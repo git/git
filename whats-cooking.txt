@@ -1,9 +1,8 @@
-Subject: What's cooking in git.git (Nov 2008, #01; Sun, 02)
-X-master-at: 6a509a6f7f38906996ac791449d5bcc2f32eef23
-X-next-at: d8fa4e31e3b8200edfff5aad88f249208cc0c5ae
-cc: "David M. Syzdek" <david.syzdek@acsalaska.net>, pasky@suse.cz
+Subject: What's cooking in git.git (Nov 2008, #02; Wed, 05)
+X-master-at: 6331adb9c4ec36c70dc3ecc6eb46b7dddb36952d
+X-next-at: f3cb49705482a19c16f6c9f5b6dab6181cc656d2
 
-What's cooking in git.git (Nov 2008, #01; Sun, 02)
+What's cooking in git.git (Nov 2008, #02; Wed, 05)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -16,6 +15,55 @@ meant to be merged to the maintenance series have "maint-" in their names.
 ----------------------------------------------------------------
 [New Topics]
 
+* gb/gitweb-snapshot-pathinfo (Sun Nov 2 10:21:39 2008 +0100) 3 commits
+ - gitweb: embed snapshot format parameter in PATH_INFO
+ - gitweb: retrieve snapshot format from PATH_INFO
+ - gitweb: make the supported snapshot formats array global
+
+Waiting for re-Ack.
+
+* bc/maint-keep-pack (Mon Nov 3 14:43:22 2008 -0600) 3 commits
+ - pack-objects: honor '.keep' files
+ - packed_git: convert pack_local flag into a bitfield and add
+   pack_keep
+ - t7700: demonstrate mishandling of objects in packs with a .keep
+   file
+
+* st/tag (Wed Nov 5 00:20:36 2008 +0100) 2 commits
+ - tag: Add more tests about mixing incompatible modes and options
+ - tag: Check that options are only allowed in the appropriate mode
+
+* np/pack-safer (Wed Oct 29 19:02:52 2008 -0400) 9 commits
+ - pack-objects: don't leak pack window reference when splitting
+   packs
+ - extend test coverage for latest pack corruption resilience
+   improvements
+ - pack-objects: allow "fixing" a corrupted pack without a full
+   repack
+ - make find_pack_revindex() aware of the nasty world
+ - make check_object() resilient to pack corruptions
+ - make packed_object_info() resilient to pack corruptions
+ - make unpack_object_header() non fatal
+ - better validation on delta base object offsets
+ - close another possibility for propagating pack corruption
+
+* mv/remote-rename (Mon Nov 3 19:26:18 2008 +0100) 1 commit
+ . Implement git remote rename
+
+* lt/decorate (Mon Nov 3 11:25:46 2008 -0800) 4 commits
+ + revision traversal: '--simplify-by-decoration'
+ + Make '--decorate' set an explicit 'show_decorations' flag
+ + revision: make tree comparison functions take commits rather than
+   trees
+ + Add a 'source' decorator for commits
+
+* cb/maint-update-ref-fix (Wed Nov 5 21:55:54 2008 +0100) 2 commits
+ + push: fix local refs update if already up-to-date
+ + do not force write of packed refs
+
+----------------------------------------------------------------
+[Graduated to "master"]
+
 * mv/maint-branch-m-symref (Sat Nov 1 00:25:44 2008 +0100) 5 commits
  + update-ref --no-deref -d: handle the case when the pointed ref is
    packed
@@ -25,36 +73,7 @@ meant to be merged to the maintenance series have "maint-" in their names.
    exist
  + Fix git branch -m for symrefs.
 
-* rs/blame (Sat Oct 25 15:31:36 2008 +0200) 5 commits
- - blame: use xdi_diff_hunks(), get rid of struct patch
- - add xdi_diff_hunks() for callers that only need hunk lengths
- - Allow alternate "low-level" emit function from xdl_diff
- - Always initialize xpparam_t to 0
- - blame: inline get_patch()
-
-* ds/uintmax-config (Sun Oct 26 03:52:47 2008 -0800) 2 commits
- - Add Makefile check for FreeBSD 4.9-SECURITY
- - Build: add NO_UINTMAX_T to support ancient systems
-
-I amended the topmost one to widen the applicability of this new feature
-to all FreeBSD 4.*, not limited to 4.9-SECURITY; testing before this hits
-'next' is appreciated.
-
-* ds/autoconf (Sun Nov 2 01:04:46 2008 -0700) 2 commits
- - DONTMERGE: fixup with a convenience macro
- - autoconf: Add link tests to each AC_CHECK_FUNC() test
-
-The topmost one is my attempt to simplify the new way of checking; the
-resulting configure.ac produces the identical configure script with or
-without it, so I think it is Ok, but testing before this hits 'next' is
-appreciated.  If all goes well, I think the two should be squashed into
-one patch.
-
-* jk/diff-convfilter-test-fix (Fri Oct 31 01:09:13 2008 -0400) 4 commits
- + Avoid using non-portable `echo -n` in tests.
- + add userdiff textconv tests
- + document the diff driver textconv feature
- + diff: add missing static declaration
+Will merge down to 'maint' in the next round.
 
 * ar/maint-mksnpath (Mon Oct 27 11:22:09 2008 +0100) 7 commits
  + Use git_pathdup instead of xstrdup(git_path(...))
@@ -65,25 +84,12 @@ one patch.
  + Fix mkpath abuse in dwim_ref and dwim_log of sha1_name.c
  + Add mksnpath which allows you to specify the output buffer
 
-* ar/mksnpath (Thu Oct 30 18:08:58 2008 -0700) 10 commits
- + Merge branch 'ar/maint-mksnpath' into ar/mksnpath
- + Use git_pathdup instead of xstrdup(git_path(...))
- + git_pathdup: returns xstrdup-ed copy of the formatted path
- + Fix potentially dangerous use of git_path in ref.c
- + Add git_snpath: a .git path formatting routine with output buffer
- + Fix potentially dangerous uses of mkpath and git_path
- + Merge branch 'ar/maint-mksnpath' into HEAD
- + Fix potentially dangerous uses of mkpath and git_path
- + Fix mkpath abuse in dwim_ref and dwim_log of sha1_name.c
- + Add mksnpath which allows you to specify the output buffer
-
-----------------------------------------------------------------
-[Will be merged to 'master' soon]
+Will merge down to 'maint' in the next round.
 
 * cj/maint-gitpm-fix-maybe-self (Sat Oct 18 20:25:12 2008 +0200) 1 commit
  + Git.pm: do not break inheritance
 
-Looked Ok; will be in 'master' soon.
+Will merge down to 'maint' in the next round.
 
 * gb/gitweb-pathinfo (Tue Oct 21 21:34:54 2008 +0200) 5 commits
  + gitweb: generate parent..current URLs
@@ -98,12 +104,8 @@ Seventh iteration.
  + builtin-blame: Reencode commit messages according to git-log
    rules.
 
-Looked Ok; will be in 'master' soon.
-
 * mv/parseopt-checkout-index (Sat Oct 18 03:17:23 2008 +0200) 1 commit
  + parse-opt: migrate builtin-checkout-index.
-
-Looked Ok; will be in 'master' soon.
 
 * sh/rebase-i-p (Wed Oct 22 11:59:30 2008 -0700) 9 commits
  + git-rebase--interactive.sh: comparision with == is bashism
@@ -131,12 +133,59 @@ rewrite of `rebase -i` would behave.
 The buglets that caused people on 'next' some surprises are quickly
 killed.  Thanks.
 
+* jc/gitweb-fix-cloud-tag (Tue Oct 14 21:27:12 2008 -0700) 1 commit
+ + Fix reading of cloud tags
+
+Got tired of waiting for an Ack.
+
 ----------------------------------------------------------------
-[Stalled]
+[Actively Cooking]
+
+* rs/blame (Sat Oct 25 15:31:36 2008 +0200) 5 commits
+ + blame: use xdi_diff_hunks(), get rid of struct patch
+ + add xdi_diff_hunks() for callers that only need hunk lengths
+ + Allow alternate "low-level" emit function from xdl_diff
+ + Always initialize xpparam_t to 0
+ + blame: inline get_patch()
+
+* ds/uintmax-config (Mon Nov 3 09:14:28 2008 -0900) 4 commits
+ . [WaitForResponse] Add autoconf tests for pthreads
+ + Make Pthread link flags configurable
+ + Add Makefile check for FreeBSD 4.9-SECURITY
+ + Build: add NO_UINTMAX_T to support ancient systems
+
+The topmost one unconditionally enables threaded delta search on any
+platform on which Pthread library is detected to be available, which
+may not be what we want.
+
+* ds/autoconf (Sun Oct 26 03:52:19 2008 -0800) 1 commit
+ + autoconf: Add link tests to each AC_CHECK_FUNC() test
+
+Attempts to help FreeBSD whose compiler does not error out when told to
+compile a program that calls unavailable functions.
 
 * jk/diff-convfilter (Sun Oct 26 00:50:02 2008 -0400) 8 commits
- - enable textconv for diff in verbose status/commit
- - wt-status: load diff ui config
+ + enable textconv for diff in verbose status/commit
+ + wt-status: load diff ui config
+ + only textconv regular files
+ + userdiff: require explicitly allowing textconv
+ + refactor userdiff textconv code
+ + add userdiff textconv tests
+ + document the diff driver textconv feature
+ + diff: add missing static declaration
+
+* jk/diff-convfilter-test-fix (Fri Oct 31 01:09:13 2008 -0400) 1 commit
+ + Avoid using non-portable `echo -n` in tests.
+
+An update to the one above.
+
+* jc/blame (Wed Jun 4 22:58:40 2008 -0700) 2 commits
+ + blame: show "previous" information in --porcelain/--incremental
+   format
+ + git-blame: refactor code to emit "porcelain format" output
+
+----------------------------------------------------------------
+[Stalled]
 
 * nd/narrow (Wed Oct 1 11:04:09 2008 +0700) 9 commits
  - grep: skip files outside sparse checkout area
@@ -158,24 +207,6 @@ Needs review.
 
 Waiting for some sort of response from Pasky.
 
-* jc/gitweb-fix-cloud-tag (Tue Oct 14 21:27:12 2008 -0700) 1 commit
- + Fix reading of cloud tags
-
-Request-for-review-and-ack sent; still waiting for response.
-
-----------------------------------------------------------------
-[Dropped]
-
-* bd/blame (Thu Aug 21 18:22:01 2008 -0500) 5 commits
- . Use xdiff caching to improve git blame performance
- . Allow xdiff machinery to cache hash results for a file
- . Always initialize xpparam_t to 0
- . Bypass textual patch generation and parsing in git blame
- . Allow alternate "low-level" emit function from xdl_diff
-
-Réne started code restructuring, which is queued to 'pu'; this series is
-dropped.
-
 ----------------------------------------------------------------
 [On Hold]
 
@@ -185,11 +216,6 @@ dropped.
 This seems to have a deadlock during communication between the peers.
 Someone needs to pick up this topic and resolve the deadlock before it can
 continue.
-
-* jc/blame (Wed Jun 4 22:58:40 2008 -0700) 2 commits
- - blame: show "previous" information in --porcelain/--incremental
-   format
- - git-blame: refactor code to emit "porcelain format" output
 
 * jk/renamelimit (Sat May 3 13:58:42 2008 -0700) 1 commit
  - diff: enable "too large a rename" warning when -M/-C is explicitly
