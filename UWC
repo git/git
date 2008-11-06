@@ -2,7 +2,7 @@
 #
 # Update an older edition of What's Cooking with the latest data.
 #
-# Usage: UWC [ old [ new ] ]
+# Usage: UWC [--keep-master] [ old [ new ] ]
 #
 # Giving no parameter is the same as giving a single "-" to the command.
 #
@@ -27,6 +27,8 @@
 # Typically the maintainer would place the What's Cooking message
 # previously sent in a buffer in Emacs, and filter the buffer contents
 # with this script, to prepare an up-to-date message.
+
+my $keep_master = 1;
 
 sub parse_whats_cooking {
 	my ($fh) = @_;
@@ -179,15 +181,27 @@ sub merge_whats_cooking {
 		}
 	}
 
-	if (%{$new_wc->{"topic hash"}}) {
-		if (@gone) {
-			$group = 'Graduated to "master"';
-			if (!exists $old_wc->{" $group"}) {
-				unshift @{$old_wc->{"group list"}}, $group;
-				$old_wc->{" $group"} = [];
-			}
-			push @{$old_wc->{" $group"}}, @gone;
+
+	$group = 'Graduated to "master"';
+	if (!$keep_master) {
+		print STDERR "Not Keeping Master\n";
+		my $o = delete $old_wc->{" $group"};
+		for (@$o) {
+			print STDERR " Dropping: ", $_->{'topic'}, "\n";
 		}
+		print STDERR "Gone are\n";
+		for (@gone) {
+			print STDERR " Gone: ", $_->{'topic'}, "\n";
+		}
+	}
+	if (@gone) {
+		if (!exists $old_wc->{" $group"}) {
+			unshift @{$old_wc->{"group list"}}, $group;
+			$old_wc->{" $group"} = [];
+		}
+		push @{$old_wc->{" $group"}}, @gone;
+	}
+	if (%{$new_wc->{"topic hash"}}) {
 		$group = "New Topics";
 		if (!exists $old_wc->{" $group"}) {
 			unshift @{$old_wc->{"group list"}}, $group;
@@ -204,6 +218,9 @@ sub merge_whats_cooking {
 
 if (@ARGV == 0) {
 	@ARGV = ('-');
+} elsif ($ARGV[0] eq '--keep-master') {
+	$keep_master = 1;
+	shift;
 }
 if (@ARGV != 2 && @ARGV != 1) {
 	die "Usage: $0 old [new]\n";

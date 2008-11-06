@@ -4,12 +4,16 @@
 master_at=$(git rev-parse --verify refs/heads/master)
 next_at=$(git rev-parse --verify refs/heads/next)
 
+keep_master=
 case "$1" in
 generate)
 	echo Here are the topics that have been
 	echo
 	Meta/git-topic.perl --base=master | sed -e 's/^\*./\n*/'
 	exit
+	;;
+keep)
+	keep_master=--keep-master
 	;;
 esac
 
@@ -48,4 +52,4 @@ last=$(
 )
 
 sed -e 's/^\[New Topics\]$/[Old New Topics]/' "Meta/$last" |
-Meta/UWC
+Meta/UWC $keep_master
