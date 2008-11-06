@@ -223,11 +223,13 @@ unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 			    "but it is not a directory\n";
 		}
 		my $git_dir = delete $ENV{GIT_DIR};
-		chomp(my $cdup = command_oneline(qw/rev-parse --show-cdup/));
-		unless (length $cdup) {
-			die "Already at toplevel, but $git_dir ",
-			    "not found '$cdup'\n";
-		}
+		my $cdup = undef;
+		git_cmd_try {
+			$cdup = command_oneline(qw/rev-parse --show-cdup/);
+			$git_dir = '.' unless ($cdup);
+			chomp $cdup if ($cdup);
+			$cdup = "." unless ($cdup && length $cdup);
+		} "Already at toplevel, but $git_dir not found\n";
 		chdir $cdup or die "Unable to chdir up to '$cdup'\n";
 		unless (-d $git_dir) {
 			die "$git_dir still not found after going to ",
