@@ -5,6 +5,7 @@ force=
 while	case "$1" in
 	-pedantic) M=$1 ;;
 	-force) force=$1 ;;
+	-dash) with_dash=y ;;
 	*) break ;;
 	esac
 do
@@ -16,6 +17,8 @@ test -z "$(git diff --cached --name-status)" || {
 	exit 1
 }
 Meta/Make clean >/dev/null 2>&1
+
+test -f /bin/dash || with_dash=
 
 : ${branches='next master maint pu jch'}
 
@@ -49,9 +52,19 @@ do
 
 	echo "** $branch" &&
 	git checkout $branch &&
+	Meta/Make $M -- $J clean &&
+	case "$with_dash" in
+	y)
+		case "$branch" in
+		master | maint | next | jch)
+			Meta/Make $M -- $J SHELL_PATH=/bin/dash test &&
+			Meta/Make $M -- $J clean
+			;;
+		esac
+		;;
+	esac &&
 	Meta/Make $M -- $J all &&
 	Meta/Make $M -- $J test &&
-	Meta/Make $M -- install &&
 	case "$branch" in
 	master | maint | next )
 		Meta/Make $M -- doc
@@ -62,6 +75,7 @@ do
 	*)
 		: ;;
 	esac &&
+	Meta/Make $M -- install &&
 	Meta/Make clean || exit $?
 
 done >./:all.log 3>&2 2>&1
