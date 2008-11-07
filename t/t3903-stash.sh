@@ -92,6 +92,7 @@ test_expect_success 'drop middle stash' '
 	git reset --hard &&
 	echo 8 > file &&
 	git stash &&
+	sleep 1 &&
 	echo 9 > file &&
 	git stash &&
 	git stash drop stash@{1} &&
