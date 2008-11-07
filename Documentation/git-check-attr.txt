@@ -3,7 +3,7 @@ git-check-attr(1)
 
 NAME
 ----
-git-check-attr - Display gitattributes information.
+git-check-attr - Display gitattributes information
 
 
 SYNOPSIS
