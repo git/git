@@ -103,7 +103,7 @@ unset GIT_CONFIG GIT_CONFIG_LOCAL
 HOME=`pwd`/no-such-directory
 export HOME ;# this way we force the victim/.git/config to be used.
 
-test_expect_failure \
+test_expect_success \
 	'pushing a delete should be denied with denyDeletes' '
 	cd victim &&
 	git config receive.denyDeletes true &&
