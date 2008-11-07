@@ -337,7 +337,7 @@ static int remove_branches(struct string_list *branches)
 		const char *refname = item->string;
 		unsigned char *sha1 = item->util;
 
-		if (delete_ref(refname, sha1))
+		if (delete_ref(refname, sha1, 0))
 			result |= error("Could not remove branch %s", refname);
 	}
 	return result;
@@ -565,7 +565,7 @@ static int prune(int argc, const char **argv)
 			const char *refname = states.stale.items[i].util;
 
 			if (!dry_run)
-				result |= delete_ref(refname, NULL);
+				result |= delete_ref(refname, NULL, 0);
 
 			printf(" * [%s] %s\n", dry_run ? "would prune" : "pruned",
 			       abbrev_ref(refname, "refs/remotes/"));

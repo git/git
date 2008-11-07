@@ -125,7 +125,7 @@ static int for_each_tag_name(const char **argv, each_tag_name_fn fn)
 static int delete_tag(const char *name, const char *ref,
 				const unsigned char *sha1)
 {
-	if (delete_ref(ref, sha1))
+	if (delete_ref(ref, sha1, 0))
 		return 1;
 	printf("Deleted tag '%s'\n", name);
 	return 0;
@@ -283,7 +283,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 		int fd;
 
 		/* write the template message before editing: */
-		path = xstrdup(git_path("TAG_EDITMSG"));
+		path = git_pathdup("TAG_EDITMSG");
 		fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 		if (fd < 0)
 			die("could not create file '%s': %s",

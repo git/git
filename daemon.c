@@ -537,6 +537,10 @@ static int execute(struct sockaddr *addr)
 #endif
 		}
 		loginfo("Connection from %s:%d", addrbuf, port);
+		setenv("REMOTE_ADDR", addrbuf, 1);
+	}
+	else {
+		unsetenv("REMOTE_ADDR");
 	}
 
 	alarm(init_timeout ? init_timeout : timeout);

@@ -620,14 +620,16 @@ static char *get_short_ref(struct refinfo *ref)
 		for (j = 0; j < i; j++) {
 			const char *rule = ref_rev_parse_rules[j];
 			unsigned char short_objectname[20];
+			char refname[PATH_MAX];
 
 			/*
 			 * the short name is ambiguous, if it resolves
 			 * (with this previous rule) to a valid ref
 			 * read_ref() returns 0 on success
 			 */
-			if (!read_ref(mkpath(rule, short_name_len, short_name),
-				      short_objectname))
+			mksnpath(refname, sizeof(refname),
+				 rule, short_name_len, short_name);
+			if (!read_ref(refname, short_objectname))
 				break;
 		}
 

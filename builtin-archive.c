@@ -111,8 +111,6 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 {
 	const char *remote = NULL;
 
-	git_config(git_default_config, NULL);
-
 	remote = extract_remote_arg(&argc, argv);
 	if (remote)
 		return run_remote_archiver(remote, argc, argv);

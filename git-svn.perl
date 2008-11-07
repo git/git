@@ -1191,7 +1191,7 @@ sub read_repo_config {
 		my $v = $opts->{$o};
 		my ($key) = ($o =~ /^([a-zA-Z\-]+)/);
 		$key =~ s/-//g;
-		my $arg = 'git-config';
+		my $arg = 'git config';
 		$arg .= ' --int' if ($o =~ /[:=]i$/);
 		$arg .= ' --bool' if ($o !~ /[:=][sfi]$/);
 		if (ref $v eq 'ARRAY') {
@@ -2267,7 +2267,7 @@ sub do_git_commit {
 	}
 	die "Tree is not a valid sha1: $tree\n" if $tree !~ /^$::sha1$/o;
 
-	my @exec = ('git-commit-tree', $tree);
+	my @exec = ('git', 'commit-tree', $tree);
 	foreach ($self->get_commit_parents($log_entry)) {
 		push @exec, '-p', $_;
 	}

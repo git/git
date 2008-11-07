@@ -135,7 +135,7 @@ proc do_push_anywhere {} {
 		set push_urltype url
 	}
 	radiobutton $w.dest.url_r \
-		-text [mc "Arbitrary URL:"] \
+		-text [mc "Arbitrary Location:"] \
 		-value url \
 		-variable push_urltype
 	entry $w.dest.url_t \

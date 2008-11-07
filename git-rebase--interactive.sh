@@ -173,13 +173,18 @@ pick_one_preserving_merges () {
 
 	if test -f "$DOTEST"/current-commit
 	then
-		current_commit=$(cat "$DOTEST"/current-commit) &&
-		git rev-parse HEAD > "$REWRITTEN"/$current_commit &&
-		rm "$DOTEST"/current-commit ||
-		die "Cannot write current commit's replacement sha1"
+		if test "$fast_forward" = t
+		then
+			cat "$DOTEST"/current-commit | while read current_commit
+			do
+				git rev-parse HEAD > "$REWRITTEN"/$current_commit
+			done
+			rm "$DOTEST"/current-commit ||
+			die "Cannot write current commit's replacement sha1"
+		fi
 	fi
 
-	echo $sha1 > "$DOTEST"/current-commit
+	echo $sha1 >> "$DOTEST"/current-commit
 
 	# rewrite parents; if none were rewritten, we can fast-forward.
 	new_parents=
@@ -192,6 +197,15 @@ pick_one_preserving_merges () {
 		if test -f "$REWRITTEN"/$p
 		then
 			new_p=$(cat "$REWRITTEN"/$p)
+
+			# If the todo reordered commits, and our parent is marked for
+			# rewriting, but hasn't been gotten to yet, assume the user meant to
+			# drop it on top of the current HEAD
+			if test -z "$new_p"
+			then
+				new_p=$(git rev-parse HEAD)
+			fi
+
 			test $p != $new_p && fast_forward=f
 			case "$new_parents" in
 			*$new_p*)
@@ -217,15 +231,19 @@ pick_one_preserving_merges () {
 			die "Cannot fast forward to $sha1"
 		;;
 	f)
-		test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
-
 		first_parent=$(expr "$new_parents" : ' \([^ ]*\)')
-		# detach HEAD to current parent
-		output git checkout $first_parent 2> /dev/null ||
-			die "Cannot move HEAD to $first_parent"
+
+		if [ "$1" != "-n" ]
+		then
+			# detach HEAD to current parent
+			output git checkout $first_parent 2> /dev/null ||
+				die "Cannot move HEAD to $first_parent"
+		fi
 
 		case "$new_parents" in
 		' '*' '*)
+			test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
+
 			# redo merge
 			author_script=$(get_author_ident_from_commit $sha1)
 			eval "$author_script"
@@ -379,20 +397,7 @@ do_next () {
 	HEADNAME=$(cat "$DOTEST"/head-name) &&
 	OLDHEAD=$(cat "$DOTEST"/head) &&
 	SHORTONTO=$(git rev-parse --short $(cat "$DOTEST"/onto)) &&
-	if test -d "$REWRITTEN"
-	then
-		test -f "$DOTEST"/current-commit &&
-			current_commit=$(cat "$DOTEST"/current-commit) &&
-			git rev-parse HEAD > "$REWRITTEN"/$current_commit
-		if test -f "$REWRITTEN"/$OLDHEAD
-		then
-			NEWHEAD=$(cat "$REWRITTEN"/$OLDHEAD)
-		else
-			NEWHEAD=$OLDHEAD
-		fi
-	else
-		NEWHEAD=$(git rev-parse HEAD)
-	fi &&
+	NEWHEAD=$(git rev-parse HEAD) &&
 	case $HEADNAME in
 	refs/*)
 		message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
@@ -591,18 +596,69 @@ first and then run 'git rebase --continue' again."
 				echo $ONTO > "$REWRITTEN"/$c ||
 					die "Could not init rewritten commits"
 			done
+			# No cherry-pick because our first pass is to determine
+			# parents to rewrite and skipping dropped commits would
+			# prematurely end our probe
 			MERGES_OPTION=
+			first_after_upstream="$(git rev-list --reverse --first-parent $UPSTREAM..$HEAD | head -n 1)"
 		else
-			MERGES_OPTION=--no-merges
+			MERGES_OPTION="--no-merges --cherry-pick"
 		fi
 
 		SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
 		SHORTHEAD=$(git rev-parse --short $HEAD)
 		SHORTONTO=$(git rev-parse --short $ONTO)
 		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
-			--abbrev=7 --reverse --left-right --cherry-pick \
+			--abbrev=7 --reverse --left-right --topo-order \
 			$UPSTREAM...$HEAD | \
-			sed -n "s/^>/pick /p" > "$TODO"
+			sed -n "s/^>//p" | while read shortsha1 rest
+		do
+			if test t != "$PRESERVE_MERGES"
+			then
+				echo "pick $shortsha1 $rest" >> "$TODO"
+			else
+				sha1=$(git rev-parse $shortsha1)
+				preserve=t
+				for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)
+				do
+					if test -f "$REWRITTEN"/$p -a \( $p != $UPSTREAM -o $sha1 = $first_after_upstream \)
+					then
+						preserve=f
+					fi
+				done
+				if test f = "$preserve"
+				then
+					touch "$REWRITTEN"/$sha1
+					echo "pick $shortsha1 $rest" >> "$TODO"
+				fi
+			fi
+		done
+
+		# Watch for commits that been dropped by --cherry-pick
+		if test t = "$PRESERVE_MERGES"
+		then
+			mkdir "$DROPPED"
+			# Save all non-cherry-picked changes
+			git rev-list $UPSTREAM...$HEAD --left-right --cherry-pick | \
+				sed -n "s/^>//p" > "$DOTEST"/not-cherry-picks
+			# Now all commits and note which ones are missing in
+			# not-cherry-picks and hence being dropped
+			git rev-list $UPSTREAM..$HEAD |
+			while read rev
+			do
+				if test -f "$REWRITTEN"/$rev -a "$(grep "$rev" "$DOTEST"/not-cherry-picks)" = ""
+				then
+					# Use -f2 because if rev-list is telling us this commit is
+					# not worthwhile, we don't want to track its multiple heads,
+					# just the history of its first-parent for others that will
+					# be rebasing on top of it
+					git rev-list --parents -1 $rev | cut -d' ' -f2 > "$DROPPED"/$rev
+					short=$(git rev-list -1 --abbrev-commit --abbrev=7 $rev)
+					grep -v "^[a-z][a-z]* $short" <"$TODO" > "${TODO}2" ; mv "${TODO}2" "$TODO"
+					rm "$REWRITTEN"/$rev
+				fi
+			done
+		fi
 		test -s "$TODO" || echo noop >> "$TODO"
 		cat >> "$TODO" << EOF
 
@@ -617,28 +673,6 @@ first and then run 'git rebase --continue' again."
 # However, if you remove everything, the rebase will be aborted.
 #
 EOF
-
-		# Watch for commits that been dropped by --cherry-pick
-		if test t = "$PRESERVE_MERGES"
-		then
-			mkdir "$DROPPED"
-			# drop the --cherry-pick parameter this time
-			git rev-list $MERGES_OPTION --abbrev-commit \
-				--abbrev=7 $UPSTREAM...$HEAD --left-right | \
-				sed -n "s/^>//p" | while read rev
-			do
-				grep --quiet "$rev" "$TODO"
-				if [ $? -ne 0 ]
-				then
-					# Use -f2 because if rev-list is telling this commit is not
-					# worthwhile, we don't want to track its multiple heads,
-					# just the history of its first-parent for others that will
-					# be rebasing on top of us
-					full=$(git rev-parse $rev)
-					git rev-list --parents -1 $rev | cut -d' ' -f2 > "$DROPPED"/$full
-				fi
-			done
-		fi
 
 		has_action "$TODO" ||
 			die_abort "Nothing to do"

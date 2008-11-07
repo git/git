@@ -251,7 +251,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	int i, index_fd, clean;
 	char *oneline, *reencoded_message = NULL;
 	const char *message, *encoding;
-	const char *defmsg = xstrdup(git_path("MERGE_MSG"));
+	char *defmsg = git_pathdup("MERGE_MSG");
 	struct merge_options o;
 	struct tree *result, *next_tree, *base_tree, *head_tree;
 	static struct lock_file index_lock;
@@ -432,6 +432,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		return execv_git_cmd(args);
 	}
 	free(reencoded_message);
+	free(defmsg);
 
 	return 0;
 }

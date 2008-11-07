@@ -783,6 +783,20 @@ void pp_remainder(enum cmit_fmt fmt,
 	}
 }
 
+char *reencode_commit_message(const struct commit *commit, const char **encoding_p)
+{
+	const char *encoding;
+
+	encoding = (git_log_output_encoding
+		    ? git_log_output_encoding
+		    : git_commit_encoding);
+	if (!encoding)
+		encoding = "utf-8";
+	if (encoding_p)
+		*encoding_p = encoding;
+	return logmsg_reencode(commit, encoding);
+}
+
 void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 			 struct strbuf *sb, int abbrev,
 			 const char *subject, const char *after_subject,
@@ -799,12 +813,7 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 		return;
 	}
 
-	encoding = (git_log_output_encoding
-		    ? git_log_output_encoding
-		    : git_commit_encoding);
-	if (!encoding)
-		encoding = "utf-8";
-	reencoded = logmsg_reencode(commit, encoding);
+	reencoded = reencode_commit_message(commit, &encoding);
 	if (reencoded) {
 		msg = reencoded;
 	}

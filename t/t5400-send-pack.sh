@@ -103,6 +103,17 @@ unset GIT_CONFIG GIT_CONFIG_LOCAL
 HOME=`pwd`/no-such-directory
 export HOME ;# this way we force the victim/.git/config to be used.
 
+test_expect_failure \
+	'pushing a delete should be denied with denyDeletes' '
+	cd victim &&
+	git config receive.denyDeletes true &&
+	git branch extra master &&
+	cd .. &&
+	test -f victim/.git/refs/heads/extra &&
+	test_must_fail git send-pack ./victim/.git/ :extra master
+'
+rm -f victim/.git/refs/heads/extra
+
 test_expect_success \
         'pushing with --force should be denied with denyNonFastforwards' '
 	cd victim &&

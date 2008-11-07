@@ -1,0 +1,40 @@
+GIT v1.6.0.4 Release Notes
+==========================
+
+Fixes since v1.6.0.3
+--------------------
+
+* 'git add -p' said "No changes" when only binary files were changed.
+
+* 'git archive' did not work correctly in bare repositories.
+
+* 'git checkout -t -b newbranch' when you are on detached HEAD was broken.
+
+* when we refuse to detect renames because there are too many new or
+  deleted files, 'git diff' did not say how many there are.
+
+* 'git push --mirror' tried and failed to push the stash; there is no
+  point in sending it to begin with.
+
+* 'git pull $there $branch:$current_branch' did not work when you were on
+  a branch yet to be born.
+
+* when giving up resolving a conflicted merge, 'git reset --hard' failed
+  to remove new paths from the working tree.
+
+* 'git send-email' had a small fd leak while scanning directory.
+
+* 'git status' incorrectly reported a submodule directory as an untracked
+  directory.
+
+* 'git svn' used deprecated 'git-foo' form of subcommand invocaition.
+
+* Plugged small memleaks here and there.
+
+* Also contains many documentation updates.
+
+--
+exec >/var/tmp/1
+O=v1.6.0.3-34-gf6276b7
+echo O=$(git describe maint)
+git shortlog --no-merges $O..maint

@@ -11,6 +11,7 @@
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
+static int deny_deletes = 0;
 static int deny_non_fast_forwards = 0;
 static int receive_fsck_objects;
 static int receive_unpack_limit = -1;
@@ -23,6 +24,11 @@ static int capabilities_sent;
 
 static int receive_pack_config(const char *var, const char *value, void *cb)
 {
+	if (strcmp(var, "receive.denydeletes") == 0) {
+		deny_deletes = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (strcmp(var, "receive.denynonfastforwards") == 0) {
 		deny_non_fast_forwards = git_config_bool(var, value);
 		return 0;
@@ -185,6 +191,12 @@ static const char *update(struct command *cmd)
 		      "but I can't find it!", sha1_to_hex(new_sha1));
 		return "bad pack";
 	}
+	if (deny_deletes && is_null_sha1(new_sha1) &&
+	    !is_null_sha1(old_sha1) &&
+	    !prefixcmp(name, "refs/heads/")) {
+		error("denying ref deletion for %s", name);
+		return "deletion prohibited";
+	}
 	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
 	    !is_null_sha1(old_sha1) &&
 	    !prefixcmp(name, "refs/heads/")) {
@@ -224,7 +236,7 @@ static const char *update(struct command *cmd)
 			warning ("Allowing deletion of corrupt ref.");
 			old_sha1 = NULL;
 		}
-		if (delete_ref(name, old_sha1)) {
+		if (delete_ref(name, old_sha1, 0)) {
 			error("failed to delete %s", name);
 			return "failed to delete";
 		}
@@ -466,11 +478,16 @@ static int delete_only(struct command *cmd)
 
 static int add_refs_from_alternate(struct alternate_object_database *e, void *unused)
 {
-	char *other = xstrdup(make_absolute_path(e->base));
-	size_t len = strlen(other);
+	char *other;
+	size_t len;
 	struct remote *remote;
 	struct transport *transport;
 	const struct ref *extra;
+
+	e->name[-1] = '\0';
+	other = xstrdup(make_absolute_path(e->base));
+	e->name[-1] = '/';
+	len = strlen(other);
 
 	while (other[len-1] == '/')
 		other[--len] = '\0';

@@ -279,7 +279,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		update_ref(msg, "ORIG_HEAD", orig, old_orig, 0, MSG_ON_ERR);
 	}
 	else if (old_orig)
-		delete_ref("ORIG_HEAD", old_orig);
+		delete_ref("ORIG_HEAD", old_orig, 0);
 	prepend_reflog_action("updating HEAD", msg, sizeof(msg));
 	update_ref_status = update_ref(msg, "HEAD", sha1, orig, 0, MSG_ON_ERR);
 

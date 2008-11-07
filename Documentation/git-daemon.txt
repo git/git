@@ -270,6 +270,15 @@ selectively enable/disable services per repository::
 ----------------------------------------------------------------
 
 
+ENVIRONMENT
+-----------
+'git-daemon' will set REMOTE_ADDR to the IP address of the client
+that connected to it, if the IP address is available. REMOTE_ADDR will
+be available in the environment of hooks called when
+services are performed.
+
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>, YOSHIFUJI Hideaki

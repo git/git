@@ -160,7 +160,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			continue;
 		}
 
-		if (delete_ref(name, sha1)) {
+		if (delete_ref(name, sha1, 0)) {
 			error("Error deleting %sbranch '%s'", remote,
 			       argv[i]);
 			ret = 1;
