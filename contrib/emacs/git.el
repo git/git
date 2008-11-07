@@ -895,29 +895,26 @@ Return the list of files that haven't been handled."
               (unless (git-empty-db-p)
                 (setq head (git-rev-parse "HEAD")
                       head-tree (git-rev-parse "HEAD^{tree}")))
-              (if files
-                  (progn
-                    (message "Running git commit...")
-                    (when
-                        (and
-                         (git-read-tree head-tree index-file)
-                         (git-update-index nil files)         ;update both the default index
-                         (git-update-index index-file files)  ;and the temporary one
-                         (setq tree (git-write-tree index-file)))
-                      (if (or (not (string-equal tree head-tree))
-                              (yes-or-no-p "The tree was not modified, do you really want to perform an empty commit? "))
-                          (let ((commit (git-commit-tree buffer tree head)))
-                            (when commit
-                              (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
-                              (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
-                              (with-current-buffer buffer (erase-buffer))
-                              (git-update-status-files (git-get-filenames files))
-                              (git-call-process nil "rerere")
-                              (git-call-process nil "gc" "--auto")
-                              (message "Committed %s." commit)
-                              (git-run-hook "post-commit" nil)))
-                        (message "Commit aborted."))))
-                (message "No files to commit.")))
+              (message "Running git commit...")
+              (when
+                  (and
+                   (git-read-tree head-tree index-file)
+                   (git-update-index nil files)         ;update both the default index
+                   (git-update-index index-file files)  ;and the temporary one
+                   (setq tree (git-write-tree index-file)))
+                (if (or (not (string-equal tree head-tree))
+                        (yes-or-no-p "The tree was not modified, do you really want to perform an empty commit? "))
+                    (let ((commit (git-commit-tree buffer tree head)))
+                      (when commit
+                        (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
+                        (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
+                        (with-current-buffer buffer (erase-buffer))
+                        (git-update-status-files (git-get-filenames files))
+                        (git-call-process nil "rerere")
+                        (git-call-process nil "gc" "--auto")
+                        (message "Committed %s." commit)
+                        (git-run-hook "post-commit" nil)))
+                  (message "Commit aborted."))))
           (delete-file index-file))))))
 
 
