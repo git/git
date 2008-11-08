@@ -8133,18 +8133,25 @@ proc cherrypick {} {
     if {[catch {exec sh -c "git cherry-pick -r $rowmenuid 2>&1"} err]} {
 	notbusy cherrypick
 	if {[regexp -line \
-	    {Entry '(.*)' would be overwritten by merge} $err msg fname]} {
-	    error_popup [mc "Cherry-pick failed:
-file '%s' had local modifications.
-
-Please commit, reset or stash your changes." $fname]
-	} elseif {[regexp -line {^CONFLICT \(.*\):} $err msg]} {
-	    # Force citool to read MERGE_MSG
-	    file delete [file join [gitdir] "GITGUI_MSG"]
-	    exec_citool {} $rowmenuid
+		 {Entry '(.*)' (would be overwritten by merge|not uptodate)} \
+		 $err msg fname]} {
+	    error_popup [mc "Cherry-pick failed because of local changes\
+			to file '%s'.\nPlease commit, reset or stash\
+			your changes and try again." $fname]
+	} elseif {[regexp -line \
+		       {^(CONFLICT \(.*\):|Automatic cherry-pick failed)} \
+		       $err]} {
+	    if {[confirm_popup [mc "Cherry-pick failed because of merge\
+			conflict.\nDo you wish to run git citool to\
+			resolve it?"]]} {
+		# Force citool to read MERGE_MSG
+		file delete [file join [gitdir] "GITGUI_MSG"]
+		exec_citool {} $rowmenuid
+	    }
 	} else {
 	    error_popup $err
 	}
+	run updatecommits
 	return
     }
     set newhead [exec git rev-parse HEAD]
