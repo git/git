@@ -437,6 +437,37 @@ test_expect_success 'push updates local refs' '
 
 '
 
+test_expect_success 'push updates up-to-date local refs' '
+
+	rm -rf parent child &&
+	mkdir parent &&
+	(cd parent && git init &&
+		echo one >foo && git add foo && git commit -m one) &&
+	git clone parent child1 &&
+	git clone parent child2 &&
+	(cd child1 &&
+		echo two >foo && git commit -a -m two &&
+		git push) &&
+	(cd child2 &&
+		git pull ../child1 master &&
+		git push &&
+	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
+
+'
+
+test_expect_success 'push preserves up-to-date packed refs' '
+
+	rm -rf parent child &&
+	mkdir parent &&
+	(cd parent && git init &&
+		echo one >foo && git add foo && git commit -m one) &&
+	git clone parent child &&
+	(cd child &&
+		git push &&
+	! test -f .git/refs/remotes/origin/master)
+
+'
+
 test_expect_success 'push does not update local refs on failure' '
 
 	rm -rf parent child &&
