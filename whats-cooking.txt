@@ -1,8 +1,8 @@
-Subject: What's cooking in git.git (Nov 2008, #02; Wed, 05)
-X-master-at: 6331adb9c4ec36c70dc3ecc6eb46b7dddb36952d
-X-next-at: f3cb49705482a19c16f6c9f5b6dab6181cc656d2
+Subject: What's cooking in git.git (Nov 2008, #03; Sun, 09)
+X-master-at: a9645b780b698703cd7dee25051d6ce39b0544c6
+X-next-at: aca556e49fea7423c223973632ed9b94c03b19eb
 
-What's cooking in git.git (Nov 2008, #02; Wed, 05)
+What's cooking in git.git (Nov 2008, #03; Sun, 09)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -15,131 +15,21 @@ meant to be merged to the maintenance series have "maint-" in their names.
 ----------------------------------------------------------------
 [New Topics]
 
-* gb/gitweb-snapshot-pathinfo (Sun Nov 2 10:21:39 2008 +0100) 3 commits
- - gitweb: embed snapshot format parameter in PATH_INFO
- - gitweb: retrieve snapshot format from PATH_INFO
- - gitweb: make the supported snapshot formats array global
+* jk/deny-push-to-current (Sat Nov 8 20:49:27 2008 -0500) 2 commits
+ + receive-pack: detect push to current branch of non-bare repo
+ + t5516: refactor oddball tests
 
-Waiting for re-Ack.
+* dl/xdiff (Fri Nov 7 21:24:33 2008 -0800) 1 commit
+ + xdiff: give up scanning similar lines early
 
-* bc/maint-keep-pack (Mon Nov 3 14:43:22 2008 -0600) 3 commits
- - pack-objects: honor '.keep' files
- - packed_git: convert pack_local flag into a bitfield and add
-   pack_keep
- - t7700: demonstrate mishandling of objects in packs with a .keep
-   file
-
-* st/tag (Wed Nov 5 00:20:36 2008 +0100) 2 commits
- - tag: Add more tests about mixing incompatible modes and options
- - tag: Check that options are only allowed in the appropriate mode
-
-* np/pack-safer (Wed Oct 29 19:02:52 2008 -0400) 9 commits
- - pack-objects: don't leak pack window reference when splitting
-   packs
- - extend test coverage for latest pack corruption resilience
-   improvements
- - pack-objects: allow "fixing" a corrupted pack without a full
-   repack
- - make find_pack_revindex() aware of the nasty world
- - make check_object() resilient to pack corruptions
- - make packed_object_info() resilient to pack corruptions
- - make unpack_object_header() non fatal
- - better validation on delta base object offsets
- - close another possibility for propagating pack corruption
-
-* mv/remote-rename (Mon Nov 3 19:26:18 2008 +0100) 1 commit
- . Implement git remote rename
-
-* lt/decorate (Mon Nov 3 11:25:46 2008 -0800) 4 commits
- + revision traversal: '--simplify-by-decoration'
- + Make '--decorate' set an explicit 'show_decorations' flag
- + revision: make tree comparison functions take commits rather than
-   trees
- + Add a 'source' decorator for commits
-
-* cb/maint-update-ref-fix (Wed Nov 5 21:55:54 2008 +0100) 2 commits
- + push: fix local refs update if already up-to-date
- + do not force write of packed refs
+This performance fix may eventually need to be cherry-picked to 'maint'.
 
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* mv/maint-branch-m-symref (Sat Nov 1 00:25:44 2008 +0100) 5 commits
- + update-ref --no-deref -d: handle the case when the pointed ref is
-   packed
- + git branch -m: forbid renaming of a symref
- + Fix git update-ref --no-deref -d.
- + rename_ref(): handle the case when the reflog of a ref does not
-   exist
- + Fix git branch -m for symrefs.
-
-Will merge down to 'maint' in the next round.
-
-* ar/maint-mksnpath (Mon Oct 27 11:22:09 2008 +0100) 7 commits
- + Use git_pathdup instead of xstrdup(git_path(...))
- + git_pathdup: returns xstrdup-ed copy of the formatted path
- + Fix potentially dangerous use of git_path in ref.c
- + Add git_snpath: a .git path formatting routine with output buffer
- + Fix potentially dangerous uses of mkpath and git_path
- + Fix mkpath abuse in dwim_ref and dwim_log of sha1_name.c
- + Add mksnpath which allows you to specify the output buffer
-
-Will merge down to 'maint' in the next round.
-
-* cj/maint-gitpm-fix-maybe-self (Sat Oct 18 20:25:12 2008 +0200) 1 commit
- + Git.pm: do not break inheritance
-
-Will merge down to 'maint' in the next round.
-
-* gb/gitweb-pathinfo (Tue Oct 21 21:34:54 2008 +0200) 5 commits
- + gitweb: generate parent..current URLs
- + gitweb: parse parent..current syntax from PATH_INFO
- + gitweb: use_pathinfo filenames start with /
- + gitweb: generate project/action/hash URLs
- + gitweb: parse project/action/hash_base:filename PATH_INFO
-
-Seventh iteration.
-
-* ag/blame-encoding (Wed Oct 22 00:55:57 2008 +0400) 1 commit
- + builtin-blame: Reencode commit messages according to git-log
-   rules.
-
-* mv/parseopt-checkout-index (Sat Oct 18 03:17:23 2008 +0200) 1 commit
- + parse-opt: migrate builtin-checkout-index.
-
-* sh/rebase-i-p (Wed Oct 22 11:59:30 2008 -0700) 9 commits
- + git-rebase--interactive.sh: comparision with == is bashism
- + rebase-i-p: minimum fix to obvious issues
- + rebase-i-p: if todo was reordered use HEAD as the rewritten parent
- + rebase-i-p: do not include non-first-parent commits touching
-   UPSTREAM
- + rebase-i-p: only list commits that require rewriting in todo
- + rebase-i-p: fix 'no squashing merges' tripping up non-merges
- + rebase-i-p: delay saving current-commit to REWRITTEN if squashing
- + rebase-i-p: use HEAD for updating the ref instead of mapping
-   OLDHEAD
- + rebase-i-p: test to exclude commits from todo based on its parents
-
-Changes the `rebase -i -p` behavior to behave like git sequencer's
-rewrite of `rebase -i` would behave.
-
-* np/index-pack (Thu Oct 23 15:05:59 2008 -0400) 5 commits
- + index-pack: don't leak leaf delta result
- + improve index-pack tests
- + fix multiple issues in index-pack
- + index-pack: smarter memory usage during delta resolution
- + index-pack: rationalize delta resolution code
-
-The buglets that caused people on 'next' some surprises are quickly
-killed.  Thanks.
-
-* jc/gitweb-fix-cloud-tag (Tue Oct 14 21:27:12 2008 -0700) 1 commit
- + Fix reading of cloud tags
-
-Got tired of waiting for an Ack.
-
-----------------------------------------------------------------
-[Actively Cooking]
+* cb/maint-update-ref-fix (Wed Nov 5 21:55:54 2008 +0100) 2 commits
+ + push: fix local refs update if already up-to-date
+ + do not force write of packed refs
 
 * rs/blame (Sat Oct 25 15:31:36 2008 +0200) 5 commits
  + blame: use xdi_diff_hunks(), get rid of struct patch
@@ -148,21 +38,67 @@ Got tired of waiting for an Ack.
  + Always initialize xpparam_t to 0
  + blame: inline get_patch()
 
-* ds/uintmax-config (Mon Nov 3 09:14:28 2008 -0900) 4 commits
- . [WaitForResponse] Add autoconf tests for pthreads
- + Make Pthread link flags configurable
- + Add Makefile check for FreeBSD 4.9-SECURITY
- + Build: add NO_UINTMAX_T to support ancient systems
-
-The topmost one unconditionally enables threaded delta search on any
-platform on which Pthread library is detected to be available, which
-may not be what we want.
-
 * ds/autoconf (Sun Oct 26 03:52:19 2008 -0800) 1 commit
  + autoconf: Add link tests to each AC_CHECK_FUNC() test
 
 Attempts to help FreeBSD whose compiler does not error out when told to
 compile a program that calls unavailable functions.
+
+----------------------------------------------------------------
+[Actively Cooking]
+
+* gb/gitweb-snapshot-pathinfo (Sun Nov 2 10:21:39 2008 +0100) 3 commits
+ + gitweb: embed snapshot format parameter in PATH_INFO
+ + gitweb: retrieve snapshot format from PATH_INFO
+ + gitweb: make the supported snapshot formats array global
+
+Got sick of waiting for re-Ack.  Merged to 'next'.
+
+* jn/gitweb-customlinks (Sun Oct 12 00:02:32 2008 +0200) 1 commit
+ + gitweb: Better processing format string in custom links in navbar
+
+Got sick of waiting for some sort of response from Pasky.  Merged to 'next'.
+
+* st/tag (Wed Nov 5 00:20:36 2008 +0100) 2 commits
+ + tag: Add more tests about mixing incompatible modes and options
+ + tag: Check that options are only allowed in the appropriate mode
+
+* np/pack-safer (Sun Nov 9 13:11:06 2008 -0800) 11 commits
+ + t5303: fix printf format string for portability
+ + t5303: work around printf breakage in dash
+ + pack-objects: don't leak pack window reference when splitting
+   packs
+ + extend test coverage for latest pack corruption resilience
+   improvements
+ + pack-objects: allow "fixing" a corrupted pack without a full
+   repack
+ + make find_pack_revindex() aware of the nasty world
+ + make check_object() resilient to pack corruptions
+ + make packed_object_info() resilient to pack corruptions
+ + make unpack_object_header() non fatal
+ + better validation on delta base object offsets
+ + close another possibility for propagating pack corruption
+
+* mv/remote-rename (Mon Nov 3 19:26:18 2008 +0100) 1 commit
+ + Implement git remote rename
+
+* lt/decorate (Mon Nov 3 11:25:46 2008 -0800) 4 commits
+ + revision traversal: '--simplify-by-decoration'
+ + Make '--decorate' set an explicit 'show_decorations' flag
+ + revision: make tree comparison functions take commits rather than
+   trees
+ + Add a 'source' decorator for commits
+
+* ds/uintmax-config (Mon Nov 3 09:14:28 2008 -0900) 5 commits
+ - autoconf: Enable threaded delta search when pthreads are supported
+ + Add autoconf tests for pthreads
+ + Make Pthread link flags configurable
+ + Add Makefile check for FreeBSD 4.9-SECURITY
+ + Build: add NO_UINTMAX_T to support ancient systems
+
+I split the part that unconditionally enable threaded delta search on any
+platform on which Pthread library is detected to be available from the
+topmost one.
 
 * jk/diff-convfilter (Sun Oct 26 00:50:02 2008 -0400) 8 commits
  + enable textconv for diff in verbose status/commit
@@ -174,8 +110,11 @@ compile a program that calls unavailable functions.
  + document the diff driver textconv feature
  + diff: add missing static declaration
 
-* jk/diff-convfilter-test-fix (Fri Oct 31 01:09:13 2008 -0400) 1 commit
+* jk/diff-convfilter-test-fix (Fri Oct 31 01:09:13 2008 -0400) 4 commits
  + Avoid using non-portable `echo -n` in tests.
+ + add userdiff textconv tests
+ + document the diff driver textconv feature
+ + diff: add missing static declaration
 
 An update to the one above.
 
@@ -183,9 +122,6 @@ An update to the one above.
  + blame: show "previous" information in --porcelain/--incremental
    format
  + git-blame: refactor code to emit "porcelain format" output
-
-----------------------------------------------------------------
-[Stalled]
 
 * nd/narrow (Wed Oct 1 11:04:09 2008 +0700) 9 commits
  - grep: skip files outside sparse checkout area
@@ -200,12 +136,21 @@ An update to the one above.
  - Introduce CE_NO_CHECKOUT bit
  - Extend index to save more flags
 
-Needs review.
+Early parts looked Ok; I am trying to find time to review the whole thing
+but fixing bugs in topics from other people here and there took almost all
+my time this weekend.  Not good.
 
-* jn/gitweb-customlinks (Sun Oct 12 00:02:32 2008 +0200) 1 commit
- - gitweb: Better processing format string in custom links in navbar
+----------------------------------------------------------------
+[Dropped]
 
-Waiting for some sort of response from Pasky.
+* bc/maint-keep-pack (Mon Nov 3 14:43:22 2008 -0600) 3 commits
+ . pack-objects: honor '.keep' files
+ . packed_git: convert pack_local flag into a bitfield and add
+   pack_keep
+ . t7700: demonstrate mishandling of objects in packs with a .keep
+   file
+
+It seems this is better rethought from the design level.
 
 ----------------------------------------------------------------
 [On Hold]
