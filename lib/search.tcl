@@ -19,11 +19,11 @@ constructor new {i_w i_text args} {
 
 	frame  $w
 	label  $w.l       -text [mc Find:]
+	entry  $w.ent -textvariable ${__this}::searchstring -background lightgreen
 	button $w.bn      -text [mc Next] -command [cb find_next]
 	button $w.bp      -text [mc Prev] -command [cb find_prev]
 	checkbutton $w.cs -text [mc Case-Sensitive] \
 		-variable ${__this}::casesensitive -command [cb _incrsearch]
-	entry  $w.ent -textvariable ${__this}::searchstring -background lightgreen
 	pack   $w.l   -side left
 	pack   $w.cs  -side right
 	pack   $w.bp  -side right
@@ -40,17 +40,25 @@ constructor new {i_w i_text args} {
 }
 
 method show {} {
-	if {![winfo ismapped $w]} {
+	if {![visible $this]} {
 		grid $w
 	}
 	focus -force $w.ent
 }
 
 method hide {} {
-	if {[winfo ismapped $w]} {
+	if {[visible $this]} {
 		focus $ctext
 		grid remove $w
 	}
+}
+
+method visible {} {
+	return [winfo ismapped $w]
+}
+
+method editor {} {
+	return $w.ent
 }
 
 method _get_new_anchor {} {
