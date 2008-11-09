@@ -559,7 +559,7 @@ method _read_file {fd jump} {
 } ifdeleted { catch {close $fd} }
 
 method _exec_blame {cur_w cur_d options cur_s} {
-	lappend options --incremental
+	lappend options --incremental --encoding=utf-8
 	if {$commit eq {}} {
 		lappend options --contents $path
 	} else {
