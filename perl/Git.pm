@@ -1203,8 +1203,7 @@ either version 2, or (at your option) any later version.
 # the method was called upon an instance and (undef, @args) if
 # it was called directly.
 sub _maybe_self {
-	# This breaks inheritance. Oh well.
-	ref $_[0] eq 'Git' ? @_ : (undef, @_);
+	UNIVERSAL::isa($_[0], 'Git') ? @_ : (undef, @_);
 }
 
 # Check if the command id is something reasonable.
