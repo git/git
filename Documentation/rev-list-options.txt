@@ -285,7 +285,7 @@ See also linkgit:git-reflog[1].
 History Simplification
 ~~~~~~~~~~~~~~~~~~~~~~
 
-When optional paths are given, 'git-rev-list' simplifies commits with
+When optional paths are given, 'git rev-list' simplifies commits with
 various strategies, according to the options you have selected.
 
 Suppose you specified `foo` as the <paths>.  We shall call commits
@@ -466,14 +466,14 @@ Limit output to the one commit object which is roughly halfway between
 the included and excluded commits. Thus, if
 
 -----------------------------------------------------------------------
-	$ git-rev-list --bisect foo ^bar ^baz
+	$ git rev-list --bisect foo ^bar ^baz
 -----------------------------------------------------------------------
 
 outputs 'midpoint', the output of the two commands
 
 -----------------------------------------------------------------------
-	$ git-rev-list foo ^midpoint
-	$ git-rev-list midpoint ^bar ^baz
+	$ git rev-list foo ^midpoint
+	$ git rev-list midpoint ^bar ^baz
 -----------------------------------------------------------------------
 
 would be of roughly the same length.  Finding the change which
