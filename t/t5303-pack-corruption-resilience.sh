@@ -234,7 +234,7 @@ test_expect_success \
     'corruption #1 in delta base reference of first delta (OBJ_OFS_DELTA)' \
     'create_new_pack --delta-base-offset &&
      git prune-packed &&
-     tr "\000" "\001" </dev/zero | do_corrupt_object $blob_2 2 &&
+     printf "\001" | do_corrupt_object $blob_2 2 &&
      git cat-file blob $blob_1 > /dev/null &&
      test_must_fail git cat-file blob $blob_2 > /dev/null &&
      test_must_fail git cat-file blob $blob_3 > /dev/null'
