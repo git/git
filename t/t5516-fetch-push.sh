@@ -486,4 +486,41 @@ test_expect_success 'allow deleting an invalid remote ref' '
 
 '
 
+test_expect_success 'warn on push to HEAD of non-bare repository' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch warn) &&
+	git push testrepo master 2>stderr &&
+	grep "warning.*this may cause confusion" stderr
+'
+
+test_expect_success 'deny push to HEAD of non-bare repository' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch true) &&
+	test_must_fail git push testrepo master
+'
+
+test_expect_success 'allow push to HEAD of bare repository (bare)' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch true &&
+		git config core.bare true) &&
+	git push testrepo master 2>stderr &&
+	! grep "warning.*this may cause confusion" stderr
+'
+
+test_expect_success 'allow push to HEAD of non-bare repository (config)' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch false
+	) &&
+	git push testrepo master 2>stderr &&
+	! grep "warning.*this may cause confusion" stderr
+'
+
 test_done
