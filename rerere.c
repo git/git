@@ -345,7 +345,7 @@ int setup_rerere(struct string_list *merge_rr)
 	if (!is_rerere_enabled())
 		return -1;
 
-	merge_rr_path = xstrdup(git_path("MERGE_RR"));
+	merge_rr_path = git_pathdup("MERGE_RR");
 	fd = hold_lock_file_for_update(&write_lock, merge_rr_path,
 				       LOCK_DIE_ON_ERROR);
 	read_rr(merge_rr);

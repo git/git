@@ -630,7 +630,7 @@ int git_config(config_fn_t fn, void *data)
 		free(user_config);
 	}
 
-	repo_config = xstrdup(git_path("config"));
+	repo_config = git_pathdup("config");
 	ret += git_config_from_file(fn, repo_config, data);
 	free(repo_config);
 	return ret;
@@ -872,7 +872,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	if (config_exclusive_filename)
 		config_filename = xstrdup(config_exclusive_filename);
 	else
-		config_filename = xstrdup(git_path("config"));
+		config_filename = git_pathdup("config");
 
 	/*
 	 * Since "key" actually contains the section name and the real
@@ -1132,7 +1132,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	if (config_exclusive_filename)
 		config_filename = xstrdup(config_exclusive_filename);
 	else
-		config_filename = xstrdup(git_path("config"));
+		config_filename = git_pathdup("config");
 	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
 	if (out_fd < 0) {
 		ret = error("could not lock config file %s", config_filename);
