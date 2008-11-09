@@ -915,25 +915,33 @@ static int repack_without_ref(const char *refname)
 	return commit_lock_file(&packlock);
 }
 
-int delete_ref(const char *refname, const unsigned char *sha1)
+int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 {
 	struct ref_lock *lock;
-	int err, i, ret = 0, flag = 0;
+	int err, i = 0, ret = 0, flag = 0;
 
 	lock = lock_ref_sha1_basic(refname, sha1, 0, &flag);
 	if (!lock)
 		return 1;
-	if (!(flag & REF_ISPACKED)) {
+	if (!(flag & REF_ISPACKED) || flag & REF_ISSYMREF) {
 		/* loose */
-		i = strlen(lock->lk->filename) - 5; /* .lock */
-		lock->lk->filename[i] = 0;
-		err = unlink(lock->lk->filename);
+		const char *path;
+
+		if (!(delopt & REF_NODEREF)) {
+			i = strlen(lock->lk->filename) - 5; /* .lock */
+			lock->lk->filename[i] = 0;
+			path = lock->lk->filename;
+		} else {
+			path = git_path(refname);
+		}
+		err = unlink(path);
 		if (err && errno != ENOENT) {
 			ret = 1;
 			error("unlink(%s) failed: %s",
-			      lock->lk->filename, strerror(errno));
+			      path, strerror(errno));
 		}
-		lock->lk->filename[i] = '.';
+		if (!(delopt & REF_NODEREF))
+			lock->lk->filename[i] = '.';
 	}
 	/* removing the loose one could have resurrected an earlier
 	 * packed one.  Also, if it was not loose we need to repack
@@ -958,11 +966,16 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	struct ref_lock *lock;
 	struct stat loginfo;
 	int log = !lstat(git_path("logs/%s", oldref), &loginfo);
+	const char *symref = NULL;
 
-	if (S_ISLNK(loginfo.st_mode))
+	if (log && S_ISLNK(loginfo.st_mode))
 		return error("reflog for %s is a symlink", oldref);
 
-	if (!resolve_ref(oldref, orig_sha1, 1, &flag))
+	symref = resolve_ref(oldref, orig_sha1, 1, &flag);
+	if (flag & REF_ISSYMREF)
+		return error("refname %s is a symbolic ref, renaming it is not supported",
+			oldref);
+	if (!symref)
 		return error("refname %s not found", oldref);
 
 	if (!is_refname_available(newref, oldref, get_packed_refs(), 0))
@@ -982,12 +995,12 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 		return error("unable to move logfile logs/%s to tmp-renamed-log: %s",
 			oldref, strerror(errno));
 
-	if (delete_ref(oldref, orig_sha1)) {
+	if (delete_ref(oldref, orig_sha1, REF_NODEREF)) {
 		error("unable to delete old %s", oldref);
 		goto rollback;
 	}
 
-	if (resolve_ref(newref, sha1, 1, &flag) && delete_ref(newref, sha1)) {
+	if (resolve_ref(newref, sha1, 1, &flag) && delete_ref(newref, sha1, REF_NODEREF)) {
 		if (errno==EISDIR) {
 			if (remove_empty_directories(git_path("%s", newref))) {
 				error("Directory not empty: %s", newref);
@@ -1030,7 +1043,6 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 		error("unable to lock %s for update", newref);
 		goto rollback;
 	}
-
 	lock->force_write = 1;
 	hashcpy(lock->old_sha1, orig_sha1);
 	if (write_ref_sha1(lock, orig_sha1, logmsg)) {

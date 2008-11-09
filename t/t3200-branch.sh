@@ -112,6 +112,15 @@ test_expect_success 'config information was renamed, too' \
 	"test $(git config branch.s.dummy) = Hello &&
 	 test_must_fail git config branch.s/s/dummy"
 
+test_expect_success 'renaming a symref is not allowed' \
+'
+	git symbolic-ref refs/heads/master2 refs/heads/master &&
+	test_must_fail git branch -m master2 master3 &&
+	git symbolic-ref refs/heads/master2 &&
+	test -f .git/refs/heads/master &&
+	! test -f .git/refs/heads/master3
+'
+
 test_expect_success \
     'git branch -m u v should fail when the reflog for u is a symlink' '
      git branch -l u &&
