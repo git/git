@@ -1801,6 +1801,11 @@ proc setoptions {} {
 # command to invoke for command, or {variable value} for radiobutton
 proc makemenu {m items} {
     menu $m
+    if {[tk windowingsystem] eq {aqua}} {
+	set Meta1 Cmd
+    } else {
+	set Meta1 Ctrl
+    }
     foreach i $items {
 	set name [mc [lindex $i 1]]
 	set type [lindex $i 2]
@@ -1826,7 +1831,9 @@ proc makemenu {m items} {
 		    -value [lindex $thing 1]
 	    }
 	}
-	eval $m add $params [lrange $i 4 end]
+	set tail [lrange $i 4 end]
+	regsub -all {\yMeta1\y} $tail $Meta1 tail
+	eval $m add $params $tail
 	if {$type eq "cascade"} {
 	    makemenu $m.$submenu $thing
 	}
@@ -1860,17 +1867,17 @@ proc makewindow {} {
     makemenu .bar {
 	{mc "File" cascade {
 	    {mc "Update" command updatecommits -accelerator F5}
-	    {mc "Reload" command reloadcommits}
+	    {mc "Reload" command reloadcommits -accelerator Meta1-F5}
 	    {mc "Reread references" command rereadrefs}
-	    {mc "List references" command showrefs}
-	    {mc "Quit" command doquit}
+	    {mc "List references" command showrefs -accelerator F2}
+	    {mc "Quit" command doquit -accelerator Meta1-Q}
 	}}
 	{mc "Edit" cascade {
 	    {mc "Preferences" command doprefs}
 	}}
 	{mc "View" cascade {
-	    {mc "New view..." command {newview 0}}
-	    {mc "Edit view..." command editview -state disabled}
+	    {mc "New view..." command {newview 0} -accelerator Shift-F4}
+	    {mc "Edit view..." command editview -state disabled -accelerator F4}
 	    {mc "Delete view" command delview -state disabled}
 	    {xx "" separator}
 	    {mc "All files" radiobutton {selectedview 0} -command {showview 0}}
@@ -2232,7 +2239,12 @@ proc makewindow {} {
     bindkey <Key-Return> {dofind 1 1}
     bindkey ? {dofind -1 1}
     bindkey f nextfile
-    bindkey <F5> updatecommits
+    bind . <F5> updatecommits
+    bind . <$M1B-F5> reloadcommits
+    bind . <F2> showrefs
+    bind . <Shift-F4> {newview 0}
+    catch { bind . <Shift-Key-XF86_Switch_VT_4> {newview 0} }
+    bind . <F4> edit_or_newview
     bind . <$M1B-q> doquit
     bind . <$M1B-f> {dofind 1 1}
     bind . <$M1B-g> {dofind 1 0}
@@ -3622,6 +3634,16 @@ proc decode_view_opts {n view_args} {
 	lappend oargs $arg
     }
     set newviewopts($n,args) [shellarglist $oargs]
+}
+
+proc edit_or_newview {} {
+    global curview
+
+    if {$curview > 0} {
+	editview
+    } else {
+	newview 0
+    }
 }
 
 proc editview {} {
