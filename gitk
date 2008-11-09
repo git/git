@@ -1555,9 +1555,27 @@ proc chewcommits {} {
     return 0
 }
 
+proc do_readcommit {id} {
+    global tclencoding
+
+    # Invoke git-log to handle automatic encoding conversion
+    set fd [open [concat | git log --no-color --pretty=raw -1 $id] r]
+    # Read the results using i18n.logoutputencoding
+    fconfigure $fd -translation lf -eofchar {}
+    if {$tclencoding != {}} {
+	fconfigure $fd -encoding $tclencoding
+    }
+    set contents [read $fd]
+    close $fd
+    # Remove the heading line
+    regsub {^commit [0-9a-f]+\n} $contents {} contents
+
+    return $contents
+}
+
 proc readcommit {id} {
-    if {[catch {set contents [exec git cat-file commit $id]}]} return
-    parsecommit $id $contents 0
+    if {[catch {set contents [do_readcommit $id]}]} return
+    parsecommit $id $contents 1
 }
 
 proc parsecommit {id contents listed} {
@@ -10557,6 +10575,9 @@ set wrcomcmd "git diff-tree --stdin -p --pretty"
 set gitencoding {}
 catch {
     set gitencoding [exec git config --get i18n.commitencoding]
+}
+catch {
+    set gitencoding [exec git config --get i18n.logoutputencoding]
 }
 if {$gitencoding == ""} {
     set gitencoding "utf-8"
