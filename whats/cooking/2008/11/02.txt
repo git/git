@@ -33,8 +33,6 @@ Waiting for re-Ack.
  - tag: Add more tests about mixing incompatible modes and options
  - tag: Check that options are only allowed in the appropriate mode
 
-Still needs fix not to update unchanged refs.
-
 * np/pack-safer (Wed Oct 29 19:02:52 2008 -0400) 9 commits
  - pack-objects: don't leak pack window reference when splitting
    packs
