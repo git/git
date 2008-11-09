@@ -2103,7 +2103,7 @@ proc makewindow {} {
     $ctext tag conf filesep -font textfontbold -back "#aaaaaa"
     $ctext tag conf hunksep -fore [lindex $diffcolors 2]
     $ctext tag conf d0 -fore [lindex $diffcolors 0]
-    $ctext tag conf d1 -fore [lindex $diffcolors 1]
+    $ctext tag conf dresult -fore [lindex $diffcolors 1]
     $ctext tag conf m0 -fore red
     $ctext tag conf m1 -fore blue
     $ctext tag conf m2 -fore green
@@ -3225,7 +3225,7 @@ proc find_hunk_blamespec {base line} {
 }
 
 proc external_blame_diff {} {
-    global currentid diffmergeid cmitmode
+    global currentid cmitmode
     global diff_menu_txtpos diff_menu_line
     global diff_menu_filebase flist_menu_file
 
@@ -3244,6 +3244,22 @@ proc external_blame_diff {} {
     }
 
     external_blame $parent_idx $line
+}
+
+# Find the SHA1 ID of the blob for file $fname in the index
+# at stage 0 or 2
+proc index_sha1 {fname} {
+    set f [open [list | git ls-files -s $fname] r]
+    while {[gets $f line] >= 0} {
+	set info [lindex [split $line "\t"] 0]
+	set stage [lindex $info 2]
+	if {$stage eq "0" || $stage eq "2"} {
+	    close $f
+	    return [lindex $info 1]
+	}
+    }
+    close $f
+    return {}
 }
 
 proc external_blame {parent_idx {line {}}} {
@@ -3275,7 +3291,9 @@ proc external_blame {parent_idx {line {}}} {
 proc show_line_source {} {
     global cmitmode currentid parents curview blamestuff blameinst
     global diff_menu_line diff_menu_filebase flist_menu_file
+    global nullid nullid2 gitdir
 
+    set from_index {}
     if {$cmitmode eq "tree"} {
 	set id $currentid
 	set line [expr {$diff_menu_line - $diff_menu_filebase}]
@@ -3287,11 +3305,46 @@ proc show_line_source {} {
 	    mark_ctext_line $diff_menu_line
 	    return
 	}
-	set id [lindex $parents($curview,$currentid) [expr {$pi - 1}]]
+	incr pi -1
+	if {$currentid eq $nullid} {
+	    if {$pi > 0} {
+		# must be a merge in progress...
+		if {[catch {
+		    # get the last line from .git/MERGE_HEAD
+		    set f [open [file join $gitdir MERGE_HEAD] r]
+		    set id [lindex [split [read $f] "\n"] end-1]
+		    close $f
+		} err]} {
+		    error_popup [mc "Couldn't read merge head: %s" $err]
+		    return
+		}
+	    } elseif {$parents($curview,$currentid) eq $nullid2} {
+		# need to do the blame from the index
+		if {[catch {
+		    set from_index [index_sha1 $flist_menu_file]
+		} err]} {
+		    error_popup [mc "Error reading index: %s" $err]
+		    return
+		}
+	    }
+	} else {
+	    set id [lindex $parents($curview,$currentid) $pi]
+	}
 	set line [lindex $h 1]
     }
+    set blameargs {}
+    if {$from_index ne {}} {
+	lappend blameargs | git cat-file blob $from_index
+    }
+    lappend blameargs | git blame -p -L$line,+1
+    if {$from_index ne {}} {
+	lappend blameargs --contents -
+    } else {
+	lappend blameargs $id
+    }
+    lappend blameargs -- $flist_menu_file
     if {[catch {
-	set f [open [list | git blame -p -L$line,+1 $id -- $flist_menu_file] r]
+	set f [open $blameargs r]
     } err]} {
 	error_popup [mc "Couldn't start git blame: %s" $err]
 	return
@@ -3313,7 +3366,7 @@ proc stopblaming {} {
 }
 
 proc read_line_source {fd inst} {
-    global blamestuff curview commfd blameinst
+    global blamestuff curview commfd blameinst nullid nullid2
 
     while {[gets $fd line] >= 0} {
 	lappend blamestuff($inst) $line
@@ -3345,6 +3398,11 @@ proc read_line_source {fd inst} {
     }
     if {$fname ne {}} {
 	# all looks good, select it
+	if {$id eq $nullid} {
+	    # blame uses all-zeroes to mean not committed,
+	    # which would mean a change in the index
+	    set id $nullid2
+	}
 	if {[commitinview $id $curview]} {
 	    selectline [rowofcommit $id] 1 [list $fname $lnum]
 	} else {
@@ -6795,130 +6853,16 @@ proc mark_ctext_line {lnum} {
 }
 
 proc mergediff {id} {
-    global diffmergeid mdifffd
+    global diffmergeid
     global diffids treediffs
-    global parents
-    global diffcontext
-    global diffencoding
-    global limitdiffs vfilelimit curview
-    global targetline
+    global parents curview
 
     set diffmergeid $id
     set diffids $id
     set treediffs($id) {}
-    set targetline {}
-    # this doesn't seem to actually affect anything...
-    set cmd [concat | git diff-tree --no-commit-id --cc -U$diffcontext $id]
-    if {$limitdiffs && $vfilelimit($curview) ne {}} {
-	set cmd [concat $cmd -- $vfilelimit($curview)]
-    }
-    if {[catch {set mdf [open $cmd r]} err]} {
-	error_popup "[mc "Error getting merge diffs:"] $err"
-	return
-    }
-    fconfigure $mdf -blocking 0 -encoding binary
-    set mdifffd($id) $mdf
     set np [llength $parents($curview,$id)]
-    set diffencoding [get_path_encoding {}]
     settabs $np
-    filerun $mdf [list getmergediffline $mdf $id $np]
-}
-
-proc getmergediffline {mdf id np} {
-    global diffmergeid ctext cflist mergemax
-    global difffilestart mdifffd treediffs
-    global ctext_file_names ctext_file_lines
-    global diffencoding jump_to_here targetline diffline
-
-    $ctext conf -state normal
-    set nr 0
-    while {[incr nr] <= 1000 && [gets $mdf line] >= 0} {
-	if {![info exists diffmergeid] || $id != $diffmergeid
-	    || $mdf != $mdifffd($id)} {
-	    close $mdf
-	    return 0
-	}
-	if {[regexp {^diff --cc (.*)} $line match fname]} {
-	    # start of a new file
-	    set fname [encoding convertfrom $fname]
-	    $ctext insert end "\n"
-	    set here [$ctext index "end - 1c"]
-	    lappend difffilestart $here
-	    lappend treediffs($id) $fname
-	    add_flist [list $fname]
-	    lappend ctext_file_names $fname
-	    lappend ctext_file_lines [lindex [split $here "."] 0]
-	    set diffencoding [get_path_encoding $fname]
-	    set l [expr {(78 - [string length $fname]) / 2}]
-	    set pad [string range "----------------------------------------" 1 $l]
-	    $ctext insert end "$pad $fname $pad\n" filesep
-	    set targetline {}
-	    if {$jump_to_here ne {} && [lindex $jump_to_here 0] eq $fname} {
-		set targetline [lindex $jump_to_here 1]
-	    }
-	    set diffline 0
-	} elseif {[regexp {^@@} $line]} {
-	    set line [encoding convertfrom $diffencoding $line]
-	    $ctext insert end "$line\n" hunksep
-	    if {[regexp { \+(\d+),\d+ @@} $line m nl]} {
-		set diffline $nl
-	    }
-	} elseif {[regexp {^[0-9a-f]{40}$} $line] || [regexp {^index} $line]} {
-	    # do nothing
-	} else {
-	    set line [encoding convertfrom $diffencoding $line]
-	    # parse the prefix - one ' ', '-' or '+' for each parent
-	    set spaces {}
-	    set minuses {}
-	    set pluses {}
-	    set isbad 0
-	    for {set j 0} {$j < $np} {incr j} {
-		set c [string range $line $j $j]
-		if {$c == " "} {
-		    lappend spaces $j
-		} elseif {$c == "-"} {
-		    lappend minuses $j
-		} elseif {$c == "+"} {
-		    lappend pluses $j
-		} else {
-		    set isbad 1
-		    break
-		}
-	    }
-	    set tags {}
-	    set num {}
-	    if {!$isbad && $minuses ne {} && $pluses eq {}} {
-		# line doesn't appear in result, parents in $minuses have the line
-		set num [lindex $minuses 0]
-	    } elseif {!$isbad && $pluses ne {} && $minuses eq {}} {
-		# line appears in result, parents in $pluses don't have the line
-		lappend tags mresult
-		set num [lindex $spaces 0]
-	    }
-	    if {$num ne {}} {
-		if {$num >= $mergemax} {
-		    set num "max"
-		}
-		lappend tags m$num
-	    }
-	    $ctext insert end "$line\n" $tags
-	    if {$targetline ne {} && $minuses eq {}} {
-		if {$diffline == $targetline} {
-		    set here [$ctext index "end - 1 line"]
-		    mark_ctext_line [lindex [split $here .] 0]
-		    set targetline {}
-		} else {
-		    incr diffline
-		}
-	    }
-	}
-    }
-    $ctext conf -state disabled
-    if {[eof $mdf]} {
-	close $mdf
-	return 0
-    }
-    return [expr {$nr >= 1000? 2: 1}]
+    getblobdiffs $id
 }
 
 proc startdiff {ids} {
@@ -7037,8 +6981,10 @@ proc gettreediffline {gdtf ids} {
 		set file [lindex $file 0]
 	    }
 	    set file [encoding convertfrom $file]
-	    lappend treediff $file
-	    lappend sublist $file
+	    if {$file ne [lindex $treediff end]} {
+		lappend treediff $file
+		lappend sublist $file
+	    }
 	}
     }
     if {$perfile_attrs} {
@@ -7098,9 +7044,9 @@ proc getblobdiffs {ids} {
     global diffcontext
     global ignorespace
     global limitdiffs vfilelimit curview
-    global diffencoding targetline
+    global diffencoding targetline diffnparents
 
-    set cmd [diffcmd $ids "-p -C --no-commit-id -U$diffcontext"]
+    set cmd [diffcmd $ids "-p -C --cc --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
 	append cmd " -w"
     }
@@ -7108,10 +7054,11 @@ proc getblobdiffs {ids} {
 	set cmd [concat $cmd -- $vfilelimit($curview)]
     }
     if {[catch {set bdf [open $cmd r]} err]} {
-	puts "error getting diffs: $err"
+	error_popup [mc "Error getting diffs: %s" $err]
 	return
     }
     set targetline {}
+    set diffnparents 0
     set diffinhdr 0
     set diffencoding [get_path_encoding {}]
     fconfigure $bdf -blocking 0 -encoding binary
@@ -7133,14 +7080,16 @@ proc setinlist {var i val} {
 }
 
 proc makediffhdr {fname ids} {
-    global ctext curdiffstart treediffs
+    global ctext curdiffstart treediffs diffencoding
     global ctext_file_names jump_to_here targetline diffline
 
+    set fname [encoding convertfrom $fname]
+    set diffencoding [get_path_encoding $fname]
     set i [lsearch -exact $treediffs($ids) $fname]
     if {$i >= 0} {
 	setinlist difffilestart $i $curdiffstart
     }
-    set ctext_file_names [lreplace $ctext_file_names end end $fname]
+    lset ctext_file_names end $fname
     set l [expr {(78 - [string length $fname]) / 2}]
     set pad [string range "----------------------------------------" 1 $l]
     $ctext insert $curdiffstart "$pad $fname $pad" filesep
@@ -7155,7 +7104,7 @@ proc getblobdiffline {bdf ids} {
     global diffids blobdifffd ctext curdiffstart
     global diffnexthead diffnextnote difffilestart
     global ctext_file_names ctext_file_lines
-    global diffinhdr treediffs
+    global diffinhdr treediffs mergemax diffnparents
     global diffencoding jump_to_here targetline diffline
 
     set nr 0
@@ -7165,47 +7114,75 @@ proc getblobdiffline {bdf ids} {
 	    close $bdf
 	    return 0
 	}
-	if {![string compare -length 11 "diff --git " $line]} {
-	    # trim off "diff --git "
-	    set line [string range $line 11 end]
-	    set diffinhdr 1
+	if {![string compare -length 5 "diff " $line]} {
+	    if {![regexp {^diff (--cc|--git) } $line m type]} {
+		set line [encoding convertfrom $line]
+		$ctext insert end "$line\n" hunksep
+		continue
+	    }
 	    # start of a new file
+	    set diffinhdr 1
 	    $ctext insert end "\n"
 	    set curdiffstart [$ctext index "end - 1c"]
 	    lappend ctext_file_names ""
 	    lappend ctext_file_lines [lindex [split $curdiffstart "."] 0]
 	    $ctext insert end "\n" filesep
-	    # If the name hasn't changed the length will be odd,
-	    # the middle char will be a space, and the two bits either
-	    # side will be a/name and b/name, or "a/name" and "b/name".
-	    # If the name has changed we'll get "rename from" and
-	    # "rename to" or "copy from" and "copy to" lines following this,
-	    # and we'll use them to get the filenames.
-	    # This complexity is necessary because spaces in the filename(s)
-	    # don't get escaped.
-	    set l [string length $line]
-	    set i [expr {$l / 2}]
-	    if {!(($l & 1) && [string index $line $i] eq " " &&
-		  [string range $line 2 [expr {$i - 1}]] eq \
-		      [string range $line [expr {$i + 3}] end])} {
-		continue
-	    }
-	    # unescape if quoted and chop off the a/ from the front
-	    if {[string index $line 0] eq "\""} {
-		set fname [string range [lindex $line 0] 2 end]
+
+	    if {$type eq "--cc"} {
+		# start of a new file in a merge diff
+		set fname [string range $line 10 end]
+		if {[lsearch -exact $treediffs($ids) $fname] < 0} {
+		    lappend treediffs($ids) $fname
+		    add_flist [list $fname]
+		}
+
 	    } else {
-		set fname [string range $line 2 [expr {$i - 1}]]
+		set line [string range $line 11 end]
+		# If the name hasn't changed the length will be odd,
+		# the middle char will be a space, and the two bits either
+		# side will be a/name and b/name, or "a/name" and "b/name".
+		# If the name has changed we'll get "rename from" and
+		# "rename to" or "copy from" and "copy to" lines following
+		# this, and we'll use them to get the filenames.
+		# This complexity is necessary because spaces in the
+		# filename(s) don't get escaped.
+		set l [string length $line]
+		set i [expr {$l / 2}]
+		if {!(($l & 1) && [string index $line $i] eq " " &&
+		      [string range $line 2 [expr {$i - 1}]] eq \
+			  [string range $line [expr {$i + 3}] end])} {
+		    continue
+		}
+		# unescape if quoted and chop off the a/ from the front
+		if {[string index $line 0] eq "\""} {
+		    set fname [string range [lindex $line 0] 2 end]
+		} else {
+		    set fname [string range $line 2 [expr {$i - 1}]]
+		}
 	    }
-	    set fname [encoding convertfrom $fname]
-	    set diffencoding [get_path_encoding $fname]
 	    makediffhdr $fname $ids
 
-	} elseif {[regexp {^@@ -([0-9]+)(,[0-9]+)? \+([0-9]+)(,[0-9]+)? @@(.*)} \
-		       $line match f1l f1c f2l f2c rest]} {
+	} elseif {![string compare -length 16 "* Unmerged path " $line]} {
+	    set fname [encoding convertfrom [string range $line 16 end]]
+	    $ctext insert end "\n"
+	    set curdiffstart [$ctext index "end - 1c"]
+	    lappend ctext_file_names $fname
+	    lappend ctext_file_lines [lindex [split $curdiffstart "."] 0]
+	    $ctext insert end "$line\n" filesep
+	    set i [lsearch -exact $treediffs($ids) $fname]
+	    if {$i >= 0} {
+		setinlist difffilestart $i $curdiffstart
+	    }
+
+	} elseif {![string compare -length 2 "@@" $line]} {
+	    regexp {^@@+} $line ats
 	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" hunksep
+	    if {[regexp { \+(\d+),\d+ @@} $line m nl]} {
+		set diffline $nl
+	    }
+	    set diffnparents [expr {[string length $ats] - 1}]
 	    set diffinhdr 0
-	    set diffline $f2l
 
 	} elseif {$diffinhdr} {
 	    if {![string compare -length 12 "rename from " $line]} {
@@ -7224,8 +7201,6 @@ proc getblobdiffline {bdf ids} {
 		if {[string index $fname 0] eq "\""} {
 		    set fname [lindex $fname 0]
 		}
-		set fname [encoding convertfrom $fname]
-		set diffencoding [get_path_encoding $fname]
 		makediffhdr $fname $ids
 	    } elseif {[string compare -length 3 $line "---"] == 0} {
 		# do nothing
@@ -7238,27 +7213,52 @@ proc getblobdiffline {bdf ids} {
 
 	} else {
 	    set line [encoding convertfrom $diffencoding $line]
-	    set x [string range $line 0 0]
-	    set here [$ctext index "end - 1 chars"]
-	    if {$x == "-" || $x == "+"} {
-		set tag [expr {$x == "+"}]
-		$ctext insert end "$line\n" d$tag
-	    } elseif {$x == " "} {
-		$ctext insert end "$line\n"
+	    # parse the prefix - one ' ', '-' or '+' for each parent
+	    set prefix [string range $line 0 [expr {$diffnparents - 1}]]
+	    set tag [expr {$diffnparents > 1? "m": "d"}]
+	    if {[string trim $prefix " -+"] eq {}} {
+		# prefix only has " ", "-" and "+" in it: normal diff line
+		set num [string first "-" $prefix]
+		if {$num >= 0} {
+		    # removed line, first parent with line is $num
+		    if {$num >= $mergemax} {
+			set num "max"
+		    }
+		    $ctext insert end "$line\n" $tag$num
+		} else {
+		    set tags {}
+		    if {[string first "+" $prefix] >= 0} {
+			# added line
+			lappend tags ${tag}result
+			if {$diffnparents > 1} {
+			    set num [string first " " $prefix]
+			    if {$num >= 0} {
+				if {$num >= $mergemax} {
+				    set num "max"
+				}
+				lappend tags m$num
+			    }
+			}
+		    }
+		    if {$targetline ne {}} {
+			if {$diffline == $targetline} {
+			    set seehere [$ctext index "end - 1 chars"]
+			    set targetline {}
+			} else {
+			    incr diffline
+			}
+		    }
+		    $ctext insert end "$line\n" $tags
+		}
 	    } else {
 		# "\ No newline at end of file",
 		# or something else we don't recognize
 		$ctext insert end "$line\n" hunksep
 	    }
-	    if {$targetline ne {} && ($x eq " " || $x eq "+")} {
-		if {$diffline == $targetline} {
-		    mark_ctext_line [lindex [split $here .] 0]
-		    set targetline {}
-		} else {
-		    incr diffline
-		}
-	    }
 	}
+    }
+    if {[info exists seehere]} {
+	mark_ctext_line [lindex [split $seehere .] 0]
     }
     $ctext conf -state disabled
     if {[eof $bdf]} {
@@ -7272,7 +7272,7 @@ proc changediffdisp {} {
     global ctext diffelide
 
     $ctext tag conf d0 -elide [lindex $diffelide 0]
-    $ctext tag conf d1 -elide [lindex $diffelide 1]
+    $ctext tag conf dresult -elide [lindex $diffelide 1]
 }
 
 proc highlightfile {loc cline} {
@@ -10010,7 +10010,7 @@ proc doprefs {} {
     label $top.diffnew -padx 40 -relief sunk -background [lindex $diffcolors 1]
     button $top.diffnewbut -text [mc "Diff: new lines"] -font optionfont \
 	-command [list choosecolor diffcolors 1 $top.diffnew "diff new lines" \
-		      [list $ctext tag conf d1 -foreground]]
+		      [list $ctext tag conf dresult -foreground]]
     grid x $top.diffnewbut $top.diffnew -sticky w
     label $top.hunksep -padx 40 -relief sunk -background [lindex $diffcolors 2]
     button $top.hunksepbut -text [mc "Diff: hunk header"] -font optionfont \
