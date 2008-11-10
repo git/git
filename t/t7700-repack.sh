@@ -34,7 +34,7 @@ test_expect_success 'objects in packs marked .keep are not repacked' '
 	test -z "$found_duplicate_object"
 '
 
-test_expect_failure 'loose objects in alternate ODB are not repacked' '
+test_expect_success 'loose objects in alternate ODB are not repacked' '
 	mkdir alt_objects &&
 	echo `pwd`/alt_objects > .git/objects/info/alternates &&
 	echo content3 > file3 &&
