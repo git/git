@@ -343,4 +343,37 @@ test_expect_success 'rename a remote' '
 	 test "$(git config branch.master.remote)" = "upstream")
 
 '
+
+cat > remotes_origin << EOF
+URL: $(pwd)/one
+Push: refs/heads/master:refs/heads/upstream
+Pull: refs/heads/master:refs/heads/origin
+EOF
+
+test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
+	git clone one five &&
+	origin_url=$(pwd)/one &&
+	(cd five &&
+	 git remote rm origin &&
+	 mkdir -p .git/remotes &&
+	 cat ../remotes_origin > .git/remotes/origin &&
+	 git remote rename origin origin &&
+	 ! test -f .git/remotes/origin &&
+	 test "$(git config remote.origin.url)" = "$origin_url" &&
+	 test "$(git config remote.origin.push)" = "refs/heads/master:refs/heads/upstream" &&
+	 test "$(git config remote.origin.fetch)" = "refs/heads/master:refs/heads/origin")
+'
+
+test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
+	git clone one six &&
+	origin_url=$(pwd)/one &&
+	(cd six &&
+	 git remote rm origin &&
+	 echo "$origin_url" > .git/branches/origin &&
+	 git remote rename origin origin &&
+	 ! test -f .git/branches/origin &&
+	 test "$(git config remote.origin.url)" = "$origin_url" &&
+	 test "$(git config remote.origin.fetch)" = "refs/heads/master:refs/heads/origin")
+'
+
 test_done
