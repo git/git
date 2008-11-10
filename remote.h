@@ -1,8 +1,15 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
+enum {
+	REMOTE_CONFIG,
+	REMOTE_REMOTES,
+	REMOTE_BRANCHES
+};
+
 struct remote {
 	const char *name;
+	int origin;
 
 	const char **url;
 	int url_nr;
