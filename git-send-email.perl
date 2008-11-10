@@ -124,9 +124,6 @@ my $auth;
 sub unique_email_list(@);
 sub cleanup_compose_files();
 
-# Constants (essentially)
-my $compose_filename = ".msg.$$";
-
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@initial_cc,@bcclist,@xh,
 	$initial_reply_to,$initial_subject,@files,$author,$sender,$smtp_authpass,$compose,$time);
@@ -149,6 +146,7 @@ if ($@) {
 
 # Behavior modification variables
 my ($quiet, $dry_run) = (0, 0);
+my $compose_filename = $repo->repo_path() . "/.gitsendemail.msg.$$";
 
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc, $cc_cmd);
