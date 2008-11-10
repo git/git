@@ -110,7 +110,7 @@ int main(int argc, const char **argv)
 	}
 
 	if (errstr) {
-		error (errstr);
+		error("%s", errstr);
 		usage_with_options(hash_object_usage, hash_object_options);
 	}
 
