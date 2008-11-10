@@ -51,6 +51,7 @@ git send-email [options] <file | directory | rev-list options >
     --bcc                   <str>  * Email Bcc:
     --subject               <str>  * Email "Subject:"
     --in-reply-to           <str>  * Email "In-Reply-To:"
+    --annotate                     * Review each patch that will be sent in an editor.
     --compose                      * Open an editor for introduction.
 
   Sending:
@@ -132,7 +133,8 @@ sub cleanup_compose_files();
 
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@initial_cc,@bcclist,@xh,
-	$initial_reply_to,$initial_subject,@files,$author,$sender,$smtp_authpass,$compose,$time);
+	$initial_reply_to,$initial_subject,@files,
+	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
 
 my $envelope_sender;
 
@@ -154,6 +156,17 @@ if ($@) {
 my ($quiet, $dry_run) = (0, 0);
 my $format_patch;
 my $compose_filename = $repo->repo_path() . "/.gitsendemail.msg.$$";
+
+# Handle interactive edition of files.
+my $multiedit;
+my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
+sub do_edit {
+	if (defined($multiedit) && !$multiedit) {
+		map { system('sh', '-c', $editor.' "$@"', $editor, $_); } @_;
+	} else {
+		system('sh', '-c', $editor.' "$@"', $editor, @_);
+	}
+}
 
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc, $cc_cmd);
@@ -184,6 +197,7 @@ my %config_settings = (
     "aliasesfile" => \@alias_files,
     "suppresscc" => \@suppress_cc,
     "envelopesender" => \$envelope_sender,
+    "multiedit" => \$multiedit,
 );
 
 # Handle Uncouth Termination
@@ -226,6 +240,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
 		    "smtp-encryption=s" => \$smtp_encryption,
 		    "identity=s" => \$identity,
+		    "annotate" => \$annotate,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
 		    "cc-cmd=s" => \$cc_cmd,
@@ -532,7 +547,12 @@ EOT
 	close(C);
 
 	my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
-	system('sh', '-c', $editor.' "$@"', $editor, $compose_filename);
+
+	if ($annotate) {
+		do_edit($compose_filename, @files);
+	} else {
+		do_edit($compose_filename);
+	}
 
 	open(C2,">",$compose_filename . ".final")
 		or die "Failed to open $compose_filename.final : " . $!;
@@ -581,6 +601,8 @@ EOT
 	}
 
 	@files = ($compose_filename . ".final", @files);
+} elsif ($annotate) {
+	do_edit(@files);
 }
 
 # Variables we set as part of the loop over files
