@@ -456,6 +456,14 @@ Note the major differences in `N` and `P` over '\--full-history':
   removed completely, because it had one parent and is TREESAME.
 --
 
+The '\--simplify-by-decoration' option allows you to view only the
+big picture of the topology of the history, by omitting commits
+that are not referenced by tags.  Commits are marked as !TREESAME
+(in other words, kept after history simplification rules described
+above) if (1) they are referenced by tags, or (2) they change the
+contents of the paths given on the command line.  All other
+commits are marked as TREESAME (subject to be simplified away).
+
 ifdef::git-rev-list[]
 Bisection Helpers
 ~~~~~~~~~~~~~~~~~
