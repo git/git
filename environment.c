@@ -113,7 +113,7 @@ const char *get_git_work_tree(void)
 			work_tree = git_work_tree_cfg;
 			/* make_absolute_path also normalizes the path */
 			if (work_tree && !is_absolute_path(work_tree))
-				work_tree = xstrdup(make_absolute_path(git_path(work_tree)));
+				work_tree = xstrdup(make_absolute_path(git_path("%s", work_tree)));
 		} else if (work_tree)
 			work_tree = xstrdup(make_absolute_path(work_tree));
 		git_work_tree_initialized = 1;

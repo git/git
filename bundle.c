@@ -114,7 +114,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 			continue;
 		}
 		if (++ret == 1)
-			error(message);
+			error("%s", message);
 		error("%s %s", sha1_to_hex(e->sha1), e->name);
 	}
 	if (revs.pending.nr != p->nr)
@@ -139,7 +139,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	for (i = 0; i < req_nr; i++)
 		if (!(refs.objects[i].item->flags & SHOWN)) {
 			if (++ret == 1)
-				error(message);
+				error("%s", message);
 			error("%s %s", sha1_to_hex(refs.objects[i].item->sha1),
 				refs.objects[i].name);
 		}

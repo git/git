@@ -323,7 +323,7 @@ static int add_branch_for_removal(const char *refname,
 
 	/* make sure that symrefs are deleted */
 	if (flags & REF_ISSYMREF)
-		return unlink(git_path(refname));
+		return unlink(git_path("%s", refname));
 
 	item = string_list_append(refname, branches->branches);
 	item->util = xmalloc(20);
