@@ -494,4 +494,54 @@ test_expect_success 'allow deleting an invalid remote ref' '
 
 '
 
+test_expect_success 'fetch with branches' '
+	mk_empty &&
+	git branch second $the_first_commit &&
+	git checkout second &&
+	echo ".." > testrepo/.git/branches/branch1 &&
+	(cd testrepo &&
+		git fetch branch1 &&
+		r=$(git show-ref -s --verify refs/heads/branch1) &&
+		test "z$r" = "z$the_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	) &&
+	git checkout master
+'
+
+test_expect_success 'fetch with branches containing #' '
+	mk_empty &&
+	echo "..#second" > testrepo/.git/branches/branch2 &&
+	(cd testrepo &&
+		git fetch branch2 &&
+		r=$(git show-ref -s --verify refs/heads/branch2) &&
+		test "z$r" = "z$the_first_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	) &&
+	git checkout master
+'
+
+test_expect_success 'push with branches' '
+	mk_empty &&
+	git checkout second &&
+	echo "testrepo" > .git/branches/branch1 &&
+	git push branch1 &&
+	(cd testrepo &&
+		r=$(git show-ref -s --verify refs/heads/master) &&
+		test "z$r" = "z$the_first_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	)
+'
+
+test_expect_success 'push with branches containing #' '
+	mk_empty &&
+	echo "testrepo#branch3" > .git/branches/branch2 &&
+	git push branch2 &&
+	(cd testrepo &&
+		r=$(git show-ref -s --verify refs/heads/branch3) &&
+		test "z$r" = "z$the_first_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	) &&
+	git checkout master
+'
+
 test_done
