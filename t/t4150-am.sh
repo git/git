@@ -116,6 +116,18 @@ test_expect_success setup '
 	git commit -m "added another file" &&
 
 	git format-patch --stdout master >lorem-move.patch &&
+
+	git checkout -b rename &&
+	git mv file renamed &&
+	git commit -m "renamed a file" &&
+
+	git format-patch -M --stdout lorem >rename.patch &&
+
+	git reset --soft lorem^ &&
+	git commit -m "renamed a file and added another" &&
+
+	git format-patch -M --stdout lorem^ >rename-add.patch &&
+
 	# reset time
 	unset test_tick &&
 	test_tick
@@ -246,8 +258,42 @@ test_expect_success 'am -3 falls back to 3-way merge' '
 	git diff --exit-code lorem
 '
 
+test_expect_success 'am can rename a file' '
+	grep "^rename from" rename.patch &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout lorem^0 &&
+	git am rename.patch &&
+	! test -d .git/rebase-apply &&
+	git update-index --refresh &&
+	git diff --exit-code rename
+'
+
+test_expect_success 'am -3 can rename a file' '
+	grep "^rename from" rename.patch &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout lorem^0 &&
+	git am -3 rename.patch &&
+	! test -d .git/rebase-apply &&
+	git update-index --refresh &&
+	git diff --exit-code rename
+'
+
+test_expect_success 'am -3 can rename a file after falling back to 3-way merge' '
+	grep "^rename from" rename-add.patch &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout lorem^0 &&
+	git am -3 rename-add.patch &&
+	! test -d .git/rebase-apply &&
+	git update-index --refresh &&
+	git diff --exit-code rename
+'
+
 test_expect_success 'am -3 -q is quiet' '
 	rm -fr .git/rebase-apply &&
+	git checkout -f lorem2 &&
 	git reset master2 --hard &&
 	sed -n -e "3,\$p" msg >file &&
 	head -n 9 msg >>file &&
