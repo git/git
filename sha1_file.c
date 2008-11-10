@@ -410,21 +410,28 @@ void prepare_alt_odb(void)
 	read_info_alternates(get_object_directory(), 0);
 }
 
-static int has_loose_object(const unsigned char *sha1)
+static int has_loose_object_local(const unsigned char *sha1)
 {
 	char *name = sha1_file_name(sha1);
-	struct alternate_object_database *alt;
+	return !access(name, F_OK);
+}
 
-	if (!access(name, F_OK))
-		return 1;
+int has_loose_object_nonlocal(const unsigned char *sha1)
+{
+	struct alternate_object_database *alt;
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		name = alt->name;
-		fill_sha1_path(name, sha1);
+		fill_sha1_path(alt->name, sha1);
 		if (!access(alt->base, F_OK))
 			return 1;
 	}
 	return 0;
+}
+
+static int has_loose_object(const unsigned char *sha1)
+{
+	return has_loose_object_local(sha1) ||
+	       has_loose_object_nonlocal(sha1);
 }
 
 static unsigned int pack_used_ctr;
