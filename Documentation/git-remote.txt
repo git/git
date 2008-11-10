@@ -66,6 +66,10 @@ was passed.
 
 Rename the remote named <old> to <new>. All remote tracking branches and
 configuration settings for the remote are updated.
++
+In case <old> and <new> are the same, and <old> is a file under
+`$GIT_DIR/remotes` or `$GIT_DIR/branches`, the remote is converted to
+the configuration file format.
 
 'rm'::
 
