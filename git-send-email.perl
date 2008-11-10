@@ -22,7 +22,11 @@ use Term::ReadLine;
 use Getopt::Long;
 use Data::Dumper;
 use Term::ANSIColor;
+use File::Temp qw/ tempdir /;
+use Error qw(:try);
 use Git;
+
+Getopt::Long::Configure qw/ pass_through /;
 
 package FakeTerm;
 sub new {
@@ -38,7 +42,7 @@ package main;
 
 sub usage {
 	print <<EOT;
-git send-email [options] <file | directory>...
+git send-email [options] <file | directory | rev-list options >
 
   Composing:
     --from                  <str>  * Email From:
@@ -73,6 +77,8 @@ git send-email [options] <file | directory>...
     --quiet                        * Output one line of info per email.
     --dry-run                      * Don't actually send the emails.
     --[no-]validate                * Perform patch sanity checks. Default on.
+    --[no-]format-patch            * understand any non optional arguments as
+                                     `git format-patch` ones.
 
 EOT
 	exit(1);
@@ -146,6 +152,7 @@ if ($@) {
 
 # Behavior modification variables
 my ($quiet, $dry_run) = (0, 0);
+my $format_patch;
 my $compose_filename = $repo->repo_path() . "/.gitsendemail.msg.$$";
 
 # Variables with corresponding config settings
@@ -229,6 +236,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
 		    "validate!" => \$validate,
+		    "format-patch!" => \$format_patch,
 	 );
 
 unless ($rc) {
@@ -363,21 +371,50 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 
 ($sender) = expand_aliases($sender) if defined $sender;
 
+# returns 1 if the conflict must be solved using it as a format-patch argument
+sub check_file_rev_conflict($) {
+	my $f = shift;
+	try {
+		$repo->command('rev-parse', '--verify', '--quiet', $f);
+		if (defined($format_patch)) {
+			print "foo\n";
+			return $format_patch;
+		}
+		die(<<EOF);
+File '$f' exists but it could also be the range of commits
+to produce patches for.  Please disambiguate by...
+
+    * Saying "./$f" if you mean a file; or
+    * Giving --format-patch option if you mean a range.
+EOF
+	} catch Git::Error::Command with {
+		return 0;
+	}
+}
+
 # Now that all the defaults are set, process the rest of the command line
 # arguments and collect up the files that need to be processed.
-for my $f (@ARGV) {
-	if (-d $f) {
+my @rev_list_opts;
+while (my $f = pop @ARGV) {
+	if ($f eq "--") {
+		push @rev_list_opts, "--", @ARGV;
+		@ARGV = ();
+	} elsif (-d $f and !check_file_rev_conflict($f)) {
 		opendir(DH,$f)
 			or die "Failed to opendir $f: $!";
 
 		push @files, grep { -f $_ } map { +$f . "/" . $_ }
 				sort readdir(DH);
 		closedir(DH);
-	} elsif (-f $f or -p $f) {
+	} elsif ((-f $f or -p $f) and !check_file_rev_conflict($f)) {
 		push @files, $f;
 	} else {
-		print STDERR "Skipping $f - not found.\n";
+		push @rev_list_opts, $f;
 	}
+}
+
+if (@rev_list_opts) {
+	push @files, $repo->command('format-patch', '-o', tempdir(CLEANUP => 1), @rev_list_opts);
 }
 
 if ($validate) {
