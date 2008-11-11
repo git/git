@@ -19,7 +19,16 @@ test_expect_success 'prepare repository with topic branches' '
 	echo First >A &&
 	git update-index --add A &&
 	git commit -m "Add A." &&
-	git checkout -b my-topic-branch &&
+	git checkout -b force-3way &&
+	echo Dummy >Y &&
+	git update-index --add Y &&
+	git commit -m "Add Y." &&
+	git checkout -b filemove &&
+	git reset --soft master &&
+	mkdir D &&
+	git mv A D/A &&
+	git commit -m "Move A." &&
+	git checkout -b my-topic-branch master &&
 	echo Second >B &&
 	git update-index --add B &&
 	git commit -m "Add B." &&
@@ -126,6 +135,19 @@ test_expect_success 'rebase a single mode change' '
 	test_tick &&
 	git commit -m modechange &&
 	GIT_TRACE=1 git rebase master
+'
+
+test_expect_success 'rebase is not broken by diff.renames' '
+	git config diff.renames copies &&
+	test_when_finished "git config --unset diff.renames" &&
+	git checkout filemove &&
+	GIT_TRACE=1 git rebase force-3way
+'
+
+test_expect_success 'setup: recover' '
+	test_might_fail git rebase --abort &&
+	git reset --hard &&
+	git checkout modechange
 '
 
 test_expect_success 'Show verbose error when HEAD could not be detached' '
