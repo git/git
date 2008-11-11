@@ -1739,6 +1739,24 @@ proc removehead {id name} {
     unset headids($name)
 }
 
+proc make_transient {window origin} {
+    global have_tk85
+
+    # In MacOS Tk 8.4 transient appears to work by setting
+    # overrideredirect, which is utterly useless, since the
+    # windows get no border, and are not even kept above
+    # the parent.
+    if {!$have_tk85 && [tk windowingsystem] eq {aqua}} return
+
+    wm transient $window $origin
+
+    # Windows fails to place transient windows normally, so
+    # schedule a callback to center them on the parent.
+    if {[tk windowingsystem] eq {win32}} {
+	after idle [list tk::PlaceWindow $window widget $origin]
+    }
+}
+
 proc show_error {w top msg} {
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
@@ -1754,7 +1772,7 @@ proc show_error {w top msg} {
 proc error_popup {msg {owner .}} {
     set w .error
     toplevel $w
-    wm transient $w $owner
+    make_transient $w $owner
     show_error $w $w $msg
 }
 
@@ -1763,7 +1781,7 @@ proc confirm_popup {msg {owner .}} {
     set confirm_ok 0
     set w .confirm
     toplevel $w
-    wm transient $w $owner
+    make_transient $w $owner
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
     button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
@@ -2558,7 +2576,7 @@ proc about {} {
     }
     toplevel $w
     wm title $w [mc "About gitk"]
-    wm transient $w .
+    make_transient $w .
     message $w.m -text [mc "
 Gitk - a commit viewer for git
 
@@ -2587,7 +2605,7 @@ proc keys {} {
     }
     toplevel $w
     wm title $w [mc "Gitk key bindings"]
-    wm transient $w .
+    make_transient $w .
     message $w.m -text "
 [mc "Gitk key bindings:"]
 
@@ -3669,7 +3687,7 @@ proc vieweditor {top n title} {
 
     toplevel $top
     wm title $top $title
-    wm transient $top .
+    make_transient $top .
 
     # View name
     frame $top.nfr
@@ -7912,7 +7930,7 @@ proc mkpatch {} {
     set patchtop $top
     catch {destroy $top}
     toplevel $top
-    wm transient $top .
+    make_transient $top .
     label $top.title -text [mc "Generate patch"]
     grid $top.title - -pady 10
     label $top.from -text [mc "From:"]
@@ -7999,7 +8017,7 @@ proc mktag {} {
     set mktagtop $top
     catch {destroy $top}
     toplevel $top
-    wm transient $top .
+    make_transient $top .
     label $top.title -text [mc "Create tag"]
     grid $top.title - -pady 10
     label $top.id -text [mc "ID:"]
@@ -8102,7 +8120,7 @@ proc writecommit {} {
     set wrcomtop $top
     catch {destroy $top}
     toplevel $top
-    wm transient $top .
+    make_transient $top .
     label $top.title -text [mc "Write commit to file"]
     grid $top.title - -pady 10
     label $top.id -text [mc "ID:"]
@@ -8159,7 +8177,7 @@ proc mkbranch {} {
     set top .makebranch
     catch {destroy $top}
     toplevel $top
-    wm transient $top .
+    make_transient $top .
     label $top.title -text [mc "Create new branch"]
     grid $top.title - -pady 10
     label $top.id -text [mc "ID:"]
@@ -8322,7 +8340,7 @@ proc resethead {} {
     set confirm_ok 0
     set w ".confirmreset"
     toplevel $w
-    wm transient $w .
+    make_transient $w .
     wm title $w [mc "Confirm reset"]
     message $w.m -text \
 	[mc "Reset branch %s to %s?" $mainhead [string range $rowmenuid 0 7]] \
@@ -8502,7 +8520,7 @@ proc showrefs {} {
     }
     toplevel $top
     wm title $top [mc "Tags and heads: %s" [file tail [pwd]]]
-    wm transient $top .
+    make_transient $top .
     text $top.list -background $bgcolor -foreground $fgcolor \
 	-selectbackground $selectbgcolor -font mainfont \
 	-xscrollcommand "$top.xsb set" -yscrollcommand "$top.ysb set" \
@@ -9844,7 +9862,7 @@ proc choosefont {font which} {
 	font create sample
 	eval font config sample [font actual $font]
 	toplevel $top
-	wm transient $top $prefstop
+	make_transient $top $prefstop
 	wm title $top [mc "Gitk font chooser"]
 	label $top.l -textvariable fontparam(which)
 	pack $top.l -side top
@@ -9961,7 +9979,7 @@ proc doprefs {} {
     }
     toplevel $top
     wm title $top [mc "Gitk preferences"]
-    wm transient $top .
+    make_transient $top .
     label $top.ldisp -text [mc "Commit list display options"]
     grid $top.ldisp - -sticky w -pady 10
     label $top.spacer -text " "
