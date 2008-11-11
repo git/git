@@ -1355,7 +1355,16 @@ check-sha1:: test-sha1$X
 	./test-sha1.sh
 
 check: common-cmds.h
-	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
+	if sparse; \
+	then \
+		for i in *.c; \
+		do \
+			sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; \
+		done; \
+	else \
+		echo 2>&1 "Did you mean 'make test'?"; \
+		exit 1; \
+	fi
 
 remove-dashes:
 	./fixup-builtins $(BUILT_INS) $(PROGRAMS) $(SCRIPTS)

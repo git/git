@@ -326,7 +326,7 @@ int fsck_error_function(struct object *obj, int type, const char *fmt, ...)
 			die("this should not happen, your snprintf is broken");
 	}
 
-	error(sb.buf);
+	error("%s", sb.buf);
 	strbuf_release(&sb);
 	return 1;
 }

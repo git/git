@@ -940,7 +940,7 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 			lock->lk->filename[i] = 0;
 			path = lock->lk->filename;
 		} else {
-			path = git_path(refname);
+			path = git_path("%s", refname);
 		}
 		err = unlink(path);
 		if (err && errno != ENOENT) {

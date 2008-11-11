@@ -41,7 +41,7 @@ char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 	len = vsnprintf(buf, n, fmt, args);
 	va_end(args);
 	if (len >= n) {
-		snprintf(buf, n, bad_path);
+		strlcpy(buf, bad_path, n);
 		return buf;
 	}
 	return cleanup_path(buf);
@@ -63,7 +63,7 @@ static char *git_vsnpath(char *buf, size_t n, const char *fmt, va_list args)
 		goto bad;
 	return cleanup_path(buf);
 bad:
-	snprintf(buf, n, bad_path);
+	strlcpy(buf, bad_path, n);
 	return buf;
 }
 
