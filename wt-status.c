@@ -185,31 +185,12 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 		wt_status_print_trailer(s);
 }
 
-static void wt_status_print_initial(struct wt_status *s)
-{
-	int i;
-	struct strbuf buf = STRBUF_INIT;
-
-	if (active_nr) {
-		s->commitable = 1;
-		wt_status_print_cached_header(s);
-	}
-	for (i = 0; i < active_nr; i++) {
-		color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
-		color_fprintf_ln(s->fp, color(WT_STATUS_UPDATED), "new file: %s",
-				quote_path(active_cache[i]->name, -1,
-					   &buf, s->prefix));
-	}
-	if (active_nr)
-		wt_status_print_trailer(s);
-	strbuf_release(&buf);
-}
-
 static void wt_status_print_updated(struct wt_status *s)
 {
 	struct rev_info rev;
 	init_revisions(&rev, NULL);
-	setup_revisions(0, NULL, &rev, s->reference);
+	setup_revisions(0, NULL, &rev,
+		s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_print_updated_cb;
 	rev.diffopt.format_callback_data = s;
@@ -351,12 +332,9 @@ void wt_status_print(struct wt_status *s)
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "# Initial commit");
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
-		wt_status_print_initial(s);
-	}
-	else {
-		wt_status_print_updated(s);
 	}
 
+	wt_status_print_updated(s);
 	wt_status_print_changed(s);
 	if (wt_status_submodule_summary)
 		wt_status_print_submodule_summary(s);
