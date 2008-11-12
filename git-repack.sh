@@ -71,13 +71,10 @@ case ",$all_into_one," in
 				existing="$existing $e"
 			fi
 		done
-	fi
-	if test -z "$args"
-	then
-		args='--unpacked --incremental'
-	elif test -n "$unpack_unreachable"
-	then
-		args="$args $unpack_unreachable"
+		if test -n "$args" -a -n "$unpack_unreachable"
+		then
+			args="$args $unpack_unreachable"
+		fi
 	fi
 	;;
 esac
