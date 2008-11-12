@@ -285,8 +285,52 @@ See also linkgit:git-reflog[1].
 History Simplification
 ~~~~~~~~~~~~~~~~~~~~~~
 
-When optional paths are given, 'git-rev-list' simplifies commits with
-various strategies, according to the options you have selected.
+Sometimes you are only interested in parts of the history, for example the
+commits modifying a particular <path>. But there are two parts of
+'History Simplification', one part is selecting the commits and the other
+is how to do it, as there are various strategies to simplify the history.
+
+The following options select the commits to be shown:
+
+<paths>::
+
+	Commits modifying the given <paths> are selected.
+
+--simplify-by-decoration::
+
+	Commits that are referred by some branch or tag are selected.
+
+Note that extra commits can be shown to give a meaningful history.
+
+The following options affect the way the simplification is performed:
+
+Default mode::
+
+	Simplifies the history to the simplest history explaining the
+	final state of the tree. Simplest because it prunes some side
+	branches if the end result is the same (i.e. merging branches
+	with the same content)
+
+--full-history::
+
+	As the default mode but does not prune some history.
+
+--dense::
+
+	Only the selected commits are shown, plus some to have a
+	meaningful history.
+
+--sparse::
+
+	All commits in the simplified history are shown.
+
+--simplify-merges::
+
+	Additional option to '--full-history' to remove some needless
+	merges from the resulting history, as there are no selected
+	commits contributing to this merge.
+
+A more detailed explanation follows.
 
 Suppose you specified `foo` as the <paths>.  We shall call commits
 that modify `foo` !TREESAME, and the rest TREESAME.  (In a diff
