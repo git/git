@@ -1,0 +1,21 @@
+GIT v1.6.0.5 Release Notes
+==========================
+
+Fixes since v1.6.0.4
+--------------------
+
+* 'git checkout' used to crash when your HEAD was pointing at a deleted
+  branch.
+
+* 'git checkout' from an un-checked-out state did not allow switching out
+  of the current branch.
+
+* 'git pack-objects' did not make its best effort to honor --max-pack-size
+  option when a single first object already busted the given limit and
+  placed many objects in a single pack.
+
+* 'make check' cannot be run without sparse; people may have meant to say
+  'make test' instead, so suggest that.
+
+* Many unsafe call to sprintf() style varargs functions are corrected.
+

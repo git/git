@@ -1269,6 +1269,11 @@ unmap:
 	die("index file corrupt");
 }
 
+int is_index_unborn(struct index_state *istate)
+{
+	return (!istate->cache_nr && !istate->alloc && !istate->timestamp);
+}
+
 int discard_index(struct index_state *istate)
 {
 	istate->cache_nr = 0;
