@@ -22,7 +22,7 @@ test_expect_success 'setup' '
 	git commit -F message
 '
 
-test_expect_failure 'initial commit shows verbose diff' '
+test_expect_success 'initial commit shows verbose diff' '
 	git commit --amend -v
 '
 
