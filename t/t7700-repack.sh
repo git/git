@@ -4,7 +4,7 @@ test_description='git repack works correctly'
 
 . ./test-lib.sh
 
-test_expect_failure 'objects in packs marked .keep are not repacked' '
+test_expect_success 'objects in packs marked .keep are not repacked' '
 	echo content1 > file1 &&
 	echo content2 > file2 &&
 	git add . &&
