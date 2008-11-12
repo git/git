@@ -71,6 +71,7 @@ static int reuse_delta = 1, reuse_object = 1;
 static int keep_unreachable, unpack_unreachable, include_tag;
 static int local;
 static int incremental;
+static int ignore_packed_keep;
 static int allow_ofs_delta;
 static const char *base_name;
 static int progress = 1;
@@ -702,6 +703,8 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 			if (incremental)
 				return 0;
 			if (local && !p->pack_local)
+				return 0;
+			if (ignore_packed_keep && p->pack_local && p->pack_keep)
 				return 0;
 		}
 	}
@@ -2040,6 +2043,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--incremental", arg)) {
 			incremental = 1;
+			continue;
+		}
+		if (!strcmp("--honor-pack-keep", arg)) {
+			ignore_packed_keep = 1;
 			continue;
 		}
 		if (!prefixcmp(arg, "--compression=")) {

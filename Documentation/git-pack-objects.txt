@@ -109,6 +109,11 @@ base-name::
 	The default is unlimited, unless the config variable
 	`pack.packSizeLimit` is set.
 
+--honor-pack-keep::
+	This flag causes an object already in a local pack that
+	has a .keep file to be ignored, even if it appears in the
+	standard input.
+
 --incremental::
 	This flag causes an object already in a pack ignored
 	even if it appears in the standard input.
