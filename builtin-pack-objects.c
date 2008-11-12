@@ -245,8 +245,16 @@ static unsigned long write_object(struct sha1file *f,
 	type = entry->type;
 
 	/* write limit if limited packsize and not first object */
-	limit = pack_size_limit && nr_written ?
-			pack_size_limit - write_offset : 0;
+	if (!pack_size_limit || !nr_written)
+		limit = 0;
+	else if (pack_size_limit <= write_offset)
+		/*
+		 * the earlier object did not fit the limit; avoid
+		 * mistaking this with unlimited (i.e. limit = 0).
+		 */
+		limit = 1;
+	else
+		limit = pack_size_limit - write_offset;
 
 	if (!entry->delta)
 		usable_delta = 0;	/* no delta */
