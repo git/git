@@ -1996,9 +1996,7 @@ static struct cached_object {
 static int cached_object_nr, cached_object_alloc;
 
 static struct cached_object empty_tree = {
-	/* empty tree sha1: 4b825dc642cb6eb9a060e54bf8d69288fbee4904 */
-	"\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60"
-	"\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04",
+	EMPTY_TREE_SHA1_BIN,
 	OBJ_TREE,
 	"",
 	0
