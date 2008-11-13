@@ -35,7 +35,7 @@ constructor new {i_w i_text args} {
 
 	trace add variable searchstring write [cb _incrsearch_cb]
 	
-	bind $w <Destroy> [cb delete_this]
+	bind $w <Destroy> [list delete_this $this]
 	return $this
 }
 
