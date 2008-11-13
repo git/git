@@ -4004,31 +4004,31 @@ proc ishighlighted {id} {
     return 0
 }
 
-proc bolden {row font} {
-    global canv linehtag selectedline boldrows need_redisplay
+proc bolden {id font} {
+    global canv linehtag currentid boldids need_redisplay
 
     # need_redisplay = 1 means the display is stale and about to be redrawn
     if {$need_redisplay} return
-    lappend boldrows $row
-    $canv itemconf $linehtag($row) -font $font
-    if {$row == $selectedline} {
+    lappend boldids $id
+    $canv itemconf $linehtag($id) -font $font
+    if {[info exists currentid] && $id eq $currentid} {
 	$canv delete secsel
-	set t [eval $canv create rect [$canv bbox $linehtag($row)] \
+	set t [eval $canv create rect [$canv bbox $linehtag($id)] \
 		   -outline {{}} -tags secsel \
 		   -fill [$canv cget -selectbackground]]
 	$canv lower $t
     }
 }
 
-proc bolden_name {row font} {
-    global canv2 linentag selectedline boldnamerows need_redisplay
+proc bolden_name {id font} {
+    global canv2 linentag currentid boldnameids need_redisplay
 
     if {$need_redisplay} return
-    lappend boldnamerows $row
-    $canv2 itemconf $linentag($row) -font $font
-    if {$row == $selectedline} {
+    lappend boldnameids $id
+    $canv2 itemconf $linentag($id) -font $font
+    if {[info exists currentid] && $id eq $currentid} {
 	$canv2 delete secsel
-	set t [eval $canv2 create rect [$canv2 bbox $linentag($row)] \
+	set t [eval $canv2 create rect [$canv2 bbox $linentag($id)] \
 		   -outline {{}} -tags secsel \
 		   -fill [$canv2 cget -selectbackground]]
 	$canv2 lower $t
@@ -4036,17 +4036,17 @@ proc bolden_name {row font} {
 }
 
 proc unbolden {} {
-    global boldrows
+    global boldids
 
     set stillbold {}
-    foreach row $boldrows {
-	if {![ishighlighted [commitonrow $row]]} {
-	    bolden $row mainfont
+    foreach id $boldids {
+	if {![ishighlighted $id]} {
+	    bolden $id mainfont
 	} else {
-	    lappend stillbold $row
+	    lappend stillbold $id
 	}
     }
-    set boldrows $stillbold
+    set boldids $stillbold
 }
 
 proc addvhighlight {n} {
@@ -4087,7 +4087,7 @@ proc vhighlightmore {} {
 	    set row [rowofcommit $id]
 	    if {$r0 <= $row && $row <= $r1} {
 		if {![highlighted $row]} {
-		    bolden $row mainfontbold
+		    bolden $id mainfontbold
 		}
 		set vhighlights($id) 1
 	    }
@@ -4102,7 +4102,7 @@ proc askvhighlight {row id} {
 
     if {[commitinview $id $hlview]} {
 	if {[info exists iddrawn($id)] && ![ishighlighted $id]} {
-	    bolden $row mainfontbold
+	    bolden $id mainfontbold
 	}
 	set vhighlights($id) 1
     } else {
@@ -4170,15 +4170,15 @@ proc find_change {name ix op} {
 }
 
 proc findcom_change args {
-    global nhighlights boldnamerows
+    global nhighlights boldnameids
     global findpattern findtype findstring gdttype
 
     stopfinding
     # delete previous highlights, if any
-    foreach row $boldnamerows {
-	bolden_name $row mainfont
+    foreach id $boldnameids {
+	bolden_name $id mainfont
     }
-    set boldnamerows {}
+    set boldnameids {}
     catch {unset nhighlights}
     unbolden
     unmarkmatches
@@ -4267,9 +4267,8 @@ proc readfhighlight {} {
 	set fhl_list [lrange $fhl_list [expr {$i+1}] end]
 	if {$line eq {}} continue
 	if {![commitinview $line $curview]} continue
-	set row [rowofcommit $line]
 	if {[info exists iddrawn($line)] && ![ishighlighted $line]} {
-	    bolden $row mainfontbold
+	    bolden $line mainfontbold
 	}
 	set fhighlights($line) 1
     }
@@ -4321,9 +4320,9 @@ proc askfindhighlight {row id} {
     }
     if {$isbold && [info exists iddrawn($id)]} {
 	if {![ishighlighted $id]} {
-	    bolden $row mainfontbold
+	    bolden $id mainfontbold
 	    if {$isbold > 1} {
-		bolden_name $row mainfontbold
+		bolden_name $id mainfontbold
 	    }
 	}
 	if {$markingmatches} {
@@ -4343,15 +4342,15 @@ proc markrowmatches {row id} {
     if {$findloc eq [mc "All fields"] || $findloc eq [mc "Headline"]} {
 	set m [findmatches $headline]
 	if {$m ne {}} {
-	    markmatches $canv $row $headline $linehtag($row) $m \
-		[$canv itemcget $linehtag($row) -font] $row
+	    markmatches $canv $row $headline $linehtag($id) $m \
+		[$canv itemcget $linehtag($id) -font] $row
 	}
     }
     if {$findloc eq [mc "All fields"] || $findloc eq [mc "Author"]} {
 	set m [findmatches $author]
 	if {$m ne {}} {
-	    markmatches $canv2 $row $author $linentag($row) $m \
-		[$canv2 itemcget $linentag($row) -font] $row
+	    markmatches $canv2 $row $author $linentag($id) $m \
+		[$canv2 itemcget $linentag($id) -font] $row
 	}
     }
 }
@@ -4476,7 +4475,7 @@ proc askrelhighlight {row id} {
     }
     if {[info exists iddrawn($id)]} {
 	if {$isbold && ![ishighlighted $id]} {
-	    bolden $row mainfontbold
+	    bolden $id mainfontbold
 	}
     }
     set rhighlights($id) $isbold
@@ -5469,7 +5468,7 @@ proc drawcmittext {id row col} {
     global cmitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag selectedline
-    global canvxmax boldrows boldnamerows fgcolor
+    global canvxmax boldids boldnameids fgcolor
     global mainheadid nullid nullid2 circleitem circlecolors ctxbut
 
     # listed is 0 for boundary, 1 for normal, 2 for negative, 3 for left, 4 for right
@@ -5534,22 +5533,22 @@ proc drawcmittext {id row col} {
     set nfont mainfont
     set isbold [ishighlighted $id]
     if {$isbold > 0} {
-	lappend boldrows $row
+	lappend boldids $id
 	set font mainfontbold
 	if {$isbold > 1} {
-	    lappend boldnamerows $row
+	    lappend boldnameids $id
 	    set nfont mainfontbold
 	}
     }
-    set linehtag($row) [$canv create text $xt $y -anchor w -fill $fgcolor \
-			    -text $headline -font $font -tags text]
-    $canv bind $linehtag($row) $ctxbut "rowmenu %X %Y $id"
-    set linentag($row) [$canv2 create text 3 $y -anchor w -fill $fgcolor \
-			    -text $name -font $nfont -tags text]
-    set linedtag($row) [$canv3 create text 3 $y -anchor w -fill $fgcolor \
-			    -text $date -font mainfont -tags text]
+    set linehtag($id) [$canv create text $xt $y -anchor w -fill $fgcolor \
+			   -text $headline -font $font -tags text]
+    $canv bind $linehtag($id) $ctxbut "rowmenu %X %Y $id"
+    set linentag($id) [$canv2 create text 3 $y -anchor w -fill $fgcolor \
+			   -text $name -font $nfont -tags text]
+    set linedtag($id) [$canv3 create text 3 $y -anchor w -fill $fgcolor \
+			   -text $date -font mainfont -tags text]
     if {$selectedline == $row} {
-	make_secsel $row
+	make_secsel $id
     }
     set xr [expr {$xt + [font measure $font $headline]}]
     if {$xr > $canvxmax} {
@@ -5757,7 +5756,7 @@ proc drawvisible {} {
 proc clear_display {} {
     global iddrawn linesegs need_redisplay nrows_drawn
     global vhighlights fhighlights nhighlights rhighlights
-    global linehtag linentag linedtag boldrows boldnamerows
+    global linehtag linentag linedtag boldids boldnameids
 
     allcanvs delete all
     catch {unset iddrawn}
@@ -5765,8 +5764,8 @@ proc clear_display {} {
     catch {unset linehtag}
     catch {unset linentag}
     catch {unset linedtag}
-    set boldrows {}
-    set boldnamerows {}
+    set boldids {}
+    set boldnameids {}
     catch {unset vhighlights}
     catch {unset fhighlights}
     catch {unset nhighlights}
@@ -6474,20 +6473,20 @@ proc dispnexttag {} {
     }
 }
 
-proc make_secsel {l} {
+proc make_secsel {id} {
     global linehtag linentag linedtag canv canv2 canv3
 
-    if {![info exists linehtag($l)]} return
+    if {![info exists linehtag($id)]} return
     $canv delete secsel
-    set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
+    set t [eval $canv create rect [$canv bbox $linehtag($id)] -outline {{}} \
 	       -tags secsel -fill [$canv cget -selectbackground]]
     $canv lower $t
     $canv2 delete secsel
-    set t [eval $canv2 create rect [$canv2 bbox $linentag($l)] -outline {{}} \
+    set t [eval $canv2 create rect [$canv2 bbox $linentag($id)] -outline {{}} \
 	       -tags secsel -fill [$canv2 cget -selectbackground]]
     $canv2 lower $t
     $canv3 delete secsel
-    set t [eval $canv3 create rect [$canv3 bbox $linedtag($l)] -outline {{}} \
+    set t [eval $canv3 create rect [$canv3 bbox $linedtag($id)] -outline {{}} \
 	       -tags secsel -fill [$canv3 cget -selectbackground]]
     $canv3 lower $t
 }
@@ -6553,7 +6552,7 @@ proc selectline {l isnew {desired_loc {}}} {
 	drawvisible
     }
 
-    make_secsel $l
+    make_secsel $id
 
     if {$isnew} {
 	addtohistory [list selbyid $id]
@@ -8109,16 +8108,16 @@ proc redrawtags {id} {
     $canv itemconf $circleitem($row) -fill $ofill
     $canv delete tag.$id
     set xt [eval drawtags $id $idpos($id)]
-    $canv coords $linehtag($row) $xt [lindex $idpos($id) 2]
-    set text [$canv itemcget $linehtag($row) -text]
-    set font [$canv itemcget $linehtag($row) -font]
+    $canv coords $linehtag($id) $xt [lindex $idpos($id) 2]
+    set text [$canv itemcget $linehtag($id) -text]
+    set font [$canv itemcget $linehtag($id) -font]
     set xr [expr {$xt + [font measure $font $text]}]
     if {$xr > $canvxmax} {
 	set canvxmax $xr
 	setcanvscroll
     }
     if {[info exists currentid] && $currentid == $id} {
-	make_secsel $row
+	make_secsel $id
     }
 }
 
@@ -10766,8 +10765,8 @@ set nhl_names {}
 set highlight_paths {}
 set findpattern {}
 set searchdirn -forwards
-set boldrows {}
-set boldnamerows {}
+set boldids {}
+set boldnameids {}
 set diffelide {0 0}
 set markingmatches 0
 set linkentercount 0
