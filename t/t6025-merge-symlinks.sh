@@ -18,11 +18,11 @@ git add file &&
 git commit -m initial &&
 git branch b-symlink &&
 git branch b-file &&
-l=$(echo -n file | git hash-object -t blob -w --stdin) &&
+l=$(printf file | git hash-object -t blob -w --stdin) &&
 echo "120000 $l	symlink" | git update-index --index-info &&
 git commit -m master &&
 git checkout b-symlink &&
-l=$(echo -n file-different | git hash-object -t blob -w --stdin) &&
+l=$(printf file-different | git hash-object -t blob -w --stdin) &&
 echo "120000 $l	symlink" | git update-index --index-info &&
 git commit -m b-symlink &&
 git checkout b-file &&
