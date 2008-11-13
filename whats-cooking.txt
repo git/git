@@ -1,8 +1,8 @@
-Subject: What's cooking in git.git (Nov 2008, #03; Sun, 09)
-X-master-at: a9645b780b698703cd7dee25051d6ce39b0544c6
-X-next-at: aca556e49fea7423c223973632ed9b94c03b19eb
+Subject: What's cooking in git.git (Nov 2008, #04; Wed, 12)
+X-master-at: 171d7661eda111d3e35f6e8097a1a3a07b30026c
+X-next-at: c990ab59beabbf7e62799d0a0190cc0a5171aba2
 
-What's cooking in git.git (Nov 2008, #03; Sun, 09)
+What's cooking in git.git (Nov 2008, #04; Wed, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -12,8 +12,39 @@ in 'next'.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
+I think we should declare -rc0 by the end of this week, with the goal of
+including everything that are in 'next' as of tonight, plus the "narrow
+checkout" and possibly Pierre's send-email that acts as format-patch
+frontend, by the time we hit -rc1, perhaps soon after the end of month.
+
 ----------------------------------------------------------------
 [New Topics]
+
+* mk/maint-cg-push (Mon Nov 10 22:47:11 2008 +0100) 1 commit
+ + git push: Interpret $GIT_DIR/branches in a Cogito compatible way
+
+* jk/commit-v-strip (Wed Nov 12 03:23:37 2008 -0500) 5 commits
+ + status: show "-v" diff even for initial commit
+ + Merge branch 'jk/maint-commit-v-strip' into jk/commit-v-strip
+ + commit: Fix stripping of patch in verbose mode.
+ + wt-status: refactor initial commit printing
+ + define empty tree sha1 as a macro
+
+* jk/maint-commit-v-strip (Wed Nov 12 03:25:52 2008 -0500) 1 commit
+ + commit: Fix stripping of patch in verbose mode.
+
+* ph/send-email (Tue Nov 11 00:54:02 2008 +0100) 4 commits
+ - git send-email: ask less questions when --compose is used.
+ - git send-email: add --annotate option
+ - git send-email: interpret unknown files as revision lists
+ - git send-email: make the message file name more specific.
+
+* nd/rename-cache (Sat Nov 8 18:27:33 2008 +0700) 2 commits
+ - diffcore-rename: add config option to allow to cache renames
+ - diffcore-rename: support rename cache
+
+----------------------------------------------------------------
+[Will merge to "master" soon]
 
 * jk/deny-push-to-current (Sat Nov 8 20:49:27 2008 -0500) 2 commits
  + receive-pack: detect push to current branch of non-bare repo
@@ -24,70 +55,32 @@ meant to be merged to the maintenance series have "maint-" in their names.
 
 This performance fix may eventually need to be cherry-picked to 'maint'.
 
-----------------------------------------------------------------
-[Graduated to "master"]
-
-* cb/maint-update-ref-fix (Wed Nov 5 21:55:54 2008 +0100) 2 commits
- + push: fix local refs update if already up-to-date
- + do not force write of packed refs
-
-* rs/blame (Sat Oct 25 15:31:36 2008 +0200) 5 commits
- + blame: use xdi_diff_hunks(), get rid of struct patch
- + add xdi_diff_hunks() for callers that only need hunk lengths
- + Allow alternate "low-level" emit function from xdl_diff
- + Always initialize xpparam_t to 0
- + blame: inline get_patch()
-
-* ds/autoconf (Sun Oct 26 03:52:19 2008 -0800) 1 commit
- + autoconf: Add link tests to each AC_CHECK_FUNC() test
-
-Attempts to help FreeBSD whose compiler does not error out when told to
-compile a program that calls unavailable functions.
-
-----------------------------------------------------------------
-[Actively Cooking]
+* lt/decorate (Wed Nov 12 11:51:28 2008 +0100) 7 commits
+ + rev-list documentation: clarify the two parts of history
+   simplification
+ + Document "git log --simplify-by-decoration"
+ + Document "git log --source"
+ + revision traversal: '--simplify-by-decoration'
+ + Make '--decorate' set an explicit 'show_decorations' flag
+ + revision: make tree comparison functions take commits rather than
+   trees
+ + Add a 'source' decorator for commits
 
 * gb/gitweb-snapshot-pathinfo (Sun Nov 2 10:21:39 2008 +0100) 3 commits
  + gitweb: embed snapshot format parameter in PATH_INFO
  + gitweb: retrieve snapshot format from PATH_INFO
  + gitweb: make the supported snapshot formats array global
 
-Got sick of waiting for re-Ack.  Merged to 'next'.
+Got sick of waiting for re-Ack.
 
 * jn/gitweb-customlinks (Sun Oct 12 00:02:32 2008 +0200) 1 commit
  + gitweb: Better processing format string in custom links in navbar
 
-Got sick of waiting for some sort of response from Pasky.  Merged to 'next'.
+Got sick of waiting for some sort of response from Pasky.
 
 * st/tag (Wed Nov 5 00:20:36 2008 +0100) 2 commits
  + tag: Add more tests about mixing incompatible modes and options
  + tag: Check that options are only allowed in the appropriate mode
-
-* np/pack-safer (Sun Nov 9 13:11:06 2008 -0800) 11 commits
- + t5303: fix printf format string for portability
- + t5303: work around printf breakage in dash
- + pack-objects: don't leak pack window reference when splitting
-   packs
- + extend test coverage for latest pack corruption resilience
-   improvements
- + pack-objects: allow "fixing" a corrupted pack without a full
-   repack
- + make find_pack_revindex() aware of the nasty world
- + make check_object() resilient to pack corruptions
- + make packed_object_info() resilient to pack corruptions
- + make unpack_object_header() non fatal
- + better validation on delta base object offsets
- + close another possibility for propagating pack corruption
-
-* mv/remote-rename (Mon Nov 3 19:26:18 2008 +0100) 1 commit
- + Implement git remote rename
-
-* lt/decorate (Mon Nov 3 11:25:46 2008 -0800) 4 commits
- + revision traversal: '--simplify-by-decoration'
- + Make '--decorate' set an explicit 'show_decorations' flag
- + revision: make tree comparison functions take commits rather than
-   trees
- + Add a 'source' decorator for commits
 
 * ds/uintmax-config (Mon Nov 3 09:14:28 2008 -0900) 5 commits
  - autoconf: Enable threaded delta search when pthreads are supported
@@ -98,7 +91,7 @@ Got sick of waiting for some sort of response from Pasky.  Merged to 'next'.
 
 I split the part that unconditionally enable threaded delta search on any
 platform on which Pthread library is detected to be available from the
-topmost one.
+topmost one.  Will merge the rest to 'master' soon.
 
 * jk/diff-convfilter (Sun Oct 26 00:50:02 2008 -0400) 8 commits
  + enable textconv for diff in verbose status/commit
@@ -117,6 +110,51 @@ topmost one.
  + diff: add missing static declaration
 
 An update to the one above.
+
+----------------------------------------------------------------
+[Actively Cooking]
+
+* bc/maint-keep-pack (Sun Nov 9 23:59:58 2008 -0600) 9 commits
+ + pack-objects: extend --local to mean ignore non-local loose
+   objects too
+ + sha1_file.c: split has_loose_object() into local and non-local
+   counterparts
+ + t7700: demonstrate mishandling of loose objects in an alternate
+   ODB
+ + builtin-gc.c: use new pack_keep bitfield to detect .keep file
+   existence
+ + repack: do not fall back to incremental repacking with [-a|-A]
+ + repack: don't repack local objects in packs with .keep file
+ + pack-objects: new option --honor-pack-keep
+ + packed_git: convert pack_local flag into a bitfield and add
+   pack_keep
+ + t7700: demonstrate mishandling of objects in packs with a .keep
+   file
+
+A few commits were rewound from 'next' and replaced with new ones.
+
+* np/pack-safer (Sun Nov 9 13:11:06 2008 -0800) 11 commits
+ + t5303: fix printf format string for portability
+ + t5303: work around printf breakage in dash
+ + pack-objects: don't leak pack window reference when splitting
+   packs
+ + extend test coverage for latest pack corruption resilience
+   improvements
+ + pack-objects: allow "fixing" a corrupted pack without a full
+   repack
+ + make find_pack_revindex() aware of the nasty world
+ + make check_object() resilient to pack corruptions
+ + make packed_object_info() resilient to pack corruptions
+ + make unpack_object_header() non fatal
+ + better validation on delta base object offsets
+ + close another possibility for propagating pack corruption
+
+* mv/remote-rename (Mon Nov 10 21:43:03 2008 +0100) 4 commits
+ + git-remote: document the migration feature of the rename
+   subcommand
+ + git-remote rename: migrate from remotes/ and branches/
+ + remote: add a new 'origin' variable to the struct
+ + Implement git remote rename
 
 * jc/blame (Wed Jun 4 22:58:40 2008 -0700) 2 commits
  + blame: show "previous" information in --porcelain/--incremental
@@ -139,18 +177,6 @@ An update to the one above.
 Early parts looked Ok; I am trying to find time to review the whole thing
 but fixing bugs in topics from other people here and there took almost all
 my time this weekend.  Not good.
-
-----------------------------------------------------------------
-[Dropped]
-
-* bc/maint-keep-pack (Mon Nov 3 14:43:22 2008 -0600) 3 commits
- . pack-objects: honor '.keep' files
- . packed_git: convert pack_local flag into a bitfield and add
-   pack_keep
- . t7700: demonstrate mishandling of objects in packs with a .keep
-   file
-
-It seems this is better rethought from the design level.
 
 ----------------------------------------------------------------
 [On Hold]
