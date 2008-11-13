@@ -201,6 +201,7 @@ static void read_remotes_file(struct remote *remote)
 
 	if (!f)
 		return;
+	remote->origin = REMOTE_REMOTES;
 	while (fgets(buffer, BUF_SIZE, f)) {
 		int value_list;
 		char *s, *p;
@@ -261,6 +262,7 @@ static void read_branches_file(struct remote *remote)
 		s++;
 	if (!*s)
 		return;
+	remote->origin = REMOTE_BRANCHES;
 	p = s + strlen(s);
 	while (isspace(p[-1]))
 		*--p = 0;
@@ -350,6 +352,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 	if (!subkey)
 		return error("Config with no key for remote %s", name);
 	remote = make_remote(name, subkey - name);
+	remote->origin = REMOTE_CONFIG;
 	if (!strcmp(subkey, ".mirror"))
 		remote->mirror = git_config_bool(key, value);
 	else if (!strcmp(subkey, ".skipdefaultupdate"))
