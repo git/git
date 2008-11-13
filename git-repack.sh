@@ -71,7 +71,8 @@ case ",$all_into_one," in
 				existing="$existing $e"
 			fi
 		done
-		if test -n "$args" -a -n "$unpack_unreachable"
+		if test -n "$args" -a -n "$unpack_unreachable" -a \
+			-n "$remove_redundant"
 		then
 			args="$args $unpack_unreachable"
 		fi
