@@ -301,8 +301,17 @@ static void wt_status_print_verbose(struct wt_status *s)
 	setup_revisions(0, NULL, &rev, s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
+	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
 	rev.diffopt.file = s->fp;
 	rev.diffopt.close_file = 0;
+	/*
+	 * If we're not going to stdout, then we definitely don't
+	 * want color, since we are going to the commit message
+	 * file (and even the "auto" setting won't work, since it
+	 * will have checked isatty on stdout).
+	 */
+	if (s->fp != stdout)
+		DIFF_OPT_CLR(&rev.diffopt, COLOR_DIFF);
 	run_diff_index(&rev, 1);
 }
 
@@ -422,5 +431,5 @@ int git_status_config(const char *k, const char *v, void *cb)
 			return error("Invalid untracked files mode '%s'", v);
 		return 0;
 	}
-	return git_color_default_config(k, v, cb);
+	return git_diff_ui_config(k, v, cb);
 }

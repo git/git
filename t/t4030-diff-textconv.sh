@@ -52,7 +52,7 @@ test_expect_success 'setup textconv filters' '
 	git config diff.fail.textconv false
 '
 
-test_expect_failure 'diff produces text' '
+test_expect_success 'diff produces text' '
 	git diff HEAD^ HEAD >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.text actual
@@ -64,23 +64,31 @@ test_expect_success 'diff-tree produces binary' '
 	test_cmp expect.binary actual
 '
 
-test_expect_failure 'log produces text' '
+test_expect_success 'log produces text' '
 	git log -1 -p >log &&
 	find_diff <log >actual &&
 	test_cmp expect.text actual
 '
 
-test_expect_failure 'format-patch produces binary' '
+test_expect_success 'format-patch produces binary' '
 	git format-patch --no-binary --stdout HEAD^ >patch &&
 	find_diff <patch >actual &&
 	test_cmp expect.binary actual
+'
+
+test_expect_success 'status -v produces text' '
+	git reset --soft HEAD^ &&
+	git status -v >diff &&
+	find_diff <diff >actual &&
+	test_cmp expect.text actual &&
+	git reset --soft HEAD@{1}
 '
 
 cat >expect.stat <<'EOF'
  file |  Bin 2 -> 4 bytes
  1 files changed, 0 insertions(+), 0 deletions(-)
 EOF
-test_expect_failure 'diffstat does not run textconv' '
+test_expect_success 'diffstat does not run textconv' '
 	echo file diff=fail >.gitattributes &&
 	git diff --stat HEAD^ HEAD >actual &&
 	test_cmp expect.stat actual
@@ -104,7 +112,7 @@ index ad8b3d2..67be421
 \ No newline at end of file
 EOF
 # make a symlink the hard way that works on symlink-challenged file systems
-test_expect_failure 'textconv does not act on symlinks' '
+test_expect_success 'textconv does not act on symlinks' '
 	printf frotz > file &&
 	git add file &&
 	git ls-files -s | sed -e s/100644/120000/ |
