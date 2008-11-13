@@ -4005,8 +4005,10 @@ proc ishighlighted {id} {
 }
 
 proc bolden {row font} {
-    global canv linehtag selectedline boldrows
+    global canv linehtag selectedline boldrows need_redisplay
 
+    # need_redisplay = 1 means the display is stale and about to be redrawn
+    if {$need_redisplay} return
     lappend boldrows $row
     $canv itemconf $linehtag($row) -font $font
     if {$row == $selectedline} {
@@ -4019,8 +4021,9 @@ proc bolden {row font} {
 }
 
 proc bolden_name {row font} {
-    global canv2 linentag selectedline boldnamerows
+    global canv2 linentag selectedline boldnamerows need_redisplay
 
+    if {$need_redisplay} return
     lappend boldnamerows $row
     $canv2 itemconf $linentag($row) -font $font
     if {$row == $selectedline} {
