@@ -53,5 +53,21 @@ test_expect_success 'loose objects in alternate ODB are not repacked' '
 	test -z "$found_duplicate_object"
 '
 
+test_expect_success 'packed obs in alt ODB are repacked even when local repo is packless' '
+	mkdir alt_objects/pack
+	mv .git/objects/pack/* alt_objects/pack &&
+	git repack -a &&
+	myidx=$(ls -1 .git/objects/pack/*.idx) &&
+	test -f "$myidx" &&
+	for p in alt_objects/pack/*.idx; do
+		git verify-pack -v $p | sed -n -e "/^[0-9a-f]\{40\}/p"
+	done | while read sha1 rest; do
+		if ! ( git verify-pack -v $myidx | grep "^$sha1" ); then
+			echo "Missing object in local pack: $sha1"
+			return 1
+		fi
+	done
+'
+
 test_done
 
