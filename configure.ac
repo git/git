@@ -446,6 +446,14 @@ GIT_CHECK_FUNC(strlcpy,
 [NO_STRLCPY=YesPlease])
 AC_SUBST(NO_STRLCPY)
 #
+# Define NO_UINTMAX_T if your platform does not have uintmax_t
+AC_CHECK_TYPE(uintmax_t,
+[NO_UINTMAX_T=],
+[NO_UINTMAX_T=YesPlease],[
+#include <inttypes.h>
+])
+AC_SUBST(NO_UINTMAX_T)
+#
 # Define NO_STRTOUMAX if you don't have strtoumax in the C library.
 GIT_CHECK_FUNC(strtoumax,
 [NO_STRTOUMAX=],
@@ -481,6 +489,22 @@ AC_SUBST(NO_MKDTEMP)
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
+#
+# Define PTHREAD_LIBS to the linker flag used for Pthread support.
+AC_LANG_CONFTEST([AC_LANG_PROGRAM(
+  [[#include <pthread.h>]],
+  [[pthread_mutex_t test_mutex;]]
+)])
+${CC} -pthread conftest.c -o conftest.o > /dev/null 2>&1
+if test $? -eq 0;then
+ PTHREAD_LIBS="-pthread"
+else
+ ${CC} -lpthread conftest.c -o conftest.o > /dev/null 2>&1
+ if test $? -eq 0;then
+  PTHREAD_LIBS="-lpthread"
+ fi
+fi
+AC_SUBST(PTHREAD_LIBS)
 
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE

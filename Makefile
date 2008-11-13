@@ -229,6 +229,7 @@ INSTALL = install
 RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
+PTHREAD_LIBS = -lpthread
 
 export TCL_PATH TCLTK_PATH
 
@@ -690,6 +691,11 @@ ifeq ($(uname_S),FreeBSD)
 	BASIC_LDFLAGS += -L/usr/local/lib
 	DIR_HAS_BSD_GROUP_SEMANTICS = YesPlease
 	THREADED_DELTA_SEARCH = YesPlease
+	ifeq ($(shell expr "$(uname_R)" : '4\.'),2)
+		PTHREAD_LIBS = -pthread
+		NO_UINTMAX_T = YesPlease
+		NO_STRTOUMAX = YesPlease
+	endif
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
@@ -949,6 +955,9 @@ endif
 ifdef NO_IPV6
 	BASIC_CFLAGS += -DNO_IPV6
 endif
+ifdef NO_UINTMAX_T
+	BASIC_CFLAGS += -Duintmax_t=uint32_t
+endif
 ifdef NO_SOCKADDR_STORAGE
 ifdef NO_IPV6
 	BASIC_CFLAGS += -Dsockaddr_storage=sockaddr_in
@@ -1010,7 +1019,7 @@ endif
 
 ifdef THREADED_DELTA_SEARCH
 	BASIC_CFLAGS += -DTHREADED_DELTA_SEARCH
-	EXTLIBS += -lpthread
+	EXTLIBS += $(PTHREAD_LIBS)
 	LIB_OBJS += thread-utils.o
 endif
 ifdef DIR_HAS_BSD_GROUP_SEMANTICS
