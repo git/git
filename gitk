@@ -8270,7 +8270,6 @@ proc mkbranch {} {
     grid $top.id $top.sha1 -sticky w
     label $top.nlab -text [mc "Name:"]
     entry $top.name -width 40
-    bind $top.name <Key-Return> "[list mkbrgo $top]"
     grid $top.nlab $top.name -sticky w
     frame $top.buts
     button $top.buts.go -text [mc "Create"] -command [list mkbrgo $top]
