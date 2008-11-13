@@ -40,6 +40,10 @@ include::diff-options.txt[]
 --decorate::
 	Print out the ref names of any commits that are shown.
 
+--source::
+	Print out the ref name given on the command line by which each
+	commit was reached.
+
 --full-diff::
 	Without this flag, "git log -p <path>..." shows commits that
 	touch the specified paths, and diffs about the same specified
