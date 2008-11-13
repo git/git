@@ -796,6 +796,14 @@ gui.diffcontext::
 	Specifies how many context lines should be used in calls to diff
 	made by the linkgit:git-gui[1]. The default is "5".
 
+gui.encoding::
+	Specifies the default encoding to use for displaying of
+	file contents in linkgit:git-gui[1] and linkgit:gitk[1].
+	It can be overridden by setting the 'encoding' attribute
+	for relevant files (see linkgit:gitattributes[5]).
+	If this option is not set, the tools default to the
+	locale encoding.
+
 gui.matchtrackingbranch::
 	Determines if new branches created with linkgit:git-gui[1] should
 	default to tracking remote branches with matching names or
@@ -817,6 +825,22 @@ gui.spellingdictionary::
 	Specifies the dictionary used for spell checking commit messages in
 	the linkgit:git-gui[1]. When set to "none" spell checking is turned
 	off.
+
+gui.fastcopyblame::
+	If true, 'git gui blame' uses '-C' instead of '-C -C' for original
+	location detection. It makes blame significantly faster on huge
+	repositories at the expense of less thorough copy detection.
+
+gui.copyblamethreshold::
+	Specifies the theshold to use in 'git gui blame' original location
+	detection, measured in alphanumeric characters. See the
+	linkgit:git-blame[1] manual for more information on copy detection.
+
+gui.blamehistoryctx::
+	Specifies the radius of history context in days to show in
+	linkgit:gitk[1] for the selected commit, when the `Show History
+	Context` menu item is invoked from 'git gui blame'. If this
+	variable is set to zero, the whole history is shown.
 
 help.browser::
 	Specify the browser that will be used to display help in the

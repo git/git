@@ -56,6 +56,11 @@ frequently used options.
 	Use this instead of explicitly specifying <revs> if the set of
 	commits to show may vary between refreshes.
 
+--select-commit=<ref>::
+
+	Automatically select the specified commit after loading the graph.
+	Default behavior is equivalent to specifying '--select-commit=HEAD'.
+
 <revs>::
 
 	Limit the revisions to show. This can be either a single revision
