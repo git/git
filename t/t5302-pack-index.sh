@@ -196,7 +196,8 @@ test_expect_success \
 
 test_expect_success \
     '[index v2] 5) pack-objects refuses to reuse corrupted data' \
-    'test_must_fail git pack-objects test-5 <obj-list'
+    'test_must_fail git pack-objects test-5 <obj-list &&
+     test_must_fail git pack-objects --no-reuse-object test-6 <obj-list'
 
 test_expect_success \
     '[index v2] 6) verify-pack detects CRC mismatch' \
