@@ -8,7 +8,7 @@
 # at the discretion of Junio C Hamano.
 #
 
-USAGE='[--tool=tool] [file to merge] ...'
+USAGE='[--tool=tool] [-y|--no-prompt|--prompt] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
 . git-sh-setup
@@ -176,8 +176,10 @@ merge_file () {
     echo "Normal merge conflict for '$MERGED':"
     describe_file "$local_mode" "local" "$LOCAL"
     describe_file "$remote_mode" "remote" "$REMOTE"
-    printf "Hit return to start merge resolution tool (%s): " "$merge_tool"
-    read ans
+    if "$prompt" = true; then
+	printf "Hit return to start merge resolution tool (%s): " "$merge_tool"
+	read ans
+    fi
 
     case "$merge_tool" in
 	kdiff3)
@@ -280,6 +282,8 @@ merge_file () {
     cleanup_temp_files
 }
 
+prompt=$(git config --bool mergetool.prompt || echo true)
+
 while test $# != 0
 do
     case "$1" in
@@ -294,6 +298,12 @@ do
 		    merge_tool="$2"
 		    shift ;;
 	    esac
+	    ;;
+	-y|--no-prompt)
+	    prompt=false
+	    ;;
+	--prompt)
+	    prompt=true
 	    ;;
 	--)
 	    break
