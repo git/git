@@ -39,6 +39,11 @@ mk_test () {
 	)
 }
 
+mk_child() {
+	rm -rf "$1" &&
+	git clone testrepo "$1"
+}
+
 check_push_result () {
 	(
 		cd testrepo &&
@@ -425,13 +430,10 @@ test_expect_success 'push with dry-run' '
 
 test_expect_success 'push updates local refs' '
 
-	rm -rf parent child &&
-	mkdir parent &&
-	(cd parent && git init &&
-		echo one >foo && git add foo && git commit -m one) &&
-	git clone parent child &&
+	mk_test heads/master &&
+	mk_child child &&
 	(cd child &&
-		echo two >foo && git commit -a -m two &&
+		git pull .. master &&
 		git push &&
 	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
 
@@ -439,15 +441,10 @@ test_expect_success 'push updates local refs' '
 
 test_expect_success 'push updates up-to-date local refs' '
 
-	rm -rf parent child &&
-	mkdir parent &&
-	(cd parent && git init &&
-		echo one >foo && git add foo && git commit -m one) &&
-	git clone parent child1 &&
-	git clone parent child2 &&
-	(cd child1 &&
-		echo two >foo && git commit -a -m two &&
-		git push) &&
+	mk_test heads/master &&
+	mk_child child1 &&
+	mk_child child2 &&
+	(cd child1 && git pull .. master && git push) &&
 	(cd child2 &&
 		git pull ../child1 master &&
 		git push &&
@@ -457,11 +454,8 @@ test_expect_success 'push updates up-to-date local refs' '
 
 test_expect_success 'push preserves up-to-date packed refs' '
 
-	rm -rf parent child &&
-	mkdir parent &&
-	(cd parent && git init &&
-		echo one >foo && git add foo && git commit -m one) &&
-	git clone parent child &&
+	mk_test heads/master &&
+	mk_child child &&
 	(cd child &&
 		git push &&
 	! test -f .git/refs/remotes/origin/master)
@@ -470,15 +464,13 @@ test_expect_success 'push preserves up-to-date packed refs' '
 
 test_expect_success 'push does not update local refs on failure' '
 
-	rm -rf parent child &&
-	mkdir parent &&
-	(cd parent && git init &&
-		echo one >foo && git add foo && git commit -m one &&
-		echo exit 1 >.git/hooks/pre-receive &&
-		chmod +x .git/hooks/pre-receive) &&
-	git clone parent child &&
+	mk_test heads/master &&
+	mk_child child &&
+	mkdir testrepo/.git/hooks &&
+	echo exit 1 >testrepo/.git/hooks/pre-receive &&
+	chmod +x testrepo/.git/hooks/pre-receive &&
 	(cd child &&
-		echo two >foo && git commit -a -m two &&
+		git pull .. master
 		test_must_fail git push &&
 		test $(git rev-parse master) != \
 			$(git rev-parse remotes/origin/master))
@@ -487,11 +479,48 @@ test_expect_success 'push does not update local refs on failure' '
 
 test_expect_success 'allow deleting an invalid remote ref' '
 
-	pwd &&
+	mk_test heads/master &&
 	rm -f testrepo/.git/objects/??/* &&
 	git push testrepo :refs/heads/master &&
 	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/master)
 
+'
+
+test_expect_success 'warn on push to HEAD of non-bare repository' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch warn) &&
+	git push testrepo master 2>stderr &&
+	grep "warning.*this may cause confusion" stderr
+'
+
+test_expect_success 'deny push to HEAD of non-bare repository' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch true) &&
+	test_must_fail git push testrepo master
+'
+
+test_expect_success 'allow push to HEAD of bare repository (bare)' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch true &&
+		git config core.bare true) &&
+	git push testrepo master 2>stderr &&
+	! grep "warning.*this may cause confusion" stderr
+'
+
+test_expect_success 'allow push to HEAD of non-bare repository (config)' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch false
+	) &&
+	git push testrepo master 2>stderr &&
+	! grep "warning.*this may cause confusion" stderr
 '
 
 test_done

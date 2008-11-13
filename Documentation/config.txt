@@ -1198,6 +1198,15 @@ receive.denyNonFastForwards::
 	even if that push is forced. This configuration variable is
 	set when initializing a shared repository.
 
+receive.denyCurrentBranch::
+	If set to true or "refuse", receive-pack will deny a ref update
+	to the currently checked out branch of a non-bare repository.
+	Such a push is potentially dangerous because it brings the HEAD
+	out of sync with the index and working tree. If set to "warn",
+	print a warning of such a push to stderr, but allow the push to
+	proceed. If set to false or "ignore", allow such pushes with no
+	message. Defaults to "warn".
+
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
 	not set, the value of this variable is used instead.
