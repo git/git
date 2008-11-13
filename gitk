@@ -1911,6 +1911,9 @@ proc makewindow {} {
 	    {mc "Reload" command reloadcommits -accelerator Meta1-F5}
 	    {mc "Reread references" command rereadrefs}
 	    {mc "List references" command showrefs -accelerator F2}
+	    {xx "" separator}
+	    {mc "Start git gui" command {exec git gui &}}
+	    {xx "" separator}
 	    {mc "Quit" command doquit -accelerator Meta1-Q}
 	}}
 	{mc "Edit" cascade {
