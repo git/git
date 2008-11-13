@@ -43,12 +43,18 @@ constructor pick {} {
 			$w.mbar.apple add command \
 				-label [mc "About %s" [appname]] \
 				-command do_about
+			$w.mbar.apple add command \
+				-label [mc "Show SSH Key"] \
+				-command do_ssh_key
 		} else {
 			$w.mbar add cascade -label [mc Help] -menu $w.mbar.help
 			menu $w.mbar.help
 			$w.mbar.help add command \
 				-label [mc "About %s" [appname]] \
 				-command do_about
+			$w.mbar.help add command \
+				-label [mc "Show SSH Key"] \
+				-command do_ssh_key
 		}
 
 		wm protocol $top WM_DELETE_WINDOW exit

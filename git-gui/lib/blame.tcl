@@ -321,7 +321,7 @@ constructor new {i_commit i_path i_jump} {
 			tk_popup $w.ctxm %X %Y
 		"
 		bind $i <Shift-Tab> "[list focus $w_cviewer];break"
-		bind $i <Tab>       "[list focus $w_cviewer];break"
+		bind $i <Tab>       "[cb _focus_search $w_cviewer];break"
 	}
 
 	foreach i [concat $w_columns $w_cviewer] {
@@ -337,10 +337,10 @@ constructor new {i_commit i_path i_jump} {
 		bind $i <Control-Key-f> {catch {%W yview scroll  1 pages};break}
 	}
 
-	bind $w_cviewer <Shift-Tab> "[list focus $w_file];break"
+	bind $w_cviewer <Shift-Tab> "[cb _focus_search $w_file];break"
 	bind $w_cviewer <Tab>       "[list focus $w_file];break"
-	bind $w_cviewer <Button-1> [list focus $w_cviewer]
-	bind $w_file    <Visibility> [list focus $w_file]
+	bind $w_cviewer <Button-1>   [list focus $w_cviewer]
+	bind $w_file    <Visibility> [cb _focus_search $w_file]
 	bind $top       <F7>         [list searchbar::show $finder]
 	bind $top       <Escape>     [list searchbar::hide $finder]
 	bind $top       <F3>         [list searchbar::find_next $finder]
@@ -380,6 +380,14 @@ constructor new {i_commit i_path i_jump} {
 	bind $top <Destroy> [cb _handle_destroy %W]
 
 	_load $this $i_jump
+}
+
+method _focus_search {win} {
+	if {[searchbar::visible $finder]} {
+		focus [searchbar::editor $finder]
+	} else {
+		focus $win
+	}
 }
 
 method _handle_destroy {win} {
@@ -551,7 +559,7 @@ method _read_file {fd jump} {
 } ifdeleted { catch {close $fd} }
 
 method _exec_blame {cur_w cur_d options cur_s} {
-	lappend options --incremental
+	lappend options --incremental --encoding=utf-8
 	if {$commit eq {}} {
 		lappend options --contents $path
 	} else {
