@@ -1245,6 +1245,18 @@ method _open_tooltip {cur_w} {
 
 	$tooltip_t conf -state disabled
 	_position_tooltip $this
+
+	# On MacOS raising a window causes it to acquire focus.
+	# Tk 8.5 on MacOS seems to properly support wm transient,
+	# so we can safely counter the effect there.
+	if {$::have_tk85 && [is_MacOSX]} {
+		update
+		if {$w eq {}} {
+			raise .
+		} else {
+			raise $w
+		}
+	}
 }
 
 method _position_tooltip {} {
@@ -1268,7 +1280,9 @@ method _position_tooltip {} {
 	append g $pos_y
 
 	wm geometry $tooltip_wm $g
-	raise $tooltip_wm
+	if {![is_MacOSX]} {
+		raise $tooltip_wm
+	}
 }
 
 method _hide_tooltip {} {
