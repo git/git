@@ -401,25 +401,25 @@ fi
 
 
 if test $# -eq 0 ; then
-	files=`git ls-files -u | sed -e 's/^[^	]*	//' | sort -u`
-	if test -z "$files" ; then
-		echo "No files need merging"
-		exit 0
-	fi
-	echo Merging the files: "$files"
-	git ls-files -u |
-	sed -e 's/^[^	]*	//' |
-	sort -u |
-	while IFS= read i
-	do
-		printf "\n"
-		merge_file "$i" < /dev/tty > /dev/tty
-	done
+    files=`git ls-files -u | sed -e 's/^[^	]*	//' | sort -u`
+    if test -z "$files" ; then
+	echo "No files need merging"
+	exit 0
+    fi
+    echo Merging the files: "$files"
+    git ls-files -u |
+    sed -e 's/^[^	]*	//' |
+    sort -u |
+    while IFS= read i
+    do
+	printf "\n"
+	merge_file "$i" < /dev/tty > /dev/tty
+    done
 else
-	while test $# -gt 0; do
-		printf "\n"
-		merge_file "$1"
-		shift
-	done
+    while test $# -gt 0; do
+	printf "\n"
+	merge_file "$1"
+	shift
+    done
 fi
 exit 0
