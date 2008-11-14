@@ -3332,11 +3332,11 @@ sub change_file_prop {
 
 sub apply_textdelta {
 	my ($self, $fb, $exp) = @_;
-	my $fh = Git::temp_acquire('svn_delta');
+	my $fh = $::_repository->temp_acquire('svn_delta');
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
 	open my $dup, '<&', $fh or croak $!;
-	my $base = Git::temp_acquire('git_blob');
+	my $base = $::_repository->temp_acquire('git_blob');
 	if ($fb->{blob}) {
 		print $base 'link ' if ($fb->{mode_a} == 120000);
 		my $size = $::_repository->cat_blob($fb->{blob}, $base);
@@ -3377,7 +3377,8 @@ sub close_file {
 				warn "$path has mode 120000",
 						" but is not a link\n";
 			} else {
-				my $tmp_fh = Git::temp_acquire('svn_hash');
+				my $tmp_fh = $::_repository->temp_acquire(
+					'svn_hash');
 				my $res;
 				while ($res = sysread($fh, my $str, 1024)) {
 					my $out = syswrite($tmp_fh, $str, $res);
@@ -3765,7 +3766,7 @@ sub change_file_prop {
 
 sub _chg_file_get_blob ($$$$) {
 	my ($self, $fbat, $m, $which) = @_;
-	my $fh = Git::temp_acquire("git_blob_$which");
+	my $fh = $::_repository->temp_acquire("git_blob_$which");
 	if ($m->{"mode_$which"} =~ /^120/) {
 		print $fh 'link ' or croak $!;
 		$self->change_file_prop($fbat,'svn:special','*');
