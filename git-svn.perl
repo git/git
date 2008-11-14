@@ -223,11 +223,13 @@ unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 			    "but it is not a directory\n";
 		}
 		my $git_dir = delete $ENV{GIT_DIR};
-		chomp(my $cdup = command_oneline(qw/rev-parse --show-cdup/));
-		unless (length $cdup) {
-			die "Already at toplevel, but $git_dir ",
-			    "not found '$cdup'\n";
-		}
+		my $cdup = undef;
+		git_cmd_try {
+			$cdup = command_oneline(qw/rev-parse --show-cdup/);
+			$git_dir = '.' unless ($cdup);
+			chomp $cdup if ($cdup);
+			$cdup = "." unless ($cdup && length $cdup);
+		} "Already at toplevel, but $git_dir not found\n";
 		chdir $cdup or die "Unable to chdir up to '$cdup'\n";
 		unless (-d $git_dir) {
 			die "$git_dir still not found after going to ",
@@ -852,7 +854,7 @@ sub escape_uri_only {
 	my ($uri) = @_;
 	my @tmp;
 	foreach (split m{/}, $uri) {
-		s/([^\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
+		s/([^~\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
 		push @tmp, $_;
 	}
 	join('/', @tmp);
@@ -1136,9 +1138,19 @@ sub get_commit_entry {
 		system($editor, $commit_editmsg);
 	}
 	rename $commit_editmsg, $commit_msg or croak $!;
-	open $log_fh, '<', $commit_msg or croak $!;
-	{ local $/; chomp($log_entry{log} = <$log_fh>); }
-	close $log_fh or croak $!;
+	{
+		# SVN requires messages to be UTF-8 when entering the repo
+		local $/;
+		open $log_fh, '<', $commit_msg or croak $!;
+		binmode $log_fh;
+		chomp($log_entry{log} = <$log_fh>);
+
+		if (my $enc = Git::config('i18n.commitencoding')) {
+			require Encode;
+			Encode::from_to($log_entry{log}, $enc, 'UTF-8');
+		}
+		close $log_fh or croak $!;
+	}
 	unlink $commit_msg;
 	\%log_entry;
 }
@@ -2273,6 +2285,14 @@ sub do_git_commit {
 	}
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
+	binmode $msg_fh;
+
+	# we always get UTF-8 from SVN, but we may want our commits in
+	# a different encoding.
+	if (my $enc = Git::config('i18n.commitencoding')) {
+		require Encode;
+		Encode::from_to($log_entry->{log}, 'UTF-8', $enc);
+	}
 	print $msg_fh $log_entry->{log} or croak $!;
 	restore_commit_header_env($old_env);
 	unless ($self->no_metadata) {
@@ -3537,7 +3557,7 @@ sub repo_path {
 sub url_path {
 	my ($self, $path) = @_;
 	if ($self->{url} =~ m#^https?://#) {
-		$path =~ s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
+		$path =~ s/([^~a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
 	}
 	$self->{url} . '/' . $self->repo_path($path);
 }
@@ -3890,7 +3910,7 @@ sub escape_uri_only {
 	my ($uri) = @_;
 	my @tmp;
 	foreach (split m{/}, $uri) {
-		s/([^\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
+		s/([^~\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
 		push @tmp, $_;
 	}
 	join('/', @tmp);
