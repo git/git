@@ -413,6 +413,15 @@ data writes properly, but can be useful for filesystems that do not use
 journalling (traditional UNIX filesystems) or that only journal metadata
 and not file contents (OS X's HFS+, or Linux ext3 with "data=writeback").
 
+core.preloadindex::
+	Enable parallel index preload for operations like 'git diff'
++
+This can speed up operations like 'git diff' and 'git status' especially
+on filesystems like NFS that have weak caching semantics and thus
+relatively high IO latencies.  With this set to 'true', git will do the
+index comparison to the filesystem data in parallel, allowing
+overlapping IO's.
+
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
