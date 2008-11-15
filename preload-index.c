@@ -2,6 +2,14 @@
  * Copyright (C) 2008 Linus Torvalds
  */
 #include "cache.h"
+
+#ifdef NO_PTHREADS
+static void preload_index(struct index_state *index, const char **pathspec)
+{
+	; /* nothing */
+}
+#else
+
 #include <pthread.h>
 
 /*
@@ -81,6 +89,7 @@ static void preload_index(struct index_state *index, const char **pathspec)
 			die("unable to join threaded lstat");
 	}
 }
+#endif
 
 int read_index_preload(struct index_state *index, const char **pathspec)
 {
