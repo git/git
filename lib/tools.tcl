@@ -102,13 +102,15 @@ proc tools_exec {fullname} {
 
 	set cmdline $repo_config(guitool.$fullname.cmd)
 	if {[is_config_true "guitool.$fullname.noconsole"]} {
-		exec sh -c $cmdline &
+		tools_run_silent [list sh -c $cmdline] \
+				 [list tools_complete $fullname {}]
 	} else {
 		regsub {/} $fullname { / } title
 		set w [console::new \
 			[mc "Tool: %s" $title] \
 			[mc "Running: %s" $cmdline]]
-		console::exec $w [list sh -c $cmdline]
+		console::exec $w [list sh -c $cmdline] \
+				 [list tools_complete $fullname $w]
 	}
 
 	unset env(GIT_GUITOOL)
@@ -116,4 +118,42 @@ proc tools_exec {fullname} {
 	unset env(CUR_BRANCH)
 	catch { unset env(ARGS) }
 	catch { unset env(REVISION) }
+}
+
+proc tools_run_silent {cmd after} {
+	lappend cmd 2>@1
+	set fd [_open_stdout_stderr $cmd]
+
+	fconfigure $fd -blocking 0 -translation binary
+	fileevent $fd readable [list tools_consume_input $fd $after]
+}
+
+proc tools_consume_input {fd after} {
+	read $fd
+	if {[eof $fd]} {
+		fconfigure $fd -blocking 1
+		if {[catch {close $fd}]} {
+			uplevel #0 $after 0
+		} else {
+			uplevel #0 $after 1
+		}
+	}
+}
+
+proc tools_complete {fullname w {ok 1}} {
+	if {$w ne {}} {
+		console::done $w $ok
+	}
+
+	if {$ok} {
+		set msg [mc "Tool completed succesfully: %s" $fullname]
+	} else {
+		set msg [mc "Tool failed: %s" $fullname]
+	}
+
+	if {[is_config_true "guitool.$fullname.norescan"]} {
+		ui_status $msg
+	} else {
+		rescan [list ui_status $msg]
+	}
 }
