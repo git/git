@@ -12,6 +12,8 @@ field add_global    0; # add to the --global config
 field no_console    0; # disable using the console
 field needs_file    0; # ensure filename is set
 field confirm       0; # ask for confirmation
+field ask_branch    0; # ask for a revision
+field ask_args      0; # ask for additional args
 
 constructor dialog {} {
 	global repo_config
@@ -69,9 +71,22 @@ constructor dialog {} {
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
 	checkbutton $w.confirm \
-		-text [mc "Ask for confirmation before running"] \
-		-variable @confirm
-	pack $w.confirm -anchor w -pady {5 0} -padx 5
+		-text [mc "Show a dialog before running"] \
+		-variable @confirm -command [cb _check_enable_dlg]
+
+	labelframe $w.dlg -labelwidget $w.confirm
+
+	checkbutton $w.dlg.askbranch \
+		-text [mc "Ask the user to select a revision (sets \$REVISION)"] \
+		-variable @ask_branch -state disabled
+	pack $w.dlg.askbranch -anchor w -padx 15
+
+	checkbutton $w.dlg.askargs \
+		-text [mc "Ask the user for additional arguments (sets \$ARGS)"] \
+		-variable @ask_args -state disabled
+	pack $w.dlg.askargs -anchor w -padx 15
+
+	pack $w.dlg -anchor nw -fill x -pady {0 8} -padx 5
 
 	checkbutton $w.noconsole \
 		-text [mc "Don't show the command output window"] \
@@ -87,6 +102,16 @@ constructor dialog {} {
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [cb _add]\;break
 	tkwait window $w
+}
+
+method _check_enable_dlg {} {
+	if {$confirm} {
+		$w.dlg.askbranch configure -state normal
+		$w.dlg.askargs configure -state normal
+	} else {
+		$w.dlg.askbranch configure -state disabled
+		$w.dlg.askargs configure -state disabled
+	}
 }
 
 method _add {} {
@@ -110,8 +135,14 @@ method _add {} {
 	if {$add_global} { lappend cmd --global }
 	set items {}
 	if {$no_console} { lappend items "guitool.$name.noconsole" }
-	if {$confirm}    { lappend items "guitool.$name.confirm" }
 	if {$needs_file} { lappend items "guitool.$name.needsfile" }
+	if {$confirm} {
+		if {$ask_args}   { lappend items "guitool.$name.argprompt" }
+		if {$ask_branch} { lappend items "guitool.$name.revprompt" }
+		if {!$ask_args && !$ask_branch} {
+			lappend items "guitool.$name.confirm"
+		}
+	}
 
 	if {[catch {
 		eval $cmd [list $item $command]
@@ -229,6 +260,162 @@ method _remove {} {
 method _visible {} {
 	grab $w
 	focus $w_names
+}
+
+}
+
+class tools_askdlg {
+
+field w              ; # widget path
+field w_rev        {}; # revision browser
+field w_args       {}; # arguments
+
+field is_ask_args   0; # has arguments field
+field is_ask_revs   0; # has revision browser
+
+field is_ok         0; # ok to start
+field argstr       {}; # arguments
+
+constructor dialog {fullname} {
+	global M1B
+
+	set title [get_config "guitool.$fullname.title"]
+	if {$title eq {}} {
+		regsub {/} $fullname { / } title
+	}
+
+	make_toplevel top w -autodelete 0
+	wm title $top [append "[appname] ([reponame]): " $title]
+	if {$top ne {.}} {
+		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
+		wm transient $top .
+	}
+
+	set prompt [get_config "guitool.$fullname.prompt"]
+	if {$prompt eq {}} {
+		set command [get_config "guitool.$fullname.cmd"]
+		set prompt [mc "Run Command: %s" $command]
+	}
+
+	label $w.header -text $prompt -font font_uibold
+	pack $w.header -side top -fill x
+
+	set argprompt [get_config "guitool.$fullname.argprompt"]
+	set revprompt [get_config "guitool.$fullname.revprompt"]
+
+	set is_ask_args [expr {$argprompt ne {}}]
+	set is_ask_revs [expr {$revprompt ne {}}]
+
+	if {$is_ask_args} {
+		if {$argprompt eq {yes} || $argprompt eq {true} || $argprompt eq {1}} {
+			set argprompt [mc "Arguments"]
+		}
+
+		labelframe $w.arg -text $argprompt
+
+		set w_args $w.arg.txt
+		entry $w_args \
+			-borderwidth 1 \
+			-relief sunken \
+			-width 40 \
+			-textvariable @argstr
+		pack $w_args -padx 5 -pady 5 -fill both
+		pack $w.arg -anchor nw -fill both -pady 5 -padx 5
+	}
+
+	if {$is_ask_revs} {
+		if {$revprompt eq {yes} || $revprompt eq {true} || $revprompt eq {1}} {
+			set revprompt [mc "Revision"]
+		}
+
+		if {[is_config_true "guitool.$fullname.revunmerged"]} {
+			set w_rev [::choose_rev::new_unmerged $w.rev $revprompt]
+		} else {
+			set w_rev [::choose_rev::new $w.rev $revprompt]
+		}
+
+		pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
+	}
+
+	frame $w.buttons
+	if {$is_ask_revs} {
+		button $w.buttons.visualize \
+			-text [mc Visualize] \
+			-command [cb _visualize]
+		pack $w.buttons.visualize -side left
+	}
+	button $w.buttons.ok \
+		-text [mc OK] \
+		-command [cb _start]
+	pack $w.buttons.ok -side right
+	button $w.buttons.cancel \
+		-text [mc "Cancel"] \
+		-command [cb _cancel]
+	pack $w.buttons.cancel -side right -padx 5
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	bind $w <$M1B-Key-Return> [cb _start]
+	bind $w <Key-Return> [cb _start]
+	bind $w <Key-Escape> [cb _cancel]
+	wm protocol $w WM_DELETE_WINDOW [cb _cancel]
+
+	bind $w <Visibility> [cb _visible]
+	return $this
+}
+
+method execute {} {
+	tkwait window $w
+	set rv $is_ok
+	delete_this
+	return $rv
+}
+
+method _visible {} {
+	grab $w
+	if {$is_ask_args} {
+		focus $w_args
+	} elseif {$is_ask_revs} {
+		$w_rev focus_filter
+	}
+}
+
+method _cancel {} {
+	wm protocol $w WM_DELETE_WINDOW {}
+	destroy $w
+}
+
+method _rev {} {
+	if {[catch {$w_rev commit_or_die}]} {
+		return {}
+	}
+	return [$w_rev get]
+}
+
+method _visualize {} {
+	global current_branch
+	set rev [_rev $this]
+	if {$rev ne {}} {
+		do_gitk [list --left-right "$current_branch...$rev"]
+	}
+}
+
+method _start {} {
+	global env
+
+	if {$is_ask_revs} {
+		set name [_rev $this]
+		if {$name eq {}} {
+			return
+		}
+		set env(REVISION) $name
+	}
+
+	if {$is_ask_args} {
+		set env(ARGS) $argstr
+	}
+
+	set is_ok 1
+	_cancel $this
 }
 
 }

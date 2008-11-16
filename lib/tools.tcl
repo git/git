@@ -77,7 +77,16 @@ proc tools_exec {fullname} {
 		}
 	}
 
-	if {[is_config_true "guitool.$fullname.confirm"]} {
+	catch { unset env(ARGS) }
+	catch { unset env(REVISION) }
+
+	if {[get_config "guitool.$fullname.revprompt"] ne {} ||
+	    [get_config "guitool.$fullname.argprompt"] ne {}} {
+		set dlg [tools_askdlg::dialog $fullname]
+		if {![tools_askdlg::execute $dlg]} {
+			return
+		}
+	} elseif {[is_config_true "guitool.$fullname.confirm"]} {
 		if {[ask_popup [mc "Are you sure you want to run %s?" $fullname]] ne {yes}} {
 			return
 		}
@@ -105,4 +114,6 @@ proc tools_exec {fullname} {
 	unset env(GIT_GUITOOL)
 	unset env(FILENAME)
 	unset env(CUR_BRANCH)
+	catch { unset env(ARGS) }
+	catch { unset env(REVISION) }
 }
