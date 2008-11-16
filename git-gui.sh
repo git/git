@@ -2289,6 +2289,9 @@ if {[is_enabled transport]} {
 	.mbar add cascade -label [mc Merge] -menu .mbar.merge
 	.mbar add cascade -label [mc Remote] -menu .mbar.remote
 }
+if {[is_enabled multicommit] || [is_enabled singlecommit]} {
+	.mbar add cascade -label [mc Tools] -menu .mbar.tools
+}
 . configure -menu .mbar
 
 # -- Repository Menu
@@ -2561,6 +2564,20 @@ if {[is_MacOSX]} {
 	.mbar.edit add separator
 	.mbar.edit add command -label [mc "Options..."] \
 		-command do_options
+}
+
+# -- Tools Menu
+#
+if {[is_enabled multicommit] || [is_enabled singlecommit]} {
+	set tools_menubar .mbar.tools
+	menu $tools_menubar
+	$tools_menubar add separator
+	$tools_menubar add command -label [mc "Add..."] -command tools_add::dialog
+	$tools_menubar add command -label [mc "Remove..."] -command tools_remove::dialog
+	set tools_tailcnt 3
+	if {[array names repo_config guitool.*.cmd] ne {}} {
+		tools_populate_all
+	}
 }
 
 # -- Help Menu
