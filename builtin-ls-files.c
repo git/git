@@ -227,6 +227,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 			int dtype = ce_to_dtype(ce);
 			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
 				continue;
+			if (ce->ce_flags & CE_UPDATE)
+				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
 				show_ce_entry(tag_removed, ce);
