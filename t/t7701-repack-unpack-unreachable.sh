@@ -8,7 +8,7 @@ fsha1=
 csha1=
 tsha1=
 
-test_expect_success '-A option leaves unreachable objects unpacked' '
+test_expect_success '-A with -d option leaves unreachable objects unpacked' '
 	echo content > file1 &&
 	git add . &&
 	git commit -m initial_commit &&
@@ -58,7 +58,7 @@ compare_mtimes ()
 		' -- "$@"
 }
 
-test_expect_success 'unpacked objects receive timestamp of pack file' '
+test_expect_success '-A without -d option leaves unreachable objects packed' '
 	fsha1path=$(echo "$fsha1" | sed -e "s|\(..\)|\1/|") &&
 	fsha1path=".git/objects/$fsha1path" &&
 	csha1path=$(echo "$csha1" | sed -e "s|\(..\)|\1/|") &&
@@ -75,7 +75,19 @@ test_expect_success 'unpacked objects receive timestamp of pack file' '
 	git branch -D transient_branch &&
 	sleep 1 &&
 	git repack -A -l &&
-	compare_mtimes "$packfile" "$fsha1path" "$csha1path" "$tsha1path"
+	test ! -f "$fsha1path" &&
+	test ! -f "$csha1path" &&
+	test ! -f "$tsha1path" &&
+	git show $fsha1 &&
+	git show $csha1 &&
+	git show $tsha1
+'
+
+test_expect_success 'unpacked objects receive timestamp of pack file' '
+	tmppack=".git/objects/pack/tmp_pack" &&
+	ln "$packfile" "$tmppack" &&
+	git repack -A -l -d &&
+	compare_mtimes "$tmppack" "$fsha1path" "$csha1path" "$tsha1path"
 '
 
 test_done
