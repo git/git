@@ -1491,10 +1491,8 @@ proc rescan_done {fd buf after} {
 	prune_selection
 	unlock_index
 	display_all_files
-	if {$current_diff_path ne {}} reshow_diff
-	if {$current_diff_path eq {}} select_first_diff
-
-	uplevel #0 $after
+	if {$current_diff_path ne {}} { reshow_diff $after }
+	if {$current_diff_path eq {}} { select_first_diff $after }
 }
 
 proc prune_selection {} {
@@ -2006,16 +2004,16 @@ proc do_rescan {} {
 }
 
 proc ui_do_rescan {} {
-	rescan {force_first_diff; ui_ready}
+	rescan {force_first_diff ui_ready}
 }
 
 proc do_commit {} {
 	commit_tree
 }
 
-proc next_diff {} {
+proc next_diff {{after {}}} {
 	global next_diff_p next_diff_w next_diff_i
-	show_diff $next_diff_p $next_diff_w {}
+	show_diff $next_diff_p $next_diff_w {} {} $after
 }
 
 proc find_anchor_pos {lst name} {
@@ -2100,25 +2098,42 @@ proc next_diff_after_action {w path {lno {}} {mmask {}}} {
 	}
 }
 
-proc select_first_diff {} {
+proc select_first_diff {after} {
 	global ui_workdir
 
 	if {[find_next_diff $ui_workdir {} 1 {^_?U}] ||
 	    [find_next_diff $ui_workdir {} 1 {[^O]$}]} {
-		next_diff
+		next_diff $after
+	} else {
+		uplevel #0 $after
 	}
 }
 
-proc force_first_diff {} {
-	global current_diff_path
+proc force_first_diff {after} {
+	global ui_workdir current_diff_path file_states
 
 	if {[info exists file_states($current_diff_path)]} {
 		set state [lindex $file_states($current_diff_path) 0]
-
-		if {[string index $state 1] ne {O}} return
+	} else {
+		set state {OO}
 	}
 
-	select_first_diff
+	set reselect 0
+	if {[string first {U} $state] >= 0} {
+		# Already a conflict, do nothing
+	} elseif {[find_next_diff $ui_workdir $current_diff_path {} {^_?U}]} {
+		set reselect 1
+	} elseif {[string index $state 1] ne {O}} {
+		# Already a diff & no conflicts, do nothing
+	} elseif {[find_next_diff $ui_workdir $current_diff_path {} {[^O]$}]} {
+		set reselect 1
+	}
+
+	if {$reselect} {
+		next_diff $after
+	} else {
+		uplevel #0 $after
+	}
 }
 
 proc toggle_or_diff {w x y} {

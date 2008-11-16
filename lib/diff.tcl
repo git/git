@@ -16,7 +16,7 @@ proc clear_diff {} {
 	$ui_workdir tag remove in_diff 0.0 end
 }
 
-proc reshow_diff {} {
+proc reshow_diff {{after {}}} {
 	global file_states file_lists
 	global current_diff_path current_diff_side
 	global ui_diff
@@ -30,13 +30,13 @@ proc reshow_diff {} {
 		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
 
 		if {[find_next_diff $current_diff_side $p {} {[^O]}]} {
-			next_diff
+			next_diff $after
 		} else {
 			clear_diff
 		}
 	} else {
 		set save_pos [lindex [$ui_diff yview] 0]
-		show_diff $p $current_diff_side {} $save_pos
+		show_diff $p $current_diff_side {} $save_pos $after
 	}
 }
 
