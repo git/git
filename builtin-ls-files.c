@@ -329,7 +329,7 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 	if (prefix) {
 		static const char *(matchbuf[2]);
 		matchbuf[0] = prefix;
-		matchbuf [1] = NULL;
+		matchbuf[1] = NULL;
 		match = matchbuf;
 	} else
 		match = NULL;
