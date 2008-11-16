@@ -25,7 +25,7 @@ proc config_check_encodings {} {
 
 proc save_config {} {
 	global default_config font_descs
-	global repo_config global_config
+	global repo_config global_config system_config
 	global repo_config_new global_config_new
 	global ui_comm_spell
 
@@ -49,7 +49,7 @@ proc save_config {} {
 	foreach name [array names default_config] {
 		set value $global_config_new($name)
 		if {$value ne $global_config($name)} {
-			if {$value eq $default_config($name)} {
+			if {$value eq $system_config($name)} {
 				catch {git config --global --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
@@ -284,17 +284,17 @@ proc do_options {} {
 }
 
 proc do_restore_defaults {} {
-	global font_descs default_config repo_config
+	global font_descs default_config repo_config system_config
 	global repo_config_new global_config_new
 
 	foreach name [array names default_config] {
-		set repo_config_new($name) $default_config($name)
-		set global_config_new($name) $default_config($name)
+		set repo_config_new($name) $system_config($name)
+		set global_config_new($name) $system_config($name)
 	}
 
 	foreach option $font_descs {
 		set name [lindex $option 0]
-		set repo_config(gui.$name) $default_config(gui.$name)
+		set repo_config(gui.$name) $system_config(gui.$name)
 	}
 	apply_config
 
