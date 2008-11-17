@@ -770,7 +770,7 @@ static int get_one_remote_for_update(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
 	if (!remote->skip_default_update)
-		string_list_append(xstrdup(remote->name), list);
+		string_list_append(remote->name, list);
 	return 0;
 }
 
