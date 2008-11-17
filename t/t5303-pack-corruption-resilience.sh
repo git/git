@@ -43,8 +43,11 @@ create_new_pack() {
 
 do_repack() {
     pack=`printf "$blob_1\n$blob_2\n$blob_3\n" |
-          git pack-objects $@ .git/objects/pack/pack` &&
-    pack=".git/objects/pack/pack-${pack}"
+          git pack-objects $@ .git/objects/pack/packtmp` &&
+    packtmp=".git/objects/pack/packtmp-${pack}" &&
+    pack=".git/objects/pack/pack-${pack}" &&
+    mv "${packtmp}.pack" "${pack}.pack" &&
+    mv "${packtmp}.idx" "${pack}.idx"
 }
 
 do_corrupt_object() {
