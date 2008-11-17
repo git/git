@@ -97,7 +97,6 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 	unsigned char sha1[20];
 	char *name = NULL;
 	const char *fmt, *remote;
-	char section[PATH_MAX];
 	int i;
 	int ret = 0;
 
@@ -165,11 +164,12 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			       argv[i]);
 			ret = 1;
 		} else {
+			struct strbuf buf = STRBUF_INIT;
 			printf("Deleted %sbranch %s.\n", remote, argv[i]);
-			snprintf(section, sizeof(section), "branch.%s",
-				 argv[i]);
-			if (git_config_rename_section(section, NULL) < 0)
+			strbuf_addf(&buf, "branch.%s", argv[i]);
+			if (git_config_rename_section(buf.buf, NULL) < 0)
 				warning("Update of config-file failed");
+			strbuf_release(&buf);
 		}
 	}
 
