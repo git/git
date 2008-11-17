@@ -8,12 +8,12 @@
 #include "refs.h"
 
 static const char * const builtin_remote_usage[] = {
-	"git remote",
-	"git remote add <name> <url>",
+	"git remote [-v | --verbose]",
+	"git remote add [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>",
 	"git remote rename <old> <new>",
 	"git remote rm <name>",
-	"git remote show <name>",
-	"git remote prune <name>",
+	"git remote show [-n] <name>",
+	"git remote prune [-n | --dry-run] <name>",
 	"git remote update [group]",
 	NULL
 };
