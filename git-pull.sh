@@ -24,9 +24,9 @@ while :
 do
 	case "$1" in
 	-q|--quiet)
-		verbosity=-q ;;
+		verbosity="$verbosity -q" ;;
 	-v|--verbose)
-		verbosity=-v ;;
+		verbosity="$verbosity -v" ;;
 	-n|--no-stat|--no-summary)
 		no_stat=-n ;;
 	--stat|--summary)
