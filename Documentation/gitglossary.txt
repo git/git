@@ -16,8 +16,10 @@ include::glossary-content.txt[]
 
 SEE ALSO
 --------
-linkgit:gittutorial[7], linkgit:gittutorial-2[7],
-linkgit:everyday[7], linkgit:gitcvs-migration[7],
+linkgit:gittutorial[7],
+linkgit:gittutorial-2[7],
+linkgit:gitcvs-migration[7],
+link:everyday.html[Everyday git],
 link:user-manual.html[The Git User's Manual]
 
 GIT

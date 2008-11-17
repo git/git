@@ -1091,4 +1091,15 @@ test_expect_success 'filename for the message is relative to cwd' '
 	git cat-file tag tag-from-subdir-2 | grep "in sub directory"
 '
 
+# mixing modes and options:
+
+test_expect_success 'mixing incompatibles modes and options is forbidden' '
+	test_must_fail git tag -a
+	test_must_fail git tag -l -v
+	test_must_fail git tag -n 100
+	test_must_fail git tag -l -m msg
+	test_must_fail git tag -l -F some file
+	test_must_fail git tag -v -s
+'
+
 test_done

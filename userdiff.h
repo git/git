@@ -14,8 +14,7 @@ struct userdiff_driver {
 	const char *textconv;
 };
 
-int userdiff_config_basic(const char *k, const char *v);
-int userdiff_config_porcelain(const char *k, const char *v);
+int userdiff_config(const char *k, const char *v);
 struct userdiff_driver *userdiff_find_by_name(const char *name);
 struct userdiff_driver *userdiff_find_by_path(const char *path);
 

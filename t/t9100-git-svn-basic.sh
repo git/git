@@ -265,4 +265,13 @@ test_expect_success 'able to set-tree to a subdirectory' "
 	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
 	"
 
+test_expect_success 'git-svn works in a bare repository' '
+	mkdir bare-repo &&
+	( cd bare-repo &&
+	git init --bare &&
+	GIT_DIR=. git svn init "$svnrepo" &&
+	git svn fetch ) &&
+	rm -rf bare-repo
+	'
+
 test_done

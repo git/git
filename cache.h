@@ -262,6 +262,7 @@ static inline void remove_name_hash(struct cache_entry *ce)
 
 #define read_cache() read_index(&the_index)
 #define read_cache_from(path) read_index_from(&the_index, (path))
+#define is_cache_unborn() is_index_unborn(&the_index)
 #define read_cache_unmerged() read_index_unmerged(&the_index)
 #define write_cache(newfd, cache, entries) write_index(&the_index, (newfd))
 #define discard_cache() discard_index(&the_index)
@@ -368,6 +369,7 @@ extern int init_db(const char *template_dir, unsigned int flags);
 /* Initialize and use the cache information */
 extern int read_index(struct index_state *);
 extern int read_index_from(struct index_state *, const char *path);
+extern int is_index_unborn(struct index_state *);
 extern int read_index_unmerged(struct index_state *);
 extern int write_index(const struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
@@ -528,6 +530,12 @@ static inline void hashclr(unsigned char *hash)
 }
 extern int is_empty_blob_sha1(const unsigned char *sha1);
 
+#define EMPTY_TREE_SHA1_HEX \
+	"4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+#define EMPTY_TREE_SHA1_BIN \
+	 "\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60" \
+	 "\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04"
+
 int git_mkstemp(char *path, size_t n, const char *template);
 
 /*
@@ -572,12 +580,16 @@ extern int force_object_loose(const unsigned char *sha1, time_t mtime);
 /* just like read_sha1_file(), but non fatal in presence of bad objects */
 extern void *read_object(const unsigned char *sha1, enum object_type *type, unsigned long *size);
 
+/* global flag to enable extra checks when accessing packed objects */
+extern int do_check_packed_object_crc;
+
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
 extern int move_temp_to_file(const char *tmpfile, const char *filename);
 
 extern int has_sha1_pack(const unsigned char *sha1, const char **ignore);
 extern int has_sha1_file(const unsigned char *sha1);
+extern int has_loose_object_nonlocal(const unsigned char *sha1);
 
 extern int has_pack_file(const unsigned char *sha1);
 extern int has_pack_index(const unsigned char *sha1);
@@ -686,7 +698,8 @@ extern struct packed_git {
 	int index_version;
 	time_t mtime;
 	int pack_fd;
-	int pack_local;
+	unsigned pack_local:1,
+		 pack_keep:1;
 	unsigned char sha1[20];
 	/* something like ".git/objects/pack/xxxxx.pack" */
 	char pack_name[FLEX_ARRAY]; /* more */
@@ -758,7 +771,7 @@ extern const unsigned char *nth_packed_object_sha1(struct packed_git *, uint32_t
 extern off_t nth_packed_object_offset(const struct packed_git *, uint32_t);
 extern off_t find_pack_entry_one(const unsigned char *, struct packed_git *);
 extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsigned long *);
-extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
+extern unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 extern const char *packed_object_info_detail(struct packed_git *, off_t, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 extern int matches_pack_name(struct packed_git *p, const char *name);

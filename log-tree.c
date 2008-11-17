@@ -52,11 +52,15 @@ static void show_parents(struct commit *commit, int abbrev)
 	}
 }
 
-void show_decorations(struct commit *commit)
+void show_decorations(struct rev_info *opt, struct commit *commit)
 {
 	const char *prefix;
 	struct name_decoration *decoration;
 
+	if (opt->show_source && commit->util)
+		printf("\t%s", (char *) commit->util);
+	if (!opt->show_decorations)
+		return;
 	decoration = lookup_decoration(&name_decoration, &commit->object);
 	if (!decoration)
 		return;
@@ -279,7 +283,7 @@ void show_log(struct rev_info *opt)
 		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
-		show_decorations(commit);
+		show_decorations(opt, commit);
 		if (opt->graph && !graph_is_commit_finished(opt->graph)) {
 			putchar('\n');
 			graph_show_remainder(opt->graph);
@@ -352,7 +356,7 @@ void show_log(struct rev_info *opt)
 			printf(" (from %s)",
 			       diff_unique_abbrev(parent->object.sha1,
 						  abbrev_commit));
-		show_decorations(commit);
+		show_decorations(opt, commit);
 		printf("%s", diff_get_color_opt(&opt->diffopt, DIFF_RESET));
 		if (opt->commit_format == CMIT_FMT_ONELINE) {
 			putchar(' ');

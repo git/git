@@ -61,6 +61,7 @@ static int generate_common_file(mmfile_t *res, mmfile_t *f1, mmfile_t *f2)
 	xdemitconf_t xecfg;
 	xdemitcb_t ecb;
 
+	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = XDF_NEED_MINIMAL;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;

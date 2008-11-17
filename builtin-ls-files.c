@@ -227,6 +227,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 			int dtype = ce_to_dtype(ce);
 			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
 				continue;
+			if (ce->ce_flags & CE_UPDATE)
+				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
 				show_ce_entry(tag_removed, ce);
@@ -329,7 +331,7 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 	if (prefix) {
 		static const char *(matchbuf[2]);
 		matchbuf[0] = prefix;
-		matchbuf [1] = NULL;
+		matchbuf[1] = NULL;
 		match = matchbuf;
 	} else
 		match = NULL;

@@ -27,6 +27,8 @@ on.
 
 * Sample pre-auto-gc script has OS X support.
 
+* Makefile has support for (ancient) FreeBSD 4.9.
+
 (performance)
 
 * The underlying diff machinery to produce textual output has been
@@ -52,6 +54,10 @@ on.
   you might have meant to say.  help.autocorrect configuration can be set
   to a non-zero value to accept the suggestion when git can uniquely
   guess.
+
+* The packfile machinery hopefully is more robust when dealilng with
+  corrupt packs if redundant objects involved in the corruption are
+  available elsehwere.
 
 * "git add -N path..." adds the named paths as an empty blob, so that
   subsequent "git diff" will show a diff as if they are creation events.
@@ -110,7 +116,17 @@ on.
 * "git diff" learned --dirstat-by-file to count changed files, not number
   of lines, when summarizing the global picture.
 
+* "git diff" learned "textconv" filters --- a binary or hard-to-read
+  contents can be munged into human readable form and the difference
+  between the results of the conversion can be viewed (obviously this
+  cannot produce a patch that can be applied, so this is disabled in
+  format-patch among other things).
+
 * "git diff" hunk header pattern for ObjC has been added.
+
+* "--cached" option to "git diff has an easier to remember synonym "--staged",
+  to ask "what is the difference between the given commit and the
+  contents staged in the index?"
 
 * a "textconv" filter that makes binary files textual form for human
    consumption can be specified as an attribute for paths; "git diff"
@@ -137,6 +153,12 @@ on.
 
 * "git log" learned --simplify-merges, a milder variant of --full-history;
   "gitk --simplify-merges" is easier to view than with --full-history.
+
+* "git log" learned "--source" to show what ref each commit was reached
+  from.
+
+* "git log" also learned "--simplify-by-decration" to show the
+  birds-eye-view of the topology of the history.
 
 * "git log --pretty=format:" learned "%d" format element that inserts
   names of tags that point at the commit.
@@ -213,6 +235,9 @@ release, unless otherwise noted.
 
 * "git filter-branch" failed to rewrite a tag name with slashes in it.
 
+* "git repack" used to grab objects out of packs marked with .keep
+  into a new pack (fix scheduled to be further downmerged to maint).
+
 * "git push --tags --all $there" failed with generic usage message without
   telling saying these two options are incompatible.
 
@@ -220,8 +245,15 @@ release, unless otherwise noted.
   timestamp part, exposing internal implementation detail.  Also these did
   not work with --fixed-strings match at all.
 
+* "git tag" did not complain about incompatible combination of options
+  e.g. "tag -l -d" (fix scheduled to be further downmerged to maint).
+
+* Internal diff machinery had a corner case performance bug that choked on a
+  large file with many repeated contents (fix scheduled to be further cherry-
+  picked to maint).
+
 --
 exec >/var/tmp/1
-O=v1.6.0.3-639-ga1a846a
+O=v1.6.0.4-697-g168d5bd
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

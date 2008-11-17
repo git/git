@@ -131,19 +131,9 @@ static int too_many_packs(void)
 
 	prepare_packed_git();
 	for (cnt = 0, p = packed_git; p; p = p->next) {
-		char path[PATH_MAX];
-		size_t len;
-		int keep;
-
 		if (!p->pack_local)
 			continue;
-		len = strlen(p->pack_name);
-		if (PATH_MAX <= len + 1)
-			continue; /* oops, give up */
-		memcpy(path, p->pack_name, len-5);
-		memcpy(path + len - 5, ".keep", 6);
-		keep = access(p->pack_name, F_OK) && (errno == ENOENT);
-		if (keep)
+		if (p->pack_keep)
 			continue;
 		/*
 		 * Perhaps check the size of the pack and count only

@@ -30,7 +30,7 @@ our $my_uri = $cgi->url(-absolute => 1);
 # if we're called with PATH_INFO, we have to strip that
 # from the URL to find our real URL
 # we make $path_info global because it's also used later on
-my $path_info = $ENV{"PATH_INFO"};
+our $path_info = $ENV{"PATH_INFO"};
 if ($path_info) {
 	$my_url =~ s,\Q$path_info\E$,,;
 	$my_uri =~ s,\Q$path_info\E$,,;
@@ -94,6 +94,11 @@ our $default_projects_order = "project";
 # show repository only if this file exists
 # (only effective if this variable evaluates to true)
 our $export_ok = "++GITWEB_EXPORT_OK++";
+
+# show repository only if this subroutine returns true
+# when given the path to the project, for example:
+#    sub { return -e "$_[0]/git-daemon-export-ok"; }
+our $export_auth_hook = undef;
 
 # only allow viewing of repositories also shown on the overview page
 our $strict_export = "++GITWEB_STRICT_EXPORT++";
@@ -292,10 +297,10 @@ our %feature = (
 
 	# The 'default' value consists of a list of triplets in the form
 	# (label, link, position) where position is the label after which
-	# to inster the link and link is a format string where %n expands
+	# to insert the link and link is a format string where %n expands
 	# to the project name, %f to the project path within the filesystem,
 	# %h to the current hash (h gitweb parameter) and %b to the current
-	# hash base (hb gitweb parameter).
+	# hash base (hb gitweb parameter); %% expands to %.
 
 	# To enable system wide have in $GITWEB_CONFIG e.g.
 	# $feature{'actions'}{'default'} = [('graphiclog',
@@ -400,7 +405,8 @@ sub check_head_link {
 sub check_export_ok {
 	my ($dir) = @_;
 	return (check_head_link($dir) &&
-		(!$export_ok || -e "$dir/$export_ok"));
+		(!$export_ok || -e "$dir/$export_ok") &&
+		(!$export_auth_hook || $export_auth_hook->($dir)));
 }
 
 # process alternate names for backward compatibility
@@ -436,7 +442,7 @@ $projects_list ||= $projectroot;
 # together during validation: this allows subsequent uses (e.g. href()) to be
 # agnostic of the parameter origin
 
-my %input_params = ();
+our %input_params = ();
 
 # input parameters are stored with the long parameter name as key. This will
 # also be used in the href subroutine to convert parameters to their CGI
@@ -446,7 +452,7 @@ my %input_params = ();
 # XXX: Warning: If you touch this, check the search form for updating,
 # too.
 
-my @cgi_param_mapping = (
+our @cgi_param_mapping = (
 	project => "p",
 	action => "a",
 	file_name => "f",
@@ -463,10 +469,10 @@ my @cgi_param_mapping = (
 	extra_options => "opt",
 	search_use_regexp => "sr",
 );
-my %cgi_param_mapping = @cgi_param_mapping;
+our %cgi_param_mapping = @cgi_param_mapping;
 
 # we will also need to know the possible actions, for validation
-my %actions = (
+our %actions = (
 	"blame" => \&git_blame,
 	"blobdiff" => \&git_blobdiff,
 	"blobdiff_plain" => \&git_blobdiff_plain,
@@ -498,7 +504,7 @@ my %actions = (
 
 # finally, we have the hash of allowed extra_options for the commands that
 # allow them
-my %allowed_options = (
+our %allowed_options = (
 	"--no-merges" => [ qw(rss atom log shortlog history) ],
 );
 
@@ -616,6 +622,45 @@ sub evaluate_path_info {
 			$input_params{'hash_parent'} ||= $parentrefname;
 		}
 	}
+
+	# for the snapshot action, we allow URLs in the form
+	# $project/snapshot/$hash.ext
+	# where .ext determines the snapshot and gets removed from the
+	# passed $refname to provide the $hash.
+	#
+	# To be able to tell that $refname includes the format extension, we
+	# require the following two conditions to be satisfied:
+	# - the hash input parameter MUST have been set from the $refname part
+	#   of the URL (i.e. they must be equal)
+	# - the snapshot format MUST NOT have been defined already (e.g. from
+	#   CGI parameter sf)
+	# It's also useless to try any matching unless $refname has a dot,
+	# so we check for that too
+	if (defined $input_params{'action'} &&
+		$input_params{'action'} eq 'snapshot' &&
+		defined $refname && index($refname, '.') != -1 &&
+		$refname eq $input_params{'hash'} &&
+		!defined $input_params{'snapshot_format'}) {
+		# We loop over the known snapshot formats, checking for
+		# extensions. Allowed extensions are both the defined suffix
+		# (which includes the initial dot already) and the snapshot
+		# format key itself, with a prepended dot
+		while (my ($fmt, %opt) = each %known_snapshot_formats) {
+			my $hash = $refname;
+			my $sfx;
+			$hash =~ s/(\Q$opt{'suffix'}\E|\Q.$fmt\E)$//;
+			next unless $sfx = $1;
+			# a valid suffix was found, so set the snapshot format
+			# and reset the hash parameter
+			$input_params{'snapshot_format'} = $fmt;
+			$input_params{'hash'} = $hash;
+			# we also set the format suffix to the one requested
+			# in the URL: this way a request for e.g. .tgz returns
+			# a .tgz instead of a .tar.gz
+			$known_snapshot_formats{$fmt}{'suffix'} = $sfx;
+			last;
+		}
+	}
 }
 evaluate_path_info();
 
@@ -721,6 +766,10 @@ if (defined $searchtext) {
 our $git_dir;
 $git_dir = "$projectroot/$project" if $project;
 
+# list of supported snapshot formats
+our @snapshot_fmts = gitweb_check_feature('snapshot');
+@snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
+
 # dispatch
 if (!defined $action) {
 	if (defined $hash) {
@@ -768,6 +817,7 @@ sub href (%) {
 		#   - action
 		#   - hash_parent or hash_parent_base:/file_parent
 		#   - hash or hash_base:/filename
+		#   - the snapshot_format as an appropriate suffix
 
 		# When the script is the root DirectoryIndex for the domain,
 		# $href here would be something like http://gitweb.example.com/
@@ -778,6 +828,10 @@ sub href (%) {
 		# Then add the project name, if present
 		$href .= "/".esc_url($params{'project'}) if defined $params{'project'};
 		delete $params{'project'};
+
+		# since we destructively absorb parameters, we keep this
+		# boolean that remembers if we're handling a snapshot
+		my $is_snapshot = $params{'action'} eq 'snapshot';
 
 		# Summary just uses the project path URL, any other action is
 		# added to the URL
@@ -818,6 +872,18 @@ sub href (%) {
 			$href .= esc_url($params{'hash'});
 			delete $params{'hash'};
 		}
+
+		# If the action was a snapshot, we can absorb the
+		# snapshot_format parameter too
+		if ($is_snapshot) {
+			my $fmt = $params{'snapshot_format'};
+			# snapshot_format should always be defined when href()
+			# is called, but just in case some code forgets, we
+			# fall back to the default
+			$fmt ||= $snapshot_fmts[0];
+			$href .= $known_snapshot_formats{$fmt}{'suffix'};
+			delete $params{'snapshot_format'};
+		}
 	}
 
 	# now encode the parameters explicitly
@@ -853,8 +919,7 @@ sub validate_project {
 	my $input = shift || return undef;
 	if (!validate_pathname($input) ||
 		!(-d "$projectroot/$input") ||
-		!check_head_link("$projectroot/$input") ||
-		($export_ok && !(-e "$projectroot/$input/$export_ok")) ||
+		!check_export_ok("$projectroot/$input") ||
 		($strict_export && !project_in_list($input))) {
 		return undef;
 	} else {
@@ -1647,8 +1712,6 @@ sub format_diff_line {
 # linked.  Pass the hash of the tree/commit to snapshot.
 sub format_snapshot_links {
 	my ($hash) = @_;
-	my @snapshot_fmts = gitweb_check_feature('snapshot');
-	@snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
 	my $num_fmts = @snapshot_fmts;
 	if ($num_fmts > 1) {
 		# A parenthesized list of links bearing format names.
@@ -3022,14 +3085,19 @@ sub git_print_page_nav {
 	$arg{'tree'}{'hash_base'} = $treebase if defined $treebase;
 
 	my @actions = gitweb_check_feature('actions');
+	my %repl = (
+		'%' => '%',
+		'n' => $project,         # project name
+		'f' => $git_dir,         # project path within filesystem
+		'h' => $treehead || '',  # current hash ('h' parameter)
+		'b' => $treebase || '',  # hash base ('hb' parameter)
+	);
 	while (@actions) {
-		my ($label, $link, $pos) = (shift(@actions), shift(@actions), shift(@actions));
+		my ($label, $link, $pos) = splice(@actions,0,3);
+		# insert
 		@navs = map { $_ eq $pos ? ($_, $label) : $_ } @navs;
 		# munch munch
-		$link =~ s#%n#$project#g;
-		$link =~ s#%f#$git_dir#g;
-		$treehead ? $link =~ s#%h#$treehead#g : $link =~ s#%h##g;
-		$treebase ? $link =~ s#%b#$treebase#g : $link =~ s#%b##g;
+		$link =~ s/%([%nfhb])/$repl{$1}/g;
 		$arg{$label}{'_href'} = $link;
 	}
 
@@ -4850,20 +4918,17 @@ sub git_tree {
 }
 
 sub git_snapshot {
-	my @supported_fmts = gitweb_check_feature('snapshot');
-	@supported_fmts = filter_snapshot_fmts(@supported_fmts);
-
 	my $format = $input_params{'snapshot_format'};
-	if (!@supported_fmts) {
+	if (!@snapshot_fmts) {
 		die_error(403, "Snapshots not allowed");
 	}
 	# default to first supported snapshot format
-	$format ||= $supported_fmts[0];
+	$format ||= $snapshot_fmts[0];
 	if ($format !~ m/^[a-z0-9]+$/) {
 		die_error(400, "Invalid snapshot format parameter");
 	} elsif (!exists($known_snapshot_formats{$format})) {
 		die_error(400, "Unknown snapshot format");
-	} elsif (!grep($_ eq $format, @supported_fmts)) {
+	} elsif (!grep($_ eq $format, @snapshot_fmts)) {
 		die_error(403, "Unsupported snapshot format");
 	}
 

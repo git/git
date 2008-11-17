@@ -544,6 +544,8 @@ have each person clone that repository with 'git-clone':
 	git remote add origin server:/pub/project
 	git config --add remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
 	git fetch
+# Create a local branch from one of the branches just fetched
+	git checkout -b master FETCH_HEAD
 # Initialize git-svn locally (be sure to use the same URL and -T/-b/-t options as were used on server)
 	git svn init http://svn.example.com/project
 # Pull the latest changes from Subversion

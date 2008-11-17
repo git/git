@@ -455,7 +455,7 @@ bisect_next() {
 	good=$(git for-each-ref --format='^%(objectname)' \
 		"refs/bisect/good-*" | tr '\012' ' ') &&
 	skip=$(git for-each-ref --format='%(objectname)' \
-		"refs/bisect/skip-*" | tr '\012' ' ') &&
+		"refs/bisect/skip-*" | tr '\012' ' ') || exit
 
 	# Maybe some merge bases must be tested first
 	check_good_are_ancestors_of_bad "$bad" "$good" "$skip"

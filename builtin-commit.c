@@ -1015,9 +1015,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	/* Truncate the message just before the diff, if any. */
-	p = strstr(sb.buf, "\ndiff --git a/");
-	if (p != NULL)
-		strbuf_setlen(&sb, p - sb.buf + 1);
+	if (verbose) {
+		p = strstr(sb.buf, "\ndiff --git ");
+		if (p != NULL)
+			strbuf_setlen(&sb, p - sb.buf + 1);
+	}
 
 	if (cleanup_mode != CLEANUP_NONE)
 		stripspace(&sb, cleanup_mode == CLEANUP_ALL);

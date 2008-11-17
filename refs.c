@@ -795,10 +795,10 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	char *ref_file;
 	const char *orig_ref = ref;
 	struct ref_lock *lock;
-	struct stat st;
 	int last_errno = 0;
 	int type, lflags;
 	int mustexist = (old_sha1 && !is_null_sha1(old_sha1));
+	int missing = 0;
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
 	lock->lock_fd = -1;
@@ -826,12 +826,13 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 			orig_ref, strerror(errno));
 		goto error_return;
 	}
+	missing = is_null_sha1(lock->old_sha1);
 	/* When the ref did not exist and we are creating it,
 	 * make sure there is no existing ref that is packed
 	 * whose name begins with our refname, nor a ref whose
 	 * name is a proper prefix of our refname.
 	 */
-	if (is_null_sha1(lock->old_sha1) &&
+	if (missing &&
             !is_refname_available(ref, NULL, get_packed_refs(), 0))
 		goto error_return;
 
@@ -845,7 +846,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	lock->ref_name = xstrdup(ref);
 	lock->orig_ref_name = xstrdup(orig_ref);
 	ref_file = git_path("%s", ref);
-	if (lstat(ref_file, &st) && errno == ENOENT)
+	if (missing)
 		lock->force_write = 1;
 	if ((flags & REF_NODEREF) && (type & REF_ISSYMREF))
 		lock->force_write = 1;
@@ -939,7 +940,7 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 			lock->lk->filename[i] = 0;
 			path = lock->lk->filename;
 		} else {
-			path = git_path(refname);
+			path = git_path("%s", refname);
 		}
 		err = unlink(path);
 		if (err && errno != ENOENT) {

@@ -100,7 +100,7 @@ static void show_commit(struct commit *commit)
 			children = children->next;
 		}
 	}
-	show_decorations(commit);
+	show_decorations(&revs, commit);
 	if (revs.commit_format == CMIT_FMT_ONELINE)
 		putchar(' ');
 	else

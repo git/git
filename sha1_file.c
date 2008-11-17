@@ -423,21 +423,28 @@ void prepare_alt_odb(void)
 	read_info_alternates(get_object_directory(), 0);
 }
 
-static int has_loose_object(const unsigned char *sha1)
+static int has_loose_object_local(const unsigned char *sha1)
 {
 	char *name = sha1_file_name(sha1);
-	struct alternate_object_database *alt;
+	return !access(name, F_OK);
+}
 
-	if (!access(name, F_OK))
-		return 1;
+int has_loose_object_nonlocal(const unsigned char *sha1)
+{
+	struct alternate_object_database *alt;
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		name = alt->name;
-		fill_sha1_path(name, sha1);
+		fill_sha1_path(alt->name, sha1);
 		if (!access(alt->base, F_OK))
 			return 1;
 	}
 	return 0;
+}
+
+static int has_loose_object(const unsigned char *sha1)
+{
+	return has_loose_object_local(sha1) ||
+	       has_loose_object_nonlocal(sha1);
 }
 
 static unsigned int pack_used_ctr;
@@ -841,6 +848,11 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 		return NULL;
 	}
 	memcpy(p->pack_name, path, path_len);
+
+	strcpy(p->pack_name + path_len, ".keep");
+	if (!access(p->pack_name, F_OK))
+		p->pack_keep = 1;
+
 	strcpy(p->pack_name + path_len, ".pack");
 	if (stat(p->pack_name, &st) || !S_ISREG(st.st_mode)) {
 		free(p);
@@ -1110,7 +1122,8 @@ static int legacy_loose_object(unsigned char *map)
 		return 0;
 }
 
-unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep)
+unsigned long unpack_object_header_buffer(const unsigned char *buf,
+		unsigned long len, enum object_type *type, unsigned long *sizep)
 {
 	unsigned shift;
 	unsigned char c;
@@ -1122,10 +1135,10 @@ unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned lon
 	size = c & 15;
 	shift = 4;
 	while (c & 0x80) {
-		if (len <= used)
+		if (len <= used || sizeof(long) * 8 <= shift) {
+			error("bad object header");
 			return 0;
-		if (sizeof(long) * 8 <= shift)
-			return 0;
+		}
 		c = buf[used++];
 		size += (c & 0x7f) << shift;
 		shift += 7;
@@ -1164,7 +1177,7 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	 * really worth it and we don't write it any longer.  But we
 	 * can still read it.
 	 */
-	used = unpack_object_header_gently(map, mapsize, &type, &size);
+	used = unpack_object_header_buffer(map, mapsize, &type, &size);
 	if (!used || !valid_loose_object_type[type])
 		return -1;
 	map += used;
@@ -1313,8 +1326,10 @@ unsigned long get_size_from_delta(struct packed_git *p,
 	} while ((st == Z_OK || st == Z_BUF_ERROR) &&
 		 stream.total_out < sizeof(delta_head));
 	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) && stream.total_out != sizeof(delta_head))
-		die("delta data unpack-initial failed");
+	if ((st != Z_STREAM_END) && stream.total_out != sizeof(delta_head)) {
+		error("delta data unpack-initial failed");
+		return 0;
+	}
 
 	/* Examine the initial part of the delta to figure out
 	 * the result size.
@@ -1355,7 +1370,7 @@ static off_t get_delta_base(struct packed_git *p,
 			base_offset = (base_offset << 7) + (c & 127);
 		}
 		base_offset = delta_obj_offset - base_offset;
-		if (base_offset >= delta_obj_offset)
+		if (base_offset <= 0 || base_offset >= delta_obj_offset)
 			return 0;  /* out of bound */
 		*curpos += used;
 	} else if (type == OBJ_REF_DELTA) {
@@ -1381,15 +1396,32 @@ static int packed_delta_info(struct packed_git *p,
 	off_t base_offset;
 
 	base_offset = get_delta_base(p, w_curs, &curpos, type, obj_offset);
+	if (!base_offset)
+		return OBJ_BAD;
 	type = packed_object_info(p, base_offset, NULL);
+	if (type <= OBJ_NONE) {
+		struct revindex_entry *revidx;
+		const unsigned char *base_sha1;
+		revidx = find_pack_revindex(p, base_offset);
+		if (!revidx)
+			return OBJ_BAD;
+		base_sha1 = nth_packed_object_sha1(p, revidx->nr);
+		mark_bad_packed_object(p, base_sha1);
+		type = sha1_object_info(base_sha1, NULL);
+		if (type <= OBJ_NONE)
+			return OBJ_BAD;
+	}
 
 	/* We choose to only get the type of the base object and
 	 * ignore potentially corrupt pack file that expects the delta
 	 * based on a base with a wrong size.  This saves tons of
 	 * inflate() calls.
 	 */
-	if (sizep)
+	if (sizep) {
 		*sizep = get_size_from_delta(p, w_curs, curpos);
+		if (*sizep == 0)
+			type = OBJ_BAD;
+	}
 
 	return type;
 }
@@ -1411,10 +1443,11 @@ static int unpack_object_header(struct packed_git *p,
 	 * insane, so we know won't exceed what we have been given.
 	 */
 	base = use_pack(p, w_curs, *curpos, &left);
-	used = unpack_object_header_gently(base, left, &type, sizep);
-	if (!used)
-		die("object offset outside of pack file");
-	*curpos += used;
+	used = unpack_object_header_buffer(base, left, &type, sizep);
+	if (!used) {
+		type = OBJ_BAD;
+	} else
+		*curpos += used;
 
 	return type;
 }
@@ -1498,8 +1531,9 @@ static int packed_object_info(struct packed_git *p, off_t obj_offset,
 			*sizep = size;
 		break;
 	default:
-		die("pack %s contains unknown object type %d",
-		    p->pack_name, type);
+		error("unknown object type %i at offset %"PRIuMAX" in %s",
+		      type, (uintmax_t)obj_offset, p->pack_name);
+		type = OBJ_BAD;
 	}
 	unuse_pack(&w_curs);
 	return type;
@@ -1663,9 +1697,12 @@ static void *unpack_delta_entry(struct packed_git *p,
 		 * This is costly but should happen only in the presence
 		 * of a corrupted pack, and is better than failing outright.
 		 */
-		struct revindex_entry *revidx = find_pack_revindex(p, base_offset);
-		const unsigned char *base_sha1 =
-					nth_packed_object_sha1(p, revidx->nr);
+		struct revindex_entry *revidx;
+		const unsigned char *base_sha1;
+		revidx = find_pack_revindex(p, base_offset);
+		if (!revidx)
+			return NULL;
+		base_sha1 = nth_packed_object_sha1(p, revidx->nr);
 		error("failed to read delta base object %s"
 		      " at offset %"PRIuMAX" from %s",
 		      sha1_to_hex(base_sha1), (uintmax_t)base_offset,
@@ -1694,12 +1731,27 @@ static void *unpack_delta_entry(struct packed_git *p,
 	return result;
 }
 
+int do_check_packed_object_crc;
+
 void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		   enum object_type *type, unsigned long *sizep)
 {
 	struct pack_window *w_curs = NULL;
 	off_t curpos = obj_offset;
 	void *data;
+
+	if (do_check_packed_object_crc && p->index_version > 1) {
+		struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);
+		unsigned long len = revidx[1].offset - obj_offset;
+		if (check_pack_crc(p, &w_curs, obj_offset, len, revidx->nr)) {
+			const unsigned char *sha1 =
+				nth_packed_object_sha1(p, revidx->nr);
+			error("bad packed object CRC for %s",
+			      sha1_to_hex(sha1));
+			mark_bad_packed_object(p, sha1);
+			return NULL;
+		}
+	}
 
 	*type = unpack_object_header(p, &w_curs, &curpos, sizep);
 	switch (*type) {
@@ -1954,7 +2006,14 @@ int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 		if (!find_pack_entry(sha1, &e, NULL))
 			return status;
 	}
-	return packed_object_info(e.p, e.offset, sizep);
+
+	status = packed_object_info(e.p, e.offset, sizep);
+	if (status < 0) {
+		mark_bad_packed_object(e.p, sha1);
+		status = sha1_object_info(sha1, sizep);
+	}
+
+	return status;
 }
 
 static void *read_packed_sha1(const unsigned char *sha1,
@@ -1996,9 +2055,7 @@ static struct cached_object {
 static int cached_object_nr, cached_object_alloc;
 
 static struct cached_object empty_tree = {
-	/* empty tree sha1: 4b825dc642cb6eb9a060e54bf8d69288fbee4904 */
-	"\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60"
-	"\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04",
+	EMPTY_TREE_SHA1_BIN,
 	OBJ_TREE,
 	"",
 	0

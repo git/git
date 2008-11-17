@@ -368,4 +368,10 @@ test_expect_success 'index-pack with --strict' '
 	)
 '
 
+test_expect_success 'tolerate absurdly small packsizelimit' '
+	git config pack.packSizeLimit 2 &&
+	packname_9=$(git pack-objects test-9 <obj-list) &&
+	test $(wc -l <obj-list) = $(ls test-9-*.pack | wc -l)
+'
+
 test_done

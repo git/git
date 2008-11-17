@@ -118,7 +118,7 @@ static int builtin_diff_index(struct rev_info *revs,
 	int cached = 0;
 	while (1 < argc) {
 		const char *arg = argv[1];
-		if (!strcmp(arg, "--cached"))
+		if (!strcmp(arg, "--cached") || !strcmp(arg, "--staged"))
 			cached = 1;
 		else
 			usage(builtin_diff_usage);
@@ -300,6 +300,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	}
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
+	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
 
 	/*
 	 * If the user asked for our exit code then don't start a
@@ -319,7 +320,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			const char *arg = argv[i];
 			if (!strcmp(arg, "--"))
 				break;
-			else if (!strcmp(arg, "--cached")) {
+			else if (!strcmp(arg, "--cached") ||
+				 !strcmp(arg, "--staged")) {
 				add_head_to_pending(&rev);
 				if (!rev.pending.nr)
 					die("No HEAD commit to compare with (yet)");

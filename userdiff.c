@@ -120,7 +120,7 @@ static int parse_tristate(int *b, const char *k, const char *v)
 	return 1;
 }
 
-int userdiff_config_basic(const char *k, const char *v)
+int userdiff_config(const char *k, const char *v)
 {
 	struct userdiff_driver *drv;
 
@@ -130,14 +130,6 @@ int userdiff_config_basic(const char *k, const char *v)
 		return parse_funcname(&drv->funcname, k, v, REG_EXTENDED);
 	if ((drv = parse_driver(k, v, "binary")))
 		return parse_tristate(&drv->binary, k, v);
-
-	return 0;
-}
-
-int userdiff_config_porcelain(const char *k, const char *v)
-{
-	struct userdiff_driver *drv;
-
 	if ((drv = parse_driver(k, v, "command")))
 		return parse_string(&drv->external, k, v);
 	if ((drv = parse_driver(k, v, "textconv")))

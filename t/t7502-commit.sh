@@ -89,6 +89,14 @@ test_expect_success 'verbose' '
 
 '
 
+test_expect_success 'verbose respects diff config' '
+
+	git config color.diff always &&
+	git status -v >actual &&
+	grep "\[1mdiff --git" actual &&
+	git config --unset color.diff
+'
+
 test_expect_success 'cleanup commit messages (verbatim,-t)' '
 
 	echo >>negative &&

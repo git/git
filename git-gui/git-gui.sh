@@ -597,6 +597,28 @@ if {[is_Windows]} {
 	if {![info exists env(DISPLAY)]} {
 		set env(DISPLAY) :9999
 	}
+} else {
+	catch {
+		image create photo gitlogo -width 16 -height 16
+
+		gitlogo put #33CC33 -to  7  0  9  2
+		gitlogo put #33CC33 -to  4  2 12  4
+		gitlogo put #33CC33 -to  7  4  9  6
+		gitlogo put #CC3333 -to  4  6 12  8
+		gitlogo put gray26  -to  4  9  6 10
+		gitlogo put gray26  -to  3 10  6 12
+		gitlogo put gray26  -to  8  9 13 11
+		gitlogo put gray26  -to  8 11 10 12
+		gitlogo put gray26  -to 11 11 13 14
+		gitlogo put gray26  -to  3 12  5 14
+		gitlogo put gray26  -to  5 13
+		gitlogo put gray26  -to 10 13
+		gitlogo put gray26  -to  4 14 12 15
+		gitlogo put gray26  -to  5 15 11 16
+		gitlogo redither
+
+		wm iconphoto . -default gitlogo
+	}
 }
 
 ######################################################################
@@ -918,19 +940,25 @@ git-version proc _parse_config {arr_name args} {
 }
 
 proc load_config {include_global} {
-	global repo_config global_config default_config
+	global repo_config global_config system_config default_config
 
 	if {$include_global} {
+		_parse_config system_config --system
 		_parse_config global_config --global
 	}
 	_parse_config repo_config
 
 	foreach name [array names default_config] {
+		if {[catch {set v $system_config($name)}]} {
+			set system_config($name) $default_config($name)
+		}
+	}
+	foreach name [array names system_config] {
 		if {[catch {set v $global_config($name)}]} {
-			set global_config($name) $default_config($name)
+			set global_config($name) $system_config($name)
 		}
 		if {[catch {set v $repo_config($name)}]} {
-			set repo_config($name) $default_config($name)
+			set repo_config($name) $system_config($name)
 		}
 	}
 }
@@ -995,6 +1023,17 @@ citool {
 		set argv [lrange $argv 1 end]
 	}
 }
+}
+
+######################################################################
+##
+## execution environment
+
+set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
+
+# Suggest our implementation of askpass, if none is set
+if {![info exists env(SSH_ASKPASS)]} {
+	set env(SSH_ASKPASS) [gitexec git-gui--askpass]
 }
 
 ######################################################################
@@ -1072,15 +1111,6 @@ set selected_commit_type new
 
 set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
-
-set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
-
-######################################################################
-
-# Suggest our implementation of askpass, if none is set
-if {![info exists env(SSH_ASKPASS)]} {
-	set env(SSH_ASKPASS) [gitexec git-gui--askpass]
-}
 
 ######################################################################
 ##
@@ -1461,10 +1491,8 @@ proc rescan_done {fd buf after} {
 	prune_selection
 	unlock_index
 	display_all_files
-	if {$current_diff_path ne {}} reshow_diff
-	if {$current_diff_path eq {}} select_first_diff
-
-	uplevel #0 $after
+	if {$current_diff_path ne {}} { reshow_diff $after }
+	if {$current_diff_path eq {}} { select_first_diff $after }
 }
 
 proc prune_selection {} {
@@ -1976,16 +2004,16 @@ proc do_rescan {} {
 }
 
 proc ui_do_rescan {} {
-	rescan {force_first_diff; ui_ready}
+	rescan {force_first_diff ui_ready}
 }
 
 proc do_commit {} {
 	commit_tree
 }
 
-proc next_diff {} {
+proc next_diff {{after {}}} {
 	global next_diff_p next_diff_w next_diff_i
-	show_diff $next_diff_p $next_diff_w {}
+	show_diff $next_diff_p $next_diff_w {} {} $after
 }
 
 proc find_anchor_pos {lst name} {
@@ -2070,25 +2098,42 @@ proc next_diff_after_action {w path {lno {}} {mmask {}}} {
 	}
 }
 
-proc select_first_diff {} {
+proc select_first_diff {after} {
 	global ui_workdir
 
 	if {[find_next_diff $ui_workdir {} 1 {^_?U}] ||
 	    [find_next_diff $ui_workdir {} 1 {[^O]$}]} {
-		next_diff
+		next_diff $after
+	} else {
+		uplevel #0 $after
 	}
 }
 
-proc force_first_diff {} {
-	global current_diff_path
+proc force_first_diff {after} {
+	global ui_workdir current_diff_path file_states
 
 	if {[info exists file_states($current_diff_path)]} {
 		set state [lindex $file_states($current_diff_path) 0]
-
-		if {[string index $state 1] ne {O}} return
+	} else {
+		set state {OO}
 	}
 
-	select_first_diff
+	set reselect 0
+	if {[string first {U} $state] >= 0} {
+		# Already a conflict, do nothing
+	} elseif {[find_next_diff $ui_workdir $current_diff_path {} {^_?U}]} {
+		set reselect 1
+	} elseif {[string index $state 1] ne {O}} {
+		# Already a diff & no conflicts, do nothing
+	} elseif {[find_next_diff $ui_workdir $current_diff_path {} {[^O]$}]} {
+		set reselect 1
+	}
+
+	if {$reselect} {
+		next_diff $after
+	} else {
+		uplevel #0 $after
+	}
 }
 
 proc toggle_or_diff {w x y} {
@@ -2243,6 +2288,9 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 if {[is_enabled transport]} {
 	.mbar add cascade -label [mc Merge] -menu .mbar.merge
 	.mbar add cascade -label [mc Remote] -menu .mbar.remote
+}
+if {[is_enabled multicommit] || [is_enabled singlecommit]} {
+	.mbar add cascade -label [mc Tools] -menu .mbar.tools
 }
 . configure -menu .mbar
 
@@ -2516,6 +2564,20 @@ if {[is_MacOSX]} {
 	.mbar.edit add separator
 	.mbar.edit add command -label [mc "Options..."] \
 		-command do_options
+}
+
+# -- Tools Menu
+#
+if {[is_enabled multicommit] || [is_enabled singlecommit]} {
+	set tools_menubar .mbar.tools
+	menu $tools_menubar
+	$tools_menubar add separator
+	$tools_menubar add command -label [mc "Add..."] -command tools_add::dialog
+	$tools_menubar add command -label [mc "Remove..."] -command tools_remove::dialog
+	set tools_tailcnt 3
+	if {[array names repo_config guitool.*.cmd] ne {}} {
+		tools_populate_all
+	}
 }
 
 # -- Help Menu

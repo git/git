@@ -33,6 +33,7 @@ forced by --no-index.
 	commit relative to the named <commit>.  Typically you
 	would want comparison with the latest commit, so if you
 	do not give <commit>, it defaults to HEAD.
+	--staged is a synonym of --cached.
 
 'git diff' [--options] <commit> [--] [<path>...]::
 

@@ -514,7 +514,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 				if (from <= last_shown)
 					from = last_shown + 1;
 				if (last_shown && from != last_shown + 1)
-					printf(hunk_mark);
+					fputs(hunk_mark, stdout);
 				while (from < lno) {
 					pcl = &prev[lno-from-1];
 					show_line(opt, pcl->bol, pcl->eol,
@@ -524,7 +524,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 				last_shown = lno-1;
 			}
 			if (last_shown && lno != last_shown + 1)
-				printf(hunk_mark);
+				fputs(hunk_mark, stdout);
 			if (!opt->count)
 				show_line(opt, bol, eol, name, lno, ':');
 			last_shown = last_hit = lno;
@@ -535,7 +535,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 * we need to show this line.
 			 */
 			if (last_shown && lno != last_shown + 1)
-				printf(hunk_mark);
+				fputs(hunk_mark, stdout);
 			show_line(opt, bol, eol, name, lno, '-');
 			last_shown = lno;
 		}

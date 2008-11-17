@@ -96,6 +96,13 @@ test_expect_success \
      git branch -d n/o/p &&
      git branch n'
 
+test_expect_success \
+	'see if up-to-date packed refs are preserved' \
+	'git branch q &&
+	 git pack-refs --all --prune &&
+	 git update-ref refs/heads/q refs/heads/q &&
+	 ! test -f .git/refs/heads/q'
+
 test_expect_success 'pack, prune and repack' '
 	git tag foo &&
 	git pack-refs --all --prune &&

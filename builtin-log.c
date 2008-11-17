@@ -28,7 +28,6 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
 	int i;
-	int decorate = 0;
 
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
@@ -55,10 +54,13 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--decorate")) {
 			load_ref_decorations();
-			decorate = 1;
+			rev->show_decorations = 1;
+		} else if (!strcmp(arg, "--source")) {
+			rev->show_source = 1;
 		} else
 			die("unrecognized argument: %s", arg);
 	}
+	DIFF_OPT_SET(&rev->diffopt, ALLOW_TEXTCONV);
 }
 
 /*

@@ -93,12 +93,6 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.external"))
 		return git_config_string(&external_diff_cmd_cfg, var, value);
 
-	switch (userdiff_config_porcelain(var, value)) {
-		case 0: break;
-		case -1: return -1;
-		default: return 0;
-	}
-
 	return git_diff_basic_config(var, value, cb);
 }
 
@@ -107,6 +101,12 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.renamelimit")) {
 		diff_rename_limit_default = git_config_int(var, value);
 		return 0;
+	}
+
+	switch (userdiff_config(var, value)) {
+		case 0: break;
+		case -1: return -1;
+		default: return 0;
 	}
 
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
@@ -121,12 +121,6 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.suppress-blank-empty")) {
 		diff_suppress_blank_empty = git_config_bool(var, value);
 		return 0;
-	}
-
-	switch (userdiff_config_basic(var, value)) {
-		case 0: break;
-		case -1: return -1;
-		default: return 0;
 	}
 
 	return git_color_default_config(var, value, cb);
@@ -294,18 +288,8 @@ static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 	else if (diff_populate_filespec(one, 0))
 		return -1;
 
-	diff_filespec_load_driver(one);
-	if (one->driver->textconv) {
-		size_t size;
-		mf->ptr = run_textconv(one->driver->textconv, one, &size);
-		if (!mf->ptr)
-			return -1;
-		mf->size = size;
-	}
-	else {
-		mf->ptr = one->data;
-		mf->size = one->size;
-	}
+	mf->ptr = one->data;
+	mf->size = one->size;
 	return 0;
 }
 
@@ -400,6 +384,7 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	mmfile_t minus, plus;
 	int i;
 
+	memset(&xpp, 0, sizeof(xpp));
 	memset(&xecfg, 0, sizeof(xecfg));
 	minus.size = diff_words->minus.text.size;
 	minus.ptr = xmalloc(minus.size);
@@ -1282,7 +1267,7 @@ static void emit_binary_diff(FILE *file, mmfile_t *one, mmfile_t *two)
 	emit_binary_diff_body(file, two, one);
 }
 
-void diff_filespec_load_driver(struct diff_filespec *one)
+static void diff_filespec_load_driver(struct diff_filespec *one)
 {
 	if (!one->driver)
 		one->driver = userdiff_find_by_path(one->path);
@@ -1323,6 +1308,16 @@ void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const
 		options->b_prefix = b;
 }
 
+static const char *get_textconv(struct diff_filespec *one)
+{
+	if (!DIFF_FILE_VALID(one))
+		return NULL;
+	if (!S_ISREG(one->mode))
+		return NULL;
+	diff_filespec_load_driver(one);
+	return one->driver->textconv;
+}
+
 static void builtin_diff(const char *name_a,
 			 const char *name_b,
 			 struct diff_filespec *one,
@@ -1337,6 +1332,7 @@ static void builtin_diff(const char *name_a,
 	const char *set = diff_get_color_opt(o, DIFF_METAINFO);
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 	const char *a_prefix, *b_prefix;
+	const char *textconv_one = NULL, *textconv_two = NULL;
 
 	diff_set_mnemonic_prefix(o, "a/", "b/");
 	if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
@@ -1390,8 +1386,14 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
+	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
+		textconv_one = get_textconv(one);
+		textconv_two = get_textconv(two);
+	}
+
 	if (!DIFF_OPT_TST(o, TEXT) &&
-	    (diff_filespec_is_binary(one) || diff_filespec_is_binary(two))) {
+	    ( (diff_filespec_is_binary(one) && !textconv_one) ||
+	      (diff_filespec_is_binary(two) && !textconv_two) )) {
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
@@ -1412,10 +1414,26 @@ static void builtin_diff(const char *name_a,
 		struct emit_callback ecbdata;
 		const struct userdiff_funcname *pe;
 
+		if (textconv_one) {
+			size_t size;
+			mf1.ptr = run_textconv(textconv_one, one, &size);
+			if (!mf1.ptr)
+				die("unable to read files to diff");
+			mf1.size = size;
+		}
+		if (textconv_two) {
+			size_t size;
+			mf2.ptr = run_textconv(textconv_two, two, &size);
+			if (!mf2.ptr)
+				die("unable to read files to diff");
+			mf2.size = size;
+		}
+
 		pe = diff_funcname_pattern(one);
 		if (!pe)
 			pe = diff_funcname_pattern(two);
 
+		memset(&xpp, 0, sizeof(xpp));
 		memset(&xecfg, 0, sizeof(xecfg));
 		memset(&ecbdata, 0, sizeof(ecbdata));
 		ecbdata.label_path = lbl;
@@ -1443,6 +1461,10 @@ static void builtin_diff(const char *name_a,
 			      &xpp, &xecfg, &ecb);
 		if (DIFF_OPT_TST(o, COLOR_DIFF_WORDS))
 			free_diff_words_data(&ecbdata);
+		if (textconv_one)
+			free(mf1.ptr);
+		if (textconv_two)
+			free(mf2.ptr);
 	}
 
  free_ab_and_return:
@@ -1489,6 +1511,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 
+		memset(&xpp, 0, sizeof(xpp));
 		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xdi_diff_outf(&mf1, &mf2, diffstat_consume, diffstat,
@@ -1535,6 +1558,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 
+		memset(&xpp, 0, sizeof(xpp));
 		memset(&xecfg, 0, sizeof(xecfg));
 		xecfg.ctxlen = 1; /* at least one context line */
 		xpp.flags = XDF_NEED_MINIMAL;
@@ -2958,6 +2982,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 		struct diff_filepair *p = q->queue[i];
 		int len1, len2;
 
+		memset(&xpp, 0, sizeof(xpp));
 		memset(&xecfg, 0, sizeof(xecfg));
 		if (p->status == 0)
 			return error("internal diff status error");

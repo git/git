@@ -4,7 +4,7 @@
 #include "remote.h"
 
 static const char ls_remote_usage[] =
-"git ls-remote [--upload-pack=<git-upload-pack>] [<host>:]<directory>";
+"git ls-remote [--heads] [--tags]  [-u <exec> | --upload-pack <exec>] <repository> <refs>...";
 
 /*
  * Is there one among the list of patterns that match the tail part
