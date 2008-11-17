@@ -43,7 +43,7 @@ static void *preload_thread(void *_data)
 			continue;
 		if (lstat(ce->name, &st))
 			continue;
-		if (ie_match_stat(index, ce, &st, 0))
+		if (ie_match_stat(index, ce, &st, CE_MATCH_RACY_IS_DIRTY))
 			continue;
 		ce_mark_uptodate(ce);
 	} while (--nr > 0);
