@@ -7129,7 +7129,7 @@ proc gettreediffline {gdtf ids} {
 	set treediffs($ids) $treediff
     }
     unset treepending
-    if {$cmitmode eq "tree"} {
+    if {$cmitmode eq "tree" && [llength $diffids] == 1} {
 	gettree $diffids
     } elseif {$ids != $diffids} {
 	if {![info exists diffmergeid]} {
