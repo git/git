@@ -309,7 +309,7 @@ proc start_rev_list {view} {
     global viewargs viewargscmd viewfiles vfilelimit
     global showlocalchanges
     global viewactive viewinstances vmergeonly
-    global mainheadid
+    global mainheadid viewmainheadid viewmainheadid_orig
     global vcanopt vflags vrevs vorigargs
 
     set startmsecs [clock clicks -milliseconds]
@@ -367,8 +367,13 @@ proc start_rev_list {view} {
     }
     set i [reg_instance $fd]
     set viewinstances($view) [list $i]
-    if {$showlocalchanges && $mainheadid ne {}} {
-	interestedin $mainheadid dodiffindex
+    set viewmainheadid($view) $mainheadid
+    set viewmainheadid_orig($view) $mainheadid
+    if {$files ne {} && $mainheadid ne {}} {
+	get_viewmainhead $view
+    }
+    if {$showlocalchanges && $viewmainheadid($view) ne {}} {
+	interestedin $viewmainheadid($view) dodiffindex
     }
     fconfigure $fd -blocking 0 -translation lf -eofchar {}
     if {$tclencoding != {}} {
@@ -446,22 +451,26 @@ proc updatecommits {} {
     global curview vcanopt vorigargs vfilelimit viewinstances
     global viewactive viewcomplete tclencoding
     global startmsecs showneartags showlocalchanges
-    global mainheadid pending_select
+    global mainheadid viewmainheadid viewmainheadid_orig pending_select
     global isworktree
     global varcid vposids vnegids vflags vrevs
 
     set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
-    set oldmainid $mainheadid
     rereadrefs
-    if {$showlocalchanges} {
-	if {$mainheadid ne $oldmainid} {
+    set view $curview
+    if {$mainheadid ne $viewmainheadid_orig($view)} {
+	if {$showlocalchanges} {
 	    dohidelocalchanges
 	}
-	if {[commitinview $mainheadid $curview]} {
-	    dodiffindex
+	set viewmainheadid($view) $mainheadid
+	set viewmainheadid_orig($view) $mainheadid
+	if {$vfilelimit($view) ne {}} {
+	    get_viewmainhead $view
 	}
     }
-    set view $curview
+    if {$showlocalchanges} {
+	doshowlocalchanges
+    }
     if {$vcanopt($view)} {
 	set oldpos $vposids($view)
 	set oldneg $vnegids($view)
@@ -4643,14 +4652,56 @@ proc layoutmore {} {
     drawvisible
 }
 
-proc doshowlocalchanges {} {
-    global curview mainheadid
+# With path limiting, we mightn't get the actual HEAD commit,
+# so ask git rev-list what is the first ancestor of HEAD that
+# touches a file in the path limit.
+proc get_viewmainhead {view} {
+    global viewmainheadid vfilelimit viewinstances mainheadid
 
-    if {$mainheadid eq {}} return
-    if {[commitinview $mainheadid $curview]} {
+    catch {
+	set rfd [open [concat | git rev-list -1 $mainheadid \
+			   -- $vfilelimit($view)] r]
+	set j [reg_instance $rfd]
+	lappend viewinstances($view) $j
+	fconfigure $rfd -blocking 0
+	filerun $rfd [list getviewhead $rfd $j $view]
+	set viewmainheadid($curview) {}
+    }
+}
+
+# git rev-list should give us just 1 line to use as viewmainheadid($view)
+proc getviewhead {fd inst view} {
+    global viewmainheadid commfd curview viewinstances showlocalchanges
+
+    set id {}
+    if {[gets $fd line] < 0} {
+	if {![eof $fd]} {
+	    return 1
+	}
+    } elseif {[string length $line] == 40 && [string is xdigit $line]} {
+	set id $line
+    }
+    set viewmainheadid($view) $id
+    close $fd
+    unset commfd($inst)
+    set i [lsearch -exact $viewinstances($view) $inst]
+    if {$i >= 0} {
+	set viewinstances($view) [lreplace $viewinstances($view) $i $i]
+    }
+    if {$showlocalchanges && $id ne {} && $view == $curview} {
+	doshowlocalchanges
+    }
+    return 0
+}
+
+proc doshowlocalchanges {} {
+    global curview viewmainheadid
+
+    if {$viewmainheadid($curview) eq {}} return
+    if {[commitinview $viewmainheadid($curview) $curview]} {
 	dodiffindex
     } else {
-	interestedin $mainheadid dodiffindex
+	interestedin $viewmainheadid($curview) dodiffindex
     }
 }
 
@@ -4668,19 +4719,24 @@ proc dohidelocalchanges {} {
 
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
-    global lserial showlocalchanges
+    global lserial showlocalchanges vfilelimit curview
     global isworktree
 
     if {!$showlocalchanges || !$isworktree} return
     incr lserial
-    set fd [open "|git diff-index --cached HEAD" r]
+    set cmd "|git diff-index --cached HEAD"
+    if {$vfilelimit($curview) ne {}} {
+	set cmd [concat $cmd -- $vfilelimit($curview)]
+    }
+    set fd [open $cmd r]
     fconfigure $fd -blocking 0
     set i [reg_instance $fd]
     filerun $fd [list readdiffindex $fd $lserial $i]
 }
 
 proc readdiffindex {fd serial inst} {
-    global mainheadid nullid nullid2 curview commitinfo commitdata lserial
+    global viewmainheadid nullid nullid2 curview commitinfo commitdata lserial
+    global vfilelimit
 
     set isdiff 1
     if {[gets $fd line] < 0} {
@@ -4697,7 +4753,11 @@ proc readdiffindex {fd serial inst} {
     }
 
     # now see if there are any local changes not checked in to the index
-    set fd [open "|git diff-files" r]
+    set cmd "|git diff-files"
+    if {$vfilelimit($curview) ne {}} {
+	set cmd [concat $cmd -- $vfilelimit($curview)]
+    }
+    set fd [open $cmd r]
     fconfigure $fd -blocking 0
     set i [reg_instance $fd]
     filerun $fd [list readdifffiles $fd $serial $i]
@@ -4710,15 +4770,18 @@ proc readdiffindex {fd serial inst} {
 	if {[commitinview $nullid $curview]} {
 	    removefakerow $nullid
 	}
-	insertfakerow $nullid2 $mainheadid
+	insertfakerow $nullid2 $viewmainheadid($curview)
     } elseif {!$isdiff && [commitinview $nullid2 $curview]} {
+	if {[commitinview $nullid $curview]} {
+	    removefakerow $nullid
+	}
 	removefakerow $nullid2
     }
     return 0
 }
 
 proc readdifffiles {fd serial inst} {
-    global mainheadid nullid nullid2 curview
+    global viewmainheadid nullid nullid2 curview
     global commitinfo commitdata lserial
 
     set isdiff 1
@@ -4743,7 +4806,7 @@ proc readdifffiles {fd serial inst} {
 	if {[commitinview $nullid2 $curview]} {
 	    set p $nullid2
 	} else {
-	    set p $mainheadid
+	    set p $viewmainheadid($curview)
 	}
 	insertfakerow $nullid $p
     } elseif {!$isdiff && [commitinview $nullid $curview]} {
@@ -8341,6 +8404,7 @@ proc cherrypick {} {
     }
     addnewchild $newhead $oldhead
     if {[commitinview $oldhead $curview]} {
+	# XXX this isn't right if we have a path limit...
 	insertrow $newhead $oldhead $curview
 	if {$mainhead ne {}} {
 	    movehead $newhead $mainhead
@@ -8448,7 +8512,7 @@ proc headmenu {x y id head} {
 
 proc cobranch {} {
     global headmenuid headmenuhead headids
-    global showlocalchanges mainheadid
+    global showlocalchanges
 
     # check the tree is clean first??
     nowbusy checkout [mc "Checking out"]
@@ -8469,6 +8533,7 @@ proc cobranch {} {
 
 proc readcheckoutstat {fd newhead newheadid} {
     global mainhead mainheadid headids showlocalchanges progresscoords
+    global viewmainheadid curview
 
     if {[gets $fd line] >= 0} {
 	if {[regexp {([0-9]+)% \(([0-9]+)/([0-9]+)\)} $line match p m n]} {
@@ -8486,6 +8551,7 @@ proc readcheckoutstat {fd newhead newheadid} {
     set oldmainid $mainheadid
     set mainhead $newhead
     set mainheadid $newheadid
+    set viewmainheadid($curview) $newheadid
     redrawtags $oldmainid
     redrawtags $newheadid
     selbyid $newheadid
