@@ -155,18 +155,16 @@ proc parseviewargs {n arglist} {
 		set origargs [lreplace $origargs $i $i]
 		incr i -1
 	    }
-	    # These request or affect diff output, which we don't want.
-	    # Some could be used to set our defaults for diff display.
 	    "-[puabwcrRBMC]" -
 	    "--no-renames" - "--full-index" - "--binary" - "--abbrev=*" -
 	    "--find-copies-harder" - "-l*" - "--ext-diff" - "--no-ext-diff" -
 	    "--src-prefix=*" - "--dst-prefix=*" - "--no-prefix" -
 	    "-O*" - "--text" - "--full-diff" - "--ignore-space-at-eol" -
 	    "--ignore-space-change" - "-U*" - "--unified=*" {
+		# These request or affect diff output, which we don't want.
+		# Some could be used to set our defaults for diff display.
 		lappend diffargs $arg
 	    }
-	    # These cause our parsing of git log's output to fail, or else
-	    # they're options we want to set ourselves, so ignore them.
 	    "--raw" - "--patch-with-raw" - "--patch-with-stat" -
 	    "--name-only" - "--name-status" - "--color" - "--color-words" -
 	    "--log-size" - "--pretty=*" - "--decorate" - "--abbrev-commit" -
@@ -174,27 +172,29 @@ proc parseviewargs {n arglist} {
 	    "--no-color" - "-g" - "--walk-reflogs" - "--no-walk" -
 	    "--timestamp" - "relative-date" - "--date=*" - "--stdin" -
 	    "--objects" - "--objects-edge" - "--reverse" {
+		# These cause our parsing of git log's output to fail, or else
+		# they're options we want to set ourselves, so ignore them.
 	    }
-	    # These are harmless, and some are even useful
 	    "--stat=*" - "--numstat" - "--shortstat" - "--summary" -
 	    "--check" - "--exit-code" - "--quiet" - "--topo-order" -
 	    "--full-history" - "--dense" - "--sparse" -
 	    "--follow" - "--left-right" - "--encoding=*" {
+		# These are harmless, and some are even useful
 		lappend glflags $arg
 	    }
-	    # These mean that we get a subset of the commits
 	    "--diff-filter=*" - "--no-merges" - "--unpacked" -
 	    "--max-count=*" - "--skip=*" - "--since=*" - "--after=*" -
 	    "--until=*" - "--before=*" - "--max-age=*" - "--min-age=*" -
 	    "--author=*" - "--committer=*" - "--grep=*" - "-[iE]" -
 	    "--remove-empty" - "--first-parent" - "--cherry-pick" -
-	    "-S*" - "--pickaxe-all" - "--pickaxe-regex" - {
+	    "-S*" - "--pickaxe-all" - "--pickaxe-regex" {
+		# These mean that we get a subset of the commits
 		set filtered 1
 		lappend glflags $arg
 	    }
-	    # This appears to be the only one that has a value as a
-	    # separate word following it
 	    "-n" {
+		# This appears to be the only one that has a value as a
+		# separate word following it
 		set filtered 1
 		set nextisval 1
 		lappend glflags $arg
@@ -211,8 +211,8 @@ proc parseviewargs {n arglist} {
 		# git rev-parse doesn't understand --merge
 		lappend revargs --gitk-symmetric-diff-marker MERGE_HEAD...HEAD
 	    }
-	    # Other flag arguments including -<n>
 	    "-*" {
+		# Other flag arguments including -<n>
 		if {[string is digit -strict [string range $arg 1 end]]} {
 		    set filtered 1
 		} else {
@@ -222,8 +222,8 @@ proc parseviewargs {n arglist} {
 		}
 		lappend glflags $arg
 	    }
-	    # Non-flag arguments specify commits or ranges of commits
 	    default {
+		# Non-flag arguments specify commits or ranges of commits
 		if {[string match "*...*" $arg]} {
 		    lappend revargs --gitk-symmetric-diff-marker
 		}
