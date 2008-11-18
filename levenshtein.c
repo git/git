@@ -25,7 +25,7 @@ int levenshtein(const char *string1, const char *string2,
 					row2[j + 1] > row0[j - 1] + w)
 				row2[j + 1] = row0[j - 1] + w;
 			/* deletion */
-			if (j + 1 < len2 && row2[j + 1] > row1[j + 1] + d)
+			if (row2[j + 1] > row1[j + 1] + d)
 				row2[j + 1] = row1[j + 1] + d;
 			/* insertion */
 			if (row2[j + 1] > row2[j] + a)
