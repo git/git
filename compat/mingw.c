@@ -819,6 +819,8 @@ int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz)
 #undef rename
 int mingw_rename(const char *pold, const char *pnew)
 {
+	DWORD attrs;
+
 	/*
 	 * Try native rename() first to get errno right.
 	 * It is based on MoveFile(), which cannot overwrite existing files.
@@ -830,11 +832,18 @@ int mingw_rename(const char *pold, const char *pnew)
 	if (MoveFileEx(pold, pnew, MOVEFILE_REPLACE_EXISTING))
 		return 0;
 	/* TODO: translate more errors */
-	if (GetLastError() == ERROR_ACCESS_DENIED) {
-		DWORD attrs = GetFileAttributes(pnew);
-		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY)) {
+	if (GetLastError() == ERROR_ACCESS_DENIED &&
+	    (attrs = GetFileAttributes(pnew)) != INVALID_FILE_ATTRIBUTES) {
+		if (attrs & FILE_ATTRIBUTE_DIRECTORY) {
 			errno = EISDIR;
 			return -1;
+		}
+		if ((attrs & FILE_ATTRIBUTE_READONLY) &&
+		    SetFileAttributes(pnew, attrs & ~FILE_ATTRIBUTE_READONLY)) {
+			if (MoveFileEx(pold, pnew, MOVEFILE_REPLACE_EXISTING))
+				return 0;
+			/* revert file attributes on failure */
+			SetFileAttributes(pnew, attrs);
 		}
 	}
 	errno = EACCES;
