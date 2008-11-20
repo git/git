@@ -2220,7 +2220,7 @@ static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
 	memcpy(buffer, filename, dirlen);
 	strcpy(buffer + dirlen, "tmp_obj_XXXXXX");
 	fd = mkstemp(buffer);
-	if (fd < 0 && dirlen) {
+	if (fd < 0 && dirlen && errno == ENOENT) {
 		/* Make sure the directory exists */
 		memcpy(buffer, filename, dirlen);
 		buffer[dirlen-1] = 0;
