@@ -358,8 +358,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	const char *repo_name, *repo, *work_tree, *git_dir;
 	char *path, *dir;
 	const struct ref *refs, *head_points_at, *remote_head, *mapped_refs;
-	char branch_top[256], key[256], value[256];
-	struct strbuf reflog_msg = STRBUF_INIT;
+	struct strbuf key = STRBUF_INIT, value = STRBUF_INIT;
+	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
 	char *src_ref_prefix = "refs/heads/";
 
@@ -463,35 +463,36 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_bare) {
 		if (option_mirror)
 			src_ref_prefix = "refs/";
-		strcpy(branch_top, src_ref_prefix);
+		strbuf_addstr(&branch_top, src_ref_prefix);
 
 		git_config_set("core.bare", "true");
 	} else {
-		snprintf(branch_top, sizeof(branch_top),
-			 "refs/remotes/%s/", option_origin);
+		strbuf_addf(&branch_top, "refs/remotes/%s/", option_origin);
 	}
 
 	if (option_mirror || !option_bare) {
 		/* Configure the remote */
 		if (option_mirror) {
-			snprintf(key, sizeof(key),
-					"remote.%s.mirror", option_origin);
-			git_config_set(key, "true");
+			strbuf_addf(&key, "remote.%s.mirror", option_origin);
+			git_config_set(key.buf, "true");
+			strbuf_reset(&key);
 		}
 
-		snprintf(key, sizeof(key), "remote.%s.url", option_origin);
-		git_config_set(key, repo);
+		strbuf_addf(&key, "remote.%s.url", option_origin);
+		git_config_set(key.buf, repo);
+			strbuf_reset(&key);
 
-		snprintf(key, sizeof(key), "remote.%s.fetch", option_origin);
-		snprintf(value, sizeof(value),
-				"+%s*:%s*", src_ref_prefix, branch_top);
-		git_config_set_multivar(key, value, "^$", 0);
+		strbuf_addf(&key, "remote.%s.fetch", option_origin);
+		strbuf_addf(&value, "+%s*:%s*", src_ref_prefix, branch_top.buf);
+		git_config_set_multivar(key.buf, value.buf, "^$", 0);
+		strbuf_reset(&key);
+		strbuf_reset(&value);
 	}
 
 	refspec.force = 0;
 	refspec.pattern = 1;
 	refspec.src = src_ref_prefix;
-	refspec.dst = branch_top;
+	refspec.dst = branch_top.buf;
 
 	if (path && !is_bundle)
 		refs = clone_local(path, git_dir);
@@ -545,7 +546,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				   head_points_at->old_sha1,
 				   NULL, 0, DIE_ON_ERR);
 
-			strbuf_addstr(&head_ref, branch_top);
+			strbuf_addstr(&head_ref, branch_top.buf);
 			strbuf_addstr(&head_ref, "HEAD");
 
 			/* Remote branch link */
@@ -553,10 +554,11 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				      head_points_at->peer_ref->name,
 				      reflog_msg.buf);
 
-			snprintf(key, sizeof(key), "branch.%s.remote", head);
-			git_config_set(key, option_origin);
-			snprintf(key, sizeof(key), "branch.%s.merge", head);
-			git_config_set(key, head_points_at->name);
+			strbuf_addf(&key, "branch.%s.remote", head);
+			git_config_set(key.buf, option_origin);
+			strbuf_reset(&key);
+			strbuf_addf(&key, "branch.%s.merge", head);
+			git_config_set(key.buf, head_points_at->name);
 		}
 	} else if (remote_head) {
 		/* Source had detached HEAD pointing somewhere. */
@@ -606,6 +608,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	strbuf_release(&reflog_msg);
+	strbuf_release(&branch_top);
+	strbuf_release(&key);
+	strbuf_release(&value);
 	junk_pid = 0;
 	return 0;
 }
