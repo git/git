@@ -134,9 +134,9 @@ static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 	}
 
 	if (is_bare) {
-		char *result = xmalloc(end - start + 5);
-		sprintf(result, "%.*s.git", (int)(end - start), start);
-		return result;
+		struct strbuf result = STRBUF_INIT;
+		strbuf_addf(&result, "%.*s.git", (int)(end - start), start);
+		return strbuf_detach(&result, 0);
 	}
 
 	return xstrndup(start, end - start);
