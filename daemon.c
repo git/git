@@ -57,7 +57,6 @@ static char *hostname;
 static char *canon_hostname;
 static char *ip_address;
 static char *tcp_port;
-static char *directory;
 
 static void logreport(int priority, const char *err, va_list params)
 {
@@ -147,7 +146,7 @@ static int avoid_alias(char *p)
 	}
 }
 
-static char *path_ok(void)
+static char *path_ok(char *directory)
 {
 	static char rpath[PATH_MAX];
 	static char interp_path[PATH_MAX];
@@ -296,12 +295,12 @@ static int git_daemon_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-static int run_service(struct daemon_service *service)
+static int run_service(char *dir, struct daemon_service *service)
 {
 	const char *path;
 	int enabled = service->enabled;
 
-	loginfo("Request %s for '%s'", service->name, directory);
+	loginfo("Request %s for '%s'", service->name, dir);
 
 	if (!enabled && !service->overridable) {
 		logerror("'%s': service not enabled.", service->name);
@@ -309,7 +308,7 @@ static int run_service(struct daemon_service *service)
 		return -1;
 	}
 
-	if (!(path = path_ok()))
+	if (!(path = path_ok(dir)))
 		return -1;
 
 	/*
@@ -555,8 +554,7 @@ static int execute(struct sockaddr *addr)
 	free(canon_hostname);
 	free(ip_address);
 	free(tcp_port);
-	free(directory);
-	hostname = canon_hostname = ip_address = tcp_port = directory = NULL;
+	hostname = canon_hostname = ip_address = tcp_port = NULL;
 
 	if (len != pktlen)
 		parse_extra_args(line + len + 1, pktlen - len - 1);
@@ -571,9 +569,7 @@ static int execute(struct sockaddr *addr)
 			 * Note: The directory here is probably context sensitive,
 			 * and might depend on the actual service being performed.
 			 */
-			free(directory);
-			directory = xstrdup(line + namelen + 5);
-			return run_service(s);
+			return run_service(line + namelen + 5, s);
 		}
 	}
 
