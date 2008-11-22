@@ -414,6 +414,7 @@ static void parse_extra_args(char *extra_args, int buflen)
 	char *val;
 	int vallen;
 	char *end = extra_args + buflen;
+	char *hp;
 
 	while (extra_args < end && *extra_args) {
 		saw_extended_args = 1;
@@ -438,11 +439,6 @@ static void parse_extra_args(char *extra_args, int buflen)
 			extra_args = val + vallen;
 		}
 	}
-}
-
-static void fill_in_extra_table_entries(void)
-{
-	char *hp;
 
 	/*
 	 * Replace literal host with lowercase-ized hostname.
@@ -562,10 +558,8 @@ static int execute(struct sockaddr *addr)
 	free(directory);
 	hostname = canon_hostname = ip_address = tcp_port = directory = NULL;
 
-	if (len != pktlen) {
+	if (len != pktlen)
 		parse_extra_args(line + len + 1, pktlen - len - 1);
-		fill_in_extra_table_entries();
-	}
 
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
