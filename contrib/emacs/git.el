@@ -39,10 +39,8 @@
 ;;  - renaming files from the status buffer
 ;;  - creating tags
 ;;  - fetch/pull
-;;  - switching branches
 ;;  - revlist browser
 ;;  - git-show-branch browser
-;;  - menus
 ;;
 
 (eval-when-compile (require 'cl))
@@ -396,6 +394,17 @@ the process output as a string, or nil if the git command failed."
      (push "-m" args))
     (unless newval (push "-d" args))
     (apply 'git-call-process-display-error "update-ref" args)))
+
+(defun git-for-each-ref (&rest specs)
+  "Return a list of refs using git-for-each-ref.
+Each entry is a cons of (SHORT-NAME . FULL-NAME)."
+  (let (refs)
+    (with-temp-buffer
+      (apply #'git-call-process t "for-each-ref" "--format=%(refname)" specs)
+      (goto-char (point-min))
+      (while (re-search-forward "^[^/\n]+/[^/\n]+/\\(.+\\)$" nil t)
+	(push (cons (match-string 1) (match-string 0)) refs)))
+    (nreverse refs)))
 
 (defun git-read-tree (tree &optional index-file)
   "Read a tree into the index file."
@@ -1356,6 +1365,24 @@ Return the list of files that haven't been handled."
         (push (match-string 1) files)))
     files))
 
+(defun git-read-commit-name (prompt &optional default)
+  "Ask for a commit name, with completion for local branch, remote branch and tag."
+  (completing-read prompt
+                   (list* "HEAD" "ORIG_HEAD" "FETCH_HEAD" (mapcar #'car (git-for-each-ref)))
+		   nil nil nil nil default))
+
+(defun git-checkout (branch &optional merge)
+  "Checkout a branch, tag, or any commit.
+Use a prefix arg if git should merge while checking out."
+  (interactive
+   (list (git-read-commit-name "Checkout: ")
+         current-prefix-arg))
+  (unless git-status (error "Not in git-status buffer."))
+  (let ((args (list branch "--")))
+    (when merge (push "-m" args))
+    (when (apply #'git-call-process-display-error "checkout" args)
+      (git-update-status-files))))
+
 (defun git-amend-commit ()
   "Undo the last commit on HEAD, and set things up to commit an
 amended version of it."
@@ -1471,6 +1498,7 @@ amended version of it."
     (define-key map "\M-\C-?" 'git-unmark-all)
     ; the commit submap
     (define-key commit-map "\C-a" 'git-amend-commit)
+    (define-key commit-map "\C-o" 'git-checkout)
     ; the diff submap
     (define-key diff-map "b" 'git-diff-file-base)
     (define-key diff-map "c" 'git-diff-file-combined)
@@ -1491,6 +1519,7 @@ amended version of it."
     `("Git"
       ["Refresh" git-refresh-status t]
       ["Commit" git-commit-file t]
+      ["Checkout..." git-checkout t]
       ("Merge"
 	["Next Unmerged File" git-next-unmerged-file t]
 	["Prev Unmerged File" git-prev-unmerged-file t]
