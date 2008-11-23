@@ -6618,7 +6618,7 @@ proc selectline {l isnew {desired_loc {}}} {
     make_secsel $id
 
     if {$isnew} {
-	addtohistory [list selbyid $id]
+	addtohistory [list selbyid $id 0] savecmitpos
     }
 
     $sha1entry delete 0 end
@@ -6770,10 +6770,12 @@ proc reselectline {} {
     }
 }
 
-proc addtohistory {cmd} {
+proc addtohistory {cmd {saveproc {}}} {
     global history historyindex curview
 
-    set elt [list $curview $cmd]
+    unset_posvars
+    save_position
+    set elt [list $curview $cmd $saveproc {}]
     if {$historyindex > 0
 	&& [lindex $history [expr {$historyindex - 1}]] == $elt} {
 	return
@@ -6793,14 +6795,45 @@ proc addtohistory {cmd} {
     .tf.bar.rightbut conf -state disabled
 }
 
+# save the scrolling position of the diff display pane
+proc save_position {} {
+    global historyindex history
+
+    if {$historyindex < 1} return
+    set hi [expr {$historyindex - 1}]
+    set fn [lindex $history $hi 2]
+    if {$fn ne {}} {
+	lset history $hi 3 [eval $fn]
+    }
+}
+
+proc unset_posvars {} {
+    global last_posvars
+
+    if {[info exists last_posvars]} {
+	foreach {var val} $last_posvars {
+	    global $var
+	    catch {unset $var}
+	}
+	unset last_posvars
+    }
+}
+
 proc godo {elt} {
-    global curview
+    global curview last_posvars
 
     set view [lindex $elt 0]
     set cmd [lindex $elt 1]
+    set pv [lindex $elt 3]
     if {$curview != $view} {
 	showview $view
     }
+    unset_posvars
+    foreach {var val} $pv {
+	global $var
+	set $var $val
+    }
+    set last_posvars $pv
     eval $cmd
 }
 
@@ -6809,6 +6842,7 @@ proc goback {} {
     focus .
 
     if {$historyindex > 1} {
+	save_position
 	incr historyindex -1
 	godo [lindex $history [expr {$historyindex - 1}]]
 	.tf.bar.rightbut conf -state normal
@@ -6823,6 +6857,7 @@ proc goforw {} {
     focus .
 
     if {$historyindex < [llength $history]} {
+	save_position
 	set cmd [lindex $history $historyindex]
 	incr historyindex
 	godo $cmd
@@ -7189,6 +7224,34 @@ proc getblobdiffs {ids} {
     filerun $bdf [list getblobdiffline $bdf $diffids]
 }
 
+proc savecmitpos {} {
+    global ctext cmitmode
+
+    if {$cmitmode eq "tree"} {
+	return {}
+    }
+    return [list target_scrollpos [$ctext index @0,0]]
+}
+
+proc savectextpos {} {
+    global ctext
+
+    return [list target_scrollpos [$ctext index @0,0]]
+}
+
+proc maybe_scroll_ctext {ateof} {
+    global ctext target_scrollpos
+
+    if {![info exists target_scrollpos]} return
+    if {!$ateof} {
+	set nlines [expr {[winfo height $ctext]
+			  / [font metrics textfont -linespace]}]
+	if {[$ctext compare "$target_scrollpos + $nlines lines" <= end]} return
+    }
+    $ctext yview $target_scrollpos
+    unset target_scrollpos
+}
+
 proc setinlist {var i val} {
     global $var
 
@@ -7383,6 +7446,7 @@ proc getblobdiffline {bdf ids} {
     if {[info exists seehere]} {
 	mark_ctext_line [lindex [split $seehere .] 0]
     }
+    maybe_scroll_ctext [eof $bdf]
     $ctext conf -state disabled
     if {[eof $bdf]} {
 	close $bdf
@@ -7877,7 +7941,7 @@ proc lineclick {x y id isnew} {
     }
 
     if {$isnew} {
-	addtohistory [list lineclick $x $y $id 0]
+	addtohistory [list lineclick $x $y $id 0] savectextpos
     }
     # fill the details pane with info about this line
     $ctext conf -state normal
@@ -7908,6 +7972,7 @@ proc lineclick {x y id isnew} {
 	    $ctext insert end "\n\t[mc "Date"]:\t$date\n"
 	}
     }
+    maybe_scroll_ctext 1
     $ctext conf -state disabled
     init_flist {}
 }
@@ -7921,10 +7986,10 @@ proc normalline {} {
     }
 }
 
-proc selbyid {id} {
+proc selbyid {id {isnew 1}} {
     global curview
     if {[commitinview $id $curview]} {
-	selectline [rowofcommit $id] 1
+	selectline [rowofcommit $id] $isnew
     }
 }
 
@@ -7974,7 +8039,7 @@ proc diffvssel {dirn} {
 	set oldid $rowmenuid
 	set newid [commitonrow $selectedline]
     }
-    addtohistory [list doseldiff $oldid $newid]
+    addtohistory [list doseldiff $oldid $newid] savectextpos
     doseldiff $oldid $newid
 }
 
@@ -9886,7 +9951,7 @@ proc showtag {tag isnew} {
     global ctext tagcontents tagids linknum tagobjid
 
     if {$isnew} {
-	addtohistory [list showtag $tag 0]
+	addtohistory [list showtag $tag 0] savectextpos
     }
     $ctext conf -state normal
     clear_ctext
@@ -9903,6 +9968,7 @@ proc showtag {tag isnew} {
 	set text "[mc "Tag"]: $tag\n[mc "Id"]:  $tagids($tag)"
     }
     appendwithlinks $text {}
+    maybe_scroll_ctext
     $ctext conf -state disabled
     init_flist {}
 }
