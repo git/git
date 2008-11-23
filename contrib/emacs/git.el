@@ -220,7 +220,7 @@ the process output as a string, or nil if the git command failed."
     (with-current-buffer buffer
       (cd dir)
       (apply #'call-process-region start end program
-             nil (list output-buffer nil) nil args))))
+             nil (list output-buffer t) nil args))))
 
 (defun git-run-command-buffer (buffer-name &rest args)
   "Run a git command, sending the output to a buffer named BUFFER-NAME."
@@ -237,13 +237,15 @@ the process output as a string, or nil if the git command failed."
 
 (defun git-run-command-region (buffer start end env &rest args)
   "Run a git command with specified buffer region as input."
-  (unless (eq 0 (if env
-                    (git-run-process-region
-                     buffer start end "env"
-                     (append (git-get-env-strings env) (list "git") args))
+  (with-temp-buffer
+    (if (eq 0 (if env
                   (git-run-process-region
-                   buffer start end "git" args)))
-    (error "Failed to run \"git %s\":\n%s" (mapconcat (lambda (x) x) args " ") (buffer-string))))
+                   buffer start end "env"
+                   (append (git-get-env-strings env) (list "git") args))
+                (git-run-process-region buffer start end "git" args)))
+        (buffer-string)
+      (display-message-or-buffer (current-buffer))
+      nil)))
 
 (defun git-run-hook (hook env &rest args)
   "Run a git hook and display its output if any."
@@ -456,18 +458,16 @@ Each entry is a cons of (SHORT-NAME . FULL-NAME)."
       (setq coding-system-for-write buffer-file-coding-system))
     (let ((commit
            (git-get-string-sha1
-            (with-output-to-string
-              (with-current-buffer standard-output
-                (let ((env `(("GIT_AUTHOR_NAME" . ,author-name)
-                             ("GIT_AUTHOR_EMAIL" . ,author-email)
-                             ("GIT_COMMITTER_NAME" . ,(git-get-committer-name))
-                             ("GIT_COMMITTER_EMAIL" . ,(git-get-committer-email)))))
-                  (when author-date (push `("GIT_AUTHOR_DATE" . ,author-date) env))
-                  (apply #'git-run-command-region
-                         buffer log-start log-end env
-                         "commit-tree" tree (nreverse args))))))))
-      (and (git-update-ref "HEAD" commit head subject)
-           commit))))
+            (let ((env `(("GIT_AUTHOR_NAME" . ,author-name)
+                         ("GIT_AUTHOR_EMAIL" . ,author-email)
+                         ("GIT_COMMITTER_NAME" . ,(git-get-committer-name))
+                         ("GIT_COMMITTER_EMAIL" . ,(git-get-committer-email)))))
+              (when author-date (push `("GIT_AUTHOR_DATE" . ,author-date) env))
+              (apply #'git-run-command-region
+                     buffer log-start log-end env
+                     "commit-tree" tree (nreverse args))))))
+      (when commit (git-update-ref "HEAD" commit head subject))
+      commit)))
 
 (defun git-empty-db-p ()
   "Check if the git db is empty (no commit done yet)."
