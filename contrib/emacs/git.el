@@ -1383,6 +1383,18 @@ Use a prefix arg if git should merge while checking out."
     (when (apply #'git-call-process-display-error "checkout" args)
       (git-update-status-files))))
 
+(defun git-branch (branch)
+  "Create a branch from the current HEAD and switch to it."
+  (interactive (list (git-read-commit-name "Branch: ")))
+  (unless git-status (error "Not in git-status buffer."))
+  (if (git-rev-parse (concat "refs/heads/" branch))
+      (if (yes-or-no-p (format "Branch %s already exists, replace it? " branch))
+          (and (git-call-process-display-error "branch" "-f" branch)
+               (git-call-process-display-error "checkout" branch))
+        (message "Canceled."))
+    (git-call-process-display-error "checkout" "-b" branch))
+    (git-refresh-ewoc-hf git-status))
+
 (defun git-amend-commit ()
   "Undo the last commit on HEAD, and set things up to commit an
 amended version of it."
@@ -1498,6 +1510,7 @@ amended version of it."
     (define-key map "\M-\C-?" 'git-unmark-all)
     ; the commit submap
     (define-key commit-map "\C-a" 'git-amend-commit)
+    (define-key commit-map "\C-b" 'git-branch)
     (define-key commit-map "\C-o" 'git-checkout)
     ; the diff submap
     (define-key diff-map "b" 'git-diff-file-base)
@@ -1520,6 +1533,7 @@ amended version of it."
       ["Refresh" git-refresh-status t]
       ["Commit" git-commit-file t]
       ["Checkout..." git-checkout t]
+      ["New Branch..." git-branch t]
       ("Merge"
 	["Next Unmerged File" git-next-unmerged-file t]
 	["Prev Unmerged File" git-prev-unmerged-file t]
