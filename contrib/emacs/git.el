@@ -1411,6 +1411,44 @@ amended version of it."
       (git-setup-commit-buffer commit)
       (git-commit-file))))
 
+(defun git-cherry-pick-commit (arg)
+  "Cherry-pick a commit."
+  (interactive (list (git-read-commit-name "Cherry-pick commit: ")))
+  (unless git-status (error "Not in git-status buffer."))
+  (let ((commit (git-rev-parse (concat arg "^0"))))
+    (unless commit (error "Not a valid commit '%s'." arg))
+    (when (git-rev-parse (concat commit "^2"))
+      (error "Cannot cherry-pick a merge commit."))
+    (let ((files (git-get-commit-files commit))
+          (ok (git-call-process-display-error "cherry-pick" "-n" commit)))
+      (git-update-status-files files ok)
+      (with-current-buffer (git-setup-commit-buffer commit)
+        (goto-char (point-min))
+        (if (re-search-forward "^\n*Signed-off-by:" nil t 1)
+            (goto-char (match-beginning 0))
+          (goto-char (point-max)))
+        (insert "(cherry picked from commit " commit ")\n"))
+      (when ok (git-commit-file)))))
+
+(defun git-revert-commit (arg)
+  "Revert a commit."
+  (interactive (list (git-read-commit-name "Revert commit: ")))
+  (unless git-status (error "Not in git-status buffer."))
+  (let ((commit (git-rev-parse (concat arg "^0"))))
+    (unless commit (error "Not a valid commit '%s'." arg))
+    (when (git-rev-parse (concat commit "^2"))
+      (error "Cannot revert a merge commit."))
+    (let ((files (git-get-commit-files commit))
+          (subject (git-get-commit-description commit))
+          (ok (git-call-process-display-error "revert" "-n" commit)))
+      (git-update-status-files files ok)
+      (when (string-match "^[0-9a-f]+ - \\(.*\\)$" subject)
+        (setq subject (match-string 1 subject)))
+      (git-setup-log-buffer (get-buffer-create "*git-commit*")
+                            (git-get-merge-heads) nil nil (format "Revert \"%s\"" subject) nil
+                            (format "This reverts commit %s.\n" commit))
+      (when ok (git-commit-file)))))
+
 (defun git-find-file ()
   "Visit the current file in its own buffer."
   (interactive)
@@ -1512,6 +1550,8 @@ amended version of it."
     (define-key commit-map "\C-a" 'git-amend-commit)
     (define-key commit-map "\C-b" 'git-branch)
     (define-key commit-map "\C-o" 'git-checkout)
+    (define-key commit-map "\C-p" 'git-cherry-pick-commit)
+    (define-key commit-map "\C-v" 'git-revert-commit)
     ; the diff submap
     (define-key diff-map "b" 'git-diff-file-base)
     (define-key diff-map "c" 'git-diff-file-combined)
@@ -1534,6 +1574,8 @@ amended version of it."
       ["Commit" git-commit-file t]
       ["Checkout..." git-checkout t]
       ["New Branch..." git-branch t]
+      ["Cherry-pick Commit..." git-cherry-pick-commit t]
+      ["Revert Commit..." git-revert-commit t]
       ("Merge"
 	["Next Unmerged File" git-next-unmerged-file t]
 	["Prev Unmerged File" git-prev-unmerged-file t]
