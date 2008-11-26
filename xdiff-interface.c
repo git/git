@@ -254,16 +254,6 @@ static long ff_regexp(const char *line, long len,
 
 	line_buffer = xstrndup(line, len); /* make NUL terminated */
 
-	/* Exclude terminating newline (and cr) from matching */
-	if (len > 0 && line[len-1] == '\n') {
-		if (len > 1 && line[len-2] == '\r')
-			len -= 2;
-		else
-			len--;
-	}
-
-	line_buffer = xstrndup(line, len); /* make NUL terminated */
-
 	for (i = 0; i < regs->nr; i++) {
 		struct ff_reg *reg = regs->array + i;
 		if (!regexec(&reg->re, line_buffer, 2, pmatch, 0)) {
@@ -338,4 +328,3 @@ int git_xmerge_config(const char *var, const char *value, void *cb)
 	}
 	return git_default_config(var, value, cb);
 }
-
