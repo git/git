@@ -290,6 +290,9 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	/* Otherwise, we are doing the usual "git" diff */
 	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
 
+	/* Default to let external be used */
+	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
+
 	if (nongit)
 		die("Not a git repository");
 	argc = setup_revisions(argc, argv, &rev, NULL);
@@ -298,7 +301,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		if (diff_setup_done(&rev.diffopt) < 0)
 			die("diff_setup_done failed");
 	}
-	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
+
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
 
