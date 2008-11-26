@@ -572,15 +572,15 @@ color.status.<slot>::
 	to red). The values of these variables may be specified as in
 	color.branch.<slot>.
 
-commit.template::
-	Specify a file to use as the template for new commit messages.
-
 color.ui::
 	When set to `always`, always use colors in all git commands which
 	are capable of colored output. When false (or `never`), never. When
 	set to `true` or `auto`, use colors only when the output is to the
 	terminal. When more specific variables of color.* are set, they always
 	take precedence over this setting. Defaults to false.
+
+commit.template::
+	Specify a file to use as the template for new commit messages.
 
 diff.autorefreshindex::
 	When using 'git-diff' to compare with work tree
@@ -713,18 +713,6 @@ gc.rerereunresolved::
 	Records of conflicted merge you have not resolved are
 	kept for this many days when 'git-rerere gc' is run.
 	The default is 15 days.  See linkgit:git-rerere[1].
-
-rerere.autoupdate::
-	When set to true, `git-rerere` updates the index with the
-	resulting contents after it cleanly resolves conflicts using
-	previously recorded resolution.  Defaults to false.
-
-rerere.enabled::
-	Activate recording of resolved conflicts, so that identical
-	conflict hunks can be resolved automatically, should they
-	be encountered again.  linkgit:git-rerere[1] command is by
-	default enabled if you create `rr-cache` directory under
-	`$GIT_DIR`, but can be disabled by setting this option to false.
 
 gitcvs.enabled::
 	Whether the CVS server interface is enabled for this repository.
@@ -917,6 +905,10 @@ i18n.logOutputEncoding::
 	Character encoding the commit messages are converted to when
 	running 'git-log' and friends.
 
+imap::
+	The configuration variables in the 'imap' section are described
+	in linkgit:git-imap-send[1].
+
 instaweb.browser::
 	Specify the program that will be used to browse your working
 	repository in gitweb. See linkgit:git-instaweb[1].
@@ -952,8 +944,6 @@ man.viewer::
 	Specify the programs that may be used to display help in the
 	'man' format. See linkgit:git-help[1].
 
-include::merge-config.txt[]
-
 man.<tool>.cmd::
 	Specify the command to invoke the specified man viewer. The
 	specified command is evaluated in shell with the man page
@@ -963,13 +953,7 @@ man.<tool>.path::
 	Override the path for the given tool that may be used to
 	display help in the 'man' format. See linkgit:git-help[1].
 
-merge.conflictstyle::
-	Specify the style in which conflicted hunks are written out to
-	working tree files upon merge.  The default is "merge", which
-	shows `<<<<<<<` conflict marker, change made by one side,
-	`=======` marker, change made by the other side, and then
-	`>>>>>>>` marker.  An alternate style, "diff3", adds `|||||||`
-	marker and the original text before `=======` marker.
+include::merge-config.txt[]
 
 mergetool.<tool>.path::
 	Override the path for the given tool.  This is useful in case
@@ -1079,6 +1063,41 @@ pull.octopus::
 pull.twohead::
 	The default merge strategy to use when pulling a single branch.
 
+receive.fsckObjects::
+	If it is set to true, git-receive-pack will check all received
+	objects. It will abort in the case of a malformed object or a
+	broken link. The result of an abort are only dangling objects.
+	Defaults to false.
+
+receive.unpackLimit::
+	If the number of objects received in a push is below this
+	limit then the objects will be unpacked into loose object
+	files. However if the number of received objects equals or
+	exceeds this limit then the received pack will be stored as
+	a pack, after adding any missing delta bases.  Storing the
+	pack from a push can make the push operation complete faster,
+	especially on slow filesystems.  If not set, the value of
+	`transfer.unpackLimit` is used instead.
+
+receive.denyDeletes::
+	If set to true, git-receive-pack will deny a ref update that deletes
+	the ref. Use this to prevent such a ref deletion via a push.
+
+receive.denyCurrentBranch::
+	If set to true or "refuse", receive-pack will deny a ref update
+	to the currently checked out branch of a non-bare repository.
+	Such a push is potentially dangerous because it brings the HEAD
+	out of sync with the index and working tree. If set to "warn",
+	print a warning of such a push to stderr, but allow the push to
+	proceed. If set to false or "ignore", allow such pushes with no
+	message. Defaults to "warn".
+
+receive.denyNonFastForwards::
+	If set to true, git-receive-pack will deny a ref update which is
+	not a fast forward. Use this to prevent such an update via a push,
+	even if that push is forced. This configuration variable is
+	set when initializing a shared repository.
+
 remote.<name>.url::
 	The URL of a remote repository.  See linkgit:git-fetch[1] or
 	linkgit:git-push[1].
@@ -1128,6 +1147,18 @@ repack.usedeltabaseoffset::
 	"false" and repack. Access from old git versions over the
 	native protocol are unaffected by this option.
 
+rerere.autoupdate::
+	When set to true, `git-rerere` updates the index with the
+	resulting contents after it cleanly resolves conflicts using
+	previously recorded resolution.  Defaults to false.
+
+rerere.enabled::
+	Activate recording of resolved conflicts, so that identical
+	conflict hunks can be resolved automatically, should they
+	be encountered again.  linkgit:git-rerere[1] command is by
+	default enabled if you create `rr-cache` directory under
+	`$GIT_DIR`, but can be disabled by setting this option to false.
+
 showbranch.default::
 	The default set of branches for linkgit:git-show-branch[1].
 	See linkgit:git-show-branch[1].
@@ -1164,6 +1195,11 @@ tar.umask::
 	archiving user's umask will be used instead.  See umask(2) and
 	linkgit:git-archive[1].
 
+transfer.unpackLimit::
+	When `fetch.unpackLimit` or `receive.unpackLimit` are
+	not set, the value of this variable is used instead.
+	The default value is 100.
+
 url.<base>.insteadOf::
 	Any URL that starts with this value will be rewritten to
 	start, instead, with <base>. In cases where some site serves a
@@ -1191,50 +1227,6 @@ user.signingkey::
 	default selection with this variable.  This option is passed
 	unchanged to gpg's --local-user parameter, so you may specify a key
 	using any method that gpg supports.
-
-imap::
-	The configuration variables in the 'imap' section are described
-	in linkgit:git-imap-send[1].
-
-receive.fsckObjects::
-	If it is set to true, git-receive-pack will check all received
-	objects. It will abort in the case of a malformed object or a
-	broken link. The result of an abort are only dangling objects.
-	Defaults to false.
-
-receive.unpackLimit::
-	If the number of objects received in a push is below this
-	limit then the objects will be unpacked into loose object
-	files. However if the number of received objects equals or
-	exceeds this limit then the received pack will be stored as
-	a pack, after adding any missing delta bases.  Storing the
-	pack from a push can make the push operation complete faster,
-	especially on slow filesystems.  If not set, the value of
-	`transfer.unpackLimit` is used instead.
-
-receive.denyDeletes::
-	If set to true, git-receive-pack will deny a ref update that deletes
-	the ref. Use this to prevent such a ref deletion via a push.
-
-receive.denyNonFastForwards::
-	If set to true, git-receive-pack will deny a ref update which is
-	not a fast forward. Use this to prevent such an update via a push,
-	even if that push is forced. This configuration variable is
-	set when initializing a shared repository.
-
-receive.denyCurrentBranch::
-	If set to true or "refuse", receive-pack will deny a ref update
-	to the currently checked out branch of a non-bare repository.
-	Such a push is potentially dangerous because it brings the HEAD
-	out of sync with the index and working tree. If set to "warn",
-	print a warning of such a push to stderr, but allow the push to
-	proceed. If set to false or "ignore", allow such pushes with no
-	message. Defaults to "warn".
-
-transfer.unpackLimit::
-	When `fetch.unpackLimit` or `receive.unpackLimit` are
-	not set, the value of this variable is used instead.
-	The default value is 100.
 
 web.browser::
 	Specify a web browser that may be used by some commands.
