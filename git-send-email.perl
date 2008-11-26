@@ -345,10 +345,13 @@ my %parse_alias = (
 			# spaces delimit multiple addresses
 			$aliases{$1} = [ split(/\s+/, $2) ];
 		}}},
-	pine => sub { my $fh = shift; while (<$fh>) {
-		if (/^(\S+)\t.*\t(.*)$/) {
+	pine => sub { my $fh = shift; my $f='\t[^\t]*';
+	        for (my $x = ''; defined($x); $x = $_) {
+			chomp $x;
+		        $x .= $1 while(defined($_ = <$fh>) && /^ +(.*)$/);
+			$x =~ /^(\S+)$f\t\(?([^\t]+?)\)?(:?$f){0,2}$/ or next;
 			$aliases{$1} = [ split(/\s*,\s*/, $2) ];
-		}}},
+		}},
 	gnus => sub { my $fh = shift; while (<$fh>) {
 		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
 			$aliases{$1} = [ $2 ];
