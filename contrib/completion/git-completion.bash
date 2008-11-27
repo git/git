@@ -1344,7 +1344,7 @@ _git_revert ()
 		return
 		;;
 	esac
-	COMPREPLY=()
+	__gitcomp "$(__git_refs)"
 }
 
 _git_rm ()
