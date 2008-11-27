@@ -801,6 +801,7 @@ n - do not stage this hunk
 a - stage this and all the remaining hunks in the file
 d - do not stage this hunk nor any of the remaining hunks in the file
 g - select a hunk to go to
+/ - search for a hunk matching the given regex
 j - leave this hunk undecided, see next undecided hunk
 J - leave this hunk undecided, see next hunk
 k - leave this hunk undecided, see previous undecided hunk
@@ -964,7 +965,7 @@ sub patch_update_file {
 		for (@{$hunk[$ix]{DISPLAY}}) {
 			print;
 		}
-		print colored $prompt_color, "Stage this hunk [y,n,a,d$other,?]? ";
+		print colored $prompt_color, "Stage this hunk [y,n,a,d,/$other,?]? ";
 		my $line = <STDIN>;
 		if ($line) {
 			if ($line =~ /^y/i) {
@@ -1011,6 +1012,31 @@ sub patch_update_file {
 					}
 					$ix++;
 				}
+				next;
+			}
+			elsif ($line =~ m|^/(.*)|) {
+				my $search_string;
+				eval {
+					$search_string = qr{$1}m;
+				};
+				if ($@) {
+					my ($err,$exp) = ($@, $1);
+					$err =~ s/ at .*git-add--interactive line \d+, <STDIN> line \d+.*$//;
+					print STDERR "Malformed search regexp $exp: $err\n";
+					next;
+				}
+				my $iy = $ix;
+				while (1) {
+					my $text = join ("", @{$hunk[$iy]{TEXT}});
+					last if ($text =~ $search_string);
+					$iy++;
+					$iy = 0 if ($iy >= $num);
+					if ($ix == $iy) {
+						print STDERR "No hunk matches the given pattern\n";
+						last;
+					}
+				}
+				$ix = $iy;
 				next;
 			}
 			elsif ($other =~ /K/ && $line =~ /^K/) {
