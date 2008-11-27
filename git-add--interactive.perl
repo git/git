@@ -929,22 +929,22 @@ sub patch_update_file {
 		for ($i = 0; $i < $ix; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$prev = 1;
-				$other .= '/k';
+				$other .= ',k';
 				last;
 			}
 		}
 		if ($ix) {
-			$other .= '/K';
+			$other .= ',K';
 		}
 		for ($i = $ix + 1; $i < $num; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$next = 1;
-				$other .= '/j';
+				$other .= ',j';
 				last;
 			}
 		}
 		if ($ix < $num - 1) {
-			$other .= '/J';
+			$other .= ',J';
 		}
 		if ($num > 1) {
 			$other .= '/g';
@@ -958,13 +958,13 @@ sub patch_update_file {
 		last if (!$undecided);
 
 		if (hunk_splittable($hunk[$ix]{TEXT})) {
-			$other .= '/s';
+			$other .= ',s';
 		}
-		$other .= '/e';
+		$other .= ',e';
 		for (@{$hunk[$ix]{DISPLAY}}) {
 			print;
 		}
-		print colored $prompt_color, "Stage this hunk [y/n/a/d$other/?]? ";
+		print colored $prompt_color, "Stage this hunk [y,n,a,d$other,?]? ";
 		my $line = <STDIN>;
 		if ($line) {
 			if ($line =~ /^y/i) {
