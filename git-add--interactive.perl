@@ -1039,29 +1039,42 @@ sub patch_update_file {
 				$ix = $iy;
 				next;
 			}
-			elsif ($other =~ /K/ && $line =~ /^K/) {
-				$ix--;
-				next;
-			}
-			elsif ($other =~ /J/ && $line =~ /^J/) {
-				$ix++;
-				next;
-			}
-			elsif ($other =~ /k/ && $line =~ /^k/) {
-				while (1) {
+			elsif ($line =~ /^K/) {
+				if ($other =~ /K/) {
 					$ix--;
-					last if (!$ix ||
-						 !defined $hunk[$ix]{USE});
+				}
+				else {
+					print STDERR "No previous hunk\n";
 				}
 				next;
 			}
-			elsif ($other =~ /j/ && $line =~ /^j/) {
-				while (1) {
+			elsif ($line =~ /^J/) {
+				if ($other =~ /J/) {
 					$ix++;
-					last if ($ix >= $num ||
-						 !defined $hunk[$ix]{USE});
+				}
+				else {
+					print STDERR "No next hunk\n";
 				}
 				next;
+			}
+			elsif ($line =~ /^k/) {
+				if ($other =~ /k/) {
+					while (1) {
+						$ix--;
+						last if (!$ix ||
+							 !defined $hunk[$ix]{USE});
+					}
+				}
+				else {
+					print STDERR "No previous hunk\n";
+				}
+				next;
+			}
+			elsif ($line =~ /^j/) {
+				if ($other !~ /j/) {
+					print STDERR "No next hunk\n";
+					next;
+				}
 			}
 			elsif ($other =~ /s/ && $line =~ /^s/) {
 				my @split = split_hunk($hunk[$ix]{TEXT}, $hunk[$ix]{DISPLAY});
