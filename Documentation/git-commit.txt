@@ -92,7 +92,7 @@ OPTIONS
 
 -s::
 --signoff::
-	Add Signed-off-by line by the commiter at the end of the commit
+	Add Signed-off-by line by the committer at the end of the commit
 	log message.
 
 -n::

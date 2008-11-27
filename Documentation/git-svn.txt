@@ -109,7 +109,7 @@ COMMANDS
 
 This works similarly to `svn update` or 'git-pull' except that
 it preserves linear history with 'git-rebase' instead of
-'git-merge' for ease of dcommiting with 'git-svn'.
+'git-merge' for ease of dcommitting with 'git-svn'.
 
 This accepts all options that 'git-svn fetch' and 'git-rebase'
 accept.  However, '--fetch-all' only fetches from the current
