@@ -30,7 +30,7 @@ Fixes since v1.6.0.3
 * 'git status' incorrectly reported a submodule directory as an untracked
   directory.
 
-* 'git svn' used deprecated 'git-foo' form of subcommand invocaition.
+* 'git svn' used deprecated 'git-foo' form of subcommand invocation.
 
 * 'git update-ref -d' to remove a reference did not honor --no-deref option.
 
