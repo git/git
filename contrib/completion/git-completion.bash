@@ -650,21 +650,12 @@ _git_branch ()
 
 _git_bundle ()
 {
-	local mycword="$COMP_CWORD"
-	case "${COMP_WORDS[0]}" in
-	git)
-		local cmd="${COMP_WORDS[2]}"
-		mycword="$((mycword-1))"
-		;;
-	git-bundle*)
-		local cmd="${COMP_WORDS[1]}"
-		;;
-	esac
-	case "$mycword" in
-	1)
+	local cmd="${COMP_WORDS[2]}"
+	case "$COMP_CWORD" in
+	2)
 		__gitcomp "create list-heads verify unbundle"
 		;;
-	2)
+	3)
 		# looking for a file
 		;;
 	*)
@@ -812,12 +803,7 @@ _git_fetch ()
 			__gitcomp "$(__git_refs)" "$pfx" "${cur#*:}"
 			;;
 		*)
-			local remote
-			case "${COMP_WORDS[0]}" in
-			git-fetch) remote="${COMP_WORDS[1]}" ;;
-			git)       remote="${COMP_WORDS[2]}" ;;
-			esac
-			__gitcomp "$(__git_refs2 "$remote")"
+			__gitcomp "$(__git_refs2 "${COMP_WORDS[2]}")"
 			;;
 		esac
 	fi
@@ -1060,12 +1046,7 @@ _git_pull ()
 	if [ "$COMP_CWORD" = 2 ]; then
 		__gitcomp "$(__git_remotes)"
 	else
-		local remote
-		case "${COMP_WORDS[0]}" in
-		git-pull)  remote="${COMP_WORDS[1]}" ;;
-		git)       remote="${COMP_WORDS[2]}" ;;
-		esac
-		__gitcomp "$(__git_refs "$remote")"
+		__gitcomp "$(__git_refs "${COMP_WORDS[2]}")"
 	fi
 }
 
@@ -1078,19 +1059,13 @@ _git_push ()
 	else
 		case "$cur" in
 		*:*)
-			local remote
-			case "${COMP_WORDS[0]}" in
-			git-push)  remote="${COMP_WORDS[1]}" ;;
-			git)       remote="${COMP_WORDS[2]}" ;;
-			esac
-
 			local pfx=""
 			case "$COMP_WORDBREAKS" in
 			*:*) : great ;;
 			*)   pfx="${cur%%:*}:" ;;
 			esac
 
-			__gitcomp "$(__git_refs "$remote")" "$pfx" "${cur#*:}"
+			__gitcomp "$(__git_refs "${COMP_WORDS[2]}")" "$pfx" "${cur#*:}"
 			;;
 		+*)
 			__gitcomp "$(__git_refs)" + "${cur#+}"
@@ -1591,7 +1566,7 @@ _git_tag ()
 	-m|-F)
 		COMPREPLY=()
 		;;
-	-*|tag|git-tag)
+	-*|tag)
 		if [ $f = 1 ]; then
 			__gitcomp "$(__git_tags)"
 		else
