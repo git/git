@@ -55,9 +55,9 @@ on.
   to a non-zero value to accept the suggestion when git can uniquely
   guess.
 
-* The packfile machinery hopefully is more robust when dealilng with
+* The packfile machinery hopefully is more robust when dealing with
   corrupt packs if redundant objects involved in the corruption are
-  available elsehwere.
+  available elsewhere.
 
 * "git add -N path..." adds the named paths as an empty blob, so that
   subsequent "git diff" will show a diff as if they are creation events.
@@ -157,7 +157,7 @@ on.
 * "git log" learned "--source" to show what ref each commit was reached
   from.
 
-* "git log" also learned "--simplify-by-decration" to show the
+* "git log" also learned "--simplify-by-decoration" to show the
   birds-eye-view of the topology of the history.
 
 * "git log --pretty=format:" learned "%d" format element that inserts
