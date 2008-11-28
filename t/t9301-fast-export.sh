@@ -231,4 +231,12 @@ test_expect_success 'fast-export -C -C | fast-import' '
 
 '
 
+test_expect_success 'fast-export | fast-import when master is tagged' '
+
+	git tag -m msg last &&
+	git fast-export -C -C --signed-tags=strip --all > output &&
+	test $(grep -c "^tag " output) = 3
+
+'
+
 test_done
