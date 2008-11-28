@@ -14,7 +14,7 @@ static const char * const builtin_remote_usage[] = {
 	"git remote rm <name>",
 	"git remote show [-n] <name>",
 	"git remote prune [-n | --dry-run] <name>",
-	"git remote update [group]",
+	"git remote [-v | --verbose] update [group]",
 	NULL
 };
 
@@ -42,7 +42,11 @@ static int opt_parse_track(const struct option *opt, const char *arg, int not)
 
 static int fetch_remote(const char *name)
 {
-	const char *argv[] = { "fetch", name, NULL };
+	const char *argv[] = { "fetch", name, NULL, NULL };
+	if (verbose) {
+		argv[1] = "-v";
+		argv[2] = name;
+	}
 	printf("Updating %s\n", name);
 	if (run_command_v_opt(argv, RUN_GIT_CMD))
 		return error("Could not fetch %s", name);
