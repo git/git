@@ -205,6 +205,13 @@ In order to facilitate caching and to make it possible to give
 parameters to the callback, `strbuf_expand()` passes a context pointer,
 which can be used by the programmer of the callback as she sees fit.
 
+`strbuf_expand_dict_cb`::
+
+	Used as callback for `strbuf_expand()`, expects an array of
+	struct strbuf_expand_dict_entry as context, i.e. pairs of
+	placeholder and replacement string.  The array needs to be
+	terminated by an entry with placeholder set to NULL.
+
 `strbuf_addf`::
 
 	Add a formatted string to the buffer.

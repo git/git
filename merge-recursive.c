@@ -16,7 +16,6 @@
 #include "string-list.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
-#include "interpolate.h"
 #include "attr.h"
 #include "merge-recursive.h"
 #include "dir.h"

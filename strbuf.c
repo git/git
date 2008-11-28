@@ -237,6 +237,22 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 	}
 }
 
+size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
+		void *context)
+{
+	struct strbuf_expand_dict_entry *e = context;
+	size_t len;
+
+	for (; e->placeholder && (len = strlen(e->placeholder)); e++) {
+		if (!strncmp(placeholder, e->placeholder, len)) {
+			if (e->value)
+				strbuf_addstr(sb, e->value);
+			return len;
+		}
+	}
+	return 0;
+}
+
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
 {
 	size_t res;
