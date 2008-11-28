@@ -188,11 +188,22 @@ __git_tags ()
 
 __git_refs ()
 {
-	local cmd i is_hash=y dir="$(__gitdir "$1")"
+	local i is_hash=y dir="$(__gitdir "$1")"
+	local cur="${COMP_WORDS[COMP_CWORD]}" format refs
 	if [ -d "$dir" ]; then
-		if [ -e "$dir/HEAD" ]; then echo HEAD; fi
-		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
-			refs/tags refs/heads refs/remotes
+		case "$cur" in
+		refs|refs/*)
+			format="refname"
+			refs="${cur%/*}"
+			;;
+		*)
+			if [ -e "$dir/HEAD" ]; then echo HEAD; fi
+			format="refname:short"
+			refs="refs/tags refs/heads refs/remotes"
+			;;
+		esac
+		git --git-dir="$dir" for-each-ref --format="%($format)" \
+			$refs
 		return
 	fi
 	for i in $(git ls-remote "$dir" 2>/dev/null); do
