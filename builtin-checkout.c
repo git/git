@@ -553,7 +553,7 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 	if (!opts->quiet && !old.path && old.commit && new->commit != old.commit)
 		describe_detached_head("Previous HEAD position was", old.commit);
 
-	if (!old.commit) {
+	if (!old.commit && !opts->force) {
 		if (!opts->quiet) {
 			fprintf(stderr, "warning: You appear to be on a branch yet to be born.\n");
 			fprintf(stderr, "warning: Forcing checkout of %s.\n", new->name);
