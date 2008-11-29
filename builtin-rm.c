@@ -115,7 +115,7 @@ static int check_local_mod(unsigned char *head, int index_only)
 		 * "intent to add" entry.
 		 */
 		if (local_changes && staged_changes) {
-			if (!index_only || !is_empty_blob_sha1(ce->sha1))
+			if (!index_only || !(ce->ce_flags & CE_INTENT_TO_ADD))
 				errs = error("'%s' has staged content different "
 					     "from both the file and the HEAD\n"
 					     "(use -f to force removal)", name);
