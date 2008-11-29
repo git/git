@@ -115,6 +115,26 @@ struct ondisk_cache_entry {
 	char name[FLEX_ARRAY]; /* more */
 };
 
+/*
+ * This struct is used when CE_EXTENDED bit is 1
+ * The struct must match ondisk_cache_entry exactly from
+ * ctime till flags
+ */
+struct ondisk_cache_entry_extended {
+	struct cache_time ctime;
+	struct cache_time mtime;
+	unsigned int dev;
+	unsigned int ino;
+	unsigned int mode;
+	unsigned int uid;
+	unsigned int gid;
+	unsigned int size;
+	unsigned char sha1[20];
+	unsigned short flags;
+	unsigned short flags2;
+	char name[FLEX_ARRAY]; /* more */
+};
+
 struct cache_entry {
 	unsigned int ce_ctime;
 	unsigned int ce_mtime;
@@ -136,7 +156,15 @@ struct cache_entry {
 #define CE_VALID     (0x8000)
 #define CE_STAGESHIFT 12
 
-/* In-memory only */
+/*
+ * Range 0xFFFF0000 in ce_flags is divided into
+ * two parts: in-memory flags and on-disk ones.
+ * Flags in CE_EXTENDED_FLAGS will get saved on-disk
+ * if you want to save a new flag, add it in
+ * CE_EXTENDED_FLAGS
+ *
+ * In-memory only flags
+ */
 #define CE_UPDATE    (0x10000)
 #define CE_REMOVE    (0x20000)
 #define CE_UPTODATE  (0x40000)
@@ -144,6 +172,24 @@ struct cache_entry {
 
 #define CE_HASHED    (0x100000)
 #define CE_UNHASHED  (0x200000)
+
+/*
+ * Extended on-disk flags
+ */
+/* CE_EXTENDED2 is for future extension */
+#define CE_EXTENDED2 0x80000000
+
+#define CE_EXTENDED_FLAGS (0)
+
+/*
+ * Safeguard to avoid saving wrong flags:
+ *  - CE_EXTENDED2 won't get saved until its semantic is known
+ *  - Bits in 0x0000FFFF have been saved in ce_flags already
+ *  - Bits in 0x003F0000 are currently in-memory flags
+ */
+#if CE_EXTENDED_FLAGS & 0x803FFFFF
+#error "CE_EXTENDED_FLAGS out of range"
+#endif
 
 /*
  * Copy the sha1 and stat state of a cache entry from one to
@@ -177,7 +223,9 @@ static inline size_t ce_namelen(const struct cache_entry *ce)
 }
 
 #define ce_size(ce) cache_entry_size(ce_namelen(ce))
-#define ondisk_ce_size(ce) ondisk_cache_entry_size(ce_namelen(ce))
+#define ondisk_ce_size(ce) (((ce)->ce_flags & CE_EXTENDED) ? \
+			    ondisk_cache_entry_extended_size(ce_namelen(ce)) : \
+			    ondisk_cache_entry_size(ce_namelen(ce)))
 #define ce_stage(ce) ((CE_STAGEMASK & (ce)->ce_flags) >> CE_STAGESHIFT)
 #define ce_uptodate(ce) ((ce)->ce_flags & CE_UPTODATE)
 #define ce_mark_uptodate(ce) ((ce)->ce_flags |= CE_UPTODATE)
@@ -220,8 +268,10 @@ static inline int ce_to_dtype(const struct cache_entry *ce)
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
 	S_ISLNK(mode) ? S_IFLNK : S_ISDIR(mode) ? S_IFDIR : S_IFGITLINK)
 
-#define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
-#define ondisk_cache_entry_size(len) ((offsetof(struct ondisk_cache_entry,name) + (len) + 8) & ~7)
+#define flexible_size(STRUCT,len) ((offsetof(struct STRUCT,name) + (len) + 8) & ~7)
+#define cache_entry_size(len) flexible_size(cache_entry,len)
+#define ondisk_cache_entry_size(len) flexible_size(ondisk_cache_entry,len)
+#define ondisk_cache_entry_extended_size(len) flexible_size(ondisk_cache_entry_extended,len)
 
 struct index_state {
 	struct cache_entry **cache;
