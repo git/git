@@ -257,6 +257,14 @@ int ie_match_stat(const struct index_state *istate,
 	if (!ignore_valid && (ce->ce_flags & CE_VALID))
 		return 0;
 
+	/*
+	 * Intent-to-add entries have not been added, so the index entry
+	 * by definition never matches what is in the work tree until it
+	 * actually gets added.
+	 */
+	if (ce->ce_flags & CE_INTENT_TO_ADD)
+		return DATA_CHANGED | TYPE_CHANGED | MODE_CHANGED;
+
 	changed = ce_match_stat_basic(ce, st);
 
 	/*
