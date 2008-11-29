@@ -3914,7 +3914,7 @@ sub fill_project_list_info {
 	my ($projlist, $check_forks) = @_;
 	my @projects;
 
-	my $show_ctags = gitweb_check_feature('ctags');
+	my ($show_ctags) = gitweb_check_feature('ctags');
  PROJECT:
 	foreach my $pr (@$projlist) {
 		my (@activity) = git_get_last_activity($pr->{'path'});
@@ -3988,7 +3988,7 @@ sub git_project_list_body {
 		@projects = sort {$a->{$oi->{'key'}} <=> $b->{$oi->{'key'}}} @projects;
 	}
 
-	my $show_ctags = gitweb_check_feature('ctags');
+	my ($show_ctags) = gitweb_check_feature('ctags');
 	if ($show_ctags) {
 		my %ctags;
 		foreach my $p (@projects) {
@@ -4457,7 +4457,7 @@ sub git_summary {
 	}
 
 	# Tag cloud
-	my $show_ctags = (gitweb_check_feature('ctags'))[0];
+	my ($show_ctags) = gitweb_check_feature('ctags');
 	if ($show_ctags) {
 		my $ctags = git_get_project_ctags($project);
 		my $cloud = git_populate_project_tagcloud($ctags);
@@ -4559,7 +4559,7 @@ sub git_blame {
 	my $fd;
 	my $ftype;
 
-	gitweb_check_feature('blame')
+	gitweb_check_feature('blame')[0]
 	    or die_error(403, "Blame view not allowed");
 
 	die_error(400, "No file name given") unless $file_name;
@@ -5610,7 +5610,7 @@ sub git_history {
 }
 
 sub git_search {
-	gitweb_check_feature('search') or die_error(403, "Search is disabled");
+	gitweb_check_feature('search')[0] or die_error(403, "Search is disabled");
 	if (!defined $searchtext) {
 		die_error(400, "Text field is empty");
 	}
@@ -5629,11 +5629,11 @@ sub git_search {
 	if ($searchtype eq 'pickaxe') {
 		# pickaxe may take all resources of your box and run for several minutes
 		# with every query - so decide by yourself how public you make this feature
-		gitweb_check_feature('pickaxe')
+		gitweb_check_feature('pickaxe')[0]
 		    or die_error(403, "Pickaxe is disabled");
 	}
 	if ($searchtype eq 'grep') {
-		gitweb_check_feature('grep')
+		gitweb_check_feature('grep')[0]
 		    or die_error(403, "Grep is disabled");
 	}
 
