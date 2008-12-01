@@ -18,11 +18,21 @@ People needing to do actual development will also want to read
 Further chapters cover more specialized topics.
 
 Comprehensive reference documentation is available through the man
-pages.  For a command such as "git clone <repo>", just use
+pages, or linkgit:git-help[1] command.  For example, for the command
+"git clone <repo>", you can either use:
 
 ------------------------------------------------
 $ man git-clone
 ------------------------------------------------
+
+or:
+
+------------------------------------------------
+$ git help clone
+------------------------------------------------
+
+With the latter, you can use the manual viewer of your choice; see
+linkgit:git-help[1] for more information.
 
 See also <<git-quick-start>> for a brief overview of git commands,
 without any explanation.
@@ -536,7 +546,7 @@ $ git bisect skip
 -------------------------------------------------
 
 In this case, though, git may not eventually be able to tell the first
-bad one between some first skipped commits and a latter bad commit.
+bad one between some first skipped commits and a later bad commit.
 
 There are also ways to automate the bisecting process if you have a
 test script that can tell a good from a bad commit. See

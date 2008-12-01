@@ -43,6 +43,13 @@ test_expect_success 'GIT_EXTERNAL_DIFF environment should apply only to diff' '
 
 '
 
+test_expect_success 'GIT_EXTERNAL_DIFF environment and --no-ext-diff' '
+
+	GIT_EXTERNAL_DIFF=echo git diff --no-ext-diff |
+	grep "^diff --git a/file b/file"
+
+'
+
 test_expect_success 'diff attribute' '
 
 	git config diff.parrot.command echo &&
@@ -64,6 +71,13 @@ test_expect_success 'diff attribute' '
 test_expect_success 'diff attribute should apply only to diff' '
 
 	git log -p -1 HEAD |
+	grep "^diff --git a/file b/file"
+
+'
+
+test_expect_success 'diff attribute and --no-ext-diff' '
+
+	git diff --no-ext-diff |
 	grep "^diff --git a/file b/file"
 
 '
@@ -90,6 +104,13 @@ test_expect_success 'diff attribute' '
 test_expect_success 'diff attribute should apply only to diff' '
 
 	git log -p -1 HEAD |
+	grep "^diff --git a/file b/file"
+
+'
+
+test_expect_success 'diff attribute and --no-ext-diff' '
+
+	git diff --no-ext-diff |
 	grep "^diff --git a/file b/file"
 
 '

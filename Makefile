@@ -437,7 +437,6 @@ LIB_OBJS += grep.o
 LIB_OBJS += hash.o
 LIB_OBJS += help.o
 LIB_OBJS += ident.o
-LIB_OBJS += interpolate.o
 LIB_OBJS += levenshtein.o
 LIB_OBJS += list-objects.o
 LIB_OBJS += ll-merge.o
@@ -496,6 +495,7 @@ LIB_OBJS += write_or_die.o
 LIB_OBJS += ws.o
 LIB_OBJS += wt-status.o
 LIB_OBJS += xdiff-interface.o
+LIB_OBJS += preload-index.o
 
 BUILTIN_OBJS += builtin-add.o
 BUILTIN_OBJS += builtin-annotate.o

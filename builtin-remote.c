@@ -8,13 +8,13 @@
 #include "refs.h"
 
 static const char * const builtin_remote_usage[] = {
-	"git remote",
-	"git remote add <name> <url>",
+	"git remote [-v | --verbose]",
+	"git remote add [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>",
 	"git remote rename <old> <new>",
 	"git remote rm <name>",
-	"git remote show <name>",
-	"git remote prune <name>",
-	"git remote update [group]",
+	"git remote show [-n] <name>",
+	"git remote prune [-n | --dry-run] <name>",
+	"git remote [-v | --verbose] update [group]",
 	NULL
 };
 
@@ -42,7 +42,11 @@ static int opt_parse_track(const struct option *opt, const char *arg, int not)
 
 static int fetch_remote(const char *name)
 {
-	const char *argv[] = { "fetch", name, NULL };
+	const char *argv[] = { "fetch", name, NULL, NULL };
+	if (verbose) {
+		argv[1] = "-v";
+		argv[2] = name;
+	}
 	printf("Updating %s\n", name);
 	if (run_command_v_opt(argv, RUN_GIT_CMD))
 		return error("Could not fetch %s", name);
@@ -770,7 +774,7 @@ static int get_one_remote_for_update(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
 	if (!remote->skip_default_update)
-		string_list_append(xstrdup(remote->name), list);
+		string_list_append(remote->name, list);
 	return 0;
 }
 

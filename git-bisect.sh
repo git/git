@@ -191,6 +191,21 @@ check_expected_revs() {
 	done
 }
 
+bisect_skip() {
+        all=''
+	for arg in "$@"
+	do
+	    case "$arg" in
+            *..*)
+                revs=$(git rev-list "$arg") || die "Bad rev input: $arg" ;;
+            *)
+                revs="'$arg'" ;;
+	    esac
+            all="$all $revs"
+        done
+        bisect_state 'skip' $all
+}
+
 bisect_state() {
 	bisect_autostart
 	state=$1
@@ -630,8 +645,10 @@ case "$#" in
         git bisect -h ;;
     start)
         bisect_start "$@" ;;
-    bad|good|skip)
+    bad|good)
         bisect_state "$cmd" "$@" ;;
+    skip)
+        bisect_skip "$@" ;;
     next)
         # Not sure we want "next" at the UI level anymore.
         bisect_next "$@" ;;

@@ -8,7 +8,7 @@ git-send-email - Send a collection of patches as emails
 
 SYNOPSIS
 --------
-'git send-email' [options] <file|directory> [... file|directory]
+'git send-email' [options] <file|directory|rev-list options>...
 
 
 DESCRIPTION
@@ -37,9 +37,23 @@ The --bcc option must be repeated for each user you want on the bcc list.
 +
 The --cc option must be repeated for each user you want on the cc list.
 
+--annotate::
+	Review each patch you're about to send in an editor. The setting
+	'sendemail.multiedit' defines if this will spawn one editor per patch
+	or one for all of them at once.
+
 --compose::
 	Use $GIT_EDITOR, core.editor, $VISUAL, or $EDITOR to edit an
 	introductory message for the patch series.
++
+When compose is in used, git send-email gets less interactive will use the
+values of the headers you set there. If the body of the email (what you type
+after the headers and a blank line) only contains blank (or GIT: prefixed)
+lines, the summary won't be sent, but git-send-email will still use the
+Headers values if you don't removed them.
++
+If it wasn't able to see a header in the summary it will ask you about it
+interactively after quitting your editor.
 
 --from::
 	Specify the sender of the emails.  This will default to
@@ -183,6 +197,12 @@ Administering
 --[no-]validate::
 	Perform sanity checks on patches.
 	Currently, validation means the following:
+
+--[no-]format-patch::
+	When an argument may be understood either as a reference or as a file name,
+	choose to understand it as a format-patch argument ('--format-patch')
+	or as a file name ('--no-format-patch'). By default, when such a conflict
+	occurs, git send-email will fail.
 +
 --
 		*	Warn of patches that contain lines longer than 998 characters; this
@@ -203,6 +223,12 @@ sendemail.aliasesfile::
 sendemail.aliasfiletype::
 	Format of the file(s) specified in sendemail.aliasesfile. Must be
 	one of 'mutt', 'mailrc', 'pine', or 'gnus'.
+
+sendemail.multiedit::
+	If true (default), a single editor instance will be spawned to edit
+	files you have to edit (patches when '--annotate' is used, and the
+	summary when '--compose' is used). If false, files will be edited one
+	after the other, spawning a new editor each time.
 
 
 Author

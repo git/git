@@ -16,7 +16,7 @@ compare_git_head_with () {
 
 compare_svn_head_with () {
 	LC_ALL=en_US.UTF-8 svn log --limit 1 `git svn info --url` | \
-		sed -e 1,3d -e "/^-\+\$/d" >current &&
+		sed -e 1,3d -e "/^-\{1,\}\$/d" >current &&
 	test_cmp current "$1"
 }
 

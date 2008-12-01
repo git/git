@@ -8,7 +8,6 @@
 #include "attr.h"
 #include "xdiff-interface.h"
 #include "run-command.h"
-#include "interpolate.h"
 #include "ll-merge.h"
 
 struct ll_merge_driver;
@@ -169,11 +168,12 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 			int virtual_ancestor)
 {
 	char temp[3][50];
-	char cmdbuf[2048];
-	struct interp table[] = {
-		{ "%O" },
-		{ "%A" },
-		{ "%B" },
+	struct strbuf cmd = STRBUF_INIT;
+	struct strbuf_expand_dict_entry dict[] = {
+		{ "O", temp[0] },
+		{ "A", temp[1] },
+		{ "B", temp[2] },
+		{ NULL }
 	};
 	struct child_process child;
 	const char *args[20];
@@ -189,17 +189,13 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	create_temp(src1, temp[1]);
 	create_temp(src2, temp[2]);
 
-	interp_set_entry(table, 0, temp[0]);
-	interp_set_entry(table, 1, temp[1]);
-	interp_set_entry(table, 2, temp[2]);
-
-	interpolate(cmdbuf, sizeof(cmdbuf), fn->cmdline, table, 3);
+	strbuf_expand(&cmd, fn->cmdline, strbuf_expand_dict_cb, &dict);
 
 	memset(&child, 0, sizeof(child));
 	child.argv = args;
 	args[0] = "sh";
 	args[1] = "-c";
-	args[2] = cmdbuf;
+	args[2] = cmd.buf;
 	args[3] = NULL;
 
 	status = run_command(&child);
@@ -224,6 +220,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
  bad:
 	for (i = 0; i < 3; i++)
 		unlink(temp[i]);
+	strbuf_release(&cmd);
 	return status;
 }
 

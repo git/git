@@ -98,7 +98,7 @@ OPTIONS
 	Record only the fact that the path will be added later. An entry
 	for the path is placed in the index with no content. This is
 	useful for, among other things, showing the unstaged content of
-	such files with 'git diff' and commiting them with 'git commit
+	such files with 'git diff' and committing them with 'git commit
 	-a'.
 
 --refresh::

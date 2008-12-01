@@ -222,6 +222,21 @@ endif::git-rev-list[]
 	Pretend as if all the refs in `$GIT_DIR/refs/` are listed on the
 	command line as '<commit>'.
 
+--branches::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/heads` are listed
+	on the command line as '<commit>'.
+
+--tags::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/tags` are listed
+	on the command line as '<commit>'.
+
+--remotes::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/remotes` are listed
+	on the command line as '<commit>'.
+
 ifdef::git-rev-list[]
 --stdin::
 

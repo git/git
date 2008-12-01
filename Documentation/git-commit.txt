@@ -29,7 +29,8 @@ The content to be added can be specified in several ways:
 
 3. by listing files as arguments to the 'commit' command, in which
    case the commit will ignore changes staged in the index, and instead
-   record the current content of the listed files;
+   record the current content of the listed files (which must already
+   be known to git);
 
 4. by using the -a switch with the 'commit' command to automatically
    "add" changes from all known files (i.e. all files that are already
@@ -94,7 +95,7 @@ OPTIONS
 
 -s::
 --signoff::
-	Add Signed-off-by line by the commiter at the end of the commit
+	Add Signed-off-by line by the committer at the end of the commit
 	log message.
 
 -n::

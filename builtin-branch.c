@@ -97,7 +97,6 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 	unsigned char sha1[20];
 	char *name = NULL;
 	const char *fmt, *remote;
-	char section[PATH_MAX];
 	int i;
 	int ret = 0;
 
@@ -165,11 +164,12 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			       argv[i]);
 			ret = 1;
 		} else {
+			struct strbuf buf = STRBUF_INIT;
 			printf("Deleted %sbranch %s.\n", remote, argv[i]);
-			snprintf(section, sizeof(section), "branch.%s",
-				 argv[i]);
-			if (git_config_rename_section(section, NULL) < 0)
+			strbuf_addf(&buf, "branch.%s", argv[i]);
+			if (git_config_rename_section(buf.buf, NULL) < 0)
 				warning("Update of config-file failed");
+			strbuf_release(&buf);
 		}
 	}
 
@@ -279,7 +279,7 @@ static int ref_cmp(const void *r1, const void *r2)
 	return strcmp(c1->name, c2->name);
 }
 
-static void fill_tracking_info(char *stat, const char *branch_name)
+static void fill_tracking_info(struct strbuf *stat, const char *branch_name)
 {
 	int ours, theirs;
 	struct branch *branch = branch_get(branch_name);
@@ -287,11 +287,11 @@ static void fill_tracking_info(char *stat, const char *branch_name)
 	if (!stat_tracking_info(branch, &ours, &theirs) || (!ours && !theirs))
 		return;
 	if (!ours)
-		sprintf(stat, "[behind %d] ", theirs);
+		strbuf_addf(stat, "[behind %d] ", theirs);
 	else if (!theirs)
-		sprintf(stat, "[ahead %d] ", ours);
+		strbuf_addf(stat, "[ahead %d] ", ours);
 	else
-		sprintf(stat, "[ahead %d, behind %d] ", ours, theirs);
+		strbuf_addf(stat, "[ahead %d, behind %d] ", ours, theirs);
 }
 
 static int matches_merge_filter(struct commit *commit)
@@ -334,11 +334,8 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	}
 
 	if (verbose) {
-		struct strbuf subject = STRBUF_INIT;
+		struct strbuf subject = STRBUF_INIT, stat = STRBUF_INIT;
 		const char *sub = " **** invalid ref ****";
-		char stat[128];
-
-		stat[0] = '\0';
 
 		commit = item->commit;
 		if (commit && !parse_commit(commit)) {
@@ -348,13 +345,14 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		}
 
 		if (item->kind == REF_LOCAL_BRANCH)
-			fill_tracking_info(stat, item->name);
+			fill_tracking_info(&stat, item->name);
 
 		printf("%c %s%-*s%s %s %s%s\n", c, branch_get_color(color),
 		       maxwidth, item->name,
 		       branch_get_color(COLOR_BRANCH_RESET),
 		       find_unique_abbrev(item->commit->object.sha1, abbrev),
-		       stat, sub);
+		       stat.buf, sub);
+		strbuf_release(&stat);
 		strbuf_release(&subject);
 	} else {
 		printf("%c %s%s%s\n", c, branch_get_color(color), item->name,
@@ -426,42 +424,45 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 
 static void rename_branch(const char *oldname, const char *newname, int force)
 {
-	char oldref[PATH_MAX], newref[PATH_MAX], logmsg[PATH_MAX*2 + 100];
+	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
 	unsigned char sha1[20];
-	char oldsection[PATH_MAX], newsection[PATH_MAX];
+	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
 
 	if (!oldname)
 		die("cannot rename the current branch while not on any.");
 
-	if (snprintf(oldref, sizeof(oldref), "refs/heads/%s", oldname) > sizeof(oldref))
-		die("Old branchname too long");
+	strbuf_addf(&oldref, "refs/heads/%s", oldname);
 
-	if (check_ref_format(oldref))
-		die("Invalid branch name: %s", oldref);
+	if (check_ref_format(oldref.buf))
+		die("Invalid branch name: %s", oldref.buf);
 
-	if (snprintf(newref, sizeof(newref), "refs/heads/%s", newname) > sizeof(newref))
-		die("New branchname too long");
+	strbuf_addf(&newref, "refs/heads/%s", newname);
 
-	if (check_ref_format(newref))
-		die("Invalid branch name: %s", newref);
+	if (check_ref_format(newref.buf))
+		die("Invalid branch name: %s", newref.buf);
 
-	if (resolve_ref(newref, sha1, 1, NULL) && !force)
+	if (resolve_ref(newref.buf, sha1, 1, NULL) && !force)
 		die("A branch named '%s' already exists.", newname);
 
-	snprintf(logmsg, sizeof(logmsg), "Branch: renamed %s to %s",
-		 oldref, newref);
+	strbuf_addf(&logmsg, "Branch: renamed %s to %s",
+		 oldref.buf, newref.buf);
 
-	if (rename_ref(oldref, newref, logmsg))
+	if (rename_ref(oldref.buf, newref.buf, logmsg.buf))
 		die("Branch rename failed");
+	strbuf_release(&logmsg);
 
 	/* no need to pass logmsg here as HEAD didn't really move */
-	if (!strcmp(oldname, head) && create_symref("HEAD", newref, NULL))
+	if (!strcmp(oldname, head) && create_symref("HEAD", newref.buf, NULL))
 		die("Branch renamed to %s, but HEAD is not updated!", newname);
 
-	snprintf(oldsection, sizeof(oldsection), "branch.%s", oldref + 11);
-	snprintf(newsection, sizeof(newsection), "branch.%s", newref + 11);
-	if (git_config_rename_section(oldsection, newsection) < 0)
+	strbuf_addf(&oldsection, "branch.%s", oldref.buf + 11);
+	strbuf_release(&oldref);
+	strbuf_addf(&newsection, "branch.%s", newref.buf + 11);
+	strbuf_release(&newref);
+	if (git_config_rename_section(oldsection.buf, newsection.buf) < 0)
 		die("Branch is renamed, but update of config-file failed");
+	strbuf_release(&oldsection);
+	strbuf_release(&newsection);
 }
 
 static int opt_parse_with_commit(const struct option *opt, const char *arg, int unset)
