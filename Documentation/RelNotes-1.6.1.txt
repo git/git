@@ -20,6 +20,8 @@ on.
 
 * Various gitweb updates from repo.or.cz installation.
 
+* Updates to emacs bindings.
+
 (portability)
 
 * A few test scripts used nonportable "grep" that did not work well on
@@ -30,6 +32,11 @@ on.
 * Makefile has support for (ancient) FreeBSD 4.9.
 
 (performance)
+
+* Many operations that are lstat(3) heavy can be told to pre-execute
+  necessary lstat(3) in parallel before their main operations, which
+  potentially gives much improved performance for cold-cache cases or in
+  environments with weak metadata caching (e.g. NFS).
 
 * The underlying diff machinery to produce textual output has been
   optimized, which would result in faster "git blame" processing.
@@ -169,6 +176,9 @@ on.
 * "git merge -s $strategy" can use a custom built strategy if you have a
   command "git-merge-$strategy" on your $PATH.
 
+* "git pull" (and "git fetch") can be told to operate "-v"erbosely or
+  "-q"uietly.
+
 * "git push" can be told to reject deletion of refs with receive.denyDeletes
   configuration.
 
@@ -183,6 +193,10 @@ on.
 
 * when giving up resolving a conflicted merge, "git reset --hard" failed
   to remove new paths from the working tree. [cherry-pick to 'maint'?]
+
+* "git send-email" can be given revision range instead of files and
+  maildirs on the command line, and automatically runs format-patch to
+  generate patches for the given revision range.
 
 * "git submodule foreach" subcommand allows you to iterate over checked
   out submodules.
@@ -245,15 +259,12 @@ release, unless otherwise noted.
   timestamp part, exposing internal implementation detail.  Also these did
   not work with --fixed-strings match at all.
 
-* "git tag" did not complain about incompatible combination of options
-  e.g. "tag -l -d" (fix scheduled to be further downmerged to maint).
-
 * Internal diff machinery had a corner case performance bug that choked on a
   large file with many repeated contents (fix scheduled to be further cherry-
   picked to maint).
 
 --
 exec >/var/tmp/1
-O=v1.6.0.4-697-g168d5bd
+O=v1.6.0.4-854-gaaab7ea
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
