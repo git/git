@@ -298,6 +298,17 @@ static void read_branches_file(struct remote *remote)
 	}
 	add_url_alias(remote, p);
 	add_fetch_refspec(remote, strbuf_detach(&branch, 0));
+	/*
+	 * Cogito compatible push: push current HEAD to remote #branch
+	 * (master if missing)
+	 */
+	strbuf_init(&branch, 0);
+	strbuf_addstr(&branch, "HEAD");
+	if (frag)
+		strbuf_addf(&branch, ":refs/heads/%s", frag);
+	else
+		strbuf_addstr(&branch, ":refs/heads/master");
+	add_push_refspec(remote, strbuf_detach(&branch, 0));
 	remote->fetch_tags = 1; /* always auto-follow */
 }
 
