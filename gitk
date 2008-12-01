@@ -199,11 +199,7 @@ proc parseviewargs {n arglist} {
 		set nextisval 1
 		lappend glflags $arg
 	    }
-	    "--not" {
-		set notflag [expr {!$notflag}]
-		lappend revargs $arg
-	    }
-	    "--all" {
+	    "--not" - "--all" {
 		lappend revargs $arg
 	    }
 	    "--merge" {
