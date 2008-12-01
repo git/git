@@ -4121,7 +4121,7 @@ proc askvhighlight {row id} {
 
 proc hfiles_change {} {
     global highlight_files filehighlight fhighlights fh_serial
-    global highlight_paths gdttype
+    global highlight_paths
 
     if {[info exists filehighlight]} {
 	# delete previous highlights
@@ -6286,10 +6286,11 @@ proc findmore {} {
 proc findselectline {l} {
     global findloc commentend ctext findcurline markingmatches gdttype
 
-    set markingmatches 1
+    set markingmatches [expr {$gdttype eq [mc "containing:"]}]
     set findcurline $l
     selectline $l 1
-    if {$findloc == [mc "All fields"] || $findloc == [mc "Comments"]} {
+    if {$markingmatches &&
+	($findloc eq [mc "All fields"] || $findloc eq [mc "Comments"])} {
 	# highlight the matches in the comments
 	set f [$ctext get 1.0 $commentend]
 	set matches [findmatches $f]
