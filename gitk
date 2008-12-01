@@ -3402,6 +3402,7 @@ proc show_line_source {} {
 	error_popup [mc "Couldn't start git blame: %s" $err]
 	return
     }
+    nowbusy blaming [mc "Searching"]
     fconfigure $f -blocking 0
     set i [reg_instance $f]
     set blamestuff($i) {}
@@ -3415,6 +3416,7 @@ proc stopblaming {} {
     if {[info exists blameinst]} {
 	stop_instance $blameinst
 	unset blameinst
+	notbusy blaming
     }
 }
 
@@ -3429,6 +3431,7 @@ proc read_line_source {fd inst} {
     }
     unset commfd($inst)
     unset blameinst
+    notbusy blaming
     fconfigure $fd -blocking 1
     if {[catch {close $fd} err]} {
 	error_popup [mc "Error running git blame: %s" $err]
