@@ -300,4 +300,17 @@ test_expect_success 'detects ambiguous reference/file conflict' '
 	grep disambiguate errors
 '
 
+test_expect_success 'feed two files' '
+	rm -fr outdir &&
+	git format-patch -2 -o outdir &&
+	GIT_SEND_EMAIL_NOTTY=1 git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	grep "^Subject: " out >subjects &&
+	test "z$(sed -n -e 1p subjects)" = "zSubject: [PATCH 1/2] Second." &&
+	test "z$(sed -n -e 2p subjects)" = "zSubject: [PATCH 2/2] add master"
+'
+
 test_done
