@@ -20,10 +20,13 @@
 #include "parse-options.h"
 
 static const char * const git_reset_usage[] = {
-	"git reset [--mixed | --soft | --hard] [-q] [<commit>]",
+	"git reset [--mixed | --soft | --hard | --merge] [-q] [<commit>]",
 	"git reset [--mixed] <commit> [--] <paths>...",
 	NULL
 };
+
+enum reset_type { MIXED, SOFT, HARD, MERGE, NONE };
+static const char *reset_type_names[] = { "mixed", "soft", "hard", "merge", NULL };
 
 static char *args_to_str(const char **argv)
 {
@@ -49,7 +52,7 @@ static inline int is_merge(void)
 	return !access(git_path("MERGE_HEAD"), F_OK);
 }
 
-static int reset_index_file(const unsigned char *sha1, int is_hard_reset, int quiet)
+static int reset_index_file(const unsigned char *sha1, int reset_type, int quiet)
 {
 	int i = 0;
 	const char *args[6];
@@ -57,9 +60,17 @@ static int reset_index_file(const unsigned char *sha1, int is_hard_reset, int qu
 	args[i++] = "read-tree";
 	if (!quiet)
 		args[i++] = "-v";
-	args[i++] = "--reset";
-	if (is_hard_reset)
+	switch (reset_type) {
+	case MERGE:
 		args[i++] = "-u";
+		args[i++] = "-m";
+		break;
+	case HARD:
+		args[i++] = "-u";
+		/* fallthrough */
+	default:
+		args[i++] = "--reset";
+	}
 	args[i++] = sha1_to_hex(sha1);
 	args[i] = NULL;
 
@@ -169,9 +180,6 @@ static void prepend_reflog_action(const char *action, char *buf, size_t size)
 		warning("Reflog action message too long: %.*s...", 50, buf);
 }
 
-enum reset_type { MIXED, SOFT, HARD, NONE };
-static const char *reset_type_names[] = { "mixed", "soft", "hard", NULL };
-
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
 	int i = 0, reset_type = NONE, update_ref_status = 0, quiet = 0;
@@ -186,6 +194,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT(0, "soft", &reset_type, "reset only HEAD", SOFT),
 		OPT_SET_INT(0, "hard", &reset_type,
 				"reset HEAD, index and working tree", HARD),
+		OPT_SET_INT(0, "merge", &reset_type,
+				"reset HEAD, index and working tree", MERGE),
 		OPT_BOOLEAN('q', NULL, &quiet,
 				"disable showing new HEAD in hard reset and progress message"),
 		OPT_END()
@@ -266,7 +276,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		if (is_merge() || read_cache() < 0 || unmerged_cache())
 			die("Cannot do a soft reset in the middle of a merge.");
 	}
-	else if (reset_index_file(sha1, (reset_type == HARD), quiet))
+	else if (reset_index_file(sha1, reset_type, quiet))
 		die("Could not reset index file to revision '%s'.", rev);
 
 	/* Any resets update HEAD to the head being switched to,
