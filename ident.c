@@ -121,6 +121,7 @@ static int crud(unsigned char c)
 		c == '<' ||
 		c == '>' ||
 		c == '"' ||
+		c == '\\' ||
 		c == '\'';
 }
 
