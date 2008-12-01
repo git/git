@@ -168,6 +168,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_libexecdir}/git-core/git-gui
 %{_libexecdir}/git-core/git-citool
+%{_libexecdir}/git-core/git-gui--askpass
 %{_datadir}/git-gui/
 %{!?_without_docs: %{_mandir}/man1/git-gui.1*}
 %{!?_without_docs: %doc Documentation/git-gui.html}

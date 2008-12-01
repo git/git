@@ -421,7 +421,7 @@ EOF
 # Now that all the defaults are set, process the rest of the command line
 # arguments and collect up the files that need to be processed.
 my @rev_list_opts;
-while (my $f = pop @ARGV) {
+while (defined(my $f = shift @ARGV)) {
 	if ($f eq "--") {
 		push @rev_list_opts, "--", @ARGV;
 		@ARGV = ();
