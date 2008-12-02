@@ -199,11 +199,11 @@ bisect_skip() {
             *..*)
                 revs=$(git rev-list "$arg") || die "Bad rev input: $arg" ;;
             *)
-                revs="'$arg'" ;;
+                revs=$(sq "$arg") ;;
 	    esac
             all="$all $revs"
         done
-        bisect_state 'skip' $all
+        eval bisect_state 'skip' $all
 }
 
 bisect_state() {

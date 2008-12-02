@@ -313,8 +313,25 @@ test_expect_success 'bisect run & skip: find first bad' '
 	grep "$HASH6 is first bad commit" my_bisect_log.txt
 '
 
-test_expect_success 'bisect starting with a detached HEAD' '
+test_expect_success 'bisect skip only one range' '
+	git bisect reset &&
+	git bisect start $HASH7 $HASH1 &&
+	git bisect skip $HASH1..$HASH5 &&
+	test "$HASH6" = "$(git rev-parse --verify HEAD)" &&
+	test_must_fail git bisect bad > my_bisect_log.txt &&
+	grep "first bad commit could be any of" my_bisect_log.txt
+'
 
+test_expect_success 'bisect skip many ranges' '
+	git bisect start $HASH7 $HASH1 &&
+	test "$HASH4" = "$(git rev-parse --verify HEAD)" &&
+	git bisect skip $HASH2 $HASH2.. ..$HASH5 &&
+	test "$HASH6" = "$(git rev-parse --verify HEAD)" &&
+	test_must_fail git bisect bad > my_bisect_log.txt &&
+	grep "first bad commit could be any of" my_bisect_log.txt
+'
+
+test_expect_success 'bisect starting with a detached HEAD' '
 	git bisect reset &&
 	git checkout master^ &&
 	HEAD=$(git rev-parse --verify HEAD) &&
