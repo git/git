@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-10-18 22:03+1100\n"
-"PO-Revision-Date: 2008-05-24 22:40+0200\n"
+"POT-Creation-Date: 2008-10-25 13:18+0200\n"
+"PO-Revision-Date: 2008-10-25 13:23+0200\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -18,6 +18,14 @@ msgstr ""
 #: gitk:113
 msgid "Couldn't get list of unmerged files:"
 msgstr "Liste der nicht-zusammengeführten Dateien nicht gefunden:"
+
+#: gitk:272
+msgid "Error parsing revisions:"
+msgstr "Fehler beim Laden der Versionen:"
+
+#: gitk:327
+msgid "Error executing --argscmd command:"
+msgstr "Fehler beim --argscmd Kommando:"
 
 #: gitk:340
 msgid "No files selected: --merge specified but no files are unmerged."
@@ -283,9 +291,9 @@ msgstr "Nur diesen hervorheben"
 msgid "External diff"
 msgstr "Externer Vergleich"
 
-#: gitk:2245
+#: gitk:2255
 msgid "Blame parent commit"
-msgstr ""
+msgstr "Annotieren der Elternversion"
 
 #: gitk:2488
 msgid ""
@@ -471,7 +479,33 @@ msgstr "<%s-Minus>\tSchriftgröße verkleinern"
 msgid "<F5>\t\tUpdate"
 msgstr "<F5>\t\tAktualisieren"
 
-#: gitk:3200
+#: gitk:2979
+#, tcl-format
+msgid "Error getting \"%s\" from %s:"
+msgstr "Fehler beim Holen von »%s« von »%s«:"
+
+#: gitk:3036 gitk:3045
+#, tcl-format
+msgid "Error creating temporary directory %s:"
+msgstr "Fehler beim Erzeugen eines temporären Verzeichnisses »%s«:"
+
+#: gitk:3058
+msgid "command failed:"
+msgstr "Kommando fehlgeschlagen:"
+
+#: gitk:3078
+msgid "No such commit"
+msgstr "Version nicht gefunden"
+
+#: gitk:3083
+msgid "git gui blame: command failed:"
+msgstr "git gui blame: Kommando fehlgeschlagen:"
+
+#: gitk:3092
+msgid "External diff viewer failed:"
+msgstr "Externes Vergleich-(Diff-)Programm fehlgeschlagen:"
+
+#: gitk:3210
 msgid "Gitk view definition"
 msgstr "Gitk Ansichten"
 
@@ -692,9 +726,10 @@ msgstr "Bitte geben Sie einen Namen für den neuen Zweig an."
 #, tcl-format
 msgid "Commit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
-"Version »%s« ist bereits im Zweig »%s« enthalten -- trotzdem erneut eintragen?"
+"Version »%s« ist bereits im Zweig »%s« enthalten -- trotzdem erneut "
+"eintragen?"
 
-#: gitk:7708
+#: gitk:7718
 msgid "Cherry-picking"
 msgstr "Version pflücken"
 
@@ -836,7 +871,7 @@ msgstr "Vergleich nur für angezeigte Pfade"
 
 #: gitk:9414
 msgid "Support per-file encodings"
-msgstr ""
+msgstr "Zeichenkodierung pro Datei ermitteln"
 
 #: gitk:9421
 msgid "External diff tool"
