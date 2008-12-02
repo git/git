@@ -10105,15 +10105,11 @@ proc doprefs {} {
 	-font optionfont
     spinbox $top.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
     grid x $top.maxpctl $top.maxpct -sticky w
-    frame $top.showlocal
-    label $top.showlocal.l -text [mc "Show local changes"] -font optionfont
-    checkbutton $top.showlocal.b -variable showlocalchanges
-    pack $top.showlocal.b $top.showlocal.l -side left
+    checkbutton $top.showlocal -text [mc "Show local changes"] \
+	-font optionfont -variable showlocalchanges
     grid x $top.showlocal -sticky w
-    frame $top.autoselect
-    label $top.autoselect.l -text [mc "Auto-select SHA1"] -font optionfont
-    checkbutton $top.autoselect.b -variable autoselect
-    pack $top.autoselect.b $top.autoselect.l -side left
+    checkbutton $top.autoselect -text [mc "Auto-select SHA1"] \
+	-font optionfont -variable autoselect
     grid x $top.autoselect -sticky w
 
     label $top.ddisp -text [mc "Diff display options"]
@@ -10121,20 +10117,14 @@ proc doprefs {} {
     label $top.tabstopl -text [mc "Tab spacing"] -font optionfont
     spinbox $top.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
     grid x $top.tabstopl $top.tabstop -sticky w
-    frame $top.ntag
-    label $top.ntag.l -text [mc "Display nearby tags"] -font optionfont
-    checkbutton $top.ntag.b -variable showneartags
-    pack $top.ntag.b $top.ntag.l -side left
+    checkbutton $top.ntag -text [mc "Display nearby tags"] \
+	-font optionfont -variable showneartags
     grid x $top.ntag -sticky w
-    frame $top.ldiff
-    label $top.ldiff.l -text [mc "Limit diffs to listed paths"] -font optionfont
-    checkbutton $top.ldiff.b -variable limitdiffs
-    pack $top.ldiff.b $top.ldiff.l -side left
+    checkbutton $top.ldiff -text [mc "Limit diffs to listed paths"] \
+	-font optionfont -variable limitdiffs
     grid x $top.ldiff -sticky w
-    frame $top.lattr
-    label $top.lattr.l -text [mc "Support per-file encodings"] -font optionfont
-    checkbutton $top.lattr.b -variable perfile_attrs
-    pack $top.lattr.b $top.lattr.l -side left
+    checkbutton $top.lattr -text [mc "Support per-file encodings"] \
+	-font optionfont -variable perfile_attrs
     grid x $top.lattr -sticky w
 
     entry $top.extdifft -textvariable extdifftool
