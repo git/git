@@ -33,10 +33,15 @@ proc push_to {remote} {
 proc start_push_anywhere_action {w} {
 	global push_urltype push_remote push_url push_thin push_tags
 	global push_force
+	global repo_config
 
+	set is_mirror 0
 	set r_url {}
 	switch -- $push_urltype {
-	remote {set r_url $push_remote}
+	remote {
+		set r_url $push_remote
+		catch {set is_mirror $repo_config(remote.$push_remote.mirror)}
+	}
 	url {set r_url $push_url}
 	}
 	if {$r_url eq {}} return
@@ -53,23 +58,29 @@ proc start_push_anywhere_action {w} {
 		lappend cmd --tags
 	}
 	lappend cmd $r_url
-	set cnt 0
-	foreach i [$w.source.l curselection] {
-		set b [$w.source.l get $i]
-		lappend cmd "refs/heads/$b:refs/heads/$b"
-		incr cnt
-	}
-	if {$cnt == 0} {
-		return
-	} elseif {$cnt == 1} {
-		set unit branch
+	if {$is_mirror} {
+		set cons [console::new \
+			[mc "push %s" $r_url] \
+			[mc "Mirroring to %s" $r_url]]
 	} else {
-		set unit branches
-	}
+		set cnt 0
+		foreach i [$w.source.l curselection] {
+			set b [$w.source.l get $i]
+			lappend cmd "refs/heads/$b:refs/heads/$b"
+			incr cnt
+		}
+		if {$cnt == 0} {
+			return
+		} elseif {$cnt == 1} {
+			set unit branch
+		} else {
+			set unit branches
+		}
 
-	set cons [console::new \
-		[mc "push %s" $r_url] \
-		[mc "Pushing %s %s to %s" $cnt $unit $r_url]]
+		set cons [console::new \
+			[mc "push %s" $r_url] \
+			[mc "Pushing %s %s to %s" $cnt $unit $r_url]]
+	}
 	console::exec $cons $cmd
 	destroy $w
 }
