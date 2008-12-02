@@ -29,7 +29,7 @@ test_expect_success 'setup binary file with history' '
 	printf "\\0\\n" >file &&
 	git add file &&
 	git commit -m one &&
-	printf "\\1\\n" >>file &&
+	printf "\\01\\n" >>file &&
 	git add file &&
 	git commit -m two
 '
