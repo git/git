@@ -34,6 +34,7 @@ mkdir -p "Meta/$lead"
 exec >"Meta/$lead/$issue.txt"
 
 cat <<EOF
+To: git@vger.kernel.org
 Subject: What's in git.git ($monthname $year, #$issue; $dow, $date)
 X-maint-at: $maint_at
 X-master-at: $master_at

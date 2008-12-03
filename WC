@@ -37,6 +37,7 @@ mkdir -p "Meta/$lead"
 exec >"Meta/$lead/$issue.txt"
 
 cat <<EOF
+To: git@vger.kernel.org
 Subject: What's cooking in git.git ($monthname $year, #$issue; $dow, $date)
 X-master-at: $master_at
 X-next-at: $next_at
