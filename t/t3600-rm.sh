@@ -187,8 +187,8 @@ test_expect_success 'but with -f it should work.' '
 	test_must_fail git ls-files --error-unmatch baz
 '
 
-test_expect_failure 'refuse to remove cached empty file with modifications' '
-	touch empty &&
+test_expect_success 'refuse to remove cached empty file with modifications' '
+	>empty &&
 	git add empty &&
 	echo content >empty &&
 	test_must_fail git rm --cached empty
