@@ -247,10 +247,11 @@ else
 		exit 1
 	}
 
-	# -s, -u, -k, --whitespace, -C and -p flags are kept
+	# -s, -u, -k, --whitespace, -3, -C and -p flags are kept
 	# for the resuming session after a patch failure.
-	# -3 and -i can and must be given when resuming.
+	# -i can and must be given when resuming.
 	echo " $git_apply_opt" >"$dotest/apply_opt_extra"
+	echo "$threeway" >"$dotest/threeway"
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
@@ -282,6 +283,10 @@ fi
 if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
+fi
+if test "$(cat "$dotest/threeway")" = t
+then
+	threeway=t
 fi
 git_apply_opt=$(cat "$dotest/apply_opt_extra")
 if test "$(cat "$dotest/sign")" = t
