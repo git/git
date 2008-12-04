@@ -121,7 +121,7 @@ It does not apply to blobs recorded in its index."
 
 prec=4
 dotest="$GIT_DIR/rebase-apply"
-sign= utf8=t keep= skip= interactive= resolved= rebasing= abort= ws=
+sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
 resolvemsg= resume=
 git_apply_opt=
 
@@ -156,7 +156,7 @@ do
 	--resolvemsg)
 		shift; resolvemsg=$1 ;;
 	--whitespace)
-		ws="--whitespace=$2"; shift ;;
+		git_apply_opt="$git_apply_opt $1=$2"; shift ;;
 	-C|-p)
 		git_apply_opt="$git_apply_opt $1$2"; shift ;;
 	--)
@@ -247,10 +247,10 @@ else
 		exit 1
 	}
 
-	# -s, -u, -k and --whitespace flags are kept for the
-	# resuming session after a patch failure.
+	# -s, -u, -k, --whitespace, -C and -p flags are kept
+	# for the resuming session after a patch failure.
 	# -3 and -i can and must be given when resuming.
-	echo " $ws" >"$dotest/whitespace"
+	echo " $git_apply_opt" >"$dotest/apply_opt_extra"
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
@@ -283,7 +283,7 @@ if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
 fi
-ws=$(cat "$dotest/whitespace")
+git_apply_opt=$(cat "$dotest/apply_opt_extra")
 if test "$(cat "$dotest/sign")" = t
 then
 	SIGNOFF=`git var GIT_COMMITTER_IDENT | sed -e '
@@ -454,7 +454,7 @@ do
 
 	case "$resolved" in
 	'')
-		git apply $git_apply_opt $ws --index "$dotest/patch"
+		git apply $git_apply_opt --index "$dotest/patch"
 		apply_status=$?
 		;;
 	t)
