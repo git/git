@@ -121,7 +121,7 @@ It does not apply to blobs recorded in its index."
 
 prec=4
 dotest="$GIT_DIR/rebase-apply"
-sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
+sign= utf8=t keep= skip= interactive= resolved= rebasing= abort= ws=
 resolvemsg= resume=
 git_apply_opt=
 
@@ -156,7 +156,7 @@ do
 	--resolvemsg)
 		shift; resolvemsg=$1 ;;
 	--whitespace)
-		git_apply_opt="$git_apply_opt $1=$2"; shift ;;
+		ws="--whitespace=$2"; shift ;;
 	-C|-p)
 		git_apply_opt="$git_apply_opt $1$2"; shift ;;
 	--)
@@ -283,7 +283,7 @@ if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
 fi
-ws=`cat "$dotest/whitespace"`
+ws=$(cat "$dotest/whitespace")
 if test "$(cat "$dotest/sign")" = t
 then
 	SIGNOFF=`git var GIT_COMMITTER_IDENT | sed -e '
@@ -454,7 +454,7 @@ do
 
 	case "$resolved" in
 	'')
-		git apply $git_apply_opt --index "$dotest/patch"
+		git apply $git_apply_opt $ws --index "$dotest/patch"
 		apply_status=$?
 		;;
 	t)
