@@ -2758,6 +2758,15 @@ sub get_file_owner {
 	return to_utf8($owner);
 }
 
+# assume that file exists
+sub insert_file {
+	my $filename = shift;
+
+	open my $fd, '<', $filename;
+	print map(to_utf8, <$fd>);
+	close $fd;
+}
+
 ## ......................................................................
 ## mimetype related functions
 
@@ -2946,9 +2955,7 @@ EOF
 	      "<body>\n";
 
 	if (-f $site_header) {
-		open (my $fd, $site_header);
-		print <$fd>;
-		close $fd;
+		insert_file($site_header);
 	}
 
 	print "<div class=\"page_header\">\n" .
@@ -3035,9 +3042,7 @@ sub git_footer_html {
 	print "</div>\n"; # class="page_footer"
 
 	if (-f $site_footer) {
-		open (my $fd, $site_footer);
-		print <$fd>;
-		close $fd;
+		insert_file($site_footer);
 	}
 
 	print "</body>\n" .
@@ -4376,9 +4381,7 @@ sub git_project_list {
 	git_header_html();
 	if (-f $home_text) {
 		print "<div class=\"index_include\">\n";
-		open (my $fd, $home_text);
-		print <$fd>;
-		close $fd;
+		insert_file($home_text);
 		print "</div>\n";
 	}
 	print $cgi->startform(-method => "get") .
@@ -4490,13 +4493,10 @@ sub git_summary {
 	print "</table>\n";
 
 	if (-s "$projectroot/$project/README.html") {
-		if (open my $fd, "$projectroot/$project/README.html") {
-			print "<div class=\"title\">readme</div>\n" .
-			      "<div class=\"readme\">\n";
-			print $_ while (<$fd>);
-			print "\n</div>\n"; # class="readme"
-			close $fd;
-		}
+		print "<div class=\"title\">readme</div>\n" .
+		      "<div class=\"readme\">\n";
+		insert_file("$projectroot/$project/README.html");
+		print "\n</div>\n"; # class="readme"
 	}
 
 	# we need to request one more than 16 (0..15) to check if
