@@ -56,4 +56,23 @@ test_expect_success 'git svn branch tests' '
 	test_must_fail git svn tag tag1
 '
 
+test_expect_success 'branch uses correct svn-remote' '
+	(svn co "$svnrepo" svn &&
+	cd svn &&
+	mkdir mirror &&
+	svn add mirror &&
+	svn copy trunk mirror/ &&
+	svn copy tags mirror/ &&
+	svn copy branches mirror/ &&
+	svn ci -m "made mirror" ) &&
+	rm -rf svn &&
+	git svn init -s -R mirror --prefix=mirror/ "$svnrepo"/mirror &&
+	git svn fetch -R mirror &&
+	git checkout mirror/trunk &&
+	base=$(git rev-parse HEAD:) &&
+	git svn branch -m "branch in mirror" d &&
+	test $base = $(git rev-parse remotes/mirror/d:) &&
+	test_must_fail git rev-parse remotes/d
+'
+
 test_done
