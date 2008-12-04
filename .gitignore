@@ -118,6 +118,7 @@ git-show
 git-show-branch
 git-show-index
 git-show-ref
+git-stage
 git-stash
 git-status
 git-stripspace
