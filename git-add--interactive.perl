@@ -800,6 +800,7 @@ y - stage this hunk
 n - do not stage this hunk
 a - stage this and all the remaining hunks in the file
 d - do not stage this hunk nor any of the remaining hunks in the file
+g - select a hunk to go to
 j - leave this hunk undecided, see next undecided hunk
 J - leave this hunk undecided, see next hunk
 k - leave this hunk undecided, see previous undecided hunk
@@ -945,6 +946,9 @@ sub patch_update_file {
 		if ($ix < $num - 1) {
 			$other .= '/J';
 		}
+		if ($num > 1) {
+			$other .= '/g';
+		}
 		for ($i = 0; $i < $num; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$undecided = 1;
@@ -975,6 +979,28 @@ sub patch_update_file {
 						$hunk[$ix]{USE} = 1;
 					}
 					$ix++;
+				}
+				next;
+			}
+			elsif ($other =~ /g/ && $line =~ /^g(.*)/) {
+				my $response = $1;
+				my $no = $ix > 10 ? $ix - 10 : 0;
+				while ($response eq '') {
+					my $extra = "";
+					$no = display_hunks(\@hunk, $no);
+					if ($no < $num) {
+						$extra = " (<ret> to see more)";
+					}
+					print "go to which hunk$extra? ";
+					$response = <STDIN>;
+					chomp $response;
+				}
+				if ($response !~ /^\s*\d+\s*$/) {
+					print STDERR "Invalid number: '$response'\n";
+				} elsif (0 < $response && $response <= $num) {
+					$ix = $response - 1;
+				} else {
+					print STDERR "Sorry, only $num hunks available.\n";
 				}
 				next;
 			}
