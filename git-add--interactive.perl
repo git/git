@@ -836,6 +836,47 @@ sub patch_update_cmd {
 	}
 }
 
+# Generate a one line summary of a hunk.
+sub summarize_hunk {
+	my $rhunk = shift;
+	my $summary = $rhunk->{TEXT}[0];
+
+	# Keep the line numbers, discard extra context.
+	$summary =~ s/@@(.*?)@@.*/$1 /s;
+	$summary .= " " x (20 - length $summary);
+
+	# Add some user context.
+	for my $line (@{$rhunk->{TEXT}}) {
+		if ($line =~ m/^[+-].*\w/) {
+			$summary .= $line;
+			last;
+		}
+	}
+
+	chomp $summary;
+	return substr($summary, 0, 80) . "\n";
+}
+
+
+# Print a one-line summary of each hunk in the array ref in
+# the first argument, starting wih the index in the 2nd.
+sub display_hunks {
+	my ($hunks, $i) = @_;
+	my $ctr = 0;
+	$i ||= 0;
+	for (; $i < @$hunks && $ctr < 20; $i++, $ctr++) {
+		my $status = " ";
+		if (defined $hunks->[$i]{USE}) {
+			$status = $hunks->[$i]{USE} ? "+" : "-";
+		}
+		printf "%s%2d: %s",
+			$status,
+			$i + 1,
+			summarize_hunk($hunks->[$i]);
+	}
+	return $i;
+}
+
 sub patch_update_file {
 	my ($ix, $num);
 	my $path = shift;
