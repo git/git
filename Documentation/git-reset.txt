@@ -8,7 +8,7 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [verse]
-'git reset' [--mixed | --soft | --hard] [-q] [<commit>]
+'git reset' [--mixed | --soft | --hard | --merge] [-q] [<commit>]
 'git reset' [-q] [<commit>] [--] <paths>...
 
 DESCRIPTION
@@ -44,6 +44,11 @@ OPTIONS
 	Matches the working tree and index to that of the tree being
 	switched to. Any changes to tracked files in the working tree
 	since <commit> are lost.
+
+--merge::
+	Resets the index to match the tree recorded by the named commit,
+	and updates the files that are different between the named commit
+	and the current commit in the working tree.
 
 -q::
 	Be quiet, only report errors.
@@ -151,6 +156,28 @@ consumption yet.  "pull" or "merge" always leaves the original
 tip of the current branch in ORIG_HEAD, so resetting hard to it
 brings your index file and the working tree back to that state,
 and resets the tip of the branch to that commit.
+
+Undo a merge or pull inside a dirty work tree::
++
+------------
+$ git pull                         <1>
+Auto-merging nitfol
+Merge made by recursive.
+ nitfol                |   20 +++++----
+ ...
+$ git reset --merge ORIG_HEAD      <2>
+------------
++
+<1> Even if you may have local modifications in your
+working tree, you can safely say "git pull" when you know
+that the change in the other branch does not overlap with
+them.
+<2> After inspecting the result of the merge, you may find
+that the change in the other branch is unsatisfactory.  Running
+"git reset --hard ORIG_HEAD" will let you go back to where you
+were, but it will discard your local changes, which you do not
+want.  "git reset --merge" keeps your local changes.
+
 
 Interrupted workflow::
 +
