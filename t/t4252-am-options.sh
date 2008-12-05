@@ -45,7 +45,6 @@ test_expect_success 'interrupted am -C1 -p2' '
 	rm -rf .git/rebase-apply &&
 	git reset --hard initial &&
 	test_must_fail git am -p2 -C1 "$tm"/am-test-4-? &&
-	cat .git/rebase-apply/apply_opt_extra &&
 	git am --skip &&
 	grep 3 file-1 &&
 	grep "^Three$" file-2
