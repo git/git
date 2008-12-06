@@ -247,10 +247,11 @@ else
 		exit 1
 	}
 
-	# -s, -u, -k and --whitespace flags are kept for the
-	# resuming session after a patch failure.
-	# -3 and -i can and must be given when resuming.
-	echo " $ws" >"$dotest/whitespace"
+	# -s, -u, -k, --whitespace, -3, -C and -p flags are kept
+	# for the resuming session after a patch failure.
+	# -i can and must be given when resuming.
+	echo " $git_apply_opt" >"$dotest/apply-opt"
+	echo "$threeway" >"$dotest/threeway"
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
@@ -283,7 +284,11 @@ if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
 fi
-ws=`cat "$dotest/whitespace"`
+if test "$(cat "$dotest/threeway")" = t
+then
+	threeway=t
+fi
+git_apply_opt=$(cat "$dotest/apply-opt")
 if test "$(cat "$dotest/sign")" = t
 then
 	SIGNOFF=`git var GIT_COMMITTER_IDENT | sed -e '
