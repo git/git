@@ -780,7 +780,8 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 	struct ref *ref_cpy;
 
 	fetch_pack_setup();
-	memcpy(&args, my_args, sizeof(args));
+	if (&args != my_args)
+		memcpy(&args, my_args, sizeof(args));
 	if (args.depth > 0) {
 		if (stat(git_path("shallow"), &st))
 			st.st_mtime = 0;
