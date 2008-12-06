@@ -69,11 +69,17 @@ on.
 * "git add -N path..." adds the named paths as an empty blob, so that
   subsequent "git diff" will show a diff as if they are creation events.
 
+* "git add" gained a built-in synonym for people who want to say "stage
+  changes" instead of "add contents the the staging area" which amounts
+  to the same thing.
+
 * "git apply" learned --include=paths option, similar to the existing
   --exclude=paths option.
 
 * "git bisect" is careful about a user mistake and suggests testing of
   merge base first when good is not a strict ancestor of bad.
+
+* "git bisect skip" can take a range of commits.
 
 * "git blame" re-encodes the commit metainfo to UTF-8 from i18n.commitEncoding
   by default.
@@ -238,6 +244,9 @@ release, unless otherwise noted.
   it (we still need to fix a similar nonsense when S is a submodule and F
   is a path in it).
 
+* "git am" after stopping at a broken patch lost --whitespace, -C, -p and
+  --3way options given from the command line initially.
+
 * "git diff --stdin" used to take two trees on a line and compared them,
   but we dropped support for such a use case long time ago.  This has
   been resurrected.
@@ -252,6 +261,10 @@ release, unless otherwise noted.
 * "git repack" used to grab objects out of packs marked with .keep
   into a new pack (fix scheduled to be further downmerged to maint).
 
+* "git rm --cached" used to allow an empty blob that was added earlier to
+  be removed without --force, even when the file in the work tree has
+  since been modified.
+
 * "git push --tags --all $there" failed with generic usage message without
   telling saying these two options are incompatible.
 
@@ -263,8 +276,11 @@ release, unless otherwise noted.
   large file with many repeated contents (fix scheduled to be further cherry-
   picked to maint).
 
+* "gitweb" did not mark non-ASCII characters imported from external HTML fragments
+  correctly.
+
 --
 exec >/var/tmp/1
-O=v1.6.0.4-854-gaaab7ea
+O=v1.6.1-rc1-55-gd8af75d
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
