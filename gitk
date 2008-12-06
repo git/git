@@ -3318,8 +3318,27 @@ proc index_sha1 {fname} {
     return {}
 }
 
+# Turn an absolute path into one relative to the current directory
+proc make_relative {f} {
+    set elts [file split $f]
+    set here [file split [pwd]]
+    set ei 0
+    set hi 0
+    set res {}
+    foreach d $here {
+	if {$ei < $hi || $ei >= [llength $elts] || [lindex $elts $ei] ne $d} {
+	    lappend res ".."
+	} else {
+	    incr ei
+	}
+	incr hi
+    }
+    set elts [concat $res [lrange $elts $ei end]]
+    return [eval file join $elts]
+}
+
 proc external_blame {parent_idx {line {}}} {
-    global flist_menu_file
+    global flist_menu_file gitdir
     global nullid nullid2
     global parentlist selectedline currentid
 
@@ -3338,7 +3357,12 @@ proc external_blame {parent_idx {line {}}} {
     if {$line ne {} && $line > 1} {
 	lappend cmdline "--line=$line"
     }
-    lappend cmdline $base_commit $flist_menu_file
+    set f [file join [file dirname $gitdir] $flist_menu_file]
+    # Unfortunately it seems git gui blame doesn't like
+    # being given an absolute path...
+    set f [make_relative $f]
+    lappend cmdline $base_commit $f
+    puts "cmdline={$cmdline}"
     if {[catch {eval exec $cmdline &} err]} {
 	error_popup "[mc "git gui blame: command failed:"] $err"
     }
@@ -3382,6 +3406,8 @@ proc show_line_source {} {
 		    error_popup [mc "Error reading index: %s" $err]
 		    return
 		}
+	    } else {
+		set id $parents($curview,$currentid)
 	    }
 	} else {
 	    set id [lindex $parents($curview,$currentid) $pi]
@@ -3398,7 +3424,7 @@ proc show_line_source {} {
     } else {
 	lappend blameargs $id
     }
-    lappend blameargs -- $flist_menu_file
+    lappend blameargs -- [file join [file dirname $gitdir] $flist_menu_file]
     if {[catch {
 	set f [open $blameargs r]
     } err]} {
