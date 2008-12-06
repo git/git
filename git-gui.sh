@@ -2630,6 +2630,20 @@ proc usage {} {
 	exit 1
 }
 
+proc normalize_relpath {path} {
+	set elements {}
+	foreach item [file split $path] {
+		if {$item eq {.}} continue
+		if {$item eq {..} && [llength $elements] > 0
+		    && [lindex $elements end] ne {..}} {
+			set elements [lrange $elements 0 end-1]
+			continue
+		}
+		lappend elements $item
+	}
+	return [eval file join $elements]
+}
+
 # -- Not a normal commit type invocation?  Do that instead!
 #
 switch -- $subcommand {
@@ -2648,7 +2662,7 @@ blame {
 	foreach a $argv {
 		if {$is_path || [file exists $_prefix$a]} {
 			if {$path ne {}} usage
-			set path $_prefix$a
+			set path [normalize_relpath $_prefix$a]
 			break
 		} elseif {$a eq {--}} {
 			if {$path ne {}} {
@@ -2671,7 +2685,7 @@ blame {
 	unset is_path
 
 	if {$head ne {} && $path eq {}} {
-		set path $_prefix$head
+		set path [normalize_relpath $_prefix$head]
 		set head {}
 	}
 
