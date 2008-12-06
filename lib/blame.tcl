@@ -940,9 +940,8 @@ method _showcommit {cur_w lno} {
 			catch {
 				set fd [git_read cat-file commit $cmit]
 				fconfigure $fd -encoding binary -translation lf
-				if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
-					set enc utf-8
-				}
+				# By default commits are assumed to be in utf-8
+				set enc utf-8
 				while {[gets $fd line] > 0} {
 					if {[string match {encoding *} $line]} {
 						set enc [string tolower [string range $line 9 end]]
