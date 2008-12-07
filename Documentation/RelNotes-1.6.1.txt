@@ -70,7 +70,7 @@ on.
   subsequent "git diff" will show a diff as if they are creation events.
 
 * "git add" gained a built-in synonym for people who want to say "stage
-  changes" instead of "add contents the the staging area" which amounts
+  changes" instead of "add contents to the staging area" which amounts
   to the same thing.
 
 * "git apply" learned --include=paths option, similar to the existing
@@ -135,15 +135,9 @@ on.
   cannot produce a patch that can be applied, so this is disabled in
   format-patch among other things).
 
-* "git diff" hunk header pattern for ObjC has been added.
-
 * "--cached" option to "git diff has an easier to remember synonym "--staged",
   to ask "what is the difference between the given commit and the
   contents staged in the index?"
-
-* a "textconv" filter that makes binary files textual form for human
-   consumption can be specified as an attribute for paths; "git diff"
-   learnt to make use of it.
 
 * "git for-each-ref" learned "refname:short" token that gives an
   unambiguously abbreviated refname.
@@ -197,9 +191,6 @@ on.
 
 * "git remote show $remote" lists remote branches one-per-line now.
 
-* when giving up resolving a conflicted merge, "git reset --hard" failed
-  to remove new paths from the working tree. [cherry-pick to 'maint'?]
-
 * "git send-email" can be given revision range instead of files and
   maildirs on the command line, and automatically runs format-patch to
   generate patches for the given revision range.
@@ -251,15 +242,7 @@ release, unless otherwise noted.
   but we dropped support for such a use case long time ago.  This has
   been resurrected.
 
-* Giving 3 or more tree-ish to "git diff" is supposed to show the combined
-  diff from second and subsequent trees to the first one.  b75271d ("git
-  diff <tree>{3,}": do not reverse order of arguments, 2008-10-10) needs
-  to be cherry-picked to 'maint'.
-
 * "git filter-branch" failed to rewrite a tag name with slashes in it.
-
-* "git repack" used to grab objects out of packs marked with .keep
-  into a new pack (fix scheduled to be further downmerged to maint).
 
 * "git rm --cached" used to allow an empty blob that was added earlier to
   be removed without --force, even when the file in the work tree has
@@ -271,10 +254,6 @@ release, unless otherwise noted.
 * "git log --author/--committer" match used to potentially match the
   timestamp part, exposing internal implementation detail.  Also these did
   not work with --fixed-strings match at all.
-
-* Internal diff machinery had a corner case performance bug that choked on a
-  large file with many repeated contents (fix scheduled to be further cherry-
-  picked to maint).
 
 * "gitweb" did not mark non-ASCII characters imported from external HTML fragments
   correctly.
