@@ -241,6 +241,7 @@ our %feature = (
 	# $feature{'grep'}{'override'} = 1;
 	# and in project config gitweb.grep = 0|1;
 	'grep' => {
+		'sub' => \&feature_grep,
 		'override' => 0,
 		'default' => [1]},
 

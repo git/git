@@ -24,7 +24,7 @@ static const char *ssl_cainfo = NULL;
 static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv = 0;
-static char *curl_http_proxy = NULL;
+static const char *curl_http_proxy = NULL;
 
 static struct curl_slist *pragma_header;
 
@@ -149,11 +149,8 @@ static int http_options(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp("http.proxy", var)) {
-		if (curl_http_proxy == NULL) {
-			if (!value)
-				return config_error_nonbool(var);
-			curl_http_proxy = xstrdup(value);
-		}
+		if (curl_http_proxy == NULL)
+			return git_config_string(&curl_http_proxy, var, value);
 		return 0;
 	}
 
@@ -309,7 +306,7 @@ void http_cleanup(void)
 	pragma_header = NULL;
 
 	if (curl_http_proxy) {
-		free(curl_http_proxy);
+		free((void *)curl_http_proxy);
 		curl_http_proxy = NULL;
 	}
 }
