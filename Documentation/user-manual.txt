@@ -13,7 +13,7 @@ to build and test a particular version of a software project, search for
 regressions, and so on.
 
 People needing to do actual development will also want to read
-<<Developing-with-git>> and <<sharing-development>>.
+<<Developing-With-git>> and <<sharing-development>>.
 
 Further chapters cover more specialized topics.
 
@@ -389,7 +389,7 @@ the order it uses to decide which to choose when there are multiple
 references with the same shorthand name, see the "SPECIFYING
 REVISIONS" section of linkgit:git-rev-parse[1].
 
-[[Updating-a-repository-with-git-fetch]]
+[[Updating-a-repository-With-git-fetch]]
 Updating a repository with git-fetch
 ------------------------------------
 
@@ -945,7 +945,7 @@ echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
 and then he just cut-and-pastes the output commands after verifying that
 they look OK.
 
-[[Finding-comments-with-given-content]]
+[[Finding-comments-With-given-Content]]
 Finding commits referencing a file with given content
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -962,7 +962,7 @@ Figuring out why this works is left as an exercise to the (advanced)
 student.  The linkgit:git-log[1], linkgit:git-diff-tree[1], and
 linkgit:git-hash-object[1] man pages may prove helpful.
 
-[[Developing-with-git]]
+[[Developing-With-git]]
 Developing with git
 ===================
 
@@ -1665,7 +1665,7 @@ dangling objects can arise in other situations.
 Sharing development with others
 ===============================
 
-[[getting-updates-with-git-pull]]
+[[getting-updates-With-git-pull]]
 Getting updates with git-pull
 -----------------------------
 
@@ -1673,7 +1673,7 @@ After you clone a repository and make a few changes of your own, you
 may wish to check the original repository for updates and merge them
 into your own work.
 
-We have already seen <<Updating-a-repository-with-git-fetch,how to
+We have already seen <<Updating-a-repository-With-git-fetch,how to
 keep remote tracking branches up to date>> with linkgit:git-fetch[1],
 and how to merge two branches.  So you can merge in changes from the
 original repository's master branch with:
@@ -1784,7 +1784,7 @@ Public git repositories
 
 Another way to submit changes to a project is to tell the maintainer
 of that project to pull the changes from your repository using
-linkgit:git-pull[1].  In the section "<<getting-updates-with-git-pull,
+linkgit:git-pull[1].  In the section "<<getting-updates-With-git-pull,
 Getting updates with git-pull>>" we described this as a way to get
 updates from the "main" repository, but it works just as well in the
 other direction.
@@ -1994,7 +1994,7 @@ $ git push ssh://yourserver.com/~you/proj.git +master
 Normally whenever a branch head in a public repository is modified, it
 is modified to point to a descendant of the commit that it pointed to
 before.  By forcing a push in this situation, you break that convention.
-(See <<problems-with-rewriting-history>>.)
+(See <<problems-With-rewriting-history>>.)
 
 Nevertheless, this is a common practice for people that need a simple
 way to publish a work-in-progress patch series, and it is an acceptable
@@ -2563,7 +2563,7 @@ There are numerous other tools, such as StGIT, which exist for the
 purpose of maintaining a patch series.  These are outside of the scope of
 this manual.
 
-[[problems-with-rewriting-history]]
+[[problems-With-rewriting-history]]
 Problems with rewriting history
 -------------------------------
 
