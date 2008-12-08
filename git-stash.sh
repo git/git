@@ -30,7 +30,7 @@ clear_stash () {
 	then
 		die "git stash clear with parameters is unimplemented"
 	fi
-	if current=$(git rev-parse -q --verify $ref_stash)
+	if current=$(git rev-parse --verify $ref_stash 2>/dev/null)
 	then
 		git update-ref -d $ref_stash $current
 	fi
@@ -129,7 +129,7 @@ save_stash () {
 }
 
 have_stash () {
-	git rev-parse -q --verify $ref_stash >/dev/null
+	git rev-parse --verify $ref_stash >/dev/null 2>&1
 }
 
 list_stash () {
@@ -229,16 +229,16 @@ drop_stash () {
 	fi
 	# Verify supplied argument looks like a stash entry
 	s=$(git rev-parse --verify "$@") &&
-	git rev-parse -q --verify "$s:"   > /dev/null &&
-	git rev-parse -q --verify "$s^1:" > /dev/null &&
-	git rev-parse -q --verify "$s^2:" > /dev/null ||
+	git rev-parse --verify "$s:"   > /dev/null 2>&1 &&
+	git rev-parse --verify "$s^1:" > /dev/null 2>&1 &&
+	git rev-parse --verify "$s^2:" > /dev/null 2>&1 ||
 		die "$*: not a valid stashed state"
 
 	git reflog delete --updateref --rewrite "$@" &&
 		echo "Dropped $* ($s)" || die "$*: Could not drop stash entry"
 
 	# clear_stash if we just dropped the last stash entry
-	git rev-parse -q --verify "$ref_stash@{0}" > /dev/null || clear_stash
+	git rev-parse --verify "$ref_stash@{0}" > /dev/null 2>&1 || clear_stash
 }
 
 apply_to_branch () {
