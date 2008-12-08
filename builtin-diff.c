@@ -290,8 +290,9 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	/* Otherwise, we are doing the usual "git" diff */
 	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
 
-	/* Default to let external be used */
+	/* Default to let external and textconv be used */
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
+	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
 
 	if (nongit)
 		die("Not a git repository");
@@ -303,7 +304,6 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	}
 
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
-	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
 
 	/*
 	 * If the user asked for our exit code then don't start a
