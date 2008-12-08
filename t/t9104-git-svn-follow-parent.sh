@@ -149,6 +149,48 @@ test_expect_success "track initial change if it was only made to parent" '
 	     "`git rev-parse r9270-d~1`"
 	'
 
+test_expect_success "follow-parent is atomic" '
+	(
+		cd wc &&
+		svn up &&
+		svn mkdir stunk &&
+		echo "trunk stunk" > stunk/readme &&
+		svn add stunk/readme &&
+		svn ci -m "trunk stunk" &&
+		echo "stunk like junk" >> stunk/readme &&
+		svn ci -m "really stunk" &&
+		echo "stink stank stunk" >> stunk/readme &&
+		svn ci -m "even the grinch agrees"
+	) &&
+	svn copy -m "stunk flunked" "$svnrepo"/stunk "$svnrepo"/flunk &&
+	{ svn cp -m "early stunk flunked too" \
+		"$svnrepo"/stunk@17 "$svnrepo"/flunked ||
+	svn cp -m "early stunk flunked too" \
+		-r17 "$svnrepo"/stunk "$svnrepo"/flunked; } &&
+	git svn init --minimize-url -i stunk "$svnrepo"/stunk &&
+	git svn fetch -i stunk &&
+	git update-ref refs/remotes/flunk@18 refs/remotes/stunk~2 &&
+	git update-ref -d refs/remotes/stunk &&
+	git config --unset svn-remote.svn.fetch stunk &&
+	mkdir -p "$GIT_DIR"/svn/flunk@18 &&
+	rev_map=$(cd "$GIT_DIR"/svn/stunk && ls .rev_map*) &&
+	dd if="$GIT_DIR"/svn/stunk/$rev_map \
+	   of="$GIT_DIR"/svn/flunk@18/$rev_map bs=24 count=1 &&
+	rm -rf "$GIT_DIR"/svn/stunk &&
+	git svn init --minimize-url -i flunk "$svnrepo"/flunk &&
+	git svn fetch -i flunk &&
+	git svn init --minimize-url -i stunk "$svnrepo"/stunk &&
+	git svn fetch -i stunk &&
+	git svn init --minimize-url -i flunked "$svnrepo"/flunked &&
+	git svn fetch -i flunked
+	test "`git rev-parse --verify refs/remotes/flunk@18`" \
+	   = "`git rev-parse --verify refs/remotes/stunk`" &&
+	test "`git rev-parse --verify refs/remotes/flunk~1`" \
+	   = "`git rev-parse --verify refs/remotes/stunk`" &&
+	test "`git rev-parse --verify refs/remotes/flunked~1`" \
+	   = "`git rev-parse --verify refs/remotes/stunk~1`"
+	'
+
 test_expect_success "track multi-parent paths" '
 	svn cp -m "resurrect /glob" "$svnrepo"/r9270 "$svnrepo"/glob &&
 	git-svn multi-fetch &&

@@ -2318,12 +2318,20 @@ sub find_parent_branch {
 		$gs = Git::SVN->init($u, $p, $repo_id, $ref_id, 1);
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
-	if (!defined $r0 || !defined $parent) {
-		my ($base, $head) = parse_revision_argument(0, $r);
-		if ($base <= $r) {
+	{
+		my ($base, $head);
+		if (!defined $r0 || !defined $parent) {
+			($base, $head) = parse_revision_argument(0, $r);
+		} else {
+			if ($r0 < $r) {
+				$gs->ra->get_log([$gs->{path}], $r0 + 1, $r, 1,
+					0, 1, sub { $base = $_[1] - 1 });
+			}
+		}
+		if (defined $base && $base <= $r) {
 			$gs->fetch($base, $r);
 		}
-		($r0, $parent) = $gs->last_rev_commit;
+		($r0, $parent) = $gs->find_rev_before($r, 1);
 	}
 	if (defined $r0 && defined $parent) {
 		print STDERR "Found branch parent: ($self->{ref_id}) $parent\n";
