@@ -2764,7 +2764,7 @@ sub insert_file {
 	my $filename = shift;
 
 	open my $fd, '<', $filename;
-	print map(to_utf8, <$fd>);
+	print map { to_utf8($_) } <$fd>;
 	close $fd;
 }
 
