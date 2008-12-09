@@ -1376,7 +1376,9 @@ static void builtin_diff(const char *name_a,
 		 */
 		if ((one->mode ^ two->mode) & S_IFMT)
 			goto free_ab_and_return;
-		if (complete_rewrite) {
+		if (complete_rewrite &&
+		    !diff_filespec_is_binary(one) &&
+		    !diff_filespec_is_binary(two)) {
 			emit_rewrite_diff(name_a, name_b, one, two, o);
 			o->found_changes = 1;
 			goto free_ab_and_return;
