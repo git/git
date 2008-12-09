@@ -46,7 +46,7 @@ The --cc option must be repeated for each user you want on the cc list.
 	Use $GIT_EDITOR, core.editor, $VISUAL, or $EDITOR to edit an
 	introductory message for the patch series.
 +
-When compose is in used, git send-email gets less interactive will use the
+When '--compose' is used, git send-email gets less interactive will use the
 values of the headers you set there. If the body of the email (what you type
 after the headers and a blank line) only contains blank (or GIT: prefixed)
 lines, the summary won't be sent, but git-send-email will still use the
