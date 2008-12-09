@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-16 13:56-0800\n"
-"PO-Revision-Date: 2008-11-26 19:17+0900\n"
+"POT-Creation-Date: 2008-12-08 08:31-0800\n"
+"PO-Revision-Date: 2008-12-09 06:27+0900\n"
 "Last-Translator: しらいし ななこ <nanako3@lavabit.com>\n"
 "Language-Team: Japanese\n"
 "MIME-Version: 1.0\n"
@@ -2501,7 +2501,12 @@ msgstr "%s から削除されたトラッキング・ブランチを刈ってい
 msgid "Pushing changes to %s"
 msgstr "%s へ変更をプッシュしています"
 
-#: lib/transport.tcl:72
+#: lib/transport.tcl:64
+#, tcl-format
+msgid "Mirroring to %s"
+msgstr "%s へミラーしています"
+
+#: lib/transport.tcl:82
 #, tcl-format
 msgid "Pushing %s %s to %s"
 msgstr "%3$s へ %1$s %2$s をプッシュしています"
