@@ -199,11 +199,7 @@ proc parseviewargs {n arglist} {
 		set nextisval 1
 		lappend glflags $arg
 	    }
-	    "--not" {
-		set notflag [expr {!$notflag}]
-		lappend revargs $arg
-	    }
-	    "--all" {
+	    "--not" - "--all" {
 		lappend revargs $arg
 	    }
 	    "--merge" {
@@ -1915,6 +1911,9 @@ proc makewindow {} {
 	    {mc "Reload" command reloadcommits -accelerator Meta1-F5}
 	    {mc "Reread references" command rereadrefs}
 	    {mc "List references" command showrefs -accelerator F2}
+	    {xx "" separator}
+	    {mc "Start git gui" command {exec git gui &}}
+	    {xx "" separator}
 	    {mc "Quit" command doquit -accelerator Meta1-Q}
 	}}
 	{mc "Edit" cascade {
@@ -3407,6 +3406,7 @@ proc show_line_source {} {
 	error_popup [mc "Couldn't start git blame: %s" $err]
 	return
     }
+    nowbusy blaming [mc "Searching"]
     fconfigure $f -blocking 0
     set i [reg_instance $f]
     set blamestuff($i) {}
@@ -3420,6 +3420,7 @@ proc stopblaming {} {
     if {[info exists blameinst]} {
 	stop_instance $blameinst
 	unset blameinst
+	notbusy blaming
     }
 }
 
@@ -3434,6 +3435,7 @@ proc read_line_source {fd inst} {
     }
     unset commfd($inst)
     unset blameinst
+    notbusy blaming
     fconfigure $fd -blocking 1
     if {[catch {close $fd} err]} {
 	error_popup [mc "Error running git blame: %s" $err]
@@ -4122,7 +4124,7 @@ proc askvhighlight {row id} {
 
 proc hfiles_change {} {
     global highlight_files filehighlight fhighlights fh_serial
-    global highlight_paths gdttype
+    global highlight_paths
 
     if {[info exists filehighlight]} {
 	# delete previous highlights
@@ -6287,10 +6289,11 @@ proc findmore {} {
 proc findselectline {l} {
     global findloc commentend ctext findcurline markingmatches gdttype
 
-    set markingmatches 1
+    set markingmatches [expr {$gdttype eq [mc "containing:"]}]
     set findcurline $l
     selectline $l 1
-    if {$findloc == [mc "All fields"] || $findloc == [mc "Comments"]} {
+    if {$markingmatches &&
+	($findloc eq [mc "All fields"] || $findloc eq [mc "Comments"])} {
 	# highlight the matches in the comments
 	set f [$ctext get 1.0 $commentend]
 	set matches [findmatches $f]
@@ -7130,7 +7133,7 @@ proc gettreediffline {gdtf ids} {
 	set treediffs($ids) $treediff
     }
     unset treepending
-    if {$cmitmode eq "tree"} {
+    if {$cmitmode eq "tree" && [llength $diffids] == 1} {
 	gettree $diffids
     } elseif {$ids != $diffids} {
 	if {![info exists diffmergeid]} {

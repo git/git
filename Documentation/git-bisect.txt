@@ -19,7 +19,7 @@ on the subcommand:
  git bisect start [<bad> [<good>...]] [--] [<paths>...]
  git bisect bad [<rev>]
  git bisect good [<rev>...]
- git bisect skip [<rev>...]
+ git bisect skip [(<rev>|<range>)...]
  git bisect reset [<branch>]
  git bisect visualize
  git bisect replay <logfile>
@@ -163,6 +163,25 @@ $ git bisect skip                 # Current version cannot be tested
 But computing the commit to test may be slower afterwards and git may
 eventually not be able to tell the first bad among a bad and one or
 more "skip"ped commits.
+
+You can even skip a range of commits, instead of just one commit,
+using the "'<commit1>'..'<commit2>'" notation. For example:
+
+------------
+$ git bisect skip v2.5..v2.6
+------------
+
+would mean that no commit between `v2.5` excluded and `v2.6` included
+can be tested.
+
+Note that if you want to also skip the first commit of a range you can
+use something like:
+
+------------
+$ git bisect skip v2.5 v2.5..v2.6
+------------
+
+and the commit pointed to by `v2.5` will be skipped too.
 
 Cutting down bisection by giving more parameters to bisect start
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

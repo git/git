@@ -253,6 +253,15 @@ static void write_tag_body(int fd, const unsigned char *sha1)
 	free(buf);
 }
 
+static int build_tag_object(struct strbuf *buf, int sign, unsigned char *result)
+{
+	if (sign && do_sign(buf) < 0)
+		return error("unable to sign the tag");
+	if (write_sha1_file(buf->buf, buf->len, tag_type, result) < 0)
+		return error("unable to write tag file");
+	return 0;
+}
+
 static void create_tag(const unsigned char *object, const char *tag,
 		       struct strbuf *buf, int message, int sign,
 		       unsigned char *prev, unsigned char *result)
@@ -260,6 +269,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 	enum object_type type;
 	char header_buf[1024];
 	int header_len;
+	char *path = NULL;
 
 	type = sha1_object_info(object, NULL);
 	if (type <= OBJ_NONE)
@@ -279,7 +289,6 @@ static void create_tag(const unsigned char *object, const char *tag,
 		die("tag header too big.");
 
 	if (!message) {
-		char *path;
 		int fd;
 
 		/* write the template message before editing: */
@@ -300,9 +309,6 @@ static void create_tag(const unsigned char *object, const char *tag,
 			"Please supply the message using either -m or -F option.\n");
 			exit(1);
 		}
-
-		unlink(path);
-		free(path);
 	}
 
 	stripspace(buf, 1);
@@ -312,10 +318,16 @@ static void create_tag(const unsigned char *object, const char *tag,
 
 	strbuf_insert(buf, 0, header_buf, header_len);
 
-	if (sign && do_sign(buf) < 0)
-		die("unable to sign the tag");
-	if (write_sha1_file(buf->buf, buf->len, tag_type, result) < 0)
-		die("unable to write tag file");
+	if (build_tag_object(buf, sign, result) < 0) {
+		if (path)
+			fprintf(stderr, "The tag message has been left in %s\n",
+				path);
+		exit(128);
+	}
+	if (path) {
+		unlink(path);
+		free(path);
+	}
 }
 
 struct msg_arg {

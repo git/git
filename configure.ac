@@ -490,6 +490,8 @@ AC_SUBST(NO_MKDTEMP)
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
+# Define NO_PTHREADS if we do not have pthreads
+#
 # Define PTHREAD_LIBS to the linker flag used for Pthread support.
 AC_LANG_CONFTEST([AC_LANG_PROGRAM(
   [[#include <pthread.h>]],
@@ -502,9 +504,12 @@ else
  ${CC} -lpthread conftest.c -o conftest.o > /dev/null 2>&1
  if test $? -eq 0;then
   PTHREAD_LIBS="-lpthread"
+ else
+  NO_PTHREADS=UnfortunatelyYes
  fi
 fi
 AC_SUBST(PTHREAD_LIBS)
+AC_SUBST(NO_PTHREADS)
 
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE

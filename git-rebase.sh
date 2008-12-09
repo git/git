@@ -365,10 +365,10 @@ case "$#" in
 	switch_to="$2"
 
 	if git show-ref --verify --quiet -- "refs/heads/$2" &&
-	   branch=$(git rev-parse --verify "refs/heads/$2" 2>/dev/null)
+	   branch=$(git rev-parse -q --verify "refs/heads/$2")
 	then
 		head_name="refs/heads/$2"
-	elif branch=$(git rev-parse --verify "$2" 2>/dev/null)
+	elif branch=$(git rev-parse -q --verify "$2")
 	then
 		head_name="detached HEAD"
 	else

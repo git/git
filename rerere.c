@@ -70,6 +70,19 @@ static int write_rr(struct string_list *rr, int out_fd)
 	return 0;
 }
 
+static void ferr_write(const void *p, size_t count, FILE *fp, int *err)
+{
+	if (!count || *err)
+		return;
+	if (fwrite(p, count, 1, fp) != 1)
+		*err = errno;
+}
+
+static inline void ferr_puts(const char *s, FILE *fp, int *err)
+{
+	ferr_write(s, strlen(s), fp, err);
+}
+
 static int handle_file(const char *path,
 	 unsigned char *sha1, const char *output)
 {
@@ -82,6 +95,7 @@ static int handle_file(const char *path,
 	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
 	FILE *f = fopen(path, "r");
 	FILE *out = NULL;
+	int wrerror = 0;
 
 	if (!f)
 		return error("Could not open %s", path);
@@ -118,11 +132,11 @@ static int handle_file(const char *path,
 			hunk_no++;
 			hunk = RR_CONTEXT;
 			if (out) {
-				fputs("<<<<<<<\n", out);
-				fwrite(one.buf, one.len, 1, out);
-				fputs("=======\n", out);
-				fwrite(two.buf, two.len, 1, out);
-				fputs(">>>>>>>\n", out);
+				ferr_puts("<<<<<<<\n", out, &wrerror);
+				ferr_write(one.buf, one.len, out, &wrerror);
+				ferr_puts("=======\n", out, &wrerror);
+				ferr_write(two.buf, two.len, out, &wrerror);
+				ferr_puts(">>>>>>>\n", out, &wrerror);
 			}
 			if (sha1) {
 				git_SHA1_Update(&ctx, one.buf ? one.buf : "",
@@ -139,7 +153,7 @@ static int handle_file(const char *path,
 		else if (hunk == RR_SIDE_2)
 			strbuf_addstr(&two, buf);
 		else if (out)
-			fputs(buf, out);
+			ferr_puts(buf, out, &wrerror);
 		continue;
 	bad:
 		hunk = 99; /* force error exit */
@@ -149,8 +163,12 @@ static int handle_file(const char *path,
 	strbuf_release(&two);
 
 	fclose(f);
-	if (out)
-		fclose(out);
+	if (wrerror)
+		error("There were errors while writing %s (%s)",
+		      path, strerror(wrerror));
+	if (out && fclose(out))
+		wrerror = error("Failed to flush %s: %s",
+				path, strerror(errno));
 	if (sha1)
 		git_SHA1_Final(sha1, &ctx);
 	if (hunk != RR_CONTEXT) {
@@ -158,6 +176,8 @@ static int handle_file(const char *path,
 			unlink(output);
 		return error("Could not parse conflict hunks in %s", path);
 	}
+	if (wrerror)
+		return -1;
 	return hunk_no;
 }
 
@@ -200,9 +220,13 @@ static int merge(const char *name, const char *path)
 	if (!ret) {
 		FILE *f = fopen(path, "w");
 		if (!f)
-			return error("Could not write to %s", path);
-		fwrite(result.ptr, result.size, 1, f);
-		fclose(f);
+			return error("Could not open %s: %s", path,
+				     strerror(errno));
+		if (fwrite(result.ptr, result.size, 1, f) != 1)
+			error("Could not write %s: %s", path, strerror(errno));
+		if (fclose(f))
+			return error("Writing %s failed: %s", path,
+				     strerror(errno));
 	}
 
 	free(cur.ptr);

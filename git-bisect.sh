@@ -9,7 +9,7 @@ git bisect bad [<rev>]
         mark <rev> a known-bad revision.
 git bisect good [<rev>...]
         mark <rev>... known-good revisions.
-git bisect skip [<rev>...]
+git bisect skip [(<rev>|<range>)...]
         mark <rev>... untestable revisions.
 git bisect next
         find next bisection to test and check it out.
@@ -199,11 +199,11 @@ bisect_skip() {
             *..*)
                 revs=$(git rev-list "$arg") || die "Bad rev input: $arg" ;;
             *)
-                revs="'$arg'" ;;
+                revs=$(sq "$arg") ;;
 	    esac
             all="$all $revs"
         done
-        bisect_state 'skip' $all
+        eval bisect_state 'skip' $all
 }
 
 bisect_state() {

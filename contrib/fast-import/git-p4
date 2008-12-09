@@ -245,7 +245,15 @@ def p4Cmd(cmd):
 def p4Where(depotPath):
     if not depotPath.endswith("/"):
         depotPath += "/"
-    output = p4Cmd("where %s..." % depotPath)
+    depotPath = depotPath + "..."
+    outputList = p4CmdList("where %s" % depotPath)
+    output = None
+    for entry in outputList:
+        if entry["depotFile"] == depotPath:
+            output = entry
+            break
+    if output == None:
+        return ""
     if output["code"] == "error":
         return ""
     clientPath = ""

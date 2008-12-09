@@ -90,6 +90,8 @@ all::
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
+# Define NO_PTHREADS if you do not have or do not want to use Pthreads.
+#
 # Define NO_PREAD if you have a problem with pread() system call (e.g.
 # cygwin.dll before v1.5.22).
 #
@@ -164,6 +166,7 @@ uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
 uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
 uname_P := $(shell sh -c 'uname -p 2>/dev/null || echo not')
+uname_V := $(shell sh -c 'uname -v 2>/dev/null || echo not')
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
@@ -317,6 +320,7 @@ BUILT_INS += git-merge-subtree$X
 BUILT_INS += git-peek-remote$X
 BUILT_INS += git-repo-config$X
 BUILT_INS += git-show$X
+BUILT_INS += git-stage$X
 BUILT_INS += git-status$X
 BUILT_INS += git-whatchanged$X
 
@@ -722,6 +726,11 @@ ifeq ($(uname_S),AIX)
 	INTERNAL_QSORT = UnfortunatelyYes
 	NEEDS_LIBICONV=YesPlease
 	BASIC_CFLAGS += -D_LARGE_FILES
+	ifneq ($(shell expr "$(uname_V)" : '[1234]'),1)
+		THREADED_DELTA_SEARCH = YesPlease
+	else
+		NO_PTHREADS = YesPlease
+	endif
 endif
 ifeq ($(uname_S),GNU)
 	# GNU/Hurd
@@ -766,6 +775,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
 	NO_MEMMEM = YesPlease
+	NO_PTHREADS = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
@@ -1017,9 +1027,15 @@ ifdef INTERNAL_QSORT
 	COMPAT_OBJS += compat/qsort.o
 endif
 
+ifdef NO_PTHREADS
+	THREADED_DELTA_SEARCH =
+	BASIC_CFLAGS += -DNO_PTHREADS
+else
+	EXTLIBS += $(PTHREAD_LIBS)
+endif
+
 ifdef THREADED_DELTA_SEARCH
 	BASIC_CFLAGS += -DTHREADED_DELTA_SEARCH
-	EXTLIBS += $(PTHREAD_LIBS)
 	LIB_OBJS += thread-utils.o
 endif
 ifdef DIR_HAS_BSD_GROUP_SEMANTICS

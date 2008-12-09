@@ -121,13 +121,13 @@ test true = "$rebase" && {
 	test -z "$origin" && origin=$(get_default_remote)
 	reflist="$(get_remote_refs_for_fetch "$@" 2>/dev/null |
 		sed "s|refs/heads/\(.*\):|\1|")" &&
-	oldremoteref="$(git rev-parse --verify \
-		"refs/remotes/$origin/$reflist" 2>/dev/null)"
+	oldremoteref="$(git rev-parse -q --verify \
+		"refs/remotes/$origin/$reflist")"
 }
-orig_head=$(git rev-parse --verify HEAD 2>/dev/null)
+orig_head=$(git rev-parse -q --verify HEAD)
 git fetch $verbosity --update-head-ok "$@" || exit 1
 
-curr_head=$(git rev-parse --verify HEAD 2>/dev/null)
+curr_head=$(git rev-parse -q --verify HEAD)
 if test -n "$orig_head" && test "$curr_head" != "$orig_head"
 then
 	# The fetch involved updating the current branch.

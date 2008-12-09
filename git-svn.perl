@@ -558,7 +558,7 @@ sub cmd_branch {
 
 	my ($src, $rev, undef, $gs) = working_head_info($head);
 
-	my $remote = Git::SVN::read_all_remotes()->{svn};
+	my $remote = Git::SVN::read_all_remotes()->{$gs->{repo_id}};
 	my $glob = $remote->{ $_tag ? 'tags' : 'branches' };
 	my ($lft, $rgt) = @{ $glob->{path} }{qw/left right/};
 	my $dst = join '/', $remote->{url}, $lft, $branch_name, ($rgt || ());
