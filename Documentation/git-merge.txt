@@ -69,20 +69,20 @@ Three kinds of merge can happen:
   simplest case, called "Already up-to-date."
 
 * `HEAD` is already contained in the merged commit. This is the
-  most common case especially when involved through 'git pull':
-  you are tracking an upstream repository, committed no local
+  most common case especially when invoked from 'git pull':
+  you are tracking an upstream repository, have committed no local
   changes and now you want to update to a newer upstream revision.
-  Your `HEAD` (and the index) is updated to at point the merged
+  Your `HEAD` (and the index) is updated to point at the merged
   commit, without creating an extra merge commit.  This is
   called "Fast-forward".
 
 * Both the merged commit and `HEAD` are independent and must be
-  tied together by a merge commit that has them both as its parents.
+  tied together by a merge commit that has both of them as its parents.
   The rest of this section describes this "True merge" case.
 
 The chosen merge strategy merges the two commits into a single
 new source tree.
-When things cleanly merge, these things happen:
+When things merge cleanly, this is what happens:
 
 1. The results are updated both in the index file and in your
    working tree;
@@ -91,16 +91,16 @@ When things cleanly merge, these things happen:
 4. The `HEAD` pointer gets advanced.
 
 Because of 2., we require that the original state of the index
-file to match exactly the current `HEAD` commit; otherwise we
+file matches exactly the current `HEAD` commit; otherwise we
 will write out your local changes already registered in your
 index file along with the merge result, which is not good.
-Because 1. involves only the paths different between your
+Because 1. involves only those paths differing between your
 branch and the remote branch you are pulling from during the
 merge (which is typically a fraction of the whole tree), you can
 have local modifications in your working tree as long as they do
 not overlap with what the merge updates.
 
-When there are conflicts, these things happen:
+When there are conflicts, the following happens:
 
 1. `HEAD` stays the same.
 
@@ -111,8 +111,8 @@ When there are conflicts, these things happen:
    versions; stage1 stores the version from the common ancestor,
    stage2 from `HEAD`, and stage3 from the remote branch (you
    can inspect the stages with `git ls-files -u`).  The working
-   tree files have the result of "merge" program; i.e. 3-way
-   merge result with familiar conflict markers `<<< === >>>`.
+   tree files contain the result of the "merge" program; i.e. 3-way
+   merge results with familiar conflict markers `<<< === >>>`.
 
 4. No other changes are done.  In particular, the local
    modifications you had before you started merge will stay the
@@ -145,13 +145,13 @@ Git makes conflict resolution easy.
 And here is another line that is cleanly resolved or unmodified.
 ------------
 
-The area a pair of conflicting changes happened is marked with markers
+The area where a pair of conflicting changes happened is marked with markers
 "`<<<<<<<`", "`=======`", and "`>>>>>>>`".  The part before the "`=======`"
-is typically your side, and the part after it is typically their side.
+is typically your side, and the part afterwards is typically their side.
 
-The default format does not show what the original said in the conflicted
-area.  You cannot tell how many lines are deleted and replaced with the
-Barbie's remark by your side.  The only thing you can tell is that your
+The default format does not show what the original said in the conflicting
+area.  You cannot tell how many lines are deleted and replaced with
+Barbie's remark on your side.  The only thing you can tell is that your
 side wants to say it is hard and you'd prefer to go shopping, while the
 other side wants to claim it is easy.
 
@@ -186,14 +186,14 @@ HOW TO RESOLVE CONFLICTS
 
 After seeing a conflict, you can do two things:
 
- * Decide not to merge.  The only clean-up you need are to reset
+ * Decide not to merge.  The only clean-ups you need are to reset
    the index file to the `HEAD` commit to reverse 2. and to clean
    up working tree changes made by 2. and 3.; 'git-reset --hard' can
    be used for this.
 
  * Resolve the conflicts.  Git will mark the conflicts in
    the working tree.  Edit the files into shape and
-   'git-add' to the index.  'git-commit' to seal the deal.
+   'git-add' them to the index.  Use 'git-commit' to seal the deal.
 
 You can work through the conflict with a number of tools:
 
