@@ -229,6 +229,8 @@ static void emit_rewrite_diff(const char *name_a,
 			      const char *name_b,
 			      struct diff_filespec *one,
 			      struct diff_filespec *two,
+			      const char *textconv_one,
+			      const char *textconv_two,
 			      struct diff_options *o)
 {
 	int lc_a, lc_b;
@@ -241,6 +243,8 @@ static void emit_rewrite_diff(const char *name_a,
 	const char *reset = diff_get_color(color_diff, DIFF_RESET);
 	static struct strbuf a_name = STRBUF_INIT, b_name = STRBUF_INIT;
 	const char *a_prefix, *b_prefix;
+	const char *data_one, *data_two;
+	size_t size_one, size_two;
 
 	if (diff_mnemonic_prefix && DIFF_OPT_TST(o, REVERSE_DIFF)) {
 		a_prefix = o->b_prefix;
@@ -262,8 +266,27 @@ static void emit_rewrite_diff(const char *name_a,
 
 	diff_populate_filespec(one, 0);
 	diff_populate_filespec(two, 0);
-	lc_a = count_lines(one->data, one->size);
-	lc_b = count_lines(two->data, two->size);
+	if (textconv_one) {
+		data_one = run_textconv(textconv_one, one, &size_one);
+		if (!data_one)
+			die("unable to read files to diff");
+	}
+	else {
+		data_one = one->data;
+		size_one = one->size;
+	}
+	if (textconv_two) {
+		data_two = run_textconv(textconv_two, two, &size_two);
+		if (!data_two)
+			die("unable to read files to diff");
+	}
+	else {
+		data_two = two->data;
+		size_two = two->size;
+	}
+
+	lc_a = count_lines(data_one, size_one);
+	lc_b = count_lines(data_two, size_two);
 	fprintf(o->file,
 		"%s--- %s%s%s\n%s+++ %s%s%s\n%s@@ -",
 		metainfo, a_name.buf, name_a_tab, reset,
@@ -273,9 +296,9 @@ static void emit_rewrite_diff(const char *name_a,
 	print_line_count(o->file, lc_b);
 	fprintf(o->file, " @@%s\n", reset);
 	if (lc_a)
-		copy_file_with_prefix(o->file, '-', one->data, one->size, old, reset);
+		copy_file_with_prefix(o->file, '-', data_one, size_one, old, reset);
 	if (lc_b)
-		copy_file_with_prefix(o->file, '+', two->data, two->size, new, reset);
+		copy_file_with_prefix(o->file, '+', data_two, size_two, new, reset);
 }
 
 static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
@@ -1334,6 +1357,11 @@ static void builtin_diff(const char *name_a,
 	const char *a_prefix, *b_prefix;
 	const char *textconv_one = NULL, *textconv_two = NULL;
 
+	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
+		textconv_one = get_textconv(one);
+		textconv_two = get_textconv(two);
+	}
+
 	diff_set_mnemonic_prefix(o, "a/", "b/");
 	if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
 		a_prefix = o->b_prefix;
@@ -1377,9 +1405,10 @@ static void builtin_diff(const char *name_a,
 		if ((one->mode ^ two->mode) & S_IFMT)
 			goto free_ab_and_return;
 		if (complete_rewrite &&
-		    !diff_filespec_is_binary(one) &&
-		    !diff_filespec_is_binary(two)) {
-			emit_rewrite_diff(name_a, name_b, one, two, o);
+		    (textconv_one || !diff_filespec_is_binary(one)) &&
+		    (textconv_two || !diff_filespec_is_binary(two))) {
+			emit_rewrite_diff(name_a, name_b, one, two,
+						textconv_one, textconv_two, o);
 			o->found_changes = 1;
 			goto free_ab_and_return;
 		}
@@ -1387,11 +1416,6 @@ static void builtin_diff(const char *name_a,
 
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
-
-	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
-		textconv_one = get_textconv(one);
-		textconv_two = get_textconv(two);
-	}
 
 	if (!DIFF_OPT_TST(o, TEXT) &&
 	    ( (diff_filespec_is_binary(one) && !textconv_one) ||
