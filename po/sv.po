@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: sv\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-11-16 13:56-0800\n"
-"PO-Revision-Date: 2008-11-21 08:35+0100\n"
+"POT-Creation-Date: 2008-12-08 08:31-0800\n"
+"PO-Revision-Date: 2008-12-09 16:23+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "MIME-Version: 1.0\n"
@@ -87,11 +87,15 @@ msgstr "Söker efter ändrade filer..."
 
 #: git-gui.sh:1367
 msgid "Calling prepare-commit-msg hook..."
-msgstr "Anropar kroken för förberedning av incheckningsmeddelande (prepare-commit-msg)..."
+msgstr ""
+"Anropar kroken för förberedning av incheckningsmeddelande (prepare-commit-"
+"msg)..."
 
 #: git-gui.sh:1384
 msgid "Commit declined by prepare-commit-msg hook."
-msgstr "Incheckningen avvisades av kroken för förberedning av incheckningsmeddelande (prepare-commit-msg)."
+msgstr ""
+"Incheckningen avvisades av kroken för förberedning av incheckningsmeddelande "
+"(prepare-commit-msg)."
 
 #: git-gui.sh:1542 lib/browser.tcl:246
 msgid "Ready."
@@ -241,25 +245,25 @@ msgstr "Ångra"
 msgid "Redo"
 msgstr "Gör om"
 
-#: git-gui.sh:2378 git-gui.sh:2923
+#: git-gui.sh:2378 git-gui.sh:2937
 msgid "Cut"
 msgstr "Klipp ut"
 
-#: git-gui.sh:2381 git-gui.sh:2926 git-gui.sh:3000 git-gui.sh:3082
+#: git-gui.sh:2381 git-gui.sh:2940 git-gui.sh:3014 git-gui.sh:3096
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr "Kopiera"
 
-#: git-gui.sh:2384 git-gui.sh:2929
+#: git-gui.sh:2384 git-gui.sh:2943
 msgid "Paste"
 msgstr "Klistra in"
 
-#: git-gui.sh:2387 git-gui.sh:2932 lib/branch_delete.tcl:26
+#: git-gui.sh:2387 git-gui.sh:2946 lib/branch_delete.tcl:26
 #: lib/remote_branch_delete.tcl:38
 msgid "Delete"
 msgstr "Ta bort"
 
-#: git-gui.sh:2391 git-gui.sh:2936 git-gui.sh:3086 lib/console.tcl:71
+#: git-gui.sh:2391 git-gui.sh:2950 git-gui.sh:3100 lib/console.tcl:71
 msgid "Select All"
 msgstr "Markera alla"
 
@@ -291,15 +295,15 @@ msgstr "Färdig"
 msgid "Commit@@verb"
 msgstr "Checka in"
 
-#: git-gui.sh:2443 git-gui.sh:2864
+#: git-gui.sh:2443 git-gui.sh:2878
 msgid "New Commit"
 msgstr "Ny incheckning"
 
-#: git-gui.sh:2451 git-gui.sh:2871
+#: git-gui.sh:2451 git-gui.sh:2885
 msgid "Amend Last Commit"
 msgstr "Lägg till föregående incheckning"
 
-#: git-gui.sh:2461 git-gui.sh:2825 lib/remote_branch_delete.tcl:99
+#: git-gui.sh:2461 git-gui.sh:2839 lib/remote_branch_delete.tcl:99
 msgid "Rescan"
 msgstr "Sök på nytt"
 
@@ -319,15 +323,15 @@ msgstr "Ta bort från incheckningskö"
 msgid "Revert Changes"
 msgstr "Återställ ändringar"
 
-#: git-gui.sh:2491 git-gui.sh:3069
+#: git-gui.sh:2491 git-gui.sh:3083
 msgid "Show Less Context"
 msgstr "Visa mindre sammanhang"
 
-#: git-gui.sh:2495 git-gui.sh:3073
+#: git-gui.sh:2495 git-gui.sh:3087
 msgid "Show More Context"
 msgstr "Visa mer sammanhang"
 
-#: git-gui.sh:2502 git-gui.sh:2838 git-gui.sh:2947
+#: git-gui.sh:2502 git-gui.sh:2852 git-gui.sh:2961
 msgid "Sign Off"
 msgstr "Skriv under"
 
@@ -361,7 +365,7 @@ msgstr "Om %s"
 msgid "Preferences..."
 msgstr "Inställningar..."
 
-#: git-gui.sh:2565 git-gui.sh:3115
+#: git-gui.sh:2565 git-gui.sh:3129
 msgid "Options..."
 msgstr "Alternativ..."
 
@@ -381,125 +385,125 @@ msgstr "Webbdokumentation"
 msgid "Show SSH Key"
 msgstr "Visa SSH-nyckel"
 
-#: git-gui.sh:2707
+#: git-gui.sh:2721
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr ""
 "ödesdigert: kunde inte ta status på sökvägen %s: Fil eller katalog saknas"
 
-#: git-gui.sh:2740
+#: git-gui.sh:2754
 msgid "Current Branch:"
 msgstr "Aktuell gren:"
 
-#: git-gui.sh:2761
+#: git-gui.sh:2775
 msgid "Staged Changes (Will Commit)"
 msgstr "Köade ändringar (kommer att checkas in)"
 
-#: git-gui.sh:2781
+#: git-gui.sh:2795
 msgid "Unstaged Changes"
 msgstr "Oköade ändringar"
 
-#: git-gui.sh:2831
+#: git-gui.sh:2845
 msgid "Stage Changed"
 msgstr "Köa ändrade"
 
-#: git-gui.sh:2850 lib/transport.tcl:93 lib/transport.tcl:182
+#: git-gui.sh:2864 lib/transport.tcl:104 lib/transport.tcl:193
 msgid "Push"
 msgstr "Sänd"
 
-#: git-gui.sh:2885
+#: git-gui.sh:2899
 msgid "Initial Commit Message:"
 msgstr "Inledande incheckningsmeddelande:"
 
-#: git-gui.sh:2886
+#: git-gui.sh:2900
 msgid "Amended Commit Message:"
 msgstr "Utökat incheckningsmeddelande:"
 
-#: git-gui.sh:2887
+#: git-gui.sh:2901
 msgid "Amended Initial Commit Message:"
 msgstr "Utökat inledande incheckningsmeddelande:"
 
-#: git-gui.sh:2888
+#: git-gui.sh:2902
 msgid "Amended Merge Commit Message:"
 msgstr "Utökat incheckningsmeddelande för sammanslagning:"
 
-#: git-gui.sh:2889
+#: git-gui.sh:2903
 msgid "Merge Commit Message:"
 msgstr "Incheckningsmeddelande för sammanslagning:"
 
-#: git-gui.sh:2890
+#: git-gui.sh:2904
 msgid "Commit Message:"
 msgstr "Incheckningsmeddelande:"
 
-#: git-gui.sh:2939 git-gui.sh:3090 lib/console.tcl:73
+#: git-gui.sh:2953 git-gui.sh:3104 lib/console.tcl:73
 msgid "Copy All"
 msgstr "Kopiera alla"
 
-#: git-gui.sh:2963 lib/blame.tcl:104
+#: git-gui.sh:2977 lib/blame.tcl:104
 msgid "File:"
 msgstr "Fil:"
 
-#: git-gui.sh:3078
+#: git-gui.sh:3092
 msgid "Refresh"
 msgstr "Uppdatera"
 
-#: git-gui.sh:3099
+#: git-gui.sh:3113
 msgid "Decrease Font Size"
 msgstr "Minska teckensnittsstorlek"
 
-#: git-gui.sh:3103
+#: git-gui.sh:3117
 msgid "Increase Font Size"
 msgstr "Öka teckensnittsstorlek"
 
-#: git-gui.sh:3111 lib/blame.tcl:281
+#: git-gui.sh:3125 lib/blame.tcl:281
 msgid "Encoding"
 msgstr "Teckenkodning"
 
-#: git-gui.sh:3122
+#: git-gui.sh:3136
 msgid "Apply/Reverse Hunk"
 msgstr "Använd/återställ del"
 
-#: git-gui.sh:3127
+#: git-gui.sh:3141
 msgid "Apply/Reverse Line"
 msgstr "Använd/återställ rad"
 
-#: git-gui.sh:3137
+#: git-gui.sh:3151
 msgid "Run Merge Tool"
 msgstr "Starta verktyg för sammanslagning"
 
-#: git-gui.sh:3142
+#: git-gui.sh:3156
 msgid "Use Remote Version"
 msgstr "Använd versionen från fjärrarkivet"
 
-#: git-gui.sh:3146
+#: git-gui.sh:3160
 msgid "Use Local Version"
 msgstr "Använd lokala versionen"
 
-#: git-gui.sh:3150
+#: git-gui.sh:3164
 msgid "Revert To Base"
 msgstr "Återställ till basversionen"
 
-#: git-gui.sh:3169
+#: git-gui.sh:3183
 msgid "Unstage Hunk From Commit"
 msgstr "Ta bort del ur incheckningskö"
 
-#: git-gui.sh:3170
+#: git-gui.sh:3184
 msgid "Unstage Line From Commit"
 msgstr "Ta bort rad ur incheckningskö"
 
-#: git-gui.sh:3172
+#: git-gui.sh:3186
 msgid "Stage Hunk For Commit"
 msgstr "Ställ del i incheckningskö"
 
-#: git-gui.sh:3173
+#: git-gui.sh:3187
 msgid "Stage Line For Commit"
 msgstr "Ställ rad i incheckningskö"
 
-#: git-gui.sh:3196
+#: git-gui.sh:3210
 msgid "Initializing..."
 msgstr "Initierar..."
 
-#: git-gui.sh:3301
+#: git-gui.sh:3315
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -516,7 +520,7 @@ msgstr ""
 "av %s:\n"
 "\n"
 
-#: git-gui.sh:3331
+#: git-gui.sh:3345
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
@@ -526,7 +530,7 @@ msgstr ""
 "Detta beror på ett känt problem med\n"
 "Tcl-binären som följer med Cygwin."
 
-#: git-gui.sh:3336
+#: git-gui.sh:3350
 #, tcl-format
 msgid ""
 "\n"
@@ -612,43 +616,43 @@ msgstr "Kör grundlig kopieringsigenkänning..."
 msgid "Loading annotation..."
 msgstr "Läser in annotering..."
 
-#: lib/blame.tcl:964
+#: lib/blame.tcl:963
 msgid "Author:"
 msgstr "Författare:"
 
-#: lib/blame.tcl:968
+#: lib/blame.tcl:967
 msgid "Committer:"
 msgstr "Incheckare:"
 
-#: lib/blame.tcl:973
+#: lib/blame.tcl:972
 msgid "Original File:"
 msgstr "Ursprunglig fil:"
 
-#: lib/blame.tcl:1021
+#: lib/blame.tcl:1020
 msgid "Cannot find HEAD commit:"
 msgstr "Hittar inte incheckning för HEAD:"
 
-#: lib/blame.tcl:1076
+#: lib/blame.tcl:1075
 msgid "Cannot find parent commit:"
 msgstr "Hittar inte föräldraincheckning:"
 
-#: lib/blame.tcl:1091
+#: lib/blame.tcl:1090
 msgid "Unable to display parent"
 msgstr "Kan inte visa förälder"
 
-#: lib/blame.tcl:1092 lib/diff.tcl:297
+#: lib/blame.tcl:1091 lib/diff.tcl:297
 msgid "Error loading diff:"
 msgstr "Fel vid inläsning av differens:"
 
-#: lib/blame.tcl:1232
+#: lib/blame.tcl:1231
 msgid "Originally By:"
 msgstr "Ursprungligen av:"
 
-#: lib/blame.tcl:1238
+#: lib/blame.tcl:1237
 msgid "In File:"
 msgstr "I filen:"
 
-#: lib/blame.tcl:1243
+#: lib/blame.tcl:1242
 msgid "Copied Or Moved Here By:"
 msgstr "Kopierad eller flyttad hit av:"
 
@@ -665,7 +669,7 @@ msgstr "Checka ut"
 #: lib/checkout_op.tcl:544 lib/choose_font.tcl:43 lib/merge.tcl:172
 #: lib/option.tcl:125 lib/remote_add.tcl:32 lib/remote_branch_delete.tcl:42
 #: lib/tools_dlg.tcl:40 lib/tools_dlg.tcl:204 lib/tools_dlg.tcl:352
-#: lib/transport.tcl:97
+#: lib/transport.tcl:108
 msgid "Cancel"
 msgstr "Avbryt"
 
@@ -1314,19 +1318,19 @@ msgstr ""
 "utöka tidigare incheckningar om du inte först avbryter den pågående "
 "sammanslagningen.\n"
 
-#: lib/commit.tcl:49
+#: lib/commit.tcl:48
 msgid "Error loading commit data for amend:"
 msgstr "Fel vid inläsning av incheckningsdata för utökning:"
 
-#: lib/commit.tcl:76
+#: lib/commit.tcl:75
 msgid "Unable to obtain your identity:"
 msgstr "Kunde inte hämta din identitet:"
 
-#: lib/commit.tcl:81
+#: lib/commit.tcl:80
 msgid "Invalid GIT_COMMITTER_IDENT:"
 msgstr "Felaktig GIT_COMMITTER_IDENT:"
 
-#: lib/commit.tcl:133
+#: lib/commit.tcl:132
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
@@ -1342,7 +1346,7 @@ msgstr ""
 "\n"
 "Sökningen kommer att startas automatiskt nu.\n"
 
-#: lib/commit.tcl:156
+#: lib/commit.tcl:155
 #, tcl-format
 msgid ""
 "Unmerged files cannot be committed.\n"
@@ -1355,7 +1359,7 @@ msgstr ""
 "Filen %s har sammanslagningskonflikter. Du måste lösa dem och köa filen "
 "innan du checkar in den.\n"
 
-#: lib/commit.tcl:164
+#: lib/commit.tcl:163
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
@@ -1366,7 +1370,7 @@ msgstr ""
 "\n"
 "Filen %s kan inte checkas in av programmet.\n"
 
-#: lib/commit.tcl:172
+#: lib/commit.tcl:171
 msgid ""
 "No changes to commit.\n"
 "\n"
@@ -1376,7 +1380,7 @@ msgstr ""
 "\n"
 "Du måste köa åtminstone en fil innan du kan checka in.\n"
 
-#: lib/commit.tcl:187
+#: lib/commit.tcl:186
 msgid ""
 "Please supply a commit message.\n"
 "\n"
@@ -1394,45 +1398,45 @@ msgstr ""
 "- Andra raden: Tom\n"
 "- Följande rader: Beskriv varför det här är en bra ändring.\n"
 
-#: lib/commit.tcl:211
+#: lib/commit.tcl:210
 #, tcl-format
 msgid "warning: Tcl does not support encoding '%s'."
 msgstr "varning: Tcl stöder inte teckenkodningen \"%s\"."
 
-#: lib/commit.tcl:227
+#: lib/commit.tcl:226
 msgid "Calling pre-commit hook..."
 msgstr "Anropar kroken före incheckning (pre-commit)..."
 
-#: lib/commit.tcl:242
+#: lib/commit.tcl:241
 msgid "Commit declined by pre-commit hook."
 msgstr "Incheckningen avvisades av kroken före incheckning (pre-commit)."
 
-#: lib/commit.tcl:265
+#: lib/commit.tcl:264
 msgid "Calling commit-msg hook..."
 msgstr "Anropar kroken för incheckningsmeddelande (commit-msg)..."
 
-#: lib/commit.tcl:280
+#: lib/commit.tcl:279
 msgid "Commit declined by commit-msg hook."
 msgstr "Incheckning avvisad av kroken för incheckningsmeddelande (commit-msg)."
 
-#: lib/commit.tcl:293
+#: lib/commit.tcl:292
 msgid "Committing changes..."
 msgstr "Checkar in ändringar..."
 
-#: lib/commit.tcl:309
+#: lib/commit.tcl:308
 msgid "write-tree failed:"
 msgstr "write-tree misslyckades:"
 
-#: lib/commit.tcl:310 lib/commit.tcl:354 lib/commit.tcl:374
+#: lib/commit.tcl:309 lib/commit.tcl:353 lib/commit.tcl:373
 msgid "Commit failed."
 msgstr "Incheckningen misslyckades."
 
-#: lib/commit.tcl:327
+#: lib/commit.tcl:326
 #, tcl-format
 msgid "Commit %s appears to be corrupt"
 msgstr "Incheckningen %s verkar vara trasig"
 
-#: lib/commit.tcl:332
+#: lib/commit.tcl:331
 msgid ""
 "No changes to commit.\n"
 "\n"
@@ -1446,19 +1450,19 @@ msgstr ""
 "\n"
 "En sökning kommer att startas automatiskt nu.\n"
 
-#: lib/commit.tcl:339
+#: lib/commit.tcl:338
 msgid "No changes to commit."
 msgstr "Inga ändringar att checka in."
 
-#: lib/commit.tcl:353
+#: lib/commit.tcl:352
 msgid "commit-tree failed:"
 msgstr "commit-tree misslyckades:"
 
-#: lib/commit.tcl:373
+#: lib/commit.tcl:372
 msgid "update-ref failed:"
 msgstr "update-ref misslyckades:"
 
-#: lib/commit.tcl:461
+#: lib/commit.tcl:460
 #, tcl-format
 msgid "Created commit %s: %s"
 msgstr "Skapade incheckningen %s: %s"
@@ -1565,14 +1569,16 @@ msgstr "Läser differens för %s..."
 msgid ""
 "LOCAL: deleted\n"
 "REMOTE:\n"
-msgstr "LOKAL: borttagen\n"
+msgstr ""
+"LOKAL: borttagen\n"
 "FJÄRR:\n"
 
 #: lib/diff.tcl:125
 msgid ""
 "REMOTE: deleted\n"
 "LOCAL:\n"
-msgstr "FJÄRR: borttagen\n"
+msgstr ""
+"FJÄRR: borttagen\n"
 "LOKAL:\n"
 
 #: lib/diff.tcl:132
@@ -1605,7 +1611,8 @@ msgstr "* Binärfil (visar inte innehållet)."
 msgid ""
 "* Untracked file is %d bytes.\n"
 "* Showing only first %d bytes.\n"
-msgstr "* Den ospårade filen är %d byte.\n"
+msgstr ""
+"* Den ospårade filen är %d byte.\n"
 "* Visar endast inledande %d byte.\n"
 
 #: lib/diff.tcl:228
@@ -1935,7 +1942,8 @@ msgstr "Verktyget för sammanslagning körs redan. Vill du avsluta det?"
 msgid ""
 "Error retrieving versions:\n"
 "%s"
-msgstr "Fel vid hämtning av versioner:\n"
+msgstr ""
+"Fel vid hämtning av versioner:\n"
 "%s"
 
 #: lib/mergetool.tcl:343
@@ -1944,7 +1952,8 @@ msgid ""
 "Could not start the merge tool:\n"
 "\n"
 "%s"
-msgstr "Kunde inte starta verktyg för sammanslagning:\n"
+msgstr ""
+"Kunde inte starta verktyg för sammanslagning:\n"
 "\n"
 "%s"
 
@@ -2157,7 +2166,8 @@ msgstr "Hämtar %s"
 msgid "Do not know how to initialize repository at location '%s'."
 msgstr "Vet inte hur arkivet på platsen \"%s\" skall initieras."
 
-#: lib/remote_add.tcl:163 lib/transport.tcl:25 lib/transport.tcl:71
+#: lib/remote_add.tcl:163 lib/transport.tcl:25 lib/transport.tcl:63
+#: lib/transport.tcl:81
 #, tcl-format
 msgid "push %s"
 msgstr "sänd %s"
@@ -2175,11 +2185,11 @@ msgstr "Ta bort gren från fjärrarkiv"
 msgid "From Repository"
 msgstr "Från arkiv"
 
-#: lib/remote_branch_delete.tcl:50 lib/transport.tcl:123
+#: lib/remote_branch_delete.tcl:50 lib/transport.tcl:134
 msgid "Remote:"
 msgstr "Fjärrarkiv:"
 
-#: lib/remote_branch_delete.tcl:66 lib/transport.tcl:138
+#: lib/remote_branch_delete.tcl:66 lib/transport.tcl:149
 msgid "Arbitrary Location:"
 msgstr "Godtycklig plats:"
 
@@ -2343,7 +2353,8 @@ msgid ""
 "Could not start ssh-keygen:\n"
 "\n"
 "%s"
-msgstr "Kunde inte starta ssh-keygen:\n"
+msgstr ""
+"Kunde inte starta ssh-keygen:\n"
 "\n"
 "%s"
 
@@ -2388,7 +2399,7 @@ msgstr "Exekverar: %s"
 #: lib/tools.tcl:149
 #, tcl-format
 msgid "Tool completed succesfully: %s"
-msgstr "Verktyget avslutades framgångsrikt."
+msgstr "Verktyget avslutades framgångsrikt: %s"
 
 #: lib/tools.tcl:151
 #, tcl-format
@@ -2453,7 +2464,8 @@ msgstr "Verktyget \"%s\" finns redan."
 msgid ""
 "Could not add tool:\n"
 "%s"
-msgstr "Kunde inte lägga till verktyget:\n"
+msgstr ""
+"Kunde inte lägga till verktyget:\n"
 "%s"
 
 #: lib/tools_dlg.tcl:190
@@ -2505,36 +2517,41 @@ msgstr "Tar bort spårande grenar som tagits bort från %s"
 msgid "Pushing changes to %s"
 msgstr "Sänder ändringar till %s"
 
-#: lib/transport.tcl:72
+#: lib/transport.tcl:64
+#, tcl-format
+msgid "Mirroring to %s"
+msgstr "Speglar till %s"
+
+#: lib/transport.tcl:82
 #, tcl-format
 msgid "Pushing %s %s to %s"
 msgstr "Sänder %s %s till %s"
 
-#: lib/transport.tcl:89
+#: lib/transport.tcl:100
 msgid "Push Branches"
 msgstr "Sänd grenar"
 
-#: lib/transport.tcl:103
+#: lib/transport.tcl:114
 msgid "Source Branches"
 msgstr "Källgrenar"
 
-#: lib/transport.tcl:120
+#: lib/transport.tcl:131
 msgid "Destination Repository"
 msgstr "Destinationsarkiv"
 
-#: lib/transport.tcl:158
+#: lib/transport.tcl:169
 msgid "Transfer Options"
 msgstr "Överföringsalternativ"
 
-#: lib/transport.tcl:160
+#: lib/transport.tcl:171
 msgid "Force overwrite existing branch (may discard changes)"
 msgstr "Tvinga överskrivning av befintlig gren (kan kasta bort ändringar)"
 
-#: lib/transport.tcl:164
+#: lib/transport.tcl:175
 msgid "Use thin pack (for slow network connections)"
 msgstr "Använd tunt paket (för långsamma nätverksanslutningar)"
 
-#: lib/transport.tcl:168
+#: lib/transport.tcl:179
 msgid "Include tags"
 msgstr "Ta med taggar"
 
