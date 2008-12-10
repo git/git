@@ -46,7 +46,7 @@ test_expect_success 'rewrite diff can show binary patch' '
 
 {
 	echo "#!$SHELL_PATH"
-	cat >dump <<'EOF'
+	cat <<'EOF'
 perl -e '$/ = undef; $_ = <>; s/./ord($&)/ge; print $_' < "$1"
 EOF
 } >dump
