@@ -32,6 +32,7 @@ DOC_MAN7=$(patsubst %.txt,%.7,$(MAN7_TXT))
 prefix?=$(HOME)
 bindir?=$(prefix)/bin
 htmldir?=$(prefix)/share/doc/git-doc
+pdfdir?=$(prefix)/share/doc/git-doc
 mandir?=$(prefix)/share/man
 man1dir=$(mandir)/man1
 man5dir=$(mandir)/man5
@@ -50,6 +51,7 @@ infodir?=$(prefix)/share/info
 MAKEINFO=makeinfo
 INSTALL_INFO=install-info
 DOCBOOK2X_TEXI=docbook2x-texi
+DBLATEX=dblatex
 ifndef PERL_PATH
 	PERL_PATH = /usr/bin/perl
 endif
@@ -87,6 +89,8 @@ man7: $(DOC_MAN7)
 
 info: git.info gitman.info
 
+pdf: user-manual.pdf
+
 install: install-man
 
 install-man: man
@@ -106,6 +110,10 @@ install-info: info
 	else \
 	  echo "No directory found in $(DESTDIR)$(infodir)" >&2 ; \
 	fi
+
+install-pdf: pdf
+	$(INSTALL) -d -m 755 $(DESTDIR)$(pdfdir)
+	$(INSTALL) -m 644 user-manual.pdf $(DESTDIR)$(pdfdir)
 
 install-html: html
 	sh ./install-webdoc.sh $(DESTDIR)$(htmldir)
@@ -188,6 +196,11 @@ git.info: user-manual.texi
 user-manual.texi: user-manual.xml
 	$(RM) $@+ $@
 	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout | $(PERL_PATH) fix-texi.perl >$@+
+	mv $@+ $@
+
+user-manual.pdf: user-manual.xml
+	$(RM) $@+ $@
+	$(DBLATEX) -o $@+ -p /etc/asciidoc/dblatex/asciidoc-dblatex.xsl -s /etc/asciidoc/dblatex/asciidoc-dblatex.sty $<
 	mv $@+ $@
 
 gitman.texi: $(MAN_XML) cat-texi.perl

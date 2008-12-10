@@ -1306,6 +1306,9 @@ html:
 info:
 	$(MAKE) -C Documentation info
 
+pdf:
+	$(MAKE) -C Documentation pdf
+
 TAGS:
 	$(RM) TAGS
 	$(FIND) . -name '*.[hcS]' -print | xargs etags -a
@@ -1447,6 +1450,9 @@ install-html:
 
 install-info:
 	$(MAKE) -C Documentation install-info
+
+install-pdf:
+	$(MAKE) -C Documentation install-pdf
 
 quick-install-doc:
 	$(MAKE) -C Documentation quick-install

@@ -101,6 +101,9 @@ Issues of note:
    Building and installing the info file additionally requires
    makeinfo and docbook2X.  Version 0.8.3 is known to work.
 
+   Building and installing the pdf file additionally requires
+   dblatex.  Version 0.2.7 with asciidoc >= 8.2.7 is known to work.
+
    The documentation is written for AsciiDoc 7, but "make
    ASCIIDOC8=YesPlease doc" will let you format with AsciiDoc 8.
 
