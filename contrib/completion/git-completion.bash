@@ -1738,6 +1738,7 @@ _git ()
 	show)        _git_show ;;
 	show-branch) _git_show_branch ;;
 	stash)       _git_stash ;;
+	stage)       _git_add ;;
 	submodule)   _git_submodule ;;
 	svn)         _git_svn ;;
 	tag)         _git_tag ;;
