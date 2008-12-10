@@ -563,7 +563,7 @@ _git_add ()
 	--*)
 		__gitcomp "
 			--interactive --refresh --patch --update --dry-run
-			--ignore-errors
+			--ignore-errors --intent-to-add
 			"
 		return
 	esac
