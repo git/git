@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: sv\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-12-08 08:31-0800\n"
-"PO-Revision-Date: 2008-12-09 16:23+0100\n"
+"PO-Revision-Date: 2008-12-10 09:49+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "MIME-Version: 1.0\n"
@@ -88,13 +88,13 @@ msgstr "Söker efter ändrade filer..."
 #: git-gui.sh:1367
 msgid "Calling prepare-commit-msg hook..."
 msgstr ""
-"Anropar kroken för förberedning av incheckningsmeddelande (prepare-commit-"
+"Anropar kroken för förberedelse av incheckningsmeddelande (prepare-commit-"
 "msg)..."
 
 #: git-gui.sh:1384
 msgid "Commit declined by prepare-commit-msg hook."
 msgstr ""
-"Incheckningen avvisades av kroken för förberedning av incheckningsmeddelande "
+"Incheckningen avvisades av kroken för förberedelse av incheckningsmeddelande "
 "(prepare-commit-msg)."
 
 #: git-gui.sh:1542 lib/browser.tcl:246
