@@ -64,11 +64,11 @@ static int fsck_error_func(struct object *obj, int type, const char *err, ...)
 	return (type == FSCK_WARN) ? 0 : 1;
 }
 
+static struct object_array pending;
+
 static int mark_object(struct object *obj, int type, void *data)
 {
-	struct tree *tree = NULL;
 	struct object *parent = data;
-	int result;
 
 	if (!obj) {
 		printf("broken link from %7s %s\n",
@@ -96,6 +96,20 @@ static int mark_object(struct object *obj, int type, void *data)
 		return 1;
 	}
 
+	add_object_array(obj, (void *) parent, &pending);
+	return 0;
+}
+
+static void mark_object_reachable(struct object *obj)
+{
+	mark_object(obj, OBJ_ANY, 0);
+}
+
+static int traverse_one_object(struct object *obj, struct object *parent)
+{
+	int result;
+	struct tree *tree = NULL;
+
 	if (obj->type == OBJ_TREE) {
 		obj->parsed = 0;
 		tree = (struct tree *)obj;
@@ -107,15 +121,22 @@ static int mark_object(struct object *obj, int type, void *data)
 		free(tree->buffer);
 		tree->buffer = NULL;
 	}
-	if (result < 0)
-		result = 1;
-
 	return result;
 }
 
-static void mark_object_reachable(struct object *obj)
+static int traverse_reachable(void)
 {
-	mark_object(obj, OBJ_ANY, 0);
+	int result = 0;
+	while (pending.nr) {
+		struct object_array_entry *entry;
+		struct object *obj, *parent;
+
+		entry = pending.objects + --pending.nr;
+		obj = entry->item;
+		parent = (struct object *) entry->name;
+		result |= traverse_one_object(obj, parent);
+	}
+	return !!result;
 }
 
 static int mark_used(struct object *obj, int type, void *data)
@@ -232,6 +253,9 @@ static void check_object(struct object *obj)
 static void check_connectivity(void)
 {
 	int i, max;
+
+	/* Traverse the pending reachable objects */
+	traverse_reachable();
 
 	/* Look up all the requirements, warn about missing objects.. */
 	max = get_max_object_index();
