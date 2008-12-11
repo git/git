@@ -78,7 +78,7 @@ static int progress = 1;
 static int window = 10;
 static uint32_t pack_size_limit, pack_size_limit_cfg;
 static int depth = 50;
-static int delta_search_threads = 1;
+static int delta_search_threads;
 static int pack_to_stdout;
 static int num_preferred_base;
 static struct progress *progress_state;
@@ -1612,6 +1612,9 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 		find_deltas(list, &list_size, window, depth, processed);
 		return;
 	}
+	if (progress > pack_to_stdout)
+		fprintf(stderr, "Delta compression using %d threads.\n",
+				delta_search_threads);
 
 	/* Partition the work amongst work threads. */
 	for (i = 0; i < delta_search_threads; i++) {
