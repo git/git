@@ -4666,11 +4666,17 @@ HTML
 			              esc_html($short_rev));
 			print "</td>\n";
 		}
-		open (my $dd, "-|", git_cmd(), "rev-parse", "$full_rev^")
-			or die_error(500, "Open git-rev-parse failed");
-		my $parent_commit = <$dd>;
-		close $dd;
-		chomp($parent_commit);
+		my $parent_commit;
+		if (!exists $meta->{'parent'}) {
+			open (my $dd, "-|", git_cmd(), "rev-parse", "$full_rev^")
+				or die_error(500, "Open git-rev-parse failed");
+			$parent_commit = <$dd>;
+			close $dd;
+			chomp($parent_commit);
+			$meta->{'parent'} = $parent_commit;
+		} else {
+			$parent_commit = $meta->{'parent'};
+		}
 		my $blamed = href(action => 'blame',
 		                  file_name => $meta->{'filename'},
 		                  hash_base => $parent_commit);
