@@ -269,6 +269,11 @@ merge_file () {
     if test "$status" -ne 0; then
 	echo "merge of $MERGED failed" 1>&2
 	mv -- "$BACKUP" "$MERGED"
+
+	if test "$merge_keep_temporaries" = "false"; then
+	    cleanup_temp_files
+	fi
+
 	return 1
     fi
 
@@ -415,6 +420,7 @@ else
     init_merge_tool_path "$merge_tool"
 
     merge_keep_backup="$(git config --bool merge.keepBackup || echo true)"
+    merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo false)"
 
     if test -z "$merge_tool_cmd" && ! type "$merge_tool_path" > /dev/null 2>&1; then
         echo "The merge tool $merge_tool is not available as '$merge_tool_path'"
