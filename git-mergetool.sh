@@ -70,16 +70,16 @@ resolve_symlink_merge () {
 		git checkout-index -f --stage=2 -- "$MERGED"
 		git add -- "$MERGED"
 		cleanup_temp_files --save-backup
-		return
+		return 0
 		;;
 	    [rR]*)
 		git checkout-index -f --stage=3 -- "$MERGED"
 		git add -- "$MERGED"
 		cleanup_temp_files --save-backup
-		return
+		return 0
 		;;
 	    [aA]*)
-		exit 1
+		return 1
 		;;
 	    esac
 	done
@@ -97,15 +97,15 @@ resolve_deleted_merge () {
 	    [mMcC]*)
 		git add -- "$MERGED"
 		cleanup_temp_files --save-backup
-		return
+		return 0
 		;;
 	    [dD]*)
 		git rm -- "$MERGED" > /dev/null
 		cleanup_temp_files
-		return
+		return 0
 		;;
 	    [aA]*)
-		exit 1
+		return 1
 		;;
 	    esac
 	done
@@ -137,7 +137,7 @@ merge_file () {
 	else
 	    echo "$MERGED: file does not need merging"
 	fi
-	exit 1
+	return 1
     fi
 
     ext="$$$(expr "$MERGED" : '.*\(\.[^/]*\)$')"
@@ -269,7 +269,7 @@ merge_file () {
     if test "$status" -ne 0; then
 	echo "merge of $MERGED failed" 1>&2
 	mv -- "$BACKUP" "$MERGED"
-	exit 1
+	return 1
     fi
 
     if test "$merge_keep_backup" = "true"; then
@@ -280,6 +280,7 @@ merge_file () {
 
     git add -- "$MERGED"
     cleanup_temp_files
+    return 0
 }
 
 prompt=$(git config --bool mergetool.prompt || echo true)
@@ -350,6 +351,22 @@ init_merge_tool_path() {
 	fi
 }
 
+prompt_after_failed_merge() {
+    while true; do
+	printf "Continue merging other unresolved paths (y/n) ? "
+	read ans
+	case "$ans" in
+
+	    [yY]*)
+		return 0
+		;;
+
+	    [nN]*)
+		return 1
+		;;
+	esac
+    done
+}
 
 if test -z "$merge_tool"; then
     merge_tool=`git config merge.tool`
@@ -409,6 +426,8 @@ else
     fi
 fi
 
+last_status=0
+rollup_status=0
 
 if test $# -eq 0 ; then
     files=`git ls-files -u | sed -e 's/^[^	]*	//' | sort -u`
@@ -422,14 +441,29 @@ if test $# -eq 0 ; then
     sort -u |
     while IFS= read i
     do
+	if test $last_status -ne 0; then
+	    prompt_after_failed_merge < /dev/tty || exit 1
+	fi
 	printf "\n"
 	merge_file "$i" < /dev/tty > /dev/tty
+	last_status=$?
+	if test $last_status -ne 0; then
+	    rollup_status=1
+	fi
     done
 else
     while test $# -gt 0; do
+	if test $last_status -ne 0; then
+	    prompt_after_failed_merge || exit 1
+	fi
 	printf "\n"
 	merge_file "$1"
+	last_status=$?
+	if test $last_status -ne 0; then
+	    rollup_status=1
+	fi
 	shift
     done
 fi
-exit 0
+
+exit $rollup_status
