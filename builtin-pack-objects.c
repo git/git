@@ -1620,6 +1620,10 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 	for (i = 0; i < delta_search_threads; i++) {
 		unsigned sub_size = list_size / (delta_search_threads - i);
 
+		/* don't use too small segments or no deltas will be found */
+		if (sub_size < 2*window && i+1 < delta_search_threads)
+			sub_size = 0;
+
 		p[i].window = window;
 		p[i].depth = depth;
 		p[i].processed = processed;
