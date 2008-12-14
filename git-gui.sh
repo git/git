@@ -3329,7 +3329,6 @@ by %s:
 		{^GIT_PAGER$} -
 		{^GIT_TRACE$} -
 		{^GIT_CONFIG$} -
-		{^GIT_CONFIG_LOCAL$} -
 		{^GIT_(AUTHOR|COMMITTER)_DATE$} {
 			append msg " - $name\n"
 			incr ignored_env
