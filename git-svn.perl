@@ -5015,8 +5015,7 @@ sub minimize_connections {
 		}
 	}
 	if (@emptied) {
-		my $file = $ENV{GIT_CONFIG} || $ENV{GIT_CONFIG_LOCAL} ||
-		           "$ENV{GIT_DIR}/config";
+		my $file = $ENV{GIT_CONFIG} || "$ENV{GIT_DIR}/config";
 		print STDERR <<EOF;
 The following [svn-remote] sections in your config file ($file) are empty
 and can be safely removed:

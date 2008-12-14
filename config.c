@@ -636,10 +636,7 @@ int git_config(config_fn_t fn, void *data)
 	char *repo_config = NULL;
 	const char *home = NULL;
 
-	/* $GIT_CONFIG makes git read _only_ the given config file,
-	 * $GIT_CONFIG_LOCAL will make it process it in addition to the
-	 * global config file, the same way it would the per-repository
-	 * config file otherwise. */
+	/* Setting $GIT_CONFIG makes git read _only_ the given config file. */
 	if (config_exclusive_filename)
 		return git_config_from_file(fn, config_exclusive_filename, data);
 	if (git_config_system() && !access(git_etc_gitconfig(), R_OK))

@@ -99,7 +99,7 @@ test_expect_success \
 	! test -f victim/.git/refs/heads/extra
 '
 
-unset GIT_CONFIG GIT_CONFIG_LOCAL
+unset GIT_CONFIG
 HOME=`pwd`/no-such-directory
 export HOME ;# this way we force the victim/.git/config to be used.
 
