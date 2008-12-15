@@ -1206,84 +1206,87 @@ _git_config ()
 	esac
 	__gitcomp "
 		apply.whitespace
-		core.fileMode
-		core.gitProxy
-		core.ignoreStat
-		core.preferSymlinkRefs
-		core.logAllRefUpdates
-		core.loosecompression
-		core.repositoryFormatVersion
-		core.sharedRepository
-		core.warnAmbiguousRefs
-		core.compression
-		core.packedGitWindowSize
-		core.packedGitLimit
 		clean.requireForce
 		color.branch
 		color.branch.current
 		color.branch.local
-		color.branch.remote
 		color.branch.plain
+		color.branch.remote
 		color.diff
-		color.diff.plain
-		color.diff.meta
-		color.diff.frag
-		color.diff.old
-		color.diff.new
 		color.diff.commit
+		color.diff.frag
+		color.diff.meta
+		color.diff.new
+		color.diff.old
+		color.diff.plain
 		color.diff.whitespace
 		color.pager
 		color.status
-		color.status.header
 		color.status.added
 		color.status.changed
+		color.status.header
 		color.status.untracked
+		core.compression
+		core.fileMode
+		core.gitProxy
+		core.ignoreStat
+		core.logAllRefUpdates
+		core.loosecompression
+		core.packedGitLimit
+		core.packedGitWindowSize
+		core.preferSymlinkRefs
+		core.repositoryFormatVersion
+		core.sharedRepository
+		core.warnAmbiguousRefs
 		diff.renameLimit
 		diff.renames
 		fetch.unpackLimit
 		format.headers
 		format.subjectprefix
-		gitcvs.enabled
-		gitcvs.logfile
-		gitcvs.allbinary
-		gitcvs.dbname gitcvs.dbdriver gitcvs.dbuser gitcvs.dbpass
-		gitcvs.dbtablenameprefix
 		gc.packrefs
 		gc.reflogexpire
 		gc.reflogexpireunreachable
 		gc.rerereresolved
 		gc.rerereunresolved
-		http.sslVerify
-		http.sslCert
-		http.sslKey
-		http.sslCAInfo
-		http.sslCAPath
-		http.maxRequests
+		gitcvs.allbinary
+		gitcvs.dbdriver
+		gitcvs.dbname
+		gitcvs.dbpass
+		gitcvs.dbtablenameprefix
+		gitcvs.dbuser
+		gitcvs.enabled
+		gitcvs.logfile
 		http.lowSpeedLimit
 		http.lowSpeedTime
+		http.maxRequests
 		http.noEPSV
+		http.sslCAInfo
+		http.sslCAPath
+		http.sslCert
+		http.sslKey
+		http.sslVerify
 		i18n.commitEncoding
 		i18n.logOutputEncoding
 		log.showroot
-		merge.tool
 		merge.summary
+		merge.tool
 		merge.verbosity
-		pack.window
-		pack.depth
-		pack.windowMemory
 		pack.compression
-		pack.deltaCacheSize
 		pack.deltaCacheLimit
+		pack.deltaCacheSize
+		pack.depth
+		pack.window
+		pack.windowMemory
 		pull.octopus
 		pull.twohead
+		receive.denyNonFastForwards
+		receive.unpackLimit
 		repack.useDeltaBaseOffset
 		showbranch.default
 		tar.umask
 		transfer.unpackLimit
-		receive.unpackLimit
-		receive.denyNonFastForwards
-		user.name
 		user.email
+		user.name
 		user.signingkey
 		branch. remote.
 	"
