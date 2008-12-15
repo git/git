@@ -982,8 +982,10 @@ static void end_packfile(void)
 
 		pack_id++;
 	}
-	else
+	else {
+		close(old_p->pack_fd);
 		unlink(old_p->pack_name);
+	}
 	free(old_p);
 
 	/* We can't carry a delta across packfiles. */
