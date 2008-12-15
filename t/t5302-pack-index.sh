@@ -10,6 +10,7 @@ test_expect_success \
     'setup' \
     'rm -rf .git
      git init &&
+     git config pack.threads 1 &&
      i=1 &&
      while test $i -le 100
      do
