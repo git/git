@@ -1155,7 +1155,7 @@ _git_config ()
 		;;
 	color.*.*)
 		__gitcomp "
-			black red green yellow blue magenta cyan white
+			normal black red green yellow blue magenta cyan white
 			bold dim ul blink reverse
 			"
 		return
@@ -1179,7 +1179,7 @@ _git_config ()
 	branch.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		__gitcomp "remote merge" "$pfx" "$cur"
+		__gitcomp "remote merge mergeoptions" "$pfx" "$cur"
 		return
 		;;
 	branch.*)
@@ -1192,7 +1192,7 @@ _git_config ()
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
 		__gitcomp "
-			url fetch push skipDefaultUpdate
+			url proxy fetch push mirror skipDefaultUpdate
 			receivepack uploadpack tagopt
 			" "$pfx" "$cur"
 		return
@@ -1206,6 +1206,8 @@ _git_config ()
 	esac
 	__gitcomp "
 		apply.whitespace
+		branch.autosetupmerge
+		branch.autosetuprebase
 		clean.requireForce
 		color.branch
 		color.branch.current
@@ -1220,46 +1222,95 @@ _git_config ()
 		color.diff.old
 		color.diff.plain
 		color.diff.whitespace
+		color.interactive
+		color.interactive.header
+		color.interactive.help
+		color.interactive.prompt
 		color.pager
 		color.status
 		color.status.added
 		color.status.changed
 		color.status.header
+		color.status.nobranch
 		color.status.untracked
+		color.status.updated
+		color.ui
+		commit.template
+		core.autocrlf
+		core.bare
 		core.compression
+		core.deltaBaseCacheLimit
+		core.editor
+		core.excludesfile
 		core.fileMode
+		core.fsyncobjectfiles
 		core.gitProxy
+		core.ignoreCygwinFSTricks
 		core.ignoreStat
 		core.logAllRefUpdates
 		core.loosecompression
 		core.packedGitLimit
 		core.packedGitWindowSize
+		core.pager
 		core.preferSymlinkRefs
+		core.preloadindex
+		core.quotepath
 		core.repositoryFormatVersion
+		core.safecrlf
 		core.sharedRepository
+		core.symlinks
+		core.trustctime
 		core.warnAmbiguousRefs
+		core.whitespace
+		core.worktree
+		diff.autorefreshindex
+		diff.external
+		diff.mnemonicprefix
 		diff.renameLimit
+		diff.renameLimit.
 		diff.renames
 		fetch.unpackLimit
 		format.headers
-		format.subjectprefix
+		format.numbered
+		format.pretty
+		format.suffix
+		gc.aggressiveWindow
+		gc.auto
+		gc.autopacklimit
 		gc.packrefs
+		gc.pruneexpire
 		gc.reflogexpire
 		gc.reflogexpireunreachable
 		gc.rerereresolved
 		gc.rerereunresolved
 		gitcvs.allbinary
+		gitcvs.dbTableNamePrefix
 		gitcvs.dbdriver
 		gitcvs.dbname
 		gitcvs.dbpass
-		gitcvs.dbtablenameprefix
 		gitcvs.dbuser
 		gitcvs.enabled
 		gitcvs.logfile
+		gitcvs.usecrlfattr
+		gui.blamehistoryctx
+		gui.commitmsgwidth
+		gui.copyblamethreshold
+		gui.diffcontext
+		gui.encoding
+		gui.fastcopyblame
+		gui.matchtrackingbranch
+		gui.newbranchtemplate
+		gui.pruneduringfetch
+		gui.spellingdictionary
+		gui.trustmtime
+		help.autocorrect
+		help.browser
+		help.format
 		http.lowSpeedLimit
 		http.lowSpeedTime
 		http.maxRequests
 		http.noEPSV
+		http.proxy
 		http.sslCAInfo
 		http.sslCAPath
 		http.sslCert
@@ -1267,27 +1318,49 @@ _git_config ()
 		http.sslVerify
 		i18n.commitEncoding
 		i18n.logOutputEncoding
+		instaweb.browser
+		instaweb.httpd
+		instaweb.local
+		instaweb.modulepath
+		instaweb.port
+		log.date
 		log.showroot
-		merge.summary
+		man.viewer
+		merge.conflictstyle
+		merge.log
+		merge.renameLimit
+		merge.stat
 		merge.tool
 		merge.verbosity
+		mergetool.keepBackup
 		pack.compression
 		pack.deltaCacheLimit
 		pack.deltaCacheSize
 		pack.depth
+		pack.indexVersion
+		pack.packSizeLimit
+		pack.threads
 		pack.window
 		pack.windowMemory
 		pull.octopus
 		pull.twohead
+		receive.denyCurrentBranch
+		receive.denyDeletes
 		receive.denyNonFastForwards
+		receive.fsckObjects
 		receive.unpackLimit
-		repack.useDeltaBaseOffset
+		repack.usedeltabaseoffset
+		rerere.autoupdate
+		rerere.enabled
 		showbranch.default
+		status.relativePaths
+		status.showUntrackedFiles
 		tar.umask
 		transfer.unpackLimit
 		user.email
 		user.name
 		user.signingkey
+		web.browser
 		branch. remote.
 	"
 }
