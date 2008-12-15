@@ -75,7 +75,7 @@ test_expect_success 'rebase -p fakes interactive rebase' '
 	)
 '
 
-test_expect_failure '--continue works after a conflict' '
+test_expect_success '--continue works after a conflict' '
 	(
 	cd clone2 &&
 	git fetch &&

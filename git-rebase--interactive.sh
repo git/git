@@ -256,9 +256,8 @@ pick_one_preserving_merges () {
 				output git merge $STRATEGY -m "$msg" \
 					$new_parents
 			then
-				git rerere
 				printf "%s\n" "$msg" > "$GIT_DIR"/MERGE_MSG
-				die Error redoing merge $sha1
+				die_with_patch $sha1 "Error redoing merge $sha1"
 			fi
 			;;
 		*)
