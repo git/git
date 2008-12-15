@@ -53,7 +53,7 @@ test_expect_success 'will not overwrite staged changes' '
 	test_cmp important c2.c
 '
 
-test_expect_failure 'will not overwrite removed file' '
+test_expect_success 'will not overwrite removed file' '
 	git reset --hard c1 &&
 	git rm c1.c &&
 	git commit -m "rm c1.c" &&
