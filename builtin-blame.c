@@ -1996,7 +1996,6 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;
 		const char *read_from;
-		unsigned long fin_size;
 
 		if (contents_from) {
 			if (stat(contents_from, &st) < 0)
@@ -2008,7 +2007,6 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 				die("Cannot lstat %s", path);
 			read_from = path;
 		}
-		fin_size = xsize_t(st.st_size);
 		mode = canon_mode(st.st_mode);
 		switch (st.st_mode & S_IFMT) {
 		case S_IFREG:
@@ -2016,9 +2014,8 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 				die("cannot open or read %s", read_from);
 			break;
 		case S_IFLNK:
-			if (readlink(read_from, buf.buf, buf.alloc) != fin_size)
+			if (strbuf_readlink(&buf, read_from, st.st_size) < 0)
 				die("cannot readlink %s", read_from);
-			buf.len = fin_size;
 			break;
 		default:
 			die("unsupported file type %s", read_from);
