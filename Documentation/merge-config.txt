@@ -1,10 +1,10 @@
 merge.conflictstyle::
 	Specify the style in which conflicted hunks are written out to
 	working tree files upon merge.  The default is "merge", which
-	shows `<<<<<<<` conflict marker, change made by one side,
-	`=======` marker, change made by the other side, and then
-	`>>>>>>>` marker.  An alternate style, "diff3", adds `|||||||`
-	marker and the original text before `=======` marker.
+	shows a `<<<<<<<` conflict marker, changes made by one side,
+	a `=======` marker, changes made by the other side, and then
+	a `>>>>>>>` marker.  An alternate style, "diff3", adds a `|||||||`
+	marker and the original text before the `=======` marker.
 
 merge.log::
 	Whether to include summaries of merged commits in newly created
@@ -32,10 +32,10 @@ merge.verbosity::
 	message if conflicts were detected. Level 1 outputs only
 	conflicts, 2 outputs conflicts and file changes.  Level 5 and
 	above outputs debugging information.  The default is level 2.
-	Can be overridden by 'GIT_MERGE_VERBOSITY' environment variable.
+	Can be overridden by the 'GIT_MERGE_VERBOSITY' environment variable.
 
 merge.<driver>.name::
-	Defines a human readable name for a custom low-level
+	Defines a human-readable name for a custom low-level
 	merge driver.  See linkgit:gitattributes[5] for details.
 
 merge.<driver>.driver::

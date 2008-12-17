@@ -249,9 +249,16 @@ def p4Where(depotPath):
     outputList = p4CmdList("where %s" % depotPath)
     output = None
     for entry in outputList:
-        if entry["depotFile"] == depotPath:
-            output = entry
-            break
+        if "depotFile" in entry:
+            if entry["depotFile"] == depotPath:
+                output = entry
+                break
+        elif "data" in entry:
+            data = entry.get("data")
+            space = data.find(" ")
+            if data[:space] == depotPath:
+                output = entry
+                break
     if output == None:
         return ""
     if output["code"] == "error":

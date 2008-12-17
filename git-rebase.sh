@@ -332,11 +332,14 @@ else
 fi
 
 # The tree must be really really clean.
-git update-index --ignore-submodules --refresh || exit
+if ! git update-index --ignore-submodules --refresh; then
+	echo >&2 "cannot rebase: you have unstaged changes"
+	exit 1
+fi
 diff=$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)
 case "$diff" in
-?*)	echo "cannot rebase: your index is not up-to-date"
-	echo "$diff"
+?*)	echo >&2 "cannot rebase: your index contains uncommitted changes"
+	echo >&2 "$diff"
 	exit 1
 	;;
 esac

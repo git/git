@@ -673,4 +673,14 @@ test_expect_success \
 	 gitweb_run "p=.git;a=tree"'
 test_debug 'cat gitweb.log'
 
+# ----------------------------------------------------------------------
+# non-ASCII in README.html
+
+test_expect_success \
+	'README.html with non-ASCII characters (utf-8)' \
+	'echo "<b>UTF-8 example:</b><br />" > .git/README.html &&
+	 cat "$TEST_DIRECTORY"/t3900/1-UTF-8.txt >> .git/README.html &&
+	 gitweb_run "p=.git;a=summary"'
+test_debug 'cat gitweb.log'
+
 test_done

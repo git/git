@@ -932,11 +932,6 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 	return git_status_config(k, v, cb);
 }
 
-static const char commit_utf8_warn[] =
-"Warning: commit message does not conform to UTF-8.\n"
-"You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n";
-
 int cmd_commit(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf sb = STRBUF_INIT;

@@ -535,6 +535,7 @@ static void write_pack_file(void)
 
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
 				 base_name, sha1_to_hex(sha1));
+			free_pack_by_name(tmpname);
 			if (adjust_perm(pack_tmp_name, mode))
 				die("unable to make temporary pack file readable: %s",
 				    strerror(errno));

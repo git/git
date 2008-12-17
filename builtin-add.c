@@ -23,7 +23,7 @@ static void fill_pathspec_matches(const char **pathspec, char *seen, int specs)
 	int num_unmatched = 0, i;
 
 	/*
-	 * Since we are walking the index as if we are warlking the directory,
+	 * Since we are walking the index as if we were walking the directory,
 	 * we have to mark the matched pathspec as seen; otherwise we will
 	 * mistakenly think that the user gave a pathspec that did not match
 	 * anything.

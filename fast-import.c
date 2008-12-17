@@ -554,6 +554,10 @@ static void *pool_alloc(size_t len)
 	struct mem_pool *p;
 	void *r;
 
+	/* round up to a 'uintmax_t' alignment */
+	if (len & (sizeof(uintmax_t) - 1))
+		len += sizeof(uintmax_t) - (len & (sizeof(uintmax_t) - 1));
+
 	for (p = mem_pool; p; p = p->next_pool)
 		if ((p->end - p->next_free >= len))
 			break;
@@ -572,9 +576,6 @@ static void *pool_alloc(size_t len)
 	}
 
 	r = p->next_free;
-	/* round out to a 'uintmax_t' alignment */
-	if (len & (sizeof(uintmax_t) - 1))
-		len += sizeof(uintmax_t) - (len & (sizeof(uintmax_t) - 1));
 	p->next_free += len;
 	return r;
 }
@@ -982,8 +983,10 @@ static void end_packfile(void)
 
 		pack_id++;
 	}
-	else
+	else {
+		close(old_p->pack_fd);
 		unlink(old_p->pack_name);
+	}
 	free(old_p);
 
 	/* We can't carry a delta across packfiles. */

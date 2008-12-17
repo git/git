@@ -15,17 +15,17 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-'git-file-merge' incorporates all changes that lead from the `<base-file>`
+'git-merge-file' incorporates all changes that lead from the `<base-file>`
 to `<other-file>` into `<current-file>`. The result ordinarily goes into
 `<current-file>`. 'git-merge-file' is useful for combining separate changes
 to an original. Suppose `<base-file>` is the original, and both
-`<current-file>` and `<other-file>` are modifications of `<base-file>`.
-Then 'git-merge-file' combines both changes.
+`<current-file>` and `<other-file>` are modifications of `<base-file>`,
+then 'git-merge-file' combines both changes.
 
 A conflict occurs if both `<current-file>` and `<other-file>` have changes
 in a common segment of lines. If a conflict is found, 'git-merge-file'
-normally outputs a warning and brackets the conflict with <<<<<<< and
->>>>>>> lines. A typical conflict will look like this:
+normally outputs a warning and brackets the conflict with lines containing
+<<<<<<< and >>>>>>> markers. A typical conflict will look like this:
 
 	<<<<<<< A
 	lines in file A
@@ -60,7 +60,7 @@ OPTIONS
 	`<current-file>`.
 
 -q::
-	Quiet;  do  not  warn about conflicts.
+	Quiet; do not warn about conflicts.
 
 
 EXAMPLES

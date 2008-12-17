@@ -37,6 +37,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
+	DIFF_OPT_SET(&rev->diffopt, ALLOW_TEXTCONV);
 
 	if (default_date_mode)
 		rev->date_mode = parse_date_format(default_date_mode);
@@ -60,7 +61,6 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		} else
 			die("unrecognized argument: %s", arg);
 	}
-	DIFF_OPT_SET(&rev->diffopt, ALLOW_TEXTCONV);
 }
 
 /*
@@ -340,7 +340,13 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 					t->tag,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			ret = show_object(o->sha1, 1, &rev);
-			objects[i].item = parse_object(t->tagged->sha1);
+			if (ret)
+				break;
+			o = parse_object(t->tagged->sha1);
+			if (!o)
+				ret = error("Could not read object %s",
+					    sha1_to_hex(t->tagged->sha1));
+			objects[i].item = o;
 			i--;
 			break;
 		}
