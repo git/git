@@ -1773,19 +1773,17 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		s->size = xsize_t(st.st_size);
 		if (!s->size)
 			goto empty;
-		if (size_only)
-			return 0;
 		if (S_ISLNK(st.st_mode)) {
-			int ret;
-			s->data = xmalloc(s->size);
-			s->should_free = 1;
-			ret = readlink(s->path, s->data, s->size);
-			if (ret < 0) {
-				free(s->data);
+			struct strbuf sb = STRBUF_INIT;
+
+			if (strbuf_readlink(&sb, s->path, s->size))
 				goto err_empty;
-			}
+			s->data = strbuf_detach(&sb, &s->size);
+			s->should_free = 1;
 			return 0;
 		}
+		if (size_only)
+			return 0;
 		fd = open(s->path, O_RDONLY);
 		if (fd < 0)
 			goto err_empty;
