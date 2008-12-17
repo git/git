@@ -177,6 +177,8 @@ $ git reset                                       <3>
 <3> At this point the index file still has all the WIP changes you
     committed as 'snapshot WIP'.  This updates the index to show your
     WIP files as uncommitted.
++
+See also linkgit:git-stash[1].
 
 Reset a single file in the index::
 +
