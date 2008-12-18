@@ -27,9 +27,8 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	if {[catch {
 			set fd [git_read cat-file commit $curHEAD]
 			fconfigure $fd -encoding binary -translation lf
-			if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
-				set enc utf-8
-			}
+			# By default commits are assumed to be in utf-8
+			set enc utf-8
 			while {[gets $fd line] > 0} {
 				if {[string match {parent *} $line]} {
 					lappend parents [string range $line 7 end]
@@ -208,7 +207,7 @@ A good commit message has the following format:
 	if {$use_enc ne {}} {
 		fconfigure $msg_wt -encoding $use_enc
 	} else {
-		puts stderr [mc "warning: Tcl does not support encoding '%s'." $enc]
+		error_popup [mc "warning: Tcl does not support encoding '%s'." $enc]
 		fconfigure $msg_wt -encoding utf-8
 	}
 	puts $msg_wt $msg
