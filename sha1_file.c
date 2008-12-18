@@ -2523,8 +2523,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object)
 {
 	int fd;
-	char *target;
-	size_t len;
+	struct strbuf sb = STRBUF_INIT;
 
 	switch (st->st_mode & S_IFMT) {
 	case S_IFREG:
@@ -2537,20 +2536,17 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 				     path);
 		break;
 	case S_IFLNK:
-		len = xsize_t(st->st_size);
-		target = xmalloc(len + 1);
-		if (readlink(path, target, len + 1) != st->st_size) {
+		if (strbuf_readlink(&sb, path, st->st_size)) {
 			char *errstr = strerror(errno);
-			free(target);
 			return error("readlink(\"%s\"): %s", path,
 			             errstr);
 		}
 		if (!write_object)
-			hash_sha1_file(target, len, blob_type, sha1);
-		else if (write_sha1_file(target, len, blob_type, sha1))
+			hash_sha1_file(sb.buf, sb.len, blob_type, sha1);
+		else if (write_sha1_file(sb.buf, sb.len, blob_type, sha1))
 			return error("%s: failed to insert into database",
 				     path);
-		free(target);
+		strbuf_release(&sb);
 		break;
 	case S_IFDIR:
 		return resolve_gitlink_ref(path, "HEAD", sha1);
