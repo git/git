@@ -5411,7 +5411,8 @@ sub git_blobdiff_plain {
 }
 
 sub git_commitdiff {
-	my $format = shift || 'html';
+	my %params = @_;
+	my $format = $params{-format} || 'html';
 
 	my $patch_max;
 	if ($format eq 'patch') {
@@ -5619,12 +5620,12 @@ sub git_commitdiff {
 }
 
 sub git_commitdiff_plain {
-	git_commitdiff('plain');
+	git_commitdiff(-format => 'plain');
 }
 
 # format-patch-style patches
 sub git_patch {
-	git_commitdiff('patch');
+	git_commitdiff(-format => 'patch');
 }
 
 sub git_history {
