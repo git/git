@@ -10914,4 +10914,9 @@ if {[info exists permviews]} {
 	addviewmenu $n
     }
 }
+
+if {[tk windowingsystem] eq "win32"} {
+    focus -force .
+}
+
 getcommits {}
