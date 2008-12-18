@@ -1778,7 +1778,8 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 
 			if (strbuf_readlink(&sb, s->path, s->size))
 				goto err_empty;
-			s->data = strbuf_detach(&sb, &s->size);
+			s->size = sb.len;
+			s->data = strbuf_detach(&sb, NULL);
 			s->should_free = 1;
 			return 0;
 		}
