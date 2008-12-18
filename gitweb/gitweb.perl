@@ -529,6 +529,7 @@ our %actions = (
 	"history" => \&git_history,
 	"log" => \&git_log,
 	"patch" => \&git_patch,
+	"patches" => \&git_patches,
 	"rss" => \&git_rss,
 	"atom" => \&git_atom,
 	"search" => \&git_search,
@@ -5529,7 +5530,15 @@ sub git_commitdiff {
 			}
 			push @commit_spec, '-n', "$hash_parent..$hash";
 		} else {
-			push @commit_spec, '-1', '--root', $hash;
+			if ($params{-single}) {
+				push @commit_spec, '-1';
+			} else {
+				if ($patch_max > 0) {
+					push @commit_spec, "-$patch_max";
+				}
+				push @commit_spec, "-n";
+			}
+			push @commit_spec, '--root', $hash;
 		}
 		open $fd, "-|", git_cmd(), "format-patch", '--encoding=utf8',
 			'--stdout', @commit_spec
@@ -5625,6 +5634,10 @@ sub git_commitdiff_plain {
 
 # format-patch-style patches
 sub git_patch {
+	git_commitdiff(-format => 'patch', -single=> 1);
+}
+
+sub git_patches {
 	git_commitdiff(-format => 'patch');
 }
 
