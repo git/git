@@ -5023,6 +5023,15 @@ sub git_log {
 
 	my $paging_nav = format_paging_nav('log', $hash, $head, $page, $#commitlist >= 100);
 
+	my ($patch_max) = gitweb_get_feature('patches');
+	if ($patch_max) {
+		if ($patch_max < 0 || @commitlist <= $patch_max) {
+			$paging_nav .= " &sdot; " .
+				$cgi->a({-href => href(action=>"patches", -replay=>1)},
+					"patches");
+		}
+	}
+
 	git_header_html();
 	git_print_page_nav('log','', $hash,undef,undef, $paging_nav);
 
@@ -5101,6 +5110,11 @@ sub git_commit {
 				        esc_html(substr($_, 0, 7)));
 			} @$parents ) .
 			')';
+	}
+	if (gitweb_check_feature('patches')) {
+		$formats_nav .= " | " .
+			$cgi->a({-href => href(action=>"patch", -replay=>1)},
+				"patch");
 	}
 
 	if (!defined $parent) {
@@ -5415,9 +5429,8 @@ sub git_commitdiff {
 	my %params = @_;
 	my $format = $params{-format} || 'html';
 
-	my $patch_max;
+	my ($patch_max) = gitweb_get_feature('patches');
 	if ($format eq 'patch') {
-		($patch_max) = gitweb_get_feature('patches');
 		die_error(403, "Patch view not allowed") unless $patch_max;
 	}
 
@@ -5435,6 +5448,11 @@ sub git_commitdiff {
 		$formats_nav =
 			$cgi->a({-href => href(action=>"commitdiff_plain", -replay=>1)},
 			        "raw");
+		if ($patch_max) {
+			$formats_nav .= " | " .
+				$cgi->a({-href => href(action=>"patch", -replay=>1)},
+					"patch");
+		}
 
 		if (defined $hash_parent &&
 		    $hash_parent ne '-c' && $hash_parent ne '--cc') {
@@ -5990,6 +6008,14 @@ sub git_shortlog {
 		$next_link =
 			$cgi->a({-href => href(-replay=>1, page=>$page+1),
 			         -accesskey => "n", -title => "Alt-n"}, "next");
+	}
+	my $patch_max = gitweb_check_feature('patches');
+	if ($patch_max) {
+		if ($patch_max < 0 || @commitlist <= $patch_max) {
+			$paging_nav .= " &sdot; " .
+				$cgi->a({-href => href(action=>"patches", -replay=>1)},
+					"patches");
+		}
 	}
 
 	git_header_html();
