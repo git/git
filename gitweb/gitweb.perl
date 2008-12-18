@@ -329,6 +329,21 @@ our %feature = (
 	'ctags' => {
 		'override' => 0,
 		'default' => [0]},
+
+	# The maximum number of patches in a patchset generated in patch
+	# view. Set this to 0 or undef to disable patch view, or to a
+	# negative number to remove any limit.
+
+	# To disable system wide have in $GITWEB_CONFIG
+	# $feature{'patches'}{'default'} = [0];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'patches'}{'override'} = 1;
+	# and in project config gitweb.patches = 0|n;
+	# where n is the maximum number of patches allowed in a patchset.
+	'patches' => {
+		'sub' => \&feature_patches,
+		'override' => 0,
+		'default' => [16]},
 );
 
 sub gitweb_get_feature {
@@ -405,6 +420,16 @@ sub feature_pickaxe {
 		return (1);
 	} elsif ($val eq 'false') {
 		return (0);
+	}
+
+	return ($_[0]);
+}
+
+sub feature_patches {
+	my @val = (git_get_project_config('patches', '--int'));
+
+	if (@val) {
+		return @val;
 	}
 
 	return ($_[0]);
@@ -503,6 +528,7 @@ our %actions = (
 	"heads" => \&git_heads,
 	"history" => \&git_history,
 	"log" => \&git_log,
+	"patch" => \&git_patch,
 	"rss" => \&git_rss,
 	"atom" => \&git_atom,
 	"search" => \&git_search,
@@ -5386,6 +5412,13 @@ sub git_blobdiff_plain {
 
 sub git_commitdiff {
 	my $format = shift || 'html';
+
+	my $patch_max;
+	if ($format eq 'patch') {
+		($patch_max) = gitweb_get_feature('patches');
+		die_error(403, "Patch view not allowed") unless $patch_max;
+	}
+
 	$hash ||= $hash_base || "HEAD";
 	my %co = parse_commit($hash)
 	    or die_error(404, "Unknown commit object");
@@ -5483,7 +5516,23 @@ sub git_commitdiff {
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
 			'-p', $hash_parent_param, $hash, "--"
 			or die_error(500, "Open git-diff-tree failed");
-
+	} elsif ($format eq 'patch') {
+		# For commit ranges, we limit the output to the number of
+		# patches specified in the 'patches' feature.
+		# For single commits, we limit the output to a single patch,
+		# diverging from the git-format-patch default.
+		my @commit_spec = ();
+		if ($hash_parent) {
+			if ($patch_max > 0) {
+				push @commit_spec, "-$patch_max";
+			}
+			push @commit_spec, '-n', "$hash_parent..$hash";
+		} else {
+			push @commit_spec, '-1', '--root', $hash;
+		}
+		open $fd, "-|", git_cmd(), "format-patch", '--encoding=utf8',
+			'--stdout', @commit_spec
+			or die_error(500, "Open git-format-patch failed");
 	} else {
 		die_error(400, "Unknown commitdiff format");
 	}
@@ -5532,6 +5581,14 @@ sub git_commitdiff {
 			print to_utf8($line) . "\n";
 		}
 		print "---\n\n";
+	} elsif ($format eq 'patch') {
+		my $filename = basename($project) . "-$hash.patch";
+
+		print $cgi->header(
+			-type => 'text/plain',
+			-charset => 'utf-8',
+			-expires => $expires,
+			-content_disposition => 'inline; filename="' . "$filename" . '"');
 	}
 
 	# write patch
@@ -5553,11 +5610,21 @@ sub git_commitdiff {
 		print <$fd>;
 		close $fd
 			or print "Reading git-diff-tree failed\n";
+	} elsif ($format eq 'patch') {
+		local $/ = undef;
+		print <$fd>;
+		close $fd
+			or print "Reading git-format-patch failed\n";
 	}
 }
 
 sub git_commitdiff_plain {
 	git_commitdiff('plain');
+}
+
+# format-patch-style patches
+sub git_patch {
+	git_commitdiff('patch');
 }
 
 sub git_history {
