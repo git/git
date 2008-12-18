@@ -1601,13 +1601,14 @@ proc parsecommit {id contents listed} {
     set header [string range $contents 0 [expr {$hdrend - 1}]]
     set comment [string range $contents [expr {$hdrend + 2}] end]
     foreach line [split $header "\n"] {
+	set line [split $line " "]
 	set tag [lindex $line 0]
 	if {$tag == "author"} {
 	    set audate [lindex $line end-1]
-	    set auname [lrange $line 1 end-2]
+	    set auname [join [lrange $line 1 end-2] " "]
 	} elseif {$tag == "committer"} {
 	    set comdate [lindex $line end-1]
-	    set comname [lrange $line 1 end-2]
+	    set comname [join [lrange $line 1 end-2] " "]
 	}
     }
     set headline {}
