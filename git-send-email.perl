@@ -20,6 +20,7 @@ use strict;
 use warnings;
 use Term::ReadLine;
 use Getopt::Long;
+use Text::ParseWords;
 use Data::Dumper;
 use Term::ANSIColor;
 use Git;
@@ -363,6 +364,10 @@ foreach my $entry (@bcclist) {
 	die "Comma in --bcclist entry: $entry'\n" unless $entry !~ m/,/;
 }
 
+sub split_addrs {
+	return parse_line('\s*,\s*', 1, @_);
+}
+
 my %aliases;
 my %parse_alias = (
 	# multiline formats can be supported in the future
@@ -371,7 +376,7 @@ my %parse_alias = (
 			my ($alias, $addr) = ($1, $2);
 			$addr =~ s/#.*$//; # mutt allows # comments
 			 # commas delimit multiple addresses
-			$aliases{$alias} = [ split(/\s*,\s*/, $addr) ];
+			$aliases{$alias} = [ split_addrs($addr) ];
 		}}},
 	mailrc => sub { my $fh = shift; while (<$fh>) {
 		if (/^alias\s+(\S+)\s+(.*)$/) {
@@ -380,7 +385,7 @@ my %parse_alias = (
 		}}},
 	pine => sub { my $fh = shift; while (<$fh>) {
 		if (/^(\S+)\t.*\t(.*)$/) {
-			$aliases{$1} = [ split(/\s*,\s*/, $2) ];
+			$aliases{$1} = [ split_addrs($2) ];
 		}}},
 	gnus => sub { my $fh = shift; while (<$fh>) {
 		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
@@ -458,7 +463,7 @@ if (!@to) {
 	}
 
 	my $to = $_;
-	push @to, split /,\s*/, $to;
+	push @to, split_addrs($to);
 	$prompting++;
 }
 
