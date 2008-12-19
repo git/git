@@ -899,7 +899,7 @@ file, which had no differences in the `mybranch` branch), and say:
 ----------------
 	Auto-merging hello
 	CONFLICT (content): Merge conflict in hello
-	Automatic merge failed; fix up by hand
+	Automatic merge failed; fix conflicts and then commit the result.
 ----------------
 
 It tells you that it did an "Automatic merge", which
@@ -993,7 +993,7 @@ would be different)
 
 ----------------
 Updating from ae3a2da... to a80b4aa....
-Fast forward
+Fast forward (no commit created; -m option ignored)
  example |    1 +
  hello   |    1 +
  2 files changed, 2 insertions(+), 0 deletions(-)
@@ -1265,9 +1265,8 @@ file, using 3-way merge.  This is done by giving
 
 ------------
 $ git merge-index git-merge-one-file hello
-Auto-merging hello.
-merge: warning: conflicts during merge
-ERROR: Merge conflict in hello.
+Auto-merging hello
+ERROR: Merge conflict in hello
 fatal: merge program failed
 ------------
 
@@ -1447,7 +1446,7 @@ public repository you might want to repack & prune often, or
 never.
 
 If you run `git repack` again at this point, it will say
-"Nothing to pack". Once you continue your development and
+"Nothing new to pack.". Once you continue your development and
 accumulate the changes, running `git repack` again will create a
 new pack, that contains objects created since you packed your
 repository the last time. We recommend that you pack your project

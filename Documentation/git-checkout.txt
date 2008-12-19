@@ -232,7 +232,6 @@ the `-m` option, you would see something like this:
 ------------
 $ git checkout -m mytopic
 Auto-merging frotz
-merge: warning: conflicts during merge
 ERROR: Merge conflict in frotz
 fatal: merge program failed
 ------------

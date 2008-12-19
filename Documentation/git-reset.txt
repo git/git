@@ -130,7 +130,7 @@ Undo a merge or pull::
 $ git pull                         <1>
 Auto-merging nitfol
 CONFLICT (content): Merge conflict in nitfol
-Automatic merge failed/prevented; fix up by hand
+Automatic merge failed; fix conflicts and then commit the result.
 $ git reset --hard                 <2>
 $ git pull . topic/branch          <3>
 Updating from 41223... to 13134...
