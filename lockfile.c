@@ -140,6 +140,7 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 			signal(SIGHUP, remove_lock_file_on_signal);
 			signal(SIGTERM, remove_lock_file_on_signal);
 			signal(SIGQUIT, remove_lock_file_on_signal);
+			signal(SIGPIPE, remove_lock_file_on_signal);
 			atexit(remove_lock_file);
 		}
 		lk->owner = getpid();
