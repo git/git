@@ -63,7 +63,7 @@ and terminated by a newline) is printed before the difference.  When
 comparing commits, the ID of the first (or only) commit, followed by a
 newline, is printed.
 +
-The following flags further affects the behavior when comparing
+The following flags further affect the behavior when comparing
 commits (but not trees).
 
 -m::
