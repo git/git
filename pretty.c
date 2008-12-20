@@ -6,6 +6,7 @@
 #include "string-list.h"
 #include "mailmap.h"
 #include "log-tree.h"
+#include "notes.h"
 
 static char *user_format;
 
@@ -881,5 +882,9 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 	 */
 	if (fmt == CMIT_FMT_EMAIL && sb->len <= beginning_of_body)
 		strbuf_addch(sb, '\n');
+
+	if (fmt != CMIT_FMT_ONELINE)
+		get_commit_notes(commit, sb, encoding);
+
 	free(reencoded);
 }
