@@ -21,7 +21,7 @@ git repository.
 
 OPTIONS
 -------
-To control which revisions to shown, the command takes options applicable to
+To control which revisions to show, the command takes options applicable to
 the 'git-rev-list' command (see linkgit:git-rev-list[1]).
 This manual page describes only the most
 frequently used options.
@@ -80,7 +80,7 @@ Examples
 --------
 gitk v2.6.12.. include/scsi drivers/scsi::
 
-	Show as the changes since version 'v2.6.12' that changed any
+	Show the changes since version 'v2.6.12' that changed any
 	file in the include/scsi or drivers/scsi subdirectories
 
 gitk --since="2 weeks ago" \-- gitk::

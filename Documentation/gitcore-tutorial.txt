@@ -999,8 +999,8 @@ Fast forward (no commit created; -m option ignored)
  2 files changed, 2 insertions(+), 0 deletions(-)
 ----------------
 
-Because your branch did not contain anything more than what are
-already merged into the `master` branch, the merge operation did
+Because your branch did not contain anything more than what had
+already been merged into the `master` branch, the merge operation did
 not actually do a merge. Instead, it just updated the top of
 the tree of your branch to that of the `master` branch. This is
 often called 'fast forward' merge.
@@ -1352,7 +1352,7 @@ $ GIT_DIR=my-git.git git init
 ------------
 
 Make sure this directory is available for others you want your
-changes to be pulled by via the transport of your choice. Also
+changes to be pulled via the transport of your choice. Also
 you need to make sure that you have the 'git-receive-pack'
 program on the `$PATH`.
 
@@ -1511,7 +1511,7 @@ You can repack this private repository whenever you feel like.
 6. Push your changes to the public repository, and announce it
    to the public.
 
-7. Every once in a while, "git-repack" the public repository.
+7. Every once in a while, 'git-repack' the public repository.
    Go back to step 5. and continue working.
 
 

@@ -166,7 +166,7 @@ FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 	'git-commit' if any paths are given on the command line,
 	in which case this option can be omitted.
 	If this option is specified together with '--amend', then
-	no paths need be specified, which can be used to amend
+	no paths need to be specified, which can be used to amend
 	the last commit without committing changes that have
 	already been staged.
 

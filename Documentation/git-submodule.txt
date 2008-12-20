@@ -87,7 +87,7 @@ use by subsequent users cloning the superproject. If the URL is
 given relative to the superproject's repository, the presumption
 is the superproject and submodule repositories will be kept
 together in the same relative location, and only the
-superproject's URL need be provided: git-submodule will correctly
+superproject's URL needs to be provided: git-submodule will correctly
 locate the submodule using the relative URL in .gitmodules.
 
 status::

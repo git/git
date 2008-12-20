@@ -56,6 +56,12 @@ M 644 :2 file2
 M 644 :3 file3
 M 755 :4 file4
 
+tag series-A
+from :5
+data <<EOF
+An annotated tag without a tagger
+EOF
+
 INPUT_END
 test_expect_success \
     'A: create pack from stdin' \
@@ -100,6 +106,18 @@ printf "$file4_data" >expect
 test_expect_success \
 	'A: verify file4' \
 	'git cat-file blob master:file4 >actual && test_cmp expect actual'
+
+cat >expect <<EOF
+object $(git rev-parse refs/heads/master)
+type commit
+tag series-A
+
+An annotated tag without a tagger
+EOF
+test_expect_success 'A: verify tag/series-A' '
+	git cat-file tag tags/series-A >actual &&
+	test_cmp expect actual
+'
 
 cat >expect <<EOF
 :2 `git rev-parse --verify master:file2`

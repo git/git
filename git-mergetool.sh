@@ -296,6 +296,7 @@ do
 	    esac
 	    ;;
 	--)
+	    shift
 	    break
 	    ;;
 	-*)

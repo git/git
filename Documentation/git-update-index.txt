@@ -55,7 +55,7 @@ OPTIONS
         default behavior is to error out.  This option makes
 	'git-update-index' continue anyway.
 
---ignore-submodules:
+--ignore-submodules::
 	Do not try to update submodules.  This option is only respected
 	when passed before --refresh.
 
@@ -78,9 +78,9 @@ OPTIONS
 
 --assume-unchanged::
 --no-assume-unchanged::
-	When these flags are specified, the object name recorded
+	When these flags are specified, the object names recorded
 	for the paths are not updated.  Instead, these options
-	sets and unsets the "assume unchanged" bit for the
+	set and unset the "assume unchanged" bit for the
 	paths.  When the "assume unchanged" bit is on, git stops
 	checking the working tree files for possible
 	modifications, so you need to manually unset the bit to
@@ -122,7 +122,7 @@ you will need to handle the situation manually.
 	'git-update-index' refuses an attempt to add `path/file`.
 	Similarly if a file `path/file` exists, a file `path`
 	cannot be added.  With --replace flag, existing entries
-	that conflicts with the entry being added are
+	that conflict with the entry being added are
 	automatically removed with warning messages.
 
 --stdin::
