@@ -1,25 +1,57 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2008, #02; Sun, 14)
-bcc: William Pursell <bill.pursell@gmail.com>, Theodore Tso <tytso@mit.edu>
-X-master-at: 7e76aba317b690932c8236311219b0faf97f1571
-X-next-at: eb2f0c452e2cf87efa16cc9ace8587e198d60eb0
+cc: Johannes Sixt <j6t@kdbg.org>,
+    Johannes Schindelin <Johannes.Schindelin@gmx.de>,
+    "Simon Schubert" <corecode@fs.ei.tum.de>
+Subject: What's cooking in git.git (Dec 2008, #03; Sun, 21)
+X-master-at: b3eae84dc10e452add0e79c7373ceee16f73f7f0
+X-next-at: 43db18a982c1bdb5d2c1849c429ae3a456b8a51e
 
-What's cooking in git.git (Dec 2008, #02; Sun, 14)
+What's cooking in git.git (Dec 2008, #03; Sun, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
 with '-' are only in 'pu' while commits prefixed with '+' are
-in 'next'.
+in 'next'.  The ones marked with '.' do not appear in any of the branches,
+but I am still holding onto them.
 
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
-As we have already passed -rc2, things queued in 'next' let alone 'pu' are
+As we have already passed -rc3, things queued in 'next' let alone 'pu' are
 unlikely to be merged to 'master' by the end of year unless otherwise
 noted.
 
 ----------------------------------------------------------------
 [New Topics]
+
+* mk/gitweb-feature (Mon Dec 15 22:16:19 2008 -0800) 1 commit
+ - gitweb: unify boolean feature subroutines
+
+* cb/merge-recursive-fix (Mon Dec 15 02:41:24 2008 -0800) 3 commits
+ - Merge branch 'cb/maint-merge-recursive-fix' into cb/merge-
+   recursive-fix
+ - merge-recursive: do not clobber untracked working tree garbage
+ - modify/delete conflict resolution overwrites untracked file
+
+* cb/maint-merge-recursive-fix (Sun Dec 14 19:40:09 2008 -0800) 2 commits
+ - merge-recursive: do not clobber untracked working tree garbage
+ - modify/delete conflict resolution overwrites untracked file
+
+* js/notes (Sat Dec 20 13:06:03 2008 +0100) 4 commits
+ - Add an expensive test for git-notes
+ - Speed up git notes lookup
+ - Add a script to edit/inspect notes
+ - Introduce commit notes
+
+* js/rebase-i-p (Mon Dec 15 11:05:31 2008 +0100) 2 commits
+ - rebase -i -p: Fix --continue after a merge could not be redone
+ - Show a failure of rebase -p if the merge had a conflict
+
+I am undecided whether I should include these in 1.6.1 and have been
+waiting for comments from Dscho.
+
+----------------------------------------------------------------
+[Post 1.6.1 items]
 
 * wp/add-p-goto (Thu Dec 4 10:22:40 2008 +0000) 2 commits
  + Add 'g' command to go to a hunk
@@ -37,9 +69,10 @@ of this series and it looked promising.
  - Add support for a pdf version of the user manual
 
 I do not have a new enough combination of dblatex and asciidoc myself but
-this would help interested people.
+this may help interested people.
 
-* np/auto-thread (Sat Dec 13 15:06:40 2008 -0500) 2 commits
+* np/auto-thread (Mon Dec 15 20:44:30 2008 +0100) 3 commits
+ + Force t5302 to use a single thread
  + pack-objects: don't use too many threads with few objects
  + autodetect number of CPUs by default when using threads
 
@@ -48,21 +81,17 @@ this would help interested people.
  - gitweb: Split git_project_list_body in two functions
  - gitweb: Modularized git_get_project_description to be more generic
 
-----------------------------------------------------------------
-[Post 1.6.1 items]
-
-* gb/gitweb-patch (Sat Dec 6 16:02:35 2008 +0100) 3 commits
- - gitweb: link to patch(es) view from commit and log views
+* gb/gitweb-patch (Thu Dec 18 08:13:19 2008 +0100) 4 commits
+ - gitweb: link to patch(es) view in commit(diff) and (short)log view
  - gitweb: add patches view
+ - gitweb: change call pattern for git_commitdiff
  - gitweb: add patch view
 
-Updated series.  Reviews and Acks?
+Updated series.
 
 * lt/reset-merge (Wed Dec 3 18:00:12 2008 -0800) 2 commits
  + Document "git-reset --merge"
  + Add 'merge' mode to 'git reset'
-
-With updated documents.
 
 * wp/add-patch-find (Thu Nov 27 04:08:03 2008 +0000) 3 commits
  . In add --patch, Handle K,k,J,j slightly more gracefully.
@@ -85,23 +114,7 @@ other interested parties.
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* jc/rm-i-t-a (Fri Nov 28 19:56:34 2008 -0800) 5 commits
- + git add --intent-to-add: do not let an empty blob be committed by
-   accident
- + git add --intent-to-add: fix removal of cached emptiness
- + builtin-rm.c: explain and clarify the "local change" logic
- + Merge branch 'nd/narrow' (early part) into jc/add-i-t-a
- + Extend index to save more flags
-
-As intent-to-add index entry is a new feature for 1.6.1, it probably is a
-good idea to merge this to 'master'.  Nitpicks and bugfixes are very much
-appreciated.
-
-* jn/gitweb-utf8 (Mon Dec 1 19:01:42 2008 +0100) 1 commit
- + gitweb: Fix handling of non-ASCII characters in inserted HTML
-   files.
-
-A bugfix.
+Nothing cooking was "not so trivial but want to have in final".
 
 ----------------------------------------------------------------
 [Will merge to "master" soon]
@@ -110,6 +123,14 @@ What are you looking for?  We are in -rc ;-)
 
 ----------------------------------------------------------------
 [On Hold]
+
+* kb/am-directory (Fri Aug 29 15:27:50 2008 -0700) 1 commit
+ . git-am: Pass the --directory option through to git-apply
+
+A reroll of this by Simon Schubert triggered a series to fix a parameter
+propagation bug, and another reroll to add "git am --directory=path/"
+should be much easier now.  I am not likely to use the feature myself, so
+it is up to intrested volunteers to carry it forward.
 
 * jc/blame (Wed Jun 4 22:58:40 2008 -0700) 2 commits
  + blame: show "previous" information in --porcelain/--incremental
@@ -221,3 +242,22 @@ this back for now.
  - stripspace: use parse_options()
  - Add "git am -s" test
  - git-am: refactor code to add signed-off-by line for the committer
+
+* jc/post-simplify (Fri Aug 15 01:34:51 2008 -0700) 2 commits
+ . revision --simplify-merges: incremental simplification
+ . revision --simplify-merges: prepare for incremental simplification
+
+* jc/clone-symref (Sat Nov 29 23:38:21 2008 -0800) 6 commits
+ . clone: test the new HEAD detection logic
+ . Merge sender side of "symbolic-ref" protocol extension
+ . upload-pack: implement protocol extension "symbolic-ref"
+ . clone: find the current branch more explicitly
+ . get_remote_heads(): do not assume that the operation is one-way
+ . upload-pack.c: refactor receive_needs()
+
+* jk/valgrind (Thu Oct 23 04:30:45 2008 +0000) 2 commits
+ . valgrind: ignore ldso errors
+ . add valgrind support in test scripts
+
+* jc/apply (Sun Sep 7 14:36:24 2008 -0700) 1 commit
+ . WIP
