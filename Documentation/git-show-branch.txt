@@ -172,7 +172,7 @@ only the primary branches.  In addition, if you happen to be on
 your topic branch, it is shown as well.
 
 ------------
-$ git show-branch --reflog='10,1 hour ago' --list master
+$ git show-branch --reflog="10,1 hour ago" --list master
 ------------
 
 shows 10 reflog entries going back from the tip as of 1 hour ago.
