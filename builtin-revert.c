@@ -352,6 +352,11 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		add_to_msg(oneline_body + 1);
 		add_to_msg("\"\n\nThis reverts commit ");
 		add_to_msg(sha1_to_hex(commit->object.sha1));
+
+		if (commit->parents->next) {
+			add_to_msg(", reversing\nchanges made to ");
+			add_to_msg(sha1_to_hex(parent->object.sha1));
+		}
 		add_to_msg(".\n");
 	} else {
 		base = parent;
