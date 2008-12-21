@@ -361,7 +361,7 @@ foreach my $entry (@bcclist) {
 }
 
 sub split_addrs {
-	return parse_line('\s*,\s*', 1, @_);
+	return quotewords('\s*,\s*', 1, @_);
 }
 
 my %aliases;
