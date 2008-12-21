@@ -1,0 +1,263 @@
+To: git@vger.kernel.org
+cc: Johannes Sixt <j6t@kdbg.org>,
+    Johannes Schindelin <Johannes.Schindelin@gmx.de>,
+    "Simon Schubert" <corecode@fs.ei.tum.de>
+Subject: What's cooking in git.git (Dec 2008, #03; Sun, 21)
+X-master-at: b3eae84dc10e452add0e79c7373ceee16f73f7f0
+X-next-at: 43db18a982c1bdb5d2c1849c429ae3a456b8a51e
+
+What's cooking in git.git (Dec 2008, #03; Sun, 21)
+--------------------------------------------------
+
+Here are the topics that have been cooking.  Commits prefixed
+with '-' are only in 'pu' while commits prefixed with '+' are
+in 'next'.  The ones marked with '.' do not appear in any of the branches,
+but I am still holding onto them.
+
+The topics list the commits in reverse chronological order.  The topics
+meant to be merged to the maintenance series have "maint-" in their names.
+
+As we have already passed -rc3, things queued in 'next' let alone 'pu' are
+unlikely to be merged to 'master' by the end of year unless otherwise
+noted.
+
+----------------------------------------------------------------
+[New Topics]
+
+* mk/gitweb-feature (Mon Dec 15 22:16:19 2008 -0800) 1 commit
+ - gitweb: unify boolean feature subroutines
+
+* cb/merge-recursive-fix (Mon Dec 15 02:41:24 2008 -0800) 3 commits
+ - Merge branch 'cb/maint-merge-recursive-fix' into cb/merge-
+   recursive-fix
+ - merge-recursive: do not clobber untracked working tree garbage
+ - modify/delete conflict resolution overwrites untracked file
+
+* cb/maint-merge-recursive-fix (Sun Dec 14 19:40:09 2008 -0800) 2 commits
+ - merge-recursive: do not clobber untracked working tree garbage
+ - modify/delete conflict resolution overwrites untracked file
+
+* js/notes (Sat Dec 20 13:06:03 2008 +0100) 4 commits
+ - Add an expensive test for git-notes
+ - Speed up git notes lookup
+ - Add a script to edit/inspect notes
+ - Introduce commit notes
+
+* js/rebase-i-p (Mon Dec 15 11:05:31 2008 +0100) 2 commits
+ - rebase -i -p: Fix --continue after a merge could not be redone
+ - Show a failure of rebase -p if the merge had a conflict
+
+I am undecided whether I should include these in 1.6.1 and have been
+waiting for comments from Dscho.
+
+----------------------------------------------------------------
+[Post 1.6.1 items]
+
+* wp/add-p-goto (Thu Dec 4 10:22:40 2008 +0000) 2 commits
+ + Add 'g' command to go to a hunk
+ + Add subroutine to display one-line summary of hunks
+
+* jn/gitweb-blame (Thu Dec 11 01:33:29 2008 +0100) 3 commits
+ - gitweb: cache $parent_commit info in git_blame()
+ - gitweb: A bit of code cleanup in git_blame()
+ - gitweb: Move 'lineno' id from link to row element in git_blame
+
+I've briefly looked at the resurrection of Ajaxy blame that comes on top
+of this series and it looked promising.
+
+* mv/um-pdf (Wed Dec 10 23:44:50 2008 +0100) 1 commit
+ - Add support for a pdf version of the user manual
+
+I do not have a new enough combination of dblatex and asciidoc myself but
+this may help interested people.
+
+* np/auto-thread (Mon Dec 15 20:44:30 2008 +0100) 3 commits
+ + Force t5302 to use a single thread
+ + pack-objects: don't use too many threads with few objects
+ + autodetect number of CPUs by default when using threads
+
+* sc/gitweb-category (Fri Dec 12 00:45:12 2008 +0100) 3 commits
+ - gitweb: Optional grouping of projects by category
+ - gitweb: Split git_project_list_body in two functions
+ - gitweb: Modularized git_get_project_description to be more generic
+
+* gb/gitweb-patch (Thu Dec 18 08:13:19 2008 +0100) 4 commits
+ - gitweb: link to patch(es) view in commit(diff) and (short)log view
+ - gitweb: add patches view
+ - gitweb: change call pattern for git_commitdiff
+ - gitweb: add patch view
+
+Updated series.
+
+* lt/reset-merge (Wed Dec 3 18:00:12 2008 -0800) 2 commits
+ + Document "git-reset --merge"
+ + Add 'merge' mode to 'git reset'
+
+* wp/add-patch-find (Thu Nov 27 04:08:03 2008 +0000) 3 commits
+ . In add --patch, Handle K,k,J,j slightly more gracefully.
+ . Add / command in add --patch
+ . git-add -i/-p: Change prompt separater from slash to comma
+
+I am still holding onto this earlier topic to add '/' subcommand to allow
+finding a hunk with given text, but I'd rather not merge/rebase it on top
+of wp/add-p-goto series myself.  Waiting for a reroll.
+
+* cb/mergetool (Fri Dec 12 21:48:41 2008 +0000) 4 commits
+ - mergetool: Don't keep temporary merge files unless told to
+ - mergetool: Add prompt to continue after failing to merge a file
+ - Add -y/--no-prompt option to mergetool
+ - Fix some tab/space inconsistencies in git-mergetool.sh
+
+Updated series.  Waiting for comments from the original author (Ted) and
+other interested parties.
+
+----------------------------------------------------------------
+[Graduated to "master"]
+
+Nothing cooking was "not so trivial but want to have in final".
+
+----------------------------------------------------------------
+[Will merge to "master" soon]
+
+What are you looking for?  We are in -rc ;-)
+
+----------------------------------------------------------------
+[On Hold]
+
+* kb/am-directory (Fri Aug 29 15:27:50 2008 -0700) 1 commit
+ . git-am: Pass the --directory option through to git-apply
+
+A reroll of this by Simon Schubert triggered a series to fix a parameter
+propagation bug, and another reroll to add "git am --directory=path/"
+should be much easier now.  I am not likely to use the feature myself, so
+it is up to intrested volunteers to carry it forward.
+
+* jc/blame (Wed Jun 4 22:58:40 2008 -0700) 2 commits
+ + blame: show "previous" information in --porcelain/--incremental
+   format
+ + git-blame: refactor code to emit "porcelain format" output
+
+* ds/uintmax-config (Mon Nov 3 09:14:28 2008 -0900) 1 commit
+ - autoconf: Enable threaded delta search when pthreads are supported
+
+Rebased to 'master', that introduced NO_PTHREADS.
+
+* cc/bisect-replace (Mon Nov 24 22:20:30 2008 +0100) 9 commits
+ - bisect: add "--no-replace" option to bisect without using replace
+   refs
+ - rev-list: make it possible to disable replacing using "--no-
+   bisect-replace"
+ - bisect: use "--bisect-replace" options when checking merge bases
+ - merge-base: add "--bisect-replace" option to use fixed up revs
+ - commit: add "bisect_replace_all" prototype to "commit.h"
+ - rev-list: add "--bisect-replace" to list revisions with fixed up
+   history
+ - Documentation: add "git bisect replace" documentation
+ - bisect: add test cases for "git bisect replace"
+ - bisect: add "git bisect replace" subcommand
+
+I really hate the idea of introducing a potentially much more useful
+replacement of the existing graft mechanism and tie it very tightly to
+bisect, making it unusable from outside.
+
+ (1) I do not think "bisect replace" workflow is a practical and usable
+     one;
+
+ (2) The underlying mechanism to express "this object replaces that other
+     object" is much easier to work with than what the graft does which is
+     "the parents of this commit are these", and idea to use the normal
+     ref to point at them means this can potentially be used for
+     transferring the graft information across repositories, which the
+     current graft mechanism cannot do.
+
+ (3) Because I like the aspect (2) of this series so much, it deeply
+     disappoints and troubles me that this is implemented minimally near
+     the surface, and that it is controlled by the "bisect" Porcelain
+     alone, by explicitly passing command line arguments.
+
+I think a mechanism like this should be added to replace grafts, but it
+should always be enabled for normal revision traversal operation, while
+always disabled for object enumeration and transfer operation (iow, fsck,
+fetch and push should use the real ancestry information recorded in the
+underlying objects, while rev-list, log, etc. should always use the
+replaced objects).  I have a suspicion that even cat-file could honor it.
+
+* nd/narrow (Sun Nov 30 17:54:38 2008 +0700) 17 commits
+ - wt-status: show sparse checkout info
+ - Introduce default sparse patterns (core.defaultsparse)
+ - checkout: add new options to support sparse checkout
+ - clone: support sparse checkout with --sparse-checkout option
+ - unpack_trees(): add support for sparse checkout
+ - unpack_trees(): keep track of unmerged entries
+ - Introduce "sparse patterns"
+ - Merge branch 'master' into nd/narrow
+ + t2104: touch portability fix
+ + grep: skip files outside sparse checkout area
+ + checkout_entry(): CE_NO_CHECKOUT on checked out entries.
+ + Prevent diff machinery from examining worktree outside sparse
+   checkout
+ + ls-files: Add tests for --sparse and friends
+ + update-index: add --checkout/--no-checkout to update
+   CE_NO_CHECKOUT bit
+ + update-index: refactor mark_valid() in preparation for new options
+ + ls-files: add options to support sparse checkout
+ + Introduce CE_NO_CHECKOUT bit
+
+Kicked back to 'on hold' until 1.6.1 final by popular demand; will be
+dropped from 'next' (see recent discussion on the interaction between the
+checkout area and commands such as "grep").
+
+* jc/clone-symref-2 (Sat Nov 29 23:38:21 2008 -0800) 7 commits
+ - clone: test the new HEAD detection logic
+ - Merge commit 'HEAD@{2}' into HEAD
+ - upload-pack: send the HEAD information
+ - clone: find the current branch more explicitly
+ - connect.c::read_extra_info(): find where HEAD points at
+ - connect.c::read_extra_info(): prepare to receive more than server
+   capabilities
+ - get_remote_heads(): refactor code to read "server capabilities"
+
+This is no way meant for 1.6.1, let alone next, yet.
+
+* jc/send-pack-tell-me-more (Thu Mar 20 00:44:11 2008 -0700) 1 commit
+ - "git push": tellme-more protocol extension
+
+This seems to have a deadlock during communication between the peers.
+Someone needs to pick up this topic and resolve the deadlock before it can
+continue.
+
+* jk/renamelimit (Sat May 3 13:58:42 2008 -0700) 1 commit
+ - diff: enable "too large a rename" warning when -M/-C is explicitly
+   asked for
+
+This would be the right thing to do for command line use,
+but gitk will be hit due to tcl/tk's limitation, so I am holding
+this back for now.
+
+* jc/stripspace (Sun Mar 9 00:30:35 2008 -0800) 6 commits
+ - git-am --forge: add Signed-off-by: line for the author
+ - git-am: clean-up Signed-off-by: lines
+ - stripspace: add --log-clean option to clean up signed-off-by:
+   lines
+ - stripspace: use parse_options()
+ - Add "git am -s" test
+ - git-am: refactor code to add signed-off-by line for the committer
+
+* jc/post-simplify (Fri Aug 15 01:34:51 2008 -0700) 2 commits
+ . revision --simplify-merges: incremental simplification
+ . revision --simplify-merges: prepare for incremental simplification
+
+* jc/clone-symref (Sat Nov 29 23:38:21 2008 -0800) 6 commits
+ . clone: test the new HEAD detection logic
+ . Merge sender side of "symbolic-ref" protocol extension
+ . upload-pack: implement protocol extension "symbolic-ref"
+ . clone: find the current branch more explicitly
+ . get_remote_heads(): do not assume that the operation is one-way
+ . upload-pack.c: refactor receive_needs()
+
+* jk/valgrind (Thu Oct 23 04:30:45 2008 +0000) 2 commits
+ . valgrind: ignore ldso errors
+ . add valgrind support in test scripts
+
+* jc/apply (Sun Sep 7 14:36:24 2008 -0700) 1 commit
+ . WIP
