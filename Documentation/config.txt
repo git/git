@@ -601,10 +601,6 @@ diff.autorefreshindex::
 	affects only 'git-diff' Porcelain, and not lower level
 	'diff' commands, such as 'git-diff-files'.
 
-diff.suppress-blank-empty::
-	A boolean to inhibit the standard behavior of printing a space
-	before each empty output line. Defaults to false.
-
 diff.external::
 	If this config variable is set, diff generation is not
 	performed using the internal diff machinery, but using the
@@ -638,6 +634,10 @@ diff.renames::
 	Tells git to detect renames.  If set to any boolean value, it
 	will enable basic rename detection.  If set to "copies" or
 	"copy", it will detect copies, as well.
+
+diff.suppress-blank-empty::
+	A boolean to inhibit the standard behavior of printing a space
+	before each empty output line. Defaults to false.
 
 fetch.unpackLimit::
 	If the number of objects fetched over the git native
