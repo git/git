@@ -1748,9 +1748,12 @@ static int validate_raw_date(const char *src, char *result, int maxlen)
 {
 	const char *orig_src = src;
 	char *endp, sign;
+	unsigned long date;
 
-	strtoul(src, &endp, 10);
-	if (endp == src || *endp != ' ')
+	errno = 0;
+
+	date = strtoul(src, &endp, 10);
+	if (errno || endp == src || *endp != ' ')
 		return -1;
 
 	src = endp + 1;
@@ -1758,8 +1761,8 @@ static int validate_raw_date(const char *src, char *result, int maxlen)
 		return -1;
 	sign = *src;
 
-	strtoul(src + 1, &endp, 10);
-	if (endp == src || *endp || (endp - orig_src) >= maxlen)
+	date = strtoul(src + 1, &endp, 10);
+	if (errno || endp == src || *endp || (endp - orig_src) >= maxlen)
 		return -1;
 
 	strcpy(result, orig_src);
