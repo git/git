@@ -22,7 +22,7 @@ branch=$3
 # want to make sure that what is pointed to has a .git directory ...
 git_dir=$(cd "$orig_git" 2>/dev/null &&
   git rev-parse --git-dir 2>/dev/null) ||
-  die "\"$orig_git\" is not a git repository!"
+  die "Not a git repository: \"$orig_git\""
 
 case "$git_dir" in
 .git)
