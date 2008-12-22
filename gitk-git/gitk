@@ -1601,13 +1601,14 @@ proc parsecommit {id contents listed} {
     set header [string range $contents 0 [expr {$hdrend - 1}]]
     set comment [string range $contents [expr {$hdrend + 2}] end]
     foreach line [split $header "\n"] {
+	set line [split $line " "]
 	set tag [lindex $line 0]
 	if {$tag == "author"} {
 	    set audate [lindex $line end-1]
-	    set auname [lrange $line 1 end-2]
+	    set auname [join [lrange $line 1 end-2] " "]
 	} elseif {$tag == "committer"} {
 	    set comdate [lindex $line end-1]
-	    set comname [lrange $line 1 end-2]
+	    set comname [join [lrange $line 1 end-2] " "]
 	}
     }
     set headline {}
@@ -2279,7 +2280,7 @@ proc makewindow {} {
     bindkey b prevfile
     bindkey d "$ctext yview scroll 18 units"
     bindkey u "$ctext yview scroll -18 units"
-    bindkey / {dofind 1 1}
+    bindkey / {focus $fstring}
     bindkey <Key-Return> {dofind 1 1}
     bindkey ? {dofind -1 1}
     bindkey f nextfile
@@ -2660,7 +2661,7 @@ proc keys {} {
 [mc "<%s-F>		Find" $M1T]
 [mc "<%s-G>		Move to next find hit" $M1T]
 [mc "<Return>	Move to next find hit"]
-[mc "/		Move to next find hit, or redo find"]
+[mc "/		Focus the search box"]
 [mc "?		Move to previous find hit"]
 [mc "f		Scroll diff view to next file"]
 [mc "<%s-S>		Search for next hit in diff view" $M1T]
@@ -3318,8 +3319,27 @@ proc index_sha1 {fname} {
     return {}
 }
 
+# Turn an absolute path into one relative to the current directory
+proc make_relative {f} {
+    set elts [file split $f]
+    set here [file split [pwd]]
+    set ei 0
+    set hi 0
+    set res {}
+    foreach d $here {
+	if {$ei < $hi || $ei >= [llength $elts] || [lindex $elts $ei] ne $d} {
+	    lappend res ".."
+	} else {
+	    incr ei
+	}
+	incr hi
+    }
+    set elts [concat $res [lrange $elts $ei end]]
+    return [eval file join $elts]
+}
+
 proc external_blame {parent_idx {line {}}} {
-    global flist_menu_file
+    global flist_menu_file gitdir
     global nullid nullid2
     global parentlist selectedline currentid
 
@@ -3338,7 +3358,12 @@ proc external_blame {parent_idx {line {}}} {
     if {$line ne {} && $line > 1} {
 	lappend cmdline "--line=$line"
     }
-    lappend cmdline $base_commit $flist_menu_file
+    set f [file join [file dirname $gitdir] $flist_menu_file]
+    # Unfortunately it seems git gui blame doesn't like
+    # being given an absolute path...
+    set f [make_relative $f]
+    lappend cmdline $base_commit $f
+    puts "cmdline={$cmdline}"
     if {[catch {eval exec $cmdline &} err]} {
 	error_popup "[mc "git gui blame: command failed:"] $err"
     }
@@ -3382,6 +3407,8 @@ proc show_line_source {} {
 		    error_popup [mc "Error reading index: %s" $err]
 		    return
 		}
+	    } else {
+		set id $parents($curview,$currentid)
 	    }
 	} else {
 	    set id [lindex $parents($curview,$currentid) $pi]
@@ -3398,7 +3425,7 @@ proc show_line_source {} {
     } else {
 	lappend blameargs $id
     }
-    lappend blameargs -- $flist_menu_file
+    lappend blameargs -- [file join [file dirname $gitdir] $flist_menu_file]
     if {[catch {
 	set f [open $blameargs r]
     } err]} {
@@ -7953,7 +7980,7 @@ proc rowmenu {x y id} {
     if {$id ne $nullid && $id ne $nullid2} {
 	set menu $rowctxmenu
 	if {$mainhead ne {}} {
-	    $menu entryconfigure 7 -label [mc "Reset %s branch to here" $mainhead]
+	    $menu entryconfigure 7 -label [mc "Reset %s branch to here" $mainhead] -state normal
 	} else {
 	    $menu entryconfigure 7 -label [mc "Detached head: can't reset" $mainhead] -state disabled
 	}
@@ -10079,15 +10106,11 @@ proc doprefs {} {
 	-font optionfont
     spinbox $top.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
     grid x $top.maxpctl $top.maxpct -sticky w
-    frame $top.showlocal
-    label $top.showlocal.l -text [mc "Show local changes"] -font optionfont
-    checkbutton $top.showlocal.b -variable showlocalchanges
-    pack $top.showlocal.b $top.showlocal.l -side left
+    checkbutton $top.showlocal -text [mc "Show local changes"] \
+	-font optionfont -variable showlocalchanges
     grid x $top.showlocal -sticky w
-    frame $top.autoselect
-    label $top.autoselect.l -text [mc "Auto-select SHA1"] -font optionfont
-    checkbutton $top.autoselect.b -variable autoselect
-    pack $top.autoselect.b $top.autoselect.l -side left
+    checkbutton $top.autoselect -text [mc "Auto-select SHA1"] \
+	-font optionfont -variable autoselect
     grid x $top.autoselect -sticky w
 
     label $top.ddisp -text [mc "Diff display options"]
@@ -10095,20 +10118,14 @@ proc doprefs {} {
     label $top.tabstopl -text [mc "Tab spacing"] -font optionfont
     spinbox $top.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
     grid x $top.tabstopl $top.tabstop -sticky w
-    frame $top.ntag
-    label $top.ntag.l -text [mc "Display nearby tags"] -font optionfont
-    checkbutton $top.ntag.b -variable showneartags
-    pack $top.ntag.b $top.ntag.l -side left
+    checkbutton $top.ntag -text [mc "Display nearby tags"] \
+	-font optionfont -variable showneartags
     grid x $top.ntag -sticky w
-    frame $top.ldiff
-    label $top.ldiff.l -text [mc "Limit diffs to listed paths"] -font optionfont
-    checkbutton $top.ldiff.b -variable limitdiffs
-    pack $top.ldiff.b $top.ldiff.l -side left
+    checkbutton $top.ldiff -text [mc "Limit diffs to listed paths"] \
+	-font optionfont -variable limitdiffs
     grid x $top.ldiff -sticky w
-    frame $top.lattr
-    label $top.lattr.l -text [mc "Support per-file encodings"] -font optionfont
-    checkbutton $top.lattr.b -variable perfile_attrs
-    pack $top.lattr.b $top.lattr.l -side left
+    checkbutton $top.lattr -text [mc "Support per-file encodings"] \
+	-font optionfont -variable perfile_attrs
     grid x $top.lattr -sticky w
 
     entry $top.extdifft -textvariable extdifftool
@@ -10124,26 +10141,26 @@ proc doprefs {} {
     grid $top.cdisp - -sticky w -pady 10
     label $top.bg -padx 40 -relief sunk -background $bgcolor
     button $top.bgbut -text [mc "Background"] -font optionfont \
-	-command [list choosecolor bgcolor {} $top.bg background setbg]
+	-command [list choosecolor bgcolor {} $top.bg [mc "background"] setbg]
     grid x $top.bgbut $top.bg -sticky w
     label $top.fg -padx 40 -relief sunk -background $fgcolor
     button $top.fgbut -text [mc "Foreground"] -font optionfont \
-	-command [list choosecolor fgcolor {} $top.fg foreground setfg]
+	-command [list choosecolor fgcolor {} $top.fg [mc "foreground"] setfg]
     grid x $top.fgbut $top.fg -sticky w
     label $top.diffold -padx 40 -relief sunk -background [lindex $diffcolors 0]
     button $top.diffoldbut -text [mc "Diff: old lines"] -font optionfont \
-	-command [list choosecolor diffcolors 0 $top.diffold "diff old lines" \
+	-command [list choosecolor diffcolors 0 $top.diffold [mc "diff old lines"] \
 		      [list $ctext tag conf d0 -foreground]]
     grid x $top.diffoldbut $top.diffold -sticky w
     label $top.diffnew -padx 40 -relief sunk -background [lindex $diffcolors 1]
     button $top.diffnewbut -text [mc "Diff: new lines"] -font optionfont \
-	-command [list choosecolor diffcolors 1 $top.diffnew "diff new lines" \
+	-command [list choosecolor diffcolors 1 $top.diffnew [mc "diff new lines"] \
 		      [list $ctext tag conf dresult -foreground]]
     grid x $top.diffnewbut $top.diffnew -sticky w
     label $top.hunksep -padx 40 -relief sunk -background [lindex $diffcolors 2]
     button $top.hunksepbut -text [mc "Diff: hunk header"] -font optionfont \
 	-command [list choosecolor diffcolors 2 $top.hunksep \
-		      "diff hunk header" \
+		      [mc "diff hunk header"] \
 		      [list $ctext tag conf hunksep -foreground]]
     grid x $top.hunksepbut $top.hunksep -sticky w
     label $top.markbgsep -padx 40 -relief sunk -background $markbgcolor
@@ -10154,7 +10171,7 @@ proc doprefs {} {
     grid x $top.markbgbut $top.markbgsep -sticky w
     label $top.selbgsep -padx 40 -relief sunk -background $selectbgcolor
     button $top.selbgbut -text [mc "Select bg"] -font optionfont \
-	-command [list choosecolor selectbgcolor {} $top.selbgsep background setselbg]
+	-command [list choosecolor selectbgcolor {} $top.selbgsep [mc "background"] setselbg]
     grid x $top.selbgbut $top.selbgsep -sticky w
 
     label $top.cfont -text [mc "Fonts: press to choose"]
@@ -10897,4 +10914,9 @@ if {[info exists permviews]} {
 	addviewmenu $n
     }
 }
+
+if {[tk windowingsystem] eq "win32"} {
+    focus -force .
+}
+
 getcommits {}
