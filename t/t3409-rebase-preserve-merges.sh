@@ -83,6 +83,7 @@ test_expect_success '--continue works after a conflict' '
 	test 2 = $(git ls-files B | wc -l) &&
 	echo Resolved again > B &&
 	test_must_fail git rebase --continue &&
+	grep "^@@@ " .git/rebase-merge/patch &&
 	git add B &&
 	git rebase --continue &&
 	test 1 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&

@@ -115,9 +115,18 @@ mark_action_done () {
 }
 
 make_patch () {
-	parent_sha1=$(git rev-parse --verify "$1"^) ||
-		die "Cannot get patch for $1^"
-	git diff-tree -p "$parent_sha1".."$1" > "$DOTEST"/patch
+	sha1_and_parents="$(git rev-list --parents -1 "$1")"
+	case "$sha1_and_parents" in
+	?*' '?*' '?*)
+		git diff --cc $sha1_and_parents
+		;;
+	?*' '?*)
+		git diff-tree -p "$1^!"
+		;;
+	*)
+		echo "Root commit"
+		;;
+	esac > "$DOTEST"/patch
 	test -f "$DOTEST"/message ||
 		git cat-file commit "$1" | sed "1,/^$/d" > "$DOTEST"/message
 	test -f "$DOTEST"/author-script ||
