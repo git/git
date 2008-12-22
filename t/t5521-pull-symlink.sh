@@ -4,6 +4,11 @@ test_description='pulling from symlinked subdir'
 
 . ./test-lib.sh
 
+if test "$no_symlinks"; then
+	say "symbolic links not supported - skipping tests"
+	test_done
+fi
+
 # The scenario we are building:
 #
 #   trash\ directory/

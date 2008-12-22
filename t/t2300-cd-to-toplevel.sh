@@ -24,6 +24,10 @@ test_cd_to_toplevel repo 'at physical root'
 
 test_cd_to_toplevel repo/sub/dir 'at physical subdir'
 
+if test "$no_symlinks"; then
+	say "symbolic links not supported - skipping tests"
+else
+
 ln -s repo symrepo
 test_cd_to_toplevel symrepo 'at symbolic root'
 
@@ -33,5 +37,7 @@ test_cd_to_toplevel subdir-link 'at symbolic subdir'
 cd repo
 ln -s sub/dir internal-link
 test_cd_to_toplevel internal-link 'at internal symbolic subdir'
+
+fi	# $no_symlinks
 
 test_done
