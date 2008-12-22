@@ -183,7 +183,8 @@ to point at the new commit.
 	and potentially aborted, and allow for a post-notification after the
 	operation is done. The hook scripts are found in the
 	`$GIT_DIR/hooks/` directory, and are enabled by simply
-	making them executable.
+	removing the `.sample` suffix from the filename. In earlier versions
+	of git you had to make them executable.
 
 [[def_index]]index::
 	A collection of files with stat information, whose contents are stored

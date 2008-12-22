@@ -27,7 +27,7 @@ the first namespace level.
 
 When <paths> are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
-the index file, or from a named commit.  In
+the index file, or from a named <tree-ish> (most often a commit).  In
 this case, the `-b` options is meaningless and giving
 either of them results in an error.  <tree-ish> argument can be
 used to specify a specific tree-ish (i.e. commit, tag or tree)
@@ -232,7 +232,6 @@ the `-m` option, you would see something like this:
 ------------
 $ git checkout -m mytopic
 Auto-merging frotz
-merge: warning: conflicts during merge
 ERROR: Merge conflict in frotz
 fatal: merge program failed
 ------------

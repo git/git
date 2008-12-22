@@ -43,7 +43,7 @@ include::diff-options.txt[]
 	show tree entry itself as well as subtrees.  Implies -r.
 
 --root::
-	When '--root' is specified the initial commit will be showed as a big
+	When '--root' is specified the initial commit will be shown as a big
 	creation event. This is equivalent to a diff against the NULL tree.
 
 --stdin::
@@ -63,7 +63,7 @@ and terminated by a newline) is printed before the difference.  When
 comparing commits, the ID of the first (or only) commit, followed by a
 newline, is printed.
 +
-The following flags further affects the behavior when comparing
+The following flags further affect the behavior when comparing
 commits (but not trees).
 
 -m::

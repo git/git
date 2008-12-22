@@ -899,7 +899,7 @@ file, which had no differences in the `mybranch` branch), and say:
 ----------------
 	Auto-merging hello
 	CONFLICT (content): Merge conflict in hello
-	Automatic merge failed; fix up by hand
+	Automatic merge failed; fix conflicts and then commit the result.
 ----------------
 
 It tells you that it did an "Automatic merge", which
@@ -993,14 +993,14 @@ would be different)
 
 ----------------
 Updating from ae3a2da... to a80b4aa....
-Fast forward
+Fast forward (no commit created; -m option ignored)
  example |    1 +
  hello   |    1 +
  2 files changed, 2 insertions(+), 0 deletions(-)
 ----------------
 
-Because your branch did not contain anything more than what are
-already merged into the `master` branch, the merge operation did
+Because your branch did not contain anything more than what had
+already been merged into the `master` branch, the merge operation did
 not actually do a merge. Instead, it just updated the top of
 the tree of your branch to that of the `master` branch. This is
 often called 'fast forward' merge.
@@ -1265,9 +1265,8 @@ file, using 3-way merge.  This is done by giving
 
 ------------
 $ git merge-index git-merge-one-file hello
-Auto-merging hello.
-merge: warning: conflicts during merge
-ERROR: Merge conflict in hello.
+Auto-merging hello
+ERROR: Merge conflict in hello
 fatal: merge program failed
 ------------
 
@@ -1353,7 +1352,7 @@ $ GIT_DIR=my-git.git git init
 ------------
 
 Make sure this directory is available for others you want your
-changes to be pulled by via the transport of your choice. Also
+changes to be pulled via the transport of your choice. Also
 you need to make sure that you have the 'git-receive-pack'
 program on the `$PATH`.
 
@@ -1447,7 +1446,7 @@ public repository you might want to repack & prune often, or
 never.
 
 If you run `git repack` again at this point, it will say
-"Nothing to pack". Once you continue your development and
+"Nothing new to pack.". Once you continue your development and
 accumulate the changes, running `git repack` again will create a
 new pack, that contains objects created since you packed your
 repository the last time. We recommend that you pack your project
@@ -1512,7 +1511,7 @@ You can repack this private repository whenever you feel like.
 6. Push your changes to the public repository, and announce it
    to the public.
 
-7. Every once in a while, "git-repack" the public repository.
+7. Every once in a while, 'git-repack' the public repository.
    Go back to step 5. and continue working.
 
 

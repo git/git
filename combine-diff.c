@@ -703,15 +703,15 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			goto deleted_file;
 
 		if (S_ISLNK(st.st_mode)) {
-			size_t len = xsize_t(st.st_size);
-			result_size = len;
-			result = xmalloc(len + 1);
-			if (result_size != readlink(elem->path, result, len)) {
+			struct strbuf buf = STRBUF_INIT;
+
+			if (strbuf_readlink(&buf, elem->path, st.st_size) < 0) {
 				error("readlink(%s): %s", elem->path,
 				      strerror(errno));
 				return;
 			}
-			result[len] = 0;
+			result_size = buf.len;
+			result = strbuf_detach(&buf, NULL);
 			elem->mode = canon_mode(st.st_mode);
 		}
 		else if (0 <= (fd = open(elem->path, O_RDONLY)) &&

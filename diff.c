@@ -1773,19 +1773,18 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		s->size = xsize_t(st.st_size);
 		if (!s->size)
 			goto empty;
-		if (size_only)
-			return 0;
 		if (S_ISLNK(st.st_mode)) {
-			int ret;
-			s->data = xmalloc(s->size);
-			s->should_free = 1;
-			ret = readlink(s->path, s->data, s->size);
-			if (ret < 0) {
-				free(s->data);
+			struct strbuf sb = STRBUF_INIT;
+
+			if (strbuf_readlink(&sb, s->path, s->size))
 				goto err_empty;
-			}
+			s->size = sb.len;
+			s->data = strbuf_detach(&sb, NULL);
+			s->should_free = 1;
 			return 0;
 		}
+		if (size_only)
+			return 0;
 		fd = open(s->path, O_RDONLY);
 		if (fd < 0)
 			goto err_empty;
@@ -1883,13 +1882,12 @@ static void prepare_temp_file(const char *name,
 		if (S_ISLNK(st.st_mode)) {
 			int ret;
 			char buf[PATH_MAX + 1]; /* ought to be SYMLINK_MAX */
-			size_t sz = xsize_t(st.st_size);
-			if (sizeof(buf) <= st.st_size)
-				die("symlink too long: %s", name);
-			ret = readlink(name, buf, sz);
+			ret = readlink(name, buf, sizeof(buf));
 			if (ret < 0)
 				die("readlink(%s)", name);
-			prep_temp_blob(temp, buf, sz,
+			if (ret == sizeof(buf))
+				die("symlink too long: %s", name);
+			prep_temp_blob(temp, buf, ret,
 				       (one->sha1_valid ?
 					one->sha1 : null_sha1),
 				       (one->sha1_valid ?

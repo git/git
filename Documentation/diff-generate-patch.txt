@@ -143,15 +143,15 @@ different from it.
 
 A `-` character in the column N means that the line appears in
 fileN but it does not appear in the result.  A `+` character
-in the column N means that the line appears in the last file,
+in the column N means that the line appears in the result,
 and fileN does not have that line (in other words, the line was
 added, from the point of view of that parent).
 
 In the above example output, the function signature was changed
 from both files (hence two `-` removals from both file1 and
 file2, plus `++` to mean one line that was added does not appear
-in either file1 nor file2).  Also two other lines are the same
-from file1 but do not appear in file2 (hence prefixed with ` +`).
+in either file1 nor file2).  Also eight other lines are the same
+from file1 but do not appear in file2 (hence prefixed with `{plus}`).
 
 When shown by `git diff-tree -c`, it compares the parents of a
 merge commit with the merge result (i.e. file1..fileN are the

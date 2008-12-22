@@ -43,7 +43,7 @@ Format of STDIN stream:
 
   new_tag ::= 'tag' sp tag_str lf
     'from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf
-    'tagger' sp name '<' email '>' when lf
+    ('tagger' sp name '<' email '>' when lf)?
     tag_msg;
   tag_msg ::= data;
 
@@ -1748,9 +1748,12 @@ static int validate_raw_date(const char *src, char *result, int maxlen)
 {
 	const char *orig_src = src;
 	char *endp, sign;
+	unsigned long date;
 
-	strtoul(src, &endp, 10);
-	if (endp == src || *endp != ' ')
+	errno = 0;
+
+	date = strtoul(src, &endp, 10);
+	if (errno || endp == src || *endp != ' ')
 		return -1;
 
 	src = endp + 1;
@@ -1758,8 +1761,8 @@ static int validate_raw_date(const char *src, char *result, int maxlen)
 		return -1;
 	sign = *src;
 
-	strtoul(src + 1, &endp, 10);
-	if (endp == src || *endp || (endp - orig_src) >= maxlen)
+	date = strtoul(src + 1, &endp, 10);
+	if (errno || endp == src || *endp || (endp - orig_src) >= maxlen)
 		return -1;
 
 	strcpy(result, orig_src);
@@ -2265,23 +2268,27 @@ static void parse_new_tag(void)
 	read_next_command();
 
 	/* tagger ... */
-	if (prefixcmp(command_buf.buf, "tagger "))
-		die("Expected tagger command, got %s", command_buf.buf);
-	tagger = parse_ident(command_buf.buf + 7);
+	if (!prefixcmp(command_buf.buf, "tagger ")) {
+		tagger = parse_ident(command_buf.buf + 7);
+		read_next_command();
+	} else
+		tagger = NULL;
 
 	/* tag payload/message */
-	read_next_command();
 	parse_data(&msg);
 
 	/* build the tag object */
 	strbuf_reset(&new_data);
+
 	strbuf_addf(&new_data,
-		"object %s\n"
-		"type %s\n"
-		"tag %s\n"
-		"tagger %s\n"
-		"\n",
-		sha1_to_hex(sha1), commit_type, t->name, tagger);
+		    "object %s\n"
+		    "type %s\n"
+		    "tag %s\n",
+		    sha1_to_hex(sha1), commit_type, t->name);
+	if (tagger)
+		strbuf_addf(&new_data,
+			    "tagger %s\n", tagger);
+	strbuf_addch(&new_data, '\n');
 	strbuf_addbuf(&new_data, &msg);
 	free(tagger);
 

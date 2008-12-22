@@ -288,6 +288,33 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 	return sb->len - oldlen;
 }
 
+#define STRBUF_MAXLINK (2*PATH_MAX)
+
+int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
+{
+	if (hint < 32)
+		hint = 32;
+
+	while (hint < STRBUF_MAXLINK) {
+		int len;
+
+		strbuf_grow(sb, hint);
+		len = readlink(path, sb->buf, hint);
+		if (len < 0) {
+			if (errno != ERANGE)
+				break;
+		} else if (len < hint) {
+			strbuf_setlen(sb, len);
+			return 0;
+		}
+
+		/* .. the buffer was too small - try again */
+		hint *= 2;
+	}
+	strbuf_release(sb);
+	return -1;
+}
+
 int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
 {
 	int ch;

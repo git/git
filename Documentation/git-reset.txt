@@ -130,7 +130,7 @@ Undo a merge or pull::
 $ git pull                         <1>
 Auto-merging nitfol
 CONFLICT (content): Merge conflict in nitfol
-Automatic merge failed/prevented; fix up by hand
+Automatic merge failed; fix conflicts and then commit the result.
 $ git reset --hard                 <2>
 $ git pull . topic/branch          <3>
 Updating from 41223... to 13134...
@@ -177,6 +177,8 @@ $ git reset                                       <3>
 <3> At this point the index file still has all the WIP changes you
     committed as 'snapshot WIP'.  This updates the index to show your
     WIP files as uncommitted.
++
+See also linkgit:git-stash[1].
 
 Reset a single file in the index::
 +

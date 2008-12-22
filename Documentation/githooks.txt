@@ -20,6 +20,10 @@ directory to trigger action at certain points.  When
 all disabled.  To enable a hook, rename it by removing its `.sample`
 suffix.
 
+NOTE: It is also a requirement for a given hook to be executable.
+However - in a freshly initialized repository - the `.sample` files are
+executable by default.
+
 This document describes the currently defined hooks.
 
 applypatch-msg

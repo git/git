@@ -58,7 +58,7 @@ Possible status letters are:
 be committed)
 - X: "unknown" change type (most probably a bug, please report it)
 
-Status letters C and M are always followed by a score (denoting the
+Status letters C and R are always followed by a score (denoting the
 percentage of similarity between the source and target of the move or
 copy), and are the only ones to be so.
 
