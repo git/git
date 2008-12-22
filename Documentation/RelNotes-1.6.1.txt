@@ -230,6 +230,13 @@ Fixes since v1.6.0
 All of the fixes in v1.6.0.X maintenance series are included in this
 release, unless otherwise noted.
 
+* Porcelains implemented as shell scripts were utterly confused when you
+  entered to a subdirectory of a work tree from sideways, following a
+  symbolic link (this may need to be backported to older releases later).
+
+* Tracking symbolic links would work better on filesystems whose lstat()
+  returns incorrect st_size value for them.
+
 * "git add" and "git update-index" incorrectly allowed adding S/F when S
   is a tracked symlink that points at a directory D that has a path F in
   it (we still need to fix a similar nonsense when S is a submodule and F
@@ -243,6 +250,16 @@ release, unless otherwise noted.
   been resurrected.
 
 * "git filter-branch" failed to rewrite a tag name with slashes in it.
+
+* "git http-push" did not understand URI scheme other than opaquelocktoken
+  when acquiring a lock from the server (this may need to be backported to
+  older releases later).
+
+* "git revert" records relative to which parent a revert was made when
+  reverting a merge.  Together with new documentation that explains issues
+  around reverting a merge and merging from the updated branch later, this
+  hopefully will reduce user confusion (this may need to be backported to
+  older releases later).
 
 * "git rm --cached" used to allow an empty blob that was added earlier to
   be removed without --force, even when the file in the work tree has
@@ -260,6 +277,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.1-rc1-55-gd8af75d
+O=v1.6.1-rc3-74-gf66bc5f
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
