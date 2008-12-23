@@ -87,6 +87,7 @@ static struct object_list *objects;
 struct repo
 {
 	char *url;
+	char *path;
 	int path_len;
 	int has_info_refs;
 	int can_update_info_refs;
@@ -1424,9 +1425,19 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
 				ls->userFunc(ls);
 			}
 		} else if (!strcmp(ctx->name, DAV_PROPFIND_NAME) && ctx->cdata) {
-			ls->dentry_name = xmalloc(strlen(ctx->cdata) -
+			char *path = ctx->cdata;
+			if (*ctx->cdata == 'h') {
+				path = strstr(path, "//");
+				if (path) {
+					path = strchr(path+2, '/');
+				}
+			}
+			if (path) {
+				path += remote->path_len;
+			}
+			ls->dentry_name = xmalloc(strlen(path) -
 						  remote->path_len + 1);
-			strcpy(ls->dentry_name, ctx->cdata + remote->path_len);
+			strcpy(ls->dentry_name, path + remote->path_len);
 		} else if (!strcmp(ctx->name, DAV_PROPFIND_COLLECTION)) {
 			ls->dentry_flags |= IS_DIR;
 		}
@@ -2206,10 +2217,11 @@ int main(int argc, char **argv)
 		if (!remote->url) {
 			char *path = strstr(arg, "//");
 			remote->url = arg;
+			remote->path_len = strlen(arg);
 			if (path) {
-				path = strchr(path+2, '/');
-				if (path)
-					remote->path_len = strlen(path);
+				remote->path = strchr(path+2, '/');
+				if (remote->path)
+					remote->path_len = strlen(remote->path);
 			}
 			continue;
 		}
@@ -2238,8 +2250,9 @@ int main(int argc, char **argv)
 		rewritten_url = xmalloc(strlen(remote->url)+2);
 		strcpy(rewritten_url, remote->url);
 		strcat(rewritten_url, "/");
+		remote->path = rewritten_url + (remote->path - remote->url);
+		remote->path_len++;
 		remote->url = rewritten_url;
-		++remote->path_len;
 	}
 
 	/* Verify DAV compliance/lock support */
