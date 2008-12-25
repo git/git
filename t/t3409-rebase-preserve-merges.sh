@@ -11,15 +11,23 @@ Run "git rebase -p" and check that merges are properly carried along
 GIT_AUTHOR_EMAIL=bogus_email_address
 export GIT_AUTHOR_EMAIL
 
-#echo 'Setting up:
+# Clone 1 (trivial merge):
 #
-#A1--A2  <-- origin/master
-# \   \
-#  B1--M  <-- topic
-#   \
-#    B2  <-- origin/topic
+# A1--A2  <-- origin/master
+#  \   \
+#   B1--M  <-- topic
+#    \
+#     B2  <-- origin/topic
 #
-#'
+# Clone 2 (conflicting merge):
+#
+# A1--A2--B3   <-- origin/master
+#  \       \
+#   B1------M  <-- topic
+#    \
+#     B2       <-- origin/topic
+#
+# In both cases, 'topic' is rebased onto 'origin/topic'.
 
 test_expect_success 'setup for merge-preserving rebase' \
 	'echo First > A &&
@@ -37,12 +45,19 @@ test_expect_success 'setup for merge-preserving rebase' \
 	cd clone1 &&
 	git checkout -b topic origin/topic &&
 	git merge origin/master &&
-	cd ..
+	cd .. &&
 
-	git clone ./. clone2
+	echo Fifth > B &&
+	git add B &&
+	git commit -m "Add different B" &&
+
+	git clone ./. clone2 &&
 	cd clone2 &&
 	git checkout -b topic origin/topic &&
-	git merge origin/master &&
+	test_must_fail git merge origin/master &&
+	echo Resolved > B &&
+	git add B &&
+	git commit -m "Merge origin/master into topic" &&
 	cd .. &&
 
 	git checkout topic &&
@@ -51,11 +66,30 @@ test_expect_success 'setup for merge-preserving rebase' \
 '
 
 test_expect_success 'rebase -p fakes interactive rebase' '
-	cd clone2 &&
+	(
+	cd clone1 &&
 	git fetch &&
 	git rebase -p origin/topic &&
 	test 1 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&
 	test 1 = $(git rev-list --all --pretty=oneline | grep "Merge commit" | wc -l)
+	)
+'
+
+test_expect_success '--continue works after a conflict' '
+	(
+	cd clone2 &&
+	git fetch &&
+	test_must_fail git rebase -p origin/topic &&
+	test 2 = $(git ls-files B | wc -l) &&
+	echo Resolved again > B &&
+	test_must_fail git rebase --continue &&
+	grep "^@@@ " .git/rebase-merge/patch &&
+	git add B &&
+	git rebase --continue &&
+	test 1 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&
+	test 1 = $(git rev-list --all --pretty=oneline | grep "Add different" | wc -l) &&
+	test 1 = $(git rev-list --all --pretty=oneline | grep "Merge origin" | wc -l)
+	)
 '
 
 test_done

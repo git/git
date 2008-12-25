@@ -255,6 +255,10 @@ release, unless otherwise noted.
   when acquiring a lock from the server (this may need to be backported to
   older releases later).
 
+* After "git rebase -p" stopped with conflicts while replaying a merge,
+ "git rebase --continue" did not work (may need to be backported to older
+  releases).
+
 * "git revert" records relative to which parent a revert was made when
   reverting a merge.  Together with new documentation that explains issues
   around reverting a merge and merging from the updated branch later, this
