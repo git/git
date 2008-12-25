@@ -9,9 +9,13 @@ static const char *argv0_path;
 
 const char *system_path(const char *path)
 {
-#ifdef RUNTIME_PREFIX
 	static const char *prefix;
 
+	if (is_absolute_path(path)) {
+		return path;
+	}
+
+#ifdef RUNTIME_PREFIX
 	assert(argv0_path);
 	assert(is_absolute_path(argv0_path));
 
@@ -34,7 +38,9 @@ const char *system_path(const char *path)
 			}
 			if (*s == ss) {
 				struct strbuf d = STRBUF_INIT;
-				strbuf_add(&d, argv0_path, sargv - argv0_path);
+				/* We also skip the trailing directory separator. */
+				assert(sargv - argv0_path - 1 >= 0);
+				strbuf_add(&d, argv0_path, sargv - argv0_path - 1);
 				prefix = strbuf_detach(&d, NULL);
 				break;
 			}
@@ -42,15 +48,18 @@ const char *system_path(const char *path)
 	}
 
 	if (!prefix) {
-		fprintf(stderr, "RUNTIME_PREFIX requested for path '%s', "
-				"but prefix computation failed.\n", path);
-		return path;
+		prefix = PREFIX;
+		fprintf(stderr, "RUNTIME_PREFIX requested, "
+				"but prefix computation failed.  "
+				"Using static fallback '%s'.\n", prefix);
 	}
+#else
+	prefix = PREFIX;
+#endif
 
 	struct strbuf d = STRBUF_INIT;
 	strbuf_addf(&d, "%s/%s", prefix, path);
 	path = strbuf_detach(&d, NULL);
-#endif
 	return path;
 }
 

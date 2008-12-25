@@ -952,11 +952,6 @@ int main(int argc, char **argv)
 	if (argv[0] && *argv[0])
 		git_extract_argv0_path(argv[0]);
 
-	/* Without this we cannot rely on waitpid() to tell
-	 * what happened to our children.
-	 */
-	signal(SIGCHLD, SIG_DFL);
-
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 
