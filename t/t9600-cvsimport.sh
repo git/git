@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-cvsimport basic tests'
+test_description='git cvsimport basic tests'
 . ./test-lib.sh
 
 CVSROOT=$(pwd)/cvsroot

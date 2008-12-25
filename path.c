@@ -32,6 +32,60 @@ static char *cleanup_path(char *path)
 	return path;
 }
 
+char *mksnpath(char *buf, size_t n, const char *fmt, ...)
+{
+	va_list args;
+	unsigned len;
+
+	va_start(args, fmt);
+	len = vsnprintf(buf, n, fmt, args);
+	va_end(args);
+	if (len >= n) {
+		strlcpy(buf, bad_path, n);
+		return buf;
+	}
+	return cleanup_path(buf);
+}
+
+static char *git_vsnpath(char *buf, size_t n, const char *fmt, va_list args)
+{
+	const char *git_dir = get_git_dir();
+	size_t len;
+
+	len = strlen(git_dir);
+	if (n < len + 1)
+		goto bad;
+	memcpy(buf, git_dir, len);
+	if (len && !is_dir_sep(git_dir[len-1]))
+		buf[len++] = '/';
+	len += vsnprintf(buf + len, n - len, fmt, args);
+	if (len >= n)
+		goto bad;
+	return cleanup_path(buf);
+bad:
+	strlcpy(buf, bad_path, n);
+	return buf;
+}
+
+char *git_snpath(char *buf, size_t n, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	(void)git_vsnpath(buf, n, fmt, args);
+	va_end(args);
+	return buf;
+}
+
+char *git_pathdup(const char *fmt, ...)
+{
+	char path[PATH_MAX];
+	va_list args;
+	va_start(args, fmt);
+	(void)git_vsnpath(path, sizeof(path), fmt, args);
+	va_end(args);
+	return xstrdup(path);
+}
+
 char *mkpath(const char *fmt, ...)
 {
 	va_list args;
@@ -348,7 +402,7 @@ int normalize_absolute_path(char *buf, const char *path)
 			goto next;
 		}
 
-		memcpy(dst, comp_start, comp_len);
+		memmove(dst, comp_start, comp_len);
 		dst += comp_len;
 	next:
 		comp_start = comp_end;

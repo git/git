@@ -352,7 +352,7 @@ static int unpack_failed(struct unpack_trees_options *o, const char *message)
 	discard_index(&o->result);
 	if (!o->gently) {
 		if (message)
-			return error(message);
+			return error("%s", message);
 		return -1;
 	}
 	return -1;
@@ -382,7 +382,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->merge_size = len;
 
 	if (!dfc)
-		dfc = xcalloc(1, sizeof(struct cache_entry) + 1);
+		dfc = xcalloc(1, cache_entry_size(0));
 	o->df_conflict_entry = dfc;
 
 	if (len) {

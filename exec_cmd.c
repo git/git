@@ -107,9 +107,7 @@ static void add_path(struct strbuf *out, const char *path)
 void setup_path(void)
 {
 	const char *old_path = getenv("PATH");
-	struct strbuf new_path;
-
-	strbuf_init(&new_path, 0);
+	struct strbuf new_path = STRBUF_INIT;
 
 	add_path(&new_path, git_exec_path());
 	add_path(&new_path, argv0_path);

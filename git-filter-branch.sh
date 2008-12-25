@@ -232,11 +232,11 @@ mkdir ../map || die "Could not create map/ directory"
 case "$filter_subdir" in
 "")
 	git rev-list --reverse --topo-order --default HEAD \
-		--parents "$@"
+		--parents --simplify-merges "$@"
 	;;
 *)
 	git rev-list --reverse --topo-order --default HEAD \
-		--parents "$@" -- "$filter_subdir"
+		--parents --simplify-merges "$@" -- "$filter_subdir"
 esac > ../revs || die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 
@@ -256,7 +256,7 @@ while read commit parents; do
 	*)
 		# The commit may not have the subdirectory at all
 		err=$(git read-tree -i -m $commit:"$filter_subdir" 2>&1) || {
-			if ! git rev-parse --verify $commit:"$filter_subdir" 2>/dev/null
+			if ! git rev-parse -q --verify $commit:"$filter_subdir"
 			then
 				rm -f "$GIT_INDEX_FILE"
 			else
@@ -317,24 +317,20 @@ done <../revs
 
 # In case of a subdirectory filter, it is possible that a specified head
 # is not in the set of rewritten commits, because it was pruned by the
-# revision walker.  Fix it by mapping these heads to the next rewritten
-# ancestor(s), i.e. the boundaries in the set of rewritten commits.
+# revision walker.  Fix it by mapping these heads to the unique nearest
+# ancestor that survived the pruning.
 
-# NEEDSWORK: we should sort the unmapped refs topologically first
-while read ref
-do
-	sha1=$(git rev-parse "$ref"^0)
-	test -f "$workdir"/../map/$sha1 && continue
-	# Assign the boundarie(s) in the set of rewritten commits
-	# as the replacement commit(s).
-	# (This would look a bit nicer if --not --stdin worked.)
-	for p in $( (cd "$workdir"/../map; ls | sed "s/^/^/") |
-		git rev-list $ref --boundary --stdin |
-		sed -n "s/^-//p")
+if test "$filter_subdir"
+then
+	while read ref
 	do
-		map $p >> "$workdir"/../map/$sha1
-	done
-done < "$tempdir"/heads
+		sha1=$(git rev-parse "$ref"^0)
+		test -f "$workdir"/../map/$sha1 && continue
+		ancestor=$(git rev-list --simplify-merges -1 \
+				$ref -- "$filter_subdir")
+		test "$ancestor" && echo $(map $ancestor) >> "$workdir"/../map/$sha1
+	done < "$tempdir"/heads
+fi
 
 # Finally update the refs
 
@@ -416,15 +412,17 @@ if [ "$filter_tag_name" ]; then
 		echo "$ref -> $new_ref ($sha1 -> $new_sha1)"
 
 		if [ "$type" = "tag" ]; then
-			new_sha1=$(git cat-file tag "$ref" |
+			new_sha1=$( ( printf 'object %s\ntype commit\ntag %s\n' \
+						"$new_sha1" "$new_ref"
+				git cat-file tag "$ref" |
 				sed -n \
 				    -e "1,/^$/{
-					  s/^object .*/object $new_sha1/
-					  s/^type .*/type commit/
-					  s/^tag .*/tag $new_ref/
+					  /^object /d
+					  /^type /d
+					  /^tag /d
 					}" \
 				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
-				    -e 'p' |
+				    -e 'p' ) |
 				git mktag) ||
 				die "Could not create new tag object for $ref"
 			if git cat-file tag "$ref" | \

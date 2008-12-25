@@ -9,8 +9,9 @@ SYNOPSIS
 --------
 [verse]
 'git daemon' [--verbose] [--syslog] [--export-all]
-	     [--timeout=n] [--init-timeout=n] [--strict-paths]
-	     [--base-path=path] [--user-path | --user-path=path]
+	     [--timeout=n] [--init-timeout=n] [--max-connections=n]
+	     [--strict-paths] [--base-path=path] [--base-path-relaxed]
+	     [--user-path | --user-path=path]
 	     [--interpolated-path=pathtemplate]
 	     [--reuseaddr] [--detach] [--pid-file=file]
 	     [--enable=service] [--disable=service]
@@ -99,15 +100,19 @@ OPTIONS
 	it takes for the server to process the sub-request and time spent
 	waiting for next client's request.
 
+--max-connections::
+	Maximum number of concurrent clients, defaults to 32.  Set it to
+	zero for no limit.
+
 --syslog::
 	Log to syslog instead of stderr. Note that this option does not imply
 	--verbose, thus by default only error conditions will be logged.
 
 --user-path::
 --user-path=path::
-	Allow ~user notation to be used in requests.  When
+	Allow {tilde}user notation to be used in requests.  When
 	specified with no parameter, requests to
-	git://host/~alice/foo is taken as a request to access
+	git://host/{tilde}alice/foo is taken as a request to access
 	'foo' repository in the home directory of user `alice`.
 	If `--user-path=path` is specified, the same request is
 	taken as a request to access `path/foo` repository in
@@ -263,6 +268,15 @@ selectively enable/disable services per repository::
 		uploadpack = false
 		uploadarch = true
 ----------------------------------------------------------------
+
+
+ENVIRONMENT
+-----------
+'git-daemon' will set REMOTE_ADDR to the IP address of the client
+that connected to it, if the IP address is available. REMOTE_ADDR will
+be available in the environment of hooks called when
+services are performed.
+
 
 
 Author

@@ -121,6 +121,9 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 			struct cache_entry *ce;
 			ce = make_cache_entry(one->mode, one->sha1, one->path,
 				0, 0);
+			if (!ce)
+				die("make_cache_entry failed for path '%s'",
+				    one->path);
 			add_cache_entry(ce, ADD_CACHE_OK_TO_ADD |
 				ADD_CACHE_OK_TO_REPLACE);
 		} else
@@ -276,7 +279,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		update_ref(msg, "ORIG_HEAD", orig, old_orig, 0, MSG_ON_ERR);
 	}
 	else if (old_orig)
-		delete_ref("ORIG_HEAD", old_orig);
+		delete_ref("ORIG_HEAD", old_orig, 0);
 	prepend_reflog_action("updating HEAD", msg, sizeof(msg));
 	update_ref_status = update_ref(msg, "HEAD", sha1, orig, 0, MSG_ON_ERR);
 

@@ -435,6 +435,10 @@ div.search {
 	right: 12px
 }
 
+p.projsearch {
+	text-align: center;
+}
+
 td.linenr {
 	text-align: right;
 }
@@ -479,6 +483,19 @@ span.refs span {
 	border: 1px solid;
 	background-color: #ffaaff;
 	border-color: #ffccff #ff00ee #ff00ee #ffccff;
+}
+
+span.refs span a {
+	text-decoration: none;
+	color: inherit;
+}
+
+span.refs span a:hover {
+	text-decoration: underline;
+}
+
+span.refs span.indirect {
+	font-style: italic;
 }
 
 span.refs span.ref {

@@ -44,6 +44,14 @@ OPTIONS
 	option specifies the parent number (starting from 1) of
 	the mainline and allows revert to reverse the change
 	relative to the specified parent.
++
+Reverting a merge commit declares that you will never want the tree changes
+brought in by the merge.  As a result, later merges will only bring in tree
+changes introduced by commits that are not ancestors of the previously
+reverted merge.  This may or may not be what you want.
++
+See the link:howto/revert-a-faulty-merge.txt[revert-a-faulty-merge How-To] for
+more details.
 
 --no-edit::
 	With this option, 'git-revert' will not start the commit

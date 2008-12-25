@@ -26,6 +26,7 @@ The following browsers (or commands) are currently supported:
 * lynx
 * dillo
 * open (this is the default under Mac OS X GUI)
+* start (this is the default under MinGW)
 
 Custom commands may also be specified.
 

@@ -10,7 +10,7 @@
 #include "parse-options.h"
 
 static const char * const push_usage[] = {
-	"git push [--all | --mirror] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]",
+	"git push [--all | --mirror] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=<repository>] [-f | --force] [-v] [<repository> <refspec>...]",
 	NULL,
 };
 
@@ -59,8 +59,17 @@ static int do_push(const char *repo, int flags)
 	if (remote->mirror)
 		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
 
-	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) && refspec)
-		return -1;
+	if ((flags & TRANSPORT_PUSH_ALL) && refspec) {
+		if (!strcmp(*refspec, "refs/tags/*"))
+			return error("--all and --tags are incompatible");
+		return error("--all can't be combined with refspecs");
+	}
+
+	if ((flags & TRANSPORT_PUSH_MIRROR) && refspec) {
+		if (!strcmp(*refspec, "refs/tags/*"))
+			return error("--mirror and --tags are incompatible");
+		return error("--mirror can't be combined with refspecs");
+	}
 
 	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) ==
 				(TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) {

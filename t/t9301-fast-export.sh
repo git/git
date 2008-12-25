@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Johannes E. Schindelin
 #
 
-test_description='git-fast-export'
+test_description='git fast-export'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -67,7 +67,7 @@ test_expect_success 'iso-8859-1' '
 
 	git config i18n.commitencoding ISO-8859-1 &&
 	# use author and committer name in ISO-8859-1 to match it.
-	. ../t3901-8859-1.txt &&
+	. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
 	test_tick &&
 	echo rosten >file &&
 	git commit -s -m den file &&
@@ -228,6 +228,34 @@ test_expect_success 'fast-export -C -C | fast-import' '
 	(cd new &&
 	 git fast-import &&
 	 test $ENTRY = $(git rev-parse --verify refs/heads/copy))
+
+'
+
+test_expect_success 'fast-export | fast-import when master is tagged' '
+
+	git tag -m msg last &&
+	git fast-export -C -C --signed-tags=strip --all > output &&
+	test $(grep -c "^tag " output) = 3
+
+'
+
+cat > tag-content << EOF
+object $(git rev-parse HEAD)
+type commit
+tag rosten
+EOF
+
+test_expect_success 'cope with tagger-less tags' '
+
+	TAG=$(git hash-object -t tag -w tag-content) &&
+	git update-ref refs/tags/sonnenschein $TAG &&
+	git fast-export -C -C --signed-tags=strip --all > output &&
+	test $(grep -c "^tag " output) = 4 &&
+	! grep "Unspecified Tagger" output &&
+	git fast-export -C -C --signed-tags=strip --all \
+		--fake-missing-tagger > output &&
+	test $(grep -c "^tag " output) = 4 &&
+	grep "Unspecified Tagger" output
 
 '
 

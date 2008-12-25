@@ -6,7 +6,7 @@ MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt \
 	gitrepository-layout.txt
 MAN7_TXT=gitcli.txt gittutorial.txt gittutorial-2.txt \
 	gitcvs-migration.txt gitcore-tutorial.txt gitglossary.txt \
-	gitdiffcore.txt
+	gitdiffcore.txt gitworkflows.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
@@ -44,6 +44,7 @@ MANPAGE_XSL = callouts.xsl
 INSTALL?=install
 RM ?= rm -f
 DOC_REF = origin/man
+HTML_REF = origin/html
 
 infodir?=$(prefix)/share/info
 MAKEINFO=makeinfo
@@ -86,7 +87,9 @@ man7: $(DOC_MAN7)
 
 info: git.info gitman.info
 
-install: man
+install: install-man
+
+install-man: man
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man5dir)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man7dir)
@@ -219,7 +222,12 @@ $(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
 install-webdoc : html
 	sh ./install-webdoc.sh $(WEBDOC_DEST)
 
-quick-install:
+quick-install: quick-install-man
+
+quick-install-man:
 	sh ./install-doc-quick.sh $(DOC_REF) $(DESTDIR)$(mandir)
+
+quick-install-html:
+	sh ./install-doc-quick.sh $(HTML_REF) $(DESTDIR)$(htmldir)
 
 .PHONY: .FORCE-GIT-VERSION-FILE

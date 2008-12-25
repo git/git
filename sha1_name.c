@@ -245,11 +245,13 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 
 	*ref = NULL;
 	for (p = ref_rev_parse_rules; *p; p++) {
+		char fullref[PATH_MAX];
 		unsigned char sha1_from_ref[20];
 		unsigned char *this_result;
 
 		this_result = refs_found ? sha1_from_ref : sha1;
-		r = resolve_ref(mkpath(*p, len, str), this_result, 1, NULL);
+		mksnpath(fullref, sizeof(fullref), *p, len, str);
+		r = resolve_ref(fullref, this_result, 1, NULL);
 		if (r) {
 			if (!refs_found++)
 				*ref = xstrdup(r);
@@ -272,7 +274,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 		char path[PATH_MAX];
 		const char *ref, *it;
 
-		strcpy(path, mkpath(*p, len, str));
+		mksnpath(path, sizeof(path), *p, len, str);
 		ref = resolve_ref(path, hash, 1, NULL);
 		if (!ref)
 			continue;
@@ -349,7 +351,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 			else
 				nth = -1;
 		}
-		if (0 <= nth)
+		if (100000000 <= nth) {
+			at_time = nth;
+			nth = -1;
+		} else if (0 <= nth)
 			at_time = 0;
 		else {
 			char *tmp = xstrndup(str + at + 2, reflog_len);

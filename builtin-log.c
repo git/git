@@ -14,7 +14,6 @@
 #include "tag.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
-#include "refs.h"
 #include "run-command.h"
 #include "shortlog.h"
 
@@ -25,36 +24,10 @@ static int default_show_root = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
-static void add_name_decoration(const char *prefix, const char *name, struct object *obj)
-{
-	int plen = strlen(prefix);
-	int nlen = strlen(name);
-	struct name_decoration *res = xmalloc(sizeof(struct name_decoration) + plen + nlen);
-	memcpy(res->name, prefix, plen);
-	memcpy(res->name + plen, name, nlen + 1);
-	res->next = add_decoration(&name_decoration, obj, res);
-}
-
-static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
-{
-	struct object *obj = parse_object(sha1);
-	if (!obj)
-		return 0;
-	add_name_decoration("", refname, obj);
-	while (obj->type == OBJ_TAG) {
-		obj = ((struct tag *)obj)->tagged;
-		if (!obj)
-			break;
-		add_name_decoration("tag: ", refname, obj);
-	}
-	return 0;
-}
-
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
 	int i;
-	int decorate = 0;
 
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
@@ -64,6 +37,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
+	DIFF_OPT_SET(&rev->diffopt, ALLOW_TEXTCONV);
 
 	if (default_date_mode)
 		rev->date_mode = parse_date_format(default_date_mode);
@@ -80,9 +54,10 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--decorate")) {
-			if (!decorate)
-				for_each_ref(add_ref_decoration, NULL);
-			decorate = 1;
+			load_ref_decorations();
+			rev->show_decorations = 1;
+		} else if (!strcmp(arg, "--source")) {
+			rev->show_source = 1;
 		} else
 			die("unrecognized argument: %s", arg);
 	}
@@ -217,6 +192,11 @@ static int cmd_log_walk(struct rev_info *rev)
 	if (rev->early_output)
 		finish_early_output(rev);
 
+	/*
+	 * For --check and --exit-code, the exit code is based on CHECK_FAILED
+	 * and HAS_CHANGES being accumulated in rev->diffopt, so be careful to
+	 * retain that state information if replacing rev->diffopt in this loop
+	 */
 	while ((commit = get_revision(rev)) != NULL) {
 		log_tree_commit(rev, commit);
 		if (!rev->reflog_info) {
@@ -227,7 +207,11 @@ static int cmd_log_walk(struct rev_info *rev)
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
 	}
-	return 0;
+	if (rev->diffopt.output_format & DIFF_FORMAT_CHECKDIFF &&
+	    DIFF_OPT_TST(&rev->diffopt, CHECK_FAILED)) {
+		return 02;
+	}
+	return diff_result_code(&rev->diffopt, 0);
 }
 
 static int git_log_config(const char *var, const char *value, void *cb)
@@ -356,7 +340,13 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 					t->tag,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			ret = show_object(o->sha1, 1, &rev);
-			objects[i].item = parse_object(t->tagged->sha1);
+			if (ret)
+				break;
+			o = parse_object(t->tagged->sha1);
+			if (!o)
+				ret = error("Could not read object %s",
+					    sha1_to_hex(t->tagged->sha1));
+			objects[i].item = o;
 			i--;
 			break;
 		}
@@ -444,7 +434,7 @@ static int istitlechar(char c)
 
 static const char *fmt_patch_suffix = ".patch";
 static int numbered = 0;
-static int auto_number = 0;
+static int auto_number = 1;
 
 static char **extra_hdr;
 static int extra_hdr_nr;
@@ -503,6 +493,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			return 0;
 		}
 		numbered = git_config_bool(var, value);
+		auto_number = auto_number && numbered;
 		return 0;
 	}
 
@@ -646,10 +637,9 @@ static void gen_message_id(struct rev_info *info, char *base)
 	const char *committer = git_committer_info(IDENT_WARN_ON_NO_NAME);
 	const char *email_start = strrchr(committer, '<');
 	const char *email_end = strrchr(committer, '>');
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	if (!email_start || !email_end || email_start > email_end - 1)
 		die("Could not extract email from committer identity.");
-	strbuf_init(&buf, 0);
 	strbuf_addf(&buf, "%s.%lu.git.%.*s", base,
 		    (unsigned long) time(NULL),
 		    (int)(email_end - email_start - 1), email_start + 1);
@@ -668,7 +658,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	const char *msg;
 	const char *extra_headers = rev->extra_headers;
 	struct shortlog log;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	int i;
 	const char *encoding = "utf-8";
 	struct diff_options opts;
@@ -689,7 +679,6 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	committer = git_committer_info(0);
 
 	msg = body;
-	strbuf_init(&sb, 0);
 	pp_user_info(NULL, CMIT_FMT_EMAIL, &sb, committer, DATE_RFC2822,
 		     encoding);
 	pp_title_line(CMIT_FMT_EMAIL, &msg, &sb, subject_start, extra_headers,
@@ -771,7 +760,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
 	char *add_signoff = NULL;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 
 	git_config(git_format_config, NULL);
 	init_revisions(&rev, prefix);
@@ -879,8 +868,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 	argc = j;
 
-	strbuf_init(&buf, 0);
-
 	for (i = 0; i < extra_hdr_nr; i++) {
 		strbuf_addstr(&buf, extra_hdr[i]);
 		strbuf_addch(&buf, '\n');
@@ -923,7 +910,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
 
-	if (!rev.diffopt.output_format)
+	if (!rev.diffopt.output_format
+		|| rev.diffopt.output_format == DIFF_FORMAT_PATCH)
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
 
 	if (!DIFF_OPT_TST(&rev.diffopt, TEXT) && !no_binary_diff)
@@ -1156,8 +1144,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 			sign = '-';
 
 		if (verbose) {
-			struct strbuf buf;
-			strbuf_init(&buf, 0);
+			struct strbuf buf = STRBUF_INIT;
 			pretty_print_commit(CMIT_FMT_ONELINE, commit,
 			                    &buf, 0, NULL, NULL, 0, 0);
 			printf("%c %s %s\n", sign,

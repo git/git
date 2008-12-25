@@ -307,19 +307,17 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	struct strbuf sb, parsed;
+	struct strbuf sb = STRBUF_INIT, parsed = STRBUF_INIT;
 	const char **usage = NULL;
 	struct option *opts = NULL;
 	int onb = 0, osz = 0, unb = 0, usz = 0;
 
-	strbuf_init(&parsed, 0);
 	strbuf_addstr(&parsed, "set --");
 	argc = parse_options(argc, argv, parseopt_opts, parseopt_usage,
 	                     PARSE_OPT_KEEP_DASHDASH);
 	if (argc < 1 || strcmp(argv[0], "--"))
 		usage_with_options(parseopt_usage, parseopt_opts);
 
-	strbuf_init(&sb, 0);
 	/* get the usage up to the first line with a -- on it */
 	for (;;) {
 		if (strbuf_getline(&sb, stdin, '\n') == EOF)

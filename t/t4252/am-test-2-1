@@ -1,0 +1,19 @@
+From: A U Thor <au.thor@example.com>
+Date: Thu Dec 4 16:00:00 2008 -0800
+Subject: Three
+
+Application of this should be rejected even with -C1 because the
+preimage line in the context does not match.
+
+diff --git i/file-1 w/file-1
+index 06e567b..10f8342 100644
+--- i/file-1
++++ w/file-1
+@@ -1,6 +1,6 @@
+ 1
+ 2
+-Tres
++Three 
+ 4
+ 5
+ 6

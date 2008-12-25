@@ -239,11 +239,18 @@ static int word_char(char ch)
 static void show_line(struct grep_opt *opt, const char *bol, const char *eol,
 		      const char *name, unsigned lno, char sign)
 {
+	if (opt->null_following_name)
+		sign = '\0';
 	if (opt->pathname)
 		printf("%s%c", name, sign);
 	if (opt->linenum)
 		printf("%d%c", lno, sign);
 	printf("%.*s\n", (int)(eol-bol), bol);
+}
+
+static void show_name(struct grep_opt *opt, const char *name)
+{
+	printf("%s%c", name, opt->null_following_name ? '\0' : '\n');
 }
 
 static int fixmatch(const char *pattern, char *line, regmatch_t *match)
@@ -489,7 +496,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 				return 1;
 			}
 			if (opt->name_only) {
-				printf("%s\n", name);
+				show_name(opt, name);
 				return 1;
 			}
 			/* Hit at this line.  If we haven't shown the
@@ -507,7 +514,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 				if (from <= last_shown)
 					from = last_shown + 1;
 				if (last_shown && from != last_shown + 1)
-					printf(hunk_mark);
+					fputs(hunk_mark, stdout);
 				while (from < lno) {
 					pcl = &prev[lno-from-1];
 					show_line(opt, pcl->bol, pcl->eol,
@@ -517,7 +524,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 				last_shown = lno-1;
 			}
 			if (last_shown && lno != last_shown + 1)
-				printf(hunk_mark);
+				fputs(hunk_mark, stdout);
 			if (!opt->count)
 				show_line(opt, bol, eol, name, lno, ':');
 			last_shown = last_hit = lno;
@@ -528,7 +535,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 * we need to show this line.
 			 */
 			if (last_shown && lno != last_shown + 1)
-				printf(hunk_mark);
+				fputs(hunk_mark, stdout);
 			show_line(opt, bol, eol, name, lno, '-');
 			last_shown = lno;
 		}
@@ -555,7 +562,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		return 0;
 	if (opt->unmatch_name_only) {
 		/* We did not see any hit, so we want to show this */
-		printf("%s\n", name);
+		show_name(opt, name);
 		return 1;
 	}
 
@@ -565,7 +572,8 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	 * make it another option?  For now suppress them.
 	 */
 	if (opt->count && count)
-		printf("%s:%u\n", name, count);
+		printf("%s%c%u\n", name,
+		       opt->null_following_name ? '\0' : ':', count);
 	return !!last_hit;
 }
 

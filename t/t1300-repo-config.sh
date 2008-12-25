@@ -742,4 +742,14 @@ test_expect_success 'symlinked configuration' '
 
 '
 
+test_expect_success 'check split_cmdline return' "
+	git config alias.split-cmdline-fix 'echo \"' &&
+	test_must_fail git split-cmdline-fix &&
+	echo foo > foo &&
+	git add foo &&
+	git commit -m 'initial commit' &&
+	git config branch.master.mergeoptions 'echo \"' &&
+	test_must_fail git merge master
+	"
+
 test_done

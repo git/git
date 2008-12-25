@@ -16,7 +16,7 @@ proc clear_diff {} {
 	$ui_workdir tag remove in_diff 0.0 end
 }
 
-proc reshow_diff {} {
+proc reshow_diff {{after {}}} {
 	global file_states file_lists
 	global current_diff_path current_diff_side
 	global ui_diff
@@ -24,13 +24,28 @@ proc reshow_diff {} {
 	set p $current_diff_path
 	if {$p eq {}} {
 		# No diff is being shown.
-	} elseif {$current_diff_side eq {}
-		|| [catch {set s $file_states($p)}]
-		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
+	} elseif {$current_diff_side eq {}} {
 		clear_diff
+	} elseif {[catch {set s $file_states($p)}]
+		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
+
+		if {[find_next_diff $current_diff_side $p {} {[^O]}]} {
+			next_diff $after
+		} else {
+			clear_diff
+		}
 	} else {
 		set save_pos [lindex [$ui_diff yview] 0]
-		show_diff $p $current_diff_side {} $save_pos
+		show_diff $p $current_diff_side {} $save_pos $after
+	}
+}
+
+proc force_diff_encoding {enc} {
+	global current_diff_path
+	
+	if {$current_diff_path ne {}} {
+		force_path_encoding $current_diff_path $enc
+		reshow_diff
 	}
 }
 
@@ -54,11 +69,12 @@ A rescan will be automatically started to find other files which may have the sa
 	rescan ui_ready 0
 }
 
-proc show_diff {path w {lno {}} {scroll_pos {}}} {
+proc show_diff {path w {lno {}} {scroll_pos {}} {callback {}}} {
 	global file_states file_lists
-	global is_3way_diff diff_active repo_config
+	global is_3way_diff is_conflict_diff diff_active repo_config
 	global ui_diff ui_index ui_workdir
 	global current_diff_path current_diff_side current_diff_header
+	global current_diff_queue
 
 	if {$diff_active || ![lock_index read]} return
 
@@ -71,21 +87,84 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 	}
 	if {$lno >= 1} {
 		$w tag add in_diff $lno.0 [expr {$lno + 1}].0
+		$w see $lno.0
 	}
 
 	set s $file_states($path)
 	set m [lindex $s 0]
-	set is_3way_diff 0
-	set diff_active 1
+	set is_conflict_diff 0
 	set current_diff_path $path
 	set current_diff_side $w
-	set current_diff_header {}
+	set current_diff_queue {}
 	ui_status [mc "Loading diff of %s..." [escape_path $path]]
+
+	set cont_info [list $scroll_pos $callback]
+
+	if {[string first {U} $m] >= 0} {
+		merge_load_stages $path [list show_unmerged_diff $cont_info]
+	} elseif {$m eq {_O}} {
+		show_other_diff $path $w $m $cont_info
+	} else {
+		start_show_diff $cont_info
+	}
+}
+
+proc show_unmerged_diff {cont_info} {
+	global current_diff_path current_diff_side
+	global merge_stages ui_diff is_conflict_diff
+	global current_diff_queue
+
+	if {$merge_stages(2) eq {}} {
+		set is_conflict_diff 1
+		lappend current_diff_queue \
+			[list [mc "LOCAL: deleted\nREMOTE:\n"] d======= \
+			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
+	} elseif {$merge_stages(3) eq {}} {
+		set is_conflict_diff 1
+		lappend current_diff_queue \
+			[list [mc "REMOTE: deleted\nLOCAL:\n"] d======= \
+			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
+	} elseif {[lindex $merge_stages(1) 0] eq {120000}
+		|| [lindex $merge_stages(2) 0] eq {120000}
+		|| [lindex $merge_stages(3) 0] eq {120000}} {
+		set is_conflict_diff 1
+		lappend current_diff_queue \
+			[list [mc "LOCAL:\n"] d======= \
+			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
+		lappend current_diff_queue \
+			[list [mc "REMOTE:\n"] d======= \
+			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
+	} else {
+		start_show_diff $cont_info
+		return
+	}
+
+	advance_diff_queue $cont_info
+}
+
+proc advance_diff_queue {cont_info} {
+	global current_diff_queue ui_diff
+
+	set item [lindex $current_diff_queue 0]
+	set current_diff_queue [lrange $current_diff_queue 1 end]
+
+	$ui_diff conf -state normal
+	$ui_diff insert end [lindex $item 0] [lindex $item 1]
+	$ui_diff conf -state disabled
+
+	start_show_diff $cont_info [lindex $item 2]
+}
+
+proc show_other_diff {path w m cont_info} {
+	global file_states file_lists
+	global is_3way_diff diff_active repo_config
+	global ui_diff ui_index ui_workdir
+	global current_diff_path current_diff_side current_diff_header
 
 	# - Git won't give us the diff, there's nothing to compare to!
 	#
 	if {$m eq {_O}} {
-		set max_sz [expr {128 * 1024}]
+		set max_sz 100000
 		set type unknown
 		if {[catch {
 				set type [file type $path]
@@ -101,7 +180,9 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 				}
 				file {
 					set fd [open $path r]
-					fconfigure $fd -eofchar {}
+					fconfigure $fd \
+						-eofchar {} \
+						-encoding [get_path_encoding $path]
 					set content [read $fd $max_sz]
 					close $fd
 					set sz [file size $path]
@@ -137,36 +218,57 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 				d_@
 		} else {
 			if {$sz > $max_sz} {
-				$ui_diff insert end \
-"* Untracked file is $sz bytes.
-* Showing only first $max_sz bytes.
-" d_@
+				$ui_diff insert end [mc \
+"* Untracked file is %d bytes.
+* Showing only first %d bytes.
+" $sz $max_sz] d_@
 			}
 			$ui_diff insert end $content
 			if {$sz > $max_sz} {
-				$ui_diff insert end "
-* Untracked file clipped here by [appname].
+				$ui_diff insert end [mc "
+* Untracked file clipped here by %s.
 * To see the entire file, use an external editor.
-" d_@
+" [appname]] d_@
 			}
 		}
 		$ui_diff conf -state disabled
 		set diff_active 0
 		unlock_index
+		set scroll_pos [lindex $cont_info 0]
 		if {$scroll_pos ne {}} {
 			update
 			$ui_diff yview moveto $scroll_pos
 		}
 		ui_ready
+		set callback [lindex $cont_info 1]
+		if {$callback ne {}} {
+			eval $callback
+		}
 		return
 	}
+}
+
+proc start_show_diff {cont_info {add_opts {}}} {
+	global file_states file_lists
+	global is_3way_diff diff_active repo_config
+	global ui_diff ui_index ui_workdir
+	global current_diff_path current_diff_side current_diff_header
+
+	set path $current_diff_path
+	set w $current_diff_side
+
+	set s $file_states($path)
+	set m [lindex $s 0]
+	set is_3way_diff 0
+	set diff_active 1
+	set current_diff_header {}
 
 	set cmd [list]
 	if {$w eq $ui_index} {
 		lappend cmd diff-index
 		lappend cmd --cached
 	} elseif {$w eq $ui_workdir} {
-		if {[string index $m 0] eq {U}} {
+		if {[string first {U} $m] >= 0} {
 			lappend cmd diff
 		} else {
 			lappend cmd diff-files
@@ -181,8 +283,12 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 	if {$w eq $ui_index} {
 		lappend cmd [PARENT]
 	}
-	lappend cmd --
-	lappend cmd $path
+	if {$add_opts ne {}} {
+		eval lappend cmd $add_opts
+	} else {
+		lappend cmd --
+		lappend cmd $path
+	}
 
 	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
 		set diff_active 0
@@ -195,14 +301,15 @@ proc show_diff {path w {lno {}} {scroll_pos {}}} {
 	set ::current_diff_inheader 1
 	fconfigure $fd \
 		-blocking 0 \
-		-encoding binary \
-		-translation binary
-	fileevent $fd readable [list read_diff $fd $scroll_pos]
+		-encoding [get_path_encoding $path] \
+		-translation lf
+	fileevent $fd readable [list read_diff $fd $cont_info]
 }
 
-proc read_diff {fd scroll_pos} {
+proc read_diff {fd cont_info} {
 	global ui_diff diff_active
-	global is_3way_diff current_diff_header
+	global is_3way_diff is_conflict_diff current_diff_header
+	global current_diff_queue
 
 	$ui_diff conf -state normal
 	while {[gets $fd line] >= 0} {
@@ -249,6 +356,7 @@ proc read_diff {fd scroll_pos} {
 			{--} {set tags d_--}
 			{++} {
 				if {[regexp {^\+\+([<>]{7} |={7})} $line _g op]} {
+					set is_conflict_diff 1
 					set line [string replace $line 0 1 {  }]
 					set tags d$op
 				} else {
@@ -268,7 +376,7 @@ proc read_diff {fd scroll_pos} {
 			{-} {set tags d_-}
 			{+} {
 				if {[regexp {^\+([<>]{7} |={7})} $line _g op]} {
-					set line [string replace $line 0 0 { }]
+					set is_conflict_diff 1
 					set tags d$op
 				} else {
 					set tags d_+
@@ -290,8 +398,15 @@ proc read_diff {fd scroll_pos} {
 
 	if {[eof $fd]} {
 		close $fd
+
+		if {$current_diff_queue ne {}} {
+			advance_diff_queue $cont_info
+			return
+		}
+
 		set diff_active 0
 		unlock_index
+		set scroll_pos [lindex $cont_info 0]
 		if {$scroll_pos ne {}} {
 			update
 			$ui_diff yview moveto $scroll_pos
@@ -300,6 +415,10 @@ proc read_diff {fd scroll_pos} {
 
 		if {[$ui_diff index end] eq {2.0}} {
 			handle_empty_diff
+		}
+		set callback [lindex $cont_info 1]
+		if {$callback ne {}} {
+			eval $callback
 		}
 	}
 }
@@ -341,8 +460,9 @@ proc apply_hunk {x y} {
 	}
 
 	if {[catch {
+		set enc [get_path_encoding $current_diff_path]
 		set p [eval git_write $apply_cmd]
-		fconfigure $p -translation binary -encoding binary
+		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p [$ui_diff get $s_lno $e_lno]
 		close $p} err]} {
@@ -370,10 +490,9 @@ proc apply_hunk {x y} {
 	}
 	unlock_index
 	display_file $current_diff_path $mi
+	# This should trigger shift to the next changed file
 	if {$o eq {_}} {
-		clear_diff
-	} else {
-		set current_diff_path $current_diff_path
+		reshow_diff
 	}
 }
 
@@ -511,8 +630,9 @@ proc apply_line {x y} {
 	set patch "@@ -$hln,$n +$hln,[eval expr $n $sign 1] @@\n$patch"
 
 	if {[catch {
+		set enc [get_path_encoding $current_diff_path]
 		set p [eval git_write $apply_cmd]
-		fconfigure $p -translation binary -encoding binary
+		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p $patch
 		close $p} err]} {

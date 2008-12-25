@@ -24,6 +24,7 @@ static const char *fast_export_usage[] = {
 
 static int progress;
 static enum { VERBATIM, WARN, STRIP, ABORT } signed_tag_mode = ABORT;
+static int fake_missing_tagger;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
 				     const char *arg, int unset)
@@ -297,10 +298,17 @@ static void handle_tag(const char *name, struct tag *tag)
 		message_size = strlen(message);
 	}
 	tagger = memmem(buf, message ? message - buf : size, "\ntagger ", 8);
-	if (!tagger)
-		die ("No tagger for tag %s", sha1_to_hex(tag->object.sha1));
-	tagger++;
-	tagger_end = strchrnul(tagger, '\n');
+	if (!tagger) {
+		if (fake_missing_tagger)
+			tagger = "tagger Unspecified Tagger "
+				"<unspecified-tagger> 0 +0000";
+		else
+			tagger = "";
+		tagger_end = tagger + strlen(tagger);
+	} else {
+		tagger++;
+		tagger_end = strchrnul(tagger, '\n');
+	}
 
 	/* handle signed tags */
 	if (message) {
@@ -326,9 +334,10 @@ static void handle_tag(const char *name, struct tag *tag)
 
 	if (!prefixcmp(name, "refs/tags/"))
 		name += 10;
-	printf("tag %s\nfrom :%d\n%.*s\ndata %d\n%.*s\n",
+	printf("tag %s\nfrom :%d\n%.*s%sdata %d\n%.*s\n",
 	       name, get_object_mark(tag->tagged),
 	       (int)(tagger_end - tagger), tagger,
+	       tagger == tagger_end ? "" : "\n",
 	       (int)message_size, (int)message_size, message ? message : "");
 }
 
@@ -354,7 +363,7 @@ static void get_tags_and_duplicates(struct object_array *pending,
 		case OBJ_TAG:
 			tag = (struct tag *)e->item;
 			while (tag && tag->object.type == OBJ_TAG) {
-				string_list_insert(full_name, extra_refs)->util = tag;
+				string_list_append(full_name, extra_refs)->util = tag;
 				tag = (struct tag *)tag->tagged;
 			}
 			if (!tag)
@@ -374,7 +383,7 @@ static void get_tags_and_duplicates(struct object_array *pending,
 		}
 		if (commit->util)
 			/* more than one name for the same object */
-			string_list_insert(full_name, extra_refs)->util = commit;
+			string_list_append(full_name, extra_refs)->util = commit;
 		else
 			commit->util = full_name;
 	}
@@ -483,6 +492,8 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 			     "Dump marks to this file"),
 		OPT_STRING(0, "import-marks", &import_filename, "FILE",
 			     "Import marks from this file"),
+		OPT_BOOLEAN(0, "fake-missing-tagger", &fake_missing_tagger,
+			     "Fake a tagger when tags lack one"),
 		OPT_END()
 	};
 

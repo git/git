@@ -111,6 +111,8 @@ int start_command(struct child_process *cmd)
 					unsetenv(*cmd->env);
 			}
 		}
+		if (cmd->preexec_cb)
+			cmd->preexec_cb();
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
 		} else {
@@ -268,14 +270,6 @@ int run_command_v_opt(const char **argv, int opt)
 {
 	struct child_process cmd;
 	prepare_run_command_v_opt(&cmd, argv, opt);
-	return run_command(&cmd);
-}
-
-int run_command_v_opt_cd(const char **argv, int opt, const char *dir)
-{
-	struct child_process cmd;
-	prepare_run_command_v_opt(&cmd, argv, opt);
-	cmd.dir = dir;
 	return run_command(&cmd);
 }
 

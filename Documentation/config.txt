@@ -117,6 +117,17 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See linkgit:git-update-index[1]. True by default.
 
+core.ignoreCygwinFSTricks::
+	This option is only used by Cygwin implementation of Git. If false,
+	the Cygwin stat() and lstat() functions are used. This may be useful
+	if your repository consists of a few separate directories joined in
+	one hierarchy using Cygwin mount. If true, Git uses native Win32 API
+	whenever it is possible and falls back to Cygwin functions only to
+	handle symbol links. The native mode is more than twice faster than
+	normal Cygwin l/stat() functions. True by default, unless core.filemode
+	is true, in which case ignoreCygwinFSTricks is ignored as Cygwin's
+	POSIX emulation is required to support core.filemode.
+
 core.trustctime::
 	If false, the ctime differences between the index and the
 	working copy are ignored; useful when the inode change time
@@ -363,8 +374,17 @@ core.pager::
 	variable.  Note that git sets the `LESS` environment
 	variable to `FRSX` if it is unset when it runs the
 	pager.  One can change these settings by setting the
-	`LESS` variable to some other value or by giving the
-	`core.pager` option a value such as "`less -+FRSX`".
+	`LESS` variable to some other value.  Alternately,
+	these settings can be overridden on a project or
+	global basis by setting the `core.pager` option.
+	Setting `core.pager` has no affect on the `LESS`
+	environment variable behaviour above, so if you want
+	to override git's default settings this way, you need
+	to be explicit.  For example, to disable the S option
+	in a backward compatible manner, set `core.pager`
+	to "`less -+$LESS -FRX`".  This will be passed to the
+	shell by git, which will translate the final command to
+	"`LESS=FRSX less -+FRSX -FRX`".
 
 core.whitespace::
 	A comma separated list of common whitespace problems to
@@ -392,6 +412,15 @@ This is a total waste of time and effort on a filesystem that orders
 data writes properly, but can be useful for filesystems that do not use
 journalling (traditional UNIX filesystems) or that only journal metadata
 and not file contents (OS X's HFS+, or Linux ext3 with "data=writeback").
+
+core.preloadindex::
+	Enable parallel index preload for operations like 'git diff'
++
+This can speed up operations like 'git diff' and 'git status' especially
+on filesystems like NFS that have weak caching semantics and thus
+relatively high IO latencies.  With this set to 'true', git will do the
+index comparison to the filesystem data in parallel, allowing
+overlapping IO's.
 
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
@@ -552,15 +581,15 @@ color.status.<slot>::
 	to red). The values of these variables may be specified as in
 	color.branch.<slot>.
 
-commit.template::
-	Specify a file to use as the template for new commit messages.
-
 color.ui::
 	When set to `always`, always use colors in all git commands which
 	are capable of colored output. When false (or `never`), never. When
 	set to `true` or `auto`, use colors only when the output is to the
 	terminal. When more specific variables of color.* are set, they always
 	take precedence over this setting. Defaults to false.
+
+commit.template::
+	Specify a file to use as the template for new commit messages.
 
 diff.autorefreshindex::
 	When using 'git-diff' to compare with work tree
@@ -581,6 +610,22 @@ diff.external::
 	you want to use an external diff program only on a subset of
 	your files, you	might want to use linkgit:gitattributes[5] instead.
 
+diff.mnemonicprefix::
+	If set, 'git-diff' uses a prefix pair that is different from the
+	standard "a/" and "b/" depending on what is being compared.  When
+	this configuration is in effect, reverse diff output also swaps
+	the order of the prefixes:
+'git-diff';;
+	compares the (i)ndex and the (w)ork tree;
+'git-diff HEAD';;
+	 compares a (c)ommit and the (w)ork tree;
+'git diff --cached';;
+	compares a (c)ommit and the (i)ndex;
+'git-diff HEAD:file1 file2';;
+	compares an (o)bject and a (w)ork tree entity;
+'git diff --no-index a b';;
+	compares two non-git things (1) and (2).
+
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
 	detection; equivalent to the 'git-diff' option '-l'.
@@ -589,6 +634,10 @@ diff.renames::
 	Tells git to detect renames.  If set to any boolean value, it
 	will enable basic rename detection.  If set to "copies" or
 	"copy", it will detect copies, as well.
+
+diff.suppress-blank-empty::
+	A boolean to inhibit the standard behavior of printing a space
+	before each empty output line. Defaults to false.
 
 fetch.unpackLimit::
 	If the number of objects fetched over the git native
@@ -602,10 +651,11 @@ fetch.unpackLimit::
 	`transfer.unpackLimit` is used instead.
 
 format.numbered::
-	A boolean which can enable sequence numbers in patch subjects.
-	Setting this option to "auto" will enable it only if there is
-	more than one patch.  See --numbered option in
-	linkgit:git-format-patch[1].
+	A boolean which can enable or disable sequence numbers in patch
+	subjects.  It defaults to "auto" which enables it only if there
+	is more than one patch.  It can be enabled or disabled for all
+	messages by setting it to "true" or "false".  See --numbered
+	option in linkgit:git-format-patch[1].
 
 format.headers::
 	Additional email headers to include in a patch to be submitted
@@ -672,18 +722,6 @@ gc.rerereunresolved::
 	Records of conflicted merge you have not resolved are
 	kept for this many days when 'git-rerere gc' is run.
 	The default is 15 days.  See linkgit:git-rerere[1].
-
-rerere.autoupdate::
-	When set to true, `git-rerere` updates the index with the
-	resulting contents after it cleanly resolves conflicts using
-	previously recorded resolution.  Defaults to false.
-
-rerere.enabled::
-	Activate recording of resolved conflicts, so that identical
-	conflict hunks can be resolved automatically, should they
-	be encountered again.  linkgit:git-rerere[1] command is by
-	default enabled if you create `rr-cache` directory under
-	`$GIT_DIR`, but can be disabled by setting this option to false.
 
 gitcvs.enabled::
 	Whether the CVS server interface is enabled for this repository.
@@ -755,6 +793,14 @@ gui.diffcontext::
 	Specifies how many context lines should be used in calls to diff
 	made by the linkgit:git-gui[1]. The default is "5".
 
+gui.encoding::
+	Specifies the default encoding to use for displaying of
+	file contents in linkgit:git-gui[1] and linkgit:gitk[1].
+	It can be overridden by setting the 'encoding' attribute
+	for relevant files (see linkgit:gitattributes[5]).
+	If this option is not set, the tools default to the
+	locale encoding.
+
 gui.matchtrackingbranch::
 	Determines if new branches created with linkgit:git-gui[1] should
 	default to tracking remote branches with matching names or
@@ -777,6 +823,73 @@ gui.spellingdictionary::
 	the linkgit:git-gui[1]. When set to "none" spell checking is turned
 	off.
 
+gui.fastcopyblame::
+	If true, 'git gui blame' uses '-C' instead of '-C -C' for original
+	location detection. It makes blame significantly faster on huge
+	repositories at the expense of less thorough copy detection.
+
+gui.copyblamethreshold::
+	Specifies the threshold to use in 'git gui blame' original location
+	detection, measured in alphanumeric characters. See the
+	linkgit:git-blame[1] manual for more information on copy detection.
+
+gui.blamehistoryctx::
+	Specifies the radius of history context in days to show in
+	linkgit:gitk[1] for the selected commit, when the `Show History
+	Context` menu item is invoked from 'git gui blame'. If this
+	variable is set to zero, the whole history is shown.
+
+guitool.<name>.cmd::
+	Specifies the shell command line to execute when the corresponding item
+	of the linkgit:git-gui[1] `Tools` menu is invoked. This option is
+	mandatory for every tool. The command is executed from the root of
+	the working directory, and in the environment it receives the name of
+	the tool as 'GIT_GUITOOL', the name of the currently selected file as
+	'FILENAME', and the name of the current branch as 'CUR_BRANCH' (if
+	the head is detached, 'CUR_BRANCH' is empty).
+
+guitool.<name>.needsfile::
+	Run the tool only if a diff is selected in the GUI. It guarantees
+	that 'FILENAME' is not empty.
+
+guitool.<name>.noconsole::
+	Run the command silently, without creating a window to display its
+	output.
+
+guitool.<name>.norescan::
+	Don't rescan the working directory for changes after the tool
+	finishes execution.
+
+guitool.<name>.confirm::
+	Show a confirmation dialog before actually running the tool.
+
+guitool.<name>.argprompt::
+	Request a string argument from the user, and pass it to the tool
+	through the 'ARGS' environment variable. Since requesting an
+	argument implies confirmation, the 'confirm' option has no effect
+	if this is enabled. If the option is set to 'true', 'yes', or '1',
+	the dialog uses a built-in generic prompt; otherwise the exact
+	value of the variable is used.
+
+guitool.<name>.revprompt::
+	Request a single valid revision from the user, and set the
+	'REVISION' environment variable. In other aspects this option
+	is similar to 'argprompt', and can be used together with it.
+
+guitool.<name>.revunmerged::
+	Show only unmerged branches in the 'revprompt' subdialog.
+	This is useful for tools similar to merge or rebase, but not
+	for things like checkout or reset.
+
+guitool.<name>.title::
+	Specifies the title to use for the prompt dialog. The default
+	is the tool name.
+
+guitool.<name>.prompt::
+	Specifies the general prompt string to display at the top of
+	the dialog, before subsections for 'argprompt' and 'revprompt'.
+	The default value includes the actual command.
+
 help.browser::
 	Specify the browser that will be used to display help in the
 	'web' format. See linkgit:git-help[1].
@@ -785,6 +898,15 @@ help.format::
 	Override the default help format used by linkgit:git-help[1].
 	Values 'man', 'info', 'web' and 'html' are supported. 'man' is
 	the default. 'web' and 'html' are the same.
+
+help.autocorrect::
+	Automatically correct and execute mistyped commands after
+	waiting for the given number of deciseconds (0.1 sec). If more
+	than one command can be deduced from the entered text, nothing
+	will be executed.  If the value of this option is negative,
+	the corrected command will be executed immediately. If the
+	value is 0 - the command will be just shown but not executed.
+	This is the default.
 
 http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy'
@@ -843,6 +965,10 @@ i18n.logOutputEncoding::
 	Character encoding the commit messages are converted to when
 	running 'git-log' and friends.
 
+imap::
+	The configuration variables in the 'imap' section are described
+	in linkgit:git-imap-send[1].
+
 instaweb.browser::
 	Specify the program that will be used to browse your working
 	repository in gitweb. See linkgit:git-instaweb[1].
@@ -878,8 +1004,6 @@ man.viewer::
 	Specify the programs that may be used to display help in the
 	'man' format. See linkgit:git-help[1].
 
-include::merge-config.txt[]
-
 man.<tool>.cmd::
 	Specify the command to invoke the specified man viewer. The
 	specified command is evaluated in shell with the man page
@@ -888,6 +1012,8 @@ man.<tool>.cmd::
 man.<tool>.path::
 	Override the path for the given tool that may be used to
 	display help in the 'man' format. See linkgit:git-help[1].
+
+include::merge-config.txt[]
 
 mergetool.<tool>.path::
 	Override the path for the given tool.  This is useful in case
@@ -997,6 +1123,41 @@ pull.octopus::
 pull.twohead::
 	The default merge strategy to use when pulling a single branch.
 
+receive.fsckObjects::
+	If it is set to true, git-receive-pack will check all received
+	objects. It will abort in the case of a malformed object or a
+	broken link. The result of an abort are only dangling objects.
+	Defaults to false.
+
+receive.unpackLimit::
+	If the number of objects received in a push is below this
+	limit then the objects will be unpacked into loose object
+	files. However if the number of received objects equals or
+	exceeds this limit then the received pack will be stored as
+	a pack, after adding any missing delta bases.  Storing the
+	pack from a push can make the push operation complete faster,
+	especially on slow filesystems.  If not set, the value of
+	`transfer.unpackLimit` is used instead.
+
+receive.denyDeletes::
+	If set to true, git-receive-pack will deny a ref update that deletes
+	the ref. Use this to prevent such a ref deletion via a push.
+
+receive.denyCurrentBranch::
+	If set to true or "refuse", receive-pack will deny a ref update
+	to the currently checked out branch of a non-bare repository.
+	Such a push is potentially dangerous because it brings the HEAD
+	out of sync with the index and working tree. If set to "warn",
+	print a warning of such a push to stderr, but allow the push to
+	proceed. If set to false or "ignore", allow such pushes with no
+	message. Defaults to "warn".
+
+receive.denyNonFastForwards::
+	If set to true, git-receive-pack will deny a ref update which is
+	not a fast forward. Use this to prevent such an update via a push,
+	even if that push is forced. This configuration variable is
+	set when initializing a shared repository.
+
 remote.<name>.url::
 	The URL of a remote repository.  See linkgit:git-fetch[1] or
 	linkgit:git-push[1].
@@ -1046,6 +1207,18 @@ repack.usedeltabaseoffset::
 	"false" and repack. Access from old git versions over the
 	native protocol are unaffected by this option.
 
+rerere.autoupdate::
+	When set to true, `git-rerere` updates the index with the
+	resulting contents after it cleanly resolves conflicts using
+	previously recorded resolution.  Defaults to false.
+
+rerere.enabled::
+	Activate recording of resolved conflicts, so that identical
+	conflict hunks can be resolved automatically, should they
+	be encountered again.  linkgit:git-rerere[1] command is by
+	default enabled if you create `rr-cache` directory under
+	`$GIT_DIR`, but can be disabled by setting this option to false.
+
 showbranch.default::
 	The default set of branches for linkgit:git-show-branch[1].
 	See linkgit:git-show-branch[1].
@@ -1082,6 +1255,11 @@ tar.umask::
 	archiving user's umask will be used instead.  See umask(2) and
 	linkgit:git-archive[1].
 
+transfer.unpackLimit::
+	When `fetch.unpackLimit` or `receive.unpackLimit` are
+	not set, the value of this variable is used instead.
+	The default value is 100.
+
 url.<base>.insteadOf::
 	Any URL that starts with this value will be rewritten to
 	start, instead, with <base>. In cases where some site serves a
@@ -1109,37 +1287,6 @@ user.signingkey::
 	default selection with this variable.  This option is passed
 	unchanged to gpg's --local-user parameter, so you may specify a key
 	using any method that gpg supports.
-
-imap::
-	The configuration variables in the 'imap' section are described
-	in linkgit:git-imap-send[1].
-
-receive.fsckObjects::
-	If it is set to true, git-receive-pack will check all received
-	objects. It will abort in the case of a malformed object or a
-	broken link. The result of an abort are only dangling objects.
-	Defaults to false.
-
-receive.unpackLimit::
-	If the number of objects received in a push is below this
-	limit then the objects will be unpacked into loose object
-	files. However if the number of received objects equals or
-	exceeds this limit then the received pack will be stored as
-	a pack, after adding any missing delta bases.  Storing the
-	pack from a push can make the push operation complete faster,
-	especially on slow filesystems.  If not set, the value of
-	`transfer.unpackLimit` is used instead.
-
-receive.denyNonFastForwards::
-	If set to true, git-receive-pack will deny a ref update which is
-	not a fast forward. Use this to prevent such an update via a push,
-	even if that push is forced. This configuration variable is
-	set when initializing a shared repository.
-
-transfer.unpackLimit::
-	When `fetch.unpackLimit` or `receive.unpackLimit` are
-	not set, the value of this variable is used instead.
-	The default value is 100.
 
 web.browser::
 	Specify a web browser that may be used by some commands.

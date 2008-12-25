@@ -142,4 +142,26 @@ test_expect_success 'custom merge backend' '
 	rm -f $o $a $b
 '
 
+test_expect_success 'up-to-date merge without common ancestor' '
+	test_create_repo repo1 &&
+	test_create_repo repo2 &&
+	test_tick &&
+	(
+		cd repo1 &&
+		>a &&
+		git add a &&
+		git commit -m initial
+	) &&
+	test_tick &&
+	(
+		cd repo2 &&
+		git commit --allow-empty -m initial
+	) &&
+	test_tick &&
+	(
+		cd repo1 &&
+		git pull ../repo2 master
+	)
+'
+
 test_done

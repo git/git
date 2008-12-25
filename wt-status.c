@@ -22,12 +22,6 @@ static char wt_status_colors[][COLOR_MAXLEN] = {
 	"\033[31m", /* WT_STATUS_NOBRANCH: red */
 };
 
-static const char use_add_msg[] =
-"use \"git add <file>...\" to update what will be committed";
-static const char use_add_rm_msg[] =
-"use \"git add/rm <file>...\" to update what will be committed";
-static const char use_add_to_include_msg[] =
-"use \"git add <file>...\" to include in what will be committed";
 enum untracked_status_type show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 
 static int parse_status_slot(const char *var, int offset)
@@ -76,12 +70,24 @@ static void wt_status_print_cached_header(struct wt_status *s)
 	color_fprintf_ln(s->fp, c, "#");
 }
 
-static void wt_status_print_header(struct wt_status *s,
-				   const char *main, const char *sub)
+static void wt_status_print_dirty_header(struct wt_status *s,
+					 int has_deleted)
 {
 	const char *c = color(WT_STATUS_HEADER);
-	color_fprintf_ln(s->fp, c, "# %s:", main);
-	color_fprintf_ln(s->fp, c, "#   (%s)", sub);
+	color_fprintf_ln(s->fp, c, "# Changed but not updated:");
+	if (!has_deleted)
+		color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to update what will be committed)");
+	else
+		color_fprintf_ln(s->fp, c, "#   (use \"git add/rm <file>...\" to update what will be committed)");
+	color_fprintf_ln(s->fp, c, "#   (use \"git checkout -- <file>...\" to discard changes in working directory)");
+	color_fprintf_ln(s->fp, c, "#");
+}
+
+static void wt_status_print_untracked_header(struct wt_status *s)
+{
+	const char *c = color(WT_STATUS_HEADER);
+	color_fprintf_ln(s->fp, c, "# Untracked files:");
+	color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to include in what will be committed)");
 	color_fprintf_ln(s->fp, c, "#");
 }
 
@@ -97,10 +103,8 @@ static void wt_status_print_filepair(struct wt_status *s,
 {
 	const char *c = color(t);
 	const char *one, *two;
-	struct strbuf onebuf, twobuf;
+	struct strbuf onebuf = STRBUF_INIT, twobuf = STRBUF_INIT;
 
-	strbuf_init(&onebuf, 0);
-	strbuf_init(&twobuf, 0);
 	one = quote_path(p->one->path, -1, &onebuf, s->prefix);
 	two = quote_path(p->two->path, -1, &twobuf, s->prefix);
 
@@ -166,14 +170,14 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 	struct wt_status *s = data;
 	int i;
 	if (q->nr) {
-		const char *msg = use_add_msg;
+		int has_deleted = 0;
 		s->workdir_dirty = 1;
 		for (i = 0; i < q->nr; i++)
 			if (q->queue[i]->status == DIFF_STATUS_DELETED) {
-				msg = use_add_rm_msg;
+				has_deleted = 1;
 				break;
 			}
-		wt_status_print_header(s, "Changed but not updated", msg);
+		wt_status_print_dirty_header(s, has_deleted);
 	}
 	for (i = 0; i < q->nr; i++)
 		wt_status_print_filepair(s, WT_STATUS_CHANGED, q->queue[i]);
@@ -181,32 +185,12 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 		wt_status_print_trailer(s);
 }
 
-static void wt_status_print_initial(struct wt_status *s)
-{
-	int i;
-	struct strbuf buf;
-
-	strbuf_init(&buf, 0);
-	if (active_nr) {
-		s->commitable = 1;
-		wt_status_print_cached_header(s);
-	}
-	for (i = 0; i < active_nr; i++) {
-		color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
-		color_fprintf_ln(s->fp, color(WT_STATUS_UPDATED), "new file: %s",
-				quote_path(active_cache[i]->name, -1,
-					   &buf, s->prefix));
-	}
-	if (active_nr)
-		wt_status_print_trailer(s);
-	strbuf_release(&buf);
-}
-
 static void wt_status_print_updated(struct wt_status *s)
 {
 	struct rev_info rev;
 	init_revisions(&rev, NULL);
-	setup_revisions(0, NULL, &rev, s->reference);
+	setup_revisions(0, NULL, &rev,
+		s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_print_updated_cb;
 	rev.diffopt.format_callback_data = s;
@@ -262,9 +246,8 @@ static void wt_status_print_untracked(struct wt_status *s)
 	struct dir_struct dir;
 	int i;
 	int shown_header = 0;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 
-	strbuf_init(&buf, 0);
 	memset(&dir, 0, sizeof(dir));
 
 	if (!s->untracked) {
@@ -275,24 +258,12 @@ static void wt_status_print_untracked(struct wt_status *s)
 
 	read_directory(&dir, ".", "", 0, NULL);
 	for(i = 0; i < dir.nr; i++) {
-		/* check for matching entry, which is unmerged; lifted from
-		 * builtin-ls-files:show_other_files */
 		struct dir_entry *ent = dir.entries[i];
-		int pos = cache_name_pos(ent->name, ent->len);
-		struct cache_entry *ce;
-		if (0 <= pos)
-			die("bug in wt_status_print_untracked");
-		pos = -pos - 1;
-		if (pos < active_nr) {
-			ce = active_cache[pos];
-			if (ce_namelen(ce) == ent->len &&
-			    !memcmp(ce->name, ent->name, ent->len))
-				continue;
-		}
+		if (!cache_name_is_other(ent->name, ent->len))
+			continue;
 		if (!shown_header) {
 			s->workdir_untracked = 1;
-			wt_status_print_header(s, "Untracked files",
-					       use_add_to_include_msg);
+			wt_status_print_untracked_header(s);
 			shown_header = 1;
 		}
 		color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
@@ -308,11 +279,21 @@ static void wt_status_print_verbose(struct wt_status *s)
 	struct rev_info rev;
 
 	init_revisions(&rev, NULL);
-	setup_revisions(0, NULL, &rev, s->reference);
+	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
+	setup_revisions(0, NULL, &rev,
+		s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.file = s->fp;
 	rev.diffopt.close_file = 0;
+	/*
+	 * If we're not going to stdout, then we definitely don't
+	 * want color, since we are going to the commit message
+	 * file (and even the "auto" setting won't work, since it
+	 * will have checked isatty on stdout).
+	 */
+	if (s->fp != stdout)
+		DIFF_OPT_CLR(&rev.diffopt, COLOR_DIFF);
 	run_diff_index(&rev, 1);
 }
 
@@ -361,12 +342,9 @@ void wt_status_print(struct wt_status *s)
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "# Initial commit");
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
-		wt_status_print_initial(s);
-	}
-	else {
-		wt_status_print_updated(s);
 	}
 
+	wt_status_print_updated(s);
 	wt_status_print_changed(s);
 	if (wt_status_submodule_summary)
 		wt_status_print_submodule_summary(s);
@@ -375,7 +353,7 @@ void wt_status_print(struct wt_status *s)
 	else if (s->commitable)
 		 fprintf(s->fp, "# Untracked files not listed (use -u option to show untracked files)\n");
 
-	if (s->verbose && !s->is_initial)
+	if (s->verbose)
 		wt_status_print_verbose(s);
 	if (!s->commitable) {
 		if (s->amend)
@@ -432,5 +410,5 @@ int git_status_config(const char *k, const char *v, void *cb)
 			return error("Invalid untracked files mode '%s'", v);
 		return 0;
 	}
-	return git_color_default_config(k, v, cb);
+	return git_diff_ui_config(k, v, cb);
 }

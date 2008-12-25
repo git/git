@@ -334,14 +334,60 @@ test_expect_success \
     test "$(git config branch.track2.merge)"
     git config branch.autosetupmerge false'
 
-test_expect_success \
-    'checkout w/--track from non-branch HEAD fails' '
-    git checkout -b delete-me master &&
-    rm .git/refs/heads/delete-me &&
-    test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
-    test_must_fail git checkout --track -b track'
+test_expect_success 'checkout w/--track from non-branch HEAD fails' '
+    git checkout master^0 &&
+    test_must_fail git symbolic-ref HEAD &&
+    test_must_fail git checkout --track -b track &&
+    test_must_fail git rev-parse --verify track &&
+    test_must_fail git symbolic-ref HEAD &&
+    test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
+'
 
-test_expect_success 'checkout an unmerged path should fail' '
+test_expect_success 'detach a symbolic link HEAD' '
+    git checkout master &&
+    git config --bool core.prefersymlinkrefs yes &&
+    git checkout side &&
+    git checkout master &&
+    it=$(git symbolic-ref HEAD) &&
+    test "z$it" = zrefs/heads/master &&
+    here=$(git rev-parse --verify refs/heads/master) &&
+    git checkout side^ &&
+    test "z$(git rev-parse --verify refs/heads/master)" = "z$here"
+'
+
+test_expect_success \
+    'checkout with --track fakes a sensible -b <name>' '
+    git update-ref refs/remotes/origin/koala/bear renamer &&
+    git update-ref refs/new/koala/bear renamer &&
+
+    git checkout --track origin/koala/bear &&
+    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+
+    git checkout master && git branch -D koala/bear &&
+
+    git checkout --track refs/remotes/origin/koala/bear &&
+    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+
+    git checkout master && git branch -D koala/bear &&
+
+    git checkout --track remotes/origin/koala/bear &&
+    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+
+    git checkout master && git branch -D koala/bear &&
+
+    git checkout --track refs/new/koala/bear &&
+    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
+    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"
+'
+
+test_expect_success \
+    'checkout with --track, but without -b, fails with too short tracked name' '
+    test_must_fail git checkout --track renamer'
+
+setup_conflicting_index () {
 	rm -f .git/index &&
 	O=$(echo original | git hash-object -w --stdin) &&
 	A=$(echo ourside | git hash-object -w --stdin) &&
@@ -352,7 +398,11 @@ test_expect_success 'checkout an unmerged path should fail' '
 		echo "100644 $A 2	file" &&
 		echo "100644 $B 3	file" &&
 		echo "100644 $A 0	filf"
-	) | git update-index --index-info &&
+	) | git update-index --index-info
+}
+
+test_expect_success 'checkout an unmerged path should fail' '
+	setup_conflicting_index &&
 	echo "none of the above" >sample &&
 	cat sample >fild &&
 	cat sample >file &&
@@ -361,6 +411,131 @@ test_expect_success 'checkout an unmerged path should fail' '
 	test_cmp sample fild &&
 	test_cmp sample filf &&
 	test_cmp sample file
+'
+
+test_expect_success 'checkout with an unmerged path can be ignored' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout -f fild file filf &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp sample file
+'
+
+test_expect_success 'checkout unmerged stage' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout --ours . &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp expect file &&
+	git checkout --theirs file &&
+	test ztheirside = "z$(cat file)"
+'
+
+test_expect_success 'checkout with --merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout -m -- fild file filf &&
+	(
+		echo "<<<<<<< ours"
+		echo ourside
+		echo "======="
+		echo theirside
+		echo ">>>>>>> theirs"
+	) >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_success 'checkout with --merge, in diff3 -m style' '
+	git config merge.conflictstyle diff3 &&
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout -m -- fild file filf &&
+	(
+		echo "<<<<<<< ours"
+		echo ourside
+		echo "|||||||"
+		echo original
+		echo "======="
+		echo theirside
+		echo ">>>>>>> theirs"
+	) >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_success 'checkout --conflict=merge, overriding config' '
+	git config merge.conflictstyle diff3 &&
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout --conflict=merge -- fild file filf &&
+	(
+		echo "<<<<<<< ours"
+		echo ourside
+		echo "======="
+		echo theirside
+		echo ">>>>>>> theirs"
+	) >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_success 'checkout --conflict=diff3' '
+	git config --unset merge.conflictstyle
+	setup_conflicting_index &&
+	echo "none of the above" >sample &&
+	echo ourside >expect &&
+	cat sample >fild &&
+	cat sample >file &&
+	cat sample >filf &&
+	git checkout --conflict=diff3 -- fild file filf &&
+	(
+		echo "<<<<<<< ours"
+		echo ourside
+		echo "|||||||"
+		echo original
+		echo "======="
+		echo theirside
+		echo ">>>>>>> theirs"
+	) >merged &&
+	test_cmp expect fild &&
+	test_cmp expect filf &&
+	test_cmp merged file
+'
+
+test_expect_success 'failing checkout -b should not break working tree' '
+	git reset --hard master &&
+	git symbolic-ref HEAD refs/heads/master &&
+	test_must_fail git checkout -b renamer side^ &&
+	test $(git symbolic-ref HEAD) = refs/heads/master &&
+	git diff --exit-code &&
+	git diff --cached --exit-code
+
 '
 
 test_done

@@ -66,7 +66,7 @@ my ($_stdin, $_help, $_edit,
 	$_version, $_fetch_all, $_no_rebase,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_git_format, $_commit_url);
+	$_git_format, $_commit_url, $_tag);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -131,6 +131,15 @@ my %cmd = (
 			  'revision|r=i' => \$_revision,
 			  'no-rebase' => \$_no_rebase,
 			%cmt_opts, %fc_opts } ],
+	branch => [ \&cmd_branch,
+	            'Create a branch in the SVN repository',
+	            { 'message|m=s' => \$_message,
+	              'dry-run|n' => \$_dry_run,
+		      'tag|t' => \$_tag } ],
+	tag => [ sub { $_tag = 1; cmd_branch(@_) },
+	         'Create a tag in the SVN repository',
+	         { 'message|m=s' => \$_message,
+	           'dry-run|n' => \$_dry_run } ],
 	'set-tree' => [ \&cmd_set_tree,
 	                "Set an SVN repository to a git tree-ish",
 			{ 'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
@@ -214,11 +223,13 @@ unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 			    "but it is not a directory\n";
 		}
 		my $git_dir = delete $ENV{GIT_DIR};
-		chomp(my $cdup = command_oneline(qw/rev-parse --show-cdup/));
-		unless (length $cdup) {
-			die "Already at toplevel, but $git_dir ",
-			    "not found '$cdup'\n";
-		}
+		my $cdup = undef;
+		git_cmd_try {
+			$cdup = command_oneline(qw/rev-parse --show-cdup/);
+			$git_dir = '.' unless ($cdup);
+			chomp $cdup if ($cdup);
+			$cdup = "." unless ($cdup && length $cdup);
+		} "Already at toplevel, but $git_dir not found\n";
 		chdir $cdup or die "Unable to chdir up to '$cdup'\n";
 		unless (-d $git_dir) {
 			die "$git_dir still not found after going to ",
@@ -421,14 +432,14 @@ sub cmd_dcommit {
 	$head ||= 'HEAD';
 	my @refs;
 	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
+	unless ($gs) {
+		die "Unable to determine upstream SVN information from ",
+		    "$head history.\nPerhaps the repository is empty.";
+	}
 	$url = defined $_commit_url ? $_commit_url : $gs->full_url;
 	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
 		print "Committing to $url ...\n";
-	}
-	unless ($gs) {
-		die "Unable to determine upstream SVN information from ",
-		    "$head history.\nPerhaps the repository is empty.";
 	}
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
 	if ($_no_rebase && scalar(@$linear_refs) > 1) {
@@ -535,6 +546,42 @@ sub cmd_dcommit {
 		}
 	}
 	unlink $gs->{index};
+}
+
+sub cmd_branch {
+	my ($branch_name, $head) = @_;
+
+	unless (defined $branch_name && length $branch_name) {
+		die(($_tag ? "tag" : "branch") . " name required\n");
+	}
+	$head ||= 'HEAD';
+
+	my ($src, $rev, undef, $gs) = working_head_info($head);
+
+	my $remote = Git::SVN::read_all_remotes()->{$gs->{repo_id}};
+	my $glob = $remote->{ $_tag ? 'tags' : 'branches' };
+	my ($lft, $rgt) = @{ $glob->{path} }{qw/left right/};
+	my $dst = join '/', $remote->{url}, $lft, $branch_name, ($rgt || ());
+
+	my $ctx = SVN::Client->new(
+		auth    => Git::SVN::Ra::_auth_providers(),
+		log_msg => sub {
+			${ $_[0] } = defined $_message
+				? $_message
+				: 'Create ' . ($_tag ? 'tag ' : 'branch ' )
+				. $branch_name;
+		},
+	);
+
+	eval {
+		$ctx->ls($dst, 'HEAD', 0);
+	} and die "branch ${branch_name} already exists\n";
+
+	print "Copying ${src} at r${rev} to ${dst}...\n";
+	$ctx->copy($src, $rev, $dst)
+		unless $_dry_run;
+
+	$gs->fetch_all;
 }
 
 sub cmd_find_rev {
@@ -803,8 +850,28 @@ sub cmd_commit_diff {
 	}
 }
 
+sub escape_uri_only {
+	my ($uri) = @_;
+	my @tmp;
+	foreach (split m{/}, $uri) {
+		s/([^~\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
+		push @tmp, $_;
+	}
+	join('/', @tmp);
+}
+
+sub escape_url {
+	my ($url) = @_;
+	if ($url =~ m#^([^:]+)://([^/]*)(.*)$#) {
+		my ($scheme, $domain, $uri) = ($1, $2, escape_uri_only($3));
+		$url = "$scheme://$domain$uri";
+	}
+	$url;
+}
+
 sub cmd_info {
 	my $path = canonicalize_path(defined($_[0]) ? $_[0] : ".");
+	my $fullpath = canonicalize_path($cmd_dir_prefix . $path);
 	if (exists $_[1]) {
 		die "Too many arguments specified\n";
 	}
@@ -812,8 +879,8 @@ sub cmd_info {
 	my ($file_type, $diff_status) = find_file_type_and_diff_status($path);
 
 	if (!$file_type && !$diff_status) {
-		print STDERR "$path:  (Not a versioned resource)\n\n";
-		return;
+		print STDERR "svn: '$path' is not under version control\n";
+		exit 1;
 	}
 
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
@@ -825,21 +892,21 @@ sub cmd_info {
 	# canonicalize_path() will return "" to make libsvn 1.5.x happy,
 	$path = "." if $path eq "";
 
-	my $full_url = $url . ($path eq "." ? "" : "/$path");
+	my $full_url = $url . ($fullpath eq "" ? "" : "/$fullpath");
 
 	if ($_url) {
-		print $full_url, "\n";
+		print escape_url($full_url), "\n";
 		return;
 	}
 
 	my $result = "Path: $path\n";
 	$result .= "Name: " . basename($path) . "\n" if $file_type ne "dir";
-	$result .= "URL: " . $full_url . "\n";
+	$result .= "URL: " . escape_url($full_url) . "\n";
 
 	eval {
 		my $repos_root = $gs->repos_root;
 		Git::SVN::remove_username($repos_root);
-		$result .= "Repository Root: $repos_root\n";
+		$result .= "Repository Root: " . escape_url($repos_root) . "\n";
 	};
 	if ($@) {
 		$result .= "Repository Root: (offline)\n";
@@ -861,7 +928,7 @@ sub cmd_info {
 	}
 
 	my ($lc_author, $lc_rev, $lc_date_utc);
-	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $path);
+	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $fullpath);
 	my $log = command_output_pipe(@args);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {
@@ -1071,9 +1138,19 @@ sub get_commit_entry {
 		system($editor, $commit_editmsg);
 	}
 	rename $commit_editmsg, $commit_msg or croak $!;
-	open $log_fh, '<', $commit_msg or croak $!;
-	{ local $/; chomp($log_entry{log} = <$log_fh>); }
-	close $log_fh or croak $!;
+	{
+		# SVN requires messages to be UTF-8 when entering the repo
+		local $/;
+		open $log_fh, '<', $commit_msg or croak $!;
+		binmode $log_fh;
+		chomp($log_entry{log} = <$log_fh>);
+
+		if (my $enc = Git::config('i18n.commitencoding')) {
+			require Encode;
+			Encode::from_to($log_entry{log}, $enc, 'UTF-8');
+		}
+		close $log_fh or croak $!;
+	}
 	unlink $commit_msg;
 	\%log_entry;
 }
@@ -1126,7 +1203,7 @@ sub read_repo_config {
 		my $v = $opts->{$o};
 		my ($key) = ($o =~ /^([a-zA-Z\-]+)/);
 		$key =~ s/-//g;
-		my $arg = 'git-config';
+		my $arg = 'git config';
 		$arg .= ' --int' if ($o =~ /[:=]i$/);
 		$arg .= ' --bool' if ($o !~ /[:=][sfi]$/);
 		if (ref $v eq 'ARRAY') {
@@ -2202,12 +2279,20 @@ sub do_git_commit {
 	}
 	die "Tree is not a valid sha1: $tree\n" if $tree !~ /^$::sha1$/o;
 
-	my @exec = ('git-commit-tree', $tree);
+	my @exec = ('git', 'commit-tree', $tree);
 	foreach ($self->get_commit_parents($log_entry)) {
 		push @exec, '-p', $_;
 	}
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
+	binmode $msg_fh;
+
+	# we always get UTF-8 from SVN, but we may want our commits in
+	# a different encoding.
+	if (my $enc = Git::config('i18n.commitencoding')) {
+		require Encode;
+		Encode::from_to($log_entry->{log}, 'UTF-8', $enc);
+	}
 	print $msg_fh $log_entry->{log} or croak $!;
 	restore_commit_header_env($old_env);
 	unless ($self->no_metadata) {
@@ -2318,12 +2403,20 @@ sub find_parent_branch {
 		$gs = Git::SVN->init($u, $p, $repo_id, $ref_id, 1);
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
-	if (!defined $r0 || !defined $parent) {
-		my ($base, $head) = parse_revision_argument(0, $r);
-		if ($base <= $r) {
+	{
+		my ($base, $head);
+		if (!defined $r0 || !defined $parent) {
+			($base, $head) = parse_revision_argument(0, $r);
+		} else {
+			if ($r0 < $r) {
+				$gs->ra->get_log([$gs->{path}], $r0 + 1, $r, 1,
+					0, 1, sub { $base = $_[1] - 1 });
+			}
+		}
+		if (defined $base && $base <= $r) {
 			$gs->fetch($base, $r);
 		}
-		($r0, $parent) = $gs->last_rev_commit;
+		($r0, $parent) = $gs->find_rev_before($r, 1);
 	}
 	if (defined $r0 && defined $parent) {
 		print STDERR "Found branch parent: ($self->{ref_id}) $parent\n";
@@ -2571,7 +2664,7 @@ sub set_tree {
 	my ($self, $tree) = (shift, shift);
 	my $log_entry = ::get_commit_entry($tree);
 	unless ($self->{last_rev}) {
-		fatal("Must have an existing revision to commit");
+		::fatal("Must have an existing revision to commit");
 	}
 	my %ed_opts = ( r => $self->{last_rev},
 	                log => $log_entry->{log},
@@ -2606,9 +2699,9 @@ sub rebuild_from_rev_db {
 sub rebuild {
 	my ($self) = @_;
 	my $map_path = $self->map_path;
-	return if (-e $map_path && ! -z $map_path);
+	my $partial = (-e $map_path && ! -z $map_path);
 	return unless ::verify_ref($self->refname.'^0');
-	if ($self->use_svm_props || $self->no_metadata) {
+	if (!$partial && ($self->use_svm_props || $self->no_metadata)) {
 		my $rev_db = $self->rev_db_path;
 		$self->rebuild_from_rev_db($rev_db);
 		if ($self->use_svm_props) {
@@ -2618,10 +2711,13 @@ sub rebuild {
 		$self->unlink_rev_db_symlink;
 		return;
 	}
-	print "Rebuilding $map_path ...\n";
+	print "Rebuilding $map_path ...\n" if (!$partial);
+	my ($base_rev, $head) = ($partial ? $self->rev_map_max_norebuild(1) :
+		(undef, undef));
 	my ($log, $ctx) =
 	    command_output_pipe(qw/rev-list --pretty=raw --no-color --reverse/,
-	                        $self->refname, '--');
+				($head ? "$head.." : "") . $self->refname,
+				'--');
 	my $metadata_url = $self->metadata_url;
 	remove_username($metadata_url);
 	my $svn_uuid = $self->ra_uuid;
@@ -2644,12 +2740,17 @@ sub rebuild {
 		    ($metadata_url && $url && ($url ne $metadata_url))) {
 			next;
 		}
+		if ($partial && $head) {
+			print "Partial-rebuilding $map_path ...\n";
+			print "Currently at $base_rev = $head\n";
+			$head = undef;
+		}
 
 		$self->rev_map_set($rev, $c);
 		print "r$rev = $c\n";
 	}
 	command_close_pipe($log, $ctx);
-	print "Done rebuilding $map_path\n";
+	print "Done rebuilding $map_path\n" if (!$partial || !$head);
 	my $rev_db_path = $self->rev_db_path;
 	if (-f $self->rev_db_path) {
 		unlink $self->rev_db_path or croak "unlink: $!";
@@ -2789,6 +2890,12 @@ sub rev_map_set {
 sub rev_map_max {
 	my ($self, $want_commit) = @_;
 	$self->rebuild;
+	my ($r, $c) = $self->rev_map_max_norebuild($want_commit);
+	$want_commit ? ($r, $c) : $r;
+}
+
+sub rev_map_max_norebuild {
+	my ($self, $want_commit) = @_;
 	my $map_path = $self->map_path;
 	stat $map_path or return $want_commit ? (0, undef) : 0;
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
@@ -3233,11 +3340,11 @@ sub change_file_prop {
 
 sub apply_textdelta {
 	my ($self, $fb, $exp) = @_;
-	my $fh = Git::temp_acquire('svn_delta');
+	my $fh = $::_repository->temp_acquire('svn_delta');
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
 	open my $dup, '<&', $fh or croak $!;
-	my $base = Git::temp_acquire('git_blob');
+	my $base = $::_repository->temp_acquire('git_blob');
 	if ($fb->{blob}) {
 		print $base 'link ' if ($fb->{mode_a} == 120000);
 		my $size = $::_repository->cat_blob($fb->{blob}, $base);
@@ -3278,7 +3385,8 @@ sub close_file {
 				warn "$path has mode 120000",
 						" but is not a link\n";
 			} else {
-				my $tmp_fh = Git::temp_acquire('svn_hash');
+				my $tmp_fh = $::_repository->temp_acquire(
+					'svn_hash');
 				my $res;
 				while ($res = sysread($fh, my $str, 1024)) {
 					my $out = syswrite($tmp_fh, $str, $res);
@@ -3380,11 +3488,12 @@ sub generate_diff {
 	while (<$diff_fh>) {
 		chomp $_; # this gets rid of the trailing "\0"
 		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
-					$::sha1\s($::sha1)\s
+					($::sha1)\s($::sha1)\s
 					([MTCRAD])\d*$/xo) {
 			push @mods, {	mode_a => $1, mode_b => $2,
-					sha1_b => $3, chg => $4 };
-			if ($4 =~ /^(?:C|R)$/) {
+					sha1_a => $3, sha1_b => $4,
+					chg => $5 };
+			if ($5 =~ /^(?:C|R)$/) {
 				$state = 'file_a';
 			} else {
 				$state = 'file_b';
@@ -3457,7 +3566,7 @@ sub repo_path {
 sub url_path {
 	my ($self, $path) = @_;
 	if ($self->{url} =~ m#^https?://#) {
-		$path =~ s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
+		$path =~ s/([^~a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
 	}
 	$self->{url} . '/' . $self->repo_path($path);
 }
@@ -3636,6 +3745,7 @@ sub R {
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 				$self->url_path($m->{file_a}), $self->{r});
 	print "\tR\t$m->{file_a} => $m->{file_b}\n" unless $::_q;
+	$self->apply_autoprops($file, $fbat);
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 
@@ -3662,6 +3772,27 @@ sub change_file_prop {
 	$self->SUPER::change_file_prop($fbat, $pname, $pval, $self->{pool});
 }
 
+sub _chg_file_get_blob ($$$$) {
+	my ($self, $fbat, $m, $which) = @_;
+	my $fh = $::_repository->temp_acquire("git_blob_$which");
+	if ($m->{"mode_$which"} =~ /^120/) {
+		print $fh 'link ' or croak $!;
+		$self->change_file_prop($fbat,'svn:special','*');
+	} elsif ($m->{mode_a} =~ /^120/ && $m->{"mode_$which"} !~ /^120/) {
+		$self->change_file_prop($fbat,'svn:special',undef);
+	}
+	my $blob = $m->{"sha1_$which"};
+	return ($fh,) if ($blob =~ /^0{40}$/);
+	my $size = $::_repository->cat_blob($blob, $fh);
+	croak "Failed to read object $blob" if ($size < 0);
+	$fh->flush == 0 or croak $!;
+	seek $fh, 0, 0 or croak $!;
+
+	my $exp = ::md5sum($fh);
+	seek $fh, 0, 0 or croak $!;
+	return ($fh, $exp);
+}
+
 sub chg_file {
 	my ($self, $fbat, $m) = @_;
 	if ($m->{mode_b} =~ /755$/ && $m->{mode_a} !~ /755$/) {
@@ -3669,26 +3800,24 @@ sub chg_file {
 	} elsif ($m->{mode_b} !~ /755$/ && $m->{mode_a} =~ /755$/) {
 		$self->change_file_prop($fbat,'svn:executable',undef);
 	}
-	my $fh = Git::temp_acquire('git_blob');
-	if ($m->{mode_b} =~ /^120/) {
-		print $fh 'link ' or croak $!;
-		$self->change_file_prop($fbat,'svn:special','*');
-	} elsif ($m->{mode_a} =~ /^120/ && $m->{mode_b} !~ /^120/) {
-		$self->change_file_prop($fbat,'svn:special',undef);
-	}
-	my $size = $::_repository->cat_blob($m->{sha1_b}, $fh);
-	croak "Failed to read object $m->{sha1_b}" if ($size < 0);
-	$fh->flush == 0 or croak $!;
-	seek $fh, 0, 0 or croak $!;
-
-	my $exp = ::md5sum($fh);
-	seek $fh, 0, 0 or croak $!;
-
+	my ($fh_a, $exp_a) = _chg_file_get_blob $self, $fbat, $m, 'a';
+	my ($fh_b, $exp_b) = _chg_file_get_blob $self, $fbat, $m, 'b';
 	my $pool = SVN::Pool->new;
-	my $atd = $self->apply_textdelta($fbat, undef, $pool);
-	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
-	die "Checksum mismatch\nexpected: $exp\ngot: $got\n" if ($got ne $exp);
-	Git::temp_release($fh, 1);
+	my $atd = $self->apply_textdelta($fbat, $exp_a, $pool);
+	if (-s $fh_a) {
+		my $txstream = SVN::TxDelta::new ($fh_a, $fh_b, $pool);
+		my $res = SVN::TxDelta::send_txstream($txstream, @$atd, $pool);
+		if (defined $res) {
+			die "Unexpected result from send_txstream: $res\n",
+			    "(SVN::Core::VERSION: $SVN::Core::VERSION)\n";
+		}
+	} else {
+		my $got = SVN::TxDelta::send_stream($fh_b, @$atd, $pool);
+		die "Checksum mismatch\nexpected: $exp_b\ngot: $got\n"
+		    if ($got ne $exp_b);
+	}
+	Git::temp_release($fh_b, 1);
+	Git::temp_release($fh_a, 1);
 	$pool->clear;
 }
 
@@ -3790,7 +3919,7 @@ sub escape_uri_only {
 	my ($uri) = @_;
 	my @tmp;
 	foreach (split m{/}, $uri) {
-		s/([^\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
+		s/([^~\w.%+-]|%(?![a-fA-F0-9]{2}))/sprintf("%%%02X",ord($1))/eg;
 		push @tmp, $_;
 	}
 	join('/', @tmp);
@@ -4886,8 +5015,7 @@ sub minimize_connections {
 		}
 	}
 	if (@emptied) {
-		my $file = $ENV{GIT_CONFIG} || $ENV{GIT_CONFIG_LOCAL} ||
-		           "$ENV{GIT_DIR}/config";
+		my $file = $ENV{GIT_CONFIG} || "$ENV{GIT_DIR}/config";
 		print STDERR <<EOF;
 The following [svn-remote] sections in your config file ($file) are empty
 and can be safely removed:

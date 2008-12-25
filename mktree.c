@@ -66,8 +66,8 @@ static const char mktree_usage[] = "git-mktree [-z]";
 
 int main(int ac, char **av)
 {
-	struct strbuf sb;
-	struct strbuf p_uq;
+	struct strbuf sb = STRBUF_INIT;
+	struct strbuf p_uq = STRBUF_INIT;
 	unsigned char sha1[20];
 	int line_termination = '\n';
 
@@ -86,8 +86,6 @@ int main(int ac, char **av)
 		av++;
 	}
 
-	strbuf_init(&sb, 0);
-	strbuf_init(&p_uq, 0);
 	while (strbuf_getline(&sb, stdin, line_termination) != EOF) {
 		char *ptr, *ntr;
 		unsigned mode;

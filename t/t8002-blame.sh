@@ -4,6 +4,6 @@ test_description='git blame'
 . ./test-lib.sh
 
 PROG='git blame -c'
-. ../annotate-tests.sh
+. "$TEST_DIRECTORY"/annotate-tests.sh
 
 test_done

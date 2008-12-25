@@ -13,10 +13,7 @@ use File::Basename;
 BEGIN { use_ok('Git') }
 
 # set up
-our $repo_dir = "trash directory";
 our $abs_repo_dir = Cwd->cwd;
-die "this must be run by calling the t/t97* shell script(s)\n"
-    if basename(Cwd->cwd) ne $repo_dir;
 ok(our $r = Git->repository(Directory => "."), "open repository");
 
 # config

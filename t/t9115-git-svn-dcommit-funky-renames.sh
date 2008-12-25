@@ -3,12 +3,12 @@
 # Copyright (c) 2007 Eric Wong
 
 
-test_description='git-svn dcommit can commit renames of files with ugly names'
+test_description='git svn dcommit can commit renames of files with ugly names'
 
 . ./lib-git-svn.sh
 
 test_expect_success 'load repository with strange names' '
-	svnadmin load -q "$rawsvnrepo" < ../t9115/funky-names.dump &&
+	svnadmin load -q "$rawsvnrepo" < "$TEST_DIRECTORY"/t9115/funky-names.dump &&
 	start_httpd gtk+
 	'
 
@@ -75,7 +75,7 @@ test_expect_success 'make a commit to test rebase' '
 		git svn dcommit
 	'
 
-test_expect_success 'git-svn rebase works inside a fresh-cloned repository' '
+test_expect_success 'git svn rebase works inside a fresh-cloned repository' '
 	cd test-rebase &&
 		git svn rebase &&
 		test -e test-rebase-main &&

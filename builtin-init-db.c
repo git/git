@@ -17,6 +17,9 @@
 #define TEST_FILEMODE 1
 #endif
 
+static int init_is_bare_repository = 0;
+static int init_shared_repository = -1;
+
 static void safe_create_dir(const char *dir, int share)
 {
 	if (mkdir(dir, 0777) < 0) {
@@ -191,6 +194,9 @@ static int create_default_files(const char *template_path)
 	copy_templates(template_path);
 
 	git_config(git_default_config, NULL);
+	is_bare_repository_cfg = init_is_bare_repository;
+	if (init_shared_repository != -1)
+		shared_repository = init_shared_repository;
 
 	/*
 	 * We would have created the above under user's umask -- under
@@ -276,6 +282,8 @@ int init_db(const char *template_dir, unsigned int flags)
 	int len, reinit;
 
 	safe_create_dir(get_git_dir(), 0);
+
+	init_is_bare_repository = is_bare_repository();
 
 	/* Check to see if the repository version is right.
 	 * Note that a newly created repository does not have
@@ -381,9 +389,9 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 			setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir,
 						sizeof(git_dir)), 0);
 		} else if (!strcmp(arg, "--shared"))
-			shared_repository = PERM_GROUP;
+			init_shared_repository = PERM_GROUP;
 		else if (!prefixcmp(arg, "--shared="))
-			shared_repository = git_config_perm("arg", arg+9);
+			init_shared_repository = git_config_perm("arg", arg+9);
 		else if (!strcmp(arg, "-q") || !strcmp(arg, "--quiet"))
 			flags |= INIT_DB_QUIET;
 		else

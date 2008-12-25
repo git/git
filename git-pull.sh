@@ -16,13 +16,17 @@ cd_to_toplevel
 test -z "$(git ls-files -u)" ||
 	die "You are in the middle of a conflicted merge."
 
-strategy_args= no_stat= no_commit= squash= no_ff= log_arg=
+strategy_args= no_stat= no_commit= squash= no_ff= log_arg= verbosity=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short=$(echo "$curr_branch" | sed "s|refs/heads/||")
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
 while :
 do
 	case "$1" in
+	-q|--quiet)
+		verbosity="$verbosity -q" ;;
+	-v|--verbose)
+		verbosity="$verbosity -v" ;;
 	-n|--no-stat|--no-summary)
 		no_stat=-n ;;
 	--stat|--summary)
@@ -117,14 +121,14 @@ test true = "$rebase" && {
 	test -z "$origin" && origin=$(get_default_remote)
 	reflist="$(get_remote_refs_for_fetch "$@" 2>/dev/null |
 		sed "s|refs/heads/\(.*\):|\1|")" &&
-	oldremoteref="$(git rev-parse --verify \
-		"refs/remotes/$origin/$reflist" 2>/dev/null)"
+	oldremoteref="$(git rev-parse -q --verify \
+		"refs/remotes/$origin/$reflist")"
 }
-orig_head=$(git rev-parse --verify HEAD 2>/dev/null)
-git fetch --update-head-ok "$@" || exit 1
+orig_head=$(git rev-parse -q --verify HEAD)
+git fetch $verbosity --update-head-ok "$@" || exit 1
 
-curr_head=$(git rev-parse --verify HEAD 2>/dev/null)
-if test "$curr_head" != "$orig_head"
+curr_head=$(git rev-parse -q --verify HEAD)
+if test -n "$orig_head" && test "$curr_head" != "$orig_head"
 then
 	# The fetch involved updating the current branch.
 
@@ -172,7 +176,7 @@ esac
 
 if test -z "$orig_head"
 then
-	git update-ref -m "initial pull" HEAD $merge_head "" &&
+	git update-ref -m "initial pull" HEAD $merge_head "$curr_head" &&
 	git read-tree --reset -u HEAD || exit 1
 	exit
 fi
@@ -182,4 +186,4 @@ test true = "$rebase" &&
 	exec git-rebase $strategy_args --onto $merge_head \
 	${oldremoteref:-$merge_head}
 exec git-merge $no_stat $no_commit $squash $no_ff $log_arg $strategy_args \
-	"$merge_name" HEAD $merge_head
+	"$merge_name" HEAD $merge_head $verbosity

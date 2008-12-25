@@ -171,7 +171,7 @@ test_expect_success 'git diff' '
 
 test_expect_success 'git grep' '
 	(cd repo.git/work/sub &&
-	GIT_DIR=../.. GIT_WORK_TREE=.. git grep -l changed | grep -q dir/tracked)
+	GIT_DIR=../.. GIT_WORK_TREE=.. git grep -l changed | grep dir/tracked)
 '
 
 test_done

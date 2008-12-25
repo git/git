@@ -811,11 +811,16 @@ EOF
 }
 
 sub patch_update_cmd {
-	my @mods = grep { !($_->{BINARY}) } list_modified('file-only');
+	my @all_mods = list_modified('file-only');
+	my @mods = grep { !($_->{BINARY}) } @all_mods;
 	my @them;
 
 	if (!@mods) {
-		print STDERR "No changes.\n";
+		if (@all_mods) {
+			print STDERR "Only binary files changed.\n";
+		} else {
+			print STDERR "No changes.\n";
+		}
 		return 0;
 	}
 	if ($patch_mode) {

@@ -15,7 +15,7 @@ static char const * const archive_usage[] = {
 
 #define USES_ZLIB_COMPRESSION 1
 
-const struct archiver {
+static const struct archiver {
 	const char *name;
 	write_archive_fn_t write_archive;
 	unsigned int flags;
@@ -29,11 +29,10 @@ static void format_subst(const struct commit *commit,
                          struct strbuf *buf)
 {
 	char *to_free = NULL;
-	struct strbuf fmt;
+	struct strbuf fmt = STRBUF_INIT;
 
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
-	strbuf_init(&fmt, 0);
 	for (;;) {
 		const char *b, *c;
 
@@ -65,10 +64,9 @@ static void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
 
 	buffer = read_sha1_file(sha1, type, sizep);
 	if (buffer && S_ISREG(mode)) {
-		struct strbuf buf;
+		struct strbuf buf = STRBUF_INIT;
 		size_t size = 0;
 
-		strbuf_init(&buf, 0);
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
 		convert_to_working_tree(path, buf.buf, buf.len, &buf);
 		if (commit)
@@ -337,6 +335,8 @@ int write_archive(int argc, const char **argv, const char *prefix,
 
 	parse_treeish_arg(argv, &args, prefix);
 	parse_pathspec_arg(argv + 1, &args);
+
+	git_config(git_default_config, NULL);
 
 	return ar->write_archive(&args);
 }

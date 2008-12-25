@@ -65,7 +65,17 @@ else \
 fi \
 ])# GIT_PARSE_WITH
 
-
+dnl
+dnl GIT_CHECK_FUNC(FUNCTION, IFTRUE, IFFALSE)
+dnl -----------------------------------------
+dnl Similar to AC_CHECK_FUNC, but on systems that do not generate
+dnl warnings for missing prototypes (e.g. FreeBSD when compiling without
+dnl -Wall), it does not work.  By looking for function definition in
+dnl libraries, this problem can be worked around.
+AC_DEFUN([GIT_CHECK_FUNC],[AC_CHECK_FUNC([$1],[
+  AC_SEARCH_LIBS([$1],,
+  [$2],[$3])
+],[$3])])
 ## Site configuration related to programs (before tests)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
 #
@@ -103,6 +113,38 @@ GIT_PARSE_WITH(tcltk))
 AC_MSG_NOTICE([CHECKS for programs])
 #
 AC_PROG_CC([cc gcc])
+# which switch to pass runtime path to dynamic libraries to the linker
+AC_CACHE_CHECK([if linker supports -R], ld_dashr, [
+   SAVE_LDFLAGS="${LDFLAGS}"
+   LDFLAGS="${SAVE_LDFLAGS} -R /"
+   AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [ld_dashr=yes], [ld_dashr=no])
+   LDFLAGS="${SAVE_LDFLAGS}"
+])
+if test "$ld_dashr" = "yes"; then
+   AC_SUBST(CC_LD_DYNPATH, [-R])
+else
+   AC_CACHE_CHECK([if linker supports -Wl,-rpath,], ld_wl_rpath, [
+      SAVE_LDFLAGS="${LDFLAGS}"
+      LDFLAGS="${SAVE_LDFLAGS} -Wl,-rpath,/"
+      AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [ld_wl_rpath=yes], [ld_wl_rpath=no])
+      LDFLAGS="${SAVE_LD_FLAGS}"
+   ])
+   if test "$ld_wl_rpath" = "yes"; then
+      AC_SUBST(CC_LD_DYNPATH, [-Wl,-rpath,])
+   else
+      AC_CACHE_CHECK([if linker supports -rpath], ld_rpath, [
+         SAVE_LDFLAGS="${LDFLAGS}"
+         LDFLAGS="${SAVE_LDFLAGS} -rpath /"
+         AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [ld_rpath=yes], [ld_rpath=no])
+         LDFLAGS="${SAVE_LD_FLAGS}"
+      ])
+      if test "$ld_rpath" = "yes"; then
+         AC_SUBST(CC_LD_DYNPATH, [-rpath])
+      else
+         AC_MSG_WARN([linker does not support runtime path to dynamic libraries])
+      fi
+   fi
+fi
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOLS(AR, [gar ar], :)
 AC_CHECK_PROGS(TAR, [gtar tar])
@@ -293,7 +335,7 @@ AC_SUBST(NO_SOCKADDR_STORAGE)
 #
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 AC_CHECK_TYPE([struct addrinfo],[
- AC_CHECK_FUNC([getaddrinfo],
+ GIT_CHECK_FUNC([getaddrinfo],
   [NO_IPV6=],
   [NO_IPV6=YesPlease])
 ],[NO_IPV6=YesPlease],[
@@ -387,43 +429,51 @@ AC_SUBST(SNPRINTF_RETURNS_BOGUS)
 AC_MSG_NOTICE([CHECKS for library functions])
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
-AC_CHECK_FUNC(strcasestr,
+GIT_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=],
 [NO_STRCASESTR=YesPlease])
 AC_SUBST(NO_STRCASESTR)
 #
 # Define NO_MEMMEM if you don't have memmem.
-AC_CHECK_FUNC(memmem,
+GIT_CHECK_FUNC(memmem,
 [NO_MEMMEM=],
 [NO_MEMMEM=YesPlease])
 AC_SUBST(NO_MEMMEM)
 #
 # Define NO_STRLCPY if you don't have strlcpy.
-AC_CHECK_FUNC(strlcpy,
+GIT_CHECK_FUNC(strlcpy,
 [NO_STRLCPY=],
 [NO_STRLCPY=YesPlease])
 AC_SUBST(NO_STRLCPY)
 #
+# Define NO_UINTMAX_T if your platform does not have uintmax_t
+AC_CHECK_TYPE(uintmax_t,
+[NO_UINTMAX_T=],
+[NO_UINTMAX_T=YesPlease],[
+#include <inttypes.h>
+])
+AC_SUBST(NO_UINTMAX_T)
+#
 # Define NO_STRTOUMAX if you don't have strtoumax in the C library.
-AC_CHECK_FUNC(strtoumax,
+GIT_CHECK_FUNC(strtoumax,
 [NO_STRTOUMAX=],
 [NO_STRTOUMAX=YesPlease])
 AC_SUBST(NO_STRTOUMAX)
 #
 # Define NO_SETENV if you don't have setenv in the C library.
-AC_CHECK_FUNC(setenv,
+GIT_CHECK_FUNC(setenv,
 [NO_SETENV=],
 [NO_SETENV=YesPlease])
 AC_SUBST(NO_SETENV)
 #
 # Define NO_UNSETENV if you don't have unsetenv in the C library.
-AC_CHECK_FUNC(unsetenv,
+GIT_CHECK_FUNC(unsetenv,
 [NO_UNSETENV=],
 [NO_UNSETENV=YesPlease])
 AC_SUBST(NO_UNSETENV)
 #
 # Define NO_MKDTEMP if you don't have mkdtemp in the C library.
-AC_CHECK_FUNC(mkdtemp,
+GIT_CHECK_FUNC(mkdtemp,
 [NO_MKDTEMP=],
 [NO_MKDTEMP=YesPlease])
 AC_SUBST(NO_MKDTEMP)
@@ -439,6 +489,27 @@ AC_SUBST(NO_MKDTEMP)
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
+#
+# Define NO_PTHREADS if we do not have pthreads
+#
+# Define PTHREAD_LIBS to the linker flag used for Pthread support.
+AC_LANG_CONFTEST([AC_LANG_PROGRAM(
+  [[#include <pthread.h>]],
+  [[pthread_mutex_t test_mutex;]]
+)])
+${CC} -pthread conftest.c -o conftest.o > /dev/null 2>&1
+if test $? -eq 0;then
+ PTHREAD_LIBS="-pthread"
+else
+ ${CC} -lpthread conftest.c -o conftest.o > /dev/null 2>&1
+ if test $? -eq 0;then
+  PTHREAD_LIBS="-lpthread"
+ else
+  NO_PTHREADS=UnfortunatelyYes
+ fi
+fi
+AC_SUBST(PTHREAD_LIBS)
+AC_SUBST(NO_PTHREADS)
 
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE

@@ -154,11 +154,8 @@ __git_heads ()
 {
 	local cmd i is_hash=y dir="$(__gitdir "$1")"
 	if [ -d "$dir" ]; then
-		for i in $(git --git-dir="$dir" \
-			for-each-ref --format='%(refname)' \
-			refs/heads ); do
-			echo "${i#refs/heads/}"
-		done
+		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
+			refs/heads
 		return
 	fi
 	for i in $(git ls-remote "$1" 2>/dev/null); do
@@ -175,11 +172,8 @@ __git_tags ()
 {
 	local cmd i is_hash=y dir="$(__gitdir "$1")"
 	if [ -d "$dir" ]; then
-		for i in $(git --git-dir="$dir" \
-			for-each-ref --format='%(refname)' \
-			refs/tags ); do
-			echo "${i#refs/tags/}"
-		done
+		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
+			refs/tags
 		return
 	fi
 	for i in $(git ls-remote "$1" 2>/dev/null); do
@@ -194,19 +188,22 @@ __git_tags ()
 
 __git_refs ()
 {
-	local cmd i is_hash=y dir="$(__gitdir "$1")"
+	local i is_hash=y dir="$(__gitdir "$1")"
+	local cur="${COMP_WORDS[COMP_CWORD]}" format refs
 	if [ -d "$dir" ]; then
-		if [ -e "$dir/HEAD" ]; then echo HEAD; fi
-		for i in $(git --git-dir="$dir" \
-			for-each-ref --format='%(refname)' \
-			refs/tags refs/heads refs/remotes); do
-			case "$i" in
-				refs/tags/*)    echo "${i#refs/tags/}" ;;
-				refs/heads/*)   echo "${i#refs/heads/}" ;;
-				refs/remotes/*) echo "${i#refs/remotes/}" ;;
-				*)              echo "$i" ;;
-			esac
-		done
+		case "$cur" in
+		refs|refs/*)
+			format="refname"
+			refs="${cur%/*}"
+			;;
+		*)
+			if [ -e "$dir/HEAD" ]; then echo HEAD; fi
+			format="refname:short"
+			refs="refs/tags refs/heads refs/remotes"
+			;;
+		esac
+		git --git-dir="$dir" for-each-ref --format="%($format)" \
+			$refs
 		return
 	fi
 	for i in $(git ls-remote "$dir" 2>/dev/null); do
@@ -650,21 +647,12 @@ _git_branch ()
 
 _git_bundle ()
 {
-	local mycword="$COMP_CWORD"
-	case "${COMP_WORDS[0]}" in
-	git)
-		local cmd="${COMP_WORDS[2]}"
-		mycword="$((mycword-1))"
-		;;
-	git-bundle*)
-		local cmd="${COMP_WORDS[1]}"
-		;;
-	esac
-	case "$mycword" in
-	1)
+	local cmd="${COMP_WORDS[2]}"
+	case "$COMP_CWORD" in
+	2)
 		__gitcomp "create list-heads verify unbundle"
 		;;
-	2)
+	3)
 		# looking for a file
 		;;
 	*)
@@ -799,14 +787,9 @@ _git_fetch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 
-	case "${COMP_WORDS[0]},$COMP_CWORD" in
-	git-fetch*,1)
+	if [ "$COMP_CWORD" = 2 ]; then
 		__gitcomp "$(__git_remotes)"
-		;;
-	git,2)
-		__gitcomp "$(__git_remotes)"
-		;;
-	*)
+	else
 		case "$cur" in
 		*:*)
 			local pfx=""
@@ -817,16 +800,10 @@ _git_fetch ()
 			__gitcomp "$(__git_refs)" "$pfx" "${cur#*:}"
 			;;
 		*)
-			local remote
-			case "${COMP_WORDS[0]}" in
-			git-fetch) remote="${COMP_WORDS[1]}" ;;
-			git)       remote="${COMP_WORDS[2]}" ;;
-			esac
-			__gitcomp "$(__git_refs2 "$remote")"
+			__gitcomp "$(__git_refs2 "${COMP_WORDS[2]}")"
 			;;
 		esac
-		;;
-	esac
+	fi
 }
 
 _git_format_patch ()
@@ -901,6 +878,7 @@ _git_help ()
 		attributes cli core-tutorial cvs-migration
 		diffcore gitk glossary hooks ignore modules
 		repository-layout tutorial tutorial-2
+		workflows
 		"
 }
 
@@ -1063,51 +1041,29 @@ _git_pull ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 
-	case "${COMP_WORDS[0]},$COMP_CWORD" in
-	git-pull*,1)
+	if [ "$COMP_CWORD" = 2 ]; then
 		__gitcomp "$(__git_remotes)"
-		;;
-	git,2)
-		__gitcomp "$(__git_remotes)"
-		;;
-	*)
-		local remote
-		case "${COMP_WORDS[0]}" in
-		git-pull)  remote="${COMP_WORDS[1]}" ;;
-		git)       remote="${COMP_WORDS[2]}" ;;
-		esac
-		__gitcomp "$(__git_refs "$remote")"
-		;;
-	esac
+	else
+		__gitcomp "$(__git_refs "${COMP_WORDS[2]}")"
+	fi
 }
 
 _git_push ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 
-	case "${COMP_WORDS[0]},$COMP_CWORD" in
-	git-push*,1)
+	if [ "$COMP_CWORD" = 2 ]; then
 		__gitcomp "$(__git_remotes)"
-		;;
-	git,2)
-		__gitcomp "$(__git_remotes)"
-		;;
-	*)
+	else
 		case "$cur" in
 		*:*)
-			local remote
-			case "${COMP_WORDS[0]}" in
-			git-push)  remote="${COMP_WORDS[1]}" ;;
-			git)       remote="${COMP_WORDS[2]}" ;;
-			esac
-
 			local pfx=""
 			case "$COMP_WORDBREAKS" in
 			*:*) : great ;;
 			*)   pfx="${cur%%:*}:" ;;
 			esac
 
-			__gitcomp "$(__git_refs "$remote")" "$pfx" "${cur#*:}"
+			__gitcomp "$(__git_refs "${COMP_WORDS[2]}")" "$pfx" "${cur#*:}"
 			;;
 		+*)
 			__gitcomp "$(__git_refs)" + "${cur#+}"
@@ -1116,8 +1072,7 @@ _git_push ()
 			__gitcomp "$(__git_refs)"
 			;;
 		esac
-		;;
-	esac
+	fi
 }
 
 _git_rebase ()
@@ -1155,7 +1110,8 @@ _git_send_email ()
 			--no-suppress-from --no-thread --quiet
 			--signed-off-by-cc --smtp-pass --smtp-server
 			--smtp-server-port --smtp-ssl --smtp-user --subject
-			--suppress-cc --suppress-from --thread --to"
+			--suppress-cc --suppress-from --thread --to
+			--validate --no-validate"
 		return
 		;;
 	esac
@@ -1199,7 +1155,7 @@ _git_config ()
 		;;
 	color.*.*)
 		__gitcomp "
-			black red green yellow blue magenta cyan white
+			normal black red green yellow blue magenta cyan white
 			bold dim ul blink reverse
 			"
 		return
@@ -1223,7 +1179,7 @@ _git_config ()
 	branch.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		__gitcomp "remote merge" "$pfx" "$cur"
+		__gitcomp "remote merge mergeoptions" "$pfx" "$cur"
 		return
 		;;
 	branch.*)
@@ -1236,7 +1192,7 @@ _git_config ()
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
 		__gitcomp "
-			url fetch push skipDefaultUpdate
+			url proxy fetch push mirror skipDefaultUpdate
 			receivepack uploadpack tagopt
 			" "$pfx" "$cur"
 		return
@@ -1250,85 +1206,161 @@ _git_config ()
 	esac
 	__gitcomp "
 		apply.whitespace
-		core.fileMode
-		core.gitProxy
-		core.ignoreStat
-		core.preferSymlinkRefs
-		core.logAllRefUpdates
-		core.loosecompression
-		core.repositoryFormatVersion
-		core.sharedRepository
-		core.warnAmbiguousRefs
-		core.compression
-		core.packedGitWindowSize
-		core.packedGitLimit
+		branch.autosetupmerge
+		branch.autosetuprebase
 		clean.requireForce
 		color.branch
 		color.branch.current
 		color.branch.local
-		color.branch.remote
 		color.branch.plain
+		color.branch.remote
 		color.diff
-		color.diff.plain
-		color.diff.meta
-		color.diff.frag
-		color.diff.old
-		color.diff.new
 		color.diff.commit
+		color.diff.frag
+		color.diff.meta
+		color.diff.new
+		color.diff.old
+		color.diff.plain
 		color.diff.whitespace
+		color.interactive
+		color.interactive.header
+		color.interactive.help
+		color.interactive.prompt
 		color.pager
 		color.status
-		color.status.header
 		color.status.added
 		color.status.changed
+		color.status.header
+		color.status.nobranch
 		color.status.untracked
+		color.status.updated
+		color.ui
+		commit.template
+		core.autocrlf
+		core.bare
+		core.compression
+		core.deltaBaseCacheLimit
+		core.editor
+		core.excludesfile
+		core.fileMode
+		core.fsyncobjectfiles
+		core.gitProxy
+		core.ignoreCygwinFSTricks
+		core.ignoreStat
+		core.logAllRefUpdates
+		core.loosecompression
+		core.packedGitLimit
+		core.packedGitWindowSize
+		core.pager
+		core.preferSymlinkRefs
+		core.preloadindex
+		core.quotepath
+		core.repositoryFormatVersion
+		core.safecrlf
+		core.sharedRepository
+		core.symlinks
+		core.trustctime
+		core.warnAmbiguousRefs
+		core.whitespace
+		core.worktree
+		diff.autorefreshindex
+		diff.external
+		diff.mnemonicprefix
 		diff.renameLimit
+		diff.renameLimit.
 		diff.renames
 		fetch.unpackLimit
 		format.headers
-		format.subjectprefix
-		gitcvs.enabled
-		gitcvs.logfile
-		gitcvs.allbinary
-		gitcvs.dbname gitcvs.dbdriver gitcvs.dbuser gitcvs.dbpass
-		gitcvs.dbtablenameprefix
+		format.numbered
+		format.pretty
+		format.suffix
+		gc.aggressiveWindow
+		gc.auto
+		gc.autopacklimit
 		gc.packrefs
+		gc.pruneexpire
 		gc.reflogexpire
 		gc.reflogexpireunreachable
 		gc.rerereresolved
 		gc.rerereunresolved
-		http.sslVerify
-		http.sslCert
-		http.sslKey
-		http.sslCAInfo
-		http.sslCAPath
-		http.maxRequests
+		gitcvs.allbinary
+		gitcvs.dbTableNamePrefix
+		gitcvs.dbdriver
+		gitcvs.dbname
+		gitcvs.dbpass
+		gitcvs.dbuser
+		gitcvs.enabled
+		gitcvs.logfile
+		gitcvs.usecrlfattr
+		gui.blamehistoryctx
+		gui.commitmsgwidth
+		gui.copyblamethreshold
+		gui.diffcontext
+		gui.encoding
+		gui.fastcopyblame
+		gui.matchtrackingbranch
+		gui.newbranchtemplate
+		gui.pruneduringfetch
+		gui.spellingdictionary
+		gui.trustmtime
+		help.autocorrect
+		help.browser
+		help.format
 		http.lowSpeedLimit
 		http.lowSpeedTime
+		http.maxRequests
 		http.noEPSV
+		http.proxy
+		http.sslCAInfo
+		http.sslCAPath
+		http.sslCert
+		http.sslKey
+		http.sslVerify
 		i18n.commitEncoding
 		i18n.logOutputEncoding
+		instaweb.browser
+		instaweb.httpd
+		instaweb.local
+		instaweb.modulepath
+		instaweb.port
+		log.date
 		log.showroot
+		man.viewer
+		merge.conflictstyle
+		merge.log
+		merge.renameLimit
+		merge.stat
 		merge.tool
-		merge.summary
 		merge.verbosity
-		pack.window
-		pack.depth
-		pack.windowMemory
+		mergetool.keepBackup
 		pack.compression
-		pack.deltaCacheSize
 		pack.deltaCacheLimit
+		pack.deltaCacheSize
+		pack.depth
+		pack.indexVersion
+		pack.packSizeLimit
+		pack.threads
+		pack.window
+		pack.windowMemory
 		pull.octopus
 		pull.twohead
-		repack.useDeltaBaseOffset
+		receive.denyCurrentBranch
+		receive.denyDeletes
+		receive.denyNonFastForwards
+		receive.fsckObjects
+		receive.unpackLimit
+		repack.usedeltabaseoffset
+		rerere.autoupdate
+		rerere.enabled
 		showbranch.default
+		status.relativePaths
+		status.showUntrackedFiles
 		tar.umask
 		transfer.unpackLimit
-		receive.unpackLimit
-		receive.denyNonFastForwards
-		user.name
 		user.email
+		user.name
 		user.signingkey
+		web.browser
 		branch. remote.
 	"
 }
@@ -1387,7 +1419,7 @@ _git_revert ()
 		return
 		;;
 	esac
-	COMPREPLY=()
+	__gitcomp "$(__git_refs)"
 }
 
 _git_rm ()
@@ -1428,6 +1460,8 @@ _git_shortlog ()
 
 _git_show ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
@@ -1493,7 +1527,7 @@ _git_submodule ()
 {
 	__git_has_doubledash && return
 
-	local subcommands="add status init update"
+	local subcommands="add status init update summary foreach sync"
 	if [ -z "$(__git_find_subcommand "$subcommands")" ]; then
 		local cur="${COMP_WORDS[COMP_CWORD]}"
 		case "$cur" in
@@ -1607,7 +1641,7 @@ _git_tag ()
 	-m|-F)
 		COMPREPLY=()
 		;;
-	-*|tag|git-tag)
+	-*|tag)
 		if [ $f = 1 ]; then
 			__gitcomp "$(__git_tags)"
 		else

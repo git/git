@@ -6,8 +6,14 @@
 #include "hash.h"
 
 #include SHA1_HEADER
-#include <zlib.h>
+#ifndef git_SHA_CTX
+#define git_SHA_CTX	SHA_CTX
+#define git_SHA1_Init	SHA1_Init
+#define git_SHA1_Update	SHA1_Update
+#define git_SHA1_Final	SHA1_Final
+#endif
 
+#include <zlib.h>
 #if defined(NO_DEFLATE_BOUND) || ZLIB_VERNUM < 0x1200
 #define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
 #endif
@@ -109,6 +115,26 @@ struct ondisk_cache_entry {
 	char name[FLEX_ARRAY]; /* more */
 };
 
+/*
+ * This struct is used when CE_EXTENDED bit is 1
+ * The struct must match ondisk_cache_entry exactly from
+ * ctime till flags
+ */
+struct ondisk_cache_entry_extended {
+	struct cache_time ctime;
+	struct cache_time mtime;
+	unsigned int dev;
+	unsigned int ino;
+	unsigned int mode;
+	unsigned int uid;
+	unsigned int gid;
+	unsigned int size;
+	unsigned char sha1[20];
+	unsigned short flags;
+	unsigned short flags2;
+	char name[FLEX_ARRAY]; /* more */
+};
+
 struct cache_entry {
 	unsigned int ce_ctime;
 	unsigned int ce_mtime;
@@ -126,10 +152,19 @@ struct cache_entry {
 
 #define CE_NAMEMASK  (0x0fff)
 #define CE_STAGEMASK (0x3000)
+#define CE_EXTENDED  (0x4000)
 #define CE_VALID     (0x8000)
 #define CE_STAGESHIFT 12
 
-/* In-memory only */
+/*
+ * Range 0xFFFF0000 in ce_flags is divided into
+ * two parts: in-memory flags and on-disk ones.
+ * Flags in CE_EXTENDED_FLAGS will get saved on-disk
+ * if you want to save a new flag, add it in
+ * CE_EXTENDED_FLAGS
+ *
+ * In-memory only flags
+ */
 #define CE_UPDATE    (0x10000)
 #define CE_REMOVE    (0x20000)
 #define CE_UPTODATE  (0x40000)
@@ -137,6 +172,25 @@ struct cache_entry {
 
 #define CE_HASHED    (0x100000)
 #define CE_UNHASHED  (0x200000)
+
+/*
+ * Extended on-disk flags
+ */
+#define CE_INTENT_TO_ADD 0x20000000
+/* CE_EXTENDED2 is for future extension */
+#define CE_EXTENDED2 0x80000000
+
+#define CE_EXTENDED_FLAGS (CE_INTENT_TO_ADD)
+
+/*
+ * Safeguard to avoid saving wrong flags:
+ *  - CE_EXTENDED2 won't get saved until its semantic is known
+ *  - Bits in 0x0000FFFF have been saved in ce_flags already
+ *  - Bits in 0x003F0000 are currently in-memory flags
+ */
+#if CE_EXTENDED_FLAGS & 0x803FFFFF
+#error "CE_EXTENDED_FLAGS out of range"
+#endif
 
 /*
  * Copy the sha1 and stat state of a cache entry from one to
@@ -170,7 +224,9 @@ static inline size_t ce_namelen(const struct cache_entry *ce)
 }
 
 #define ce_size(ce) cache_entry_size(ce_namelen(ce))
-#define ondisk_ce_size(ce) ondisk_cache_entry_size(ce_namelen(ce))
+#define ondisk_ce_size(ce) (((ce)->ce_flags & CE_EXTENDED) ? \
+			    ondisk_cache_entry_extended_size(ce_namelen(ce)) : \
+			    ondisk_cache_entry_size(ce_namelen(ce)))
 #define ce_stage(ce) ((CE_STAGEMASK & (ce)->ce_flags) >> CE_STAGESHIFT)
 #define ce_uptodate(ce) ((ce)->ce_flags & CE_UPTODATE)
 #define ce_mark_uptodate(ce) ((ce)->ce_flags |= CE_UPTODATE)
@@ -213,8 +269,10 @@ static inline int ce_to_dtype(const struct cache_entry *ce)
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
 	S_ISLNK(mode) ? S_IFLNK : S_ISDIR(mode) ? S_IFDIR : S_IFGITLINK)
 
-#define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
-#define ondisk_cache_entry_size(len) ((offsetof(struct ondisk_cache_entry,name) + (len) + 8) & ~7)
+#define flexible_size(STRUCT,len) ((offsetof(struct STRUCT,name) + (len) + 8) & ~7)
+#define cache_entry_size(len) flexible_size(cache_entry,len)
+#define ondisk_cache_entry_size(len) flexible_size(ondisk_cache_entry,len)
+#define ondisk_cache_entry_extended_size(len) flexible_size(ondisk_cache_entry_extended,len)
 
 struct index_state {
 	struct cache_entry **cache;
@@ -255,6 +313,8 @@ static inline void remove_name_hash(struct cache_entry *ce)
 
 #define read_cache() read_index(&the_index)
 #define read_cache_from(path) read_index_from(&the_index, (path))
+#define read_cache_preload(pathspec) read_index_preload(&the_index, (pathspec))
+#define is_cache_unborn() is_index_unborn(&the_index)
 #define read_cache_unmerged() read_index_unmerged(&the_index)
 #define write_cache(newfd, cache, entries) write_index(&the_index, (newfd))
 #define discard_cache() discard_index(&the_index)
@@ -270,6 +330,7 @@ static inline void remove_name_hash(struct cache_entry *ce)
 #define ce_match_stat(ce, st, options) ie_match_stat(&the_index, (ce), (st), (options))
 #define ce_modified(ce, st, options) ie_modified(&the_index, (ce), (st), (options))
 #define cache_name_exists(name, namelen, igncase) index_name_exists(&the_index, (name), (namelen), (igncase))
+#define cache_name_is_other(name, namelen) index_name_is_other(&the_index, (name), (namelen))
 #endif
 
 enum object_type {
@@ -312,6 +373,7 @@ extern int is_bare_repository(void);
 extern int is_inside_git_dir(void);
 extern char *git_work_tree_cfg;
 extern int is_inside_work_tree(void);
+extern int have_git_dir(void);
 extern const char *get_git_dir(void);
 extern char *get_object_directory(void);
 extern char *get_index_file(void);
@@ -358,7 +420,9 @@ extern int init_db(const char *template_dir, unsigned int flags);
 
 /* Initialize and use the cache information */
 extern int read_index(struct index_state *);
+extern int read_index_preload(struct index_state *, const char **pathspec);
 extern int read_index_from(struct index_state *, const char *path);
+extern int is_index_unborn(struct index_state *);
 extern int read_index_unmerged(struct index_state *);
 extern int write_index(const struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
@@ -370,6 +434,7 @@ extern int index_name_pos(const struct index_state *, const char *name, int name
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
 #define ADD_CACHE_JUST_APPEND 8		/* Append only; tree.c::read_tree() */
+#define ADD_CACHE_NEW_ONLY 16		/* Do not replace existing ones */
 extern int add_index_entry(struct index_state *, struct cache_entry *ce, int option);
 extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern void rename_index_entry_at(struct index_state *, int pos, const char *new_name);
@@ -378,10 +443,13 @@ extern int remove_file_from_index(struct index_state *, const char *path);
 #define ADD_CACHE_VERBOSE 1
 #define ADD_CACHE_PRETEND 2
 #define ADD_CACHE_IGNORE_ERRORS	4
+#define ADD_CACHE_IGNORE_REMOVAL 8
+#define ADD_CACHE_INTENT 16
 extern int add_to_index(struct index_state *, const char *path, struct stat *, int flags);
 extern int add_file_to_index(struct index_state *, const char *path, int flags);
 extern struct cache_entry *make_cache_entry(unsigned int mode, const unsigned char *sha1, const char *path, int stage, int refresh);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
+extern int index_name_is_other(const struct index_state *, const char *, int);
 
 /* do stat comparison even if CE_VALID is true */
 #define CE_MATCH_IGNORE_VALID		01
@@ -392,7 +460,6 @@ extern int ie_modified(const struct index_state *, struct cache_entry *, struct 
 
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
-extern int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object);
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 
@@ -411,6 +478,8 @@ struct lock_file {
 	char on_list;
 	char filename[PATH_MAX];
 };
+#define LOCK_DIE_ON_ERROR 1
+#define LOCK_NODEREF 2
 extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int hold_lock_file_for_append(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
@@ -420,7 +489,7 @@ extern int commit_locked_index(struct lock_file *);
 extern void set_alternate_index_output(const char *);
 extern int close_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
-extern int delete_ref(const char *, const unsigned char *sha1);
+extern int delete_ref(const char *, const unsigned char *sha1, int delopt);
 
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
@@ -442,6 +511,7 @@ extern size_t packed_git_limit;
 extern size_t delta_base_cache_limit;
 extern int auto_crlf;
 extern int fsync_object_files;
+extern int core_preload_index;
 
 enum safe_crlf {
 	SAFE_CRLF_FALSE = 0,
@@ -452,6 +522,7 @@ enum safe_crlf {
 extern enum safe_crlf safe_crlf;
 
 enum branch_track {
+	BRANCH_TRACK_UNSPECIFIED = -1,
 	BRANCH_TRACK_NEVER = 0,
 	BRANCH_TRACK_REMOTE,
 	BRANCH_TRACK_ALWAYS,
@@ -480,6 +551,13 @@ extern int check_repository_format(void);
 #define DATA_CHANGED    0x0020
 #define TYPE_CHANGED    0x0040
 
+extern char *mksnpath(char *buf, size_t n, const char *fmt, ...)
+	__attribute__((format (printf, 3, 4)));
+extern char *git_snpath(char *buf, size_t n, const char *fmt, ...)
+	__attribute__((format (printf, 3, 4)));
+extern char *git_pathdup(const char *fmt, ...)
+	__attribute__((format (printf, 1, 2)));
+
 /* Return a statically allocated filename matching the sha1 signature */
 extern char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 extern char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
@@ -504,6 +582,13 @@ static inline void hashclr(unsigned char *hash)
 {
 	memset(hash, 0, 20);
 }
+extern int is_empty_blob_sha1(const unsigned char *sha1);
+
+#define EMPTY_TREE_SHA1_HEX \
+	"4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+#define EMPTY_TREE_SHA1_BIN \
+	 "\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60" \
+	 "\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04"
 
 int git_mkstemp(char *path, size_t n, const char *template);
 
@@ -531,6 +616,7 @@ static inline int is_absolute_path(const char *path)
 {
 	return path[0] == '/' || has_dos_drive_prefix(path);
 }
+int is_directory(const char *);
 const char *make_absolute_path(const char *path);
 const char *make_nonrelative_path(const char *path);
 const char *make_relative_path(const char *abs, const char *base);
@@ -548,12 +634,16 @@ extern int force_object_loose(const unsigned char *sha1, time_t mtime);
 /* just like read_sha1_file(), but non fatal in presence of bad objects */
 extern void *read_object(const unsigned char *sha1, enum object_type *type, unsigned long *size);
 
+/* global flag to enable extra checks when accessing packed objects */
+extern int do_check_packed_object_crc;
+
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
 extern int move_temp_to_file(const char *tmpfile, const char *filename);
 
 extern int has_sha1_pack(const unsigned char *sha1, const char **ignore);
 extern int has_sha1_file(const unsigned char *sha1);
+extern int has_loose_object_nonlocal(const unsigned char *sha1);
 
 extern int has_pack_file(const unsigned char *sha1);
 extern int has_pack_index(const unsigned char *sha1);
@@ -638,6 +728,8 @@ extern struct alternate_object_database {
 } *alt_odb_list;
 extern void prepare_alt_odb(void);
 extern void add_to_alternates_file(const char *reference);
+typedef int alt_odb_fn(struct alternate_object_database *, void *);
+extern void foreach_alt_odb(alt_odb_fn, void*);
 
 struct pack_window {
 	struct pack_window *next;
@@ -660,7 +752,8 @@ extern struct packed_git {
 	int index_version;
 	time_t mtime;
 	int pack_fd;
-	int pack_local;
+	unsigned pack_local:1,
+		 pack_keep:1;
 	unsigned char sha1[20];
 	/* something like ".git/objects/pack/xxxxx.pack" */
 	char pack_name[FLEX_ARRAY]; /* more */
@@ -706,7 +799,11 @@ extern struct child_process *git_connect(int fd[2], const char *url, const char 
 extern int finish_connect(struct child_process *conn);
 extern int path_match(const char *path, int nr, char **match);
 extern int get_ack(int fd, unsigned char *result_sha1);
-extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match, unsigned int flags);
+struct extra_have_objects {
+	int nr, alloc;
+	unsigned char (*array)[20];
+};
+extern struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match, unsigned int flags, struct extra_have_objects *);
 extern int server_supports(const char *feature);
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1);
@@ -723,12 +820,13 @@ extern int open_pack_index(struct packed_git *);
 extern unsigned char* use_pack(struct packed_git *, struct pack_window **, off_t, unsigned int *);
 extern void close_pack_windows(struct packed_git *);
 extern void unuse_pack(struct pack_window **);
+extern void free_pack_by_name(const char *);
 extern struct packed_git *add_packed_git(const char *, int, int);
 extern const unsigned char *nth_packed_object_sha1(struct packed_git *, uint32_t);
 extern off_t nth_packed_object_offset(const struct packed_git *, uint32_t);
 extern off_t find_pack_entry_one(const unsigned char *, struct packed_git *);
 extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsigned long *);
-extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
+extern unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 extern const char *packed_object_info_detail(struct packed_git *, off_t, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 extern int matches_pack_name(struct packed_git *p, const char *name);
@@ -740,7 +838,6 @@ typedef int (*config_fn_t)(const char *, const char *, void *);
 extern int git_default_config(const char *, const char *, void *);
 extern int git_config_from_file(config_fn_t fn, const char *, void *);
 extern int git_config(config_fn_t fn, void *);
-extern int git_parse_long(const char *, long *);
 extern int git_parse_ulong(const char *, unsigned long *);
 extern int git_config_int(const char *, const char *);
 extern unsigned long git_config_ulong(const char *, const char *);

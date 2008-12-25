@@ -11,10 +11,8 @@
 #include "progress.h"
 #include "csum-file.h"
 
-static void sha1flush(struct sha1file *f, unsigned int count)
+static void flush(struct sha1file *f, void * buf, unsigned int count)
 {
-	void *buf = f->buffer;
-
 	for (;;) {
 		int ret = xwrite(f->fd, buf, count);
 		if (ret > 0) {
@@ -32,22 +30,28 @@ static void sha1flush(struct sha1file *f, unsigned int count)
 	}
 }
 
-int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
+void sha1flush(struct sha1file *f)
 {
-	int fd;
 	unsigned offset = f->offset;
 
 	if (offset) {
-		SHA1_Update(&f->ctx, f->buffer, offset);
-		sha1flush(f, offset);
+		git_SHA1_Update(&f->ctx, f->buffer, offset);
+		flush(f, f->buffer, offset);
 		f->offset = 0;
 	}
-	SHA1_Final(f->buffer, &f->ctx);
+}
+
+int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
+{
+	int fd;
+
+	sha1flush(f);
+	git_SHA1_Final(f->buffer, &f->ctx);
 	if (result)
 		hashcpy(result, f->buffer);
 	if (flags & (CSUM_CLOSE | CSUM_FSYNC)) {
 		/* write checksum and close fd */
-		sha1flush(f, 20);
+		flush(f, f->buffer, 20);
 		if (flags & CSUM_FSYNC)
 			fsync_or_die(f->fd, f->name);
 		if (close(f->fd))
@@ -62,21 +66,30 @@ int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
 
 int sha1write(struct sha1file *f, void *buf, unsigned int count)
 {
-	if (f->do_crc)
-		f->crc32 = crc32(f->crc32, buf, count);
 	while (count) {
 		unsigned offset = f->offset;
 		unsigned left = sizeof(f->buffer) - offset;
 		unsigned nr = count > left ? left : count;
+		void *data;
 
-		memcpy(f->buffer + offset, buf, nr);
+		if (f->do_crc)
+			f->crc32 = crc32(f->crc32, buf, nr);
+
+		if (nr == sizeof(f->buffer)) {
+			/* process full buffer directly without copy */
+			data = buf;
+		} else {
+			memcpy(f->buffer + offset, buf, nr);
+			data = f->buffer;
+		}
+
 		count -= nr;
 		offset += nr;
 		buf = (char *) buf + nr;
 		left -= nr;
 		if (!left) {
-			SHA1_Update(&f->ctx, f->buffer, offset);
-			sha1flush(f, offset);
+			git_SHA1_Update(&f->ctx, data, offset);
+			flush(f, data, offset);
 			offset = 0;
 		}
 		f->offset = offset;
@@ -98,7 +111,7 @@ struct sha1file *sha1fd_throughput(int fd, const char *name, struct progress *tp
 	f->tp = tp;
 	f->name = name;
 	f->do_crc = 0;
-	SHA1_Init(&f->ctx);
+	git_SHA1_Init(&f->ctx);
 	return f;
 }
 

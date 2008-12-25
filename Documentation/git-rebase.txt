@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git rebase' [-i | --interactive] [-v | --verbose] [-m | --merge]
-	[-s <strategy> | --strategy=<strategy>]
+	[-s <strategy> | --strategy=<strategy>] [--no-verify]
 	[-C<n>] [ --whitespace=<option>] [-p | --preserve-merges]
 	[--onto <newbase>] <upstream> [<branch>]
 'git rebase' --continue | --skip | --abort
@@ -92,7 +92,7 @@ branch to another, to pretend that you forked the topic branch
 from the latter branch, using `rebase --onto`.
 
 First let's assume your 'topic' is based on branch 'next'.
-For example feature developed in 'topic' depends on some
+For example, a feature developed in 'topic' depends on some
 functionality which is found in 'next'.
 
 ------------
@@ -103,9 +103,9 @@ functionality which is found in 'next'.
                             o---o---o  topic
 ------------
 
-We would want to make 'topic' forked from branch 'master',
-for example because the functionality 'topic' branch depend on
-got merged into more stable 'master' branch, like this:
+We want to make 'topic' forked from branch 'master'; for example,
+because the functionality on which 'topic' depends was merged into the
+more stable 'master' branch. We want our tree to look like this:
 
 ------------
     o---o---o---o---o  master
@@ -232,6 +232,9 @@ OPTIONS
 --verbose::
 	Display a diffstat of what changed upstream since the last rebase.
 
+--no-verify::
+	This option bypasses the pre-rebase hook.  See also linkgit:githooks[5].
+
 -C<n>::
 	Ensure at least <n> lines of surrounding context match before
 	and after each change.  When fewer lines of surrounding
@@ -250,18 +253,16 @@ OPTIONS
 
 -p::
 --preserve-merges::
-	Instead of ignoring merges, try to recreate them.  This option
-	only works in interactive mode.
+	Instead of ignoring merges, try to recreate them.
 
 include::merge-strategies.txt[]
 
 NOTES
 -----
-When you rebase a branch, you are changing its history in a way that
-will cause problems for anyone who already has a copy of the branch
-in their repository and tries to pull updates from you.  You should
-understand the implications of using 'git-rebase' on a repository that
-you share.
+
+You should understand the implications of using 'git-rebase' on a
+repository that you share.  See also RECOVERING FROM UPSTREAM REBASE
+below.
 
 When the git-rebase command is run, it will first execute a "pre-rebase"
 hook if one exists.  You can use this hook to do sanity checks and
@@ -394,6 +395,127 @@ If you are not absolutely sure that the intermediate revisions are
 consistent (they compile, pass the testsuite, etc.) you should use
 'git-stash' to stash away the not-yet-committed changes
 after each commit, test, and amend the commit if fixes are necessary.
+
+
+RECOVERING FROM UPSTREAM REBASE
+-------------------------------
+
+Rebasing (or any other form of rewriting) a branch that others have
+based work on is a bad idea: anyone downstream of it is forced to
+manually fix their history.  This section explains how to do the fix
+from the downstream's point of view.  The real fix, however, would be
+to avoid rebasing the upstream in the first place.
+
+To illustrate, suppose you are in a situation where someone develops a
+'subsystem' branch, and you are working on a 'topic' that is dependent
+on this 'subsystem'.  You might end up with a history like the
+following:
+
+------------
+    o---o---o---o---o---o---o---o---o  master
+	 \
+	  o---o---o---o---o  subsystem
+			   \
+			    *---*---*  topic
+------------
+
+If 'subsystem' is rebased against 'master', the following happens:
+
+------------
+    o---o---o---o---o---o---o---o  master
+	 \			 \
+	  o---o---o---o---o	  o'--o'--o'--o'--o'  subsystem
+			   \
+			    *---*---*  topic
+------------
+
+If you now continue development as usual, and eventually merge 'topic'
+to 'subsystem', the commits from 'subsystem' will remain duplicated forever:
+
+------------
+    o---o---o---o---o---o---o---o  master
+	 \			 \
+	  o---o---o---o---o	  o'--o'--o'--o'--o'--M	 subsystem
+			   \			     /
+			    *---*---*-..........-*--*  topic
+------------
+
+Such duplicates are generally frowned upon because they clutter up
+history, making it harder to follow.  To clean things up, you need to
+transplant the commits on 'topic' to the new 'subsystem' tip, i.e.,
+rebase 'topic'.  This becomes a ripple effect: anyone downstream from
+'topic' is forced to rebase too, and so on!
+
+There are two kinds of fixes, discussed in the following subsections:
+
+Easy case: The changes are literally the same.::
+
+	This happens if the 'subsystem' rebase was a simple rebase and
+	had no conflicts.
+
+Hard case: The changes are not the same.::
+
+	This happens if the 'subsystem' rebase had conflicts, or used
+	`\--interactive` to omit, edit, or squash commits; or if the
+	upstream used one of `commit \--amend`, `reset`, or
+	`filter-branch`.
+
+
+The easy case
+~~~~~~~~~~~~~
+
+Only works if the changes (patch IDs based on the diff contents) on
+'subsystem' are literally the same before and after the rebase
+'subsystem' did.
+
+In that case, the fix is easy because 'git-rebase' knows to skip
+changes that are already present in the new upstream.  So if you say
+(assuming you're on 'topic')
+------------
+    $ git rebase subsystem
+------------
+you will end up with the fixed history
+------------
+    o---o---o---o---o---o---o---o  master
+				 \
+				  o'--o'--o'--o'--o'  subsystem
+						   \
+						    *---*---*  topic
+------------
+
+
+The hard case
+~~~~~~~~~~~~~
+
+Things get more complicated if the 'subsystem' changes do not exactly
+correspond to the ones before the rebase.
+
+NOTE: While an "easy case recovery" sometimes appears to be successful
+      even in the hard case, it may have unintended consequences.  For
+      example, a commit that was removed via `git rebase
+      \--interactive` will be **resurrected**!
+
+The idea is to manually tell 'git-rebase' "where the old 'subsystem'
+ended and your 'topic' began", that is, what the old merge-base
+between them was.  You will have to find a way to name the last commit
+of the old 'subsystem', for example:
+
+* With the 'subsystem' reflog: after 'git-fetch', the old tip of
+  'subsystem' is at `subsystem@\{1}`.  Subsequent fetches will
+  increase the number.  (See linkgit:git-reflog[1].)
+
+* Relative to the tip of 'topic': knowing that your 'topic' has three
+  commits, the old tip of 'subsystem' must be `topic~3`.
+
+You can then transplant the old `subsystem..topic` to the new tip by
+saying (for the reflog case, and assuming you are on 'topic' already):
+------------
+    $ git rebase --onto subsystem subsystem@{1}
+------------
+
+The ripple effect of a "hard case" recovery is especially bad:
+'everyone' downstream from 'topic' will now have to perform a "hard
+case" recovery too!
 
 
 Authors

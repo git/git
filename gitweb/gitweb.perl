@@ -27,6 +27,15 @@ our $version = "++GIT_VERSION++";
 our $my_url = $cgi->url();
 our $my_uri = $cgi->url(-absolute => 1);
 
+# if we're called with PATH_INFO, we have to strip that
+# from the URL to find our real URL
+# we make $path_info global because it's also used later on
+our $path_info = $ENV{"PATH_INFO"};
+if ($path_info) {
+	$my_url =~ s,\Q$path_info\E$,,;
+	$my_uri =~ s,\Q$path_info\E$,,;
+}
+
 # core git executable to use
 # this can just be "git" if your webserver has a sensible PATH
 our $GIT = "++GIT_BINDIR++/git";
@@ -85,6 +94,11 @@ our $default_projects_order = "project";
 # show repository only if this file exists
 # (only effective if this variable evaluates to true)
 our $export_ok = "++GITWEB_EXPORT_OK++";
+
+# show repository only if this subroutine returns true
+# when given the path to the project, for example:
+#    sub { return -e "$_[0]/git-daemon-export-ok"; }
+our $export_auth_hook = undef;
 
 # only allow viewing of repositories also shown on the overview page
 our $strict_export = "++GITWEB_STRICT_EXPORT++";
@@ -176,7 +190,9 @@ our %feature = (
 	# if there is no 'sub' key (no feature-sub), then feature cannot be
 	# overriden
 	#
-	# use gitweb_check_feature(<feature>) to check if <feature> is enabled
+	# use gitweb_get_feature(<feature>) to retrieve the <feature> value
+	# (an array) or gitweb_check_feature(<feature>) to check if <feature>
+	# is enabled
 
 	# Enable the 'blame' blob view, showing the last commit that modified
 	# each line in the file. This can be very CPU-intensive.
@@ -225,6 +241,7 @@ our %feature = (
 	# $feature{'grep'}{'override'} = 1;
 	# and in project config gitweb.grep = 0|1;
 	'grep' => {
+		'sub' => \&feature_grep,
 		'override' => 0,
 		'default' => [1]},
 
@@ -275,9 +292,47 @@ our %feature = (
 	'forks' => {
 		'override' => 0,
 		'default' => [0]},
+
+	# Insert custom links to the action bar of all project pages.
+	# This enables you mainly to link to third-party scripts integrating
+	# into gitweb; e.g. git-browser for graphical history representation
+	# or custom web-based repository administration interface.
+
+	# The 'default' value consists of a list of triplets in the form
+	# (label, link, position) where position is the label after which
+	# to insert the link and link is a format string where %n expands
+	# to the project name, %f to the project path within the filesystem,
+	# %h to the current hash (h gitweb parameter) and %b to the current
+	# hash base (hb gitweb parameter); %% expands to %.
+
+	# To enable system wide have in $GITWEB_CONFIG e.g.
+	# $feature{'actions'}{'default'} = [('graphiclog',
+	# 	'/git-browser/by-commit.html?r=%n', 'summary')];
+	# Project specific override is not supported.
+	'actions' => {
+		'override' => 0,
+		'default' => []},
+
+	# Allow gitweb scan project content tags described in ctags/
+	# of project repository, and display the popular Web 2.0-ish
+	# "tag cloud" near the project list. Note that this is something
+	# COMPLETELY different from the normal Git tags.
+
+	# gitweb by itself can show existing tags, but it does not handle
+	# tagging itself; you need an external application for that.
+	# For an example script, check Girocco's cgi/tagproj.cgi.
+	# You may want to install the HTML::TagCloud Perl module to get
+	# a pretty tag cloud instead of just a list of tags.
+
+	# To enable system wide have in $GITWEB_CONFIG
+	# $feature{'ctags'}{'default'} = ['path_to_tag_script'];
+	# Project specific override is not supported.
+	'ctags' => {
+		'override' => 0,
+		'default' => [0]},
 );
 
-sub gitweb_check_feature {
+sub gitweb_get_feature {
 	my ($name) = @_;
 	return unless exists $feature{$name};
 	my ($sub, $override, @defaults) = (
@@ -291,6 +346,22 @@ sub gitweb_check_feature {
 	}
 	return $sub->(@defaults);
 }
+
+# A wrapper to check if a given feature is enabled.
+# With this, you can say
+#
+#   my $bool_feat = gitweb_check_feature('bool_feat');
+#   gitweb_check_feature('bool_feat') or somecode;
+#
+# instead of
+#
+#   my ($bool_feat) = gitweb_get_feature('bool_feat');
+#   (gitweb_get_feature('bool_feat'))[0] or somecode;
+#
+sub gitweb_check_feature {
+	return (gitweb_get_feature(@_))[0];
+}
+
 
 sub feature_blame {
 	my ($val) = git_get_project_config('blame', '--bool');
@@ -353,7 +424,8 @@ sub check_head_link {
 sub check_export_ok {
 	my ($dir) = @_;
 	return (check_head_link($dir) &&
-		(!$export_ok || -e "$dir/$export_ok"));
+		(!$export_ok || -e "$dir/$export_ok") &&
+		(!$export_auth_hook || $export_auth_hook->($dir)));
 }
 
 # process alternate names for backward compatibility
@@ -383,162 +455,43 @@ $projects_list ||= $projectroot;
 
 # ======================================================================
 # input validation and dispatch
-our $action = $cgi->param('a');
-if (defined $action) {
-	if ($action =~ m/[^0-9a-zA-Z\.\-_]/) {
-		die_error(400, "Invalid action parameter");
-	}
-}
 
-# parameters which are pathnames
-our $project = $cgi->param('p');
-if (defined $project) {
-	if (!validate_pathname($project) ||
-	    !(-d "$projectroot/$project") ||
-	    !check_head_link("$projectroot/$project") ||
-	    ($export_ok && !(-e "$projectroot/$project/$export_ok")) ||
-	    ($strict_export && !project_in_list($project))) {
-		undef $project;
-		die_error(404, "No such project");
-	}
-}
+# input parameters can be collected from a variety of sources (presently, CGI
+# and PATH_INFO), so we define an %input_params hash that collects them all
+# together during validation: this allows subsequent uses (e.g. href()) to be
+# agnostic of the parameter origin
 
-our $file_name = $cgi->param('f');
-if (defined $file_name) {
-	if (!validate_pathname($file_name)) {
-		die_error(400, "Invalid file parameter");
-	}
-}
+our %input_params = ();
 
-our $file_parent = $cgi->param('fp');
-if (defined $file_parent) {
-	if (!validate_pathname($file_parent)) {
-		die_error(400, "Invalid file parent parameter");
-	}
-}
+# input parameters are stored with the long parameter name as key. This will
+# also be used in the href subroutine to convert parameters to their CGI
+# equivalent, and since the href() usage is the most frequent one, we store
+# the name -> CGI key mapping here, instead of the reverse.
+#
+# XXX: Warning: If you touch this, check the search form for updating,
+# too.
 
-# parameters which are refnames
-our $hash = $cgi->param('h');
-if (defined $hash) {
-	if (!validate_refname($hash)) {
-		die_error(400, "Invalid hash parameter");
-	}
-}
-
-our $hash_parent = $cgi->param('hp');
-if (defined $hash_parent) {
-	if (!validate_refname($hash_parent)) {
-		die_error(400, "Invalid hash parent parameter");
-	}
-}
-
-our $hash_base = $cgi->param('hb');
-if (defined $hash_base) {
-	if (!validate_refname($hash_base)) {
-		die_error(400, "Invalid hash base parameter");
-	}
-}
-
-my %allowed_options = (
-	"--no-merges" => [ qw(rss atom log shortlog history) ],
+our @cgi_param_mapping = (
+	project => "p",
+	action => "a",
+	file_name => "f",
+	file_parent => "fp",
+	hash => "h",
+	hash_parent => "hp",
+	hash_base => "hb",
+	hash_parent_base => "hpb",
+	page => "pg",
+	order => "o",
+	searchtext => "s",
+	searchtype => "st",
+	snapshot_format => "sf",
+	extra_options => "opt",
+	search_use_regexp => "sr",
 );
+our %cgi_param_mapping = @cgi_param_mapping;
 
-our @extra_options = $cgi->param('opt');
-if (defined @extra_options) {
-	foreach my $opt (@extra_options) {
-		if (not exists $allowed_options{$opt}) {
-			die_error(400, "Invalid option parameter");
-		}
-		if (not grep(/^$action$/, @{$allowed_options{$opt}})) {
-			die_error(400, "Invalid option parameter for this action");
-		}
-	}
-}
-
-our $hash_parent_base = $cgi->param('hpb');
-if (defined $hash_parent_base) {
-	if (!validate_refname($hash_parent_base)) {
-		die_error(400, "Invalid hash parent base parameter");
-	}
-}
-
-# other parameters
-our $page = $cgi->param('pg');
-if (defined $page) {
-	if ($page =~ m/[^0-9]/) {
-		die_error(400, "Invalid page parameter");
-	}
-}
-
-our $searchtype = $cgi->param('st');
-if (defined $searchtype) {
-	if ($searchtype =~ m/[^a-z]/) {
-		die_error(400, "Invalid searchtype parameter");
-	}
-}
-
-our $search_use_regexp = $cgi->param('sr');
-
-our $searchtext = $cgi->param('s');
-our $search_regexp;
-if (defined $searchtext) {
-	if (length($searchtext) < 2) {
-		die_error(403, "At least two characters are required for search parameter");
-	}
-	$search_regexp = $search_use_regexp ? $searchtext : quotemeta $searchtext;
-}
-
-# now read PATH_INFO and use it as alternative to parameters
-sub evaluate_path_info {
-	return if defined $project;
-	my $path_info = $ENV{"PATH_INFO"};
-	return if !$path_info;
-	$path_info =~ s,^/+,,;
-	return if !$path_info;
-	# find which part of PATH_INFO is project
-	$project = $path_info;
-	$project =~ s,/+$,,;
-	while ($project && !check_head_link("$projectroot/$project")) {
-		$project =~ s,/*[^/]*$,,;
-	}
-	# validate project
-	$project = validate_pathname($project);
-	if (!$project ||
-	    ($export_ok && !-e "$projectroot/$project/$export_ok") ||
-	    ($strict_export && !project_in_list($project))) {
-		undef $project;
-		return;
-	}
-	# do not change any parameters if an action is given using the query string
-	return if $action;
-	$path_info =~ s,^\Q$project\E/*,,;
-	my ($refname, $pathname) = split(/:/, $path_info, 2);
-	if (defined $pathname) {
-		# we got "project.git/branch:filename" or "project.git/branch:dir/"
-		# we could use git_get_type(branch:pathname), but it needs $git_dir
-		$pathname =~ s,^/+,,;
-		if (!$pathname || substr($pathname, -1) eq "/") {
-			$action  ||= "tree";
-			$pathname =~ s,/$,,;
-		} else {
-			$action  ||= "blob_plain";
-		}
-		$hash_base ||= validate_refname($refname);
-		$file_name ||= validate_pathname($pathname);
-	} elsif (defined $refname) {
-		# we got "project.git/branch"
-		$action ||= "shortlog";
-		$hash   ||= validate_refname($refname);
-	}
-}
-evaluate_path_info();
-
-# path to the current git repository
-our $git_dir;
-$git_dir = "$projectroot/$project" if $project;
-
-# dispatch
-my %actions = (
+# we will also need to know the possible actions, for validation
+our %actions = (
 	"blame" => \&git_blame,
 	"blobdiff" => \&git_blobdiff,
 	"blobdiff_plain" => \&git_blobdiff_plain,
@@ -568,6 +521,275 @@ my %actions = (
 	"project_index" => \&git_project_index,
 );
 
+# finally, we have the hash of allowed extra_options for the commands that
+# allow them
+our %allowed_options = (
+	"--no-merges" => [ qw(rss atom log shortlog history) ],
+);
+
+# fill %input_params with the CGI parameters. All values except for 'opt'
+# should be single values, but opt can be an array. We should probably
+# build an array of parameters that can be multi-valued, but since for the time
+# being it's only this one, we just single it out
+while (my ($name, $symbol) = each %cgi_param_mapping) {
+	if ($symbol eq 'opt') {
+		$input_params{$name} = [ $cgi->param($symbol) ];
+	} else {
+		$input_params{$name} = $cgi->param($symbol);
+	}
+}
+
+# now read PATH_INFO and update the parameter list for missing parameters
+sub evaluate_path_info {
+	return if defined $input_params{'project'};
+	return if !$path_info;
+	$path_info =~ s,^/+,,;
+	return if !$path_info;
+
+	# find which part of PATH_INFO is project
+	my $project = $path_info;
+	$project =~ s,/+$,,;
+	while ($project && !check_head_link("$projectroot/$project")) {
+		$project =~ s,/*[^/]*$,,;
+	}
+	return unless $project;
+	$input_params{'project'} = $project;
+
+	# do not change any parameters if an action is given using the query string
+	return if $input_params{'action'};
+	$path_info =~ s,^\Q$project\E/*,,;
+
+	# next, check if we have an action
+	my $action = $path_info;
+	$action =~ s,/.*$,,;
+	if (exists $actions{$action}) {
+		$path_info =~ s,^$action/*,,;
+		$input_params{'action'} = $action;
+	}
+
+	# list of actions that want hash_base instead of hash, but can have no
+	# pathname (f) parameter
+	my @wants_base = (
+		'tree',
+		'history',
+	);
+
+	# we want to catch
+	# [$hash_parent_base[:$file_parent]..]$hash_parent[:$file_name]
+	my ($parentrefname, $parentpathname, $refname, $pathname) =
+		($path_info =~ /^(?:(.+?)(?::(.+))?\.\.)?(.+?)(?::(.+))?$/);
+
+	# first, analyze the 'current' part
+	if (defined $pathname) {
+		# we got "branch:filename" or "branch:dir/"
+		# we could use git_get_type(branch:pathname), but:
+		# - it needs $git_dir
+		# - it does a git() call
+		# - the convention of terminating directories with a slash
+		#   makes it superfluous
+		# - embedding the action in the PATH_INFO would make it even
+		#   more superfluous
+		$pathname =~ s,^/+,,;
+		if (!$pathname || substr($pathname, -1) eq "/") {
+			$input_params{'action'} ||= "tree";
+			$pathname =~ s,/$,,;
+		} else {
+			# the default action depends on whether we had parent info
+			# or not
+			if ($parentrefname) {
+				$input_params{'action'} ||= "blobdiff_plain";
+			} else {
+				$input_params{'action'} ||= "blob_plain";
+			}
+		}
+		$input_params{'hash_base'} ||= $refname;
+		$input_params{'file_name'} ||= $pathname;
+	} elsif (defined $refname) {
+		# we got "branch". In this case we have to choose if we have to
+		# set hash or hash_base.
+		#
+		# Most of the actions without a pathname only want hash to be
+		# set, except for the ones specified in @wants_base that want
+		# hash_base instead. It should also be noted that hand-crafted
+		# links having 'history' as an action and no pathname or hash
+		# set will fail, but that happens regardless of PATH_INFO.
+		$input_params{'action'} ||= "shortlog";
+		if (grep { $_ eq $input_params{'action'} } @wants_base) {
+			$input_params{'hash_base'} ||= $refname;
+		} else {
+			$input_params{'hash'} ||= $refname;
+		}
+	}
+
+	# next, handle the 'parent' part, if present
+	if (defined $parentrefname) {
+		# a missing pathspec defaults to the 'current' filename, allowing e.g.
+		# someproject/blobdiff/oldrev..newrev:/filename
+		if ($parentpathname) {
+			$parentpathname =~ s,^/+,,;
+			$parentpathname =~ s,/$,,;
+			$input_params{'file_parent'} ||= $parentpathname;
+		} else {
+			$input_params{'file_parent'} ||= $input_params{'file_name'};
+		}
+		# we assume that hash_parent_base is wanted if a path was specified,
+		# or if the action wants hash_base instead of hash
+		if (defined $input_params{'file_parent'} ||
+			grep { $_ eq $input_params{'action'} } @wants_base) {
+			$input_params{'hash_parent_base'} ||= $parentrefname;
+		} else {
+			$input_params{'hash_parent'} ||= $parentrefname;
+		}
+	}
+
+	# for the snapshot action, we allow URLs in the form
+	# $project/snapshot/$hash.ext
+	# where .ext determines the snapshot and gets removed from the
+	# passed $refname to provide the $hash.
+	#
+	# To be able to tell that $refname includes the format extension, we
+	# require the following two conditions to be satisfied:
+	# - the hash input parameter MUST have been set from the $refname part
+	#   of the URL (i.e. they must be equal)
+	# - the snapshot format MUST NOT have been defined already (e.g. from
+	#   CGI parameter sf)
+	# It's also useless to try any matching unless $refname has a dot,
+	# so we check for that too
+	if (defined $input_params{'action'} &&
+		$input_params{'action'} eq 'snapshot' &&
+		defined $refname && index($refname, '.') != -1 &&
+		$refname eq $input_params{'hash'} &&
+		!defined $input_params{'snapshot_format'}) {
+		# We loop over the known snapshot formats, checking for
+		# extensions. Allowed extensions are both the defined suffix
+		# (which includes the initial dot already) and the snapshot
+		# format key itself, with a prepended dot
+		while (my ($fmt, %opt) = each %known_snapshot_formats) {
+			my $hash = $refname;
+			my $sfx;
+			$hash =~ s/(\Q$opt{'suffix'}\E|\Q.$fmt\E)$//;
+			next unless $sfx = $1;
+			# a valid suffix was found, so set the snapshot format
+			# and reset the hash parameter
+			$input_params{'snapshot_format'} = $fmt;
+			$input_params{'hash'} = $hash;
+			# we also set the format suffix to the one requested
+			# in the URL: this way a request for e.g. .tgz returns
+			# a .tgz instead of a .tar.gz
+			$known_snapshot_formats{$fmt}{'suffix'} = $sfx;
+			last;
+		}
+	}
+}
+evaluate_path_info();
+
+our $action = $input_params{'action'};
+if (defined $action) {
+	if (!validate_action($action)) {
+		die_error(400, "Invalid action parameter");
+	}
+}
+
+# parameters which are pathnames
+our $project = $input_params{'project'};
+if (defined $project) {
+	if (!validate_project($project)) {
+		undef $project;
+		die_error(404, "No such project");
+	}
+}
+
+our $file_name = $input_params{'file_name'};
+if (defined $file_name) {
+	if (!validate_pathname($file_name)) {
+		die_error(400, "Invalid file parameter");
+	}
+}
+
+our $file_parent = $input_params{'file_parent'};
+if (defined $file_parent) {
+	if (!validate_pathname($file_parent)) {
+		die_error(400, "Invalid file parent parameter");
+	}
+}
+
+# parameters which are refnames
+our $hash = $input_params{'hash'};
+if (defined $hash) {
+	if (!validate_refname($hash)) {
+		die_error(400, "Invalid hash parameter");
+	}
+}
+
+our $hash_parent = $input_params{'hash_parent'};
+if (defined $hash_parent) {
+	if (!validate_refname($hash_parent)) {
+		die_error(400, "Invalid hash parent parameter");
+	}
+}
+
+our $hash_base = $input_params{'hash_base'};
+if (defined $hash_base) {
+	if (!validate_refname($hash_base)) {
+		die_error(400, "Invalid hash base parameter");
+	}
+}
+
+our @extra_options = @{$input_params{'extra_options'}};
+# @extra_options is always defined, since it can only be (currently) set from
+# CGI, and $cgi->param() returns the empty array in array context if the param
+# is not set
+foreach my $opt (@extra_options) {
+	if (not exists $allowed_options{$opt}) {
+		die_error(400, "Invalid option parameter");
+	}
+	if (not grep(/^$action$/, @{$allowed_options{$opt}})) {
+		die_error(400, "Invalid option parameter for this action");
+	}
+}
+
+our $hash_parent_base = $input_params{'hash_parent_base'};
+if (defined $hash_parent_base) {
+	if (!validate_refname($hash_parent_base)) {
+		die_error(400, "Invalid hash parent base parameter");
+	}
+}
+
+# other parameters
+our $page = $input_params{'page'};
+if (defined $page) {
+	if ($page =~ m/[^0-9]/) {
+		die_error(400, "Invalid page parameter");
+	}
+}
+
+our $searchtype = $input_params{'searchtype'};
+if (defined $searchtype) {
+	if ($searchtype =~ m/[^a-z]/) {
+		die_error(400, "Invalid searchtype parameter");
+	}
+}
+
+our $search_use_regexp = $input_params{'search_use_regexp'};
+
+our $searchtext = $input_params{'searchtext'};
+our $search_regexp;
+if (defined $searchtext) {
+	if (length($searchtext) < 2) {
+		die_error(403, "At least two characters are required for search parameter");
+	}
+	$search_regexp = $search_use_regexp ? $searchtext : quotemeta $searchtext;
+}
+
+# path to the current git repository
+our $git_dir;
+$git_dir = "$projectroot/$project" if $project;
+
+# list of supported snapshot formats
+our @snapshot_fmts = gitweb_get_feature('snapshot');
+@snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
+
+# dispatch
 if (!defined $action) {
 	if (defined $hash) {
 		$action = git_get_type($hash);
@@ -597,55 +819,96 @@ sub href (%) {
 	# default is to use -absolute url() i.e. $my_uri
 	my $href = $params{-full} ? $my_url : $my_uri;
 
-	# XXX: Warning: If you touch this, check the search form for updating,
-	# too.
-
-	my @mapping = (
-		project => "p",
-		action => "a",
-		file_name => "f",
-		file_parent => "fp",
-		hash => "h",
-		hash_parent => "hp",
-		hash_base => "hb",
-		hash_parent_base => "hpb",
-		page => "pg",
-		order => "o",
-		searchtext => "s",
-		searchtype => "st",
-		snapshot_format => "sf",
-		extra_options => "opt",
-		search_use_regexp => "sr",
-	);
-	my %mapping = @mapping;
-
 	$params{'project'} = $project unless exists $params{'project'};
 
 	if ($params{-replay}) {
-		while (my ($name, $symbol) = each %mapping) {
+		while (my ($name, $symbol) = each %cgi_param_mapping) {
 			if (!exists $params{$name}) {
-				# to allow for multivalued params we use arrayref form
-				$params{$name} = [ $cgi->param($symbol) ];
+				$params{$name} = $input_params{$name};
 			}
 		}
 	}
 
-	my ($use_pathinfo) = gitweb_check_feature('pathinfo');
+	my $use_pathinfo = gitweb_check_feature('pathinfo');
 	if ($use_pathinfo) {
-		# use PATH_INFO for project name
+		# try to put as many parameters as possible in PATH_INFO:
+		#   - project name
+		#   - action
+		#   - hash_parent or hash_parent_base:/file_parent
+		#   - hash or hash_base:/filename
+		#   - the snapshot_format as an appropriate suffix
+
+		# When the script is the root DirectoryIndex for the domain,
+		# $href here would be something like http://gitweb.example.com/
+		# Thus, we strip any trailing / from $href, to spare us double
+		# slashes in the final URL
+		$href =~ s,/$,,;
+
+		# Then add the project name, if present
 		$href .= "/".esc_url($params{'project'}) if defined $params{'project'};
 		delete $params{'project'};
 
-		# Summary just uses the project path URL
-		if (defined $params{'action'} && $params{'action'} eq 'summary') {
+		# since we destructively absorb parameters, we keep this
+		# boolean that remembers if we're handling a snapshot
+		my $is_snapshot = $params{'action'} eq 'snapshot';
+
+		# Summary just uses the project path URL, any other action is
+		# added to the URL
+		if (defined $params{'action'}) {
+			$href .= "/".esc_url($params{'action'}) unless $params{'action'} eq 'summary';
 			delete $params{'action'};
+		}
+
+		# Next, we put hash_parent_base:/file_parent..hash_base:/file_name,
+		# stripping nonexistent or useless pieces
+		$href .= "/" if ($params{'hash_base'} || $params{'hash_parent_base'}
+			|| $params{'hash_parent'} || $params{'hash'});
+		if (defined $params{'hash_base'}) {
+			if (defined $params{'hash_parent_base'}) {
+				$href .= esc_url($params{'hash_parent_base'});
+				# skip the file_parent if it's the same as the file_name
+				delete $params{'file_parent'} if $params{'file_parent'} eq $params{'file_name'};
+				if (defined $params{'file_parent'} && $params{'file_parent'} !~ /\.\./) {
+					$href .= ":/".esc_url($params{'file_parent'});
+					delete $params{'file_parent'};
+				}
+				$href .= "..";
+				delete $params{'hash_parent'};
+				delete $params{'hash_parent_base'};
+			} elsif (defined $params{'hash_parent'}) {
+				$href .= esc_url($params{'hash_parent'}). "..";
+				delete $params{'hash_parent'};
+			}
+
+			$href .= esc_url($params{'hash_base'});
+			if (defined $params{'file_name'} && $params{'file_name'} !~ /\.\./) {
+				$href .= ":/".esc_url($params{'file_name'});
+				delete $params{'file_name'};
+			}
+			delete $params{'hash'};
+			delete $params{'hash_base'};
+		} elsif (defined $params{'hash'}) {
+			$href .= esc_url($params{'hash'});
+			delete $params{'hash'};
+		}
+
+		# If the action was a snapshot, we can absorb the
+		# snapshot_format parameter too
+		if ($is_snapshot) {
+			my $fmt = $params{'snapshot_format'};
+			# snapshot_format should always be defined when href()
+			# is called, but just in case some code forgets, we
+			# fall back to the default
+			$fmt ||= $snapshot_fmts[0];
+			$href .= $known_snapshot_formats{$fmt}{'suffix'};
+			delete $params{'snapshot_format'};
 		}
 	}
 
 	# now encode the parameters explicitly
 	my @result = ();
-	for (my $i = 0; $i < @mapping; $i += 2) {
-		my ($name, $symbol) = ($mapping[$i], $mapping[$i+1]);
+	for (my $i = 0; $i < @cgi_param_mapping; $i += 2) {
+		my ($name, $symbol) = ($cgi_param_mapping[$i], $cgi_param_mapping[$i+1]);
 		if (defined $params{$name}) {
 			if (ref($params{$name}) eq "ARRAY") {
 				foreach my $par (@{$params{$name}}) {
@@ -664,6 +927,24 @@ sub href (%) {
 
 ## ======================================================================
 ## validation, quoting/unquoting and escaping
+
+sub validate_action {
+	my $input = shift || return undef;
+	return undef unless exists $actions{$input};
+	return $input;
+}
+
+sub validate_project {
+	my $input = shift || return undef;
+	if (!validate_pathname($input) ||
+		!(-d "$projectroot/$input") ||
+		!check_export_ok("$projectroot/$input") ||
+		($strict_export && !project_in_list($input))) {
+		return undef;
+	} else {
+		return $input;
+	}
+}
 
 sub validate_pathname {
 	my $input = shift || return undef;
@@ -775,7 +1056,7 @@ sub quot_cec {
 	);
 	my $chr = ( (exists $es{$cntrl})
 		    ? $es{$cntrl}
-		    : sprintf('\%03o', ord($cntrl)) );
+		    : sprintf('\%2x', ord($cntrl)) );
 	if ($opts{-nohtml}) {
 		return $chr;
 	} else {
@@ -1090,13 +1371,23 @@ sub format_log_line_html {
 }
 
 # format marker of refs pointing to given object
+
+# the destination action is chosen based on object type and current context:
+# - for annotated tags, we choose the tag view unless it's the current view
+#   already, in which case we go to shortlog view
+# - for other refs, we keep the current view if we're in history, shortlog or
+#   log view, and select shortlog otherwise
 sub format_ref_marker {
 	my ($refs, $id) = @_;
 	my $markers = '';
 
 	if (defined $refs->{$id}) {
 		foreach my $ref (@{$refs->{$id}}) {
+			# this code exploits the fact that non-lightweight tags are the
+			# only indirect objects, and that they are the only objects for which
+			# we want to use tag instead of shortlog as action
 			my ($type, $name) = qw();
+			my $indirect = ($ref =~ s/\^\{\}$//);
 			# e.g. tags/v2.6.11 or heads/next
 			if ($ref =~ m!^(.*?)s?/(.*)$!) {
 				$type = $1;
@@ -1106,8 +1397,29 @@ sub format_ref_marker {
 				$name = $ref;
 			}
 
-			$markers .= " <span class=\"$type\" title=\"$ref\">" .
-			            esc_html($name) . "</span>";
+			my $class = $type;
+			$class .= " indirect" if $indirect;
+
+			my $dest_action = "shortlog";
+
+			if ($indirect) {
+				$dest_action = "tag" unless $action eq "tag";
+			} elsif ($action =~ /^(history|(short)?log)$/) {
+				$dest_action = $action;
+			}
+
+			my $dest = "";
+			$dest .= "refs/" unless $ref =~ m!^refs/!;
+			$dest .= $ref;
+
+			my $link = $cgi->a({
+				-href => href(
+					action=>$dest_action,
+					hash=>$dest
+				)}, $name);
+
+			$markers .= " <span class=\"$class\" title=\"$ref\">" .
+				$link . "</span>";
 		}
 	}
 
@@ -1419,8 +1731,6 @@ sub format_diff_line {
 # linked.  Pass the hash of the tree/commit to snapshot.
 sub format_snapshot_links {
 	my ($hash) = @_;
-	my @snapshot_fmts = gitweb_check_feature('snapshot');
-	@snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
 	my $num_fmts = @snapshot_fmts;
 	if ($num_fmts > 1) {
 		# A parenthesized list of links bearing format names.
@@ -1724,6 +2034,71 @@ sub git_get_project_description {
 	return $descr;
 }
 
+sub git_get_project_ctags {
+	my $path = shift;
+	my $ctags = {};
+
+	$git_dir = "$projectroot/$path";
+	unless (opendir D, "$git_dir/ctags") {
+		return $ctags;
+	}
+	foreach (grep { -f $_ } map { "$git_dir/ctags/$_" } readdir(D)) {
+		open CT, $_ or next;
+		my $val = <CT>;
+		chomp $val;
+		close CT;
+		my $ctag = $_; $ctag =~ s#.*/##;
+		$ctags->{$ctag} = $val;
+	}
+	closedir D;
+	$ctags;
+}
+
+sub git_populate_project_tagcloud {
+	my $ctags = shift;
+
+	# First, merge different-cased tags; tags vote on casing
+	my %ctags_lc;
+	foreach (keys %$ctags) {
+		$ctags_lc{lc $_}->{count} += $ctags->{$_};
+		if (not $ctags_lc{lc $_}->{topcount}
+		    or $ctags_lc{lc $_}->{topcount} < $ctags->{$_}) {
+			$ctags_lc{lc $_}->{topcount} = $ctags->{$_};
+			$ctags_lc{lc $_}->{topname} = $_;
+		}
+	}
+
+	my $cloud;
+	if (eval { require HTML::TagCloud; 1; }) {
+		$cloud = HTML::TagCloud->new;
+		foreach (sort keys %ctags_lc) {
+			# Pad the title with spaces so that the cloud looks
+			# less crammed.
+			my $title = $ctags_lc{$_}->{topname};
+			$title =~ s/ /&nbsp;/g;
+			$title =~ s/^/&nbsp;/g;
+			$title =~ s/$/&nbsp;/g;
+			$cloud->add($title, $home_link."?by_tag=".$_, $ctags_lc{$_}->{count});
+		}
+	} else {
+		$cloud = \%ctags_lc;
+	}
+	$cloud;
+}
+
+sub git_show_project_tagcloud {
+	my ($cloud, $count) = @_;
+	print STDERR ref($cloud)."..\n";
+	if (ref $cloud eq 'HTML::TagCloud') {
+		return $cloud->html_and_css($count);
+	} else {
+		my @tags = sort { $cloud->{$a}->{count} <=> $cloud->{$b}->{count} } keys %$cloud;
+		return '<p align="center">' . join (', ', map {
+			"<a href=\"$home_link?by_tag=$_\">$cloud->{$_}->{topname}</a>"
+		} splice(@tags, 0, $count)) . '</p>';
+	}
+}
+
 sub git_get_project_url_list {
 	my $path = shift;
 
@@ -1745,7 +2120,7 @@ sub git_get_projects_list {
 	$filter ||= '';
 	$filter =~ s/\.git$//;
 
-	my ($check_forks) = gitweb_check_feature('forks');
+	my $check_forks = gitweb_check_feature('forks');
 
 	if (-d $projects_list) {
 		# search in directory
@@ -1772,9 +2147,7 @@ sub git_get_projects_list {
 
 				my $subdir = substr($File::Find::name, $pfxlen + 1);
 				# we check related file in $projectroot
-				if ($check_forks and $subdir =~ m#/.#) {
-					$File::Find::prune = 1;
-				} elsif (check_export_ok("$projectroot/$filter/$subdir")) {
+				if (check_export_ok("$projectroot/$filter/$subdir")) {
 					push @list, { path => ($filter ? "$filter/" : '') . $subdir };
 					$File::Find::prune = 1;
 				}
@@ -1918,7 +2291,7 @@ sub git_get_references {
 
 	while (my $line = <$fd>) {
 		chomp $line;
-		if ($line =~ m!^([0-9a-fA-F]{40})\srefs/($type/?[^^]+)!) {
+		if ($line =~ m!^([0-9a-fA-F]{40})\srefs/($type.*)$!) {
 			if (defined $refs{$1}) {
 				push @{$refs{$1}}, $2;
 			} else {
@@ -2386,6 +2759,15 @@ sub get_file_owner {
 	return to_utf8($owner);
 }
 
+# assume that file exists
+sub insert_file {
+	my $filename = shift;
+
+	open my $fd, '<', $filename;
+	print map { to_utf8($_) } <$fd>;
+	close $fd;
+}
+
 ## ......................................................................
 ## mimetype related functions
 
@@ -2574,9 +2956,7 @@ EOF
 	      "<body>\n";
 
 	if (-f $site_header) {
-		open (my $fd, $site_header);
-		print <$fd>;
-		close $fd;
+		insert_file($site_header);
 	}
 
 	print "<div class=\"page_header\">\n" .
@@ -2593,7 +2973,7 @@ EOF
 	}
 	print "</div>\n";
 
-	my ($have_search) = gitweb_check_feature('search');
+	my $have_search = gitweb_check_feature('search');
 	if (defined $project && $have_search) {
 		if (!defined $searchtext) {
 			$searchtext = "";
@@ -2607,7 +2987,7 @@ EOF
 			$search_hash = "HEAD";
 		}
 		my $action = $my_uri;
-		my ($use_pathinfo) = gitweb_check_feature('pathinfo');
+		my $use_pathinfo = gitweb_check_feature('pathinfo');
 		if ($use_pathinfo) {
 			$action .= "/".esc_url($project);
 		}
@@ -2663,9 +3043,7 @@ sub git_footer_html {
 	print "</div>\n"; # class="page_footer"
 
 	if (-f $site_footer) {
-		open (my $fd, $site_footer);
-		print <$fd>;
-		close $fd;
+		insert_file($site_footer);
 	}
 
 	print "</body>\n" .
@@ -2726,13 +3104,31 @@ sub git_print_page_nav {
 			}
 		}
 	}
+
 	$arg{'tree'}{'hash'} = $treehead if defined $treehead;
 	$arg{'tree'}{'hash_base'} = $treebase if defined $treebase;
+
+	my @actions = gitweb_get_feature('actions');
+	my %repl = (
+		'%' => '%',
+		'n' => $project,         # project name
+		'f' => $git_dir,         # project path within filesystem
+		'h' => $treehead || '',  # current hash ('h' parameter)
+		'b' => $treebase || '',  # hash base ('hb' parameter)
+	);
+	while (@actions) {
+		my ($label, $link, $pos) = splice(@actions,0,3);
+		# insert
+		@navs = map { $_ eq $pos ? ($_, $label) : $_ } @navs;
+		# munch munch
+		$link =~ s/%([%nfhb])/$repl{$1}/g;
+		$arg{$label}{'_href'} = $link;
+	}
 
 	print "<div class=\"page_nav\">\n" .
 		(join " | ",
 		 map { $_ eq $current ?
-		       $_ : $cgi->a({-href => href(%{$arg{$_}})}, "$_")
+		       $_ : $cgi->a({-href => ($arg{$_}{_href} ? $arg{$_}{_href} : href(%{$arg{$_}}))}, "$_")
 		 } @navs);
 	print "<br/>\n$extra<br/>\n" .
 	      "</div>\n";
@@ -3082,7 +3478,7 @@ sub is_patch_split {
 sub git_difftree_body {
 	my ($difftree, $hash, @parents) = @_;
 	my ($parent) = $parents[0];
-	my ($have_blame) = gitweb_check_feature('blame');
+	my $have_blame = gitweb_check_feature('blame');
 	print "<div class=\"list_head\">\n";
 	if ($#{$difftree} > 10) {
 		print(($#{$difftree} + 1) . " files changed:\n");
@@ -3542,6 +3938,7 @@ sub fill_project_list_info {
 	my ($projlist, $check_forks) = @_;
 	my @projects;
 
+	my $show_ctags = gitweb_check_feature('ctags');
  PROJECT:
 	foreach my $pr (@$projlist) {
 		my (@activity) = git_get_last_activity($pr->{'path'});
@@ -3568,25 +3965,20 @@ sub fill_project_list_info {
 				$pr->{'forks'} = 0;
 			}
 		}
+		$show_ctags and $pr->{'ctags'} = git_get_project_ctags($pr->{'path'});
 		push @projects, $pr;
 	}
 
 	return @projects;
 }
 
-# print 'sort by' <th> element, either sorting by $key if $name eq $order
-# (changing $list), or generating 'sort by $name' replay link otherwise
+# print 'sort by' <th> element, generating 'sort by $name' replay link
+# if that order is not selected
 sub print_sort_th {
-	my ($str_sort, $name, $order, $key, $header, $list) = @_;
-	$key    ||= $name;
+	my ($name, $order, $header) = @_;
 	$header ||= ucfirst($name);
 
 	if ($order eq $name) {
-		if ($str_sort) {
-			@$list = sort {$a->{$key} cmp $b->{$key}} @$list;
-		} else {
-			@$list = sort {$a->{$key} <=> $b->{$key}} @$list;
-		}
 		print "<th>$header</th>\n";
 	} else {
 		print "<th>" .
@@ -3596,23 +3988,41 @@ sub print_sort_th {
 	}
 }
 
-sub print_sort_th_str {
-	print_sort_th(1, @_);
-}
-
-sub print_sort_th_num {
-	print_sort_th(0, @_);
-}
-
 sub git_project_list_body {
+	# actually uses global variable $project
 	my ($projlist, $order, $from, $to, $extra, $no_header) = @_;
 
-	my ($check_forks) = gitweb_check_feature('forks');
+	my $check_forks = gitweb_check_feature('forks');
 	my @projects = fill_project_list_info($projlist, $check_forks);
 
 	$order ||= $default_projects_order;
 	$from = 0 unless defined $from;
 	$to = $#projects if (!defined $to || $#projects < $to);
+
+	my %order_info = (
+		project => { key => 'path', type => 'str' },
+		descr => { key => 'descr_long', type => 'str' },
+		owner => { key => 'owner', type => 'str' },
+		age => { key => 'age', type => 'num' }
+	);
+	my $oi = $order_info{$order};
+	if ($oi->{'type'} eq 'str') {
+		@projects = sort {$a->{$oi->{'key'}} cmp $b->{$oi->{'key'}}} @projects;
+	} else {
+		@projects = sort {$a->{$oi->{'key'}} <=> $b->{$oi->{'key'}}} @projects;
+	}
+
+	my $show_ctags = gitweb_check_feature('ctags');
+	if ($show_ctags) {
+		my %ctags;
+		foreach my $p (@projects) {
+			foreach my $ct (keys %{$p->{'ctags'}}) {
+				$ctags{$ct} += $p->{'ctags'}->{$ct};
+			}
+		}
+		my $cloud = git_populate_project_tagcloud(\%ctags);
+		print git_show_project_tagcloud($cloud, 64);
+	}
 
 	print "<table class=\"project_list\">\n";
 	unless ($no_header) {
@@ -3620,20 +4030,29 @@ sub git_project_list_body {
 		if ($check_forks) {
 			print "<th></th>\n";
 		}
-		print_sort_th_str('project', $order, 'path',
-		                  'Project', \@projects);
-		print_sort_th_str('descr', $order, 'descr_long',
-		                  'Description', \@projects);
-		print_sort_th_str('owner', $order, 'owner',
-		                  'Owner', \@projects);
-		print_sort_th_num('age', $order, 'age',
-		                  'Last Change', \@projects);
+		print_sort_th('project', $order, 'Project');
+		print_sort_th('descr', $order, 'Description');
+		print_sort_th('owner', $order, 'Owner');
+		print_sort_th('age', $order, 'Last Change');
 		print "<th></th>\n" . # for links
 		      "</tr>\n";
 	}
 	my $alternate = 1;
+	my $tagfilter = $cgi->param('by_tag');
 	for (my $i = $from; $i <= $to; $i++) {
 		my $pr = $projects[$i];
+
+		next if $tagfilter and $show_ctags and not grep { lc $_ eq lc $tagfilter } keys %{$pr->{'ctags'}};
+		next if $searchtext and not $pr->{'path'} =~ /$searchtext/
+			and not $pr->{'descr_long'} =~ /$searchtext/;
+		# Weed out forks or non-matching entries of search
+		if ($check_forks) {
+			my $forkbase = $project; $forkbase ||= ''; $forkbase =~ s#\.git$#/#;
+			$forkbase="^$forkbase" if $forkbase;
+			next if not $searchtext and not $tagfilter and $show_ctags
+				and $pr->{'path'} =~ m#$forkbase.*/.*#; # regexp-safe
+		}
+
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -3950,7 +4369,7 @@ sub git_search_grep_body {
 ## actions
 
 sub git_project_list {
-	my $order = $cgi->param('o');
+	my $order = $input_params{'order'};
 	if (defined $order && $order !~ m/none|project|descr|owner|age/) {
 		die_error(400, "Unknown order parameter");
 	}
@@ -3963,17 +4382,20 @@ sub git_project_list {
 	git_header_html();
 	if (-f $home_text) {
 		print "<div class=\"index_include\">\n";
-		open (my $fd, $home_text);
-		print <$fd>;
-		close $fd;
+		insert_file($home_text);
 		print "</div>\n";
 	}
+	print $cgi->startform(-method => "get") .
+	      "<p class=\"projsearch\">Search:\n" .
+	      $cgi->textfield(-name => "s", -value => $searchtext) . "\n" .
+	      "</p>" .
+	      $cgi->end_form() . "\n";
 	git_project_list_body(\@list, $order);
 	git_footer_html();
 }
 
 sub git_forks {
-	my $order = $cgi->param('o');
+	my $order = $input_params{'order'};
 	if (defined $order && $order !~ m/none|project|descr|owner|age/) {
 		die_error(400, "Unknown order parameter");
 	}
@@ -4028,7 +4450,7 @@ sub git_summary {
 	my @taglist  = git_get_tags_list(16);
 	my @headlist = git_get_heads_list(16);
 	my @forklist;
-	my ($check_forks) = gitweb_check_feature('forks');
+	my $check_forks = gitweb_check_feature('forks');
 
 	if ($check_forks) {
 		@forklist = git_get_projects_list($project);
@@ -4039,10 +4461,10 @@ sub git_summary {
 
 	print "<div class=\"title\">&nbsp;</div>\n";
 	print "<table class=\"projects_list\">\n" .
-	      "<tr><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
-	      "<tr><td>owner</td><td>" . esc_html($owner) . "</td></tr>\n";
+	      "<tr id=\"metadata_desc\"><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
+	      "<tr id=\"metadata_owner\"><td>owner</td><td>" . esc_html($owner) . "</td></tr>\n";
 	if (defined $cd{'rfc2822'}) {
-		print "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
+		print "<tr id=\"metadata_lchange\"><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
 	}
 
 	# use per project git URL list in $projectroot/$project/cloneurl
@@ -4052,19 +4474,30 @@ sub git_summary {
 	@url_list = map { "$_/$project" } @git_base_url_list unless @url_list;
 	foreach my $git_url (@url_list) {
 		next unless $git_url;
-		print "<tr><td>$url_tag</td><td>$git_url</td></tr>\n";
+		print "<tr class=\"metadata_url\"><td>$url_tag</td><td>$git_url</td></tr>\n";
 		$url_tag = "";
 	}
+
+	# Tag cloud
+	my $show_ctags = gitweb_check_feature('ctags');
+	if ($show_ctags) {
+		my $ctags = git_get_project_ctags($project);
+		my $cloud = git_populate_project_tagcloud($ctags);
+		print "<tr id=\"metadata_ctags\"><td>Content tags:<br />";
+		print "</td>\n<td>" unless %$ctags;
+		print "<form action=\"$show_ctags\" method=\"post\"><input type=\"hidden\" name=\"p\" value=\"$project\" />Add: <input type=\"text\" name=\"t\" size=\"8\" /></form>";
+		print "</td>\n<td>" if %$ctags;
+		print git_show_project_tagcloud($cloud, 48);
+		print "</td></tr>";
+	}
+
 	print "</table>\n";
 
 	if (-s "$projectroot/$project/README.html") {
-		if (open my $fd, "$projectroot/$project/README.html") {
-			print "<div class=\"title\">readme</div>\n" .
-			      "<div class=\"readme\">\n";
-			print $_ while (<$fd>);
-			print "\n</div>\n"; # class="readme"
-			close $fd;
-		}
+		print "<div class=\"title\">readme</div>\n" .
+		      "<div class=\"readme\">\n";
+		insert_file("$projectroot/$project/README.html");
+		print "\n</div>\n"; # class="readme"
 	}
 
 	# we need to request one more than 16 (0..15) to check if
@@ -4093,10 +4526,10 @@ sub git_summary {
 
 	if (@forklist) {
 		git_print_header_div('forks');
-		git_project_list_body(\@forklist, undef, 0, 15,
+		git_project_list_body(\@forklist, 'age', 0, 15,
 		                      $#forklist <= 15 ? undef :
 		                      $cgi->a({-href => href(action=>"forks")}, "..."),
-		                      'noheader');
+		                      'no_header');
 	}
 
 	git_footer_html();
@@ -4333,7 +4766,7 @@ sub git_blob {
 		$expires = "+1d";
 	}
 
-	my ($have_blame) = gitweb_check_feature('blame');
+	my $have_blame = gitweb_check_feature('blame');
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(500, "Couldn't cat $file_name, $hash");
 	my $mimetype = blob_mimetype($fd, $file_name);
@@ -4414,6 +4847,7 @@ sub git_tree {
 			$hash = $hash_base;
 		}
 	}
+	die_error(404, "No such tree") unless defined($hash);
 	$/ = "\0";
 	open my $fd, "-|", git_cmd(), "ls-tree", '-z', $hash
 		or die_error(500, "Open git-ls-tree failed");
@@ -4425,7 +4859,7 @@ sub git_tree {
 	my $ref = format_ref_marker($refs, $hash_base);
 	git_header_html();
 	my $basedir = '';
-	my ($have_blame) = gitweb_check_feature('blame');
+	my $have_blame = gitweb_check_feature('blame');
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 		my @views_nav = ();
 		if (defined $file_name) {
@@ -4454,8 +4888,8 @@ sub git_tree {
 		if ($basedir ne '' && substr($basedir, -1) ne '/') {
 			$basedir .= '/';
 		}
+		git_print_page_path($file_name, 'tree', $hash_base);
 	}
-	git_print_page_path($file_name, 'tree', $hash_base);
 	print "<div class=\"page_body\">\n";
 	print "<table class=\"tree\">\n";
 	my $alternate = 1;
@@ -4503,20 +4937,17 @@ sub git_tree {
 }
 
 sub git_snapshot {
-	my @supported_fmts = gitweb_check_feature('snapshot');
-	@supported_fmts = filter_snapshot_fmts(@supported_fmts);
-
-	my $format = $cgi->param('sf');
-	if (!@supported_fmts) {
+	my $format = $input_params{'snapshot_format'};
+	if (!@snapshot_fmts) {
 		die_error(403, "Snapshots not allowed");
 	}
 	# default to first supported snapshot format
-	$format ||= $supported_fmts[0];
+	$format ||= $snapshot_fmts[0];
 	if ($format !~ m/^[a-z0-9]+$/) {
 		die_error(400, "Invalid snapshot format parameter");
 	} elsif (!exists($known_snapshot_formats{$format})) {
 		die_error(400, "Unknown snapshot format");
-	} elsif (!grep($_ eq $format, @supported_fmts)) {
+	} elsif (!grep($_ eq $format, @snapshot_fmts)) {
 		die_error(403, "Unsupported snapshot format");
 	}
 
@@ -4854,43 +5285,9 @@ sub git_blobdiff {
 			or die_error(500, "Open git-diff-tree failed");
 	}
 
-	# old/legacy style URI
-	if (!%diffinfo && # if new style URI failed
-	    defined $hash && defined $hash_parent) {
-		# fake git-diff-tree raw output
-		$diffinfo{'from_mode'} = $diffinfo{'to_mode'} = "blob";
-		$diffinfo{'from_id'} = $hash_parent;
-		$diffinfo{'to_id'}   = $hash;
-		if (defined $file_name) {
-			if (defined $file_parent) {
-				$diffinfo{'status'} = '2';
-				$diffinfo{'from_file'} = $file_parent;
-				$diffinfo{'to_file'}   = $file_name;
-			} else { # assume not renamed
-				$diffinfo{'status'} = '1';
-				$diffinfo{'from_file'} = $file_name;
-				$diffinfo{'to_file'}   = $file_name;
-			}
-		} else { # no filename given
-			$diffinfo{'status'} = '2';
-			$diffinfo{'from_file'} = $hash_parent;
-			$diffinfo{'to_file'}   = $hash;
-		}
-
-		# non-textual hash id's can be cached
-		if ($hash =~ m/^[0-9a-fA-F]{40}$/ &&
-		    $hash_parent =~ m/^[0-9a-fA-F]{40}$/) {
-			$expires = '+1d';
-		}
-
-		# open patch output
-		open $fd, "-|", git_cmd(), "diff", @diff_opts,
-			'-p', ($format eq 'html' ? "--full-index" : ()),
-			$hash_parent, $hash, "--"
-			or die_error(500, "Open git-diff failed");
-	} else  {
-		die_error(400, "Missing one of the blob diff parameters")
-			unless %diffinfo;
+	# old/legacy style URI -- not generated anymore since 1.4.3.
+	if (!%diffinfo) {
+		die_error('404 Not Found', "Missing one of the blob diff parameters")
 	}
 
 	# header
@@ -5426,7 +5823,7 @@ insensitive).</p>
 <dt><b>commit</b></dt>
 <dd>The commit messages and authorship information will be scanned for the given pattern.</dd>
 EOT
-	my ($have_grep) = gitweb_check_feature('grep');
+	my $have_grep = gitweb_check_feature('grep');
 	if ($have_grep) {
 		print <<EOT;
 <dt><b>grep</b></dt>
@@ -5443,7 +5840,7 @@ EOT
 <dt><b>committer</b></dt>
 <dd>Name and e-mail of the committer and date of commit will be scanned for the given pattern.</dd>
 EOT
-	my ($have_pickaxe) = gitweb_check_feature('pickaxe');
+	my $have_pickaxe = gitweb_check_feature('pickaxe');
 	if ($have_pickaxe) {
 		print <<EOT;
 <dt><b>pickaxe</b></dt>
@@ -5467,7 +5864,11 @@ sub git_shortlog {
 	}
 	my $refs = git_get_references();
 
-	my @commitlist = parse_commits($hash, 101, (100 * $page));
+	my $commit_hash = $hash;
+	if (defined $hash_parent) {
+		$commit_hash = "$hash_parent..$hash";
+	}
+	my @commitlist = parse_commits($commit_hash, 101, (100 * $page));
 
 	my $paging_nav = format_paging_nav('shortlog', $hash, $head, $page, $#commitlist >= 100);
 	my $next_link = '';
@@ -5491,7 +5892,7 @@ sub git_shortlog {
 
 sub git_feed {
 	my $format = shift || 'atom';
-	my ($have_blame) = gitweb_check_feature('blame');
+	my $have_blame = gitweb_check_feature('blame');
 
 	# Atom: http://www.atomenabled.org/developers/syndication/
 	# RSS:  http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ

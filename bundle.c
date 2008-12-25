@@ -114,7 +114,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 			continue;
 		}
 		if (++ret == 1)
-			error(message);
+			error("%s", message);
 		error("%s %s", sha1_to_hex(e->sha1), e->name);
 	}
 	if (revs.pending.nr != p->nr)
@@ -139,7 +139,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	for (i = 0; i < req_nr; i++)
 		if (!(refs.objects[i].item->flags & SHOWN)) {
 			if (++ret == 1)
-				error(message);
+				error("%s", message);
 			error("%s %s", sha1_to_hex(refs.objects[i].item->sha1),
 				refs.objects[i].name);
 		}
@@ -186,7 +186,8 @@ int create_bundle(struct bundle_header *header, const char *path,
 	if (bundle_to_stdout)
 		bundle_fd = 1;
 	else
-		bundle_fd = hold_lock_file_for_update(&lock, path, 1);
+		bundle_fd = hold_lock_file_for_update(&lock, path,
+						      LOCK_DIE_ON_ERROR);
 
 	/* write signature */
 	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));

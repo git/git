@@ -5,6 +5,7 @@
 #include "revision.h"
 #include "string-list.h"
 #include "mailmap.h"
+#include "log-tree.h"
 
 static char *user_format;
 
@@ -233,7 +234,7 @@ static char *get_header(const struct commit *commit, const char *key)
 
 static char *replace_encoding_header(char *buf, const char *encoding)
 {
-	struct strbuf tmp;
+	struct strbuf tmp = STRBUF_INIT;
 	size_t start, len;
 	char *cp = buf;
 
@@ -249,7 +250,6 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 		return buf; /* should not happen but be defensive */
 	len = cp + 1 - (buf + start);
 
-	strbuf_init(&tmp, 0);
 	strbuf_attach(&tmp, buf, strlen(buf), strlen(buf) + 1);
 	if (is_encoding_utf8(encoding)) {
 		/* we have re-coded to UTF-8; drop the header */
@@ -481,6 +481,23 @@ static void parse_commit_header(struct format_commit_context *context)
 	context->commit_header_parsed = 1;
 }
 
+static void format_decoration(struct strbuf *sb, const struct commit *commit)
+{
+	struct name_decoration *d;
+	const char *prefix = " (";
+
+	load_ref_decorations();
+	d = lookup_decoration(&name_decoration, &commit->object);
+	while (d) {
+		strbuf_addstr(sb, prefix);
+		prefix = ", ";
+		strbuf_addstr(sb, d->name);
+		d = d->next;
+	}
+	if (prefix[0] == ',')
+		strbuf_addch(sb, ')');
+}
+
 static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
                                void *context)
 {
@@ -572,6 +589,9 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 		                 : (commit->object.flags & SYMMETRIC_LEFT)
 		                 ? '<'
 		                 : '>');
+		return 1;
+	case 'd':
+		format_decoration(sb, commit);
 		return 1;
 	}
 
@@ -763,6 +783,20 @@ void pp_remainder(enum cmit_fmt fmt,
 	}
 }
 
+char *reencode_commit_message(const struct commit *commit, const char **encoding_p)
+{
+	const char *encoding;
+
+	encoding = (git_log_output_encoding
+		    ? git_log_output_encoding
+		    : git_commit_encoding);
+	if (!encoding)
+		encoding = "utf-8";
+	if (encoding_p)
+		*encoding_p = encoding;
+	return logmsg_reencode(commit, encoding);
+}
+
 void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 			 struct strbuf *sb, int abbrev,
 			 const char *subject, const char *after_subject,
@@ -779,12 +813,7 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 		return;
 	}
 
-	encoding = (git_log_output_encoding
-		    ? git_log_output_encoding
-		    : git_commit_encoding);
-	if (!encoding)
-		encoding = "utf-8";
-	reencoded = logmsg_reencode(commit, encoding);
+	reencoded = reencode_commit_message(commit, &encoding);
 	if (reencoded) {
 		msg = reencoded;
 	}

@@ -11,6 +11,7 @@
 #include "reflog-walk.h"
 #include "patch-ids.h"
 #include "decorate.h"
+#include "log-tree.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -199,6 +200,8 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 			mark_parents_uninteresting(commit);
 			revs->limited = 1;
 		}
+		if (revs->show_source && !commit->util)
+			commit->util = (void *) name;
 		return commit;
 	}
 
@@ -292,10 +295,31 @@ static void file_change(struct diff_options *options,
 	DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
-static int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree *t2)
+static int rev_compare_tree(struct rev_info *revs, struct commit *parent, struct commit *commit)
 {
+	struct tree *t1 = parent->tree;
+	struct tree *t2 = commit->tree;
+
 	if (!t1)
 		return REV_TREE_NEW;
+
+	if (revs->simplify_by_decoration) {
+		/*
+		 * If we are simplifying by decoration, then the commit
+		 * is worth showing if it has a tag pointing at it.
+		 */
+		if (lookup_decoration(&name_decoration, &commit->object))
+			return REV_TREE_DIFFERENT;
+		/*
+		 * A commit that is not pointed by a tag is uninteresting
+		 * if we are not limited by path.  This means that you will
+		 * see the usual "commits that touch the paths" plus any
+		 * tagged commit by specifying both --simplify-by-decoration
+		 * and pathspec.
+		 */
+		if (!revs->prune_data)
+			return REV_TREE_SAME;
+	}
 	if (!t2)
 		return REV_TREE_DIFFERENT;
 	tree_difference = REV_TREE_SAME;
@@ -306,12 +330,13 @@ static int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree 
 	return tree_difference;
 }
 
-static int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
+static int rev_same_tree_as_empty(struct rev_info *revs, struct commit *commit)
 {
 	int retval;
 	void *tree;
 	unsigned long size;
 	struct tree_desc empty, real;
+	struct tree *t1 = commit->tree;
 
 	if (!t1)
 		return 0;
@@ -345,7 +370,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		return;
 
 	if (!commit->parents) {
-		if (rev_same_tree_as_empty(revs, commit->tree))
+		if (rev_same_tree_as_empty(revs, commit))
 			commit->object.flags |= TREESAME;
 		return;
 	}
@@ -365,7 +390,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 			die("cannot simplify commit %s (because of %s)",
 			    sha1_to_hex(commit->object.sha1),
 			    sha1_to_hex(p->object.sha1));
-		switch (rev_compare_tree(revs, p->tree, commit->tree)) {
+		switch (rev_compare_tree(revs, p, commit)) {
 		case REV_TREE_SAME:
 			tree_same = 1;
 			if (!revs->simplify_history || (p->object.flags & UNINTERESTING)) {
@@ -385,7 +410,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 
 		case REV_TREE_NEW:
 			if (revs->remove_empty_trees &&
-			    rev_same_tree_as_empty(revs, p->tree)) {
+			    rev_same_tree_as_empty(revs, p)) {
 				/* We are adding all the specified
 				 * paths from this parent, so the
 				 * history beyond this parent is not
@@ -484,12 +509,14 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 
 		if (parse_commit(p) < 0)
 			return -1;
+		if (revs->show_source && !p->util)
+			p->util = commit->util;
 		p->object.flags |= left_flag;
 		if (!(p->object.flags & SEEN)) {
 			p->object.flags |= SEEN;
 			insert_by_date_cached(p, list, cached_base, cache_ptr);
 		}
-		if(revs->first_parent_only)
+		if (revs->first_parent_only)
 			break;
 	}
 	return 0;
@@ -968,7 +995,7 @@ static void add_ignore_packed(struct rev_info *revs, const char *name)
 	int num = ++revs->num_ignore_packed;
 
 	revs->ignore_packed = xrealloc(revs->ignore_packed,
-				       sizeof(const char **) * (num + 1));
+				       sizeof(const char *) * (num + 1));
 	revs->ignore_packed[num-1] = name;
 	revs->ignore_packed[num] = NULL;
 }
@@ -1028,6 +1055,19 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--topo-order")) {
 		revs->lifo = 1;
 		revs->topo_order = 1;
+	} else if (!strcmp(arg, "--simplify-merges")) {
+		revs->simplify_merges = 1;
+		revs->rewrite_parents = 1;
+		revs->simplify_history = 0;
+		revs->limited = 1;
+	} else if (!strcmp(arg, "--simplify-by-decoration")) {
+		revs->simplify_merges = 1;
+		revs->rewrite_parents = 1;
+		revs->simplify_history = 0;
+		revs->simplify_by_decoration = 1;
+		revs->limited = 1;
+		revs->prune = 1;
+		load_ref_decorations();
 	} else if (!strcmp(arg, "--date-order")) {
 		revs->lifo = 0;
 		revs->topo_order = 1;
@@ -1355,6 +1395,179 @@ static void add_child(struct rev_info *revs, struct commit *parent, struct commi
 	l->next = add_decoration(&revs->children, &parent->object, l);
 }
 
+static int remove_duplicate_parents(struct commit *commit)
+{
+	struct commit_list **pp, *p;
+	int surviving_parents;
+
+	/* Examine existing parents while marking ones we have seen... */
+	pp = &commit->parents;
+	while ((p = *pp) != NULL) {
+		struct commit *parent = p->item;
+		if (parent->object.flags & TMP_MARK) {
+			*pp = p->next;
+			continue;
+		}
+		parent->object.flags |= TMP_MARK;
+		pp = &p->next;
+	}
+	/* count them while clearing the temporary mark */
+	surviving_parents = 0;
+	for (p = commit->parents; p; p = p->next) {
+		p->item->object.flags &= ~TMP_MARK;
+		surviving_parents++;
+	}
+	return surviving_parents;
+}
+
+struct merge_simplify_state {
+	struct commit *simplified;
+};
+
+static struct merge_simplify_state *locate_simplify_state(struct rev_info *revs, struct commit *commit)
+{
+	struct merge_simplify_state *st;
+
+	st = lookup_decoration(&revs->merge_simplification, &commit->object);
+	if (!st) {
+		st = xcalloc(1, sizeof(*st));
+		add_decoration(&revs->merge_simplification, &commit->object, st);
+	}
+	return st;
+}
+
+static struct commit_list **simplify_one(struct rev_info *revs, struct commit *commit, struct commit_list **tail)
+{
+	struct commit_list *p;
+	struct merge_simplify_state *st, *pst;
+	int cnt;
+
+	st = locate_simplify_state(revs, commit);
+
+	/*
+	 * Have we handled this one?
+	 */
+	if (st->simplified)
+		return tail;
+
+	/*
+	 * An UNINTERESTING commit simplifies to itself, so does a
+	 * root commit.  We do not rewrite parents of such commit
+	 * anyway.
+	 */
+	if ((commit->object.flags & UNINTERESTING) || !commit->parents) {
+		st->simplified = commit;
+		return tail;
+	}
+
+	/*
+	 * Do we know what commit all of our parents should be rewritten to?
+	 * Otherwise we are not ready to rewrite this one yet.
+	 */
+	for (cnt = 0, p = commit->parents; p; p = p->next) {
+		pst = locate_simplify_state(revs, p->item);
+		if (!pst->simplified) {
+			tail = &commit_list_insert(p->item, tail)->next;
+			cnt++;
+		}
+	}
+	if (cnt) {
+		tail = &commit_list_insert(commit, tail)->next;
+		return tail;
+	}
+
+	/*
+	 * Rewrite our list of parents.
+	 */
+	for (p = commit->parents; p; p = p->next) {
+		pst = locate_simplify_state(revs, p->item);
+		p->item = pst->simplified;
+	}
+	cnt = remove_duplicate_parents(commit);
+
+	/*
+	 * It is possible that we are a merge and one side branch
+	 * does not have any commit that touches the given paths;
+	 * in such a case, the immediate parents will be rewritten
+	 * to different commits.
+	 *
+	 *      o----X		X: the commit we are looking at;
+	 *     /    /		o: a commit that touches the paths;
+	 * ---o----'
+	 *
+	 * Further reduce the parents by removing redundant parents.
+	 */
+	if (1 < cnt) {
+		struct commit_list *h = reduce_heads(commit->parents);
+		cnt = commit_list_count(h);
+		free_commit_list(commit->parents);
+		commit->parents = h;
+	}
+
+	/*
+	 * A commit simplifies to itself if it is a root, if it is
+	 * UNINTERESTING, if it touches the given paths, or if it is a
+	 * merge and its parents simplifies to more than one commits
+	 * (the first two cases are already handled at the beginning of
+	 * this function).
+	 *
+	 * Otherwise, it simplifies to what its sole parent simplifies to.
+	 */
+	if (!cnt ||
+	    (commit->object.flags & UNINTERESTING) ||
+	    !(commit->object.flags & TREESAME) ||
+	    (1 < cnt))
+		st->simplified = commit;
+	else {
+		pst = locate_simplify_state(revs, commit->parents->item);
+		st->simplified = pst->simplified;
+	}
+	return tail;
+}
+
+static void simplify_merges(struct rev_info *revs)
+{
+	struct commit_list *list;
+	struct commit_list *yet_to_do, **tail;
+
+	if (!revs->topo_order)
+		sort_in_topological_order(&revs->commits, revs->lifo);
+	if (!revs->prune)
+		return;
+
+	/* feed the list reversed */
+	yet_to_do = NULL;
+	for (list = revs->commits; list; list = list->next)
+		commit_list_insert(list->item, &yet_to_do);
+	while (yet_to_do) {
+		list = yet_to_do;
+		yet_to_do = NULL;
+		tail = &yet_to_do;
+		while (list) {
+			struct commit *commit = list->item;
+			struct commit_list *next = list->next;
+			free(list);
+			list = next;
+			tail = simplify_one(revs, commit, tail);
+		}
+	}
+
+	/* clean up the result, removing the simplified ones */
+	list = revs->commits;
+	revs->commits = NULL;
+	tail = &revs->commits;
+	while (list) {
+		struct commit *commit = list->item;
+		struct commit_list *next = list->next;
+		struct merge_simplify_state *st;
+		free(list);
+		list = next;
+		st = locate_simplify_state(revs, commit);
+		if (st->simplified == commit)
+			tail = &commit_list_insert(commit, tail)->next;
+	}
+}
+
 static void set_children(struct rev_info *revs)
 {
 	struct commit_list *l;
@@ -1395,6 +1608,8 @@ int prepare_revision_walk(struct rev_info *revs)
 			return -1;
 	if (revs->topo_order)
 		sort_in_topological_order(&revs->commits, revs->lifo);
+	if (revs->simplify_merges)
+		simplify_merges(revs);
 	if (revs->children.name)
 		set_children(revs);
 	return 0;
@@ -1425,26 +1640,6 @@ static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp
 			return rewrite_one_noparents;
 		*pp = p->parents->item;
 	}
-}
-
-static void remove_duplicate_parents(struct commit *commit)
-{
-	struct commit_list **pp, *p;
-
-	/* Examine existing parents while marking ones we have seen... */
-	pp = &commit->parents;
-	while ((p = *pp) != NULL) {
-		struct commit *parent = p->item;
-		if (parent->object.flags & TMP_MARK) {
-			*pp = p->next;
-			continue;
-		}
-		parent->object.flags |= TMP_MARK;
-		pp = &p->next;
-	}
-	/* ... and clear the temporary mark */
-	for (p = commit->parents; p; p = p->next)
-		p->item->object.flags &= ~TMP_MARK;
 }
 
 static int rewrite_parents(struct rev_info *revs, struct commit *commit)
@@ -1633,26 +1828,6 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 		return c;
 	}
 
-	if (revs->reverse) {
-		int limit = -1;
-
-		if (0 <= revs->max_count) {
-			limit = revs->max_count;
-			if (0 < revs->skip_count)
-				limit += revs->skip_count;
-		}
-		l = NULL;
-		while ((c = get_revision_1(revs))) {
-			commit_list_insert(c, &l);
-			if ((0 < limit) && !--limit)
-				break;
-		}
-		revs->commits = l;
-		revs->reverse = 0;
-		revs->max_count = -1;
-		c = NULL;
-	}
-
 	/*
 	 * Now pick up what they want to give us
 	 */
@@ -1725,7 +1900,23 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 
 struct commit *get_revision(struct rev_info *revs)
 {
-	struct commit *c = get_revision_internal(revs);
+	struct commit *c;
+	struct commit_list *reversed;
+
+	if (revs->reverse) {
+		reversed = NULL;
+		while ((c = get_revision_internal(revs))) {
+			commit_list_insert(c, &reversed);
+		}
+		revs->commits = reversed;
+		revs->reverse = 0;
+		revs->reverse_output_stage = 1;
+	}
+
+	if (revs->reverse_output_stage)
+		return pop_commit(&revs->commits);
+
+	c = get_revision_internal(revs);
 	if (c && revs->graph)
 		graph_update(revs->graph, c);
 	return c;

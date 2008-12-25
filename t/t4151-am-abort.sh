@@ -22,7 +22,7 @@ test_expect_success setup '
 		test_tick &&
 		git commit -a -m $i || break
 	done &&
-	git format-patch initial &&
+	git format-patch --no-numbered initial &&
 	git checkout -b side initial &&
 	echo local change >file-2-expect
 '

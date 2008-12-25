@@ -70,15 +70,32 @@ static int write_rr(struct string_list *rr, int out_fd)
 	return 0;
 }
 
+static void ferr_write(const void *p, size_t count, FILE *fp, int *err)
+{
+	if (!count || *err)
+		return;
+	if (fwrite(p, count, 1, fp) != 1)
+		*err = errno;
+}
+
+static inline void ferr_puts(const char *s, FILE *fp, int *err)
+{
+	ferr_write(s, strlen(s), fp, err);
+}
+
 static int handle_file(const char *path,
 	 unsigned char *sha1, const char *output)
 {
-	SHA_CTX ctx;
+	git_SHA_CTX ctx;
 	char buf[1024];
-	int hunk = 0, hunk_no = 0;
-	struct strbuf one, two;
+	int hunk_no = 0;
+	enum {
+		RR_CONTEXT = 0, RR_SIDE_1, RR_SIDE_2, RR_ORIGINAL,
+	} hunk = RR_CONTEXT;
+	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
 	FILE *f = fopen(path, "r");
 	FILE *out = NULL;
+	int wrerror = 0;
 
 	if (!f)
 		return error("Could not open %s", path);
@@ -92,47 +109,51 @@ static int handle_file(const char *path,
 	}
 
 	if (sha1)
-		SHA1_Init(&ctx);
+		git_SHA1_Init(&ctx);
 
-	strbuf_init(&one, 0);
-	strbuf_init(&two,  0);
 	while (fgets(buf, sizeof(buf), f)) {
 		if (!prefixcmp(buf, "<<<<<<< ")) {
-			if (hunk)
+			if (hunk != RR_CONTEXT)
 				goto bad;
-			hunk = 1;
+			hunk = RR_SIDE_1;
+		} else if (!prefixcmp(buf, "|||||||") && isspace(buf[7])) {
+			if (hunk != RR_SIDE_1)
+				goto bad;
+			hunk = RR_ORIGINAL;
 		} else if (!prefixcmp(buf, "=======") && isspace(buf[7])) {
-			if (hunk != 1)
+			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
 				goto bad;
-			hunk = 2;
+			hunk = RR_SIDE_2;
 		} else if (!prefixcmp(buf, ">>>>>>> ")) {
-			if (hunk != 2)
+			if (hunk != RR_SIDE_2)
 				goto bad;
 			if (strbuf_cmp(&one, &two) > 0)
 				strbuf_swap(&one, &two);
 			hunk_no++;
-			hunk = 0;
+			hunk = RR_CONTEXT;
 			if (out) {
-				fputs("<<<<<<<\n", out);
-				fwrite(one.buf, one.len, 1, out);
-				fputs("=======\n", out);
-				fwrite(two.buf, two.len, 1, out);
-				fputs(">>>>>>>\n", out);
+				ferr_puts("<<<<<<<\n", out, &wrerror);
+				ferr_write(one.buf, one.len, out, &wrerror);
+				ferr_puts("=======\n", out, &wrerror);
+				ferr_write(two.buf, two.len, out, &wrerror);
+				ferr_puts(">>>>>>>\n", out, &wrerror);
 			}
 			if (sha1) {
-				SHA1_Update(&ctx, one.buf ? one.buf : "",
+				git_SHA1_Update(&ctx, one.buf ? one.buf : "",
 					    one.len + 1);
-				SHA1_Update(&ctx, two.buf ? two.buf : "",
+				git_SHA1_Update(&ctx, two.buf ? two.buf : "",
 					    two.len + 1);
 			}
 			strbuf_reset(&one);
 			strbuf_reset(&two);
-		} else if (hunk == 1)
+		} else if (hunk == RR_SIDE_1)
 			strbuf_addstr(&one, buf);
-		else if (hunk == 2)
+		else if (hunk == RR_ORIGINAL)
+			; /* discard */
+		else if (hunk == RR_SIDE_2)
 			strbuf_addstr(&two, buf);
 		else if (out)
-			fputs(buf, out);
+			ferr_puts(buf, out, &wrerror);
 		continue;
 	bad:
 		hunk = 99; /* force error exit */
@@ -142,15 +163,21 @@ static int handle_file(const char *path,
 	strbuf_release(&two);
 
 	fclose(f);
-	if (out)
-		fclose(out);
+	if (wrerror)
+		error("There were errors while writing %s (%s)",
+		      path, strerror(wrerror));
+	if (out && fclose(out))
+		wrerror = error("Failed to flush %s: %s",
+				path, strerror(errno));
 	if (sha1)
-		SHA1_Final(sha1, &ctx);
-	if (hunk) {
+		git_SHA1_Final(sha1, &ctx);
+	if (hunk != RR_CONTEXT) {
 		if (output)
 			unlink(output);
 		return error("Could not parse conflict hunks in %s", path);
 	}
+	if (wrerror)
+		return -1;
 	return hunk_no;
 }
 
@@ -193,9 +220,13 @@ static int merge(const char *name, const char *path)
 	if (!ret) {
 		FILE *f = fopen(path, "w");
 		if (!f)
-			return error("Could not write to %s", path);
-		fwrite(result.ptr, result.size, 1, f);
-		fclose(f);
+			return error("Could not open %s: %s", path,
+				     strerror(errno));
+		if (fwrite(result.ptr, result.size, 1, f) != 1)
+			error("Could not write %s: %s", path, strerror(errno));
+		if (fclose(f))
+			return error("Writing %s failed: %s", path,
+				     strerror(errno));
 	}
 
 	free(cur.ptr);
@@ -319,7 +350,6 @@ static int git_rerere_config(const char *var, const char *value, void *cb)
 
 static int is_rerere_enabled(void)
 {
-	struct stat st;
 	const char *rr_cache;
 	int rr_cache_exists;
 
@@ -327,7 +357,7 @@ static int is_rerere_enabled(void)
 		return 0;
 
 	rr_cache = git_path("rr-cache");
-	rr_cache_exists = !stat(rr_cache, &st) && S_ISDIR(st.st_mode);
+	rr_cache_exists = is_directory(rr_cache);
 	if (rerere_enabled < 0)
 		return rr_cache_exists;
 
@@ -345,8 +375,9 @@ int setup_rerere(struct string_list *merge_rr)
 	if (!is_rerere_enabled())
 		return -1;
 
-	merge_rr_path = xstrdup(git_path("MERGE_RR"));
-	fd = hold_lock_file_for_update(&write_lock, merge_rr_path, 1);
+	merge_rr_path = git_pathdup("MERGE_RR");
+	fd = hold_lock_file_for_update(&write_lock, merge_rr_path,
+				       LOCK_DIE_ON_ERROR);
 	read_rr(merge_rr);
 	return fd;
 }

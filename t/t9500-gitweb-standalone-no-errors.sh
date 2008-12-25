@@ -25,9 +25,9 @@ our \$site_name = "[localhost]";
 our \$site_header = "";
 our \$site_footer = "";
 our \$home_text = "indextext.html";
-our @stylesheets = ("file:///$safe_pwd/../../gitweb/gitweb.css");
-our \$logo = "file:///$safe_pwd/../../gitweb/git-logo.png";
-our \$favicon = "file:///$safe_pwd/../../gitweb/git-favicon.png";
+our @stylesheets = ("file:///$TEST_DIRECTORY/../gitweb/gitweb.css");
+our \$logo = "file:///$TEST_DIRECTORY/../gitweb/git-logo.png";
+our \$favicon = "file:///$TEST_DIRECTORY/../gitweb/git-favicon.png";
 our \$projects_list = "";
 our \$export_ok = "";
 our \$strict_export = "";
@@ -54,9 +54,9 @@ gitweb_run () {
 	# written to web server logs, so we are not interested in that:
 	# we are interested only in properly formatted errors/warnings
 	rm -f gitweb.log &&
-	perl -- "$(pwd)/../../gitweb/gitweb.perl" \
+	perl -- "$TEST_DIRECTORY/../gitweb/gitweb.perl" \
 		>/dev/null 2>gitweb.log &&
-	if grep -q -s "^[[]" gitweb.log >/dev/null; then false; else true; fi
+	if grep "^[[]" gitweb.log >/dev/null 2>&1; then false; else true; fi
 
 	# gitweb.log is left for debugging
 }
@@ -506,6 +506,55 @@ test_expect_success \
 test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
+# path_info links
+test_expect_success \
+	'path_info: project' \
+	'gitweb_run "" "/.git"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch' \
+	'gitweb_run "" "/.git/b"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:file' \
+	'gitweb_run "" "/.git/master:file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:dir/' \
+	'gitweb_run "" "/.git/master:foo/"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:file (non-existent)' \
+	'gitweb_run "" "/.git/master:non-existent"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/branch:dir/ (non-existent)' \
+	'gitweb_run "" "/.git/master:non-existent/"'
+test_debug 'cat gitweb.log'
+
+
+test_expect_success \
+	'path_info: project/branch:/file' \
+	'gitweb_run "" "/.git/master:/file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/:/file (implicit HEAD)' \
+	'gitweb_run "" "/.git/:/file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'path_info: project/:/ (implicit HEAD, top tree)' \
+	'gitweb_run "" "/.git/:/"'
+test_debug 'cat gitweb.log'
+
+
+# ----------------------------------------------------------------------
 # feed generation
 
 test_expect_success \
@@ -528,20 +577,20 @@ test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'encode(commit): utf8' \
-	'. ../t3901-utf8.txt &&
+	'. "$TEST_DIRECTORY"/t3901-utf8.txt &&
 	 echo "UTF-8" >> file &&
 	 git add file &&
-	 git commit -F ../t3900/1-UTF-8.txt &&
+	 git commit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
 	 gitweb_run "p=.git;a=commit"'
 test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'encode(commit): iso-8859-1' \
-	'. ../t3901-8859-1.txt &&
+	'. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
 	 echo "ISO-8859-1" >> file &&
 	 git add file &&
 	 git config i18n.commitencoding ISO-8859-1 &&
-	 git commit -F ../t3900/ISO-8859-1.txt &&
+	 git commit -F "$TEST_DIRECTORY"/t3900/ISO-8859-1.txt &&
 	 git config --unset i18n.commitencoding &&
 	 gitweb_run "p=.git;a=commit"'
 test_debug 'cat gitweb.log'
@@ -625,6 +674,16 @@ test_expect_success \
 	'git config gitweb.blame yes &&
 	 git config gitweb.snapshot "zip,tgz, tbz2" &&
 	 gitweb_run "p=.git;a=tree"'
+test_debug 'cat gitweb.log'
+
+# ----------------------------------------------------------------------
+# non-ASCII in README.html
+
+test_expect_success \
+	'README.html with non-ASCII characters (utf-8)' \
+	'echo "<b>UTF-8 example:</b><br />" > .git/README.html &&
+	 cat "$TEST_DIRECTORY"/t3900/1-UTF-8.txt >> .git/README.html &&
+	 gitweb_run "p=.git;a=summary"'
 test_debug 'cat gitweb.log'
 
 test_done

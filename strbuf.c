@@ -237,6 +237,22 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 	}
 }
 
+size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
+		void *context)
+{
+	struct strbuf_expand_dict_entry *e = context;
+	size_t len;
+
+	for (; e->placeholder && (len = strlen(e->placeholder)); e++) {
+		if (!strncmp(placeholder, e->placeholder, len)) {
+			if (e->value)
+				strbuf_addstr(sb, e->value);
+			return len;
+		}
+	}
+	return 0;
+}
+
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
 {
 	size_t res;
@@ -270,6 +286,33 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 
 	sb->buf[sb->len] = '\0';
 	return sb->len - oldlen;
+}
+
+#define STRBUF_MAXLINK (2*PATH_MAX)
+
+int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
+{
+	if (hint < 32)
+		hint = 32;
+
+	while (hint < STRBUF_MAXLINK) {
+		int len;
+
+		strbuf_grow(sb, hint);
+		len = readlink(path, sb->buf, hint);
+		if (len < 0) {
+			if (errno != ERANGE)
+				break;
+		} else if (len < hint) {
+			strbuf_setlen(sb, len);
+			return 0;
+		}
+
+		/* .. the buffer was too small - try again */
+		hint *= 2;
+	}
+	strbuf_release(sb);
+	return -1;
 }
 
 int strbuf_getline(struct strbuf *sb, FILE *fp, int term)

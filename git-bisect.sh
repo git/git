@@ -9,7 +9,7 @@ git bisect bad [<rev>]
         mark <rev> a known-bad revision.
 git bisect good [<rev>...]
         mark <rev>... known-good revisions.
-git bisect skip [<rev>...]
+git bisect skip [(<rev>|<range>)...]
         mark <rev>... untestable revisions.
 git bisect next
         find next bisection to test and check it out.
@@ -172,6 +172,40 @@ bisect_write() {
 	test -n "$nolog" || echo "git bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
 }
 
+is_expected_rev() {
+	test -f "$GIT_DIR/BISECT_EXPECTED_REV" &&
+	test "$1" = $(cat "$GIT_DIR/BISECT_EXPECTED_REV")
+}
+
+mark_expected_rev() {
+	echo "$1" > "$GIT_DIR/BISECT_EXPECTED_REV"
+}
+
+check_expected_revs() {
+	for _rev in "$@"; do
+		if ! is_expected_rev "$_rev"; then
+			rm -f "$GIT_DIR/BISECT_ANCESTORS_OK"
+			rm -f "$GIT_DIR/BISECT_EXPECTED_REV"
+			return
+		fi
+	done
+}
+
+bisect_skip() {
+        all=''
+	for arg in "$@"
+	do
+	    case "$arg" in
+            *..*)
+                revs=$(git rev-list "$arg") || die "Bad rev input: $arg" ;;
+            *)
+                revs=$(sq "$arg") ;;
+	    esac
+            all="$all $revs"
+        done
+        eval bisect_state 'skip' $all
+}
+
 bisect_state() {
 	bisect_autostart
 	state=$1
@@ -181,7 +215,8 @@ bisect_state() {
 	1,bad|1,good|1,skip)
 		rev=$(git rev-parse --verify HEAD) ||
 			die "Bad rev input: HEAD"
-		bisect_write "$state" "$rev" ;;
+		bisect_write "$state" "$rev"
+		check_expected_revs "$rev" ;;
 	2,bad|*,good|*,skip)
 		shift
 		eval=''
@@ -191,7 +226,8 @@ bisect_state() {
 				die "Bad rev input: $rev"
 			eval="$eval bisect_write '$state' '$sha'; "
 		done
-		eval "$eval" ;;
+		eval "$eval"
+		check_expected_revs "$@" ;;
 	*,bad)
 		die "'git bisect bad' can take only one argument." ;;
 	*)
@@ -243,33 +279,18 @@ bisect_auto_next() {
 	bisect_next_check && bisect_next || :
 }
 
-eval_rev_list() {
-	_eval="$1"
-
-	eval $_eval
-	res=$?
-
-	if [ $res -ne 0 ]; then
-		echo >&2 "'git rev-list --bisect-vars' failed:"
-		echo >&2 "maybe you mistake good and bad revs?"
-		exit $res
-	fi
-
-	return $res
-}
-
 filter_skipped() {
 	_eval="$1"
 	_skip="$2"
 
 	if [ -z "$_skip" ]; then
-		eval_rev_list "$_eval"
+		eval "$_eval"
 		return
 	fi
 
 	# Let's parse the output of:
 	# "git rev-list --bisect-vars --bisect-all ..."
-	eval_rev_list "$_eval" | while read hash line
+	eval "$_eval" | while read hash line
 	do
 		case "$VARS,$FOUND,$TRIED,$hash" in
 			# We display some vars.
@@ -332,20 +353,133 @@ exit_if_skipped_commits () {
 	fi
 }
 
+bisect_checkout() {
+	_rev="$1"
+	_msg="$2"
+	echo "Bisecting: $_msg"
+	mark_expected_rev "$_rev"
+	git checkout -q "$_rev" || exit
+	git show-branch "$_rev"
+}
+
+is_among() {
+	_rev="$1"
+	_list="$2"
+	case "$_list" in *$_rev*) return 0 ;; esac
+	return 1
+}
+
+handle_bad_merge_base() {
+	_badmb="$1"
+	_good="$2"
+	if is_expected_rev "$_badmb"; then
+		cat >&2 <<EOF
+The merge base $_badmb is bad.
+This means the bug has been fixed between $_badmb and [$_good].
+EOF
+		exit 3
+	else
+		cat >&2 <<EOF
+Some good revs are not ancestor of the bad rev.
+git bisect cannot work properly in this case.
+Maybe you mistake good and bad revs?
+EOF
+		exit 1
+	fi
+}
+
+handle_skipped_merge_base() {
+	_mb="$1"
+	_bad="$2"
+	_good="$3"
+	cat >&2 <<EOF
+Warning: the merge base between $_bad and [$_good] must be skipped.
+So we cannot be sure the first bad commit is between $_mb and $_bad.
+We continue anyway.
+EOF
+}
+
+#
+# "check_merge_bases" checks that merge bases are not "bad".
+#
+# - If one is "good", that's good, we have nothing to do.
+# - If one is "bad", it means the user assumed something wrong
+# and we must exit.
+# - If one is "skipped", we can't know but we should warn.
+# - If we don't know, we should check it out and ask the user to test.
+#
+# In the last case we will return 1, and otherwise 0.
+#
+check_merge_bases() {
+	_bad="$1"
+	_good="$2"
+	_skip="$3"
+	for _mb in $(git merge-base --all $_bad $_good)
+	do
+		if is_among "$_mb" "$_good"; then
+			continue
+		elif test "$_mb" = "$_bad"; then
+			handle_bad_merge_base "$_bad" "$_good"
+		elif is_among "$_mb" "$_skip"; then
+			handle_skipped_merge_base "$_mb" "$_bad" "$_good"
+		else
+			bisect_checkout "$_mb" "a merge base must be tested"
+			return 1
+		fi
+	done
+	return 0
+}
+
+#
+# "check_good_are_ancestors_of_bad" checks that all "good" revs are
+# ancestor of the "bad" rev.
+#
+# If that's not the case, we need to check the merge bases.
+# If a merge base must be tested by the user we return 1 and
+# otherwise 0.
+#
+check_good_are_ancestors_of_bad() {
+	test -f "$GIT_DIR/BISECT_ANCESTORS_OK" &&
+		return
+
+	_bad="$1"
+	_good=$(echo $2 | sed -e 's/\^//g')
+	_skip="$3"
+
+	# Bisecting with no good rev is ok
+	test -z "$_good" && return
+
+	_side=$(git rev-list $_good ^$_bad)
+	if test -n "$_side"; then
+		# Return if a checkout was done
+		check_merge_bases "$_bad" "$_good" "$_skip" || return
+	fi
+
+	: > "$GIT_DIR/BISECT_ANCESTORS_OK"
+
+	return 0
+}
+
 bisect_next() {
 	case "$#" in 0) ;; *) usage ;; esac
 	bisect_autostart
 	bisect_next_check good
 
-	skip=$(git for-each-ref --format='%(objectname)' \
-		"refs/bisect/skip-*" | tr '\012' ' ') || exit
-
-	BISECT_OPT=''
-	test -n "$skip" && BISECT_OPT='--bisect-all'
-
+	# Get bad, good and skipped revs
 	bad=$(git rev-parse --verify refs/bisect/bad) &&
 	good=$(git for-each-ref --format='^%(objectname)' \
 		"refs/bisect/good-*" | tr '\012' ' ') &&
+	skip=$(git for-each-ref --format='%(objectname)' \
+		"refs/bisect/skip-*" | tr '\012' ' ') || exit
+
+	# Maybe some merge bases must be tested first
+	check_good_are_ancestors_of_bad "$bad" "$good" "$skip"
+	# Return now if a checkout has already been done
+	test "$?" -eq "1" && return
+
+	# Get bisection information
+	BISECT_OPT=''
+	test -n "$skip" && BISECT_OPT='--bisect-all'
 	eval="git rev-list --bisect-vars $BISECT_OPT $good $bad --" &&
 	eval="$eval $(cat "$GIT_DIR/BISECT_NAMES")" &&
 	eval=$(filter_skipped "$eval" "$skip") &&
@@ -366,9 +500,7 @@ bisect_next() {
 	# commit is also a "skip" commit (see above).
 	exit_if_skipped_commits "$bisect_rev"
 
-	echo "Bisecting: $bisect_nr revisions left to test after this"
-	git checkout -q "$bisect_rev" || exit
-	git show-branch "$bisect_rev"
+	bisect_checkout "$bisect_rev" "$bisect_nr revisions left to test after this"
 }
 
 bisect_visualize() {
@@ -415,6 +547,8 @@ bisect_clean_state() {
 	do
 		git update-ref -d $ref $hash || exit
 	done
+	rm -f "$GIT_DIR/BISECT_EXPECTED_REV" &&
+	rm -f "$GIT_DIR/BISECT_ANCESTORS_OK" &&
 	rm -f "$GIT_DIR/BISECT_LOG" &&
 	rm -f "$GIT_DIR/BISECT_NAMES" &&
 	rm -f "$GIT_DIR/BISECT_RUN" &&
@@ -511,8 +645,10 @@ case "$#" in
         git bisect -h ;;
     start)
         bisect_start "$@" ;;
-    bad|good|skip)
+    bad|good)
         bisect_state "$cmd" "$@" ;;
+    skip)
+        bisect_skip "$@" ;;
     next)
         # Not sure we want "next" at the UI level anymore.
         bisect_next "$@" ;;

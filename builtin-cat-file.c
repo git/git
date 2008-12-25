@@ -189,9 +189,8 @@ static int batch_one_object(const char *obj_name, int print_contents)
 
 static int batch_objects(int print_contents)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 
-	strbuf_init(&buf, 0);
 	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
 		int error = batch_one_object(buf.buf, print_contents);
 		if (error)

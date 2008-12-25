@@ -13,16 +13,26 @@ to build and test a particular version of a software project, search for
 regressions, and so on.
 
 People needing to do actual development will also want to read
-<<Developing-with-git>> and <<sharing-development>>.
+<<Developing-With-git>> and <<sharing-development>>.
 
 Further chapters cover more specialized topics.
 
 Comprehensive reference documentation is available through the man
-pages.  For a command such as "git clone <repo>", just use
+pages, or linkgit:git-help[1] command.  For example, for the command
+"git clone <repo>", you can either use:
 
 ------------------------------------------------
 $ man git-clone
 ------------------------------------------------
+
+or:
+
+------------------------------------------------
+$ git help clone
+------------------------------------------------
+
+With the latter, you can use the manual viewer of your choice; see
+linkgit:git-help[1] for more information.
 
 See also <<git-quick-start>> for a brief overview of git commands,
 without any explanation.
@@ -389,7 +399,7 @@ the order it uses to decide which to choose when there are multiple
 references with the same shorthand name, see the "SPECIFYING
 REVISIONS" section of linkgit:git-rev-parse[1].
 
-[[Updating-a-repository-with-git-fetch]]
+[[Updating-a-repository-With-git-fetch]]
 Updating a repository with git-fetch
 ------------------------------------
 
@@ -536,7 +546,7 @@ $ git bisect skip
 -------------------------------------------------
 
 In this case, though, git may not eventually be able to tell the first
-bad one between some first skipped commits and a latter bad commit.
+bad one between some first skipped commits and a later bad commit.
 
 There are also ways to automate the bisecting process if you have a
 test script that can tell a good from a bad commit. See
@@ -945,7 +955,7 @@ echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
 and then he just cut-and-pastes the output commands after verifying that
 they look OK.
 
-[[Finding-comments-with-given-content]]
+[[Finding-comments-With-given-Content]]
 Finding commits referencing a file with given content
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -962,7 +972,7 @@ Figuring out why this works is left as an exercise to the (advanced)
 student.  The linkgit:git-log[1], linkgit:git-diff-tree[1], and
 linkgit:git-hash-object[1] man pages may prove helpful.
 
-[[Developing-with-git]]
+[[Developing-With-git]]
 Developing with git
 ===================
 
@@ -1665,7 +1675,7 @@ dangling objects can arise in other situations.
 Sharing development with others
 ===============================
 
-[[getting-updates-with-git-pull]]
+[[getting-updates-With-git-pull]]
 Getting updates with git-pull
 -----------------------------
 
@@ -1673,7 +1683,7 @@ After you clone a repository and make a few changes of your own, you
 may wish to check the original repository for updates and merge them
 into your own work.
 
-We have already seen <<Updating-a-repository-with-git-fetch,how to
+We have already seen <<Updating-a-repository-With-git-fetch,how to
 keep remote tracking branches up to date>> with linkgit:git-fetch[1],
 and how to merge two branches.  So you can merge in changes from the
 original repository's master branch with:
@@ -1784,7 +1794,7 @@ Public git repositories
 
 Another way to submit changes to a project is to tell the maintainer
 of that project to pull the changes from your repository using
-linkgit:git-pull[1].  In the section "<<getting-updates-with-git-pull,
+linkgit:git-pull[1].  In the section "<<getting-updates-With-git-pull,
 Getting updates with git-pull>>" we described this as a way to get
 updates from the "main" repository, but it works just as well in the
 other direction.
@@ -1994,7 +2004,7 @@ $ git push ssh://yourserver.com/~you/proj.git +master
 Normally whenever a branch head in a public repository is modified, it
 is modified to point to a descendant of the commit that it pointed to
 before.  By forcing a push in this situation, you break that convention.
-(See <<problems-with-rewriting-history>>.)
+(See <<problems-With-rewriting-history>>.)
 
 Nevertheless, this is a common practice for people that need a simple
 way to publish a work-in-progress patch series, and it is an acceptable
@@ -2563,7 +2573,7 @@ There are numerous other tools, such as StGIT, which exist for the
 purpose of maintaining a patch series.  These are outside of the scope of
 this manual.
 
-[[problems-with-rewriting-history]]
+[[problems-With-rewriting-history]]
 Problems with rewriting history
 -------------------------------
 
@@ -4356,7 +4366,9 @@ $ git remote show example	# get details
 * remote example
   URL: git://example.com/project.git
   Tracked remote branches
-    master next ...
+    master
+    next
+    ...
 $ git fetch example		# update branches from example
 $ git branch -r			# list all remote branches
 -----------------------------------------------
@@ -4559,5 +4571,4 @@ Alternates, clone -reference, etc.
 
 More on recovery from repository corruption.  See:
 	http://marc.theaimsgroup.com/?l=git&m=117263864820799&w=2
-	http://marc.theaimsgroup.com/?l=git&m=117147855503798&w=2
 	http://marc.theaimsgroup.com/?l=git&m=117147855503798&w=2

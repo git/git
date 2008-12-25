@@ -42,6 +42,8 @@ struct rev_info {
 			simplify_history:1,
 			lifo:1,
 			topo_order:1,
+			simplify_merges:1,
+			simplify_by_decoration:1,
 			tag_objects:1,
 			tree_objects:1,
 			blob_objects:1,
@@ -52,7 +54,10 @@ struct rev_info {
 			left_right:1,
 			rewrite_parents:1,
 			print_parents:1,
+			show_source:1,
+			show_decorations:1,
 			reverse:1,
+			reverse_output_stage:1,
 			cherry_pick:1,
 			first_parent_only:1;
 
@@ -110,6 +115,7 @@ struct rev_info {
 
 	struct reflog_walk_info *reflog_info;
 	struct decoration children;
+	struct decoration merge_simplification;
 };
 
 #define REV_TREE_SAME		0

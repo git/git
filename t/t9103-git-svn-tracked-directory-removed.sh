@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Eric Wong
 #
 
-test_description='git-svn tracking removed top-level path'
+test_description='git svn tracking removed top-level path'
 . ./lib-git-svn.sh
 
 test_expect_success 'make history for tracking' '

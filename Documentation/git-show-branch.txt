@@ -30,7 +30,7 @@ OPTIONS
 -------
 <rev>::
 	Arbitrary extended SHA1 expression (see linkgit:git-rev-parse[1])
-	that typically names a branch HEAD or a tag.
+	that typically names a branch head or a tag.
 
 <glob>::
 	A glob pattern that matches branch or tag names under
@@ -172,7 +172,7 @@ only the primary branches.  In addition, if you happen to be on
 your topic branch, it is shown as well.
 
 ------------
-$ git show-branch --reflog='10,1 hour ago' --list master
+$ git show-branch --reflog="10,1 hour ago" --list master
 ------------
 
 shows 10 reflog entries going back from the tip as of 1 hour ago.

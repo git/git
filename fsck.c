@@ -307,9 +307,8 @@ int fsck_error_function(struct object *obj, int type, const char *fmt, ...)
 {
 	va_list ap;
 	int len;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
-	strbuf_init(&sb, 0);
 	strbuf_addf(&sb, "object %s:", obj->sha1?sha1_to_hex(obj->sha1):"(null)");
 
 	va_start(ap, fmt);
@@ -327,7 +326,7 @@ int fsck_error_function(struct object *obj, int type, const char *fmt, ...)
 			die("this should not happen, your snprintf is broken");
 	}
 
-	error(sb.buf);
+	error("%s", sb.buf);
 	strbuf_release(&sb);
 	return 1;
 }

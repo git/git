@@ -51,6 +51,7 @@ git-gc
 git-get-tar-commit-id
 git-grep
 git-hash-object
+git-help
 git-http-fetch
 git-http-push
 git-imap-send
@@ -117,6 +118,7 @@ git-show
 git-show-branch
 git-show-index
 git-show-ref
+git-stage
 git-stash
 git-status
 git-stripspace

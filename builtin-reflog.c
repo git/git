@@ -277,11 +277,11 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	lock = lock_any_ref_for_update(ref, sha1, 0);
 	if (!lock)
 		return error("cannot lock ref '%s'", ref);
-	log_file = xstrdup(git_path("logs/%s", ref));
+	log_file = git_pathdup("logs/%s", ref);
 	if (!file_exists(log_file))
 		goto finish;
 	if (!cmd->dry_run) {
-		newlog_path = xstrdup(git_path("logs/%s.lock", ref));
+		newlog_path = git_pathdup("logs/%s.lock", ref);
 		cb.newlog = fopen(newlog_path, "w");
 	}
 
@@ -540,11 +540,11 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		free(collected.e);
 	}
 
-	while (i < argc) {
-		const char *ref = argv[i++];
+	for (; i < argc; i++) {
+		char *ref;
 		unsigned char sha1[20];
-		if (!resolve_ref(ref, sha1, 1, NULL)) {
-			status |= error("%s points nowhere!", ref);
+		if (!dwim_log(argv[i], strlen(argv[i]), sha1, &ref)) {
+			status |= error("%s points nowhere!", argv[i]);
 			continue;
 		}
 		set_reflog_expiry_param(&cb, explicit_expiry, ref);

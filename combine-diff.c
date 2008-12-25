@@ -143,8 +143,6 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 }
 
 struct combine_diff_state {
-	struct xdiff_emit_state xm;
-
 	unsigned int lno;
 	int ob, on, nb, nn;
 	unsigned long nmask;
@@ -215,19 +213,18 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 
 	parent_file.ptr = grab_blob(parent, &sz);
 	parent_file.size = sz;
+	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = XDF_NEED_MINIMAL;
 	memset(&xecfg, 0, sizeof(xecfg));
-	ecb.outf = xdiff_outf;
-	ecb.priv = &state;
 	memset(&state, 0, sizeof(state));
-	state.xm.consume = consume_line;
 	state.nmask = nmask;
 	state.sline = sline;
 	state.lno = 1;
 	state.num_parent = num_parent;
 	state.n = n;
 
-	xdi_diff(&parent_file, result_file, &xpp, &xecfg, &ecb);
+	xdi_diff_outf(&parent_file, result_file, consume_line, &state,
+		      &xpp, &xecfg, &ecb);
 	free(parent_file.ptr);
 
 	/* Assign line numbers for this parent.
@@ -687,9 +684,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int i, show_hunks;
 	int working_tree_file = is_null_sha1(elem->sha1);
 	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
+	const char *a_prefix, *b_prefix;
 	mmfile_t result_file;
 
 	context = opt->context;
+	a_prefix = opt->a_prefix ? opt->a_prefix : "a/";
+	b_prefix = opt->b_prefix ? opt->b_prefix : "b/";
+
 	/* Read the result of merge first */
 	if (!working_tree_file)
 		result = grab_blob(elem->sha1, &result_size);
@@ -702,15 +703,15 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			goto deleted_file;
 
 		if (S_ISLNK(st.st_mode)) {
-			size_t len = xsize_t(st.st_size);
-			result_size = len;
-			result = xmalloc(len + 1);
-			if (result_size != readlink(elem->path, result, len)) {
+			struct strbuf buf = STRBUF_INIT;
+
+			if (strbuf_readlink(&buf, elem->path, st.st_size) < 0) {
 				error("readlink(%s): %s", elem->path,
 				      strerror(errno));
 				return;
 			}
-			result[len] = 0;
+			result_size = buf.len;
+			result = strbuf_detach(&buf, NULL);
 			elem->mode = canon_mode(st.st_mode);
 		}
 		else if (0 <= (fd = open(elem->path, O_RDONLY)) &&
@@ -742,9 +743,8 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 			/* If not a fake symlink, apply filters, e.g. autocrlf */
 			if (is_file) {
-				struct strbuf buf;
+				struct strbuf buf = STRBUF_INIT;
 
-				strbuf_init(&buf, 0);
 				if (convert_to_git(elem->path, result, len, &buf, safe_crlf)) {
 					free(result);
 					result = strbuf_detach(&buf, &len);
@@ -865,13 +865,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			dump_quoted_path("--- ", "", "/dev/null",
 					 c_meta, c_reset);
 		else
-			dump_quoted_path("--- ", opt->a_prefix, elem->path,
+			dump_quoted_path("--- ", a_prefix, elem->path,
 					 c_meta, c_reset);
 		if (deleted)
 			dump_quoted_path("+++ ", "", "/dev/null",
 					 c_meta, c_reset);
 		else
-			dump_quoted_path("+++ ", opt->b_prefix, elem->path,
+			dump_quoted_path("+++ ", b_prefix, elem->path,
 					 c_meta, c_reset);
 		dump_sline(sline, cnt, num_parent,
 			   DIFF_OPT_TST(opt, COLOR_DIFF));

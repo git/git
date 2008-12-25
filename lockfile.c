@@ -121,15 +121,17 @@ static char *resolve_symlink(char *p, size_t s)
 }
 
 
-static int lock_file(struct lock_file *lk, const char *path)
+static int lock_file(struct lock_file *lk, const char *path, int flags)
 {
-	if (strlen(path) >= sizeof(lk->filename)) return -1;
+	if (strlen(path) >= sizeof(lk->filename))
+		return -1;
 	strcpy(lk->filename, path);
 	/*
 	 * subtract 5 from size to make sure there's room for adding
 	 * ".lock" for the lock file name
 	 */
-	resolve_symlink(lk->filename, sizeof(lk->filename)-5);
+	if (!(flags & LOCK_NODEREF))
+		resolve_symlink(lk->filename, sizeof(lk->filename)-5);
 	strcat(lk->filename, ".lock");
 	lk->fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (0 <= lk->fd) {
@@ -138,6 +140,7 @@ static int lock_file(struct lock_file *lk, const char *path)
 			signal(SIGHUP, remove_lock_file_on_signal);
 			signal(SIGTERM, remove_lock_file_on_signal);
 			signal(SIGQUIT, remove_lock_file_on_signal);
+			signal(SIGPIPE, remove_lock_file_on_signal);
 			atexit(remove_lock_file);
 		}
 		lk->owner = getpid();
@@ -155,21 +158,21 @@ static int lock_file(struct lock_file *lk, const char *path)
 	return lk->fd;
 }
 
-int hold_lock_file_for_update(struct lock_file *lk, const char *path, int die_on_error)
+int hold_lock_file_for_update(struct lock_file *lk, const char *path, int flags)
 {
-	int fd = lock_file(lk, path);
-	if (fd < 0 && die_on_error)
+	int fd = lock_file(lk, path, flags);
+	if (fd < 0 && (flags & LOCK_DIE_ON_ERROR))
 		die("unable to create '%s.lock': %s", path, strerror(errno));
 	return fd;
 }
 
-int hold_lock_file_for_append(struct lock_file *lk, const char *path, int die_on_error)
+int hold_lock_file_for_append(struct lock_file *lk, const char *path, int flags)
 {
 	int fd, orig_fd;
 
-	fd = lock_file(lk, path);
+	fd = lock_file(lk, path, flags);
 	if (fd < 0) {
-		if (die_on_error)
+		if (flags & LOCK_DIE_ON_ERROR)
 			die("unable to create '%s.lock': %s", path, strerror(errno));
 		return fd;
 	}
@@ -177,13 +180,13 @@ int hold_lock_file_for_append(struct lock_file *lk, const char *path, int die_on
 	orig_fd = open(path, O_RDONLY);
 	if (orig_fd < 0) {
 		if (errno != ENOENT) {
-			if (die_on_error)
+			if (flags & LOCK_DIE_ON_ERROR)
 				die("cannot open '%s' for copying", path);
 			close(fd);
 			return error("cannot open '%s' for copying", path);
 		}
 	} else if (copy_fd(orig_fd, fd)) {
-		if (die_on_error)
+		if (flags & LOCK_DIE_ON_ERROR)
 			exit(128);
 		close(fd);
 		return -1;
@@ -215,7 +218,10 @@ int commit_lock_file(struct lock_file *lk)
 
 int hold_locked_index(struct lock_file *lk, int die_on_error)
 {
-	return hold_lock_file_for_update(lk, get_index_file(), die_on_error);
+	return hold_lock_file_for_update(lk, get_index_file(),
+					 die_on_error
+					 ? LOCK_DIE_ON_ERROR
+					 : 0);
 }
 
 void set_alternate_index_output(const char *name)

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2008 Marcus Griep
 
-test_description='git-svn multi-glob branch names'
+test_description='git svn multi-glob branch names'
 . ./lib-git-svn.sh
 
 test_expect_success 'setup svnrepo' '

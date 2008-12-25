@@ -26,12 +26,12 @@ constructor dialog {} {
 	global all_remotes M1B
 
 	make_toplevel top w
-	wm title $top [append "[appname] ([reponame]): " [mc "Delete Remote Branch"]]
+	wm title $top [append "[appname] ([reponame]): " [mc "Delete Branch Remotely"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	label $w.header -text [mc "Delete Remote Branch"] -font font_uibold
+	label $w.header -text [mc "Delete Branch Remotely"] -font font_uibold
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
@@ -63,7 +63,7 @@ constructor dialog {} {
 		set urltype url
 	}
 	radiobutton $w.dest.url_r \
-		-text [mc "Arbitrary URL:"] \
+		-text [mc "Arbitrary Location:"] \
 		-value url \
 		-variable @urltype
 	entry $w.dest.url_t \

@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2008 Brad King
 
-test_description='git-svn dcommit honors auto-props'
+test_description='git svn dcommit honors auto-props'
 
 . ./lib-git-svn.sh
 
@@ -16,26 +16,24 @@ enable-auto-props=$1
 EOF
 }
 
-test_expect_success 'initialize git-svn' '
+test_expect_success 'initialize git svn' '
 	mkdir import &&
 	(
 		cd import &&
 		echo foo >foo &&
-		svn import -m "import for git-svn" . "$svnrepo"
+		svn import -m "import for git svn" . "$svnrepo"
 	) &&
 	rm -rf import &&
-	git-svn init "$svnrepo"
-	git-svn fetch
+	git svn init "$svnrepo"
+	git svn fetch
 '
 
 test_expect_success 'enable auto-props config' '
-	cd "$gittestrepo" &&
 	mkdir user &&
 	generate_auto_props yes >user/config
 '
 
 test_expect_success 'add files matching auto-props' '
-	cd "$gittestrepo" &&
 	echo "#!$SHELL_PATH" >exec1.sh &&
 	chmod +x exec1.sh &&
 	echo "hello" >hello.txt &&
@@ -46,12 +44,10 @@ test_expect_success 'add files matching auto-props' '
 '
 
 test_expect_success 'disable auto-props config' '
-	cd "$gittestrepo" &&
 	generate_auto_props no >user/config
 '
 
 test_expect_success 'add files matching disabled auto-props' '
-	cd "$gittestrepo" &&
 	echo "#$SHELL_PATH" >exec2.sh &&
 	chmod +x exec2.sh &&
 	echo "world" >world.txt &&
@@ -62,6 +58,7 @@ test_expect_success 'add files matching disabled auto-props' '
 '
 
 test_expect_success 'check resulting svn repository' '
+(
 	mkdir work &&
 	cd work &&
 	svn co "$svnrepo" &&
@@ -81,6 +78,24 @@ test_expect_success 'check resulting svn repository' '
 	test "x$(svn propget svn:mime-type world.txt)" = "x" &&
 	test "x$(svn propget svn:eol-style world.txt)" = "x" &&
 	test "x$(svn propget svn:mime-type zot)" = "x"
+)
+'
+
+test_expect_success 'check renamed file' '
+	test -d user &&
+	generate_auto_props yes > user/config &&
+	git mv foo foo.sh &&
+	git commit -m "foo => foo.sh" &&
+	git svn dcommit --config-dir=user &&
+	(
+		cd work/svnrepo &&
+		svn up &&
+		test ! -e foo &&
+		test -e foo.sh &&
+		test "x$(svn propget svn:mime-type foo.sh)" = \
+		     "xapplication/x-shellscript" &&
+		test "x$(svn propget svn:eol-style foo.sh)" = "xLF"
+	)
 '
 
 test_done

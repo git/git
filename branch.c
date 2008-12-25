@@ -129,7 +129,9 @@ void create_branch(const char *head,
 			die("Cannot setup tracking information; starting point is not a branch.");
 		break;
 	case 1:
-		/* Unique completion -- good */
+		/* Unique completion -- good, only if it is a real ref */
+		if (track == BRANCH_TRACK_EXPLICIT && !strcmp(real_ref, "HEAD"))
+			die("Cannot setup tracking information; starting point is not a branch.");
 		break;
 	default:
 		die("Ambiguous object name: '%s'.", start_name);
@@ -168,5 +170,6 @@ void remove_branch_state(void)
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_RR"));
 	unlink(git_path("MERGE_MSG"));
+	unlink(git_path("MERGE_MODE"));
 	unlink(git_path("SQUASH_MSG"));
 }

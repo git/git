@@ -3,7 +3,7 @@ git-imap-send(1)
 
 NAME
 ----
-git-imap-send - Dump a mailbox from stdin into an imap folder
+git-imap-send - Send a collection of patches from stdin to an IMAP folder
 
 
 SYNOPSIS
@@ -13,9 +13,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This command uploads a mailbox generated with git-format-patch
-into an imap drafts folder.  This allows patches to be sent as
-other email is sent with mail clients that cannot read mailbox
+This command uploads a mailbox generated with 'git-format-patch'
+into an IMAP drafts folder.  This allows patches to be sent as
+other email is when using mail clients that cannot read mailbox
 files directly.
 
 Typical usage is something like:
@@ -26,21 +26,75 @@ git format-patch --signoff --stdout --attach origin | git imap-send
 CONFIGURATION
 -------------
 
-'git-imap-send' requires the following values in the repository
-configuration file (shown with examples):
+To use the tool, imap.folder and either imap.tunnel or imap.host must be set
+to appropriate values.
+
+Variables
+~~~~~~~~~
+
+imap.folder::
+	The folder to drop the mails into, which is typically the Drafts
+	folder. For example: "INBOX.Drafts", "INBOX/Drafts" or
+	"[Gmail]/Drafts". Required to use imap-send.
+
+imap.tunnel::
+	Command used to setup a tunnel to the IMAP server through which
+	commands will be piped instead of using a direct network connection
+	to the server. Required when imap.host is not set to use imap-send.
+
+imap.host::
+	A URL identifying the server. Use a `imap://` prefix for non-secure
+	connections and a `imaps://` prefix for secure connections.
+	Ignored when imap.tunnel is set, but required to use imap-send
+	otherwise.
+
+imap.user::
+	The username to use when logging in to the server.
+
+imap.password::
+	The password to use when logging in to the server.
+
+imap.port::
+	An integer port number to connect to on the server.
+	Defaults to 143 for imap:// hosts and 993 for imaps:// hosts.
+	Ignored when imap.tunnel is set.
+
+imap.sslverify::
+	A boolean to enable/disable verification of the server certificate
+	used by the SSL/TLS connection. Default is `true`. Ignored when
+	imap.tunnel is set.
+
+Examples
+~~~~~~~~
+
+Using tunnel mode:
 
 ..........................
 [imap]
-    Folder = "INBOX.Drafts"
+    folder = "INBOX.Drafts"
+    tunnel = "ssh -q -C user@example.com /usr/bin/imapd ./Maildir 2> /dev/null"
+..........................
 
-[imap]
-    Tunnel = "ssh -q user@server.com /usr/bin/imapd ./Maildir 2> /dev/null"
+Using direct mode:
 
+.........................
 [imap]
-    Host = imap.server.com
-    User = bob
-    Pass = pwd
-    Port = 143
+    folder = "INBOX.Drafts"
+    host = imap://imap.example.com
+    user = bob
+    pass = p4ssw0rd
+..........................
+
+Using direct mode with SSL:
+
+.........................
+[imap]
+    folder = "INBOX.Drafts"
+    host = imaps://imap.example.com
+    user = bob
+    pass = p4ssw0rd
+    port = 123
+    sslverify = false
 ..........................
 
 

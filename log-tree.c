@@ -1,11 +1,47 @@
 #include "cache.h"
 #include "diff.h"
 #include "commit.h"
+#include "tag.h"
 #include "graph.h"
 #include "log-tree.h"
 #include "reflog-walk.h"
+#include "refs.h"
 
 struct decoration name_decoration = { "object names" };
+
+static void add_name_decoration(const char *prefix, const char *name, struct object *obj)
+{
+	int plen = strlen(prefix);
+	int nlen = strlen(name);
+	struct name_decoration *res = xmalloc(sizeof(struct name_decoration) + plen + nlen);
+	memcpy(res->name, prefix, plen);
+	memcpy(res->name + plen, name, nlen + 1);
+	res->next = add_decoration(&name_decoration, obj, res);
+}
+
+static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
+{
+	struct object *obj = parse_object(sha1);
+	if (!obj)
+		return 0;
+	add_name_decoration("", refname, obj);
+	while (obj->type == OBJ_TAG) {
+		obj = ((struct tag *)obj)->tagged;
+		if (!obj)
+			break;
+		add_name_decoration("tag: ", refname, obj);
+	}
+	return 0;
+}
+
+void load_ref_decorations(void)
+{
+	static int loaded;
+	if (!loaded) {
+		loaded = 1;
+		for_each_ref(add_ref_decoration, NULL);
+	}
+}
 
 static void show_parents(struct commit *commit, int abbrev)
 {
@@ -16,11 +52,15 @@ static void show_parents(struct commit *commit, int abbrev)
 	}
 }
 
-void show_decorations(struct commit *commit)
+void show_decorations(struct rev_info *opt, struct commit *commit)
 {
 	const char *prefix;
 	struct name_decoration *decoration;
 
+	if (opt->show_source && commit->util)
+		printf("\t%s", (char *) commit->util);
+	if (!opt->show_decorations)
+		return;
 	decoration = lookup_decoration(&name_decoration, &commit->object);
 	if (!decoration)
 		return;
@@ -216,7 +256,7 @@ void log_write_email_headers(struct rev_info *opt, const char *name,
 
 void show_log(struct rev_info *opt)
 {
-	struct strbuf msgbuf;
+	struct strbuf msgbuf = STRBUF_INIT;
 	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
 	int abbrev = opt->diffopt.abbrev;
@@ -243,7 +283,7 @@ void show_log(struct rev_info *opt)
 		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
-		show_decorations(commit);
+		show_decorations(opt, commit);
 		if (opt->graph && !graph_is_commit_finished(opt->graph)) {
 			putchar('\n');
 			graph_show_remainder(opt->graph);
@@ -316,7 +356,7 @@ void show_log(struct rev_info *opt)
 			printf(" (from %s)",
 			       diff_unique_abbrev(parent->object.sha1,
 						  abbrev_commit));
-		show_decorations(commit);
+		show_decorations(opt, commit);
 		printf("%s", diff_get_color_opt(&opt->diffopt, DIFF_RESET));
 		if (opt->commit_format == CMIT_FMT_ONELINE) {
 			putchar(' ');
@@ -345,7 +385,6 @@ void show_log(struct rev_info *opt)
 	/*
 	 * And then the pretty-printed message itself
 	 */
-	strbuf_init(&msgbuf, 0);
 	if (need_8bit_cte >= 0)
 		need_8bit_cte = has_non_ascii(opt->add_signoff);
 	pretty_print_commit(opt->commit_format, commit, &msgbuf,
@@ -432,7 +471,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	struct commit_list *parents;
 	unsigned const char *sha1 = commit->object.sha1;
 
-	if (!opt->diff)
+	if (!opt->diff && !DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS))
 		return 0;
 
 	/* Root commit? */

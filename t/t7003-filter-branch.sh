@@ -96,13 +96,17 @@ test_expect_success 'filter subdirectory only' '
 	test_tick &&
 	git commit -m "again not subdir" &&
 	git branch sub &&
-	git filter-branch -f --subdirectory-filter subdir refs/heads/sub
+	git branch sub-earlier HEAD~2 &&
+	git filter-branch -f --subdirectory-filter subdir \
+		refs/heads/sub refs/heads/sub-earlier
 '
 
 test_expect_success 'subdirectory filter result looks okay' '
 	test 2 = $(git rev-list sub | wc -l) &&
 	git show sub:new &&
-	test_must_fail git show sub:subdir
+	test_must_fail git show sub:subdir &&
+	git show sub-earlier:new &&
+	test_must_fail git show sub-earlier:subdir
 '
 
 test_expect_success 'more setup' '
@@ -247,6 +251,14 @@ test_expect_success 'Tag name filtering strips gpg signature' '
 	echo "$faux_gpg_tag" | sed -e s/XXXXXX/$sha1/ | head -n 6 > expect &&
 	git filter-branch -f --tag-name-filter cat &&
 	git cat-file tag S > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'Tag name filtering allows slashes in tag names' '
+	git tag -m tag-with-slash X/1 &&
+	git cat-file tag X/1 | sed -e s,X/1,X/2, > expect &&
+	git filter-branch -f --tag-name-filter "echo X/2" &&
+	git cat-file tag X/2 > actual &&
 	test_cmp expect actual
 '
 

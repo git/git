@@ -52,11 +52,6 @@ int common_prefix(const char **pathspec)
 	return prefix;
 }
 
-static inline int special_char(unsigned char c1)
-{
-	return !c1 || c1 == '*' || c1 == '[' || c1 == '?' || c1 == '\\';
-}
-
 /*
  * Does 'match' matches the given name?
  * A match is found if
@@ -80,7 +75,7 @@ static int match_one(const char *match, const char *name, int namelen)
 	for (;;) {
 		unsigned char c1 = *match;
 		unsigned char c2 = *name;
-		if (special_char(c1))
+		if (isspecial(c1))
 			break;
 		if (c1 != c2)
 			return 0;
@@ -387,7 +382,7 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 	return ent;
 }
 
-struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
+static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
 	if (cache_name_exists(pathname, len, ignore_case))
 		return NULL;
@@ -396,7 +391,7 @@ struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int
 	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
-struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
+static struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
 {
 	if (cache_name_pos(pathname, len) >= 0)
 		return NULL;
@@ -680,17 +675,12 @@ static int cmp_name(const void *p1, const void *p2)
  */
 static int simple_length(const char *match)
 {
-	const char special[256] = {
-		[0] = 1, ['?'] = 1,
-		['\\'] = 1, ['*'] = 1,
-		['['] = 1
-	};
 	int len = -1;
 
 	for (;;) {
 		unsigned char c = *match++;
 		len++;
-		if (special[c])
+		if (isspecial(c))
 			return len;
 	}
 }
@@ -727,8 +717,12 @@ static void free_simplify(struct path_simplify *simplify)
 
 int read_directory(struct dir_struct *dir, const char *path, const char *base, int baselen, const char **pathspec)
 {
-	struct path_simplify *simplify = create_simplify(pathspec);
+	struct path_simplify *simplify;
 
+	if (has_symlink_leading_path(strlen(path), path))
+		return dir->nr;
+
+	simplify = create_simplify(pathspec);
 	read_directory_recursive(dir, path, base, baselen, 0, simplify);
 	free_simplify(simplify);
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
@@ -837,3 +831,23 @@ void setup_standard_excludes(struct dir_struct *dir)
 	if (excludes_file && !access(excludes_file, R_OK))
 		add_excludes_from_file(dir, excludes_file);
 }
+
+int remove_path(const char *name)
+{
+	char *slash;
+
+	if (unlink(name) && errno != ENOENT)
+		return -1;
+
+	slash = strrchr(name, '/');
+	if (slash) {
+		char *dirs = xstrdup(name);
+		slash = dirs + (slash - name);
+		do {
+			*slash = '\0';
+		} while (rmdir(dirs) && (slash = strrchr(dirs, '/')));
+		free(dirs);
+	}
+	return 0;
+}
+

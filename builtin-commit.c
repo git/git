@@ -225,17 +225,17 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 
 	if (interactive) {
 		interactive_add(argc, argv, prefix);
-		if (read_cache() < 0)
+		if (read_cache_preload(NULL) < 0)
 			die("index file corrupt");
 		commit_style = COMMIT_AS_IS;
 		return get_index_file();
 	}
 
-	if (read_cache() < 0)
-		die("index file corrupt");
-
 	if (*argv)
 		pathspec = get_pathspec(prefix, argv);
+
+	if (read_cache_preload(pathspec) < 0)
+		die("index file corrupt");
 
 	/*
 	 * Non partial, non as-is commit.
@@ -320,7 +320,9 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 		die("unable to write new_index file");
 
 	fd = hold_lock_file_for_update(&false_lock,
-				       git_path("next-index-%d", getpid()), 1);
+				       git_path("next-index-%"PRIuMAX,
+						(uintmax_t) getpid()),
+				       LOCK_DIE_ON_ERROR);
 
 	create_base_index();
 	add_remove_files(&partial);
@@ -448,7 +450,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 {
 	struct stat statbuf;
 	int commitable, saved_color_setting;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	char *buffer;
 	FILE *fp;
 	const char *hook_arg1 = NULL;
@@ -458,7 +460,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		return 0;
 
-	strbuf_init(&sb, 0);
 	if (message.len) {
 		strbuf_addbuf(&sb, &message);
 		hook_arg1 = "message";
@@ -511,10 +512,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 		stripspace(&sb, 0);
 
 	if (signoff) {
-		struct strbuf sob;
+		struct strbuf sob = STRBUF_INIT;
 		int i;
 
-		strbuf_init(&sob, 0);
 		strbuf_addstr(&sob, sign_off_header);
 		strbuf_addstr(&sob, fmt_name(getenv("GIT_COMMITTER_NAME"),
 					     getenv("GIT_COMMITTER_EMAIL")));
@@ -667,20 +667,19 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 }
 
 /*
- * Find out if the message starting at position 'start' in the strbuf
- * contains only whitespace and Signed-off-by lines.
+ * Find out if the message in the strbuf contains only whitespace and
+ * Signed-off-by lines.
  */
-static int message_is_empty(struct strbuf *sb, int start)
+static int message_is_empty(struct strbuf *sb)
 {
-	struct strbuf tmpl;
+	struct strbuf tmpl = STRBUF_INIT;
 	const char *nl;
-	int eol, i;
+	int eol, i, start = 0;
 
 	if (cleanup_mode == CLEANUP_NONE && sb->len)
 		return 0;
 
 	/* See if the template is just a prefix of the message. */
-	strbuf_init(&tmpl, 0);
 	if (template_file && strbuf_read_file(&tmpl, template_file, 0) > 0) {
 		stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
 		if (start + tmpl.len <= sb->len &&
@@ -710,6 +709,31 @@ static int message_is_empty(struct strbuf *sb, int start)
 	return 1;
 }
 
+static const char *find_author_by_nickname(const char *name)
+{
+	struct rev_info revs;
+	struct commit *commit;
+	struct strbuf buf = STRBUF_INIT;
+	const char *av[20];
+	int ac = 0;
+
+	init_revisions(&revs, NULL);
+	strbuf_addf(&buf, "--author=%s", name);
+	av[++ac] = "--all";
+	av[++ac] = "-i";
+	av[++ac] = buf.buf;
+	av[++ac] = NULL;
+	setup_revisions(ac, av, &revs, NULL);
+	prepare_revision_walk(&revs);
+	commit = get_revision(&revs);
+	if (commit) {
+		strbuf_release(&buf);
+		format_commit_message(commit, "%an <%ae>", &buf, DATE_NORMAL);
+		return strbuf_detach(&buf, NULL);
+	}
+	die("No existing author found with '%s'", name);
+}
+
 static int parse_and_validate_options(int argc, const char *argv[],
 				      const char * const usage[],
 				      const char *prefix)
@@ -719,6 +743,9 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	argc = parse_options(argc, argv, builtin_commit_options, usage, 0);
 	logfile = parse_options_fix_filename(prefix, logfile);
 	template_file = parse_options_fix_filename(prefix, template_file);
+
+	if (force_author && !strchr(force_author, '>'))
+		force_author = find_author_by_nickname(force_author);
 
 	if (logfile || message.len || use_message)
 		use_editor = 0;
@@ -854,6 +881,9 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 {
 	struct rev_info rev;
 	struct commit *commit;
+	static const char *format = "format:%h: \"%s\"";
+	unsigned char junk_sha1[20];
+	const char *head = resolve_ref("HEAD", junk_sha1, 0, NULL);
 
 	commit = lookup_commit(sha1);
 	if (!commit)
@@ -871,18 +901,24 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 	rev.verbose_header = 1;
 	rev.show_root_diff = 1;
-	get_commit_format("format:%h: %s", &rev);
+	get_commit_format(format, &rev);
 	rev.always_show_header = 0;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
-	printf("Created %scommit ", initial_commit ? "initial " : "");
+	printf("[%s%s]: created ",
+		!prefixcmp(head, "refs/heads/") ?
+			head + 11 :
+			!strcmp(head, "HEAD") ?
+				"detached HEAD" :
+				head,
+		initial_commit ? " (root-commit)" : "");
 
 	if (!log_tree_commit(&rev, commit)) {
 		struct strbuf buf = STRBUF_INIT;
-		format_commit_message(commit, "%h: %s", &buf, DATE_NORMAL);
+		format_commit_message(commit, format + 7, &buf, DATE_NORMAL);
 		printf("%s\n", buf.buf);
 		strbuf_release(&buf);
 	}
@@ -896,39 +932,16 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 	return git_status_config(k, v, cb);
 }
 
-static const char commit_utf8_warn[] =
-"Warning: commit message does not conform to UTF-8.\n"
-"You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n";
-
-static void add_parent(struct strbuf *sb, const unsigned char *sha1)
-{
-	struct object *obj = parse_object(sha1);
-	const char *parent = sha1_to_hex(sha1);
-	const char *cp;
-
-	if (!obj)
-		die("Unable to find commit parent %s", parent);
-	if (obj->type != OBJ_COMMIT)
-		die("Parent %s isn't a proper commit", parent);
-
-	for (cp = sb->buf; cp && (cp = strstr(cp, "\nparent ")); cp += 8) {
-		if (!memcmp(cp + 8, parent, 40) && cp[48] == '\n') {
-			error("duplicate parent %s ignored", parent);
-			return;
-		}
-	}
-	strbuf_addf(sb, "parent %s\n", parent);
-}
-
 int cmd_commit(int argc, const char **argv, const char *prefix)
 {
-	int header_len;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	const char *index_file, *reflog_msg;
 	char *nl, *p;
 	unsigned char commit_sha1[20];
 	struct ref_lock *ref_lock;
+	struct commit_list *parents = NULL, **pptr = &parents;
+	struct stat statbuf;
+	int allow_fast_forward = 1;
 
 	git_config(git_commit_config, NULL);
 
@@ -943,13 +956,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		return 1;
 	}
 
-	/*
-	 * The commit object
-	 */
-	strbuf_init(&sb, 0);
-	strbuf_addf(&sb, "tree %s\n",
-		    sha1_to_hex(active_cache_tree->sha1));
-
 	/* Determine parents */
 	if (initial_commit) {
 		reflog_msg = "commit (initial)";
@@ -963,14 +969,13 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			die("could not parse HEAD commit");
 
 		for (c = commit->parents; c; c = c->next)
-			add_parent(&sb, c->item->object.sha1);
+			pptr = &commit_list_insert(c->item, pptr)->next;
 	} else if (in_merge) {
-		struct strbuf m;
+		struct strbuf m = STRBUF_INIT;
 		FILE *fp;
 
 		reflog_msg = "commit (merge)";
-		add_parent(&sb, head_sha1);
-		strbuf_init(&m, 0);
+		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
 		fp = fopen(git_path("MERGE_HEAD"), "r");
 		if (fp == NULL)
 			die("could not open %s for reading: %s",
@@ -979,46 +984,49 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			unsigned char sha1[20];
 			if (get_sha1_hex(m.buf, sha1) < 0)
 				die("Corrupt MERGE_HEAD file (%s)", m.buf);
-			add_parent(&sb, sha1);
+			pptr = &commit_list_insert(lookup_commit(sha1), pptr)->next;
 		}
 		fclose(fp);
 		strbuf_release(&m);
+		if (!stat(git_path("MERGE_MODE"), &statbuf)) {
+			if (strbuf_read_file(&sb, git_path("MERGE_MODE"), 0) < 0)
+				die("could not read MERGE_MODE: %s",
+						strerror(errno));
+			if (!strcmp(sb.buf, "no-ff"))
+				allow_fast_forward = 0;
+		}
+		if (allow_fast_forward)
+			parents = reduce_heads(parents);
 	} else {
 		reflog_msg = "commit";
-		strbuf_addf(&sb, "parent %s\n", sha1_to_hex(head_sha1));
+		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
 	}
 
-	strbuf_addf(&sb, "author %s\n",
-		    fmt_ident(author_name, author_email, author_date, IDENT_ERROR_ON_NO_NAME));
-	strbuf_addf(&sb, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
-	if (!is_encoding_utf8(git_commit_encoding))
-		strbuf_addf(&sb, "encoding %s\n", git_commit_encoding);
-	strbuf_addch(&sb, '\n');
-
 	/* Finally, get the commit message */
-	header_len = sb.len;
+	strbuf_reset(&sb);
 	if (strbuf_read_file(&sb, git_path(commit_editmsg), 0) < 0) {
 		rollback_index_files();
 		die("could not read commit message");
 	}
 
 	/* Truncate the message just before the diff, if any. */
-	p = strstr(sb.buf, "\ndiff --git a/");
-	if (p != NULL)
-		strbuf_setlen(&sb, p - sb.buf + 1);
+	if (verbose) {
+		p = strstr(sb.buf, "\ndiff --git ");
+		if (p != NULL)
+			strbuf_setlen(&sb, p - sb.buf + 1);
+	}
 
 	if (cleanup_mode != CLEANUP_NONE)
 		stripspace(&sb, cleanup_mode == CLEANUP_ALL);
-	if (sb.len < header_len || message_is_empty(&sb, header_len)) {
+	if (message_is_empty(&sb)) {
 		rollback_index_files();
 		fprintf(stderr, "Aborting commit due to empty commit message.\n");
 		exit(1);
 	}
-	strbuf_addch(&sb, '\0');
-	if (is_encoding_utf8(git_commit_encoding) && !is_utf8(sb.buf))
-		fprintf(stderr, commit_utf8_warn);
 
-	if (write_sha1_file(sb.buf, sb.len - 1, commit_type, commit_sha1)) {
+	if (commit_tree(sb.buf, active_cache_tree->sha1, parents, commit_sha1,
+			fmt_ident(author_name, author_email, author_date,
+				IDENT_ERROR_ON_NO_NAME))) {
 		rollback_index_files();
 		die("failed to write commit object");
 	}
@@ -1027,12 +1035,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 					   initial_commit ? NULL : head_sha1,
 					   0);
 
-	nl = strchr(sb.buf + header_len, '\n');
+	nl = strchr(sb.buf, '\n');
 	if (nl)
 		strbuf_setlen(&sb, nl + 1 - sb.buf);
 	else
 		strbuf_addch(&sb, '\n');
-	strbuf_remove(&sb, 0, header_len);
 	strbuf_insert(&sb, 0, reflog_msg, strlen(reflog_msg));
 	strbuf_insert(&sb, strlen(reflog_msg), ": ", 2);
 
@@ -1047,6 +1054,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_MSG"));
+	unlink(git_path("MERGE_MODE"));
 	unlink(git_path("SQUASH_MSG"));
 
 	if (commit_index_files())

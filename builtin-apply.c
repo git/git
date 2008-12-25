@@ -13,6 +13,7 @@
 #include "delta.h"
 #include "builtin.h"
 #include "string-list.h"
+#include "dir.h"
 
 /*
  *  --check turns on checking that the working tree matches the
@@ -320,13 +321,12 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 	const char *start = line;
 
 	if (*line == '"') {
-		struct strbuf name;
+		struct strbuf name = STRBUF_INIT;
 
 		/*
 		 * Proposed "new-style" GNU patch/diff format; see
 		 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
 		 */
-		strbuf_init(&name, 0);
 		if (!unquote_c_style(&name, line, NULL)) {
 			char *cp;
 
@@ -674,11 +674,8 @@ static char *git_header_name(char *line, int llen)
 
 	if (*line == '"') {
 		const char *cp;
-		struct strbuf first;
-		struct strbuf sp;
-
-		strbuf_init(&first, 0);
-		strbuf_init(&sp, 0);
+		struct strbuf first = STRBUF_INIT;
+		struct strbuf sp = STRBUF_INIT;
 
 		if (unquote_c_style(&first, line, &second))
 			goto free_and_fail1;
@@ -740,10 +737,9 @@ static char *git_header_name(char *line, int llen)
 	 */
 	for (second = name; second < line + llen; second++) {
 		if (*second == '"') {
-			struct strbuf sp;
+			struct strbuf sp = STRBUF_INIT;
 			const char *np;
 
-			strbuf_init(&sp, 0);
 			if (unquote_c_style(&sp, second, NULL))
 				goto free_and_fail2;
 
@@ -809,6 +805,13 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 	 * the default name from the header.
 	 */
 	patch->def_name = git_header_name(line, len);
+	if (patch->def_name && root) {
+		char *s = xmalloc(root_len + strlen(patch->def_name) + 1);
+		strcpy(s, root);
+		strcpy(s + root_len, patch->def_name);
+		free(patch->def_name);
+		patch->def_name = s;
+	}
 
 	line += len;
 	size -= len;
@@ -1507,11 +1510,10 @@ static const char minuses[]=
 
 static void show_stats(struct patch *patch)
 {
-	struct strbuf qname;
+	struct strbuf qname = STRBUF_INIT;
 	char *cp = patch->new_name ? patch->new_name : patch->old_name;
 	int max, add, del;
 
-	strbuf_init(&qname, 0);
 	quote_c_style(cp, &qname, NULL, 0);
 
 	/*
@@ -1557,10 +1559,8 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 {
 	switch (st->st_mode & S_IFMT) {
 	case S_IFLNK:
-		strbuf_grow(buf, st->st_size);
-		if (readlink(path, buf->buf, st->st_size) != st->st_size)
-			return -1;
-		strbuf_setlen(buf, st->st_size);
+		if (strbuf_readlink(buf, path, st->st_size) < 0)
+			return error("unable to read symlink %s", path);
 		return 0;
 	case S_IFREG:
 		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
@@ -1696,7 +1696,7 @@ static int match_fragment(struct image *img,
 		fixlen = ws_fix_copy(buf, orig, oldlen, ws_rule, NULL);
 
 		/* Try fixing the line in the target */
-		if (sizeof(tgtfixbuf) < tgtlen)
+		if (sizeof(tgtfixbuf) > tgtlen)
 			tgtfix = tgtfixbuf;
 		else
 			tgtfix = xmalloc(tgtlen);
@@ -2291,13 +2291,11 @@ static void add_to_fn_table(struct patch *patch)
 
 static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	struct image image;
 	size_t len;
 	char *img;
 	struct patch *tpatch;
-
-	strbuf_init(&buf, 0);
 
 	if (!(patch->is_copy || patch->is_rename) &&
 	    ((tpatch = in_fn_table(patch->old_name)) != NULL)) {
@@ -2585,6 +2583,8 @@ static void build_fake_ancestor(struct patch *list, const char *filename)
 			sha1_ptr = sha1;
 
 		ce = make_cache_entry(patch->old_mode, sha1_ptr, name, 0, 0);
+		if (!ce)
+			die("make_cache_entry failed for path '%s'", name);
 		if (add_index_entry(&result, ce, ADD_CACHE_OK_TO_ADD))
 			die ("Could not add %s to temporary index", name);
 	}
@@ -2735,15 +2735,7 @@ static void remove_file(struct patch *patch, int rmdir_empty)
 				warning("unable to remove submodule %s",
 					patch->old_name);
 		} else if (!unlink(patch->old_name) && rmdir_empty) {
-			char *name = xstrdup(patch->old_name);
-			char *end = strrchr(name, '/');
-			while (end) {
-				*end = 0;
-				if (rmdir(name))
-					break;
-				end = strrchr(name, '/');
-			}
-			free(name);
+			remove_path(patch->old_name);
 		}
 	}
 }
@@ -2784,7 +2776,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
 	int fd;
-	struct strbuf nbuf;
+	struct strbuf nbuf = STRBUF_INIT;
 
 	if (S_ISGITLINK(mode)) {
 		struct stat st;
@@ -2803,7 +2795,6 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	if (fd < 0)
 		return -1;
 
-	strbuf_init(&nbuf, 0);
 	if (convert_to_working_tree(path, buf, size, &nbuf)) {
 		size = nbuf.len;
 		buf  = nbuf.buf;
@@ -2848,8 +2839,8 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 		unsigned int nr = getpid();
 
 		for (;;) {
-			const char *newpath;
-			newpath = mkpath("%s~%u", path, nr);
+			char newpath[PATH_MAX];
+			mksnpath(newpath, sizeof(newpath), "%s~%u", path, nr);
 			if (!try_create_file(newpath, mode, buf, size)) {
 				if (!rename(newpath, path))
 					return;
@@ -2994,28 +2985,44 @@ static int write_out_results(struct patch *list, int skipped_patch)
 
 static struct lock_file lock_file;
 
-static struct excludes {
-	struct excludes *next;
-	const char *path;
-} *excludes;
+static struct string_list limit_by_name;
+static int has_include;
+static void add_name_limit(const char *name, int exclude)
+{
+	struct string_list_item *it;
+
+	it = string_list_append(name, &limit_by_name);
+	it->util = exclude ? NULL : (void *) 1;
+}
 
 static int use_patch(struct patch *p)
 {
 	const char *pathname = p->new_name ? p->new_name : p->old_name;
-	struct excludes *x = excludes;
-	while (x) {
-		if (fnmatch(x->path, pathname, 0) == 0)
-			return 0;
-		x = x->next;
-	}
+	int i;
+
+	/* Paths outside are not touched regardless of "--include" */
 	if (0 < prefix_length) {
 		int pathlen = strlen(pathname);
 		if (pathlen <= prefix_length ||
 		    memcmp(prefix, pathname, prefix_length))
 			return 0;
 	}
-	return 1;
+
+	/* See if it matches any of exclude/include rule */
+	for (i = 0; i < limit_by_name.nr; i++) {
+		struct string_list_item *it = &limit_by_name.items[i];
+		if (!fnmatch(it->string, pathname, 0))
+			return (it->util != NULL);
+	}
+
+	/*
+	 * If we had any include, a path that does not match any rule is
+	 * not used.  Otherwise, we saw bunch of exclude rules (or none)
+	 * and such a path is used.
+	 */
+	return !has_include;
 }
+
 
 static void prefix_one(char **name)
 {
@@ -3049,13 +3056,12 @@ static void prefix_patches(struct patch *p)
 static int apply_patch(int fd, const char *filename, int options)
 {
 	size_t offset;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
 	/* FIXME - memory leak when using multiple patch files as inputs */
 	memset(&fn_table, 0, sizeof(struct string_list));
-	strbuf_init(&buf, 0);
 	patch_input_file = filename;
 	read_patch_file(&buf, fd);
 	offset = 0;
@@ -3157,10 +3163,12 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			continue;
 		}
 		if (!prefixcmp(arg, "--exclude=")) {
-			struct excludes *x = xmalloc(sizeof(*x));
-			x->path = arg + 10;
-			x->next = excludes;
-			excludes = x;
+			add_name_limit(arg + 10, 1);
+			continue;
+		}
+		if (!prefixcmp(arg, "--include=")) {
+			add_name_limit(arg + 10, 0);
+			has_include = 1;
 			continue;
 		}
 		if (!prefixcmp(arg, "-p")) {

@@ -64,6 +64,8 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_RELATIVE_NAME       (1 << 17)
 #define DIFF_OPT_IGNORE_SUBMODULES   (1 << 18)
 #define DIFF_OPT_DIRSTAT_CUMULATIVE  (1 << 19)
+#define DIFF_OPT_DIRSTAT_BY_FILE     (1 << 20)
+#define DIFF_OPT_ALLOW_TEXTCONV      (1 << 21)
 #define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
 #define DIFF_OPT_SET(opts, flag)    ((opts)->flags |= DIFF_OPT_##flag)
 #define DIFF_OPT_CLR(opts, flag)    ((opts)->flags &= ~DIFF_OPT_##flag)
@@ -159,6 +161,8 @@ extern void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 extern void diff_tree_combined(const unsigned char *sha1, const unsigned char parent[][20], int num_parent, int dense, struct rev_info *rev);
 
 extern void diff_tree_combined_merge(const unsigned char *sha1, int, struct rev_info *);
+
+void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
 
 extern void diff_addremove(struct diff_options *,
 			   int addremove,

@@ -26,6 +26,15 @@ First, note that you can get documentation for a command such as
 $ man git-log
 ------------------------------------------------
 
+or:
+
+------------------------------------------------
+$ git help log
+------------------------------------------------
+
+With the latter, you can use the manual viewer of your choice; see
+linkgit:git-help[1] for more information.
+
 It is a good idea to introduce yourself to git with your name and
 public email address before doing any operation.  The easiest
 way to do so is:
@@ -653,6 +662,7 @@ linkgit:gittutorial-2[7],
 linkgit:gitcvs-migration[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],
+linkgit:git-help[1],
 link:everyday.html[Everyday git],
 link:user-manual.html[The Git User's Manual]
 

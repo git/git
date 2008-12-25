@@ -30,7 +30,7 @@ This is designed to be as compact as possible.
 
 	  commit <sha1>
 	  Author: <author>
-	  Date: <author date>
+	  Date:   <author date>
 
 	      <title line>
 
@@ -49,9 +49,9 @@ This is designed to be as compact as possible.
 * 'fuller'
 
 	  commit <sha1>
-	  Author: <author>
+	  Author:     <author>
 	  AuthorDate: <author date>
-	  Commit: <committer>
+	  Commit:     <committer>
 	  CommitDate: <committer date>
 
 	       <title line>
@@ -116,6 +116,7 @@ The placeholders are:
 - '%cr': committer date, relative
 - '%ct': committer date, UNIX timestamp
 - '%ci': committer date, ISO 8601 format
+- '%d': ref names, like the --decorate option of linkgit:git-log[1]
 - '%e': encoding
 - '%s': subject
 - '%b': body

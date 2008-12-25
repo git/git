@@ -540,7 +540,7 @@ static int get_pack(int xd[2], char **pack_lockfile)
 			*av++ = "--fix-thin";
 		if (args.lock_pack || unpack_limit) {
 			int s = sprintf(keep_arg,
-					"--keep=fetch-pack %d on ", getpid());
+					"--keep=fetch-pack %"PRIuMAX " on ", (uintmax_t) getpid());
 			if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
 				strcpy(keep_arg + s, "localhost");
 			*av++ = keep_arg;
@@ -735,7 +735,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	conn = git_connect(fd, (char *)dest, args.uploadpack,
 			   args.verbose ? CONNECT_VERBOSE : 0);
 	if (conn) {
-		get_remote_heads(fd[0], &ref, 0, NULL, 0);
+		get_remote_heads(fd[0], &ref, 0, NULL, 0, NULL);
 
 		ref = fetch_pack(&args, fd, conn, ref, dest, nr_heads, heads, NULL);
 		close(fd[0]);
@@ -780,7 +780,8 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 	struct ref *ref_cpy;
 
 	fetch_pack_setup();
-	memcpy(&args, my_args, sizeof(args));
+	if (&args != my_args)
+		memcpy(&args, my_args, sizeof(args));
 	if (args.depth > 0) {
 		if (stat(git_path("shallow"), &st))
 			st.st_mtime = 0;
@@ -813,7 +814,8 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 			  )
 			die("shallow file was changed during fetch");
 
-		fd = hold_lock_file_for_update(&lock, shallow, 1);
+		fd = hold_lock_file_for_update(&lock, shallow,
+					       LOCK_DIE_ON_ERROR);
 		if (!write_shallow_commits(fd, 0)) {
 			unlink(shallow);
 			rollback_lock_file(&lock);

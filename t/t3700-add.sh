@@ -185,6 +185,7 @@ test_expect_success 'git add --refresh' '
 
 if case $(uname -s) in *MINGW*) :;; *) false;; esac then
 	say "chmod 0 does not make files unreadable - skipping tests"
+	say "cannot have backslashes in file names - skipping test"
 else
 
 test_expect_success 'git add should fail atomically upon an unreadable file' '
@@ -230,14 +231,14 @@ test_expect_success 'git add (add.ignore-errors = false)' '
 	! ( git ls-files foo1 | grep foo1 )
 '
 
-fi	# skip chmod 0 tests
-
 test_expect_success 'git add '\''fo\[ou\]bar'\'' ignores foobar' '
 	git reset --hard &&
 	touch fo\[ou\]bar foobar &&
 	git add '\''fo\[ou\]bar'\'' &&
-	git ls-files fo\[ou\]bar | grep -F fo\[ou\]bar &&
+	git ls-files fo\[ou\]bar | fgrep fo\[ou\]bar &&
 	! ( git ls-files foobar | grep foobar )
 '
+
+fi	# skip chmod 0 and bslash-in-filename tests
 
 test_done

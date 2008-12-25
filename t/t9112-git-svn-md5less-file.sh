@@ -42,6 +42,6 @@ EOF
 
 test_expect_success 'load svn dumpfile' 'svnadmin load "$rawsvnrepo" < dumpfile.svn'
 
-test_expect_success 'initialize git-svn' 'git-svn init "$svnrepo"'
-test_expect_success 'fetch revisions from svn' 'git-svn fetch'
+test_expect_success 'initialize git svn' 'git svn init "$svnrepo"'
+test_expect_success 'fetch revisions from svn' 'git svn fetch'
 test_done

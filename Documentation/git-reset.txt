@@ -82,7 +82,9 @@ $ git reset --hard HEAD~3   <1>
 +
 <1> The last three commits (HEAD, HEAD^, and HEAD~2) were bad
 and you do not want to ever see them again.  Do *not* do this if
-you have already given these commits to somebody else.
+you have already given these commits to somebody else.  (See the
+"RECOVERING FROM UPSTREAM REBASE" section in linkgit:git-rebase[1] for
+the implications of doing so.)
 
 Undo a commit, making it a topic branch::
 +
@@ -128,7 +130,7 @@ Undo a merge or pull::
 $ git pull                         <1>
 Auto-merging nitfol
 CONFLICT (content): Merge conflict in nitfol
-Automatic merge failed/prevented; fix up by hand
+Automatic merge failed; fix conflicts and then commit the result.
 $ git reset --hard                 <2>
 $ git pull . topic/branch          <3>
 Updating from 41223... to 13134...
@@ -175,6 +177,8 @@ $ git reset                                       <3>
 <3> At this point the index file still has all the WIP changes you
     committed as 'snapshot WIP'.  This updates the index to show your
     WIP files as uncommitted.
++
+See also linkgit:git-stash[1].
 
 Reset a single file in the index::
 +

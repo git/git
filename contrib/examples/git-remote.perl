@@ -309,7 +309,7 @@ sub update_remote {
 			}
 		}
 	} else {
-		print STDERR "Remote group $name does not exists.\n";
+		print STDERR "Remote group $name does not exist.\n";
 		exit(1);
 	}
 	for (@remotes) {

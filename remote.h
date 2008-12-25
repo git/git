@@ -1,8 +1,15 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
+enum {
+	REMOTE_CONFIG,
+	REMOTE_REMOTES,
+	REMOTE_BRANCHES
+};
+
 struct remote {
 	const char *name;
+	int origin;
 
 	const char **url;
 	int url_nr;
@@ -55,9 +62,7 @@ struct refspec {
 
 extern const struct refspec *tag_refspec;
 
-struct ref *alloc_ref(unsigned namelen);
-
-struct ref *alloc_ref_from_str(const char* str);
+struct ref *alloc_ref(const char *name);
 
 struct ref *copy_ref_list(const struct ref *ref);
 
@@ -77,7 +82,6 @@ void ref_remove_duplicates(struct ref *ref_map);
 
 int valid_fetch_refspec(const char *refspec);
 struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
-struct refspec *parse_push_refspec(int nr_refspec, const char **refspec);
 
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	       int nr_refspec, const char **refspec, int all);

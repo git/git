@@ -9,8 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
-	  [--all | [--update | -u]] [--refresh] [--ignore-errors] [--]
-	  <filepattern>...
+	  [--all | [--update | -u]] [--intent-to-add | -N]
+	  [--refresh] [--ignore-errors] [--] <filepattern>...
 
 DESCRIPTION
 -----------
@@ -91,6 +91,15 @@ OPTIONS
 	Update files that git already knows about (same as '\--update')
 	and add all untracked files that are not ignored by '.gitignore'
 	mechanism.
+
+
+-N::
+--intent-to-add::
+	Record only the fact that the path will be added later. An entry
+	for the path is placed in the index with no content. This is
+	useful for, among other things, showing the unstaged content of
+	such files with 'git diff' and committing them with 'git commit
+	-a'.
 
 --refresh::
 	Don't add the file(s), but only refresh their stat()

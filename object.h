@@ -41,7 +41,18 @@ extern int type_from_string(const char *str);
 extern unsigned int get_max_object_index(void);
 extern struct object *get_indexed_object(unsigned int);
 
-/** Internal only **/
+/*
+ * This can be used to see if we have heard of the object before, but
+ * it can return "yes we have, and here is a half-initialised object"
+ * for an object that we haven't loaded/parsed yet.
+ *
+ * When parsing a commit to create an in-core commit object, its
+ * parents list holds commit objects that represent its parents, but
+ * they are expected to be lazily initialized and do not know what
+ * their trees or parents are yet.  When this function returns such a
+ * half-initialised objects, the caller is expected to initialize them
+ * by calling parse_object() on them.
+ */
 struct object *lookup_object(const unsigned char *sha1);
 
 extern void *create_object(const unsigned char *sha1, int type, void *obj);

@@ -29,7 +29,8 @@ The content to be added can be specified in several ways:
 
 3. by listing files as arguments to the 'commit' command, in which
    case the commit will ignore changes staged in the index, and instead
-   record the current content of the listed files;
+   record the current content of the listed files (which must already
+   be known to git);
 
 4. by using the -a switch with the 'commit' command to automatically
    "add" changes from all known files (i.e. all files that are already
@@ -75,8 +76,10 @@ OPTIONS
 	read the message from the standard input.
 
 --author=<author>::
-	Override the author name used in the commit.  Use
-	`A U Thor <author@example.com>` format.
+	Override the author name used in the commit.  You can use the
+	standard `A U Thor <author@example.com>` format.  Otherwise,
+	an existing commit that matches the given string and its author
+	name is used.
 
 -m <msg>::
 --message=<msg>::
@@ -92,7 +95,8 @@ OPTIONS
 
 -s::
 --signoff::
-	Add Signed-off-by line at the end of the commit message.
+	Add Signed-off-by line by the committer at the end of the commit
+	log message.
 
 -n::
 --no-verify::
@@ -142,6 +146,10 @@ It is a rough equivalent for:
 ------
 but can be used to amend a merge commit.
 --
++
+You should understand the implications of rewriting history if you
+amend a commit that has already been published.  (See the "RECOVERING
+FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 
 -i::
 --include::
@@ -158,7 +166,7 @@ but can be used to amend a merge commit.
 	'git-commit' if any paths are given on the command line,
 	in which case this option can be omitted.
 	If this option is specified together with '--amend', then
-	no paths need be specified, which can be used to amend
+	no paths need to be specified, which can be used to amend
 	the last commit without committing changes that have
 	already been staged.
 

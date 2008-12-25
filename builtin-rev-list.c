@@ -100,15 +100,14 @@ static void show_commit(struct commit *commit)
 			children = children->next;
 		}
 	}
-	show_decorations(commit);
+	show_decorations(&revs, commit);
 	if (revs.commit_format == CMIT_FMT_ONELINE)
 		putchar(' ');
 	else
 		putchar('\n');
 
 	if (revs.verbose_header && commit->buffer) {
-		struct strbuf buf;
-		strbuf_init(&buf, 0);
+		struct strbuf buf = STRBUF_INIT;
 		pretty_print_commit(revs.commit_format, commit,
 				    &buf, revs.abbrev, NULL, NULL,
 				    revs.date_mode, 0);

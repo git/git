@@ -7,7 +7,7 @@ test_description='Test rename detection in diff engine.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
 
 echo >path0 'Line 1
 Line 2

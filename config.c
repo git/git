@@ -205,8 +205,27 @@ static int git_parse_file(config_fn_t fn, void *data)
 	int baselen = 0;
 	static char var[MAXNAME];
 
+	/* U+FEFF Byte Order Mark in UTF8 */
+	static const unsigned char *utf8_bom = (unsigned char *) "\xef\xbb\xbf";
+	const unsigned char *bomptr = utf8_bom;
+
 	for (;;) {
 		int c = get_next_char();
+		if (bomptr && *bomptr) {
+			/* We are at the file beginning; skip UTF8-encoded BOM
+			 * if present. Sane editors won't put this in on their
+			 * own, but e.g. Windows Notepad will do it happily. */
+			if ((unsigned char) c == *bomptr) {
+				bomptr++;
+				continue;
+			} else {
+				/* Do not tolerate partial BOM. */
+				if (bomptr != utf8_bom)
+					break;
+				/* No BOM at file beginning. Cool. */
+				bomptr = NULL;
+			}
+		}
 		if (c == '\n') {
 			if (config_file_eof)
 				return 0;
@@ -255,7 +274,7 @@ static int parse_unit_factor(const char *end, unsigned long *val)
 	return 0;
 }
 
-int git_parse_long(const char *value, long *ret)
+static int git_parse_long(const char *value, long *ret)
 {
 	if (value && *value) {
 		char *end;
@@ -291,7 +310,7 @@ static void die_bad_config(const char *name)
 
 int git_config_int(const char *name, const char *value)
 {
-	long ret;
+	long ret = 0;
 	if (!git_parse_long(value, &ret))
 		die_bad_config(name);
 	return ret;
@@ -471,6 +490,11 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.preloadindex")) {
+		core_preload_index = git_config_bool(var, value);
+		return 0;
+	}
+
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
@@ -612,10 +636,7 @@ int git_config(config_fn_t fn, void *data)
 	char *repo_config = NULL;
 	const char *home = NULL;
 
-	/* $GIT_CONFIG makes git read _only_ the given config file,
-	 * $GIT_CONFIG_LOCAL will make it process it in addition to the
-	 * global config file, the same way it would the per-repository
-	 * config file otherwise. */
+	/* Setting $GIT_CONFIG makes git read _only_ the given config file. */
 	if (config_exclusive_filename)
 		return git_config_from_file(fn, config_exclusive_filename, data);
 	if (git_config_system() && !access(git_etc_gitconfig(), R_OK))
@@ -630,7 +651,7 @@ int git_config(config_fn_t fn, void *data)
 		free(user_config);
 	}
 
-	repo_config = xstrdup(git_path("config"));
+	repo_config = git_pathdup("config");
 	ret += git_config_from_file(fn, repo_config, data);
 	free(repo_config);
 	return ret;
@@ -734,9 +755,8 @@ static int store_write_section(int fd, const char* key)
 {
 	const char *dot;
 	int i, success;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
-	strbuf_init(&sb, 0);
 	dot = memchr(key, '.', store.baselen);
 	if (dot) {
 		strbuf_addf(&sb, "[%.*s \"", (int)(dot - key), key);
@@ -761,7 +781,7 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	int i, success;
 	int length = strlen(key + store.baselen + 1);
 	const char *quote = "";
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
 	/*
 	 * Check to see if the value needs to be surrounded with a dq pair.
@@ -778,7 +798,6 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	if (i && value[i - 1] == ' ')
 		quote = "\"";
 
-	strbuf_init(&sb, 0);
 	strbuf_addf(&sb, "\t%.*s = %s",
 		    length, key + store.baselen + 1, quote);
 
@@ -872,7 +891,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	if (config_exclusive_filename)
 		config_filename = xstrdup(config_exclusive_filename);
 	else
-		config_filename = xstrdup(git_path("config"));
+		config_filename = git_pathdup("config");
 
 	/*
 	 * Since "key" actually contains the section name and the real
@@ -1132,7 +1151,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	if (config_exclusive_filename)
 		config_filename = xstrdup(config_exclusive_filename);
 	else
-		config_filename = xstrdup(git_path("config"));
+		config_filename = git_pathdup("config");
 	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
 	if (out_fd < 0) {
 		ret = error("could not lock config file %s", config_filename);

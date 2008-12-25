@@ -4,9 +4,9 @@
 # This file is licensed under the GPL v2, or a later version
 # at the discretion of Linus Torvalds.
 
-USAGE='<commit> <url> [<head>]'
-LONG_USAGE='Summarizes the changes since <commit> to the standard output,
-and includes <url> in the message generated.'
+USAGE='<start> <url> [<end>]'
+LONG_USAGE='Summarizes the changes between two commits to the standard output,
+and includes the given URL in the generated summary.'
 SUBDIRECTORY_OK='Yes'
 OPTIONS_SPEC=
 . git-sh-setup

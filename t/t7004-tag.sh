@@ -186,8 +186,8 @@ EOF
 test_expect_success \
 	'listing tags with substring as pattern must print those matching' '
 	rm *a* &&
-	git tag -l "*a*" > actual &&
-	test_cmp expect actual
+	git tag -l "*a*" > current &&
+	test_cmp expect current
 '
 
 cat >expect <<EOF
@@ -626,7 +626,7 @@ esac
 # Name and email: C O Mitter <committer@example.com>
 # No password given, to enable non-interactive operation.
 
-cp -R ../t7004 ./gpghome
+cp -R "$TEST_DIRECTORY"/t7004 ./gpghome
 chmod 0700 gpghome
 GNUPGHOME="$(pwd)/gpghome"
 export GNUPGHOME
@@ -1089,6 +1089,17 @@ test_expect_success 'filename for the message is relative to cwd' '
 		git tag -a -F msgfile-6 tag-from-subdir-2
 	) &&
 	git cat-file tag tag-from-subdir-2 | grep "in sub directory"
+'
+
+# mixing modes and options:
+
+test_expect_success 'mixing incompatibles modes and options is forbidden' '
+	test_must_fail git tag -a
+	test_must_fail git tag -l -v
+	test_must_fail git tag -n 100
+	test_must_fail git tag -l -m msg
+	test_must_fail git tag -l -F some file
+	test_must_fail git tag -v -s
 '
 
 test_done

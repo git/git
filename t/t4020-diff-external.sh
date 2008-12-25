@@ -43,6 +43,13 @@ test_expect_success 'GIT_EXTERNAL_DIFF environment should apply only to diff' '
 
 '
 
+test_expect_success 'GIT_EXTERNAL_DIFF environment and --no-ext-diff' '
+
+	GIT_EXTERNAL_DIFF=echo git diff --no-ext-diff |
+	grep "^diff --git a/file b/file"
+
+'
+
 test_expect_success 'diff attribute' '
 
 	git config diff.parrot.command echo &&
@@ -64,6 +71,13 @@ test_expect_success 'diff attribute' '
 test_expect_success 'diff attribute should apply only to diff' '
 
 	git log -p -1 HEAD |
+	grep "^diff --git a/file b/file"
+
+'
+
+test_expect_success 'diff attribute and --no-ext-diff' '
+
+	git diff --no-ext-diff |
 	grep "^diff --git a/file b/file"
 
 '
@@ -94,6 +108,13 @@ test_expect_success 'diff attribute should apply only to diff' '
 
 '
 
+test_expect_success 'diff attribute and --no-ext-diff' '
+
+	git diff --no-ext-diff |
+	grep "^diff --git a/file b/file"
+
+'
+
 test_expect_success 'no diff with -diff' '
 	echo >.gitattributes "file -diff" &&
 	git diff | grep Binary
@@ -104,7 +125,7 @@ echo NULZbetweenZwords | perl -pe 'y/Z/\000/' > file
 test_expect_success 'force diff with "diff"' '
 	echo >.gitattributes "file diff" &&
 	git diff >actual &&
-	test_cmp ../t4020/diff.NUL actual
+	test_cmp "$TEST_DIRECTORY"/t4020/diff.NUL actual
 '
 
 test_done

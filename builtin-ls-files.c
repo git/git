@@ -91,39 +91,10 @@ static void show_other_files(struct dir_struct *dir)
 {
 	int i;
 
-
-	/*
-	 * Skip matching and unmerged entries for the paths,
-	 * since we want just "others".
-	 *
-	 * (Matching entries are normally pruned during
-	 * the directory tree walk, but will show up for
-	 * gitlinks because we don't necessarily have
-	 * dir->show_other_directories set to suppress
-	 * them).
-	 */
 	for (i = 0; i < dir->nr; i++) {
 		struct dir_entry *ent = dir->entries[i];
-		int len, pos;
-		struct cache_entry *ce;
-
-		/*
-		 * Remove the '/' at the end that directory
-		 * walking adds for directory entries.
-		 */
-		len = ent->len;
-		if (len && ent->name[len-1] == '/')
-			len--;
-		pos = cache_name_pos(ent->name, len);
-		if (0 <= pos)
-			continue;	/* exact match */
-		pos = -pos - 1;
-		if (pos < active_nr) {
-			ce = active_cache[pos];
-			if (ce_namelen(ce) == len &&
-			    !memcmp(ce->name, ent->name, len))
-				continue; /* Yup, this one exists unmerged */
-		}
+		if (!cache_name_is_other(ent->name, ent->len))
+			continue;
 		show_dir_entry(tag_other, ent);
 	}
 }
@@ -256,6 +227,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 			int dtype = ce_to_dtype(ce);
 			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
 				continue;
+			if (ce->ce_flags & CE_UPDATE)
+				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
 				show_ce_entry(tag_removed, ce);
@@ -358,7 +331,7 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 	if (prefix) {
 		static const char *(matchbuf[2]);
 		matchbuf[0] = prefix;
-		matchbuf [1] = NULL;
+		matchbuf[1] = NULL;
 		match = matchbuf;
 	} else
 		match = NULL;

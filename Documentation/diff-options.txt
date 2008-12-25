@@ -65,6 +65,9 @@ endif::git-format-patch[]
 	can be set with "--dirstat=limit". Changes in a child directory is not
 	counted for the parent directory, unless "--cumulative" is used.
 
+--dirstat-by-file[=limit]::
+	Same as --dirstat, but counts changed files instead of lines.
+
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
@@ -106,9 +109,9 @@ endif::git-format-patch[]
 	--exit-code.
 
 --full-index::
-	Instead of the first handful characters, show full
-	object name of pre- and post-image blob on the "index"
-	line when generating a patch format output.
+	Instead of the first handful of characters, show the full
+	pre- and post-image blob object names on the "index"
+	line when generating patch format output.
 
 --binary::
 	In addition to --full-index, output "binary diff" that
@@ -134,7 +137,8 @@ endif::git-format-patch[]
 --diff-filter=[ACDMRTUXB*]::
 	Select only files that are Added (`A`), Copied (`C`),
 	Deleted (`D`), Modified (`M`), Renamed (`R`), have their
-	type (mode) changed (`T`), are Unmerged (`U`), are
+	type (i.e. regular file, symlink, submodule, ...) changed (`T`),
+	are Unmerged (`U`), are
 	Unknown (`X`), or have had their pairing Broken (`B`).
 	Any combination of the filter characters may be used.
 	When `*` (All-or-none) is added to the combination, all

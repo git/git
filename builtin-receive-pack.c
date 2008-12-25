@@ -6,10 +6,20 @@
 #include "exec_cmd.h"
 #include "commit.h"
 #include "object.h"
+#include "remote.h"
+#include "transport.h"
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
+enum deny_action {
+	DENY_IGNORE,
+	DENY_WARN,
+	DENY_REFUSE,
+};
+
+static int deny_deletes = 0;
 static int deny_non_fast_forwards = 0;
+static enum deny_action deny_current_branch = DENY_WARN;
 static int receive_fsck_objects;
 static int receive_unpack_limit = -1;
 static int transfer_unpack_limit = -1;
@@ -19,8 +29,28 @@ static int report_status;
 static char capabilities[] = " report-status delete-refs ";
 static int capabilities_sent;
 
+static enum deny_action parse_deny_action(const char *var, const char *value)
+{
+	if (value) {
+		if (!strcasecmp(value, "ignore"))
+			return DENY_IGNORE;
+		if (!strcasecmp(value, "warn"))
+			return DENY_WARN;
+		if (!strcasecmp(value, "refuse"))
+			return DENY_REFUSE;
+	}
+	if (git_config_bool(var, value))
+		return DENY_REFUSE;
+	return DENY_IGNORE;
+}
+
 static int receive_pack_config(const char *var, const char *value, void *cb)
 {
+	if (strcmp(var, "receive.denydeletes") == 0) {
+		deny_deletes = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (strcmp(var, "receive.denynonfastforwards") == 0) {
 		deny_non_fast_forwards = git_config_bool(var, value);
 		return 0;
@@ -38,6 +68,11 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 	if (strcmp(var, "receive.fsckobjects") == 0) {
 		receive_fsck_objects = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "receive.denycurrentbranch")) {
+		deny_current_branch = parse_deny_action(var, value);
 		return 0;
 	}
 
@@ -165,6 +200,20 @@ static int run_update_hook(struct command *cmd)
 	return hook_status(run_command(&proc), update_hook);
 }
 
+static int is_ref_checked_out(const char *ref)
+{
+	unsigned char sha1[20];
+	const char *head;
+
+	if (is_bare_repository())
+		return 0;
+
+	head = resolve_ref("HEAD", sha1, 0, NULL);
+	if (!head)
+		return 0;
+	return !strcmp(head, ref);
+}
+
 static const char *update(struct command *cmd)
 {
 	const char *name = cmd->ref_name;
@@ -178,10 +227,34 @@ static const char *update(struct command *cmd)
 		return "funny refname";
 	}
 
+	switch (deny_current_branch) {
+	case DENY_IGNORE:
+		break;
+	case DENY_WARN:
+		if (!is_ref_checked_out(name))
+			break;
+		warning("updating the currently checked out branch; this may"
+			" cause confusion,\n"
+			"as the index and working tree do not reflect changes"
+			" that are now in HEAD.");
+		break;
+	case DENY_REFUSE:
+		if (!is_ref_checked_out(name))
+			break;
+		error("refusing to update checked out branch: %s", name);
+		return "branch is currently checked out";
+	}
+
 	if (!is_null_sha1(new_sha1) && !has_sha1_file(new_sha1)) {
 		error("unpack should have generated %s, "
 		      "but I can't find it!", sha1_to_hex(new_sha1));
 		return "bad pack";
+	}
+	if (deny_deletes && is_null_sha1(new_sha1) &&
+	    !is_null_sha1(old_sha1) &&
+	    !prefixcmp(name, "refs/heads/")) {
+		error("denying ref deletion for %s", name);
+		return "deletion prohibited";
 	}
 	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
 	    !is_null_sha1(old_sha1) &&
@@ -222,7 +295,7 @@ static const char *update(struct command *cmd)
 			warning ("Allowing deletion of corrupt ref.");
 			old_sha1 = NULL;
 		}
-		if (delete_ref(name, old_sha1)) {
+		if (delete_ref(name, old_sha1, 0)) {
 			error("failed to delete %s", name);
 			return "failed to delete";
 		}
@@ -407,7 +480,7 @@ static const char *unpack(void)
 		char keep_arg[256];
 		struct child_process ip;
 
-		s = sprintf(keep_arg, "--keep=receive-pack %i on ", getpid());
+		s = sprintf(keep_arg, "--keep=receive-pack %"PRIuMAX" on ", (uintmax_t) getpid());
 		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
 			strcpy(keep_arg + s, "localhost");
 
@@ -462,7 +535,46 @@ static int delete_only(struct command *cmd)
 	return 1;
 }
 
-int main(int argc, char **argv)
+static int add_refs_from_alternate(struct alternate_object_database *e, void *unused)
+{
+	char *other;
+	size_t len;
+	struct remote *remote;
+	struct transport *transport;
+	const struct ref *extra;
+
+	e->name[-1] = '\0';
+	other = xstrdup(make_absolute_path(e->base));
+	e->name[-1] = '/';
+	len = strlen(other);
+
+	while (other[len-1] == '/')
+		other[--len] = '\0';
+	if (len < 8 || memcmp(other + len - 8, "/objects", 8))
+		return 0;
+	/* Is this a git repository with refs? */
+	memcpy(other + len - 8, "/refs", 6);
+	if (!is_directory(other))
+		return 0;
+	other[len - 8] = '\0';
+	remote = remote_get(other);
+	transport = transport_get(remote, other);
+	for (extra = transport_get_remote_refs(transport);
+	     extra;
+	     extra = extra->next) {
+		add_extra_ref(".have", extra->old_sha1, 0);
+	}
+	transport_disconnect(transport);
+	free(other);
+	return 0;
+}
+
+static void add_alternate_refs(void)
+{
+	foreach_alt_odb(add_refs_from_alternate, NULL);
+}
+
+int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	char *dir = NULL;
@@ -472,7 +584,7 @@ int main(int argc, char **argv)
 
 	argv++;
 	for (i = 1; i < argc; i++) {
-		char *arg = *argv++;
+		const char *arg = *argv++;
 
 		if (*arg == '-') {
 			/* Do flag handling here */
@@ -480,7 +592,7 @@ int main(int argc, char **argv)
 		}
 		if (dir)
 			usage(receive_pack_usage);
-		dir = arg;
+		dir = xstrdup(arg);
 	}
 	if (!dir)
 		usage(receive_pack_usage);
@@ -500,7 +612,9 @@ int main(int argc, char **argv)
 	else if (0 <= receive_unpack_limit)
 		unpack_limit = receive_unpack_limit;
 
+	add_alternate_refs();
 	write_head_info();
+	clear_extra_refs();
 
 	/* EOF */
 	packet_flush(1);

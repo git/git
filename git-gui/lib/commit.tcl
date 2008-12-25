@@ -27,9 +27,8 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	if {[catch {
 			set fd [git_read cat-file commit $curHEAD]
 			fconfigure $fd -encoding binary -translation lf
-			if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
-				set enc utf-8
-			}
+			# By default commits are assumed to be in utf-8
+			set enc utf-8
 			while {[gets $fd line] > 0} {
 				if {[string match {parent *} $line]} {
 					lappend parents [string range $line 7 end]
@@ -149,7 +148,9 @@ The rescan will be automatically started now.
 		_? {continue}
 		A? -
 		D? -
+		T_ -
 		M? {set files_ready 1}
+		_U -
 		U? {
 			error_popup [mc "Unmerged files cannot be committed.
 
@@ -166,7 +167,7 @@ File %s cannot be committed by this program.
 		}
 		}
 	}
-	if {!$files_ready && ![string match *merge $curType]} {
+	if {!$files_ready && ![string match *merge $curType] && ![is_enabled nocommit]} {
 		info_popup [mc "No changes to commit.
 
 You must stage at least 1 file before you can commit.
@@ -174,6 +175,8 @@ You must stage at least 1 file before you can commit.
 		unlock_index
 		return
 	}
+
+	if {[is_enabled nocommitmsg]} { do_quit 0 }
 
 	# -- A message is required.
 	#
@@ -204,11 +207,13 @@ A good commit message has the following format:
 	if {$use_enc ne {}} {
 		fconfigure $msg_wt -encoding $use_enc
 	} else {
-		puts stderr [mc "warning: Tcl does not support encoding '%s'." $enc]
+		error_popup [mc "warning: Tcl does not support encoding '%s'." $enc]
 		fconfigure $msg_wt -encoding utf-8
 	}
 	puts $msg_wt $msg
 	close $msg_wt
+
+	if {[is_enabled nocommit]} { do_quit 0 }
 
 	# -- Run the pre-commit hook.
 	#
@@ -408,7 +413,7 @@ A rescan will be automatically started now.
 		set ::GITGUI_BCK_exists 0
 	}
 
-	if {[is_enabled singlecommit]} do_quit
+	if {[is_enabled singlecommit]} { do_quit 0 }
 
 	# -- Update in memory status
 	#
@@ -428,6 +433,7 @@ A rescan will be automatically started now.
 		__ -
 		A_ -
 		M_ -
+		T_ -
 		D_ {
 			unset file_states($path)
 			catch {unset selected_paths($path)}

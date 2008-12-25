@@ -31,11 +31,11 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	int i;
 	int show_only = 0, remove_directories = 0, quiet = 0, ignored = 0;
 	int ignored_only = 0, baselen = 0, config_set = 0, errors = 0;
-	struct strbuf directory;
+	struct strbuf directory = STRBUF_INIT;
 	struct dir_struct dir;
 	const char *path, *base;
 	static const char **pathspec;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	const char *qname;
 	char *seen = NULL;
 	struct option options[] = {
@@ -58,7 +58,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, options, builtin_clean_usage, 0);
 
-	strbuf_init(&buf, 0);
 	memset(&dir, 0, sizeof(dir));
 	if (ignored_only)
 		dir.show_ignored = 1;
@@ -88,7 +87,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	if (baselen)
 		path = base = xmemdupz(*pathspec, baselen);
 	read_directory(&dir, path, base, baselen, pathspec);
-	strbuf_init(&directory, 0);
 
 	if (pathspec)
 		seen = xmalloc(argc > 0 ? argc : 1);

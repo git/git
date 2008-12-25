@@ -13,7 +13,7 @@ file if core.symlinks is false.'
 test_expect_success \
 'preparation' '
 git config core.symlinks false &&
-l=$(echo -n file | git hash-object -t blob -w --stdin) &&
+l=$(printf file | git hash-object -t blob -w --stdin) &&
 echo "120000 $l	symlink" | git update-index --index-info'
 
 test_expect_success \

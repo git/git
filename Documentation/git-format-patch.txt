@@ -46,7 +46,8 @@ applies to that command line and you do not get "everything
 since the beginning of the time".  If you want to format
 everything since project inception to one commit, say "git
 format-patch \--root <commit>" to make it clear that it is the
-latter case.
+latter case.  If you want to format a single commit, you can do
+this with "git format-patch -1 <commit>".
 
 By default, each output file is numbered sequentially from 1, and uses the
 first line of the commit message (massaged for pathname safety) as
@@ -58,8 +59,10 @@ output, unless the --stdout option is specified.
 If -o is specified, output files are created in <dir>.  Otherwise
 they are created in the current working directory.
 
-If -n is specified, instead of "[PATCH] Subject", the first line
-is formatted as "[PATCH n/m] Subject".
+By default, the subject of a single patch is "[PATCH] First Line" and
+the subject when multiple patches are output is "[PATCH n/m] First
+Line". To force 1/1 to be added for a single patch, use -n.  To omit
+patch numbers from the subject, use -N
 
 If given --thread, 'git-format-patch' will generate In-Reply-To and
 References headers to make the second and subsequent patch mails appear
@@ -81,7 +84,7 @@ include::diff-options.txt[]
 
 -n::
 --numbered::
-	Name output in '[PATCH n/m]' format.
+	Name output in '[PATCH n/m]' format, even with a single patch.
 
 -N::
 --no-numbered::

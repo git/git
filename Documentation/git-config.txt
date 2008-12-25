@@ -279,7 +279,7 @@ If you want to know all the values for a multivar, do:
 % git config --get-all core.gitproxy
 ------------
 
-If you like to live dangerous, you can replace *all* core.gitproxy by a
+If you like to live dangerously, you can replace *all* core.gitproxy by a
 new one with
 
 ------------

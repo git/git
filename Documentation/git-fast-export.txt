@@ -15,7 +15,7 @@ DESCRIPTION
 This program dumps the given revisions in a form suitable to be piped
 into 'git-fast-import'.
 
-You can use it as a human readable bundle replacement (see
+You can use it as a human-readable bundle replacement (see
 linkgit:git-bundle[1]), or as a kind of an interactive
 'git-filter-branch'.
 
@@ -64,6 +64,12 @@ Any commits that have already been marked will not be exported again.
 If the backend uses a similar \--import-marks file, this allows for
 incremental bidirectional exporting of the repository by keeping the
 marks the same across runs.
+
+--fake-missing-tagger::
+	Some old repositories have tags without a tagger.  The
+	fast-import protocol was pretty strict about that, and did not
+	allow that.  So fake a tagger to be able to fast-import the
+	output.
 
 
 EXAMPLES

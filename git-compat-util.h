@@ -85,6 +85,7 @@
 #undef _XOPEN_SOURCE
 #include <grp.h>
 #define _XOPEN_SOURCE 600
+#include "compat/cygwin.h"
 #else
 #undef _ALL_SOURCE /* AIX 5.3L defines a struct list with _ALL_SOURCE. */
 #include <grp.h>
@@ -97,6 +98,11 @@
 
 #ifndef NO_ICONV
 #include <iconv.h>
+#endif
+
+#ifndef NO_OPENSSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 #endif
 
 /* On most systems <limits.h> would have given us this, but
@@ -149,10 +155,7 @@ extern void die(const char *err, ...) NORETURN __attribute__((format (printf, 1,
 extern int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
 
-extern void set_usage_routine(void (*routine)(const char *err) NORETURN);
 extern void set_die_routine(void (*routine)(const char *err, va_list params) NORETURN);
-extern void set_error_routine(void (*routine)(const char *err, va_list params));
-extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 
 extern int prefixcmp(const char *str, const char *prefix);
 extern time_t tm_to_time_t(const struct tm *tm);
@@ -191,6 +194,12 @@ extern int git_munmap(void *start, size_t length);
 		: 32 * 1024 * 1024)
 
 #endif /* NO_MMAP */
+
+#ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
+#define on_disk_bytes(st) ((st).st_size)
+#else
+#define on_disk_bytes(st) ((st).st_blocks * 512)
+#endif
 
 #define DEFAULT_PACKED_GIT_LIMIT \
 	((1024L * 1024L) * (sizeof(void*) >= 8 ? 8192 : 256))
@@ -318,11 +327,13 @@ extern unsigned char sane_ctype[256];
 #define GIT_SPACE 0x01
 #define GIT_DIGIT 0x02
 #define GIT_ALPHA 0x04
+#define GIT_SPECIAL 0x08
 #define sane_istest(x,mask) ((sane_ctype[(unsigned char)(x)] & (mask)) != 0)
 #define isspace(x) sane_istest(x,GIT_SPACE)
 #define isdigit(x) sane_istest(x,GIT_DIGIT)
 #define isalpha(x) sane_istest(x,GIT_ALPHA)
 #define isalnum(x) sane_istest(x,GIT_ALPHA | GIT_DIGIT)
+#define isspecial(x) sane_istest(x,GIT_SPECIAL)
 #define tolower(x) sane_case((unsigned char)(x), 0x20)
 #define toupper(x) sane_case((unsigned char)(x), 0)
 

@@ -230,6 +230,10 @@ test_expect_success 'test option parsing' '
 	test_must_fail git merge
 '
 
+test_expect_success 'reject non-strategy with a git-merge-foo name' '
+	test_must_fail git merge -s index c1
+'
+
 test_expect_success 'merge c0 with c1' '
 	git reset --hard c0 &&
 	git merge c1 &&
@@ -502,6 +506,55 @@ test_expect_success 'in-index merge' '
 	git reset --hard c0 &&
 	git merge --no-ff -s resolve c1 > out &&
 	grep "Wonderful." out &&
+	verify_parents $c0 $c1
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'refresh the index before merging' '
+	git reset --hard c1 &&
+	sleep 1 &&
+	touch file &&
+	git merge c3
+'
+
+cat >expected <<EOF
+Merge branch 'c5' (early part)
+EOF
+
+test_expect_success 'merge early part of c2' '
+	git reset --hard c3 &&
+	echo c4 > c4.c &&
+	git add c4.c &&
+	git commit -m c4 &&
+	git tag c4 &&
+	echo c5 > c5.c &&
+	git add c5.c &&
+	git commit -m c5 &&
+	git tag c5 &&
+	git reset --hard c3 &&
+	echo c6 > c6.c &&
+	git add c6.c &&
+	git commit -m c6 &&
+	git tag c6 &&
+	git merge c5~1 &&
+	git show -s --pretty=format:%s HEAD > actual &&
+	test_cmp actual expected
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge --no-ff --no-commit && commit' '
+	git reset --hard c0 &&
+	git merge --no-ff --no-commit c1 &&
+	EDITOR=: git commit &&
+	verify_parents $c0 $c1
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'amending no-ff merge commit' '
+	EDITOR=: git commit --amend &&
 	verify_parents $c0 $c1
 '
 

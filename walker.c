@@ -191,7 +191,7 @@ static int interpret_target(struct walker *walker, char *target, unsigned char *
 	if (!get_sha1_hex(target, sha1))
 		return 0;
 	if (!check_ref_format(target)) {
-		struct ref *ref = alloc_ref_from_str(target);
+		struct ref *ref = alloc_ref(target);
 		if (!walker->fetch_ref(walker, ref)) {
 			hashcpy(sha1, ref->old_sha1);
 			free(ref);
@@ -215,9 +215,8 @@ static int mark_complete(const char *path, const unsigned char *sha1, int flag, 
 int walker_targets_stdin(char ***target, const char ***write_ref)
 {
 	int targets = 0, targets_alloc = 0;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	*target = NULL; *write_ref = NULL;
-	strbuf_init(&buf, 0);
 	while (1) {
 		char *rf_one = NULL;
 		char *tg_one;

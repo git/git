@@ -71,7 +71,7 @@ run git diff --check on your changes before you commit.
 
 (1a) Try to be nice to older C compilers
 
-We try to support wide range of C compilers to compile
+We try to support a wide range of C compilers to compile
 git with. That means that you should not use C99 initializers, even
 if a lot of compilers grok it.
 
@@ -221,6 +221,9 @@ forwarding somebody else's patch with the above rules for
 D-C-O.  Indeed you are encouraged to do so.  Do not forget to
 place an in-body "From: " line at the beginning to properly attribute
 the change to its true author (see (2) above).
+
+Also notice that a real name is used in the Signed-off-by: line. Please
+don't hide your real name.
 
 Some people also put extra tags at the end.
 
@@ -456,3 +459,30 @@ This should help you to submit patches inline using KMail.
 
 5) Back in the compose window: add whatever other text you wish to the
 message, complete the addressing and subject fields, and press send.
+
+
+Gmail
+-----
+
+Submitting properly formatted patches via Gmail is simple now that
+IMAP support is available. First, edit your ~/.gitconfig to specify your
+account settings:
+
+[imap]
+	folder = "[Gmail]/Drafts"
+	host = imaps://imap.gmail.com
+	user = user@gmail.com
+	pass = p4ssw0rd
+	port = 993
+	sslverify = false
+
+Next, ensure that your Gmail settings are correct. In "Settings" the
+"Use Unicode (UTF-8) encoding for outgoing messages" should be checked.
+
+Once your commits are ready to send to the mailing list, run the following
+command to send the patch emails to your Gmail Drafts folder.
+
+	$ git format-patch -M --stdout origin/master | git imap-send
+
+Go to your Gmail account, open the Drafts folder, find the patch email, fill
+in the To: and CC: fields and send away!

@@ -7,12 +7,12 @@ test_description='Rename interaction with pathspec.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     'prepare reference tree' \
     'mkdir path0 path1 &&
-     cp ../../COPYING path0/COPYING &&
+     cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
      git update-index --add path0/COPYING &&
     tree=$(git write-tree) &&
     echo $tree'

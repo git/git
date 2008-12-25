@@ -99,7 +99,7 @@ do
 	test=`echo "$cmd" | sed -e 's|[/ ][/ ]*|_|g'`
 	cnt=`expr $test_count + 1`
 	pfx=`printf "%04d" $cnt`
-	expect="../t4013/diff.$test"
+	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
 	test_expect_success "git $cmd" '
@@ -236,11 +236,14 @@ show --patch-with-stat --summary side
 format-patch --stdout initial..side
 format-patch --stdout initial..master^
 format-patch --stdout initial..master
+format-patch --stdout --no-numbered initial..master
+format-patch --stdout --numbered initial..master
 format-patch --attach --stdout initial..side
 format-patch --attach --stdout initial..master^
 format-patch --attach --stdout initial..master
 format-patch --inline --stdout initial..side
 format-patch --inline --stdout initial..master^
+format-patch --inline --stdout initial..master
 format-patch --inline --stdout initial..master
 format-patch --inline --stdout --subject-prefix=TESTCASE initial..master
 config format.subjectprefix DIFFERENT_PREFIX
@@ -258,6 +261,7 @@ diff --patch-with-stat -r initial..side
 diff --patch-with-raw -r initial..side
 diff --name-status dir2 dir
 diff --no-index --name-status dir2 dir
+diff master master^ side
 EOF
 
 test_done

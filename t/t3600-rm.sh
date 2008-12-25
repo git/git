@@ -187,6 +187,19 @@ test_expect_success 'but with -f it should work.' '
 	test_must_fail git ls-files --error-unmatch baz
 '
 
+test_expect_success 'refuse to remove cached empty file with modifications' '
+	>empty &&
+	git add empty &&
+	echo content >empty &&
+	test_must_fail git rm --cached empty
+'
+
+test_expect_success 'remove intent-to-add file without --force' '
+	echo content >intent-to-add &&
+	git add -N intent-to-add
+	git rm --cached intent-to-add
+'
+
 test_expect_success 'Recursive test setup' '
 	mkdir -p frotz &&
 	echo qfwfq >frotz/nitfol &&
@@ -219,14 +232,40 @@ test_expect_success 'Remove nonexistent file returns nonzero exit status' '
 
 test_expect_success 'Call "rm" from outside the work tree' '
 	mkdir repo &&
-	cd repo &&
-	git init &&
-	echo something > somefile &&
-	git add somefile &&
-	git commit -m "add a file" &&
-	(cd .. &&
-	 git --git-dir=repo/.git --work-tree=repo rm somefile) &&
-	test_must_fail git ls-files --error-unmatch somefile
+	(cd repo &&
+	 git init &&
+	 echo something > somefile &&
+	 git add somefile &&
+	 git commit -m "add a file" &&
+	 (cd .. &&
+	  git --git-dir=repo/.git --work-tree=repo rm somefile) &&
+	test_must_fail git ls-files --error-unmatch somefile)
+'
+
+test_expect_success 'refresh index before checking if it is up-to-date' '
+
+	git reset --hard &&
+	test-chmtime -86400 frotz/nitfol &&
+	git rm frotz/nitfol &&
+	test ! -f frotz/nitfol
+
+'
+
+test_expect_success 'choking "git rm" should not let it die with cruft' '
+	git reset -q --hard &&
+	H=0000000000000000000000000000000000000000 &&
+	i=0 &&
+	while test $i -lt 12000
+	do
+	    echo "100644 $H 0	some-file-$i"
+	    i=$(( $i + 1 ))
+	done | git update-index --index-info &&
+	git rm -n "some-file-*" | :;
+	test -f .git/index.lock
+	status=$?
+	rm -f .git/index.lock
+	git reset -q --hard
+	test "$status" != 0
 '
 
 test_done

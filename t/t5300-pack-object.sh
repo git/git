@@ -284,7 +284,8 @@ test_expect_success \
 
 test_expect_success \
     'make sure index-pack detects the SHA1 collision' \
-    'test_must_fail git index-pack -o bad.idx test-3.pack'
+    'test_must_fail git index-pack -o bad.idx test-3.pack 2>msg &&
+     grep "SHA1 COLLISION FOUND" msg'
 
 test_expect_success \
     'honor pack.packSizeLimit' \
@@ -365,6 +366,12 @@ test_expect_success 'index-pack with --strict' '
 		cd test-7 &&
 		git index-pack --strict --stdin <../test-6-$PACK6.pack
 	)
+'
+
+test_expect_success 'tolerate absurdly small packsizelimit' '
+	git config pack.packSizeLimit 2 &&
+	packname_9=$(git pack-objects test-9 <obj-list) &&
+	test $(wc -l <obj-list) = $(ls test-9-*.pack | wc -l)
 '
 
 test_done

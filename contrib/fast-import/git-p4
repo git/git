@@ -245,7 +245,22 @@ def p4Cmd(cmd):
 def p4Where(depotPath):
     if not depotPath.endswith("/"):
         depotPath += "/"
-    output = p4Cmd("where %s..." % depotPath)
+    depotPath = depotPath + "..."
+    outputList = p4CmdList("where %s" % depotPath)
+    output = None
+    for entry in outputList:
+        if "depotFile" in entry:
+            if entry["depotFile"] == depotPath:
+                output = entry
+                break
+        elif "data" in entry:
+            data = entry.get("data")
+            space = data.find(" ")
+            if data[:space] == depotPath:
+                output = entry
+                break
+    if output == None:
+        return ""
     if output["code"] == "error":
         return ""
     clientPath = ""
@@ -316,8 +331,11 @@ def gitBranchExists(branch):
                             stderr=subprocess.PIPE, stdout=subprocess.PIPE);
     return proc.wait() == 0;
 
+_gitConfig = {}
 def gitConfig(key):
-    return read_pipe("git config %s" % key, ignore_error=True).strip()
+    if not _gitConfig.has_key(key):
+        _gitConfig[key] = read_pipe("git config %s" % key, ignore_error=True).strip()
+    return _gitConfig[key]
 
 def p4BranchesInGit(branchesAreInRemotes = True):
     branches = {}
@@ -708,6 +726,7 @@ class P4Submit(Command):
                 newdiff = newdiff.replace("\n", "\r\n")
             tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
             tmpFile.close()
+            mtime = os.stat(fileName).st_mtime
             defaultEditor = "vi"
             if platform.system() == "Windows":
                 defaultEditor = "notepad"
@@ -716,15 +735,29 @@ class P4Submit(Command):
             else:
                 editor = os.environ.get("EDITOR", defaultEditor);
             system(editor + " " + fileName)
-            tmpFile = open(fileName, "rb")
-            message = tmpFile.read()
-            tmpFile.close()
-            os.remove(fileName)
-            submitTemplate = message[:message.index(separatorLine)]
-            if self.isWindows:
-                submitTemplate = submitTemplate.replace("\r\n", "\n")
 
-            p4_write_pipe("submit -i", submitTemplate)
+            response = "y"
+            if os.stat(fileName).st_mtime <= mtime:
+                response = "x"
+                while response != "y" and response != "n":
+                    response = raw_input("Submit template unchanged. Submit anyway? [y]es, [n]o (skip this patch) ")
+
+            if response == "y":
+                tmpFile = open(fileName, "rb")
+                message = tmpFile.read()
+                tmpFile.close()
+                submitTemplate = message[:message.index(separatorLine)]
+                if self.isWindows:
+                    submitTemplate = submitTemplate.replace("\r\n", "\n")
+                p4_write_pipe("submit -i", submitTemplate)
+            else:
+                for f in editedFiles:
+                    p4_system("revert \"%s\"" % f);
+                for f in filesToAdd:
+                    p4_system("revert \"%s\"" % f);
+                    system("rm %s" %f)
+
+            os.remove(fileName)
         else:
             fileName = "submit.txt"
             file = open(fileName, "w+")
@@ -931,7 +964,7 @@ class P4Sync(Command):
 
             if includeFile:
                 filesForCommit.append(f)
-                if f['action'] != 'delete':
+                if f['action'] not in ('delete', 'purge'):
                     filesToRead.append(f)
 
         filedata = []
@@ -950,11 +983,11 @@ class P4Sync(Command):
         while j < len(filedata):
             stat = filedata[j]
             j += 1
-            text = [];
+            text = ''
             while j < len(filedata) and filedata[j]['code'] in ('text', 'unicode', 'binary'):
-                text.append(filedata[j]['data'])
+                text += filedata[j]['data']
+                del filedata[j]['data']
                 j += 1
-            text = ''.join(text)
 
             if not stat.has_key('depotFile'):
                 sys.stderr.write("p4 print fails with: %s\n" % repr(stat))
@@ -963,7 +996,7 @@ class P4Sync(Command):
             if stat['type'] in ('text+ko', 'unicode+ko', 'binary+ko'):
                 text = re.sub(r'(?i)\$(Id|Header):[^$]*\$',r'$\1$', text)
             elif stat['type'] in ('text+k', 'ktext', 'kxtext', 'unicode+k', 'binary+k'):
-                text = re.sub(r'\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$]*\$',r'$\1$', text)
+                text = re.sub(r'\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$\n]*\$',r'$\1$', text)
 
             contents[stat['depotFile']] = text
 
@@ -1023,7 +1056,7 @@ class P4Sync(Command):
                 continue
 
             relPath = self.stripRepoPath(file['path'], branchPrefixes)
-            if file["action"] == "delete":
+            if file["action"] in ("delete", "purge"):
                 self.gitStream.write("D %s\n" % relPath)
             else:
                 data = file['data']
@@ -1062,7 +1095,7 @@ class P4Sync(Command):
 
                 cleanedFiles = {}
                 for info in files:
-                    if info["action"] == "delete":
+                    if info["action"] in ("delete", "purge"):
                         continue
                     cleanedFiles[info["depotFile"]] = info["rev"]
 
@@ -1385,7 +1418,7 @@ class P4Sync(Command):
             if change > newestRevision:
                 newestRevision = change
 
-            if info["action"] == "delete":
+            if info["action"] in ("delete", "purge"):
                 # don't increase the file cnt, otherwise details["depotFile123"] will have gaps!
                 #fileCnt = fileCnt + 1
                 continue
@@ -1733,8 +1766,12 @@ class P4Clone(P4Sync):
         if not P4Sync.run(self, depotPaths):
             return False
         if self.branch != "master":
-            if gitBranchExists("refs/remotes/p4/master"):
-                system("git branch master refs/remotes/p4/master")
+            if self.importIntoRemotes:
+                masterbranch = "refs/remotes/p4/master"
+            else:
+                masterbranch = "refs/heads/p4/master"
+            if gitBranchExists(masterbranch):
+                system("git branch master %s" % masterbranch)
                 system("git checkout -f")
             else:
                 print "Could not detect main branch. No checkout/master branch created."

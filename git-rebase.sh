@@ -34,6 +34,7 @@ set_reflog_action rebase
 require_work_tree
 cd_to_toplevel
 
+OK_TO_SKIP_PRE_REBASE=
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".
 If you would prefer to skip this patch, instead run \"git rebase --skip\".
@@ -138,10 +139,37 @@ finish_rb_merge () {
 }
 
 is_interactive () {
-	test -f "$dotest"/interactive ||
-	while :; do case $#,"$1" in 0,|*,-i|*,--interactive) break ;; esac
+	while test $# != 0
+	do
+		case "$1" in
+			-i|--interactive)
+				interactive_rebase=explicit
+				break
+			;;
+			-p|--preserve-merges)
+				interactive_rebase=implied
+			;;
+		esac
 		shift
-	done && test -n "$1"
+	done
+
+	if [ "$interactive_rebase" = implied ]; then
+		GIT_EDITOR=:
+		export GIT_EDITOR
+	fi
+
+	test -n "$interactive_rebase" || test -f "$dotest"/interactive
+}
+
+run_pre_rebase_hook () {
+	if test -z "$OK_TO_SKIP_PRE_REBASE" &&
+	   test -x "$GIT_DIR/hooks/pre-rebase"
+	then
+		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
+			echo >&2 "The pre-rebase hook refused to rebase."
+			exit 1
+		}
+	fi
 }
 
 test -f "$GIT_DIR"/rebase-apply/applying &&
@@ -160,6 +188,9 @@ fi
 while test $# != 0
 do
 	case "$1" in
+	--no-verify)
+		OK_TO_SKIP_PRE_REBASE=yes
+		;;
 	--continue)
 		test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply ||
 			die "No rebase in progress?"
@@ -301,11 +332,14 @@ else
 fi
 
 # The tree must be really really clean.
-git update-index --ignore-submodules --refresh || exit
+if ! git update-index --ignore-submodules --refresh; then
+	echo >&2 "cannot rebase: you have unstaged changes"
+	exit 1
+fi
 diff=$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)
 case "$diff" in
-?*)	echo "cannot rebase: your index is not up-to-date"
-	echo "$diff"
+?*)	echo >&2 "cannot rebase: your index contains uncommitted changes"
+	echo >&2 "$diff"
 	exit 1
 	;;
 esac
@@ -320,13 +354,7 @@ onto_name=${newbase-"$upstream_name"}
 onto=$(git rev-parse --verify "${onto_name}^0") || exit
 
 # If a hook exists, give it a chance to interrupt
-if test -x "$GIT_DIR/hooks/pre-rebase"
-then
-	"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
-		echo >&2 "The pre-rebase hook refused to rebase."
-		exit 1
-	}
-fi
+run_pre_rebase_hook ${1+"$@"}
 
 # If the branch to rebase is given, that is the branch we will rebase
 # $branch_name -- branch being rebased, or HEAD (already detached)
@@ -340,10 +368,10 @@ case "$#" in
 	switch_to="$2"
 
 	if git show-ref --verify --quiet -- "refs/heads/$2" &&
-	   branch=$(git rev-parse --verify "refs/heads/$2" 2>/dev/null)
+	   branch=$(git rev-parse -q --verify "refs/heads/$2")
 	then
 		head_name="refs/heads/$2"
-	elif branch=$(git rev-parse --verify "$2" 2>/dev/null)
+	elif branch=$(git rev-parse -q --verify "$2")
 	then
 		head_name="detached HEAD"
 	else

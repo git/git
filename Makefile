@@ -90,6 +90,8 @@ all::
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
+# Define NO_PTHREADS if you do not have or do not want to use Pthreads.
+#
 # Define NO_PREAD if you have a problem with pread() system call (e.g.
 # cygwin.dll before v1.5.22).
 #
@@ -123,6 +125,9 @@ all::
 #
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-index perspective.
+#
+# Define NO_ST_BLOCKS_IN_STRUCT_STAT if your platform does not have st_blocks
+# field that counts the on-disk footprint in 512-byte blocks.
 #
 # Define ASCIIDOC8 if you want to format documentation with AsciiDoc 8
 #
@@ -161,6 +166,7 @@ uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
 uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
 uname_P := $(shell sh -c 'uname -p 2>/dev/null || echo not')
+uname_V := $(shell sh -c 'uname -v 2>/dev/null || echo not')
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
@@ -226,6 +232,7 @@ INSTALL = /bin/install
 RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
+PTHREAD_LIBS = -lpthread
 
 export TCL_PATH TCLTK_PATH
 
@@ -291,8 +298,8 @@ PROGRAMS += git-mktag$X
 PROGRAMS += git-mktree$X
 PROGRAMS += git-pack-redundant$X
 PROGRAMS += git-patch-id$X
-PROGRAMS += git-receive-pack$X
 PROGRAMS += git-send-pack$X
+PROGRAMS += git-shell$X
 PROGRAMS += git-show-index$X
 PROGRAMS += git-unpack-file$X
 PROGRAMS += git-update-server-info$X
@@ -313,6 +320,7 @@ BUILT_INS += git-merge-subtree$X
 BUILT_INS += git-peek-remote$X
 BUILT_INS += git-repo-config$X
 BUILT_INS += git-show$X
+BUILT_INS += git-stage$X
 BUILT_INS += git-status$X
 BUILT_INS += git-whatchanged$X
 
@@ -343,6 +351,7 @@ LIB_H += cache.h
 LIB_H += cache-tree.h
 LIB_H += commit.h
 LIB_H += compat/mingw.h
+LIB_H += compat/cygwin.h
 LIB_H += csum-file.h
 LIB_H += decorate.h
 LIB_H += delta.h
@@ -354,6 +363,8 @@ LIB_H += git-compat-util.h
 LIB_H += graph.h
 LIB_H += grep.h
 LIB_H += hash.h
+LIB_H += help.h
+LIB_H += levenshtein.h
 LIB_H += list-objects.h
 LIB_H += ll-merge.h
 LIB_H += log-tree.h
@@ -383,6 +394,7 @@ LIB_H += transport.h
 LIB_H += tree.h
 LIB_H += tree-walk.h
 LIB_H += unpack-trees.h
+LIB_H += userdiff.h
 LIB_H += utf8.h
 LIB_H += wt-status.h
 
@@ -429,7 +441,7 @@ LIB_OBJS += grep.o
 LIB_OBJS += hash.o
 LIB_OBJS += help.o
 LIB_OBJS += ident.o
-LIB_OBJS += interpolate.o
+LIB_OBJS += levenshtein.o
 LIB_OBJS += list-objects.o
 LIB_OBJS += ll-merge.o
 LIB_OBJS += lockfile.o
@@ -437,6 +449,7 @@ LIB_OBJS += log-tree.o
 LIB_OBJS += mailmap.o
 LIB_OBJS += match-trees.o
 LIB_OBJS += merge-file.o
+LIB_OBJS += merge-recursive.o
 LIB_OBJS += name-hash.o
 LIB_OBJS += object.o
 LIB_OBJS += pack-check.o
@@ -477,6 +490,7 @@ LIB_OBJS += tree-diff.o
 LIB_OBJS += tree.o
 LIB_OBJS += tree-walk.o
 LIB_OBJS += unpack-trees.o
+LIB_OBJS += userdiff.o
 LIB_OBJS += usage.o
 LIB_OBJS += utf8.o
 LIB_OBJS += walker.o
@@ -485,6 +499,7 @@ LIB_OBJS += write_or_die.o
 LIB_OBJS += ws.o
 LIB_OBJS += wt-status.o
 LIB_OBJS += xdiff-interface.o
+LIB_OBJS += preload-index.o
 
 BUILTIN_OBJS += builtin-add.o
 BUILTIN_OBJS += builtin-annotate.o
@@ -518,6 +533,7 @@ BUILTIN_OBJS += builtin-for-each-ref.o
 BUILTIN_OBJS += builtin-fsck.o
 BUILTIN_OBJS += builtin-gc.o
 BUILTIN_OBJS += builtin-grep.o
+BUILTIN_OBJS += builtin-help.o
 BUILTIN_OBJS += builtin-init-db.o
 BUILTIN_OBJS += builtin-log.o
 BUILTIN_OBJS += builtin-ls-files.o
@@ -538,6 +554,7 @@ BUILTIN_OBJS += builtin-prune-packed.o
 BUILTIN_OBJS += builtin-prune.o
 BUILTIN_OBJS += builtin-push.o
 BUILTIN_OBJS += builtin-read-tree.o
+BUILTIN_OBJS += builtin-receive-pack.o
 BUILTIN_OBJS += builtin-reflog.o
 BUILTIN_OBJS += builtin-remote.o
 BUILTIN_OBJS += builtin-rerere.o
@@ -575,9 +592,11 @@ EXTLIBS = /mingw/lib/libz.a
 
 ifeq ($(uname_S),Linux)
 	NO_STRLCPY = YesPlease
+	THREADED_DELTA_SEARCH = YesPlease
 endif
 ifeq ($(uname_S),GNU/kFreeBSD)
 	NO_STRLCPY = YesPlease
+	THREADED_DELTA_SEARCH = YesPlease
 endif
 ifeq ($(uname_S),UnixWare)
 	CC = cc
@@ -626,8 +645,7 @@ ifeq ($(uname_S),Darwin)
 	endif
 	NO_STRLCPY = YesPlease
 	NO_MEMMEM = YesPlease
-	COMPAT_CFLAGS += -Icompat/regex
-	COMPAT_OBJS += compat/regex/regex.o
+	THREADED_DELTA_SEARCH = YesPlease
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
@@ -637,8 +655,8 @@ ifeq ($(uname_S),SunOS)
 	NO_MEMMEM = YesPlease
 	NO_HSTRERROR = YesPlease
 	NO_MKDTEMP = YesPlease
+	OLD_ICONV = UnfortunatelyYes
 	ifeq ($(uname_R),5.8)
-		NEEDS_LIBICONV = YesPlease
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_C99_FORMAT = YesPlease
@@ -677,8 +695,12 @@ ifeq ($(uname_S),FreeBSD)
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
 	DIR_HAS_BSD_GROUP_SEMANTICS = YesPlease
-	COMPAT_CFLAGS += -Icompat/regex
-	COMPAT_OBJS += compat/regex/regex.o
+	THREADED_DELTA_SEARCH = YesPlease
+	ifeq ($(shell expr "$(uname_R)" : '4\.'),2)
+		PTHREAD_LIBS = -pthread
+		NO_UINTMAX_T = YesPlease
+		NO_STRTOUMAX = YesPlease
+	endif
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
@@ -686,14 +708,15 @@ ifeq ($(uname_S),OpenBSD)
 	NEEDS_LIBICONV = YesPlease
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
+	THREADED_DELTA_SEARCH = YesPlease
 endif
 ifeq ($(uname_S),NetBSD)
 	ifeq ($(shell expr "$(uname_R)" : '[01]\.'),2)
 		NEEDS_LIBICONV = YesPlease
 	endif
 	BASIC_CFLAGS += -I/usr/pkg/include
-	BASIC_LDFLAGS += -L/usr/pkg/lib
-	ALL_LDFLAGS += -Wl,-rpath,/usr/pkg/lib
+	BASIC_LDFLAGS += -L/usr/pkg/lib $(CC_LD_DYNPATH)/usr/pkg/lib
+	THREADED_DELTA_SEARCH = YesPlease
 endif
 ifeq ($(uname_S),AIX)
 	NO_STRCASESTR=YesPlease
@@ -704,8 +727,11 @@ ifeq ($(uname_S),AIX)
 	INTERNAL_QSORT = UnfortunatelyYes
 	NEEDS_LIBICONV=YesPlease
 	BASIC_CFLAGS += -D_LARGE_FILES
-	COMPAT_CFLAGS += -Icompat/regex
-	COMPAT_OBJS += compat/regex/regex.o
+	ifneq ($(shell expr "$(uname_V)" : '[1234]'),1)
+		THREADED_DELTA_SEARCH = YesPlease
+	else
+		NO_PTHREADS = YesPlease
+	endif
 endif
 ifeq ($(uname_S),GNU)
 	# GNU/Hurd
@@ -735,6 +761,9 @@ ifeq ($(uname_S),HP-UX)
 	NO_SYS_SELECT_H = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 endif
+ifneq (,$(findstring CYGWIN,$(uname_S)))
+	COMPAT_OBJS += compat/cygwin.o
+endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MMAP = YesPlease
 	NO_PREAD = YesPlease
@@ -746,6 +775,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
 	NO_MEMMEM = YesPlease
+	NO_PTHREADS = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
@@ -758,6 +788,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	INTERNAL_QSORT = YesPlease
 	RUNTIME_PREFIX = YesPlease
 	NO_POSIX_ONLY_PROGRAMS = YesPlease
+	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/regex -Icompat/fnmatch
 	COMPAT_CFLAGS += -DSNPRINTF_SIZE_CORR=1
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
@@ -789,12 +820,14 @@ ifeq ($(uname_S),Darwin)
 	endif
 endif
 
-ifdef NO_R_TO_GCC_LINKER
-	# Some gcc does not accept and pass -R to the linker to specify
-	# the runtime dynamic library path.
-	CC_LD_DYNPATH = -Wl,-rpath=
-else
-	CC_LD_DYNPATH = -R
+ifndef CC_LD_DYNPATH
+	ifdef NO_R_TO_GCC_LINKER
+		# Some gcc does not accept and pass -R to the linker to specify
+		# the runtime dynamic library path.
+		CC_LD_DYNPATH = -Wl,-rpath,
+	else
+		CC_LD_DYNPATH = -R
+	endif
 endif
 
 ifdef NO_CURL
@@ -830,7 +863,6 @@ EXTLIBS += -lz
 ifndef NO_POSIX_ONLY_PROGRAMS
 	PROGRAMS += git-daemon$X
 	PROGRAMS += git-imap-send$X
-	PROGRAMS += git-shell$X
 endif
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
@@ -870,6 +902,9 @@ ifdef NO_D_TYPE_IN_DIRENT
 endif
 ifdef NO_D_INO_IN_DIRENT
 	BASIC_CFLAGS += -DNO_D_INO_IN_DIRENT
+endif
+ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
+	BASIC_CFLAGS += -DNO_ST_BLOCKS_IN_STRUCT_STAT
 endif
 ifdef NO_C99_FORMAT
 	BASIC_CFLAGS += -DNO_C99_FORMAT
@@ -931,6 +966,9 @@ ifdef NO_TRUSTABLE_FILEMODE
 endif
 ifdef NO_IPV6
 	BASIC_CFLAGS += -DNO_IPV6
+endif
+ifdef NO_UINTMAX_T
+	BASIC_CFLAGS += -Duintmax_t=uint32_t
 endif
 ifdef NO_SOCKADDR_STORAGE
 ifdef NO_IPV6
@@ -994,9 +1032,15 @@ ifdef RUNTIME_PREFIX
 	COMPAT_CFLAGS += -DRUNTIME_PREFIX
 endif
 
+ifdef NO_PTHREADS
+	THREADED_DELTA_SEARCH =
+	BASIC_CFLAGS += -DNO_PTHREADS
+else
+	EXTLIBS += $(PTHREAD_LIBS)
+endif
+
 ifdef THREADED_DELTA_SEARCH
 	BASIC_CFLAGS += -DTHREADED_DELTA_SEARCH
-	EXTLIBS += -lpthread
 	LIB_OBJS += thread-utils.o
 endif
 ifdef DIR_HAS_BSD_GROUP_SEMANTICS
@@ -1109,7 +1153,7 @@ git$X: git.o $(BUILTIN_OBJS) $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ git.o \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
-help.o: help.c common-cmds.h GIT-CFLAGS
+builtin-help.o: builtin-help.c common-cmds.h GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) \
 		'-DGIT_HTML_PATH="$(htmldir_SQ_C)"' \
 		'-DGIT_MAN_PATH="$(mandir_SQ)"' \
@@ -1237,7 +1281,9 @@ endif
 git-%$X: %.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
-git-imap-send$X: imap-send.o $(LIB_FILE)
+git-imap-send$X: imap-send.o $(GITLIBS)
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+		$(LIBS) $(OPENSSL_LINK) $(OPENSSL_LIBSSL)
 
 http.o http-walker.o http-push.o transport.o: http.h
 
@@ -1263,6 +1309,12 @@ $(XDIFF_LIB): $(XDIFF_OBJS)
 
 doc:
 	$(MAKE) -C Documentation all
+
+man:
+	$(MAKE) -C Documentation man
+
+html:
+	$(MAKE) -C Documentation html
 
 info:
 	$(MAKE) -C Documentation info
@@ -1341,7 +1393,16 @@ check-sha1:: test-sha1$X
 	./test-sha1.sh
 
 check: common-cmds.h
-	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
+	if sparse; \
+	then \
+		for i in *.c; \
+		do \
+			sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; \
+		done; \
+	else \
+		echo 2>&1 "Did you mean 'make test'?"; \
+		exit 1; \
+	fi
 
 remove-dashes:
 	./fixup-builtins $(BUILT_INS) $(PROGRAMS) $(SCRIPTS)
@@ -1367,7 +1428,7 @@ install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
-	$(INSTALL) git$X git-upload-pack$X git-receive-pack$X git-upload-archive$X '$(DESTDIR_SQ)$(bindir_SQ)'
+	$(INSTALL) git$X git-upload-pack$X git-receive-pack$X git-upload-archive$X git-shell$X git-cvsserver '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(MAKE) -C perl prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' install
 ifndef NO_TCLTK
@@ -1391,6 +1452,9 @@ endif
 install-doc:
 	$(MAKE) -C Documentation install
 
+install-man:
+	$(MAKE) -C Documentation install-man
+
 install-html:
 	$(MAKE) -C Documentation install-html
 
@@ -1399,6 +1463,12 @@ install-info:
 
 quick-install-doc:
 	$(MAKE) -C Documentation quick-install
+
+quick-install-man:
+	$(MAKE) -C Documentation quick-install-man
+
+quick-install-html:
+	$(MAKE) -C Documentation quick-install-html
 
 
 

@@ -194,6 +194,10 @@ static int process_path(const char *path)
 	int len;
 	struct stat st;
 
+	len = strlen(path);
+	if (has_symlink_leading_path(len, path))
+		return error("'%s' is beyond a symbolic link", path);
+
 	/*
 	 * First things first: get the stat information, to decide
 	 * what to do about the pathname!
@@ -201,7 +205,6 @@ static int process_path(const char *path)
 	if (lstat(path, &st) < 0)
 		return process_lstat_error(path, errno);
 
-	len = strlen(path);
 	if (S_ISDIR(st.st_mode))
 		return process_directory(path, len, &st);
 
@@ -215,7 +218,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 	struct cache_entry *ce;
 
 	if (!verify_path(path))
-		return -1;
+		return error("Invalid path '%s'", path);
 
 	len = strlen(path);
 	size = cache_entry_size(len);
@@ -294,11 +297,9 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 
 static void read_index_info(int line_termination)
 {
-	struct strbuf buf;
-	struct strbuf uq;
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf uq = STRBUF_INIT;
 
-	strbuf_init(&buf, 0);
-	strbuf_init(&uq, 0);
 	while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
 		char *ptr, *tab;
 		char *path_name;
@@ -714,10 +715,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			free((char*)p);
 	}
 	if (read_from_stdin) {
-		struct strbuf buf, nbuf;
+		struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;
 
-		strbuf_init(&buf, 0);
-		strbuf_init(&nbuf, 0);
 		setup_work_tree();
 		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
 			const char *p;

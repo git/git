@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Eric Wong
 #
 
-test_description='git-svn init/clone tests'
+test_description='git svn init/clone tests'
 
 . ./lib-git-svn.sh
 

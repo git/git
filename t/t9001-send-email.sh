@@ -113,7 +113,7 @@ test_expect_success 'allow long lines with --no-validate' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
-		--no-validate \
+		--novalidate \
 		$patches longline.patch \
 		2>errors
 '
@@ -294,6 +294,27 @@ test_expect_success '--compose adds MIME for utf8 subject' '
 	  $patches &&
 	grep "^fake edit" msgtxt1 &&
 	grep "^Subject: =?utf-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
+'
+
+test_expect_success 'detects ambiguous reference/file conflict' '
+	echo master > master &&
+	git add master &&
+	git commit -m"add master" &&
+	test_must_fail git send-email --dry-run master 2>errors &&
+	grep disambiguate errors
+'
+
+test_expect_success 'feed two files' '
+	rm -fr outdir &&
+	git format-patch -2 -o outdir &&
+	GIT_SEND_EMAIL_NOTTY=1 git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	grep "^Subject: " out >subjects &&
+	test "z$(sed -n -e 1p subjects)" = "zSubject: [PATCH 1/2] Second." &&
+	test "z$(sed -n -e 2p subjects)" = "zSubject: [PATCH 2/2] add master"
 '
 
 test_done

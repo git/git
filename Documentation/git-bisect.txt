@@ -19,14 +19,14 @@ on the subcommand:
  git bisect start [<bad> [<good>...]] [--] [<paths>...]
  git bisect bad [<rev>]
  git bisect good [<rev>...]
- git bisect skip [<rev>...]
+ git bisect skip [(<rev>|<range>)...]
  git bisect reset [<branch>]
  git bisect visualize
  git bisect replay <logfile>
  git bisect log
  git bisect run <cmd>...
 
-This command uses 'git-rev-list --bisect' to help drive the
+This command uses 'git rev-list --bisect' to help drive the
 binary search process to find which change introduced a bug, given an
 old "good" commit object name and a later "bad" commit object name.
 
@@ -101,7 +101,7 @@ $ git bisect visualize
 to see the currently remaining suspects in 'gitk'.  `visualize` is a bit
 too long to type and `view` is provided as a synonym.
 
-If 'DISPLAY' environment variable is not set, 'git-log' is used
+If 'DISPLAY' environment variable is not set, 'git log' is used
 instead.  You can even give command line options such as `-p` and
 `--stat`.
 
@@ -164,6 +164,25 @@ But computing the commit to test may be slower afterwards and git may
 eventually not be able to tell the first bad among a bad and one or
 more "skip"ped commits.
 
+You can even skip a range of commits, instead of just one commit,
+using the "'<commit1>'..'<commit2>'" notation. For example:
+
+------------
+$ git bisect skip v2.5..v2.6
+------------
+
+would mean that no commit between `v2.5` excluded and `v2.6` included
+can be tested.
+
+Note that if you want to also skip the first commit of a range you can
+use something like:
+
+------------
+$ git bisect skip v2.5 v2.5..v2.6
+------------
+
+and the commit pointed to by `v2.5` will be skipped too.
+
 Cutting down bisection by giving more parameters to bisect start
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -215,7 +234,7 @@ tweaks (e.g., s/#define DEBUG 0/#define DEBUG 1/ in a header file, or
 work around other problem this bisection is not interested in")
 applied to the revision being tested.
 
-To cope with such a situation, after the inner 'git-bisect' finds the
+To cope with such a situation, after the inner 'git bisect' finds the
 next revision to test, with the "run" script, you can apply that tweak
 before compiling, run the real test, and after the test decides if the
 revision (possibly with the needed tweaks) passed the test, rewind the

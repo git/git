@@ -53,7 +53,7 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 	}
 	url = argv[arg];
 	if (url && url[strlen(url)-1] != '/') {
-		rewritten_url = malloc(strlen(url)+2);
+		rewritten_url = xmalloc(strlen(url)+2);
 		strcpy(rewritten_url, url);
 		strcat(rewritten_url, "/");
 		url = rewritten_url;

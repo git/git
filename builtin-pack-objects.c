@@ -71,6 +71,7 @@ static int reuse_delta = 1, reuse_object = 1;
 static int keep_unreachable, unpack_unreachable, include_tag;
 static int local;
 static int incremental;
+static int ignore_packed_keep;
 static int allow_ofs_delta;
 static const char *base_name;
 static int progress = 1;
@@ -245,8 +246,16 @@ static unsigned long write_object(struct sha1file *f,
 	type = entry->type;
 
 	/* write limit if limited packsize and not first object */
-	limit = pack_size_limit && nr_written ?
-			pack_size_limit - write_offset : 0;
+	if (!pack_size_limit || !nr_written)
+		limit = 0;
+	else if (pack_size_limit <= write_offset)
+		/*
+		 * the earlier object did not fit the limit; avoid
+		 * mistaking this with unlimited (i.e. limit = 0).
+		 */
+		limit = 1;
+	else
+		limit = pack_size_limit - write_offset;
 
 	if (!entry->delta)
 		usable_delta = 0;	/* no delta */
@@ -277,6 +286,7 @@ static unsigned long write_object(struct sha1file *f,
 				 */
 
 	if (!to_reuse) {
+		no_reuse:
 		if (!usable_delta) {
 			buf = read_sha1_file(entry->idx.sha1, &type, &size);
 			if (!buf)
@@ -358,46 +368,60 @@ static unsigned long write_object(struct sha1file *f,
 		struct revindex_entry *revidx;
 		off_t offset;
 
-		if (entry->delta) {
+		if (entry->delta)
 			type = (allow_ofs_delta && entry->delta->idx.offset) ?
 				OBJ_OFS_DELTA : OBJ_REF_DELTA;
-			reused_delta++;
-		}
 		hdrlen = encode_header(type, entry->size, header);
+
 		offset = entry->in_pack_offset;
 		revidx = find_pack_revindex(p, offset);
 		datalen = revidx[1].offset - offset;
 		if (!pack_to_stdout && p->index_version > 1 &&
-		    check_pack_crc(p, &w_curs, offset, datalen, revidx->nr))
-			die("bad packed object CRC for %s", sha1_to_hex(entry->idx.sha1));
+		    check_pack_crc(p, &w_curs, offset, datalen, revidx->nr)) {
+			error("bad packed object CRC for %s", sha1_to_hex(entry->idx.sha1));
+			unuse_pack(&w_curs);
+			goto no_reuse;
+		}
+
 		offset += entry->in_pack_header_size;
 		datalen -= entry->in_pack_header_size;
+		if (!pack_to_stdout && p->index_version == 1 &&
+		    check_pack_inflate(p, &w_curs, offset, datalen, entry->size)) {
+			error("corrupt packed object for %s", sha1_to_hex(entry->idx.sha1));
+			unuse_pack(&w_curs);
+			goto no_reuse;
+		}
+
 		if (type == OBJ_OFS_DELTA) {
 			off_t ofs = entry->idx.offset - entry->delta->idx.offset;
 			unsigned pos = sizeof(dheader) - 1;
 			dheader[pos] = ofs & 127;
 			while (ofs >>= 7)
 				dheader[--pos] = 128 | (--ofs & 127);
-			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit)
+			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
+				unuse_pack(&w_curs);
 				return 0;
+			}
 			sha1write(f, header, hdrlen);
 			sha1write(f, dheader + pos, sizeof(dheader) - pos);
 			hdrlen += sizeof(dheader) - pos;
+			reused_delta++;
 		} else if (type == OBJ_REF_DELTA) {
-			if (limit && hdrlen + 20 + datalen + 20 >= limit)
+			if (limit && hdrlen + 20 + datalen + 20 >= limit) {
+				unuse_pack(&w_curs);
 				return 0;
+			}
 			sha1write(f, header, hdrlen);
 			sha1write(f, entry->delta->idx.sha1, 20);
 			hdrlen += 20;
+			reused_delta++;
 		} else {
-			if (limit && hdrlen + datalen + 20 >= limit)
+			if (limit && hdrlen + datalen + 20 >= limit) {
+				unuse_pack(&w_curs);
 				return 0;
+			}
 			sha1write(f, header, hdrlen);
 		}
-
-		if (!pack_to_stdout && p->index_version == 1 &&
-		    check_pack_inflate(p, &w_curs, offset, datalen, entry->size))
-			die("corrupt packed object for %s", sha1_to_hex(entry->idx.sha1));
 		copy_pack_data(f, p, &w_curs, offset, datalen);
 		unuse_pack(&w_curs);
 		reused++;
@@ -511,6 +535,7 @@ static void write_pack_file(void)
 
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
 				 base_name, sha1_to_hex(sha1));
+			free_pack_by_name(tmpname);
 			if (adjust_perm(pack_tmp_name, mode))
 				die("unable to make temporary pack file readable: %s",
 				    strerror(errno));
@@ -690,6 +715,9 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 		return 0;
 	}
 
+	if (!exclude && local && has_loose_object_nonlocal(sha1))
+		return 0;
+
 	for (p = packed_git; p; p = p->next) {
 		off_t offset = find_pack_entry_one(sha1, p);
 		if (offset) {
@@ -702,6 +730,8 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 			if (incremental)
 				return 0;
 			if (local && !p->pack_local)
+				return 0;
+			if (ignore_packed_keep && p->pack_local && p->pack_keep)
 				return 0;
 		}
 	}
@@ -1002,9 +1032,11 @@ static void check_object(struct object_entry *entry)
 		 * We want in_pack_type even if we do not reuse delta
 		 * since non-delta representations could still be reused.
 		 */
-		used = unpack_object_header_gently(buf, avail,
+		used = unpack_object_header_buffer(buf, avail,
 						   &entry->in_pack_type,
 						   &entry->size);
+		if (used == 0)
+			goto give_up;
 
 		/*
 		 * Determine if this is a delta and if so whether we can
@@ -1016,6 +1048,8 @@ static void check_object(struct object_entry *entry)
 			/* Not a delta hence we've already got all we need. */
 			entry->type = entry->in_pack_type;
 			entry->in_pack_header_size = used;
+			if (entry->type < OBJ_COMMIT || entry->type > OBJ_BLOB)
+				goto give_up;
 			unuse_pack(&w_curs);
 			return;
 		case OBJ_REF_DELTA:
@@ -1032,19 +1066,25 @@ static void check_object(struct object_entry *entry)
 			ofs = c & 127;
 			while (c & 128) {
 				ofs += 1;
-				if (!ofs || MSB(ofs, 7))
-					die("delta base offset overflow in pack for %s",
-					    sha1_to_hex(entry->idx.sha1));
+				if (!ofs || MSB(ofs, 7)) {
+					error("delta base offset overflow in pack for %s",
+					      sha1_to_hex(entry->idx.sha1));
+					goto give_up;
+				}
 				c = buf[used_0++];
 				ofs = (ofs << 7) + (c & 127);
 			}
-			if (ofs >= entry->in_pack_offset)
-				die("delta base offset out of bound for %s",
-				    sha1_to_hex(entry->idx.sha1));
 			ofs = entry->in_pack_offset - ofs;
+			if (ofs <= 0 || ofs >= entry->in_pack_offset) {
+				error("delta base offset out of bound for %s",
+				      sha1_to_hex(entry->idx.sha1));
+				goto give_up;
+			}
 			if (reuse_delta && !entry->preferred_base) {
 				struct revindex_entry *revidx;
 				revidx = find_pack_revindex(p, ofs);
+				if (!revidx)
+					goto give_up;
 				base_ref = nth_packed_object_sha1(p, revidx->nr);
 			}
 			entry->in_pack_header_size = used + used_0;
@@ -1064,6 +1104,7 @@ static void check_object(struct object_entry *entry)
 			 */
 			entry->type = entry->in_pack_type;
 			entry->delta = base_entry;
+			entry->delta_size = entry->size;
 			entry->delta_sibling = base_entry->delta_child;
 			base_entry->delta_child = entry;
 			unuse_pack(&w_curs);
@@ -1078,6 +1119,8 @@ static void check_object(struct object_entry *entry)
 			 */
 			entry->size = get_size_from_delta(p, &w_curs,
 					entry->in_pack_offset + entry->in_pack_header_size);
+			if (entry->size == 0)
+				goto give_up;
 			unuse_pack(&w_curs);
 			return;
 		}
@@ -1087,6 +1130,7 @@ static void check_object(struct object_entry *entry)
 		 * with sha1_object_info() to find about the object type
 		 * at this point...
 		 */
+		give_up:
 		unuse_pack(&w_curs);
 	}
 
@@ -1369,15 +1413,13 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 			int window, int depth, unsigned *processed)
 {
 	uint32_t i, idx = 0, count = 0;
-	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array;
 	unsigned long mem_usage = 0;
 
-	array = xmalloc(array_size);
-	memset(array, 0, array_size);
+	array = xcalloc(window, sizeof(struct unpacked));
 
 	for (;;) {
-		struct object_entry *entry = *list++;
+		struct object_entry *entry;
 		struct unpacked *n = array + idx;
 		int j, max_depth, best_base = -1;
 
@@ -1386,6 +1428,7 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 			progress_unlock();
 			break;
 		}
+		entry = *list++;
 		(*list_size)--;
 		if (!entry->preferred_base) {
 			(*processed)++;
@@ -1699,6 +1742,16 @@ static void prepare_pack(int window, int depth)
 
 	get_object_details();
 
+	/*
+	 * If we're locally repacking then we need to be doubly careful
+	 * from now on in order to make sure no stealth corruption gets
+	 * propagated to the new pack.  Clients receiving streamed packs
+	 * should validate everything they get anyway so no need to incur
+	 * the additional cost here in that case.
+	 */
+	if (!pack_to_stdout)
+		do_check_packed_object_crc = 1;
+
 	if (!nr_objects || !window || !depth)
 		return;
 
@@ -1725,6 +1778,14 @@ static void prepare_pack(int window, int depth)
 			if (entry->type < 0)
 				die("unable to get type of object %s",
 				    sha1_to_hex(entry->idx.sha1));
+		} else {
+			if (entry->type < 0) {
+				/*
+				 * This object is not found, but we
+				 * don't have to include it anyway.
+				 */
+				continue;
+			}
 		}
 
 		delta_list[n++] = entry;
@@ -2039,6 +2100,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--incremental", arg)) {
 			incremental = 1;
+			continue;
+		}
+		if (!strcmp("--honor-pack-keep", arg)) {
+			ignore_packed_keep = 1;
 			continue;
 		}
 		if (!prefixcmp(arg, "--compression=")) {

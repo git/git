@@ -20,9 +20,14 @@ use strict;
 use warnings;
 use Term::ReadLine;
 use Getopt::Long;
+use Text::ParseWords;
 use Data::Dumper;
 use Term::ANSIColor;
+use File::Temp qw/ tempdir /;
+use Error qw(:try);
 use Git;
+
+Getopt::Long::Configure qw/ pass_through /;
 
 package FakeTerm;
 sub new {
@@ -38,76 +43,44 @@ package main;
 
 sub usage {
 	print <<EOT;
-git send-email [options] <file | directory>...
-Options:
-   --from         Specify the "From:" line of the email to be sent.
+git send-email [options] <file | directory | rev-list options >
 
-   --to           Specify the primary "To:" line of the email.
+  Composing:
+    --from                  <str>  * Email From:
+    --to                    <str>  * Email To:
+    --cc                    <str>  * Email Cc:
+    --bcc                   <str>  * Email Bcc:
+    --subject               <str>  * Email "Subject:"
+    --in-reply-to           <str>  * Email "In-Reply-To:"
+    --annotate                     * Review each patch that will be sent in an editor.
+    --compose                      * Open an editor for introduction.
 
-   --cc           Specify an initial "Cc:" list for the entire series
-                  of emails.
+  Sending:
+    --envelope-sender       <str>  * Email envelope sender.
+    --smtp-server       <str:int>  * Outgoing SMTP server to use. The port
+                                     is optional. Default 'localhost'.
+    --smtp-server-port      <int>  * Outgoing SMTP server port.
+    --smtp-user             <str>  * Username for SMTP-AUTH.
+    --smtp-pass             <str>  * Password for SMTP-AUTH; not necessary.
+    --smtp-encryption       <str>  * tls or ssl; anything else disables.
+    --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
 
-   --cc-cmd       Specify a command to execute per file which adds
-                  per file specific cc address entries
+  Automating:
+    --identity              <str>  * Use the sendemail.<id> options.
+    --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
+    --suppress-cc           <str>  * author, self, sob, cccmd, all.
+    --[no-]signed-off-by-cc        * Send to Cc: and Signed-off-by:
+                                     addresses. Default on.
+    --[no-]suppress-from           * Send to self. Default off.
+    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default on.
+    --[no-]thread                  * Use In-Reply-To: field. Default on.
 
-   --bcc          Specify a list of email addresses that should be Bcc:
-		  on all the emails.
-
-   --compose      Use \$GIT_EDITOR, core.editor, \$EDITOR, or \$VISUAL to edit
-		  an introductory message for the patch series.
-
-   --subject      Specify the initial "Subject:" line.
-                  Only necessary if --compose is also set.  If --compose
-		  is not set, this will be prompted for.
-
-   --in-reply-to  Specify the first "In-Reply-To:" header line.
-                  Only used if --compose is also set.  If --compose is not
-		  set, this will be prompted for.
-
-   --chain-reply-to If set, the replies will all be to the previous
-                  email sent, rather than to the first email sent.
-                  Defaults to on.
-
-   --signed-off-cc Automatically add email addresses that appear in
-                 Signed-off-by: or Cc: lines to the cc: list. Defaults to on.
-
-   --identity     The configuration identity, a subsection to prioritise over
-                  the default section.
-
-   --smtp-server  If set, specifies the outgoing SMTP server to use.
-                  Defaults to localhost.  Port number can be specified here with
-                  hostname:port format or by using --smtp-server-port option.
-
-   --smtp-server-port Specify a port on the outgoing SMTP server to connect to.
-
-   --smtp-user    The username for SMTP-AUTH.
-
-   --smtp-pass    The password for SMTP-AUTH.
-
-   --smtp-encryption Specify 'tls' for STARTTLS encryption, or 'ssl' for SSL.
-                  Any other value disables the feature.
-
-   --smtp-ssl     Synonym for '--smtp-encryption=ssl'.  Deprecated.
-
-   --suppress-cc  Suppress the specified category of auto-CC.  The category
-		  can be one of 'author' for the patch author, 'self' to
-		  avoid copying yourself, 'sob' for Signed-off-by lines,
-		  'cccmd' for the output of the cccmd, or 'all' to suppress
-		  all of these.
-
-   --suppress-from Suppress sending emails to yourself. Defaults to off.
-
-   --thread       Specify that the "In-Reply-To:" header should be set on all
-                  emails. Defaults to on.
-
-   --quiet	  Make git-send-email less verbose.  One line per email
-                  should be all that is output.
-
-   --dry-run	  Do everything except actually send the emails.
-
-   --envelope-sender	Specify the envelope sender used to send the emails.
-
-   --no-validate	Don't perform any sanity checks on patches.
+  Administering:
+    --quiet                        * Output one line of info per email.
+    --dry-run                      * Don't actually send the emails.
+    --[no-]validate                * Perform patch sanity checks. Default on.
+    --[no-]format-patch            * understand any non optional arguments as
+                                     `git format-patch` ones.
 
 EOT
 	exit(1);
@@ -159,12 +132,10 @@ my $auth;
 sub unique_email_list(@);
 sub cleanup_compose_files();
 
-# Constants (essentially)
-my $compose_filename = ".msg.$$";
-
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@initial_cc,@bcclist,@xh,
-	$initial_reply_to,$initial_subject,@files,$author,$sender,$smtp_authpass,$compose,$time);
+	$initial_reply_to,$initial_subject,@files,
+	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
 
 my $envelope_sender;
 
@@ -184,19 +155,42 @@ if ($@) {
 
 # Behavior modification variables
 my ($quiet, $dry_run) = (0, 0);
+my $format_patch;
+my $compose_filename = $repo->repo_path() . "/.gitsendemail.msg.$$";
+
+# Handle interactive edition of files.
+my $multiedit;
+my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
+sub do_edit {
+	if (defined($multiedit) && !$multiedit) {
+		map {
+			system('sh', '-c', $editor.' "$@"', $editor, $_);
+			if (($? & 127) || ($? >> 8)) {
+				die("the editor exited uncleanly, aborting everything");
+			}
+		} @_;
+	} else {
+		system('sh', '-c', $editor.' "$@"', $editor, @_);
+		if (($? & 127) || ($? >> 8)) {
+			die("the editor exited uncleanly, aborting everything");
+		}
+	}
+}
 
 # Variables with corresponding config settings
-my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
+my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc, $cc_cmd);
 my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_encryption);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
-my ($no_validate);
+my ($validate);
 my (@suppress_cc);
 
 my %config_bool_settings = (
     "thread" => [\$thread, 1],
     "chainreplyto" => [\$chain_reply_to, 1],
     "suppressfrom" => [\$suppress_from, undef],
-    "signedoffcc" => [\$signed_off_cc, undef],
+    "signedoffbycc" => [\$signed_off_by_cc, undef],
+    "signedoffcc" => [\$signed_off_by_cc, undef],      # Deprecated
+    "validate" => [\$validate, 1],
 );
 
 my %config_settings = (
@@ -212,6 +206,7 @@ my %config_settings = (
     "aliasesfile" => \@alias_files,
     "suppresscc" => \@suppress_cc,
     "envelopesender" => \$envelope_sender,
+    "multiedit" => \$multiedit,
 );
 
 # Handle Uncouth Termination
@@ -254,16 +249,18 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
 		    "smtp-encryption=s" => \$smtp_encryption,
 		    "identity=s" => \$identity,
+		    "annotate" => \$annotate,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
 		    "cc-cmd=s" => \$cc_cmd,
 		    "suppress-from!" => \$suppress_from,
 		    "suppress-cc=s" => \@suppress_cc,
-		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_cc,
+		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_by_cc,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
-		    "no-validate" => \$no_validate,
+		    "validate!" => \$validate,
+		    "format-patch!" => \$format_patch,
 	 );
 
 unless ($rc) {
@@ -335,7 +332,7 @@ if ($suppress_cc{'all'}) {
 
 # If explicit old-style ones are specified, they trump --suppress-cc.
 $suppress_cc{'self'} = $suppress_from if defined $suppress_from;
-$suppress_cc{'sob'} = !$signed_off_cc if defined $signed_off_cc;
+$suppress_cc{'sob'} = !$signed_off_by_cc if defined $signed_off_by_cc;
 
 # Debugging, print out the suppressions.
 if (0) {
@@ -363,6 +360,10 @@ foreach my $entry (@bcclist) {
 	die "Comma in --bcclist entry: $entry'\n" unless $entry !~ m/,/;
 }
 
+sub split_addrs {
+	return quotewords('\s*,\s*', 1, @_);
+}
+
 my %aliases;
 my %parse_alias = (
 	# multiline formats can be supported in the future
@@ -371,17 +372,20 @@ my %parse_alias = (
 			my ($alias, $addr) = ($1, $2);
 			$addr =~ s/#.*$//; # mutt allows # comments
 			 # commas delimit multiple addresses
-			$aliases{$alias} = [ split(/\s*,\s*/, $addr) ];
+			$aliases{$alias} = [ split_addrs($addr) ];
 		}}},
 	mailrc => sub { my $fh = shift; while (<$fh>) {
 		if (/^alias\s+(\S+)\s+(.*)$/) {
 			# spaces delimit multiple addresses
 			$aliases{$1} = [ split(/\s+/, $2) ];
 		}}},
-	pine => sub { my $fh = shift; while (<$fh>) {
-		if (/^(\S+)\t.*\t(.*)$/) {
-			$aliases{$1} = [ split(/\s*,\s*/, $2) ];
-		}}},
+	pine => sub { my $fh = shift; my $f='\t[^\t]*';
+	        for (my $x = ''; defined($x); $x = $_) {
+			chomp $x;
+		        $x .= $1 while(defined($_ = <$fh>) && /^ +(.*)$/);
+			$x =~ /^(\S+)$f\t\(?([^\t]+?)\)?(:?$f){0,2}$/ or next;
+			$aliases{$1} = [ split_addrs($2) ];
+		}},
 	gnus => sub { my $fh = shift; while (<$fh>) {
 		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
 			$aliases{$1} = [ $2 ];
@@ -398,25 +402,53 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 
 ($sender) = expand_aliases($sender) if defined $sender;
 
+# returns 1 if the conflict must be solved using it as a format-patch argument
+sub check_file_rev_conflict($) {
+	my $f = shift;
+	try {
+		$repo->command('rev-parse', '--verify', '--quiet', $f);
+		if (defined($format_patch)) {
+			print "foo\n";
+			return $format_patch;
+		}
+		die(<<EOF);
+File '$f' exists but it could also be the range of commits
+to produce patches for.  Please disambiguate by...
+
+    * Saying "./$f" if you mean a file; or
+    * Giving --format-patch option if you mean a range.
+EOF
+	} catch Git::Error::Command with {
+		return 0;
+	}
+}
+
 # Now that all the defaults are set, process the rest of the command line
 # arguments and collect up the files that need to be processed.
-for my $f (@ARGV) {
-	if (-d $f) {
+my @rev_list_opts;
+while (defined(my $f = shift @ARGV)) {
+	if ($f eq "--") {
+		push @rev_list_opts, "--", @ARGV;
+		@ARGV = ();
+	} elsif (-d $f and !check_file_rev_conflict($f)) {
 		opendir(DH,$f)
 			or die "Failed to opendir $f: $!";
 
 		push @files, grep { -f $_ } map { +$f . "/" . $_ }
 				sort readdir(DH);
-
-	} elsif (-f $f or -p $f) {
+		closedir(DH);
+	} elsif ((-f $f or -p $f) and !check_file_rev_conflict($f)) {
 		push @files, $f;
-
 	} else {
-		print STDERR "Skipping $f - not found.\n";
+		push @rev_list_opts, $f;
 	}
 }
 
-if (!$no_validate) {
+if (@rev_list_opts) {
+	push @files, $repo->command('format-patch', '-o', tempdir(CLEANUP => 1), @rev_list_opts);
+}
+
+if ($validate) {
 	foreach my $f (@files) {
 		unless (-p $f) {
 			my $error = validate_patch($f);
@@ -432,6 +464,108 @@ if (@files) {
 } else {
 	print STDERR "\nNo patch files specified!\n\n";
 	usage();
+}
+
+sub get_patch_subject($) {
+	my $fn = shift;
+	open (my $fh, '<', $fn);
+	while (my $line = <$fh>) {
+		next unless ($line =~ /^Subject: (.*)$/);
+		close $fh;
+		return "GIT: $1\n";
+	}
+	close $fh;
+	die "No subject line in $fn ?";
+}
+
+if ($compose) {
+	# Note that this does not need to be secure, but we will make a small
+	# effort to have it be unique
+	open(C,">",$compose_filename)
+		or die "Failed to open for writing $compose_filename: $!";
+
+
+	my $tpl_sender = $sender || $repoauthor || $repocommitter || '';
+	my $tpl_subject = $initial_subject || '';
+	my $tpl_reply_to = $initial_reply_to || '';
+
+	print C <<EOT;
+From $tpl_sender # This line is ignored.
+GIT: Lines beginning in "GIT: " will be removed.
+GIT: Consider including an overall diffstat or table of contents
+GIT: for the patch you are writing.
+GIT:
+GIT: Clear the body content if you don't wish to send a summary.
+From: $tpl_sender
+Subject: $tpl_subject
+In-Reply-To: $tpl_reply_to
+
+EOT
+	for my $f (@files) {
+		print C get_patch_subject($f);
+	}
+	close(C);
+
+	my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
+
+	if ($annotate) {
+		do_edit($compose_filename, @files);
+	} else {
+		do_edit($compose_filename);
+	}
+
+	open(C2,">",$compose_filename . ".final")
+		or die "Failed to open $compose_filename.final : " . $!;
+
+	open(C,"<",$compose_filename)
+		or die "Failed to open $compose_filename : " . $!;
+
+	my $need_8bit_cte = file_has_nonascii($compose_filename);
+	my $in_body = 0;
+	my $summary_empty = 1;
+	while(<C>) {
+		next if m/^GIT: /;
+		if ($in_body) {
+			$summary_empty = 0 unless (/^\n$/);
+		} elsif (/^\n$/) {
+			$in_body = 1;
+			if ($need_8bit_cte) {
+				print C2 "MIME-Version: 1.0\n",
+					 "Content-Type: text/plain; ",
+					   "charset=utf-8\n",
+					 "Content-Transfer-Encoding: 8bit\n";
+			}
+		} elsif (/^MIME-Version:/i) {
+			$need_8bit_cte = 0;
+		} elsif (/^Subject:\s*(.+)\s*$/i) {
+			$initial_subject = $1;
+			my $subject = $initial_subject;
+			$_ = "Subject: " .
+				($subject =~ /[^[:ascii:]]/ ?
+				 quote_rfc2047($subject) :
+				 $subject) .
+				"\n";
+		} elsif (/^In-Reply-To:\s*(.+)\s*$/i) {
+			$initial_reply_to = $1;
+			next;
+		} elsif (/^From:\s*(.+)\s*$/i) {
+			$sender = $1;
+			next;
+		} elsif (/^(?:To|Cc|Bcc):/i) {
+			print "To/Cc/Bcc fields are not interpreted yet, they have been ignored\n";
+			next;
+		}
+		print C2 $_;
+	}
+	close(C);
+	close(C2);
+
+	if ($summary_empty) {
+		print "Summary email is empty, skipping it\n";
+		$compose = -1;
+	}
+} elsif ($annotate) {
+	do_edit(@files);
 }
 
 my $prompting = 0;
@@ -459,7 +593,7 @@ if (!@to) {
 	}
 
 	my $to = $_;
-	push @to, split /,\s*/, $to;
+	push @to, split_addrs($to);
 	$prompting++;
 }
 
@@ -477,17 +611,6 @@ sub expand_aliases {
 @to = (map { sanitize_address($_) } @to);
 @initial_cc = expand_aliases(@initial_cc);
 @bcclist = expand_aliases(@bcclist);
-
-if (!defined $initial_subject && $compose) {
-	while (1) {
-		$_ = $term->readline("What subject should the initial email start with? ", $initial_subject);
-		last if defined $_;
-		print "\n";
-	}
-
-	$initial_subject = $_;
-	$prompting++;
-}
 
 if ($thread && !defined $initial_reply_to && $prompting) {
 	while (1) {
@@ -515,59 +638,6 @@ if (!defined $smtp_server) {
 }
 
 if ($compose) {
-	# Note that this does not need to be secure, but we will make a small
-	# effort to have it be unique
-	open(C,">",$compose_filename)
-		or die "Failed to open for writing $compose_filename: $!";
-	print C "From $sender # This line is ignored.\n";
-	printf C "Subject: %s\n\n", $initial_subject;
-	printf C <<EOT;
-GIT: Please enter your email below.
-GIT: Lines beginning in "GIT: " will be removed.
-GIT: Consider including an overall diffstat or table of contents
-GIT: for the patch you are writing.
-
-EOT
-	close(C);
-
-	my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
-	system('sh', '-c', $editor.' "$@"', $editor, $compose_filename);
-
-	open(C2,">",$compose_filename . ".final")
-		or die "Failed to open $compose_filename.final : " . $!;
-
-	open(C,"<",$compose_filename)
-		or die "Failed to open $compose_filename : " . $!;
-
-	my $need_8bit_cte = file_has_nonascii($compose_filename);
-	my $in_body = 0;
-	while(<C>) {
-		next if m/^GIT: /;
-		if (!$in_body && /^\n$/) {
-			$in_body = 1;
-			if ($need_8bit_cte) {
-				print C2 "MIME-Version: 1.0\n",
-					 "Content-Type: text/plain; ",
-					   "charset=utf-8\n",
-					 "Content-Transfer-Encoding: 8bit\n";
-			}
-		}
-		if (!$in_body && /^MIME-Version:/i) {
-			$need_8bit_cte = 0;
-		}
-		if (!$in_body && /^Subject: ?(.*)/i) {
-			my $subject = $1;
-			$_ = "Subject: " .
-				($subject =~ /[^[:ascii:]]/ ?
-				 quote_rfc2047($subject) :
-				 $subject) .
-				"\n";
-		}
-		print C2 $_;
-	}
-	close(C);
-	close(C2);
-
 	while (1) {
 		$_ = $term->readline("Send this email? (y|n) ");
 		last if defined $_;
@@ -579,7 +649,9 @@ EOT
 		exit(0);
 	}
 
-	@files = ($compose_filename . ".final", @files);
+	if ($compose > 0) {
+		@files = ($compose_filename . ".final", @files);
+	}
 }
 
 # Variables we set as part of the loop over files

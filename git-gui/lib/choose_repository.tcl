@@ -43,12 +43,18 @@ constructor pick {} {
 			$w.mbar.apple add command \
 				-label [mc "About %s" [appname]] \
 				-command do_about
+			$w.mbar.apple add command \
+				-label [mc "Show SSH Key"] \
+				-command do_ssh_key
 		} else {
 			$w.mbar add cascade -label [mc Help] -menu $w.mbar.help
 			menu $w.mbar.help
 			$w.mbar.help add command \
 				-label [mc "About %s" [appname]] \
 				-command do_about
+			$w.mbar.help add command \
+				-label [mc "Show SSH Key"] \
+				-command do_ssh_key
 		}
 
 		wm protocol $top WM_DELETE_WINDOW exit
@@ -381,7 +387,8 @@ method _do_new {} {
 	label $w_body.where.l -text [mc "Directory:"]
 	entry $w_body.where.t \
 		-textvariable @local_path \
-		-font font_diff \
+		-borderwidth 1 \
+		-relief sunken \
 		-width 50
 	button $w_body.where.b \
 		-text [mc "Browse"] \
@@ -463,20 +470,22 @@ method _do_clone {} {
 	frame $w_body.args
 	pack $args -fill both
 
-	label $args.origin_l -text [mc "URL:"]
+	label $args.origin_l -text [mc "Source Location:"]
 	entry $args.origin_t \
 		-textvariable @origin_url \
-		-font font_diff \
+		-borderwidth 1 \
+		-relief sunken \
 		-width 50
 	button $args.origin_b \
 		-text [mc "Browse"] \
 		-command [cb _open_origin]
 	grid $args.origin_l $args.origin_t $args.origin_b -sticky ew
 
-	label $args.where_l -text [mc "Directory:"]
+	label $args.where_l -text [mc "Target Directory:"]
 	entry $args.where_t \
 		-textvariable @local_path \
-		-font font_diff \
+		-borderwidth 1 \
+		-relief sunken \
 		-width 50
 	button $args.where_b \
 		-text [mc "Browse"] \
@@ -979,7 +988,8 @@ method _do_open {} {
 	label $w_body.where.l -text [mc "Repository:"]
 	entry $w_body.where.t \
 		-textvariable @local_path \
-		-font font_diff \
+		-borderwidth 1 \
+		-relief sunken \
 		-width 50
 	button $w_body.where.b \
 		-text [mc "Browse"] \

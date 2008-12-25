@@ -43,6 +43,9 @@ unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
 enum branch_track git_branch_track = BRANCH_TRACK_REMOTE;
 enum rebase_setup_type autorebase = AUTOREBASE_NEVER;
 
+/* Parallel index stat data preload? */
+int core_preload_index = 0;
+
 /* This is set by setup_git_dir_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
 static char *work_tree;
@@ -71,13 +74,18 @@ static void setup_git_env(void)
 	}
 	git_graft_file = getenv(GRAFT_ENVIRONMENT);
 	if (!git_graft_file)
-		git_graft_file = xstrdup(git_path("info/grafts"));
+		git_graft_file = git_pathdup("info/grafts");
 }
 
 int is_bare_repository(void)
 {
 	/* if core.bare is not 'false', let's see if there is a work tree */
 	return is_bare_repository_cfg && !get_git_work_tree();
+}
+
+int have_git_dir(void)
+{
+	return !!git_dir;
 }
 
 const char *get_git_dir(void)
@@ -113,7 +121,7 @@ const char *get_git_work_tree(void)
 			work_tree = git_work_tree_cfg;
 			/* make_absolute_path also normalizes the path */
 			if (work_tree && !is_absolute_path(work_tree))
-				work_tree = xstrdup(make_absolute_path(git_path(work_tree)));
+				work_tree = xstrdup(make_absolute_path(git_path("%s", work_tree)));
 		} else if (work_tree)
 			work_tree = xstrdup(make_absolute_path(work_tree));
 		git_work_tree_initialized = 1;

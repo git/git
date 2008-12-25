@@ -50,6 +50,7 @@ cat > expect << \EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -80,6 +81,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -108,6 +110,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -142,6 +145,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -178,6 +182,7 @@ cat > expect << \EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   modified
 #
@@ -208,6 +213,7 @@ cat > expect << \EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -271,6 +277,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -289,6 +296,12 @@ test_expect_success 'status submodule summary is disabled by default' '
 	test_cmp expect output
 '
 
+# we expect the same as the previous test
+test_expect_success 'status --untracked-files=all does not show submodule' '
+	git status --untracked-files=all >output &&
+	test_cmp expect output
+'
+
 head=$(cd sm && git rev-parse --short=7 --verify HEAD)
 
 cat >expect <<EOF
@@ -301,6 +314,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -330,6 +344,7 @@ cat >expect <<EOF
 # On branch master
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
@@ -361,6 +376,7 @@ cat >expect <<EOF
 #
 # Changed but not updated:
 #   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
 #
 #	modified:   dir1/modified
 #
