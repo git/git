@@ -397,6 +397,14 @@ static void make_service_overridable(const char *name, int ena)
 	die("No such service %s", name);
 }
 
+static char *xstrdup_tolower(const char *str)
+{
+	char *p, *dup = xstrdup(str);
+	for (p = dup; *p; p++)
+		*p = tolower(*p);
+	return dup;
+}
+
 /*
  * Separate the "extra args" information as supplied by the client connection.
  */
@@ -405,7 +413,6 @@ static void parse_extra_args(char *extra_args, int buflen)
 	char *val;
 	int vallen;
 	char *end = extra_args + buflen;
-	char *hp;
 
 	while (extra_args < end && *extra_args) {
 		saw_extended_args = 1;
@@ -423,7 +430,7 @@ static void parse_extra_args(char *extra_args, int buflen)
 					tcp_port = xstrdup(port);
 				}
 				free(hostname);
-				hostname = xstrdup(host);
+				hostname = xstrdup_tolower(host);
 			}
 
 			/* On to the next one */
@@ -432,19 +439,10 @@ static void parse_extra_args(char *extra_args, int buflen)
 	}
 
 	/*
-	 * Replace literal host with lowercase-ized hostname.
-	 */
-	hp = hostname;
-	if (!hp)
-		return;
-	for ( ; *hp; hp++)
-		*hp = tolower(*hp);
-
-	/*
 	 * Locate canonical hostname and its IP address.
 	 */
+	if (hostname) {
 #ifndef NO_IPV6
-	{
 		struct addrinfo hints;
 		struct addrinfo *ai, *ai0;
 		int gai;
@@ -468,9 +466,7 @@ static void parse_extra_args(char *extra_args, int buflen)
 			}
 			freeaddrinfo(ai0);
 		}
-	}
 #else
-	{
 		struct hostent *hent;
 		struct sockaddr_in sa;
 		char **ap;
@@ -491,8 +487,8 @@ static void parse_extra_args(char *extra_args, int buflen)
 		canon_hostname = xstrdup(hent->h_name);
 		free(ip_address);
 		ip_address = xstrdup(addrbuf);
-	}
 #endif
+	}
 }
 
 
@@ -945,12 +941,8 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (!prefixcmp(arg, "--listen=")) {
-		    char *p = arg + 9;
-		    char *ph = listen_addr = xmalloc(strlen(arg + 9) + 1);
-		    while (*p)
-			*ph++ = tolower(*p++);
-		    *ph = 0;
-		    continue;
+			listen_addr = xstrdup_tolower(arg + 9);
+			continue;
 		}
 		if (!prefixcmp(arg, "--port=")) {
 			char *end;
