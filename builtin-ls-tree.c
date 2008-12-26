@@ -156,6 +156,11 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 				chomp_prefix = 0;
 				break;
 			}
+			if (!strcmp(argv[1]+2, "full-tree")) {
+				ls_tree_prefix = prefix = NULL;
+				chomp_prefix = 0;
+				break;
+			}
 			if (!prefixcmp(argv[1]+2, "abbrev=")) {
 				abbrev = strtoul(argv[1]+9, NULL, 10);
 				if (abbrev && abbrev < MINIMUM_ABBREV)
