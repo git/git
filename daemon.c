@@ -150,7 +150,6 @@ static char *path_ok(char *directory)
 {
 	static char rpath[PATH_MAX];
 	static char interp_path[PATH_MAX];
-	int retried_path = 0;
 	char *path;
 	char *dir;
 
@@ -219,22 +218,15 @@ static char *path_ok(char *directory)
 		dir = rpath;
 	}
 
-	do {
-		path = enter_repo(dir, strict_paths);
-		if (path)
-			break;
-
+	path = enter_repo(dir, strict_paths);
+	if (!path && base_path && base_path_relaxed) {
 		/*
 		 * if we fail and base_path_relaxed is enabled, try without
 		 * prefixing the base path
 		 */
-		if (base_path && base_path_relaxed && !retried_path) {
-			dir = directory;
-			retried_path = 1;
-			continue;
-		}
-		break;
-	} while (1);
+		dir = directory;
+		path = enter_repo(dir, strict_paths);
+	}
 
 	if (!path) {
 		logerror("'%s': unable to chdir or not a git archive", dir);
