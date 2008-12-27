@@ -48,15 +48,41 @@ OPTIONS
 FILES
 -----
 
-If the file `.mailmap` exists, it will be used for mapping author
-email addresses to a real author name. One mapping per line, first
-the author name followed by the email address enclosed by
-'<' and '>'. Use hash '#' for comments. Example:
+If a file `.mailmap` exists at the toplevel of the repository,
+it is used to map an author email address to a canonical real name. This
+can be used to coalesce together commits by the same person where their
+name was spelled differently (whether with the same email address or
+not).
+
+Each line in the file consists, in this order, of the canonical real name
+of an author, whitespace, and an email address (enclosed by '<' and '>')
+to map to the name. Use hash '#' for comments, either on their own line,
+or after the email address.
+
+A canonical name may appear in more than one line, associated with
+different email addresses, but it doesn't make sense for a given address
+to appear more than once (if that happens, a later line overrides the
+earlier ones).
+
+So, for example, if your history contains commits by two authors, Jane
+and Joe, whose names appear in the repository under several forms:
 
 ------------
-# Keep alphabetized
-Adam Morrow <adam@localhost.localdomain>
-Eve Jones <eve@laptop.(none)>
+Joe Developer <joe@example.com>
+Joe R. Developer <joe@example.com>
+Jane Doe <jane@example.com>
+Jane Doe <jane@laptop.(none)>
+Jane D. <jane@desktop.(none)>
+------------
+
+Then, supposing Joe wants his middle name initial used, and Jane prefers
+her family name fully spelled out, a proper `.mailmap` file would look like:
+
+------------
+# Note how we don't need an entry for <jane@laptop.(none)>, because the
+# real name of that author is correct already, and coalesced directly.
+Jane Doe <jane@desktop.(none)>
+Joe R. Developer <joe@random.com>
 ------------
 
 Author
