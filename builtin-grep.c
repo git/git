@@ -20,6 +20,8 @@
 #endif
 #endif
 
+static int builtin_grep;
+
 /*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;
  * pathname wildcards are allowed.
@@ -389,7 +391,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 	 * we grep through the checked-out files. It tends to
 	 * be a lot more optimized
 	 */
-	if (!cached) {
+	if (!cached && !builtin_grep) {
 		hit = external_grep(opt, paths, cached);
 		if (hit >= 0)
 			return hit;
@@ -543,6 +545,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		argc--; argv++;
 		if (!strcmp("--cached", arg)) {
 			cached = 1;
+			continue;
+		}
+		if (!strcmp("--no-ext-grep", arg)) {
+			builtin_grep = 1;
 			continue;
 		}
 		if (!strcmp("-a", arg) ||
