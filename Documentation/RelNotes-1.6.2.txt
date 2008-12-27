@@ -1,0 +1,28 @@
+GIT v1.6.2 Release Notes
+========================
+
+Updates since v1.6.1
+--------------------
+
+(subsystems)
+
+(portability)
+
+(performance)
+
+(usability, bells and whistles)
+
+(internal)
+
+
+Fixes since v1.6.1
+------------------
+
+All of the fixes in v1.6.1.X maintenance series are included in this
+release, unless otherwise noted.
+
+--
+exec >/var/tmp/1
+O=v1.6.1
+echo O=$(git describe master)
+git shortlog --no-merges $O..master ^maint
