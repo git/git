@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git apply' [--stat] [--numstat] [--summary] [--check] [--index]
-	  [--apply] [--no-add] [--build-fake-ancestor <file>] [-R | --reverse]
+	  [--apply] [--no-add] [--build-fake-ancestor=<file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-pNUM] [-CNUM] [--inaccurate-eof] [--recount] [--cached]
 	  [--whitespace=<nowarn|warn|fix|error|error-all>]
@@ -64,7 +64,7 @@ OPTIONS
 	cached data, apply the patch, and store the result in the index,
 	without using the working tree. This implies '--index'.
 
---build-fake-ancestor <file>::
+--build-fake-ancestor=<file>::
 	Newer 'git-diff' output has embedded 'index information'
 	for each blob to help identify the original version that
 	the patch applies to.  When this flag is given, and if
