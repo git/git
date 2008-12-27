@@ -495,6 +495,28 @@ static void parse_commit_header(struct format_commit_context *context)
 	context->commit_header_parsed = 1;
 }
 
+static const char *format_subject(struct strbuf *sb, const char *msg,
+				  const char *line_separator)
+{
+	int first = 1;
+
+	for (;;) {
+		const char *line = msg;
+		int linelen = get_one_line(line);
+
+		msg += linelen;
+		if (!linelen || is_empty_line(line, &linelen))
+			break;
+
+		strbuf_grow(sb, linelen + 2);
+		if (!first)
+			strbuf_addstr(sb, line_separator);
+		strbuf_add(sb, line, linelen);
+		first = 0;
+	}
+	return msg;
+}
+
 static void format_decoration(struct strbuf *sb, const struct commit *commit)
 {
 	struct name_decoration *d;
@@ -718,27 +740,11 @@ void pp_title_line(enum cmit_fmt fmt,
 		   const char *encoding,
 		   int need_8bit_cte)
 {
+	const char *line_separator = (fmt == CMIT_FMT_EMAIL) ? "\n " : " ";
 	struct strbuf title;
 
 	strbuf_init(&title, 80);
-
-	for (;;) {
-		const char *line = *msg_p;
-		int linelen = get_one_line(line);
-
-		*msg_p += linelen;
-		if (!linelen || is_empty_line(line, &linelen))
-			break;
-
-		strbuf_grow(&title, linelen + 2);
-		if (title.len) {
-			if (fmt == CMIT_FMT_EMAIL) {
-				strbuf_addch(&title, '\n');
-			}
-			strbuf_addch(&title, ' ');
-		}
-		strbuf_add(&title, line, linelen);
-	}
+	*msg_p = format_subject(&title, *msg_p, line_separator);
 
 	strbuf_grow(sb, title.len + 1024);
 	if (subject) {
