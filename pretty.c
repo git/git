@@ -424,13 +424,15 @@ struct chunk {
 struct format_commit_context {
 	const struct commit *commit;
 	enum date_mode dmode;
+	unsigned commit_header_parsed:1;
+	unsigned commit_message_parsed:1;
 
 	/* These offsets are relative to the start of the commit message. */
-	int commit_header_parsed;
-	struct chunk subject;
 	struct chunk author;
 	struct chunk committer;
 	struct chunk encoding;
+	size_t message_off;
+	size_t subject_off;
 	size_t body_off;
 
 	/* The following ones are relative to the result struct strbuf. */
@@ -460,23 +462,14 @@ static void parse_commit_header(struct format_commit_context *context)
 {
 	const char *msg = context->commit->buffer;
 	int i;
-	enum { HEADER, SUBJECT, BODY } state;
 
-	for (i = 0, state = HEADER; msg[i] && state < BODY; i++) {
+	for (i = 0; msg[i]; i++) {
 		int eol;
 		for (eol = i; msg[eol] && msg[eol] != '\n'; eol++)
 			; /* do nothing */
 
-		if (state == SUBJECT) {
-			context->subject.off = i;
-			context->subject.len = eol - i;
-			i = eol;
-		}
 		if (i == eol) {
-			state++;
-			/* strip empty lines */
-			while (msg[eol] == '\n' && msg[eol + 1] == '\n')
-				eol++;
+			break;
 		} else if (!prefixcmp(msg + i, "author ")) {
 			context->author.off = i + 7;
 			context->author.len = eol - i - 7;
@@ -488,10 +481,8 @@ static void parse_commit_header(struct format_commit_context *context)
 			context->encoding.len = eol - i - 9;
 		}
 		i = eol;
-		if (!msg[i])
-			break;
 	}
-	context->body_off = i;
+	context->message_off = i;
 	context->commit_header_parsed = 1;
 }
 
@@ -508,6 +499,8 @@ static const char *format_subject(struct strbuf *sb, const char *msg,
 		if (!linelen || is_empty_line(line, &linelen))
 			break;
 
+		if (!sb)
+			continue;
 		strbuf_grow(sb, linelen + 2);
 		if (!first)
 			strbuf_addstr(sb, line_separator);
@@ -515,6 +508,21 @@ static const char *format_subject(struct strbuf *sb, const char *msg,
 		first = 0;
 	}
 	return msg;
+}
+
+static void parse_commit_message(struct format_commit_context *c)
+{
+	const char *msg = c->commit->buffer + c->message_off;
+	const char *start = c->commit->buffer;
+
+	msg = skip_empty_lines(msg);
+	c->subject_off = msg - start;
+
+	msg = format_subject(NULL, msg, NULL);
+	msg = skip_empty_lines(msg);
+	c->body_off = msg - start;
+
+	c->commit_message_parsed = 1;
 }
 
 static void format_decoration(struct strbuf *sb, const struct commit *commit)
@@ -636,9 +644,6 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 		parse_commit_header(c);
 
 	switch (placeholder[0]) {
-	case 's':	/* subject */
-		strbuf_add(sb, msg + c->subject.off, c->subject.len);
-		return 1;
 	case 'a':	/* author ... */
 		return format_person_part(sb, placeholder[1],
 				   msg + c->author.off, c->author.len,
@@ -649,6 +654,16 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 				   c->dmode);
 	case 'e':	/* encoding */
 		strbuf_add(sb, msg + c->encoding.off, c->encoding.len);
+		return 1;
+	}
+
+	/* Now we need to parse the commit message. */
+	if (!c->commit_message_parsed)
+		parse_commit_message(c);
+
+	switch (placeholder[0]) {
+	case 's':	/* subject */
+		format_subject(sb, msg + c->subject_off, " ");
 		return 1;
 	case 'b':	/* body */
 		strbuf_addstr(sb, msg + c->body_off);
