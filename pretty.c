@@ -181,6 +181,20 @@ static int is_empty_line(const char *line, int *len_p)
 	return !len;
 }
 
+static const char *skip_empty_lines(const char *msg)
+{
+	for (;;) {
+		int linelen = get_one_line(msg);
+		int ll = linelen;
+		if (!linelen)
+			break;
+		if (!is_empty_line(msg, &ll))
+			break;
+		msg += linelen;
+	}
+	return msg;
+}
+
 static void add_merge_info(enum cmit_fmt fmt, struct strbuf *sb,
 			const struct commit *commit, int abbrev)
 {
@@ -850,15 +864,7 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 	}
 
 	/* Skip excess blank lines at the beginning of body, if any... */
-	for (;;) {
-		int linelen = get_one_line(msg);
-		int ll = linelen;
-		if (!linelen)
-			break;
-		if (!is_empty_line(msg, &ll))
-			break;
-		msg += linelen;
-	}
+	msg = skip_empty_lines(msg);
 
 	/* These formats treat the title line specially. */
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
