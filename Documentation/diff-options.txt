@@ -215,6 +215,10 @@ endif::git-format-patch[]
 -w::
 	Shorthand for "--ignore-all-space".
 
+--inter-hunk-context=<lines>::
+	Show the context between diff hunks, up to the specified number
+	of lines, thereby fusing hunks that are close to each other.
+
 --exit-code::
 	Make the program exit with codes similar to diff(1).
 	That is, it exits with 1 if there were differences and
