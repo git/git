@@ -34,6 +34,7 @@ The --bcc option must be repeated for each user you want on the bcc list.
 
 --cc::
 	Specify a starting "Cc:" value for each email.
+	Default is the value of 'sendemail.cc'.
 +
 The --cc option must be repeated for each user you want on the cc list.
 
