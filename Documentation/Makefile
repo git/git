@@ -198,7 +198,7 @@ gitman.texi: $(MAN_XML) cat-texi.perl
 	mv $@+ $@
 
 gitman.info: gitman.texi
-	$(MAKEINFO) --no-split $*.texi
+	$(MAKEINFO) --no-split --no-validate $*.texi
 
 $(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
 	$(RM) $@+ $@
