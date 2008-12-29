@@ -16,6 +16,7 @@
 #include "patch-ids.h"
 #include "run-command.h"
 #include "shortlog.h"
+#include "remote.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -1070,13 +1071,14 @@ static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
 }
 
 static const char cherry_usage[] =
-"git cherry [-v] <upstream> [<head>] [<limit>]";
+"git cherry [-v] [<upstream>] [<head>] [<limit>]";
 int cmd_cherry(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	struct patch_ids ids;
 	struct commit *commit;
 	struct commit_list *list = NULL;
+	struct branch *current_branch;
 	const char *upstream;
 	const char *head = "HEAD";
 	const char *limit = NULL;
@@ -1099,7 +1101,17 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 		upstream = argv[1];
 		break;
 	default:
-		usage(cherry_usage);
+		current_branch = branch_get(NULL);
+		if (!current_branch || !current_branch->merge
+					|| !current_branch->merge[0]
+					|| !current_branch->merge[0]->dst) {
+			fprintf(stderr, "Could not find a tracked"
+					" remote branch, please"
+					" specify <upstream> manually.\n");
+			usage(cherry_usage);
+		}
+
+		upstream = current_branch->merge[0]->dst;
 	}
 
 	init_revisions(&revs, prefix);
