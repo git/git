@@ -1,0 +1,23 @@
+GIT v1.6.1.1 Release Notes
+==========================
+
+Fixes since v1.6.1
+------------------
+
+* "git describe --all" complained when a commit is described with a tag,
+  which was nonsense.
+
+* "git log --pretty=format:%s" did not handle a multi-line subject the
+  same way as built-in log listers (i.e. shortlog, --pretty=oneline, etc.)
+
+* "git daemon", and "git merge-file" are more careful when freopen fails
+  and barf, instead of going on and writing to unopened filehandle.
+
+Other documentation fixes.
+
+---
+exec >/var/tmp/1
+O=v1.6.1-15-ga9e67c8
+echo O=$(git describe maint)
+git shortlog --no-merges $O..maint
+

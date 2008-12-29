@@ -2147,8 +2147,9 @@ sub git_get_projects_list {
 
 				my $subdir = substr($File::Find::name, $pfxlen + 1);
 				# we check related file in $projectroot
-				if (check_export_ok("$projectroot/$filter/$subdir")) {
-					push @list, { path => ($filter ? "$filter/" : '') . $subdir };
+				my $path = ($filter ? "$filter/" : '') . $subdir;
+				if (check_export_ok("$projectroot/$path")) {
+					push @list, { path => $path };
 					$File::Find::prune = 1;
 				}
 			},
