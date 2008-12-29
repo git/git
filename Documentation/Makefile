@@ -187,13 +187,14 @@ git.info: user-manual.texi
 
 user-manual.texi: user-manual.xml
 	$(RM) $@+ $@
-	$(DOCBOOK2X_TEXI) user-manual.xml --to-stdout | $(PERL_PATH) fix-texi.perl >$@+
+	$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout | \
+		$(PERL_PATH) fix-texi.perl >$@+
 	mv $@+ $@
 
 gitman.texi: $(MAN_XML) cat-texi.perl
 	$(RM) $@+ $@
-	($(foreach xml,$(MAN_XML),$(DOCBOOK2X_TEXI) --to-stdout $(xml);)) | \
-	$(PERL_PATH) cat-texi.perl $@ >$@+
+	($(foreach xml,$(MAN_XML),$(DOCBOOK2X_TEXI) --encoding=UTF-8 \
+		--to-stdout $(xml);)) | $(PERL_PATH) cat-texi.perl $@ >$@+
 	mv $@+ $@
 
 gitman.info: gitman.texi
