@@ -96,7 +96,7 @@ cd_to_toplevel () {
 		..|../*|*/..|*/../*)
 			# Interpret $cdup relative to the physical, not logical, cwd.
 			# Probably /bin/pwd is more portable than passing -P to cd or pwd.
-			phys="$(/bin/pwd)/$cdup"
+			phys="$(unset PWD; /bin/pwd)/$cdup"
 			;;
 		*)
 			# There's no "..", so no need to make things absolute.
