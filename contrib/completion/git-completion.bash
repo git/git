@@ -776,6 +776,7 @@ _git_diff ()
 			--no-ext-diff
 			--no-prefix --src-prefix= --dst-prefix=
 			--base --ours --theirs
+			--patience
 			"
 		return
 		;;
@@ -967,6 +968,7 @@ _git_log ()
 			--color-words --walk-reflogs
 			--parents --children --full-history
 			--merge
+			--patience
 			"
 		return
 		;;
