@@ -341,4 +341,28 @@ test_expect_success \
      check_cache_at DF/DF dirty &&
      :'
 
+test_expect_success \
+    'a/b (untracked) vs a case setup.' \
+    'rm -f .git/index &&
+     : >a &&
+     git update-index --add a &&
+     treeM=`git write-tree` &&
+     echo treeM $treeM &&
+     git ls-tree $treeM &&
+     git ls-files --stage >treeM.out &&
+
+     rm -f a &&
+     git update-index --remove a &&
+     mkdir a &&
+     : >a/b &&
+     treeH=`git write-tree` &&
+     echo treeH $treeH &&
+     git ls-tree $treeH'
+
+test_expect_success \
+    'a/b (untracked) vs a, plus c/d case test.' \
+    '! git read-tree -u -m "$treeH" "$treeM" &&
+     git ls-files --stage &&
+     test -f a/b'
+
 test_done

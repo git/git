@@ -587,7 +587,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
-		int cnt;
+		int ret;
 		int dtype = ce_to_dtype(ce);
 		struct cache_entry *result;
 
@@ -615,7 +615,9 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 			 * files that are in "foo/" we would lose
 			 * it.
 			 */
-			cnt = verify_clean_subdirectory(ce, action, o);
+			ret = verify_clean_subdirectory(ce, action, o);
+			if (ret < 0)
+				return ret;
 
 			/*
 			 * If this removed entries from the index,
@@ -634,7 +636,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 			 * We need to increment it by the number of
 			 * deleted entries here.
 			 */
-			o->pos += cnt;
+			o->pos += ret;
 			return 0;
 		}
 
