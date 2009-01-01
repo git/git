@@ -493,7 +493,7 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 	 * anything in the existing directory there.
 	 */
 	int namelen;
-	int pos, i;
+	int i;
 	struct dir_struct d;
 	char *pathbuf;
 	int cnt = 0;
@@ -514,11 +514,7 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 	 * in that directory.
 	 */
 	namelen = strlen(ce->name);
-	pos = index_name_pos(o->src_index, ce->name, namelen);
-	if (0 <= pos)
-		return 0; /* we have it as nondirectory */
-	pos = -pos - 1;
-	for (i = pos; i < o->src_index->cache_nr; i++) {
+	for (i = o->pos; i < o->src_index->cache_nr; i++) {
 		struct cache_entry *ce2 = o->src_index->cache[i];
 		int len = ce_namelen(ce2);
 		if (len < namelen ||
