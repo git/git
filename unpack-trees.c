@@ -516,22 +516,22 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 	namelen = strlen(ce->name);
 	pos = index_name_pos(o->src_index, ce->name, namelen);
 	if (0 <= pos)
-		return cnt; /* we have it as nondirectory */
+		return 0; /* we have it as nondirectory */
 	pos = -pos - 1;
 	for (i = pos; i < o->src_index->cache_nr; i++) {
-		struct cache_entry *ce = o->src_index->cache[i];
-		int len = ce_namelen(ce);
+		struct cache_entry *ce2 = o->src_index->cache[i];
+		int len = ce_namelen(ce2);
 		if (len < namelen ||
-		    strncmp(ce->name, ce->name, namelen) ||
-		    ce->name[namelen] != '/')
+		    strncmp(ce->name, ce2->name, namelen) ||
+		    ce2->name[namelen] != '/')
 			break;
 		/*
-		 * ce->name is an entry in the subdirectory.
+		 * ce2->name is an entry in the subdirectory.
 		 */
-		if (!ce_stage(ce)) {
-			if (verify_uptodate(ce, o))
+		if (!ce_stage(ce2)) {
+			if (verify_uptodate(ce2, o))
 				return -1;
-			add_entry(o, ce, CE_REMOVE, 0);
+			add_entry(o, ce2, CE_REMOVE, 0);
 		}
 		cnt++;
 	}
@@ -623,7 +623,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 			 * If this removed entries from the index,
 			 * what that means is:
 			 *
-			 * (1) the caller unpack_trees_rec() saw path/foo
+			 * (1) the caller unpack_callback() saw path/foo
 			 * in the index, and it has not removed it because
 			 * it thinks it is handling 'path' as blob with
 			 * D/F conflict;

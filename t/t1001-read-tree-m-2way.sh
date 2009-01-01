@@ -365,4 +365,31 @@ test_expect_success \
      git ls-files --stage &&
      test -f a/b'
 
+test_expect_success \
+    'a/b vs a, plus c/d case setup.' \
+    'rm -f .git/index &&
+     rm -fr a &&
+     : >a &&
+     mkdir c &&
+     : >c/d &&
+     git update-index --add a c/d &&
+     treeM=`git write-tree` &&
+     echo treeM $treeM &&
+     git ls-tree $treeM &&
+     git ls-files --stage >treeM.out &&
+
+     rm -f a &&
+     mkdir a
+     : >a/b &&
+     git update-index --add --remove a a/b &&
+     treeH=`git write-tree` &&
+     echo treeH $treeH &&
+     git ls-tree $treeH'
+
+test_expect_success \
+    'a/b vs a, plus c/d case test.' \
+    'git read-tree -u -m "$treeH" "$treeM" &&
+     git ls-files --stage | tee >treeMcheck.out &&
+     test_cmp treeM.out treeMcheck.out'
+
 test_done
