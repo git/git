@@ -8,7 +8,7 @@
 # at the discretion of Junio C Hamano.
 #
 
-USAGE='[--tool=tool] [file to merge] ...'
+USAGE='[--tool=tool] [-y|--no-prompt|--prompt] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
 . git-sh-setup
@@ -70,16 +70,16 @@ resolve_symlink_merge () {
 		git checkout-index -f --stage=2 -- "$MERGED"
 		git add -- "$MERGED"
 		cleanup_temp_files --save-backup
-		return
+		return 0
 		;;
 	    [rR]*)
 		git checkout-index -f --stage=3 -- "$MERGED"
 		git add -- "$MERGED"
 		cleanup_temp_files --save-backup
-		return
+		return 0
 		;;
 	    [aA]*)
-		exit 1
+		return 1
 		;;
 	    esac
 	done
@@ -97,15 +97,15 @@ resolve_deleted_merge () {
 	    [mMcC]*)
 		git add -- "$MERGED"
 		cleanup_temp_files --save-backup
-		return
+		return 0
 		;;
 	    [dD]*)
 		git rm -- "$MERGED" > /dev/null
 		cleanup_temp_files
-		return
+		return 0
 		;;
 	    [aA]*)
-		exit 1
+		return 1
 		;;
 	    esac
 	done
@@ -137,7 +137,7 @@ merge_file () {
 	else
 	    echo "$MERGED: file does not need merging"
 	fi
-	exit 1
+	return 1
     fi
 
     ext="$$$(expr "$MERGED" : '.*\(\.[^/]*\)$')"
@@ -176,8 +176,10 @@ merge_file () {
     echo "Normal merge conflict for '$MERGED':"
     describe_file "$local_mode" "local" "$LOCAL"
     describe_file "$remote_mode" "remote" "$REMOTE"
-    printf "Hit return to start merge resolution tool (%s): " "$merge_tool"
-    read ans
+    if "$prompt" = true; then
+	printf "Hit return to start merge resolution tool (%s): " "$merge_tool"
+	read ans
+    fi
 
     case "$merge_tool" in
 	kdiff3)
@@ -267,7 +269,12 @@ merge_file () {
     if test "$status" -ne 0; then
 	echo "merge of $MERGED failed" 1>&2
 	mv -- "$BACKUP" "$MERGED"
-	exit 1
+
+	if test "$merge_keep_temporaries" = "false"; then
+	    cleanup_temp_files
+	fi
+
+	return 1
     fi
 
     if test "$merge_keep_backup" = "true"; then
@@ -278,7 +285,10 @@ merge_file () {
 
     git add -- "$MERGED"
     cleanup_temp_files
+    return 0
 }
+
+prompt=$(git config --bool mergetool.prompt || echo true)
 
 while test $# != 0
 do
@@ -294,6 +304,12 @@ do
 		    merge_tool="$2"
 		    shift ;;
 	    esac
+	    ;;
+	-y|--no-prompt)
+	    prompt=false
+	    ;;
+	--prompt)
+	    prompt=true
 	    ;;
 	--)
 	    shift
@@ -341,6 +357,22 @@ init_merge_tool_path() {
 	fi
 }
 
+prompt_after_failed_merge() {
+    while true; do
+	printf "Continue merging other unresolved paths (y/n) ? "
+	read ans
+	case "$ans" in
+
+	    [yY]*)
+		return 0
+		;;
+
+	    [nN]*)
+		return 1
+		;;
+	esac
+    done
+}
 
 if test -z "$merge_tool"; then
     merge_tool=`git config merge.tool`
@@ -389,6 +421,7 @@ else
     init_merge_tool_path "$merge_tool"
 
     merge_keep_backup="$(git config --bool merge.keepBackup || echo true)"
+    merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo false)"
 
     if test -z "$merge_tool_cmd" && ! type "$merge_tool_path" > /dev/null 2>&1; then
         echo "The merge tool $merge_tool is not available as '$merge_tool_path'"
@@ -400,27 +433,44 @@ else
     fi
 fi
 
+last_status=0
+rollup_status=0
 
 if test $# -eq 0 ; then
-	files=`git ls-files -u | sed -e 's/^[^	]*	//' | sort -u`
-	if test -z "$files" ; then
-		echo "No files need merging"
-		exit 0
+    files=`git ls-files -u | sed -e 's/^[^	]*	//' | sort -u`
+    if test -z "$files" ; then
+	echo "No files need merging"
+	exit 0
+    fi
+    echo Merging the files: "$files"
+    git ls-files -u |
+    sed -e 's/^[^	]*	//' |
+    sort -u |
+    while IFS= read i
+    do
+	if test $last_status -ne 0; then
+	    prompt_after_failed_merge < /dev/tty || exit 1
 	fi
-	echo Merging the files: "$files"
-	git ls-files -u |
-	sed -e 's/^[^	]*	//' |
-	sort -u |
-	while IFS= read i
-	do
-		printf "\n"
-		merge_file "$i" < /dev/tty > /dev/tty
-	done
+	printf "\n"
+	merge_file "$i" < /dev/tty > /dev/tty
+	last_status=$?
+	if test $last_status -ne 0; then
+	    rollup_status=1
+	fi
+    done
 else
-	while test $# -gt 0; do
-		printf "\n"
-		merge_file "$1"
-		shift
-	done
+    while test $# -gt 0; do
+	if test $last_status -ne 0; then
+	    prompt_after_failed_merge || exit 1
+	fi
+	printf "\n"
+	merge_file "$1"
+	last_status=$?
+	if test $last_status -ne 0; then
+	    rollup_status=1
+	fi
+	shift
+    done
 fi
-exit 0
+
+exit $rollup_status
