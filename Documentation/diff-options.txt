@@ -40,6 +40,9 @@ endif::git-format-patch[]
 --patch-with-raw::
 	Synonym for "-p --raw".
 
+--patience:
+	Generate a diff using the "patience diff" algorithm.
+
 --stat[=width[,name-width]]::
 	Generate a diffstat.  You can override the default
 	output width for 80-column terminal by "--stat=width".

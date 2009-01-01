@@ -2471,6 +2471,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
 	else if (!strcmp(arg, "--ignore-space-at-eol"))
 		options->xdl_opts |= XDF_IGNORE_WHITESPACE_AT_EOL;
+	else if (!strcmp(arg, "--patience"))
+		options->xdl_opts |= XDF_PATIENCE_DIFF;
 
 	/* flags options */
 	else if (!strcmp(arg, "--binary")) {
