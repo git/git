@@ -554,7 +554,6 @@ first and then run 'git rebase --continue' again."
 		;;
 	--)
 		shift
-		run_pre_rebase_hook ${1+"$@"}
 		test $# -eq 1 -o $# -eq 2 || usage
 		test -d "$DOTEST" &&
 			die "Interactive rebase already started"
@@ -562,11 +561,13 @@ first and then run 'git rebase --continue' again."
 		git var GIT_COMMITTER_IDENT >/dev/null ||
 			die "You need to set your committer info first"
 
+		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
+		run_pre_rebase_hook ${1+"$@"}
+
 		comment_for_reflog start
 
 		require_clean_work_tree
 
-		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
 		test -z "$ONTO" && ONTO=$UPSTREAM
 
 		if test ! -z "$2"
