@@ -1358,7 +1358,13 @@ sub req_ci
     # write our commit message out if we have one ...
     my ( $msg_fh, $msg_filename ) = tempfile( DIR => $TEMP_DIR );
     print $msg_fh $state->{opt}{m};# if ( exists ( $state->{opt}{m} ) );
-    print $msg_fh "\n\nvia git-CVS emulator\n";
+    if ( defined ( $cfg->{gitcvs}{commitmsgannotation} ) ) {
+        if ($cfg->{gitcvs}{commitmsgannotation} !~ /^\s*$/ ) {
+            print $msg_fh "\n\n".$cfg->{gitcvs}{commitmsgannotation}."\n"
+        }
+    } else {
+        print $msg_fh "\n\nvia git-CVS emulator\n";
+    }
     close $msg_fh;
 
     my $commithash = `git-commit-tree $treehash -p $parenthash < $msg_filename`;
