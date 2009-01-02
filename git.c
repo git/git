@@ -428,9 +428,8 @@ int main(int argc, const char **argv)
 	 * name, and the dirname as the default exec_path
 	 * if we don't have anything better.
 	 */
-	do
-		--slash;
-	while (cmd <= slash && !is_dir_sep(*slash));
+	while (cmd <= slash && !is_dir_sep(*slash))
+		slash--;
 	if (cmd <= slash) {
 		*slash++ = 0;
 		git_set_argv0_path(cmd);
