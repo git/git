@@ -6122,7 +6122,11 @@ sub git_atom {
 sub git_opml {
 	my @list = git_get_projects_list();
 
-	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
+	print $cgi->header(
+		-type => 'text/xml',
+		-charset => 'utf-8',
+		-content_disposition => 'inline; filename="opml.xml"');
+
 	print <<XML;
 <?xml version="1.0" encoding="utf-8"?>
 <opml version="1.0">
