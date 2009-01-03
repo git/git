@@ -515,8 +515,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		argv++;
 		argc--;
 
+		new.name = arg;
 		if ((new.commit = lookup_commit_reference_gently(rev, 1))) {
-			new.name = arg;
 			setup_branch_path(&new);
 			if (resolve_ref(new.path, rev, 1, NULL))
 				new.commit = lookup_commit_reference(rev);
