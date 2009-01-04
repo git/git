@@ -36,8 +36,8 @@ struct strategy {
 };
 
 static const char * const builtin_merge_usage[] = {
-	"git-merge [options] <remote>...",
-	"git-merge [options] <msg> HEAD <remote>",
+	"git merge [options] <remote>...",
+	"git merge [options] <msg> HEAD <remote>",
 	NULL
 };
 

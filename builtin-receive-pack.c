@@ -9,7 +9,7 @@
 #include "remote.h"
 #include "transport.h"
 
-static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
+static const char receive_pack_usage[] = "git receive-pack <git-dir>";
 
 enum deny_action {
 	DENY_IGNORE,

@@ -73,7 +73,7 @@ static void generate_id_list(void)
 	flush_current_id(patchlen, sha1, &ctx);
 }
 
-static const char patch_id_usage[] = "git-patch-id < patch";
+static const char patch_id_usage[] = "git patch-id < patch";
 
 int main(int argc, char **argv)
 {

@@ -107,7 +107,7 @@ static int verify_one_pack(const char *path, int verbose)
 	return err;
 }
 
-static const char verify_pack_usage[] = "git-verify-pack [-v] <pack>...";
+static const char verify_pack_usage[] = "git verify-pack [-v] <pack>...";
 
 int cmd_verify_pack(int argc, const char **argv, const char *prefix)
 {
