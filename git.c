@@ -416,12 +416,34 @@ static void execv_dashed_external(const char **argv)
 	strbuf_release(&cmd);
 }
 
+static int run_argv(int *argcp, const char ***argv)
+{
+	int done_alias = 0;
+
+	while (1) {
+		/* See if it's an internal command */
+		handle_internal_command(*argcp, *argv);
+
+		/* .. then try the external ones */
+		execv_dashed_external(*argv);
+
+		/* It could be an alias -- this works around the insanity
+		 * of overriding "git log" with "git show" by having
+		 * alias.log = show
+		 */
+		if (done_alias || !handle_alias(argcp, argv))
+			break;
+		done_alias = 1;
+	}
+
+	return done_alias;
+}
+
 
 int main(int argc, const char **argv)
 {
 	const char *cmd = argv[0] && *argv[0] ? argv[0] : "git-help";
 	char *slash = (char *)cmd + strlen(cmd);
-	int done_alias = 0;
 
 	/*
 	 * Take the basename of argv[0] as the command
@@ -479,31 +501,22 @@ int main(int argc, const char **argv)
 	setup_path();
 
 	while (1) {
-		/* See if it's an internal command */
-		handle_internal_command(argc, argv);
-
-		/* .. then try the external ones */
-		execv_dashed_external(argv);
-
-		/* It could be an alias -- this works around the insanity
-		 * of overriding "git log" with "git show" by having
-		 * alias.log = show
-		 */
-		if (done_alias || !handle_alias(&argc, &argv))
+		static int done_help = 0;
+		static int was_alias = 0;
+		was_alias = run_argv(&argc, &argv);
+		if (errno != ENOENT)
 			break;
-		done_alias = 1;
-	}
-
-	if (errno == ENOENT) {
-		if (done_alias) {
+		if (was_alias) {
 			fprintf(stderr, "Expansion of alias '%s' failed; "
 				"'%s' is not a git-command\n",
 				cmd, argv[0]);
 			exit(1);
 		}
-		argv[0] = help_unknown_cmd(cmd);
-		handle_internal_command(argc, argv);
-		execv_dashed_external(argv);
+		if (!done_help) {
+			cmd = argv[0] = help_unknown_cmd(cmd);
+			done_help = 1;
+		} else
+			break;
 	}
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
