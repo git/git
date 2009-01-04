@@ -2039,7 +2039,7 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 			if (lstat(one->path, &st) < 0)
 				die("stat %s", one->path);
 			if (index_path(one->sha1, one->path, &st, 0))
-				die("cannot hash %s\n", one->path);
+				die("cannot hash %s", one->path);
 		}
 	}
 	else
