@@ -1009,7 +1009,7 @@ $ git init
 If you have some initial content (say, a tarball):
 
 -------------------------------------------------
-$ tar -xzvf project.tar.gz
+$ tar xzvf project.tar.gz
 $ cd project
 $ git init
 $ git add . # include everything below ./ in the first commit:
