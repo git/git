@@ -590,7 +590,7 @@ list.  When the history has lines of development that diverged and
 then merged back together, the order in which 'git-log' presents
 those commits is meaningless.
 
-Most projects with multiple contributors (such as the linux kernel,
+Most projects with multiple contributors (such as the Linux kernel,
 or git itself) have frequent merges, and 'gitk' does a better job of
 visualizing their history.  For example,
 
@@ -642,7 +642,7 @@ digressions that may be interesting at this point are:
 
   * linkgit:git-format-patch[1], linkgit:git-am[1]: These convert
     series of git commits into emailed patches, and vice versa,
-    useful for projects such as the linux kernel which rely heavily
+    useful for projects such as the Linux kernel which rely heavily
     on emailed patches.
 
   * linkgit:git-bisect[1]: When there is a regression in your

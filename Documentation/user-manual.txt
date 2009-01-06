@@ -59,7 +59,7 @@ project in mind, here are some interesting examples:
 ------------------------------------------------
 	# git itself (approx. 10MB download):
 $ git clone git://git.kernel.org/pub/scm/git/git.git
-	# the linux kernel (approx. 150MB download):
+	# the Linux kernel (approx. 150MB download):
 $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 ------------------------------------------------
 
@@ -1009,7 +1009,7 @@ $ git init
 If you have some initial content (say, a tarball):
 
 -------------------------------------------------
-$ tar -xzvf project.tar.gz
+$ tar xzvf project.tar.gz
 $ cd project
 $ git init
 $ git add . # include everything below ./ in the first commit:
@@ -1340,7 +1340,7 @@ These will display all commits which exist only on HEAD or on
 MERGE_HEAD, and which touch an unmerged file.
 
 You may also use linkgit:git-mergetool[1], which lets you merge the
-unmerged files using external tools such as emacs or kdiff3.
+unmerged files using external tools such as Emacs or kdiff3.
 
 Each time you resolve the conflicts in a file and update the index:
 
