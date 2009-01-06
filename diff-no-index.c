@@ -173,8 +173,10 @@ void diff_no_index(struct rev_info *revs,
 
 	/* Were we asked to do --no-index explicitly? */
 	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--"))
-			return;
+		if (!strcmp(argv[i], "--")) {
+			i++;
+			break;
+		}
 		if (!strcmp(argv[i], "--no-index"))
 			no_index = 1;
 		if (argv[i][0] != '-')
@@ -212,8 +214,10 @@ void diff_no_index(struct rev_info *revs,
 		int j;
 		if (!strcmp(argv[i], "--no-index"))
 			i++;
-		else if (!strcmp(argv[1], "-q"))
+		else if (!strcmp(argv[i], "-q"))
 			options |= DIFF_SILENT_ON_REMOVED;
+		else if (!strcmp(argv[i], "--"))
+			i++;
 		else {
 			j = diff_opt_parse(&revs->diffopt, argv + i, argc - i);
 			if (!j)
