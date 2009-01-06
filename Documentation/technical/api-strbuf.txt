@@ -133,8 +133,10 @@ Functions
 
 * Adding data to the buffer
 
-NOTE: All of these functions in this section will grow the buffer as
-      necessary.
+NOTE: All of the functions in this section will grow the buffer as necessary.
+If they fail for some reason other than memory shortage and the buffer hadn't
+been allocated before (i.e. the `struct strbuf` was set to `STRBUF_INIT`),
+then they will free() it.
 
 `strbuf_addch`::
 
@@ -234,6 +236,11 @@ same behaviour as well.
 
 	Read the contents of a file, specified by its path. The third argument
 	can be used to give a hint about the file size, to avoid reallocs.
+
+`strbuf_readlink`::
+
+	Read the target of a symbolic link, specified by its path.  The third
+	argument can be used to give a hint about the size, to avoid reallocs.
 
 `strbuf_getline`::
 
