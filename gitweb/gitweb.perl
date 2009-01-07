@@ -4576,28 +4576,33 @@ sub git_tag {
 }
 
 sub git_blame {
-	my $fd;
-	my $ftype;
-
+	# permissions
 	gitweb_check_feature('blame')
-	    or die_error(403, "Blame view not allowed");
+		or die_error(403, "Blame view not allowed");
 
+	# error checking
 	die_error(400, "No file name given") unless $file_name;
 	$hash_base ||= git_get_head_hash($project);
-	die_error(404, "Couldn't find base commit") unless ($hash_base);
+	die_error(404, "Couldn't find base commit") unless $hash_base;
 	my %co = parse_commit($hash_base)
 		or die_error(404, "Commit not found");
+	my $ftype = "blob";
 	if (!defined $hash) {
 		$hash = git_get_hash_by_path($hash_base, $file_name, "blob")
 			or die_error(404, "Error looking up file");
+	} else {
+		$ftype = git_get_type($hash);
+		if ($ftype !~ "blob") {
+			die_error(400, "Object is not a blob");
+		}
 	}
-	$ftype = git_get_type($hash);
-	if ($ftype !~ "blob") {
-		die_error(400, "Object is not a blob");
-	}
-	open ($fd, "-|", git_cmd(), "blame", '-p', '--',
-	      $file_name, $hash_base)
+
+	# run git-blame --porcelain
+	open my $fd, "-|", git_cmd(), "blame", '-p',
+		$hash_base, '--', $file_name
 		or die_error(500, "Open git-blame failed");
+
+	# page header
 	git_header_html();
 	my $formats_nav =
 		$cgi->a({-href => href(action=>"blob", -replay=>1)},
@@ -4611,42 +4616,46 @@ sub git_blame {
 	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
 	git_print_page_path($file_name, $ftype, $hash_base);
-	my @rev_color = (qw(light2 dark2));
+
+	# page body
+	my @rev_color = qw(light2 dark2);
 	my $num_colors = scalar(@rev_color);
 	my $current_color = 0;
-	my $last_rev;
+	my %metainfo = ();
+
 	print <<HTML;
 <div class="page_body">
 <table class="blame">
 <tr><th>Commit</th><th>Line</th><th>Data</th></tr>
 HTML
-	my %metainfo = ();
-	while (1) {
-		$_ = <$fd>;
-		last unless defined $_;
+ LINE:
+	while (my $line = <$fd>) {
+		chomp $line;
+		# the header: <SHA-1> <src lineno> <dst lineno> [<lines in group>]
+		# no <lines in group> for subsequent lines in group of lines
 		my ($full_rev, $orig_lineno, $lineno, $group_size) =
-		    /^([0-9a-f]{40}) (\d+) (\d+)(?: (\d+))?$/;
+		   ($line =~ /^([0-9a-f]{40}) (\d+) (\d+)(?: (\d+))?$/);
 		if (!exists $metainfo{$full_rev}) {
 			$metainfo{$full_rev} = {};
 		}
 		my $meta = $metainfo{$full_rev};
-		while (<$fd>) {
-			last if (s/^\t//);
-			if (/^(\S+) (.*)$/) {
+		my $data;
+		while ($data = <$fd>) {
+			chomp $data;
+			last if ($data =~ s/^\t//); # contents of line
+			if ($data =~ /^(\S+) (.*)$/) {
 				$meta->{$1} = $2;
 			}
 		}
-		my $data = $_;
-		chomp $data;
-		my $rev = substr($full_rev, 0, 8);
+		my $short_rev = substr($full_rev, 0, 8);
 		my $author = $meta->{'author'};
-		my %date = parse_date($meta->{'author-time'},
-		                      $meta->{'author-tz'});
+		my %date =
+			parse_date($meta->{'author-time'}, $meta->{'author-tz'});
 		my $date = $date{'iso-tz'};
 		if ($group_size) {
-			$current_color = ++$current_color % $num_colors;
+			$current_color = ($current_color + 1) % $num_colors;
 		}
-		print "<tr class=\"$rev_color[$current_color]\">\n";
+		print "<tr id=\"l$lineno\" class=\"$rev_color[$current_color]\">\n";
 		if ($group_size) {
 			print "<td class=\"sha1\"";
 			print " title=\"". esc_html($author) . ", $date\"";
@@ -4655,20 +4664,25 @@ HTML
 			print $cgi->a({-href => href(action=>"commit",
 			                             hash=>$full_rev,
 			                             file_name=>$file_name)},
-			              esc_html($rev));
+			              esc_html($short_rev));
 			print "</td>\n";
 		}
-		open (my $dd, "-|", git_cmd(), "rev-parse", "$full_rev^")
-			or die_error(500, "Open git-rev-parse failed");
-		my $parent_commit = <$dd>;
-		close $dd;
-		chomp($parent_commit);
+		my $parent_commit;
+		if (!exists $meta->{'parent'}) {
+			open (my $dd, "-|", git_cmd(), "rev-parse", "$full_rev^")
+				or die_error(500, "Open git-rev-parse failed");
+			$parent_commit = <$dd>;
+			close $dd;
+			chomp($parent_commit);
+			$meta->{'parent'} = $parent_commit;
+		} else {
+			$parent_commit = $meta->{'parent'};
+		}
 		my $blamed = href(action => 'blame',
 		                  file_name => $meta->{'filename'},
 		                  hash_base => $parent_commit);
 		print "<td class=\"linenr\">";
 		print $cgi->a({ -href => "$blamed#l$orig_lineno",
-		                -id => "l$lineno",
 		                -class => "linenr" },
 		              esc_html($lineno));
 		print "</td>";
@@ -4679,6 +4693,8 @@ HTML
 	print "</div>";
 	close $fd
 		or print "Reading blob failed\n";
+
+	# page footer
 	git_footer_html();
 }
 
