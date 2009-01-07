@@ -203,7 +203,7 @@ our %feature = (
 	# $feature{'blame'}{'override'} = 1;
 	# and in project config gitweb.blame = 0|1;
 	'blame' => {
-		'sub' => \&feature_blame,
+		'sub' => sub { feature_bool('blame', @_) },
 		'override' => 0,
 		'default' => [0]},
 
@@ -241,7 +241,7 @@ our %feature = (
 	# $feature{'grep'}{'override'} = 1;
 	# and in project config gitweb.grep = 0|1;
 	'grep' => {
-		'sub' => \&feature_grep,
+		'sub' => sub { feature_bool('grep', @_) },
 		'override' => 0,
 		'default' => [1]},
 
@@ -255,7 +255,7 @@ our %feature = (
 	# $feature{'pickaxe'}{'override'} = 1;
 	# and in project config gitweb.pickaxe = 0|1;
 	'pickaxe' => {
-		'sub' => \&feature_pickaxe,
+		'sub' => sub { feature_bool('pickaxe', @_) },
 		'override' => 0,
 		'default' => [1]},
 
@@ -363,16 +363,17 @@ sub gitweb_check_feature {
 }
 
 
-sub feature_blame {
-	my ($val) = git_get_project_config('blame', '--bool');
+sub feature_bool {
+	my $key = shift;
+	my ($val) = git_get_project_config($key, '--bool');
 
 	if ($val eq 'true') {
-		return 1;
+		return (1);
 	} elsif ($val eq 'false') {
-		return 0;
+		return (0);
 	}
 
-	return $_[0];
+	return ($_[0]);
 }
 
 sub feature_snapshot {
@@ -385,30 +386,6 @@ sub feature_snapshot {
 	}
 
 	return @fmts;
-}
-
-sub feature_grep {
-	my ($val) = git_get_project_config('grep', '--bool');
-
-	if ($val eq 'true') {
-		return (1);
-	} elsif ($val eq 'false') {
-		return (0);
-	}
-
-	return ($_[0]);
-}
-
-sub feature_pickaxe {
-	my ($val) = git_get_project_config('pickaxe', '--bool');
-
-	if ($val eq 'true') {
-		return (1);
-	} elsif ($val eq 'false') {
-		return (0);
-	}
-
-	return ($_[0]);
 }
 
 # checking HEAD file with -e is fragile if the repository was
