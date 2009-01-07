@@ -207,8 +207,10 @@ void diff_no_index(struct rev_info *revs,
 		int j;
 		if (!strcmp(argv[i], "--no-index"))
 			i++;
-		else if (!strcmp(argv[i], "-q"))
+		else if (!strcmp(argv[i], "-q")) {
 			options |= DIFF_SILENT_ON_REMOVED;
+			i++;
+		}
 		else if (!strcmp(argv[i], "--"))
 			i++;
 		else {
