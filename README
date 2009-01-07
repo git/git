@@ -24,7 +24,7 @@ It was originally written by Linus Torvalds with help of a group of
 hackers around the net. It is currently maintained by Junio C Hamano.
 
 Please read the file INSTALL for installation instructions.
-See Documentation/tutorial.txt to get started, then see
+See Documentation/gittutorial.txt to get started, then see
 Documentation/everyday.txt for a useful minimum set of commands,
 and "man git-commandname" for documentation of each command.
 CVS users may also want to read Documentation/cvs-migration.txt.
