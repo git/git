@@ -208,7 +208,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	do {
 		request->stream.next_out = expn;
 		request->stream.avail_out = sizeof(expn);
-		request->zret = inflate(&request->stream, Z_SYNC_FLUSH);
+		request->zret = git_inflate(&request->stream, Z_SYNC_FLUSH);
 		SHA1_Update(&request->c, expn,
 			    sizeof(expn) - request->stream.avail_out);
 	} while (request->stream.avail_in && request->zret == Z_OK);
@@ -268,7 +268,7 @@ static void start_fetch_loose(struct transfer_request *request)
 
 	memset(&request->stream, 0, sizeof(request->stream));
 
-	inflateInit(&request->stream);
+	git_inflate_init(&request->stream);
 
 	SHA1_Init(&request->c);
 
@@ -309,7 +309,7 @@ static void start_fetch_loose(struct transfer_request *request)
 	   file; also rewind to the beginning of the local file. */
 	if (prev_read == -1) {
 		memset(&request->stream, 0, sizeof(request->stream));
-		inflateInit(&request->stream);
+		git_inflate_init(&request->stream);
 		SHA1_Init(&request->c);
 		if (prev_posn>0) {
 			prev_posn = 0;
@@ -741,7 +741,7 @@ static void finish_request(struct transfer_request *request)
 			if (request->http_code == 416)
 				fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
 
-			inflateEnd(&request->stream);
+			git_inflate_end(&request->stream);
 			SHA1_Final(request->real_sha1, &request->c);
 			if (request->zret != Z_STREAM_END) {
 				unlink(request->tmpfile);

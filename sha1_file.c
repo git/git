@@ -1182,8 +1182,8 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	stream->avail_out = bufsiz;
 
 	if (legacy_loose_object(map)) {
-		inflateInit(stream);
-		return inflate(stream, 0);
+		git_inflate_init(stream);
+		return git_inflate(stream, 0);
 	}
 
 
@@ -1203,7 +1203,7 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	/* Set up the stream for the rest.. */
 	stream->next_in = map;
 	stream->avail_in = mapsize;
-	inflateInit(stream);
+	git_inflate_init(stream);
 
 	/* And generate the fake traditional header */
 	stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu",
@@ -1240,11 +1240,11 @@ static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size
 		stream->next_out = buf + bytes;
 		stream->avail_out = size - bytes;
 		while (status == Z_OK)
-			status = inflate(stream, Z_FINISH);
+			status = git_inflate(stream, Z_FINISH);
 	}
 	buf[size] = 0;
 	if (status == Z_STREAM_END && !stream->avail_in) {
-		inflateEnd(stream);
+		git_inflate_end(stream);
 		return buf;
 	}
 
@@ -1334,15 +1334,15 @@ unsigned long get_size_from_delta(struct packed_git *p,
 	stream.next_out = delta_head;
 	stream.avail_out = sizeof(delta_head);
 
-	inflateInit(&stream);
+	git_inflate_init(&stream);
 	do {
 		in = use_pack(p, w_curs, curpos, &stream.avail_in);
 		stream.next_in = in;
-		st = inflate(&stream, Z_FINISH);
+		st = git_inflate(&stream, Z_FINISH);
 		curpos += stream.next_in - in;
 	} while ((st == Z_OK || st == Z_BUF_ERROR) &&
 		 stream.total_out < sizeof(delta_head));
-	inflateEnd(&stream);
+	git_inflate_end(&stream);
 	if ((st != Z_STREAM_END) && stream.total_out != sizeof(delta_head))
 		die("delta data unpack-initial failed");
 
@@ -1550,14 +1550,14 @@ static void *unpack_compressed_entry(struct packed_git *p,
 	stream.next_out = buffer;
 	stream.avail_out = size;
 
-	inflateInit(&stream);
+	git_inflate_init(&stream);
 	do {
 		in = use_pack(p, w_curs, curpos, &stream.avail_in);
 		stream.next_in = in;
-		st = inflate(&stream, Z_FINISH);
+		st = git_inflate(&stream, Z_FINISH);
 		curpos += stream.next_in - in;
 	} while (st == Z_OK || st == Z_BUF_ERROR);
-	inflateEnd(&stream);
+	git_inflate_end(&stream);
 	if ((st != Z_STREAM_END) || stream.total_out != size) {
 		free(buffer);
 		return NULL;
@@ -1965,7 +1965,7 @@ static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *size
 		status = error("unable to parse %s header", sha1_to_hex(sha1));
 	else if (sizep)
 		*sizep = size;
-	inflateEnd(&stream);
+	git_inflate_end(&stream);
 	munmap(map, mapsize);
 	return status;
 }
