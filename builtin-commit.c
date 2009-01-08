@@ -945,6 +945,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	git_config(git_commit_config, NULL);
 
+	if (wt_status_use_color == -1)
+		wt_status_use_color = git_use_color_default;
+
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage, prefix);
 
 	index_file = prepare_index(argc, argv, prefix);
