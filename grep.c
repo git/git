@@ -294,7 +294,6 @@ static struct {
 static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol, char *eol, enum grep_context ctx)
 {
 	int hit = 0;
-	int at_true_bol = 1;
 	int saved_ch = 0;
 	regmatch_t pmatch[10];
 
@@ -337,7 +336,7 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 		 * either end of the line, or at word boundary
 		 * (i.e. the next char must not be a word char).
 		 */
-		if ( ((pmatch[0].rm_so == 0 && at_true_bol) ||
+		if ( ((pmatch[0].rm_so == 0) ||
 		      !word_char(bol[pmatch[0].rm_so-1])) &&
 		     ((pmatch[0].rm_eo == (eol-bol)) ||
 		      !word_char(bol[pmatch[0].rm_eo])) )
@@ -349,10 +348,14 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 			/* There could be more than one match on the
 			 * line, and the first match might not be
 			 * strict word match.  But later ones could be!
+			 * Forward to the next possible start, i.e. the
+			 * next position following a non-word char.
 			 */
 			bol = pmatch[0].rm_so + bol + 1;
-			at_true_bol = 0;
-			goto again;
+			while (word_char(bol[-1]) && bol < eol)
+				bol++;
+			if (bol < eol)
+				goto again;
 		}
 	}
 	if (p->token == GREP_PATTERN_HEAD && saved_ch)
