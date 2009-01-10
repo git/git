@@ -962,6 +962,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		 * get_revision() to do the usual traversal.
 		 */
 	}
+
+	/*
+	 * We cannot move this anywhere earlier because we do want to
+	 * know if --root was given explicitly from the comand line.
+	 */
+	rev.show_root_diff = 1;
+
 	if (cover_letter) {
 		/* remember the range */
 		int i;
