@@ -10,6 +10,7 @@
 #include "tree-walk.h"
 #include "fsck.h"
 #include "parse-options.h"
+#include "dir.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -395,19 +396,12 @@ static void fsck_dir(int i, char *path)
 	while ((de = readdir(dir)) != NULL) {
 		char name[100];
 		unsigned char sha1[20];
-		int len = strlen(de->d_name);
 
-		switch (len) {
-		case 2:
-			if (de->d_name[1] != '.')
-				break;
-		case 1:
-			if (de->d_name[0] != '.')
-				break;
+		if (is_dot_or_dotdot(de->d_name))
 			continue;
-		case 38:
+		if (strlen(de->d_name) == 38) {
 			sprintf(name, "%02x", i);
-			memcpy(name+2, de->d_name, len+1);
+			memcpy(name+2, de->d_name, 39);
 			if (get_sha1_hex(name, sha1) < 0)
 				break;
 			add_sha1_list(sha1, DIRENT_SORT_HINT(de));

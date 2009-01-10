@@ -585,10 +585,8 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			int len, dtype;
 			int exclude;
 
-			if ((de->d_name[0] == '.') &&
-			    (de->d_name[1] == 0 ||
-			     !strcmp(de->d_name + 1, ".") ||
-			     !strcmp(de->d_name + 1, "git")))
+			if (is_dot_or_dotdot(de->d_name) ||
+			     !strcmp(de->d_name, ".git"))
 				continue;
 			len = strlen(de->d_name);
 			/* Ignore overly long pathnames! */
@@ -793,10 +791,8 @@ int remove_dir_recursively(struct strbuf *path, int only_empty)
 	len = path->len;
 	while ((e = readdir(dir)) != NULL) {
 		struct stat st;
-		if ((e->d_name[0] == '.') &&
-		    ((e->d_name[1] == 0) ||
-		     ((e->d_name[1] == '.') && e->d_name[2] == 0)))
-			continue; /* "." and ".." */
+		if (is_dot_or_dotdot(e->d_name))
+			continue;
 
 		strbuf_setlen(path, len);
 		strbuf_addstr(path, e->d_name);

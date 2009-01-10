@@ -77,6 +77,13 @@ extern int file_exists(const char *);
 extern char *get_relative_cwd(char *buffer, int size, const char *dir);
 extern int is_inside_dir(const char *dir);
 
+static inline int is_dot_or_dotdot(const char *name)
+{
+	return (name[0] == '.' &&
+		(name[1] == '\0' ||
+		 (name[1] == '.' && name[2] == '\0')));
+}
+
 extern void setup_standard_excludes(struct dir_struct *dir);
 extern int remove_dir_recursively(struct strbuf *path, int only_empty);
 
