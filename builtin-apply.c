@@ -3140,16 +3140,6 @@ static int git_apply_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-static int option_parse_stdin(const struct option *opt,
-			      const char *arg, int unset)
-{
-	int *errs = opt->value;
-
-	*errs |= apply_patch(0, "<stdin>", options);
-	read_stdin = 0;
-	return 0;
-}
-
 static int option_parse_exclude(const struct option *opt,
 				const char *arg, int unset)
 {
@@ -3218,9 +3208,6 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 	const char *whitespace_option = NULL;
 
 	struct option builtin_apply_options[] = {
-		{ OPTION_CALLBACK, '-', NULL, &errs, NULL,
-			"read the patch from the standard input",
-			PARSE_OPT_NOARG, option_parse_stdin },
 		{ OPTION_CALLBACK, 0, "exclude", NULL, "path",
 			"don´t apply changes matching the given path",
 			0, option_parse_exclude },
@@ -3302,7 +3289,11 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 		const char *arg = argv[i];
 		int fd;
 
-		if (0 < prefix_length)
+		if (!strcmp(arg, "-")) {
+			errs |= apply_patch(0, "<stdin>", options);
+			read_stdin = 0;
+			continue;
+		} else if (0 < prefix_length)
 			arg = prefix_filename(prefix, prefix_length, arg);
 
 		fd = open(arg, O_RDONLY);
