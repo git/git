@@ -84,6 +84,8 @@ static inline int is_dot_or_dotdot(const char *name)
 		 (name[1] == '.' && name[2] == '\0')));
 }
 
+extern int is_empty_dir(const char *dir);
+
 extern void setup_standard_excludes(struct dir_struct *dir);
 extern int remove_dir_recursively(struct strbuf *path, int only_empty);
 

@@ -777,6 +777,25 @@ int is_inside_dir(const char *dir)
 	return get_relative_cwd(buffer, sizeof(buffer), dir) != NULL;
 }
 
+int is_empty_dir(const char *path)
+{
+	DIR *dir = opendir(path);
+	struct dirent *e;
+	int ret = 1;
+
+	if (!dir)
+		return 0;
+
+	while ((e = readdir(dir)) != NULL)
+		if (!is_dot_or_dotdot(e->d_name)) {
+			ret = 0;
+			break;
+		}
+
+	closedir(dir);
+	return ret;
+}
+
 int remove_dir_recursively(struct strbuf *path, int only_empty)
 {
 	DIR *dir = opendir(path->buf);
