@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2009, #01; Mon, 05)
-X-master-at: e9b852310ebc271bdd71bb3b980e77325ad7f75f
-X-next-at: 866a4abd3e8fee98a6d3bc74510db28c4bca0c48
+Subject: What's cooking in git.git (Jan 2009, #02; Sun, 11)
+X-master-at: 7eb5bbdb645e04d746bc0edea102744f50a5e529
+X-next-at: 1b01dafc9b8818adbe83018ebe1c21daf7fbed87
 
-What's cooking in git.git (Jan 2009, #01; Mon, 05)
+What's cooking in git.git (Jan 2009, #02; Sun, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed
@@ -21,84 +21,53 @@ git lately for the past few days, but hopefully I can get to them shortly.
 ----------------------------------------------------------------
 [New Topics]
 
-* js/bundle-tags (Fri Jan 2 19:08:46 2009 +0100) 1 commit
- + bundle: allow rev-list options to exclude annotated tags
+* rs/fgrep (Sat Jan 10 00:18:34 2009 +0100) 2 commits
+ + grep: don't call regexec() for fixed strings
+ + grep -w: forward to next possible position after rejected match
 
-* js/add-not-submodule (Fri Jan 2 19:08:40 2009 +0100) 1 commit
- + git add: do not add files from a submodule
+* lt/zlib-wrap-xprm (Wed Jan 7 19:54:47 2009 -0800) 1 commit
+ - Wrap inflateInit to retry allocation after releasing pack memory
 
-* pb/maint-git-pm-false-dir (Mon Dec 29 01:25:00 2008 +0100) 1 commit
- + Git.pm: correctly handle directory name that evaluates to "false"
+Need to clean up the log message, perhaps rebase it to maint-1.6.0 and
+start cooking in 'next'.
 
-* pj/maint-ldflags (Sun Jan 4 21:27:41 2009 -0500) 1 commit
- + configure clobbers LDFLAGS
+* jc/maint-format-patch (Sat Jan 10 12:41:33 2009 -0800) 1 commit
+ + format-patch: show patch text for the root commit
 
-* fe/cvsserver (Fri Jan 2 16:40:14 2009 +0100) 2 commits
- + cvsserver: change generation of CVS author names
- + cvsserver: add option to configure commit message
+* tr/maint-no-index-fixes (Wed Jan 7 12:15:30 2009 +0100) 3 commits
+ + diff --no-index -q: fix endless loop
+ + diff --no-index: test for pager after option parsing
+ + diff: accept -- when using --no-index
 
-* js/maint-bisect-gitk (Fri Jan 2 19:08:00 2009 +0100) 1 commit
- + bisect view: call gitk if Cygwin's SESSIONNAME variable is set
+* gb/gitweb-opml (Fri Jan 2 13:49:30 2009 +0100) 2 commits
+ - gitweb: suggest name for OPML view
+ - gitweb: don't use pathinfo for global actions
 
-* np/no-loosen-prune-expire-now (Tue Dec 30 14:45:11 2008 -0500) 1 commit
- + objects to be pruned immediately don't have to be loosened
+* mh/maint-commit-color-status (Thu Jan 8 19:53:05 2009 +0100) 2 commits
+ - git-status -v: color diff output when color.ui is set
+ - git-commit: color status output when color.ui is set
 
-* cb/maint-unpack-trees-absense (Thu Jan 1 21:54:33 2009 +0100) 3 commits
- + unpack-trees: remove redundant path search in verify_absent
- + unpack-trees: fix path search bug in verify_absent
- + unpack-trees: handle failure in verify_absent
+* ks/maint-mailinfo-folded (Thu Jan 8 01:43:42 2009 +0300) 1 commit
+ - mailinfo: correctly handle multiline 'Subject:' header
 
-* mc/cd-p-pwd (Tue Dec 30 07:10:24 2008 -0800) 1 commit
- + git-sh-setup: Fix scripts whose PWD is a symlink to a work-dir on
-   OS X
+* js/patience-diff (Thu Jan 1 17:39:37 2009 +0100) 3 commits
+ - bash completions: Add the --patience option
+ - Introduce the diff option '--patience'
+ - Implement the patience diff algorithm
 
-All of the above are good fixes and clean-ups; will be fast-tracked to
-'master' and maintenance branches as appropriate.
+All of the above 'pu' topics are ready for 'next'.
 
-* mv/apply-parse-opt (Sun Dec 28 00:03:57 2008 +0100) 1 commit
- + parse-opt: migrate builtin-apply.
+* ap/clone-into-empty (Fri Jan 9 02:24:23 2009 +0300) 2 commits
+ - Use is_pseudo_dir_name everywhere
+ - Allow cloning to an existing empty directory
 
-* mh/cherry-default (Thu Jan 1 22:56:29 2009 +0100) 2 commits
- + Documentation: clarify which parameters are optional to git-cherry
- + git-cherry: make <upstream> parameter optional
-
-* rs/maint-shortlog-foldline (Mon Dec 29 23:15:50 2008 +0100) 1 commit
- - [Need tidying up the log] pretty: support multiline subjects with
-   format:
-
-* tr/rebase-root (Fri Jan 2 23:28:29 2009 +0100) 4 commits
- - rebase: update documentation for --root
- - rebase -i: learn to rebase root commit
- - rebase: learn to rebase root commit
- - rebase -i: execute hook only after argument checking
-
-I should be able to find time to read this over again and merge to
-'next' sometime this week.
-
-* as/autocorrect-alias (Sun Jan 4 18:16:01 2009 +0100) 1 commit
- + git.c: make autocorrected aliases work
-
-* as/commit-signoff (Mon Dec 29 12:16:45 2008 +0100) 1 commit
- - [WIP] Add a commit.signoff configuration option to always use --
-   signoff in commit
+There is an updated patch that only refactors the repeated code to check
+if a dirent is dot or dot-dot posted, which I should have picked up to
+replace these but I haven't yet (the "clone into empty" can and should
+build on top of it).
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
-
-* wp/add-patch-find (Thu Nov 27 04:08:03 2008 +0000) 3 commits
- . In add --patch, Handle K,k,J,j slightly more gracefully.
- . Add / command in add --patch
- . git-add -i/-p: Change prompt separater from slash to comma
-
-Will discard and wait for a resubmit.
-
-* kb/am-directory (Fri Aug 29 15:27:50 2008 -0700) 1 commit
- . git-am: Pass the --directory option through to git-apply
-
-A reroll of this by Simon Schubert triggered a series to fix a parameter
-propagation bug, and another reroll to add "git am --directory=path/"
-should be much easier now.  I am not likely to use the feature myself, so
-it is up to intrested volunteers to carry it forward.
 
 * ds/uintmax-config (Mon Nov 3 09:14:28 2008 -0900) 1 commit
  - autoconf: Enable threaded delta search when pthreads are supported
@@ -123,17 +92,25 @@ need to be resurrected before this can move forward.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* nd/grep-assume-unchanged (Sat Dec 27 15:21:03 2008 +0700) 2 commits
- + grep: grep cache entries if they are "assume unchanged"
- + grep: support --no-ext-grep to test builtin grep
+* mv/apply-parse-opt (Fri Jan 9 22:21:36 2009 -0800) 2 commits
+ + Resurrect "git apply --flags -" to read from the standard input
+ + parse-opt: migrate builtin-apply.
 
-* as/maint-shortlog-cleanup (Tue Dec 30 22:01:44 2008 +0100) 1 commit
- + builtin-shortlog.c: use string_list_append(), and don't strdup
-   unnecessarily
+* rs/maint-shortlog-foldline (Tue Jan 6 21:41:06 2009 +0100) 1 commit
+ + shortlog: handle multi-line subjects like log --pretty=oneline et.
+   al. do
 
-* jc/maint-ls-tree (Wed Dec 31 19:00:50 2008 +0900) 2 commits
- + Document git-ls-tree --full-tree
- + ls-tree: add --full-tree option
+* tr/rebase-root (Fri Jan 2 23:28:29 2009 +0100) 4 commits
+ - rebase: update documentation for --root
+ - rebase -i: learn to rebase root commit
+ - rebase: learn to rebase root commit
+ - rebase -i: execute hook only after argument checking
+
+I should be able to find time to read this over again and merge to
+'next' sometime this week.
+
+* as/autocorrect-alias (Sun Jan 4 18:16:01 2009 +0100) 1 commit
+ + git.c: make autocorrected aliases work
 
 * js/notes (Sat Dec 20 13:06:03 2008 +0100) 4 commits
  - Add an expensive test for git-notes
@@ -154,15 +131,6 @@ need to be resurrected before this can move forward.
 
 ----------------------------------------------------------------
 [Graduated to "master"]
-
-* cb/mergetool (Fri Dec 12 21:48:41 2008 +0000) 4 commits
- + mergetool: Don't keep temporary merge files unless told to
- + mergetool: Add prompt to continue after failing to merge a file
- + Add -y/--no-prompt option to mergetool
- + Fix some tab/space inconsistencies in git-mergetool.sh
-
-----------------------------------------------------------------
-[Will merge to "master" soon]
 
 * mh/maint-sendmail-cc-doc (Mon Dec 29 00:37:25 2008 +0100) 1 commit
  + doc/git-send-email: mention sendemail.cc config variable
@@ -202,67 +170,67 @@ need to be resurrected before this can move forward.
  + http-push: support full URI in handle_remote_ls_ctx()
 
 ----------------------------------------------------------------
+[Will merge to "master" soon]
+
+* nd/grep-assume-unchanged (Sat Dec 27 15:21:03 2008 +0700) 2 commits
+ + grep: grep cache entries if they are "assume unchanged"
+ + grep: support --no-ext-grep to test builtin grep
+
+* as/maint-shortlog-cleanup (Tue Dec 30 22:01:44 2008 +0100) 1 commit
+ + builtin-shortlog.c: use string_list_append(), and don't strdup
+   unnecessarily
+
+* jc/maint-ls-tree (Wed Dec 31 19:00:50 2008 +0900) 2 commits
+ + Document git-ls-tree --full-tree
+ + ls-tree: add --full-tree option
+
+* js/bundle-tags (Fri Jan 2 19:08:46 2009 +0100) 1 commit
+ + bundle: allow rev-list options to exclude annotated tags
+
+* js/add-not-submodule (Fri Jan 2 19:08:40 2009 +0100) 1 commit
+ + git add: do not add files from a submodule
+
+* pb/maint-git-pm-false-dir (Mon Dec 29 01:25:00 2008 +0100) 1 commit
+ + Git.pm: correctly handle directory name that evaluates to "false"
+
+* pj/maint-ldflags (Sun Jan 4 21:27:41 2009 -0500) 1 commit
+ + configure clobbers LDFLAGS
+
+* fe/cvsserver (Fri Jan 2 16:40:14 2009 +0100) 2 commits
+ + cvsserver: change generation of CVS author names
+ + cvsserver: add option to configure commit message
+
+* js/maint-bisect-gitk (Fri Jan 2 19:08:00 2009 +0100) 1 commit
+ + bisect view: call gitk if Cygwin's SESSIONNAME variable is set
+
+* np/no-loosen-prune-expire-now (Tue Dec 30 14:45:11 2008 -0500) 1 commit
+ + objects to be pruned immediately don't have to be loosened
+
+* cb/maint-unpack-trees-absense (Thu Jan 1 21:54:33 2009 +0100) 3 commits
+ + unpack-trees: remove redundant path search in verify_absent
+ + unpack-trees: fix path search bug in verify_absent
+ + unpack-trees: handle failure in verify_absent
+
+* mc/cd-p-pwd (Tue Dec 30 07:10:24 2008 -0800) 1 commit
+ + git-sh-setup: Fix scripts whose PWD is a symlink to a work-dir on
+   OS X
+
+* mh/cherry-default (Thu Jan 1 22:56:29 2009 +0100) 2 commits
+ + Documentation: clarify which parameters are optional to git-cherry
+ + git-cherry: make <upstream> parameter optional
+
+----------------------------------------------------------------
+[Will drop]
+
+* as/commit-signoff (Mon Dec 29 12:16:45 2008 +0100) 1 commit
+ - [WIP] Add a commit.signoff configuration option to always use --
+   signoff in commit
+
+The semantics when "git commit" was used as a backend for other actions
+such as rebase and cherry-pick was unclear.
+
+----------------------------------------------------------------
 [On Hold]
-
-* nd/narrow (Sun Nov 30 17:54:38 2008 +0700) 17 commits
- - wt-status: show sparse checkout info
- - Introduce default sparse patterns (core.defaultsparse)
- - checkout: add new options to support sparse checkout
- - clone: support sparse checkout with --sparse-checkout option
- - unpack_trees(): add support for sparse checkout
- - unpack_trees(): keep track of unmerged entries
- - Introduce "sparse patterns"
- - Merge branch 'master' into nd/narrow
- - t2104: touch portability fix
- - grep: skip files outside sparse checkout area
- - checkout_entry(): CE_NO_CHECKOUT on checked out entries.
- - Prevent diff machinery from examining worktree outside sparse
-   checkout
- - ls-files: Add tests for --sparse and friends
- - update-index: add --checkout/--no-checkout to update
-   CE_NO_CHECKOUT bit
- - update-index: refactor mark_valid() in preparation for new options
- - ls-files: add options to support sparse checkout
- - Introduce CE_NO_CHECKOUT bit
-
-Will drop shortly, but there may be some other fixes to CE_VALID, like
-nd/grep-assume-unchanged topic above, that we may want to resurrect.
-
-* jc/clone-symref-2 (Sat Nov 29 23:38:21 2008 -0800) 7 commits
- - clone: test the new HEAD detection logic
- - Merge commit 'HEAD@{2}' into HEAD
- - upload-pack: send the HEAD information
- - clone: find the current branch more explicitly
- - connect.c::read_extra_info(): find where HEAD points at
- - connect.c::read_extra_info(): prepare to receive more than server
-   capabilities
- - get_remote_heads(): refactor code to read "server capabilities"
-
-An attempt to extend the fetch protocol to make the logic to detect where
-HEAD on the origin site points to more robust.  Will drop shortly as the
-protocol extension was not very popular.
-
-* cc/bisect-replace (Mon Nov 24 22:20:30 2008 +0100) 9 commits
- - bisect: add "--no-replace" option to bisect without using replace
-   refs
- - rev-list: make it possible to disable replacing using "--no-
-   bisect-replace"
- - bisect: use "--bisect-replace" options when checking merge bases
- - merge-base: add "--bisect-replace" option to use fixed up revs
- - commit: add "bisect_replace_all" prototype to "commit.h"
- - rev-list: add "--bisect-replace" to list revisions with fixed up
-   history
- - Documentation: add "git bisect replace" documentation
- - bisect: add test cases for "git bisect replace"
- - bisect: add "git bisect replace" subcommand
-
-Will drop and replace it with the resubmitted series when it comes.
-
-* jc/send-pack-tell-me-more (Thu Mar 20 00:44:11 2008 -0700) 1 commit
- - "git push": tellme-more protocol extension
-
-This seems to have a deadlock during communication between the peers.
-Will drop shortly.
 
 * jk/renamelimit (Sat May 3 13:58:42 2008 -0700) 1 commit
  - diff: enable "too large a rename" warning when -M/-C is explicitly
@@ -280,4 +248,3 @@ this back for now.
  - stripspace: use parse_options()
  - Add "git am -s" test
  - git-am: refactor code to add signed-off-by line for the committer
-
