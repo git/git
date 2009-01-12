@@ -50,4 +50,12 @@ test_expect_success 'interrupted am -C1 -p2' '
 	grep "^Three$" file-2
 '
 
+test_expect_success 'interrupted am --directory="frotz nitfol"' '
+	rm -rf .git/rebase-apply &&
+	git reset --hard initial &&
+	test_must_fail git am --directory="frotz nitfol" "$tm"/am-test-5-? &&
+	git am --skip &&
+	grep One "frotz nitfol/file-5"
+'
+
 test_done

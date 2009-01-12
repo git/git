@@ -16,6 +16,7 @@ s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
 k,keep          pass -k flag to git-mailinfo
 whitespace=     pass it through git-apply
+directory=      pass it through git-apply
 C=              pass it through git-apply
 p=              pass it through git-apply
 resolvemsg=     override error message when patch failure occurs
@@ -32,6 +33,14 @@ cd_to_toplevel
 
 git var GIT_COMMITTER_IDENT >/dev/null ||
 	die "You need to set your committer info first"
+
+sq () {
+	for sqarg
+	do
+		printf "%s" "$sqarg" |
+		sed -e 's/'\''/'\''\'\'''\''/g' -e 's/.*/ '\''&'\''/'
+	done
+}
 
 stop_here () {
     echo "$1" >"$dotest/next"
@@ -155,10 +164,10 @@ do
 		;;
 	--resolvemsg)
 		shift; resolvemsg=$1 ;;
-	--whitespace)
-		git_apply_opt="$git_apply_opt $1=$2"; shift ;;
+	--whitespace|--directory)
+		git_apply_opt="$git_apply_opt $(sq "$1=$2")"; shift ;;
 	-C|-p)
-		git_apply_opt="$git_apply_opt $1$2"; shift ;;
+		git_apply_opt="$git_apply_opt $(sq "$1$2")"; shift ;;
 	--)
 		shift; break ;;
 	*)
@@ -459,7 +468,7 @@ do
 
 	case "$resolved" in
 	'')
-		git apply $git_apply_opt --index "$dotest/patch"
+		eval 'git apply '"$git_apply_opt"' --index "$dotest/patch"'
 		apply_status=$?
 		;;
 	t)
