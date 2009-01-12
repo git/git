@@ -568,6 +568,7 @@ static const char *get_oneline_for_filename(struct commit *commit,
 
 static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
+static int outdir_offset;
 
 static int reopen_stdout(const char *oneline, int nr, int total)
 {
@@ -594,7 +595,7 @@ static int reopen_stdout(const char *oneline, int nr, int total)
 		strcpy(filename + len, fmt_patch_suffix);
 	}
 
-	fprintf(realstdout, "%s\n", filename);
+	fprintf(realstdout, "%s\n", filename + outdir_offset);
 	if (freopen(filename, "w", stdout) == NULL)
 		return error("Cannot open patch file %s",filename);
 
@@ -755,6 +756,27 @@ static const char *clean_message_id(const char *msg_id)
 	if (++z == m)
 		return a;
 	return xmemdupz(a, z - a);
+}
+
+static const char *set_outdir(const char *prefix, const char *output_directory)
+{
+	if (output_directory && is_absolute_path(output_directory))
+		return output_directory;
+
+	if (!prefix || !*prefix) {
+		if (output_directory)
+			return output_directory;
+		/* The user did not explicitly ask for "./" */
+		outdir_offset = 2;
+		return "./";
+	}
+
+	outdir_offset = strlen(prefix);
+	if (!output_directory)
+		return prefix;
+
+	return xstrdup(prefix_filename(prefix, outdir_offset,
+				       output_directory));
 }
 
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
@@ -935,8 +957,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!DIFF_OPT_TST(&rev.diffopt, TEXT) && !no_binary_diff)
 		DIFF_OPT_SET(&rev.diffopt, BINARY);
 
-	if (!output_directory && !use_stdout)
-		output_directory = prefix;
+	if (!use_stdout)
+		output_directory = set_outdir(prefix, output_directory);
 
 	if (output_directory) {
 		if (use_stdout)
