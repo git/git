@@ -1700,6 +1700,9 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	delta_base_cache_lru.prev = &ent->lru;
 }
 
+static void *read_object(const unsigned char *sha1, enum object_type *type,
+			 unsigned long *size);
+
 static void *unpack_delta_entry(struct packed_git *p,
 				struct pack_window **w_curs,
 				off_t curpos,
@@ -2130,8 +2133,8 @@ int pretend_sha1_file(void *buf, unsigned long len, enum object_type type,
 	return 0;
 }
 
-void *read_object(const unsigned char *sha1, enum object_type *type,
-		  unsigned long *size)
+static void *read_object(const unsigned char *sha1, enum object_type *type,
+			 unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
