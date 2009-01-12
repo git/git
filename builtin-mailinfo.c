@@ -871,6 +871,7 @@ static void handle_info(void)
 			}
 			output_header_lines(fout, "Subject", hdr);
 		} else if (!memcmp(header[i], "From", 4)) {
+			cleanup_space(hdr);
 			handle_from(hdr);
 			fprintf(fout, "Author: %s\n", name.buf);
 			fprintf(fout, "Email: %s\n", email.buf);
