@@ -3291,6 +3291,11 @@ sub _mark_empty_symlinks {
 	\%ret;
 }
 
+# returns true if a given path is inside a ".git" directory
+sub in_dot_git {
+	$_[0] =~ m{(?:^|/)\.git(?:/|$)};
+}
+
 sub set_path_strip {
 	my ($self, $path) = @_;
 	$self->{path_strip} = qr/^\Q$path\E(\/|$)/ if length $path;
@@ -3316,6 +3321,7 @@ sub git_path {
 
 sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
+	return undef if in_dot_git($path);
 
 	my $gpath = $self->git_path($path);
 	return undef if ($gpath eq '');
@@ -3343,8 +3349,12 @@ sub delete_entry {
 
 sub open_file {
 	my ($self, $path, $pb, $rev) = @_;
+	my ($mode, $blob);
+
+	goto out if in_dot_git($path);
+
 	my $gpath = $self->git_path($path);
-	my ($mode, $blob) = (command('ls-tree', $self->{c}, '--', $gpath)
+	($mode, $blob) = (command('ls-tree', $self->{c}, '--', $gpath)
 	                     =~ /^(\d{6}) blob ([a-f\d]{40})\t/);
 	unless (defined $mode && defined $blob) {
 		die "$path was not found in commit $self->{c} (r$rev)\n";
@@ -3352,20 +3362,27 @@ sub open_file {
 	if ($mode eq '100644' && $self->{empty_symlinks}->{$path}) {
 		$mode = '120000';
 	}
+out:
 	{ path => $path, mode_a => $mode, mode_b => $mode, blob => $blob,
 	  pool => SVN::Pool->new, action => 'M' };
 }
 
 sub add_file {
 	my ($self, $path, $pb, $cp_path, $cp_rev) = @_;
-	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
-	delete $self->{empty}->{$dir};
-	{ path => $path, mode_a => 100644, mode_b => 100644,
+	my $mode;
+
+	if (!in_dot_git($path)) {
+		my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
+		delete $self->{empty}->{$dir};
+		$mode = '100644';
+	}
+	{ path => $path, mode_a => $mode, mode_b => $mode,
 	  pool => SVN::Pool->new, action => 'A' };
 }
 
 sub add_directory {
 	my ($self, $path, $cp_path, $cp_rev) = @_;
+	goto out if in_dot_git($path);
 	my $gpath = $self->git_path($path);
 	if ($gpath eq '') {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
@@ -3383,11 +3400,13 @@ sub add_directory {
 	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
 	delete $self->{empty}->{$dir};
 	$self->{empty}->{$path} = 1;
+out:
 	{ path => $path };
 }
 
 sub change_dir_prop {
 	my ($self, $db, $prop, $value) = @_;
+	return undef if in_dot_git($db->{path});
 	$self->{dir_prop}->{$db->{path}} ||= {};
 	$self->{dir_prop}->{$db->{path}}->{$prop} = $value;
 	undef;
@@ -3395,6 +3414,7 @@ sub change_dir_prop {
 
 sub absent_directory {
 	my ($self, $path, $pb) = @_;
+	return undef if in_dot_git($pb->{path});
 	$self->{absent_dir}->{$pb->{path}} ||= [];
 	push @{$self->{absent_dir}->{$pb->{path}}}, $path;
 	undef;
@@ -3402,6 +3422,7 @@ sub absent_directory {
 
 sub absent_file {
 	my ($self, $path, $pb) = @_;
+	return undef if in_dot_git($pb->{path});
 	$self->{absent_file}->{$pb->{path}} ||= [];
 	push @{$self->{absent_file}->{$pb->{path}}}, $path;
 	undef;
@@ -3409,6 +3430,7 @@ sub absent_file {
 
 sub change_file_prop {
 	my ($self, $fb, $prop, $value) = @_;
+	return undef if in_dot_git($fb->{path});
 	if ($prop eq 'svn:executable') {
 		if ($fb->{mode_b} != 120000) {
 			$fb->{mode_b} = defined $value ? 100755 : 100644;
@@ -3424,11 +3446,13 @@ sub change_file_prop {
 
 sub apply_textdelta {
 	my ($self, $fb, $exp) = @_;
+	return undef if (in_dot_git($fb->{path}));
 	my $fh = $::_repository->temp_acquire('svn_delta');
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
 	open my $dup, '<&', $fh or croak $!;
 	my $base = $::_repository->temp_acquire('git_blob');
+
 	if ($fb->{blob}) {
 		my ($base_is_link, $size);
 
@@ -3469,6 +3493,8 @@ sub apply_textdelta {
 
 sub close_file {
 	my ($self, $fb, $exp) = @_;
+	return undef if (in_dot_git($fb->{path}));
+
 	my $hash;
 	my $path = $self->git_path($fb->{path});
 	if (my $fh = $fb->{fh}) {
