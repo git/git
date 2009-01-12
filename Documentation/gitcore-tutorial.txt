@@ -1243,10 +1243,10 @@ $ git ls-files --stage
 ------------
 
 In our example of only two files, we did not have unchanged
-files so only 'example' resulted in collapsing, but in real-life
-large projects, only small number of files change in one commit,
-and this 'collapsing' tends to trivially merge most of the paths
-fairly quickly, leaving only a handful the real changes in non-zero
+files so only 'example' resulted in collapsing.  But in real-life
+large projects, when only a small number of files change in one commit,
+this 'collapsing' tends to trivially merge most of the paths
+fairly quickly, leaving only a handful of real changes in non-zero
 stages.
 
 To look at only non-zero stages, use `\--unmerged` flag:
