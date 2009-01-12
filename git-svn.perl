@@ -3200,7 +3200,10 @@ sub new {
 	my ($class, $git_svn) = @_;
 	my $self = SVN::Delta::Editor->new;
 	bless $self, $class;
-	$self->{c} = $git_svn->{last_commit} if exists $git_svn->{last_commit};
+	if (exists $git_svn->{last_commit}) {
+		$self->{c} = $git_svn->{last_commit};
+		$self->{empty_symlinks} = _mark_empty_symlinks($git_svn);
+	}
 	$self->{empty} = {};
 	$self->{dir_prop} = {};
 	$self->{file_prop} = {};
@@ -3208,6 +3211,34 @@ sub new {
 	$self->{absent_file} = {};
 	$self->{gii} = $git_svn->tmp_index_do(sub { Git::IndexInfo->new });
 	$self;
+}
+
+# this uses the Ra object, so it must be called before do_{switch,update},
+# not inside them (when the Git::SVN::Fetcher object is passed) to
+# do_{switch,update}
+sub _mark_empty_symlinks {
+	my ($git_svn) = @_;
+	my %ret;
+	my ($rev, $cmt) = $git_svn->last_rev_commit;
+	return {} unless ($rev && $cmt);
+
+	chomp(my $empty_blob = `git hash-object -t blob --stdin < /dev/null`);
+	my ($ls, $ctx) = command_output_pipe(qw/ls-tree -r -z/, $cmt);
+	local $/ = "\0";
+	my $pfx = $git_svn->{path};
+	$pfx .= '/' if length($pfx);
+	while (<$ls>) {
+		chomp;
+		s/\A100644 blob $empty_blob\t//o or next;
+		my $path = $_;
+		my (undef, $props) =
+		               $git_svn->ra->get_file($pfx.$path, $rev, undef);
+		if ($props->{'svn:special'}) {
+			$ret{$path} = 1;
+		}
+	}
+	command_close_pipe($ls, $ctx);
+	\%ret;
 }
 
 sub set_path_strip {
@@ -3267,6 +3298,9 @@ sub open_file {
 	                     =~ /^(\d{6}) blob ([a-f\d]{40})\t/);
 	unless (defined $mode && defined $blob) {
 		die "$path was not found in commit $self->{c} (r$rev)\n";
+	}
+	if ($mode eq '100644' && $self->{empty_symlinks}->{$path}) {
+		$mode = '120000';
 	}
 	{ path => $path, mode_a => $mode, mode_b => $mode, blob => $blob,
 	  pool => SVN::Pool->new, action => 'M' };
@@ -3346,7 +3380,10 @@ sub apply_textdelta {
 	open my $dup, '<&', $fh or croak $!;
 	my $base = $::_repository->temp_acquire('git_blob');
 	if ($fb->{blob}) {
-		print $base 'link ' if ($fb->{mode_a} == 120000);
+		if ($fb->{mode_a} eq '120000' &&
+		    ! $self->{empty_symlinks}->{$fb->{path}}) {
+			print $base 'link ' or die "print $!\n";
+		}
 		my $size = $::_repository->cat_blob($fb->{blob}, $base);
 		die "Failed to read object $fb->{blob}" if ($size < 0);
 
@@ -3379,11 +3416,19 @@ sub close_file {
 		}
 		if ($fb->{mode_b} == 120000) {
 			sysseek($fh, 0, 0) or croak $!;
-			sysread($fh, my $buf, 5) == 5 or croak $!;
+			my $rd = sysread($fh, my $buf, 5);
 
-			unless ($buf eq 'link ') {
+			if (!defined $rd) {
+				croak "sysread: $!\n";
+			} elsif ($rd == 0) {
 				warn "$path has mode 120000",
-						" but is not a link\n";
+				     " but it points to nothing\n",
+				     "converting to an empty file with mode",
+				     " 100644\n";
+				$fb->{mode_b} = '100644';
+			} elsif ($buf ne 'link ') {
+				warn "$path has mode 120000",
+				     " but is not a link\n";
 			} else {
 				my $tmp_fh = $::_repository->temp_acquire(
 					'svn_hash');
