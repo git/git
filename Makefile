@@ -280,7 +280,10 @@ endif
 
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
-CFLAGS = -g -O2 -Wall
+CFLAGS = -g -O2 -Wall -Werror \
+	-Wno-pointer-to-int-cast \
+	-Wold-style-definition \
+	-Wdeclaration-after-statement
 LDFLAGS =
 ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
