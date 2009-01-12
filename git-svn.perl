@@ -3380,19 +3380,35 @@ sub apply_textdelta {
 	open my $dup, '<&', $fh or croak $!;
 	my $base = $::_repository->temp_acquire('git_blob');
 	if ($fb->{blob}) {
+		my ($base_is_link, $size);
+
 		if ($fb->{mode_a} eq '120000' &&
 		    ! $self->{empty_symlinks}->{$fb->{path}}) {
 			print $base 'link ' or die "print $!\n";
+			$base_is_link = 1;
 		}
-		my $size = $::_repository->cat_blob($fb->{blob}, $base);
+	retry:
+		$size = $::_repository->cat_blob($fb->{blob}, $base);
 		die "Failed to read object $fb->{blob}" if ($size < 0);
 
 		if (defined $exp) {
 			seek $base, 0, 0 or croak $!;
 			my $got = ::md5sum($base);
-			die "Checksum mismatch: $fb->{path} $fb->{blob}\n",
-			    "expected: $exp\n",
-			    "     got: $got\n" if ($got ne $exp);
+			if ($got ne $exp) {
+				my $err = "Checksum mismatch: ".
+				       "$fb->{path} $fb->{blob}\n" .
+				       "expected: $exp\n" .
+				       "     got: $got\n";
+				if ($base_is_link) {
+					warn $err,
+					     "Retrying... (possibly ",
+					     "a bad symlink from SVN)\n";
+					$::_repository->temp_reset($base);
+					$base_is_link = 0;
+					goto retry;
+				}
+				die $err;
+			}
 		}
 	}
 	seek $base, 0, 0 or croak $!;
