@@ -630,7 +630,7 @@ static int gitdiff_index(const char *line, struct patch *patch)
 	memcpy(patch->new_sha1_prefix, line, len);
 	patch->new_sha1_prefix[len] = 0;
 	if (*ptr == ' ')
-		patch->new_mode = patch->old_mode = strtoul(ptr+1, NULL, 8);
+		patch->old_mode = strtoul(ptr+1, NULL, 8);
 	return 0;
 }
 
@@ -2447,6 +2447,8 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	if (st_mode != patch->old_mode)
 		fprintf(stderr, "warning: %s has type %o, expected %o\n",
 			old_name, st_mode, patch->old_mode);
+	if (!patch->new_mode)
+		patch->new_mode = st_mode;
 	return 0;
 
  is_new:
