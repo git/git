@@ -447,6 +447,30 @@ static void flush_buffer(int fd, const char *buf, unsigned long size)
 	}
 }
 
+static int would_lose_untracked(const char *path)
+{
+	int pos = cache_name_pos(path, strlen(path));
+
+	if (pos < 0)
+		pos = -1 - pos;
+	while (pos < active_nr &&
+	       !strcmp(path, active_cache[pos]->name)) {
+		/*
+		 * If stage #0, it is definitely tracked.
+		 * If it has stage #2 then it was tracked
+		 * before this merge started.  All other
+		 * cases the path was not tracked.
+		 */
+		switch (ce_stage(active_cache[pos])) {
+		case 0:
+		case 2:
+			return 0;
+		}
+		pos++;
+	}
+	return file_exists(path);
+}
+
 static int make_room_for_path(const char *path)
 {
 	int status;
@@ -461,6 +485,14 @@ static int make_room_for_path(const char *path)
 		}
 		die(msg, path, "");
 	}
+
+	/*
+	 * Do not unlink a file in the work tree if we are not
+	 * tracking it.
+	 */
+	if (would_lose_untracked(path))
+		return error("refusing to lose untracked file at '%s'",
+			     path);
 
 	/* Successful unlink is good.. */
 	if (!unlink(path))
