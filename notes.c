@@ -110,8 +110,8 @@ void get_commit_notes(const struct commit *commit, struct strbuf *sb,
 {
 	static const char *utf8 = "utf-8";
 	unsigned char *sha1;
-	char *msg;
-	unsigned long msgoffset, msglen;
+	char *msg, *msg_p;
+	unsigned long linelen, msglen;
 	enum object_type type;
 
 	if (!initialized) {
@@ -148,12 +148,13 @@ void get_commit_notes(const struct commit *commit, struct strbuf *sb,
 
 	strbuf_addstr(sb, "\nNotes:\n");
 
-	for (msgoffset = 0; msgoffset < msglen;) {
-		int linelen = strchrnul(msg, '\n') - msg;
+	for (msg_p = msg; msg_p < msg + msglen; msg_p += linelen + 1) {
+		linelen = strchrnul(msg_p, '\n') - msg_p;
 
 		strbuf_addstr(sb, "    ");
-		strbuf_add(sb, msg + msgoffset, linelen);
-		msgoffset += linelen;
+		strbuf_add(sb, msg_p, linelen);
+		strbuf_addch(sb, '\n');
 	}
+
 	free(msg);
 }
