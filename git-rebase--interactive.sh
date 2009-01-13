@@ -349,7 +349,7 @@ do_next () {
 	squash|s)
 		comment_for_reflog squash
 
-		has_action "$DONE" ||
+		test -f "$DONE" && has_action "$DONE" ||
 			die "Cannot 'squash' without a previous commit"
 
 		mark_action_done
