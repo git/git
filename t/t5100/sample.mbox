@@ -556,3 +556,8 @@ index 3fd3afb..0ee807e 100644
  #. на своей машине: отредактировать /etc/sudoers (команда ``visudo``) примерно следующим образом::
 -- 
 1.5.6.5
+From nobody Mon Sep 17 00:00:00 2001
+From: <a.u.thor@example.com> (A U Thor)
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: [PATCH] a patch
+
