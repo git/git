@@ -188,7 +188,9 @@ static int need_to_gc(void)
 	 * there is no need.
 	 */
 	if (too_many_packs())
-		append_option(argv_repack, "-A", MAX_ADD);
+		append_option(argv_repack,
+			      !strcmp(prune_expire, "now") ? "-a" : "-A",
+			      MAX_ADD);
 	else if (!too_many_loose_objects())
 		return 0;
 
@@ -243,7 +245,9 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			"run \"git gc\" manually. See "
 			"\"git help gc\" for more information.\n");
 	} else
-		append_option(argv_repack, "-A", MAX_ADD);
+		append_option(argv_repack,
+			      !strcmp(prune_expire, "now") ? "-a" : "-A",
+			      MAX_ADD);
 
 	if (pack_refs && run_command_v_opt(argv_pack_refs, RUN_GIT_CMD))
 		return error(FAILED_RUN, argv_pack_refs[0]);

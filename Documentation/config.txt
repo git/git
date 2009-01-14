@@ -702,7 +702,9 @@ gc.packrefs::
 
 gc.pruneexpire::
 	When 'git-gc' is run, it will call 'prune --expire 2.weeks.ago'.
-	Override the grace period with this config variable.
+	Override the grace period with this config variable.  The value
+	"now" may be used to disable this  grace period and always prune
+	unreachable objects immediately.
 
 gc.reflogexpire::
 	'git-reflog expire' removes reflog entries older than
