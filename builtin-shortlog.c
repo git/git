@@ -36,7 +36,6 @@ static void insert_one_record(struct shortlog *log,
 	const char *dot3 = log->common_repo_prefix;
 	char *buffer, *p;
 	struct string_list_item *item;
-	struct string_list *onelines;
 	char namebuf[1024];
 	size_t len;
 	const char *eol;
@@ -68,12 +67,9 @@ static void insert_one_record(struct shortlog *log,
 		snprintf(namebuf + len, room, " %.*s", maillen, boemail);
 	}
 
-	buffer = xstrdup(namebuf);
-	item = string_list_insert(buffer, &log->list);
+	item = string_list_insert(namebuf, &log->list);
 	if (item->util == NULL)
 		item->util = xcalloc(1, sizeof(struct string_list));
-	else
-		free(buffer);
 
 	/* Skip any leading whitespace, including any blank lines. */
 	while (*oneline && isspace(*oneline))
@@ -104,16 +100,7 @@ static void insert_one_record(struct shortlog *log,
 		}
 	}
 
-	onelines = item->util;
-	if (onelines->nr >= onelines->alloc) {
-		onelines->alloc = alloc_nr(onelines->nr);
-		onelines->items = xrealloc(onelines->items,
-				onelines->alloc
-				* sizeof(struct string_list_item));
-	}
-
-	onelines->items[onelines->nr].util = NULL;
-	onelines->items[onelines->nr++].string = buffer;
+	string_list_append(buffer, item->util);
 }
 
 static void read_from_stdin(struct shortlog *log)
@@ -323,7 +310,7 @@ void shortlog_output(struct shortlog *log)
 		}
 
 		onelines->strdup_strings = 1;
-		string_list_clear(onelines, 1);
+		string_list_clear(onelines, 0);
 		free(onelines);
 		log->list.items[i].util = NULL;
 	}
