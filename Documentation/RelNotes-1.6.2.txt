@@ -10,7 +10,32 @@ Updates since v1.6.1
 
 (performance)
 
+* pack-objects autodetects the number of CPUs available and uses threaded
+  version.
+
 (usability, bells and whistles)
+
+* "git-add -p" learned 'g'oto action to jump directly to a hunk.
+
+* git-cherry defaults to HEAD when the <upstream> argument is not given.
+
+* git-cvsserver can be told not to add extra "via git-CVS emulator" to the
+  commit log message it serves via gitcvs.commitmsgannotation configuration.
+
+* git-diff learned a new option --inter-hunk-context to coalesce close
+  hunks together and show context between them.
+
+* git-filter-branch learned --prune-empty option that discards commits
+  that do not change the contents.
+
+* git-ls-tree learned --full-tree option that shows the path in full
+  regardless of where in the work tree hierarchy the command was started.
+
+* git-mergetool learned -y(--no-prompt) option to disable prompting.
+
+* "git-reset --merge" is a new mode that works similar to the way
+  "git checkout" switches branches, taking the local changes while
+  switching to another commit.
 
 (internal)
 
@@ -21,8 +46,20 @@ Fixes since v1.6.1
 All of the fixes in v1.6.1.X maintenance series are included in this
 release, unless otherwise noted.
 
+* "git-add sub/file" when sub is a submodule incorrectly added the path to
+  the superproject.
+
+* git-bundle did not exclude annotated tags even when a range given from the
+  command line wanted to.
+
+* git-grep did not work correctly for index entries with assume-unchanged bit.
+
+* branch switching and merges had a silly bug that did not validate
+  the correct directory when making sure an existing subdirectory is
+  clean.
+
 --
 exec >/var/tmp/1
-O=v1.6.1
+O=v1.6.1-134-ge98c6a1
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
