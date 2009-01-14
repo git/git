@@ -725,6 +725,10 @@ gc.rerereunresolved::
 	kept for this many days when 'git-rerere gc' is run.
 	The default is 15 days.  See linkgit:git-rerere[1].
 
+gitcvs.commitmsgannotation::
+	Append this string to each commit message. Set to empty string
+	to disable this feature. Defaults to "via git-CVS emulator".
+
 gitcvs.enabled::
 	Whether the CVS server interface is enabled for this repository.
 	See linkgit:git-cvsserver[1].
