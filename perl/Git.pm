@@ -1010,8 +1010,8 @@ sub _temp_cache {
 	my $temp_fd = \$TEMP_FILEMAP{$name};
 	if (defined $$temp_fd and $$temp_fd->opened) {
 		if ($TEMP_FILES{$$temp_fd}{locked}) {
-			throw Error::Simple("Temp file with moniker '",
-				$name, "' already in use");
+			throw Error::Simple("Temp file with moniker '" .
+				$name . "' already in use");
 		}
 	} else {
 		if (defined $$temp_fd) {
