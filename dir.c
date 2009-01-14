@@ -118,7 +118,7 @@ int match_pathspec(const char **pathspec, const char *name, int namelen, int pre
 
 	for (retval = 0; (match = *pathspec++) != NULL; seen++) {
 		int how;
-		if (retval && *seen == MATCHED_EXACTLY)
+		if (*seen == MATCHED_EXACTLY)
 			continue;
 		match += prefix;
 		how = match_one(match, name, namelen);
