@@ -166,7 +166,7 @@ static int list_paths(struct string_list *list, const char *with_tree,
 		struct cache_entry *ce = active_cache[i];
 		if (ce->ce_flags & CE_UPDATE)
 			continue;
-		if (!pathspec_match(pattern, m, ce->name, 0))
+		if (!match_pathspec(pattern, ce->name, ce_namelen(ce), 0, m))
 			continue;
 		string_list_insert(ce->name, list);
 	}
