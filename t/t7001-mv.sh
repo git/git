@@ -49,7 +49,7 @@ test_expect_success \
      test -f untracked1 &&
      test ! -f path0/untracked1'
 
-test_expect_failure \
+test_expect_success \
     'checking -k on multiple untracked files' \
     'touch untracked2 &&
      git mv -k untracked1 untracked2 path0 &&
