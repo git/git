@@ -388,6 +388,23 @@ test_expect_success 'aborted --continue does not squash commits after "edit"' '
 	git rebase --abort
 '
 
+test_expect_success 'auto-amend only edited commits after "edit"' '
+	test_tick &&
+	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
+	echo "edited again" > file7 &&
+	git add file7 &&
+	FAKE_COMMIT_MESSAGE="edited file7 again" git commit &&
+	echo "and again" > file7 &&
+	git add file7 &&
+	test_tick &&
+	(
+		FAKE_COMMIT_MESSAGE="and again" &&
+		export FAKE_COMMIT_MESSAGE &&
+		test_must_fail git rebase --continue
+	) &&
+	git rebase --abort
+'
+
 test_expect_success 'rebase a detached HEAD' '
 	grandparent=$(git rev-parse HEAD~2) &&
 	git checkout $(git rev-parse HEAD) &&
