@@ -52,7 +52,7 @@ esac
 
 __gitdir ()
 {
-	if [ -z "$1" ]; then
+	if [ -z "${1-}" ]; then
 		if [ -n "$__git_dir" ]; then
 			echo "$__git_dir"
 		elif [ -d .git ]; then
@@ -111,7 +111,7 @@ __git_ps1 ()
 			fi
 		fi
 
-		if [ -n "$1" ]; then
+		if [ -n "${1-}" ]; then
 			printf "$1" "${b##refs/heads/}$r"
 		else
 			printf " (%s)" "${b##refs/heads/}$r"
@@ -143,8 +143,8 @@ __gitcomp ()
 		;;
 	*)
 		local IFS=$'\n'
-		COMPREPLY=($(compgen -P "$2" \
-			-W "$(__gitcomp_1 "$1" "$4")" \
+		COMPREPLY=($(compgen -P "${2-}" \
+			-W "$(__gitcomp_1 "${1-}" "${4-}")" \
 			-- "$cur"))
 		;;
 	esac
@@ -152,13 +152,13 @@ __gitcomp ()
 
 __git_heads ()
 {
-	local cmd i is_hash=y dir="$(__gitdir "$1")"
+	local cmd i is_hash=y dir="$(__gitdir "${1-}")"
 	if [ -d "$dir" ]; then
 		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
 			refs/heads
 		return
 	fi
-	for i in $(git ls-remote "$1" 2>/dev/null); do
+	for i in $(git ls-remote "${1-}" 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
@@ -170,13 +170,13 @@ __git_heads ()
 
 __git_tags ()
 {
-	local cmd i is_hash=y dir="$(__gitdir "$1")"
+	local cmd i is_hash=y dir="$(__gitdir "${1-}")"
 	if [ -d "$dir" ]; then
 		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
 			refs/tags
 		return
 	fi
-	for i in $(git ls-remote "$1" 2>/dev/null); do
+	for i in $(git ls-remote "${1-}" 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
@@ -188,7 +188,7 @@ __git_tags ()
 
 __git_refs ()
 {
-	local i is_hash=y dir="$(__gitdir "$1")"
+	local i is_hash=y dir="$(__gitdir "${1-}")"
 	local cur="${COMP_WORDS[COMP_CWORD]}" format refs
 	if [ -d "$dir" ]; then
 		case "$cur" in
