@@ -1,3 +1,4 @@
+#!bash
 #
 # bash completion support for core Git.
 #
@@ -50,6 +51,8 @@ case "$COMP_WORDBREAKS" in
 *)   COMP_WORDBREAKS="$COMP_WORDBREAKS:"
 esac
 
+# __gitdir accepts 0 or 1 arguments (i.e., location)
+# returns location of .git repo
 __gitdir ()
 {
 	if [ -z "${1-}" ]; then
@@ -67,6 +70,8 @@ __gitdir ()
 	fi
 }
 
+# __git_ps1 accepts 0 or 1 arguments (i.e., format string)
+# returns text to add to bash PS1 prompt (includes branch name)
 __git_ps1 ()
 {
 	local g="$(git rev-parse --git-dir 2>/dev/null)"
@@ -119,6 +124,7 @@ __git_ps1 ()
 	fi
 }
 
+# __gitcomp_1 requires 2 arguments
 __gitcomp_1 ()
 {
 	local c IFS=' '$'\t'$'\n'
@@ -131,6 +137,8 @@ __gitcomp_1 ()
 	done
 }
 
+# __gitcomp accepts 1, 2, 3, or 4 arguments
+# generates completion reply with compgen
 __gitcomp ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -150,6 +158,7 @@ __gitcomp ()
 	esac
 }
 
+# __git_heads accepts 0 or 1 arguments (to pass to __gitdir)
 __git_heads ()
 {
 	local cmd i is_hash=y dir="$(__gitdir "${1-}")"
@@ -168,6 +177,7 @@ __git_heads ()
 	done
 }
 
+# __git_tags accepts 0 or 1 arguments (to pass to __gitdir)
 __git_tags ()
 {
 	local cmd i is_hash=y dir="$(__gitdir "${1-}")"
@@ -186,6 +196,7 @@ __git_tags ()
 	done
 }
 
+# __git_refs accepts 0 or 1 arguments (to pass to __gitdir)
 __git_refs ()
 {
 	local i is_hash=y dir="$(__gitdir "${1-}")"
@@ -218,6 +229,7 @@ __git_refs ()
 	done
 }
 
+# __git_refs2 requires 1 argument (to pass to __git_refs)
 __git_refs2 ()
 {
 	local i
@@ -226,6 +238,7 @@ __git_refs2 ()
 	done
 }
 
+# __git_refs_remotes requires 1 argument (to pass to ls-remote)
 __git_refs_remotes ()
 {
 	local cmd i is_hash=y
@@ -470,6 +483,7 @@ __git_aliases ()
 	done
 }
 
+# __git_aliased_command requires 1 argument
 __git_aliased_command ()
 {
 	local word cmdline=$(git --git-dir="$(__gitdir)" \
@@ -482,6 +496,7 @@ __git_aliased_command ()
 	done
 }
 
+# __git_find_subcommand requires 1 argument
 __git_find_subcommand ()
 {
 	local word subcommand c=1
