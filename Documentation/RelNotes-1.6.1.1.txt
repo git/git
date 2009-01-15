@@ -4,6 +4,11 @@ GIT v1.6.1.1 Release Notes
 Fixes since v1.6.1
 ------------------
 
+* "git apply" took file modes from the patch text and updated the mode
+  bits of the target tree even when the patch was not about mode changes.
+
+* "git checkout $tree" did not trigger an error.
+
 * "git describe --all" complained when a commit is described with a tag,
   which was nonsense.
 
@@ -13,11 +18,27 @@ Fixes since v1.6.1
 * "git daemon", and "git merge-file" are more careful when freopen fails
   and barf, instead of going on and writing to unopened filehandle.
 
-Other documentation fixes.
+* "git http-push" did not like some RFC 4918 compliant DAV server
+  responses.
+
+* "git merge -s recursive" mistakenly overwritten an untracked file in the
+  work tree upon delete/modify conflict.
+
+* "git merge -s recursive" didn't leave the index unmerged for entries with
+  rename/delete conflictd.
+
+* "git merge -s recursive" clobbered untracked files in the work tree.
+
+* "git mv -k" with more than one errorneous paths misbehaved.
+
+* "git rebase -i" issued an unnecessary error message upon a user error of
+  marking the first commit to be "squash"ed.
+
+Other documentation updates.
 
 ---
 exec >/var/tmp/1
-O=v1.6.1-15-ga9e67c8
+O=v1.6.1-47-g914186a
 echo O=$(git describe maint)
 git shortlog --no-merges $O..maint
 
