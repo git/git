@@ -373,6 +373,21 @@ test_expect_success '--continue tries to commit, even for "edit"' '
 	test $parent = $(git rev-parse HEAD^)
 '
 
+test_expect_success 'aborted --continue does not squash commits after "edit"' '
+	old=$(git rev-parse HEAD) &&
+	test_tick &&
+	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
+	echo "edited again" > file7 &&
+	git add file7 &&
+	(
+		FAKE_COMMIT_MESSAGE=" " &&
+		export FAKE_COMMIT_MESSAGE &&
+		test_must_fail git rebase --continue
+	) &&
+	test $old = $(git rev-parse HEAD) &&
+	git rebase --abort
+'
+
 test_expect_success 'rebase a detached HEAD' '
 	grandparent=$(git rev-parse HEAD~2) &&
 	git checkout $(git rev-parse HEAD) &&
