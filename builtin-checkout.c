@@ -38,25 +38,13 @@ struct checkout_opts {
 static int post_checkout_hook(struct commit *old, struct commit *new,
 			      int changed)
 {
-	struct child_process proc;
-	const char *name = git_path("hooks/post-checkout");
-	const char *argv[5];
-
-	if (access(name, X_OK) < 0)
-		return 0;
-
-	memset(&proc, 0, sizeof(proc));
-	argv[0] = name;
-	argv[1] = sha1_to_hex(old ? old->object.sha1 : null_sha1);
-	argv[2] = sha1_to_hex(new ? new->object.sha1 : null_sha1);
+	return run_hook(NULL, "post-checkout",
+			sha1_to_hex(old ? old->object.sha1 : null_sha1),
+			sha1_to_hex(new ? new->object.sha1 : null_sha1),
+			changed ? "1" : "0", NULL);
 	/* "new" can be NULL when checking out from the index before
 	   a commit exists. */
-	argv[3] = changed ? "1" : "0";
-	argv[4] = NULL;
-	proc.argv = argv;
-	proc.no_stdin = 1;
-	proc.stdout_to_stderr = 1;
-	return run_command(&proc);
+
 }
 
 static int update_some(const unsigned char *sha1, const char *base, int baselen,
