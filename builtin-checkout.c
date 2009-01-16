@@ -47,8 +47,10 @@ static int post_checkout_hook(struct commit *old, struct commit *new,
 
 	memset(&proc, 0, sizeof(proc));
 	argv[0] = name;
-	argv[1] = xstrdup(sha1_to_hex(old ? old->object.sha1 : null_sha1));
-	argv[2] = xstrdup(sha1_to_hex(new->object.sha1));
+	argv[1] = sha1_to_hex(old ? old->object.sha1 : null_sha1);
+	argv[2] = sha1_to_hex(new ? new->object.sha1 : null_sha1);
+	/* "new" can be NULL when checking out from the index before
+	   a commit exists. */
 	argv[3] = changed ? "1" : "0";
 	argv[4] = NULL;
 	proc.argv = argv;
