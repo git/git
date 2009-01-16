@@ -838,6 +838,8 @@ _git_format_patch ()
 			--not --all
 			--cover-letter
 			--no-prefix --src-prefix= --dst-prefix=
+			--inline --suffix= --ignore-if-in-upstream
+			--subject-prefix=
 			"
 		return
 		;;
