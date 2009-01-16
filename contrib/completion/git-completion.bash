@@ -947,6 +947,8 @@ _git_ls_tree ()
 	__git_complete_file
 }
 
+__git_log_pretty_formats="oneline short medium full fuller email raw format:"
+
 _git_log ()
 {
 	__git_has_doubledash && return
@@ -954,8 +956,7 @@ _git_log ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
-		__gitcomp "
-			oneline short medium full fuller email raw
+		__gitcomp "$__git_log_pretty_formats
 			" "" "${cur##--pretty=}"
 		return
 		;;
@@ -1483,8 +1484,7 @@ _git_show ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
-		__gitcomp "
-			oneline short medium full fuller email raw
+		__gitcomp "$__git_log_pretty_formats
 			" "" "${cur##--pretty=}"
 		return
 		;;
