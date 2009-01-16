@@ -22,7 +22,8 @@ with merge conflicts.
 
 OPTIONS
 -------
--t or --tool=<tool>::
+-t <tool>::
+--tool=<tool>::
 	Use the merge resolution program specified by <tool>.
 	Valid merge tools are:
 	kdiff3, tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff, ecmerge, and opendiff
@@ -60,7 +61,8 @@ variable `mergetool.<tool>.trustExitCode` can be set to `true`.
 Otherwise, 'git-mergetool' will prompt the user to indicate the
 success of the resolution after the custom tool has exited.
 
--y or --no-prompt::
+-y::
+--no-prompt::
 	Don't prompt before each invocation of the merge resolution
 	program.
 
