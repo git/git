@@ -352,6 +352,9 @@ int run_hook(const char *index_file, const char *name, ...)
 	int ret;
 	int i;
 
+	if (access(git_path("hooks/%s", name), X_OK) < 0)
+		return 0;
+
 	va_start(args, name);
 	argv[0] = git_path("hooks/%s", name);
 	i = 0;
@@ -361,9 +364,6 @@ int run_hook(const char *index_file, const char *name, ...)
 		argv[i] = va_arg(args, const char *);
 	} while (argv[i]);
 	va_end(args);
-
-	if (access(argv[0], X_OK) < 0)
-		return 0;
 
 	memset(&hook, 0, sizeof(hook));
 	hook.argv = argv;
