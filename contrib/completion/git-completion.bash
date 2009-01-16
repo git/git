@@ -643,7 +643,6 @@ _git_branch ()
 	done
 
 	case "${COMP_WORDS[COMP_CWORD]}" in
-	--*=*)	COMPREPLY=() ;;
 	--*)
 		__gitcomp "
 			--color --no-color --verbose --abbrev= --no-abbrev
@@ -1689,7 +1688,6 @@ _git ()
 
 	if [ -z "$command" ]; then
 		case "${COMP_WORDS[COMP_CWORD]}" in
-		--*=*) COMPREPLY=() ;;
 		--*)   __gitcomp "
 			--paginate
 			--no-pager
