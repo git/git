@@ -58,7 +58,7 @@ Functions
 	The first argument is a pathname to an index file, or NULL
 	if the hook uses the default index file or no index is needed.
 	The second argument is the name of the hook.
-	The further arguments (up to 9) correspond to the hook arguments.
+	The further arguments correspond to the hook arguments.
 	The last argument has to be NULL to terminate the arguments list.
 	If the hook does not exist or is not executable, the return
 	value will be zero.
