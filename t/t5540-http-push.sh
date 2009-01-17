@@ -51,17 +51,29 @@ test_expect_success 'clone remote repository' '
 	git clone $HTTPD_URL/test_repo.git test_repo_clone
 '
 
-test_expect_failure 'push to remote repository' '
+test_expect_failure 'push to remote repository with packed refs' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	: >path2 &&
 	git add path2 &&
 	test_tick &&
 	git commit -m path2 &&
+	HEAD=$(git rev-parse --verify HEAD) &&
 	git push &&
-	[ -f "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git/refs/heads/master" ]
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
+	 test $HEAD = $(git rev-parse --verify HEAD))
 '
 
-test_expect_failure 'create and delete remote branch' '
+test_expect_success ' push to remote repository with unpacked refs' '
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
+	 rm packed-refs &&
+	 git update-ref refs/heads/master \
+		0c973ae9bd51902a28466f3850b543fa66a6aaf4) &&
+	git push &&
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
+	 test $HEAD = $(git rev-parse --verify HEAD))
+'
+
+test_expect_success 'create and delete remote branch' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	git checkout -b dev &&
 	: >path3 &&
