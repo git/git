@@ -75,7 +75,7 @@ static int match_one(const char *match, const char *name, int namelen)
 	for (;;) {
 		unsigned char c1 = *match;
 		unsigned char c2 = *name;
-		if (isspecial(c1))
+		if (c1 == '\0' || is_glob_special(c1))
 			break;
 		if (c1 != c2)
 			return 0;
@@ -680,7 +680,7 @@ static int simple_length(const char *match)
 	for (;;) {
 		unsigned char c = *match++;
 		len++;
-		if (isspecial(c))
+		if (c == '\0' || is_glob_special(c))
 			return len;
 	}
 }

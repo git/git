@@ -30,8 +30,9 @@ void append_grep_pattern(struct grep_opt *opt, const char *pat,
 
 static int isregexspecial(int c)
 {
-	return isspecial(c) || c == '$' || c == '(' || c == ')' || c == '+' ||
-			       c == '.' || c == '^' || c == '{' || c == '|';
+	return c == '\0' || is_glob_special(c) ||
+		c == '$' || c == '(' || c == ')' || c == '+' ||
+		c == '.' || c == '^' || c == '{' || c == '|';
 }
 
 static int is_fixed(const char *s)

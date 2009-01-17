@@ -21,6 +21,11 @@ static int test_isalnum(int c)
 	return isalnum(c);
 }
 
+static int test_is_glob_special(int c)
+{
+	return is_glob_special(c);
+}
+
 #define DIGIT "0123456789"
 #define LOWER "abcdefghijklmnopqrstuvwxyz"
 #define UPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -34,6 +39,7 @@ static const struct ctype_class {
 	{ "isspace", test_isspace, " \n\r\t" },
 	{ "isalpha", test_isalpha, LOWER UPPER },
 	{ "isalnum", test_isalnum, LOWER UPPER DIGIT },
+	{ "is_glob_special", test_is_glob_special, "*?[\\" },
 	{ NULL }
 };
 
