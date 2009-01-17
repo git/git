@@ -674,6 +674,84 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 	return retval;
 }
 
+struct grab_nth_branch_switch_cbdata {
+	int counting;
+	int nth;
+	struct strbuf *buf;
+};
+
+static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
+				  const char *email, unsigned long timestamp, int tz,
+				  const char *message, void *cb_data)
+{
+	struct grab_nth_branch_switch_cbdata *cb = cb_data;
+	const char *match = NULL;
+
+	if (!prefixcmp(message, "checkout: moving to "))
+		match = message + strlen("checkout: moving to ");
+	else if (!prefixcmp(message, "checkout: moving from ")) {
+		const char *cp = message + strlen("checkout: moving from ");
+		if ((cp = strstr(cp, " to ")) != NULL) {
+			match = cp + 4;
+		}
+	}
+
+	if (!match)
+		return 0;
+
+	if (cb->counting) {
+		cb->nth++;
+		return 0;
+	}
+
+	if (--cb->nth <= 0) {
+		size_t len = strlen(match);
+		while (match[len-1] == '\n')
+			len--;
+		strbuf_reset(cb->buf);
+		strbuf_add(cb->buf, match, len);
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * This reads "@{-N}" syntax, finds the name of the Nth previous
+ * branch we were on, and places the name of the branch in the given
+ * buf and returns 0 if successful.
+ *
+ * If the input is not of the accepted format, it returns a negative
+ * number to signal an error.
+ */
+int interpret_nth_last_branch(const char *name, struct strbuf *buf)
+{
+	int nth, i;
+	struct grab_nth_branch_switch_cbdata cb;
+
+	if (name[0] != '@' || name[1] != '{' || name[2] != '-')
+		return -1;
+	for (i = 3, nth = 0; name[i] && name[i] != '}'; i++) {
+		char ch = name[i];
+		if ('0' <= ch && ch <= '9')
+			nth = nth * 10 + ch - '0';
+		else
+			return -1;
+	}
+	if (nth < 0 || 10 <= nth)
+		return -1;
+
+	cb.counting = 1;
+	cb.nth = 0;
+	cb.buf = buf;
+	for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
+
+	cb.counting = 0;
+	cb.nth -= nth;
+	cb.buf = buf;
+	for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
+	return 0;
+}
+
 /*
  * This is like "get_sha1_basic()", except it allows "sha1 expressions",
  * notably "xyz^" for "parent of xyz"
