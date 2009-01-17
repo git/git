@@ -1544,7 +1544,8 @@ static void builtin_diff(const char *name_a,
 				ecbdata.diff_words->word_regex = (regex_t *)
 					xmalloc(sizeof(regex_t));
 				if (regcomp(ecbdata.diff_words->word_regex,
-						o->word_regex, REG_EXTENDED))
+						o->word_regex,
+						REG_EXTENDED | REG_NEWLINE))
 					die ("Invalid regular expression: %s",
 							o->word_regex);
 			}
