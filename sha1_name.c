@@ -685,18 +685,20 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 				  const char *message, void *cb_data)
 {
 	struct grab_nth_branch_switch_cbdata *cb = cb_data;
-	const char *match = NULL;
+	const char *match = NULL, *target = NULL;
+	size_t len;
 
-	if (!prefixcmp(message, "checkout: moving to "))
-		match = message + strlen("checkout: moving to ");
-	else if (!prefixcmp(message, "checkout: moving from ")) {
-		const char *cp = message + strlen("checkout: moving from ");
-		if ((cp = strstr(cp, " to ")) != NULL) {
-			match = cp + 4;
-		}
+	if (!prefixcmp(message, "checkout: moving from ")) {
+		match = message + strlen("checkout: moving from ");
+		if ((target = strstr(match, " to ")) != NULL)
+			target += 4;
 	}
 
 	if (!match)
+		return 0;
+
+	len = target - match - 4;
+	if (target[len] == '\n' && !strncmp(match, target, len))
 		return 0;
 
 	if (cb->counting) {
@@ -704,10 +706,7 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 		return 0;
 	}
 
-	if (--cb->nth <= 0) {
-		size_t len = strlen(match);
-		while (match[len-1] == '\n')
-			len--;
+	if (cb->nth-- <= 0) {
 		strbuf_reset(cb->buf);
 		strbuf_add(cb->buf, match, len);
 		return 1;
@@ -718,26 +717,28 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 /*
  * This reads "@{-N}" syntax, finds the name of the Nth previous
  * branch we were on, and places the name of the branch in the given
- * buf and returns 0 if successful.
+ * buf and returns the number of characters parsed if successful.
  *
  * If the input is not of the accepted format, it returns a negative
  * number to signal an error.
+ *
+ * If the input was ok but there are not N branch switches in the
+ * reflog, it returns 0.
  */
 int interpret_nth_last_branch(const char *name, struct strbuf *buf)
 {
-	int nth, i;
+	int nth;
 	struct grab_nth_branch_switch_cbdata cb;
+	const char *brace;
+	char *num_end;
 
 	if (name[0] != '@' || name[1] != '{' || name[2] != '-')
 		return -1;
-	for (i = 3, nth = 0; name[i] && name[i] != '}'; i++) {
-		char ch = name[i];
-		if ('0' <= ch && ch <= '9')
-			nth = nth * 10 + ch - '0';
-		else
-			return -1;
-	}
-	if (nth < 0 || 10 <= nth)
+	brace = strchr(name, '}');
+	if (!brace)
+		return -1;
+	nth = strtol(name+3, &num_end, 10);
+	if (num_end != brace)
 		return -1;
 
 	cb.counting = 1;
@@ -745,11 +746,15 @@ int interpret_nth_last_branch(const char *name, struct strbuf *buf)
 	cb.buf = buf;
 	for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
 
+	if (cb.nth < nth)
+		return 0;
+
 	cb.counting = 0;
 	cb.nth -= nth;
 	cb.buf = buf;
 	for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
-	return 0;
+
+	return brace-name+1;
 }
 
 /*

@@ -361,8 +361,10 @@ struct branch_info {
 static void setup_branch_path(struct branch_info *branch)
 {
 	struct strbuf buf = STRBUF_INIT;
+	int ret;
 
-	if (!interpret_nth_last_branch(branch->name, &buf)) {
+	if ((ret = interpret_nth_last_branch(branch->name, &buf))
+	    && ret == strlen(branch->name)) {
 		branch->name = xstrdup(buf.buf);
 		strbuf_splice(&buf, 0, 0, "refs/heads/", 11);
 	} else {
