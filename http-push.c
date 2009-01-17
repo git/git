@@ -1434,10 +1434,8 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
 			}
 			if (path) {
 				path += remote->path_len;
+				ls->dentry_name = xstrdup(path);
 			}
-			ls->dentry_name = xmalloc(strlen(path) -
-						  remote->path_len + 1);
-			strcpy(ls->dentry_name, path + remote->path_len);
 		} else if (!strcmp(ctx->name, DAV_PROPFIND_COLLECTION)) {
 			ls->dentry_flags |= IS_DIR;
 		}
@@ -1448,6 +1446,12 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
 	}
 }
 
+/*
+ * NEEDSWORK: remote_ls() ignores info/refs on the remote side.  But it
+ * should _only_ heed the information from that file, instead of trying to
+ * determine the refs from the remote file system (badly: it does not even
+ * know about packed-refs).
+ */
 static void remote_ls(const char *path, int flags,
 		      void (*userFunc)(struct remote_ls_ctx *ls),
 		      void *userData)
