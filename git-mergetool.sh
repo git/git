@@ -200,14 +200,19 @@ merge_file () {
 	    fi
 	    status=$?
 	    ;;
-	meld|vimdiff)
+	meld)
 	    touch "$BACKUP"
 	    "$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"
 	    check_unchanged
 	    ;;
+	vimdiff)
+	    touch "$BACKUP"
+	    "$merge_tool_path" -c "wincmd l" "$LOCAL" "$MERGED" "$REMOTE"
+	    check_unchanged
+	    ;;
 	gvimdiff)
 	    touch "$BACKUP"
-	    "$merge_tool_path" -f "$LOCAL" "$MERGED" "$REMOTE"
+	    "$merge_tool_path" -c "wincmd l" -f "$LOCAL" "$MERGED" "$REMOTE"
 	    check_unchanged
 	    ;;
 	xxdiff)
