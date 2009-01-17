@@ -102,6 +102,10 @@ differences.  You may want to append `|[^[:space:]]` to your regular
 expression to make sure that it matches all non-whitespace characters.
 A match that contains a newline is silently truncated(!) at the
 newline.
++
+The regex can also be set via a diff driver, see
+linkgit:gitattributes[1]; giving it explicitly overrides any diff
+driver setting.
 
 --no-renames::
 	Turn off rename detection, even when the configuration

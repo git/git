@@ -84,6 +84,41 @@ test_expect_success 'word diff with a regular expression' '
 
 '
 
+test_expect_success 'set a diff driver' '
+	git config diff.testdriver.wordregex "[^[:space:]]" &&
+	cat <<EOF > .gitattributes
+pre diff=testdriver
+post diff=testdriver
+EOF
+'
+
+test_expect_success 'option overrides default' '
+
+	word_diff --color-words="[a-z]+"
+
+'
+
+cat > expect <<\EOF
+<WHITE>diff --git a/pre b/post<RESET>
+<WHITE>index 330b04f..5ed8eff 100644<RESET>
+<WHITE>--- a/pre<RESET>
+<WHITE>+++ b/post<RESET>
+<BROWN>@@ -1,3 +1,7 @@<RESET>
+h(4)<GREEN>,hh[44]<RESET>
+<RESET>
+a = b + c<RESET>
+
+<GREEN>aa = a<RESET>
+
+<GREEN>aeff = aeff * ( aaa )<RESET>
+EOF
+
+test_expect_success 'use default supplied by driver' '
+
+	word_diff --color-words
+
+'
+
 echo 'aaa (aaa)' > pre
 echo 'aaa (aaa) aaa' > post
 
@@ -99,6 +134,7 @@ EOF
 test_expect_success 'test parsing words for newline' '
 
 	word_diff --color-words="a+"
+
 
 '
 
