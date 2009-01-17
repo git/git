@@ -63,4 +63,61 @@ test_expect_success 'word diff with runs of whitespace' '
 
 '
 
+cat > expect <<\EOF
+<WHITE>diff --git a/pre b/post<RESET>
+<WHITE>index 330b04f..5ed8eff 100644<RESET>
+<WHITE>--- a/pre<RESET>
+<WHITE>+++ b/post<RESET>
+<BROWN>@@ -1,3 +1,7 @@<RESET>
+h(4),<GREEN>hh<RESET>[44]
+<RESET>
+a = b + c<RESET>
+
+<GREEN>aa = a<RESET>
+
+<GREEN>aeff = aeff * ( aaa<RESET> )
+EOF
+
+test_expect_success 'word diff with a regular expression' '
+
+	word_diff --color-words="[a-z]+"
+
+'
+
+echo 'aaa (aaa)' > pre
+echo 'aaa (aaa) aaa' > post
+
+cat > expect <<\EOF
+<WHITE>diff --git a/pre b/post<RESET>
+<WHITE>index c29453b..be22f37 100644<RESET>
+<WHITE>--- a/pre<RESET>
+<WHITE>+++ b/post<RESET>
+<BROWN>@@ -1 +1 @@<RESET>
+aaa (aaa) <GREEN>aaa<RESET>
+EOF
+
+test_expect_success 'test parsing words for newline' '
+
+	word_diff --color-words="a+"
+
+'
+
+echo '(:' > pre
+echo '(' > post
+
+cat > expect <<\EOF
+<WHITE>diff --git a/pre b/post<RESET>
+<WHITE>index 289cb9d..2d06f37 100644<RESET>
+<WHITE>--- a/pre<RESET>
+<WHITE>+++ b/post<RESET>
+<BROWN>@@ -1 +1 @@<RESET>
+(<RED>:<RESET>
+EOF
+
+test_expect_success 'test when words are only removed at the end' '
+
+	word_diff --color-words=.
+
+'
+
 test_done
