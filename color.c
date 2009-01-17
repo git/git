@@ -115,7 +115,7 @@ void color_parse(const char *value, const char *var, char *dst)
 	*dst = 0;
 	return;
 bad:
-	die("bad config value '%s' for variable '%s'", value, var);
+	die("bad color value '%s' for variable '%s'", value, var);
 }
 
 int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
@@ -190,4 +190,11 @@ int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...)
 	r = color_vfprintf(fp, color, fmt, args, "\n");
 	va_end(args);
 	return r;
+}
+
+void color_parse_mem(const char *value, int len, const char *var, char *dst)
+{
+	char *tmp = xmemdupz(value, len);
+	color_parse(tmp, var, dst);
+	free(tmp);
 }
