@@ -326,10 +326,7 @@ struct diff_words_buffer {
 static void diff_words_append(char *line, unsigned long len,
 		struct diff_words_buffer *buffer)
 {
-	if (buffer->text.size + len > buffer->alloc) {
-		buffer->alloc = (buffer->text.size + len) * 3 / 2;
-		buffer->text.ptr = xrealloc(buffer->text.ptr, buffer->alloc);
-	}
+	ALLOC_GROW(buffer->text.ptr, buffer->text.size + len, buffer->alloc);
 	line++;
 	len--;
 	memcpy(buffer->text.ptr + buffer->text.size, line, len);
@@ -398,6 +395,22 @@ static void fn_out_diff_words_aux(void *priv, char *line, unsigned long len)
 	}
 }
 
+/*
+ * This function splits the words in buffer->text, and stores the list with
+ * newline separator into out.
+ */
+static void diff_words_fill(struct diff_words_buffer *buffer, mmfile_t *out)
+{
+	int i;
+	out->size = buffer->text.size;
+	out->ptr = xmalloc(out->size);
+	memcpy(out->ptr, buffer->text.ptr, out->size);
+	for (i = 0; i < out->size; i++)
+		if (isspace(out->ptr[i]))
+			out->ptr[i] = '\n';
+	buffer->current = 0;
+}
+
 /* this executes the word diff on the accumulated buffers */
 static void diff_words_show(struct diff_words_data *diff_words)
 {
@@ -405,26 +418,11 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	xdemitconf_t xecfg;
 	xdemitcb_t ecb;
 	mmfile_t minus, plus;
-	int i;
 
 	memset(&xpp, 0, sizeof(xpp));
 	memset(&xecfg, 0, sizeof(xecfg));
-	minus.size = diff_words->minus.text.size;
-	minus.ptr = xmalloc(minus.size);
-	memcpy(minus.ptr, diff_words->minus.text.ptr, minus.size);
-	for (i = 0; i < minus.size; i++)
-		if (isspace(minus.ptr[i]))
-			minus.ptr[i] = '\n';
-	diff_words->minus.current = 0;
-
-	plus.size = diff_words->plus.text.size;
-	plus.ptr = xmalloc(plus.size);
-	memcpy(plus.ptr, diff_words->plus.text.ptr, plus.size);
-	for (i = 0; i < plus.size; i++)
-		if (isspace(plus.ptr[i]))
-			plus.ptr[i] = '\n';
-	diff_words->plus.current = 0;
-
+	diff_words_fill(&diff_words->minus, &minus);
+	diff_words_fill(&diff_words->plus, &plus);
 	xpp.flags = XDF_NEED_MINIMAL;
 	xecfg.ctxlen = diff_words->minus.alloc + diff_words->plus.alloc;
 	xdi_diff_outf(&minus, &plus, fn_out_diff_words_aux, diff_words,
