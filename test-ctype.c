@@ -26,6 +26,11 @@ static int test_is_glob_special(int c)
 	return is_glob_special(c);
 }
 
+static int test_is_regex_special(int c)
+{
+	return is_regex_special(c);
+}
+
 #define DIGIT "0123456789"
 #define LOWER "abcdefghijklmnopqrstuvwxyz"
 #define UPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -40,6 +45,7 @@ static const struct ctype_class {
 	{ "isalpha", test_isalpha, LOWER UPPER },
 	{ "isalnum", test_isalnum, LOWER UPPER DIGIT },
 	{ "is_glob_special", test_is_glob_special, "*?[\\" },
+	{ "is_regex_special", test_is_regex_special, "$()*+.?[\\^{|" },
 	{ NULL }
 };
 
