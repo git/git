@@ -297,6 +297,8 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 	return logs_found;
 }
 
+static int get_sha1_1(const char *name, int len, unsigned char *sha1);
+
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 {
 	static const char *warning = "warning: refname '%.*s' is ambiguous.\n";
@@ -307,7 +309,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
 
-	/* basic@{time or number} format to query ref-log */
+	/* basic@{time or number or -number} format to query ref-log */
 	reflog_len = at = 0;
 	if (str[len-1] == '}') {
 		for (at = 0; at < len - 1; at++) {
@@ -324,6 +326,16 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		return -1;
 
 	if (!len && reflog_len) {
+		struct strbuf buf = STRBUF_INIT;
+		int ret;
+		/* try the @{-N} syntax for n-th checkout */
+		ret = interpret_nth_last_branch(str+at, &buf);
+		if (ret > 0) {
+			/* substitute this branch name and restart */
+			return get_sha1_1(buf.buf, buf.len, sha1);
+		} else if (ret == 0) {
+			return -1;
+		}
 		/* allow "@{...}" to mean the current branch reflog */
 		refs_found = dwim_ref("HEAD", 4, sha1, &real_ref);
 	} else if (reflog_len)
@@ -378,8 +390,6 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	free(real_ref);
 	return 0;
 }
-
-static int get_sha1_1(const char *name, int len, unsigned char *sha1);
 
 static int get_parent(const char *name, int len,
 		      unsigned char *result, int idx)
