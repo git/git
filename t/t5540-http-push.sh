@@ -76,6 +76,12 @@ test_expect_failure 'create and delete remote branch' '
 	test_must_fail git show-ref --verify refs/remotes/origin/dev
 '
 
+test_expect_success 'MKCOL sends directory names with trailing slashes' '
+
+	! grep "\"MKCOL.*[^/] HTTP/[^ ]*\"" < "$HTTPD_ROOT_PATH"/access.log
+
+'
+
 stop_httpd
 
 test_done

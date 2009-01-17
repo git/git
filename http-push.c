@@ -1201,7 +1201,8 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	/* Make sure leading directories exist for the remote ref */
 	ep = strchr(url + strlen(remote->url) + 1, '/');
 	while (ep) {
-		*ep = 0;
+		char saved_character = ep[1];
+		ep[1] = '\0';
 		slot = get_active_slot();
 		slot->results = &results;
 		curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
@@ -1223,7 +1224,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 			free(url);
 			return NULL;
 		}
-		*ep = '/';
+		ep[1] = saved_character;
 		ep = strchr(ep + 1, '/');
 	}
 
