@@ -54,7 +54,7 @@ test_expect_success '@{-1}^2 works' '
 	test_rev_equivalent side^2 @{-1}^2
 '
 
-test_expect_failure '@{-1}@{1} works' '
+test_expect_success '@{-1}@{1} works' '
 	test_rev_equivalent side@{1} @{-1}@{1}
 '
 

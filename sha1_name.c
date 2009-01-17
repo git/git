@@ -238,8 +238,28 @@ static int ambiguous_path(const char *path, int len)
 	return slash;
 }
 
+/*
+ * *string and *len will only be substituted, and *string returned (for
+ * later free()ing) if the string passed in is of the form @{-<n>}.
+ */
+static char *substitute_nth_last_branch(const char **string, int *len)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int ret = interpret_nth_last_branch(*string, &buf);
+
+	if (ret == *len) {
+		size_t size;
+		*string = strbuf_detach(&buf, &size);
+		*len = size;
+		return (char *)*string;
+	}
+
+	return NULL;
+}
+
 int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 {
+	char *last_branch = substitute_nth_last_branch(&str, &len);
 	const char **p, *r;
 	int refs_found = 0;
 
@@ -259,11 +279,13 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 				break;
 		}
 	}
+	free(last_branch);
 	return refs_found;
 }
 
 int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 {
+	char *last_branch = substitute_nth_last_branch(&str, &len);
 	const char **p;
 	int logs_found = 0;
 
@@ -294,6 +316,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 		if (!warn_ambiguous_refs)
 			break;
 	}
+	free(last_branch);
 	return logs_found;
 }
 
@@ -312,7 +335,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	/* basic@{time or number or -number} format to query ref-log */
 	reflog_len = at = 0;
 	if (str[len-1] == '}') {
-		for (at = 0; at < len - 1; at++) {
+		for (at = len-2; at >= 0; at--) {
 			if (str[at] == '@' && str[at+1] == '{') {
 				reflog_len = (len-1) - (at+2);
 				len = at;
