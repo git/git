@@ -57,8 +57,8 @@ Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
 +
 The special refspec `:` (or `+:` to allow non-fast forward updates)
-directs git to push "matching" heads: for every head that exists on
-the local side, the remote side is updated if a head of the same name
+directs git to push "matching" branches: for every branch that exists on
+the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.  This is the default operation mode
 if no explicit refspec is found (that is neither on the command line
 nor in any Push line of the corresponding remotes file---see below).
