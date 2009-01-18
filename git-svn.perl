@@ -4130,10 +4130,23 @@ sub DESTROY {
 	# do not call the real DESTROY since we store ourselves in $RA
 }
 
+# get_log(paths, start, end, limit,
+#         discover_changed_paths, strict_node_history, receiver)
 sub get_log {
 	my ($self, @args) = @_;
 	my $pool = SVN::Pool->new;
-	splice(@args, 3, 1) if ($SVN::Core::VERSION le '1.2.0');
+
+	# the limit parameter was not supported in SVN 1.1.x, so we
+	# drop it.  Therefore, the receiver callback passed to it
+	# is made aware of this limitation by being wrapped if
+	# the limit passed to is being wrapped.
+	if ($SVN::Core::VERSION le '1.2.0') {
+		my $limit = splice(@args, 3, 1);
+		if ($limit > 0) {
+			my $receiver = pop @args;
+			push(@args, sub { &$receiver(@_) if (--$limit >= 0) });
+		}
+	}
 	my $ret = $self->SUPER::get_log(@args, $pool);
 	$pool->clear;
 	$ret;
