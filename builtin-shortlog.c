@@ -29,6 +29,9 @@ static int compare_by_number(const void *a1, const void *a2)
 		return -1;
 }
 
+const char *format_subject(struct strbuf *sb, const char *msg,
+			   const char *line_separator);
+
 static void insert_one_record(struct shortlog *log,
 			      const char *author,
 			      const char *oneline)
@@ -40,6 +43,7 @@ static void insert_one_record(struct shortlog *log,
 	size_t len;
 	const char *eol;
 	const char *boemail, *eoemail;
+	struct strbuf subject = STRBUF_INIT;
 
 	boemail = strchr(author, '<');
 	if (!boemail)
@@ -85,9 +89,8 @@ static void insert_one_record(struct shortlog *log,
 	while (*oneline && isspace(*oneline) && *oneline != '\n')
 		oneline++;
 	len = eol - oneline;
-	while (len && isspace(oneline[len-1]))
-		len--;
-	buffer = xmemdupz(oneline, len);
+	format_subject(&subject, oneline, " ");
+	buffer = strbuf_detach(&subject, NULL);
 
 	if (dot3) {
 		int dot3len = strlen(dot3);
