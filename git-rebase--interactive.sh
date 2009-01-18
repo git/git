@@ -27,6 +27,7 @@ continue           continue rebasing process
 abort              abort rebasing process and restore original branch
 skip               skip current patch and continue rebasing process
 no-verify          override pre-rebase hook from stopping the operation
+root               rebase all reachable commmits up to the root(s)
 "
 
 . git-sh-setup
@@ -44,6 +45,7 @@ STRATEGY=
 ONTO=
 VERBOSE=
 OK_TO_SKIP_PRE_REBASE=
+REBASE_ROOT=
 
 GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
 mark the corrected paths with 'git add <paths>', and
@@ -154,6 +156,11 @@ pick_one () {
 	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$REWRITTEN" &&
 		pick_one_preserving_merges "$@" && return
+	if test ! -z "$REBASE_ROOT"
+	then
+		output git cherry-pick "$@"
+		return
+	fi
 	parent_sha1=$(git rev-parse --verify $sha1^) ||
 		die "Could not get the parent of $sha1"
 	current_sha1=$(git rev-parse --verify HEAD)
@@ -197,7 +204,11 @@ pick_one_preserving_merges () {
 
 	# rewrite parents; if none were rewritten, we can fast-forward.
 	new_parents=
-	pend=" $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)"
+	pend=" $(git rev-list --parents -1 $sha1 | cut -d' ' -s -f2-)"
+	if test "$pend" = " "
+	then
+		pend=" root"
+	fi
 	while [ "$pend" != "" ]
 	do
 		p=$(expr "$pend" : ' \([^ ]*\)')
@@ -227,7 +238,9 @@ pick_one_preserving_merges () {
 			if test -f "$DROPPED"/$p
 			then
 				fast_forward=f
-				pend=" $(cat "$DROPPED"/$p)$pend"
+				replacement="$(cat "$DROPPED"/$p)"
+				test -z "$replacement" && replacement=root
+				pend=" $replacement$pend"
 			else
 				new_parents="$new_parents $p"
 			fi
@@ -443,6 +456,7 @@ get_saved_options () {
 	test -d "$REWRITTEN" && PRESERVE_MERGES=t
 	test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
 	test -f "$DOTEST"/verbose && VERBOSE=t
+	test ! -s "$DOTEST"/upstream && REBASE_ROOT=t
 }
 
 while test $# != 0
@@ -547,6 +561,9 @@ first and then run 'git rebase --continue' again."
 	-i)
 		# yeah, we know
 		;;
+	--root)
+		REBASE_ROOT=t
+		;;
 	--onto)
 		shift
 		ONTO=$(git rev-parse --verify "$1") ||
@@ -554,27 +571,36 @@ first and then run 'git rebase --continue' again."
 		;;
 	--)
 		shift
-		run_pre_rebase_hook ${1+"$@"}
-		test $# -eq 1 -o $# -eq 2 || usage
+		test ! -z "$REBASE_ROOT" -o $# -eq 1 -o $# -eq 2 || usage
 		test -d "$DOTEST" &&
 			die "Interactive rebase already started"
 
 		git var GIT_COMMITTER_IDENT >/dev/null ||
 			die "You need to set your committer info first"
 
+		if test -z "$REBASE_ROOT"
+		then
+			UPSTREAM_ARG="$1"
+			UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
+			test -z "$ONTO" && ONTO=$UPSTREAM
+			shift
+		else
+			UPSTREAM_ARG=--root
+			test -z "$ONTO" &&
+				die "You must specify --onto when using --root"
+		fi
+		run_pre_rebase_hook "$UPSTREAM_ARG" "$@"
+
 		comment_for_reflog start
 
 		require_clean_work_tree
 
-		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
-		test -z "$ONTO" && ONTO=$UPSTREAM
-
-		if test ! -z "$2"
+		if test ! -z "$1"
 		then
-			output git show-ref --verify --quiet "refs/heads/$2" ||
-				die "Invalid branchname: $2"
-			output git checkout "$2" ||
-				die "Could not checkout $2"
+			output git show-ref --verify --quiet "refs/heads/$1" ||
+				die "Invalid branchname: $1"
+			output git checkout "$1" ||
+				die "Could not checkout $1"
 		fi
 
 		HEAD=$(git rev-parse --verify HEAD) || die "No HEAD?"
@@ -598,12 +624,19 @@ first and then run 'git rebase --continue' again."
 			# This ensures that commits on merged, but otherwise
 			# unrelated side branches are left alone. (Think "X"
 			# in the man page's example.)
-			mkdir "$REWRITTEN" &&
-			for c in $(git merge-base --all $HEAD $UPSTREAM)
-			do
-				echo $ONTO > "$REWRITTEN"/$c ||
+			if test -z "$REBASE_ROOT"
+			then
+				mkdir "$REWRITTEN" &&
+				for c in $(git merge-base --all $HEAD $UPSTREAM)
+				do
+					echo $ONTO > "$REWRITTEN"/$c ||
+						die "Could not init rewritten commits"
+				done
+			else
+				mkdir "$REWRITTEN" &&
+				echo $ONTO > "$REWRITTEN"/root ||
 					die "Could not init rewritten commits"
-			done
+			fi
 			# No cherry-pick because our first pass is to determine
 			# parents to rewrite and skipping dropped commits would
 			# prematurely end our probe
@@ -613,12 +646,21 @@ first and then run 'git rebase --continue' again."
 			MERGES_OPTION="--no-merges --cherry-pick"
 		fi
 
-		SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
 		SHORTHEAD=$(git rev-parse --short $HEAD)
 		SHORTONTO=$(git rev-parse --short $ONTO)
+		if test -z "$REBASE_ROOT"
+			# this is now equivalent to ! -z "$UPSTREAM"
+		then
+			SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
+			REVISIONS=$UPSTREAM...$HEAD
+			SHORTREVISIONS=$SHORTUPSTREAM..$SHORTHEAD
+		else
+			REVISIONS=$ONTO...$HEAD
+			SHORTREVISIONS=$SHORTHEAD
+		fi
 		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
 			--abbrev=7 --reverse --left-right --topo-order \
-			$UPSTREAM...$HEAD | \
+			$REVISIONS | \
 			sed -n "s/^>//p" | while read shortsha1 rest
 		do
 			if test t != "$PRESERVE_MERGES"
@@ -626,14 +668,19 @@ first and then run 'git rebase --continue' again."
 				echo "pick $shortsha1 $rest" >> "$TODO"
 			else
 				sha1=$(git rev-parse $shortsha1)
-				preserve=t
-				for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)
-				do
-					if test -f "$REWRITTEN"/$p -a \( $p != $UPSTREAM -o $sha1 = $first_after_upstream \)
-					then
-						preserve=f
-					fi
-				done
+				if test -z "$REBASE_ROOT"
+				then
+					preserve=t
+					for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -s -f2-)
+					do
+						if test -f "$REWRITTEN"/$p -a \( $p != $UPSTREAM -o $sha1 = $first_after_upstream \)
+						then
+							preserve=f
+						fi
+					done
+				else
+					preserve=f
+				fi
 				if test f = "$preserve"
 				then
 					touch "$REWRITTEN"/$sha1
@@ -647,11 +694,11 @@ first and then run 'git rebase --continue' again."
 		then
 			mkdir "$DROPPED"
 			# Save all non-cherry-picked changes
-			git rev-list $UPSTREAM...$HEAD --left-right --cherry-pick | \
+			git rev-list $REVISIONS --left-right --cherry-pick | \
 				sed -n "s/^>//p" > "$DOTEST"/not-cherry-picks
 			# Now all commits and note which ones are missing in
 			# not-cherry-picks and hence being dropped
-			git rev-list $UPSTREAM..$HEAD |
+			git rev-list $REVISIONS |
 			while read rev
 			do
 				if test -f "$REWRITTEN"/$rev -a "$(grep "$rev" "$DOTEST"/not-cherry-picks)" = ""
@@ -660,17 +707,18 @@ first and then run 'git rebase --continue' again."
 					# not worthwhile, we don't want to track its multiple heads,
 					# just the history of its first-parent for others that will
 					# be rebasing on top of it
-					git rev-list --parents -1 $rev | cut -d' ' -f2 > "$DROPPED"/$rev
+					git rev-list --parents -1 $rev | cut -d' ' -s -f2 > "$DROPPED"/$rev
 					short=$(git rev-list -1 --abbrev-commit --abbrev=7 $rev)
 					grep -v "^[a-z][a-z]* $short" <"$TODO" > "${TODO}2" ; mv "${TODO}2" "$TODO"
 					rm "$REWRITTEN"/$rev
 				fi
 			done
 		fi
+
 		test -s "$TODO" || echo noop >> "$TODO"
 		cat >> "$TODO" << EOF
 
-# Rebase $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
+# Rebase $SHORTREVISIONS onto $SHORTONTO
 #
 # Commands:
 #  p, pick = use commit
