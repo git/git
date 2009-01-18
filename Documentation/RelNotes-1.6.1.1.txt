@@ -9,8 +9,13 @@ Fixes since v1.6.1
 
 * "git checkout $tree" did not trigger an error.
 
+* "git commit" tried to remove COMMIT_EDITMSG from the work tree by mistake.
+
 * "git describe --all" complained when a commit is described with a tag,
   which was nonsense.
+
+* "git fsck branch" did not work as advertised; instead it behaved the same
+  way as "git fsck".
 
 * "git log --pretty=format:%s" did not handle a multi-line subject the
   same way as built-in log listers (i.e. shortlog, --pretty=oneline, etc.)
@@ -38,7 +43,7 @@ Other documentation updates.
 
 ---
 exec >/var/tmp/1
-O=v1.6.1-47-g914186a
+O=v1.6.1-60-g78f111e
 echo O=$(git describe maint)
 git shortlog --no-merges $O..maint
 
