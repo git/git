@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "exec_cmd.h"
 
 static const char update_server_info_usage[] =
 "git update-server-info [--force]";
@@ -18,6 +19,8 @@ int main(int ac, char **av)
 	}
 	if (i != ac)
 		usage(update_server_info_usage);
+
+	git_extract_argv0_path(av[0]);
 
 	setup_git_directory();
 

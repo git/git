@@ -7,6 +7,7 @@
 */
 
 #include "cache.h"
+#include "exec_cmd.h"
 
 #define BLKSIZE 512
 
@@ -600,6 +601,8 @@ int main(int argc, char **argv)
 	struct llist *ignore;
 	unsigned char *sha1;
 	char buf[42]; /* 40 byte sha1 + \n + \0 */
+
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 
