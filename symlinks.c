@@ -1,10 +1,11 @@
 #include "cache.h"
 
 static struct cache_def {
-	char path[PATH_MAX];
+	char path[PATH_MAX + 1];
 	int len;
 	int flags;
 	int track_flags;
+	int prefix_len_stat_func;
 } cache;
 
 /*
@@ -31,12 +32,13 @@ static inline int longest_match_lstat_cache(int len, const char *name)
 	return match_len;
 }
 
-static inline void reset_lstat_cache(int track_flags)
+static inline void reset_lstat_cache(int track_flags, int prefix_len_stat_func)
 {
 	cache.path[0] = '\0';
 	cache.len = 0;
 	cache.flags = 0;
 	cache.track_flags = track_flags;
+	cache.prefix_len_stat_func = prefix_len_stat_func;
 }
 
 #define FL_DIR      (1 << 0)
@@ -44,28 +46,35 @@ static inline void reset_lstat_cache(int track_flags)
 #define FL_SYMLINK  (1 << 2)
 #define FL_LSTATERR (1 << 3)
 #define FL_ERR      (1 << 4)
+#define FL_FULLPATH (1 << 5)
 
 /*
  * Check if name 'name' of length 'len' has a symlink leading
  * component, or if the directory exists and is real, or not.
  *
  * To speed up the check, some information is allowed to be cached.
- * This can be indicated by the 'track_flags' argument.
+ * This can be indicated by the 'track_flags' argument, which also can
+ * be used to indicate that we should check the full path.
+ *
+ * The 'prefix_len_stat_func' parameter can be used to set the length
+ * of the prefix, where the cache should use the stat() function
+ * instead of the lstat() function to test each path component.
  */
 static int lstat_cache(int len, const char *name,
-		       int track_flags)
+		       int track_flags, int prefix_len_stat_func)
 {
 	int match_len, last_slash, last_slash_dir;
-	int match_flags, ret_flags, save_flags, max_len;
+	int match_flags, ret_flags, save_flags, max_len, ret;
 	struct stat st;
 
-	if (cache.track_flags != track_flags) {
+	if (cache.track_flags != track_flags ||
+	    cache.prefix_len_stat_func != prefix_len_stat_func) {
 		/*
-		 * As a safeguard we clear the cache if the value of
-		 * track_flags does not match with the last supplied
-		 * value.
+		 * As a safeguard we clear the cache if the values of
+		 * track_flags and/or prefix_len_stat_func does not
+		 * match with the last supplied values.
 		 */
-		reset_lstat_cache(track_flags);
+		reset_lstat_cache(track_flags, prefix_len_stat_func);
 		match_len = last_slash = 0;
 	} else {
 		/*
@@ -101,12 +110,17 @@ static int lstat_cache(int len, const char *name,
 			cache.path[match_len] = name[match_len];
 			match_len++;
 		} while (match_len < max_len && name[match_len] != '/');
-		if (match_len >= max_len)
+		if (match_len >= max_len && !(track_flags & FL_FULLPATH))
 			break;
 		last_slash = match_len;
 		cache.path[last_slash] = '\0';
 
-		if (lstat(cache.path, &st)) {
+		if (last_slash <= prefix_len_stat_func)
+			ret = stat(cache.path, &st);
+		else
+			ret = lstat(cache.path, &st);
+
+		if (ret) {
 			ret_flags = FL_LSTATERR;
 			if (errno == ENOENT)
 				ret_flags |= FL_NOENT;
@@ -127,12 +141,12 @@ static int lstat_cache(int len, const char *name,
 	 * for the moment!
 	 */
 	save_flags = ret_flags & track_flags & (FL_NOENT|FL_SYMLINK);
-	if (save_flags && last_slash > 0 && last_slash < PATH_MAX) {
+	if (save_flags && last_slash > 0 && last_slash <= PATH_MAX) {
 		cache.path[last_slash] = '\0';
 		cache.len = last_slash;
 		cache.flags = save_flags;
 	} else if (track_flags & FL_DIR &&
-		   last_slash_dir > 0 && last_slash_dir < PATH_MAX) {
+		   last_slash_dir > 0 && last_slash_dir <= PATH_MAX) {
 		/*
 		 * We have a separate test for the directory case,
 		 * since it could be that we have found a symlink or a
@@ -148,10 +162,12 @@ static int lstat_cache(int len, const char *name,
 		cache.len = last_slash_dir;
 		cache.flags = FL_DIR;
 	} else {
-		reset_lstat_cache(track_flags);
+		reset_lstat_cache(track_flags, prefix_len_stat_func);
 	}
 	return ret_flags;
 }
+
+#define USE_ONLY_LSTAT  0
 
 /*
  * Return non-zero if path 'name' has a leading symlink component
@@ -159,7 +175,7 @@ static int lstat_cache(int len, const char *name,
 int has_symlink_leading_path(int len, const char *name)
 {
 	return lstat_cache(len, name,
-			   FL_SYMLINK|FL_DIR) &
+			   FL_SYMLINK|FL_DIR, USE_ONLY_LSTAT) &
 		FL_SYMLINK;
 }
 
@@ -170,6 +186,20 @@ int has_symlink_leading_path(int len, const char *name)
 int has_symlink_or_noent_leading_path(int len, const char *name)
 {
 	return lstat_cache(len, name,
-			   FL_SYMLINK|FL_NOENT|FL_DIR) &
+			   FL_SYMLINK|FL_NOENT|FL_DIR, USE_ONLY_LSTAT) &
 		(FL_SYMLINK|FL_NOENT);
+}
+
+/*
+ * Return non-zero if all path components of 'name' exists as a
+ * directory.  If prefix_len > 0, we will test with the stat()
+ * function instead of the lstat() function for a prefix length of
+ * 'prefix_len', thus we then allow for symlinks in the prefix part as
+ * long as those points to real existing directories.
+ */
+int has_dirs_only_path(int len, const char *name, int prefix_len)
+{
+	return lstat_cache(len, name,
+			   FL_DIR|FL_FULLPATH, prefix_len) &
+		FL_DIR;
 }

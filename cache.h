@@ -721,6 +721,7 @@ struct checkout {
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
 extern int has_symlink_leading_path(int len, const char *name);
 extern int has_symlink_or_noent_leading_path(int len, const char *name);
+extern int has_dirs_only_path(int len, const char *name, int prefix_len);
 
 extern struct alternate_object_database {
 	struct alternate_object_database *next;
