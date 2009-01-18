@@ -50,8 +50,8 @@ even if it does not result in a fast forward update.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 +
-A parameter <ref> without a colon pushes the <ref> from the source
-repository to the destination repository under the same name.
+A lonely <src> parameter (without a colon and a destination) pushes
+the <src> to the same name in the destination repository.
 +
 Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
