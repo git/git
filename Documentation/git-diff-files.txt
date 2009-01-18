@@ -21,7 +21,10 @@ OPTIONS
 -------
 include::diff-options.txt[]
 
--1 -2 -3 or --base --ours --theirs, and -0::
+-1 --base::
+-2 --ours::
+-3 --theirs::
+-0::
 	Diff against the "base" version, "our branch" or "their
 	branch" respectively.  With these options, diffs for
 	merged entries are not shown.
