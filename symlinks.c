@@ -12,23 +12,30 @@ static struct cache_def {
  * Returns the length (on a path component basis) of the longest
  * common prefix match of 'name' and the cached path string.
  */
-static inline int longest_match_lstat_cache(int len, const char *name)
+static inline int longest_match_lstat_cache(int len, const char *name,
+					    int *previous_slash)
 {
-	int max_len, match_len = 0, i = 0;
+	int max_len, match_len = 0, match_len_prev = 0, i = 0;
 
 	max_len = len < cache.len ? len : cache.len;
 	while (i < max_len && name[i] == cache.path[i]) {
-		if (name[i] == '/')
+		if (name[i] == '/') {
+			match_len_prev = match_len;
 			match_len = i;
+		}
 		i++;
 	}
 	/* Is the cached path string a substring of 'name'? */
-	if (i == cache.len && cache.len < len && name[cache.len] == '/')
+	if (i == cache.len && cache.len < len && name[cache.len] == '/') {
+		match_len_prev = match_len;
 		match_len = cache.len;
 	/* Is 'name' a substring of the cached path string? */
-	else if ((i == len && len < cache.len && cache.path[len] == '/') ||
-		 (i == len && len == cache.len))
+	} else if ((i == len && len < cache.len && cache.path[len] == '/') ||
+		   (i == len && len == cache.len)) {
+		match_len_prev = match_len;
 		match_len = len;
+	}
+	*previous_slash = match_len_prev;
 	return match_len;
 }
 
@@ -63,7 +70,7 @@ static inline void reset_lstat_cache(int track_flags, int prefix_len_stat_func)
 static int lstat_cache(int len, const char *name,
 		       int track_flags, int prefix_len_stat_func)
 {
-	int match_len, last_slash, last_slash_dir;
+	int match_len, last_slash, last_slash_dir, previous_slash;
 	int match_flags, ret_flags, save_flags, max_len, ret;
 	struct stat st;
 
@@ -81,7 +88,8 @@ static int lstat_cache(int len, const char *name,
 		 * Check to see if we have a match from the cache for
 		 * the 2 "excluding" path types.
 		 */
-		match_len = last_slash = longest_match_lstat_cache(len, name);
+		match_len = last_slash =
+			longest_match_lstat_cache(len, name, &previous_slash);
 		match_flags = cache.flags & track_flags & (FL_NOENT|FL_SYMLINK);
 		if (match_flags && match_len == cache.len)
 			return match_flags;
@@ -165,6 +173,26 @@ static int lstat_cache(int len, const char *name,
 		reset_lstat_cache(track_flags, prefix_len_stat_func);
 	}
 	return ret_flags;
+}
+
+/*
+ * Invalidate the given 'name' from the cache, if 'name' matches
+ * completely with the cache.
+ */
+void invalidate_lstat_cache(int len, const char *name)
+{
+	int match_len, previous_slash;
+
+	match_len = longest_match_lstat_cache(len, name, &previous_slash);
+	if (len == match_len) {
+		if ((cache.track_flags & FL_DIR) && previous_slash > 0) {
+			cache.path[previous_slash] = '\0';
+			cache.len = previous_slash;
+			cache.flags = FL_DIR;
+		} else
+			reset_lstat_cache(cache.track_flags,
+					  cache.prefix_len_stat_func);
+	}
 }
 
 #define USE_ONLY_LSTAT  0
