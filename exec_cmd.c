@@ -22,7 +22,11 @@ const char *system_path(const char *path)
 
 const char *git_extract_argv0_path(const char *argv0)
 {
-	const char *slash = argv0 + strlen(argv0);
+	const char *slash;
+
+	if (!argv0 || !*argv0)
+		return NULL;
+	slash = argv0 + strlen(argv0);
 
 	while (argv0 <= slash && !is_dir_sep(*slash))
 		slash--;
