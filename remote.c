@@ -4,6 +4,7 @@
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
+#include "dir.h"
 
 static struct refspec s_tag_refspec = {
 	0,
@@ -634,10 +635,7 @@ static struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
 
 static int valid_remote_nick(const char *name)
 {
-	if (!name[0] || /* not empty */
-	    (name[0] == '.' && /* not "." */
-	     (!name[1] || /* not ".." */
-	      (name[1] == '.' && !name[2]))))
+	if (!name[0] || is_dot_or_dotdot(name))
 		return 0;
 	return !strchr(name, '/'); /* no slash */
 }

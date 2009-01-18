@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "blob.h"
+#include "dir.h"
 
 static void create_directories(const char *path, const struct checkout *state)
 {
@@ -62,9 +63,7 @@ static void remove_subtree(const char *path)
 	*name++ = '/';
 	while ((de = readdir(dir)) != NULL) {
 		struct stat st;
-		if ((de->d_name[0] == '.') &&
-		    ((de->d_name[1] == 0) ||
-		     ((de->d_name[1] == '.') && de->d_name[2] == 0)))
+		if (is_dot_or_dotdot(de->d_name))
 			continue;
 		strcpy(name, de->d_name);
 		if (lstat(pathbuf, &st))
