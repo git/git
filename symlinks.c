@@ -195,6 +195,14 @@ void invalidate_lstat_cache(int len, const char *name)
 	}
 }
 
+/*
+ * Completely clear the contents of the cache
+ */
+void clear_lstat_cache(void)
+{
+	reset_lstat_cache(0, 0);
+}
+
 #define USE_ONLY_LSTAT  0
 
 /*
