@@ -624,7 +624,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	}
 
 	heads = 0;
-	for (i = 1; i < argc; i++) {
+	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!get_sha1(arg, head_sha1)) {
 			struct object *obj = lookup_object(head_sha1);
