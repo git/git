@@ -11,7 +11,7 @@ test_expect_success 'preparing origin repository' '
 	git clone --bare . x &&
 	test "$(GIT_CONFIG=a.git/config git config --bool core.bare)" = true &&
 	test "$(GIT_CONFIG=x/config git config --bool core.bare)" = true
-	git bundle create b1.bundle master HEAD &&
+	git bundle create b1.bundle --all &&
 	git bundle create b2.bundle master &&
 	mkdir dir &&
 	cp b1.bundle dir/b3

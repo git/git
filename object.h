@@ -71,5 +71,6 @@ int object_list_contains(struct object_list *list, struct object *obj);
 /* Object array handling .. */
 void add_object_array(struct object *obj, const char *name, struct object_array *array);
 void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode);
+void object_array_remove_duplicates(struct object_array *);
 
 #endif /* OBJECT_H */
