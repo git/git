@@ -92,6 +92,17 @@ COMMANDS
 	.git/config file may be specified as an optional command-line
 	argument.
 
+--localtime;;
+	Store Git commit times in the local timezone instead of UTC.  This
+	makes 'git-log' (even without --date=local) show the same times
+	that `svn log` would in the local timezone.
+
+This doesn't interfere with interoperating with the Subversion
+repository you cloned from, but if you wish for your local Git
+repository to be able to interoperate with someone else's local Git
+repository, either don't use this option or you should both use it in
+the same local timezone.
+
 'clone'::
 	Runs 'init' and 'fetch'.  It will automatically create a
 	directory based on the basename of the URL passed to it;

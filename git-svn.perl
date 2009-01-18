@@ -84,6 +84,7 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		   \$Git::SVN::_repack_flags,
 		'use-log-author' => \$Git::SVN::_use_log_author,
 		'add-author-from' => \$Git::SVN::_add_author_from,
+		'localtime' => \$Git::SVN::_localtime,
 		%remote_opts );
 
 my ($_trunk, $_tags, $_branches, $_stdlayout);
@@ -1364,7 +1365,7 @@ use constant rev_map_fmt => 'NH40';
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags $_use_svm_props $_head
             $_use_svnsync_props $no_reuse_existing $_minimize_url
-	    $_use_log_author $_add_author_from/;
+	    $_use_log_author $_add_author_from $_localtime/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
@@ -2526,12 +2527,61 @@ sub get_untracked {
 	\@out;
 }
 
+# parse_svn_date(DATE)
+# --------------------
+# Given a date (in UTC) from Subversion, return a string in the format
+# "<TZ Offset> <local date/time>" that Git will use.
+#
+# By default the parsed date will be in UTC; if $Git::SVN::_localtime
+# is true we'll convert it to the local timezone instead.
 sub parse_svn_date {
 	my $date = shift || return '+0000 1970-01-01 00:00:00';
 	my ($Y,$m,$d,$H,$M,$S) = ($date =~ /^(\d{4})\-(\d\d)\-(\d\d)T
 	                                    (\d\d)\:(\d\d)\:(\d\d).\d+Z$/x) or
 	                                 croak "Unable to parse date: $date\n";
-	"+0000 $Y-$m-$d $H:$M:$S";
+	my $parsed_date;    # Set next.
+
+	if ($Git::SVN::_localtime) {
+		# Translate the Subversion datetime to an epoch time.
+		# Begin by switching ourselves to $date's timezone, UTC.
+		my $old_env_TZ = $ENV{TZ};
+		$ENV{TZ} = 'UTC';
+
+		my $epoch_in_UTC =
+		    POSIX::strftime('%s', $S, $M, $H, $d, $m - 1, $Y - 1900);
+
+		# Determine our local timezone (including DST) at the
+		# time of $epoch_in_UTC.  $Git::SVN::Log::TZ stored the
+		# value of TZ, if any, at the time we were run.
+		if (defined $Git::SVN::Log::TZ) {
+			$ENV{TZ} = $Git::SVN::Log::TZ;
+		} else {
+			delete $ENV{TZ};
+		}
+
+		my $our_TZ =
+		    POSIX::strftime('%Z', $S, $M, $H, $d, $m - 1, $Y - 1900);
+
+		# This converts $epoch_in_UTC into our local timezone.
+		my ($sec, $min, $hour, $mday, $mon, $year,
+		    $wday, $yday, $isdst) = localtime($epoch_in_UTC);
+
+		$parsed_date = sprintf('%s %04d-%02d-%02d %02d:%02d:%02d',
+				       $our_TZ, $year + 1900, $mon + 1,
+				       $mday, $hour, $min, $sec);
+
+		# Reset us to the timezone in effect when we entered
+		# this routine.
+		if (defined $old_env_TZ) {
+			$ENV{TZ} = $old_env_TZ;
+		} else {
+			delete $ENV{TZ};
+		}
+	} else {
+		$parsed_date = "+0000 $Y-$m-$d $H:$M:$S";
+	}
+
+	return $parsed_date;
 }
 
 sub check_author {
