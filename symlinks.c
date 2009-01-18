@@ -4,6 +4,7 @@ static struct cache_def {
 	char path[PATH_MAX];
 	int len;
 	int flags;
+	int track_flags;
 } cache;
 
 /*
@@ -30,21 +31,23 @@ static inline int longest_match_lstat_cache(int len, const char *name)
 	return match_len;
 }
 
-static inline void reset_lstat_cache(void)
+static inline void reset_lstat_cache(int track_flags)
 {
 	cache.path[0] = '\0';
 	cache.len = 0;
 	cache.flags = 0;
+	cache.track_flags = track_flags;
 }
 
 #define FL_DIR      (1 << 0)
-#define FL_SYMLINK  (1 << 1)
-#define FL_LSTATERR (1 << 2)
-#define FL_ERR      (1 << 3)
+#define FL_NOENT    (1 << 1)
+#define FL_SYMLINK  (1 << 2)
+#define FL_LSTATERR (1 << 3)
+#define FL_ERR      (1 << 4)
 
 /*
  * Check if name 'name' of length 'len' has a symlink leading
- * component, or if the directory exists and is real.
+ * component, or if the directory exists and is real, or not.
  *
  * To speed up the check, some information is allowed to be cached.
  * This can be indicated by the 'track_flags' argument.
@@ -56,25 +59,35 @@ static int lstat_cache(int len, const char *name,
 	int match_flags, ret_flags, save_flags, max_len;
 	struct stat st;
 
-	/*
-	 * Check to see if we have a match from the cache for the
-	 * symlink path type.
-	 */
-	match_len = last_slash = longest_match_lstat_cache(len, name);
-	match_flags = cache.flags & track_flags & FL_SYMLINK;
-	if (match_flags && match_len == cache.len)
-		return match_flags;
-	/*
-	 * If we now have match_len > 0, we would know that the
-	 * matched part will always be a directory.
-	 *
-	 * Also, if we are tracking directories and 'name' is a
-	 * substring of the cache on a path component basis, we can
-	 * return immediately.
-	 */
-	match_flags = track_flags & FL_DIR;
-	if (match_flags && len == match_len)
-		return match_flags;
+	if (cache.track_flags != track_flags) {
+		/*
+		 * As a safeguard we clear the cache if the value of
+		 * track_flags does not match with the last supplied
+		 * value.
+		 */
+		reset_lstat_cache(track_flags);
+		match_len = last_slash = 0;
+	} else {
+		/*
+		 * Check to see if we have a match from the cache for
+		 * the 2 "excluding" path types.
+		 */
+		match_len = last_slash = longest_match_lstat_cache(len, name);
+		match_flags = cache.flags & track_flags & (FL_NOENT|FL_SYMLINK);
+		if (match_flags && match_len == cache.len)
+			return match_flags;
+		/*
+		 * If we now have match_len > 0, we would know that
+		 * the matched part will always be a directory.
+		 *
+		 * Also, if we are tracking directories and 'name' is
+		 * a substring of the cache on a path component basis,
+		 * we can return immediately.
+		 */
+		match_flags = track_flags & FL_DIR;
+		if (match_flags && len == match_len)
+			return match_flags;
+	}
 
 	/*
 	 * Okay, no match from the cache so far, so now we have to
@@ -95,6 +108,8 @@ static int lstat_cache(int len, const char *name,
 
 		if (lstat(cache.path, &st)) {
 			ret_flags = FL_LSTATERR;
+			if (errno == ENOENT)
+				ret_flags |= FL_NOENT;
 		} else if (S_ISDIR(st.st_mode)) {
 			last_slash_dir = last_slash;
 			continue;
@@ -107,11 +122,11 @@ static int lstat_cache(int len, const char *name,
 	}
 
 	/*
-	 * At the end update the cache.  Note that max 2 different
-	 * path types, FL_SYMLINK and FL_DIR, can be cached for the
-	 * moment!
+	 * At the end update the cache.  Note that max 3 different
+	 * path types, FL_NOENT, FL_SYMLINK and FL_DIR, can be cached
+	 * for the moment!
 	 */
-	save_flags = ret_flags & track_flags & FL_SYMLINK;
+	save_flags = ret_flags & track_flags & (FL_NOENT|FL_SYMLINK);
 	if (save_flags && last_slash > 0 && last_slash < PATH_MAX) {
 		cache.path[last_slash] = '\0';
 		cache.len = last_slash;
@@ -120,20 +135,20 @@ static int lstat_cache(int len, const char *name,
 		   last_slash_dir > 0 && last_slash_dir < PATH_MAX) {
 		/*
 		 * We have a separate test for the directory case,
-		 * since it could be that we have found a symlink and
-		 * the track_flags says that we cannot cache this
-		 * fact, so the cache would then have been left empty
-		 * in this case.
+		 * since it could be that we have found a symlink or a
+		 * non-existing directory and the track_flags says
+		 * that we cannot cache this fact, so the cache would
+		 * then have been left empty in this case.
 		 *
 		 * But if we are allowed to track real directories, we
 		 * can still cache the path components before the last
-		 * one (the found symlink component).
+		 * one (the found symlink or non-existing component).
 		 */
 		cache.path[last_slash_dir] = '\0';
 		cache.len = last_slash_dir;
 		cache.flags = FL_DIR;
 	} else {
-		reset_lstat_cache();
+		reset_lstat_cache(track_flags);
 	}
 	return ret_flags;
 }
@@ -146,4 +161,15 @@ int has_symlink_leading_path(int len, const char *name)
 	return lstat_cache(len, name,
 			   FL_SYMLINK|FL_DIR) &
 		FL_SYMLINK;
+}
+
+/*
+ * Return non-zero if path 'name' has a leading symlink component or
+ * if some leading path component does not exists.
+ */
+int has_symlink_or_noent_leading_path(int len, const char *name)
+{
+	return lstat_cache(len, name,
+			   FL_SYMLINK|FL_NOENT|FL_DIR) &
+		(FL_SYMLINK|FL_NOENT);
 }
