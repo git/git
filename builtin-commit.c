@@ -624,7 +624,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 	if (!commitable && !in_merge && !allow_empty &&
 	    !(amend && is_a_merge(head_sha1))) {
 		run_status(stdout, index_file, prefix, 0);
-		unlink(commit_editmsg);
 		return 0;
 	}
 
