@@ -444,9 +444,8 @@ int main(int argc, const char **argv)
 {
 	const char *cmd;
 
-	if (argv[0] && *argv[0])
-		cmd = git_extract_argv0_path(argv[0]);
-	else
+	cmd = git_extract_argv0_path(argv[0]);
+	if (!cmd)
 		cmd = "git-help";
 
 	/*
