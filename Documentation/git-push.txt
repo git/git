@@ -44,8 +44,7 @@ tip of `master` branch); see linkgit:git-rev-parse[1]) that you
 want to push.  The <dst> side represents the destination location.
 +
 The local ref that matches <src> is used
-to fast forward the remote ref that matches <dst> (or, if no <dst> was
-specified, the same ref that <src> referred to locally).  If
+to fast forward the remote ref that matches <dst>.  If
 the optional leading plus `+` is used, the remote ref is updated
 even if it does not result in a fast forward update.
 +
