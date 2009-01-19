@@ -127,7 +127,7 @@ fi
 
 error () {
 	say_color error "error: $*"
-	trap - exit
+	trap - EXIT
 	exit 1
 }
 
@@ -163,7 +163,7 @@ die () {
 	exit 1
 }
 
-trap 'die' exit
+trap 'die' EXIT
 
 # The semantics of the editor variables are that of invoking
 # sh -c "$EDITOR \"$@\"" files ...
@@ -208,7 +208,7 @@ test_failure_ () {
 	say_color error "FAIL $test_count: $1"
 	shift
 	echo "$@" | sed -e 's/^/	/'
-	test "$immediate" = "" || { trap - exit; exit 1; }
+	test "$immediate" = "" || { trap - EXIT; exit 1; }
 }
 
 test_known_broken_ok_ () {
@@ -416,7 +416,7 @@ test_create_repo () {
 }
 
 test_done () {
-	trap - exit
+	trap - EXIT
 	test_results_dir="$TEST_DIRECTORY/test-results"
 	mkdir -p "$test_results_dir"
 	test_results_path="$test_results_dir/${0%-*}-$$"
@@ -493,7 +493,7 @@ fi
 test="trash directory.$(basename "$0" .sh)"
 test ! -z "$debug" || remove_trash="$TEST_DIRECTORY/$test"
 rm -fr "$test" || {
-	trap - exit
+	trap - EXIT
 	echo >&5 "FATAL: Cannot prepare test area"
 	exit 1
 }
