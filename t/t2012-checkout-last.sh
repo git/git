@@ -47,4 +47,48 @@ test_expect_success '"checkout -" detaches again' '
 	test_must_fail git symbolic-ref HEAD
 '
 
+test_expect_success 'more switches' '
+	for i in 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
+	do
+		git checkout -b branch$i
+	done
+'
+
+more_switches () {
+	for i in 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
+	do
+		git checkout branch$i
+	done
+}
+
+test_expect_success 'switch to the last' '
+	more_switches &&
+	git checkout @{-1} &&
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch2"
+'
+
+test_expect_success 'switch to second from the last' '
+	more_switches &&
+	git checkout @{-2} &&
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch3"
+'
+
+test_expect_success 'switch to third from the last' '
+	more_switches &&
+	git checkout @{-3} &&
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch4"
+'
+
+test_expect_success 'switch to fourth from the last' '
+	more_switches &&
+	git checkout @{-4} &&
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch5"
+'
+
+test_expect_success 'switch to twelfth from the last' '
+	more_switches &&
+	git checkout @{-12} &&
+	test "z$(git symbolic-ref HEAD)" = "zrefs/heads/branch13"
+'
+
 test_done

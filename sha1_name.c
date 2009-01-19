@@ -685,8 +685,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 }
 
 struct grab_nth_branch_switch_cbdata {
-	int counting;
-	int nth;
+	long cnt, alloc;
 	struct strbuf *buf;
 };
 
@@ -697,6 +696,7 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 	struct grab_nth_branch_switch_cbdata *cb = cb_data;
 	const char *match = NULL, *target = NULL;
 	size_t len;
+	int nth;
 
 	if (!prefixcmp(message, "checkout: moving from ")) {
 		match = message + strlen("checkout: moving from ");
@@ -711,16 +711,9 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 	if (target[len] == '\n' && !strncmp(match, target, len))
 		return 0;
 
-	if (cb->counting) {
-		cb->nth++;
-		return 0;
-	}
-
-	if (cb->nth-- <= 0) {
-		strbuf_reset(cb->buf);
-		strbuf_add(cb->buf, match, len);
-		return 1;
-	}
+	nth = cb->cnt++ % cb->alloc;
+	strbuf_reset(&cb->buf[nth]);
+	strbuf_add(&cb->buf[nth], match, len);
 	return 0;
 }
 
@@ -737,7 +730,8 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
  */
 int interpret_nth_last_branch(const char *name, struct strbuf *buf)
 {
-	int nth;
+	long nth;
+	int i;
 	struct grab_nth_branch_switch_cbdata cb;
 	const char *brace;
 	char *num_end;
@@ -750,19 +744,22 @@ int interpret_nth_last_branch(const char *name, struct strbuf *buf)
 	nth = strtol(name+3, &num_end, 10);
 	if (num_end != brace)
 		return -1;
-
-	cb.counting = 1;
-	cb.nth = 0;
-	cb.buf = buf;
+	if (nth <= 0)
+		return -1;
+	cb.alloc = nth;
+	cb.buf = xmalloc(nth * sizeof(struct strbuf));
+	for (i = 0; i < nth; i++)
+		strbuf_init(&cb.buf[i], 20);
+	cb.cnt = 0;
 	for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
-
-	if (cb.nth < nth)
+	if (cb.cnt < nth)
 		return 0;
-
-	cb.counting = 0;
-	cb.nth -= nth;
-	cb.buf = buf;
-	for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
+	i = cb.cnt % nth;
+	strbuf_reset(buf);
+	strbuf_add(buf, cb.buf[i].buf, cb.buf[i].len);
+	for (i = 0; i < nth; i++)
+		strbuf_release(&cb.buf[i]);
+	free(cb.buf);
 
 	return brace-name+1;
 }
