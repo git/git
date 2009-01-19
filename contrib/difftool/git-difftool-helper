@@ -32,7 +32,6 @@ cleanup_temp_files () {
 
 # This is called when users Ctrl-C out of git-difftool-helper
 sigint_handler () {
-	echo
 	cleanup_temp_files
 	exit 1
 }
