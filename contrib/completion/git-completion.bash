@@ -784,7 +784,7 @@ _git_diff ()
 			--patch-with-stat --name-only --name-status --color
 			--no-color --color-words --no-renames --check
 			--full-index --binary --abbrev --diff-filter=
-			--find-copies-harder --pickaxe-all --pickaxe-regex
+			--find-copies-harder
 			--text --ignore-space-at-eol --ignore-space-change
 			--ignore-all-space --exit-code --quiet --ext-diff
 			--no-ext-diff
@@ -986,6 +986,7 @@ _git_log ()
 			--parents --children --full-history
 			--merge
 			--inter-hunk-context=
+			--pickaxe-all --pickaxe-regex
 			"
 		return
 		;;
