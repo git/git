@@ -78,12 +78,16 @@ launch_merge_tool () {
 		"$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"
 		;;
 
-	meld|vimdiff)
+	meld)
 		"$merge_tool_path" "$LOCAL" "$REMOTE"
 		;;
 
+	vimdiff)
+		"$merge_tool_path" -c "wincmd l" "$LOCAL" "$REMOTE"
+		;;
+
 	gvimdiff)
-		"$merge_tool_path" -f "$LOCAL" "$REMOTE"
+		"$merge_tool_path" -c "wincmd l" -f "$LOCAL" "$REMOTE"
 		;;
 
 	xxdiff)
