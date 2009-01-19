@@ -53,7 +53,7 @@ launch_merge_tool () {
 
 	# Create and ensure that we clean up $BACKUP
 	test -f "$MERGED" && cp -- "$MERGED" "$BACKUP"
-	trap sigint_handler SIGINT
+	trap sigint_handler INT
 
 	# $LOCAL and $REMOTE are temporary files so prompt
 	# the user with the real $MERGED name before launching $merge_tool.
