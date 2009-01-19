@@ -15,8 +15,17 @@ compare_git_head_with () {
 }
 
 compare_svn_head_with () {
-	LC_ALL=en_US.UTF-8 svn log --limit 1 `git svn info --url` | \
-		sed -e 1,3d -e "/^-\{1,\}\$/d" >current &&
+	# extract just the log message and strip out committer info.
+	# don't use --limit here since svn 1.1.x doesn't have it,
+	LC_ALL=en_US.UTF-8 svn log `git svn info --url` | perl -w -e '
+		use bytes;
+		$/ = ("-"x72) . "\n";
+		my @x = <STDIN>;
+		@x = split(/\n/, $x[1]);
+		splice(@x, 0, 2);
+		$x[-1] = "";
+		print join("\n", @x);
+	' > current &&
 	test_cmp current "$1"
 }
 

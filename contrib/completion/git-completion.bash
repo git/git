@@ -1576,7 +1576,7 @@ _git_svn ()
 			--follow-parent --authors-file= --repack=
 			--no-metadata --use-svm-props --use-svnsync-props
 			--log-window-size= --no-checkout --quiet
-			--repack-flags --user-log-author $remote_opts
+			--repack-flags --user-log-author --localtime $remote_opts
 			"
 		local init_opts="
 			--template= --shared= --trunk= --tags=
