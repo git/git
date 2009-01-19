@@ -501,7 +501,7 @@ do
 	fi
 	if test $apply_status != 0
 	then
-		echo "Patch failed at $msgnum $FIRSTLINE"
+		printf 'Patch failed at %s %s\n' "$msgnum" "$FIRSTLINE"
 		stop_here_user_resolve $this
 	fi
 
