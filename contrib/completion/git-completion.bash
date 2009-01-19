@@ -773,14 +773,7 @@ _git_describe ()
 	__gitcomp "$(__git_refs)"
 }
 
-_git_diff ()
-{
-	__git_has_doubledash && return
-
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	case "$cur" in
-	--*)
-		__gitcomp "--cached --stat --numstat --shortstat --summary
+__git_diff_common_options="--stat --numstat --shortstat --summary
 			--patch-with-stat --name-only --name-status --color
 			--no-color --color-words --no-renames --check
 			--full-index --binary --abbrev --diff-filter=
@@ -789,8 +782,20 @@ _git_diff ()
 			--ignore-all-space --exit-code --quiet --ext-diff
 			--no-ext-diff
 			--no-prefix --src-prefix= --dst-prefix=
-			--base --ours --theirs
 			--inter-hunk-context=
+			--raw
+"
+
+_git_diff ()
+{
+	__git_has_doubledash && return
+
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--cached --pickaxe-all --pickaxe-regex
+			--base --ours --theirs
+			$__git_diff_common_options
 			"
 		return
 		;;
@@ -976,16 +981,15 @@ _git_log ()
 			--relative-date --date=
 			--author= --committer= --grep=
 			--all-match
-			--pretty= --name-status --name-only --raw
+			--pretty=
 			--not --all
 			--left-right --cherry-pick
 			--graph
-			--stat --numstat --shortstat
-			--decorate --diff-filter=
-			--color-words --walk-reflogs
+			--decorate
+			--walk-reflogs
 			--parents --children --full-history
 			--merge
-			--inter-hunk-context=
+			$__git_diff_common_options
 			--pickaxe-all --pickaxe-regex
 			"
 		return
@@ -1490,7 +1494,9 @@ _git_show ()
 		return
 		;;
 	--*)
-		__gitcomp "--pretty="
+		__gitcomp "--pretty=
+			$__git_diff_common_options
+			"
 		return
 		;;
 	esac
