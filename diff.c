@@ -118,7 +118,9 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	}
 
 	/* like GNU diff's --suppress-blank-empty option  */
-	if (!strcmp(var, "diff.suppress-blank-empty")) {
+	if (!strcmp(var, "diff.suppressblankempty") ||
+			/* for backwards compatibility */
+			!strcmp(var, "diff.suppress-blank-empty")) {
 		diff_suppress_blank_empty = git_config_bool(var, value);
 		return 0;
 	}
