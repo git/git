@@ -727,7 +727,7 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 			target += 4;
 	}
 
-	if (!match)
+	if (!match || !target)
 		return 0;
 
 	len = target - match - 4;
