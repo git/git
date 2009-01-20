@@ -775,7 +775,13 @@ int interpret_nth_last_branch(const char *name, struct strbuf *buf)
 		strbuf_init(&cb.buf[i], 20);
 	cb.cnt = 0;
 	retval = 0;
-	for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
+	for_each_recent_reflog_ent("HEAD", grab_nth_branch_switch, 40960, &cb);
+	if (cb.cnt < nth) {
+		cb.cnt = 0;
+		for (i = 0; i < nth; i++)
+			strbuf_release(&cb.buf[i]);
+		for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
+	}
 	if (cb.cnt < nth)
 		goto release_return;
 	i = cb.cnt % nth;
