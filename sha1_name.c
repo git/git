@@ -754,7 +754,7 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 int interpret_nth_last_branch(const char *name, struct strbuf *buf)
 {
 	long nth;
-	int i;
+	int i, retval;
 	struct grab_nth_branch_switch_cbdata cb;
 	const char *brace;
 	char *num_end;
@@ -774,17 +774,21 @@ int interpret_nth_last_branch(const char *name, struct strbuf *buf)
 	for (i = 0; i < nth; i++)
 		strbuf_init(&cb.buf[i], 20);
 	cb.cnt = 0;
+	retval = 0;
 	for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
 	if (cb.cnt < nth)
-		return 0;
+		goto release_return;
 	i = cb.cnt % nth;
 	strbuf_reset(buf);
 	strbuf_add(buf, cb.buf[i].buf, cb.buf[i].len);
+	retval = brace-name+1;
+
+release_return:
 	for (i = 0; i < nth; i++)
 		strbuf_release(&cb.buf[i]);
 	free(cb.buf);
 
-	return brace-name+1;
+	return retval;
 }
 
 /*
