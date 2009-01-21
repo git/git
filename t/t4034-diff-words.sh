@@ -77,6 +77,7 @@ a = b + c<RESET>
 
 <GREEN>aeff = aeff * ( aaa<RESET> )
 EOF
+cp expect expect.letter-runs-are-words
 
 test_expect_success 'word diff with a regular expression' '
 
@@ -92,7 +93,7 @@ post diff=testdriver
 EOF
 '
 
-test_expect_success 'option overrides default' '
+test_expect_success 'option overrides .gitattributes' '
 
 	word_diff --color-words="[a-z]+"
 
@@ -112,11 +113,51 @@ a = b + c<RESET>
 
 <GREEN>aeff = aeff * ( aaa )<RESET>
 EOF
+cp expect expect.non-whitespace-is-word
 
-test_expect_success 'use default supplied by driver' '
+test_expect_success 'use regex supplied by driver' '
 
 	word_diff --color-words
 
+'
+
+test_expect_success 'set diff.wordregex option' '
+	git config diff.wordregex "[[:alnum:]]+"
+'
+
+cp expect.letter-runs-are-words expect
+
+test_expect_success 'command-line overrides config' '
+	word_diff --color-words="[a-z]+"
+'
+
+cp expect.non-whitespace-is-word expect
+
+test_expect_success '.gitattributes override config' '
+	word_diff --color-words
+'
+
+test_expect_success 'remove diff driver regex' '
+	git config --unset diff.testdriver.wordregex
+'
+
+cat > expect <<\EOF
+<WHITE>diff --git a/pre b/post<RESET>
+<WHITE>index 330b04f..5ed8eff 100644<RESET>
+<WHITE>--- a/pre<RESET>
+<WHITE>+++ b/post<RESET>
+<BROWN>@@ -1,3 +1,7 @@<RESET>
+h(4),<GREEN>hh[44<RESET>]
+<RESET>
+a = b + c<RESET>
+
+<GREEN>aa = a<RESET>
+
+<GREEN>aeff = aeff * ( aaa<RESET> )
+EOF
+
+test_expect_success 'use configured regex' '
+	word_diff --color-words
 '
 
 echo 'aaa (aaa)' > pre

@@ -23,6 +23,7 @@ static int diff_detect_rename_default;
 static int diff_rename_limit_default = 200;
 static int diff_suppress_blank_empty;
 int diff_use_color_default = -1;
+static const char *diff_word_regex_cfg;
 static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
@@ -92,6 +93,8 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "diff.external"))
 		return git_config_string(&external_diff_cmd_cfg, var, value);
+	if (!strcmp(var, "diff.wordregex"))
+		return git_config_string(&diff_word_regex_cfg, var, value);
 
 	return git_diff_basic_config(var, value, cb);
 }
@@ -1550,6 +1553,8 @@ static void builtin_diff(const char *name_a,
 				o->word_regex = userdiff_word_regex(one);
 			if (!o->word_regex)
 				o->word_regex = userdiff_word_regex(two);
+			if (!o->word_regex)
+				o->word_regex = diff_word_regex_cfg;
 			if (o->word_regex) {
 				ecbdata.diff_words->word_regex = (regex_t *)
 					xmalloc(sizeof(regex_t));

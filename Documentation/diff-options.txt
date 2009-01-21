@@ -103,9 +103,10 @@ expression to make sure that it matches all non-whitespace characters.
 A match that contains a newline is silently truncated(!) at the
 newline.
 +
-The regex can also be set via a diff driver, see
-linkgit:gitattributes[1]; giving it explicitly overrides any diff
-driver setting.
+The regex can also be set via a diff driver or configuration option, see
+linkgit:gitattributes[1] or linkgit:git-config[1].  Giving it explicitly
+overrides any diff driver or configuration setting.  Diff drivers
+override configuration settings.
 
 --no-renames::
 	Turn off rename detection, even when the configuration
