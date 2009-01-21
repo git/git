@@ -6,8 +6,8 @@ static struct userdiff_driver *drivers;
 static int ndrivers;
 static int drivers_alloc;
 
-#define PATTERNS(name, pattern, wordregex)			\
-	{ name, NULL, -1, { pattern, REG_EXTENDED }, wordregex }
+#define PATTERNS(name, pattern, word_regex)			\
+	{ name, NULL, -1, { pattern, REG_EXTENDED }, word_regex }
 static struct userdiff_driver builtin_drivers[] = {
 PATTERNS("html", "^[ \t]*(<[Hh][1-6][ \t].*>.*)$",
 	 "[^<>= \t]+|[^[:space:]]|[\x80-\xff]+"),

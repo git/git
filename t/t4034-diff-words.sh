@@ -86,7 +86,7 @@ test_expect_success 'word diff with a regular expression' '
 '
 
 test_expect_success 'set a diff driver' '
-	git config diff.testdriver.wordregex "[^[:space:]]" &&
+	git config diff.testdriver.wordRegex "[^[:space:]]" &&
 	cat <<EOF > .gitattributes
 pre diff=testdriver
 post diff=testdriver
@@ -121,8 +121,8 @@ test_expect_success 'use regex supplied by driver' '
 
 '
 
-test_expect_success 'set diff.wordregex option' '
-	git config diff.wordregex "[[:alnum:]]+"
+test_expect_success 'set diff.wordRegex option' '
+	git config diff.wordRegex "[[:alnum:]]+"
 '
 
 cp expect.letter-runs-are-words expect
@@ -138,7 +138,7 @@ test_expect_success '.gitattributes override config' '
 '
 
 test_expect_success 'remove diff driver regex' '
-	git config --unset diff.testdriver.wordregex
+	git config --unset diff.testdriver.wordRegex
 '
 
 cat > expect <<\EOF
