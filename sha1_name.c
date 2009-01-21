@@ -723,17 +723,13 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 
 	if (!prefixcmp(message, "checkout: moving from ")) {
 		match = message + strlen("checkout: moving from ");
-		if ((target = strstr(match, " to ")) != NULL)
-			target += 4;
+		target = strstr(match, " to ");
 	}
 
 	if (!match || !target)
 		return 0;
 
-	len = target - match - 4;
-	if (target[len] == '\n' && !strncmp(match, target, len))
-		return 0;
-
+	len = target - match;
 	nth = cb->cnt++ % cb->alloc;
 	strbuf_reset(&cb->buf[nth]);
 	strbuf_add(&cb->buf[nth], match, len);
