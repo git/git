@@ -34,13 +34,24 @@ test_expect_success 'custom mergetool' '
     git config merge.tool mytool &&
     git config mergetool.mytool.cmd "cat \"\$REMOTE\" >\"\$MERGED\"" &&
     git config mergetool.mytool.trustExitCode true &&
-	git checkout branch1 &&
+    git checkout branch1 &&
     test_must_fail git merge master >/dev/null 2>&1 &&
     ( yes "" | git mergetool file1>/dev/null 2>&1 ) &&
     ( yes "" | git mergetool file2>/dev/null 2>&1 ) &&
     test "$(cat file1)" = "master updated" &&
     test "$(cat file2)" = "master new" &&
-	git commit -m "branch1 resolved with mergetool"
+    git commit -m "branch1 resolved with mergetool"
+'
+
+test_expect_success 'mergetool crlf' '
+    git config core.autocrlf true &&
+    git reset --hard HEAD^
+    test_must_fail git merge master >/dev/null 2>&1 &&
+    ( yes "" | git mergetool file1>/dev/null 2>&1 ) &&
+    ( yes "" | git mergetool file2>/dev/null 2>&1 ) &&
+    test "$(printf x | cat file1 -)" = "$(printf "master updated\r\nx")" &&
+    test "$(printf x | cat file2 -)" = "$(printf "master new\r\nx")" &&
+    git commit -m "branch1 resolved with mergetool - autocrlf"
 '
 
 test_done

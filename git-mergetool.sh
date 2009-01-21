@@ -127,6 +127,14 @@ check_unchanged () {
     fi
 }
 
+checkout_staged_file () {
+    tmpfile=$(expr "$(git checkout-index --temp --stage="$1" "$2")" : '\([^	]*\)	')
+
+    if test $? -eq 0 -a -n "$tmpfile" ; then
+	mv -- "$tmpfile" "$3"
+    fi
+}
+
 merge_file () {
     MERGED="$1"
 
@@ -153,9 +161,9 @@ merge_file () {
     local_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $1;}'`
     remote_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $1;}'`
 
-    base_present   && git cat-file blob ":1:$prefix$MERGED" >"$BASE" 2>/dev/null
-    local_present  && git cat-file blob ":2:$prefix$MERGED" >"$LOCAL" 2>/dev/null
-    remote_present && git cat-file blob ":3:$prefix$MERGED" >"$REMOTE" 2>/dev/null
+    base_present   && checkout_staged_file 1 "$prefix$MERGED" "$BASE"
+    local_present  && checkout_staged_file 2 "$prefix$MERGED" "$LOCAL"
+    remote_present && checkout_staged_file 3 "$prefix$MERGED" "$REMOTE"
 
     if test -z "$local_mode" -o -z "$remote_mode"; then
 	echo "Deleted merge conflict for '$MERGED':"
