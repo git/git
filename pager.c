@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "run-command.h"
+#include "sigchain.h"
 
 /*
  * This is split up from the rest of git so that we can do
@@ -36,6 +37,13 @@ static void wait_for_pager(void)
 	close(1);
 	close(2);
 	finish_command(&pager_process);
+}
+
+static void wait_for_pager_signal(int signo)
+{
+	wait_for_pager();
+	sigchain_pop(signo);
+	raise(signo);
 }
 
 void setup_pager(void)
@@ -75,6 +83,7 @@ void setup_pager(void)
 	close(pager_process.in);
 
 	/* this makes sure that the parent terminates after the pager */
+	sigchain_push_common(wait_for_pager_signal);
 	atexit(wait_for_pager);
 }
 
