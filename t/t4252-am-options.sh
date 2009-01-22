@@ -50,4 +50,20 @@ test_expect_success 'interrupted am -C1 -p2' '
 	grep "^Three$" file-2
 '
 
+test_expect_success 'interrupted am --directory="frotz nitfol"' '
+	rm -rf .git/rebase-apply &&
+	git reset --hard initial &&
+	test_must_fail git am --directory="frotz nitfol" "$tm"/am-test-5-? &&
+	git am --skip &&
+	grep One "frotz nitfol/file-5"
+'
+
+test_expect_success 'apply to a funny path' '
+	with_sq="with'\''sq"
+	rm -fr .git/rebase-apply &&
+	git reset --hard initial &&
+	git am --directory="$with_sq" "$tm"/am-test-5-2 &&
+	test -f "$with_sq/file-5"
+'
+
 test_done
