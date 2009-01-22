@@ -14,7 +14,7 @@ touch foo && git add foo && git commit -m "added foo" &&
 test_format() {
 	cat >expect.$1
 	test_expect_success "format $1" "
-git rev-list --pretty=format:$2 master >output.$1 &&
+git rev-list --pretty=format:'$2' master >output.$1 &&
 test_cmp expect.$1 output.$1
 "
 }
@@ -99,6 +99,13 @@ commit 131a310eb913d107dd3c09a65d1651175898735d
 [31mfoo[32mbar[34mbaz[mxyzzy
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
 [31mfoo[32mbar[34mbaz[mxyzzy
+EOF
+
+test_format advanced-colors '%C(red yellow bold)foo%C(reset)' <<'EOF'
+commit 131a310eb913d107dd3c09a65d1651175898735d
+[1;31;43mfoo[m
+commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
+[1;31;43mfoo[m
 EOF
 
 cat >commit-msg <<'EOF'
