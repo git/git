@@ -40,6 +40,16 @@ skip_commit()
 	done;
 }
 
+# if you run 'git_commit_non_empty_tree "$@"' in a commit filter,
+# it will skip commits that leave the tree untouched, commit the other.
+git_commit_non_empty_tree()
+{
+	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
+		map "$3"
+	else
+		git commit-tree "$@"
+	fi
+}
 # override die(): this version puts in an extra line break, so that
 # the progress is still visible
 
@@ -109,11 +119,12 @@ filter_tree=
 filter_index=
 filter_parent=
 filter_msg=cat
-filter_commit='git commit-tree "$@"'
+filter_commit=
 filter_tag_name=
 filter_subdir=
 orig_namespace=refs/original/
 force=
+prune_empty=
 while :
 do
 	case "$1" in
@@ -124,6 +135,11 @@ do
 	--force|-f)
 		shift
 		force=t
+		continue
+		;;
+	--prune-empty)
+		shift
+		prune_empty=t
 		continue
 		;;
 	-*)
@@ -175,6 +191,17 @@ do
 		;;
 	esac
 done
+
+case "$prune_empty,$filter_commit" in
+,)
+	filter_commit='git commit-tree "$@"';;
+t,)
+	filter_commit="$functions;"' git_commit_non_empty_tree "$@"';;
+,*)
+	;;
+*)
+	die "Cannot set --prune-empty and --filter-commit at the same time"
+esac
 
 case "$force" in
 t)

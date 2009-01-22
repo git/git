@@ -8,10 +8,11 @@ git-rebase - Forward-port local commits to the updated upstream head
 SYNOPSIS
 --------
 [verse]
-'git rebase' [-i | --interactive] [-v | --verbose] [-m | --merge]
-	[-s <strategy> | --strategy=<strategy>] [--no-verify]
-	[-C<n>] [ --whitespace=<option>] [-p | --preserve-merges]
-	[--onto <newbase>] <upstream> [<branch>]
+'git rebase' [-i | --interactive] [options] [--onto <newbase>]
+	<upstream> [<branch>]
+'git rebase' [-i | --interactive] [options] --onto <newbase>
+	--root [<branch>]
+
 'git rebase' --continue | --skip | --abort
 
 DESCRIPTION
@@ -22,7 +23,8 @@ it remains on the current branch.
 
 All changes made by commits in the current branch but that are not
 in <upstream> are saved to a temporary area.  This is the same set
-of commits that would be shown by `git log <upstream>..HEAD`.
+of commits that would be shown by `git log <upstream>..HEAD` (or
+`git log HEAD`, if --root is specified).
 
 The current branch is reset to <upstream>, or <newbase> if the
 --onto option was supplied.  This has the exact same effect as
@@ -254,6 +256,15 @@ OPTIONS
 -p::
 --preserve-merges::
 	Instead of ignoring merges, try to recreate them.
+
+--root::
+	Rebase all commits reachable from <branch>, instead of
+	limiting them with an <upstream>.  This allows you to rebase
+	the root commit(s) on a branch.  Must be used with --onto, and
+	will skip changes already contained in <newbase> (instead of
+	<upstream>).  When used together with --preserve-merges, 'all'
+	root commits will be rewritten to have <newbase> as parent
+	instead.
 
 include::merge-strategies.txt[]
 

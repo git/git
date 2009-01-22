@@ -87,7 +87,7 @@ With something like git.git current tree, I get:
 	v1.0.4-14-g2414721
 
 i.e. the current head of my "parent" branch is based on v1.0.4,
-but since it has a handful commits on top of that,
+but since it has a few commits on top of that,
 describe has added the number of additional commits ("14") and
 an abbreviated object name for the commit itself ("2414721")
 at the end.

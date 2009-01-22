@@ -7,7 +7,7 @@ git-mergetool - Run merge conflict resolution tools to resolve merge conflicts
 
 SYNOPSIS
 --------
-'git mergetool' [--tool=<tool>] [<file>]...
+'git mergetool' [--tool=<tool>] [-y|--no-prompt|--prompt] [<file>]...
 
 DESCRIPTION
 -----------
@@ -22,7 +22,8 @@ with merge conflicts.
 
 OPTIONS
 -------
--t or --tool=<tool>::
+-t <tool>::
+--tool=<tool>::
 	Use the merge resolution program specified by <tool>.
 	Valid merge tools are:
 	kdiff3, tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff, ecmerge, and opendiff
@@ -59,6 +60,16 @@ merge resolution with its exit code, then the configuration
 variable `mergetool.<tool>.trustExitCode` can be set to `true`.
 Otherwise, 'git-mergetool' will prompt the user to indicate the
 success of the resolution after the custom tool has exited.
+
+-y::
+--no-prompt::
+	Don't prompt before each invocation of the merge resolution
+	program.
+
+--prompt::
+	Prompt before each invocation of the merge resolution program.
+	This is the default behaviour; the option is provided to
+	override any configuration settings.
 
 Author
 ------

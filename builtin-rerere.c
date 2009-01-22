@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "dir.h"
 #include "string-list.h"
 #include "rerere.h"
 #include "xdiff/xdiff.h"
@@ -59,17 +60,15 @@ static void garbage_collect(struct string_list *rr)
 	git_config(git_rerere_gc_config, NULL);
 	dir = opendir(git_path("rr-cache"));
 	while ((e = readdir(dir))) {
-		const char *name = e->d_name;
-		if (name[0] == '.' &&
-		    (name[1] == '\0' || (name[1] == '.' && name[2] == '\0')))
+		if (is_dot_or_dotdot(e->d_name))
 			continue;
-		then = rerere_created_at(name);
+		then = rerere_created_at(e->d_name);
 		if (!then)
 			continue;
-		cutoff = (has_resolution(name)
+		cutoff = (has_resolution(e->d_name)
 			  ? cutoff_resolve : cutoff_noresolve);
 		if (then < now - cutoff * 86400)
-			string_list_append(name, &to_remove);
+			string_list_append(e->d_name, &to_remove);
 	}
 	for (i = 0; i < to_remove.nr; i++)
 		unlink_rr_item(to_remove.items[i].string);

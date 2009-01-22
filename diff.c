@@ -118,7 +118,9 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	}
 
 	/* like GNU diff's --suppress-blank-empty option  */
-	if (!strcmp(var, "diff.suppress-blank-empty")) {
+	if (!strcmp(var, "diff.suppressblankempty") ||
+			/* for backwards compatibility */
+			!strcmp(var, "diff.suppress-blank-empty")) {
 		diff_suppress_blank_empty = git_config_bool(var, value);
 		return 0;
 	}
@@ -1469,6 +1471,7 @@ static void builtin_diff(const char *name_a,
 		ecbdata.file = o->file;
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
+		xecfg.interhunkctxlen = o->interhunkcontext;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		if (pe)
 			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
@@ -2039,7 +2042,7 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 			if (lstat(one->path, &st) < 0)
 				die("stat %s", one->path);
 			if (index_path(one->sha1, one->path, &st, 0))
-				die("cannot hash %s\n", one->path);
+				die("cannot hash %s", one->path);
 		}
 	}
 	else
@@ -2538,6 +2541,9 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->b_prefix = arg + 13;
 	else if (!strcmp(arg, "--no-prefix"))
 		options->a_prefix = options->b_prefix = "";
+	else if (opt_arg(arg, '\0', "inter-hunk-context",
+			 &options->interhunkcontext))
+		;
 	else if (!prefixcmp(arg, "--output=")) {
 		options->file = fopen(arg + strlen("--output="), "w");
 		options->close_file = 1;

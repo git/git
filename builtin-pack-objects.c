@@ -78,7 +78,7 @@ static int progress = 1;
 static int window = 10;
 static uint32_t pack_size_limit, pack_size_limit_cfg;
 static int depth = 50;
-static int delta_search_threads = 1;
+static int delta_search_threads;
 static int pack_to_stdout;
 static int num_preferred_base;
 static struct progress *progress_state;
@@ -195,16 +195,16 @@ static int check_pack_inflate(struct packed_git *p,
 	int st;
 
 	memset(&stream, 0, sizeof(stream));
-	inflateInit(&stream);
+	git_inflate_init(&stream);
 	do {
 		in = use_pack(p, w_curs, offset, &stream.avail_in);
 		stream.next_in = in;
 		stream.next_out = fakebuf;
 		stream.avail_out = sizeof(fakebuf);
-		st = inflate(&stream, Z_FINISH);
+		st = git_inflate(&stream, Z_FINISH);
 		offset += stream.next_in - in;
 	} while (st == Z_OK || st == Z_BUF_ERROR);
-	inflateEnd(&stream);
+	git_inflate_end(&stream);
 	return (st == Z_STREAM_END &&
 		stream.total_out == expect &&
 		stream.total_in == len) ? 0 : -1;
@@ -1612,10 +1612,17 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 		find_deltas(list, &list_size, window, depth, processed);
 		return;
 	}
+	if (progress > pack_to_stdout)
+		fprintf(stderr, "Delta compression using %d threads.\n",
+				delta_search_threads);
 
 	/* Partition the work amongst work threads. */
 	for (i = 0; i < delta_search_threads; i++) {
 		unsigned sub_size = list_size / (delta_search_threads - i);
+
+		/* don't use too small segments or no deltas will be found */
+		if (sub_size < 2*window && i+1 < delta_search_threads)
+			sub_size = 0;
 
 		p[i].window = window;
 		p[i].depth = depth;

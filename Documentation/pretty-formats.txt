@@ -124,6 +124,7 @@ The placeholders are:
 - '%Cgreen': switch color to green
 - '%Cblue': switch color to blue
 - '%Creset': reset color
+- '%C(...)': color specification, as described in color.branch.* config option
 - '%m': left, right or boundary mark
 - '%n': newline
 - '%x00': print a byte from a hex code

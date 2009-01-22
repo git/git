@@ -125,4 +125,23 @@ test_expect_success 'clone to destination with extra trailing /' '
 
 '
 
+test_expect_success 'clone to an existing empty directory' '
+	mkdir target-3 &&
+	git clone src target-3 &&
+	T=$( cd target-3 && git rev-parse HEAD ) &&
+	S=$( cd src && git rev-parse HEAD ) &&
+	test "$T" = "$S"
+'
+
+test_expect_success 'clone to an existing non-empty directory' '
+	mkdir target-4 &&
+	>target-4/Fakefile &&
+	test_must_fail git clone src target-4
+'
+
+test_expect_success 'clone to an existing path' '
+	>target-5 &&
+	test_must_fail git clone src target-5
+'
+
 test_done

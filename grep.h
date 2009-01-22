@@ -30,6 +30,7 @@ struct grep_pat {
 	const char *pattern;
 	enum grep_header_field field;
 	regex_t regexp;
+	unsigned fixed:1;
 };
 
 enum grep_expr_node {

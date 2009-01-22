@@ -84,6 +84,7 @@ typedef long (*find_func_t)(const char *line, long line_len, char *buffer, long 
 
 typedef struct s_xdemitconf {
 	long ctxlen;
+	long interhunkctxlen;
 	unsigned long flags;
 	find_func_t find_func;
 	void *find_func_priv;

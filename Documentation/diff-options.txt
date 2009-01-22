@@ -19,16 +19,12 @@ endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 -p::
+-u::
 	Generate patch (see section on generating patches).
 	{git-diff? This is the default.}
 endif::git-format-patch[]
 
--u::
-	Synonym for "-p".
-
 -U<n>::
-	Shorthand for "--unified=<n>".
-
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
 	the usual three. Implies "-p".
@@ -120,7 +116,7 @@ endif::git-format-patch[]
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
 	name in diff-raw format output and diff-tree header
-	lines, show only handful hexdigits prefix.  This is
+	lines, show only a partial prefix.  This is
 	independent of --full-index option above, which controls
 	the diff-patch output format.  Non default number of
 	digits can be specified with --abbrev=<n>.
@@ -190,30 +186,28 @@ endif::git-format-patch[]
 	can name which subdirectory to make the output relative
 	to by giving a <path> as an argument.
 
+-a::
 --text::
 	Treat all files as text.
-
--a::
-	Shorthand for "--text".
 
 --ignore-space-at-eol::
 	Ignore changes in whitespace at EOL.
 
+-b::
 --ignore-space-change::
 	Ignore changes in amount of whitespace.  This ignores whitespace
 	at line end, and considers all other sequences of one or
 	more whitespace characters to be equivalent.
 
--b::
-	Shorthand for "--ignore-space-change".
-
+-w::
 --ignore-all-space::
 	Ignore whitespace when comparing lines.  This ignores
 	differences even if one line has whitespace where the other
 	line has none.
 
--w::
-	Shorthand for "--ignore-all-space".
+--inter-hunk-context=<lines>::
+	Show the context between diff hunks, up to the specified number
+	of lines, thereby fusing hunks that are close to each other.
 
 --exit-code::
 	Make the program exit with codes similar to diff(1).

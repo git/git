@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='[--interactive | -i] [-v] [--onto <newbase>] <upstream> [<branch>]'
+USAGE='[--interactive | -i] [-v] [--onto <newbase>] [<upstream>|--root] [<branch>]'
 LONG_USAGE='git-rebase replaces <branch> with a new branch of the
 same name.  When the --onto option is provided the new branch starts
 out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
@@ -47,6 +47,7 @@ dotest="$GIT_DIR"/rebase-merge
 prec=4
 verbose=
 git_am_opt=
+rebase_root=
 
 continue_merge () {
 	test -n "$prev_head" || die "prev_head must be defined"
@@ -297,6 +298,9 @@ do
 	-C*)
 		git_am_opt="$git_am_opt $1"
 		;;
+	--root)
+		rebase_root=t
+		;;
 	-*)
 		usage
 		;;
@@ -344,17 +348,29 @@ case "$diff" in
 	;;
 esac
 
-# The upstream head must be given.  Make sure it is valid.
-upstream_name="$1"
-upstream=`git rev-parse --verify "${upstream_name}^0"` ||
-    die "invalid upstream $upstream_name"
+if test -z "$rebase_root"
+then
+	# The upstream head must be given.  Make sure it is valid.
+	upstream_name="$1"
+	shift
+	upstream=`git rev-parse --verify "${upstream_name}^0"` ||
+	die "invalid upstream $upstream_name"
+	unset root_flag
+	upstream_arg="$upstream_name"
+else
+	test -z "$newbase" && die "--root must be used with --onto"
+	unset upstream_name
+	unset upstream
+	root_flag="--root"
+	upstream_arg="$root_flag"
+fi
 
 # Make sure the branch to rebase onto is valid.
 onto_name=${newbase-"$upstream_name"}
 onto=$(git rev-parse --verify "${onto_name}^0") || exit
 
 # If a hook exists, give it a chance to interrupt
-run_pre_rebase_hook ${1+"$@"}
+run_pre_rebase_hook "$upstream_arg" "$@"
 
 # If the branch to rebase is given, that is the branch we will rebase
 # $branch_name -- branch being rebased, or HEAD (already detached)
@@ -362,16 +378,16 @@ run_pre_rebase_hook ${1+"$@"}
 # $head_name -- refs/heads/<that-branch> or "detached HEAD"
 switch_to=
 case "$#" in
-2)
+1)
 	# Is it "rebase other $branchname" or "rebase other $commit"?
-	branch_name="$2"
-	switch_to="$2"
+	branch_name="$1"
+	switch_to="$1"
 
-	if git show-ref --verify --quiet -- "refs/heads/$2" &&
-	   branch=$(git rev-parse -q --verify "refs/heads/$2")
+	if git show-ref --verify --quiet -- "refs/heads/$1" &&
+	   branch=$(git rev-parse -q --verify "refs/heads/$1")
 	then
-		head_name="refs/heads/$2"
-	elif branch=$(git rev-parse -q --verify "$2")
+		head_name="refs/heads/$1"
+	elif branch=$(git rev-parse -q --verify "$1")
 	then
 		head_name="detached HEAD"
 	else
@@ -393,7 +409,8 @@ case "$#" in
 esac
 orig_head=$branch
 
-# Now we are rebasing commits $upstream..$branch on top of $onto
+# Now we are rebasing commits $upstream..$branch (or with --root,
+# everything leading up to $branch) on top of $onto
 
 # Check if we are already based on $onto with linear history,
 # but this should be done only when upstream and onto are the same.
@@ -429,10 +446,17 @@ then
 	exit 0
 fi
 
+if test -n "$rebase_root"
+then
+	revisions="$onto..$orig_head"
+else
+	revisions="$upstream..$orig_head"
+fi
+
 if test -z "$do_merge"
 then
 	git format-patch -k --stdout --full-index --ignore-if-in-upstream \
-		"$upstream..$orig_head" |
+		$root_flag "$revisions" |
 	git am $git_am_opt --rebasing --resolvemsg="$RESOLVEMSG" &&
 	move_to_original_branch
 	ret=$?
@@ -455,7 +479,7 @@ echo "$orig_head" > "$dotest/orig-head"
 echo "$head_name" > "$dotest/head-name"
 
 msgnum=0
-for cmt in `git rev-list --reverse --no-merges "$upstream..$orig_head"`
+for cmt in `git rev-list --reverse --no-merges "$revisions"`
 do
 	msgnum=$(($msgnum + 1))
 	echo "$cmt" > "$dotest/cmt.$msgnum"

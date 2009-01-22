@@ -1358,7 +1358,13 @@ sub req_ci
     # write our commit message out if we have one ...
     my ( $msg_fh, $msg_filename ) = tempfile( DIR => $TEMP_DIR );
     print $msg_fh $state->{opt}{m};# if ( exists ( $state->{opt}{m} ) );
-    print $msg_fh "\n\nvia git-CVS emulator\n";
+    if ( defined ( $cfg->{gitcvs}{commitmsgannotation} ) ) {
+        if ($cfg->{gitcvs}{commitmsgannotation} !~ /^\s*$/ ) {
+            print $msg_fh "\n\n".$cfg->{gitcvs}{commitmsgannotation}."\n"
+        }
+    } else {
+        print $msg_fh "\n\nvia git-CVS emulator\n";
+    }
     close $msg_fh;
 
     my $commithash = `git-commit-tree $treehash -p $parenthash < $msg_filename`;
@@ -2527,12 +2533,18 @@ sub open_blob_or_die
     return $fh;
 }
 
-# Generate a CVS author name from Git author information, by taking
-# the first eight characters of the user part of the email address.
+# Generate a CVS author name from Git author information, by taking the local
+# part of the email address and replacing characters not in the Portable
+# Filename Character Set (see IEEE Std 1003.1-2001, 3.276) by underscores. CVS
+# Login names are Unix login names, which should be restricted to this
+# character set.
 sub cvs_author
 {
     my $author_line = shift;
-    (my $author) = $author_line =~ /<([^>@]{1,8})/;
+    (my $author) = $author_line =~ /<([^@>]*)/;
+
+    $author =~ s/[^-a-zA-Z0-9_.]/_/g;
+    $author =~ s/^-/_/;
 
     $author;
 }

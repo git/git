@@ -635,7 +635,7 @@ diff.renames::
 	will enable basic rename detection.  If set to "copies" or
 	"copy", it will detect copies, as well.
 
-diff.suppress-blank-empty::
+diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space
 	before each empty output line. Defaults to false.
 
@@ -702,7 +702,9 @@ gc.packrefs::
 
 gc.pruneexpire::
 	When 'git-gc' is run, it will call 'prune --expire 2.weeks.ago'.
-	Override the grace period with this config variable.
+	Override the grace period with this config variable.  The value
+	"now" may be used to disable this  grace period and always prune
+	unreachable objects immediately.
 
 gc.reflogexpire::
 	'git-reflog expire' removes reflog entries older than
@@ -722,6 +724,10 @@ gc.rerereunresolved::
 	Records of conflicted merge you have not resolved are
 	kept for this many days when 'git-rerere gc' is run.
 	The default is 15 days.  See linkgit:git-rerere[1].
+
+gitcvs.commitmsgannotation::
+	Append this string to each commit message. Set to empty string
+	to disable this feature. Defaults to "via git-CVS emulator".
 
 gitcvs.enabled::
 	Whether the CVS server interface is enabled for this repository.
@@ -1043,6 +1049,16 @@ mergetool.keepBackup::
 	can be saved as a file with a `.orig` extension.  If this variable
 	is set to `false` then this file is not preserved.  Defaults to
 	`true` (i.e. keep the backup files).
+
+mergetool.keepTemporaries::
+	When invoking a custom merge tool, git uses a set of temporary
+	files to pass to the tool. If the tool returns an error and this
+	variable is set to `true`, then these temporary files will be
+	preserved, otherwise they will be removed after the tool has
+	exited. Defaults to `false`.
+
+mergetool.prompt::
+	Prompt before each invocation of the merge resolution program.
 
 pack.window::
 	The size of the window used by linkgit:git-pack-objects[1] when no

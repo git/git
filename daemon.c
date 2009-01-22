@@ -150,7 +150,6 @@ static char *path_ok(char *directory)
 {
 	static char rpath[PATH_MAX];
 	static char interp_path[PATH_MAX];
-	int retried_path = 0;
 	char *path;
 	char *dir;
 
@@ -219,22 +218,15 @@ static char *path_ok(char *directory)
 		dir = rpath;
 	}
 
-	do {
-		path = enter_repo(dir, strict_paths);
-		if (path)
-			break;
-
+	path = enter_repo(dir, strict_paths);
+	if (!path && base_path && base_path_relaxed) {
 		/*
 		 * if we fail and base_path_relaxed is enabled, try without
 		 * prefixing the base path
 		 */
-		if (base_path && base_path_relaxed && !retried_path) {
-			dir = directory;
-			retried_path = 1;
-			continue;
-		}
-		break;
-	} while (1);
+		dir = directory;
+		path = enter_repo(dir, strict_paths);
+	}
 
 	if (!path) {
 		logerror("'%s': unable to chdir or not a git archive", dir);
@@ -405,6 +397,14 @@ static void make_service_overridable(const char *name, int ena)
 	die("No such service %s", name);
 }
 
+static char *xstrdup_tolower(const char *str)
+{
+	char *p, *dup = xstrdup(str);
+	for (p = dup; *p; p++)
+		*p = tolower(*p);
+	return dup;
+}
+
 /*
  * Separate the "extra args" information as supplied by the client connection.
  */
@@ -413,7 +413,6 @@ static void parse_extra_args(char *extra_args, int buflen)
 	char *val;
 	int vallen;
 	char *end = extra_args + buflen;
-	char *hp;
 
 	while (extra_args < end && *extra_args) {
 		saw_extended_args = 1;
@@ -431,7 +430,7 @@ static void parse_extra_args(char *extra_args, int buflen)
 					tcp_port = xstrdup(port);
 				}
 				free(hostname);
-				hostname = xstrdup(host);
+				hostname = xstrdup_tolower(host);
 			}
 
 			/* On to the next one */
@@ -440,19 +439,10 @@ static void parse_extra_args(char *extra_args, int buflen)
 	}
 
 	/*
-	 * Replace literal host with lowercase-ized hostname.
-	 */
-	hp = hostname;
-	if (!hp)
-		return;
-	for ( ; *hp; hp++)
-		*hp = tolower(*hp);
-
-	/*
 	 * Locate canonical hostname and its IP address.
 	 */
+	if (hostname) {
 #ifndef NO_IPV6
-	{
 		struct addrinfo hints;
 		struct addrinfo *ai, *ai0;
 		int gai;
@@ -476,9 +466,7 @@ static void parse_extra_args(char *extra_args, int buflen)
 			}
 			freeaddrinfo(ai0);
 		}
-	}
 #else
-	{
 		struct hostent *hent;
 		struct sockaddr_in sa;
 		char **ap;
@@ -499,8 +487,8 @@ static void parse_extra_args(char *extra_args, int buflen)
 		canon_hostname = xstrdup(hent->h_name);
 		free(ip_address);
 		ip_address = xstrdup(addrbuf);
-	}
 #endif
+	}
 }
 
 
@@ -728,7 +716,7 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 
 	gai = getaddrinfo(listen_addr, pbuf, &hints, &ai0);
 	if (gai)
-		die("getaddrinfo() failed: %s\n", gai_strerror(gai));
+		die("getaddrinfo() failed: %s", gai_strerror(gai));
 
 	for (ai = ai0; ai; ai = ai->ai_next) {
 		int sockfd;
@@ -953,12 +941,8 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (!prefixcmp(arg, "--listen=")) {
-		    char *p = arg + 9;
-		    char *ph = listen_addr = xmalloc(strlen(arg + 9) + 1);
-		    while (*p)
-			*ph++ = tolower(*p++);
-		    *ph = 0;
-		    continue;
+			listen_addr = xstrdup_tolower(arg + 9);
+			continue;
 		}
 		if (!prefixcmp(arg, "--port=")) {
 			char *end;
@@ -1118,7 +1102,9 @@ int main(int argc, char **argv)
 		struct sockaddr *peer = (struct sockaddr *)&ss;
 		socklen_t slen = sizeof(ss);
 
-		freopen("/dev/null", "w", stderr);
+		if (!freopen("/dev/null", "w", stderr))
+			die("failed to redirect stderr to /dev/null: %s",
+			    strerror(errno));
 
 		if (getpeername(0, peer, &slen))
 			peer = NULL;

@@ -78,6 +78,7 @@ struct diff_options {
 	const char *a_prefix, *b_prefix;
 	unsigned flags;
 	int context;
+	int interhunkcontext;
 	int break_opt;
 	int detect_rename;
 	int skip_stat_unmatch;

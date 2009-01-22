@@ -256,18 +256,21 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
 {
 	size_t res;
+	size_t oldalloc = sb->alloc;
 
 	strbuf_grow(sb, size);
 	res = fread(sb->buf + sb->len, 1, size, f);
-	if (res > 0) {
+	if (res > 0)
 		strbuf_setlen(sb, sb->len + res);
-	}
+	else if (res < 0 && oldalloc == 0)
+		strbuf_release(sb);
 	return res;
 }
 
 ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 {
 	size_t oldlen = sb->len;
+	size_t oldalloc = sb->alloc;
 
 	strbuf_grow(sb, hint ? hint : 8192);
 	for (;;) {
@@ -275,7 +278,10 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 
 		cnt = xread(fd, sb->buf + sb->len, sb->alloc - sb->len - 1);
 		if (cnt < 0) {
-			strbuf_setlen(sb, oldlen);
+			if (oldalloc == 0)
+				strbuf_release(sb);
+			else
+				strbuf_setlen(sb, oldlen);
 			return -1;
 		}
 		if (!cnt)
@@ -292,6 +298,8 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 
 int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 {
+	size_t oldalloc = sb->alloc;
+
 	if (hint < 32)
 		hint = 32;
 
@@ -311,7 +319,8 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 		/* .. the buffer was too small - try again */
 		hint *= 2;
 	}
-	strbuf_release(sb);
+	if (oldalloc == 0)
+		strbuf_release(sb);
 	return -1;
 }
 
