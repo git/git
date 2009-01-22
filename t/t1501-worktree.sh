@@ -92,6 +92,13 @@ cd sub/dir || exit 1
 test_rev_parse 'in repo.git/sub/dir' false true true sub/dir/
 cd ../../../.. || exit 1
 
+test_expect_success 'detecting gitdir when cwd is in a subdir of gitdir' '
+	(expected=$(pwd)/repo.git &&
+	 cd repo.git/refs &&
+	 unset GIT_DIR &&
+	 test "$expected" = "$(git rev-parse --git-dir)")
+'
+
 test_expect_success 'repo finds its work tree' '
 	(cd repo.git &&
 	 : > work/sub/dir/untracked &&
