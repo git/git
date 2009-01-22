@@ -136,7 +136,7 @@ static int hook_status(int code, const char *hook_name)
 	}
 }
 
-static int run_hook(const char *hook_name)
+static int run_receive_hook(const char *hook_name)
 {
 	static char buf[sizeof(commands->old_sha1) * 2 + PATH_MAX + 4];
 	struct command *cmd;
@@ -358,7 +358,7 @@ static void execute_commands(const char *unpacker_error)
 		return;
 	}
 
-	if (run_hook(pre_receive_hook)) {
+	if (run_receive_hook(pre_receive_hook)) {
 		while (cmd) {
 			cmd->error_string = "pre-receive hook declined";
 			cmd = cmd->next;
@@ -627,7 +627,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			unlink(pack_lockfile);
 		if (report_status)
 			report(unpack_status);
-		run_hook(post_receive_hook);
+		run_receive_hook(post_receive_hook);
 		run_update_post_hook(commands);
 	}
 	return 0;
