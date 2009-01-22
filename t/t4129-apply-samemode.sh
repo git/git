@@ -4,6 +4,9 @@ test_description='applying patch with mode bits'
 
 . ./test-lib.sh
 
+say "executable mode not supported - skipping tests"
+test_done
+
 test_expect_success setup '
 	echo original >file &&
 	git add file &&
