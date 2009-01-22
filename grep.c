@@ -28,15 +28,9 @@ void append_grep_pattern(struct grep_opt *opt, const char *pat,
 	p->next = NULL;
 }
 
-static int isregexspecial(int c)
-{
-	return isspecial(c) || c == '$' || c == '(' || c == ')' || c == '+' ||
-			       c == '.' || c == '^' || c == '{' || c == '|';
-}
-
 static int is_fixed(const char *s)
 {
-	while (!isregexspecial(*s))
+	while (*s && !is_regex_special(*s))
 		s++;
 	return !*s;
 }

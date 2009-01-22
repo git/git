@@ -1357,6 +1357,7 @@ endif
 ### Testing rules
 
 TEST_PROGRAMS += test-chmtime$X
+TEST_PROGRAMS += test-ctype$X
 TEST_PROGRAMS += test-date$X
 TEST_PROGRAMS += test-delta$X
 TEST_PROGRAMS += test-genrandom$X
@@ -1375,6 +1376,8 @@ export NO_SVN_TESTS
 
 test: all
 	$(MAKE) -C t/ all
+
+test-ctype$X: ctype.o
 
 test-date$X: date.o ctype.o
 
