@@ -99,11 +99,11 @@ EOF
 git diff -w > out
 test_expect_success 'another test, with -w' 'test_cmp expect out'
 git diff -w -b > out
-test_expect_failure 'another test, with -w -b' 'test_cmp expect out'
+test_expect_success 'another test, with -w -b' 'test_cmp expect out'
 git diff -w --ignore-space-at-eol > out
-test_expect_failure 'another test, with -w --ignore-space-at-eol' 'test_cmp expect out'
+test_expect_success 'another test, with -w --ignore-space-at-eol' 'test_cmp expect out'
 git diff -w -b --ignore-space-at-eol > out
-test_expect_failure 'another test, with -w -b --ignore-space-at-eol' 'test_cmp expect out'
+test_expect_success 'another test, with -w -b --ignore-space-at-eol' 'test_cmp expect out'
 
 tr 'Q' '\015' << EOF > expect
 diff --git a/x b/x
@@ -123,7 +123,7 @@ EOF
 git diff -b > out
 test_expect_success 'another test, with -b' 'test_cmp expect out'
 git diff -b --ignore-space-at-eol > out
-test_expect_failure 'another test, with -b --ignore-space-at-eol' 'test_cmp expect out'
+test_expect_success 'another test, with -b --ignore-space-at-eol' 'test_cmp expect out'
 
 tr 'Q' '\015' << EOF > expect
 diff --git a/x b/x
