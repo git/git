@@ -28,7 +28,9 @@ OPTIONS
 -------
 <repository>::
 	The "remote" repository that is destination of a push
-	operation.  See the section <<URLS,GIT URLS>> below.
+	operation.  This parameter can be either a URL
+	(see the section <<URLS,GIT URLS>> below) or the name
+	of a remote (see the section <<REMOTES,REMOTES>> below).
 
 <refspec>...::
 	The canonical format of a <refspec> parameter is
@@ -42,22 +44,21 @@ tip of `master` branch); see linkgit:git-rev-parse[1]) that you
 want to push.  The <dst> side represents the destination location.
 +
 The local ref that matches <src> is used
-to fast forward the remote ref that matches <dst> (or, if no <dst> was
-specified, the same ref that <src> referred to locally).  If
+to fast forward the remote ref that matches <dst>.  If
 the optional leading plus `+` is used, the remote ref is updated
 even if it does not result in a fast forward update.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 +
-A parameter <ref> without a colon pushes the <ref> from the source
-repository to the destination repository under the same name.
+A lonely <src> parameter (without a colon and a destination) pushes
+the <src> to the same name in the destination repository.
 +
 Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
 +
 The special refspec `:` (or `+:` to allow non-fast forward updates)
-directs git to push "matching" heads: for every head that exists on
-the local side, the remote side is updated if a head of the same name
+directs git to push "matching" branches: for every branch that exists on
+the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.  This is the default operation mode
 if no explicit refspec is found (that is neither on the command line
 nor in any Push line of the corresponding remotes file---see below).
