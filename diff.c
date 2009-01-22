@@ -165,6 +165,33 @@ static struct diff_tempfile {
 	char tmp_path[PATH_MAX];
 } diff_temp[2];
 
+static struct diff_tempfile *claim_diff_tempfile(void) {
+	int i;
+	for (i = 0; i < ARRAY_SIZE(diff_temp); i++)
+		if (!diff_temp[i].name)
+			return diff_temp + i;
+	die("BUG: diff is failing to clean up its tempfiles");
+}
+
+static int remove_tempfile_installed;
+
+static void remove_tempfile(void)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(diff_temp); i++)
+		if (diff_temp[i].name == diff_temp[i].tmp_path) {
+			unlink(diff_temp[i].name);
+			diff_temp[i].name = NULL;
+		}
+}
+
+static void remove_tempfile_on_signal(int signo)
+{
+	remove_tempfile();
+	signal(SIGINT, SIG_DFL);
+	raise(signo);
+}
+
 static int count_lines(const char *data, int size)
 {
 	int count, ch, completely_empty = 1, nl_just_seen = 0;
@@ -1857,10 +1884,11 @@ static void prep_temp_blob(struct diff_tempfile *temp,
 	sprintf(temp->mode, "%06o", mode);
 }
 
-static void prepare_temp_file(const char *name,
-			      struct diff_tempfile *temp,
-			      struct diff_filespec *one)
+static struct diff_tempfile *prepare_temp_file(const char *name,
+		struct diff_filespec *one)
 {
+	struct diff_tempfile *temp = claim_diff_tempfile();
+
 	if (!DIFF_FILE_VALID(one)) {
 	not_a_valid_file:
 		/* A '-' entry produces this for file-2, and
@@ -1869,7 +1897,13 @@ static void prepare_temp_file(const char *name,
 		temp->name = "/dev/null";
 		strcpy(temp->hex, ".");
 		strcpy(temp->mode, ".");
-		return;
+		return temp;
+	}
+
+	if (!remove_tempfile_installed) {
+		atexit(remove_tempfile);
+		signal(SIGINT, remove_tempfile_on_signal);
+		remove_tempfile_installed = 1;
 	}
 
 	if (!one->sha1_valid ||
@@ -1909,7 +1943,7 @@ static void prepare_temp_file(const char *name,
 			 */
 			sprintf(temp->mode, "%06o", one->mode);
 		}
-		return;
+		return temp;
 	}
 	else {
 		if (diff_populate_filespec(one, 0))
@@ -1917,24 +1951,7 @@ static void prepare_temp_file(const char *name,
 		prep_temp_blob(temp, one->data, one->size,
 			       one->sha1, one->mode);
 	}
-}
-
-static void remove_tempfile(void)
-{
-	int i;
-
-	for (i = 0; i < 2; i++)
-		if (diff_temp[i].name == diff_temp[i].tmp_path) {
-			unlink(diff_temp[i].name);
-			diff_temp[i].name = NULL;
-		}
-}
-
-static void remove_tempfile_on_signal(int signo)
-{
-	remove_tempfile();
-	signal(SIGINT, SIG_DFL);
-	raise(signo);
+	return temp;
 }
 
 /* An external diff command takes:
@@ -1952,34 +1969,22 @@ static void run_external_diff(const char *pgm,
 			      int complete_rewrite)
 {
 	const char *spawn_arg[10];
-	struct diff_tempfile *temp = diff_temp;
 	int retval;
-	static int atexit_asked = 0;
-	const char *othername;
 	const char **arg = &spawn_arg[0];
 
-	othername = (other? other : name);
 	if (one && two) {
-		prepare_temp_file(name, &temp[0], one);
-		prepare_temp_file(othername, &temp[1], two);
-		if (! atexit_asked &&
-		    (temp[0].name == temp[0].tmp_path ||
-		     temp[1].name == temp[1].tmp_path)) {
-			atexit_asked = 1;
-			atexit(remove_tempfile);
-		}
-		signal(SIGINT, remove_tempfile_on_signal);
-	}
-
-	if (one && two) {
+		struct diff_tempfile *temp_one, *temp_two;
+		const char *othername = (other ? other : name);
+		temp_one = prepare_temp_file(name, one);
+		temp_two = prepare_temp_file(othername, two);
 		*arg++ = pgm;
 		*arg++ = name;
-		*arg++ = temp[0].name;
-		*arg++ = temp[0].hex;
-		*arg++ = temp[0].mode;
-		*arg++ = temp[1].name;
-		*arg++ = temp[1].hex;
-		*arg++ = temp[1].mode;
+		*arg++ = temp_one->name;
+		*arg++ = temp_one->hex;
+		*arg++ = temp_one->mode;
+		*arg++ = temp_two->name;
+		*arg++ = temp_two->hex;
+		*arg++ = temp_two->mode;
 		if (other) {
 			*arg++ = other;
 			*arg++ = xfrm_msg;
@@ -3448,15 +3453,15 @@ void diff_unmerge(struct diff_options *options,
 static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 		size_t *outsize)
 {
-	struct diff_tempfile temp;
+	struct diff_tempfile *temp;
 	const char *argv[3];
 	const char **arg = argv;
 	struct child_process child;
 	struct strbuf buf = STRBUF_INIT;
 
-	prepare_temp_file(spec->path, &temp, spec);
+	temp = prepare_temp_file(spec->path, spec);
 	*arg++ = pgm;
-	*arg++ = temp.name;
+	*arg++ = temp->name;
 	*arg = NULL;
 
 	memset(&child, 0, sizeof(child));
@@ -3465,13 +3470,11 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	if (start_command(&child) != 0 ||
 	    strbuf_read(&buf, child.out, 0) < 0 ||
 	    finish_command(&child) != 0) {
-		if (temp.name == temp.tmp_path)
-			unlink(temp.name);
+		remove_tempfile();
 		error("error running textconv command '%s'", pgm);
 		return NULL;
 	}
-	if (temp.name == temp.tmp_path)
-		unlink(temp.name);
+	remove_tempfile();
 
 	return strbuf_detach(&buf, outsize);
 }
