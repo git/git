@@ -10,6 +10,7 @@
 #include "exec_cmd.h"
 #include "remote.h"
 #include "list-objects.h"
+#include "sigchain.h"
 
 #include <expat.h>
 
@@ -1363,7 +1364,7 @@ static void remove_locks(void)
 static void remove_locks_on_signal(int signo)
 {
 	remove_locks();
-	signal(signo, SIG_DFL);
+	sigchain_pop(signo);
 	raise(signo);
 }
 
@@ -2261,10 +2262,10 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	signal(SIGINT, remove_locks_on_signal);
-	signal(SIGHUP, remove_locks_on_signal);
-	signal(SIGQUIT, remove_locks_on_signal);
-	signal(SIGTERM, remove_locks_on_signal);
+	sigchain_push(SIGINT, remove_locks_on_signal);
+	sigchain_push(SIGHUP, remove_locks_on_signal);
+	sigchain_push(SIGQUIT, remove_locks_on_signal);
+	sigchain_push(SIGTERM, remove_locks_on_signal);
 
 	/* Check whether the remote has server info files */
 	remote->can_update_info_refs = 0;

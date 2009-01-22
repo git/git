@@ -2,6 +2,7 @@
  * Copyright (c) 2005, Junio C Hamano
  */
 #include "cache.h"
+#include "sigchain.h"
 
 static struct lock_file *lock_file_list;
 static const char *alternate_index_output;
@@ -24,7 +25,7 @@ static void remove_lock_file(void)
 static void remove_lock_file_on_signal(int signo)
 {
 	remove_lock_file();
-	signal(signo, SIG_DFL);
+	sigchain_pop(signo);
 	raise(signo);
 }
 
@@ -136,11 +137,11 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 	lk->fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (0 <= lk->fd) {
 		if (!lock_file_list) {
-			signal(SIGINT, remove_lock_file_on_signal);
-			signal(SIGHUP, remove_lock_file_on_signal);
-			signal(SIGTERM, remove_lock_file_on_signal);
-			signal(SIGQUIT, remove_lock_file_on_signal);
-			signal(SIGPIPE, remove_lock_file_on_signal);
+			sigchain_push(SIGINT, remove_lock_file_on_signal);
+			sigchain_push(SIGHUP, remove_lock_file_on_signal);
+			sigchain_push(SIGTERM, remove_lock_file_on_signal);
+			sigchain_push(SIGQUIT, remove_lock_file_on_signal);
+			sigchain_push(SIGPIPE, remove_lock_file_on_signal);
 			atexit(remove_lock_file);
 		}
 		lk->owner = getpid();

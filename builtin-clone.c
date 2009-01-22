@@ -19,6 +19,7 @@
 #include "strbuf.h"
 #include "dir.h"
 #include "pack-refs.h"
+#include "sigchain.h"
 
 /*
  * Overall FIXMEs:
@@ -288,7 +289,7 @@ static void remove_junk(void)
 static void remove_junk_on_signal(int signo)
 {
 	remove_junk();
-	signal(SIGINT, SIG_DFL);
+	sigchain_pop(signo);
 	raise(signo);
 }
 
@@ -438,7 +439,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 	junk_git_dir = git_dir;
 	atexit(remove_junk);
-	signal(SIGINT, remove_junk_on_signal);
+	sigchain_push(SIGINT, remove_junk_on_signal);
 
 	setenv(CONFIG_ENVIRONMENT, xstrdup(mkpath("%s/config", git_dir)), 1);
 

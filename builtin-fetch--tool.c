@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "refs.h"
 #include "commit.h"
+#include "sigchain.h"
 
 static char *get_stdin(void)
 {
@@ -186,7 +187,7 @@ static void remove_keep(void)
 static void remove_keep_on_signal(int signo)
 {
 	remove_keep();
-	signal(SIGINT, SIG_DFL);
+	sigchain_pop(signo);
 	raise(signo);
 }
 
@@ -245,7 +246,7 @@ static int fetch_native_store(FILE *fp,
 	char buffer[1024];
 	int err = 0;
 
-	signal(SIGINT, remove_keep_on_signal);
+	sigchain_push(SIGINT, remove_keep_on_signal);
 	atexit(remove_keep);
 
 	while (fgets(buffer, sizeof(buffer), stdin)) {

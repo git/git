@@ -12,6 +12,7 @@
 #include "run-command.h"
 #include "utf8.h"
 #include "userdiff.h"
+#include "sigchain.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -188,7 +189,7 @@ static void remove_tempfile(void)
 static void remove_tempfile_on_signal(int signo)
 {
 	remove_tempfile();
-	signal(SIGINT, SIG_DFL);
+	sigchain_pop(signo);
 	raise(signo);
 }
 
@@ -1902,7 +1903,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 
 	if (!remove_tempfile_installed) {
 		atexit(remove_tempfile);
-		signal(SIGINT, remove_tempfile_on_signal);
+		sigchain_push(SIGINT, remove_tempfile_on_signal);
 		remove_tempfile_installed = 1;
 	}
 
