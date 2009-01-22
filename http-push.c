@@ -2262,10 +2262,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	sigchain_push(SIGINT, remove_locks_on_signal);
-	sigchain_push(SIGHUP, remove_locks_on_signal);
-	sigchain_push(SIGQUIT, remove_locks_on_signal);
-	sigchain_push(SIGTERM, remove_locks_on_signal);
+	sigchain_push_common(remove_locks_on_signal);
 
 	/* Check whether the remote has server info files */
 	remote->can_update_info_refs = 0;

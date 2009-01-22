@@ -137,11 +137,7 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 	lk->fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (0 <= lk->fd) {
 		if (!lock_file_list) {
-			sigchain_push(SIGINT, remove_lock_file_on_signal);
-			sigchain_push(SIGHUP, remove_lock_file_on_signal);
-			sigchain_push(SIGTERM, remove_lock_file_on_signal);
-			sigchain_push(SIGQUIT, remove_lock_file_on_signal);
-			sigchain_push(SIGPIPE, remove_lock_file_on_signal);
+			sigchain_push_common(remove_lock_file_on_signal);
 			atexit(remove_lock_file);
 		}
 		lk->owner = getpid();

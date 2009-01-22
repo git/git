@@ -1903,7 +1903,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 
 	if (!remove_tempfile_installed) {
 		atexit(remove_tempfile);
-		sigchain_push(SIGINT, remove_tempfile_on_signal);
+		sigchain_push_common(remove_tempfile_on_signal);
 		remove_tempfile_installed = 1;
 	}
 
