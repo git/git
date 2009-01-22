@@ -38,7 +38,7 @@ OPTIONS
 	Automatically implies --tags.
 
 --abbrev=<n>::
-	Instead of using the default 8 hexadecimal digits as the
+	Instead of using the default 7 hexadecimal digits as the
 	abbreviated object name, use <n> digits.
 
 --candidates=<n>::
