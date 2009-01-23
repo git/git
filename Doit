@@ -6,6 +6,7 @@ while	case "$1" in
 	-pedantic) M=$1 ;;
 	-force) force=$1 ;;
 	-dash) with_dash=y ;;
+	-noinstall) install=noinstall ;;
 	*) break ;;
 	esac
 do
@@ -91,7 +92,10 @@ do
 	*)
 		: ;;
 	esac &&
-	Meta/Make $M -- install &&
+	{
+		test z$install = znoinstall ||
+		Meta/Make $M -- install
+	} &&
 	Meta/Make clean || exit $?
 
 	git reset --hard
