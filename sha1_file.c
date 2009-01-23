@@ -2145,8 +2145,10 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
 	return read_packed_sha1(sha1, type, size);
 }
 
-void *read_sha1_file(const unsigned char *sha1, enum object_type *type,
-		     unsigned long *size)
+void *read_sha1_file_repl(const unsigned char *sha1,
+			  enum object_type *type,
+			  unsigned long *size,
+			  const unsigned char **replacement)
 {
 	const unsigned char *repl = lookup_replace_object(sha1);
 	void *data = read_object(repl, type, size);
@@ -2159,6 +2161,9 @@ void *read_sha1_file(const unsigned char *sha1, enum object_type *type,
 	/* legacy behavior is to die on corrupted objects */
 	if (!data && (has_loose_object(repl) || has_packed_and_bad(repl)))
 		die("object %s is corrupted", sha1_to_hex(repl));
+
+	if (replacement)
+		*replacement = repl;
 
 	return data;
 }
