@@ -12,6 +12,7 @@ SYNOPSIS
 'git am' [--signoff] [--keep] [--utf8 | --no-utf8]
 	 [--3way] [--interactive]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
+	 [--reject]
 	 [<mbox> | <Maildir>...]
 'git am' (--skip | --resolved | --abort)
 
@@ -63,6 +64,7 @@ default.   You could use `--no-utf8` to override this.
 -C<n>::
 -p<n>::
 --directory=<dir>::
+--reject::
 	These flags are passed to the 'git-apply' (see linkgit:git-apply[1])
 	program that applies
 	the patch.
