@@ -70,6 +70,18 @@ test_expect_success 'replace the author' '
      git show $HASH2 | grep "O Thor"
 '
 
+cat >tag.sig <<EOF
+object $HASH2
+type commit
+tag mytag
+tagger T A Gger <> 0 +0000
+
+EOF
+
+test_expect_success 'tag replaced commit' '
+     git mktag <tag.sig >.git/refs/tags/mytag 2>message
+'
+
 #
 #
 test_done
