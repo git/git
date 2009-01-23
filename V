@@ -3,9 +3,13 @@
 for v in maint master next pu jch
 do
 	installed=$($HOME/git-$v/bin/git version)
+	dirty=
 	if version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$')
 	then
 		:
+	elif version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)\.dirty$')
+	then
+		dirty=t
 	elif version=v$(expr "$installed" : \
 			'git version \(.*\)\.rc[0-9]*$')
 	then
@@ -19,9 +23,14 @@ do
 	revision=$(git show-ref -s --verify "refs/heads/$v")
 	if test "z$version" = "z$revision"
 	then
-		in= out= installed=
+		in= out=
+		installed=${dirty:+" (with changes)"}
 	else
 		installed=$(git describe $version)
+		case "$dirty" in
+		t)
+			installed="$installed.dirty"
+		esac
 		in="[41;37m" out="[m" installed="	$installed"
 	fi
 	echo "$in$v$out	$(git describe refs/heads/$v)$installed"
