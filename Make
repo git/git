@@ -41,7 +41,7 @@ snap)
 *)
 	prefix="$HOME/git-test" ;;
 esac
-d="prefix=$prefix THREADED_DELTA_SEARCH="
+d="prefix=$prefix"
 
 : ${O=-O2}
 
