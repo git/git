@@ -308,9 +308,7 @@ alice$ git pull /home/bob/myrepo master
 
 This merges the changes from Bob's "master" branch into Alice's
 current branch.  If Alice has made her own changes in the meantime,
-then she may need to manually fix any conflicts.  (Note that the
-"master" argument in the above command is actually unnecessary, as it
-is the default.)
+then she may need to manually fix any conflicts.
 
 The "pull" command thus performs two operations: it fetches changes
 from a remote branch, then merges them into the current branch.
