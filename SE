@@ -28,7 +28,6 @@ git send-email \
 	--from="$me" \
 	--envelope-sender="$me" \
 	--to="$to" \
-	--suppress-cc=all \
 	--smtp-server=$smtp \
 	$dryrun \
 	"$@"
