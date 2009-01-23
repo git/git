@@ -24,6 +24,7 @@ resolvemsg=     override error message when patch failure occurs
 r,resolved      to be used after a patch failure
 skip            skip the current patch
 abort           restore the original branch and abort the patching operation.
+committer-date-is-author-date    lie about committer date
 rebasing        (internal use for git-rebase)"
 
 . git-sh-setup
@@ -134,6 +135,7 @@ dotest="$GIT_DIR/rebase-apply"
 sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
 resolvemsg= resume=
 git_apply_opt=
+committer_date_is_author_date=
 
 while test $# != 0
 do
@@ -171,6 +173,8 @@ do
 		git_apply_opt="$git_apply_opt $(sq "$1$2")"; shift ;;
 	--reject)
 		git_apply_opt="$git_apply_opt $1" ;;
+	--committer-date-is-author-date)
+		committer_date_is_author_date=t ;;
 	--)
 		shift; break ;;
 	*)
@@ -524,7 +528,14 @@ do
 
 	tree=$(git write-tree) &&
 	parent=$(git rev-parse --verify HEAD) &&
-	commit=$(git commit-tree $tree -p $parent <"$dotest/final-commit") &&
+	commit=$(
+		if test -n "$committer_date_is_author_date"
+		then
+			GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+			export GIT_COMMITTER_DATE
+		fi &&
+		git commit-tree $tree -p $parent <"$dotest/final-commit"
+	) &&
 	git update-ref -m "$GIT_REFLOG_ACTION: $FIRSTLINE" HEAD $commit $parent ||
 	stop_here $this
 

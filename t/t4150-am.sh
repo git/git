@@ -257,4 +257,24 @@ test_expect_success 'am works from file (absolute path given) in subdirectory' '
 	test -z "$(git diff second)"
 '
 
+test_expect_success 'am --committer-date-is-author-date' '
+	git checkout first &&
+	test_tick &&
+	git am --committer-date-is-author-date patch1 &&
+	git cat-file commit HEAD | sed -e "/^$/q" >head1 &&
+	at=$(sed -ne "/^author /s/.*> //p" head1) &&
+	ct=$(sed -ne "/^committer /s/.*> //p" head1) &&
+	test "$at" = "$ct"
+'
+
+test_expect_success 'am without --committer-date-is-author-date' '
+	git checkout first &&
+	test_tick &&
+	git am patch1 &&
+	git cat-file commit HEAD | sed -e "/^$/q" >head1 &&
+	at=$(sed -ne "/^author /s/.*> //p" head1) &&
+	ct=$(sed -ne "/^committer /s/.*> //p" head1) &&
+	test "$at" != "$ct"
+'
+
 test_done
