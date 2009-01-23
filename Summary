@@ -6,9 +6,19 @@ trap 'rm -f $tmp-*' 0
 since="$1"
 until="$2"
 
-git rev-list --no-merges "master@{$1}..master@{$2}" >"$tmp-0.txt"
-top="master@{$until}"
-bottom="master@{$since}"
+case 0 in
+1)
+	bottom=$(git rev-parse master@{"$1"})
+	top=$(git rev-parse master@{"$2"})
+	;;
+0)
+	git rev-list --first-parent --since="$since" --until="$until" \
+		master >"$tmp-1" &&
+	bottom=$(tail -n 1 "$tmp-1") &&
+	top=$(head -n 1 "$tmp-1") &&
+	rm -f "$tmp-1"
+	;;
+esac
 
 num_patches=$(git rev-list --no-merges $bottom..$top | wc -l)
 git shortlog -s -n --no-merges $bottom..$top >"$tmp-0.txt"
@@ -34,3 +44,4 @@ EOF
 
 git shortlog -w72,2,4 --no-merges $bottom..$top
 
+git diff --dirstat $bottom..$top
