@@ -94,6 +94,9 @@ const unsigned char *lookup_replace_object(const unsigned char *sha1)
 	int pos, depth = MAXREPLACEDEPTH;
 	const unsigned char *cur = sha1;
 
+	if (!read_replace_refs)
+		return sha1;
+
 	prepare_replace_object();
 
 	/* Try to recursively replace the object */

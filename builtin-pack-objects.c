@@ -2103,6 +2103,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	int rp_ac_alloc = 64;
 	int rp_ac;
 
+	read_replace_refs = 0;
+
 	rp_av = xcalloc(rp_ac_alloc, sizeof(*rp_av));
 
 	rp_av[0] = "pack-objects";

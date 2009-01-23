@@ -516,6 +516,7 @@ extern size_t packed_git_window_size;
 extern size_t packed_git_limit;
 extern size_t delta_base_cache_limit;
 extern int auto_crlf;
+extern int read_replace_refs;
 extern int fsync_object_files;
 extern int core_preload_index;
 

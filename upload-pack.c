@@ -618,6 +618,7 @@ int main(int argc, char **argv)
 	int strict = 0;
 
 	git_extract_argv0_path(argv[0]);
+	read_replace_refs = 0;
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];

@@ -82,6 +82,29 @@ test_expect_success 'tag replaced commit' '
      git mktag <tag.sig >.git/refs/tags/mytag 2>message
 '
 
+test_expect_success '"git fsck" works' '
+     git fsck master > fsck_master.out &&
+     grep "dangling commit $R" fsck_master.out &&
+     grep "dangling tag $(cat .git/refs/tags/mytag)" fsck_master.out &&
+     test -z "$(git fsck)"
+'
+
+test_expect_success 'repack, clone and fetch work' '
+     git repack -a -d &&
+     git clone --no-hardlinks . clone_dir &&
+     cd clone_dir &&
+     git show HEAD~5 | grep "A U Thor" &&
+     git show $HASH2 | grep "A U Thor" &&
+     git cat-file commit $R &&
+     git repack -a -d &&
+     test_must_fail git cat-file commit $R &&
+     git fetch ../ "refs/replace/*:refs/replace/*" &&
+     git show HEAD~5 | grep "O Thor" &&
+     git show $HASH2 | grep "O Thor" &&
+     git cat-file commit $R &&
+     cd ..
+'
+
 #
 #
 test_done
