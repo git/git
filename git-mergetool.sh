@@ -390,21 +390,19 @@ fi
 
 if test -z "$merge_tool" ; then
     if test -n "$DISPLAY"; then
-        merge_tool_candidates="kdiff3 tkdiff xxdiff meld gvimdiff"
         if test -n "$GNOME_DESKTOP_SESSION_ID" ; then
-            merge_tool_candidates="meld $merge_tool_candidates"
-        fi
-        if test "$KDE_FULL_SESSION" = "true"; then
-            merge_tool_candidates="kdiff3 $merge_tool_candidates"
+            merge_tool_candidates="meld kdiff3 tkdiff xxdiff gvimdiff"
+        else
+            merge_tool_candidates="kdiff3 tkdiff xxdiff meld gvimdiff"
         fi
     fi
     if echo "${VISUAL:-$EDITOR}" | grep 'emacs' > /dev/null 2>&1; then
-        merge_tool_candidates="$merge_tool_candidates emerge"
+        merge_tool_candidates="$merge_tool_candidates emerge opendiff vimdiff"
+    elif echo "${VISUAL:-$EDITOR}" | grep 'vim' > /dev/null 2>&1; then
+        merge_tool_candidates="$merge_tool_candidates vimdiff opendiff emerge"
+    else
+        merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
     fi
-    if echo "${VISUAL:-$EDITOR}" | grep 'vim' > /dev/null 2>&1; then
-        merge_tool_candidates="$merge_tool_candidates vimdiff"
-    fi
-    merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
     echo "merge tool candidates: $merge_tool_candidates"
     for i in $merge_tool_candidates; do
         init_merge_tool_path $i
