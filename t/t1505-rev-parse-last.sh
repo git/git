@@ -32,8 +32,6 @@ test_expect_success 'setup' '
 #
 # and 'side' should be the last branch
 
-git log --graph --all --pretty=oneline --decorate
-
 test_rev_equivalent () {
 
 	git rev-parse "$1" > expect &&
