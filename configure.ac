@@ -127,7 +127,7 @@ else
       SAVE_LDFLAGS="${LDFLAGS}"
       LDFLAGS="${SAVE_LDFLAGS} -Wl,-rpath,/"
       AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [ld_wl_rpath=yes], [ld_wl_rpath=no])
-      LDFLAGS="${SAVE_LD_FLAGS}"
+      LDFLAGS="${SAVE_LDFLAGS}"
    ])
    if test "$ld_wl_rpath" = "yes"; then
       AC_SUBST(CC_LD_DYNPATH, [-Wl,-rpath,])
@@ -136,7 +136,7 @@ else
          SAVE_LDFLAGS="${LDFLAGS}"
          LDFLAGS="${SAVE_LDFLAGS} -rpath /"
          AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [ld_rpath=yes], [ld_rpath=no])
-         LDFLAGS="${SAVE_LD_FLAGS}"
+         LDFLAGS="${SAVE_LDFLAGS}"
       ])
       if test "$ld_rpath" = "yes"; then
          AC_SUBST(CC_LD_DYNPATH, [-rpath])
