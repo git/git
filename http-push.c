@@ -177,6 +177,37 @@ struct remote_ls_ctx
 	struct remote_ls_ctx *parent;
 };
 
+/* get_dav_token_headers options */
+enum dav_header_flag {
+	DAV_HEADER_IF = (1u << 0),
+	DAV_HEADER_LOCK = (1u << 1),
+	DAV_HEADER_TIMEOUT = (1u << 2)
+};
+
+static struct curl_slist *get_dav_token_headers(struct remote_lock *lock, enum dav_header_flag options) {
+	struct strbuf buf = STRBUF_INIT;
+	struct curl_slist *dav_headers = NULL;
+
+	if(options & DAV_HEADER_IF) {
+		strbuf_addf(&buf, "If: (<%s>)", lock->token);
+		dav_headers = curl_slist_append(dav_headers, buf.buf);
+		strbuf_reset(&buf);
+	}
+	if(options & DAV_HEADER_LOCK) {
+		strbuf_addf(&buf, "Lock-Token: <%s>", lock->token);
+		dav_headers = curl_slist_append(dav_headers, buf.buf);
+		strbuf_reset(&buf);
+	}
+	if(options & DAV_HEADER_TIMEOUT) {
+		strbuf_addf(&buf, "Timeout: Second-%ld", lock->timeout);
+		dav_headers = curl_slist_append(dav_headers, buf.buf);
+		strbuf_reset(&buf);
+	}
+	strbuf_release(&buf);
+
+	return dav_headers;
+}
+
 static void finish_request(struct transfer_request *request);
 static void release_request(struct transfer_request *request);
 
@@ -588,18 +619,12 @@ static int refresh_lock(struct remote_lock *lock)
 {
 	struct active_request_slot *slot;
 	struct slot_results results;
-	char *if_header;
-	char timeout_header[25];
-	struct curl_slist *dav_headers = NULL;
+	struct curl_slist *dav_headers;
 	int rc = 0;
 
 	lock->refreshing = 1;
 
-	if_header = xmalloc(strlen(lock->token) + 25);
-	sprintf(if_header, "If: (<%s>)", lock->token);
-	sprintf(timeout_header, "Timeout: Second-%ld", lock->timeout);
-	dav_headers = curl_slist_append(dav_headers, if_header);
-	dav_headers = curl_slist_append(dav_headers, timeout_header);
+	dav_headers = get_dav_token_headers(lock, DAV_HEADER_IF | DAV_HEADER_TIMEOUT);
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -622,7 +647,6 @@ static int refresh_lock(struct remote_lock *lock)
 
 	lock->refreshing = 0;
 	curl_slist_free_all(dav_headers);
-	free(if_header);
 
 	return rc;
 }
@@ -1303,14 +1327,10 @@ static int unlock_remote(struct remote_lock *lock)
 	struct active_request_slot *slot;
 	struct slot_results results;
 	struct remote_lock *prev = remote->locks;
-	char *lock_token_header;
-	struct curl_slist *dav_headers = NULL;
+	struct curl_slist *dav_headers;
 	int rc = 0;
 
-	lock_token_header = xmalloc(strlen(lock->token) + 31);
-	sprintf(lock_token_header, "Lock-Token: <%s>",
-		lock->token);
-	dav_headers = curl_slist_append(dav_headers, lock_token_header);
+	dav_headers = get_dav_token_headers(lock, DAV_HEADER_LOCK);
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -1331,7 +1351,6 @@ static int unlock_remote(struct remote_lock *lock)
 	}
 
 	curl_slist_free_all(dav_headers);
-	free(lock_token_header);
 
 	if (remote->locks == lock) {
 		remote->locks = lock->next;
@@ -1731,13 +1750,10 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 {
 	struct active_request_slot *slot;
 	struct slot_results results;
-	char *if_header;
 	struct buffer out_buffer = { STRBUF_INIT, 0 };
-	struct curl_slist *dav_headers = NULL;
+	struct curl_slist *dav_headers;
 
-	if_header = xmalloc(strlen(lock->token) + 25);
-	sprintf(if_header, "If: (<%s>)", lock->token);
-	dav_headers = curl_slist_append(dav_headers, if_header);
+	dav_headers = get_dav_token_headers(lock, DAV_HEADER_IF);
 
 	strbuf_addf(&out_buffer.buf, "%s\n", sha1_to_hex(sha1));
 
@@ -1756,7 +1772,6 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		strbuf_release(&out_buffer.buf);
-		free(if_header);
 		if (results.curl_result != CURLE_OK) {
 			fprintf(stderr,
 				"PUT error: curl result=%d, HTTP code=%ld\n",
@@ -1766,7 +1781,6 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 		}
 	} else {
 		strbuf_release(&out_buffer.buf);
-		free(if_header);
 		fprintf(stderr, "Unable to start PUT request\n");
 		return 0;
 	}
@@ -1948,15 +1962,12 @@ static void update_remote_info_refs(struct remote_lock *lock)
 	struct buffer buffer = { STRBUF_INIT, 0 };
 	struct active_request_slot *slot;
 	struct slot_results results;
-	char *if_header;
-	struct curl_slist *dav_headers = NULL;
+	struct curl_slist *dav_headers;
 
 	remote_ls("refs/", (PROCESS_FILES | RECURSIVE),
 		  add_remote_info_ref, &buffer.buf);
 	if (!aborted) {
-		if_header = xmalloc(strlen(lock->token) + 25);
-		sprintf(if_header, "If: (<%s>)", lock->token);
-		dav_headers = curl_slist_append(dav_headers, if_header);
+		dav_headers = get_dav_token_headers(lock, DAV_HEADER_IF);
 
 		slot = get_active_slot();
 		slot->results = &results;
@@ -1978,7 +1989,6 @@ static void update_remote_info_refs(struct remote_lock *lock)
 					results.curl_result, results.http_code);
 			}
 		}
-		free(if_header);
 	}
 	strbuf_release(&buffer.buf);
 }
