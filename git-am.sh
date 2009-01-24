@@ -25,6 +25,7 @@ r,resolved      to be used after a patch failure
 skip            skip the current patch
 abort           restore the original branch and abort the patching operation.
 committer-date-is-author-date    lie about committer date
+ignore-date     use current timestamp for author date
 rebasing        (internal use for git-rebase)"
 
 . git-sh-setup
@@ -136,6 +137,7 @@ sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
 resolvemsg= resume=
 git_apply_opt=
 committer_date_is_author_date=
+ignore_date=
 
 while test $# != 0
 do
@@ -175,6 +177,8 @@ do
 		git_apply_opt="$git_apply_opt $1" ;;
 	--committer-date-is-author-date)
 		committer_date_is_author_date=t ;;
+	--ignore-date)
+		ignore_date=t ;;
 	--)
 		shift; break ;;
 	*)
@@ -529,6 +533,10 @@ do
 	tree=$(git write-tree) &&
 	parent=$(git rev-parse --verify HEAD) &&
 	commit=$(
+		if test -n "$ignore_date"
+		then
+			GIT_AUTHOR_DATE=
+		fi
 		if test -n "$committer_date_is_author_date"
 		then
 			GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
