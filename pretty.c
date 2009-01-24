@@ -486,8 +486,8 @@ static void parse_commit_header(struct format_commit_context *context)
 	context->commit_header_parsed = 1;
 }
 
-static const char *format_subject(struct strbuf *sb, const char *msg,
-				  const char *line_separator)
+const char *format_subject(struct strbuf *sb, const char *msg,
+			   const char *line_separator)
 {
 	int first = 1;
 
