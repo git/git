@@ -329,6 +329,9 @@ int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	xdalgoenv_t xenv;
 	diffdata_t dd1, dd2;
 
+	if (xpp->flags & XDF_PATIENCE_DIFF)
+		return xdl_do_patience_diff(mf1, mf2, xpp, xe);
+
 	if (xdl_prepare_env(mf1, mf2, xpp, xe) < 0) {
 
 		return -1;
