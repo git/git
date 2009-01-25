@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2009, #05; Wed, 21)
-X-master-at: 9a01387b9714452ebcae431705a288e1a7e099c3
-X-next-at: 0d272dd28471e8ace6f341f646eac2157628f634
+Subject: What's cooking in git.git (Jan 2009, #06; Sat, 24)
+X-master-at: 5dc1308562ab5991ecada68b06707709bea408c9
+X-next-at: 7298c8d081d90e4a3c5161414c17908750ecf5a9
 
-What's cooking in git.git (Jan 2009, #05; Wed, 21)
+What's cooking in git.git (Jan 2009, #06; Sat, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -17,11 +17,37 @@ meant to be merged to the maintenance series have "maint-" in their names.
 ----------------------------------------------------------------
 [New Topics]
 
-* js/valgrind (Wed Jan 21 02:36:40 2009 +0100) 2 commits
- - valgrind: ignore ldso errors
- - Add valgrind support in test scripts
+* jg/mergetool (Sat Jan 24 00:12:45 2009 +0100) 1 commit
+ - [wait for an ack from ted] mergetool: Don't repeat merge tool
+   candidates
 
-Dscho seems to have some updates out of discussion with Peff.
+* cb/mergetool (Wed Jan 21 22:57:48 2009 +0000) 1 commit
+ - [wait for ack from ted] mergetool: respect autocrlf by using
+   checkout-index
+
+* jc/commit-assume-also-during-merge (Thu Jan 22 22:21:49 2009 -0800) 3 commits
+ - git commit: pathspec without -i/-o implies -i semantics during a
+   merge
+ - builtin-commit: shorten eye-sore overlong lines
+ - Add "partial commit" tests during a conflicted merge
+
+This is only meant as a weatherballoon to help facilitate discussion.
+
+* sr/clone-empty (Fri Jan 23 01:07:32 2009 +0100) 1 commit
+ + Allow cloning an empty repository
+
+At last ;-)  This is a reasonable thing to do, and should be fast tracked
+to 'master'.
+
+* cc/replace (Fri Jan 23 10:07:46 2009 +0100) 7 commits
+ - environment: add global variable to disable replacement
+ - mktag: call "check_sha1_signature" with the replacement sha1
+ - replace_object: add a test case
+ - object: call "check_sha1_signature" with the replacement sha1
+ - sha1_file: add a "read_sha1_file_repl" function
+ - replace_object: add mechanism to replace objects found in
+   "refs/replace/"
+ - refs: add a "for_each_replace_ref" function
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
@@ -47,7 +73,24 @@ think something like this to allow interoperating with other SCMs as if
 the other end is a native git repository is a very worthy goal.
 
 ----------------------------------------------------------------
+[Reverted]
+
+* mh/unify-color (Fri Jan 23 01:25:23 2009 -0800) 3 commits
+ ? Revert previous two commits
+ ? move the color variables to color.c
+ ? handle color.ui at a central place
+
+This broke git-format-patch badly.
+
+----------------------------------------------------------------
 [Actively cooking]
+
+* js/valgrind (Wed Jan 21 02:36:40 2009 +0100) 2 commits
+ - valgrind: ignore ldso errors
+ - Add valgrind support in test scripts
+
+Dscho seems to have some updates out of discussion with Peff, which is not
+queued here.
 
 * sp/runtime-prefix (Sun Jan 18 13:00:15 2009 +0100) 7 commits
  - Windows: Revert to default paths and convert them by
@@ -69,17 +112,16 @@ We should move this to 'next' soon with J6t's blessing.
  + archive.c: enable traversal of submodules
  + tree.c: add support for traversal of submodules
 
-I think choosing the submodules to descend into by seeing if the commit
-happens to be available is a horribly broken semantics; it needs to be
-fixed before this can move to 'master'.
+There were a few updates posted, which I haven't picked up.
 
-* jk/signal-cleanup (Sun Jan 11 06:36:49 2009 -0500) 3 commits
+* jk/signal-cleanup (Thu Jan 22 01:03:28 2009 -0500) 5 commits
  - pager: do wait_for_pager on signal death
  - refactor signal handling for cleanup functions
  - chain kill signals for cleanup functions
+ - diff: refactor tempfile cleanup handling
+ - Windows: Fix signal numbers
 
-I think this can move to 'next', as Peff and J6t agreed on how to fix
-things up as needed for Windows.
+Ready for 'next', but not tonight (yet).
 
 * ks/maint-mailinfo-folded (Tue Jan 13 01:21:04 2009 +0300) 5 commits
  - mailinfo: tests for RFC2047 examples
@@ -101,7 +143,8 @@ As far as I can see, the only remaining thing is a minor fix-up in the
  + Introduce commit notes
 
 It would be nice to hear a real world success story using the notes
-mechanism before casting this design in stone.
+mechanism; Dscho says he also wants to make sure the current choice
+of the structure scales well before casting it in stone.
 
 * sc/gitweb-category (Fri Dec 12 00:45:12 2008 +0100) 3 commits
  - gitweb: Optional grouping of projects by category
@@ -113,56 +156,10 @@ Design discussion between Jakub and Sebastien continues.
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* jk/color-parse (Sat Jan 17 10:38:46 2009 -0500) 2 commits
- + expand --pretty=format color options
- + color: make it easier for non-config to parse color specs
-
-* sb/hook-cleanup (Sat Jan 17 04:02:55 2009 +0100) 5 commits
- + run_hook(): allow more than 9 hook arguments
- + run_hook(): check the executability of the hook before filling
-   argv
- + api-run-command.txt: talk about run_hook()
- + Move run_hook() from builtin-commit.c into run-command.c (libgit)
- + checkout: don't crash on file checkout before running post-
-   checkout hook
-
-* rs/ctype (Sat Jan 17 16:50:37 2009 +0100) 4 commits
- + Add is_regex_special()
- + Change NUL char handling of isspecial()
- + Reformat ctype.c
- + Add ctype test
-
-* jf/am-failure-report (Sun Jan 18 19:34:31 2009 -0800) 2 commits
- + git-am: re-fix the diag message printing
- + git-am: Make it easier to see which patch failed
-
-* sg/maint-gitdir-in-subdir (Fri Jan 16 16:37:33 2009 +0100) 1 commit
- + Fix gitdir detection when in subdir of gitdir
-
-This has my "don't do the fullpath if you are directly inside .git"
-squashed in, so it should be much safer.
-
-* am/maint-push-doc (Sun Jan 18 15:36:58 2009 +0100) 4 commits
- + Documentation: avoid using undefined parameters
- + Documentation: mention branches rather than heads
- + Documentation: remove a redundant elaboration
- + Documentation: git push repository can also be a remote
-
-* lt/maint-wrap-zlib (Wed Jan 7 19:54:47 2009 -0800) 1 commit
- + Wrap inflate and other zlib routines for better error reporting
-
-Needs the "free our memory upon seeing Z_MEM_ERROR and try again" bits
-extracted from Shawn's patch on top of this one.
-
-* kb/am-directory (Wed Jan 14 16:29:59 2009 -0800) 2 commits
- + git-am: fix shell quoting
- + git-am: add --directory=<dir> option
-
-This is "third-time-lucky, perhaps?" resurrection.  I do not think I'd be
-using this very often, but it originated from a real user request.
-
-* jc/maint-format-patch-o-relative (Mon Jan 12 15:18:02 2009 -0800) 1 commit
- + Teach format-patch to handle output directory relative to cwd
+* js/patience-diff (Thu Jan 1 17:39:37 2009 +0100) 3 commits
+ + bash completions: Add the --patience option
+ + Introduce the diff option '--patience'
+ + Implement the patience diff algorithm
 
 ----------------------------------------------------------------
 [Will merge to "master" soon]
@@ -191,15 +188,12 @@ using this very often, but it originated from a real user request.
  + bundle: allow the same ref to be given more than once
  + revision walker: include a detached HEAD in --all
 
-* mh/unify-color (Sun Jan 18 21:39:12 2009 +0100) 2 commits
- + move the color variables to color.c
- + handle color.ui at a central place
-
 * cb/add-pathspec (Wed Jan 14 15:54:35 2009 +0100) 2 commits
  + remove pathspec_match, use match_pathspec instead
  + clean up pathspec matching
 
-* js/diff-color-words (Tue Jan 20 21:46:57 2009 -0600) 8 commits
+* js/diff-color-words (Tue Jan 20 22:59:54 2009 -0600) 9 commits
+ + Change the spelling of "wordregex".
  + color-words: Support diff.wordregex config option
  + color-words: make regex configurable via attributes
  + color-words: expand docs with precise semantics
@@ -210,11 +204,6 @@ using this very often, but it originated from a real user request.
  + color-words: refactor word splitting and use ALLOC_GROW()
  + Add color_fwrite_lines(), a function coloring each line
    individually
-
-* js/patience-diff (Thu Jan 1 17:39:37 2009 +0100) 3 commits
- + bash completions: Add the --patience option
- + Introduce the diff option '--patience'
- + Implement the patience diff algorithm
 
 ----------------------------------------------------------------
 [On Hold]
@@ -244,9 +233,3 @@ using this very often, but it originated from a real user request.
  . In add --patch, Handle K,k,J,j slightly more gracefully.
  . Add / command in add --patch
  . git-add -i/-p: Change prompt separater from slash to comma
-
-* jc/grafts (Wed Jul 2 17:14:12 2008 -0700) 1 commit
- . [BROKEN wrt shallow clones] Ignore graft during object transfer
-
-* jc/replace (Fri Oct 31 09:21:39 2008 -0700) 1 commit
- . WIP
