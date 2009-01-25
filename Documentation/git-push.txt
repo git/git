@@ -39,20 +39,21 @@ OPTIONS
 	It is used to specify with what <src> object the <dst> ref
 	in the remote repository is to be updated.
 +
-The <src> side represents the source branch (or arbitrary
-"SHA1 expression", such as `master~4` (four parents before the
-tip of `master` branch); see linkgit:git-rev-parse[1]) that you
-want to push.  The <dst> side represents the destination location.
+The <src> is often the name of the branch you would want to push, but
+it can be any arbitrary "SHA-1 expression", such as `master~4` or
+`HEAD` (see linkgit:git-rev-parse[1]).
 +
-The local ref that matches <src> is used
-to fast forward the remote ref that matches <dst>.  If
-the optional leading plus `+` is used, the remote ref is updated
-even if it does not result in a fast forward update.
+The <dst> tells which ref on the remote side is updated with this
+push. Arbitrary expressions cannot be used here, an actual ref must
+be named. If `:`<dst> is omitted, the same ref as <src> will be
+updated.
++
+The object referenced by <src> is used to fast forward the ref <dst>
+on the remote side. If the optional leading plus `{plus}` is used, the
+remote ref is updated even if it does not result in a fast forward
+update.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
-+
-A lonely <src> parameter (without a colon and a destination) pushes
-the <src> to the same name in the destination repository.
 +
 Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
