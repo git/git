@@ -4021,7 +4021,8 @@ my ($ra_invalid, $can_do_switch, %ignored_err, $RA);
 BEGIN {
 	# enforce temporary pool usage for some simple functions
 	no strict 'refs';
-	for my $f (qw/rev_proplist get_latest_revnum get_uuid get_repos_root/) {
+	for my $f (qw/rev_proplist get_latest_revnum get_uuid get_repos_root
+	              get_file/) {
 		my $SUPER = "SUPER::$f";
 		*$f = sub {
 			my $self = shift;
