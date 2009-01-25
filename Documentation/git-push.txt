@@ -191,9 +191,9 @@ git push origin master::
 	with it.  If `master` did not exist remotely, it would be
 	created.
 
-git push origin :experimental::
-	Find a ref that matches `experimental` in the `origin` repository
-	(e.g. `refs/heads/experimental`), and delete it.
+git push origin HEAD::
+	A handy way to push the current branch to the same name on the
+	remote.
 
 git push origin master:satellite/master dev:satellite/dev::
 	Use the source ref that matches `master` (e.g. `refs/heads/master`)
@@ -201,12 +201,22 @@ git push origin master:satellite/master dev:satellite/dev::
 	`refs/remotes/satellite/master`) in the `origin` repository, then
 	do the same for `dev` and `satellite/dev`.
 
+git push origin HEAD:master::
+	Push the current branch to the remote ref matching `master` in the
+	`origin` repository. This form is convenient to push the current
+	branch without thinking about its local name.
+
 git push origin master:refs/heads/experimental::
 	Create the branch `experimental` in the `origin` repository
 	by copying the current `master` branch.  This form is only
 	needed to create a new branch or tag in the remote repository when
 	the local name and the remote name are different; otherwise,
 	the ref name on its own will work.
+
+git push origin :experimental::
+	Find a ref that matches `experimental` in the `origin` repository
+	(e.g. `refs/heads/experimental`), and delete it.
+
 
 Author
 ------
