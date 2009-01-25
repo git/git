@@ -36,7 +36,7 @@ endif::git-format-patch[]
 --patch-with-raw::
 	Synonym for "-p --raw".
 
---patience:
+--patience::
 	Generate a diff using the "patience diff" algorithm.
 
 --stat[=width[,name-width]]::
