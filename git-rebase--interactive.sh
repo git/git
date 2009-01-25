@@ -571,7 +571,8 @@ first and then run 'git rebase --continue' again."
 		;;
 	--)
 		shift
-		test ! -z "$REBASE_ROOT" -o $# -eq 1 -o $# -eq 2 || usage
+		test -z "$REBASE_ROOT" -a $# -ge 1 -a $# -le 2 ||
+		test ! -z "$REBASE_ROOT" -a $# -le 1 || usage
 		test -d "$DOTEST" &&
 			die "Interactive rebase already started"
 
