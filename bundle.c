@@ -266,6 +266,8 @@ int create_bundle(struct bundle_header *header, const char *path,
 		return error("unrecognized argument: %s'", argv[i]);
 	}
 
+	object_array_remove_duplicates(&revs.pending);
+
 	for (i = 0; i < revs.pending.nr; i++) {
 		struct object_array_entry *e = revs.pending.objects + i;
 		unsigned char sha1[20];
