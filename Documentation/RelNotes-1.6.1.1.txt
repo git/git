@@ -4,8 +4,13 @@ GIT v1.6.1.1 Release Notes
 Fixes since v1.6.1
 ------------------
 
+* "git add frotz/nitfol" when "frotz" is a submodule should have errored
+  out, but it didn't.
+
 * "git apply" took file modes from the patch text and updated the mode
   bits of the target tree even when the patch was not about mode changes.
+
+* "git bisect view" on Cygwin did not launch gitk
 
 * "git checkout $tree" did not trigger an error.
 
@@ -13,6 +18,12 @@ Fixes since v1.6.1
 
 * "git describe --all" complained when a commit is described with a tag,
   which was nonsense.
+
+* "git diff --no-index --" did not trigger no-index (aka "use git-diff as
+  a replacement of diff on untracked files") behaviour.
+
+* "git format-patch -1 HEAD" on a root commit failed to produce patch
+  text.
 
 * "git fsck branch" did not work as advertised; instead it behaved the same
   way as "git fsck".
@@ -36,14 +47,13 @@ Fixes since v1.6.1
 
 * "git mv -k" with more than one errorneous paths misbehaved.
 
+* "git read-tree -m -u" hence branch switching incorrectly lost a
+  subdirectory in rare cases.
+
 * "git rebase -i" issued an unnecessary error message upon a user error of
   marking the first commit to be "squash"ed.
 
-Other documentation updates.
+* "git shortlog" did not format a commit message with multi-line
+  subject correctly.
 
----
-exec >/var/tmp/1
-O=v1.6.1-60-g78f111e
-echo O=$(git describe maint)
-git shortlog --no-merges $O..maint
-
+Many documentation updates.
