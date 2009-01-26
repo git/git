@@ -456,7 +456,7 @@ get_saved_options () {
 	test -d "$REWRITTEN" && PRESERVE_MERGES=t
 	test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
 	test -f "$DOTEST"/verbose && VERBOSE=t
-	test ! -s "$DOTEST"/upstream && REBASE_ROOT=t
+	test -f "$DOTEST"/rebase-root && REBASE_ROOT=t
 }
 
 while test $# != 0
@@ -586,6 +586,7 @@ first and then run 'git rebase --continue' again."
 			test -z "$ONTO" && ONTO=$UPSTREAM
 			shift
 		else
+			UPSTREAM=
 			UPSTREAM_ARG=--root
 			test -z "$ONTO" &&
 				die "You must specify --onto when using --root"
@@ -612,7 +613,12 @@ first and then run 'git rebase --continue' again."
 			echo "detached HEAD" > "$DOTEST"/head-name
 
 		echo $HEAD > "$DOTEST"/head
-		echo $UPSTREAM > "$DOTEST"/upstream
+		case "$REBASE_ROOT" in
+		'')
+			rm -f "$DOTEST"/rebase-root ;;
+		*)
+			: >"$DOTEST"/rebase-root ;;
+		esac
 		echo $ONTO > "$DOTEST"/onto
 		test -z "$STRATEGY" || echo "$STRATEGY" > "$DOTEST"/strategy
 		test t = "$VERBOSE" && : > "$DOTEST"/verbose
