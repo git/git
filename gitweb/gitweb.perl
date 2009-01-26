@@ -6015,7 +6015,7 @@ sub git_feed {
 	}
 	if (defined($commitlist[0])) {
 		%latest_commit = %{$commitlist[0]};
-		%latest_date   = parse_date($latest_commit{'author_epoch'});
+		%latest_date   = parse_date($latest_commit{'committer_epoch'});
 		print $cgi->header(
 			-type => $content_type,
 			-charset => 'utf-8',
