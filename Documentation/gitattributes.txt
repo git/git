@@ -317,6 +317,8 @@ patterns are available:
 
 - `bibtex` suitable for files with BibTeX coded references.
 
+- `cpp` suitable for source code in the C and C++ languages.
+
 - `html` suitable for HTML/XHTML documents.
 
 - `java` suitable for source code in the Java language.
@@ -332,6 +334,25 @@ patterns are available:
 - `ruby` suitable for source code in the Ruby language.
 
 - `tex` suitable for source code for LaTeX documents.
+
+
+Customizing word diff
+^^^^^^^^^^^^^^^^^^^^^
+
+You can customize the rules that `git diff --color-words` uses to
+split words in a line, by specifying an appropriate regular expression
+in the "diff.*.wordRegex" configuration variable.  For example, in TeX
+a backslash followed by a sequence of letters forms a command, but
+several such commands can be run together without intervening
+whitespace.  To separate them, use a regular expression such as
+
+------------------------
+[diff "tex"]
+	wordRegex = "\\\\[a-zA-Z]+|[{}]|\\\\.|[^\\{}[:space:]]+"
+------------------------
+
+A built-in pattern is provided for all languages listed in the
+previous section.
 
 
 Performing text diffs of binary files

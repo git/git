@@ -23,6 +23,7 @@ static int diff_detect_rename_default;
 static int diff_rename_limit_default = 200;
 static int diff_suppress_blank_empty;
 int diff_use_color_default = -1;
+static const char *diff_word_regex_cfg;
 static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
@@ -92,6 +93,8 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "diff.external"))
 		return git_config_string(&external_diff_cmd_cfg, var, value);
+	if (!strcmp(var, "diff.wordregex"))
+		return git_config_string(&diff_word_regex_cfg, var, value);
 
 	return git_diff_basic_config(var, value, cb);
 }
@@ -321,82 +324,138 @@ static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 struct diff_words_buffer {
 	mmfile_t text;
 	long alloc;
-	long current; /* output pointer */
-	int suppressed_newline;
+	struct diff_words_orig {
+		const char *begin, *end;
+	} *orig;
+	int orig_nr, orig_alloc;
 };
 
 static void diff_words_append(char *line, unsigned long len,
 		struct diff_words_buffer *buffer)
 {
-	if (buffer->text.size + len > buffer->alloc) {
-		buffer->alloc = (buffer->text.size + len) * 3 / 2;
-		buffer->text.ptr = xrealloc(buffer->text.ptr, buffer->alloc);
-	}
+	ALLOC_GROW(buffer->text.ptr, buffer->text.size + len, buffer->alloc);
 	line++;
 	len--;
 	memcpy(buffer->text.ptr + buffer->text.size, line, len);
 	buffer->text.size += len;
+	buffer->text.ptr[buffer->text.size] = '\0';
 }
 
 struct diff_words_data {
 	struct diff_words_buffer minus, plus;
+	const char *current_plus;
 	FILE *file;
+	regex_t *word_regex;
 };
-
-static void print_word(FILE *file, struct diff_words_buffer *buffer, int len, int color,
-		int suppress_newline)
-{
-	const char *ptr;
-	int eol = 0;
-
-	if (len == 0)
-		return;
-
-	ptr  = buffer->text.ptr + buffer->current;
-	buffer->current += len;
-
-	if (ptr[len - 1] == '\n') {
-		eol = 1;
-		len--;
-	}
-
-	fputs(diff_get_color(1, color), file);
-	fwrite(ptr, len, 1, file);
-	fputs(diff_get_color(1, DIFF_RESET), file);
-
-	if (eol) {
-		if (suppress_newline)
-			buffer->suppressed_newline = 1;
-		else
-			putc('\n', file);
-	}
-}
 
 static void fn_out_diff_words_aux(void *priv, char *line, unsigned long len)
 {
 	struct diff_words_data *diff_words = priv;
+	int minus_first, minus_len, plus_first, plus_len;
+	const char *minus_begin, *minus_end, *plus_begin, *plus_end;
 
-	if (diff_words->minus.suppressed_newline) {
-		if (line[0] != '+')
-			putc('\n', diff_words->file);
-		diff_words->minus.suppressed_newline = 0;
+	if (line[0] != '@' || parse_hunk_header(line, len,
+			&minus_first, &minus_len, &plus_first, &plus_len))
+		return;
+
+	/* POSIX requires that first be decremented by one if len == 0... */
+	if (minus_len) {
+		minus_begin = diff_words->minus.orig[minus_first].begin;
+		minus_end =
+			diff_words->minus.orig[minus_first + minus_len - 1].end;
+	} else
+		minus_begin = minus_end =
+			diff_words->minus.orig[minus_first].end;
+
+	if (plus_len) {
+		plus_begin = diff_words->plus.orig[plus_first].begin;
+		plus_end = diff_words->plus.orig[plus_first + plus_len - 1].end;
+	} else
+		plus_begin = plus_end = diff_words->plus.orig[plus_first].end;
+
+	if (diff_words->current_plus != plus_begin)
+		fwrite(diff_words->current_plus,
+				plus_begin - diff_words->current_plus, 1,
+				diff_words->file);
+	if (minus_begin != minus_end)
+		color_fwrite_lines(diff_words->file,
+				diff_get_color(1, DIFF_FILE_OLD),
+				minus_end - minus_begin, minus_begin);
+	if (plus_begin != plus_end)
+		color_fwrite_lines(diff_words->file,
+				diff_get_color(1, DIFF_FILE_NEW),
+				plus_end - plus_begin, plus_begin);
+
+	diff_words->current_plus = plus_end;
+}
+
+/* This function starts looking at *begin, and returns 0 iff a word was found. */
+static int find_word_boundaries(mmfile_t *buffer, regex_t *word_regex,
+		int *begin, int *end)
+{
+	if (word_regex && *begin < buffer->size) {
+		regmatch_t match[1];
+		if (!regexec(word_regex, buffer->ptr + *begin, 1, match, 0)) {
+			char *p = memchr(buffer->ptr + *begin + match[0].rm_so,
+					'\n', match[0].rm_eo - match[0].rm_so);
+			*end = p ? p - buffer->ptr : match[0].rm_eo + *begin;
+			*begin += match[0].rm_so;
+			return *begin >= *end;
+		}
+		return -1;
 	}
 
-	len--;
-	switch (line[0]) {
-		case '-':
-			print_word(diff_words->file,
-				   &diff_words->minus, len, DIFF_FILE_OLD, 1);
-			break;
-		case '+':
-			print_word(diff_words->file,
-				   &diff_words->plus, len, DIFF_FILE_NEW, 0);
-			break;
-		case ' ':
-			print_word(diff_words->file,
-				   &diff_words->plus, len, DIFF_PLAIN, 0);
-			diff_words->minus.current += len;
-			break;
+	/* find the next word */
+	while (*begin < buffer->size && isspace(buffer->ptr[*begin]))
+		(*begin)++;
+	if (*begin >= buffer->size)
+		return -1;
+
+	/* find the end of the word */
+	*end = *begin + 1;
+	while (*end < buffer->size && !isspace(buffer->ptr[*end]))
+		(*end)++;
+
+	return 0;
+}
+
+/*
+ * This function splits the words in buffer->text, stores the list with
+ * newline separator into out, and saves the offsets of the original words
+ * in buffer->orig.
+ */
+static void diff_words_fill(struct diff_words_buffer *buffer, mmfile_t *out,
+		regex_t *word_regex)
+{
+	int i, j;
+	long alloc = 0;
+
+	out->size = 0;
+	out->ptr = NULL;
+
+	/* fake an empty "0th" word */
+	ALLOC_GROW(buffer->orig, 1, buffer->orig_alloc);
+	buffer->orig[0].begin = buffer->orig[0].end = buffer->text.ptr;
+	buffer->orig_nr = 1;
+
+	for (i = 0; i < buffer->text.size; i++) {
+		if (find_word_boundaries(&buffer->text, word_regex, &i, &j))
+			return;
+
+		/* store original boundaries */
+		ALLOC_GROW(buffer->orig, buffer->orig_nr + 1,
+				buffer->orig_alloc);
+		buffer->orig[buffer->orig_nr].begin = buffer->text.ptr + i;
+		buffer->orig[buffer->orig_nr].end = buffer->text.ptr + j;
+		buffer->orig_nr++;
+
+		/* store one word */
+		ALLOC_GROW(out->ptr, out->size + j - i + 1, alloc);
+		memcpy(out->ptr + out->size, buffer->text.ptr + i, j - i);
+		out->ptr[out->size + j - i] = '\n';
+		out->size += j - i + 1;
+
+		i = j - 1;
 	}
 }
 
@@ -407,38 +466,36 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	xdemitconf_t xecfg;
 	xdemitcb_t ecb;
 	mmfile_t minus, plus;
-	int i;
+
+	/* special case: only removal */
+	if (!diff_words->plus.text.size) {
+		color_fwrite_lines(diff_words->file,
+			diff_get_color(1, DIFF_FILE_OLD),
+			diff_words->minus.text.size, diff_words->minus.text.ptr);
+		diff_words->minus.text.size = 0;
+		return;
+	}
+
+	diff_words->current_plus = diff_words->plus.text.ptr;
 
 	memset(&xpp, 0, sizeof(xpp));
 	memset(&xecfg, 0, sizeof(xecfg));
-	minus.size = diff_words->minus.text.size;
-	minus.ptr = xmalloc(minus.size);
-	memcpy(minus.ptr, diff_words->minus.text.ptr, minus.size);
-	for (i = 0; i < minus.size; i++)
-		if (isspace(minus.ptr[i]))
-			minus.ptr[i] = '\n';
-	diff_words->minus.current = 0;
-
-	plus.size = diff_words->plus.text.size;
-	plus.ptr = xmalloc(plus.size);
-	memcpy(plus.ptr, diff_words->plus.text.ptr, plus.size);
-	for (i = 0; i < plus.size; i++)
-		if (isspace(plus.ptr[i]))
-			plus.ptr[i] = '\n';
-	diff_words->plus.current = 0;
-
+	diff_words_fill(&diff_words->minus, &minus, diff_words->word_regex);
+	diff_words_fill(&diff_words->plus, &plus, diff_words->word_regex);
 	xpp.flags = XDF_NEED_MINIMAL;
-	xecfg.ctxlen = diff_words->minus.alloc + diff_words->plus.alloc;
+	/* as only the hunk header will be parsed, we need a 0-context */
+	xecfg.ctxlen = 0;
 	xdi_diff_outf(&minus, &plus, fn_out_diff_words_aux, diff_words,
 		      &xpp, &xecfg, &ecb);
 	free(minus.ptr);
 	free(plus.ptr);
+	if (diff_words->current_plus != diff_words->plus.text.ptr +
+			diff_words->plus.text.size)
+		fwrite(diff_words->current_plus,
+			diff_words->plus.text.ptr + diff_words->plus.text.size
+			- diff_words->current_plus, 1,
+			diff_words->file);
 	diff_words->minus.text.size = diff_words->plus.text.size = 0;
-
-	if (diff_words->minus.suppressed_newline) {
-		putc('\n', diff_words->file);
-		diff_words->minus.suppressed_newline = 0;
-	}
 }
 
 typedef unsigned long (*sane_truncate_fn)(char *line, unsigned long len);
@@ -462,7 +519,10 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 			diff_words_show(ecbdata->diff_words);
 
 		free (ecbdata->diff_words->minus.text.ptr);
+		free (ecbdata->diff_words->minus.orig);
 		free (ecbdata->diff_words->plus.text.ptr);
+		free (ecbdata->diff_words->plus.orig);
+		free(ecbdata->diff_words->word_regex);
 		free(ecbdata->diff_words);
 		ecbdata->diff_words = NULL;
 	}
@@ -1325,6 +1385,12 @@ static const struct userdiff_funcname *diff_funcname_pattern(struct diff_filespe
 	return one->driver->funcname.pattern ? &one->driver->funcname : NULL;
 }
 
+static const char *userdiff_word_regex(struct diff_filespec *one)
+{
+	diff_filespec_load_driver(one);
+	return one->driver->word_regex;
+}
+
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b)
 {
 	if (!options->a_prefix)
@@ -1485,6 +1551,21 @@ static void builtin_diff(const char *name_a,
 			ecbdata.diff_words =
 				xcalloc(1, sizeof(struct diff_words_data));
 			ecbdata.diff_words->file = o->file;
+			if (!o->word_regex)
+				o->word_regex = userdiff_word_regex(one);
+			if (!o->word_regex)
+				o->word_regex = userdiff_word_regex(two);
+			if (!o->word_regex)
+				o->word_regex = diff_word_regex_cfg;
+			if (o->word_regex) {
+				ecbdata.diff_words->word_regex = (regex_t *)
+					xmalloc(sizeof(regex_t));
+				if (regcomp(ecbdata.diff_words->word_regex,
+						o->word_regex,
+						REG_EXTENDED | REG_NEWLINE))
+					die ("Invalid regular expression: %s",
+							o->word_regex);
+			}
 		}
 		xdi_diff_outf(&mf1, &mf2, fn_out_consume, &ecbdata,
 			      &xpp, &xecfg, &ecb);
@@ -2498,6 +2579,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_CLR(options, COLOR_DIFF);
 	else if (!strcmp(arg, "--color-words"))
 		options->flags |= DIFF_OPT_COLOR_DIFF | DIFF_OPT_COLOR_DIFF_WORDS;
+	else if (!prefixcmp(arg, "--color-words=")) {
+		options->flags |= DIFF_OPT_COLOR_DIFF | DIFF_OPT_COLOR_DIFF_WORDS;
+		options->word_regex = arg + 14;
+	}
 	else if (!strcmp(arg, "--exit-code"))
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	else if (!strcmp(arg, "--quiet"))
