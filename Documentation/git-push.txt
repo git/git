@@ -33,10 +33,11 @@ OPTIONS
 	of a remote (see the section <<REMOTES,REMOTES>> below).
 
 <refspec>...::
-	The canonical format of a <refspec> parameter is
-	`+?<src>:<dst>`; that is, an optional plus `{plus}`, followed
-	by the source ref, followed by a colon `:`, followed by
-	the destination ref.
+	The format of a <refspec> parameter is an optional plus
+	`{plus}`, followed by the source ref <src>, followed
+	by a colon `:`, followed by the destination ref <dst>.
+	It is used to specify with what <src> object the <dst> ref
+	in the remote repository is to be updated.
 +
 The <src> side represents the source branch (or arbitrary
 "SHA1 expression", such as `master~4` (four parents before the
