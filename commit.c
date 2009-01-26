@@ -705,6 +705,21 @@ struct commit_list *get_merge_bases(struct commit *one, struct commit *two,
 	return get_merge_bases_many(one, 1, &two, cleanup);
 }
 
+int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
+{
+	if (!with_commit)
+		return 1;
+	while (with_commit) {
+		struct commit *other;
+
+		other = with_commit->item;
+		with_commit = with_commit->next;
+		if (in_merge_bases(other, &commit, 1))
+			return 1;
+	}
+	return 0;
+}
+
 int in_merge_bases(struct commit *commit, struct commit **reference, int num)
 {
 	struct commit_list *bases, *b;
