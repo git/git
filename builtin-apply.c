@@ -2447,7 +2447,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	if (st_mode != patch->old_mode)
 		fprintf(stderr, "warning: %s has type %o, expected %o\n",
 			old_name, st_mode, patch->old_mode);
-	if (!patch->new_mode)
+	if (!patch->new_mode && !patch->is_delete)
 		patch->new_mode = st_mode;
 	return 0;
 
