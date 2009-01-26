@@ -1,0 +1,42 @@
+#!/bin/sh
+
+merge_msg="Merge branch '\(.*\)'"
+x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+x40="$x40$x40$x40$x40$x40$x40$x40$x40"
+LF='
+'
+
+echo '#!/bin/sh
+while read branch eh
+do
+	case "$eh" in
+	"") git merge "$branch" || break ;;
+	?*) echo >&2 "Eh? $branch $eh"; break ;;
+	esac
+done <<EOF'
+
+git log --pretty=oneline --first-parent "$1" |
+{
+	series=
+	while read commit msg
+	do
+		other=$(git rev-parse --verify "$commit^2") &&
+		branch=$(expr "$msg" : "$merge_msg") &&
+		tip=$(git rev-parse --verify "refs/heads/$branch" 2>/dev/null) &&
+		merged=$(git name-rev --refs="refs/heads/$branch" "$other" 2>/dev/null) &&
+		merged=$(expr "$merged" : "$x40 \(.*\)") &&
+		test "$merged" != undefined || {
+			other=$(git log -1 --pretty='format:%s' $other) &&
+			merged="$branch :rebased? $other"
+		}
+		if test -z "$series"
+		then
+			series="$merged"
+		else
+			series="$merged$LF$series"
+		fi
+	done
+	echo "$series"
+}
+
+echo 'EOF'
