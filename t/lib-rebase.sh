@@ -1,5 +1,17 @@
 #!/bin/sh
 
+# After setting the fake editor with this function, you can
+#
+# - override the commit message with $FAKE_COMMIT_MESSAGE,
+# - amend the commit message with $FAKE_COMMIT_AMEND
+# - check that non-commit messages have a certain line count with $EXPECT_COUNT
+# - rewrite a rebase -i script with $FAKE_LINES in the form
+#
+#	"[<lineno1>] [<lineno2>]..."
+#
+#   If a line number is prefixed with "squash" or "edit", the respective line's
+#   command will be replaced with the specified one.
+
 set_fake_editor () {
 	echo "#!$SHELL_PATH" >fake-editor.sh
 	cat >> fake-editor.sh <<\EOF
