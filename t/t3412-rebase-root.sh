@@ -172,14 +172,22 @@ EOF
 
 test_expect_success 'pre-rebase hook stops rebase' '
 	git checkout -b stops1 other &&
-	GIT_EDITOR=: test_must_fail git rebase --root --onto master &&
+	(
+		GIT_EDITOR=:
+		export GIT_EDITOR
+		test_must_fail git rebase --root --onto master
+	) &&
 	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops1
 	test 0 = $(git rev-list other...stops1 | wc -l)
 '
 
 test_expect_success 'pre-rebase hook stops rebase -i' '
 	git checkout -b stops2 other &&
-	GIT_EDITOR=: test_must_fail git rebase --root --onto master &&
+	(
+		GIT_EDITOR=:
+		export GIT_EDITOR
+		test_must_fail git rebase --root --onto master
+	) &&
 	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops2
 	test 0 = $(git rev-list other...stops2 | wc -l)
 '
@@ -224,7 +232,11 @@ test_expect_success 'rebase --root with conflict (second part)' '
 
 test_expect_success 'rebase -i --root with conflict (first part)' '
 	git checkout -b conflict2 other &&
-	GIT_EDITOR=: test_must_fail git rebase -i --root --onto master &&
+	(
+		GIT_EDITOR=:
+		export GIT_EDITOR
+		test_must_fail git rebase -i --root --onto master
+	) &&
 	git ls-files -u | grep "B$"
 '
 
@@ -262,7 +274,11 @@ EOF
 
 test_expect_success 'rebase -i -p --root with conflict (first part)' '
 	git checkout -b conflict3 other &&
-	GIT_EDITOR=: test_must_fail git rebase -i -p --root --onto master &&
+	(
+		GIT_EDITOR=:
+		export GIT_EDITOR
+		test_must_fail git rebase -i -p --root --onto master
+	) &&
 	git ls-files -u | grep "B$"
 '
 
