@@ -1329,6 +1329,7 @@ Return the list of files that haven't been handled."
 					 (log-edit-diff-function . git-log-edit-diff)) buffer)
 	(log-edit 'git-do-commit nil 'git-log-edit-files buffer))
       (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
+      (setq paragraph-separate (concat (regexp-quote git-log-msg-separator) "$\\|Author: \\|Date: \\|Merge: \\|Signed-off-by: \\|\f\\|[ 	]*$"))
       (setq buffer-file-coding-system coding-system)
       (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t))))
 
