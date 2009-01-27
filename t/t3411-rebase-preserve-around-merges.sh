@@ -5,44 +5,14 @@
 
 test_description='git rebase preserve merges
 
-This test runs git rebase with and tries to squash a commit from after a merge
-to before the merge.
+This test runs git rebase with -p and tries to squash a commit from after
+a merge to before the merge.
 '
 . ./test-lib.sh
 
-# Copy/paste from t3404-rebase-interactive.sh
-echo "#!$SHELL_PATH" >fake-editor.sh
-cat >> fake-editor.sh <<\EOF
-case "$1" in
-*/COMMIT_EDITMSG)
-	test -z "$FAKE_COMMIT_MESSAGE" || echo "$FAKE_COMMIT_MESSAGE" > "$1"
-	test -z "$FAKE_COMMIT_AMEND" || echo "$FAKE_COMMIT_AMEND" >> "$1"
-	exit
-	;;
-esac
-test -z "$EXPECT_COUNT" ||
-	test "$EXPECT_COUNT" = $(sed -e '/^#/d' -e '/^$/d' < "$1" | wc -l) ||
-	exit
-test -z "$FAKE_LINES" && exit
-grep -v '^#' < "$1" > "$1".tmp
-rm -f "$1"
-cat "$1".tmp
-action=pick
-for line in $FAKE_LINES; do
-	case $line in
-	squash|edit)
-		action="$line";;
-	*)
-		echo sed -n "${line}s/^pick/$action/p"
-		sed -n "${line}p" < "$1".tmp
-		sed -n "${line}s/^pick/$action/p" < "$1".tmp >> "$1"
-		action=pick;;
-	esac
-done
-EOF
+. ../lib-rebase.sh
 
-test_set_editor "$(pwd)/fake-editor.sh"
-chmod a+x fake-editor.sh
+set_fake_editor
 
 # set up two branches like this:
 #
