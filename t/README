@@ -212,6 +212,24 @@ library for your script to use.
    is to summarize successes and failures in the test script and
    exit with an appropriate error code.
 
+ - test_tick
+
+   Make commit and tag names consistent by setting the author and
+   committer times to defined stated.  Subsequent calls will
+   advance the times by a fixed amount.
+
+ - test_commit <message> [<filename> [<contents>]]
+
+   Creates a commit with the given message, committing the given
+   file with the given contents (default for both is to reuse the
+   message string), and adds a tag (again reusing the message
+   string as name).  Calls test_tick to make the SHA-1s
+   reproducible.
+
+ - test_merge <message> <commit-or-tag>
+
+   Merges the given rev using the given message.  Like test_commit,
+   creates a tag and calls test_tick before committing.
 
 Tips for Writing Tests
 ----------------------

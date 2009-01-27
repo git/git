@@ -193,6 +193,31 @@ test_tick () {
 	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 }
 
+# Call test_commit with the arguments "<message> [<file> [<contents>]]"
+#
+# This will commit a file with the given contents and the given commit
+# message.  It will also add a tag with <message> as name.
+#
+# Both <file> and <contents> default to <message>.
+
+test_commit () {
+	file=${2:-$(echo "$1" | tr 'A-Z' 'a-z')}
+	echo "${3-$1}" > "$file" &&
+	git add "$file" &&
+	test_tick &&
+	git commit -m "$1" &&
+	git tag "$1"
+}
+
+# Call test_merge with the arguments "<message> <commit>", where <commit>
+# can be a tag pointing to the commit-to-merge.
+
+test_merge () {
+	test_tick &&
+	git merge -m "$1" "$2" &&
+	git tag "$1"
+}
+
 # You are not expected to call test_ok_ and test_failure_ directly, use
 # the text_expect_* functions instead.
 
