@@ -484,7 +484,7 @@ test_expect_success 'submodule rebase setup' '
 	git commit -a -m "Three changes submodule"
 '
 
-test_expect_failure 'submodule rebase -i' '
+test_expect_success 'submodule rebase -i' '
 	FAKE_LINES="1 squash 2 3" git rebase -i A
 '
 
