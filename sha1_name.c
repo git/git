@@ -309,7 +309,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 
 	/* basic@{time or number} format to query ref-log */
 	reflog_len = at = 0;
-	if (str[len-1] == '}') {
+	if (len && str[len-1] == '}') {
 		for (at = 0; at < len - 1; at++) {
 			if (str[at] == '@' && str[at+1] == '{') {
 				reflog_len = (len-1) - (at+2);
