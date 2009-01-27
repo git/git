@@ -7,23 +7,13 @@ Tests if git rebase --root --onto <newparent> can rebase the root commit.
 . ./test-lib.sh
 
 test_expect_success 'prepare repository' '
-	echo 1 > A &&
-	git add A &&
-	git commit -m 1 &&
-	echo 2 > A &&
-	git add A &&
-	git commit -m 2 &&
+	test_commit 1 A &&
+	test_commit 2 A &&
 	git symbolic-ref HEAD refs/heads/other &&
 	rm .git/index &&
-	echo 3 > B &&
-	git add B &&
-	git commit -m 3 &&
-	echo 1 > A &&
-	git add A &&
-	git commit -m 1b &&
-	echo 4 > B &&
-	git add B &&
-	git commit -m 4
+	test_commit 3 B &&
+	test_commit 1b A 1 &&
+	test_commit 4 B
 '
 
 test_expect_success 'rebase --root expects --onto' '
@@ -103,9 +93,7 @@ test_expect_success 'pre-rebase got correct input (5)' '
 test_expect_success 'set up merge history' '
 	git checkout other^ &&
 	git checkout -b side &&
-	echo 5 > C &&
-	git add C &&
-	git commit -m 5 &&
+	test_commit 5 C &&
 	git checkout other &&
 	git merge side
 '
@@ -132,9 +120,7 @@ test_expect_success 'set up second root and merge' '
 	git symbolic-ref HEAD refs/heads/third &&
 	rm .git/index &&
 	rm A B C &&
-	echo 6 > D &&
-	git add D &&
-	git commit -m 6 &&
+	test_commit 6 D &&
 	git checkout other &&
 	git merge third
 '
