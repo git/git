@@ -238,8 +238,28 @@ static int ambiguous_path(const char *path, int len)
 	return slash;
 }
 
+/*
+ * *string and *len will only be substituted, and *string returned (for
+ * later free()ing) if the string passed in is of the form @{-<n>}.
+ */
+static char *substitute_nth_last_branch(const char **string, int *len)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int ret = interpret_nth_last_branch(*string, &buf);
+
+	if (ret == *len) {
+		size_t size;
+		*string = strbuf_detach(&buf, &size);
+		*len = size;
+		return (char *)*string;
+	}
+
+	return NULL;
+}
+
 int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 {
+	char *last_branch = substitute_nth_last_branch(&str, &len);
 	const char **p, *r;
 	int refs_found = 0;
 
@@ -259,11 +279,13 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 				break;
 		}
 	}
+	free(last_branch);
 	return refs_found;
 }
 
 int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 {
+	char *last_branch = substitute_nth_last_branch(&str, &len);
 	const char **p;
 	int logs_found = 0;
 
@@ -294,8 +316,11 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 		if (!warn_ambiguous_refs)
 			break;
 	}
+	free(last_branch);
 	return logs_found;
 }
+
+static int get_sha1_1(const char *name, int len, unsigned char *sha1);
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 {
@@ -307,10 +332,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
 
-	/* basic@{time or number} format to query ref-log */
+	/* basic@{time or number or -number} format to query ref-log */
 	reflog_len = at = 0;
 	if (len && str[len-1] == '}') {
-		for (at = 0; at < len - 1; at++) {
+		for (at = len-2; at >= 0; at--) {
 			if (str[at] == '@' && str[at+1] == '{') {
 				reflog_len = (len-1) - (at+2);
 				len = at;
@@ -324,6 +349,16 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		return -1;
 
 	if (!len && reflog_len) {
+		struct strbuf buf = STRBUF_INIT;
+		int ret;
+		/* try the @{-N} syntax for n-th checkout */
+		ret = interpret_nth_last_branch(str+at, &buf);
+		if (ret > 0) {
+			/* substitute this branch name and restart */
+			return get_sha1_1(buf.buf, buf.len, sha1);
+		} else if (ret == 0) {
+			return -1;
+		}
 		/* allow "@{...}" to mean the current branch reflog */
 		refs_found = dwim_ref("HEAD", 4, sha1, &real_ref);
 	} else if (reflog_len)
@@ -378,8 +413,6 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	free(real_ref);
 	return 0;
 }
-
-static int get_sha1_1(const char *name, int len, unsigned char *sha1);
 
 static int get_parent(const char *name, int len,
 		      unsigned char *result, int idx)
@@ -671,6 +704,92 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 	free_commit_list(list);
 	for (l = backup; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);
+	return retval;
+}
+
+struct grab_nth_branch_switch_cbdata {
+	long cnt, alloc;
+	struct strbuf *buf;
+};
+
+static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
+				  const char *email, unsigned long timestamp, int tz,
+				  const char *message, void *cb_data)
+{
+	struct grab_nth_branch_switch_cbdata *cb = cb_data;
+	const char *match = NULL, *target = NULL;
+	size_t len;
+	int nth;
+
+	if (!prefixcmp(message, "checkout: moving from ")) {
+		match = message + strlen("checkout: moving from ");
+		target = strstr(match, " to ");
+	}
+
+	if (!match || !target)
+		return 0;
+
+	len = target - match;
+	nth = cb->cnt++ % cb->alloc;
+	strbuf_reset(&cb->buf[nth]);
+	strbuf_add(&cb->buf[nth], match, len);
+	return 0;
+}
+
+/*
+ * This reads "@{-N}" syntax, finds the name of the Nth previous
+ * branch we were on, and places the name of the branch in the given
+ * buf and returns the number of characters parsed if successful.
+ *
+ * If the input is not of the accepted format, it returns a negative
+ * number to signal an error.
+ *
+ * If the input was ok but there are not N branch switches in the
+ * reflog, it returns 0.
+ */
+int interpret_nth_last_branch(const char *name, struct strbuf *buf)
+{
+	long nth;
+	int i, retval;
+	struct grab_nth_branch_switch_cbdata cb;
+	const char *brace;
+	char *num_end;
+
+	if (name[0] != '@' || name[1] != '{' || name[2] != '-')
+		return -1;
+	brace = strchr(name, '}');
+	if (!brace)
+		return -1;
+	nth = strtol(name+3, &num_end, 10);
+	if (num_end != brace)
+		return -1;
+	if (nth <= 0)
+		return -1;
+	cb.alloc = nth;
+	cb.buf = xmalloc(nth * sizeof(struct strbuf));
+	for (i = 0; i < nth; i++)
+		strbuf_init(&cb.buf[i], 20);
+	cb.cnt = 0;
+	retval = 0;
+	for_each_recent_reflog_ent("HEAD", grab_nth_branch_switch, 40960, &cb);
+	if (cb.cnt < nth) {
+		cb.cnt = 0;
+		for (i = 0; i < nth; i++)
+			strbuf_release(&cb.buf[i]);
+		for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
+	}
+	if (cb.cnt < nth)
+		goto release_return;
+	i = cb.cnt % nth;
+	strbuf_reset(buf);
+	strbuf_add(buf, cb.buf[i].buf, cb.buf[i].len);
+	retval = brace-name+1;
+
+release_return:
+	for (i = 0; i < nth; i++)
+		strbuf_release(&cb.buf[i]);
+	free(cb.buf);
+
 	return retval;
 }
 
