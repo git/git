@@ -118,7 +118,9 @@ int start_command(struct child_process *cmd)
 		} else {
 			execvp(cmd->argv[0], (char *const*) cmd->argv);
 		}
-		die("exec %s failed.", cmd->argv[0]);
+		trace_printf("trace: exec '%s' failed: %s\n", cmd->argv[0],
+				strerror(errno));
+		exit(127);
 	}
 #else
 	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
@@ -187,6 +189,7 @@ int start_command(struct child_process *cmd)
 #endif
 
 	if (cmd->pid < 0) {
+		int err = errno;
 		if (need_in)
 			close_pair(fdin);
 		else if (cmd->in)
@@ -197,7 +200,9 @@ int start_command(struct child_process *cmd)
 			close(cmd->out);
 		if (need_err)
 			close_pair(fderr);
-		return -ERR_RUN_COMMAND_FORK;
+		return err == ENOENT ?
+			-ERR_RUN_COMMAND_EXEC :
+			-ERR_RUN_COMMAND_FORK;
 	}
 
 	if (need_in)
@@ -236,9 +241,14 @@ static int wait_or_whine(pid_t pid)
 		if (!WIFEXITED(status))
 			return -ERR_RUN_COMMAND_WAITPID_NOEXIT;
 		code = WEXITSTATUS(status);
-		if (code)
+		switch (code) {
+		case 127:
+			return -ERR_RUN_COMMAND_EXEC;
+		case 0:
+			return 0;
+		default:
 			return -code;
-		return 0;
+		}
 	}
 }
 
