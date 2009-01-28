@@ -23,6 +23,9 @@ all::
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
 #
+# Define EXPATDIR=/foo/bar if your expat header and library files are in
+# /foo/bar/include and /foo/bar/lib directories.
+#
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 #
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
@@ -850,7 +853,12 @@ else
 		endif
 	endif
 	ifndef NO_EXPAT
-		EXPAT_LIBEXPAT = -lexpat
+		ifdef EXPATDIR
+			BASIC_CFLAGS += -I$(EXPATDIR)/include
+			EXPAT_LIBEXPAT = -L$(EXPATDIR)/$(lib) $(CC_LD_DYNPATH)$(EXPATDIR)/$(lib) -lexpat
+		else
+			EXPAT_LIBEXPAT = -lexpat
+		endif
 	endif
 endif
 
