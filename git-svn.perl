@@ -70,7 +70,8 @@ my ($_stdin, $_help, $_edit,
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
-                    'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache );
+                    'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
+                    'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex );
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
 		'repack:i' => \$Git::SVN::_repack,
@@ -3245,6 +3246,7 @@ use warnings;
 use Carp qw/croak/;
 use File::Temp qw/tempfile/;
 use IO::File qw//;
+use vars qw/$_ignore_regex/;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
@@ -3297,6 +3299,15 @@ sub in_dot_git {
 	$_[0] =~ m{(?:^|/)\.git(?:/|$)};
 }
 
+# return value: 0 -- don't ignore, 1 -- ignore
+sub is_path_ignored {
+	my ($path) = @_;
+	return 1 if in_dot_git($path);
+	return 0 unless defined($_ignore_regex);
+	return 1 if $path =~ m!$_ignore_regex!o;
+	return 0;
+}
+
 sub set_path_strip {
 	my ($self, $path) = @_;
 	$self->{path_strip} = qr/^\Q$path\E(\/|$)/ if length $path;
@@ -3322,7 +3333,7 @@ sub git_path {
 
 sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
-	return undef if in_dot_git($path);
+	return undef if is_path_ignored($path);
 
 	my $gpath = $self->git_path($path);
 	return undef if ($gpath eq '');
@@ -3352,7 +3363,7 @@ sub open_file {
 	my ($self, $path, $pb, $rev) = @_;
 	my ($mode, $blob);
 
-	goto out if in_dot_git($path);
+	goto out if is_path_ignored($path);
 
 	my $gpath = $self->git_path($path);
 	($mode, $blob) = (command('ls-tree', $self->{c}, '--', $gpath)
@@ -3372,7 +3383,7 @@ sub add_file {
 	my ($self, $path, $pb, $cp_path, $cp_rev) = @_;
 	my $mode;
 
-	if (!in_dot_git($path)) {
+	if (!is_path_ignored($path)) {
 		my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
 		delete $self->{empty}->{$dir};
 		$mode = '100644';
@@ -3383,7 +3394,7 @@ sub add_file {
 
 sub add_directory {
 	my ($self, $path, $cp_path, $cp_rev) = @_;
-	goto out if in_dot_git($path);
+	goto out if is_path_ignored($path);
 	my $gpath = $self->git_path($path);
 	if ($gpath eq '') {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
@@ -3407,7 +3418,7 @@ out:
 
 sub change_dir_prop {
 	my ($self, $db, $prop, $value) = @_;
-	return undef if in_dot_git($db->{path});
+	return undef if is_path_ignored($db->{path});
 	$self->{dir_prop}->{$db->{path}} ||= {};
 	$self->{dir_prop}->{$db->{path}}->{$prop} = $value;
 	undef;
@@ -3415,7 +3426,7 @@ sub change_dir_prop {
 
 sub absent_directory {
 	my ($self, $path, $pb) = @_;
-	return undef if in_dot_git($pb->{path});
+	return undef if is_path_ignored($path);
 	$self->{absent_dir}->{$pb->{path}} ||= [];
 	push @{$self->{absent_dir}->{$pb->{path}}}, $path;
 	undef;
@@ -3423,7 +3434,7 @@ sub absent_directory {
 
 sub absent_file {
 	my ($self, $path, $pb) = @_;
-	return undef if in_dot_git($pb->{path});
+	return undef if is_path_ignored($path);
 	$self->{absent_file}->{$pb->{path}} ||= [];
 	push @{$self->{absent_file}->{$pb->{path}}}, $path;
 	undef;
@@ -3431,7 +3442,7 @@ sub absent_file {
 
 sub change_file_prop {
 	my ($self, $fb, $prop, $value) = @_;
-	return undef if in_dot_git($fb->{path});
+	return undef if is_path_ignored($fb->{path});
 	if ($prop eq 'svn:executable') {
 		if ($fb->{mode_b} != 120000) {
 			$fb->{mode_b} = defined $value ? 100755 : 100644;
@@ -3447,7 +3458,7 @@ sub change_file_prop {
 
 sub apply_textdelta {
 	my ($self, $fb, $exp) = @_;
-	return undef if (in_dot_git($fb->{path}));
+	return undef if is_path_ignored($fb->{path});
 	my $fh = $::_repository->temp_acquire('svn_delta');
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
@@ -3494,7 +3505,7 @@ sub apply_textdelta {
 
 sub close_file {
 	my ($self, $fb, $exp) = @_;
-	return undef if (in_dot_git($fb->{path}));
+	return undef if is_path_ignored($fb->{path});
 
 	my $hash;
 	my $path = $self->git_path($fb->{path});
@@ -4021,7 +4032,8 @@ my ($ra_invalid, $can_do_switch, %ignored_err, $RA);
 BEGIN {
 	# enforce temporary pool usage for some simple functions
 	no strict 'refs';
-	for my $f (qw/rev_proplist get_latest_revnum get_uuid get_repos_root/) {
+	for my $f (qw/rev_proplist get_latest_revnum get_uuid get_repos_root
+	              get_file/) {
 		my $SUPER = "SUPER::$f";
 		*$f = sub {
 			my $self = shift;

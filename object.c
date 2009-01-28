@@ -268,3 +268,22 @@ void add_object_array_with_mode(struct object *obj, const char *name, struct obj
 	objects[nr].mode = mode;
 	array->nr = ++nr;
 }
+
+void object_array_remove_duplicates(struct object_array *array)
+{
+	int ref, src, dst;
+	struct object_array_entry *objects = array->objects;
+
+	for (ref = 0; ref < array->nr - 1; ref++) {
+		for (src = ref + 1, dst = src;
+		     src < array->nr;
+		     src++) {
+			if (!strcmp(objects[ref].name, objects[src].name))
+				continue;
+			if (src != dst)
+				objects[dst] = objects[src];
+			dst++;
+		}
+		array->nr = dst;
+	}
+}

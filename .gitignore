@@ -144,6 +144,7 @@ git-core-*/?*
 gitk-wish
 gitweb/gitweb.cgi
 test-chmtime
+test-ctype
 test-date
 test-delta
 test-dump-cache-tree

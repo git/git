@@ -108,25 +108,28 @@ static int match_one(const char *match, const char *name, int namelen)
  * and a mark is left in seen[] array for pathspec element that
  * actually matched anything.
  */
-int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen)
+int match_pathspec(const char **pathspec, const char *name, int namelen,
+		int prefix, char *seen)
 {
-	int retval;
-	const char *match;
+	int i, retval = 0;
+
+	if (!pathspec)
+		return 1;
 
 	name += prefix;
 	namelen -= prefix;
 
-	for (retval = 0; (match = *pathspec++) != NULL; seen++) {
+	for (i = 0; pathspec[i] != NULL; i++) {
 		int how;
-		if (retval && *seen == MATCHED_EXACTLY)
+		const char *match = pathspec[i] + prefix;
+		if (seen && seen[i] == MATCHED_EXACTLY)
 			continue;
-		match += prefix;
 		how = match_one(match, name, namelen);
 		if (how) {
 			if (retval < how)
 				retval = how;
-			if (*seen < how)
-				*seen = how;
+			if (seen && seen[i] < how)
+				seen[i] = how;
 		}
 	}
 	return retval;

@@ -36,6 +36,9 @@ endif::git-format-patch[]
 --patch-with-raw::
 	Synonym for "-p --raw".
 
+--patience::
+	Generate a diff using the "patience diff" algorithm.
+
 --stat[=width[,name-width]]::
 	Generate a diffstat.  You can override the default
 	output width for 80-column terminal by "--stat=width".
@@ -91,8 +94,22 @@ endif::git-format-patch[]
 	Turn off colored diff, even when the configuration file
 	gives the default to color output.
 
---color-words::
-	Show colored word diff, i.e. color words which have changed.
+--color-words[=<regex>]::
+	Show colored word diff, i.e., color words which have changed.
+	By default, words are separated by whitespace.
++
+When a <regex> is specified, every non-overlapping match of the
+<regex> is considered a word.  Anything between these matches is
+considered whitespace and ignored(!) for the purposes of finding
+differences.  You may want to append `|[^[:space:]]` to your regular
+expression to make sure that it matches all non-whitespace characters.
+A match that contains a newline is silently truncated(!) at the
+newline.
++
+The regex can also be set via a diff driver or configuration option, see
+linkgit:gitattributes[1] or linkgit:git-config[1].  Giving it explicitly
+overrides any diff driver or configuration setting.  Diff drivers
+override configuration settings.
 
 --no-renames::
 	Turn off rename detection, even when the configuration
