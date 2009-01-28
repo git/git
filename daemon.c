@@ -937,6 +937,8 @@ int main(int argc, char **argv)
 	gid_t gid = 0;
 	int i;
 
+	git_extract_argv0_path(argv[0]);
+
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 

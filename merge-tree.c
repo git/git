@@ -2,6 +2,7 @@
 #include "tree-walk.h"
 #include "xdiff-interface.h"
 #include "blob.h"
+#include "exec_cmd.h"
 
 static const char merge_tree_usage[] = "git-merge-tree <base-tree> <branch1> <branch2>";
 static int resolve_directories = 1;
@@ -343,6 +344,8 @@ int main(int argc, char **argv)
 
 	if (argc != 4)
 		usage(merge_tree_usage);
+
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 
