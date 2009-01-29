@@ -10,12 +10,12 @@ test_cd_to_toplevel () {
 			cd '"'$1'"' &&
 			. git-sh-setup &&
 			cd_to_toplevel &&
-			[ "$(/bin/pwd)" = "$TOPLEVEL" ]
+			[ "$(unset PWD; /bin/pwd)" = "$TOPLEVEL" ]
 		)
 	'
 }
 
-TOPLEVEL="$(/bin/pwd)/repo"
+TOPLEVEL="$(unset PWD; /bin/pwd)/repo"
 mkdir -p repo/sub/dir
 mv .git repo/
 SUBDIRECTORY_OK=1
