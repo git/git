@@ -1414,13 +1414,13 @@ sub req_ci
 		close $pipe || die "bad pipe: $! $?";
 	}
 
+    $updater->update();
+
 	### Then hooks/post-update
 	$hook = $ENV{GIT_DIR}.'hooks/post-update';
 	if (-x $hook) {
 		system($hook, "refs/heads/$state->{module}");
 	}
-
-    $updater->update();
 
     # foreach file specified on the command line ...
     foreach my $filename ( @committedfiles )
