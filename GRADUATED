@@ -1,0 +1,94 @@
+#!/bin/sh
+
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+LF='
+'
+
+# disable pager
+GIT_PAGER=cat
+export GIT_PAGER
+
+find_last_tip () {
+	topic="$(git rev-parse --verify "$1")" integrate="$2"
+	git rev-list --first-parent --parents "$2" |
+	sed -n -e "
+		/^$_x40 $_x40 $topic$/{
+			s/^\($_x40\) $_x40 $topic$/\1/p
+			q
+		}
+	"
+}
+
+
+tmp=/tmp/GR.$$
+
+trap 'rm -f "$tmp".*' 0
+
+git branch --merged master | sed -n -e '/\//s/^. //p' >"$tmp.master"
+git branch --merged maint | sed -n -e '/\//s/^. //p' >"$tmp.maint"
+
+comm -12 "$tmp.maint" "$tmp.master" >"$tmp.both"
+if test -s "$tmp.both"
+then
+	echo "# Graduated to both maint and master"
+	sed -e 's|^|git branch -d |' "$tmp.both"
+	echo
+fi
+
+comm -13 "$tmp.maint" "$tmp.master" |
+{
+	while read topic
+	do
+		t=$(find_last_tip $topic master) &&
+		test -n "$t" &&
+		m=$(git rev-parse --verify "$t^1") &&
+		test -n "$m" || continue
+
+		# NEEDSWORK: this misses repeated merges
+		#
+		#        o---o---maint
+		#       /
+		#      .---o---o topic
+		#     /     \   \
+		# ---o---o---*---*---master
+
+		tsize=$(git rev-list "$m..$topic" | wc -l)
+		rsize=$(git rev-list "maint..$topic" | wc -l)
+
+		if test $tsize -eq $rsize
+		then
+			s=$(git show -s --pretty="tformat:%ct %H" $t)
+			echo "$s $topic"
+		else
+			s=$(git show -s --pretty="tformat:%ct %H" $t)
+			echo >&3 "$s $topic"
+		fi
+	done 3>"$tmp.unmergeable" >"$tmp.mergeable"
+
+	if test -s "$tmp.unmergeable"
+	then
+		echo "# Graduated to master; unmergeable to maint"
+		sort -n "$tmp.unmergeable" |
+		while read timestamp merge topic
+		do
+			git show -s --pretty="format:# %h %cd" $merge
+			echo "git branch -d $topic"
+		done
+		echo
+	fi
+	if test -s "$tmp.mergeable"
+	then
+		sort -n  "$tmp.mergeable" |
+		while read timestamp merge topic
+		do
+			{
+				git show -s --pretty="format:%h %cd" $merge
+				git log --pretty=oneline --abbrev-commit maint..$topic 
+			} |
+			sed -e 's/^/# /'
+			echo "git checkout maint && git merge $topic"
+			echo
+		done
+	fi
+}
