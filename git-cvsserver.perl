@@ -76,6 +76,7 @@ my $methods = {
     'history'         => \&req_CATCHALL,
     'watchers'        => \&req_EMPTY,
     'editors'         => \&req_EMPTY,
+    'noop'            => \&req_EMPTY,
     'annotate'        => \&req_annotate,
     'Global_option'   => \&req_Globaloption,
     #'annotate'        => \&req_CATCHALL,
