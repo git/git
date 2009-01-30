@@ -10,6 +10,12 @@ Tests if git rebase --root --onto <newparent> can rebase the root commit.
 GIT_EDITOR=:
 export GIT_EDITOR
 
+log_with_names () {
+	git rev-list --topo-order --parents --pretty="tformat:%s" HEAD |
+	git name-rev --stdin --name-only --refs=refs/heads/$1
+}
+
+
 test_expect_success 'prepare repository' '
 	test_commit 1 A &&
 	test_commit 2 A &&
@@ -102,21 +108,25 @@ test_expect_success 'set up merge history' '
 	git merge side
 '
 
-sed 's/#/ /g' > expect-side <<'EOF'
-*   Merge branch 'side' into other
-|\##
-| * 5
-* | 4
-|/##
-* 3
-* 2
-* 1
+cat > expect-side <<'EOF'
+commit work6 work6~1 work6^2
+Merge branch 'side' into other
+commit work6^2 work6~2
+5
+commit work6~1 work6~2
+4
+commit work6~2 work6~3
+3
+commit work6~3 work6~4
+2
+commit work6~4
+1
 EOF
 
 test_expect_success 'rebase -i -p with merge' '
 	git checkout -b work6 other &&
 	git rebase -i -p --root --onto master &&
-	git log --graph --topo-order --pretty=tformat:"%s" > rebased6 &&
+	log_with_names work6 > rebased6 &&
 	test_cmp expect-side rebased6
 '
 
@@ -129,25 +139,29 @@ test_expect_success 'set up second root and merge' '
 	git merge third
 '
 
-sed 's/#/ /g' > expect-third <<'EOF'
-*   Merge branch 'third' into other
-|\##
-| * 6
-* |   Merge branch 'side' into other
-|\ \##
-| * | 5
-* | | 4
-|/ /##
-* | 3
-|/##
-* 2
-* 1
+cat > expect-third <<'EOF'
+commit work7 work7~1 work7^2
+Merge branch 'third' into other
+commit work7^2 work7~4
+6
+commit work7~1 work7~2 work7~1^2
+Merge branch 'side' into other
+commit work7~1^2 work7~3
+5
+commit work7~2 work7~3
+4
+commit work7~3 work7~4
+3
+commit work7~4 work7~5
+2
+commit work7~5
+1
 EOF
 
 test_expect_success 'rebase -i -p with two roots' '
 	git checkout -b work7 other &&
 	git rebase -i -p --root --onto master &&
-	git log --graph --topo-order --pretty=tformat:"%s" > rebased7 &&
+	log_with_names work7 > rebased7 &&
 	test_cmp expect-third rebased7
 '
 
@@ -263,8 +277,7 @@ test_expect_success 'fix the conflict' '
 
 test_expect_success 'rebase -i -p --root with conflict (second part)' '
 	git rebase --continue &&
-	git rev-list --topo-order --parents --pretty="tformat:%s" HEAD |
-	git name-rev --stdin --name-only --refs=refs/heads/conflict3 >out &&
+	log_with_names conflict3 >out &&
 	test_cmp expect-conflict-p out
 '
 
