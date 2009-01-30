@@ -12,7 +12,7 @@ EOF
 test_expect_success 'sigchain works' '
 	test-sigchain >actual
 	case "$?" in
-	130) true ;; # POSIX w/ SIGINT=2
+	143) true ;; # POSIX w/ SIGTERM=15
 	  3) true ;; # Windows
 	  *) false ;;
 	esac &&

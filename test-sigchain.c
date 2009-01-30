@@ -14,9 +14,9 @@ X(three)
 #undef X
 
 int main(int argc, char **argv) {
-	sigchain_push(SIGINT, one);
-	sigchain_push(SIGINT, two);
-	sigchain_push(SIGINT, three);
-	raise(SIGINT);
+	sigchain_push(SIGTERM, one);
+	sigchain_push(SIGTERM, two);
+	sigchain_push(SIGTERM, three);
+	raise(SIGTERM);
 	return 0;
 }
