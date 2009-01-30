@@ -66,7 +66,7 @@ test_expect_success 'mergetool crlf' '
     git reset --hard
 '
 
-test_expect_failure 'mergetool in subdir' '
+test_expect_success 'mergetool in subdir' '
     git checkout -b test3 branch1
     cd subdir && (
     test_must_fail git merge master >/dev/null 2>&1 &&
