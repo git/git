@@ -23,6 +23,7 @@ static int check_full;
 static int check_strict;
 static int keep_cache_objects;
 static unsigned char head_sha1[20];
+static const char *head_points_at;
 static int errors_found;
 static int write_lost_and_found;
 static int verbose;
@@ -473,6 +474,8 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int f
 
 static void get_default_heads(void)
 {
+	if (head_points_at && !is_null_sha1(head_sha1))
+		fsck_handle_ref("HEAD", head_sha1, 0, NULL);
 	for_each_ref(fsck_handle_ref, NULL);
 	if (include_reflogs)
 		for_each_reflog(fsck_handle_reflog, NULL);
@@ -512,14 +515,13 @@ static void fsck_object_dir(const char *path)
 
 static int fsck_head_link(void)
 {
-	unsigned char sha1[20];
 	int flag;
 	int null_is_error = 0;
-	const char *head_points_at = resolve_ref("HEAD", sha1, 0, &flag);
 
 	if (verbose)
 		fprintf(stderr, "Checking HEAD link\n");
 
+	head_points_at = resolve_ref("HEAD", head_sha1, 0, &flag);
 	if (!head_points_at)
 		return error("Invalid HEAD");
 	if (!strcmp(head_points_at, "HEAD"))
@@ -528,7 +530,7 @@ static int fsck_head_link(void)
 	else if (prefixcmp(head_points_at, "refs/heads/"))
 		return error("HEAD points to something strange (%s)",
 			     head_points_at);
-	if (is_null_sha1(sha1)) {
+	if (is_null_sha1(head_sha1)) {
 		if (null_is_error)
 			return error("HEAD: detached HEAD points at nothing");
 		fprintf(stderr, "notice: HEAD points to an unborn branch (%s)\n",
@@ -624,8 +626,9 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	heads = 0;
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
-		if (!get_sha1(arg, head_sha1)) {
-			struct object *obj = lookup_object(head_sha1);
+		unsigned char sha1[20];
+		if (!get_sha1(arg, sha1)) {
+			struct object *obj = lookup_object(sha1);
 
 			/* Error is printed by lookup_object(). */
 			if (!obj)
