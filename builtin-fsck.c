@@ -586,6 +586,7 @@ static struct option fsck_opts[] = {
 int cmd_fsck(int argc, const char **argv, const char *prefix)
 {
 	int i, heads;
+	struct alternate_object_database *alt;
 
 	errors_found = 0;
 
@@ -597,17 +598,19 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 	fsck_head_link();
 	fsck_object_dir(get_object_directory());
+
+	prepare_alt_odb();
+	for (alt = alt_odb_list; alt; alt = alt->next) {
+		char namebuf[PATH_MAX];
+		int namelen = alt->name - alt->base;
+		memcpy(namebuf, alt->base, namelen);
+		namebuf[namelen - 1] = 0;
+		fsck_object_dir(namebuf);
+	}
+
 	if (check_full) {
-		struct alternate_object_database *alt;
 		struct packed_git *p;
-		prepare_alt_odb();
-		for (alt = alt_odb_list; alt; alt = alt->next) {
-			char namebuf[PATH_MAX];
-			int namelen = alt->name - alt->base;
-			memcpy(namebuf, alt->base, namelen);
-			namebuf[namelen - 1] = 0;
-			fsck_object_dir(namebuf);
-		}
+
 		prepare_packed_git();
 		for (p = packed_git; p; p = p->next)
 			/* verify gives error messages itself */
