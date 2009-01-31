@@ -2901,6 +2901,11 @@ sub git_header_html {
 <meta name="robots" content="index, nofollow"/>
 <title>$title</title>
 EOF
+# the stylesheet, favicon etc urls won't work correctly with path_info unless we
+# set the appropriate base URL
+	if ($ENV{'PATH_INFO'}) {
+		print '<base href="'.esc_url($my_url).'" />\n';
+	}
 # print out each stylesheet that exist
 	if (defined $stylesheet) {
 #provides backwards capability for those people who define style sheet in a config file
