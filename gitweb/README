@@ -322,6 +322,82 @@ something like the following in your gitweb.conf (or gitweb_config.perl) file:
   $home_link = "/";
 
 
+PATH_INFO usage
+-----------------------
+If you enable PATH_INFO usage in gitweb by putting
+
+   $feature{'pathinfo'}{'default'} = [1];
+
+in your gitweb.conf, it is possible to set up your server so that it
+consumes and produces URLs in the form
+
+http://git.example.com/project.git/shortlog/sometag
+
+by using a configuration such as the following, that assumes that
+/var/www/gitweb is the DocumentRoot of your webserver, and that it
+contains the gitweb.cgi script and complementary static files
+(stylesheet, favicon):
+
+<VirtualHost *:80>
+	ServerAlias git.example.com
+
+	DocumentRoot /var/www/gitweb
+
+	<Directory /var/www/gitweb>
+		Options ExecCGI
+		AddHandler cgi-script cgi
+
+		DirectoryIndex gitweb.cgi
+
+		RewriteEngine On
+		RewriteCond %{REQUEST_FILENAME} !-f
+		RewriteCond %{REQUEST_FILENAME} !-d
+		RewriteRule ^.* /gitweb.cgi/$0 [L,PT]
+	</Directory>
+</VirtualHost>
+
+The rewrite rule guarantees that existing static files will be properly
+served, whereas any other URL will be passed to gitweb as PATH_INFO
+parameter.
+
+Notice that in this case you don't need special settings for
+@stylesheets, $my_uri and $home_link, but you lose "dumb client" access
+to your project .git dirs. A possible workaround for the latter is the
+following: in your project root dir (e.g. /pub/git) have the projects
+named without a .git extension (e.g. /pub/git/project instead of
+/pub/git/project.git) and configure Apache as follows:
+
+<VirtualHost *:80>
+	ServerAlias git.example.com
+
+	DocumentRoot /var/www/gitweb
+
+	AliasMatch ^(/.*?)(\.git)(/.*)? /pub/git$1$3
+	<Directory /var/www/gitweb>
+		Options ExecCGI
+		AddHandler cgi-script cgi
+
+		DirectoryIndex gitweb.cgi
+
+		RewriteEngine On
+		RewriteCond %{REQUEST_FILENAME} !-f
+		RewriteCond %{REQUEST_FILENAME} !-d
+		RewriteRule ^.* /gitweb.cgi/$0 [L,PT]
+	</Directory>
+</VirtualHost>
+
+The additional AliasMatch makes it so that
+
+http://git.example.com/project.git
+
+will give raw access to the project's git dir (so that the project can
+be cloned), while
+
+http://git.example.com/project
+
+will provide human-friendly gitweb access.
+
+
 Originally written by:
   Kay Sievers <kay.sievers@vrfy.org>
 
