@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "exec_cmd.h"
 
 static void flush_current_id(int patchlen, unsigned char *id, git_SHA_CTX *c)
 {
@@ -78,6 +79,8 @@ int main(int argc, char **argv)
 {
 	if (argc != 1)
 		usage(patch_id_usage);
+
+	git_extract_argv0_path(argv[0]);
 
 	generate_id_list();
 	return 0;

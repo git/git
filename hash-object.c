@@ -8,6 +8,7 @@
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
+#include "exec_cmd.h"
 
 static void hash_fd(int fd, const char *type, int write_object, const char *path)
 {
@@ -80,6 +81,8 @@ int main(int argc, const char **argv)
 	const char *errstr = NULL;
 
 	type = blob_type;
+
+	git_extract_argv0_path(argv[0]);
 
 	git_config(git_default_config, NULL);
 

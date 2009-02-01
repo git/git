@@ -4,6 +4,7 @@
  * Copyright (C) Eric Biederman, 2005
  */
 #include "cache.h"
+#include "exec_cmd.h"
 
 static const char var_usage[] = "git var [-l | <variable>]";
 
@@ -55,6 +56,8 @@ int main(int argc, char **argv)
 	if (argc != 2) {
 		usage(var_usage);
 	}
+
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory_gently(&nongit);
 	val = NULL;

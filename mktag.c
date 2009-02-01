@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "tag.h"
+#include "exec_cmd.h"
 
 /*
  * A signature file has a very simple fixed format: four lines
@@ -158,6 +159,8 @@ int main(int argc, char **argv)
 
 	if (argc != 1)
 		usage("git-mktag < signaturefile");
+
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 

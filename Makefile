@@ -182,28 +182,32 @@ STRIP ?= strip
 # Among the variables below, these:
 #   gitexecdir
 #   template_dir
+#   mandir
+#   infodir
 #   htmldir
 #   ETC_GITCONFIG (but not sysconfdir)
-# can be specified as a relative path ../some/where/else (which must begin
-# with ../); this is interpreted as relative to $(bindir) and "git" at
+# can be specified as a relative path some/where/else;
+# this is interpreted as relative to $(prefix) and "git" at
 # runtime figures out where they are based on the path to the executable.
 # This can help installing the suite in a relocatable way.
 
 prefix = $(HOME)
-bindir = $(prefix)/bin
-mandir = $(prefix)/share/man
-infodir = $(prefix)/share/info
-gitexecdir = $(prefix)/libexec/git-core
+bindir_relative = bin
+bindir = $(prefix)/$(bindir_relative)
+mandir = share/man
+infodir = share/info
+gitexecdir = libexec/git-core
 sharedir = $(prefix)/share
-template_dir = $(sharedir)/git-core/templates
-htmldir=$(sharedir)/doc/git-doc
+template_dir = share/git-core/templates
+htmldir = share/doc/git-doc
 ifeq ($(prefix),/usr)
 sysconfdir = /etc
+ETC_GITCONFIG = $(sysconfdir)/gitconfig
 else
 sysconfdir = $(prefix)/etc
+ETC_GITCONFIG = etc/gitconfig
 endif
 lib = lib
-ETC_GITCONFIG = $(sysconfdir)/gitconfig
 # DESTDIR=
 
 # default configuration for gitweb
@@ -790,6 +794,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	NO_SVN_TESTS = YesPlease
 	NO_PERL_MAKEMAKER = YesPlease
+	RUNTIME_PREFIX = YesPlease
 	NO_POSIX_ONLY_PROGRAMS = YesPlease
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/regex -Icompat/fnmatch
@@ -798,9 +803,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/regex/regex.o compat/winansi.o
 	EXTLIBS += -lws2_32
 	X = .exe
-	gitexecdir = ../libexec/git-core
-	template_dir = ../share/git-core/templates/
-	ETC_GITCONFIG = ../etc/gitconfig
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
@@ -1038,6 +1040,9 @@ ifdef INTERNAL_QSORT
 	COMPAT_CFLAGS += -DINTERNAL_QSORT
 	COMPAT_OBJS += compat/qsort.o
 endif
+ifdef RUNTIME_PREFIX
+	COMPAT_CFLAGS += -DRUNTIME_PREFIX
+endif
 
 ifdef NO_PTHREADS
 	THREADED_DELTA_SEARCH =
@@ -1097,6 +1102,7 @@ ETC_GITCONFIG_SQ = $(subst ','\'',$(ETC_GITCONFIG))
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 bindir_SQ = $(subst ','\'',$(bindir))
+bindir_relative_SQ = $(subst ','\'',$(bindir_relative))
 mandir_SQ = $(subst ','\'',$(mandir))
 infodir_SQ = $(subst ','\'',$(infodir))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
@@ -1262,7 +1268,12 @@ git.o git.spec \
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
 exec_cmd.o: exec_cmd.c GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) '-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' $<
+	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) \
+		'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
+		'-DBINDIR="$(bindir_relative_SQ)"' \
+		'-DPREFIX="$(prefix_SQ)"' \
+		$<
+
 builtin-init-db.o: builtin-init-db.c GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $<
 
@@ -1422,17 +1433,17 @@ remove-dashes:
 
 ### Installation rules
 
-ifeq ($(firstword $(subst /, ,$(template_dir))),..)
-template_instdir = $(bindir)/$(template_dir)
-else
+ifeq ($(abspath $(template_dir)),$(template_dir))
 template_instdir = $(template_dir)
+else
+template_instdir = $(prefix)/$(template_dir)
 endif
 export template_instdir
 
-ifeq ($(firstword $(subst /, ,$(gitexecdir))),..)
-gitexec_instdir = $(bindir)/$(gitexecdir)
-else
+ifeq ($(abspath $(gitexecdir)),$(gitexecdir))
 gitexec_instdir = $(gitexecdir)
+else
+gitexec_instdir = $(prefix)/$(gitexecdir)
 endif
 gitexec_instdir_SQ = $(subst ','\'',$(gitexec_instdir))
 export gitexec_instdir
