@@ -162,14 +162,12 @@ not include variables usually directly set during build):
    $GITWEB_LIST during installation.  If empty, $projectroot is used
    to scan for repositories.
  * $my_url, $my_uri
-   URL and absolute URL of gitweb script; you might need to set those
-   variables if you are using 'pathinfo' feature: see also below.
+   Full URL and absolute URL of gitweb script;
+   in earlier versions of gitweb you might have need to set those
+   variables, now there should be no need to do it.
  * $home_link
    Target of the home link on top of all pages (the first part of view
-   "breadcrumbs").  By default set to absolute URI of a page; you might
-   need to set it up to [base] gitweb URI if you use 'pathinfo' feature
-   (alternative format of the URLs, with project name embedded directly
-   in the path part of URL).
+   "breadcrumbs").  By default set to absolute URI of a page ($my_uri).
  * @stylesheets
    List of URIs of stylesheets (relative to base URI of a page). You
    might specify more than one stylesheet, for example use gitweb.css
