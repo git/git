@@ -3271,10 +3271,18 @@ sub new {
 # do_{switch,update}
 sub _mark_empty_symlinks {
 	my ($git_svn) = @_;
+	my $bool = Git::config_bool('svn.brokenSymlinkWorkaround');
+	return {} if (defined($bool) && ! $bool);
+
 	my %ret;
 	my ($rev, $cmt) = $git_svn->last_rev_commit;
 	return {} unless ($rev && $cmt);
 
+	# allow the warning to be printed for each revision we fetch to
+	# ensure the user sees it.  The user can also disable the workaround
+	# on the repository even while git svn is running and the next
+	# revision fetched will skip this expensive function.
+	my $printed_warning;
 	chomp(my $empty_blob = `git hash-object -t blob --stdin < /dev/null`);
 	my ($ls, $ctx) = command_output_pipe(qw/ls-tree -r -z/, $cmt);
 	local $/ = "\0";
@@ -3283,6 +3291,18 @@ sub _mark_empty_symlinks {
 	while (<$ls>) {
 		chomp;
 		s/\A100644 blob $empty_blob\t//o or next;
+		unless ($printed_warning) {
+			print STDERR "Scanning for empty symlinks, ",
+			             "this may take a while if you have ",
+				     "many empty files\n",
+				     "You may disable this with `",
+				     "git config svn.brokenSymlinkWorkaround ",
+				     "false'.\n",
+				     "This may be done in a different ",
+				     "terminal without restarting ",
+				     "git svn\n";
+			$printed_warning = 1;
+		}
 		my $path = $_;
 		my (undef, $props) =
 		               $git_svn->ra->get_file($pfx.$path, $rev, undef);
