@@ -433,4 +433,30 @@ test_expect_success 'do "noop" when there is nothing to cherry-pick' '
 
 '
 
+test_expect_success 'submodule rebase setup' '
+	git checkout A &&
+	mkdir sub &&
+	(
+		cd sub && git init && >elif &&
+		git add elif && git commit -m "submodule initial"
+	) &&
+	echo 1 >file1 &&
+	git add file1 sub
+	test_tick &&
+	git commit -m "One" &&
+	echo 2 >file1 &&
+	test_tick &&
+	git commit -a -m "Two" &&
+	(
+		cd sub && echo 3 >elif &&
+		git commit -a -m "submodule second"
+	) &&
+	test_tick &&
+	git commit -a -m "Three changes submodule"
+'
+
+test_expect_success 'submodule rebase -i' '
+	FAKE_LINES="1 squash 2 3" git rebase -i A
+'
+
 test_done
