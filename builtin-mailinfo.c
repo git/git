@@ -430,13 +430,6 @@ static struct strbuf *decode_b_segment(const struct strbuf *b_seg)
 			c -= 'a' - 26;
 		else if ('0' <= c && c <= '9')
 			c -= '0' - 52;
-		else if (c == '=') {
-			/* padding is almost like (c == 0), except we do
-			 * not output NUL resulting only from it;
-			 * for now we just trust the data.
-			 */
-			c = 0;
-		}
 		else
 			continue; /* garbage */
 		switch (pos++) {
@@ -514,7 +507,25 @@ static int decode_header_bq(struct strbuf *it)
 		rfc2047 = 1;
 
 		if (in != ep) {
-			strbuf_add(&outbuf, in, ep - in);
+			/*
+			 * We are about to process an encoded-word
+			 * that begins at ep, but there is something
+			 * before the encoded word.
+			 */
+			char *scan;
+			for (scan = in; scan < ep; scan++)
+				if (!isspace(*scan))
+					break;
+
+			if (scan != ep || in == it->buf) {
+				/*
+				 * We should not lose that "something",
+				 * unless we have just processed an
+				 * encoded-word, and there is only LWS
+				 * before the one we are about to process.
+				 */
+				strbuf_add(&outbuf, in, ep - in);
+			}
 			in = ep;
 		}
 		/* E.g.
@@ -860,6 +871,7 @@ static void handle_info(void)
 			}
 			output_header_lines(fout, "Subject", hdr);
 		} else if (!memcmp(header[i], "From", 4)) {
+			cleanup_space(hdr);
 			handle_from(hdr);
 			fprintf(fout, "Author: %s\n", name.buf);
 			fprintf(fout, "Email: %s\n", email.buf);
