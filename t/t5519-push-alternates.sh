@@ -103,4 +103,41 @@ test_expect_success 'bob works and pushes' '
 	)
 '
 
+test_expect_success 'alice works and pushes yet again' '
+	(
+		# Alice does not care what Bob does.  She does not
+		# even have to be aware of his existence.  She just
+		# keeps working and pushing
+		cd alice-work &&
+		echo more and more alice >file &&
+		git commit -a -m sixth.1 &&
+		echo more and more alice >>file &&
+		git commit -a -m sixth.2 &&
+		echo more and more alice >>file &&
+		git commit -a -m sixth.3 &&
+		git push ../alice-pub
+	)
+'
+
+test_expect_success 'bob works and pushes again' '
+	(
+		cd alice-pub &&
+		git cat-file commit master >../bob-work/commit
+	)
+	(
+		# This time Bob does not pull from Alice, and
+		# the master branch at her public repository points
+		# at a commit Bob does not fully know about, but
+		# he happens to have the commit object (but not the
+		# necessary tree) in his repository from Alice.
+		# This should not prevent the push by Bob from
+		# succeeding.
+		cd bob-work &&
+		git hash-object -t commit -w commit &&
+		echo even more bob >file &&
+		git commit -a -m seventh &&
+		git push ../bob-pub
+	)
+'
+
 test_done

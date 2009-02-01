@@ -183,8 +183,11 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 		if (!tag->tagged)
 			die("bad tag");
 		object = parse_object(tag->tagged->sha1);
-		if (!object)
+		if (!object) {
+			if (flags & UNINTERESTING)
+				return NULL;
 			die("bad object %s", sha1_to_hex(tag->tagged->sha1));
+		}
 	}
 
 	/*
@@ -479,9 +482,10 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 		while (parent) {
 			struct commit *p = parent->item;
 			parent = parent->next;
+			if (p)
+				p->object.flags |= UNINTERESTING;
 			if (parse_commit(p) < 0)
-				return -1;
-			p->object.flags |= UNINTERESTING;
+				continue;
 			if (p->parents)
 				mark_parents_uninteresting(p);
 			if (p->object.flags & SEEN)
