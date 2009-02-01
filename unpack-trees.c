@@ -240,8 +240,11 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info, con
 	return ce;
 }
 
-static int unpack_nondirectories(int n, unsigned long mask, unsigned long dirmask, struct cache_entry *src[5],
-	const struct name_entry *names, const struct traverse_info *info)
+static int unpack_nondirectories(int n, unsigned long mask,
+				 unsigned long dirmask,
+				 struct cache_entry **src,
+				 const struct name_entry *names,
+				 const struct traverse_info *info)
 {
 	int i;
 	struct unpack_trees_options *o = info->data;
@@ -291,7 +294,7 @@ static int unpack_nondirectories(int n, unsigned long mask, unsigned long dirmas
 
 static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, struct name_entry *names, struct traverse_info *info)
 {
-	struct cache_entry *src[5] = { NULL, };
+	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
 	struct unpack_trees_options *o = info->data;
 	const struct name_entry *p = names;
 
