@@ -391,6 +391,7 @@ LIB_H += revision.h
 LIB_H += run-command.h
 LIB_H += sha1-lookup.h
 LIB_H += sideband.h
+LIB_H += sigchain.h
 LIB_H += strbuf.h
 LIB_H += tag.h
 LIB_H += transport.h
@@ -484,6 +485,7 @@ LIB_OBJS += sha1-lookup.o
 LIB_OBJS += sha1_name.o
 LIB_OBJS += shallow.o
 LIB_OBJS += sideband.o
+LIB_OBJS += sigchain.o
 LIB_OBJS += strbuf.o
 LIB_OBJS += symlinks.o
 LIB_OBJS += tag.o
@@ -1374,6 +1376,7 @@ TEST_PROGRAMS += test-match-trees$X
 TEST_PROGRAMS += test-parse-options$X
 TEST_PROGRAMS += test-path-utils$X
 TEST_PROGRAMS += test-sha1$X
+TEST_PROGRAMS += test-sigchain$X
 
 all:: $(TEST_PROGRAMS)
 

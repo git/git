@@ -153,6 +153,7 @@ test-match-trees
 test-parse-options
 test-path-utils
 test-sha1
+test-sigchain
 common-cmds.h
 *.tar.gz
 *.dsc
