@@ -29,6 +29,9 @@ static struct strbuf **p_hdr_data, **s_hdr_data;
 #define MAX_HDR_PARSED 10
 #define MAX_BOUNDARIES 5
 
+static void cleanup_space(struct strbuf *sb);
+
+
 static void get_sane_name(struct strbuf *out, struct strbuf *name, struct strbuf *email)
 {
 	struct strbuf *src = name;
@@ -109,11 +112,19 @@ static void handle_from(const struct strbuf *from)
 	strbuf_add(&email, at, el);
 	strbuf_remove(&f, at - f.buf, el + (at[el] ? 1 : 0));
 
-	/* The remainder is name.  It could be "John Doe <john.doe@xz>"
-	 * or "john.doe@xz (John Doe)", but we have removed the
-	 * email part, so trim from both ends, possibly removing
-	 * the () pair at the end.
+	/* The remainder is name.  It could be
+	 *
+	 * - "John Doe <john.doe@xz>"			(a), or
+	 * - "john.doe@xz (John Doe)"			(b), or
+	 * - "John (zzz) Doe <john.doe@xz> (Comment)"	(c)
+	 *
+	 * but we have removed the email part, so
+	 *
+	 * - remove extra spaces which could stay after email (case 'c'), and
+	 * - trim from both ends, possibly removing the () pair at the end
+	 *   (cases 'a' and 'b').
 	 */
+	cleanup_space(&f);
 	strbuf_trim(&f);
 	if (f.buf[0] == '(' && f.len && f.buf[f.len - 1] == ')') {
 		strbuf_remove(&f, 0, 1);
