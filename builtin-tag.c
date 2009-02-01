@@ -26,6 +26,7 @@ static char signingkey[1000];
 struct tag_filter {
 	const char *pattern;
 	int lines;
+	struct commit_list *with_commit;
 };
 
 #define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
@@ -41,6 +42,16 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 		enum object_type type;
 		char *buf, *sp, *eol;
 		size_t len;
+
+		if (filter->with_commit) {
+			struct commit *commit;
+
+			commit = lookup_commit_reference_gently(sha1, 1);
+			if (!commit)
+				return 0;
+			if (!is_descendant_of(commit, filter->with_commit))
+				return 0;
+		}
 
 		if (!filter->lines) {
 			printf("%s\n", refname);
@@ -79,7 +90,8 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 	return 0;
 }
 
-static int list_tags(const char *pattern, int lines)
+static int list_tags(const char *pattern, int lines,
+			struct commit_list *with_commit)
 {
 	struct tag_filter filter;
 
@@ -88,6 +100,7 @@ static int list_tags(const char *pattern, int lines)
 
 	filter.pattern = pattern;
 	filter.lines = lines;
+	filter.with_commit = with_commit;
 
 	for_each_tag_ref(show_reference, (void *) &filter);
 
@@ -360,6 +373,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		list = 0, delete = 0, verify = 0;
 	const char *msgfile = NULL, *keyid = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
+	struct commit_list *with_commit = NULL;
 	struct option options[] = {
 		OPT_BOOLEAN('l', NULL, &list, "list tag names"),
 		{ OPTION_INTEGER, 'n', NULL, &lines, NULL,
@@ -378,6 +392,14 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_STRING('u', NULL, &keyid, "key-id",
 					"use another key to sign the tag"),
 		OPT_BOOLEAN('f', NULL, &force, "replace the tag if exists"),
+
+		OPT_GROUP("Tag listing options"),
+		{
+			OPTION_CALLBACK, 0, "contains", &with_commit, "commit",
+			"print only tags that contain the commit",
+			PARSE_OPT_LASTARG_DEFAULT,
+			parse_opt_with_commit, (intptr_t)"HEAD",
+		},
 		OPT_END()
 	};
 
@@ -402,9 +424,12 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (list + delete + verify > 1)
 		usage_with_options(git_tag_usage, options);
 	if (list)
-		return list_tags(argv[0], lines == -1 ? 0 : lines);
+		return list_tags(argv[0], lines == -1 ? 0 : lines,
+				 with_commit);
 	if (lines != -1)
 		die("-n option is only allowed with -l.");
+	if (with_commit)
+		die("--contains option is only allowed with -l.");
 	if (delete)
 		return for_each_tag_name(argv, delete_tag);
 	if (verify)

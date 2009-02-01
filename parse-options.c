@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
 #include "cache.h"
+#include "commit.h"
 
 #define OPT_SHORT 1
 #define OPT_UNSET 2
@@ -503,6 +504,22 @@ int parse_opt_verbosity_cb(const struct option *opt, const char *arg,
 		else
 			*target = -1;
 	}
+	return 0;
+}
+
+int parse_opt_with_commit(const struct option *opt, const char *arg, int unset)
+{
+	unsigned char sha1[20];
+	struct commit *commit;
+
+	if (!arg)
+		return -1;
+	if (get_sha1(arg, sha1))
+		return error("malformed object name %s", arg);
+	commit = lookup_commit_reference(sha1);
+	if (!commit)
+		return error("no such commit %s", arg);
+	commit_list_insert(commit, opt->value);
 	return 0;
 }
 

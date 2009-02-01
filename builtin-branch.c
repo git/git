@@ -193,21 +193,6 @@ struct ref_list {
 	int kinds;
 };
 
-static int has_commit(struct commit *commit, struct commit_list *with_commit)
-{
-	if (!with_commit)
-		return 1;
-	while (with_commit) {
-		struct commit *other;
-
-		other = with_commit->item;
-		with_commit = with_commit->next;
-		if (in_merge_bases(other, &commit, 1))
-			return 1;
-	}
-	return 0;
-}
-
 static int append_ref(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct ref_list *ref_list = (struct ref_list*)(cb_data);
@@ -231,7 +216,7 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 		return error("branch '%s' does not point at a commit", refname);
 
 	/* Filter with with_commit if specified */
-	if (!has_commit(commit, ref_list->with_commit))
+	if (!is_descendant_of(commit, ref_list->with_commit))
 		return 0;
 
 	/* Don't add types the caller doesn't want */
@@ -401,7 +386,8 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 	qsort(ref_list.list, ref_list.index, sizeof(struct ref_item), ref_cmp);
 
 	detached = (detached && (kinds & REF_LOCAL_BRANCH));
-	if (detached && head_commit && has_commit(head_commit, with_commit)) {
+	if (detached && head_commit &&
+	    is_descendant_of(head_commit, with_commit)) {
 		struct ref_item item;
 		item.name = xstrdup("(no branch)");
 		item.kind = REF_LOCAL_BRANCH;
@@ -466,22 +452,6 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	strbuf_release(&newsection);
 }
 
-static int opt_parse_with_commit(const struct option *opt, const char *arg, int unset)
-{
-	unsigned char sha1[20];
-	struct commit *commit;
-
-	if (!arg)
-		return -1;
-	if (get_sha1(arg, sha1))
-		die("malformed object name %s", arg);
-	commit = lookup_commit_reference(sha1);
-	if (!commit)
-		die("no such commit %s", arg);
-	commit_list_insert(commit, opt->value);
-	return 0;
-}
-
 static int opt_parse_merge_filter(const struct option *opt, const char *arg, int unset)
 {
 	merge_filter = ((opt->long_name[0] == 'n')
@@ -517,13 +487,13 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			OPTION_CALLBACK, 0, "contains", &with_commit, "commit",
 			"print only branches that contain the commit",
 			PARSE_OPT_LASTARG_DEFAULT,
-			opt_parse_with_commit, (intptr_t)"HEAD",
+			parse_opt_with_commit, (intptr_t)"HEAD",
 		},
 		{
 			OPTION_CALLBACK, 0, "with", &with_commit, "commit",
 			"print only branches that contain the commit",
 			PARSE_OPT_HIDDEN | PARSE_OPT_LASTARG_DEFAULT,
-			opt_parse_with_commit, (intptr_t) "HEAD",
+			parse_opt_with_commit, (intptr_t) "HEAD",
 		},
 		OPT__ABBREV(&abbrev),
 
