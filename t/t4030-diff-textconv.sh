@@ -104,7 +104,7 @@ cat >expect.typechange <<'EOF'
 -1
 diff --git a/file b/file
 new file mode 120000
-index ad8b3d2..67be421
+index 0000000..67be421
 --- /dev/null
 +++ b/file
 @@ -0,0 +1 @@
