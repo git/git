@@ -105,6 +105,18 @@ test_expect_success 'repack, clone and fetch work' '
      cd ..
 '
 
+test_expect_success '"git replace" listing and deleting' '
+     test "$HASH2" = "$(git replace -l)" &&
+     test "$HASH2" = "$(git replace)" &&
+     aa=${HASH2%??????????????????????????????????????} &&
+     test "$HASH2" = "$(git replace -l "$aa*")" &&
+     test_must_fail git replace -d $R &&
+     test_must_fail git replace -d &&
+     test_must_fail git replace -l -d $HASH2 &&
+     git replace -d $HASH2 &&
+     test -z "$(git replace -l)"
+'
+
 #
 #
 test_done
