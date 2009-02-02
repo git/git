@@ -994,6 +994,9 @@ sub patch_update_file {
 					}
 					print "go to which hunk$extra? ";
 					$response = <STDIN>;
+					if (!defined $response) {
+						$response = '';
+					}
 					chomp $response;
 				}
 				if ($response !~ /^\s*\d+\s*$/) {
