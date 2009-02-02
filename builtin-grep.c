@@ -289,6 +289,8 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		push_arg("-E");
 	if (opt->regflags & REG_ICASE)
 		push_arg("-i");
+	if (opt->binary == GREP_BINARY_NOMATCH)
+		push_arg("-I");
 	if (opt->word_regexp)
 		push_arg("-w");
 	if (opt->name_only)
