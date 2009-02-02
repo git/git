@@ -114,7 +114,17 @@ test_expect_success '"git replace" listing and deleting' '
      test_must_fail git replace -d &&
      test_must_fail git replace -l -d $HASH2 &&
      git replace -d $HASH2 &&
+     git show $HASH2 | grep "A U Thor" &&
      test -z "$(git replace -l)"
+'
+
+test_expect_success '"git replace" replacing' '
+     git replace $HASH2 $R &&
+     git show $HASH2 | grep "O Thor" &&
+     test_must_fail git replace $HASH2 $R &&
+     git replace -f $HASH2 $R &&
+     test_must_fail git replace -f &&
+     test "$HASH2" = "$(git replace)"
 '
 
 #
