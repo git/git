@@ -121,7 +121,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, options, git_replace_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, git_replace_usage, 0);
 
 	if (list && delete)
 		usage_with_options(git_replace_usage, options);
