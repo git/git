@@ -39,7 +39,8 @@ this:
     * passed all 3 test(s)
 
 You can pass --verbose (or -v), --debug (or -d), and --immediate
-(or -i) command line argument to the test.
+(or -i) command line argument to the test, or by setting GIT_TEST_OPTS
+appropriately before running "make".
 
 --verbose::
 	This makes the test more verbose.  Specifically, the
@@ -58,6 +59,11 @@ You can pass --verbose (or -v), --debug (or -d), and --immediate
 	This causes additional long-running tests to be run (where
 	available), for more exhaustive testing.
 
+--valgrind::
+	Execute all Git binaries with valgrind and exit with status
+	126 on errors (just like regular tests, this will only stop
+	the test script when running under -i).  Valgrind errors
+	go to stderr, so you might want to pass the -v option, too.
 
 Skipping Tests
 --------------
