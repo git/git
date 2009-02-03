@@ -531,6 +531,10 @@ else
 		then
 			symlink_target=../valgrind.sh
 		fi
+		case "$base" in
+		*.sh|*.perl)
+			symlink_target=../unprocessed-script
+		esac
 		# create the link, or replace it if it is out of date
 		make_symlink "$symlink_target" "$GIT_VALGRIND/bin/$base" || exit
 	}
@@ -542,6 +546,17 @@ else
 	do
 		make_valgrind_symlink $file
 	done
+	OLDIFS=$IFS
+	IFS=:
+	for path in $PATH
+	do
+		ls "$path"/git-* 2> /dev/null |
+		while read file
+		do
+			make_valgrind_symlink "$file"
+		done
+	done
+	IFS=$OLDIFS
 	PATH=$GIT_VALGRIND/bin:$PATH
 	GIT_EXEC_PATH=$GIT_VALGRIND/bin
 	export GIT_VALGRIND
