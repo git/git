@@ -356,7 +356,7 @@ static int rm(int argc, const char **argv)
 	struct known_remotes known_remotes = { NULL, NULL };
 	struct string_list branches = { NULL, 0, 0, 1 };
 	struct branches_for_remote cb_data = { NULL, &branches, &known_remotes };
-	int i;
+	int i, result;
 
 	if (argc != 2)
 		usage_with_options(builtin_remote_usage, options);
@@ -397,14 +397,14 @@ static int rm(int argc, const char **argv)
 	 * refs, which are invalidated when deleting a branch.
 	 */
 	cb_data.remote = remote;
-	i = for_each_ref(add_branch_for_removal, &cb_data);
+	result = for_each_ref(add_branch_for_removal, &cb_data);
 	strbuf_release(&buf);
 
-	if (!i)
-		i = remove_branches(&branches);
+	if (!result)
+		result = remove_branches(&branches);
 	string_list_clear(&branches, 1);
 
-	return i;
+	return result;
 }
 
 static void show_list(const char *title, struct string_list *list,
