@@ -3,6 +3,22 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
+# if --tee was passed, write the output not only to the terminal, but
+# additionally to the file test-results/$BASENAME.out, too.
+case "$GIT_TEST_TEE_STARTED, $* " in
+done,*)
+	# do not redirect again
+	;;
+*' --tee '*)
+	mkdir -p test-results
+	BASE=test-results/$(basename "$0" .sh)
+	(GIT_TEST_TEE_STARTED=done ${SHELL-sh} "$0" "$@" 2>&1;
+	 echo $? > $BASE.exit) | tee $BASE.out
+	test "$(cat $BASE.exit)" = 0
+	exit
+	;;
+esac
+
 # Keep the original TERM for say_color
 ORIGINAL_TERM=$TERM
 
@@ -96,6 +112,8 @@ do
 		shift ;;
 	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
 		valgrind=t; shift ;;
+	--tee)
+		shift ;; # was handled already
 	*)
 		break ;;
 	esac

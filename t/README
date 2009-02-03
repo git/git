@@ -65,6 +65,12 @@ appropriately before running "make".
 	the test script when running under -i).  Valgrind errors
 	go to stderr, so you might want to pass the -v option, too.
 
+--tee::
+	In addition to printing the test output to the terminal,
+	write it to files named 't/test-results/$TEST_NAME.out'.
+	As the names depend on the tests' file names, it is safe to
+	run the tests with this option in parallel.
+
 Skipping Tests
 --------------
 
