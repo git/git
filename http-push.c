@@ -231,7 +231,8 @@ static void process_response(void *callback_data)
 
 #ifdef USE_CURL_MULTI
 
-static char *get_remote_object_url(const char *url, const char *hex, int only_two_digit_prefix)
+static char *get_remote_object_url(const char *url, const char *hex,
+				   int only_two_digit_prefix)
 {
 	struct strbuf buf = STRBUF_INIT;
 	append_remote_object_url(&buf, url, hex, only_two_digit_prefix);
