@@ -218,13 +218,6 @@ static void append_remote_object_url(struct strbuf *buf, const char *url,
 		strbuf_addf(buf, "%s", hex+2);
 }
 
-static char *get_remote_object_url(const char *url, const char *hex, int only_two_digit_prefix)
-{
-	struct strbuf buf = STRBUF_INIT;
-	append_remote_object_url(&buf, url, hex, only_two_digit_prefix);
-	return strbuf_detach(&buf, NULL);
-}
-
 static void finish_request(struct transfer_request *request);
 static void release_request(struct transfer_request *request);
 
@@ -237,6 +230,14 @@ static void process_response(void *callback_data)
 }
 
 #ifdef USE_CURL_MULTI
+
+static char *get_remote_object_url(const char *url, const char *hex, int only_two_digit_prefix)
+{
+	struct strbuf buf = STRBUF_INIT;
+	append_remote_object_url(&buf, url, hex, only_two_digit_prefix);
+	return strbuf_detach(&buf, NULL);
+}
+
 static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 			       void *data)
 {
