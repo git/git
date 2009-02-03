@@ -9,7 +9,7 @@ case "$GIT_TEST_TEE_STARTED, $* " in
 done,*)
 	# do not redirect again
 	;;
-*' --tee '*)
+*' --tee '*|*' --va'*)
 	mkdir -p test-results
 	BASE=test-results/$(basename "$0" .sh)
 	(GIT_TEST_TEE_STARTED=done ${SHELL-sh} "$0" "$@" 2>&1;
@@ -111,7 +111,7 @@ do
 		# noop now...
 		shift ;;
 	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
-		valgrind=t; shift ;;
+		valgrind=t; verbose=t; shift ;;
 	--tee)
 		shift ;; # was handled already
 	*)

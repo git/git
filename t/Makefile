@@ -39,6 +39,6 @@ full-svn-test:
 	$(MAKE) $(TSVN) GIT_SVN_NO_OPTIMIZE_COMMITS=0 LC_ALL=en_US.UTF-8
 
 valgrind:
-	GIT_TEST_OPTS='--valgrind -v --tee' $(MAKE) -k
+	GIT_TEST_OPTS=--valgrind $(MAKE)
 
 .PHONY: pre-clean $(T) aggregate-results clean valgrind
