@@ -555,6 +555,7 @@ static void start_put(struct transfer_request *request)
 	request->dest = strbuf_detach(&buf, NULL);
 
 	append_remote_object_url(&buf, remote->url, hex, 0);
+	strbuf_addstr(&buf, "_");
 	strbuf_addstr(&buf, request->lock->token);
 	request->url = strbuf_detach(&buf, NULL);
 
