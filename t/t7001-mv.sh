@@ -58,7 +58,7 @@ test_expect_success \
      test ! -f path0/untracked1 &&
      test ! -f path0/untracked2'
 
-test_expect_failure \
+test_expect_success \
     'checking -f on untracked file with existing target' \
     'touch path0/untracked1 &&
      git mv -f untracked1 path0
