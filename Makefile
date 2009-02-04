@@ -1382,6 +1382,7 @@ TEST_PROGRAMS += test-chmtime$X
 TEST_PROGRAMS += test-ctype$X
 TEST_PROGRAMS += test-date$X
 TEST_PROGRAMS += test-delta$X
+TEST_PROGRAMS += test-dump-cache-tree$X
 TEST_PROGRAMS += test-genrandom$X
 TEST_PROGRAMS += test-match-trees$X
 TEST_PROGRAMS += test-parse-options$X

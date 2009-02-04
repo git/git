@@ -21,7 +21,7 @@ allocated memory or not), use `strbuf_detach()` to unwrap a memory
 buffer from its strbuf shell in a safe way. That is the sole supported
 way. This will give you a malloced buffer that you can later `free()`.
 +
-However, it it totally safe to modify anything in the string pointed by
+However, it is totally safe to modify anything in the string pointed by
 the `buf` member, between the indices `0` and `len-1` (inclusive).
 
 . The `buf` member is a byte array that has at least `len + 1` bytes
