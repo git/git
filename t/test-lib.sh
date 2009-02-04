@@ -201,7 +201,7 @@ test_tick () {
 # Both <file> and <contents> default to <message>.
 
 test_commit () {
-	file=${2:-$(echo "$1" | tr 'A-Z' 'a-z')}
+	file=${2:-"$1.t"}
 	echo "${3-$1}" > "$file" &&
 	git add "$file" &&
 	test_tick &&
