@@ -107,6 +107,32 @@ test_expect_success 'remove remote' '
 )
 '
 
+test_expect_success 'remove remote protects non-remote branches' '
+(
+	cd test &&
+	(cat >expect1 <<EOF
+Note: A non-remote branch was not removed; to delete it, use:
+  git branch -d master
+EOF
+    cat >expect2 <<EOF
+Note: Non-remote branches were not removed; to delete them, use:
+  git branch -d foobranch
+  git branch -d master
+EOF
+) &&
+	git tag footag
+	git config --add remote.oops.fetch "+refs/*:refs/*" &&
+	git remote rm oops 2>actual1 &&
+	git branch foobranch &&
+	git config --add remote.oops.fetch "+refs/*:refs/*" &&
+	git remote rm oops 2>actual2 &&
+	git branch -d foobranch &&
+	git tag -d footag &&
+	test_cmp expect1 actual1 &&
+	test_cmp expect2 actual2
+)
+'
+
 cat > test/expect << EOF
 * remote origin
   URL: $(pwd)/one

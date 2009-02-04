@@ -296,7 +296,7 @@ static int add_known_remote(struct remote *remote, void *cb_data)
 
 struct branches_for_remote {
 	struct remote *remote;
-	struct string_list *branches;
+	struct string_list *branches, *skipped;
 	struct known_remotes *keep;
 };
 
@@ -319,6 +319,16 @@ static int add_branch_for_removal(const char *refname,
 		refspec.dst = (char *)refname;
 		if (!remote_find_tracking(kr->remote, &refspec))
 			return 0;
+	}
+
+	/* don't delete non-remote refs */
+	if (prefixcmp(refname, "refs/remotes")) {
+		/* advise user how to delete local branches */
+		if (!prefixcmp(refname, "refs/heads/"))
+			string_list_append(abbrev_branch(refname),
+					   branches->skipped);
+		/* silently skip over other non-remote refs */
+		return 0;
 	}
 
 	/* make sure that symrefs are deleted */
@@ -355,7 +365,10 @@ static int rm(int argc, const char **argv)
 	struct strbuf buf;
 	struct known_remotes known_remotes = { NULL, NULL };
 	struct string_list branches = { NULL, 0, 0, 1 };
-	struct branches_for_remote cb_data = { NULL, &branches, &known_remotes };
+	struct string_list skipped = { NULL, 0, 0, 1 };
+	struct branches_for_remote cb_data = {
+		NULL, &branches, &skipped, &known_remotes
+	};
 	int i, result;
 
 	if (argc != 2)
@@ -403,6 +416,18 @@ static int rm(int argc, const char **argv)
 	if (!result)
 		result = remove_branches(&branches);
 	string_list_clear(&branches, 1);
+
+	if (skipped.nr) {
+		fprintf(stderr, skipped.nr == 1 ?
+			"Note: A non-remote branch was not removed; "
+			"to delete it, use:\n" :
+			"Note: Non-remote branches were not removed; "
+			"to delete them, use:\n");
+		for (i = 0; i < skipped.nr; i++)
+			fprintf(stderr, "  git branch -d %s\n",
+				skipped.items[i].string);
+	}
+	string_list_clear(&skipped, 0);
 
 	return result;
 }
