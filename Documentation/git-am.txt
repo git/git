@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git am' [--signoff] [--keep] [--utf8 | --no-utf8]
-	 [--3way] [--interactive]
+	 [--3way] [--interactive] [--committer-date-is-author-date]
+	 [--ignore-date]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--reject]
 	 [<mbox> | <Maildir>...]
@@ -72,6 +73,20 @@ default.   You could use `--no-utf8` to override this.
 -i::
 --interactive::
 	Run interactively.
+
+--committer-date-is-author-date::
+	By default the command records the date from the e-mail
+	message as the commit author date, and uses the time of
+	commit creation as the committer date. This allows the
+	user to lie about the committer date by using the same
+	timestamp as the author date.
+
+--ignore-date::
+	By default the command records the date from the e-mail
+	message as the commit author date, and uses the time of
+	commit creation as the committer date. This allows the
+	user to lie about author timestamp by using the same
+	timestamp as the committer date.
 
 --skip::
 	Skip the current patch.  This is only meaningful when

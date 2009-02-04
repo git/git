@@ -257,4 +257,37 @@ test_expect_success 'am works from file (absolute path given) in subdirectory' '
 	test -z "$(git diff second)"
 '
 
+test_expect_success 'am --committer-date-is-author-date' '
+	git checkout first &&
+	test_tick &&
+	git am --committer-date-is-author-date patch1 &&
+	git cat-file commit HEAD | sed -e "/^$/q" >head1 &&
+	at=$(sed -ne "/^author /s/.*> //p" head1) &&
+	ct=$(sed -ne "/^committer /s/.*> //p" head1) &&
+	test "$at" = "$ct"
+'
+
+test_expect_success 'am without --committer-date-is-author-date' '
+	git checkout first &&
+	test_tick &&
+	git am patch1 &&
+	git cat-file commit HEAD | sed -e "/^$/q" >head1 &&
+	at=$(sed -ne "/^author /s/.*> //p" head1) &&
+	ct=$(sed -ne "/^committer /s/.*> //p" head1) &&
+	test "$at" != "$ct"
+'
+
+# This checks for +0000 because TZ is set to UTC and that should
+# show up when the current time is used. The date in message is set
+# by test_tick that uses -0700 timezone; if this feature does not
+# work, we will see that instead of +0000.
+test_expect_success 'am --ignore-date' '
+	git checkout first &&
+	test_tick &&
+	git am --ignore-date patch1 &&
+	git cat-file commit HEAD | sed -e "/^$/q" >head1 &&
+	at=$(sed -ne "/^author /s/.*> //p" head1) &&
+	echo "$at" | grep "+0000"
+'
+
 test_done
