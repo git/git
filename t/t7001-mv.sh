@@ -55,8 +55,16 @@ test_expect_success \
      git mv -k untracked1 untracked2 path0 &&
      test -f untracked1 &&
      test -f untracked2 &&
-     test ! -f path0/untracked1
+     test ! -f path0/untracked1 &&
      test ! -f path0/untracked2'
+
+test_expect_success \
+    'checking -f on untracked file with existing target' \
+    'touch path0/untracked1 &&
+     git mv -f untracked1 path0
+     test ! -f .git/index.lock &&
+     test -f untracked1 &&
+     test -f path0/untracked1'
 
 # clean up the mess in case bad things happen
 rm -f idontexist untracked1 untracked2 \
