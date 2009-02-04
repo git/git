@@ -162,7 +162,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				}
 				argc += last - first;
 			}
-		} else if (lstat(dst, &st) == 0) {
+		} else if (cache_name_pos(src, length) < 0)
+			bad = "not under version control";
+		else if (lstat(dst, &st) == 0) {
 			bad = "destination exists";
 			if (force) {
 				/*
@@ -177,9 +179,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				} else
 					bad = "Cannot overwrite";
 			}
-		} else if (cache_name_pos(src, length) < 0)
-			bad = "not under version control";
-		else if (string_list_has_string(&src_for_dst, dst))
+		} else if (string_list_has_string(&src_for_dst, dst))
 			bad = "multiple sources for the same target";
 		else
 			string_list_insert(dst, &src_for_dst);
