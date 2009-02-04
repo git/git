@@ -6,10 +6,6 @@ Tests if git rebase --root --onto <newparent> can rebase the root commit.
 '
 . ./test-lib.sh
 
-# we always run the interactive rebases unchanged, so just disable the editor
-GIT_EDITOR=:
-export GIT_EDITOR
-
 log_with_names () {
 	git rev-list --topo-order --parents --pretty="tformat:%s" HEAD |
 	git name-rev --stdin --name-only --refs=refs/heads/$1
