@@ -801,6 +801,7 @@ n - do not stage this hunk
 a - stage this and all the remaining hunks in the file
 d - do not stage this hunk nor any of the remaining hunks in the file
 g - select a hunk to go to
+/ - search for a hunk matching the given regex
 j - leave this hunk undecided, see next undecided hunk
 J - leave this hunk undecided, see next hunk
 k - leave this hunk undecided, see previous undecided hunk
@@ -929,25 +930,25 @@ sub patch_update_file {
 		for ($i = 0; $i < $ix; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$prev = 1;
-				$other .= '/k';
+				$other .= ',k';
 				last;
 			}
 		}
 		if ($ix) {
-			$other .= '/K';
+			$other .= ',K';
 		}
 		for ($i = $ix + 1; $i < $num; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$next = 1;
-				$other .= '/j';
+				$other .= ',j';
 				last;
 			}
 		}
 		if ($ix < $num - 1) {
-			$other .= '/J';
+			$other .= ',J';
 		}
 		if ($num > 1) {
-			$other .= '/g';
+			$other .= ',g';
 		}
 		for ($i = 0; $i < $num; $i++) {
 			if (!defined $hunk[$i]{USE}) {
@@ -958,13 +959,13 @@ sub patch_update_file {
 		last if (!$undecided);
 
 		if (hunk_splittable($hunk[$ix]{TEXT})) {
-			$other .= '/s';
+			$other .= ',s';
 		}
-		$other .= '/e';
+		$other .= ',e';
 		for (@{$hunk[$ix]{DISPLAY}}) {
 			print;
 		}
-		print colored $prompt_color, "Stage this hunk [y/n/a/d$other/?]? ";
+		print colored $prompt_color, "Stage this hunk [y,n,a,d,/$other,?]? ";
 		my $line = <STDIN>;
 		if ($line) {
 			if ($line =~ /^y/i) {
@@ -993,6 +994,9 @@ sub patch_update_file {
 					}
 					print "go to which hunk$extra? ";
 					$response = <STDIN>;
+					if (!defined $response) {
+						$response = '';
+					}
 					chomp $response;
 				}
 				if ($response !~ /^\s*\d+\s*$/) {
@@ -1013,29 +1017,67 @@ sub patch_update_file {
 				}
 				next;
 			}
-			elsif ($other =~ /K/ && $line =~ /^K/) {
-				$ix--;
-				next;
-			}
-			elsif ($other =~ /J/ && $line =~ /^J/) {
-				$ix++;
-				next;
-			}
-			elsif ($other =~ /k/ && $line =~ /^k/) {
+			elsif ($line =~ m|^/(.*)|) {
+				my $search_string;
+				eval {
+					$search_string = qr{$1}m;
+				};
+				if ($@) {
+					my ($err,$exp) = ($@, $1);
+					$err =~ s/ at .*git-add--interactive line \d+, <STDIN> line \d+.*$//;
+					print STDERR "Malformed search regexp $exp: $err\n";
+					next;
+				}
+				my $iy = $ix;
 				while (1) {
+					my $text = join ("", @{$hunk[$iy]{TEXT}});
+					last if ($text =~ $search_string);
+					$iy++;
+					$iy = 0 if ($iy >= $num);
+					if ($ix == $iy) {
+						print STDERR "No hunk matches the given pattern\n";
+						last;
+					}
+				}
+				$ix = $iy;
+				next;
+			}
+			elsif ($line =~ /^K/) {
+				if ($other =~ /K/) {
 					$ix--;
-					last if (!$ix ||
-						 !defined $hunk[$ix]{USE});
+				}
+				else {
+					print STDERR "No previous hunk\n";
 				}
 				next;
 			}
-			elsif ($other =~ /j/ && $line =~ /^j/) {
-				while (1) {
+			elsif ($line =~ /^J/) {
+				if ($other =~ /J/) {
 					$ix++;
-					last if ($ix >= $num ||
-						 !defined $hunk[$ix]{USE});
+				}
+				else {
+					print STDERR "No next hunk\n";
 				}
 				next;
+			}
+			elsif ($line =~ /^k/) {
+				if ($other =~ /k/) {
+					while (1) {
+						$ix--;
+						last if (!$ix ||
+							 !defined $hunk[$ix]{USE});
+					}
+				}
+				else {
+					print STDERR "No previous hunk\n";
+				}
+				next;
+			}
+			elsif ($line =~ /^j/) {
+				if ($other !~ /j/) {
+					print STDERR "No next hunk\n";
+					next;
+				}
 			}
 			elsif ($other =~ /s/ && $line =~ /^s/) {
 				my @split = split_hunk($hunk[$ix]{TEXT}, $hunk[$ix]{DISPLAY});
