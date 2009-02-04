@@ -2445,7 +2445,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		return error("%s: %s", old_name, strerror(errno));
 	}
 
-	if (!cached)
+	if (!cached && !tpatch)
 		st_mode = ce_mode_from_stat(*ce, st->st_mode);
 
 	if (patch->is_new < 0)
