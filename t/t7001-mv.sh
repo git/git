@@ -55,7 +55,7 @@ test_expect_success \
      git mv -k untracked1 untracked2 path0 &&
      test -f untracked1 &&
      test -f untracked2 &&
-     test ! -f path0/untracked1
+     test ! -f path0/untracked1 &&
      test ! -f path0/untracked2'
 
 # clean up the mess in case bad things happen
