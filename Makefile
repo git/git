@@ -649,10 +649,12 @@ endif
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	ifneq ($(shell expr "$(uname_R)" : '9\.'),2)
+	ifeq ($(shell expr "$(uname_R)" : '[15678]\.'),2)
 		OLD_ICONV = UnfortunatelyYes
 	endif
-	NO_STRLCPY = YesPlease
+	ifeq ($(shell expr "$(uname_R)" : '[15]\.'),2)
+		NO_STRLCPY = YesPlease
+	endif
 	NO_MEMMEM = YesPlease
 	THREADED_DELTA_SEARCH = YesPlease
 endif
