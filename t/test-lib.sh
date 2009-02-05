@@ -536,5 +536,8 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
+	pwd() {
+		builtin pwd -W
+	}
 	;;
 esac

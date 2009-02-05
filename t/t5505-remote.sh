@@ -107,9 +107,6 @@ test_expect_success 'remove remote' '
 )
 '
 
-case $(uname -s) in
-*MINGW*) pwd() { builtin pwd -W; } ;;
-esac
 cat > test/expect << EOF
 * remote origin
   URL: $(pwd)/one
