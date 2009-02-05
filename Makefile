@@ -1434,14 +1434,14 @@ remove-dashes:
 
 ### Installation rules
 
-ifeq ($(abspath $(template_dir)),$(template_dir))
+ifneq ($(filter /%,$(firstword $(template_dir))),)
 template_instdir = $(template_dir)
 else
 template_instdir = $(prefix)/$(template_dir)
 endif
 export template_instdir
 
-ifeq ($(abspath $(gitexecdir)),$(gitexecdir))
+ifneq ($(filter /%,$(firstword $(gitexecdir))),)
 gitexec_instdir = $(gitexecdir)
 else
 gitexec_instdir = $(prefix)/$(gitexecdir)
