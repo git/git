@@ -38,6 +38,8 @@
 	writing-data-from-zlib-triggers-even-more-errors
 	Memcheck:Param
 	write(buf)
-	...
+	obj:/lib/ld-*.so
+	fun:write_in_full
+	fun:write_buffer
 	fun:write_loose_object
 }
