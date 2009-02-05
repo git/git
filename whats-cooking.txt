@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2009, #01; Sun, 01)
-X-master-at: 2ea3c17189bf9ca459879129ca190792b5451f05
-X-next-at: 5bad675db98a79d08ce5abadd3347d829c6c5b36
+Subject: What's cooking in git.git (Feb 2009, #02; Wed, 04)
+X-master-at: 88ccb9f9745ff1f44bff7c6d6c17ad4b46870706
+X-next-at: c5d3fa64fe3170d80a48f5c5b99f14dbabcbd9b4
 
-What's cooking in git.git (Feb 2009, #01; Sun, 01)
+What's cooking in git.git (Feb 2009, #02; Wed, 04)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,87 +14,37 @@ holding onto them.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
+I was this close (shows thumb and index finger almost touching) to merge
+js/notes to master and declare 1.6.2-rc0 but decided against it, because I
+thought I need to at least have heard about somebody who used it before
+doing so.  Perhaps I'll try it out myself to keep track of commits that
+happened between 1.6.1 and master that need to be cherry-picked to maint,
+or something silly like that.  In any case, my prediction is that -rc0
+would look like what 'next' tonight looks like, nothing more, not much
+less (I'd probably drop jc/blame).
+
 ----------------------------------------------------------------
 [New Topics]
 
-* gt/utf8-width (Fri Jan 30 04:41:29 2009 -0500) 2 commits
- - builtin-blame.c: Use utf8_strwidth for author's names
- - utf8: add utf8_strwidth()
+* jc/refuse-push-to-current-1.7.0 (Sat Jan 31 17:34:05 2009 -0800) 1 commit
+ - Refuse updating the current branch in a non-bare repository via
+   push
 
-I am not sure if utf8_strwidth() behaves sensibly when fed a non-UTF8
-string (a possible failure mode is utf8_width() says "no" and it returns
-0, resulting in width of all zero and causing division by zero somewhere
-downstream, or something silly like that), but other than that, I do not
-think it would hurt, and will actively improve the current code.
+This is for 1.7.0.
 
-* jc/refuse-push-to-current (Sat Jan 31 17:34:05 2009 -0800) 2 commits
- - Set receive.denyCurrentBranch to true in a new non-bare repository
- - receive-pack: explain what to do when push updates the current
-   branch
+* js/maint-remote-remove-mirror (Wed Feb 4 11:06:07 2009 -0500) 2 commits
+ + builtin-remote: make rm operation safer in mirrored repository
+ + builtin-remote: make rm() use properly named variable to hold
+   return value
 
-This prepares to finally switch the default for receive.denyCurrentBranch
-to "refuse".  The idea is to issue a big warning to people who push into
-currently checked out branch when the configuration is unset and we
-default to "warn", and explain in detail (1) why it is not likely to be
-what they want to do (to help new people), (2) if it is what they want,
-how to squelch that annoyingly long message, and (3) the default will be
-changed to "refuse" in a future release of git.  The tip commit also sets
-the configuration to refuse in a newly created repository, but with a
-twist.  People who get the "refusal" configuration this way may be
-expecting the recipe they picked up to push into a live repository,
-perhaps a website, and let its post-update hook to "reset --hard" the
-deployment, and we will explain that (1) it will no longer work (because
-we default to "refuse" in a newly created repository), (2) how to
-configure it to work again, and (3) how to squelch the annoying message.
+* ek/maint-filter-branch-bare (Tue Feb 3 13:27:03 2009 -0500) 1 commit
+ + filter-branch: Fix fatal error on bare repositories
 
-I personally do not think anything short of an approach like this would
-work without a huge fallout like we had when yanked git-foo commands from
-people's $PATH in 1.6.0, but I can still be pursuaded by a better
-alternative, and that is why they are not in 'next' yet.  Saying "old
-timers can flip a single switch just once" is not a better alternative, as
-I explained already.
+* tr/add-p-single (Wed Feb 4 21:12:39 2009 +0100) 2 commits
+ - add -p: print errors in separate color
+ - add -p: prompt for single characters
 
-* jc/fsck (Fri Jan 30 02:44:13 2009 -0800) 7 commits
- - fsck: revert --quick to the default and introduce --medium
- - fsck: three levels of validation
- - verify-pack: add --quick
- - verify_pack(): allow a quicker verification for a pack with
-   version 2 idx
- - pack-check.c: minor formatting fix to match coding style
- + fsck: check loose objects from alternate object stores by default
- + fsck: HEAD is part of refs
-
-I haven't heard anything positive nor negative about this series.  I
-consider the bottom two changes are pure bugfixes and should probably be
-in 1.6.2.
-
-I think the tip two commits should be squashed (and perhaps the option
-parser cleaned up as suggested on the list) if we were to take the
-remainder.
-
-* rc/http-push (Sat Jan 31 07:51:55 2009 +0800) 1 commit
- + http-push: refactor request url creation
-
-Looked fine for 1.6.2.
-
-* jk/head-symref (Thu Jan 29 03:33:02 2009 -0500) 2 commits
- + symbolic ref: refuse non-ref targets in HEAD
- + validate_headref: tighten ref-matching to just branches
-
-Looked fine for 1.6.2.
-
-* kb/checkout-optim (Sun Feb 1 21:23:39 2009 +0100) 7 commits
- - unpack-trees.c: introduce schedule_dir_for_removal()
- - lstat_cache(): print a warning if doing ping-pong between cache
-   types
- - combine-diff.c: remove a call to fstat() inside show_patch_diff()
- - write_entry(): use fstat() instead of lstat() when file is open
- - cleanup of write_entry() in entry.c
- - remove some memcpy() and strchr() calls inside
-   create_directories()
- - symlinks.c: small cleanup and optimisation
-
-Love to have in 1.6.2
+Will move to 'next'; it may or may not mature in time for 1.6.2.
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
@@ -191,27 +141,42 @@ This broke git-format-patch badly.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* wp/add-patch-find (Thu Nov 27 04:08:03 2008 +0000) 3 commits
- + In add --patch, Handle K,k,J,j slightly more gracefully.
- + Add / command in add --patch
- + git-add -i/-p: Change prompt separater from slash to comma
+* jc/fsck (Fri Jan 30 02:44:13 2009 -0800) 5 commits
+ - fsck: revert --quick to the default and introduce --medium
+ - fsck: three levels of validation
+ - verify-pack: add --quick
+ - verify_pack(): allow a quicker verification for a pack with
+   version 2 idx
+ - pack-check.c: minor formatting fix to match coding style
 
-I think this is Ok to have in 1.6.2
+I haven't heard anything positive nor negative about this series.  I think
+the tip two commits should be squashed (and perhaps the option parser
+cleaned up as suggested on the list).
 
-* cb/mergetool (Fri Jan 30 23:20:11 2009 +0000) 3 commits
- - mergetool: fix running mergetool in sub-directories
- - mergetool: Add a test for running mergetool in a sub-directory
- + mergetool: respect autocrlf by using checkout-index
+* kb/checkout-optim (Wed Feb 4 13:53:20 2009 +0100) 8 commits
+ - lstat_cache(): print a warning if doing ping-pong between cache
+   types
+ - show_patch_diff(): remove a call to fstat()
+ - write_entry(): cleanup of some duplicated code
+ - create_directories(): remove some memcpy() and strchr() calls
+ - unlink_entry(): introduce schedule_dir_for_removal()
+ - lstat_cache(): swap func(length, string) into func(string, length)
+ - lstat_cache(): generalise longest_match_lstat_cache()
+ - lstat_cache(): small cleanup and optimisation
 
-The fix to its subdirectory behaviour looked somewhat iffy and may have a
-potential for cleaning up.  But we should have it in 1.6.2.
+Should be in 'next' soon.
 
-* js/valgrind (Wed Jan 21 02:36:40 2009 +0100) 2 commits
- - valgrind: ignore ldso errors
+* js/valgrind (Wed Feb 4 00:26:31 2009 +0100) 8 commits
+ - test-lib: avoid assuming that templates/ are in the GIT_EXEC_PATH
+ - Tests: let --valgrind imply --verbose and --tee
+ - Add a script to coalesce the valgrind outputs
+ - t/Makefile: provide a 'valgrind' target
+ - test-lib.sh: optionally output to test-results/$TEST.out, too
+ - Valgrind support: check for more than just programming errors
+ - valgrind: ignore ldso and more libz errors
  - Add valgrind support in test scripts
 
-Dscho and Peff had further exchanges on the list; I am sort of waiting for
-the conclusion before picking any intermediate version up.
+Should be in 'next' soon.
 
 * js/notes (Tue Jan 13 20:57:16 2009 +0100) 6 commits
  + git-notes: fix printing of multi-line notes
@@ -223,90 +188,19 @@ the conclusion before picking any intermediate version up.
 
 It would be nice to hear a real world success story using the notes
 mechanism; Dscho says he also wants to make sure the current choice
-of the structure scales well before casting it in stone.
+of the structure scales well before casting it in stone, but nothing
+has happened since then.
 
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* jc/maint-1.6.0-split-diff-metainfo (Mon Jan 26 00:08:24 2009 -0800) 1 commit
- + diff.c: output correct index lines for a split diff
-
-This is slated for maintenance series 1.6.0.X.
-
-* jc/maint-split-diff-metainfo (Tue Jan 27 01:08:02 2009 -0800) 2 commits
- + Merge branch 'jc/maint-1.6.0-split-diff-metainfo' into jc/maint-
-   split-diff-metainfo
- + diff.c: output correct index lines for a split diff
-
-Early conflict resolution branch for the above to carry it to 1.6.1.X
-series.
-
-* js/maint-rebase-i-submodule (Tue Jan 27 12:42:31 2009 +0100) 2 commits
- + Fix submodule squashing into unrelated commit
- + rebase -i squashes submodule changes into unrelated commit
-
-* jg/tag-contains (Mon Jan 26 09:13:25 2009 -0500) 3 commits
- + git-tag: Add --contains option
- + Make has_commit() non-static
- + Make opt_parse_with_commit() non-static
-
-* jc/maint-allow-uninteresting-missing (Tue Jan 27 23:19:30 2009 -0800) 1 commit
- + revision traversal: allow UNINTERESTING objects to be missing
-
-This is a small follow-up to the fix to send-pack in 1.6.1; meant to go in
-1.6.1.X maintenance series and newer.
-
-* am/maint-push-doc (Mon Jan 26 00:45:33 2009 +0100) 3 commits
- + Documentation: rework src/dst description in git push
- + Documentation: more git push examples
- + Documentation: simplify refspec format description
-
-* jc/maint-apply-fix (Sun Jan 25 23:41:26 2009 -0800) 1 commit
- + builtin-apply.c: do not set bogus mode in check_preimage() for
-   deleted path
-
-* ks/maint-mailinfo-folded (Tue Jan 13 01:21:04 2009 +0300) 4 commits
- + mailinfo: tests for RFC2047 examples
- + mailinfo: add explicit test for mails like '<a.u.thor@example.com>
-   (A U Thor)'
- + mailinfo: 'From:' header should be unfold as well
- + mailinfo: correctly handle multiline 'Subject:' header
-
-Graduated with a follow-up patch from the original author.
-
-* jg/mergetool (Sat Jan 24 00:12:45 2009 +0100) 1 commit
- + mergetool: Don't repeat merge tool candidates
-
-* jk/signal-cleanup (Thu Jan 22 01:03:28 2009 -0500) 5 commits
- + pager: do wait_for_pager on signal death
- + refactor signal handling for cleanup functions
- + chain kill signals for cleanup functions
- + diff: refactor tempfile cleanup handling
- + Windows: Fix signal numbers
-
-* sp/runtime-prefix (Sun Jan 18 13:00:15 2009 +0100) 7 commits
- + Windows: Revert to default paths and convert them by
-   RUNTIME_PREFIX
- + Compute prefix at runtime if RUNTIME_PREFIX is set
- + Modify setup_path() to only add git_exec_path() to PATH
- + Add calls to git_extract_argv0_path() in programs that call
-   git_config_*
- + git_extract_argv0_path(): Move check for valid argv0 from caller
-   to callee
- + Refactor git_set_argv0_path() to git_extract_argv0_path()
- + Move computation of absolute paths from Makefile to runtime (in
-   preparation for RUNTIME_PREFIX)
-
-There was a report that this breaks with older GNU Make.
-
-----------------------------------------------------------------
-[Will merge to "master" soon]
+* wp/add-patch-find (Thu Nov 27 04:08:03 2008 +0000) 3 commits
+ + In add --patch, Handle K,k,J,j slightly more gracefully.
+ + Add / command in add --patch
+ + git-add -i/-p: Change prompt separater from slash to comma
 
 * jc/maint-add-u-remove-conflicted (Wed Jan 28 14:24:53 2009 -0800) 1 commit
- - add -u: do not fail to resolve a path as deleted
-
-This has been updated from the posted version with a correction.  We
-should have it in 1.6.2
+ + add -u: do not fail to resolve a path as deleted
 
 * jk/maint-cleanup-after-exec-failure (Wed Jan 28 02:38:14 2009 -0500) 4 commits
  + git: use run_command() to execute dashed externals
@@ -314,15 +208,54 @@ should have it in 1.6.2
  + run_command(): handle missing command errors more gracefully
  + git: s/run_command/run_builtin/
 
-Looked good for 1.6.2.
-
 * ns/am-slacker (Sat Jan 24 10:18:02 2009 +0900) 2 commits
  + git-am: Add --ignore-date option
  + am: Add --committer-date-is-author-date option
 
-It is a (probably) useful new feature with a sort-of cute explanation.
-I am not sure if it needs further work (such as hooking it to rebase),
-but other than that, I think it is Ok to have in 1.6.2.
+----------------------------------------------------------------
+[Will merge to "master" soon]
+
+* gt/utf8-width (Fri Jan 30 04:41:29 2009 -0500) 2 commits
+ + builtin-blame.c: Use utf8_strwidth for author's names
+ + utf8: add utf8_strwidth()
+
+I replaced the bottom one with a cheesy "if it does not look like
+utf8, give strlen back" to make the result behave sensibly for legacy
+encodings.  It does improve "git blame git-stash.sh" output (especially
+if you remove .mailmap).
+
+* jk/head-symref (Thu Jan 29 03:33:02 2009 -0500) 2 commits
+ + symbolic ref: refuse non-ref targets in HEAD
+ + validate_headref: tighten ref-matching to just branches
+
+Looked fine for 1.6.2.
+
+* rc/http-push (Tue Feb 3 20:39:00 2009 +0800) 4 commits
+ + http-push: wrap signature of get_remote_object_url
+ + http-push: add back underscore separator before lock token
+ + http-push.c: get_remote_object_url() is only used under
+   USE_CURL_MULTI
+ + http-push: refactor request url creation
+
+As these are supposed to be only clean-ups without any functionality
+change, let's flush it out before 1.6.2.
+
+* jc/refuse-push-to-current (Sat Jan 31 17:34:05 2009 -0800) 1 commit
+ + receive-pack: explain what to do when push updates the current
+   branch
+
+This prepares to finally switch the default for receive.denyCurrentBranch
+to "refuse".  The idea is to issue a big warning to people who push into
+currently checked out branch when the configuration is unset and we
+default to "warn", and explain in detail (1) why it is not likely to be
+what they want to do (to help new people), (2) if it is what they want,
+how to squelch that annoyingly long message, and (3) the default will be
+changed to "refuse" in a future release of git.
+
+* cb/mergetool (Fri Jan 30 23:20:11 2009 +0000) 3 commits
+ + mergetool: fix running mergetool in sub-directories
+ + mergetool: Add a test for running mergetool in a sub-directory
+ + mergetool: respect autocrlf by using checkout-index
 
 ----------------------------------------------------------------
 [On Hold]
