@@ -1000,6 +1000,13 @@ instaweb.port::
 	The port number to bind the gitweb httpd to. See
 	linkgit:git-instaweb[1].
 
+interactive.singlekey::
+	In interactive programs, allow the user to provide one-letter
+	input with a single key (i.e., without hitting enter).
+	Currently this is used only by the `\--patch` mode of
+	linkgit:git-add[1].  Note that this setting is silently
+	ignored if portable keystroke input is not available.
+
 log.date::
 	Set default date-time mode for the log command. Setting log.date
 	value is similar to using 'git-log'\'s --date option. The value is one of the
