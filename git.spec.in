@@ -97,7 +97,7 @@ BuildRequires:  perl(Error)
 %description -n perl-Git
 Perl interface to Git
 
-%define path_settings ETC_GITCONFIG=/etc/gitconfig prefix=%{_prefix} mandir=%{_mandir} htmldir=%{_docdir}/%{name}-core-%{version}
+%define path_settings ETC_GITCONFIG=/etc/gitconfig prefix=%{_prefix} mandir=%{_mandir} htmldir=%{_docdir}/%{name}-%{version}
 
 %prep
 %setup -q
@@ -189,6 +189,9 @@ rm -rf $RPM_BUILD_ROOT
 # No files for you!
 
 %changelog
+* Mon Feb 04 2009 David J. Mellor <dmellor@whistlingcat.com>
+- fixed broken git help -w after renaming the git-core package to git.
+
 * Fri Sep 12 2008 Quy Tonthat <qtonthat@gmail.com>
 - move git-cvsserver to bindir.
 
