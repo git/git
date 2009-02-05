@@ -242,13 +242,11 @@ test_merge () {
 # the text_expect_* functions instead.
 
 test_ok_ () {
-	test_count=$(($test_count + 1))
 	test_success=$(($test_success + 1))
 	say_color "" "  ok $test_count: $@"
 }
 
 test_failure_ () {
-	test_count=$(($test_count + 1))
 	test_failure=$(($test_failure + 1))
 	say_color error "FAIL $test_count: $1"
 	shift
@@ -257,13 +255,11 @@ test_failure_ () {
 }
 
 test_known_broken_ok_ () {
-	test_count=$(($test_count+1))
 	test_fixed=$(($test_fixed+1))
 	say_color "" "  FIXED $test_count: $@"
 }
 
 test_known_broken_failure_ () {
-	test_count=$(($test_count+1))
 	test_broken=$(($test_broken+1))
 	say_color skip "  still broken $test_count: $@"
 }
@@ -279,10 +275,11 @@ test_run_ () {
 }
 
 test_skip () {
+	test_count=$(($test_count+1))
 	to_skip=
 	for skp in $GIT_SKIP_TESTS
 	do
-		case $this_test.$(($test_count+1)) in
+		case $this_test.$test_count in
 		$skp)
 			to_skip=t
 		esac
@@ -290,7 +287,6 @@ test_skip () {
 	case "$to_skip" in
 	t)
 		say_color skip >&3 "skipping test: $@"
-		test_count=$(($test_count+1))
 		say_color skip "skip $test_count: $1"
 		: true
 		;;
@@ -368,7 +364,7 @@ test_external () {
 	then
 		# Announce the script to reduce confusion about the
 		# test output that follows.
-		say_color "" " run $(($test_count+1)): $descr ($*)"
+		say_color "" " run $test_count: $descr ($*)"
 		# Run command; redirect its stderr to &4 as in
 		# test_run_, but keep its stdout on our stdout even in
 		# non-verbose mode.
