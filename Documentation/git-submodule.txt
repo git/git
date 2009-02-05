@@ -12,7 +12,7 @@ SYNOPSIS
 'git submodule' [--quiet] add [-b branch] [--] <repository> <path>
 'git submodule' [--quiet] status [--cached] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
-'git submodule' [--quiet] update [--init] [--] [<path>...]
+'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--] [<path>...]
 'git submodule' [--quiet] summary [--summary-limit <n>] [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach <command>
 'git submodule' [--quiet] sync [--] [<path>...]
@@ -171,6 +171,11 @@ OPTIONS
 	Giving 0 will disable the summary; a negative number means unlimited
 	(the default). This limit only applies to modified submodules. The
 	size is always limited to 1 for added/deleted/typechanged submodules.
+
+-N::
+--no-fetch::
+	This option is only valid for the update command.
+	Don't fetch new objects from the remote site.
 
 <path>...::
 	Paths to submodule(s). When specified this will restrict the command
