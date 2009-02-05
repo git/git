@@ -556,8 +556,8 @@ color.interactive::
 
 color.interactive.<slot>::
 	Use customized color for 'git-add --interactive'
-	output. `<slot>` may be `prompt`, `header`, or `help`, for
-	three distinct types of normal output from interactive
+	output. `<slot>` may be `prompt`, `header`, `help` or `error`, for
+	four distinct types of normal output from interactive
 	programs.  The values of these variables may be specified as
 	in color.branch.<slot>.
 
