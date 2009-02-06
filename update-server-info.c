@@ -20,8 +20,7 @@ int main(int ac, char **av)
 	if (i != ac)
 		usage(update_server_info_usage);
 
-	if (av[0] && *av[0])
-		git_extract_argv0_path(av[0]);
+	git_extract_argv0_path(av[0]);
 
 	setup_git_directory();
 

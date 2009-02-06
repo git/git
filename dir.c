@@ -75,7 +75,7 @@ static int match_one(const char *match, const char *name, int namelen)
 	for (;;) {
 		unsigned char c1 = *match;
 		unsigned char c2 = *name;
-		if (isspecial(c1))
+		if (c1 == '\0' || is_glob_special(c1))
 			break;
 		if (c1 != c2)
 			return 0;
@@ -108,25 +108,28 @@ static int match_one(const char *match, const char *name, int namelen)
  * and a mark is left in seen[] array for pathspec element that
  * actually matched anything.
  */
-int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen)
+int match_pathspec(const char **pathspec, const char *name, int namelen,
+		int prefix, char *seen)
 {
-	int retval;
-	const char *match;
+	int i, retval = 0;
+
+	if (!pathspec)
+		return 1;
 
 	name += prefix;
 	namelen -= prefix;
 
-	for (retval = 0; (match = *pathspec++) != NULL; seen++) {
+	for (i = 0; pathspec[i] != NULL; i++) {
 		int how;
-		if (retval && *seen == MATCHED_EXACTLY)
+		const char *match = pathspec[i] + prefix;
+		if (seen && seen[i] == MATCHED_EXACTLY)
 			continue;
-		match += prefix;
 		how = match_one(match, name, namelen);
 		if (how) {
 			if (retval < how)
 				retval = how;
-			if (*seen < how)
-				*seen = how;
+			if (seen && seen[i] < how)
+				seen[i] = how;
 		}
 	}
 	return retval;
@@ -585,10 +588,8 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			int len, dtype;
 			int exclude;
 
-			if ((de->d_name[0] == '.') &&
-			    (de->d_name[1] == 0 ||
-			     !strcmp(de->d_name + 1, ".") ||
-			     !strcmp(de->d_name + 1, "git")))
+			if (is_dot_or_dotdot(de->d_name) ||
+			     !strcmp(de->d_name, ".git"))
 				continue;
 			len = strlen(de->d_name);
 			/* Ignore overly long pathnames! */
@@ -680,7 +681,7 @@ static int simple_length(const char *match)
 	for (;;) {
 		unsigned char c = *match++;
 		len++;
-		if (isspecial(c))
+		if (c == '\0' || is_glob_special(c))
 			return len;
 	}
 }
@@ -779,6 +780,25 @@ int is_inside_dir(const char *dir)
 	return get_relative_cwd(buffer, sizeof(buffer), dir) != NULL;
 }
 
+int is_empty_dir(const char *path)
+{
+	DIR *dir = opendir(path);
+	struct dirent *e;
+	int ret = 1;
+
+	if (!dir)
+		return 0;
+
+	while ((e = readdir(dir)) != NULL)
+		if (!is_dot_or_dotdot(e->d_name)) {
+			ret = 0;
+			break;
+		}
+
+	closedir(dir);
+	return ret;
+}
+
 int remove_dir_recursively(struct strbuf *path, int only_empty)
 {
 	DIR *dir = opendir(path->buf);
@@ -793,10 +813,8 @@ int remove_dir_recursively(struct strbuf *path, int only_empty)
 	len = path->len;
 	while ((e = readdir(dir)) != NULL) {
 		struct stat st;
-		if ((e->d_name[0] == '.') &&
-		    ((e->d_name[1] == 0) ||
-		     ((e->d_name[1] == '.') && e->d_name[2] == 0)))
-			continue; /* "." and ".." */
+		if (is_dot_or_dotdot(e->d_name))
+			continue;
 
 		strbuf_setlen(path, len);
 		strbuf_addstr(path, e->d_name);

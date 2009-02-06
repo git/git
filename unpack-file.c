@@ -26,8 +26,7 @@ int main(int argc, char **argv)
 {
 	unsigned char sha1[20];
 
-	if (argv[0] && *argv[0])
-		git_extract_argv0_path(argv[0]);
+	git_extract_argv0_path(argv[0]);
 
 	if (argc != 2)
 		usage("git-unpack-file <sha1>");

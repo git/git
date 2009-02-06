@@ -50,12 +50,10 @@ test_expect_success '-A with -d option leaves unreachable objects unpacked' '
 
 compare_mtimes ()
 {
-	perl -e 'my $reference = shift;
-		 foreach my $file (@ARGV) {
-			exit(1) unless(-f $file && -M $file == -M $reference);
-		 }
-		 exit(0);
-		' -- "$@"
+	read tref rest &&
+	while read t rest; do
+		test "$tref" = "$t" || break
+	done
 }
 
 test_expect_success '-A without -d option leaves unreachable objects packed' '
@@ -87,7 +85,9 @@ test_expect_success 'unpacked objects receive timestamp of pack file' '
 	tmppack=".git/objects/pack/tmp_pack" &&
 	ln "$packfile" "$tmppack" &&
 	git repack -A -l -d &&
-	compare_mtimes "$tmppack" "$fsha1path" "$csha1path" "$tsha1path"
+	test-chmtime -v +0 "$tmppack" "$fsha1path" "$csha1path" "$tsha1path" \
+		> mtimes &&
+	compare_mtimes < mtimes
 '
 
 test_done

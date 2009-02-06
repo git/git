@@ -166,7 +166,7 @@ static int list_paths(struct string_list *list, const char *with_tree,
 		struct cache_entry *ce = active_cache[i];
 		if (ce->ce_flags & CE_UPDATE)
 			continue;
-		if (!pathspec_match(pattern, m, ce->name, 0))
+		if (!match_pathspec(pattern, ce->name, ce_namelen(ce), 0, m))
 			continue;
 		string_list_insert(ce->name, list);
 	}
@@ -359,40 +359,6 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 	wt_status_print(&s);
 
 	return s.commitable;
-}
-
-static int run_hook(const char *index_file, const char *name, ...)
-{
-	struct child_process hook;
-	const char *argv[10], *env[2];
-	char index[PATH_MAX];
-	va_list args;
-	int i;
-
-	va_start(args, name);
-	argv[0] = git_path("hooks/%s", name);
-	i = 0;
-	do {
-		if (++i >= ARRAY_SIZE(argv))
-			die ("run_hook(): too many arguments");
-		argv[i] = va_arg(args, const char *);
-	} while (argv[i]);
-	va_end(args);
-
-	snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
-	env[0] = index;
-	env[1] = NULL;
-
-	if (access(argv[0], X_OK) < 0)
-		return 0;
-
-	memset(&hook, 0, sizeof(hook));
-	hook.argv = argv;
-	hook.no_stdin = 1;
-	hook.stdout_to_stderr = 1;
-	hook.env = env;
-
-	return run_command(&hook);
 }
 
 static int is_a_merge(const unsigned char *sha1)
@@ -624,7 +590,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 	if (!commitable && !in_merge && !allow_empty &&
 	    !(amend && is_a_merge(head_sha1))) {
 		run_status(stdout, index_file, prefix, 0);
-		unlink(commit_editmsg);
 		return 0;
 	}
 
@@ -866,6 +831,9 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	if (wt_status_use_color == -1)
 		wt_status_use_color = git_use_color_default;
 
+	if (diff_use_color_default == -1)
+		diff_use_color_default = git_use_color_default;
+
 	argc = parse_and_validate_options(argc, argv, builtin_status_usage, prefix);
 
 	index_file = prepare_index(argc, argv, prefix);
@@ -881,7 +849,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 {
 	struct rev_info rev;
 	struct commit *commit;
-	static const char *format = "format:%h: \"%s\"";
+	static const char *format = "format:%h] %s";
 	unsigned char junk_sha1[20];
 	const char *head = resolve_ref("HEAD", junk_sha1, 0, NULL);
 
@@ -908,7 +876,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
-	printf("[%s%s]: created ",
+	printf("[%s%s ",
 		!prefixcmp(head, "refs/heads/") ?
 			head + 11 :
 			!strcmp(head, "HEAD") ?
@@ -944,6 +912,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	int allow_fast_forward = 1;
 
 	git_config(git_commit_config, NULL);
+
+	if (wt_status_use_color == -1)
+		wt_status_use_color = git_use_color_default;
 
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage, prefix);
 

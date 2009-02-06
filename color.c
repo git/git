@@ -41,29 +41,40 @@ static int parse_attr(const char *name, int len)
 
 void color_parse(const char *value, const char *var, char *dst)
 {
+	color_parse_mem(value, strlen(value), var, dst);
+}
+
+void color_parse_mem(const char *value, int value_len, const char *var,
+		char *dst)
+{
 	const char *ptr = value;
+	int len = value_len;
 	int attr = -1;
 	int fg = -2;
 	int bg = -2;
 
-	if (!strcasecmp(value, "reset")) {
+	if (!strncasecmp(value, "reset", len)) {
 		strcpy(dst, "\033[m");
 		return;
 	}
 
 	/* [fg [bg]] [attr] */
-	while (*ptr) {
+	while (len > 0) {
 		const char *word = ptr;
-		int val, len = 0;
+		int val, wordlen = 0;
 
-		while (word[len] && !isspace(word[len]))
-			len++;
+		while (len > 0 && !isspace(word[wordlen])) {
+			wordlen++;
+			len--;
+		}
 
-		ptr = word + len;
-		while (*ptr && isspace(*ptr))
+		ptr = word + wordlen;
+		while (len > 0 && isspace(*ptr)) {
 			ptr++;
+			len--;
+		}
 
-		val = parse_color(word, len);
+		val = parse_color(word, wordlen);
 		if (val >= -1) {
 			if (fg == -2) {
 				fg = val;
@@ -75,7 +86,7 @@ void color_parse(const char *value, const char *var, char *dst)
 			}
 			goto bad;
 		}
-		val = parse_attr(word, len);
+		val = parse_attr(word, wordlen);
 		if (val < 0 || attr != -1)
 			goto bad;
 		attr = val;
@@ -115,7 +126,7 @@ void color_parse(const char *value, const char *var, char *dst)
 	*dst = 0;
 	return;
 bad:
-	die("bad config value '%s' for variable '%s'", value, var);
+	die("bad color value '%.*s' for variable '%s'", value_len, value, var);
 }
 
 int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
@@ -191,3 +202,31 @@ int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...)
 	va_end(args);
 	return r;
 }
+
+/*
+ * This function splits the buffer by newlines and colors the lines individually.
+ *
+ * Returns 0 on success.
+ */
+int color_fwrite_lines(FILE *fp, const char *color,
+		size_t count, const char *buf)
+{
+	if (!*color)
+		return fwrite(buf, count, 1, fp) != 1;
+	while (count) {
+		char *p = memchr(buf, '\n', count);
+		if (p != buf && (fputs(color, fp) < 0 ||
+				fwrite(buf, p ? p - buf : count, 1, fp) != 1 ||
+				fputs(COLOR_RESET, fp) < 0))
+			return -1;
+		if (!p)
+			return 0;
+		if (fputc('\n', fp) < 0)
+			return -1;
+		count -= p + 1 - buf;
+		buf = p + 1;
+	}
+	return 0;
+}
+
+

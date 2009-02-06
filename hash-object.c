@@ -82,8 +82,7 @@ int main(int argc, const char **argv)
 
 	type = blob_type;
 
-	if (argv[0] && *argv[0])
-		git_extract_argv0_path(argv[0]);
+	git_extract_argv0_path(argv[0]);
 
 	git_config(git_default_config, NULL);
 

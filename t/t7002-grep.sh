@@ -161,7 +161,14 @@ test_expect_success 'log grep (6)' '
 	git log --author=-0700  --pretty=tformat:%s >actual &&
 	>expect &&
 	test_cmp expect actual
+'
 
+test_expect_success 'grep with CE_VALID file' '
+	git update-index --assume-unchanged t/t &&
+	rm t/t &&
+	test "$(git grep --no-ext-grep t)" = "t/t:test" &&
+	git update-index --no-assume-unchanged t/t &&
+	git checkout t/t
 '
 
 test_done

@@ -7,7 +7,7 @@ git-cherry - Find commits not merged upstream
 
 SYNOPSIS
 --------
-'git cherry' [-v] <upstream> [<head>] [<limit>]
+'git cherry' [-v] [<upstream> [<head> [<limit>]]]
 
 DESCRIPTION
 -----------
@@ -51,6 +51,7 @@ OPTIONS
 
 <upstream>::
 	Upstream branch to compare against.
+	Defaults to the first tracked remote branch, if available.
 
 <head>::
 	Working branch; defaults to HEAD.

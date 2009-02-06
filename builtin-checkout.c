@@ -38,23 +38,13 @@ struct checkout_opts {
 static int post_checkout_hook(struct commit *old, struct commit *new,
 			      int changed)
 {
-	struct child_process proc;
-	const char *name = git_path("hooks/post-checkout");
-	const char *argv[5];
+	return run_hook(NULL, "post-checkout",
+			sha1_to_hex(old ? old->object.sha1 : null_sha1),
+			sha1_to_hex(new ? new->object.sha1 : null_sha1),
+			changed ? "1" : "0", NULL);
+	/* "new" can be NULL when checking out from the index before
+	   a commit exists. */
 
-	if (access(name, X_OK) < 0)
-		return 0;
-
-	memset(&proc, 0, sizeof(proc));
-	argv[0] = name;
-	argv[1] = xstrdup(sha1_to_hex(old ? old->object.sha1 : null_sha1));
-	argv[2] = xstrdup(sha1_to_hex(new->object.sha1));
-	argv[3] = changed ? "1" : "0";
-	argv[4] = NULL;
-	proc.argv = argv;
-	proc.no_stdin = 1;
-	proc.stdout_to_stderr = 1;
-	return run_command(&proc);
 }
 
 static int update_some(const unsigned char *sha1, const char *base, int baselen,
@@ -240,7 +230,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
-		pathspec_match(pathspec, ps_matched, ce->name, 0);
+		match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, ps_matched);
 	}
 
 	if (report_path_error(ps_matched, pathspec, 0))
@@ -249,7 +239,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	/* Any unmerged paths? */
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
-		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
+		if (match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, NULL)) {
 			if (!ce_stage(ce))
 				continue;
 			if (opts->force) {
@@ -274,7 +264,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	state.refresh_cache = 1;
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
-		if (pathspec_match(pathspec, NULL, ce->name, 0)) {
+		if (match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, NULL)) {
 			if (!ce_stage(ce)) {
 				errs |= checkout_entry(ce, &state, NULL);
 				continue;
@@ -681,8 +671,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		argv++;
 		argc--;
 
+		new.name = arg;
 		if ((new.commit = lookup_commit_reference_gently(rev, 1))) {
-			new.name = arg;
 			setup_branch_path(&new);
 			if (resolve_ref(new.path, rev, 1, NULL))
 				new.commit = lookup_commit_reference(rev);

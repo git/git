@@ -1873,12 +1873,13 @@ static void file_change_m(struct branch *b)
 	if (!p)
 		die("Corrupt mode: %s", command_buf.buf);
 	switch (mode) {
+	case 0644:
+	case 0755:
+		mode |= S_IFREG;
 	case S_IFREG | 0644:
 	case S_IFREG | 0755:
 	case S_IFLNK:
 	case S_IFGITLINK:
-	case 0644:
-	case 0755:
 		/* ok */
 		break;
 	default:
@@ -1945,7 +1946,7 @@ static void file_change_m(struct branch *b)
 			    typename(type), command_buf.buf);
 	}
 
-	tree_content_set(&b->branch_tree, p, sha1, S_IFREG | mode, NULL);
+	tree_content_set(&b->branch_tree, p, sha1, mode, NULL);
 }
 
 static void file_change_d(struct branch *b)
@@ -2406,8 +2407,7 @@ int main(int argc, const char **argv)
 {
 	unsigned int i, show_stats = 1;
 
-	if (argv[0] && *argv[0])
-		git_extract_argv0_path(argv[0]);
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 	git_config(git_pack_config, NULL);

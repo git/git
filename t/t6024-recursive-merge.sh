@@ -97,4 +97,27 @@ test_expect_success 'refuse to merge binary files' '
 		merge.err
 '
 
+test_expect_success 'mark rename/delete as unmerged' '
+
+	git reset --hard &&
+	git checkout -b delete &&
+	git rm a1 &&
+	test_tick &&
+	git commit -m delete &&
+	git checkout -b rename HEAD^ &&
+	git mv a1 a2
+	test_tick &&
+	git commit -m rename &&
+	test_must_fail git merge delete &&
+	test 1 = $(git ls-files --unmerged | wc -l) &&
+	git rev-parse --verify :2:a2 &&
+	test_must_fail git rev-parse --verify :3:a2 &&
+	git checkout -f delete &&
+	test_must_fail git merge rename &&
+	test 1 = $(git ls-files --unmerged | wc -l) &&
+	test_must_fail git rev-parse --verify :2:a2 &&
+	git rev-parse --verify :3:a2
+
+'
+
 test_done

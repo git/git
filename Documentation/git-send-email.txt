@@ -34,6 +34,7 @@ The --bcc option must be repeated for each user you want on the bcc list.
 
 --cc::
 	Specify a starting "Cc:" value for each email.
+	Default is the value of 'sendemail.cc'.
 +
 The --cc option must be repeated for each user you want on the cc list.
 
@@ -197,12 +198,6 @@ Administering
 --[no-]validate::
 	Perform sanity checks on patches.
 	Currently, validation means the following:
-
---[no-]format-patch::
-	When an argument may be understood either as a reference or as a file name,
-	choose to understand it as a format-patch argument ('--format-patch')
-	or as a file name ('--no-format-patch'). By default, when such a conflict
-	occurs, git send-email will fail.
 +
 --
 		*	Warn of patches that contain lines longer than 998 characters; this
@@ -211,6 +206,12 @@ Administering
 +
 Default is the value of 'sendemail.validate'; if this is not set,
 default to '--validate'.
+
+--[no-]format-patch::
+	When an argument may be understood either as a reference or as a file name,
+	choose to understand it as a format-patch argument ('--format-patch')
+	or as a file name ('--no-format-patch'). By default, when such a conflict
+	occurs, git send-email will fail.
 
 
 CONFIGURATION

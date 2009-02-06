@@ -179,7 +179,7 @@ static char *open_pack_file(char *pack_name)
 		} else
 			output_fd = open(pack_name, O_CREAT|O_EXCL|O_RDWR, 0600);
 		if (output_fd < 0)
-			die("unable to create %s: %s\n", pack_name, strerror(errno));
+			die("unable to create %s: %s", pack_name, strerror(errno));
 		pack_fd = output_fd;
 	} else {
 		input_fd = open(pack_name, O_RDONLY);
@@ -276,10 +276,10 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size)
 	stream.avail_out = size;
 	stream.next_in = fill(1);
 	stream.avail_in = input_len;
-	inflateInit(&stream);
+	git_inflate_init(&stream);
 
 	for (;;) {
-		int ret = inflate(&stream, 0);
+		int ret = git_inflate(&stream, 0);
 		use(input_len - stream.avail_in);
 		if (stream.total_out == size && ret == Z_STREAM_END)
 			break;
@@ -288,7 +288,7 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size)
 		stream.next_in = fill(1);
 		stream.avail_in = input_len;
 	}
-	inflateEnd(&stream);
+	git_inflate_end(&stream);
 	return buf;
 }
 
@@ -383,9 +383,9 @@ static void *get_data_from_pack(struct object_entry *obj)
 	stream.avail_out = obj->size;
 	stream.next_in = src;
 	stream.avail_in = len;
-	inflateInit(&stream);
-	while ((st = inflate(&stream, Z_FINISH)) == Z_OK);
-	inflateEnd(&stream);
+	git_inflate_init(&stream);
+	while ((st = git_inflate(&stream, Z_FINISH)) == Z_OK);
+	git_inflate_end(&stream);
 	if (st != Z_STREAM_END || stream.total_out != obj->size)
 		die("serious inflate inconsistency");
 	free(src);
@@ -881,8 +881,7 @@ int main(int argc, char **argv)
 	struct pack_idx_entry **idx_objects;
 	unsigned char pack_sha1[20];
 
-	if (argv[0] && *argv[0])
-		git_extract_argv0_path(argv[0]);
+	git_extract_argv0_path(argv[0]);
 
 	/*
 	 * We wish to read the repository's config file if any, and

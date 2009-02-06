@@ -32,6 +32,7 @@ extern "C" {
 #define XDF_IGNORE_WHITESPACE (1 << 2)
 #define XDF_IGNORE_WHITESPACE_CHANGE (1 << 3)
 #define XDF_IGNORE_WHITESPACE_AT_EOL (1 << 4)
+#define XDF_PATIENCE_DIFF (1 << 5)
 #define XDF_WHITESPACE_FLAGS (XDF_IGNORE_WHITESPACE | XDF_IGNORE_WHITESPACE_CHANGE | XDF_IGNORE_WHITESPACE_AT_EOL)
 
 #define XDL_PATCH_NORMAL '-'
@@ -84,6 +85,7 @@ typedef long (*find_func_t)(const char *line, long line_len, char *buffer, long 
 
 typedef struct s_xdemitconf {
 	long ctxlen;
+	long interhunkctxlen;
 	unsigned long flags;
 	find_func_t find_func;
 	void *find_func_priv;

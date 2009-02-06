@@ -98,6 +98,12 @@ index d99af23..8b32fb5 100644
 EOF
 git diff -w > out
 test_expect_success 'another test, with -w' 'test_cmp expect out'
+git diff -w -b > out
+test_expect_success 'another test, with -w -b' 'test_cmp expect out'
+git diff -w --ignore-space-at-eol > out
+test_expect_success 'another test, with -w --ignore-space-at-eol' 'test_cmp expect out'
+git diff -w -b --ignore-space-at-eol > out
+test_expect_success 'another test, with -w -b --ignore-space-at-eol' 'test_cmp expect out'
 
 tr 'Q' '\015' << EOF > expect
 diff --git a/x b/x
@@ -116,6 +122,27 @@ index d99af23..8b32fb5 100644
 EOF
 git diff -b > out
 test_expect_success 'another test, with -b' 'test_cmp expect out'
+git diff -b --ignore-space-at-eol > out
+test_expect_success 'another test, with -b --ignore-space-at-eol' 'test_cmp expect out'
+
+tr 'Q' '\015' << EOF > expect
+diff --git a/x b/x
+index d99af23..8b32fb5 100644
+--- a/x
++++ b/x
+@@ -1,6 +1,6 @@
+-whitespace at beginning
+-whitespace change
+-whitespace in the middle
++	whitespace at beginning
++whitespace 	 change
++white space in the middle
+ whitespace at end
+ unchanged line
+ CR at endQ
+EOF
+git diff --ignore-space-at-eol > out
+test_expect_success 'another test, with --ignore-space-at-eol' 'test_cmp expect out'
 
 test_expect_success 'check mixed spaces and tabs in indent' '
 

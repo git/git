@@ -36,42 +36,6 @@ static const char *tag_other = "";
 static const char *tag_killed = "";
 static const char *tag_modified = "";
 
-
-/*
- * Match a pathspec against a filename. The first "skiplen" characters
- * are the common prefix
- */
-int pathspec_match(const char **spec, char *ps_matched,
-		   const char *filename, int skiplen)
-{
-	const char *m;
-
-	while ((m = *spec++) != NULL) {
-		int matchlen = strlen(m + skiplen);
-
-		if (!matchlen)
-			goto matched;
-		if (!strncmp(m + skiplen, filename + skiplen, matchlen)) {
-			if (m[skiplen + matchlen - 1] == '/')
-				goto matched;
-			switch (filename[skiplen + matchlen]) {
-			case '/': case '\0':
-				goto matched;
-			}
-		}
-		if (!fnmatch(m + skiplen, filename + skiplen, 0))
-			goto matched;
-		if (ps_matched)
-			ps_matched++;
-		continue;
-	matched:
-		if (ps_matched)
-			*ps_matched = 1;
-		return 1;
-	}
-	return 0;
-}
-
 static void show_dir_entry(const char *tag, struct dir_entry *ent)
 {
 	int len = prefix_len;
@@ -80,7 +44,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	if (len >= ent->len)
 		die("git ls-files: internal error - directory entry not superset of prefix");
 
-	if (pathspec && !pathspec_match(pathspec, ps_matched, ent->name, len))
+	if (!match_pathspec(pathspec, ent->name, ent->len, len, ps_matched))
 		return;
 
 	fputs(tag, stdout);
@@ -156,7 +120,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 	if (len >= ce_namelen(ce))
 		die("git ls-files: internal error - cache entry not superset of prefix");
 
-	if (pathspec && !pathspec_match(pathspec, ps_matched, ce->name, len))
+	if (!match_pathspec(pathspec, ce->name, ce_namelen(ce), len, ps_matched))
 		return;
 
 	if (tag && *tag && show_valid_bit &&

@@ -20,9 +20,9 @@ HTTPD_DOCUMENT_ROOT_PATH=$HTTPD_ROOT_PATH/www
 
 if ! test -x "$LIB_HTTPD_PATH"
 then
-        say "skipping test, no web server found at '$LIB_HTTPD_PATH'"
-        test_done
-        exit
+	say "skipping test, no web server found at '$LIB_HTTPD_PATH'"
+	test_done
+	exit
 fi
 
 HTTPD_VERSION=`$LIB_HTTPD_PATH -v | \
@@ -84,7 +84,7 @@ prepare_httpd() {
 start_httpd() {
 	prepare_httpd
 
-	trap 'stop_httpd; die' exit
+	trap 'stop_httpd; die' EXIT
 
 	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
 		-f "$TEST_PATH/apache.conf" $HTTPD_PARA \
@@ -92,7 +92,7 @@ start_httpd() {
 }
 
 stop_httpd() {
-	trap 'die' exit
+	trap 'die' EXIT
 
 	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
 		-f "$TEST_PATH/apache.conf" -k stop

@@ -19,16 +19,12 @@ endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 -p::
+-u::
 	Generate patch (see section on generating patches).
 	{git-diff? This is the default.}
 endif::git-format-patch[]
 
--u::
-	Synonym for "-p".
-
 -U<n>::
-	Shorthand for "--unified=<n>".
-
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
 	the usual three. Implies "-p".
@@ -39,6 +35,9 @@ endif::git-format-patch[]
 
 --patch-with-raw::
 	Synonym for "-p --raw".
+
+--patience::
+	Generate a diff using the "patience diff" algorithm.
 
 --stat[=width[,name-width]]::
 	Generate a diffstat.  You can override the default
@@ -95,8 +94,22 @@ endif::git-format-patch[]
 	Turn off colored diff, even when the configuration file
 	gives the default to color output.
 
---color-words::
-	Show colored word diff, i.e. color words which have changed.
+--color-words[=<regex>]::
+	Show colored word diff, i.e., color words which have changed.
+	By default, words are separated by whitespace.
++
+When a <regex> is specified, every non-overlapping match of the
+<regex> is considered a word.  Anything between these matches is
+considered whitespace and ignored(!) for the purposes of finding
+differences.  You may want to append `|[^[:space:]]` to your regular
+expression to make sure that it matches all non-whitespace characters.
+A match that contains a newline is silently truncated(!) at the
+newline.
++
+The regex can also be set via a diff driver or configuration option, see
+linkgit:gitattributes[1] or linkgit:git-config[1].  Giving it explicitly
+overrides any diff driver or configuration setting.  Diff drivers
+override configuration settings.
 
 --no-renames::
 	Turn off rename detection, even when the configuration
@@ -120,7 +133,7 @@ endif::git-format-patch[]
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
 	name in diff-raw format output and diff-tree header
-	lines, show only handful hexdigits prefix.  This is
+	lines, show only a partial prefix.  This is
 	independent of --full-index option above, which controls
 	the diff-patch output format.  Non default number of
 	digits can be specified with --abbrev=<n>.
@@ -190,30 +203,28 @@ endif::git-format-patch[]
 	can name which subdirectory to make the output relative
 	to by giving a <path> as an argument.
 
+-a::
 --text::
 	Treat all files as text.
-
--a::
-	Shorthand for "--text".
 
 --ignore-space-at-eol::
 	Ignore changes in whitespace at EOL.
 
+-b::
 --ignore-space-change::
 	Ignore changes in amount of whitespace.  This ignores whitespace
 	at line end, and considers all other sequences of one or
 	more whitespace characters to be equivalent.
 
--b::
-	Shorthand for "--ignore-space-change".
-
+-w::
 --ignore-all-space::
 	Ignore whitespace when comparing lines.  This ignores
 	differences even if one line has whitespace where the other
 	line has none.
 
--w::
-	Shorthand for "--ignore-all-space".
+--inter-hunk-context=<lines>::
+	Show the context between diff hunks, up to the specified number
+	of lines, thereby fusing hunks that are close to each other.
 
 --exit-code::
 	Make the program exit with codes similar to diff(1).

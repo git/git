@@ -114,31 +114,31 @@ AC_MSG_NOTICE([CHECKS for programs])
 #
 AC_PROG_CC([cc gcc])
 # which switch to pass runtime path to dynamic libraries to the linker
-AC_CACHE_CHECK([if linker supports -R], ld_dashr, [
+AC_CACHE_CHECK([if linker supports -R], git_cv_ld_dashr, [
    SAVE_LDFLAGS="${LDFLAGS}"
    LDFLAGS="${SAVE_LDFLAGS} -R /"
-   AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [ld_dashr=yes], [ld_dashr=no])
+   AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [git_cv_ld_dashr=yes], [git_cv_ld_dashr=no])
    LDFLAGS="${SAVE_LDFLAGS}"
 ])
-if test "$ld_dashr" = "yes"; then
+if test "$git_cv_ld_dashr" = "yes"; then
    AC_SUBST(CC_LD_DYNPATH, [-R])
 else
-   AC_CACHE_CHECK([if linker supports -Wl,-rpath,], ld_wl_rpath, [
+   AC_CACHE_CHECK([if linker supports -Wl,-rpath,], git_cv_ld_wl_rpath, [
       SAVE_LDFLAGS="${LDFLAGS}"
       LDFLAGS="${SAVE_LDFLAGS} -Wl,-rpath,/"
-      AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [ld_wl_rpath=yes], [ld_wl_rpath=no])
-      LDFLAGS="${SAVE_LD_FLAGS}"
+      AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [git_cv_ld_wl_rpath=yes], [git_cv_ld_wl_rpath=no])
+      LDFLAGS="${SAVE_LDFLAGS}"
    ])
-   if test "$ld_wl_rpath" = "yes"; then
+   if test "$git_cv_ld_wl_rpath" = "yes"; then
       AC_SUBST(CC_LD_DYNPATH, [-Wl,-rpath,])
    else
-      AC_CACHE_CHECK([if linker supports -rpath], ld_rpath, [
+      AC_CACHE_CHECK([if linker supports -rpath], git_cv_ld_rpath, [
          SAVE_LDFLAGS="${LDFLAGS}"
          LDFLAGS="${SAVE_LDFLAGS} -rpath /"
-         AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [ld_rpath=yes], [ld_rpath=no])
-         LDFLAGS="${SAVE_LD_FLAGS}"
+         AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [git_cv_ld_rpath=yes], [git_cv_ld_rpath=no])
+         LDFLAGS="${SAVE_LDFLAGS}"
       ])
-      if test "$ld_rpath" = "yes"; then
+      if test "$git_cv_ld_rpath" = "yes"; then
          AC_SUBST(CC_LD_DYNPATH, [-rpath])
       else
          AC_MSG_WARN([linker does not support runtime path to dynamic libraries])
@@ -492,7 +492,8 @@ AC_SUBST(NO_MKDTEMP)
 #
 # Define NO_PTHREADS if we do not have pthreads
 #
-# Define PTHREAD_LIBS to the linker flag used for Pthread support.
+# Define PTHREAD_LIBS to the linker flag used for Pthread support and define
+# THREADED_DELTA_SEARCH if Pthreads are available.
 AC_LANG_CONFTEST([AC_LANG_PROGRAM(
   [[#include <pthread.h>]],
   [[pthread_mutex_t test_mutex;]]
@@ -500,16 +501,19 @@ AC_LANG_CONFTEST([AC_LANG_PROGRAM(
 ${CC} -pthread conftest.c -o conftest.o > /dev/null 2>&1
 if test $? -eq 0;then
  PTHREAD_LIBS="-pthread"
+ THREADED_DELTA_SEARCH=YesPlease
 else
  ${CC} -lpthread conftest.c -o conftest.o > /dev/null 2>&1
  if test $? -eq 0;then
   PTHREAD_LIBS="-lpthread"
+  THREADED_DELTA_SEARCH=YesPlease
  else
   NO_PTHREADS=UnfortunatelyYes
  fi
 fi
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(NO_PTHREADS)
+AC_SUBST(THREADED_DELTA_SEARCH)
 
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE

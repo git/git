@@ -262,4 +262,12 @@ test_expect_success 'Tag name filtering allows slashes in tag names' '
 	test_cmp expect actual
 '
 
+test_expect_success 'Prune empty commits' '
+	git rev-list HEAD > expect &&
+	make_commit to_remove &&
+	git filter-branch -f --index-filter "git update-index --remove to_remove" --prune-empty HEAD &&
+	git rev-list HEAD > actual &&
+	test_cmp expect actual
+'
+
 test_done

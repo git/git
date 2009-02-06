@@ -18,6 +18,10 @@
 #define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
 #endif
 
+void git_inflate_init(z_streamp strm);
+void git_inflate_end(z_streamp strm);
+int git_inflate(z_streamp strm, int flush);
+
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
 #define DTYPE(de)	((de)->d_type)
 #else
@@ -631,9 +635,6 @@ extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsig
 extern int pretend_sha1_file(void *, unsigned long, enum object_type, unsigned char *);
 extern int force_object_loose(const unsigned char *sha1, time_t mtime);
 
-/* just like read_sha1_file(), but non fatal in presence of bad objects */
-extern void *read_object(const unsigned char *sha1, enum object_type *type, unsigned long *size);
-
 /* global flag to enable extra checks when accessing packed objects */
 extern int do_check_packed_object_crc;
 
@@ -720,6 +721,10 @@ struct checkout {
 
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
 extern int has_symlink_leading_path(int len, const char *name);
+extern int has_symlink_or_noent_leading_path(int len, const char *name);
+extern int has_dirs_only_path(int len, const char *name, int prefix_len);
+extern void invalidate_lstat_cache(int len, const char *name);
+extern void clear_lstat_cache(void);
 
 extern struct alternate_object_database {
 	struct alternate_object_database *next;
@@ -936,7 +941,6 @@ extern int ws_fix_copy(char *, const char *, int, unsigned, int *);
 extern int ws_blank_line(const char *line, int len, unsigned ws_rule);
 
 /* ls-files */
-int pathspec_match(const char **spec, char *matched, const char *filename, int skiplen);
 int report_path_error(const char *ps_matched, const char **pathspec, int prefix_offset);
 void overlay_tree_on_cache(const char *tree_name, const char *prefix);
 

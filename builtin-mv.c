@@ -192,6 +192,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					memmove(destination + i,
 						destination + i + 1,
 						(argc - i) * sizeof(char *));
+					i--;
 				}
 			} else
 				die ("%s, source=%s, destination=%s",

@@ -464,7 +464,7 @@ static void minimize(struct pack_list **min)
 		pll_free(perm_all);
 	}
 	if (perm_ok == NULL)
-		die("Internal error: No complete sets found!\n");
+		die("Internal error: No complete sets found!");
 
 	/* find the permutation with the smallest size */
 	perm = perm_ok;
@@ -574,14 +574,14 @@ static struct pack_list * add_pack_file(char *filename)
 	struct packed_git *p = packed_git;
 
 	if (strlen(filename) < 40)
-		die("Bad pack filename: %s\n", filename);
+		die("Bad pack filename: %s", filename);
 
 	while (p) {
 		if (strstr(p->pack_name, filename))
 			return add_pack(p);
 		p = p->next;
 	}
-	die("Filename %s not found in packed_git\n", filename);
+	die("Filename %s not found in packed_git", filename);
 }
 
 static void load_all(void)
@@ -602,8 +602,7 @@ int main(int argc, char **argv)
 	unsigned char *sha1;
 	char buf[42]; /* 40 byte sha1 + \n + \0 */
 
-	if (argv[0] && *argv[0])
-		git_extract_argv0_path(argv[0]);
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 
@@ -640,7 +639,7 @@ int main(int argc, char **argv)
 			add_pack_file(*(argv + i++));
 
 	if (local_packs == NULL)
-		die("Zero packs found!\n");
+		die("Zero packs found!");
 
 	load_all_objects();
 

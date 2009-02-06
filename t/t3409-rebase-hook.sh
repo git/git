@@ -118,7 +118,11 @@ test_expect_success 'pre-rebase hook stops rebase (1)' '
 test_expect_success 'pre-rebase hook stops rebase (2)' '
 	git checkout test &&
 	git reset --hard side &&
-	EDITOR=true test_must_fail git rebase -i master &&
+	(
+		EDITOR=:
+		export EDITOR
+		test_must_fail git rebase -i master
+	) &&
 	test "z$(git symbolic-ref HEAD)" = zrefs/heads/test &&
 	test 0 = $(git rev-list HEAD...side | wc -l)
 '

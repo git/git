@@ -70,7 +70,8 @@ my ($_stdin, $_help, $_edit,
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
-                    'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache );
+                    'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
+                    'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex );
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
 		'repack:i' => \$Git::SVN::_repack,
@@ -84,6 +85,7 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		   \$Git::SVN::_repack_flags,
 		'use-log-author' => \$Git::SVN::_use_log_author,
 		'add-author-from' => \$Git::SVN::_add_author_from,
+		'localtime' => \$Git::SVN::_localtime,
 		%remote_opts );
 
 my ($_trunk, $_tags, $_branches, $_stdlayout);
@@ -911,7 +913,8 @@ sub cmd_info {
 	if ($@) {
 		$result .= "Repository Root: (offline)\n";
 	}
-	$result .= "Repository UUID: $uuid\n" unless $diff_status eq "A";
+	$result .= "Repository UUID: $uuid\n" unless $diff_status eq "A" &&
+		($SVN::Core::VERSION le '1.5.4' || $file_type ne "dir");
 	$result .= "Revision: " . ($diff_status eq "A" ? 0 : $rev) . "\n";
 
 	$result .= "Node Kind: " .
@@ -1364,7 +1367,7 @@ use constant rev_map_fmt => 'NH40';
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags $_use_svm_props $_head
             $_use_svnsync_props $no_reuse_existing $_minimize_url
-	    $_use_log_author $_add_author_from/;
+	    $_use_log_author $_add_author_from $_localtime/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
@@ -2526,12 +2529,61 @@ sub get_untracked {
 	\@out;
 }
 
+# parse_svn_date(DATE)
+# --------------------
+# Given a date (in UTC) from Subversion, return a string in the format
+# "<TZ Offset> <local date/time>" that Git will use.
+#
+# By default the parsed date will be in UTC; if $Git::SVN::_localtime
+# is true we'll convert it to the local timezone instead.
 sub parse_svn_date {
 	my $date = shift || return '+0000 1970-01-01 00:00:00';
 	my ($Y,$m,$d,$H,$M,$S) = ($date =~ /^(\d{4})\-(\d\d)\-(\d\d)T
 	                                    (\d\d)\:(\d\d)\:(\d\d).\d+Z$/x) or
 	                                 croak "Unable to parse date: $date\n";
-	"+0000 $Y-$m-$d $H:$M:$S";
+	my $parsed_date;    # Set next.
+
+	if ($Git::SVN::_localtime) {
+		# Translate the Subversion datetime to an epoch time.
+		# Begin by switching ourselves to $date's timezone, UTC.
+		my $old_env_TZ = $ENV{TZ};
+		$ENV{TZ} = 'UTC';
+
+		my $epoch_in_UTC =
+		    POSIX::strftime('%s', $S, $M, $H, $d, $m - 1, $Y - 1900);
+
+		# Determine our local timezone (including DST) at the
+		# time of $epoch_in_UTC.  $Git::SVN::Log::TZ stored the
+		# value of TZ, if any, at the time we were run.
+		if (defined $Git::SVN::Log::TZ) {
+			$ENV{TZ} = $Git::SVN::Log::TZ;
+		} else {
+			delete $ENV{TZ};
+		}
+
+		my $our_TZ =
+		    POSIX::strftime('%Z', $S, $M, $H, $d, $m - 1, $Y - 1900);
+
+		# This converts $epoch_in_UTC into our local timezone.
+		my ($sec, $min, $hour, $mday, $mon, $year,
+		    $wday, $yday, $isdst) = localtime($epoch_in_UTC);
+
+		$parsed_date = sprintf('%s %04d-%02d-%02d %02d:%02d:%02d',
+				       $our_TZ, $year + 1900, $mon + 1,
+				       $mday, $hour, $min, $sec);
+
+		# Reset us to the timezone in effect when we entered
+		# this routine.
+		if (defined $old_env_TZ) {
+			$ENV{TZ} = $old_env_TZ;
+		} else {
+			delete $ENV{TZ};
+		}
+	} else {
+		$parsed_date = "+0000 $Y-$m-$d $H:$M:$S";
+	}
+
+	return $parsed_date;
 }
 
 sub check_author {
@@ -3194,13 +3246,17 @@ use warnings;
 use Carp qw/croak/;
 use File::Temp qw/tempfile/;
 use IO::File qw//;
+use vars qw/$_ignore_regex/;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
 	my ($class, $git_svn) = @_;
 	my $self = SVN::Delta::Editor->new;
 	bless $self, $class;
-	$self->{c} = $git_svn->{last_commit} if exists $git_svn->{last_commit};
+	if (exists $git_svn->{last_commit}) {
+		$self->{c} = $git_svn->{last_commit};
+		$self->{empty_symlinks} = _mark_empty_symlinks($git_svn);
+	}
 	$self->{empty} = {};
 	$self->{dir_prop} = {};
 	$self->{file_prop} = {};
@@ -3208,6 +3264,48 @@ sub new {
 	$self->{absent_file} = {};
 	$self->{gii} = $git_svn->tmp_index_do(sub { Git::IndexInfo->new });
 	$self;
+}
+
+# this uses the Ra object, so it must be called before do_{switch,update},
+# not inside them (when the Git::SVN::Fetcher object is passed) to
+# do_{switch,update}
+sub _mark_empty_symlinks {
+	my ($git_svn) = @_;
+	my %ret;
+	my ($rev, $cmt) = $git_svn->last_rev_commit;
+	return {} unless ($rev && $cmt);
+
+	chomp(my $empty_blob = `git hash-object -t blob --stdin < /dev/null`);
+	my ($ls, $ctx) = command_output_pipe(qw/ls-tree -r -z/, $cmt);
+	local $/ = "\0";
+	my $pfx = $git_svn->{path};
+	$pfx .= '/' if length($pfx);
+	while (<$ls>) {
+		chomp;
+		s/\A100644 blob $empty_blob\t//o or next;
+		my $path = $_;
+		my (undef, $props) =
+		               $git_svn->ra->get_file($pfx.$path, $rev, undef);
+		if ($props->{'svn:special'}) {
+			$ret{$path} = 1;
+		}
+	}
+	command_close_pipe($ls, $ctx);
+	\%ret;
+}
+
+# returns true if a given path is inside a ".git" directory
+sub in_dot_git {
+	$_[0] =~ m{(?:^|/)\.git(?:/|$)};
+}
+
+# return value: 0 -- don't ignore, 1 -- ignore
+sub is_path_ignored {
+	my ($path) = @_;
+	return 1 if in_dot_git($path);
+	return 0 unless defined($_ignore_regex);
+	return 1 if $path =~ m!$_ignore_regex!o;
+	return 0;
 }
 
 sub set_path_strip {
@@ -3235,6 +3333,7 @@ sub git_path {
 
 sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
+	return undef if is_path_ignored($path);
 
 	my $gpath = $self->git_path($path);
 	return undef if ($gpath eq '');
@@ -3262,26 +3361,40 @@ sub delete_entry {
 
 sub open_file {
 	my ($self, $path, $pb, $rev) = @_;
+	my ($mode, $blob);
+
+	goto out if is_path_ignored($path);
+
 	my $gpath = $self->git_path($path);
-	my ($mode, $blob) = (command('ls-tree', $self->{c}, '--', $gpath)
+	($mode, $blob) = (command('ls-tree', $self->{c}, '--', $gpath)
 	                     =~ /^(\d{6}) blob ([a-f\d]{40})\t/);
 	unless (defined $mode && defined $blob) {
 		die "$path was not found in commit $self->{c} (r$rev)\n";
 	}
+	if ($mode eq '100644' && $self->{empty_symlinks}->{$path}) {
+		$mode = '120000';
+	}
+out:
 	{ path => $path, mode_a => $mode, mode_b => $mode, blob => $blob,
 	  pool => SVN::Pool->new, action => 'M' };
 }
 
 sub add_file {
 	my ($self, $path, $pb, $cp_path, $cp_rev) = @_;
-	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
-	delete $self->{empty}->{$dir};
-	{ path => $path, mode_a => 100644, mode_b => 100644,
+	my $mode;
+
+	if (!is_path_ignored($path)) {
+		my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
+		delete $self->{empty}->{$dir};
+		$mode = '100644';
+	}
+	{ path => $path, mode_a => $mode, mode_b => $mode,
 	  pool => SVN::Pool->new, action => 'A' };
 }
 
 sub add_directory {
 	my ($self, $path, $cp_path, $cp_rev) = @_;
+	goto out if is_path_ignored($path);
 	my $gpath = $self->git_path($path);
 	if ($gpath eq '') {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
@@ -3299,11 +3412,13 @@ sub add_directory {
 	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
 	delete $self->{empty}->{$dir};
 	$self->{empty}->{$path} = 1;
+out:
 	{ path => $path };
 }
 
 sub change_dir_prop {
 	my ($self, $db, $prop, $value) = @_;
+	return undef if is_path_ignored($db->{path});
 	$self->{dir_prop}->{$db->{path}} ||= {};
 	$self->{dir_prop}->{$db->{path}}->{$prop} = $value;
 	undef;
@@ -3311,6 +3426,7 @@ sub change_dir_prop {
 
 sub absent_directory {
 	my ($self, $path, $pb) = @_;
+	return undef if is_path_ignored($path);
 	$self->{absent_dir}->{$pb->{path}} ||= [];
 	push @{$self->{absent_dir}->{$pb->{path}}}, $path;
 	undef;
@@ -3318,6 +3434,7 @@ sub absent_directory {
 
 sub absent_file {
 	my ($self, $path, $pb) = @_;
+	return undef if is_path_ignored($path);
 	$self->{absent_file}->{$pb->{path}} ||= [];
 	push @{$self->{absent_file}->{$pb->{path}}}, $path;
 	undef;
@@ -3325,6 +3442,7 @@ sub absent_file {
 
 sub change_file_prop {
 	my ($self, $fb, $prop, $value) = @_;
+	return undef if is_path_ignored($fb->{path});
 	if ($prop eq 'svn:executable') {
 		if ($fb->{mode_b} != 120000) {
 			$fb->{mode_b} = defined $value ? 100755 : 100644;
@@ -3340,22 +3458,43 @@ sub change_file_prop {
 
 sub apply_textdelta {
 	my ($self, $fb, $exp) = @_;
+	return undef if is_path_ignored($fb->{path});
 	my $fh = $::_repository->temp_acquire('svn_delta');
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
 	open my $dup, '<&', $fh or croak $!;
 	my $base = $::_repository->temp_acquire('git_blob');
+
 	if ($fb->{blob}) {
-		print $base 'link ' if ($fb->{mode_a} == 120000);
-		my $size = $::_repository->cat_blob($fb->{blob}, $base);
+		my ($base_is_link, $size);
+
+		if ($fb->{mode_a} eq '120000' &&
+		    ! $self->{empty_symlinks}->{$fb->{path}}) {
+			print $base 'link ' or die "print $!\n";
+			$base_is_link = 1;
+		}
+	retry:
+		$size = $::_repository->cat_blob($fb->{blob}, $base);
 		die "Failed to read object $fb->{blob}" if ($size < 0);
 
 		if (defined $exp) {
 			seek $base, 0, 0 or croak $!;
 			my $got = ::md5sum($base);
-			die "Checksum mismatch: $fb->{path} $fb->{blob}\n",
-			    "expected: $exp\n",
-			    "     got: $got\n" if ($got ne $exp);
+			if ($got ne $exp) {
+				my $err = "Checksum mismatch: ".
+				       "$fb->{path} $fb->{blob}\n" .
+				       "expected: $exp\n" .
+				       "     got: $got\n";
+				if ($base_is_link) {
+					warn $err,
+					     "Retrying... (possibly ",
+					     "a bad symlink from SVN)\n";
+					$::_repository->temp_reset($base);
+					$base_is_link = 0;
+					goto retry;
+				}
+				die $err;
+			}
 		}
 	}
 	seek $base, 0, 0 or croak $!;
@@ -3366,6 +3505,8 @@ sub apply_textdelta {
 
 sub close_file {
 	my ($self, $fb, $exp) = @_;
+	return undef if is_path_ignored($fb->{path});
+
 	my $hash;
 	my $path = $self->git_path($fb->{path});
 	if (my $fh = $fb->{fh}) {
@@ -3379,11 +3520,19 @@ sub close_file {
 		}
 		if ($fb->{mode_b} == 120000) {
 			sysseek($fh, 0, 0) or croak $!;
-			sysread($fh, my $buf, 5) == 5 or croak $!;
+			my $rd = sysread($fh, my $buf, 5);
 
-			unless ($buf eq 'link ') {
+			if (!defined $rd) {
+				croak "sysread: $!\n";
+			} elsif ($rd == 0) {
 				warn "$path has mode 120000",
-						" but is not a link\n";
+				     " but it points to nothing\n",
+				     "converting to an empty file with mode",
+				     " 100644\n";
+				$fb->{mode_b} = '100644';
+			} elsif ($buf ne 'link ') {
+				warn "$path has mode 120000",
+				     " but is not a link\n";
 			} else {
 				my $tmp_fh = $::_repository->temp_acquire(
 					'svn_hash');
@@ -3883,7 +4032,8 @@ my ($ra_invalid, $can_do_switch, %ignored_err, $RA);
 BEGIN {
 	# enforce temporary pool usage for some simple functions
 	no strict 'refs';
-	for my $f (qw/rev_proplist get_latest_revnum get_uuid get_repos_root/) {
+	for my $f (qw/rev_proplist get_latest_revnum get_uuid get_repos_root
+	              get_file/) {
 		my $SUPER = "SUPER::$f";
 		*$f = sub {
 			my $self = shift;
@@ -4019,10 +4169,23 @@ sub DESTROY {
 	# do not call the real DESTROY since we store ourselves in $RA
 }
 
+# get_log(paths, start, end, limit,
+#         discover_changed_paths, strict_node_history, receiver)
 sub get_log {
 	my ($self, @args) = @_;
 	my $pool = SVN::Pool->new;
-	splice(@args, 3, 1) if ($SVN::Core::VERSION le '1.2.0');
+
+	# the limit parameter was not supported in SVN 1.1.x, so we
+	# drop it.  Therefore, the receiver callback passed to it
+	# is made aware of this limitation by being wrapped if
+	# the limit passed to is being wrapped.
+	if ($SVN::Core::VERSION le '1.2.0') {
+		my $limit = splice(@args, 3, 1);
+		if ($limit > 0) {
+			my $receiver = pop @args;
+			push(@args, sub { &$receiver(@_) if (--$limit >= 0) });
+		}
+	}
 	my $ret = $self->SUPER::get_log(@args, $pool);
 	$pool->clear;
 	$ret;

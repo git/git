@@ -94,8 +94,7 @@ int main(int argc, char **argv)
 	if (argc < 3)
 		usage("git-merge-index [-o] [-q] <merge-program> (-a | [--] <filename>*)");
 
-	if (argv[0] && *argv[0])
-		git_extract_argv0_path(argv[0]);
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 	read_cache();

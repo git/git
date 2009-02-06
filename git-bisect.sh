@@ -508,7 +508,7 @@ bisect_visualize() {
 
 	if test $# = 0
 	then
-		case "${DISPLAY+set}${MSYSTEM+set}${SECURITYSESSIONID+set}" in
+		case "${DISPLAY+set}${SESSIONNAME+set}${MSYSTEM+set}${SECURITYSESSIONID+set}" in
 		'')	set git log ;;
 		set*)	set gitk ;;
 		esac

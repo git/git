@@ -447,6 +447,30 @@ static void flush_buffer(int fd, const char *buf, unsigned long size)
 	}
 }
 
+static int would_lose_untracked(const char *path)
+{
+	int pos = cache_name_pos(path, strlen(path));
+
+	if (pos < 0)
+		pos = -1 - pos;
+	while (pos < active_nr &&
+	       !strcmp(path, active_cache[pos]->name)) {
+		/*
+		 * If stage #0, it is definitely tracked.
+		 * If it has stage #2 then it was tracked
+		 * before this merge started.  All other
+		 * cases the path was not tracked.
+		 */
+		switch (ce_stage(active_cache[pos])) {
+		case 0:
+		case 2:
+			return 0;
+		}
+		pos++;
+	}
+	return file_exists(path);
+}
+
 static int make_room_for_path(const char *path)
 {
 	int status;
@@ -461,6 +485,14 @@ static int make_room_for_path(const char *path)
 		}
 		die(msg, path, "");
 	}
+
+	/*
+	 * Do not unlink a file in the work tree if we are not
+	 * tracking it.
+	 */
+	if (would_lose_untracked(path))
+		return error("refusing to lose untracked file at '%s'",
+			     path);
 
 	/* Successful unlink is good.. */
 	if (!unlink(path))
@@ -902,6 +934,11 @@ static int process_renames(struct merge_options *o,
 				       ren1_src, ren1_dst, branch1,
 				       branch2);
 				update_file(o, 0, ren1->pair->two->sha1, ren1->pair->two->mode, ren1_dst);
+				update_stages(ren1_dst, NULL,
+						branch1 == o->branch1 ?
+						ren1->pair->two : NULL,
+						branch1 == o->branch1 ?
+						NULL : ren1->pair->two, 1);
 			} else if (!sha_eq(dst_other.sha1, null_sha1)) {
 				const char *new_path;
 				clean_merge = 0;

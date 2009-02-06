@@ -5,11 +5,13 @@ automatically.
 If you have an older version of vim, you can get the latest syntax
 files from the vim project:
 
-  http://vim.svn.sourceforge.net/viewvc/vim/trunk/runtime/syntax/git.vim
-  http://vim.svn.sourceforge.net/viewvc/vim/trunk/runtime/syntax/gitcommit.vim
-  http://vim.svn.sourceforge.net/viewvc/vim/trunk/runtime/syntax/gitconfig.vim
-  http://vim.svn.sourceforge.net/viewvc/vim/trunk/runtime/syntax/gitrebase.vim
-  http://vim.svn.sourceforge.net/viewvc/vim/trunk/runtime/syntax/gitsendemail.vim
+  http://ftp.vim.org/pub/vim/runtime/syntax/git.vim
+  http://ftp.vim.org/pub/vim/runtime/syntax/gitcommit.vim
+  http://ftp.vim.org/pub/vim/runtime/syntax/gitconfig.vim
+  http://ftp.vim.org/pub/vim/runtime/syntax/gitrebase.vim
+  http://ftp.vim.org/pub/vim/runtime/syntax/gitsendemail.vim
+
+These files are also available via FTP at the same location.
 
 To install:
 

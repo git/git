@@ -245,12 +245,14 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 			while (ptr + 1 < top && isspace(ptr[1])
 					&& ptr[1] != '\n')
 				ptr++;
-			if (flags & XDF_IGNORE_WHITESPACE_CHANGE
+			if (flags & XDF_IGNORE_WHITESPACE)
+				; /* already handled */
+			else if (flags & XDF_IGNORE_WHITESPACE_CHANGE
 					&& ptr[1] != '\n') {
 				ha += (ha << 5);
 				ha ^= (unsigned long) ' ';
 			}
-			if (flags & XDF_IGNORE_WHITESPACE_AT_EOL
+			else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL
 					&& ptr[1] != '\n') {
 				while (ptr2 != ptr + 1) {
 					ha += (ha << 5);

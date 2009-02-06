@@ -5,6 +5,7 @@
  */
 
 #include "cache.h"
+#include "dir.h"
 #include "builtin.h"
 #include "parse-options.h"
 
@@ -21,9 +22,7 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 		const char *cp;
 		int bad = 0;
 
-		if ((ent->d_name[0] == '.') &&
-		    (ent->d_name[1] == 0 ||
-		     ((ent->d_name[1] == '.') && (ent->d_name[2] == 0))))
+		if (is_dot_or_dotdot(ent->d_name))
 			continue;
 		for (cp = ent->d_name; *cp; cp++) {
 			int ch = *cp;

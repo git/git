@@ -16,6 +16,7 @@
 #include "patch-ids.h"
 #include "run-command.h"
 #include "shortlog.h"
+#include "remote.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -249,22 +250,13 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 
 static void show_tagger(char *buf, int len, struct rev_info *rev)
 {
-	char *email_end, *p;
-	unsigned long date;
-	int tz;
+	struct strbuf out = STRBUF_INIT;
 
-	email_end = memchr(buf, '>', len);
-	if (!email_end)
-		return;
-	p = ++email_end;
-	while (isspace(*p))
-		p++;
-	date = strtoul(p, &p, 10);
-	while (isspace(*p))
-		p++;
-	tz = (int)strtol(p, NULL, 10);
-	printf("Tagger: %.*s\nDate:   %s\n", (int)(email_end - buf), buf,
-	       show_date(date, tz, rev->date_mode));
+	pp_user_info("Tagger", rev->commit_format, &out, buf, rev->date_mode,
+		git_log_output_encoding ?
+		git_log_output_encoding: git_commit_encoding);
+	printf("%s\n", out.buf);
+	strbuf_release(&out);
 }
 
 static int show_object(const unsigned char *sha1, int show_tag_object,
@@ -553,6 +545,7 @@ static const char *get_oneline_for_filename(struct commit *commit,
 
 static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
+static int outdir_offset;
 
 static int reopen_stdout(const char *oneline, int nr, int total)
 {
@@ -579,7 +572,7 @@ static int reopen_stdout(const char *oneline, int nr, int total)
 		strcpy(filename + len, fmt_patch_suffix);
 	}
 
-	fprintf(realstdout, "%s\n", filename);
+	fprintf(realstdout, "%s\n", filename + outdir_offset);
 	if (freopen(filename, "w", stdout) == NULL)
 		return error("Cannot open patch file %s",filename);
 
@@ -740,6 +733,27 @@ static const char *clean_message_id(const char *msg_id)
 	return xmemdupz(a, z - a);
 }
 
+static const char *set_outdir(const char *prefix, const char *output_directory)
+{
+	if (output_directory && is_absolute_path(output_directory))
+		return output_directory;
+
+	if (!prefix || !*prefix) {
+		if (output_directory)
+			return output_directory;
+		/* The user did not explicitly ask for "./" */
+		outdir_offset = 2;
+		return "./";
+	}
+
+	outdir_offset = strlen(prefix);
+	if (!output_directory)
+		return prefix;
+
+	return xstrdup(prefix_filename(prefix, outdir_offset,
+				       output_directory));
+}
+
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
@@ -824,7 +838,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			committer = git_committer_info(IDENT_ERROR_ON_NO_NAME);
 			endpos = strchr(committer, '>');
 			if (!endpos)
-				die("bogus committer info %s\n", committer);
+				die("bogus committer info %s", committer);
 			add_signoff = xmemdupz(committer, endpos - committer + 1);
 		}
 		else if (!strcmp(argv[i], "--attach")) {
@@ -917,8 +931,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!DIFF_OPT_TST(&rev.diffopt, TEXT) && !no_binary_diff)
 		DIFF_OPT_SET(&rev.diffopt, BINARY);
 
-	if (!output_directory && !use_stdout)
-		output_directory = prefix;
+	if (!use_stdout)
+		output_directory = set_outdir(prefix, output_directory);
 
 	if (output_directory) {
 		if (use_stdout)
@@ -944,6 +958,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		 * get_revision() to do the usual traversal.
 		 */
 	}
+
+	/*
+	 * We cannot move this anywhere earlier because we do want to
+	 * know if --root was given explicitly from the comand line.
+	 */
+	rev.show_root_diff = 1;
+
 	if (cover_letter) {
 		/* remember the range */
 		int i;
@@ -1070,13 +1091,14 @@ static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
 }
 
 static const char cherry_usage[] =
-"git cherry [-v] <upstream> [<head>] [<limit>]";
+"git cherry [-v] [<upstream> [<head> [<limit>]]]";
 int cmd_cherry(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	struct patch_ids ids;
 	struct commit *commit;
 	struct commit_list *list = NULL;
+	struct branch *current_branch;
 	const char *upstream;
 	const char *head = "HEAD";
 	const char *limit = NULL;
@@ -1099,7 +1121,17 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 		upstream = argv[1];
 		break;
 	default:
-		usage(cherry_usage);
+		current_branch = branch_get(NULL);
+		if (!current_branch || !current_branch->merge
+					|| !current_branch->merge[0]
+					|| !current_branch->merge[0]->dst) {
+			fprintf(stderr, "Could not find a tracked"
+					" remote branch, please"
+					" specify <upstream> manually.\n");
+			usage(cherry_usage);
+		}
+
+		upstream = current_branch->merge[0]->dst;
 	}
 
 	init_revisions(&revs, prefix);

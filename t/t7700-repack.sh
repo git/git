@@ -69,5 +69,24 @@ test_expect_success 'packed obs in alt ODB are repacked even when local repo is 
 	done
 '
 
+test_expect_failure 'packed obs in alt ODB are repacked when local repo has packs' '
+	rm -f .git/objects/pack/* &&
+	echo new_content >> file1 &&
+	git add file1 &&
+	git commit -m more_content &&
+	git repack &&
+	git repack -a -d &&
+	myidx=$(ls -1 .git/objects/pack/*.idx) &&
+	test -f "$myidx" &&
+	for p in alt_objects/pack/*.idx; do
+		git verify-pack -v $p | sed -n -e "/^[0-9a-f]\{40\}/p"
+	done | while read sha1 rest; do
+		if ! ( git verify-pack -v $myidx | grep "^$sha1" ); then
+			echo "Missing object in local pack: $sha1"
+			return 1
+		fi
+	done
+'
+
 test_done
 

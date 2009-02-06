@@ -822,6 +822,7 @@ ifeq ($(uname_S),Darwin)
 			BASIC_LDFLAGS += -L/opt/local/lib
 		endif
 	endif
+	PTHREAD_LIBS =
 endif
 
 ifndef CC_LD_DYNPATH
@@ -1301,7 +1302,7 @@ $(LIB_FILE): $(LIB_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(LIB_OBJS)
 
 XDIFF_OBJS=xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
-	xdiff/xmerge.o
+	xdiff/xmerge.o xdiff/xpatience.o
 $(XDIFF_OBJS): xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
 	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
 
@@ -1320,6 +1321,9 @@ html:
 
 info:
 	$(MAKE) -C Documentation info
+
+pdf:
+	$(MAKE) -C Documentation pdf
 
 TAGS:
 	$(RM) TAGS
@@ -1367,7 +1371,15 @@ endif
 
 ### Testing rules
 
-TEST_PROGRAMS = test-chmtime$X test-genrandom$X test-date$X test-delta$X test-sha1$X test-match-trees$X test-parse-options$X test-path-utils$X
+TEST_PROGRAMS += test-chmtime$X
+TEST_PROGRAMS += test-ctype$X
+TEST_PROGRAMS += test-date$X
+TEST_PROGRAMS += test-delta$X
+TEST_PROGRAMS += test-genrandom$X
+TEST_PROGRAMS += test-match-trees$X
+TEST_PROGRAMS += test-parse-options$X
+TEST_PROGRAMS += test-path-utils$X
+TEST_PROGRAMS += test-sha1$X
 
 all:: $(TEST_PROGRAMS)
 
@@ -1379,6 +1391,8 @@ export NO_SVN_TESTS
 
 test: all
 	$(MAKE) -C t/ all
+
+test-ctype$X: ctype.o
 
 test-date$X: date.o ctype.o
 
@@ -1445,10 +1459,12 @@ endif
 	{ $(RM) "$$execdir/git-add$X" && \
 		ln git-add$X "$$execdir/git-add$X" 2>/dev/null || \
 		cp git-add$X "$$execdir/git-add$X"; } && \
-	{ $(foreach p,$(filter-out git-add$X,$(BUILT_INS)), $(RM) "$$execdir/$p" && \
-		ln "$$execdir/git-add$X" "$$execdir/$p" 2>/dev/null || \
-		ln -s "git-add$X" "$$execdir/$p" 2>/dev/null || \
-		cp "$$execdir/git-add$X" "$$execdir/$p" || exit;) } && \
+	{ for p in $(filter-out git-add$X,$(BUILT_INS)); do \
+		$(RM) "$$execdir/$$p" && \
+		ln "$$execdir/git-add$X" "$$execdir/$$p" 2>/dev/null || \
+		ln -s "git-add$X" "$$execdir/$$p" 2>/dev/null || \
+		cp "$$execdir/git-add$X" "$$execdir/$$p" || exit; \
+	  done } && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
 install-doc:
@@ -1462,6 +1478,9 @@ install-html:
 
 install-info:
 	$(MAKE) -C Documentation install-info
+
+install-pdf:
+	$(MAKE) -C Documentation install-pdf
 
 quick-install-doc:
 	$(MAKE) -C Documentation quick-install

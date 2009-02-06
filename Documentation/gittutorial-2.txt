@@ -32,12 +32,12 @@ Initialized empty Git repository in .git/
 $ echo 'hello world' > file.txt
 $ git add .
 $ git commit -a -m "initial commit"
-[master (root-commit)] created 54196cc: "initial commit"
+[master (root-commit) 54196cc] initial commit
  1 files changed, 1 insertions(+), 0 deletions(-)
  create mode 100644 file.txt
 $ echo 'hello world!' >file.txt
 $ git commit -a -m "add emphasis"
-[master] created c4d59f3: "add emphasis"
+[master c4d59f3] add emphasis
  1 files changed, 1 insertions(+), 1 deletions(-)
 ------------------------------------------------
 

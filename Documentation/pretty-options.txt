@@ -10,7 +10,7 @@ configuration (see linkgit:git-config[1]).
 
 --abbrev-commit::
 	Instead of showing the full 40-byte hexadecimal commit object
-	name, show only handful hexdigits prefix.  Non default number of
+	name, show only a partial prefix.  Non default number of
 	digits can be specified with "--abbrev=<n>" (which also modifies
 	diff output, if it is displayed).
 +

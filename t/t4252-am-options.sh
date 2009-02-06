@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git am not losing options'
+test_description='git am with options and not losing them'
 . ./test-lib.sh
 
 tm="$TEST_DIRECTORY/t4252"
@@ -48,6 +48,31 @@ test_expect_success 'interrupted am -C1 -p2' '
 	git am --skip &&
 	grep 3 file-1 &&
 	grep "^Three$" file-2
+'
+
+test_expect_success 'interrupted am --directory="frotz nitfol"' '
+	rm -rf .git/rebase-apply &&
+	git reset --hard initial &&
+	test_must_fail git am --directory="frotz nitfol" "$tm"/am-test-5-? &&
+	git am --skip &&
+	grep One "frotz nitfol/file-5"
+'
+
+test_expect_success 'apply to a funny path' '
+	with_sq="with'\''sq"
+	rm -fr .git/rebase-apply &&
+	git reset --hard initial &&
+	git am --directory="$with_sq" "$tm"/am-test-5-2 &&
+	test -f "$with_sq/file-5"
+'
+
+test_expect_success 'am --reject' '
+	rm -rf .git/rebase-apply &&
+	git reset --hard initial &&
+	test_must_fail git am --reject "$tm"/am-test-6-1 &&
+	grep "@@ -1,3 +1,3 @@" file-2.rej &&
+	test_must_fail git diff-files --exit-code --quiet file-2 &&
+	grep "[-]-reject" .git/rebase-apply/apply-opt
 '
 
 test_done

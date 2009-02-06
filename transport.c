@@ -50,9 +50,7 @@ static int read_loose_refs(struct strbuf *path, int name_offset,
 	memset (&list, 0, sizeof(list));
 
 	while ((de = readdir(dir))) {
-		if (de->d_name[0] == '.' && (de->d_name[1] == '\0' ||
-				(de->d_name[1] == '.' &&
-				 de->d_name[2] == '\0')))
+		if (is_dot_or_dotdot(de->d_name))
 			continue;
 		ALLOC_GROW(list.entries, list.nr + 1, list.alloc);
 		list.entries[list.nr++] = xstrdup(de->d_name);

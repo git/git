@@ -116,9 +116,9 @@ static int nfvasprintf(char **strp, const char *fmt, va_list ap)
 
 	len = vsnprintf(tmp, sizeof(tmp), fmt, ap);
 	if (len < 0)
-		die("Fatal: Out of memory\n");
+		die("Fatal: Out of memory");
 	if (len >= sizeof(tmp))
-		die("imap command overflow !\n");
+		die("imap command overflow!");
 	*strp = xmemdupz(tmp, len);
 	return len;
 }
@@ -483,7 +483,7 @@ static int nfsnprintf(char *buf, int blen, const char *fmt, ...)
 
 	va_start(va, fmt);
 	if (blen <= 0 || (unsigned)(ret = vsnprintf(buf, blen, fmt, va)) >= (unsigned)blen)
-		die("Fatal: buffer too small. Please report a bug.\n");
+		die("Fatal: buffer too small. Please report a bug.");
 	va_end(va);
 	return ret;
 }
@@ -1390,8 +1390,7 @@ int main(int argc, char **argv)
 	int total, n = 0;
 	int nongit_ok;
 
-	if (argv[0] && *argv[0])
-		git_extract_argv0_path(argv[0]);
+	git_extract_argv0_path(argv[0]);
 
 	/* init the random number generator */
 	arc4_init();

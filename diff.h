@@ -78,6 +78,7 @@ struct diff_options {
 	const char *a_prefix, *b_prefix;
 	unsigned flags;
 	int context;
+	int interhunkcontext;
 	int break_opt;
 	int detect_rename;
 	int skip_stat_unmatch;
@@ -97,6 +98,7 @@ struct diff_options {
 
 	int stat_width;
 	int stat_name_width;
+	const char *word_regex;
 
 	/* this is set by diffcore for DIFF_FORMAT_PATCH */
 	int found_changes;

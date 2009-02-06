@@ -28,9 +28,25 @@ void append_grep_pattern(struct grep_opt *opt, const char *pat,
 	p->next = NULL;
 }
 
+static int is_fixed(const char *s)
+{
+	while (*s && !is_regex_special(*s))
+		s++;
+	return !*s;
+}
+
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
-	int err = regcomp(&p->regexp, p->pattern, opt->regflags);
+	int err;
+
+	if (opt->fixed || is_fixed(p->pattern))
+		p->fixed = 1;
+	if (opt->regflags & REG_ICASE)
+		p->fixed = 0;
+	if (p->fixed)
+		return;
+
+	err = regcomp(&p->regexp, p->pattern, opt->regflags);
 	if (err) {
 		char errbuf[1024];
 		char where[1024];
@@ -159,8 +175,7 @@ void compile_grep_patterns(struct grep_opt *opt)
 		case GREP_PATTERN: /* atom */
 		case GREP_PATTERN_HEAD:
 		case GREP_PATTERN_BODY:
-			if (!opt->fixed)
-				compile_regexp(p, opt);
+			compile_regexp(p, opt);
 			break;
 		default:
 			opt->extended = 1;
@@ -294,7 +309,6 @@ static struct {
 static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol, char *eol, enum grep_context ctx)
 {
 	int hit = 0;
-	int at_true_bol = 1;
 	int saved_ch = 0;
 	regmatch_t pmatch[10];
 
@@ -315,7 +329,7 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 	}
 
  again:
-	if (!opt->fixed) {
+	if (!p->fixed) {
 		regex_t *exp = &p->regexp;
 		hit = !regexec(exp, bol, ARRAY_SIZE(pmatch),
 			       pmatch, 0);
@@ -337,7 +351,7 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 		 * either end of the line, or at word boundary
 		 * (i.e. the next char must not be a word char).
 		 */
-		if ( ((pmatch[0].rm_so == 0 && at_true_bol) ||
+		if ( ((pmatch[0].rm_so == 0) ||
 		      !word_char(bol[pmatch[0].rm_so-1])) &&
 		     ((pmatch[0].rm_eo == (eol-bol)) ||
 		      !word_char(bol[pmatch[0].rm_eo])) )
@@ -349,10 +363,14 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 			/* There could be more than one match on the
 			 * line, and the first match might not be
 			 * strict word match.  But later ones could be!
+			 * Forward to the next possible start, i.e. the
+			 * next position following a non-word char.
 			 */
 			bol = pmatch[0].rm_so + bol + 1;
-			at_true_bol = 0;
-			goto again;
+			while (word_char(bol[-1]) && bol < eol)
+				bol++;
+			if (bol < eol)
+				goto again;
 		}
 	}
 	if (p->token == GREP_PATTERN_HEAD && saved_ch)
@@ -395,7 +413,7 @@ static int match_expr_eval(struct grep_opt *o,
 		h |= match_expr_eval(o, x->u.binary.right, bol, eol, ctx, 1);
 		break;
 	default:
-		die("Unexpected node type (internal error) %d\n", x->node);
+		die("Unexpected node type (internal error) %d", x->node);
 	}
 	if (collect_hits)
 		x->hit |= h;

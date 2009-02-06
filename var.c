@@ -57,8 +57,7 @@ int main(int argc, char **argv)
 		usage(var_usage);
 	}
 
-	if (argv[0] && *argv[0])
-		git_extract_argv0_path(argv[0]);
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory_gently(&nongit);
 	val = NULL;

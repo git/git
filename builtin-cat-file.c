@@ -137,7 +137,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		break;
 
 	default:
-		die("git cat-file: unknown option: %s\n", exp_type);
+		die("git cat-file: unknown option: %s", exp_type);
 	}
 
 	if (!buf)
