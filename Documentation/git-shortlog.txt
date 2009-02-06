@@ -82,7 +82,7 @@ her family name fully spelled out, a proper `.mailmap` file would look like:
 # Note how we don't need an entry for <jane@laptop.(none)>, because the
 # real name of that author is correct already, and coalesced directly.
 Jane Doe <jane@desktop.(none)>
-Joe R. Developer <joe@random.com>
+Joe R. Developer <joe@example.com>
 ------------
 
 Author

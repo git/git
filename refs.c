@@ -1453,7 +1453,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	return 1;
 }
 
-int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
+int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs, void *cb_data)
 {
 	const char *logfile;
 	FILE *logfp;
@@ -1464,6 +1464,16 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 	logfp = fopen(logfile, "r");
 	if (!logfp)
 		return -1;
+
+	if (ofs) {
+		struct stat statbuf;
+		if (fstat(fileno(logfp), &statbuf) ||
+		    statbuf.st_size < ofs ||
+		    fseek(logfp, -ofs, SEEK_END) ||
+		    fgets(buf, sizeof(buf), logfp))
+			return -1;
+	}
+
 	while (fgets(buf, sizeof(buf), logfp)) {
 		unsigned char osha1[20], nsha1[20];
 		char *email_end, *message;
@@ -1495,6 +1505,11 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 	}
 	fclose(logfp);
 	return ret;
+}
+
+int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
+{
+	return for_each_recent_reflog_ent(ref, fn, 0, cb_data);
 }
 
 static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)

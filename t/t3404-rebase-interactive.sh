@@ -10,6 +10,10 @@ that the result still makes sense.
 '
 . ./test-lib.sh
 
+. ../lib-rebase.sh
+
+set_fake_editor
+
 # set up two branches like this:
 #
 # A - B - C - D - E
@@ -60,39 +64,6 @@ test_expect_success 'setup' '
 	git commit -m I &&
 	git tag I
 '
-
-echo "#!$SHELL_PATH" >fake-editor.sh
-cat >> fake-editor.sh <<\EOF
-case "$1" in
-*/COMMIT_EDITMSG)
-	test -z "$FAKE_COMMIT_MESSAGE" || echo "$FAKE_COMMIT_MESSAGE" > "$1"
-	test -z "$FAKE_COMMIT_AMEND" || echo "$FAKE_COMMIT_AMEND" >> "$1"
-	exit
-	;;
-esac
-test -z "$EXPECT_COUNT" ||
-	test "$EXPECT_COUNT" = $(sed -e '/^#/d' -e '/^$/d' < "$1" | wc -l) ||
-	exit
-test -z "$FAKE_LINES" && exit
-grep -v '^#' < "$1" > "$1".tmp
-rm -f "$1"
-cat "$1".tmp
-action=pick
-for line in $FAKE_LINES; do
-	case $line in
-	squash|edit)
-		action="$line";;
-	*)
-		echo sed -n "${line}s/^pick/$action/p"
-		sed -n "${line}p" < "$1".tmp
-		sed -n "${line}s/^pick/$action/p" < "$1".tmp >> "$1"
-		action=pick;;
-	esac
-done
-EOF
-
-test_set_editor "$(pwd)/fake-editor.sh"
-chmod a+x fake-editor.sh
 
 test_expect_success 'no changes are a nop' '
 	git rebase -i F &&
@@ -460,6 +431,32 @@ test_expect_success 'do "noop" when there is nothing to cherry-pick' '
 	git rebase -i branch3 &&
 	test $(git rev-parse branch3) = $(git rev-parse branch4)
 
+'
+
+test_expect_success 'submodule rebase setup' '
+	git checkout A &&
+	mkdir sub &&
+	(
+		cd sub && git init && >elif &&
+		git add elif && git commit -m "submodule initial"
+	) &&
+	echo 1 >file1 &&
+	git add file1 sub
+	test_tick &&
+	git commit -m "One" &&
+	echo 2 >file1 &&
+	test_tick &&
+	git commit -a -m "Two" &&
+	(
+		cd sub && echo 3 >elif &&
+		git commit -a -m "submodule second"
+	) &&
+	test_tick &&
+	git commit -a -m "Three changes submodule"
+'
+
+test_expect_success 'submodule rebase -i' '
+	FAKE_LINES="1 squash 2 3" git rebase -i A
 '
 
 test_done

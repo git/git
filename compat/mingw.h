@@ -21,12 +21,12 @@ typedef int pid_t;
 #define WEXITSTATUS(x) ((x) & 0xff)
 #define WIFSIGNALED(x) ((unsigned)(x) > 259)
 
-#define SIGKILL 0
-#define SIGCHLD 0
-#define SIGPIPE 0
-#define SIGHUP 0
-#define SIGQUIT 0
-#define SIGALRM 100
+#define SIGHUP 1
+#define SIGQUIT 3
+#define SIGKILL 9
+#define SIGPIPE 13
+#define SIGALRM 14
+#define SIGCHLD 17
 
 #define F_GETFD 1
 #define F_SETFD 2

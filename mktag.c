@@ -158,7 +158,9 @@ int main(int argc, char **argv)
 	unsigned char result_sha1[20];
 
 	if (argc != 1)
-		usage("git-mktag < signaturefile");
+		usage("git mktag < signaturefile");
+
+	git_extract_argv0_path(argv[0]);
 
 	git_extract_argv0_path(argv[0]);
 

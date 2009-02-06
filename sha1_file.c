@@ -2340,7 +2340,8 @@ static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
 static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 			      void *buf, unsigned long len, time_t mtime)
 {
-	int fd, size, ret;
+	int fd, ret;
+	size_t size;
 	unsigned char *compressed;
 	z_stream stream;
 	char *filename;

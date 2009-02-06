@@ -12,7 +12,7 @@ and issues a git add -u with path limiting on "dir" to add
 only the updates to dir/sub.
 
 Also tested are "git add -u" without limiting, and "git add -u"
-without contents changes.'
+without contents changes, and other conditions'
 
 . ./test-lib.sh
 
@@ -125,6 +125,54 @@ test_expect_success 'add -n -u should not add but just report' '
 
 	test "$before" = "$after" &&
 	test_cmp expect actual
+
+'
+
+test_expect_success 'add -u resolves unmerged paths' '
+	git reset --hard &&
+	one=$(echo 1 | git hash-object -w --stdin) &&
+	two=$(echo 2 | git hash-object -w --stdin) &&
+	three=$(echo 3 | git hash-object -w --stdin) &&
+	{
+		for path in path1 path2
+		do
+			echo "100644 $one 1	$path"
+			echo "100644 $two 2	$path"
+			echo "100644 $three 3	$path"
+		done
+		echo "100644 $one 1	path3"
+		echo "100644 $one 1	path4"
+		echo "100644 $one 3	path5"
+		echo "100644 $one 3	path6"
+	} |
+	git update-index --index-info &&
+	echo 3 >path1 &&
+	echo 2 >path3 &&
+	echo 2 >path5 &&
+	git add -u &&
+	git ls-files -s "path?" >actual &&
+	{
+		echo "100644 $three 0	path1"
+		echo "100644 $one 1	path3"
+		echo "100644 $one 1	path4"
+		echo "100644 $one 3	path5"
+		echo "100644 $one 3	path6"
+	} >expect &&
+	test_cmp expect actual &&
+
+	# Bonus tests.  Explicit resolving
+	git add path3 path5 &&
+	test_must_fail git add path4 &&
+	test_must_fail git add path6 &&
+	git rm path4 &&
+	git rm path6 &&
+
+	git ls-files -s "path?" >actual &&
+	{
+		echo "100644 $three 0	path1"
+		echo "100644 $two 0	path3"
+		echo "100644 $two 0	path5"
+	} >expect
 
 '
 

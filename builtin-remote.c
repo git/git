@@ -298,7 +298,7 @@ static int add_known_remote(struct remote *remote, void *cb_data)
 
 struct branches_for_remote {
 	struct remote *remote;
-	struct string_list *branches;
+	struct string_list *branches, *skipped;
 	struct known_remotes *keep;
 };
 
@@ -321,6 +321,16 @@ static int add_branch_for_removal(const char *refname,
 		refspec.dst = (char *)refname;
 		if (!remote_find_tracking(kr->remote, &refspec))
 			return 0;
+	}
+
+	/* don't delete non-remote refs */
+	if (prefixcmp(refname, "refs/remotes")) {
+		/* advise user how to delete local branches */
+		if (!prefixcmp(refname, "refs/heads/"))
+			string_list_append(abbrev_branch(refname),
+					   branches->skipped);
+		/* silently skip over other non-remote refs */
+		return 0;
 	}
 
 	/* make sure that symrefs are deleted */
@@ -542,8 +552,11 @@ static int rm(int argc, const char **argv)
 	struct strbuf buf = STRBUF_INIT;
 	struct known_remotes known_remotes = { NULL, NULL };
 	struct string_list branches = { NULL, 0, 0, 1 };
-	struct branches_for_remote cb_data = { NULL, &branches, &known_remotes };
-	int i;
+	struct string_list skipped = { NULL, 0, 0, 1 };
+	struct branches_for_remote cb_data = {
+		NULL, &branches, &skipped, &known_remotes
+	};
+	int i, result;
 
 	if (argc != 2)
 		usage_with_options(builtin_remote_usage, options);
@@ -583,14 +596,26 @@ static int rm(int argc, const char **argv)
 	 * refs, which are invalidated when deleting a branch.
 	 */
 	cb_data.remote = remote;
-	i = for_each_ref(add_branch_for_removal, &cb_data);
+	result = for_each_ref(add_branch_for_removal, &cb_data);
 	strbuf_release(&buf);
 
-	if (!i)
-		i = remove_branches(&branches);
+	if (!result)
+		result = remove_branches(&branches);
 	string_list_clear(&branches, 1);
 
-	return i;
+	if (skipped.nr) {
+		fprintf(stderr, skipped.nr == 1 ?
+			"Note: A non-remote branch was not removed; "
+			"to delete it, use:\n" :
+			"Note: Non-remote branches were not removed; "
+			"to delete them, use:\n");
+		for (i = 0; i < skipped.nr; i++)
+			fprintf(stderr, "  git branch -d %s\n",
+				skipped.items[i].string);
+	}
+	string_list_clear(&skipped, 0);
+
+	return result;
 }
 
 static void show_list(const char *title, struct string_list *list,

@@ -82,6 +82,7 @@ git-mktag
 git-mktree
 git-name-rev
 git-mv
+git-notes
 git-pack-redundant
 git-pack-objects
 git-pack-refs
@@ -153,6 +154,7 @@ test-match-trees
 test-parse-options
 test-path-utils
 test-sha1
+test-sigchain
 common-cmds.h
 *.tar.gz
 *.dsc

@@ -13,7 +13,6 @@ SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
-prefix=$(git rev-parse --show-prefix)
 
 # Returns true if the mode reflects a symlink
 is_symlink () {
@@ -127,6 +126,14 @@ check_unchanged () {
     fi
 }
 
+checkout_staged_file () {
+    tmpfile=$(expr "$(git checkout-index --temp --stage="$1" "$2")" : '\([^	]*\)	')
+
+    if test $? -eq 0 -a -n "$tmpfile" ; then
+	mv -- "$(git rev-parse --show-cdup)$tmpfile" "$3"
+    fi
+}
+
 merge_file () {
     MERGED="$1"
 
@@ -153,9 +160,9 @@ merge_file () {
     local_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $1;}'`
     remote_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $1;}'`
 
-    base_present   && git cat-file blob ":1:$prefix$MERGED" >"$BASE" 2>/dev/null
-    local_present  && git cat-file blob ":2:$prefix$MERGED" >"$LOCAL" 2>/dev/null
-    remote_present && git cat-file blob ":3:$prefix$MERGED" >"$REMOTE" 2>/dev/null
+    base_present   && checkout_staged_file 1 "$MERGED" "$BASE"
+    local_present  && checkout_staged_file 2 "$MERGED" "$LOCAL"
+    remote_present && checkout_staged_file 3 "$MERGED" "$REMOTE"
 
     if test -z "$local_mode" -o -z "$remote_mode"; then
 	echo "Deleted merge conflict for '$MERGED':"
@@ -390,21 +397,19 @@ fi
 
 if test -z "$merge_tool" ; then
     if test -n "$DISPLAY"; then
-        merge_tool_candidates="kdiff3 tkdiff xxdiff meld gvimdiff"
         if test -n "$GNOME_DESKTOP_SESSION_ID" ; then
-            merge_tool_candidates="meld $merge_tool_candidates"
-        fi
-        if test "$KDE_FULL_SESSION" = "true"; then
-            merge_tool_candidates="kdiff3 $merge_tool_candidates"
+            merge_tool_candidates="meld kdiff3 tkdiff xxdiff gvimdiff"
+        else
+            merge_tool_candidates="kdiff3 tkdiff xxdiff meld gvimdiff"
         fi
     fi
     if echo "${VISUAL:-$EDITOR}" | grep 'emacs' > /dev/null 2>&1; then
-        merge_tool_candidates="$merge_tool_candidates emerge"
+        merge_tool_candidates="$merge_tool_candidates emerge opendiff vimdiff"
+    elif echo "${VISUAL:-$EDITOR}" | grep 'vim' > /dev/null 2>&1; then
+        merge_tool_candidates="$merge_tool_candidates vimdiff opendiff emerge"
+    else
+        merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
     fi
-    if echo "${VISUAL:-$EDITOR}" | grep 'vim' > /dev/null 2>&1; then
-        merge_tool_candidates="$merge_tool_candidates vimdiff"
-    fi
-    merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
     echo "merge tool candidates: $merge_tool_candidates"
     for i in $merge_tool_candidates; do
         init_merge_tool_path $i

@@ -76,6 +76,7 @@ my $methods = {
     'history'         => \&req_CATCHALL,
     'watchers'        => \&req_EMPTY,
     'editors'         => \&req_EMPTY,
+    'noop'            => \&req_EMPTY,
     'annotate'        => \&req_annotate,
     'Global_option'   => \&req_Globaloption,
     #'annotate'        => \&req_CATCHALL,
@@ -1413,13 +1414,13 @@ sub req_ci
 		close $pipe || die "bad pipe: $! $?";
 	}
 
+    $updater->update();
+
 	### Then hooks/post-update
 	$hook = $ENV{GIT_DIR}.'hooks/post-update';
 	if (-x $hook) {
 		system($hook, "refs/heads/$state->{module}");
 	}
-
-    $updater->update();
 
     # foreach file specified on the command line ...
     foreach my $filename ( @committedfiles )

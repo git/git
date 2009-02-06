@@ -92,7 +92,9 @@ int main(int argc, char **argv)
 	signal(SIGCHLD, SIG_DFL);
 
 	if (argc < 3)
-		usage("git-merge-index [-o] [-q] <merge-program> (-a | [--] <filename>*)");
+		usage("git merge-index [-o] [-q] <merge-program> (-a | [--] <filename>*)");
+
+	git_extract_argv0_path(argv[0]);
 
 	git_extract_argv0_path(argv[0]);
 

@@ -6,6 +6,11 @@ Updates since v1.6.1
 
 (subsystems)
 
+* git-svn updates.
+
+* gitweb updates, including a new patch view and RSS/Atom feed
+  improvements.
+
 (portability)
 
 (performance)
@@ -15,25 +20,63 @@ Updates since v1.6.1
 
 (usability, bells and whistles)
 
-* "git-add -p" learned 'g'oto action to jump directly to a hunk.
+* automatic typo correction works on aliases as well
 
-* git-cherry defaults to HEAD when the <upstream> argument is not given.
+* @{-1} is a way to refer to the last branch you were on.  This is
+  accepted not only where an object name is expected, but anywhere
+  a branch name is expected.  E.g. "git branch --track mybranch @{-1}"
+  "git rev-parse --symbolic-full-name @{-1}".
 
-* git-cvsserver can be told not to add extra "via git-CVS emulator" to the
-  commit log message it serves via gitcvs.commitmsgannotation configuration.
+* "git add -p" learned 'g'oto action to jump directly to a hunk.
 
-* git-diff learned a new option --inter-hunk-context to coalesce close
+* when "git am" stops upon a patch that does not apply, it shows the
+  title of the offending patch.
+
+* "git am --directory=<dir>" and "git am --reject" passes these options
+  to underlying "git apply".
+
+* "git clone" now makes its best effort when cloning from an empty
+  repository to set up configuration variables to refer to the remote
+  repository.
+
+* "git checkout -" is a shorthand for "git checkout @{-1}".
+
+* "git cherry" defaults to whatever the current branch is tracking (if
+  exists) when the <upstream> argument is not given.
+
+* "git cvsserver" can be told not to add extra "via git-CVS emulator" to
+  the commit log message it serves via gitcvs.commitmsgannotation
+  configuration.
+
+* "git diff" learned a new option --inter-hunk-context to coalesce close
   hunks together and show context between them.
 
-* git-filter-branch learned --prune-empty option that discards commits
+* The definition of what constitutes a word for "git diff --color-words"
+  can be customized via gitattributes, command line or a configuration.
+
+* "git diff" learned --patience to run "patience diff" algorithm.
+
+* Some combinations of -b/-w/--ignore-space-at-eol to "git diff" did
+  not work as expected.
+
+* "git filter-branch" learned --prune-empty option that discards commits
   that do not change the contents.
 
-* git-ls-tree learned --full-tree option that shows the path in full
+* "git grep -w" and "git grep" for fixed strings have been optimized.
+
+* "git log" and friends include HEAD to the set of starting points
+  when --all is given.  This makes a difference when you are not on
+  any branch.
+
+* "git ls-tree" learned --full-tree option that shows the path in full
   regardless of where in the work tree hierarchy the command was started.
 
-* git-mergetool learned -y(--no-prompt) option to disable prompting.
+* "git mergetool" learned -y(--no-prompt) option to disable prompting.
 
-* "git-reset --merge" is a new mode that works similar to the way
+* "git rebase -i" can transplant a history down to root to elsewhere
+  with --root option.
+
+* "git reset --merge" is a new mode that works similar to the way
   "git checkout" switches branches, taking the local changes while
   switching to another commit.
 
@@ -52,14 +95,12 @@ release, unless otherwise noted.
 * git-bundle did not exclude annotated tags even when a range given from the
   command line wanted to.
 
-* git-grep did not work correctly for index entries with assume-unchanged bit.
-
 * branch switching and merges had a silly bug that did not validate
   the correct directory when making sure an existing subdirectory is
   clean.
 
 --
 exec >/var/tmp/1
-O=v1.6.1-134-ge98c6a1
+O=v1.6.1.2-252-g8c95d3c
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

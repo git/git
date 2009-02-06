@@ -19,6 +19,7 @@
 #include "string-list.h"
 #include "mailmap.h"
 #include "parse-options.h"
+#include "utf8.h"
 
 static char blame_usage[] = "git blame [options] [rev-opts] [rev] [--] file";
 
@@ -1618,13 +1619,14 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 				printf(" %*d", max_orig_digits,
 				       ent->s_lno + 1 + cnt);
 
-			if (!(opt & OUTPUT_NO_AUTHOR))
-				printf(" (%-*.*s %10s",
-				       longest_author, longest_author,
-				       ci.author,
+			if (!(opt & OUTPUT_NO_AUTHOR)) {
+				int pad = longest_author - utf8_strwidth(ci.author);
+				printf(" (%s%*s %10s",
+				       ci.author, pad, "",
 				       format_time(ci.author_time,
 						   ci.author_tz,
 						   show_raw_time));
+			}
 			printf(" %*d) ",
 			       max_digits, ent->lno + 1 + cnt);
 		}
@@ -1755,7 +1757,7 @@ static void find_alignment(struct scoreboard *sb, int *option)
 		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
 			suspect->commit->object.flags |= METAINFO_SHOWN;
 			get_commit_info(suspect->commit, &ci, 1);
-			num = strlen(ci.author);
+			num = utf8_strwidth(ci.author);
 			if (longest_author < num)
 				longest_author = num;
 		}
