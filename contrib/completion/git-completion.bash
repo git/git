@@ -125,7 +125,7 @@ __git_ps1 ()
 		local w
 		local i
 
-		if test -n "$GIT_PS1_SHOWDIRTYSTATE"; then
+		if test -n "${GIT_PS1_SHOWDIRTYSTATE-}"; then
 			if test "$(git config --bool bash.showDirtyState)" != "false"; then
 				git diff --no-ext-diff --ignore-submodules \
 					--quiet --exit-code || w="*"
