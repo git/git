@@ -40,9 +40,12 @@ my ($diff_new_color) =
 my $normal_color = $repo->get_color("", "reset");
 
 my $use_readkey = 0;
+sub ReadMode;
+sub ReadKey;
 if ($repo->config_bool("interactive.singlekey")) {
 	eval {
-		use Term::ReadKey;
+		require Term::ReadKey;
+		Term::ReadKey->import;
 		$use_readkey = 1;
 	};
 }
