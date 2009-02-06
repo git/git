@@ -82,7 +82,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	do {
 		obj_req->stream.next_out = expn;
 		obj_req->stream.avail_out = sizeof(expn);
-		obj_req->zret = inflate(&obj_req->stream, Z_SYNC_FLUSH);
+		obj_req->zret = git_inflate(&obj_req->stream, Z_SYNC_FLUSH);
 		git_SHA1_Update(&obj_req->c, expn,
 			    sizeof(expn) - obj_req->stream.avail_out);
 	} while (obj_req->stream.avail_in && obj_req->zret == Z_OK);
@@ -142,7 +142,7 @@ static void start_object_request(struct walker *walker,
 
 	memset(&obj_req->stream, 0, sizeof(obj_req->stream));
 
-	inflateInit(&obj_req->stream);
+	git_inflate_init(&obj_req->stream);
 
 	git_SHA1_Init(&obj_req->c);
 
@@ -183,7 +183,7 @@ static void start_object_request(struct walker *walker,
 	   file; also rewind to the beginning of the local file. */
 	if (prev_read == -1) {
 		memset(&obj_req->stream, 0, sizeof(obj_req->stream));
-		inflateInit(&obj_req->stream);
+		git_inflate_init(&obj_req->stream);
 		git_SHA1_Init(&obj_req->c);
 		if (prev_posn>0) {
 			prev_posn = 0;
@@ -243,7 +243,7 @@ static void finish_object_request(struct object_request *obj_req)
 		return;
 	}
 
-	inflateEnd(&obj_req->stream);
+	git_inflate_end(&obj_req->stream);
 	git_SHA1_Final(obj_req->real_sha1, &obj_req->c);
 	if (obj_req->zret != Z_STREAM_END) {
 		unlink(obj_req->tmpfile);

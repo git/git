@@ -1253,8 +1253,9 @@ static char *inflate_it(const void *data, unsigned long size,
 	stream.avail_in = size;
 	stream.next_out = out = xmalloc(inflated_size);
 	stream.avail_out = inflated_size;
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
+	git_inflate_init(&stream);
+	st = git_inflate(&stream, Z_FINISH);
+	git_inflate_end(&stream);
 	if ((st != Z_STREAM_END) || stream.total_out != inflated_size) {
 		free(out);
 		return NULL;
