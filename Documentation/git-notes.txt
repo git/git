@@ -1,0 +1,46 @@
+git-notes(1)
+============
+
+NAME
+----
+git-notes - Add/inspect commit notes
+
+SYNOPSIS
+--------
+[verse]
+'git-notes' (edit | show) [commit]
+
+DESCRIPTION
+-----------
+This command allows you to add notes to commit messages, without
+changing the commit.  To discern these notes from the message stored
+in the commit object, the notes are indented like the message, after
+an unindented line saying "Notes:".
+
+To disable commit notes, you have to set the config variable
+core.notesRef to the empty string.  Alternatively, you can set it
+to a different ref, something like "refs/notes/bugzilla".  This setting
+can be overridden by the environment variable "GIT_NOTES_REF".
+
+
+SUBCOMMANDS
+-----------
+
+edit::
+	Edit the notes for a given commit (defaults to HEAD).
+
+show::
+	Show the notes for a given commit (defaults to HEAD).
+
+
+Author
+------
+Written by Johannes Schindelin <johannes.schindelin@gmx.de>
+
+Documentation
+-------------
+Documentation by Johannes Schindelin
+
+GIT
+---
+Part of the gitlink:git[7] suite
