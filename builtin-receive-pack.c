@@ -607,9 +607,6 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	int i;
 	char *dir = NULL;
 
-	if (argv[0] && *argv[0])
-		git_extract_argv0_path(argv[0]);
-
 	argv++;
 	for (i = 1; i < argc; i++) {
 		const char *arg = *argv++;

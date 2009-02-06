@@ -162,8 +162,6 @@ int main(int argc, char **argv)
 
 	git_extract_argv0_path(argv[0]);
 
-	git_extract_argv0_path(argv[0]);
-
 	setup_git_directory();
 
 	if (strbuf_read(&buf, 0, 4096) < 0) {
