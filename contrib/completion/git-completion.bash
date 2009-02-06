@@ -34,11 +34,11 @@
 #       are currently in a git repository.  The %s token will be
 #       the name of the current branch.
 #
-#	In addition, if you set GIT_PS1_SHOWDIRTYSTATE to a nonempty
-#	value, unstaged (*) and staged (+) changes will be shown next
-#	to the branch name.  You can configure this per-repository
-#	with the bash.showDirtyState variable, which defaults to true
-#	once GIT_PS1_SHOWDIRTYSTATE is enabled.
+#       In addition, if you set GIT_PS1_SHOWDIRTYSTATE to a nonempty
+#       value, unstaged (*) and staged (+) changes will be shown next
+#       to the branch name.  You can configure this per-repository
+#       with the bash.showDirtyState variable, which defaults to true
+#       once GIT_PS1_SHOWDIRTYSTATE is enabled.
 #
 # To submit patches:
 #
