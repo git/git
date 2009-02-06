@@ -456,7 +456,11 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			inside_git_dir = 1;
 			if (!work_tree_env)
 				inside_work_tree = 0;
-			setenv(GIT_DIR_ENVIRONMENT, ".", 1);
+			if (offset != len) {
+				cwd[offset] = '\0';
+				setenv(GIT_DIR_ENVIRONMENT, cwd, 1);
+			} else
+				setenv(GIT_DIR_ENVIRONMENT, ".", 1);
 			check_repository_format_gently(nongit_ok);
 			return NULL;
 		}
