@@ -51,10 +51,15 @@ proc force_diff_encoding {enc} {
 
 proc handle_empty_diff {} {
 	global current_diff_path file_states file_lists
+	global diff_empty_count
 
 	set path $current_diff_path
 	set s $file_states($path)
 	if {[lindex $s 0] ne {_M}} return
+
+	# Prevent infinite rescan loops
+	incr diff_empty_count
+	if {$diff_empty_count > 1} return
 
 	info_popup [mc "No differences detected.
 
@@ -310,6 +315,7 @@ proc read_diff {fd cont_info} {
 	global ui_diff diff_active
 	global is_3way_diff is_conflict_diff current_diff_header
 	global current_diff_queue
+	global diff_empty_count
 
 	$ui_diff conf -state normal
 	while {[gets $fd line] >= 0} {
@@ -415,7 +421,10 @@ proc read_diff {fd cont_info} {
 
 		if {[$ui_diff index end] eq {2.0}} {
 			handle_empty_diff
+		} else {
+			set diff_empty_count 0
 		}
+
 		set callback [lindex $cont_info 1]
 		if {$callback ne {}} {
 			eval $callback
