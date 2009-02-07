@@ -547,7 +547,6 @@ static inline int is_absolute_path(const char *path)
 const char *make_absolute_path(const char *path);
 const char *make_nonrelative_path(const char *path);
 const char *make_relative_path(const char *abs, const char *base);
-int normalize_absolute_path(char *buf, const char *path);
 int normalize_path_copy(char *dst, const char *src);
 int longest_ancestor_length(const char *path, const char *prefix_list);
 
