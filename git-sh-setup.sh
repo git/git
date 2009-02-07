@@ -85,27 +85,14 @@ cd_to_toplevel () {
 	cdup=$(git rev-parse --show-cdup)
 	if test ! -z "$cdup"
 	then
-		case "$cdup" in
-		/*)
-			# Not quite the same as if we did "cd -P '$cdup'" when
-			# $cdup contains ".." after symlink path components.
-			# Don't fix that case at least until Git switches to
-			# "cd -P" across the board.
-			phys="$cdup"
-			;;
-		..|../*|*/..|*/../*)
-			# Interpret $cdup relative to the physical, not logical, cwd.
-			# Probably /bin/pwd is more portable than passing -P to cd or pwd.
-			phys="$(unset PWD; /bin/pwd)/$cdup"
-			;;
-		*)
-			# There's no "..", so no need to make things absolute.
-			phys="$cdup"
-			;;
-		esac
-
-		cd "$phys" || {
-			echo >&2 "Cannot chdir to $phys, the toplevel of the working tree"
+		# The "-P" option says to follow "physical" directory
+		# structure instead of following symbolic links.  When cdup is
+		# "../", this means following the ".." entry in the current
+		# directory instead textually removing a symlink path element
+		# from the PWD shell variable.  The "-P" behavior is more
+		# consistent with the C-style chdir used by most of Git.
+		cd -P "$cdup" || {
+			echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
 			exit 1
 		}
 	fi
