@@ -1,6 +1,6 @@
 ;;; git.el --- A user interface for git
 
-;; Copyright (C) 2005, 2006, 2007 Alexandre Julliard <julliard@winehq.org>
+;; Copyright (C) 2005, 2006, 2007, 2008, 2009 Alexandre Julliard <julliard@winehq.org>
 
 ;; Version: 1.0
 
@@ -34,13 +34,21 @@
 ;; To start: `M-x git-status'
 ;;
 ;; TODO
-;;  - portability to XEmacs
 ;;  - diff against other branch
 ;;  - renaming files from the status buffer
 ;;  - creating tags
 ;;  - fetch/pull
 ;;  - revlist browser
 ;;  - git-show-branch browser
+;;
+
+;;; Compatibility:
+;;
+;; This file works on GNU Emacs 21 or later. It may work on older
+;; versions but this is not guaranteed.
+;;
+;; It may work on XEmacs 21, provided that you first install the ewoc
+;; and log-edit packages.
 ;;
 
 (eval-when-compile (require 'cl))
