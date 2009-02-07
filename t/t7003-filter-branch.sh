@@ -39,7 +39,9 @@ test_expect_success 'result is really identical' '
 '
 
 test_expect_success 'rewrite bare repository identically' '
-	(git config core.bare true && cd .git && git filter-branch branch)
+	(git config core.bare true && cd .git &&
+	 git filter-branch branch > filter-output 2>&1 &&
+	! fgrep fatal filter-output)
 '
 git config core.bare false
 test_expect_success 'result is really identical' '
