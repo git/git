@@ -3,7 +3,7 @@
 #include "color.h"
 
 static const char git_config_set_usage[] =
-"git config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int | --bool-or-int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list | --get-color var [default] | --get-colorbool name [stdout-is-tty]";
+"git config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int | --bool-or-int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list | --get-color var [default] | --get-colorbool name [stdout-is-tty] | --edit | -e ]";
 
 static char *key;
 static regex_t *key_regexp;
@@ -362,6 +362,17 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			return get_color(argc-2, argv+2);
 		} else if (!strcmp(argv[1], "--get-colorbool")) {
 			return get_colorbool(argc-2, argv+2);
+		} else if (!strcmp(argv[1], "--edit") || !strcmp(argv[1], "-e")) {
+			const char *config_filename;
+			if (argc != 2)
+				usage(git_config_set_usage);
+			if (config_exclusive_filename)
+				config_filename = config_exclusive_filename;
+			else
+				config_filename = git_path("config");
+			git_config(git_default_config, NULL);
+			launch_editor(config_filename, NULL, NULL);
+			return 0;
 		} else
 			break;
 		argc--;
