@@ -524,15 +524,16 @@ int longest_ancestor_length(const char *path, const char *prefix_list)
 		return -1;
 
 	for (colon = ceil = prefix_list; *colon; ceil = colon+1) {
-		for (colon = ceil; *colon && *colon != ':'; colon++);
+		for (colon = ceil; *colon && *colon != PATH_SEP; colon++);
 		len = colon - ceil;
 		if (len == 0 || len > PATH_MAX || !is_absolute_path(ceil))
 			continue;
 		strlcpy(buf, ceil, len+1);
-		len = normalize_absolute_path(buf, buf);
-		/* Strip "trailing slashes" from "/". */
-		if (len == 1)
-			len = 0;
+		if (normalize_path_copy(buf, buf) < 0)
+			continue;
+		len = strlen(buf);
+		if (len > 0 && buf[len-1] == '/')
+			buf[--len] = '\0';
 
 		if (!strncmp(path, buf, len) &&
 		    path[len] == '/' &&
