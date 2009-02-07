@@ -107,17 +107,17 @@ incremental bundle,
 
 ----------------
 machineA$ cd R1
-machineA$ git bundle create file.bdl master
+machineA$ git bundle create file.bundle master
 machineA$ git tag -f lastR2bundle master
 ----------------
 
-Then you sneakernet file.bdl to the target machine B. Because you don't
+Then you sneakernet file.bundle to the target machine B. Because you don't
 have to have any object to extract objects from such a bundle, not only
 you can fetch/pull from a bundle, you can clone from it as if it was a
 remote repository.
 
 ----------------
-machineB$ git clone /home/me/tmp/file.bdl R2
+machineB$ git clone /home/me/tmp/file.bundle R2
 ----------------
 
 This will define a remote called "origin" in the resulting repository that
@@ -126,12 +126,12 @@ have an entry like this:
 
 ------------------------
 [remote "origin"]
-    url = /home/me/tmp/file.bdl
+    url = /home/me/tmp/file.bundle
     fetch = refs/heads/*:refs/remotes/origin/*
 ------------------------
 
 You can fetch/pull to update the resulting mine.git repository after
-replacing the bundle you store at /home/me/tmp/file.bdl with incremental
+replacing the bundle you store at /home/me/tmp/file.bundle with incremental
 updates from here on.
 
 After working more in the original repository, you can create an
@@ -139,11 +139,11 @@ incremental bundle to update the other:
 
 ----------------
 machineA$ cd R1
-machineA$ git bundle create file.bdl lastR2bundle..master
+machineA$ git bundle create file.bundle lastR2bundle..master
 machineA$ git tag -f lastR2bundle master
 ----------------
 
-and sneakernet it to the other machine to replace /home/me/tmp/file.bdl,
+and sneakernet it to the other machine to replace /home/me/tmp/file.bundle,
 and pull from it.
 
 ----------------
