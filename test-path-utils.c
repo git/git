@@ -2,10 +2,11 @@
 
 int main(int argc, char **argv)
 {
-	if (argc == 3 && !strcmp(argv[1], "normalize_absolute_path")) {
+	if (argc == 3 && !strcmp(argv[1], "normalize_path_copy")) {
 		char *buf = xmalloc(PATH_MAX + 1);
-		int rv = normalize_absolute_path(buf, argv[2]);
-		assert(strlen(buf) == rv);
+		int rv = normalize_path_copy(buf, argv[2]);
+		if (rv)
+			buf = "++failed++";
 		puts(buf);
 		return 0;
 	}

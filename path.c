@@ -484,18 +484,12 @@ int normalize_path_copy(char *dst, const char *src)
 		 * dst0..dst is prefix portion, and dst[-1] is '/';
 		 * go up one level.
 		 */
-		dst -= 2; /* go past trailing '/' if any */
-		if (dst < dst0)
+		dst--;	/* go to trailing '/' */
+		if (dst <= dst0)
 			return -1;
-		while (1) {
-			if (dst <= dst0)
-				break;
-			c = *dst--;
-			if (c == '/') {	/* MinGW: cannot be '\\' anymore */
-				dst += 2;
-				break;
-			}
-		}
+		/* Windows: dst[-1] cannot be backslash anymore */
+		while (dst0 < dst && dst[-1] != '/')
+			dst--;
 	}
 	*dst = '\0';
 	return 0;
