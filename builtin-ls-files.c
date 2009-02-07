@@ -262,6 +262,21 @@ static const char *verify_pathspec(const char *prefix)
 	return max ? xmemdupz(prev, max) : NULL;
 }
 
+static void strip_trailing_slash_from_submodules(void)
+{
+	const char **p;
+
+	for (p = pathspec; *p != NULL; p++) {
+		int len = strlen(*p), pos;
+
+		if (len < 1 || (*p)[len - 1] != '/')
+			continue;
+		pos = cache_name_pos(*p, len - 1);
+		if (pos >= 0 && S_ISGITLINK(active_cache[pos]->ce_mode))
+			*p = xstrndup(*p, len - 1);
+	}
+}
+
 /*
  * Read the tree specified with --with-tree option
  * (typically, HEAD) into stage #1 and then
@@ -510,6 +525,11 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 
 	pathspec = get_pathspec(prefix, argv + i);
 
+	/* be nice with submodule patsh ending in a slash */
+	read_cache();
+	if (pathspec)
+		strip_trailing_slash_from_submodules();
+
 	/* Verify that the pathspec matches the prefix */
 	if (pathspec)
 		prefix = verify_pathspec(prefix);
@@ -533,7 +553,6 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 	      show_killed | show_modified))
 		show_cached = 1;
 
-	read_cache();
 	if (prefix)
 		prune_cache(prefix);
 	if (with_tree) {

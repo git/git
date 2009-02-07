@@ -234,4 +234,10 @@ test_expect_success 'gracefully add submodule with a trailing slash' '
 
 '
 
+test_expect_success 'ls-files gracefully handles trailing slash' '
+
+	test "init" = "$(git ls-files init/)"
+
+'
+
 test_done
