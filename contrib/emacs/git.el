@@ -571,29 +571,29 @@ Each entry is a cons of (SHORT-NAME . FULL-NAME)."
   (let* ((old-type (lsh (or old-perm 0) -9))
 	 (new-type (lsh (or new-perm 0) -9))
 	 (str (case new-type
-		(?\100  ;; file
+		(64  ;; file
 		 (case old-type
-		   (?\100 nil)
-		   (?\120 "   (type change symlink -> file)")
-		   (?\160 "   (type change subproject -> file)")))
-		 (?\120  ;; symlink
+		   (64 nil)
+		   (80 "   (type change symlink -> file)")
+		   (112 "   (type change subproject -> file)")))
+		 (80  ;; symlink
 		  (case old-type
-		    (?\100 "   (type change file -> symlink)")
-		    (?\160 "   (type change subproject -> symlink)")
+		    (64 "   (type change file -> symlink)")
+		    (112 "   (type change subproject -> symlink)")
 		    (t "   (symlink)")))
-		  (?\160  ;; subproject
+		  (112  ;; subproject
 		   (case old-type
-		     (?\100 "   (type change file -> subproject)")
-		     (?\120 "   (type change symlink -> subproject)")
+		     (64 "   (type change file -> subproject)")
+		     (80 "   (type change symlink -> subproject)")
 		     (t "   (subproject)")))
-                  (?\110 nil)  ;; directory (internal, not a real git state)
-		  (?\000  ;; deleted or unknown
+                  (72 nil)  ;; directory (internal, not a real git state)
+		  (0  ;; deleted or unknown
 		   (case old-type
-		     (?\120 "   (symlink)")
-		     (?\160 "   (subproject)")))
+		     (80 "   (symlink)")
+		     (112 "   (subproject)")))
 		  (t (format "   (unknown type %o)" new-type)))))
     (cond (str (propertize str 'face 'git-status-face))
-          ((eq new-type ?\110) "/")
+          ((eq new-type 72) "/")
           (t ""))))
 
 (defun git-rename-as-string (info)
