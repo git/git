@@ -59,7 +59,7 @@ resolve_relative_url ()
 #
 module_list()
 {
-	git ls-files --stage -- "$@" | grep '^160000 '
+	git ls-files --error-unmatch --stage -- "$@" | grep '^160000 '
 }
 
 #

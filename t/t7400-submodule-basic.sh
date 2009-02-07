@@ -240,4 +240,11 @@ test_expect_success 'ls-files gracefully handles trailing slash' '
 
 '
 
+test_expect_success 'submodule <invalid-path> warns' '
+
+	git submodule no-such-submodule 2> output.err &&
+	grep "^error: .*no-such-submodule" output.err
+
+'
+
 test_done
