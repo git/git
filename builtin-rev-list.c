@@ -608,6 +608,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--bisect-all")) {
 			bisect_list = 1;
 			bisect_find_all = 1;
+			revs.show_decorations = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--bisect-vars")) {
