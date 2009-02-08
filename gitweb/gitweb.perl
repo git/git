@@ -132,6 +132,10 @@ our $fallback_encoding = 'latin1';
 # - one might want to include '-B' option, e.g. '-B', '-M'
 our @diff_opts = ('-M'); # taken from git_commit
 
+# Disables features that would allow repository owners to inject script into
+# the gitweb domain.
+our $prevent_xss = 0;
+
 # information about snapshot formats that gitweb is capable of serving
 our %known_snapshot_formats = (
 	# name => {
@@ -4494,7 +4498,9 @@ sub git_summary {
 
 	print "</table>\n";
 
-	if (-s "$projectroot/$project/README.html") {
+	# If XSS prevention is on, we don't include README.html.
+	# TODO: Allow a readme in some safe format.
+	if (!$prevent_xss && -s "$projectroot/$project/README.html") {
 		print "<div class=\"title\">readme</div>\n" .
 		      "<div class=\"readme\">\n";
 		insert_file("$projectroot/$project/README.html");
@@ -4739,10 +4745,21 @@ sub git_blob_plain {
 		$save_as .= '.txt';
 	}
 
+	# With XSS prevention on, blobs of all types except a few known safe
+	# ones are served with "Content-Disposition: attachment" to make sure
+	# they don't run in our security domain.  For certain image types,
+	# blob view writes an <img> tag referring to blob_plain view, and we
+	# want to be sure not to break that by serving the image as an
+	# attachment (though Firefox 3 doesn't seem to care).
+	my $sandbox = $prevent_xss &&
+		$type !~ m!^(?:text/plain|image/(?:gif|png|jpeg))$!;
+
 	print $cgi->header(
 		-type => $type,
 		-expires => $expires,
-		-content_disposition => 'inline; filename="' . $save_as . '"');
+		-content_disposition =>
+			($sandbox ? 'attachment' : 'inline')
+			. '; filename="' . $save_as . '"');
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;

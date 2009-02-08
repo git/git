@@ -214,6 +214,11 @@ not include variables usually directly set during build):
    Rename detection options for git-diff and git-diff-tree. By default
    ('-M'); set it to ('-C') or ('-C', '-C') to also detect copies, or
    set it to () if you don't want to have renames detection.
+ * $prevent_xss
+   If true, some gitweb features are disabled to prevent content in
+   repositories from launching cross-site scripting (XSS) attacks.  Set this
+   to true if you don't trust the content of your repositories. The default
+   is false.
 
 
 Projects list file format
@@ -260,7 +265,9 @@ You can use the following files in repository:
    A .html file (HTML fragment) which is included on the gitweb project
    summary page inside <div> block element. You can use it for longer
    description of a project, to provide links (for example to project's
-   homepage), etc.
+   homepage), etc. This is recognized only if XSS prevention is off
+   ($prevent_xss is false); a way to include a readme safely when XSS
+   prevention is on may be worked out in the future.
  * description (or gitweb.description)
    Short (shortened by default to 25 characters in the projects list page)
    single line description of a project (of a repository). Plain text file;
