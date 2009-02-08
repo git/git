@@ -115,7 +115,7 @@ if test -z "$browser" ; then
 	browser_candidates="open $browser_candidates"
     fi
     # /bin/start indicates MinGW
-    if test -n /bin/start; then
+    if test -x /bin/start; then
 	browser_candidates="start $browser_candidates"
     fi
 
