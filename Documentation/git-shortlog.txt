@@ -48,24 +48,38 @@ OPTIONS
 FILES
 -----
 
-If a file `.mailmap` exists at the toplevel of the repository, or at the
-location pointed to by the log.mailmap configuration option,
-it is used to map an author email address to a canonical real name. This
-can be used to coalesce together commits by the same person where their
-name was spelled differently (whether with the same email address or
-not).
+If the file `.mailmap` exists at the toplevel of the repository, or at
+the location pointed to by the mailmap.file configuration option, it
+is used to map author and committer names and email addresses to
+canonical real names and email addresses.
+This mapping can be used to coalesce together commits by the same
+person where their name and/or email address was spelled differently.
 
-Each line in the file consists, in this order, of the canonical real name
-of an author, whitespace, and an email address (enclosed by '<' and '>')
-to map to the name. Use hash '#' for comments, either on their own line,
-or after the email address.
+In the simple form, each line in the file consists of the canonical
+real name of an author, whitespace, and an email address used in the
+commit (enclosed by '<' and '>') to map to the name. Thus, looks like
+this
+--
+	Proper Name <commit@email.xx>
+--
 
-A canonical name may appear in more than one line, associated with
-different email addresses, but it doesn't make sense for a given address
-to appear more than once (if that happens, a later line overrides the
-earlier ones).
+The more complex forms are
+--
+	<proper@email.xx> <commit@email.xx>
+--
+which allows mailmap to replace only the email part of a commit, and
+--
+	Proper Name <proper@email.xx> <commit@email.xx>
+--
+which allows mailmap to replace both the name and the email of a
+commit matching the specified commit email address, and
+--
+	Proper Name <proper@email.xx> Commit Name <commit@email.xx>
+--
+which allows mailmap to replace both the name and the email of a
+commit matching both the specified commit name and email address.
 
-So, for example, if your history contains commits by two authors, Jane
+Example 1: Your history contains commits by two authors, Jane
 and Joe, whose names appear in the repository under several forms:
 
 ------------
@@ -76,15 +90,42 @@ Jane Doe <jane@laptop.(none)>
 Jane D. <jane@desktop.(none)>
 ------------
 
-Then, supposing Joe wants his middle name initial used, and Jane prefers
-her family name fully spelled out, a proper `.mailmap` file would look like:
+Now suppose that Joe wants his middle name initial used, and Jane
+prefers her family name fully spelled out. A proper `.mailmap` file
+would look like:
 
 ------------
-# Note how we don't need an entry for <jane@laptop.(none)>, because the
-# real name of that author is correct already, and coalesced directly.
-Jane Doe <jane@desktop.(none)>
+Jane Doe         <jane@desktop.(none)>
 Joe R. Developer <joe@example.com>
 ------------
+
+Note how we don't need an entry for <jane@laptop.(none)>, because the
+real name of that author is correct already, and coalesced directly.
+
+Example 2: Your repository contains commits from the following
+authors:
+
+------------
+nick1 <bugs@company.xx>
+nick2 <bugs@company.xx>
+nick2 <nick2@company.xx>
+santa <me@company.xx>
+claus <me@company.xx>
+CTO <cto@coompany.xx>
+------------
+
+Then, you might want a `.mailmap` file looking like:
+------------
+<cto@company.xx>                       <cto@coompany.xx>
+Some Dude <some@dude.xx>         nick1 <bugs@company.xx>
+Other Author <other@author.xx>   nick2 <bugs@company.xx>
+Other Author <other@author.xx>         <nick2@company.xx>
+Santa Claus <santa.claus@northpole.xx> <me@company.xx>
+------------
+
+Use hash '#' for comments that are either on their own line, or after
+the email address.
+
 
 Author
 ------
