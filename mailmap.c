@@ -2,10 +2,11 @@
 #include "string-list.h"
 #include "mailmap.h"
 
-int read_mailmap(struct string_list *map, const char *filename, char **repo_abbrev)
+const char *git_mailmap_file;
+static int read_single_mailmap(struct string_list *map, const char *filename, char **repo_abbrev)
 {
 	char buffer[1024];
-	FILE *f = fopen(filename, "r");
+	FILE *f = (filename == NULL ? NULL : fopen(filename, "r"));
 
 	if (f == NULL)
 		return 1;
@@ -58,6 +59,13 @@ int read_mailmap(struct string_list *map, const char *filename, char **repo_abbr
 	}
 	fclose(f);
 	return 0;
+}
+
+int read_mailmap(struct string_list *map, char **repo_abbrev)
+{
+	/* each failure returns 1, so >1 means both calls failed */
+	return read_single_mailmap(map, ".mailmap", repo_abbrev) +
+	       read_single_mailmap(map, git_mailmap_file, repo_abbrev) > 1;
 }
 
 int map_email(struct string_list *map, const char *email, char *name, int maxlen)

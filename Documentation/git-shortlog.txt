@@ -48,7 +48,8 @@ OPTIONS
 FILES
 -----
 
-If a file `.mailmap` exists at the toplevel of the repository,
+If a file `.mailmap` exists at the toplevel of the repository, or at the
+location pointed to by the log.mailmap configuration option,
 it is used to map an author email address to a canonical real name. This
 can be used to coalesce together commits by the same person where their
 name was spelled differently (whether with the same email address or

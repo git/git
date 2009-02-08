@@ -312,7 +312,7 @@ static int mailmap_name(struct strbuf *sb, const char *email)
 
 	if (!mail_map) {
 		mail_map = xcalloc(1, sizeof(*mail_map));
-		read_mailmap(mail_map, ".mailmap", NULL);
+		read_mailmap(mail_map, NULL);
 	}
 
 	if (!mail_map->nr)

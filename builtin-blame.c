@@ -2394,7 +2394,7 @@ parse_done:
 		die("reading graft file %s failed: %s",
 		    revs_file, strerror(errno));
 
-	read_mailmap(&mailmap, ".mailmap", NULL);
+	read_mailmap(&mailmap, NULL);
 
 	if (!incremental)
 		setup_pager();

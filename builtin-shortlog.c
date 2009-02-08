@@ -219,7 +219,7 @@ void shortlog_init(struct shortlog *log)
 {
 	memset(log, 0, sizeof(*log));
 
-	read_mailmap(&log->mailmap, ".mailmap", &log->common_repo_prefix);
+	read_mailmap(&log->mailmap, &log->common_repo_prefix);
 
 	log->list.strdup_strings = 1;
 	log->wrap = DEFAULT_WRAPLEN;
@@ -248,6 +248,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	struct parse_opt_ctx_t ctx;
 
 	prefix = setup_git_directory_gently(&nongit);
+	git_config(git_default_config, NULL);
 	shortlog_init(&log);
 	init_revisions(&rev, prefix);
 	parse_options_start(&ctx, argc, argv, PARSE_OPT_KEEP_DASHDASH |
