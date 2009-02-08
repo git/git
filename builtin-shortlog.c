@@ -40,6 +40,7 @@ static void insert_one_record(struct shortlog *log,
 	char *buffer, *p;
 	struct string_list_item *item;
 	char namebuf[1024];
+	char emailbuf[1024];
 	size_t len;
 	const char *eol;
 	const char *boemail, *eoemail;
@@ -51,7 +52,19 @@ static void insert_one_record(struct shortlog *log,
 	eoemail = strchr(boemail, '>');
 	if (!eoemail)
 		return;
-	if (!map_email(&log->mailmap, boemail+1, namebuf, sizeof(namebuf))) {
+
+	/* copy author name to namebuf, to support matching on both name and email */
+	memcpy(namebuf, author, boemail - author);
+	len = boemail - author;
+	while(len > 0 && isspace(namebuf[len-1]))
+		len--;
+	namebuf[len] = 0;
+
+	/* copy email name to emailbuf, to allow email replacement as well */
+	memcpy(emailbuf, boemail+1, eoemail - boemail);
+	emailbuf[eoemail - boemail - 1] = 0;
+
+	if (!map_user(&log->mailmap, emailbuf, sizeof(emailbuf), namebuf, sizeof(namebuf))) {
 		while (author < boemail && isspace(*author))
 			author++;
 		for (len = 0;
@@ -67,8 +80,8 @@ static void insert_one_record(struct shortlog *log,
 
 	if (log->email) {
 		size_t room = sizeof(namebuf) - len - 1;
-		int maillen = eoemail - boemail + 1;
-		snprintf(namebuf + len, room, " %.*s", maillen, boemail);
+		int maillen = strlen(emailbuf);
+		snprintf(namebuf + len, room, " <%.*s>", maillen, emailbuf);
 	}
 
 	item = string_list_insert(namebuf, &log->list);
@@ -321,6 +334,5 @@ void shortlog_output(struct shortlog *log)
 
 	log->list.strdup_strings = 1;
 	string_list_clear(&log->list, 1);
-	log->mailmap.strdup_strings = 1;
-	string_list_clear(&log->mailmap, 1);
+	clear_mailmap(&log->mailmap);
 }

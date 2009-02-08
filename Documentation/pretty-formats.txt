@@ -103,6 +103,7 @@ The placeholders are:
 - '%an': author name
 - '%aN': author name (respecting .mailmap)
 - '%ae': author email
+- '%aE': author email (respecting .mailmap)
 - '%ad': author date (format respects --date= option)
 - '%aD': author date, RFC2822 style
 - '%ar': author date, relative
@@ -111,6 +112,7 @@ The placeholders are:
 - '%cn': committer name
 - '%cN': committer name (respecting .mailmap)
 - '%ce': committer email
+- '%cE': committer email (respecting .mailmap)
 - '%cd': committer date
 - '%cD': committer date, RFC2822 style
 - '%cr': committer date, relative
