@@ -51,6 +51,11 @@ static inline void reset_lstat_cache(void)
 	 */
 }
 
+#define SWITCHES_BEFORE_WARNING 10
+static unsigned int cache_switches, number_of_warnings;
+static unsigned int current_cache_func, last_cache_func;
+static unsigned int total_calls;
+
 #define FL_DIR      (1 << 0)
 #define FL_NOENT    (1 << 1)
 #define FL_SYMLINK  (1 << 2)
@@ -77,6 +82,7 @@ static int lstat_cache(const char *name, int len,
 	int match_flags, ret_flags, save_flags, max_len, ret;
 	struct stat st;
 
+	total_calls++;
 	if (cache.track_flags != track_flags ||
 	    cache.prefix_len_stat_func != prefix_len_stat_func) {
 		/*
@@ -88,6 +94,17 @@ static int lstat_cache(const char *name, int len,
 		cache.track_flags = track_flags;
 		cache.prefix_len_stat_func = prefix_len_stat_func;
 		match_len = last_slash = 0;
+		cache_switches++;
+		if (cache_switches > SWITCHES_BEFORE_WARNING) {
+			if (number_of_warnings < 10 || number_of_warnings % 1000 == 0)
+				printf("warning from %s:%d cache_switches:%u > %u "\
+				       "(current:%u last:%u total:%u)\n",
+				       __FILE__, __LINE__,
+				       cache_switches, SWITCHES_BEFORE_WARNING,
+				       current_cache_func, last_cache_func,
+				       total_calls);
+			number_of_warnings++;
+		}
 	} else {
 		/*
 		 * Check to see if we have a match from the cache for
@@ -216,6 +233,8 @@ void clear_lstat_cache(void)
  */
 int has_symlink_leading_path(const char *name, int len)
 {
+	last_cache_func = current_cache_func;
+	current_cache_func = 1;
 	return lstat_cache(name, len,
 			   FL_SYMLINK|FL_DIR, USE_ONLY_LSTAT) &
 		FL_SYMLINK;
@@ -227,6 +246,8 @@ int has_symlink_leading_path(const char *name, int len)
  */
 int has_symlink_or_noent_leading_path(const char *name, int len)
 {
+	last_cache_func = current_cache_func;
+	current_cache_func = 2;
 	return lstat_cache(name, len,
 			   FL_SYMLINK|FL_NOENT|FL_DIR, USE_ONLY_LSTAT) &
 		(FL_SYMLINK|FL_NOENT);
@@ -241,6 +262,8 @@ int has_symlink_or_noent_leading_path(const char *name, int len)
  */
 int has_dirs_only_path(const char *name, int len, int prefix_len)
 {
+	last_cache_func = current_cache_func;
+	current_cache_func = 3;
 	return lstat_cache(name, len,
 			   FL_DIR|FL_FULLPATH, prefix_len) &
 		FL_DIR;
