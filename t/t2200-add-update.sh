@@ -150,7 +150,7 @@ test_expect_success 'add -u resolves unmerged paths' '
 	echo 2 >path3 &&
 	echo 2 >path5 &&
 	git add -u &&
-	git ls-files -s "path?" >actual &&
+	git ls-files -s path1 path2 path3 path4 path5 path6 >actual &&
 	{
 		echo "100644 $three 0	path1"
 		echo "100644 $one 1	path3"
