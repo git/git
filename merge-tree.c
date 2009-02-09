@@ -4,7 +4,7 @@
 #include "blob.h"
 #include "exec_cmd.h"
 
-static const char merge_tree_usage[] = "git-merge-tree <base-tree> <branch1> <branch2>";
+static const char merge_tree_usage[] = "git merge-tree <base-tree> <branch1> <branch2>";
 static int resolve_directories = 1;
 
 struct merge_list {

@@ -12,6 +12,12 @@ my ($prompt_color, $header_color, $help_color) =
 		$repo->get_color('color.interactive.header', 'bold'),
 		$repo->get_color('color.interactive.help', 'red bold'),
 	) : ();
+my $error_color = ();
+if ($menu_use_color) {
+	my $help_color_spec = $repo->config('color.interactive.help');
+	$error_color = $repo->get_color('color.interactive.error',
+					$help_color_spec);
+}
 
 my $diff_use_color = $repo->get_colorbool('color.diff');
 my ($fraginfo_color) =
@@ -32,6 +38,17 @@ my ($diff_new_color) =
 	) : ();
 
 my $normal_color = $repo->get_color("", "reset");
+
+my $use_readkey = 0;
+sub ReadMode;
+sub ReadKey;
+if ($repo->config_bool("interactive.singlekey")) {
+	eval {
+		require Term::ReadKey;
+		Term::ReadKey->import;
+		$use_readkey = 1;
+	};
+}
 
 sub colored {
 	my $color = shift;
@@ -325,6 +342,10 @@ sub highlight_prefix {
 	return "$prompt_color$prefix$normal_color$remainder";
 }
 
+sub error_msg {
+	print STDERR colored $error_color, @_;
+}
+
 sub list_and_choose {
 	my ($opts, @stuff) = @_;
 	my (@chosen, @return);
@@ -420,12 +441,12 @@ sub list_and_choose {
 			else {
 				$bottom = $top = find_unique($choice, @stuff);
 				if (!defined $bottom) {
-					print "Huh ($choice)?\n";
+					error_msg "Huh ($choice)?\n";
 					next TOPLOOP;
 				}
 			}
 			if ($opts->{SINGLETON} && $bottom != $top) {
-				print "Huh ($choice)?\n";
+				error_msg "Huh ($choice)?\n";
 				next TOPLOOP;
 			}
 			for ($i = $bottom-1; $i <= $top-1; $i++) {
@@ -758,11 +779,32 @@ sub diff_applies {
 	return close $fh;
 }
 
+sub _restore_terminal_and_die {
+	ReadMode 'restore';
+	print "\n";
+	exit 1;
+}
+
+sub prompt_single_character {
+	if ($use_readkey) {
+		local $SIG{TERM} = \&_restore_terminal_and_die;
+		local $SIG{INT} = \&_restore_terminal_and_die;
+		ReadMode 'cbreak';
+		my $key = ReadKey 0;
+		ReadMode 'restore';
+		print "$key" if defined $key;
+		print "\n";
+		return $key;
+	} else {
+		return <STDIN>;
+	}
+}
+
 sub prompt_yesno {
 	my ($prompt) = @_;
 	while (1) {
 		print colored $prompt_color, $prompt;
-		my $line = <STDIN>;
+		my $line = prompt_single_character;
 		return 0 if $line =~ /^n/i;
 		return 1 if $line =~ /^y/i;
 	}
@@ -801,6 +843,7 @@ n - do not stage this hunk
 a - stage this and all the remaining hunks in the file
 d - do not stage this hunk nor any of the remaining hunks in the file
 g - select a hunk to go to
+/ - search for a hunk matching the given regex
 j - leave this hunk undecided, see next undecided hunk
 J - leave this hunk undecided, see next hunk
 k - leave this hunk undecided, see previous undecided hunk
@@ -892,7 +935,7 @@ sub patch_update_file {
 			print @{$mode->{DISPLAY}};
 			print colored $prompt_color,
 				"Stage mode change [y/n/a/d/?]? ";
-			my $line = <STDIN>;
+			my $line = prompt_single_character;
 			if ($line =~ /^y/i) {
 				$mode->{USE} = 1;
 				last;
@@ -929,25 +972,25 @@ sub patch_update_file {
 		for ($i = 0; $i < $ix; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$prev = 1;
-				$other .= '/k';
+				$other .= ',k';
 				last;
 			}
 		}
 		if ($ix) {
-			$other .= '/K';
+			$other .= ',K';
 		}
 		for ($i = $ix + 1; $i < $num; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$next = 1;
-				$other .= '/j';
+				$other .= ',j';
 				last;
 			}
 		}
 		if ($ix < $num - 1) {
-			$other .= '/J';
+			$other .= ',J';
 		}
 		if ($num > 1) {
-			$other .= '/g';
+			$other .= ',g';
 		}
 		for ($i = 0; $i < $num; $i++) {
 			if (!defined $hunk[$i]{USE}) {
@@ -958,14 +1001,14 @@ sub patch_update_file {
 		last if (!$undecided);
 
 		if (hunk_splittable($hunk[$ix]{TEXT})) {
-			$other .= '/s';
+			$other .= ',s';
 		}
-		$other .= '/e';
+		$other .= ',e';
 		for (@{$hunk[$ix]{DISPLAY}}) {
 			print;
 		}
-		print colored $prompt_color, "Stage this hunk [y/n/a/d$other/?]? ";
-		my $line = <STDIN>;
+		print colored $prompt_color, "Stage this hunk [y,n,a,d,/$other,?]? ";
+		my $line = prompt_single_character;
 		if ($line) {
 			if ($line =~ /^y/i) {
 				$hunk[$ix]{USE} = 1;
@@ -993,14 +1036,17 @@ sub patch_update_file {
 					}
 					print "go to which hunk$extra? ";
 					$response = <STDIN>;
+					if (!defined $response) {
+						$response = '';
+					}
 					chomp $response;
 				}
 				if ($response !~ /^\s*\d+\s*$/) {
-					print STDERR "Invalid number: '$response'\n";
+					error_msg "Invalid number: '$response'\n";
 				} elsif (0 < $response && $response <= $num) {
 					$ix = $response - 1;
 				} else {
-					print STDERR "Sorry, only $num hunks available.\n";
+					error_msg "Sorry, only $num hunks available.\n";
 				}
 				next;
 			}
@@ -1013,29 +1059,75 @@ sub patch_update_file {
 				}
 				next;
 			}
-			elsif ($other =~ /K/ && $line =~ /^K/) {
-				$ix--;
-				next;
-			}
-			elsif ($other =~ /J/ && $line =~ /^J/) {
-				$ix++;
-				next;
-			}
-			elsif ($other =~ /k/ && $line =~ /^k/) {
+			elsif ($line =~ m|^/(.*)|) {
+				my $regex = $1;
+				if ($1 eq "") {
+					print colored $prompt_color, "search for regex? ";
+					$regex = <STDIN>;
+					if (defined $regex) {
+						chomp $regex;
+					}
+				}
+				my $search_string;
+				eval {
+					$search_string = qr{$regex}m;
+				};
+				if ($@) {
+					my ($err,$exp) = ($@, $1);
+					$err =~ s/ at .*git-add--interactive line \d+, <STDIN> line \d+.*$//;
+					error_msg "Malformed search regexp $exp: $err\n";
+					next;
+				}
+				my $iy = $ix;
 				while (1) {
+					my $text = join ("", @{$hunk[$iy]{TEXT}});
+					last if ($text =~ $search_string);
+					$iy++;
+					$iy = 0 if ($iy >= $num);
+					if ($ix == $iy) {
+						error_msg "No hunk matches the given pattern\n";
+						last;
+					}
+				}
+				$ix = $iy;
+				next;
+			}
+			elsif ($line =~ /^K/) {
+				if ($other =~ /K/) {
 					$ix--;
-					last if (!$ix ||
-						 !defined $hunk[$ix]{USE});
+				}
+				else {
+					error_msg "No previous hunk\n";
 				}
 				next;
 			}
-			elsif ($other =~ /j/ && $line =~ /^j/) {
-				while (1) {
+			elsif ($line =~ /^J/) {
+				if ($other =~ /J/) {
 					$ix++;
-					last if ($ix >= $num ||
-						 !defined $hunk[$ix]{USE});
+				}
+				else {
+					error_msg "No next hunk\n";
 				}
 				next;
+			}
+			elsif ($line =~ /^k/) {
+				if ($other =~ /k/) {
+					while (1) {
+						$ix--;
+						last if (!$ix ||
+							 !defined $hunk[$ix]{USE});
+					}
+				}
+				else {
+					error_msg "No previous hunk\n";
+				}
+				next;
+			}
+			elsif ($line =~ /^j/) {
+				if ($other !~ /j/) {
+					error_msg "No next hunk\n";
+					next;
+				}
 			}
 			elsif ($other =~ /s/ && $line =~ /^s/) {
 				my @split = split_hunk($hunk[$ix]{TEXT}, $hunk[$ix]{DISPLAY});

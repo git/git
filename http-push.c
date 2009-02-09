@@ -10,6 +10,7 @@
 #include "exec_cmd.h"
 #include "remote.h"
 #include "list-objects.h"
+#include "sigchain.h"
 
 #include <expat.h>
 
@@ -209,6 +210,15 @@ static struct curl_slist *get_dav_token_headers(struct remote_lock *lock, enum d
 	return dav_headers;
 }
 
+static void append_remote_object_url(struct strbuf *buf, const char *url,
+				     const char *hex,
+				     int only_two_digit_prefix)
+{
+	strbuf_addf(buf, "%sobjects/%.*s/", url, 2, hex);
+	if (!only_two_digit_prefix)
+		strbuf_addf(buf, "%s", hex+2);
+}
+
 static void finish_request(struct transfer_request *request);
 static void release_request(struct transfer_request *request);
 
@@ -221,6 +231,15 @@ static void process_response(void *callback_data)
 }
 
 #ifdef USE_CURL_MULTI
+
+static char *get_remote_object_url(const char *url, const char *hex,
+				   int only_two_digit_prefix)
+{
+	struct strbuf buf = STRBUF_INIT;
+	append_remote_object_url(&buf, url, hex, only_two_digit_prefix);
+	return strbuf_detach(&buf, NULL);
+}
+
 static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 			       void *data)
 {
@@ -255,7 +274,6 @@ static void start_fetch_loose(struct transfer_request *request)
 	char *filename;
 	char prevfile[PATH_MAX];
 	char *url;
-	char *posn;
 	int prevlocal;
 	unsigned char prev_buf[PREV_BUF_SIZE];
 	ssize_t prev_read = 0;
@@ -305,17 +323,8 @@ static void start_fetch_loose(struct transfer_request *request)
 
 	git_SHA1_Init(&request->c);
 
-	url = xmalloc(strlen(remote->url) + 50);
-	request->url = xmalloc(strlen(remote->url) + 50);
-	strcpy(url, remote->url);
-	posn = url + strlen(remote->url);
-	strcpy(posn, "objects/");
-	posn += 8;
-	memcpy(posn, hex, 2);
-	posn += 2;
-	*(posn++) = '/';
-	strcpy(posn, hex + 2);
-	strcpy(request->url, url);
+	url = get_remote_object_url(remote->url, hex, 0);
+	request->url = xstrdup(url);
 
 	/* If a previous temp file is present, process what was already
 	   fetched. */
@@ -388,16 +397,8 @@ static void start_mkcol(struct transfer_request *request)
 {
 	char *hex = sha1_to_hex(request->obj->sha1);
 	struct active_request_slot *slot;
-	char *posn;
 
-	request->url = xmalloc(strlen(remote->url) + 13);
-	strcpy(request->url, remote->url);
-	posn = request->url + strlen(remote->url);
-	strcpy(posn, "objects/");
-	posn += 8;
-	memcpy(posn, hex, 2);
-	posn += 2;
-	strcpy(posn, "/");
+	request->url = get_remote_object_url(remote->url, hex, 1);
 
 	slot = get_active_slot();
 	slot->callback_func = process_response;
@@ -512,7 +513,7 @@ static void start_put(struct transfer_request *request)
 {
 	char *hex = sha1_to_hex(request->obj->sha1);
 	struct active_request_slot *slot;
-	char *posn;
+	struct strbuf buf = STRBUF_INIT;
 	enum object_type type;
 	char hdr[50];
 	void *unpacked;
@@ -551,21 +552,14 @@ static void start_put(struct transfer_request *request)
 
 	request->buffer.buf.len = stream.total_out;
 
-	request->url = xmalloc(strlen(remote->url) +
-			       strlen(request->lock->token) + 51);
-	strcpy(request->url, remote->url);
-	posn = request->url + strlen(remote->url);
-	strcpy(posn, "objects/");
-	posn += 8;
-	memcpy(posn, hex, 2);
-	posn += 2;
-	*(posn++) = '/';
-	strcpy(posn, hex + 2);
-	request->dest = xmalloc(strlen(request->url) + 14);
-	sprintf(request->dest, "Destination: %s", request->url);
-	posn += 38;
-	*(posn++) = '_';
-	strcpy(posn, request->lock->token);
+	strbuf_addstr(&buf, "Destination: ");
+	append_remote_object_url(&buf, remote->url, hex, 0);
+	request->dest = strbuf_detach(&buf, NULL);
+
+	append_remote_object_url(&buf, remote->url, hex, 0);
+	strbuf_addstr(&buf, "_");
+	strbuf_addstr(&buf, request->lock->token);
+	request->url = strbuf_detach(&buf, NULL);
 
 	slot = get_active_slot();
 	slot->callback_func = process_response;
@@ -1384,7 +1378,7 @@ static void remove_locks(void)
 static void remove_locks_on_signal(int signo)
 {
 	remove_locks();
-	signal(signo, SIG_DFL);
+	sigchain_pop(signo);
 	raise(signo);
 }
 
@@ -2279,10 +2273,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	signal(SIGINT, remove_locks_on_signal);
-	signal(SIGHUP, remove_locks_on_signal);
-	signal(SIGQUIT, remove_locks_on_signal);
-	signal(SIGTERM, remove_locks_on_signal);
+	sigchain_push_common(remove_locks_on_signal);
 
 	/* Check whether the remote has server info files */
 	remote->can_update_info_refs = 0;

@@ -62,7 +62,7 @@ static void write_tree(unsigned char *sha1)
 	write_sha1_file(buf.buf, buf.len, tree_type, sha1);
 }
 
-static const char mktree_usage[] = "git-mktree [-z]";
+static const char mktree_usage[] = "git mktree [-z]";
 
 int main(int ac, char **av)
 {

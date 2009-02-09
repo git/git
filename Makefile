@@ -23,6 +23,9 @@ all::
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
 #
+# Define EXPATDIR=/foo/bar if your expat header and library files are in
+# /foo/bar/include and /foo/bar/lib directories.
+#
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 #
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
@@ -262,6 +265,7 @@ SCRIPT_SH += git-merge-octopus.sh
 SCRIPT_SH += git-merge-one-file.sh
 SCRIPT_SH += git-merge-resolve.sh
 SCRIPT_SH += git-mergetool.sh
+SCRIPT_SH += git-notes.sh
 SCRIPT_SH += git-parse-remote.sh
 SCRIPT_SH += git-pull.sh
 SCRIPT_SH += git-quiltimport.sh
@@ -374,6 +378,7 @@ LIB_H += ll-merge.h
 LIB_H += log-tree.h
 LIB_H += mailmap.h
 LIB_H += merge-recursive.h
+LIB_H += notes.h
 LIB_H += object.h
 LIB_H += pack.h
 LIB_H += pack-refs.h
@@ -392,6 +397,7 @@ LIB_H += revision.h
 LIB_H += run-command.h
 LIB_H += sha1-lookup.h
 LIB_H += sideband.h
+LIB_H += sigchain.h
 LIB_H += strbuf.h
 LIB_H += tag.h
 LIB_H += transport.h
@@ -455,6 +461,7 @@ LIB_OBJS += match-trees.o
 LIB_OBJS += merge-file.o
 LIB_OBJS += merge-recursive.o
 LIB_OBJS += name-hash.o
+LIB_OBJS += notes.o
 LIB_OBJS += object.o
 LIB_OBJS += pack-check.o
 LIB_OBJS += pack-refs.o
@@ -485,6 +492,7 @@ LIB_OBJS += sha1-lookup.o
 LIB_OBJS += sha1_name.o
 LIB_OBJS += shallow.o
 LIB_OBJS += sideband.o
+LIB_OBJS += sigchain.o
 LIB_OBJS += strbuf.o
 LIB_OBJS += symlinks.o
 LIB_OBJS += tag.o
@@ -644,10 +652,12 @@ endif
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	ifneq ($(shell expr "$(uname_R)" : '9\.'),2)
+	ifeq ($(shell expr "$(uname_R)" : '[15678]\.'),2)
 		OLD_ICONV = UnfortunatelyYes
 	endif
-	NO_STRLCPY = YesPlease
+	ifeq ($(shell expr "$(uname_R)" : '[15]\.'),2)
+		NO_STRLCPY = YesPlease
+	endif
 	NO_MEMMEM = YesPlease
 	THREADED_DELTA_SEARCH = YesPlease
 endif
@@ -852,7 +862,12 @@ else
 		endif
 	endif
 	ifndef NO_EXPAT
-		EXPAT_LIBEXPAT = -lexpat
+		ifdef EXPATDIR
+			BASIC_CFLAGS += -I$(EXPATDIR)/include
+			EXPAT_LIBEXPAT = -L$(EXPATDIR)/$(lib) $(CC_LD_DYNPATH)$(EXPATDIR)/$(lib) -lexpat
+		else
+			EXPAT_LIBEXPAT = -lexpat
+		endif
 	endif
 endif
 
@@ -1372,11 +1387,13 @@ TEST_PROGRAMS += test-chmtime$X
 TEST_PROGRAMS += test-ctype$X
 TEST_PROGRAMS += test-date$X
 TEST_PROGRAMS += test-delta$X
+TEST_PROGRAMS += test-dump-cache-tree$X
 TEST_PROGRAMS += test-genrandom$X
 TEST_PROGRAMS += test-match-trees$X
 TEST_PROGRAMS += test-parse-options$X
 TEST_PROGRAMS += test-path-utils$X
 TEST_PROGRAMS += test-sha1$X
+TEST_PROGRAMS += test-sigchain$X
 
 all:: $(TEST_PROGRAMS)
 
@@ -1422,14 +1439,14 @@ remove-dashes:
 
 ### Installation rules
 
-ifeq ($(abspath $(template_dir)),$(template_dir))
+ifneq ($(filter /%,$(firstword $(template_dir))),)
 template_instdir = $(template_dir)
 else
 template_instdir = $(prefix)/$(template_dir)
 endif
 export template_instdir
 
-ifeq ($(abspath $(gitexecdir)),$(gitexecdir))
+ifneq ($(filter /%,$(firstword $(gitexecdir))),)
 gitexec_instdir = $(gitexecdir)
 else
 gitexec_instdir = $(prefix)/$(gitexecdir)

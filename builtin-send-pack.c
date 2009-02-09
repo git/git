@@ -15,6 +15,20 @@ static struct send_pack_args args = {
 	/* .receivepack = */ "git-receive-pack",
 };
 
+static int feed_object(const unsigned char *sha1, int fd, int negative)
+{
+	char buf[42];
+
+	if (negative && !has_sha1_file(sha1))
+		return 1;
+
+	memcpy(buf + negative, sha1_to_hex(sha1), 40);
+	if (negative)
+		buf[0] = '^';
+	buf[40 + negative] = '\n';
+	return write_or_whine(fd, buf, 41 + negative, "send-pack: send refs");
+}
+
 /*
  * Make a pack stream and spit it out into file descriptor fd
  */
@@ -35,7 +49,6 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 	};
 	struct child_process po;
 	int i;
-	char buf[42];
 
 	if (args.use_thin_pack)
 		argv[4] = "--thin";
@@ -51,31 +64,17 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 	 * We feed the pack-objects we just spawned with revision
 	 * parameters by writing to the pipe.
 	 */
-	for (i = 0; i < extra->nr; i++) {
-		memcpy(buf + 1, sha1_to_hex(&extra->array[i][0]), 40);
-		buf[0] = '^';
-		buf[41] = '\n';
-		if (!write_or_whine(po.in, buf, 42, "send-pack: send refs"))
+	for (i = 0; i < extra->nr; i++)
+		if (!feed_object(extra->array[i], po.in, 1))
 			break;
-	}
 
 	while (refs) {
 		if (!is_null_sha1(refs->old_sha1) &&
-		    has_sha1_file(refs->old_sha1)) {
-			memcpy(buf + 1, sha1_to_hex(refs->old_sha1), 40);
-			buf[0] = '^';
-			buf[41] = '\n';
-			if (!write_or_whine(po.in, buf, 42,
-						"send-pack: send refs"))
-				break;
-		}
-		if (!is_null_sha1(refs->new_sha1)) {
-			memcpy(buf, sha1_to_hex(refs->new_sha1), 40);
-			buf[40] = '\n';
-			if (!write_or_whine(po.in, buf, 41,
-						"send-pack: send refs"))
-				break;
-		}
+		    !feed_object(refs->old_sha1, po.in, 1))
+			break;
+		if (!is_null_sha1(refs->new_sha1) &&
+		    !feed_object(refs->new_sha1, po.in, 0))
+			break;
 		refs = refs->next;
 	}
 

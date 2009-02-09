@@ -1,12 +1,32 @@
 GIT v1.6.2 Release Notes
 ========================
 
+With the next major release, "git push" into a branch that is
+currently checked out will be refused by default.  You can choose
+what should happen upon such a push by setting the configuration
+variable receive.denyCurrentBranch in the receiving repository.
+
+To ease the transition plan, the receiving repository of such a
+push running this release will issue a big warning when the
+configuration variable is missing.  Please refer to:
+
+  http://thread.gmane.org/gmane.comp.version-control.git/107758/focus=108007
+
+for more details on the transition plan.
+
+
 Updates since v1.6.1
 --------------------
 
 (subsystems)
 
-(portability)
+* git-svn updates.
+
+* gitweb updates, including a new patch view and RSS/Atom feed
+  improvements.
+
+* (contrib) git.el updates for better XEmacs compatibility; vc-git.el
+  is not shiped with git anymore (it is part of official Emacs)
 
 (performance)
 
@@ -15,29 +35,76 @@ Updates since v1.6.1
 
 (usability, bells and whistles)
 
-* "git-add -p" learned 'g'oto action to jump directly to a hunk.
+* automatic typo correction works on aliases as well
 
-* git-cherry defaults to HEAD when the <upstream> argument is not given.
+* Initial support for "git notes" implemented.
 
-* git-cvsserver can be told not to add extra "via git-CVS emulator" to the
-  commit log message it serves via gitcvs.commitmsgannotation configuration.
+* @{-1} is a way to refer to the last branch you were on.  This is
+  accepted not only where an object name is expected, but anywhere
+  a branch name is expected.  E.g. "git branch --track mybranch @{-1}"
+  "git rev-parse --symbolic-full-name @{-1}".
 
-* git-diff learned a new option --inter-hunk-context to coalesce close
+* "git add -p" learned 'g'oto action to jump directly to a hunk.
+
+* "git add -p" learned to find a hunk with given text with '/'.
+
+* "git add -p" optionally can be told to work with just the command letter
+  without Enter.
+
+* when "git am" stops upon a patch that does not apply, it shows the
+  title of the offending patch.
+
+* "git am --directory=<dir>" and "git am --reject" passes these options
+  to underlying "git apply".
+
+* "git am" learned --ignore-date option.
+
+* "git blame" aligns author names better when they are spelled in
+  non US-ASCII encoding.
+
+* "git clone" now makes its best effort when cloning from an empty
+  repository to set up configuration variables to refer to the remote
+  repository.
+
+* "git checkout -" is a shorthand for "git checkout @{-1}".
+
+* "git cherry" defaults to whatever the current branch is tracking (if
+  exists) when the <upstream> argument is not given.
+
+* "git cvsserver" can be told not to add extra "via git-CVS emulator" to
+  the commit log message it serves via gitcvs.commitmsgannotation
+  configuration.
+
+* "git cvsserver" learned to handle 'noop' command some CVS clients seem
+  to expect to work.
+
+* "git diff" learned a new option --inter-hunk-context to coalesce close
   hunks together and show context between them.
 
-* git-filter-branch learned --prune-empty option that discards commits
+* The definition of what constitutes a word for "git diff --color-words"
+  can be customized via gitattributes, command line or a configuration.
+
+* "git diff" learned --patience to run "patience diff" algorithm.
+
+* "git filter-branch" learned --prune-empty option that discards commits
   that do not change the contents.
 
-* git-ls-tree learned --full-tree option that shows the path in full
-  regardless of where in the work tree hierarchy the command was started.
+* "git fsck" now checks loose objects in alternate object stores, instead
+  of misreporting them as missing.
 
-* git-mergetool learned -y(--no-prompt) option to disable prompting.
+* "git grep -w" and "git grep" for fixed strings have been optimized.
 
-* "git-reset --merge" is a new mode that works similar to the way
+* "git mergetool" learned -y(--no-prompt) option to disable prompting.
+
+* "git rebase -i" can transplant a history down to root to elsewhere
+  with --root option.
+
+* "git reset --merge" is a new mode that works similar to the way
   "git checkout" switches branches, taking the local changes while
   switching to another commit.
 
-(internal)
+* "git tag" learned --contains that works the same way as the same option
+  from "git branch".
 
 
 Fixes since v1.6.1
@@ -46,20 +113,34 @@ Fixes since v1.6.1
 All of the fixes in v1.6.1.X maintenance series are included in this
 release, unless otherwise noted.
 
+Here are fixes that this release has, but have not been backported to
+v1.6.1.X series.
+
 * "git-add sub/file" when sub is a submodule incorrectly added the path to
   the superproject.
 
-* git-bundle did not exclude annotated tags even when a range given from the
-  command line wanted to.
+* "git bundle" did not exclude annotated tags even when a range given
+  from the command line wanted to.
 
-* git-grep did not work correctly for index entries with assume-unchanged bit.
+* "git filter-branch" unnecessarily refused to work when you had
+  checked out a different commit from what is recorded in the superproject
+  index in a submodule.
+
+* "git filter-branch" incorrectly tried to update a nonexistent work tree
+  at the end when it is run in a bare repository.
+
+* "git mergetool" used to ignore autocrlf and other attributes
+  based content rewriting.
 
 * branch switching and merges had a silly bug that did not validate
   the correct directory when making sure an existing subdirectory is
   clean.
 
+* "git -p cmd" when cmd is not a built-in one left the display in funny state
+  when killed in the middle.
+
 --
 exec >/var/tmp/1
-O=v1.6.1-134-ge98c6a1
+O=v1.6.1.3-371-gc19923a
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

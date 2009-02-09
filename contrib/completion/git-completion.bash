@@ -34,6 +34,12 @@
 #       are currently in a git repository.  The %s token will be
 #       the name of the current branch.
 #
+#	In addition, if you set GIT_PS1_SHOWDIRTYSTATE to a nonempty
+#	value, unstaged (*) and staged (+) changes will be shown next
+#	to the branch name.  You can configure this per-repository
+#	with the bash.showDirtyState variable, which defaults to true
+#	once GIT_PS1_SHOWDIRTYSTATE is enabled.
+#
 # To submit patches:
 #
 #    *) Read Documentation/SubmittingPatches
@@ -116,10 +122,26 @@ __git_ps1 ()
 			fi
 		fi
 
+		local w
+		local i
+
+		if test -n "$GIT_PS1_SHOWDIRTYSTATE"; then
+			if test "$(git config --bool bash.showDirtyState)" != "false"; then
+				git diff --no-ext-diff --ignore-submodules \
+					--quiet --exit-code || w="*"
+				if git rev-parse --quiet --verify HEAD >/dev/null; then
+					git diff-index --cached --quiet \
+						--ignore-submodules HEAD -- || i="+"
+				else
+					i="#"
+				fi
+			fi
+		fi
+
 		if [ -n "${1-}" ]; then
-			printf "$1" "${b##refs/heads/}$r"
+			printf "$1" "${b##refs/heads/}$w$i$r"
 		else
-			printf " (%s)" "${b##refs/heads/}$r"
+			printf " (%s)" "${b##refs/heads/}$w$i$r"
 		fi
 	fi
 }

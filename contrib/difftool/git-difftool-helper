@@ -1,7 +1,7 @@
 #!/bin/sh
 # git-difftool-helper is a GIT_EXTERNAL_DIFF-compatible diff tool launcher.
-# It supports kdiff3, tkdiff, xxdiff, meld, opendiff, emerge, ecmerge,
-# vimdiff, gvimdiff, and custom user-configurable tools.
+# It supports kdiff3, kompare, tkdiff, xxdiff, meld, opendiff,
+# emerge, ecmerge, vimdiff, gvimdiff, and custom user-configurable tools.
 # This script is typically launched by using the 'git difftool'
 # convenience command.
 #
@@ -73,6 +73,10 @@ launch_merge_tool () {
 			> /dev/null 2>&1
 		;;
 
+	kompare)
+		"$merge_tool_path" "$LOCAL" "$REMOTE"
+		;;
+
 	tkdiff)
 		"$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"
 		;;
@@ -134,7 +138,7 @@ valid_custom_tool() {
 # Built-in merge tools are always valid.
 valid_tool() {
 	case "$1" in
-	kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge)
+	kdiff3 | kompare | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge)
 		;; # happy
 	*)
 		if ! valid_custom_tool "$1"
@@ -177,31 +181,24 @@ fi
 
 # Try to guess an appropriate merge tool if no tool has been set.
 if test -z "$merge_tool"; then
-
 	# We have a $DISPLAY so try some common UNIX merge tools
 	if test -n "$DISPLAY"; then
-		merge_tool_candidates="kdiff3 tkdiff xxdiff meld gvimdiff"
-		# If gnome then prefer meld
-		if test -n "$GNOME_DESKTOP_SESSION_ID"; then
-			merge_tool_candidates="meld $merge_tool_candidates"
-		fi
-		# If KDE then prefer kdiff3
-		if test "$KDE_FULL_SESSION" = "true"; then
-			merge_tool_candidates="kdiff3 $merge_tool_candidates"
+		# If gnome then prefer meld, otherwise, prefer kdiff3 or kompare
+		if test -n "$GNOME_DESKTOP_SESSION_ID" ; then
+			merge_tool_candidates="meld kdiff3 kompare tkdiff xxdiff gvimdiff"
+		else
+			merge_tool_candidates="kdiff3 kompare tkdiff xxdiff meld gvimdiff"
 		fi
 	fi
-
-	# $EDITOR is emacs so add emerge as a candidate
 	if echo "${VISUAL:-$EDITOR}" | grep 'emacs' > /dev/null 2>&1; then
-		merge_tool_candidates="$merge_tool_candidates emerge"
+		# $EDITOR is emacs so add emerge as a candidate
+		merge_tool_candidates="$merge_tool_candidates emerge opendiff vimdiff"
+	elif echo "${VISUAL:-$EDITOR}" | grep 'vim' > /dev/null 2>&1; then
+		# $EDITOR is vim so add vimdiff as a candidate
+		merge_tool_candidates="$merge_tool_candidates vimdiff opendiff emerge"
+	else
+		merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
 	fi
-
-	# $EDITOR is vim so add vimdiff as a candidate
-	if echo "${VISUAL:-$EDITOR}" | grep 'vim' > /dev/null 2>&1; then
-		merge_tool_candidates="$merge_tool_candidates vimdiff"
-	fi
-
-	merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
 	echo "merge tool candidates: $merge_tool_candidates"
 
 	# Loop over each candidate and stop when a valid merge tool is found.

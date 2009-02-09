@@ -351,8 +351,16 @@ struct branch_info {
 static void setup_branch_path(struct branch_info *branch)
 {
 	struct strbuf buf = STRBUF_INIT;
-	strbuf_addstr(&buf, "refs/heads/");
-	strbuf_addstr(&buf, branch->name);
+	int ret;
+
+	if ((ret = interpret_nth_last_branch(branch->name, &buf))
+	    && ret == strlen(branch->name)) {
+		branch->name = xstrdup(buf.buf);
+		strbuf_splice(&buf, 0, 0, "refs/heads/", 11);
+	} else {
+		strbuf_addstr(&buf, "refs/heads/");
+		strbuf_addstr(&buf, branch->name);
+	}
 	branch->path = strbuf_detach(&buf, NULL);
 }
 
@@ -660,6 +668,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 		arg = argv[0];
 		has_dash_dash = (argc > 1) && !strcmp(argv[1], "--");
+
+		if (!strcmp(arg, "-"))
+			arg = "@{-1}";
 
 		if (get_sha1(arg, rev)) {
 			if (has_dash_dash)          /* case (1) */

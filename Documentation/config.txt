@@ -422,6 +422,19 @@ relatively high IO latencies.  With this set to 'true', git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.
 
+core.notesRef::
+	When showing commit messages, also show notes which are stored in
+	the given ref.  This ref is expected to contain files named
+	after the full SHA-1 of the commit they annotate.
++
+If such a file exists in the given ref, the referenced blob is read, and
+appended to the commit message, separated by a "Notes:" line.  If the
+given ref itself does not exist, it is not an error, but means that no
+notes should be printed.
++
+This setting defaults to "refs/notes/commits", and can be overridden by
+the `GIT_NOTES_REF` environment variable.
+
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
@@ -556,8 +569,8 @@ color.interactive::
 
 color.interactive.<slot>::
 	Use customized color for 'git-add --interactive'
-	output. `<slot>` may be `prompt`, `header`, or `help`, for
-	three distinct types of normal output from interactive
+	output. `<slot>` may be `prompt`, `header`, `help` or `error`, for
+	four distinct types of normal output from interactive
 	programs.  The values of these variables may be specified as
 	in color.branch.<slot>.
 
@@ -999,6 +1012,13 @@ instaweb.modulepath::
 instaweb.port::
 	The port number to bind the gitweb httpd to. See
 	linkgit:git-instaweb[1].
+
+interactive.singlekey::
+	In interactive programs, allow the user to provide one-letter
+	input with a single key (i.e., without hitting enter).
+	Currently this is used only by the `\--patch` mode of
+	linkgit:git-add[1].  Note that this setting is silently
+	ignored if portable keystroke input is not available.
 
 log.date::
 	Set default date-time mode for the log command. Setting log.date

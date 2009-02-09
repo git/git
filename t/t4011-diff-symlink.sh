@@ -89,4 +89,11 @@ test_expect_success \
     git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 
+test_expect_success \
+    'diff symlinks with non-existing targets' \
+    'ln -s narf pinky &&
+    ln -s take\ over brain &&
+    test_must_fail git diff --no-index pinky brain > output 2> output.err &&
+    grep narf output &&
+    ! grep error output.err'
 test_done

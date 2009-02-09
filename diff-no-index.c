@@ -40,7 +40,7 @@ static int get_mode(const char *path, int *mode)
 		*mode = 0;
 	else if (!strcmp(path, "-"))
 		*mode = create_ce_mode(0666);
-	else if (stat(path, &st))
+	else if (lstat(path, &st))
 		return error("Could not access '%s'", path);
 	else
 		*mode = st.st_mode;

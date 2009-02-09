@@ -108,7 +108,7 @@ OPTIONS_SPEC=
 . git-sh-setup
 
 if [ "$(is_bare_repository)" = false ]; then
-	git diff-files --quiet &&
+	git diff-files --ignore-submodules --quiet &&
 	git diff-index --cached --quiet HEAD -- ||
 	die "Cannot rewrite branch(es) with a dirty working directory."
 fi
@@ -469,19 +469,20 @@ rm -rf "$tempdir"
 
 trap - 0
 
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+test -z "$ORIG_GIT_DIR" || {
+	GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
+}
+test -z "$ORIG_GIT_WORK_TREE" || {
+	GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
+	export GIT_WORK_TREE
+}
+test -z "$ORIG_GIT_INDEX_FILE" || {
+	GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
+	export GIT_INDEX_FILE
+}
+
 if [ "$(is_bare_repository)" = false ]; then
-	unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
-	test -z "$ORIG_GIT_DIR" || {
-		GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
-	}
-	test -z "$ORIG_GIT_WORK_TREE" || {
-		GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
-		export GIT_WORK_TREE
-	}
-	test -z "$ORIG_GIT_INDEX_FILE" || {
-		GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
-		export GIT_INDEX_FILE
-	}
 	git read-tree -u -m HEAD
 fi
 

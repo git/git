@@ -1,6 +1,6 @@
 ;;; git.el --- A user interface for git
 
-;; Copyright (C) 2005, 2006, 2007 Alexandre Julliard <julliard@winehq.org>
+;; Copyright (C) 2005, 2006, 2007, 2008, 2009 Alexandre Julliard <julliard@winehq.org>
 
 ;; Version: 1.0
 
@@ -34,15 +34,21 @@
 ;; To start: `M-x git-status'
 ;;
 ;; TODO
-;;  - portability to XEmacs
 ;;  - diff against other branch
 ;;  - renaming files from the status buffer
 ;;  - creating tags
 ;;  - fetch/pull
-;;  - switching branches
 ;;  - revlist browser
 ;;  - git-show-branch browser
-;;  - menus
+;;
+
+;;; Compatibility:
+;;
+;; This file works on GNU Emacs 21 or later. It may work on older
+;; versions but this is not guaranteed.
+;;
+;; It may work on XEmacs 21, provided that you first install the ewoc
+;; and log-edit packages.
 ;;
 
 (eval-when-compile (require 'cl))
@@ -222,7 +228,7 @@ the process output as a string, or nil if the git command failed."
     (with-current-buffer buffer
       (cd dir)
       (apply #'call-process-region start end program
-             nil (list output-buffer nil) nil args))))
+             nil (list output-buffer t) nil args))))
 
 (defun git-run-command-buffer (buffer-name &rest args)
   "Run a git command, sending the output to a buffer named BUFFER-NAME."
@@ -239,13 +245,15 @@ the process output as a string, or nil if the git command failed."
 
 (defun git-run-command-region (buffer start end env &rest args)
   "Run a git command with specified buffer region as input."
-  (unless (eq 0 (if env
-                    (git-run-process-region
-                     buffer start end "env"
-                     (append (git-get-env-strings env) (list "git") args))
+  (with-temp-buffer
+    (if (eq 0 (if env
                   (git-run-process-region
-                   buffer start end "git" args)))
-    (error "Failed to run \"git %s\":\n%s" (mapconcat (lambda (x) x) args " ") (buffer-string))))
+                   buffer start end "env"
+                   (append (git-get-env-strings env) (list "git") args))
+                (git-run-process-region buffer start end "git" args)))
+        (buffer-string)
+      (display-message-or-buffer (current-buffer))
+      nil)))
 
 (defun git-run-hook (hook env &rest args)
   "Run a git hook and display its output if any."
@@ -397,6 +405,17 @@ the process output as a string, or nil if the git command failed."
     (unless newval (push "-d" args))
     (apply 'git-call-process-display-error "update-ref" args)))
 
+(defun git-for-each-ref (&rest specs)
+  "Return a list of refs using git-for-each-ref.
+Each entry is a cons of (SHORT-NAME . FULL-NAME)."
+  (let (refs)
+    (with-temp-buffer
+      (apply #'git-call-process t "for-each-ref" "--format=%(refname)" specs)
+      (goto-char (point-min))
+      (while (re-search-forward "^[^/\n]+/[^/\n]+/\\(.+\\)$" nil t)
+	(push (cons (match-string 1) (match-string 0)) refs)))
+    (nreverse refs)))
+
 (defun git-read-tree (tree &optional index-file)
   "Read a tree into the index file."
   (let ((process-environment
@@ -447,18 +466,16 @@ the process output as a string, or nil if the git command failed."
       (setq coding-system-for-write buffer-file-coding-system))
     (let ((commit
            (git-get-string-sha1
-            (with-output-to-string
-              (with-current-buffer standard-output
-                (let ((env `(("GIT_AUTHOR_NAME" . ,author-name)
-                             ("GIT_AUTHOR_EMAIL" . ,author-email)
-                             ("GIT_COMMITTER_NAME" . ,(git-get-committer-name))
-                             ("GIT_COMMITTER_EMAIL" . ,(git-get-committer-email)))))
-                  (when author-date (push `("GIT_AUTHOR_DATE" . ,author-date) env))
-                  (apply #'git-run-command-region
-                         buffer log-start log-end env
-                         "commit-tree" tree (nreverse args))))))))
-      (and (git-update-ref "HEAD" commit head subject)
-           commit))))
+            (let ((env `(("GIT_AUTHOR_NAME" . ,author-name)
+                         ("GIT_AUTHOR_EMAIL" . ,author-email)
+                         ("GIT_COMMITTER_NAME" . ,(git-get-committer-name))
+                         ("GIT_COMMITTER_EMAIL" . ,(git-get-committer-email)))))
+              (when author-date (push `("GIT_AUTHOR_DATE" . ,author-date) env))
+              (apply #'git-run-command-region
+                     buffer log-start log-end env
+                     "commit-tree" tree (nreverse args))))))
+      (when commit (git-update-ref "HEAD" commit head subject))
+      commit)))
 
 (defun git-empty-db-p ()
   "Check if the git db is empty (no commit done yet)."
@@ -562,29 +579,29 @@ the process output as a string, or nil if the git command failed."
   (let* ((old-type (lsh (or old-perm 0) -9))
 	 (new-type (lsh (or new-perm 0) -9))
 	 (str (case new-type
-		(?\100  ;; file
+		(64  ;; file
 		 (case old-type
-		   (?\100 nil)
-		   (?\120 "   (type change symlink -> file)")
-		   (?\160 "   (type change subproject -> file)")))
-		 (?\120  ;; symlink
+		   (64 nil)
+		   (80 "   (type change symlink -> file)")
+		   (112 "   (type change subproject -> file)")))
+		 (80  ;; symlink
 		  (case old-type
-		    (?\100 "   (type change file -> symlink)")
-		    (?\160 "   (type change subproject -> symlink)")
+		    (64 "   (type change file -> symlink)")
+		    (112 "   (type change subproject -> symlink)")
 		    (t "   (symlink)")))
-		  (?\160  ;; subproject
+		  (112  ;; subproject
 		   (case old-type
-		     (?\100 "   (type change file -> subproject)")
-		     (?\120 "   (type change symlink -> subproject)")
+		     (64 "   (type change file -> subproject)")
+		     (80 "   (type change symlink -> subproject)")
 		     (t "   (subproject)")))
-                  (?\110 nil)  ;; directory (internal, not a real git state)
-		  (?\000  ;; deleted or unknown
+                  (72 nil)  ;; directory (internal, not a real git state)
+		  (0  ;; deleted or unknown
 		   (case old-type
-		     (?\120 "   (symlink)")
-		     (?\160 "   (subproject)")))
+		     (80 "   (symlink)")
+		     (112 "   (subproject)")))
 		  (t (format "   (unknown type %o)" new-type)))))
     (cond (str (propertize str 'face 'git-status-face))
-          ((eq new-type ?\110) "/")
+          ((eq new-type 72) "/")
           (t ""))))
 
 (defun git-rename-as-string (info)
@@ -1320,6 +1337,7 @@ Return the list of files that haven't been handled."
 					 (log-edit-diff-function . git-log-edit-diff)) buffer)
 	(log-edit 'git-do-commit nil 'git-log-edit-files buffer))
       (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
+      (setq paragraph-separate (concat (regexp-quote git-log-msg-separator) "$\\|Author: \\|Date: \\|Merge: \\|Signed-off-by: \\|\f\\|[ 	]*$"))
       (setq buffer-file-coding-system coding-system)
       (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t))))
 
@@ -1356,6 +1374,36 @@ Return the list of files that haven't been handled."
         (push (match-string 1) files)))
     files))
 
+(defun git-read-commit-name (prompt &optional default)
+  "Ask for a commit name, with completion for local branch, remote branch and tag."
+  (completing-read prompt
+                   (list* "HEAD" "ORIG_HEAD" "FETCH_HEAD" (mapcar #'car (git-for-each-ref)))
+		   nil nil nil nil default))
+
+(defun git-checkout (branch &optional merge)
+  "Checkout a branch, tag, or any commit.
+Use a prefix arg if git should merge while checking out."
+  (interactive
+   (list (git-read-commit-name "Checkout: ")
+         current-prefix-arg))
+  (unless git-status (error "Not in git-status buffer."))
+  (let ((args (list branch "--")))
+    (when merge (push "-m" args))
+    (when (apply #'git-call-process-display-error "checkout" args)
+      (git-update-status-files))))
+
+(defun git-branch (branch)
+  "Create a branch from the current HEAD and switch to it."
+  (interactive (list (git-read-commit-name "Branch: ")))
+  (unless git-status (error "Not in git-status buffer."))
+  (if (git-rev-parse (concat "refs/heads/" branch))
+      (if (yes-or-no-p (format "Branch %s already exists, replace it? " branch))
+          (and (git-call-process-display-error "branch" "-f" branch)
+               (git-call-process-display-error "checkout" branch))
+        (message "Canceled."))
+    (git-call-process-display-error "checkout" "-b" branch))
+    (git-refresh-ewoc-hf git-status))
+
 (defun git-amend-commit ()
   "Undo the last commit on HEAD, and set things up to commit an
 amended version of it."
@@ -1371,6 +1419,44 @@ amended version of it."
       (git-update-status-files files t)
       (git-setup-commit-buffer commit)
       (git-commit-file))))
+
+(defun git-cherry-pick-commit (arg)
+  "Cherry-pick a commit."
+  (interactive (list (git-read-commit-name "Cherry-pick commit: ")))
+  (unless git-status (error "Not in git-status buffer."))
+  (let ((commit (git-rev-parse (concat arg "^0"))))
+    (unless commit (error "Not a valid commit '%s'." arg))
+    (when (git-rev-parse (concat commit "^2"))
+      (error "Cannot cherry-pick a merge commit."))
+    (let ((files (git-get-commit-files commit))
+          (ok (git-call-process-display-error "cherry-pick" "-n" commit)))
+      (git-update-status-files files ok)
+      (with-current-buffer (git-setup-commit-buffer commit)
+        (goto-char (point-min))
+        (if (re-search-forward "^\n*Signed-off-by:" nil t 1)
+            (goto-char (match-beginning 0))
+          (goto-char (point-max)))
+        (insert "(cherry picked from commit " commit ")\n"))
+      (when ok (git-commit-file)))))
+
+(defun git-revert-commit (arg)
+  "Revert a commit."
+  (interactive (list (git-read-commit-name "Revert commit: ")))
+  (unless git-status (error "Not in git-status buffer."))
+  (let ((commit (git-rev-parse (concat arg "^0"))))
+    (unless commit (error "Not a valid commit '%s'." arg))
+    (when (git-rev-parse (concat commit "^2"))
+      (error "Cannot revert a merge commit."))
+    (let ((files (git-get-commit-files commit))
+          (subject (git-get-commit-description commit))
+          (ok (git-call-process-display-error "revert" "-n" commit)))
+      (git-update-status-files files ok)
+      (when (string-match "^[0-9a-f]+ - \\(.*\\)$" subject)
+        (setq subject (match-string 1 subject)))
+      (git-setup-log-buffer (get-buffer-create "*git-commit*")
+                            (git-get-merge-heads) nil nil (format "Revert \"%s\"" subject) nil
+                            (format "This reverts commit %s.\n" commit))
+      (when ok (git-commit-file)))))
 
 (defun git-find-file ()
   "Visit the current file in its own buffer."
@@ -1471,6 +1557,10 @@ amended version of it."
     (define-key map "\M-\C-?" 'git-unmark-all)
     ; the commit submap
     (define-key commit-map "\C-a" 'git-amend-commit)
+    (define-key commit-map "\C-b" 'git-branch)
+    (define-key commit-map "\C-o" 'git-checkout)
+    (define-key commit-map "\C-p" 'git-cherry-pick-commit)
+    (define-key commit-map "\C-v" 'git-revert-commit)
     ; the diff submap
     (define-key diff-map "b" 'git-diff-file-base)
     (define-key diff-map "c" 'git-diff-file-combined)
@@ -1491,6 +1581,10 @@ amended version of it."
     `("Git"
       ["Refresh" git-refresh-status t]
       ["Commit" git-commit-file t]
+      ["Checkout..." git-checkout t]
+      ["New Branch..." git-branch t]
+      ["Cherry-pick Commit..." git-cherry-pick-commit t]
+      ["Revert Commit..." git-revert-commit t]
       ("Merge"
 	["Next Unmerged File" git-next-unmerged-file t]
 	["Prev Unmerged File" git-prev-unmerged-file t]
