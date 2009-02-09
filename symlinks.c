@@ -70,7 +70,7 @@ static inline void reset_lstat_cache(void)
  * of the prefix, where the cache should use the stat() function
  * instead of the lstat() function to test each path component.
  */
-static int lstat_cache(int len, const char *name,
+static int lstat_cache(const char *name, int len,
 		       int track_flags, int prefix_len_stat_func)
 {
 	int match_len, last_slash, last_slash_dir, previous_slash;
@@ -185,7 +185,7 @@ static int lstat_cache(int len, const char *name,
  * Invalidate the given 'name' from the cache, if 'name' matches
  * completely with the cache.
  */
-void invalidate_lstat_cache(int len, const char *name)
+void invalidate_lstat_cache(const char *name, int len)
 {
 	int match_len, previous_slash;
 
@@ -214,9 +214,9 @@ void clear_lstat_cache(void)
 /*
  * Return non-zero if path 'name' has a leading symlink component
  */
-int has_symlink_leading_path(int len, const char *name)
+int has_symlink_leading_path(const char *name, int len)
 {
-	return lstat_cache(len, name,
+	return lstat_cache(name, len,
 			   FL_SYMLINK|FL_DIR, USE_ONLY_LSTAT) &
 		FL_SYMLINK;
 }
@@ -225,9 +225,9 @@ int has_symlink_leading_path(int len, const char *name)
  * Return non-zero if path 'name' has a leading symlink component or
  * if some leading path component does not exists.
  */
-int has_symlink_or_noent_leading_path(int len, const char *name)
+int has_symlink_or_noent_leading_path(const char *name, int len)
 {
-	return lstat_cache(len, name,
+	return lstat_cache(name, len,
 			   FL_SYMLINK|FL_NOENT|FL_DIR, USE_ONLY_LSTAT) &
 		(FL_SYMLINK|FL_NOENT);
 }
@@ -239,9 +239,9 @@ int has_symlink_or_noent_leading_path(int len, const char *name)
  * 'prefix_len', thus we then allow for symlinks in the prefix part as
  * long as those points to real existing directories.
  */
-int has_dirs_only_path(int len, const char *name, int prefix_len)
+int has_dirs_only_path(const char *name, int len, int prefix_len)
 {
-	return lstat_cache(len, name,
+	return lstat_cache(name, len,
 			   FL_DIR|FL_FULLPATH, prefix_len) &
 		FL_DIR;
 }

@@ -20,7 +20,7 @@ static void create_directories(const char *path, const struct checkout *state)
 		 * we test the path components of the prefix with the
 		 * stat() function instead of the lstat() function.
 		 */
-		if (has_dirs_only_path(len, buf, state->base_dir_len))
+		if (has_dirs_only_path(buf, len, state->base_dir_len))
 			continue; /* ok, it is already a directory. */
 
 		/*
