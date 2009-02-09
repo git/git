@@ -94,11 +94,12 @@ static void *read_blob_entry(struct cache_entry *ce, unsigned long *size)
 static int write_entry(struct cache_entry *ce, char *path, const struct checkout *state, int to_tempfile)
 {
 	unsigned int ce_mode_s_ifmt = ce->ce_mode & S_IFMT;
-	int fd, ret;
+	int fd, ret, fstat_done = 0;
 	char *new;
 	struct strbuf buf = STRBUF_INIT;
 	unsigned long size;
 	size_t wrote, newsize = 0;
+	struct stat st;
 
 	switch (ce_mode_s_ifmt) {
 	case S_IFREG:
@@ -145,6 +146,11 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		}
 
 		wrote = write_in_full(fd, new, size);
+		/* use fstat() only when path == ce->name */
+		if (state->refresh_cache && !to_tempfile && !state->base_dir_len) {
+			fstat(fd, &st);
+			fstat_done = 1;
+		}
 		close(fd);
 		free(new);
 		if (wrote != size)
@@ -161,8 +167,8 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 	}
 
 	if (state->refresh_cache) {
-		struct stat st;
-		lstat(ce->name, &st);
+		if (!fstat_done)
+			lstat(ce->name, &st);
 		fill_stat_cache_info(ce, &st);
 	}
 	return 0;
