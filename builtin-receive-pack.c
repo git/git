@@ -21,11 +21,13 @@ enum deny_action {
 static int deny_deletes = 0;
 static int deny_non_fast_forwards = 0;
 static enum deny_action deny_current_branch = DENY_UNCONFIGURED;
+static enum deny_action deny_delete_current = DENY_UNCONFIGURED;
 static int receive_fsck_objects;
 static int receive_unpack_limit = -1;
 static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
 static int report_status;
+static const char *head_name;
 
 static char capabilities[] = " report-status delete-refs ";
 static int capabilities_sent;
@@ -74,6 +76,11 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(var, "receive.denycurrentbranch")) {
 		deny_current_branch = parse_deny_action(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.denydeletecurrent") == 0) {
+		deny_delete_current = parse_deny_action(var, value);
 		return 0;
 	}
 
@@ -203,16 +210,12 @@ static int run_update_hook(struct command *cmd)
 
 static int is_ref_checked_out(const char *ref)
 {
-	unsigned char sha1[20];
-	const char *head;
-
 	if (is_bare_repository())
 		return 0;
 
-	head = resolve_ref("HEAD", sha1, 0, NULL);
-	if (!head)
+	if (!head_name)
 		return 0;
-	return !strcmp(head, ref);
+	return !strcmp(head_name, ref);
 }
 
 static char *warn_unconfigured_deny_msg[] = {
@@ -242,6 +245,32 @@ static void warn_unconfigured_deny(void)
 	int i;
 	for (i = 0; i < ARRAY_SIZE(warn_unconfigured_deny_msg); i++)
 		warning(warn_unconfigured_deny_msg[i]);
+}
+
+static char *warn_unconfigured_deny_delete_current_msg[] = {
+	"Deleting the current branch can cause confusion by making the next",
+	"'git clone' not check out any file.",
+	"",
+	"You can set 'receive.denyDeleteCurrent' configuration variable to",
+	"'refuse' in the remote repository to disallow deleting the current",
+	"branch.",
+	"",
+	"You can set it to 'ignore' to allow such a delete without a warning.",
+	"",
+	"To make this warning message less loud, you can set it to 'warn'.",
+	"",
+	"Note that the default will change in a future version of git",
+	"to refuse deleting the current branch unless you have the",
+	"configuration variable set to either 'ignore' or 'warn'."
+};
+
+static void warn_unconfigured_deny_delete_current(void)
+{
+	int i;
+	for (i = 0;
+	     i < ARRAY_SIZE(warn_unconfigured_deny_delete_current_msg);
+	     i++)
+		warning(warn_unconfigured_deny_delete_current_msg[i]);
 }
 
 static const char *update(struct command *cmd)
@@ -278,12 +307,30 @@ static const char *update(struct command *cmd)
 		      "but I can't find it!", sha1_to_hex(new_sha1));
 		return "bad pack";
 	}
-	if (deny_deletes && is_null_sha1(new_sha1) &&
-	    !is_null_sha1(old_sha1) &&
-	    !prefixcmp(name, "refs/heads/")) {
-		error("denying ref deletion for %s", name);
-		return "deletion prohibited";
+
+	if (!is_null_sha1(old_sha1) && is_null_sha1(new_sha1)) {
+		if (deny_deletes && !prefixcmp(name, "refs/heads/")) {
+			error("denying ref deletion for %s", name);
+			return "deletion prohibited";
+		}
+
+		if (!strcmp(name, head_name)) {
+			switch (deny_delete_current) {
+			case DENY_IGNORE:
+				break;
+			case DENY_WARN:
+			case DENY_UNCONFIGURED:
+				if (deny_delete_current == DENY_UNCONFIGURED)
+					warn_unconfigured_deny_delete_current();
+				warning("deleting the current branch");
+				break;
+			case DENY_REFUSE:
+				error("refusing to delete the current branch: %s", name);
+				return "deletion of the current branch prohibited";
+			}
+		}
 	}
+
 	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
 	    !is_null_sha1(old_sha1) &&
 	    !prefixcmp(name, "refs/heads/")) {
@@ -377,6 +424,7 @@ static void run_update_post_hook(struct command *cmd)
 static void execute_commands(const char *unpacker_error)
 {
 	struct command *cmd = commands;
+	unsigned char sha1[20];
 
 	if (unpacker_error) {
 		while (cmd) {
@@ -393,6 +441,8 @@ static void execute_commands(const char *unpacker_error)
 		}
 		return;
 	}
+
+	head_name = resolve_ref("HEAD", sha1, 0, NULL);
 
 	while (cmd) {
 		cmd->error_string = update(cmd);
