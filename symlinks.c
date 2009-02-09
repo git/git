@@ -245,3 +245,62 @@ int has_dirs_only_path(const char *name, int len, int prefix_len)
 			   FL_DIR|FL_FULLPATH, prefix_len) &
 		FL_DIR;
 }
+
+static struct removal_def {
+	char path[PATH_MAX];
+	int len;
+} removal;
+
+static void do_remove_scheduled_dirs(int new_len)
+{
+	while (removal.len > new_len) {
+		removal.path[removal.len] = '\0';
+		if (rmdir(removal.path))
+			break;
+		do {
+			removal.len--;
+		} while (removal.len > new_len &&
+			 removal.path[removal.len] != '/');
+	}
+	removal.len = new_len;
+	return;
+}
+
+void schedule_dir_for_removal(const char *name, int len)
+{
+	int match_len, last_slash, i, previous_slash;
+
+	match_len = last_slash = i =
+		longest_path_match(name, len, removal.path, removal.len,
+				   &previous_slash);
+	/* Find last slash inside 'name' */
+	while (i < len) {
+		if (name[i] == '/')
+			last_slash = i;
+		i++;
+	}
+
+	/*
+	 * If we are about to go down the directory tree, we check if
+	 * we must first go upwards the tree, such that we then can
+	 * remove possible empty directories as we go upwards.
+	 */
+	if (match_len < last_slash && match_len < removal.len)
+		do_remove_scheduled_dirs(match_len);
+	/*
+	 * If we go deeper down the directory tree, we only need to
+	 * save the new path components as we go down.
+	 */
+	if (match_len < last_slash) {
+		memcpy(&removal.path[match_len], &name[match_len],
+		       last_slash - match_len);
+		removal.len = last_slash;
+	}
+	return;
+}
+
+void remove_scheduled_dirs(void)
+{
+	do_remove_scheduled_dirs(0);
+	return;
+}

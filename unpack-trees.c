@@ -52,36 +52,17 @@ static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 	add_index_entry(&o->result, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|ADD_CACHE_SKIP_DFCHECK);
 }
 
-/* Unlink the last component and attempt to remove leading
- * directories, in case this unlink is the removal of the
- * last entry in the directory -- empty directories are removed.
+/*
+ * Unlink the last component and schedule the leading directories for
+ * removal, such that empty directories get removed.
  */
 static void unlink_entry(struct cache_entry *ce)
 {
-	char *cp, *prev;
-	char *name = ce->name;
-
 	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
 		return;
-	if (unlink(name))
+	if (unlink(ce->name))
 		return;
-	prev = NULL;
-	while (1) {
-		int status;
-		cp = strrchr(name, '/');
-		if (prev)
-			*prev = '/';
-		if (!cp)
-			break;
-
-		*cp = 0;
-		status = rmdir(name);
-		if (status) {
-			*cp = '/';
-			break;
-		}
-		prev = cp;
-	}
+	schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }
 
 static struct checkout state;
@@ -117,6 +98,7 @@ static int check_updates(struct unpack_trees_options *o)
 			continue;
 		}
 	}
+	remove_scheduled_dirs();
 
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];

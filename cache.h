@@ -729,6 +729,8 @@ extern int has_symlink_or_noent_leading_path(const char *name, int len);
 extern int has_dirs_only_path(const char *name, int len, int prefix_len);
 extern void invalidate_lstat_cache(const char *name, int len);
 extern void clear_lstat_cache(void);
+extern void schedule_dir_for_removal(const char *name, int len);
+extern void remove_scheduled_dirs(void);
 
 extern struct alternate_object_database {
 	struct alternate_object_database *next;
