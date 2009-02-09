@@ -25,8 +25,9 @@ Updates since v1.6.1
 * gitweb updates, including a new patch view and RSS/Atom feed
   improvements.
 
-* (contrib) git.el updates for better XEmacs compatibility; vc-git.el
-  is not shiped with git anymore (it is part of official Emacs)
+* (contrib/emacs) git.el now has commands for checking out a branch,
+  creating a branch, cherry-picking and reverting commits; vc-git.el
+  is not shipped with git anymore (it is part of official Emacs).
 
 (performance)
 
