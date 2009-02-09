@@ -756,11 +756,16 @@ static int prune(int argc, const char **argv)
 		OPT_END()
 	};
 	struct ref_states states;
+	const char *dangling_msg;
 
 	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
 
 	if (argc < 1)
 		usage_with_options(builtin_remote_usage, options);
+
+	dangling_msg = (dry_run
+			? " %s will become dangling!\n"
+			: " %s has become dangling!\n");
 
 	memset(&states, 0, sizeof(states));
 	for (; argc; argc--, argv++) {
@@ -784,6 +789,7 @@ static int prune(int argc, const char **argv)
 
 			printf(" * [%s] %s\n", dry_run ? "would prune" : "pruned",
 			       abbrev_ref(refname, "refs/remotes/"));
+			warn_dangling_symref(dangling_msg, refname);
 		}
 
 		/* NEEDSWORK: free remote */

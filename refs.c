@@ -275,16 +275,43 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 				list = get_ref_dir(ref, list);
 				continue;
 			}
-			if (!resolve_ref(ref, sha1, 1, &flag)) {
-				error("%s points nowhere!", ref);
-				continue;
-			}
+			if (!resolve_ref(ref, sha1, 1, &flag))
+				hashclr(sha1);
 			list = add_ref(ref, sha1, flag, list, NULL);
 		}
 		free(ref);
 		closedir(dir);
 	}
 	return sort_ref_list(list);
+}
+
+struct warn_if_dangling_data {
+	const char *refname;
+	const char *msg_fmt;
+};
+
+static int warn_if_dangling_symref(const char *refname, const unsigned char *sha1,
+				   int flags, void *cb_data)
+{
+	struct warn_if_dangling_data *d = cb_data;
+	const char *resolves_to;
+	unsigned char junk[20];
+
+	if (!(flags & REF_ISSYMREF))
+		return 0;
+
+	resolves_to = resolve_ref(refname, junk, 0, NULL);
+	if (!resolves_to || strcmp(resolves_to, d->refname))
+		return 0;
+
+	printf(d->msg_fmt, refname);
+	return 0;
+}
+
+void warn_dangling_symref(const char *msg_fmt, const char *refname)
+{
+	struct warn_if_dangling_data data = { refname, msg_fmt };
+	for_each_rawref(warn_if_dangling_symref, &data);
 }
 
 static struct ref_list *get_loose_refs(void)
@@ -498,16 +525,19 @@ int read_ref(const char *ref, unsigned char *sha1)
 	return -1;
 }
 
+#define DO_FOR_EACH_INCLUDE_BROKEN 01
 static int do_one_ref(const char *base, each_ref_fn fn, int trim,
-		      void *cb_data, struct ref_list *entry)
+		      int flags, void *cb_data, struct ref_list *entry)
 {
 	if (strncmp(base, entry->name, trim))
 		return 0;
-	if (is_null_sha1(entry->sha1))
-		return 0;
-	if (!has_sha1_file(entry->sha1)) {
-		error("%s does not point to a valid object!", entry->name);
-		return 0;
+	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
+		if (is_null_sha1(entry->sha1))
+			return 0;
+		if (!has_sha1_file(entry->sha1)) {
+			error("%s does not point to a valid object!", entry->name);
+			return 0;
+		}
 	}
 	current_ref = entry;
 	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
@@ -561,7 +591,7 @@ fallback:
 }
 
 static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
-			   void *cb_data)
+			   int flags, void *cb_data)
 {
 	int retval = 0;
 	struct ref_list *packed = get_packed_refs();
@@ -570,7 +600,7 @@ static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
 	struct ref_list *extra;
 
 	for (extra = extra_refs; extra; extra = extra->next)
-		retval = do_one_ref(base, fn, trim, cb_data, extra);
+		retval = do_one_ref(base, fn, trim, flags, cb_data, extra);
 
 	while (packed && loose) {
 		struct ref_list *entry;
@@ -586,13 +616,13 @@ static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
 			entry = packed;
 			packed = packed->next;
 		}
-		retval = do_one_ref(base, fn, trim, cb_data, entry);
+		retval = do_one_ref(base, fn, trim, flags, cb_data, entry);
 		if (retval)
 			goto end_each;
 	}
 
 	for (packed = packed ? packed : loose; packed; packed = packed->next) {
-		retval = do_one_ref(base, fn, trim, cb_data, packed);
+		retval = do_one_ref(base, fn, trim, flags, cb_data, packed);
 		if (retval)
 			goto end_each;
 	}
@@ -614,22 +644,28 @@ int head_ref(each_ref_fn fn, void *cb_data)
 
 int for_each_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/", fn, 0, cb_data);
+	return do_for_each_ref("refs/", fn, 0, 0, cb_data);
 }
 
 int for_each_tag_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/tags/", fn, 10, cb_data);
+	return do_for_each_ref("refs/tags/", fn, 10, 0, cb_data);
 }
 
 int for_each_branch_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/heads/", fn, 11, cb_data);
+	return do_for_each_ref("refs/heads/", fn, 11, 0, cb_data);
 }
 
 int for_each_remote_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/remotes/", fn, 13, cb_data);
+	return do_for_each_ref("refs/remotes/", fn, 13, 0, cb_data);
+}
+
+int for_each_rawref(each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_ref("refs/", fn, 0,
+			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
 /*
