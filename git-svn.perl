@@ -4376,6 +4376,9 @@ sub gs_fetch_loop_common {
 		}
 		$self->get_log([$longest_path], $min, $max, 0, 1, 1,
 		               sub { $revs{$_[1]} = _cb(@_) });
+		if ($err) {
+			print "Checked through r$max\r";
+		}
 		if ($err && $max >= $head) {
 			print STDERR "Path '$longest_path' ",
 				     "was probably deleted:\n",
