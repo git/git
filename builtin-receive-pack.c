@@ -18,8 +18,8 @@ enum deny_action {
 	DENY_REFUSE,
 };
 
-static int deny_deletes = 0;
-static int deny_non_fast_forwards = 0;
+static int deny_deletes;
+static int deny_non_fast_forwards;
 static enum deny_action deny_current_branch = DENY_UNCONFIGURED;
 static enum deny_action deny_delete_current = DENY_UNCONFIGURED;
 static int receive_fsck_objects;
