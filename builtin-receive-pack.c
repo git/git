@@ -241,30 +241,24 @@ static void refuse_unconfigured_deny(void)
 		error("%s", refuse_unconfigured_deny_msg[i]);
 }
 
-static char *warn_unconfigured_deny_delete_current_msg[] = {
-	"Deleting the current branch can cause confusion by making the next",
-	"'git clone' not check out any file.",
+static char *refuse_unconfigured_deny_delete_current_msg[] = {
+	"By default, deleting the current branch is denied, because the next",
+	"'git clone' won't result in any file checked out, causing confusion.",
 	"",
 	"You can set 'receive.denyDeleteCurrent' configuration variable to",
-	"'refuse' in the remote repository to disallow deleting the current",
-	"branch.",
+	"'warn' or 'ignore' in the remote repository to allow deleting the",
+	"current branch, with or without a warning message.",
 	"",
-	"You can set it to 'ignore' to allow such a delete without a warning.",
-	"",
-	"To make this warning message less loud, you can set it to 'warn'.",
-	"",
-	"Note that the default will change in a future version of git",
-	"to refuse deleting the current branch unless you have the",
-	"configuration variable set to either 'ignore' or 'warn'."
+	"To squelch this message, you can set it to 'refuse'."
 };
 
-static void warn_unconfigured_deny_delete_current(void)
+static void refuse_unconfigured_deny_delete_current(void)
 {
 	int i;
 	for (i = 0;
-	     i < ARRAY_SIZE(warn_unconfigured_deny_delete_current_msg);
+	     i < ARRAY_SIZE(refuse_unconfigured_deny_delete_current_msg);
 	     i++)
-		warning("%s", warn_unconfigured_deny_delete_current_msg[i]);
+		error("%s", refuse_unconfigured_deny_delete_current_msg[i]);
 }
 
 static const char *update(struct command *cmd)
@@ -313,12 +307,12 @@ static const char *update(struct command *cmd)
 			case DENY_IGNORE:
 				break;
 			case DENY_WARN:
-			case DENY_UNCONFIGURED:
-				if (deny_delete_current == DENY_UNCONFIGURED)
-					warn_unconfigured_deny_delete_current();
 				warning("deleting the current branch");
 				break;
 			case DENY_REFUSE:
+			case DENY_UNCONFIGURED:
+				if (deny_delete_current == DENY_UNCONFIGURED)
+					refuse_unconfigured_deny_delete_current();
 				error("refusing to delete the current branch: %s", name);
 				return "deletion of the current branch prohibited";
 			}

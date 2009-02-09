@@ -191,16 +191,11 @@ test_expect_success 'pushing wildcard refspecs respects forcing' '
 	test "$parent_head" = "$child_head"
 '
 
-test_expect_success 'warn pushing to delete current branch' '
+test_expect_success 'deny pushing to delete current branch' '
 	rewound_push_setup &&
 	(
 	    cd child &&
-	    git send-pack ../parent :refs/heads/master 2>errs
-	) &&
-	grep "warning: to refuse deleting" child/errs &&
-	(
-		cd parent &&
-		test_must_fail git rev-parse --verify master
+	    test_must_fail git send-pack ../parent :refs/heads/master 2>errs
 	)
 '
 
