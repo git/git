@@ -25,27 +25,30 @@ static inline int longest_match_lstat_cache(int len, const char *name,
 		}
 		i++;
 	}
-	/* Is the cached path string a substring of 'name'? */
-	if (i == cache.len && cache.len < len && name[cache.len] == '/') {
+	/*
+	 * Is the cached path string a substring of 'name', is 'name'
+	 * a substring of the cached path string, or is 'name' and the
+	 * cached path string the exact same string?
+	 */
+	if (i >= max_len && ((len > cache.len && name[cache.len] == '/') ||
+			     (len < cache.len && cache.path[len] == '/') ||
+			     (len == cache.len))) {
 		match_len_prev = match_len;
-		match_len = cache.len;
-	/* Is 'name' a substring of the cached path string? */
-	} else if ((i == len && len < cache.len && cache.path[len] == '/') ||
-		   (i == len && len == cache.len)) {
-		match_len_prev = match_len;
-		match_len = len;
+		match_len = i;
 	}
 	*previous_slash = match_len_prev;
 	return match_len;
 }
 
-static inline void reset_lstat_cache(int track_flags, int prefix_len_stat_func)
+static inline void reset_lstat_cache(void)
 {
 	cache.path[0] = '\0';
 	cache.len = 0;
 	cache.flags = 0;
-	cache.track_flags = track_flags;
-	cache.prefix_len_stat_func = prefix_len_stat_func;
+	/*
+	 * The track_flags and prefix_len_stat_func members is only
+	 * set by the safeguard rule inside lstat_cache()
+	 */
 }
 
 #define FL_DIR      (1 << 0)
@@ -77,11 +80,13 @@ static int lstat_cache(int len, const char *name,
 	if (cache.track_flags != track_flags ||
 	    cache.prefix_len_stat_func != prefix_len_stat_func) {
 		/*
-		 * As a safeguard we clear the cache if the values of
-		 * track_flags and/or prefix_len_stat_func does not
-		 * match with the last supplied values.
+		 * As a safeguard rule we clear the cache if the
+		 * values of track_flags and/or prefix_len_stat_func
+		 * does not match with the last supplied values.
 		 */
-		reset_lstat_cache(track_flags, prefix_len_stat_func);
+		reset_lstat_cache();
+		cache.track_flags = track_flags;
+		cache.prefix_len_stat_func = prefix_len_stat_func;
 		match_len = last_slash = 0;
 	} else {
 		/*
@@ -153,7 +158,7 @@ static int lstat_cache(int len, const char *name,
 		cache.path[last_slash] = '\0';
 		cache.len = last_slash;
 		cache.flags = save_flags;
-	} else if (track_flags & FL_DIR &&
+	} else if ((track_flags & FL_DIR) &&
 		   last_slash_dir > 0 && last_slash_dir <= PATH_MAX) {
 		/*
 		 * We have a separate test for the directory case,
@@ -170,7 +175,7 @@ static int lstat_cache(int len, const char *name,
 		cache.len = last_slash_dir;
 		cache.flags = FL_DIR;
 	} else {
-		reset_lstat_cache(track_flags, prefix_len_stat_func);
+		reset_lstat_cache();
 	}
 	return ret_flags;
 }
@@ -190,8 +195,7 @@ void invalidate_lstat_cache(int len, const char *name)
 			cache.len = previous_slash;
 			cache.flags = FL_DIR;
 		} else
-			reset_lstat_cache(cache.track_flags,
-					  cache.prefix_len_stat_func);
+			reset_lstat_cache();
 	}
 }
 
@@ -200,7 +204,7 @@ void invalidate_lstat_cache(int len, const char *name)
  */
 void clear_lstat_cache(void)
 {
-	reset_lstat_cache(0, 0);
+	reset_lstat_cache();
 }
 
 #define USE_ONLY_LSTAT  0
