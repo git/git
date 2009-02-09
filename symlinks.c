@@ -1,5 +1,37 @@
 #include "cache.h"
 
+/*
+ * Returns the length (on a path component basis) of the longest
+ * common prefix match of 'name_a' and 'name_b'.
+ */
+static int longest_path_match(const char *name_a, int len_a,
+			      const char *name_b, int len_b,
+			      int *previous_slash)
+{
+	int max_len, match_len = 0, match_len_prev = 0, i = 0;
+
+	max_len = len_a < len_b ? len_a : len_b;
+	while (i < max_len && name_a[i] == name_b[i]) {
+		if (name_a[i] == '/') {
+			match_len_prev = match_len;
+			match_len = i;
+		}
+		i++;
+	}
+	/*
+	 * Is 'name_b' a substring of 'name_a', the other way around,
+	 * or is 'name_a' and 'name_b' the exact same string?
+	 */
+	if (i >= max_len && ((len_a > len_b && name_a[len_b] == '/') ||
+			     (len_a < len_b && name_b[len_a] == '/') ||
+			     (len_a == len_b))) {
+		match_len_prev = match_len;
+		match_len = i;
+	}
+	*previous_slash = match_len_prev;
+	return match_len;
+}
+
 static struct cache_def {
 	char path[PATH_MAX + 1];
 	int len;
@@ -7,38 +39,6 @@ static struct cache_def {
 	int track_flags;
 	int prefix_len_stat_func;
 } cache;
-
-/*
- * Returns the length (on a path component basis) of the longest
- * common prefix match of 'name' and the cached path string.
- */
-static inline int longest_match_lstat_cache(int len, const char *name,
-					    int *previous_slash)
-{
-	int max_len, match_len = 0, match_len_prev = 0, i = 0;
-
-	max_len = len < cache.len ? len : cache.len;
-	while (i < max_len && name[i] == cache.path[i]) {
-		if (name[i] == '/') {
-			match_len_prev = match_len;
-			match_len = i;
-		}
-		i++;
-	}
-	/*
-	 * Is the cached path string a substring of 'name', is 'name'
-	 * a substring of the cached path string, or is 'name' and the
-	 * cached path string the exact same string?
-	 */
-	if (i >= max_len && ((len > cache.len && name[cache.len] == '/') ||
-			     (len < cache.len && cache.path[len] == '/') ||
-			     (len == cache.len))) {
-		match_len_prev = match_len;
-		match_len = i;
-	}
-	*previous_slash = match_len_prev;
-	return match_len;
-}
 
 static inline void reset_lstat_cache(void)
 {
@@ -94,7 +94,8 @@ static int lstat_cache(int len, const char *name,
 		 * the 2 "excluding" path types.
 		 */
 		match_len = last_slash =
-			longest_match_lstat_cache(len, name, &previous_slash);
+			longest_path_match(name, len, cache.path, cache.len,
+					   &previous_slash);
 		match_flags = cache.flags & track_flags & (FL_NOENT|FL_SYMLINK);
 		if (match_flags && match_len == cache.len)
 			return match_flags;
@@ -188,7 +189,8 @@ void invalidate_lstat_cache(int len, const char *name)
 {
 	int match_len, previous_slash;
 
-	match_len = longest_match_lstat_cache(len, name, &previous_slash);
+	match_len = longest_path_match(name, len, cache.path, cache.len,
+				       &previous_slash);
 	if (len == match_len) {
 		if ((cache.track_flags & FL_DIR) && previous_slash > 0) {
 			cache.path[previous_slash] = '\0';
