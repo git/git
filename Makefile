@@ -228,7 +228,7 @@ GITWEB_FAVICON = git-favicon.png
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 
-export prefix bindir sharedir htmldir sysconfdir
+export prefix bindir sharedir sysconfdir
 
 CC = gcc
 AR = ar
