@@ -223,17 +223,6 @@ static char *help_msg(const unsigned char *sha1)
 	return helpbuf;
 }
 
-static int index_is_dirty(void)
-{
-	struct rev_info rev;
-	init_revisions(&rev, NULL);
-	setup_revisions(0, NULL, &rev, "HEAD");
-	DIFF_OPT_SET(&rev.diffopt, QUIET);
-	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
-	run_diff_index(&rev, 1);
-	return !!DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES);
-}
-
 static struct tree *empty_tree(void)
 {
 	struct tree *tree = xcalloc(1, sizeof(struct tree));
@@ -279,7 +268,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	} else {
 		if (get_sha1("HEAD", head))
 			die ("You do not have a valid HEAD");
-		if (index_is_dirty())
+		if (index_differs_from("HEAD", 0))
 			die ("Dirty index: cannot %s", me);
 	}
 	discard_cache();
