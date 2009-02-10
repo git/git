@@ -943,6 +943,7 @@ static void end_packfile(void)
 {
 	struct packed_git *old_p = pack_data, *new_p;
 
+	clear_delta_base_cache();
 	if (object_count) {
 		char *idx_name;
 		int i;
