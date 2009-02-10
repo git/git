@@ -615,7 +615,9 @@ show_new_revisions()
 		revspec=$oldrev..$newrev
 	fi
 
-	git rev-parse --not --branches | grep -v $(git rev-parse $refname) |
+	other_branches=$(git for-each-ref --format='%(refname)' refs/heads/ |
+	    grep -F -v $refname)
+	git rev-parse --not $other_branches |
 	if [ -z "$custom_showrev" ]
 	then
 		git rev-list --pretty --stdin $revspec
