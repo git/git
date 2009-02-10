@@ -19,6 +19,9 @@ do
     >$dir/a.$i
   done
 done
+>"#ignore1"
+>"#ignore2"
+>"#hidden"
 
 cat >expect <<EOF
 a.2
@@ -42,6 +45,9 @@ three/a.8
 EOF
 
 echo '.gitignore
+\#ignore1
+\#ignore2*
+\#hid*n
 output
 expect
 .gitignore
@@ -79,9 +85,10 @@ test_expect_success \
        >output &&
      test_cmp expect output'
 
-cat > excludes-file << EOF
+cat > excludes-file <<\EOF
 *.[1-8]
 e*
+\#*
 EOF
 
 git config core.excludesFile excludes-file
