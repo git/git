@@ -84,39 +84,30 @@ __git_ps1 ()
 	if [ -n "$g" ]; then
 		local r
 		local b
-		if [ -d "$g/rebase-apply" ]
-		then
-			if test -f "$g/rebase-apply/rebasing"
-			then
+		if [ -d "$g/rebase-apply" ]; then
+			if [ -f "$g/rebase-apply/rebasing" ]; then
 				r="|REBASE"
-			elif test -f "$g/rebase-apply/applying"
-			then
+		elif [ -f "$g/rebase-apply/applying" ]; then
 				r="|AM"
 			else
 				r="|AM/REBASE"
 			fi
 			b="$(git symbolic-ref HEAD 2>/dev/null)"
-		elif [ -f "$g/rebase-merge/interactive" ]
-		then
+		elif [ -f "$g/rebase-merge/interactive" ]; then
 			r="|REBASE-i"
 			b="$(cat "$g/rebase-merge/head-name")"
-		elif [ -d "$g/rebase-merge" ]
-		then
+		elif [ -d "$g/rebase-merge" ]; then
 			r="|REBASE-m"
 			b="$(cat "$g/rebase-merge/head-name")"
-		elif [ -f "$g/MERGE_HEAD" ]
-		then
+		elif [ -f "$g/MERGE_HEAD" ]; then
 			r="|MERGING"
 			b="$(git symbolic-ref HEAD 2>/dev/null)"
 		else
-			if [ -f "$g/BISECT_LOG" ]
-			then
+			if [ -f "$g/BISECT_LOG" ]; then
 				r="|BISECTING"
 			fi
-			if ! b="$(git symbolic-ref HEAD 2>/dev/null)"
-			then
-				if ! b="$(git describe --exact-match HEAD 2>/dev/null)"
-				then
+			if ! b="$(git symbolic-ref HEAD 2>/dev/null)"; then
+				if ! b="$(git describe --exact-match HEAD 2>/dev/null)"; then
 					b="$(cut -c1-7 "$g/HEAD")..."
 				fi
 			fi
@@ -125,8 +116,8 @@ __git_ps1 ()
 		local w
 		local i
 
-		if test -n "${GIT_PS1_SHOWDIRTYSTATE-}"; then
-			if test "$(git config --bool bash.showDirtyState)" != "false"; then
+		if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
+			if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
 				git diff --no-ext-diff --ignore-submodules \
 					--quiet --exit-code || w="*"
 				if git rev-parse --quiet --verify HEAD >/dev/null; then
