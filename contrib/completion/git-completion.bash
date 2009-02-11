@@ -108,7 +108,9 @@ __git_ps1 ()
 			fi
 			if ! b="$(git symbolic-ref HEAD 2>/dev/null)"; then
 				if ! b="$(git describe --exact-match HEAD 2>/dev/null)"; then
-					b="$(cut -c1-7 "$g/HEAD")..."
+					if [ -r "$g/HEAD" ]; then
+						b="$(cut -c1-7 "$g/HEAD")..."
+					fi
 				fi
 			fi
 		fi
@@ -116,23 +118,29 @@ __git_ps1 ()
 		local w
 		local i
 
-		if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
-			if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
-				git diff --no-ext-diff --ignore-submodules \
-					--quiet --exit-code || w="*"
-				if git rev-parse --quiet --verify HEAD >/dev/null; then
-					git diff-index --cached --quiet \
-						--ignore-submodules HEAD -- || i="+"
-				else
-					i="#"
+		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
+			b="GIT_DIR!"
+		elif [ "true" = "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]; then
+			if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
+				if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
+					git diff --no-ext-diff --ignore-submodules \
+						--quiet --exit-code || w="*"
+					if git rev-parse --quiet --verify HEAD >/dev/null; then
+						git diff-index --cached --quiet \
+							--ignore-submodules HEAD -- || i="+"
+					else
+						i="#"
+					fi
 				fi
 			fi
 		fi
 
-		if [ -n "${1-}" ]; then
-			printf "$1" "${b##refs/heads/}$w$i$r"
-		else
-			printf " (%s)" "${b##refs/heads/}$w$i$r"
+		if [ -n "$b" ]; then
+			if [ -n "${1-}" ]; then
+				printf "$1" "${b##refs/heads/}$w$i$r"
+			else
+				printf " (%s)" "${b##refs/heads/}$w$i$r"
+			fi
 		fi
 	fi
 }
