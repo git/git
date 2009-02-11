@@ -48,6 +48,10 @@ test_expect_success 'result is really identical' '
 	test $H = $(git rev-parse HEAD)
 '
 
+test_expect_success 'Fail if commit filter fails' '
+	test_must_fail git filter-branch -f --commit-filter "exit 1" HEAD
+'
+
 test_expect_success 'rewrite, renaming a specific file' '
 	git filter-branch -f --tree-filter "mv d doh || :" HEAD
 '
