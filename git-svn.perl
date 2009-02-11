@@ -1693,6 +1693,7 @@ sub find_by_url { # repos_root and, path are optional
 			my $prefix = '';
 			if ($rwr) {
 				$z = $rwr;
+				remove_username($z);
 			} elsif (defined $svm) {
 				$z = $svm->{source};
 				$prefix = $svm->{replace};
