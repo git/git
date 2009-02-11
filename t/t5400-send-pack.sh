@@ -32,7 +32,7 @@ test_expect_success setup '
 	done &&
 	git update-ref HEAD "$commit" &&
 	git clone ./. victim &&
-	( cd victim && git log ) &&
+	( cd victim && git config receive.denyCurrentBranch warn && git log ) &&
 	git update-ref HEAD "$zero" &&
 	parent=$zero &&
 	i=0 &&
@@ -129,6 +129,7 @@ rewound_push_setup() {
 	    cd parent &&
 	    git init &&
 	    echo one >file && git add file && git commit -m one &&
+	    git config receive.denyCurrentBranch warn &&
 	    echo two >file && git commit -a -m two
 	) &&
 	git clone parent child &&
