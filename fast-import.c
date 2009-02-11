@@ -869,7 +869,7 @@ static char *create_index(void)
 	/* Generate the fan-out array. */
 	c = idx;
 	for (i = 0; i < 256; i++) {
-		struct object_entry **next = c;;
+		struct object_entry **next = c;
 		while (next < last) {
 			if ((*next)->sha1[0] != i)
 				break;

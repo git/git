@@ -110,7 +110,7 @@ int read_tree_recursive(struct tree *tree,
 		case 0:
 			continue;
 		case READ_TREE_RECURSIVE:
-			break;;
+			break;
 		default:
 			return -1;
 		}
