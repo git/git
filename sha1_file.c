@@ -676,6 +676,7 @@ void free_pack_by_name(const char *pack_name)
 	while (*pp) {
 		p = *pp;
 		if (strcmp(pack_name, p->pack_name) == 0) {
+			clear_delta_base_cache();
 			close_pack_windows(p);
 			if (p->pack_fd != -1)
 				close(p->pack_fd);
