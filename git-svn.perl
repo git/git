@@ -2417,7 +2417,7 @@ sub find_parent_branch {
 			# is not included with SVN 1.4.3 (the latest version
 			# at the moment), so we can't rely on it
 			$self->{last_commit} = $parent;
-			$ed = SVN::Git::Fetcher->new($self);
+			$ed = SVN::Git::Fetcher->new($self, $gs->{path});
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
 					      $self->full_url, $ed)
 			  or die "SVN connection failed somewhere...\n";
@@ -3258,12 +3258,13 @@ use vars qw/$_ignore_regex/;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
-	my ($class, $git_svn) = @_;
+	my ($class, $git_svn, $switch_path) = @_;
 	my $self = SVN::Delta::Editor->new;
 	bless $self, $class;
 	if (exists $git_svn->{last_commit}) {
 		$self->{c} = $git_svn->{last_commit};
-		$self->{empty_symlinks} = _mark_empty_symlinks($git_svn);
+		$self->{empty_symlinks} =
+		                  _mark_empty_symlinks($git_svn, $switch_path);
 	}
 	$self->{empty} = {};
 	$self->{dir_prop} = {};
@@ -3278,7 +3279,7 @@ sub new {
 # not inside them (when the Git::SVN::Fetcher object is passed) to
 # do_{switch,update}
 sub _mark_empty_symlinks {
-	my ($git_svn) = @_;
+	my ($git_svn, $switch_path) = @_;
 	my $bool = Git::config_bool('svn.brokenSymlinkWorkaround');
 	return {} if (defined($bool) && ! $bool);
 
@@ -3294,7 +3295,7 @@ sub _mark_empty_symlinks {
 	chomp(my $empty_blob = `git hash-object -t blob --stdin < /dev/null`);
 	my ($ls, $ctx) = command_output_pipe(qw/ls-tree -r -z/, $cmt);
 	local $/ = "\0";
-	my $pfx = $git_svn->{path};
+	my $pfx = defined($switch_path) ? $switch_path : $git_svn->{path};
 	$pfx .= '/' if length($pfx);
 	while (<$ls>) {
 		chomp;
