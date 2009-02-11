@@ -68,13 +68,8 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 		 *
 		 * Something similar to this incomplete example:
 		 *
-		if (show_subprojects(base, baselen, pathname)) {
-			struct child_process ls_tree;
-
-			ls_tree.dir = base;
-			ls_tree.argv = ls-tree;
-			start_command(&ls_tree);
-		}
+		if (show_subprojects(base, baselen, pathname))
+			retval = READ_TREE_RECURSIVE;
 		 *
 		 */
 		type = commit_type;

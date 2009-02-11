@@ -132,7 +132,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 		err = write_entry(args, sha1, path.buf, path.len, mode, NULL, 0);
 		if (err)
 			return err;
-		return READ_TREE_RECURSIVE;
+		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
 	}
 
 	buffer = sha1_file_to_archive(path_without_prefix, sha1, mode,
