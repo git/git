@@ -278,7 +278,8 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 				*ref = xstrdup(r);
 			if (!warn_ambiguous_refs)
 				break;
-		} else if (flag & REF_ISSYMREF)
+		} else if ((flag & REF_ISSYMREF) &&
+			   (len != 4 || strcmp(str, "HEAD")))
 			warning("ignoring dangling symref %s.", fullref);
 	}
 	free(last_branch);
