@@ -62,7 +62,7 @@ esac
 __gitdir ()
 {
 	if [ -z "${1-}" ]; then
-		if [ -n "$__git_dir" ]; then
+		if [ -n "${__git_dir-}" ]; then
 			echo "$__git_dir"
 		elif [ -d .git ]; then
 			echo .git
@@ -298,7 +298,7 @@ __git_remotes ()
 
 __git_merge_strategies ()
 {
-	if [ -n "$__git_merge_strategylist" ]; then
+	if [ -n "${__git_merge_strategylist-}" ]; then
 		echo "$__git_merge_strategylist"
 		return
 	fi
@@ -384,7 +384,7 @@ __git_complete_revlist ()
 
 __git_all_commands ()
 {
-	if [ -n "$__git_all_commandlist" ]; then
+	if [ -n "${__git_all_commandlist-}" ]; then
 		echo "$__git_all_commandlist"
 		return
 	fi
@@ -402,7 +402,7 @@ __git_all_commandlist="$(__git_all_commands 2>/dev/null)"
 
 __git_porcelain_commands ()
 {
-	if [ -n "$__git_porcelain_commandlist" ]; then
+	if [ -n "${__git_porcelain_commandlist-}" ]; then
 		echo "$__git_porcelain_commandlist"
 		return
 	fi
