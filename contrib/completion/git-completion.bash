@@ -80,7 +80,7 @@ __gitdir ()
 # returns text to add to bash PS1 prompt (includes branch name)
 __git_ps1 ()
 {
-	local g="$(git rev-parse --git-dir 2>/dev/null)"
+	local g="$(__gitdir)"
 	if [ -n "$g" ]; then
 		local r
 		local b
@@ -1797,7 +1797,7 @@ _gitk ()
 	__git_has_doubledash && return
 
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	local g="$(git rev-parse --git-dir 2>/dev/null)"
+	local g="$(__gitdir)"
 	local merge=""
 	if [ -f $g/MERGE_HEAD ]; then
 		merge="--merge"
