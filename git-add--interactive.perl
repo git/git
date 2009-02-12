@@ -753,6 +753,10 @@ EOF
 		|| $ENV{VISUAL} || $ENV{EDITOR} || "vi";
 	system('sh', '-c', $editor.' "$@"', $editor, $hunkfile);
 
+	if ($? != 0) {
+		return undef;
+	}
+
 	open $fh, '<', $hunkfile
 		or die "failed to open hunk edit file for reading: " . $!;
 	my @newtext = grep { !/^#/ } <$fh>;
