@@ -350,6 +350,19 @@ static struct ref *write_remote_refs(const struct ref *refs,
 	return local_refs;
 }
 
+static void install_branch_config(const char *local,
+				  const char *origin,
+				  const char *remote)
+{
+	struct strbuf key = STRBUF_INIT;
+	strbuf_addf(&key, "branch.%s.remote", local);
+	git_config_set(key.buf, origin);
+	strbuf_reset(&key);
+	strbuf_addf(&key, "branch.%s.merge", local);
+	git_config_set(key.buf, remote);
+	strbuf_release(&key);
+}
+
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
 	int use_local_hardlinks = 1;
@@ -539,6 +552,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		head_points_at = NULL;
 		remote_head = NULL;
 		option_no_checkout = 1;
+		if (!option_bare)
+			install_branch_config("master", option_origin,
+					      "refs/heads/master");
 	}
 
 	if (head_points_at) {
@@ -567,11 +583,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				      head_points_at->peer_ref->name,
 				      reflog_msg.buf);
 
-			strbuf_addf(&key, "branch.%s.remote", head);
-			git_config_set(key.buf, option_origin);
-			strbuf_reset(&key);
-			strbuf_addf(&key, "branch.%s.merge", head);
-			git_config_set(key.buf, head_points_at->name);
+			install_branch_config(head, option_origin,
+					      head_points_at->name);
 		}
 	} else if (remote_head) {
 		/* Source had detached HEAD pointing somewhere. */
