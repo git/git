@@ -1196,8 +1196,12 @@ _git_config ()
 		__gitcomp "$(__git_merge_strategies)"
 		return
 		;;
-	color.branch|color.diff|color.status)
+	color.branch|color.diff|color.interactive|color.status|color.ui)
 		__gitcomp "always never auto"
+		return
+		;;
+	color.pager)
+		__gitcomp "false true"
 		return
 		;;
 	color.*.*)
