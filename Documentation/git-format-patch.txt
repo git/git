@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git format-patch' [-k] [-o <dir> | --stdout] [--thread]
-		   [--attach[=<boundary>] | --inline[=<boundary>]]
+		   [--attach[=<boundary>] | --inline[=<boundary>] |
+		     [--no-attach]]
 		   [-s | --signoff] [<common diff options>]
 		   [-n | --numbered | -N | --no-numbered]
 		   [--start-number <n>] [--numbered-files]
@@ -117,6 +118,10 @@ include::diff-options.txt[]
 	which is the commit message and the patch itself in the
 	second part, with "Content-Disposition: attachment".
 
+--no-attach::
+	Disable the creation of an attachment, overriding the
+	configuration setting.
+
 --inline[=<boundary>]::
 	Create multipart/mixed attachment, the first part of
 	which is the commit message and the patch itself in the
@@ -174,7 +179,8 @@ CONFIGURATION
 -------------
 You can specify extra mail header lines to be added to each message
 in the repository configuration, new defaults for the subject prefix
-and file suffix, and number patches when outputting more than one.
+and file suffix, control attachements, and number patches when outputting
+more than one.
 
 ------------
 [format]
@@ -183,6 +189,7 @@ and file suffix, and number patches when outputting more than one.
 	suffix = .txt
 	numbered = auto
 	cc = <email>
+	attach [ = mime-boundary-string ]
 ------------
 
 
