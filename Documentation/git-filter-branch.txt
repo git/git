@@ -212,6 +212,11 @@ git filter-branch --index-filter 'git rm --cached filename' HEAD
 
 Now, you will get the rewritten history saved in HEAD.
 
+As with using `rm filename`, `git rm --cached filename` will fail
+if the file is absent from the tree of a commit.  If it is not important
+whether the file is already absent from the tree, you can use
+`git rm --cached --ignore-unmatch filename` instead.
+
 To rewrite the repository to look as if `foodir/` had been its project
 root, and discard all other history:
 
