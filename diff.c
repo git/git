@@ -184,11 +184,11 @@ static int remove_tempfile_installed;
 static void remove_tempfile(void)
 {
 	int i;
-	for (i = 0; i < ARRAY_SIZE(diff_temp); i++)
-		if (diff_temp[i].name == diff_temp[i].tmp_path) {
+	for (i = 0; i < ARRAY_SIZE(diff_temp); i++) {
+		if (diff_temp[i].name == diff_temp[i].tmp_path)
 			unlink(diff_temp[i].name);
-			diff_temp[i].name = NULL;
-		}
+		diff_temp[i].name = NULL;
+	}
 }
 
 static void remove_tempfile_on_signal(int signo)
