@@ -246,6 +246,7 @@ OPTIONS
 --whitespace=<nowarn|warn|error|error-all|strip>::
 	This flag is passed to the 'git-apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
+	Incompatible with the --interactive option.
 
 -i::
 --interactive::
