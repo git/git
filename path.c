@@ -154,7 +154,7 @@ int validate_headref(const char *path)
 	/* Make sure it is a "refs/.." symlink */
 	if (S_ISLNK(st.st_mode)) {
 		len = readlink(path, buffer, sizeof(buffer)-1);
-		if (len >= 11 && !memcmp("refs/heads/", buffer, 11))
+		if (len >= 5 && !memcmp("refs/", buffer, 5))
 			return 0;
 		return -1;
 	}
@@ -178,7 +178,7 @@ int validate_headref(const char *path)
 		len -= 4;
 		while (len && isspace(*buf))
 			buf++, len--;
-		if (len >= 11 && !memcmp("refs/heads/", buf, 11))
+		if (len >= 5 && !memcmp("refs/", buf, 5))
 			return 0;
 	}
 
