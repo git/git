@@ -1,0 +1,19 @@
+GIT v1.6.1.4 Release Notes
+==========================
+
+Fixes since v1.6.1.3
+--------------------
+
+* "git fast-export" produced wrong output with some parents missing from
+  commits, when the history is clock-skewed.
+
+* "git fast-import" sometimes failed to read back objects it just wrote
+  out and aborted, because it failed to flush stale cached data.
+
+* "git repack" did not error out when necessary object was missing in the
+  repository.
+
+Also includes minor documentation fixes and updates.
+
+--
+git shortlog --no-merges v1.6.1.3..
