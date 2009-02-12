@@ -376,8 +376,35 @@ Thunderbird
 
 (A Large Angry SCM)
 
+By default, Thunderbird will both wrap emails as well as flag them as
+being 'format=flowed', both of which will make the resulting email unusable
+by git.
+
 Here are some hints on how to successfully submit patches inline using
 Thunderbird.
+
+There are two different approaches.  One approach is to configure
+Thunderbird to not mangle patches.  The second approach is to use
+an external editor to keep Thunderbird from mangling the patches.
+
+Approach #1 (configuration):
+
+This recipe is current as of Thunderbird 2.0.0.19.  Three steps:
+  1.  Configure your mail server composition as plain text
+      Edit...Account Settings...Composition & Addressing,
+        uncheck 'Compose Messages in HTML'.
+  2.  Configure your general composition window to not wrap
+      Edit..Preferences..Composition, wrap plain text messages at 0
+  3.  Disable the use of format=flowed
+      Edit..Preferences..Advanced..Config Editor.  Search for:
+        mailnews.send_plaintext_flowed
+      toggle it to make sure it is set to 'false'.
+
+After that is done, you should be able to compose email as you
+otherwise would (cut + paste, git-format-patch | git-imap-send, etc),
+and the patches should not be mangled.
+
+Approach #2 (external editor):
 
 This recipe appears to work with the current [*1*] Thunderbird from Suse.
 

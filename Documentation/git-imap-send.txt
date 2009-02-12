@@ -98,6 +98,20 @@ Using direct mode with SSL:
 ..........................
 
 
+CAUTION
+-------
+It is still your responsibility to make sure that the email message
+sent by your email program meets the standards of your project.
+Many projects do not like patches to be attached.  Some mail
+agents will transform patches (e.g. wrap lines, send them as
+format=flowed) in ways that make them fail.  You will get angry
+flames ridiculing you if you don't check this.
+
+Thunderbird in particular is known to be problematic.  Thunderbird
+users may wish to visit this web page for more information:
+  http://kb.mozillazine.org/Plain_text_e-mail_-_Thunderbird#Completely_plain_email
+
+
 BUGS
 ----
 Doesn't handle lines starting with "From " in the message body.
