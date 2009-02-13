@@ -210,15 +210,13 @@ static void add_merge_info(enum cmit_fmt fmt, struct strbuf *sb,
 	while (parent) {
 		struct commit *p = parent->item;
 		const char *hex = NULL;
-		const char *dots;
 		if (abbrev)
 			hex = find_unique_abbrev(p->object.sha1, abbrev);
 		if (!hex)
 			hex = sha1_to_hex(p->object.sha1);
-		dots = (abbrev && strlen(hex) != 40) ?  "..." : "";
 		parent = parent->next;
 
-		strbuf_addf(sb, " %s%s", hex, dots);
+		strbuf_addf(sb, " %s", hex);
 	}
 	strbuf_addch(sb, '\n');
 }
