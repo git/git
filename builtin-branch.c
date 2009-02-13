@@ -32,11 +32,11 @@ static unsigned char head_sha1[20];
 
 static int branch_use_color = -1;
 static char branch_colors[][COLOR_MAXLEN] = {
-	"\033[m",	/* reset */
-	"",		/* PLAIN (normal) */
-	"\033[31m",	/* REMOTE (red) */
-	"",		/* LOCAL (normal) */
-	"\033[32m",	/* CURRENT (green) */
+	GIT_COLOR_RESET,
+	GIT_COLOR_NORMAL,	/* PLAIN */
+	GIT_COLOR_RED,		/* REMOTE */
+	GIT_COLOR_NORMAL,	/* LOCAL */
+	GIT_COLOR_GREEN,	/* CURRENT */
 };
 enum color_branch {
 	COLOR_BRANCH_RESET = 0,
