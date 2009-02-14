@@ -1600,7 +1600,8 @@ _git_svn ()
 	local subcommands="
 		init fetch clone rebase dcommit log find-rev
 		set-tree commit-diff info create-ignore propget
-		proplist show-ignore show-externals
+		proplist show-ignore show-externals branch tag blame
+		migrate
 		"
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
@@ -1611,13 +1612,15 @@ _git_svn ()
 			--follow-parent --authors-file= --repack=
 			--no-metadata --use-svm-props --use-svnsync-props
 			--log-window-size= --no-checkout --quiet
-			--repack-flags --use-log-author --localtime $remote_opts
+			--repack-flags --use-log-author --localtime
+			--ignore-paths= $remote_opts
 			"
 		local init_opts="
 			--template= --shared= --trunk= --tags=
 			--branches= --stdlayout --minimize-url
 			--no-metadata --use-svm-props --use-svnsync-props
-			--rewrite-root= $remote_opts
+			--rewrite-root= --prefix= --use-log-author
+			--add-author-from $remote_opts
 			"
 		local cmt_opts="
 			--edit --rmdir --find-copies-harder --copy-similarity=
@@ -1637,7 +1640,8 @@ _git_svn ()
 		dcommit,--*)
 			__gitcomp "
 				--merge --strategy= --verbose --dry-run
-				--fetch-all --no-rebase $cmt_opts $fc_opts
+				--fetch-all --no-rebase --commit-url
+				--revision $cmt_opts $fc_opts
 				"
 			;;
 		set-tree,--*)
@@ -1651,13 +1655,13 @@ _git_svn ()
 			__gitcomp "
 				--limit= --revision= --verbose --incremental
 				--oneline --show-commit --non-recursive
-				--authors-file=
+				--authors-file= --color
 				"
 			;;
 		rebase,--*)
 			__gitcomp "
 				--merge --verbose --strategy= --local
-				--fetch-all $fc_opts
+				--fetch-all --dry-run $fc_opts
 				"
 			;;
 		commit-diff,--*)
@@ -1665,6 +1669,21 @@ _git_svn ()
 			;;
 		info,--*)
 			__gitcomp "--url"
+			;;
+		branch,--*)
+			__gitcomp "--dry-run --message --tag"
+			;;
+		tag,--*)
+			__gitcomp "--dry-run --message"
+			;;
+		blame,--*)
+			__gitcomp "--git-format"
+			;;
+		migrate,--*)
+			__gitcomp "
+				--config-dir= --ignore-paths= --minimize
+				--no-auth-cache --username=
+				"
 			;;
 		*)
 			COMPREPLY=()
