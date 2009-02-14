@@ -339,6 +339,47 @@ git filter-branch --index-filter \
 ---------------------------------------------------------------
 
 
+
+Checklist for Shrinking a Repository
+------------------------------------
+
+git-filter-branch is often used to get rid of a subset of files,
+usually with some combination of `\--index-filter` and
+`\--subdirectory-filter`.  People expect the resulting repository to
+be smaller than the original, but you need a few more steps to
+actually make it smaller, because git tries hard not to lose your
+objects until you tell it to.  First make sure that:
+
+* You really removed all variants of a filename, if a blob was moved
+  over its lifetime.  `git log \--name-only \--follow \--all \--
+  filename` can help you find renames.
+
+* You really filtered all refs: use `\--tag-name-filter cat \--
+  \--all` when calling git-filter-branch.
+
+Then there are two ways to get a smaller repository.  A safer way is
+to clone, that keeps your original intact.
+
+* Clone it with `git clone +++file:///path/to/repo+++`.  The clone
+  will not have the removed objects.  See linkgit:git-clone[1].  (Note
+  that cloning with a plain path just hardlinks everything!)
+
+If you really don't want to clone it, for whatever reasons, check the
+following points instead (in this order).  This is a very destructive
+approach, so *make a backup* or go back to cloning it.  You have been
+warned.
+
+* Remove the original refs backed up by git-filter-branch: say `git
+  for-each-ref \--format="%(refname)" refs/original/ | xargs -n 1 git
+  update-ref -d`.
+
+* Expire all reflogs with `git reflog expire \--expire=now \--all`.
+
+* Garbage collect all unreferenced objects with `git gc \--prune=now`
+  (or if your git-gc is not new enough to support arguments to
+  `\--prune`, use `git repack -ad; git prune` instead).
+
+
 Author
 ------
 Written by Petr "Pasky" Baudis <pasky@suse.cz>,
