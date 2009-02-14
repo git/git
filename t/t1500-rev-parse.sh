@@ -26,16 +26,23 @@ test_rev_parse() {
 	"test '$1' = \"\$(git rev-parse --show-prefix)\""
 	shift
 	[ $# -eq 0 ] && return
+
+	test_expect_success "$name: git-dir" \
+	"test '$1' = \"\$(git rev-parse --git-dir)\""
+	shift
+	[ $# -eq 0 ] && return
 }
 
-# label is-bare is-inside-git is-inside-work prefix
+# label is-bare is-inside-git is-inside-work prefix git-dir
+
+ROOT=$(pwd)
 
 test_rev_parse toplevel false false true ''
 
 cd .git || exit 1
 test_rev_parse .git/ false true false ''
 cd objects || exit 1
-test_rev_parse .git/objects/ false true false ''
+test_rev_parse .git/objects/ false true false '' "$ROOT/.git"
 cd ../.. || exit 1
 
 mkdir -p sub/dir || exit 1
