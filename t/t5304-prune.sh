@@ -112,4 +112,42 @@ test_expect_success 'prune: do not prune heads listed as an argument' '
 
 '
 
+test_expect_success 'gc --no-prune' '
+
+	before=$(git count-objects | sed "s/ .*//") &&
+	BLOB=$(echo aleph_0 | git hash-object -w --stdin) &&
+	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
+	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test -f $BLOB_FILE &&
+	test-chmtime =-$((86400*5001)) $BLOB_FILE &&
+	git config gc.pruneExpire 2.days.ago &&
+	git gc --no-prune &&
+	test 1 = $(git count-objects | sed "s/ .*//") &&
+	test -f $BLOB_FILE
+
+'
+
+test_expect_success 'gc respects gc.pruneExpire' '
+
+	git config gc.pruneExpire 5002.days.ago &&
+	git gc &&
+	test -f $BLOB_FILE &&
+	git config gc.pruneExpire 5000.days.ago &&
+	git gc &&
+	test ! -f $BLOB_FILE
+
+'
+
+test_expect_success 'gc --prune=<date>' '
+
+	BLOB=$(echo aleph_0 | git hash-object -w --stdin) &&
+	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
+	test-chmtime =-$((86400*5001)) $BLOB_FILE &&
+	git gc --prune=5002.days.ago &&
+	test -f $BLOB_FILE &&
+	git gc --prune=5000.days.ago &&
+	test ! -f $BLOB_FILE
+
+'
+
 test_done
