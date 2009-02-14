@@ -13,28 +13,17 @@ static const char git_rerere_usage[] =
 static int cutoff_noresolve = 15;
 static int cutoff_resolve = 60;
 
-static const char *rr_path(const char *name, const char *file)
-{
-	return git_path("rr-cache/%s/%s", name, file);
-}
-
 static time_t rerere_created_at(const char *name)
 {
 	struct stat st;
-	return stat(rr_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
-}
-
-static int has_resolution(const char *name)
-{
-	struct stat st;
-	return !stat(rr_path(name, "postimage"), &st);
+	return stat(rerere_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
 
 static void unlink_rr_item(const char *name)
 {
-	unlink(rr_path(name, "thisimage"));
-	unlink(rr_path(name, "preimage"));
-	unlink(rr_path(name, "postimage"));
+	unlink(rerere_path(name, "thisimage"));
+	unlink(rerere_path(name, "preimage"));
+	unlink(rerere_path(name, "postimage"));
 	rmdir(git_path("rr-cache/%s", name));
 }
 
@@ -65,7 +54,7 @@ static void garbage_collect(struct string_list *rr)
 		then = rerere_created_at(e->d_name);
 		if (!then)
 			continue;
-		cutoff = (has_resolution(e->d_name)
+		cutoff = (has_rerere_resolution(e->d_name)
 			  ? cutoff_resolve : cutoff_noresolve);
 		if (then < now - cutoff * 86400)
 			string_list_append(e->d_name, &to_remove);
@@ -124,7 +113,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 	if (!strcmp(argv[1], "clear")) {
 		for (i = 0; i < merge_rr.nr; i++) {
 			const char *name = (const char *)merge_rr.items[i].util;
-			if (!has_resolution(name))
+			if (!has_rerere_resolution(name))
 				unlink_rr_item(name);
 		}
 		unlink(git_path("rr-cache/MERGE_RR"));
@@ -137,7 +126,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < merge_rr.nr; i++) {
 			const char *path = merge_rr.items[i].string;
 			const char *name = (const char *)merge_rr.items[i].util;
-			diff_two(rr_path(name, "preimage"), path, path, path);
+			diff_two(rerere_path(name, "preimage"), path, path, path);
 		}
 	else
 		usage(git_rerere_usage);
