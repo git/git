@@ -94,6 +94,13 @@ test_expect_success 'MKCOL sends directory names with trailing slashes' '
 
 '
 
+test_expect_success 'PUT and MOVE sends object to URLs with SHA-1 hash suffix' '
+
+	grep -P "\"(?:PUT|MOVE) .+objects/[\da-z]{2}/[\da-z]{38}_[\da-z\-]{40} HTTP/[0-9.]+\" 20\d" \
+		< "$HTTPD_ROOT_PATH"/access.log
+
+'
+
 stop_httpd
 
 test_done
