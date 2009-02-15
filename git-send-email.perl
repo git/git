@@ -126,6 +126,7 @@ sub format_2822_time {
 }
 
 my $have_email_valid = eval { require Email::Valid; 1 };
+my $have_mail_address = eval { require Mail::Address; 1 };
 my $smtp;
 my $auth;
 
@@ -366,6 +367,14 @@ foreach my $entry (@bcclist) {
 	die "Comma in --bcclist entry: $entry'\n" unless $entry !~ m/,/;
 }
 
+sub parse_address_line {
+	if ($have_mail_address) {
+		return map { $_->format } Mail::Address->parse($_[0]);
+	} else {
+		return split_addrs($_[0]);
+	}
+}
+
 sub split_addrs {
 	return quotewords('\s*,\s*', 1, @_);
 }
@@ -602,7 +611,7 @@ if (!@to) {
 	}
 
 	my $to = $_;
-	push @to, split_addrs($to);
+	push @to, parse_address_line($to);
 	$prompting++;
 }
 
@@ -929,86 +938,96 @@ foreach my $t (@files) {
 	@cc = @initial_cc;
 	@xh = ();
 	my $input_format = undef;
-	my $header_done = 0;
+	my @header = ();
 	$message = "";
+	# First unfold multiline header fields
 	while(<F>) {
-		if (!$header_done) {
-			if (/^From /) {
-				$input_format = 'mbox';
-				next;
-			}
-			chomp;
-			if (!defined $input_format && /^[-A-Za-z]+:\s/) {
-				$input_format = 'mbox';
-			}
+		last if /^\s*$/;
+		if (/^\s+\S/ and @header) {
+			chomp($header[$#header]);
+			s/^\s+/ /;
+			$header[$#header] .= $_;
+	    } else {
+			push(@header, $_);
+		}
+	}
+	# Now parse the header
+	foreach(@header) {
+		if (/^From /) {
+			$input_format = 'mbox';
+			next;
+		}
+		chomp;
+		if (!defined $input_format && /^[-A-Za-z]+:\s/) {
+			$input_format = 'mbox';
+		}
 
-			if (defined $input_format && $input_format eq 'mbox') {
-				if (/^Subject:\s+(.*)$/) {
-					$subject = $1;
-
-				} elsif (/^(Cc|From):\s+(.*)$/) {
-					if (unquote_rfc2047($2) eq $sender) {
+		if (defined $input_format && $input_format eq 'mbox') {
+			if (/^Subject:\s+(.*)$/) {
+				$subject = $1;
+			}
+			elsif (/^From:\s+(.*)$/) {
+				($author, $author_encoding) = unquote_rfc2047($1);
+				next if $suppress_cc{'author'};
+				next if $suppress_cc{'self'} and $author eq $sender;
+				printf("(mbox) Adding cc: %s from line '%s'\n",
+					$1, $_) unless $quiet;
+				push @cc, $1;
+			}
+			elsif (/^Cc:\s+(.*)$/) {
+				foreach my $addr (parse_address_line($1)) {
+					if (unquote_rfc2047($addr) eq $sender) {
 						next if ($suppress_cc{'self'});
-					}
-					elsif ($1 eq 'From') {
-						($author, $author_encoding)
-						  = unquote_rfc2047($2);
-						next if ($suppress_cc{'author'});
 					} else {
 						next if ($suppress_cc{'cc'});
 					}
 					printf("(mbox) Adding cc: %s from line '%s'\n",
-						$2, $_) unless $quiet;
-					push @cc, $2;
-				}
-				elsif (/^Content-type:/i) {
-					$has_content_type = 1;
-					if (/charset="?([^ "]+)/) {
-						$body_encoding = $1;
-					}
-					push @xh, $_;
-				}
-				elsif (/^Message-Id: (.*)/i) {
-					$message_id = $1;
-				}
-				elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
-					push @xh, $_;
-				}
-
-			} else {
-				# In the traditional
-				# "send lots of email" format,
-				# line 1 = cc
-				# line 2 = subject
-				# So let's support that, too.
-				$input_format = 'lots';
-				if (@cc == 0 && !$suppress_cc{'cc'}) {
-					printf("(non-mbox) Adding cc: %s from line '%s'\n",
-						$_, $_) unless $quiet;
-
-					push @cc, $_;
-
-				} elsif (!defined $subject) {
-					$subject = $_;
+						$addr, $_) unless $quiet;
+					push @cc, $addr;
 				}
 			}
-
-			# A whitespace line will terminate the headers
-			if (m/^\s*$/) {
-				$header_done = 1;
+			elsif (/^Content-type:/i) {
+				$has_content_type = 1;
+				if (/charset="?([^ "]+)/) {
+					$body_encoding = $1;
+				}
+				push @xh, $_;
 			}
+			elsif (/^Message-Id: (.*)/i) {
+				$message_id = $1;
+			}
+			elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
+				push @xh, $_;
+			}
+
 		} else {
-			$message .=  $_;
-			if (/^(Signed-off-by|Cc): (.*)$/i) {
-				next if ($suppress_cc{'sob'});
-				chomp;
-				my $c = $2;
-				chomp $c;
-				next if ($c eq $sender and $suppress_cc{'self'});
-				push @cc, $c;
-				printf("(sob) Adding cc: %s from line '%s'\n",
-					$c, $_) unless $quiet;
+			# In the traditional
+			# "send lots of email" format,
+			# line 1 = cc
+			# line 2 = subject
+			# So let's support that, too.
+			$input_format = 'lots';
+			if (@cc == 0 && !$suppress_cc{'cc'}) {
+				printf("(non-mbox) Adding cc: %s from line '%s'\n",
+					$_, $_) unless $quiet;
+				push @cc, $_;
+			} elsif (!defined $subject) {
+				$subject = $_;
 			}
+		}
+	}
+	# Now parse the message body
+	while(<F>) {
+		$message .=  $_;
+		if (/^(Signed-off-by|Cc): (.*)$/i) {
+			next if ($suppress_cc{'sob'});
+			chomp;
+			my $c = $2;
+			chomp $c;
+			next if ($c eq $sender and $suppress_cc{'self'});
+			push @cc, $c;
+			printf("(sob) Adding cc: %s from line '%s'\n",
+				$c, $_) unless $quiet;
 		}
 	}
 	close F;
@@ -1029,7 +1048,7 @@ foreach my $t (@files) {
 			or die "(cc-cmd) failed to close pipe to '$cc_cmd'";
 	}
 
-	if (defined $author) {
+	if (defined $author and $author ne $sender) {
 		$message = "From: $author\n\n$message";
 		if (defined $author_encoding) {
 			if ($has_content_type) {
