@@ -868,6 +868,7 @@ extern int user_ident_explicitly_given;
 
 extern const char *git_commit_encoding;
 extern const char *git_log_output_encoding;
+extern const char *git_mailmap_file;
 
 /* IO helper functions */
 extern void maybe_flush_or_die(FILE *, const char *);
