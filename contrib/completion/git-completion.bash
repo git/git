@@ -1037,6 +1037,7 @@ _git_merge ()
 	--*)
 		__gitcomp "
 			--no-commit --no-stat --log --no-log --squash --strategy
+			--commit --stat --no-squash --ff --no-ff
 			"
 		return
 	esac
