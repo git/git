@@ -153,6 +153,7 @@ struct remote_lock
 	char *url;
 	char *owner;
 	char *token;
+	char tmpfile_suffix[41];
 	time_t start_time;
 	long timeout;
 	int refreshing;
@@ -557,8 +558,7 @@ static void start_put(struct transfer_request *request)
 	request->dest = strbuf_detach(&buf, NULL);
 
 	append_remote_object_url(&buf, remote->url, hex, 0);
-	strbuf_addstr(&buf, "_");
-	strbuf_addstr(&buf, request->lock->token);
+	strbuf_add(&buf, request->lock->tmpfile_suffix, 41);
 	request->url = strbuf_detach(&buf, NULL);
 
 	slot = get_active_slot();
@@ -1130,6 +1130,8 @@ static void handle_lockprop_ctx(struct xml_ctx *ctx, int tag_closed)
 static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 {
 	struct remote_lock *lock = (struct remote_lock *)ctx->userData;
+	git_SHA_CTX sha_ctx;
+	unsigned char lock_token_sha1[20];
 
 	if (tag_closed && ctx->cdata) {
 		if (!strcmp(ctx->name, DAV_ACTIVELOCK_OWNER)) {
@@ -1142,6 +1144,13 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN)) {
 			lock->token = xmalloc(strlen(ctx->cdata) + 1);
 			strcpy(lock->token, ctx->cdata);
+
+			git_SHA1_Init(&sha_ctx);
+			git_SHA1_Update(&sha_ctx, lock->token, strlen(lock->token));
+			git_SHA1_Final(lock_token_sha1, &sha_ctx);
+
+			lock->tmpfile_suffix[0] = '_';
+			memcpy(lock->tmpfile_suffix + 1, sha1_to_hex(lock_token_sha1), 40);
 		}
 	}
 }
