@@ -164,14 +164,25 @@ Automating
 
 --suppress-cc::
 	Specify an additional category of recipients to suppress the
-	auto-cc of.  'self' will avoid including the sender, 'author' will
-	avoid including the patch author, 'cc' will avoid including anyone
-	mentioned in Cc lines in the patch, 'sob' will avoid including
-	anyone mentioned in Signed-off-by lines, and 'cccmd' will avoid
-	running the --cc-cmd.  'all' will suppress all auto cc values.
-	Default is the value of 'sendemail.suppresscc' configuration value;
-	if that is unspecified, default to 'self' if --suppress-from is
-	specified, as well as 'sob' if --no-signed-off-cc is specified.
+	auto-cc of:
++
+--
+- 'author' will avoid including the patch author
+- 'self' will avoid including the sender
+- 'cc' will avoid including anyone mentioned in Cc lines in the patch header
+  except for self (use 'self' for that).
+- 'ccbody' will avoid including anyone mentioned in Cc lines in the
+  patch body (commit message) except for self (use 'self' for that).
+- 'sob' will avoid including anyone mentioned in Signed-off-by lines except
+   for self (use 'self' for that).
+- 'cccmd' will avoid running the --cc-cmd.
+- 'body' is equivalent to 'sob' + 'ccbody'
+- 'all' will suppress all auto cc values.
+--
++
+Default is the value of 'sendemail.suppresscc' configuration value; if
+that is unspecified, default to 'self' if --suppress-from is
+specified, as well as 'body' if --no-signed-off-cc is specified.
 
 --[no-]suppress-from::
 	If this is set, do not add the From: address to the cc: list.

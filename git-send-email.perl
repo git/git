@@ -68,9 +68,8 @@ git send-email [options] <file | directory | rev-list options >
   Automating:
     --identity              <str>  * Use the sendemail.<id> options.
     --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
-    --suppress-cc           <str>  * author, self, sob, cccmd, all.
-    --[no-]signed-off-by-cc        * Send to Cc: and Signed-off-by:
-                                     addresses. Default on.
+    --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, all.
+    --[no-]signed-off-by-cc        * Send to Signed-off-by: addresses. Default on.
     --[no-]suppress-from           * Send to self. Default off.
     --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default on.
     --[no-]thread                  * Use In-Reply-To: field. Default on.
@@ -325,13 +324,13 @@ my(%suppress_cc);
 if (@suppress_cc) {
 	foreach my $entry (@suppress_cc) {
 		die "Unknown --suppress-cc field: '$entry'\n"
-			unless $entry =~ /^(all|cccmd|cc|author|self|sob)$/;
+			unless $entry =~ /^(all|cccmd|cc|author|self|sob|body|bodycc)$/;
 		$suppress_cc{$entry} = 1;
 	}
 }
 
 if ($suppress_cc{'all'}) {
-	foreach my $entry (qw (ccmd cc author self sob)) {
+	foreach my $entry (qw (ccmd cc author self sob body bodycc)) {
 		$suppress_cc{$entry} = 1;
 	}
 	delete $suppress_cc{'all'};
@@ -340,6 +339,13 @@ if ($suppress_cc{'all'}) {
 # If explicit old-style ones are specified, they trump --suppress-cc.
 $suppress_cc{'self'} = $suppress_from if defined $suppress_from;
 $suppress_cc{'sob'} = !$signed_off_by_cc if defined $signed_off_by_cc;
+
+if ($suppress_cc{'body'}) {
+	foreach my $entry (qw (sob bodycc)) {
+		$suppress_cc{$entry} = 1;
+	}
+	delete $suppress_cc{'body'};
+}
 
 # Debugging, print out the suppressions.
 if (0) {
@@ -1020,13 +1026,17 @@ foreach my $t (@files) {
 	while(<F>) {
 		$message .=  $_;
 		if (/^(Signed-off-by|Cc): (.*)$/i) {
-			next if ($suppress_cc{'sob'});
 			chomp;
-			my $c = $2;
+			my ($what, $c) = ($1, $2);
 			chomp $c;
-			next if ($c eq $sender and $suppress_cc{'self'});
+			if ($c eq $sender) {
+				next if ($suppress_cc{'self'});
+			} else {
+				next if $suppress_cc{'sob'} and $what =~ /Signed-off-by/i;
+				next if $suppress_cc{'bodycc'} and $what =~ /Cc/i;
+			}
 			push @cc, $c;
-			printf("(sob) Adding cc: %s from line '%s'\n",
+			printf("(body) Adding cc: %s from line '%s'\n",
 				$c, $_) unless $quiet;
 		}
 	}
