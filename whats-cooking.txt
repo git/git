@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2009, #03; Sat, 07)
-X-master-at: 621f1b4bcf40f1469fc59202248df35619e33c82
-X-next-at: 5e148c2bfc7eda43fad0646e9583a9959b15bb2a
+Subject: What's cooking in git.git (Feb 2009, #04; Sun, 15)
+X-master-at: 075394e26cd7fb38e08d5f637a5fc825ab0b3fb3
+X-next-at: 607872276f2e9c2cf5c5bb05e9a9a741f3792148
 
-What's cooking in git.git (Feb 2009, #03; Sat, 07)
+What's cooking in git.git (Feb 2009, #04; Sun, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,7 +14,8 @@ holding onto them.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
-The master branch is at -rc0 now.
+The master branch will be tagged as 1.6.2-rc1 by the end of the long
+weekend.
 
 Traditionally, rc freeze, especially post -rc1, meant that I stop paying
 attention to whatever topic that did not graduate to 'master', and not
@@ -26,54 +27,87 @@ I do not think that approach has worked well in practice, so let's try
 something slightly different.
 
 I'll try to leave 'next' open during this freeze, but the new topics and
-topics that hasn't cooked to maturity by -rc1 will not be in 1.6.2.  That
-is what a freeze means, so it may not be necessary to say so, but I am
-just trying to make it clear.
+topics that hasn't cooked to maturity by -rc1 will not be in 1.6.2 (that
+is what a freeze means).
 
 ----------------------------------------------------------------
 [New Topics]
 
-* jn/gitweb-committag (Fri Feb 6 10:12:41 2009 +0100) 1 commit
- + gitweb: Better regexp for SHA-1 committag match
+* jw/imap-preformatted-html (Thu Feb 12 08:58:12 2009 -0600) 1 commit
+ - imap.preformattedHTML to tell Thunderbird to send non-flowed text
 
-* js/maint-1.6.0-path-normalize (Sat Feb 7 16:08:31 2009 +0100) 5 commits
- + Remove unused normalize_absolute_path()
- + Test and fix normalize_path_copy()
- + Fix GIT_CEILING_DIRECTORIES on Windows
- + Move sanitary_path_copy() to path.c and rename it to
-   normalize_path_copy()
- + Make test-path-utils more robust against incorrect use
+The patch text should be identical to Jeremy's "Virtual Patch", except
+that the configuration variable was renamed per list discussion.
 
-Replaces one from René that was queued earlier.
+* jw/format-patch-attach (Thu Feb 12 09:51:55 2009 -0600) 1 commit
+ - Enable setting attach as the default in .gitconfig for git-format-
+   patch.
 
-* js/git-submodule-trailing-slash (Sat Feb 7 14:43:15 2009 +0100) 2 commits
- + submodule: warn about non-submodules
- + Let ls-files strip trailing slashes in submodules' paths
+* sr/force-rebase (Fri Feb 13 23:48:01 2009 +0100) 1 commit
+ - Teach rebase to rebase even if upstream is up to date
 
-* ms/mailmap (Thu Feb 5 09:06:41 2009 +0100) 4 commits
- - Change current mailmap usage to do matching on both name and email
-   of author/committer.
- - Add map_user() and clear_mailmap() to mailmap
- - Add find_insert_index, insert_at_index and clear_func functions to
-   string_list
- - Add log.mailmap as configurational option for mailmap location
+* fg/exclude-bq (Tue Feb 10 15:20:17 2009 +0100) 1 commit
+ - Support "\" in non-wildcard exclusion entries
 
-* ff/submodule-no-fetch (Thu Feb 5 20:18:32 2009 -0200) 1 commit
- - submodule: add --no-fetch parameter to update command
+* fc/config-editor (Sat Feb 7 23:53:00 2009 +0200) 1 commit
+ - config: Add new option to open an editor.
 
-* mc/setup-cd-p (Fri Feb 6 19:24:28 2009 -0800) 1 commit
- - git-sh-setup: Use "cd" option, not /bin/pwd, for symlinked work
-   tree
+* dm/add-i-edit-abort (Thu Feb 12 00:19:41 2009 -0500) 1 commit
+ - add -i: revisit hunk on editor failure
 
-* js/rebase-error-a-bit-more-verbose (Sat Feb 7 18:20:09 2009 +0100) 1 commit
- + rebase: explain why when the HEAD could not be detached
+* tp/completion (Wed Feb 11 13:03:26 2009 -0500) 4 commits
+ - completion: More fixes to prevent unbound variable errors
+ - completion: Better __git_ps1 support when not in working directory
+ - completion: Use consistent if [...] convention, not "test"
+ - completion: For consistency, change "git rev-parse" to __gitdir
+   calls
 
-All of these looked sensible, and I think many deserve to be in 1.6.2.
-They are not in -rc0 only because I started the release engineering before
-they arrived.
+* js/branch-symref (Fri Feb 13 04:40:18 2009 -0500) 1 commit
+ - builtin-branch: improve output when displaying remote branches
+
+* js/send-email (Sat Feb 14 23:32:15 2009 -0500) 3 commits
+ - send-email: --suppress-cc improvements
+ - send-email: handle multiple Cc addresses when reading mbox message
+ - send-email: allow send-email to run outside a repo
+
+* al/ansi-color (Fri Feb 13 22:53:41 2009 +0100) 2 commits
+ - builtin-branch.c: Rename branch category color names
+ - Clean up use of ANSI color sequences
+
+All of the above are probably ready for 'next'.
+
+* js/remote-set-head (Sat Feb 14 05:30:30 2009 -0500) 5 commits
+ - builtin-remote: better handling of multiple remote HEADs
+ - builtin-remote: add set-head subcommand
+ - builtin-remote: teach show to display remote HEAD
+ - builtin-remote: move duplicated cleanup code its own function
+ - builtin-clone: move locate_head() to remote.c so it can be re-used
+
+* jk/head-lookup (Sun Feb 15 01:18:18 2009 -0500) 5 commits
+ - remote: use exact HEAD lookup if it is available
+ - remote: refactor guess_remote_head
+ - refactor find_refs_by_name to accept const list
+ - add basic http clone/fetch tests
+ - test scripts: refactor start_httpd helper
+
+Builds on top of Jay Soffian's js/remote-set-head topic.
+
+* sg/rerere-cleanup (Sat Feb 14 23:21:04 2009 +0100) 1 commit
+ - rerere: remove duplicated functions
+
+* ns/stash-keep (Thu Feb 12 06:25:14 2009 +0900) 1 commit
+ - stash: --keep option just saves
+
+* jc/deny-delete-current-1.7.0 (Mon Feb 9 00:19:46 2009 -0800) 1 commit
+ - receive-pack: default receive.denyDeleteCurrent to refuse
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
+
+* lh/submodule-tree-traversal (Sun Jan 25 01:52:06 2009 +0100) 1 commit
+ - archive.c: add support for --submodules[=(all|checkedout)]
+
+Discussion stalled on the submodule selection criteria.
 
 * jc/blame (Wed Jun 4 22:58:40 2008 -0700) 2 commits
  + blame: show "previous" information in --porcelain/--incremental
@@ -143,6 +177,12 @@ experiment.
 
 This broke git-format-patch badly.
 
+* js/rebase-error-a-bit-more-verbose (Sun Feb 8 21:22:18 2009 -0800) 2 commits
+ ? Revert "rebase: explain why when the HEAD could not be detached"
+ ? rebase: explain why when the HEAD could not be detached
+
+This turned out to be unnecessary.
+
 * rs/maint-1.6.0-windows-ceiling (Sat Feb 7 12:40:40 2009 -0800) 2 commits
  ? Revert "fix t1504 on Windows"
  ? fix t1504 on Windows
@@ -160,19 +200,11 @@ I'm giving a fresh start to Lars's second iteration.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* lh/submodule-tree-traversal (Sun Jan 25 01:52:06 2009 +0100) 2 commits
- - archive.c: add support for --submodules[=(all|checkedout)]
- + tree.c: allow read_tree_recursive() to traverse gitlink entries
-
-I think the first one is Ok to have in 1.6.2 but I didn't audit all the
-r-t-r callback functions myself to make sure they do not return
-READ_TREE_RECURSIVE when they shouldn't.  Perhaps somebody else should
-double check.
-
-* kb/checkout-optim (Wed Feb 4 13:53:20 2009 +0100) 8 commits
+* kb/checkout-optim (Mon Feb 9 21:54:53 2009 +0100) 9 commits
  - lstat_cache(): print a warning if doing ping-pong between cache
    types
  - show_patch_diff(): remove a call to fstat()
+ - write_entry(): use fstat() instead of lstat() when file is open
  - write_entry(): cleanup of some duplicated code
  - create_directories(): remove some memcpy() and strchr() calls
  - unlink_entry(): introduce schedule_dir_for_removal()
@@ -180,7 +212,7 @@ double check.
  - lstat_cache(): generalise longest_match_lstat_cache()
  - lstat_cache(): small cleanup and optimisation
 
-I thought it looked fine, but Kjetil asks to cook this a bit longer.
+Should be ready for 'next'.
 
 * js/valgrind (Thu Feb 5 22:03:00 2009 +0100) 9 commits
  + valgrind: do not require valgrind 3.4.0 or newer
@@ -196,60 +228,43 @@ I thought it looked fine, but Kjetil asks to cook this a bit longer.
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* js/maint-remote-remove-mirror (Wed Feb 4 11:06:07 2009 -0500) 2 commits
- + builtin-remote: make rm operation safer in mirrored repository
- + builtin-remote: make rm() use properly named variable to hold
-   return value
+* jn/gitweb-committag (Fri Feb 6 10:12:41 2009 +0100) 1 commit
+ + gitweb: Better regexp for SHA-1 committag match
 
-* ek/maint-filter-branch-bare (Tue Feb 3 13:27:03 2009 -0500) 1 commit
- + filter-branch: Fix fatal error on bare repositories
+* js/maint-1.6.0-path-normalize (Sat Feb 7 16:08:31 2009 +0100) 5 commits
+ + Remove unused normalize_absolute_path()
+ + Test and fix normalize_path_copy()
+ + Fix GIT_CEILING_DIRECTORIES on Windows
+ + Move sanitary_path_copy() to path.c and rename it to
+   normalize_path_copy()
+ + Make test-path-utils more robust against incorrect use
 
-* tr/add-p-single (Fri Feb 6 20:30:01 2009 +0100) 3 commits
- + add -p: import Term::ReadKey with 'require'
- + add -p: print errors in separate color
- + add -p: prompt for single characters
+Replaces one from René that was queued earlier.
 
-* js/notes (Tue Jan 13 20:57:16 2009 +0100) 6 commits
- + git-notes: fix printing of multi-line notes
- + notes: fix core.notesRef documentation
- + Add an expensive test for git-notes
- + Speed up git notes lookup
- + Add a script to edit/inspect notes
- + Introduce commit notes
+* js/git-submodule-trailing-slash (Sat Feb 7 14:43:15 2009 +0100) 2 commits
+ + submodule: warn about non-submodules
+ + Let ls-files strip trailing slashes in submodules' paths
 
-* gt/utf8-width (Fri Jan 30 04:41:29 2009 -0500) 2 commits
- + builtin-blame.c: Use utf8_strwidth for author's names
- + utf8: add utf8_strwidth()
+* ms/mailmap (Thu Feb 8 15:34:31 2009 +0100) 5 commits
+ + Move mailmap documentation into separate file
+ + Change current mailmap usage to do matching on both name and email
+   of author/committer.
+ + Add map_user() and clear_mailmap() to mailmap
+ + Add find_insert_index, insert_at_index and clear_func functions to
+   string_list
+ + Add log.mailmap as configurational option for mailmap location
 
-I replaced the bottom one with a cheesy "if it does not look like
-utf8, give strlen back" to make the result behave sensibly for legacy
-encodings.  It does improve "git blame git-stash.sh" output (especially
-if you remove .mailmap).
+* ff/submodule-no-fetch (Thu Feb 5 20:18:32 2009 -0200) 1 commit
+ + submodule: add --no-fetch parameter to update command
 
-* jk/head-symref (Thu Jan 29 03:33:02 2009 -0500) 2 commits
- + symbolic ref: refuse non-ref targets in HEAD
- + validate_headref: tighten ref-matching to just branches
-
-* rc/http-push (Tue Feb 3 20:39:00 2009 +0800) 4 commits
- + http-push: wrap signature of get_remote_object_url
- + http-push: add back underscore separator before lock token
- + http-push.c: get_remote_object_url() is only used under
-   USE_CURL_MULTI
- + http-push: refactor request url creation
-
-* jc/refuse-push-to-current (Sat Jan 31 17:34:05 2009 -0800) 1 commit
- + receive-pack: explain what to do when push updates the current
-   branch
-
-* cb/mergetool (Fri Jan 30 23:20:11 2009 +0000) 3 commits
- + mergetool: fix running mergetool in sub-directories
- + mergetool: Add a test for running mergetool in a sub-directory
- + mergetool: respect autocrlf by using checkout-index
+* mc/setup-cd-p (Fri Feb 6 19:24:28 2009 -0800) 1 commit
+ + git-sh-setup: Use "cd" option, not /bin/pwd, for symlinked work
+   tree
 
 ----------------------------------------------------------------
 [On Hold]
 
-* jc/refuse-push-to-current-1.7.0 (Sat Jan 31 17:34:05 2009 -0800) 1 commit
+* jc/refuse-push-to-current-1.7.0 (Wed Feb 11 02:28:03 2009 -0800) 1 commit
  - Refuse updating the current branch in a non-bare repository via
    push
 
