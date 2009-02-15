@@ -23,7 +23,7 @@ use Getopt::Long;
 use Text::ParseWords;
 use Data::Dumper;
 use Term::ANSIColor;
-use File::Temp qw/ tempdir /;
+use File::Temp qw/ tempdir tempfile /;
 use Error qw(:try);
 use Git;
 
@@ -156,7 +156,10 @@ if ($@) {
 # Behavior modification variables
 my ($quiet, $dry_run) = (0, 0);
 my $format_patch;
-my $compose_filename = $repo->repo_path() . "/.gitsendemail.msg.$$";
+my $compose_filename = ($repo ?
+	tempfile(".gitsendemail.msg.XXXXXX", DIR => $repo->repo_path()) :
+	tempfile(".gitsendemail.msg.XXXXXX", DIR => "."))[1];
+
 
 # Handle interactive edition of files.
 my $multiedit;
@@ -266,6 +269,9 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 unless ($rc) {
     usage();
 }
+
+die "Cannot run git format-patch from outside a repository\n"
+	if $format_patch and not $repo;
 
 # Now, let's fill any that aren't set in with defaults:
 
@@ -404,6 +410,7 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 
 # returns 1 if the conflict must be solved using it as a format-patch argument
 sub check_file_rev_conflict($) {
+	return unless $repo;
 	my $f = shift;
 	try {
 		$repo->command('rev-parse', '--verify', '--quiet', $f);
@@ -445,6 +452,8 @@ while (defined(my $f = shift @ARGV)) {
 }
 
 if (@rev_list_opts) {
+	die "Cannot run git format-patch from outside a repository\n"
+		unless $repo;
 	push @files, $repo->command('format-patch', '-o', tempdir(CLEANUP => 1), @rev_list_opts);
 }
 
