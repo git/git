@@ -979,4 +979,40 @@ test_expect_success 'push --porcelain --dry-run rejected' '
 	test_cmp .git/foo .git/bar
 '
 
+test_expect_success 'receive.denyCurrentBranch = updateInstead' '
+	git push testrepo master &&
+	(cd testrepo &&
+		git reset --hard &&
+		git config receive.denyCurrentBranch updateInstead
+	) &&
+	test_commit third path2 &&
+	git push testrepo master &&
+	test $(git rev-parse HEAD) = $(cd testrepo && git rev-parse HEAD) &&
+	test third = "$(cat testrepo/path2)" &&
+	(cd testrepo &&
+		git update-index --refresh &&
+		git diff-files --quiet &&
+		git diff-index --cached HEAD --
+	)
+'
+
+test_expect_success 'receive.denyCurrentBranch = detachInstead' '
+	(cd testrepo &&
+		git reset --hard &&
+		git config receive.denyCurrentBranch detachInstead
+	) &&
+	OLDHEAD=$(cd testrepo && git rev-parse HEAD) &&
+	test_commit fourth path2 &&
+	test fourth = "$(cat path2)" &&
+	git push testrepo master &&
+	test $OLDHEAD = $(cd testrepo && git rev-parse HEAD) &&
+	test fourth != "$(cat testrepo/path2)" &&
+	(cd testrepo &&
+		test_must_fail git symbolic-ref HEAD &&
+		git update-index --refresh &&
+		git diff-files --quiet &&
+		git diff-index --cached HEAD --
+	)
+'
+
 test_done
