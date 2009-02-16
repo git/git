@@ -174,7 +174,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			int dtype = ce_to_dtype(ce);
-			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
+			if (excluded(dir, ce->name, &dtype) !=
+					!!(dir->flags & DIR_SHOW_IGNORED))
 				continue;
 			if (show_unmerged && !ce_stage(ce))
 				continue;
@@ -189,7 +190,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 			struct stat st;
 			int err;
 			int dtype = ce_to_dtype(ce);
-			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
+			if (excluded(dir, ce->name, &dtype) !=
+					!!(dir->flags & DIR_SHOW_IGNORED))
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
@@ -432,7 +434,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp(arg, "-i") || !strcmp(arg, "--ignored")) {
-			dir.show_ignored = 1;
+			dir.flags |= DIR_SHOW_IGNORED;
 			require_work_tree = 1;
 			continue;
 		}
@@ -446,11 +448,11 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp(arg, "--directory")) {
-			dir.show_other_directories = 1;
+			dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 			continue;
 		}
 		if (!strcmp(arg, "--no-empty-directory")) {
-			dir.hide_empty_directories = 1;
+			dir.flags |= DIR_HIDE_EMPTY_DIRECTORIES;
 			continue;
 		}
 		if (!strcmp(arg, "-u") || !strcmp(arg, "--unmerged")) {
@@ -542,7 +544,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		ps_matched = xcalloc(1, num);
 	}
 
-	if (dir.show_ignored && !exc_given) {
+	if ((dir.flags & DIR_SHOW_IGNORED) && !exc_given) {
 		fprintf(stderr, "%s: --ignored needs some exclude pattern\n",
 			argv[0]);
 		exit(1);
