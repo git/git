@@ -239,6 +239,19 @@ static void parse_treeish_arg(const char **argv,
 	ar_args->time = archive_time;
 }
 
+static void create_output_file(const char *output_file)
+{
+	int output_fd = open(output_file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	if (output_fd < 0)
+		die("could not create archive file: %s ", output_file);
+	if (output_fd != 1) {
+		if (dup2(output_fd, 1) < 0)
+			die("could not redirect output");
+		else
+			close(output_fd);
+	}
+}
+
 #define OPT__COMPR(s, v, h, p) \
 	{ OPTION_SET_INT, (s), NULL, (v), NULL, (h), \
 	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, (p) }
@@ -253,6 +266,7 @@ static int parse_archive_args(int argc, const char **argv,
 	const char *base = NULL;
 	const char *remote = NULL;
 	const char *exec = NULL;
+	const char *output = NULL;
 	int compression_level = -1;
 	int verbose = 0;
 	int i;
@@ -262,6 +276,8 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_STRING(0, "format", &format, "fmt", "archive format"),
 		OPT_STRING(0, "prefix", &base, "prefix",
 			"prepend prefix to each pathname in the archive"),
+		OPT_STRING(0, "output", &output, "file",
+			"write the archive to this file"),
 		OPT__VERBOSE(&verbose),
 		OPT__COMPR('0', &compression_level, "store only", 0),
 		OPT__COMPR('1', &compression_level, "compress faster", 1),
@@ -293,6 +309,9 @@ static int parse_archive_args(int argc, const char **argv,
 
 	if (!base)
 		base = "";
+
+	if (output)
+		create_output_file(output);
 
 	if (list) {
 		for (i = 0; i < ARRAY_SIZE(archivers); i++)

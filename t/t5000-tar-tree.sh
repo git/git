@@ -86,6 +86,10 @@ test_expect_success \
     'git archive vs. the same in a bare repo' \
     'test_cmp b.tar b3.tar'
 
+test_expect_success 'git archive with --output' \
+    'git archive --output=b4.tar HEAD &&
+    test_cmp b.tar b4.tar'
+
 test_expect_success \
     'validate file modification time' \
     'mkdir extract &&
@@ -171,6 +175,10 @@ test_expect_success \
 test_expect_success \
     'git archive --format=zip vs. the same in a bare repo' \
     'test_cmp d.zip d1.zip'
+
+test_expect_success 'git archive --format=zip with --output' \
+    'git archive --format=zip --output=d2.zip HEAD &&
+    test_cmp d.zip d2.zip'
 
 $UNZIP -v >/dev/null 2>&1
 if [ $? -eq 127 ]; then
