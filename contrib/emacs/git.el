@@ -1068,7 +1068,9 @@ The FILES list must be sorted."
     (unless files
       (push (file-relative-name (read-file-name "File to remove: " nil nil t)) files))
     (if (yes-or-no-p
-         (format "Remove %d file%s? " (length files) (if (> (length files) 1) "s" "")))
+         (if (cdr files)
+             (format "Remove %d files? " (length files))
+           (format "Remove %s? " (car files))))
         (progn
           (dolist (name files)
             (ignore-errors
@@ -1087,7 +1089,9 @@ The FILES list must be sorted."
         added modified)
     (when (and files
                (yes-or-no-p
-                (format "Revert %d file%s? " (length files) (if (> (length files) 1) "s" ""))))
+                (if (cdr files)
+                    (format "Revert %d files? " (length files))
+                  (format "Revert %s? " (git-fileinfo->name (car files))))))
       (dolist (info files)
         (case (git-fileinfo->state info)
           ('added (push (git-fileinfo->name info) added))
