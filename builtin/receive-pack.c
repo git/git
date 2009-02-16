@@ -22,7 +22,9 @@ enum deny_action {
 	DENY_UNCONFIGURED,
 	DENY_IGNORE,
 	DENY_WARN,
-	DENY_REFUSE
+	DENY_REFUSE,
+	DENY_UPDATE_INSTEAD,
+	DENY_DETACH_INSTEAD,
 };
 
 static int deny_deletes;
@@ -100,7 +102,12 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "receive.denycurrentbranch")) {
-		deny_current_branch = parse_deny_action(var, value);
+		if (value && !strcasecmp(value, "updateinstead"))
+			deny_current_branch = DENY_UPDATE_INSTEAD;
+		else if (value && !strcasecmp(value, "detachinstead"))
+			deny_current_branch = DENY_DETACH_INSTEAD;
+		else
+			deny_current_branch = parse_deny_action(var, value);
 		return 0;
 	}
 
@@ -468,6 +475,44 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	return 0;
 }
 
+static void merge_worktree(unsigned char *sha1)
+{
+	const char *update_refresh[] = {
+		"update-index", "--refresh", NULL
+	};
+	const char *read_tree[] = {
+		"read-tree", "-u", "-m", sha1_to_hex(sha1), NULL
+	};
+	struct child_process child;
+	struct strbuf git_env = STRBUF_INIT;
+	const char *env[2];
+
+	if (is_bare_repository())
+		die ("denyCurrentBranch = updateInstead needs a worktree");
+
+	strbuf_addf(&git_env, "GIT_DIR=%s", absolute_path(get_git_dir()));
+	env[0] = git_env.buf;
+	env[1] = NULL;
+
+	memset(&child, 0, sizeof(child));
+	child.argv = update_refresh;
+	child.env = env;
+	child.dir = git_work_tree_cfg ? git_work_tree_cfg : "..";
+	child.stdout_to_stderr = 1;
+	child.git_cmd = 1;
+	if (run_command(&child))
+		die ("Could not refresh the index");
+
+	child.argv = read_tree;
+	child.no_stdin = 1;
+	child.no_stdout = 1;
+	child.stdout_to_stderr = 0;
+	if (run_command(&child))
+		die ("Could not merge working tree with new HEAD.  Good luck.");
+
+	strbuf_release(&git_env);
+}
+
 static const char *update(struct command *cmd, struct shallow_info *si)
 {
 	const char *name = cmd->ref_name;
@@ -499,6 +544,13 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 			if (deny_current_branch == DENY_UNCONFIGURED)
 				refuse_unconfigured_deny();
 			return "branch is currently checked out";
+		case DENY_UPDATE_INSTEAD:
+			merge_worktree(new_sha1);
+			break;
+		case DENY_DETACH_INSTEAD:
+			update_ref("push into current branch (detach)", "HEAD",
+				old_sha1, NULL, REF_NODEREF, DIE_ON_ERR);
+			break;
 		}
 	}
 
@@ -527,6 +579,8 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 					refuse_unconfigured_deny_delete_current();
 				rp_error("refusing to delete the current branch: %s", name);
 				return "deletion of the current branch prohibited";
+			default:
+				die ("Invalid denyDeleteCurrent setting");
 			}
 		}
 	}
