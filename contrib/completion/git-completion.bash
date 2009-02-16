@@ -937,6 +937,11 @@ _git_log ()
 	__git_has_doubledash && return
 
 	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local g="$(git rev-parse --git-dir 2>/dev/null)"
+	local merge=""
+	if [ -f $g/MERGE_HEAD ]; then
+		merge="--merge"
+	fi
 	case "$cur" in
 	--pretty=*)
 		__gitcomp "
@@ -968,7 +973,7 @@ _git_log ()
 			--decorate --diff-filter=
 			--color-words --walk-reflogs
 			--parents --children --full-history
-			--merge
+			$merge
 			"
 		return
 		;;
