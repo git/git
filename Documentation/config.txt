@@ -1619,6 +1619,11 @@ receive.denyCurrentBranch::
 	print a warning of such a push to stderr, but allow the push to
 	proceed. If set to false or "ignore", allow such pushes with no
 	message. Defaults to "refuse".
++
+There are two more options that are meant for Git experts: "updateInstead"
+which will run `read-tree -u -m HEAD` and "detachInstead" which will detach
+the HEAD so it does not need to change.  Both options come with their own
+set of possible *complications*, but can be appropriate in rare workflows.
 
 receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is
