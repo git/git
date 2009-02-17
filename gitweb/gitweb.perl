@@ -27,13 +27,29 @@ our $version = "++GIT_VERSION++";
 our $my_url = $cgi->url();
 our $my_uri = $cgi->url(-absolute => 1);
 
-# if we're called with PATH_INFO, we have to strip that
-# from the URL to find our real URL
-# we make $path_info global because it's also used later on
+# Base URL for relative URLs in gitweb ($logo, $favicon, ...),
+# needed and used only for URLs with nonempty PATH_INFO
+our $base_url = $my_url;
+
+# When the script is used as DirectoryIndex, the URL does not contain the name
+# of the script file itself, and $cgi->url() fails to strip PATH_INFO, so we
+# have to do it ourselves. We make $path_info global because it's also used
+# later on.
+#
+# Another issue with the script being the DirectoryIndex is that the resulting
+# $my_url data is not the full script URL: this is good, because we want
+# generated links to keep implying the script name if it wasn't explicitly
+# indicated in the URL we're handling, but it means that $my_url cannot be used
+# as base URL.
+# Therefore, if we needed to strip PATH_INFO, then we know that we have
+# to build the base URL ourselves:
 our $path_info = $ENV{"PATH_INFO"};
 if ($path_info) {
-	$my_url =~ s,\Q$path_info\E$,,;
-	$my_uri =~ s,\Q$path_info\E$,,;
+	if ($my_url =~ s,\Q$path_info\E$,, &&
+	    $my_uri =~ s,\Q$path_info\E$,, &&
+	    defined $ENV{'SCRIPT_NAME'}) {
+		$base_url = $cgi->url(-base => 1) . $ENV{'SCRIPT_NAME'};
+	}
 }
 
 # core git executable to use
@@ -131,6 +147,10 @@ our $fallback_encoding = 'latin1';
 #   (number of files in the original tree) * (number of new files)
 # - one might want to include '-B' option, e.g. '-B', '-M'
 our @diff_opts = ('-M'); # taken from git_commit
+
+# Disables features that would allow repository owners to inject script into
+# the gitweb domain.
+our $prevent_xss = 0;
 
 # information about snapshot formats that gitweb is capable of serving
 our %known_snapshot_formats = (
@@ -1364,7 +1384,7 @@ sub format_log_line_html {
 	my $line = shift;
 
 	$line = esc_html($line, -nbsp=>1);
-	if ($line =~ m/([0-9a-fA-F]{8,40})/) {
+	if ($line =~ m/\b([0-9a-fA-F]{8,40})\b/) {
 		my $hash_text = $1;
 		my $link =
 			$cgi->a({-href => href(action=>"object", hash=>$hash_text),
@@ -2904,7 +2924,7 @@ EOF
 	# the stylesheet, favicon etc urls won't work correctly with path_info
 	# unless we set the appropriate base URL
 	if ($ENV{'PATH_INFO'}) {
-		print '<base href="'.esc_url($my_url).'" />\n';
+		print "<base href=\"".esc_url($base_url)."\" />\n";
 	}
 	# print out each stylesheet that exist, providing backwards capability
 	# for those people who defined $stylesheet in a config file
@@ -4503,7 +4523,9 @@ sub git_summary {
 
 	print "</table>\n";
 
-	if (-s "$projectroot/$project/README.html") {
+	# If XSS prevention is on, we don't include README.html.
+	# TODO: Allow a readme in some safe format.
+	if (!$prevent_xss && -s "$projectroot/$project/README.html") {
 		print "<div class=\"title\">readme</div>\n" .
 		      "<div class=\"readme\">\n";
 		insert_file("$projectroot/$project/README.html");
@@ -4764,10 +4786,21 @@ sub git_blob_plain {
 		$save_as .= '.txt';
 	}
 
+	# With XSS prevention on, blobs of all types except a few known safe
+	# ones are served with "Content-Disposition: attachment" to make sure
+	# they don't run in our security domain.  For certain image types,
+	# blob view writes an <img> tag referring to blob_plain view, and we
+	# want to be sure not to break that by serving the image as an
+	# attachment (though Firefox 3 doesn't seem to care).
+	my $sandbox = $prevent_xss &&
+		$type !~ m!^(?:text/plain|image/(?:gif|png|jpeg))$!;
+
 	print $cgi->header(
 		-type => $type,
 		-expires => $expires,
-		-content_disposition => 'inline; filename="' . $save_as . '"');
+		-content_disposition =>
+			($sandbox ? 'attachment' : 'inline')
+			. '; filename="' . $save_as . '"');
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;

@@ -1693,6 +1693,7 @@ sub find_by_url { # repos_root and, path are optional
 			my $prefix = '';
 			if ($rwr) {
 				$z = $rwr;
+				remove_username($z);
 			} elsif (defined $svm) {
 				$z = $svm->{source};
 				$prefix = $svm->{replace};
@@ -2389,22 +2390,8 @@ sub find_parent_branch {
 	print STDERR  "Found possible branch point: ",
 	              "$new_url => ", $self->full_url, ", $r\n";
 	$branch_from =~ s#^/##;
-	my $gs = Git::SVN->find_by_url($new_url, $repos_root, $branch_from);
-	unless ($gs) {
-		my $ref_id = $self->{ref_id};
-		$ref_id =~ s/\@\d+$//;
-		$ref_id .= "\@$r";
-		# just grow a tail if we're not unique enough :x
-		$ref_id .= '-' while find_ref($ref_id);
-		print STDERR "Initializing parent: $ref_id\n";
-		my ($u, $p, $repo_id) = ($new_url, '', $ref_id);
-		if ($u =~ s#^\Q$url\E(/|$)##) {
-			$p = $u;
-			$u = $url;
-			$repo_id = $self->{repo_id};
-		}
-		$gs = Git::SVN->init($u, $p, $repo_id, $ref_id, 1);
-	}
+	my $gs = $self->other_gs($new_url, $url, $repos_root,
+		                 $branch_from, $r, $self->{ref_id});
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	{
 		my ($base, $head);
@@ -2431,7 +2418,7 @@ sub find_parent_branch {
 			# is not included with SVN 1.4.3 (the latest version
 			# at the moment), so we can't rely on it
 			$self->{last_commit} = $parent;
-			$ed = SVN::Git::Fetcher->new($self);
+			$ed = SVN::Git::Fetcher->new($self, $gs->{path});
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
 					      $self->full_url, $ed)
 			  or die "SVN connection failed somewhere...\n";
@@ -2584,6 +2571,28 @@ sub parse_svn_date {
 	}
 
 	return $parsed_date;
+}
+
+sub other_gs {
+	my ($self, $new_url, $url, $repos_root,
+	    $branch_from, $r, $old_ref_id) = @_;
+	my $gs = Git::SVN->find_by_url($new_url, $repos_root, $branch_from);
+	unless ($gs) {
+		my $ref_id = $old_ref_id;
+		$ref_id =~ s/\@\d+$//;
+		$ref_id .= "\@$r";
+		# just grow a tail if we're not unique enough :x
+		$ref_id .= '-' while find_ref($ref_id);
+		print STDERR "Initializing parent: $ref_id\n";
+		my ($u, $p, $repo_id) = ($new_url, '', $ref_id);
+		if ($u =~ s#^\Q$url\E(/|$)##) {
+			$p = $u;
+			$u = $url;
+			$repo_id = $self->{repo_id};
+		}
+		$gs = Git::SVN->init($u, $p, $repo_id, $ref_id, 1);
+	}
+	$gs
 }
 
 sub check_author {
@@ -3250,12 +3259,13 @@ use vars qw/$_ignore_regex/;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
-	my ($class, $git_svn) = @_;
+	my ($class, $git_svn, $switch_path) = @_;
 	my $self = SVN::Delta::Editor->new;
 	bless $self, $class;
 	if (exists $git_svn->{last_commit}) {
 		$self->{c} = $git_svn->{last_commit};
-		$self->{empty_symlinks} = _mark_empty_symlinks($git_svn);
+		$self->{empty_symlinks} =
+		                  _mark_empty_symlinks($git_svn, $switch_path);
 	}
 	$self->{empty} = {};
 	$self->{dir_prop} = {};
@@ -3270,19 +3280,39 @@ sub new {
 # not inside them (when the Git::SVN::Fetcher object is passed) to
 # do_{switch,update}
 sub _mark_empty_symlinks {
-	my ($git_svn) = @_;
+	my ($git_svn, $switch_path) = @_;
+	my $bool = Git::config_bool('svn.brokenSymlinkWorkaround');
+	return {} if (defined($bool) && ! $bool);
+
 	my %ret;
 	my ($rev, $cmt) = $git_svn->last_rev_commit;
 	return {} unless ($rev && $cmt);
 
+	# allow the warning to be printed for each revision we fetch to
+	# ensure the user sees it.  The user can also disable the workaround
+	# on the repository even while git svn is running and the next
+	# revision fetched will skip this expensive function.
+	my $printed_warning;
 	chomp(my $empty_blob = `git hash-object -t blob --stdin < /dev/null`);
 	my ($ls, $ctx) = command_output_pipe(qw/ls-tree -r -z/, $cmt);
 	local $/ = "\0";
-	my $pfx = $git_svn->{path};
+	my $pfx = defined($switch_path) ? $switch_path : $git_svn->{path};
 	$pfx .= '/' if length($pfx);
 	while (<$ls>) {
 		chomp;
 		s/\A100644 blob $empty_blob\t//o or next;
+		unless ($printed_warning) {
+			print STDERR "Scanning for empty symlinks, ",
+			             "this may take a while if you have ",
+				     "many empty files\n",
+				     "You may disable this with `",
+				     "git config svn.brokenSymlinkWorkaround ",
+				     "false'.\n",
+				     "This may be done in a different ",
+				     "terminal without restarting ",
+				     "git svn\n";
+			$printed_warning = 1;
+		}
 		my $path = $_;
 		my (undef, $props) =
 		               $git_svn->ra->get_file($pfx.$path, $rev, undef);
@@ -4348,6 +4378,9 @@ sub gs_fetch_loop_common {
 		}
 		$self->get_log([$longest_path], $min, $max, 0, 1, 1,
 		               sub { $revs{$_[1]} = _cb(@_) });
+		if ($err) {
+			print "Checked through r$max\r";
+		}
 		if ($err && $max >= $head) {
 			print STDERR "Path '$longest_path' ",
 				     "was probably deleted:\n",

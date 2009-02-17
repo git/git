@@ -422,19 +422,6 @@ relatively high IO latencies.  With this set to 'true', git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.
 
-core.notesRef::
-	When showing commit messages, also show notes which are stored in
-	the given ref.  This ref is expected to contain files named
-	after the full SHA-1 of the commit they annotate.
-+
-If such a file exists in the given ref, the referenced blob is read, and
-appended to the commit message, separated by a "Notes:" line.  If the
-given ref itself does not exist, it is not an error, but means that no
-notes should be printed.
-+
-This setting defaults to "refs/notes/commits", and can be overridden by
-the `GIT_NOTES_REF` environment variable.
-
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
@@ -1031,6 +1018,14 @@ log.showroot::
 	This is equivalent to a diff against an empty tree.
 	Tools like linkgit:git-log[1] or linkgit:git-whatchanged[1], which
 	normally hide the root commit will now show it. True by default.
+
+mailmap.file::
+	The location of an augmenting mailmap file. The default
+	mailmap, located in the root of the repository, is loaded
+	first, then the mailmap file pointed to by this variable.
+	The location of the mailmap file may be in a repository
+	subdirectory, or somewhere outside of the repository itself.
+	See linkgit:git-shortlog[1] and linkgit:git-blame[1].
 
 man.viewer::
 	Specify the programs that may be used to display help in the

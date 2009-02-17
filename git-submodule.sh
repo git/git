@@ -5,7 +5,7 @@
 # Copyright (c) 2007 Lars Hjemli
 
 USAGE="[--quiet] [--cached] \
-[add <repo> [-b branch] <path>]|[status|init|update [-i|--init]|summary [-n|--summary-limit <n>] [<commit>]] \
+[add <repo> [-b branch] <path>]|[status|init|update [-i|--init] [-N|--no-fetch]|summary [-n|--summary-limit <n>] [<commit>]] \
 [--] [<path>...]|[foreach <command>]|[sync [--] [<path>...]]"
 OPTIONS_SPEC=
 . git-sh-setup
@@ -16,6 +16,7 @@ command=
 branch=
 quiet=
 cached=
+nofetch=
 
 #
 # print stuff on stdout unless -q was specified
@@ -59,7 +60,7 @@ resolve_relative_url ()
 #
 module_list()
 {
-	git ls-files --stage -- "$@" | grep '^160000 '
+	git ls-files --error-unmatch --stage -- "$@" | grep '^160000 '
 }
 
 #
@@ -300,6 +301,10 @@ cmd_update()
 			shift
 			cmd_init "$@" || return
 			;;
+		-N|--no-fetch)
+			shift
+			nofetch=1
+			;;
 		--)
 			shift
 			break
@@ -345,8 +350,16 @@ cmd_update()
 			then
 				force="-f"
 			fi
-			(unset GIT_DIR; cd "$path" && git-fetch &&
-				git-checkout $force -q "$sha1") ||
+
+			if test -z "$nofetch"
+			then
+				(unset GIT_DIR; cd "$path" &&
+					git-fetch) ||
+				die "Unable to fetch in submodule path '$path'"
+			fi
+
+			(unset GIT_DIR; cd "$path" &&
+				  git-checkout $force -q "$sha1") ||
 			die "Unable to checkout '$sha1' in submodule path '$path'"
 
 			say "Submodule path '$path': checked out '$sha1'"

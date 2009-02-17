@@ -99,6 +99,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 	const char *fmt, *remote;
 	int i;
 	int ret = 0;
+	struct strbuf bname = STRBUF_INIT;
 
 	switch (kinds) {
 	case REF_REMOTE_BRANCH:
@@ -119,20 +120,25 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 		if (!head_rev)
 			die("Couldn't look up commit object for HEAD");
 	}
-	for (i = 0; i < argc; i++) {
-		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, argv[i])) {
+	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
+		int len = strlen(argv[i]);
+
+		if (interpret_nth_last_branch(argv[i], &bname) != len)
+			strbuf_add(&bname, argv[i], len);
+
+		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, bname.buf)) {
 			error("Cannot delete the branch '%s' "
-				"which you are currently on.", argv[i]);
+			      "which you are currently on.", bname.buf);
 			ret = 1;
 			continue;
 		}
 
 		free(name);
 
-		name = xstrdup(mkpath(fmt, argv[i]));
+		name = xstrdup(mkpath(fmt, bname.buf));
 		if (!resolve_ref(name, sha1, 1, NULL)) {
 			error("%sbranch '%s' not found.",
-					remote, argv[i]);
+					remote, bname.buf);
 			ret = 1;
 			continue;
 		}
@@ -152,22 +158,23 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 		if (!force &&
 		    !in_merge_bases(rev, &head_rev, 1)) {
 			error("The branch '%s' is not an ancestor of "
-				"your current HEAD.\n"
-				"If you are sure you want to delete it, "
-				"run 'git branch -D %s'.", argv[i], argv[i]);
+			      "your current HEAD.\n"
+			      "If you are sure you want to delete it, "
+			      "run 'git branch -D %s'.", bname.buf, bname.buf);
 			ret = 1;
 			continue;
 		}
 
 		if (delete_ref(name, sha1, 0)) {
 			error("Error deleting %sbranch '%s'", remote,
-			       argv[i]);
+			      bname.buf);
 			ret = 1;
 		} else {
 			struct strbuf buf = STRBUF_INIT;
-			printf("Deleted %sbranch %s (%s).\n", remote, argv[i],
-				find_unique_abbrev(sha1, DEFAULT_ABBREV));
-			strbuf_addf(&buf, "branch.%s", argv[i]);
+			printf("Deleted %sbranch %s (%s).\n", remote,
+			       bname.buf,
+			       find_unique_abbrev(sha1, DEFAULT_ABBREV));
+			strbuf_addf(&buf, "branch.%s", bname.buf);
 			if (git_config_rename_section(buf.buf, NULL) < 0)
 				warning("Update of config-file failed");
 			strbuf_release(&buf);

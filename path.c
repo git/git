@@ -154,7 +154,7 @@ int validate_headref(const char *path)
 	/* Make sure it is a "refs/.." symlink */
 	if (S_ISLNK(st.st_mode)) {
 		len = readlink(path, buffer, sizeof(buffer)-1);
-		if (len >= 11 && !memcmp("refs/heads/", buffer, 11))
+		if (len >= 5 && !memcmp("refs/", buffer, 5))
 			return 0;
 		return -1;
 	}
@@ -178,7 +178,7 @@ int validate_headref(const char *path)
 		len -= 4;
 		while (len && isspace(*buf))
 			buf++, len--;
-		if (len >= 11 && !memcmp("refs/heads/", buf, 11))
+		if (len >= 5 && !memcmp("refs/", buf, 5))
 			return 0;
 	}
 
@@ -363,56 +363,97 @@ const char *make_relative_path(const char *abs, const char *base)
 }
 
 /*
- * path = absolute path
- * buf = buffer of at least max(2, strlen(path)+1) bytes
- * It is okay if buf == path, but they should not overlap otherwise.
+ * It is okay if dst == src, but they should not overlap otherwise.
  *
- * Performs the following normalizations on path, storing the result in buf:
- * - Removes trailing slashes.
- * - Removes empty components.
+ * Performs the following normalizations on src, storing the result in dst:
+ * - Ensures that components are separated by '/' (Windows only)
+ * - Squashes sequences of '/'.
  * - Removes "." components.
  * - Removes ".." components, and the components the precede them.
- * "" and paths that contain only slashes are normalized to "/".
- * Returns the length of the output.
+ * Returns failure (non-zero) if a ".." component appears as first path
+ * component anytime during the normalization. Otherwise, returns success (0).
  *
  * Note that this function is purely textual.  It does not follow symlinks,
  * verify the existence of the path, or make any system calls.
  */
-int normalize_absolute_path(char *buf, const char *path)
+int normalize_path_copy(char *dst, const char *src)
 {
-	const char *comp_start = path, *comp_end = path;
-	char *dst = buf;
-	int comp_len;
-	assert(buf);
-	assert(path);
+	char *dst0;
 
-	while (*comp_start) {
-		assert(*comp_start == '/');
-		while (*++comp_end && *comp_end != '/')
-			; /* nothing */
-		comp_len = comp_end - comp_start;
+	if (has_dos_drive_prefix(src)) {
+		*dst++ = *src++;
+		*dst++ = *src++;
+	}
+	dst0 = dst;
 
-		if (!strncmp("/",  comp_start, comp_len) ||
-		    !strncmp("/.", comp_start, comp_len))
-			goto next;
-
-		if (!strncmp("/..", comp_start, comp_len)) {
-			while (dst > buf && *--dst != '/')
-				; /* nothing */
-			goto next;
-		}
-
-		memmove(dst, comp_start, comp_len);
-		dst += comp_len;
-	next:
-		comp_start = comp_end;
+	if (is_dir_sep(*src)) {
+		*dst++ = '/';
+		while (is_dir_sep(*src))
+			src++;
 	}
 
-	if (dst == buf)
-		*dst++ = '/';
+	for (;;) {
+		char c = *src;
 
+		/*
+		 * A path component that begins with . could be
+		 * special:
+		 * (1) "." and ends   -- ignore and terminate.
+		 * (2) "./"           -- ignore them, eat slash and continue.
+		 * (3) ".." and ends  -- strip one and terminate.
+		 * (4) "../"          -- strip one, eat slash and continue.
+		 */
+		if (c == '.') {
+			if (!src[1]) {
+				/* (1) */
+				src++;
+			} else if (is_dir_sep(src[1])) {
+				/* (2) */
+				src += 2;
+				while (is_dir_sep(*src))
+					src++;
+				continue;
+			} else if (src[1] == '.') {
+				if (!src[2]) {
+					/* (3) */
+					src += 2;
+					goto up_one;
+				} else if (is_dir_sep(src[2])) {
+					/* (4) */
+					src += 3;
+					while (is_dir_sep(*src))
+						src++;
+					goto up_one;
+				}
+			}
+		}
+
+		/* copy up to the next '/', and eat all '/' */
+		while ((c = *src++) != '\0' && !is_dir_sep(c))
+			*dst++ = c;
+		if (is_dir_sep(c)) {
+			*dst++ = '/';
+			while (is_dir_sep(c))
+				c = *src++;
+			src--;
+		} else if (!c)
+			break;
+		continue;
+
+	up_one:
+		/*
+		 * dst0..dst is prefix portion, and dst[-1] is '/';
+		 * go up one level.
+		 */
+		dst--;	/* go to trailing '/' */
+		if (dst <= dst0)
+			return -1;
+		/* Windows: dst[-1] cannot be backslash anymore */
+		while (dst0 < dst && dst[-1] != '/')
+			dst--;
+	}
 	*dst = '\0';
-	return dst - buf;
+	return 0;
 }
 
 /*
@@ -438,15 +479,16 @@ int longest_ancestor_length(const char *path, const char *prefix_list)
 		return -1;
 
 	for (colon = ceil = prefix_list; *colon; ceil = colon+1) {
-		for (colon = ceil; *colon && *colon != ':'; colon++);
+		for (colon = ceil; *colon && *colon != PATH_SEP; colon++);
 		len = colon - ceil;
 		if (len == 0 || len > PATH_MAX || !is_absolute_path(ceil))
 			continue;
 		strlcpy(buf, ceil, len+1);
-		len = normalize_absolute_path(buf, buf);
-		/* Strip "trailing slashes" from "/". */
-		if (len == 1)
-			len = 0;
+		if (normalize_path_copy(buf, buf) < 0)
+			continue;
+		len = strlen(buf);
+		if (len > 0 && buf[len-1] == '/')
+			buf[--len] = '\0';
 
 		if (!strncmp(path, buf, len) &&
 		    path[len] == '/' &&

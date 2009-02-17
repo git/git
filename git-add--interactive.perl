@@ -14,7 +14,8 @@ my ($prompt_color, $header_color, $help_color) =
 	) : ();
 my $error_color = ();
 if ($menu_use_color) {
-	my $help_color_spec = $repo->config('color.interactive.help');
+	my $help_color_spec = ($repo->config('color.interactive.help') or
+				'red bold');
 	$error_color = $repo->get_color('color.interactive.error',
 					$help_color_spec);
 }

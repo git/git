@@ -513,3 +513,18 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 		exit(128);
 	return 0;
 }
+
+int index_differs_from(const char *def, int diff_flags)
+{
+	struct rev_info rev;
+
+	init_revisions(&rev, NULL);
+	setup_revisions(0, NULL, &rev, def);
+	DIFF_OPT_SET(&rev.diffopt, QUIET);
+	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
+	rev.diffopt.flags |= diff_flags;
+	run_diff_index(&rev, 1);
+	if (rev.pending.alloc)
+		free(rev.pending.objects);
+	return (DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES) != 0);
+}

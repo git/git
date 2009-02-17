@@ -869,7 +869,7 @@ static char *create_index(void)
 	/* Generate the fan-out array. */
 	c = idx;
 	for (i = 0; i < 256; i++) {
-		struct object_entry **next = c;;
+		struct object_entry **next = c;
 		while (next < last) {
 			if ((*next)->sha1[0] != i)
 				break;
@@ -945,6 +945,7 @@ static void end_packfile(void)
 {
 	struct packed_git *old_p = pack_data, *new_p;
 
+	clear_delta_base_cache();
 	if (object_count) {
 		char *idx_name;
 		int i;

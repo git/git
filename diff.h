@@ -265,4 +265,6 @@ extern int diff_result_code(struct diff_options *, int);
 
 extern void diff_no_index(struct rev_info *, int, const char **, int, const char *);
 
+extern int index_differs_from(const char *def, int diff_flags);
+
 #endif /* DIFF_H */

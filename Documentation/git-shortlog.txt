@@ -45,45 +45,16 @@ OPTIONS
 	and subsequent lines are indented by `indent2` spaces. `width`,
 	`indent1`, and `indent2` default to 76, 6 and 9 respectively.
 
-FILES
------
 
-If a file `.mailmap` exists at the toplevel of the repository,
-it is used to map an author email address to a canonical real name. This
-can be used to coalesce together commits by the same person where their
-name was spelled differently (whether with the same email address or
-not).
+MAPPING AUTHORS
+---------------
 
-Each line in the file consists, in this order, of the canonical real name
-of an author, whitespace, and an email address (enclosed by '<' and '>')
-to map to the name. Use hash '#' for comments, either on their own line,
-or after the email address.
+The `.mailmap` feature is used to coalesce together commits by the same
+person in the shortlog, where their name and/or email address was
+spelled differently.
 
-A canonical name may appear in more than one line, associated with
-different email addresses, but it doesn't make sense for a given address
-to appear more than once (if that happens, a later line overrides the
-earlier ones).
+include::mailmap.txt[]
 
-So, for example, if your history contains commits by two authors, Jane
-and Joe, whose names appear in the repository under several forms:
-
-------------
-Joe Developer <joe@example.com>
-Joe R. Developer <joe@example.com>
-Jane Doe <jane@example.com>
-Jane Doe <jane@laptop.(none)>
-Jane D. <jane@desktop.(none)>
-------------
-
-Then, supposing Joe wants his middle name initial used, and Jane prefers
-her family name fully spelled out, a proper `.mailmap` file would look like:
-
-------------
-# Note how we don't need an entry for <jane@laptop.(none)>, because the
-# real name of that author is correct already, and coalesced directly.
-Jane Doe <jane@desktop.(none)>
-Joe R. Developer <joe@example.com>
-------------
 
 Author
 ------

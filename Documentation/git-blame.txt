@@ -184,6 +184,12 @@ there is ever added information (like the commit encoding or extended
 commit commentary), a blame viewer won't ever care.
 
 
+MAPPING AUTHORS
+---------------
+
+include::mailmap.txt[]
+
+
 SEE ALSO
 --------
 linkgit:git-annotate[1]

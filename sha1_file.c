@@ -689,6 +689,7 @@ void free_pack_by_name(const char *pack_name)
 	while (*pp) {
 		p = *pp;
 		if (strcmp(pack_name, p->pack_name) == 0) {
+			clear_delta_base_cache();
 			close_pack_windows(p);
 			if (p->pack_fd != -1)
 				close(p->pack_fd);
@@ -1661,6 +1662,13 @@ static inline void release_delta_base_cache(struct delta_base_cache_entry *ent)
 		ent->lru.prev->next = ent->lru.next;
 		delta_base_cached -= ent->size;
 	}
+}
+
+void clear_delta_base_cache(void)
+{
+	unsigned long p;
+	for (p = 0; p < MAX_DELTA_CACHE; p++)
+		release_delta_base_cache(&delta_base_cache[p]);
 }
 
 static void add_delta_base_cache(struct packed_git *p, off_t base_offset,

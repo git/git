@@ -221,7 +221,7 @@ die ""
 trap 'cd ../..; rm -rf "$tempdir"' 0
 
 # Make sure refs/original is empty
-git for-each-ref > "$tempdir"/backup-refs
+git for-each-ref > "$tempdir"/backup-refs || exit
 while read sha1 type name
 do
 	case "$force,$name" in
@@ -241,8 +241,9 @@ GIT_WORK_TREE=.
 export GIT_DIR GIT_WORK_TREE
 
 # The refs should be updated if their heads were rewritten
-git rev-parse --no-flags --revs-only --symbolic-full-name --default HEAD "$@" |
-sed -e '/^^/d' >"$tempdir"/heads
+git rev-parse --no-flags --revs-only --symbolic-full-name \
+	--default HEAD "$@" > "$tempdir"/raw-heads || exit
+sed -e '/^^/d' "$tempdir"/raw-heads >"$tempdir"/heads
 
 test -s "$tempdir"/heads ||
 	die "Which ref do you want to rewrite?"
@@ -250,8 +251,6 @@ test -s "$tempdir"/heads ||
 GIT_INDEX_FILE="$(pwd)/../index"
 export GIT_INDEX_FILE
 git read-tree || die "Could not seed the index"
-
-ret=0
 
 # map old->new commit ids for rewriting parents
 mkdir ../map || die "Could not create map/ directory"
@@ -315,10 +314,11 @@ while read commit parents; do
 			die "tree filter failed: $filter_tree"
 
 		(
-			git diff-index -r --name-only $commit
+			git diff-index -r --name-only $commit &&
 			git ls-files --others
-		) |
-		git update-index --add --replace --remove --stdin
+		) > "$tempdir"/tree-state || exit
+		git update-index --add --replace --remove --stdin \
+			< "$tempdir"/tree-state || exit
 	fi
 
 	eval "$filter_index" < /dev/null ||
@@ -339,7 +339,8 @@ while read commit parents; do
 		eval "$filter_msg" > ../message ||
 			die "msg filter failed: $filter_msg"
 	@SHELL_PATH@ -c "$filter_commit" "git commit-tree" \
-		$(git write-tree) $parentstr < ../message > ../map/$commit
+		$(git write-tree) $parentstr < ../message > ../map/$commit ||
+			die "could not write rewritten commit"
 done <../revs
 
 # In case of a subdirectory filter, it is possible that a specified head
@@ -407,7 +408,8 @@ do
 			die "Could not rewrite $ref"
 	;;
 	esac
-	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1
+	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1 ||
+		 exit
 done < "$tempdir"/heads
 
 # TODO: This should possibly go, with the semantics that all positive given
@@ -483,7 +485,7 @@ test -z "$ORIG_GIT_INDEX_FILE" || {
 }
 
 if [ "$(is_bare_repository)" = false ]; then
-	git read-tree -u -m HEAD
+	git read-tree -u -m HEAD || exit
 fi
 
-exit $ret
+exit 0

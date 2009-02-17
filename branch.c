@@ -103,14 +103,22 @@ void create_branch(const char *head,
 	struct ref_lock *lock;
 	struct commit *commit;
 	unsigned char sha1[20];
-	char *real_ref, ref[PATH_MAX], msg[PATH_MAX + 20];
+	char *real_ref, msg[PATH_MAX + 20];
+	struct strbuf ref = STRBUF_INIT;
 	int forcing = 0;
+	int len;
 
-	snprintf(ref, sizeof ref, "refs/heads/%s", name);
-	if (check_ref_format(ref))
+	len = strlen(name);
+	if (interpret_nth_last_branch(name, &ref) != len) {
+		strbuf_reset(&ref);
+		strbuf_add(&ref, name, len);
+	}
+	strbuf_splice(&ref, 0, 0, "refs/heads/", 11);
+
+	if (check_ref_format(ref.buf))
 		die("'%s' is not a valid branch name.", name);
 
-	if (resolve_ref(ref, sha1, 1, NULL)) {
+	if (resolve_ref(ref.buf, sha1, 1, NULL)) {
 		if (!force)
 			die("A branch named '%s' already exists.", name);
 		else if (!is_bare_repository() && !strcmp(head, name))
@@ -142,7 +150,7 @@ void create_branch(const char *head,
 		die("Not a valid branch point: '%s'.", start_name);
 	hashcpy(sha1, commit->object.sha1);
 
-	lock = lock_any_ref_for_update(ref, NULL, 0);
+	lock = lock_any_ref_for_update(ref.buf, NULL, 0);
 	if (!lock)
 		die("Failed to lock ref for update: %s.", strerror(errno));
 
@@ -162,6 +170,7 @@ void create_branch(const char *head,
 	if (write_ref_sha1(lock, sha1, msg) < 0)
 		die("Failed to write ref: %s.", strerror(errno));
 
+	strbuf_release(&ref);
 	free(real_ref);
 }
 

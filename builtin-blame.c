@@ -1264,11 +1264,12 @@ struct commit_info
  * Parse author/committer line in the commit object buffer
  */
 static void get_ac_line(const char *inbuf, const char *what,
-			int bufsz, char *person, const char **mail,
+			int person_len, char *person,
+			int mail_len, char *mail,
 			unsigned long *time, const char **tz)
 {
 	int len, tzlen, maillen;
-	char *tmp, *endp, *timepos;
+	char *tmp, *endp, *timepos, *mailpos;
 
 	tmp = strstr(inbuf, what);
 	if (!tmp)
@@ -1279,10 +1280,11 @@ static void get_ac_line(const char *inbuf, const char *what,
 		len = strlen(tmp);
 	else
 		len = endp - tmp;
-	if (bufsz <= len) {
+	if (person_len <= len) {
 	error_out:
 		/* Ugh */
-		*mail = *tz = "(unknown)";
+		*tz = "(unknown)";
+		strcpy(mail, *tz);
 		*time = 0;
 		return;
 	}
@@ -1305,9 +1307,10 @@ static void get_ac_line(const char *inbuf, const char *what,
 	*tmp = 0;
 	while (*tmp != ' ')
 		tmp--;
-	*mail = tmp + 1;
+	mailpos = tmp + 1;
 	*tmp = 0;
 	maillen = timepos - tmp;
+	memcpy(mail, mailpos, maillen);
 
 	if (!mailmap.nr)
 		return;
@@ -1316,20 +1319,23 @@ static void get_ac_line(const char *inbuf, const char *what,
 	 * mailmap expansion may make the name longer.
 	 * make room by pushing stuff down.
 	 */
-	tmp = person + bufsz - (tzlen + 1);
+	tmp = person + person_len - (tzlen + 1);
 	memmove(tmp, *tz, tzlen);
 	tmp[tzlen] = 0;
 	*tz = tmp;
 
-	tmp = tmp - (maillen + 1);
-	memmove(tmp, *mail, maillen);
-	tmp[maillen] = 0;
-	*mail = tmp;
-
 	/*
-	 * Now, convert e-mail using mailmap
+	 * Now, convert both name and e-mail using mailmap
 	 */
-	map_email(&mailmap, tmp + 1, person, tmp-person-1);
+	if(map_user(&mailmap, mail+1, mail_len-1, person, tmp-person-1)) {
+		/* Add a trailing '>' to email, since map_user returns plain emails
+		   Note: It already has '<', since we replace from mail+1 */
+		mailpos = memchr(mail, '\0', mail_len);
+		if (mailpos && mailpos-mail < mail_len - 1) {
+			*mailpos = '>';
+			*(mailpos+1) = '\0';
+		}
+	}
 }
 
 static void get_commit_info(struct commit *commit,
@@ -1338,8 +1344,10 @@ static void get_commit_info(struct commit *commit,
 {
 	int len;
 	char *tmp, *endp, *reencoded, *message;
-	static char author_buf[1024];
-	static char committer_buf[1024];
+	static char author_name[1024];
+	static char author_mail[1024];
+	static char committer_name[1024];
+	static char committer_mail[1024];
 	static char summary_buf[1024];
 
 	/*
@@ -1357,9 +1365,11 @@ static void get_commit_info(struct commit *commit,
 	}
 	reencoded = reencode_commit_message(commit, NULL);
 	message   = reencoded ? reencoded : commit->buffer;
-	ret->author = author_buf;
+	ret->author = author_name;
+	ret->author_mail = author_mail;
 	get_ac_line(message, "\nauthor ",
-		    sizeof(author_buf), author_buf, &ret->author_mail,
+		    sizeof(author_name), author_name,
+		    sizeof(author_mail), author_mail,
 		    &ret->author_time, &ret->author_tz);
 
 	if (!detailed) {
@@ -1367,9 +1377,11 @@ static void get_commit_info(struct commit *commit,
 		return;
 	}
 
-	ret->committer = committer_buf;
+	ret->committer = committer_name;
+	ret->committer_mail = committer_mail;
 	get_ac_line(message, "\ncommitter ",
-		    sizeof(committer_buf), committer_buf, &ret->committer_mail,
+		    sizeof(committer_name), committer_name,
+		    sizeof(committer_mail), committer_mail,
 		    &ret->committer_time, &ret->committer_tz);
 
 	ret->summary = summary_buf;
@@ -2396,7 +2408,7 @@ parse_done:
 		die("reading graft file %s failed: %s",
 		    revs_file, strerror(errno));
 
-	read_mailmap(&mailmap, ".mailmap", NULL);
+	read_mailmap(&mailmap, NULL);
 
 	if (!incremental)
 		setup_pager();

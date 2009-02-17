@@ -34,11 +34,11 @@
 #       are currently in a git repository.  The %s token will be
 #       the name of the current branch.
 #
-#	In addition, if you set GIT_PS1_SHOWDIRTYSTATE to a nonempty
-#	value, unstaged (*) and staged (+) changes will be shown next
-#	to the branch name.  You can configure this per-repository
-#	with the bash.showDirtyState variable, which defaults to true
-#	once GIT_PS1_SHOWDIRTYSTATE is enabled.
+#       In addition, if you set GIT_PS1_SHOWDIRTYSTATE to a nonempty
+#       value, unstaged (*) and staged (+) changes will be shown next
+#       to the branch name.  You can configure this per-repository
+#       with the bash.showDirtyState variable, which defaults to true
+#       once GIT_PS1_SHOWDIRTYSTATE is enabled.
 #
 # To submit patches:
 #
@@ -125,7 +125,7 @@ __git_ps1 ()
 		local w
 		local i
 
-		if test -n "$GIT_PS1_SHOWDIRTYSTATE"; then
+		if test -n "${GIT_PS1_SHOWDIRTYSTATE-}"; then
 			if test "$(git config --bool bash.showDirtyState)" != "false"; then
 				git diff --no-ext-diff --ignore-submodules \
 					--quiet --exit-code || w="*"
@@ -1037,6 +1037,7 @@ _git_merge ()
 	--*)
 		__gitcomp "
 			--no-commit --no-stat --log --no-log --squash --strategy
+			--commit --stat --no-squash --ff --no-ff
 			"
 		return
 	esac
@@ -1196,8 +1197,12 @@ _git_config ()
 		__gitcomp "$(__git_merge_strategies)"
 		return
 		;;
-	color.branch|color.diff|color.status)
+	color.branch|color.diff|color.interactive|color.status|color.ui)
 		__gitcomp "always never auto"
+		return
+		;;
+	color.pager)
+		__gitcomp "false true"
 		return
 		;;
 	color.*.*)
@@ -1595,7 +1600,8 @@ _git_svn ()
 	local subcommands="
 		init fetch clone rebase dcommit log find-rev
 		set-tree commit-diff info create-ignore propget
-		proplist show-ignore show-externals
+		proplist show-ignore show-externals branch tag blame
+		migrate
 		"
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
@@ -1606,13 +1612,15 @@ _git_svn ()
 			--follow-parent --authors-file= --repack=
 			--no-metadata --use-svm-props --use-svnsync-props
 			--log-window-size= --no-checkout --quiet
-			--repack-flags --user-log-author --localtime $remote_opts
+			--repack-flags --use-log-author --localtime
+			--ignore-paths= $remote_opts
 			"
 		local init_opts="
 			--template= --shared= --trunk= --tags=
 			--branches= --stdlayout --minimize-url
 			--no-metadata --use-svm-props --use-svnsync-props
-			--rewrite-root= $remote_opts
+			--rewrite-root= --prefix= --use-log-author
+			--add-author-from $remote_opts
 			"
 		local cmt_opts="
 			--edit --rmdir --find-copies-harder --copy-similarity=
@@ -1632,7 +1640,8 @@ _git_svn ()
 		dcommit,--*)
 			__gitcomp "
 				--merge --strategy= --verbose --dry-run
-				--fetch-all --no-rebase $cmt_opts $fc_opts
+				--fetch-all --no-rebase --commit-url
+				--revision $cmt_opts $fc_opts
 				"
 			;;
 		set-tree,--*)
@@ -1646,13 +1655,13 @@ _git_svn ()
 			__gitcomp "
 				--limit= --revision= --verbose --incremental
 				--oneline --show-commit --non-recursive
-				--authors-file=
+				--authors-file= --color
 				"
 			;;
 		rebase,--*)
 			__gitcomp "
 				--merge --verbose --strategy= --local
-				--fetch-all $fc_opts
+				--fetch-all --dry-run $fc_opts
 				"
 			;;
 		commit-diff,--*)
@@ -1660,6 +1669,21 @@ _git_svn ()
 			;;
 		info,--*)
 			__gitcomp "--url"
+			;;
+		branch,--*)
+			__gitcomp "--dry-run --message --tag"
+			;;
+		tag,--*)
+			__gitcomp "--dry-run --message"
+			;;
+		blame,--*)
+			__gitcomp "--git-format"
+			;;
+		migrate,--*)
+			__gitcomp "
+				--config-dir= --ignore-paths= --minimize
+				--no-auth-cache --username=
+				"
 			;;
 		*)
 			COMPREPLY=()

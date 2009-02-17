@@ -499,6 +499,14 @@ svn-remote.<name>.rewriteRoot::
 	the repository with a public http:// or svn:// URL in the
 	metadata so users of it will see the public URL.
 
+svn.brokenSymlinkWorkaround::
+This disables potentially expensive checks to workaround broken symlinks
+checked into SVN by broken clients.  Set this option to "false" if you
+track a SVN repository with many empty blobs that are not symlinks.
+This option may be changed while "git-svn" is running and take effect on
+the next revision fetched.  If unset, git-svn assumes this option to be
+"true".
+
 --
 
 Since the noMetadata, rewriteRoot, useSvnsyncProps and useSvmProps

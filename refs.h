@@ -24,6 +24,11 @@ extern int for_each_tag_ref(each_ref_fn, void *);
 extern int for_each_branch_ref(each_ref_fn, void *);
 extern int for_each_remote_ref(each_ref_fn, void *);
 
+/* can be used to learn about broken ref and symref */
+extern int for_each_rawref(each_ref_fn, void *);
+
+extern void warn_dangling_symref(const char *msg_fmt, const char *refname);
+
 /*
  * Extra refs will be listed by for_each_ref() before any actual refs
  * for the duration of this process or until clear_extra_refs() is
