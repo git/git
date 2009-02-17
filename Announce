@@ -12,21 +12,33 @@ git rev-parse --verify "$previous" >/dev/null || exit $?
 
 case "$branch" in
 maint)
-	kind="maintenance" ;;
-mainto/*)
-	kind="obsolete maintenance" ;;
+	kind="The latest maintenance release" ;;
+mainto/* | maint-[0-9]*)
+	kind="An maintenance release" ;;
 master)
-	kind="feature" ;;
+	kind="The latest feature release" ;;
 esac
 
-echo "To: git@vger.kernel.org
-cc: linux-kernel@vger.kernel.org
-bcc: info@lwn.net
-Subject: [ANNOUNCE] GIT $vername
+case "$vername" in
+*-rc[0-9]*)
+	rpmroot=testing
+	vername=$(echo "$vername" | tr "-" ".")
+	kind="A release candidate"
+	for_testing=" for testing"
+	;;
+*)
+	for_testing=
+	rpmroot="RPMS/$arch"
+	;;
+esac
+
+echo "To: git@vger.kernel.org"
+Meta/ProjectContact -b
+echo "Subject: [ANNOUNCE] GIT $vername
 "
 
 fmt -70 <<EOF
-The latest $kind release GIT $vername is available at the usual places:
+$kind GIT $vername is available at the usual places$for_testing:
 
   http://www.kernel.org/pub/software/scm/git/
 
@@ -34,10 +46,9 @@ The latest $kind release GIT $vername is available at the usual places:
   git-htmldocs-$vername.tar.{gz,bz2}		(preformatted docs)
   git-manpages-$vername.tar.{gz,bz2}		(preformatted docs)
 
-The RPM binary packages for a few architectures are also provided as
-courtesy.
+The RPM binary packages for a few architectures are found in:
 
-  RPMS/\$arch/git-*-$vername-1.fc9.\$arch.rpm	(RPM)
+  $rpmroot/git-*-$vername-1.fc9.\$arch.rpm	(RPM)
 
 BLURB HERE BLURB HERE BLURB HERE
 
