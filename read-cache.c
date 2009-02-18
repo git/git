@@ -443,6 +443,26 @@ int remove_index_entry_at(struct index_state *istate, int pos)
 	return 1;
 }
 
+/*
+ * Remove all cache ententries marked for removal, that is where
+ * CE_REMOVE is set in ce_flags.  This is much more effective than
+ * calling remove_index_entry_at() for each entry to be removed.
+ */
+void remove_marked_cache_entries(struct index_state *istate)
+{
+	struct cache_entry **ce_array = istate->cache;
+	unsigned int i, j;
+
+	for (i = j = 0; i < istate->cache_nr; i++) {
+		if (ce_array[i]->ce_flags & CE_REMOVE)
+			remove_name_hash(ce_array[i]);
+		else
+			ce_array[j++] = ce_array[i];
+	}
+	istate->cache_changed = 1;
+	istate->cache_nr = j;
+}
+
 int remove_file_from_index(struct index_state *istate, const char *path)
 {
 	int pos = index_name_pos(istate, path, strlen(path));

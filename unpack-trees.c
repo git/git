@@ -93,11 +93,9 @@ static int check_updates(struct unpack_trees_options *o)
 			display_progress(progress, ++cnt);
 			if (o->update)
 				unlink_entry(ce);
-			remove_index_entry_at(&o->result, i);
-			i--;
-			continue;
 		}
 	}
+	remove_marked_cache_entries(&o->result);
 	remove_scheduled_dirs();
 
 	for (i = 0; i < index->cache_nr; i++) {
