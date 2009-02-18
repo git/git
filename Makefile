@@ -809,7 +809,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/regex/regex.o compat/winansi.o
 	EXTLIBS += -lws2_32
 	X = .exe
-	NOEXECTEMPL = .noexec
 	htmldir=doc/git/html/
 endif
 ifneq (,$(findstring arm,$(uname_M)))
