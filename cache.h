@@ -629,6 +629,7 @@ const char *make_nonrelative_path(const char *path);
 const char *make_relative_path(const char *abs, const char *base);
 int normalize_absolute_path(char *buf, const char *path);
 int longest_ancestor_length(const char *path, const char *prefix_list);
+char *strip_path_suffix(const char *path, const char *suffix);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int sha1_object_info(const unsigned char *, unsigned long *);

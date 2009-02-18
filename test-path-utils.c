@@ -22,5 +22,10 @@ int main(int argc, char **argv)
 		printf("%d\n", len);
 	}
 
+	if (argc == 4 && !strcmp(argv[1], "strip_path_suffix")) {
+		char *prefix = strip_path_suffix(argv[2], argv[3]);
+		printf("%s\n", prefix ? prefix : "(null)");
+	}
+
 	return 0;
 }
