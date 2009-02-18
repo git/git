@@ -432,7 +432,9 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 	    is_descendant_of(head_commit, with_commit)) {
 		struct ref_item item;
 		item.name = xstrdup("(no branch)");
+		item.len = strlen(item.name);
 		item.kind = REF_LOCAL_BRANCH;
+		item.dest = NULL;
 		item.commit = head_commit;
 		if (strlen(item.name) > ref_list.maxwidth)
 			ref_list.maxwidth = strlen(item.name);
