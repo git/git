@@ -185,8 +185,8 @@ test_expect_success 'submodule fast-export | fast-import' '
 
 '
 
-export GIT_AUTHOR_NAME='A U Thor'
-export GIT_COMMITTER_NAME='C O Mitter'
+GIT_AUTHOR_NAME='A U Thor'; export GIT_AUTHOR_NAME
+GIT_COMMITTER_NAME='C O Mitter'; export GIT_COMMITTER_NAME
 
 test_expect_success 'setup copies' '
 
