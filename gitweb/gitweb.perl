@@ -402,13 +402,13 @@ sub feature_bool {
 	my $key = shift;
 	my ($val) = git_get_project_config($key, '--bool');
 
-	if ($val eq 'true') {
+	if (!defined $val) {
+		return ($_[0]);
+	} elsif ($val eq 'true') {
 		return (1);
 	} elsif ($val eq 'false') {
 		return (0);
 	}
-
-	return ($_[0]);
 }
 
 sub feature_snapshot {
@@ -1914,18 +1914,19 @@ sub git_parse_project_config {
 	return %config;
 }
 
-# convert config value to boolean, 'true' or 'false'
+# convert config value to boolean: 'true' or 'false'
 # no value, number > 0, 'true' and 'yes' values are true
 # rest of values are treated as false (never as error)
 sub config_to_bool {
 	my $val = shift;
 
+	return 1 if !defined $val;             # section.key
+
 	# strip leading and trailing whitespace
 	$val =~ s/^\s+//;
 	$val =~ s/\s+$//;
 
-	return (!defined $val ||               # section.key
-	        ($val =~ /^\d+$/ && $val) ||   # section.key = 1
+	return (($val =~ /^\d+$/ && $val) ||   # section.key = 1
 	        ($val =~ /^(?:true|yes)$/i));  # section.key = true
 }
 
@@ -1977,6 +1978,9 @@ sub git_get_project_config {
 		%config = git_parse_project_config('gitweb');
 		$config_file = "$git_dir/config";
 	}
+
+	# check if config variable (key) exists
+	return unless exists $config{"gitweb.$key"};
 
 	# ensure given type
 	if (!defined $type) {
