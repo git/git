@@ -1384,13 +1384,11 @@ sub format_log_line_html {
 	my $line = shift;
 
 	$line = esc_html($line, -nbsp=>1);
-	if ($line =~ m/\b([0-9a-fA-F]{8,40})\b/) {
-		my $hash_text = $1;
-		my $link =
-			$cgi->a({-href => href(action=>"object", hash=>$hash_text),
-			        -class => "text"}, $hash_text);
-		$line =~ s/$hash_text/$link/;
-	}
+	$line =~ s{\b([0-9a-fA-F]{8,40})\b}{
+		$cgi->a({-href => href(action=>"object", hash=>$1),
+					-class => "text"}, $1);
+	}eg;
+
 	return $line;
 }
 
