@@ -460,6 +460,10 @@ static void add_header(const char *value)
 	extra_hdr[extra_hdr_nr++] = xstrndup(value, len);
 }
 
+#define THREAD_SHALLOW 1
+#define THREAD_DEEP 2
+static int thread = 0;
+
 static int git_format_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "format.headers")) {
@@ -487,6 +491,18 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		}
 		numbered = git_config_bool(var, value);
 		auto_number = auto_number && numbered;
+		return 0;
+	}
+	if (!strcmp(var, "format.thread")) {
+		if (value && !strcasecmp(value, "deep")) {
+			thread = THREAD_DEEP;
+			return 0;
+		}
+		if (value && !strcasecmp(value, "shallow")) {
+			thread = THREAD_SHALLOW;
+			return 0;
+		}
+		thread = git_config_bool(var, value) && THREAD_SHALLOW;
 		return 0;
 	}
 
@@ -767,7 +783,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int numbered_files = 0;		/* _just_ numbers */
 	int subject_prefix = 0;
 	int ignore_if_in_upstream = 0;
-	int thread = 0;
 	int cover_letter = 0;
 	int boundary_count = 0;
 	int no_binary_diff = 0;
@@ -860,8 +875,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 		else if (!strcmp(argv[i], "--ignore-if-in-upstream"))
 			ignore_if_in_upstream = 1;
-		else if (!strcmp(argv[i], "--thread"))
-			thread = 1;
+		else if (!strcmp(argv[i], "--thread")
+			|| !strcmp(argv[i], "--thread=shallow"))
+			thread = THREAD_SHALLOW;
+		else if (!strcmp(argv[i], "--thread=deep"))
+			thread = THREAD_DEEP;
+		else if (!strcmp(argv[i], "--no-thread"))
+			thread = 0;
 		else if (!prefixcmp(argv[i], "--in-reply-to="))
 			in_reply_to = argv[i] + 14;
 		else if (!strcmp(argv[i], "--in-reply-to")) {
@@ -1036,6 +1056,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			/* Have we already had a message ID? */
 			if (rev.message_id) {
 				/*
+				 * For deep threading: make every mail
+				 * a reply to the previous one, no
+				 * matter what other options are set.
+				 *
+				 * For shallow threading:
+				 *
 				 * Without --cover-letter and
 				 * --in-reply-to, make every mail a
 				 * reply to the one before.
@@ -1050,7 +1076,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				 * letter is a reply to the
 				 * --in-reply-to, if specified.
 				 */
-				if (rev.ref_message_ids->nr > 0
+				if (thread == THREAD_SHALLOW
+				    && rev.ref_message_ids->nr > 0
 				    && (!cover_letter || rev.nr > 1))
 					free(rev.message_id);
 				else

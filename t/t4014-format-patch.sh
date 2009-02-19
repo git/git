@@ -257,6 +257,126 @@ test_expect_success 'thread cover-letter in-reply-to' '
 		--in-reply-to="<test.message>" --thread master
 '
 
+test_expect_success 'thread explicit shallow' '
+	check_threading expect.cl-irt --cover-letter \
+		--in-reply-to="<test.message>" --thread=shallow master
+'
+
+cat > expect.deep <<EOF
+---
+Message-Id: <0>
+---
+Message-Id: <1>
+In-Reply-To: <0>
+References: <0>
+---
+Message-Id: <2>
+In-Reply-To: <1>
+References: <0>
+	<1>
+EOF
+
+test_expect_success 'thread deep' '
+	check_threading expect.deep --thread=deep master
+'
+
+cat > expect.deep-irt <<EOF
+---
+Message-Id: <0>
+In-Reply-To: <1>
+References: <1>
+---
+Message-Id: <2>
+In-Reply-To: <0>
+References: <1>
+	<0>
+---
+Message-Id: <3>
+In-Reply-To: <2>
+References: <1>
+	<0>
+	<2>
+EOF
+
+test_expect_success 'thread deep in-reply-to' '
+	check_threading expect.deep-irt  --thread=deep \
+		--in-reply-to="<test.message>" master
+'
+
+cat > expect.deep-cl <<EOF
+---
+Message-Id: <0>
+---
+Message-Id: <1>
+In-Reply-To: <0>
+References: <0>
+---
+Message-Id: <2>
+In-Reply-To: <1>
+References: <0>
+	<1>
+---
+Message-Id: <3>
+In-Reply-To: <2>
+References: <0>
+	<1>
+	<2>
+EOF
+
+test_expect_success 'thread deep cover-letter' '
+	check_threading expect.deep-cl --cover-letter --thread=deep master
+'
+
+cat > expect.deep-cl-irt <<EOF
+---
+Message-Id: <0>
+In-Reply-To: <1>
+References: <1>
+---
+Message-Id: <2>
+In-Reply-To: <0>
+References: <1>
+	<0>
+---
+Message-Id: <3>
+In-Reply-To: <2>
+References: <1>
+	<0>
+	<2>
+---
+Message-Id: <4>
+In-Reply-To: <3>
+References: <1>
+	<0>
+	<2>
+	<3>
+EOF
+
+test_expect_success 'thread deep cover-letter in-reply-to' '
+	check_threading expect.deep-cl-irt --cover-letter \
+		--in-reply-to="<test.message>" --thread=deep master
+'
+
+test_expect_success 'thread via config' '
+	git config format.thread true &&
+	check_threading expect.thread master
+'
+
+test_expect_success 'thread deep via config' '
+	git config format.thread deep &&
+	check_threading expect.deep master
+'
+
+test_expect_success 'thread config + override' '
+	git config format.thread deep &&
+	check_threading expect.thread --thread master
+'
+
+test_expect_success 'thread config + --no-thread' '
+	git config format.thread deep &&
+	check_threading expect.no-threading --no-thread master
+'
+
 test_expect_success 'excessive subject' '
 
 	rm -rf patches/ &&
