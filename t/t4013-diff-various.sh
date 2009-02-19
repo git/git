@@ -205,6 +205,9 @@ log -SF master
 log -SF -p master
 log --decorate --all
 
+rev-list --parents HEAD
+rev-list --children HEAD
+
 whatchanged master
 whatchanged -p master
 whatchanged --root master
