@@ -19,10 +19,6 @@ TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 
 ## po-file creation rules
 XGETTEXT   ?= xgettext
-uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
-ifneq (,$(findstring MINGW,$(uname_S)))
-	NO_MSGFMT=1
-endif
 ifdef NO_MSGFMT
 	MSGFMT ?= $(TCL_PATH) po/po2msg.sh
 else
