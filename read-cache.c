@@ -67,8 +67,15 @@ void rename_index_entry_at(struct index_state *istate, int nr, const char *new_n
  */
 void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 {
-	ce->ce_ctime = st->st_ctime;
-	ce->ce_mtime = st->st_mtime;
+	ce->ce_ctime.sec = (unsigned int)st->st_ctime;
+	ce->ce_mtime.sec = (unsigned int)st->st_mtime;
+#ifdef USE_NSEC
+	ce->ce_ctime.nsec = (unsigned int)st->st_ctim.tv_nsec;
+	ce->ce_mtime.nsec = (unsigned int)st->st_mtim.tv_nsec;
+#else
+	ce->ce_ctime.nsec = 0;
+	ce->ce_mtime.nsec = 0;
+#endif
 	ce->ce_dev = st->st_dev;
 	ce->ce_ino = st->st_ino;
 	ce->ce_uid = st->st_uid;
@@ -196,10 +203,17 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 	default:
 		die("internal error: ce_mode is %o", ce->ce_mode);
 	}
-	if (ce->ce_mtime != (unsigned int) st->st_mtime)
+	if (ce->ce_mtime.sec != (unsigned int)st->st_mtime)
 		changed |= MTIME_CHANGED;
-	if (trust_ctime && ce->ce_ctime != (unsigned int) st->st_ctime)
+	if (trust_ctime && ce->ce_ctime.sec != (unsigned int)st->st_ctime)
 		changed |= CTIME_CHANGED;
+
+#ifdef USE_NSEC
+	if (ce->ce_mtime.nsec != (unsigned int)st->st_mtim.tv_nsec)
+		changed |= MTIME_CHANGED;
+	if (trust_ctime && ce->ce_ctime.nsec != (unsigned int)st->st_ctim.tv_nsec)
+		changed |= CTIME_CHANGED;
+#endif
 
 	if (ce->ce_uid != (unsigned int) st->st_uid ||
 	    ce->ce_gid != (unsigned int) st->st_gid)
@@ -232,8 +246,16 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 static int is_racy_timestamp(const struct index_state *istate, struct cache_entry *ce)
 {
 	return (!S_ISGITLINK(ce->ce_mode) &&
-		istate->timestamp &&
-		((unsigned int)istate->timestamp) <= ce->ce_mtime);
+		istate->timestamp.sec &&
+#ifdef USE_NSEC
+		 /* nanosecond timestamped files can also be racy! */
+		(istate->timestamp.sec < ce->ce_mtime.sec ||
+		 (istate->timestamp.sec == ce->ce_mtime.sec &&
+		  istate->timestamp.nsec <= ce->ce_mtime.nsec))
+#else
+		istate->timestamp.sec <= ce->ce_mtime.sec
+#endif
+		 );
 }
 
 int ie_match_stat(const struct index_state *istate,
@@ -1159,8 +1181,15 @@ static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_en
 	size_t len;
 	const char *name;
 
-	ce->ce_ctime = ntohl(ondisk->ctime.sec);
-	ce->ce_mtime = ntohl(ondisk->mtime.sec);
+	ce->ce_ctime.sec = ntohl(ondisk->ctime.sec);
+	ce->ce_mtime.sec = ntohl(ondisk->mtime.sec);
+#ifdef USE_NSEC
+	ce->ce_ctime.nsec = ntohl(ondisk->ctime.nsec);
+	ce->ce_mtime.nsec = ntohl(ondisk->mtime.nsec);
+#else
+	ce->ce_ctime.nsec = 0;
+	ce->ce_mtime.nsec = 0;
+#endif
 	ce->ce_dev   = ntohl(ondisk->dev);
 	ce->ce_ino   = ntohl(ondisk->ino);
 	ce->ce_mode  = ntohl(ondisk->mode);
@@ -1226,7 +1255,8 @@ int read_index_from(struct index_state *istate, const char *path)
 		return istate->cache_nr;
 
 	errno = ENOENT;
-	istate->timestamp = 0;
+	istate->timestamp.sec = 0;
+	istate->timestamp.nsec = 0;
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		if (errno == ENOENT)
@@ -1278,7 +1308,13 @@ int read_index_from(struct index_state *istate, const char *path)
 		src_offset += ondisk_ce_size(ce);
 		dst_offset += ce_size(ce);
 	}
-	istate->timestamp = st.st_mtime;
+	istate->timestamp.sec = st.st_mtime;
+#ifdef USE_NSEC
+	istate->timestamp.nsec = (unsigned int)st.st_mtim.tv_nsec;
+#else
+	istate->timestamp.nsec = 0;
+#endif
+
 	while (src_offset <= mmap_size - 20 - 8) {
 		/* After an array of active_nr index entries,
 		 * there can be arbitrary number of extended
@@ -1308,14 +1344,15 @@ unmap:
 
 int is_index_unborn(struct index_state *istate)
 {
-	return (!istate->cache_nr && !istate->alloc && !istate->timestamp);
+	return (!istate->cache_nr && !istate->alloc && !istate->timestamp.sec);
 }
 
 int discard_index(struct index_state *istate)
 {
 	istate->cache_nr = 0;
 	istate->cache_changed = 0;
-	istate->timestamp = 0;
+	istate->timestamp.sec = 0;
+	istate->timestamp.nsec = 0;
 	istate->name_hash_initialized = 0;
 	free_hash(&istate->name_hash);
 	cache_tree_free(&(istate->cache_tree));
@@ -1461,10 +1498,15 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 	struct ondisk_cache_entry *ondisk = xcalloc(1, size);
 	char *name;
 
-	ondisk->ctime.sec = htonl(ce->ce_ctime);
+	ondisk->ctime.sec = htonl(ce->ce_ctime.sec);
+	ondisk->mtime.sec = htonl(ce->ce_mtime.sec);
+#ifdef USE_NSEC
+	ondisk->ctime.nsec = htonl(ce->ce_ctime.nsec);
+	ondisk->mtime.nsec = htonl(ce->ce_mtime.nsec);
+#else
 	ondisk->ctime.nsec = 0;
-	ondisk->mtime.sec = htonl(ce->ce_mtime);
 	ondisk->mtime.nsec = 0;
+#endif
 	ondisk->dev  = htonl(ce->ce_dev);
 	ondisk->ino  = htonl(ce->ce_ino);
 	ondisk->mode = htonl(ce->ce_mode);

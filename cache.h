@@ -140,8 +140,8 @@ struct ondisk_cache_entry_extended {
 };
 
 struct cache_entry {
-	unsigned int ce_ctime;
-	unsigned int ce_mtime;
+	struct cache_time ce_ctime;
+	struct cache_time ce_mtime;
 	unsigned int ce_dev;
 	unsigned int ce_ino;
 	unsigned int ce_mode;
@@ -282,7 +282,7 @@ struct index_state {
 	struct cache_entry **cache;
 	unsigned int cache_nr, cache_alloc, cache_changed;
 	struct cache_tree *cache_tree;
-	time_t timestamp;
+	struct cache_time timestamp;
 	void *alloc;
 	unsigned name_hash_initialized : 1,
 		 initialized : 1;
