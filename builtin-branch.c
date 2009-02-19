@@ -436,8 +436,8 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 		item.kind = REF_LOCAL_BRANCH;
 		item.dest = NULL;
 		item.commit = head_commit;
-		if (strlen(item.name) > ref_list.maxwidth)
-			ref_list.maxwidth = strlen(item.name);
+		if (item.len > ref_list.maxwidth)
+			ref_list.maxwidth = item.len;
 		print_ref_item(&item, ref_list.maxwidth, verbose, abbrev, 1, "");
 		free(item.name);
 	}
