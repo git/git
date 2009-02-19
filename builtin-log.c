@@ -17,6 +17,7 @@
 #include "run-command.h"
 #include "shortlog.h"
 #include "remote.h"
+#include "string-list.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -1011,8 +1012,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		numbered = 1;
 	if (numbered)
 		rev.total = total + start_number - 1;
-	if (in_reply_to)
-		rev.ref_message_id = clean_message_id(in_reply_to);
+	if (in_reply_to || thread || cover_letter)
+		rev.ref_message_ids = xcalloc(1, sizeof(struct string_list));
+	if (in_reply_to) {
+		const char *msgid = clean_message_id(in_reply_to);
+		string_list_append(msgid, rev.ref_message_ids);
+	}
 	if (cover_letter) {
 		if (thread)
 			gen_message_id(&rev, "cover");
@@ -1036,10 +1041,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				 * otherwise, make everything a reply
 				 * to that.
 				 */
-				if (rev.ref_message_id)
+				if (rev.ref_message_ids->nr > 0)
 					free(rev.message_id);
 				else
-					rev.ref_message_id = rev.message_id;
+					string_list_append(rev.message_id,
+							   rev.ref_message_ids);
 			}
 			gen_message_id(&rev, sha1_to_hex(commit->object.sha1));
 		}
