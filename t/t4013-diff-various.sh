@@ -263,6 +263,7 @@ diff --name-status dir2 dir
 diff --no-index --name-status dir2 dir
 diff --no-index --name-status -- dir2 dir
 diff master master^ side
+diff --dirstat master~1 master~2
 EOF
 
 test_done
