@@ -670,7 +670,11 @@ sub cmd_create_ignore {
 	$gs->prop_walk($gs->{path}, $r, sub {
 		my ($gs, $path, $props) = @_;
 		# $path is of the form /path/to/dir/
-		my $ignore = '.' . $path . '.gitignore';
+		$path = '.' . $path;
+		# SVN can have attributes on empty directories,
+		# which git won't track
+		mkpath([$path]) unless -d $path;
+		my $ignore = $path . '.gitignore';
 		my $s = $props->{'svn:ignore'} or return;
 		open(GITIGNORE, '>', $ignore)
 		  or fatal("Failed to open `$ignore' for writing: $!");
