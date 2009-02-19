@@ -191,7 +191,7 @@ STRIP ?= strip
 # runtime figures out where they are based on the path to the executable.
 # This can help installing the suite in a relocatable way.
 
-prefix =
+prefix = $(HOME)
 bindir_relative = bin
 bindir = $(prefix)/$(bindir_relative)
 mandir = share/man
@@ -235,7 +235,7 @@ AR = ar
 RM = rm -f
 TAR = tar
 FIND = find
-INSTALL = /bin/install
+INSTALL = install
 RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
@@ -592,7 +592,7 @@ BUILTIN_OBJS += builtin-verify-tag.o
 BUILTIN_OBJS += builtin-write-tree.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
-EXTLIBS = /mingw/lib/libz.a
+EXTLIBS =
 
 #
 # Platform specific tweaks
@@ -779,6 +779,9 @@ ifneq (,$(findstring CYGWIN,$(uname_S)))
 	COMPAT_OBJS += compat/cygwin.o
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
+	prefix =
+	INSTALL = /bin/install
+	EXTLIBS += /mingw/lib/libz.a
 	NO_MMAP = YesPlease
 	NO_PREAD = YesPlease
 	NO_OPENSSL = YesPlease
