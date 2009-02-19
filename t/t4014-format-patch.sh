@@ -138,56 +138,120 @@ test_expect_success 'multiple files' '
 	ls patches/0001-Side-changes-1.patch patches/0002-Side-changes-2.patch patches/0003-Side-changes-3-with-n-backslash-n-in-it.patch
 '
 
-test_expect_success 'thread' '
+check_threading () {
+	expect="$1" &&
+	shift &&
+	(git format-patch --stdout "$@"; echo $? > status.out) |
+	# Prints everything between the Message-ID and In-Reply-To,
+	# and replaces all Message-ID-lookalikes by a sequence number
+	perl -ne '
+		if (/^(message-id|references|in-reply-to)/i) {
+			$printing = 1;
+		} elsif (/^\S/) {
+			$printing = 0;
+		}
+		if ($printing) {
+			$h{$1}=$i++ if (/<([^>]+)>/ and !exists $h{$1});
+			for $k (keys %h) {s/$k/$h{$k}/};
+			print;
+		}
+		print "---\n" if /^From /i;
+	' > actual &&
+	test 0 = "$(cat status.out)" &&
+	test_cmp "$expect" actual
+}
 
-	rm -rf patches/ &&
+cat >> expect.no-threading <<EOF
+---
+---
+---
+EOF
+
+test_expect_success 'no threading' '
 	git checkout side &&
-	git format-patch --thread -o patches/ master &&
-	FIRST_MID=$(grep "Message-Id:" patches/0001-* | sed "s/^[^<]*\(<[^>]*>\).*$/\1/") &&
-	for i in patches/0002-* patches/0003-*
-	do
-	  grep "References: $FIRST_MID" $i &&
-	  grep "In-Reply-To: $FIRST_MID" $i || break
-	done
+	check_threading expect.no-threading master
 '
+
+cat > expect.thread <<EOF
+---
+Message-Id: <0>
+---
+Message-Id: <1>
+In-Reply-To: <0>
+References: <0>
+---
+Message-Id: <2>
+In-Reply-To: <0>
+References: <0>
+EOF
+
+test_expect_success 'thread' '
+	check_threading expect.thread --thread master
+'
+
+cat > expect.in-reply-to <<EOF
+---
+Message-Id: <0>
+In-Reply-To: <1>
+References: <1>
+---
+Message-Id: <2>
+In-Reply-To: <1>
+References: <1>
+---
+Message-Id: <3>
+In-Reply-To: <1>
+References: <1>
+EOF
 
 test_expect_success 'thread in-reply-to' '
-
-	rm -rf patches/ &&
-	git checkout side &&
-	git format-patch --in-reply-to="<test.message>" --thread -o patches/ master &&
-	FIRST_MID="<test.message>" &&
-	for i in patches/*
-	do
-	  grep "References: $FIRST_MID" $i &&
-	  grep "In-Reply-To: $FIRST_MID" $i || break
-	done
+	check_threading expect.in-reply-to --in-reply-to="<test.message>" \
+		--thread master
 '
+
+cat > expect.cover-letter <<EOF
+---
+Message-Id: <0>
+---
+Message-Id: <1>
+In-Reply-To: <0>
+References: <0>
+---
+Message-Id: <2>
+In-Reply-To: <0>
+References: <0>
+---
+Message-Id: <3>
+In-Reply-To: <0>
+References: <0>
+EOF
 
 test_expect_success 'thread cover-letter' '
-
-	rm -rf patches/ &&
-	git checkout side &&
-	git format-patch --cover-letter --thread -o patches/ master &&
-	FIRST_MID=$(grep "Message-Id:" patches/0000-* | sed "s/^[^<]*\(<[^>]*>\).*$/\1/") &&
-	for i in patches/0001-* patches/0002-* patches/0003-*
-	do
-	  grep "References: $FIRST_MID" $i &&
-	  grep "In-Reply-To: $FIRST_MID" $i || break
-	done
+	check_threading expect.cover-letter --cover-letter --thread master
 '
 
-test_expect_success 'thread cover-letter in-reply-to' '
+cat > expect.cl-irt <<EOF
+---
+Message-Id: <0>
+In-Reply-To: <1>
+References: <1>
+---
+Message-Id: <2>
+In-Reply-To: <1>
+References: <1>
+---
+Message-Id: <3>
+In-Reply-To: <1>
+References: <1>
+---
+Message-Id: <4>
+In-Reply-To: <1>
+References: <1>
+EOF
 
-	rm -rf patches/ &&
-	git checkout side &&
-	git format-patch --cover-letter --in-reply-to="<test.message>" --thread -o patches/ master &&
-	FIRST_MID="<test.message>" &&
-	for i in patches/*
-	do
-	  grep "References: $FIRST_MID" $i &&
-	  grep "In-Reply-To: $FIRST_MID" $i || break
-	done
+test_expect_success 'thread cover-letter in-reply-to' '
+	check_threading expect.cl-irt --cover-letter \
+		--in-reply-to="<test.message>" --thread master
 '
 
 test_expect_success 'excessive subject' '
