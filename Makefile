@@ -161,7 +161,7 @@ all::
 # broken, or spawning external process is slower than built-in grep git has).
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
-	@"$(SHELL_PATH)" ./GIT-VERSION-GEN
+	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
