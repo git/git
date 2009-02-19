@@ -237,16 +237,19 @@ In-Reply-To: <1>
 References: <1>
 ---
 Message-Id: <2>
-In-Reply-To: <1>
+In-Reply-To: <0>
 References: <1>
+	<0>
 ---
 Message-Id: <3>
-In-Reply-To: <1>
+In-Reply-To: <0>
 References: <1>
+	<0>
 ---
 Message-Id: <4>
-In-Reply-To: <1>
+In-Reply-To: <0>
 References: <1>
+	<0>
 EOF
 
 test_expect_success 'thread cover-letter in-reply-to' '
