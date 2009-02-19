@@ -203,6 +203,7 @@ log --root -c --patch-with-stat --summary master
 log --root --cc --patch-with-stat --summary master
 log -SF master
 log -SF -p master
+log --decorate --all
 
 whatchanged master
 whatchanged -p master
