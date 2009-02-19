@@ -41,6 +41,13 @@ of lines before or after the line given by <start>.
 -S <revs-file>::
 	Use revs from revs-file instead of calling linkgit:git-rev-list[1].
 
+--reverse::
+	Walk history forward instead of backward. Instead of showing
+	the revision in which a line appeared, this shows the last
+	revision in which a line has existed. This requires a range of
+	revision like START..END where the path to blame exists in
+	START.
+
 -p::
 --porcelain::
 	Show in a format designed for machine consumption.
