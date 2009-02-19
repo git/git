@@ -466,7 +466,11 @@ static inline int chomp_trailing_dir_sep(const char *path, int len)
 	return len;
 }
 
-/* sets prefix if the suffix matches */
+/*
+ * If path ends with suffix (complete path components), returns the
+ * part before suffix (sans trailing directory separators).
+ * Otherwise returns NULL.
+ */
 char *strip_path_suffix(const char *path, const char *suffix)
 {
 	int path_len = strlen(path), suffix_len = strlen(suffix);
