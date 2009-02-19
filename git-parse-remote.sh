@@ -51,8 +51,7 @@ get_remote_url () {
 		;;
 	*)
 		die "internal error: get-remote-url $1" ;;
-	esac | sed "s|^\(.[^:][^:]*\):\(/[^/]\)|ssh://\1\2|"
-		# work around MinGW path mangling
+	esac
 }
 
 get_default_remote () {
