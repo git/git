@@ -192,29 +192,8 @@ static int git_get_color_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-static int get_color(int argc, const char **argv)
+static void get_color(const char *def_color)
 {
-	/*
-	 * grab the color setting for the given slot from the configuration,
-	 * or parse the default value if missing, and return ANSI color
-	 * escape sequence.
-	 *
-	 * e.g.
-	 * git config --get-color color.diff.whitespace "blue reverse"
-	 */
-	const char *def_color = NULL;
-
-	switch (argc) {
-	default:
-		usage(git_config_set_usage);
-	case 2:
-		def_color = argv[1];
-		/* fallthru */
-	case 1:
-		get_color_slot = argv[0];
-		break;
-	}
-
 	get_color_found = 0;
 	parsed_color[0] = '\0';
 	git_config(git_get_color_config, NULL);
@@ -223,7 +202,6 @@ static int get_color(int argc, const char **argv)
 		color_parse(def_color, "command line", parsed_color);
 
 	fputs(parsed_color, stdout);
-	return 0;
 }
 
 static int stdout_is_tty;
@@ -247,24 +225,10 @@ static int git_get_colorbool_config(const char *var, const char *value,
 	return 0;
 }
 
-static int get_colorbool(int argc, const char **argv)
+static int get_colorbool(int print)
 {
-	/*
-	 * git config --get-colorbool <slot> [<stdout-is-tty>]
-	 *
-	 * returns "true" or "false" depending on how <slot>
-	 * is configured.
-	 */
-
-	if (argc == 2)
-		stdout_is_tty = git_config_bool("command line", argv[1]);
-	else if (argc == 1)
-		stdout_is_tty = isatty(1);
-	else
-		usage(git_config_set_usage);
 	get_colorbool_found = -1;
 	get_diff_color_found = -1;
-	get_colorbool_slot = argv[0];
 	git_config(git_get_colorbool_config, NULL);
 
 	if (get_colorbool_found < 0) {
@@ -274,12 +238,11 @@ static int get_colorbool(int argc, const char **argv)
 			get_colorbool_found = git_use_color_default;
 	}
 
-	if (argc == 1) {
-		return get_colorbool_found ? 0 : 1;
-	} else {
+	if (print) {
 		printf("%s\n", get_colorbool_found ? "true" : "false");
 		return 0;
-	}
+	} else
+		return get_colorbool_found ? 0 : 1;
 }
 
 int cmd_config(int argc, const char **argv, const char *unused_prefix)
@@ -363,9 +326,20 @@ int cmd_config(int argc, const char **argv, const char *unused_prefix)
 			}
 			return 0;
 		} else if (!strcmp(argv[1], "--get-color")) {
-			return get_color(argc-2, argv+2);
+			if (argc > 4 || argc < 3)
+				usage(git_config_set_usage);
+			get_color_slot = argv[2];
+			get_color(argv[3]);
+			return 0;
 		} else if (!strcmp(argv[1], "--get-colorbool")) {
-			return get_colorbool(argc-2, argv+2);
+			if (argc == 4)
+				stdout_is_tty = git_config_bool("command line", argv[3]);
+			else if (argc == 3)
+				stdout_is_tty = isatty(1);
+			else
+				usage(git_config_set_usage);
+			get_colorbool_slot = argv[2];
+			return get_colorbool(argc != 3);
 		} else if (!strcmp(argv[1], "--edit") || !strcmp(argv[1], "-e")) {
 			if (argc != 2)
 				usage(git_config_set_usage);
