@@ -1,9 +1,12 @@
 #include "builtin.h"
 #include "cache.h"
 #include "color.h"
+#include "parse-options.h"
 
-static const char git_config_set_usage[] =
-"git config [ --global | --system | [ -f | --file ] config-file ] [ --bool | --int | --bool-or-int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list | --get-color var [default] | --get-colorbool name [stdout-is-tty] | --edit | -e ]";
+static const char *const builtin_config_usage[] = {
+	"git config [options]",
+	NULL
+};
 
 static char *key;
 static regex_t *key_regexp;
@@ -17,6 +20,63 @@ static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
 static enum { T_RAW, T_INT, T_BOOL, T_BOOL_OR_INT } type = T_RAW;
+
+static int use_global_config, use_system_config;
+static const char *given_config_file;
+static int actions;
+static const char *get_color_slot, *get_colorbool_slot;
+static int end_null;
+
+#define ACTION_GET (1<<0)
+#define ACTION_GET_ALL (1<<1)
+#define ACTION_GET_REGEXP (1<<2)
+#define ACTION_REPLACE_ALL (1<<3)
+#define ACTION_ADD (1<<4)
+#define ACTION_UNSET (1<<5)
+#define ACTION_UNSET_ALL (1<<6)
+#define ACTION_RENAME_SECTION (1<<7)
+#define ACTION_REMOVE_SECTION (1<<8)
+#define ACTION_LIST (1<<9)
+#define ACTION_EDIT (1<<10)
+#define ACTION_SET (1<<11)
+#define ACTION_SET_ALL (1<<12)
+#define ACTION_GET_COLOR (1<<13)
+#define ACTION_GET_COLORBOOL (1<<14)
+
+static struct option builtin_config_options[] = {
+	OPT_GROUP("Config file location"),
+	OPT_BOOLEAN(0, "global", &use_global_config, "use global config file"),
+	OPT_BOOLEAN(0, "system", &use_system_config, "use system config file"),
+	OPT_STRING('f', "file", &given_config_file, "FILE", "use given config file"),
+	OPT_GROUP("Action"),
+	OPT_BIT(0, "get", &actions, "get value: name [value-regex]", ACTION_GET),
+	OPT_BIT(0, "get-all", &actions, "get all values: key [value-regex]", ACTION_GET_ALL),
+	OPT_BIT(0, "get-regexp", &actions, "get values for regexp: name-regex [value-regex]", ACTION_GET_REGEXP),
+	OPT_BIT(0, "replace-all", &actions, "replace all matching variables: name [value [value_regex]", ACTION_REPLACE_ALL),
+	OPT_BIT(0, "add", &actions, "adds a new variable: name value", ACTION_ADD),
+	OPT_BIT(0, "unset", &actions, "removes a variable: name [value-regex]", ACTION_UNSET),
+	OPT_BIT(0, "unset-all", &actions, "removes all matches: name [value-regex]", ACTION_UNSET_ALL),
+	OPT_BIT(0, "rename-section", &actions, "rename section: old-name new-name", ACTION_RENAME_SECTION),
+	OPT_BIT(0, "remove-section", &actions, "remove a section: name", ACTION_REMOVE_SECTION),
+	OPT_BIT('l', "list", &actions, "list all", ACTION_LIST),
+	OPT_BIT('e', "edit", &actions, "opens an editor", ACTION_EDIT),
+	OPT_STRING(0, "get-color", &get_color_slot, "slot", "find the color configured: [default]"),
+	OPT_STRING(0, "get-colorbool", &get_colorbool_slot, "slot", "find the color setting: [stdout-is-tty]"),
+	OPT_GROUP("Type"),
+	OPT_SET_INT(0, "bool", &type, "value is \"true\" or \"false\"", T_BOOL),
+	OPT_SET_INT(0, "int", &type, "value is decimal number", T_INT),
+	OPT_SET_INT(0, "bool-or-int", &type, NULL, T_BOOL_OR_INT),
+	OPT_GROUP("Other"),
+	OPT_BOOLEAN('z', "null", &end_null, "terminate values with NUL byte"),
+	OPT_END(),
+};
+
+static void check_argc(int argc, int min, int max) {
+	if (argc >= min && argc <= max)
+		return;
+	error("wrong number of arguments");
+	usage_with_options(builtin_config_usage, builtin_config_options);
+}
 
 static int show_all_config(const char *key_, const char *value_, void *cb)
 {
@@ -253,162 +313,143 @@ int cmd_config(int argc, const char **argv, const char *unused_prefix)
 
 	config_exclusive_filename = getenv(CONFIG_ENVIRONMENT);
 
-	while (1 < argc) {
-		if (!strcmp(argv[1], "--int"))
-			type = T_INT;
-		else if (!strcmp(argv[1], "--bool"))
-			type = T_BOOL;
-		else if (!strcmp(argv[1], "--bool-or-int"))
-			type = T_BOOL_OR_INT;
-		else if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l")) {
-			if (argc != 2)
-				usage(git_config_set_usage);
-			if (git_config(show_all_config, NULL) < 0) {
-				if (config_exclusive_filename)
-					die("unable to read config file %s: %s",
-					    config_exclusive_filename, strerror(errno));
-				else
-					die("error processing config file(s)");
-			}
-			return 0;
+	argc = parse_options(argc, argv, builtin_config_options, builtin_config_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+
+	if (use_global_config) {
+		char *home = getenv("HOME");
+		if (home) {
+			char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
+			config_exclusive_filename = user_config;
+		} else {
+			die("$HOME not set");
 		}
-		else if (!strcmp(argv[1], "--global")) {
-			char *home = getenv("HOME");
-			if (home) {
-				char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
-				config_exclusive_filename = user_config;
-			} else {
-				die("$HOME not set");
-			}
-		}
-		else if (!strcmp(argv[1], "--system"))
-			config_exclusive_filename = git_etc_gitconfig();
-		else if (!strcmp(argv[1], "--file") || !strcmp(argv[1], "-f")) {
-			if (argc < 3)
-				usage(git_config_set_usage);
-			if (!is_absolute_path(argv[2]) && prefix)
-				config_exclusive_filename = prefix_filename(prefix,
-									    strlen(prefix),
-									    argv[2]);
-			else
-				config_exclusive_filename = argv[2];
-			argc--;
-			argv++;
-		}
-		else if (!strcmp(argv[1], "--null") || !strcmp(argv[1], "-z")) {
-			term = '\0';
-			delim = '\n';
-			key_delim = '\n';
-		}
-		else if (!strcmp(argv[1], "--rename-section")) {
-			int ret;
-			if (argc != 4)
-				usage(git_config_set_usage);
-			ret = git_config_rename_section(argv[2], argv[3]);
-			if (ret < 0)
-				return ret;
-			if (ret == 0) {
-				fprintf(stderr, "No such section!\n");
-				return 1;
-			}
-			return 0;
-		}
-		else if (!strcmp(argv[1], "--remove-section")) {
-			int ret;
-			if (argc != 3)
-				usage(git_config_set_usage);
-			ret = git_config_rename_section(argv[2], NULL);
-			if (ret < 0)
-				return ret;
-			if (ret == 0) {
-				fprintf(stderr, "No such section!\n");
-				return 1;
-			}
-			return 0;
-		} else if (!strcmp(argv[1], "--get-color")) {
-			if (argc > 4 || argc < 3)
-				usage(git_config_set_usage);
-			get_color_slot = argv[2];
-			get_color(argv[3]);
-			return 0;
-		} else if (!strcmp(argv[1], "--get-colorbool")) {
-			if (argc == 4)
-				stdout_is_tty = git_config_bool("command line", argv[3]);
-			else if (argc == 3)
-				stdout_is_tty = isatty(1);
-			else
-				usage(git_config_set_usage);
-			get_colorbool_slot = argv[2];
-			return get_colorbool(argc != 3);
-		} else if (!strcmp(argv[1], "--edit") || !strcmp(argv[1], "-e")) {
-			if (argc != 2)
-				usage(git_config_set_usage);
-			git_config(git_default_config, NULL);
-			launch_editor(config_exclusive_filename ?
-				      config_exclusive_filename : git_path("config"),
-				      NULL, NULL);
-			return 0;
-		} else
-			break;
-		argc--;
-		argv++;
+	}
+	else if (use_system_config)
+		config_exclusive_filename = git_etc_gitconfig();
+	else if (given_config_file) {
+		if (!is_absolute_path(given_config_file) && prefix)
+			config_exclusive_filename = prefix_filename(prefix,
+								    strlen(prefix),
+								    argv[2]);
+		else
+			config_exclusive_filename = given_config_file;
 	}
 
-	switch (argc) {
-	case 2:
-		return get_value(argv[1], NULL);
-	case 3:
-		if (!strcmp(argv[1], "--unset"))
-			return git_config_set(argv[2], NULL);
-		else if (!strcmp(argv[1], "--unset-all"))
-			return git_config_set_multivar(argv[2], NULL, NULL, 1);
-		else if (!strcmp(argv[1], "--get"))
-			return get_value(argv[2], NULL);
-		else if (!strcmp(argv[1], "--get-all")) {
-			do_all = 1;
-			return get_value(argv[2], NULL);
-		} else if (!strcmp(argv[1], "--get-regexp")) {
-			show_keys = 1;
-			use_key_regexp = 1;
-			do_all = 1;
-			return get_value(argv[2], NULL);
-		} else {
-			value = normalize_value(argv[1], argv[2]);
-			return git_config_set(argv[1], value);
-		}
-	case 4:
-		if (!strcmp(argv[1], "--unset"))
-			return git_config_set_multivar(argv[2], NULL, argv[3], 0);
-		else if (!strcmp(argv[1], "--unset-all"))
-			return git_config_set_multivar(argv[2], NULL, argv[3], 1);
-		else if (!strcmp(argv[1], "--get"))
-			return get_value(argv[2], argv[3]);
-		else if (!strcmp(argv[1], "--get-all")) {
-			do_all = 1;
-			return get_value(argv[2], argv[3]);
-		} else if (!strcmp(argv[1], "--get-regexp")) {
-			show_keys = 1;
-			use_key_regexp = 1;
-			do_all = 1;
-			return get_value(argv[2], argv[3]);
-		} else if (!strcmp(argv[1], "--add")) {
-			value = normalize_value(argv[2], argv[3]);
-			return git_config_set_multivar(argv[2], value, "^$", 0);
-		} else if (!strcmp(argv[1], "--replace-all")) {
-			value = normalize_value(argv[2], argv[3]);
-			return git_config_set_multivar(argv[2], value, NULL, 1);
-		} else {
-			value = normalize_value(argv[1], argv[2]);
-			return git_config_set_multivar(argv[1], value, argv[3], 0);
-		}
-	case 5:
-		if (!strcmp(argv[1], "--replace-all")) {
-			value = normalize_value(argv[2], argv[3]);
-			return git_config_set_multivar(argv[2], value, argv[4], 1);
-		}
-	case 1:
-	default:
-		usage(git_config_set_usage);
+	if (end_null) {
+		term = '\0';
+		delim = '\n';
+		key_delim = '\n';
 	}
+
+	if (get_color_slot)
+	    actions |= ACTION_GET_COLOR;
+	if (get_colorbool_slot)
+	    actions |= ACTION_GET_COLORBOOL;
+
+	if (HAS_MULTI_BITS(actions)) {
+		error("only one action at a time.");
+		usage_with_options(builtin_config_usage, builtin_config_options);
+	}
+	if (actions == 0)
+		switch (argc) {
+		case 1: actions = ACTION_GET; break;
+		case 2: actions = ACTION_SET; break;
+		case 3: actions = ACTION_SET_ALL; break;
+		default:
+			usage_with_options(builtin_config_usage, builtin_config_options);
+		}
+
+	if (actions == ACTION_LIST) {
+		if (git_config(show_all_config, NULL) < 0) {
+			if (config_exclusive_filename)
+				die("unable to read config file %s: %s",
+				    config_exclusive_filename, strerror(errno));
+			else
+				die("error processing config file(s)");
+		}
+	}
+	else if (actions == ACTION_EDIT) {
+		git_config(git_default_config, NULL);
+		launch_editor(config_exclusive_filename ?
+			      config_exclusive_filename : git_path("config"),
+			      NULL, NULL);
+	}
+	else if (actions == ACTION_SET) {
+		check_argc(argc, 2, 2);
+		value = normalize_value(argv[0], argv[1]);
+		return git_config_set(argv[0], value);
+	}
+	else if (actions == ACTION_SET_ALL) {
+		check_argc(argc, 2, 3);
+		value = normalize_value(argv[0], argv[1]);
+		return git_config_set_multivar(argv[0], value, argv[2], 0);
+	}
+	else if (actions == ACTION_ADD) {
+		check_argc(argc, 2, 2);
+		value = normalize_value(argv[0], argv[1]);
+		return git_config_set_multivar(argv[0], value, "^$", 0);
+	}
+	else if (actions == ACTION_REPLACE_ALL) {
+		check_argc(argc, 2, 3);
+		value = normalize_value(argv[0], argv[1]);
+		return git_config_set_multivar(argv[0], value, argv[2], 1);
+	}
+	else if (actions == ACTION_GET) {
+		check_argc(argc, 1, 2);
+		return get_value(argv[0], argv[1]);
+	}
+	else if (actions == ACTION_GET_ALL) {
+		do_all = 1;
+		check_argc(argc, 1, 2);
+		return get_value(argv[0], argv[1]);
+	}
+	else if (actions == ACTION_GET_REGEXP) {
+		show_keys = 1;
+		use_key_regexp = 1;
+		do_all = 1;
+		check_argc(argc, 1, 2);
+		return get_value(argv[0], argv[1]);
+	}
+	else if (actions == ACTION_UNSET) {
+		check_argc(argc, 1, 2);
+		if (argc == 2)
+			return git_config_set_multivar(argv[0], NULL, argv[1], 0);
+		else
+			return git_config_set(argv[0], NULL);
+	}
+	else if (actions == ACTION_UNSET_ALL) {
+		check_argc(argc, 1, 2);
+		return git_config_set_multivar(argv[0], NULL, argv[1], 1);
+	}
+	else if (actions == ACTION_RENAME_SECTION) {
+		int ret;
+		check_argc(argc, 2, 2);
+		ret = git_config_rename_section(argv[0], argv[1]);
+		if (ret < 0)
+			return ret;
+		if (ret == 0)
+			die("No such section!");
+	}
+	else if (actions == ACTION_REMOVE_SECTION) {
+		int ret;
+		check_argc(argc, 1, 1);
+		ret = git_config_rename_section(argv[0], NULL);
+		if (ret < 0)
+			return ret;
+		if (ret == 0)
+			die("No such section!");
+	}
+	else if (actions == ACTION_GET_COLOR) {
+		get_color(argv[0]);
+	}
+	else if (actions == ACTION_GET_COLORBOOL) {
+		if (argc == 1)
+			stdout_is_tty = git_config_bool("command line", argv[0]);
+		else if (argc == 0)
+			stdout_is_tty = isatty(1);
+		return get_colorbool(argc != 0);
+	}
+
 	return 0;
 }
