@@ -530,9 +530,9 @@ Each entry is a cons of (SHORT-NAME . FULL-NAME)."
           (git-fileinfo->needs-refresh info) t)))
 
 (defun git-status-filenames-map (status func files &rest args)
-  "Apply FUNC to the status files names in the FILES list."
+  "Apply FUNC to the status files names in the FILES list.
+The list must be sorted."
   (when files
-    (setq files (sort files #'string-lessp))
     (let ((file (pop files))
           (node (ewoc-nth status 0)))
       (while (and file node)
@@ -545,7 +545,7 @@ Each entry is a cons of (SHORT-NAME . FULL-NAME)."
             (setq file (pop files))))))))
 
 (defun git-set-filenames-state (status files state)
-  "Set the state of a list of named files."
+  "Set the state of a list of named files. The list must be sorted"
   (when files
     (git-status-filenames-map status #'git-set-fileinfo-state files state)
     (unless state  ;; delete files whose state has been set to nil
@@ -750,6 +750,7 @@ Return the list of files that haven't been handled."
     (let (unmerged-files)
       (while (re-search-forward "[0-7]\\{6\\} [0-9a-f]\\{40\\} [123]\t\\([^\0]+\\)\0" nil t)
         (push (match-string 1) unmerged-files))
+      (setq unmerged-files (nreverse unmerged-files))  ;; assume it is sorted already
       (git-set-filenames-state status unmerged-files 'unmerged))))
 
 (defun git-get-exclude-files ()
@@ -770,17 +771,18 @@ Return the list of files that haven't been handled."
            (append options (mapcar (lambda (f) (concat "--exclude-from=" f)) exclude-files)))))
 
 (defun git-update-status-files (&optional files mark-files)
-  "Update the status of FILES from the index."
+  "Update the status of FILES from the index.
+The FILES list must be sorted."
   (unless git-status (error "Not in git-status buffer."))
   ;; set the needs-update flag on existing files
-  (if (setq files (sort files #'string-lessp))
+  (if files
       (git-status-filenames-map
        git-status (lambda (info) (setf (git-fileinfo->needs-update info) t)) files)
     (ewoc-map (lambda (info) (setf (git-fileinfo->needs-update info) t) nil) git-status)
     (git-call-process nil "update-index" "--refresh")
     (when git-show-uptodate
       (git-run-ls-files-cached git-status nil 'uptodate)))
-  (let* ((remaining-files
+  (let ((remaining-files
           (if (git-empty-db-p) ; we need some special handling for an empty db
 	      (git-run-ls-files-cached git-status files 'added)
             (git-run-diff-index git-status files))))
@@ -825,13 +827,13 @@ Return the list of files that haven't been handled."
       (list (ewoc-data (ewoc-locate git-status)))))
 
 (defun git-marked-files-state (&rest states)
-  "Return marked files that are in the specified states."
+  "Return a sorted list of marked files that are in the specified states."
   (let ((files (git-marked-files))
         result)
     (dolist (info files)
       (when (memq (git-fileinfo->state info) states)
         (push info result)))
-    result))
+    (nreverse result)))
 
 (defun git-refresh-files ()
   "Refresh all files that need it and clear the needs-refresh flag."
@@ -1066,7 +1068,9 @@ Return the list of files that haven't been handled."
     (unless files
       (push (file-relative-name (read-file-name "File to remove: " nil nil t)) files))
     (if (yes-or-no-p
-         (format "Remove %d file%s? " (length files) (if (> (length files) 1) "s" "")))
+         (if (cdr files)
+             (format "Remove %d files? " (length files))
+           (format "Remove %s? " (car files))))
         (progn
           (dolist (name files)
             (ignore-errors
@@ -1085,7 +1089,9 @@ Return the list of files that haven't been handled."
         added modified)
     (when (and files
                (yes-or-no-p
-                (format "Revert %d file%s? " (length files) (if (> (length files) 1) "s" ""))))
+                (if (cdr files)
+                    (format "Revert %d files? " (length files))
+                  (format "Revert %s? " (git-fileinfo->name (car files))))))
       (dolist (info files)
         (case (git-fileinfo->state info)
           ('added (push (git-fileinfo->name info) added))
@@ -1101,13 +1107,14 @@ Return the list of files that haven't been handled."
                  (or (not added)
                      (apply 'git-call-process-display-error "update-index" "--force-remove" "--" added))
                  (or (not modified)
-                     (apply 'git-call-process-display-error "checkout" "HEAD" modified)))))
-        (git-update-status-files (append added modified))
+                     (apply 'git-call-process-display-error "checkout" "HEAD" modified))))
+            (names (git-get-filenames files)))
+        (git-update-status-files names)
         (when ok
           (dolist (file modified)
             (let ((buffer (get-file-buffer file)))
               (when buffer (with-current-buffer buffer (revert-buffer t t t)))))
-          (git-success-message "Reverted" (git-get-filenames files)))))))
+          (git-success-message "Reverted" names))))))
 
 (defun git-resolve-file ()
   "Resolve conflicts in marked file(s)."
@@ -1365,14 +1372,14 @@ Return the list of files that haven't been handled."
                           (mapconcat #'identity msg "\n"))))
 
 (defun git-get-commit-files (commit)
-  "Retrieve the list of files modified by COMMIT."
+  "Retrieve a sorted list of files modified by COMMIT."
   (let (files)
     (with-temp-buffer
       (git-call-process t "diff-tree" "-m" "-r" "-z" "--name-only" "--no-commit-id" "--root" commit)
       (goto-char (point-min))
       (while (re-search-forward "\\([^\0]*\\)\0" nil t 1)
         (push (match-string 1) files)))
-    files))
+    (sort files #'string-lessp)))
 
 (defun git-read-commit-name (prompt &optional default)
   "Ask for a commit name, with completion for local branch, remote branch and tag."
