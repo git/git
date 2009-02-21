@@ -117,9 +117,14 @@ __git_ps1 ()
 
 		local w
 		local i
+		local c
 
 		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
-			b="GIT_DIR!"
+			if [ "true" = "$(git config --bool core.bare 2>/dev/null)" ]; then
+				c="BARE:"
+			else
+				b="GIT_DIR!"
+			fi
 		elif [ "true" = "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]; then
 			if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
 				if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
@@ -133,12 +138,6 @@ __git_ps1 ()
 					fi
 				fi
 			fi
-		fi
-
-		local c
-
-		if [ "true" = "$(git config --bool core.bare 2>/dev/null)" ]; then
-			c="BARE:"
 		fi
 
 		if [ -n "$b" ]; then
