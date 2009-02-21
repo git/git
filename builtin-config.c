@@ -374,6 +374,7 @@ int cmd_config(int argc, const char **argv, const char *unused_prefix)
 		}
 
 	if (actions == ACTION_LIST) {
+		check_argc(argc, 0, 0);
 		if (git_config(show_all_config, NULL) < 0) {
 			if (config_exclusive_filename)
 				die("unable to read config file %s: %s",
@@ -383,6 +384,7 @@ int cmd_config(int argc, const char **argv, const char *unused_prefix)
 		}
 	}
 	else if (actions == ACTION_EDIT) {
+		check_argc(argc, 0, 0);
 		git_config(git_default_config, NULL);
 		launch_editor(config_exclusive_filename ?
 			      config_exclusive_filename : git_path("config"),
