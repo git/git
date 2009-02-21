@@ -135,11 +135,17 @@ __git_ps1 ()
 			fi
 		fi
 
+		local c
+
+		if [ "true" = "$(git config --bool core.bare 2>/dev/null)" ]; then
+			c="BARE:"
+		fi
+
 		if [ -n "$b" ]; then
 			if [ -n "${1-}" ]; then
-				printf "$1" "${b##refs/heads/}$w$i$r"
+				printf "$1" "$c${b##refs/heads/}$w$i$r"
 			else
-				printf " (%s)" "${b##refs/heads/}$w$i$r"
+				printf " (%s)" "$c${b##refs/heads/}$w$i$r"
 			fi
 		fi
 	fi
