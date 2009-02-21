@@ -178,6 +178,7 @@ static char *normalize_value(const char *key, const char *value)
 
 static int get_color_found;
 static const char *get_color_slot;
+static const char *get_colorbool_slot;
 static char parsed_color[COLOR_MAXLEN];
 
 static int git_get_color_config(const char *var, const char *value, void *cb)
@@ -231,7 +232,7 @@ static int get_diff_color_found;
 static int git_get_colorbool_config(const char *var, const char *value,
 		void *cb)
 {
-	if (!strcmp(var, get_color_slot)) {
+	if (!strcmp(var, get_colorbool_slot)) {
 		get_colorbool_found =
 			git_config_colorbool(var, value, stdout_is_tty);
 	}
@@ -263,11 +264,11 @@ static int get_colorbool(int argc, const char **argv)
 		usage(git_config_set_usage);
 	get_colorbool_found = -1;
 	get_diff_color_found = -1;
-	get_color_slot = argv[0];
+	get_colorbool_slot = argv[0];
 	git_config(git_get_colorbool_config, NULL);
 
 	if (get_colorbool_found < 0) {
-		if (!strcmp(get_color_slot, "color.diff"))
+		if (!strcmp(get_colorbool_slot, "color.diff"))
 			get_colorbool_found = get_diff_color_found;
 		if (get_colorbool_found < 0)
 			get_colorbool_found = git_use_color_default;
@@ -281,11 +282,11 @@ static int get_colorbool(int argc, const char **argv)
 	}
 }
 
-int cmd_config(int argc, const char **argv, const char *prefix)
+int cmd_config(int argc, const char **argv, const char *unused_prefix)
 {
 	int nongit;
 	char *value;
-	const char *file = setup_git_directory_gently(&nongit);
+	const char *prefix = setup_git_directory_gently(&nongit);
 
 	config_exclusive_filename = getenv(CONFIG_ENVIRONMENT);
 
@@ -299,10 +300,13 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l")) {
 			if (argc != 2)
 				usage(git_config_set_usage);
-			if (git_config(show_all_config, NULL) < 0 &&
-					file && errno)
-				die("unable to read config file %s: %s", file,
-				    strerror(errno));
+			if (git_config(show_all_config, NULL) < 0) {
+				if (config_exclusive_filename)
+					die("unable to read config file %s: %s",
+					    config_exclusive_filename, strerror(errno));
+				else
+					die("error processing config file(s)");
+			}
 			return 0;
 		}
 		else if (!strcmp(argv[1], "--global")) {
@@ -319,12 +323,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "--file") || !strcmp(argv[1], "-f")) {
 			if (argc < 3)
 				usage(git_config_set_usage);
-			if (!is_absolute_path(argv[2]) && file)
-				file = prefix_filename(file, strlen(file),
-						       argv[2]);
+			if (!is_absolute_path(argv[2]) && prefix)
+				config_exclusive_filename = prefix_filename(prefix,
+									    strlen(prefix),
+									    argv[2]);
 			else
-				file = argv[2];
-			config_exclusive_filename = file;
+				config_exclusive_filename = argv[2];
 			argc--;
 			argv++;
 		}
