@@ -19,11 +19,10 @@ static int seen;
 static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
-static enum { T_RAW, T_INT, T_BOOL, T_BOOL_OR_INT } type = T_RAW;
 
 static int use_global_config, use_system_config;
 static const char *given_config_file;
-static int actions;
+static int actions, types;
 static const char *get_color_slot, *get_colorbool_slot;
 static int end_null;
 
@@ -42,6 +41,10 @@ static int end_null;
 #define ACTION_SET_ALL (1<<12)
 #define ACTION_GET_COLOR (1<<13)
 #define ACTION_GET_COLORBOOL (1<<14)
+
+#define TYPE_BOOL (1<<0)
+#define TYPE_INT (1<<1)
+#define TYPE_BOOL_OR_INT (1<<2)
 
 static struct option builtin_config_options[] = {
 	OPT_GROUP("Config file location"),
@@ -63,9 +66,9 @@ static struct option builtin_config_options[] = {
 	OPT_STRING(0, "get-color", &get_color_slot, "slot", "find the color configured: [default]"),
 	OPT_STRING(0, "get-colorbool", &get_colorbool_slot, "slot", "find the color setting: [stdout-is-tty]"),
 	OPT_GROUP("Type"),
-	OPT_SET_INT(0, "bool", &type, "value is \"true\" or \"false\"", T_BOOL),
-	OPT_SET_INT(0, "int", &type, "value is decimal number", T_INT),
-	OPT_SET_INT(0, "bool-or-int", &type, NULL, T_BOOL_OR_INT),
+	OPT_BIT(0, "bool", &types, "value is \"true\" or \"false\"", TYPE_BOOL),
+	OPT_BIT(0, "int", &types, "value is decimal number", TYPE_INT),
+	OPT_BIT(0, "bool-or-int", &types, NULL, TYPE_BOOL_OR_INT),
 	OPT_GROUP("Other"),
 	OPT_BOOLEAN('z', "null", &end_null, "terminate values with NUL byte"),
 	OPT_END(),
@@ -109,11 +112,11 @@ static int show_config(const char *key_, const char *value_, void *cb)
 	}
 	if (seen && !do_all)
 		dup_error = 1;
-	if (type == T_INT)
+	if (types == TYPE_INT)
 		sprintf(value, "%d", git_config_int(key_, value_?value_:""));
-	else if (type == T_BOOL)
+	else if (types == TYPE_BOOL)
 		vptr = git_config_bool(key_, value_) ? "true" : "false";
-	else if (type == T_BOOL_OR_INT) {
+	else if (types == TYPE_BOOL_OR_INT) {
 		int is_bool, v;
 		v = git_config_bool_or_int(key_, value_, &is_bool);
 		if (is_bool)
@@ -212,18 +215,18 @@ static char *normalize_value(const char *key, const char *value)
 	if (!value)
 		return NULL;
 
-	if (type == T_RAW)
+	if (types == 0)
 		normalized = xstrdup(value);
 	else {
 		normalized = xmalloc(64);
-		if (type == T_INT) {
+		if (types == TYPE_INT) {
 			int v = git_config_int(key, value);
 			sprintf(normalized, "%d", v);
 		}
-		else if (type == T_BOOL)
+		else if (types == TYPE_BOOL)
 			sprintf(normalized, "%s",
 				git_config_bool(key, value) ? "true" : "false");
-		else if (type == T_BOOL_OR_INT) {
+		else if (types == TYPE_BOOL_OR_INT) {
 			int is_bool, v;
 			v = git_config_bool_or_int(key, value, &is_bool);
 			if (!is_bool)
@@ -345,6 +348,11 @@ int cmd_config(int argc, const char **argv, const char *unused_prefix)
 		term = '\0';
 		delim = '\n';
 		key_delim = '\n';
+	}
+
+	if (HAS_MULTI_BITS(types)) {
+		error("only one type at a time.");
+		usage_with_options(builtin_config_usage, builtin_config_options);
 	}
 
 	if (get_color_slot)
