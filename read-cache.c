@@ -1528,13 +1528,14 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 	return ce_write(c, fd, ondisk, size);
 }
 
-int write_index(const struct index_state *istate, int newfd)
+int write_index(struct index_state *istate, int newfd)
 {
 	git_SHA_CTX c;
 	struct cache_header hdr;
 	int i, err, removed, extended;
 	struct cache_entry **cache = istate->cache;
 	int entries = istate->cache_nr;
+	struct stat st;
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
@@ -1578,7 +1579,14 @@ int write_index(const struct index_state *istate, int newfd)
 		if (err)
 			return -1;
 	}
-	return ce_flush(&c, newfd);
+
+	if (ce_flush(&c, newfd) || fstat(newfd, &st))
+		return -1;
+	istate->timestamp.sec = (unsigned int)st.st_ctime;
+#ifdef USE_NSEC
+	istate->timestamp.nsec = (unsigned int)st.st_ctim.tv_nsec;
+#endif
+	return 0;
 }
 
 /*
