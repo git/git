@@ -156,10 +156,7 @@ if ($@) {
 # Behavior modification variables
 my ($quiet, $dry_run) = (0, 0);
 my $format_patch;
-my $compose_filename = ($repo ?
-	tempfile(".gitsendemail.msg.XXXXXX", DIR => $repo->repo_path()) :
-	tempfile(".gitsendemail.msg.XXXXXX", DIR => "."))[1];
-
+my $compose_filename;
 
 # Handle interactive edition of files.
 my $multiedit;
@@ -222,11 +219,13 @@ sub signal_handler {
 	system "stty echo";
 
 	# tmp files from --compose
-	if (-e $compose_filename) {
-		print "'$compose_filename' contains an intermediate version of the email you were composing.\n";
-	}
-	if (-e ($compose_filename . ".final")) {
-		print "'$compose_filename.final' contains the composed email.\n"
+	if (defined $compose_filename) {
+		if (-e $compose_filename) {
+			print "'$compose_filename' contains an intermediate version of the email you were composing.\n";
+		}
+		if (-e ($compose_filename . ".final")) {
+			print "'$compose_filename.final' contains the composed email.\n"
+		}
 	}
 
 	exit;
@@ -505,6 +504,9 @@ sub get_patch_subject($) {
 if ($compose) {
 	# Note that this does not need to be secure, but we will make a small
 	# effort to have it be unique
+	$compose_filename = ($repo ?
+		tempfile(".gitsendemail.msg.XXXXXX", DIR => $repo->repo_path()) :
+		tempfile(".gitsendemail.msg.XXXXXX", DIR => "."))[1];
 	open(C,">",$compose_filename)
 		or die "Failed to open for writing $compose_filename: $!";
 
