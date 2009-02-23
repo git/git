@@ -121,4 +121,6 @@ test_expect_success 'import from a CVS working tree' '
 
 '
 
+test_expect_success 'test entire HEAD' 'test_cmp_branch_tree master'
+
 test_done
