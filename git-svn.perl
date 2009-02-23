@@ -2421,6 +2421,7 @@ sub find_parent_branch {
 			# do_switch works with svn/trunk >= r22312, but that
 			# is not included with SVN 1.4.3 (the latest version
 			# at the moment), so we can't rely on it
+			$self->{last_rev} = $r0;
 			$self->{last_commit} = $parent;
 			$ed = SVN::Git::Fetcher->new($self, $gs->{path});
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
