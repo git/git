@@ -6,12 +6,12 @@ test_description='git cvsimport basic tests'
 CVSROOT=$(pwd)/cvsroot
 export CVSROOT
 
-test_expect_success 'setup cvsroot' 'cvs init'
+test_expect_success 'setup cvsroot' '$CVS init'
 
 test_expect_success 'setup a cvs module' '
 
 	mkdir "$CVSROOT/module" &&
-	cvs co -d module-cvs module &&
+	$CVS co -d module-cvs module &&
 	cd module-cvs &&
 	cat <<EOF >o_fortuna &&
 O Fortuna
@@ -30,13 +30,13 @@ egestatem,
 potestatem
 dissolvit ut glaciem.
 EOF
-	cvs add o_fortuna &&
+	$CVS add o_fortuna &&
 	cat <<EOF >message &&
 add "O Fortuna" lyrics
 
 These public domain lyrics make an excellent sample text.
 EOF
-	cvs commit -F message &&
+	$CVS commit -F message &&
 	cd ..
 '
 
@@ -74,7 +74,7 @@ translate to English
 
 My Latin is terrible.
 EOF
-	cvs commit -F message &&
+	$CVS commit -F message &&
 	cd ..
 '
 
@@ -92,8 +92,8 @@ test_expect_success 'update cvs module' '
 
 	cd module-cvs &&
 		echo 1 >tick &&
-		cvs add tick &&
-		cvs commit -m 1
+		$CVS add tick &&
+		$CVS commit -m 1
 	cd ..
 
 '
@@ -111,7 +111,7 @@ test_expect_success 'cvsimport.module config works' '
 
 test_expect_success 'import from a CVS working tree' '
 
-	cvs co -d import-from-wt module &&
+	$CVS co -d import-from-wt module &&
 	cd import-from-wt &&
 		git cvsimport -a -z0 &&
 		echo 1 >expect &&
