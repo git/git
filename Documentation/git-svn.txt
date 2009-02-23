@@ -169,6 +169,10 @@ and have no uncommitted changes.
 	reused if a user is later given access to an alternate transport
 	method (e.g. `svn+ssh://` or `https://`) for commit.
 
+config key: svn-remote.<name>.commiturl
+
+config key: svn.commiturl (overwrites all svn-remote.<name>.commiturl options)
+
 	Using this option for any other purpose (don't ask)
 	is very strongly discouraged.
 --

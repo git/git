@@ -438,7 +438,17 @@ sub cmd_dcommit {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history.\nPerhaps the repository is empty.";
 	}
-	$url = defined $_commit_url ? $_commit_url : $gs->full_url;
+
+	if (defined $_commit_url) {
+		$url = $_commit_url;
+	} else {
+		$url = eval { command_oneline('config', '--get',
+			      "svn-remote.$gs->{repo_id}.commiturl") };
+		if (!$url) {
+			$url = $gs->full_url
+		}
+	}
+
 	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
 		print "Committing to $url ...\n";
