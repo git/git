@@ -18,6 +18,10 @@ configuration (see linkgit:git-config[1]).
 This should make "--pretty=oneline" a whole lot more readable for
 people using 80-column terminals.
 
+--oneline::
+	This is a shorthand for "--pretty=oneline --abbrev-commit"
+	used together.
+
 --encoding[=<encoding>]::
 	The commit objects record the encoding used for the log message
 	in their encoding header; this option can be used to tell the
