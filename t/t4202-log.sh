@@ -37,6 +37,46 @@ test_expect_success setup '
 
 '
 
+printf "sixth\nfifth\nfourth\nthird\nsecond\ninitial" > expect
+test_expect_success 'pretty' '
+
+	git log --pretty="format:%s" > actual &&
+	test_cmp expect actual
+'
+
+printf "sixth\nfifth\nfourth\nthird\nsecond\ninitial\n" > expect
+test_expect_success 'pretty (tformat)' '
+
+	git log --pretty="tformat:%s" > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pretty (shortcut)' '
+
+	git log --pretty="%s" > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format' '
+
+	git log --format="%s" > actual &&
+	test_cmp expect actual
+'
+
+cat > expect << EOF
+804a787 sixth
+394ef78 fifth
+5d31159 fourth
+2fbe8c0 third
+f7dab8e second
+3a2fdcb initial
+EOF
+test_expect_success 'oneline' '
+
+	git log --oneline > actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'diff-filter=A' '
 
 	actual=$(git log --pretty="format:%s" --diff-filter=A HEAD) &&
