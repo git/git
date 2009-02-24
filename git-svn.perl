@@ -438,7 +438,17 @@ sub cmd_dcommit {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history.\nPerhaps the repository is empty.";
 	}
-	$url = defined $_commit_url ? $_commit_url : $gs->full_url;
+
+	if (defined $_commit_url) {
+		$url = $_commit_url;
+	} else {
+		$url = eval { command_oneline('config', '--get',
+			      "svn-remote.$gs->{repo_id}.commiturl") };
+		if (!$url) {
+			$url = $gs->full_url
+		}
+	}
+
 	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
 		print "Committing to $url ...\n";
@@ -670,7 +680,11 @@ sub cmd_create_ignore {
 	$gs->prop_walk($gs->{path}, $r, sub {
 		my ($gs, $path, $props) = @_;
 		# $path is of the form /path/to/dir/
-		my $ignore = '.' . $path . '.gitignore';
+		$path = '.' . $path;
+		# SVN can have attributes on empty directories,
+		# which git won't track
+		mkpath([$path]) unless -d $path;
+		my $ignore = $path . '.gitignore';
 		my $s = $props->{'svn:ignore'} or return;
 		open(GITIGNORE, '>', $ignore)
 		  or fatal("Failed to open `$ignore' for writing: $!");
@@ -2417,6 +2431,7 @@ sub find_parent_branch {
 			# do_switch works with svn/trunk >= r22312, but that
 			# is not included with SVN 1.4.3 (the latest version
 			# at the moment), so we can't rely on it
+			$self->{last_rev} = $r0;
 			$self->{last_commit} = $parent;
 			$ed = SVN::Git::Fetcher->new($self, $gs->{path});
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
