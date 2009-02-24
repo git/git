@@ -1014,6 +1014,11 @@ _git_log ()
 			" "" "${cur##--pretty=}"
 		return
 		;;
+	--format=*)
+		__gitcomp "$__git_log_pretty_formats
+			" "" "${cur##--format=}"
+		return
+		;;
 	--date=*)
 		__gitcomp "
 			relative iso8601 rfc2822 short local default
@@ -1029,7 +1034,7 @@ _git_log ()
 			--follow
 			--abbrev-commit --abbrev=
 			--relative-date --date=
-			--pretty=
+			--pretty= --format= --oneline
 			--cherry-pick
 			--graph
 			--decorate
@@ -1541,8 +1546,13 @@ _git_show ()
 			" "" "${cur##--pretty=}"
 		return
 		;;
+	--format=*)
+		__gitcomp "$__git_log_pretty_formats
+			" "" "${cur##--format=}"
+		return
+		;;
 	--*)
-		__gitcomp "--pretty=
+		__gitcomp "--pretty= --format=
 			$__git_diff_common_options
 			"
 		return
