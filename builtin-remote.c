@@ -21,6 +21,7 @@ static const char * const builtin_remote_usage[] = {
 
 #define GET_REF_STATES (1<<0)
 #define GET_HEAD_NAMES (1<<1)
+#define GET_PUSH_REF_STATES (1<<2)
 
 static int verbose;
 
@@ -220,7 +221,7 @@ static void read_branches(void)
 
 struct ref_states {
 	struct remote *remote;
-	struct string_list new, stale, tracked, heads;
+	struct string_list new, stale, tracked, heads, push;
 	int queried;
 };
 
@@ -272,6 +273,112 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	for_each_ref(handle_one_branch, states);
 	sort_string_list(&states->stale);
 
+	return 0;
+}
+
+struct push_info {
+	char *dest;
+	int forced;
+	enum {
+		PUSH_STATUS_CREATE = 0,
+		PUSH_STATUS_DELETE,
+		PUSH_STATUS_UPTODATE,
+		PUSH_STATUS_FASTFORWARD,
+		PUSH_STATUS_OUTOFDATE,
+		PUSH_STATUS_NOTQUERIED,
+	} status;
+};
+
+static int get_push_ref_states(const struct ref *remote_refs,
+	struct ref_states *states)
+{
+	struct remote *remote = states->remote;
+	struct ref *ref, *local_refs, *push_map, **push_tail;
+	if (remote->mirror)
+		return 0;
+
+	local_refs = get_local_heads();
+	ref = push_map = copy_ref_list(remote_refs);
+	while (ref->next)
+		ref = ref->next;
+	push_tail = &ref->next;
+
+	match_refs(local_refs, push_map, &push_tail, remote->push_refspec_nr,
+		   remote->push_refspec, MATCH_REFS_NONE);
+
+	states->push.strdup_strings = 1;
+	for (ref = push_map; ref; ref = ref->next) {
+		struct string_list_item *item;
+		struct push_info *info;
+
+		if (!ref->peer_ref)
+			continue;
+		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
+
+		item = string_list_append(abbrev_branch(ref->peer_ref->name),
+					  &states->push);
+		item->util = xcalloc(sizeof(struct push_info), 1);
+		info = item->util;
+		info->forced = ref->force;
+		info->dest = xstrdup(abbrev_branch(ref->name));
+
+		if (is_null_sha1(ref->new_sha1)) {
+			info->status = PUSH_STATUS_DELETE;
+		} else if (!hashcmp(ref->old_sha1, ref->new_sha1))
+			info->status = PUSH_STATUS_UPTODATE;
+		else if (is_null_sha1(ref->old_sha1))
+			info->status = PUSH_STATUS_CREATE;
+		else if (has_sha1_file(ref->old_sha1) &&
+			 ref_newer(ref->new_sha1, ref->old_sha1))
+			info->status = PUSH_STATUS_FASTFORWARD;
+		else
+			info->status = PUSH_STATUS_OUTOFDATE;
+		// ref->peer_ref = NULL; /* local ref which is freed below */
+	}
+	free_refs(local_refs);
+	free_refs(push_map);
+	return 0;
+}
+
+static int get_push_ref_states_noquery(struct ref_states *states)
+{
+	int i;
+	struct remote *remote = states->remote;
+	struct string_list_item *item;
+	struct push_info *info;
+
+	if (remote->mirror)
+		return 0;
+
+	states->push.strdup_strings = 1;
+	if (!remote->push_refspec_nr) {
+		item = string_list_append("(matching)", &states->push);
+		info = item->util = xcalloc(sizeof(struct push_info), 1);
+		info->status = PUSH_STATUS_NOTQUERIED;
+		info->dest = xstrdup(item->string);
+	}
+	for (i = 0; i < remote->push_refspec_nr; i++) {
+		struct refspec *spec = remote->push + i;
+		char buf[PATH_MAX];
+		if (spec->matching)
+			item = string_list_append("(matching)", &states->push);
+		else if (spec->pattern) {
+			snprintf(buf, (sizeof(buf)), "%s*", spec->src);
+			item = string_list_append(buf, &states->push);
+			snprintf(buf, (sizeof(buf)), "%s*", spec->dst);
+		} else if (strlen(spec->src))
+			item = string_list_append(spec->src, &states->push);
+		else
+			item = string_list_append("(delete)", &states->push);
+
+		info = item->util = xcalloc(sizeof(struct push_info), 1);
+		info->forced = spec->force;
+		info->status = PUSH_STATUS_NOTQUERIED;
+		if (spec->pattern)
+			info->dest = xstrdup(buf);
+		else
+			info->dest = xstrdup(spec->dst ? spec->dst : item->string);
+	}
 	return 0;
 }
 
@@ -644,12 +751,20 @@ static int rm(int argc, const char **argv)
 	return result;
 }
 
+void clear_push_info(void *util, const char *string)
+{
+	struct push_info *info = util;
+	free(info->dest);
+	free(info);
+}
+
 static void free_remote_ref_states(struct ref_states *states)
 {
 	string_list_clear(&states->new, 0);
 	string_list_clear(&states->stale, 0);
 	string_list_clear(&states->tracked, 0);
 	string_list_clear(&states->heads, 0);
+	string_list_clear_func(&states->push, clear_push_info);
 }
 
 static int append_ref_to_tracked_list(const char *refname,
@@ -693,9 +808,12 @@ static int get_remote_ref_states(const char *name,
 			get_ref_states(remote_refs, states);
 		if (query & GET_HEAD_NAMES)
 			get_head_names(remote_refs, states);
+		if (query & GET_PUSH_REF_STATES)
+			get_push_ref_states(remote_refs, states);
 	} else {
 		for_each_ref(append_ref_to_tracked_list, states);
 		sort_string_list(&states->tracked);
+		get_push_ref_states_noquery(states);
 	}
 
 	return 0;
@@ -704,7 +822,7 @@ static int get_remote_ref_states(const char *name,
 struct show_info {
 	struct string_list *list;
 	struct ref_states *states;
-	int width;
+	int width, width2;
 	int any_rebase;
 };
 
@@ -799,6 +917,58 @@ int show_local_info_item(struct string_list_item *item, void *cb_data)
 	return 0;
 }
 
+int add_push_to_show_info(struct string_list_item *push_item, void *cb_data)
+{
+	struct show_info *show_info = cb_data;
+	struct push_info *push_info = push_item->util;
+	struct string_list_item *item;
+	int n;
+	if ((n = strlen(push_item->string)) > show_info->width)
+		show_info->width = n;
+	if ((n = strlen(push_info->dest)) > show_info->width2)
+		show_info->width2 = n;
+	item = string_list_append(push_item->string, show_info->list);
+	item->util = push_item->util;
+	return 0;
+}
+
+int show_push_info_item(struct string_list_item *item, void *cb_data)
+{
+	struct show_info *show_info = cb_data;
+	struct push_info *push_info = item->util;
+	char *src = item->string, *status = NULL;
+
+	switch (push_info->status) {
+	case PUSH_STATUS_CREATE:
+		status = "create";
+		break;
+	case PUSH_STATUS_DELETE:
+		status = "delete";
+		src = "(none)";
+		break;
+	case PUSH_STATUS_UPTODATE:
+		status = "up to date";
+		break;
+	case PUSH_STATUS_FASTFORWARD:
+		status = "fast forwardable";
+		break;
+	case PUSH_STATUS_OUTOFDATE:
+		status = "local out of date";
+		break;
+	case PUSH_STATUS_NOTQUERIED:
+		break;
+	}
+	if (status)
+		printf("    %-*s %s to %-*s (%s)\n", show_info->width, src,
+			push_info->forced ? "forces" : "pushes",
+			show_info->width2, push_info->dest, status);
+	else
+		printf("    %-*s %s to %s\n", show_info->width, src,
+			push_info->forced ? "forces" : "pushes",
+			push_info->dest);
+	return 0;
+}
+
 static int show(int argc, const char **argv)
 {
 	int no_query = 0, result = 0, query_flag = 0;
@@ -817,7 +987,7 @@ static int show(int argc, const char **argv)
 		return show_all();
 
 	if (!no_query)
-		query_flag = (GET_REF_STATES | GET_HEAD_NAMES);
+		query_flag = (GET_REF_STATES | GET_HEAD_NAMES | GET_PUSH_REF_STATES);
 
 	memset(&states, 0, sizeof(states));
 	memset(&info, 0, sizeof(info));
@@ -867,19 +1037,18 @@ static int show(int argc, const char **argv)
 		string_list_clear(info.list, 0);
 
 		/* git push info */
-		if (states.remote->push_refspec_nr) {
-			printf("  Local branch%s pushed with 'git push'\n",
-				states.remote->push_refspec_nr > 1 ?
-					"es" : "");
-			for (i = 0; i < states.remote->push_refspec_nr; i++) {
-				struct refspec *spec = states.remote->push + i;
-				printf("    %s%s%s%s\n",
-				       spec->force ? "+" : "",
-				       abbrev_branch(spec->src),
-				       spec->dst ? ":" : "",
-				       spec->dst ? abbrev_branch(spec->dst) : "");
-			}
-		}
+		if (states.remote->mirror)
+			printf("  Local refs will be mirrored by 'git push'\n");
+
+		info.width = info.width2 = 0;
+		for_each_string_list(add_push_to_show_info, &states.push, &info);
+		sort_string_list(info.list);
+		if (info.list->nr)
+			printf("  Local ref%s configured for 'git push'%s:\n",
+				info.list->nr > 1 ? "s" : "",
+				no_query ? " (status not queried)" : "");
+		for_each_string_list(show_push_info_item, info.list, &info);
+		string_list_clear(info.list, 0);
 
 		free_remote_ref_states(&states);
 	}

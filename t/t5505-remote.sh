@@ -141,25 +141,34 @@ cat > test/expect << EOF
     master new (next fetch will store in remotes/origin)
     side   tracked
   Local branches configured for 'git pull':
+    ahead    merges with remote master
     master   merges with remote master
     octopus  merges with remote topic-a
                 and with remote topic-b
                 and with remote topic-c
     rebase  rebases onto remote master
-  Local branches pushed with 'git push'
-    master:upstream
-    +refs/tags/lastbackup
+  Local refs configured for 'git push':
+    master pushes to master   (local out of date)
+    master pushes to upstream (create)
 * remote two
   URL: ../two
   HEAD branch (remote HEAD is ambiguous, may be one of the following):
     another
     master
+  Local refs configured for 'git push':
+    ahead  forces to master  (fast forwardable)
+    master pushes to another (up to date)
 EOF
 
 test_expect_success 'show' '
 	(cd test &&
 	 git config --add remote.origin.fetch refs/heads/master:refs/heads/upstream &&
 	 git fetch &&
+	 git checkout -b ahead origin/master &&
+	 echo 1 >> file &&
+	 test_tick &&
+	 git commit -m update file &&
+	 git checkout master &&
 	 git branch --track octopus origin/master &&
 	 git branch --track rebase origin/master &&
 	 git branch -d -r origin/master &&
@@ -170,8 +179,11 @@ test_expect_success 'show' '
 	  echo 1 > file &&
 	  test_tick &&
 	  git commit -m update file) &&
-	 git config remote.origin.push refs/heads/master:refs/heads/upstream &&
+	 git config --add remote.origin.push : &&
+	 git config --add remote.origin.push refs/heads/master:refs/heads/upstream &&
 	 git config --add remote.origin.push +refs/tags/lastbackup &&
+	 git config --add remote.two.push +refs/heads/ahead:refs/heads/master &&
+	 git config --add remote.two.push refs/heads/master:refs/heads/another &&
 	 git remote show origin two > output &&
 	 git branch -d rebase octopus &&
 	 test_cmp expect output)
@@ -184,11 +196,13 @@ cat > test/expect << EOF
   Remote branches: (status not queried)
     master
     side
-  Local branch configured for 'git pull':
+  Local branches configured for 'git pull':
+    ahead  merges with remote master
     master merges with remote master
-  Local branches pushed with 'git push'
-    master:upstream
-    +refs/tags/lastbackup
+  Local refs configured for 'git push' (status not queried):
+    (matching)           pushes to (matching)
+    refs/heads/master    pushes to refs/heads/upstream
+    refs/tags/lastbackup forces to refs/tags/lastbackup
 EOF
 
 test_expect_success 'show -n' '
