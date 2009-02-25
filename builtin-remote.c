@@ -143,7 +143,7 @@ static int add(int argc, const char **argv)
 }
 
 struct branch_info {
-	char *remote;
+	char *remote_name;
 	struct string_list merge;
 };
 
@@ -182,9 +182,9 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 			item->util = xcalloc(sizeof(struct branch_info), 1);
 		info = item->util;
 		if (type == REMOTE) {
-			if (info->remote)
+			if (info->remote_name)
 				warning("more than one branch.%s", key);
-			info->remote = xstrdup(value);
+			info->remote_name = xstrdup(value);
 		} else {
 			char *space = strchr(value, ' ');
 			value = abbrev_branch(value);
@@ -206,7 +206,6 @@ static void read_branches(void)
 	if (branch_list.nr)
 		return;
 	git_config(config_read_branches, NULL);
-	sort_string_list(&branch_list);
 }
 
 struct ref_states {
@@ -238,13 +237,14 @@ static int handle_one_branch(const char *refname,
 	return 0;
 }
 
-static int get_ref_states(const struct ref *ref, struct ref_states *states)
+static int get_ref_states(const struct ref *remote_refs, struct ref_states *states)
 {
 	struct ref *fetch_map = NULL, **tail = &fetch_map;
+	struct ref *ref;
 	int i;
 
 	for (i = 0; i < states->remote->fetch_refspec_nr; i++)
-		if (get_fetch_map(ref, states->remote->fetch + i, &tail, 1))
+		if (get_fetch_map(remote_refs, states->remote->fetch + i, &tail, 1))
 			die("Could not get fetch map for refspec %s",
 				states->remote->fetch_refspec[i]);
 
@@ -459,7 +459,7 @@ static int mv(int argc, const char **argv)
 	for (i = 0; i < branch_list.nr; i++) {
 		struct string_list_item *item = branch_list.items + i;
 		struct branch_info *info = item->util;
-		if (info->remote && !strcmp(info->remote, rename.old)) {
+		if (info->remote_name && !strcmp(info->remote_name, rename.old)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.remote", item->string);
 			if (git_config_set(buf.buf, rename.new)) {
@@ -569,7 +569,7 @@ static int rm(int argc, const char **argv)
 	for (i = 0; i < branch_list.nr; i++) {
 		struct string_list_item *item = branch_list.items + i;
 		struct branch_info *info = item->util;
-		if (info->remote && !strcmp(info->remote, remote->name)) {
+		if (info->remote_name && !strcmp(info->remote_name, remote->name)) {
 			const char *keys[] = { "remote", "merge", NULL }, **k;
 			for (k = keys; *k; k++) {
 				strbuf_reset(&buf);
@@ -637,7 +637,7 @@ static int get_remote_ref_states(const char *name,
 				 int query)
 {
 	struct transport *transport;
-	const struct ref *ref;
+	const struct ref *remote_refs;
 
 	states->remote = remote_get(name);
 	if (!states->remote)
@@ -648,10 +648,10 @@ static int get_remote_ref_states(const char *name,
 	if (query) {
 		transport = transport_get(NULL, states->remote->url_nr > 0 ?
 			states->remote->url[0] : NULL);
-		ref = transport_get_remote_refs(transport);
+		remote_refs = transport_get_remote_refs(transport);
 		transport_disconnect(transport);
 
-		get_ref_states(ref, states);
+		get_ref_states(remote_refs, states);
 	}
 
 	return 0;
@@ -701,7 +701,7 @@ static int show(int argc, const char **argv)
 			struct branch_info *info = branch->util;
 			int j;
 
-			if (!info->merge.nr || strcmp(*argv, info->remote))
+			if (!info->merge.nr || strcmp(*argv, info->remote_name))
 				continue;
 			printf("  Remote branch%s merged with 'git pull' "
 				"while on branch %s\n   ",
