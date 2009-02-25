@@ -4630,6 +4630,7 @@ package Git::SVN::Log;
 use strict;
 use warnings;
 use POSIX qw/strftime/;
+use Time::Local;
 use constant commit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
             %rusers $show_commit $incremental/;
@@ -4736,7 +4737,12 @@ sub run_pager {
 }
 
 sub format_svn_date {
-	return strftime("%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)", localtime(shift));
+	# some systmes don't handle or mishandle %z, so be creative.
+	my $t = shift;
+	my $gm = timelocal(gmtime($t));
+	my $sign = qw( + + - )[ $t <=> $gm ];
+	my $gmoff = sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
+	return strftime("%Y-%m-%d %H:%M:%S $gmoff (%a, %d %b %Y)", localtime($t));
 }
 
 sub parse_git_date {
