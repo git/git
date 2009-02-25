@@ -1052,6 +1052,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	struct refspec *rs;
 	int send_all = flags & MATCH_REFS_ALL;
 	int send_mirror = flags & MATCH_REFS_MIRROR;
+	int errs;
 	static const char *default_refspec[] = { ":", 0 };
 
 	if (!nr_refspec) {
@@ -1059,8 +1060,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		refspec = default_refspec;
 	}
 	rs = parse_push_refspec(nr_refspec, (const char **) refspec);
-	if (match_explicit_refs(src, dst, dst_tail, rs, nr_refspec))
-		return -1;
+	errs = match_explicit_refs(src, dst, dst_tail, rs, nr_refspec);
 
 	/* pick the remainder */
 	for ( ; src; src = src->next) {
@@ -1116,6 +1116,8 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	free_name:
 		free(dst_name);
 	}
+	if (errs)
+		return -1;
 	return 0;
 }
 
