@@ -18,10 +18,10 @@ A `gitattributes` file is a simple text file that gives
 
 Each line in `gitattributes` file is of form:
 
-	glob	attr1 attr2 ...
+	pattern	attr1 attr2 ...
 
-That is, a glob pattern followed by an attributes list,
-separated by whitespaces.  When the glob pattern matches the
+That is, a pattern followed by an attributes list,
+separated by whitespaces.  When the pattern matches the
 path in question, the attributes listed on the line are given to
 the path.
 
@@ -48,13 +48,14 @@ Set to a value::
 
 Unspecified::
 
-	No glob pattern matches the path, and nothing says if
+	No pattern matches the path, and nothing says if
 	the path has or does not have the attribute, the
 	attribute for the path is said to be Unspecified.
 
-When more than one glob pattern matches the path, a later line
+When more than one pattern matches the path, a later line
 overrides an earlier line.  This overriding is done per
-attribute.
+attribute.  The rules how the pattern matches paths are the
+same as in `.gitignore` files; see linkgit:gitignore[5].
 
 When deciding what attributes are assigned to a path, git
 consults `$GIT_DIR/info/attributes` file (which has the highest
