@@ -136,6 +136,7 @@ EOF
 cat > test/expect << EOF
 * remote origin
   URL: $(pwd)/one
+  HEAD branch: master
   Remote branch merged with 'git pull' while on branch master
     master
   New remote branch (next fetch will store in remotes/origin)
@@ -146,6 +147,11 @@ cat > test/expect << EOF
   Local branches pushed with 'git push'
     master:upstream
     +refs/tags/lastbackup
+* remote two
+  URL: ../two
+  HEAD branch (remote HEAD is ambiguous, may be one of the following):
+    another
+    master
 EOF
 
 test_expect_success 'show' '
@@ -154,6 +160,7 @@ test_expect_success 'show' '
 		refs/heads/master:refs/heads/upstream &&
 	 git fetch &&
 	 git branch -d -r origin/master &&
+	 git config --add remote.two.url ../two &&
 	 (cd ../one &&
 	  echo 1 > file &&
 	  test_tick &&
@@ -162,13 +169,14 @@ test_expect_success 'show' '
 		refs/heads/master:refs/heads/upstream &&
 	 git config --add remote.origin.push \
 		+refs/tags/lastbackup &&
-	 git remote show origin > output &&
+	 git remote show origin two > output &&
 	 test_cmp expect output)
 '
 
 cat > test/expect << EOF
 * remote origin
   URL: $(pwd)/one
+  HEAD branch: (not queried)
   Remote branch merged with 'git pull' while on branch master
     master
   Tracked remote branches
@@ -343,7 +351,7 @@ test_expect_success '"remote show" does not show symbolic refs' '
 	git clone one three &&
 	(cd three &&
 	 git remote show origin > output &&
-	 ! grep HEAD < output &&
+	 ! grep "^ *HEAD$" < output &&
 	 ! grep -i stale < output)
 
 '

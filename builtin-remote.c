@@ -18,6 +18,9 @@ static const char * const builtin_remote_usage[] = {
 	NULL
 };
 
+#define GET_REF_STATES (1<<0)
+#define GET_HEAD_NAMES (1<<1)
+
 static int verbose;
 
 static int show_all(void);
@@ -210,7 +213,7 @@ static void read_branches(void)
 
 struct ref_states {
 	struct remote *remote;
-	struct string_list new, stale, tracked;
+	struct string_list new, stale, tracked, heads;
 };
 
 static int handle_one_branch(const char *refname,
@@ -260,6 +263,28 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	sort_string_list(&states->tracked);
 	for_each_ref(handle_one_branch, states);
 	sort_string_list(&states->stale);
+
+	return 0;
+}
+
+static int get_head_names(const struct ref *remote_refs, struct ref_states *states)
+{
+	struct ref *ref, *matches;
+	struct ref *fetch_map = NULL, **fetch_map_tail = &fetch_map;
+	struct refspec refspec;
+
+	refspec.force = 0;
+	refspec.pattern = 1;
+	refspec.src = refspec.dst = "refs/heads/";
+	states->heads.strdup_strings = 1;
+	get_fetch_map(remote_refs, &refspec, &fetch_map_tail, 0);
+	matches = guess_remote_head(find_ref_by_name(remote_refs, "HEAD"),
+				    fetch_map, 1);
+	for(ref = matches; ref; ref = ref->next)
+		string_list_append(abbrev_branch(ref->name), &states->heads);
+
+	free_refs(fetch_map);
+	free_refs(matches);
 
 	return 0;
 }
@@ -630,6 +655,7 @@ static void free_remote_ref_states(struct ref_states *states)
 	string_list_clear(&states->new, 0);
 	string_list_clear(&states->stale, 0);
 	string_list_clear(&states->tracked, 0);
+	string_list_clear(&states->heads, 0);
 }
 
 static int append_ref_to_tracked_list(const char *refname,
@@ -668,7 +694,10 @@ static int get_remote_ref_states(const char *name,
 		remote_refs = transport_get_remote_refs(transport);
 		transport_disconnect(transport);
 
-		get_ref_states(remote_refs, states);
+		if (query & GET_REF_STATES)
+			get_ref_states(remote_refs, states);
+		if (query & GET_HEAD_NAMES)
+			get_head_names(remote_refs, states);
 	} else {
 		for_each_ref(append_ref_to_tracked_list, states);
 		sort_string_list(&states->tracked);
@@ -679,7 +708,7 @@ static int get_remote_ref_states(const char *name,
 
 static int show(int argc, const char **argv)
 {
-	int no_query = 0, result = 0;
+	int no_query = 0, result = 0, query_flag = 0;
 	struct option options[] = {
 		OPT_GROUP("show specific options"),
 		OPT_BOOLEAN('n', NULL, &no_query, "do not query remotes"),
@@ -692,15 +721,30 @@ static int show(int argc, const char **argv)
 	if (argc < 1)
 		return show_all();
 
+	if (!no_query)
+		query_flag = (GET_REF_STATES | GET_HEAD_NAMES);
+
 	memset(&states, 0, sizeof(states));
 	for (; argc; argc--, argv++) {
 		int i;
 
-		get_remote_ref_states(*argv, &states, !no_query);
+		get_remote_ref_states(*argv, &states, query_flag);
 
 		printf("* remote %s\n  URL: %s\n", *argv,
 			states.remote->url_nr > 0 ?
 				states.remote->url[0] : "(no URL)");
+		if (no_query)
+			printf("  HEAD branch: (not queried)\n");
+		else if (!states.heads.nr)
+			printf("  HEAD branch: (unknown)\n");
+		else if (states.heads.nr == 1)
+			printf("  HEAD branch: %s\n", states.heads.items[0].string);
+		else {
+			printf("  HEAD branch (remote HEAD is ambiguous,"
+			       " may be one of the following):\n");
+			for (i = 0; i < states.heads.nr; i++)
+				printf("    %s\n", states.heads.items[i].string);
+		}
 
 		for (i = 0; i < branch_list.nr; i++) {
 			struct string_list_item *branch = branch_list.items + i;
@@ -772,7 +816,7 @@ static int prune(int argc, const char **argv)
 	for (; argc; argc--, argv++) {
 		int i;
 
-		get_remote_ref_states(*argv, &states, 1);
+		get_remote_ref_states(*argv, &states, GET_REF_STATES);
 
 		if (states.stale.nr) {
 			printf("Pruning %s\n", *argv);
