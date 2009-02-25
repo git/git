@@ -28,7 +28,7 @@ tokens_match () {
 }
 
 check_remote_track () {
-	actual=$(git remote show "$1" | sed -e '1,/Tracked/d') &&
+	actual=$(git remote show "$1" | sed -ne 's|^    \(.*\) tracked$|\1|p')
 	shift &&
 	tokens_match "$*" "$actual"
 }
@@ -137,13 +137,15 @@ cat > test/expect << EOF
 * remote origin
   URL: $(pwd)/one
   HEAD branch: master
-  Remote branch merged with 'git pull' while on branch master
-    master
-  New remote branch (next fetch will store in remotes/origin)
-    master
-  Tracked remote branches
-    master
-    side
+  Remote branches:
+    master new (next fetch will store in remotes/origin)
+    side   tracked
+  Local branches configured for 'git pull':
+    master   merges with remote master
+    octopus  merges with remote topic-a
+                and with remote topic-b
+                and with remote topic-c
+    rebase  rebases onto remote master
   Local branches pushed with 'git push'
     master:upstream
     +refs/tags/lastbackup
@@ -156,20 +158,22 @@ EOF
 
 test_expect_success 'show' '
 	(cd test &&
-	 git config --add remote.origin.fetch \
-		refs/heads/master:refs/heads/upstream &&
+	 git config --add remote.origin.fetch refs/heads/master:refs/heads/upstream &&
 	 git fetch &&
+	 git branch --track octopus origin/master &&
+	 git branch --track rebase origin/master &&
 	 git branch -d -r origin/master &&
 	 git config --add remote.two.url ../two &&
+	 git config branch.rebase.rebase true &&
+	 git config branch.octopus.merge "topic-a topic-b topic-c" &&
 	 (cd ../one &&
 	  echo 1 > file &&
 	  test_tick &&
 	  git commit -m update file) &&
-	 git config remote.origin.push \
-		refs/heads/master:refs/heads/upstream &&
-	 git config --add remote.origin.push \
-		+refs/tags/lastbackup &&
+	 git config remote.origin.push refs/heads/master:refs/heads/upstream &&
+	 git config --add remote.origin.push +refs/tags/lastbackup &&
 	 git remote show origin two > output &&
+	 git branch -d rebase octopus &&
 	 test_cmp expect output)
 '
 
@@ -177,11 +181,11 @@ cat > test/expect << EOF
 * remote origin
   URL: $(pwd)/one
   HEAD branch: (not queried)
-  Remote branch merged with 'git pull' while on branch master
-    master
-  Tracked remote branches
+  Remote branches: (status not queried)
     master
     side
+  Local branch configured for 'git pull':
+    master merges with remote master
   Local branches pushed with 'git push'
     master:upstream
     +refs/tags/lastbackup
