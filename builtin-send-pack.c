@@ -133,32 +133,7 @@ static int ref_newer(const unsigned char *new_sha1,
 	return found;
 }
 
-static struct ref *local_refs, **local_tail;
 static struct ref *remote_refs, **remote_tail;
-
-static int one_local_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
-{
-	struct ref *ref;
-	int len;
-
-	/* we already know it starts with refs/ to get here */
-	if (check_ref_format(refname + 5))
-		return 0;
-
-	len = strlen(refname) + 1;
-	ref = xcalloc(1, sizeof(*ref) + len);
-	hashcpy(ref->new_sha1, sha1);
-	memcpy(ref->name, refname, len);
-	*local_tail = ref;
-	local_tail = &ref->next;
-	return 0;
-}
-
-static void get_local_heads(void)
-{
-	local_tail = &local_refs;
-	for_each_ref(one_local_ref, NULL);
-}
 
 static int receive_status(int in, struct ref *refs)
 {
@@ -387,7 +362,7 @@ static int refs_pushed(struct ref *ref)
 
 static int do_send_pack(int in, int out, struct remote *remote, const char *dest, int nr_refspec, const char **refspec)
 {
-	struct ref *ref;
+	struct ref *ref, *local_refs;
 	int new_refs;
 	int ask_for_status_report = 0;
 	int allow_deleting_refs = 0;
@@ -405,7 +380,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 	/* No funny business with the matcher */
 	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, REF_NORMAL,
 				       &extra_have);
-	get_local_heads();
+	local_refs = get_local_heads();
 
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))
