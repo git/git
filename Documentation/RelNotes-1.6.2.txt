@@ -150,6 +150,9 @@ v1.6.1.X series.
 * "git filter-branch" incorrectly tried to update a nonexistent work tree
   at the end when it is run in a bare repository.
 
+* "git gc" did not work if your repository was created with an ancient git
+  and never had any pack files in it before.
+
 * "git mergetool" used to ignore autocrlf and other attributes
   based content rewriting.
 
@@ -162,6 +165,6 @@ v1.6.1.X series.
 
 --
 exec >/var/tmp/1
-v1.6.2-rc0-89-gf7a2bdb
+O=v1.6.2-rc2
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
