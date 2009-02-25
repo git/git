@@ -226,10 +226,8 @@ static int handle_one_branch(const char *refname,
 		const char *name = abbrev_branch(refspec.src);
 		/* symbolic refs pointing nowhere were handled already */
 		if ((flags & REF_ISSYMREF) ||
-				unsorted_string_list_has_string(&states->tracked,
-					name) ||
-				unsorted_string_list_has_string(&states->new,
-					name))
+		    string_list_has_string(&states->tracked, name) ||
+		    string_list_has_string(&states->new, name))
 			return 0;
 		item = string_list_append(name, &states->stale);
 		item->util = xstrdup(refname);
@@ -258,6 +256,8 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	}
 	free_refs(fetch_map);
 
+	sort_string_list(&states->new);
+	sort_string_list(&states->tracked);
 	for_each_ref(handle_one_branch, states);
 	sort_string_list(&states->stale);
 
@@ -638,6 +638,9 @@ static int append_ref_to_tracked_list(const char *refname,
 	struct ref_states *states = cb_data;
 	struct refspec refspec;
 
+	if (flags & REF_ISSYMREF)
+		return 0;
+
 	memset(&refspec, 0, sizeof(refspec));
 	refspec.dst = (char *)refname;
 	if (!remote_find_tracking(states->remote, &refspec))
@@ -666,8 +669,10 @@ static int get_remote_ref_states(const char *name,
 		transport_disconnect(transport);
 
 		get_ref_states(remote_refs, states);
-	} else
+	} else {
 		for_each_ref(append_ref_to_tracked_list, states);
+		sort_string_list(&states->tracked);
+	}
 
 	return 0;
 }

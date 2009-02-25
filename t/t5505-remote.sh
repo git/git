@@ -141,8 +141,8 @@ cat > test/expect << EOF
   New remote branch (next fetch will store in remotes/origin)
     master
   Tracked remote branches
-    side
     master
+    side
   Local branches pushed with 'git push'
     master:upstream
     +refs/tags/lastbackup
