@@ -632,6 +632,13 @@ static void show_list(const char *title, struct string_list *list,
 		printf("    %s\n", list->items[i].string);
 }
 
+static void free_remote_ref_states(struct ref_states *states)
+{
+	string_list_clear(&states->new, 0);
+	string_list_clear(&states->stale, 0);
+	string_list_clear(&states->tracked, 0);
+}
+
 static int get_remote_ref_states(const char *name,
 				 struct ref_states *states,
 				 int query)
@@ -738,10 +745,7 @@ static int show(int argc, const char **argv)
 			}
 		}
 
-		/* NEEDSWORK: free remote */
-		string_list_clear(&states.new, 0);
-		string_list_clear(&states.stale, 0);
-		string_list_clear(&states.tracked, 0);
+		free_remote_ref_states(&states);
 	}
 
 	return result;
@@ -792,10 +796,7 @@ static int prune(int argc, const char **argv)
 			warn_dangling_symref(dangling_msg, refname);
 		}
 
-		/* NEEDSWORK: free remote */
-		string_list_clear(&states.new, 0);
-		string_list_clear(&states.stale, 0);
-		string_list_clear(&states.tracked, 0);
+		free_remote_ref_states(&states);
 	}
 
 	return result;
