@@ -20,13 +20,7 @@ then
 fi
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
-
-if ! start_httpd >&3 2>&4
-then
-	say "skipping test, web server setup failed"
-	test_done
-	exit
-fi
+start_httpd
 
 test_expect_success 'setup remote repository' '
 	cd "$ROOT_PATH" &&
