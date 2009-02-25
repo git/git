@@ -1452,37 +1452,22 @@ struct ref *get_local_heads(void)
 	return local_refs;
 }
 
-const struct ref *guess_remote_head(const struct ref *refs,
-				    const struct ref *mapped_refs,
-				    const struct ref **remote_head_p)
+const struct ref *guess_remote_head(const struct ref *head,
+				    const struct ref *refs)
 {
-	const struct ref *remote_head = NULL;
-	const struct ref *remote_master = NULL;
 	const struct ref *r;
-	for (r = refs; r; r = r->next)
-		if (!strcmp(r->name, "HEAD"))
-			remote_head = r;
 
-	for (r = mapped_refs; r; r = r->next)
-		if (!strcmp(r->name, "refs/heads/master"))
-			remote_master = r;
-
-	if (remote_head_p)
-		*remote_head_p = remote_head;
-
-	/* If there's no HEAD value at all, never mind. */
-	if (!remote_head)
+	if (!head)
 		return NULL;
 
 	/* If refs/heads/master could be right, it is. */
-	if (remote_master && !hashcmp(remote_master->old_sha1,
-				      remote_head->old_sha1))
-		return remote_master;
+	r = find_ref_by_name(refs, "refs/heads/master");
+	if (r && !hashcmp(r->old_sha1, head->old_sha1))
+		return r;
 
 	/* Look for another ref that points there */
-	for (r = mapped_refs; r; r = r->next)
-		if (r != remote_head &&
-		    !hashcmp(r->old_sha1, remote_head->old_sha1))
+	for (r = refs; r; r = r->next)
+		if (r != head && !hashcmp(r->old_sha1, head->old_sha1))
 			return r;
 
 	/* Nothing is the same */
