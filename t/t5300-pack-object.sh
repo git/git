@@ -180,6 +180,23 @@ test_expect_success \
 
 unset GIT_OBJECT_DIRECTORY
 
+test_expect_success 'survive missing objects/pack directory' '
+	(
+		rm -fr missing-pack &&
+		mkdir missing-pack &&
+		cd missing-pack &&
+		git init &&
+		GOP=.git/objects/pack
+		rm -fr $GOP &&
+		git index-pack --stdin --keep=test <../test-3-${packname_3}.pack &&
+		test -f $GOP/pack-${packname_3}.pack &&
+		test_cmp $GOP/pack-${packname_3}.pack ../test-3-${packname_3}.pack &&
+		test -f $GOP/pack-${packname_3}.idx &&
+		test_cmp $GOP/pack-${packname_3}.idx ../test-3-${packname_3}.idx &&
+		test -f $GOP/pack-${packname_3}.keep
+	)
+'
+
 test_expect_success \
     'verify pack' \
     'git verify-pack	test-1-${packname_1}.idx \

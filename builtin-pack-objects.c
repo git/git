@@ -473,9 +473,8 @@ static void write_pack_file(void)
 		} else {
 			char tmpname[PATH_MAX];
 			int fd;
-			snprintf(tmpname, sizeof(tmpname),
-				 "%s/pack/tmp_pack_XXXXXX", get_object_directory());
-			fd = xmkstemp(tmpname);
+			fd = odb_mkstemp(tmpname, sizeof(tmpname),
+					 "pack/tmp_pack_XXXXXX");
 			pack_tmp_name = xstrdup(tmpname);
 			f = sha1fd(fd, pack_tmp_name);
 		}

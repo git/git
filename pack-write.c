@@ -44,9 +44,7 @@ char *write_idx_file(char *index_name, struct pack_idx_entry **objects,
 
 	if (!index_name) {
 		static char tmpfile[PATH_MAX];
-		snprintf(tmpfile, sizeof(tmpfile),
-			 "%s/pack/tmp_idx_XXXXXX", get_object_directory());
-		fd = xmkstemp(tmpfile);
+		fd = odb_mkstemp(tmpfile, sizeof(tmpfile), "pack/tmp_idx_XXXXXX");
 		index_name = xstrdup(tmpfile);
 	} else {
 		unlink(index_name);
@@ -239,7 +237,7 @@ char *index_pack_lockfile(int ip_out)
 	char packname[46];
 
 	/*
-	 * The first thing we expects from index-pack's output
+	 * The first thing we expect from index-pack's output
 	 * is "pack\t%40s\n" or "keep\t%40s\n" (46 bytes) where
 	 * %40s is the newly created pack SHA1 name.  In the "keep"
 	 * case, we need it to remove the corresponding .keep file
