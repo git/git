@@ -12,31 +12,37 @@ test_expect_success \
     'Initialize test directory' \
     "touch -- foo bar baz 'space embedded' -q &&
      git add -- foo bar baz 'space embedded' -q &&
-     git commit -m 'add normal files' &&
-     test_tabs=y &&
-     if touch -- 'tab	embedded' 'newline
-embedded'
-     then
+     git commit -m 'add normal files'"
+
+if touch -- 'tab	embedded' 'newline
+embedded' 2>/dev/null
+then
+	test_set_prereq FUNNYNAMES
+else
+	say 'Your filesystem does not allow tabs in filenames.'
+fi
+
+test_expect_success FUNNYNAMES 'add files with funny names' "
      git add -- 'tab	embedded' 'newline
 embedded' &&
      git commit -m 'add files with tabs and newlines'
-     else
-         test_tabs=n
-     fi"
+"
 
-test "$test_tabs" = n && say 'Your filesystem does not allow tabs in filenames.'
-
+# Determine rm behavior
 # Later we will try removing an unremovable path to make sure
 # git rm barfs, but if the test is run as root that cannot be
 # arranged.
-test_expect_success \
-    'Determine rm behavior' \
-    ': >test-file
-     chmod a-w .
-     rm -f test-file
-     test -f test-file && test_failed_remove=y
-     chmod 775 .
-     rm -f test-file'
+: >test-file
+chmod a-w .
+rm -f test-file 2>/dev/null
+if test -f test-file
+then
+	test_set_prereq RO_DIR
+else
+	say 'skipping removal failure test (perhaps running as root?)'
+fi
+chmod 775 .
+rm -f test-file
 
 test_expect_success \
     'Pre-check that foo exists and is in index before git rm foo' \
@@ -101,20 +107,16 @@ test_expect_success \
     'Test that "git rm -- -q" succeeds (remove a file that looks like an option)' \
     'git rm -- -q'
 
-test "$test_tabs" = y && test_expect_success \
+test_expect_success FUNNYNAMES \
     "Test that \"git rm -f\" succeeds with embedded space, tab, or newline characters." \
     "git rm -f 'space embedded' 'tab	embedded' 'newline
 embedded'"
 
-if test "$test_failed_remove" = y; then
-chmod a-w .
-test_expect_success \
-    'Test that "git rm -f" fails if its rm fails' \
-    'test_must_fail git rm -f baz'
-chmod 775 .
-else
-    say 'skipping removal failure test (perhaps running as root?)'
-fi
+test_expect_success RO_DIR 'Test that "git rm -f" fails if its rm fails' '
+	chmod a-w . &&
+	test_must_fail git rm -f baz &&
+	chmod 775 .
+'
 
 test_expect_success \
     'When the rm in "git rm -f" fails, it should not remove the file from the index' \
