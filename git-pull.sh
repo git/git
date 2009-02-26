@@ -171,6 +171,11 @@ case "$merge_head" in
 		echo >&2 "Cannot merge multiple branches into empty head"
 		exit 1
 	fi
+	if test true = "$rebase"
+	then
+		echo >&2 "Cannot rebase onto multiple branches"
+		exit 1
+	fi
 	;;
 esac
 

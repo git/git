@@ -85,4 +85,8 @@ ancestor /foo/bar :://foo/.:: 4
 ancestor /foo/bar //foo/./::/bar 4
 ancestor /foo/bar ::/bar -1
 
+test_expect_success 'strip_path_suffix' '
+	test c:/msysgit = $(test-path-utils strip_path_suffix \
+		c:/msysgit/libexec//git-core libexec/git-core)
+'
 test_done

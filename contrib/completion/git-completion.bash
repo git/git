@@ -975,6 +975,27 @@ _git_ls_tree ()
 	__git_complete_file
 }
 
+# Options that go well for log, shortlog and gitk
+__git_log_common_options="
+	--not --all
+	--branches --tags --remotes
+	--first-parent --no-merges
+	--max-count=
+	--max-age= --since= --after=
+	--min-age= --until= --before=
+"
+# Options that go well for log and gitk (not shortlog)
+__git_log_gitk_options="
+	--dense --sparse --full-history
+	--simplify-merges --simplify-by-decoration
+	--left-right
+"
+# Options that go well for log and shortlog (not gitk)
+__git_log_shortlog_options="
+	--author= --committer= --grep=
+	--all-match
+"
+
 __git_log_pretty_formats="oneline short medium full fuller email raw format:"
 
 _git_log ()
@@ -982,6 +1003,11 @@ _git_log ()
 	__git_has_doubledash && return
 
 	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local g="$(git rev-parse --git-dir 2>/dev/null)"
+	local merge=""
+	if [ -f $g/MERGE_HEAD ]; then
+		merge="--merge"
+	fi
 	case "$cur" in
 	--pretty=*)
 		__gitcomp "$__git_log_pretty_formats
@@ -996,22 +1022,20 @@ _git_log ()
 		;;
 	--*)
 		__gitcomp "
-			--max-count= --max-age= --since= --after=
-			--min-age= --before= --until=
+			$__git_log_common_options
+			$__git_log_shortlog_options
+			$__git_log_gitk_options
 			--root --topo-order --date-order --reverse
-			--no-merges --follow
+			--follow
 			--abbrev-commit --abbrev=
 			--relative-date --date=
-			--author= --committer= --grep=
-			--all-match
 			--pretty=
-			--not --all
-			--left-right --cherry-pick
+			--cherry-pick
 			--graph
 			--decorate
 			--walk-reflogs
-			--parents --children --full-history
-			--merge
+			--parents --children
+			$merge
 			$__git_diff_common_options
 			--pickaxe-all --pickaxe-regex
 			"
@@ -1496,12 +1520,8 @@ _git_shortlog ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--max-count= --max-age= --since= --after=
-			--min-age= --before= --until=
-			--no-merges
-			--author= --committer= --grep=
-			--all-match
-			--not --all
+			$__git_log_common_options
+			$__git_log_shortlog_options
 			--numbered --summary
 			"
 		return
@@ -1828,7 +1848,11 @@ _gitk ()
 	fi
 	case "$cur" in
 	--*)
-		__gitcomp "--not --all $merge"
+		__gitcomp "
+			$__git_log_common_options
+			$__git_log_gitk_options
+			$merge
+			"
 		return
 		;;
 	esac

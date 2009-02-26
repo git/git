@@ -1468,8 +1468,8 @@ endif
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
 	{ $(RM) "$$execdir/git-add$X" && \
-		ln git-add$X "$$execdir/git-add$X" 2>/dev/null || \
-		cp git-add$X "$$execdir/git-add$X"; } && \
+		ln "$$bindir/git$X" "$$execdir/git-add$X" 2>/dev/null || \
+		cp "$$bindir/git$X" "$$execdir/git-add$X"; } && \
 	{ for p in $(filter-out git-add$X,$(BUILT_INS)); do \
 		$(RM) "$$execdir/$$p" && \
 		ln "$$execdir/git-add$X" "$$execdir/$$p" 2>/dev/null || \

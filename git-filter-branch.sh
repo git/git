@@ -220,6 +220,12 @@ die ""
 # Remove tempdir on exit
 trap 'cd ../..; rm -rf "$tempdir"' 0
 
+ORIG_GIT_DIR="$GIT_DIR"
+ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
+ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
+GIT_WORK_TREE=.
+export GIT_DIR GIT_WORK_TREE
+
 # Make sure refs/original is empty
 git for-each-ref > "$tempdir"/backup-refs || exit
 while read sha1 type name
@@ -233,12 +239,6 @@ do
 	;;
 	esac
 done < "$tempdir"/backup-refs
-
-ORIG_GIT_DIR="$GIT_DIR"
-ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
-ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
-GIT_WORK_TREE=.
-export GIT_DIR GIT_WORK_TREE
 
 # The refs should be updated if their heads were rewritten
 git rev-parse --no-flags --revs-only --symbolic-full-name \

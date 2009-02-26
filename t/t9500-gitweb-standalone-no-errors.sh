@@ -662,6 +662,11 @@ cat >>gitweb_config.perl <<EOF
 EOF
 
 test_expect_success \
+	'config override: tree view, features not overridden in repo config' \
+	'gitweb_run "p=.git;a=tree"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
 	'config override: tree view, features disabled in repo config' \
 	'git config gitweb.blame no &&
 	 git config gitweb.snapshot none &&
@@ -669,10 +674,21 @@ test_expect_success \
 test_debug 'cat gitweb.log'
 
 test_expect_success \
-	'config override: tree view, features enabled in repo config' \
+	'config override: tree view, features enabled in repo config (1)' \
 	'git config gitweb.blame yes &&
 	 git config gitweb.snapshot "zip,tgz, tbz2" &&
 	 gitweb_run "p=.git;a=tree"'
+test_debug 'cat gitweb.log'
+
+cat >.git/config <<\EOF
+# testing noval and alternate separator
+[gitweb]
+	blame
+	snapshot = zip tgz
+EOF
+test_expect_success \
+	'config override: tree view, features enabled in repo config (2)' \
+	'gitweb_run "p=.git;a=tree"'
 test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------

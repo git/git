@@ -438,7 +438,17 @@ sub cmd_dcommit {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history.\nPerhaps the repository is empty.";
 	}
-	$url = defined $_commit_url ? $_commit_url : $gs->full_url;
+
+	if (defined $_commit_url) {
+		$url = $_commit_url;
+	} else {
+		$url = eval { command_oneline('config', '--get',
+			      "svn-remote.$gs->{repo_id}.commiturl") };
+		if (!$url) {
+			$url = $gs->full_url
+		}
+	}
+
 	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
 		print "Committing to $url ...\n";
@@ -670,7 +680,11 @@ sub cmd_create_ignore {
 	$gs->prop_walk($gs->{path}, $r, sub {
 		my ($gs, $path, $props) = @_;
 		# $path is of the form /path/to/dir/
-		my $ignore = '.' . $path . '.gitignore';
+		$path = '.' . $path;
+		# SVN can have attributes on empty directories,
+		# which git won't track
+		mkpath([$path]) unless -d $path;
+		my $ignore = $path . '.gitignore';
 		my $s = $props->{'svn:ignore'} or return;
 		open(GITIGNORE, '>', $ignore)
 		  or fatal("Failed to open `$ignore' for writing: $!");
@@ -2417,6 +2431,7 @@ sub find_parent_branch {
 			# do_switch works with svn/trunk >= r22312, but that
 			# is not included with SVN 1.4.3 (the latest version
 			# at the moment), so we can't rely on it
+			$self->{last_rev} = $r0;
 			$self->{last_commit} = $parent;
 			$ed = SVN::Git::Fetcher->new($self, $gs->{path});
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
@@ -2526,7 +2541,7 @@ sub get_untracked {
 sub parse_svn_date {
 	my $date = shift || return '+0000 1970-01-01 00:00:00';
 	my ($Y,$m,$d,$H,$M,$S) = ($date =~ /^(\d{4})\-(\d\d)\-(\d\d)T
-	                                    (\d\d)\:(\d\d)\:(\d\d).\d+Z$/x) or
+	                                    (\d\d)\:(\d\d)\:(\d\d)\.\d*Z$/x) or
 	                                 croak "Unable to parse date: $date\n";
 	my $parsed_date;    # Set next.
 
@@ -4615,6 +4630,7 @@ package Git::SVN::Log;
 use strict;
 use warnings;
 use POSIX qw/strftime/;
+use Time::Local;
 use constant commit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
             %rusers $show_commit $incremental/;
@@ -4721,7 +4737,12 @@ sub run_pager {
 }
 
 sub format_svn_date {
-	return strftime("%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)", localtime(shift));
+	# some systmes don't handle or mishandle %z, so be creative.
+	my $t = shift;
+	my $gm = timelocal(gmtime($t));
+	my $sign = qw( + + - )[ $t <=> $gm ];
+	my $gmoff = sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
+	return strftime("%Y-%m-%d %H:%M:%S $gmoff (%a, %d %b %Y)", localtime($t));
 }
 
 sub parse_git_date {

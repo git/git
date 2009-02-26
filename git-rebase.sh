@@ -310,6 +310,7 @@ do
 	esac
 	shift
 done
+test $# -gt 2 && usage
 
 # Make sure we do not have $GIT_DIR/rebase-apply
 if test -z "$do_merge"
