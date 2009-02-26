@@ -221,6 +221,9 @@ then
 	resume=yes
 
 	case "$skip,$abort" in
+	t,t)
+		die "Please make up your mind. --skip or --abort?"
+		;;
 	t,)
 		git rerere clear
 		git read-tree --reset -u HEAD HEAD
@@ -229,6 +232,10 @@ then
 		git update-ref ORIG_HEAD $orig_head
 		;;
 	,t)
+		if test -f "$dotest/rebasing"
+		then
+			exec git rebase --abort
+		fi
 		git rerere clear
 		test -f "$dotest/dirtyindex" || {
 			git read-tree --reset -u HEAD ORIG_HEAD
