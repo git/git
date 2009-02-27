@@ -1460,24 +1460,33 @@ struct ref *get_local_heads(void)
 	return local_refs;
 }
 
-const struct ref *guess_remote_head(const struct ref *head,
-				    const struct ref *refs)
+struct ref *guess_remote_head(const struct ref *head,
+			      const struct ref *refs,
+			      int all)
 {
 	const struct ref *r;
+	struct ref *list = NULL;
+	struct ref **tail = &list;
 
 	if (!head)
 		return NULL;
 
 	/* If refs/heads/master could be right, it is. */
-	r = find_ref_by_name(refs, "refs/heads/master");
-	if (r && !hashcmp(r->old_sha1, head->old_sha1))
-		return r;
+	if (!all) {
+		r = find_ref_by_name(refs, "refs/heads/master");
+		if (r && !hashcmp(r->old_sha1, head->old_sha1))
+			return copy_ref(r);
+	}
 
 	/* Look for another ref that points there */
-	for (r = refs; r; r = r->next)
-		if (r != head && !hashcmp(r->old_sha1, head->old_sha1))
-			return r;
+	for (r = refs; r; r = r->next) {
+		if (r != head && !hashcmp(r->old_sha1, head->old_sha1)) {
+			*tail = copy_ref(r);
+			tail = &((*tail)->next);
+			if (!all)
+				break;
+		}
+	}
 
-	/* Nothing is the same */
-	return NULL;
+	return list;
 }
