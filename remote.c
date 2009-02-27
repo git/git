@@ -779,10 +779,18 @@ struct ref *alloc_ref(const char *name)
 
 static struct ref *copy_ref(const struct ref *ref)
 {
-	struct ref *ret = xmalloc(sizeof(struct ref) + strlen(ref->name) + 1);
-	memcpy(ret, ref, sizeof(struct ref) + strlen(ref->name) + 1);
-	ret->next = NULL;
-	return ret;
+	struct ref *cpy;
+	size_t len;
+	if (!ref)
+		return NULL;
+	len = strlen(ref->name);
+	cpy = xmalloc(sizeof(struct ref) + len + 1);
+	memcpy(cpy, ref, sizeof(struct ref) + len + 1);
+	cpy->next = NULL;
+	cpy->symref = ref->symref ? xstrdup(ref->symref) : NULL;
+	cpy->remote_status = ref->remote_status ? xstrdup(ref->remote_status) : NULL;
+	cpy->peer_ref = copy_ref(ref->peer_ref);
+	return cpy;
 }
 
 struct ref *copy_ref_list(const struct ref *ref)
@@ -801,6 +809,7 @@ static void free_ref(struct ref *ref)
 {
 	if (!ref)
 		return;
+	free_ref(ref->peer_ref);
 	free(ref->remote_status);
 	free(ref->symref);
 	free(ref);
@@ -811,7 +820,6 @@ void free_refs(struct ref *ref)
 	struct ref *next;
 	while (ref) {
 		next = ref->next;
-		free(ref->peer_ref);
 		free_ref(ref);
 		ref = next;
 	}
