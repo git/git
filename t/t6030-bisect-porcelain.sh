@@ -224,6 +224,31 @@ test_expect_success 'bisect skip: cannot tell between 2 commits' '
 	fi
 '
 
+# $HASH1 is good, $HASH4 is both skipped and bad, we skip $HASH3
+# and $HASH2 is good,
+# so we should not be able to tell the first bad commit
+# among $HASH3 and $HASH4
+test_expect_success 'bisect skip: with commit both bad and skipped' '
+	git bisect start &&
+	git bisect skip &&
+	git bisect bad &&
+	git bisect good $HASH1 &&
+	git bisect skip &&
+	if git bisect good > my_bisect_log.txt
+	then
+		echo Oops, should have failed.
+		false
+	else
+		test $? -eq 2 &&
+		grep "first bad commit could be any of" my_bisect_log.txt &&
+		! grep $HASH1 my_bisect_log.txt &&
+		! grep $HASH2 my_bisect_log.txt &&
+		grep $HASH3 my_bisect_log.txt &&
+		grep $HASH4 my_bisect_log.txt &&
+		git bisect reset
+	fi
+'
+
 # We want to automatically find the commit that
 # introduced "Another" into hello.
 test_expect_success \
