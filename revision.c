@@ -1485,7 +1485,8 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
 		return commit_ignore;
-	if (revs->unpacked && has_sha1_pack(commit->object.sha1, revs->ignore_packed))
+	if (revs->unpacked &&
+	    has_sha1_kept_pack(commit->object.sha1, revs->ignore_packed))
 		return commit_ignore;
 	if (revs->show_all)
 		return commit_show;
