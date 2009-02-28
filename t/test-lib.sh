@@ -238,6 +238,15 @@ test_merge () {
 	git tag "$1"
 }
 
+# This function helps systems where core.filemode=false is set.
+# Use it instead of plain 'chmod +x' to set or unset the executable bit
+# of a file in the working directory and add it to the index.
+
+test_chmod () {
+	chmod "$@" &&
+	git update-index --add "--chmod=$@"
+}
+
 # You are not expected to call test_ok_ and test_failure_ directly, use
 # the text_expect_* functions instead.
 
