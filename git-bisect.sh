@@ -284,7 +284,13 @@ filter_skipped() {
 	_skip="$2"
 
 	if [ -z "$_skip" ]; then
-		eval "$_eval"
+		eval "$_eval" | {
+			while read line
+			do
+				echo "$line &&"
+			done
+			echo ':'
+		}
 		return
 	fi
 
