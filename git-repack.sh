@@ -60,6 +60,7 @@ case ",$all_into_one," in
 	args='--unpacked --incremental'
 	;;
 ,t,)
+	args= existing=
 	if [ -d "$PACKDIR" ]; then
 		for e in `cd "$PACKDIR" && find . -type f -name '*.pack' \
 			| sed -e 's/^\.\///' -e 's/\.pack$//'`
