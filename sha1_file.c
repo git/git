@@ -1858,7 +1858,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	return 0;
 }
 
-int matches_pack_name(struct packed_git *p, const char *name)
+static int matches_pack_name(const struct packed_git *p, const char *name)
 {
 	const char *last_c, *c;
 
@@ -1876,6 +1876,17 @@ int matches_pack_name(struct packed_git *p, const char *name)
 	return 0;
 }
 
+int is_kept_pack(const struct packed_git *p, const struct rev_info *revs)
+{
+	int i;
+
+	for (i = 0; i < revs->num_ignore_packed; i++) {
+		if (matches_pack_name(p, revs->ignore_packed[i]))
+			return 0;
+	}
+	return 1;
+}
+
 static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
 			 const struct rev_info *revs)
 {
@@ -1889,15 +1900,8 @@ static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
 	p = (last_found == (void *)1) ? packed_git : last_found;
 
 	do {
-		if (revs->ignore_packed) {
-			const char **ig;
-			for (ig = revs->ignore_packed; *ig; ig++)
-				if (matches_pack_name(p, *ig))
-					break;
-			if (*ig)
-				goto next;
-		}
-
+		if (revs->ignore_packed && !is_kept_pack(p, revs))
+			goto next;
 		if (p->num_bad_objects) {
 			unsigned i;
 			for (i = 0; i < p->num_bad_objects; i++)

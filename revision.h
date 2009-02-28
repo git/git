@@ -159,5 +159,6 @@ enum commit_action {
 extern enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit);
 
 extern int has_sha1_kept_pack(const unsigned char *sha1, const struct rev_info *);
+extern int is_kept_pack(const struct packed_git *, const struct rev_info *);
 
 #endif
