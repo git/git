@@ -159,7 +159,7 @@ on the command line, and ignored if there is any include pattern.
 	considered whitespace errors.
 +
 By default, the command outputs warning messages but applies the patch.
-When `git-apply is used for statistics and not applying a
+When `git-apply` is used for statistics and not applying a
 patch, it defaults to `nowarn`.
 +
 You can use different `<action>` to control this
