@@ -68,10 +68,13 @@ case ",$all_into_one," in
 			if [ -e "$PACKDIR/$e.keep" ]; then
 				: keep
 			else
-				args="$args --unpacked=$e.pack"
 				existing="$existing $e"
 			fi
 		done
+		if test -n "$existing"
+		then
+			args="--kept-pack-only"
+		fi
 		if test -n "$args" -a -n "$unpack_unreachable" -a \
 			-n "$remove_redundant"
 		then

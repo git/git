@@ -1858,33 +1858,9 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	return 0;
 }
 
-static int matches_pack_name(const struct packed_git *p, const char *name)
+int is_kept_pack(const struct packed_git *p)
 {
-	const char *last_c, *c;
-
-	if (!strcmp(p->pack_name, name))
-		return 1;
-
-	for (c = p->pack_name, last_c = c; *c;)
-		if (*c == '/')
-			last_c = ++c;
-		else
-			++c;
-	if (!strcmp(last_c, name))
-		return 1;
-
-	return 0;
-}
-
-int is_kept_pack(const struct packed_git *p, const struct rev_info *revs)
-{
-	int i;
-
-	for (i = 0; i < revs->num_ignore_packed; i++) {
-		if (matches_pack_name(p, revs->ignore_packed[i]))
-			return 0;
-	}
-	return 1;
+	return p->pack_keep;
 }
 
 static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
@@ -1900,7 +1876,7 @@ static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
 	p = (last_found == (void *)1) ? packed_git : last_found;
 
 	do {
-		if (revs->ignore_packed && !is_kept_pack(p, revs))
+		if (revs->kept_pack_only && !is_kept_pack(p))
 			goto next;
 		if (p->num_bad_objects) {
 			unsigned i;
