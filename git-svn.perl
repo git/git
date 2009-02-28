@@ -4738,7 +4738,7 @@ sub run_pager {
 
 sub format_svn_date {
 	# some systmes don't handle or mishandle %z, so be creative.
-	my $t = shift;
+	my $t = shift || time;
 	my $gm = timelocal(gmtime($t));
 	my $sign = qw( + + - )[ $t <=> $gm ];
 	my $gmoff = sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
