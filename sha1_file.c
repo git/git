@@ -16,8 +16,6 @@
 #include "refs.h"
 #include "pack-revindex.h"
 #include "sha1-lookup.h"
-#include "diff.h"
-#include "revision.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -1858,13 +1856,8 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	return 0;
 }
 
-int is_kept_pack(const struct packed_git *p)
-{
-	return p->pack_keep;
-}
-
 static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
-			 const struct rev_info *revs)
+			 int kept_pack_only)
 {
 	static struct packed_git *last_found = (void *)1;
 	struct packed_git *p;
@@ -1876,7 +1869,7 @@ static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
 	p = (last_found == (void *)1) ? packed_git : last_found;
 
 	do {
-		if (revs->kept_pack_only && !is_kept_pack(p))
+		if (kept_pack_only && !p->pack_keep)
 			goto next;
 		if (p->num_bad_objects) {
 			unsigned i;
@@ -1919,13 +1912,12 @@ static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
 
 static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 {
-	return find_pack_ent(sha1, e, NULL);
+	return find_pack_ent(sha1, e, 0);
 }
 
-static int find_kept_pack_entry(const unsigned char *sha1, struct pack_entry *e,
-				const struct rev_info *revs)
+static int find_kept_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 {
-	return find_pack_ent(sha1, e, revs);
+	return find_pack_ent(sha1, e, 1);
 }
 
 struct packed_git *find_sha1_pack(const unsigned char *sha1,
@@ -2395,10 +2387,10 @@ int has_sha1_pack(const unsigned char *sha1)
 	return find_pack_entry(sha1, &e);
 }
 
-int has_sha1_kept_pack(const unsigned char *sha1, const struct rev_info *revs)
+int has_sha1_kept_pack(const unsigned char *sha1)
 {
 	struct pack_entry e;
-	return find_kept_pack_entry(sha1, &e, revs);
+	return find_kept_pack_entry(sha1, &e);
 }
 
 int has_sha1_file(const unsigned char *sha1)

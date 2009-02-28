@@ -1915,7 +1915,7 @@ static void add_objects_in_unpacked_packs(struct rev_info *revs)
 		const unsigned char *sha1;
 		struct object *o;
 
-		if (is_kept_pack(p))
+		if (p->pack_keep)
 			continue;
 		if (open_pack_index(p))
 			die("cannot open pack index");
@@ -1951,7 +1951,7 @@ static void loosen_unused_packed_objects(struct rev_info *revs)
 	const unsigned char *sha1;
 
 	for (p = packed_git; p; p = p->next) {
-		if (is_kept_pack(p))
+		if (p->pack_keep)
 			continue;
 
 		if (open_pack_index(p))
