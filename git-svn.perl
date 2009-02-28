@@ -3297,7 +3297,7 @@ sub new {
 sub _mark_empty_symlinks {
 	my ($git_svn, $switch_path) = @_;
 	my $bool = Git::config_bool('svn.brokenSymlinkWorkaround');
-	return {} if (defined($bool) && ! $bool);
+	return {} if (!defined($bool)) || (defined($bool) && ! $bool);
 
 	my %ret;
 	my ($rev, $cmt) = $git_svn->last_rev_commit;
