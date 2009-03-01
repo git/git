@@ -48,6 +48,10 @@ test_expect_success \
     'the rebase operation should not have destroyed author information' \
     '! (git log | grep "Author:" | grep "<>")'
 
+test_expect_success 'HEAD was detached during rebase' '
+     test $(git rev-parse HEAD@{1}) != $(git rev-parse my-topic-branch@{1})
+'
+
 test_expect_success 'rebase after merge master' '
      git reset --hard topic &&
      git merge master &&
@@ -83,10 +87,6 @@ test_expect_success 'rebase a single mode change' '
      test_tick &&
      git commit -m modechange A X &&
      GIT_TRACE=1 git rebase master
-'
-
-test_expect_success 'HEAD was detached during rebase' '
-     test $(git rev-parse HEAD@{1}) != $(git rev-parse modechange@{1})
 '
 
 test_expect_success 'Show verbose error when HEAD could not be detached' '
