@@ -28,7 +28,7 @@ test_expect_success 'tar archive' '
 
 "$UNZIP" -v >/dev/null 2>&1
 if [ $? -eq 127 ]; then
-	echo "Skipping ZIP test, because unzip was not found"
+	say "Skipping ZIP test, because unzip was not found"
 	test_done
 	exit
 fi

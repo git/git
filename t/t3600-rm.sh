@@ -112,7 +112,7 @@ test_expect_success \
     'test_must_fail git rm -f baz'
 chmod 775 .
 else
-    test_expect_success 'skipping removal failure (perhaps running as root?)' :
+    say 'skipping removal failure test (perhaps running as root?)'
 fi
 
 test_expect_success \

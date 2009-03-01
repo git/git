@@ -49,12 +49,12 @@ not_present() {
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git-cvsserver tests, cvs not found' :
+    say 'skipping git-cvsserver tests, cvs not found'
     test_done
     exit
 fi
 perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
-    test_expect_success 'skipping git-cvsserver tests, Perl SQLite interface unavailable' :
+    say 'skipping git-cvsserver tests, Perl SQLite interface unavailable'
     test_done
     exit
 }
