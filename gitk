@@ -701,16 +701,17 @@ proc newvarc {view id} {
 }
 
 proc splitvarc {p v} {
-    global varcid varcstart varccommits varctok
+    global varcid varcstart varccommits varctok vtokmod
     global vupptr vdownptr vleftptr vbackptr varcix varcrow vlastins
 
     set oa $varcid($v,$p)
+    set otok [lindex $varctok($v) $oa]
     set ac $varccommits($v,$oa)
     set i [lsearch -exact $varccommits($v,$oa) $p]
     if {$i <= 0} return
     set na [llength $varctok($v)]
     # "%" sorts before "0"...
-    set tok "[lindex $varctok($v) $oa]%[strrep $i]"
+    set tok "$otok%[strrep $i]"
     lappend varctok($v) $tok
     lappend varcrow($v) {}
     lappend varcix($v) {}
@@ -729,6 +730,9 @@ proc splitvarc {p v} {
     lappend vbackptr($v) 0
     for {set b [lindex $vdownptr($v) $na]} {$b != 0} {set b [lindex $vleftptr($v) $b]} {
 	lset vupptr($v) $b $na
+    }
+    if {[string compare $otok $vtokmod($v)] <= 0} {
+	modify_arc $v $oa
     }
 }
 
@@ -3363,7 +3367,6 @@ proc external_blame {parent_idx {line {}}} {
     # being given an absolute path...
     set f [make_relative $f]
     lappend cmdline $base_commit $f
-    puts "cmdline={$cmdline}"
     if {[catch {eval exec $cmdline &} err]} {
 	error_popup "[mc "git gui blame: command failed:"] $err"
     }
@@ -5731,7 +5734,6 @@ proc drawcommits {row {endrow {}}} {
     optimize_rows $ro1 0 $r2
     if {$need_redisplay || $nrows_drawn > 2000} {
 	clear_display
-	drawvisible
     }
 
     # make the lines join to already-drawn rows either side
