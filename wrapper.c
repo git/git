@@ -268,9 +268,10 @@ int odb_mkstemp(char *template, size_t limit, const char *pattern)
 		return fd;
 
 	/* slow path */
-	safe_create_leading_directories(template);
+	/* some mkstemp implementations erase template on failure */
 	snprintf(template, limit, "%s/%s",
 		 get_object_directory(), pattern);
+	safe_create_leading_directories(template);
 	return xmkstemp(template);
 }
 
