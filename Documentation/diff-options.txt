@@ -176,7 +176,10 @@ override configuration settings.
 	number.
 
 -S<string>::
-	Look for differences that contain the change in <string>.
+	Look for differences that introduce or remove an instance of
+	<string>. Note that this is different than the string simply
+	appearing in diff output; see the 'pickaxe' entry in
+	linkgit:gitdiffcore[7] for more details.
 
 --pickaxe-all::
 	When -S finds a change, show all the changes in that
