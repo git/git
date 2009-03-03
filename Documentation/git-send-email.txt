@@ -199,6 +199,22 @@ specified, as well as 'body' if --no-signed-off-cc is specified.
 Administering
 ~~~~~~~~~~~~~
 
+--confirm::
+	Confirm just before sending:
++
+--
+- 'always' will always confirm before sending
+- 'never' will never confirm before sending
+- 'cc' will confirm before sending when send-email has automatically
+  added addresses from the patch to the Cc list
+- 'compose' will confirm before sending the first message when using --compose.
+- 'auto' is equivalent to 'cc' + 'compose'
+--
++
+Default is the value of 'sendemail.confirm' configuration value; if that
+is unspecified, default to 'auto' unless any of the suppress options
+have been specified, in which case default to 'compose'.
+
 --dry-run::
 	Do everything except actually send the emails.
 
@@ -241,6 +257,11 @@ sendemail.multiedit::
 	files you have to edit (patches when '--annotate' is used, and the
 	summary when '--compose' is used). If false, files will be edited one
 	after the other, spawning a new editor each time.
+
+sendemail.confirm::
+	Sets the default for whether to confirm before sending. Must be
+	one of 'always', 'never', 'cc', 'compose', or 'auto'. See '--confirm'
+	in the previous section for the meaning of these values.
 
 
 Author
