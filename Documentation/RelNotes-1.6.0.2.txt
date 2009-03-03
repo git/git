@@ -7,7 +7,7 @@ Fixes since v1.6.0.1
 * Installation on platforms that needs .exe suffix to git-* programs were
   broken in 1.6.0.1.
 
-* Installation on filesystems without symbolic links support did nto
+* Installation on filesystems without symbolic links support did not
   work well.
 
 * In-tree documentations and test scripts now use "git foo" form to set a

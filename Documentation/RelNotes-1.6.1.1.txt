@@ -41,11 +41,11 @@ Fixes since v1.6.1
   work tree upon delete/modify conflict.
 
 * "git merge -s recursive" didn't leave the index unmerged for entries with
-  rename/delete conflictd.
+  rename/delete conflicts.
 
 * "git merge -s recursive" clobbered untracked files in the work tree.
 
-* "git mv -k" with more than one errorneous paths misbehaved.
+* "git mv -k" with more than one erroneous paths misbehaved.
 
 * "git read-tree -m -u" hence branch switching incorrectly lost a
   subdirectory in rare cases.
