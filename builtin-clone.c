@@ -20,6 +20,7 @@
 #include "dir.h"
 #include "pack-refs.h"
 #include "sigchain.h"
+#include "run-command.h"
 
 /*
  * Overall FIXMEs:
@@ -377,6 +378,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
 	char *src_ref_prefix = "refs/heads/";
+	int err = 0;
 
 	struct refspec refspec;
 
@@ -631,6 +633,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (write_cache(fd, active_cache, active_nr) ||
 		    commit_locked_index(lock_file))
 			die("unable to write new index file");
+
+		err |= run_hook(NULL, "post-checkout", sha1_to_hex(null_sha1),
+				sha1_to_hex(remote_head->old_sha1), "1", NULL);
 	}
 
 	strbuf_release(&reflog_msg);
@@ -638,5 +643,5 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	strbuf_release(&key);
 	strbuf_release(&value);
 	junk_pid = 0;
-	return 0;
+	return err;
 }
