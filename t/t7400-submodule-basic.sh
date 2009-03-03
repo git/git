@@ -64,7 +64,7 @@ test_expect_success 'submodule add' '
 	)
 '
 
-test_expect_failure 'submodule add with ./ in path' '
+test_expect_success 'submodule add with ./ in path' '
 	(
 		cd addtest &&
 		git submodule add "$submodurl" ././dotsubmod/./frotz/./ &&
@@ -72,7 +72,7 @@ test_expect_failure 'submodule add with ./ in path' '
 	)
 '
 
-test_expect_failure 'submodule add with // in path' '
+test_expect_success 'submodule add with // in path' '
 	(
 		cd addtest &&
 		git submodule add "$submodurl" slashslashsubmod///frotz// &&
@@ -80,7 +80,7 @@ test_expect_failure 'submodule add with // in path' '
 	)
 '
 
-test_expect_failure 'submodule add with /.. in path' '
+test_expect_success 'submodule add with /.. in path' '
 	(
 		cd addtest &&
 		git submodule add "$submodurl" dotdotsubmod/../realsubmod/frotz/.. &&
@@ -88,7 +88,7 @@ test_expect_failure 'submodule add with /.. in path' '
 	)
 '
 
-test_expect_failure 'submodule add with ./, /.. and // in path' '
+test_expect_success 'submodule add with ./, /.. and // in path' '
 	(
 		cd addtest &&
 		git submodule add "$submodurl" dot/dotslashsubmod/./../..////realsubmod2/a/b/c/d/../../../../frotz//.. &&
