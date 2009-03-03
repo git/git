@@ -39,7 +39,7 @@ Such a "revert" of a merge can be made with:
 
     $ git revert -m 1 M
 
-After the develpers of the side branch fixes their mistakes, the history
+After the developers of the side branch fix their mistakes, the history
 may look like this:
 
  ---o---o---o---M---x---x---W---x
@@ -116,7 +116,7 @@ If you reverted the revert in such a case as in the previous example:
 	       /                 \         /
        ---A---B                   A'--B'--C'
 
-where Y is the revert of W, A' and B'are rerolled A and B, and there may
+where Y is the revert of W, A' and B' are rerolled A and B, and there may
 also be a further fix-up C' on the side branch.  "diff Y^..Y" is similar
 to "diff -R W^..W" (which in turn means it is similar to "diff M^..M"),
 and "diff A'^..C'" by definition would be similar but different from that,
