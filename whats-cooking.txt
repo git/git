@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2009, #05; Mon, 16)
-X-master-at: 81d3fe9f4871e42ebd1af0221fa091fe5476e2f7
-X-next-at: fe6246962442d691150184fe12c71dd019e1b41f
+Subject: What's cooking in git.git (Feb 2009, #06; Wed, 18)
+X-master-at: 25487f8e2ae266936df0f807ae79dca41606e404
+X-next-at: 7bf82e6b638b58e0dd7bf2ab96f861e1f239b822
 
-What's cooking in git.git (Feb 2009, #05; Mon, 16)
+What's cooking in git.git (Feb 2009, #06; Wed, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -25,23 +25,24 @@ never graduate until 1.6.2 final.
 ----------------------------------------------------------------
 [New Topics]
 
-* gb/gitweb-base (Sun Feb 15 10:18:36 2009 +0100) 1 commit
- - gitweb: fix wrong base URL when non-root DirectoryIndex
+* fc/parseopt-config (Tue Feb 17 15:52:56 2009 +0200) 11 commits
+ . config: Don't allow extra arguments for -e or -l
+ . config: Disallow multiple variable types
+ . config: Disallow multiple config file locations
+ . config: Disallow --getcolor* and other actions used together
+ . config: Use parseopt
+ . config: Reorganize get_color*
+ . config: Trivial rename in preparation for parseopt
+ . ??? config: Make git_config() more flexible
+ . config: Cleanup editor action
+ . config: style clean-ups
+ - config: Add new option to open an editor.
 
-Should this go in 1.6.2-rc2?
+Builds on top of "config -e" change.
 
-* tr/gcov (Sun Feb 15 23:25:45 2009 +0100) 8 commits
- - Test git-patch-id
- - Test rev-list --parents/--children
- - Test log --decorate
- - Test fsck a bit harder
- - Test log --graph
- - Test diff --dirstat functionality
- - Test that diff can read from stdin
- - Support coverage testing with GCC/gcov
-
-* jc/add-p-unquote (Mon Feb 16 22:43:43 2009 -0800) 1 commit
- - git-add -i/-p: learn to unwrap C-quoted paths
+* mv/parseopt-ls-files (Tue Feb 17 15:27:11 2009 +0100) 2 commits
+ - parse-opt: migrate builtin-ls-files.
+ - Turn the flags in struct dir_struct into a single variable
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
@@ -149,13 +150,15 @@ I'm giving a fresh start to Lars's second iteration.
 ----------------------------------------------------------------
 [Will merge to 'next' soon]
 
-* js/send-email (Sat Feb 14 23:32:15 2009 -0500) 3 commits
- - send-email: --suppress-cc improvements
- - send-email: handle multiple Cc addresses when reading mbox message
- - send-email: allow send-email to run outside a repo
-
-* sg/rerere-cleanup (Sat Feb 14 23:21:04 2009 +0100) 1 commit
- - rerere: remove duplicated functions
+* tr/gcov (Sun Feb 15 23:25:45 2009 +0100) 8 commits
+ - Test git-patch-id
+ - Test rev-list --parents/--children
+ - Test log --decorate
+ - Test fsck a bit harder
+ - Test log --graph
+ - Test diff --dirstat functionality
+ - Test that diff can read from stdin
+ - Support coverage testing with GCC/gcov
 
 ----------------------------------------------------------------
 [Ready for 'master' after 1.6.2]
@@ -186,14 +189,17 @@ that the configuration variable was renamed per list discussion.
  + completion: For consistency, change "git rev-parse" to __gitdir
    calls
 
-* js/branch-symref (Fri Feb 13 04:40:18 2009 -0500) 1 commit
+* js/branch-symref (Wed Feb 18 19:14:59 2009 +0100) 2 commits
+ + Avoid segfault with 'git branch' when the HEAD is detached
  + builtin-branch: improve output when displaying remote branches
 
 * al/ansi-color (Fri Feb 13 22:53:41 2009 +0100) 2 commits
  + builtin-branch.c: Rename branch category color names
  + Clean up use of ANSI color sequences
 
-* kb/checkout-optim (Mon Feb 9 21:54:53 2009 +0100) 9 commits
+* kb/checkout-optim (Wed Feb 18 23:18:03 2009 +0100) 10 commits
+ + check_updates(): effective removal of cache entries marked
+   CE_REMOVE
  + lstat_cache(): print a warning if doing ping-pong between cache
    types
  + show_patch_diff(): remove a call to fstat()
@@ -219,13 +225,25 @@ that the configuration variable was renamed per list discussion.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* js/notes (Sat Feb 14 21:23:25 2009 +0100) 13 commits
- - notes: refuse to edit notes outside refs/notes/
- - t3301: use test_must_fail instead of !
- - t3301: fix confusing quoting in test for valid notes ref
- - notes: use GIT_EDITOR and core.editor over VISUAL/EDITOR
- - notes: only clean up message file when editing
- - handle empty notes gracefully
+* jc/add-p-unquote (Mon Feb 16 22:43:43 2009 -0800) 1 commit
+ + git-add -i/-p: learn to unwrap C-quoted paths
+
+* js/send-email (Sat Feb 14 23:32:15 2009 -0500) 3 commits
+ + send-email: --suppress-cc improvements
+ + send-email: handle multiple Cc addresses when reading mbox message
+ + send-email: allow send-email to run outside a repo
+
+* sg/rerere-cleanup (Sat Feb 14 23:21:04 2009 +0100) 1 commit
+ + rerere: remove duplicated functions
+
+* js/notes (Wed Feb 18 11:17:27 2009 -0800) 14 commits
+ + tests: fix "export var=val"
+ + notes: refuse to edit notes outside refs/notes/
+ + t3301: use test_must_fail instead of !
+ + t3301: fix confusing quoting in test for valid notes ref
+ + notes: use GIT_EDITOR and core.editor over VISUAL/EDITOR
+ + notes: only clean up message file when editing
+ + handle empty notes gracefully
  + git notes show: test empty notes
  + git-notes: fix printing of multi-line notes
  + notes: fix core.notesRef documentation
@@ -237,19 +255,8 @@ that the configuration variable was renamed per list discussion.
 Earlier part was merged to master and then reverted there.  I probably
 should rebase this after 1.6.2 to keep my sanity.
 
-* fc/config-editor (Tue Feb 17 02:54:54 2009 +0200) 9 commits
- . config: Cleanup editor action.
- . config: Codestyle cleanups.
- . config: Don't allow extra arguments for -e or -l.
- . config: Disallow multiple config file locations.
- . config: Disallow multiple variable types.
- . config: Use parseopt.
- . config: Reorganize get_color*.
- . config: Trivial rename in preparation for parseopt.
+* fc/config-editor (Sat Feb 7 23:53:00 2009 +0200) 1 commit
  - config: Add new option to open an editor.
-
-The follow-up series does not pass the test suite, and evicted from 'pu';
-the first one might be 'next' worthy, though.
 
 * js/remote-set-head (Sat Feb 14 05:30:30 2009 -0500) 5 commits
  - builtin-remote: better handling of multiple remote HEADs
@@ -308,6 +315,7 @@ canonical representation and possibly add conflict markers, and then write
 the results out after convert_to_working_tree().  It also needs to write
 in binary mode as well.
 
+----------------------------------------------------------------
 [Perhaps will discard]
 
 * jk/renamelimit (Sat May 3 13:58:42 2008 -0700) 1 commit
