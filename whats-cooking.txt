@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2009, #06; Wed, 18)
-X-master-at: 25487f8e2ae266936df0f807ae79dca41606e404
-X-next-at: 7bf82e6b638b58e0dd7bf2ab96f861e1f239b822
+Subject: What's cooking in git.git (Mar 2009, #01; Tue, 03)
+X-master-at: 1d035f85649cbb0a4fcc3e341f7e854acf9cf3c1
+X-next-at: 23381c887989ea63153c562061b1c4703ee75baf
 
-What's cooking in git.git (Feb 2009, #06; Wed, 18)
+What's cooking in git.git (Mar 2009, #01; Tue, 03)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,38 +14,172 @@ holding onto them.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
-The master branch is slightly past 1.6.2-rc1.
+The master branch is slightly past 1.6.2-rc2.  It's been a week and I
+think I can declare the final on this Wednesday, *if* I am not too mired
+by the day job, but I do not know what would happen yet.
 
-As an experiment, 'next' and 'pu' stay open during this release freeze;
-new topics are accepted as time permits, but people are much more strongly
-encouraged to find issues on what is already on 'master', and patches to
-fix them always takes precedence over what is still on 'next' and will
-never graduate until 1.6.2 final.
+As an experiment, 'next' and 'pu' stayed open during this release freeze;
+new topics have been accepted.  I have to say that the experiment was a
+moderate success, and many topics in 'next' seem to be of fairly high
+quality already, which would mean that we will have a shorter cycle before
+1.6.3.
 
 ----------------------------------------------------------------
 [New Topics]
 
-* fc/parseopt-config (Tue Feb 17 15:52:56 2009 +0200) 11 commits
- . config: Don't allow extra arguments for -e or -l
- . config: Disallow multiple variable types
- . config: Disallow multiple config file locations
- . config: Disallow --getcolor* and other actions used together
- . config: Use parseopt
- . config: Reorganize get_color*
- . config: Trivial rename in preparation for parseopt
- . ??? config: Make git_config() more flexible
- . config: Cleanup editor action
- . config: style clean-ups
- - config: Add new option to open an editor.
+* jk/clone-post-checkout (Tue Mar 3 00:37:51 2009 -0500) 1 commit
+ - clone: run post-checkout hook when checking out
 
-Builds on top of "config -e" change.
+* hv/cvsimport (Mon Mar 2 18:59:36 2009 +0100) 1 commit
+ - cvsimport: add test illustrating a bug in cvsps
+
+* jc/push-to-create (Mon Mar 2 22:36:16 2009 -0800) 1 commit
+ - Push to create
+
+* fc/parseopt-config (Sat Feb 21 02:49:29 2009 +0200) 11 commits
+ - git config: don't allow --get-color* and variable type
+ - git config: don't allow extra arguments for -e or -l.
+ - git config: don't allow multiple variable types
+ - git config: don't allow multiple config file locations
+ - git config: reorganize to use parseopt
+ - git config: reorganize get_color*
+ - git config: trivial rename in preparation for parseopt
+ - git_config(): not having a per-repo config file is not an error
+ + git config: trivial cleanup for editor action
+ + git config: codestyle cleanups
+ + config: Add new option to open an editor.
+
+* tr/format-patch-thread (Thu Feb 19 22:26:33 2009 +0100) 4 commits
+ - format-patch: support deep threading
+ - format-patch: thread as reply to cover letter even with in-reply-
+   to
+ - format-patch: track several references
+ - format-patch: threading test reactivation
+
+* ns/pretty-format (Tue Feb 24 15:33:29 2009 +0200) 5 commits
+ + bash completion: add --format= and --oneline options for "git log"
+ + Add tests for git log --pretty, --format and --oneline.
+ + Add --oneline that is a synonym to "--pretty=oneline --abbrev-
+   commit"
+ + Give short-hands to --pretty=tformat:%formatstring
+ + Add --format that is a synonym to --pretty
+
+* mh/cvsimport-tests (Mon Feb 23 06:08:14 2009 +0100) 5 commits
+ - Add a test of "git cvsimport"'s handling of tags and branches
+ - Add some tests of git-cvsimport's handling of vendor branches
+ - Test contents of entire cvsimported "master" tree contents
+ - Use CVS's -f option if available (ignore user's ~/.cvsrc file)
+ - Start a library for cvsimport-related tests
+
+* tr/maint-1.6.0-send-email-irt (Sun Mar 1 23:45:41 2009 +0100) 1 commit
+ - send-email: respect in-reply-to regardless of threading
+
+* jc/maint-1.6.0-keep-pack (Sat Feb 28 00:37:19 2009 -0800) 6 commits
+ + is_kept_pack(): final clean-up
+ + Simplify is_kept_pack()
+ + Consolidate ignore_packed logic more
+ + has_sha1_kept_pack(): take "struct rev_info"
+ + has_sha1_pack(): refactor "pretend these packs do not exist"
+   interface
+ + git-repack: resist stray environment variable
+
+* en/maint-hash-object (Sat Feb 28 12:56:49 2009 -0700) 1 commit
+ + Ensure proper setup of git_dir for git-hash-object
+
+* el/blame-date (Fri Feb 20 14:51:11 2009 -0800) 1 commit
+ - Make git blame's date output format configurable, like git log
+
+* js/remote-improvements (Wed Feb 25 03:32:28 2009 -0500) 22 commits
+ - builtin-remote: new show output style for push refspecs
+ - builtin-remote: new show output style
+ - remote: make guess_remote_head() use exact HEAD lookup if it is
+   available
+ - builtin-remote: add set-head subcommand
+ - builtin-remote: teach show to display remote HEAD
+ - builtin-remote: fix two inconsistencies in the output of "show
+   <remote>"
+ - builtin-remote: make get_remote_ref_states() always populate
+   states.tracked
+ - builtin-remote: rename variables and eliminate redundant function
+   call
+ - builtin-remote: remove unused code in get_ref_states
+ - builtin-remote: refactor duplicated cleanup code
+ - string-list: new for_each_string_list() function
+ - remote: make match_refs() not short-circuit
+ - remote: make match_refs() copy src ref before assigning to
+   peer_ref
+ - remote: let guess_remote_head() optionally return all matches
+ - remote: make copy_ref() perform a deep copy
+ - remote: simplify guess_remote_head()
+ - move locate_head() to remote.c
+ - move duplicated ref_newer() to remote.c
+ - move duplicated get_local_heads() to remote.c
+ - refactor find_ref_by_name() to accept const list
+ - add basic http clone/fetch tests
+ - test scripts: refactor start_httpd helper
+
+* js/clone-depth-local (Fri Feb 27 00:04:06 2009 -0800) 3 commits
+ . parse_options(): do not "increment" boolean
+ . clone: ignore --depth when cloning locally (implicitly --local)
+ . clone: do not ignore --no-local option
+
+Jeff had a good suggestion for this series but it was tripped by
+a misfeature in parse_options().
+
+* rs/memmem (Tue Mar 3 00:19:30 2009 +0100) 2 commits
+ - optimize compat/ memmem()
+ - diffcore-pickaxe: use memmem()
+
+As always with patches from René, this is already next material.
 
 * mv/parseopt-ls-files (Tue Feb 17 15:27:11 2009 +0100) 2 commits
  - parse-opt: migrate builtin-ls-files.
  - Turn the flags in struct dir_struct into a single variable
 
+* jk/sane-relative-time (Tue Feb 24 00:42:16 2009 -0500) 1 commit
+ + never fallback relative times to absolute
+
+* tv/rebase-stat (Sun Mar 1 22:28:28 2009 +0100) 2 commits
+ - git-pull: Allow --stat and --no-stat to be used with --rebase
+ - git-rebase: Add --stat and --no-stat for producing diffstat on
+   rebase
+
+----------------------------------------------------------------
+[Discarded]
+
+* jc/fsck (Fri Jan 30 02:33:47 2009 -0800) 4 commits
+ - fsck: three levels of validation
+ - verify-pack: add --quick
+ - verify_pack(): allow a quicker verification for a pack with
+   version 2 idx
+ - pack-check.c: minor formatting fix to match coding style
+
+J6t has a good point that if this had any value then medium level should
+replace the default.  I am tempted to actually dropping this as a failed
+experiment.
+
+* js/remote-set-head (Sat Feb 14 05:30:30 2009 -0500) 5 commits
+ - builtin-remote: better handling of multiple remote HEADs
+ - builtin-remote: add set-head subcommand
+ - builtin-remote: teach show to display remote HEAD
+ - builtin-remote: move duplicated cleanup code its own function
+ - builtin-clone: move locate_head() to remote.c so it can be re-used
+
+* jk/head-lookup (Sun Feb 15 01:18:18 2009 -0500) 5 commits
+ - remote: use exact HEAD lookup if it is available
+ - remote: refactor guess_remote_head
+ - refactor find_refs_by_name to accept const list
+ - add basic http clone/fetch tests
+ - test scripts: refactor start_httpd helper
+
+These two are now consolidated into Jay's remove-improvements series
+listed above.
+
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
+
+* gb/gitweb-base (Sun Feb 15 10:18:36 2009 +0100) 1 commit
+ - gitweb: fix wrong base URL when non-root DirectoryIndex
 
 * ns/stash-keep (Thu Feb 12 06:25:14 2009 +0900) 1 commit
  - stash: --keep option just saves
@@ -106,17 +240,6 @@ Independent review sorely needed.
 Design discussion between Jakub and Sebastien seems to have stalled, but
 Jakub seems to be taking this over.
 
-* jc/fsck (Fri Jan 30 02:33:47 2009 -0800) 4 commits
- - fsck: three levels of validation
- - verify-pack: add --quick
- - verify_pack(): allow a quicker verification for a pack with
-   version 2 idx
- - pack-check.c: minor formatting fix to match coding style
-
-J6t has a good point that if this had any value then medium level should
-replace the default.  I am tempted to actually dropping this as a failed
-experiment.
-
 ----------------------------------------------------------------
 [Reverted]
 
@@ -150,18 +273,21 @@ I'm giving a fresh start to Lars's second iteration.
 ----------------------------------------------------------------
 [Will merge to 'next' soon]
 
-* tr/gcov (Sun Feb 15 23:25:45 2009 +0100) 8 commits
- - Test git-patch-id
- - Test rev-list --parents/--children
- - Test log --decorate
- - Test fsck a bit harder
- - Test log --graph
- - Test diff --dirstat functionality
- - Test that diff can read from stdin
- - Support coverage testing with GCC/gcov
+* js/send-email (Mon Mar 2 23:52:18 2009 -0500) 5 commits
+ - send-email: add --confirm option and configuration setting
+ + send-email: don't create temporary compose file until it is needed
+ + send-email: --suppress-cc improvements
+ + send-email: handle multiple Cc addresses when reading mbox message
+ + send-email: allow send-email to run outside a repo
 
 ----------------------------------------------------------------
 [Ready for 'master' after 1.6.2]
+
+* sg/rerere-cleanup (Sat Feb 14 23:21:04 2009 +0100) 1 commit
+ + rerere: remove duplicated functions
+
+* jc/add-p-unquote (Mon Feb 16 22:43:43 2009 -0800) 1 commit
+ + git-add -i/-p: learn to unwrap C-quoted paths
 
 * jw/imap-preformatted-html (Thu Feb 12 08:58:12 2009 -0600) 1 commit
  + imap.preformattedHTML to tell Thunderbird to send non-flowed text
@@ -182,14 +308,18 @@ that the configuration variable was renamed per list discussion.
 * dm/add-i-edit-abort (Thu Feb 12 00:19:41 2009 -0500) 1 commit
  + add -i: revisit hunk on editor failure
 
-* tp/completion (Wed Feb 11 13:03:26 2009 -0500) 4 commits
+* tp/completion (Sat Feb 21 15:48:43 2009 +0100) 6 commits
+ + Fixup: Add bare repository indicator for __git_ps1
+ + Add bare repository indicator for __git_ps1
  + completion: More fixes to prevent unbound variable errors
  + completion: Better __git_ps1 support when not in working directory
  + completion: Use consistent if [...] convention, not "test"
  + completion: For consistency, change "git rev-parse" to __gitdir
    calls
 
-* js/branch-symref (Wed Feb 18 19:14:59 2009 +0100) 2 commits
+* js/branch-symref (Wed Feb 18 22:34:44 2009 -0500) 4 commits
+ + add basic branch display tests
+ + branch: clean up repeated strlen
  + Avoid segfault with 'git branch' when the HEAD is detached
  + builtin-branch: improve output when displaying remote branches
 
@@ -197,7 +327,12 @@ that the configuration variable was renamed per list discussion.
  + builtin-branch.c: Rename branch category color names
  + Clean up use of ANSI color sequences
 
-* kb/checkout-optim (Wed Feb 18 23:18:03 2009 +0100) 10 commits
+* kb/checkout-optim (Mon Feb 23 19:02:57 2009 +0100) 14 commits
+ + write_index(): update index_state->timestamp after flushing to
+   disk
+ + verify_uptodate(): add ce_uptodate(ce) test
+ + make USE_NSEC work as expected
+ + fix compile error when USE_NSEC is defined
  + check_updates(): effective removal of cache entries marked
    CE_REMOVE
  + lstat_cache(): print a warning if doing ping-pong between cache
@@ -225,25 +360,23 @@ that the configuration variable was renamed per list discussion.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* jc/add-p-unquote (Mon Feb 16 22:43:43 2009 -0800) 1 commit
- + git-add -i/-p: learn to unwrap C-quoted paths
+* tr/gcov (Thu Feb 19 12:13:42 2009 +0100) 8 commits
+ - Test git-patch-id
+ - Test rev-list --parents/--children
+ - Test log --decorate
+ - Test fsck a bit harder
+ - Test log --graph
+ - Test diff --dirstat functionality
+ - Test that diff can read from stdin
+ - Support coverage testing with GCC/gcov
 
-* js/send-email (Sat Feb 14 23:32:15 2009 -0500) 3 commits
- + send-email: --suppress-cc improvements
- + send-email: handle multiple Cc addresses when reading mbox message
- + send-email: allow send-email to run outside a repo
-
-* sg/rerere-cleanup (Sat Feb 14 23:21:04 2009 +0100) 1 commit
- + rerere: remove duplicated functions
-
-* js/notes (Wed Feb 18 11:17:27 2009 -0800) 14 commits
- + tests: fix "export var=val"
- + notes: refuse to edit notes outside refs/notes/
- + t3301: use test_must_fail instead of !
- + t3301: fix confusing quoting in test for valid notes ref
- + notes: use GIT_EDITOR and core.editor over VISUAL/EDITOR
- + notes: only clean up message file when editing
- + handle empty notes gracefully
+* js/notes (Sat Feb 14 21:23:25 2009 +0100) 13 commits
+ - notes: refuse to edit notes outside refs/notes/
+ - t3301: use test_must_fail instead of !
+ - t3301: fix confusing quoting in test for valid notes ref
+ - notes: use GIT_EDITOR and core.editor over VISUAL/EDITOR
+ - notes: only clean up message file when editing
+ - handle empty notes gracefully
  + git notes show: test empty notes
  + git-notes: fix printing of multi-line notes
  + notes: fix core.notesRef documentation
@@ -252,28 +385,15 @@ that the configuration variable was renamed per list discussion.
  + Add a script to edit/inspect notes
  + Introduce commit notes
 
-Earlier part was merged to master and then reverted there.  I probably
-should rebase this after 1.6.2 to keep my sanity.
+Earlier part was merged to master and then reverted there.  Will be
+rebased 1.6.2 to keep my sanity.
 
-* fc/config-editor (Sat Feb 7 23:53:00 2009 +0200) 1 commit
- - config: Add new option to open an editor.
+* fc/config-editor (Sat Feb 21 02:48:54 2009 +0200) 3 commits
+ + git config: trivial cleanup for editor action
+ + git config: codestyle cleanups
+ + config: Add new option to open an editor.
 
-* js/remote-set-head (Sat Feb 14 05:30:30 2009 -0500) 5 commits
- - builtin-remote: better handling of multiple remote HEADs
- - builtin-remote: add set-head subcommand
- - builtin-remote: teach show to display remote HEAD
- - builtin-remote: move duplicated cleanup code its own function
- - builtin-clone: move locate_head() to remote.c so it can be re-used
-
-* jk/head-lookup (Sun Feb 15 01:18:18 2009 -0500) 5 commits
- - remote: use exact HEAD lookup if it is available
- - remote: refactor guess_remote_head
- - refactor find_refs_by_name to accept const list
- - add basic http clone/fetch tests
- - test scripts: refactor start_httpd helper
-
-Builds on top of Jay Soffian's js/remote-set-head topic.  How well do
-these two work in practice in the real world?  Success stories?
+Rerolled and looked sane.
 
 ----------------------------------------------------------------
 [On Hold]
@@ -314,23 +434,3 @@ read with convert_to_git(), merge them while they are still in the
 canonical representation and possibly add conflict markers, and then write
 the results out after convert_to_working_tree().  It also needs to write
 in binary mode as well.
-
-----------------------------------------------------------------
-[Perhaps will discard]
-
-* jk/renamelimit (Sat May 3 13:58:42 2008 -0700) 1 commit
- . diff: enable "too large a rename" warning when -M/-C is explicitly
-   asked for
-
-* jc/stripspace (Sun Mar 9 00:30:35 2008 -0800) 6 commits
- . git-am --forge: add Signed-off-by: line for the author
- . git-am: clean-up Signed-off-by: lines
- . stripspace: add --log-clean option to clean up signed-off-by:
-   lines
- . stripspace: use parse_options()
- . Add "git am -s" test
- . git-am: refactor code to add signed-off-by line for the committer
-
-* jc/post-simplify (Fri Aug 15 01:34:51 2008 -0700) 2 commits
- . revision --simplify-merges: incremental simplification
- . revision --simplify-merges: prepare for incremental simplification
