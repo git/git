@@ -117,9 +117,6 @@ static inline int waitpid(pid_t pid, int *status, unsigned options)
 	return -1;
 }
 
-#define off_t off64_t
-#define lseek lseek64
-
 /*
  * implementations of missing functions
  */
