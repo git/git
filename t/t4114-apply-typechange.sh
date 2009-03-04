@@ -9,6 +9,13 @@ test_description='git apply should not get confused with type changes.
 
 . ./test-lib.sh
 
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+	exit
+fi
+
 test_expect_success 'setup repository and commits' '
 	echo "hello world" > foo &&
 	echo "hi planet" > bar &&

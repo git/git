@@ -80,7 +80,7 @@ test_expect_success 'change gets noticed' '
 
 '
 
-test_expect_success 'replace a file with a symlink' '
+test_expect_success SYMLINKS 'replace a file with a symlink' '
 
 	rm foo &&
 	ln -s top foo &&

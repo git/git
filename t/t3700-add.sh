@@ -30,7 +30,7 @@ test_expect_success \
 	 *) echo fail; git ls-files --stage xfoo1; (exit 1);;
 	 esac'
 
-test_expect_success 'git add: filemode=0 should not get confused by symlink' '
+test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo1 &&
 	ln -s foo xfoo1 &&
 	git add xfoo1 &&
@@ -51,7 +51,7 @@ test_expect_success \
 	 *) echo fail; git ls-files --stage xfoo2; (exit 1);;
 	 esac'
 
-test_expect_success 'git add: filemode=0 should not get confused by symlink' '
+test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo2 &&
 	ln -s foo xfoo2 &&
 	git update-index --add xfoo2 &&
@@ -61,7 +61,7 @@ test_expect_success 'git add: filemode=0 should not get confused by symlink' '
 	esac
 '
 
-test_expect_success \
+test_expect_success SYMLINKS \
 	'git update-index --add: Test that executable bit is not used...' \
 	'git config core.filemode 0 &&
 	 ln -s xfoo2 xfoo3 &&

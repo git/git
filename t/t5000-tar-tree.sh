@@ -37,7 +37,11 @@ test_expect_success \
      cp /bin/sh a/bin &&
      printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
      printf "A not substituted O" >a/substfile2 &&
-     ln -s a a/l1 &&
+     if test_have_prereq SYMLINKS; then
+	ln -s a a/l1
+     else
+	printf %s a > a/l1
+     fi &&
      (p=long_path_to_a_file && cd a &&
       for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
       echo text >file_with_long_path) &&
