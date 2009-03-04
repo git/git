@@ -46,7 +46,8 @@ static int do_lstat(const char *file_name, struct stat *buf)
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
 		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes);
-		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
+		buf->st_size = fdata.nFileSizeLow |
+			(((off_t)fdata.nFileSizeHigh)<<32);
 		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
@@ -101,7 +102,7 @@ int mingw_fstat(int fd, struct stat *buf)
 	}
 	/* direct non-file handles to MS's fstat() */
 	if (GetFileType(fh) != FILE_TYPE_DISK)
-		return fstat(fd, buf);
+		return _fstati64(fd, buf);
 
 	if (GetFileInformationByHandle(fh, &fdata)) {
 		buf->st_ino = 0;
@@ -109,7 +110,8 @@ int mingw_fstat(int fd, struct stat *buf)
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
 		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes);
-		buf->st_size = fdata.nFileSizeLow; /* Can't use nFileSizeHigh, since it's not a stat64 */
+		buf->st_size = fdata.nFileSizeLow |
+			(((off_t)fdata.nFileSizeHigh)<<32);
 		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
