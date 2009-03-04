@@ -29,6 +29,9 @@ iis2=',
  '
 while read address name
 do
+	case "$address" in
+	'#'*)	continue ;;
+	esac
 	case "$name" in
 	$match)	;;
 	*)	continue ;;
@@ -52,5 +55,5 @@ fi
 } <<\EOF
 linux-kernel@vger.kernel.org	Linux Kernel
 info@lwn.net			LWN.NET
-emacs-orgmode@gnu.org		Emacs Org Mode
+ask@perl.org			Perl5-porters at perl
 EOF
