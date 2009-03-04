@@ -1,0 +1,22 @@
+GIT v1.6.3 Release Notes
+========================
+
+Updates since v1.6.2
+--------------------
+
+(subsystems)
+
+(performance)
+
+(usability, bells and whistles)
+
+
+Fixes since v1.6.2
+------------------
+
+All of the fixes in v1.6.2.X maintenance series are included in this
+release, unless otherwise noted.
+
+Here are fixes that this release has, but have not been backported to
+v1.6.2.X series.
+
