@@ -126,6 +126,9 @@ all::
 # randomly break unless your underlying filesystem supports those sub-second
 # times (my ext3 doesn't).
 #
+# Define NO_NSEC if your "struct stat" does not have "st_ctim.tv_nsec"
+# available.  This automatically turns USE_NSEC off.
+#
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-index perspective.
 #
@@ -737,6 +740,7 @@ ifeq ($(uname_S),AIX)
 	NO_MEMMEM = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_STRLCPY = YesPlease
+	NO_NSEC = YesPlease
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 	INTERNAL_QSORT = UnfortunatelyYes
 	NEEDS_LIBICONV=YesPlease
@@ -802,6 +806,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	RUNTIME_PREFIX = YesPlease
 	NO_POSIX_ONLY_PROGRAMS = YesPlease
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
+	NO_NSEC = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/regex -Icompat/fnmatch
 	COMPAT_CFLAGS += -DSNPRINTF_SIZE_CORR=1
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
@@ -922,6 +927,9 @@ ifdef NO_D_INO_IN_DIRENT
 endif
 ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
 	BASIC_CFLAGS += -DNO_ST_BLOCKS_IN_STRUCT_STAT
+endif
+ifdef NO_NSEC
+	BASIC_CFLAGS += -DNO_NSEC
 endif
 ifdef NO_C99_FORMAT
 	BASIC_CFLAGS += -DNO_C99_FORMAT

@@ -69,13 +69,8 @@ void fill_stat_cache_info(struct cache_entry *ce, struct stat *st)
 {
 	ce->ce_ctime.sec = (unsigned int)st->st_ctime;
 	ce->ce_mtime.sec = (unsigned int)st->st_mtime;
-#ifdef USE_NSEC
-	ce->ce_ctime.nsec = (unsigned int)st->st_ctim.tv_nsec;
-	ce->ce_mtime.nsec = (unsigned int)st->st_mtim.tv_nsec;
-#else
-	ce->ce_ctime.nsec = 0;
-	ce->ce_mtime.nsec = 0;
-#endif
+	ce->ce_ctime.nsec = ST_CTIME_NSEC(*st);
+	ce->ce_mtime.nsec = ST_MTIME_NSEC(*st);
 	ce->ce_dev = st->st_dev;
 	ce->ce_ino = st->st_ino;
 	ce->ce_uid = st->st_uid;
@@ -1183,13 +1178,8 @@ static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_en
 
 	ce->ce_ctime.sec = ntohl(ondisk->ctime.sec);
 	ce->ce_mtime.sec = ntohl(ondisk->mtime.sec);
-#ifdef USE_NSEC
 	ce->ce_ctime.nsec = ntohl(ondisk->ctime.nsec);
 	ce->ce_mtime.nsec = ntohl(ondisk->mtime.nsec);
-#else
-	ce->ce_ctime.nsec = 0;
-	ce->ce_mtime.nsec = 0;
-#endif
 	ce->ce_dev   = ntohl(ondisk->dev);
 	ce->ce_ino   = ntohl(ondisk->ino);
 	ce->ce_mode  = ntohl(ondisk->mode);
@@ -1309,11 +1299,7 @@ int read_index_from(struct index_state *istate, const char *path)
 		dst_offset += ce_size(ce);
 	}
 	istate->timestamp.sec = st.st_mtime;
-#ifdef USE_NSEC
-	istate->timestamp.nsec = (unsigned int)st.st_mtim.tv_nsec;
-#else
-	istate->timestamp.nsec = 0;
-#endif
+	istate->timestamp.nsec = ST_MTIME_NSEC(st);
 
 	while (src_offset <= mmap_size - 20 - 8) {
 		/* After an array of active_nr index entries,
@@ -1500,13 +1486,8 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 
 	ondisk->ctime.sec = htonl(ce->ce_ctime.sec);
 	ondisk->mtime.sec = htonl(ce->ce_mtime.sec);
-#ifdef USE_NSEC
 	ondisk->ctime.nsec = htonl(ce->ce_ctime.nsec);
 	ondisk->mtime.nsec = htonl(ce->ce_mtime.nsec);
-#else
-	ondisk->ctime.nsec = 0;
-	ondisk->mtime.nsec = 0;
-#endif
 	ondisk->dev  = htonl(ce->ce_dev);
 	ondisk->ino  = htonl(ce->ce_ino);
 	ondisk->mode = htonl(ce->ce_mode);
@@ -1583,9 +1564,7 @@ int write_index(struct index_state *istate, int newfd)
 	if (ce_flush(&c, newfd) || fstat(newfd, &st))
 		return -1;
 	istate->timestamp.sec = (unsigned int)st.st_ctime;
-#ifdef USE_NSEC
-	istate->timestamp.nsec = (unsigned int)st.st_ctim.tv_nsec;
-#endif
+	istate->timestamp.nsec = ST_CTIME_NSEC(st);
 	return 0;
 }
 

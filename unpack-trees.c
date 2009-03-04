@@ -362,9 +362,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->result.initialized = 1;
 	if (o->src_index) {
 		o->result.timestamp.sec = o->src_index->timestamp.sec;
-#ifdef USE_NSEC
 		o->result.timestamp.nsec = o->src_index->timestamp.nsec;
-#endif
 	}
 	o->merge_size = len;
 

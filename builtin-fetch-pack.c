@@ -801,9 +801,7 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 		int fd;
 
 		mtime.sec = st.st_mtime;
-#ifdef USE_NSEC
-		mtime.nsec = st.st_mtim.tv_nsec;
-#endif
+		mtime.nsec = ST_MTIME_NSEC(st);
 		if (stat(shallow, &st)) {
 			if (mtime.sec)
 				die("shallow file was removed during fetch");
