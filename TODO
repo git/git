@@ -8,10 +8,6 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
-* Windows relocatable install
-
-  Steffen Prohaska ($gmane/92605), Johannes Sixt.
-
 * Haiku port
 
   Andreas Färber ($gmane/92582)
@@ -24,14 +20,6 @@ The latest copy of this document is found at
 
   Giovanni Funchal ($gmane/92745)
 
-* update "rebase -i" documentation with examples
-
-  Eric Hanchrow ($gmane/92669)
-
-* pre-push hook
-
-  Scott Chacon ($gmane/92900, $gmane/92936)
-
 * Make attributes apply to trees, not just working tree.
 
 * "git checkout treeish -- path" from a treeish that does not contain
@@ -42,20 +30,6 @@ The latest copy of this document is found at
 * Safer handling of grafts (Linus, me)
   $gmane/37744/focus=37866.  Partially in 'pu' but stalled due to breakage in
   "shallow clone".
-
-* Prepare cvsimport for fixed cvsps (David Mansfield)
-
-Message-Id: <1207100091.10532.64.camel@gandalf.cobite.com>
-
-* Unify post-receive and nonexistent post-fetch (Pascal Obry)
-
-  $gmane/91150/focus=91173
-
-* receive.localBranches = { refuse | allow } (Dscho)
-  $gmane/78065
-
-* autosetting core.ignorecase (Dmitry Potapov)
-  $gmane/78176
 
 * synopsys: use {} instead of () for grouping alternatives (Jari Aalto)
   $gmane/72243
