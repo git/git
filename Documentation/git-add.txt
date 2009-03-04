@@ -136,7 +136,7 @@ $ git add Documentation/\\*.txt
 ------------
 +
 Note that the asterisk `\*` is quoted from the shell in this
-example; this lets the command to include the files from
+example; this lets the command include the files from
 subdirectories of `Documentation/` directory.
 
 * Considers adding content from all git-*.sh scripts:
@@ -145,7 +145,7 @@ subdirectories of `Documentation/` directory.
 $ git add git-*.sh
 ------------
 +
-Because this example lets shell expand the asterisk (i.e. you are
+Because this example lets the shell expand the asterisk (i.e. you are
 listing the files explicitly), it does not consider
 `subdir/git-foo.sh`.
 
@@ -198,8 +198,8 @@ one deletion).
 
 update::
 
-   This shows the status information and gives prompt
-   "Update>>".  When the prompt ends with double '>>', you can
+   This shows the status information and issues an "Update>>"
+   prompt.  When the prompt ends with double '>>', you can
    make more than one selection, concatenated with whitespace or
    comma.  Also you can say ranges.  E.g. "2-5 7,9" to choose
    2,3,4,5,7,9 from the list.  If the second number in a range is
@@ -238,8 +238,8 @@ add untracked::
 
 patch::
 
-  This lets you choose one path out of 'status' like selection.
-  After choosing the path, it presents diff between the index
+  This lets you choose one path out of a 'status' like selection.
+  After choosing the path, it presents the diff between the index
   and the working tree file and asks you if you want to stage
   the change of each hunk.  You can say:
 

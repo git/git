@@ -3297,7 +3297,7 @@ sub new {
 sub _mark_empty_symlinks {
 	my ($git_svn, $switch_path) = @_;
 	my $bool = Git::config_bool('svn.brokenSymlinkWorkaround');
-	return {} if (defined($bool) && ! $bool);
+	return {} if (!defined($bool)) || (defined($bool) && ! $bool);
 
 	my %ret;
 	my ($rev, $cmt) = $git_svn->last_rev_commit;
@@ -4738,7 +4738,7 @@ sub run_pager {
 
 sub format_svn_date {
 	# some systmes don't handle or mishandle %z, so be creative.
-	my $t = shift;
+	my $t = shift || time;
 	my $gm = timelocal(gmtime($t));
 	my $sign = qw( + + - )[ $t <=> $gm ];
 	my $gmoff = sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);

@@ -162,9 +162,3 @@ v1.6.1.X series.
 
 * "git -p cmd" when cmd is not a built-in one left the display in funny state
   when killed in the middle.
-
---
-exec >/var/tmp/1
-O=v1.6.2-rc2
-echo O=$(git describe master)
-git shortlog --no-merges $O..master ^maint

@@ -222,7 +222,7 @@ which can be used by the programmer of the callback as she sees fit.
 
 	Read a given size of data from a FILE* pointer to the buffer.
 +
-NOTE: The buffer is rewinded if the read fails. If -1 is returned,
+NOTE: The buffer is rewound if the read fails. If -1 is returned,
 `errno` must be consulted, like you would do for `read(3)`.
 `strbuf_read()`, `strbuf_read_file()` and `strbuf_getline()` has the
 same behaviour as well.
