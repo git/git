@@ -13,6 +13,10 @@ do
 	--dry-run | -n)
 		dryrun=--dry-run
 		;;
+	--)
+		shift
+		break
+		;;
 	-*)
 		echo >&2 "? $1"
 		exit 1
