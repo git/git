@@ -428,6 +428,8 @@ static const char *fmt_patch_suffix = ".patch";
 static int numbered = 0;
 static int auto_number = 1;
 
+static char *default_attach = NULL;
+
 static char **extra_hdr;
 static int extra_hdr_nr;
 static int extra_hdr_alloc;
@@ -488,6 +490,14 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		auto_number = auto_number && numbered;
 		return 0;
 	}
+	if (!strcmp(var, "format.attach")) {
+		if (value && *value)
+			default_attach = xstrdup(value);
+		else
+			default_attach = xstrdup(git_version_string);
+		return 0;
+	}
+
 
 	return git_log_config(var, value, cb);
 }
@@ -787,6 +797,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	rev.subject_prefix = fmt_patch_subject_prefix;
 
+	if (default_attach) {
+		rev.mime_boundary = default_attach;
+		rev.no_inline = 1;
+	}
+
 	/*
 	 * Parse the arguments before setup_revisions(), or something
 	 * like "git format-patch -o a123 HEAD^.." may fail; a123 is
@@ -848,6 +863,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		else if (!prefixcmp(argv[i], "--attach=")) {
 			rev.mime_boundary = argv[i] + 9;
 			rev.no_inline = 1;
+		}
+		else if (!strcmp(argv[i], "--no-attach")) {
+			rev.mime_boundary = NULL;
+			rev.no_inline = 0;
 		}
 		else if (!strcmp(argv[i], "--inline")) {
 			rev.mime_boundary = git_version_string;
