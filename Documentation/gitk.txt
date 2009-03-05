@@ -47,7 +47,8 @@ frequently used options.
 
 	After an attempt to merge stops with conflicts, show the commits on
 	the history between two branches (i.e. the HEAD and the MERGE_HEAD)
-	that modify the conflicted files.
+	that modify the conflicted files and do not exist on all the heads
+	being merged.
 
 --argscmd=<command>::
 	Command to be run each time gitk has to determine the list of
@@ -73,7 +74,7 @@ frequently used options.
 <path>...::
 
 	Limit commits to the ones touching files in the given paths. Note, to
-	avoid ambiguity wrt. revision names use "--" to separate the paths
+	avoid ambiguity with respect to revision names use "--" to separate the paths
 	from any preceding options.
 
 Examples

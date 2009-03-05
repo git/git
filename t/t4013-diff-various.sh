@@ -74,6 +74,10 @@ test_expect_success setup '
 	for i in 1 2; do echo $i; done >>dir/sub &&
 	git update-index file0 dir/sub &&
 
+	mkdir dir3 &&
+	cp dir/sub dir3/sub &&
+	test-chmtime +1 dir3/sub &&
+
 	git config log.showroot false &&
 	git commit --amend &&
 	git show-branch
@@ -262,6 +266,7 @@ diff --patch-with-raw -r initial..side
 diff --name-status dir2 dir
 diff --no-index --name-status dir2 dir
 diff --no-index --name-status -- dir2 dir
+diff --no-index dir dir3
 diff master master^ side
 EOF
 

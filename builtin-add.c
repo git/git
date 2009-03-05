@@ -15,7 +15,7 @@ static const char * const builtin_add_usage[] = {
 	"git add [options] [--] <filepattern>...",
 	NULL
 };
-static int patch_interactive = 0, add_interactive = 0;
+static int patch_interactive, add_interactive;
 static int take_worktree_changes;
 
 static void fill_pathspec_matches(const char **pathspec, char *seen, int specs)

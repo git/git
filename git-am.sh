@@ -221,6 +221,9 @@ then
 	resume=yes
 
 	case "$skip,$abort" in
+	t,t)
+		die "Please make up your mind. --skip or --abort?"
+		;;
 	t,)
 		git rerere clear
 		git read-tree --reset -u HEAD HEAD
@@ -229,12 +232,19 @@ then
 		git update-ref ORIG_HEAD $orig_head
 		;;
 	,t)
+		if test -f "$dotest/rebasing"
+		then
+			exec git rebase --abort
+		fi
 		git rerere clear
-		git read-tree --reset -u HEAD ORIG_HEAD
-		git reset ORIG_HEAD
+		test -f "$dotest/dirtyindex" || {
+			git read-tree --reset -u HEAD ORIG_HEAD
+			git reset ORIG_HEAD
+		}
 		rm -fr "$dotest"
 		exit ;;
 	esac
+	rm -f "$dotest/dirtyindex"
 else
 	# Make sure we are not given --skip, --resolved, nor --abort
 	test "$skip$resolved$abort" = "" ||
@@ -287,7 +297,11 @@ fi
 case "$resolved" in
 '')
 	files=$(git diff-index --cached --name-only HEAD --) || exit
-	test "$files" && die "Dirty index: cannot apply patches (dirty: $files)"
+	if test "$files"
+	then
+		: >"$dotest/dirtyindex"
+		die "Dirty index: cannot apply patches (dirty: $files)"
+	fi
 esac
 
 if test "$(cat "$dotest/utf8")" = t

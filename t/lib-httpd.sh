@@ -11,7 +11,21 @@ then
 	exit
 fi
 
-LIB_HTTPD_PATH=${LIB_HTTPD_PATH-'/usr/sbin/apache2'}
+HTTPD_PARA=""
+
+case $(uname) in
+	Darwin)
+		DEFAULT_HTTPD_PATH='/usr/sbin/httpd'
+		DEFAULT_HTTPD_MODULE_PATH='/usr/libexec/apache2'
+		HTTPD_PARA="$HTTPD_PARA -DDarwin"
+	;;
+	*)
+		DEFAULT_HTTPD_PATH='/usr/sbin/apache2'
+		DEFAULT_HTTPD_MODULE_PATH='/usr/lib/apache2/modules'
+	;;
+esac
+
+LIB_HTTPD_PATH=${LIB_HTTPD_PATH-"$DEFAULT_HTTPD_PATH"}
 LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'8111'}
 
 TEST_PATH="$TEST_DIRECTORY"/lib-httpd
@@ -39,13 +53,11 @@ then
 			exit
 		fi
 
-		LIB_HTTPD_MODULE_PATH='/usr/lib/apache2/modules'
+		LIB_HTTPD_MODULE_PATH="$DEFAULT_HTTPD_MODULE_PATH"
 	fi
 else
 	error "Could not identify web server at '$LIB_HTTPD_PATH'"
 fi
-
-HTTPD_PARA=""
 
 prepare_httpd() {
 	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH"
@@ -95,5 +107,5 @@ stop_httpd() {
 	trap 'die' EXIT
 
 	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
-		-f "$TEST_PATH/apache.conf" -k stop
+		-f "$TEST_PATH/apache.conf" $HTTPD_PARA -k stop
 }

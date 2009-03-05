@@ -1,6 +1,6 @@
 $ git log --root --cc --patch-with-stat --summary master
 commit 59d314ad6f356dd08601a4cd5e530381da3e3c64
-Merge: 9a6d494... c7a2ab9...
+Merge: 9a6d494 c7a2ab9
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:04:00 2006 +0000
 

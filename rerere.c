@@ -290,7 +290,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 			hex = xstrdup(sha1_to_hex(sha1));
 			string_list_insert(path, rr)->util = hex;
 			if (mkdir(git_path("rr-cache/%s", hex), 0755))
-				continue;;
+				continue;
 			handle_file(path, NULL, rr_path(hex, "preimage"));
 			fprintf(stderr, "Recorded preimage for '%s'\n", path);
 		}

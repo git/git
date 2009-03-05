@@ -88,31 +88,78 @@ if [ -z "$names" ]; then
 		echo Nothing new to pack.
 	fi
 fi
-for name in $names ; do
+
+# Ok we have prepared all new packfiles.
+mkdir -p "$PACKDIR" || exit
+
+# First see if there are packs of the same name and if so
+# if we can move them out of the way (this can happen if we
+# repacked immediately after packing fully.
+rollback=
+failed=
+for name in $names
+do
+	for sfx in pack idx
+	do
+		file=pack-$name.$sfx
+		test -f "$PACKDIR/$file" || continue
+		rm -f "$PACKDIR/old-$file" &&
+		mv "$PACKDIR/$file" "$PACKDIR/old-$file" || {
+			failed=t
+			break
+		}
+		rollback="$rollback $file"
+	done
+	test -z "$failed" || break
+done
+
+# If renaming failed for any of them, roll the ones we have
+# already renamed back to their original names.
+if test -n "$failed"
+then
+	rollback_failure=
+	for file in $rollback
+	do
+		mv "$PACKDIR/old-$file" "$PACKDIR/$file" ||
+		rollback_failure="$rollback_failure $file"
+	done
+	if test -n "$rollback_failure"
+	then
+		echo >&2 "WARNING: Some packs in use have been renamed by"
+		echo >&2 "WARNING: prefixing old- to their name, in order to"
+		echo >&2 "WARNING: replace them with the new version of the"
+		echo >&2 "WARNING: file.  But the operation failed, and"
+		echo >&2 "WARNING: attempt to rename them back to their"
+		echo >&2 "WARNING: original names also failed."
+		echo >&2 "WARNING: Please rename them in $PACKDIR manually:"
+		for file in $rollback_failure
+		do
+			echo >&2 "WARNING:   old-$file -> $file"
+		done
+	fi
+	exit 1
+fi
+
+# Now the ones with the same name are out of the way...
+fullbases=
+for name in $names
+do
 	fullbases="$fullbases pack-$name"
 	chmod a-w "$PACKTMP-$name.pack"
 	chmod a-w "$PACKTMP-$name.idx"
-	mkdir -p "$PACKDIR" || exit
-
-	for sfx in pack idx
-	do
-		if test -f "$PACKDIR/pack-$name.$sfx"
-		then
-			mv -f "$PACKDIR/pack-$name.$sfx" \
-				"$PACKDIR/old-pack-$name.$sfx"
-		fi
-	done &&
 	mv -f "$PACKTMP-$name.pack" "$PACKDIR/pack-$name.pack" &&
-	mv -f "$PACKTMP-$name.idx"  "$PACKDIR/pack-$name.idx" &&
-	test -f "$PACKDIR/pack-$name.pack" &&
-	test -f "$PACKDIR/pack-$name.idx" || {
-		echo >&2 "Couldn't replace the existing pack with updated one."
-		echo >&2 "The original set of packs have been saved as"
-		echo >&2 "old-pack-$name.{pack,idx} in $PACKDIR."
-		exit 1
-	}
-	rm -f "$PACKDIR/old-pack-$name.pack" "$PACKDIR/old-pack-$name.idx"
+	mv -f "$PACKTMP-$name.idx"  "$PACKDIR/pack-$name.idx" ||
+	exit
 done
+
+# Remove the "old-" files
+for name in $names
+do
+	rm -f "$PACKDIR/old-pack-$name.idx"
+	rm -f "$PACKDIR/old-pack-$name.pack"
+done
+
+# End of pack replacement.
 
 if test "$remove_redundant" = t
 then

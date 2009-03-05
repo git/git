@@ -442,13 +442,14 @@ def p4ChangesForPaths(depotPaths, changeRange):
     output = p4_read_pipe_lines("changes " + ' '.join (["%s...%s" % (p, changeRange)
                                                         for p in depotPaths]))
 
-    changes = []
+    changes = {}
     for line in output:
-        changeNum = line.split(" ")[1]
-        changes.append(int(changeNum))
+	changeNum = int(line.split(" ")[1])
+	changes[changeNum] = True
 
-    changes.sort()
-    return changes
+    changelist = changes.keys()
+    changelist.sort()
+    return changelist
 
 class Command:
     def __init__(self):

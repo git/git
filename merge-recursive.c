@@ -237,7 +237,7 @@ static int save_files_dirs(const unsigned char *sha1,
 		string_list_insert(newpath, &o->current_file_set);
 	free(newpath);
 
-	return READ_TREE_RECURSIVE;
+	return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
 }
 
 static int get_files_dirs(struct merge_options *o, struct tree *tree)

@@ -561,7 +561,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 		commitable = run_status(fp, index_file, prefix, 1);
 		wt_status_use_color = saved_color_setting;
 	} else {
-		struct rev_info rev;
 		unsigned char sha1[20];
 		const char *parent = "HEAD";
 
@@ -573,16 +572,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 
 		if (get_sha1(parent, sha1))
 			commitable = !!active_nr;
-		else {
-			init_revisions(&rev, "");
-			rev.abbrev = 0;
-			setup_revisions(0, NULL, &rev, parent);
-			DIFF_OPT_SET(&rev.diffopt, QUIET);
-			DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
-			run_diff_index(&rev, 1 /* cached */);
-
-			commitable = !!DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES);
-		}
+		else
+			commitable = index_differs_from(parent, 0);
 	}
 
 	fclose(fp);

@@ -4,8 +4,8 @@ GIT v1.6.1.2 Release Notes
 Fixes since v1.6.1.1
 --------------------
 
-* The logic for rename detectin in internal diff used by commands like
-  "git diff" and "git blame" have been optimized to avoid loading the same
+* The logic for rename detection in internal diff used by commands like
+  "git diff" and "git blame" has been optimized to avoid loading the same
   blob repeatedly.
 
 * We did not allow writing out a blob that is larger than 2GB for no good

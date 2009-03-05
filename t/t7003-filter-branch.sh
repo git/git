@@ -39,11 +39,29 @@ test_expect_success 'result is really identical' '
 '
 
 test_expect_success 'rewrite bare repository identically' '
-	(git config core.bare true && cd .git && git filter-branch branch)
+	(git config core.bare true && cd .git &&
+	 git filter-branch branch > filter-output 2>&1 &&
+	! fgrep fatal filter-output)
 '
 git config core.bare false
 test_expect_success 'result is really identical' '
 	test $H = $(git rev-parse HEAD)
+'
+
+TRASHDIR=$(pwd)
+test_expect_success 'correct GIT_DIR while using -d' '
+	mkdir drepo &&
+	( cd drepo &&
+	git init &&
+	test_commit drepo &&
+	git filter-branch -d "$TRASHDIR/dfoo" \
+		--index-filter "cp \"$TRASHDIR\"/dfoo/backup-refs \"$TRASHDIR\"" \
+	) &&
+	grep drepo "$TRASHDIR/backup-refs"
+'
+
+test_expect_success 'Fail if commit filter fails' '
+	test_must_fail git filter-branch -f --commit-filter "exit 1" HEAD
 '
 
 test_expect_success 'rewrite, renaming a specific file' '

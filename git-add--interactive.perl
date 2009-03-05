@@ -12,6 +12,13 @@ my ($prompt_color, $header_color, $help_color) =
 		$repo->get_color('color.interactive.header', 'bold'),
 		$repo->get_color('color.interactive.help', 'red bold'),
 	) : ();
+my $error_color = ();
+if ($menu_use_color) {
+	my $help_color_spec = ($repo->config('color.interactive.help') or
+				'red bold');
+	$error_color = $repo->get_color('color.interactive.error',
+					$help_color_spec);
+}
 
 my $diff_use_color = $repo->get_colorbool('color.diff');
 my ($fraginfo_color) =
@@ -32,6 +39,17 @@ my ($diff_new_color) =
 	) : ();
 
 my $normal_color = $repo->get_color("", "reset");
+
+my $use_readkey = 0;
+sub ReadMode;
+sub ReadKey;
+if ($repo->config_bool("interactive.singlekey")) {
+	eval {
+		require Term::ReadKey;
+		Term::ReadKey->import;
+		$use_readkey = 1;
+	};
+}
 
 sub colored {
 	my $color = shift;
@@ -325,6 +343,10 @@ sub highlight_prefix {
 	return "$prompt_color$prefix$normal_color$remainder";
 }
 
+sub error_msg {
+	print STDERR colored $error_color, @_;
+}
+
 sub list_and_choose {
 	my ($opts, @stuff) = @_;
 	my (@chosen, @return);
@@ -420,12 +442,12 @@ sub list_and_choose {
 			else {
 				$bottom = $top = find_unique($choice, @stuff);
 				if (!defined $bottom) {
-					print "Huh ($choice)?\n";
+					error_msg "Huh ($choice)?\n";
 					next TOPLOOP;
 				}
 			}
 			if ($opts->{SINGLETON} && $bottom != $top) {
-				print "Huh ($choice)?\n";
+				error_msg "Huh ($choice)?\n";
 				next TOPLOOP;
 			}
 			for ($i = $bottom-1; $i <= $top-1; $i++) {
@@ -758,11 +780,32 @@ sub diff_applies {
 	return close $fh;
 }
 
+sub _restore_terminal_and_die {
+	ReadMode 'restore';
+	print "\n";
+	exit 1;
+}
+
+sub prompt_single_character {
+	if ($use_readkey) {
+		local $SIG{TERM} = \&_restore_terminal_and_die;
+		local $SIG{INT} = \&_restore_terminal_and_die;
+		ReadMode 'cbreak';
+		my $key = ReadKey 0;
+		ReadMode 'restore';
+		print "$key" if defined $key;
+		print "\n";
+		return $key;
+	} else {
+		return <STDIN>;
+	}
+}
+
 sub prompt_yesno {
 	my ($prompt) = @_;
 	while (1) {
 		print colored $prompt_color, $prompt;
-		my $line = <STDIN>;
+		my $line = prompt_single_character;
 		return 0 if $line =~ /^n/i;
 		return 1 if $line =~ /^y/i;
 	}
@@ -893,7 +936,7 @@ sub patch_update_file {
 			print @{$mode->{DISPLAY}};
 			print colored $prompt_color,
 				"Stage mode change [y/n/a/d/?]? ";
-			my $line = <STDIN>;
+			my $line = prompt_single_character;
 			if ($line =~ /^y/i) {
 				$mode->{USE} = 1;
 				last;
@@ -966,7 +1009,7 @@ sub patch_update_file {
 			print;
 		}
 		print colored $prompt_color, "Stage this hunk [y,n,a,d,/$other,?]? ";
-		my $line = <STDIN>;
+		my $line = prompt_single_character;
 		if ($line) {
 			if ($line =~ /^y/i) {
 				$hunk[$ix]{USE} = 1;
@@ -1000,11 +1043,11 @@ sub patch_update_file {
 					chomp $response;
 				}
 				if ($response !~ /^\s*\d+\s*$/) {
-					print STDERR "Invalid number: '$response'\n";
+					error_msg "Invalid number: '$response'\n";
 				} elsif (0 < $response && $response <= $num) {
 					$ix = $response - 1;
 				} else {
-					print STDERR "Sorry, only $num hunks available.\n";
+					error_msg "Sorry, only $num hunks available.\n";
 				}
 				next;
 			}
@@ -1018,14 +1061,22 @@ sub patch_update_file {
 				next;
 			}
 			elsif ($line =~ m|^/(.*)|) {
+				my $regex = $1;
+				if ($1 eq "") {
+					print colored $prompt_color, "search for regex? ";
+					$regex = <STDIN>;
+					if (defined $regex) {
+						chomp $regex;
+					}
+				}
 				my $search_string;
 				eval {
-					$search_string = qr{$1}m;
+					$search_string = qr{$regex}m;
 				};
 				if ($@) {
 					my ($err,$exp) = ($@, $1);
 					$err =~ s/ at .*git-add--interactive line \d+, <STDIN> line \d+.*$//;
-					print STDERR "Malformed search regexp $exp: $err\n";
+					error_msg "Malformed search regexp $exp: $err\n";
 					next;
 				}
 				my $iy = $ix;
@@ -1035,7 +1086,7 @@ sub patch_update_file {
 					$iy++;
 					$iy = 0 if ($iy >= $num);
 					if ($ix == $iy) {
-						print STDERR "No hunk matches the given pattern\n";
+						error_msg "No hunk matches the given pattern\n";
 						last;
 					}
 				}
@@ -1047,7 +1098,7 @@ sub patch_update_file {
 					$ix--;
 				}
 				else {
-					print STDERR "No previous hunk\n";
+					error_msg "No previous hunk\n";
 				}
 				next;
 			}
@@ -1056,7 +1107,7 @@ sub patch_update_file {
 					$ix++;
 				}
 				else {
-					print STDERR "No next hunk\n";
+					error_msg "No next hunk\n";
 				}
 				next;
 			}
@@ -1069,13 +1120,13 @@ sub patch_update_file {
 					}
 				}
 				else {
-					print STDERR "No previous hunk\n";
+					error_msg "No previous hunk\n";
 				}
 				next;
 			}
 			elsif ($line =~ /^j/) {
 				if ($other !~ /j/) {
-					print STDERR "No next hunk\n";
+					error_msg "No next hunk\n";
 					next;
 				}
 			}

@@ -34,11 +34,11 @@
 #       are currently in a git repository.  The %s token will be
 #       the name of the current branch.
 #
-#	In addition, if you set GIT_PS1_SHOWDIRTYSTATE to a nonempty
-#	value, unstaged (*) and staged (+) changes will be shown next
-#	to the branch name.  You can configure this per-repository
-#	with the bash.showDirtyState variable, which defaults to true
-#	once GIT_PS1_SHOWDIRTYSTATE is enabled.
+#       In addition, if you set GIT_PS1_SHOWDIRTYSTATE to a nonempty
+#       value, unstaged (*) and staged (+) changes will be shown next
+#       to the branch name.  You can configure this per-repository
+#       with the bash.showDirtyState variable, which defaults to true
+#       once GIT_PS1_SHOWDIRTYSTATE is enabled.
 #
 # To submit patches:
 #
@@ -125,7 +125,7 @@ __git_ps1 ()
 		local w
 		local i
 
-		if test -n "$GIT_PS1_SHOWDIRTYSTATE"; then
+		if test -n "${GIT_PS1_SHOWDIRTYSTATE-}"; then
 			if test "$(git config --bool bash.showDirtyState)" != "false"; then
 				git diff --no-ext-diff --ignore-submodules \
 					--quiet --exit-code || w="*"
@@ -975,6 +975,27 @@ _git_ls_tree ()
 	__git_complete_file
 }
 
+# Options that go well for log, shortlog and gitk
+__git_log_common_options="
+	--not --all
+	--branches --tags --remotes
+	--first-parent --no-merges
+	--max-count=
+	--max-age= --since= --after=
+	--min-age= --until= --before=
+"
+# Options that go well for log and gitk (not shortlog)
+__git_log_gitk_options="
+	--dense --sparse --full-history
+	--simplify-merges --simplify-by-decoration
+	--left-right
+"
+# Options that go well for log and shortlog (not gitk)
+__git_log_shortlog_options="
+	--author= --committer= --grep=
+	--all-match
+"
+
 __git_log_pretty_formats="oneline short medium full fuller email raw format:"
 
 _git_log ()
@@ -982,6 +1003,11 @@ _git_log ()
 	__git_has_doubledash && return
 
 	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local g="$(git rev-parse --git-dir 2>/dev/null)"
+	local merge=""
+	if [ -f $g/MERGE_HEAD ]; then
+		merge="--merge"
+	fi
 	case "$cur" in
 	--pretty=*)
 		__gitcomp "$__git_log_pretty_formats
@@ -996,22 +1022,20 @@ _git_log ()
 		;;
 	--*)
 		__gitcomp "
-			--max-count= --max-age= --since= --after=
-			--min-age= --before= --until=
+			$__git_log_common_options
+			$__git_log_shortlog_options
+			$__git_log_gitk_options
 			--root --topo-order --date-order --reverse
-			--no-merges --follow
+			--follow
 			--abbrev-commit --abbrev=
 			--relative-date --date=
-			--author= --committer= --grep=
-			--all-match
 			--pretty=
-			--not --all
-			--left-right --cherry-pick
+			--cherry-pick
 			--graph
 			--decorate
 			--walk-reflogs
-			--parents --children --full-history
-			--merge
+			--parents --children
+			$merge
 			$__git_diff_common_options
 			--pickaxe-all --pickaxe-regex
 			"
@@ -1037,6 +1061,7 @@ _git_merge ()
 	--*)
 		__gitcomp "
 			--no-commit --no-stat --log --no-log --squash --strategy
+			--commit --stat --no-squash --ff --no-ff
 			"
 		return
 	esac
@@ -1196,8 +1221,12 @@ _git_config ()
 		__gitcomp "$(__git_merge_strategies)"
 		return
 		;;
-	color.branch|color.diff|color.status)
+	color.branch|color.diff|color.interactive|color.status|color.ui)
 		__gitcomp "always never auto"
+		return
+		;;
+	color.pager)
+		__gitcomp "false true"
 		return
 		;;
 	color.*.*)
@@ -1491,12 +1520,8 @@ _git_shortlog ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--max-count= --max-age= --since= --after=
-			--min-age= --before= --until=
-			--no-merges
-			--author= --committer= --grep=
-			--all-match
-			--not --all
+			$__git_log_common_options
+			$__git_log_shortlog_options
 			--numbered --summary
 			"
 		return
@@ -1595,7 +1620,8 @@ _git_svn ()
 	local subcommands="
 		init fetch clone rebase dcommit log find-rev
 		set-tree commit-diff info create-ignore propget
-		proplist show-ignore show-externals
+		proplist show-ignore show-externals branch tag blame
+		migrate
 		"
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
@@ -1606,13 +1632,15 @@ _git_svn ()
 			--follow-parent --authors-file= --repack=
 			--no-metadata --use-svm-props --use-svnsync-props
 			--log-window-size= --no-checkout --quiet
-			--repack-flags --user-log-author --localtime $remote_opts
+			--repack-flags --use-log-author --localtime
+			--ignore-paths= $remote_opts
 			"
 		local init_opts="
 			--template= --shared= --trunk= --tags=
 			--branches= --stdlayout --minimize-url
 			--no-metadata --use-svm-props --use-svnsync-props
-			--rewrite-root= $remote_opts
+			--rewrite-root= --prefix= --use-log-author
+			--add-author-from $remote_opts
 			"
 		local cmt_opts="
 			--edit --rmdir --find-copies-harder --copy-similarity=
@@ -1632,7 +1660,8 @@ _git_svn ()
 		dcommit,--*)
 			__gitcomp "
 				--merge --strategy= --verbose --dry-run
-				--fetch-all --no-rebase $cmt_opts $fc_opts
+				--fetch-all --no-rebase --commit-url
+				--revision $cmt_opts $fc_opts
 				"
 			;;
 		set-tree,--*)
@@ -1646,13 +1675,13 @@ _git_svn ()
 			__gitcomp "
 				--limit= --revision= --verbose --incremental
 				--oneline --show-commit --non-recursive
-				--authors-file=
+				--authors-file= --color
 				"
 			;;
 		rebase,--*)
 			__gitcomp "
 				--merge --verbose --strategy= --local
-				--fetch-all $fc_opts
+				--fetch-all --dry-run $fc_opts
 				"
 			;;
 		commit-diff,--*)
@@ -1660,6 +1689,21 @@ _git_svn ()
 			;;
 		info,--*)
 			__gitcomp "--url"
+			;;
+		branch,--*)
+			__gitcomp "--dry-run --message --tag"
+			;;
+		tag,--*)
+			__gitcomp "--dry-run --message"
+			;;
+		blame,--*)
+			__gitcomp "--git-format"
+			;;
+		migrate,--*)
+			__gitcomp "
+				--config-dir= --ignore-paths= --minimize
+				--no-auth-cache --username=
+				"
 			;;
 		*)
 			COMPREPLY=()
@@ -1804,7 +1848,11 @@ _gitk ()
 	fi
 	case "$cur" in
 	--*)
-		__gitcomp "--not --all $merge"
+		__gitcomp "
+			$__git_log_common_options
+			$__git_log_gitk_options
+			$merge
+			"
 		return
 		;;
 	esac

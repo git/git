@@ -817,9 +817,8 @@ static void start_packfile(void)
 	struct pack_header hdr;
 	int pack_fd;
 
-	snprintf(tmpfile, sizeof(tmpfile),
-		"%s/pack/tmp_pack_XXXXXX", get_object_directory());
-	pack_fd = xmkstemp(tmpfile);
+	pack_fd = odb_mkstemp(tmpfile, sizeof(tmpfile),
+			      "pack/tmp_pack_XXXXXX");
 	p = xcalloc(1, sizeof(*p) + strlen(tmpfile) + 2);
 	strcpy(p->pack_name, tmpfile);
 	p->pack_fd = pack_fd;
@@ -869,7 +868,7 @@ static char *create_index(void)
 	/* Generate the fan-out array. */
 	c = idx;
 	for (i = 0; i < 256; i++) {
-		struct object_entry **next = c;;
+		struct object_entry **next = c;
 		while (next < last) {
 			if ((*next)->sha1[0] != i)
 				break;
@@ -879,9 +878,8 @@ static char *create_index(void)
 		c = next;
 	}
 
-	snprintf(tmpfile, sizeof(tmpfile),
-		"%s/pack/tmp_idx_XXXXXX", get_object_directory());
-	idx_fd = xmkstemp(tmpfile);
+	idx_fd = odb_mkstemp(tmpfile, sizeof(tmpfile),
+			     "pack/tmp_idx_XXXXXX");
 	f = sha1fd(idx_fd, tmpfile);
 	sha1write(f, array, 256 * sizeof(int));
 	git_SHA1_Init(&ctx);
@@ -907,9 +905,7 @@ static char *keep_pack(char *curr_index_name)
 	chmod(pack_data->pack_name, 0444);
 	chmod(curr_index_name, 0444);
 
-	snprintf(name, sizeof(name), "%s/pack/pack-%s.keep",
-		 get_object_directory(), sha1_to_hex(pack_data->sha1));
-	keep_fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
+	keep_fd = odb_pack_keep(name, sizeof(name), pack_data->sha1);
 	if (keep_fd < 0)
 		die("cannot create keep file");
 	write_or_die(keep_fd, keep_msg, strlen(keep_msg));
@@ -945,6 +941,7 @@ static void end_packfile(void)
 {
 	struct packed_git *old_p = pack_data, *new_p;
 
+	clear_delta_base_cache();
 	if (object_count) {
 		char *idx_name;
 		int i;

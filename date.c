@@ -89,6 +89,11 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 	struct tm *tm;
 	static char timebuf[200];
 
+	if (mode == DATE_RAW) {
+		snprintf(timebuf, sizeof(timebuf), "%lu %+05d", time, tz);
+		return timebuf;
+	}
+
 	if (mode == DATE_RELATIVE) {
 		unsigned long diff;
 		struct timeval now;
@@ -615,6 +620,8 @@ enum date_mode parse_date_format(const char *format)
 		return DATE_LOCAL;
 	else if (!strcmp(format, "default"))
 		return DATE_NORMAL;
+	else if (!strcmp(format, "raw"))
+		return DATE_RAW;
 	else
 		die("unknown date format %s", format);
 }

@@ -356,8 +356,13 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	struct object *remote_head;
 	unsigned char branch_head[20], buf_sha[20];
 	struct strbuf buf = STRBUF_INIT;
+	struct strbuf bname = STRBUF_INIT;
 	const char *ptr;
 	int len, early;
+
+	len = strlen(remote);
+	if (interpret_nth_last_branch(remote, &bname) == len)
+		remote = bname.buf;
 
 	memset(branch_head, 0, sizeof(branch_head));
 	remote_head = peel_to_type(remote, 0, NULL, OBJ_COMMIT);
@@ -371,7 +376,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	if (!hashcmp(remote_head->sha1, branch_head)) {
 		strbuf_addf(msg, "%s\t\tbranch '%s' of .\n",
 			sha1_to_hex(branch_head), remote);
-		return;
+		goto cleanup;
 	}
 
 	/* See if remote matches <name>^^^.. or <name>~<number> */
@@ -411,7 +416,8 @@ static void merge_name(const char *remote, struct strbuf *msg)
 				    sha1_to_hex(remote_head->sha1),
 				    truname.buf + 11,
 				    (early ? " (early part)" : ""));
-			return;
+			strbuf_release(&truname);
+			goto cleanup;
 		}
 	}
 
@@ -432,10 +438,13 @@ static void merge_name(const char *remote, struct strbuf *msg)
 			strbuf_remove(&line, ptr-line.buf+1, 13);
 		strbuf_addbuf(msg, &line);
 		strbuf_release(&line);
-		return;
+		goto cleanup;
 	}
 	strbuf_addf(msg, "%s\t\tcommit '%s'\n",
 		sha1_to_hex(remote_head->sha1), remote);
+cleanup:
+	strbuf_release(&buf);
+	strbuf_release(&bname);
 }
 
 static int git_merge_config(const char *k, const char *v, void *cb)

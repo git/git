@@ -402,4 +402,31 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
 	 test "$(git config remote.origin.fetch)" = "refs/heads/master:refs/heads/origin")
 '
 
+test_expect_success 'remote prune to cause a dangling symref' '
+	git clone one seven &&
+	(
+		cd one &&
+		git checkout side2 &&
+		git branch -D master
+	) &&
+	(
+		cd seven &&
+		git remote prune origin
+	) 2>err &&
+	grep "has become dangling" err &&
+
+	: And the dangling symref will not cause other annoying errors
+	(
+		cd seven &&
+		git branch -a
+	) 2>err &&
+	! grep "points nowhere" err
+	(
+		cd seven &&
+		test_must_fail git branch nomore origin
+	) 2>err &&
+	grep "dangling symref" err
+'
+
 test_done
+

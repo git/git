@@ -469,11 +469,6 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.notesref")) {
-		notes_ref_name = xstrdup(value);
-		return 0;
-	}
-
 	if (!strcmp(var, "core.pager"))
 		return git_config_string(&pager_program, var, value);
 
@@ -570,6 +565,15 @@ static int git_default_branch_config(const char *var, const char *value)
 	return 0;
 }
 
+static int git_default_mailmap_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "mailmap.file"))
+		return git_config_string(&git_mailmap_file, var, value);
+
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
+
 int git_default_config(const char *var, const char *value, void *dummy)
 {
 	if (!prefixcmp(var, "core."))
@@ -583,6 +587,9 @@ int git_default_config(const char *var, const char *value, void *dummy)
 
 	if (!prefixcmp(var, "branch."))
 		return git_default_branch_config(var, value);
+
+	if (!prefixcmp(var, "mailmap."))
+		return git_default_mailmap_config(var, value);
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);

@@ -184,11 +184,11 @@ static int remove_tempfile_installed;
 static void remove_tempfile(void)
 {
 	int i;
-	for (i = 0; i < ARRAY_SIZE(diff_temp); i++)
-		if (diff_temp[i].name == diff_temp[i].tmp_path) {
+	for (i = 0; i < ARRAY_SIZE(diff_temp); i++) {
+		if (diff_temp[i].name == diff_temp[i].tmp_path)
 			unlink(diff_temp[i].name);
-			diff_temp[i].name = NULL;
-		}
+		diff_temp[i].name = NULL;
+	}
 }
 
 static void remove_tempfile_on_signal(int signo)
@@ -2326,15 +2326,12 @@ void diff_setup(struct diff_options *options)
 	options->break_opt = -1;
 	options->rename_limit = -1;
 	options->dirstat_percent = 3;
-	DIFF_OPT_CLR(options, DIRSTAT_CUMULATIVE);
 	options->context = 3;
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
 	if (diff_use_color_default > 0)
 		DIFF_OPT_SET(options, COLOR_DIFF);
-	else
-		DIFF_OPT_CLR(options, COLOR_DIFF);
 	options->detect_rename = diff_detect_rename_default;
 
 	if (!diff_mnemonic_prefix) {

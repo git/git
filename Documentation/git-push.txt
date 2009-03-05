@@ -9,7 +9,7 @@ git-push - Update remote refs along with associated objects
 SYNOPSIS
 --------
 [verse]
-'git push' [--all | --mirror] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>]
+'git push' [--all | --mirror | --tags] [--dry-run] [--receive-pack=<git-receive-pack>]
 	   [--repo=<repository>] [-f | --force] [-v | --verbose]
 	   [<repository> <refspec>...]
 
@@ -48,17 +48,19 @@ push. Arbitrary expressions cannot be used here, an actual ref must
 be named. If `:`<dst> is omitted, the same ref as <src> will be
 updated.
 +
-The object referenced by <src> is used to fast forward the ref <dst>
-on the remote side. If the optional leading plus `{plus}` is used, the
-remote ref is updated even if it does not result in a fast forward
-update.
+The object referenced by <src> is used to update the <dst> reference
+on the remote side, but by default this is only allowed if the
+update can fast forward <dst>.  By having the optional leading `{plus}`,
+you can tell git to update the <dst> ref even when the update is not a
+fast forward.  This does *not* attempt to merge <src> into <dst>.  See
+EXAMPLES below for details.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 +
 Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
 +
-The special refspec `:` (or `+:` to allow non-fast forward updates)
+The special refspec `:` (or `{plus}:` to allow non-fast forward updates)
 directs git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.  This is the default operation mode
@@ -217,6 +219,30 @@ git push origin master:refs/heads/experimental::
 git push origin :experimental::
 	Find a ref that matches `experimental` in the `origin` repository
 	(e.g. `refs/heads/experimental`), and delete it.
+
+git push origin {plus}dev:master::
+	Update the origin repository's master branch with the dev branch,
+	allowing non-fast forward updates.  *This can leave unreferenced
+	commits dangling in the origin repository.*  Consider the
+	following situation, where a fast forward is not possible:
++
+----
+	    o---o---o---A---B  origin/master
+		     \
+		      X---Y---Z  dev
+----
++
+The above command would change the origin repository to
++
+----
+		      A---B  (unnamed branch)
+		     /
+	    o---o---o---X---Y---Z  master
+----
++
+Commits A and B would no longer belong to a branch with a symbolic name,
+and so would be unreachable.  As such, these commits would be removed by
+a `git gc` command on the origin repository.
 
 
 Author
