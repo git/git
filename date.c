@@ -133,7 +133,25 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 			snprintf(timebuf, sizeof(timebuf), "%lu months ago", (diff + 15) / 30);
 			return timebuf;
 		}
-		/* Else fall back on absolute format.. */
+		/* Give years and months for 5 years or so */
+		if (diff < 1825) {
+			unsigned long years = (diff + 183) / 365;
+			unsigned long months = (diff % 365 + 15) / 30;
+			int n;
+			n = snprintf(timebuf, sizeof(timebuf), "%lu year%s",
+					years, (years > 1 ? "s" : ""));
+			if (months)
+				snprintf(timebuf + n, sizeof(timebuf) - n,
+					", %lu month%s ago",
+					months, (months > 1 ? "s" : ""));
+			else
+				snprintf(timebuf + n, sizeof(timebuf) - n,
+					" ago");
+			return timebuf;
+		}
+		/* Otherwise, just years. Centuries is probably overkill. */
+		snprintf(timebuf, sizeof(timebuf), "%lu years ago", (diff + 183) / 365);
+		return timebuf;
 	}
 
 	if (mode == DATE_LOCAL)
