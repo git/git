@@ -188,7 +188,8 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 
 struct ref_item {
 	char *name;
-	unsigned int kind;
+	char *dest;
+	unsigned int kind, len;
 	struct commit *commit;
 };
 
@@ -200,22 +201,47 @@ struct ref_list {
 	int kinds;
 };
 
+static char *resolve_symref(const char *src, const char *prefix)
+{
+	unsigned char sha1[20];
+	int flag;
+	const char *dst, *cp;
+
+	dst = resolve_ref(src, sha1, 0, &flag);
+	if (!(dst && (flag & REF_ISSYMREF)))
+		return NULL;
+	if (prefix && (cp = skip_prefix(dst, prefix)))
+		dst = cp;
+	return xstrdup(dst);
+}
+
 static int append_ref(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct ref_list *ref_list = (struct ref_list*)(cb_data);
 	struct ref_item *newitem;
 	struct commit *commit;
-	int kind;
-	int len;
+	int kind, i;
+	const char *prefix, *orig_refname = refname;
+
+	static struct {
+		int kind;
+		const char *prefix;
+		int pfxlen;
+	} ref_kind[] = {
+		{ REF_LOCAL_BRANCH, "refs/heads/", 11 },
+		{ REF_REMOTE_BRANCH, "refs/remotes/", 13 },
+	};
 
 	/* Detect kind */
-	if (!prefixcmp(refname, "refs/heads/")) {
-		kind = REF_LOCAL_BRANCH;
-		refname += 11;
-	} else if (!prefixcmp(refname, "refs/remotes/")) {
-		kind = REF_REMOTE_BRANCH;
-		refname += 13;
-	} else
+	for (i = 0; i < ARRAY_SIZE(ref_kind); i++) {
+		prefix = ref_kind[i].prefix;
+		if (strncmp(refname, prefix, ref_kind[i].pfxlen))
+			continue;
+		kind = ref_kind[i].kind;
+		refname += ref_kind[i].pfxlen;
+		break;
+	}
+	if (ARRAY_SIZE(ref_kind) <= i)
 		return 0;
 
 	commit = lookup_commit_reference_gently(sha1, 1);
@@ -246,9 +272,14 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	newitem->name = xstrdup(refname);
 	newitem->kind = kind;
 	newitem->commit = commit;
-	len = strlen(newitem->name);
-	if (len > ref_list->maxwidth)
-		ref_list->maxwidth = len;
+	newitem->len = strlen(refname);
+	newitem->dest = resolve_symref(orig_refname, prefix);
+	/* adjust for "remotes/" */
+	if (newitem->kind == REF_REMOTE_BRANCH &&
+	    ref_list->kinds != REF_REMOTE_BRANCH)
+		newitem->len += 8;
+	if (newitem->len > ref_list->maxwidth)
+		ref_list->maxwidth = newitem->len;
 
 	return 0;
 }
@@ -257,8 +288,10 @@ static void free_ref_list(struct ref_list *ref_list)
 {
 	int i;
 
-	for (i = 0; i < ref_list->index; i++)
+	for (i = 0; i < ref_list->index; i++) {
 		free(ref_list->list[i].name);
+		free(ref_list->list[i].dest);
+	}
 	free(ref_list->list);
 }
 
@@ -299,11 +332,12 @@ static int matches_merge_filter(struct commit *commit)
 }
 
 static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
-			   int abbrev, int current)
+			   int abbrev, int current, char *prefix)
 {
 	char c;
 	int color;
 	struct commit *commit = item->commit;
+	struct strbuf out = STRBUF_INIT, name = STRBUF_INIT;
 
 	if (!matches_merge_filter(commit))
 		return;
@@ -326,7 +360,18 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		color = BRANCH_COLOR_CURRENT;
 	}
 
-	if (verbose) {
+	strbuf_addf(&name, "%s%s", prefix, item->name);
+	if (verbose)
+		strbuf_addf(&out, "%c %s%-*s%s", c, branch_get_color(color),
+			    maxwidth, name.buf,
+			    branch_get_color(BRANCH_COLOR_RESET));
+	else
+		strbuf_addf(&out, "%c %s%s%s", c, branch_get_color(color),
+			    name.buf, branch_get_color(BRANCH_COLOR_RESET));
+
+	if (item->dest)
+		strbuf_addf(&out, " -> %s", item->dest);
+	else if (verbose) {
 		struct strbuf subject = STRBUF_INIT, stat = STRBUF_INIT;
 		const char *sub = " **** invalid ref ****";
 
@@ -340,28 +385,25 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		if (item->kind == REF_LOCAL_BRANCH)
 			fill_tracking_info(&stat, item->name);
 
-		printf("%c %s%-*s%s %s %s%s\n", c, branch_get_color(color),
-		       maxwidth, item->name,
-		       branch_get_color(BRANCH_COLOR_RESET),
-		       find_unique_abbrev(item->commit->object.sha1, abbrev),
-		       stat.buf, sub);
+		strbuf_addf(&out, " %s %s%s",
+			find_unique_abbrev(item->commit->object.sha1, abbrev),
+			stat.buf, sub);
 		strbuf_release(&stat);
 		strbuf_release(&subject);
-	} else {
-		printf("%c %s%s%s\n", c, branch_get_color(color), item->name,
-		       branch_get_color(BRANCH_COLOR_RESET));
 	}
+	printf("%s\n", out.buf);
+	strbuf_release(&name);
+	strbuf_release(&out);
 }
 
 static int calc_maxwidth(struct ref_list *refs)
 {
-	int i, l, w = 0;
+	int i, w = 0;
 	for (i = 0; i < refs->index; i++) {
 		if (!matches_merge_filter(refs->list[i].commit))
 			continue;
-		l = strlen(refs->list[i].name);
-		if (l > w)
-			w = l;
+		if (refs->list[i].len > w)
+			w = refs->list[i].len;
 	}
 	return w;
 }
@@ -397,11 +439,13 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 	    is_descendant_of(head_commit, with_commit)) {
 		struct ref_item item;
 		item.name = xstrdup("(no branch)");
+		item.len = strlen(item.name);
 		item.kind = REF_LOCAL_BRANCH;
+		item.dest = NULL;
 		item.commit = head_commit;
-		if (strlen(item.name) > ref_list.maxwidth)
-			ref_list.maxwidth = strlen(item.name);
-		print_ref_item(&item, ref_list.maxwidth, verbose, abbrev, 1);
+		if (item.len > ref_list.maxwidth)
+			ref_list.maxwidth = item.len;
+		print_ref_item(&item, ref_list.maxwidth, verbose, abbrev, 1, "");
 		free(item.name);
 	}
 
@@ -409,8 +453,11 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 		int current = !detached &&
 			(ref_list.list[i].kind == REF_LOCAL_BRANCH) &&
 			!strcmp(ref_list.list[i].name, head);
+		char *prefix = (kinds != REF_REMOTE_BRANCH &&
+				ref_list.list[i].kind == REF_REMOTE_BRANCH)
+				? "remotes/" : "";
 		print_ref_item(&ref_list.list[i], ref_list.maxwidth, verbose,
-			       abbrev, current);
+			       abbrev, current, prefix);
 	}
 
 	free_ref_list(&ref_list);
