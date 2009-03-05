@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='[--interactive | -i] [-v] [--onto <newbase>] [<upstream>|--root] [<branch>]'
+USAGE='[--interactive | -i] [-v] [--force-rebase | -f] [--onto <newbase>] [<upstream>|--root] [<branch>]'
 LONG_USAGE='git-rebase replaces <branch> with a new branch of the
 same name.  When the --onto option is provided the new branch starts
 out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
@@ -48,6 +48,7 @@ prec=4
 verbose=
 git_am_opt=
 rebase_root=
+force_rebase=
 
 continue_merge () {
 	test -n "$prev_head" || die "prev_head must be defined"
@@ -294,12 +295,20 @@ do
 		;;
 	--whitespace=*)
 		git_am_opt="$git_am_opt $1"
+		case "$1" in
+		--whitespace=fix|--whitespace=strip)
+			force_rebase=t
+			;;
+		esac
 		;;
 	-C*)
 		git_am_opt="$git_am_opt $1"
 		;;
 	--root)
 		rebase_root=t
+		;;
+	-f|--f|--fo|--for|--forc|force|--force-r|--force-re|--force-reb|--force-reba|--force_rebas|--force-rebase)
+		force_rebase=t
 		;;
 	-*)
 		usage
@@ -420,10 +429,15 @@ if test "$upstream" = "$onto" && test "$mb" = "$onto" &&
 	# linear history?
 	! (git rev-list --parents "$onto".."$branch" | grep " .* ") > /dev/null
 then
-	# Lazily switch to the target branch if needed...
-	test -z "$switch_to" || git checkout "$switch_to"
-	echo >&2 "Current branch $branch_name is up to date."
-	exit 0
+	if test -z "$force_rebase"
+	then
+		# Lazily switch to the target branch if needed...
+		test -z "$switch_to" || git checkout "$switch_to"
+		echo >&2 "Current branch $branch_name is up to date."
+		exit 0
+	else
+		echo "Current branch $branch_name is up to date, rebase forced."
+	fi
 fi
 
 if test -n "$verbose"
