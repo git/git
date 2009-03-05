@@ -10,6 +10,15 @@
 
 static char *user_format;
 
+static void save_user_format(struct rev_info *rev, const char *cp, int is_tformat)
+{
+	free(user_format);
+	user_format = xstrdup(cp);
+	if (is_tformat)
+		rev->use_terminator = 1;
+	rev->commit_format = CMIT_FMT_USERFORMAT;
+}
+
 void get_commit_format(const char *arg, struct rev_info *rev)
 {
 	int i;
@@ -33,12 +42,7 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 		return;
 	}
 	if (!prefixcmp(arg, "format:") || !prefixcmp(arg, "tformat:")) {
-		const char *cp = strchr(arg, ':') + 1;
-		free(user_format);
-		user_format = xstrdup(cp);
-		if (arg[0] == 't')
-			rev->use_terminator = 1;
-		rev->commit_format = CMIT_FMT_USERFORMAT;
+		save_user_format(rev, strchr(arg, ':') + 1, arg[0] == 't');
 		return;
 	}
 	for (i = 0; i < ARRAY_SIZE(cmt_fmts); i++) {
@@ -49,6 +53,10 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 			rev->commit_format = cmt_fmts[i].v;
 			return;
 		}
+	}
+	if (strchr(arg, '%')) {
+		save_user_format(rev, arg, 1);
+		return;
 	}
 
 	die("invalid --pretty format: %s", arg);
