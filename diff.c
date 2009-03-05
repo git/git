@@ -30,14 +30,14 @@ int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 
 static char diff_colors[][COLOR_MAXLEN] = {
-	"\033[m",	/* reset */
-	"",		/* PLAIN (normal) */
-	"\033[1m",	/* METAINFO (bold) */
-	"\033[36m",	/* FRAGINFO (cyan) */
-	"\033[31m",	/* OLD (red) */
-	"\033[32m",	/* NEW (green) */
-	"\033[33m",	/* COMMIT (yellow) */
-	"\033[41m",	/* WHITESPACE (red background) */
+	GIT_COLOR_RESET,
+	GIT_COLOR_NORMAL,	/* PLAIN */
+	GIT_COLOR_BOLD,		/* METAINFO */
+	GIT_COLOR_CYAN,		/* FRAGINFO */
+	GIT_COLOR_RED,		/* OLD */
+	GIT_COLOR_GREEN,	/* NEW */
+	GIT_COLOR_YELLOW,	/* COMMIT */
+	GIT_COLOR_BG_RED,	/* WHITESPACE */
 };
 
 static void diff_filespec_load_driver(struct diff_filespec *one);

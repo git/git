@@ -32,18 +32,18 @@ static unsigned char head_sha1[20];
 
 static int branch_use_color = -1;
 static char branch_colors[][COLOR_MAXLEN] = {
-	"\033[m",	/* reset */
-	"",		/* PLAIN (normal) */
-	"\033[31m",	/* REMOTE (red) */
-	"",		/* LOCAL (normal) */
-	"\033[32m",	/* CURRENT (green) */
+	GIT_COLOR_RESET,
+	GIT_COLOR_NORMAL,	/* PLAIN */
+	GIT_COLOR_RED,		/* REMOTE */
+	GIT_COLOR_NORMAL,	/* LOCAL */
+	GIT_COLOR_GREEN,	/* CURRENT */
 };
 enum color_branch {
-	COLOR_BRANCH_RESET = 0,
-	COLOR_BRANCH_PLAIN = 1,
-	COLOR_BRANCH_REMOTE = 2,
-	COLOR_BRANCH_LOCAL = 3,
-	COLOR_BRANCH_CURRENT = 4,
+	BRANCH_COLOR_RESET = 0,
+	BRANCH_COLOR_PLAIN = 1,
+	BRANCH_COLOR_REMOTE = 2,
+	BRANCH_COLOR_LOCAL = 3,
+	BRANCH_COLOR_CURRENT = 4,
 };
 
 static enum merge_filter {
@@ -56,15 +56,15 @@ static unsigned char merge_filter_ref[20];
 static int parse_branch_color_slot(const char *var, int ofs)
 {
 	if (!strcasecmp(var+ofs, "plain"))
-		return COLOR_BRANCH_PLAIN;
+		return BRANCH_COLOR_PLAIN;
 	if (!strcasecmp(var+ofs, "reset"))
-		return COLOR_BRANCH_RESET;
+		return BRANCH_COLOR_RESET;
 	if (!strcasecmp(var+ofs, "remote"))
-		return COLOR_BRANCH_REMOTE;
+		return BRANCH_COLOR_REMOTE;
 	if (!strcasecmp(var+ofs, "local"))
-		return COLOR_BRANCH_LOCAL;
+		return BRANCH_COLOR_LOCAL;
 	if (!strcasecmp(var+ofs, "current"))
-		return COLOR_BRANCH_CURRENT;
+		return BRANCH_COLOR_CURRENT;
 	die("bad config variable '%s'", var);
 }
 
@@ -310,20 +310,20 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 
 	switch (item->kind) {
 	case REF_LOCAL_BRANCH:
-		color = COLOR_BRANCH_LOCAL;
+		color = BRANCH_COLOR_LOCAL;
 		break;
 	case REF_REMOTE_BRANCH:
-		color = COLOR_BRANCH_REMOTE;
+		color = BRANCH_COLOR_REMOTE;
 		break;
 	default:
-		color = COLOR_BRANCH_PLAIN;
+		color = BRANCH_COLOR_PLAIN;
 		break;
 	}
 
 	c = ' ';
 	if (current) {
 		c = '*';
-		color = COLOR_BRANCH_CURRENT;
+		color = BRANCH_COLOR_CURRENT;
 	}
 
 	if (verbose) {
@@ -342,14 +342,14 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 
 		printf("%c %s%-*s%s %s %s%s\n", c, branch_get_color(color),
 		       maxwidth, item->name,
-		       branch_get_color(COLOR_BRANCH_RESET),
+		       branch_get_color(BRANCH_COLOR_RESET),
 		       find_unique_abbrev(item->commit->object.sha1, abbrev),
 		       stat.buf, sub);
 		strbuf_release(&stat);
 		strbuf_release(&subject);
 	} else {
 		printf("%c %s%s%s\n", c, branch_get_color(color), item->name,
-		       branch_get_color(COLOR_BRANCH_RESET));
+		       branch_get_color(BRANCH_COLOR_RESET));
 	}
 }
 

@@ -568,16 +568,16 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 			return end - placeholder + 1;
 		}
 		if (!prefixcmp(placeholder + 1, "red")) {
-			strbuf_addstr(sb, "\033[31m");
+			strbuf_addstr(sb, GIT_COLOR_RED);
 			return 4;
 		} else if (!prefixcmp(placeholder + 1, "green")) {
-			strbuf_addstr(sb, "\033[32m");
+			strbuf_addstr(sb, GIT_COLOR_GREEN);
 			return 6;
 		} else if (!prefixcmp(placeholder + 1, "blue")) {
-			strbuf_addstr(sb, "\033[34m");
+			strbuf_addstr(sb, GIT_COLOR_BLUE);
 			return 5;
 		} else if (!prefixcmp(placeholder + 1, "reset")) {
-			strbuf_addstr(sb, "\033[m");
+			strbuf_addstr(sb, GIT_COLOR_RESET);
 			return 6;
 		} else
 			return 0;
