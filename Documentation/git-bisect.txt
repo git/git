@@ -212,7 +212,7 @@ If you have a script that can tell if the current source code is good
 or bad, you can automatically bisect using:
 
 ------------
-$ git bisect run my_script
+$ git bisect run my_script arguments
 ------------
 
 Note that the "run" script (`my_script` in the above example) should
@@ -250,6 +250,13 @@ EXAMPLES
 ------------
 $ git bisect start HEAD v1.2 --      # HEAD is bad, v1.2 is good
 $ git bisect run make                # "make" builds the app
+------------
+
+* Automatically bisect a test failure between origin and HEAD:
++
+------------
+$ git bisect start HEAD origin --    # HEAD is bad, origin is good
+$ git bisect run make test           # "make test" builds and tests
 ------------
 
 * Automatically bisect a broken test suite:
@@ -290,6 +297,15 @@ and "exit 1" (for example) otherwise.
 It's safer if both "test.sh" and "check_test_case.sh" scripts are
 outside the repo to prevent interactions between the bisect, make and
 test processes and the scripts.
+
+* Automatically bisect a broken test suite:
++
+------------
+$ git bisect start HEAD HEAD~10 --   # culprit is among the last 10
+$ git bisect run sh -c "make || exit 125; ~/check_test_case.sh"
+------------
++
+Does the same as the previous example, but on a single line.
 
 Author
 ------
