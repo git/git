@@ -84,7 +84,7 @@ test_expect_success 'setup' '
     echo "subdir/file.h crlf" >> .gitattributes &&
     git add .gitattributes textfile.c binfile.bin mixedUp.c subdir/* &&
     git commit -q -m "First Commit" &&
-    git clone -q --local --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
+    git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
     GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
     GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log"
 '
