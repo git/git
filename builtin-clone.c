@@ -378,7 +378,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct transport *transport = NULL;
 	char *src_ref_prefix = "refs/heads/";
 
-	struct refspec refspec;
+	struct refspec *refspec;
+	const char *fetch_pattern;
 
 	junk_pid = getpid();
 
@@ -487,8 +488,14 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&branch_top, "refs/remotes/%s/", option_origin);
 	}
 
+	strbuf_addf(&value, "+%s*:%s*", src_ref_prefix, branch_top.buf);
+
 	if (option_mirror || !option_bare) {
 		/* Configure the remote */
+		strbuf_addf(&key, "remote.%s.fetch", option_origin);
+		git_config_set_multivar(key.buf, value.buf, "^$", 0);
+		strbuf_reset(&key);
+
 		if (option_mirror) {
 			strbuf_addf(&key, "remote.%s.mirror", option_origin);
 			git_config_set(key.buf, "true");
@@ -497,19 +504,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 		strbuf_addf(&key, "remote.%s.url", option_origin);
 		git_config_set(key.buf, repo);
-			strbuf_reset(&key);
-
-		strbuf_addf(&key, "remote.%s.fetch", option_origin);
-		strbuf_addf(&value, "+%s*:%s*", src_ref_prefix, branch_top.buf);
-		git_config_set_multivar(key.buf, value.buf, "^$", 0);
 		strbuf_reset(&key);
-		strbuf_reset(&value);
 	}
 
-	refspec.force = 0;
-	refspec.pattern = 1;
-	refspec.src = src_ref_prefix;
-	refspec.dst = branch_top.buf;
+	fetch_pattern = value.buf;
+	refspec = parse_fetch_refspec(1, &fetch_pattern);
+
+	strbuf_reset(&value);
 
 	if (path && !is_bundle)
 		refs = clone_local(path, git_dir);
@@ -543,7 +544,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (refs) {
 		clear_extra_refs();
 
-		mapped_refs = write_remote_refs(refs, &refspec, reflog_msg.buf);
+		mapped_refs = write_remote_refs(refs, refspec, reflog_msg.buf);
 
 		head_points_at = locate_head(refs, mapped_refs, &remote_head);
 	}
