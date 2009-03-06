@@ -387,6 +387,63 @@ __git_complete_revlist ()
 	esac
 }
 
+__git_complete_remote_or_refspec ()
+{
+	local cmd="${COMP_WORDS[1]}"
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local i c=2 remote="" pfx="" lhs=1
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		-*) ;;
+		*) remote="$i"; break ;;
+		esac
+		c=$((++c))
+	done
+	if [ -z "$remote" ]; then
+		__gitcomp "$(__git_remotes)"
+		return
+	fi
+	[ "$remote" = "." ] && remote=
+	case "$cur" in
+	*:*)
+		case "$COMP_WORDBREAKS" in
+		*:*) : great ;;
+		*)   pfx="${cur%%:*}:" ;;
+		esac
+		cur="${cur#*:}"
+		lhs=0
+		;;
+	+*)
+		pfx="+"
+		cur="${cur#+}"
+		;;
+	esac
+	case "$cmd" in
+	fetch)
+		if [ $lhs = 1 ]; then
+			__gitcomp "$(__git_refs2 "$remote")" "$pfx" "$cur"
+		else
+			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		fi
+		;;
+	pull)
+		if [ $lhs = 1 ]; then
+			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur"
+		else
+			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		fi
+		;;
+	push)
+		if [ $lhs = 1 ]; then
+			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		else
+			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur"
+		fi
+		;;
+	esac
+}
+
 __git_all_commands ()
 {
 	if [ -n "${__git_all_commandlist-}" ]; then
@@ -832,25 +889,7 @@ _git_diff ()
 
 _git_fetch ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-
-	if [ "$COMP_CWORD" = 2 ]; then
-		__gitcomp "$(__git_remotes)"
-	else
-		case "$cur" in
-		*:*)
-			local pfx=""
-			case "$COMP_WORDBREAKS" in
-			*:*) : great ;;
-			*)   pfx="${cur%%:*}:" ;;
-			esac
-			__gitcomp "$(__git_refs)" "$pfx" "${cur#*:}"
-			;;
-		*)
-			__gitcomp "$(__git_refs2 "${COMP_WORDS[2]}")"
-			;;
-		esac
-	fi
+	__git_complete_remote_or_refspec
 }
 
 _git_format_patch ()
@@ -1120,40 +1159,12 @@ _git_name_rev ()
 
 _git_pull ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-
-	if [ "$COMP_CWORD" = 2 ]; then
-		__gitcomp "$(__git_remotes)"
-	else
-		__gitcomp "$(__git_refs "${COMP_WORDS[2]}")"
-	fi
+	__git_complete_remote_or_refspec
 }
 
 _git_push ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-
-	if [ "$COMP_CWORD" = 2 ]; then
-		__gitcomp "$(__git_remotes)"
-	else
-		case "$cur" in
-		*:*)
-			local pfx=""
-			case "$COMP_WORDBREAKS" in
-			*:*) : great ;;
-			*)   pfx="${cur%%:*}:" ;;
-			esac
-
-			__gitcomp "$(__git_refs "${COMP_WORDS[2]}")" "$pfx" "${cur#*:}"
-			;;
-		+*)
-			__gitcomp "$(__git_refs)" + "${cur#+}"
-			;;
-		*)
-			__gitcomp "$(__git_refs)"
-			;;
-		esac
-	fi
+	__git_complete_remote_or_refspec
 }
 
 _git_rebase ()
