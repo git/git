@@ -54,6 +54,13 @@ do
 	echo "** $branch" &&
 
 	(
+		case "$branch, $branches " in
+		jch,*' next '*)
+			dotest= ;;
+		*)
+			dotest=test ;;
+		esac
+
 		cd "$BUILDBASE/$branch"
 		git checkout "$branch" &&
 		git reset --hard  || exit
@@ -72,14 +79,14 @@ do
 		y)
 			case "$branch" in
 			master | maint | next | jch)
-				Meta/Make $M -- $J SHELL_PATH=/bin/dash test
+				Meta/Make $M -- $J SHELL_PATH=/bin/dash $dotest
 				;;
 			esac
 			;;
 		esac &&
 
 		Meta/Make $M -- $J all &&
-		Meta/Make $M -- $J test &&
+		Meta/Make $M -- $J $dotest &&
 		case "$branch" in
 		master | maint | next )
 			Meta/Make $M -- doc
