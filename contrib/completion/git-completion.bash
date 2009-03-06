@@ -444,6 +444,23 @@ __git_complete_remote_or_refspec ()
 	esac
 }
 
+__git_complete_strategy ()
+{
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	-s|--strategy)
+		__gitcomp "$(__git_merge_strategies)"
+		return 0
+	esac
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--strategy=*)
+		__gitcomp "$(__git_merge_strategies)" "" "${cur##--strategy=}"
+		return 0
+		;;
+	esac
+	return 1
+}
+
 __git_all_commands ()
 {
 	if [ -n "${__git_all_commandlist-}" ]; then
@@ -1095,17 +1112,10 @@ _git_log ()
 
 _git_merge ()
 {
+	__git_complete_strategy && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	case "${COMP_WORDS[COMP_CWORD-1]}" in
-	-s|--strategy)
-		__gitcomp "$(__git_merge_strategies)"
-		return
-	esac
 	case "$cur" in
-	--strategy=*)
-		__gitcomp "$(__git_merge_strategies)" "" "${cur##--strategy=}"
-		return
-		;;
 	--*)
 		__gitcomp "
 			--no-commit --no-stat --log --no-log --squash --strategy
@@ -1174,16 +1184,8 @@ _git_rebase ()
 		__gitcomp "--continue --skip --abort"
 		return
 	fi
-	case "${COMP_WORDS[COMP_CWORD-1]}" in
-	-s|--strategy)
-		__gitcomp "$(__git_merge_strategies)"
-		return
-	esac
+	__git_complete_strategy && return
 	case "$cur" in
-	--strategy=*)
-		__gitcomp "$(__git_merge_strategies)" "" "${cur##--strategy=}"
-		return
-		;;
 	--*)
 		__gitcomp "--onto --merge --strategy --interactive"
 		return
