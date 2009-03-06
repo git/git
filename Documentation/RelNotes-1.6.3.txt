@@ -32,6 +32,44 @@ Updates since v1.6.2
 
 (usability, bells and whistles)
 
+* "--pretty=<style>" option to the log family of commands can now be
+  spelled as "--format=<style>".  In addition, --format=%formatstring
+  is a short-hand for --pretty=tformat:%formatstring.
+
+* "--oneline" is a synonym for "--pretty=oneline --abbrev=commit".
+
+* If you realize that you botched the patch when you are editing hunks
+  with the 'edit' action in git-add -i/-p, you can abort the editor to
+  tell git not to apply it.
+
+* git-archive learned --output=<file> option.
+
+* git-bisect shows not just the number of remaining commits whose goodness
+  is unknown, but also shows the estimated number of remaining rounds.
+
+* git-branch -r shows HEAD symref that points at a remote branch in
+  interest of each tracked remote repository.
+
+* git-config learned -e option to open an editor to edit the config file
+  directly.
+
+* git-format-patch can be told to use attachment with a new configuration,
+  format.attach.
+
+* git-imap-send learned to work around Thunderbird's inability to easily
+  disable format=flowed with a new configuration, imap.preformattedHTML.
+
+* git-rebase can be told to rebase the series even if your branch is a
+  descendant of the commit you are rebasing onto with --force-rebase
+  option.
+
+* git-send-email learned --confirm option to review the Cc: list before
+  sending the messages out.
+
+(developers)
+
+* Test scripts can be run under valgrind.
+
 
 Fixes since v1.6.2
 ------------------
@@ -42,3 +80,25 @@ release, unless otherwise noted.
 Here are fixes that this release has, but have not been backported to
 v1.6.2.X series.
 
+* .gitignore learned to handle backslash as a quoting mechanism for
+  comment introduction character "#" (backport by merging dd482ee if
+  needed).
+
+* timestamp output in --date=relative mode used to display timestamps that
+  are long time ago in the default mode; it now uses "N years M months
+  ago", and "N years ago" (backport by picking 10edf37 if needed).
+
+* git-add -i/-p now works with non-ASCII pathnames (backport by picking
+  8851f48 if needed).
+
+* "git hash-object -w" did not read from the configuration file from the
+  correct .git directory (backport by merging 272459a if needed).
+
+* git-send-email learned to correctly handle multiple Cc: addresses
+  (backport by merging afe756c if needed).
+
+---
+exec >/var/tmp/1
+O=v1.6.2-77-g8cc3fe4
+echo O=$(git describe master)
+git shortlog --no-merges $O..master ^maint
