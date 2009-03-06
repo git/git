@@ -391,10 +391,11 @@ __git_complete_remote_or_refspec ()
 {
 	local cmd="${COMP_WORDS[1]}"
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	local i c=2 remote="" pfx="" lhs=1
+	local i c=2 remote="" pfx="" lhs=1 no_complete_refspec=0
 	while [ $c -lt $COMP_CWORD ]; do
 		i="${COMP_WORDS[c]}"
 		case "$i" in
+		--all|--mirror) [ "$cmd" = "push" ] && no_complete_refspec=1 ;;
 		-*) ;;
 		*) remote="$i"; break ;;
 		esac
@@ -402,6 +403,10 @@ __git_complete_remote_or_refspec ()
 	done
 	if [ -z "$remote" ]; then
 		__gitcomp "$(__git_remotes)"
+		return
+	fi
+	if [ $no_complete_refspec = 1 ]; then
+		COMPREPLY=()
 		return
 	fi
 	[ "$remote" = "." ] && remote=
@@ -904,8 +909,20 @@ _git_diff ()
 	__git_complete_file
 }
 
+__git_fetch_options="
+	--quiet --verbose --append --upload-pack --force --keep --depth=
+	--tags --no-tags
+"
+
 _git_fetch ()
 {
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "$__git_fetch_options"
+		return
+		;;
+	esac
 	__git_complete_remote_or_refspec
 }
 
@@ -1110,6 +1127,11 @@ _git_log ()
 	__git_complete_revlist
 }
 
+__git_merge_options="
+	--no-commit --no-stat --log --no-log --squash --strategy
+	--commit --stat --no-squash --ff --no-ff
+"
+
 _git_merge ()
 {
 	__git_complete_strategy && return
@@ -1117,10 +1139,7 @@ _git_merge ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "
-			--no-commit --no-stat --log --no-log --squash --strategy
-			--commit --stat --no-squash --ff --no-ff
-			"
+		__gitcomp "$__git_merge_options"
 		return
 	esac
 	__gitcomp "$(__git_refs)"
@@ -1169,11 +1188,43 @@ _git_name_rev ()
 
 _git_pull ()
 {
+	__git_complete_strategy && return
+
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--rebase --no-rebase
+			$__git_merge_options
+			$__git_fetch_options
+		"
+		return
+		;;
+	esac
 	__git_complete_remote_or_refspec
 }
 
 _git_push ()
 {
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	--repo)
+		__gitcomp "$(__git_remotes)"
+		return
+	esac
+	case "$cur" in
+	--repo=*)
+		__gitcomp "$(__git_remotes)" "" "${cur##--repo=}"
+		return
+		;;
+	--*)
+		__gitcomp "
+			--all --mirror --tags --dry-run --force --verbose
+			--receive-pack= --repo=
+		"
+		return
+		;;
+	esac
 	__git_complete_remote_or_refspec
 }
 
