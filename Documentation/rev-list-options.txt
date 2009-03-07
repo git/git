@@ -568,11 +568,11 @@ This outputs all the commit objects between the included and excluded
 commits, ordered by their distance to the included and excluded
 commits. The farthest from them is displayed first. (This is the only
 one displayed by `--bisect`.)
-
++
 This is useful because it makes it easy to choose a good commit to
 test when you want to avoid to test some of them for some reason (they
 may not compile for example).
-
++
 This option can be used along with `--bisect-vars`, in this case,
 after all the sorted commit objects, there will be the same text as if
 `--bisect-vars` had been used alone.
