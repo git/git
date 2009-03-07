@@ -209,6 +209,7 @@ ETC_GITCONFIG = etc/gitconfig
 endif
 lib = lib
 # DESTDIR=
+pathsep = :
 
 # default configuration for gitweb
 GITWEB_CONFIG = gitweb_config.perl
@@ -776,6 +777,7 @@ ifneq (,$(findstring CYGWIN,$(uname_S)))
 	COMPAT_OBJS += compat/cygwin.o
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
+	pathsep = ;
 	prefix =
 	INSTALL = /bin/install
 	EXTLIBS += /mingw/lib/libz.a
@@ -1204,7 +1206,7 @@ $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 	sed -e '1{' \
 	    -e '	s|#!.*perl|#!$(PERL_PATH_SQ)|' \
 	    -e '	h' \
-	    -e '	s=.*=use lib (split(/:/, $$ENV{GITPERLLIB} || "@@INSTLIBDIR@@"));=' \
+	    -e '	s=.*=use lib (split(/$(pathsep)/, $$ENV{GITPERLLIB} || "@@INSTLIBDIR@@"));=' \
 	    -e '	H' \
 	    -e '	x' \
 	    -e '}' \
