@@ -88,7 +88,6 @@ test_expect_success 'branch.to-rebase.rebase' '
 	test new = $(git show HEAD:file2)
 '
 
-say "Remote does not work in t/ - skipping." ||
 test_expect_success '--rebase with rebased upstream' '
 
 	git remote add -f me . &&
