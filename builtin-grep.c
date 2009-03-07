@@ -22,6 +22,24 @@
 
 static int builtin_grep;
 
+static int grep_config(const char *var, const char *value, void *cb)
+{
+	struct grep_opt *opt = cb;
+
+	if (!strcmp(var, "grep.color") || !strcmp(var, "color.grep")) {
+		opt->color = git_config_colorbool(var, value, -1);
+		return 0;
+	}
+	if (!strcmp(var, "grep.color.match") ||
+	    !strcmp(var, "color.grep.match")) {
+		if (!value)
+			return config_error_nonbool(var);
+		color_parse(value, var, opt->color_match);
+		return 0;
+	}
+	return git_color_default_config(var, value, cb);
+}
+
 /*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;
  * pathname wildcards are allowed.
@@ -536,6 +554,12 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	opt.pattern_tail = &opt.pattern_list;
 	opt.regflags = REG_NEWLINE;
 
+	strcpy(opt.color_match, GIT_COLOR_RED GIT_COLOR_BOLD);
+	opt.color = -1;
+	git_config(grep_config, &opt);
+	if (opt.color == -1)
+		opt.color = git_use_color_default;
+
 	/*
 	 * If there is no -- then the paths must exist in the working
 	 * tree.  If there is no explicit pattern specified with -e or
@@ -730,6 +754,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--full-name", arg)) {
 			opt.relative = 0;
+			continue;
+		}
+		if (!strcmp("--color", arg)) {
+			opt.color = 1;
+			continue;
+		}
+		if (!strcmp("--no-color", arg)) {
+			opt.color = 0;
 			continue;
 		}
 		if (!strcmp("--", arg)) {
