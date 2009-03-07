@@ -82,6 +82,7 @@ test_expect_success 'merge-msg test #1' '
 	test_cmp expected actual
 '
 
+TEST_DIRECTORY=$(cd "$TEST_DIRECTORY" && pwd)
 cat >expected <<EOF
 Merge branch 'left' of $TEST_DIRECTORY/$test
 EOF
