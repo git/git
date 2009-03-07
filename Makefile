@@ -781,7 +781,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	prefix =
 	INSTALL = /bin/install
 	EXTLIBS += /mingw/lib/libz.a
-	NO_MMAP = YesPlease
 	NO_PREAD = YesPlease
 	NO_OPENSSL = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
@@ -805,6 +804,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	RUNTIME_PREFIX = YesPlease
 	NO_POSIX_ONLY_PROGRAMS = YesPlease
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
+	USE_WIN32_MMAP = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/regex -Icompat/fnmatch
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/regex/regex.o compat/winansi.o
@@ -973,6 +973,10 @@ endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
 	COMPAT_OBJS += compat/mmap.o
+endif
+ifdef USE_WIN32_MMAP
+	COMPAT_CFLAGS += -DUSE_WIN32_MMAP
+	COMPAT_OBJS += compat/win32mmap.o
 endif
 ifdef NO_PREAD
 	COMPAT_CFLAGS += -DNO_PREAD

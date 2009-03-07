@@ -166,7 +166,7 @@ static inline const char *skip_prefix(const char *str, const char *prefix)
 	return strncmp(str, prefix, len) ? NULL : str + len;
 }
 
-#ifdef NO_MMAP
+#if defined(NO_MMAP) || defined(USE_WIN32_MMAP)
 
 #ifndef PROT_READ
 #define PROT_READ 1
@@ -180,12 +180,18 @@ static inline const char *skip_prefix(const char *str, const char *prefix)
 extern void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 extern int git_munmap(void *start, size_t length);
 
+#else /* NO_MMAP || USE_WIN32_MMAP */
+
+#include <sys/mman.h>
+
+#endif /* NO_MMAP || USE_WIN32_MMAP */
+
+#ifdef NO_MMAP
+
 /* This value must be multiple of (pagesize * 2) */
 #define DEFAULT_PACKED_GIT_WINDOW_SIZE (1 * 1024 * 1024)
 
 #else /* NO_MMAP */
-
-#include <sys/mman.h>
 
 /* This value must be multiple of (pagesize * 2) */
 #define DEFAULT_PACKED_GIT_WINDOW_SIZE \
