@@ -718,9 +718,7 @@ int check_ref_format(const char *ref)
 		while ((ch = *cp++) != 0) {
 			bad_type = bad_ref_char(ch);
 			if (bad_type) {
-				return (bad_type == 2 && !*cp)
-					? CHECK_REF_FORMAT_WILDCARD
-					: CHECK_REF_FORMAT_ERROR;
+				return CHECK_REF_FORMAT_ERROR;
 			}
 			if (ch == '/')
 				break;

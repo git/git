@@ -10,8 +10,8 @@ static struct refspec s_tag_refspec = {
 	0,
 	1,
 	0,
-	"refs/tags/",
-	"refs/tags/"
+	"refs/tags/*",
+	"refs/tags/*"
 };
 
 const struct refspec *tag_refspec = &s_tag_refspec;
@@ -451,16 +451,11 @@ static void read_config(void)
  */
 static int verify_refname(char *name, int is_glob)
 {
-	int result, len = -1;
+	int result;
 
-	if (is_glob) {
-		len = strlen(name);
-		assert(name[len - 1] == '/');
-		name[len - 1] = '\0';
-	}
 	result = check_ref_format(name);
-	if (is_glob)
-		name[len - 1] = '/';
+	if (is_glob && result == CHECK_REF_FORMAT_WILDCARD)
+		result = CHECK_REF_FORMAT_OK;
 	return result;
 }
 
@@ -517,7 +512,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 		if (rhs) {
 			size_t rlen = strlen(++rhs);
 			is_glob = (2 <= rlen && !strcmp(rhs + rlen - 2, "/*"));
-			rs[i].dst = xstrndup(rhs, rlen - is_glob);
+			rs[i].dst = xstrndup(rhs, rlen);
 		}
 
 		llen = (rhs ? (rhs - lhs - 1) : strlen(lhs));
@@ -525,7 +520,6 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			if ((rhs && !is_glob) || (!rhs && fetch))
 				goto invalid;
 			is_glob = 1;
-			llen--;
 		} else if (rhs && is_glob) {
 			goto invalid;
 		}
@@ -722,10 +716,19 @@ int remote_has_url(struct remote *remote, const char *url)
 static int match_name_with_pattern(const char *key, const char *name,
 				   const char *value, char **result)
 {
-	size_t klen = strlen(key);
-	int ret = !strncmp(key, name, klen);
+	const char *kstar = strchr(key, '*');
+	size_t klen;
+	int ret;
+	if (!kstar)
+		die("Key '%s' of pattern had no '*'", key);
+	klen = kstar - key;
+	ret = !strncmp(key, name, klen);
 	if (ret && value) {
-		size_t vlen = strlen(value);
+		const char *vstar = strchr(value, '*');
+		size_t vlen;
+		if (!vstar)
+			die("Value '%s' of pattern has no '*'", value);
+		vlen = vstar - value;
 		*result = xmalloc(vlen +
 				  strlen(name) -
 				  klen + 1);
