@@ -6,7 +6,11 @@
  * number of characters to write without the trailing NUL.
  */
 #ifndef SNPRINTF_SIZE_CORR
+#if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ < 3
+#define SNPRINTF_SIZE_CORR 1
+#else
 #define SNPRINTF_SIZE_CORR 0
+#endif
 #endif
 
 #undef vsnprintf
