@@ -511,12 +511,12 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 
 		if (rhs) {
 			size_t rlen = strlen(++rhs);
-			is_glob = (2 <= rlen && !strcmp(rhs + rlen - 2, "/*"));
+			is_glob = (1 <= rlen && strchr(rhs, '*'));
 			rs[i].dst = xstrndup(rhs, rlen);
 		}
 
 		llen = (rhs ? (rhs - lhs - 1) : strlen(lhs));
-		if (2 <= llen && !memcmp(lhs + llen - 2, "/*", 2)) {
+		if (1 <= llen && memchr(lhs, '*', llen)) {
 			if ((rhs && !is_glob) || (!rhs && fetch))
 				goto invalid;
 			is_glob = 1;
@@ -718,22 +718,32 @@ static int match_name_with_pattern(const char *key, const char *name,
 {
 	const char *kstar = strchr(key, '*');
 	size_t klen;
+	size_t ksuffixlen;
+	size_t namelen;
 	int ret;
 	if (!kstar)
 		die("Key '%s' of pattern had no '*'", key);
 	klen = kstar - key;
-	ret = !strncmp(key, name, klen);
+	ksuffixlen = strlen(kstar + 1);
+	namelen = strlen(name);
+	ret = !strncmp(name, key, klen) && namelen >= klen + ksuffixlen &&
+		!memcmp(name + namelen - ksuffixlen, kstar + 1, ksuffixlen);
 	if (ret && value) {
 		const char *vstar = strchr(value, '*');
 		size_t vlen;
+		size_t vsuffixlen;
 		if (!vstar)
 			die("Value '%s' of pattern has no '*'", value);
 		vlen = vstar - value;
-		*result = xmalloc(vlen +
+		vsuffixlen = strlen(vstar + 1);
+		*result = xmalloc(vlen + vsuffixlen +
 				  strlen(name) -
-				  klen + 1);
-		strcpy(*result, value);
-		strcpy(*result + vlen, name + klen);
+				  klen - ksuffixlen + 1);
+		strncpy(*result, value, vlen);
+		strncpy(*result + vlen,
+			name + klen, namelen - klen - ksuffixlen);
+		strcpy(*result + vlen + namelen - klen - ksuffixlen,
+		       vstar + 1);
 	}
 	return ret;
 }
