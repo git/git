@@ -68,7 +68,7 @@ static struct option builtin_config_options[] = {
 	OPT_GROUP("Type"),
 	OPT_BIT(0, "bool", &types, "value is \"true\" or \"false\"", TYPE_BOOL),
 	OPT_BIT(0, "int", &types, "value is decimal number", TYPE_INT),
-	OPT_BIT(0, "bool-or-int", &types, NULL, TYPE_BOOL_OR_INT),
+	OPT_BIT(0, "bool-or-int", &types, "value is --bool or --int", TYPE_BOOL_OR_INT),
 	OPT_GROUP("Other"),
 	OPT_BOOLEAN('z', "null", &end_null, "terminate values with NUL byte"),
 	OPT_END(),
