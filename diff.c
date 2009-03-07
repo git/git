@@ -875,7 +875,7 @@ static void fill_print_name(struct diffstat_file *file)
 
 static void show_stats(struct diffstat_t* data, struct diff_options *options)
 {
-	int i, len, add, del, total, adds = 0, dels = 0;
+	int i, len, add, del, adds = 0, dels = 0;
 	int max_change = 0, max_len = 0;
 	int total_files = data->nr;
 	int width, name_width;
@@ -978,14 +978,12 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 		 */
 		add = added;
 		del = deleted;
-		total = add + del;
 		adds += add;
 		dels += del;
 
 		if (width <= max_change) {
 			add = scale_linear(add, width, max_change);
 			del = scale_linear(del, width, max_change);
-			total = add + del;
 		}
 		show_name(options->file, prefix, name, len, reset, set);
 		fprintf(options->file, "%5d%s", added + deleted,

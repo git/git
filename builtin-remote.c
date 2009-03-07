@@ -484,9 +484,8 @@ static int mv(int argc, const char **argv)
 		struct string_list_item *item = remote_branches.items + i;
 		int flag = 0;
 		unsigned char sha1[20];
-		const char *symref;
 
-		symref = resolve_ref(item->string, sha1, 1, &flag);
+		resolve_ref(item->string, sha1, 1, &flag);
 		if (!(flag & REF_ISSYMREF))
 			continue;
 		if (delete_ref(item->string, NULL, REF_NODEREF))

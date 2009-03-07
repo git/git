@@ -365,8 +365,6 @@ static void install_branch_config(const char *local,
 
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
-	int use_local_hardlinks = 1;
-	int use_separate_remote = 1;
 	int is_bundle = 0;
 	struct stat buf;
 	const char *repo_name, *repo, *work_tree, *git_dir;
@@ -388,9 +386,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (argc == 0)
 		die("You must specify a repository to clone.");
 
-	if (option_no_hardlinks)
-		use_local_hardlinks = 0;
-
 	if (option_mirror)
 		option_bare = 1;
 
@@ -399,7 +394,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			die("--bare and --origin %s options are incompatible.",
 			    option_origin);
 		option_no_checkout = 1;
-		use_separate_remote = 0;
 	}
 
 	if (!option_origin)
