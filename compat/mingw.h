@@ -203,9 +203,7 @@ int winansi_fprintf(FILE *stream, const char *format, ...) __attribute__((format
 #define has_dos_drive_prefix(path) (isalpha(*(path)) && (path)[1] == ':')
 #define is_dir_sep(c) ((c) == '/' || (c) == '\\')
 #define PATH_SEP ';'
-#if !defined(__GNUC__) || __GNUC__ < 3
 #define PRIuMAX "I64u"
-#endif
 
 void mingw_open_html(const char *path);
 #define open_html mingw_open_html
