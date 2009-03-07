@@ -719,6 +719,12 @@ int remote_has_url(struct remote *remote, const char *url)
 	return 0;
 }
 
+static int match_name_with_pattern(const char *key, const char *name)
+{
+	int ret = !prefixcmp(key, name);
+	return ret;
+}
+
 int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 {
 	int find_src = refspec->src == NULL;
@@ -742,7 +748,7 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 		if (!fetch->dst)
 			continue;
 		if (fetch->pattern) {
-			if (!prefixcmp(needle, key)) {
+			if (match_name_with_pattern(key, needle)) {
 				*result = xmalloc(strlen(value) +
 						  strlen(needle) -
 						  strlen(key) + 1);
@@ -1020,7 +1026,7 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
 			continue;
 		}
 
-		if (rs[i].pattern && !prefixcmp(src->name, rs[i].src))
+		if (rs[i].pattern && match_name_with_pattern(rs[i].src, src->name))
 			return rs + i;
 	}
 	if (matching_refs != -1)
@@ -1160,7 +1166,7 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 	for (ref = remote_refs; ref; ref = ref->next) {
 		if (strchr(ref->name, '^'))
 			continue; /* a dereference item */
-		if (!prefixcmp(ref->name, refspec->src)) {
+		if (match_name_with_pattern(refspec->src, ref->name)) {
 			const char *match;
 			struct ref *cpy = copy_ref(ref);
 			match = ref->name + remote_prefix_len;
