@@ -80,6 +80,7 @@ struct grep_opt {
 	unsigned null_following_name:1;
 	int color;
 	char color_match[COLOR_MAXLEN];
+	const char *color_external;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
