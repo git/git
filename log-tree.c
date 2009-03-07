@@ -79,18 +79,18 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
  */
 static int detect_any_signoff(char *letter, int size)
 {
-	char ch, *cp;
+	char *cp;
 	int seen_colon = 0;
 	int seen_at = 0;
 	int seen_name = 0;
 	int seen_head = 0;
 
 	cp = letter + size;
-	while (letter <= --cp && (ch = *cp) == '\n')
+	while (letter <= --cp && *cp == '\n')
 		continue;
 
 	while (letter <= cp) {
-		ch = *cp--;
+		char ch = *cp--;
 		if (ch == '\n')
 			break;
 
