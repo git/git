@@ -31,6 +31,7 @@ struct grep_pat {
 	enum grep_header_field field;
 	regex_t regexp;
 	unsigned fixed:1;
+	unsigned word_regexp:1;
 };
 
 enum grep_expr_node {

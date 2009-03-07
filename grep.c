@@ -39,6 +39,8 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
 
+	p->word_regexp = opt->word_regexp;
+
 	if (opt->fixed || is_fixed(p->pattern))
 		p->fixed = 1;
 	if (opt->regflags & REG_ICASE)
@@ -306,7 +308,8 @@ static struct {
 	{ "committer ", 10 },
 };
 
-static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol, char *eol, enum grep_context ctx)
+static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
+			     enum grep_context ctx)
 {
 	int hit = 0;
 	int saved_ch = 0;
@@ -338,7 +341,7 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 		hit = !fixmatch(p->pattern, bol, pmatch);
 	}
 
-	if (hit && opt->word_regexp) {
+	if (hit && p->word_regexp) {
 		if ((pmatch[0].rm_so < 0) ||
 		    (eol - bol) <= pmatch[0].rm_so ||
 		    (pmatch[0].rm_eo < 0) ||
@@ -378,35 +381,32 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 	return hit;
 }
 
-static int match_expr_eval(struct grep_opt *o,
-			   struct grep_expr *x,
-			   char *bol, char *eol,
-			   enum grep_context ctx,
-			   int collect_hits)
+static int match_expr_eval(struct grep_expr *x, char *bol, char *eol,
+			   enum grep_context ctx, int collect_hits)
 {
 	int h = 0;
 
 	switch (x->node) {
 	case GREP_NODE_ATOM:
-		h = match_one_pattern(o, x->u.atom, bol, eol, ctx);
+		h = match_one_pattern(x->u.atom, bol, eol, ctx);
 		break;
 	case GREP_NODE_NOT:
-		h = !match_expr_eval(o, x->u.unary, bol, eol, ctx, 0);
+		h = !match_expr_eval(x->u.unary, bol, eol, ctx, 0);
 		break;
 	case GREP_NODE_AND:
-		if (!match_expr_eval(o, x->u.binary.left, bol, eol, ctx, 0))
+		if (!match_expr_eval(x->u.binary.left, bol, eol, ctx, 0))
 			return 0;
-		h = match_expr_eval(o, x->u.binary.right, bol, eol, ctx, 0);
+		h = match_expr_eval(x->u.binary.right, bol, eol, ctx, 0);
 		break;
 	case GREP_NODE_OR:
 		if (!collect_hits)
-			return (match_expr_eval(o, x->u.binary.left,
+			return (match_expr_eval(x->u.binary.left,
 						bol, eol, ctx, 0) ||
-				match_expr_eval(o, x->u.binary.right,
+				match_expr_eval(x->u.binary.right,
 						bol, eol, ctx, 0));
-		h = match_expr_eval(o, x->u.binary.left, bol, eol, ctx, 0);
+		h = match_expr_eval(x->u.binary.left, bol, eol, ctx, 0);
 		x->u.binary.left->hit |= h;
-		h |= match_expr_eval(o, x->u.binary.right, bol, eol, ctx, 1);
+		h |= match_expr_eval(x->u.binary.right, bol, eol, ctx, 1);
 		break;
 	default:
 		die("Unexpected node type (internal error) %d", x->node);
@@ -420,7 +420,7 @@ static int match_expr(struct grep_opt *opt, char *bol, char *eol,
 		      enum grep_context ctx, int collect_hits)
 {
 	struct grep_expr *x = opt->pattern_expression;
-	return match_expr_eval(opt, x, bol, eol, ctx, collect_hits);
+	return match_expr_eval(x, bol, eol, ctx, collect_hits);
 }
 
 static int match_line(struct grep_opt *opt, char *bol, char *eol,
@@ -432,7 +432,7 @@ static int match_line(struct grep_opt *opt, char *bol, char *eol,
 
 	/* we do not call with collect_hits without being extended */
 	for (p = opt->pattern_list; p; p = p->next) {
-		if (match_one_pattern(opt, p, bol, eol, ctx))
+		if (match_one_pattern(p, bol, eol, ctx))
 			return 1;
 	}
 	return 0;
