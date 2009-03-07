@@ -394,13 +394,9 @@ static int match_expr_eval(struct grep_opt *o,
 		h = !match_expr_eval(o, x->u.unary, bol, eol, ctx, 0);
 		break;
 	case GREP_NODE_AND:
-		if (!collect_hits)
-			return (match_expr_eval(o, x->u.binary.left,
-						bol, eol, ctx, 0) &&
-				match_expr_eval(o, x->u.binary.right,
-						bol, eol, ctx, 0));
-		h = match_expr_eval(o, x->u.binary.left, bol, eol, ctx, 0);
-		h &= match_expr_eval(o, x->u.binary.right, bol, eol, ctx, 0);
+		if (!match_expr_eval(o, x->u.binary.left, bol, eol, ctx, 0))
+			return 0;
+		h = match_expr_eval(o, x->u.binary.right, bol, eol, ctx, 0);
 		break;
 	case GREP_NODE_OR:
 		if (!collect_hits)
