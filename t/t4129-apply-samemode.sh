@@ -16,6 +16,11 @@ test_expect_success setup '
 	git diff --stat -p >patch-1.txt
 '
 
+test "$(git config --bool core.filemode)" = false &&
+say "executable bit not honored - skipping" &&
+test_done &&
+exit
+
 test_expect_success 'same mode (no index)' '
 	git reset --hard &&
 	chmod +x file &&
