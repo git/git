@@ -319,6 +319,7 @@ static inline int has_extension(const char *filename, const char *ext)
 }
 
 /* Sane ctype - no locale, and works with signed chars */
+#undef isascii
 #undef isspace
 #undef isdigit
 #undef isalpha
@@ -332,6 +333,7 @@ extern unsigned char sane_ctype[256];
 #define GIT_GLOB_SPECIAL 0x08
 #define GIT_REGEX_SPECIAL 0x10
 #define sane_istest(x,mask) ((sane_ctype[(unsigned char)(x)] & (mask)) != 0)
+#define isascii(x) (((x) & ~0x7f) == 0)
 #define isspace(x) sane_istest(x,GIT_SPACE)
 #define isdigit(x) sane_istest(x,GIT_DIGIT)
 #define isalpha(x) sane_istest(x,GIT_ALPHA)

@@ -336,10 +336,10 @@ test_expect_success 'get bool variable with empty value' \
 	'git config --bool emptyvalue.variable > output &&
 	 cmp output expect'
 
-git config > output 2>&1
-
-test_expect_success 'no arguments, but no crash' \
-	"test $? = 129 && grep usage output"
+test_expect_success 'no arguments, but no crash' '
+	test_must_fail git config >output 2>&1 &&
+	grep usage output
+'
 
 cat > .git/config << EOF
 [a.b]
@@ -373,7 +373,7 @@ EOF
 test_expect_success 'new variable inserts into proper section' 'cmp .git/config expect'
 
 test_expect_success 'alternative GIT_CONFIG (non-existing file should fail)' \
-	'git config --file non-existing-config -l; test $? != 0'
+	'test_must_fail git config --file non-existing-config -l'
 
 cat > other-config << EOF
 [ein]

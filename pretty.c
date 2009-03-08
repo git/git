@@ -83,8 +83,7 @@ static int get_one_line(const char *msg)
 /* High bit set, or ISO-2022-INT */
 int non_ascii(int ch)
 {
-	ch = (ch & 0xff);
-	return ((ch & 0x80) || (ch == 0x1b));
+	return !isascii(ch) || ch == '\033';
 }
 
 static int is_rfc2047_special(char ch)

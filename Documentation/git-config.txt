@@ -131,6 +131,10 @@ See also <<FILES>>.
 	in the config file will cause the value to be multiplied
 	by 1024, 1048576, or 1073741824 prior to output.
 
+--bool-or-int::
+	'git-config' will ensure that the output matches the format of
+	either --bool or --int, as described above.
+
 -z::
 --null::
 	For all options that output values and/or keys, always
