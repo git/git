@@ -42,7 +42,7 @@ test_expect_success \
 
 test_expect_success \
     'git ls-files --others should pick up symlinks.' \
-    'diff output expected1'
+    'test_cmp expected1 output'
 
 test_expect_success \
     'git ls-files --others --directory to show output.' \
@@ -51,6 +51,6 @@ test_expect_success \
 
 test_expect_success \
     'git ls-files --others --directory should not get confused.' \
-    'diff output expected2'
+    'test_cmp expected2 output'
 
 test_done
