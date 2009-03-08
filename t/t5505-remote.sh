@@ -28,7 +28,7 @@ tokens_match () {
 }
 
 check_remote_track () {
-	actual=$(git remote show "$1" | sed -e '1,/Tracked/d') &&
+	actual=$(git remote show "$1" | sed -ne 's|^    \(.*\) tracked$|\1|p')
 	shift &&
 	tokens_match "$*" "$actual"
 }
@@ -136,47 +136,73 @@ EOF
 cat > test/expect << EOF
 * remote origin
   URL: $(pwd)/one
-  Remote branch merged with 'git pull' while on branch master
+  HEAD branch: master
+  Remote branches:
+    master new (next fetch will store in remotes/origin)
+    side   tracked
+  Local branches configured for 'git pull':
+    ahead    merges with remote master
+    master   merges with remote master
+    octopus  merges with remote topic-a
+                and with remote topic-b
+                and with remote topic-c
+    rebase  rebases onto remote master
+  Local refs configured for 'git push':
+    master pushes to master   (local out of date)
+    master pushes to upstream (create)
+* remote two
+  URL: ../two
+  HEAD branch (remote HEAD is ambiguous, may be one of the following):
+    another
     master
-  New remote branch (next fetch will store in remotes/origin)
-    master
-  Tracked remote branches
-    side
-    master
-  Local branches pushed with 'git push'
-    master:upstream
-    +refs/tags/lastbackup
+  Local refs configured for 'git push':
+    ahead  forces to master  (fast forwardable)
+    master pushes to another (up to date)
 EOF
 
 test_expect_success 'show' '
 	(cd test &&
-	 git config --add remote.origin.fetch \
-		refs/heads/master:refs/heads/upstream &&
+	 git config --add remote.origin.fetch refs/heads/master:refs/heads/upstream &&
 	 git fetch &&
+	 git checkout -b ahead origin/master &&
+	 echo 1 >> file &&
+	 test_tick &&
+	 git commit -m update file &&
+	 git checkout master &&
+	 git branch --track octopus origin/master &&
+	 git branch --track rebase origin/master &&
 	 git branch -d -r origin/master &&
+	 git config --add remote.two.url ../two &&
+	 git config branch.rebase.rebase true &&
+	 git config branch.octopus.merge "topic-a topic-b topic-c" &&
 	 (cd ../one &&
 	  echo 1 > file &&
 	  test_tick &&
 	  git commit -m update file) &&
-	 git config remote.origin.push \
-		refs/heads/master:refs/heads/upstream &&
-	 git config --add remote.origin.push \
-		+refs/tags/lastbackup &&
-	 git remote show origin > output &&
+	 git config --add remote.origin.push : &&
+	 git config --add remote.origin.push refs/heads/master:refs/heads/upstream &&
+	 git config --add remote.origin.push +refs/tags/lastbackup &&
+	 git config --add remote.two.push +refs/heads/ahead:refs/heads/master &&
+	 git config --add remote.two.push refs/heads/master:refs/heads/another &&
+	 git remote show origin two > output &&
+	 git branch -d rebase octopus &&
 	 test_cmp expect output)
 '
 
 cat > test/expect << EOF
 * remote origin
   URL: $(pwd)/one
-  Remote branch merged with 'git pull' while on branch master
-    master
-  Tracked remote branches
+  HEAD branch: (not queried)
+  Remote branches: (status not queried)
     master
     side
-  Local branches pushed with 'git push'
-    master:upstream
-    +refs/tags/lastbackup
+  Local branches configured for 'git pull':
+    ahead  merges with remote master
+    master merges with remote master
+  Local refs configured for 'git push' (status not queried):
+    (matching)           pushes to (matching)
+    refs/heads/master    pushes to refs/heads/upstream
+    refs/tags/lastbackup forces to refs/tags/lastbackup
 EOF
 
 test_expect_success 'show -n' '
@@ -195,6 +221,46 @@ test_expect_success 'prune' '
 	 git remote prune origin &&
 	 git rev-parse refs/remotes/origin/side2 &&
 	 test_must_fail git rev-parse refs/remotes/origin/side)
+'
+
+test_expect_success 'set-head --delete' '
+	(cd test &&
+	 git symbolic-ref refs/remotes/origin/HEAD &&
+	 git remote set-head --delete origin &&
+	 test_must_fail git symbolic-ref refs/remotes/origin/HEAD)
+'
+
+test_expect_success 'set-head --auto' '
+	(cd test &&
+	 git remote set-head --auto origin &&
+	 echo refs/remotes/origin/master >expect &&
+	 git symbolic-ref refs/remotes/origin/HEAD >output &&
+	 test_cmp expect output
+	)
+'
+
+cat >test/expect <<EOF
+error: Multiple remote HEAD branches. Please choose one explicitly with:
+  git remote set-head two another
+  git remote set-head two master
+EOF
+
+test_expect_success 'set-head --auto fails w/multiple HEADs' '
+	(cd test &&
+	 test_must_fail git remote set-head --auto two >output 2>&1 &&
+	test_cmp expect output)
+'
+
+cat >test/expect <<EOF
+refs/remotes/origin/side2
+EOF
+
+test_expect_success 'set-head explicit' '
+	(cd test &&
+	 git remote set-head origin side2 &&
+	 git symbolic-ref refs/remotes/origin/HEAD >output &&
+	 git remote set-head origin master &&
+	 test_cmp expect output)
 '
 
 cat > test/expect << EOF
@@ -343,7 +409,7 @@ test_expect_success '"remote show" does not show symbolic refs' '
 	git clone one three &&
 	(cd three &&
 	 git remote show origin > output &&
-	 ! grep HEAD < output &&
+	 ! grep "^ *HEAD$" < output &&
 	 ! grep -i stale < output)
 
 '
