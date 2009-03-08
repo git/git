@@ -333,7 +333,6 @@ static int get_push_ref_states(const struct ref *remote_refs,
 			info->status = PUSH_STATUS_FASTFORWARD;
 		else
 			info->status = PUSH_STATUS_OUTOFDATE;
-		// ref->peer_ref = NULL; /* local ref which is freed below */
 	}
 	free_refs(local_refs);
 	free_refs(push_map);
