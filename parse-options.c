@@ -274,7 +274,7 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			case -1:
 				return parse_options_usage(usagestr, options);
 			case -2:
-				return PARSE_OPT_UNKNOWN;
+				goto unknown;
 			}
 			if (ctx->opt)
 				check_typos(arg + 1, options);
@@ -292,7 +292,7 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 					 */
 					ctx->argv[0] = xstrdup(ctx->opt - 1);
 					*(char *)ctx->argv[0] = '-';
-					return PARSE_OPT_UNKNOWN;
+					goto unknown;
 				}
 			}
 			continue;
@@ -314,8 +314,14 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		case -1:
 			return parse_options_usage(usagestr, options);
 		case -2:
-			return PARSE_OPT_UNKNOWN;
+			goto unknown;
 		}
+		continue;
+unknown:
+		if (!(ctx->flags & PARSE_OPT_KEEP_UNKNOWN))
+			return PARSE_OPT_UNKNOWN;
+		ctx->out[ctx->cpidx++] = ctx->argv[0];
+		ctx->opt = NULL;
 	}
 	return PARSE_OPT_DONE;
 }
