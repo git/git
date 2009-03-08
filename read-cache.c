@@ -204,9 +204,9 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 		changed |= CTIME_CHANGED;
 
 #ifdef USE_NSEC
-	if (ce->ce_mtime.nsec != (unsigned int)st->st_mtim.tv_nsec)
+	if (ce->ce_mtime.nsec != ST_MTIME_NSEC(*st))
 		changed |= MTIME_CHANGED;
-	if (trust_ctime && ce->ce_ctime.nsec != (unsigned int)st->st_ctim.tv_nsec)
+	if (trust_ctime && ce->ce_ctime.nsec != ST_CTIME_NSEC(*st))
 		changed |= CTIME_CHANGED;
 #endif
 
