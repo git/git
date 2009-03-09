@@ -197,11 +197,7 @@ static int update_local_ref(struct ref *ref,
 	struct commit *current = NULL, *updated;
 	enum object_type type;
 	struct branch *current_branch = branch_get(NULL);
-	const char *pretty_ref = ref->name + (
-		!prefixcmp(ref->name, "refs/heads/") ? 11 :
-		!prefixcmp(ref->name, "refs/tags/") ? 10 :
-		!prefixcmp(ref->name, "refs/remotes/") ? 13 :
-		0);
+	const char *pretty_ref = prettify_ref(ref);
 
 	*display = 0;
 	type = sha1_object_info(ref->new_sha1, NULL);
