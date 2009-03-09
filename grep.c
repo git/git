@@ -490,9 +490,9 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 		*eol = '\0';
 		while (next_match(opt, bol, eol, ctx, &match, eflags)) {
 			printf("%.*s%s%.*s%s",
-			       match.rm_so, bol,
+			       (int)match.rm_so, bol,
 			       opt->color_match,
-			       match.rm_eo - match.rm_so, bol + match.rm_so,
+			       (int)(match.rm_eo - match.rm_so), bol + match.rm_so,
 			       GIT_COLOR_RESET);
 			bol += match.rm_eo;
 			rest -= match.rm_eo;
