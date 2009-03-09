@@ -66,6 +66,12 @@ Steps to parse options
 non-option arguments in `argv[]`.
 `argc` is updated appropriately because of the assignment.
 +
+You can also pass NULL instead of a usage array as fourth parameter of
+parse_options(), to avoid displaying a help screen with usage info and
+option list.  This should only be done if necessary, e.g. to implement
+a limited parser for only a subset of the options that needs to be run
+before the full parser, which in turn shows the full help message.
++
 Flags are the bitwise-or of:
 
 `PARSE_OPT_KEEP_DASHDASH`::
@@ -76,6 +82,27 @@ Flags are the bitwise-or of:
 	Usually the whole argument vector is massaged and reordered.
 	Using this flag, processing is stopped at the first non-option
 	argument.
+
+`PARSE_OPT_KEEP_ARGV0`::
+	Keep the first argument, which contains the program name.  It's
+	removed from argv[] by default.
+
+`PARSE_OPT_KEEP_UNKNOWN`::
+	Keep unknown arguments instead of erroring out.  This doesn't
+	work for all combinations of arguments as users might expect
+	it to do.  E.g. if the first argument in `--unknown --known`
+	takes a value (which we can't know), the second one is
+	mistakenly interpreted as a known option.  Similarly, if
+	`PARSE_OPT_STOP_AT_NON_OPTION` is set, the second argument in
+	`--unknown value` will be mistakenly interpreted as a
+	non-option, not as a value belonging to the unknown option,
+	stopping the parser early.
+
+`PARSE_OPT_NO_INTERNAL_HELP`::
+	By default, parse_options() handles `-h`, `--help` and
+	`--help-all` internally, by showing a help screen.  This option
+	turns it off and allows one to add custom handlers for these
+	options, or to just leave them unknown.
 
 Data Structure
 --------------
