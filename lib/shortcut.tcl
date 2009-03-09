@@ -54,7 +54,7 @@ proc do_cygwin_shortcut {} {
 					$argv0]
 				win32_create_lnk $fn [list \
 					$sh -c \
-					"CHERE_INVOKING=1 source /etc/profile;[sq $me]" \
+					"CHERE_INVOKING=1 source /etc/profile;[sq $me] &" \
 					] \
 					[file dirname [file normalize [gitdir]]]
 			} err]} {
