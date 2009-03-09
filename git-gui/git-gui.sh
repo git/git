@@ -769,9 +769,9 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 set _real_git_version $_git_version
 regsub -- {[\-\.]dirty$} $_git_version {} _git_version
 regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
-regsub {\.rc[0-9]+$} $_git_version {} _git_version
+regsub {\.[a-zA-Z]+\.?[0-9]+$} $_git_version {} _git_version
 regsub {\.GIT$} $_git_version {} _git_version
-regsub {\.[a-zA-Z]+\.[0-9]+$} $_git_version {} _git_version
+regsub {\.[a-zA-Z]+\.?[0-9]+$} $_git_version {} _git_version
 
 if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
 	catch {wm withdraw .}
