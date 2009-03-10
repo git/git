@@ -18,8 +18,6 @@
 
  This file is git-specific. Therefore, this file does not attempt
  to implement any codes that are not used by git.
-
- TODO: K
 */
 
 static HANDLE console;
@@ -78,6 +76,20 @@ static void set_console_attr(void)
 	}
 	SetConsoleTextAttribute(console, attributes);
 }
+
+static void erase_in_line(void)
+{
+	CONSOLE_SCREEN_BUFFER_INFO sbi;
+
+	if (!console)
+		return;
+
+	GetConsoleScreenBufferInfo(console, &sbi);
+	FillConsoleOutputCharacterA(console, ' ',
+		sbi.dwSize.X - sbi.dwCursorPosition.X, sbi.dwCursorPosition,
+		NULL);
+}
+
 
 static const char *set_attr(const char *str)
 {
@@ -218,7 +230,7 @@ static const char *set_attr(const char *str)
 		set_console_attr();
 		break;
 	case 'K':
-		/* TODO */
+		erase_in_line();
 		break;
 	default:
 		/* Unsupported code */
