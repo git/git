@@ -94,52 +94,33 @@ static void process_curl_messages(void)
 static int http_options(const char *var, const char *value, void *cb)
 {
 	if (!strcmp("http.sslverify", var)) {
-		if (curl_ssl_verify == -1)
-			curl_ssl_verify = git_config_bool(var, value);
+		curl_ssl_verify = git_config_bool(var, value);
 		return 0;
 	}
-
-	if (!strcmp("http.sslcert", var)) {
-		if (ssl_cert == NULL)
-			return git_config_string(&ssl_cert, var, value);
-		return 0;
-	}
+	if (!strcmp("http.sslcert", var))
+		return git_config_string(&ssl_cert, var, value);
 #if LIBCURL_VERSION_NUM >= 0x070902
-	if (!strcmp("http.sslkey", var)) {
-		if (ssl_key == NULL)
-			return git_config_string(&ssl_key, var, value);
-		return 0;
-	}
+	if (!strcmp("http.sslkey", var))
+		return git_config_string(&ssl_key, var, value);
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
-	if (!strcmp("http.sslcapath", var)) {
-		if (ssl_capath == NULL)
-			return git_config_string(&ssl_capath, var, value);
-		return 0;
-	}
+	if (!strcmp("http.sslcapath", var))
+		return git_config_string(&ssl_capath, var, value);
 #endif
-	if (!strcmp("http.sslcainfo", var)) {
-		if (ssl_cainfo == NULL)
-			return git_config_string(&ssl_cainfo, var, value);
-		return 0;
-	}
-
+	if (!strcmp("http.sslcainfo", var))
+		return git_config_string(&ssl_cainfo, var, value);
 #ifdef USE_CURL_MULTI
 	if (!strcmp("http.maxrequests", var)) {
-		if (max_requests == -1)
-			max_requests = git_config_int(var, value);
+		max_requests = git_config_int(var, value);
 		return 0;
 	}
 #endif
-
 	if (!strcmp("http.lowspeedlimit", var)) {
-		if (curl_low_speed_limit == -1)
-			curl_low_speed_limit = (long)git_config_int(var, value);
+		curl_low_speed_limit = (long)git_config_int(var, value);
 		return 0;
 	}
 	if (!strcmp("http.lowspeedtime", var)) {
-		if (curl_low_speed_time == -1)
-			curl_low_speed_time = (long)git_config_int(var, value);
+		curl_low_speed_time = (long)git_config_int(var, value);
 		return 0;
 	}
 
@@ -147,11 +128,8 @@ static int http_options(const char *var, const char *value, void *cb)
 		curl_ftp_no_epsv = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp("http.proxy", var)) {
-		if (curl_http_proxy == NULL)
-			return git_config_string(&curl_http_proxy, var, value);
-		return 0;
-	}
+	if (!strcmp("http.proxy", var))
+		return git_config_string(&curl_http_proxy, var, value);
 
 	/* Fall back on the default ones */
 	return git_default_config(var, value, cb);
@@ -212,10 +190,19 @@ static CURL *get_curl_handle(void)
 	return result;
 }
 
+static void set_from_env(const char **var, const char *envname)
+{
+	const char *val = getenv(envname);
+	if (val)
+		*var = val;
+}
+
 void http_init(struct remote *remote)
 {
 	char *low_speed_limit;
 	char *low_speed_time;
+
+	git_config(http_options, NULL);
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
@@ -241,14 +228,14 @@ void http_init(struct remote *remote)
 	if (getenv("GIT_SSL_NO_VERIFY"))
 		curl_ssl_verify = 0;
 
-	ssl_cert = getenv("GIT_SSL_CERT");
+	set_from_env(&ssl_cert, "GIT_SSL_CERT");
 #if LIBCURL_VERSION_NUM >= 0x070902
-	ssl_key = getenv("GIT_SSL_KEY");
+	set_from_env(&ssl_key, "GIT_SSL_KEY");
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
-	ssl_capath = getenv("GIT_SSL_CAPATH");
+	set_from_env(&ssl_capath, "GIT_SSL_CAPATH");
 #endif
-	ssl_cainfo = getenv("GIT_SSL_CAINFO");
+	set_from_env(&ssl_cainfo, "GIT_SSL_CAINFO");
 
 	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
 	if (low_speed_limit != NULL)
@@ -256,8 +243,6 @@ void http_init(struct remote *remote)
 	low_speed_time = getenv("GIT_HTTP_LOW_SPEED_TIME");
 	if (low_speed_time != NULL)
 		curl_low_speed_time = strtol(low_speed_time, NULL, 10);
-
-	git_config(http_options, NULL);
 
 	if (curl_ssl_verify == -1)
 		curl_ssl_verify = 1;
