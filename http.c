@@ -25,6 +25,7 @@ static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
+static char *user_name, *user_pass;
 
 static struct curl_slist *pragma_header;
 
@@ -135,6 +136,20 @@ static int http_options(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
+static void init_curl_http_auth(CURL *result)
+{
+	if (!user_name)
+		curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+	else {
+		struct strbuf up = STRBUF_INIT;
+		if (!user_pass)
+			user_pass = xstrdup(getpass("Password: "));
+		strbuf_addf(&up, "%s:%s", user_name, user_pass);
+		curl_easy_setopt(result, CURLOPT_USERPWD,
+				 strbuf_detach(&up, NULL));
+	}
+}
+
 static CURL *get_curl_handle(void)
 {
 	CURL *result = curl_easy_init();
@@ -152,6 +167,8 @@ static CURL *get_curl_handle(void)
 #if LIBCURL_VERSION_NUM >= 0x070907
 	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
 #endif
+
+	init_curl_http_auth(result);
 
 	if (ssl_cert != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
@@ -188,6 +205,46 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
 
 	return result;
+}
+
+static void http_auth_init(const char *url)
+{
+	char *at, *colon, *cp, *slash;
+	int len;
+
+	cp = strstr(url, "://");
+	if (!cp)
+		return;
+
+	/*
+	 * Ok, the URL looks like "proto://something".  Which one?
+	 * "proto://<user>:<pass>@<host>/...",
+	 * "proto://<user>@<host>/...", or just
+	 * "proto://<host>/..."?
+	 */
+	cp += 3;
+	at = strchr(cp, '@');
+	colon = strchr(cp, ':');
+	slash = strchrnul(cp, '/');
+	if (!at || slash <= at)
+		return; /* No credentials */
+	if (!colon || at <= colon) {
+		/* Only username */
+		len = at - cp;
+		user_name = xmalloc(len + 1);
+		memcpy(user_name, cp, len);
+		user_name[len] = '\0';
+		user_pass = NULL;
+	} else {
+		len = colon - cp;
+		user_name = xmalloc(len + 1);
+		memcpy(user_name, cp, len);
+		user_name[len] = '\0';
+		len = at - (colon + 1);
+		user_pass = xmalloc(len + 1);
+		memcpy(user_pass, colon + 1, len);
+		user_pass[len] = '\0';
+	}
 }
 
 static void set_from_env(const char **var, const char *envname)
@@ -254,6 +311,9 @@ void http_init(struct remote *remote)
 
 	if (getenv("GIT_CURL_FTP_NO_EPSV"))
 		curl_ftp_no_epsv = 1;
+
+	if (remote && remote->url && remote->url[0])
+		http_auth_init(remote->url[0]);
 
 #ifndef NO_CURL_EASY_DUPHANDLE
 	curl_default = get_curl_handle();
