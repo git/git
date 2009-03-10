@@ -1,7 +1,7 @@
 #include "http.h"
 
 int data_received;
-int active_requests = 0;
+int active_requests;
 
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
@@ -13,22 +13,22 @@ static CURL *curl_default;
 char curl_errorstr[CURL_ERROR_SIZE];
 
 static int curl_ssl_verify = -1;
-static const char *ssl_cert = NULL;
+static const char *ssl_cert;
 #if LIBCURL_VERSION_NUM >= 0x070902
-static const char *ssl_key = NULL;
+static const char *ssl_key;
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
-static const char *ssl_capath = NULL;
+static const char *ssl_capath;
 #endif
-static const char *ssl_cainfo = NULL;
+static const char *ssl_cainfo;
 static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
-static int curl_ftp_no_epsv = 0;
-static const char *curl_http_proxy = NULL;
+static int curl_ftp_no_epsv;
+static const char *curl_http_proxy;
 
 static struct curl_slist *pragma_header;
 
-static struct active_request_slot *active_queue_head = NULL;
+static struct active_request_slot *active_queue_head;
 
 size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
@@ -94,9 +94,8 @@ static void process_curl_messages(void)
 static int http_options(const char *var, const char *value, void *cb)
 {
 	if (!strcmp("http.sslverify", var)) {
-		if (curl_ssl_verify == -1) {
+		if (curl_ssl_verify == -1)
 			curl_ssl_verify = git_config_bool(var, value);
-		}
 		return 0;
 	}
 
@@ -158,9 +157,9 @@ static int http_options(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-static CURL* get_curl_handle(void)
+static CURL *get_curl_handle(void)
 {
-	CURL* result = curl_easy_init();
+	CURL *result = curl_easy_init();
 
 	if (!curl_ssl_verify) {
 		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 0);
@@ -322,15 +321,14 @@ struct active_request_slot *get_active_slot(void)
 	/* Wait for a slot to open up if the queue is full */
 	while (active_requests >= max_requests) {
 		curl_multi_perform(curlm, &num_transfers);
-		if (num_transfers < active_requests) {
+		if (num_transfers < active_requests)
 			process_curl_messages();
-		}
 	}
 #endif
 
-	while (slot != NULL && slot->in_use) {
+	while (slot != NULL && slot->in_use)
 		slot = slot->next;
-	}
+
 	if (slot == NULL) {
 		newslot = xmalloc(sizeof(*newslot));
 		newslot->curl = NULL;
@@ -341,9 +339,8 @@ struct active_request_slot *get_active_slot(void)
 		if (slot == NULL) {
 			active_queue_head = newslot;
 		} else {
-			while (slot->next != NULL) {
+			while (slot->next != NULL)
 				slot = slot->next;
-			}
 			slot->next = newslot;
 		}
 		slot = newslot;
@@ -404,7 +401,7 @@ struct fill_chain {
 	struct fill_chain *next;
 };
 
-static struct fill_chain *fill_cfg = NULL;
+static struct fill_chain *fill_cfg;
 
 void add_fill_function(void *data, int (*fill)(void *))
 {
@@ -535,9 +532,8 @@ static void finish_active_slot(struct active_request_slot *slot)
 	}
 
 	/* Run callback if appropriate */
-	if (slot->callback_func != NULL) {
+	if (slot->callback_func != NULL)
 		slot->callback_func(slot->callback_data);
-	}
 }
 
 void finish_all_active_slots(void)
@@ -567,8 +563,10 @@ static inline int needs_quote(int ch)
 
 static inline int hex(int v)
 {
-	if (v < 10) return '0' + v;
-	else return 'A' + v - 10;
+	if (v < 10)
+		return '0' + v;
+	else
+		return 'A' + v - 10;
 }
 
 static char *quote_ref_url(const char *base, const char *ref)
