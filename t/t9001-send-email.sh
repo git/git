@@ -292,4 +292,15 @@ test_expect_success '--compose adds MIME for utf8 subject' '
 	grep "^Subject: =?utf-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
 '
 
+test_expect_success 'in-reply-to but no threading' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--in-reply-to="<in-reply-id@example.com>" \
+		--no-thread \
+		$patches |
+	grep "In-Reply-To: <in-reply-id@example.com>"
+'
+
 test_done
