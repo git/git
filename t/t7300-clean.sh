@@ -373,9 +373,9 @@ test_expect_success 'removal failure' '
 
 	mkdir foo &&
 	touch foo/bar &&
-	exec <foo/bar &&
-	chmod 0 foo &&
-	test_must_fail git clean -f -d
+	(exec <foo/bar &&
+	 chmod 0 foo &&
+	 test_must_fail git clean -f -d)
 
 '
 chmod 755 foo
