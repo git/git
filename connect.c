@@ -373,8 +373,6 @@ static void git_tcp_connect(int fd[2], char *host, int flags)
 
 
 static char *git_proxy_command;
-static const char *rhost_name;
-static int rhost_len;
 
 static int git_proxy_command_options(const char *var, const char *value,
 		void *cb)
@@ -383,6 +381,8 @@ static int git_proxy_command_options(const char *var, const char *value,
 		const char *for_pos;
 		int matchlen = -1;
 		int hostlen;
+		const char *rhost_name = cb;
+		int rhost_len = strlen(rhost_name);
 
 		if (git_proxy_command)
 			return 0;
@@ -426,11 +426,8 @@ static int git_proxy_command_options(const char *var, const char *value,
 
 static int git_use_proxy(const char *host)
 {
-	rhost_name = host;
-	rhost_len = strlen(host);
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options, NULL);
-	rhost_name = NULL;
+	git_config(git_proxy_command_options, (void*)host);
 	return (git_proxy_command && *git_proxy_command);
 }
 
