@@ -46,6 +46,7 @@ do_merge=
 dotest="$GIT_DIR"/rebase-merge
 prec=4
 verbose=
+diffstat=$(git config --bool rebase.stat)
 git_am_opt=
 rebase_root=
 force_rebase=
@@ -290,8 +291,15 @@ do
 		esac
 		do_merge=t
 		;;
+	-n|--no-stat)
+		diffstat=
+		;;
+	--stat)
+		diffstat=t
+		;;
 	-v|--verbose)
 		verbose=t
+		diffstat=t
 		;;
 	--whitespace=*)
 		git_am_opt="$git_am_opt $1"
@@ -440,17 +448,20 @@ then
 	fi
 fi
 
-if test -n "$verbose"
-then
-	echo "Changes from $mb to $onto:"
-	# We want color (if set), but no pager
-	GIT_PAGER='' git diff --stat --summary "$mb" "$onto"
-fi
-
 # Detach HEAD and reset the tree
 echo "First, rewinding head to replay your work on top of it..."
 git checkout -q "$onto^0" || die "could not detach HEAD"
 git update-ref ORIG_HEAD $branch
+
+if test -n "$diffstat"
+then
+	if test -n "$verbose"
+	then
+		echo "Changes from $mb to $onto:"
+	fi
+	# We want color (if set), but no pager
+	GIT_PAGER='' git diff --stat --summary "$mb" "$onto"
+fi
 
 # If the $onto is a proper descendant of the tip of the branch, then
 # we just fast forwarded.
