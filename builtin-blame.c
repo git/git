@@ -1,5 +1,5 @@
 /*
- * Pickaxe
+ * Blame
  *
  * Copyright (c) 2006, Junio C Hamano
  */
@@ -40,6 +40,10 @@ static int reverse;
 static int blank_boundary;
 static int incremental;
 static int xdl_opts = XDF_NEED_MINIMAL;
+
+static enum date_mode blame_date_mode = DATE_ISO8601;
+static size_t blame_date_width;
+
 static struct string_list mailmap;
 
 #ifndef DEBUG
@@ -1532,24 +1536,20 @@ static const char *format_time(unsigned long time, const char *tz_str,
 			       int show_raw_time)
 {
 	static char time_buf[128];
-	time_t t = time;
-	int minutes, tz;
-	struct tm *tm;
+	const char *time_str;
+	int time_len;
+	int tz;
 
 	if (show_raw_time) {
 		sprintf(time_buf, "%lu %s", time, tz_str);
-		return time_buf;
 	}
-
-	tz = atoi(tz_str);
-	minutes = tz < 0 ? -tz : tz;
-	minutes = (minutes / 100)*60 + (minutes % 100);
-	minutes = tz < 0 ? -minutes : minutes;
-	t = time + minutes * 60;
-	tm = gmtime(&t);
-
-	strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S ", tm);
-	strcat(time_buf, tz_str);
+	else {
+		tz = atoi(tz_str);
+		time_str = show_date(time, tz, blame_date_mode);
+		time_len = strlen(time_str);
+		memcpy(time_buf, time_str, time_len);
+		memset(time_buf + time_len, ' ', blame_date_width - time_len);
+	}
 	return time_buf;
 }
 
@@ -1954,6 +1954,12 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 		blank_boundary = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "blame.date")) {
+		if (!value)
+			return config_error_nonbool(var);
+		blame_date_mode = parse_date_format(value);
+		return 0;
+	}
 	return git_default_config(var, value, cb);
 }
 
@@ -2218,6 +2224,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 
 	git_config(git_blame_config, NULL);
 	init_revisions(&revs, NULL);
+	revs.date_mode = blame_date_mode;
+
 	save_commit_buffer = 0;
 	dashdash_pos = 0;
 
@@ -2242,8 +2250,35 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 parse_done:
 	argc = parse_options_end(&ctx);
 
-	if (cmd_is_annotate)
+	if (cmd_is_annotate) {
 		output_option |= OUTPUT_ANNOTATE_COMPAT;
+		blame_date_mode = DATE_ISO8601;
+	} else {
+		blame_date_mode = revs.date_mode;
+	}
+
+	/* The maximum width used to show the dates */
+	switch (blame_date_mode) {
+	case DATE_RFC2822:
+		blame_date_width = sizeof("Thu, 19 Oct 2006 16:00:04 -0700");
+		break;
+	case DATE_ISO8601:
+		blame_date_width = sizeof("2006-10-19 16:00:04 -0700");
+		break;
+	case DATE_RAW:
+		blame_date_width = sizeof("1161298804 -0700");
+		break;
+	case DATE_SHORT:
+		blame_date_width = sizeof("2006-10-19");
+		break;
+	case DATE_RELATIVE:
+		/* "normal" is used as the fallback for "relative" */
+	case DATE_LOCAL:
+	case DATE_NORMAL:
+		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
+		break;
+	}
+	blame_date_width -= 1; /* strip the null */
 
 	if (DIFF_OPT_TST(&revs.diffopt, FIND_COPIES_HARDER))
 		opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE |
