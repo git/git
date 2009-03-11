@@ -80,23 +80,6 @@ release, unless otherwise noted.
 Here are fixes that this release has, but have not been backported to
 v1.6.2.X series.
 
-* .gitignore learned to handle backslash as a quoting mechanism for
-  comment introduction character "#" (backport by merging dd482ee if
-  needed).
-
-* timestamp output in --date=relative mode used to display timestamps that
-  are long time ago in the default mode; it now uses "N years M months
-  ago", and "N years ago" (backport by picking 10edf37 if needed).
-
-* git-add -i/-p now works with non-ASCII pathnames (backport by picking
-  8851f48 if needed).
-
-* "git hash-object -w" did not read from the configuration file from the
-  correct .git directory (backport by merging 272459a if needed).
-
-* git-send-email learned to correctly handle multiple Cc: addresses
-  (backport by merging afe756c if needed).
-
 ---
 exec >/var/tmp/1
 O=v1.6.2-77-g8cc3fe4
