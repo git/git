@@ -174,5 +174,153 @@ test_expect_success 'log --grep -i' '
 	test_cmp expect actual
 '
 
+cat > expect <<EOF
+* Second
+* sixth
+* fifth
+* fourth
+* third
+* second
+* initial
+EOF
+
+test_expect_success 'simple log --graph' '
+	git log --graph --pretty=tformat:%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'set up merge history' '
+	git checkout -b side HEAD~4 &&
+	test_commit side-1 1 1 &&
+	test_commit side-2 2 2 &&
+	git checkout master &&
+	git merge side
+'
+
+cat > expect <<\EOF
+*   Merge branch 'side'
+|\
+| * side-2
+| * side-1
+* | Second
+* | sixth
+* | fifth
+* | fourth
+|/
+* third
+* second
+* initial
+EOF
+
+test_expect_success 'log --graph with merge' '
+	git log --graph --date-order --pretty=tformat:%s |
+		sed "s/ *$//" >actual &&
+	test_cmp expect actual
+'
+
+cat > expect <<\EOF
+*   commit master
+|\  Merge: A B
+| | Author: A U Thor <author@example.com>
+| |
+| |     Merge branch 'side'
+| |
+| * commit side
+| | Author: A U Thor <author@example.com>
+| |
+| |     side-2
+| |
+| * commit tags/side-1
+| | Author: A U Thor <author@example.com>
+| |
+| |     side-1
+| |
+* | commit master~1
+| | Author: A U Thor <author@example.com>
+| |
+| |     Second
+| |
+* | commit master~2
+| | Author: A U Thor <author@example.com>
+| |
+| |     sixth
+| |
+* | commit master~3
+| | Author: A U Thor <author@example.com>
+| |
+| |     fifth
+| |
+* | commit master~4
+|/  Author: A U Thor <author@example.com>
+|
+|       fourth
+|
+* commit tags/side-1~1
+| Author: A U Thor <author@example.com>
+|
+|     third
+|
+* commit tags/side-1~2
+| Author: A U Thor <author@example.com>
+|
+|     second
+|
+* commit tags/side-1~3
+  Author: A U Thor <author@example.com>
+
+      initial
+EOF
+
+test_expect_success 'log --graph with full output' '
+	git log --graph --date-order --pretty=short |
+		git name-rev --name-only --stdin |
+		sed "s/Merge:.*/Merge: A B/;s/ *$//" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'set up more tangled history' '
+	git checkout -b tangle HEAD~6 &&
+	test_commit tangle-a tangle-a a &&
+	git merge master~3 &&
+	git merge side~1 &&
+	git checkout master &&
+	git merge tangle
+'
+
+cat > expect <<\EOF
+*   Merge branch 'tangle'
+|\
+| *   Merge branch 'side' (early part) into tangle
+| |\
+| * \   Merge branch 'master' (early part) into tangle
+| |\ \
+| * | | tangle-a
+* | | |   Merge branch 'side'
+|\ \ \ \
+| * | | | side-2
+| | | |/
+| | |/|
+| |/| |
+| * | | side-1
+* | | | Second
+* | | | sixth
+| | |/
+| |/|
+|/| |
+* | | fifth
+* | | fourth
+|/ /
+* | third
+|/
+* second
+* initial
+EOF
+
+test_expect_success 'log --graph with merge' '
+	git log --graph --date-order --pretty=tformat:%s |
+		sed "s/ *$//" >actual &&
+	test_cmp expect actual
+'
+
 test_done
 
