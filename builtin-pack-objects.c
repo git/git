@@ -1966,11 +1966,7 @@ static void add_objects_in_unpacked_packs(struct rev_info *revs)
 		const unsigned char *sha1;
 		struct object *o;
 
-		for (i = 0; i < revs->num_ignore_packed; i++) {
-			if (matches_pack_name(p, revs->ignore_packed[i]))
-				break;
-		}
-		if (revs->num_ignore_packed <= i)
+		if (p->pack_keep)
 			continue;
 		if (open_pack_index(p))
 			die("cannot open pack index");
@@ -2006,11 +2002,7 @@ static void loosen_unused_packed_objects(struct rev_info *revs)
 	const unsigned char *sha1;
 
 	for (p = packed_git; p; p = p->next) {
-		for (i = 0; i < revs->num_ignore_packed; i++) {
-			if (matches_pack_name(p, revs->ignore_packed[i]))
-				break;
-		}
-		if (revs->num_ignore_packed <= i)
+		if (p->pack_keep)
 			continue;
 
 		if (open_pack_index(p))
@@ -2208,7 +2200,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp("--unpacked", arg) ||
-		    !prefixcmp(arg, "--unpacked=") ||
+		    !strcmp("--kept-pack-only", arg) ||
 		    !strcmp("--reflog", arg) ||
 		    !strcmp("--all", arg)) {
 			use_internal_rev_list = 1;

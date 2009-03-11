@@ -49,7 +49,8 @@ struct rev_info {
 			blob_objects:1,
 			edge_hint:1,
 			limited:1,
-			unpacked:1, /* see also ignore_packed below */
+			unpacked:1,
+			kept_pack_only:1,
 			boundary:2,
 			left_right:1,
 			rewrite_parents:1,
@@ -79,9 +80,6 @@ struct rev_info {
 			use_terminator:1,
 			missing_newline:1;
 	enum date_mode date_mode;
-
-	const char **ignore_packed; /* pretend objects in these are unpacked */
-	int num_ignore_packed;
 
 	unsigned int	abbrev;
 	enum cmit_fmt	commit_format;
