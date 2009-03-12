@@ -42,6 +42,8 @@ else \
 	if test "$withval" = "yes"; then \
 		AC_MSG_WARN([You should provide path for --with-$1=PATH]); \
 	else \
+		m4_toupper($1)_PATH=$withval; \
+		AC_MSG_NOTICE([Setting m4_toupper($1)_PATH to $withval]); \
 		GIT_CONF_APPEND_LINE(${PROGRAM}_PATH=$withval); \
 	fi; \
 fi; \
@@ -61,6 +63,8 @@ elif test "$withval" = "yes"; then \
 	m4_toupper(NO_$1)=; \
 else \
 	m4_toupper(NO_$1)=; \
+	m4_toupper($1)DIR=$withval; \
+	AC_MSG_NOTICE([Setting m4_toupper($1)DIR to $withval]); \
 	GIT_CONF_APPEND_LINE(${PACKAGE}DIR=$withval); \
 fi \
 ])# GIT_PARSE_WITH
@@ -86,9 +90,16 @@ AC_ARG_WITH([lib],
  [if test "$withval" = "no" || test "$withval" = "yes"; then \
 	AC_MSG_WARN([You should provide name for --with-lib=ARG]); \
 else \
+	lib=$withval; \
+	AC_MSG_NOTICE([Setting lib to '$lib']); \
 	GIT_CONF_APPEND_LINE(lib=$withval); \
 fi; \
 ],[])
+
+if test -z "$lib"; then
+   AC_MSG_NOTICE([Setting lib to 'lib' (the default)])
+   lib=lib
+fi
 #
 # Define SHELL_PATH to provide path to shell.
 GIT_ARG_SET_PATH(shell)
