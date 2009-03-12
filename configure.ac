@@ -80,6 +80,32 @@ AC_DEFUN([GIT_CHECK_FUNC],[AC_CHECK_FUNC([$1],[
   AC_SEARCH_LIBS([$1],,
   [$2],[$3])
 ],[$3])])
+
+dnl
+dnl GIT_STASH_FLAGS(BASEPATH_VAR)
+dnl -----------------------------
+dnl Allow for easy stashing of LDFLAGS and CPPFLAGS before running
+dnl tests that may want to take user settings into account.
+AC_DEFUN([GIT_STASH_FLAGS],[
+if test -n "$1"; then
+   old_CPPFLAGS="$CPPFLAGS"
+   old_LDFLAGS="$LDFLAGS"
+   CPPFLAGS="-I$1/include $CPPFLAGS"
+   LDFLAGS="-L$1/$lib $LDFLAGS"
+fi
+])
+
+dnl
+dnl GIT_UNSTASH_FLAGS(BASEPATH_VAR)
+dnl -----------------------------
+dnl Restore the stashed *FLAGS values.
+AC_DEFUN([GIT_UNSTASH_FLAGS],[
+if test -n "$1"; then
+   CPPFLAGS="$old_CPPFLAGS"
+   LDFLAGS="$old_LDFLAGS"
+fi
+])
+
 ## Site configuration related to programs (before tests)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
 #
