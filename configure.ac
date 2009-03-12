@@ -127,6 +127,27 @@ if test -z "$lib"; then
    lib=lib
 fi
 
+AC_ARG_ENABLE([pthreads],
+ [AS_HELP_STRING([--enable-pthreads=FLAGS],
+  [FLAGS is the value to pass to the compiler to enable POSIX Threads.]
+  [The default if FLAGS is not specified is to try first -pthread]
+  [and then -lpthread.]
+  [--without-pthreads will disable threading.])],
+[
+if test "x$enableval" = "xyes"; then
+   AC_MSG_NOTICE([Will try -pthread then -lpthread to enable POSIX Threads])
+elif test "x$enableval" != "xno"; then
+   PTHREAD_CFLAGS=$enableval
+   AC_MSG_NOTICE([Setting '$PTHREAD_CFLAGS' as the FLAGS to enable POSIX Threads])
+else
+   AC_MSG_NOTICE([POSIX Threads will be disabled.])
+   NO_PTHREADS=YesPlease
+   USER_NOPTHREAD=1
+fi],
+[
+   AC_MSG_NOTICE([Will try -pthread then -lpthread to enable POSIX Threads.])
+])
+
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
 AC_MSG_NOTICE([CHECKS for site configuration])
@@ -672,23 +693,61 @@ AC_SUBST(NO_MKDTEMP)
 #
 # Define PTHREAD_LIBS to the linker flag used for Pthread support and define
 # THREADED_DELTA_SEARCH if Pthreads are available.
-AC_LANG_CONFTEST([AC_LANG_PROGRAM(
-  [[#include <pthread.h>]],
-  [[pthread_mutex_t test_mutex;]]
-)])
-${CC} -pthread conftest.c -o conftest.o > /dev/null 2>&1
-if test $? -eq 0;then
- PTHREAD_LIBS="-pthread"
- THREADED_DELTA_SEARCH=YesPlease
+AC_DEFUN([PTHREADTEST_SRC], [
+#include <pthread.h>
+
+int main(void)
+{
+	pthread_mutex_t test_mutex;
+	return (0);
+}
+])
+
+dnl AC_LANG_CONFTEST([AC_LANG_PROGRAM(
+dnl   [[#include <pthread.h>]],
+dnl   [[pthread_mutex_t test_mutex;]]
+dnl )])
+
+NO_PTHREADS=UnfortunatelyYes
+THREADED_DELTA_SEARCH=
+PTHREAD_LIBS=
+
+if test -n "$USER_NOPTHREAD"; then
+   AC_MSG_NOTICE([Skipping POSIX Threads at user request.])
+# handle these separately since PTHREAD_CFLAGS could be '-lpthreads
+# -D_REENTRANT' or some such.
+elif test -z "$PTHREAD_CFLAGS"; then
+  for opt in -pthread -lpthread; do
+     old_CFLAGS="$CFLAGS"
+     CFLAGS="$opt $CFLAGS"
+     AC_MSG_CHECKING([Checking for POSIX Threads with '$opt'])
+     AC_LINK_IFELSE(PTHREADTEST_SRC,
+	[AC_MSG_RESULT([yes])
+		NO_PTHREADS=
+		PTHREAD_LIBS="$opt"
+		THREADED_DELTA_SEARCH=YesPlease
+		break
+	],
+	[AC_MSG_RESULT([no])])
+      CFLAGS="$old_CFLAGS"
+  done
 else
- ${CC} -lpthread conftest.c -o conftest.o > /dev/null 2>&1
- if test $? -eq 0;then
-  PTHREAD_LIBS="-lpthread"
-  THREADED_DELTA_SEARCH=YesPlease
- else
-  NO_PTHREADS=UnfortunatelyYes
- fi
+  old_CFLAGS="$CFLAGS"
+  CFLAGS="$PTHREAD_CFLAGS $CFLAGS"
+  AC_MSG_CHECKING([Checking for POSIX Threads with '$PTHREAD_CFLAGS'])
+  AC_LINK_IFELSE(PTHREADTEST_SRC,
+	[AC_MSG_RESULT([yes])
+		NO_PTHREADS=
+		PTHREAD_LIBS="$PTHREAD_CFLAGS"
+		THREADED_DELTA_SEARCH=YesPlease
+	],
+	[AC_MSG_RESULT([no])])
+
+  CFLAGS="$old_CFLAGS"
 fi
+
+CFLAGS="$old_CFLAGS"
+
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(NO_PTHREADS)
 AC_SUBST(THREADED_DELTA_SEARCH)
