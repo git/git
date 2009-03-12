@@ -51,8 +51,6 @@ do
 		test -n "$force" || continue
 	fi
 
-	echo "** $branch" &&
-
 	(
 		case "$branch, $branches " in
 		jch,*' next '*)
