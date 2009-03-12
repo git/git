@@ -1122,7 +1122,7 @@ static int err_win_to_posix(DWORD winerr)
 
 int link(const char *oldpath, const char *newpath)
 {
-	typedef BOOL (*T)(const char*, const char*, LPSECURITY_ATTRIBUTES);
+	typedef BOOL WINAPI (*T)(LPCTSTR, LPCTSTR, LPSECURITY_ATTRIBUTES);
 	static T create_hard_link = NULL;
 	if (!create_hard_link) {
 		create_hard_link = (T) GetProcAddress(
