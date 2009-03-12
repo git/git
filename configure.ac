@@ -291,7 +291,7 @@ fi
 AC_CHECK_PROGS(ASCIIDOC, [asciidoc])
 if test -n "$ASCIIDOC"; then
 	AC_MSG_CHECKING([for asciidoc version])
-	asciidoc_version=`$ASCIIDOC --version 2>&1`
+	asciidoc_version=`$ASCIIDOC --version 2>/dev/null`
 	case "${asciidoc_version}" in
 	asciidoc' '8*)
 		ASCIIDOC8=YesPlease
