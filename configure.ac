@@ -315,33 +315,57 @@ AC_MSG_NOTICE([CHECKS for libraries])
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
+
+GIT_STASH_FLAGS($OPENSSLDIR)
+
 AC_CHECK_LIB([crypto], [SHA1_Init],
 [NEEDS_SSL_WITH_CRYPTO=],
 [AC_CHECK_LIB([ssl], [SHA1_Init],
  [NEEDS_SSL_WITH_CRYPTO=YesPlease
   NEEDS_SSL_WITH_CRYPTO=],
  [NO_OPENSSL=YesPlease])])
+
+GIT_UNSTASH_FLAGS($OPENSSLDIR)
+
 AC_SUBST(NEEDS_SSL_WITH_CRYPTO)
 AC_SUBST(NO_OPENSSL)
+
 #
 # Define NO_CURL if you do not have libcurl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.
+
+GIT_STASH_FLAGS($CURLDIR)
+
 AC_CHECK_LIB([curl], [curl_global_init],
 [NO_CURL=],
 [NO_CURL=YesPlease])
+
+GIT_UNSTASH_FLAGS($CURLDIR)
+
 AC_SUBST(NO_CURL)
+
 #
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
+
+GIT_STASH_FLAGS($EXPATDIR)
+
 AC_CHECK_LIB([expat], [XML_ParserCreate],
 [NO_EXPAT=],
 [NO_EXPAT=YesPlease])
+
+GIT_UNSTASH_FLAGS($EXPATDIR)
+
 AC_SUBST(NO_EXPAT)
+
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin and
 # some Solaris installations).
 # Define NO_ICONV if neither libc nor libiconv support iconv.
+
+GIT_STASH_FLAGS($ICONVDIR)
+
 AC_DEFUN([ICONVTEST_SRC], [
 #include <iconv.h>
 
@@ -365,11 +389,17 @@ AC_LINK_IFELSE(ICONVTEST_SRC,
 		[AC_MSG_RESULT([no])
 		NO_ICONV=YesPlease])
 	LIBS="$old_LIBS"])
+
+GIT_UNSTASH_FLAGS($ICONVDIR)
+
 AC_SUBST(NEEDS_LIBICONV)
 AC_SUBST(NO_ICONV)
-test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"
+
 #
 # Define NO_DEFLATE_BOUND if deflateBound is missing from zlib.
+
+GIT_STASH_FLAGS($ZLIB_PATH)
+
 AC_DEFUN([ZLIBTEST_SRC], [
 #include <zlib.h>
 
@@ -387,7 +417,11 @@ AC_LINK_IFELSE(ZLIBTEST_SRC,
 	[AC_MSG_RESULT([no])
 	NO_DEFLATE_BOUND=yes])
 LIBS="$old_LIBS"
+
+GIT_UNSTASH_FLAGS($ZLIB_PATH)
+
 AC_SUBST(NO_DEFLATE_BOUND)
+
 #
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
