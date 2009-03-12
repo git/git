@@ -47,14 +47,20 @@ Updates since v1.6.2
 * git-bisect shows not just the number of remaining commits whose goodness
   is unknown, but also shows the estimated number of remaining rounds.
 
+* You can give --date=<format> option to git-blame.
+
 * git-branch -r shows HEAD symref that points at a remote branch in
   interest of each tracked remote repository.
 
 * git-config learned -e option to open an editor to edit the config file
   directly.
 
+* git-clone runs post-checkout hook when run without --no-checkout.
+
 * git-format-patch can be told to use attachment with a new configuration,
   format.attach.
+
+* git-format-patch can be told to produce deep or shallow message threads.
 
 * git-imap-send learned to work around Thunderbird's inability to easily
   disable format=flowed with a new configuration, imap.preformattedHTML.
@@ -63,6 +69,8 @@ Updates since v1.6.2
   descendant of the commit you are rebasing onto with --force-rebase
   option.
 
+* git-rebase can be told to report diffstat with the --stat option.
+
 * git-send-email learned --confirm option to review the Cc: list before
   sending the messages out.
 
@@ -70,6 +78,8 @@ Updates since v1.6.2
 
 * Test scripts can be run under valgrind.
 
+* Makefile learned 'coverage' option to run the test suites with
+  coverage tracking enabled.
 
 Fixes since v1.6.2
 ------------------
@@ -80,8 +90,15 @@ release, unless otherwise noted.
 Here are fixes that this release has, but have not been backported to
 v1.6.2.X series.
 
+* 'git-submodule add' did not tolerate extra slashes and ./ in the
+  path it accepted from the command line; it now is more lenient
+ (if needed, backport by merging db75ada).
+
+* git-gc spent excessive amount of time to decide if an object appears
+  in a locally existing pack (if needed, backport by merging 69e020a).
+
 ---
 exec >/var/tmp/1
-O=v1.6.2-77-g8cc3fe4
+O=v1.6.2-149-g6462146
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
