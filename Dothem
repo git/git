@@ -54,7 +54,13 @@ do
 	(
 		case "$branch, $branches " in
 		jch,*' next '*)
-			dotest= ;;
+			if git diff --quiet --exit-code jch next
+			then
+				dotest=
+			else
+				dotest=test
+			fi
+			;;
 		*)
 			dotest=test ;;
 		esac
