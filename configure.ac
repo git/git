@@ -375,20 +375,35 @@ int main(void)
 	return 0;
 }
 ])
-AC_MSG_CHECKING([for iconv in -lc])
-AC_LINK_IFELSE(ICONVTEST_SRC,
+
+if test -n "$ICONVDIR"; then
+   lib_order="-liconv -lc"
+else
+   lib_order="-lc -liconv"
+fi
+
+NO_ICONV=YesPlease
+
+for l in $lib_order; do
+    if test "$l" = "-liconv"; then
+       NEEDS_LIBICONV=YesPlease
+    else
+       NEEDS_LIBICONV=
+    fi
+
+    old_LIBS="$LIBS"
+    LIBS="$LIBS $l"
+    AC_MSG_CHECKING([for iconv in $l])
+    AC_LINK_IFELSE(ICONVTEST_SRC,
 	[AC_MSG_RESULT([yes])
-	NEEDS_LIBICONV=],
-	[AC_MSG_RESULT([no])
-	old_LIBS="$LIBS"
-	LIBS="$LIBS -liconv"
-	AC_MSG_CHECKING([for iconv in -liconv])
-	AC_LINK_IFELSE(ICONVTEST_SRC,
-		[AC_MSG_RESULT([yes])
-		NEEDS_LIBICONV=YesPlease],
-		[AC_MSG_RESULT([no])
-		NO_ICONV=YesPlease])
-	LIBS="$old_LIBS"])
+	NO_ICONV=
+	break],
+	[AC_MSG_RESULT([no])])
+    LIBS="$old_LIBS"
+done
+
+#in case of break
+LIBS="$old_LIBS"
 
 GIT_UNSTASH_FLAGS($ICONVDIR)
 
@@ -455,13 +470,18 @@ int main(void)
 	return 0;
 }
 ]])
+
+GIT_STASH_FLAGS($ICONVDIR)
+
 AC_MSG_CHECKING([for old iconv()])
 AC_COMPILE_IFELSE(OLDICONVTEST_SRC,
 	[AC_MSG_RESULT([no])],
 	[AC_MSG_RESULT([yes])
 	OLD_ICONV=UnfortunatelyYes])
-AC_SUBST(OLD_ICONV)
 
+GIT_UNSTASH_FLAGS($ICONVDIR)
+
+AC_SUBST(OLD_ICONV)
 
 ## Checks for typedefs, structures, and compiler characteristics.
 AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
