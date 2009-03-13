@@ -138,9 +138,7 @@ static int http_options(const char *var, const char *value, void *cb)
 
 static void init_curl_http_auth(CURL *result)
 {
-	if (!user_name)
-		curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
-	else {
+	if (user_name) {
 		struct strbuf up = STRBUF_INIT;
 		if (!user_pass)
 			user_pass = xstrdup(getpass("Password: "));
