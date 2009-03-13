@@ -687,6 +687,10 @@ case $(uname -s) in
 	pwd () {
 		builtin pwd -W
 	}
+	# no POSIX permissions
+	;;
+*)
+	test_set_prereq POSIXPERM
 	;;
 esac
 
