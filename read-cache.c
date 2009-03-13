@@ -1574,6 +1574,26 @@ static void update_callback(struct diff_queue_struct *q,
 		default:
 			die("unexpected diff status %c", p->status);
 		case DIFF_STATUS_UNMERGED:
+			/*
+			 * ADD_CACHE_IGNORE_REMOVAL is unset if "git
+			 * add -u" is calling us, In such a case, a
+			 * missing work tree file needs to be removed
+			 * if there is an unmerged entry at stage #2,
+			 * but such a diff record is followed by
+			 * another with DIFF_STATUS_DELETED (and if
+			 * there is no stage #2, we won't see DELETED
+			 * nor MODIFIED).  We can simply continue
+			 * either way.
+			 */
+			if (!(data->flags & ADD_CACHE_IGNORE_REMOVAL))
+				continue;
+			/*
+			 * Otherwise, it is "git add path" is asking
+			 * to explicitly add it; we fall through.  A
+			 * missing work tree file is an error and is
+			 * caught by add_file_to_index() in such a
+			 * case.
+			 */
 		case DIFF_STATUS_MODIFIED:
 		case DIFF_STATUS_TYPE_CHANGED:
 			if (add_file_to_index(&the_index, path, data->flags)) {
