@@ -263,62 +263,74 @@ filter_skipped() {
 	_skip="$2"
 
 	if [ -z "$_skip" ]; then
-		eval_rev_list "$_eval"
+		eval_rev_list "$_eval" | {
+			while read line
+			do
+				echo "$line &&"
+			done
+			echo ':'
+		}
 		return
 	fi
 
 	# Let's parse the output of:
 	# "git rev-list --bisect-vars --bisect-all ..."
-	eval_rev_list "$_eval" | while read hash line
-	do
-		case "$VARS,$FOUND,$TRIED,$hash" in
-			# We display some vars.
-			1,*,*,*) echo "$hash $line" ;;
-
-			# Split line.
-			,*,*,---*) ;;
-
-			# We had nothing to search.
+	eval_rev_list "$_eval" | {
+		VARS= FOUND= TRIED=
+		while read hash line
+		do
+			case "$VARS,$FOUND,$TRIED,$hash" in
+			1,*,*,*)
+				# "bisect_foo=bar" read from rev-list output.
+				echo "$hash &&"
+				;;
+			,*,*,---*)
+				# Separator
+				;;
 			,,,bisect_rev*)
-				echo "bisect_rev="
+				# We had nothing to search.
+				echo "bisect_rev= &&"
 				VARS=1
 				;;
-
-			# We did not find a good bisect rev.
-			# This should happen only if the "bad"
-			# commit is also a "skip" commit.
 			,,*,bisect_rev*)
-				echo "bisect_rev=$TRIED"
+				# We did not find a good bisect rev.
+				# This should happen only if the "bad"
+				# commit is also a "skip" commit.
+				echo "bisect_rev='$TRIED' &&"
 				VARS=1
 				;;
-
-			# We are searching.
 			,,*,*)
+				# We are searching.
 				TRIED="${TRIED:+$TRIED|}$hash"
 				case "$_skip" in
 				*$hash*) ;;
 				*)
-					echo "bisect_rev=$hash"
-					echo "bisect_tried=\"$TRIED\""
+					echo "bisect_rev=$hash &&"
+					echo "bisect_tried='$TRIED' &&"
 					FOUND=1
 					;;
 				esac
 				;;
-
-			# We have already found a rev to be tested.
-			,1,*,bisect_rev*) VARS=1 ;;
-			,1,*,*) ;;
-
-			# ???
-			*) die "filter_skipped error " \
-			    "VARS: '$VARS' " \
-			    "FOUND: '$FOUND' " \
-			    "TRIED: '$TRIED' " \
-			    "hash: '$hash' " \
-			    "line: '$line'"
-			;;
-		esac
-	done
+			,1,*,bisect_rev*)
+				# We have already found a rev to be tested.
+				VARS=1
+				;;
+			,1,*,*)
+				;;
+			*)
+				# Unexpected input
+				echo "die 'filter_skipped error'"
+				die "filter_skipped error " \
+				    "VARS: '$VARS' " \
+				    "FOUND: '$FOUND' " \
+				    "TRIED: '$TRIED' " \
+				    "hash: '$hash' " \
+				    "line: '$line'"
+				;;
+			esac
+		done
+		echo ':'
+	}
 }
 
 exit_if_skipped_commits () {
