@@ -495,7 +495,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 		int is_glob;
 		const char *lhs, *rhs;
 
-		llen = is_glob = 0;
+		is_glob = 0;
 
 		lhs = refspec[i];
 		if (*lhs == '+') {

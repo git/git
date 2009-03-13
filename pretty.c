@@ -135,7 +135,6 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 	int namelen;
 	unsigned long time;
 	int tz;
-	const char *filler = "    ";
 
 	if (fmt == CMIT_FMT_ONELINE)
 		return;
@@ -154,7 +153,6 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 		while (line < name_tail && isspace(name_tail[-1]))
 			name_tail--;
 		display_name_length = name_tail - line;
-		filler = "";
 		strbuf_addstr(sb, "From: ");
 		add_rfc2047(sb, line, display_name_length, encoding);
 		strbuf_add(sb, name_tail, namelen - display_name_length);
@@ -162,7 +160,7 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 	} else {
 		strbuf_addf(sb, "%s: %.*s%.*s\n", what,
 			      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
-			      filler, namelen, line);
+			      "    ", namelen, line);
 	}
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:

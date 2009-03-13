@@ -504,7 +504,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 				  const char *prog, int flags)
 {
 	char *url = xstrdup(url_orig);
-	char *host, *path = url;
+	char *host, *path;
 	char *end;
 	int c;
 	struct child_process *conn;

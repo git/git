@@ -101,7 +101,6 @@ static void insert_one_record(struct shortlog *log,
 	}
 	while (*oneline && isspace(*oneline) && *oneline != '\n')
 		oneline++;
-	len = eol - oneline;
 	format_subject(&subject, oneline, " ");
 	buffer = strbuf_detach(&subject, NULL);
 

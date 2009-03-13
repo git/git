@@ -579,7 +579,7 @@ static struct imap_cmd *v_issue_imap_cmd(struct imap_store *ctx,
 			n = socket_write(&imap->buf.sock, cmd->cb.data, cmd->cb.dlen);
 			free(cmd->cb.data);
 			if (n != cmd->cb.dlen ||
-			    (n = socket_write(&imap->buf.sock, "\r\n", 2)) != 2) {
+			    socket_write(&imap->buf.sock, "\r\n", 2) != 2) {
 				free(cmd->cmd);
 				free(cmd);
 				return NULL;
