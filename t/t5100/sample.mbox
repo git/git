@@ -2,7 +2,10 @@
 	
     
 From nobody Mon Sep 17 00:00:00 2001
-From: A U Thor <a.u.thor@example.com>
+From: A
+      U
+      Thor
+      <a.u.thor@example.com>
 Date: Fri, 9 Jun 2006 00:44:16 -0700
 Subject: [PATCH] a commit.
 
@@ -500,4 +503,61 @@ index 3e5fe51..aabfe5c 100644
 1.6.0.rc2
 
 --=-=-=--
+
+From bda@mnsspb.ru Wed Nov 12 17:54:41 2008
+From: Dmitriy Blinov <bda@mnsspb.ru>
+To: navy-patches@dinar.mns.mnsspb.ru
+Date: Wed, 12 Nov 2008 17:54:41 +0300
+Message-Id: <1226501681-24923-1-git-send-email-bda@mnsspb.ru>
+X-Mailer: git-send-email 1.5.6.5
+MIME-Version: 1.0
+Content-Type: text/plain;
+  charset=utf-8
+Content-Transfer-Encoding: 8bit
+Subject: [Navy-patches] [PATCH]
+	=?utf-8?b?0JjQt9C80LXQvdGR0L0g0YHQv9C40YHQvtC6INC/0LA=?=
+	=?utf-8?b?0LrQtdGC0L7QsiDQvdC10L7QsdGF0L7QtNC40LzRi9GFINC00LvRjyA=?=
+	=?utf-8?b?0YHQsdC+0YDQutC4?=
+
+textlive-* исправлены на texlive-*
+docutils заменён на python-docutils
+
+Действительно, оказалось, что rest2web вытягивает за собой
+python-docutils. В то время как сам rest2web не нужен.
+
+Signed-off-by: Dmitriy Blinov <bda@mnsspb.ru>
+---
+ howto/build_navy.txt |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/howto/build_navy.txt b/howto/build_navy.txt
+index 3fd3afb..0ee807e 100644
+--- a/howto/build_navy.txt
++++ b/howto/build_navy.txt
+@@ -119,8 +119,8 @@
+    - libxv-dev
+    - libusplash-dev
+    - latex-make
+-   - textlive-lang-cyrillic
+-   - textlive-latex-extra
++   - texlive-lang-cyrillic
++   - texlive-latex-extra
+    - dia
+    - python-pyrex
+    - libtool
+@@ -128,7 +128,7 @@
+    - sox
+    - cython
+    - imagemagick
+-   - docutils
++   - python-docutils
+ 
+ #. на машине dinar: добавить свой открытый ssh-ключ в authorized_keys2 пользователя ddev
+ #. на своей машине: отредактировать /etc/sudoers (команда ``visudo``) примерно следующим образом::
+-- 
+1.5.6.5
+From nobody Mon Sep 17 00:00:00 2001
+From: <a.u.thor@example.com> (A U Thor)
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: [PATCH] a patch
 
