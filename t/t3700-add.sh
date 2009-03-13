@@ -222,7 +222,7 @@ test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
 	! ( git ls-files foo1 | grep foo1 )
 '
 
-test_expect_success 'git add '\''fo\[ou\]bar'\'' ignores foobar' '
+test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
 	git reset --hard &&
 	touch fo\[ou\]bar foobar &&
 	git add '\''fo\[ou\]bar'\'' &&

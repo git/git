@@ -688,9 +688,11 @@ case $(uname -s) in
 		builtin pwd -W
 	}
 	# no POSIX permissions
+	# backslashes in pathspec are converted to '/'
 	;;
 *)
 	test_set_prereq POSIXPERM
+	test_set_prereq BSLASHPSPEC
 	;;
 esac
 
