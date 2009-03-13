@@ -649,5 +649,9 @@ case $(uname -s) in
 	sum () {
 		md5sum "$@"
 	}
+	# git sees Windows-style pwd
+	pwd () {
+		builtin pwd -W
+	}
 	;;
 esac
