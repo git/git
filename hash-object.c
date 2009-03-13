@@ -81,8 +81,6 @@ int main(int argc, const char **argv)
 
 	type = blob_type;
 
-	git_config(git_default_config, NULL);
-
 	argc = parse_options(argc, argv, hash_object_options, hash_object_usage, 0);
 
 	if (write_object) {
@@ -91,6 +89,8 @@ int main(int argc, const char **argv)
 		if (vpath && prefix)
 			vpath = prefix_filename(prefix, prefix_length, vpath);
 	}
+
+	git_config(git_default_config, NULL);
 
 	if (stdin_paths) {
 		if (hashstdin)
