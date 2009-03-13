@@ -398,6 +398,8 @@ method _do_new {} {
 	grid $w_body.where.l $w_body.where.t $w_body.where.b -sticky ew
 	pack $w_body.where -fill x
 
+	grid columnconfigure $w_body.where 1 -weight 1
+
 	trace add variable @local_path write [cb _write_local_path]
 	bind $w_body.h <Destroy> [list trace remove variable @local_path write [cb _write_local_path]]
 	update
@@ -997,6 +999,8 @@ method _do_open {} {
 
 	grid $w_body.where.l $w_body.where.t $w_body.where.b -sticky ew
 	pack $w_body.where -fill x
+
+	grid columnconfigure $w_body.where 1 -weight 1
 
 	trace add variable @local_path write [cb _write_local_path]
 	bind $w_body.h <Destroy> [list trace remove variable @local_path write [cb _write_local_path]]
