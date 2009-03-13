@@ -2,6 +2,7 @@
 #include "exec_cmd.h"
 #include "cache.h"
 #include "quote.h"
+#include "run-command.h"
 
 const char git_usage_string[] =
 	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate|--no-pager] [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE] [--help] COMMAND [ARGS]";
@@ -219,7 +220,7 @@ struct cmd_struct {
 	int option;
 };
 
-static int run_command(struct cmd_struct *p, int argc, const char **argv)
+static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 {
 	int status;
 	struct stat st;
@@ -384,7 +385,7 @@ static void handle_internal_command(int argc, const char **argv)
 		struct cmd_struct *p = commands+i;
 		if (strcmp(p->cmd, cmd))
 			continue;
-		exit(run_command(p, argc, argv));
+		exit(run_builtin(p, argc, argv));
 	}
 }
 
@@ -392,6 +393,7 @@ static void execv_dashed_external(const char **argv)
 {
 	struct strbuf cmd = STRBUF_INIT;
 	const char *tmp;
+	int status;
 
 	strbuf_addf(&cmd, "git-%s", argv[0]);
 
@@ -406,10 +408,17 @@ static void execv_dashed_external(const char **argv)
 
 	trace_argv_printf(argv, "trace: exec:");
 
-	/* execvp() can only ever return if it fails */
-	execvp(cmd.buf, (char **)argv);
-
-	trace_printf("trace: exec failed: %s\n", strerror(errno));
+	/*
+	 * if we fail because the command is not found, it is
+	 * OK to return. Otherwise, we just pass along the status code.
+	 */
+	status = run_command_v_opt(argv, 0);
+	if (status != -ERR_RUN_COMMAND_EXEC) {
+		if (IS_RUN_COMMAND_ERR(status))
+			die("unable to run '%s'", argv[0]);
+		exit(-status);
+	}
+	errno = ENOENT; /* as if we called execvp */
 
 	argv[0] = tmp;
 
