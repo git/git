@@ -159,6 +159,11 @@ int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
 
+#ifdef USE_WIN32_MMAP
+int mingw_getpagesize(void);
+#define getpagesize mingw_getpagesize
+#endif
+
 /* Use mingw_lstat() instead of lstat()/stat() and
  * mingw_fstat() instead of fstat() on Windows.
  */
