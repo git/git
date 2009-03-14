@@ -646,5 +646,8 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
+	sum () {
+		md5sum "$@"
+	}
 	;;
 esac
