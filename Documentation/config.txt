@@ -25,7 +25,7 @@ blank lines are ignored.
 The file consists of sections and variables.  A section begins with
 the name of the section in square brackets and continues until the next
 section begins.  Section names are not case sensitive.  Only alphanumeric
-characters, '`-`' and '`.`' are allowed in section names.  Each variable
+characters, `-` and `.` are allowed in section names.  Each variable
 must belong to some section, which means that there must be section
 header before first setting of a variable.
 
@@ -39,7 +39,7 @@ in the section header, like in example below:
 --------
 
 Subsection names can contain any characters except newline (doublequote
-'`"`' and backslash have to be escaped as '`\"`' and '`\\`',
+`"` and backslash have to be escaped as `\"` and `\\`,
 respectively) and are case sensitive.  Section header cannot span multiple
 lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
@@ -53,7 +53,7 @@ All the other lines are recognized as setting variables, in the form
 'name = value'.  If there is no equal sign on the line, the entire line
 is taken as 'name' and the variable is recognized as boolean "true".
 The variable names are case-insensitive and only alphanumeric
-characters and '`-`' are allowed.  There can be more than one value
+characters and `-` are allowed.  There can be more than one value
 for a given variable; we say then that variable is multivalued.
 
 Leading and trailing whitespace in a variable value is discarded.
@@ -69,15 +69,15 @@ String values may be entirely or partially enclosed in double quotes.
 You need to enclose variable value in double quotes if you want to
 preserve leading or trailing whitespace, or if variable value contains
 beginning of comment characters (if it contains '#' or ';').
-Double quote '`"`' and backslash '`\`' characters in variable value must
-be escaped: use '`\"`' for '`"`' and '`\\`' for '`\`'.
+Double quote `"` and backslash `\` characters in variable value must
+be escaped: use `\"` for `"` and `\\` for `\`.
 
-The following escape sequences (beside '`\"`' and '`\\`') are recognized:
-'`\n`' for newline character (NL), '`\t`' for horizontal tabulation (HT, TAB)
-and '`\b`' for backspace (BS).  No other char escape sequence, nor octal
+The following escape sequences (beside `\"` and `\\`) are recognized:
+`\n` for newline character (NL), `\t` for horizontal tabulation (HT, TAB)
+and `\b` for backspace (BS).  No other char escape sequence, nor octal
 char sequences are valid.
 
-Variable value ending in a '`\`' is continued on the next line in the
+Variable value ending in a `\` is continued on the next line in the
 customary UNIX fashion.
 
 Some variables may require special value format.
@@ -382,9 +382,9 @@ core.pager::
 	to override git's default settings this way, you need
 	to be explicit.  For example, to disable the S option
 	in a backward compatible manner, set `core.pager`
-	to "`less -+$LESS -FRX`".  This will be passed to the
+	to `less -+$LESS -FRX`.  This will be passed to the
 	shell by git, which will translate the final command to
-	"`LESS=FRSX less -+FRSX -FRX`".
+	`LESS=FRSX less -+FRSX -FRX`.
 
 core.whitespace::
 	A comma separated list of common whitespace problems to
@@ -1161,7 +1161,7 @@ pager.<cmd>::
 	particular git subcommand when writing to a tty.  If
 	`\--paginate` or `\--no-pager` is specified on the command line,
 	it takes precedence over this option.  To disable pagination for
-	all commands, set `core.pager` or 'GIT_PAGER' to "`cat`".
+	all commands, set `core.pager` or `GIT_PAGER` to `cat`.
 
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches

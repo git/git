@@ -133,9 +133,9 @@ the conflicted merge in the specified paths.
 When this parameter names a non-branch (but still a valid commit object),
 your HEAD becomes 'detached'.
 +
-As a special case, the "`@\{-N\}`" syntax for the N-th last branch
+As a special case, the `"@\{-N\}"` syntax for the N-th last branch
 checks out the branch (instead of detaching).  You may also specify
-"`-`" which is synonymous with "`@\{-1\}`".
+`-` which is synonymous with `"@\{-1\}"`.
 
 
 Detached HEAD
