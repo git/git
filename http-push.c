@@ -816,7 +816,7 @@ static void finish_request(struct transfer_request *request)
 #ifdef USE_CURL_MULTI
 static int fill_active_slot(void *unused)
 {
-	struct transfer_request *request = request_queue_head;
+	struct transfer_request *request;
 
 	if (aborted)
 		return 0;
