@@ -1563,8 +1563,8 @@ int write_index(struct index_state *istate, int newfd)
 
 	if (ce_flush(&c, newfd) || fstat(newfd, &st))
 		return -1;
-	istate->timestamp.sec = (unsigned int)st.st_ctime;
-	istate->timestamp.nsec = ST_CTIME_NSEC(st);
+	istate->timestamp.sec = (unsigned int)st.st_mtime;
+	istate->timestamp.nsec = ST_MTIME_NSEC(st);
 	return 0;
 }
 
