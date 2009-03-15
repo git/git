@@ -99,6 +99,6 @@ v1.6.2.X series.
 
 ---
 exec >/var/tmp/1
-O=v1.6.2-149-g6462146
+O=v1.6.2.1-135-g7d65c21
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

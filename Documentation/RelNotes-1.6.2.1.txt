@@ -17,9 +17,3 @@ Fixes since v1.6.2
   correct .git directory.
 
 * git-send-email learned to correctly handle multiple Cc: addresses.
-
----
-exec >/var/tmp/1
-O=v1.6.2-21-g7681ed2
-echo O=$(git describe maint)
-git shortlog --no-merges $O..maint
