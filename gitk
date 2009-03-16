@@ -7216,7 +7216,7 @@ proc getblobdiffs {ids} {
     set diffnparents 0
     set diffinhdr 0
     set diffencoding [get_path_encoding {}]
-    fconfigure $bdf -blocking 0 -encoding binary
+    fconfigure $bdf -blocking 0 -encoding binary -eofchar {}
     set blobdifffd($ids) $bdf
     filerun $bdf [list getblobdiffline $bdf $diffids]
 }
@@ -7367,7 +7367,8 @@ proc getblobdiffline {bdf ids} {
 	    $ctext insert end "$line\n" filesep
 
 	} else {
-	    set line [encoding convertfrom $diffencoding $line]
+	    set line [string map {\x1A ^Z} \
+                          [encoding convertfrom $diffencoding $line]]
 	    # parse the prefix - one ' ', '-' or '+' for each parent
 	    set prefix [string range $line 0 [expr {$diffnparents - 1}]]
 	    set tag [expr {$diffnparents > 1? "m": "d"}]
