@@ -76,7 +76,7 @@ test_expect_success \
 
 test_expect_success \
     'git archive vs. git tar-tree' \
-    'diff b.tar b2.tar'
+    'test_cmp b.tar b2.tar'
 
 test_expect_success \
     'git archive in a bare repo' \
@@ -96,12 +96,12 @@ test_expect_success \
      "$TAR" xf b.tar -C extract a/a &&
      test-chmtime -v +0 extract/a/a |cut -f 1 >b.mtime &&
      echo "1117231200" >expected.mtime &&
-     diff expected.mtime b.mtime'
+     test_cmp expected.mtime b.mtime'
 
 test_expect_success \
     'git get-tar-commit-id' \
     'git get-tar-commit-id <b.tar >b.commitid &&
-     diff .git/$(git symbolic-ref HEAD) b.commitid'
+     test_cmp .git/$(git symbolic-ref HEAD) b.commitid'
 
 test_expect_success \
     'extract tar archive' \
@@ -110,7 +110,7 @@ test_expect_success \
 test_expect_success \
     'validate filenames' \
     '(cd b/a && find .) | sort >b.lst &&
-     diff a.lst b.lst'
+     test_cmp a.lst b.lst'
 
 test_expect_success \
     'validate file contents' \
@@ -127,7 +127,7 @@ test_expect_success \
 test_expect_success \
     'validate filenames with prefix' \
     '(cd c/prefix/a && find .) | sort >c.lst &&
-     diff a.lst c.lst'
+     test_cmp a.lst c.lst'
 
 test_expect_success \
     'validate file contents with prefix' \
@@ -148,8 +148,8 @@ test_expect_success \
      'validate substfile contents' \
      'git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
       >f/a/substfile1.expected &&
-      diff f/a/substfile1.expected f/a/substfile1 &&
-      diff a/substfile2 f/a/substfile2
+      test_cmp f/a/substfile1.expected f/a/substfile1 &&
+      test_cmp a/substfile2 f/a/substfile2
 '
 
 test_expect_success \
@@ -160,8 +160,8 @@ test_expect_success \
      'validate substfile contents from archive with prefix' \
      'git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
       >g/prefix/a/substfile1.expected &&
-      diff g/prefix/a/substfile1.expected g/prefix/a/substfile1 &&
-      diff a/substfile2 g/prefix/a/substfile2
+      test_cmp g/prefix/a/substfile1.expected g/prefix/a/substfile1 &&
+      test_cmp a/substfile2 g/prefix/a/substfile2
 '
 
 test_expect_success \
@@ -194,7 +194,7 @@ test_expect_success \
 test_expect_success \
     'validate filenames' \
     '(cd d/a && find .) | sort >d.lst &&
-     diff a.lst d.lst'
+     test_cmp a.lst d.lst'
 
 test_expect_success \
     'validate file contents' \
@@ -211,7 +211,7 @@ test_expect_success \
 test_expect_success \
     'validate filenames with prefix' \
     '(cd e/prefix/a && find .) | sort >e.lst &&
-     diff a.lst e.lst'
+     test_cmp a.lst e.lst'
 
 test_expect_success \
     'validate file contents with prefix' \

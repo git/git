@@ -75,7 +75,7 @@ EOF
 
 test_expect_success \
     'validate git ls-files -k output.' \
-    'diff .output .expected'
+    'test_cmp .expected .output'
 
 test_expect_success \
     'git ls-files -m to show modified files.' \
@@ -91,6 +91,6 @@ EOF
 
 test_expect_success \
     'validate git ls-files -m output.' \
-    'diff .output .expected'
+    'test_cmp .expected .output'
 
 test_done

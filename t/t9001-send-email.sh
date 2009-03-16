@@ -88,7 +88,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'Verify commandline' \
-    'diff commandline1 expected'
+    'test_cmp expected commandline1'
 
 cat >expected-show-all-headers <<\EOF
 0001-Second.patch

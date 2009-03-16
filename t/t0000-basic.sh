@@ -127,7 +127,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'validate git ls-files output for a known tree.' \
-    'diff current expected'
+    'test_cmp expected current'
 
 test_expect_success \
     'writing tree out with git write-tree.' \
@@ -147,7 +147,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'git ls-tree output for a known tree.' \
-    'diff current expected'
+    'test_cmp expected current'
 
 # This changed in ls-tree pathspec change -- recursive does
 # not show tree nodes anymore.
@@ -166,7 +166,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'git ls-tree -r output for a known tree.' \
-    'diff current expected'
+    'test_cmp expected current'
 
 # But with -r -t we can have both.
 test_expect_success \
@@ -187,7 +187,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'git ls-tree -r output for a known tree.' \
-    'diff current expected'
+    'test_cmp expected current'
 
 test_expect_success \
     'writing partial tree out with git write-tree --prefix.' \
