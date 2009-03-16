@@ -48,6 +48,48 @@ static void set_refspecs(const char **refs, int nr)
 	}
 }
 
+static void setup_push_tracking(void)
+{
+	struct strbuf refspec = STRBUF_INIT;
+	struct branch *branch = branch_get(NULL);
+	if (!branch)
+		die("You are not currently on a branch.");
+	if (!branch->merge_nr)
+		die("The current branch %s is not tracking anything.",
+		    branch->name);
+	if (branch->merge_nr != 1)
+		die("The current branch %s is tracking multiple branches, "
+		    "refusing to push.", branch->name);
+	strbuf_addf(&refspec, "%s:%s", branch->name, branch->merge[0]->src);
+	add_refspec(refspec.buf);
+}
+
+static void setup_default_push_refspecs(void)
+{
+	git_config(git_default_config, NULL);
+	switch (push_default) {
+	case PUSH_DEFAULT_UNSPECIFIED:
+		/* fallthrough */
+
+	case PUSH_DEFAULT_MATCHING:
+		add_refspec(":");
+		break;
+
+	case PUSH_DEFAULT_TRACKING:
+		setup_push_tracking();
+		break;
+
+	case PUSH_DEFAULT_CURRENT:
+		add_refspec("HEAD");
+		break;
+
+	case PUSH_DEFAULT_NOTHING:
+		die("You didn't specify any refspecs to push, and "
+		    "push.default is \"nothing\".");
+		break;
+	}
+}
+
 static int do_push(const char *repo, int flags)
 {
 	int i, errs;
@@ -76,11 +118,12 @@ static int do_push(const char *repo, int flags)
 		return error("--all and --mirror are incompatible");
 	}
 
-	if (!refspec
-		&& !(flags & TRANSPORT_PUSH_ALL)
-		&& remote->push_refspec_nr) {
-		refspec = remote->push_refspec;
-		refspec_nr = remote->push_refspec_nr;
+	if (!refspec && !(flags & TRANSPORT_PUSH_ALL)) {
+		if (remote->push_refspec_nr) {
+			refspec = remote->push_refspec;
+			refspec_nr = remote->push_refspec_nr;
+		} else if (!(flags & TRANSPORT_PUSH_MIRROR))
+			setup_default_push_refspecs();
 	}
 	errs = 0;
 	for (i = 0; i < remote->url_nr; i++) {
