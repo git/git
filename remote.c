@@ -105,16 +105,6 @@ static void add_url_alias(struct remote *remote, const char *url)
 	add_url(remote, alias_url(url));
 }
 
-static struct remote *get_remote_by_name(const char *name)
-{
-	int i;
-	for (i = 0; i < remotes_nr; i++) {
-		if (!strcmp(name, remotes[i]->name))
-			return remotes[i];
-	}
-	return NULL;
-}
-
 static struct remote *make_remote(const char *name, int len)
 {
 	struct remote *ret;
@@ -665,20 +655,15 @@ struct remote *remote_get(const char *name)
 		name = default_remote_name;
 		name_given = explicit_default_remote_name;
 	}
-	if (name_given)
-		ret = make_remote(name, 0);
-	else {
-		ret = get_remote_by_name(name);
-		if (!ret)
-			return NULL;
-	}
+
+	ret = make_remote(name, 0);
 	if (valid_remote_nick(name)) {
 		if (!ret->url)
 			read_remotes_file(ret);
 		if (!ret->url)
 			read_branches_file(ret);
 	}
-	if (!ret->url)
+	if (name_given && !ret->url)
 		add_url_alias(ret, name);
 	if (!ret->url)
 		return NULL;
