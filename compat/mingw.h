@@ -163,11 +163,14 @@ int mingw_rename(const char*, const char*);
 /* Use mingw_lstat() instead of lstat()/stat() and
  * mingw_fstat() instead of fstat() on Windows.
  */
+#define off_t off64_t
+#define stat _stati64
+#define lseek _lseeki64
 int mingw_lstat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
 #define fstat mingw_fstat
 #define lstat mingw_lstat
-#define stat(x,y) mingw_lstat(x,y)
+#define _stati64(x,y) mingw_lstat(x,y)
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
 #define utime mingw_utime

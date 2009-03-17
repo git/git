@@ -256,8 +256,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 
 int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
 	int limit = 20, i = 0, pos = 0;
-	char line[1024];
-	char *p = line, *sep = "";
+	char *sep = "";
 	unsigned char head_sha1[20];
 	const char *current_branch;
 
@@ -271,9 +270,8 @@ int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
 	/* get a line */
 	while (pos < in->len) {
 		int len;
-		char *newline;
+		char *newline, *p = in->buf + pos;
 
-		p = in->buf + pos;
 		newline = strchr(p, '\n');
 		len = newline ? newline - p : strlen(p);
 		pos += len + !!newline;

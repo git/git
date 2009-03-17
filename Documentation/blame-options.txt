@@ -70,6 +70,14 @@ of lines before or after the line given by <start>.
 	tree copy has the contents of the named file (specify
 	`-` to make the command read from the standard input).
 
+--date <format>::
+	The value is one of the following alternatives:
+	{relative,local,default,iso,rfc,short}. If --date is not
+	provided, the value of the blame.date config variable is
+	used. If the blame.date config variable is also not set, the
+	iso format is used. For more information, See the discussion
+	of the --date option at linkgit:git-log[1].
+
 -M|<num>|::
 	Detect moving lines in the file as well.  When a commit
 	moves a block of lines in a file (e.g. the original file

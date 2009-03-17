@@ -232,7 +232,9 @@ while read sha1 type name
 do
 	case "$force,$name" in
 	,$orig_namespace*)
-		die "Namespace $orig_namespace not empty"
+		die "Cannot create a new backup.
+A previous backup already exists in $orig_namespace
+Force overwriting the backup with -f"
 	;;
 	t,$orig_namespace*)
 		git update-ref -d "$name" $sha1

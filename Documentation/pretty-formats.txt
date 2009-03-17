@@ -152,3 +152,12 @@ $ git log -2 --pretty=tformat:%h 4da45bef \
 4da45be
 7134973
 ---------------------
++
+In addition, any unrecognized string that has a `%` in it is interpreted
+as if it has `tformat:` in front of it.  For example, these two are
+equivalent:
++
+---------------------
+$ git log -2 --pretty=tformat:%h 4da45bef
+$ git log -2 --pretty=%h 4da45bef
+---------------------

@@ -574,6 +574,45 @@ static struct commit_list *find_bisection(struct commit_list *list,
 	return best;
 }
 
+static inline int log2i(int n)
+{
+	int log2 = 0;
+
+	for (; n > 1; n >>= 1)
+		log2++;
+
+	return log2;
+}
+
+static inline int exp2i(int n)
+{
+	return 1 << n;
+}
+
+/*
+ * Estimate the number of bisect steps left (after the current step)
+ *
+ * For any x between 0 included and 2^n excluded, the probability for
+ * n - 1 steps left looks like:
+ *
+ * P(2^n + x) == (2^n - x) / (2^n + x)
+ *
+ * and P(2^n + x) < 0.5 means 2^n < 3x
+ */
+static int estimate_bisect_steps(int all)
+{
+	int n, x, e;
+
+	if (all < 3)
+		return 0;
+
+	n = log2i(all);
+	e = exp2i(n);
+	x = all - e;
+
+	return (e < 3 * x) ? n : n - 1;
+}
+
 int cmd_rev_list(int argc, const char **argv, const char *prefix)
 {
 	struct commit_list *list;
@@ -688,12 +727,14 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			       "bisect_nr=%d\n"
 			       "bisect_good=%d\n"
 			       "bisect_bad=%d\n"
-			       "bisect_all=%d\n",
+			       "bisect_all=%d\n"
+			       "bisect_steps=%d\n",
 			       hex,
 			       cnt - 1,
 			       all - reaches - 1,
 			       reaches - 1,
-			       all);
+			       all,
+			       estimate_bisect_steps(all));
 			return 0;
 		}
 	}

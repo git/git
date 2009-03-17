@@ -167,9 +167,18 @@ cmd_add()
 	;;
 	esac
 
-	# strip trailing slashes from path
-	path=$(echo "$path" | sed -e 's|/*$||')
-
+	# normalize path:
+	# multiple //; leading ./; /./; /../; trailing /
+	path=$(printf '%s/\n' "$path" |
+		sed -e '
+			s|//*|/|g
+			s|^\(\./\)*||
+			s|/\./|/|g
+			:start
+			s|\([^/]*\)/\.\./||
+			tstart
+			s|/*$||
+		')
 	git ls-files --error-unmatch "$path" > /dev/null 2>&1 &&
 	die "'$path' already exists in the index"
 

@@ -5,44 +5,35 @@
 #include "cache.h"
 #include "builtin.h"
 #include "archive.h"
+#include "parse-options.h"
 #include "pkt-line.h"
 #include "sideband.h"
 
-static int run_remote_archiver(const char *remote, int argc,
-			       const char **argv)
+static void create_output_file(const char *output_file)
+{
+	int output_fd = open(output_file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	if (output_fd < 0)
+		die("could not create archive file: %s ", output_file);
+	if (output_fd != 1) {
+		if (dup2(output_fd, 1) < 0)
+			die("could not redirect output");
+		else
+			close(output_fd);
+	}
+}
+
+static int run_remote_archiver(int argc, const char **argv,
+			       const char *remote, const char *exec)
 {
 	char *url, buf[LARGE_PACKET_MAX];
 	int fd[2], i, len, rv;
 	struct child_process *conn;
-	const char *exec = "git-upload-archive";
-	int exec_at = 0, exec_value_at = 0;
-
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (!prefixcmp(arg, "--exec=")) {
-			if (exec_at)
-				die("multiple --exec specified");
-			exec = arg + 7;
-			exec_at = i;
-		} else if (!strcmp(arg, "--exec")) {
-			if (exec_at)
-				die("multiple --exec specified");
-			if (i + 1 >= argc)
-				die("option --exec requires a value");
-			exec = argv[i + 1];
-			exec_at = i;
-			exec_value_at = ++i;
-		}
-	}
 
 	url = xstrdup(remote);
 	conn = git_connect(fd, url, exec, 0);
 
-	for (i = 1; i < argc; i++) {
-		if (i == exec_at || i == exec_value_at)
-			continue;
+	for (i = 1; i < argc; i++)
 		packet_write(fd[1], "argument %s\n", argv[i]);
-	}
 	packet_flush(fd[1]);
 
 	len = packet_read_line(fd[0], buf, sizeof(buf));
@@ -69,51 +60,33 @@ static int run_remote_archiver(const char *remote, int argc,
 	return !!rv;
 }
 
-static const char *extract_remote_arg(int *ac, const char **av)
-{
-	int ix, iy, cnt = *ac;
-	int no_more_options = 0;
-	const char *remote = NULL;
-
-	for (ix = iy = 1; ix < cnt; ix++) {
-		const char *arg = av[ix];
-		if (!strcmp(arg, "--"))
-			no_more_options = 1;
-		if (!no_more_options) {
-			if (!prefixcmp(arg, "--remote=")) {
-				if (remote)
-					die("Multiple --remote specified");
-				remote = arg + 9;
-				continue;
-			} else if (!strcmp(arg, "--remote")) {
-				if (remote)
-					die("Multiple --remote specified");
-				if (++ix >= cnt)
-					die("option --remote requires a value");
-				remote = av[ix];
-				continue;
-			}
-			if (arg[0] != '-')
-				no_more_options = 1;
-		}
-		if (ix != iy)
-			av[iy] = arg;
-		iy++;
-	}
-	if (remote) {
-		av[--cnt] = NULL;
-		*ac = cnt;
-	}
-	return remote;
-}
+#define PARSE_OPT_KEEP_ALL ( PARSE_OPT_KEEP_DASHDASH | 	\
+			     PARSE_OPT_KEEP_ARGV0 | 	\
+			     PARSE_OPT_KEEP_UNKNOWN |	\
+			     PARSE_OPT_NO_INTERNAL_HELP	)
 
 int cmd_archive(int argc, const char **argv, const char *prefix)
 {
+	const char *exec = "git-upload-archive";
+	const char *output = NULL;
 	const char *remote = NULL;
+	struct option local_opts[] = {
+		OPT_STRING(0, "output", &output, "file",
+			"write the archive to this file"),
+		OPT_STRING(0, "remote", &remote, "repo",
+			"retrieve the archive from remote repository <repo>"),
+		OPT_STRING(0, "exec", &exec, "cmd",
+			"path to the remote git-upload-archive command"),
+		OPT_END()
+	};
 
-	remote = extract_remote_arg(&argc, argv);
+	argc = parse_options(argc, argv, local_opts, NULL, PARSE_OPT_KEEP_ALL);
+
+	if (output)
+		create_output_file(output);
+
 	if (remote)
-		return run_remote_archiver(remote, argc, argv);
+		return run_remote_archiver(argc, argv, remote, exec);
 
 	setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 

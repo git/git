@@ -943,7 +943,6 @@ static int opt_parse_sort(const struct option *opt, const char *arg, int unset)
 		return -1;
 
 	*sort_tail = s = xcalloc(1, sizeof(*s));
-	sort_tail = &s->next;
 
 	if (*arg == '-') {
 		s->reverse = 1;

@@ -3,6 +3,8 @@
 use strict;
 use Git;
 
+binmode(STDOUT, ":raw");
+
 my $repo = Git->repository();
 
 my $menu_use_color = $repo->get_colorbool('color.interactive');
@@ -91,6 +93,47 @@ if (!defined $GIT_DIR) {
 }
 chomp($GIT_DIR);
 
+my %cquote_map = (
+ "b" => chr(8),
+ "t" => chr(9),
+ "n" => chr(10),
+ "v" => chr(11),
+ "f" => chr(12),
+ "r" => chr(13),
+ "\\" => "\\",
+ "\042" => "\042",
+);
+
+sub unquote_path {
+	local ($_) = @_;
+	my ($retval, $remainder);
+	if (!/^\042(.*)\042$/) {
+		return $_;
+	}
+	($_, $retval) = ($1, "");
+	while (/^([^\\]*)\\(.*)$/) {
+		$remainder = $2;
+		$retval .= $1;
+		for ($remainder) {
+			if (/^([0-3][0-7][0-7])(.*)$/) {
+				$retval .= chr(oct($1));
+				$_ = $2;
+				last;
+			}
+			if (/^([\\\042btnvfr])(.*)$/) {
+				$retval .= $cquote_map{$1};
+				$_ = $2;
+				last;
+			}
+			# This is malformed -- just return it as-is for now.
+			return $_[0];
+		}
+		$_ = $remainder;
+	}
+	$retval .= $_;
+	return $retval;
+}
+
 sub refresh {
 	my $fh;
 	open $fh, 'git update-index --refresh |'
@@ -104,7 +147,7 @@ sub refresh {
 sub list_untracked {
 	map {
 		chomp $_;
-		$_;
+		unquote_path($_);
 	}
 	run_cmd_pipe(qw(git ls-files --others --exclude-standard --), @ARGV);
 }
@@ -141,7 +184,8 @@ sub list_modified {
 
 	if (@ARGV) {
 		@tracked = map {
-			chomp $_; $_;
+			chomp $_;
+			unquote_path($_);
 		} run_cmd_pipe(qw(git ls-files --exclude-standard --), @ARGV);
 		return if (!@tracked);
 	}
@@ -153,6 +197,7 @@ sub list_modified {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			my ($change, $bin);
+			$file = unquote_path($file);
 			if ($add eq '-' && $del eq '-') {
 				$change = 'binary';
 				$bin = 1;
@@ -168,6 +213,7 @@ sub list_modified {
 		}
 		elsif (($adddel, $file) =
 		       /^ (create|delete) mode [0-7]+ (.*)$/) {
+			$file = unquote_path($file);
 			$data{$file}{INDEX_ADDDEL} = $adddel;
 		}
 	}
@@ -175,6 +221,7 @@ sub list_modified {
 	for (run_cmd_pipe(qw(git diff-files --numstat --summary --), @tracked)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
+			$file = unquote_path($file);
 			if (!exists $data{$file}) {
 				$data{$file} = +{
 					INDEX => 'unchanged',
@@ -196,6 +243,7 @@ sub list_modified {
 		}
 		elsif (($adddel, $file) =
 		       /^ (create|delete) mode [0-7]+ (.*)$/) {
+			$file = unquote_path($file);
 			$data{$file}{FILE_ADDDEL} = $adddel;
 		}
 	}
@@ -302,7 +350,8 @@ sub find_unique_prefixes {
 			}
 			%search = %{$search{$letter}};
 		}
-		if ($soft_limit && $j + 1 > $soft_limit) {
+		if (ord($letters[0]) > 127 ||
+		    ($soft_limit && $j + 1 > $soft_limit)) {
 			$prefix = undef;
 			$remainder = $ret;
 		}
@@ -752,6 +801,10 @@ EOF
 	my $editor = $ENV{GIT_EDITOR} || $repo->config("core.editor")
 		|| $ENV{VISUAL} || $ENV{EDITOR} || "vi";
 	system('sh', '-c', $editor.' "$@"', $editor, $hunkfile);
+
+	if ($? != 0) {
+		return undef;
+	}
 
 	open $fh, '<', $hunkfile
 		or die "failed to open hunk edit file for reading: " . $!;

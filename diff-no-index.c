@@ -38,6 +38,10 @@ static int get_mode(const char *path, int *mode)
 
 	if (!path || !strcmp(path, "/dev/null"))
 		*mode = 0;
+#ifdef _WIN32
+	else if (!strcasecmp(path, "nul"))
+		*mode = 0;
+#endif
 	else if (!strcmp(path, "-"))
 		*mode = create_ce_mode(0666);
 	else if (lstat(path, &st))

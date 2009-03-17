@@ -1640,3 +1640,27 @@ check-docs::
 check-builtins::
 	./check-builtins.sh
 
+### Test suite coverage testing
+#
+.PHONY: coverage coverage-clean coverage-build coverage-report
+
+coverage:
+	$(MAKE) coverage-build
+	$(MAKE) coverage-report
+
+coverage-clean:
+	rm -f *.gcda *.gcno
+
+COVERAGE_CFLAGS = $(CFLAGS) -O0 -ftest-coverage -fprofile-arcs
+COVERAGE_LDFLAGS = $(CFLAGS)  -O0 -lgcov
+
+coverage-build: coverage-clean
+	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" all
+	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" \
+		-j1 test
+
+coverage-report:
+	gcov -b *.c
+	grep '^function.*called 0 ' *.c.gcov \
+		| sed -e 's/\([^:]*\)\.gcov: *function \([^ ]*\) called.*/\1: \2/' \
+		| tee coverage-untested-functions
