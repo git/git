@@ -419,6 +419,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "-d") || !strcmp(arg, "--deleted")) {
 			show_deleted = 1;
+			require_work_tree = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-m") || !strcmp(arg, "--modified")) {
