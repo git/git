@@ -221,6 +221,11 @@ core.gitProxy::
 Can be overridden by the 'GIT_PROXY_COMMAND' environment variable
 (which always applies universally, without the special "for"
 handling).
++
+The special string `none` can be used as the proxy command to
+specify that no proxy be used for a given domain pattern.
+This is useful for excluding servers inside a firewall from
+proxy use, while defaulting to a common proxy for external domains.
 
 core.ignoreStat::
 	If true, commands which modify both the working tree and the index
