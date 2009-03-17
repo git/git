@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git config' [<file-option>] [type] [-z|--null] name [value [value_regex]]
 'git config' [<file-option>] [type] --add name value
-'git config' [<file-option>] [type] --replace-all name [value [value_regex]]
+'git config' [<file-option>] [type] --replace-all name value [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get name [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-all name [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-regexp name_regex [value_regex]
