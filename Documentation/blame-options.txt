@@ -39,7 +39,7 @@ of lines before or after the line given by <start>.
 	Show raw timestamp (Default: off).
 
 -S <revs-file>::
-	Use revs from revs-file instead of calling linkgit:git-rev-list[1].
+	Use revisions from revs-file instead of calling linkgit:git-rev-list[1].
 
 --reverse::
 	Walk history forward instead of backward. Instead of showing
