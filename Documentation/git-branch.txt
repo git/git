@@ -76,8 +76,8 @@ OPTIONS
 	based sha1 expressions such as "<branchname>@\{yesterday}".
 
 -f::
-	Force the creation of a new branch even if it means deleting
-	a branch that already exists with the same name.
+	Reset <branchname> to <startpoint> if <branchname> exists
+	already. Without `-f` 'git-branch' refuses to change an existing branch.
 
 -m::
 	Move/rename a branch and the corresponding reflog.
