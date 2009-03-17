@@ -8,6 +8,7 @@ auml=`printf '\xc3\xa4'`
 aumlcdiar=`printf '\x61\xcc\x88'`
 
 case_insensitive=
+unibad=
 test_expect_success 'see if we expect ' '
 
 	test_case=test_expect_success
@@ -19,7 +20,6 @@ test_expect_success 'see if we expect ' '
 	then
 		test_case=test_expect_failure
 		case_insensitive=t
-		say "will test on a case insensitive filesystem"
 	fi &&
 	rm -fr junk &&
 	mkdir junk &&
@@ -27,12 +27,17 @@ test_expect_success 'see if we expect ' '
 	case "$(cd junk && echo *)" in
 	"$aumlcdiar")
 		test_unicode=test_expect_failure
-		say "will test on a unicode corrupting filesystem"
+		unibad=t
 		;;
 	*)	;;
 	esac &&
 	rm -fr junk
 '
+
+test "$case_insensitive" &&
+	say "will test on a case insensitive filesystem"
+test "$unibad" &&
+	say "will test on a unicode corrupting filesystem"
 
 if test "$case_insensitive"
 then

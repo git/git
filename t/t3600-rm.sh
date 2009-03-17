@@ -21,9 +21,10 @@ embedded'
 embedded' &&
      git commit -m 'add files with tabs and newlines'
      else
-         say 'Your filesystem does not allow tabs in filenames.'
          test_tabs=n
      fi"
+
+test "$test_tabs" = n && say 'Your filesystem does not allow tabs in filenames.'
 
 # Later we will try removing an unremovable path to make sure
 # git rm barfs, but if the test is run as root that cannot be
