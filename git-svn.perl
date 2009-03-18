@@ -2351,7 +2351,10 @@ sub match_paths {
 	if (my $path = $paths->{"/$self->{path}"}) {
 		return ($path->{action} eq 'D') ? 0 : 1;
 	}
-	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\//;
+	my $repos_root = $self->ra->{repos_root};
+	my $extended_path = $self->{url} . '/' . $self->{path};
+	$extended_path =~ s#^\Q$repos_root\E(/|$)##;
+	$self->{path_regex} ||= qr/^\/\Q$extended_path\E\//;
 	if (grep /$self->{path_regex}/, keys %$paths) {
 		return 1;
 	}

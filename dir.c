@@ -137,7 +137,7 @@ int match_pathspec(const char **pathspec, const char *name, int namelen,
 
 static int no_wildcard(const char *string)
 {
-	return string[strcspn(string, "*?[{")] == '\0';
+	return string[strcspn(string, "*?[{\\")] == '\0';
 }
 
 void add_exclude(const char *string, const char *base,

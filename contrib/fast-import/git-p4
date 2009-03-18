@@ -1142,7 +1142,7 @@ class P4Sync(Command):
 
         s = ''
         for (key, val) in self.users.items():
-            s += "%s\t%s\n" % (key, val)
+	    s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
 
         open(self.getUserCacheFilename(), "wb").write(s)
         self.userMapFromPerforceServer = True

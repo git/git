@@ -4,6 +4,16 @@
 /* "\033[1;38;5;2xx;48;5;2xxm\0" is 23 bytes */
 #define COLOR_MAXLEN 24
 
+#define GIT_COLOR_NORMAL	""
+#define GIT_COLOR_RESET		"\033[m"
+#define GIT_COLOR_BOLD		"\033[1m"
+#define GIT_COLOR_RED		"\033[31m"
+#define GIT_COLOR_GREEN		"\033[32m"
+#define GIT_COLOR_YELLOW	"\033[33m"
+#define GIT_COLOR_BLUE		"\033[34m"
+#define GIT_COLOR_CYAN		"\033[36m"
+#define GIT_COLOR_BG_RED	"\033[41m"
+
 /*
  * This variable stores the value of color.ui
  */

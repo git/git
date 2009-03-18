@@ -526,7 +526,6 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 		return; /* result deleted */
 
 	while (1) {
-		struct sline *sl = &sline[lno];
 		unsigned long hunk_end;
 		unsigned long rlines;
 		const char *hunk_comment = NULL;
@@ -592,7 +591,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 			struct lline *ll;
 			int j;
 			unsigned long p_mask;
-			sl = &sline[lno++];
+			struct sline *sl = &sline[lno++];
 			ll = (sl->flag & no_pre_delete) ? NULL : sl->lost_head;
 			while (ll) {
 				fputs(c_old, stdout);

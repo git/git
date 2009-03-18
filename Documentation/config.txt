@@ -677,6 +677,16 @@ format.pretty::
 	See linkgit:git-log[1], linkgit:git-show[1],
 	linkgit:git-whatchanged[1].
 
+format.thread::
+	The default threading style for 'git-format-patch'.  Can be
+	either a boolean value, `shallow` or `deep`.  'Shallow'
+	threading makes every mail a reply to the head of the series,
+	where the head is chosen from the cover letter, the
+	`\--in-reply-to`, and the first patch mail, in this order.
+	'Deep' threading makes every mail a reply to the previous one.
+	A true boolean value is the same as `shallow`, and a false
+	value disables threading.
+
 gc.aggressiveWindow::
 	The window size parameter used in the delta compression
 	algorithm used by 'git-gc --aggressive'.  This defaults
@@ -1159,6 +1169,10 @@ pull.octopus::
 
 pull.twohead::
 	The default merge strategy to use when pulling a single branch.
+
+rebase.stat::
+	Whether to show a diffstat of what changed upstream since the last
+	rebase. False by default.
 
 receive.fsckObjects::
 	If it is set to true, git-receive-pack will check all received

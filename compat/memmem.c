@@ -5,6 +5,8 @@ void *gitmemmem(const void *haystack, size_t haystack_len,
 {
 	const char *begin = haystack;
 	const char *last_possible = begin + haystack_len - needle_len;
+	const char *tail = needle;
+	char point;
 
 	/*
 	 * The first occurrence of the empty string is deemed to occur at
@@ -20,8 +22,9 @@ void *gitmemmem(const void *haystack, size_t haystack_len,
 	if (haystack_len < needle_len)
 		return NULL;
 
+	point = *tail++;
 	for (; begin <= last_possible; begin++) {
-		if (!memcmp(begin, needle, needle_len))
+		if (*begin == point && !memcmp(begin + 1, tail, needle_len - 1))
 			return (void *)begin;
 	}
 

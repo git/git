@@ -71,4 +71,16 @@ test_expect_success 'post-checkout receives the right args when not switching br
         test $old = $new -a $flag = 0
 '
 
+mkdir -p templates/hooks
+cat >templates/hooks/post-checkout <<'EOF'
+#!/bin/sh
+echo $@ > $GIT_DIR/post-checkout.args
+EOF
+chmod +x templates/hooks/post-checkout
+
+test_expect_success 'post-checkout hook is triggered by clone' '
+	git clone --template=templates . clone3 &&
+	test -f clone3/.git/post-checkout.args
+'
+
 test_done

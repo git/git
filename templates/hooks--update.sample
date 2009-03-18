@@ -43,10 +43,12 @@ allowdeletetag=$(git config --bool hooks.allowdeletetag)
 
 # check for no description
 projectdesc=$(sed -e '1q' "$GIT_DIR/description")
-if [ -z "$projectdesc" -o "$projectdesc" = "Unnamed repository; edit this file to name it for gitweb." ]; then
+case "$projectdesc" in
+"Unnamed repository"* | "")
 	echo "*** Project description file hasn't been set" >&2
 	exit 1
-fi
+	;;
+esac
 
 # --- Check types
 # if $newrev is 0000...0000, it's a commit to delete a ref.

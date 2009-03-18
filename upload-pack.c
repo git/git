@@ -397,12 +397,11 @@ static int get_common_commits(void)
 	static char line[1000];
 	unsigned char sha1[20];
 	char hex[41], last_hex[41];
-	int len;
 
 	save_commit_buffer = 0;
 
 	for(;;) {
-		len = packet_read_line(0, line, sizeof(line));
+		int len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
 
 		if (!len) {
@@ -410,7 +409,7 @@ static int get_common_commits(void)
 				packet_write(1, "NAK\n");
 			continue;
 		}
-		len = strip(line, len);
+		strip(line, len);
 		if (!prefixcmp(line, "have ")) {
 			switch (got_sha1(line+5, sha1)) {
 			case -1: /* they have what we do not */
@@ -645,7 +644,7 @@ int main(int argc, char **argv)
 	dir = argv[i];
 
 	if (!enter_repo(dir, strict))
-		die("'%s': unable to chdir or not a git archive", dir);
+		die("'%s' does not appear to be a git repository", dir);
 	if (is_repository_shallow())
 		die("attempt to fetch/clone from a shallow repository");
 	if (getenv("GIT_DEBUG_SEND_PACK"))

@@ -1,0 +1,104 @@
+GIT v1.6.3 Release Notes
+========================
+
+With the next major release, "git push" into a branch that is
+currently checked out will be refused by default.  You can choose
+what should happen upon such a push by setting the configuration
+variable receive.denyCurrentBranch in the receiving repository.
+
+To ease the transition plan, the receiving repository of such a
+push running this release will issue a big warning when the
+configuration variable is missing.  Please refer to:
+
+  http://git.or.cz/gitwiki/GitFaq#non-bare
+  http://thread.gmane.org/gmane.comp.version-control.git/107758/focus=108007
+
+for more details on the reason why this change is needed and the
+transition plan.
+
+For a similar reason, "git push $there :$killed" to delete the branch
+$killed in a remote repository $there, if $killed branch is the current
+branch pointed at by its HEAD, gets a large warning.  You can choose what
+should happen upon such a push by setting the configuration variable
+receive.denyDeleteCurrent in the receiving repository.
+
+
+Updates since v1.6.2
+--------------------
+
+(subsystems)
+
+(performance)
+
+(usability, bells and whistles)
+
+* "--pretty=<style>" option to the log family of commands can now be
+  spelled as "--format=<style>".  In addition, --format=%formatstring
+  is a short-hand for --pretty=tformat:%formatstring.
+
+* "--oneline" is a synonym for "--pretty=oneline --abbrev=commit".
+
+* If you realize that you botched the patch when you are editing hunks
+  with the 'edit' action in git-add -i/-p, you can abort the editor to
+  tell git not to apply it.
+
+* git-archive learned --output=<file> option.
+
+* git-bisect shows not just the number of remaining commits whose goodness
+  is unknown, but also shows the estimated number of remaining rounds.
+
+* You can give --date=<format> option to git-blame.
+
+* git-branch -r shows HEAD symref that points at a remote branch in
+  interest of each tracked remote repository.
+
+* git-config learned -e option to open an editor to edit the config file
+  directly.
+
+* git-clone runs post-checkout hook when run without --no-checkout.
+
+* git-format-patch can be told to use attachment with a new configuration,
+  format.attach.
+
+* git-format-patch can be told to produce deep or shallow message threads.
+
+* git-imap-send learned to work around Thunderbird's inability to easily
+  disable format=flowed with a new configuration, imap.preformattedHTML.
+
+* git-rebase can be told to rebase the series even if your branch is a
+  descendant of the commit you are rebasing onto with --force-rebase
+  option.
+
+* git-rebase can be told to report diffstat with the --stat option.
+
+* git-send-email learned --confirm option to review the Cc: list before
+  sending the messages out.
+
+(developers)
+
+* Test scripts can be run under valgrind.
+
+* Makefile learned 'coverage' option to run the test suites with
+  coverage tracking enabled.
+
+Fixes since v1.6.2
+------------------
+
+All of the fixes in v1.6.2.X maintenance series are included in this
+release, unless otherwise noted.
+
+Here are fixes that this release has, but have not been backported to
+v1.6.2.X series.
+
+* 'git-submodule add' did not tolerate extra slashes and ./ in the
+  path it accepted from the command line; it now is more lenient
+ (if needed, backport by merging db75ada).
+
+* git-gc spent excessive amount of time to decide if an object appears
+  in a locally existing pack (if needed, backport by merging 69e020a).
+
+---
+exec >/var/tmp/1
+O=v1.6.2.1-135-g7d65c21
+echo O=$(git describe master)
+git shortlog --no-merges $O..master ^maint

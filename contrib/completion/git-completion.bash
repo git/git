@@ -62,7 +62,7 @@ esac
 __gitdir ()
 {
 	if [ -z "${1-}" ]; then
-		if [ -n "$__git_dir" ]; then
+		if [ -n "${__git_dir-}" ]; then
 			echo "$__git_dir"
 		elif [ -d .git ]; then
 			echo .git
@@ -80,68 +80,72 @@ __gitdir ()
 # returns text to add to bash PS1 prompt (includes branch name)
 __git_ps1 ()
 {
-	local g="$(git rev-parse --git-dir 2>/dev/null)"
+	local g="$(__gitdir)"
 	if [ -n "$g" ]; then
 		local r
 		local b
-		if [ -d "$g/rebase-apply" ]
-		then
-			if test -f "$g/rebase-apply/rebasing"
-			then
+		if [ -d "$g/rebase-apply" ]; then
+			if [ -f "$g/rebase-apply/rebasing" ]; then
 				r="|REBASE"
-			elif test -f "$g/rebase-apply/applying"
-			then
+		elif [ -f "$g/rebase-apply/applying" ]; then
 				r="|AM"
 			else
 				r="|AM/REBASE"
 			fi
 			b="$(git symbolic-ref HEAD 2>/dev/null)"
-		elif [ -f "$g/rebase-merge/interactive" ]
-		then
+		elif [ -f "$g/rebase-merge/interactive" ]; then
 			r="|REBASE-i"
 			b="$(cat "$g/rebase-merge/head-name")"
-		elif [ -d "$g/rebase-merge" ]
-		then
+		elif [ -d "$g/rebase-merge" ]; then
 			r="|REBASE-m"
 			b="$(cat "$g/rebase-merge/head-name")"
-		elif [ -f "$g/MERGE_HEAD" ]
-		then
+		elif [ -f "$g/MERGE_HEAD" ]; then
 			r="|MERGING"
 			b="$(git symbolic-ref HEAD 2>/dev/null)"
 		else
-			if [ -f "$g/BISECT_LOG" ]
-			then
+			if [ -f "$g/BISECT_LOG" ]; then
 				r="|BISECTING"
 			fi
-			if ! b="$(git symbolic-ref HEAD 2>/dev/null)"
-			then
-				if ! b="$(git describe --exact-match HEAD 2>/dev/null)"
-				then
-					b="$(cut -c1-7 "$g/HEAD")..."
+			if ! b="$(git symbolic-ref HEAD 2>/dev/null)"; then
+				if ! b="$(git describe --exact-match HEAD 2>/dev/null)"; then
+					if [ -r "$g/HEAD" ]; then
+						b="$(cut -c1-7 "$g/HEAD")..."
+					fi
 				fi
 			fi
 		fi
 
 		local w
 		local i
+		local c
 
-		if test -n "${GIT_PS1_SHOWDIRTYSTATE-}"; then
-			if test "$(git config --bool bash.showDirtyState)" != "false"; then
-				git diff --no-ext-diff --ignore-submodules \
-					--quiet --exit-code || w="*"
-				if git rev-parse --quiet --verify HEAD >/dev/null; then
-					git diff-index --cached --quiet \
-						--ignore-submodules HEAD -- || i="+"
-				else
-					i="#"
+		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
+			if [ "true" = "$(git config --bool core.bare 2>/dev/null)" ]; then
+				c="BARE:"
+			else
+				b="GIT_DIR!"
+			fi
+		elif [ "true" = "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]; then
+			if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
+				if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
+					git diff --no-ext-diff --ignore-submodules \
+						--quiet --exit-code || w="*"
+					if git rev-parse --quiet --verify HEAD >/dev/null; then
+						git diff-index --cached --quiet \
+							--ignore-submodules HEAD -- || i="+"
+					else
+						i="#"
+					fi
 				fi
 			fi
 		fi
 
-		if [ -n "${1-}" ]; then
-			printf "$1" "${b##refs/heads/}$w$i$r"
-		else
-			printf " (%s)" "${b##refs/heads/}$w$i$r"
+		if [ -n "$b" ]; then
+			if [ -n "${1-}" ]; then
+				printf "$1" "$c${b##refs/heads/}$w$i$r"
+			else
+				printf " (%s)" "$c${b##refs/heads/}$w$i$r"
+			fi
 		fi
 	fi
 }
@@ -299,7 +303,7 @@ __git_remotes ()
 
 __git_merge_strategies ()
 {
-	if [ -n "$__git_merge_strategylist" ]; then
+	if [ -n "${__git_merge_strategylist-}" ]; then
 		echo "$__git_merge_strategylist"
 		return
 	fi
@@ -383,9 +387,88 @@ __git_complete_revlist ()
 	esac
 }
 
+__git_complete_remote_or_refspec ()
+{
+	local cmd="${COMP_WORDS[1]}"
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local i c=2 remote="" pfx="" lhs=1 no_complete_refspec=0
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		--all|--mirror) [ "$cmd" = "push" ] && no_complete_refspec=1 ;;
+		-*) ;;
+		*) remote="$i"; break ;;
+		esac
+		c=$((++c))
+	done
+	if [ -z "$remote" ]; then
+		__gitcomp "$(__git_remotes)"
+		return
+	fi
+	if [ $no_complete_refspec = 1 ]; then
+		COMPREPLY=()
+		return
+	fi
+	[ "$remote" = "." ] && remote=
+	case "$cur" in
+	*:*)
+		case "$COMP_WORDBREAKS" in
+		*:*) : great ;;
+		*)   pfx="${cur%%:*}:" ;;
+		esac
+		cur="${cur#*:}"
+		lhs=0
+		;;
+	+*)
+		pfx="+"
+		cur="${cur#+}"
+		;;
+	esac
+	case "$cmd" in
+	fetch)
+		if [ $lhs = 1 ]; then
+			__gitcomp "$(__git_refs2 "$remote")" "$pfx" "$cur"
+		else
+			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		fi
+		;;
+	pull)
+		if [ $lhs = 1 ]; then
+			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur"
+		else
+			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		fi
+		;;
+	push)
+		if [ $lhs = 1 ]; then
+			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		else
+			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur"
+		fi
+		;;
+	esac
+}
+
+__git_complete_strategy ()
+{
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	-s|--strategy)
+		__gitcomp "$(__git_merge_strategies)"
+		return 0
+	esac
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--strategy=*)
+		__gitcomp "$(__git_merge_strategies)" "" "${cur##--strategy=}"
+		return 0
+		;;
+	esac
+	return 1
+}
+
 __git_all_commands ()
 {
-	if [ -n "$__git_all_commandlist" ]; then
+	if [ -n "${__git_all_commandlist-}" ]; then
 		echo "$__git_all_commandlist"
 		return
 	fi
@@ -403,7 +486,7 @@ __git_all_commandlist="$(__git_all_commands 2>/dev/null)"
 
 __git_porcelain_commands ()
 {
-	if [ -n "$__git_porcelain_commandlist" ]; then
+	if [ -n "${__git_porcelain_commandlist-}" ]; then
 		echo "$__git_porcelain_commandlist"
 		return
 	fi
@@ -826,27 +909,21 @@ _git_diff ()
 	__git_complete_file
 }
 
+__git_fetch_options="
+	--quiet --verbose --append --upload-pack --force --keep --depth=
+	--tags --no-tags
+"
+
 _git_fetch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-
-	if [ "$COMP_CWORD" = 2 ]; then
-		__gitcomp "$(__git_remotes)"
-	else
-		case "$cur" in
-		*:*)
-			local pfx=""
-			case "$COMP_WORDBREAKS" in
-			*:*) : great ;;
-			*)   pfx="${cur%%:*}:" ;;
-			esac
-			__gitcomp "$(__git_refs)" "$pfx" "${cur#*:}"
-			;;
-		*)
-			__gitcomp "$(__git_refs2 "${COMP_WORDS[2]}")"
-			;;
-		esac
-	fi
+	case "$cur" in
+	--*)
+		__gitcomp "$__git_fetch_options"
+		return
+		;;
+	esac
+	__git_complete_remote_or_refspec
 }
 
 _git_format_patch ()
@@ -1014,6 +1091,11 @@ _git_log ()
 			" "" "${cur##--pretty=}"
 		return
 		;;
+	--format=*)
+		__gitcomp "$__git_log_pretty_formats
+			" "" "${cur##--format=}"
+		return
+		;;
 	--date=*)
 		__gitcomp "
 			relative iso8601 rfc2822 short local default
@@ -1029,7 +1111,7 @@ _git_log ()
 			--follow
 			--abbrev-commit --abbrev=
 			--relative-date --date=
-			--pretty=
+			--pretty= --format= --oneline
 			--cherry-pick
 			--graph
 			--decorate
@@ -1045,24 +1127,19 @@ _git_log ()
 	__git_complete_revlist
 }
 
+__git_merge_options="
+	--no-commit --no-stat --log --no-log --squash --strategy
+	--commit --stat --no-squash --ff --no-ff
+"
+
 _git_merge ()
 {
+	__git_complete_strategy && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	case "${COMP_WORDS[COMP_CWORD-1]}" in
-	-s|--strategy)
-		__gitcomp "$(__git_merge_strategies)"
-		return
-	esac
 	case "$cur" in
-	--strategy=*)
-		__gitcomp "$(__git_merge_strategies)" "" "${cur##--strategy=}"
-		return
-		;;
 	--*)
-		__gitcomp "
-			--no-commit --no-stat --log --no-log --squash --strategy
-			--commit --stat --no-squash --ff --no-ff
-			"
+		__gitcomp "$__git_merge_options"
 		return
 	esac
 	__gitcomp "$(__git_refs)"
@@ -1111,40 +1188,44 @@ _git_name_rev ()
 
 _git_pull ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
+	__git_complete_strategy && return
 
-	if [ "$COMP_CWORD" = 2 ]; then
-		__gitcomp "$(__git_remotes)"
-	else
-		__gitcomp "$(__git_refs "${COMP_WORDS[2]}")"
-	fi
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--rebase --no-rebase
+			$__git_merge_options
+			$__git_fetch_options
+		"
+		return
+		;;
+	esac
+	__git_complete_remote_or_refspec
 }
 
 _git_push ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-
-	if [ "$COMP_CWORD" = 2 ]; then
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	--repo)
 		__gitcomp "$(__git_remotes)"
-	else
-		case "$cur" in
-		*:*)
-			local pfx=""
-			case "$COMP_WORDBREAKS" in
-			*:*) : great ;;
-			*)   pfx="${cur%%:*}:" ;;
-			esac
-
-			__gitcomp "$(__git_refs "${COMP_WORDS[2]}")" "$pfx" "${cur#*:}"
-			;;
-		+*)
-			__gitcomp "$(__git_refs)" + "${cur#+}"
-			;;
-		*)
-			__gitcomp "$(__git_refs)"
-			;;
-		esac
-	fi
+		return
+	esac
+	case "$cur" in
+	--repo=*)
+		__gitcomp "$(__git_remotes)" "" "${cur##--repo=}"
+		return
+		;;
+	--*)
+		__gitcomp "
+			--all --mirror --tags --dry-run --force --verbose
+			--receive-pack= --repo=
+		"
+		return
+		;;
+	esac
+	__git_complete_remote_or_refspec
 }
 
 _git_rebase ()
@@ -1154,16 +1235,8 @@ _git_rebase ()
 		__gitcomp "--continue --skip --abort"
 		return
 	fi
-	case "${COMP_WORDS[COMP_CWORD-1]}" in
-	-s|--strategy)
-		__gitcomp "$(__git_merge_strategies)"
-		return
-	esac
+	__git_complete_strategy && return
 	case "$cur" in
-	--strategy=*)
-		__gitcomp "$(__git_merge_strategies)" "" "${cur##--strategy=}"
-		return
-		;;
 	--*)
 		__gitcomp "--onto --merge --strategy --interactive"
 		return
@@ -1541,8 +1614,13 @@ _git_show ()
 			" "" "${cur##--pretty=}"
 		return
 		;;
+	--format=*)
+		__gitcomp "$__git_log_pretty_formats
+			" "" "${cur##--format=}"
+		return
+		;;
 	--*)
-		__gitcomp "--pretty=
+		__gitcomp "--pretty= --format=
 			$__git_diff_common_options
 			"
 		return
@@ -1841,7 +1919,7 @@ _gitk ()
 	__git_has_doubledash && return
 
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	local g="$(git rev-parse --git-dir 2>/dev/null)"
+	local g="$(__gitdir)"
 	local merge=""
 	if [ -f $g/MERGE_HEAD ]; then
 		merge="--merge"

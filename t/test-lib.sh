@@ -3,6 +3,22 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
+# if --tee was passed, write the output not only to the terminal, but
+# additionally to the file test-results/$BASENAME.out, too.
+case "$GIT_TEST_TEE_STARTED, $* " in
+done,*)
+	# do not redirect again
+	;;
+*' --tee '*|*' --va'*)
+	mkdir -p test-results
+	BASE=test-results/$(basename "$0" .sh)
+	(GIT_TEST_TEE_STARTED=done ${SHELL-sh} "$0" "$@" 2>&1;
+	 echo $? > $BASE.exit) | tee $BASE.out
+	test "$(cat $BASE.exit)" = 0
+	exit
+	;;
+esac
+
 # Keep the original TERM for say_color
 ORIGINAL_TERM=$TERM
 
@@ -94,6 +110,10 @@ do
 	--no-python)
 		# noop now...
 		shift ;;
+	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
+		valgrind=t; verbose=t; shift ;;
+	--tee)
+		shift ;; # was handled already
 	*)
 		break ;;
 	esac
@@ -434,7 +454,7 @@ test_create_repo () {
 	repo="$1"
 	mkdir -p "$repo"
 	cd "$repo" || error "Cannot setup test environment"
-	"$GIT_EXEC_PATH/git" init "--template=$GIT_EXEC_PATH/templates/blt/" >&3 2>&4 ||
+	"$GIT_EXEC_PATH/git" init "--template=$owd/../templates/blt/" >&3 2>&4 ||
 	error "cannot run git init -- have you built things yet?"
 	mv .git/hooks .git/hooks-disabled
 	cd "$owd"
@@ -444,7 +464,7 @@ test_done () {
 	trap - EXIT
 	test_results_dir="$TEST_DIRECTORY/test-results"
 	mkdir -p "$test_results_dir"
-	test_results_path="$test_results_dir/${0%-*}-$$"
+	test_results_path="$test_results_dir/${0%.sh}-$$"
 
 	echo "total $test_count" >> $test_results_path
 	echo "success $test_success" >> $test_results_path
@@ -492,8 +512,73 @@ test_done () {
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
 TEST_DIRECTORY=$(pwd)
-PATH=$TEST_DIRECTORY/..:$PATH
-GIT_EXEC_PATH=$(pwd)/..
+if test -z "$valgrind"
+then
+	PATH=$TEST_DIRECTORY/..:$PATH
+	GIT_EXEC_PATH=$TEST_DIRECTORY/..
+else
+	make_symlink () {
+		test -h "$2" &&
+		test "$1" = "$(readlink "$2")" || {
+			# be super paranoid
+			if mkdir "$2".lock
+			then
+				rm -f "$2" &&
+				ln -s "$1" "$2" &&
+				rm -r "$2".lock
+			else
+				while test -d "$2".lock
+				do
+					say "Waiting for lock on $2."
+					sleep 1
+				done
+			fi
+		}
+	}
+
+	make_valgrind_symlink () {
+		# handle only executables
+		test -x "$1" || return
+
+		base=$(basename "$1")
+		symlink_target=$TEST_DIRECTORY/../$base
+		# do not override scripts
+		if test -x "$symlink_target" &&
+		    test ! -d "$symlink_target" &&
+		    test "#!" != "$(head -c 2 < "$symlink_target")"
+		then
+			symlink_target=../valgrind.sh
+		fi
+		case "$base" in
+		*.sh|*.perl)
+			symlink_target=../unprocessed-script
+		esac
+		# create the link, or replace it if it is out of date
+		make_symlink "$symlink_target" "$GIT_VALGRIND/bin/$base" || exit
+	}
+
+	# override all git executables in TEST_DIRECTORY/..
+	GIT_VALGRIND=$TEST_DIRECTORY/valgrind
+	mkdir -p "$GIT_VALGRIND"/bin
+	for file in $TEST_DIRECTORY/../git* $TEST_DIRECTORY/../test-*
+	do
+		make_valgrind_symlink $file
+	done
+	OLDIFS=$IFS
+	IFS=:
+	for path in $PATH
+	do
+		ls "$path"/git-* 2> /dev/null |
+		while read file
+		do
+			make_valgrind_symlink "$file"
+		done
+	done
+	IFS=$OLDIFS
+	PATH=$GIT_VALGRIND/bin:$PATH
+	GIT_EXEC_PATH=$GIT_VALGRIND/bin
+	export GIT_VALGRIND
+fi
 GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 unset GIT_CONFIG
 GIT_CONFIG_NOSYSTEM=1

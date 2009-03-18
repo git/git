@@ -573,31 +573,21 @@ static inline int hex(int v)
 
 static char *quote_ref_url(const char *base, const char *ref)
 {
+	struct strbuf buf = STRBUF_INIT;
 	const char *cp;
-	char *dp, *qref;
-	int len, baselen, ch;
+	int ch;
 
-	baselen = strlen(base);
-	len = baselen + 2; /* '/' after base and terminating NUL */
-	for (cp = ref; (ch = *cp) != 0; cp++, len++)
+	strbuf_addstr(&buf, base);
+	if (buf.len && buf.buf[buf.len - 1] != '/' && *ref != '/')
+		strbuf_addstr(&buf, "/");
+
+	for (cp = ref; (ch = *cp) != 0; cp++)
 		if (needs_quote(ch))
-			len += 2; /* extra two hex plus replacement % */
-	qref = xmalloc(len);
-	memcpy(qref, base, baselen);
-	dp = qref + baselen;
-	*(dp++) = '/';
-	for (cp = ref; (ch = *cp) != 0; cp++) {
-		if (needs_quote(ch)) {
-			*dp++ = '%';
-			*dp++ = hex((ch >> 4) & 0xF);
-			*dp++ = hex(ch & 0xF);
-		}
+			strbuf_addf(&buf, "%%%02x", ch);
 		else
-			*dp++ = ch;
-	}
-	*dp = 0;
+			strbuf_addch(&buf, *cp);
 
-	return qref;
+	return strbuf_detach(&buf, NULL);
 }
 
 int http_fetch_ref(const char *base, struct ref *ref)

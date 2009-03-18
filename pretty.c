@@ -10,6 +10,15 @@
 
 static char *user_format;
 
+static void save_user_format(struct rev_info *rev, const char *cp, int is_tformat)
+{
+	free(user_format);
+	user_format = xstrdup(cp);
+	if (is_tformat)
+		rev->use_terminator = 1;
+	rev->commit_format = CMIT_FMT_USERFORMAT;
+}
+
 void get_commit_format(const char *arg, struct rev_info *rev)
 {
 	int i;
@@ -33,12 +42,7 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 		return;
 	}
 	if (!prefixcmp(arg, "format:") || !prefixcmp(arg, "tformat:")) {
-		const char *cp = strchr(arg, ':') + 1;
-		free(user_format);
-		user_format = xstrdup(cp);
-		if (arg[0] == 't')
-			rev->use_terminator = 1;
-		rev->commit_format = CMIT_FMT_USERFORMAT;
+		save_user_format(rev, strchr(arg, ':') + 1, arg[0] == 't');
 		return;
 	}
 	for (i = 0; i < ARRAY_SIZE(cmt_fmts); i++) {
@@ -49,6 +53,10 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 			rev->commit_format = cmt_fmts[i].v;
 			return;
 		}
+	}
+	if (strchr(arg, '%')) {
+		save_user_format(rev, arg, 1);
+		return;
 	}
 
 	die("invalid --pretty format: %s", arg);
@@ -75,8 +83,7 @@ static int get_one_line(const char *msg)
 /* High bit set, or ISO-2022-INT */
 int non_ascii(int ch)
 {
-	ch = (ch & 0xff);
-	return ((ch & 0x80) || (ch == 0x1b));
+	return !isascii(ch) || ch == '\033';
 }
 
 static int is_rfc2047_special(char ch)
@@ -128,7 +135,6 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 	int namelen;
 	unsigned long time;
 	int tz;
-	const char *filler = "    ";
 
 	if (fmt == CMIT_FMT_ONELINE)
 		return;
@@ -147,7 +153,6 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 		while (line < name_tail && isspace(name_tail[-1]))
 			name_tail--;
 		display_name_length = name_tail - line;
-		filler = "";
 		strbuf_addstr(sb, "From: ");
 		add_rfc2047(sb, line, display_name_length, encoding);
 		strbuf_add(sb, name_tail, namelen - display_name_length);
@@ -155,7 +160,7 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 	} else {
 		strbuf_addf(sb, "%s: %.*s%.*s\n", what,
 			      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
-			      filler, namelen, line);
+			      "    ", namelen, line);
 	}
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:
@@ -568,16 +573,16 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 			return end - placeholder + 1;
 		}
 		if (!prefixcmp(placeholder + 1, "red")) {
-			strbuf_addstr(sb, "\033[31m");
+			strbuf_addstr(sb, GIT_COLOR_RED);
 			return 4;
 		} else if (!prefixcmp(placeholder + 1, "green")) {
-			strbuf_addstr(sb, "\033[32m");
+			strbuf_addstr(sb, GIT_COLOR_GREEN);
 			return 6;
 		} else if (!prefixcmp(placeholder + 1, "blue")) {
-			strbuf_addstr(sb, "\033[34m");
+			strbuf_addstr(sb, GIT_COLOR_BLUE);
 			return 5;
 		} else if (!prefixcmp(placeholder + 1, "reset")) {
-			strbuf_addstr(sb, "\033[m");
+			strbuf_addstr(sb, GIT_COLOR_RESET);
 			return 6;
 		} else
 			return 0;

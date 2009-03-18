@@ -23,7 +23,7 @@ use Getopt::Long;
 use Text::ParseWords;
 use Data::Dumper;
 use Term::ANSIColor;
-use File::Temp qw/ tempdir /;
+use File::Temp qw/ tempdir tempfile /;
 use Error qw(:try);
 use Git;
 
@@ -68,14 +68,15 @@ git send-email [options] <file | directory | rev-list options >
   Automating:
     --identity              <str>  * Use the sendemail.<id> options.
     --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
-    --suppress-cc           <str>  * author, self, sob, cccmd, all.
-    --[no-]signed-off-by-cc        * Send to Cc: and Signed-off-by:
-                                     addresses. Default on.
+    --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, all.
+    --[no-]signed-off-by-cc        * Send to Signed-off-by: addresses. Default on.
     --[no-]suppress-from           * Send to self. Default off.
     --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default on.
     --[no-]thread                  * Use In-Reply-To: field. Default on.
 
   Administering:
+    --confirm               <str>  * Confirm recipients before sending;
+                                     auto, cc, compose, always, or never.
     --quiet                        * Output one line of info per email.
     --dry-run                      * Don't actually send the emails.
     --[no-]validate                * Perform patch sanity checks. Default on.
@@ -126,6 +127,7 @@ sub format_2822_time {
 }
 
 my $have_email_valid = eval { require Email::Valid; 1 };
+my $have_mail_address = eval { require Mail::Address; 1 };
 my $smtp;
 my $auth;
 
@@ -156,7 +158,7 @@ if ($@) {
 # Behavior modification variables
 my ($quiet, $dry_run) = (0, 0);
 my $format_patch;
-my $compose_filename = $repo->repo_path() . "/.gitsendemail.msg.$$";
+my $compose_filename;
 
 # Handle interactive edition of files.
 my $multiedit;
@@ -181,7 +183,7 @@ sub do_edit {
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc, $cc_cmd);
 my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_encryption);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
-my ($validate);
+my ($validate, $confirm);
 my (@suppress_cc);
 
 my %config_bool_settings = (
@@ -207,6 +209,7 @@ my %config_settings = (
     "suppresscc" => \@suppress_cc,
     "envelopesender" => \$envelope_sender,
     "multiedit" => \$multiedit,
+    "confirm"   => \$confirm,
 );
 
 # Handle Uncouth Termination
@@ -219,11 +222,13 @@ sub signal_handler {
 	system "stty echo";
 
 	# tmp files from --compose
-	if (-e $compose_filename) {
-		print "'$compose_filename' contains an intermediate version of the email you were composing.\n";
-	}
-	if (-e ($compose_filename . ".final")) {
-		print "'$compose_filename.final' contains the composed email.\n"
+	if (defined $compose_filename) {
+		if (-e $compose_filename) {
+			print "'$compose_filename' contains an intermediate version of the email you were composing.\n";
+		}
+		if (-e ($compose_filename . ".final")) {
+			print "'$compose_filename.final' contains the composed email.\n"
+		}
 	}
 
 	exit;
@@ -256,6 +261,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "suppress-from!" => \$suppress_from,
 		    "suppress-cc=s" => \@suppress_cc,
 		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_by_cc,
+		    "confirm=s" => \$confirm,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
@@ -266,6 +272,9 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 unless ($rc) {
     usage();
 }
+
+die "Cannot run git format-patch from outside a repository\n"
+	if $format_patch and not $repo;
 
 # Now, let's fill any that aren't set in with defaults:
 
@@ -318,13 +327,13 @@ my(%suppress_cc);
 if (@suppress_cc) {
 	foreach my $entry (@suppress_cc) {
 		die "Unknown --suppress-cc field: '$entry'\n"
-			unless $entry =~ /^(all|cccmd|cc|author|self|sob)$/;
+			unless $entry =~ /^(all|cccmd|cc|author|self|sob|body|bodycc)$/;
 		$suppress_cc{$entry} = 1;
 	}
 }
 
 if ($suppress_cc{'all'}) {
-	foreach my $entry (qw (ccmd cc author self sob)) {
+	foreach my $entry (qw (ccmd cc author self sob body bodycc)) {
 		$suppress_cc{$entry} = 1;
 	}
 	delete $suppress_cc{'all'};
@@ -333,6 +342,21 @@ if ($suppress_cc{'all'}) {
 # If explicit old-style ones are specified, they trump --suppress-cc.
 $suppress_cc{'self'} = $suppress_from if defined $suppress_from;
 $suppress_cc{'sob'} = !$signed_off_by_cc if defined $signed_off_by_cc;
+
+if ($suppress_cc{'body'}) {
+	foreach my $entry (qw (sob bodycc)) {
+		$suppress_cc{$entry} = 1;
+	}
+	delete $suppress_cc{'body'};
+}
+
+# Set confirm's default value
+my $confirm_unconfigured = !defined $confirm;
+if ($confirm_unconfigured) {
+	$confirm = scalar %suppress_cc ? 'compose' : 'auto';
+};
+die "Unknown --confirm setting: '$confirm'\n"
+	unless $confirm =~ /^(?:auto|cc|compose|always|never)/;
 
 # Debugging, print out the suppressions.
 if (0) {
@@ -358,6 +382,14 @@ foreach my $entry (@initial_cc) {
 
 foreach my $entry (@bcclist) {
 	die "Comma in --bcclist entry: $entry'\n" unless $entry !~ m/,/;
+}
+
+sub parse_address_line {
+	if ($have_mail_address) {
+		return map { $_->format } Mail::Address->parse($_[0]);
+	} else {
+		return split_addrs($_[0]);
+	}
 }
 
 sub split_addrs {
@@ -404,6 +436,7 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 
 # returns 1 if the conflict must be solved using it as a format-patch argument
 sub check_file_rev_conflict($) {
+	return unless $repo;
 	my $f = shift;
 	try {
 		$repo->command('rev-parse', '--verify', '--quiet', $f);
@@ -445,6 +478,8 @@ while (defined(my $f = shift @ARGV)) {
 }
 
 if (@rev_list_opts) {
+	die "Cannot run git format-patch from outside a repository\n"
+		unless $repo;
 	push @files, $repo->command('format-patch', '-o', tempdir(CLEANUP => 1), @rev_list_opts);
 }
 
@@ -481,6 +516,9 @@ sub get_patch_subject($) {
 if ($compose) {
 	# Note that this does not need to be secure, but we will make a small
 	# effort to have it be unique
+	$compose_filename = ($repo ?
+		tempfile(".gitsendemail.msg.XXXXXX", DIR => $repo->repo_path()) :
+		tempfile(".gitsendemail.msg.XXXXXX", DIR => "."))[1];
 	open(C,">",$compose_filename)
 		or die "Failed to open for writing $compose_filename: $!";
 
@@ -593,7 +631,7 @@ if (!@to) {
 	}
 
 	my $to = $_;
-	push @to, split_addrs($to);
+	push @to, parse_address_line($to);
 	$prompting++;
 }
 
@@ -637,25 +675,13 @@ if (!defined $smtp_server) {
 	$smtp_server ||= 'localhost'; # could be 127.0.0.1, too... *shrug*
 }
 
-if ($compose) {
-	while (1) {
-		$_ = $term->readline("Send this email? (y|n) ");
-		last if defined $_;
-		print "\n";
-	}
-
-	if (uc substr($_,0,1) ne 'Y') {
-		cleanup_compose_files();
-		exit(0);
-	}
-
-	if ($compose > 0) {
-		@files = ($compose_filename . ".final", @files);
-	}
+if ($compose && $compose > 0) {
+	@files = ($compose_filename . ".final", @files);
 }
 
 # Variables we set as part of the loop over files
-our ($message_id, %mail, $subject, $reply_to, $references, $message);
+our ($message_id, %mail, $subject, $reply_to, $references, $message,
+	$needs_confirm, $message_num);
 
 sub extract_valid_address {
 	my $address = shift;
@@ -811,6 +837,37 @@ X-Mailer: git-send-email $gitversion
 	unshift (@sendmail_parameters,
 			'-f', $raw_from) if(defined $envelope_sender);
 
+	if ($needs_confirm && !$dry_run) {
+		print "\n$header\n";
+		if ($needs_confirm eq "inform") {
+			$confirm_unconfigured = 0; # squelch this message for the rest of this run
+			print "    The Cc list above has been expanded by additional\n";
+			print "    addresses found in the patch commit message. By default\n";
+			print "    send-email prompts before sending whenever this occurs.\n";
+			print "    This behavior is controlled by the sendemail.confirm\n";
+			print "    configuration setting.\n";
+			print "\n";
+			print "    For additional information, run 'git send-email --help'.\n";
+			print "    To retain the current behavior, but squelch this message,\n";
+			print "    run 'git config --global sendemail.confirm auto'.\n\n";
+		}
+		while (1) {
+			chomp ($_ = $term->readline(
+				"Send this email? ([y]es|[n]o|[q]uit|[a]ll): "
+			));
+			last if /^(?:yes|y|no|n|quit|q|all|a)/i;
+			print "\n";
+		}
+		if (/^n/i) {
+			return;
+		} elsif (/^q/i) {
+			cleanup_compose_files();
+			exit(0);
+		} elsif (/^a/i) {
+			$confirm = 'never';
+		}
+	}
+
 	if ($dry_run) {
 		# We don't want to send the email.
 	} elsif ($smtp_server =~ m#^/#) {
@@ -909,6 +966,7 @@ X-Mailer: git-send-email $gitversion
 $reply_to = $initial_reply_to;
 $references = $initial_reply_to || '';
 $subject = $initial_subject;
+$message_num = 0;
 
 foreach my $t (@files) {
 	open(F,"<",$t) or die "can't open file $t";
@@ -917,89 +975,104 @@ foreach my $t (@files) {
 	my $author_encoding;
 	my $has_content_type;
 	my $body_encoding;
-	@cc = @initial_cc;
+	@cc = ();
 	@xh = ();
 	my $input_format = undef;
-	my $header_done = 0;
+	my @header = ();
 	$message = "";
+	$message_num++;
+	# First unfold multiline header fields
 	while(<F>) {
-		if (!$header_done) {
-			if (/^From /) {
-				$input_format = 'mbox';
-				next;
-			}
-			chomp;
-			if (!defined $input_format && /^[-A-Za-z]+:\s/) {
-				$input_format = 'mbox';
-			}
+		last if /^\s*$/;
+		if (/^\s+\S/ and @header) {
+			chomp($header[$#header]);
+			s/^\s+/ /;
+			$header[$#header] .= $_;
+	    } else {
+			push(@header, $_);
+		}
+	}
+	# Now parse the header
+	foreach(@header) {
+		if (/^From /) {
+			$input_format = 'mbox';
+			next;
+		}
+		chomp;
+		if (!defined $input_format && /^[-A-Za-z]+:\s/) {
+			$input_format = 'mbox';
+		}
 
-			if (defined $input_format && $input_format eq 'mbox') {
-				if (/^Subject:\s+(.*)$/) {
-					$subject = $1;
-
-				} elsif (/^(Cc|From):\s+(.*)$/) {
-					if (unquote_rfc2047($2) eq $sender) {
+		if (defined $input_format && $input_format eq 'mbox') {
+			if (/^Subject:\s+(.*)$/) {
+				$subject = $1;
+			}
+			elsif (/^From:\s+(.*)$/) {
+				($author, $author_encoding) = unquote_rfc2047($1);
+				next if $suppress_cc{'author'};
+				next if $suppress_cc{'self'} and $author eq $sender;
+				printf("(mbox) Adding cc: %s from line '%s'\n",
+					$1, $_) unless $quiet;
+				push @cc, $1;
+			}
+			elsif (/^Cc:\s+(.*)$/) {
+				foreach my $addr (parse_address_line($1)) {
+					if (unquote_rfc2047($addr) eq $sender) {
 						next if ($suppress_cc{'self'});
-					}
-					elsif ($1 eq 'From') {
-						($author, $author_encoding)
-						  = unquote_rfc2047($2);
-						next if ($suppress_cc{'author'});
 					} else {
 						next if ($suppress_cc{'cc'});
 					}
 					printf("(mbox) Adding cc: %s from line '%s'\n",
-						$2, $_) unless $quiet;
-					push @cc, $2;
-				}
-				elsif (/^Content-type:/i) {
-					$has_content_type = 1;
-					if (/charset="?([^ "]+)/) {
-						$body_encoding = $1;
-					}
-					push @xh, $_;
-				}
-				elsif (/^Message-Id: (.*)/i) {
-					$message_id = $1;
-				}
-				elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
-					push @xh, $_;
-				}
-
-			} else {
-				# In the traditional
-				# "send lots of email" format,
-				# line 1 = cc
-				# line 2 = subject
-				# So let's support that, too.
-				$input_format = 'lots';
-				if (@cc == 0 && !$suppress_cc{'cc'}) {
-					printf("(non-mbox) Adding cc: %s from line '%s'\n",
-						$_, $_) unless $quiet;
-
-					push @cc, $_;
-
-				} elsif (!defined $subject) {
-					$subject = $_;
+						$addr, $_) unless $quiet;
+					push @cc, $addr;
 				}
 			}
-
-			# A whitespace line will terminate the headers
-			if (m/^\s*$/) {
-				$header_done = 1;
+			elsif (/^Content-type:/i) {
+				$has_content_type = 1;
+				if (/charset="?([^ "]+)/) {
+					$body_encoding = $1;
+				}
+				push @xh, $_;
 			}
+			elsif (/^Message-Id: (.*)/i) {
+				$message_id = $1;
+			}
+			elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
+				push @xh, $_;
+			}
+
 		} else {
-			$message .=  $_;
-			if (/^(Signed-off-by|Cc): (.*)$/i) {
-				next if ($suppress_cc{'sob'});
-				chomp;
-				my $c = $2;
-				chomp $c;
-				next if ($c eq $sender and $suppress_cc{'self'});
-				push @cc, $c;
-				printf("(sob) Adding cc: %s from line '%s'\n",
-					$c, $_) unless $quiet;
+			# In the traditional
+			# "send lots of email" format,
+			# line 1 = cc
+			# line 2 = subject
+			# So let's support that, too.
+			$input_format = 'lots';
+			if (@cc == 0 && !$suppress_cc{'cc'}) {
+				printf("(non-mbox) Adding cc: %s from line '%s'\n",
+					$_, $_) unless $quiet;
+				push @cc, $_;
+			} elsif (!defined $subject) {
+				$subject = $_;
 			}
+		}
+	}
+	# Now parse the message body
+	while(<F>) {
+		$message .=  $_;
+		if (/^(Signed-off-by|Cc): (.*)$/i) {
+			chomp;
+			my ($what, $c) = ($1, $2);
+			chomp $c;
+			if ($c eq $sender) {
+				next if ($suppress_cc{'self'});
+			} else {
+				next if $suppress_cc{'sob'} and $what =~ /Signed-off-by/i;
+				next if $suppress_cc{'bodycc'} and $what =~ /Cc/i;
+			}
+			push @cc, $c;
+			printf("(body) Adding cc: %s from line '%s'\n",
+				$c, $_) unless $quiet;
 		}
 	}
 	close F;
@@ -1020,7 +1093,7 @@ foreach my $t (@files) {
 			or die "(cc-cmd) failed to close pipe to '$cc_cmd'";
 	}
 
-	if (defined $author) {
+	if (defined $author and $author ne $sender) {
 		$message = "From: $author\n\n$message";
 		if (defined $author_encoding) {
 			if ($has_content_type) {
@@ -1040,6 +1113,14 @@ foreach my $t (@files) {
 		}
 	}
 
+	$needs_confirm = (
+		$confirm eq "always" or
+		($confirm =~ /^(?:auto|cc)$/ && @cc) or
+		($confirm =~ /^(?:auto|compose)$/ && $compose && $message_num == 1));
+	$needs_confirm = "inform" if ($needs_confirm && $confirm_unconfigured && @cc);
+
+	@cc = (@initial_cc, @cc);
+
 	send_message();
 
 	# set up for the next message
@@ -1054,13 +1135,10 @@ foreach my $t (@files) {
 	$message_id = undef;
 }
 
-if ($compose) {
-	cleanup_compose_files();
-}
+cleanup_compose_files();
 
 sub cleanup_compose_files() {
-	unlink($compose_filename, $compose_filename . ".final");
-
+	unlink($compose_filename, $compose_filename . ".final") if $compose;
 }
 
 $smtp->quit if $smtp;

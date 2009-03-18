@@ -376,6 +376,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	    (write_cache(index_fd, active_cache, active_nr) ||
 	     commit_locked_index(&index_lock)))
 		die("%s: Unable to write new index file", me);
+	rollback_lock_file(&index_lock);
 
 	if (!clean) {
 		add_to_msg("\nConflicts:\n\n");

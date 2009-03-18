@@ -192,6 +192,13 @@ Alternatively, you can undo the 'git-rebase' with
 
     git rebase --abort
 
+CONFIGURATION
+-------------
+
+rebase.stat::
+	Whether to show a diffstat of what changed upstream since the last
+	rebase. False by default.
+
 OPTIONS
 -------
 <newbase>::
@@ -232,7 +239,15 @@ OPTIONS
 
 -v::
 --verbose::
-	Display a diffstat of what changed upstream since the last rebase.
+	Be verbose. Implies --stat.
+
+--stat::
+	Show a diffstat of what changed upstream since the last rebase. The
+	diffstat is also controlled by the configuration option rebase.stat.
+
+-n::
+--no-stat::
+	Do not show a diffstat as part of the rebase process.
 
 --no-verify::
 	This option bypasses the pre-rebase hook.  See also linkgit:githooks[5].
