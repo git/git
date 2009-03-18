@@ -1,0 +1,40 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2009.02.21.18.11.14;	author tester;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2009.02.21.18.11.43;	author tester;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Rev 2
+@
+text
+@1.2
+@
+
+
+1.1
+log
+@Rev 1
+@
+text
+@d1 1
+a1 1
+1.1
+@
