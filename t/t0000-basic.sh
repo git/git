@@ -30,22 +30,6 @@ fi
 
 . ./test-lib.sh
 
-test "$no_symlinks" && {
-	DIFF=$(which diff)
-
-	function diff () {
-		opt=
-		case "$1" in -*) opt=$1; shift;; esac
-		tr -d "\015" < $1 > $1.doof
-		grep -v "^:\?120000" < $2 | \
-			sed -e s/58a09c23e2ca152193f2786e06986b7b6712bdbe/600f42758e4458c37c2c1f8063378f540b4efad7/ \
-			    -e s/21ae8269cacbe57ae09138dcc3a2887f904d02b3/cfb8591b2f65de8b8cc1020cd7d9e67e7793b325/ \
-			    -e s/3c5e5399f3a333eddecce7a9b9465b63f65f51e2/ce580448f0148b985a513b693fdf7d802cacb44f/ \
-			> $2.doof
-		$DIFF $opt $1.doof $2.doof
-	}
-}
-
 ################################################################
 # git init has been done in an empty repository.
 # make sure it is empty.
@@ -116,12 +100,31 @@ test_expect_success \
     'test "$tree" = 4b825dc642cb6eb9a060e54bf8d69288fbee4904'
 
 # Various types of objects
+# Some filesystems do not support symblic links; on such systems
+# some expected values are different
 mkdir path2 path3 path3/subp3
-for p in path0 path2/file2 path3/file3 path3/subp3/file3
+paths='path0 path2/file2 path3/file3 path3/subp3/file3'
+for p in $paths
 do
     echo "hello $p" >$p
-    ln -s "hello $p" ${p}sym
 done
+if test -z "$no_symlinks"
+then
+	for p in $paths
+	do
+		ln -s "hello $p" ${p}sym
+	done
+	expectfilter=cat
+	expectedtree=087704a96baf1c2d1c869a8b084481e121c88b5b
+	expectedptree1=21ae8269cacbe57ae09138dcc3a2887f904d02b3
+	expectedptree2=3c5e5399f3a333eddecce7a9b9465b63f65f51e2
+else
+	expectfilter='grep -v sym'
+	expectedtree=8e18edf7d7edcf4371a3ac6ae5f07c2641db7c46
+	expectedptree1=cfb8591b2f65de8b8cc1020cd7d9e67e7793b325
+	expectedptree2=ce580448f0148b985a513b693fdf7d802cacb44f
+fi
+
 test_expect_success \
     'adding various types of objects with git update-index --add.' \
     'find path* ! -type d -print | xargs git update-index --add'
@@ -131,7 +134,7 @@ test_expect_success \
     'showing stage with git ls-files --stage' \
     'git ls-files --stage >current'
 
-cat >expected <<\EOF
+$expectfilter >expected <<\EOF
 100644 f87290f8eb2cbbea7857214459a0739927eab154 0	path0
 120000 15a98433ae33114b085f3eb3bb03b832b3180a01 0	path0sym
 100644 3feff949ed00a62d9f7af97c15cd8a30595e7ac7 0	path2/file2
@@ -149,11 +152,9 @@ test_expect_success \
 test_expect_success \
     'writing tree out with git write-tree.' \
     'tree=$(git write-tree)'
-expected_tree=087704a96baf1c2d1c869a8b084481e121c88b5b
-test "$no_symlinks" && expected_tree=8e18edf7d7edcf4371a3ac6ae5f07c2641db7c46
 test_expect_success \
     'validate object ID for a known tree.' \
-    'test "$tree" = "$expected_tree"'
+    'test "$tree" = "$expectedtree"'
 
 test_expect_success \
     'showing tree with git ls-tree' \
@@ -164,6 +165,7 @@ cat >expected <<\EOF
 040000 tree 58a09c23e2ca152193f2786e06986b7b6712bdbe	path2
 040000 tree 21ae8269cacbe57ae09138dcc3a2887f904d02b3	path3
 EOF
+test -z "$no_symlinks" &&
 test_expect_success \
     'git ls-tree output for a known tree.' \
     'test_cmp expected current'
@@ -173,7 +175,7 @@ test_expect_success \
 test_expect_success \
     'showing tree with git ls-tree -r' \
     'git ls-tree -r $tree >current'
-cat >expected <<\EOF
+$expectfilter >expected <<\EOF
 100644 blob f87290f8eb2cbbea7857214459a0739927eab154	path0
 120000 blob 15a98433ae33114b085f3eb3bb03b832b3180a01	path0sym
 100644 blob 3feff949ed00a62d9f7af97c15cd8a30595e7ac7	path2/file2
@@ -204,6 +206,7 @@ cat >expected <<\EOF
 100644 blob 00fb5908cb97c2564a9783c0c64087333b3b464f	path3/subp3/file3
 120000 blob 6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c	path3/subp3/file3sym
 EOF
+test -z "$no_symlinks" &&
 test_expect_success \
     'git ls-tree -r output for a known tree.' \
     'test_cmp expected current'
@@ -211,20 +214,16 @@ test_expect_success \
 test_expect_success \
     'writing partial tree out with git write-tree --prefix.' \
     'ptree=$(git write-tree --prefix=path3)'
-expected_tree=21ae8269cacbe57ae09138dcc3a2887f904d02b3
-test "$no_symlinks" && expected_tree=cfb8591b2f65de8b8cc1020cd7d9e67e7793b325
 test_expect_success \
     'validate object ID for a known tree.' \
-    'test "$ptree" = "$expected_tree"'
+    'test "$ptree" = "$expectedptree1"'
 
 test_expect_success \
     'writing partial tree out with git write-tree --prefix.' \
     'ptree=$(git write-tree --prefix=path3/subp3)'
-expect_tree=3c5e5399f3a333eddecce7a9b9465b63f65f51e2
-test "$no_symlinks" && expect_tree=ce580448f0148b985a513b693fdf7d802cacb44f
 test_expect_success \
     'validate object ID for a known tree.' \
-    'test "$ptree" = "$expect_tree"'
+    'test "$ptree" = "$expectedptree2"'
 
 cat >badobjects <<EOF
 100644 blob 1000000000000000000000000000000000000000	dir/file1
@@ -257,7 +256,7 @@ test_expect_success \
      newtree=$(git write-tree) &&
      test "$newtree" = "$tree"'
 
-cat >expected <<\EOF
+$expectfilter >expected <<\EOF
 :100644 100644 f87290f8eb2cbbea7857214459a0739927eab154 0000000000000000000000000000000000000000 M	path0
 :120000 120000 15a98433ae33114b085f3eb3bb03b832b3180a01 0000000000000000000000000000000000000000 M	path0sym
 :100644 100644 3feff949ed00a62d9f7af97c15cd8a30595e7ac7 0000000000000000000000000000000000000000 M	path2/file2
@@ -280,8 +279,7 @@ test_expect_success \
     'git diff-files >current && cmp -s current /dev/null'
 
 ################################################################
-P=087704a96baf1c2d1c869a8b084481e121c88b5b
-test "$no_symlinks" && P=7bb943559a305bdd6bdee2cef6e5df2413c3d30a
+P=$expectedtree
 test_expect_success \
     'git commit-tree records the correct tree in a commit.' \
     'commit0=$(echo NO | git commit-tree $P) &&
@@ -317,7 +315,7 @@ test_expect_success 'update-index D/F conflict' '
 	test $numpath0 = 1
 '
 
-test "$no_symlinks" ||
+test -z "$no_symlinks" &&
 test_expect_success 'absolute path works as expected' '
 	mkdir first &&
 	ln -s ../.git first/.git &&
