@@ -1,17 +1,29 @@
 head	1.2;
 access;
-symbols;
+symbols
+	A:1.2.0.2;
 locks; strict;
 comment	@# @;
 
 
 1.2
 date	2009.02.21.18.11.14;	author tester;	state Exp;
-branches;
+branches
+	1.2.2.1;
 next	1.1;
 
 1.1
 date	2009.02.21.18.11.43;	author tester;	state Exp;
+branches;
+next	;
+
+1.2.2.1
+date	2009.03.11.19.03.52;	author tester;	state Exp;
+branches;
+next	1.2.2.2;
+
+1.2.2.2
+date	2009.03.11.19.09.10;	author tester;	state Exp;
 branches;
 next	;
 
@@ -26,6 +38,28 @@ log
 @
 text
 @1.2
+@
+
+
+1.2.2.1
+log
+@Rev 4 Branch A
+@
+text
+@d1 1
+a1 1
+1.2.2.1
+@
+
+
+1.2.2.2
+log
+@Rev 5 Branch A
+@
+text
+@d1 1
+a1 1
+1.2.2.2
 @
 
 

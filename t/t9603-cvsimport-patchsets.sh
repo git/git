@@ -21,13 +21,20 @@ test_expect_failure 'import with criss cross times on revisions' '
 
     git cvsimport -p"-x" -C module-git module &&
     cd module-git &&
-        git log --pretty=format:%s > ../actual &&
-        echo "" >> ../actual &&
+        git log --pretty=format:%s > ../actual-master &&
+        git log A~2..A --pretty="format:%s %ad" -- > ../actual-A &&
+        echo "" >> ../actual-master &&
+        echo "" >> ../actual-A &&
     cd .. &&
-    echo "Rev 3
+    echo "Rev 4
+Rev 3
 Rev 2
-Rev 1" > expect &&
-    test_cmp actual expect
+Rev 1" > expect-master &&
+    test_cmp actual-master expect-master &&
+
+    echo "Rev 5 Branch A Wed Mar 11 19:09:10 2009 +0000
+Rev 4 Branch A Wed Mar 11 19:03:52 2009 +0000" > expect-A &&
+    test_cmp actual-A expect-A
 '
 
 test_done
