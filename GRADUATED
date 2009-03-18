@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Older first!
+old_maint='maint-1.6.0 maint-1.6.1'
+
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 LF='
@@ -25,16 +28,29 @@ tmp=/tmp/GR.$$
 
 trap 'rm -f "$tmp".*' 0
 
-git branch --merged master | sed -n -e '/\//s/^. //p' >"$tmp.master"
-git branch --merged maint | sed -n -e '/\//s/^. //p' >"$tmp.maint"
+git branch --merged master | sed -n -e '/\//s/^. //p' | sort >"$tmp.master"
 
-comm -12 "$tmp.maint" "$tmp.master" >"$tmp.both"
-if test -s "$tmp.both"
-then
-	echo "# Graduated to both maint and master"
-	sed -e 's|^|git branch -d |' "$tmp.both"
-	echo
-fi
+>"$tmp.known"
+for m in $old_maint maint
+do
+	git branch --merged $m | sed -n -e '/\//s/^. //p' | sort >"$tmp.$m"
+	comm -12 "$tmp.$m" "$tmp.master" >"$tmp.both0"
+	comm -23 "$tmp.both0" "$tmp.known" >"$tmp.both"
+	if test -s "$tmp.both"
+	then
+		echo "# Graduated to both $m and master"
+		while read branch
+		do
+			echo "$(git show -s --format='%ct' "$branch") $branch"
+		done <"$tmp.both" |
+		sort -r -n |
+		sed -e 's/^[0-9]* //' \
+		    -e 's/^/git branch -d /'
+		echo
+		cat "$tmp.known" "$tmp.both" | sort >"$tmp.next"
+		mv "$tmp.next" "$tmp.known"
+	fi
+done
 
 comm -13 "$tmp.maint" "$tmp.master" |
 {
