@@ -49,7 +49,7 @@ static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 	memcpy(new, ce, size);
 	new->next = NULL;
 	new->ce_flags = (new->ce_flags & ~clear) | set;
-	add_index_entry(&o->result, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|ADD_CACHE_SKIP_DFCHECK);
+	add_index_entry(&o->result, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 }
 
 /*
@@ -266,9 +266,9 @@ static int unpack_nondirectories(int n, unsigned long mask,
 	if (o->merge)
 		return call_unpack_fn(src, o);
 
-	n += o->merge;
 	for (i = 0; i < n; i++)
-		add_entry(o, src[i], 0, 0);
+		if (src[i] && src[i] != o->df_conflict_entry)
+			add_entry(o, src[i], 0, 0);
 	return 0;
 }
 
