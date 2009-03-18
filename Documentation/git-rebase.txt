@@ -258,6 +258,13 @@ OPTIONS
 	context exist they all must match.  By default no context is
 	ever ignored.
 
+-f::
+--force-rebase::
+	Force the rebase even if the current branch is a descendant
+	of the commit you are rebasing onto.  Normally the command will
+	exit with the message "Current branch is up to date" in such a
+	situation.
+
 --whitespace=<option>::
 	This flag is passed to the 'git-apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
