@@ -20,6 +20,7 @@
 #include "dir.h"
 #include "pack-refs.h"
 #include "sigchain.h"
+#include "remote.h"
 #include "run-command.h"
 
 /*
@@ -294,43 +295,6 @@ static void remove_junk_on_signal(int signo)
 	raise(signo);
 }
 
-static const struct ref *locate_head(const struct ref *refs,
-				     const struct ref *mapped_refs,
-				     const struct ref **remote_head_p)
-{
-	const struct ref *remote_head = NULL;
-	const struct ref *remote_master = NULL;
-	const struct ref *r;
-	for (r = refs; r; r = r->next)
-		if (!strcmp(r->name, "HEAD"))
-			remote_head = r;
-
-	for (r = mapped_refs; r; r = r->next)
-		if (!strcmp(r->name, "refs/heads/master"))
-			remote_master = r;
-
-	if (remote_head_p)
-		*remote_head_p = remote_head;
-
-	/* If there's no HEAD value at all, never mind. */
-	if (!remote_head)
-		return NULL;
-
-	/* If refs/heads/master could be right, it is. */
-	if (remote_master && !hashcmp(remote_master->old_sha1,
-				      remote_head->old_sha1))
-		return remote_master;
-
-	/* Look for another ref that points there */
-	for (r = mapped_refs; r; r = r->next)
-		if (r != remote_head &&
-		    !hashcmp(r->old_sha1, remote_head->old_sha1))
-			return r;
-
-	/* Nothing is the same */
-	return NULL;
-}
-
 static struct ref *write_remote_refs(const struct ref *refs,
 		struct refspec *refspec, const char *reflog)
 {
@@ -541,7 +505,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 		mapped_refs = write_remote_refs(refs, &refspec, reflog_msg.buf);
 
-		head_points_at = locate_head(refs, mapped_refs, &remote_head);
+		remote_head = find_ref_by_name(refs, "HEAD");
+		head_points_at = guess_remote_head(remote_head, mapped_refs, 0);
 	}
 	else {
 		warning("You appear to have cloned an empty repository.");

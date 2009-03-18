@@ -5,6 +5,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "dir.h"
+#include "tag.h"
 
 static struct refspec s_tag_refspec = {
 	0,
@@ -778,10 +779,18 @@ struct ref *alloc_ref(const char *name)
 
 static struct ref *copy_ref(const struct ref *ref)
 {
-	struct ref *ret = xmalloc(sizeof(struct ref) + strlen(ref->name) + 1);
-	memcpy(ret, ref, sizeof(struct ref) + strlen(ref->name) + 1);
-	ret->next = NULL;
-	return ret;
+	struct ref *cpy;
+	size_t len;
+	if (!ref)
+		return NULL;
+	len = strlen(ref->name);
+	cpy = xmalloc(sizeof(struct ref) + len + 1);
+	memcpy(cpy, ref, sizeof(struct ref) + len + 1);
+	cpy->next = NULL;
+	cpy->symref = ref->symref ? xstrdup(ref->symref) : NULL;
+	cpy->remote_status = ref->remote_status ? xstrdup(ref->remote_status) : NULL;
+	cpy->peer_ref = copy_ref(ref->peer_ref);
+	return cpy;
 }
 
 struct ref *copy_ref_list(const struct ref *ref)
@@ -800,6 +809,7 @@ static void free_ref(struct ref *ref)
 {
 	if (!ref)
 		return;
+	free_ref(ref->peer_ref);
 	free(ref->remote_status);
 	free(ref->symref);
 	free(ref);
@@ -810,7 +820,6 @@ void free_refs(struct ref *ref)
 	struct ref *next;
 	while (ref) {
 		next = ref->next;
-		free(ref->peer_ref);
 		free_ref(ref);
 		ref = next;
 	}
@@ -927,6 +936,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 			  struct refspec *rs)
 {
 	struct ref *matched_src, *matched_dst;
+	int copy_src;
 
 	const char *dst_value = rs->dst;
 	char *dst_guess;
@@ -937,6 +947,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	matched_src = matched_dst = NULL;
 	switch (count_refspec_match(rs->src, src, &matched_src)) {
 	case 1:
+		copy_src = 1;
 		break;
 	case 0:
 		/* The source could be in the get_sha1() format
@@ -946,6 +957,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		matched_src = try_explicit_object_name(rs->src);
 		if (!matched_src)
 			return error("src refspec %s does not match any.", rs->src);
+		copy_src = 0;
 		break;
 	default:
 		return error("src refspec %s matches more than one.", rs->src);
@@ -991,7 +1003,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		return error("dst ref %s receives from more than one src.",
 		      matched_dst->name);
 	else {
-		matched_dst->peer_ref = matched_src;
+		matched_dst->peer_ref = copy_src ? copy_ref(matched_src) : matched_src;
 		matched_dst->force = rs->force;
 	}
 	return 0;
@@ -1040,6 +1052,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	struct refspec *rs;
 	int send_all = flags & MATCH_REFS_ALL;
 	int send_mirror = flags & MATCH_REFS_MIRROR;
+	int errs;
 	static const char *default_refspec[] = { ":", 0 };
 
 	if (!nr_refspec) {
@@ -1047,8 +1060,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		refspec = default_refspec;
 	}
 	rs = parse_push_refspec(nr_refspec, (const char **) refspec);
-	if (match_explicit_refs(src, dst, dst_tail, rs, nr_refspec))
-		return -1;
+	errs = match_explicit_refs(src, dst, dst_tail, rs, nr_refspec);
 
 	/* pick the remainder */
 	for ( ; src; src = src->next) {
@@ -1099,11 +1111,13 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 			dst_peer = make_linked_ref(dst_name, dst_tail);
 			hashcpy(dst_peer->new_sha1, src->new_sha1);
 		}
-		dst_peer->peer_ref = src;
+		dst_peer->peer_ref = copy_ref(src);
 		dst_peer->force = pat->force;
 	free_name:
 		free(dst_name);
 	}
+	if (errs)
+		return -1;
 	return 0;
 }
 
@@ -1269,6 +1283,54 @@ int resolve_remote_symref(struct ref *ref, struct ref *list)
 	return 1;
 }
 
+static void unmark_and_free(struct commit_list *list, unsigned int mark)
+{
+	while (list) {
+		struct commit_list *temp = list;
+		temp->item->object.flags &= ~mark;
+		list = temp->next;
+		free(temp);
+	}
+}
+
+int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1)
+{
+	struct object *o;
+	struct commit *old, *new;
+	struct commit_list *list, *used;
+	int found = 0;
+
+	/* Both new and old must be commit-ish and new is descendant of
+	 * old.  Otherwise we require --force.
+	 */
+	o = deref_tag(parse_object(old_sha1), NULL, 0);
+	if (!o || o->type != OBJ_COMMIT)
+		return 0;
+	old = (struct commit *) o;
+
+	o = deref_tag(parse_object(new_sha1), NULL, 0);
+	if (!o || o->type != OBJ_COMMIT)
+		return 0;
+	new = (struct commit *) o;
+
+	if (parse_commit(new) < 0)
+		return 0;
+
+	used = list = NULL;
+	commit_list_insert(new, &list);
+	while (list) {
+		new = pop_most_recent_commit(&list, TMP_MARK);
+		commit_list_insert(new, &used);
+		if (new == old) {
+			found = 1;
+			break;
+		}
+	}
+	unmark_and_free(list, TMP_MARK);
+	unmark_and_free(used, TMP_MARK);
+	return found;
+}
+
 /*
  * Return true if there is anything to report, otherwise false.
  */
@@ -1375,4 +1437,69 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			    "respectively.\n",
 			    base, num_ours, num_theirs);
 	return 1;
+}
+
+static int one_local_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+{
+	struct ref ***local_tail = cb_data;
+	struct ref *ref;
+	int len;
+
+	/* we already know it starts with refs/ to get here */
+	if (check_ref_format(refname + 5))
+		return 0;
+
+	len = strlen(refname) + 1;
+	ref = xcalloc(1, sizeof(*ref) + len);
+	hashcpy(ref->new_sha1, sha1);
+	memcpy(ref->name, refname, len);
+	**local_tail = ref;
+	*local_tail = &ref->next;
+	return 0;
+}
+
+struct ref *get_local_heads(void)
+{
+	struct ref *local_refs, **local_tail = &local_refs;
+	for_each_ref(one_local_ref, &local_tail);
+	return local_refs;
+}
+
+struct ref *guess_remote_head(const struct ref *head,
+			      const struct ref *refs,
+			      int all)
+{
+	const struct ref *r;
+	struct ref *list = NULL;
+	struct ref **tail = &list;
+
+	if (!head)
+		return NULL;
+
+	/*
+	 * Some transports support directly peeking at
+	 * where HEAD points; if that is the case, then
+	 * we don't have to guess.
+	 */
+	if (head->symref)
+		return copy_ref(find_ref_by_name(refs, head->symref));
+
+	/* If refs/heads/master could be right, it is. */
+	if (!all) {
+		r = find_ref_by_name(refs, "refs/heads/master");
+		if (r && !hashcmp(r->old_sha1, head->old_sha1))
+			return copy_ref(r);
+	}
+
+	/* Look for another ref that points there */
+	for (r = refs; r; r = r->next) {
+		if (r != head && !hashcmp(r->old_sha1, head->old_sha1)) {
+			*tail = copy_ref(r);
+			tail = &((*tail)->next);
+			if (!all)
+				break;
+		}
+	}
+
+	return list;
 }

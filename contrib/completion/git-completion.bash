@@ -1516,7 +1516,7 @@ _git_config ()
 
 _git_remote ()
 {
-	local subcommands="add rename rm show prune update"
+	local subcommands="add rename rm show prune update set-head"
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"

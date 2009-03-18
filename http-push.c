@@ -1792,20 +1792,7 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 	return 1;
 }
 
-static struct ref *local_refs, **local_tail;
 static struct ref *remote_refs, **remote_tail;
-
-static int one_local_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
-{
-	struct ref *ref;
-	int len = strlen(refname) + 1;
-	ref = xcalloc(1, sizeof(*ref) + len);
-	hashcpy(ref->new_sha1, sha1);
-	memcpy(ref->name, refname, len);
-	*local_tail = ref;
-	local_tail = &ref->next;
-	return 0;
-}
 
 static void one_remote_ref(char *refname)
 {
@@ -1839,12 +1826,6 @@ static void one_remote_ref(char *refname)
 	remote_tail = &ref->next;
 }
 
-static void get_local_heads(void)
-{
-	local_tail = &local_refs;
-	for_each_ref(one_local_ref, NULL);
-}
-
 static void get_dav_remote_heads(void)
 {
 	remote_tail = &remote_refs;
@@ -1860,55 +1841,6 @@ static int is_zero_sha1(const unsigned char *sha1)
 			return 0;
 	}
 	return 1;
-}
-
-static void unmark_and_free(struct commit_list *list, unsigned int mark)
-{
-	while (list) {
-		struct commit_list *temp = list;
-		temp->item->object.flags &= ~mark;
-		list = temp->next;
-		free(temp);
-	}
-}
-
-static int ref_newer(const unsigned char *new_sha1,
-		     const unsigned char *old_sha1)
-{
-	struct object *o;
-	struct commit *old, *new;
-	struct commit_list *list, *used;
-	int found = 0;
-
-	/* Both new and old must be commit-ish and new is descendant of
-	 * old.  Otherwise we require --force.
-	 */
-	o = deref_tag(parse_object(old_sha1), NULL, 0);
-	if (!o || o->type != OBJ_COMMIT)
-		return 0;
-	old = (struct commit *) o;
-
-	o = deref_tag(parse_object(new_sha1), NULL, 0);
-	if (!o || o->type != OBJ_COMMIT)
-		return 0;
-	new = (struct commit *) o;
-
-	if (parse_commit(new) < 0)
-		return 0;
-
-	used = list = NULL;
-	commit_list_insert(new, &list);
-	while (list) {
-		new = pop_most_recent_commit(&list, TMP_MARK);
-		commit_list_insert(new, &used);
-		if (new == old) {
-			found = 1;
-			break;
-		}
-	}
-	unmark_and_free(list, TMP_MARK);
-	unmark_and_free(used, TMP_MARK);
-	return found;
 }
 
 static void add_remote_info_ref(struct remote_ls_ctx *ls)
@@ -2195,7 +2127,7 @@ int main(int argc, char **argv)
 	int rc = 0;
 	int i;
 	int new_refs;
-	struct ref *ref;
+	struct ref *ref, *local_refs;
 	char *rewritten_url = NULL;
 
 	git_extract_argv0_path(argv[0]);
@@ -2302,7 +2234,7 @@ int main(int argc, char **argv)
 		fetch_indices();
 
 	/* Get a list of all local and remote heads to validate refspecs */
-	get_local_heads();
+	local_refs = get_local_heads();
 	fprintf(stderr, "Fetching remote heads...\n");
 	get_dav_remote_heads();
 
