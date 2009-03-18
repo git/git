@@ -138,6 +138,11 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 	}
 }
 
+static const char *rsync_url(const char *url)
+{
+	return prefixcmp(url, "rsync://") ? skip_prefix(url, "rsync:") : url;
+}
+
 static struct ref *get_refs_via_rsync(struct transport *transport)
 {
 	struct strbuf buf = STRBUF_INIT, temp_dir = STRBUF_INIT;
@@ -153,7 +158,7 @@ static struct ref *get_refs_via_rsync(struct transport *transport)
 		die ("Could not make temporary directory");
 	temp_dir_len = temp_dir.len;
 
-	strbuf_addstr(&buf, transport->url);
+	strbuf_addstr(&buf, rsync_url(transport->url));
 	strbuf_addstr(&buf, "/refs");
 
 	memset(&rsync, 0, sizeof(rsync));
@@ -169,7 +174,7 @@ static struct ref *get_refs_via_rsync(struct transport *transport)
 		die ("Could not run rsync to get refs");
 
 	strbuf_reset(&buf);
-	strbuf_addstr(&buf, transport->url);
+	strbuf_addstr(&buf, rsync_url(transport->url));
 	strbuf_addstr(&buf, "/packed-refs");
 
 	args[2] = buf.buf;
@@ -206,7 +211,7 @@ static int fetch_objs_via_rsync(struct transport *transport,
 	const char *args[8];
 	int result;
 
-	strbuf_addstr(&buf, transport->url);
+	strbuf_addstr(&buf, rsync_url(transport->url));
 	strbuf_addstr(&buf, "/objects/");
 
 	memset(&rsync, 0, sizeof(rsync));
@@ -285,7 +290,7 @@ static int rsync_transport_push(struct transport *transport,
 
 	/* first push the objects */
 
-	strbuf_addstr(&buf, transport->url);
+	strbuf_addstr(&buf, rsync_url(transport->url));
 	strbuf_addch(&buf, '/');
 
 	memset(&rsync, 0, sizeof(rsync));
@@ -306,7 +311,8 @@ static int rsync_transport_push(struct transport *transport,
 	args[i++] = NULL;
 
 	if (run_command(&rsync))
-		return error("Could not push objects to %s", transport->url);
+		return error("Could not push objects to %s",
+				rsync_url(transport->url));
 
 	/* copy the refs to the temporary directory; they could be packed. */
 
@@ -327,10 +333,11 @@ static int rsync_transport_push(struct transport *transport,
 	if (!(flags & TRANSPORT_PUSH_FORCE))
 		args[i++] = "--ignore-existing";
 	args[i++] = temp_dir.buf;
-	args[i++] = transport->url;
+	args[i++] = rsync_url(transport->url);
 	args[i++] = NULL;
 	if (run_command(&rsync))
-		result = error("Could not push to %s", transport->url);
+		result = error("Could not push to %s",
+				rsync_url(transport->url));
 
 	if (remove_dir_recursively(&temp_dir, 0))
 		warning ("Could not remove temporary directory %s.",
@@ -723,7 +730,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	ret->remote = remote;
 	ret->url = url;
 
-	if (!prefixcmp(url, "rsync://")) {
+	if (!prefixcmp(url, "rsync:")) {
 		ret->get_refs_list = get_refs_via_rsync;
 		ret->fetch = fetch_objs_via_rsync;
 		ret->push = rsync_transport_push;
