@@ -3212,7 +3212,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 
 	struct option builtin_apply_options[] = {
 		{ OPTION_CALLBACK, 0, "exclude", NULL, "path",
-			"don´t apply changes matching the given path",
+			"don't apply changes matching the given path",
 			0, option_parse_exclude },
 		{ OPTION_CALLBACK, 0, "include", NULL, "path",
 			"apply changes matching the given path",
