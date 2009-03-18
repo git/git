@@ -2196,6 +2196,7 @@ int main(int argc, char **argv)
 	int i;
 	int new_refs;
 	struct ref *ref;
+	struct remote *remote;
 	char *rewritten_url = NULL;
 
 	git_extract_argv0_path(argv[0]);
@@ -2263,7 +2264,14 @@ int main(int argc, char **argv)
 
 	memset(remote_dir_exists, -1, 256);
 
-	http_init(NULL);
+	/*
+	 * Create a minimum remote by hand to give to http_init(),
+	 * primarily to allow it to look at the URL.
+	 */
+	remote = xcalloc(sizeof(*remote), 1);
+	ALLOC_GROW(remote->url, remote->url_nr + 1, remote->url_alloc);
+	remote->url[remote->url_nr++] = repo->url;
+	http_init(remote);
 
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
