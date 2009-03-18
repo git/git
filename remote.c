@@ -39,6 +39,7 @@ static int branches_nr;
 
 static struct branch *current_branch;
 static const char *default_remote_name;
+static int explicit_default_remote_name;
 
 static struct rewrite **rewrite;
 static int rewrite_alloc;
@@ -331,8 +332,10 @@ static int handle_config(const char *key, const char *value, void *cb)
 			if (!value)
 				return config_error_nonbool(key);
 			branch->remote_name = xstrdup(value);
-			if (branch == current_branch)
+			if (branch == current_branch) {
 				default_remote_name = branch->remote_name;
+				explicit_default_remote_name = 1;
+			}
 		} else if (!strcmp(subkey, ".merge")) {
 			if (!value)
 				return config_error_nonbool(key);
@@ -644,10 +647,16 @@ static int valid_remote_nick(const char *name)
 struct remote *remote_get(const char *name)
 {
 	struct remote *ret;
+	int name_given = 0;
 
 	read_config();
-	if (!name)
+	if (name)
+		name_given = 1;
+	else {
 		name = default_remote_name;
+		name_given = explicit_default_remote_name;
+	}
+
 	ret = make_remote(name, 0);
 	if (valid_remote_nick(name)) {
 		if (!ret->url)
@@ -655,7 +664,7 @@ struct remote *remote_get(const char *name)
 		if (!ret->url)
 			read_branches_file(ret);
 	}
-	if (!ret->url)
+	if (name_given && !ret->url)
 		add_url_alias(ret, name);
 	if (!ret->url)
 		return NULL;
