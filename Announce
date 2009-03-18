@@ -28,7 +28,7 @@ case "$vername" in
 	;;
 *)
 	for_testing=
-	rpmroot="RPMS/$arch"
+	rpmroot='RPMS/$arch'
 	;;
 esac
 
