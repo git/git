@@ -39,6 +39,8 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
 
+	p->word_regexp = opt->word_regexp;
+
 	if (opt->fixed || is_fixed(p->pattern))
 		p->fixed = 1;
 	if (opt->regflags & REG_ICASE)
@@ -251,18 +253,6 @@ static int word_char(char ch)
 	return isalnum(ch) || ch == '_';
 }
 
-static void show_line(struct grep_opt *opt, const char *bol, const char *eol,
-		      const char *name, unsigned lno, char sign)
-{
-	if (opt->null_following_name)
-		sign = '\0';
-	if (opt->pathname)
-		printf("%s%c", name, sign);
-	if (opt->linenum)
-		printf("%d%c", lno, sign);
-	printf("%.*s\n", (int)(eol-bol), bol);
-}
-
 static void show_name(struct grep_opt *opt, const char *name)
 {
 	printf("%s%c", name, opt->null_following_name ? '\0' : '\n');
@@ -306,11 +296,12 @@ static struct {
 	{ "committer ", 10 },
 };
 
-static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol, char *eol, enum grep_context ctx)
+static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
+			     enum grep_context ctx,
+			     regmatch_t *pmatch, int eflags)
 {
 	int hit = 0;
 	int saved_ch = 0;
-	regmatch_t pmatch[10];
 
 	if ((p->token != GREP_PATTERN) &&
 	    ((p->token == GREP_PATTERN_HEAD) != (ctx == GREP_CONTEXT_HEAD)))
@@ -329,16 +320,12 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 	}
 
  again:
-	if (!p->fixed) {
-		regex_t *exp = &p->regexp;
-		hit = !regexec(exp, bol, ARRAY_SIZE(pmatch),
-			       pmatch, 0);
-	}
-	else {
+	if (p->fixed)
 		hit = !fixmatch(p->pattern, bol, pmatch);
-	}
+	else
+		hit = !regexec(&p->regexp, bol, 1, pmatch, eflags);
 
-	if (hit && opt->word_regexp) {
+	if (hit && p->word_regexp) {
 		if ((pmatch[0].rm_so < 0) ||
 		    (eol - bol) <= pmatch[0].rm_so ||
 		    (pmatch[0].rm_eo < 0) ||
@@ -378,39 +365,33 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 	return hit;
 }
 
-static int match_expr_eval(struct grep_opt *o,
-			   struct grep_expr *x,
-			   char *bol, char *eol,
-			   enum grep_context ctx,
-			   int collect_hits)
+static int match_expr_eval(struct grep_expr *x, char *bol, char *eol,
+			   enum grep_context ctx, int collect_hits)
 {
 	int h = 0;
+	regmatch_t match;
 
 	switch (x->node) {
 	case GREP_NODE_ATOM:
-		h = match_one_pattern(o, x->u.atom, bol, eol, ctx);
+		h = match_one_pattern(x->u.atom, bol, eol, ctx, &match, 0);
 		break;
 	case GREP_NODE_NOT:
-		h = !match_expr_eval(o, x->u.unary, bol, eol, ctx, 0);
+		h = !match_expr_eval(x->u.unary, bol, eol, ctx, 0);
 		break;
 	case GREP_NODE_AND:
-		if (!collect_hits)
-			return (match_expr_eval(o, x->u.binary.left,
-						bol, eol, ctx, 0) &&
-				match_expr_eval(o, x->u.binary.right,
-						bol, eol, ctx, 0));
-		h = match_expr_eval(o, x->u.binary.left, bol, eol, ctx, 0);
-		h &= match_expr_eval(o, x->u.binary.right, bol, eol, ctx, 0);
+		if (!match_expr_eval(x->u.binary.left, bol, eol, ctx, 0))
+			return 0;
+		h = match_expr_eval(x->u.binary.right, bol, eol, ctx, 0);
 		break;
 	case GREP_NODE_OR:
 		if (!collect_hits)
-			return (match_expr_eval(o, x->u.binary.left,
+			return (match_expr_eval(x->u.binary.left,
 						bol, eol, ctx, 0) ||
-				match_expr_eval(o, x->u.binary.right,
+				match_expr_eval(x->u.binary.right,
 						bol, eol, ctx, 0));
-		h = match_expr_eval(o, x->u.binary.left, bol, eol, ctx, 0);
+		h = match_expr_eval(x->u.binary.left, bol, eol, ctx, 0);
 		x->u.binary.left->hit |= h;
-		h |= match_expr_eval(o, x->u.binary.right, bol, eol, ctx, 1);
+		h |= match_expr_eval(x->u.binary.right, bol, eol, ctx, 1);
 		break;
 	default:
 		die("Unexpected node type (internal error) %d", x->node);
@@ -424,22 +405,102 @@ static int match_expr(struct grep_opt *opt, char *bol, char *eol,
 		      enum grep_context ctx, int collect_hits)
 {
 	struct grep_expr *x = opt->pattern_expression;
-	return match_expr_eval(opt, x, bol, eol, ctx, collect_hits);
+	return match_expr_eval(x, bol, eol, ctx, collect_hits);
 }
 
 static int match_line(struct grep_opt *opt, char *bol, char *eol,
 		      enum grep_context ctx, int collect_hits)
 {
 	struct grep_pat *p;
+	regmatch_t match;
+
 	if (opt->extended)
 		return match_expr(opt, bol, eol, ctx, collect_hits);
 
 	/* we do not call with collect_hits without being extended */
 	for (p = opt->pattern_list; p; p = p->next) {
-		if (match_one_pattern(opt, p, bol, eol, ctx))
+		if (match_one_pattern(p, bol, eol, ctx, &match, 0))
 			return 1;
 	}
 	return 0;
+}
+
+static int match_next_pattern(struct grep_pat *p, char *bol, char *eol,
+			      enum grep_context ctx,
+			      regmatch_t *pmatch, int eflags)
+{
+	regmatch_t match;
+
+	if (!match_one_pattern(p, bol, eol, ctx, &match, eflags))
+		return 0;
+	if (match.rm_so < 0 || match.rm_eo < 0)
+		return 0;
+	if (pmatch->rm_so >= 0 && pmatch->rm_eo >= 0) {
+		if (match.rm_so > pmatch->rm_so)
+			return 1;
+		if (match.rm_so == pmatch->rm_so && match.rm_eo < pmatch->rm_eo)
+			return 1;
+	}
+	pmatch->rm_so = match.rm_so;
+	pmatch->rm_eo = match.rm_eo;
+	return 1;
+}
+
+static int next_match(struct grep_opt *opt, char *bol, char *eol,
+		      enum grep_context ctx, regmatch_t *pmatch, int eflags)
+{
+	struct grep_pat *p;
+	int hit = 0;
+
+	pmatch->rm_so = pmatch->rm_eo = -1;
+	if (bol < eol) {
+		for (p = opt->pattern_list; p; p = p->next) {
+			switch (p->token) {
+			case GREP_PATTERN: /* atom */
+			case GREP_PATTERN_HEAD:
+			case GREP_PATTERN_BODY:
+				hit |= match_next_pattern(p, bol, eol, ctx,
+							  pmatch, eflags);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	return hit;
+}
+
+static void show_line(struct grep_opt *opt, char *bol, char *eol,
+		      const char *name, unsigned lno, char sign)
+{
+	int rest = eol - bol;
+
+	if (opt->null_following_name)
+		sign = '\0';
+	if (opt->pathname)
+		printf("%s%c", name, sign);
+	if (opt->linenum)
+		printf("%d%c", lno, sign);
+	if (opt->color) {
+		regmatch_t match;
+		enum grep_context ctx = GREP_CONTEXT_BODY;
+		int ch = *eol;
+		int eflags = 0;
+
+		*eol = '\0';
+		while (next_match(opt, bol, eol, ctx, &match, eflags)) {
+			printf("%.*s%s%.*s%s",
+			       (int)match.rm_so, bol,
+			       opt->color_match,
+			       (int)(match.rm_eo - match.rm_so), bol + match.rm_so,
+			       GIT_COLOR_RESET);
+			bol += match.rm_eo;
+			rest -= match.rm_eo;
+			eflags = REG_NOTBOL;
+		}
+		*eol = ch;
+	}
+	printf("%.*s\n", rest, bol);
 }
 
 static int grep_buffer_1(struct grep_opt *opt, const char *name,

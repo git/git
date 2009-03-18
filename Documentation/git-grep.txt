@@ -17,6 +17,7 @@ SYNOPSIS
 	   [-l | --files-with-matches] [-L | --files-without-match]
 	   [-z | --null]
 	   [-c | --count] [--all-match]
+	   [--color | --no-color]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-f <file>] [-e] <pattern>
 	   [--and|--or|--not|(|)|-e <pattern>...] [<tree>...]
@@ -104,6 +105,13 @@ OPTIONS
 --count::
 	Instead of showing every matched line, show the number of
 	lines that match.
+
+--color::
+	Show colored matches.
+
+--no-color::
+	Turn off match highlighting, even when the configuration file
+	gives the default to color output.
 
 -[ABC] <context>::
 	Show `context` trailing (`A` -- after), or leading (`B`
