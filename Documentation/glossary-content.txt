@@ -262,7 +262,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	'origin' is used for that purpose. New upstream updates
 	will be fetched into remote <<def_tracking_branch,tracking branches>> named
 	origin/name-of-upstream-branch, which you can see using
-	"`git branch -r`".
+	`git branch -r`.
 
 [[def_pack]]pack::
 	A set of objects which have been compressed into one file (to save space

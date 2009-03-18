@@ -30,7 +30,17 @@ Updates since v1.6.2
 
 (performance)
 
+* many uses of lstat(2) in the codepath for "git checkout" have been
+  optimized out.
+
 (usability, bells and whistles)
+
+* rsync:/path/to/repo can be used to run git over rsync for local
+  repositories.  It may not be useful in practice; meant primarily for
+  testing.
+
+* (msysgit) progress output that is sent over the sideband protocol can
+  be handled appropriately in Windows console.
 
 * "--pretty=<style>" option to the log family of commands can now be
   spelled as "--format=<style>".  In addition, --format=%formatstring
@@ -62,6 +72,8 @@ Updates since v1.6.2
 
 * git-format-patch can be told to produce deep or shallow message threads.
 
+* git-grep learned to highlight the found substrings in color.
+
 * git-imap-send learned to work around Thunderbird's inability to easily
   disable format=flowed with a new configuration, imap.preformattedHTML.
 
@@ -70,6 +82,8 @@ Updates since v1.6.2
   option.
 
 * git-rebase can be told to report diffstat with the --stat option.
+
+* Output from git-remote command has been vastly improved.
 
 * git-send-email learned --confirm option to review the Cc: list before
   sending the messages out.
@@ -90,15 +104,30 @@ release, unless otherwise noted.
 Here are fixes that this release has, but have not been backported to
 v1.6.2.X series.
 
-* 'git-submodule add' did not tolerate extra slashes and ./ in the
-  path it accepted from the command line; it now is more lenient
- (if needed, backport by merging db75ada).
+* "git diff --pickaxe-regexp" did not count overlapping matches
+  correctly (backport by cherry-picking 50fd699).
+
+* "git-fetch" in a repository that was not cloned from anywhere said
+  it cannot find 'origin', which was hard to understand for new people.
 
 * git-gc spent excessive amount of time to decide if an object appears
   in a locally existing pack (if needed, backport by merging 69e020a).
 
+* "git-ls-files --deleted" did not work well with GIT_DIR&GIT_WORK_TREE
+  (backport by cherry-picking 8ad3dae).
+
+* "git-read-tree A B C..." without -m option has been broken for a long time
+  (backport by merging jc/maint-1.6.0-read-tree-overlay)
+
+* 'git-submodule add' did not tolerate extra slashes and ./ in the
+  path it accepted from the command line; it now is more lenient
+ (if needed, backport by merging db75ada).
+
+* git-send-email ignored --in-reply-to when --no-thread was given
+  (backport by merging tr/maint-1.6.0-send-email-irt)
+
 ---
 exec >/var/tmp/1
-O=v1.6.2.1-135-g7d65c21
+O=v1.6.2.1-213-g7d4e3a7
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

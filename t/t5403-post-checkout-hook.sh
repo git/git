@@ -71,6 +71,7 @@ test_expect_success 'post-checkout receives the right args when not switching br
         test $old = $new -a $flag = 0
 '
 
+if test "$(git config --bool core.filemode)" = true; then
 mkdir -p templates/hooks
 cat >templates/hooks/post-checkout <<'EOF'
 #!/bin/sh
@@ -82,5 +83,6 @@ test_expect_success 'post-checkout hook is triggered by clone' '
 	git clone --template=templates . clone3 &&
 	test -f clone3/.git/post-checkout.args
 '
+fi
 
 test_done

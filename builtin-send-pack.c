@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "commit.h"
-#include "tag.h"
 #include "refs.h"
 #include "pkt-line.h"
 #include "run-command.h"
@@ -84,81 +83,7 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 	return 0;
 }
 
-static void unmark_and_free(struct commit_list *list, unsigned int mark)
-{
-	while (list) {
-		struct commit_list *temp = list;
-		temp->item->object.flags &= ~mark;
-		list = temp->next;
-		free(temp);
-	}
-}
-
-static int ref_newer(const unsigned char *new_sha1,
-		     const unsigned char *old_sha1)
-{
-	struct object *o;
-	struct commit *old, *new;
-	struct commit_list *list, *used;
-	int found = 0;
-
-	/* Both new and old must be commit-ish and new is descendant of
-	 * old.  Otherwise we require --force.
-	 */
-	o = deref_tag(parse_object(old_sha1), NULL, 0);
-	if (!o || o->type != OBJ_COMMIT)
-		return 0;
-	old = (struct commit *) o;
-
-	o = deref_tag(parse_object(new_sha1), NULL, 0);
-	if (!o || o->type != OBJ_COMMIT)
-		return 0;
-	new = (struct commit *) o;
-
-	if (parse_commit(new) < 0)
-		return 0;
-
-	used = list = NULL;
-	commit_list_insert(new, &list);
-	while (list) {
-		new = pop_most_recent_commit(&list, 1);
-		commit_list_insert(new, &used);
-		if (new == old) {
-			found = 1;
-			break;
-		}
-	}
-	unmark_and_free(list, 1);
-	unmark_and_free(used, 1);
-	return found;
-}
-
-static struct ref *local_refs, **local_tail;
 static struct ref *remote_refs, **remote_tail;
-
-static int one_local_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
-{
-	struct ref *ref;
-	int len;
-
-	/* we already know it starts with refs/ to get here */
-	if (check_ref_format(refname + 5))
-		return 0;
-
-	len = strlen(refname) + 1;
-	ref = xcalloc(1, sizeof(*ref) + len);
-	hashcpy(ref->new_sha1, sha1);
-	memcpy(ref->name, refname, len);
-	*local_tail = ref;
-	local_tail = &ref->next;
-	return 0;
-}
-
-static void get_local_heads(void)
-{
-	local_tail = &local_refs;
-	for_each_ref(one_local_ref, NULL);
-}
 
 static int receive_status(int in, struct ref *refs)
 {
@@ -387,7 +312,7 @@ static int refs_pushed(struct ref *ref)
 
 static int do_send_pack(int in, int out, struct remote *remote, const char *dest, int nr_refspec, const char **refspec)
 {
-	struct ref *ref;
+	struct ref *ref, *local_refs;
 	int new_refs;
 	int ask_for_status_report = 0;
 	int allow_deleting_refs = 0;
@@ -405,7 +330,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 	/* No funny business with the matcher */
 	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, REF_NORMAL,
 				       &extra_have);
-	get_local_heads();
+	local_refs = get_local_heads();
 
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))

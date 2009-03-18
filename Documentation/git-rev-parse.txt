@@ -299,18 +299,18 @@ previous section means the set of commits reachable from that
 commit, following the commit ancestry chain.
 
 To exclude commits reachable from a commit, a prefix `{caret}`
-notation is used.  E.g. "`{caret}r1 r2`" means commits reachable
+notation is used.  E.g. `{caret}r1 r2` means commits reachable
 from `r2` but exclude the ones reachable from `r1`.
 
 This set operation appears so often that there is a shorthand
 for it.  When you have two commits `r1` and `r2` (named according
 to the syntax explained in SPECIFYING REVISIONS above), you can ask
 for commits that are reachable from r2 excluding those that are reachable
-from r1 by "`{caret}r1 r2`" and it can be written as "`r1..r2`".
+from r1 by `{caret}r1 r2` and it can be written as `r1..r2`.
 
-A similar notation "`r1\...r2`" is called symmetric difference
+A similar notation `r1\...r2` is called symmetric difference
 of `r1` and `r2` and is defined as
-"`r1 r2 --not $(git merge-base --all r1 r2)`".
+`r1 r2 --not $(git merge-base --all r1 r2)`.
 It is the set of commits that are reachable from either one of
 `r1` or `r2` but not from both.
 

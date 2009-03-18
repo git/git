@@ -67,8 +67,6 @@ static inline int readlink(const char *path, char *buf, size_t bufsiz)
 { errno = ENOSYS; return -1; }
 static inline int symlink(const char *oldpath, const char *newpath)
 { errno = ENOSYS; return -1; }
-static inline int link(const char *oldpath, const char *newpath)
-{ errno = ENOSYS; return -1; }
 static inline int fchmod(int fildes, mode_t mode)
 { errno = ENOSYS; return -1; }
 static inline int fork(void)
@@ -134,6 +132,7 @@ int getpagesize(void);	/* defined in MinGW's libgcc.a */
 struct passwd *getpwuid(int uid);
 int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
+int link(const char *oldpath, const char *newpath);
 
 /*
  * replacements of existing functions

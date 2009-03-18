@@ -22,6 +22,28 @@
 
 static int builtin_grep;
 
+static int grep_config(const char *var, const char *value, void *cb)
+{
+	struct grep_opt *opt = cb;
+
+	if (!strcmp(var, "grep.color") || !strcmp(var, "color.grep")) {
+		opt->color = git_config_colorbool(var, value, -1);
+		return 0;
+	}
+	if (!strcmp(var, "grep.color.external") ||
+	    !strcmp(var, "color.grep.external")) {
+		return git_config_string(&(opt->color_external), var, value);
+	}
+	if (!strcmp(var, "grep.color.match") ||
+	    !strcmp(var, "color.grep.match")) {
+		if (!value)
+			return config_error_nonbool(var);
+		color_parse(value, var, opt->color_match);
+		return 0;
+	}
+	return git_color_default_config(var, value, cb);
+}
+
 /*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;
  * pathname wildcards are allowed.
@@ -269,6 +291,21 @@ static int flush_grep(struct grep_opt *opt,
 	return status;
 }
 
+static void grep_add_color(struct strbuf *sb, const char *escape_seq)
+{
+	size_t orig_len = sb->len;
+
+	while (*escape_seq) {
+		if (*escape_seq == 'm')
+			strbuf_addch(sb, ';');
+		else if (*escape_seq != '\033' && *escape_seq  != '[')
+			strbuf_addch(sb, *escape_seq);
+		escape_seq++;
+	}
+	if (sb->len > orig_len && sb->buf[sb->len - 1] == ';')
+		strbuf_setlen(sb, sb->len - 1);
+}
+
 static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 {
 	int i, nr, argc, hit, len, status;
@@ -338,6 +375,23 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 	for (p = opt->pattern_list; p; p = p->next) {
 		push_arg("-e");
 		push_arg(p->pattern);
+	}
+	if (opt->color) {
+		struct strbuf sb = STRBUF_INIT;
+
+		grep_add_color(&sb, opt->color_match);
+		setenv("GREP_COLOR", sb.buf, 1);
+
+		strbuf_reset(&sb);
+		strbuf_addstr(&sb, "mt=");
+		grep_add_color(&sb, opt->color_match);
+		strbuf_addstr(&sb, ":sl=:cx=:fn=:ln=:bn=:se=");
+		setenv("GREP_COLORS", sb.buf, 1);
+
+		strbuf_release(&sb);
+
+		if (opt->color_external && strlen(opt->color_external) > 0)
+			push_arg(opt->color_external);
 	}
 
 	hit = 0;
@@ -536,6 +590,12 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	opt.pattern_tail = &opt.pattern_list;
 	opt.regflags = REG_NEWLINE;
 
+	strcpy(opt.color_match, GIT_COLOR_RED GIT_COLOR_BOLD);
+	opt.color = -1;
+	git_config(grep_config, &opt);
+	if (opt.color == -1)
+		opt.color = git_use_color_default;
+
 	/*
 	 * If there is no -- then the paths must exist in the working
 	 * tree.  If there is no explicit pattern specified with -e or
@@ -732,6 +792,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			opt.relative = 0;
 			continue;
 		}
+		if (!strcmp("--color", arg)) {
+			opt.color = 1;
+			continue;
+		}
+		if (!strcmp("--no-color", arg)) {
+			opt.color = 0;
+			continue;
+		}
 		if (!strcmp("--", arg)) {
 			/* later processing wants to have this at argv[1] */
 			argv--;
@@ -757,6 +825,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		}
 	}
 
+	if (opt.color && !opt.color_external)
+		builtin_grep = 1;
 	if (!opt.pattern_list)
 		die("no pattern given.");
 	if ((opt.regflags != REG_NEWLINE) && opt.fixed)

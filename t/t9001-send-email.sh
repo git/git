@@ -88,7 +88,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'Verify commandline' \
-    'diff commandline1 expected'
+    'test_cmp expected commandline1'
 
 cat >expected-show-all-headers <<\EOF
 0001-Second.patch
@@ -529,6 +529,17 @@ test_expect_success 'feed two files' '
 	grep "^Subject: " out >subjects &&
 	test "z$(sed -n -e 1p subjects)" = "zSubject: [PATCH 1/2] Second." &&
 	test "z$(sed -n -e 2p subjects)" = "zSubject: [PATCH 2/2] add master"
+'
+
+test_expect_success 'in-reply-to but no threading' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--in-reply-to="<in-reply-id@example.com>" \
+		--no-thread \
+		$patches |
+	grep "In-Reply-To: <in-reply-id@example.com>"
 '
 
 test_done

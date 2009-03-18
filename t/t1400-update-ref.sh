@@ -137,7 +137,7 @@ $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000
 EOF
 test_expect_success \
 	"verifying $m's log" \
-	"diff expect .git/logs/$m"
+	"test_cmp expect .git/logs/$m"
 rm -rf .git/$m .git/logs expect
 
 test_expect_success \
@@ -168,7 +168,7 @@ $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 +0000
 EOF
 test_expect_success \
 	"verifying $m's log" \
-	'diff expect .git/logs/$m'
+	'test_cmp expect .git/logs/$m'
 rm -f .git/$m .git/logs/$m expect
 
 git update-ref $m $D
@@ -272,7 +272,7 @@ $h_FIXED $h_MERGED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151100 +0000	c
 EOF
 test_expect_success \
 	'git commit logged updates' \
-	"diff expect .git/logs/$m"
+	"test_cmp expect .git/logs/$m"
 unset h_TEST h_OTHER h_FIXED h_MERGED
 
 test_expect_success \

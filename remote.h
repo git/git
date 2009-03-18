@@ -74,6 +74,7 @@ int check_ref_type(const struct ref *ref, int flags);
 void free_refs(struct ref *ref);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
+int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1);
 
 /*
  * Removes and frees any duplicate refs in the map.
@@ -136,5 +137,16 @@ enum match_refs_flags {
 /* Reporting of tracking info */
 int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs);
 int format_tracking_info(struct branch *branch, struct strbuf *sb);
+
+struct ref *get_local_heads(void);
+/*
+ * Find refs from a list which are likely to be pointed to by the given HEAD
+ * ref. If 'all' is false, returns the most likely ref; otherwise, returns a
+ * list of all candidate refs. If no match is found (or 'head' is NULL),
+ * returns NULL. All returns are newly allocated and should be freed.
+ */
+struct ref *guess_remote_head(const struct ref *head,
+			      const struct ref *refs,
+			      int all);
 
 #endif
