@@ -482,7 +482,7 @@ static int sideband_demux(int fd, void *data)
 {
 	int *xd = data;
 
-	return recv_sideband("fetch-pack", xd[0], fd, 2);
+	return recv_sideband("fetch-pack", xd[0], fd);
 }
 
 static int get_pack(int xd[2], char **pack_lockfile)
