@@ -531,4 +531,15 @@ test_expect_success 'feed two files' '
 	test "z$(sed -n -e 2p subjects)" = "zSubject: [PATCH 2/2] add master"
 '
 
+test_expect_success 'in-reply-to but no threading' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--in-reply-to="<in-reply-id@example.com>" \
+		--no-thread \
+		$patches |
+	grep "In-Reply-To: <in-reply-id@example.com>"
+'
+
 test_done
