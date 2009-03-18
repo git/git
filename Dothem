@@ -66,6 +66,7 @@ do
 		esac
 
 		cd "$BUILDBASE/$branch"
+		git reset --hard  &&
 		git checkout "$branch" &&
 		git reset --hard  || exit
 		case "$private" in
