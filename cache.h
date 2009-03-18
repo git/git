@@ -140,8 +140,8 @@ struct ondisk_cache_entry_extended {
 };
 
 struct cache_entry {
-	unsigned int ce_ctime;
-	unsigned int ce_mtime;
+	struct cache_time ce_ctime;
+	struct cache_time ce_mtime;
 	unsigned int ce_dev;
 	unsigned int ce_ino;
 	unsigned int ce_mode;
@@ -282,7 +282,7 @@ struct index_state {
 	struct cache_entry **cache;
 	unsigned int cache_nr, cache_alloc, cache_changed;
 	struct cache_tree *cache_tree;
-	time_t timestamp;
+	struct cache_time timestamp;
 	void *alloc;
 	unsigned name_hash_initialized : 1,
 		 initialized : 1;
@@ -428,7 +428,7 @@ extern int read_index_preload(struct index_state *, const char **pathspec);
 extern int read_index_from(struct index_state *, const char *path);
 extern int is_index_unborn(struct index_state *);
 extern int read_index_unmerged(struct index_state *);
-extern int write_index(const struct index_state *, int newfd);
+extern int write_index(struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
 extern int unmerged_index(const struct index_state *);
 extern int verify_path(const char *path);
@@ -443,6 +443,7 @@ extern int add_index_entry(struct index_state *, struct cache_entry *ce, int opt
 extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern void rename_index_entry_at(struct index_state *, int pos, const char *new_name);
 extern int remove_index_entry_at(struct index_state *, int pos);
+extern void remove_marked_cache_entries(struct index_state *istate);
 extern int remove_file_from_index(struct index_state *, const char *path);
 #define ADD_CACHE_VERBOSE 1
 #define ADD_CACHE_PRETEND 2
@@ -725,11 +726,13 @@ struct checkout {
 };
 
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
-extern int has_symlink_leading_path(int len, const char *name);
-extern int has_symlink_or_noent_leading_path(int len, const char *name);
-extern int has_dirs_only_path(int len, const char *name, int prefix_len);
-extern void invalidate_lstat_cache(int len, const char *name);
+extern int has_symlink_leading_path(const char *name, int len);
+extern int has_symlink_or_noent_leading_path(const char *name, int len);
+extern int has_dirs_only_path(const char *name, int len, int prefix_len);
+extern void invalidate_lstat_cache(const char *name, int len);
 extern void clear_lstat_cache(void);
+extern void schedule_dir_for_removal(const char *name, int len);
+extern void remove_scheduled_dirs(void);
 
 extern struct alternate_object_database {
 	struct alternate_object_database *next;

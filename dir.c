@@ -720,7 +720,7 @@ int read_directory(struct dir_struct *dir, const char *path, const char *base, i
 {
 	struct path_simplify *simplify;
 
-	if (has_symlink_leading_path(strlen(path), path))
+	if (has_symlink_leading_path(path, strlen(path)))
 		return dir->nr;
 
 	simplify = create_simplify(pathspec);

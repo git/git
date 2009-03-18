@@ -712,9 +712,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			result_size = buf.len;
 			result = strbuf_detach(&buf, NULL);
 			elem->mode = canon_mode(st.st_mode);
-		}
-		else if (0 <= (fd = open(elem->path, O_RDONLY)) &&
-			 !fstat(fd, &st)) {
+		} else if (0 <= (fd = open(elem->path, O_RDONLY))) {
 			size_t len = xsize_t(st.st_size);
 			ssize_t done;
 			int is_file, i;

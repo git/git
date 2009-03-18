@@ -52,36 +52,17 @@ static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 	add_index_entry(&o->result, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|ADD_CACHE_SKIP_DFCHECK);
 }
 
-/* Unlink the last component and attempt to remove leading
- * directories, in case this unlink is the removal of the
- * last entry in the directory -- empty directories are removed.
+/*
+ * Unlink the last component and schedule the leading directories for
+ * removal, such that empty directories get removed.
  */
 static void unlink_entry(struct cache_entry *ce)
 {
-	char *cp, *prev;
-	char *name = ce->name;
-
-	if (has_symlink_or_noent_leading_path(ce_namelen(ce), ce->name))
+	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
 		return;
-	if (unlink(name))
+	if (unlink(ce->name))
 		return;
-	prev = NULL;
-	while (1) {
-		int status;
-		cp = strrchr(name, '/');
-		if (prev)
-			*prev = '/';
-		if (!cp)
-			break;
-
-		*cp = 0;
-		status = rmdir(name);
-		if (status) {
-			*cp = '/';
-			break;
-		}
-		prev = cp;
-	}
+	schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }
 
 static struct checkout state;
@@ -112,11 +93,10 @@ static int check_updates(struct unpack_trees_options *o)
 			display_progress(progress, ++cnt);
 			if (o->update)
 				unlink_entry(ce);
-			remove_index_entry_at(&o->result, i);
-			i--;
-			continue;
 		}
 	}
+	remove_marked_cache_entries(&o->result);
+	remove_scheduled_dirs();
 
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
@@ -380,8 +360,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	memset(&o->result, 0, sizeof(o->result));
 	o->result.initialized = 1;
-	if (o->src_index)
-		o->result.timestamp = o->src_index->timestamp;
+	if (o->src_index) {
+		o->result.timestamp.sec = o->src_index->timestamp.sec;
+		o->result.timestamp.nsec = o->src_index->timestamp.nsec;
+	}
 	o->merge_size = len;
 
 	if (!dfc)
@@ -446,7 +428,7 @@ static int verify_uptodate(struct cache_entry *ce,
 {
 	struct stat st;
 
-	if (o->index_only || o->reset)
+	if (o->index_only || o->reset || ce_uptodate(ce))
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
@@ -583,7 +565,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 	if (o->index_only || o->reset || !o->update)
 		return 0;
 
-	if (has_symlink_or_noent_leading_path(ce_namelen(ce), ce->name))
+	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
