@@ -9,7 +9,7 @@ test_description='Test export of commits to CVS'
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git cvsexportcommit tests, cvs not found' :
+    say 'skipping git cvsexportcommit tests, cvs not found'
     test_done
     exit
 fi

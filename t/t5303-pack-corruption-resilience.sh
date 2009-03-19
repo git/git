@@ -55,6 +55,8 @@ do_corrupt_object() {
     test_must_fail git verify-pack ${pack}.pack
 }
 
+printf '\0' > zero
+
 test_expect_success \
     'initial setup validation' \
     'create_test_files &&
@@ -66,7 +68,7 @@ test_expect_success \
 
 test_expect_success \
     'create corruption in header of first object' \
-    'do_corrupt_object $blob_1 0 < /dev/zero &&
+    'do_corrupt_object $blob_1 0 < zero &&
      test_must_fail git cat-file blob $blob_1 > /dev/null &&
      test_must_fail git cat-file blob $blob_2 > /dev/null &&
      test_must_fail git cat-file blob $blob_3 > /dev/null'
@@ -125,7 +127,7 @@ test_expect_success \
     'create corruption in header of first delta' \
     'create_new_pack &&
      git prune-packed &&
-     do_corrupt_object $blob_2 0 < /dev/zero &&
+     do_corrupt_object $blob_2 0 < zero &&
      git cat-file blob $blob_1 > /dev/null &&
      test_must_fail git cat-file blob $blob_2 > /dev/null &&
      test_must_fail git cat-file blob $blob_3 > /dev/null'
@@ -180,7 +182,7 @@ test_expect_success \
     'corruption in delta base reference of first delta (OBJ_REF_DELTA)' \
     'create_new_pack &&
      git prune-packed &&
-     do_corrupt_object $blob_2 2 < /dev/zero &&
+     do_corrupt_object $blob_2 2 < zero &&
      git cat-file blob $blob_1 > /dev/null &&
      test_must_fail git cat-file blob $blob_2 > /dev/null &&
      test_must_fail git cat-file blob $blob_3 > /dev/null'
@@ -207,7 +209,7 @@ test_expect_success \
     'corruption #0 in delta base reference of first delta (OBJ_OFS_DELTA)' \
     'create_new_pack --delta-base-offset &&
      git prune-packed &&
-     do_corrupt_object $blob_2 2 < /dev/zero &&
+     do_corrupt_object $blob_2 2 < zero &&
      git cat-file blob $blob_1 > /dev/null &&
      test_must_fail git cat-file blob $blob_2 > /dev/null &&
      test_must_fail git cat-file blob $blob_3 > /dev/null'
@@ -259,7 +261,7 @@ test_expect_success \
 
 test_expect_success \
     '... and a redundant pack allows for full recovery too' \
-    'do_corrupt_object $blob_2 2 < /dev/zero &&
+    'do_corrupt_object $blob_2 2 < zero &&
      git cat-file blob $blob_1 > /dev/null &&
      test_must_fail git cat-file blob $blob_2 > /dev/null &&
      test_must_fail git cat-file blob $blob_3 > /dev/null &&

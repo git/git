@@ -185,8 +185,9 @@ cba
 EOF
 test_expect_success \
 	'listing tags with substring as pattern must print those matching' '
-	git tag -l "*a*" > actual &&
-	test_cmp expect actual
+	rm *a* &&
+	git tag -l "*a*" > current &&
+	test_cmp expect current
 '
 
 cat >expect <<EOF
@@ -582,7 +583,7 @@ test_expect_success \
 # subsequent tests require gpg; check if it is available
 gpg --version >/dev/null
 if [ $? -eq 127 ]; then
-	echo "gpg not found - skipping tag signing and verification tests"
+	say "gpg not found - skipping tag signing and verification tests"
 	test_done
 	exit
 fi
@@ -614,7 +615,7 @@ test_expect_success \
 # that version, creation of signed tags using the generated key fails.
 case "$(gpg --version)" in
 'gpg (GnuPG) 1.0.6'*)
-	echo "Skipping signed tag tests, because a bug in 1.0.6 version"
+	say "Skipping signed tag tests, because a bug in 1.0.6 version"
 	test_done
 	exit
 	;;

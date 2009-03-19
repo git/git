@@ -5,7 +5,7 @@ git_svn_id=git""-svn-id
 
 if test -n "$NO_SVN_TESTS"
 then
-	test_expect_success 'skipping git svn tests, NO_SVN_TESTS defined' :
+	say 'skipping git svn tests, NO_SVN_TESTS defined'
 	test_done
 	exit
 fi
@@ -17,7 +17,7 @@ SVN_TREE=$GIT_SVN_DIR/svn-tree
 svn >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git svn tests, svn not found' :
+    say 'skipping git svn tests, svn not found'
     test_done
     exit
 fi
@@ -41,7 +41,7 @@ then
 	else
 		err='Perl SVN libraries not found or unusable, skipping test'
 	fi
-	test_expect_success "$err" :
+	say "$err"
 	test_done
 	exit
 fi
