@@ -10902,7 +10902,10 @@ catch {
     gitlogo copy gitlogoplus  -to 11 9
     image delete gitlogoplus
 
-    wm iconphoto . -default gitlogo
+    image create photo gitlogo32    -width 32 -height 32
+    gitlogo32 copy gitlogo -zoom 2 2
+
+    wm iconphoto . -default gitlogo gitlogo32
 }
 # wait for the window to become visible
 tkwait visibility .
