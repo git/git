@@ -94,7 +94,7 @@ test_expect_success 'packed obs in alternate ODB kept pack are repacked' '
 	done
 '
 
-test_expect_failure 'packed unreachable obs in alternate ODB are not loosened' '
+test_expect_success 'packed unreachable obs in alternate ODB are not loosened' '
 	rm -f alt_objects/pack/*.keep &&
 	mv .git/objects/pack/* alt_objects/pack/ &&
 	csha1=$(git rev-parse HEAD^{commit}) &&
