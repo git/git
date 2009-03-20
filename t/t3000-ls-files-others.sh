@@ -13,12 +13,13 @@ filesystem.
     path2/file2 - a file in a directory
     path3-junk  - a file to confuse things
     path3/file3 - a file in a directory
+    path4       - an empty directory
 '
 . ./test-lib.sh
 
 date >path0
 ln -s xyzzy path1
-mkdir path2 path3
+mkdir path2 path3 path4
 date >path2/file2
 date >path2-junk
 date >path3/file3
@@ -28,6 +29,7 @@ git update-index --add path3-junk path3/file3
 cat >expected1 <<EOF
 expected1
 expected2
+expected3
 output
 path0
 path1
@@ -35,6 +37,8 @@ path2-junk
 path2/file2
 EOF
 sed -e 's|path2/file2|path2/|' <expected1 >expected2
+cat <expected2 >expected3
+echo path4/ >>expected2
 
 test_expect_success \
     'git ls-files --others to show output.' \
@@ -52,5 +56,13 @@ test_expect_success \
 test_expect_success \
     'git ls-files --others --directory should not get confused.' \
     'test_cmp expected2 output'
+
+test_expect_success \
+    'git ls-files --others --directory --no-empty-directory to show output.' \
+    'git ls-files --others --directory --no-empty-directory >output'
+
+test_expect_success \
+    '--no-empty-directory hides empty directory' \
+    'test_cmp expected3 output'
 
 test_done

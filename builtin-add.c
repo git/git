@@ -104,7 +104,7 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec,
 	/* Set up the default git porcelain excludes */
 	memset(dir, 0, sizeof(*dir));
 	if (!ignored_too) {
-		dir->collect_ignored = 1;
+		dir->flags |= DIR_COLLECT_IGNORED;
 		setup_standard_excludes(dir);
 	}
 
