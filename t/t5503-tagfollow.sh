@@ -4,6 +4,13 @@ test_description='test automatic tag following'
 
 . ./test-lib.sh
 
+case $(uname -s) in
+*MINGW*)
+	say "GIT_DEBUG_SEND_PACK not supported - skipping tests"
+	test_done
+	exit
+esac
+
 # End state of the repository:
 #
 #         T - tag1          S - tag2
