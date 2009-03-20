@@ -88,7 +88,7 @@ proc merge_load_stages {path cont} {
 	set merge_stages(3) {}
 	set merge_stages_buf {}
 
-	set merge_stages_fd [eval git_read ls-files -u -z -- $path]
+	set merge_stages_fd [eval git_read ls-files -u -z -- {$path}]
 
 	fconfigure $merge_stages_fd -blocking 0 -translation binary -encoding binary
 	fileevent $merge_stages_fd readable [list read_merge_stages $merge_stages_fd $cont]
