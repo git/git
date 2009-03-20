@@ -50,28 +50,29 @@ $ git bisect good v2.6.13-rc2    # v2.6.13-rc2 was the last version
 ------------------------------------------------
 
 When you have specified at least one bad and one good version, the
-command bisects the revision tree and outputs something similar to:
+command bisects the revision tree and outputs something similar to
+the following:
 
 ------------------------------------------------
 Bisecting: 675 revisions left to test after this
 ------------------------------------------------
 
-and then checks out the state in the middle. You would now compile
-that kernel and boot it. If the booted kernel works correctly, you
-would then issue the following command:
+The state in the middle of the set of revisions is then checked out.
+You would now compile that kernel and boot it. If the booted kernel
+works correctly, you would then issue the following command:
 
 ------------------------------------------------
 $ git bisect good			# this one is good
 ------------------------------------------------
 
-which would then output something similar to:
+The output of this command would be something similar to the following:
 
 ------------------------------------------------
 Bisecting: 337 revisions left to test after this
 ------------------------------------------------
 
-and you continue along, compiling that one, testing it, and depending
-on whether it is good or bad issuing the command "git bisect good"
+You keep repeating this process, compiling the tree, testing it, and
+depending on whether it is good or bad issuing the command "git bisect good"
 or "git bisect bad" to ask for the next bisection.
 
 Eventually there will be no more revisions left to bisect, and you
@@ -81,7 +82,7 @@ Bisect reset
 ~~~~~~~~~~~~
 
 To return to the original head after a bisect session, you issue the
-command:
+following command:
 
 ------------------------------------------------
 $ git bisect reset
@@ -94,14 +95,14 @@ the bisection state).
 Bisect visualize
 ~~~~~~~~~~~~~~~~
 
-During the bisection process, you issue the command:
+To see the currently remaining suspects in 'gitk', the following command
+is issued during the bisection process:
 
 ------------
 $ git bisect visualize
 ------------
 
-to see the currently remaining suspects in 'gitk'.  `view` may also
-be used as a synonym for `visualize`.
+`view` may also be used as a synonym for `visualize`.
 
 If the 'DISPLAY' environment variable is not set, 'git log' is used
 instead.  You can also give command line options such as `-p` and
@@ -114,16 +115,17 @@ $ git bisect view --stat
 Bisect log and bisect replay
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After having marked revisions as good or bad, then:
+After having marked revisions as good or bad, you issue the following
+command to show what has been done so far:
 
 ------------
 $ git bisect log
 ------------
 
-shows what you have done so far. If you discover that you made a mistake
-in specifying the status of a revision, you can save the output of this
-command to a file, edit it to remove the incorrect entries, and then issue
-the following commands to return to a corrected state:
+If you discover that you made a mistake in specifying the status of a
+revision, you can save the output of this command to a file, edit it to
+remove the incorrect entries, and then issue the following commands to
+return to a corrected state:
 
 ------------
 $ git bisect reset
@@ -173,8 +175,8 @@ using the "'<commit1>'..'<commit2>'" notation. For example:
 $ git bisect skip v2.5..v2.6
 ------------
 
-would mean that no commit between `v2.5` excluded and `v2.6` included
-can be tested.
+The effect of this would be that no commit between `v2.5` excluded and
+`v2.6` included could be tested.
 
 Note that if you also want to skip the first commit of the range you
 would issue the command:
@@ -183,14 +185,16 @@ would issue the command:
 $ git bisect skip v2.5 v2.5..v2.6
 ------------
 
-and the commit pointed to by `v2.5` would also be skipped.
+This would cause the commits between `v2.5` included and `v2.6` included
+to be skipped.
+
 
 Cutting down bisection by giving more parameters to bisect start
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can further cut down the number of trials, if you know what part of
 the tree is involved in the problem you are tracking down, by specifying
-path parameters when issuing the `bisect start` command, like this:
+path parameters when issuing the `bisect start` command:
 
 ------------
 $ git bisect start -- arch/i386 include/asm-i386
