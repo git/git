@@ -358,14 +358,9 @@ static int get_push_ref_states_noquery(struct ref_states *states)
 	}
 	for (i = 0; i < remote->push_refspec_nr; i++) {
 		struct refspec *spec = remote->push + i;
-		char buf[PATH_MAX];
 		if (spec->matching)
 			item = string_list_append("(matching)", &states->push);
-		else if (spec->pattern) {
-			snprintf(buf, (sizeof(buf)), "%s*", spec->src);
-			item = string_list_append(buf, &states->push);
-			snprintf(buf, (sizeof(buf)), "%s*", spec->dst);
-		} else if (strlen(spec->src))
+		else if (strlen(spec->src))
 			item = string_list_append(spec->src, &states->push);
 		else
 			item = string_list_append("(delete)", &states->push);
@@ -373,10 +368,7 @@ static int get_push_ref_states_noquery(struct ref_states *states)
 		info = item->util = xcalloc(sizeof(struct push_info), 1);
 		info->forced = spec->force;
 		info->status = PUSH_STATUS_NOTQUERIED;
-		if (spec->pattern)
-			info->dest = xstrdup(buf);
-		else
-			info->dest = xstrdup(spec->dst ? spec->dst : item->string);
+		info->dest = xstrdup(spec->dst ? spec->dst : item->string);
 	}
 	return 0;
 }
@@ -389,7 +381,7 @@ static int get_head_names(const struct ref *remote_refs, struct ref_states *stat
 
 	refspec.force = 0;
 	refspec.pattern = 1;
-	refspec.src = refspec.dst = "refs/heads/";
+	refspec.src = refspec.dst = "refs/heads/*";
 	states->heads.strdup_strings = 1;
 	get_fetch_map(remote_refs, &refspec, &fetch_map_tail, 0);
 	matches = guess_remote_head(find_ref_by_name(remote_refs, "HEAD"),

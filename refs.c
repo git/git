@@ -694,6 +694,7 @@ static inline int bad_ref_char(int ch)
 int check_ref_format(const char *ref)
 {
 	int ch, level, bad_type;
+	int ret = CHECK_REF_FORMAT_OK;
 	const char *cp = ref;
 
 	level = 0;
@@ -709,18 +710,18 @@ int check_ref_format(const char *ref)
 			return CHECK_REF_FORMAT_ERROR;
 		bad_type = bad_ref_char(ch);
 		if (bad_type) {
-			return (bad_type == 2 && !*cp)
-				? CHECK_REF_FORMAT_WILDCARD
-				: CHECK_REF_FORMAT_ERROR;
+			if (bad_type == 2 && (!*cp || *cp == '/') &&
+			    ret == CHECK_REF_FORMAT_OK)
+				ret = CHECK_REF_FORMAT_WILDCARD;
+			else
+				return CHECK_REF_FORMAT_ERROR;
 		}
 
 		/* scan the rest of the path component */
 		while ((ch = *cp++) != 0) {
 			bad_type = bad_ref_char(ch);
 			if (bad_type) {
-				return (bad_type == 2 && !*cp)
-					? CHECK_REF_FORMAT_WILDCARD
-					: CHECK_REF_FORMAT_ERROR;
+				return CHECK_REF_FORMAT_ERROR;
 			}
 			if (ch == '/')
 				break;
@@ -731,7 +732,7 @@ int check_ref_format(const char *ref)
 		if (!ch) {
 			if (level < 2)
 				return CHECK_REF_FORMAT_ONELEVEL;
-			return CHECK_REF_FORMAT_OK;
+			return ret;
 		}
 	}
 }
