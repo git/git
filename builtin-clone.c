@@ -20,6 +20,7 @@
 #include "dir.h"
 #include "pack-refs.h"
 #include "sigchain.h"
+#include "branch.h"
 #include "remote.h"
 #include "run-command.h"
 
@@ -315,19 +316,6 @@ static struct ref *write_remote_refs(const struct ref *refs,
 	return local_refs;
 }
 
-static void install_branch_config(const char *local,
-				  const char *origin,
-				  const char *remote)
-{
-	struct strbuf key = STRBUF_INIT;
-	strbuf_addf(&key, "branch.%s.remote", local);
-	git_config_set(key.buf, origin);
-	strbuf_reset(&key);
-	strbuf_addf(&key, "branch.%s.merge", local);
-	git_config_set(key.buf, remote);
-	strbuf_release(&key);
-}
-
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
 	int is_bundle = 0;
@@ -514,7 +502,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		remote_head = NULL;
 		option_no_checkout = 1;
 		if (!option_bare)
-			install_branch_config("master", option_origin,
+			install_branch_config(0, "master", option_origin,
 					      "refs/heads/master");
 	}
 
@@ -544,7 +532,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				      head_points_at->peer_ref->name,
 				      reflog_msg.buf);
 
-			install_branch_config(head, option_origin,
+			install_branch_config(0, head, option_origin,
 					      head_points_at->name);
 		}
 	} else if (remote_head) {
