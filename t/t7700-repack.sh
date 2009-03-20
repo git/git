@@ -69,7 +69,7 @@ test_expect_success 'packed obs in alt ODB are repacked even when local repo is 
 	done
 '
 
-test_expect_failure 'packed obs in alternate ODB kept pack are repacked' '
+test_expect_success 'packed obs in alternate ODB kept pack are repacked' '
 	# swap the .keep so the commit object is in the pack with .keep
 	for p in alt_objects/pack/*.pack
 	do
