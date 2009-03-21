@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2009, #05; Tue, 17)
-X-master-at: 642d0844b9795ca7b1424f4afc8d8c86abd7bf34
-X-next-at: 34201954f04a3f0a1f9457670f24b26704fa31f1
+Subject: What's cooking in git.git (Mar 2009, #06; Sat, 21)
+X-master-at: a797b02f3925c4a6324472e2edaf4a58d4ffc097
+X-next-at: 5572a388cef2195e61894eec7976411776a95b39
 
-What's cooking in git.git (Mar 2009, #05; Tue, 17)
+What's cooking in git.git (Mar 2009, #06; Sat, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -17,109 +17,46 @@ meant to be merged to the maintenance series have "maint-" in their names.
 ----------------------------------------------------------------
 [New Topics]
 
-* dm/maint-docco (Mon Mar 16 23:16:17 2009 -0700) 4 commits
- + Documentation: minor grammatical fixes in git-branch.txt.
- + Documentation: minor grammatical fixes in git-blame.txt.
- + Documentation: reword the "Description" section of git-bisect.txt.
- + Documentation: minor grammatical fixes in git-archive.txt.
+* jk/reflog-date (Fri Mar 20 02:00:43 2009 -0400) 1 commit
+ - make oneline reflog dates more consistent with multiline format
 
-* mg/test-installed (Mon Mar 16 18:03:12 2009 +0100) 2 commits
- + test-lib.sh: Allow running the test suite against installed git
- + test-lib.sh: Test for presence of git-init in the right path.
+* js/maint-1.6.0-exec-path-env (Wed Mar 18 08:42:53 2009 +0100) 1 commit
+ - export GIT_EXEC_PATH when git is run with --exec-path
+
+* da/difftool (Thu Mar 19 01:25:25 2009 -0700) 1 commit
+ - difftool: move 'git-difftool' out of contrib
+
+* jc/maint-1.6.0-keep-pack (Thu Mar 19 22:47:54 2009 -0500) 4 commits
+ - Remove --kept-pack-only option and associated infrastructure
+ - pack-objects: only repack or loosen objects residing in "local"
+   packs
+ - git-repack.sh: don't use --kept-pack-only option to pack-objects
+ - t7700-repack: add two new tests demonstrating repacking flaws
+
+Brandon Casey fixed the regression previous patches introduced; thanks.
+
+* jc/maint-1.6.0-blame-s (Wed Mar 18 00:13:03 2009 -0700) 1 commit
+ - blame: read custom grafts given by -S before calling
+   setup_revisions()
+
+The above are all ready for 'next'.
+
+* hv/cvsps-tests (Wed Mar 18 18:33:41 2009 +0100) 7 commits
+ - cvsimport: extend testcase about patchset order to contain
+   branches
+ - cvsimport: add test illustrating a bug in cvsps
+ - Add a test of "git cvsimport"'s handling of tags and branches
+ - Add some tests of git-cvsimport's handling of vendor branches
+ - Test contents of entire cvsimported "master" tree contents
+ - Use CVS's -f option if available (ignore user's ~/.cvsrc file)
+ - Start a library for cvsimport-related tests
+
+Two cvsimport test topics were rewound from 'next' and merged into this
+one.  I'll keep this in 'pu' so that people can polish their cvsps skilz
+to resolve issues these tests identify.
 
 ----------------------------------------------------------------
 [Graduated to "master"]
-
-* kb/checkout-optim (Tue Mar 17 19:20:29 2009 +0100) 20 commits
- + Revert "lstat_cache(): print a warning if doing ping-pong between
-   cache types"
- + checkout bugfix: use stat.mtime instead of stat.ctime in two
-   places
- + Makefile: Set compiler switch for USE_NSEC
- + Create USE_ST_TIMESPEC and turn it on for Darwin
- + Not all systems use st_[cm]tim field for ns resolution file
-   timestamp
- + Record ns-timestamps if possible, but do not use it without
-   USE_NSEC
- + write_index(): update index_state->timestamp after flushing to
-   disk
- + verify_uptodate(): add ce_uptodate(ce) test
- + make USE_NSEC work as expected
- + fix compile error when USE_NSEC is defined
- + check_updates(): effective removal of cache entries marked
-   CE_REMOVE
- + lstat_cache(): print a warning if doing ping-pong between cache
-   types
- + show_patch_diff(): remove a call to fstat()
- + write_entry(): use fstat() instead of lstat() when file is open
- + write_entry(): cleanup of some duplicated code
- + create_directories(): remove some memcpy() and strchr() calls
- + unlink_entry(): introduce schedule_dir_for_removal()
- + lstat_cache(): swap func(length, string) into func(string, length)
- + lstat_cache(): generalise longest_match_lstat_cache()
- + lstat_cache(): small cleanup and optimisation
-
-* tr/maint-1.6.0-send-email-irt (Wed Mar 11 23:40:13 2009 +0100) 2 commits
- + send-email: test --no-thread --in-reply-to combination
- + send-email: respect in-reply-to regardless of threading
-
-* js/remote-improvements (Sun Mar 8 00:10:33 2009 -0800) 23 commits
- + builtin-remote.c: no "commented out" code, please
- + builtin-remote: new show output style for push refspecs
- + builtin-remote: new show output style
- + remote: make guess_remote_head() use exact HEAD lookup if it is
-   available
- + builtin-remote: add set-head subcommand
- + builtin-remote: teach show to display remote HEAD
- + builtin-remote: fix two inconsistencies in the output of "show
-   <remote>"
- + builtin-remote: make get_remote_ref_states() always populate
-   states.tracked
- + builtin-remote: rename variables and eliminate redundant function
-   call
- + builtin-remote: remove unused code in get_ref_states
- + builtin-remote: refactor duplicated cleanup code
- + string-list: new for_each_string_list() function
- + remote: make match_refs() not short-circuit
- + remote: make match_refs() copy src ref before assigning to
-   peer_ref
- + remote: let guess_remote_head() optionally return all matches
- + remote: make copy_ref() perform a deep copy
- + remote: simplify guess_remote_head()
- + move locate_head() to remote.c
- + move duplicated ref_newer() to remote.c
- + move duplicated get_local_heads() to remote.c
- + refactor find_ref_by_name() to accept const list
- + add basic http clone/fetch tests
- + test scripts: refactor start_httpd helper
-
-* rs/color-grep (Mon Mar 16 13:20:04 2009 +1100) 7 commits
- + grep: prefer builtin over external one when coloring results
- + grep: cast printf %.*s "precision" argument explicitly to int
- + grep: add support for coloring with external greps
- + grep: color patterns in output
- + grep: add pmatch and eflags arguments to match_one_pattern()
- + grep: remove grep_opt argument from match_expr_eval()
- + grep: micro-optimize hit collection for AND nodes
-
-* js/rsync-local (Mon Mar 9 19:44:55 2009 +0100) 1 commit
- + rsync transport: allow local paths, and fix tests
-
-* js/sideband-stderr (Tue Mar 10 22:58:09 2009 +0100) 2 commits
- + winansi: support ESC [ K (erase in line)
- + recv_sideband: Bands #2 and #3 always go to stderr
-
-* db/maint-missing-origin (Mon Mar 16 00:35:09 2009 -0700) 2 commits
- + Remove total confusion from git-fetch and git-push
- + Give error when no remote is configured
-
-* jc/maint-1.6.0-read-tree-overlay (Thu Mar 12 00:02:12 2009 -0700) 1 commit
- + read-tree A B C: do not create a bogus index and do not segfault
-
-With new test.
-
-----------------------------------------------------------------
-[Will merge to 'master' soon]
 
 * fc/parseopt-config (Tue Mar 17 10:46:37 2009 +0100) 10 commits
  + config: test for --replace-all with one argument and fix
@@ -136,16 +73,6 @@ With new test.
 
 * js/rebase-i-opt (Tue Mar 3 10:55:31 2009 +0100) 1 commit
  + rebase -i: avoid 'git reset' when possible
-
-* mh/cvsimport-tests (Mon Feb 23 06:08:14 2009 +0100) 5 commits
- + Add a test of "git cvsimport"'s handling of tags and branches
- + Add some tests of git-cvsimport's handling of vendor branches
- + Test contents of entire cvsimported "master" tree contents
- + Use CVS's -f option if available (ignore user's ~/.cvsrc file)
- + Start a library for cvsimport-related tests
-
-* hv/cvsimport-tests (Mon Mar 2 18:59:36 2009 +0100) 1 commit
- + cvsimport: add test illustrating a bug in cvsps
 
 * jc/clone-branch-rebase (Tue Mar 10 01:20:42 2009 -0700) 2 commits
  + Improve "git branch --tracking" output
@@ -172,6 +99,44 @@ This is a rewrite of a patch from Pat Notz.
  + configure: add macros to stash FLAG variables
  + configure: reorganize flow of argument checks
  + configure: ensure settings from user are also usable in the script
+
+* mv/parseopt-ls-files (Sat Mar 7 20:27:22 2009 -0500) 4 commits
+ + ls-files: fix broken --no-empty-directory
+ + t3000: use test_cmp instead of diff
+ + parse-opt: migrate builtin-ls-files.
+ + Turn the flags in struct dir_struct into a single variable
+
+The tip one was a subject for further discussion, but nothing is queued
+yet.
+
+----------------------------------------------------------------
+[Will merge to 'master' soon]
+
+* dm/maint-docco (Thu Mar 19 20:35:34 2009 -0700) 6 commits
+ + Documentation: reword example text in git-bisect.txt.
+ + Documentation: reworded the "Description" section of git-
+   bisect.txt.
+ + Documentation: minor grammatical fixes in git-branch.txt.
+ + Documentation: minor grammatical fixes in git-blame.txt.
+ + Documentation: reword the "Description" section of git-bisect.txt.
+ + Documentation: minor grammatical fixes in git-archive.txt.
+
+* mg/test-installed (Mon Mar 16 18:03:12 2009 +0100) 2 commits
+ + test-lib.sh: Allow running the test suite against installed git
+ + test-lib.sh: Test for presence of git-init in the right path.
+
+----------------------------------------------------------------
+[Discarded]
+
+* hv/cvsimport-tests (Mon Mar 2 18:59:36 2009 +0100) 1 commit
+ ? cvsimport: add test illustrating a bug in cvsps
+
+* mh/cvsimport-tests (Mon Feb 23 06:08:14 2009 +0100) 5 commits
+ ? Add a test of "git cvsimport"'s handling of tags and branches
+ ? Add some tests of git-cvsimport's handling of vendor branches
+ ? Test contents of entire cvsimported "master" tree contents
+ ? Use CVS's -f option if available (ignore user's ~/.cvsrc file)
+ ? Start a library for cvsimport-related tests
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
@@ -257,8 +222,12 @@ haven't managed to.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* jc/attributes-checkout (Fri Mar 13 21:24:08 2009 -0700) 1 commit
+* jc/attributes-checkout (Fri Mar 20 10:32:09 2009 +0100) 2 commits
+ - Add a test for checking whether gitattributes is honored by
+   checkout.
  - Read attributes from the index that is being checked out
+
+Original issue identified, and test provided by Kristian Amlie.
 
 * fg/push-default (Mon Mar 16 16:42:52 2009 +0100) 2 commits
  - Display warning for default git push with no push.default config
@@ -269,16 +238,20 @@ Some might argue that this should not give any warning but just give users
 this new configuration to play with first, and after we know we are going
 to switch default some day, start the warning.
 
-* mg/http-auth (Thu Mar 12 22:34:43 2009 -0700) 4 commits
+* mg/http-auth (Wed Mar 18 18:46:41 2009 -0500) 6 commits
+ + http-push.c: use a faux remote to pass to http_init
+ + Do not name "repo" struct "remote" in push_http.c
  + http.c: CURLOPT_NETRC_OPTIONAL is not available in ancient
    versions of cURL
  + http authentication via prompts
  + http_init(): Fix config file parsing
  + http.c: style cleanups
 
-This does only the fetch side but without any additional configuration
-variables that looked like band-aid.  Support for push side seems to be in
-the works somewhere.
+Amos King added push side support on top of my fetch side support.
+
+We may want to also pass --remote parameter from git-push to this backend
+as Daniel did as an interim solution for the fetch side, so that we can
+handle the configuration better.
 
 * db/push-cleanup (Sun Mar 8 21:06:07 2009 -0400) 2 commits
  + Move push matching and reporting logic into transport.c
@@ -294,15 +267,6 @@ commits, because your repeated merge from the other branch does not really
 add any real value to the end result, giving them absolute zero weight
 somehow feels wrong. At least it shows that your have been _active_ on the
 branch.  But I do not feel very strongly about it.
-
-* mv/parseopt-ls-files (Sat Mar 7 20:27:22 2009 -0500) 4 commits
- + ls-files: fix broken --no-empty-directory
- + t3000: use test_cmp instead of diff
- + parse-opt: migrate builtin-ls-files.
- + Turn the flags in struct dir_struct into a single variable
-
-The tip one was a subject for further discussion, but nothing is queued
-yet.
 
 ----------------------------------------------------------------
 [On Hold]
