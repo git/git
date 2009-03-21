@@ -137,7 +137,7 @@ void create_branch(const char *head,
 	int len;
 
 	len = strlen(name);
-	if (interpret_nth_last_branch(name, &ref) != len) {
+	if (interpret_branch_name(name, &ref) != len) {
 		strbuf_reset(&ref);
 		strbuf_add(&ref, name, len);
 	}

@@ -361,7 +361,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	int len, early;
 
 	len = strlen(remote);
-	if (interpret_nth_last_branch(remote, &bname) == len)
+	if (interpret_branch_name(remote, &bname) == len)
 		remote = bname.buf;
 
 	memset(branch_head, 0, sizeof(branch_head));

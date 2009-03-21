@@ -123,7 +123,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
 		int len = strlen(argv[i]);
 
-		if (interpret_nth_last_branch(argv[i], &bname) != len)
+		if (interpret_branch_name(argv[i], &bname) != len)
 			strbuf_add(&bname, argv[i], len);
 
 		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, bname.buf)) {
