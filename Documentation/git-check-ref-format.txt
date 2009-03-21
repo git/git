@@ -32,7 +32,9 @@ imposes the following rules on how refs are named:
   caret `{caret}`, colon `:`, question-mark `?`, asterisk `*`,
   or open bracket `[` anywhere;
 
-. It cannot end with a slash `/`.
+. They cannot end with a slash `/` nor a dot `.`.
+
+. They cannot contain a sequence `@{`.
 
 These rules makes it easy for shell script based tools to parse
 refnames, pathname expansion by the shell when a refname is used
@@ -50,6 +52,8 @@ refname expressions (see linkgit:git-rev-parse[1]).  Namely:
   value and store it in dstref" in fetch and push operations.
   It may also be used to select a specific object such as with
   'git-cat-file': "git cat-file blob v1.3.3:refs.c".
+
+. at-open-brace `@{` is used as a notation to access a reflog entry.
 
 With the `--branch` option, it expands a branch name shorthand and
 prints the name of the branch the shorthand refers to.

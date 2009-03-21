@@ -464,12 +464,21 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
 	unsigned char sha1[20];
 	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
+	int recovery = 0;
 
 	if (!oldname)
 		die("cannot rename the current branch while not on any.");
 
-	if (strbuf_check_branch_ref(&oldref, oldname))
-		die("Invalid branch name: '%s'", oldname);
+	if (strbuf_check_branch_ref(&oldref, oldname)) {
+		/*
+		 * Bad name --- this could be an attempt to rename a
+		 * ref that we used to allow to be created by accident.
+		 */
+		if (resolve_ref(oldref.buf, sha1, 1, NULL))
+			recovery = 1;
+		else
+			die("Invalid branch name: '%s'", oldname);
+	}
 
 	if (strbuf_check_branch_ref(&newref, newname))
 		die("Invalid branch name: '%s'", newname);
@@ -483,6 +492,9 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	if (rename_ref(oldref.buf, newref.buf, logmsg.buf))
 		die("Branch rename failed");
 	strbuf_release(&logmsg);
+
+	if (recovery)
+		warning("Renamed a misnamed branch '%s' away", oldref.buf + 11);
 
 	/* no need to pass logmsg here as HEAD didn't really move */
 	if (!strcmp(oldname, head) && create_symref("HEAD", newref.buf, NULL))
