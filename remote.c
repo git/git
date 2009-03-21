@@ -11,8 +11,8 @@ static struct refspec s_tag_refspec = {
 	0,
 	1,
 	0,
-	"refs/tags/",
-	"refs/tags/"
+	"refs/tags/*",
+	"refs/tags/*"
 };
 
 const struct refspec *tag_refspec = &s_tag_refspec;
@@ -455,16 +455,11 @@ static void read_config(void)
  */
 static int verify_refname(char *name, int is_glob)
 {
-	int result, len = -1;
+	int result;
 
-	if (is_glob) {
-		len = strlen(name);
-		assert(name[len - 1] == '/');
-		name[len - 1] = '\0';
-	}
 	result = check_ref_format(name);
-	if (is_glob)
-		name[len - 1] = '/';
+	if (is_glob && result == CHECK_REF_FORMAT_WILDCARD)
+		result = CHECK_REF_FORMAT_OK;
 	return result;
 }
 
@@ -520,16 +515,15 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 
 		if (rhs) {
 			size_t rlen = strlen(++rhs);
-			is_glob = (2 <= rlen && !strcmp(rhs + rlen - 2, "/*"));
-			rs[i].dst = xstrndup(rhs, rlen - is_glob);
+			is_glob = (1 <= rlen && strchr(rhs, '*'));
+			rs[i].dst = xstrndup(rhs, rlen);
 		}
 
 		llen = (rhs ? (rhs - lhs - 1) : strlen(lhs));
-		if (2 <= llen && !memcmp(lhs + llen - 2, "/*", 2)) {
+		if (1 <= llen && memchr(lhs, '*', llen)) {
 			if ((rhs && !is_glob) || (!rhs && fetch))
 				goto invalid;
 			is_glob = 1;
-			llen--;
 		} else if (rhs && is_glob) {
 			goto invalid;
 		}
@@ -729,6 +723,41 @@ int remote_has_url(struct remote *remote, const char *url)
 	return 0;
 }
 
+static int match_name_with_pattern(const char *key, const char *name,
+				   const char *value, char **result)
+{
+	const char *kstar = strchr(key, '*');
+	size_t klen;
+	size_t ksuffixlen;
+	size_t namelen;
+	int ret;
+	if (!kstar)
+		die("Key '%s' of pattern had no '*'", key);
+	klen = kstar - key;
+	ksuffixlen = strlen(kstar + 1);
+	namelen = strlen(name);
+	ret = !strncmp(name, key, klen) && namelen >= klen + ksuffixlen &&
+		!memcmp(name + namelen - ksuffixlen, kstar + 1, ksuffixlen);
+	if (ret && value) {
+		const char *vstar = strchr(value, '*');
+		size_t vlen;
+		size_t vsuffixlen;
+		if (!vstar)
+			die("Value '%s' of pattern has no '*'", value);
+		vlen = vstar - value;
+		vsuffixlen = strlen(vstar + 1);
+		*result = xmalloc(vlen + vsuffixlen +
+				  strlen(name) -
+				  klen - ksuffixlen + 1);
+		strncpy(*result, value, vlen);
+		strncpy(*result + vlen,
+			name + klen, namelen - klen - ksuffixlen);
+		strcpy(*result + vlen + namelen - klen - ksuffixlen,
+		       vstar + 1);
+	}
+	return ret;
+}
+
 int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 {
 	int find_src = refspec->src == NULL;
@@ -752,13 +781,7 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 		if (!fetch->dst)
 			continue;
 		if (fetch->pattern) {
-			if (!prefixcmp(needle, key)) {
-				*result = xmalloc(strlen(value) +
-						  strlen(needle) -
-						  strlen(key) + 1);
-				strcpy(*result, value);
-				strcpy(*result + strlen(value),
-				       needle + strlen(key));
+			if (match_name_with_pattern(key, needle, value, result)) {
 				refspec->force = fetch->force;
 				return 0;
 			}
@@ -1041,7 +1064,8 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
 			continue;
 		}
 
-		if (rs[i].pattern && !prefixcmp(src->name, rs[i].src))
+		if (rs[i].pattern && match_name_with_pattern(rs[i].src, src->name,
+							     NULL, NULL))
 			return rs + i;
 	}
 	if (matching_refs != -1)
@@ -1095,11 +1119,9 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 
 		} else {
 			const char *dst_side = pat->dst ? pat->dst : pat->src;
-			dst_name = xmalloc(strlen(dst_side) +
-					   strlen(src->name) -
-					   strlen(pat->src) + 2);
-			strcpy(dst_name, dst_side);
-			strcat(dst_name, src->name + strlen(pat->src));
+			if (!match_name_with_pattern(pat->src, src->name,
+						     dst_side, &dst_name))
+				die("Didn't think it matches any more");
 		}
 		dst_peer = find_ref_by_name(dst, dst_name);
 		if (dst_peer) {
@@ -1177,19 +1199,17 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 	struct ref *ret = NULL;
 	struct ref **tail = &ret;
 
-	int remote_prefix_len = strlen(refspec->src);
-	int local_prefix_len = strlen(refspec->dst);
+	char *expn_name;
 
 	for (ref = remote_refs; ref; ref = ref->next) {
 		if (strchr(ref->name, '^'))
 			continue; /* a dereference item */
-		if (!prefixcmp(ref->name, refspec->src)) {
-			const char *match;
+		if (match_name_with_pattern(refspec->src, ref->name,
+					    refspec->dst, &expn_name)) {
 			struct ref *cpy = copy_ref(ref);
-			match = ref->name + remote_prefix_len;
 
-			cpy->peer_ref = alloc_ref_with_prefix(refspec->dst,
-					local_prefix_len, match);
+			cpy->peer_ref = alloc_ref(expn_name);
+			free(expn_name);
 			if (refspec->force)
 				cpy->peer_ref->force = 1;
 			*tail = cpy;

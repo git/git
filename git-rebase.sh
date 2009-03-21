@@ -309,6 +309,10 @@ do
 			;;
 		esac
 		;;
+	--committer-date-is-author-date|--ignore-date)
+		git_am_opt="$git_am_opt $1"
+		force_rebase=t
+		;;
 	-C*)
 		git_am_opt="$git_am_opt $1"
 		;;

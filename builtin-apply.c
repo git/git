@@ -3212,7 +3212,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 
 	struct option builtin_apply_options[] = {
 		{ OPTION_CALLBACK, 0, "exclude", NULL, "path",
-			"don´t apply changes matching the given path",
+			"don't apply changes matching the given path",
 			0, option_parse_exclude },
 		{ OPTION_CALLBACK, 0, "include", NULL, "path",
 			"apply changes matching the given path",
@@ -3224,10 +3224,10 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			"ignore additions made by the patch"),
 		OPT_BOOLEAN(0, "stat", &diffstat,
 			"instead of applying the patch, output diffstat for the input"),
-		OPT_BOOLEAN(0, "allow-binary-replacement", &binary,
-			"now no-op"),
-		OPT_BOOLEAN(0, "binary", &binary,
-			"now no-op"),
+		{ OPTION_BOOLEAN, 0, "allow-binary-replacement", &binary,
+		  NULL, "old option, now no-op", PARSE_OPT_HIDDEN },
+		{ OPTION_BOOLEAN, 0, "binary", &binary,
+		  NULL, "old option, now no-op", PARSE_OPT_HIDDEN },
 		OPT_BOOLEAN(0, "numstat", &numstat,
 			"shows number of added and deleted lines in decimal notation"),
 		OPT_BOOLEAN(0, "summary", &summary,

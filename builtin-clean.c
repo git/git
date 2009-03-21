@@ -60,7 +60,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	memset(&dir, 0, sizeof(dir));
 	if (ignored_only)
-		dir.show_ignored = 1;
+		dir.flags |= DIR_SHOW_IGNORED;
 
 	if (ignored && ignored_only)
 		die("-x and -X cannot be used together");
@@ -69,7 +69,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		die("clean.requireForce%s set and -n or -f not given; "
 		    "refusing to clean", config_set ? "" : " not");
 
-	dir.show_other_directories = 1;
+	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 
 	if (!ignored)
 		setup_standard_excludes(&dir);

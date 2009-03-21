@@ -32,19 +32,57 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 	return 0;
 }
 
-static int should_setup_rebase(const struct tracking *tracking)
+static int should_setup_rebase(const char *origin)
 {
 	switch (autorebase) {
 	case AUTOREBASE_NEVER:
 		return 0;
 	case AUTOREBASE_LOCAL:
-		return tracking->remote == NULL;
+		return origin == NULL;
 	case AUTOREBASE_REMOTE:
-		return tracking->remote != NULL;
+		return origin != NULL;
 	case AUTOREBASE_ALWAYS:
 		return 1;
 	}
 	return 0;
+}
+
+void install_branch_config(int flag, const char *local, const char *origin, const char *remote)
+{
+	struct strbuf key = STRBUF_INIT;
+	int rebasing = should_setup_rebase(origin);
+
+	strbuf_addf(&key, "branch.%s.remote", local);
+	git_config_set(key.buf, origin ? origin : ".");
+
+	strbuf_reset(&key);
+	strbuf_addf(&key, "branch.%s.merge", local);
+	git_config_set(key.buf, remote);
+
+	if (rebasing) {
+		strbuf_reset(&key);
+		strbuf_addf(&key, "branch.%s.rebase", local);
+		git_config_set(key.buf, "true");
+	}
+
+	if (flag & BRANCH_CONFIG_VERBOSE) {
+		strbuf_reset(&key);
+
+		strbuf_addstr(&key, origin ? "remote" : "local");
+
+		/* Are we tracking a proper "branch"? */
+		if (!prefixcmp(remote, "refs/heads/")) {
+			strbuf_addf(&key, " branch %s", remote + 11);
+			if (origin)
+				strbuf_addf(&key, " from %s", origin);
+		}
+		else
+			strbuf_addf(&key, " ref %s", remote);
+		printf("Branch %s set up to track %s%s.\n",
+		       local, key.buf,
+		       rebasing ? " by rebasing" : "");
+	}
+	strbuf_release(&key);
 }
 
 /*
@@ -55,7 +93,6 @@ static int should_setup_rebase(const struct tracking *tracking)
 static int setup_tracking(const char *new_ref, const char *orig_ref,
                           enum branch_track track)
 {
-	char key[1024];
 	struct tracking tracking;
 
 	if (strlen(new_ref) > 1024 - 7 - 7 - 1)
@@ -80,19 +117,10 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 		return error("Not tracking: ambiguous information for ref %s",
 				orig_ref);
 
-	sprintf(key, "branch.%s.remote", new_ref);
-	git_config_set(key, tracking.remote ?  tracking.remote : ".");
-	sprintf(key, "branch.%s.merge", new_ref);
-	git_config_set(key, tracking.src ? tracking.src : orig_ref);
-	printf("Branch %s set up to track %s branch %s.\n", new_ref,
-		tracking.remote ? "remote" : "local", orig_ref);
-	if (should_setup_rebase(&tracking)) {
-		sprintf(key, "branch.%s.rebase", new_ref);
-		git_config_set(key, "true");
-		printf("This branch will rebase on pull.\n");
-	}
-	free(tracking.src);
+	install_branch_config(BRANCH_CONFIG_VERBOSE, new_ref, tracking.remote,
+			      tracking.src ? tracking.src : orig_ref);
 
+	free(tracking.src);
 	return 0;
 }
 

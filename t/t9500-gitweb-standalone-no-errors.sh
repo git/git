@@ -63,18 +63,10 @@ gitweb_run () {
 	# gitweb.log is left for debugging
 }
 
-safe_chmod () {
-	chmod "$1" "$2" &&
-	if [ "$(git config --get core.filemode)" = false ]
-	then
-		git update-index --chmod="$1" "$2"
-	fi
-}
-
 . ./test-lib.sh
 
 perl -MEncode -e 'decode_utf8("", Encode::FB_CROAK)' >/dev/null 2>&1 || {
-    test_expect_success 'skipping gitweb tests, perl version is too old' :
+    say 'skipping gitweb tests, perl version is too old'
     test_done
     exit
 }
@@ -242,7 +234,7 @@ test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): mode change' \
-	'safe_chmod +x new_file &&
+	'test_chmod +x new_file &&
 	 git commit -a -m "Mode changed." &&
 	 gitweb_run "p=.git;a=commitdiff"'
 test_debug 'cat gitweb.log'
@@ -281,7 +273,7 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'commitdiff(0): mode change and modified' \
 	'echo "New line" >> file2 &&
-	 safe_chmod +x file2 &&
+	 test_chmod +x file2 &&
 	 git commit -a -m "Mode change and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
 test_debug 'cat gitweb.log'
@@ -308,7 +300,7 @@ test_expect_success \
 	'commitdiff(0): renamed, mode change and modified' \
 	'git mv file3 file2 &&
 	 echo "Propter nomen suum." >> file2 &&
-	 safe_chmod +x file2 &&
+	 test_chmod +x file2 &&
 	 git commit -a -m "File rename, mode change and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
 test_debug 'cat gitweb.log'
@@ -425,10 +417,10 @@ test_expect_success \
 	 git add 03-new &&
 	 git mv 04-rename-from 04-rename-to &&
 	 echo "Changed" >> 04-rename-to &&
-	 safe_chmod +x 05-mode-change &&
+	 test_chmod +x 05-mode-change &&
 	 rm -f 06-file-or-symlink && ln -s 01-change 06-file-or-symlink &&
 	 echo "Changed and have mode changed" > 07-change-mode-change	&&
-	 safe_chmod +x 07-change-mode-change &&
+	 test_chmod +x 07-change-mode-change &&
 	 git commit -a -m "Large commit" &&
 	 git checkout master'
 

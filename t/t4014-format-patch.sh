@@ -16,9 +16,7 @@ test_expect_success setup '
 	git checkout -b side &&
 
 	for i in 1 2 5 6 A B C 7 8 9 10; do echo "$i"; done >file &&
-	chmod +x elif &&
-	git update-index file elif &&
-	git update-index --chmod=+x elif &&
+	test_chmod +x elif &&
 	git commit -m "Side changes #1" &&
 
 	for i in D E F; do echo "$i"; done >>file &&

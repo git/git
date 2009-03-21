@@ -83,9 +83,9 @@ test_expect_success 'rebase a single mode change' '
      git checkout -b modechange HEAD^ &&
      echo 1 > X &&
      git add X &&
-     chmod a+x A &&
+     test_chmod +x A &&
      test_tick &&
-     git commit -m modechange A X &&
+     git commit -m modechange &&
      GIT_TRACE=1 git rebase master
 '
 

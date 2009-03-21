@@ -459,4 +459,15 @@ test_expect_success 'submodule rebase -i' '
 	FAKE_LINES="1 squash 2 3" git rebase -i A
 '
 
+test_expect_success 'avoid unnecessary reset' '
+	git checkout master &&
+	test-chmtime =123456789 file3 &&
+	git update-index --refresh &&
+	HEAD=$(git rev-parse HEAD) &&
+	git rebase -i HEAD~4 &&
+	test $HEAD = $(git rev-parse HEAD) &&
+	MTIME=$(test-chmtime -v +0 file3 | sed 's/[^0-9].*$//') &&
+	test 123456789 = $MTIME
+'
+
 test_done
