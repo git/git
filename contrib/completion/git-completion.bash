@@ -899,7 +899,7 @@ _git_diff ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--cached --pickaxe-all --pickaxe-regex
+		__gitcomp "--cached --staged --pickaxe-all --pickaxe-regex
 			--base --ours --theirs
 			$__git_diff_common_options
 			"
