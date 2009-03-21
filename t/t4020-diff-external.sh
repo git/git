@@ -136,4 +136,20 @@ test_expect_success 'GIT_EXTERNAL_DIFF with more than one changed files' '
 	GIT_EXTERNAL_DIFF=echo git diff
 '
 
+echo "#!$SHELL_PATH" >fake-diff.sh
+cat >> fake-diff.sh <<\EOF
+cat $2 >> crlfed.txt
+EOF
+chmod a+x fake-diff.sh
+
+keep_only_cr () {
+	tr -dc '\015'
+}
+
+test_expect_success 'external diff with autocrlf = true' '
+	git config core.autocrlf true &&
+	GIT_EXTERNAL_DIFF=./fake-diff.sh git diff &&
+	test $(wc -l < crlfed.txt) = $(cat crlfed.txt | keep_only_cr | wc -c)
+'
+
 test_done
