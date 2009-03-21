@@ -353,16 +353,11 @@ struct branch_info {
 static void setup_branch_path(struct branch_info *branch)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int ret;
 
-	if ((ret = interpret_branch_name(branch->name, &buf))
-	    && ret == strlen(branch->name)) {
+	strbuf_branchname(&buf, branch->name);
+	if (strcmp(buf.buf, branch->name))
 		branch->name = xstrdup(buf.buf);
-		strbuf_splice(&buf, 0, 0, "refs/heads/", 11);
-	} else {
-		strbuf_addstr(&buf, "refs/heads/");
-		strbuf_addstr(&buf, branch->name);
-	}
+	strbuf_splice(&buf, 0, 0, "refs/heads/", 11);
 	branch->path = strbuf_detach(&buf, NULL);
 }
 

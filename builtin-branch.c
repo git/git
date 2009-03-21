@@ -121,11 +121,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			die("Couldn't look up commit object for HEAD");
 	}
 	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
-		int len = strlen(argv[i]);
-
-		if (interpret_branch_name(argv[i], &bname) != len)
-			strbuf_add(&bname, argv[i], len);
-
+		strbuf_branchname(&bname, argv[i]);
 		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, bname.buf)) {
 			error("Cannot delete the branch '%s' "
 			      "which you are currently on.", bname.buf);

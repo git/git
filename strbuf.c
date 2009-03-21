@@ -357,3 +357,12 @@ int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint)
 
 	return len;
 }
+
+int strbuf_branchname(struct strbuf *sb, const char *name)
+{
+	int len = strlen(name);
+	if (interpret_branch_name(name, sb) == len)
+		return 0;
+	strbuf_add(sb, name, len);
+	return len;
+}

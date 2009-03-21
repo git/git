@@ -134,13 +134,8 @@ void create_branch(const char *head,
 	char *real_ref, msg[PATH_MAX + 20];
 	struct strbuf ref = STRBUF_INIT;
 	int forcing = 0;
-	int len;
 
-	len = strlen(name);
-	if (interpret_branch_name(name, &ref) != len) {
-		strbuf_reset(&ref);
-		strbuf_add(&ref, name, len);
-	}
+	strbuf_branchname(&ref, name);
 	strbuf_splice(&ref, 0, 0, "refs/heads/", 11);
 
 	if (check_ref_format(ref.buf))
