@@ -113,5 +113,22 @@ test_expect_success 'packed unreachable obs in alternate ODB are not loosened' '
 	test_must_fail git show $csha1
 '
 
+test_expect_failure 'local packed unreachable obs that exist in alternate ODB are not loosened' '
+	echo `pwd`/alt_objects > .git/objects/info/alternates &&
+	echo "$csha1" | git pack-objects --non-empty --all --reflog pack &&
+	rm -f .git/objects/pack/* &&
+	mv pack-* .git/objects/pack/ &&
+	# The pack-objects call on the next line is equivalent to
+	# git repack -A -d without the call to prune-packed
+	git pack-objects --honor-pack-keep --non-empty --all --reflog \
+	    --unpack-unreachable </dev/null pack &&
+	rm -f .git/objects/pack/* &&
+	mv pack-* .git/objects/pack/ &&
+	test 0 = $(git verify-pack -v -- .git/objects/pack/*.idx |
+		egrep "^$csha1 " | sort | uniq | wc -l) &&
+	echo > .git/objects/info/alternates &&
+	test_must_fail git show $csha1
+'
+
 test_done
 
