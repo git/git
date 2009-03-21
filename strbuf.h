@@ -132,5 +132,6 @@ extern void stripspace(struct strbuf *buf, int skip_comments);
 extern int launch_editor(const char *path, struct strbuf *buffer, const char *const *env);
 
 extern int strbuf_branchname(struct strbuf *sb, const char *name);
+extern int strbuf_check_branch_ref(struct strbuf *sb, const char *name);
 
 #endif /* STRBUF_H */

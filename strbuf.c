@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "refs.h"
 
 int prefixcmp(const char *str, const char *prefix)
 {
@@ -365,4 +366,11 @@ int strbuf_branchname(struct strbuf *sb, const char *name)
 		return 0;
 	strbuf_add(sb, name, len);
 	return len;
+}
+
+int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
+{
+	strbuf_branchname(sb, name);
+	strbuf_splice(sb, 0, 0, "refs/heads/", 11);
+	return check_ref_format(sb->buf);
 }
