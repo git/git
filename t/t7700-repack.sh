@@ -113,7 +113,7 @@ test_expect_success 'packed unreachable obs in alternate ODB are not loosened' '
 	test_must_fail git show $csha1
 '
 
-test_expect_failure 'local packed unreachable obs that exist in alternate ODB are not loosened' '
+test_expect_success 'local packed unreachable obs that exist in alternate ODB are not loosened' '
 	echo `pwd`/alt_objects > .git/objects/info/alternates &&
 	echo "$csha1" | git pack-objects --non-empty --all --reflog pack &&
 	rm -f .git/objects/pack/* &&
