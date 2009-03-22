@@ -821,7 +821,7 @@ Date: $date
 Message-Id: $message_id
 X-Mailer: git-send-email $gitversion
 ";
-	if ($thread && $reply_to) {
+	if ($reply_to) {
 
 		$header .= "In-Reply-To: $reply_to\n";
 		$header .= "References: $references\n";
