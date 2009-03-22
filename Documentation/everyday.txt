@@ -98,7 +98,7 @@ Use a tarball as a starting point for a new repository.::
 ------------
 $ tar zxf frotz.tar.gz
 $ cd frotz
-$ git-init
+$ git init
 $ git add . <1>
 $ git commit -m "import of frotz source tree."
 $ git tag v2.43 <2>
