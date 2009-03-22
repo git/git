@@ -104,27 +104,8 @@ release, unless otherwise noted.
 Here are fixes that this release has, but have not been backported to
 v1.6.2.X series.
 
-* "git diff --pickaxe-regexp" did not count overlapping matches
-  correctly (backport by cherry-picking 50fd699).
-
-* "git-fetch" in a repository that was not cloned from anywhere said
-  it cannot find 'origin', which was hard to understand for new people.
-
 * git-gc spent excessive amount of time to decide if an object appears
   in a locally existing pack (if needed, backport by merging 69e020a).
-
-* "git-ls-files --deleted" did not work well with GIT_DIR&GIT_WORK_TREE
-  (backport by cherry-picking 8ad3dae).
-
-* "git-read-tree A B C..." without -m option has been broken for a long time
-  (backport by merging jc/maint-1.6.0-read-tree-overlay)
-
-* 'git-submodule add' did not tolerate extra slashes and ./ in the
-  path it accepted from the command line; it now is more lenient
- (if needed, backport by merging db75ada).
-
-* git-send-email ignored --in-reply-to when --no-thread was given
-  (backport by merging tr/maint-1.6.0-send-email-irt)
 
 ---
 exec >/var/tmp/1
