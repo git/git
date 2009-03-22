@@ -457,7 +457,7 @@ test_create_repo () {
 	repo="$1"
 	mkdir -p "$repo"
 	cd "$repo" || error "Cannot setup test environment"
-	"$GIT_EXEC_PATH/git" init "--template=$owd/../templates/blt/" >&3 2>&4 ||
+	"$GIT_EXEC_PATH/git-init" "--template=$owd/../templates/blt/" >&3 2>&4 ||
 	error "cannot run git init -- have you built things yet?"
 	mv .git/hooks .git/hooks-disabled
 	cd "$owd"
@@ -517,8 +517,16 @@ test_done () {
 TEST_DIRECTORY=$(pwd)
 if test -z "$valgrind"
 then
-	PATH=$TEST_DIRECTORY/..:$PATH
-	GIT_EXEC_PATH=$TEST_DIRECTORY/..
+	if test -z "$GIT_TEST_INSTALLED"
+	then
+		PATH=$TEST_DIRECTORY/..:$PATH
+		GIT_EXEC_PATH=$TEST_DIRECTORY/..
+	else
+		GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
+		error "Cannot run git from $GIT_TEST_INSTALLED."
+		PATH=$GIT_TEST_INSTALLED:$TEST_DIRECTORY/..:$PATH
+		GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
+	fi
 else
 	make_symlink () {
 		test -h "$2" &&
