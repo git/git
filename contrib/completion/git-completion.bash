@@ -952,6 +952,21 @@ _git_format_patch ()
 	__git_complete_revlist
 }
 
+_git_fsck ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--tags --root --unreachable --cache --no-reflogs --full
+			--strict --verbose --lost-found
+			"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_gc ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -1880,6 +1895,7 @@ _git ()
 	diff)        _git_diff ;;
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
+	fsck)        _git_fsck ;;
 	gc)          _git_gc ;;
 	grep)        _git_grep ;;
 	help)        _git_help ;;
