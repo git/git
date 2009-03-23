@@ -1264,8 +1264,8 @@ _git_send_email ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--bcc --cc --cc-cmd --chain-reply-to --compose
-			--dry-run --envelope-sender --from --identity
+		__gitcomp "--annotate --bcc --cc --cc-cmd --chain-reply-to
+			--compose --dry-run --envelope-sender --from --identity
 			--in-reply-to --no-chain-reply-to --no-signed-off-by-cc
 			--no-suppress-from --no-thread --quiet
 			--signed-off-by-cc --smtp-pass --smtp-server
