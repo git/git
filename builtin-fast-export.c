@@ -362,7 +362,10 @@ static void get_tags_and_duplicates(struct object_array *pending,
 			break;
 		case OBJ_TAG:
 			tag = (struct tag *)e->item;
+
+			/* handle nested tags */
 			while (tag && tag->object.type == OBJ_TAG) {
+				parse_object(tag->object.sha1);
 				string_list_append(full_name, extra_refs)->util = tag;
 				tag = (struct tag *)tag->tagged;
 			}
@@ -375,7 +378,7 @@ static void get_tags_and_duplicates(struct object_array *pending,
 			case OBJ_BLOB:
 				handle_object(tag->object.sha1);
 				continue;
-			default:
+			default: /* OBJ_TAG (nested tags) is already handled */
 				warning("Tag points to object of unexpected type %s, skipping.",
 					typename(tag->object.type));
 				continue;
