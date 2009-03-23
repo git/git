@@ -1830,7 +1830,9 @@ proc setoptions {} {
     option add *Button.font uifont startupFile
     option add *Checkbutton.font uifont startupFile
     option add *Radiobutton.font uifont startupFile
-    option add *Menu.font uifont startupFile
+    if {[tk windowingsystem] ne "aqua"} {
+	option add *Menu.font uifont startupFile
+    }
     option add *Menubutton.font uifont startupFile
     option add *Label.font uifont startupFile
     option add *Message.font uifont startupFile
@@ -1910,8 +1912,8 @@ proc makewindow {} {
 
     # The "mc" arguments here are purely so that xgettext
     # sees the following string as needing to be translated
-    makemenu .bar {
-	{mc "File" cascade {
+    set file {
+	mc "File" cascade {
 	    {mc "Update" command updatecommits -accelerator F5}
 	    {mc "Reload" command reloadcommits -accelerator Meta1-F5}
 	    {mc "Reread references" command rereadrefs}
@@ -1921,21 +1923,41 @@ proc makewindow {} {
 	    {xx "" separator}
 	    {mc "Quit" command doquit -accelerator Meta1-Q}
 	}}
-	{mc "Edit" cascade {
+    set edit {
+	mc "Edit" cascade {
 	    {mc "Preferences" command doprefs}
 	}}
-	{mc "View" cascade {
+    set view {
+	mc "View" cascade {
 	    {mc "New view..." command {newview 0} -accelerator Shift-F4}
 	    {mc "Edit view..." command editview -state disabled -accelerator F4}
 	    {mc "Delete view" command delview -state disabled}
 	    {xx "" separator}
 	    {mc "All files" radiobutton {selectedview 0} -command {showview 0}}
 	}}
-	{mc "Help" cascade {
+    if {[tk windowingsystem] ne "aqua"} {
+	set help {
+	mc "Help" cascade {
 	    {mc "About gitk" command about}
 	    {mc "Key bindings" command keys}
 	}}
+	set bar [list $file $edit $view $help]
+    } else {
+	proc ::tk::mac::ShowPreferences {} {doprefs}
+	proc ::tk::mac::Quit {} {doquit}
+	lset file end [lreplace [lindex $file end] end-1 end]
+	set apple {
+	xx "Apple" cascade {
+	    {mc "About gitk" command about}
+	    {xx "" separator}
+	}}
+	set help {
+	mc "Help" cascade {
+	    {mc "Key bindings" command keys}
+	}}
+	set bar [list $apple $file $view $help]
     }
+    makemenu .bar $bar
     . configure -menu .bar
 
     # the gui has upper and lower half, parts of a paned window.
@@ -2231,8 +2253,10 @@ proc makewindow {} {
 
     if {[tk windowingsystem] eq {aqua}} {
         set M1B M1
+        set ::BM "3"
     } else {
         set M1B Control
+        set ::BM "2"
     }
 
     bind .pwbottom <Configure> {resizecdetpanes %W %w}
@@ -2250,10 +2274,14 @@ proc makewindow {} {
                 set delta [expr {- (%D)}]
                 allcanvs yview scroll $delta units
             }
+            bindall <Shift-MouseWheel> {
+                set delta [expr {- (%D)}]
+                $canv xview scroll $delta units
+            }
         }
     }
-    bindall <2> "canvscan mark %W %x %y"
-    bindall <B2-Motion> "canvscan dragto %W %x %y"
+    bindall <$::BM> "canvscan mark %W %x %y"
+    bindall <B$::BM-Motion> "canvscan dragto %W %x %y"
     bindkey <Home> selfirstline
     bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
@@ -10690,9 +10718,15 @@ catch {
     }
 }
 
-set mainfont {Helvetica 9}
-set textfont {Courier 9}
-set uifont {Helvetica 9 bold}
+if {[tk windowingsystem] eq "aqua"} {
+    set mainfont {{Lucida Grande} 9}
+    set textfont {Monaco 9}
+    set uifont {{Lucida Grande} 9 bold}
+} else {
+    set mainfont {Helvetica 9}
+    set textfont {Courier 9}
+    set uifont {Helvetica 9 bold}
+}
 set tabstop 8
 set findmergefiles 0
 set maxgraphpct 50
@@ -10713,7 +10747,11 @@ set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autoselect 1
 set perfile_attrs 0
 
-set extdifftool "meld"
+if {[tk windowingsystem] eq "aqua"} {
+    set extdifftool "opendiff"
+} else {
+    set extdifftool "meld"
+}
 
 set colors {green red blue magenta darkgrey brown orange}
 set bgcolor white
