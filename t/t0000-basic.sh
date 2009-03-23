@@ -57,6 +57,21 @@ test_expect_failure 'pretend we have a known breakage' '
 test_expect_failure 'pretend we have fixed a known breakage' '
     :
 '
+test_set_prereq HAVEIT
+haveit=no
+test_expect_success HAVEIT 'test runs if prerequisite is satisfied' '
+    test_have_prereq HAVEIT &&
+    haveit=yes
+'
+donthaveit=yes
+test_expect_success DONTHAVEIT 'unmet prerequisite causes test to be skipped' '
+    donthaveit=no
+'
+if test $haveit$donthaveit != yesyes
+then
+	say "bug in test framework: prerequisite tags do not work reliably"
+	exit 1
+fi
 
 ################################################################
 # Basics of the basics
@@ -108,7 +123,7 @@ for p in $paths
 do
     echo "hello $p" >$p
 done
-if test -z "$no_symlinks"
+if test_have_prereq SYMLINKS
 then
 	for p in $paths
 	do
@@ -144,7 +159,6 @@ $expectfilter >expected <<\EOF
 100644 00fb5908cb97c2564a9783c0c64087333b3b464f 0	path3/subp3/file3
 120000 6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c 0	path3/subp3/file3sym
 EOF
-
 test_expect_success \
     'validate git ls-files output for a known tree.' \
     'test_cmp expected current'
@@ -165,8 +179,7 @@ cat >expected <<\EOF
 040000 tree 58a09c23e2ca152193f2786e06986b7b6712bdbe	path2
 040000 tree 21ae8269cacbe57ae09138dcc3a2887f904d02b3	path3
 EOF
-test -z "$no_symlinks" &&
-test_expect_success \
+test_expect_success SYMLINKS \
     'git ls-tree output for a known tree.' \
     'test_cmp expected current'
 
@@ -206,8 +219,7 @@ cat >expected <<\EOF
 100644 blob 00fb5908cb97c2564a9783c0c64087333b3b464f	path3/subp3/file3
 120000 blob 6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c	path3/subp3/file3sym
 EOF
-test -z "$no_symlinks" &&
-test_expect_success \
+test_expect_success SYMLINKS \
     'git ls-tree -r output for a known tree.' \
     'test_cmp expected current'
 
@@ -315,8 +327,7 @@ test_expect_success 'update-index D/F conflict' '
 	test $numpath0 = 1
 '
 
-test -z "$no_symlinks" &&
-test_expect_success 'absolute path works as expected' '
+test_expect_success SYMLINKS 'absolute path works as expected' '
 	mkdir first &&
 	ln -s ../.git first/.git &&
 	mkdir second &&

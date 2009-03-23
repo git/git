@@ -4,6 +4,13 @@ test_description='test automatic tag following'
 
 . ./test-lib.sh
 
+case $(uname -s) in
+*MINGW*)
+	say "GIT_DEBUG_SEND_PACK not supported - skipping tests"
+	test_done
+	exit
+esac
+
 # End state of the repository:
 #
 #         T - tag1          S - tag2
@@ -41,12 +48,7 @@ cat - <<EOF >expect
 want $A
 #E
 EOF
-
-case $(uname -s) in
-*MINGW*) test_expect=test_expect_failure;;
-*)       test_expect=test_expect_success;;
-esac
-$test_expect 'fetch A (new commit : 1 connection)' '
+test_expect_success 'fetch A (new commit : 1 connection)' '
 	rm -f $U
 	(
 		cd cloned &&
@@ -76,11 +78,7 @@ want $C
 want $T
 #E
 EOF
-case $(uname -s) in
-*MINGW*) test_expect=test_expect_failure;;
-*)       test_expect=test_expect_success;;
-esac
-$test_expect 'fetch C, T (new branch, tag : 1 connection)' '
+test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
 	rm -f $U
 	(
 		cd cloned &&
@@ -116,11 +114,7 @@ want $B
 want $S
 #E
 EOF
-case $(uname -s) in
-*MINGW*) test_expect=test_expect_failure;;
-*)       test_expect=test_expect_success;;
-esac
-$test_expect 'fetch B, S (commit and tag : 1 connection)' '
+test_expect_success 'fetch B, S (commit and tag : 1 connection)' '
 	rm -f $U
 	(
 		cd cloned &&
@@ -140,11 +134,7 @@ want $B
 want $S
 #E
 EOF
-case $(uname -s) in
-*MINGW*) test_expect=test_expect_failure;;
-*)       test_expect=test_expect_success;;
-esac
-$test_expect 'new clone fetch master and tags' '
+test_expect_success 'new clone fetch master and tags' '
 	git branch -D cat
 	rm -f $U
 	(

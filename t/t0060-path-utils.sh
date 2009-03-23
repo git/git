@@ -8,7 +8,7 @@ test_description='Test various path utilities'
 . ./test-lib.sh
 
 norm_path() {
-	test_expect_success "normalize path: $1 => $2" \
+	test_expect_success $3 "normalize path: $1 => $2" \
 	"test \"\$(test-path-utils normalize_path_copy '$1')\" = '$2'"
 }
 
@@ -34,6 +34,16 @@ ancestor() {
 	 test \"\$actual\" = '$expected'"
 }
 
+# Absolute path tests must be skipped on Windows because due to path mangling
+# the test program never sees a POSIX-style absolute path
+case $(uname -s) in
+*MINGW*)
+	;;
+*)
+	test_set_prereq POSIX
+	;;
+esac
+
 norm_path "" ""
 norm_path . ""
 norm_path ./ ""
@@ -57,13 +67,6 @@ norm_path d1/s1///s2/..//../s3/ d1/s3/
 norm_path d1/s1//../s2/../../d2 d2
 norm_path d1/.../d2 d1/.../d2
 norm_path d1/..././../d2 d1/d2
-
-# Absolute path tests must be skipped on Windows because due to path mangling
-# the test program never sees a POSIX-style absolute path
-case $(uname -s) in
-*MINGW*)
-	;;
-*)
 
 norm_path / / POSIX
 norm_path // / POSIX
@@ -89,9 +92,6 @@ norm_path /d1/s1///s2/..//../s3/ /d1/s3/ POSIX
 norm_path /d1/s1//../s2/../../d2 /d2 POSIX
 norm_path /d1/.../d2 /d1/.../d2 POSIX
 norm_path /d1/..././../d2 /d1/d2 POSIX
-
-	;;
-esac
 
 ancestor / "" -1
 ancestor / / -1

@@ -3,6 +3,11 @@
 test_description='merge-recursive: handle file mode'
 . ./test-lib.sh
 
+if ! test "$(git config --bool core.filemode)" = false
+then
+	test_set_prereq FILEMODE
+fi
+
 test_expect_success 'mode change in one branch: keep changed version' '
 	: >file1 &&
 	git add file1 &&
@@ -16,7 +21,11 @@ test_expect_success 'mode change in one branch: keep changed version' '
 	git commit -m b1 &&
 	git checkout a1 &&
 	git merge-recursive master -- a1 b1 &&
-	{ test -x file1 || git ls-files -s file1 | grep ^100755; }
+	git ls-files -s file1 | grep ^100755
+'
+
+test_expect_success FILEMODE 'verify executable bit on file' '
+	test -x file1
 '
 
 test_expect_success 'mode change in both branches: expect conflict' '
@@ -41,7 +50,11 @@ test_expect_success 'mode change in both branches: expect conflict' '
 		echo "100644 $H 3	file2"
 	) >expect &&
 	test_cmp actual expect &&
-	{ test -x file2 || git ls-files -s file2 | grep ^100755; }
+	git ls-files -s file2 | grep ^100755
+'
+
+test_expect_success FILEMODE 'verify executable bit on file' '
+	test -x file2
 '
 
 test_done

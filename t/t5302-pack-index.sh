@@ -69,32 +69,27 @@ test_expect_success \
     'index v2: force some 64-bit offsets with pack-objects' \
     'pack3=$(git pack-objects --index-version=2,0x40000 test-3 <obj-list)'
 
-have_64bits=
 if msg=$(git verify-pack -v "test-3-${pack3}.pack" 2>&1) ||
 	! (echo "$msg" | grep "pack too large .* off_t")
 then
-	have_64bits=t
+	test_set_prereq OFF64_T
 else
 	say "skipping tests concerning 64-bit offsets"
 fi
 
-test "$have_64bits" &&
-test_expect_success \
+test_expect_success OFF64_T \
     'index v2: verify a pack with some 64-bit offsets' \
     'git verify-pack -v "test-3-${pack3}.pack"'
 
-test "$have_64bits" &&
-test_expect_success \
+test_expect_success OFF64_T \
     '64-bit offsets: should be different from previous index v2 results' \
     '! cmp "test-2-${pack2}.idx" "test-3-${pack3}.idx"'
 
-test "$have_64bits" &&
-test_expect_success \
+test_expect_success OFF64_T \
     'index v2: force some 64-bit offsets with index-pack' \
     'git index-pack --index-version=2,0x40000 -o 3.idx "test-1-${pack1}.pack"'
 
-test "$have_64bits" &&
-test_expect_success \
+test_expect_success OFF64_T \
     '64-bit offsets: index-pack result should match pack-objects one' \
     'cmp "test-3-${pack3}.idx" "3.idx"'
 

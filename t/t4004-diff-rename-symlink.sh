@@ -12,11 +12,11 @@ by an edit for them.
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh
 
-if test "$no_symlinks"
+if ! test_have_prereq SYMLINKS
 then
-    say 'Symbolic links not supported, skipping tests.'
-    test_done
-    exit
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+	exit
 fi
 
 test_expect_success \

@@ -4,9 +4,11 @@ test_description='typechange rename detection'
 
 . ./test-lib.sh
 
-if test "$no_symlinks"; then
-	say "symbolic links not supported - skipping test"
-	test_done;
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+	exit
 fi
 
 test_expect_success setup '

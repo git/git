@@ -4,9 +4,11 @@ test_description='pulling from symlinked subdir'
 
 . ./test-lib.sh
 
-if test "$no_symlinks"; then
-	say "symbolic links not supported - skipping tests"
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
 	test_done
+	exit
 fi
 
 # The scenario we are building:

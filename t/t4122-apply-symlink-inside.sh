@@ -3,7 +3,7 @@
 test_description='apply to deeper directory without getting fooled with symlink'
 . ./test-lib.sh
 
-if test "$no_symlinks"
+if ! test_have_prereq SYMLINKS
 then
 	say 'Symbolic links not supported, skipping tests.'
 	test_done

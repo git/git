@@ -206,8 +206,7 @@ test_expect_success 'git mv should not change sha1 of moved cache entry' '
 
 rm -f dirty dirty2
 
-test "$no_symlinks" ||
-test_expect_success 'git mv should overwrite symlink to a file' '
+test_expect_success SYMLINKS 'git mv should overwrite symlink to a file' '
 
 	rm -fr .git &&
 	git init &&
@@ -226,8 +225,7 @@ test_expect_success 'git mv should overwrite symlink to a file' '
 
 rm -f moved symlink
 
-test "$no_symlinks" ||
-test_expect_success 'git mv should overwrite file with a symlink' '
+test_expect_success SYMLINKS 'git mv should overwrite file with a symlink' '
 
 	rm -fr .git &&
 	git init &&

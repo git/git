@@ -246,7 +246,7 @@ test_expect_success \
 	 gitweb_run "p=.git;a=commitdiff"'
 test_debug 'cat gitweb.log'
 
-test_expect_success \
+test_expect_success SYMLINKS \
 	'commitdiff(0): file to symlink' \
 	'rm renamed_file &&
 	 ln -s file renamed_file &&
@@ -308,7 +308,7 @@ test_debug 'cat gitweb.log'
 # ----------------------------------------------------------------------
 # commitdiff testing (taken from t4114-apply-typechange.sh)
 
-test_expect_success 'setup typechange commits' '
+test_expect_success SYMLINKS 'setup typechange commits' '
 	echo "hello world" > foo &&
 	echo "hi planet" > bar &&
 	git update-index --add foo bar &&
@@ -418,7 +418,12 @@ test_expect_success \
 	 git mv 04-rename-from 04-rename-to &&
 	 echo "Changed" >> 04-rename-to &&
 	 test_chmod +x 05-mode-change &&
-	 rm -f 06-file-or-symlink && ln -s 01-change 06-file-or-symlink &&
+	 rm -f 06-file-or-symlink &&
+	 if test_have_prereq SYMLINKS; then
+		ln -s 01-change 06-file-or-symlink
+	 else
+		printf %s 01-change > 06-file-or-symlink
+	 fi &&
 	 echo "Changed and have mode changed" > 07-change-mode-change	&&
 	 test_chmod +x 07-change-mode-change &&
 	 git commit -a -m "Large commit" &&

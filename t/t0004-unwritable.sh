@@ -4,13 +4,6 @@ test_description='detect unwritable repository and fail correctly'
 
 . ./test-lib.sh
 
-case "$(uname -s)" in
-*MINGW*)
-	say "chmod a-w .git/objects does not make directory unwritable - skipping tests"
-	test_done
-	;;
-esac
-
 test_expect_success setup '
 
 	>file &&
@@ -22,7 +15,7 @@ test_expect_success setup '
 
 '
 
-test_expect_success 'write-tree should notice unwritable repository' '
+test_expect_success POSIXPERM 'write-tree should notice unwritable repository' '
 
 	(
 		chmod a-w .git/objects .git/objects/?? &&
@@ -34,7 +27,7 @@ test_expect_success 'write-tree should notice unwritable repository' '
 
 '
 
-test_expect_success 'commit should notice unwritable repository' '
+test_expect_success POSIXPERM 'commit should notice unwritable repository' '
 
 	(
 		chmod a-w .git/objects .git/objects/?? &&
@@ -46,7 +39,7 @@ test_expect_success 'commit should notice unwritable repository' '
 
 '
 
-test_expect_success 'update-index should notice unwritable repository' '
+test_expect_success POSIXPERM 'update-index should notice unwritable repository' '
 
 	(
 		echo 6O >file &&
@@ -59,7 +52,7 @@ test_expect_success 'update-index should notice unwritable repository' '
 
 '
 
-test_expect_success 'add should notice unwritable repository' '
+test_expect_success POSIXPERM 'add should notice unwritable repository' '
 
 	(
 		echo b >file &&

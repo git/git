@@ -9,11 +9,11 @@ test_description='git apply symlinks and partial files
 
 . ./test-lib.sh
 
-if test "$no_symlinks"
+if ! test_have_prereq SYMLINKS
 then
-    say 'Symbolic links not supported, skipping tests.'
-    test_done
-    exit
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+	exit
 fi
 
 test_expect_success setup '
