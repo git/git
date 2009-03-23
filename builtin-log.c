@@ -539,30 +539,29 @@ static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
 static int outdir_offset;
 
-static int reopen_stdout(const char *oneline, struct rev_info *rev)
+static int reopen_stdout(struct commit *commit, struct rev_info *rev)
 {
-	char filename[PATH_MAX];
-	int len = 0;
+	struct strbuf filename = STRBUF_INIT;
 	int suffix_len = strlen(fmt_patch_suffix) + 1;
 
 	if (output_directory) {
-		len = snprintf(filename, sizeof(filename), "%s",
-				output_directory);
-		if (len >=
-		    sizeof(filename) - FORMAT_PATCH_NAME_MAX - suffix_len)
+		strbuf_addstr(&filename, output_directory);
+		if (filename.len >=
+		    PATH_MAX - FORMAT_PATCH_NAME_MAX - suffix_len)
 			return error("name of output directory is too long");
-		if (filename[len - 1] != '/')
-			filename[len++] = '/';
+		if (filename.buf[filename.len - 1] != '/')
+			strbuf_addch(&filename, '/');
 	}
 
-	strncpy(filename + len, oneline, PATH_MAX - len);
+	get_patch_filename(commit, rev->nr, fmt_patch_suffix, &filename);
 
 	if (!DIFF_OPT_TST(&rev->diffopt, QUIET))
-		fprintf(realstdout, "%s\n", filename + outdir_offset);
+		fprintf(realstdout, "%s\n", filename.buf + outdir_offset);
 
-	if (freopen(filename, "w", stdout) == NULL)
-		return error("Cannot open patch file %s",filename);
+	if (freopen(filename.buf, "w", stdout) == NULL)
+		return error("Cannot open patch file %s", filename.buf);
 
+	strbuf_release(&filename);
 	return 0;
 }
 
@@ -643,25 +642,41 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	const char *encoding = "utf-8";
 	struct diff_options opts;
 	int need_8bit_cte = 0;
-	char filename[PATH_MAX];
+	struct commit *commit = NULL;
 
 	if (rev->commit_format != CMIT_FMT_EMAIL)
 		die("Cover letter needs email format");
 
-	if (numbered_files)
-		sprintf(filename, "0");
-	else
-		sprintf(filename, "%04d-cover-letter%s", 0, fmt_patch_suffix);
+	committer = git_committer_info(0);
+	head_sha1 = sha1_to_hex(head->object.sha1);
 
-	if (!use_stdout && reopen_stdout(filename, rev))
+	if (!numbered_files) {
+		/*
+		 * We fake a commit for the cover letter so we get the filename
+		 * desired.
+		 */
+		commit = xcalloc(1, sizeof(*commit));
+		commit->buffer = xmalloc(400);
+		snprintf(commit->buffer, 400,
+			"tree 0000000000000000000000000000000000000000\n"
+			"parent %s\n"
+			"author %s\n"
+			"committer %s\n\n"
+			"cover letter\n",
+			head_sha1, committer, committer);
+	}
+
+	if (!use_stdout && reopen_stdout(commit, rev))
 		return;
 
-	head_sha1 = sha1_to_hex(head->object.sha1);
+	if (commit) {
+
+		free(commit->buffer);
+		free(commit);
+	}
 
 	log_write_email_headers(rev, head_sha1, &subject_start, &extra_headers,
 				&need_8bit_cte);
-
-	committer = git_committer_info(0);
 
 	msg = body;
 	pp_user_info(NULL, CMIT_FMT_EMAIL, &sb, committer, DATE_RFC2822,
@@ -766,7 +781,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct patch_ids ids;
 	char *add_signoff = NULL;
 	struct strbuf buf = STRBUF_INIT;
-	struct strbuf patch_filename = STRBUF_INIT;
 
 	git_config(git_format_config, NULL);
 	init_revisions(&rev, prefix);
@@ -1070,11 +1084,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			gen_message_id(&rev, sha1_to_hex(commit->object.sha1));
 		}
 
-		get_patch_filename(numbered_files ? NULL : commit, rev.nr,
-				    fmt_patch_suffix, &patch_filename);
-		if (!use_stdout && reopen_stdout(patch_filename.buf, &rev))
+		if (!use_stdout && reopen_stdout(numbered_files ? NULL : commit,
+						 &rev))
 			die("Failed to create output files");
-		strbuf_setlen(&patch_filename, 0);
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;
@@ -1098,7 +1110,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (!use_stdout)
 			fclose(stdout);
 	}
-	strbuf_release(&patch_filename);
 	free(list);
 	if (ignore_if_in_upstream)
 		free_patch_ids(&ids);
