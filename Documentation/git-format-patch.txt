@@ -97,7 +97,6 @@ include::diff-options.txt[]
 --numbered-files::
 	Output file names will be a simple number sequence
 	without the default first line of the commit appended.
-	Mutually exclusive with the --stdout option.
 
 -k::
 --keep-subject::

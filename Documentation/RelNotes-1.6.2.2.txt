@@ -1,0 +1,35 @@
+GIT v1.6.2.2 Release Notes
+==========================
+
+Fixes since v1.6.2.1
+--------------------
+
+* A longstanding confusing description of what --pickaxe option of
+  git-diff does has been clarified in the documentation.
+
+* "git diff --pickaxe-regexp" did not count overlapping matches
+  correctly.
+
+* "git-fetch" in a repository that was not cloned from anywhere said
+  it cannot find 'origin', which was hard to understand for new people.
+
+* "git-format-patch --numbered-files --stdout" did not have to die of
+  incompatible options; it now simply ignores --numbered-files as no files
+  are produced anyway.
+
+* "git-ls-files --deleted" did not work well with GIT_DIR&GIT_WORK_TREE.
+
+* "git-read-tree A B C..." without -m option has been broken for a long
+  time.
+
+* git-send-email ignored --in-reply-to when --no-thread was given.
+
+* 'git-submodule add' did not tolerate extra slashes and ./ in the path it
+  accepted from the command line; it now is more lenient.
+
+
+---
+exec >/var/tmp/1
+O=v1.6.2.1-23-g67c176f
+echo O=$(git describe maint)
+git shortlog --no-merges $O..maint
