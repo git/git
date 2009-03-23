@@ -2519,6 +2519,9 @@ proc savestuff {w} {
     if {![winfo viewable .]} return
     catch {
 	set f [open "~/.gitk-new" w]
+	if {$::tcl_platform(platform) eq {windows}} {
+	    file attributes "~/.gitk-new" -hidden true
+	}
 	puts $f [list set mainfont $mainfont]
 	puts $f [list set textfont $textfont]
 	puts $f [list set uifont $uifont]
