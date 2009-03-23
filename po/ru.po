@@ -661,16 +661,6 @@ msgstr "Всегда (не выполнять проверку на объеди
 msgid "The following branches are not completely merged into %s:"
 msgstr "Следующие ветви объединены с %s не полностью:"
 
-#: lib/branch_delete.tcl:115
-msgid ""
-"Recovering deleted branches is difficult. \n"
-"\n"
-" Delete the selected branches?"
-msgstr ""
-"Восстанавливать удаленные ветви сложно. \n"
-"\n"
-" Удалить выбранные ветви?"
-
 #: lib/branch_delete.tcl:141
 #, tcl-format
 msgid ""

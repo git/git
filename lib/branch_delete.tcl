@@ -51,7 +51,7 @@ constructor dialog {} {
 		$w.check \
 		[mc "Delete Only If Merged Into"] \
 		]
-	$w_check none [mc "Always (Do not perform merge test.)"]
+	$w_check none [mc "Always (Do not perform merge checks)"]
 	pack $w.check -anchor nw -fill x -pady 5 -padx 5
 
 	foreach h [load_all_heads] {
@@ -112,7 +112,7 @@ method _delete {} {
 	}
 	if {$to_delete eq {}} return
 	if {$check_cmt eq {}} {
-		set msg [mc "Recovering deleted branches is difficult. \n\n Delete the selected branches?"]
+		set msg [mc "Recovering deleted branches is difficult.\n\nDelete the selected branches?"]
 		if {[tk_messageBox \
 			-icon warning \
 			-type yesno \

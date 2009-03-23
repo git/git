@@ -780,16 +780,6 @@ msgstr "Toujours (Ne pas faire de test de fusion.)"
 msgid "The following branches are not completely merged into %s:"
 msgstr "Les branches suivantes ne sont pas complètement fusionnées dans %s :"
 
-#: lib/branch_delete.tcl:115
-msgid ""
-"Recovering deleted branches is difficult. \n"
-"\n"
-" Delete the selected branches?"
-msgstr ""
-"Il est difficile de récupérer des branches supprimées.\n"
-"\n"
-"Supprimer les branches sélectionnées ?"
-
 #: lib/branch_delete.tcl:141
 #, tcl-format
 msgid ""
@@ -2412,7 +2402,7 @@ msgstr "Lancement de : %s"
 
 #: lib/tools.tcl:149
 #, tcl-format
-msgid "Tool completed succesfully: %s"
+msgid "Tool completed successfully: %s"
 msgstr "L'outil a terminé avec succès : %s"
 
 #: lib/tools.tcl:151

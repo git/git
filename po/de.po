@@ -773,16 +773,6 @@ msgstr "Immer (ohne Zusammenführungstest)"
 msgid "The following branches are not completely merged into %s:"
 msgstr "Folgende Zweige sind noch nicht mit »%s« zusammengeführt:"
 
-#: lib/branch_delete.tcl:115
-msgid ""
-"Recovering deleted branches is difficult. \n"
-"\n"
-" Delete the selected branches?"
-msgstr ""
-"Gelöschte Zweige können nur mit größerem Aufwand wiederhergestellt werden.\n"
-"\n"
-"Gewählte Zweige jetzt löschen?"
-
 #: lib/branch_delete.tcl:141
 #, tcl-format
 msgid ""
@@ -2506,7 +2496,7 @@ msgstr "Starten: %s"
 
 #: lib/tools.tcl:149
 #, tcl-format
-msgid "Tool completed succesfully: %s"
+msgid "Tool completed successfully: %s"
 msgstr "Werkzeug erfolgreich abgeschlossen: %s"
 
 #: lib/tools.tcl:151
