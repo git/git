@@ -107,10 +107,6 @@ test_expect_success 'remove remote' '
 )
 '
 
-case $(uname -s) in
-*MINGW*) pwd() { builtin pwd -W; } ;;
-esac
-
 test_expect_success 'remove remote protects non-remote branches' '
 (
 	cd test &&

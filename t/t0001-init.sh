@@ -108,7 +108,7 @@ test_expect_success 'GIT_DIR & GIT_WORK_TREE (1)' '
 		mkdir git-dir-wt-1.git &&
 		GIT_WORK_TREE=$(pwd) GIT_DIR=git-dir-wt-1.git git init
 	) &&
-	check_config git-dir-wt-1.git false "$(pwd -W)"
+	check_config git-dir-wt-1.git false "$(pwd)"
 '
 
 test_expect_success 'GIT_DIR & GIT_WORK_TREE (2)' '
