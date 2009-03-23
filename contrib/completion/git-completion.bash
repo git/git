@@ -932,13 +932,13 @@ _git_format_patch ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--stdout --attach --thread
+			--stdout --attach --no-attach --thread
 			--output-directory
 			--numbered --start-number
 			--numbered-files
 			--keep-subject
 			--signoff
-			--in-reply-to=
+			--in-reply-to= --cc=
 			--full-index --binary
 			--not --all
 			--cover-letter
