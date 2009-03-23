@@ -121,6 +121,7 @@ The placeholders are:
 - '%d': ref names, like the --decorate option of linkgit:git-log[1]
 - '%e': encoding
 - '%s': subject
+- '%f': sanitized subject line, suitable for a filename
 - '%b': body
 - '%Cred': switch color to red
 - '%Cgreen': switch color to green
