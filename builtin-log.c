@@ -607,7 +607,6 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      int nr, struct commit **list, struct commit *head)
 {
 	const char *committer;
-	char *head_sha1;
 	const char *subject_start = NULL;
 	const char *body = "*** SUBJECT HERE ***\n\n*** BLURB HERE ***\n";
 	const char *msg;
@@ -624,7 +623,6 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 		die("Cover letter needs email format");
 
 	committer = git_committer_info(0);
-	head_sha1 = sha1_to_hex(head->object.sha1);
 
 	if (!numbered_files) {
 		/*
@@ -639,7 +637,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			"author %s\n"
 			"committer %s\n\n"
 			"cover letter\n",
-			head_sha1, committer, committer);
+			sha1_to_hex(head->object.sha1), committer, committer);
 	}
 
 	if (!use_stdout && reopen_stdout(commit, rev))
@@ -651,7 +649,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 		free(commit);
 	}
 
-	log_write_email_headers(rev, head_sha1, &subject_start, &extra_headers,
+	log_write_email_headers(rev, head, &subject_start, &extra_headers,
 				&need_8bit_cte);
 
 	msg = body;
@@ -1011,6 +1009,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		const char *msgid = clean_message_id(in_reply_to);
 		string_list_append(msgid, rev.ref_message_ids);
 	}
+	rev.numbered_files = numbered_files;
+	rev.patch_suffix = fmt_patch_suffix;
 	if (cover_letter) {
 		if (thread)
 			gen_message_id(&rev, "cover");
