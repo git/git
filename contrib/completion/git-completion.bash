@@ -930,9 +930,15 @@ _git_format_patch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
+	--thread=*)
+		__gitcomp "
+			deep shallow
+			" "" "${cur##--thread=}"
+		return
+		;;
 	--*)
 		__gitcomp "
-			--stdout --attach --no-attach --thread
+			--stdout --attach --no-attach --thread --thread=
 			--output-directory
 			--numbered --start-number
 			--numbered-files
