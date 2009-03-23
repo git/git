@@ -17,7 +17,7 @@ norm_path() {
 # which means that the path / accounts for this many characters:
 rootoff=$(test-path-utils normalize_path_copy / | wc -c)
 # Account for the trailing LF:
-if test "$rootoff" = 2; then
+if test $rootoff = 2; then
 	rootoff=	# we are on Unix
 else
 	rootoff=$(($rootoff-1))
