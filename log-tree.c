@@ -179,6 +179,28 @@ static int has_non_ascii(const char *s)
 	return 0;
 }
 
+void get_patch_filename(struct commit *commit, int nr, const char *suffix,
+			struct strbuf *buf)
+{
+	int suffix_len = strlen(suffix) + 1;
+	int start_len = buf->len;
+
+	strbuf_addf(buf, commit ? "%04d-" : "%d", nr);
+	if (commit) {
+		format_commit_message(commit, "%f", buf, DATE_NORMAL);
+		/*
+		 * Replace characters at the end with the suffix if the
+		 * filename is too long
+		 */
+		if (buf->len + suffix_len > FORMAT_PATCH_NAME_MAX + start_len)
+			strbuf_splice(buf,
+				start_len + FORMAT_PATCH_NAME_MAX - suffix_len,
+				suffix_len, suffix, suffix_len);
+		else
+			strbuf_addstr(buf, suffix);
+	}
+}
+
 void log_write_email_headers(struct rev_info *opt, const char *name,
 			     const char **subject_p,
 			     const char **extra_headers_p,
