@@ -59,10 +59,10 @@ test_expect_success \
     'git read-tree -m $tree1 && git checkout-index -f -a'
 test_debug 'show_files $tree1'
 
-ln -s path0 path1
-test_expect_success \
+test_expect_success SYMLINKS \
     'git update-index --add a symlink.' \
-    'git update-index --add path1'
+    'ln -s path0 path1 &&
+     git update-index --add path1'
 test_expect_success \
     'writing tree out with git write-tree' \
     'tree3=$(git write-tree)'

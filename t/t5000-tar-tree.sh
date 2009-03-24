@@ -37,7 +37,11 @@ test_expect_success \
      cp /bin/sh a/bin &&
      printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
      printf "A not substituted O" >a/substfile2 &&
-     ln -s a a/l1 &&
+     if test_have_prereq SYMLINKS; then
+	ln -s a a/l1
+     else
+	printf %s a > a/l1
+     fi &&
      (p=long_path_to_a_file && cd a &&
       for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
       echo text >file_with_long_path) &&
@@ -183,20 +187,20 @@ test_expect_success 'git archive --format=zip with --output' \
 $UNZIP -v >/dev/null 2>&1
 if [ $? -eq 127 ]; then
 	say "Skipping ZIP tests, because unzip was not found"
-	test_done
-	exit
+else
+	test_set_prereq UNZIP
 fi
 
-test_expect_success \
+test_expect_success UNZIP \
     'extract ZIP archive' \
     '(mkdir d && cd d && $UNZIP ../d.zip)'
 
-test_expect_success \
+test_expect_success UNZIP \
     'validate filenames' \
     '(cd d/a && find .) | sort >d.lst &&
      test_cmp a.lst d.lst'
 
-test_expect_success \
+test_expect_success UNZIP \
     'validate file contents' \
     'diff -r a d/a'
 
@@ -204,16 +208,16 @@ test_expect_success \
     'git archive --format=zip with prefix' \
     'git archive --format=zip --prefix=prefix/ HEAD >e.zip'
 
-test_expect_success \
+test_expect_success UNZIP \
     'extract ZIP archive with prefix' \
     '(mkdir e && cd e && $UNZIP ../e.zip)'
 
-test_expect_success \
+test_expect_success UNZIP \
     'validate filenames with prefix' \
     '(cd e/prefix/a && find .) | sort >e.lst &&
      test_cmp a.lst e.lst'
 
-test_expect_success \
+test_expect_success UNZIP \
     'validate file contents with prefix' \
     'diff -r a e/prefix/a'
 

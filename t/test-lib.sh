@@ -247,6 +247,31 @@ test_chmod () {
 	git update-index --add "--chmod=$@"
 }
 
+# Use test_set_prereq to tell that a particular prerequisite is available.
+# The prerequisite can later be checked for in two ways:
+#
+# - Explicitly using test_have_prereq.
+#
+# - Implicitly by specifying the prerequisite tag in the calls to
+#   test_expect_{success,failure,code}.
+#
+# The single parameter is the prerequisite tag (a simple word, in all
+# capital letters by convention).
+
+test_set_prereq () {
+	satisfied="$satisfied$1 "
+}
+satisfied=" "
+
+test_have_prereq () {
+	case $satisfied in
+	*" $1 "*)
+		: yes, have it ;;
+	*)
+		! : nope ;;
+	esac
+}
+
 # You are not expected to call test_ok_ and test_failure_ directly, use
 # the text_expect_* functions instead.
 
@@ -293,6 +318,11 @@ test_skip () {
 			to_skip=t
 		esac
 	done
+	if test -z "$to_skip" && test -n "$prereq" &&
+	   ! test_have_prereq "$prereq"
+	then
+		to_skip=t
+	fi
 	case "$to_skip" in
 	t)
 		say_color skip >&3 "skipping test: $@"
@@ -306,8 +336,9 @@ test_skip () {
 }
 
 test_expect_failure () {
+	test "$#" = 3 && { prereq=$1; shift; } || prereq=
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 parameters to test-expect-failure"
+	error "bug in the test script: not 2 or 3 parameters to test-expect-failure"
 	if ! test_skip "$@"
 	then
 		say >&3 "checking known breakage: $2"
@@ -323,8 +354,9 @@ test_expect_failure () {
 }
 
 test_expect_success () {
+	test "$#" = 3 && { prereq=$1; shift; } || prereq=
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 parameters to test-expect-success"
+	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
 	if ! test_skip "$@"
 	then
 		say >&3 "expecting success: $2"
@@ -340,8 +372,9 @@ test_expect_success () {
 }
 
 test_expect_code () {
+	test "$#" = 4 && { prereq=$1; shift; } || prereq=
 	test "$#" = 3 ||
-	error "bug in the test script: not 3 parameters to test-expect-code"
+	error "bug in the test script: not 3 or 4 parameters to test-expect-code"
 	if ! test_skip "$@"
 	then
 		say >&3 "expecting exit code $1: $3"
@@ -365,8 +398,9 @@ test_expect_code () {
 # Usage: test_external description command arguments...
 # Example: test_external 'Perl API' perl ../path/to/test.pl
 test_external () {
-	test "$#" -eq 3 ||
-	error >&5 "bug in the test script: not 3 parameters to test_external"
+	test "$#" = 4 && { prereq=$1; shift; } || prereq=
+	test "$#" = 3 ||
+	error >&5 "bug in the test script: not 3 or 4 parameters to test_external"
 	descr="$1"
 	shift
 	if ! test_skip "$descr" "$@"
@@ -643,3 +677,33 @@ do
 		test_done
 	esac
 done
+
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) sort and find
+	sort () {
+		/usr/bin/sort "$@"
+	}
+	find () {
+		/usr/bin/find "$@"
+	}
+	sum () {
+		md5sum "$@"
+	}
+	# git sees Windows-style pwd
+	pwd () {
+		builtin pwd -W
+	}
+	# no POSIX permissions
+	# backslashes in pathspec are converted to '/'
+	;;
+*)
+	test_set_prereq POSIXPERM
+	test_set_prereq BSLASHPSPEC
+	;;
+esac
+
+# test whether the filesystem supports symbolic links
+ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
+rm -f y

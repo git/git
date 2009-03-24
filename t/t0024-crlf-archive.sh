@@ -29,11 +29,11 @@ test_expect_success 'tar archive' '
 "$UNZIP" -v >/dev/null 2>&1
 if [ $? -eq 127 ]; then
 	say "Skipping ZIP test, because unzip was not found"
-	test_done
-	exit
+else
+	test_set_prereq UNZIP
 fi
 
-test_expect_success 'zip archive' '
+test_expect_success UNZIP 'zip archive' '
 
 	git archive --format=zip HEAD >test.zip &&
 

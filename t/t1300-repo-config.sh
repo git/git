@@ -733,7 +733,7 @@ echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
 
-test_expect_success 'symlinked configuration' '
+test_expect_success SYMLINKS 'symlinked configuration' '
 
 	ln -s notyet myconfig &&
 	GIT_CONFIG=myconfig git config test.frotz nitfol &&

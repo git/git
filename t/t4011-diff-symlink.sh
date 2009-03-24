@@ -9,6 +9,13 @@ test_description='Test diff of symlinks.
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh
 
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+	exit
+fi
+
 cat > expected << EOF
 diff --git a/frotz b/frotz
 new file mode 120000
