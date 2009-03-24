@@ -759,7 +759,7 @@ static void finish_request(struct transfer_request *request)
 			}
 		} else {
 			if (request->http_code == 416)
-				fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
+				warning("requested range invalid; we may already have all the data.");
 
 			git_inflate_end(&request->stream);
 			git_SHA1_Final(request->real_sha1, &request->c);
@@ -1616,7 +1616,7 @@ static int locking_available(void)
 			}
 			XML_ParserFree(parser);
 			if (!lock_flags)
-				error("Error: no DAV locking support on %s",
+				error("no DAV locking support on %s",
 				      remote->url);
 
 		} else {
@@ -2225,7 +2225,7 @@ int main(int argc, char **argv)
 		if (info_ref_lock)
 			remote->can_update_info_refs = 1;
 		else {
-			fprintf(stderr, "Error: cannot lock existing info/refs\n");
+			error("cannot lock existing info/refs");
 			rc = 1;
 			goto cleanup;
 		}
