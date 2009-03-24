@@ -676,6 +676,7 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
  * - it has double dots "..", or
  * - it has ASCII control character, "~", "^", ":" or SP, anywhere, or
  * - it ends with a "/".
+ * - it ends with ".lock"
  */
 
 static inline int bad_ref_char(int ch)
@@ -737,6 +738,8 @@ int check_ref_format(const char *ref)
 				return CHECK_REF_FORMAT_ERROR;
 			if (level < 2)
 				return CHECK_REF_FORMAT_ONELEVEL;
+			if (has_extension(ref, ".lock"))
+				return CHECK_REF_FORMAT_ERROR;
 			return ret;
 		}
 	}

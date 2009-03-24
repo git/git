@@ -34,6 +34,8 @@ imposes the following rules on how refs are named:
 
 . They cannot end with a slash `/` nor a dot `.`.
 
+. They cannot end with the sequence `.lock`.
+
 . They cannot contain a sequence `@{`.
 
 These rules makes it easy for shell script based tools to parse
