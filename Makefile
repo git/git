@@ -811,7 +811,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
 	NO_MEMMEM = YesPlease
-	NO_PTHREADS = YesPlease
+	THREADED_DELTA_SEARCH = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
