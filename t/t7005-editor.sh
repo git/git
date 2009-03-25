@@ -7,6 +7,7 @@ test_description='GIT_EDITOR, core.editor, and stuff'
 for i in GIT_EDITOR core_editor EDITOR VISUAL vi
 do
 	cat >e-$i.sh <<-EOF
+	#!$SHELL_PATH
 	echo "Edited by $i" >"\$1"
 	EOF
 	chmod +x e-$i.sh
