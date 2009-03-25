@@ -2243,11 +2243,15 @@ static void write_sha1_file_prepare(const void *buf, unsigned long len,
 }
 
 /*
- * Move the just written object into its final resting place
+ * Move the just written object into its final resting place.
+ * NEEDSWORK: this should be renamed to finalize_temp_file() as
+ * "moving" is only a part of what it does, when no patch between
+ * master to pu changes the call sites of this function.
  */
 int move_temp_to_file(const char *tmpfile, const char *filename)
 {
 	int ret = 0;
+
 	if (link(tmpfile, filename))
 		ret = errno;
 
@@ -2275,6 +2279,8 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 		/* FIXME!!! Collision check here ? */
 	}
 
+	if (adjust_shared_perm(filename))
+		return error("unable to set permission to '%s'", filename);
 	return 0;
 }
 

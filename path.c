@@ -314,33 +314,39 @@ char *enter_repo(char *path, int strict)
 int adjust_shared_perm(const char *path)
 {
 	struct stat st;
-	int mode;
+	int mode, tweak, shared;
 
 	if (!shared_repository)
 		return 0;
 	if (lstat(path, &st) < 0)
 		return -1;
 	mode = st.st_mode;
+	if (shared_repository < 0)
+		shared = -shared_repository;
+	else
+		shared = shared_repository;
+	tweak = shared;
 
-	if (shared_repository) {
-		int tweak = shared_repository;
-		if (!(mode & S_IWUSR))
-			tweak &= ~0222;
+	if (!(mode & S_IWUSR))
+		tweak &= ~0222;
+	if (mode & S_IXUSR)
+		/* Copy read bits to execute bits */
+		tweak |= (tweak & 0444) >> 2;
+	if (shared_repository < 0)
+		mode = (mode & ~0777) | tweak;
+	else
 		mode |= tweak;
-	} else {
-		/* Preserve old PERM_UMASK behaviour */
-		if (mode & S_IWUSR)
-			mode |= S_IWGRP;
-	}
 
 	if (S_ISDIR(mode)) {
-		mode |= FORCE_DIR_SET_GID;
-
 		/* Copy read bits to execute bits */
-		mode |= (shared_repository & 0444) >> 2;
+		mode |= (shared & 0444) >> 2;
+		mode |= FORCE_DIR_SET_GID;
 	}
 
-	if ((mode & st.st_mode) != mode && chmod(path, mode) < 0)
+	if (((shared_repository < 0
+	      ? (st.st_mode & (FORCE_DIR_SET_GID | 0777))
+	      : (st.st_mode & mode)) != mode) &&
+	    chmod(path, mode) < 0)
 		return -2;
 	return 0;
 }
