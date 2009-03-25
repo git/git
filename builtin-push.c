@@ -73,7 +73,7 @@ static const char *warn_unconfigured_push_msg[] = {
 	"",
 	"You can specify what action you want to take in this case, and",
 	"avoid seeing this message again, by configuring 'push.default' to:",
-	"  'nothing'  : Do not push anythig",
+	"  'nothing'  : Do not push anything",
 	"  'matching' : Push all matching branches (default)",
 	"  'tracking' : Push the current branch to whatever it is tracking",
 	"  'current'  : Push the current branch"
