@@ -697,10 +697,12 @@ case $(uname -s) in
 	}
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
+	# exec does not inherit the PID
 	;;
 *)
 	test_set_prereq POSIXPERM
 	test_set_prereq BSLASHPSPEC
+	test_set_prereq EXECKEEPSPID
 	;;
 esac
 
