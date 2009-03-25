@@ -263,6 +263,18 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 BASIC_CFLAGS =
 BASIC_LDFLAGS =
 
+# Guard against environment variables
+BUILTIN_OBJS =
+BUILT_INS =
+COMPAT_CFLAGS =
+COMPAT_OBJS =
+LIB_H =
+LIB_OBJS =
+PROGRAMS =
+SCRIPT_PERL =
+SCRIPT_SH =
+TEST_PROGRAMS =
+
 SCRIPT_SH += git-am.sh
 SCRIPT_SH += git-bisect.sh
 SCRIPT_SH += git-filter-branch.sh
