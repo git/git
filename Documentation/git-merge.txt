@@ -41,7 +41,7 @@ include::merge-strategies.txt[]
 
 
 If you tried a merge which resulted in a complex conflicts and
-would want to start over, you can recover with 'git-reset'.
+want to start over, you can recover with 'git-reset'.
 
 CONFIGURATION
 -------------
