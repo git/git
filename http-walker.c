@@ -231,7 +231,6 @@ static void finish_object_request(struct object_request *obj_req)
 {
 	struct stat st;
 
-	fchmod(obj_req->local, 0444);
 	close(obj_req->local); obj_req->local = -1;
 
 	if (obj_req->http_code == 416) {

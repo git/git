@@ -2279,7 +2279,7 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 		/* FIXME!!! Collision check here ? */
 	}
 
-	if (adjust_shared_perm(filename))
+	if (chmod(filename, 0444) || adjust_shared_perm(filename))
 		return error("unable to set permission to '%s'", filename);
 	return 0;
 }
@@ -2305,7 +2305,6 @@ static void close_sha1_file(int fd)
 {
 	if (fsync_object_files)
 		fsync_or_die(fd, "sha1 file");
-	fchmod(fd, 0444);
 	if (close(fd) != 0)
 		die("error when closing sha1 file (%s)", strerror(errno));
 }
