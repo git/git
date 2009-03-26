@@ -918,6 +918,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			cover_letter = 1;
 		else if (!strcmp(argv[i], "--no-binary"))
 			no_binary_diff = 1;
+		else if (!prefixcmp(argv[i], "--add-header="))
+			add_header(argv[i] + 13);
 		else
 			argv[j++] = argv[i];
 	}
