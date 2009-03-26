@@ -4,6 +4,7 @@
 #include "revision.h"
 #include "refs.h"
 #include "list-objects.h"
+#include "quote.h"
 #include "sha1-lookup.h"
 #include "bisect.h"
 
@@ -424,6 +425,32 @@ static int read_bisect_refs(void)
 	return for_each_ref_in("refs/bisect/", register_ref, NULL);
 }
 
+void read_bisect_paths(void)
+{
+	struct strbuf str = STRBUF_INIT;
+	const char *filename = git_path("BISECT_NAMES");
+	FILE *fp = fopen(filename, "r");
+
+	if (!fp)
+		die("Could not open file '%s': %s", filename, strerror(errno));
+
+	while (strbuf_getline(&str, fp, '\n') != EOF) {
+		char *quoted;
+		int res;
+
+		strbuf_trim(&str);
+		quoted = strbuf_detach(&str, NULL);
+		res = sq_dequote_to_argv(quoted, &rev_argv,
+					 &rev_argv_nr, &rev_argv_alloc);
+		if (res)
+			die("Badly quoted content in file '%s': %s",
+			    filename, quoted);
+	}
+
+	strbuf_release(&str);
+	fclose(fp);
+}
+
 static int skipcmp(const void *a, const void *b)
 {
 	return hashcmp(a, b);
@@ -479,14 +506,11 @@ struct commit_list *filter_skipped(struct commit_list *list,
 	return filtered;
 }
 
-int bisect_next_vars(const char *prefix)
+static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
 {
-	struct rev_info revs;
-	int reaches = 0, all = 0;
-
-	init_revisions(&revs, prefix);
-	revs.abbrev = 0;
-	revs.commit_format = CMIT_FMT_UNSPECIFIED;
+	init_revisions(revs, prefix);
+	revs->abbrev = 0;
+	revs->commit_format = CMIT_FMT_UNSPECIFIED;
 
 	/* argv[0] will be ignored by setup_revisions */
 	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
@@ -498,9 +522,22 @@ int bisect_next_vars(const char *prefix)
 	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
 	rev_argv[rev_argv_nr++] = xstrdup("--");
 
-	setup_revisions(rev_argv_nr, rev_argv, &revs, NULL);
+	read_bisect_paths();
 
-	revs.limited = 1;
+	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
+	rev_argv[rev_argv_nr++] = NULL;
+
+	setup_revisions(rev_argv_nr, rev_argv, revs, NULL);
+
+	revs->limited = 1;
+}
+
+int bisect_next_vars(const char *prefix)
+{
+	struct rev_info revs;
+	int reaches = 0, all = 0;
+
+	bisect_rev_setup(&revs, prefix);
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
