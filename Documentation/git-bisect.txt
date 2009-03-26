@@ -151,7 +151,7 @@ $ git reset --hard HEAD~3		# try 3 revisions before what
 					# was suggested
 ------------
 
-Then you compile and test the chosen revision. Afterwards you mark
+Then compile and test the chosen revision, and afterwards mark
 the revision as good or bad in the usual manner.
 
 Bisect skip
@@ -175,8 +175,8 @@ using the "'<commit1>'..'<commit2>'" notation. For example:
 $ git bisect skip v2.5..v2.6
 ------------
 
-This tells the bisect process that no commit between `v2.5` excluded and
-`v2.6` included should be tested.
+This tells the bisect process that no commit after `v2.5`, up to and
+including `v2.6`, should be tested.
 
 Note that if you also want to skip the first commit of the range you
 would issue the command:
