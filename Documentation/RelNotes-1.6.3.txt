@@ -22,6 +22,13 @@ branch pointed at by its HEAD, gets a large warning.  You can choose what
 should happen upon such a push by setting the configuration variable
 receive.denyDeleteCurrent in the receiving repository.
 
+In a future release, the default of "git push" without further
+arguments might be changed. Currently, it will push all matching
+refspecs to the current remote.  A configuration variable push.default
+has been introduced to select the default behaviour.  To ease the
+transition, a big warning is issued if this is not configured and a
+git push without arguments is attempted.
+
 
 Updates since v1.6.2
 --------------------
