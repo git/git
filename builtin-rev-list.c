@@ -226,16 +226,16 @@ static int estimate_bisect_steps(int all)
 	return (e < 3 * x) ? n : n - 1;
 }
 
-int show_bisect_vars(int reaches, int all, int show_all)
+int show_bisect_vars(struct rev_info *revs, int reaches, int all, int show_all)
 {
 	int cnt;
 	char hex[41];
 
-	if (!revs.commits)
+	if (!revs->commits)
 		return 1;
 
 	/*
-	 * revs.commits can reach "reaches" commits among
+	 * revs->commits can reach "reaches" commits among
 	 * "all" commits.  If it is good, then there are
 	 * (all-reaches) commits left to be bisected.
 	 * On the other hand, if it is bad, then the set
@@ -247,10 +247,10 @@ int show_bisect_vars(int reaches, int all, int show_all)
 	if (cnt < reaches)
 		cnt = reaches;
 
-	strcpy(hex, sha1_to_hex(revs.commits->item->object.sha1));
+	strcpy(hex, sha1_to_hex(revs->commits->item->object.sha1));
 
 	if (show_all) {
-		traverse_commit_list(&revs, show_commit, show_object);
+		traverse_commit_list(revs, show_commit, show_object);
 		printf("------\n");
 	}
 
@@ -358,7 +358,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		revs.commits = find_bisection(revs.commits, &reaches, &all,
 					      bisect_find_all);
 		if (bisect_show_vars)
-			return show_bisect_vars(reaches, all, bisect_find_all);
+			return show_bisect_vars(&revs, reaches, all,
+						bisect_find_all);
 	}
 
 	traverse_commit_list(&revs,
