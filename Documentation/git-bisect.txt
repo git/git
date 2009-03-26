@@ -81,7 +81,7 @@ will have been left with the first bad kernel revision in "refs/bisect/bad".
 Bisect reset
 ~~~~~~~~~~~~
 
-To return to the original head after a bisect session, you issue the
+To return to the original head after a bisect session, issue the
 following command:
 
 ------------------------------------------------
@@ -95,8 +95,8 @@ the bisection state).
 Bisect visualize
 ~~~~~~~~~~~~~~~~
 
-To see the currently remaining suspects in 'gitk', the following command
-is issued during the bisection process:
+To see the currently remaining suspects in 'gitk', issue the following
+command during the bisection process:
 
 ------------
 $ git bisect visualize
@@ -115,7 +115,7 @@ $ git bisect view --stat
 Bisect log and bisect replay
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After having marked revisions as good or bad, you issue the following
+After having marked revisions as good or bad, issue the following
 command to show what has been done so far:
 
 ------------
@@ -135,7 +135,7 @@ $ git bisect replay that-file
 Avoiding testing a commit
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If in the middle of a bisect session, you know that the next suggested
+If, in the middle of a bisect session, you know that the next suggested
 revision is not a good one to test (e.g. the change the commit
 introduces is known not to work in your environment and you know it
 does not have anything to do with the bug you are chasing), you may
@@ -151,8 +151,8 @@ $ git reset --hard HEAD~3		# try 3 revisions before what
 					# was suggested
 ------------
 
-Then compile and test the chosen revision. Afterwards the revision
-is marked as good or bad in the usual manner.
+Then compile and test the chosen revision, and afterwards mark
+the revision as good or bad in the usual manner.
 
 Bisect skip
 ~~~~~~~~~~~~
@@ -175,8 +175,8 @@ using the "'<commit1>'..'<commit2>'" notation. For example:
 $ git bisect skip v2.5..v2.6
 ------------
 
-The effect of this would be that no commit between `v2.5` excluded and
-`v2.6` included could be tested.
+This tells the bisect process that no commit after `v2.5`, up to and
+including `v2.6`, should be tested.
 
 Note that if you also want to skip the first commit of the range you
 would issue the command:
@@ -185,8 +185,8 @@ would issue the command:
 $ git bisect skip v2.5 v2.5..v2.6
 ------------
 
-This would cause the commits between `v2.5` included and `v2.6` included
-to be skipped.
+This tells the bisect process that the commits between `v2.5` included
+and `v2.6` included should be skipped.
 
 
 Cutting down bisection by giving more parameters to bisect start
