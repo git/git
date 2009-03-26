@@ -52,7 +52,6 @@ static const char rev_list_usage[] =
 
 static struct rev_info revs;
 
-static int bisect_list;
 static int show_timestamp;
 static int hdr_termination;
 static const char *header_prefix;
@@ -618,6 +617,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	struct commit_list *list;
 	int i;
 	int read_from_stdin = 0;
+	int bisect_list = 0;
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
 	int quiet = 0;
