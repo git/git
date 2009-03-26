@@ -226,13 +226,27 @@ static int estimate_bisect_steps(int all)
 	return (e < 3 * x) ? n : n - 1;
 }
 
-int show_bisect_vars(struct rev_info *revs, int reaches, int all, int show_all)
+static void show_tried_revs(struct commit_list *tried)
+{
+	printf("bisect_tried='");
+	for (;tried; tried = tried->next) {
+		char *format = tried->next ? "%s|" : "%s";
+		printf(format, sha1_to_hex(tried->item->object.sha1));
+	}
+	printf("'\n");
+}
+
+int show_bisect_vars(struct rev_info *revs, int reaches, int all,
+		     int show_all, int show_tried)
 {
 	int cnt;
-	char hex[41];
+	char hex[41] = "";
+	struct commit_list *tried;
 
-	if (!revs->commits)
+	if (!revs->commits && !show_tried)
 		return 1;
+
+	revs->commits = filter_skipped(revs->commits, &tried, show_all);
 
 	/*
 	 * revs->commits can reach "reaches" commits among
@@ -247,13 +261,16 @@ int show_bisect_vars(struct rev_info *revs, int reaches, int all, int show_all)
 	if (cnt < reaches)
 		cnt = reaches;
 
-	strcpy(hex, sha1_to_hex(revs->commits->item->object.sha1));
+	if (revs->commits)
+		strcpy(hex, sha1_to_hex(revs->commits->item->object.sha1));
 
 	if (show_all) {
 		traverse_commit_list(revs, show_commit, show_object);
 		printf("------\n");
 	}
 
+	if (show_tried)
+		show_tried_revs(tried);
 	printf("bisect_rev=%s\n"
 	       "bisect_nr=%d\n"
 	       "bisect_good=%d\n"
@@ -278,6 +295,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_list = 0;
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
+	int bisect_show_all = 0;
 	int quiet = 0;
 
 	git_config(git_default_config, NULL);
@@ -305,6 +323,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--bisect-all")) {
 			bisect_list = 1;
 			bisect_find_all = 1;
+			bisect_show_all = 1;
 			revs.show_decorations = 1;
 			continue;
 		}
@@ -357,9 +376,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 		revs.commits = find_bisection(revs.commits, &reaches, &all,
 					      bisect_find_all);
+
 		if (bisect_show_vars)
 			return show_bisect_vars(&revs, reaches, all,
-						bisect_find_all);
+						bisect_show_all, 0);
 	}
 
 	traverse_commit_list(&revs,

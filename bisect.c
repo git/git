@@ -4,6 +4,9 @@
 #include "revision.h"
 #include "bisect.h"
 
+static unsigned char (*skipped_sha1)[20];
+static int skipped_sha1_nr;
+
 /* bits #0-15 in revision.h */
 
 #define COUNTED		(1u<<16)
@@ -386,3 +389,63 @@ struct commit_list *find_bisection(struct commit_list *list,
 	return best;
 }
 
+static int skipcmp(const void *a, const void *b)
+{
+	return hashcmp(a, b);
+}
+
+static void prepare_skipped(void)
+{
+	qsort(skipped_sha1, skipped_sha1_nr, sizeof(*skipped_sha1), skipcmp);
+}
+
+static int lookup_skipped(unsigned char *sha1)
+{
+	int lo, hi;
+	lo = 0;
+	hi = skipped_sha1_nr;
+	while (lo < hi) {
+		int mi = (lo + hi) / 2;
+		int cmp = hashcmp(sha1, skipped_sha1[mi]);
+		if (!cmp)
+			return mi;
+		if (cmp < 0)
+			hi = mi;
+		else
+			lo = mi + 1;
+	}
+	return -lo - 1;
+}
+
+struct commit_list *filter_skipped(struct commit_list *list,
+				   struct commit_list **tried,
+				   int show_all)
+{
+	struct commit_list *filtered = NULL, **f = &filtered;
+
+	*tried = NULL;
+
+	if (!skipped_sha1_nr)
+		return list;
+
+	prepare_skipped();
+
+	while (list) {
+		struct commit_list *next = list->next;
+		list->next = NULL;
+		if (0 <= lookup_skipped(list->item->object.sha1)) {
+			/* Move current to tried list */
+			*tried = list;
+			tried = &list->next;
+		} else {
+			if (!show_all)
+				return list;
+			/* Move current to filtered list */
+			*f = list;
+			f = &list->next;
+		}
+		list = next;
+	}
+
+	return filtered;
+}
