@@ -226,7 +226,7 @@ static int estimate_bisect_steps(int all)
 	return (e < 3 * x) ? n : n - 1;
 }
 
-static int show_bisect_vars(int reaches, int all, int bisect_find_all)
+int show_bisect_vars(int reaches, int all, int show_all)
 {
 	int cnt;
 	char hex[41];
@@ -246,9 +246,10 @@ static int show_bisect_vars(int reaches, int all, int bisect_find_all)
 	cnt = all - reaches;
 	if (cnt < reaches)
 		cnt = reaches;
+
 	strcpy(hex, sha1_to_hex(revs.commits->item->object.sha1));
 
-	if (bisect_find_all) {
+	if (show_all) {
 		traverse_commit_list(&revs, show_commit, show_object);
 		printf("------\n");
 	}
