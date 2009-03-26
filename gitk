@@ -6540,7 +6540,7 @@ proc appendrefs {pos ids var} {
 	}
     }
     if {[llength $tags] > $maxrefs} {
-	$ctext insert $pos "many ([llength $tags])"
+	$ctext insert $pos "[mc "many"] ([llength $tags])"
     } else {
 	set tags [lsort -index 0 -decreasing $tags]
 	set sep {}
