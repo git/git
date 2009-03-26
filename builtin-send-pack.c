@@ -11,7 +11,6 @@ static const char send_pack_usage[] =
 "  --all and explicit <ref> specification are mutually exclusive.";
 
 static struct send_pack_args args = {
-	/* .receivepack = */ "git-receive-pack",
 };
 
 static int feed_object(const unsigned char *sha1, int fd, int negative)
@@ -31,7 +30,7 @@ static int feed_object(const unsigned char *sha1, int fd, int negative)
 /*
  * Make a pack stream and spit it out into file descriptor fd
  */
-static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *extra)
+static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *extra, struct send_pack_args *args)
 {
 	/*
 	 * The child becomes pack-objects --revs; we feed
@@ -49,7 +48,7 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 	struct child_process po;
 	int i;
 
-	if (args.use_thin_pack)
+	if (args->use_thin_pack)
 		argv[4] = "--thin";
 	memset(&po, 0, sizeof(po));
 	po.argv = argv;
@@ -82,8 +81,6 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 		return error("pack-objects died with strange error");
 	return 0;
 }
-
-static struct ref *remote_refs, **remote_tail;
 
 static int receive_status(int in, struct ref *refs)
 {
@@ -170,16 +167,6 @@ static void update_tracking_ref(struct remote *remote, struct ref *ref)
 					ref->new_sha1, NULL, 0, 0);
 		free(rs.dst);
 	}
-}
-
-static const char *prettify_ref(const struct ref *ref)
-{
-	const char *name = ref->name;
-	return name + (
-		!prefixcmp(name, "refs/heads/") ? 11 :
-		!prefixcmp(name, "refs/tags/") ? 10 :
-		!prefixcmp(name, "refs/remotes/") ? 13 :
-		0);
 }
 
 #define SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
@@ -310,27 +297,19 @@ static int refs_pushed(struct ref *ref)
 	return 0;
 }
 
-static int do_send_pack(int in, int out, struct remote *remote, const char *dest, int nr_refspec, const char **refspec)
+int send_pack(struct send_pack_args *args,
+	      int fd[], struct child_process *conn,
+	      struct ref *remote_refs,
+	      struct extra_have_objects *extra_have)
 {
-	struct ref *ref, *local_refs;
+	int in = fd[0];
+	int out = fd[1];
+	struct ref *ref;
 	int new_refs;
 	int ask_for_status_report = 0;
 	int allow_deleting_refs = 0;
 	int expect_status_report = 0;
-	int flags = MATCH_REFS_NONE;
 	int ret;
-	struct extra_have_objects extra_have;
-
-	memset(&extra_have, 0, sizeof(extra_have));
-	if (args.send_all)
-		flags |= MATCH_REFS_ALL;
-	if (args.send_mirror)
-		flags |= MATCH_REFS_MIRROR;
-
-	/* No funny business with the matcher */
-	remote_tail = get_remote_heads(in, &remote_refs, 0, NULL, REF_NORMAL,
-				       &extra_have);
-	local_refs = get_local_heads();
 
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))
@@ -338,19 +317,9 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 	if (server_supports("delete-refs"))
 		allow_deleting_refs = 1;
 
-	/* match them up */
-	if (!remote_tail)
-		remote_tail = &remote_refs;
-	if (match_refs(local_refs, remote_refs, &remote_tail,
-		       nr_refspec, refspec, flags)) {
-		close(out);
-		return -1;
-	}
-
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
 			"Perhaps you should specify a branch such as 'master'.\n");
-		close(out);
 		return 0;
 	}
 
@@ -362,7 +331,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 
 		if (ref->peer_ref)
 			hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
-		else if (!args.send_mirror)
+		else if (!args->send_mirror)
 			continue;
 
 		ref->deletion = is_null_sha1(ref->new_sha1);
@@ -401,7 +370,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 		    (!has_sha1_file(ref->old_sha1)
 		      || !ref_newer(ref->new_sha1, ref->old_sha1));
 
-		if (ref->nonfastforward && !ref->force && !args.force_update) {
+		if (ref->nonfastforward && !ref->force && !args->force_update) {
 			ref->status = REF_STATUS_REJECT_NONFASTFORWARD;
 			continue;
 		}
@@ -409,7 +378,7 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 		if (!ref->deletion)
 			new_refs++;
 
-		if (!args.dry_run) {
+		if (!args->dry_run) {
 			char *old_hex = sha1_to_hex(ref->old_sha1);
 			char *new_hex = sha1_to_hex(ref->new_sha1);
 
@@ -430,27 +399,19 @@ static int do_send_pack(int in, int out, struct remote *remote, const char *dest
 	}
 
 	packet_flush(out);
-	if (new_refs && !args.dry_run) {
-		if (pack_objects(out, remote_refs, &extra_have) < 0)
+	if (new_refs && !args->dry_run) {
+		if (pack_objects(out, remote_refs, extra_have, args) < 0) {
+			for (ref = remote_refs; ref; ref = ref->next)
+				ref->status = REF_STATUS_NONE;
 			return -1;
+		}
 	}
-	else
-		close(out);
 
 	if (expect_status_report)
 		ret = receive_status(in, remote_refs);
 	else
 		ret = 0;
 
-	print_push_status(dest, remote_refs);
-
-	if (!args.dry_run && remote) {
-		for (ref = remote_refs; ref; ref = ref->next)
-			update_tracking_ref(remote, ref);
-	}
-
-	if (!refs_pushed(remote_refs))
-		fprintf(stderr, "Everything up-to-date\n");
 	if (ret < 0)
 		return ret;
 	for (ref = remote_refs; ref; ref = ref->next) {
@@ -499,11 +460,19 @@ static void verify_remote_names(int nr_heads, const char **heads)
 
 int cmd_send_pack(int argc, const char **argv, const char *prefix)
 {
-	int i, nr_heads = 0;
-	const char **heads = NULL;
+	int i, nr_refspecs = 0;
+	const char **refspecs = NULL;
 	const char *remote_name = NULL;
 	struct remote *remote = NULL;
 	const char *dest = NULL;
+	int fd[2];
+	struct child_process *conn;
+	struct extra_have_objects extra_have;
+	struct ref *remote_refs, **remote_tail, *local_refs;
+	int ret;
+	int send_all = 0;
+	const char *receivepack = "git-receive-pack";
+	int flags;
 
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {
@@ -511,11 +480,11 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 
 		if (*arg == '-') {
 			if (!prefixcmp(arg, "--receive-pack=")) {
-				args.receivepack = arg + 15;
+				receivepack = arg + 15;
 				continue;
 			}
 			if (!prefixcmp(arg, "--exec=")) {
-				args.receivepack = arg + 7;
+				receivepack = arg + 7;
 				continue;
 			}
 			if (!prefixcmp(arg, "--remote=")) {
@@ -523,7 +492,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
-				args.send_all = 1;
+				send_all = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--dry-run")) {
@@ -552,8 +521,8 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 			dest = arg;
 			continue;
 		}
-		heads = (const char **) argv;
-		nr_heads = argc - i;
+		refspecs = (const char **) argv;
+		nr_refspecs = argc - i;
 		break;
 	}
 	if (!dest)
@@ -562,8 +531,8 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	 * --all and --mirror are incompatible; neither makes sense
 	 * with any refspecs.
 	 */
-	if ((heads && (args.send_all || args.send_mirror)) ||
-					(args.send_all && args.send_mirror))
+	if ((refspecs && (send_all || args.send_mirror)) ||
+	    (send_all && args.send_mirror))
 		usage(send_pack_usage);
 
 	if (remote_name) {
@@ -574,24 +543,50 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	return send_pack(&args, dest, remote, nr_heads, heads);
-}
+	conn = git_connect(fd, dest, receivepack, args.verbose ? CONNECT_VERBOSE : 0);
 
-int send_pack(struct send_pack_args *my_args,
-	      const char *dest, struct remote *remote,
-	      int nr_heads, const char **heads)
-{
-	int fd[2], ret;
-	struct child_process *conn;
+	memset(&extra_have, 0, sizeof(extra_have));
 
-	memcpy(&args, my_args, sizeof(args));
+	get_remote_heads(fd[0], &remote_refs, 0, NULL, REF_NORMAL,
+			 &extra_have);
 
-	verify_remote_names(nr_heads, heads);
+	verify_remote_names(nr_refspecs, refspecs);
 
-	conn = git_connect(fd, dest, args.receivepack, args.verbose ? CONNECT_VERBOSE : 0);
-	ret = do_send_pack(fd[0], fd[1], remote, dest, nr_heads, heads);
+	local_refs = get_local_heads();
+
+	flags = MATCH_REFS_NONE;
+
+	if (send_all)
+		flags |= MATCH_REFS_ALL;
+	if (args.send_mirror)
+		flags |= MATCH_REFS_MIRROR;
+
+	/* match them up */
+	remote_tail = &remote_refs;
+	while (*remote_tail)
+		remote_tail = &((*remote_tail)->next);
+	if (match_refs(local_refs, remote_refs, &remote_tail,
+		       nr_refspecs, refspecs, flags)) {
+		return -1;
+	}
+
+	ret = send_pack(&args, fd, conn, remote_refs, &extra_have);
+
+	close(fd[1]);
 	close(fd[0]);
-	/* do_send_pack always closes fd[1] */
+
 	ret |= finish_connect(conn);
-	return !!ret;
+
+	print_push_status(dest, remote_refs);
+
+	if (!args.dry_run && remote) {
+		struct ref *ref;
+		for (ref = remote_refs; ref; ref = ref->next)
+			update_tracking_ref(remote, ref);
+	}
+
+	if (!ret && !refs_pushed(remote_refs))
+		fprintf(stderr, "Everything up-to-date\n");
+
+	return ret;
 }

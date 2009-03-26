@@ -737,6 +737,16 @@ int check_ref_format(const char *ref)
 	}
 }
 
+const char *prettify_ref(const struct ref *ref)
+{
+	const char *name = ref->name;
+	return name + (
+		!prefixcmp(name, "refs/heads/") ? 11 :
+		!prefixcmp(name, "refs/tags/") ? 10 :
+		!prefixcmp(name, "refs/remotes/") ? 13 :
+		0);
+}
+
 const char *ref_rev_parse_rules[] = {
 	"%.*s",
 	"refs/%.*s",
