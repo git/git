@@ -187,17 +187,12 @@ void get_patch_filename(struct commit *commit, int nr, const char *suffix,
 
 	strbuf_addf(buf, commit ? "%04d-" : "%d", nr);
 	if (commit) {
+		int max_len = start_len + FORMAT_PATCH_NAME_MAX - suffix_len;
+
 		format_commit_message(commit, "%f", buf, DATE_NORMAL);
-		/*
-		 * Replace characters at the end with the suffix if the
-		 * filename is too long
-		 */
-		if (buf->len + suffix_len > FORMAT_PATCH_NAME_MAX + start_len)
-			strbuf_splice(buf,
-				start_len + FORMAT_PATCH_NAME_MAX - suffix_len,
-				suffix_len, suffix, suffix_len);
-		else
-			strbuf_addstr(buf, suffix);
+		if (max_len < buf->len)
+			strbuf_setlen(buf, max_len);
+		strbuf_addstr(buf, suffix);
 	}
 }
 
