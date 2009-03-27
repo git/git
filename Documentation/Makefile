@@ -42,6 +42,7 @@ man7dir=$(mandir)/man7
 ASCIIDOC=asciidoc
 ASCIIDOC_EXTRA =
 MANPAGE_XSL = manpage-normal.xsl
+XMLTO_EXTRA =
 INSTALL?=install
 RM ?= rm -f
 DOC_REF = origin/man
@@ -92,6 +93,9 @@ else
 	# pass-thru raw roff codes from asciidoc.conf, so turn them off.
 	ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
 	endif
+endif
+ifdef MAN_BOLD_LITERAL
+XMLTO_EXTRA += -m manpage-bold-literal.xsl
 endif
 
 #
@@ -192,7 +196,7 @@ $(MAN_HTML): %.html : %.txt
 
 %.1 %.5 %.7 : %.xml
 	$(RM) $@
-	xmlto -m $(MANPAGE_XSL) man $<
+	xmlto -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
 %.xml : %.txt
 	$(RM) $@+ $@
