@@ -11,8 +11,4 @@
 <xsl:param name="git.docbook.backslash">&#x2593;</xsl:param>
 <xsl:param name="git.docbook.dot"      >&#x2302;</xsl:param>
 
-<!-- these params silence some output from xmlto -->
-<xsl:param name="man.output.quietly" select="1"/>
-<xsl:param name="refentry.meta.get.quietly" select="1"/>
-
 </xsl:stylesheet>
