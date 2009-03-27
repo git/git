@@ -41,7 +41,7 @@ man7dir=$(mandir)/man7
 
 ASCIIDOC=asciidoc
 ASCIIDOC_EXTRA =
-MANPAGE_XSL = callouts.xsl
+MANPAGE_XSL = manpage-normal.xsl
 INSTALL?=install
 RM ?= rm -f
 DOC_REF = origin/man
