@@ -178,7 +178,7 @@ cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 
 clean:
 	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7
-	$(RM) *.texi *.texi+ git.info gitman.info
+	$(RM) *.texi *.texi+ *.texi++ git.info gitman.info
 	$(RM) howto-index.txt howto/*.html doc.dep
 	$(RM) technical/api-*.html technical/api-index.txt
 	$(RM) $(cmds_txt) *.made
@@ -221,8 +221,9 @@ git.info: user-manual.texi
 
 user-manual.texi: user-manual.xml
 	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
-	$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout | \
-		$(PERL_PATH) fix-texi.perl >$@+ && \
+	$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@++ && \
+	$(PERL_PATH) fix-texi.perl <$@++ >$@+ && \
+	rm $@++ && \
 	mv $@+ $@
 
 user-manual.pdf: user-manual.xml
@@ -233,7 +234,9 @@ user-manual.pdf: user-manual.xml
 gitman.texi: $(MAN_XML) cat-texi.perl
 	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
 	($(foreach xml,$(MAN_XML),$(DOCBOOK2X_TEXI) --encoding=UTF-8 \
-		--to-stdout $(xml) &&) true) | $(PERL_PATH) cat-texi.perl $@ >$@+ && \
+		--to-stdout $(xml) &&) true) > $@++ && \
+	$(PERL_PATH) cat-texi.perl $@ <$@++ >$@+ && \
+	rm $@++ && \
 	mv $@+ $@
 
 gitman.info: gitman.texi
