@@ -542,8 +542,17 @@ enum rebase_setup_type {
 	AUTOREBASE_ALWAYS,
 };
 
+enum push_default_type {
+	PUSH_DEFAULT_UNSPECIFIED = -1,
+	PUSH_DEFAULT_NOTHING = 0,
+	PUSH_DEFAULT_MATCHING,
+	PUSH_DEFAULT_TRACKING,
+	PUSH_DEFAULT_CURRENT,
+};
+
 extern enum branch_track git_branch_track;
 extern enum rebase_setup_type autorebase;
+extern enum push_default_type push_default;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;

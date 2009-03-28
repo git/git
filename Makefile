@@ -264,6 +264,18 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 BASIC_CFLAGS =
 BASIC_LDFLAGS =
 
+# Guard against environment variables
+BUILTIN_OBJS =
+BUILT_INS =
+COMPAT_CFLAGS =
+COMPAT_OBJS =
+LIB_H =
+LIB_OBJS =
+PROGRAMS =
+SCRIPT_PERL =
+SCRIPT_SH =
+TEST_PROGRAMS =
+
 SCRIPT_SH += git-am.sh
 SCRIPT_SH += git-bisect.sh
 SCRIPT_SH += git-filter-branch.sh
@@ -714,6 +726,7 @@ ifeq ($(uname_S),FreeBSD)
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
 	DIR_HAS_BSD_GROUP_SEMANTICS = YesPlease
+	USE_ST_TIMESPEC = YesPlease
 	THREADED_DELTA_SEARCH = YesPlease
 	ifeq ($(shell expr "$(uname_R)" : '4\.'),2)
 		PTHREAD_LIBS = -pthread

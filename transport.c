@@ -143,13 +143,16 @@ static const char *rsync_url(const char *url)
 	return prefixcmp(url, "rsync://") ? skip_prefix(url, "rsync:") : url;
 }
 
-static struct ref *get_refs_via_rsync(struct transport *transport)
+static struct ref *get_refs_via_rsync(struct transport *transport, int for_push)
 {
 	struct strbuf buf = STRBUF_INIT, temp_dir = STRBUF_INIT;
 	struct ref dummy, *tail = &dummy;
 	struct child_process rsync;
 	const char *args[5];
 	int temp_dir_len;
+
+	if (for_push)
+		return NULL;
 
 	/* copy the refs to the temporary directory */
 
@@ -429,7 +432,7 @@ static int curl_transport_push(struct transport *transport, int refspec_nr, cons
 	return !!err;
 }
 
-static struct ref *get_refs_via_curl(struct transport *transport)
+static struct ref *get_refs_via_curl(struct transport *transport, int for_push)
 {
 	struct strbuf buffer = STRBUF_INIT;
 	char *data, *start, *mid;
@@ -445,6 +448,9 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	struct ref *last_ref = NULL;
 
 	struct walker *walker;
+
+	if (for_push)
+		return NULL;
 
 	if (!transport->data)
 		transport->data = get_http_walker(transport->url,
@@ -532,11 +538,14 @@ struct bundle_transport_data {
 	struct bundle_header header;
 };
 
-static struct ref *get_refs_from_bundle(struct transport *transport)
+static struct ref *get_refs_from_bundle(struct transport *transport, int for_push)
 {
 	struct bundle_transport_data *data = transport->data;
 	struct ref *result = NULL;
 	int i;
+
+	if (for_push)
+		return NULL;
 
 	if (data->fd > 0)
 		close(data->fd);
@@ -578,6 +587,7 @@ struct git_transport_data {
 	int fd[2];
 	const char *uploadpack;
 	const char *receivepack;
+	struct extra_have_objects extra_have;
 };
 
 static int set_git_option(struct transport *connection,
@@ -609,20 +619,23 @@ static int set_git_option(struct transport *connection,
 	return 1;
 }
 
-static int connect_setup(struct transport *transport)
+static int connect_setup(struct transport *transport, int for_push, int verbose)
 {
 	struct git_transport_data *data = transport->data;
-	data->conn = git_connect(data->fd, transport->url, data->uploadpack, 0);
+	data->conn = git_connect(data->fd, transport->url,
+				 for_push ? data->receivepack : data->uploadpack,
+				 verbose ? CONNECT_VERBOSE : 0);
 	return 0;
 }
 
-static struct ref *get_refs_via_connect(struct transport *transport)
+static struct ref *get_refs_via_connect(struct transport *transport, int for_push)
 {
 	struct git_transport_data *data = transport->data;
 	struct ref *refs;
 
-	connect_setup(transport);
-	get_remote_heads(data->fd[0], &refs, 0, NULL, 0, NULL);
+	connect_setup(transport, for_push, 0);
+	get_remote_heads(data->fd[0], &refs, 0, NULL,
+			 for_push ? REF_NORMAL : 0, &data->extra_have);
 
 	return refs;
 }
@@ -654,7 +667,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 		origh[i] = heads[i] = xstrdup(to_fetch[i]->name);
 
 	if (!data->conn) {
-		connect_setup(transport);
+		connect_setup(transport, 0, 0);
 		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL, 0, NULL);
 	}
 
@@ -677,20 +690,216 @@ static int fetch_refs_via_pack(struct transport *transport,
 	return (refs ? 0 : -1);
 }
 
-static int git_transport_push(struct transport *transport, int refspec_nr, const char **refspec, int flags)
+static int refs_pushed(struct ref *ref)
+{
+	for (; ref; ref = ref->next) {
+		switch(ref->status) {
+		case REF_STATUS_NONE:
+		case REF_STATUS_UPTODATE:
+			break;
+		default:
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static void update_tracking_ref(struct remote *remote, struct ref *ref, int verbose)
+{
+	struct refspec rs;
+
+	if (ref->status != REF_STATUS_OK && ref->status != REF_STATUS_UPTODATE)
+		return;
+
+	rs.src = ref->name;
+	rs.dst = NULL;
+
+	if (!remote_find_tracking(remote, &rs)) {
+		if (verbose)
+			fprintf(stderr, "updating local tracking ref '%s'\n", rs.dst);
+		if (ref->deletion) {
+			delete_ref(rs.dst, NULL, 0);
+		} else
+			update_ref("update by push", rs.dst,
+					ref->new_sha1, NULL, 0, 0);
+		free(rs.dst);
+	}
+}
+
+#define SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
+
+static void print_ref_status(char flag, const char *summary, struct ref *to, struct ref *from, const char *msg)
+{
+	fprintf(stderr, " %c %-*s ", flag, SUMMARY_WIDTH, summary);
+	if (from)
+		fprintf(stderr, "%s -> %s", prettify_ref(from), prettify_ref(to));
+	else
+		fputs(prettify_ref(to), stderr);
+	if (msg) {
+		fputs(" (", stderr);
+		fputs(msg, stderr);
+		fputc(')', stderr);
+	}
+	fputc('\n', stderr);
+}
+
+static const char *status_abbrev(unsigned char sha1[20])
+{
+	return find_unique_abbrev(sha1, DEFAULT_ABBREV);
+}
+
+static void print_ok_ref_status(struct ref *ref)
+{
+	if (ref->deletion)
+		print_ref_status('-', "[deleted]", ref, NULL, NULL);
+	else if (is_null_sha1(ref->old_sha1))
+		print_ref_status('*',
+			(!prefixcmp(ref->name, "refs/tags/") ? "[new tag]" :
+			  "[new branch]"),
+			ref, ref->peer_ref, NULL);
+	else {
+		char quickref[84];
+		char type;
+		const char *msg;
+
+		strcpy(quickref, status_abbrev(ref->old_sha1));
+		if (ref->nonfastforward) {
+			strcat(quickref, "...");
+			type = '+';
+			msg = "forced update";
+		} else {
+			strcat(quickref, "..");
+			type = ' ';
+			msg = NULL;
+		}
+		strcat(quickref, status_abbrev(ref->new_sha1));
+
+		print_ref_status(type, quickref, ref, ref->peer_ref, msg);
+	}
+}
+
+static int print_one_push_status(struct ref *ref, const char *dest, int count)
+{
+	if (!count)
+		fprintf(stderr, "To %s\n", dest);
+
+	switch(ref->status) {
+	case REF_STATUS_NONE:
+		print_ref_status('X', "[no match]", ref, NULL, NULL);
+		break;
+	case REF_STATUS_REJECT_NODELETE:
+		print_ref_status('!', "[rejected]", ref, NULL,
+				"remote does not support deleting refs");
+		break;
+	case REF_STATUS_UPTODATE:
+		print_ref_status('=', "[up to date]", ref,
+				ref->peer_ref, NULL);
+		break;
+	case REF_STATUS_REJECT_NONFASTFORWARD:
+		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+				"non-fast forward");
+		break;
+	case REF_STATUS_REMOTE_REJECT:
+		print_ref_status('!', "[remote rejected]", ref,
+				ref->deletion ? NULL : ref->peer_ref,
+				ref->remote_status);
+		break;
+	case REF_STATUS_EXPECTING_REPORT:
+		print_ref_status('!', "[remote failure]", ref,
+				ref->deletion ? NULL : ref->peer_ref,
+				"remote failed to report status");
+		break;
+	case REF_STATUS_OK:
+		print_ok_ref_status(ref);
+		break;
+	}
+
+	return 1;
+}
+
+static void print_push_status(const char *dest, struct ref *refs, int verbose)
+{
+	struct ref *ref;
+	int n = 0;
+
+	if (verbose) {
+		for (ref = refs; ref; ref = ref->next)
+			if (ref->status == REF_STATUS_UPTODATE)
+				n += print_one_push_status(ref, dest, n);
+	}
+
+	for (ref = refs; ref; ref = ref->next)
+		if (ref->status == REF_STATUS_OK)
+			n += print_one_push_status(ref, dest, n);
+
+	for (ref = refs; ref; ref = ref->next) {
+		if (ref->status != REF_STATUS_NONE &&
+		    ref->status != REF_STATUS_UPTODATE &&
+		    ref->status != REF_STATUS_OK)
+			n += print_one_push_status(ref, dest, n);
+	}
+}
+
+static void verify_remote_names(int nr_heads, const char **heads)
+{
+	int i;
+
+	for (i = 0; i < nr_heads; i++) {
+		const char *local = heads[i];
+		const char *remote = strrchr(heads[i], ':');
+
+		if (*local == '+')
+			local++;
+
+		/* A matching refspec is okay.  */
+		if (remote == local && remote[1] == '\0')
+			continue;
+
+		remote = remote ? (remote + 1) : local;
+		switch (check_ref_format(remote)) {
+		case 0: /* ok */
+		case CHECK_REF_FORMAT_ONELEVEL:
+			/* ok but a single level -- that is fine for
+			 * a match pattern.
+			 */
+		case CHECK_REF_FORMAT_WILDCARD:
+			/* ok but ends with a pattern-match character */
+			continue;
+		}
+		die("remote part of refspec is not a valid name in %s",
+		    heads[i]);
+	}
+}
+
+static int git_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
 {
 	struct git_transport_data *data = transport->data;
 	struct send_pack_args args;
+	int ret;
 
-	args.receivepack = data->receivepack;
-	args.send_all = !!(flags & TRANSPORT_PUSH_ALL);
+	if (!data->conn) {
+		struct ref *tmp_refs;
+		connect_setup(transport, 1, 0);
+
+		get_remote_heads(data->fd[0], &tmp_refs, 0, NULL, REF_NORMAL,
+				 NULL);
+	}
+
 	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
 	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
 	args.use_thin_pack = data->thin;
 	args.verbose = !!(flags & TRANSPORT_PUSH_VERBOSE);
 	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
 
-	return send_pack(&args, transport->url, transport->remote, refspec_nr, refspec);
+	ret = send_pack(&args, data->fd, data->conn, remote_refs,
+			&data->extra_have);
+
+	close(data->fd[1]);
+	close(data->fd[0]);
+	ret |= finish_connect(data->conn);
+	data->conn = NULL;
+
+	return ret;
 }
 
 static int disconnect_git(struct transport *transport)
@@ -760,7 +969,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->set_option = set_git_option;
 		ret->get_refs_list = get_refs_via_connect;
 		ret->fetch = fetch_refs_via_pack;
-		ret->push = git_transport_push;
+		ret->push_refs = git_transport_push;
 		ret->disconnect = disconnect_git;
 
 		data->thin = 1;
@@ -787,15 +996,53 @@ int transport_set_option(struct transport *transport,
 int transport_push(struct transport *transport,
 		   int refspec_nr, const char **refspec, int flags)
 {
-	if (!transport->push)
-		return 1;
-	return transport->push(transport, refspec_nr, refspec, flags);
+	verify_remote_names(refspec_nr, refspec);
+
+	if (transport->push)
+		return transport->push(transport, refspec_nr, refspec, flags);
+	if (transport->push_refs) {
+		struct ref *remote_refs =
+			transport->get_refs_list(transport, 1);
+		struct ref **remote_tail;
+		struct ref *local_refs = get_local_heads();
+		int match_flags = MATCH_REFS_NONE;
+		int verbose = flags & TRANSPORT_PUSH_VERBOSE;
+		int ret;
+
+		if (flags & TRANSPORT_PUSH_ALL)
+			match_flags |= MATCH_REFS_ALL;
+		if (flags & TRANSPORT_PUSH_MIRROR)
+			match_flags |= MATCH_REFS_MIRROR;
+
+		remote_tail = &remote_refs;
+		while (*remote_tail)
+			remote_tail = &((*remote_tail)->next);
+		if (match_refs(local_refs, remote_refs, &remote_tail,
+			       refspec_nr, refspec, match_flags)) {
+			return -1;
+		}
+
+		ret = transport->push_refs(transport, remote_refs, flags);
+
+		print_push_status(transport->url, remote_refs, verbose);
+
+		if (!(flags & TRANSPORT_PUSH_DRY_RUN)) {
+			struct ref *ref;
+			for (ref = remote_refs; ref; ref = ref->next)
+				update_tracking_ref(transport->remote, ref, verbose);
+		}
+
+		if (!ret && !refs_pushed(remote_refs))
+			fprintf(stderr, "Everything up-to-date\n");
+		return ret;
+	}
+	return 1;
 }
 
 const struct ref *transport_get_remote_refs(struct transport *transport)
 {
 	if (!transport->remote_refs)
-		transport->remote_refs = transport->get_refs_list(transport);
+		transport->remote_refs = transport->get_refs_list(transport, 0);
 	return transport->remote_refs;
 }
 

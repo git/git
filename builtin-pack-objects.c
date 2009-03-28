@@ -1293,7 +1293,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		max_size = trg_entry->delta_size;
 		ref_depth = trg->depth;
 	}
-	max_size = max_size * (max_depth - src->depth) /
+	max_size = (uint64_t)max_size * (max_depth - src->depth) /
 						(max_depth - ref_depth + 1);
 	if (max_size == 0)
 		return 0;

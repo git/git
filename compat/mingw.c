@@ -457,7 +457,7 @@ static const char *quote_arg(const char *arg)
 	const char *p = arg;
 	if (!*p) force_quotes = 1;
 	while (*p) {
-		if (isspace(*p) || *p == '*' || *p == '?' || *p == '{')
+		if (isspace(*p) || *p == '*' || *p == '?' || *p == '{' || *p == '\'')
 			force_quotes = 1;
 		else if (*p == '"')
 			n++;
