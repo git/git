@@ -22,12 +22,12 @@ branch pointed at by its HEAD, gets a large warning.  You can choose what
 should happen upon such a push by setting the configuration variable
 receive.denyDeleteCurrent in the receiving repository.
 
-In a future release, the default of "git push" without further
-arguments might be changed. Currently, it will push all matching
-refspecs to the current remote.  A configuration variable push.default
-has been introduced to select the default behaviour.  To ease the
-transition, a big warning is issued if this is not configured and a
-git push without arguments is attempted.
+When the user does not tell "git push" what to push, it has always
+pushed matching refs.  For some people it is unexpected, and a new
+configuration variable push.default has been introduced to allow
+changing a different default behaviour.  To advertise the new feature,
+a big warning is issued if this is not configured and a git push without
+arguments is attempted.
 
 
 Updates since v1.6.2
@@ -45,6 +45,9 @@ Updates since v1.6.2
 * rsync:/path/to/repo can be used to run git over rsync for local
   repositories.  It may not be useful in practice; meant primarily for
   testing.
+
+* http transport learned to prompt and use password when fetching from or
+  pushing to http://user@host.xz/ URL.
 
 * (msysgit) progress output that is sent over the sideband protocol can
   be handled appropriately in Windows console.
@@ -99,6 +102,8 @@ Updates since v1.6.2
 
 * Test scripts can be run under valgrind.
 
+* Test scripts can be run with installed git.
+
 * Makefile learned 'coverage' option to run the test suites with
   coverage tracking enabled.
 
@@ -111,11 +116,20 @@ release, unless otherwise noted.
 Here are fixes that this release has, but have not been backported to
 v1.6.2.X series.
 
+* "git-blame -S" did not quite work near the commits that were given
+  on the command line correctly (jc/maint-1.6.0-blame-s).
+
+* The initial checkout did not read the attributes from the .gitattribute
+  file that is being checked out.
+
+* git-diff feeds files in work-tree representation to external diff and
+  textconv (js/maint-diff-temp-smudge).
+
 * git-gc spent excessive amount of time to decide if an object appears
   in a locally existing pack (if needed, backport by merging 69e020a).
 
 ---
 exec >/var/tmp/1
-O=v1.6.2.1-213-g7d4e3a7
+O=v1.6.2.1-399-gaa72a14
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
