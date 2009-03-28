@@ -2263,12 +2263,12 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 	 *
 	 * The same holds for FAT formatted media.
 	 *
-	 * When this succeeds, we just return 0. We have nothing
+	 * When this succeeds, we just return.  We have nothing
 	 * left to unlink.
 	 */
 	if (ret && ret != EEXIST) {
 		if (!rename(tmpfile, filename))
-			return 0;
+			goto out;
 		ret = errno;
 	}
 	unlink(tmpfile);
@@ -2279,6 +2279,7 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 		/* FIXME!!! Collision check here ? */
 	}
 
+out:
 	if (chmod(filename, 0444) || adjust_shared_perm(filename))
 		return error("unable to set permission to '%s'", filename);
 	return 0;
