@@ -24,7 +24,7 @@ pre-clean:
 	$(RM) -r test-results
 
 clean:
-	$(RM) -r 'trash directory' test-results
+	$(RM) -r 'trash directory'.* test-results
 
 aggregate-results-and-cleanup: $(T)
 	$(MAKE) aggregate-results
