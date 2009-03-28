@@ -2280,7 +2280,7 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 	}
 
 out:
-	if (chmod(filename, 0444) || adjust_shared_perm(filename))
+	if (set_shared_perm(filename, (S_IFREG|0444)))
 		return error("unable to set permission to '%s'", filename);
 	return 0;
 }

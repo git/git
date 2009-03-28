@@ -311,16 +311,23 @@ char *enter_repo(char *path, int strict)
 	return NULL;
 }
 
-int adjust_shared_perm(const char *path)
+int set_shared_perm(const char *path, int mode)
 {
 	struct stat st;
-	int mode, tweak, shared;
+	int tweak, shared, orig_mode;
 
-	if (!shared_repository)
+	if (!shared_repository) {
+		if (mode)
+			return chmod(path, mode & ~S_IFMT);
 		return 0;
-	if (lstat(path, &st) < 0)
-		return -1;
-	mode = st.st_mode;
+	}
+	if (!mode) {
+		if (lstat(path, &st) < 0)
+			return -1;
+		mode = st.st_mode;
+		orig_mode = mode;
+	} else
+		orig_mode = 0;
 	if (shared_repository < 0)
 		shared = -shared_repository;
 	else
@@ -344,9 +351,9 @@ int adjust_shared_perm(const char *path)
 	}
 
 	if (((shared_repository < 0
-	      ? (st.st_mode & (FORCE_DIR_SET_GID | 0777))
-	      : (st.st_mode & mode)) != mode) &&
-	    chmod(path, mode) < 0)
+	      ? (orig_mode & (FORCE_DIR_SET_GID | 0777))
+	      : (orig_mode & mode)) != mode) &&
+	    chmod(path, (mode & ~S_IFMT)) < 0)
 		return -2;
 	return 0;
 }
