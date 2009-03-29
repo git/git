@@ -9,13 +9,17 @@ extern struct commit_list *filter_skipped(struct commit_list *list,
 					  struct commit_list **tried,
 					  int show_all);
 
+/* show_bisect_vars flags */
+#define BISECT_SHOW_ALL		(1<<0)
+#define BISECT_SHOW_TRIED	(1<<1)
+
 /*
- * The "show_all" parameter should be 0 if this function is called
+ * The flag BISECT_SHOW_ALL should not be set if this function is called
  * from outside "builtin-rev-list.c" as otherwise it would use
  * static "revs" from this file.
  */
 extern int show_bisect_vars(struct rev_info *revs, int reaches, int all,
-			    int show_all, int show_tried);
+			    int flags);
 
 extern int bisect_next_vars(const char *prefix);
 

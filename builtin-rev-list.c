@@ -236,17 +236,16 @@ static void show_tried_revs(struct commit_list *tried)
 	printf("'\n");
 }
 
-int show_bisect_vars(struct rev_info *revs, int reaches, int all,
-		     int show_all, int show_tried)
+int show_bisect_vars(struct rev_info *revs, int reaches, int all, int flags)
 {
 	int cnt;
 	char hex[41] = "";
 	struct commit_list *tried;
 
-	if (!revs->commits && !show_tried)
+	if (!revs->commits && !(flags & BISECT_SHOW_TRIED))
 		return 1;
 
-	revs->commits = filter_skipped(revs->commits, &tried, show_all);
+	revs->commits = filter_skipped(revs->commits, &tried, flags & BISECT_SHOW_ALL);
 
 	/*
 	 * revs->commits can reach "reaches" commits among
@@ -264,12 +263,12 @@ int show_bisect_vars(struct rev_info *revs, int reaches, int all,
 	if (revs->commits)
 		strcpy(hex, sha1_to_hex(revs->commits->item->object.sha1));
 
-	if (show_all) {
+	if (flags & BISECT_SHOW_ALL) {
 		traverse_commit_list(revs, show_commit, show_object);
 		printf("------\n");
 	}
 
-	if (show_tried)
+	if (flags & BISECT_SHOW_TRIED)
 		show_tried_revs(tried);
 	printf("bisect_rev=%s\n"
 	       "bisect_nr=%d\n"
@@ -379,7 +378,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 		if (bisect_show_vars)
 			return show_bisect_vars(&revs, reaches, all,
-						bisect_show_all, 0);
+						bisect_show_all ? BISECT_SHOW_ALL : 0);
 	}
 
 	traverse_commit_list(&revs,
