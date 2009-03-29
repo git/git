@@ -72,7 +72,7 @@ void sq_quote_argv(struct strbuf *dst, const char** argv, size_t maxlen)
 	}
 }
 
-char *sq_dequote(char *arg)
+char *sq_dequote_step(char *arg, char **next)
 {
 	char *dst = arg;
 	char *src = arg;
@@ -92,6 +92,8 @@ char *sq_dequote(char *arg)
 		switch (*++src) {
 		case '\0':
 			*dst = 0;
+			if (next)
+				*next = NULL;
 			return arg;
 		case '\\':
 			c = *++src;
@@ -101,9 +103,21 @@ char *sq_dequote(char *arg)
 			}
 		/* Fallthrough */
 		default:
-			return NULL;
+			if (!next || !isspace(*src))
+				return NULL;
+			do {
+				c = *++src;
+			} while (isspace(c));
+			*dst = 0;
+			*next = src;
+			return arg;
 		}
 	}
+}
+
+char *sq_dequote(char *arg)
+{
+	return sq_dequote_step(arg, NULL);
 }
 
 /* 1 means: quote as octal
