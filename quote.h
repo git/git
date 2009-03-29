@@ -46,6 +46,7 @@ extern char *sq_dequote(char *);
  * is no more argument to be dequoted, "next" is updated to point to NULL.
  */
 extern char *sq_dequote_step(char *arg, char **next);
+extern int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc);
 
 extern int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);
 extern size_t quote_c_style(const char *name, struct strbuf *, FILE *, int no_dq);

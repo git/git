@@ -120,6 +120,23 @@ char *sq_dequote(char *arg)
 	return sq_dequote_step(arg, NULL);
 }
 
+int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc)
+{
+	char *next = arg;
+
+	if (!*arg)
+		return 0;
+	do {
+		char *dequoted = sq_dequote_step(next, &next);
+		if (!dequoted)
+			return -1;
+		ALLOC_GROW(*argv, *nr + 1, *alloc);
+		(*argv)[(*nr)++] = dequoted;
+	} while (next);
+
+	return 0;
+}
+
 /* 1 means: quote as octal
  * 0 means: quote as octal if (quote_path_fully)
  * -1 means: never quote
