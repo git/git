@@ -421,8 +421,8 @@ test_confirm () {
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
-		$@ \
-		$patches | grep "Send this email"
+		$@ $patches > stdout &&
+	grep "Send this email" stdout
 }
 
 test_expect_success '--confirm=always' '
@@ -444,14 +444,58 @@ test_expect_success '--confirm=compose' '
 test_expect_success 'confirm by default (due to cc)' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config --unset sendemail.confirm &&
-	test_confirm &&
-	git config sendemail.confirm $CONFIRM
+	test_confirm
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
 '
 
 test_expect_success 'confirm by default (due to --compose)' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config --unset sendemail.confirm &&
 	test_confirm --suppress-cc=all --compose
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'confirm detects EOF (inform assumes y)' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config --unset sendemail.confirm &&
+	GIT_SEND_EMAIL_NOTTY=1 \
+		git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			$patches < /dev/null
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'confirm detects EOF (auto causes failure)' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config sendemail.confirm auto &&
+	GIT_SEND_EMAIL_NOTTY=1 \
+		test_must_fail git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			$patches < /dev/null
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'confirm doesnt loop forever' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config sendemail.confirm auto &&
+	yes "bogus" | GIT_SEND_EMAIL_NOTTY=1 \
+		test_must_fail git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			$patches
 	ret="$?"
 	git config sendemail.confirm ${CONFIRM:-never}
 	test $ret = "0"
