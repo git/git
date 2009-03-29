@@ -2331,13 +2331,13 @@ sub do_git_commit {
 
 	$self->{last_rev} = $log_entry->{revision};
 	$self->{last_commit} = $commit;
-	print "r$log_entry->{revision}";
+	print "r$log_entry->{revision}" unless $::_q;
 	if (defined $log_entry->{svm_revision}) {
-		 print " (\@$log_entry->{svm_revision})";
+		 print " (\@$log_entry->{svm_revision})" unless $::_q;
 		 $self->rev_map_set($log_entry->{svm_revision}, $commit,
 		                   0, $self->svm_uuid);
 	}
-	print " = $commit ($self->{ref_id})\n";
+	print " = $commit ($self->{ref_id})\n" unless $::_q;
 	if (--$_gc_nr == 0) {
 		$_gc_nr = $_gc_period;
 		gc();
