@@ -2944,7 +2944,7 @@ $ctxm add command \
 	-command {tk_textPaste $ui_comm}
 $ctxm add command \
 	-label [mc Delete] \
-	-command {$ui_comm delete sel.first sel.last}
+	-command {catch {$ui_comm delete sel.first sel.last}}
 $ctxm add separator
 $ctxm add command \
 	-label [mc "Select All"] \
