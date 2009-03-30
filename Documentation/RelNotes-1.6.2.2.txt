@@ -27,9 +27,16 @@ Fixes since v1.6.2.1
 * 'git-submodule add' did not tolerate extra slashes and ./ in the path it
   accepted from the command line; it now is more lenient.
 
+* git-svn misbehaved when the project contained a path that began with
+  two dashes.
+
+* import-zips script (in contrib) did not compute the common directory
+  prefix correctly.
+
+Many small documentation updates are included as well.
 
 ---
 exec >/var/tmp/1
-O=v1.6.2.1-23-g67c176f
+O=v1.6.2.1-46-gb19293d
 echo O=$(git describe maint)
 git shortlog --no-merges $O..maint
