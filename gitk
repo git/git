@@ -521,7 +521,7 @@ proc updatecommits {} {
     incr viewactive($view)
     set viewcomplete($view) 0
     reset_pending_select {}
-    nowbusy $view "Reading"
+    nowbusy $view [mc "Reading"]
     if {$showneartags} {
 	getallcommits
     }
@@ -3772,7 +3772,7 @@ proc editview {} {
     set newviewopts($curview,perm) $viewperm($curview)
     set newviewopts($curview,cmd)  $viewargscmd($curview)
     decode_view_opts $curview $viewargs($curview)
-    vieweditor $top $curview "Gitk: edit view $viewname($curview)"
+    vieweditor $top $curview "[mc "Gitk: edit view"] $viewname($curview)"
 }
 
 proc vieweditor {top n title} {
@@ -10400,7 +10400,7 @@ proc doprefs {} {
 proc choose_extdiff {} {
     global extdifftool
 
-    set prog [tk_getOpenFile -title "External diff tool" -multiple false]
+    set prog [tk_getOpenFile -title [mc "External diff tool"] -multiple false]
     if {$prog ne {}} {
 	set extdifftool $prog
     }
