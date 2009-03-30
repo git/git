@@ -2313,6 +2313,7 @@ proc makewindow {} {
     bindkey d "$ctext yview scroll 18 units"
     bindkey u "$ctext yview scroll -18 units"
     bindkey / {focus $fstring}
+    bindkey <Key-KP_Divide> {focus $fstring}
     bindkey <Key-Return> {dofind 1 1}
     bindkey ? {dofind -1 1}
     bindkey f nextfile
