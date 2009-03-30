@@ -1005,7 +1005,7 @@ _git_log ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local g="$(git rev-parse --git-dir 2>/dev/null)"
 	local merge=""
-	if [ -f $g/MERGE_HEAD ]; then
+	if [ -f "$g/MERGE_HEAD" ]; then
 		merge="--merge"
 	fi
 	case "$cur" in
@@ -1843,7 +1843,7 @@ _gitk ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local g="$(git rev-parse --git-dir 2>/dev/null)"
 	local merge=""
-	if [ -f $g/MERGE_HEAD ]; then
+	if [ -f "$g/MERGE_HEAD" ]; then
 		merge="--merge"
 	fi
 	case "$cur" in
