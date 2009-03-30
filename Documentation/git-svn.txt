@@ -385,7 +385,8 @@ config key: svn.authorsfile
 
 -q::
 --quiet::
-	Make 'git-svn' less verbose.
+	Make 'git-svn' less verbose. Specify a second time to make it
+	even less verbose.
 
 --repack[=<n>]::
 --repack-flags=<flags>::
