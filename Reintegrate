@@ -7,16 +7,41 @@ LF='
 '
 
 echo '#!/bin/sh
+accept_rerere=t
+while case "$#,$1" in 0,*) break;; *,-*) ;; *) break ;; esac
+do
+	case "$1" in
+	-n)	accept_rerere= ;;
+	*)	echo "$0 [-n]"; exit 1 ;;
+	esac
+	shift
+done
+
+accept_rerere () {
+	if test -z "$accept_rerere"
+	then
+		return 1
+	fi
+	if git diff HEAD |
+		grep -e "^+<<<<<<<" -e "^+=======" -e "^+>>>>>>>" >/dev/null
+	then
+		return 1
+	else
+		EDITOR=: git commit -a
+		return 0
+	fi
+}
+
 while read branch eh
 do
 	case "$eh" in
 	"")
 		echo >&2 "* $branch"
-		git merge "$branch" || break ;;
+		git merge "$branch" || accept_rerere || exit ;;
 	pick" "*)
 		echo >&2 "* $eh"
-		git cherry-pick "$branch" || break ;;
-	*) echo >&2 "Eh? $branch $eh"; break ;;
+		git cherry-pick "$branch" || exit ;;
+	*) echo >&2 "Eh? $branch $eh"; exit ;;
 	esac
 done <<EOF'
 
