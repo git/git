@@ -4,12 +4,13 @@
 : ${BUILDBASE=../buildfarm}
 : ${branches='next master maint pu jch'}
 
-force= with_dash= M= install=
+force= with_dash= M= install= nodoc=
 while	case "$1" in
 	-pedantic) M=$1 ;;
 	-force) force=$1 ;;
 	-dash) with_dash=y ;;
 	-noinstall) install=noinstall ;;
+	-nodoc) nodoc=y ;;
 	*) break ;;
 	esac
 do
@@ -93,11 +94,11 @@ do
 		Meta/Make $M -- $J all &&
 		Meta/Make $M -- $J $dotest &&
 		case "$branch" in
-		master | maint | next )
-			Meta/Make $M -- doc
-			;;
-		jch )
+		jch)
 			Meta/Make $M -- doc install-doc
+			;;
+		master | maint | next )
+			test -z "$nodoc" || Meta/Make $M -- doc
 			;;
 		*)
 			: ;;
