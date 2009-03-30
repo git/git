@@ -1202,19 +1202,14 @@ push.default::
 	Defines the action git push should take if no refspec is given
 	on the command line, no refspec is configured in the remote, and
 	no refspec is implied by any of the options given on the command
-	line.
-+
-The term `current remote` means the remote configured for the current
-branch, or `origin` if no remote is configured. `origin` is also used
-if you are not on any branch. Possible values are:
+	line. Possible values are:
 +
 * `nothing` do not push anything.
-* `matching` push all matching branches to the current remote.
+* `matching` push all matching branches.
   All branches having the same name in both ends are considered to be
-  matching. This is the current default value.
+  matching. This is the default.
 * `tracking` push the current branch to the branch it is tracking.
-* `current` push the current branch to a branch of the same name on the
-  current remote.
+* `current` push the current branch to a branch of the same name.
 
 rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
