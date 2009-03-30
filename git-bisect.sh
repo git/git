@@ -279,18 +279,6 @@ bisect_auto_next() {
 	bisect_next_check && bisect_next || :
 }
 
-eval_and_string_together() {
-	_eval="$1"
-
-	eval "$_eval" | {
-		while read line
-		do
-			echo "$line &&"
-		done
-		echo ':'
-	}
-}
-
 exit_if_skipped_commits () {
 	_tried=$1
 	_bad=$2
@@ -429,8 +417,7 @@ bisect_next() {
 	test "$?" -eq "1" && return
 
 	# Get bisection information
-	eval="git bisect--helper --next-vars" &&
-	eval=$(eval_and_string_together "$eval") &&
+	eval=$(eval "git bisect--helper --next-vars") &&
 	eval "$eval" || exit
 
 	if [ -z "$bisect_rev" ]; then

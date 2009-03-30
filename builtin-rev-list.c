@@ -226,20 +226,20 @@ static int estimate_bisect_steps(int all)
 	return (e < 3 * x) ? n : n - 1;
 }
 
-static void show_tried_revs(struct commit_list *tried)
+static void show_tried_revs(struct commit_list *tried, int stringed)
 {
 	printf("bisect_tried='");
 	for (;tried; tried = tried->next) {
 		char *format = tried->next ? "%s|" : "%s";
 		printf(format, sha1_to_hex(tried->item->object.sha1));
 	}
-	printf("'\n");
+	printf(stringed ? "' &&\n" : "'\n");
 }
 
 int show_bisect_vars(struct rev_info *revs, int reaches, int all, int flags)
 {
 	int cnt;
-	char hex[41] = "";
+	char hex[41] = "", *format;
 	struct commit_list *tried;
 
 	if (!revs->commits && !(flags & BISECT_SHOW_TRIED))
@@ -269,13 +269,22 @@ int show_bisect_vars(struct rev_info *revs, int reaches, int all, int flags)
 	}
 
 	if (flags & BISECT_SHOW_TRIED)
-		show_tried_revs(tried);
-	printf("bisect_rev=%s\n"
-	       "bisect_nr=%d\n"
-	       "bisect_good=%d\n"
-	       "bisect_bad=%d\n"
-	       "bisect_all=%d\n"
-	       "bisect_steps=%d\n",
+		show_tried_revs(tried, flags & BISECT_SHOW_STRINGED);
+	format = (flags & BISECT_SHOW_STRINGED) ?
+		"bisect_rev=%s &&\n"
+		"bisect_nr=%d &&\n"
+		"bisect_good=%d &&\n"
+		"bisect_bad=%d &&\n"
+		"bisect_all=%d &&\n"
+		"bisect_steps=%d\n"
+		:
+		"bisect_rev=%s\n"
+		"bisect_nr=%d\n"
+		"bisect_good=%d\n"
+		"bisect_bad=%d\n"
+		"bisect_all=%d\n"
+		"bisect_steps=%d\n";
+	printf(format,
 	       hex,
 	       cnt - 1,
 	       all - reaches - 1,

@@ -12,6 +12,7 @@ extern struct commit_list *filter_skipped(struct commit_list *list,
 /* show_bisect_vars flags */
 #define BISECT_SHOW_ALL		(1<<0)
 #define BISECT_SHOW_TRIED	(1<<1)
+#define BISECT_SHOW_STRINGED	(1<<2)
 
 /*
  * The flag BISECT_SHOW_ALL should not be set if this function is called

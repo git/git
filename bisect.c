@@ -547,5 +547,6 @@ int bisect_next_vars(const char *prefix)
 	revs.commits = find_bisection(revs.commits, &reaches, &all,
 				      !!skipped_sha1_nr);
 
-	return show_bisect_vars(&revs, reaches, all, BISECT_SHOW_TRIED);
+	return show_bisect_vars(&revs, reaches, all,
+				BISECT_SHOW_TRIED | BISECT_SHOW_STRINGED);
 }
