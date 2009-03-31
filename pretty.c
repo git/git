@@ -502,6 +502,7 @@ static int istitlechar(char c)
 static void format_sanitized_subject(struct strbuf *sb, const char *msg)
 {
 	size_t trimlen;
+	size_t start_len = sb->len;
 	int space = 2;
 
 	for (; *msg && *msg != '\n'; msg++) {
@@ -519,8 +520,9 @@ static void format_sanitized_subject(struct strbuf *sb, const char *msg)
 
 	/* trim any trailing '.' or '-' characters */
 	trimlen = 0;
-	while (sb->buf[sb->len - 1 - trimlen] == '.'
-		|| sb->buf[sb->len - 1 - trimlen] == '-')
+	while (sb->len - trimlen > start_len &&
+		(sb->buf[sb->len - 1 - trimlen] == '.'
+		|| sb->buf[sb->len - 1 - trimlen] == '-'))
 		trimlen++;
 	strbuf_remove(sb, sb->len - trimlen, trimlen);
 }
