@@ -209,6 +209,31 @@ static int keep_entry(struct commit **it, unsigned char *sha1)
 	return 1;
 }
 
+static int unreachable(struct expire_reflog_cb *cb, struct commit *commit, unsigned char *sha1)
+{
+	/*
+	 * We may or may not have the commit yet - if not, look it
+	 * up using the supplied sha1.
+	 */
+	if (!commit) {
+		if (is_null_sha1(sha1))
+			return 0;
+
+		commit = lookup_commit_reference_gently(sha1, 1);
+
+		/* Not a commit -- keep it */
+		if (!commit)
+			return 0;
+	}
+
+	/* Reachable from the current ref?  Don't prune. */
+	if (in_merge_bases(commit, &cb->ref_commit, 1))
+		return 0;
+
+	/* We can't reach it - prune it. */
+	return 1;
+}
+
 static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		const char *email, unsigned long timestamp, int tz,
 		const char *message, void *cb_data)
@@ -230,12 +255,7 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	if (timestamp < cb->cmd->expire_unreachable) {
 		if (!cb->ref_commit)
 			goto prune;
-		if (!old && !is_null_sha1(osha1))
-			old = lookup_commit_reference_gently(osha1, 1);
-		if (!new && !is_null_sha1(nsha1))
-			new = lookup_commit_reference_gently(nsha1, 1);
-		if ((old && !in_merge_bases(old, &cb->ref_commit, 1)) ||
-		    (new && !in_merge_bases(new, &cb->ref_commit, 1)))
+		if (unreachable(cb, old, osha1) || unreachable(cb, new, nsha1))
 			goto prune;
 	}
 
