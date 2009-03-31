@@ -62,4 +62,12 @@ test_expect_success \
     'git diff-index --cached $tree -- file0/ >current &&
      compare_diff_raw current expected'
 
+test_expect_success 'diff-tree pathspec' '
+	tree2=$(git write-tree) &&
+	echo "$tree2" &&
+	git diff-tree -r --name-only $tree $tree2 -- pa path1/a >current &&
+	>expected &&
+	test_cmp expected current
+'
+
 test_done
