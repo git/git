@@ -462,12 +462,14 @@ test_expect_success 'confirm by default (due to --compose)' '
 test_expect_success 'confirm detects EOF (inform assumes y)' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config --unset sendemail.confirm &&
+	rm -fr outdir &&
+	git format-patch -2 -o outdir &&
 	GIT_SEND_EMAIL_NOTTY=1 \
 		git send-email \
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/fake.sendmail" \
-			$patches < /dev/null
+			outdir/*.patch < /dev/null
 	ret="$?"
 	git config sendemail.confirm ${CONFIRM:-never}
 	test $ret = "0"
