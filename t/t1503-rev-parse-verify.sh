@@ -71,6 +71,7 @@ test_expect_success 'fails with any bad rev or many good revs' '
 '
 
 test_expect_success 'fails silently when using -q' '
+	set +x &&
 	test_must_fail git rev-parse --verify --quiet 2>error &&
 	test -z "$(cat error)" &&
 	test_must_fail git rev-parse -q --verify foo 2>error &&

@@ -247,6 +247,7 @@ EOF
 
 test_expect_success 'set-head --auto fails w/multiple HEADs' '
 	(cd test &&
+	 set +x &&
 	 test_must_fail git remote set-head --auto two >output 2>&1 &&
 	test_cmp expect output)
 '

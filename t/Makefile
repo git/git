@@ -21,7 +21,7 @@ $(T):
 	@echo "*** $@ ***"; GIT_CONFIG=.git/config '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
 
 pre-clean:
-	$(RM) -r test-results
+	$(RM) -r test-results test-log
 
 clean:
 	$(RM) -r 'trash directory'.* test-results
