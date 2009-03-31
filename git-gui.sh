@@ -1947,7 +1947,7 @@ proc do_explore {} {
 		# freedesktop.org-conforming system is our best shot
 		set explorer "xdg-open"
 	}
-	eval exec $explorer [file dirname [gitdir]] &
+	eval exec $explorer [list [file nativename [file dirname [gitdir]]]] &
 }
 
 set is_quitting 0
