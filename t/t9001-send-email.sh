@@ -505,6 +505,19 @@ test_expect_success 'confirm doesnt loop forever' '
 	test $ret = "0"
 '
 
+test_expect_success 'utf8 Cc is rfc2047 encoded' '
+	clean_fake_sendmail &&
+	rm -fr outdir &&
+	git format-patch -1 -o outdir --cc="àéìöú <utf8@example.com>" &&
+	git send-email \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--smtp-server="$(pwd)/fake.sendmail" \
+	outdir/*.patch &&
+	grep "^Cc:" msgtxt1 |
+	grep "=?utf-8?q?=C3=A0=C3=A9=C3=AC=C3=B6=C3=BA?= <utf8@example.com>"
+'
+
 test_expect_success '--compose adds MIME for utf8 body' '
 	clean_fake_sendmail &&
 	(echo "#!$SHELL_PATH" &&
