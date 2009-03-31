@@ -90,7 +90,8 @@ static void add_mapping(struct string_list *map,
 		 old_name, old_email, new_name, new_email);
 }
 
-static char *parse_name_and_email(char *buffer, char **name, char **email)
+static char *parse_name_and_email(char *buffer, char **name,
+		char **email, int allow_empty_email)
 {
 	char *left, *right, *nstart, *nend;
 	*name = *email = 0;
@@ -99,7 +100,7 @@ static char *parse_name_and_email(char *buffer, char **name, char **email)
 		return NULL;
 	if ((right = strchr(left+1, '>')) == NULL)
 		return NULL;
-	if (left+1 == right)
+	if (!allow_empty_email && (left+1 == right))
 		return NULL;
 
 	/* remove whitespace from beginning and end of name */
@@ -150,8 +151,8 @@ static int read_single_mailmap(struct string_list *map, const char *filename, ch
 			}
 			continue;
 		}
-		if ((name2 = parse_name_and_email(buffer, &name1, &email1)) != NULL)
-			parse_name_and_email(name2, &name2, &email2);
+		if ((name2 = parse_name_and_email(buffer, &name1, &email1, 0)) != NULL)
+			parse_name_and_email(name2, &name2, &email2, 1);
 
 		if (email1)
 			add_mapping(map, name1, email1, name2, email2);
