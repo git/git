@@ -612,6 +612,9 @@ sub ask {
 	my $default = $arg{default};
 	my $resp;
 	my $i = 0;
+	return defined $default ? $default : undef
+		unless defined $term->IN and defined fileno($term->IN) and
+		       defined $term->OUT and defined fileno($term->OUT);
 	while ($i++ < 10) {
 		$resp = $term->readline($prompt);
 		if (!defined $resp) { # EOF
