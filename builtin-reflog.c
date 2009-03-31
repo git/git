@@ -52,6 +52,7 @@ struct collect_reflog_cb {
 
 #define INCOMPLETE	(1u<<10)
 #define STUDYING	(1u<<11)
+#define REACHABLE	(1u<<12)
 
 static int tree_is_complete(const unsigned char *sha1)
 {
@@ -227,11 +228,50 @@ static int unreachable(struct expire_reflog_cb *cb, struct commit *commit, unsig
 	}
 
 	/* Reachable from the current ref?  Don't prune. */
+	if (commit->object.flags & REACHABLE)
+		return 0;
 	if (in_merge_bases(commit, &cb->ref_commit, 1))
 		return 0;
 
 	/* We can't reach it - prune it. */
 	return 1;
+}
+
+static void mark_reachable(struct commit *commit, unsigned long expire_limit)
+{
+	/*
+	 * We need to compute if commit on either side of an reflog
+	 * entry is reachable from the tip of the ref for all entries.
+	 * Mark commits that are reachable from the tip down to the
+	 * time threashold first; we know a commit marked thusly is
+	 * reachable from the tip without running in_merge_bases()
+	 * at all.
+	 */
+	struct commit_list *pending = NULL;
+
+	commit_list_insert(commit, &pending);
+	while (pending) {
+		struct commit_list *entry = pending;
+		struct commit_list *parent;
+		pending = entry->next;
+		commit = entry->item;
+		free(entry);
+		if (commit->object.flags & REACHABLE)
+			continue;
+		if (parse_commit(commit))
+			continue;
+		commit->object.flags |= REACHABLE;
+		if (commit->date < expire_limit)
+			continue;
+		parent = commit->parents;
+		while (parent) {
+			commit = parent->item;
+			parent = parent->next;
+			if (commit->object.flags & REACHABLE)
+				continue;
+			commit_list_insert(commit, &pending);
+		}
+	}
 }
 
 static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
@@ -308,7 +348,11 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	cb.ref_commit = lookup_commit_reference_gently(sha1, 1);
 	cb.ref = ref;
 	cb.cmd = cmd;
+	if (cb.ref_commit)
+		mark_reachable(cb.ref_commit, cmd->expire_total);
 	for_each_reflog_ent(ref, expire_reflog_ent, &cb);
+	if (cb.ref_commit)
+		clear_commit_marks(cb.ref_commit, REACHABLE);
  finish:
 	if (cb.newlog) {
 		if (fclose(cb.newlog)) {
