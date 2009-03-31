@@ -478,7 +478,8 @@ test_expect_success 'confirm detects EOF (inform assumes y)' '
 test_expect_success 'confirm detects EOF (auto causes failure)' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config sendemail.confirm auto &&
-	GIT_SEND_EMAIL_NOTTY=1 \
+	GIT_SEND_EMAIL_NOTTY=1 &&
+	export GIT_SEND_EMAIL_NOTTY &&
 		test_must_fail git send-email \
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
@@ -492,8 +493,9 @@ test_expect_success 'confirm detects EOF (auto causes failure)' '
 test_expect_success 'confirm doesnt loop forever' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config sendemail.confirm auto &&
-	yes "bogus" | GIT_SEND_EMAIL_NOTTY=1 \
-		test_must_fail git send-email \
+	GIT_SEND_EMAIL_NOTTY=1 &&
+	export GIT_SEND_EMAIL_NOTTY &&
+		yes "bogus" | test_must_fail git send-email \
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/fake.sendmail" \
