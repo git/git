@@ -147,8 +147,8 @@ test_expect_success 'forced modes' '
 	# Everything must be unaccessible to others
 	test -z "$(sed -n -e "/^.......---/d" actual)" &&
 
-	# All directories must have 2770
-	test -z "$(sed -n -e "/^drwxrws---/d" -e "/^d/p" actual)" &&
+	# All directories must have either 2770 or 770
+	test -z "$(sed -n -e "/^drwxrw[sx]---/d" -e "/^d/p" actual)" &&
 
 	# post-update hook must be 0770
 	test -z "$(sed -n -e "/post-update/{
