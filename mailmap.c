@@ -50,6 +50,15 @@ static void add_mapping(struct string_list *map,
 {
 	struct mailmap_entry *me;
 	int index;
+	char *p;
+
+	if (old_email)
+		for (p = old_email; *p; p++)
+			*p = tolower(*p);
+	if (new_email)
+		for (p = new_email; *p; p++)
+			*p = tolower(*p);
+
 	if (old_email == NULL) {
 		old_email = new_email;
 		new_email = NULL;
