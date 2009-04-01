@@ -165,6 +165,9 @@ all::
 # Define NO_EXTERNAL_GREP if you don't want "git grep" to ever call
 # your external grep (e.g., if your system lacks grep, if its grep is
 # broken, or spawning external process is slower than built-in grep git has).
+#
+# Define USE_NED_ALLOCATOR if you want to replace the platforms default
+# memory allocators with the nedmalloc allocator written by Niall Douglas.
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -827,6 +830,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	NO_NSEC = YesPlease
 	USE_WIN32_MMAP = YesPlease
+	USE_NED_ALLOCATOR = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/regex -Icompat/fnmatch
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/regex/regex.o compat/winansi.o
@@ -1104,6 +1108,11 @@ ifdef DIR_HAS_BSD_GROUP_SEMANTICS
 endif
 ifdef NO_EXTERNAL_GREP
 	BASIC_CFLAGS += -DNO_EXTERNAL_GREP
+endif
+
+ifdef USE_NED_ALLOCATOR
+       COMPAT_CFLAGS += -DUSE_NED_ALLOCATOR -DOVERRIDE_STRDUP -DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR -Icompat/nedmalloc
+       COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
 endif
 
 ifeq ($(TCLTK_PATH),)
