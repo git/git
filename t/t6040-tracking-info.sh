@@ -58,7 +58,7 @@ test_expect_success 'checkout' '
 	grep "have 1 and 1 different" actual
 '
 
-test_expect_failure 'checkout with local tracked branch' '
+test_expect_success 'checkout with local tracked branch' '
 	git checkout master &&
 	git checkout follower >actual
 	grep "is ahead of" actual
