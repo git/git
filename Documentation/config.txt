@@ -715,6 +715,13 @@ format.thread::
 	A true boolean value is the same as `shallow`, and a false
 	value disables threading.
 
+format.signoff::
+    A boolean value which lets you enable the `-s/--signoff` option of
+    format-patch by default. *Note:* Adding the Signed-off-by: line to a
+    patch should be a conscious act and means that you certify you have
+    the rights to submit this work under the same open source license.
+    Please see the 'SubmittingPatches' document for further discussion.
+
 gc.aggressiveWindow::
 	The window size parameter used in the delta compression
 	algorithm used by 'git-gc --aggressive'.  This defaults

@@ -205,6 +205,7 @@ more than one.
 	numbered = auto
 	cc = <email>
 	attach [ = mime-boundary-string ]
+	signoff = true
 ------------
 
 

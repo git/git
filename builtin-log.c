@@ -465,6 +465,7 @@ static void add_header(const char *value)
 #define THREAD_SHALLOW 1
 #define THREAD_DEEP 2
 static int thread = 0;
+static int do_signoff = 0;
 
 static int git_format_config(const char *var, const char *value, void *cb)
 {
@@ -512,6 +513,10 @@ static int git_format_config(const char *var, const char *value, void *cb)
 			return 0;
 		}
 		thread = git_config_bool(var, value) && THREAD_SHALLOW;
+		return 0;
+	}
+	if (!strcmp(var, "format.signoff")) {
+		do_signoff = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -865,13 +870,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 		else if (!strcmp(argv[i], "--signoff") ||
 			 !strcmp(argv[i], "-s")) {
-			const char *committer;
-			const char *endpos;
-			committer = git_committer_info(IDENT_ERROR_ON_NO_NAME);
-			endpos = strchr(committer, '>');
-			if (!endpos)
-				die("bogus committer info %s", committer);
-			add_signoff = xmemdupz(committer, endpos - committer + 1);
+			do_signoff = 1;
 		}
 		else if (!strcmp(argv[i], "--attach")) {
 			rev.mime_boundary = git_version_string;
@@ -924,6 +923,16 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			argv[j++] = argv[i];
 	}
 	argc = j;
+
+	if (do_signoff) {
+		const char *committer;
+		const char *endpos;
+		committer = git_committer_info(IDENT_ERROR_ON_NO_NAME);
+		endpos = strchr(committer, '>');
+		if (!endpos)
+			die("bogus committer info %s", committer);
+		add_signoff = xmemdupz(committer, endpos - committer + 1);
+	}
 
 	for (i = 0; i < extra_hdr_nr; i++) {
 		strbuf_addstr(&buf, extra_hdr[i]);
