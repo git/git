@@ -270,7 +270,7 @@ static const struct ref *clone_local(const char *src_repo,
 
 static const char *junk_work_tree;
 static const char *junk_git_dir;
-pid_t junk_pid;
+static pid_t junk_pid;
 
 static void remove_junk(void)
 {
