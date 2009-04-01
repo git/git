@@ -37,6 +37,10 @@
 #define CURLE_HTTP_RETURNED_ERROR CURLE_HTTP_NOT_FOUND
 #endif
 
+#if LIBCURL_VERSION_NUM < 0x070c03
+#define NO_CURL_IOCTL
+#endif
+
 struct slot_results
 {
 	CURLcode curl_result;
@@ -67,6 +71,9 @@ struct buffer
 extern size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 extern size_t fwrite_buffer(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 extern size_t fwrite_null(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+#ifndef NO_CURL_IOCTL
+extern curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
+#endif
 
 /* Slot lifecycle functions */
 extern struct active_request_slot *get_active_slot(void);
