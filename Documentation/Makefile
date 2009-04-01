@@ -69,7 +69,9 @@ endif
 #
 # For docbook-xsl ...
 #	-1.68.1,	set ASCIIDOC_NO_ROFF? (based on changelog from 1.73.0)
-#	1.69.0-1.71.1,	no extra settings are needed?
+#	1.69.0,		no extra settings are needed?
+#	1.69.1-1.71.0,	set DOCBOOK_SUPPRESS_SP?
+#	1.71.1,		no extra settings are needed?
 #	1.72.0,		set DOCBOOK_XSL_172.
 #	1.73.0-,	set ASCIIDOC_NO_ROFF
 #
@@ -96,6 +98,9 @@ else
 endif
 ifdef MAN_BOLD_LITERAL
 XMLTO_EXTRA += -m manpage-bold-literal.xsl
+endif
+ifdef DOCBOOK_SUPPRESS_SP
+XMLTO_EXTRA += -m manpage-suppress-sp.xsl
 endif
 
 #
