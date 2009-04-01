@@ -673,9 +673,9 @@ listed below are allowed:
 ------------------------------------------------------------------------
 [svn-remote "project-a"]
 	url = http://server.org/svn
+	fetch = trunk/project-a:refs/remotes/project-a/trunk
 	branches = branches/*/project-a:refs/remotes/project-a/branches/*
 	tags = tags/*/project-a:refs/remotes/project-a/tags/*
-	trunk = trunk/project-a:refs/remotes/project-a/trunk
 ------------------------------------------------------------------------
 
 Keep in mind that the '*' (asterisk) wildcard of the local ref
