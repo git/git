@@ -53,9 +53,6 @@ static int update_some(const unsigned char *sha1, const char *base, int baselen,
 	int len;
 	struct cache_entry *ce;
 
-	if (S_ISGITLINK(mode))
-		return 0;
-
 	if (S_ISDIR(mode))
 		return READ_TREE_RECURSIVE;
 
