@@ -50,7 +50,6 @@ struct rev_info {
 			edge_hint:1,
 			limited:1,
 			unpacked:1,
-			kept_pack_only:1,
 			boundary:2,
 			left_right:1,
 			rewrite_parents:1,
