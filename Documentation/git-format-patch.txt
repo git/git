@@ -157,6 +157,11 @@ if that is not set.
 	Add a "Cc:" header to the email headers. This is in addition
 	to any configured headers, and may be used multiple times.
 
+--add-header=<header>::
+	Add an arbitrary header to the email headers.  This is in addition
+	to any configured headers, and may be used multiple times.
+	For example, --add-header="Organization: git-foo"
+
 --cover-letter::
 	In addition to the patches, generate a cover letter file
 	containing the shortlog and the overall diffstat.  You can
