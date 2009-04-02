@@ -60,8 +60,12 @@ static int match_tree_entry(const char *base, int baselen, const char *path, uns
 			/* If it doesn't match, move along... */
 			if (strncmp(base, match, matchlen))
 				continue;
-			/* The base is a subdirectory of a path which was specified. */
-			return 1;
+			/* pathspecs match only at the directory boundaries */
+			if (!matchlen ||
+			    base[matchlen] == '/' ||
+			    match[matchlen - 1] == '/')
+				return 1;
+			continue;
 		}
 
 		/* Does the base match? */
