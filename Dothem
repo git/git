@@ -91,14 +91,13 @@ do
 			;;
 		esac &&
 
-		Meta/Make $M -- $J all &&
 		Meta/Make $M -- $J $dotest &&
 		case "$branch" in
 		jch)
-			Meta/Make $M -- doc install-doc
+			test -n "$nodoc" || Meta/Make $M -- doc install-doc
 			;;
 		master | maint | next )
-			test -z "$nodoc" || Meta/Make $M -- doc
+			test -n "$nodoc" || Meta/Make $M -- doc
 			;;
 		*)
 			: ;;
