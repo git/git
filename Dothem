@@ -92,16 +92,10 @@ do
 		esac &&
 
 		Meta/Make $M -- $J $dotest &&
-		case "$branch" in
-		jch)
-			test -n "$nodoc" || Meta/Make $M -- doc install-doc
-			;;
-		master | maint | next )
-			test -n "$nodoc" || Meta/Make $M -- doc
-			;;
-		*)
-			: ;;
-		esac &&
+		{
+			test -n "$nodoc" ||
+			Meta/Make $M -- doc install-doc
+		} &&
 		{
 			test z$install = znoinstall ||
 			Meta/Make $M -- install
