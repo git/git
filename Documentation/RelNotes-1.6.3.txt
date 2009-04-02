@@ -107,6 +107,11 @@ Updates since v1.6.2
 * Makefile learned 'coverage' option to run the test suites with
   coverage tracking enabled.
 
+* Building the manpages with docbook-xsl between 1.69.1 and 1.71.1 now
+  requires setting DOCBOOK_SUPPRESS_SP to work around a docbook-xsl bug.
+  This workaround used to be enabled by default, but causes problems
+  with newer versions of docbook-xsl.
+
 Fixes since v1.6.2
 ------------------
 
