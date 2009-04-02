@@ -121,14 +121,8 @@ release, unless otherwise noted.
 Here are fixes that this release has, but have not been backported to
 v1.6.2.X series.
 
-* "git-blame -S" did not quite work near the commits that were given
-  on the command line correctly (jc/maint-1.6.0-blame-s).
-
 * The initial checkout did not read the attributes from the .gitattribute
   file that is being checked out.
-
-* git-diff feeds files in work-tree representation to external diff and
-  textconv (js/maint-diff-temp-smudge).
 
 * git-gc spent excessive amount of time to decide if an object appears
   in a locally existing pack (if needed, backport by merging 69e020a).
