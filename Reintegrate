@@ -22,8 +22,9 @@ accept_rerere () {
 	then
 		return 1
 	fi
-	if git diff HEAD |
-		grep -e "^+<<<<<<<" -e "^+=======" -e "^+>>>>>>>" >/dev/null
+	if git diff |
+	   grep -e "^.+" -e "^+." |
+	   grep -e "^..<<<<<<<" -e "^..=======" -e "^..>>>>>>>" >/dev/null
 	then
 		return 1
 	else
