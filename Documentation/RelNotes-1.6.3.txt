@@ -62,6 +62,10 @@ Updates since v1.6.2
   with the 'edit' action in git-add -i/-p, you can abort the editor to
   tell git not to apply it.
 
+* The number of commits shown in "you are ahead/behind your upstream"
+  messages given by "git checkout" and "git status" used to count merge
+  commits; now it doesn't.
+
 * git-archive learned --output=<file> option.
 
 * git-bisect shows not just the number of remaining commits whose goodness
@@ -77,10 +81,16 @@ Updates since v1.6.2
 
 * git-clone runs post-checkout hook when run without --no-checkout.
 
+* git-fast-export choked when seeing a tag that does not point at commit.
+
 * git-format-patch can be told to use attachment with a new configuration,
   format.attach.
 
 * git-format-patch can be told to produce deep or shallow message threads.
+
+* git-format-patch learned format.headers configuration to add extra
+  header fields to the output.  This behaviour is similar to the existing
+  --add-header=<header> option of the command.
 
 * git-grep learned to highlight the found substrings in color.
 
@@ -94,6 +104,11 @@ Updates since v1.6.2
 * git-rebase can be told to report diffstat with the --stat option.
 
 * Output from git-remote command has been vastly improved.
+
+* git-repack (invoked from git-gc) did not work as nicely as it should in
+  a repository that borrows objects from neighbours via alternates
+  mechanism especially when some packs are marked with the ".keep" flag
+  to prevent them from being repacked.
 
 * git-send-email learned --confirm option to review the Cc: list before
   sending the messages out.
@@ -110,7 +125,9 @@ Updates since v1.6.2
 * Building the manpages with docbook-xsl between 1.69.1 and 1.71.1 now
   requires setting DOCBOOK_SUPPRESS_SP to work around a docbook-xsl bug.
   This workaround used to be enabled by default, but causes problems
-  with newer versions of docbook-xsl.
+  with newer versions of docbook-xsl.  In addition, there are a few more
+  knobs you can tweak to work around issues with various versions of the
+  docbook-xsl package.  See comments in Documentation/Makefile for details.
 
 Fixes since v1.6.2
 ------------------
@@ -129,6 +146,6 @@ v1.6.2.X series.
 
 ---
 exec >/var/tmp/1
-O=v1.6.2.1-399-gaa72a14
+O=v1.6.2.2-403-g8130949
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
