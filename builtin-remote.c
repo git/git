@@ -15,7 +15,7 @@ static const char * const builtin_remote_usage[] = {
 	"git remote set-head <name> [-a | -d | <branch>]",
 	"git remote show [-n] <name>",
 	"git remote prune [-n | --dry-run] <name>",
-	"git remote [-v | --verbose] update [group]",
+	"git remote [-v | --verbose] update [-p | --prune] [group]",
 	NULL
 };
 
@@ -1208,10 +1208,18 @@ static int get_remote_group(const char *key, const char *value, void *cb)
 
 static int update(int argc, const char **argv)
 {
-	int i, result = 0;
+	int i, result = 0, prune = 0;
 	struct string_list list = { NULL, 0, 0, 0 };
 	static const char *default_argv[] = { NULL, "default", NULL };
+	struct option options[] = {
+		OPT_GROUP("update specific options"),
+		OPT_BOOLEAN('p', "prune", &prune,
+			    "prune remotes after fecthing"),
+		OPT_END()
+	};
 
+	argc = parse_options(argc, argv, options, builtin_remote_usage,
+			     PARSE_OPT_KEEP_ARGV0);
 	if (argc < 2) {
 		argc = 2;
 		argv = default_argv;
@@ -1226,8 +1234,12 @@ static int update(int argc, const char **argv)
 	if (!result && !list.nr  && argc == 2 && !strcmp(argv[1], "default"))
 		result = for_each_remote(get_one_remote_for_update, &list);
 
-	for (i = 0; i < list.nr; i++)
-		result |= fetch_remote(list.items[i].string);
+	for (i = 0; i < list.nr; i++) {
+		int err = fetch_remote(list.items[i].string);
+		result |= err;
+		if (!err && prune)
+			result |= prune_remote(list.items[i].string, 0);
+	}
 
 	/* all names were strdup()ed or strndup()ed */
 	list.strdup_strings = 1;
