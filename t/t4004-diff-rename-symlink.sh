@@ -16,7 +16,6 @@ if ! test_have_prereq SYMLINKS
 then
 	say 'Symbolic links not supported, skipping tests.'
 	test_done
-	exit
 fi
 
 test_expect_success \

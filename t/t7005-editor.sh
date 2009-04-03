@@ -92,7 +92,6 @@ if ! echo 'echo space > "$1"' > "e space.sh"
 then
 	say "Skipping; FS does not support spaces in filenames"
 	test_done
-	exit
 fi
 
 test_expect_success 'editor with a space' '

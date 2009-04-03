@@ -17,7 +17,6 @@ if git http-push > /dev/null 2>&1 || [ $? -eq 128 ]
 then
 	say "skipping test, USE_CURL_MULTI is not defined"
 	test_done
-	exit
 fi
 
 . "$TEST_DIRECTORY"/lib-httpd.sh

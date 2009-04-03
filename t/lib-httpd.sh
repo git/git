@@ -8,7 +8,6 @@ then
 	say "skipping test, network testing disabled by default"
 	say "(define GIT_TEST_HTTPD to enable)"
 	test_done
-	exit
 fi
 
 HTTPD_PARA=""
@@ -36,7 +35,6 @@ if ! test -x "$LIB_HTTPD_PATH"
 then
 	say "skipping test, no web server found at '$LIB_HTTPD_PATH'"
 	test_done
-	exit
 fi
 
 HTTPD_VERSION=`$LIB_HTTPD_PATH -v | \
@@ -50,7 +48,6 @@ then
 		then
 			say "skipping test, at least Apache version 2 is required"
 			test_done
-			exit
 		fi
 
 		LIB_HTTPD_MODULE_PATH="$DEFAULT_HTTPD_MODULE_PATH"
