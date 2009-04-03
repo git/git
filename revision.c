@@ -1106,10 +1106,6 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->edge_hint = 1;
 	} else if (!strcmp(arg, "--unpacked")) {
 		revs->unpacked = 1;
-		revs->kept_pack_only = 0;
-	} else if (!strcmp(arg, "--kept-pack-only")) {
-		revs->unpacked = 1;
-		revs->kept_pack_only = 1;
 	} else if (!prefixcmp(arg, "--unpacked=")) {
 		die("--unpacked=<packfile> no longer supported.");
 	} else if (!strcmp(arg, "-r")) {
@@ -1679,10 +1675,7 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
 		return commit_ignore;
-	if (revs->unpacked &&
-	    (revs->kept_pack_only
-	     ? has_sha1_kept_pack(commit->object.sha1)
-	     : has_sha1_pack(commit->object.sha1)))
+	if (revs->unpacked && has_sha1_pack(commit->object.sha1))
 		return commit_ignore;
 	if (revs->show_all)
 		return commit_show;

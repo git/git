@@ -173,24 +173,26 @@ ISSUES
 Problems related to timestamps:
 
  * If timestamps of commits in the cvs repository are not stable enough
-   to be used for ordering commits
+   to be used for ordering commits changes may show up in the wrong
+   order.
  * If any files were ever "cvs import"ed more than once (e.g., import of
-   more than one vendor release)
+   more than one vendor release) the HEAD contains the wrong content.
  * If the timestamp order of different files cross the revision order
-   within the commit matching time window
+   within the commit matching time window the order of commits may be
+   wrong.
 
 Problems related to branches:
 
- * Branches on which no commits have been made are not imported
+ * Branches on which no commits have been made are not imported.
  * All files from the branching point are added to a branch even if
-   never added in cvs
- * files added to the source branch *after* a daughter branch was
-   created: If previously no commit was made on the daugther branch they
-   will erroneously be added to the daughter branch in git
+   never added in cvs.
+ * This applies to files added to the source branch *after* a daughter
+   branch was created: if previously no commit was made on the daughter
+   branch they will erroneously be added to the daughter branch in git.
 
 Problems related to tags:
 
-* Multiple tags on the same revision are not imported
+* Multiple tags on the same revision are not imported.
 
 If you suspect that any of these issues may apply to the repository you
 want to import consider using these alternative tools which proved to be

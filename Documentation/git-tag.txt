@@ -63,6 +63,7 @@ OPTIONS
 	are printed when using -l.
 	The default is not to print any annotation lines.
 	If no number is given to `-n`, only the first line is printed.
+	If the tag is not annotated, the commit message is displayed instead.
 
 -l <pattern>::
 	List tags with names that match the given pattern (or all if no pattern is given).

@@ -1401,9 +1401,10 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 	if (theirs == ours)
 		return 0;
 
-	/* Run "rev-list --left-right ours...theirs" internally... */
+	/* Run "rev-list --no-merges --left-right ours...theirs" internally... */
 	rev_argc = 0;
 	rev_argv[rev_argc++] = NULL;
+	rev_argv[rev_argc++] = "--no-merges";
 	rev_argv[rev_argc++] = "--left-right";
 	rev_argv[rev_argc++] = symmetric;
 	rev_argv[rev_argc++] = "--";
