@@ -3,6 +3,11 @@
 test_description='git cvsimport basic tests'
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping git cvsimport tests, perl not available'
+	test_done
+fi
+
 CVSROOT=$(pwd)/cvsroot
 export CVSROOT
 unset CVS_SERVER

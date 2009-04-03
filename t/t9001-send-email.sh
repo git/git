@@ -3,6 +3,11 @@
 test_description='git send-email'
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping git send-email tests, perl not available'
+	test_done
+fi
+
 PROG='git send-email'
 test_expect_success \
     'prepare reference tree' \
