@@ -16,6 +16,7 @@ body blockquote {
 html body {
   margin: 1em 5% 1em 5%;
   line-height: 1.2;
+  font-family: sans-serif;
 }
 
 body div {
@@ -128,6 +129,15 @@ body pre {
 
 tt.literal, code.literal {
   color: navy;
+  font-family: sans-serif;
+}
+
+code.literal:before { content: "'"; }
+code.literal:after { content: "'"; }
+
+em {
+  font-style: italic;
+  color: #064;
 }
 
 div.literallayout p {
@@ -137,7 +147,6 @@ div.literallayout p {
 
 div.literallayout {
   font-family: monospace;
-#  margin: 0.5em 10% 0.5em 1em;
   margin: 0em;
   color: navy;
   border: 1px solid silver;
@@ -187,7 +196,8 @@ dt {
 }
 
 dt span.term {
-  font-style: italic;
+  font-style: normal;
+  color: navy;
 }
 
 div.variablelist dd p {
