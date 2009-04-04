@@ -2,6 +2,7 @@
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
+#include "sha1-lookup.h"
 #include "bisect.h"
 
 static unsigned char (*skipped_sha1)[20];
@@ -399,22 +400,16 @@ static void prepare_skipped(void)
 	qsort(skipped_sha1, skipped_sha1_nr, sizeof(*skipped_sha1), skipcmp);
 }
 
+static const unsigned char *skipped_sha1_access(size_t index, void *table)
+{
+	unsigned char (*skipped)[20] = table;
+	return skipped[index];
+}
+
 static int lookup_skipped(unsigned char *sha1)
 {
-	int lo, hi;
-	lo = 0;
-	hi = skipped_sha1_nr;
-	while (lo < hi) {
-		int mi = (lo + hi) / 2;
-		int cmp = hashcmp(sha1, skipped_sha1[mi]);
-		if (!cmp)
-			return mi;
-		if (cmp < 0)
-			hi = mi;
-		else
-			lo = mi + 1;
-	}
-	return -lo - 1;
+	return sha1_pos(sha1, skipped_sha1, skipped_sha1_nr,
+			skipped_sha1_access);
 }
 
 struct commit_list *filter_skipped(struct commit_list *list,
