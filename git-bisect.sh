@@ -77,7 +77,7 @@ bisect_start() {
 	then
 		# Reset to the rev from where we started.
 		start_head=$(cat "$GIT_DIR/BISECT_START")
-		git checkout "$start_head" || exit
+		git checkout "$start_head" -- || exit
 	else
 		# Get rev from where we start.
 		case "$head" in
@@ -370,7 +370,7 @@ bisect_checkout() {
 	_msg="$2"
 	echo "Bisecting: $_msg"
 	mark_expected_rev "$_rev"
-	git checkout -q "$_rev" || exit
+	git checkout -q "$_rev" -- || exit
 	git show-branch "$_rev"
 }
 
@@ -549,7 +549,7 @@ bisect_reset() {
 	*)
 	    usage ;;
 	esac
-	git checkout "$branch" && bisect_clean_state
+	git checkout "$branch" -- && bisect_clean_state
 }
 
 bisect_clean_state() {
