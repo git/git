@@ -26,7 +26,7 @@ problem by stashing the refs in a single file,
 traditional `$GIT_DIR/refs` hierarchy, it is looked up in this
 file and used if found.
 
-Subsequent updates to branches always creates new file under
+Subsequent updates to branches always create new files under
 `$GIT_DIR/refs` hierarchy.
 
 A recommended practice to deal with a repository with too many
@@ -35,7 +35,7 @@ occasionally run `git pack-refs \--prune`.  Tags are by
 definition stationary and are not expected to change.  Branch
 heads will be packed with the initial `pack-refs --all`, but
 only the currently active branch heads will become unpacked,
-and next `pack-refs` (without `--all`) will leave them
+and the next `pack-refs` (without `--all`) will leave them
 unpacked.
 
 
