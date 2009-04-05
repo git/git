@@ -922,6 +922,20 @@ int add_push_to_show_info(struct string_list_item *push_item, void *cb_data)
 	return 0;
 }
 
+/*
+ * Sorting comparison for a string list that has push_info
+ * structs in its util field
+ */
+static int cmp_string_with_push(const void *va, const void *vb)
+{
+	const struct string_list_item *a = va;
+	const struct string_list_item *b = vb;
+	const struct push_info *a_push = a->util;
+	const struct push_info *b_push = b->util;
+	int cmp = strcmp(a->string, b->string);
+	return cmp ? cmp : strcmp(a_push->dest, b_push->dest);
+}
+
 int show_push_info_item(struct string_list_item *item, void *cb_data)
 {
 	struct show_info *show_info = cb_data;
@@ -1032,7 +1046,8 @@ static int show(int argc, const char **argv)
 
 		info.width = info.width2 = 0;
 		for_each_string_list(add_push_to_show_info, &states.push, &info);
-		sort_string_list(info.list);
+		qsort(info.list->items, info.list->nr,
+			sizeof(*info.list->items), cmp_string_with_push);
 		if (info.list->nr)
 			printf("  Local ref%s configured for 'git push'%s:\n",
 				info.list->nr > 1 ? "s" : "",

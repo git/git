@@ -22,6 +22,13 @@ branch pointed at by its HEAD, gets a large warning.  You can choose what
 should happen upon such a push by setting the configuration variable
 receive.denyDeleteCurrent in the receiving repository.
 
+When the user does not tell "git push" what to push, it has always
+pushed matching refs.  For some people it is unexpected, and a new
+configuration variable push.default has been introduced to allow
+changing a different default behaviour.  To advertise the new feature,
+a big warning is issued if this is not configured and a git push without
+arguments is attempted.
+
 
 Updates since v1.6.2
 --------------------
@@ -39,6 +46,9 @@ Updates since v1.6.2
   repositories.  It may not be useful in practice; meant primarily for
   testing.
 
+* http transport learned to prompt and use password when fetching from or
+  pushing to http://user@host.xz/ URL.
+
 * (msysgit) progress output that is sent over the sideband protocol can
   be handled appropriately in Windows console.
 
@@ -51,6 +61,10 @@ Updates since v1.6.2
 * If you realize that you botched the patch when you are editing hunks
   with the 'edit' action in git-add -i/-p, you can abort the editor to
   tell git not to apply it.
+
+* The number of commits shown in "you are ahead/behind your upstream"
+  messages given by "git checkout" and "git status" used to count merge
+  commits; now it doesn't.
 
 * git-archive learned --output=<file> option.
 
@@ -67,10 +81,16 @@ Updates since v1.6.2
 
 * git-clone runs post-checkout hook when run without --no-checkout.
 
+* git-fast-export choked when seeing a tag that does not point at commit.
+
 * git-format-patch can be told to use attachment with a new configuration,
   format.attach.
 
 * git-format-patch can be told to produce deep or shallow message threads.
+
+* git-format-patch learned format.headers configuration to add extra
+  header fields to the output.  This behaviour is similar to the existing
+  --add-header=<header> option of the command.
 
 * git-grep learned to highlight the found substrings in color.
 
@@ -85,6 +105,11 @@ Updates since v1.6.2
 
 * Output from git-remote command has been vastly improved.
 
+* git-repack (invoked from git-gc) did not work as nicely as it should in
+  a repository that borrows objects from neighbours via alternates
+  mechanism especially when some packs are marked with the ".keep" flag
+  to prevent them from being repacked.
+
 * git-send-email learned --confirm option to review the Cc: list before
   sending the messages out.
 
@@ -92,8 +117,17 @@ Updates since v1.6.2
 
 * Test scripts can be run under valgrind.
 
+* Test scripts can be run with installed git.
+
 * Makefile learned 'coverage' option to run the test suites with
   coverage tracking enabled.
+
+* Building the manpages with docbook-xsl between 1.69.1 and 1.71.1 now
+  requires setting DOCBOOK_SUPPRESS_SP to work around a docbook-xsl bug.
+  This workaround used to be enabled by default, but causes problems
+  with newer versions of docbook-xsl.  In addition, there are a few more
+  knobs you can tweak to work around issues with various versions of the
+  docbook-xsl package.  See comments in Documentation/Makefile for details.
 
 Fixes since v1.6.2
 ------------------
@@ -104,11 +138,14 @@ release, unless otherwise noted.
 Here are fixes that this release has, but have not been backported to
 v1.6.2.X series.
 
+* The initial checkout did not read the attributes from the .gitattribute
+  file that is being checked out.
+
 * git-gc spent excessive amount of time to decide if an object appears
   in a locally existing pack (if needed, backport by merging 69e020a).
 
 ---
 exec >/var/tmp/1
-O=v1.6.2.1-213-g7d4e3a7
+O=v1.6.2.2-403-g8130949
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

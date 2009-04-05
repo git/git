@@ -523,14 +523,6 @@ test_done () {
 	fi
 	case "$test_failure" in
 	0)
-		# We could:
-		# cd .. && rm -fr 'trash directory'
-		# but that means we forbid any tests that use their own
-		# subdirectory from calling test_done without coming back
-		# to where they started from.
-		# The Makefile provided will clean this test area so
-		# we will leave things as they are.
-
 		say_color pass "passed all $msg"
 
 		test -d "$remove_trash" &&
@@ -697,10 +689,12 @@ case $(uname -s) in
 	}
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
+	# exec does not inherit the PID
 	;;
 *)
 	test_set_prereq POSIXPERM
 	test_set_prereq BSLASHPSPEC
+	test_set_prereq EXECKEEPSPID
 	;;
 esac
 

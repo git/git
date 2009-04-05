@@ -421,8 +421,8 @@ test_confirm () {
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
-		$@ \
-		$patches | grep "Send this email"
+		$@ $patches > stdout &&
+	grep "Send this email" stdout
 }
 
 test_expect_success '--confirm=always' '
@@ -444,8 +444,10 @@ test_expect_success '--confirm=compose' '
 test_expect_success 'confirm by default (due to cc)' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config --unset sendemail.confirm &&
-	test_confirm &&
-	git config sendemail.confirm $CONFIRM
+	test_confirm
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
 '
 
 test_expect_success 'confirm by default (due to --compose)' '
@@ -455,6 +457,65 @@ test_expect_success 'confirm by default (due to --compose)' '
 	ret="$?"
 	git config sendemail.confirm ${CONFIRM:-never}
 	test $ret = "0"
+'
+
+test_expect_success 'confirm detects EOF (inform assumes y)' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config --unset sendemail.confirm &&
+	rm -fr outdir &&
+	git format-patch -2 -o outdir &&
+	GIT_SEND_EMAIL_NOTTY=1 \
+		git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			outdir/*.patch < /dev/null
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'confirm detects EOF (auto causes failure)' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config sendemail.confirm auto &&
+	GIT_SEND_EMAIL_NOTTY=1 &&
+	export GIT_SEND_EMAIL_NOTTY &&
+		test_must_fail git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			$patches < /dev/null
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'confirm doesnt loop forever' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config sendemail.confirm auto &&
+	GIT_SEND_EMAIL_NOTTY=1 &&
+	export GIT_SEND_EMAIL_NOTTY &&
+		yes "bogus" | test_must_fail git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			$patches
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'utf8 Cc is rfc2047 encoded' '
+	clean_fake_sendmail &&
+	rm -fr outdir &&
+	git format-patch -1 -o outdir --cc="àéìöú <utf8@example.com>" &&
+	git send-email \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--smtp-server="$(pwd)/fake.sendmail" \
+	outdir/*.patch &&
+	grep "^Cc:" msgtxt1 |
+	grep "=?utf-8?q?=C3=A0=C3=A9=C3=AC=C3=B6=C3=BA?= <utf8@example.com>"
 '
 
 test_expect_success '--compose adds MIME for utf8 body' '

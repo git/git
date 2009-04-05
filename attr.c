@@ -1,3 +1,4 @@
+#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "attr.h"
 
@@ -318,6 +319,9 @@ static struct attr_stack *read_attr_from_array(const char **list)
 	return res;
 }
 
+static enum git_attr_direction direction;
+static struct index_state *use_index;
+
 static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 {
 	FILE *fp = fopen(path, "r");
@@ -340,9 +344,10 @@ static void *read_index_data(const char *path)
 	unsigned long sz;
 	enum object_type type;
 	void *data;
+	struct index_state *istate = use_index ? use_index : &the_index;
 
 	len = strlen(path);
-	pos = cache_name_pos(path, len);
+	pos = index_name_pos(istate, path, len);
 	if (pos < 0) {
 		/*
 		 * We might be in the middle of a merge, in which
@@ -350,15 +355,15 @@ static void *read_index_data(const char *path)
 		 */
 		int i;
 		for (i = -pos - 1;
-		     (pos < 0 && i < active_nr &&
-		      !strcmp(active_cache[i]->name, path));
+		     (pos < 0 && i < istate->cache_nr &&
+		      !strcmp(istate->cache[i]->name, path));
 		     i++)
-			if (ce_stage(active_cache[i]) == 2)
+			if (ce_stage(istate->cache[i]) == 2)
 				pos = i;
 	}
 	if (pos < 0)
 		return NULL;
-	data = read_sha1_file(active_cache[pos]->sha1, &type, &sz);
+	data = read_sha1_file(istate->cache[pos]->sha1, &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;
@@ -366,27 +371,17 @@ static void *read_index_data(const char *path)
 	return data;
 }
 
-static struct attr_stack *read_attr(const char *path, int macro_ok)
+static struct attr_stack *read_attr_from_index(const char *path, int macro_ok)
 {
 	struct attr_stack *res;
 	char *buf, *sp;
 	int lineno = 0;
 
-	res = read_attr_from_file(path, macro_ok);
-	if (res)
-		return res;
-
-	res = xcalloc(1, sizeof(*res));
-
-	/*
-	 * There is no checked out .gitattributes file there, but
-	 * we might have it in the index.  We allow operation in a
-	 * sparsely checked out work tree, so read from it.
-	 */
 	buf = read_index_data(path);
 	if (!buf)
-		return res;
+		return NULL;
 
+	res = xcalloc(1, sizeof(*res));
 	for (sp = buf; *sp; ) {
 		char *ep;
 		int more;
@@ -398,6 +393,30 @@ static struct attr_stack *read_attr(const char *path, int macro_ok)
 		sp = ep + more;
 	}
 	free(buf);
+	return res;
+}
+
+static struct attr_stack *read_attr(const char *path, int macro_ok)
+{
+	struct attr_stack *res;
+
+	if (direction == GIT_ATTR_CHECKOUT) {
+		res = read_attr_from_index(path, macro_ok);
+		if (!res)
+			res = read_attr_from_file(path, macro_ok);
+	}
+	else {
+		res = read_attr_from_file(path, macro_ok);
+		if (!res)
+			/*
+			 * There is no checked out .gitattributes file there, but
+			 * we might have it in the index.  We allow operation in a
+			 * sparsely checked out work tree, so read from it.
+			 */
+			res = read_attr_from_index(path, macro_ok);
+	}
+	if (!res)
+		res = xcalloc(1, sizeof(*res));
 	return res;
 }
 
@@ -427,6 +446,15 @@ static void debug_set(const char *what, const char *match, struct git_attr *attr
 #define debug_pop(a) do { ; } while (0)
 #define debug_set(a,b,c,d) do { ; } while (0)
 #endif
+
+static void drop_attr_stack(void)
+{
+	while (attr_stack) {
+		struct attr_stack *elem = attr_stack;
+		attr_stack = elem->prev;
+		free_attr_elem(elem);
+	}
+}
 
 static void bootstrap_attr_stack(void)
 {
@@ -641,4 +669,13 @@ int git_checkattr(const char *path, int num, struct git_attr_check *check)
 	}
 
 	return 0;
+}
+
+void git_attr_set_direction(enum git_attr_direction new, struct index_state *istate)
+{
+	enum git_attr_direction old = direction;
+	direction = new;
+	if (new != old)
+		drop_attr_stack();
+	use_index = istate;
 }

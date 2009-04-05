@@ -221,7 +221,8 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	if (message)
 		message += 2;
 
-	if (commit->parents) {
+	if (commit->parents &&
+	    get_object_mark(&commit->parents->item->object) != 0) {
 		parse_commit(commit->parents->item);
 		diff_tree_sha1(commit->parents->item->tree->object.sha1,
 			       commit->tree->object.sha1, "", &rev->diffopt);
@@ -362,7 +363,10 @@ static void get_tags_and_duplicates(struct object_array *pending,
 			break;
 		case OBJ_TAG:
 			tag = (struct tag *)e->item;
+
+			/* handle nested tags */
 			while (tag && tag->object.type == OBJ_TAG) {
+				parse_object(tag->object.sha1);
 				string_list_append(full_name, extra_refs)->util = tag;
 				tag = (struct tag *)tag->tagged;
 			}
@@ -375,11 +379,17 @@ static void get_tags_and_duplicates(struct object_array *pending,
 			case OBJ_BLOB:
 				handle_object(tag->object.sha1);
 				continue;
+			default: /* OBJ_TAG (nested tags) is already handled */
+				warning("Tag points to object of unexpected type %s, skipping.",
+					typename(tag->object.type));
+				continue;
 			}
 			break;
 		default:
-			die ("Unexpected object of type %s",
-			     typename(e->item->type));
+			warning("%s: Unexpected object of type %s, skipping.",
+				e->name,
+				typename(e->item->type));
+			continue;
 		}
 		if (commit->util)
 			/* more than one name for the same object */
