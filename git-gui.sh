@@ -122,6 +122,7 @@ unset oguimsg
 set _appname {Git Gui}
 set _gitdir {}
 set _gitexec {}
+set _githtmldir {}
 set _reponame {}
 set _iscygwin {}
 set _search_path {}
@@ -166,6 +167,28 @@ proc gitexec {args} {
 		return $_gitexec
 	}
 	return [eval [list file join $_gitexec] $args]
+}
+
+proc githtmldir {args} {
+	global _githtmldir
+	if {$_githtmldir eq {}} {
+		if {[catch {set _githtmldir [git --html-path]}]} {
+			# Git not installed or option not yet supported
+			return {}
+		}
+		if {[is_Cygwin]} {
+			set _githtmldir [exec cygpath \
+				--windows \
+				--absolute \
+				$_githtmldir]
+		} else {
+			set _githtmldir [file normalize $_githtmldir]
+		}
+	}
+	if {$args eq {}} {
+		return $_githtmldir
+	}
+	return [eval [list file join $_githtmldir] $args]
 }
 
 proc reponame {} {
@@ -2591,11 +2614,13 @@ if {![is_MacOSX]} {
 }
 
 
-set doc_path [file dirname [gitexec]]
-set doc_path [file join $doc_path Documentation index.html]
+set doc_path [githtmldir]
+if {$doc_path ne {}} {
+	set doc_path [file join $doc_path index.html]
 
-if {[is_Cygwin]} {
-	set doc_path [exec cygpath --mixed $doc_path]
+	if {[is_Cygwin]} {
+		set doc_path [exec cygpath --mixed $doc_path]
+	}
 }
 
 if {[file isfile $doc_path]} {
