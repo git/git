@@ -1123,10 +1123,11 @@ static int process_entry(struct merge_options *o,
 		clean_merge = mfi.clean;
 		if (mfi.clean)
 			update_file(o, 1, mfi.sha, mfi.mode, path);
-		else if (S_ISGITLINK(mfi.mode))
+		else if (S_ISGITLINK(mfi.mode)) {
 			output(o, 1, "CONFLICT (submodule): Merge conflict in %s "
 			       "- needs %s", path, sha1_to_hex(b.sha1));
-		else {
+			update_file(o, 0, mfi.sha, mfi.mode, path);
+		} else {
 			output(o, 1, "CONFLICT (%s): Merge conflict in %s",
 					reason, path);
 

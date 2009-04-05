@@ -63,7 +63,7 @@ test_expect_failure 'merging with modify/modify conflict' '
 
 '
 
-test_expect_failure 'merging with a modify/modify conflict between merge bases' '
+test_expect_success 'merging with a modify/modify conflict between merge bases' '
 
 	git reset --hard HEAD &&
 	git checkout -b test2 c &&
