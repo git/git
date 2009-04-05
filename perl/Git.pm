@@ -56,7 +56,7 @@ require Exporter;
 @EXPORT_OK = qw(command command_oneline command_noisy
                 command_output_pipe command_input_pipe command_close_pipe
                 command_bidi_pipe command_close_bidi_pipe
-                version exec_path hash_object git_cmd_try
+                version exec_path html_path hash_object git_cmd_try
                 remote_refs
                 temp_acquire temp_release temp_reset temp_path);
 
@@ -490,6 +490,16 @@ C<git --exec-path>). Useful mostly only internally.
 =cut
 
 sub exec_path { command_oneline('--exec-path') }
+
+
+=item html_path ()
+
+Return path to the Git html documentation (the same as
+C<git --html-path>). Useful mostly only internally.
+
+=cut
+
+sub html_path { command_oneline('--html-path') }
 
 
 =item repo_path ()
