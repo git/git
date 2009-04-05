@@ -646,7 +646,8 @@ _git_am ()
 		;;
 	--*)
 		__gitcomp "
-			--signoff --utf8 --binary --3way --interactive
+			--3way --committer-date-is-author-date --ignore-date
+			--interactive --keep --no-utf8 --signoff --utf8
 			--whitespace=
 			"
 		return
