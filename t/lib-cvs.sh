@@ -11,7 +11,6 @@ if ! type cvs >/dev/null 2>&1
 then
 	say 'skipping cvsimport tests, cvs not found'
 	test_done
-	exit
 fi
 
 CVS="cvs -f"
@@ -24,12 +23,10 @@ case "$cvsps_version" in
 '')
 	say 'skipping cvsimport tests, cvsps not found'
 	test_done
-	exit
 	;;
 *)
 	say 'skipping cvsimport tests, unsupported cvsps version'
 	test_done
-	exit
 	;;
 esac
 
