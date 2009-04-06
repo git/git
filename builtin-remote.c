@@ -1188,16 +1188,18 @@ struct remote_group {
 	struct string_list *list;
 } remote_group;
 
-static int get_remote_group(const char *key, const char *value, void *cb)
+static int get_remote_group(const char *key, const char *value, void *num_hits)
 {
 	if (!prefixcmp(key, "remotes.") &&
 			!strcmp(key + 8, remote_group.name)) {
 		/* split list by white space */
 		int space = strcspn(value, " \t\n");
 		while (*value) {
-			if (space > 1)
+			if (space > 1) {
 				string_list_append(xstrndup(value, space),
 						remote_group.list);
+				++*((int *)num_hits);
+			}
 			value += space + (value[space] != '\0');
 			space = strcspn(value, " \t\n");
 		}
@@ -1227,8 +1229,11 @@ static int update(int argc, const char **argv)
 
 	remote_group.list = &list;
 	for (i = 1; i < argc; i++) {
+		int groups_found = 0;
 		remote_group.name = argv[i];
-		result = git_config(get_remote_group, NULL);
+		result = git_config(get_remote_group, &groups_found);
+		if (!groups_found && (i != 1 || strcmp(argv[1], "default")))
+			die("No such remote group: '%s'", argv[i]);
 	}
 
 	if (!result && !list.nr  && argc == 2 && !strcmp(argv[1], "default"))
