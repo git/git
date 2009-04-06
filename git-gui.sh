@@ -1108,6 +1108,7 @@ set current_diff_path {}
 set is_3way_diff 0
 set is_conflict_diff 0
 set selected_commit_type new
+set diff_empty_count 0
 
 set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
