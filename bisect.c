@@ -535,7 +535,11 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
 int bisect_next_vars(const char *prefix)
 {
 	struct rev_info revs;
+	struct rev_list_info info;
 	int reaches = 0, all = 0;
+
+	memset(&info, 0, sizeof(info));
+	info.revs = &revs;
 
 	bisect_rev_setup(&revs, prefix);
 
@@ -547,6 +551,6 @@ int bisect_next_vars(const char *prefix)
 	revs.commits = find_bisection(revs.commits, &reaches, &all,
 				      !!skipped_sha1_nr);
 
-	return show_bisect_vars(&revs, reaches, all,
+	return show_bisect_vars(&info, reaches, all,
 				BISECT_SHOW_TRIED | BISECT_SHOW_STRINGED);
 }
