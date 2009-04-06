@@ -214,12 +214,12 @@ merge_file () {
 	    ;;
 	vimdiff)
 	    touch "$BACKUP"
-	    "$merge_tool_path" -c "wincmd l" "$LOCAL" "$MERGED" "$REMOTE"
+	    "$merge_tool_path" -d -c "wincmd l" "$LOCAL" "$MERGED" "$REMOTE"
 	    check_unchanged
 	    ;;
 	gvimdiff)
 	    touch "$BACKUP"
-	    "$merge_tool_path" -c "wincmd l" -f "$LOCAL" "$MERGED" "$REMOTE"
+	    "$merge_tool_path" -d -c "wincmd l" -f "$LOCAL" "$MERGED" "$REMOTE"
 	    check_unchanged
 	    ;;
 	xxdiff)
@@ -359,6 +359,12 @@ init_merge_tool_path() {
 	merge_tool_path=`git config mergetool.$1.path`
 	if test -z "$merge_tool_path" ; then
 		case "$1" in
+			vimdiff)
+				merge_tool_path=vim
+				;;
+			gvimdiff)
+				merge_tool_path=gvim
+				;;
 			emerge)
 				merge_tool_path=emacs
 				;;
