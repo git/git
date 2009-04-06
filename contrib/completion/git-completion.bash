@@ -1174,7 +1174,8 @@ _git_mergetool ()
 	--tool=*)
 		__gitcomp "
 			kdiff3 tkdiff meld xxdiff emerge
-			vimdiff gvimdiff ecmerge opendiff
+			vimdiff gvimdiff ecmerge diffuse
+			opendiff
 			" "" "${cur##--tool=}"
 		return
 		;;

@@ -414,9 +414,9 @@ fi
 if test -z "$merge_tool" ; then
     if test -n "$DISPLAY"; then
         if test -n "$GNOME_DESKTOP_SESSION_ID" ; then
-            merge_tool_candidates="meld kdiff3 tkdiff xxdiff tortoisemerge gvimdiff"
+            merge_tool_candidates="meld kdiff3 tkdiff xxdiff tortoisemerge gvimdiff diffuse"
         else
-            merge_tool_candidates="kdiff3 tkdiff xxdiff meld tortoisemerge gvimdiff"
+            merge_tool_candidates="kdiff3 tkdiff xxdiff meld tortoisemerge gvimdiff diffuse"
         fi
     fi
     if echo "${VISUAL:-$EDITOR}" | grep 'emacs' > /dev/null 2>&1; then
