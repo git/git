@@ -966,7 +966,34 @@ method _readtree_wait {fd} {
 		return
 	}
 
-	set done 1
+	# -- Run the post-checkout hook.
+	#
+	set fd_ph [githook_read post-checkout [string repeat 0 40] \
+		[git rev-parse HEAD] 1]
+	if {$fd_ph ne {}} {
+		global pch_error
+		set pch_error {}
+		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+		fileevent $fd_ph readable [cb _postcheckout_wait $fd_ph]
+	} else {
+		set done 1
+	}
+}
+
+method _postcheckout_wait {fd_ph} {
+	global pch_error
+
+	append pch_error [read $fd_ph]
+	fconfigure $fd_ph -blocking 1
+	if {[eof $fd_ph]} {
+		if {[catch {close $fd_ph}]} {
+			hook_failed_popup post-checkout $pch_error 0
+		}
+		unset pch_error
+		set done 1
+		return
+	}
+	fconfigure $fd_ph -blocking 0
 }
 
 ######################################################################
