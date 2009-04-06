@@ -145,8 +145,8 @@ $ git checkout hello.c            <3>
 ------------
 +
 <1> switch branch
-<2> take out a file out of other commit
-<3> restore hello.c from HEAD of current branch
+<2> take a file out of another commit
+<3> restore hello.c from the index
 +
 If you have an unfortunate branch that is named `hello.c`, this
 step would be confused as an instruction to switch to that branch.
