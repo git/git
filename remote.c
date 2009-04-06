@@ -1170,8 +1170,9 @@ struct branch *branch_get(const char *name)
 			for (i = 0; i < ret->merge_nr; i++) {
 				ret->merge[i] = xcalloc(1, sizeof(**ret->merge));
 				ret->merge[i]->src = xstrdup(ret->merge_name[i]);
-				remote_find_tracking(ret->remote,
-						     ret->merge[i]);
+				if (remote_find_tracking(ret->remote, ret->merge[i])
+				    && !strcmp(ret->remote_name, "."))
+					ret->merge[i]->dst = xstrdup(ret->merge_name[i]);
 			}
 		}
 	}
@@ -1451,6 +1452,8 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 	base = branch->merge[0]->dst;
 	if (!prefixcmp(base, "refs/remotes/")) {
 		base += strlen("refs/remotes/");
+	} else if (!prefixcmp(base, "refs/heads/")) {
+		base += strlen("refs/heads/");
 	}
 	if (!num_theirs)
 		strbuf_addf(sb, "Your branch is ahead of '%s' "
