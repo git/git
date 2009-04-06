@@ -9,31 +9,7 @@
 
 # Set GIT_DIFFTOOL_NO_PROMPT to bypass the per-file prompt.
 should_prompt () {
-	! test -n "$GIT_DIFFTOOL_NO_PROMPT"
-}
-
-# Should we keep the backup .orig file?
-keep_backup_mode="$(git config --bool merge.keepBackup || echo true)"
-keep_backup () {
-	test "$keep_backup_mode" = "true"
-}
-
-# This function manages the backup .orig file.
-# A backup $MERGED.orig file is created if changes are detected.
-cleanup_temp_files () {
-	if test -n "$MERGED"; then
-		if keep_backup && test "$MERGED" -nt "$BACKUP"; then
-			test -f "$BACKUP" && mv -- "$BACKUP" "$MERGED.orig"
-		else
-			rm -f -- "$BACKUP"
-		fi
-	fi
-}
-
-# This is called when users Ctrl-C out of git-difftool-helper
-sigint_handler () {
-	cleanup_temp_files
-	exit 1
+	test -z "$GIT_DIFFTOOL_NO_PROMPT"
 }
 
 # This function prepares temporary files and launches the appropriate
@@ -47,12 +23,6 @@ launch_merge_tool () {
 	LOCAL="$2"
 	REMOTE="$3"
 	BASE="$1"
-	ext="$$$(expr "$MERGED" : '.*\(\.[^/]*\)$')"
-	BACKUP="$MERGED.BACKUP.$ext"
-
-	# Create and ensure that we clean up $BACKUP
-	test -f "$MERGED" && cp -- "$MERGED" "$BACKUP"
-	trap sigint_handler INT
 
 	# $LOCAL and $REMOTE are temporary files so prompt
 	# the user with the real $MERGED name before launching $merge_tool.
@@ -120,8 +90,6 @@ launch_merge_tool () {
 		fi
 		;;
 	esac
-
-	cleanup_temp_files
 }
 
 # Verifies that (difftool|mergetool).<tool>.cmd exists
