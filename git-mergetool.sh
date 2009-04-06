@@ -265,6 +265,16 @@ merge_file () {
 	    fi
 	    status=$?
 	    ;;
+	tortoisemerge)
+	    if base_present ; then
+		touch "$BACKUP"
+		"$merge_tool_path" -base:"$BASE" -mine:"$LOCAL" -theirs:"$REMOTE" -merged:"$MERGED"
+		check_unchanged
+	    else
+		echo "TortoiseMerge cannot be used without a base" 1>&2
+		status=1
+	    fi
+	    ;;
 	*)
 	    if test -n "$merge_tool_cmd"; then
 		if test "$merge_tool_trust_exit_code" = "false"; then
@@ -345,7 +355,7 @@ valid_custom_tool()
 
 valid_tool() {
 	case "$1" in
-		kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge)
+		kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge | tortoisemerge)
 			;; # happy
 		*)
 			if ! valid_custom_tool "$1"; then
@@ -404,9 +414,9 @@ fi
 if test -z "$merge_tool" ; then
     if test -n "$DISPLAY"; then
         if test -n "$GNOME_DESKTOP_SESSION_ID" ; then
-            merge_tool_candidates="meld kdiff3 tkdiff xxdiff gvimdiff"
+            merge_tool_candidates="meld kdiff3 tkdiff xxdiff tortoisemerge gvimdiff"
         else
-            merge_tool_candidates="kdiff3 tkdiff xxdiff meld gvimdiff"
+            merge_tool_candidates="kdiff3 tkdiff xxdiff meld tortoisemerge gvimdiff"
         fi
     fi
     if echo "${VISUAL:-$EDITOR}" | grep 'emacs' > /dev/null 2>&1; then
