@@ -69,7 +69,7 @@ launch_merge_tool () {
 		"$merge_tool_path" --auto \
 			--L1 "$basename (A)" \
 			--L2 "$basename (B)" \
-			-o "$MERGED" "$LOCAL" "$REMOTE" \
+			"$LOCAL" "$REMOTE" \
 			> /dev/null 2>&1
 		;;
 
@@ -78,7 +78,7 @@ launch_merge_tool () {
 		;;
 
 	tkdiff)
-		"$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"
+		"$merge_tool_path" "$LOCAL" "$REMOTE"
 		;;
 
 	meld)
@@ -95,17 +95,13 @@ launch_merge_tool () {
 
 	xxdiff)
 		"$merge_tool_path" \
-			-X \
-			-R 'Accel.SaveAsMerged: "Ctrl-S"' \
 			-R 'Accel.Search: "Ctrl+F"' \
 			-R 'Accel.SearchForward: "Ctrl-G"' \
-			--merged-file "$MERGED" \
 			"$LOCAL" "$REMOTE"
 		;;
 
 	opendiff)
-		"$merge_tool_path" "$LOCAL" "$REMOTE" \
-			-merge "$MERGED" | cat
+		"$merge_tool_path" "$LOCAL" "$REMOTE" | cat
 		;;
 
 	ecmerge)
