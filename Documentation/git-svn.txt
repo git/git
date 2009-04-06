@@ -97,6 +97,9 @@ COMMANDS
 	makes 'git-log' (even without --date=local) show the same times
 	that `svn log` would in the local timezone.
 
+--parent;;
+	Fetch only from the SVN parent of the current HEAD.
+
 This doesn't interfere with interoperating with the Subversion
 repository you cloned from, but if you wish for your local Git
 repository to be able to interoperate with someone else's local Git

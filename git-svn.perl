@@ -63,7 +63,7 @@ $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
 	$_message, $_file,
 	$_template, $_shared,
-	$_version, $_fetch_all, $_no_rebase,
+	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_git_format, $_commit_url, $_tag);
@@ -112,6 +112,7 @@ my %cmd = (
 	fetch => [ \&cmd_fetch, "Download new revisions from SVN",
 			{ 'revision|r=s' => \$_revision,
 			  'fetch-all|all' => \$_fetch_all,
+			  'parent|p' => \$_fetch_parent,
 			   %fc_opts } ],
 	clone => [ \&cmd_clone, "Initialize and fetch revisions",
 			{ 'revision|r=s' => \$_revision,
@@ -381,12 +382,21 @@ sub cmd_fetch {
 	}
 	my ($remote) = @_;
 	if (@_ > 1) {
-		die "Usage: $0 fetch [--all] [svn-remote]\n";
+		die "Usage: $0 fetch [--all] [--parent] [svn-remote]\n";
 	}
-	$remote ||= $Git::SVN::default_repo_id;
-	if ($_fetch_all) {
+	if ($_fetch_parent) {
+		my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+		unless ($gs) {
+			die "Unable to determine upstream SVN information from ",
+			    "working tree history\n";
+		}
+	        # just fetch, don't checkout.
+		$_no_checkout = 'true';
+		$_fetch_all ? $gs->fetch_all : $gs->fetch;
+	} elsif ($_fetch_all) {
 		cmd_multi_fetch();
 	} else {
+		$remote ||= $Git::SVN::default_repo_id;
 		Git::SVN::fetch_all($remote, Git::SVN::read_all_remotes());
 	}
 }
