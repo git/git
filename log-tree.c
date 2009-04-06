@@ -179,13 +179,31 @@ static int has_non_ascii(const char *s)
 	return 0;
 }
 
-void log_write_email_headers(struct rev_info *opt, const char *name,
+void get_patch_filename(struct commit *commit, int nr, const char *suffix,
+			struct strbuf *buf)
+{
+	int suffix_len = strlen(suffix) + 1;
+	int start_len = buf->len;
+
+	strbuf_addf(buf, commit ? "%04d-" : "%d", nr);
+	if (commit) {
+		int max_len = start_len + FORMAT_PATCH_NAME_MAX - suffix_len;
+
+		format_commit_message(commit, "%f", buf, DATE_NORMAL);
+		if (max_len < buf->len)
+			strbuf_setlen(buf, max_len);
+		strbuf_addstr(buf, suffix);
+	}
+}
+
+void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			     const char **subject_p,
 			     const char **extra_headers_p,
 			     int *need_8bit_cte_p)
 {
 	const char *subject = NULL;
 	const char *extra_headers = opt->extra_headers;
+	const char *name = sha1_to_hex(commit->object.sha1);
 
 	*need_8bit_cte_p = 0; /* unknown */
 	if (opt->total > 0) {
@@ -224,6 +242,7 @@ void log_write_email_headers(struct rev_info *opt, const char *name,
 	if (opt->mime_boundary) {
 		static char subject_buffer[1024];
 		static char buffer[1024];
+		struct strbuf filename =  STRBUF_INIT;
 		*need_8bit_cte_p = -1; /* NEVER */
 		snprintf(subject_buffer, sizeof(subject_buffer) - 1,
 			 "%s"
@@ -242,18 +261,21 @@ void log_write_email_headers(struct rev_info *opt, const char *name,
 			 mime_boundary_leader, opt->mime_boundary);
 		extra_headers = subject_buffer;
 
+		get_patch_filename(opt->numbered_files ? NULL : commit, opt->nr,
+				    opt->patch_suffix, &filename);
 		snprintf(buffer, sizeof(buffer) - 1,
 			 "\n--%s%s\n"
 			 "Content-Type: text/x-patch;"
-			 " name=\"%s.diff\"\n"
+			 " name=\"%s\"\n"
 			 "Content-Transfer-Encoding: 8bit\n"
 			 "Content-Disposition: %s;"
-			 " filename=\"%s.diff\"\n\n",
+			 " filename=\"%s\"\n\n",
 			 mime_boundary_leader, opt->mime_boundary,
-			 name,
+			 filename.buf,
 			 opt->no_inline ? "attachment" : "inline",
-			 name);
+			 filename.buf);
 		opt->diffopt.stat_sep = buffer;
+		strbuf_release(&filename);
 	}
 	*subject_p = subject;
 	*extra_headers_p = extra_headers;
@@ -333,8 +355,7 @@ void show_log(struct rev_info *opt)
 	 */
 
 	if (opt->commit_format == CMIT_FMT_EMAIL) {
-		log_write_email_headers(opt, sha1_to_hex(commit->object.sha1),
-					&subject, &extra_headers,
+		log_write_email_headers(opt, commit, &subject, &extra_headers,
 					&need_8bit_cte);
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_COMMIT), stdout);
