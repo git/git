@@ -748,7 +748,6 @@ static void finish_request(struct transfer_request *request)
 			aborted = 1;
 		}
 	} else if (request->state == RUN_FETCH_LOOSE) {
-		fchmod(request->local_fileno, 0444);
 		close(request->local_fileno); request->local_fileno = -1;
 
 		if (request->curl_result != CURLE_OK &&

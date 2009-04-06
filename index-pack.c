@@ -823,8 +823,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		}
 		if (move_temp_to_file(curr_pack_name, final_pack_name))
 			die("cannot store pack file");
-	}
-	if (from_stdin)
+	} else if (from_stdin)
 		chmod(final_pack_name, 0444);
 
 	if (final_index_name != curr_index_name) {
@@ -835,8 +834,8 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		}
 		if (move_temp_to_file(curr_index_name, final_index_name))
 			die("cannot store index file");
-	}
-	chmod(final_index_name, 0444);
+	} else
+		chmod(final_index_name, 0444);
 
 	if (!from_stdin) {
 		printf("%s\n", sha1_to_hex(sha1));
