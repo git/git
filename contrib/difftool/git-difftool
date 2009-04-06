@@ -33,7 +33,10 @@ sub setup_environment
 sub exe
 {
 	my $exe = shift;
-	return defined $ENV{COMSPEC} ? "$exe.exe" : $exe;
+	if ($^O eq 'MSWin32' || $^O eq 'msys') {
+		return "$exe.exe";
+	}
+	return $exe;
 }
 
 sub generate_command
@@ -47,7 +50,7 @@ sub generate_command
 			$skip_next = 0;
 			next;
 		}
-		if ($arg eq '-t' or $arg eq '--tool') {
+		if ($arg eq '-t' || $arg eq '--tool') {
 			usage() if $#ARGV <= $idx;
 			$ENV{GIT_DIFF_TOOL} = $ARGV[$idx + 1];
 			$skip_next = 1;
