@@ -137,7 +137,7 @@ checkout_staged_file () {
 merge_file () {
     MERGED="$1"
 
-    f=`git ls-files -u -- "$MERGED"`
+    f=$(git ls-files -u -- "$MERGED")
     if test -z "$f" ; then
 	if test ! -f "$MERGED" ; then
 	    echo "$MERGED: file not found"
@@ -156,9 +156,9 @@ merge_file () {
     mv -- "$MERGED" "$BACKUP"
     cp -- "$BACKUP" "$MERGED"
 
-    base_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==1) print $1;}'`
-    local_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $1;}'`
-    remote_mode=`git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $1;}'`
+    base_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==1) print $1;}')
+    local_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $1;}')
+    remote_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $1;}')
 
     base_present   && checkout_staged_file 1 "$MERGED" "$BASE"
     local_present  && checkout_staged_file 2 "$MERGED" "$LOCAL"
@@ -318,7 +318,7 @@ do
 	-t|--tool*)
 	    case "$#,$1" in
 		*,*=*)
-		    merge_tool=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+		    merge_tool=$(expr "z$1" : 'z-[^=]*=\(.*\)')
 		    ;;
 		1,*)
 		    usage ;;
@@ -366,7 +366,7 @@ valid_tool() {
 }
 
 init_merge_tool_path() {
-	merge_tool_path=`git config mergetool.$1.path`
+	merge_tool_path=$(git config mergetool.$1.path)
 	if test -z "$merge_tool_path" ; then
 		case "$1" in
 			vimdiff)
@@ -403,7 +403,7 @@ prompt_after_failed_merge() {
 }
 
 if test -z "$merge_tool"; then
-    merge_tool=`git config merge.tool`
+    merge_tool=$(git config merge.tool)
     if test -n "$merge_tool" && ! valid_tool "$merge_tool"; then
 	    echo >&2 "git config option merge.tool set to unknown tool: $merge_tool"
 	    echo >&2 "Resetting to default..."
@@ -463,7 +463,7 @@ last_status=0
 rollup_status=0
 
 if test $# -eq 0 ; then
-    files=`git ls-files -u | sed -e 's/^[^	]*	//' | sort -u`
+    files=$(git ls-files -u | sed -e 's/^[^	]*	//' | sort -u)
     if test -z "$files" ; then
 	echo "No files need merging"
 	exit 0
