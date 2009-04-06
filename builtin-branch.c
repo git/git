@@ -121,11 +121,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			die("Couldn't look up commit object for HEAD");
 	}
 	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
-		int len = strlen(argv[i]);
-
-		if (interpret_nth_last_branch(argv[i], &bname) != len)
-			strbuf_add(&bname, argv[i], len);
-
+		strbuf_branchname(&bname, argv[i]);
 		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, bname.buf)) {
 			error("Cannot delete the branch '%s' "
 			      "which you are currently on.", bname.buf);
@@ -468,22 +464,27 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
 	unsigned char sha1[20];
 	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
+	int recovery = 0;
 
 	if (!oldname)
 		die("cannot rename the current branch while not on any.");
 
-	strbuf_addf(&oldref, "refs/heads/%s", oldname);
+	if (strbuf_check_branch_ref(&oldref, oldname)) {
+		/*
+		 * Bad name --- this could be an attempt to rename a
+		 * ref that we used to allow to be created by accident.
+		 */
+		if (resolve_ref(oldref.buf, sha1, 1, NULL))
+			recovery = 1;
+		else
+			die("Invalid branch name: '%s'", oldname);
+	}
 
-	if (check_ref_format(oldref.buf))
-		die("Invalid branch name: %s", oldref.buf);
-
-	strbuf_addf(&newref, "refs/heads/%s", newname);
-
-	if (check_ref_format(newref.buf))
-		die("Invalid branch name: %s", newref.buf);
+	if (strbuf_check_branch_ref(&newref, newname))
+		die("Invalid branch name: '%s'", newname);
 
 	if (resolve_ref(newref.buf, sha1, 1, NULL) && !force)
-		die("A branch named '%s' already exists.", newname);
+		die("A branch named '%s' already exists.", newref.buf + 11);
 
 	strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 		 oldref.buf, newref.buf);
@@ -491,6 +492,9 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	if (rename_ref(oldref.buf, newref.buf, logmsg.buf))
 		die("Branch rename failed");
 	strbuf_release(&logmsg);
+
+	if (recovery)
+		warning("Renamed a misnamed branch '%s' away", oldref.buf + 11);
 
 	/* no need to pass logmsg here as HEAD didn't really move */
 	if (!strcmp(oldname, head) && create_symref("HEAD", newref.buf, NULL))
