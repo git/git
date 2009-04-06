@@ -16,7 +16,7 @@ SYNOPSIS
 'git remote set-head' <name> [-a | -d | <branch>]
 'git remote show' [-n] <name>
 'git remote prune' [-n | --dry-run] <name>
-'git remote update' [-p | --prune] [group]
+'git remote update' [-p | --prune] [group | remote]...
 
 DESCRIPTION
 -----------
