@@ -233,10 +233,9 @@ static void show_tried_revs(struct commit_list *tried, int stringed)
 	printf(stringed ? "' &&\n" : "'\n");
 }
 
-int show_bisect_vars(struct rev_list_info *info, int reaches, int all,
-		     int flags)
+int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 {
-	int cnt;
+	int cnt, flags = info->bisect_show_flags;
 	char hex[41] = "", *format;
 	struct commit_list *tried;
 	struct rev_info *revs = info->revs;
@@ -303,7 +302,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_list = 0;
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
-	int bisect_show_all = 0;
 	int quiet = 0;
 
 	git_config(git_default_config, NULL);
@@ -334,7 +332,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--bisect-all")) {
 			bisect_list = 1;
 			bisect_find_all = 1;
-			bisect_show_all = 1;
+			info.bisect_show_flags = BISECT_SHOW_ALL;
 			revs.show_decorations = 1;
 			continue;
 		}
@@ -387,8 +385,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 					      bisect_find_all);
 
 		if (bisect_show_vars)
-			return show_bisect_vars(&info, reaches, all,
-						bisect_show_all ? BISECT_SHOW_ALL : 0);
+			return show_bisect_vars(&info, reaches, all);
 	}
 
 	traverse_commit_list(&revs,
