@@ -569,7 +569,7 @@ static void gen_scanf_fmt(char *scanf_fmt, const char *rule)
 /*
  * Shorten the refname to an non-ambiguous form
  */
-static char *get_short_ref(struct refinfo *ref)
+static char *get_short_ref(const char *ref)
 {
 	int i;
 	static char **scanf_fmts;
@@ -598,17 +598,17 @@ static char *get_short_ref(struct refinfo *ref)
 
 	/* bail out if there are no rules */
 	if (!nr_rules)
-		return ref->refname;
+		return xstrdup(ref);
 
-	/* buffer for scanf result, at most ref->refname must fit */
-	short_name = xstrdup(ref->refname);
+	/* buffer for scanf result, at most ref must fit */
+	short_name = xstrdup(ref);
 
 	/* skip first rule, it will always match */
 	for (i = nr_rules - 1; i > 0 ; --i) {
 		int j;
 		int short_name_len;
 
-		if (1 != sscanf(ref->refname, scanf_fmts[i], short_name))
+		if (1 != sscanf(ref, scanf_fmts[i], short_name))
 			continue;
 
 		short_name_len = strlen(short_name);
@@ -642,7 +642,7 @@ static char *get_short_ref(struct refinfo *ref)
 	}
 
 	free(short_name);
-	return ref->refname;
+	return xstrdup(ref);
 }
 
 
@@ -684,7 +684,7 @@ static void populate_value(struct refinfo *ref)
 			if (formatp) {
 				formatp++;
 				if (!strcmp(formatp, "short"))
-					refname = get_short_ref(ref);
+					refname = get_short_ref(ref->refname);
 				else
 					die("unknown refname format %s",
 					    formatp);
