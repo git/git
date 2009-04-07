@@ -8,6 +8,7 @@
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
+#include "remote.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
@@ -66,6 +67,7 @@ static struct {
 	{ "subject" },
 	{ "body" },
 	{ "contents" },
+	{ "upstream" },
 };
 
 /*
@@ -682,6 +684,18 @@ static void populate_value(struct refinfo *ref)
 
 		if (!prefixcmp(name, "refname"))
 			refname = ref->refname;
+		else if(!prefixcmp(name, "upstream")) {
+			struct branch *branch;
+			/* only local branches may have an upstream */
+			if (prefixcmp(ref->refname, "refs/heads/"))
+				continue;
+			branch = branch_get(ref->refname + 11);
+
+			if (!branch || !branch->merge || !branch->merge[0] ||
+			    !branch->merge[0]->dst)
+				continue;
+			refname = branch->merge[0]->dst;
+		}
 		else
 			continue;
 
