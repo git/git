@@ -7,7 +7,7 @@ git-difftool - Show changes using common diff tools
 
 SYNOPSIS
 --------
-'git difftool' [--tool=<tool>] [-y|--no-prompt] [<'git diff' options>]
+'git difftool' [--tool=<tool>] [-y|--no-prompt|--prompt] [<'git diff' options>]
 
 DESCRIPTION
 -----------
@@ -20,6 +20,11 @@ OPTIONS
 -y::
 --no-prompt::
 	Do not prompt before launching a diff tool.
+
+--prompt::
+	Prompt before each invocation of the diff tool.
+	This is the default behaviour; the option is provided to
+	override any configuration settings.
 
 -t <tool>::
 --tool=<tool>::
@@ -71,6 +76,9 @@ difftool.<tool>.cmd::
 	Specify the command to invoke the specified diff tool.
 +
 See the `--tool=<tool>` option above for more details.
+
+difftool.prompt::
+	Prompt before each invocation of the diff tool.
 
 SEE ALSO
 --------
