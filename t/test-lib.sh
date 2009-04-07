@@ -60,6 +60,7 @@ export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 export EDITOR VISUAL
 GIT_TEST_CMP=${GIT_TEST_CMP:-diff -u}
+TEST_DIRECTORY=$(pwd)
 
 # Protect ourselves from common misconfiguration to export
 # CDPATH into the environment
@@ -167,9 +168,15 @@ fi
 exec 5>&1
 if test "$verbose" = "t"
 then
+	set_x= set_nox=
 	exec 4>&2 3>&1
 else
-	exec 4>/dev/null 3>/dev/null
+	test_log_dir="$TEST_DIRECTORY/test-log"
+	mkdir -p "$test_log_dir"
+	test_log_path="$test_log_dir/${0%.sh}-$$"
+	set_x='set -x;'
+	set_nox='set +x'
+	exec 3>"$test_log_path" 4>&3
 fi
 
 test_failure=0
@@ -238,18 +245,50 @@ test_merge () {
 	git tag "$1"
 }
 
+# This function helps systems where core.filemode=false is set.
+# Use it instead of plain 'chmod +x' to set or unset the executable bit
+# of a file in the working directory and add it to the index.
+
+test_chmod () {
+	chmod "$@" &&
+	git update-index --add "--chmod=$@"
+}
+
+# Use test_set_prereq to tell that a particular prerequisite is available.
+# The prerequisite can later be checked for in two ways:
+#
+# - Explicitly using test_have_prereq.
+#
+# - Implicitly by specifying the prerequisite tag in the calls to
+#   test_expect_{success,failure,code}.
+#
+# The single parameter is the prerequisite tag (a simple word, in all
+# capital letters by convention).
+
+test_set_prereq () {
+	satisfied="$satisfied$1 "
+}
+satisfied=" "
+
+test_have_prereq () {
+	case $satisfied in
+	*" $1 "*)
+		: yes, have it ;;
+	*)
+		! : nope ;;
+	esac
+}
+
 # You are not expected to call test_ok_ and test_failure_ directly, use
 # the text_expect_* functions instead.
 
 test_ok_ () {
-	test_count=$(expr "$test_count" + 1)
-	test_success=$(expr "$test_success" + 1)
+	test_success=$(($test_success + 1))
 	say_color "" "  ok $test_count: $@"
 }
 
 test_failure_ () {
-	test_count=$(expr "$test_count" + 1)
-	test_failure=$(expr "$test_failure" + 1);
+	test_failure=$(($test_failure + 1))
 	say_color error "FAIL $test_count: $1"
 	shift
 	echo "$@" | sed -e 's/^/	/'
@@ -257,13 +296,11 @@ test_failure_ () {
 }
 
 test_known_broken_ok_ () {
-	test_count=$(expr "$test_count" + 1)
 	test_fixed=$(($test_fixed+1))
 	say_color "" "  FIXED $test_count: $@"
 }
 
 test_known_broken_failure_ () {
-	test_count=$(expr "$test_count" + 1)
 	test_broken=$(($test_broken+1))
 	say_color skip "  still broken $test_count: $@"
 }
@@ -273,26 +310,30 @@ test_debug () {
 }
 
 test_run_ () {
-	eval >&3 2>&4 "$1"
-	eval_ret="$?"
+	eval >&3 2>&4 $set_x "$1" '
+		eval_ret=$?
+		$set_nox'
 	return 0
 }
 
 test_skip () {
-	this_test=$(expr "./$0" : '.*/\(t[0-9]*\)-[^/]*$')
-	this_test="$this_test.$(expr "$test_count" + 1)"
+	test_count=$(($test_count+1))
 	to_skip=
 	for skp in $GIT_SKIP_TESTS
 	do
-		case "$this_test" in
+		case $this_test.$test_count in
 		$skp)
 			to_skip=t
 		esac
 	done
+	if test -z "$to_skip" && test -n "$prereq" &&
+	   ! test_have_prereq "$prereq"
+	then
+		to_skip=t
+	fi
 	case "$to_skip" in
 	t)
 		say_color skip >&3 "skipping test: $@"
-		test_count=$(expr "$test_count" + 1)
 		say_color skip "skip $test_count: $1"
 		: true
 		;;
@@ -303,8 +344,9 @@ test_skip () {
 }
 
 test_expect_failure () {
+	test "$#" = 3 && { prereq=$1; shift; } || prereq=
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 parameters to test-expect-failure"
+	error "bug in the test script: not 2 or 3 parameters to test-expect-failure"
 	if ! test_skip "$@"
 	then
 		say >&3 "checking known breakage: $2"
@@ -320,8 +362,9 @@ test_expect_failure () {
 }
 
 test_expect_success () {
+	test "$#" = 3 && { prereq=$1; shift; } || prereq=
 	test "$#" = 2 ||
-	error "bug in the test script: not 2 parameters to test-expect-success"
+	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
 	if ! test_skip "$@"
 	then
 		say >&3 "expecting success: $2"
@@ -337,8 +380,9 @@ test_expect_success () {
 }
 
 test_expect_code () {
+	test "$#" = 4 && { prereq=$1; shift; } || prereq=
 	test "$#" = 3 ||
-	error "bug in the test script: not 3 parameters to test-expect-code"
+	error "bug in the test script: not 3 or 4 parameters to test-expect-code"
 	if ! test_skip "$@"
 	then
 		say >&3 "expecting exit code $1: $3"
@@ -362,15 +406,16 @@ test_expect_code () {
 # Usage: test_external description command arguments...
 # Example: test_external 'Perl API' perl ../path/to/test.pl
 test_external () {
-	test "$#" -eq 3 ||
-	error >&5 "bug in the test script: not 3 parameters to test_external"
+	test "$#" = 4 && { prereq=$1; shift; } || prereq=
+	test "$#" = 3 ||
+	error >&5 "bug in the test script: not 3 or 4 parameters to test_external"
 	descr="$1"
 	shift
 	if ! test_skip "$descr" "$@"
 	then
 		# Announce the script to reduce confusion about the
 		# test output that follows.
-		say_color "" " run $(expr "$test_count" + 1): $descr ($*)"
+		say_color "" " run $test_count: $descr ($*)"
 		# Run command; redirect its stderr to &4 as in
 		# test_run_, but keep its stdout on our stdout even in
 		# non-verbose mode.
@@ -454,7 +499,7 @@ test_create_repo () {
 	repo="$1"
 	mkdir -p "$repo"
 	cd "$repo" || error "Cannot setup test environment"
-	"$GIT_EXEC_PATH/git" init "--template=$owd/../templates/blt/" >&3 2>&4 ||
+	"$GIT_EXEC_PATH/git-init" "--template=$owd/../templates/blt/" >&3 2>&4 ||
 	error "cannot run git init -- have you built things yet?"
 	mv .git/hooks .git/hooks-disabled
 	cd "$owd"
@@ -486,14 +531,6 @@ test_done () {
 	fi
 	case "$test_failure" in
 	0)
-		# We could:
-		# cd .. && rm -fr 'trash directory'
-		# but that means we forbid any tests that use their own
-		# subdirectory from calling test_done without coming back
-		# to where they started from.
-		# The Makefile provided will clean this test area so
-		# we will leave things as they are.
-
 		say_color pass "passed all $msg"
 
 		test -d "$remove_trash" &&
@@ -511,11 +548,18 @@ test_done () {
 
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
-TEST_DIRECTORY=$(pwd)
 if test -z "$valgrind"
 then
-	PATH=$TEST_DIRECTORY/..:$PATH
-	GIT_EXEC_PATH=$TEST_DIRECTORY/..
+	if test -z "$GIT_TEST_INSTALLED"
+	then
+		PATH=$TEST_DIRECTORY/..:$PATH
+		GIT_EXEC_PATH=$TEST_DIRECTORY/..
+	else
+		GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
+		error "Cannot run git from $GIT_TEST_INSTALLED."
+		PATH=$GIT_TEST_INSTALLED:$TEST_DIRECTORY/..:$PATH
+		GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
+	fi
 else
 	make_symlink () {
 		test -h "$2" &&
@@ -613,11 +657,8 @@ test_create_repo "$test"
 # in subprocesses like git equals our $PWD (for pathname comparisons).
 cd -P "$test" || exit 1
 
-# test for symbolic link capability
-ln -s x y 2> /dev/null && test -l y 2> /dev/null || no_symlinks=1
-rm -f y
-
-this_test=$(expr "./$0" : '.*/\(t[0-9]*\)-[^/]*$')
+this_test=${0##*/}
+this_test=${this_test%%-*}
 for skp in $GIT_SKIP_TESTS
 do
 	to_skip=
@@ -646,8 +687,24 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
-	pwd() {
+	sum () {
+		md5sum "$@"
+	}
+	# git sees Windows-style pwd
+	pwd () {
 		builtin pwd -W
 	}
+	# no POSIX permissions
+	# backslashes in pathspec are converted to '/'
+	# exec does not inherit the PID
+	;;
+*)
+	test_set_prereq POSIXPERM
+	test_set_prereq BSLASHPSPEC
+	test_set_prereq EXECKEEPSPID
 	;;
 esac
+
+# test whether the filesystem supports symbolic links
+ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
+rm -f y

@@ -7,6 +7,7 @@
 #include "unpack-trees.h"
 #include "progress.h"
 #include "refs.h"
+#include "attr.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as
@@ -49,39 +50,20 @@ static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 	memcpy(new, ce, size);
 	new->next = NULL;
 	new->ce_flags = (new->ce_flags & ~clear) | set;
-	add_index_entry(&o->result, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|ADD_CACHE_SKIP_DFCHECK);
+	add_index_entry(&o->result, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 }
 
-/* Unlink the last component and attempt to remove leading
- * directories, in case this unlink is the removal of the
- * last entry in the directory -- empty directories are removed.
+/*
+ * Unlink the last component and schedule the leading directories for
+ * removal, such that empty directories get removed.
  */
 static void unlink_entry(struct cache_entry *ce)
 {
-	char *cp, *prev;
-	char *name = ce->name;
-
-	if (has_symlink_or_noent_leading_path(ce_namelen(ce), ce->name))
+	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
 		return;
-	if (unlink(name))
+	if (unlink(ce->name))
 		return;
-	prev = NULL;
-	while (1) {
-		int status;
-		cp = strrchr(name, '/');
-		if (prev)
-			*prev = '/';
-		if (!cp)
-			break;
-
-		*cp = 0;
-		status = rmdir(name);
-		if (status) {
-			*cp = '/';
-			break;
-		}
-		prev = cp;
-	}
+	schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }
 
 static struct checkout state;
@@ -105,6 +87,7 @@ static int check_updates(struct unpack_trees_options *o)
 		cnt = 0;
 	}
 
+	git_attr_set_direction(GIT_ATTR_CHECKOUT, &o->result);
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 
@@ -112,11 +95,10 @@ static int check_updates(struct unpack_trees_options *o)
 			display_progress(progress, ++cnt);
 			if (o->update)
 				unlink_entry(ce);
-			remove_index_entry_at(&o->result, i);
-			i--;
-			continue;
 		}
 	}
+	remove_marked_cache_entries(&o->result);
+	remove_scheduled_dirs();
 
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
@@ -130,6 +112,7 @@ static int check_updates(struct unpack_trees_options *o)
 		}
 	}
 	stop_progress(&progress);
+	git_attr_set_direction(GIT_ATTR_CHECKIN, NULL);
 	return errs != 0;
 }
 
@@ -286,9 +269,9 @@ static int unpack_nondirectories(int n, unsigned long mask,
 	if (o->merge)
 		return call_unpack_fn(src, o);
 
-	n += o->merge;
 	for (i = 0; i < n; i++)
-		add_entry(o, src[i], 0, 0);
+		if (src[i] && src[i] != o->df_conflict_entry)
+			add_entry(o, src[i], 0, 0);
 	return 0;
 }
 
@@ -380,8 +363,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	memset(&o->result, 0, sizeof(o->result));
 	o->result.initialized = 1;
-	if (o->src_index)
-		o->result.timestamp = o->src_index->timestamp;
+	if (o->src_index) {
+		o->result.timestamp.sec = o->src_index->timestamp.sec;
+		o->result.timestamp.nsec = o->src_index->timestamp.nsec;
+	}
 	o->merge_size = len;
 
 	if (!dfc)
@@ -446,7 +431,7 @@ static int verify_uptodate(struct cache_entry *ce,
 {
 	struct stat st;
 
-	if (o->index_only || o->reset)
+	if (o->index_only || o->reset || ce_uptodate(ce))
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
@@ -583,7 +568,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 	if (o->index_only || o->reset || !o->update)
 		return 0;
 
-	if (has_symlink_or_noent_leading_path(ce_namelen(ce), ce->name))
+	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
 		return 0;
 
 	if (!lstat(ce->name, &st)) {

@@ -250,10 +250,9 @@ static void wt_status_print_untracked(struct wt_status *s)
 
 	memset(&dir, 0, sizeof(dir));
 
-	if (!s->untracked) {
-		dir.show_other_directories = 1;
-		dir.hide_empty_directories = 1;
-	}
+	if (!s->untracked)
+		dir.flags |=
+			DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
 	setup_standard_excludes(&dir);
 
 	read_directory(&dir, ".", "", 0, NULL);

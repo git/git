@@ -85,7 +85,7 @@ EOF
 
 test_expect_success 'clone using git svn' 'git svn clone -r1 "$svnrepo" x'
 
-test_expect_success '"bar" is a symlink that points to "asdf"' '
+test_expect_success SYMLINKS '"bar" is a symlink that points to "asdf"' '
 	test -L x/bar &&
 	(cd x && test xasdf = x"`git cat-file blob HEAD:bar`")
 '
@@ -94,7 +94,7 @@ test_expect_success 'get "bar" => symlink fix from svn' '
 	(cd x && git svn rebase)
 '
 
-test_expect_success '"bar" remains a proper symlink' '
+test_expect_success SYMLINKS '"bar" remains a proper symlink' '
 	test -L x/bar &&
 	(cd x && test xdoink = x"`git cat-file blob HEAD:bar`")
 '

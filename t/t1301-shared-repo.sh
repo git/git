@@ -26,7 +26,7 @@ modebits () {
 
 for u in 002 022
 do
-	test_expect_success "shared=1 does not clear bits preset by umask $u" '
+	test_expect_success POSIXPERM "shared=1 does not clear bits preset by umask $u" '
 		mkdir sub && (
 			cd sub &&
 			umask $u &&
@@ -54,11 +54,7 @@ test_expect_success 'shared=all' '
 	test 2 = $(git config core.sharedrepository)
 '
 
-say "update-server-info not supported - skipping tests"
-test_done
-exit 0
-
-test_expect_success 'update-server-info honors core.sharedRepository' '
+test_expect_success POSIXPERM 'update-server-info honors core.sharedRepository' '
 	: > a1 &&
 	git add a1 &&
 	test_tick &&
@@ -89,7 +85,7 @@ do
 	git config core.sharedrepository "$u" &&
 	umask 0277 &&
 
-	test_expect_success "shared = $u ($y) ro" '
+	test_expect_success POSIXPERM "shared = $u ($y) ro" '
 
 		rm -f .git/info/refs &&
 		git update-server-info &&
@@ -101,7 +97,7 @@ do
 	'
 
 	umask 077 &&
-	test_expect_success "shared = $u ($x) rw" '
+	test_expect_success POSIXPERM "shared = $u ($x) rw" '
 
 		rm -f .git/info/refs &&
 		git update-server-info &&
@@ -115,7 +111,7 @@ do
 
 done
 
-test_expect_success 'git reflog expire honors core.sharedRepository' '
+test_expect_success POSIXPERM 'git reflog expire honors core.sharedRepository' '
 	git config core.sharedRepository group &&
 	git reflog expire --all &&
 	actual="$(ls -l .git/logs/refs/heads/master)" &&

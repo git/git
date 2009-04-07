@@ -24,8 +24,8 @@ every time you push into it, by setting up 'hooks' there.  See
 documentation for linkgit:git-receive-pack[1].
 
 
-OPTIONS
--------
+OPTIONS[[OPTIONS]]
+------------------
 <repository>::
 	The "remote" repository that is destination of a push
 	operation.  This parameter can be either a URL
@@ -186,6 +186,28 @@ reason::
 
 Examples
 --------
+
+git push::
+	Works like `git push <remote>`, where <remote> is the
+	current branch's remote (or `origin`, if no remote is
+	configured for the current branch).
+
+git push origin::
+	Without additional configuration, works like
+	`git push origin :`.
++
+The default behavior of this command when no <refspec> is given can be
+configured by setting the `push` option of the remote.
++
+For example, to default to pushing only the current branch to `origin`
+use `git config remote.origin.push HEAD`.  Any valid <refspec> (like
+the ones in the examples below) can be configured as the default for
+`git push origin`.
+
+git push origin :::
+	Push "matching" branches to `origin`. See
+	<refspec> in the <<OPTIONS,OPTIONS>> section above for a
+	description of "matching" branches.
 
 git push origin master::
 	Find a ref that matches `master` in the source repository

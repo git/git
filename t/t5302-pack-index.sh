@@ -6,12 +6,6 @@
 test_description='pack index with 64-bit offsets and object CRC'
 . ./test-lib.sh
 
-zeros () {
-	while :; do
-		echo -n xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	done | tr x '\0'
-}
-
 test_expect_success \
     'setup' \
     'rm -rf .git
@@ -75,32 +69,27 @@ test_expect_success \
     'index v2: force some 64-bit offsets with pack-objects' \
     'pack3=$(git pack-objects --index-version=2,0x40000 test-3 <obj-list)'
 
-have_64bits=
 if msg=$(git verify-pack -v "test-3-${pack3}.pack" 2>&1) ||
 	! (echo "$msg" | grep "pack too large .* off_t")
 then
-	have_64bits=t
+	test_set_prereq OFF64_T
 else
 	say "skipping tests concerning 64-bit offsets"
 fi
 
-test "$have_64bits" &&
-test_expect_success \
+test_expect_success OFF64_T \
     'index v2: verify a pack with some 64-bit offsets' \
     'git verify-pack -v "test-3-${pack3}.pack"'
 
-test "$have_64bits" &&
-test_expect_success \
+test_expect_success OFF64_T \
     '64-bit offsets: should be different from previous index v2 results' \
     '! cmp "test-2-${pack2}.idx" "test-3-${pack3}.idx"'
 
-test "$have_64bits" &&
-test_expect_success \
+test_expect_success OFF64_T \
     'index v2: force some 64-bit offsets with index-pack' \
     'git index-pack --index-version=2,0x40000 -o 3.idx "test-1-${pack1}.pack"'
 
-test "$have_64bits" &&
-test_expect_success \
+test_expect_success OFF64_T \
     '64-bit offsets: index-pack result should match pack-objects one' \
     'cmp "test-3-${pack3}.idx" "3.idx"'
 
@@ -214,7 +203,7 @@ test_expect_success \
      obj=`git hash-object file_001` &&
      nr=`index_obj_nr ".git/objects/pack/pack-${pack1}.idx" $obj` &&
      chmod +w ".git/objects/pack/pack-${pack1}.idx" &&
-     zeros | dd of=".git/objects/pack/pack-${pack1}.idx" conv=notrunc \
+     printf xxxx | dd of=".git/objects/pack/pack-${pack1}.idx" conv=notrunc \
         bs=1 count=4 seek=$((8 + 256 * 4 + `wc -l <obj-list` * 20 + $nr * 4)) &&
      ( while read obj
        do git cat-file -p $obj >/dev/null || exit 1

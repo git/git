@@ -73,33 +73,12 @@ test_expect_success 'merge white into red (A->B,M->N)' \
 '
 	git checkout -b red-white red &&
 	git merge white &&
-	git write-tree >/dev/null || {
-		echo "BAD: merge did not complete"
-		return 1
-	}
-
-	test -f B || {
-		echo "BAD: B does not exist in working directory"
-		return 1
-	}
-	test -f N || {
-		echo "BAD: N does not exist in working directory"
-		return 1
-	}
-	test -f R || {
-		echo "BAD: R does not exist in working directory"
-		return 1
-	}
-
-	test -f A && {
-		echo "BAD: A still exists in working directory"
-		return 1
-	}
-	test -f M && {
-		echo "BAD: M still exists in working directory"
-		return 1
-	}
-	return 0
+	git write-tree >/dev/null &&
+	test -f B &&
+	test -f N &&
+	test -f R &&
+	! test -f A &&
+	! test -f M
 '
 
 # This test broke in 8371234ecaaf6e14fe3f2082a855eff1bbd79ae9
@@ -108,32 +87,12 @@ test_expect_success 'merge blue into white (A->B, mod A, A untracked)' \
 	git checkout -b white-blue white &&
 	echo dirty >A &&
 	git merge blue &&
-	git write-tree >/dev/null || {
-		echo "BAD: merge did not complete"
-		return 1
-	}
-
-	test -f A || {
-		echo "BAD: A does not exist in working directory"
-		return 1
-	}
-	test `cat A` = dirty || {
-		echo "BAD: A content is wrong"
-		return 1
-	}
-	test -f B || {
-		echo "BAD: B does not exist in working directory"
-		return 1
-	}
-	test -f N || {
-		echo "BAD: N does not exist in working directory"
-		return 1
-	}
-	test -f M && {
-		echo "BAD: M still exists in working directory"
-		return 1
-	}
-	return 0
+	git write-tree >/dev/null &&
+	test -f A &&
+	test `cat A` = dirty &&
+	test -f B &&
+	test -f N &&
+	! test -f M
 '
 
 test_done

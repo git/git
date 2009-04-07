@@ -899,7 +899,7 @@ _git_diff ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--cached --pickaxe-all --pickaxe-regex
+		__gitcomp "--cached --staged --pickaxe-all --pickaxe-regex
 			--base --ours --theirs
 			$__git_diff_common_options
 			"
@@ -930,15 +930,21 @@ _git_format_patch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
+	--thread=*)
+		__gitcomp "
+			deep shallow
+			" "" "${cur##--thread=}"
+		return
+		;;
 	--*)
 		__gitcomp "
-			--stdout --attach --thread
+			--stdout --attach --no-attach --thread --thread=
 			--output-directory
 			--numbered --start-number
 			--numbered-files
 			--keep-subject
 			--signoff
-			--in-reply-to=
+			--in-reply-to= --cc=
 			--full-index --binary
 			--not --all
 			--cover-letter
@@ -950,6 +956,21 @@ _git_format_patch ()
 		;;
 	esac
 	__git_complete_revlist
+}
+
+_git_fsck ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--tags --root --unreachable --cache --no-reflogs --full
+			--strict --verbose --lost-found
+			"
+		return
+		;;
+	esac
+	COMPREPLY=()
 }
 
 _git_gc ()
@@ -1082,7 +1103,7 @@ _git_log ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local g="$(git rev-parse --git-dir 2>/dev/null)"
 	local merge=""
-	if [ -f $g/MERGE_HEAD ]; then
+	if [ -f "$g/MERGE_HEAD" ]; then
 		merge="--merge"
 	fi
 	case "$cur" in
@@ -1249,8 +1270,8 @@ _git_send_email ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--bcc --cc --cc-cmd --chain-reply-to --compose
-			--dry-run --envelope-sender --from --identity
+		__gitcomp "--annotate --bcc --cc --cc-cmd --chain-reply-to
+			--compose --dry-run --envelope-sender --from --identity
 			--in-reply-to --no-chain-reply-to --no-signed-off-by-cc
 			--no-suppress-from --no-thread --quiet
 			--signed-off-by-cc --smtp-pass --smtp-server
@@ -1516,7 +1537,7 @@ _git_config ()
 
 _git_remote ()
 {
-	local subcommands="add rename rm show prune update"
+	local subcommands="add rename rm show prune update set-head"
 	local subcommand="$(__git_find_subcommand "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
@@ -1880,6 +1901,7 @@ _git ()
 	diff)        _git_diff ;;
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
+	fsck)        _git_fsck ;;
 	gc)          _git_gc ;;
 	grep)        _git_grep ;;
 	help)        _git_help ;;
@@ -1921,7 +1943,7 @@ _gitk ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local g="$(__gitdir)"
 	local merge=""
-	if [ -f $g/MERGE_HEAD ]; then
+	if [ -f "$g/MERGE_HEAD" ]; then
 		merge="--merge"
 	fi
 	case "$cur" in

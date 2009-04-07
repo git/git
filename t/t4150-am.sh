@@ -245,11 +245,7 @@ test_expect_success 'am works from file (relative path given) in subdirectory' '
 	test -z "$(git diff second)"
 '
 
-case $(uname -s) in
-*MINGW*) test_expect=test_expect_failure;;
-*)       test_expect=test_expect_success;;
-esac
-$test_expect 'am works from file (absolute path given) in subdirectory' '
+test_expect_success 'am works from file (absolute path given) in subdirectory' '
 	rm -fr subdir &&
 	git checkout first &&
 	P=$(pwd) &&

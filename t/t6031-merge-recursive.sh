@@ -3,8 +3,10 @@
 test_description='merge-recursive: handle file mode'
 . ./test-lib.sh
 
-# Note that we follow "chmod +x F" with "update-index --chmod=+x F" to
-# help filesystems that do not have the executable bit.
+if ! test "$(git config --bool core.filemode)" = false
+then
+	test_set_prereq FILEMODE
+fi
 
 test_expect_success 'mode change in one branch: keep changed version' '
 	: >file1 &&
@@ -15,11 +17,14 @@ test_expect_success 'mode change in one branch: keep changed version' '
 	git add dummy &&
 	git commit -m a &&
 	git checkout -b b1 master &&
-	chmod +x file1 &&
-	git update-index --chmod=+x file1 &&
+	test_chmod +x file1 &&
 	git commit -m b1 &&
 	git checkout a1 &&
 	git merge-recursive master -- a1 b1 &&
+	git ls-files -s file1 | grep ^100755
+'
+
+test_expect_success FILEMODE 'verify executable bit on file' '
 	test -x file1
 '
 
@@ -28,8 +33,7 @@ test_expect_success 'mode change in both branches: expect conflict' '
 	git checkout -b a2 master &&
 	: >file2 &&
 	H=$(git hash-object file2) &&
-	chmod +x file2 &&
-	git update-index --add --chmod=+x file2 &&
+	test_chmod +x file2 &&
 	git commit -m a2 &&
 	git checkout -b b2 master &&
 	: >file2 &&
@@ -46,6 +50,10 @@ test_expect_success 'mode change in both branches: expect conflict' '
 		echo "100644 $H 3	file2"
 	) >expect &&
 	test_cmp actual expect &&
+	git ls-files -s file2 | grep ^100755
+'
+
+test_expect_success FILEMODE 'verify executable bit on file' '
 	test -x file2
 '
 

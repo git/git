@@ -14,13 +14,18 @@ die "usage: import-tars *.tar.{gz,bz2,Z}\n" unless @ARGV;
 
 my $branch_name = 'import-tars';
 my $branch_ref = "refs/heads/$branch_name";
-my $committer_name = 'T Ar Creator';
-my $committer_email = 'tar@example.com';
+my $author_name = $ENV{'GIT_AUTHOR_NAME'} || 'T Ar Creator';
+my $author_email = $ENV{'GIT_AUTHOR_EMAIL'} || 'tar@example.com';
+my $committer_name = $ENV{'GIT_COMMITTER_NAME'} || `git config --get user.name`;
+my $committer_email = $ENV{'GIT_COMMITTER_EMAIL'} || `git config --get user.email`;
+
+chomp($committer_name, $committer_email);
 
 open(FI, '|-', 'git', 'fast-import', '--quiet')
 	or die "Unable to start git fast-import: $!\n";
 foreach my $tar_file (@ARGV)
 {
+	my $commit_time = time;
 	$tar_file =~ m,([^/]+)$,;
 	my $tar_name = $1;
 
@@ -39,7 +44,7 @@ foreach my $tar_file (@ARGV)
 		die "Unrecognized compression format: $tar_file\n";
 	}
 
-	my $commit_time = 0;
+	my $author_time = 0;
 	my $next_mark = 1;
 	my $have_top_dir = 1;
 	my ($top_dir, %files);
@@ -92,7 +97,7 @@ foreach my $tar_file (@ARGV)
 		}
 		$files{$path} = [$next_mark++, $mode];
 
-		$commit_time = $mtime if $mtime > $commit_time;
+		$author_time = $mtime if $mtime > $author_time;
 		$path =~ m,^([^/]+)/,;
 		$top_dir = $1 unless $top_dir;
 		$have_top_dir = 0 if $top_dir ne $1;
@@ -100,6 +105,7 @@ foreach my $tar_file (@ARGV)
 
 	print FI <<EOF;
 commit $branch_ref
+author $author_name <$author_email> $author_time +0000
 committer $committer_name <$committer_email> $commit_time +0000
 data <<END_OF_COMMIT_MESSAGE
 Imported from $tar_file.
@@ -119,7 +125,7 @@ EOF
 	print FI <<EOF;
 tag $tar_name
 from $branch_ref
-tagger $committer_name <$committer_email> $commit_time +0000
+tagger $author_name <$author_email> $author_time +0000
 data <<END_OF_TAG_MESSAGE
 Package $tar_name
 END_OF_TAG_MESSAGE

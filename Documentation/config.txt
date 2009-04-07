@@ -25,7 +25,7 @@ blank lines are ignored.
 The file consists of sections and variables.  A section begins with
 the name of the section in square brackets and continues until the next
 section begins.  Section names are not case sensitive.  Only alphanumeric
-characters, '`-`' and '`.`' are allowed in section names.  Each variable
+characters, `-` and `.` are allowed in section names.  Each variable
 must belong to some section, which means that there must be section
 header before first setting of a variable.
 
@@ -39,7 +39,7 @@ in the section header, like in example below:
 --------
 
 Subsection names can contain any characters except newline (doublequote
-'`"`' and backslash have to be escaped as '`\"`' and '`\\`',
+`"` and backslash have to be escaped as `\"` and `\\`,
 respectively) and are case sensitive.  Section header cannot span multiple
 lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
@@ -53,7 +53,7 @@ All the other lines are recognized as setting variables, in the form
 'name = value'.  If there is no equal sign on the line, the entire line
 is taken as 'name' and the variable is recognized as boolean "true".
 The variable names are case-insensitive and only alphanumeric
-characters and '`-`' are allowed.  There can be more than one value
+characters and `-` are allowed.  There can be more than one value
 for a given variable; we say then that variable is multivalued.
 
 Leading and trailing whitespace in a variable value is discarded.
@@ -69,15 +69,15 @@ String values may be entirely or partially enclosed in double quotes.
 You need to enclose variable value in double quotes if you want to
 preserve leading or trailing whitespace, or if variable value contains
 beginning of comment characters (if it contains '#' or ';').
-Double quote '`"`' and backslash '`\`' characters in variable value must
-be escaped: use '`\"`' for '`"`' and '`\\`' for '`\`'.
+Double quote `"` and backslash `\` characters in variable value must
+be escaped: use `\"` for `"` and `\\` for `\`.
 
-The following escape sequences (beside '`\"`' and '`\\`') are recognized:
-'`\n`' for newline character (NL), '`\t`' for horizontal tabulation (HT, TAB)
-and '`\b`' for backspace (BS).  No other char escape sequence, nor octal
+The following escape sequences (beside `\"` and `\\`) are recognized:
+`\n` for newline character (NL), `\t` for horizontal tabulation (HT, TAB)
+and `\b` for backspace (BS).  No other char escape sequence, nor octal
 char sequences are valid.
 
-Variable value ending in a '`\`' is continued on the next line in the
+Variable value ending in a `\` is continued on the next line in the
 customary UNIX fashion.
 
 Some variables may require special value format.
@@ -221,6 +221,11 @@ core.gitProxy::
 Can be overridden by the 'GIT_PROXY_COMMAND' environment variable
 (which always applies universally, without the special "for"
 handling).
++
+The special string `none` can be used as the proxy command to
+specify that no proxy be used for a given domain pattern.
+This is useful for excluding servers inside a firewall from
+proxy use, while defaulting to a common proxy for external domains.
 
 core.ignoreStat::
 	If true, commands which modify both the working tree and the index
@@ -382,9 +387,9 @@ core.pager::
 	to override git's default settings this way, you need
 	to be explicit.  For example, to disable the S option
 	in a backward compatible manner, set `core.pager`
-	to "`less -+$LESS -FRX`".  This will be passed to the
+	to `less -+$LESS -FRX`.  This will be passed to the
 	shell by git, which will translate the final command to
-	"`LESS=FRSX less -+FRSX -FRX`".
+	`LESS=FRSX less -+FRSX -FRX`.
 
 core.whitespace::
 	A comma separated list of common whitespace problems to
@@ -468,10 +473,14 @@ branch.autosetuprebase::
 	This option defaults to never.
 
 branch.<name>.remote::
-	When in branch <name>, it tells 'git-fetch' which remote to fetch.
-	If this option is not given, 'git-fetch' defaults to remote "origin".
+	When in branch <name>, it tells 'git-fetch' and 'git-push' which
+	remote to fetch from/push to.  It defaults to `origin` if no remote is
+	configured. `origin` is also used if you are not on any branch.
 
 branch.<name>.merge::
+	Defines, together with branch.<name>.remote, the upstream branch
+	for the given branch. It tells 'git-fetch'/'git-pull' which
+	branch to merge from.
 	When in branch <name>, it tells 'git-fetch' the default
 	refspec to be marked for merging in FETCH_HEAD. The value is
 	handled like the remote part of a refspec, and must match a
@@ -547,6 +556,25 @@ color.diff.<slot>::
 	`commit` (commit headers), or `whitespace` (highlighting
 	whitespace errors). The values of these variables may be specified as
 	in color.branch.<slot>.
+
+color.grep::
+	When set to `always`, always highlight matches.  When `false` (or
+	`never`), never.  When set to `true` or `auto`, use color only
+	when the output is written to the terminal.  Defaults to `false`.
+
+color.grep.external::
+	The string value of this variable is passed to an external 'grep'
+	command as a command line option if match highlighting is turned
+	on.  If set to an empty string, no option is passed at all,
+	turning off coloring for external 'grep' calls; this is the default.
+	For GNU grep, set it to `--color=always` to highlight matches even
+	when a pager is used.
+
+color.grep.match::
+	Use customized color for matches.  The value of this variable
+	may be specified as in color.branch.<slot>.  It is passed using
+	the environment variables 'GREP_COLOR' and 'GREP_COLORS' when
+	calling an external 'grep'.
 
 color.interactive::
 	When set to `always`, always use colors for interactive prompts
@@ -1161,7 +1189,7 @@ pager.<cmd>::
 	particular git subcommand when writing to a tty.  If
 	`\--paginate` or `\--no-pager` is specified on the command line,
 	it takes precedence over this option.  To disable pagination for
-	all commands, set `core.pager` or 'GIT_PAGER' to "`cat`".
+	all commands, set `core.pager` or `GIT_PAGER` to `cat`.
 
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches
@@ -1169,6 +1197,19 @@ pull.octopus::
 
 pull.twohead::
 	The default merge strategy to use when pulling a single branch.
+
+push.default::
+	Defines the action git push should take if no refspec is given
+	on the command line, no refspec is configured in the remote, and
+	no refspec is implied by any of the options given on the command
+	line. Possible values are:
++
+* `nothing` do not push anything.
+* `matching` push all matching branches.
+  All branches having the same name in both ends are considered to be
+  matching. This is the default.
+* `tracking` push the current branch to the branch it is tracking.
+* `current` push the current branch to a branch of the same name.
 
 rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last

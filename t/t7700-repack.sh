@@ -88,5 +88,66 @@ test_expect_failure 'packed obs in alt ODB are repacked when local repo has pack
 	done
 '
 
+test_expect_success 'packed obs in alternate ODB kept pack are repacked' '
+	# swap the .keep so the commit object is in the pack with .keep
+	for p in alt_objects/pack/*.pack
+	do
+		base_name=$(basename $p .pack)
+		if test -f alt_objects/pack/$base_name.keep
+		then
+			rm alt_objects/pack/$base_name.keep
+		else
+			touch alt_objects/pack/$base_name.keep
+		fi
+	done
+	git repack -a -d &&
+	myidx=$(ls -1 .git/objects/pack/*.idx) &&
+	test -f "$myidx" &&
+	for p in alt_objects/pack/*.idx; do
+		git verify-pack -v $p | sed -n -e "/^[0-9a-f]\{40\}/p"
+	done | while read sha1 rest; do
+		if ! ( git verify-pack -v $myidx | grep "^$sha1" ); then
+			echo "Missing object in local pack: $sha1"
+			return 1
+		fi
+	done
+'
+
+test_expect_success 'packed unreachable obs in alternate ODB are not loosened' '
+	rm -f alt_objects/pack/*.keep &&
+	mv .git/objects/pack/* alt_objects/pack/ &&
+	csha1=$(git rev-parse HEAD^{commit}) &&
+	git reset --hard HEAD^ &&
+	sleep 1 &&
+	git reflog expire --expire=now --expire-unreachable=now --all &&
+	# The pack-objects call on the next line is equivalent to
+	# git repack -A -d without the call to prune-packed
+	git pack-objects --honor-pack-keep --non-empty --all --reflog \
+	    --unpack-unreachable </dev/null pack &&
+	rm -f .git/objects/pack/* &&
+	mv pack-* .git/objects/pack/ &&
+	test 0 = $(git verify-pack -v -- .git/objects/pack/*.idx |
+		egrep "^$csha1 " | sort | uniq | wc -l) &&
+	echo > .git/objects/info/alternates &&
+	test_must_fail git show $csha1
+'
+
+test_expect_success 'local packed unreachable obs that exist in alternate ODB are not loosened' '
+	echo `pwd`/alt_objects > .git/objects/info/alternates &&
+	echo "$csha1" | git pack-objects --non-empty --all --reflog pack &&
+	rm -f .git/objects/pack/* &&
+	mv pack-* .git/objects/pack/ &&
+	# The pack-objects call on the next line is equivalent to
+	# git repack -A -d without the call to prune-packed
+	git pack-objects --honor-pack-keep --non-empty --all --reflog \
+	    --unpack-unreachable </dev/null pack &&
+	rm -f .git/objects/pack/* &&
+	mv pack-* .git/objects/pack/ &&
+	test 0 = $(git verify-pack -v -- .git/objects/pack/*.idx |
+		egrep "^$csha1 " | sort | uniq | wc -l) &&
+	echo > .git/objects/info/alternates &&
+	test_must_fail git show $csha1
+'
+
 test_done
 

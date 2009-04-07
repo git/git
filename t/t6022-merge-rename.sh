@@ -95,30 +95,15 @@ git checkout master'
 test_expect_success 'pull renaming branch into unrenaming one' \
 '
 	git show-branch
-	git pull . white && {
-		echo "BAD: should have conflicted"
-		return 1
-	}
-	git ls-files -s
-	test "$(git ls-files -u B | wc -l)" -eq 3 || {
-		echo "BAD: should have left stages for B"
-		return 1
-	}
-	test "$(git ls-files -s N | wc -l)" -eq 1 || {
-		echo "BAD: should have merged N"
-		return 1
-	}
+	test_must_fail git pull . white &&
+	git ls-files -s &&
+	test "$(git ls-files -u B | wc -l)" -eq 3 &&
+	test "$(git ls-files -s N | wc -l)" -eq 1 &&
 	sed -ne "/^g/{
 	p
 	q
-	}" B | grep master || {
-		echo "BAD: should have listed our change first"
-		return 1
-	}
-	test "$(git diff white N | wc -l)" -eq 0 || {
-		echo "BAD: should have taken colored branch"
-		return 1
-	}
+	}" B | grep master &&
+	test "$(git diff white N | wc -l)" -eq 0
 '
 
 test_expect_success 'pull renaming branch into another renaming one' \
@@ -126,95 +111,44 @@ test_expect_success 'pull renaming branch into another renaming one' \
 	rm -f B
 	git reset --hard
 	git checkout red
-	git pull . white && {
-		echo "BAD: should have conflicted"
-		return 1
-	}
-	test "$(git ls-files -u B | wc -l)" -eq 3 || {
-		echo "BAD: should have left stages"
-		return 1
-	}
-	test "$(git ls-files -s N | wc -l)" -eq 1 || {
-		echo "BAD: should have merged N"
-		return 1
-	}
+	test_must_fail git pull . white &&
+	test "$(git ls-files -u B | wc -l)" -eq 3 &&
+	test "$(git ls-files -s N | wc -l)" -eq 1 &&
 	sed -ne "/^g/{
 	p
 	q
-	}" B | grep red || {
-		echo "BAD: should have listed our change first"
-		return 1
-	}
-	test "$(git diff white N | wc -l)" -eq 0 || {
-		echo "BAD: should have taken colored branch"
-		return 1
-	}
+	}" B | grep red &&
+	test "$(git diff white N | wc -l)" -eq 0
 '
 
 test_expect_success 'pull unrenaming branch into renaming one' \
 '
 	git reset --hard
 	git show-branch
-	git pull . master && {
-		echo "BAD: should have conflicted"
-		return 1
-	}
-	test "$(git ls-files -u B | wc -l)" -eq 3 || {
-		echo "BAD: should have left stages"
-		return 1
-	}
-	test "$(git ls-files -s N | wc -l)" -eq 1 || {
-		echo "BAD: should have merged N"
-		return 1
-	}
+	test_must_fail git pull . master &&
+	test "$(git ls-files -u B | wc -l)" -eq 3 &&
+	test "$(git ls-files -s N | wc -l)" -eq 1 &&
 	sed -ne "/^g/{
 	p
 	q
-	}" B | grep red || {
-		echo "BAD: should have listed our change first"
-		return 1
-	}
-	test "$(git diff white N | wc -l)" -eq 0 || {
-		echo "BAD: should have taken colored branch"
-		return 1
-	}
+	}" B | grep red &&
+	test "$(git diff white N | wc -l)" -eq 0
 '
 
 test_expect_success 'pull conflicting renames' \
 '
 	git reset --hard
 	git show-branch
-	git pull . blue && {
-		echo "BAD: should have conflicted"
-		return 1
-	}
-	test "$(git ls-files -u A | wc -l)" -eq 1 || {
-		echo "BAD: should have left a stage"
-		return 1
-	}
-	test "$(git ls-files -u B | wc -l)" -eq 1 || {
-		echo "BAD: should have left a stage"
-		return 1
-	}
-	test "$(git ls-files -u C | wc -l)" -eq 1 || {
-		echo "BAD: should have left a stage"
-		return 1
-	}
-	test "$(git ls-files -s N | wc -l)" -eq 1 || {
-		echo "BAD: should have merged N"
-		return 1
-	}
+	test_must_fail git pull . blue &&
+	test "$(git ls-files -u A | wc -l)" -eq 1 &&
+	test "$(git ls-files -u B | wc -l)" -eq 1 &&
+	test "$(git ls-files -u C | wc -l)" -eq 1 &&
+	test "$(git ls-files -s N | wc -l)" -eq 1 &&
 	sed -ne "/^g/{
 	p
 	q
-	}" B | grep red || {
-		echo "BAD: should have listed our change first"
-		return 1
-	}
-	test "$(git diff white N | wc -l)" -eq 0 || {
-		echo "BAD: should have taken colored branch"
-		return 1
-	}
+	}" B | grep red &&
+	test "$(git diff white N | wc -l)" -eq 0
 '
 
 test_expect_success 'interference with untracked working tree file' '
@@ -222,14 +156,8 @@ test_expect_success 'interference with untracked working tree file' '
 	git reset --hard
 	git show-branch
 	echo >A this file should not matter
-	git pull . white && {
-		echo "BAD: should have conflicted"
-		return 1
-	}
-	test -f A || {
-		echo "BAD: should have left A intact"
-		return 1
-	}
+	test_must_fail git pull . white &&
+	test -f A
 '
 
 test_expect_success 'interference with untracked working tree file' '
@@ -239,14 +167,8 @@ test_expect_success 'interference with untracked working tree file' '
 	git show-branch
 	rm -f A
 	echo >A this file should not matter
-	git pull . red && {
-		echo "BAD: should have conflicted"
-		return 1
-	}
-	test -f A || {
-		echo "BAD: should have left A intact"
-		return 1
-	}
+	test_must_fail git pull . red &&
+	test -f A
 '
 
 test_expect_success 'interference with untracked working tree file' '
@@ -256,14 +178,8 @@ test_expect_success 'interference with untracked working tree file' '
 	git checkout -f master
 	git tag -f anchor
 	git show-branch
-	git pull . yellow || {
-		echo "BAD: should have cleanly merged"
-		return 1
-	}
-	test -f M && {
-		echo "BAD: should have removed M"
-		return 1
-	}
+	git pull . yellow
+	test ! -f M &&
 	git reset --hard anchor
 '
 
@@ -276,14 +192,8 @@ test_expect_success 'updated working tree file should prevent the merge' '
 	git show-branch
 	echo >>M one line addition
 	cat M >M.saved
-	git pull . yellow && {
-		echo "BAD: should have complained"
-		return 1
-	}
-	diff M M.saved || {
-		echo "BAD: should have left M intact"
-		return 1
-	}
+	test_must_fail git pull . yellow &&
+	diff M M.saved &&
 	rm -f M.saved
 '
 
@@ -297,14 +207,8 @@ test_expect_success 'updated working tree file should prevent the merge' '
 	echo >>M one line addition
 	cat M >M.saved
 	git update-index M
-	git pull . yellow && {
-		echo "BAD: should have complained"
-		return 1
-	}
-	diff M M.saved || {
-		echo "BAD: should have left M intact"
-		return 1
-	}
+	test_must_fail git pull . yellow &&
+	diff M M.saved &&
 	rm -f M.saved
 '
 
@@ -316,18 +220,9 @@ test_expect_success 'interference with untracked working tree file' '
 	git tag -f anchor
 	git show-branch
 	echo >M this file should not matter
-	git pull . master || {
-		echo "BAD: should have cleanly merged"
-		return 1
-	}
-	test -f M || {
-		echo "BAD: should have left M intact"
-		return 1
-	}
-	git ls-files -s | grep M && {
-		echo "BAD: M must be untracked in the result"
-		return 1
-	}
+	git pull . master &&
+	test -f M &&
+	! (git ls-files -s | grep M) &&
 	git reset --hard anchor
 '
 

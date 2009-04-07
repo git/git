@@ -1919,8 +1919,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	return 0;
 }
 
-static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
-			 int kept_pack_only)
+static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 {
 	static struct packed_git *last_found = (void *)1;
 	struct packed_git *p;
@@ -1932,8 +1931,6 @@ static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
 	p = (last_found == (void *)1) ? packed_git : last_found;
 
 	do {
-		if (kept_pack_only && !p->pack_keep)
-			goto next;
 		if (p->num_bad_objects) {
 			unsigned i;
 			for (i = 0; i < p->num_bad_objects; i++)
@@ -1971,16 +1968,6 @@ static int find_pack_ent(const unsigned char *sha1, struct pack_entry *e,
 			p = p->next;
 	} while (p);
 	return 0;
-}
-
-static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
-{
-	return find_pack_ent(sha1, e, 0);
-}
-
-static int find_kept_pack_entry(const unsigned char *sha1, struct pack_entry *e)
-{
-	return find_pack_ent(sha1, e, 1);
 }
 
 struct packed_git *find_sha1_pack(const unsigned char *sha1,
@@ -2287,7 +2274,7 @@ static void close_sha1_file(int fd)
 		fsync_or_die(fd, "sha1 file");
 	fchmod(fd, 0444);
 	if (close(fd) != 0)
-		die("unable to write sha1 file");
+		die("error when closing sha1 file (%s)", strerror(errno));
 }
 
 /* Size of directory component, including the ending '/' */
@@ -2454,12 +2441,6 @@ int has_sha1_pack(const unsigned char *sha1)
 {
 	struct pack_entry e;
 	return find_pack_entry(sha1, &e);
-}
-
-int has_sha1_kept_pack(const unsigned char *sha1)
-{
-	struct pack_entry e;
-	return find_kept_pack_entry(sha1, &e);
 }
 
 int has_sha1_file(const unsigned char *sha1)

@@ -126,6 +126,12 @@ all::
 # randomly break unless your underlying filesystem supports those sub-second
 # times (my ext3 doesn't).
 #
+# Define USE_ST_TIMESPEC if your "struct stat" uses "st_ctimespec" instead of
+# "st_ctim"
+#
+# Define NO_NSEC if your "struct stat" does not have "st_ctim.tv_nsec"
+# available.  This automatically turns USE_NSEC off.
+#
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-index perspective.
 #
@@ -257,6 +263,18 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 # but it still might be nice to keep that distinction.)
 BASIC_CFLAGS =
 BASIC_LDFLAGS =
+
+# Guard against environment variables
+BUILTIN_OBJS =
+BUILT_INS =
+COMPAT_CFLAGS =
+COMPAT_OBJS =
+LIB_H =
+LIB_OBJS =
+PROGRAMS =
+SCRIPT_PERL =
+SCRIPT_SH =
+TEST_PROGRAMS =
 
 SCRIPT_SH += git-am.sh
 SCRIPT_SH += git-bisect.sh
@@ -658,6 +676,7 @@ ifeq ($(uname_S),Darwin)
 	endif
 	NO_MEMMEM = YesPlease
 	THREADED_DELTA_SEARCH = YesPlease
+	USE_ST_TIMESPEC = YesPlease
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
@@ -707,6 +726,7 @@ ifeq ($(uname_S),FreeBSD)
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
 	DIR_HAS_BSD_GROUP_SEMANTICS = YesPlease
+	USE_ST_TIMESPEC = YesPlease
 	THREADED_DELTA_SEARCH = YesPlease
 	ifeq ($(shell expr "$(uname_R)" : '4\.'),2)
 		PTHREAD_LIBS = -pthread
@@ -735,6 +755,7 @@ ifeq ($(uname_S),AIX)
 	NO_MEMMEM = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_STRLCPY = YesPlease
+	NO_NSEC = YesPlease
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 	INTERNAL_QSORT = UnfortunatelyYes
 	NEEDS_LIBICONV=YesPlease
@@ -804,6 +825,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	RUNTIME_PREFIX = YesPlease
 	NO_POSIX_ONLY_PROGRAMS = YesPlease
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
+	NO_NSEC = YesPlease
 	USE_WIN32_MMAP = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/regex -Icompat/fnmatch
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
@@ -926,6 +948,15 @@ endif
 ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
 	BASIC_CFLAGS += -DNO_ST_BLOCKS_IN_STRUCT_STAT
 endif
+ifdef USE_NSEC
+	BASIC_CFLAGS += -DUSE_NSEC
+endif
+ifdef USE_ST_TIMESPEC
+	BASIC_CFLAGS += -DUSE_ST_TIMESPEC
+endif
+ifdef NO_NSEC
+	BASIC_CFLAGS += -DNO_NSEC
+endif
 ifdef NO_C99_FORMAT
 	BASIC_CFLAGS += -DNO_C99_FORMAT
 endif
@@ -973,6 +1004,11 @@ endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
 	COMPAT_OBJS += compat/mmap.o
+else
+	ifdef USE_WIN32_MMAP
+		COMPAT_CFLAGS += -DUSE_WIN32_MMAP
+		COMPAT_OBJS += compat/win32mmap.o
+	endif
 endif
 ifdef USE_WIN32_MMAP
 	COMPAT_CFLAGS += -DUSE_WIN32_MMAP
@@ -1373,6 +1409,7 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 GIT-BUILD-OPTIONS: .FORCE-GIT-BUILD-OPTIONS
 	@echo SHELL_PATH=\''$(subst ','\'',$(SHELL_PATH_SQ))'\' >$@
 	@echo TAR=\''$(subst ','\'',$(subst ','\'',$(TAR)))'\' >>$@
+	@echo NO_CURL=\''$(subst ','\'',$(subst ','\'',$(NO_CURL)))'\' >>$@
 
 ### Detect Tck/Tk interpreter path changes
 ifndef NO_TCLTK

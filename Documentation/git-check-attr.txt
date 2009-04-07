@@ -14,7 +14,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-For every pathname, this command will list if each attr is 'unspecified',
+For every pathname, this command will list if each attribute is 'unspecified',
 'set', or 'unset' as a gitattribute on that pathname.
 
 OPTIONS
@@ -23,11 +23,11 @@ OPTIONS
 	Read file names from stdin instead of from the command-line.
 
 -z::
-	Only meaningful with `--stdin`; paths are separated with
-	NUL character instead of LF.
+	Only meaningful with `--stdin`; paths are separated with a
+	NUL character instead of a linefeed character.
 
 \--::
-	Interpret all preceding arguments as attributes, and all following
+	Interpret all preceding arguments as attributes and all following
 	arguments as path names. If not supplied, only the first argument will
 	be treated as an attribute.
 
@@ -37,12 +37,12 @@ OUTPUT
 The output is of the form:
 <path> COLON SP <attribute> COLON SP <info> LF
 
-Where <path> is the path of a file being queried, <attribute> is an attribute
+<path> is the path of a file being queried, <attribute> is an attribute
 being queried and <info> can be either:
 
 'unspecified';; when the attribute is not defined for the path.
-'unset';;	when the attribute is defined to false.
-'set';;		when the attribute is defined to true.
+'unset';;	when the attribute is defined as false.
+'set';;		when the attribute is defined as true.
 <value>;;	when a value has been assigned to the attribute.
 
 EXAMPLES
@@ -69,7 +69,7 @@ org/example/MyClass.java: diff: java
 org/example/MyClass.java: myAttr: set
 ---------------
 
-* Listing attribute for multiple files:
+* Listing an attribute for multiple files:
 ---------------
 $ git check-attr myAttr -- org/example/MyClass.java org/example/NoMyAttr.java
 org/example/MyClass.java: myAttr: set

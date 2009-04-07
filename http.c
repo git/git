@@ -1,7 +1,7 @@
 #include "http.h"
 
 int data_received;
-int active_requests = 0;
+int active_requests;
 
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
@@ -13,22 +13,23 @@ static CURL *curl_default;
 char curl_errorstr[CURL_ERROR_SIZE];
 
 static int curl_ssl_verify = -1;
-static const char *ssl_cert = NULL;
+static const char *ssl_cert;
 #if LIBCURL_VERSION_NUM >= 0x070902
-static const char *ssl_key = NULL;
+static const char *ssl_key;
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
-static const char *ssl_capath = NULL;
+static const char *ssl_capath;
 #endif
-static const char *ssl_cainfo = NULL;
+static const char *ssl_cainfo;
 static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
-static int curl_ftp_no_epsv = 0;
-static const char *curl_http_proxy = NULL;
+static int curl_ftp_no_epsv;
+static const char *curl_http_proxy;
+static char *user_name, *user_pass;
 
 static struct curl_slist *pragma_header;
 
-static struct active_request_slot *active_queue_head = NULL;
+static struct active_request_slot *active_queue_head;
 
 size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
@@ -94,53 +95,33 @@ static void process_curl_messages(void)
 static int http_options(const char *var, const char *value, void *cb)
 {
 	if (!strcmp("http.sslverify", var)) {
-		if (curl_ssl_verify == -1) {
-			curl_ssl_verify = git_config_bool(var, value);
-		}
+		curl_ssl_verify = git_config_bool(var, value);
 		return 0;
 	}
-
-	if (!strcmp("http.sslcert", var)) {
-		if (ssl_cert == NULL)
-			return git_config_string(&ssl_cert, var, value);
-		return 0;
-	}
+	if (!strcmp("http.sslcert", var))
+		return git_config_string(&ssl_cert, var, value);
 #if LIBCURL_VERSION_NUM >= 0x070902
-	if (!strcmp("http.sslkey", var)) {
-		if (ssl_key == NULL)
-			return git_config_string(&ssl_key, var, value);
-		return 0;
-	}
+	if (!strcmp("http.sslkey", var))
+		return git_config_string(&ssl_key, var, value);
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
-	if (!strcmp("http.sslcapath", var)) {
-		if (ssl_capath == NULL)
-			return git_config_string(&ssl_capath, var, value);
-		return 0;
-	}
+	if (!strcmp("http.sslcapath", var))
+		return git_config_string(&ssl_capath, var, value);
 #endif
-	if (!strcmp("http.sslcainfo", var)) {
-		if (ssl_cainfo == NULL)
-			return git_config_string(&ssl_cainfo, var, value);
-		return 0;
-	}
-
+	if (!strcmp("http.sslcainfo", var))
+		return git_config_string(&ssl_cainfo, var, value);
 #ifdef USE_CURL_MULTI
 	if (!strcmp("http.maxrequests", var)) {
-		if (max_requests == -1)
-			max_requests = git_config_int(var, value);
+		max_requests = git_config_int(var, value);
 		return 0;
 	}
 #endif
-
 	if (!strcmp("http.lowspeedlimit", var)) {
-		if (curl_low_speed_limit == -1)
-			curl_low_speed_limit = (long)git_config_int(var, value);
+		curl_low_speed_limit = (long)git_config_int(var, value);
 		return 0;
 	}
 	if (!strcmp("http.lowspeedtime", var)) {
-		if (curl_low_speed_time == -1)
-			curl_low_speed_time = (long)git_config_int(var, value);
+		curl_low_speed_time = (long)git_config_int(var, value);
 		return 0;
 	}
 
@@ -148,19 +129,28 @@ static int http_options(const char *var, const char *value, void *cb)
 		curl_ftp_no_epsv = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp("http.proxy", var)) {
-		if (curl_http_proxy == NULL)
-			return git_config_string(&curl_http_proxy, var, value);
-		return 0;
-	}
+	if (!strcmp("http.proxy", var))
+		return git_config_string(&curl_http_proxy, var, value);
 
 	/* Fall back on the default ones */
 	return git_default_config(var, value, cb);
 }
 
-static CURL* get_curl_handle(void)
+static void init_curl_http_auth(CURL *result)
 {
-	CURL* result = curl_easy_init();
+	if (user_name) {
+		struct strbuf up = STRBUF_INIT;
+		if (!user_pass)
+			user_pass = xstrdup(getpass("Password: "));
+		strbuf_addf(&up, "%s:%s", user_name, user_pass);
+		curl_easy_setopt(result, CURLOPT_USERPWD,
+				 strbuf_detach(&up, NULL));
+	}
+}
+
+static CURL *get_curl_handle(void)
+{
+	CURL *result = curl_easy_init();
 
 	if (!curl_ssl_verify) {
 		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 0);
@@ -175,6 +165,8 @@ static CURL* get_curl_handle(void)
 #if LIBCURL_VERSION_NUM >= 0x070907
 	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
 #endif
+
+	init_curl_http_auth(result);
 
 	if (ssl_cert != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
@@ -213,10 +205,59 @@ static CURL* get_curl_handle(void)
 	return result;
 }
 
+static void http_auth_init(const char *url)
+{
+	char *at, *colon, *cp, *slash;
+	int len;
+
+	cp = strstr(url, "://");
+	if (!cp)
+		return;
+
+	/*
+	 * Ok, the URL looks like "proto://something".  Which one?
+	 * "proto://<user>:<pass>@<host>/...",
+	 * "proto://<user>@<host>/...", or just
+	 * "proto://<host>/..."?
+	 */
+	cp += 3;
+	at = strchr(cp, '@');
+	colon = strchr(cp, ':');
+	slash = strchrnul(cp, '/');
+	if (!at || slash <= at)
+		return; /* No credentials */
+	if (!colon || at <= colon) {
+		/* Only username */
+		len = at - cp;
+		user_name = xmalloc(len + 1);
+		memcpy(user_name, cp, len);
+		user_name[len] = '\0';
+		user_pass = NULL;
+	} else {
+		len = colon - cp;
+		user_name = xmalloc(len + 1);
+		memcpy(user_name, cp, len);
+		user_name[len] = '\0';
+		len = at - (colon + 1);
+		user_pass = xmalloc(len + 1);
+		memcpy(user_pass, colon + 1, len);
+		user_pass[len] = '\0';
+	}
+}
+
+static void set_from_env(const char **var, const char *envname)
+{
+	const char *val = getenv(envname);
+	if (val)
+		*var = val;
+}
+
 void http_init(struct remote *remote)
 {
 	char *low_speed_limit;
 	char *low_speed_time;
+
+	git_config(http_options, NULL);
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
@@ -242,14 +283,14 @@ void http_init(struct remote *remote)
 	if (getenv("GIT_SSL_NO_VERIFY"))
 		curl_ssl_verify = 0;
 
-	ssl_cert = getenv("GIT_SSL_CERT");
+	set_from_env(&ssl_cert, "GIT_SSL_CERT");
 #if LIBCURL_VERSION_NUM >= 0x070902
-	ssl_key = getenv("GIT_SSL_KEY");
+	set_from_env(&ssl_key, "GIT_SSL_KEY");
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
-	ssl_capath = getenv("GIT_SSL_CAPATH");
+	set_from_env(&ssl_capath, "GIT_SSL_CAPATH");
 #endif
-	ssl_cainfo = getenv("GIT_SSL_CAINFO");
+	set_from_env(&ssl_cainfo, "GIT_SSL_CAINFO");
 
 	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
 	if (low_speed_limit != NULL)
@@ -257,8 +298,6 @@ void http_init(struct remote *remote)
 	low_speed_time = getenv("GIT_HTTP_LOW_SPEED_TIME");
 	if (low_speed_time != NULL)
 		curl_low_speed_time = strtol(low_speed_time, NULL, 10);
-
-	git_config(http_options, NULL);
 
 	if (curl_ssl_verify == -1)
 		curl_ssl_verify = 1;
@@ -270,6 +309,9 @@ void http_init(struct remote *remote)
 
 	if (getenv("GIT_CURL_FTP_NO_EPSV"))
 		curl_ftp_no_epsv = 1;
+
+	if (remote && remote->url && remote->url[0])
+		http_auth_init(remote->url[0]);
 
 #ifndef NO_CURL_EASY_DUPHANDLE
 	curl_default = get_curl_handle();
@@ -322,15 +364,14 @@ struct active_request_slot *get_active_slot(void)
 	/* Wait for a slot to open up if the queue is full */
 	while (active_requests >= max_requests) {
 		curl_multi_perform(curlm, &num_transfers);
-		if (num_transfers < active_requests) {
+		if (num_transfers < active_requests)
 			process_curl_messages();
-		}
 	}
 #endif
 
-	while (slot != NULL && slot->in_use) {
+	while (slot != NULL && slot->in_use)
 		slot = slot->next;
-	}
+
 	if (slot == NULL) {
 		newslot = xmalloc(sizeof(*newslot));
 		newslot->curl = NULL;
@@ -341,9 +382,8 @@ struct active_request_slot *get_active_slot(void)
 		if (slot == NULL) {
 			active_queue_head = newslot;
 		} else {
-			while (slot->next != NULL) {
+			while (slot->next != NULL)
 				slot = slot->next;
-			}
 			slot->next = newslot;
 		}
 		slot = newslot;
@@ -404,7 +444,7 @@ struct fill_chain {
 	struct fill_chain *next;
 };
 
-static struct fill_chain *fill_cfg = NULL;
+static struct fill_chain *fill_cfg;
 
 void add_fill_function(void *data, int (*fill)(void *))
 {
@@ -535,9 +575,8 @@ static void finish_active_slot(struct active_request_slot *slot)
 	}
 
 	/* Run callback if appropriate */
-	if (slot->callback_func != NULL) {
+	if (slot->callback_func != NULL)
 		slot->callback_func(slot->callback_data);
-	}
 }
 
 void finish_all_active_slots(void)
@@ -567,8 +606,10 @@ static inline int needs_quote(int ch)
 
 static inline int hex(int v)
 {
-	if (v < 10) return '0' + v;
-	else return 'A' + v - 10;
+	if (v < 10)
+		return '0' + v;
+	else
+		return 'A' + v - 10;
 }
 
 static char *quote_ref_url(const char *base, const char *ref)

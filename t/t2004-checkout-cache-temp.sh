@@ -194,8 +194,7 @@ test_expect_success \
  test $(cat ../$s1) = tree1asubdir/path5)
 )'
 
-test "$no_symlinks" || {
-test_expect_success \
+test_expect_success SYMLINKS \
 'checkout --temp symlink' '
 rm -f path* .merge_* out .git/index &&
 ln -s b a &&
@@ -209,6 +208,5 @@ test $(cut "-d	" -f2 out) = a &&
 p=$(cut "-d	" -f1 out) &&
 test -f $p &&
 test $(cat $p) = b'
-}
 
 test_done

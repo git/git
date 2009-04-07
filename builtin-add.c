@@ -104,7 +104,7 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec,
 	/* Set up the default git porcelain excludes */
 	memset(dir, 0, sizeof(*dir));
 	if (!ignored_too) {
-		dir->collect_ignored = 1;
+		dir->flags |= DIR_COLLECT_IGNORED;
 		setup_standard_excludes(dir);
 	}
 
@@ -148,7 +148,7 @@ static const char **validate_pathspec(int argc, const char **argv, const char *p
 	if (pathspec) {
 		const char **p;
 		for (p = pathspec; *p; p++) {
-			if (has_symlink_leading_path(strlen(*p), *p)) {
+			if (has_symlink_leading_path(*p, strlen(*p))) {
 				int len = prefix ? strlen(prefix) : 0;
 				die("'%s' is beyond a symbolic link", *p + len);
 			}

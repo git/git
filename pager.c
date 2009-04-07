@@ -9,7 +9,6 @@
 
 static int spawned_pager;
 
-#ifndef __MINGW32__
 static void pager_preexec(void)
 {
 	/*
@@ -24,7 +23,6 @@ static void pager_preexec(void)
 
 	setenv("LESS", "FRSX", 0);
 }
-#endif
 
 static const char *pager_argv[] = { "sh", "-c", NULL, NULL };
 static struct child_process pager_process;
@@ -68,13 +66,15 @@ void setup_pager(void)
 
 	/* spawn the pager */
 	pager_argv[2] = pager;
-	pager_process.argv = pager_argv;
-	pager_process.in = -1;
-#ifndef __MINGW32__
 	pager_process.preexec_cb = pager_preexec;
-#endif
-	if (start_command(&pager_process))
-		return;
+	pager_process.argv = &pager_argv[2];
+	pager_process.in = -1;
+	if (start_command(&pager_process)) {
+		pager_process.argv = pager_argv;
+		pager_process.in = -1;
+		if (start_command(&pager_process))
+			return;
+	}
 
 	/* original process continues, but writes to the pipe */
 	dup2(pager_process.in, 1);

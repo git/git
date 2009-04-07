@@ -16,9 +16,7 @@ test_expect_success setup '
 	git checkout -b side &&
 
 	for i in 1 2 5 6 A B C 7 8 9 10; do echo "$i"; done >file &&
-	chmod +x elif &&
-	git update-index file elif &&
-	git update-index --chmod=+x elif &&
+	test_chmod +x elif &&
 	git commit -m "Side changes #1" &&
 
 	for i in D E F; do echo "$i"; done >>file &&
@@ -128,6 +126,21 @@ test_expect_success 'additional command line cc' '
 	git format-patch --cc="S. E. Cipient <scipient@example.com>" --stdout master..side | sed -e "/^$/q" >patch5 &&
 	grep "^Cc: R. E. Cipient <rcipient@example.com>,$" patch5 &&
 	grep "^ *S. E. Cipient <scipient@example.com>$" patch5
+'
+
+test_expect_success 'command line headers' '
+
+	git config --unset-all format.headers &&
+	git format-patch --add-header="Cc: R. E. Cipient <rcipient@example.com>" --stdout master..side | sed -e "/^$/q" >patch6 &&
+	grep "^Cc: R. E. Cipient <rcipient@example.com>$" patch6
+'
+
+test_expect_success 'configuration headers and command line headers' '
+
+	git config --replace-all format.headers "Cc: R. E. Cipient <rcipient@example.com>" &&
+	git format-patch --add-header="Cc: S. E. Cipient <scipient@example.com>" --stdout master..side | sed -e "/^$/q" >patch7 &&
+	grep "^Cc: R. E. Cipient <rcipient@example.com>,$" patch7 &&
+	grep "^ *S. E. Cipient <scipient@example.com>$" patch7
 '
 
 test_expect_success 'multiple files' '

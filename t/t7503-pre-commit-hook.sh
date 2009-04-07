@@ -69,11 +69,7 @@ test_expect_success '--no-verify with failing hook' '
 '
 
 chmod -x "$HOOK"
-if test "$(git config --bool core.filemode)" = false; then
-	say "executable bit not honored - skipping tests of non-executable hook"
-else
-
-test_expect_success 'with non-executable hook' '
+test_expect_success POSIXPERM 'with non-executable hook' '
 
 	echo "content" >> file &&
 	git add file &&
@@ -81,14 +77,12 @@ test_expect_success 'with non-executable hook' '
 
 '
 
-test_expect_success '--no-verify with non-executable hook' '
+test_expect_success POSIXPERM '--no-verify with non-executable hook' '
 
 	echo "more content" >> file &&
 	git add file &&
 	git commit --no-verify -m "more content"
 
 '
-
-fi # non-executable hooks
 
 test_done

@@ -573,7 +573,7 @@ static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
 static int outdir_offset;
 
-static int reopen_stdout(const char *oneline, int nr, int total)
+static int reopen_stdout(const char *oneline, int nr, struct rev_info *rev)
 {
 	char filename[PATH_MAX];
 	int len = 0;
@@ -598,7 +598,9 @@ static int reopen_stdout(const char *oneline, int nr, int total)
 		strcpy(filename + len, fmt_patch_suffix);
 	}
 
-	fprintf(realstdout, "%s\n", filename + outdir_offset);
+	if (!DIFF_OPT_TST(&rev->diffopt, QUIET))
+		fprintf(realstdout, "%s\n", filename + outdir_offset);
+
 	if (freopen(filename, "w", stdout) == NULL)
 		return error("Cannot open patch file %s",filename);
 
@@ -687,7 +689,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 		die("Cover letter needs email format");
 
 	if (!use_stdout && reopen_stdout(numbered_files ?
-				NULL : "cover-letter", 0, rev->total))
+				NULL : "cover-letter", 0, rev))
 		return;
 
 	head_sha1 = sha1_to_hex(head->object.sha1);
@@ -916,6 +918,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			cover_letter = 1;
 		else if (!strcmp(argv[i], "--no-binary"))
 			no_binary_diff = 1;
+		else if (!prefixcmp(argv[i], "--add-header="))
+			add_header(argv[i] + 13);
 		else
 			argv[j++] = argv[i];
 	}
@@ -956,8 +960,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		die ("-n and -k are mutually exclusive.");
 	if (keep_subject && subject_prefix)
 		die ("--subject-prefix and -k are mutually exclusive.");
-	if (numbered_files && use_stdout)
-		die ("--numbered-files and --stdout are mutually exclusive.");
 
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)
@@ -1106,7 +1108,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 		if (!use_stdout && reopen_stdout(numbered_files ? NULL :
 				get_oneline_for_filename(commit, keep_subject),
-				rev.nr, rev.total))
+				rev.nr, &rev))
 			die("Failed to create output files");
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);

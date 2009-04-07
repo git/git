@@ -25,10 +25,12 @@ static unsigned int contains(struct diff_filespec *one,
 		regmatch_t regmatch;
 		int flags = 0;
 
+		assert(data[sz] == '\0');
 		while (*data && !regexec(regexp, data, 1, &regmatch, flags)) {
 			flags |= REG_NOTBOL;
-			data += regmatch.rm_so;
-			if (*data) data++;
+			data += regmatch.rm_eo;
+			if (*data && regmatch.rm_so == regmatch.rm_eo)
+				data++;
 			cnt++;
 		}
 

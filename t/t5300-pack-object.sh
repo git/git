@@ -10,30 +10,13 @@ test_description='git pack-object
 
 TRASH=`pwd`
 
-x4k=xxxxxxxx
-x4k="$x4k$x4k$x4k$x4k$x4k$x4k$x4k$x4k"
-x4k="$x4k$x4k$x4k$x4k$x4k$x4k$x4k$x4k"
-x4k="$x4k$x4k$x4k$x4k$x4k$x4k$x4k$x4k"
-
-corrupt()
-{
-	(
-	read -d "" -n $4 l
-	echo -n "$l"
-	read -d "" -n $3 l
-	echo -n ${x4k:0:$3} | tr x '\0'
-	cat
-	) < $1 > $2
-}
-
 test_expect_success \
     'setup' \
     'rm -f .git/index*
-     for i in a b c
-     do
-	     echo -n "$x4k" | tr x $i >$i &&
-	     git update-index --add $i || return 1
-     done &&
+     perl -e "print \"a\" x 4096;" > a &&
+     perl -e "print \"b\" x 4096;" > b &&
+     perl -e "print \"c\" x 4096;" > c &&
+     git update-index --add a b c &&
      cat c >d && echo foo >>d && git update-index --add d &&
      tree=`git write-tree` &&
      commit=`git commit-tree $tree </dev/null` && {
@@ -236,7 +219,8 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack catches a corrupted pack signature' \
-    'corrupt test-1-${packname_1}.pack test-3.pack 1 2 &&
+    'cat test-1-${packname_1}.pack >test-3.pack &&
+     echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
      if git verify-pack test-3.idx
      then false
      else :;
@@ -244,7 +228,8 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack catches a corrupted pack version' \
-    'corrupt test-1-${packname_1}.pack test-3.pack 1 7 &&
+    'cat test-1-${packname_1}.pack >test-3.pack &&
+     echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
      if git verify-pack test-3.idx
      then false
      else :;
@@ -252,7 +237,8 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack catches a corrupted type/size of the 1st packed object data' \
-    'corrupt test-1-${packname_1}.pack test-3.pack 1 12 &&
+    'cat test-1-${packname_1}.pack >test-3.pack &&
+     echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
      if git verify-pack test-3.idx
      then false
      else :;
@@ -262,7 +248,8 @@ test_expect_success \
     'verify-pack catches a corrupted sum of the index file itself' \
     'l=`wc -c <test-3.idx` &&
      l=`expr $l - 20` &&
-     corrupt test-1-${packname_1}.pack test-3.pack 20 $l &&
+     cat test-1-${packname_1}.pack >test-3.pack &&
+     printf "%20s" "" | dd of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
      if git verify-pack test-3.pack
      then false
      else :;
@@ -310,7 +297,7 @@ test_expect_success \
      packname_4=$(git pack-objects test-4 <obj-list) &&
      test 3 = $(ls test-4-*.pack | wc -l)'
 
-test_expect_success 'setup --strict tests' '
+test_expect_success 'unpacking with --strict' '
 
 	git config --unset pack.packsizelimit &&
 	for j in a b c d e f g
@@ -336,11 +323,7 @@ test_expect_success 'setup --strict tests' '
 			echo "$LIST"
 			echo "$LI"
 			echo "$ST"
-		 ) | git pack-objects test-6 )
-'
-
-test_expect_success 'unpacking with --strict' '
-
+		 ) | git pack-objects test-6 ) &&
 	test_create_repo test-5 &&
 	(
 		cd test-5 &&
@@ -364,6 +347,30 @@ test_expect_success 'unpacking with --strict' '
 
 test_expect_success 'index-pack with --strict' '
 
+	for j in a b c d e f g
+	do
+		for i in 0 1 2 3 4 5 6 7 8 9
+		do
+			o=$(echo $j$i | git hash-object -w --stdin) &&
+			echo "100644 $o	0 $j$i"
+		done
+	done >LIST &&
+	rm -f .git/index &&
+	git update-index --index-info <LIST &&
+	LIST=$(git write-tree) &&
+	rm -f .git/index &&
+	head -n 10 LIST | git update-index --index-info &&
+	LI=$(git write-tree) &&
+	rm -f .git/index &&
+	tail -n 10 LIST | git update-index --index-info &&
+	ST=$(git write-tree) &&
+	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" | \
+		git pack-objects test-5 ) &&
+	PACK6=$( (
+			echo "$LIST"
+			echo "$LI"
+			echo "$ST"
+		 ) | git pack-objects test-6 ) &&
 	test_create_repo test-7 &&
 	(
 		cd test-7 &&

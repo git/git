@@ -20,6 +20,8 @@
 #include "dir.h"
 #include "pack-refs.h"
 #include "sigchain.h"
+#include "branch.h"
+#include "remote.h"
 #include "run-command.h"
 
 /*
@@ -268,7 +270,7 @@ static const struct ref *clone_local(const char *src_repo,
 
 static const char *junk_work_tree;
 static const char *junk_git_dir;
-pid_t junk_pid;
+static pid_t junk_pid;
 
 static void remove_junk(void)
 {
@@ -294,43 +296,6 @@ static void remove_junk_on_signal(int signo)
 	raise(signo);
 }
 
-static const struct ref *locate_head(const struct ref *refs,
-				     const struct ref *mapped_refs,
-				     const struct ref **remote_head_p)
-{
-	const struct ref *remote_head = NULL;
-	const struct ref *remote_master = NULL;
-	const struct ref *r;
-	for (r = refs; r; r = r->next)
-		if (!strcmp(r->name, "HEAD"))
-			remote_head = r;
-
-	for (r = mapped_refs; r; r = r->next)
-		if (!strcmp(r->name, "refs/heads/master"))
-			remote_master = r;
-
-	if (remote_head_p)
-		*remote_head_p = remote_head;
-
-	/* If there's no HEAD value at all, never mind. */
-	if (!remote_head)
-		return NULL;
-
-	/* If refs/heads/master could be right, it is. */
-	if (remote_master && !hashcmp(remote_master->old_sha1,
-				      remote_head->old_sha1))
-		return remote_master;
-
-	/* Look for another ref that points there */
-	for (r = mapped_refs; r; r = r->next)
-		if (r != remote_head &&
-		    !hashcmp(r->old_sha1, remote_head->old_sha1))
-			return r;
-
-	/* Nothing is the same */
-	return NULL;
-}
-
 static struct ref *write_remote_refs(const struct ref *refs,
 		struct refspec *refspec, const char *reflog)
 {
@@ -351,19 +316,6 @@ static struct ref *write_remote_refs(const struct ref *refs,
 	return local_refs;
 }
 
-static void install_branch_config(const char *local,
-				  const char *origin,
-				  const char *remote)
-{
-	struct strbuf key = STRBUF_INIT;
-	strbuf_addf(&key, "branch.%s.remote", local);
-	git_config_set(key.buf, origin);
-	strbuf_reset(&key);
-	strbuf_addf(&key, "branch.%s.merge", local);
-	git_config_set(key.buf, remote);
-	strbuf_release(&key);
-}
-
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
 	int is_bundle = 0;
@@ -378,7 +330,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	char *src_ref_prefix = "refs/heads/";
 	int err = 0;
 
-	struct refspec refspec;
+	struct refspec *refspec;
+	const char *fetch_pattern;
 
 	junk_pid = getpid();
 
@@ -453,7 +406,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	atexit(remove_junk);
 	sigchain_push_common(remove_junk_on_signal);
 
-	setenv(CONFIG_ENVIRONMENT, xstrdup(mkpath("%s/config", git_dir)), 1);
+	setenv(CONFIG_ENVIRONMENT, mkpath("%s/config", git_dir), 1);
 
 	if (safe_create_leading_directories_const(git_dir) < 0)
 		die("could not create leading directories of '%s'", git_dir);
@@ -483,8 +436,14 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&branch_top, "refs/remotes/%s/", option_origin);
 	}
 
+	strbuf_addf(&value, "+%s*:%s*", src_ref_prefix, branch_top.buf);
+
 	if (option_mirror || !option_bare) {
 		/* Configure the remote */
+		strbuf_addf(&key, "remote.%s.fetch", option_origin);
+		git_config_set_multivar(key.buf, value.buf, "^$", 0);
+		strbuf_reset(&key);
+
 		if (option_mirror) {
 			strbuf_addf(&key, "remote.%s.mirror", option_origin);
 			git_config_set(key.buf, "true");
@@ -493,19 +452,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 		strbuf_addf(&key, "remote.%s.url", option_origin);
 		git_config_set(key.buf, repo);
-			strbuf_reset(&key);
-
-		strbuf_addf(&key, "remote.%s.fetch", option_origin);
-		strbuf_addf(&value, "+%s*:%s*", src_ref_prefix, branch_top.buf);
-		git_config_set_multivar(key.buf, value.buf, "^$", 0);
 		strbuf_reset(&key);
-		strbuf_reset(&value);
 	}
 
-	refspec.force = 0;
-	refspec.pattern = 1;
-	refspec.src = src_ref_prefix;
-	refspec.dst = branch_top.buf;
+	fetch_pattern = value.buf;
+	refspec = parse_fetch_refspec(1, &fetch_pattern);
+
+	strbuf_reset(&value);
 
 	if (path && !is_bundle)
 		refs = clone_local(path, git_dir);
@@ -539,9 +492,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (refs) {
 		clear_extra_refs();
 
-		mapped_refs = write_remote_refs(refs, &refspec, reflog_msg.buf);
+		mapped_refs = write_remote_refs(refs, refspec, reflog_msg.buf);
 
-		head_points_at = locate_head(refs, mapped_refs, &remote_head);
+		remote_head = find_ref_by_name(refs, "HEAD");
+		head_points_at = guess_remote_head(remote_head, mapped_refs, 0);
 	}
 	else {
 		warning("You appear to have cloned an empty repository.");
@@ -549,7 +503,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		remote_head = NULL;
 		option_no_checkout = 1;
 		if (!option_bare)
-			install_branch_config("master", option_origin,
+			install_branch_config(0, "master", option_origin,
 					      "refs/heads/master");
 	}
 
@@ -579,7 +533,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				      head_points_at->peer_ref->name,
 				      reflog_msg.buf);
 
-			install_branch_config(head, option_origin,
+			install_branch_config(0, head, option_origin,
 					      head_points_at->name);
 		}
 	} else if (remote_head) {

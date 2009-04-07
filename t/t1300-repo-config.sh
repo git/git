@@ -118,7 +118,14 @@ EOF
 
 test_expect_success 'multiple unset is correct' 'cmp .git/config expect'
 
-mv .git/config2 .git/config
+cp .git/config2 .git/config
+
+test_expect_success '--replace-all missing value' '
+	test_must_fail git config --replace-all beta.haha &&
+	test_cmp .git/config2 .git/config
+'
+
+rm .git/config2
 
 test_expect_success '--replace-all' \
 	'git config --replace-all beta.haha gamma'
@@ -726,8 +733,7 @@ echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
 
-test "$no_symlinks" ||
-test_expect_success 'symlinked configuration' '
+test_expect_success SYMLINKS 'symlinked configuration' '
 
 	ln -s notyet myconfig &&
 	GIT_CONFIG=myconfig git config test.frotz nitfol &&

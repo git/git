@@ -8,10 +8,6 @@ test_description='git read-tree --prefix test.
 
 . ./test-lib.sh
 
-cmp () {
-	diff -w "$@"
-}
-
 test_expect_success setup '
 	echo hello >one &&
 	git update-index --add one &&

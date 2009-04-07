@@ -2057,7 +2057,7 @@ proc makewindow {} {
     button .tf.lbar.fnext -text [mc "next"] -command {dofind 1 1}
     button .tf.lbar.fprev -text [mc "prev"] -command {dofind -1 1}
     label .tf.lbar.flab2 -text " [mc "commit"] "
-    pack .tf.lbar.flabel .tf.lbar.fnext .tf.lbar.fprev .tf.lbar.flab2 \
+    pack .tf.lbar.flabel .tf.lbar.fprev .tf.lbar.fnext .tf.lbar.flab2 \
 	-side left -fill y
     set gdttype [mc "containing:"]
     set gm [tk_optionMenu .tf.lbar.gdttype gdttype \

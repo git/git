@@ -272,10 +272,10 @@ test $commits -eq 0 && die "Found nothing to rewrite"
 
 # Rewrite the commits
 
-i=0
+git_filter_branch__commit_count=0
 while read commit parents; do
-	i=$(($i+1))
-	printf "\rRewrite $commit ($i/$commits)"
+	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
+	printf "\rRewrite $commit ($git_filter_branch__commit_count/$commits)"
 
 	case "$filter_subdir" in
 	"")

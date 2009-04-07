@@ -293,9 +293,22 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 }
 
 #ifdef __MINGW32__
+static int close_fd = -1;
+NORETURN void die_from_thread(const char *err, va_list params)
+{
+	vreport("fatal: ", err, params);
+	if (close_fd >= 0)
+		close(close_fd);
+	_endthreadex(128);
+	exit(128);	/* silence compiler */
+}
+
 static __stdcall unsigned run_thread(void *data)
 {
 	struct async *async = data;
+	close_fd = async->fd_for_proc;
+	extern NORETURN void die_from_thread(const char *err, va_list params);
+	set_die_routine(die_from_thread);
 	return async->proc(async->fd_for_proc, async->data);
 }
 #endif
@@ -349,6 +362,9 @@ int finish_async(struct async *async)
 	else if (!GetExitCodeThread(async->tid, &ret))
 		ret = error("cannot get thread exit code: %lu", GetLastError());
 	CloseHandle(async->tid);
+	if (ret)
+		/* test suite tests for this string */
+		error("waitpid (async) failed");
 #endif
 	return ret;
 }

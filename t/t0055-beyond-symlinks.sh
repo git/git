@@ -4,12 +4,7 @@ test_description='update-index and add refuse to add beyond symlinks'
 
 . ./test-lib.sh
 
-if test "$no_symlinks"; then
-	say "symbolic links not supported - skipping tests"
-	test_done
-fi
-
-test_expect_success setup '
+test_expect_success SYMLINKS setup '
 	>a &&
 	mkdir b &&
 	ln -s b c &&
@@ -17,12 +12,12 @@ test_expect_success setup '
 	git update-index --add a b/d
 '
 
-test_expect_success 'update-index --add beyond symlinks' '
+test_expect_success SYMLINKS 'update-index --add beyond symlinks' '
 	test_must_fail git update-index --add c/d &&
 	! ( git ls-files | grep c/d )
 '
 
-test_expect_success 'add beyond symlinks' '
+test_expect_success SYMLINKS 'add beyond symlinks' '
 	test_must_fail git add c/d &&
 	! ( git ls-files | grep c/d )
 '

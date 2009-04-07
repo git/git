@@ -28,9 +28,10 @@ const char *system_path(const char *path)
 	    !(prefix = strip_path_suffix(argv0_path, BINDIR)) &&
 	    !(prefix = strip_path_suffix(argv0_path, "git"))) {
 		prefix = PREFIX;
-		fprintf(stderr, "RUNTIME_PREFIX requested, "
-				"but prefix computation failed.  "
-				"Using static fallback '%s'.\n", prefix);
+		/*
+		 * RUNTIME_PREFIX requested, but prefix computation failed.
+		 * Using static fallback.
+		 */
 	}
 #endif
 
@@ -61,6 +62,10 @@ const char *git_extract_argv0_path(const char *argv0)
 void git_set_argv_exec_path(const char *exec_path)
 {
 	argv_exec_path = exec_path;
+	/*
+	 * Propagate this setting to external programs.
+	 */
+	setenv(EXEC_PATH_ENVIRONMENT, exec_path, 1);
 }
 
 

@@ -606,32 +606,43 @@ EOT
 	do_edit(@files);
 }
 
+sub ask {
+	my ($prompt, %arg) = @_;
+	my $valid_re = $arg{valid_re} || ""; # "" matches anything
+	my $default = $arg{default};
+	my $resp;
+	my $i = 0;
+	return defined $default ? $default : undef
+		unless defined $term->IN and defined fileno($term->IN) and
+		       defined $term->OUT and defined fileno($term->OUT);
+	while ($i++ < 10) {
+		$resp = $term->readline($prompt);
+		if (!defined $resp) { # EOF
+			print "\n";
+			return defined $default ? $default : undef;
+		}
+		if ($resp eq '' and defined $default) {
+			return $default;
+		}
+		if ($resp =~ /$valid_re/) {
+			return $resp;
+		}
+	}
+	return undef;
+}
+
 my $prompting = 0;
 if (!defined $sender) {
 	$sender = $repoauthor || $repocommitter || '';
-
-	while (1) {
-		$_ = $term->readline("Who should the emails appear to be from? [$sender] ");
-		last if defined $_;
-		print "\n";
-	}
-
-	$sender = $_ if ($_);
+	$sender = ask("Who should the emails appear to be from? [$sender] ",
+	              default => $sender);
 	print "Emails will be sent from: ", $sender, "\n";
 	$prompting++;
 }
 
 if (!@to) {
-
-
-	while (1) {
-		$_ = $term->readline("Who should the emails be sent to? ", "");
-		last if defined $_;
-		print "\n";
-	}
-
-	my $to = $_;
-	push @to, parse_address_line($to);
+	my $to = ask("Who should the emails be sent to? ");
+	push @to, parse_address_line($to) if defined $to; # sanitized/validated later
 	$prompting++;
 }
 
@@ -651,13 +662,8 @@ sub expand_aliases {
 @bcclist = expand_aliases(@bcclist);
 
 if ($thread && !defined $initial_reply_to && $prompting) {
-	while (1) {
-		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ", $initial_reply_to);
-		last if defined $_;
-		print "\n";
-	}
-
-	$initial_reply_to = $_;
+	$initial_reply_to = ask(
+		"Message-ID to be used as In-Reply-To for the first email? ");
 }
 if (defined $initial_reply_to) {
 	$initial_reply_to =~ s/^\s*<?//;
@@ -681,7 +687,7 @@ if ($compose && $compose > 0) {
 
 # Variables we set as part of the loop over files
 our ($message_id, %mail, $subject, $reply_to, $references, $message,
-	$needs_confirm, $message_num);
+	$needs_confirm, $message_num, $ask_default);
 
 sub extract_valid_address {
 	my $address = shift;
@@ -770,12 +776,13 @@ sub sanitize_address
 	}
 
 	# if recipient_name is already quoted, do nothing
-	if ($recipient_name =~ /^(".*"|=\?utf-8\?q\?.*\?=)$/) {
+	if ($recipient_name =~ /^("[[:ascii:]]*"|=\?utf-8\?q\?.*\?=)$/) {
 		return $recipient;
 	}
 
 	# rfc2047 is needed if a non-ascii char is included
 	if ($recipient_name =~ /[^[:ascii:]]/) {
+		$recipient_name =~ s/^"(.*)"$/$1/;
 		$recipient_name = quote_rfc2047($recipient_name);
 	}
 
@@ -821,7 +828,7 @@ Date: $date
 Message-Id: $message_id
 X-Mailer: git-send-email $gitversion
 ";
-	if ($thread && $reply_to) {
+	if ($reply_to) {
 
 		$header .= "In-Reply-To: $reply_to\n";
 		$header .= "References: $references\n";
@@ -841,6 +848,7 @@ X-Mailer: git-send-email $gitversion
 		print "\n$header\n";
 		if ($needs_confirm eq "inform") {
 			$confirm_unconfigured = 0; # squelch this message for the rest of this run
+			$ask_default = "y"; # assume yes on EOF since user hasn't explicitly asked for confirmation
 			print "    The Cc list above has been expanded by additional\n";
 			print "    addresses found in the patch commit message. By default\n";
 			print "    send-email prompts before sending whenever this occurs.\n";
@@ -851,13 +859,10 @@ X-Mailer: git-send-email $gitversion
 			print "    To retain the current behavior, but squelch this message,\n";
 			print "    run 'git config --global sendemail.confirm auto'.\n\n";
 		}
-		while (1) {
-			chomp ($_ = $term->readline(
-				"Send this email? ([y]es|[n]o|[q]uit|[a]ll): "
-			));
-			last if /^(?:yes|y|no|n|quit|q|all|a)/i;
-			print "\n";
-		}
+		$_ = ask("Send this email? ([y]es|[n]o|[q]uit|[a]ll): ",
+		         valid_re => qr/^(?:yes|y|no|n|quit|q|all|a)/i,
+		         default => $ask_default);
+		die "Send this email reply required" unless defined $_;
 		if (/^n/i) {
 			return;
 		} elsif (/^q/i) {
