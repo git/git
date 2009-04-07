@@ -35,6 +35,8 @@ git-diff
 git-diff-files
 git-diff-index
 git-diff-tree
+git-difftool
+git-difftool--helper
 git-describe
 git-fast-export
 git-fast-import

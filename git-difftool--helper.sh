@@ -1,5 +1,5 @@
 #!/bin/sh
-# git-difftool-helper is a GIT_EXTERNAL_DIFF-compatible diff tool launcher.
+# git-difftool--helper is a GIT_EXTERNAL_DIFF-compatible diff tool launcher.
 # This script is typically launched by using the 'git difftool'
 # convenience command.
 #
