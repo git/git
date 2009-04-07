@@ -18,7 +18,7 @@ my $DIR = abs_path(dirname($0));
 sub usage
 {
 	print << 'USAGE';
-usage: git difftool [--tool=<tool>] [--no-prompt] ["git diff" options]
+usage: git difftool [--tool=<tool>] [-y|--no-prompt] ["git diff" options]
 USAGE
 	exit 1;
 }
@@ -60,11 +60,11 @@ sub generate_command
 			$ENV{GIT_DIFF_TOOL} = substr($arg, 7);
 			next;
 		}
-		if ($arg eq '--no-prompt') {
+		if ($arg eq '-y' || $arg eq '--no-prompt') {
 			$ENV{GIT_DIFFTOOL_NO_PROMPT} = 'true';
 			next;
 		}
-		if ($arg eq '-h' or $arg eq '--help') {
+		if ($arg eq '-h' || $arg eq '--help') {
 			usage();
 		}
 		push @command, $arg;
