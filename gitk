@@ -2359,6 +2359,9 @@ proc makewindow {} {
 	{mc "Create new branch" command mkbranch}
 	{mc "Cherry-pick this commit" command cherrypick}
 	{mc "Reset HEAD branch to here" command resethead}
+	{mc "Mark this commit" command markhere}
+	{mc "Return to mark" command gotomark}
+	{mc "Find descendant of this and mark" command find_common_desc}
     }
     $rowctxmenu configure -tearoff 0
 
@@ -4074,7 +4077,7 @@ proc ishighlighted {id} {
 }
 
 proc bolden {id font} {
-    global canv linehtag currentid boldids need_redisplay
+    global canv linehtag currentid boldids need_redisplay markedid
 
     # need_redisplay = 1 means the display is stale and about to be redrawn
     if {$need_redisplay} return
@@ -4086,6 +4089,9 @@ proc bolden {id font} {
 		   -outline {{}} -tags secsel \
 		   -fill [$canv cget -selectbackground]]
 	$canv lower $t
+    }
+    if {[info exists markedid] && $id eq $markedid} {
+	make_idmark $id
     }
 }
 
@@ -5591,7 +5597,7 @@ proc drawcmittext {id row col} {
     global cmitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag selectedline
-    global canvxmax boldids boldnameids fgcolor
+    global canvxmax boldids boldnameids fgcolor markedid
     global mainheadid nullid nullid2 circleitem circlecolors ctxbut
 
     # listed is 0 for boundary, 1 for normal, 2 for negative, 3 for left, 4 for right
@@ -5672,6 +5678,9 @@ proc drawcmittext {id row col} {
 			   -text $date -font mainfont -tags text]
     if {$selectedline == $row} {
 	make_secsel $id
+    }
+    if {[info exists markedid] && $markedid eq $id} {
+	make_idmark $id
     }
     set xr [expr {$xt + [font measure $font $headline]}]
     if {$xr > $canvxmax} {
@@ -6612,6 +6621,16 @@ proc make_secsel {id} {
     set t [eval $canv3 create rect [$canv3 bbox $linedtag($id)] -outline {{}} \
 	       -tags secsel -fill [$canv3 cget -selectbackground]]
     $canv3 lower $t
+}
+
+proc make_idmark {id} {
+    global linehtag canv fgcolor
+
+    if {![info exists linehtag($id)]} return
+    $canv delete markid
+    set t [eval $canv create rect [$canv bbox $linehtag($id)] \
+	       -tags markid -outline $fgcolor]
+    $canv raise $t
 }
 
 proc selectline {l isnew {desired_loc {}}} {
@@ -7999,7 +8018,7 @@ proc mstime {} {
 
 proc rowmenu {x y id} {
     global rowctxmenu selectedline rowmenuid curview
-    global nullid nullid2 fakerowmenu mainhead
+    global nullid nullid2 fakerowmenu mainhead markedid
 
     stopfinding
     set rowmenuid $id
@@ -8015,6 +8034,13 @@ proc rowmenu {x y id} {
 	} else {
 	    $menu entryconfigure 7 -label [mc "Detached head: can't reset" $mainhead] -state disabled
 	}
+	if {[info exists markedid] && $markedid ne $id} {
+	    $menu entryconfigure 9 -state normal
+	    $menu entryconfigure 10 -state normal
+	} else {
+	    $menu entryconfigure 9 -state disabled
+	    $menu entryconfigure 10 -state disabled
+	}
     } else {
 	set menu $fakerowmenu
     }
@@ -8022,6 +8048,59 @@ proc rowmenu {x y id} {
     $menu entryconfigure [mca "Diff selected -> this"] -state $state
     $menu entryconfigure [mca "Make patch"] -state $state
     tk_popup $menu $x $y
+}
+
+proc markhere {} {
+    global rowmenuid markedid canv
+
+    set markedid $rowmenuid
+    make_idmark $markedid
+}
+
+proc gotomark {} {
+    global markedid
+
+    if {[info exists markedid]} {
+	selbyid $markedid
+    }
+}
+
+proc replace_by_kids {l r} {
+    global curview children
+
+    set id [commitonrow $r]
+    set l [lreplace $l 0 0]
+    foreach kid $children($curview,$id) {
+	lappend l [rowofcommit $kid]
+    }
+    return [lsort -integer -decreasing -unique $l]
+}
+
+proc find_common_desc {} {
+    global markedid rowmenuid curview children
+
+    if {![info exists markedid]} return
+    if {![commitinview $markedid $curview] ||
+	![commitinview $rowmenuid $curview]} return
+    #set t1 [clock clicks -milliseconds]
+    set l1 [list [rowofcommit $markedid]]
+    set l2 [list [rowofcommit $rowmenuid]]
+    while 1 {
+	set r1 [lindex $l1 0]
+	set r2 [lindex $l2 0]
+	if {$r1 eq {} || $r2 eq {}} break
+	if {$r1 == $r2} {
+	    selectline $r1 1
+	    break
+	}
+	if {$r1 > $r2} {
+	    set l1 [replace_by_kids $l1 $r1]
+	} else {
+	    set l2 [replace_by_kids $l2 $r2]
+	}
+    }
+    #set t2 [clock clicks -milliseconds]
+    #puts "took [expr {$t2-$t1}]ms"
 }
 
 proc diffvssel {dirn} {
@@ -8218,7 +8297,7 @@ proc domktag {} {
 }
 
 proc redrawtags {id} {
-    global canv linehtag idpos currentid curview cmitlisted
+    global canv linehtag idpos currentid curview cmitlisted markedid
     global canvxmax iddrawn circleitem mainheadid circlecolors
 
     if {![commitinview $id $curview]} return
@@ -8242,6 +8321,9 @@ proc redrawtags {id} {
     }
     if {[info exists currentid] && $currentid == $id} {
 	make_secsel $id
+    }
+    if {[info exists markedid] && $markedid eq $id} {
+	make_idmark $id
     }
 }
 
@@ -10269,6 +10351,7 @@ proc setfg {c} {
     }
     allcanvs itemconf text -fill $c
     $canv itemconf circle -outline $c
+    $canv itemconf markid -outline $c
 }
 
 proc prefscan {} {
