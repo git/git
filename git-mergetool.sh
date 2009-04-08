@@ -11,7 +11,9 @@
 USAGE='[--tool=tool] [-y|--no-prompt|--prompt] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
+TOOL_MODE=merge
 . git-sh-setup
+. git-mergetool--lib
 require_work_tree
 
 # Returns true if the mode reflects a symlink
@@ -110,22 +112,6 @@ resolve_deleted_merge () {
 	done
 }
 
-check_unchanged () {
-    if test "$MERGED" -nt "$BACKUP" ; then
-	status=0;
-    else
-	while true; do
-	    echo "$MERGED seems unchanged."
-	    printf "Was the merge successful? [y/n] "
-	    read answer < /dev/tty
-	    case "$answer" in
-		y*|Y*) status=0; break ;;
-		n*|N*) status=1; break ;;
-	    esac
-	done
-    fi
-}
-
 checkout_staged_file () {
     tmpfile=$(expr "$(git checkout-index --temp --stage="$1" "$2")" : '\([^	]*\)	')
 
@@ -188,107 +174,11 @@ merge_file () {
 	read ans
     fi
 
-    case "$merge_tool" in
-	kdiff3)
-	    if base_present ; then
-		("$merge_tool_path" --auto --L1 "$MERGED (Base)" --L2 "$MERGED (Local)" --L3 "$MERGED (Remote)" \
-		    -o "$MERGED" "$BASE" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
-	    else
-		("$merge_tool_path" --auto --L1 "$MERGED (Local)" --L2 "$MERGED (Remote)" \
-		    -o "$MERGED" "$LOCAL" "$REMOTE" > /dev/null 2>&1)
-	    fi
-	    status=$?
-	    ;;
-	tkdiff)
-	    if base_present ; then
-		"$merge_tool_path" -a "$BASE" -o "$MERGED" "$LOCAL" "$REMOTE"
-	    else
-		"$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"
-	    fi
-	    status=$?
-	    ;;
-	meld)
-	    touch "$BACKUP"
-	    "$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"
-	    check_unchanged
-	    ;;
-	vimdiff)
-	    touch "$BACKUP"
-	    "$merge_tool_path" -d -c "wincmd l" "$LOCAL" "$MERGED" "$REMOTE"
-	    check_unchanged
-	    ;;
-	gvimdiff)
-	    touch "$BACKUP"
-	    "$merge_tool_path" -d -c "wincmd l" -f "$LOCAL" "$MERGED" "$REMOTE"
-	    check_unchanged
-	    ;;
-	xxdiff)
-	    touch "$BACKUP"
-	    if base_present ; then
-		"$merge_tool_path" -X --show-merged-pane \
-		    -R 'Accel.SaveAsMerged: "Ctrl-S"' \
-		    -R 'Accel.Search: "Ctrl+F"' \
-		    -R 'Accel.SearchForward: "Ctrl-G"' \
-		    --merged-file "$MERGED" "$LOCAL" "$BASE" "$REMOTE"
-	    else
-		"$merge_tool_path" -X --show-merged-pane \
-		    -R 'Accel.SaveAsMerged: "Ctrl-S"' \
-		    -R 'Accel.Search: "Ctrl+F"' \
-		    -R 'Accel.SearchForward: "Ctrl-G"' \
-		    --merged-file "$MERGED" "$LOCAL" "$REMOTE"
-	    fi
-	    check_unchanged
-	    ;;
-	opendiff)
-	    touch "$BACKUP"
-	    if base_present; then
-		"$merge_tool_path" "$LOCAL" "$REMOTE" -ancestor "$BASE" -merge "$MERGED" | cat
-	    else
-		"$merge_tool_path" "$LOCAL" "$REMOTE" -merge "$MERGED" | cat
-	    fi
-	    check_unchanged
-	    ;;
-	ecmerge)
-	    touch "$BACKUP"
-	    if base_present; then
-		"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" --default --mode=merge3 --to="$MERGED"
-	    else
-		"$merge_tool_path" "$LOCAL" "$REMOTE" --default --mode=merge2 --to="$MERGED"
-	    fi
-	    check_unchanged
-	    ;;
-	emerge)
-	    if base_present ; then
-		"$merge_tool_path" -f emerge-files-with-ancestor-command "$LOCAL" "$REMOTE" "$BASE" "$(basename "$MERGED")"
-	    else
-		"$merge_tool_path" -f emerge-files-command "$LOCAL" "$REMOTE" "$(basename "$MERGED")"
-	    fi
-	    status=$?
-	    ;;
-	tortoisemerge)
-	    if base_present ; then
-		touch "$BACKUP"
-		"$merge_tool_path" -base:"$BASE" -mine:"$LOCAL" -theirs:"$REMOTE" -merged:"$MERGED"
-		check_unchanged
-	    else
-		echo "TortoiseMerge cannot be used without a base" 1>&2
-		status=1
-	    fi
-	    ;;
-	*)
-	    if test -n "$merge_tool_cmd"; then
-		if test "$merge_tool_trust_exit_code" = "false"; then
-		    touch "$BACKUP"
-		    ( eval $merge_tool_cmd )
-		    check_unchanged
-		else
-		    ( eval $merge_tool_cmd )
-		    status=$?
-		fi
-	    fi
-	    ;;
-    esac
-    if test "$status" -ne 0; then
+    present=false
+    base_present &&
+    present=true
+
+    if ! run_merge_tool "$merge_tool" "$present"; then
 	echo "merge of $MERGED failed" 1>&2
 	mv -- "$BACKUP" "$MERGED"
 
@@ -347,44 +237,6 @@ do
     shift
 done
 
-valid_custom_tool()
-{
-    merge_tool_cmd="$(git config mergetool.$1.cmd)"
-    test -n "$merge_tool_cmd"
-}
-
-valid_tool() {
-	case "$1" in
-		kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge | tortoisemerge)
-			;; # happy
-		*)
-			if ! valid_custom_tool "$1"; then
-				return 1
-			fi
-			;;
-	esac
-}
-
-init_merge_tool_path() {
-	merge_tool_path=$(git config mergetool.$1.path)
-	if test -z "$merge_tool_path" ; then
-		case "$1" in
-			vimdiff)
-				merge_tool_path=vim
-				;;
-			gvimdiff)
-				merge_tool_path=gvim
-				;;
-			emerge)
-				merge_tool_path=emacs
-				;;
-			*)
-				merge_tool_path=$1
-				;;
-		esac
-	fi
-}
-
 prompt_after_failed_merge() {
     while true; do
 	printf "Continue merging other unresolved paths (y/n) ? "
@@ -402,62 +254,12 @@ prompt_after_failed_merge() {
     done
 }
 
-if test -z "$merge_tool"; then
-    merge_tool=$(git config merge.tool)
-    if test -n "$merge_tool" && ! valid_tool "$merge_tool"; then
-	    echo >&2 "git config option merge.tool set to unknown tool: $merge_tool"
-	    echo >&2 "Resetting to default..."
-	    unset merge_tool
-    fi
-fi
-
-if test -z "$merge_tool" ; then
-    if test -n "$DISPLAY"; then
-        if test -n "$GNOME_DESKTOP_SESSION_ID" ; then
-            merge_tool_candidates="meld kdiff3 tkdiff xxdiff tortoisemerge gvimdiff diffuse"
-        else
-            merge_tool_candidates="kdiff3 tkdiff xxdiff meld tortoisemerge gvimdiff diffuse"
-        fi
-    fi
-    if echo "${VISUAL:-$EDITOR}" | grep 'emacs' > /dev/null 2>&1; then
-        merge_tool_candidates="$merge_tool_candidates emerge opendiff vimdiff"
-    elif echo "${VISUAL:-$EDITOR}" | grep 'vim' > /dev/null 2>&1; then
-        merge_tool_candidates="$merge_tool_candidates vimdiff opendiff emerge"
-    else
-        merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
-    fi
-    echo "merge tool candidates: $merge_tool_candidates"
-    for i in $merge_tool_candidates; do
-        init_merge_tool_path $i
-        if type "$merge_tool_path" > /dev/null 2>&1; then
-            merge_tool=$i
-            break
-        fi
-    done
-    if test -z "$merge_tool" ; then
-	echo "No known merge resolution program available."
-	exit 1
-    fi
-else
-    if ! valid_tool "$merge_tool"; then
-        echo >&2 "Unknown merge_tool $merge_tool"
-        exit 1
-    fi
-
-    init_merge_tool_path "$merge_tool"
-
-    merge_keep_backup="$(git config --bool merge.keepBackup || echo true)"
-    merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo false)"
-
-    if test -z "$merge_tool_cmd" && ! type "$merge_tool_path" > /dev/null 2>&1; then
-        echo "The merge tool $merge_tool is not available as '$merge_tool_path'"
-        exit 1
-    fi
-
-    if ! test -z "$merge_tool_cmd"; then
-        merge_tool_trust_exit_code="$(git config --bool mergetool.$merge_tool.trustExitCode || echo false)"
-    fi
-fi
+merge_tool=$(get_merge_tool "$merge_tool") || exit
+merge_tool_cmd="$(get_merge_tool_cmd "$merge_tool")"
+merge_tool_path="$(get_merge_tool_path "$merge_tool")" || exit
+merge_keep_backup="$(git config --bool merge.keepBackup || echo true)"
+merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo false)"
+merge_tool_trust_exit_code="$(git config --bool mergetool."$merge_tool".trustExitCode || echo false)"
 
 last_status=0
 rollup_status=0

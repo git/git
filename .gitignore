@@ -80,6 +80,7 @@ git-merge-recursive
 git-merge-resolve
 git-merge-subtree
 git-mergetool
+git-mergetool--lib
 git-mktag
 git-mktree
 git-name-rev

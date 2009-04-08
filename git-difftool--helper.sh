@@ -5,6 +5,10 @@
 #
 # Copyright (c) 2009 David Aguilar
 
+# Load common functions from git-mergetool--lib
+TOOL_MODE=diff
+. git-mergetool--lib
+
 # difftool.prompt controls the default prompt/no-prompt behavior
 # and is overridden with $GIT_DIFFTOOL*_PROMPT.
 should_prompt () {
@@ -16,8 +20,7 @@ should_prompt () {
 	fi
 }
 
-# This function prepares temporary files and launches the appropriate
-# merge tool.
+# Sets up shell variables and runs a merge tool
 launch_merge_tool () {
 	# Merged is the filename as it appears in the work tree
 	# Local is the contents of a/filename
@@ -37,187 +40,16 @@ launch_merge_tool () {
 	fi
 
 	# Run the appropriate merge tool command
-	case "$merge_tool" in
-	kdiff3)
-		basename=$(basename "$MERGED")
-		"$merge_tool_path" --auto \
-			--L1 "$basename (A)" \
-			--L2 "$basename (B)" \
-			"$LOCAL" "$REMOTE" \
-			> /dev/null 2>&1
-		;;
-
-	kompare)
-		"$merge_tool_path" "$LOCAL" "$REMOTE"
-		;;
-
-	tkdiff)
-		"$merge_tool_path" "$LOCAL" "$REMOTE"
-		;;
-
-	meld)
-		"$merge_tool_path" "$LOCAL" "$REMOTE"
-		;;
-
-	diffuse)
-		"$merge_tool_path" "$LOCAL" "$REMOTE" | cat
-		;;
-
-	vimdiff)
-		"$merge_tool_path" -d -c "wincmd l" "$LOCAL" "$REMOTE"
-		;;
-
-	gvimdiff)
-		"$merge_tool_path" -d -c "wincmd l" -f "$LOCAL" "$REMOTE"
-		;;
-
-	xxdiff)
-		"$merge_tool_path" \
-			-R 'Accel.Search: "Ctrl+F"' \
-			-R 'Accel.SearchForward: "Ctrl-G"' \
-			"$LOCAL" "$REMOTE"
-		;;
-
-	opendiff)
-		"$merge_tool_path" "$LOCAL" "$REMOTE" | cat
-		;;
-
-	ecmerge)
-		"$merge_tool_path" "$LOCAL" "$REMOTE" \
-			--default --mode=merge2 --to="$MERGED"
-		;;
-
-	emerge)
-		"$merge_tool_path" -f emerge-files-command \
-			"$LOCAL" "$REMOTE" "$(basename "$MERGED")"
-		;;
-
-	*)
-		if test -n "$merge_tool_cmd"; then
-			( eval $merge_tool_cmd )
-		fi
-		;;
-	esac
-}
-
-# Verifies that (difftool|mergetool).<tool>.cmd exists
-valid_custom_tool() {
-	merge_tool_cmd="$(git config difftool.$1.cmd)"
-	test -z "$merge_tool_cmd" &&
-	merge_tool_cmd="$(git config mergetool.$1.cmd)"
-	test -n "$merge_tool_cmd"
-}
-
-# Verifies that the chosen merge tool is properly setup.
-# Built-in merge tools are always valid.
-valid_tool() {
-	case "$1" in
-	kdiff3 | kompare | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | ecmerge)
-		;; # happy
-	*)
-		if ! valid_custom_tool "$1"
-		then
-			return 1
-		fi
-		;;
-	esac
-}
-
-# Sets up the merge_tool_path variable.
-# This handles the difftool.<tool>.path configuration.
-# This also falls back to mergetool defaults.
-init_merge_tool_path() {
-	merge_tool_path=$(git config difftool."$1".path)
-	test -z "$merge_tool_path" &&
-	merge_tool_path=$(git config mergetool."$1".path)
-	if test -z "$merge_tool_path"; then
-		case "$1" in
-		vimdiff)
-			merge_tool_path=vim
-			;;
-		gvimdiff)
-			merge_tool_path=gvim
-			;;
-		emerge)
-			merge_tool_path=emacs
-			;;
-		*)
-			merge_tool_path="$1"
-			;;
-		esac
-	fi
+	run_merge_tool "$merge_tool"
 }
 
 # Allow GIT_DIFF_TOOL and GIT_MERGE_TOOL to provide default values
 test -n "$GIT_MERGE_TOOL" && merge_tool="$GIT_MERGE_TOOL"
 test -n "$GIT_DIFF_TOOL" && merge_tool="$GIT_DIFF_TOOL"
 
-# If merge tool was not specified then use the diff.tool
-# configuration variable.  If that's invalid then reset merge_tool.
-# Fallback to merge.tool.
-if test -z "$merge_tool"; then
-	merge_tool=$(git config diff.tool)
-	test -z "$merge_tool" &&
-	merge_tool=$(git config merge.tool)
-	if test -n "$merge_tool" && ! valid_tool "$merge_tool"; then
-		echo >&2 "git config option diff.tool set to unknown tool: $merge_tool"
-		echo >&2 "Resetting to default..."
-		unset merge_tool
-	fi
-fi
-
-# Try to guess an appropriate merge tool if no tool has been set.
-if test -z "$merge_tool"; then
-	# We have a $DISPLAY so try some common UNIX merge tools
-	if test -n "$DISPLAY"; then
-		# If gnome then prefer meld, otherwise, prefer kdiff3 or kompare
-		if test -n "$GNOME_DESKTOP_SESSION_ID" ; then
-			merge_tool_candidates="meld kdiff3 kompare tkdiff xxdiff gvimdiff diffuse"
-		else
-			merge_tool_candidates="kdiff3 kompare tkdiff xxdiff meld gvimdiff diffuse"
-		fi
-	fi
-	if echo "${VISUAL:-$EDITOR}" | grep 'emacs' > /dev/null 2>&1; then
-		# $EDITOR is emacs so add emerge as a candidate
-		merge_tool_candidates="$merge_tool_candidates emerge opendiff vimdiff"
-	elif echo "${VISUAL:-$EDITOR}" | grep 'vim' > /dev/null 2>&1; then
-		# $EDITOR is vim so add vimdiff as a candidate
-		merge_tool_candidates="$merge_tool_candidates vimdiff opendiff emerge"
-	else
-		merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
-	fi
-	echo "merge tool candidates: $merge_tool_candidates"
-
-	# Loop over each candidate and stop when a valid merge tool is found.
-	for i in $merge_tool_candidates
-	do
-		init_merge_tool_path $i
-		if type "$merge_tool_path" > /dev/null 2>&1; then
-			merge_tool=$i
-			break
-		fi
-	done
-
-	if test -z "$merge_tool" ; then
-		echo "No known merge resolution program available."
-		exit 1
-	fi
-
-else
-	# A merge tool has been set, so verify that it's valid.
-	if ! valid_tool "$merge_tool"; then
-		echo >&2 "Unknown merge tool $merge_tool"
-		exit 1
-	fi
-
-	init_merge_tool_path "$merge_tool"
-
-	if test -z "$merge_tool_cmd" && ! type "$merge_tool_path" > /dev/null 2>&1; then
-		echo "The merge tool $merge_tool is not available as '$merge_tool_path'"
-		exit 1
-	fi
-fi
-
+merge_tool=$(get_merge_tool "$merge_tool") || exit
+merge_tool_cmd="$(get_merge_tool_cmd "$merge_tool")"
+merge_tool_path="$(get_merge_tool_path "$merge_tool")" || exit
 
 # Launch the merge tool on each path provided by 'git diff'
 while test $# -gt 6
