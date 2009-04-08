@@ -10,12 +10,14 @@
 #include "cache-tree.h"
 #include "run-command.h"
 #include "parse-options.h"
+#include "diff.h"
+#include "revision.h"
 
 static const char * const builtin_add_usage[] = {
 	"git add [options] [--] <filepattern>...",
 	NULL
 };
-static int patch_interactive, add_interactive;
+static int patch_interactive, add_interactive, edit_interactive;
 static int take_worktree_changes;
 
 static void fill_pathspec_matches(const char **pathspec, char *seen, int specs)
@@ -187,6 +189,51 @@ int interactive_add(int argc, const char **argv, const char *prefix)
 	return status;
 }
 
+int edit_patch(int argc, const char **argv, const char *prefix)
+{
+	char *file = xstrdup(git_path("ADD_EDIT.patch"));
+	const char *apply_argv[] = { "apply", "--recount", "--cached",
+		file, NULL };
+	struct child_process child;
+	struct rev_info rev;
+	int out;
+	struct stat st;
+
+	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+
+	if (read_cache() < 0)
+		die ("Could not read the index");
+
+	init_revisions(&rev, prefix);
+	rev.diffopt.context = 7;
+
+	argc = setup_revisions(argc, argv, &rev, NULL);
+	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
+	out = open(file, O_CREAT | O_WRONLY, 0644);
+	if (out < 0)
+		die ("Could not open '%s' for writing.", file);
+	rev.diffopt.file = fdopen(out, "w");
+	rev.diffopt.close_file = 1;
+	if (run_diff_files(&rev, 0))
+		die ("Could not write patch");
+
+	launch_editor(file, NULL, NULL);
+
+	if (stat(file, &st))
+		die("Could not stat '%s'", file);
+	if (!st.st_size)
+		die("Empty patch. Aborted.");
+
+	memset(&child, 0, sizeof(child));
+	child.git_cmd = 1;
+	child.argv = apply_argv;
+	if (run_command(&child))
+		die ("Could not apply '%s'", file);
+
+	unlink(file);
+	return 0;
+}
+
 static struct lock_file lock_file;
 
 static const char ignore_error[] =
@@ -201,6 +248,7 @@ static struct option builtin_add_options[] = {
 	OPT_GROUP(""),
 	OPT_BOOLEAN('i', "interactive", &add_interactive, "interactive picking"),
 	OPT_BOOLEAN('p', "patch", &patch_interactive, "interactive patching"),
+	OPT_BOOLEAN('e', "edit", &edit_interactive, "edit current diff and apply"),
 	OPT_BOOLEAN('f', "force", &ignored_too, "allow adding otherwise ignored files"),
 	OPT_BOOLEAN('u', "update", &take_worktree_changes, "update tracked files"),
 	OPT_BOOLEAN('N', "intent-to-add", &intent_to_add, "record only the fact that the path will be added later"),
@@ -251,13 +299,18 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int require_pathspec;
 
 	argc = parse_options(argc, argv, builtin_add_options,
-			  builtin_add_usage, 0);
+			  builtin_add_usage, PARSE_OPT_KEEP_ARGV0);
 	if (patch_interactive)
 		add_interactive = 1;
 	if (add_interactive)
-		exit(interactive_add(argc, argv, prefix));
+		exit(interactive_add(argc - 1, argv + 1, prefix));
 
 	git_config(add_config, NULL);
+
+	if (edit_interactive)
+		return(edit_patch(argc, argv, prefix));
+	argc--;
+	argv++;
 
 	if (addremove && take_worktree_changes)
 		die("-A and -u are mutually incompatible");
