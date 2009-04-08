@@ -1871,6 +1871,7 @@ _git ()
 			--bare
 			--version
 			--exec-path
+			--html-path
 			--work-tree=
 			--help
 			"
