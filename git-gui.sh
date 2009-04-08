@@ -722,7 +722,7 @@ proc apply_config {} {
 
 set default_config(branch.autosetupmerge) true
 set default_config(merge.tool) {}
-set default_config(merge.keepbackup) true
+set default_config(mergetool.keepbackup) true
 set default_config(merge.diffstat) true
 set default_config(merge.summary) false
 set default_config(merge.verbosity) 2
@@ -1131,6 +1131,7 @@ set current_diff_path {}
 set is_3way_diff 0
 set is_conflict_diff 0
 set selected_commit_type new
+set diff_empty_count 0
 
 set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"

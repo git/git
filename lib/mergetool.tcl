@@ -382,7 +382,7 @@ proc merge_tool_finish {fd} {
 		delete_temp_files $mtool_tmpfiles
 		ui_status [mc "Merge tool failed."]
 	} else {
-		if {[is_config_true merge.keepbackup]} {
+		if {[is_config_true mergetool.keepbackup]} {
 			file rename -force -- $backup "$mtool_target.orig"
 		}
 
