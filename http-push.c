@@ -567,6 +567,10 @@ static void start_put(struct transfer_request *request)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &request->buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, request->buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &request->buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PUT);
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 1);
@@ -1266,6 +1270,10 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &out_buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
@@ -1507,6 +1515,10 @@ static void remote_ls(const char *path, int flags,
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &out_buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
@@ -1583,6 +1595,10 @@ static int locking_available(void)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &out_buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, repo->url);
@@ -1765,6 +1781,10 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &out_buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PUT);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
@@ -1909,6 +1929,10 @@ static void update_remote_info_refs(struct remote_lock *lock)
 		curl_easy_setopt(slot->curl, CURLOPT_INFILE, &buffer);
 		curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, buffer.buf.len);
 		curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+		curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+		curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &buffer);
+#endif
 		curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 		curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PUT);
 		curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
