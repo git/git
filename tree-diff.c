@@ -118,10 +118,16 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 				continue;
 
 			/*
-			 * The base is a subdirectory of a path which
-			 * was specified, so all of them are interesting.
+			 * If the base is a subdirectory of a path which
+			 * was specified, all of them are interesting.
 			 */
-			return 2;
+			if (!matchlen ||
+			    base[matchlen] == '/' ||
+			    match[matchlen - 1] == '/')
+				return 2;
+
+			/* Just a random prefix match */
+			continue;
 		}
 
 		/* Does the base match? */
