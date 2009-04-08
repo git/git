@@ -90,23 +90,31 @@ error_on_no_merge_candidates () {
 
 	curr_branch=${curr_branch#refs/heads/}
 
-	echo "You asked me to pull without telling me which branch you"
-	echo "want to merge with, and 'branch.${curr_branch}.merge' in"
-	echo "your configuration file does not tell me either.  Please"
-	echo "name which branch you want to merge on the command line and"
-	echo "try again (e.g. 'git pull <repository> <refspec>')."
-	echo "See git-pull(1) for details on the refspec."
-	echo
-	echo "If you often merge with the same branch, you may want to"
-	echo "configure the following variables in your configuration"
-	echo "file:"
-	echo
-	echo "    branch.${curr_branch}.remote = <nickname>"
-	echo "    branch.${curr_branch}.merge = <remote-ref>"
-	echo "    remote.<nickname>.url = <url>"
-	echo "    remote.<nickname>.fetch = <refspec>"
-	echo
-	echo "See git-config(1) for details."
+	if [ -z "$curr_branch" ]; then
+		echo "You are not currently on a branch, so I cannot use any"
+		echo "'branch.<branchname>.merge' in your configuration file."
+		echo "Please specify which branch you want to merge on the command"
+		echo "line and try again (e.g. 'git pull <repository> <refspec>')."
+		echo "See git-pull(1) for details."
+	else
+		echo "You asked me to pull without telling me which branch you"
+		echo "want to merge with, and 'branch.${curr_branch}.merge' in"
+		echo "your configuration file does not tell me either.	Please"
+		echo "specify which branch you want to merge on the command line and"
+		echo "try again (e.g. 'git pull <repository> <refspec>')."
+		echo "See git-pull(1) for details."
+		echo
+		echo "If you often merge with the same branch, you may want to"
+		echo "configure the following variables in your configuration"
+		echo "file:"
+		echo
+		echo "    branch.${curr_branch}.remote = <nickname>"
+		echo "    branch.${curr_branch}.merge = <remote-ref>"
+		echo "    remote.<nickname>.url = <url>"
+		echo "    remote.<nickname>.fetch = <refspec>"
+		echo
+		echo "See git-config(1) for details."
+	fi
 	exit 1
 }
 
