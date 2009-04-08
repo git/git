@@ -60,9 +60,9 @@ same as in `.gitignore` files; see linkgit:gitignore[5].
 When deciding what attributes are assigned to a path, git
 consults `$GIT_DIR/info/attributes` file (which has the highest
 precedence), `.gitattributes` file in the same directory as the
-path in question, and its parent directories (the further the
-directory that contains `.gitattributes` is from the path in
-question, the lower its precedence).
+path in question, and its parent directories up to the toplevel of the
+work tree (the further the directory that contains `.gitattributes`
+is from the path in question, the lower its precedence).
 
 If you wish to affect only a single repository (i.e., to assign
 attributes to files that are particular to one user's workflow), then
