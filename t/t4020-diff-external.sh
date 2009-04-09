@@ -152,4 +152,12 @@ test_expect_success 'external diff with autocrlf = true' '
 	test $(wc -l < crlfed.txt) = $(cat crlfed.txt | keep_only_cr | wc -c)
 '
 
+test_expect_success 'diff --cached' '
+	git add file &&
+	git update-index --assume-unchanged file &&
+	echo second >file &&
+	git diff --cached >actual &&
+	test_cmp ../t4020/diff.NUL actual
+'
+
 test_done
