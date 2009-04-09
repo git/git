@@ -40,6 +40,9 @@ Updates since v1.6.2
 * many uses of lstat(2) in the codepath for "git checkout" have been
   optimized out.
 
+* pruning reflog entries that are unreachable from the tip of the ref
+  during "git reflog prune" (hence "git gc") was very inefficient.
+
 (usability, bells and whistles)
 
 * rsync:/path/to/repo can be used to run git over rsync for local
@@ -56,7 +59,7 @@ Updates since v1.6.2
   spelled as "--format=<style>".  In addition, --format=%formatstring
   is a short-hand for --pretty=tformat:%formatstring.
 
-* "--oneline" is a synonym for "--pretty=oneline --abbrev=commit".
+* "--oneline" is a synonym for "--pretty=oneline --abbrev-commit".
 
 * If you realize that you botched the patch when you are editing hunks
   with the 'edit' action in git-add -i/-p, you can abort the editor to
@@ -65,6 +68,10 @@ Updates since v1.6.2
 * The number of commits shown in "you are ahead/behind your upstream"
   messages given by "git checkout" and "git status" used to count merge
   commits; now it doesn't.
+
+* @{-1} is a new way to refer to the last branch you were on introduced in
+  1.6.2, but the initial implementation did not teach this to a few
+  commands.  Now the syntax works with "branch -m @{-1} newname".
 
 * git-archive learned --output=<file> option.
 
@@ -88,9 +95,15 @@ Updates since v1.6.2
 
 * git-format-patch can be told to produce deep or shallow message threads.
 
+* git-format-patch can be told to always add sign-off with a configuration
+  variable.
+
 * git-format-patch learned format.headers configuration to add extra
   header fields to the output.  This behaviour is similar to the existing
   --add-header=<header> option of the command.
+
+* git-format-patch gives human readable names to the attached files, when
+  told to send patches as attachments.
 
 * git-grep learned to highlight the found substrings in color.
 
@@ -136,11 +149,23 @@ v1.6.2.X series.
 * The initial checkout did not read the attributes from the .gitattribute
   file that is being checked out.
 
+* "git-checkout <tree-ish> <submodule>" did not update the index entry at
+  the named path; it now does.
+
 * git-gc spent excessive amount of time to decide if an object appears
   in a locally existing pack (if needed, backport by merging 69e020a).
 
+* "git-ls-tree" and "git-diff-tree" used a pathspec correctly when
+  deciding to descend into a subdirectory but they did not match the
+  individual paths correctly.  This caused pathspecs "abc/d ab" to match
+  "abc/0" ("abc/d" made them decide to descend into the directory "abc/",
+  and then "ab" incorrectly matched "abc/0" when it shouldn't).
+
+* "git-merge-recursive" was broken when a submodule entry was involved in
+  a criss-cross merge situation.
+
 ---
 exec >/var/tmp/1
-O=v1.6.2.2-403-g8130949
+O=v1.6.2.2-484-g796b137
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
