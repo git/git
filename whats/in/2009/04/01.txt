@@ -14,9 +14,9 @@ What's in git.git (Apr 2009, #01; Thu, 09)
 We have quite a few documentation fixes accumulated on the maint branch
 perhaps a new maintenance release 1.6.2.3 mid next week.
 
-On the 'master' front, there are currently 6 topics cooking in 'next' all
-of which look quite good.  I'll probably tag 1.6.3-rc0 with them and keep
-cooking what are in 'pu' for 1.6.4 cycle.
+On the 'master' front, there are currently 6 topics cooking in 'next', all
+of which look quite good.  I'll probably tag 1.6.3-rc0 this weekend with
+most of these topics and keep cooking the rest for 1.6.4 cycle.
 
 * The 'maint' branch has these fixes since the last announcement.
 
