@@ -62,6 +62,15 @@ static int parse_diff_color_slot(const char *var, int ofs)
 	die("bad config variable '%s'", var);
 }
 
+static int git_config_rename(const char *var, const char *value)
+{
+	if (!value)
+		return DIFF_DETECT_RENAME;
+	if (!strcasecmp(value, "copies") || !strcasecmp(value, "copy"))
+		return  DIFF_DETECT_COPY;
+	return git_config_bool(var,value) ? DIFF_DETECT_RENAME : 0;
+}
+
 /*
  * These are to give UI layer defaults.
  * The core-level commands such as git-diff-files should
@@ -75,13 +84,7 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "diff.renames")) {
-		if (!value)
-			diff_detect_rename_default = DIFF_DETECT_RENAME;
-		else if (!strcasecmp(value, "copies") ||
-			 !strcasecmp(value, "copy"))
-			diff_detect_rename_default = DIFF_DETECT_COPY;
-		else if (git_config_bool(var,value))
-			diff_detect_rename_default = DIFF_DETECT_RENAME;
+		diff_detect_rename_default = git_config_rename(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.autorefreshindex")) {
