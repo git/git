@@ -105,11 +105,6 @@ Updates since v1.6.2
 
 * Output from git-remote command has been vastly improved.
 
-* git-repack (invoked from git-gc) did not work as nicely as it should in
-  a repository that borrows objects from neighbours via alternates
-  mechanism especially when some packs are marked with the ".keep" flag
-  to prevent them from being repacked.
-
 * git-send-email learned --confirm option to review the Cc: list before
   sending the messages out.
 
