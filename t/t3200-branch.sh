@@ -195,7 +195,7 @@ test_expect_success 'test deleting branch deletes branch config' \
 test_expect_success 'test deleting branch without config' \
     'git branch my7 s &&
      sha1=$(git rev-parse my7 | cut -c 1-7) &&
-     test "$(git branch -d my7 2>&1)" = "Deleted branch my7 ($sha1)."'
+     test "$(git branch -d my7 2>&1)" = "Deleted branch my7 (was $sha1)."'
 
 test_expect_success 'test --track without .fetch entries' \
     'git branch --track my8 &&
