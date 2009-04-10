@@ -47,7 +47,8 @@ BEGIN {
 	# import functions from Git into our packages, en masse
 	no strict 'refs';
 	foreach (qw/command command_oneline command_noisy command_output_pipe
-	            command_input_pipe command_close_pipe/) {
+	            command_input_pipe command_close_pipe
+	            command_bidi_pipe command_close_bidi_pipe/) {
 		for my $package ( qw(SVN::Git::Editor SVN::Git::Fetcher
 			Git::SVN::Migration Git::SVN::Log Git::SVN),
 			__PACKAGE__) {
@@ -1262,6 +1263,40 @@ sub extract_metadata {
 sub cmt_metadata {
 	return extract_metadata((grep(/^git-svn-id: /,
 		command(qw/cat-file commit/, shift)))[-1]);
+}
+
+sub cmt_sha2rev_batch {
+	my %s2r;
+	my ($pid, $in, $out, $ctx) = command_bidi_pipe(qw/cat-file --batch/);
+	my $list = shift;
+
+	foreach my $sha (@{$list}) {
+		my $first = 1;
+		my $size = 0;
+		print $out $sha, "\n";
+
+		while (my $line = <$in>) {
+			if ($first && $line =~ /^[[:xdigit:]]{40}\smissing$/) {
+				last;
+			} elsif ($first &&
+			       $line =~ /^[[:xdigit:]]{40}\scommit\s(\d+)$/) {
+				$first = 0;
+				$size = $1;
+				next;
+			} elsif ($line =~ /^(git-svn-id: )/) {
+				my (undef, $rev, undef) =
+				                      extract_metadata($line);
+				$s2r{$sha} = $rev;
+			}
+
+			$size -= length($line);
+			last if ($size == 0);
+		}
+	}
+
+	command_close_bidi_pipe($pid, $in, $out, $ctx);
+
+	return \%s2r;
 }
 
 sub working_head_info {
@@ -5001,11 +5036,22 @@ sub cmd_blame {
 						  '--', $path);
 		my ($sha1);
 		my %authors;
+		my @buffer;
+		my %dsha; #distinct sha keys
+
 		while (my $line = <$fh>) {
+			push @buffer, $line;
 			if ($line =~ /^([[:xdigit:]]{40})\s\d+\s\d+/) {
-				$sha1 = $1;
-				(undef, $rev, undef) = ::cmt_metadata($1);
-				$rev = '0' if (!$rev);
+				$dsha{$1} = 1;
+			}
+		}
+
+		my $s2r = ::cmt_sha2rev_batch([keys %dsha]);
+
+		foreach my $line (@buffer) {
+			if ($line =~ /^([[:xdigit:]]{40})\s\d+\s\d+/) {
+				$rev = $s2r->{$1};
+				$rev = '0' if (!$rev)
 			}
 			elsif ($line =~ /^author (.*)/) {
 				$authors{$rev} = $1;
