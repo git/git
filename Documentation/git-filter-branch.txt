@@ -31,6 +31,9 @@ changes, which would normally have no effect.  Nevertheless, this may be
 useful in the future for compensating for some git bugs or such,
 therefore such a usage is permitted.
 
+*NOTE*: This command honors `.git/info/grafts`. If you have any grafts
+defined, running this command will make them permanent.
+
 *WARNING*! The rewritten history will have different object names for all
 the objects and will not converge with the original branch.  You will not
 be able to easily push and distribute the rewritten branch on top of the
