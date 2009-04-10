@@ -36,6 +36,13 @@ cd_to_toplevel
 git var GIT_COMMITTER_IDENT >/dev/null ||
 	die "You need to set your committer info first"
 
+if git rev-parse --verify -q HEAD >/dev/null
+then
+	HAS_HEAD=yes
+else
+	HAS_HEAD=
+fi
+
 sq () {
 	for sqarg
 	do
@@ -290,16 +297,26 @@ else
 		: >"$dotest/rebasing"
 	else
 		: >"$dotest/applying"
-		git update-ref ORIG_HEAD HEAD
+		if test -n "$HAS_HEAD"
+		then
+			git update-ref ORIG_HEAD HEAD
+		else
+			git update-ref -d ORIG_HEAD >/dev/null 2>&1
+		fi
 	fi
 fi
 
 case "$resolved" in
 '')
-	files=$(git diff-index --cached --name-only HEAD --) || exit
+	case "$HAS_HEAD" in
+	'')
+		files=$(git ls-files) ;;
+	?*)
+		files=$(git diff-index --cached --name-only HEAD --) ;;
+	esac || exit
 	if test "$files"
 	then
-		: >"$dotest/dirtyindex"
+		test -n "$HAS_HEAD" && : >"$dotest/dirtyindex"
 		die "Dirty index: cannot apply patches (dirty: $files)"
 	fi
 esac
@@ -541,18 +558,20 @@ do
 	fi
 
 	tree=$(git write-tree) &&
-	parent=$(git rev-parse --verify HEAD) &&
 	commit=$(
 		if test -n "$ignore_date"
 		then
 			GIT_AUTHOR_DATE=
 		fi
+		parent=$(git rev-parse --verify -q HEAD) ||
+		echo >&2 "applying to an empty history"
+
 		if test -n "$committer_date_is_author_date"
 		then
 			GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
 			export GIT_COMMITTER_DATE
 		fi &&
-		git commit-tree $tree -p $parent <"$dotest/final-commit"
+		git commit-tree $tree ${parent:+-p $parent} <"$dotest/final-commit"
 	) &&
 	git update-ref -m "$GIT_REFLOG_ACTION: $FIRSTLINE" HEAD $commit $parent ||
 	stop_here $this

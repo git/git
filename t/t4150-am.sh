@@ -290,4 +290,19 @@ test_expect_success 'am --ignore-date' '
 	echo "$at" | grep "+0000"
 '
 
+test_expect_success 'am into an unborn branch' '
+	rm -fr subdir &&
+	mkdir -p subdir &&
+	git format-patch --numbered-files -o subdir -1 first &&
+	(
+		cd subdir &&
+		git init &&
+		git am 1
+	) &&
+	result=$(
+		cd subdir && git rev-parse HEAD^{tree}
+	) &&
+	test "z$result" = "z$(git rev-parse first^{tree})"
+'
+
 test_done
