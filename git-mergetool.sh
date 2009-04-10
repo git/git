@@ -257,7 +257,7 @@ prompt_after_failed_merge() {
 merge_tool=$(get_merge_tool "$merge_tool") || exit
 merge_tool_cmd="$(get_merge_tool_cmd "$merge_tool")"
 merge_tool_path="$(get_merge_tool_path "$merge_tool")" || exit
-merge_keep_backup="$(git config --bool merge.keepBackup || echo true)"
+merge_keep_backup="$(git config --bool mergetool.keepBackup || echo true)"
 merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo false)"
 merge_tool_trust_exit_code="$(git config --bool mergetool."$merge_tool".trustExitCode || echo false)"
 
