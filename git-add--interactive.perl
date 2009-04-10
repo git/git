@@ -890,6 +890,7 @@ sub help_patch_cmd {
 	print colored $help_color, <<\EOF ;
 y - stage this hunk
 n - do not stage this hunk
+q - quit, do not stage this hunk nor any of the remaining ones
 a - stage this and all the remaining hunks in the file
 d - do not stage this hunk nor any of the remaining hunks in the file
 g - select a hunk to go to
@@ -926,7 +927,7 @@ sub patch_update_cmd {
 					@mods);
 	}
 	for (@them) {
-		patch_update_file($_->{VALUE});
+		return 0 if patch_update_file($_->{VALUE});
 	}
 }
 
@@ -972,6 +973,7 @@ sub display_hunks {
 }
 
 sub patch_update_file {
+	my $quit = 0;
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
@@ -1000,6 +1002,11 @@ sub patch_update_file {
 			}
 			elsif ($line =~ /^d/i) {
 				$_->{USE} = 0 foreach ($mode, @hunk);
+				last;
+			}
+			elsif ($line =~ /^q/i) {
+				$_->{USE} = 0 foreach ($mode, @hunk);
+				$quit = 1;
 				last;
 			}
 			else {
@@ -1107,6 +1114,16 @@ sub patch_update_file {
 					}
 					$ix++;
 				}
+				next;
+			}
+			elsif ($line =~ /^q/i) {
+				while ($ix < $num) {
+					if (!defined $hunk[$ix]{USE}) {
+						$hunk[$ix]{USE} = 0;
+					}
+					$ix++;
+				}
+				$quit = 1;
 				next;
 			}
 			elsif ($line =~ m|^/(.*)|) {
@@ -1235,6 +1252,7 @@ sub patch_update_file {
 	}
 
 	print "\n";
+	return $quit;
 }
 
 sub diff_cmd {
