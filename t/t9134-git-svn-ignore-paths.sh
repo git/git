@@ -31,6 +31,22 @@ test_expect_success 'clone an SVN repository with ignored www directory' '
 	test_cmp expect expect2
 '
 
+test_expect_success 'init+fetch an SVN repository with ignored www directory' '
+	git svn init "$svnrepo" c &&
+	( cd c && git svn fetch --ignore-paths="^www" ) &&
+	rm expect2 &&
+	echo test_qqq > expect &&
+	for i in c/*/*.txt; do cat $i >> expect2; done &&
+	test_cmp expect expect2
+'
+
+test_expect_success 'set persistent ignore-paths config' '
+	(
+	    cd g &&
+	    git config svn-remote.svn.ignore-paths "^www"
+	)
+'
+
 test_expect_success 'SVN-side change outside of www' '
 	(
 		cd s &&
@@ -41,9 +57,20 @@ test_expect_success 'SVN-side change outside of www' '
 	)
 '
 
-test_expect_success 'update git svn-cloned repo' '
+test_expect_success 'update git svn-cloned repo (config ignore)' '
 	(
 		cd g &&
+		git svn rebase &&
+		printf "test_qqq\nb\n" > expect &&
+		for i in */*.txt; do cat $i >> expect2; done &&
+		test_cmp expect2 expect &&
+		rm expect expect2
+	)
+'
+
+test_expect_success 'update git svn-cloned repo (option ignore)' '
+	(
+		cd c &&
 		git svn rebase --ignore-paths="^www" &&
 		printf "test_qqq\nb\n" > expect &&
 		for i in */*.txt; do cat $i >> expect2; done &&
@@ -62,9 +89,20 @@ test_expect_success 'SVN-side change inside of ignored www' '
 	)
 '
 
-test_expect_success 'update git svn-cloned repo' '
+test_expect_success 'update git svn-cloned repo (config ignore)' '
 	(
 		cd g &&
+		git svn rebase &&
+		printf "test_qqq\nb\n" > expect &&
+		for i in */*.txt; do cat $i >> expect2; done &&
+		test_cmp expect2 expect &&
+		rm expect expect2
+	)
+'
+
+test_expect_success 'update git svn-cloned repo (option ignore)' '
+	(
+		cd c &&
 		git svn rebase --ignore-paths="^www" &&
 		printf "test_qqq\nb\n" > expect &&
 		for i in */*.txt; do cat $i >> expect2; done &&
@@ -84,9 +122,20 @@ test_expect_success 'SVN-side change in and out of ignored www' '
 	)
 '
 
-test_expect_success 'update git svn-cloned repo again' '
+test_expect_success 'update git svn-cloned repo again (config ignore)' '
 	(
 		cd g &&
+		git svn rebase &&
+		printf "test_qqq\nb\nygg\n" > expect &&
+		for i in */*.txt; do cat $i >> expect2; done &&
+		test_cmp expect2 expect &&
+		rm expect expect2
+	)
+'
+
+test_expect_success 'update git svn-cloned repo again (option ignore)' '
+	(
+		cd c &&
 		git svn rebase --ignore-paths="^www" &&
 		printf "test_qqq\nb\nygg\n" > expect &&
 		for i in */*.txt; do cat $i >> expect2; done &&

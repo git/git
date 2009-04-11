@@ -107,17 +107,25 @@ repository, either don't use this option or you should both use it in
 the same local timezone.
 
 --ignore-paths=<regex>;;
-	This allows one to specify Perl regular expression that will
+	This allows one to specify a Perl regular expression that will
 	cause skipping of all matching paths from checkout from SVN.
-	Examples:
+	The '--ignore-paths' option should match for every 'fetch'
+	(including automatic fetches due to 'clone', 'dcommit',
+	'rebase', etc) on a given repository.
 
-	--ignore-paths="^doc" - skip "doc*" directory for every fetch.
+config key: svn-remote.<name>.ignore-paths
 
-	--ignore-paths="^[^/]+/(?:branches|tags)" - skip "branches"
-	    and "tags" of first level directories.
+	If the ignore-paths config key is set and the command
+	line option is also given, both regular expressions
+	will be used.
 
-	Regular expression is not persistent, you should specify
-	it every time when fetching.
+Examples:
+
+	--ignore-paths="^doc" - skip "doc*" directory for every
+	    fetch.
+
+	--ignore-paths="^[^/]+/(?:branches|tags)" - skip
+	    "branches" and "tags" of first level directories.
 
 'clone'::
 	Runs 'init' and 'fetch'.  It will automatically create a
