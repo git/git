@@ -31,7 +31,7 @@ test_expect_success 'diff -M -B' '
 
 '
 
-test_expect_failure 'apply' '
+test_expect_success 'apply' '
 	git apply diff
 '
 
