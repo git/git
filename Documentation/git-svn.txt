@@ -85,6 +85,10 @@ COMMANDS
 	specified, the prefix must include a trailing slash.
 	Setting a prefix is useful if you wish to track multiple
 	projects that share a common repository.
+--ignore-paths=<regex>;;
+	When passed to 'init' or 'clone' this regular expression will
+	be preserved as a config key.  See 'fetch' for a description
+	of '--ignore-paths'.
 
 'fetch'::
 	Fetch unfetched revisions from the Subversion remote we are

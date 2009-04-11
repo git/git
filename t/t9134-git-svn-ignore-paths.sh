@@ -40,10 +40,10 @@ test_expect_success 'init+fetch an SVN repository with ignored www directory' '
 	test_cmp expect expect2
 '
 
-test_expect_success 'set persistent ignore-paths config' '
+test_expect_success 'verify ignore-paths config saved by clone' '
 	(
 	    cd g &&
-	    git config svn-remote.svn.ignore-paths "^www"
+	    git config --get svn-remote.svn.ignore-paths | fgrep "www"
 	)
 '
 

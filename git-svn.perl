@@ -336,6 +336,9 @@ sub do_git_init_db {
 		command_noisy('config', "$pfx.$i", $icv{$i});
 		$set = $i;
 	}
+	my $ignore_regex = \$SVN::Git::Fetcher::_ignore_regex;
+	command_noisy('config', "$pfx.ignore-paths", $$ignore_regex)
+		if defined $$ignore_regex;
 }
 
 sub init_subdir {
