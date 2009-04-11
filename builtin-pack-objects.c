@@ -1856,8 +1856,10 @@ static void show_commit(struct commit *commit)
 	commit->object.flags |= OBJECT_ADDED;
 }
 
-static void show_object(struct object *obj, const char *name)
+static void show_object(struct object *obj, const struct name_path *path, const char *last)
 {
+	char *name = path_name(path, last);
+
 	add_preferred_base_object(name);
 	add_object_entry(obj->sha1, obj->type, name, 0);
 	obj->flags |= OBJECT_ADDED;

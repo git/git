@@ -23,7 +23,7 @@ static void process_blob(struct rev_info *revs,
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	obj->flags |= SEEN;
-	show(obj, path_name(path, name));
+	show(obj, path, name);
 }
 
 /*
@@ -77,7 +77,7 @@ static void process_tree(struct rev_info *revs,
 	if (parse_tree(tree) < 0)
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
-	show(obj, path_name(path, name));
+	show(obj, path, name);
 	me.up = path;
 	me.elem = name;
 	me.elem_len = strlen(name);
@@ -140,8 +140,8 @@ static void add_pending_tree(struct rev_info *revs, struct tree *tree)
 }
 
 void traverse_commit_list(struct rev_info *revs,
-			  void (*show_commit)(struct commit *),
-			  void (*show_object)(struct object *, const char *))
+			  show_commit_fn show_commit,
+			  show_object_fn show_object)
 {
 	int i;
 	struct commit *commit;
@@ -158,7 +158,7 @@ void traverse_commit_list(struct rev_info *revs,
 			continue;
 		if (obj->type == OBJ_TAG) {
 			obj->flags |= SEEN;
-			show_object(obj, name);
+			show_object(obj, NULL, name);
 			continue;
 		}
 		if (obj->type == OBJ_TREE) {
