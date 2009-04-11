@@ -2,7 +2,7 @@
 #define LIST_OBJECTS_H
 
 typedef void (*show_commit_fn)(struct commit *);
-typedef void (*show_object_fn)(struct object_array_entry *);
+typedef void (*show_object_fn)(struct object *, const char *);
 typedef void (*show_edge_fn)(struct commit *);
 
 void traverse_commit_list(struct rev_info *revs, show_commit_fn, show_object_fn);

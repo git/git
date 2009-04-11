@@ -14,7 +14,7 @@
 
 volatile show_early_output_fn_t show_early_output;
 
-static char *path_name(struct name_path *path, const char *name)
+char *path_name(struct name_path *path, const char *name)
 {
 	struct name_path *p;
 	char *n, *m;
