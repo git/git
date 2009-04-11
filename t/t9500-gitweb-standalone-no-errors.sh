@@ -68,7 +68,6 @@ gitweb_run () {
 perl -MEncode -e 'decode_utf8("", Encode::FB_CROAK)' >/dev/null 2>&1 || {
     say 'skipping gitweb tests, perl version is too old'
     test_done
-    exit
 }
 
 gitweb_init

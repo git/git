@@ -15,12 +15,10 @@ if test $? -ne 1
 then
     say 'skipping git-cvsserver tests, cvs not found'
     test_done
-    exit
 fi
 perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
     say 'skipping git-cvsserver tests, Perl SQLite interface unavailable'
     test_done
-    exit
 }
 
 unset GIT_DIR GIT_CONFIG

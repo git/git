@@ -130,6 +130,19 @@ test_expect_success 'Show all headers' '
 	test_cmp expected-show-all-headers actual-show-all-headers
 '
 
+test_expect_success 'Prompting works' '
+	clean_fake_sendmail &&
+	(echo "Example <from@example.com>"
+	 echo "to@example.com"
+	 echo ""
+	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches \
+		2>errors &&
+		grep "^From: Example <from@example.com>$" msgtxt1 &&
+		grep "^To: to@example.com$" msgtxt1
+'
+
 z8=zzzzzzzz
 z64=$z8$z8$z8$z8$z8$z8$z8$z8
 z512=$z64$z64$z64$z64$z64$z64$z64$z64

@@ -903,9 +903,6 @@ static char *keep_pack(char *curr_index_name)
 	static const char *keep_msg = "fast-import";
 	int keep_fd;
 
-	chmod(pack_data->pack_name, 0444);
-	chmod(curr_index_name, 0444);
-
 	keep_fd = odb_pack_keep(name, sizeof(name), pack_data->sha1);
 	if (keep_fd < 0)
 		die("cannot create keep file");

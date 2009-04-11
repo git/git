@@ -126,9 +126,13 @@ the conflicted merge in the specified paths.
 <new_branch>::
 	Name for the new branch.
 
+<tree-ish>::
+	Tree to checkout from (when paths are given). If not specified,
+	the index will be used.
+
 <branch>::
-	Branch to checkout; may be any object ID that resolves to a
-	commit.  Defaults to HEAD.
+	Branch to checkout (when no paths are given); may be any object
+	ID that resolves to a commit.  Defaults to HEAD.
 +
 When this parameter names a non-branch (but still a valid commit object),
 your HEAD becomes 'detached'.
@@ -191,7 +195,7 @@ $ git checkout hello.c            <3>
 +
 <1> switch branch
 <2> take a file out of another commit
-<3> restore hello.c from HEAD of current branch
+<3> restore hello.c from the index
 +
 If you have an unfortunate branch that is named `hello.c`, this
 step would be confused as an instruction to switch to that branch.

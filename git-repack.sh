@@ -181,5 +181,5 @@ fi
 
 case "$no_update_info" in
 t) : ;;
-*) git-update-server-info ;;
+*) git update-server-info ;;
 esac

@@ -8,7 +8,6 @@ case $(uname -s) in
 *MINGW*)
 	say "GIT_DEBUG_SEND_PACK not supported - skipping tests"
 	test_done
-	exit
 esac
 
 # End state of the repository:

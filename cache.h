@@ -623,7 +623,8 @@ enum sharedrepo {
 	PERM_EVERYBODY      = 0664,
 };
 int git_config_perm(const char *var, const char *value);
-int adjust_shared_perm(const char *path);
+int set_shared_perm(const char *path, int mode);
+#define adjust_shared_perm(path) set_shared_perm((path), 0)
 int safe_create_leading_directories(char *path);
 int safe_create_leading_directories_const(const char *path);
 char *enter_repo(char *path, int strict);
@@ -679,7 +680,7 @@ extern int read_ref(const char *filename, unsigned char *sha1);
 extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *);
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
-extern int interpret_nth_last_branch(const char *str, struct strbuf *);
+extern int interpret_branch_name(const char *str, struct strbuf *);
 
 extern int refname_match(const char *abbrev_name, const char *full_name, const char **rules);
 extern const char *ref_rev_parse_rules[];

@@ -608,7 +608,7 @@ EOT
 
 sub ask {
 	my ($prompt, %arg) = @_;
-	my $valid_re = $arg{valid_re} || ""; # "" matches anything
+	my $valid_re = $arg{valid_re};
 	my $default = $arg{default};
 	my $resp;
 	my $i = 0;
@@ -624,7 +624,7 @@ sub ask {
 		if ($resp eq '' and defined $default) {
 			return $default;
 		}
-		if ($resp =~ /$valid_re/) {
+		if (!defined $valid_re or $resp =~ /$valid_re/) {
 			return $resp;
 		}
 	}

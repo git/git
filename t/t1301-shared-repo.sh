@@ -126,4 +126,41 @@ test_expect_success POSIXPERM 'git reflog expire honors core.sharedRepository' '
 	esac
 '
 
+test_expect_success 'forced modes' '
+	mkdir -p templates/hooks &&
+	echo update-server-info >templates/hooks/post-update &&
+	chmod +x templates/hooks/post-update &&
+	echo : >random-file &&
+	mkdir new &&
+	(
+		cd new &&
+		umask 002 &&
+		git init --shared=0660 --template=../templates &&
+		>frotz &&
+		git add frotz &&
+		git commit -a -m initial &&
+		git repack
+	) &&
+	find new/.git -print |
+	xargs ls -ld >actual &&
+
+	# Everything must be unaccessible to others
+	test -z "$(sed -n -e "/^.......---/d" actual)" &&
+
+	# All directories must have either 2770 or 770
+	test -z "$(sed -n -e "/^drwxrw[sx]---/d" -e "/^d/p" actual)" &&
+
+	# post-update hook must be 0770
+	test -z "$(sed -n -e "/post-update/{
+		/^-rwxrwx---/d
+		p
+	}" actual)" &&
+
+	# All files inside objects must be 0440
+	test -z "$(sed -n -e "/objects\//{
+		/^d/d
+		/^-r--r-----/d
+	}" actual)"
+'
+
 test_done

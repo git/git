@@ -1,4 +1,4 @@
-$ git format-patch --attach --stdout initial..side
+$ git format-patch --attach --stdout --suffix=.diff initial..side
 From c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:03:00 +0000
@@ -20,9 +20,9 @@ Content-Transfer-Encoding: 8bit
 
 
 --------------g-i-t--v-e-r-s-i-o-n
-Content-Type: text/x-patch; name="0001-Side.patch"
+Content-Type: text/x-patch; name="0001-Side.diff"
 Content-Transfer-Encoding: 8bit
-Content-Disposition: attachment; filename="0001-Side.patch"
+Content-Disposition: attachment; filename="0001-Side.diff"
 
 diff --git a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644
