@@ -1912,6 +1912,8 @@ static void show_object(struct object_array_entry *p)
 	add_preferred_base_object(p->name);
 	add_object_entry(p->item->sha1, p->item->type, p->name, 0);
 	p->item->flags |= OBJECT_ADDED;
+	free((char *)p->name);
+	p->name = NULL;
 }
 
 static void show_edge(struct commit *commit)
