@@ -7,7 +7,7 @@ git-mergetool--lib - Common git merge tool shell scriptlets
 
 SYNOPSIS
 --------
-'. "$(git --exec-path)/git-mergetool--lib"'
+'TOOL_MODE=(diff|merge) . "$(git --exec-path)/git-mergetool--lib"'
 
 DESCRIPTION
 -----------
@@ -20,14 +20,14 @@ The 'git-mergetool--lib' scriptlet is designed to be sourced (using
 `.`) by other shell scripts to set up functions for working
 with git merge tools.
 
-Before sourcing it, your script should set up a few variables;
-`TOOL_MODE` is used to define the operation mode for various
-functions.  'diff' and 'merge' are valid values.
+Before sourcing 'git-mergetool--lib', your script must set `TOOL_MODE`
+to define the operation mode for the functions listed below.
+'diff' and 'merge' are valid values.
 
 FUNCTIONS
 ---------
 get_merge_tool::
-	returns a merge tool
+	returns a merge tool.
 
 get_merge_tool_cmd::
 	returns the custom command for a merge tool.
@@ -38,10 +38,8 @@ get_merge_tool_path::
 run_merge_tool::
 	launches a merge tool given the tool name and a true/false
 	flag to indicate whether a merge base is present.
-	'$merge_tool', '$merge_tool_path', and for custom commands,
-	'$merge_tool_cmd', must be defined prior to calling
-	run_merge_tool.  Additionally, '$MERGED', '$LOCAL', '$REMOTE',
-	and '$BASE' must be defined for use by the merge tool.
+	'$MERGED', '$LOCAL', '$REMOTE', and '$BASE' must be defined
+	for use by the merge tool.
 
 Author
 ------

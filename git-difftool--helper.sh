@@ -47,9 +47,9 @@ launch_merge_tool () {
 test -n "$GIT_MERGE_TOOL" && merge_tool="$GIT_MERGE_TOOL"
 test -n "$GIT_DIFF_TOOL" && merge_tool="$GIT_DIFF_TOOL"
 
-merge_tool=$(get_merge_tool "$merge_tool") || exit
-merge_tool_cmd="$(get_merge_tool_cmd "$merge_tool")"
-merge_tool_path="$(get_merge_tool_path "$merge_tool")" || exit
+if test -z "$merge_tool"; then
+	merge_tool="$(get_merge_tool)" || exit
+fi
 
 # Launch the merge tool on each path provided by 'git diff'
 while test $# -gt 6

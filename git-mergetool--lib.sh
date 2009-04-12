@@ -8,25 +8,20 @@ merge_mode() {
 }
 
 translate_merge_tool_path () {
-	if test -n "$2"; then
-		echo "$2"
-	else
-		case "$1" in
-		vimdiff)
-			path=vim
-			;;
-		gvimdiff)
-			path=gvim
-			;;
-		emerge)
-			path=emacs
-			;;
-		*)
-			path="$1"
-			;;
-		esac
-		echo "$path"
-	fi
+	case "$1" in
+	vimdiff)
+		echo vim
+		;;
+	gvimdiff)
+		echo gvim
+		;;
+	emerge)
+		echo emacs
+		;;
+	*)
+		echo "$1"
+		;;
+	esac
 }
 
 check_unchanged () {
@@ -69,15 +64,22 @@ valid_tool () {
 }
 
 get_merge_tool_cmd () {
-	diff_mode &&
-	custom_cmd="$(git config difftool.$1.cmd)"
-	test -z "$custom_cmd" &&
-	custom_cmd="$(git config mergetool.$1.cmd)"
-	test -n "$custom_cmd" &&
-	echo "$custom_cmd"
+	# Prints the custom command for a merge tool
+	if test -n "$1"; then
+		merge_tool="$1"
+	else
+		merge_tool="$(get_merge_tool)"
+	fi
+	if diff_mode; then
+		echo "$(git config difftool.$merge_tool.cmd ||
+		        git config mergetool.$merge_tool.cmd)"
+	else
+		echo "$(git config mergetool.$merge_tool.cmd)"
+	fi
 }
 
 run_merge_tool () {
+	merge_tool_path="$(get_merge_tool_path "$1")" || exit
 	base_present="$2"
 	status=0
 
@@ -103,9 +105,9 @@ run_merge_tool () {
 			status=$?
 		else
 			("$merge_tool_path" --auto \
-			 --L1 "$MERGED (A)" \
-			 --L2 "$MERGED (B)" "$LOCAL" "$REMOTE" \
-			 > /dev/null 2>&1)
+				--L1 "$MERGED (A)" \
+				--L2 "$MERGED (B)" "$LOCAL" "$REMOTE" \
+			> /dev/null 2>&1)
 		fi
 		;;
 	kompare)
@@ -262,6 +264,7 @@ run_merge_tool () {
 		fi
 		;;
 	*)
+		merge_tool_cmd="$(get_merge_tool_cmd "$1")"
 		if test -z "$merge_tool_cmd"; then
 			if merge_mode; then
 				status=1
@@ -269,7 +272,9 @@ run_merge_tool () {
 			break
 		fi
 		if merge_mode; then
-			if test "$merge_tool_trust_exit_code" = "false"; then
+			trust_exit_code="$(git config --bool \
+				mergetool."$1".trustExitCode || echo false)"
+			if test "$trust_exit_code" = "false"; then
 				touch "$BACKUP"
 				( eval $merge_tool_cmd )
 				check_unchanged
@@ -315,64 +320,66 @@ guess_merge_tool () {
 	do
 		merge_tool_path="$(translate_merge_tool_path "$i")"
 		if type "$merge_tool_path" > /dev/null 2>&1; then
-			merge_tool="$i"
-			break
+			echo "$i"
+			return 0
 		fi
 	done
 
-	if test -z "$merge_tool" ; then
-		echo >&2 "No known merge resolution program available."
-		return 1
-	fi
-	echo "$merge_tool"
+	echo >&2 "No known merge resolution program available."
+	return 1
 }
 
 get_configured_merge_tool () {
 	# Diff mode first tries diff.tool and falls back to merge.tool.
 	# Merge mode only checks merge.tool
 	if diff_mode; then
-		tool=$(git config diff.tool)
-	fi
-	if test -z "$tool"; then
-		tool=$(git config merge.tool)
+		merge_tool=$(git config diff.tool || git config merge.tool)
+	else
+		merge_tool=$(git config merge.tool)
 	fi
 	if test -n "$merge_tool" && ! valid_tool "$merge_tool"; then
 		echo >&2 "git config option $TOOL_MODE.tool set to unknown tool: $merge_tool"
 		echo >&2 "Resetting to default..."
 		return 1
 	fi
-	echo "$tool"
+	echo "$merge_tool"
 }
 
 get_merge_tool_path () {
 	# A merge tool has been set, so verify that it's valid.
+	if test -n "$1"; then
+		merge_tool="$1"
+	else
+		merge_tool="$(get_merge_tool)"
+	fi
 	if ! valid_tool "$merge_tool"; then
 		echo >&2 "Unknown merge tool $merge_tool"
 		exit 1
 	fi
 	if diff_mode; then
-		merge_tool_path=$(git config difftool."$merge_tool".path)
-	fi
-	if test -z "$merge_tool_path"; then
+		merge_tool_path=$(git config difftool."$merge_tool".path ||
+		                  git config mergetool."$merge_tool".path)
+	else
 		merge_tool_path=$(git config mergetool."$merge_tool".path)
 	fi
-	merge_tool_path="$(translate_merge_tool_path "$merge_tool" "$merge_tool_path")"
-	if test -z "$merge_tool_cmd" && ! type "$merge_tool_path" > /dev/null 2>&1; then
-		echo >&2 "The $TOOL_MODE tool $merge_tool is not available as '$merge_tool_path'"
+	if test -z "$merge_tool_path"; then
+		merge_tool_path="$(translate_merge_tool_path "$merge_tool")"
+	fi
+	if test -z "$(get_merge_tool_cmd "$merge_tool")" &&
+	! type "$merge_tool_path" > /dev/null 2>&1; then
+		echo >&2 "The $TOOL_MODE tool $merge_tool is not available as"\
+		         "'$merge_tool_path'"
 		exit 1
 	fi
 	echo "$merge_tool_path"
 }
 
 get_merge_tool () {
-	merge_tool="$1"
 	# Check if a merge tool has been configured
-	if test -z "$merge_tool"; then
-		merge_tool=$(get_configured_merge_tool)
-	fi
+	merge_tool=$(get_configured_merge_tool)
 	# Try to guess an appropriate merge tool if no tool has been set.
 	if test -z "$merge_tool"; then
-		merge_tool=$(guess_merge_tool) || exit
+		merge_tool="$(guess_merge_tool)" || exit
 	fi
 	echo "$merge_tool"
 }
