@@ -20,9 +20,3 @@ Fixes since v1.6.2.2
   to prevent them from being repacked.
 
 Many small documentation updates are included as well.
-
----
-exec >/var/tmp/1
-echo O=$(git describe maint)
-O=v1.6.2.2-41-gbff82d0
-git shortlog --no-merges $O..maint
