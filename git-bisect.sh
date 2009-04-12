@@ -279,87 +279,14 @@ bisect_auto_next() {
 	bisect_next_check && bisect_next || :
 }
 
-filter_skipped() {
-	_eval="$1"
-	_skip="$2"
-
-	if [ -z "$_skip" ]; then
-		eval "$_eval" | {
-			while read line
-			do
-				echo "$line &&"
-			done
-			echo ':'
-		}
-		return
-	fi
-
-	# Let's parse the output of:
-	# "git rev-list --bisect-vars --bisect-all ..."
-	eval "$_eval" | {
-		VARS= FOUND= TRIED=
-		while read hash line
-		do
-			case "$VARS,$FOUND,$TRIED,$hash" in
-			1,*,*,*)
-				# "bisect_foo=bar" read from rev-list output.
-				echo "$hash &&"
-				;;
-			,*,*,---*)
-				# Separator
-				;;
-			,,,bisect_rev*)
-				# We had nothing to search.
-				echo "bisect_rev= &&"
-				VARS=1
-				;;
-			,,*,bisect_rev*)
-				# We did not find a good bisect rev.
-				# This should happen only if the "bad"
-				# commit is also a "skip" commit.
-				echo "bisect_rev='$TRIED' &&"
-				VARS=1
-				;;
-			,,*,*)
-				# We are searching.
-				TRIED="${TRIED:+$TRIED|}$hash"
-				case "$_skip" in
-				*$hash*) ;;
-				*)
-					echo "bisect_rev=$hash &&"
-					echo "bisect_tried='$TRIED' &&"
-					FOUND=1
-					;;
-				esac
-				;;
-			,1,*,bisect_rev*)
-				# We have already found a rev to be tested.
-				VARS=1
-				;;
-			,1,*,*)
-				;;
-			*)
-				# Unexpected input
-				echo "die 'filter_skipped error'"
-				die "filter_skipped error " \
-				    "VARS: '$VARS' " \
-				    "FOUND: '$FOUND' " \
-				    "TRIED: '$TRIED' " \
-				    "hash: '$hash' " \
-				    "line: '$line'"
-				;;
-			esac
-		done
-		echo ':'
-	}
-}
-
 exit_if_skipped_commits () {
 	_tried=$1
-	if expr "$_tried" : ".*[|].*" > /dev/null ; then
+	_bad=$2
+	if test -n "$_tried" ; then
 		echo "There are only 'skip'ped commit left to test."
 		echo "The first bad commit could be any of:"
 		echo "$_tried" | tr '[|]' '[\012]'
+		test -n "$_bad" && echo "$_bad"
 		echo "We cannot bisect more!"
 		exit 2
 	fi
@@ -490,27 +417,22 @@ bisect_next() {
 	test "$?" -eq "1" && return
 
 	# Get bisection information
-	BISECT_OPT=''
-	test -n "$skip" && BISECT_OPT='--bisect-all'
-	eval="git rev-list --bisect-vars $BISECT_OPT $good $bad --" &&
-	eval="$eval $(cat "$GIT_DIR/BISECT_NAMES")" &&
-	eval=$(filter_skipped "$eval" "$skip") &&
+	eval=$(eval "git bisect--helper --next-vars") &&
 	eval "$eval" || exit
 
 	if [ -z "$bisect_rev" ]; then
+		# We should exit here only if the "bad"
+		# commit is also a "skip" commit (see above).
+		exit_if_skipped_commits "$bisect_tried"
 		echo "$bad was both good and bad"
 		exit 1
 	fi
 	if [ "$bisect_rev" = "$bad" ]; then
-		exit_if_skipped_commits "$bisect_tried"
+		exit_if_skipped_commits "$bisect_tried" "$bad"
 		echo "$bisect_rev is first bad commit"
 		git diff-tree --pretty $bisect_rev
 		exit 0
 	fi
-
-	# We should exit here only if the "bad"
-	# commit is also a "skip" commit (see above).
-	exit_if_skipped_commits "$bisect_rev"
 
 	bisect_checkout "$bisect_rev" "$bisect_nr revisions left to test after this (roughly $bisect_steps steps)"
 }
