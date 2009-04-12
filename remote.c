@@ -667,6 +667,17 @@ struct remote *remote_get(const char *name)
 	return ret;
 }
 
+int remote_is_configured(const char *name)
+{
+	int i;
+	read_config();
+
+	for (i = 0; i < remotes_nr; i++)
+		if (!strcmp(name, remotes[i]->name))
+			return 1;
+	return 0;
+}
+
 int for_each_remote(each_remote_fn fn, void *priv)
 {
 	int i, result = 0;
