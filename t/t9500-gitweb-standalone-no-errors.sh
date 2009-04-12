@@ -65,6 +65,11 @@ gitweb_run () {
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping gitweb tests, perl not available'
+	test_done
+fi
+
 perl -MEncode -e 'decode_utf8("", Encode::FB_CROAK)' >/dev/null 2>&1 || {
     say 'skipping gitweb tests, perl version is too old'
     test_done
