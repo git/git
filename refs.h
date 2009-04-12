@@ -81,6 +81,7 @@ extern int for_each_reflog(each_ref_fn, void *);
 extern int check_ref_format(const char *target);
 
 extern const char *prettify_ref(const struct ref *ref);
+extern char *shorten_unambiguous_ref(const char *ref);
 
 /** rename ref, return 0 on success **/
 extern int rename_ref(const char *oldref, const char *newref, const char *logmsg);
