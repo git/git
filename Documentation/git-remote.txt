@@ -16,7 +16,7 @@ SYNOPSIS
 'git remote set-head' <name> [-a | -d | <branch>]
 'git remote show' [-n] <name>
 'git remote prune' [-n | --dry-run] <name>
-'git remote update' [group]
+'git remote update' [-p | --prune] [group | remote]...
 
 DESCRIPTION
 -----------
@@ -125,6 +125,8 @@ the configuration parameter remotes.default will get used; if
 remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
 be updated.  (See linkgit:git-config[1]).
++
+With `--prune` option, prune all the remotes that are updated.
 
 
 DISCUSSION

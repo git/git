@@ -10,6 +10,10 @@ cvs CLI client via git-cvsserver server'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping git cvsserver tests, perl not available'
+	test_done
+fi
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then

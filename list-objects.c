@@ -135,8 +135,9 @@ void mark_edges_uninteresting(struct commit_list *list,
 }
 
 void traverse_commit_list(struct rev_info *revs,
-			  void (*show_commit)(struct commit *),
-			  void (*show_object)(struct object_array_entry *))
+			  show_commit_fn show_commit,
+			  show_object_fn show_object,
+			  void *data)
 {
 	int i;
 	struct commit *commit;
@@ -144,7 +145,7 @@ void traverse_commit_list(struct rev_info *revs,
 
 	while ((commit = get_revision(revs)) != NULL) {
 		process_tree(revs, commit->tree, &objects, NULL, "");
-		show_commit(commit);
+		show_commit(commit, data);
 	}
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *pending = revs->pending.objects + i;
@@ -171,7 +172,7 @@ void traverse_commit_list(struct rev_info *revs,
 		    sha1_to_hex(obj->sha1), name);
 	}
 	for (i = 0; i < objects.nr; i++)
-		show_object(&objects.objects[i]);
+		show_object(&objects.objects[i], data);
 	free(objects.objects);
 	if (revs->pending.nr) {
 		free(revs->pending.objects);

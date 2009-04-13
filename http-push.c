@@ -186,6 +186,32 @@ enum dav_header_flag {
 	DAV_HEADER_TIMEOUT = (1u << 2)
 };
 
+static char *xml_entities(char *s)
+{
+	struct strbuf buf = STRBUF_INIT;
+	while (*s) {
+		size_t len = strcspn(s, "\"<>&");
+		strbuf_add(&buf, s, len);
+		s += len;
+		switch (*s) {
+		case '"':
+			strbuf_addstr(&buf, "&quot;");
+			break;
+		case '<':
+			strbuf_addstr(&buf, "&lt;");
+			break;
+		case '>':
+			strbuf_addstr(&buf, "&gt;");
+			break;
+		case '&':
+			strbuf_addstr(&buf, "&amp;");
+			break;
+		}
+		s++;
+	}
+	return strbuf_detach(&buf, NULL);
+}
+
 static struct curl_slist *get_dav_token_headers(struct remote_lock *lock, enum dav_header_flag options)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -1225,6 +1251,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	struct remote_lock *lock = NULL;
 	struct curl_slist *dav_headers = NULL;
 	struct xml_ctx ctx;
+	char *escaped;
 
 	url = xmalloc(strlen(repo->url) + strlen(path) + 1);
 	sprintf(url, "%s%s", repo->url, path);
@@ -1259,7 +1286,9 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 		ep = strchr(ep + 1, '/');
 	}
 
-	strbuf_addf(&out_buffer.buf, LOCK_REQUEST, git_default_email);
+	escaped = xml_entities(git_default_email);
+	strbuf_addf(&out_buffer.buf, LOCK_REQUEST, escaped);
+	free(escaped);
 
 	sprintf(timeout_header, "Timeout: Second-%ld", timeout);
 	dav_headers = curl_slist_append(dav_headers, timeout_header);
@@ -1584,8 +1613,11 @@ static int locking_available(void)
 	struct curl_slist *dav_headers = NULL;
 	struct xml_ctx ctx;
 	int lock_flags = 0;
+	char *escaped;
 
-	strbuf_addf(&out_buffer.buf, PROPFIND_SUPPORTEDLOCK_REQUEST, repo->url);
+	escaped = xml_entities(repo->url);
+	strbuf_addf(&out_buffer.buf, PROPFIND_SUPPORTEDLOCK_REQUEST, escaped);
+	free(escaped);
 
 	dav_headers = curl_slist_append(dav_headers, "Depth: 0");
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");

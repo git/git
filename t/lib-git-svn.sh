@@ -8,6 +8,10 @@ then
 	say 'skipping git svn tests, NO_SVN_TESTS defined'
 	test_done
 fi
+if ! test_have_prereq PERL; then
+	say 'skipping git svn tests, perl not available'
+	test_done
+fi
 
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/git-svn

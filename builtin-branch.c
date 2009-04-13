@@ -301,19 +301,30 @@ static int ref_cmp(const void *r1, const void *r2)
 	return strcmp(c1->name, c2->name);
 }
 
-static void fill_tracking_info(struct strbuf *stat, const char *branch_name)
+static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
+		int show_upstream_ref)
 {
 	int ours, theirs;
 	struct branch *branch = branch_get(branch_name);
 
-	if (!stat_tracking_info(branch, &ours, &theirs) || (!ours && !theirs))
+	if (!stat_tracking_info(branch, &ours, &theirs)) {
+		if (branch && branch->merge && branch->merge[0]->dst &&
+		    show_upstream_ref)
+			strbuf_addf(stat, "[%s] ",
+			    shorten_unambiguous_ref(branch->merge[0]->dst));
 		return;
+	}
+
+	strbuf_addch(stat, '[');
+	if (show_upstream_ref)
+		strbuf_addf(stat, "%s: ",
+			shorten_unambiguous_ref(branch->merge[0]->dst));
 	if (!ours)
-		strbuf_addf(stat, "[behind %d] ", theirs);
+		strbuf_addf(stat, "behind %d] ", theirs);
 	else if (!theirs)
-		strbuf_addf(stat, "[ahead %d] ", ours);
+		strbuf_addf(stat, "ahead %d] ", ours);
 	else
-		strbuf_addf(stat, "[ahead %d, behind %d] ", ours, theirs);
+		strbuf_addf(stat, "ahead %d, behind %d] ", ours, theirs);
 }
 
 static int matches_merge_filter(struct commit *commit)
@@ -379,7 +390,7 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 		}
 
 		if (item->kind == REF_LOCAL_BRANCH)
-			fill_tracking_info(&stat, item->name);
+			fill_tracking_info(&stat, item->name, verbose > 1);
 
 		strbuf_addf(&out, " %s %s%s",
 			find_unique_abbrev(item->commit->object.sha1, abbrev),

@@ -66,7 +66,7 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 }
 
 static FILE *pack_pipe = NULL;
-static void show_commit(struct commit *commit)
+static void show_commit(struct commit *commit, void *data)
 {
 	if (commit->object.flags & BOUNDARY)
 		fputc('-', pack_pipe);
@@ -78,7 +78,7 @@ static void show_commit(struct commit *commit)
 	commit->buffer = NULL;
 }
 
-static void show_object(struct object_array_entry *p)
+static void show_object(struct object_array_entry *p, void *data)
 {
 	/* An object with name "foo\n0000000..." can be used to
 	 * confuse downstream git-pack-objects very badly.
@@ -134,7 +134,7 @@ static int do_rev_list(int fd, void *create_full_pack)
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
-	traverse_commit_list(&revs, show_commit, show_object);
+	traverse_commit_list(&revs, show_commit, show_object, NULL);
 	fflush(pack_pipe);
 	fclose(pack_pipe);
 	return 0;
