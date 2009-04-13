@@ -544,8 +544,6 @@ EOT
 	}
 	close(C);
 
-	my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
-
 	if ($annotate) {
 		do_edit($compose_filename, @files);
 	} else {
