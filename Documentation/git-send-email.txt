@@ -136,7 +136,9 @@ user is prompted for a password while the input is masked for privacy.
 --smtp-server-port=<port>::
 	Specifies a port different from the default port (SMTP
 	servers typically listen to smtp port 25 and ssmtp port
-	465). This can be set with 'sendemail.smtpserverport'.
+	465); symbolic port names (e.g. "submission" instead of 465)
+	are also accepted. The port can also be set with the
+	'sendemail.smtpserverport' configuration variable.
 
 --smtp-ssl::
 	Legacy alias for '--smtp-encryption ssl'.
