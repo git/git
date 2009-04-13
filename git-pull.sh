@@ -16,7 +16,7 @@ cd_to_toplevel
 test -z "$(git ls-files -u)" ||
 	die "You are in the middle of a conflicted merge."
 
-strategy_args= no_stat= no_commit= squash= no_ff= log_arg= verbosity=
+strategy_args= diffstat= no_commit= squash= no_ff= log_arg= verbosity=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short=$(echo "$curr_branch" | sed "s|refs/heads/||")
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
@@ -28,9 +28,9 @@ do
 	-v|--verbose)
 		verbosity="$verbosity -v" ;;
 	-n|--no-stat|--no-summary)
-		no_stat=-n ;;
+		diffstat=--no-stat ;;
 	--stat|--summary)
-		no_stat=$1 ;;
+		diffstat=--stat ;;
 	--log|--no-log)
 		log_arg=$1 ;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
@@ -90,23 +90,31 @@ error_on_no_merge_candidates () {
 
 	curr_branch=${curr_branch#refs/heads/}
 
-	echo "You asked me to pull without telling me which branch you"
-	echo "want to merge with, and 'branch.${curr_branch}.merge' in"
-	echo "your configuration file does not tell me either.  Please"
-	echo "name which branch you want to merge on the command line and"
-	echo "try again (e.g. 'git pull <repository> <refspec>')."
-	echo "See git-pull(1) for details on the refspec."
-	echo
-	echo "If you often merge with the same branch, you may want to"
-	echo "configure the following variables in your configuration"
-	echo "file:"
-	echo
-	echo "    branch.${curr_branch}.remote = <nickname>"
-	echo "    branch.${curr_branch}.merge = <remote-ref>"
-	echo "    remote.<nickname>.url = <url>"
-	echo "    remote.<nickname>.fetch = <refspec>"
-	echo
-	echo "See git-config(1) for details."
+	if [ -z "$curr_branch" ]; then
+		echo "You are not currently on a branch, so I cannot use any"
+		echo "'branch.<branchname>.merge' in your configuration file."
+		echo "Please specify which branch you want to merge on the command"
+		echo "line and try again (e.g. 'git pull <repository> <refspec>')."
+		echo "See git-pull(1) for details."
+	else
+		echo "You asked me to pull without telling me which branch you"
+		echo "want to merge with, and 'branch.${curr_branch}.merge' in"
+		echo "your configuration file does not tell me either.	Please"
+		echo "specify which branch you want to merge on the command line and"
+		echo "try again (e.g. 'git pull <repository> <refspec>')."
+		echo "See git-pull(1) for details."
+		echo
+		echo "If you often merge with the same branch, you may want to"
+		echo "configure the following variables in your configuration"
+		echo "file:"
+		echo
+		echo "    branch.${curr_branch}.remote = <nickname>"
+		echo "    branch.${curr_branch}.merge = <remote-ref>"
+		echo "    remote.<nickname>.url = <url>"
+		echo "    remote.<nickname>.fetch = <refspec>"
+		echo
+		echo "See git-config(1) for details."
+	fi
 	exit 1
 }
 
@@ -188,7 +196,7 @@ fi
 
 merge_name=$(git fmt-merge-msg $log_arg <"$GIT_DIR/FETCH_HEAD") || exit
 test true = "$rebase" &&
-	exec git-rebase $strategy_args --onto $merge_head \
+	exec git-rebase $diffstat $strategy_args --onto $merge_head \
 	${oldremoteref:-$merge_head}
-exec git-merge $no_stat $no_commit $squash $no_ff $log_arg $strategy_args \
+exec git-merge $diffstat $no_commit $squash $no_ff $log_arg $strategy_args \
 	"$merge_name" HEAD $merge_head $verbosity

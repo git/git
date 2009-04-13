@@ -40,6 +40,6 @@ test_expect_success \
 
 test_expect_success \
     'compare commit' \
-    'diff expected commit'
+    'test_cmp expected commit'
 
 test_done

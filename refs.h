@@ -20,6 +20,7 @@ struct ref_lock {
 typedef int each_ref_fn(const char *refname, const unsigned char *sha1, int flags, void *cb_data);
 extern int head_ref(each_ref_fn, void *);
 extern int for_each_ref(each_ref_fn, void *);
+extern int for_each_ref_in(const char *, each_ref_fn, void *);
 extern int for_each_tag_ref(each_ref_fn, void *);
 extern int for_each_branch_ref(each_ref_fn, void *);
 extern int for_each_remote_ref(each_ref_fn, void *);
@@ -78,6 +79,9 @@ extern int for_each_reflog(each_ref_fn, void *);
 #define CHECK_REF_FORMAT_ONELEVEL (-2)
 #define CHECK_REF_FORMAT_WILDCARD (-3)
 extern int check_ref_format(const char *target);
+
+extern const char *prettify_ref(const struct ref *ref);
+extern char *shorten_unambiguous_ref(const char *ref);
 
 /** rename ref, return 0 on success **/
 extern int rename_ref(const char *oldref, const char *newref, const char *logmsg);

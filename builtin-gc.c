@@ -23,7 +23,7 @@ static const char * const builtin_gc_usage[] = {
 };
 
 static int pack_refs = 1;
-static int aggressive_window = -1;
+static int aggressive_window = 250;
 static int gc_auto_threshold = 6700;
 static int gc_auto_pack_limit = 50;
 static const char *prune_expire = "2.weeks.ago";
@@ -200,6 +200,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (aggressive) {
 		append_option(argv_repack, "-f", MAX_ADD);
+		append_option(argv_repack, "--depth=250", MAX_ADD);
 		if (aggressive_window > 0) {
 			sprintf(buf, "--window=%d", aggressive_window);
 			append_option(argv_repack, buf, MAX_ADD);

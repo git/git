@@ -1,5 +1,6 @@
 #ifndef GREP_H
 #define GREP_H
+#include "color.h"
 
 enum grep_pat_token {
 	GREP_PATTERN,
@@ -31,6 +32,7 @@ struct grep_pat {
 	enum grep_header_field field;
 	regex_t regexp;
 	unsigned fixed:1;
+	unsigned word_regexp:1;
 };
 
 enum grep_expr_node {
@@ -76,6 +78,9 @@ struct grep_opt {
 	unsigned relative:1;
 	unsigned pathname:1;
 	unsigned null_following_name:1;
+	int color;
+	char color_match[COLOR_MAXLEN];
+	const char *color_external;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;

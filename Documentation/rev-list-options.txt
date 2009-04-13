@@ -140,38 +140,38 @@ limiting may be applied.
 --
 
 -n 'number'::
---max-count='number'::
+--max-count=<number>::
 
 	Limit the number of commits output.
 
---skip='number'::
+--skip=<number>::
 
 	Skip 'number' commits before starting to show the commit output.
 
---since='date'::
---after='date'::
+--since=<date>::
+--after=<date>::
 
 	Show commits more recent than a specific date.
 
---until='date'::
---before='date'::
+--until=<date>::
+--before=<date>::
 
 	Show commits older than a specific date.
 
 ifdef::git-rev-list[]
---max-age='timestamp'::
---min-age='timestamp'::
+--max-age=<timestamp>::
+--min-age=<timestamp>::
 
 	Limit the commits output to specified time range.
 endif::git-rev-list[]
 
---author='pattern'::
---committer='pattern'::
+--author=<pattern>::
+--committer=<pattern>::
 
 	Limit the commits output to ones with author/committer
 	header lines that match the specified pattern (regular expression).
 
---grep='pattern'::
+--grep=<pattern>::
 
 	Limit the commits output to ones with log message that
 	matches the specified pattern (regular expression).

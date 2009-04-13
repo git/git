@@ -38,6 +38,10 @@ static int get_mode(const char *path, int *mode)
 
 	if (!path || !strcmp(path, "/dev/null"))
 		*mode = 0;
+#ifdef _WIN32
+	else if (!strcasecmp(path, "nul"))
+		*mode = 0;
+#endif
 	else if (!strcmp(path, "-"))
 		*mode = create_ce_mode(0666);
 	else if (lstat(path, &st))
@@ -201,8 +205,6 @@ void diff_no_index(struct rev_info *revs,
 		    no_index ? "--no-index" : "[--no-index]");
 
 	diff_setup(&revs->diffopt);
-	if (!revs->diffopt.output_format)
-		revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 	for (i = 1; i < argc - 2; ) {
 		int j;
 		if (!strcmp(argv[i], "--no-index"))
@@ -248,6 +250,8 @@ void diff_no_index(struct rev_info *revs,
 		revs->diffopt.paths = argv + argc - 2;
 	revs->diffopt.nr_paths = 2;
 	revs->diffopt.skip_stat_unmatch = 1;
+	if (!revs->diffopt.output_format)
+		revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 
 	DIFF_OPT_SET(&revs->diffopt, EXIT_WITH_STATUS);
 	DIFF_OPT_SET(&revs->diffopt, NO_INDEX);

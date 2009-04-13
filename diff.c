@@ -30,14 +30,14 @@ int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 
 static char diff_colors[][COLOR_MAXLEN] = {
-	"\033[m",	/* reset */
-	"",		/* PLAIN (normal) */
-	"\033[1m",	/* METAINFO (bold) */
-	"\033[36m",	/* FRAGINFO (cyan) */
-	"\033[31m",	/* OLD (red) */
-	"\033[32m",	/* NEW (green) */
-	"\033[33m",	/* COMMIT (yellow) */
-	"\033[41m",	/* WHITESPACE (red background) */
+	GIT_COLOR_RESET,
+	GIT_COLOR_NORMAL,	/* PLAIN */
+	GIT_COLOR_BOLD,		/* METAINFO */
+	GIT_COLOR_CYAN,		/* FRAGINFO */
+	GIT_COLOR_RED,		/* OLD */
+	GIT_COLOR_GREEN,	/* NEW */
+	GIT_COLOR_YELLOW,	/* COMMIT */
+	GIT_COLOR_BG_RED,	/* WHITESPACE */
 };
 
 static void diff_filespec_load_driver(struct diff_filespec *one);
@@ -62,6 +62,15 @@ static int parse_diff_color_slot(const char *var, int ofs)
 	die("bad config variable '%s'", var);
 }
 
+static int git_config_rename(const char *var, const char *value)
+{
+	if (!value)
+		return DIFF_DETECT_RENAME;
+	if (!strcasecmp(value, "copies") || !strcasecmp(value, "copy"))
+		return  DIFF_DETECT_COPY;
+	return git_config_bool(var,value) ? DIFF_DETECT_RENAME : 0;
+}
+
 /*
  * These are to give UI layer defaults.
  * The core-level commands such as git-diff-files should
@@ -75,13 +84,7 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "diff.renames")) {
-		if (!value)
-			diff_detect_rename_default = DIFF_DETECT_RENAME;
-		else if (!strcasecmp(value, "copies") ||
-			 !strcasecmp(value, "copy"))
-			diff_detect_rename_default = DIFF_DETECT_COPY;
-		else if (git_config_bool(var,value))
-			diff_detect_rename_default = DIFF_DETECT_RENAME;
+		diff_detect_rename_default = git_config_rename(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.autorefreshindex")) {
@@ -875,7 +878,7 @@ static void fill_print_name(struct diffstat_file *file)
 
 static void show_stats(struct diffstat_t* data, struct diff_options *options)
 {
-	int i, len, add, del, total, adds = 0, dels = 0;
+	int i, len, add, del, adds = 0, dels = 0;
 	int max_change = 0, max_len = 0;
 	int total_files = data->nr;
 	int width, name_width;
@@ -978,14 +981,12 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 		 */
 		add = added;
 		del = deleted;
-		total = add + del;
 		adds += add;
 		dels += del;
 
 		if (width <= max_change) {
 			add = scale_linear(add, width, max_change);
 			del = scale_linear(del, width, max_change);
-			total = add + del;
 		}
 		show_name(options->file, prefix, name, len, reset, set);
 		fprintf(options->file, "%5d%s", added + deleted,
@@ -1759,7 +1760,8 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	struct stat st;
 	int pos, len;
 
-	/* We do not read the cache ourselves here, because the
+	/*
+	 * We do not read the cache ourselves here, because the
 	 * benchmark with my previous version that always reads cache
 	 * shows that it makes things worse for diff-tree comparing
 	 * two linux-2.6 kernel trees in an already checked out work
@@ -1783,7 +1785,7 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	 * objects however would tend to be slower as they need
 	 * to be individually opened and inflated.
 	 */
-	if (!FAST_WORKING_DIRECTORY && !want_file && has_sha1_pack(sha1, NULL))
+	if (!FAST_WORKING_DIRECTORY && !want_file && has_sha1_pack(sha1))
 		return 0;
 
 	len = strlen(name);
@@ -1797,6 +1799,13 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	 * unreusable because it is not a regular file.
 	 */
 	if (hashcmp(sha1, ce->sha1) || !S_ISREG(ce->ce_mode))
+		return 0;
+
+	/*
+	 * If ce is marked as "assume unchanged", there is no
+	 * guarantee that work tree matches what we are looking for.
+	 */
+	if (ce->ce_flags & CE_VALID)
 		return 0;
 
 	/*
@@ -1948,17 +1957,23 @@ void diff_free_filespec_data(struct diff_filespec *s)
 	s->cnt_data = NULL;
 }
 
-static void prep_temp_blob(struct diff_tempfile *temp,
+static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 			   void *blob,
 			   unsigned long size,
 			   const unsigned char *sha1,
 			   int mode)
 {
 	int fd;
+	struct strbuf buf = STRBUF_INIT;
 
 	fd = git_mkstemp(temp->tmp_path, PATH_MAX, ".diff_XXXXXX");
 	if (fd < 0)
 		die("unable to create temp-file: %s", strerror(errno));
+	if (convert_to_working_tree(path,
+			(const char *)blob, (size_t)size, &buf)) {
+		blob = buf.buf;
+		size = buf.len;
+	}
 	if (write_in_full(fd, blob, size) != size)
 		die("unable to write temp-file");
 	close(fd);
@@ -1966,6 +1981,7 @@ static void prep_temp_blob(struct diff_tempfile *temp,
 	strcpy(temp->hex, sha1_to_hex(sha1));
 	temp->hex[40] = 0;
 	sprintf(temp->mode, "%06o", mode);
+	strbuf_release(&buf);
 }
 
 static struct diff_tempfile *prepare_temp_file(const char *name,
@@ -2006,7 +2022,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 				die("readlink(%s)", name);
 			if (ret == sizeof(buf))
 				die("symlink too long: %s", name);
-			prep_temp_blob(temp, buf, ret,
+			prep_temp_blob(name, temp, buf, ret,
 				       (one->sha1_valid ?
 					one->sha1 : null_sha1),
 				       (one->sha1_valid ?
@@ -2032,7 +2048,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 	else {
 		if (diff_populate_filespec(one, 0))
 			die("cannot read data blob for %s", one->path);
-		prep_temp_blob(temp, one->data, one->size,
+		prep_temp_blob(name, temp, one->data, one->size,
 			       one->sha1, one->mode);
 	}
 	return temp;
@@ -2567,13 +2583,13 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 
 	/* xdiff options */
 	else if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
-		options->xdl_opts |= XDF_IGNORE_WHITESPACE;
+		DIFF_XDL_SET(options, IGNORE_WHITESPACE);
 	else if (!strcmp(arg, "-b") || !strcmp(arg, "--ignore-space-change"))
-		options->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
+		DIFF_XDL_SET(options, IGNORE_WHITESPACE_CHANGE);
 	else if (!strcmp(arg, "--ignore-space-at-eol"))
-		options->xdl_opts |= XDF_IGNORE_WHITESPACE_AT_EOL;
+		DIFF_XDL_SET(options, IGNORE_WHITESPACE_AT_EOL);
 	else if (!strcmp(arg, "--patience"))
-		options->xdl_opts |= XDF_PATIENCE_DIFF;
+		DIFF_XDL_SET(options, PATIENCE_DIFF);
 
 	/* flags options */
 	else if (!strcmp(arg, "--binary")) {
@@ -2594,10 +2610,13 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_SET(options, COLOR_DIFF);
 	else if (!strcmp(arg, "--no-color"))
 		DIFF_OPT_CLR(options, COLOR_DIFF);
-	else if (!strcmp(arg, "--color-words"))
-		options->flags |= DIFF_OPT_COLOR_DIFF | DIFF_OPT_COLOR_DIFF_WORDS;
+	else if (!strcmp(arg, "--color-words")) {
+		DIFF_OPT_SET(options, COLOR_DIFF);
+		DIFF_OPT_SET(options, COLOR_DIFF_WORDS);
+	}
 	else if (!prefixcmp(arg, "--color-words=")) {
-		options->flags |= DIFF_OPT_COLOR_DIFF | DIFF_OPT_COLOR_DIFF_WORDS;
+		DIFF_OPT_SET(options, COLOR_DIFF);
+		DIFF_OPT_SET(options, COLOR_DIFF_WORDS);
 		options->word_regex = arg + 14;
 	}
 	else if (!strcmp(arg, "--exit-code"))

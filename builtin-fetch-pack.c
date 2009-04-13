@@ -216,9 +216,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	if (args.depth > 0) {
 		char line[1024];
 		unsigned char sha1[20];
-		int len;
 
-		while ((len = packet_read_line(fd[0], line, sizeof(line)))) {
+		while (packet_read_line(fd[0], line, sizeof(line))) {
 			if (!prefixcmp(line, "shallow ")) {
 				if (get_sha1_hex(line + 8, sha1))
 					die("invalid shallow line: %s", line);
@@ -483,7 +482,7 @@ static int sideband_demux(int fd, void *data)
 {
 	int *xd = data;
 
-	return recv_sideband("fetch-pack", xd[0], fd, 2);
+	return recv_sideband("fetch-pack", xd[0], fd);
 }
 
 static int get_pack(int xd[2], char **pack_lockfile)
@@ -606,7 +605,7 @@ static struct ref *do_fetch_pack(int fd[2],
 			/* When cloning, it is not unusual to have
 			 * no common commit.
 			 */
-			fprintf(stderr, "warning: no common commits\n");
+			warning("no common commits");
 
 	if (get_pack(fd, pack_lockfile))
 		die("git fetch-pack: fetch failed.");
@@ -801,15 +800,13 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 		int fd;
 
 		mtime.sec = st.st_mtime;
-#ifdef USE_NSEC
-		mtime.usec = st.st_mtim.usec;
-#endif
+		mtime.nsec = ST_MTIME_NSEC(st);
 		if (stat(shallow, &st)) {
 			if (mtime.sec)
 				die("shallow file was removed during fetch");
 		} else if (st.st_mtime != mtime.sec
 #ifdef USE_NSEC
-				|| st.st_mtim.usec != mtime.usec
+				|| ST_MTIME_NSEC(st) != mtime.nsec
 #endif
 			  )
 			die("shallow file was changed during fetch");

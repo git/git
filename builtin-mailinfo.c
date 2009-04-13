@@ -537,7 +537,6 @@ static int decode_header_bq(struct strbuf *it)
 				 */
 				strbuf_add(&outbuf, in, ep - in);
 			}
-			in = ep;
 		}
 		/* E.g.
 		 * ep : "=?iso-2022-jp?B?GyR...?= foo"

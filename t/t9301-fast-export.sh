@@ -8,6 +8,9 @@ test_description='git fast-export'
 
 test_expect_success 'setup' '
 
+	echo break it > file0 &&
+	git add file0 &&
+	test_tick &&
 	echo Wohlauf > file &&
 	git add file &&
 	test_tick &&
@@ -57,8 +60,8 @@ test_expect_success 'fast-export master~2..master' '
 		(cd new &&
 		 git fast-import &&
 		 test $MASTER != $(git rev-parse --verify refs/heads/partial) &&
-		 git diff master..partial &&
-		 git diff master^..partial^ &&
+		 git diff --exit-code master partial &&
+		 git diff --exit-code master^ partial^ &&
 		 test_must_fail git rev-parse partial~2)
 
 '
@@ -258,5 +261,20 @@ test_expect_success 'cope with tagger-less tags' '
 	grep "Unspecified Tagger" output
 
 '
+
+test_expect_success 'set-up a few more tags for tag export tests' '
+	git checkout -f master &&
+	HEAD_TREE=`git show -s --pretty=raw HEAD | grep tree | sed "s/tree //"` &&
+	git tag    tree_tag        -m "tagging a tree" $HEAD_TREE &&
+	git tag -a tree_tag-obj    -m "tagging a tree" $HEAD_TREE &&
+	git tag    tag-obj_tag     -m "tagging a tag" tree_tag-obj &&
+	git tag -a tag-obj_tag-obj -m "tagging a tag" tree_tag-obj
+'
+
+# NEEDSWORK: not just check return status, but validate the output
+test_expect_success 'tree_tag'        'git fast-export tree_tag'
+test_expect_success 'tree_tag-obj'    'git fast-export tree_tag-obj'
+test_expect_success 'tag-obj_tag'     'git fast-export tag-obj_tag'
+test_expect_success 'tag-obj_tag-obj' 'git fast-export tag-obj_tag-obj'
 
 test_done

@@ -24,7 +24,7 @@ pre-clean:
 	$(RM) -r test-results
 
 clean:
-	$(RM) -r 'trash directory' test-results
+	$(RM) -r 'trash directory'.* test-results
 
 aggregate-results-and-cleanup: $(T)
 	$(MAKE) aggregate-results
@@ -38,4 +38,7 @@ full-svn-test:
 	$(MAKE) $(TSVN) GIT_SVN_NO_OPTIMIZE_COMMITS=1 LC_ALL=C
 	$(MAKE) $(TSVN) GIT_SVN_NO_OPTIMIZE_COMMITS=0 LC_ALL=en_US.UTF-8
 
-.PHONY: pre-clean $(T) aggregate-results clean
+valgrind:
+	GIT_TEST_OPTS=--valgrind $(MAKE)
+
+.PHONY: pre-clean $(T) aggregate-results clean valgrind

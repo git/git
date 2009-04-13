@@ -11,22 +11,16 @@ This test runs various sanity checks on http-push.'
 
 ROOT_PATH="$PWD"
 LIB_HTTPD_DAV=t
+LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5540'}
 
 if git http-push > /dev/null 2>&1 || [ $? -eq 128 ]
 then
 	say "skipping test, USE_CURL_MULTI is not defined"
 	test_done
-	exit
 fi
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
-
-if ! start_httpd >&3 2>&4
-then
-	say "skipping test, web server setup failed"
-	test_done
-	exit
-fi
+start_httpd
 
 test_expect_success 'setup remote repository' '
 	cd "$ROOT_PATH" &&

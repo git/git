@@ -66,7 +66,7 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 }
 
 static FILE *pack_pipe = NULL;
-static void show_commit(struct commit *commit)
+static void show_commit(struct commit *commit, void *data)
 {
 	if (commit->object.flags & BOUNDARY)
 		fputc('-', pack_pipe);
@@ -78,7 +78,7 @@ static void show_commit(struct commit *commit)
 	commit->buffer = NULL;
 }
 
-static void show_object(struct object_array_entry *p)
+static void show_object(struct object_array_entry *p, void *data)
 {
 	/* An object with name "foo\n0000000..." can be used to
 	 * confuse downstream git-pack-objects very badly.
@@ -134,7 +134,7 @@ static int do_rev_list(int fd, void *create_full_pack)
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
-	traverse_commit_list(&revs, show_commit, show_object);
+	traverse_commit_list(&revs, show_commit, show_object, NULL);
 	fflush(pack_pipe);
 	fclose(pack_pipe);
 	return 0;
@@ -397,12 +397,11 @@ static int get_common_commits(void)
 	static char line[1000];
 	unsigned char sha1[20];
 	char hex[41], last_hex[41];
-	int len;
 
 	save_commit_buffer = 0;
 
 	for(;;) {
-		len = packet_read_line(0, line, sizeof(line));
+		int len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
 
 		if (!len) {
@@ -410,7 +409,7 @@ static int get_common_commits(void)
 				packet_write(1, "NAK\n");
 			continue;
 		}
-		len = strip(line, len);
+		strip(line, len);
 		if (!prefixcmp(line, "have ")) {
 			switch (got_sha1(line+5, sha1)) {
 			case -1: /* they have what we do not */
@@ -645,7 +644,7 @@ int main(int argc, char **argv)
 	dir = argv[i];
 
 	if (!enter_repo(dir, strict))
-		die("'%s': unable to chdir or not a git archive", dir);
+		die("'%s' does not appear to be a git repository", dir);
 	if (is_repository_shallow())
 		die("attempt to fetch/clone from a shallow repository");
 	if (getenv("GIT_DEBUG_SEND_PACK"))

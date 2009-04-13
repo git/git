@@ -1,8 +1,6 @@
 #include "cache.h"
 #include "color.h"
 
-#define COLOR_RESET "\033[m"
-
 int git_use_color_default = 0;
 
 static int parse_color(const char *name, int len)
@@ -54,7 +52,7 @@ void color_parse_mem(const char *value, int value_len, const char *var,
 	int bg = -2;
 
 	if (!strncasecmp(value, "reset", len)) {
-		strcpy(dst, "\033[m");
+		strcpy(dst, GIT_COLOR_RESET);
 		return;
 	}
 
@@ -175,7 +173,7 @@ static int color_vfprintf(FILE *fp, const char *color, const char *fmt,
 		r += fprintf(fp, "%s", color);
 	r += vfprintf(fp, fmt, args);
 	if (*color)
-		r += fprintf(fp, "%s", COLOR_RESET);
+		r += fprintf(fp, "%s", GIT_COLOR_RESET);
 	if (trail)
 		r += fprintf(fp, "%s", trail);
 	return r;
@@ -217,7 +215,7 @@ int color_fwrite_lines(FILE *fp, const char *color,
 		char *p = memchr(buf, '\n', count);
 		if (p != buf && (fputs(color, fp) < 0 ||
 				fwrite(buf, p ? p - buf : count, 1, fp) != 1 ||
-				fputs(COLOR_RESET, fp) < 0))
+				fputs(GIT_COLOR_RESET, fp) < 0))
 			return -1;
 		if (!p)
 			return 0;

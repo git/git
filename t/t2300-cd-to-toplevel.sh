@@ -5,7 +5,7 @@ test_description='cd_to_toplevel'
 . ./test-lib.sh
 
 test_cd_to_toplevel () {
-	test_expect_success "$2" '
+	test_expect_success $3 "$2" '
 		(
 			cd '"'$1'"' &&
 			. git-sh-setup &&
@@ -24,14 +24,14 @@ test_cd_to_toplevel repo 'at physical root'
 
 test_cd_to_toplevel repo/sub/dir 'at physical subdir'
 
-ln -s repo symrepo
-test_cd_to_toplevel symrepo 'at symbolic root'
+ln -s repo symrepo 2>/dev/null
+test_cd_to_toplevel symrepo 'at symbolic root' SYMLINKS
 
-ln -s repo/sub/dir subdir-link
-test_cd_to_toplevel subdir-link 'at symbolic subdir'
+ln -s repo/sub/dir subdir-link 2>/dev/null
+test_cd_to_toplevel subdir-link 'at symbolic subdir' SYMLINKS
 
 cd repo
-ln -s sub/dir internal-link
-test_cd_to_toplevel internal-link 'at internal symbolic subdir'
+ln -s sub/dir internal-link 2>/dev/null
+test_cd_to_toplevel internal-link 'at internal symbolic subdir' SYMLINKS
 
 test_done

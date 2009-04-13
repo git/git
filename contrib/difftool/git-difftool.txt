@@ -32,23 +32,23 @@ OPTIONS
 	vimdiff, gvimdiff, ecmerge, and opendiff
 +
 If a merge resolution program is not specified, 'git-difftool'
-will use the configuration variable `merge.tool`.  If the
-configuration variable `merge.tool` is not set, 'git difftool'
+will use the configuration variable `diff.tool`.  If the
+configuration variable `diff.tool` is not set, 'git-difftool'
 will pick a suitable default.
 +
 You can explicitly provide a full path to the tool by setting the
-configuration variable `mergetool.<tool>.path`. For example, you
+configuration variable `difftool.<tool>.path`. For example, you
 can configure the absolute path to kdiff3 by setting
-`mergetool.kdiff3.path`. Otherwise, 'git-difftool' assumes the
+`difftool.kdiff3.path`. Otherwise, 'git-difftool' assumes the
 tool is available in PATH.
 +
 Instead of running one of the known merge tool programs,
 'git-difftool' can be customized to run an alternative program
 by specifying the command line to invoke in a configuration
-variable `mergetool.<tool>.cmd`.
+variable `difftool.<tool>.cmd`.
 +
 When 'git-difftool' is invoked with this tool (either through the
-`-t` or `--tool` option or the `merge.tool` configuration variable)
+`-t` or `--tool` option or the `diff.tool` configuration variable)
 the configured command line will be invoked with the following
 variables available: `$LOCAL` is set to the name of the temporary
 file containing the contents of the diff pre-image and `$REMOTE`
@@ -61,24 +61,24 @@ with custom merge tool commands and has the same value as `$LOCAL`.
 
 CONFIG VARIABLES
 ----------------
-merge.tool::
+'git-difftool' falls back to 'git-mergetool' config variables when the
+difftool equivalents have not been defined.
+
+diff.tool::
 	The default merge tool to use.
+
+difftool.<tool>.path::
+	Override the path for the given tool.  This is useful in case
+	your tool is not in the PATH.
+
+difftool.<tool>.cmd::
+	Specify the command to invoke the specified merge tool.
 +
 See the `--tool=<tool>` option above for more details.
 
 merge.keepBackup::
 	The original, unedited file content can be saved to a file with
 	a `.orig` extension.  Defaults to `true` (i.e. keep the backup files).
-
-mergetool.<tool>.path::
-	Override the path for the given tool.  This is useful in case
-	your tool is not in the PATH.
-
-mergetool.<tool>.cmd::
-	Specify the command to invoke the specified merge tool.
-+
-See the `--tool=<tool>` option above for more details.
-
 
 SEE ALSO
 --------

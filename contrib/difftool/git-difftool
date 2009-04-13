@@ -4,7 +4,7 @@
 # This is a wrapper around the GIT_EXTERNAL_DIFF-compatible
 # git-difftool-helper script.  This script exports
 # GIT_EXTERNAL_DIFF and GIT_PAGER for use by git, and
-# GIT_DIFFTOOL_NO_PROMPT and GIT_MERGE_TOOL for use by git-difftool-helper.
+# GIT_DIFFTOOL_NO_PROMPT and GIT_DIFF_TOOL for use by git-difftool-helper.
 # Any arguments that are unknown to this script are forwarded to 'git diff'.
 
 use strict;
@@ -49,12 +49,12 @@ sub generate_command
 		}
 		if ($arg eq '-t' or $arg eq '--tool') {
 			usage() if $#ARGV <= $idx;
-			$ENV{GIT_MERGE_TOOL} = $ARGV[$idx + 1];
+			$ENV{GIT_DIFF_TOOL} = $ARGV[$idx + 1];
 			$skip_next = 1;
 			next;
 		}
 		if ($arg =~ /^--tool=/) {
-			$ENV{GIT_MERGE_TOOL} = substr($arg, 7);
+			$ENV{GIT_DIFF_TOOL} = substr($arg, 7);
 			next;
 		}
 		if ($arg eq '--no-prompt') {

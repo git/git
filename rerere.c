@@ -12,15 +12,15 @@ static int rerere_autoupdate;
 
 static char *merge_rr_path;
 
-static const char *rr_path(const char *name, const char *file)
+const char *rerere_path(const char *hex, const char *file)
 {
-	return git_path("rr-cache/%s/%s", name, file);
+	return git_path("rr-cache/%s/%s", hex, file);
 }
 
-static int has_resolution(const char *name)
+int has_rerere_resolution(const char *hex)
 {
 	struct stat st;
-	return !stat(rr_path(name, "postimage"), &st);
+	return !stat(rerere_path(hex, "postimage"), &st);
 }
 
 static void read_rr(struct string_list *rr)
@@ -208,12 +208,12 @@ static int merge(const char *name, const char *path)
 	mmbuffer_t result = {NULL, 0};
 	xpparam_t xpp = {XDF_NEED_MINIMAL};
 
-	if (handle_file(path, NULL, rr_path(name, "thisimage")) < 0)
+	if (handle_file(path, NULL, rerere_path(name, "thisimage")) < 0)
 		return 1;
 
-	if (read_mmfile(&cur, rr_path(name, "thisimage")) ||
-			read_mmfile(&base, rr_path(name, "preimage")) ||
-			read_mmfile(&other, rr_path(name, "postimage")))
+	if (read_mmfile(&cur, rerere_path(name, "thisimage")) ||
+			read_mmfile(&base, rerere_path(name, "preimage")) ||
+			read_mmfile(&other, rerere_path(name, "postimage")))
 		return 1;
 	ret = xdl_merge(&base, &cur, "", &other, "",
 			&xpp, XDL_MERGE_ZEALOUS, &result);
@@ -291,7 +291,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 			string_list_insert(path, rr)->util = hex;
 			if (mkdir(git_path("rr-cache/%s", hex), 0755))
 				continue;
-			handle_file(path, NULL, rr_path(hex, "preimage"));
+			handle_file(path, NULL, rerere_path(hex, "preimage"));
 			fprintf(stderr, "Recorded preimage for '%s'\n", path);
 		}
 	}
@@ -307,7 +307,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		const char *path = rr->items[i].string;
 		const char *name = (const char *)rr->items[i].util;
 
-		if (has_resolution(name)) {
+		if (has_rerere_resolution(name)) {
 			if (!merge(name, path)) {
 				if (rerere_autoupdate)
 					string_list_insert(path, &update);
@@ -326,7 +326,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 			continue;
 
 		fprintf(stderr, "Recorded resolution for '%s'.\n", path);
-		copy_file(rr_path(name, "postimage"), path, 0666);
+		copy_file(rerere_path(name, "postimage"), path, 0666);
 	mark_resolved:
 		rr->items[i].util = NULL;
 	}

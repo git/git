@@ -166,7 +166,7 @@ static inline const char *skip_prefix(const char *str, const char *prefix)
 	return strncmp(str, prefix, len) ? NULL : str + len;
 }
 
-#ifdef NO_MMAP
+#if defined(NO_MMAP) || defined(USE_WIN32_MMAP)
 
 #ifndef PROT_READ
 #define PROT_READ 1
@@ -180,12 +180,18 @@ static inline const char *skip_prefix(const char *str, const char *prefix)
 extern void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 extern int git_munmap(void *start, size_t length);
 
+#else /* NO_MMAP || USE_WIN32_MMAP */
+
+#include <sys/mman.h>
+
+#endif /* NO_MMAP || USE_WIN32_MMAP */
+
+#ifdef NO_MMAP
+
 /* This value must be multiple of (pagesize * 2) */
 #define DEFAULT_PACKED_GIT_WINDOW_SIZE (1 * 1024 * 1024)
 
 #else /* NO_MMAP */
-
-#include <sys/mman.h>
 
 /* This value must be multiple of (pagesize * 2) */
 #define DEFAULT_PACKED_GIT_WINDOW_SIZE \
@@ -386,6 +392,20 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 # define FORCE_DIR_SET_GID S_ISGID
 #else
 # define FORCE_DIR_SET_GID 0
+#endif
+
+#ifdef NO_NSEC
+#undef USE_NSEC
+#define ST_CTIME_NSEC(st) 0
+#define ST_MTIME_NSEC(st) 0
+#else
+#ifdef USE_ST_TIMESPEC
+#define ST_CTIME_NSEC(st) ((unsigned int)((st).st_ctimespec.tv_nsec))
+#define ST_MTIME_NSEC(st) ((unsigned int)((st).st_mtimespec.tv_nsec))
+#else
+#define ST_CTIME_NSEC(st) ((unsigned int)((st).st_ctim.tv_nsec))
+#define ST_MTIME_NSEC(st) ((unsigned int)((st).st_mtim.tv_nsec))
+#endif
 #endif
 
 #endif

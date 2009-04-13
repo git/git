@@ -10,7 +10,7 @@ enum {
 	ERR_RUN_COMMAND_WAITPID_SIGNAL,
 	ERR_RUN_COMMAND_WAITPID_NOEXIT,
 };
-#define IS_RUN_COMMAND_ERR(x) ((x) <= -ERR_RUN_COMMAND_FORK)
+#define IS_RUN_COMMAND_ERR(x) (-(x) >= ERR_RUN_COMMAND_FORK)
 
 struct child_process {
 	const char **argv;

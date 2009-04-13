@@ -39,7 +39,7 @@ of lines before or after the line given by <start>.
 	Show raw timestamp (Default: off).
 
 -S <revs-file>::
-	Use revs from revs-file instead of calling linkgit:git-rev-list[1].
+	Use revisions from revs-file instead of calling linkgit:git-rev-list[1].
 
 --reverse::
 	Walk history forward instead of backward. Instead of showing
@@ -69,6 +69,14 @@ of lines before or after the line given by <start>.
 	This flag makes the command pretend as if the working
 	tree copy has the contents of the named file (specify
 	`-` to make the command read from the standard input).
+
+--date <format>::
+	The value is one of the following alternatives:
+	{relative,local,default,iso,rfc,short}. If --date is not
+	provided, the value of the blame.date config variable is
+	used. If the blame.date config variable is also not set, the
+	iso format is used. For more information, See the discussion
+	of the --date option at linkgit:git-log[1].
 
 -M|<num>|::
 	Detect moving lines in the file as well.  When a commit

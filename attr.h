@@ -31,4 +31,10 @@ struct git_attr_check {
 
 int git_checkattr(const char *path, int, struct git_attr_check *);
 
+enum git_attr_direction {
+	GIT_ATTR_CHECKIN,
+	GIT_ATTR_CHECKOUT
+};
+void git_attr_set_direction(enum git_attr_direction, struct index_state *);
+
 #endif /* ATTR_H */

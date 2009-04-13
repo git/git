@@ -85,6 +85,11 @@ objectsize::
 objectname::
 	The object name (aka SHA-1).
 
+upstream::
+	The name of a local ref which can be considered ``upstream''
+	from the displayed ref. Respects `:short` in the same way as
+	`refname` above.
+
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.

@@ -7,8 +7,14 @@ Fixes since v1.6.2.1
 * A longstanding confusing description of what --pickaxe option of
   git-diff does has been clarified in the documentation.
 
+* "git-blame -S" did not quite work near the commits that were given
+  on the command line correctly.
+
 * "git diff --pickaxe-regexp" did not count overlapping matches
   correctly.
+
+* "git diff" did not feed files in work-tree representation to external
+  diff and textconv.
 
 * "git-fetch" in a repository that was not cloned from anywhere said
   it cannot find 'origin', which was hard to understand for new people.
@@ -27,9 +33,13 @@ Fixes since v1.6.2.1
 * 'git-submodule add' did not tolerate extra slashes and ./ in the path it
   accepted from the command line; it now is more lenient.
 
+* git-svn misbehaved when the project contained a path that began with
+  two dashes.
 
----
-exec >/var/tmp/1
-O=v1.6.2.1-23-g67c176f
-echo O=$(git describe maint)
-git shortlog --no-merges $O..maint
+* import-zips script (in contrib) did not compute the common directory
+  prefix correctly.
+
+* miscompilation of negated enum constants by old gcc (2.9) affected the
+  codepaths to spawn subprocesses.
+
+Many small documentation updates are included as well.

@@ -121,6 +121,7 @@ The placeholders are:
 - '%d': ref names, like the --decorate option of linkgit:git-log[1]
 - '%e': encoding
 - '%s': subject
+- '%f': sanitized subject line, suitable for a filename
 - '%b': body
 - '%Cred': switch color to red
 - '%Cgreen': switch color to green
@@ -151,4 +152,13 @@ $ git log -2 --pretty=tformat:%h 4da45bef \
   | perl -pe '$_ .= " -- NO NEWLINE\n" unless /\n/'
 4da45be
 7134973
+---------------------
++
+In addition, any unrecognized string that has a `%` in it is interpreted
+as if it has `tformat:` in front of it.  For example, these two are
+equivalent:
++
+---------------------
+$ git log -2 --pretty=tformat:%h 4da45bef
+$ git log -2 --pretty=%h 4da45bef
 ---------------------

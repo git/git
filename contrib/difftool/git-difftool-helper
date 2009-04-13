@@ -128,8 +128,10 @@ launch_merge_tool () {
 	cleanup_temp_files
 }
 
-# Verifies that mergetool.<tool>.cmd exists
+# Verifies that (difftool|mergetool).<tool>.cmd exists
 valid_custom_tool() {
+	merge_tool_cmd="$(git config difftool.$1.cmd)"
+	test -z "$merge_tool_cmd" &&
 	merge_tool_cmd="$(git config mergetool.$1.cmd)"
 	test -n "$merge_tool_cmd"
 }
@@ -150,8 +152,11 @@ valid_tool() {
 }
 
 # Sets up the merge_tool_path variable.
-# This handles the mergetool.<tool>.path configuration.
+# This handles the difftool.<tool>.path configuration.
+# This also falls back to mergetool defaults.
 init_merge_tool_path() {
+	merge_tool_path=$(git config difftool."$1".path)
+	test -z "$merge_tool_path" &&
 	merge_tool_path=$(git config mergetool."$1".path)
 	if test -z "$merge_tool_path"; then
 		case "$1" in
@@ -165,15 +170,19 @@ init_merge_tool_path() {
 	fi
 }
 
-# Allow the GIT_MERGE_TOOL variable to provide a default value
+# Allow GIT_DIFF_TOOL and GIT_MERGE_TOOL to provide default values
 test -n "$GIT_MERGE_TOOL" && merge_tool="$GIT_MERGE_TOOL"
+test -n "$GIT_DIFF_TOOL" && merge_tool="$GIT_DIFF_TOOL"
 
-# If not merge tool was specified then use the merge.tool
+# If merge tool was not specified then use the diff.tool
 # configuration variable.  If that's invalid then reset merge_tool.
+# Fallback to merge.tool.
 if test -z "$merge_tool"; then
+	merge_tool=$(git config diff.tool)
+	test -z "$merge_tool" &&
 	merge_tool=$(git config merge.tool)
 	if test -n "$merge_tool" && ! valid_tool "$merge_tool"; then
-		echo >&2 "git config option merge.tool set to unknown tool: $merge_tool"
+		echo >&2 "git config option diff.tool set to unknown tool: $merge_tool"
 		echo >&2 "Resetting to default..."
 		unset merge_tool
 	fi

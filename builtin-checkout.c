@@ -53,9 +53,6 @@ static int update_some(const unsigned char *sha1, const char *base, int baselen,
 	int len;
 	struct cache_entry *ce;
 
-	if (S_ISGITLINK(mode))
-		return 0;
-
 	if (S_ISDIR(mode))
 		return READ_TREE_RECURSIVE;
 
@@ -295,6 +292,8 @@ static void show_local_changes(struct object *head)
 	init_revisions(&rev, NULL);
 	rev.abbrev = 0;
 	rev.diffopt.output_format |= DIFF_FORMAT_NAME_STATUS;
+	if (diff_setup_done(&rev.diffopt) < 0)
+		die("diff_setup_done failed");
 	add_pending_object(&rev, head, NULL);
 	run_diff_index(&rev, 0);
 }
@@ -351,16 +350,11 @@ struct branch_info {
 static void setup_branch_path(struct branch_info *branch)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int ret;
 
-	if ((ret = interpret_nth_last_branch(branch->name, &buf))
-	    && ret == strlen(branch->name)) {
+	strbuf_branchname(&buf, branch->name);
+	if (strcmp(buf.buf, branch->name))
 		branch->name = xstrdup(buf.buf);
-		strbuf_splice(&buf, 0, 0, "refs/heads/", 11);
-	} else {
-		strbuf_addstr(&buf, "refs/heads/");
-		strbuf_addstr(&buf, branch->name);
-	}
+	strbuf_splice(&buf, 0, 0, "refs/heads/", 11);
 	branch->path = strbuf_detach(&buf, NULL);
 }
 
@@ -405,7 +399,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.verbose_update = !opts->quiet;
 		topts.fn = twoway_merge;
 		topts.dir = xcalloc(1, sizeof(*topts.dir));
-		topts.dir->show_ignored = 1;
+		topts.dir->flags |= DIR_SHOW_IGNORED;
 		topts.dir->exclude_per_dir = ".gitignore";
 		tree = parse_tree_indirect(old->commit->object.sha1);
 		init_tree_desc(&trees[0], tree->buffer, tree->size);
@@ -501,10 +495,10 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 		create_symref("HEAD", new->path, msg.buf);
 		if (!opts->quiet) {
 			if (old->path && !strcmp(new->path, old->path))
-				fprintf(stderr, "Already on \"%s\"\n",
+				fprintf(stderr, "Already on '%s'\n",
 					new->name);
 			else
-				fprintf(stderr, "Switched to%s branch \"%s\"\n",
+				fprintf(stderr, "Switched to%s branch '%s'\n",
 					opts->new_branch ? " a new" : "",
 					new->name);
 		}
@@ -513,7 +507,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 			   REF_NODEREF, DIE_ON_ERR);
 		if (!opts->quiet) {
 			if (old->path)
-				fprintf(stderr, "Note: moving to \"%s\" which isn't a local branch\nIf you want to create a new branch from this checkout, you may do so\n(now or later) by using -b with the checkout command again. Example:\n  git checkout -b <new_branch_name>\n", new->name);
+				fprintf(stderr, "Note: moving to '%s' which isn't a local branch\nIf you want to create a new branch from this checkout, you may do so\n(now or later) by using -b with the checkout command again. Example:\n  git checkout -b <new_branch_name>\n", new->name);
 			describe_detached_head("HEAD is now at", new->commit);
 		}
 	}
@@ -556,8 +550,8 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 
 	if (!old.commit && !opts->force) {
 		if (!opts->quiet) {
-			fprintf(stderr, "warning: You appear to be on a branch yet to be born.\n");
-			fprintf(stderr, "warning: Forcing checkout of %s.\n", new->name);
+			warning("You appear to be on a branch yet to be born.");
+			warning("Forcing checkout of %s.", new->name);
 		}
 		opts->force = 1;
 	}
@@ -736,12 +730,11 @@ no_reference:
 
 	if (opts.new_branch) {
 		struct strbuf buf = STRBUF_INIT;
-		strbuf_addstr(&buf, "refs/heads/");
-		strbuf_addstr(&buf, opts.new_branch);
+		if (strbuf_check_branch_ref(&buf, opts.new_branch))
+			die("git checkout: we do not like '%s' as a branch name.",
+			    opts.new_branch);
 		if (!get_sha1(buf.buf, rev))
 			die("git checkout: branch %s already exists", opts.new_branch);
-		if (check_ref_format(buf.buf))
-			die("git checkout: we do not like '%s' as a branch name.", opts.new_branch);
 		strbuf_release(&buf);
 	}
 

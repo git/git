@@ -17,6 +17,7 @@
 #include "run-command.h"
 #include "shortlog.h"
 #include "remote.h"
+#include "string-list.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -416,17 +417,12 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 }
 
 /* format-patch */
-#define FORMAT_PATCH_NAME_MAX 64
-
-static int istitlechar(char c)
-{
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-		(c >= '0' && c <= '9') || c == '.' || c == '_';
-}
 
 static const char *fmt_patch_suffix = ".patch";
 static int numbered = 0;
 static int auto_number = 1;
+
+static char *default_attach = NULL;
 
 static char **extra_hdr;
 static int extra_hdr_nr;
@@ -459,6 +455,11 @@ static void add_header(const char *value)
 	extra_hdr[extra_hdr_nr++] = xstrndup(value, len);
 }
 
+#define THREAD_SHALLOW 1
+#define THREAD_DEEP 2
+static int thread = 0;
+static int do_signoff = 0;
+
 static int git_format_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "format.headers")) {
@@ -488,94 +489,60 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		auto_number = auto_number && numbered;
 		return 0;
 	}
+	if (!strcmp(var, "format.attach")) {
+		if (value && *value)
+			default_attach = xstrdup(value);
+		else
+			default_attach = xstrdup(git_version_string);
+		return 0;
+	}
+	if (!strcmp(var, "format.thread")) {
+		if (value && !strcasecmp(value, "deep")) {
+			thread = THREAD_DEEP;
+			return 0;
+		}
+		if (value && !strcasecmp(value, "shallow")) {
+			thread = THREAD_SHALLOW;
+			return 0;
+		}
+		thread = git_config_bool(var, value) && THREAD_SHALLOW;
+		return 0;
+	}
+	if (!strcmp(var, "format.signoff")) {
+		do_signoff = git_config_bool(var, value);
+		return 0;
+	}
 
 	return git_log_config(var, value, cb);
-}
-
-
-static const char *get_oneline_for_filename(struct commit *commit,
-					    int keep_subject)
-{
-	static char filename[PATH_MAX];
-	char *sol;
-	int len = 0;
-	int suffix_len = strlen(fmt_patch_suffix) + 1;
-
-	sol = strstr(commit->buffer, "\n\n");
-	if (!sol)
-		filename[0] = '\0';
-	else {
-		int j, space = 0;
-
-		sol += 2;
-		/* strip [PATCH] or [PATCH blabla] */
-		if (!keep_subject && !prefixcmp(sol, "[PATCH")) {
-			char *eos = strchr(sol + 6, ']');
-			if (eos) {
-				while (isspace(*eos))
-					eos++;
-				sol = eos;
-			}
-		}
-
-		for (j = 0;
-		     j < FORMAT_PATCH_NAME_MAX - suffix_len - 5 &&
-			     len < sizeof(filename) - suffix_len &&
-			     sol[j] && sol[j] != '\n';
-		     j++) {
-			if (istitlechar(sol[j])) {
-				if (space) {
-					filename[len++] = '-';
-					space = 0;
-				}
-				filename[len++] = sol[j];
-				if (sol[j] == '.')
-					while (sol[j + 1] == '.')
-						j++;
-			} else
-				space = 1;
-		}
-		while (filename[len - 1] == '.'
-		       || filename[len - 1] == '-')
-			len--;
-		filename[len] = '\0';
-	}
-	return filename;
 }
 
 static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
 static int outdir_offset;
 
-static int reopen_stdout(const char *oneline, int nr, int total)
+static int reopen_stdout(struct commit *commit, struct rev_info *rev)
 {
-	char filename[PATH_MAX];
-	int len = 0;
+	struct strbuf filename = STRBUF_INIT;
 	int suffix_len = strlen(fmt_patch_suffix) + 1;
 
 	if (output_directory) {
-		len = snprintf(filename, sizeof(filename), "%s",
-				output_directory);
-		if (len >=
-		    sizeof(filename) - FORMAT_PATCH_NAME_MAX - suffix_len)
+		strbuf_addstr(&filename, output_directory);
+		if (filename.len >=
+		    PATH_MAX - FORMAT_PATCH_NAME_MAX - suffix_len)
 			return error("name of output directory is too long");
-		if (filename[len - 1] != '/')
-			filename[len++] = '/';
+		if (filename.buf[filename.len - 1] != '/')
+			strbuf_addch(&filename, '/');
 	}
 
-	if (!oneline)
-		len += sprintf(filename + len, "%d", nr);
-	else {
-		len += sprintf(filename + len, "%04d-", nr);
-		len += snprintf(filename + len, sizeof(filename) - len - 1
-				- suffix_len, "%s", oneline);
-		strcpy(filename + len, fmt_patch_suffix);
-	}
+	get_patch_filename(commit, rev->nr, fmt_patch_suffix, &filename);
 
-	fprintf(realstdout, "%s\n", filename + outdir_offset);
-	if (freopen(filename, "w", stdout) == NULL)
-		return error("Cannot open patch file %s",filename);
+	if (!DIFF_OPT_TST(&rev->diffopt, QUIET))
+		fprintf(realstdout, "%s\n", filename.buf + outdir_offset);
 
+	if (freopen(filename.buf, "w", stdout) == NULL)
+		return error("Cannot open patch file %s", filename.buf);
+
+	strbuf_release(&filename);
 	return 0;
 }
 
@@ -645,7 +612,6 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      int nr, struct commit **list, struct commit *head)
 {
 	const char *committer;
-	char *head_sha1;
 	const char *subject_start = NULL;
 	const char *body = "*** SUBJECT HERE ***\n\n*** BLURB HERE ***\n";
 	const char *msg;
@@ -656,20 +622,40 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	const char *encoding = "utf-8";
 	struct diff_options opts;
 	int need_8bit_cte = 0;
+	struct commit *commit = NULL;
 
 	if (rev->commit_format != CMIT_FMT_EMAIL)
 		die("Cover letter needs email format");
 
-	if (!use_stdout && reopen_stdout(numbered_files ?
-				NULL : "cover-letter", 0, rev->total))
+	committer = git_committer_info(0);
+
+	if (!numbered_files) {
+		/*
+		 * We fake a commit for the cover letter so we get the filename
+		 * desired.
+		 */
+		commit = xcalloc(1, sizeof(*commit));
+		commit->buffer = xmalloc(400);
+		snprintf(commit->buffer, 400,
+			"tree 0000000000000000000000000000000000000000\n"
+			"parent %s\n"
+			"author %s\n"
+			"committer %s\n\n"
+			"cover letter\n",
+			sha1_to_hex(head->object.sha1), committer, committer);
+	}
+
+	if (!use_stdout && reopen_stdout(commit, rev))
 		return;
 
-	head_sha1 = sha1_to_hex(head->object.sha1);
+	if (commit) {
 
-	log_write_email_headers(rev, head_sha1, &subject_start, &extra_headers,
+		free(commit->buffer);
+		free(commit);
+	}
+
+	log_write_email_headers(rev, head, &subject_start, &extra_headers,
 				&need_8bit_cte);
-
-	committer = git_committer_info(0);
 
 	msg = body;
 	pp_user_info(NULL, CMIT_FMT_EMAIL, &sb, committer, DATE_RFC2822,
@@ -766,7 +752,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int numbered_files = 0;		/* _just_ numbers */
 	int subject_prefix = 0;
 	int ignore_if_in_upstream = 0;
-	int thread = 0;
 	int cover_letter = 0;
 	int boundary_count = 0;
 	int no_binary_diff = 0;
@@ -786,6 +771,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
 
 	rev.subject_prefix = fmt_patch_subject_prefix;
+
+	if (default_attach) {
+		rev.mime_boundary = default_attach;
+		rev.no_inline = 1;
+	}
 
 	/*
 	 * Parse the arguments before setup_revisions(), or something
@@ -833,13 +823,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 		else if (!strcmp(argv[i], "--signoff") ||
 			 !strcmp(argv[i], "-s")) {
-			const char *committer;
-			const char *endpos;
-			committer = git_committer_info(IDENT_ERROR_ON_NO_NAME);
-			endpos = strchr(committer, '>');
-			if (!endpos)
-				die("bogus committer info %s", committer);
-			add_signoff = xmemdupz(committer, endpos - committer + 1);
+			do_signoff = 1;
 		}
 		else if (!strcmp(argv[i], "--attach")) {
 			rev.mime_boundary = git_version_string;
@@ -848,6 +832,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		else if (!prefixcmp(argv[i], "--attach=")) {
 			rev.mime_boundary = argv[i] + 9;
 			rev.no_inline = 1;
+		}
+		else if (!strcmp(argv[i], "--no-attach")) {
+			rev.mime_boundary = NULL;
+			rev.no_inline = 0;
 		}
 		else if (!strcmp(argv[i], "--inline")) {
 			rev.mime_boundary = git_version_string;
@@ -859,8 +847,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 		else if (!strcmp(argv[i], "--ignore-if-in-upstream"))
 			ignore_if_in_upstream = 1;
-		else if (!strcmp(argv[i], "--thread"))
-			thread = 1;
+		else if (!strcmp(argv[i], "--thread")
+			|| !strcmp(argv[i], "--thread=shallow"))
+			thread = THREAD_SHALLOW;
+		else if (!strcmp(argv[i], "--thread=deep"))
+			thread = THREAD_DEEP;
+		else if (!strcmp(argv[i], "--no-thread"))
+			thread = 0;
 		else if (!prefixcmp(argv[i], "--in-reply-to="))
 			in_reply_to = argv[i] + 14;
 		else if (!strcmp(argv[i], "--in-reply-to")) {
@@ -877,10 +870,22 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			cover_letter = 1;
 		else if (!strcmp(argv[i], "--no-binary"))
 			no_binary_diff = 1;
+		else if (!prefixcmp(argv[i], "--add-header="))
+			add_header(argv[i] + 13);
 		else
 			argv[j++] = argv[i];
 	}
 	argc = j;
+
+	if (do_signoff) {
+		const char *committer;
+		const char *endpos;
+		committer = git_committer_info(IDENT_ERROR_ON_NO_NAME);
+		endpos = strchr(committer, '>');
+		if (!endpos)
+			die("bogus committer info %s", committer);
+		add_signoff = xmemdupz(committer, endpos - committer + 1);
+	}
 
 	for (i = 0; i < extra_hdr_nr; i++) {
 		strbuf_addstr(&buf, extra_hdr[i]);
@@ -1009,8 +1014,14 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		numbered = 1;
 	if (numbered)
 		rev.total = total + start_number - 1;
-	if (in_reply_to)
-		rev.ref_message_id = clean_message_id(in_reply_to);
+	if (in_reply_to || thread || cover_letter)
+		rev.ref_message_ids = xcalloc(1, sizeof(struct string_list));
+	if (in_reply_to) {
+		const char *msgid = clean_message_id(in_reply_to);
+		string_list_append(msgid, rev.ref_message_ids);
+	}
+	rev.numbered_files = numbered_files;
+	rev.patch_suffix = fmt_patch_suffix;
 	if (cover_letter) {
 		if (thread)
 			gen_message_id(&rev, "cover");
@@ -1029,21 +1040,39 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			/* Have we already had a message ID? */
 			if (rev.message_id) {
 				/*
-				 * If we've got the ID to be a reply
-				 * to, discard the current ID;
-				 * otherwise, make everything a reply
-				 * to that.
+				 * For deep threading: make every mail
+				 * a reply to the previous one, no
+				 * matter what other options are set.
+				 *
+				 * For shallow threading:
+				 *
+				 * Without --cover-letter and
+				 * --in-reply-to, make every mail a
+				 * reply to the one before.
+				 *
+				 * With --in-reply-to but no
+				 * --cover-letter, make every mail a
+				 * reply to the <reply-to>.
+				 *
+				 * With --cover-letter, make every
+				 * mail but the cover letter a reply
+				 * to the cover letter.  The cover
+				 * letter is a reply to the
+				 * --in-reply-to, if specified.
 				 */
-				if (rev.ref_message_id)
+				if (thread == THREAD_SHALLOW
+				    && rev.ref_message_ids->nr > 0
+				    && (!cover_letter || rev.nr > 1))
 					free(rev.message_id);
 				else
-					rev.ref_message_id = rev.message_id;
+					string_list_append(rev.message_id,
+							   rev.ref_message_ids);
 			}
 			gen_message_id(&rev, sha1_to_hex(commit->object.sha1));
 		}
-		if (!use_stdout && reopen_stdout(numbered_files ? NULL :
-				get_oneline_for_filename(commit, keep_subject),
-				rev.nr, rev.total))
+
+		if (!use_stdout && reopen_stdout(numbered_files ? NULL : commit,
+						 &rev))
 			die("Failed to create output files");
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);

@@ -242,10 +242,10 @@ static int ambiguous_path(const char *path, int len)
  * *string and *len will only be substituted, and *string returned (for
  * later free()ing) if the string passed in is of the form @{-<n>}.
  */
-static char *substitute_nth_last_branch(const char **string, int *len)
+static char *substitute_branch_name(const char **string, int *len)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int ret = interpret_nth_last_branch(*string, &buf);
+	int ret = interpret_branch_name(*string, &buf);
 
 	if (ret == *len) {
 		size_t size;
@@ -259,7 +259,7 @@ static char *substitute_nth_last_branch(const char **string, int *len)
 
 int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 {
-	char *last_branch = substitute_nth_last_branch(&str, &len);
+	char *last_branch = substitute_branch_name(&str, &len);
 	const char **p, *r;
 	int refs_found = 0;
 
@@ -288,7 +288,7 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 
 int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 {
-	char *last_branch = substitute_nth_last_branch(&str, &len);
+	char *last_branch = substitute_branch_name(&str, &len);
 	const char **p;
 	int logs_found = 0;
 
@@ -355,7 +355,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		struct strbuf buf = STRBUF_INIT;
 		int ret;
 		/* try the @{-N} syntax for n-th checkout */
-		ret = interpret_nth_last_branch(str+at, &buf);
+		ret = interpret_branch_name(str+at, &buf);
 		if (ret > 0) {
 			/* substitute this branch name and restart */
 			return get_sha1_1(buf.buf, buf.len, sha1);
@@ -750,7 +750,7 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
  * If the input was ok but there are not N branch switches in the
  * reflog, it returns 0.
  */
-int interpret_nth_last_branch(const char *name, struct strbuf *buf)
+int interpret_branch_name(const char *name, struct strbuf *buf)
 {
 	long nth;
 	int i, retval;

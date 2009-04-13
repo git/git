@@ -565,6 +565,31 @@ static int git_default_branch_config(const char *var, const char *value)
 	return 0;
 }
 
+static int git_default_push_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "push.default")) {
+		if (!value)
+			return config_error_nonbool(var);
+		else if (!strcmp(value, "nothing"))
+			push_default = PUSH_DEFAULT_NOTHING;
+		else if (!strcmp(value, "matching"))
+			push_default = PUSH_DEFAULT_MATCHING;
+		else if (!strcmp(value, "tracking"))
+			push_default = PUSH_DEFAULT_TRACKING;
+		else if (!strcmp(value, "current"))
+			push_default = PUSH_DEFAULT_CURRENT;
+		else {
+			error("Malformed value for %s: %s", var, value);
+			return error("Must be one of nothing, matching, "
+				     "tracking or current.");
+		}
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
+
 static int git_default_mailmap_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "mailmap.file"))
@@ -587,6 +612,9 @@ int git_default_config(const char *var, const char *value, void *dummy)
 
 	if (!prefixcmp(var, "branch."))
 		return git_default_branch_config(var, value);
+
+	if (!prefixcmp(var, "push."))
+		return git_default_push_config(var, value);
 
 	if (!prefixcmp(var, "mailmap."))
 		return git_default_mailmap_config(var, value);
@@ -644,28 +672,37 @@ int git_config_global(void)
 
 int git_config(config_fn_t fn, void *data)
 {
-	int ret = 0;
+	int ret = 0, found = 0;
 	char *repo_config = NULL;
 	const char *home = NULL;
 
 	/* Setting $GIT_CONFIG makes git read _only_ the given config file. */
 	if (config_exclusive_filename)
 		return git_config_from_file(fn, config_exclusive_filename, data);
-	if (git_config_system() && !access(git_etc_gitconfig(), R_OK))
+	if (git_config_system() && !access(git_etc_gitconfig(), R_OK)) {
 		ret += git_config_from_file(fn, git_etc_gitconfig(),
 					    data);
+		found += 1;
+	}
 
 	home = getenv("HOME");
 	if (git_config_global() && home) {
 		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
-		if (!access(user_config, R_OK))
+		if (!access(user_config, R_OK)) {
 			ret += git_config_from_file(fn, user_config, data);
+			found += 1;
+		}
 		free(user_config);
 	}
 
 	repo_config = git_pathdup("config");
-	ret += git_config_from_file(fn, repo_config, data);
+	if (!access(repo_config, R_OK)) {
+		ret += git_config_from_file(fn, repo_config, data);
+		found += 1;
+	}
 	free(repo_config);
+	if (found == 0)
+		return -1;
 	return ret;
 }
 

@@ -5,9 +5,12 @@ git_svn_id=git""-svn-id
 
 if test -n "$NO_SVN_TESTS"
 then
-	test_expect_success 'skipping git svn tests, NO_SVN_TESTS defined' :
+	say 'skipping git svn tests, NO_SVN_TESTS defined'
 	test_done
-	exit
+fi
+if ! test_have_prereq PERL; then
+	say 'skipping git svn tests, perl not available'
+	test_done
 fi
 
 GIT_DIR=$PWD/.git
@@ -17,9 +20,8 @@ SVN_TREE=$GIT_SVN_DIR/svn-tree
 svn >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git svn tests, svn not found' :
+    say 'skipping git svn tests, svn not found'
     test_done
-    exit
 fi
 
 svnrepo=$PWD/svnrepo
@@ -41,9 +43,8 @@ then
 	else
 		err='Perl SVN libraries not found or unusable, skipping test'
 	fi
-	test_expect_success "$err" :
+	say "$err"
 	test_done
-	exit
 fi
 
 rawsvnrepo="$svnrepo"
@@ -144,7 +145,6 @@ require_svnserve () {
     then
         say 'skipping svnserve test. (set $SVNSERVE_PORT to enable)'
         test_done
-        exit
     fi
 }
 

@@ -253,6 +253,7 @@ static int parse_archive_args(int argc, const char **argv,
 	const char *base = NULL;
 	const char *remote = NULL;
 	const char *exec = NULL;
+	const char *output = NULL;
 	int compression_level = -1;
 	int verbose = 0;
 	int i;
@@ -262,6 +263,8 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_STRING(0, "format", &format, "fmt", "archive format"),
 		OPT_STRING(0, "prefix", &base, "prefix",
 			"prepend prefix to each pathname in the archive"),
+		OPT_STRING(0, "output", &output, "file",
+			"write the archive to this file"),
 		OPT__VERBOSE(&verbose),
 		OPT__COMPR('0', &compression_level, "store only", 0),
 		OPT__COMPR('1', &compression_level, "compress faster", 1),
@@ -290,6 +293,8 @@ static int parse_archive_args(int argc, const char **argv,
 		die("Unexpected option --remote");
 	if (exec)
 		die("Option --exec can only be used together with --remote");
+	if (output)
+		die("Unexpected option --output");
 
 	if (!base)
 		base = "";

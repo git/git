@@ -9,7 +9,7 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--exec-path[=GIT_EXEC_PATH]]
+'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [--html-path]
     [-p|--paginate|--no-pager]
     [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]
     [--help] COMMAND [ARGS]
@@ -43,9 +43,12 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.6.2/git.html[documentation for release 1.6.2]
+* link:v1.6.2.3/git.html[documentation for release 1.6.2.3]
 
 * release notes for
+  link:RelNotes-1.6.2.3.txt[1.6.2.3],
+  link:RelNotes-1.6.2.2.txt[1.6.2.2],
+  link:RelNotes-1.6.2.1.txt[1.6.2.1],
   link:RelNotes-1.6.2.txt[1.6.2].
 
 * link:v1.6.1.3/git.html[documentation for release 1.6.1.3]
@@ -176,6 +179,10 @@ help ...`.
 	This can also be controlled by setting the GIT_EXEC_PATH
 	environment variable. If no path is given, 'git' will print
 	the current setting and then exit.
+
+--html-path::
+	Print the path to wherever your git HTML documentation is installed
+	and exit.
 
 -p::
 --paginate::

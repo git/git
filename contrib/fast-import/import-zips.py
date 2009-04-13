@@ -44,7 +44,8 @@ for zipfile in argv[1:]:
 			common_prefix = name[:name.rfind('/') + 1]
 		else:
 			while not name.startswith(common_prefix):
-				common_prefix = name[:name.rfind('/') + 1]
+				last_slash = common_prefix[:-1].rfind('/') + 1
+				common_prefix = common_prefix[:last_slash]
 
 		mark[name] = ':' + str(next_mark)
 		next_mark += 1

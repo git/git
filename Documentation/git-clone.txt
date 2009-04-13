@@ -117,7 +117,7 @@ then the cloned repository will become corrupt.
 --origin <name>::
 -o <name>::
 	Instead of using the remote name 'origin' to keep track
-	of the upstream repository, use <name> instead.
+	of the upstream repository, use <name>.
 
 --upload-pack <upload-pack>::
 -u <upload-pack>::

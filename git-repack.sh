@@ -60,6 +60,7 @@ case ",$all_into_one," in
 	args='--unpacked --incremental'
 	;;
 ,t,)
+	args= existing=
 	if [ -d "$PACKDIR" ]; then
 		for e in `cd "$PACKDIR" && find . -type f -name '*.pack' \
 			| sed -e 's/^\.\///' -e 's/\.pack$//'`
@@ -67,11 +68,10 @@ case ",$all_into_one," in
 			if [ -e "$PACKDIR/$e.keep" ]; then
 				: keep
 			else
-				args="$args --unpacked=$e.pack"
 				existing="$existing $e"
 			fi
 		done
-		if test -n "$args" -a -n "$unpack_unreachable" -a \
+		if test -n "$existing" -a -n "$unpack_unreachable" -a \
 			-n "$remove_redundant"
 		then
 			args="$args $unpack_unreachable"
@@ -181,5 +181,5 @@ fi
 
 case "$no_update_info" in
 t) : ;;
-*) git-update-server-info ;;
+*) git update-server-info ;;
 esac

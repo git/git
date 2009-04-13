@@ -647,19 +647,24 @@ int for_each_ref(each_ref_fn fn, void *cb_data)
 	return do_for_each_ref("refs/", fn, 0, 0, cb_data);
 }
 
+int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_ref(prefix, fn, strlen(prefix), 0, cb_data);
+}
+
 int for_each_tag_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/tags/", fn, 10, 0, cb_data);
+	return for_each_ref_in("refs/tags/", fn, cb_data);
 }
 
 int for_each_branch_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/heads/", fn, 11, 0, cb_data);
+	return for_each_ref_in("refs/heads/", fn, cb_data);
 }
 
 int for_each_remote_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/remotes/", fn, 13, 0, cb_data);
+	return for_each_ref_in("refs/remotes/", fn, cb_data);
 }
 
 int for_each_rawref(each_ref_fn fn, void *cb_data)
@@ -676,6 +681,7 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
  * - it has double dots "..", or
  * - it has ASCII control character, "~", "^", ":" or SP, anywhere, or
  * - it ends with a "/".
+ * - it ends with ".lock"
  */
 
 static inline int bad_ref_char(int ch)
@@ -693,7 +699,8 @@ static inline int bad_ref_char(int ch)
 
 int check_ref_format(const char *ref)
 {
-	int ch, level, bad_type;
+	int ch, level, bad_type, last;
+	int ret = CHECK_REF_FORMAT_OK;
 	const char *cp = ref;
 
 	level = 0;
@@ -709,31 +716,48 @@ int check_ref_format(const char *ref)
 			return CHECK_REF_FORMAT_ERROR;
 		bad_type = bad_ref_char(ch);
 		if (bad_type) {
-			return (bad_type == 2 && !*cp)
-				? CHECK_REF_FORMAT_WILDCARD
-				: CHECK_REF_FORMAT_ERROR;
+			if (bad_type == 2 && (!*cp || *cp == '/') &&
+			    ret == CHECK_REF_FORMAT_OK)
+				ret = CHECK_REF_FORMAT_WILDCARD;
+			else
+				return CHECK_REF_FORMAT_ERROR;
 		}
 
+		last = ch;
 		/* scan the rest of the path component */
 		while ((ch = *cp++) != 0) {
 			bad_type = bad_ref_char(ch);
-			if (bad_type) {
-				return (bad_type == 2 && !*cp)
-					? CHECK_REF_FORMAT_WILDCARD
-					: CHECK_REF_FORMAT_ERROR;
-			}
+			if (bad_type)
+				return CHECK_REF_FORMAT_ERROR;
 			if (ch == '/')
 				break;
-			if (ch == '.' && *cp == '.')
+			if (last == '.' && ch == '.')
 				return CHECK_REF_FORMAT_ERROR;
+			if (last == '@' && ch == '{')
+				return CHECK_REF_FORMAT_ERROR;
+			last = ch;
 		}
 		level++;
 		if (!ch) {
+			if (ref <= cp - 2 && cp[-2] == '.')
+				return CHECK_REF_FORMAT_ERROR;
 			if (level < 2)
 				return CHECK_REF_FORMAT_ONELEVEL;
-			return CHECK_REF_FORMAT_OK;
+			if (has_extension(ref, ".lock"))
+				return CHECK_REF_FORMAT_ERROR;
+			return ret;
 		}
 	}
+}
+
+const char *prettify_ref(const struct ref *ref)
+{
+	const char *name = ref->name;
+	return name + (
+		!prefixcmp(name, "refs/heads/") ? 11 :
+		!prefixcmp(name, "refs/tags/") ? 10 :
+		!prefixcmp(name, "refs/remotes/") ? 13 :
+		0);
 }
 
 const char *ref_rev_parse_rules[] = {
@@ -995,7 +1019,7 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 
 	err = unlink(git_path("logs/%s", lock->ref_name));
 	if (err && errno != ENOENT)
-		fprintf(stderr, "warning: unlink(%s) failed: %s",
+		warning("unlink(%s) failed: %s",
 			git_path("logs/%s", lock->ref_name), strerror(errno));
 	invalidate_cached_refs();
 	unlock_ref(lock);
@@ -1437,8 +1461,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 				if (get_sha1_hex(rec + 41, sha1))
 					die("Log %s is corrupt.", logfile);
 				if (hashcmp(logged_sha1, sha1)) {
-					fprintf(stderr,
-						"warning: Log %s has gap after %s.\n",
+					warning("Log %s has gap after %s.",
 						logfile, show_date(date, tz, DATE_RFC2822));
 				}
 			}
@@ -1450,8 +1473,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 				if (get_sha1_hex(rec + 41, logged_sha1))
 					die("Log %s is corrupt.", logfile);
 				if (hashcmp(logged_sha1, sha1)) {
-					fprintf(stderr,
-						"warning: Log %s unexpectedly ended on %s.\n",
+					warning("Log %s unexpectedly ended on %s.",
 						logfile, show_date(date, tz, DATE_RFC2822));
 				}
 			}
@@ -1628,10 +1650,109 @@ int update_ref(const char *action, const char *refname,
 	return 0;
 }
 
-struct ref *find_ref_by_name(struct ref *list, const char *name)
+struct ref *find_ref_by_name(const struct ref *list, const char *name)
 {
 	for ( ; list; list = list->next)
 		if (!strcmp(list->name, name))
-			return list;
+			return (struct ref *)list;
 	return NULL;
+}
+
+/*
+ * generate a format suitable for scanf from a ref_rev_parse_rules
+ * rule, that is replace the "%.*s" spec with a "%s" spec
+ */
+static void gen_scanf_fmt(char *scanf_fmt, const char *rule)
+{
+	char *spec;
+
+	spec = strstr(rule, "%.*s");
+	if (!spec || strstr(spec + 4, "%.*s"))
+		die("invalid rule in ref_rev_parse_rules: %s", rule);
+
+	/* copy all until spec */
+	strncpy(scanf_fmt, rule, spec - rule);
+	scanf_fmt[spec - rule] = '\0';
+	/* copy new spec */
+	strcat(scanf_fmt, "%s");
+	/* copy remaining rule */
+	strcat(scanf_fmt, spec + 4);
+
+	return;
+}
+
+char *shorten_unambiguous_ref(const char *ref)
+{
+	int i;
+	static char **scanf_fmts;
+	static int nr_rules;
+	char *short_name;
+
+	/* pre generate scanf formats from ref_rev_parse_rules[] */
+	if (!nr_rules) {
+		size_t total_len = 0;
+
+		/* the rule list is NULL terminated, count them first */
+		for (; ref_rev_parse_rules[nr_rules]; nr_rules++)
+			/* no +1 because strlen("%s") < strlen("%.*s") */
+			total_len += strlen(ref_rev_parse_rules[nr_rules]);
+
+		scanf_fmts = xmalloc(nr_rules * sizeof(char *) + total_len);
+
+		total_len = 0;
+		for (i = 0; i < nr_rules; i++) {
+			scanf_fmts[i] = (char *)&scanf_fmts[nr_rules]
+					+ total_len;
+			gen_scanf_fmt(scanf_fmts[i], ref_rev_parse_rules[i]);
+			total_len += strlen(ref_rev_parse_rules[i]);
+		}
+	}
+
+	/* bail out if there are no rules */
+	if (!nr_rules)
+		return xstrdup(ref);
+
+	/* buffer for scanf result, at most ref must fit */
+	short_name = xstrdup(ref);
+
+	/* skip first rule, it will always match */
+	for (i = nr_rules - 1; i > 0 ; --i) {
+		int j;
+		int short_name_len;
+
+		if (1 != sscanf(ref, scanf_fmts[i], short_name))
+			continue;
+
+		short_name_len = strlen(short_name);
+
+		/*
+		 * check if the short name resolves to a valid ref,
+		 * but use only rules prior to the matched one
+		 */
+		for (j = 0; j < i; j++) {
+			const char *rule = ref_rev_parse_rules[j];
+			unsigned char short_objectname[20];
+			char refname[PATH_MAX];
+
+			/*
+			 * the short name is ambiguous, if it resolves
+			 * (with this previous rule) to a valid ref
+			 * read_ref() returns 0 on success
+			 */
+			mksnpath(refname, sizeof(refname),
+				 rule, short_name_len, short_name);
+			if (!read_ref(refname, short_objectname))
+				break;
+		}
+
+		/*
+		 * short name is non-ambiguous if all previous rules
+		 * haven't resolved to a valid ref
+		 */
+		if (j == i)
+			return short_name;
+	}
+
+	free(short_name);
+	return xstrdup(ref);
 }

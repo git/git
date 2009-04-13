@@ -70,24 +70,26 @@ do
 done
 
 if locale -a |grep -q en_US.utf8; then
-	test_expect_success 'ISO-8859-1 should match UTF-8 in svn' '
+	test_set_prereq UTF8
+else
+	say "UTF-8 locale not available, test skipped"
+fi
+
+test_expect_success UTF8 'ISO-8859-1 should match UTF-8 in svn' '
 	(
 		cd ISO-8859-1 &&
 		compare_svn_head_with "$TEST_DIRECTORY"/t3900/1-UTF-8.txt
 	)
-	'
+'
 
-	for H in EUCJP ISO-2022-JP
-	do
-		test_expect_success '$H should match UTF-8 in svn' '
+for H in EUCJP ISO-2022-JP
+do
+	test_expect_success UTF8 "$H should match UTF-8 in svn" '
 		(
 			cd $H &&
 			compare_svn_head_with "$TEST_DIRECTORY"/t3900/2-UTF-8.txt
 		)
-		'
-	done
-else
-	say "UTF-8 locale not available, test skipped"
-fi
+	'
+done
 
 test_done

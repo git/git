@@ -18,8 +18,9 @@ struct transport {
 	int (*set_option)(struct transport *connection, const char *name,
 			  const char *value);
 
-	struct ref *(*get_refs_list)(struct transport *transport);
+	struct ref *(*get_refs_list)(struct transport *transport, int for_push);
 	int (*fetch)(struct transport *transport, int refs_nr, const struct ref **refs);
+	int (*push_refs)(struct transport *transport, struct ref *refs, int flags);
 	int (*push)(struct transport *connection, int refspec_nr, const char **refspec, int flags);
 
 	int (*disconnect)(struct transport *connection);

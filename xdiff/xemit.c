@@ -132,7 +132,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	if (xecfg->flags & XDL_EMIT_COMMON)
 		return xdl_emit_common(xe, xscr, ecb, xecfg);
 
-	for (xch = xche = xscr; xch; xch = xche->next) {
+	for (xch = xscr; xch; xch = xche->next) {
 		xche = xdl_get_hunk(xch, xecfg);
 
 		s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);

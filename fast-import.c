@@ -1,4 +1,5 @@
 /*
+(See Documentation/git-fast-import.txt for maintained documentation.)
 Format of STDIN stream:
 
   stream ::= cmd*;
@@ -18,8 +19,8 @@ Format of STDIN stream:
 
   new_commit ::= 'commit' sp ref_str lf
     mark?
-    ('author' sp name '<' email '>' when lf)?
-    'committer' sp name '<' email '>' when lf
+    ('author' sp name sp '<' email '>' sp when lf)?
+    'committer' sp name sp '<' email '>' sp when lf
     commit_msg
     ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
     ('merge' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)*
@@ -43,7 +44,7 @@ Format of STDIN stream:
 
   new_tag ::= 'tag' sp tag_str lf
     'from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf
-    ('tagger' sp name '<' email '>' when lf)?
+    ('tagger' sp name sp '<' email '>' sp when lf)?
     tag_msg;
   tag_msg ::= data;
 
@@ -1742,21 +1743,19 @@ static void parse_data(struct strbuf *sb)
 static int validate_raw_date(const char *src, char *result, int maxlen)
 {
 	const char *orig_src = src;
-	char *endp, sign;
-	unsigned long date;
+	char *endp;
 
 	errno = 0;
 
-	date = strtoul(src, &endp, 10);
+	strtoul(src, &endp, 10);
 	if (errno || endp == src || *endp != ' ')
 		return -1;
 
 	src = endp + 1;
 	if (*src != '-' && *src != '+')
 		return -1;
-	sign = *src;
 
-	date = strtoul(src + 1, &endp, 10);
+	strtoul(src + 1, &endp, 10);
 	if (errno || endp == src || *endp || (endp - orig_src) >= maxlen)
 		return -1;
 

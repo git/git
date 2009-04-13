@@ -15,11 +15,11 @@ int wt_status_relative_paths = 1;
 int wt_status_use_color = -1;
 int wt_status_submodule_summary;
 static char wt_status_colors[][COLOR_MAXLEN] = {
-	"",         /* WT_STATUS_HEADER: normal */
-	"\033[32m", /* WT_STATUS_UPDATED: green */
-	"\033[31m", /* WT_STATUS_CHANGED: red */
-	"\033[31m", /* WT_STATUS_UNTRACKED: red */
-	"\033[31m", /* WT_STATUS_NOBRANCH: red */
+	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
+	GIT_COLOR_GREEN,  /* WT_STATUS_UPDATED */
+	GIT_COLOR_RED,    /* WT_STATUS_CHANGED */
+	GIT_COLOR_RED,    /* WT_STATUS_UNTRACKED */
+	GIT_COLOR_RED,    /* WT_STATUS_NOBRANCH */
 };
 
 enum untracked_status_type show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
@@ -250,10 +250,9 @@ static void wt_status_print_untracked(struct wt_status *s)
 
 	memset(&dir, 0, sizeof(dir));
 
-	if (!s->untracked) {
-		dir.show_other_directories = 1;
-		dir.hide_empty_directories = 1;
-	}
+	if (!s->untracked)
+		dir.flags |=
+			DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
 	setup_standard_excludes(&dir);
 
 	read_directory(&dir, ".", "", 0, NULL);

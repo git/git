@@ -10,17 +10,19 @@ cvs CLI client via git-cvsserver server'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping git cvsserver tests, perl not available'
+	test_done
+fi
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git-cvsserver tests, cvs not found' :
+    say 'skipping git-cvsserver tests, cvs not found'
     test_done
-    exit
 fi
 perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
-    test_expect_success 'skipping git-cvsserver tests, Perl SQLite interface unavailable' :
+    say 'skipping git-cvsserver tests, Perl SQLite interface unavailable'
     test_done
-    exit
 }
 
 unset GIT_DIR GIT_CONFIG
@@ -44,7 +46,7 @@ test_expect_success 'setup' '
   git add secondrootfile &&
   git commit -m "second root") &&
   git pull secondroot master &&
-  git clone -q --local --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
+  git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
   GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
   GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log"
 '
@@ -267,7 +269,7 @@ test_expect_success 'gitcvs.ext.dbname' \
 
 rm -fr "$SERVERDIR"
 cd "$WORKDIR" &&
-git clone -q --local --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
+git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
 GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
 GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log" ||
 exit 1

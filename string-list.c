@@ -92,6 +92,16 @@ struct string_list_item *string_list_lookup(const char *string, struct string_li
 	return list->items + i;
 }
 
+int for_each_string_list(string_list_each_func_t fn,
+			 struct string_list *list, void *cb_data)
+{
+	int i, ret = 0;
+	for (i = 0; i < list->nr; i++)
+		if ((ret = fn(&list->items[i], cb_data)))
+			break;
+	return ret;
+}
+
 void string_list_clear(struct string_list *list, int free_util)
 {
 	if (list->items) {
