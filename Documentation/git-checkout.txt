@@ -114,11 +114,11 @@ the conflicted merge in the specified paths.
 	"merge" style, shows the original contents).
 
 <branch>::
-	Branch to checkout (when no paths are given); may be any object
-	ID that resolves to a commit.  Defaults to HEAD.
-+
-When this parameter names a non-branch (but still a valid commit object),
-your HEAD becomes 'detached'.
+	Branch to checkout; if it refers to a branch (i.e., a name that,
+	when prepended with "refs/heads/", is a valid ref), then that
+	branch is checked out. Otherwise, if it refers to a valid
+	commit, your HEAD becomes "detached" and you are no longer on
+	any branch (see below for details).
 +
 As a special case, the `"@\{-N\}"` syntax for the N-th last branch
 checks out the branch (instead of detaching).  You may also specify
