@@ -40,9 +40,8 @@ Composing
 ~~~~~~~~~
 
 --annotate::
-	Review each patch you're about to send in an editor. The setting
-	'sendemail.multiedit' defines if this will spawn one editor per patch
-	or one for all of them at once.
+	Review and edit each patch you're about to send. See the
+	CONFIGURATION section for 'sendemail.multiedit'.
 
 --bcc=<address>::
 	Specify a "Bcc:" value for each email. Default is the value of
@@ -67,6 +66,8 @@ In-Reply-To headers specified in the message. If the body of the message
 and In-Reply-To headers will be used unless they are removed.
 +
 Missing From or In-Reply-To headers will be prompted for.
++
+See the CONFIGURATION section for 'sendemail.multiedit'.
 
 --from=<address>::
 	Specify the sender of the emails.  This will default to
