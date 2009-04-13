@@ -311,14 +311,14 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 		if (branch && branch->merge && branch->merge[0]->dst &&
 		    show_upstream_ref)
 			strbuf_addf(stat, "[%s] ",
-			    shorten_unambiguous_ref(branch->merge[0]->dst));
+			    shorten_unambiguous_ref(branch->merge[0]->dst, 0));
 		return;
 	}
 
 	strbuf_addch(stat, '[');
 	if (show_upstream_ref)
 		strbuf_addf(stat, "%s: ",
-			shorten_unambiguous_ref(branch->merge[0]->dst));
+			shorten_unambiguous_ref(branch->merge[0]->dst, 0));
 	if (!ours)
 		strbuf_addf(stat, "behind %d] ", theirs);
 	else if (!theirs)

@@ -601,7 +601,7 @@ static void populate_value(struct refinfo *ref)
 		if (formatp) {
 			formatp++;
 			if (!strcmp(formatp, "short"))
-				refname = shorten_unambiguous_ref(refname);
+				refname = shorten_unambiguous_ref(refname, 0);
 			else
 				die("unknown %.*s format %s",
 				    (int)(formatp - name), name, formatp);
