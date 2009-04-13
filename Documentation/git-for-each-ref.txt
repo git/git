@@ -75,6 +75,8 @@ For all objects, the following names can be used:
 refname::
 	The name of the ref (the part after $GIT_DIR/).
 	For a non-ambiguous short name of the ref append `:short`.
+	The option core.warnAmbiguousRefs is used to select the strict
+	abbreviation mode.
 
 objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
