@@ -35,6 +35,8 @@ Updates since v1.6.2
 
 (subsystems)
 
+* various git-svn updates.
+
 (performance)
 
 * many uses of lstat(2) in the codepath for "git checkout" have been
@@ -80,8 +82,11 @@ Updates since v1.6.2
 
 * You can give --date=<format> option to git-blame.
 
-* git-branch -r shows HEAD symref that points at a remote branch in
+* "git-branch -r" shows HEAD symref that points at a remote branch in
   interest of each tracked remote repository.
+
+* "git-branch -v -v" is a new way to get list of names for branches and the
+  "upstream" branch for them.
 
 * git-config learned -e option to open an editor to edit the config file
   directly.
@@ -89,6 +94,8 @@ Updates since v1.6.2
 * git-clone runs post-checkout hook when run without --no-checkout.
 
 * git-fast-export choked when seeing a tag that does not point at commit.
+
+* git-for-each-ref learned a new "upstream" token.
 
 * git-format-patch can be told to use attachment with a new configuration,
   format.attach.
@@ -117,6 +124,9 @@ Updates since v1.6.2
 * git-rebase can be told to report diffstat with the --stat option.
 
 * Output from git-remote command has been vastly improved.
+
+* "git remote update --prune $remote" updates from the named remote and
+  then prunes stale tracking branches.
 
 * git-send-email learned --confirm option to review the Cc: list before
   sending the messages out.
@@ -166,6 +176,6 @@ v1.6.2.X series.
 
 ---
 exec >/var/tmp/1
-O=v1.6.2.2-484-g796b137
+O=v1.6.2.3-497-g54a4749
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
