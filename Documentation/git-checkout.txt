@@ -90,7 +90,7 @@ guessing results in an empty name, the guessing is aborted.  You can
 explicitly give a name with '-b' in such a case.
 
 --no-track::
-	Do not set up tracking configuration, even if the
+	Do not set up "upstream" configuration, even if the
 	branch.autosetupmerge configuration variable is true.
 
 -l::
