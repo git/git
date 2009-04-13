@@ -39,6 +39,11 @@ OPTIONS
 Composing
 ~~~~~~~~~
 
+--annotate::
+	Review each patch you're about to send in an editor. The setting
+	'sendemail.multiedit' defines if this will spawn one editor per patch
+	or one for all of them at once.
+
 --bcc=<address>::
 	Specify a "Bcc:" value for each email. Default is the value of
 	'sendemail.bcc'.
@@ -50,11 +55,6 @@ The --bcc option must be repeated for each user you want on the bcc list.
 	Default is the value of 'sendemail.cc'.
 +
 The --cc option must be repeated for each user you want on the cc list.
-
---annotate::
-	Review each patch you're about to send in an editor. The setting
-	'sendemail.multiedit' defines if this will spawn one editor per patch
-	or one for all of them at once.
 
 --compose::
 	Use $GIT_EDITOR, core.editor, $VISUAL, or $EDITOR to edit an
@@ -230,6 +230,12 @@ have been specified, in which case default to 'compose'.
 --dry-run::
 	Do everything except actually send the emails.
 
+--[no-]format-patch::
+	When an argument may be understood either as a reference or as a file name,
+	choose to understand it as a format-patch argument ('--format-patch')
+	or as a file name ('--no-format-patch'). By default, when such a conflict
+	occurs, git send-email will fail.
+
 --quiet::
 	Make git-send-email less verbose.  One line per email should be
 	all that is output.
@@ -245,12 +251,6 @@ have been specified, in which case default to 'compose'.
 +
 Default is the value of 'sendemail.validate'; if this is not set,
 default to '--validate'.
-
---[no-]format-patch::
-	When an argument may be understood either as a reference or as a file name,
-	choose to understand it as a format-patch argument ('--format-patch')
-	or as a file name ('--no-format-patch'). By default, when such a conflict
-	occurs, git send-email will fail.
 
 
 CONFIGURATION
