@@ -90,7 +90,8 @@ guessing results in an empty name, the guessing is aborted.  You can
 explicitly give a name with '-b' in such a case.
 
 --no-track::
-	Ignore the branch.autosetupmerge configuration variable.
+	Do not set up tracking configuration, even if the
+	branch.autosetupmerge configuration variable is true.
 
 -l::
 	Create the new branch's reflog.  This activates recording of

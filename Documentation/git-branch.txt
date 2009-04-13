@@ -124,7 +124,8 @@ OPTIONS
 	start-point is either a local or remote branch.
 
 --no-track::
-	Ignore the branch.autosetupmerge configuration variable.
+	Do not set up tracking configuration, even if the
+	branch.autosetupmerge configuration variable is true.
 
 --contains <commit>::
 	Only list branches which contain the specified commit.
