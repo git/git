@@ -39,7 +39,6 @@ Standard options
 EOF
 
 test_expect_success 'test help' '
-	set +x &&
 	test_must_fail test-parse-options -h > output 2> output.err &&
 	test ! -s output &&
 	test_cmp expect.err output.err
@@ -159,7 +158,6 @@ error: did you mean \`--boolean\` (with two dashes ?)
 EOF
 
 test_expect_success 'detect possible typos' '
-	set +x &&
 	test_must_fail test-parse-options -boolean > output 2> output.err &&
 	test ! -s output &&
 	test_cmp typo.err output.err
@@ -225,7 +223,6 @@ Callback: "not set", 1
 EOF
 
 test_expect_success 'OPT_CALLBACK() and callback errors work' '
-	set +x &&
 	test_must_fail test-parse-options --no-length > output 2> output.err &&
 	test_cmp expect output &&
 	test_cmp expect.err output.err

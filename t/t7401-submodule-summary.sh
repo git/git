@@ -14,8 +14,6 @@ esac
 
 . ./test-lib.sh
 
-export GIT_TEST_CMP='diff -u -b' # some lines end in CRLF
-
 add_file () {
 	sm=$1
 	shift

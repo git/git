@@ -21,7 +21,7 @@ $(T):
 	@echo "*** $@ ***"; GIT_CONFIG=.git/config '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
 
 pre-clean:
-	$(RM) -r test-results test-log
+	$(RM) -r test-results
 
 clean:
 	$(RM) -r 'trash directory'.* test-results
@@ -42,24 +42,3 @@ valgrind:
 	GIT_TEST_OPTS=--valgrind $(MAKE)
 
 .PHONY: pre-clean $(T) aggregate-results clean valgrind
-
--include Makefile.local
-
-GIT_SKIP_TESTS := $(GIT_SKIP_TESTS_LOCAL)
-# git am does not treat absolute path to mbox file correctly
-GIT_SKIP_TESTS += t4150.18
-# output contains CRLF (I think)
-GIT_SKIP_TESTS += t7401.14
-# output contains CRLF (I think)
-GIT_SKIP_TESTS += t7508.1[68]
-# cannot run fake.sendmail for some reason
-GIT_SKIP_TESTS += t9001
-# there's a problem with GIT_DIR in test 12 (why only there?)
-# needs fixups with $PWD instead of $(pwd) - tries to run rsh c
-GIT_SKIP_TESTS += t9200
-# CGI.pm not found
-GIT_SKIP_TESTS += t9500
-export GIT_SKIP_TESTS
-
-NO_SVN_TESTS=SkipThem
-export NO_SVN_TESTS

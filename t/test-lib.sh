@@ -60,7 +60,6 @@ export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 export EDITOR VISUAL
 GIT_TEST_CMP=${GIT_TEST_CMP:-diff -u}
-TEST_DIRECTORY=$(pwd)
 
 # Protect ourselves from common misconfiguration to export
 # CDPATH into the environment
@@ -168,15 +167,9 @@ fi
 exec 5>&1
 if test "$verbose" = "t"
 then
-	set_x= set_nox=
 	exec 4>&2 3>&1
 else
-	test_log_dir="$TEST_DIRECTORY/test-log"
-	mkdir -p "$test_log_dir"
-	test_log_path="$test_log_dir/${0%.sh}-$$"
-	set_x='set -x;'
-	set_nox='set +x'
-	exec 3>"$test_log_path" 4>&3
+	exec 4>/dev/null 3>/dev/null
 fi
 
 test_failure=0
@@ -310,9 +303,8 @@ test_debug () {
 }
 
 test_run_ () {
-	eval >&3 2>&4 $set_x "$1" '
-		eval_ret=$?
-		$set_nox'
+	eval >&3 2>&4 "$1"
+	eval_ret="$?"
 	return 0
 }
 
@@ -548,6 +540,7 @@ test_done () {
 
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
+TEST_DIRECTORY=$(pwd)
 if test -z "$valgrind"
 then
 	if test -z "$GIT_TEST_INSTALLED"
