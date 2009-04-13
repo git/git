@@ -141,11 +141,14 @@ test_expect_success 'forced modes' '
 		git commit -a -m initial &&
 		git repack
 	) &&
-	find new/.git -print |
+	# List repository files meant to be protected; note that
+	# COMMIT_EDITMSG does not matter---0mode is not about a
+	# repository with a work tree.
+	find new/.git -type f -name COMMIT_EDITMSG -prune -o -print |
 	xargs ls -ld >actual &&
 
 	# Everything must be unaccessible to others
-	test -z "$(sed -n -e "/^.......---/d" actual)" &&
+	test -z "$(sed -e "/^.......---/d" actual)" &&
 
 	# All directories must have either 2770 or 770
 	test -z "$(sed -n -e "/^drwxrw[sx]---/d" -e "/^d/p" actual)" &&
@@ -156,10 +159,11 @@ test_expect_success 'forced modes' '
 		p
 	}" actual)" &&
 
-	# All files inside objects must be 0440
+	# All files inside objects must be accessible by us
 	test -z "$(sed -n -e "/objects\//{
 		/^d/d
-		/^-r--r-----/d
+		/^-r.-r.----/d
+		p
 	}" actual)"
 '
 
