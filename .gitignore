@@ -11,6 +11,7 @@ git-apply
 git-archimport
 git-archive
 git-bisect
+git-bisect--helper
 git-blame
 git-branch
 git-bundle
