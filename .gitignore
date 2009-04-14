@@ -105,6 +105,7 @@ git-reflog
 git-relink
 git-remote
 git-repack
+git-replace
 git-repo-config
 git-request-pull
 git-rerere
