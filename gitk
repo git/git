@@ -2251,6 +2251,10 @@ proc makewindow {} {
 	}
     }
 
+    if {[info exists geometry(state)] && $geometry(state) eq "zoomed"} {
+        wm state . $geometry(state)
+    }
+
     if {[tk windowingsystem] eq {aqua}} {
         set M1B M1
         set ::BM "3"
@@ -2548,6 +2552,7 @@ proc savestuff {w} {
 	puts $f [list set perfile_attrs $perfile_attrs]
 
 	puts $f "set geometry(main) [wm geometry .]"
+	puts $f "set geometry(state) [wm state .]"
 	puts $f "set geometry(topwidth) [winfo width .tf]"
 	puts $f "set geometry(topheight) [winfo height .tf]"
         puts $f "set geometry(pwsash0) \"[.tf.histframe.pwclist sash coord 0]\""
