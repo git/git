@@ -11128,6 +11128,7 @@ catch {
 # wait for the window to become visible
 tkwait visibility .
 wm title . "[file tail $argv0]: [file tail [pwd]]"
+update
 readrefs
 
 if {$cmdline_files ne {} || $revtreeargs ne {} || $revtreeargscmd ne {}} {
