@@ -3245,9 +3245,8 @@ proc external_diff {} {
     set difftofile [external_diff_get_one_file $diffidto $flist_menu_file $diffdir]
 
     if {$difffromfile ne {} && $difftofile ne {}} {
-        set cmd [concat | [shellsplit $extdifftool] \
-		     [list $difffromfile $difftofile]]
-        if {[catch {set fl [open $cmd r]} err]} {
+        set cmd [list [shellsplit $extdifftool] $difffromfile $difftofile]
+        if {[catch {set fl [open |$cmd r]} err]} {
             file delete -force $diffdir
             error_popup "$extdifftool: [mc "command failed:"] $err"
         } else {
