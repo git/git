@@ -1504,7 +1504,7 @@ static int one_local_ref(const char *refname, const unsigned char *sha1, int fla
 
 struct ref *get_local_heads(void)
 {
-	struct ref *local_refs, **local_tail = &local_refs;
+	struct ref *local_refs = NULL, **local_tail = &local_refs;
 	for_each_ref(one_local_ref, &local_tail);
 	return local_refs;
 }
