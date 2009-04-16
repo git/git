@@ -297,7 +297,8 @@ for paths.
 
 Then, you would define a "diff.tex.xfuncname" configuration to
 specify a regular expression that matches a line that you would
-want to appear as the hunk header "TEXT", like this:
+want to appear as the hunk header "TEXT". Add a section to your
+`$GIT_DIR/config` file (or `$HOME/.gitconfig` file) like this:
 
 ------------------------
 [diff "tex"]
@@ -345,7 +346,8 @@ split words in a line, by specifying an appropriate regular expression
 in the "diff.*.wordRegex" configuration variable.  For example, in TeX
 a backslash followed by a sequence of letters forms a command, but
 several such commands can be run together without intervening
-whitespace.  To separate them, use a regular expression such as
+whitespace.  To separate them, use a regular expression in your
+`$GIT_DIR/config` file (or `$HOME/.gitconfig` file) like this:
 
 ------------------------
 [diff "tex"]
@@ -373,7 +375,8 @@ resulting text on stdout.
 
 For example, to show the diff of the exif information of a
 file instead of the binary information (assuming you have the
-exif tool installed):
+exif tool installed), add the following section to your
+`$GIT_DIR/config` file (or `$HOME/.gitconfig` file):
 
 ------------------------
 [diff "jpg"]
