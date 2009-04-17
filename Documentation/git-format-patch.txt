@@ -194,7 +194,7 @@ CONFIGURATION
 -------------
 You can specify extra mail header lines to be added to each message
 in the repository configuration, new defaults for the subject prefix
-and file suffix, control attachements, and number patches when outputting
+and file suffix, control attachments, and number patches when outputting
 more than one.
 
 ------------
