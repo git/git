@@ -51,7 +51,7 @@ static char *parse_value(void)
 
 	for (;;) {
 		int c = get_next_char();
-		if (len >= sizeof(value))
+		if (len >= sizeof(value) - 1)
 			return NULL;
 		if (c == '\n') {
 			if (quote)
