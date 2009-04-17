@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git archive' --format=<fmt> [--list] [--prefix=<prefix>/] [<extra>]
-	      [--output=<file>]
+	      [--output=<file>] [--worktree-attributes]
 	      [--remote=<repo> [--exec=<git-upload-archive>]] <tree-ish>
 	      [path...]
 
@@ -50,6 +50,9 @@ OPTIONS
 
 --output=<file>::
 	Write the archive to <file> instead of stdout.
+
+--worktree-attributes::
+	Look for attributes in .gitattributes in working directory too.
 
 <extra>::
 	This can be any options that the archiver backend understands.

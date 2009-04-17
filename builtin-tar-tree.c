@@ -24,7 +24,7 @@ int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 	 * 	git archive --format-tar --prefix=basedir tree-ish
 	 */
 	int i;
-	const char **nargv = xcalloc(sizeof(*nargv), argc + 2);
+	const char **nargv = xcalloc(sizeof(*nargv), argc + 3);
 	char *basedir_arg;
 	int nargc = 0;
 
@@ -36,6 +36,13 @@ int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 		argv++;
 		argc--;
 	}
+
+	/*
+	 * Because it's just a compatibility wrapper, tar-tree supports only
+	 * the old behaviour of reading attributes from the work tree.
+	 */
+	nargv[nargc++] = "--worktree-attributes";
+
 	switch (argc) {
 	default:
 		usage(tar_tree_usage);
