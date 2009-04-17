@@ -243,7 +243,7 @@ static void mark_reachable(struct commit *commit, unsigned long expire_limit)
 	 * We need to compute if commit on either side of an reflog
 	 * entry is reachable from the tip of the ref for all entries.
 	 * Mark commits that are reachable from the tip down to the
-	 * time threashold first; we know a commit marked thusly is
+	 * time threshold first; we know a commit marked thusly is
 	 * reachable from the tip without running in_merge_bases()
 	 * at all.
 	 */

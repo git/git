@@ -92,7 +92,7 @@ static int cygwin_stat(const char *path, struct stat *buf)
  * Reading this option is not always possible immediately as git_dir may be
  * not be set yet. So until it is set, use cygwin lstat/stat functions.
  * However, if core.filemode is set, we must use the Cygwin posix
- * stat/lstat as the Windows stat fuctions do not determine posix filemode.
+ * stat/lstat as the Windows stat functions do not determine posix filemode.
  *
  * Note that git_cygwin_config() does NOT call git_default_config() and this
  * is deliberate.  Many commands read from config to establish initial

@@ -396,7 +396,7 @@ repeat:
 		 * its own input data to become available. But since
 		 * the process (pack-objects) is itself CPU intensive,
 		 * it will happily pick up the time slice that we are
-		 * relinguishing here.
+		 * relinquishing here.
 		 */
 		Sleep(0);
 		goto repeat;

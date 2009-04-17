@@ -228,7 +228,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		}
 		/*
 		 * Otherwise, argv[i] could be either <rev> or <paths> and
-		 * has to be unambigous.
+		 * has to be unambiguous.
 		 */
 		else if (!get_sha1(argv[i], sha1)) {
 			/*

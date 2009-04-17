@@ -76,7 +76,7 @@ Format of STDIN stream:
     delim lf;
 
      # note: declen indicates the length of binary_data in bytes.
-     # declen does not include the lf preceeding the binary data.
+     # declen does not include the lf preceding the binary data.
      #
   exact_data ::= 'data' sp declen lf
     binary_data;
@@ -134,7 +134,7 @@ Format of STDIN stream:
      #
      # In case it is not clear, the '#' that starts the comment
      # must be the first character on that the line (an lf have
-     # preceeded it).
+     # preceded it).
      #
   comment ::= '#' not_lf* lf;
   not_lf  ::= # Any byte that is not ASCII newline (LF);
@@ -953,7 +953,7 @@ static void end_packfile(void)
 		close(pack_data->pack_fd);
 		idx_name = keep_pack(create_index());
 
-		/* Register the packfile with core git's machinary. */
+		/* Register the packfile with core git's machinery. */
 		new_p = add_packed_git(idx_name, strlen(idx_name), 1);
 		if (!new_p)
 			die("core git rejected index %s", idx_name);

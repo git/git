@@ -178,7 +178,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	/*
 	 * NEEDSWORK:
 	 * There is absolutely no reason to write this as a blob object
-	 * and create a phoney cache entry just to leak.  This hack is
+	 * and create a phony cache entry just to leak.  This hack is
 	 * primarily to get to the write_entry() machinery that massages
 	 * the contents to work-tree format and writes out which only
 	 * allows it for a cache entry.  The code in write_entry() needs

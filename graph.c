@@ -35,7 +35,7 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb);
  * newline.  A new graph line will not be printed after the final newline.
  * If the strbuf is empty, no output will be printed.
  *
- * Since the first line will not include the graph ouput, the caller is
+ * Since the first line will not include the graph output, the caller is
  * responsible for printing this line's graph (perhaps via
  * graph_show_commit() or graph_show_oneline()) before calling
  * graph_show_strbuf().

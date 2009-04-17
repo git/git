@@ -456,7 +456,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			/*
 			 * Record the end-of-group position in case we are matched
 			 * with a group of changes in the other file (that is, the
-			 * change record before the enf-of-group index in the other
+			 * change record before the end-of-group index in the other
 			 * file is set).
 			 */
 			ixref = rchgo[ixo - 1] ? ix: nrec;
