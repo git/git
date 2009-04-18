@@ -135,4 +135,10 @@ test_expect_success \
 EOF
      test_output'
 
+test_expect_success 'ls-tree filter is leading path match' '
+	git ls-tree $tree pa path3/a >current &&
+	>expected &&
+	test_output
+'
+
 test_done
