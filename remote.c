@@ -1461,11 +1461,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 		return 0;
 
 	base = branch->merge[0]->dst;
-	if (!prefixcmp(base, "refs/remotes/")) {
-		base += strlen("refs/remotes/");
-	} else if (!prefixcmp(base, "refs/heads/")) {
-		base += strlen("refs/heads/");
-	}
+	base = shorten_unambiguous_ref(base, 0);
 	if (!num_theirs)
 		strbuf_addf(sb, "Your branch is ahead of '%s' "
 			    "by %d commit%s.\n",
