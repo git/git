@@ -51,7 +51,7 @@ imap.host::
 imap.user::
 	The username to use when logging in to the server.
 
-imap.password::
+imap.pass::
 	The password to use when logging in to the server.
 
 imap.port::
