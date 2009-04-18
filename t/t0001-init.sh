@@ -199,4 +199,13 @@ test_expect_success 'init honors global core.sharedRepository' '
 	x`git config -f shared-honor-global/.git/config core.sharedRepository`
 '
 
+test_expect_success 'init rejects insanely long --template' '
+	(
+		insane=$(printf "x%09999dx" 1) &&
+		mkdir test &&
+		cd test &&
+		test_must_fail git init --template=$insane
+	)
+'
+
 test_done
