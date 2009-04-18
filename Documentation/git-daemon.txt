@@ -100,7 +100,7 @@ OPTIONS
 	it takes for the server to process the sub-request and the time spent
 	waiting for the next client's request.
 
---max-connections::
+--max-connections=n::
 	Maximum number of concurrent clients, defaults to 32.  Set it to
 	zero for no limit.
 
