@@ -10,7 +10,7 @@ setup() {
 
 check() {
 	echo "$2" >expected
-	git config --get "$1" >actual
+	git config --get "$1" >actual 2>&1
 	test_cmp actual expected
 }
 
@@ -38,6 +38,13 @@ SECTION="test.q\"s\\sq'sp e.key"
 test_expect_success 'make sure git config escapes section names properly' '
 	git config "$SECTION" bar &&
 	check "$SECTION" bar
+'
+
+LONG_VALUE=$(printf "x%01021dx a" 7)
+test_expect_success 'do not crash on special long config line' '
+	setup &&
+	git config section.key "$LONG_VALUE" &&
+	check section.key "fatal: bad config file line 2 in .git/config"
 '
 
 test_done
