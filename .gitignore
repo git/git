@@ -36,6 +36,8 @@ git-diff
 git-diff-files
 git-diff-index
 git-diff-tree
+git-difftool
+git-difftool--helper
 git-describe
 git-fast-export
 git-fast-import
@@ -79,6 +81,7 @@ git-merge-recursive
 git-merge-resolve
 git-merge-subtree
 git-mergetool
+git-mergetool--lib
 git-mktag
 git-mktree
 git-name-rev
