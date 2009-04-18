@@ -40,6 +40,7 @@ static struct commands {
 } cmd_list[] = {
 	{ "git-receive-pack", do_generic_cmd },
 	{ "git-upload-pack", do_generic_cmd },
+	{ "git-upload-archive", do_generic_cmd },
 	{ "cvs", do_cvs_cmd },
 	{ NULL },
 };
