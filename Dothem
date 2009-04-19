@@ -1,22 +1,27 @@
 #!/bin/sh
 
-: ${J=-j2}
-: ${BUILDBASE=../buildfarm}
-: ${branches='next master maint pu jch'}
+NWD=contrib/workdir/git-new-workdir
 
-force= with_dash= M= install= nodoc=
+force= with_dash= M= install= nodoc= bootstrap= branches= jobs=
 while	case "$1" in
-	-pedantic) M=$1 ;;
-	-force) force=$1 ;;
-	-dash) with_dash=y ;;
-	-noinstall) install=noinstall ;;
-	-nodoc) nodoc=y ;;
+	--pedantic) M="$M $1" ;;
+	--force) force=$1 ;;
+	--dash) with_dash=y ;;
+	--noinstall) install=noinstall ;;
+	--nodoc) nodoc=y ;;
+	--bootstrap) bootstrap=y ;;
+	--base=*) BUILDBASE=${1#*=} ;;
+	--branches=*) branches=${1#*=} ;;
+	-j*) jobs=$1 ;;
 	*) break ;;
 	esac
 do
 	shift
 done
 test -f /bin/dash || with_dash=
+test -n "$BUILDBASE" || BUILDBASE=../buildfarm
+test -n "$branches" || branches='next master maint pu jch'
+test -n "$jobs" || jobs=-j2
 
 for branch in $branches
 do
@@ -25,15 +30,26 @@ do
 		echo "** No $branch"
 		continue
 	}
-	test -d "$BUILDBASE/$branch" || {
-		echo "** No $BUILDBASE/$branch"
-		continue
-	}
+
+	if test ! -d "$BUILDBASE/$branch"
+	then
+		if test -z "$bootstrap"
+		then
+			echo "** No $BUILDBASE/$branch"
+			continue
+		fi
+		"$NWD" . "$BUILDBASE/$branch" $branch &&
+		"$NWD" Meta "$BUILDBASE/$branch/Meta" || {
+			echo "** Failed to bootstrap $BUILDBASE/$branch"
+			continue
+		}
+	fi
 
 	private=$(git rev-parse -q --verify private-$branch 2>/dev/null)
 	case $? in 0|1) ;; *) exit $? ;; esac
 
-	if	installed=$($HOME/git-$branch/bin/git version) &&
+	if	test -f "$HOME/git-$branch/bin/git" &&
+		installed=$($HOME/git-$branch/bin/git version) &&
 		if version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$')
 		then
 			:
@@ -68,34 +84,36 @@ do
 
 		cd "$BUILDBASE/$branch"
 		git reset --hard  &&
-		git checkout "$branch" &&
-		git reset --hard  || exit
+		case "$(git symbolic-ref HEAD)" in
+		"refs/heads/$branch")
+			: ;;
+		*)
+			git checkout "$branch" &&
+			git reset --hard || exit
+		esac &&
+
 		case "$private" in
 		'')
 			;;
 		?*)
 			git merge --squash --no-commit "$private" || {
-				echo >&2 "Cannot apply private edition changes"
+				echo >&2 "** Cannot apply private edition changes"
 				git reset --hard
 			}
 			;;
 		esac &&
 
-		case "$with_dash" in
-		y)
-			case "$branch" in
-			master | maint | next | jch)
-				Meta/Make $M -- $J SHELL_PATH=/bin/dash $dotest
-				;;
-			esac
-			;;
-		esac &&
+		{
+			test "z$with_dash" != 'zy' ||
+			Meta/Make $M -- $jobs SHELL_PATH=/bin/dash $dotest
+		} &&
 
-		Meta/Make $M -- $J $dotest &&
+		Meta/Make $M -- $jobs $dotest &&
 		{
 			test -n "$nodoc" ||
 			Meta/Make $M -- doc install-doc
 		} &&
+
 		{
 			test z$install = znoinstall ||
 			Meta/Make $M -- install
