@@ -1010,10 +1010,6 @@ else
 		COMPAT_OBJS += compat/win32mmap.o
 	endif
 endif
-ifdef USE_WIN32_MMAP
-	COMPAT_CFLAGS += -DUSE_WIN32_MMAP
-	COMPAT_OBJS += compat/win32mmap.o
-endif
 ifdef NO_PREAD
 	COMPAT_CFLAGS += -DNO_PREAD
 	COMPAT_OBJS += compat/pread.o
