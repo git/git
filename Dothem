@@ -41,7 +41,7 @@ do
 			continue
 		fi
 		"$NWD" . "$BUILDBASE/$branch" $branch &&
-		"$NWD" Meta "$BUILDBASE/$branch/Meta" || {
+		ln -s "$(pwd)/Meta" "$BUILDBASE/$branch/Meta" || {
 			echo "** Failed to bootstrap $BUILDBASE/$branch"
 			continue
 		}
