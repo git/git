@@ -211,7 +211,7 @@ static inline int exp2i(int n)
  *
  * and P(2^n + x) < 0.5 means 2^n < 3x
  */
-static int estimate_bisect_steps(int all)
+int estimate_bisect_steps(int all)
 {
 	int n, x, e;
 
