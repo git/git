@@ -279,19 +279,6 @@ bisect_auto_next() {
 	bisect_next_check && bisect_next || :
 }
 
-exit_if_skipped_commits () {
-	_tried=$1
-	_bad=$2
-	if test -n "$_tried" ; then
-		echo "There are only 'skip'ped commit left to test."
-		echo "The first bad commit could be any of:"
-		echo "$_tried" | tr '[|]' '[\012]'
-		test -n "$_bad" && echo "$_bad"
-		echo "We cannot bisect more!"
-		exit 2
-	fi
-}
-
 bisect_checkout() {
 	_rev="$1"
 	_msg="$2"
@@ -416,25 +403,17 @@ bisect_next() {
 	# Return now if a checkout has already been done
 	test "$?" -eq "1" && return
 
-	# Get bisection information
-	eval=$(eval "git bisect--helper --next-vars") &&
-	eval "$eval" || exit
+	# Perform bisection computation, display and checkout
+	git bisect--helper --next-exit
+	res=$?
 
-	if [ -z "$bisect_rev" ]; then
-		# We should exit here only if the "bad"
-		# commit is also a "skip" commit (see above).
-		exit_if_skipped_commits "$bisect_tried"
-		echo "$bad was both good and bad"
-		exit 1
-	fi
-	if [ "$bisect_rev" = "$bad" ]; then
-		exit_if_skipped_commits "$bisect_tried" "$bad"
-		echo "$bisect_rev is first bad commit"
-		git diff-tree --pretty $bisect_rev
-		exit 0
-	fi
+        # Check if we should exit because bisection is finished
+	test $res -eq 10 && exit 0
 
-	bisect_checkout "$bisect_rev" "$bisect_nr revisions left to test after this (roughly $bisect_steps steps)"
+	# Check for an error in the bisection process
+	test $res -ne 0 && exit $res
+
+	return 0
 }
 
 bisect_visualize() {
