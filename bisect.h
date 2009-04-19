@@ -9,6 +9,10 @@ extern struct commit_list *filter_skipped(struct commit_list *list,
 					  struct commit_list **tried,
 					  int show_all);
 
+extern void print_commit_list(struct commit_list *list,
+			      const char *format_cur,
+			      const char *format_last);
+
 /* bisect_show_flags flags in struct rev_list_info */
 #define BISECT_SHOW_ALL		(1<<0)
 #define BISECT_SHOW_TRIED	(1<<1)
