@@ -13,14 +13,9 @@ test -f "$GIT" || {
 	echo >&2 "No git to bootstrap"
 }
 PATH=/usr/bin:/bin
+export PATH
+
 LANG=C
-LC_ALL=C
-export PATH LANG LC_ALL
-
-# for now...
-#GIT_SVN_NO_LIB=1
-#export GIT_SVN_NO_LIB
-
 old_style_def_fix=b79d18c92d9f4841a6a1a29b7b2373a8ff9871e1
 
 head=`$GIT symbolic-ref HEAD 2>/dev/null` &&
@@ -45,11 +40,11 @@ d="prefix=$prefix"
 
 : ${O=-O2}
 
-Wall=-Wall
+Wall=-Wall tests=
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
-	-pedantic)
+	-pedantic | --pedantic)
 		o= &&
 		rev=$($GIT rev-parse HEAD) &&
 		case "$($GIT merge-base "$old_style_def_fix" "$rev")" in
@@ -59,8 +54,20 @@ do
 		O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast"
 		# O="$O -fwrapv -fno-strict-overflow"
 		;;
-	-loose)
+	-loose | --loose)
 		Wall=
+		;;
+	--locale=*)
+		LANG=${1#*=}
+		;;
+	--test=*)
+		tests=$(
+			cd t &&
+			for t in ${1#*=}
+			do
+				eval echo "t$t-*.sh"
+			done | tr '\012' ' '
+		)
 		;;
 	--)
 		shift
@@ -77,6 +84,9 @@ do
 	shift
 done
 
+LC_ALL=$LANG
+export LANG LC_ALL
+
 sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 	$GIT describe --abbrev=4 HEAD | sed -e 's/-/./g' >version
 }
@@ -90,6 +100,7 @@ make $d \
      PYTHON_PATH=/usr/bin/python2.4 \
      ETC_GITCONFIG=$prefix/etc/gitconfig \
      CFLAGS="$CFLAGS" \
+     ${tests:+"T=$tests"} \
      "$@"
 status=$?
 rm -f version
