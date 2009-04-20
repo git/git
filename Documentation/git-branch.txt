@@ -112,19 +112,22 @@ OPTIONS
 	Display the full sha1s in the output listing rather than abbreviating them.
 
 --track::
-	When creating a new branch, set up the configuration so that 'git-pull'
-	will automatically retrieve data from the start point, which must be
-	a branch. Use this if you always pull from the same upstream branch
-	into the new branch, and if you do not want to use "git pull
-	<repository> <refspec>" explicitly. This behavior is the default
-	when the start point is a remote branch. Set the
-	branch.autosetupmerge configuration variable to `false` if you want
-	'git-checkout' and 'git-branch' to always behave as if '--no-track' were
-	given. Set it to `always` if you want this behavior when the
-	start-point is either a local or remote branch.
+	When creating a new branch, set up configuration to mark the
+	start-point branch as "upstream" from the new branch. This
+	configuration will tell git to show the relationship between the
+	two branches in `git status` and `git branch -v`. Furthermore,
+	it directs `git pull` without arguments to pull from the
+	upstream when the new branch is checked out.
++
+This behavior is the default when the start point is a remote branch.
+Set the branch.autosetupmerge configuration variable to `false` if you
+want `git checkout` and `git branch` to always behave as if '--no-track'
+were given. Set it to `always` if you want this behavior when the
+start-point is either a local or remote branch.
 
 --no-track::
-	Ignore the branch.autosetupmerge configuration variable.
+	Do not set up "upstream" configuration, even if the
+	branch.autosetupmerge configuration variable is true.
 
 --contains <commit>::
 	Only list branches which contain the specified commit.

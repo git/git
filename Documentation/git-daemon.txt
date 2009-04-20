@@ -48,7 +48,7 @@ OPTIONS
 	'git-daemon' will refuse to start when this option is enabled and no
 	whitelist is specified.
 
---base-path::
+--base-path=path::
 	Remap all the path requests as relative to the given path.
 	This is sort of "GIT root" - if you run 'git-daemon' with
 	'--base-path=/srv/git' on example.com, then if you later try to pull
@@ -81,8 +81,8 @@ OPTIONS
 	Incompatible with --port, --listen, --user and --group options.
 
 --listen=host_or_ipaddr::
-	Listen on an a specific IP address or hostname.  IP addresses can
-	be either an IPv4 address or an IPV6 address if supported.  If IPv6
+	Listen on a specific IP address or hostname.  IP addresses can
+	be either an IPv4 address or an IPv6 address if supported.  If IPv6
 	is not supported, then --listen=hostname is also not supported and
 	--listen must be given an IPv4 address.
 	Incompatible with '--inetd' option.
@@ -90,17 +90,17 @@ OPTIONS
 --port=n::
 	Listen on an alternative port.  Incompatible with '--inetd' option.
 
---init-timeout::
+--init-timeout=n::
 	Timeout between the moment the connection is established and the
 	client request is received (typically a rather low value, since
 	that should be basically immediate).
 
---timeout::
+--timeout=n::
 	Timeout for specific client sub-requests. This includes the time
-	it takes for the server to process the sub-request and time spent
-	waiting for next client's request.
+	it takes for the server to process the sub-request and the time spent
+	waiting for the next client's request.
 
---max-connections::
+--max-connections=n::
 	Maximum number of concurrent clients, defaults to 32.  Set it to
 	zero for no limit.
 
@@ -150,7 +150,7 @@ the facility of inet daemon to achieve the same before spawning
 	Enable/disable the service site-wide per default.  Note
 	that a service disabled site-wide can still be enabled
 	per repository if it is marked overridable and the
-	repository enables the service with an configuration
+	repository enables the service with a configuration
 	item.
 
 --allow-override=service::

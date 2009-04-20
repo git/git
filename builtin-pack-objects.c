@@ -1907,13 +1907,19 @@ static void show_commit(struct commit *commit, void *data)
 	commit->object.flags |= OBJECT_ADDED;
 }
 
-static void show_object(struct object_array_entry *p, void *data)
+static void show_object(struct object *obj, const struct name_path *path, const char *last)
 {
-	add_preferred_base_object(p->name);
-	add_object_entry(p->item->sha1, p->item->type, p->name, 0);
-	p->item->flags |= OBJECT_ADDED;
-	free((char *)p->name);
-	p->name = NULL;
+	char *name = path_name(path, last);
+
+	add_preferred_base_object(name);
+	add_object_entry(obj->sha1, obj->type, name, 0);
+	obj->flags |= OBJECT_ADDED;
+
+	/*
+	 * We will have generated the hash from the name,
+	 * but not saved a pointer to it - we can free it
+	 */
+	free((char *)name);
 }
 
 static void show_edge(struct commit *commit)

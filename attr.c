@@ -405,7 +405,7 @@ static struct attr_stack *read_attr(const char *path, int macro_ok)
 		if (!res)
 			res = read_attr_from_file(path, macro_ok);
 	}
-	else {
+	else if (direction == GIT_ATTR_CHECKIN) {
 		res = read_attr_from_file(path, macro_ok);
 		if (!res)
 			/*
@@ -415,6 +415,8 @@ static struct attr_stack *read_attr(const char *path, int macro_ok)
 			 */
 			res = read_attr_from_index(path, macro_ok);
 	}
+	else
+		res = read_attr_from_index(path, macro_ok);
 	if (!res)
 		res = xcalloc(1, sizeof(*res));
 	return res;
@@ -466,7 +468,7 @@ static void bootstrap_attr_stack(void)
 		elem->prev = attr_stack;
 		attr_stack = elem;
 
-		if (!is_bare_repository()) {
+		if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
 			elem = read_attr(GITATTRIBUTES_FILE, 1);
 			elem->origin = strdup("");
 			elem->prev = attr_stack;
@@ -533,7 +535,7 @@ static void prepare_attr_stack(const char *path, int dirlen)
 	/*
 	 * Read from parent directories and push them down
 	 */
-	if (!is_bare_repository()) {
+	if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
 		while (1) {
 			char *cp;
 
@@ -674,6 +676,10 @@ int git_checkattr(const char *path, int num, struct git_attr_check *check)
 void git_attr_set_direction(enum git_attr_direction new, struct index_state *istate)
 {
 	enum git_attr_direction old = direction;
+
+	if (is_bare_repository() && new != GIT_ATTR_INDEX)
+		die("BUG: non-INDEX attr direction in a bare repo");
+
 	direction = new;
 	if (new != old)
 		drop_attr_stack();

@@ -620,11 +620,12 @@ sub parse_diff {
 	if ($diff_use_color) {
 		@colored = run_cmd_pipe(qw(git diff-files -p --color --), $path);
 	}
-	my (@hunk) = { TEXT => [], DISPLAY => [] };
+	my (@hunk) = { TEXT => [], DISPLAY => [], TYPE => 'header' };
 
 	for (my $i = 0; $i < @diff; $i++) {
 		if ($diff[$i] =~ /^@@ /) {
-			push @hunk, { TEXT => [], DISPLAY => [] };
+			push @hunk, { TEXT => [], DISPLAY => [],
+				TYPE => 'hunk' };
 		}
 		push @{$hunk[-1]{TEXT}}, $diff[$i];
 		push @{$hunk[-1]{DISPLAY}},
@@ -636,8 +637,8 @@ sub parse_diff {
 sub parse_diff_header {
 	my $src = shift;
 
-	my $head = { TEXT => [], DISPLAY => [] };
-	my $mode = { TEXT => [], DISPLAY => [] };
+	my $head = { TEXT => [], DISPLAY => [], TYPE => 'header' };
+	my $mode = { TEXT => [], DISPLAY => [], TYPE => 'mode' };
 
 	for (my $i = 0; $i < @{$src->{TEXT}}; $i++) {
 		my $dest = $src->{TEXT}->[$i] =~ /^(old|new) mode (\d+)$/ ?
@@ -684,6 +685,7 @@ sub split_hunk {
 		my $this = +{
 			TEXT => [],
 			DISPLAY => [],
+			TYPE => 'hunk',
 			OLD => $o_ofs,
 			NEW => $n_ofs,
 			OCNT => 0,
@@ -873,7 +875,11 @@ sub edit_hunk_loop {
 		if (!defined $text) {
 			return undef;
 		}
-		my $newhunk = { TEXT => $text, USE => 1 };
+		my $newhunk = {
+			TEXT => $text,
+			TYPE => $hunk->[$ix]->{TYPE},
+			USE => 1
+		};
 		if (diff_applies($head,
 				 @{$hunk}[0..$ix-1],
 				 $newhunk,
@@ -894,6 +900,7 @@ sub help_patch_cmd {
 	print colored $help_color, <<\EOF ;
 y - stage this hunk
 n - do not stage this hunk
+q - quit, do not stage this hunk nor any of the remaining ones
 a - stage this and all the remaining hunks in the file
 d - do not stage this hunk nor any of the remaining hunks in the file
 g - select a hunk to go to
@@ -930,7 +937,7 @@ sub patch_update_cmd {
 					@mods);
 	}
 	for (@them) {
-		patch_update_file($_->{VALUE});
+		return 0 if patch_update_file($_->{VALUE});
 	}
 }
 
@@ -976,6 +983,7 @@ sub display_hunks {
 }
 
 sub patch_update_file {
+	my $quit = 0;
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
@@ -985,32 +993,7 @@ sub patch_update_file {
 	}
 
 	if (@{$mode->{TEXT}}) {
-		while (1) {
-			print @{$mode->{DISPLAY}};
-			print colored $prompt_color,
-				"Stage mode change [y/n/a/d/?]? ";
-			my $line = prompt_single_character;
-			if ($line =~ /^y/i) {
-				$mode->{USE} = 1;
-				last;
-			}
-			elsif ($line =~ /^n/i) {
-				$mode->{USE} = 0;
-				last;
-			}
-			elsif ($line =~ /^a/i) {
-				$_->{USE} = 1 foreach ($mode, @hunk);
-				last;
-			}
-			elsif ($line =~ /^d/i) {
-				$_->{USE} = 0 foreach ($mode, @hunk);
-				last;
-			}
-			else {
-				help_patch_cmd('');
-				next;
-			}
-		}
+		unshift @hunk, $mode;
 	}
 
 	$num = scalar @hunk;
@@ -1054,14 +1037,19 @@ sub patch_update_file {
 		}
 		last if (!$undecided);
 
-		if (hunk_splittable($hunk[$ix]{TEXT})) {
+		if ($hunk[$ix]{TYPE} eq 'hunk' &&
+		    hunk_splittable($hunk[$ix]{TEXT})) {
 			$other .= ',s';
 		}
-		$other .= ',e';
+		if ($hunk[$ix]{TYPE} eq 'hunk') {
+			$other .= ',e';
+		}
 		for (@{$hunk[$ix]{DISPLAY}}) {
 			print;
 		}
-		print colored $prompt_color, "Stage this hunk [y,n,a,d,/$other,?]? ";
+		print colored $prompt_color, 'Stage ',
+		  ($hunk[$ix]{TYPE} eq 'mode' ? 'mode change' : 'this hunk'),
+		  " [y,n,a,d,/$other,?]? ";
 		my $line = prompt_single_character;
 		if ($line) {
 			if ($line =~ /^y/i) {
@@ -1111,6 +1099,16 @@ sub patch_update_file {
 					}
 					$ix++;
 				}
+				next;
+			}
+			elsif ($line =~ /^q/i) {
+				while ($ix < $num) {
+					if (!defined $hunk[$ix]{USE}) {
+						$hunk[$ix]{USE} = 0;
+					}
+					$ix++;
+				}
+				$quit = 1;
 				next;
 			}
 			elsif ($line =~ m|^/(.*)|) {
@@ -1193,7 +1191,7 @@ sub patch_update_file {
 				$num = scalar @hunk;
 				next;
 			}
-			elsif ($line =~ /^e/) {
+			elsif ($other =~ /e/ && $line =~ /^e/) {
 				my $newhunk = edit_hunk_loop($head, \@hunk, $ix);
 				if (defined $newhunk) {
 					splice @hunk, $ix, 1, $newhunk;
@@ -1214,9 +1212,6 @@ sub patch_update_file {
 
 	my $n_lofs = 0;
 	my @result = ();
-	if ($mode->{USE}) {
-		push @result, @{$mode->{TEXT}};
-	}
 	for (@hunk) {
 		if ($_->{USE}) {
 			push @result, @{$_->{TEXT}};
@@ -1239,6 +1234,7 @@ sub patch_update_file {
 	}
 
 	print "\n";
+	return $quit;
 }
 
 sub diff_cmd {

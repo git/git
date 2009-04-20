@@ -601,7 +601,8 @@ static void populate_value(struct refinfo *ref)
 		if (formatp) {
 			formatp++;
 			if (!strcmp(formatp, "short"))
-				refname = shorten_unambiguous_ref(refname);
+				refname = shorten_unambiguous_ref(refname,
+						      warn_ambiguous_refs);
 			else
 				die("unknown %.*s format %s",
 				    (int)(formatp - name), name, formatp);
@@ -916,6 +917,9 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	if (!sort)
 		sort = default_sort();
 	sort_atom_limit = used_atom_cnt;
+
+	/* for warn_ambiguous_refs */
+	git_config(git_default_config, NULL);
 
 	memset(&cbdata, 0, sizeof(cbdata));
 	cbdata.grab_pattern = argv;

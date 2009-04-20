@@ -1681,7 +1681,7 @@ static void gen_scanf_fmt(char *scanf_fmt, const char *rule)
 	return;
 }
 
-char *shorten_unambiguous_ref(const char *ref)
+char *shorten_unambiguous_ref(const char *ref, int strict)
 {
 	int i;
 	static char **scanf_fmts;
@@ -1718,6 +1718,7 @@ char *shorten_unambiguous_ref(const char *ref)
 	/* skip first rule, it will always match */
 	for (i = nr_rules - 1; i > 0 ; --i) {
 		int j;
+		int rules_to_fail = i;
 		int short_name_len;
 
 		if (1 != sscanf(ref, scanf_fmts[i], short_name))
@@ -1726,13 +1727,24 @@ char *shorten_unambiguous_ref(const char *ref)
 		short_name_len = strlen(short_name);
 
 		/*
+		 * in strict mode, all (except the matched one) rules
+		 * must fail to resolve to a valid non-ambiguous ref
+		 */
+		if (strict)
+			rules_to_fail = nr_rules;
+
+		/*
 		 * check if the short name resolves to a valid ref,
 		 * but use only rules prior to the matched one
 		 */
-		for (j = 0; j < i; j++) {
+		for (j = 0; j < rules_to_fail; j++) {
 			const char *rule = ref_rev_parse_rules[j];
 			unsigned char short_objectname[20];
 			char refname[PATH_MAX];
+
+			/* skip matched rule */
+			if (i == j)
+				continue;
 
 			/*
 			 * the short name is ambiguous, if it resolves
@@ -1749,7 +1761,7 @@ char *shorten_unambiguous_ref(const char *ref)
 		 * short name is non-ambiguous if all previous rules
 		 * haven't resolved to a valid ref
 		 */
-		if (j == i)
+		if (j == rules_to_fail)
 			return short_name;
 	}
 

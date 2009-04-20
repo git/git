@@ -61,7 +61,7 @@ Internal whitespace within a variable value is retained verbatim.
 
 The values following the equals sign in variable assign are all either
 a string, an integer, or a boolean.  Boolean values may be given as yes/no,
-0/1 or true/false.  Case is not significant in boolean values, when
+0/1, true/false or on/off.  Case is not significant in boolean values, when
 converting value to the canonical form using '--bool' type specifier;
 'git-config' will ensure that the output is "true" or "false".
 
@@ -666,6 +666,27 @@ diff.renames::
 diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space
 	before each empty output line. Defaults to false.
+
+diff.tool::
+	Controls which diff tool is used.  `diff.tool` overrides
+	`merge.tool` when used by linkgit:git-difftool[1] and has
+	the same valid values as `merge.tool` minus "tortoisemerge"
+	and plus "kompare".
+
+difftool.<tool>.path::
+	Override the path for the given tool.  This is useful in case
+	your tool is not in the PATH.
+
+difftool.<tool>.cmd::
+	Specify the command to invoke the specified diff tool.
+	The specified command is evaluated in shell with the following
+	variables available:  'LOCAL' is set to the name of the temporary
+	file containing the contents of the diff pre-image and 'REMOTE'
+	is set to the name of the temporary file containing the contents
+	of the diff post-image.
+
+difftool.prompt::
+	Prompt before each invocation of the diff tool.
 
 diff.wordRegex::
 	A POSIX Extended Regular Expression used to determine what is a "word"

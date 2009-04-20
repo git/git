@@ -16,6 +16,9 @@
 # hooks.allowdeletebranch
 #   This boolean sets whether deleting branches will be allowed in the
 #   repository.  By default they won't be.
+# hooks.denycreatebranch
+#   This boolean sets whether remotely creating branches will be denied
+#   in the repository.  By default this is allowed.
 #
 
 # --- Command line
@@ -39,6 +42,7 @@ fi
 # --- Config
 allowunannotated=$(git config --bool hooks.allowunannotated)
 allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
+denycreatebranch=$(git config --bool hooks.denycreatebranch)
 allowdeletetag=$(git config --bool hooks.allowdeletetag)
 
 # check for no description
@@ -52,7 +56,8 @@ esac
 
 # --- Check types
 # if $newrev is 0000...0000, it's a commit to delete a ref.
-if [ "$newrev" = "0000000000000000000000000000000000000000" ]; then
+zero="0000000000000000000000000000000000000000"
+if [ "$newrev" = "$zero" ]; then
 	newrev_type=delete
 else
 	newrev_type=$(git-cat-file -t $newrev)
@@ -80,6 +85,10 @@ case "$refname","$newrev_type" in
 		;;
 	refs/heads/*,commit)
 		# branch
+		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
+			echo "*** Creating a branch is not allowed in this repository" >&2
+			exit 1
+		fi
 		;;
 	refs/heads/*,delete)
 		# delete branch
