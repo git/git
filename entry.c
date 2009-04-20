@@ -147,7 +147,8 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 
 		wrote = write_in_full(fd, new, size);
 		/* use fstat() only when path == ce->name */
-		if (state->refresh_cache && !to_tempfile && !state->base_dir_len) {
+		if (fstat_is_reliable() &&
+		    state->refresh_cache && !to_tempfile && !state->base_dir_len) {
 			fstat(fd, &st);
 			fstat_done = 1;
 		}

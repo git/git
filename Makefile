@@ -167,6 +167,10 @@ all::
 # Define NO_EXTERNAL_GREP if you don't want "git grep" to ever call
 # your external grep (e.g., if your system lacks grep, if its grep is
 # broken, or spawning external process is slower than built-in grep git has).
+#
+# Define UNRELIABLE_FSTAT if your system's fstat does not return the same
+# information on a not yet closed file that lstat would return for the same
+# file after it was closed.
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -803,6 +807,7 @@ ifeq ($(uname_S),HP-UX)
 endif
 ifneq (,$(findstring CYGWIN,$(uname_S)))
 	COMPAT_OBJS += compat/cygwin.o
+	UNRELIABLE_FSTAT = UnfortunatelyYes
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_PREAD = YesPlease
@@ -829,6 +834,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	NO_NSEC = YesPlease
 	USE_WIN32_MMAP = YesPlease
+	UNRELIABLE_FSTAT = UnfortunatelyYes
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/regex -Icompat/fnmatch
 	COMPAT_CFLAGS += -DSNPRINTF_SIZE_CORR=1
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
@@ -1106,6 +1112,9 @@ ifdef DIR_HAS_BSD_GROUP_SEMANTICS
 endif
 ifdef NO_EXTERNAL_GREP
 	BASIC_CFLAGS += -DNO_EXTERNAL_GREP
+endif
+ifdef UNRELIABLE_FSTAT
+	BASIC_CFLAGS += -DUNRELIABLE_FSTAT
 endif
 
 ifeq ($(TCLTK_PATH),)
