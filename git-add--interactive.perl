@@ -1049,7 +1049,7 @@ sub patch_update_file {
 		}
 		print colored $prompt_color, 'Stage ',
 		  ($hunk[$ix]{TYPE} eq 'mode' ? 'mode change' : 'this hunk'),
-		  " [y,n,a,d,/$other,?]? ";
+		  " [y,n,q,a,d,/$other,?]? ";
 		my $line = prompt_single_character;
 		if ($line) {
 			if ($line =~ /^y/i) {
