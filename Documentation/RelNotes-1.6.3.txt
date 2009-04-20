@@ -42,9 +42,6 @@ Updates since v1.6.2
 * many uses of lstat(2) in the codepath for "git checkout" have been
   optimized out.
 
-* pruning reflog entries that are unreachable from the tip of the ref
-  during "git reflog prune" (hence "git gc") was very inefficient.
-
 (usability, bells and whistles)
 
 * Boolean configuration variable yes/no can be written as on/off.
@@ -80,8 +77,6 @@ Updates since v1.6.2
   1.6.2, but the initial implementation did not teach this to a few
   commands.  Now the syntax works with "branch -m @{-1} newname".
 
-* "git-add -p" now supports "q"uit action.
-
 * git-archive learned --output=<file> option.
 
 * git-archive takes attributes from the tree being archived; strictly
@@ -108,8 +103,6 @@ Updates since v1.6.2
 
 * git-difftool is now part of the officially supported command, primarily
   maintained by David Aguilar.
-
-* git-fast-export choked when seeing a tag that does not point at commit.
 
 * git-for-each-ref learned a new "upstream" token.
 
@@ -184,6 +177,6 @@ v1.6.2.X series.
 
 ---
 exec >/var/tmp/1
-O=v1.6.3-rc0-74-g9824a38
+O=v1.6.3-rc1-1-gea10b60
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
