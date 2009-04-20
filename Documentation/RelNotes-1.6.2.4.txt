@@ -7,8 +7,16 @@ Fixes since v1.6.2.3
 * The configuration parser had a buffer overflow while parsing an overlong
   value.
 
+* pruning reflog entries that are unreachable from the tip of the ref
+  during "git reflog prune" (hence "git gc") was very inefficient.
+
+* "git-add -p" lacked a way to say "q"uit to refuse staging any hunks for
+  the remaining paths.  You had to say "d" and then ^C.
+
 * "git-checkout <tree-ish> <submodule>" did not update the index entry at
   the named path; it now does.
+
+* "git-fast-export" choked when seeing a tag that does not point at commit.
 
 * "git init" segfaulted when given an overlong template location via
   the --template= option.
@@ -27,5 +35,5 @@ Many small documentation updates are included as well.
 ---
 exec >/var/tmp/1
 echo O=$(git describe maint)
-O=v1.6.2.3-21-ga51609a
+O=v1.6.2.3-38-g318b847
 git shortlog --no-merges $O..maint
