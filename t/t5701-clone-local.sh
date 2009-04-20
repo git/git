@@ -132,4 +132,14 @@ test_expect_success 'clone empty repository' '
 	 test $actual = $expected)
 '
 
+test_expect_success 'clone empty repository, and then push should not segfault.' '
+	cd "$D" &&
+	rm -fr empty/ empty-clone/ &&
+	mkdir empty &&
+	(cd empty && git init) &&
+	git clone empty empty-clone &&
+	cd empty-clone &&
+	test_must_fail git push
+'
+
 test_done
