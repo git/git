@@ -211,7 +211,6 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		case 3:
 		default:
 			opts.fn = threeway_merge;
-			cache_tree_free(&active_cache_tree);
 			break;
 		}
 
@@ -221,6 +220,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			opts.head_idx = 1;
 	}
 
+	cache_tree_free(&active_cache_tree);
 	for (i = 0; i < nr_trees; i++) {
 		struct tree *tree = trees[i];
 		parse_tree(tree);
@@ -235,10 +235,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	 * valid cache-tree because the index must match exactly
 	 * what came from the tree.
 	 */
-	if (nr_trees && !opts.prefix && (!opts.merge || (stage == 2))) {
-		cache_tree_free(&active_cache_tree);
+	if (nr_trees == 1 && !opts.prefix)
 		prime_cache_tree();
-	}
 
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_locked_index(&lock_file))
