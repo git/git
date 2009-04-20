@@ -10,7 +10,7 @@ esac
 : ${J='-l 4 -j'}
 G=/pub/software/scm/git &&
 
-cd $HOME/git &&
+(cd $HOME/git 2>/dev/null || cd $HOME/git.git || exit ) &&
 make clean >/dev/null 2>&1 &&
 git reset --hard &&
 make clean >/dev/null 2>&1 &&
