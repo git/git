@@ -1,6 +1,8 @@
 #ifndef CACHE_TREE_H
 #define CACHE_TREE_H
 
+#include "tree.h"
+
 struct cache_tree;
 struct cache_tree_sub {
 	struct cache_tree *cache_tree;
@@ -33,4 +35,6 @@ int cache_tree_update(struct cache_tree *, struct cache_entry **, int, int, int)
 #define WRITE_TREE_PREFIX_ERROR (-3)
 
 int write_cache_as_tree(unsigned char *sha1, int missing_ok, const char *prefix);
+void prime_cache_tree(struct cache_tree **, struct tree *);
+
 #endif

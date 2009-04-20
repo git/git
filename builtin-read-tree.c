@@ -29,41 +29,6 @@ static int list_tree(unsigned char *sha1)
 	return 0;
 }
 
-static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
-{
-	struct tree_desc desc;
-	struct name_entry entry;
-	int cnt;
-
-	hashcpy(it->sha1, tree->object.sha1);
-	init_tree_desc(&desc, tree->buffer, tree->size);
-	cnt = 0;
-	while (tree_entry(&desc, &entry)) {
-		if (!S_ISDIR(entry.mode))
-			cnt++;
-		else {
-			struct cache_tree_sub *sub;
-			struct tree *subtree = lookup_tree(entry.sha1);
-			if (!subtree->object.parsed)
-				parse_tree(subtree);
-			sub = cache_tree_sub(it, entry.path);
-			sub->cache_tree = cache_tree();
-			prime_cache_tree_rec(sub->cache_tree, subtree);
-			cnt += sub->cache_tree->entry_count;
-		}
-	}
-	it->entry_count = cnt;
-}
-
-static void prime_cache_tree(void)
-{
-	if (!nr_trees)
-		return;
-	active_cache_tree = cache_tree();
-	prime_cache_tree_rec(active_cache_tree, trees[0]);
-
-}
-
 static const char read_tree_usage[] = "git read-tree (<sha> | [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] [--index-output=<file>] <sha1> [<sha2> [<sha3>]])";
 
 static struct lock_file lock_file;
@@ -236,7 +201,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	 * what came from the tree.
 	 */
 	if (nr_trees == 1 && !opts.prefix)
-		prime_cache_tree();
+		prime_cache_tree(&active_cache_tree, trees[0]);
 
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_locked_index(&lock_file))

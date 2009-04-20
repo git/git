@@ -5,6 +5,7 @@
 #include "commit.h"
 #include "tree.h"
 #include "tree-walk.h"
+#include "cache-tree.h"
 #include "unpack-trees.h"
 #include "dir.h"
 #include "run-command.h"
