@@ -6489,6 +6489,17 @@ proc setlink {id lk} {
     }
 }
 
+proc appendshortlink {id {pre {}} {post {}}} {
+    global ctext linknum
+
+    $ctext insert end $pre
+    $ctext tag delete link$linknum
+    $ctext insert end [string range $id 0 7] link$linknum
+    $ctext insert end $post
+    setlink $id link$linknum
+    incr linknum
+}
+
 proc makelink {id} {
     global pendinglinks
 
@@ -8127,8 +8138,15 @@ proc getpatchid {id} {
     global patchids
 
     if {![info exists patchids($id)]} {
-	set x [exec git diff-tree -p --root $id | git patch-id]
-	set patchids($id) [lindex $x 0]
+	set cmd [diffcmd [list $id] {-p --root}]
+	# trim off the initial "|"
+	set cmd [lrange $cmd 1 end]
+	if {[catch {
+	    set x [eval exec $cmd | git patch-id]
+	    set patchids($id) [lindex $x 0]
+	}]} {
+	    set patchids($id) "error"
+	}
     }
     return $patchids($id)
 }
@@ -8140,18 +8158,16 @@ proc do_cmp_commits {a b} {
     clear_ctext
     init_flist {}
     for {set i 0} {$i < 100} {incr i} {
-	set shorta [string range $a 0 7]
-	set shortb [string range $b 0 7]
 	set skipa 0
 	set skipb 0
 	if {[llength $parents($curview,$a)] > 1} {
-	    appendwithlinks [mc "Skipping merge commit %s\n" $shorta] {}
+	    appendshortlink $a [mc "Skipping merge commit "] "\n"
 	    set skipa 1
 	} else {
 	    set patcha [getpatchid $a]
 	}
 	if {[llength $parents($curview,$b)] > 1} {
-	    appendwithlinks [mc "Skipping merge commit %s\n" $shortb] {}
+	    appendshortlink $b [mc "Skipping merge commit "] "\n"
 	    set skipb 1
 	} else {
 	    set patchb [getpatchid $b]
@@ -8159,39 +8175,51 @@ proc do_cmp_commits {a b} {
 	if {!$skipa && !$skipb} {
 	    set heada [lindex $commitinfo($a) 0]
 	    set headb [lindex $commitinfo($b) 0]
+	    if {$patcha eq "error"} {
+		appendshortlink $a [mc "Error getting patch ID for "] \
+		    [mc " - stopping\n"]
+		break
+	    }
+	    if {$patchb eq "error"} {
+		appendshortlink $b [mc "Error getting patch ID for "] \
+		    [mc " - stopping\n"]
+		break
+	    }
 	    if {$patcha eq $patchb} {
 		if {$heada eq $headb} {
-		    appendwithlinks [mc "Commit %s == %s  %s\n" \
-					 $shorta $shortb $heada] {}
+		    appendshortlink $a [mc "Commit "]
+		    appendshortlink $b " == " "  $heada\n"
 		} else {
-		    appendwithlinks [mc "Commit %s  %s\n" $shorta $heada] {}
-		    appendwithlinks [mc " is the same patch as\n"] {}
-		    appendwithlinks [mc "       %s  %s\n" $shortb $headb] {}
+		    appendshortlink $a [mc "Commit "] "  $heada\n"
+		    appendshortlink $b [mc " is the same patch as\n       "] \
+			"  $headb\n"
 		}
 		set skipa 1
 		set skipb 1
 	    } else {
 		$ctext insert end "\n"
-		appendwithlinks [mc "Commit %s  %s\n" $shorta $heada] {}
-		appendwithlinks [mc " differs from\n"] {}
-		appendwithlinks [mc "       %s  %s\n" $shortb $headb] {}
-		appendwithlinks [mc "- stopping\n"]
+		appendshortlink $a [mc "Commit "] "  $heada\n"
+		appendshortlink $b [mc " differs from\n       "] \
+		    "  $headb\n"
+		$ctext insert end [mc "- stopping\n"]
 		break
 	    }
 	}
 	if {$skipa} {
 	    if {[llength $children($curview,$a)] != 1} {
 		$ctext insert end "\n"
-		appendwithlinks [mc "Commit %s has %s children - stopping\n" \
-				    $shorta [llength $children($curview,$a)]] {}
+		appendshortlink $a [mc "Commit "] \
+		    [mc " has %s children - stopping\n" \
+			 [llength $children($curview,$a)]]
 		break
 	    }
 	    set a [lindex $children($curview,$a) 0]
 	}
 	if {$skipb} {
 	    if {[llength $children($curview,$b)] != 1} {
-		appendwithlinks [mc "Commit %s has %s children - stopping\n" \
-				    $shortb [llength $children($curview,$b)]] {}
+		appendshortlink $b [mc "Commit "] \
+		    [mc " has %s children - stopping\n" \
+			 [llength $children($curview,$b)]]
 		break
 	    }
 	    set b [lindex $children($curview,$b) 0]
