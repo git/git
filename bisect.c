@@ -554,21 +554,6 @@ static void bisect_common(struct rev_info *revs, const char *prefix,
 				       !!skipped_sha1_nr);
 }
 
-int bisect_next_vars(const char *prefix)
-{
-	struct rev_info revs;
-	struct rev_list_info info;
-	int reaches = 0, all = 0;
-
-	memset(&info, 0, sizeof(info));
-	info.revs = &revs;
-	info.bisect_show_flags = BISECT_SHOW_TRIED | BISECT_SHOW_STRINGED;
-
-	bisect_common(&revs, prefix, &reaches, &all);
-
-	return show_bisect_vars(&info, reaches, all);
-}
-
 static void exit_if_skipped_commits(struct commit_list *tried,
 				    const unsigned char *bad)
 {
