@@ -69,10 +69,6 @@ Updates since v1.6.2
   with the 'edit' action in git-add -i/-p, you can abort the editor to
   tell git not to apply it.
 
-* The number of commits shown in "you are ahead/behind your upstream"
-  messages given by "git checkout" and "git status" used to count merge
-  commits; now it doesn't.
-
 * @{-1} is a new way to refer to the last branch you were on introduced in
   1.6.2, but the initial implementation did not teach this to a few
   commands.  Now the syntax works with "branch -m @{-1} newname".
