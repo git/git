@@ -298,14 +298,12 @@ cat > expect <<\EOF
 * | | |   Merge branch 'side'
 |\ \ \ \
 | * | | | side-2
-| | | |/
-| | |/|
+| | |_|/
 | |/| |
 | * | | side-1
 * | | | Second
 * | | | sixth
-| | |/
-| |/|
+| |_|/
 |/| |
 * | | fifth
 * | | fourth
