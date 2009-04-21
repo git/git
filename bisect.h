@@ -16,7 +16,6 @@ extern void print_commit_list(struct commit_list *list,
 /* bisect_show_flags flags in struct rev_list_info */
 #define BISECT_SHOW_ALL		(1<<0)
 #define BISECT_SHOW_TRIED	(1<<1)
-#define BISECT_SHOW_STRINGED	(1<<2)
 
 struct rev_list_info {
 	struct rev_info *revs;
