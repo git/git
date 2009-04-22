@@ -2,11 +2,24 @@
 #include "commit.h"
 #include "refs.h"
 #include "builtin.h"
+#include "color.h"
 
 static const char show_branch_usage[] =
 "git show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n[,b]] <branch>";
 static const char show_branch_usage_reflog[] =
 "--reflog is incompatible with --all, --remotes, --independent or --merge-base";
+
+static int showbranch_use_color = -1;
+static char column_colors[][COLOR_MAXLEN] = {
+	GIT_COLOR_RED,
+	GIT_COLOR_GREEN,
+	GIT_COLOR_YELLOW,
+	GIT_COLOR_BLUE,
+	GIT_COLOR_MAGENTA,
+	GIT_COLOR_CYAN,
+};
+
+#define COLUMN_COLORS_MAX (ARRAY_SIZE(column_colors))
 
 static int default_num;
 static int default_alloc;
@@ -18,6 +31,20 @@ static const char **default_arg;
 #define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
 
 #define DEFAULT_REFLOG	4
+
+static const char *get_color_code(int idx)
+{
+	if (showbranch_use_color)
+		return column_colors[idx];
+	return "";
+}
+
+static const char *get_color_reset_code(void)
+{
+	if (showbranch_use_color)
+		return GIT_COLOR_RESET;
+	return "";
+}
 
 static struct commit *interesting(struct commit_list *list)
 {
@@ -545,7 +572,12 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	if (!strcmp(var, "color.showbranch")) {
+		showbranch_use_color = git_config_colorbool(var, value, -1);
+		return 0;
+	}
+
+	return git_color_default_config(var, value, cb);
 }
 
 static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
@@ -611,6 +643,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 	git_config(git_show_branch_config, NULL);
 
+	if (showbranch_use_color == -1)
+		showbranch_use_color = git_use_color_default;
+
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_num) {
 		ac = default_num + 1;
@@ -658,6 +693,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			parse_reflog_param(arg + 9, &reflog, &reflog_base);
 		else if (!prefixcmp(arg, "-g="))
 			parse_reflog_param(arg + 3, &reflog, &reflog_base);
+		else if (!strcmp(arg, "--color"))
+			showbranch_use_color = 1;
+		else if (!strcmp(arg, "--no-color"))
+			showbranch_use_color = 0;
 		else
 			usage(show_branch_usage);
 		ac--; av++;
@@ -843,8 +882,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			else {
 				for (j = 0; j < i; j++)
 					putchar(' ');
-				printf("%c [%s] ",
-				       is_head ? '*' : '!', ref_name[i]);
+				printf("%s%c%s [%s] ",
+				       get_color_code(i % COLUMN_COLORS_MAX),
+				       is_head ? '*' : '!',
+				       get_color_reset_code(), ref_name[i]);
 			}
 
 			if (!reflog) {
@@ -903,7 +944,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 					mark = '*';
 				else
 					mark = '+';
-				putchar(mark);
+				printf("%s%c%s",
+				       get_color_code(i % COLUMN_COLORS_MAX),
+				       mark, get_color_reset_code());
 			}
 			putchar(' ');
 		}
