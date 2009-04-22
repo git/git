@@ -82,4 +82,5 @@ sub generate_command
 }
 
 setup_environment();
-exec(generate_command());
+my $rc = system(generate_command());
+exit($rc | ($rc >> 8));
