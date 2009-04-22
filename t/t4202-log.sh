@@ -342,7 +342,7 @@ cat > expect <<\EOF
 * initial
 EOF
 
-test_expect_failure 'log --graph with merge' '
+test_expect_sucess 'log --graph with merge' '
 	git log --graph --date-order --pretty=tformat:%s |
 		sed "s/ *$//" >actual &&
 	test_cmp expect actual

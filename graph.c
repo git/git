@@ -852,7 +852,7 @@ static void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 			graph_output_commit_char(graph, sb);
 			chars_written++;
 
-			if (graph->num_parents > 3)
+			if (graph->num_parents > 2)
 				chars_written += graph_draw_octopus_merge(graph,
 									  sb);
 		} else if (seen_this && (graph->num_parents > 2)) {
