@@ -284,10 +284,36 @@ test_expect_success 'set up more tangled history' '
 	git merge master~3 &&
 	git merge side~1 &&
 	git checkout master &&
-	git merge tangle
+	git merge tangle &&
+	git checkout -b reach &&
+	test_commit reach &&
+	git checkout master &&
+	git checkout -b octopus-a &&
+	test_commit octopus-a &&
+	git checkout master &&
+	git checkout -b octopus-b &&
+	test_commit octopus-b &&
+	git checkout master &&
+	test_commit seventh &&
+	git merge octopus-a octopus-b
+	git merge reach
 '
 
 cat > expect <<\EOF
+*   Merge branch 'reach'
+|\
+| \
+|  \
+*-. \   Merge branches 'octopus-a' and 'octopus-b'
+|\ \ \
+* | | | seventh
+| | * | octopus-b
+| |/ /
+|/| |
+| * | octopus-a
+|/ /
+| * reach
+|/
 *   Merge branch 'tangle'
 |\
 | *   Merge branch 'side' (early part) into tangle
@@ -316,7 +342,7 @@ cat > expect <<\EOF
 * initial
 EOF
 
-test_expect_success 'log --graph with merge' '
+test_expect_failure 'log --graph with merge' '
 	git log --graph --date-order --pretty=tformat:%s |
 		sed "s/ *$//" >actual &&
 	test_cmp expect actual
