@@ -693,7 +693,7 @@ listed below are allowed:
 	tags = tags/*/project-a:refs/remotes/project-a/tags/*
 ------------------------------------------------------------------------
 
-Keep in mind that the '*' (asterisk) wildcard of the local ref
+Keep in mind that the '\*' (asterisk) wildcard of the local ref
 (right of the ':') *must* be the farthest right path component;
 however the remote wildcard may be anywhere as long as it's own
 independent path component (surrounded by '/' or EOL).   This
