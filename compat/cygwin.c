@@ -89,7 +89,7 @@ static int cygwin_stat(const char *path, struct stat *buf)
 /*
  * At start up, we are trying to determine whether Win32 API or cygwin stat
  * functions should be used. The choice is determined by core.ignorecygwinfstricks.
- * Reading this option is not always possible immediately as git_dir may be
+ * Reading this option is not always possible immediately as git_dir may
  * not be set yet. So until it is set, use cygwin lstat/stat functions.
  * However, if core.filemode is set, we must use the Cygwin posix
  * stat/lstat as the Windows stat functions do not determine posix filemode.

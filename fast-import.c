@@ -133,7 +133,7 @@ Format of STDIN stream:
      # always escapes the related input from comment processing.
      #
      # In case it is not clear, the '#' that starts the comment
-     # must be the first character on that the line (an lf have
+     # must be the first character on that line (an lf
      # preceded it).
      #
   comment ::= '#' not_lf* lf;

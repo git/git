@@ -240,7 +240,7 @@ static int unreachable(struct expire_reflog_cb *cb, struct commit *commit, unsig
 static void mark_reachable(struct commit *commit, unsigned long expire_limit)
 {
 	/*
-	 * We need to compute if commit on either side of an reflog
+	 * We need to compute whether the commit on either side of a reflog
 	 * entry is reachable from the tip of the ref for all entries.
 	 * Mark commits that are reachable from the tip down to the
 	 * time threshold first; we know a commit marked thusly is

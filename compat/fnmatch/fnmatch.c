@@ -39,7 +39,7 @@
 # include <stdlib.h>
 #endif
 
-/* For platform which support the ISO C amendment 1 functionality we
+/* For platforms which support the ISO C amendment 1 functionality we
    support user defined character classes.  */
 #if defined _LIBC || (defined HAVE_WCTYPE_H && defined HAVE_WCHAR_H)
 /* Solaris 2.5 has a bug: <wchar.h> must be included before <wctype.h>.  */
