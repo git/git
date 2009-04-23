@@ -8,9 +8,9 @@ is used to store the information for that repository, and
 fallback values for the `.git/config` file. The file `/etc/gitconfig`
 can be used to store system-wide defaults.
 
-They can be used by both the git plumbing
-and the porcelains. The variables are divided into sections, where
-in the fully qualified variable name the variable itself is the last
+The configuration variables are used by both the git plumbing
+and the porcelains. The variables are divided into sections, wherein
+the fully qualified variable name of the variable itself is the last
 dot-separated segment and the section name is everything before the last
 dot. The variable names are case-insensitive and only alphanumeric
 characters are allowed. Some variables may appear multiple times.
@@ -38,9 +38,9 @@ in the section header, like in the example below:
 
 --------
 
-Subsection names can contain any character except newline (doublequote
-`"` and backslash have to be escaped as `\"` and `\\`,
-respectively) and are case sensitive.  Section headers cannot span multiple
+Subsection names are case sensitive and can contain any characters except
+newline (doublequote `"` and backslash have to be escaped as `\"` and `\\`,
+respectively).  Section headers cannot span multiple
 lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
 don't need to.
