@@ -15,6 +15,7 @@
 #include "grep.h"
 #include "quote.h"
 #include "dir.h"
+#include "string-list.h"
 
 #ifndef NO_PTHREADS
 #include <pthread.h>
@@ -556,6 +557,31 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	}
 }
 
+static void append_path(struct grep_opt *opt, const void *data, size_t len)
+{
+	struct string_list *path_list = opt->output_priv;
+
+	if (len == 1 && *(char *)data == '\0')
+		return;
+	string_list_append(xstrndup(data, len), path_list);
+}
+
+static void run_pager(struct grep_opt *opt, const char *prefix)
+{
+	struct string_list *path_list = opt->output_priv;
+	char **argv = xmalloc(sizeof(const char *) * (path_list->nr + 1));
+	int i;
+
+	for (i = 0; i < path_list->nr; i++)
+		argv[i] = path_list->items[i].string;
+	argv[path_list->nr] = NULL;
+
+	if (prefix)
+		chdir(prefix);
+	execvp(argv[0], argv);
+	error("Could not run pager %s: %s", argv[0], strerror(errno));
+}
+
 static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 {
 	int hit = 0;
@@ -785,9 +811,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	int cached = 0;
 	int seen_dashdash = 0;
 	int external_grep_allowed__ignored;
+	int show_in_pager = 0;
 	struct grep_opt opt;
 	struct object_array list = { 0, 0, NULL };
 	const char **paths = NULL;
+	struct string_list path_list = { NULL, 0, 0, 0 };
 	int i;
 	int dummy;
 	int nongit = 0, use_index = 1;
@@ -871,6 +899,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "all-match", &opt.all_match,
 			"show only matches from files that match all patterns"),
 		OPT_GROUP(""),
+		OPT_BOOLEAN('O', "open-files-in-pager", &show_in_pager,
+			"show matching files in the pager"),
 		OPT_BOOLEAN(0, "ext-grep", &external_grep_allowed__ignored,
 			    "allow calling of grep(1) (ignored by this build)"),
 		{ OPTION_CALLBACK, 0, "help-all", &options, NULL, "show usage",
@@ -946,6 +976,20 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		argc--;
 	}
 
+	if (show_in_pager) {
+		const char *pager = getenv("GIT_PAGER");
+		if (!pager)
+			pager = getenv("PAGER");
+		if (!pager)
+			pager = "less";
+		opt.name_only = 1;
+		opt.null_following_name = 1;
+		opt.output_priv = &path_list;
+		opt.output = append_path;
+		string_list_append(pager, &path_list);
+		use_threads = 0;
+	}
+
 	if (!opt.pattern_list)
 		die("no pattern given.");
 	if (!opt.fixed && opt.ignore_case)
@@ -1014,6 +1058,29 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		return !hit;
 	}
 
+	if (show_in_pager && (cached || list.nr))
+		die ("--open-files-in-pager only works on the worktree");
+
+	if (show_in_pager && opt.pattern_list && !opt.pattern_list->next) {
+		const char *pager = path_list.items[0].string;
+		int len = strlen(pager);
+
+		if (len > 4 && is_dir_sep(pager[len - 5]))
+			pager += len - 4;
+
+		if (!strcmp("less", pager) || !strcmp("vi", pager)) {
+			struct strbuf buf = STRBUF_INIT;
+			strbuf_addf(&buf, "+/%s%s",
+					strcmp("less", pager) ? "" : "*",
+					opt.pattern_list->pattern);
+			string_list_append(buf.buf, &path_list);
+			strbuf_detach(&buf, NULL);
+		}
+	}
+
+	if (!show_in_pager)
+		setup_pager();
+
 	if (!list.nr) {
 		if (!cached)
 			setup_work_tree();
@@ -1036,6 +1103,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (use_threads)
 		hit |= wait_all();
+
+	if (hit && show_in_pager)
+		run_pager(&opt, prefix);
+
 	free_grep_patterns(&opt);
 	return !hit;
 }
