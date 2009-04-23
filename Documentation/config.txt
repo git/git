@@ -707,6 +707,13 @@ fetch.unpackLimit::
 	especially on slow filesystems.  If not set, the value of
 	`transfer.unpackLimit` is used instead.
 
+format.attach::
+	Enable multipart/mixed attachments as the default for
+	'format-patch'.  The value can also be a double quoted string
+	which will enable attachments as the default and set the
+	value as the boundary.  See the --attach option in
+	linkgit:git-format-patch[1].
+
 format.numbered::
 	A boolean which can enable or disable sequence numbers in patch
 	subjects.  It defaults to "auto" which enables it only if there
@@ -717,6 +724,14 @@ format.numbered::
 format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See linkgit:git-format-patch[1].
+
+format.cc::
+	Additional "Cc:" headers to include in a patch to be submitted
+	by mail.  See the --cc option in linkgit:git-format-patch[1].
+
+format.subjectprefix::
+	The default for format-patch is to output files with the '[PATCH]'
+	subject prefix. Use this variable to change that prefix.
 
 format.suffix::
 	The default for format-patch is to output files with the suffix
