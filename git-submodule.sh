@@ -17,6 +17,7 @@ branch=
 quiet=
 cached=
 nofetch=
+rebase=
 
 #
 # print stuff on stdout unless -q was specified
@@ -294,6 +295,11 @@ cmd_init()
 		git config submodule."$name".url "$url" ||
 		die "Failed to register url for submodule path '$path'"
 
+		test true != "$(git config -f .gitmodules --bool \
+			submodule."$name".rebase)" ||
+		git config submodule."$name".rebase true ||
+		die "Failed to register submodule path '$path' as rebasing"
+
 		say "Submodule '$name' ($url) registered for path '$path'"
 	done
 }
@@ -321,6 +327,10 @@ cmd_update()
 			shift
 			nofetch=1
 			;;
+		-r|--rebase)
+			shift
+			rebase=true
+			;;
 		--)
 			shift
 			break
@@ -339,6 +349,7 @@ cmd_update()
 	do
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
+		rebase_module=$(git config --bool submodule."$name".rebase)
 		if test -z "$url"
 		then
 			# Only mention uninitialized submodules when its
@@ -359,6 +370,11 @@ cmd_update()
 			die "Unable to find current revision in submodule path '$path'"
 		fi
 
+		if test true = "$rebase"
+		then
+			rebase_module=true
+		fi
+
 		if test "$subsha1" != "$sha1"
 		then
 			force=
@@ -374,11 +390,20 @@ cmd_update()
 				die "Unable to fetch in submodule path '$path'"
 			fi
 
-			(unset GIT_DIR; cd "$path" &&
-				  git-checkout $force -q "$sha1") ||
-			die "Unable to checkout '$sha1' in submodule path '$path'"
+			if test true = "$rebase_module"
+			then
+				command="git-rebase"
+				action="rebase"
+				msg="rebased onto"
+			else
+				command="git-checkout $force -q"
+				action="checkout"
+				msg="checked out"
+			fi
 
-			say "Submodule path '$path': checked out '$sha1'"
+			(unset GIT_DIR; cd "$path" && $command "$sha1") ||
+			die "Unable to $action '$sha1' in submodule path '$path'"
+			say "Submodule path '$path': $msg '$sha1'"
 		fi
 	done
 }

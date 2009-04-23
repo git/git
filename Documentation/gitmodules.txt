@@ -30,6 +30,9 @@ submodule.<name>.path::
 submodule.<name>.url::
 	Defines an url from where the submodule repository can be cloned.
 
+submodule.<name>.rebase::
+	Defines that the submodule should be rebased by default.
+
 
 EXAMPLES
 --------
