@@ -128,9 +128,9 @@ include::diff-options.txt[]
 	the Message-Id header to reference.
 +
 The optional <style> argument can be either `shallow` or `deep`.
-'Shallow' threading makes every mail a reply to the head of the
+'shallow' threading makes every mail a reply to the head of the
 series, where the head is chosen from the cover letter, the
-`\--in-reply-to`, and the first patch mail, in this order.  'Deep'
+`\--in-reply-to`, and the first patch mail, in this order.  'deep'
 threading makes every mail a reply to the previous one.  If not
 specified, defaults to the 'format.thread' configuration, or `shallow`
 if that is not set.
