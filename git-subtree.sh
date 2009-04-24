@@ -46,7 +46,6 @@ assert()
 
 while [ $# -gt 0 ]; do
 	opt="$1"
-	debug "option: $1"
 	shift
 	case "$opt" in
 		-q) quiet=1 ;;
@@ -108,6 +107,30 @@ cache_set()
 	echo "$newrev" >"$cachedir/$oldrev"
 }
 
+find_existing_splits()
+{
+	debug "Looking for prior splits..."
+	dir="$1"
+	revs="$2"
+	git log --grep="^git-subtree-dir: $dir\$" \
+		--pretty=format:'%s%n%n%b%nEND' "$revs" |
+	while read a b junk; do
+		case "$a" in
+			git-subtree-mainline:) main="$b" ;;
+			git-subtree-split:) sub="$b" ;;
+			*)
+				if [ -n "$main" -a -n "$sub" ]; then
+					debug "  Prior: $main -> $sub"
+					cache_set $main $sub
+					echo "^$main^ ^$sub^"
+					main=
+					sub=
+				fi
+				;;
+		esac
+	done
+}
+
 copy_commit()
 {
 	# We're doing to set some environment vars here, so
@@ -136,10 +159,11 @@ merge_msg()
 	latest_old="$2"
 	latest_new="$3"
 	cat <<-EOF
-		Split changes from '$dir/' into commit '$latest_new'
+		Split '$dir/' into commit '$latest_new'
 		
 		git-subtree-dir: $dir
-		git-subtree-includes: $latest_old
+		git-subtree-mainline: $latest_old
+		git-subtree-split: $latest_new
 	EOF
 }
 
@@ -148,11 +172,19 @@ cmd_split()
 	debug "Splitting $dir..."
 	cache_setup || exit $?
 	
-	git rev-list --reverse --parents $revs -- "$dir" |
+	unrevs="$(find_existing_splits "$dir" "$revs")"
+	
+	git rev-list --reverse --parents $revs $unrevs -- "$dir" |
 	while read rev parents; do
+		exists=$(cache_get $rev)
 		newparents=$(cache_get $parents)
 		debug
 		debug "Processing commit: $rev / $newparents"
+		
+		if [ -n "$exists" ]; then
+			debug "  prior: $exists"
+			continue
+		fi
 		
 		git ls-tree $rev -- "$dir" |
 		while read mode type tree name; do
