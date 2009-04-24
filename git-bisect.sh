@@ -33,16 +33,6 @@ require_work_tree
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 
-sq() {
-	@@PERL@@ -e '
-		for (@ARGV) {
-			s/'\''/'\'\\\\\'\''/g;
-			print " '\''$_'\''";
-		}
-		print "\n";
-	' "$@"
-}
-
 bisect_autostart() {
 	test -s "$GIT_DIR/BISECT_START" || {
 		echo >&2 'You need to start by "git bisect start"'
@@ -107,7 +97,7 @@ bisect_start() {
 	for arg; do
 	    case "$arg" in --) has_double_dash=1; break ;; esac
 	done
-	orig_args=$(sq "$@")
+	orig_args=$(git rev-parse --sq-quote "$@")
 	bad_seen=0
 	eval=''
 	while [ $# -gt 0 ]; do
@@ -147,7 +137,7 @@ bisect_start() {
 	# Write new start state.
 	#
 	echo "$start_head" >"$GIT_DIR/BISECT_START" &&
-	sq "$@" >"$GIT_DIR/BISECT_NAMES" &&
+	git rev-parse --sq-quote "$@" >"$GIT_DIR/BISECT_NAMES" &&
 	eval "$eval" &&
 	echo "git bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG" || exit
 	#
@@ -199,7 +189,7 @@ bisect_skip() {
             *..*)
                 revs=$(git rev-list "$arg") || die "Bad rev input: $arg" ;;
             *)
-                revs=$(sq "$arg") ;;
+                revs=$(git rev-parse --sq-quote "$arg") ;;
 	    esac
             all="$all $revs"
         done
