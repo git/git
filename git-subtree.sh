@@ -28,6 +28,16 @@ debug()
 	fi
 }
 
+assert()
+{
+	if "$@"; then
+		:
+	else
+		die "assertion failed: " "$@"
+	fi
+}
+
+
 #echo "Options: $*"
 
 while [ $# -gt 0 ]; do
@@ -63,7 +73,7 @@ debug "dir: {$dir}"
 
 cache_setup()
 {
-	cachedir="$GIT_DIR/subtree-cache/$dir"
+	cachedir="$GIT_DIR/subtree-cache/$$"
 	rm -rf "$cachedir" || die "Can't delete old cachedir: $cachedir"
 	mkdir -p "$cachedir" || die "Can't create new cachedir: $cachedir"
 	debug "Using cachedir: $cachedir" >&2
@@ -98,19 +108,23 @@ cmd_split()
 	git rev-list --reverse --parents $revs -- "$dir" |
 	while read rev parents; do
 		newparents=$(cache_get $parents)
-		echo "rev: $rev / $newparents"
+		debug
+		debug "Processing commit: $rev / $newparents"
 		
 		git ls-tree $rev -- "$dir" |
 		while read mode type tree name; do
+			assert [ "$name" = "$dir" ]
+			debug "  tree is: $tree"
 			p=""
 			for parent in $newparents; do
 				p="$p -p $parent"
 			done
 			newrev=$(echo synthetic | git commit-tree $tree $p) \
 				|| die "Can't create new commit for $rev / $tree"
+			echo "  newrev is: $newrev"
 			cache_set $rev $newrev
-		done
-	done
+		done || exit $?
+	done || exit $?
 	
 	exit 0
 }
