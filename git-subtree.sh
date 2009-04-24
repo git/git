@@ -77,7 +77,6 @@ cache_setup()
 	rm -rf "$cachedir" || die "Can't delete old cachedir: $cachedir"
 	mkdir -p "$cachedir" || die "Can't create new cachedir: $cachedir"
 	debug "Using cachedir: $cachedir" >&2
-	echo "$cachedir"
 }
 
 cache_get()
@@ -100,6 +99,24 @@ cache_set()
 	echo "$newrev" >"$cachedir/$oldrev"
 }
 
+copy_commit()
+{
+	# We're doing to set some environment vars here, so
+	# do it in a subshell to get rid of them safely later
+	git log -1 --pretty=format:'%an%n%ae%n%ad%n%cn%n%ce%n%cd%n%s%n%n%b' "$1" |
+	(
+		read GIT_AUTHOR_NAME
+		read GIT_AUTHOR_EMAIL
+		read GIT_AUTHOR_DATE
+		read GIT_COMMITTER_NAME
+		read GIT_COMMITTER_EMAIL
+		read GIT_COMMITTER_DATE
+		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
+		export GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE
+		git commit-tree "$2" $3  # reads the rest of stdin
+	) || die "Can't copy commit $1"
+}
+
 cmd_split()
 {
 	debug "Splitting $dir..."
@@ -119,9 +136,9 @@ cmd_split()
 			for parent in $newparents; do
 				p="$p -p $parent"
 			done
-			newrev=$(echo synthetic | git commit-tree $tree $p) \
-				|| die "Can't create new commit for $rev / $tree"
-			echo "  newrev is: $newrev"
+			
+			newrev=$(copy_commit $rev $tree "$p") || exit $?
+			debug "  newrev is: $newrev"
 			cache_set $rev $newrev
 		done || exit $?
 	done || exit $?
