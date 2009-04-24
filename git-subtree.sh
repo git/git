@@ -173,28 +173,31 @@ cmd_split()
 	cache_setup || exit $?
 	
 	if [ -n "$onto" ]; then
-		echo "Reading history for $onto..."
+		echo "Reading history for --onto=$onto..."
 		git rev-list $onto |
 		while read rev; do
 			# the 'onto' history is already just the subdir, so
 			# any parent we find there can be used verbatim
+			debug "  cache: $rev"
 			cache_set $rev $rev
 		done
 	fi
 	
 	unrevs="$(find_existing_splits "$dir" "$revs")"
 	
-	git rev-list --reverse --parents $revs $unrevs -- "$dir" |
+	debug "git rev-list --reverse $revs $unrevs"
+	git rev-list --reverse --parents $revs $unrevsx |
 	while read rev parents; do
-		exists=$(cache_get $rev)
-		newparents=$(cache_get $parents)
 		debug
-		debug "Processing commit: $rev / $newparents"
-		
+		debug "Processing commit: $rev"
+		exists=$(cache_get $rev)
 		if [ -n "$exists" ]; then
 			debug "  prior: $exists"
 			continue
 		fi
+		debug "  parents: $parents"
+		newparents=$(cache_get $parents)
+		debug "  newparents: $newparents"
 		
 		git ls-tree $rev -- "$dir" |
 		while read mode type tree name; do
