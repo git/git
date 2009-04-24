@@ -2,10 +2,10 @@
 #
 # git-subtree.sh: split/join git repositories in subdirectories of this one
 #
-# Copyright (c) 2009 Avery Pennarun <apenwarr@gmail.com>
+# Copyright (C) 2009 Avery Pennarun <apenwarr@gmail.com>
 #
 OPTS_SPEC="\
-git subtree split <revisions> -- <subdir>
+git subtree split [--rejoin] [--onto rev] <commit...> -- <path>
 git subtree merge 
 
 git subtree does foo and bar!
@@ -13,6 +13,8 @@ git subtree does foo and bar!
 h,help   show the help
 q        quiet
 v        verbose
+onto=    existing subtree revision to connect, if any
+rejoin   merge the new branch back into HEAD
 "
 eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
 . git-sh-setup
@@ -20,6 +22,8 @@ require_work_tree
 
 quiet=
 command=
+onto=
+rejoin=
 
 debug()
 {
@@ -42,9 +46,12 @@ assert()
 
 while [ $# -gt 0 ]; do
 	opt="$1"
+	debug "option: $1"
 	shift
 	case "$opt" in
 		-q) quiet=1 ;;
+		--onto) onto="$1"; shift ;;
+		--rejoin) rejoin=1 ;;
 		--) break ;;
 	esac
 done
@@ -93,7 +100,9 @@ cache_set()
 {
 	oldrev="$1"
 	newrev="$2"
-	if [ "$oldrev" != "latest" -a -e "$cachedir/$oldrev" ]; then
+	if [ "$oldrev" != "latest_old" \
+	     -a "$oldrev" != "latest_new" \
+	     -a -e "$cachedir/$oldrev" ]; then
 		die "cache for $oldrev already exists!"
 	fi
 	echo "$newrev" >"$cachedir/$oldrev"
@@ -111,10 +120,27 @@ copy_commit()
 		read GIT_COMMITTER_NAME
 		read GIT_COMMITTER_EMAIL
 		read GIT_COMMITTER_DATE
-		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
-		export GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE
+		export  GIT_AUTHOR_NAME \
+			GIT_AUTHOR_EMAIL \
+			GIT_AUTHOR_DATE \
+			GIT_COMMITTER_NAME \
+			GIT_COMMITTER_EMAIL \
+			GIT_COMMITTER_DATE
 		git commit-tree "$2" $3  # reads the rest of stdin
 	) || die "Can't copy commit $1"
+}
+
+merge_msg()
+{
+	dir="$1"
+	latest_old="$2"
+	latest_new="$3"
+	cat <<-EOF
+		Split changes from '$dir/' into commit '$latest_new'
+		
+		git-subtree-dir: $dir
+		git-subtree-includes: $latest_old
+	EOF
 }
 
 cmd_split()
@@ -140,14 +166,23 @@ cmd_split()
 			newrev=$(copy_commit $rev $tree "$p") || exit $?
 			debug "  newrev is: $newrev"
 			cache_set $rev $newrev
-			cache_set latest $newrev
+			cache_set latest_new $newrev
+			cache_set latest_old $rev
 		done || exit $?
 	done || exit $?
-	latest=$(cache_get latest)
-	if [ -z "$latest" ]; then
+	latest_new=$(cache_get latest_new)
+	if [ -z "$latest_new" ]; then
 		die "No new revisions were found"
 	fi
-	echo $latest
+	
+	if [ -n "$rejoin" ]; then
+		debug "Merging split branch into HEAD..."
+		latest_old=$(cache_get latest_old)
+		git merge -s ours \
+			-m "$(merge_msg $dir $latest_old $latest_new)" \
+			$latest_new
+	fi
+	echo $latest_new
 	exit 0
 }
 
