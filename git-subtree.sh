@@ -13,7 +13,7 @@ git subtree does foo and bar!
 h,help   show the help
 q        quiet
 v        verbose
-onto=    existing subtree revision to connect, if any
+onto=    existing subtree revision to search for parent
 rejoin   merge the new branch back into HEAD
 "
 eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
@@ -171,6 +171,16 @@ cmd_split()
 {
 	debug "Splitting $dir..."
 	cache_setup || exit $?
+	
+	if [ -n "$onto" ]; then
+		echo "Reading history for $onto..."
+		git rev-list $onto |
+		while read rev; do
+			# the 'onto' history is already just the subdir, so
+			# any parent we find there can be used verbatim
+			cache_set $rev $rev
+		done
+	fi
 	
 	unrevs="$(find_existing_splits "$dir" "$revs")"
 	
