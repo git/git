@@ -44,11 +44,7 @@ else
 fi
 
 sq () {
-	for sqarg
-	do
-		printf "%s" "$sqarg" |
-		sed -e 's/'\''/'\''\\'\'''\''/g' -e 's/.*/ '\''&'\''/'
-	done
+	git rev-parse --sq-quote "$@"
 }
 
 stop_here () {
