@@ -616,7 +616,7 @@ test_expect_success 'in-reply-to but no threading' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--in-reply-to="<in-reply-id@example.com>" \
-		--no-thread \
+		--nothread \
 		$patches |
 	grep "In-Reply-To: <in-reply-id@example.com>"
 '
