@@ -93,7 +93,7 @@ cache_set()
 {
 	oldrev="$1"
 	newrev="$2"
-	if [ -e "$cachedir/$oldrev" ]; then
+	if [ "$oldrev" != "latest" -a -e "$cachedir/$oldrev" ]; then
 		die "cache for $oldrev already exists!"
 	fi
 	echo "$newrev" >"$cachedir/$oldrev"
@@ -140,9 +140,14 @@ cmd_split()
 			newrev=$(copy_commit $rev $tree "$p") || exit $?
 			debug "  newrev is: $newrev"
 			cache_set $rev $newrev
+			cache_set latest $newrev
 		done || exit $?
 	done || exit $?
-	
+	latest=$(cache_get latest)
+	if [ -z "$latest" ]; then
+		die "No new revisions were found"
+	fi
+	echo $latest
 	exit 0
 }
 
