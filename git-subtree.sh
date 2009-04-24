@@ -167,6 +167,32 @@ merge_msg()
 	EOF
 }
 
+tree_for_commit()
+{
+	git ls-tree "$1" -- "$dir" |
+	while read mode type tree name; do
+		assert [ "$name" = "$dir" ]
+		echo $tree
+		break
+	done
+}
+
+tree_changed()
+{
+	tree=$1
+	shift
+	if [ $# -ne 1 ]; then
+		return 0   # weird parents, consider it changed
+	else
+		ptree=$(tree_for_commit $1)
+		if [ "$ptree" != "$tree" ]; then
+			return 0   # changed
+		else
+			return 1   # not changed
+		fi
+	fi
+}
+
 cmd_split()
 {
 	debug "Splitting $dir..."
@@ -199,21 +225,24 @@ cmd_split()
 		newparents=$(cache_get $parents)
 		debug "  newparents: $newparents"
 		
-		git ls-tree $rev -- "$dir" |
-		while read mode type tree name; do
-			assert [ "$name" = "$dir" ]
-			debug "  tree is: $tree"
-			p=""
-			for parent in $newparents; do
-				p="$p -p $parent"
-			done
+		tree=$(tree_for_commit $rev)
+		debug "  tree is: $tree"
+		[ -z $tree ] && continue
+
+		p=""
+		for parent in $newparents; do
+			p="$p -p $parent"
+		done
 			
+		if tree_changed $tree $parents; then
 			newrev=$(copy_commit $rev $tree "$p") || exit $?
-			debug "  newrev is: $newrev"
-			cache_set $rev $newrev
-			cache_set latest_new $newrev
-			cache_set latest_old $rev
-		done || exit $?
+		else
+			newrev="$newparents"
+		fi
+		debug "  newrev is: $newrev"
+		cache_set $rev $newrev
+		cache_set latest_new $newrev
+		cache_set latest_old $rev
 	done || exit $?
 	latest_new=$(cache_get latest_new)
 	if [ -z "$latest_new" ]; then
