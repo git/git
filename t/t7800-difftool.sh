@@ -10,6 +10,11 @@ Testing basic diff tool invocation
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping difftool tests, perl not available'
+	test_done
+fi
+
 remove_config_vars()
 {
 	# Unset all config variables used by git-difftool
