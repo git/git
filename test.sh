@@ -59,7 +59,7 @@ git branch sub2 FETCH_HEAD
 git merge -s subtree FETCH_HEAD
 git branch pre-split
 
-split1=$(git subtree split --onto FETCH_HEAD subdir --rejoin)
+split1=$(git subtree split --prefix subdir --onto FETCH_HEAD --rejoin)
 echo "split1={$split1}"
 git branch split1 "$split1"
 
@@ -77,14 +77,14 @@ git add sub6
 git commit -m 'sub6'
 
 cd ../mainline
-split2=$(git subtree split subdir --rejoin)
+split2=$(git subtree split --prefix subdir --rejoin)
 git branch split2 "$split2"
 
 touch subdir/main-sub7
 git add subdir/main-sub7
 git commit -m 'main-sub7'
 
-split3=$(git subtree split subdir --rejoin)
+split3=$(git subtree split --prefix subdir --rejoin)
 git branch split3 "$split3"
 
 cd ../subproj

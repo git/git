@@ -8,14 +8,12 @@ if [ $# -eq 0 ]; then
     set -- -h
 fi
 OPTS_SPEC="\
-git subtree split [options...] <commit...> -- <path>
+git subtree split [options...] <--prefix=prefix> <commit...> -- <path>
 git subtree merge 
-
-git subtree does foo and bar!
 --
 h,help        show the help
 q             quiet
-v             verbose
+prefix=       the name of the subdir to split out
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
 ignore-joins  ignore prior --rejoin commits
@@ -54,6 +52,8 @@ while [ $# -gt 0 ]; do
 	shift
 	case "$opt" in
 		-q) quiet=1 ;;
+		--prefix) prefix="$1"; shift ;;
+		--no-prefix) prefix= ;;
 		--onto) onto="$1"; shift ;;
 		--no-onto) onto= ;;
 		--rejoin) rejoin=1 ;;
@@ -72,14 +72,16 @@ case "$command" in
 esac
 
 revs=$(git rev-parse --default HEAD --revs-only "$@") || exit $?
-dirs="$(git rev-parse --sq --no-revs --no-flags "$@")" || exit $?
 
-#echo "dirs is {$dirs}"
-eval $(echo set -- $dirs)
-if [ "$#" -ne 1 ]; then
-	die "Must provide exactly one subtree dir (got $#)"
+if [ -z "$prefix" ]; then
+	die "You must provide the --prefix option."
 fi
-dir="$1"
+dir="$prefix"
+
+dirs="$(git rev-parse --no-revs --no-flags "$@")" || exit $?
+if [ -n "$dirs" ]; then
+	die "Error: Use --prefix instead of bare filenames."
+fi
 
 debug "command: {$command}"
 debug "quiet: {$quiet}"
@@ -261,8 +263,10 @@ cmd_split()
 		unrevs="$(find_existing_splits "$dir" "$revs")"
 	fi
 	
-	debug "git rev-list --reverse $revs $unrevs"
-	git rev-list --reverse --parents $revs $unrevsx |
+	# We can't restrict rev-list to only "$dir" here, because that leaves out
+	# critical information about commit parents.
+	debug "git rev-list --reverse --parents $revs $unrevs"
+	git rev-list --reverse --parents $revs $unrevs |
 	while read rev parents; do
 		debug
 		debug "Processing commit: $rev"
