@@ -8,7 +8,8 @@ if [ $# -eq 0 ]; then
     set -- -h
 fi
 OPTS_SPEC="\
-git subtree split [options...] <--prefix=prefix> <commit...> -- <path>
+git subtree add <--prefix=prefix <commit>
+git subtree split [options...] <--prefix=prefix> <commit...>
 git subtree merge 
 --
 h,help        show the help
@@ -67,11 +68,12 @@ done
 command="$1"
 shift
 case "$command" in
-	split|merge) ;;
+	add|merge) default= ;;
+	split) default="--default HEAD" ;;
 	*) die "Unknown command '$command'" ;;
 esac
 
-revs=$(git rev-parse --default HEAD --revs-only "$@") || exit $?
+revs=$(git rev-parse $default --revs-only "$@") || exit $?
 
 if [ -z "$prefix" ]; then
 	die "You must provide the --prefix option."
@@ -87,6 +89,7 @@ debug "command: {$command}"
 debug "quiet: {$quiet}"
 debug "revs: {$revs}"
 debug "dir: {$dir}"
+debug
 
 cache_setup()
 {
@@ -165,6 +168,20 @@ copy_commit()
 	) || die "Can't copy commit $1"
 }
 
+add_msg()
+{
+	dir="$1"
+	latest_old="$2"
+	latest_new="$3"
+	cat <<-EOF
+		Add '$dir/' from commit '$latest_new'
+		
+		git-subtree-dir: $dir
+		git-subtree-mainline: $latest_old
+		git-subtree-split: $latest_new
+	EOF
+}
+
 merge_msg()
 {
 	dir="$1"
@@ -239,6 +256,39 @@ copy_or_skip()
 	else
 		copy_commit $rev $tree "$p" || exit $?
 	fi
+}
+
+cmd_add()
+{
+	if [ -e "$dir" ]; then
+		die "'$dir' already exists.  Cannot add."
+	fi
+	if ! git diff-index HEAD --exit-code --quiet; then
+		die "Working tree has modifications.  Cannot add."
+	fi
+	if ! git diff-index --cached HEAD --exit-code --quiet; then
+		die "Index has modifications.  Cannot add."
+	fi
+	set -- $revs
+	if [ $# -ne 1 ]; then
+		die "You must provide exactly one revision.  Got: '$revs'"
+	fi
+	rev="$1"
+	
+	debug "Adding $dir as '$rev'..."
+	git read-tree --prefix="$dir" $rev || exit $?
+	git checkout "$dir" || exit $?
+	tree=$(git write-tree) || exit $?
+	
+	headrev=$(git rev-parse HEAD) || exit $?
+	if [ -n "$headrev" -a "$headrev" != "$rev" ]; then
+		headp="-p $headrev"
+	else
+		headp=
+	fi
+	commit=$(add_msg "$dir" "$headrev" "$rev" |
+		 git commit-tree $tree $headp -p "$rev") || exit $?
+	git reset "$commit" || exit $?
 }
 
 cmd_split()
