@@ -4,17 +4,21 @@
 #
 # Copyright (C) 2009 Avery Pennarun <apenwarr@gmail.com>
 #
+if [ $# -eq 0 ]; then
+    set -- -h
+fi
 OPTS_SPEC="\
-git subtree split [--rejoin] [--onto rev] <commit...> -- <path>
+git subtree split [options...] <commit...> -- <path>
 git subtree merge 
 
 git subtree does foo and bar!
 --
-h,help   show the help
-q        quiet
-v        verbose
-onto=    existing subtree revision to search for parent
-rejoin   merge the new branch back into HEAD
+h,help        show the help
+q             quiet
+v             verbose
+onto=         try connecting new tree to an existing one
+rejoin        merge the new branch back into HEAD
+ignore-joins  ignore prior --rejoin commits
 "
 eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
 . git-sh-setup
@@ -24,6 +28,7 @@ quiet=
 command=
 onto=
 rejoin=
+ignore_joins=
 
 debug()
 {
@@ -50,7 +55,11 @@ while [ $# -gt 0 ]; do
 	case "$opt" in
 		-q) quiet=1 ;;
 		--onto) onto="$1"; shift ;;
+		--no-onto) onto= ;;
 		--rejoin) rejoin=1 ;;
+		--no-rejoin) rejoin= ;;
+		--ignore-joins) ignore_joins=1 ;;
+		--no-ignore-joins) ignore_joins= ;;
 		--) break ;;
 	esac
 done
@@ -209,20 +218,25 @@ copy_or_skip()
 	newparents="$3"
 	assert [ -n "$tree" ]
 
-	p=""
+	identical=
+	p=
 	for parent in $newparents; do
 		ptree=$(toptree_for_commit $parent) || exit $?
 		if [ "$ptree" = "$tree" ]; then
-			# any identical parent means this commit is unnecessary
-			echo $parent
-			return 0
-		elif [ -n "$ptree" ]; then
-			# an existing, non-identical parent is important
+			# an identical parent could be used in place of this rev.
+			identical="$parent"
+		fi
+		if [ -n "$ptree" ]; then
+			parentmatch="$parentmatch$parent"
 			p="$p -p $parent"
 		fi
 	done
 	
-	copy_commit $rev $tree "$p" || exit $?
+	if [ -n "$identical" -a "$parentmatch" = "$identical" ]; then
+		echo $identical
+	else
+		copy_commit $rev $tree "$p" || exit $?
+	fi
 }
 
 cmd_split()
@@ -241,7 +255,11 @@ cmd_split()
 		done
 	fi
 	
-	unrevs="$(find_existing_splits "$dir" "$revs")"
+	if [ -n "$ignore_joins" ]; then
+		unrevs=
+	else
+		unrevs="$(find_existing_splits "$dir" "$revs")"
+	fi
 	
 	debug "git rev-list --reverse $revs $unrevs"
 	git rev-list --reverse --parents $revs $unrevsx |

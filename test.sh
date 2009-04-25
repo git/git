@@ -35,7 +35,10 @@ git fetch ../subproj sub1
 git branch sub1 FETCH_HEAD
 git read-tree --prefix=subdir FETCH_HEAD
 git checkout subdir
-git commit -m 'initial-subdir-merge'
+tree=$(git write-tree)
+com=$(echo initial-subdir-merge | git commit-tree $tree -p HEAD -p FETCH_HEAD)
+git reset $com
+#git commit -m 'initial-subdir-merge'
 
 git merge -m 'merge -s -ours' -s ours FETCH_HEAD
 
