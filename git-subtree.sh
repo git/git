@@ -8,13 +8,15 @@ if [ $# -eq 0 ]; then
     set -- -h
 fi
 OPTS_SPEC="\
-git subtree add <--prefix=prefix <commit>
-git subtree split [options...] <--prefix=prefix> <commit...>
-git subtree merge 
+git subtree add --prefix=<prefix> <commit>
+git subtree split [options...] --prefix=<prefix> <commit...>
+git subtree merge --prefix=<prefix> <commit>
+git subtree pull  --prefix=<prefix> <repository> <refspec...>
 --
 h,help        show the help
 q             quiet
 prefix=       the name of the subdir to split out
+ options for 'split'
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
 ignore-joins  ignore prior --rejoin commits
@@ -68,27 +70,29 @@ done
 command="$1"
 shift
 case "$command" in
-	add|merge) default= ;;
+	add|merge|pull) default= ;;
 	split) default="--default HEAD" ;;
 	*) die "Unknown command '$command'" ;;
 esac
-
-revs=$(git rev-parse $default --revs-only "$@") || exit $?
 
 if [ -z "$prefix" ]; then
 	die "You must provide the --prefix option."
 fi
 dir="$prefix"
 
-dirs="$(git rev-parse --no-revs --no-flags "$@")" || exit $?
-if [ -n "$dirs" ]; then
-	die "Error: Use --prefix instead of bare filenames."
+if [ "$command" != "pull" ]; then
+	revs=$(git rev-parse $default --revs-only "$@") || exit $?
+	dirs="$(git rev-parse --no-revs --no-flags "$@")" || exit $?
+	if [ -n "$dirs" ]; then
+		die "Error: Use --prefix instead of bare filenames."
+	fi
 fi
 
 debug "command: {$command}"
 debug "quiet: {$quiet}"
 debug "revs: {$revs}"
 debug "dir: {$dir}"
+debug "opts: {$*}"
 debug
 
 cache_setup()
@@ -258,17 +262,23 @@ copy_or_skip()
 	fi
 }
 
-cmd_add()
+ensure_clean()
 {
-	if [ -e "$dir" ]; then
-		die "'$dir' already exists.  Cannot add."
-	fi
 	if ! git diff-index HEAD --exit-code --quiet; then
 		die "Working tree has modifications.  Cannot add."
 	fi
 	if ! git diff-index --cached HEAD --exit-code --quiet; then
 		die "Index has modifications.  Cannot add."
 	fi
+}
+
+cmd_add()
+{
+	if [ -e "$dir" ]; then
+		die "'$dir' already exists.  Cannot add."
+	fi
+	ensure_clean
+	
 	set -- $revs
 	if [ $# -ne 1 ]; then
 		die "You must provide exactly one revision.  Got: '$revs'"
@@ -357,7 +367,22 @@ cmd_split()
 
 cmd_merge()
 {
-	die "merge command not implemented yet"
+	ensure_clean
+	
+	set -- $revs
+	if [ $# -ne 1 ]; then
+		die "You must provide exactly one revision.  Got: '$revs'"
+	fi
+	rev="$1"
+	
+	git merge -s subtree $rev
 }
 
-"cmd_$command"
+cmd_pull()
+{
+	ensure_clean
+	set -x
+	git pull -s subtree "$@"
+}
+
+"cmd_$command" "$@"
