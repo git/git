@@ -125,6 +125,16 @@ cache_set()
 	echo "$newrev" >"$cachedir/$oldrev"
 }
 
+# if a commit doesn't have a parent, this might not work.  But we only want
+# to remove the parent from the rev-list, and since it doesn't exist, it won't
+# be there anyway, so do nothing in that case.
+try_remove_previous()
+{
+	if git rev-parse "$1^" >/dev/null 2>&1; then
+		echo "^$1^"
+	fi
+}
+
 find_existing_splits()
 {
 	debug "Looking for prior splits..."
@@ -140,7 +150,8 @@ find_existing_splits()
 				if [ -n "$main" -a -n "$sub" ]; then
 					debug "  Prior: $main -> $sub"
 					cache_set $main $sub
-					echo "^$main^ ^$sub^"
+					try_remove_previous "$main"
+					try_remove_previous "$sub"
 					main=
 					sub=
 				fi
