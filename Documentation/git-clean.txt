@@ -12,13 +12,16 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Removes files unknown to git.  This allows cleaning the working tree
-of files that are not under version control.  If the '-x' option is
-specified, ignored files are also removed, allowing the removal of all
-build products.
+
+This allows cleaning the working tree by removing files that are not
+under version control.
+
+Normally, only files unknown to git are removed, but if the '-x'
+option is specified, ignored files are also removed. This can, for
+example, be useful to remove all build products.
+
 If any optional `<path>...` arguments are given, only those paths
 are affected.
-
 
 OPTIONS
 -------
