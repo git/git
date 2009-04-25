@@ -152,6 +152,10 @@ Updates since v1.6.2
   knobs you can tweak to work around issues with various versions of the
   docbook-xsl package.  See comments in Documentation/Makefile for details.
 
+* Support for building and testing a subset of git on a system without a
+  working perl has been improved.
+
+
 Fixes since v1.6.2
 ------------------
 
@@ -173,6 +177,6 @@ v1.6.2.X series.
 
 ---
 exec >/var/tmp/1
-O=v1.6.3-rc1-1-gea10b60
+O=v1.6.3-rc2
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
