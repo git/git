@@ -33,13 +33,9 @@ git branch -m master mainline
 
 git fetch ../subproj sub1
 git branch sub1 FETCH_HEAD
-git read-tree --prefix=subdir FETCH_HEAD
-git checkout subdir
-tree=$(git write-tree)
-com=$(echo initial-subdir-merge | git commit-tree $tree -p HEAD -p FETCH_HEAD)
-git reset $com
-#git commit -m 'initial-subdir-merge'
+git subtree add --prefix=subdir FETCH_HEAD
 
+# this shouldn't actually do anything, since FETCH_HEAD is already a parent
 git merge -m 'merge -s -ours' -s ours FETCH_HEAD
 
 touch subdir/main-sub3
@@ -56,7 +52,7 @@ git commit -m 'main-sub4'
 
 git fetch ../subproj sub2
 git branch sub2 FETCH_HEAD
-git merge -s subtree FETCH_HEAD
+git subtree merge --prefix=subdir FETCH_HEAD
 git branch pre-split
 
 split1=$(git subtree split --prefix subdir --onto FETCH_HEAD --rejoin)
@@ -96,4 +92,4 @@ git branch subproj-merge-split3
 cd ../mainline
 git fetch ../subproj subproj-merge-split3
 git branch subproj-merge-split3 FETCH_HEAD
-git merge -s subtree subproj-merge-split3
+git subtree pull --prefix=subdir ../subproj subproj-merge-split3
