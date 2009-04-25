@@ -93,4 +93,4 @@ git branch subproj-merge-split3
 cd ../mainline
 git fetch ../subproj subproj-merge-split3
 git branch subproj-merge-split3 FETCH_HEAD
-git merge subproj-merge-split3
+git merge -s subtree subproj-merge-split3

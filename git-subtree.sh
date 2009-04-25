@@ -202,6 +202,29 @@ tree_changed()
 	fi
 }
 
+copy_or_skip()
+{
+	rev="$1"
+	tree="$2"
+	newparents="$3"
+	assert [ -n "$tree" ]
+
+	p=""
+	for parent in $newparents; do
+		ptree=$(toptree_for_commit $parent) || exit $?
+		if [ "$ptree" = "$tree" ]; then
+			# any identical parent means this commit is unnecessary
+			echo $parent
+			return 0
+		elif [ -n "$ptree" ]; then
+			# an existing, non-identical parent is important
+			p="$p -p $parent"
+		fi
+	done
+	
+	copy_commit $rev $tree "$p" || exit $?
+}
+
 cmd_split()
 {
 	debug "Splitting $dir..."
@@ -238,16 +261,7 @@ cmd_split()
 		debug "  tree is: $tree"
 		[ -z $tree ] && continue
 
-		p=""
-		for parent in $newparents; do
-			p="$p -p $parent"
-		done
-			
-		if tree_changed $tree $newparents; then
-			newrev=$(copy_commit $rev $tree "$p") || exit $?
-		else
-			newrev="$newparents"
-		fi
+		newrev=$(copy_or_skip "$rev" "$tree" "$newparents") || exit $?
 		debug "  newrev is: $newrev"
 		cache_set $rev $newrev
 		cache_set latest_new $newrev
