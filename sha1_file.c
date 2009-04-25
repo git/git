@@ -2225,7 +2225,9 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 {
 	int ret = 0;
 
-	if (link(tmpfile, filename))
+	if (unreliable_hardlinks)
+		goto try_rename;
+	else if (link(tmpfile, filename))
 		ret = errno;
 
 	/*
@@ -2240,6 +2242,7 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 	 * left to unlink.
 	 */
 	if (ret && ret != EEXIST) {
+	try_rename:
 		if (!rename(tmpfile, filename))
 			goto out;
 		ret = errno;
