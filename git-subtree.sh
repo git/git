@@ -149,6 +149,7 @@ copy_commit()
 			GIT_COMMITTER_NAME \
 			GIT_COMMITTER_EMAIL \
 			GIT_COMMITTER_DATE
+		(echo -n '*'; cat ) |  # FIXME
 		git commit-tree "$2" $3  # reads the rest of stdin
 	) || die "Can't copy commit $1"
 }
@@ -199,7 +200,7 @@ cmd_split()
 	cache_setup || exit $?
 	
 	if [ -n "$onto" ]; then
-		echo "Reading history for --onto=$onto..."
+		debug "Reading history for --onto=$onto..."
 		git rev-list $onto |
 		while read rev; do
 			# the 'onto' history is already just the subdir, so
@@ -254,7 +255,7 @@ cmd_split()
 		latest_old=$(cache_get latest_old)
 		git merge -s ours \
 			-m "$(merge_msg $dir $latest_old $latest_new)" \
-			$latest_new
+			$latest_new >&2
 	fi
 	echo $latest_new
 	exit 0
