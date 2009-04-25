@@ -168,9 +168,17 @@ merge_msg()
 	EOF
 }
 
-tree_for_commit()
+toptree_for_commit()
 {
-	git ls-tree "$1" -- "$dir" |
+	commit="$1"
+	git log -1 --pretty=format:'%T' "$commit" -- || exit $?
+}
+
+subtree_for_commit()
+{
+	commit="$1"
+	dir="$2"
+	git ls-tree "$commit" -- "$dir" |
 	while read mode type tree name; do
 		assert [ "$name" = "$dir" ]
 		echo $tree
@@ -185,7 +193,7 @@ tree_changed()
 	if [ $# -ne 1 ]; then
 		return 0   # weird parents, consider it changed
 	else
-		ptree=$(tree_for_commit $1)
+		ptree=$(toptree_for_commit $1)
 		if [ "$ptree" != "$tree" ]; then
 			return 0   # changed
 		else
@@ -226,7 +234,7 @@ cmd_split()
 		newparents=$(cache_get $parents)
 		debug "  newparents: $newparents"
 		
-		tree=$(tree_for_commit $rev)
+		tree=$(subtree_for_commit $rev "$dir")
 		debug "  tree is: $tree"
 		[ -z $tree ] && continue
 
@@ -235,7 +243,7 @@ cmd_split()
 			p="$p -p $parent"
 		done
 			
-		if tree_changed $tree $parents; then
+		if tree_changed $tree $newparents; then
 			newrev=$(copy_commit $rev $tree "$p") || exit $?
 		else
 			newrev="$newparents"
