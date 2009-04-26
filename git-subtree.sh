@@ -338,9 +338,9 @@ cmd_split()
 		unrevs="$(find_existing_splits "$dir" "$revs")"
 	fi
 	
-	# We can't restrict rev-list to only "$dir" here, because that leaves out
-	# critical information about commit parents.
-	debug "git rev-list --reverse --parents $revs $unrevs"
+	# We can't restrict rev-list to only $dir here, because some of our
+	# parents have the $dir contents the root, and those won't match.
+	# (and rev-list --follow doesn't seem to solve this)
 	git rev-list --reverse --parents $revs $unrevs |
 	while read rev parents; do
 		debug
