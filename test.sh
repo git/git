@@ -169,5 +169,39 @@ check_equal "$(git log --pretty=format:'%s' HEAD^2 | grep -i split)" ""
 # meaningless to subproj since one side of the merge refers to the mainline)
 check_equal "$(git log --pretty=format:'%s%n%b' HEAD^2 | grep 'git-subtree.*:')" ""
 
+# make sure no patch changes more than one file.  The original set of commits
+# changed only one file each.  A multi-file change would imply that we pruned
+# commits too aggressively.
+joincommits()
+{
+	echo "hello world"
+	commit=
+	all=
+	while read x y; do
+		echo "{$x}" >&2
+		if [ -z "$x" ]; then
+			continue
+		elif [ "$x" = "commit:" ]; then
+			if [ -n "$commit" ]; then
+				echo "$commit $all"
+				all=
+			fi
+			commit="$y"
+		else
+			all="$all $y"
+		fi
+	done
+	echo "$commit $all"
+}
+x=0
+git log --pretty=format:'commit: %H' | joincommits |
+(	while read commit a b; do
+		echo "Verifying commit $commit"
+		check_equal "$b" ""
+		x=$(($x + 1))
+	done
+	check_equal $x 23
+) || exit 1
+
 echo
 echo 'ok'
