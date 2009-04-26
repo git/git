@@ -1,0 +1,8 @@
+
+	delete tempdir
+	--annotate-sometimes: only annotate if the patch also changes files
+	  outside the subdir?
+	'git subtree rejoin' option to do the same as --rejoin, eg. after a
+	  rebase
+	"-s subtree" should be given an explicit subtree option?
+	
