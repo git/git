@@ -100,7 +100,8 @@ git branch sub2 FETCH_HEAD
 git subtree merge --prefix=subdir FETCH_HEAD
 git branch pre-split
 
-split1=$(git subtree split --annotate='*' --prefix subdir --onto FETCH_HEAD --rejoin)
+split1=$(git subtree split --annotate='*' \
+		--prefix subdir --onto FETCH_HEAD --rejoin)
 echo "split1={$split1}"
 git branch split1 "$split1"
 
@@ -161,3 +162,5 @@ check_equal "$mainfiles" "$chkm $chkms_sub $chks_sub"
 allchanges=$(git log --name-only --pretty=format:'' | sort | fixnl)
 check_equal "$allchanges" "$chkm $chkms $chks $chkms_sub"
 
+echo
+echo 'ok'
