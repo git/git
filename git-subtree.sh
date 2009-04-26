@@ -258,6 +258,7 @@ copy_or_skip()
 	assert [ -n "$tree" ]
 
 	identical=
+	nonidentical=
 	p=
 	gotparents=
 	for parent in $newparents; do
@@ -266,6 +267,8 @@ copy_or_skip()
 		if [ "$ptree" = "$tree" ]; then
 			# an identical parent could be used in place of this rev.
 			identical="$parent"
+		else
+			nonidentical="$parent"
 		fi
 		
 		# sometimes both old parents map to the same newparent;
@@ -283,7 +286,7 @@ copy_or_skip()
 		fi
 	done
 	
-	if [ -n "$identical" -a "$gotparents" = " $identical" ]; then
+	if [ -n "$identical" -a -z "$nonidentical" ]; then
 		echo $identical
 	else
 		copy_commit $rev $tree "$p" || exit $?
