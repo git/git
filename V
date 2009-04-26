@@ -42,6 +42,10 @@ do
 	then
 		in= out=
 		installed=${dirty:+" (with changes)"}
+	elif test -z "$version"
+	then
+		in="[41;37m" out="[m"
+		installed="	none"
 	else
 		installed=$(git describe $version)
 		case "$dirty" in
