@@ -17,6 +17,7 @@ h,help        show the help
 q             quiet
 prefix=       the name of the subdir to split out
  options for 'split'
+annotate=     add a prefix to commit message of new commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
 ignore-joins  ignore prior --rejoin commits
@@ -30,6 +31,7 @@ command=
 onto=
 rejoin=
 ignore_joins=
+annotate=
 
 debug()
 {
@@ -55,6 +57,8 @@ while [ $# -gt 0 ]; do
 	shift
 	case "$opt" in
 		-q) quiet=1 ;;
+		--annotate) annotate="$1"; shift ;;
+		--no-annotate) annotate= ;;
 		--prefix) prefix="$1"; shift ;;
 		--no-prefix) prefix= ;;
 		--onto) onto="$1"; shift ;;
@@ -178,7 +182,7 @@ copy_commit()
 			GIT_COMMITTER_NAME \
 			GIT_COMMITTER_EMAIL \
 			GIT_COMMITTER_DATE
-		(echo -n '*'; cat ) |  # FIXME
+		(echo -n "$annotate"; cat ) |
 		git commit-tree "$2" $3  # reads the rest of stdin
 	) || die "Can't copy commit $1"
 }
