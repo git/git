@@ -174,7 +174,6 @@ check_equal "$(git log --pretty=format:'%s%n%b' HEAD^2 | grep 'git-subtree.*:')"
 # commits too aggressively.
 joincommits()
 {
-	echo "hello world"
 	commit=
 	all=
 	while read x y; do
@@ -193,14 +192,14 @@ joincommits()
 	done
 	echo "$commit $all"
 }
-x=0
+x=
 git log --pretty=format:'commit: %H' | joincommits |
 (	while read commit a b; do
 		echo "Verifying commit $commit"
 		check_equal "$b" ""
-		x=$(($x + 1))
+		x=1
 	done
-	check_equal $x 23
+	check_equal "$x" 1
 ) || exit 1
 
 echo
