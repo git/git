@@ -286,7 +286,7 @@ copy_or_skip()
 		fi
 	done
 	
-	if [ -n "$identical" -a -z "$nonidentical" ]; then
+	if [ -n "$identical" ]; then
 		echo $identical
 	else
 		copy_commit $rev $tree "$p" || exit $?
