@@ -1,45 +1,33 @@
 #!/bin/sh
 
-# DDD=' -DUSE_SYMLINK_HEAD=0'
-# PATH=/usr/bin:/bin
-
 G=/opt/packrat/playpen/public/in-place/git/index/gitweb_config.perl
-for i in active maint master next
-do
-	GIT="$HOME/git-$i/bin/git"
-	test -f "$GIT" && break
-done
-test -f "$GIT" || {
+
+case "$(git version 2>/dev/null)" in
+"git version"*)
+	GIT=git ;;
+*)
 	echo >&2 "No git to bootstrap"
-}
-PATH=/usr/bin:/bin
-export PATH
+	exit 1 ;;
+esac
+
+inst_prefix=$(
+	IFS=:
+	for p in $PATH
+	do
+		probed=${p%/git-active/bin}
+		if test "$probed" != "$p"
+		then
+			echo "$probed"
+			exit
+		fi
+	done
+	echo $HOME
+)
 
 LANG=C
 old_style_def_fix=b79d18c92d9f4841a6a1a29b7b2373a8ff9871e1
 
-head=`$GIT symbolic-ref HEAD 2>/dev/null` &&
-branch=`expr "$head" : 'refs/heads/\(.*\)'` || branch=detached
-
-case "$branch" in
-next | maint | master | pu | jch)
-	prefix="$HOME/git-$branch"
-	;;
-snap)
-	v=`$GIT describe HEAD`
-	expr "$v" : '.*-g[0-9a-f]*$' >/dev/null && {
-	    echo >&2 "You are on 'snap' but $v is not an official version."
-	    exit 1
-	}
-	prefix="$HOME/git-snap-$v"
-	;;
-*)
-	prefix="$HOME/git-test" ;;
-esac
-d="prefix=$prefix"
-
 : ${O=-O2}
-
 Wall=-Wall tests=
 while case $# in 0) break ;; esac
 do 
@@ -86,6 +74,26 @@ done
 
 LC_ALL=$LANG
 export LANG LC_ALL
+
+head=`$GIT symbolic-ref HEAD 2>/dev/null` &&
+branch=`expr "$head" : 'refs/heads/\(.*\)'` || branch=detached
+
+case "$branch" in
+next | maint | master | pu | jch)
+	prefix="$inst_prefix/git-$branch"
+	;;
+snap)
+	v=`$GIT describe HEAD`
+	expr "$v" : '.*-g[0-9a-f]*$' >/dev/null && {
+	    echo >&2 "You are on 'snap' but $v is not an official version."
+	    exit 1
+	}
+	prefix="$inst_prefix/git-snap-$v"
+	;;
+*)
+	prefix="$inst_prefix/git-test" ;;
+esac
+d="prefix=$prefix"
 
 sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 	$GIT describe --abbrev=4 HEAD | sed -e 's/-/./g' >version
