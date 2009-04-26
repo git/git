@@ -168,6 +168,7 @@ copy_commit()
 {
 	# We're doing to set some environment vars here, so
 	# do it in a subshell to get rid of them safely later
+	debug copy_commit "{$1}" "{$2}" "{$3}"
 	git log -1 --pretty=format:'%an%n%ae%n%ad%n%cn%n%ce%n%cd%n%s%n%n%b' "$1" |
 	(
 		read GIT_AUTHOR_NAME
@@ -258,19 +259,31 @@ copy_or_skip()
 
 	identical=
 	p=
+	gotparents=
 	for parent in $newparents; do
 		ptree=$(toptree_for_commit $parent) || exit $?
+		[ -z "$ptree" ] && continue
 		if [ "$ptree" = "$tree" ]; then
 			# an identical parent could be used in place of this rev.
 			identical="$parent"
 		fi
-		if [ -n "$ptree" ]; then
-			parentmatch="$parentmatch$parent"
+		
+		# sometimes both old parents map to the same newparent;
+		# eliminate duplicates
+		is_new=1
+		for gp in $gotparents; do
+			if [ "$gp" = "$parent" ]; then
+				is_new=
+				break
+			fi
+		done
+		if [ -n "$is_new" ]; then
+			gotparents="$gotparents $parent"
 			p="$p -p $parent"
 		fi
 	done
 	
-	if [ -n "$identical" -a "$parentmatch" = "$identical" ]; then
+	if [ -n "$identical" -a "$gotparents" = " $identical" ]; then
 		echo $identical
 	else
 		copy_commit $rev $tree "$p" || exit $?
