@@ -15,6 +15,7 @@ git subtree pull  --prefix=<prefix> <repository> <refspec...>
 --
 h,help        show the help
 q             quiet
+d             show debug messages
 prefix=       the name of the subdir to split out
  options for 'split'
 annotate=     add a prefix to commit message of new commits
@@ -27,6 +28,7 @@ eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
 require_work_tree
 
 quiet=
+debug=
 command=
 onto=
 rejoin=
@@ -34,6 +36,13 @@ ignore_joins=
 annotate=
 
 debug()
+{
+	if [ -n "$debug" ]; then
+		echo "$@" >&2
+	fi
+}
+
+say()
 {
 	if [ -z "$quiet" ]; then
 		echo "$@" >&2
@@ -57,6 +66,7 @@ while [ $# -gt 0 ]; do
 	shift
 	case "$opt" in
 		-q) quiet=1 ;;
+		-d) debug=1 ;;
 		--annotate) annotate="$1"; shift ;;
 		--no-annotate) annotate= ;;
 		--prefix) prefix="$1"; shift ;;
@@ -357,15 +367,21 @@ cmd_split()
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
 	# (and rev-list --follow doesn't seem to solve this)
-	git rev-list --reverse --parents $revs $unrevs |
+	grl='git rev-list --reverse --parents $revs $unrevs'
+	revmax=$(eval "$grl" | wc -l)
+	revcount=0
+	createcount=0
+	eval "$grl" |
 	while read rev parents; do
-		debug
+		revcount=$(($revcount + 1))
+		say -n "$revcount/$revmax ($createcount)"
 		debug "Processing commit: $rev"
 		exists=$(cache_get $rev)
 		if [ -n "$exists" ]; then
 			debug "  prior: $exists"
 			continue
 		fi
+		createcount=$(($createcount + 1))
 		debug "  parents: $parents"
 		newparents=$(cache_get $parents)
 		debug "  newparents: $newparents"
