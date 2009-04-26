@@ -145,7 +145,7 @@ find_existing_splits()
 	dir="$1"
 	revs="$2"
 	git log --grep="^git-subtree-dir: $dir\$" \
-		--pretty=format:'%s%n%n%b%nEND' "$revs" |
+		--pretty=format:'%s%n%n%b%nEND' $revs |
 	while read a b junk; do
 		case "$a" in
 			git-subtree-mainline:) main="$b" ;;
