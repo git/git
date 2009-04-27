@@ -10,7 +10,7 @@ esac
 : ${J='-l 4 -j'}
 G=/pub/software/scm/git &&
 
-(cd $HOME/git 2>/dev/null || cd $HOME/git.git || exit ) &&
+# (cd $HOME/git 2>/dev/null || cd $HOME/git.git || exit ) &&
 make clean >/dev/null 2>&1 &&
 git reset --hard &&
 make clean >/dev/null 2>&1 &&
@@ -52,7 +52,7 @@ maint | maint-* | master)
 	hera.kernel.org)
 		narch='x86_64 i386'
 		arch=x86_64 ;;
-	wing-fc*|vir-fc*)
+	wing-fc*|fc*.siamese.dyndns.org)
 		arch=i386 ;;
 	*)	echo >&2 "What are you talking about???"
 		exit 1 ;;
@@ -72,9 +72,9 @@ maint | maint-* | master)
 			echo >&2 "Done -- move RPMS to the master machine."
 			(
 				cd "$HOME/rpms/" &&
-				tar cf "$HOME/$V.tar" \
+				tar cf "TARBALL/$V.$arch.tar" \
 					RPMS/$arch/*-$V-*.$arch.rpm &&
-				ls -ld $HOME/$V.tar
+				ls -ld $HOME/rpms/TARBALL/$V.tar
 			)
 			make clean
 			;;
