@@ -21,6 +21,15 @@ who house by the whale-path, heard his mandate,
 gave him gifts:  a good king he!
 EOF
 
+cat > second-part << EOF
+To him an heir was afterward born,
+a son in his halls, whom heaven sent
+to favor the folk, feeling their woe
+that erst they had lacked an earl for leader
+so long a while; the Lord endowed him,
+the Wielder of Wonder, with world's renown.
+EOF
+
 test_expect_success 'setup' '
 
 	git add file &&
@@ -31,10 +40,10 @@ test_expect_success 'setup' '
 
 cat > expected-patch << EOF
 diff --git a/file b/file
-index b9834b5..0b8f197 100644
+index b9834b5..9020acb 100644
 --- a/file
 +++ b/file
-@@ -1,11 +1,3 @@
+@@ -1,11 +1,6 @@
 -LO, praise of the prowess of people-kings
 -of spear-armed Danes, in days long sped,
 -we have heard, and what honor the athelings won!
@@ -46,9 +55,12 @@ index b9834b5..0b8f197 100644
 -till before him the folk, both far and near,
 -who house by the whale-path, heard his mandate,
 -gave him gifts:  a good king he!
-+#!$SHELL_PATH
-+mv -f "\$1" orig-patch &&
-+mv -f patch "\$1"
++To him an heir was afterward born,
++a son in his halls, whom heaven sent
++to favor the folk, feeling their woe
++that erst they had lacked an earl for leader
++so long a while; the Lord endowed him,
++the Wielder of Wonder, with world's renown.
 EOF
 
 cat > patch << EOF
@@ -97,9 +109,9 @@ chmod a+x fake-editor.sh
 
 test_expect_success 'add -e' '
 
-	cp fake-editor.sh file &&
+	cp second-part file &&
 	git add -e &&
-	test_cmp fake-editor.sh file &&
+	test_cmp second-part file &&
 	test_cmp orig-patch expected-patch &&
 	git diff --cached > out &&
 	test_cmp out expected
