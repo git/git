@@ -16,7 +16,7 @@ inst_prefix=$(
 	echo $HOME
 )
 
-force= with_dash= M= install= nodoc= bootstrap= branches= jobs=
+force= with_dash= M= install= nodoc= notest= bootstrap= branches= jobs=
 while	case "$1" in
 	--pedantic) M="$M $1" ;;
 	--locale=*) M="$M $1" ;;
@@ -24,6 +24,7 @@ while	case "$1" in
 	--dash) with_dash=y ;;
 	--noinstall) install=noinstall ;;
 	--nodoc) nodoc=y ;;
+	--notest) notest=y ;;
 	--bootstrap) bootstrap=y ;;
 	--base=*) BUILDBASE=${1#*=} ;;
 	--branches=*) branches=${1#*=} ;;
@@ -35,7 +36,19 @@ do
 	shift
 done
 test -f /bin/dash || with_dash=
-test -n "$BUILDBASE" || BUILDBASE=$inst_prefix/buildfarm
+if test -z "$BUILDBASE"
+then
+	if test -d "$inst_prefix/buildfarm"
+	then
+		BUILDBASE="$inst_prefix/buildfarm"
+	elif test -d "../buildfarm"
+	then
+		BUILDBASE=../buildfarm
+	else
+		echo >&2 "Buildbase unknown"
+		exit 1
+	fi
+fi
 test -n "$branches" || branches='next master maint pu jch'
 test -n "$jobs" || jobs=-j2
 
@@ -97,6 +110,7 @@ do
 		*)
 			dotest=test ;;
 		esac
+		test -z "$notest" || dotest=
 
 		cd "$BUILDBASE/$branch"
 		git reset --hard  &&
