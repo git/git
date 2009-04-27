@@ -1557,7 +1557,7 @@ endif
 		ln "$$execdir/git-add$X" "$$execdir/$$p" 2>/dev/null || \
 		ln -s "git-add$X" "$$execdir/$$p" 2>/dev/null || \
 		cp "$$execdir/git-add$X" "$$execdir/$$p" || exit; \
-	  done } && \
+	  done; } && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
 install-doc:
