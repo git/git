@@ -196,7 +196,7 @@ Problems related to tags:
 
 If you suspect that any of these issues may apply to the repository you
 want to import consider using these alternative tools which proved to be
-more stable in practise:
+more stable in practice:
 
 * cvs2git (part of cvs2svn), `http://cvs2svn.tigris.org`
 * parsecvs, `http://cgit.freedesktop.org/~keithp/parsecvs`

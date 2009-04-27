@@ -688,10 +688,10 @@ sub evaluate_path_info {
 		# extensions. Allowed extensions are both the defined suffix
 		# (which includes the initial dot already) and the snapshot
 		# format key itself, with a prepended dot
-		while (my ($fmt, %opt) = each %known_snapshot_formats) {
+		while (my ($fmt, $opt) = each %known_snapshot_formats) {
 			my $hash = $refname;
 			my $sfx;
-			$hash =~ s/(\Q$opt{'suffix'}\E|\Q.$fmt\E)$//;
+			$hash =~ s/(\Q$opt->{'suffix'}\E|\Q.$fmt\E)$//;
 			next unless $sfx = $1;
 			# a valid suffix was found, so set the snapshot format
 			# and reset the hash parameter

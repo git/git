@@ -512,7 +512,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 
 	pathspec = get_pathspec(prefix, argv);
 
-	/* be nice with submodule patsh ending in a slash */
+	/* be nice with submodule paths ending in a slash */
 	read_cache();
 	if (pathspec)
 		strip_trailing_slash_from_submodules();

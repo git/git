@@ -204,8 +204,15 @@ cmd_add()
 	else
 
 		module_clone "$path" "$realrepo" || exit
-		(unset GIT_DIR; cd "$path" && git checkout -f -q ${branch:+-b "$branch" "origin/$branch"}) ||
-		die "Unable to checkout submodule '$path'"
+		(
+			unset GIT_DIR
+			cd "$path" &&
+			# ash fails to wordsplit ${branch:+-b "$branch"...}
+			case "$branch" in
+			'') git checkout -f -q ;;
+			?*) git checkout -f -q -b "$branch" "origin/$branch" ;;
+			esac
+		) || die "Unable to checkout submodule '$path'"
 	fi
 
 	git add "$path" ||

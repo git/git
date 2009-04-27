@@ -2,15 +2,15 @@ CONFIGURATION FILE
 ------------------
 
 The git configuration file contains a number of variables that affect
-the git command's behavior. `.git/config` file for each repository
-is used to store the information for that repository, and
-`$HOME/.gitconfig` is used to store per user information to give
-fallback values for `.git/config` file. The file `/etc/gitconfig`
-can be used to store system-wide defaults.
+the git command's behavior. The `.git/config` file in each repository
+is used to store the configuration for that repository, and
+`$HOME/.gitconfig` is used to store a per-user configuration as
+fallback values for the `.git/config` file. The file `/etc/gitconfig`
+can be used to store a system-wide default configuration.
 
-They can be used by both the git plumbing
-and the porcelains. The variables are divided into sections, where
-in the fully qualified variable name the variable itself is the last
+The configuration variables are used by both the git plumbing
+and the porcelains. The variables are divided into sections, wherein
+the fully qualified variable name of the variable itself is the last
 dot-separated segment and the section name is everything before the last
 dot. The variable names are case-insensitive and only alphanumeric
 characters are allowed. Some variables may appear multiple times.
@@ -26,28 +26,28 @@ The file consists of sections and variables.  A section begins with
 the name of the section in square brackets and continues until the next
 section begins.  Section names are not case sensitive.  Only alphanumeric
 characters, `-` and `.` are allowed in section names.  Each variable
-must belong to some section, which means that there must be section
-header before first setting of a variable.
+must belong to some section, which means that there must be a section
+header before the first setting of a variable.
 
 Sections can be further divided into subsections.  To begin a subsection
 put its name in double quotes, separated by space from the section name,
-in the section header, like in example below:
+in the section header, like in the example below:
 
 --------
 	[section "subsection"]
 
 --------
 
-Subsection names can contain any characters except newline (doublequote
-`"` and backslash have to be escaped as `\"` and `\\`,
-respectively) and are case sensitive.  Section header cannot span multiple
+Subsection names are case sensitive and can contain any characters except
+newline (doublequote `"` and backslash have to be escaped as `\"` and `\\`,
+respectively).  Section headers cannot span multiple
 lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
 don't need to.
 
-There is also (case insensitive) alternative `[section.subsection]` syntax.
-In this syntax subsection names follow the same restrictions as for section
-name.
+There is also a case insensitive alternative `[section.subsection]` syntax.
+In this syntax, subsection names follow the same restrictions as for section
+names.
 
 All the other lines are recognized as setting variables, in the form
 'name = value'.  If there is no equal sign on the line, the entire line
@@ -66,10 +66,10 @@ converting value to the canonical form using '--bool' type specifier;
 'git-config' will ensure that the output is "true" or "false".
 
 String values may be entirely or partially enclosed in double quotes.
-You need to enclose variable value in double quotes if you want to
-preserve leading or trailing whitespace, or if variable value contains
-beginning of comment characters (if it contains '#' or ';').
-Double quote `"` and backslash `\` characters in variable value must
+You need to enclose variable values in double quotes if you want to
+preserve leading or trailing whitespace, or if the variable value contains
+comment characters (i.e. it contains '#' or ';').
+Double quote `"` and backslash `\` characters in variable values must
 be escaped: use `\"` for `"` and `\\` for `\`.
 
 The following escape sequences (beside `\"` and `\\`) are recognized:
@@ -77,10 +77,10 @@ The following escape sequences (beside `\"` and `\\`) are recognized:
 and `\b` for backspace (BS).  No other char escape sequence, nor octal
 char sequences are valid.
 
-Variable value ending in a `\` is continued on the next line in the
+Variable values ending in a `\` are continued on the next line in the
 customary UNIX fashion.
 
-Some variables may require special value format.
+Some variables may require a special value format.
 
 Example
 ~~~~~~~
@@ -295,8 +295,10 @@ core.sharedRepository::
 	group-shareable. When 'umask' (or 'false'), git will use permissions
 	reported by umask(2). When '0xxx', where '0xxx' is an octal number,
 	files in the repository will have this mode value. '0xxx' will override
-	user's umask value, and thus, users with a safe umask (0077) can use
-	this option. Examples: '0660' is equivalent to 'group'. '0640' is a
+	user's umask value (whereas the other options will only override
+	requested parts of the user's umask value). Examples: '0660' will make
+	the repo read/write-able for the owner and group, but inaccessible to
+	others (equivalent to 'group' unless umask is e.g. '0022'). '0640' is a
 	repository that is group-readable but not group-writable.
 	See linkgit:git-init[1]. False by default.
 
@@ -426,6 +428,11 @@ on filesystems like NFS that have weak caching semantics and thus
 relatively high IO latencies.  With this set to 'true', git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.
+
+core.unreliableHardlinks::
+	Some filesystem drivers cannot properly handle hardlinking a file
+	and deleting the source right away.  In such a case, you need to
+	set this config variable to 'true'.
 
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
@@ -705,6 +712,13 @@ fetch.unpackLimit::
 	especially on slow filesystems.  If not set, the value of
 	`transfer.unpackLimit` is used instead.
 
+format.attach::
+	Enable multipart/mixed attachments as the default for
+	'format-patch'.  The value can also be a double quoted string
+	which will enable attachments as the default and set the
+	value as the boundary.  See the --attach option in
+	linkgit:git-format-patch[1].
+
 format.numbered::
 	A boolean which can enable or disable sequence numbers in patch
 	subjects.  It defaults to "auto" which enables it only if there
@@ -715,6 +729,14 @@ format.numbered::
 format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See linkgit:git-format-patch[1].
+
+format.cc::
+	Additional "Cc:" headers to include in a patch to be submitted
+	by mail.  See the --cc option in linkgit:git-format-patch[1].
+
+format.subjectprefix::
+	The default for format-patch is to output files with the '[PATCH]'
+	subject prefix. Use this variable to change that prefix.
 
 format.suffix::
 	The default for format-patch is to output files with the suffix
@@ -728,11 +750,11 @@ format.pretty::
 
 format.thread::
 	The default threading style for 'git-format-patch'.  Can be
-	either a boolean value, `shallow` or `deep`.  'Shallow'
+	either a boolean value, `shallow` or `deep`.  `shallow`
 	threading makes every mail a reply to the head of the series,
 	where the head is chosen from the cover letter, the
 	`\--in-reply-to`, and the first patch mail, in this order.
-	'Deep' threading makes every mail a reply to the previous one.
+	`deep` threading makes every mail a reply to the previous one.
 	A true boolean value is the same as `shallow`, and a false
 	value disables threading.
 

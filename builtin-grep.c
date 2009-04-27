@@ -26,16 +26,13 @@ static int grep_config(const char *var, const char *value, void *cb)
 {
 	struct grep_opt *opt = cb;
 
-	if (!strcmp(var, "grep.color") || !strcmp(var, "color.grep")) {
+	if (!strcmp(var, "color.grep")) {
 		opt->color = git_config_colorbool(var, value, -1);
 		return 0;
 	}
-	if (!strcmp(var, "grep.color.external") ||
-	    !strcmp(var, "color.grep.external")) {
+	if (!strcmp(var, "color.grep.external"))
 		return git_config_string(&(opt->color_external), var, value);
-	}
-	if (!strcmp(var, "grep.color.match") ||
-	    !strcmp(var, "color.grep.match")) {
+	if (!strcmp(var, "color.grep.match")) {
 		if (!value)
 			return config_error_nonbool(var);
 		color_parse(value, var, opt->color_match);

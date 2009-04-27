@@ -39,12 +39,6 @@ what they are for:
 * info/refs
 
 
-BUGS
-----
-When you remove an existing ref, the command fails to update
-info/refs file unless `--force` flag is given.
-
-
 Author
 ------
 Written by Junio C Hamano <gitster@pobox.com>

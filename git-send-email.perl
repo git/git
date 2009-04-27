@@ -418,6 +418,14 @@ my %parse_alias = (
 			$x =~ /^(\S+)$f\t\(?([^\t]+?)\)?(:?$f){0,2}$/ or next;
 			$aliases{$1} = [ split_addrs($2) ];
 		}},
+	elm => sub  { my $fh = shift;
+		      while (<$fh>) {
+			  if (/^(\S+)\s+=\s+[^=]+=\s(\S+)/) {
+			      my ($alias, $addr) = ($1, $2);
+			       $aliases{$alias} = [ split_addrs($addr) ];
+			  }
+		      } },
+
 	gnus => sub { my $fh = shift; while (<$fh>) {
 		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
 			$aliases{$1} = [ $2 ];

@@ -42,9 +42,6 @@ Updates since v1.6.2
 * many uses of lstat(2) in the codepath for "git checkout" have been
   optimized out.
 
-* pruning reflog entries that are unreachable from the tip of the ref
-  during "git reflog prune" (hence "git gc") was very inefficient.
-
 (usability, bells and whistles)
 
 * Boolean configuration variable yes/no can be written as on/off.
@@ -72,15 +69,9 @@ Updates since v1.6.2
   with the 'edit' action in git-add -i/-p, you can abort the editor to
   tell git not to apply it.
 
-* The number of commits shown in "you are ahead/behind your upstream"
-  messages given by "git checkout" and "git status" used to count merge
-  commits; now it doesn't.
-
 * @{-1} is a new way to refer to the last branch you were on introduced in
   1.6.2, but the initial implementation did not teach this to a few
   commands.  Now the syntax works with "branch -m @{-1} newname".
-
-* "git-add -p" now supports "q"uit action.
 
 * git-archive learned --output=<file> option.
 
@@ -108,8 +99,6 @@ Updates since v1.6.2
 
 * git-difftool is now part of the officially supported command, primarily
   maintained by David Aguilar.
-
-* git-fast-export choked when seeing a tag that does not point at commit.
 
 * git-for-each-ref learned a new "upstream" token.
 
@@ -163,6 +152,10 @@ Updates since v1.6.2
   knobs you can tweak to work around issues with various versions of the
   docbook-xsl package.  See comments in Documentation/Makefile for details.
 
+* Support for building and testing a subset of git on a system without a
+  working perl has been improved.
+
+
 Fixes since v1.6.2
 ------------------
 
@@ -184,6 +177,6 @@ v1.6.2.X series.
 
 ---
 exec >/var/tmp/1
-O=v1.6.3-rc0-74-g9824a38
+O=v1.6.3-rc2
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
