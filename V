@@ -26,7 +26,7 @@ do
 		:
 	elif version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)\.dirty$')
 	then
-		dirty=t
+		dirty=" (with changes)"
 	elif version=v$(expr "$installed" : \
 			'git version \(.*\)\.rc[0-9]*$')
 	then
@@ -41,7 +41,7 @@ do
 	if test "z$version" = "z$revision"
 	then
 		in= out=
-		installed=${dirty:+" (with changes)"}
+		installed=$dirty
 	elif test -z "$version"
 	then
 		in="[41;37m" out="[m"
@@ -49,8 +49,10 @@ do
 	else
 		installed=$(git describe $version)
 		case "$dirty" in
-		t)
-			installed="$installed.dirty"
+		'')
+			;;
+		?*)
+			installed="$installed$dirty"
 		esac
 		in="[41;37m" out="[m" installed="	$installed"
 	fi
