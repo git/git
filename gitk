@@ -7268,7 +7268,7 @@ proc getblobdiffs {ids} {
     global limitdiffs vfilelimit curview
     global diffencoding targetline diffnparents
 
-    set cmd [diffcmd $ids "-p -C --cc --no-commit-id -U$diffcontext"]
+    set cmd [diffcmd $ids "-p --textconv -C --cc --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
 	append cmd " -w"
     }
