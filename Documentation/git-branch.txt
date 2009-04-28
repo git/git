@@ -111,6 +111,7 @@ OPTIONS
 --no-abbrev::
 	Display the full sha1s in the output listing rather than abbreviating them.
 
+-t::
 --track::
 	When creating a new branch, set up configuration to mark the
 	start-point branch as "upstream" from the new branch. This
