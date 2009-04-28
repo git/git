@@ -72,6 +72,8 @@ static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 	struct grep_expr *x;
 
 	p = *list;
+	if (!p)
+		return NULL;
 	switch (p->token) {
 	case GREP_PATTERN: /* atom */
 	case GREP_PATTERN_HEAD:
@@ -84,8 +86,6 @@ static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 	case GREP_OPEN_PAREN:
 		*list = p->next;
 		x = compile_pattern_or(list);
-		if (!x)
-			return NULL;
 		if (!*list || (*list)->token != GREP_CLOSE_PAREN)
 			die("unmatched parenthesis");
 		*list = (*list)->next;
@@ -101,6 +101,8 @@ static struct grep_expr *compile_pattern_not(struct grep_pat **list)
 	struct grep_expr *x;
 
 	p = *list;
+	if (!p)
+		return NULL;
 	switch (p->token) {
 	case GREP_NOT:
 		if (!p->next)
@@ -372,6 +374,8 @@ static int match_expr_eval(struct grep_expr *x, char *bol, char *eol,
 	int h = 0;
 	regmatch_t match;
 
+	if (!x)
+		die("Not a valid grep expression");
 	switch (x->node) {
 	case GREP_NODE_ATOM:
 		h = match_one_pattern(x->u.atom, bol, eol, ctx, &match, 0);
