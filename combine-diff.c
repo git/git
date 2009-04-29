@@ -6,6 +6,7 @@
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "log-tree.h"
+#include "refs.h"
 
 static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
@@ -90,18 +91,24 @@ struct sline {
 	unsigned long *p_lno;
 };
 
-static char *grab_blob(const unsigned char *sha1, unsigned long *size)
+static char *grab_blob(const unsigned char *sha1, unsigned int mode, unsigned long *size)
 {
 	char *blob;
 	enum object_type type;
-	if (is_null_sha1(sha1)) {
+
+	if (S_ISGITLINK(mode)) {
+		blob = xmalloc(100);
+		*size = snprintf(blob, 100,
+				 "Subproject commit %s\n", sha1_to_hex(sha1));
+	} else if (is_null_sha1(sha1)) {
 		/* deleted blob */
 		*size = 0;
 		return xcalloc(1, 1);
+	} else {
+		blob = read_sha1_file(sha1, &type, size);
+		if (type != OBJ_BLOB)
+			die("object '%s' is not a blob!", sha1_to_hex(sha1));
 	}
-	blob = read_sha1_file(sha1, &type, size);
-	if (type != OBJ_BLOB)
-		die("object '%s' is not a blob!", sha1_to_hex(sha1));
 	return blob;
 }
 
@@ -195,7 +202,8 @@ static void consume_line(void *state_, char *line, unsigned long len)
 	}
 }
 
-static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
+static void combine_diff(const unsigned char *parent, unsigned int mode,
+			 mmfile_t *result_file,
 			 struct sline *sline, unsigned int cnt, int n,
 			 int num_parent)
 {
@@ -211,7 +219,7 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	if (!cnt)
 		return; /* result deleted */
 
-	parent_file.ptr = grab_blob(parent, &sz);
+	parent_file.ptr = grab_blob(parent, mode, &sz);
 	parent_file.size = sz;
 	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = XDF_NEED_MINIMAL;
@@ -692,7 +700,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 	/* Read the result of merge first */
 	if (!working_tree_file)
-		result = grab_blob(elem->sha1, &result_size);
+		result = grab_blob(elem->sha1, elem->mode, &result_size);
 	else {
 		/* Used by diff-tree to read from the working tree */
 		struct stat st;
@@ -712,6 +720,12 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			result_size = buf.len;
 			result = strbuf_detach(&buf, NULL);
 			elem->mode = canon_mode(st.st_mode);
+		} else if (S_ISDIR(st.st_mode)) {
+			unsigned char sha1[20];
+			if (resolve_gitlink_ref(elem->path, "HEAD", sha1) < 0)
+				result = grab_blob(elem->sha1, elem->mode, &result_size);
+			else
+				result = grab_blob(sha1, elem->mode, &result_size);
 		} else if (0 <= (fd = open(elem->path, O_RDONLY))) {
 			size_t len = xsize_t(st.st_size);
 			ssize_t done;
@@ -804,7 +818,9 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			}
 		}
 		if (i <= j)
-			combine_diff(elem->parent[i].sha1, &result_file, sline,
+			combine_diff(elem->parent[i].sha1,
+				     elem->parent[i].mode,
+				     &result_file, sline,
 				     cnt, i, num_parent);
 		if (elem->parent[i].mode != elem->mode)
 			mode_differs = 1;
