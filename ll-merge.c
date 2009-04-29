@@ -219,7 +219,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	close(fd);
  bad:
 	for (i = 0; i < 3; i++)
-		unlink(temp[i]);
+		unlink_or_warn(temp[i]);
 	strbuf_release(&cmd);
 	return status;
 }

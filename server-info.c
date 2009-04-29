@@ -246,7 +246,7 @@ int update_server_info(int force)
 	errs = errs | update_info_packs(force);
 
 	/* remove leftover rev-cache file if there is any */
-	unlink(git_path("info/rev-cache"));
+	unlink_or_warn(git_path("info/rev-cache"));
 
 	return errs;
 }

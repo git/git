@@ -16,7 +16,7 @@ static void remove_lock_file(void)
 		    lock_file_list->filename[0]) {
 			if (lock_file_list->fd >= 0)
 				close(lock_file_list->fd);
-			unlink(lock_file_list->filename);
+			unlink_or_warn(lock_file_list->filename);
 		}
 		lock_file_list = lock_file_list->next;
 	}
@@ -259,7 +259,7 @@ void rollback_lock_file(struct lock_file *lk)
 	if (lk->filename[0]) {
 		if (lk->fd >= 0)
 			close(lk->fd);
-		unlink(lk->filename);
+		unlink_or_warn(lk->filename);
 	}
 	lk->filename[0] = 0;
 }

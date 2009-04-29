@@ -931,7 +931,7 @@ static void unkeep_all_packs(void)
 		struct packed_git *p = all_packs[k];
 		snprintf(name, sizeof(name), "%s/pack/pack-%s.keep",
 			 get_object_directory(), sha1_to_hex(p->sha1));
-		unlink(name);
+		unlink_or_warn(name);
 	}
 }
 
@@ -981,7 +981,7 @@ static void end_packfile(void)
 	}
 	else {
 		close(old_p->pack_fd);
-		unlink(old_p->pack_name);
+		unlink_or_warn(old_p->pack_name);
 	}
 	free(old_p);
 

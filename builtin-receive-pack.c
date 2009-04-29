@@ -702,7 +702,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			unpack_status = unpack();
 		execute_commands(unpack_status);
 		if (pack_lockfile)
-			unlink(pack_lockfile);
+			unlink_or_warn(pack_lockfile);
 		if (report_status)
 			report(unpack_status);
 		run_receive_hook(post_receive_hook);

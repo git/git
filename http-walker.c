@@ -111,9 +111,9 @@ static void start_object_request(struct walker *walker,
 	struct walker_data *data = walker->data;
 
 	snprintf(prevfile, sizeof(prevfile), "%s.prev", obj_req->filename);
-	unlink(prevfile);
+	unlink_or_warn(prevfile);
 	rename(obj_req->tmpfile, prevfile);
-	unlink(obj_req->tmpfile);
+	unlink_or_warn(obj_req->tmpfile);
 
 	if (obj_req->local != -1)
 		error("fd leakage in start: %d", obj_req->local);
@@ -177,7 +177,7 @@ static void start_object_request(struct walker *walker,
 		} while (prev_read > 0);
 		close(prevlocal);
 	}
-	unlink(prevfile);
+	unlink_or_warn(prevfile);
 
 	/* Reset inflate/SHA1 if there was an error reading the previous temp
 	   file; also rewind to the beginning of the local file. */
@@ -238,18 +238,18 @@ static void finish_object_request(struct object_request *obj_req)
 	} else if (obj_req->curl_result != CURLE_OK) {
 		if (stat(obj_req->tmpfile, &st) == 0)
 			if (st.st_size == 0)
-				unlink(obj_req->tmpfile);
+				unlink_or_warn(obj_req->tmpfile);
 		return;
 	}
 
 	git_inflate_end(&obj_req->stream);
 	git_SHA1_Final(obj_req->real_sha1, &obj_req->c);
 	if (obj_req->zret != Z_STREAM_END) {
-		unlink(obj_req->tmpfile);
+		unlink_or_warn(obj_req->tmpfile);
 		return;
 	}
 	if (hashcmp(obj_req->sha1, obj_req->real_sha1)) {
-		unlink(obj_req->tmpfile);
+		unlink_or_warn(obj_req->tmpfile);
 		return;
 	}
 	obj_req->rename =
@@ -809,7 +809,7 @@ static void abort_object_request(struct object_request *obj_req)
 		close(obj_req->local);
 		obj_req->local = -1;
 	}
-	unlink(obj_req->tmpfile);
+	unlink_or_warn(obj_req->tmpfile);
 	if (obj_req->slot) {
 		release_active_slot(obj_req->slot);
 		obj_req->slot = NULL;
