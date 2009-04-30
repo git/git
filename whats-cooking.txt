@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2009, #03; Wed, 15)
-X-master-at: f800b65bea1504299747e7be03ee279508a74e1f
-X-next-at: 40869ef2c65a11295fc4c83e257fa4564b3e18f5
+Subject: What's cooking in git.git (Apr 2009, #04; Wed, 29)
+X-master-at: 6ffd567bec439e7809ee0966556bd5e72fb78de4
+X-next-at: 8c6980a6544dcc03e45b1d63d624544f3bfa1b94
 
-What's cooking in git.git (Apr 2009, #03; Wed, 15)
+What's cooking in git.git (Apr 2009, #04; Wed, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,29 +14,62 @@ holding onto them.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
-We are a bit past 1.6.3-rc0, and this report will show pretty much what
-the final should look like from the feature-set point-of-view.
-
 ----------------------------------------------------------------
 [New Topics]
 
+* cc/bisect (Fri Apr 24 08:29:01 2009 +0200) 10 commits
+ - am: simplify "sq" function by using "git rev-parse --sq-quote"
+ - bisect: use "git rev-parse --sq-quote" instead of a custom "sq"
+   function
+ - rev-parse: add --sq-quote to shell quote arguments
+ - rev-list: remove stringed output flag from "show_bisect_vars"
+ - bisect--helper: remove "--next-vars" option as it is now useless
+ - bisect: use "git bisect--helper --next-exit" in "git-bisect.sh"
+ - bisect--helper: add "--next-exit" to output bisect results
+ - bisect: move common bisect functionality to "bisect_common"
+ - rev-list: refactor printing bisect vars
+ - rev-list: make "estimate_bisect_steps" non static
+
+* mh/show-branch-color (Sat Apr 25 13:46:14 2009 +0200) 2 commits
+ + bash completion: show-branch color support
+ + show-branch: color the commit status signs
+
+* ac/graph-horizontal-line (Tue Apr 21 08:47:01 2009 -0400) 1 commit
+ + graph API: Use horizontal lines for more compact graphs
+
+* ar/merge-one-file-diag (Wed Apr 29 23:40:50 2009 +0200) 1 commit
+ - Clarify kind of conflict in merge-one-file helper
+
+* mh/diff-stat-color (Sat Apr 25 00:06:47 2009 +0200) 1 commit
+ - diff: do not color --stat output like patch context
+
+* rc/http-push (Sat Apr 25 00:35:57 2009 +0800) 3 commits
+ . http-push: send out fetch requests on queue
+ . t5540-http-push: test fetching of packed objects
+ . t5540-http-push: test fetching of loose objects
+
+Breaks build in a trivial way; which I haven't got around fixing it up.
+
+* ae/anon-fetch-info (Fri Apr 17 10:20:11 2009 +0200) 1 commit
+ + fetch: Strip usernames from url's before storing them
+
+* ar/unlink-err (Wed Apr 29 23:24:52 2009 +0200) 3 commits
+ - print unlink(2) errno in copy_or_link_directory
+ - replace direct calls to unlink(2) with unlink_or_warn
+ - Introduce an unlink(2) wrapper which gives warning if unlink
+   failed
+
+* ph/submodule-rebase (Fri Apr 24 09:06:38 2009 +1000) 1 commit
+ - git-submodule: add support for --rebase.
+
+----------------------------------------------------------------
+[Graduated to "master"]
+
+It's been a while since I sent "What's cooking" out, and some of the
+topics below have fixes on top directly applied since they graduated.
+
 * ac/color-graph (Mon Apr 13 15:53:41 2009 -0400) 1 commit
  + graph API: Added logic for colored edges
-
-This has been under discussion since before 1.6.3-rc0, hopefully in
-1.6.3-rc1.
-
-* mw/send-email (Mon Apr 13 13:23:52 2009 -0500) 6 commits
- - send-email: Remove superfluous `my $editor = ...'
- - send-email: 'References:' should only reference what is sent
- - send-email: Handle "GIT:" rather than "GIT: " during --compose
- - Docs: send-email: --smtp-server-port can take symbolic ports
- - Docs: send-email: Refer to CONFIGURATION section for
-   sendemail.multiedit
- - Docs: send-email: Put options back into alphabetical order
-
-Only partially queued, but this is not 1.6.3 material and we are not in a
-hurry.
 
 * jk/cobdoc (Mon Apr 13 07:21:04 2009 -0400) 5 commits
  + docs/checkout: clarify what "non-branch" means
@@ -45,21 +78,14 @@ hurry.
  + doc: refer to tracking configuration as "upstream"
  + doc: clarify --no-track option
 
-For 1.6.3
-
 * mk/apply-swap (Sat Apr 11 21:31:00 2009 +0200) 2 commits
  + builtin-apply: keep information about files to be deleted
  + tests: test applying criss-cross rename patch
 
-For 1.6.3; perhaps needs to be cherry-picked to 1.6.2.X series as well.
-
-----------------------------------------------------------------
-[Will merge to 'master' before 1.6.3-rc1]
+Perhaps needs to be cherry-picked to 1.6.2.X series as well.
 
 * mm/add-p-quit (Fri Apr 10 16:57:01 2009 +0200) 1 commit
  + git add -p: new "quit" command at the prompt.
-
-I did a minimal documentation update myself.
 
 * eb/upload-archive-from-git-shell (Thu Apr 9 21:58:52 2009 +0200) 1 commit
  + git-shell: Add 'git-upload-archive' to allowed commands.
@@ -70,9 +96,6 @@ I did a minimal documentation update myself.
 
 * jc/maint-shared-literally (Sun Apr 12 21:22:02 2009 +0200) 1 commit
  + t1301-shared-repo: fix forced modes test
-
-J6t's updates to fix permission tests and make sure they won't run on
-systems without permission bits on the filesystem.
 
 * ns/am-to-empty (Fri Apr 10 09:34:42 2009 +0900) 1 commit
  + git-am: teach git-am to apply a patch to an unborn branch
@@ -102,18 +125,23 @@ systems without permission bits on the filesystem.
  + git-mergetool/difftool: make (g)vimdiff workable under Windows
  + doc/merge-config: list ecmerge as a built-in merge tool
 
-----------------------------------------------------------------
-[Graduated to "master"]
-
-(none)
-
-----------------------------------------------------------------
-[Stalled and may need help and prodding to go forward]
-
 * lt/bool-on-off (Thu Apr 9 12:40:39 2009 -0700) 1 commit
  + Allow users to un-configure rename detection
 
-Still lacks doc updates.
+* lt/pack-object-memuse (Fri Apr 10 18:15:26 2009 -0700) 2 commits
+ + show_object(): push path_name() call further down
+ + process_{tree,blob}: show objects without buffering
+
+* nd/archive-attribute (Mon Apr 13 14:18:39 2009 +0200) 5 commits
+ + archive test: test new --fix-attributes feature
+ + archive: do not read .gitattributes in working directory
+ + unpack-trees: do not muck with attributes when we are not checking
+   out
+ + attr: add GIT_ATTR_INDEX "direction"
+ + archive tests: do not use .gitattributes in working directory
+
+----------------------------------------------------------------
+[Stalled and may need help and prodding to go forward]
 
 * ps/blame (Thu Mar 12 21:30:03 2009 +1100) 1 commit
  - blame.c: start libifying the blame infrastructure
@@ -188,25 +216,21 @@ to resolve issues these tests identify.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* lt/pack-object-memuse (Fri Apr 10 18:15:26 2009 -0700) 2 commits
- + show_object(): push path_name() call further down
- + process_{tree,blob}: show objects without buffering
+* mw/send-email (Mon Apr 13 13:23:52 2009 -0500) 6 commits
+ - send-email: Remove superfluous `my $editor = ...'
+ - send-email: 'References:' should only reference what is sent
+ - send-email: Handle "GIT:" rather than "GIT: " during --compose
+ - Docs: send-email: --smtp-server-port can take symbolic ports
+ - Docs: send-email: Refer to CONFIGURATION section for
+   sendemail.multiedit
+ - Docs: send-email: Put options back into alphabetical order
 
-This had some conflicts with Christian's bisect topic; I think I resolved
-them correctly, but double-checking would be nice.
+Only partially queued, but this is not 1.6.3 material and we are not in a
+hurry.
 
-* nd/archive-attribute (Mon Apr 13 14:18:39 2009 +0200) 5 commits
- + archive test: test new --fix-attributes feature
- + archive: do not read .gitattributes in working directory
- + unpack-trees: do not muck with attributes when we are not checking
-   out
- + attr: add GIT_ATTR_INDEX "direction"
- + archive tests: do not use .gitattributes in working directory
-
-With fix-ups from René and myself.  Perhaps 1.6.3 material, perhaps not.
-
-* js/add-edit (Wed Apr 8 23:30:24 2009 +0200) 1 commit
- - git-add: introduce --edit (to edit the diff vs. the index)
+* js/add-edit (Mon Apr 27 19:51:42 2009 +0200) 2 commits
+ + t3702: fix reliance on SHELL_PATH being '/bin/sh'
+ + git-add: introduce --edit (to edit the diff vs. the index)
 
 * cc/replace (Tue Apr 14 00:36:59 2009 +0200) 13 commits
  - Documentation: add documentation for "git replace"
