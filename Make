@@ -28,7 +28,7 @@ LANG=C
 old_style_def_fix=b79d18c92d9f4841a6a1a29b7b2373a8ff9871e1
 
 : ${O=-O2}
-Wall=-Wall tests=
+Wall='-Wall -Wdeclaration-after-statement' tests=
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
@@ -101,7 +101,7 @@ sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 
 d="$d ASCIIDOC_NO_ROFF=YesPlease ASCIIDOC8=YesPlease"
 
-CFLAGS="$O $Wall -Wdeclaration-after-statement -g"
+CFLAGS="$O $Wall -g"
 
 make $d \
      GITWEB_CONFIG=$G \
