@@ -18,8 +18,7 @@ inst_prefix=$(
 
 force= with_dash= M= install= nodoc= notest= bootstrap= branches= jobs=
 while	case "$1" in
-	--pedantic) M="$M $1" ;;
-	--locale=*) M="$M $1" ;;
+	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
 	--dash) with_dash=y ;;
 	--noinstall) install=noinstall ;;
