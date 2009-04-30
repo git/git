@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-10-18 22:03+1100\n"
-"PO-Revision-Date: 2008-05-24 22:40+0200\n"
+"POT-Creation-Date: 2008-12-06 20:40+0100\n"
+"PO-Revision-Date: 2008-12-06 20:45+0100\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -18,6 +18,14 @@ msgstr ""
 #: gitk:113
 msgid "Couldn't get list of unmerged files:"
 msgstr "Liste der nicht-zusammengeführten Dateien nicht gefunden:"
+
+#: gitk:272
+msgid "Error parsing revisions:"
+msgstr "Fehler beim Laden der Versionen:"
+
+#: gitk:327
+msgid "Error executing --argscmd command:"
+msgstr "Fehler beim --argscmd Kommando:"
 
 #: gitk:340
 msgid "No files selected: --merge specified but no files are unmerged."
@@ -82,7 +90,11 @@ msgstr "Zweige neu laden"
 msgid "List references"
 msgstr "Zweige/Markierungen auflisten"
 
-#: gitk:1815
+#: gitk:1915
+msgid "Start git gui"
+msgstr "»git gui« starten"
+
+#: gitk:1917
 msgid "Quit"
 msgstr "Beenden"
 
@@ -283,11 +295,19 @@ msgstr "Nur diesen hervorheben"
 msgid "External diff"
 msgstr "Externer Vergleich"
 
-#: gitk:2245
+#: gitk:2255
 msgid "Blame parent commit"
-msgstr ""
+msgstr "Annotieren der Elternversion"
 
-#: gitk:2488
+#: gitk:2360
+msgid "Show origin of this line"
+msgstr "Herkunft dieser Zeile anzeigen"
+
+#: gitk:2361
+msgid "Run git gui blame on this line"
+msgstr "Annotieren (»git gui blame«) von dieser Zeile"
+
+#: gitk:2606
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
@@ -471,15 +491,68 @@ msgstr "<%s-Minus>\tSchriftgröße verkleinern"
 msgid "<F5>\t\tUpdate"
 msgstr "<F5>\t\tAktualisieren"
 
-#: gitk:3200
+#: gitk:2979
+#, tcl-format
+msgid "Error getting \"%s\" from %s:"
+msgstr "Fehler beim Holen von »%s« von »%s«:"
+
+#: gitk:3036 gitk:3045
+#, tcl-format
+msgid "Error creating temporary directory %s:"
+msgstr "Fehler beim Erzeugen eines temporären Verzeichnisses »%s«:"
+
+#: gitk:3058
+msgid "command failed:"
+msgstr "Kommando fehlgeschlagen:"
+
+#: gitk:3078
+msgid "No such commit"
+msgstr "Version nicht gefunden"
+
+#: gitk:3083
+msgid "git gui blame: command failed:"
+msgstr "git gui blame: Kommando fehlgeschlagen:"
+
+#: gitk:3398
+#, tcl-format
+msgid "Couldn't read merge head: %s"
+msgstr "Zusammenführungs-Spitze konnte nicht gelesen werden: %s"
+
+#: gitk:3406
+#, tcl-format
+msgid "Error reading index: %s"
+msgstr "Fehler beim Lesen der Bereitstellung (»index«): %s"
+
+#: gitk:3431
+#, tcl-format
+msgid "Couldn't start git blame: %s"
+msgstr "»git blame« konnte nicht gestartet werden: %s"
+
+#: gitk:3434 gitk:6160
+msgid "Searching"
+msgstr "Suchen"
+
+#: gitk:3466
+#, tcl-format
+msgid "Error running git blame: %s"
+msgstr "Fehler beim Ausführen von »git blame«: %s"
+
+#: gitk:3494
+#, tcl-format
+msgid "That line comes from commit %s,  which is not in this view"
+msgstr ""
+"Diese Zeile stammt aus Version %s, welche nicht in dieser Ansicht gezeigt "
+"wird."
+
+#: gitk:3508
+msgid "External diff viewer failed:"
+msgstr "Externes Vergleich-(Diff-)Programm fehlgeschlagen:"
+
+#: gitk:3210
 msgid "Gitk view definition"
 msgstr "Gitk Ansichten"
 
-#: gitk:3225
-msgid "Name"
-msgstr "Name"
-
-#: gitk:3228
+#: gitk:3630
 msgid "Remember this view"
 msgstr "Diese Ansicht speichern"
 
@@ -487,15 +560,55 @@ msgstr "Diese Ansicht speichern"
 msgid "Commits to include (arguments to git log):"
 msgstr "Versionen anzeigen (Argumente von git-log):"
 
-#: gitk:3239
+#: gitk:3632
+msgid "Use all refs"
+msgstr "Alle Zweige verwenden"
+
+#: gitk:3633
+msgid "Strictly sort by date"
+msgstr "Streng nach Datum sortieren"
+
+#: gitk:3634
+msgid "Mark branch sides"
+msgstr "Zweig-Seiten markieren"
+
+#: gitk:3635
+msgid "Since date:"
+msgstr "Von Datum:"
+
+#: gitk:3636
+msgid "Until date:"
+msgstr "Bis Datum:"
+
+#: gitk:3637
+msgid "Max count:"
+msgstr "Max. Anzahl:"
+
+#: gitk:3638
+msgid "Skip:"
+msgstr "Überspringen:"
+
+#: gitk:3639
+msgid "Limit to first parent"
+msgstr "Auf erste Elternversion beschränken"
+
+#: gitk:3640
 msgid "Command to generate more commits to include:"
 msgstr "Versionsliste durch folgendes Kommando erzeugen lassen:"
 
-#: gitk:3246
+#: gitk:3749
+msgid "Name"
+msgstr "Name"
+
+#: gitk:3797
 msgid "Enter files and directories to include, one per line:"
 msgstr "Folgende Dateien und Verzeichnisse anzeigen (eine pro Zeile):"
 
-#: gitk:3293
+#: gitk:3811
+msgid "Apply (F5)"
+msgstr "Anwenden (F5)"
+
+#: gitk:3849
 msgid "Error in commit selection arguments:"
 msgstr "Fehler in den ausgewählten Versionen:"
 
@@ -535,11 +648,7 @@ msgstr "Lokale Änderungen bereitgestellt, aber nicht eingetragen"
 msgid "Local uncommitted changes, not checked in to index"
 msgstr "Lokale Änderungen, nicht bereitgestellt"
 
-#: gitk:5549
-msgid "Searching"
-msgstr "Suchen"
-
-#: gitk:6049
+#: gitk:6673
 msgid "Tags:"
 msgstr "Markierungen:"
 
@@ -563,11 +672,12 @@ msgstr "Folgt auf"
 msgid "Precedes"
 msgstr "Vorgänger von"
 
-#: gitk:6378
-msgid "Error getting merge diffs:"
-msgstr "Fehler beim Laden des Vergleichs:"
+#: gitk:7209
+#, tcl-format
+msgid "Error getting diffs: %s"
+msgstr "Fehler beim Laden des Vergleichs: %s"
 
-#: gitk:7113
+#: gitk:7748
 msgid "Goto:"
 msgstr "Gehe zu:"
 
@@ -688,17 +798,42 @@ msgstr "Name:"
 msgid "Please specify a name for the new branch"
 msgstr "Bitte geben Sie einen Namen für den neuen Zweig an."
 
-#: gitk:7703
+#: gitk:8328
+#, tcl-format
+msgid "Branch '%s' already exists. Overwrite?"
+msgstr "Zweig »%s« existiert bereits. Soll er überschrieben werden?"
+
+#: gitk:8394
 #, tcl-format
 msgid "Commit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
-"Version »%s« ist bereits im Zweig »%s« enthalten -- trotzdem erneut eintragen?"
+"Version »%s« ist bereits im Zweig »%s« enthalten -- trotzdem erneut "
+"eintragen?"
 
-#: gitk:7708
+#: gitk:7718
 msgid "Cherry-picking"
 msgstr "Version pflücken"
 
-#: gitk:7720
+#: gitk:8408
+#, tcl-format
+msgid ""
+"Cherry-pick failed because of local changes to file '%s'.\n"
+"Please commit, reset or stash your changes and try again."
+msgstr ""
+"Pflücken fehlgeschlagen, da noch lokale Änderungen in Datei »%s«\n"
+"vorliegen. Bitte diese Änderungen eintragen, zurücksetzen oder\n"
+"zwischenspeichern (»git stash») und dann erneut versuchen."
+
+#: gitk:8414
+msgid ""
+"Cherry-pick failed because of merge conflict.\n"
+"Do you wish to run git citool to resolve it?"
+msgstr ""
+"Pflücken fehlgeschlagen, da ein Zusammenführungs-Konflikt aufgetreten\n"
+"ist. Soll das »git citool« (Zusammenführungs-Werkzeug) aufgerufen\n"
+"werden, um diesen Konflikt aufzulösen?"
+
+#: gitk:8430
 msgid "No changes committed"
 msgstr "Keine Änderungen eingetragen"
 
@@ -836,7 +971,7 @@ msgstr "Vergleich nur für angezeigte Pfade"
 
 #: gitk:9414
 msgid "Support per-file encodings"
-msgstr ""
+msgstr "Zeichenkodierung pro Datei ermitteln"
 
 #: gitk:9421
 msgid "External diff tool"
@@ -854,23 +989,51 @@ msgstr "Farben: Klicken zum Wählen"
 msgid "Background"
 msgstr "Hintergrund"
 
-#: gitk:9435
+#: gitk:10153 gitk:10183
+msgid "background"
+msgstr "Hintergrund"
+
+#: gitk:10156
 msgid "Foreground"
 msgstr "Vordergrund"
 
-#: gitk:9439
+#: gitk:10157
+msgid "foreground"
+msgstr "Vordergrund"
+
+#: gitk:10160
 msgid "Diff: old lines"
 msgstr "Vergleich: Alte Zeilen"
 
-#: gitk:9444
+#: gitk:10161
+msgid "diff old lines"
+msgstr "Vergleich - Alte Zeilen"
+
+#: gitk:10165
 msgid "Diff: new lines"
 msgstr "Vergleich: Neue Zeilen"
 
-#: gitk:9449
+#: gitk:10166
+msgid "diff new lines"
+msgstr "Vergleich - Neue Zeilen"
+
+#: gitk:10170
 msgid "Diff: hunk header"
 msgstr "Vergleich: Änderungstitel"
 
-#: gitk:9455
+#: gitk:10172
+msgid "diff hunk header"
+msgstr "Vergleich - Änderungstitel"
+
+#: gitk:10176
+msgid "Marked line bg"
+msgstr "Markierte Zeile Hintergrund"
+
+#: gitk:10178
+msgid "marked line background"
+msgstr "markierte Zeile Hintergrund"
+
+#: gitk:10182
 msgid "Select bg"
 msgstr "Hintergrundfarbe Auswählen"
 
