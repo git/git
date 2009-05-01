@@ -406,7 +406,7 @@ cmd_split()
 		latest_old=$(cache_get latest_old)
 		git merge -s ours \
 			-m "$(merge_msg $dir $latest_old $latest_new)" \
-			$latest_new >&2
+			$latest_new >&2 || exit $?
 	fi
 	echo $latest_new
 	exit 0
