@@ -24,7 +24,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			path = q->queue[i]->two->path;
 			len = strlen(path);
 			p = xmalloc(combine_diff_path_size(num_parent, len));
-			p->path = (char*) &(p->parent[num_parent]);
+			p->path = (char *) &(p->parent[num_parent]);
 			memcpy(p->path, path, len);
 			p->path[len] = 0;
 			p->len = len;
@@ -1063,7 +1063,7 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 	for (parents = commit->parents, num_parent = 0;
 	     parents;
 	     parents = parents->next, num_parent++)
-		hashcpy((unsigned char*)(parent + num_parent),
+		hashcpy((unsigned char *)(parent + num_parent),
 			parents->item->object.sha1);
 	diff_tree_combined(sha1, parent, num_parent, dense, rev);
 }

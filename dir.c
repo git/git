@@ -156,7 +156,7 @@ void add_exclude(const char *string, const char *base,
 	if (len && string[len - 1] == '/') {
 		char *s;
 		x = xmalloc(sizeof(*x) + len);
-		s = (char*)(x+1);
+		s = (char *)(x+1);
 		memcpy(s, string, len - 1);
 		s[len - 1] = '\0';
 		string = s;

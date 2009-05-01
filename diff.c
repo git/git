@@ -876,7 +876,7 @@ static void fill_print_name(struct diffstat_file *file)
 	file->print_name = pname;
 }
 
-static void show_stats(struct diffstat_t* data, struct diff_options *options)
+static void show_stats(struct diffstat_t *data, struct diff_options *options)
 {
 	int i, len, add, del, adds = 0, dels = 0;
 	int max_change = 0, max_len = 0;
@@ -1025,7 +1025,7 @@ static void show_shortstats(struct diffstat_t* data, struct diff_options *option
 	       total_files, adds, dels);
 }
 
-static void show_numstat(struct diffstat_t* data, struct diff_options *options)
+static void show_numstat(struct diffstat_t *data, struct diff_options *options)
 {
 	int i;
 

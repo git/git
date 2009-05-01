@@ -132,8 +132,8 @@ static int read_pack_info_file(const char *infofile)
 
 static int compare_info(const void *a_, const void *b_)
 {
-	struct pack_info * const* a = a_;
-	struct pack_info * const* b = b_;
+	struct pack_info *const *a = a_;
+	struct pack_info *const *b = b_;
 
 	if (0 <= (*a)->old_num && 0 <= (*b)->old_num)
 		/* Keep the order in the original */

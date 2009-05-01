@@ -233,7 +233,7 @@ void diff_no_index(struct rev_info *revs,
 	if (prefix) {
 		int len = strlen(prefix);
 
-		revs->diffopt.paths = xcalloc(2, sizeof(char*));
+		revs->diffopt.paths = xcalloc(2, sizeof(char *));
 		for (i = 0; i < 2; i++) {
 			const char *p = argv[argc - 2 + i];
 			/*

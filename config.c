@@ -724,16 +724,16 @@ int git_config(config_fn_t fn, void *data)
 
 static struct {
 	int baselen;
-	char* key;
+	char *key;
 	int do_not_match;
-	regex_t* value_regex;
+	regex_t *value_regex;
 	int multi_replace;
 	size_t offset[MAX_MATCHES];
 	enum { START, SECTION_SEEN, SECTION_END_SEEN, KEY_SEEN } state;
 	int seen;
 } store;
 
-static int matches(const char* key, const char* value)
+static int matches(const char *key, const char *value)
 {
 	return !strcmp(key, store.key) &&
 		(store.value_regex == NULL ||
@@ -741,7 +741,7 @@ static int matches(const char* key, const char* value)
 		  !regexec(store.value_regex, value, 0, NULL, 0)));
 }
 
-static int store_aux(const char* key, const char* value, void *cb)
+static int store_aux(const char *key, const char *value, void *cb)
 {
 	const char *ep;
 	size_t section_len;
@@ -810,7 +810,7 @@ static int write_error(const char *filename)
 	return 4;
 }
 
-static int store_write_section(int fd, const char* key)
+static int store_write_section(int fd, const char *key)
 {
 	const char *dot;
 	int i, success;
@@ -835,7 +835,7 @@ static int store_write_section(int fd, const char* key)
 	return success;
 }
 
-static int store_write_pair(int fd, const char* key, const char* value)
+static int store_write_pair(int fd, const char *key, const char *value)
 {
 	int i, success;
 	int length = strlen(key + store.baselen + 1);
@@ -883,8 +883,8 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	return success;
 }
 
-static ssize_t find_beginning_of_line(const char* contents, size_t size,
-	size_t offset_, int* found_bracket)
+static ssize_t find_beginning_of_line(const char *contents, size_t size,
+	size_t offset_, int *found_bracket)
 {
 	size_t equal_offset = size, bracket_offset = size;
 	ssize_t offset;
@@ -909,7 +909,7 @@ contline:
 	return offset;
 }
 
-int git_config_set(const char* key, const char* value)
+int git_config_set(const char *key, const char *value)
 {
 	return git_config_set_multivar(key, value, NULL, 0);
 }
@@ -937,15 +937,15 @@ int git_config_set(const char* key, const char* value)
  * - the config file is removed and the lock file rename()d to it.
  *
  */
-int git_config_set_multivar(const char* key, const char* value,
-	const char* value_regex, int multi_replace)
+int git_config_set_multivar(const char *key, const char *value,
+	const char *value_regex, int multi_replace)
 {
 	int i, dot;
 	int fd = -1, in_fd;
 	int ret;
-	char* config_filename;
+	char *config_filename;
 	struct lock_file *lock = NULL;
-	const char* last_dot = strrchr(key, '.');
+	const char *last_dot = strrchr(key, '.');
 
 	if (config_exclusive_filename)
 		config_filename = xstrdup(config_exclusive_filename);
@@ -1026,13 +1026,13 @@ int git_config_set_multivar(const char* key, const char* value,
 			goto out_free;
 		}
 
-		store.key = (char*)key;
+		store.key = (char *)key;
 		if (!store_write_section(fd, key) ||
 		    !store_write_pair(fd, key, value))
 			goto write_err_out;
 	} else {
 		struct stat st;
-		char* contents;
+		char *contents;
 		size_t contents_sz, copy_begin, copy_end;
 		int i, new_line = 0;
 
