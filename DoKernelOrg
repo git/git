@@ -74,7 +74,7 @@ maint | maint-* | master)
 				cd "$HOME/rpms/" &&
 				tar cf "TARBALL/$V.$arch.tar" \
 					RPMS/$arch/*-$V-*.$arch.rpm &&
-				ls -ld $HOME/rpms/TARBALL/$V.tar
+				ls -ld $HOME/rpms/TARBALL/$V.$arch.tar
 			)
 			make clean
 			;;
