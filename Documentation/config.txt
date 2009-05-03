@@ -429,6 +429,11 @@ relatively high IO latencies.  With this set to 'true', git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.
 
+core.unreliableHardlinks::
+	Some filesystem drivers cannot properly handle hardlinking a file
+	and deleting the source right away.  In such a case, you need to
+	set this config variable to 'true'.
+
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
