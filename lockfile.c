@@ -109,7 +109,7 @@ static char *resolve_symlink(char *p, size_t s)
 			 * link is a relative path, so I must replace the
 			 * last element of p with it.
 			 */
-			char *r = (char*)last_path_elm(p);
+			char *r = (char *)last_path_elm(p);
 			if (r - p + link_len < s)
 				strcpy(r, link);
 			else {

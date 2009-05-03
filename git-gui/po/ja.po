@@ -773,16 +773,6 @@ msgstr "無条件(マージテストしない)"
 msgid "The following branches are not completely merged into %s:"
 msgstr "以下のブランチは %s に完全にマージされていません:"
 
-#: lib/branch_delete.tcl:115
-msgid ""
-"Recovering deleted branches is difficult. \n"
-"\n"
-" Delete the selected branches?"
-msgstr ""
-"ブランチを削除すると元に戻すのは困難です。 \n"
-"\n"
-" 選択したブランチを削除しますか？"
-
 #: lib/branch_delete.tcl:141
 #, tcl-format
 msgid ""
@@ -2382,7 +2372,7 @@ msgstr "実行中: %s"
 
 #: lib/tools.tcl:149
 #, tcl-format
-msgid "Tool completed succesfully: %s"
+msgid "Tool completed successfully: %s"
 msgstr "ツールが完了しました: %s"
 
 #: lib/tools.tcl:151

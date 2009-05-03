@@ -407,8 +407,8 @@ A rescan will be automatically started now.
 	#
 	set fd_ph [githook_read post-commit]
 	if {$fd_ph ne {}} {
-		upvar #0 pch_error$cmt_id pc_err
-		set pc_err {}
+		global pch_error
+		set pch_error {}
 		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 		fileevent $fd_ph readable \
 			[list commit_postcommit_wait $fd_ph $cmt_id]
@@ -470,7 +470,7 @@ A rescan will be automatically started now.
 }
 
 proc commit_postcommit_wait {fd_ph cmt_id} {
-	upvar #0 pch_error$cmt_id pch_error
+	global pch_error
 
 	append pch_error [read $fd_ph]
 	fconfigure $fd_ph -blocking 1

@@ -54,13 +54,13 @@ test_expect_success setup '
 	git merge -s ours a
 '
 
-test_expect_failure 'merging with modify/modify conflict' '
+test_expect_success 'merging with modify/modify conflict' '
 
 	git checkout -b test1 a &&
 	test_must_fail git merge b &&
 	test -f .git/MERGE_MSG &&
-	git diff
-
+	git diff &&
+	test -n "$(git ls-files -u)"
 '
 
 test_expect_success 'merging with a modify/modify conflict between merge bases' '

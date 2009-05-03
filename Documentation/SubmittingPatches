@@ -6,9 +6,13 @@ Checklist (and a short version for the impatient):
 	- check for unnecessary whitespace with "git diff --check"
 	  before committing
 	- do not check in commented out code or unneeded files
-	- provide a meaningful commit message
 	- the first line of the commit message should be a short
 	  description and should skip the full stop
+	- the body should provide a meaningful commit message, which:
+		- uses the imperative, present tense: "change",
+		  not "changed" or "changes".
+		- includes motivation for the change, and contrasts
+		  its implementation with previous behaviour
 	- if you want your work included in git.git, add a
 	  "Signed-off-by: Your Name <you@example.com>" line to the
 	  commit message (or just use the option "-s" when
@@ -62,6 +66,14 @@ Describe the technical detail of the change(s).
 
 If your description starts to get too long, that's a sign that you
 probably need to split up your commit to finer grained pieces.
+That being said, patches which plainly describe the things that
+help reviewers check the patch, and future maintainers understand
+the code, are the most beautiful patches.  Descriptions that summarise
+the point in the subject well, and describe the motivation for the
+change, the approach taken by the change, and if relevant how this
+differs substantially from the prior version, can be found on Usenet
+archives back into the late 80's.  Consider it like good Netiquette,
+but for code.
 
 Oh, another thing.  I am picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped

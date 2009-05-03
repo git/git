@@ -429,10 +429,14 @@ relatively high IO latencies.  With this set to 'true', git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.
 
-core.unreliableHardlinks::
-	Some filesystem drivers cannot properly handle hardlinking a file
-	and deleting the source right away.  In such a case, you need to
-	set this config variable to 'true'.
+core.createObject::
+	You can set this to 'link', in which case a hardlink followed by
+	a delete of the source are used to make sure that object creation
+	will not overwrite existing objects.
++
+On some file system/operating system combinations, this is unreliable.
+Set this config setting to 'rename' there; However, This will remove the
+check that makes sure that existing object files will not get overwritten.
 
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.

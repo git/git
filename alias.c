@@ -27,7 +27,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 	int src, dst, count = 0, size = 16;
 	char quoted = 0;
 
-	*argv = xmalloc(sizeof(char*) * size);
+	*argv = xmalloc(sizeof(char *) * size);
 
 	/* split alias_string */
 	(*argv)[count++] = cmdline;
@@ -40,7 +40,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 				; /* skip */
 			if (count >= size) {
 				size += 16;
-				*argv = xrealloc(*argv, sizeof(char*) * size);
+				*argv = xrealloc(*argv, sizeof(char *) * size);
 			}
 			(*argv)[count++] = cmdline + dst;
 		} else if (!quoted && (c == '\'' || c == '"')) {

@@ -138,8 +138,8 @@ test_expect_success 'clone empty repository, and then push should not segfault.'
 	mkdir empty &&
 	(cd empty && git init) &&
 	git clone empty empty-clone &&
-	cd empty-clone &&
-	test_must_fail git push
+	(cd empty-clone &&
+	test_must_fail git push)
 '
 
 test_done

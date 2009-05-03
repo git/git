@@ -111,7 +111,7 @@ static void mark_common(struct commit *commit,
   Get the next rev to send, ignoring the common.
 */
 
-static const unsigned char* get_rev(void)
+static const unsigned char *get_rev(void)
 {
 	struct commit *commit = NULL;
 

@@ -37,7 +37,7 @@ where options is the bitwise-or of:
 
 	Make sure there is a work tree, i.e. the command cannot act
 	on bare repositories.
-	This makes only sense when `RUN_SETUP` is also set.
+	This only makes sense when `RUN_SETUP` is also set.
 
 . Add `builtin-foo.o` to `BUILTIN_OBJS` in `Makefile`.
 
