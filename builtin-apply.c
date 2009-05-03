@@ -2271,6 +2271,25 @@ static struct patch *in_fn_table(const char *name)
 	return NULL;
 }
 
+/*
+ * item->util in the filename table records the status of the path.
+ * Usually it points at a patch (whose result records the contents
+ * of it after applying it), but it could be PATH_WAS_DELETED for a
+ * path that a previously applied patch has already removed.
+ */
+ #define PATH_TO_BE_DELETED ((struct patch *) -2)
+#define PATH_WAS_DELETED ((struct patch *) -1)
+
+static int to_be_deleted(struct patch *patch)
+{
+	return patch == PATH_TO_BE_DELETED;
+}
+
+static int was_deleted(struct patch *patch)
+{
+	return patch == PATH_WAS_DELETED;
+}
+
 static void add_to_fn_table(struct patch *patch)
 {
 	struct string_list_item *item;
@@ -2291,7 +2310,22 @@ static void add_to_fn_table(struct patch *patch)
 	 */
 	if ((patch->new_name == NULL) || (patch->is_rename)) {
 		item = string_list_insert(patch->old_name, &fn_table);
-		item->util = (struct patch *) -1;
+		item->util = PATH_WAS_DELETED;
+	}
+}
+
+static void prepare_fn_table(struct patch *patch)
+{
+	/*
+	 * store information about incoming file deletion
+	 */
+	while (patch) {
+		if ((patch->new_name == NULL) || (patch->is_rename)) {
+			struct string_list_item *item;
+			item = string_list_insert(patch->old_name, &fn_table);
+			item->util = PATH_TO_BE_DELETED;
+		}
+		patch = patch->next;
 	}
 }
 
@@ -2304,8 +2338,8 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	struct patch *tpatch;
 
 	if (!(patch->is_copy || patch->is_rename) &&
-	    ((tpatch = in_fn_table(patch->old_name)) != NULL)) {
-		if (tpatch == (struct patch *) -1) {
+	    (tpatch = in_fn_table(patch->old_name)) != NULL && !to_be_deleted(tpatch)) {
+		if (was_deleted(tpatch)) {
 			return error("patch %s has been renamed/deleted",
 				patch->old_name);
 		}
@@ -2399,16 +2433,18 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	assert(patch->is_new <= 0);
 
 	if (!(patch->is_copy || patch->is_rename) &&
-	    (tpatch = in_fn_table(old_name)) != NULL) {
-		if (tpatch == (struct patch *) -1) {
+	    (tpatch = in_fn_table(old_name)) != NULL && !to_be_deleted(tpatch)) {
+		if (was_deleted(tpatch))
 			return error("%s: has been deleted/renamed", old_name);
-		}
 		st_mode = tpatch->new_mode;
 	} else if (!cached) {
 		stat_ret = lstat(old_name, st);
 		if (stat_ret && errno != ENOENT)
 			return error("%s: %s", old_name, strerror(errno));
 	}
+
+	if (to_be_deleted(tpatch))
+		tpatch = NULL;
 
 	if (check_index && !tpatch) {
 		int pos = cache_name_pos(old_name, strlen(old_name));
@@ -2471,6 +2507,7 @@ static int check_patch(struct patch *patch)
 	const char *new_name = patch->new_name;
 	const char *name = old_name ? old_name : new_name;
 	struct cache_entry *ce = NULL;
+	struct patch *tpatch;
 	int ok_if_exists;
 	int status;
 
@@ -2481,7 +2518,8 @@ static int check_patch(struct patch *patch)
 		return status;
 	old_name = patch->old_name;
 
-	if (in_fn_table(new_name) == (struct patch *) -1)
+	if ((tpatch = in_fn_table(new_name)) &&
+			(was_deleted(tpatch) || to_be_deleted(tpatch)))
 		/*
 		 * A type-change diff is always split into a patch to
 		 * delete old, immediately followed by a patch to
@@ -2533,6 +2571,7 @@ static int check_patch_list(struct patch *patch)
 {
 	int err = 0;
 
+	prepare_fn_table(patch);
 	while (patch) {
 		if (apply_verbosely)
 			say_patch_name(stderr,
