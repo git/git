@@ -293,7 +293,7 @@ static unsigned long write_object(struct sha1file *f,
 				die("unable to read %s", sha1_to_hex(entry->idx.sha1));
 			/*
 			 * make sure no cached delta data remains from a
-			 * previous attempt before a pack split occured.
+			 * previous attempt before a pack split occurred.
 			 */
 			free(entry->delta_data);
 			entry->delta_data = NULL;

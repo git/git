@@ -62,6 +62,7 @@ static int match_tree_entry(const char *base, int baselen, const char *path, uns
 				continue;
 			/* pathspecs match only at the directory boundaries */
 			if (!matchlen ||
+			    baselen == matchlen ||
 			    base[matchlen] == '/' ||
 			    match[matchlen - 1] == '/')
 				return 1;

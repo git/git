@@ -148,9 +148,10 @@ $ git show-branch master fixes mhf
 ------------------------------------------------
 
 These three branches all forked from a common commit, [master],
-whose commit message is "Add 'git show-branch'.  "fixes" branch
-adds one commit 'Introduce "reset type"'.  "mhf" branch has many
-other commits.  The current branch is "master".
+whose commit message is "Add \'git show-branch\'". The "fixes"
+branch adds one commit "Introduce "reset type" flag to "git reset"".
+The "mhf" branch adds many other commits. The current branch
+is "master".
 
 
 EXAMPLE

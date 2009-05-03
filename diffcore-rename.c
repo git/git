@@ -267,7 +267,7 @@ static int find_identical_files(struct file_similarity *src,
 			int score;
 			struct diff_filespec *source = p->filespec;
 
-			/* False hash collission? */
+			/* False hash collision? */
 			if (hashcmp(source->sha1, target->sha1))
 				continue;
 			/* Non-regular files? If so, the modes must match! */

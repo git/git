@@ -374,7 +374,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 	}
 
 	/*
-	 * Then, discard all the non-relevane file pairs...
+	 * Then, discard all the non-relevant file pairs...
 	 */
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];

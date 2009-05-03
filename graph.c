@@ -35,7 +35,7 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb);
  * newline.  A new graph line will not be printed after the final newline.
  * If the strbuf is empty, no output will be printed.
  *
- * Since the first line will not include the graph ouput, the caller is
+ * Since the first line will not include the graph output, the caller is
  * responsible for printing this line's graph (perhaps via
  * graph_show_commit() or graph_show_oneline()) before calling
  * graph_show_strbuf().
@@ -727,8 +727,8 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 		if (col->commit == graph->commit) {
 			seen_this = 1;
 			strbuf_write_column(sb, col, '|');
-			strbuf_addf(sb, " %*s", graph->expansion_row, "");
-			chars_written += 2 + graph->expansion_row;
+			strbuf_addf(sb, "%*s", graph->expansion_row, "");
+			chars_written += 1 + graph->expansion_row;
 		} else if (seen_this && (graph->expansion_row == 0)) {
 			/*
 			 * This is the first line of the pre-commit output.
@@ -852,7 +852,7 @@ static void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 			graph_output_commit_char(graph, sb);
 			chars_written++;
 
-			if (graph->num_parents > 3)
+			if (graph->num_parents > 2)
 				chars_written += graph_draw_octopus_merge(graph,
 									  sb);
 		} else if (seen_this && (graph->num_parents > 2)) {

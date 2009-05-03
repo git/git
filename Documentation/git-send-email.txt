@@ -262,7 +262,7 @@ sendemail.aliasesfile::
 
 sendemail.aliasfiletype::
 	Format of the file(s) specified in sendemail.aliasesfile. Must be
-	one of 'mutt', 'mailrc', 'pine', or 'gnus'.
+	one of 'mutt', 'mailrc', 'pine', 'elm', or 'gnus'.
 
 sendemail.multiedit::
 	If true (default), a single editor instance will be spawned to edit

@@ -408,4 +408,10 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #endif
 #endif
 
+#ifdef UNRELIABLE_FSTAT
+#define fstat_is_reliable() 0
+#else
+#define fstat_is_reliable() 1
+#endif
+
 #endif

@@ -430,7 +430,7 @@ if [ "$filter_tag_name" ]; then
 		if [ "$type" = "tag" ]; then
 			# Dereference to a commit
 			sha1t="$sha1"
-			sha1="$(git rev-parse "$sha1"^{commit} 2>/dev/null)" || continue
+			sha1="$(git rev-parse -q "$sha1"^{commit})" || continue
 		fi
 
 		[ -f "../map/$sha1" ] || continue

@@ -1216,7 +1216,7 @@ static int update(int argc, const char **argv)
 	struct option options[] = {
 		OPT_GROUP("update specific options"),
 		OPT_BOOLEAN('p', "prune", &prune,
-			    "prune remotes after fecthing"),
+			    "prune remotes after fetching"),
 		OPT_END()
 	};
 

@@ -236,7 +236,7 @@ static int add_man_viewer_info(const char *var, const char *value)
 	const char *subkey = strrchr(name, '.');
 
 	if (!subkey)
-		return error("Config with no key for man viewer: %s", name);
+		return 0;
 
 	if (!strcmp(subkey, ".path")) {
 		if (!value)
@@ -249,7 +249,6 @@ static int add_man_viewer_info(const char *var, const char *value)
 		return add_man_viewer_cmd(name, subkey - name, value);
 	}
 
-	warning("'%s': unsupported man viewer sub key.", subkey);
 	return 0;
 }
 

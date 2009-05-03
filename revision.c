@@ -209,7 +209,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	}
 
 	/*
-	 * Tree object? Either mark it uniniteresting, or add it
+	 * Tree object? Either mark it uninteresting, or add it
 	 * to the list of objects to look at later..
 	 */
 	if (object->type == OBJ_TREE) {

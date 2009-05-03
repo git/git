@@ -366,7 +366,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 	}
 	subkey = strrchr(name, '.');
 	if (!subkey)
-		return error("Config with no key for remote %s", name);
+		return 0;
 	remote = make_remote(name, subkey - name);
 	remote->origin = REMOTE_CONFIG;
 	if (!strcmp(subkey, ".mirror"))
@@ -1413,10 +1413,9 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 	if (theirs == ours)
 		return 0;
 
-	/* Run "rev-list --no-merges --left-right ours...theirs" internally... */
+	/* Run "rev-list --left-right ours...theirs" internally... */
 	rev_argc = 0;
 	rev_argv[rev_argc++] = NULL;
-	rev_argv[rev_argc++] = "--no-merges";
 	rev_argv[rev_argc++] = "--left-right";
 	rev_argv[rev_argc++] = symmetric;
 	rev_argv[rev_argc++] = "--";

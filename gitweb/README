@@ -206,7 +206,7 @@ not include variables usually directly set during build):
  * $fallback_encoding
    Gitweb assumes this charset if line contains non-UTF-8 characters.
    Fallback decoding is used without error checking, so it can be even
-   'utf-8'. Value mist be valid encodig; see Encoding::Supported(3pm) man
+   'utf-8'. Value must be valid encoding; see Encoding::Supported(3pm) man
    page for a list.   By default 'latin1', aka. 'iso-8859-1'.
  * @diff_opts
    Rename detection options for git-diff and git-diff-tree. By default

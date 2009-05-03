@@ -52,7 +52,7 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *
  * `argh`::
  *   token to explain the kind of argument this option wants. Keep it
- *   homogenous across the repository.
+ *   homogeneous across the repository.
  *
  * `help`::
  *   the short help associated to what the option does.
@@ -61,7 +61,7 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *
  * `flags`::
  *   mask of parse_opt_option_flags.
- *   PARSE_OPT_OPTARG: says that the argument is optionnal (not for BOOLEANs)
+ *   PARSE_OPT_OPTARG: says that the argument is optional (not for BOOLEANs)
  *   PARSE_OPT_NOARG: says that this option takes no argument, for CALLBACKs
  *   PARSE_OPT_NONEG: says that this option cannot be negated
  *   PARSE_OPT_HIDDEN this option is skipped in the default usage, showed in
@@ -105,7 +105,7 @@ struct option {
 	{ OPTION_CALLBACK, (s), (l), (v), (a), (h), 0, (f) }
 
 /* parse_options() will filter out the processed options and leave the
- * non-option argments in argv[].
+ * non-option arguments in argv[].
  * Returns the number of arguments left in argv[].
  */
 extern int parse_options(int argc, const char **argv,
@@ -115,7 +115,7 @@ extern int parse_options(int argc, const char **argv,
 extern NORETURN void usage_with_options(const char * const *usagestr,
                                         const struct option *options);
 
-/*----- incremantal advanced APIs -----*/
+/*----- incremental advanced APIs -----*/
 
 enum {
 	PARSE_OPT_HELP = -1,
