@@ -10,6 +10,7 @@ struct archiver_args {
 	time_t time;
 	const char **pathspec;
 	unsigned int verbose : 1;
+	unsigned int worktree_attributes : 1;
 	int compression_level;
 };
 

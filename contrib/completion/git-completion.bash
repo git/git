@@ -910,6 +910,26 @@ _git_diff ()
 	__git_complete_file
 }
 
+__git_mergetools_common="diffuse ecmerge emerge kdiff3 meld opendiff
+			tkdiff vimdiff gvimdiff xxdiff
+"
+
+_git_difftool ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--tool=*)
+		__gitcomp "$__git_mergetools_common kompare" "" "${cur##--tool=}"
+		return
+		;;
+	--*)
+		__gitcomp "--tool="
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 __git_fetch_options="
 	--quiet --verbose --append --upload-pack --force --keep --depth=
 	--tags --no-tags
@@ -1172,10 +1192,7 @@ _git_mergetool ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--tool=*)
-		__gitcomp "
-			kdiff3 tkdiff meld xxdiff emerge
-			vimdiff gvimdiff ecmerge opendiff
-			" "" "${cur##--tool=}"
+		__gitcomp "$__git_mergetools_common tortoisemerge" "" "${cur##--tool=}"
 		return
 		;;
 	--*)
@@ -1901,6 +1918,7 @@ _git ()
 	config)      _git_config ;;
 	describe)    _git_describe ;;
 	diff)        _git_diff ;;
+	difftool)    _git_difftool ;;
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
 	fsck)        _git_fsck ;;

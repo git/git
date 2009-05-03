@@ -1461,11 +1461,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 		return 0;
 
 	base = branch->merge[0]->dst;
-	if (!prefixcmp(base, "refs/remotes/")) {
-		base += strlen("refs/remotes/");
-	} else if (!prefixcmp(base, "refs/heads/")) {
-		base += strlen("refs/heads/");
-	}
+	base = shorten_unambiguous_ref(base, 0);
 	if (!num_theirs)
 		strbuf_addf(sb, "Your branch is ahead of '%s' "
 			    "by %d commit%s.\n",
@@ -1504,7 +1500,7 @@ static int one_local_ref(const char *refname, const unsigned char *sha1, int fla
 
 struct ref *get_local_heads(void)
 {
-	struct ref *local_refs, **local_tail = &local_refs;
+	struct ref *local_refs = NULL, **local_tail = &local_refs;
 	for_each_ref(one_local_ref, &local_tail);
 	return local_refs;
 }

@@ -4,6 +4,7 @@
 #include "attr.h"
 #include "archive.h"
 #include "parse-options.h"
+#include "unpack-trees.h"
 
 static char const * const archive_usage[] = {
 	"git archive [options] <tree-ish> [path...]",
@@ -150,6 +151,8 @@ int write_archive_entries(struct archiver_args *args,
 		write_archive_entry_fn_t write_entry)
 {
 	struct archiver_context context;
+	struct unpack_trees_options opts;
+	struct tree_desc t;
 	int err;
 
 	if (args->baselen > 0 && args->base[args->baselen - 1] == '/') {
@@ -167,6 +170,22 @@ int write_archive_entries(struct archiver_args *args,
 
 	context.args = args;
 	context.write_entry = write_entry;
+
+	/*
+	 * Setup index and instruct attr to read index only
+	 */
+	if (!args->worktree_attributes) {
+		memset(&opts, 0, sizeof(opts));
+		opts.index_only = 1;
+		opts.head_idx = -1;
+		opts.src_index = &the_index;
+		opts.dst_index = &the_index;
+		opts.fn = oneway_merge;
+		init_tree_desc(&t, args->tree->buffer, args->tree->size);
+		if (unpack_trees(1, &t, &opts))
+			return -1;
+		git_attr_set_direction(GIT_ATTR_INDEX, &the_index);
+	}
 
 	err =  read_tree_recursive(args->tree, args->base, args->baselen, 0,
 			args->pathspec, write_archive_entry, &context);
@@ -258,6 +277,7 @@ static int parse_archive_args(int argc, const char **argv,
 	int verbose = 0;
 	int i;
 	int list = 0;
+	int worktree_attributes = 0;
 	struct option opts[] = {
 		OPT_GROUP(""),
 		OPT_STRING(0, "format", &format, "fmt", "archive format"),
@@ -265,6 +285,8 @@ static int parse_archive_args(int argc, const char **argv,
 			"prepend prefix to each pathname in the archive"),
 		OPT_STRING(0, "output", &output, "file",
 			"write the archive to this file"),
+		OPT_BOOLEAN(0, "worktree-attributes", &worktree_attributes,
+			"read .gitattributes in working directory"),
 		OPT__VERBOSE(&verbose),
 		OPT__COMPR('0', &compression_level, "store only", 0),
 		OPT__COMPR('1', &compression_level, "compress faster", 1),
@@ -324,6 +346,7 @@ static int parse_archive_args(int argc, const char **argv,
 	args->verbose = verbose;
 	args->base = base;
 	args->baselen = strlen(base);
+	args->worktree_attributes = worktree_attributes;
 
 	return argc;
 }

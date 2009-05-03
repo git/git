@@ -3,35 +3,37 @@ git-difftool(1)
 
 NAME
 ----
-git-difftool - compare changes using common merge tools
+git-difftool - Show changes using common diff tools
 
 SYNOPSIS
 --------
-'git difftool' [--tool=<tool>] [--no-prompt] ['git diff' options]
+'git difftool' [--tool=<tool>] [-y|--no-prompt|--prompt] [<'git diff' options>]
 
 DESCRIPTION
 -----------
 'git-difftool' is a git command that allows you to compare and edit files
-between revisions using common merge tools.  At its most basic level,
-'git-difftool' does what 'git-mergetool' does but its use is for non-merge
-situations such as when preparing commits or comparing changes against
-the index.
-
-'git difftool' is a frontend to 'git diff' and accepts the same
-arguments and options.
-
-See linkgit:git-diff[1] for the full list of supported options.
+between revisions using common diff tools.  'git difftool' is a frontend
+to 'git-diff' and accepts the same options and arguments.
 
 OPTIONS
 -------
+-y::
+--no-prompt::
+	Do not prompt before launching a diff tool.
+
+--prompt::
+	Prompt before each invocation of the diff tool.
+	This is the default behaviour; the option is provided to
+	override any configuration settings.
+
 -t <tool>::
 --tool=<tool>::
-	Use the merge resolution program specified by <tool>.
+	Use the diff tool specified by <tool>.
 	Valid merge tools are:
-	kdiff3, kompare, tkdiff, meld, xxdiff, emerge,
-	vimdiff, gvimdiff, ecmerge, and opendiff
+	kdiff3, kompare, tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff,
+	ecmerge, diffuse and opendiff
 +
-If a merge resolution program is not specified, 'git-difftool'
+If a diff tool is not specified, 'git-difftool'
 will use the configuration variable `diff.tool`.  If the
 configuration variable `diff.tool` is not set, 'git-difftool'
 will pick a suitable default.
@@ -42,7 +44,7 @@ can configure the absolute path to kdiff3 by setting
 `difftool.kdiff3.path`. Otherwise, 'git-difftool' assumes the
 tool is available in PATH.
 +
-Instead of running one of the known merge tool programs,
+Instead of running one of the known diff tools,
 'git-difftool' can be customized to run an alternative program
 by specifying the command line to invoke in a configuration
 variable `difftool.<tool>.cmd`.
@@ -56,8 +58,7 @@ is set to the name of the temporary file containing the contents
 of the diff post-image.  `$BASE` is provided for compatibility
 with custom merge tool commands and has the same value as `$LOCAL`.
 
---no-prompt::
-	Do not prompt before launching a diff tool.
+See linkgit:git-diff[1] for the full list of supported options.
 
 CONFIG VARIABLES
 ----------------
@@ -65,20 +66,19 @@ CONFIG VARIABLES
 difftool equivalents have not been defined.
 
 diff.tool::
-	The default merge tool to use.
+	The default diff tool to use.
 
 difftool.<tool>.path::
 	Override the path for the given tool.  This is useful in case
 	your tool is not in the PATH.
 
 difftool.<tool>.cmd::
-	Specify the command to invoke the specified merge tool.
+	Specify the command to invoke the specified diff tool.
 +
 See the `--tool=<tool>` option above for more details.
 
-merge.keepBackup::
-	The original, unedited file content can be saved to a file with
-	a `.orig` extension.  Defaults to `true` (i.e. keep the backup files).
+difftool.prompt::
+	Prompt before each invocation of the diff tool.
 
 SEE ALSO
 --------

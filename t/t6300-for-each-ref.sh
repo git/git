@@ -301,10 +301,11 @@ test_expect_success 'Check for invalid refname format' '
 
 cat >expected <<\EOF
 heads/master
-master
+tags/master
 EOF
 
-test_expect_success 'Check ambiguous head and tag refs' '
+test_expect_success 'Check ambiguous head and tag refs (strict)' '
+	git config --bool core.warnambiguousrefs true &&
 	git checkout -b newtag &&
 	echo "Using $datestamp" > one &&
 	git add one &&
@@ -316,11 +317,22 @@ test_expect_success 'Check ambiguous head and tag refs' '
 '
 
 cat >expected <<\EOF
+heads/master
+master
+EOF
+
+test_expect_success 'Check ambiguous head and tag refs (loose)' '
+	git config --bool core.warnambiguousrefs false &&
+	git for-each-ref --format "%(refname:short)" refs/heads/master refs/tags/master >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
 heads/ambiguous
 ambiguous
 EOF
 
-test_expect_success 'Check ambiguous head and tag refs II' '
+test_expect_success 'Check ambiguous head and tag refs II (loose)' '
 	git checkout master &&
 	git tag ambiguous testtag^0 &&
 	git branch ambiguous testtag^0 &&
