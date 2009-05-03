@@ -22,9 +22,9 @@ This is the second commit.
 
 
 --------------g-i-t--v-e-r-s-i-o-n
-Content-Type: text/x-patch; name="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
+Content-Type: text/x-patch; name="0001-Second.patch"
 Content-Transfer-Encoding: 8bit
-Content-Disposition: inline; filename="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
+Content-Disposition: inline; filename="0001-Second.patch"
 
 diff --git a/dir/sub b/dir/sub
 index 35d242b..8422d40 100644

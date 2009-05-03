@@ -7,6 +7,11 @@ say "cannot invoke fake.sendmail; skipping test"
 test_done
 exit 0
 
+if ! test_have_prereq PERL; then
+	say 'skipping git send-email tests, perl not available'
+	test_done
+fi
+
 PROG='git send-email'
 test_expect_success \
     'prepare reference tree' \
@@ -132,6 +137,19 @@ test_expect_success 'Show all headers' '
 		-e "s/^\(X-Mailer:\).*/\1 X-MAILER-STRING/" \
 		>actual-show-all-headers &&
 	test_cmp expected-show-all-headers actual-show-all-headers
+'
+
+test_expect_success 'Prompting works' '
+	clean_fake_sendmail &&
+	(echo "Example <from@example.com>"
+	 echo "to@example.com"
+	 echo ""
+	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches \
+		2>errors &&
+		grep "^From: Example <from@example.com>$" msgtxt1 &&
+		grep "^To: to@example.com$" msgtxt1
 '
 
 z8=zzzzzzzz

@@ -7,7 +7,10 @@ if test -n "$NO_SVN_TESTS"
 then
 	say 'skipping git svn tests, NO_SVN_TESTS defined'
 	test_done
-	exit
+fi
+if ! test_have_prereq PERL; then
+	say 'skipping git svn tests, perl not available'
+	test_done
 fi
 
 GIT_DIR=$PWD/.git
@@ -19,7 +22,6 @@ if test $? -ne 1
 then
     say 'skipping git svn tests, svn not found'
     test_done
-    exit
 fi
 
 svnrepo=$PWD/svnrepo
@@ -43,7 +45,6 @@ then
 	fi
 	say "$err"
 	test_done
-	exit
 fi
 
 rawsvnrepo="$svnrepo"
@@ -144,7 +145,6 @@ require_svnserve () {
     then
         say 'skipping svnserve test. (set $SVNSERVE_PORT to enable)'
         test_done
-        exit
     fi
 }
 

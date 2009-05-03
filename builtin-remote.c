@@ -15,7 +15,7 @@ static const char * const builtin_remote_usage[] = {
 	"git remote set-head <name> [-a | -d | <branch>]",
 	"git remote show [-n] <name>",
 	"git remote prune [-n | --dry-run] <name>",
-	"git remote [-v | --verbose] update [group]",
+	"git remote [-v | --verbose] update [-p | --prune] [group]",
 	NULL
 };
 
@@ -26,6 +26,7 @@ static const char * const builtin_remote_usage[] = {
 static int verbose;
 
 static int show_all(void);
+static int prune_remote(const char *remote, int dry_run);
 
 static inline int postfixcmp(const char *string, const char *postfix)
 {
@@ -1128,46 +1129,49 @@ static int prune(int argc, const char **argv)
 		OPT__DRY_RUN(&dry_run),
 		OPT_END()
 	};
-	struct ref_states states;
-	const char *dangling_msg;
 
 	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
 
 	if (argc < 1)
 		usage_with_options(builtin_remote_usage, options);
 
-	dangling_msg = (dry_run
-			? " %s will become dangling!\n"
-			: " %s has become dangling!\n");
+	for (; argc; argc--, argv++)
+		result |= prune_remote(*argv, dry_run);
+
+	return result;
+}
+
+static int prune_remote(const char *remote, int dry_run)
+{
+	int result = 0, i;
+	struct ref_states states;
+	const char *dangling_msg = dry_run
+		? " %s will become dangling!\n"
+		: " %s has become dangling!\n";
 
 	memset(&states, 0, sizeof(states));
-	for (; argc; argc--, argv++) {
-		int i;
+	get_remote_ref_states(remote, &states, GET_REF_STATES);
 
-		get_remote_ref_states(*argv, &states, GET_REF_STATES);
-
-		if (states.stale.nr) {
-			printf("Pruning %s\n", *argv);
-			printf("URL: %s\n",
-			       states.remote->url_nr
-			       ? states.remote->url[0]
-			       : "(no URL)");
-		}
-
-		for (i = 0; i < states.stale.nr; i++) {
-			const char *refname = states.stale.items[i].util;
-
-			if (!dry_run)
-				result |= delete_ref(refname, NULL, 0);
-
-			printf(" * [%s] %s\n", dry_run ? "would prune" : "pruned",
-			       abbrev_ref(refname, "refs/remotes/"));
-			warn_dangling_symref(dangling_msg, refname);
-		}
-
-		free_remote_ref_states(&states);
+	if (states.stale.nr) {
+		printf("Pruning %s\n", remote);
+		printf("URL: %s\n",
+		       states.remote->url_nr
+		       ? states.remote->url[0]
+		       : "(no URL)");
 	}
 
+	for (i = 0; i < states.stale.nr; i++) {
+		const char *refname = states.stale.items[i].util;
+
+		if (!dry_run)
+			result |= delete_ref(refname, NULL, 0);
+
+		printf(" * [%s] %s\n", dry_run ? "would prune" : "pruned",
+		       abbrev_ref(refname, "refs/remotes/"));
+		warn_dangling_symref(dangling_msg, refname);
+	}
+
+	free_remote_ref_states(&states);
 	return result;
 }
 
@@ -1184,16 +1188,18 @@ struct remote_group {
 	struct string_list *list;
 } remote_group;
 
-static int get_remote_group(const char *key, const char *value, void *cb)
+static int get_remote_group(const char *key, const char *value, void *num_hits)
 {
 	if (!prefixcmp(key, "remotes.") &&
 			!strcmp(key + 8, remote_group.name)) {
 		/* split list by white space */
 		int space = strcspn(value, " \t\n");
 		while (*value) {
-			if (space > 1)
+			if (space > 1) {
 				string_list_append(xstrndup(value, space),
 						remote_group.list);
+				++*((int *)num_hits);
+			}
 			value += space + (value[space] != '\0');
 			space = strcspn(value, " \t\n");
 		}
@@ -1204,10 +1210,18 @@ static int get_remote_group(const char *key, const char *value, void *cb)
 
 static int update(int argc, const char **argv)
 {
-	int i, result = 0;
+	int i, result = 0, prune = 0;
 	struct string_list list = { NULL, 0, 0, 0 };
 	static const char *default_argv[] = { NULL, "default", NULL };
+	struct option options[] = {
+		OPT_GROUP("update specific options"),
+		OPT_BOOLEAN('p', "prune", &prune,
+			    "prune remotes after fecthing"),
+		OPT_END()
+	};
 
+	argc = parse_options(argc, argv, options, builtin_remote_usage,
+			     PARSE_OPT_KEEP_ARGV0);
 	if (argc < 2) {
 		argc = 2;
 		argv = default_argv;
@@ -1215,15 +1229,28 @@ static int update(int argc, const char **argv)
 
 	remote_group.list = &list;
 	for (i = 1; i < argc; i++) {
+		int groups_found = 0;
 		remote_group.name = argv[i];
-		result = git_config(get_remote_group, NULL);
+		result = git_config(get_remote_group, &groups_found);
+		if (!groups_found && (i != 1 || strcmp(argv[1], "default"))) {
+			struct remote *remote;
+			if (!remote_is_configured(argv[i]))
+				die("No such remote or remote group: %s",
+				    argv[i]);
+			remote = remote_get(argv[i]);
+			string_list_append(remote->name, remote_group.list);
+		}
 	}
 
 	if (!result && !list.nr  && argc == 2 && !strcmp(argv[1], "default"))
 		result = for_each_remote(get_one_remote_for_update, &list);
 
-	for (i = 0; i < list.nr; i++)
-		result |= fetch_remote(list.items[i].string);
+	for (i = 0; i < list.nr; i++) {
+		int err = fetch_remote(list.items[i].string);
+		result |= err;
+		if (!err && prune)
+			result |= prune_remote(list.items[i].string, 0);
+	}
 
 	/* all names were strdup()ed or strndup()ed */
 	list.strdup_strings = 1;

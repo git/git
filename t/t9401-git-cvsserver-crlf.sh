@@ -51,12 +51,15 @@ if test $? -ne 1
 then
     say 'skipping git-cvsserver tests, cvs not found'
     test_done
-    exit
+fi
+if ! test_have_prereq PERL
+then
+    say 'skipping git-cvsserver tests, perl not available'
+    test_done
 fi
 perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
     say 'skipping git-cvsserver tests, Perl SQLite interface unavailable'
     test_done
-    exit
 }
 
 unset GIT_DIR GIT_CONFIG

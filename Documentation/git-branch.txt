@@ -100,7 +100,9 @@ OPTIONS
 
 -v::
 --verbose::
-	Show sha1 and commit subject line for each head.
+	Show sha1 and commit subject line for each head, along with
+	relationship to upstream branch (if any). If given twice, print
+	the name of the upstream branch, as well.
 
 --abbrev=<length>::
 	Alter the sha1's minimum display length in the output listing.

@@ -29,7 +29,9 @@ test_expect_success setup '
 		git checkout -b b4 origin &&
 		advance e &&
 		advance f
-	)
+	) &&
+	git checkout -b follower --track master &&
+	advance g
 '
 
 script='s/^..\(b.\)[	 0-9a-f]*\[\([^]]*\)\].*/\1 \2/p'
@@ -54,6 +56,12 @@ test_expect_success 'checkout' '
 		cd test && git checkout b1
 	) >actual &&
 	grep "have 1 and 1 different" actual
+'
+
+test_expect_success 'checkout with local tracked branch' '
+	git checkout master &&
+	git checkout follower >actual
+	grep "is ahead of" actual
 '
 
 test_expect_success 'status' '

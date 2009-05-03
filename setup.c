@@ -434,7 +434,7 @@ int git_config_perm(const char *var, const char *value)
 
 	/*
 	 * Treat values 0, 1 and 2 as compatibility cases, otherwise it is
-	 * a chmod value.
+	 * a chmod value to restrict to.
 	 */
 	switch (i) {
 	case PERM_UMASK:               /* 0 */
@@ -456,7 +456,7 @@ int git_config_perm(const char *var, const char *value)
 	 * Mask filemode value. Others can not get write permission.
 	 * x flags for directories are handled separately.
 	 */
-	return i & 0666;
+	return -(i & 0666);
 }
 
 int check_repository_format_version(const char *var, const char *value, void *cb)

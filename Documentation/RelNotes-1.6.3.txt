@@ -35,10 +35,15 @@ Updates since v1.6.2
 
 (subsystems)
 
+* various git-svn updates.
+
 (performance)
 
 * many uses of lstat(2) in the codepath for "git checkout" have been
   optimized out.
+
+* pruning reflog entries that are unreachable from the tip of the ref
+  during "git reflog prune" (hence "git gc") was very inefficient.
 
 (usability, bells and whistles)
 
@@ -56,7 +61,7 @@ Updates since v1.6.2
   spelled as "--format=<style>".  In addition, --format=%formatstring
   is a short-hand for --pretty=tformat:%formatstring.
 
-* "--oneline" is a synonym for "--pretty=oneline --abbrev=commit".
+* "--oneline" is a synonym for "--pretty=oneline --abbrev-commit".
 
 * If you realize that you botched the patch when you are editing hunks
   with the 'edit' action in git-add -i/-p, you can abort the editor to
@@ -66,6 +71,10 @@ Updates since v1.6.2
   messages given by "git checkout" and "git status" used to count merge
   commits; now it doesn't.
 
+* @{-1} is a new way to refer to the last branch you were on introduced in
+  1.6.2, but the initial implementation did not teach this to a few
+  commands.  Now the syntax works with "branch -m @{-1} newname".
+
 * git-archive learned --output=<file> option.
 
 * git-bisect shows not just the number of remaining commits whose goodness
@@ -73,8 +82,11 @@ Updates since v1.6.2
 
 * You can give --date=<format> option to git-blame.
 
-* git-branch -r shows HEAD symref that points at a remote branch in
+* "git-branch -r" shows HEAD symref that points at a remote branch in
   interest of each tracked remote repository.
+
+* "git-branch -v -v" is a new way to get list of names for branches and the
+  "upstream" branch for them.
 
 * git-config learned -e option to open an editor to edit the config file
   directly.
@@ -83,14 +95,22 @@ Updates since v1.6.2
 
 * git-fast-export choked when seeing a tag that does not point at commit.
 
+* git-for-each-ref learned a new "upstream" token.
+
 * git-format-patch can be told to use attachment with a new configuration,
   format.attach.
 
 * git-format-patch can be told to produce deep or shallow message threads.
 
+* git-format-patch can be told to always add sign-off with a configuration
+  variable.
+
 * git-format-patch learned format.headers configuration to add extra
   header fields to the output.  This behaviour is similar to the existing
   --add-header=<header> option of the command.
+
+* git-format-patch gives human readable names to the attached files, when
+  told to send patches as attachments.
 
 * git-grep learned to highlight the found substrings in color.
 
@@ -105,10 +125,8 @@ Updates since v1.6.2
 
 * Output from git-remote command has been vastly improved.
 
-* git-repack (invoked from git-gc) did not work as nicely as it should in
-  a repository that borrows objects from neighbours via alternates
-  mechanism especially when some packs are marked with the ".keep" flag
-  to prevent them from being repacked.
+* "git remote update --prune $remote" updates from the named remote and
+  then prunes stale tracking branches.
 
 * git-send-email learned --confirm option to review the Cc: list before
   sending the messages out.
@@ -141,11 +159,23 @@ v1.6.2.X series.
 * The initial checkout did not read the attributes from the .gitattribute
   file that is being checked out.
 
+* "git-checkout <tree-ish> <submodule>" did not update the index entry at
+  the named path; it now does.
+
 * git-gc spent excessive amount of time to decide if an object appears
   in a locally existing pack (if needed, backport by merging 69e020a).
 
+* "git-ls-tree" and "git-diff-tree" used a pathspec correctly when
+  deciding to descend into a subdirectory but they did not match the
+  individual paths correctly.  This caused pathspecs "abc/d ab" to match
+  "abc/0" ("abc/d" made them decide to descend into the directory "abc/",
+  and then "ab" incorrectly matched "abc/0" when it shouldn't).
+
+* "git-merge-recursive" was broken when a submodule entry was involved in
+  a criss-cross merge situation.
+
 ---
 exec >/var/tmp/1
-O=v1.6.2.2-403-g8130949
+O=v1.6.2.3-497-g54a4749
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

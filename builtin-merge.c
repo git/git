@@ -360,9 +360,8 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	const char *ptr;
 	int len, early;
 
-	len = strlen(remote);
-	if (interpret_nth_last_branch(remote, &bname) == len)
-		remote = bname.buf;
+	strbuf_branchname(&bname, remote);
+	remote = bname.buf;
 
 	memset(branch_head, 0, sizeof(branch_head));
 	remote_head = peel_to_type(remote, 0, NULL, OBJ_COMMIT);

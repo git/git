@@ -698,6 +698,8 @@ case $(uname -s) in
 	;;
 esac
 
+test -z "$NO_PERL" && test_set_prereq PERL
+
 # test whether the filesystem supports symbolic links
 ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
 rm -f y
