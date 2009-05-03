@@ -115,6 +115,23 @@ proc create_new_commit {} {
 	rescan ui_ready
 }
 
+proc setup_commit_encoding {msg_wt {quiet 0}} {
+	global repo_config
+
+	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
+		set enc utf-8
+	}
+	set use_enc [tcl_encoding $enc]
+	if {$use_enc ne {}} {
+		fconfigure $msg_wt -encoding $use_enc
+	} else {
+		if {!$quiet} {
+			error_popup [mc "warning: Tcl does not support encoding '%s'." $enc]
+		}
+		fconfigure $msg_wt -encoding utf-8
+	}
+}
+
 proc commit_tree {} {
 	global HEAD commit_type file_states ui_comm repo_config
 	global pch_error
@@ -200,16 +217,7 @@ A good commit message has the following format:
 	set msg_p [gitdir GITGUI_EDITMSG]
 	set msg_wt [open $msg_p w]
 	fconfigure $msg_wt -translation lf
-	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
-		set enc utf-8
-	}
-	set use_enc [tcl_encoding $enc]
-	if {$use_enc ne {}} {
-		fconfigure $msg_wt -encoding $use_enc
-	} else {
-		error_popup [mc "warning: Tcl does not support encoding '%s'." $enc]
-		fconfigure $msg_wt -encoding utf-8
-	}
+	setup_commit_encoding $msg_wt
 	puts $msg_wt $msg
 	close $msg_wt
 
@@ -362,6 +370,7 @@ A rescan will be automatically started now.
 		append reflogm " ($commit_type)"
 	}
 	set msg_fd [open $msg_p r]
+	setup_commit_encoding $msg_fd 1
 	gets $msg_fd subject
 	close $msg_fd
 	append reflogm {: } $subject
@@ -398,8 +407,8 @@ A rescan will be automatically started now.
 	#
 	set fd_ph [githook_read post-commit]
 	if {$fd_ph ne {}} {
-		upvar #0 pch_error$cmt_id pc_err
-		set pc_err {}
+		global pch_error
+		set pch_error {}
 		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 		fileevent $fd_ph readable \
 			[list commit_postcommit_wait $fd_ph $cmt_id]
@@ -461,7 +470,7 @@ A rescan will be automatically started now.
 }
 
 proc commit_postcommit_wait {fd_ph cmt_id} {
-	upvar #0 pch_error$cmt_id pch_error
+	global pch_error
 
 	append pch_error [read $fd_ph]
 	fconfigure $fd_ph -blocking 1

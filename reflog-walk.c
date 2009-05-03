@@ -241,7 +241,7 @@ void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)
 	commit->object.flags &= ~(ADDED | SEEN | SHOWN);
 }
 
-void show_reflog_message(struct reflog_walk_info* info, int oneline,
+void show_reflog_message(struct reflog_walk_info *info, int oneline,
 	enum date_mode dmode)
 {
 	if (info && info->last_commit_reflog) {

@@ -88,7 +88,7 @@ proc merge_load_stages {path cont} {
 	set merge_stages(3) {}
 	set merge_stages_buf {}
 
-	set merge_stages_fd [eval git_read ls-files -u -z -- $path]
+	set merge_stages_fd [eval git_read ls-files -u -z -- {$path}]
 
 	fconfigure $merge_stages_fd -blocking 0 -translation binary -encoding binary
 	fileevent $merge_stages_fd readable [list read_merge_stages $merge_stages_fd $cont]
@@ -382,7 +382,7 @@ proc merge_tool_finish {fd} {
 		delete_temp_files $mtool_tmpfiles
 		ui_status [mc "Merge tool failed."]
 	} else {
-		if {[is_config_true merge.keepbackup]} {
+		if {[is_config_true mergetool.keepbackup]} {
 			file rename -force -- $backup "$mtool_target.orig"
 		}
 

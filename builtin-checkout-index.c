@@ -124,7 +124,7 @@ static int checkout_file(const char *name, int prefix_length)
 static void checkout_all(const char *prefix, int prefix_length)
 {
 	int i, errs = 0;
-	struct cache_entry* last_ce = NULL;
+	struct cache_entry *last_ce = NULL;
 
 	for (i = 0; i < active_nr ; i++) {
 		struct cache_entry *ce = active_cache[i];
@@ -278,7 +278,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		p = prefix_path(prefix, prefix_length, arg);
 		checkout_file(p, prefix_length);
 		if (p < arg || p > arg + strlen(arg))
-			free((char*)p);
+			free((char *)p);
 	}
 
 	if (read_from_stdin) {

@@ -444,27 +444,27 @@ static void parse_extra_args(char *extra_args, int buflen)
 	if (hostname) {
 #ifndef NO_IPV6
 		struct addrinfo hints;
-		struct addrinfo *ai, *ai0;
+		struct addrinfo *ai;
 		int gai;
 		static char addrbuf[HOST_NAME_MAX + 1];
 
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_flags = AI_CANONNAME;
 
-		gai = getaddrinfo(hostname, 0, &hints, &ai0);
+		gai = getaddrinfo(hostname, 0, &hints, &ai);
 		if (!gai) {
-			for (ai = ai0; ai; ai = ai->ai_next) {
-				struct sockaddr_in *sin_addr = (void *)ai->ai_addr;
+			struct sockaddr_in *sin_addr = (void *)ai->ai_addr;
 
-				inet_ntop(AF_INET, &sin_addr->sin_addr,
-					  addrbuf, sizeof(addrbuf));
-				free(canon_hostname);
-				canon_hostname = xstrdup(ai->ai_canonname);
-				free(ip_address);
-				ip_address = xstrdup(addrbuf);
-				break;
-			}
-			freeaddrinfo(ai0);
+			inet_ntop(AF_INET, &sin_addr->sin_addr,
+				  addrbuf, sizeof(addrbuf));
+			free(ip_address);
+			ip_address = xstrdup(addrbuf);
+
+			free(canon_hostname);
+			canon_hostname = xstrdup(ai->ai_canonname ?
+						 ai->ai_canonname : ip_address);
+
+			freeaddrinfo(ai);
 		}
 #else
 		struct hostent *hent;
