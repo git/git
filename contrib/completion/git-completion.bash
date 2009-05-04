@@ -1376,6 +1376,39 @@ _git_config ()
 		__gitcomp "$(__git_heads)" "$pfx" "$cur" "."
 		return
 		;;
+	guitool.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "
+			argprompt cmd confirm needsfile noconsole norescan
+			prompt revprompt revunmerged title
+			" "$pfx" "$cur"
+		return
+		;;
+	difftool.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur"
+		return
+		;;
+	man.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur"
+		return
+		;;
+	mergetool.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "cmd path trustExitCode" "$pfx" "$cur"
+		return
+		;;
+	pager.*)
+		local pfx="${cur%.*}."
+		cur="${cur#*.}"
+		__gitcomp "$(__git_all_commands)" "$pfx" "$cur"
+		return
+		;;
 	remote.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
@@ -1389,6 +1422,12 @@ _git_config ()
 		local pfx="${cur%.*}."
 		cur="${cur#*.}"
 		__gitcomp "$(__git_remotes)" "$pfx" "$cur" "."
+		return
+		;;
+	url.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "insteadof" "$pfx" "$cur"
 		return
 		;;
 	esac
@@ -1465,6 +1504,7 @@ _git_config ()
 		diff.suppressBlankEmpty
 		diff.tool
 		diff.wordRegex
+		difftool.
 		difftool.prompt
 		fetch.unpackLimit
 		format.attach
@@ -1495,6 +1535,7 @@ _git_config ()
 		gitcvs.enabled
 		gitcvs.logfile
 		gitcvs.usecrlfattr
+		guitool.
 		gui.blamehistoryctx
 		gui.commitmsgwidth
 		gui.copyblamethreshold
@@ -1538,6 +1579,7 @@ _git_config ()
 		log.date
 		log.showroot
 		mailmap.file
+		man.
 		man.viewer
 		merge.conflictstyle
 		merge.log
@@ -1545,6 +1587,7 @@ _git_config ()
 		merge.stat
 		merge.tool
 		merge.verbosity
+		mergetool.
 		mergetool.keepBackup
 		mergetool.prompt
 		pack.compression
@@ -1556,6 +1599,7 @@ _git_config ()
 		pack.threads
 		pack.window
 		pack.windowMemory
+		pager.
 		pull.octopus
 		pull.twohead
 		push.default
@@ -1593,6 +1637,7 @@ _git_config ()
 		status.showUntrackedFiles
 		tar.umask
 		transfer.unpackLimit
+		url.
 		user.email
 		user.name
 		user.signingkey
