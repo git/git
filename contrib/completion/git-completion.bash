@@ -1116,6 +1116,7 @@ __git_log_shortlog_options="
 "
 
 __git_log_pretty_formats="oneline short medium full fuller email raw format:"
+__git_log_date_formats="relative iso8601 rfc2822 short local default raw"
 
 _git_log ()
 {
@@ -1139,9 +1140,7 @@ _git_log ()
 		return
 		;;
 	--date=*)
-		__gitcomp "
-			relative iso8601 rfc2822 short local default
-		" "" "${cur##--date=}"
+		__gitcomp "$__git_log_date_formats" "" "${cur##--date=}"
 		return
 		;;
 	--*)
@@ -1350,6 +1349,10 @@ _git_config ()
 		;;
 	help.format)
 		__gitcomp "man info web html"
+		return
+		;;
+	log.date)
+		__gitcomp "$__git_log_date_formats"
 		return
 		;;
 	*.*)
