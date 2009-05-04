@@ -1393,6 +1393,7 @@ _git_config ()
 		;;
 	esac
 	__gitcomp "
+		alias.
 		apply.whitespace
 		branch.autosetupmerge
 		branch.autosetuprebase
@@ -1410,6 +1411,9 @@ _git_config ()
 		color.diff.old
 		color.diff.plain
 		color.diff.whitespace
+		color.grep
+		color.grep.external
+		color.grep.match
 		color.interactive
 		color.interactive.header
 		color.interactive.help
@@ -1427,6 +1431,7 @@ _git_config ()
 		core.autocrlf
 		core.bare
 		core.compression
+		core.createObject
 		core.deltaBaseCacheLimit
 		core.editor
 		core.excludesfile
@@ -1457,11 +1462,20 @@ _git_config ()
 		diff.renameLimit
 		diff.renameLimit.
 		diff.renames
+		diff.suppressBlankEmpty
+		diff.tool
+		diff.wordRegex
+		difftool.prompt
 		fetch.unpackLimit
+		format.attach
+		format.cc
 		format.headers
 		format.numbered
 		format.pretty
+		format.signoff
+		format.subjectprefix
 		format.suffix
+		format.thread
 		gc.aggressiveWindow
 		gc.auto
 		gc.autopacklimit
@@ -1472,6 +1486,7 @@ _git_config ()
 		gc.rerereresolved
 		gc.rerereunresolved
 		gitcvs.allbinary
+		gitcvs.commitmsgannotation
 		gitcvs.dbTableNamePrefix
 		gitcvs.dbdriver
 		gitcvs.dbname
@@ -1506,13 +1521,23 @@ _git_config ()
 		http.sslVerify
 		i18n.commitEncoding
 		i18n.logOutputEncoding
+		imap.folder
+		imap.host
+		imap.pass
+		imap.port
+		imap.preformattedHTML
+		imap.sslverify
+		imap.tunnel
+		imap.user
 		instaweb.browser
 		instaweb.httpd
 		instaweb.local
 		instaweb.modulepath
 		instaweb.port
+		interactive.singlekey
 		log.date
 		log.showroot
+		mailmap.file
 		man.viewer
 		merge.conflictstyle
 		merge.log
@@ -1521,6 +1546,7 @@ _git_config ()
 		merge.tool
 		merge.verbosity
 		mergetool.keepBackup
+		mergetool.prompt
 		pack.compression
 		pack.deltaCacheLimit
 		pack.deltaCacheSize
@@ -1532,6 +1558,8 @@ _git_config ()
 		pack.windowMemory
 		pull.octopus
 		pull.twohead
+		push.default
+		rebase.stat
 		receive.denyCurrentBranch
 		receive.denyDeletes
 		receive.denyNonFastForwards
@@ -1540,6 +1568,26 @@ _git_config ()
 		repack.usedeltabaseoffset
 		rerere.autoupdate
 		rerere.enabled
+		sendemail.aliasesfile
+		sendemail.aliasesfiletype
+		sendemail.bcc
+		sendemail.cc
+		sendemail.cccmd
+		sendemail.chainreplyto
+		sendemail.confirm
+		sendemail.envelopesender
+		sendemail.multiedit
+		sendemail.signedoffbycc
+		sendemail.smtpencryption
+		sendemail.smtppass
+		sendemail.smtpserver
+		sendemail.smtpserverport
+		sendemail.smtpuser
+		sendemail.suppresscc
+		sendemail.suppressfrom
+		sendemail.thread
+		sendemail.to
+		sendemail.validate
 		showbranch.default
 		status.relativePaths
 		status.showUntrackedFiles
