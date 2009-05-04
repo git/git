@@ -212,7 +212,7 @@ struct tree_content;
 struct tree_entry
 {
 	struct tree_content *tree;
-	struct atom_str* name;
+	struct atom_str *name;
 	struct tree_entry_ms
 	{
 		uint16_t mode;
@@ -313,7 +313,7 @@ static unsigned int object_entry_alloc = 5000;
 static struct object_entry_pool *blocks;
 static struct object_entry *object_table[1 << 16];
 static struct mark_set *marks;
-static const char* mark_file;
+static const char *mark_file;
 
 /* Our last blob */
 static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
@@ -672,7 +672,7 @@ static struct branch *lookup_branch(const char *name)
 static struct branch *new_branch(const char *name)
 {
 	unsigned int hc = hc_str(name, strlen(name)) % branch_table_sz;
-	struct branch* b = lookup_branch(name);
+	struct branch *b = lookup_branch(name);
 
 	if (b)
 		die("Invalid attempt to create duplicate branch: %s", name);
@@ -1035,7 +1035,7 @@ static int store_object(
 	git_SHA_CTX c;
 	z_stream s;
 
-	hdrlen = sprintf((char*)hdr,"%s %lu", typename(type),
+	hdrlen = sprintf((char *)hdr,"%s %lu", typename(type),
 		(unsigned long)dat->len) + 1;
 	git_SHA1_Init(&c);
 	git_SHA1_Update(&c, hdr, hdrlen);
@@ -1217,7 +1217,7 @@ static const char *get_mode(const char *str, uint16_t *modep)
 
 static void load_tree(struct tree_entry *root)
 {
-	unsigned char* sha1 = root->versions[1].sha1;
+	unsigned char *sha1 = root->versions[1].sha1;
 	struct object_entry *myoe;
 	struct tree_content *t;
 	unsigned long size;
@@ -1258,8 +1258,8 @@ static void load_tree(struct tree_entry *root)
 		e->versions[0].mode = e->versions[1].mode;
 		e->name = to_atom(c, strlen(c));
 		c += e->name->str_len + 1;
-		hashcpy(e->versions[0].sha1, (unsigned char*)c);
-		hashcpy(e->versions[1].sha1, (unsigned char*)c);
+		hashcpy(e->versions[0].sha1, (unsigned char *)c);
+		hashcpy(e->versions[1].sha1, (unsigned char *)c);
 		c += 20;
 	}
 	free(buf);

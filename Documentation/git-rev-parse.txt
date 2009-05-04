@@ -26,7 +26,7 @@ OPTIONS
 --parseopt::
 	Use 'git-rev-parse' in option parsing mode (see PARSEOPT section below).
 
---keep-dash-dash::
+--keep-dashdash::
 	Only meaningful in `--parseopt` mode. Tells the option parser to echo
 	out the first `--` met instead of skipping it.
 

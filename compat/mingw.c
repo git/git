@@ -562,7 +562,7 @@ static char **get_path_split(void)
 	if (!n)
 		return NULL;
 
-	path = xmalloc((n+1)*sizeof(char*));
+	path = xmalloc((n+1)*sizeof(char *));
 	p = envpath;
 	i = 0;
 	do {

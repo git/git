@@ -873,7 +873,7 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	 * Prepare mmfile that contains only the lines in ent.
 	 */
 	cp = nth_line(sb, ent->lno);
-	file_o.ptr = (char*) cp;
+	file_o.ptr = (char *) cp;
 	cnt = ent->num_lines;
 
 	while (cnt && cp < sb->final_buf + sb->final_buf_size) {
@@ -1704,7 +1704,7 @@ static int prepare_lines(struct scoreboard *sb)
 	while (len--) {
 		if (bol) {
 			sb->lineno = xrealloc(sb->lineno,
-					      sizeof(int* ) * (num + 1));
+					      sizeof(int *) * (num + 1));
 			sb->lineno[num] = buf - sb->final_buf;
 			bol = 0;
 		}
@@ -1714,7 +1714,7 @@ static int prepare_lines(struct scoreboard *sb)
 		}
 	}
 	sb->lineno = xrealloc(sb->lineno,
-			      sizeof(int* ) * (num + incomplete + 1));
+			      sizeof(int *) * (num + incomplete + 1));
 	sb->lineno[num + incomplete] = buf - sb->final_buf;
 	sb->num_lines = num + incomplete;
 	return sb->num_lines;
@@ -1889,7 +1889,7 @@ static const char *parse_loc(const char *spec,
 		return spec;
 
 	/* it could be a regexp of form /.../ */
-	for (term = (char*) spec + 1; *term && *term != '/'; term++) {
+	for (term = (char *) spec + 1; *term && *term != '/'; term++) {
 		if (*term == '\\')
 			term++;
 	}

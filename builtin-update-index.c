@@ -292,7 +292,7 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 	report("add '%s'", path);
  free_return:
 	if (p < path || p > path + strlen(path))
-		free((char*)p);
+		free((char *)p);
 }
 
 static void read_index_info(int line_termination)
@@ -509,7 +509,7 @@ static int do_unresolve(int ac, const char **av,
 		const char *p = prefix_path(prefix, prefix_length, arg);
 		err |= unresolve_one(p);
 		if (p < arg || p > arg + strlen(arg))
-			free((char*)p);
+			free((char *)p);
 	}
 	return err;
 }
@@ -712,7 +712,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		if (set_executable_bit)
 			chmod_path(set_executable_bit, p);
 		if (p < path || p > path + strlen(path))
-			free((char*)p);
+			free((char *)p);
 	}
 	if (read_from_stdin) {
 		struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;

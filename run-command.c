@@ -106,7 +106,7 @@ int start_command(struct child_process *cmd)
 		if (cmd->env) {
 			for (; *cmd->env; cmd->env++) {
 				if (strchr(*cmd->env, '='))
-					putenv((char*)*cmd->env);
+					putenv((char *)*cmd->env);
 				else
 					unsetenv(*cmd->env);
 			}

@@ -26,6 +26,10 @@ test_expect_success setup '
 	git commit -m initial
 '
 
+test_expect_success 'grep should not segfault with a bad input' '
+	test_must_fail git grep "("
+'
+
 for H in HEAD ''
 do
 	case "$H" in

@@ -122,6 +122,7 @@ unset oguimsg
 set _appname {Git Gui}
 set _gitdir {}
 set _gitexec {}
+set _githtmldir {}
 set _reponame {}
 set _iscygwin {}
 set _search_path {}
@@ -166,6 +167,28 @@ proc gitexec {args} {
 		return $_gitexec
 	}
 	return [eval [list file join $_gitexec] $args]
+}
+
+proc githtmldir {args} {
+	global _githtmldir
+	if {$_githtmldir eq {}} {
+		if {[catch {set _githtmldir [git --html-path]}]} {
+			# Git not installed or option not yet supported
+			return {}
+		}
+		if {[is_Cygwin]} {
+			set _githtmldir [exec cygpath \
+				--windows \
+				--absolute \
+				$_githtmldir]
+		} else {
+			set _githtmldir [file normalize $_githtmldir]
+		}
+	}
+	if {$args eq {}} {
+		return $_githtmldir
+	}
+	return [eval [list file join $_githtmldir] $args]
 }
 
 proc reponame {} {
@@ -640,9 +663,12 @@ font create font_diffbold
 font create font_diffitalic
 
 foreach class {Button Checkbutton Entry Label
-		Labelframe Listbox Menu Message
+		Labelframe Listbox Message
 		Radiobutton Spinbox Text} {
 	option add *$class.font font_ui
+}
+if {![is_MacOSX]} {
+	option add *Menu.font font_ui
 }
 unset class
 
@@ -699,7 +725,7 @@ proc apply_config {} {
 
 set default_config(branch.autosetupmerge) true
 set default_config(merge.tool) {}
-set default_config(merge.keepbackup) true
+set default_config(mergetool.keepbackup) true
 set default_config(merge.diffstat) true
 set default_config(merge.summary) false
 set default_config(merge.verbosity) 2
@@ -769,9 +795,9 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 set _real_git_version $_git_version
 regsub -- {[\-\.]dirty$} $_git_version {} _git_version
 regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
-regsub {\.rc[0-9]+$} $_git_version {} _git_version
+regsub {\.[a-zA-Z]+\.?[0-9]+$} $_git_version {} _git_version
 regsub {\.GIT$} $_git_version {} _git_version
-regsub {\.[a-zA-Z]+\.[0-9]+$} $_git_version {} _git_version
+regsub {\.[a-zA-Z]+\.?[0-9]+$} $_git_version {} _git_version
 
 if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
 	catch {wm withdraw .}
@@ -1108,6 +1134,7 @@ set current_diff_path {}
 set is_3way_diff 0
 set is_conflict_diff 0
 set selected_commit_type new
+set diff_empty_count 0
 
 set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
@@ -1924,7 +1951,7 @@ proc do_explore {} {
 		# freedesktop.org-conforming system is our best shot
 		set explorer "xdg-open"
 	}
-	eval exec $explorer [file dirname [gitdir]] &
+	eval exec $explorer [list [file nativename [file dirname [gitdir]]]] &
 }
 
 set is_quitting 0
@@ -2277,6 +2304,12 @@ set ui_comm {}
 # -- Menu Bar
 #
 menu .mbar -tearoff 0
+if {[is_MacOSX]} {
+	# -- Apple Menu (Mac OS X only)
+	#
+	.mbar add cascade -label Apple -menu .mbar.apple
+	menu .mbar.apple
+}
 .mbar add cascade -label [mc Repository] -menu .mbar.repository
 .mbar add cascade -label [mc Edit] -menu .mbar.edit
 if {[is_enabled branch]} {
@@ -2292,7 +2325,6 @@ if {[is_enabled transport]} {
 if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	.mbar add cascade -label [mc Tools] -menu .mbar.tools
 }
-. configure -menu .mbar
 
 # -- Repository Menu
 #
@@ -2545,19 +2577,7 @@ if {[is_enabled transport]} {
 }
 
 if {[is_MacOSX]} {
-	# -- Apple Menu (Mac OS X only)
-	#
-	.mbar add cascade -label Apple -menu .mbar.apple
-	menu .mbar.apple
-
-	.mbar.apple add command -label [mc "About %s" [appname]] \
-		-command do_about
-	.mbar.apple add separator
-	.mbar.apple add command \
-		-label [mc "Preferences..."] \
-		-command do_options \
-		-accelerator $M1T-,
-	bind . <$M1B-,> do_options
+	proc ::tk::mac::ShowPreferences {} {do_options}
 } else {
 	# -- Edit Menu
 	#
@@ -2585,17 +2605,23 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 .mbar add cascade -label [mc Help] -menu .mbar.help
 menu .mbar.help
 
-if {![is_MacOSX]} {
+if {[is_MacOSX]} {
+	.mbar.apple add command -label [mc "About %s" [appname]] \
+		-command do_about
+	.mbar.apple add separator
+} else {
 	.mbar.help add command -label [mc "About %s" [appname]] \
 		-command do_about
 }
+. configure -menu .mbar
 
+set doc_path [githtmldir]
+if {$doc_path ne {}} {
+	set doc_path [file join $doc_path index.html]
 
-set doc_path [file dirname [gitexec]]
-set doc_path [file join $doc_path Documentation index.html]
-
-if {[is_Cygwin]} {
-	set doc_path [exec cygpath --mixed $doc_path]
+	if {[is_Cygwin]} {
+		set doc_path [exec cygpath --mixed $doc_path]
+	}
 }
 
 if {[file isfile $doc_path]} {
@@ -2944,7 +2970,7 @@ $ctxm add command \
 	-command {tk_textPaste $ui_comm}
 $ctxm add command \
 	-label [mc Delete] \
-	-command {$ui_comm delete sel.first sel.last}
+	-command {catch {$ui_comm delete sel.first sel.last}}
 $ctxm add separator
 $ctxm add command \
 	-label [mc "Select All"] \

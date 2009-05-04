@@ -37,6 +37,12 @@ Updates since v1.6.2
 
 * various git-svn updates.
 
+* git-gui updates, including an update to Russian translation, and a
+  fix to an infinite loop when showing an empty diff.
+
+* gitk updates, including an update to Russian translation and improved Windows
+  support.
+
 (performance)
 
 * many uses of lstat(2) in the codepath for "git checkout" have been

@@ -224,7 +224,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		if (is_macro)
 			res->u.attr = git_attr(name, namelen);
 		else {
-			res->u.pattern = (char*)&(res->state[num_attr]);
+			res->u.pattern = (char *)&(res->state[num_attr]);
 			memcpy(res->u.pattern, name, namelen);
 			res->u.pattern[namelen] = 0;
 		}
@@ -275,7 +275,7 @@ static void free_attr_elem(struct attr_stack *e)
 			    setto == ATTR__UNKNOWN)
 				;
 			else
-				free((char*) setto);
+				free((char *) setto);
 		}
 		free(a);
 	}

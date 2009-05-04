@@ -55,6 +55,7 @@ void prune_packed_objects(int opts)
 	for (i = 0; i < 256; i++) {
 		DIR *d;
 
+		display_progress(progress, i + 1);
 		sprintf(pathname + len, "%02x/", i);
 		d = opendir(pathname);
 		if (!d)
