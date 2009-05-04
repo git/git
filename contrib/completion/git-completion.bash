@@ -1282,18 +1282,39 @@ _git_rebase ()
 	__gitcomp "$(__git_refs)"
 }
 
+__git_send_email_confirm_options="always never auto cc compose"
+__git_send_email_suppresscc_options="author self cc ccbody sob cccmd body all"
+
 _git_send_email ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
+	--confirm=*)
+		__gitcomp "
+			$__git_send_email_confirm_options
+			" "" "${cur##--confirm=}"
+		return
+		;;
+	--suppress-cc=*)
+		__gitcomp "
+			$__git_send_email_suppresscc_options
+			" "" "${cur##--suppress-cc=}"
+
+		return
+		;;
+	--smtp-encryption=*)
+		__gitcomp "ssl tls" "" "${cur##--smtp-encryption=}"
+		return
+		;;
 	--*)
 		__gitcomp "--annotate --bcc --cc --cc-cmd --chain-reply-to
-			--compose --dry-run --envelope-sender --from --identity
+			--compose --confirm= --dry-run --envelope-sender
+			--from --identity
 			--in-reply-to --no-chain-reply-to --no-signed-off-by-cc
 			--no-suppress-from --no-thread --quiet
 			--signed-off-by-cc --smtp-pass --smtp-server
-			--smtp-server-port --smtp-ssl --smtp-user --subject
-			--suppress-cc --suppress-from --thread --to
+			--smtp-server-port --smtp-encryption= --smtp-user
+			--subject --suppress-cc= --suppress-from --thread --to
 			--validate --no-validate"
 		return
 		;;
@@ -1353,6 +1374,18 @@ _git_config ()
 		;;
 	log.date)
 		__gitcomp "$__git_log_date_formats"
+		return
+		;;
+	sendemail.aliasesfiletype)
+		__gitcomp "mutt mailrc pine elm gnus"
+		return
+		;;
+	sendemail.confirm)
+		__gitcomp "$__git_send_email_confirm_options"
+		return
+		;;
+	sendemail.suppresscc)
+		__gitcomp "$__git_send_email_suppresscc_options"
 		return
 		;;
 	*.*)
