@@ -1348,6 +1348,10 @@ _git_config ()
 			"
 		return
 		;;
+	help.format)
+		__gitcomp "man info web html"
+		return
+		;;
 	*.*)
 		COMPREPLY=()
 		return
