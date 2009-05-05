@@ -79,14 +79,14 @@ default.   You can use `--no-utf8` to override this.
 	message as the commit author date, and uses the time of
 	commit creation as the committer date. This allows the
 	user to lie about the committer date by using the same
-	timestamp as the author date.
+	value as the author date.
 
 --ignore-date::
 	By default the command records the date from the e-mail
 	message as the commit author date, and uses the time of
 	commit creation as the committer date. This allows the
-	user to lie about author timestamp by using the same
-	timestamp as the committer date.
+	user to lie about the author date by using the same
+	value as the committer date.
 
 --skip::
 	Skip the current patch.  This is only meaningful when
@@ -115,7 +115,7 @@ DISCUSSION
 ----------
 
 The commit author name is taken from the "From: " line of the
-message, and commit author time is taken from the "Date: " line
+message, and commit author date is taken from the "Date: " line
 of the message.  The "Subject: " line is used as the title of
 the commit, after stripping common prefix "[PATCH <anything>]".
 The "Subject: " line is supposed to concisely describe what the
