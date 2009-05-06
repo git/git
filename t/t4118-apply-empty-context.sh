@@ -20,7 +20,7 @@ test_expect_success setup '
 		cat file1 &&
 		echo Q | tr -d "\\012"
 	} >file2 &&
-	cat file2 >file2.orig
+	cat file2 >file2.orig &&
 	git add file1 file2 &&
 	sed -e "/^B/d" <file1.orig >file1 &&
 	sed -e "/^[BQ]/d" <file2.orig >file2 &&
