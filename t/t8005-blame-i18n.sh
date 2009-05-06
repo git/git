@@ -36,7 +36,7 @@ EOF
 test_expect_success \
 	'blame respects i18n.commitencoding' '
 	git blame --incremental file | \
-		grep "^\(author\|summary\) " > actual &&
+		egrep "^(author|summary) " > actual &&
 	test_cmp actual expected
 '
 
@@ -53,7 +53,7 @@ test_expect_success \
 	'blame respects i18n.logoutputencoding' '
 	git config i18n.logoutputencoding cp1251 &&
 	git blame --incremental file | \
-		grep "^\(author\|summary\) " > actual &&
+		egrep "^(author|summary) " > actual &&
 	test_cmp actual expected
 '
 
@@ -69,7 +69,7 @@ EOF
 test_expect_success \
 	'blame respects --encoding=utf-8' '
 	git blame --incremental --encoding=utf-8 file | \
-		grep "^\(author\|summary\) " > actual &&
+		egrep "^(author|summary) " > actual &&
 	test_cmp actual expected
 '
 
@@ -85,7 +85,7 @@ EOF
 test_expect_success \
 	'blame respects --encoding=none' '
 	git blame --incremental --encoding=none file | \
-		grep "^\(author\|summary\) " > actual &&
+		egrep "^(author|summary) " > actual &&
 	test_cmp actual expected
 '
 
