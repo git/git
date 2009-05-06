@@ -4471,7 +4471,7 @@ sub gs_fetch_loop_common {
 				my $ok;
 				$self->get_log([$longest_path], $min, $hi,
 				               0, 1, 1, sub {
-				               $ok ||= $_[1];
+				               $ok = $_[1];
 				               $revs{$_[1]} = _cb(@_) });
 				if ($ok) {
 					print STDERR "r$min .. r$ok OK\n";
