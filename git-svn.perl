@@ -147,7 +147,7 @@ my %cmd = (
 	           'dry-run|n' => \$_dry_run } ],
 	'set-tree' => [ \&cmd_set_tree,
 	                "Set an SVN repository to a git tree-ish",
-			{ 'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
+			{ 'stdin' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'create-ignore' => [ \&cmd_create_ignore,
 			     'Create a .gitignore per svn:ignore',
 			     { 'revision|r=i' => \$_revision

@@ -871,13 +871,15 @@ unsigned long approxidate(const char *date)
 	int number = 0;
 	struct tm tm, now;
 	struct timeval tv;
+	time_t time_sec;
 	char buffer[50];
 
 	if (parse_date(date, buffer, sizeof(buffer)) > 0)
 		return strtoul(buffer, NULL, 10);
 
 	gettimeofday(&tv, NULL);
-	localtime_r(&tv.tv_sec, &tm);
+	time_sec = tv.tv_sec;
+	localtime_r(&time_sec, &tm);
 	now = tm;
 	for (;;) {
 		unsigned char c = *date;
