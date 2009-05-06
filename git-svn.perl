@@ -4438,6 +4438,7 @@ sub gs_fetch_loop_common {
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my $longest_path = longest_common_path($gsv, $globs);
 	my $ra_url = $self->{url};
+	my $find_trailing_edge;
 	while (1) {
 		my %revs;
 		my $err;
@@ -4455,8 +4456,10 @@ sub gs_fetch_loop_common {
 		               sub { $revs{$_[1]} = _cb(@_) });
 		if ($err) {
 			print "Checked through r$max\r";
+		} else {
+			$find_trailing_edge = 1;
 		}
-		if ($err && $max >= $head) {
+		if ($err and $find_trailing_edge) {
 			print STDERR "Path '$longest_path' ",
 				     "was probably deleted:\n",
 				     $err->expanded_message,
@@ -4475,6 +4478,7 @@ sub gs_fetch_loop_common {
 					last;
 				}
 			}
+			$find_trailing_edge = 0;
 		}
 		$SVN::Error::handler = $err_handler;
 
