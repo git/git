@@ -53,7 +53,7 @@ int common_prefix(const char **pathspec)
 }
 
 /*
- * Does 'match' matches the given name?
+ * Does 'match' match the given name?
  * A match is found if
  *
  * (1) the 'match' string is leading directory of 'name', or
@@ -290,7 +290,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	dir->basebuf[baselen] = '\0';
 }
 
-/* Scan the list and let the last match determines the fate.
+/* Scan the list and let the last match determine the fate.
  * Return 1 for exclude, 0 for include and -1 for undecided.
  */
 static int excluded_1(const char *pathname,
