@@ -361,6 +361,7 @@ sub cmd_clone {
 	$path = basename($url) if !defined $path || !length $path;
 	cmd_init($url, $path);
 	Git::SVN::fetch_all($Git::SVN::default_repo_id);
+	command_oneline('config', 'svn.authorsfile', $_authors) if $_authors;
 }
 
 sub cmd_init {
