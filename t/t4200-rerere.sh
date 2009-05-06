@@ -57,7 +57,7 @@ test_expect_success 'conflicting merge' '
 	test_must_fail git merge first
 '
 
-sha1=$(sed -e 's/	.*//' .git/MERGE_RR)
+sha1=$(perl -pe 's/	.*//' .git/MERGE_RR)
 rr=.git/rr-cache/$sha1
 test_expect_success 'recorded preimage' "grep ^=======$ $rr/preimage"
 
