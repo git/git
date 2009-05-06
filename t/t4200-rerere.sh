@@ -190,8 +190,6 @@ test_expect_success 'file2 added differently in two branches' '
 	git add file2 &&
 	git commit -m version2 &&
 	test_must_fail git merge fourth &&
-	sha1=$(sed -e "s/	.*//" .git/MERGE_RR) &&
-	rr=.git/rr-cache/$sha1 &&
 	echo Cello > file2 &&
 	git add file2 &&
 	git commit -m resolution
