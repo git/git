@@ -180,9 +180,3 @@ v1.6.2.X series.
 
 * git-gc spent excessive amount of time to decide if an object appears
   in a locally existing pack (if needed, backport by merging 69e020a).
-
----
-exec >/var/tmp/1
-O=v1.6.3-rc2
-echo O=$(git describe master)
-git shortlog --no-merges $O..master ^maint
