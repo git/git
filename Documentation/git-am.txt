@@ -32,7 +32,7 @@ OPTIONS
 
 -s::
 --signoff::
-	Add `Signed-off-by:` line to the commit message, using
+	Add a `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
 
 -k::
@@ -79,14 +79,14 @@ default.   You can use `--no-utf8` to override this.
 	message as the commit author date, and uses the time of
 	commit creation as the committer date. This allows the
 	user to lie about the committer date by using the same
-	timestamp as the author date.
+	value as the author date.
 
 --ignore-date::
 	By default the command records the date from the e-mail
 	message as the commit author date, and uses the time of
 	commit creation as the committer date. This allows the
-	user to lie about author timestamp by using the same
-	timestamp as the committer date.
+	user to lie about the author date by using the same
+	value as the committer date.
 
 --skip::
 	Skip the current patch.  This is only meaningful when
@@ -115,21 +115,21 @@ DISCUSSION
 ----------
 
 The commit author name is taken from the "From: " line of the
-message, and commit author time is taken from the "Date: " line
+message, and commit author date is taken from the "Date: " line
 of the message.  The "Subject: " line is used as the title of
 the commit, after stripping common prefix "[PATCH <anything>]".
-It is supposed to describe what the commit is about concisely as
-a one line text.
+The "Subject: " line is supposed to concisely describe what the
+commit is about in one line of text.
 
-The body of the message (the rest of the message after the blank line
-that terminates the RFC2822 headers) can begin with "Subject: " and
-"From: " lines that are different from those of the mail header,
-to override the values of these fields.
+"From: " and "Subject: " lines starting the body (the rest of the
+message after the blank line terminating the RFC2822 headers)
+override the respective commit author name and title values taken
+from the headers.
 
 The commit message is formed by the title taken from the
 "Subject: ", a blank line and the body of the message up to
-where the patch begins.  Excess whitespace characters at the end of the
-lines are automatically stripped.
+where the patch begins.  Excess whitespace at the end of each
+line is automatically stripped.
 
 The patch is expected to be inline, directly following the
 message.  Any line that is of the form:
@@ -141,7 +141,7 @@ message.  Any line that is of the form:
 is taken as the beginning of a patch, and the commit log message
 is terminated before the first occurrence of such a line.
 
-When initially invoking it, you give it the names of the mailboxes
+When initially invoking `git am`, you give it the names of the mailboxes
 to process.  Upon seeing the first patch that does not apply, it
 aborts in the middle.  You can recover from this in one of two ways:
 

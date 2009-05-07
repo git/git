@@ -1116,6 +1116,7 @@ __git_log_shortlog_options="
 "
 
 __git_log_pretty_formats="oneline short medium full fuller email raw format:"
+__git_log_date_formats="relative iso8601 rfc2822 short local default raw"
 
 _git_log ()
 {
@@ -1139,9 +1140,7 @@ _git_log ()
 		return
 		;;
 	--date=*)
-		__gitcomp "
-			relative iso8601 rfc2822 short local default
-		" "" "${cur##--date=}"
+		__gitcomp "$__git_log_date_formats" "" "${cur##--date=}"
 		return
 		;;
 	--*)
@@ -1283,18 +1282,39 @@ _git_rebase ()
 	__gitcomp "$(__git_refs)"
 }
 
+__git_send_email_confirm_options="always never auto cc compose"
+__git_send_email_suppresscc_options="author self cc ccbody sob cccmd body all"
+
 _git_send_email ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
+	--confirm=*)
+		__gitcomp "
+			$__git_send_email_confirm_options
+			" "" "${cur##--confirm=}"
+		return
+		;;
+	--suppress-cc=*)
+		__gitcomp "
+			$__git_send_email_suppresscc_options
+			" "" "${cur##--suppress-cc=}"
+
+		return
+		;;
+	--smtp-encryption=*)
+		__gitcomp "ssl tls" "" "${cur##--smtp-encryption=}"
+		return
+		;;
 	--*)
 		__gitcomp "--annotate --bcc --cc --cc-cmd --chain-reply-to
-			--compose --dry-run --envelope-sender --from --identity
+			--compose --confirm= --dry-run --envelope-sender
+			--from --identity
 			--in-reply-to --no-chain-reply-to --no-signed-off-by-cc
 			--no-suppress-from --no-thread --quiet
 			--signed-off-by-cc --smtp-pass --smtp-server
-			--smtp-server-port --smtp-ssl --smtp-user --subject
-			--suppress-cc --suppress-from --thread --to
+			--smtp-server-port --smtp-encryption= --smtp-user
+			--subject --suppress-cc= --suppress-from --thread --to
 			--validate --no-validate"
 		return
 		;;
@@ -1348,6 +1368,26 @@ _git_config ()
 			"
 		return
 		;;
+	help.format)
+		__gitcomp "man info web html"
+		return
+		;;
+	log.date)
+		__gitcomp "$__git_log_date_formats"
+		return
+		;;
+	sendemail.aliasesfiletype)
+		__gitcomp "mutt mailrc pine elm gnus"
+		return
+		;;
+	sendemail.confirm)
+		__gitcomp "$__git_send_email_confirm_options"
+		return
+		;;
+	sendemail.suppresscc)
+		__gitcomp "$__git_send_email_suppresscc_options"
+		return
+		;;
 	*.*)
 		COMPREPLY=()
 		return
@@ -1376,6 +1416,39 @@ _git_config ()
 		__gitcomp "$(__git_heads)" "$pfx" "$cur" "."
 		return
 		;;
+	guitool.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "
+			argprompt cmd confirm needsfile noconsole norescan
+			prompt revprompt revunmerged title
+			" "$pfx" "$cur"
+		return
+		;;
+	difftool.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur"
+		return
+		;;
+	man.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur"
+		return
+		;;
+	mergetool.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "cmd path trustExitCode" "$pfx" "$cur"
+		return
+		;;
+	pager.*)
+		local pfx="${cur%.*}."
+		cur="${cur#*.}"
+		__gitcomp "$(__git_all_commands)" "$pfx" "$cur"
+		return
+		;;
 	remote.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
@@ -1391,8 +1464,15 @@ _git_config ()
 		__gitcomp "$(__git_remotes)" "$pfx" "$cur" "."
 		return
 		;;
+	url.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		__gitcomp "insteadof" "$pfx" "$cur"
+		return
+		;;
 	esac
 	__gitcomp "
+		alias.
 		apply.whitespace
 		branch.autosetupmerge
 		branch.autosetuprebase
@@ -1410,6 +1490,9 @@ _git_config ()
 		color.diff.old
 		color.diff.plain
 		color.diff.whitespace
+		color.grep
+		color.grep.external
+		color.grep.match
 		color.interactive
 		color.interactive.header
 		color.interactive.help
@@ -1427,6 +1510,7 @@ _git_config ()
 		core.autocrlf
 		core.bare
 		core.compression
+		core.createObject
 		core.deltaBaseCacheLimit
 		core.editor
 		core.excludesfile
@@ -1457,11 +1541,21 @@ _git_config ()
 		diff.renameLimit
 		diff.renameLimit.
 		diff.renames
+		diff.suppressBlankEmpty
+		diff.tool
+		diff.wordRegex
+		difftool.
+		difftool.prompt
 		fetch.unpackLimit
+		format.attach
+		format.cc
 		format.headers
 		format.numbered
 		format.pretty
+		format.signoff
+		format.subjectprefix
 		format.suffix
+		format.thread
 		gc.aggressiveWindow
 		gc.auto
 		gc.autopacklimit
@@ -1472,6 +1566,7 @@ _git_config ()
 		gc.rerereresolved
 		gc.rerereunresolved
 		gitcvs.allbinary
+		gitcvs.commitmsgannotation
 		gitcvs.dbTableNamePrefix
 		gitcvs.dbdriver
 		gitcvs.dbname
@@ -1480,6 +1575,7 @@ _git_config ()
 		gitcvs.enabled
 		gitcvs.logfile
 		gitcvs.usecrlfattr
+		guitool.
 		gui.blamehistoryctx
 		gui.commitmsgwidth
 		gui.copyblamethreshold
@@ -1506,13 +1602,24 @@ _git_config ()
 		http.sslVerify
 		i18n.commitEncoding
 		i18n.logOutputEncoding
+		imap.folder
+		imap.host
+		imap.pass
+		imap.port
+		imap.preformattedHTML
+		imap.sslverify
+		imap.tunnel
+		imap.user
 		instaweb.browser
 		instaweb.httpd
 		instaweb.local
 		instaweb.modulepath
 		instaweb.port
+		interactive.singlekey
 		log.date
 		log.showroot
+		mailmap.file
+		man.
 		man.viewer
 		merge.conflictstyle
 		merge.log
@@ -1520,7 +1627,9 @@ _git_config ()
 		merge.stat
 		merge.tool
 		merge.verbosity
+		mergetool.
 		mergetool.keepBackup
+		mergetool.prompt
 		pack.compression
 		pack.deltaCacheLimit
 		pack.deltaCacheSize
@@ -1530,8 +1639,11 @@ _git_config ()
 		pack.threads
 		pack.window
 		pack.windowMemory
+		pager.
 		pull.octopus
 		pull.twohead
+		push.default
+		rebase.stat
 		receive.denyCurrentBranch
 		receive.denyDeletes
 		receive.denyNonFastForwards
@@ -1540,11 +1652,32 @@ _git_config ()
 		repack.usedeltabaseoffset
 		rerere.autoupdate
 		rerere.enabled
+		sendemail.aliasesfile
+		sendemail.aliasesfiletype
+		sendemail.bcc
+		sendemail.cc
+		sendemail.cccmd
+		sendemail.chainreplyto
+		sendemail.confirm
+		sendemail.envelopesender
+		sendemail.multiedit
+		sendemail.signedoffbycc
+		sendemail.smtpencryption
+		sendemail.smtppass
+		sendemail.smtpserver
+		sendemail.smtpserverport
+		sendemail.smtpuser
+		sendemail.suppresscc
+		sendemail.suppressfrom
+		sendemail.thread
+		sendemail.to
+		sendemail.validate
 		showbranch.default
 		status.relativePaths
 		status.showUntrackedFiles
 		tar.umask
 		transfer.unpackLimit
+		url.
 		user.email
 		user.name
 		user.signingkey
