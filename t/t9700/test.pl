@@ -86,18 +86,12 @@ close TEMPFILE;
 unlink $tmpfile;
 
 # paths
-is($r->repo_path, "./.git", "repo_path");
+is($r->repo_path, $abs_repo_dir . "/.git", "repo_path");
 is($r->wc_path, $abs_repo_dir . "/", "wc_path");
 is($r->wc_subdir, "", "wc_subdir initial");
 $r->wc_chdir("directory1");
 is($r->wc_subdir, "directory1", "wc_subdir after wc_chdir");
-TODO: {
-	local $TODO = "commands do not work after wc_chdir";
-	# Failure output is active even in non-verbose mode and thus
-	# annoying.  Hence we skip these tests as long as they fail.
-	todo_skip 'config after wc_chdir', 1;
-	is($r->config("color.string"), "value", "config after wc_chdir");
-}
+is($r->config("test.string"), "value", "config after wc_chdir");
 
 # Object generation in sub directory
 chdir("directory2");

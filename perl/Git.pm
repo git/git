@@ -185,7 +185,7 @@ sub repository {
 
 		if ($dir) {
 			$dir =~ m#^/# or $dir = $opts{Directory} . '/' . $dir;
-			$opts{Repository} = $dir;
+			$opts{Repository} = abs_path($dir);
 
 			# If --git-dir went ok, this shouldn't die either.
 			my $prefix = $search->command_oneline('rev-parse', '--show-prefix');
