@@ -1,5 +1,6 @@
 /* common Win32 functions for MinGW and Cygwin */
 #include <windows.h>
+#include <conio.h>
 
 static inline int file_attr_to_st_mode (DWORD attr)
 {

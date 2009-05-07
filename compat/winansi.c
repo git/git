@@ -80,7 +80,7 @@ static void set_console_attr(void)
 static void erase_in_line(void)
 {
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
-	long dummy; /* Needed for Windows 7 (or Vista) regression */
+	DWORD dummy; /* Needed for Windows 7 (or Vista) regression */
 
 	if (!console)
 		return;
