@@ -31,6 +31,7 @@ String options
 Magic arguments
     --quux                means --quux
     -NUM                  set integer to NUM
+    +                     same as -b
 
 Standard options
     --abbrev[=<n>]        use <n> digits to display SHA-1s
@@ -272,6 +273,12 @@ test_expect_success 'OPT_BIT() works' '
 
 test_expect_success 'OPT_NEGBIT() works' '
 	test-parse-options -bb --no-neg-or4 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+test_expect_success 'OPT_BOOLEAN() with PARSE_OPT_NODASH works' '
+	test-parse-options + + + + + + > output 2> output.err &&
 	test ! -s output.err &&
 	test_cmp expect output
 '
