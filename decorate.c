@@ -8,7 +8,8 @@
 
 static unsigned int hash_obj(const struct object *obj, unsigned int n)
 {
-	unsigned int hash = *(unsigned int *)obj->sha1;
+	const void *p = obj->sha1;
+	unsigned int hash = *(const unsigned int *)p;
 	return hash % n;
 }
 
