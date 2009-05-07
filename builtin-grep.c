@@ -20,8 +20,6 @@
 #endif
 #endif
 
-static int builtin_grep;
-
 static int grep_config(const char *var, const char *value, void *cb)
 {
 	struct grep_opt *opt = cb;
@@ -432,7 +430,8 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 }
 #endif
 
-static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
+static int grep_cache(struct grep_opt *opt, const char **paths, int cached,
+		      int external_grep_allowed)
 {
 	int hit = 0;
 	int nr;
@@ -444,7 +443,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 	 * we grep through the checked-out files. It tends to
 	 * be a lot more optimized
 	 */
-	if (!cached && !builtin_grep) {
+	if (!cached && external_grep_allowed) {
 		hit = external_grep(opt, paths, cached);
 		if (hit >= 0)
 			return hit;
@@ -574,6 +573,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 {
 	int hit = 0;
 	int cached = 0;
+	int external_grep_allowed = 1;
 	int seen_dashdash = 0;
 	struct grep_opt opt;
 	struct object_array list = { 0, 0, NULL };
@@ -612,7 +612,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp("--no-ext-grep", arg)) {
-			builtin_grep = 1;
+			external_grep_allowed = 0;
 			continue;
 		}
 		if (!strcmp("-a", arg) ||
@@ -823,7 +823,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 
 	if (opt.color && !opt.color_external)
-		builtin_grep = 1;
+		external_grep_allowed = 0;
 	if (!opt.pattern_list)
 		die("no pattern given.");
 	if ((opt.regflags != REG_NEWLINE) && opt.fixed)
@@ -874,7 +874,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (!list.nr) {
 		if (!cached)
 			setup_work_tree();
-		return !grep_cache(&opt, paths, cached);
+		return !grep_cache(&opt, paths, cached, external_grep_allowed);
 	}
 
 	if (cached)
