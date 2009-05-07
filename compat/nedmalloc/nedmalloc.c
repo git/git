@@ -34,7 +34,7 @@ DEALINGS IN THE SOFTWARE.
 /*#define FULLSANITYCHECKS*/
 
 #include "nedmalloc.h"
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(WIN32)
  #include <malloc.h>
 #endif
 #define MSPACES 1

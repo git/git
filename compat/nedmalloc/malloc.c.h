@@ -1270,7 +1270,9 @@ int mspace_mallopt(int, int);
 /*------------------------------ internal #includes ---------------------- */
 
 #ifdef WIN32
+#ifndef __GNUC__
 #pragma warning( disable : 4146 ) /* no "unsigned" warnings */
+#endif
 #endif /* WIN32 */
 
 #include <stdio.h>       /* for printing in malloc_stats */
@@ -2541,7 +2543,7 @@ struct malloc_params {
 static struct malloc_params mparams;
 
 /* Ensure mparams initialized */
-#define ensure_initialization() (mparams.magic != 0 || init_mparams())
+#define ensure_initialization() if (mparams.magic == 0) init_mparams()
 
 #if !ONLY_MSPACES
 
