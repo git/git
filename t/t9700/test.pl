@@ -98,3 +98,16 @@ TODO: {
 	todo_skip 'config after wc_chdir', 1;
 	is($r->config("color.string"), "value", "config after wc_chdir");
 }
+
+# Object generation in sub directory
+chdir("directory2");
+my $r2 = Git->repository();
+is($r2->repo_path, $abs_repo_dir . "/.git", "repo_path (2)");
+is($r2->wc_path, $abs_repo_dir . "/", "wc_path (2)");
+is($r2->wc_subdir, "directory2/", "wc_subdir initial (2)");
+
+# commands in sub directory
+my $last_commit = $r2->command_oneline(qw(rev-parse --verify HEAD));
+like($last_commit, qr/^[0-9a-fA-F]{40}$/, 'rev-parse returned hash');
+my $dir_commit = $r2->command_oneline('log', '-n1', '--pretty=format:%H', '.');
+isnt($last_commit, $dir_commit, 'log . does not show last commit');
