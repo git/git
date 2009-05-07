@@ -13,6 +13,7 @@
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
 static int unpack_limit = 100;
+static int prefer_ofs_delta = 1;
 static struct fetch_pack_args args = {
 	/* .uploadpack = */ "git-upload-pack",
 };
@@ -200,7 +201,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 				     (args.use_thin_pack ? " thin-pack" : ""),
 				     (args.no_progress ? " no-progress" : ""),
 				     (args.include_tag ? " include-tag" : ""),
-				     " ofs-delta");
+				     (prefer_ofs_delta ? " ofs-delta" : ""));
 		else
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 		fetching++;
@@ -596,6 +597,11 @@ static struct ref *do_fetch_pack(int fd[2],
 			fprintf(stderr, "Server supports side-band\n");
 		use_sideband = 1;
 	}
+	if (server_supports("ofs-delta")) {
+		if (args.verbose)
+			fprintf(stderr, "Server supports ofs-delta\n");
+	} else
+		prefer_ofs_delta = 0;
 	if (everything_local(&ref, nr_match, match)) {
 		packet_flush(fd[1]);
 		goto all_done;
@@ -645,6 +651,11 @@ static int fetch_pack_config(const char *var, const char *value, void *cb)
 
 	if (strcmp(var, "transfer.unpacklimit") == 0) {
 		transfer_unpack_limit = git_config_int(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "repack.usedeltabaseoffset") == 0) {
+		prefer_ofs_delta = git_config_bool(var, value);
 		return 0;
 	}
 
