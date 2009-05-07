@@ -6,6 +6,7 @@ enum parse_opt_type {
 	OPTION_END,
 	OPTION_ARGUMENT,
 	OPTION_GROUP,
+	OPTION_NUMBER,
 	/* options with no arguments */
 	OPTION_BIT,
 	OPTION_NEGBIT,
@@ -105,6 +106,9 @@ struct option {
 	  parse_opt_approxidate_cb }
 #define OPT_CALLBACK(s, l, v, a, h, f) \
 	{ OPTION_CALLBACK, (s), (l), (v), (a), (h), 0, (f) }
+#define OPT_NUMBER_CALLBACK(v, h, f) \
+	{ OPTION_NUMBER, 0, NULL, (v), NULL, (h), \
+	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, (f) }
 
 /* parse_options() will filter out the processed options and leave the
  * non-option arguments in argv[].

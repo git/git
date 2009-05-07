@@ -129,11 +129,33 @@ static int get_value(struct parse_opt_ctx_t *p,
 
 static int parse_short_opt(struct parse_opt_ctx_t *p, const struct option *options)
 {
+	const struct option *numopt = NULL;
+
 	for (; options->type != OPTION_END; options++) {
 		if (options->short_name == *p->opt) {
 			p->opt = p->opt[1] ? p->opt + 1 : NULL;
 			return get_value(p, options, OPT_SHORT);
 		}
+
+		/*
+		 * Handle the numerical option later, explicit one-digit
+		 * options take precedence over it.
+		 */
+		if (options->type == OPTION_NUMBER)
+			numopt = options;
+	}
+	if (numopt && isdigit(*p->opt)) {
+		size_t len = 1;
+		char *arg;
+		int rc;
+
+		while (isdigit(p->opt[len]))
+			len++;
+		arg = xmemdupz(p->opt, len);
+		p->opt = p->opt[len] ? p->opt + len : NULL;
+		rc = (*numopt->callback)(numopt, arg, 0) ? (-1) : 0;
+		free(arg);
+		return rc;
 	}
 	return -2;
 }
@@ -411,6 +433,8 @@ int usage_with_options_internal(const char * const *usagestr,
 			pos += fprintf(stderr, ", ");
 		if (opts->long_name)
 			pos += fprintf(stderr, "--%s", opts->long_name);
+		if (opts->type == OPTION_NUMBER)
+			pos += fprintf(stderr, "-NUM");
 
 		switch (opts->type) {
 		case OPTION_ARGUMENT:
@@ -447,7 +471,7 @@ int usage_with_options_internal(const char * const *usagestr,
 					pos += fprintf(stderr, " ...");
 			}
 			break;
-		default: /* OPTION_{BIT,BOOLEAN,SET_INT,SET_PTR} */
+		default: /* OPTION_{BIT,BOOLEAN,NUMBER,SET_INT,SET_PTR} */
 			break;
 		}
 

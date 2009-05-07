@@ -19,6 +19,12 @@ int length_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+int number_callback(const struct option *opt, const char *arg, int unset)
+{
+	*(int *)opt->value = strtol(arg, NULL, 10);
+	return 0;
+}
+
 int main(int argc, const char **argv)
 {
 	const char *usage[] = {
@@ -46,6 +52,8 @@ int main(int argc, const char **argv)
 			"set string to default", (unsigned long)"default"),
 		OPT_GROUP("Magic arguments"),
 		OPT_ARGUMENT("quux", "means --quux"),
+		OPT_NUMBER_CALLBACK(&integer, "set integer to NUM",
+			number_callback),
 		OPT_GROUP("Standard options"),
 		OPT__ABBREV(&abbrev),
 		OPT__VERBOSE(&verbose),
