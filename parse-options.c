@@ -50,6 +50,7 @@ static int get_value(struct parse_opt_ctx_t *p,
 			/* FALLTHROUGH */
 		case OPTION_BOOLEAN:
 		case OPTION_BIT:
+		case OPTION_NEGBIT:
 		case OPTION_SET_INT:
 		case OPTION_SET_PTR:
 			return opterror(opt, "takes no value", flags);
@@ -64,6 +65,13 @@ static int get_value(struct parse_opt_ctx_t *p,
 			*(int *)opt->value &= ~opt->defval;
 		else
 			*(int *)opt->value |= opt->defval;
+		return 0;
+
+	case OPTION_NEGBIT:
+		if (unset)
+			*(int *)opt->value |= opt->defval;
+		else
+			*(int *)opt->value &= ~opt->defval;
 		return 0;
 
 	case OPTION_BOOLEAN:

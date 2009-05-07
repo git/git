@@ -137,6 +137,10 @@ There are some macros to easily define options:
 	Introduce a boolean option.
 	If used, `int_var` is bitwise-ored with `mask`.
 
+`OPT_NEGBIT(short, long, &int_var, description, mask)`::
+	Introduce a boolean option.
+	If used, `int_var` is bitwise-anded with the inverted `mask`.
+
 `OPT_SET_INT(short, long, &int_var, description, integer)`::
 	Introduce a boolean option.
 	If used, set `int_var` to `integer`.
