@@ -8,11 +8,11 @@ test_expect_success 'setup svnrepo' '
 	mkdir project project/trunk project/branches \
 			project/branches/v14.1 project/tags &&
 	echo foo > project/trunk/foo &&
-	svn import -m "$test_description" project "$svnrepo/project" &&
+	svn_cmd import -m "$test_description" project "$svnrepo/project" &&
 	rm -rf project &&
-	svn cp -m "fun" "$svnrepo/project/trunk" \
+	svn_cmd cp -m "fun" "$svnrepo/project/trunk" \
 	                "$svnrepo/project/branches/v14.1/beta" &&
-	svn cp -m "more fun!" "$svnrepo/project/branches/v14.1/beta" \
+	svn_cmd cp -m "more fun!" "$svnrepo/project/branches/v14.1/beta" \
 	                      "$svnrepo/project/branches/v14.1/gold"
 	'
 

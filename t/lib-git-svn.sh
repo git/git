@@ -26,6 +26,8 @@ fi
 
 svnrepo=$PWD/svnrepo
 export svnrepo
+svnconf=$PWD/svnconf
+export svnconf
 
 perl -w -e "
 use SVN::Core;
@@ -52,6 +54,19 @@ svnrepo="file://$svnrepo"
 
 poke() {
 	test-chmtime +1 "$1"
+}
+
+# We need this, because we should pass empty configuration directory to
+# the 'svn commit' to avoid automated property changes and other stuff
+# that could be set from user's configuration files in ~/.subversion.
+svn_cmd () {
+	[ -d "$svnconf" ] || mkdir "$svnconf"
+	orig_svncmd="$1"; shift
+	if [ -z "$orig_svncmd" ]; then
+		svn
+		return
+	fi
+	svn "$orig_svncmd" --config-dir "$svnconf" "$@"
 }
 
 for d in \

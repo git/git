@@ -33,7 +33,7 @@ for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "$H setup" '
 		mkdir $H &&
-		svn import -m "$H test" $H "$svnrepo"/$H &&
+		svn_cmd import -m "$H test" $H "$svnrepo"/$H &&
 		git svn clone "$svnrepo"/$H $H
 	'
 done
