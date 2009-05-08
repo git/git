@@ -1,7 +1,5 @@
 #!/bin/sh
 
-G=/opt/packrat/playpen/public/in-place/git/index/gitweb_config.perl
-
 case "$(git version 2>/dev/null)" in
 "git version"*)
 	GIT=git ;;
@@ -101,13 +99,22 @@ sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 
 d="$d ASCIIDOC_NO_ROFF=YesPlease ASCIIDOC8=YesPlease"
 
-CFLAGS="$O $Wall -g"
+# Platform hack
+if test -z "${make:+set}" && test -x /usr/local/bin/gmake
+then
+	make=gmake
+fi
 
-make $d \
-     GITWEB_CONFIG=$G \
-     PYTHON_PATH=/usr/bin/python2.4 \
+CFLAGS="$O $Wall -g"
+OK_TO_USE_CFLAGS=Yes
+if test -n "${NO_CFLAGS+set}"
+then
+	unset OK_TO_USE_CFLAGS
+fi
+
+${make-make} $d \
      ETC_GITCONFIG=$prefix/etc/gitconfig \
-     CFLAGS="$CFLAGS" \
+     ${OK_TO_USE_CFLAGS+"CFLAGS=$CFLAGS"} \
      ${tests:+"T=$tests"} \
      "$@"
 status=$?
