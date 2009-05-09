@@ -9,9 +9,13 @@
 #include "run-command.h"
 #include "bisect.h"
 
-static unsigned char (*skipped_sha1)[20];
-static int skipped_sha1_nr;
-static int skipped_sha1_alloc;
+struct sha1_array {
+	unsigned char (*sha1)[20];
+	int sha1_nr;
+	int sha1_alloc;
+};
+
+static struct sha1_array skipped_revs;
 
 static const char **rev_argv;
 static int rev_argv_nr;
@@ -420,9 +424,9 @@ static int register_ref(const char *refname, const unsigned char *sha1,
 		ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
 		rev_argv[rev_argv_nr++] = good;
 	} else if (!prefixcmp(refname, "skip-")) {
-		ALLOC_GROW(skipped_sha1, skipped_sha1_nr + 1,
-			   skipped_sha1_alloc);
-		hashcpy(skipped_sha1[skipped_sha1_nr++], sha1);
+		ALLOC_GROW(skipped_revs.sha1, skipped_revs.sha1_nr + 1,
+			   skipped_revs.sha1_alloc);
+		hashcpy(skipped_revs.sha1[skipped_revs.sha1_nr++], sha1);
 	}
 
 	return 0;
@@ -466,7 +470,8 @@ static int skipcmp(const void *a, const void *b)
 
 static void prepare_skipped(void)
 {
-	qsort(skipped_sha1, skipped_sha1_nr, sizeof(*skipped_sha1), skipcmp);
+	qsort(skipped_revs.sha1, skipped_revs.sha1_nr,
+	      sizeof(*skipped_revs.sha1), skipcmp);
 }
 
 static const unsigned char *skipped_sha1_access(size_t index, void *table)
@@ -477,7 +482,7 @@ static const unsigned char *skipped_sha1_access(size_t index, void *table)
 
 static int lookup_skipped(unsigned char *sha1)
 {
-	return sha1_pos(sha1, skipped_sha1, skipped_sha1_nr,
+	return sha1_pos(sha1, skipped_revs.sha1, skipped_revs.sha1_nr,
 			skipped_sha1_access);
 }
 
@@ -489,7 +494,7 @@ struct commit_list *filter_skipped(struct commit_list *list,
 
 	*tried = NULL;
 
-	if (!skipped_sha1_nr)
+	if (!skipped_revs.sha1_nr)
 		return list;
 
 	prepare_skipped();
@@ -551,7 +556,7 @@ static void bisect_common(struct rev_info *revs, const char *prefix,
 		mark_edges_uninteresting(revs->commits, revs, NULL);
 
 	revs->commits = find_bisection(revs->commits, reaches, all,
-				       !!skipped_sha1_nr);
+				       !!skipped_revs.sha1_nr);
 }
 
 static void exit_if_skipped_commits(struct commit_list *tried,
