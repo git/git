@@ -180,7 +180,7 @@ static int write_tar_entry(struct archiver_args *args,
 
 	sprintf(header.mode, "%07o", mode & 07777);
 	sprintf(header.size, "%011lo", S_ISREG(mode) ? size : 0);
-	sprintf(header.mtime, "%011lo", args->time);
+	sprintf(header.mtime, "%011lo", (unsigned long) args->time);
 
 	sprintf(header.uid, "%07o", 0);
 	sprintf(header.gid, "%07o", 0);
