@@ -1322,6 +1322,35 @@ _git_send_email ()
 	COMPREPLY=()
 }
 
+__git_config_get_set_variables ()
+{
+	local prevword word config_file= c=$COMP_CWORD
+	while [ $c -gt 1 ]; do
+		word="${COMP_WORDS[c]}"
+		case "$word" in
+		--global|--system|--file=*)
+			config_file="$word"
+			break
+			;;
+		-f|--file)
+			config_file="$word $prevword"
+			break
+			;;
+		esac
+		prevword=$word
+		c=$((--c))
+	done
+
+	for i in $(git --git-dir="$(__gitdir)" config $config_file --list \
+			2>/dev/null); do
+		case "$i" in
+		*.*)
+			echo "${i/=*/}"
+			;;
+		esac
+	done
+}
+
 _git_config ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -1386,6 +1415,10 @@ _git_config ()
 		;;
 	sendemail.suppresscc)
 		__gitcomp "$__git_send_email_suppresscc_options"
+		return
+		;;
+	--get|--get-all|--unset|--unset-all)
+		__gitcomp "$(__git_config_get_set_variables)"
 		return
 		;;
 	*.*)
