@@ -26,8 +26,6 @@ struct argv_array {
 	int argv_alloc;
 };
 
-struct argv_array rev_argv;
-
 static const char *argv_diff_tree[] = {"diff-tree", "--pretty", NULL, NULL};
 static const char *argv_checkout[] = {"checkout", "-q", NULL, "--", NULL};
 static const char *argv_show_branch[] = {"show-branch", NULL, NULL};
@@ -539,14 +537,12 @@ struct commit_list *filter_skipped(struct commit_list *list,
 
 static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
 {
+	struct argv_array rev_argv = { NULL, 0, 0 };
 	int i;
 
 	init_revisions(revs, prefix);
 	revs->abbrev = 0;
 	revs->commit_format = CMIT_FMT_UNSPECIFIED;
-
-	if (read_bisect_refs())
-		die("reading bisect refs failed");
 
 	/* rev_argv.argv[0] will be ignored by setup_revisions */
 	argv_array_push(&rev_argv, xstrdup("bisect_rev_setup"));
@@ -561,11 +557,8 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
 	revs->limited = 1;
 }
 
-static void bisect_common(struct rev_info *revs, const char *prefix,
-			  int *reaches, int *all)
+static void bisect_common(struct rev_info *revs, int *reaches, int *all)
 {
-	bisect_rev_setup(revs, prefix);
-
 	if (prepare_revision_walk(revs))
 		die("revision walk setup failed");
 	if (revs->tree_objects)
@@ -636,7 +629,12 @@ int bisect_next_exit(const char *prefix)
 	const unsigned char *bisect_rev;
 	char bisect_rev_hex[41];
 
-	bisect_common(&revs, prefix, &reaches, &all);
+	if (read_bisect_refs())
+		die("reading bisect refs failed");
+
+	bisect_rev_setup(&revs, prefix);
+
+	bisect_common(&revs, &reaches, &all);
 
 	revs.commits = filter_skipped(revs.commits, &tried, 0);
 
