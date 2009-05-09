@@ -830,7 +830,7 @@ static void check_good_are_ancestors_of_bad(const char *prefix)
  * the bisection process finished successfully.
  * In this case the calling shell script should exit 0.
  */
-int bisect_next_exit(const char *prefix)
+int bisect_next_all(const char *prefix)
 {
 	struct rev_info revs;
 	struct commit_list *tried;
@@ -840,6 +840,8 @@ int bisect_next_exit(const char *prefix)
 
 	if (read_bisect_refs())
 		die("reading bisect refs failed");
+
+	check_good_are_ancestors_of_bad(prefix);
 
 	bisect_rev_setup(&revs, prefix);
 
