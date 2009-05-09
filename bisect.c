@@ -15,6 +15,7 @@ struct sha1_array {
 	int sha1_alloc;
 };
 
+static struct sha1_array good_revs;
 static struct sha1_array skipped_revs;
 
 static const char **rev_argv;
@@ -418,18 +419,22 @@ static void rev_argv_push(const unsigned char *sha1, const char *format)
 	rev_argv[rev_argv_nr++] = strbuf_detach(&buf, NULL);
 }
 
+static void sha1_array_push(struct sha1_array *array,
+			    const unsigned char *sha1)
+{
+	ALLOC_GROW(array->sha1, array->sha1_nr + 1, array->sha1_alloc);
+	hashcpy(array->sha1[array->sha1_nr++], sha1);
+}
+
 static int register_ref(const char *refname, const unsigned char *sha1,
 			int flags, void *cb_data)
 {
 	if (!strcmp(refname, "bad")) {
 		current_bad_sha1 = sha1;
-		rev_argv_push(sha1, "%s");
 	} else if (!prefixcmp(refname, "good-")) {
-		rev_argv_push(sha1, "^%s");
+		sha1_array_push(&good_revs, sha1);
 	} else if (!prefixcmp(refname, "skip-")) {
-		ALLOC_GROW(skipped_revs.sha1, skipped_revs.sha1_nr + 1,
-			   skipped_revs.sha1_alloc);
-		hashcpy(skipped_revs.sha1[skipped_revs.sha1_nr++], sha1);
+		sha1_array_push(&skipped_revs, sha1);
 	}
 
 	return 0;
@@ -524,16 +529,23 @@ struct commit_list *filter_skipped(struct commit_list *list,
 
 static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
 {
+	int i;
+
 	init_revisions(revs, prefix);
 	revs->abbrev = 0;
 	revs->commit_format = CMIT_FMT_UNSPECIFIED;
+
+	if (read_bisect_refs())
+		die("reading bisect refs failed");
 
 	/* argv[0] will be ignored by setup_revisions */
 	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
 	rev_argv[rev_argv_nr++] = xstrdup("bisect_rev_setup");
 
-	if (read_bisect_refs())
-		die("reading bisect refs failed");
+	rev_argv_push(current_bad_sha1, "%s");
+
+	for (i = 0; i < good_revs.sha1_nr; i++)
+		rev_argv_push(good_revs.sha1[i], "^%s");
 
 	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
 	rev_argv[rev_argv_nr++] = xstrdup("--");
