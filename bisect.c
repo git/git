@@ -13,6 +13,7 @@ struct sha1_array {
 	unsigned char (*sha1)[20];
 	int sha1_nr;
 	int sha1_alloc;
+	int sorted;
 };
 
 static struct sha1_array good_revs;
@@ -487,6 +488,8 @@ static int array_cmp(const void *a, const void *b)
 static void sort_sha1_array(struct sha1_array *array)
 {
 	qsort(array->sha1, array->sha1_nr, sizeof(*array->sha1), array_cmp);
+
+	array->sorted = 1;
 }
 
 static const unsigned char *sha1_access(size_t index, void *table)
@@ -498,6 +501,9 @@ static const unsigned char *sha1_access(size_t index, void *table)
 static int lookup_sha1_array(struct sha1_array *array,
 			     const unsigned char *sha1)
 {
+	if (!array->sorted)
+		sort_sha1_array(array);
+
 	return sha1_pos(sha1, array->sha1, array->sha1_nr, sha1_access);
 }
 
@@ -511,8 +517,6 @@ struct commit_list *filter_skipped(struct commit_list *list,
 
 	if (!skipped_revs.sha1_nr)
 		return list;
-
-	sort_sha1_array(&skipped_revs);
 
 	while (list) {
 		struct commit_list *next = list->next;
