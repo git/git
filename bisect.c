@@ -409,20 +409,23 @@ struct commit_list *find_bisection(struct commit_list *list,
 	return best;
 }
 
+static void rev_argv_push(const unsigned char *sha1, const char *format)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	strbuf_addf(&buf, format, sha1_to_hex(sha1));
+	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
+	rev_argv[rev_argv_nr++] = strbuf_detach(&buf, NULL);
+}
+
 static int register_ref(const char *refname, const unsigned char *sha1,
 			int flags, void *cb_data)
 {
 	if (!strcmp(refname, "bad")) {
-		ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
 		current_bad_sha1 = sha1;
-		rev_argv[rev_argv_nr++] = xstrdup(sha1_to_hex(sha1));
+		rev_argv_push(sha1, "%s");
 	} else if (!prefixcmp(refname, "good-")) {
-		const char *hex = sha1_to_hex(sha1);
-		char *good = xmalloc(strlen(hex) + 2);
-		*good = '^';
-		memcpy(good + 1, hex, strlen(hex) + 1);
-		ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-		rev_argv[rev_argv_nr++] = good;
+		rev_argv_push(sha1, "^%s");
 	} else if (!prefixcmp(refname, "skip-")) {
 		ALLOC_GROW(skipped_revs.sha1, skipped_revs.sha1_nr + 1,
 			   skipped_revs.sha1_alloc);
