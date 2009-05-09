@@ -18,11 +18,15 @@ struct sha1_array {
 static struct sha1_array good_revs;
 static struct sha1_array skipped_revs;
 
-static const char **rev_argv;
-static int rev_argv_nr;
-static int rev_argv_alloc;
-
 static const unsigned char *current_bad_sha1;
+
+struct argv_array {
+	const char **argv;
+	int argv_nr;
+	int argv_alloc;
+};
+
+struct argv_array rev_argv;
 
 static const char *argv_diff_tree[] = {"diff-tree", "--pretty", NULL, NULL};
 static const char *argv_checkout[] = {"checkout", "-q", NULL, "--", NULL};
@@ -410,13 +414,19 @@ struct commit_list *find_bisection(struct commit_list *list,
 	return best;
 }
 
-static void rev_argv_push(const unsigned char *sha1, const char *format)
+static void argv_array_push(struct argv_array *array, const char *string)
+{
+	ALLOC_GROW(array->argv, array->argv_nr + 1, array->argv_alloc);
+	array->argv[array->argv_nr++] = string;
+}
+
+static void argv_array_push_sha1(struct argv_array *array,
+				 const unsigned char *sha1,
+				 const char *format)
 {
 	struct strbuf buf = STRBUF_INIT;
-
 	strbuf_addf(&buf, format, sha1_to_hex(sha1));
-	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-	rev_argv[rev_argv_nr++] = strbuf_detach(&buf, NULL);
+	argv_array_push(array, strbuf_detach(&buf, NULL));
 }
 
 static void sha1_array_push(struct sha1_array *array,
@@ -445,7 +455,7 @@ static int read_bisect_refs(void)
 	return for_each_ref_in("refs/bisect/", register_ref, NULL);
 }
 
-void read_bisect_paths(void)
+void read_bisect_paths(struct argv_array *array)
 {
 	struct strbuf str = STRBUF_INIT;
 	const char *filename = git_path("BISECT_NAMES");
@@ -460,8 +470,8 @@ void read_bisect_paths(void)
 
 		strbuf_trim(&str);
 		quoted = strbuf_detach(&str, NULL);
-		res = sq_dequote_to_argv(quoted, &rev_argv,
-					 &rev_argv_nr, &rev_argv_alloc);
+		res = sq_dequote_to_argv(quoted, &array->argv,
+					 &array->argv_nr, &array->argv_alloc);
 		if (res)
 			die("Badly quoted content in file '%s': %s",
 			    filename, quoted);
@@ -538,25 +548,16 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
 	if (read_bisect_refs())
 		die("reading bisect refs failed");
 
-	/* argv[0] will be ignored by setup_revisions */
-	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-	rev_argv[rev_argv_nr++] = xstrdup("bisect_rev_setup");
-
-	rev_argv_push(current_bad_sha1, "%s");
-
+	/* rev_argv.argv[0] will be ignored by setup_revisions */
+	argv_array_push(&rev_argv, xstrdup("bisect_rev_setup"));
+	argv_array_push_sha1(&rev_argv, current_bad_sha1, "%s");
 	for (i = 0; i < good_revs.sha1_nr; i++)
-		rev_argv_push(good_revs.sha1[i], "^%s");
+		argv_array_push_sha1(&rev_argv, good_revs.sha1[i], "^%s");
+	argv_array_push(&rev_argv, xstrdup("--"));
+	read_bisect_paths(&rev_argv);
+	argv_array_push(&rev_argv, NULL);
 
-	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-	rev_argv[rev_argv_nr++] = xstrdup("--");
-
-	read_bisect_paths();
-
-	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-	rev_argv[rev_argv_nr++] = NULL;
-
-	setup_revisions(rev_argv_nr, rev_argv, revs, NULL);
-
+	setup_revisions(rev_argv.argv_nr, rev_argv.argv, revs, NULL);
 	revs->limited = 1;
 }
 
