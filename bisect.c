@@ -479,27 +479,26 @@ void read_bisect_paths(struct argv_array *array)
 	fclose(fp);
 }
 
-static int skipcmp(const void *a, const void *b)
+static int array_cmp(const void *a, const void *b)
 {
 	return hashcmp(a, b);
 }
 
-static void prepare_skipped(void)
+static void sort_sha1_array(struct sha1_array *array)
 {
-	qsort(skipped_revs.sha1, skipped_revs.sha1_nr,
-	      sizeof(*skipped_revs.sha1), skipcmp);
+	qsort(array->sha1, array->sha1_nr, sizeof(*array->sha1), array_cmp);
 }
 
-static const unsigned char *skipped_sha1_access(size_t index, void *table)
+static const unsigned char *sha1_access(size_t index, void *table)
 {
-	unsigned char (*skipped)[20] = table;
-	return skipped[index];
+	unsigned char (*array)[20] = table;
+	return array[index];
 }
 
-static int lookup_skipped(unsigned char *sha1)
+static int lookup_sha1_array(struct sha1_array *array,
+			     const unsigned char *sha1)
 {
-	return sha1_pos(sha1, skipped_revs.sha1, skipped_revs.sha1_nr,
-			skipped_sha1_access);
+	return sha1_pos(sha1, array->sha1, array->sha1_nr, sha1_access);
 }
 
 struct commit_list *filter_skipped(struct commit_list *list,
@@ -513,12 +512,13 @@ struct commit_list *filter_skipped(struct commit_list *list,
 	if (!skipped_revs.sha1_nr)
 		return list;
 
-	prepare_skipped();
+	sort_sha1_array(&skipped_revs);
 
 	while (list) {
 		struct commit_list *next = list->next;
 		list->next = NULL;
-		if (0 <= lookup_skipped(list->item->object.sha1)) {
+		if (0 <= lookup_sha1_array(&skipped_revs,
+					   list->item->object.sha1)) {
 			/* Move current to tried list */
 			*tried = list;
 			tried = &list->next;
