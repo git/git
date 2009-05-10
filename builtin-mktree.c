@@ -67,7 +67,7 @@ static const char *mktree_usage[] = {
 	NULL
 };
 
-static void mktree_line(char *buf, size_t len, int line_termination)
+static void mktree_line(char *buf, size_t len, int line_termination, int allow_missing)
 {
 	char *ptr, *ntr;
 	unsigned mode;
@@ -91,10 +91,13 @@ static void mktree_line(char *buf, size_t len, int line_termination)
 		die("input format error: %s", buf);
 
 	/* It is perfectly normal if we do not have a commit from a submodule */
-	if (!S_ISGITLINK(mode))
+	if (S_ISGITLINK(mode))
+		allow_missing = 1;
+
+	if (!allow_missing)
 		type = sha1_object_info(sha1, NULL);
 	else
-		type = OBJ_COMMIT;
+		type = object_type(mode);
 
 	if (type < 0)
 		die("object %s unavailable", sha1_to_hex(sha1));
@@ -118,15 +121,17 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 	struct strbuf sb = STRBUF_INIT;
 	unsigned char sha1[20];
 	int line_termination = '\n';
+	int allow_missing = 0;
 	const struct option option[] = {
 		OPT_SET_INT('z', NULL, &line_termination, "input is NUL terminated", '\0'),
+		OPT_SET_INT( 0 , "missing", &allow_missing, "allow missing objects", 1),
 		OPT_END()
 	};
 
 	ac = parse_options(ac, av, option, mktree_usage, 0);
 
 	while (strbuf_getline(&sb, stdin, line_termination) != EOF)
-		mktree_line(sb.buf, sb.len, line_termination);
+		mktree_line(sb.buf, sb.len, line_termination, allow_missing);
 
 	strbuf_release(&sb);
 

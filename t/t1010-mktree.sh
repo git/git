@@ -10,6 +10,11 @@ test_expect_success setup '
 		mkdir "$d" && echo "$d/one" >"$d/one" &&
 		git add "$d"
 	done &&
+	echo zero >one &&
+	git update-index --add --info-only one &&
+	git write-tree --missing-ok >tree.missing &&
+	git ls-tree $(cat tree.missing) >top.missing &&
+	git ls-tree -r $(cat tree.missing) >all.missing &&
 	echo one >one &&
 	git add one &&
 	git write-tree >tree &&
@@ -46,6 +51,11 @@ test_expect_success 'ls-tree output in wrong order given to mktree (2)' '
 	perl -e "print reverse <>" <top.withsub |
 	git mktree >actual &&
 	test_cmp tree.withsub actual
+'
+
+test_expect_success 'allow missing object with --missing' '
+	git mktree --missing <top.missing >actual &&
+	test_cmp tree.missing actual
 '
 
 test_expect_failure 'mktree reads ls-tree -r output (1)' '
