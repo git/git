@@ -1,12 +1,11 @@
 /*
  * GIT - the stupid content tracker
  *
- * Copyright (c) Junio C Hamano, 2006
+ * Copyright (c) Junio C Hamano, 2006, 2009
  */
-#include "cache.h"
+#include "builtin.h"
 #include "quote.h"
 #include "tree.h"
-#include "exec_cmd.h"
 
 static struct treeent {
 	unsigned mode;
@@ -64,19 +63,15 @@ static void write_tree(unsigned char *sha1)
 
 static const char mktree_usage[] = "git mktree [-z]";
 
-int main(int ac, char **av)
+int cmd_mktree(int ac, const char **av, const char *prefix)
 {
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf p_uq = STRBUF_INIT;
 	unsigned char sha1[20];
 	int line_termination = '\n';
 
-	git_extract_argv0_path(av[0]);
-
-	setup_git_directory();
-
 	while ((1 < ac) && av[1][0] == '-') {
-		char *arg = av[1];
+		const char *arg = av[1];
 		if (!strcmp("-z", arg))
 			line_termination = 0;
 		else
@@ -92,8 +87,9 @@ int main(int ac, char **av)
 		char *path;
 
 		ptr = sb.buf;
-		/* Input is non-recursive ls-tree output format
-		 * mode SP type SP sha1 TAB name
+		/*
+		 * Read non-recursive ls-tree output format:
+		 *     mode SP type SP sha1 TAB name
 		 */
 		mode = strtoul(ptr, &ntr, 8);
 		if (ptr == ntr || !ntr || *ntr != ' ')
