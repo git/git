@@ -458,8 +458,8 @@ sub filter_snapshot_fmts {
 	@fmts = map {
 		exists $known_snapshot_format_aliases{$_} ?
 		       $known_snapshot_format_aliases{$_} : $_} @fmts;
-	@fmts = grep(exists $known_snapshot_formats{$_}, @fmts);
-
+	@fmts = grep {
+		exists $known_snapshot_formats{$_} } @fmts;
 }
 
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
@@ -1838,7 +1838,7 @@ sub git_cmd {
 # Try to avoid using this function wherever possible.
 sub quote_command {
 	return join(' ',
-		    map( { my $a = $_; $a =~ s/(['!])/'\\$1'/g; "'$a'" } @_ ));
+		map { my $a = $_; $a =~ s/(['!])/'\\$1'/g; "'$a'" } @_ );
 }
 
 # get HEAD ref of given project as hash
