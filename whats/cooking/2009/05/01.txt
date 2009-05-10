@@ -23,8 +23,20 @@ meant to be merged to the maintenance series have "maint-" in their names.
 * rr/forbid-bs-in-ref (Fri May 8 07:32:37 2009 +0200) 1 commit
  + Disallow '\' in ref names
 
+This retroactively forbids use of what people could have been using
+happily, which, strictly speaking, is a no-no, but makes sense in the
+longer term.
+
 * jk/maint-add-empty (Tue Apr 28 23:21:01 2009 -0400) 1 commit
  - add: don't complain when adding empty project root
+
+When you say "git add ." in an empty directory, you get "No path matches
+''", instead of "No path matches '.'", and this "fixes" it by hiding the
+error and making the command silently succeed.  Strictly speaking it
+introduces inconsistency, but I think an empty directory is so
+uninteresting special case that not signalling it as an error is Ok.
+
+Will merge to 'next'.
 
 * lt/maint-diff-reduce-lstat (Sat May 9 15:11:17 2009 -0700) 2 commits
  + Teach 'git checkout' to preload the index contents
@@ -58,6 +70,9 @@ meant to be merged to the maintenance series have "maint-" in their names.
 * jk/no-no-no-empty-directory (Fri May 8 01:01:17 2009 -0400) 2 commits
  + parseopt: add OPT_NEGBIT
  + parseopt: add OPT_NEGBIT
+
+I somehow botched the commit log message of the top one; it is about
+fixing "ls-files --no-empty-directory".
 
 * fl/git-pm (Thu May 7 15:41:28 2009 +0200) 2 commits
  + Git.pm: Always set Repository to absolute path if autodetecting
@@ -152,6 +167,8 @@ in binary mode as well.
  - rev-list: refactor printing bisect vars
  - rev-list: make "estimate_bisect_steps" non static
 
+Will merge to 'next'.
+
 * mh/show-branch-color (Sat Apr 25 13:46:14 2009 +0200) 2 commits
  + bash completion: show-branch color support
  + show-branch: color the commit status signs
@@ -162,8 +179,12 @@ in binary mode as well.
 * ar/merge-one-file-diag (Wed Apr 29 23:40:50 2009 +0200) 1 commit
  - Clarify kind of conflict in merge-one-file helper
 
+Will merge to 'next'.
+
 * mh/diff-stat-color (Sat Apr 25 00:06:47 2009 +0200) 1 commit
  - diff: do not color --stat output like patch context
+
+Will merge to 'next'.
 
 * rc/http-push (Sat Apr 25 00:35:57 2009 +0800) 3 commits
  - http-push: send out fetch requests on queue
@@ -179,8 +200,12 @@ in binary mode as well.
  - Introduce an unlink(2) wrapper which gives warning if unlink
    failed
 
+Will merge to 'next'.
+
 * ph/submodule-rebase (Fri Apr 24 09:06:38 2009 +1000) 1 commit
  - git-submodule: add support for --rebase.
+
+Will merge to 'next'.
 
 * mw/send-email (Mon Apr 13 13:23:52 2009 -0500) 6 commits
  - send-email: Remove superfluous `my $editor = ...'
@@ -193,6 +218,8 @@ in binary mode as well.
 
 Only partially queued, but this is not 1.6.3 material and we are not in a
 hurry.
+
+Will merge to 'next'.
 
 * js/add-edit (Mon Apr 27 19:51:42 2009 +0200) 2 commits
  + t3702: fix reliance on SHELL_PATH being '/bin/sh'
@@ -228,4 +255,5 @@ command line would not work very well with this series.
    push
 
 These are for 1.7.0, but the messages when they trigger together may need
-to be rethought.
+to be rethought.  Will start merging them to 'next' shortly.
+
