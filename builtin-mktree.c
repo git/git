@@ -6,6 +6,7 @@
 #include "builtin.h"
 #include "quote.h"
 #include "tree.h"
+#include "parse-options.h"
 
 static struct treeent {
 	unsigned mode;
@@ -61,7 +62,10 @@ static void write_tree(unsigned char *sha1)
 	write_sha1_file(buf.buf, buf.len, tree_type, sha1);
 }
 
-static const char mktree_usage[] = "git mktree [-z]";
+static const char *mktree_usage[] = {
+	"git mktree [-z]",
+	NULL
+};
 
 int cmd_mktree(int ac, const char **av, const char *prefix)
 {
@@ -69,16 +73,12 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 	struct strbuf p_uq = STRBUF_INIT;
 	unsigned char sha1[20];
 	int line_termination = '\n';
+	const struct option option[] = {
+		OPT_SET_INT('z', NULL, &line_termination, "input is NUL terminated", '\0'),
+		OPT_END()
+	};
 
-	while ((1 < ac) && av[1][0] == '-') {
-		const char *arg = av[1];
-		if (!strcmp("-z", arg))
-			line_termination = 0;
-		else
-			usage(mktree_usage);
-		ac--;
-		av++;
-	}
+	ac = parse_options(ac, av, option, mktree_usage, 0);
 
 	while (strbuf_getline(&sb, stdin, line_termination) != EOF) {
 		char *ptr, *ntr;
