@@ -108,10 +108,21 @@ __git_ps1 ()
 			fi
 
 			b="$(git symbolic-ref HEAD 2>/dev/null)" || {
-				b="$(git describe --exact-match HEAD 2>/dev/null)" ||
+
+				b="$(
+				case "${GIT_PS1_DESCRIBE_STYLE-}" in
+				(contains)
+					git describe --contains HEAD ;;
+				(branch)
+					git describe --contains --all HEAD ;;
+				(describe)
+					git describe HEAD ;;
+				(* | default)
+					git describe --exact-match HEAD ;;
+				esac 2>/dev/null)" ||
+
 				b="$(cut -c1-7 "$g/HEAD" 2>/dev/null)..." ||
 				b="unknown"
-
 				b="($b)"
 			}
 		fi
