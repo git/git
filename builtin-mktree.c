@@ -89,9 +89,16 @@ static void mktree_line(char *buf, size_t len, int line_termination)
 	    ntr[41] != '\t' ||
 	    get_sha1_hex(ntr + 1, sha1))
 		die("input format error: %s", buf);
-	type = sha1_object_info(sha1, NULL);
+
+	/* It is perfectly normal if we do not have a commit from a submodule */
+	if (!S_ISGITLINK(mode))
+		type = sha1_object_info(sha1, NULL);
+	else
+		type = OBJ_COMMIT;
+
 	if (type < 0)
 		die("object %s unavailable", sha1_to_hex(sha1));
+
 	*ntr++ = 0; /* now at the beginning of SHA1 */
 	if (type != type_from_string(ptr))
 		die("object type %s mismatch (%s)", ptr, typename(type));
