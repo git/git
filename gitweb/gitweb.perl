@@ -2050,7 +2050,7 @@ sub git_get_project_description {
 	my $path = shift;
 
 	$git_dir = "$projectroot/$path";
-	open my $fd, "$git_dir/description"
+	open my $fd, '<', "$git_dir/description"
 		or return git_get_project_config('description');
 	my $descr = <$fd>;
 	close $fd;
@@ -2068,7 +2068,7 @@ sub git_get_project_ctags {
 	opendir my $dh, "$git_dir/ctags"
 		or return $ctags;
 	foreach (grep { -f $_ } map { "$git_dir/ctags/$_" } readdir($dh)) {
-		open my $ct, $_ or next;
+		open my $ct, '<', $_ or next;
 		my $val = <$ct>;
 		chomp $val;
 		close $ct;
@@ -2128,7 +2128,7 @@ sub git_get_project_url_list {
 	my $path = shift;
 
 	$git_dir = "$projectroot/$path";
-	open my $fd, "$git_dir/cloneurl"
+	open my $fd, '<', "$git_dir/cloneurl"
 		or return wantarray ?
 		@{ config_to_multi(git_get_project_config('url')) } :
 		   config_to_multi(git_get_project_config('url'));
@@ -2186,7 +2186,7 @@ sub git_get_projects_list {
 		# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
 		# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
 		my %paths;
-		open my ($fd), $projects_list or return;
+		open my $fd, '<', $projects_list or return;
 	PROJECT:
 		while (my $line = <$fd>) {
 			chomp $line;
@@ -2249,7 +2249,7 @@ sub git_get_project_list_from_file {
 	# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
 	# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
 	if (-f $projects_list) {
-		open (my $fd , $projects_list);
+		open(my $fd, '<', $projects_list);
 		while (my $line = <$fd>) {
 			chomp $line;
 			my ($pr, $ow) = split ' ', $line;
@@ -2803,7 +2803,7 @@ sub mimetype_guess_file {
 	-r $mimemap or return undef;
 
 	my %mimemap;
-	open(my $mh, $mimemap) or return undef;
+	open(my $mh, '<', $mimemap) or return undef;
 	while (<$mh>) {
 		next if m/^#/; # skip comments
 		my ($mimetype, $exts) = split(/\t+/);
