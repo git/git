@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2009, #04; Wed, 29)
-X-master-at: 6ffd567bec439e7809ee0966556bd5e72fb78de4
-X-next-at: 8c6980a6544dcc03e45b1d63d624544f3bfa1b94
+Subject: What's cooking in git.git (May 2009, #01; Sat, 09)
+X-master-at: 6345d7a0d151afc3d2a10ada3ecacf54c3fee2d0
+X-next-at: 99c766e3a22715646df19711aeaf76e0c938bacd
 
-What's cooking in git.git (Apr 2009, #04; Wed, 29)
+What's cooking in git.git (May 2009, #01; Sat, 09)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -17,128 +17,70 @@ meant to be merged to the maintenance series have "maint-" in their names.
 ----------------------------------------------------------------
 [New Topics]
 
-* cc/bisect (Fri Apr 24 08:29:01 2009 +0200) 10 commits
- - am: simplify "sq" function by using "git rev-parse --sq-quote"
- - bisect: use "git rev-parse --sq-quote" instead of a custom "sq"
-   function
- - rev-parse: add --sq-quote to shell quote arguments
- - rev-list: remove stringed output flag from "show_bisect_vars"
- - bisect--helper: remove "--next-vars" option as it is now useless
- - bisect: use "git bisect--helper --next-exit" in "git-bisect.sh"
- - bisect--helper: add "--next-exit" to output bisect results
- - bisect: move common bisect functionality to "bisect_common"
- - rev-list: refactor printing bisect vars
- - rev-list: make "estimate_bisect_steps" non static
+* mt/submodule-reference (Mon May 4 22:30:01 2009 +0300) 1 commit
+ + Add --reference option to git submodule.
 
-* mh/show-branch-color (Sat Apr 25 13:46:14 2009 +0200) 2 commits
- + bash completion: show-branch color support
- + show-branch: color the commit status signs
+* rr/forbid-bs-in-ref (Fri May 8 07:32:37 2009 +0200) 1 commit
+ + Disallow '\' in ref names
 
-* ac/graph-horizontal-line (Tue Apr 21 08:47:01 2009 -0400) 1 commit
- + graph API: Use horizontal lines for more compact graphs
+This retroactively forbids use of what people could have been using
+happily, which, strictly speaking, is a no-no, but makes sense in the
+longer term.
 
-* ar/merge-one-file-diag (Wed Apr 29 23:40:50 2009 +0200) 1 commit
- - Clarify kind of conflict in merge-one-file helper
+* jk/maint-add-empty (Tue Apr 28 23:21:01 2009 -0400) 1 commit
+ - add: don't complain when adding empty project root
 
-* mh/diff-stat-color (Sat Apr 25 00:06:47 2009 +0200) 1 commit
- - diff: do not color --stat output like patch context
+When you say "git add ." in an empty directory, you get "No path matches
+''", instead of "No path matches '.'", and this "fixes" it by hiding the
+error and making the command silently succeed.  Strictly speaking it
+introduces inconsistency, but I think an empty directory is so
+uninteresting special case that not signalling it as an error is Ok.
 
-* rc/http-push (Sat Apr 25 00:35:57 2009 +0800) 3 commits
- . http-push: send out fetch requests on queue
- . t5540-http-push: test fetching of packed objects
- . t5540-http-push: test fetching of loose objects
+Will merge to 'next'.
 
-Breaks build in a trivial way; which I haven't got around fixing it up.
+* lt/maint-diff-reduce-lstat (Sat May 9 15:11:17 2009 -0700) 2 commits
+ + Teach 'git checkout' to preload the index contents
+ + Avoid unnecessary 'lstat()' calls in 'get_stat_data()'
 
-* ae/anon-fetch-info (Fri Apr 17 10:20:11 2009 +0200) 1 commit
- + fetch: Strip usernames from url's before storing them
+* jk/maint-1.6.0-trace-argv (Fri May 8 05:06:15 2009 -0400) 1 commit
+ + fix GIT_TRACE segfault with shell-quoted aliases
 
-* ar/unlink-err (Wed Apr 29 23:24:52 2009 +0200) 3 commits
- - print unlink(2) errno in copy_or_link_directory
- - replace direct calls to unlink(2) with unlink_or_warn
- - Introduce an unlink(2) wrapper which gives warning if unlink
-   failed
+* hv/sample-update (Fri May 8 17:22:30 2009 +0200) 1 commit
+ + Extend sample update hook, disable modifying of existing tags
 
-* ph/submodule-rebase (Fri Apr 24 09:06:38 2009 +1000) 1 commit
- - git-submodule: add support for --rebase.
+* rs/grep-parseopt (Thu May 7 21:46:48 2009 +0200) 5 commits
+ + grep: use parseopt
+ + grep: remove global variable builtin_grep
+ + parseopt: add PARSE_OPT_NODASH
+ + parseopt: add OPT_NUMBER_CALLBACK
+ + parseopt: add OPT_NEGBIT
+
+* do/maint-merge-recursive-fix (Sat May 9 14:49:59 2009 -0700) 1 commit
+ + merge-recursive: never leave index unmerged while recursing
+
+* np/push-delta (Fri May 1 16:56:47 2009 -0400) 1 commit
+ + allow OFS_DELTA objects during a push
+
+* jm/format-patch-no-auto-n-when-k-is-given (Sat May 9 10:12:01 2009 +0200) 1 commit
+ + format-patch let -k override a config-specified format.numbered
+
+* da/mergetool-lib (Sat May 2 01:57:21 2009 -0700) 1 commit
+ - mergetool--lib: specialize diff options for emerge and ecmerge
+
+* jk/no-no-no-empty-directory (Fri May 8 01:01:17 2009 -0400) 2 commits
+ + parseopt: add OPT_NEGBIT
+ + parseopt: add OPT_NEGBIT
+
+I somehow botched the commit log message of the top one; it is about
+fixing "ls-files --no-empty-directory".
+
+* fl/git-pm (Thu May 7 15:41:28 2009 +0200) 2 commits
+ + Git.pm: Always set Repository to absolute path if autodetecting
+ + Git.pm: Set GIT_WORK_TREE if we set GIT_DIR
 
 ----------------------------------------------------------------
-[Graduated to "master"]
+[Will merge to "master" soon]
 
-It's been a while since I sent "What's cooking" out, and some of the
-topics below have fixes on top directly applied since they graduated.
-
-* ac/color-graph (Mon Apr 13 15:53:41 2009 -0400) 1 commit
- + graph API: Added logic for colored edges
-
-* jk/cobdoc (Mon Apr 13 07:21:04 2009 -0400) 5 commits
- + docs/checkout: clarify what "non-branch" means
- + doc/checkout: split checkout and branch creation in synopsis
- + doc/checkout: refer to git-branch(1) as appropriate
- + doc: refer to tracking configuration as "upstream"
- + doc: clarify --no-track option
-
-* mk/apply-swap (Sat Apr 11 21:31:00 2009 +0200) 2 commits
- + builtin-apply: keep information about files to be deleted
- + tests: test applying criss-cross rename patch
-
-Perhaps needs to be cherry-picked to 1.6.2.X series as well.
-
-* mm/add-p-quit (Fri Apr 10 16:57:01 2009 +0200) 1 commit
- + git add -p: new "quit" command at the prompt.
-
-* eb/upload-archive-from-git-shell (Thu Apr 9 21:58:52 2009 +0200) 1 commit
- + git-shell: Add 'git-upload-archive' to allowed commands.
-
-* jc/shared-literally (Sun Apr 12 17:55:18 2009 -0700) 2 commits
- + Mark t1301 permission test to depend on POSIXPERM
- + t1301-shared-repo: fix forced modes test
-
-* jc/maint-shared-literally (Sun Apr 12 21:22:02 2009 +0200) 1 commit
- + t1301-shared-repo: fix forced modes test
-
-* ns/am-to-empty (Fri Apr 10 09:34:42 2009 +0900) 1 commit
- + git-am: teach git-am to apply a patch to an unborn branch
-
-* bw/short-ref-strict (Mon Apr 13 13:20:26 2009 +0200) 3 commits
- + rev-parse: --abbrev-ref option to shorten ref name
- + for-each-ref: utilize core.warnAmbiguousRefs for :short-format
- + shorten_unambiguous_ref(): add strict mode
-
-* da/difftool (Sat Apr 11 20:41:56 2009 -0700) 16 commits
- + mergetool--lib: simplify API usage by removing more global
-   variables
- + Fix misspelled mergetool.keepBackup
- + difftool/mergetool: refactor commands to use git-mergetool--lib
- + mergetool: use $( ... ) instead of `backticks`
- + bash completion: add git-difftool
- + difftool: add support for a difftool.prompt config variable
- + difftool: add various git-difftool tests
- + difftool: move 'git-difftool' out of contrib
- + difftool/mergetool: add diffuse as merge and diff tool
- + difftool: add a -y shortcut for --no-prompt
- + difftool: use perl built-ins when testing for msys
- + difftool: remove the backup file feature
- + difftool: remove merge options for opendiff, tkdiff, kdiff3 and
-   xxdiff
- + git-mergetool: add new merge tool TortoiseMerge
- + git-mergetool/difftool: make (g)vimdiff workable under Windows
- + doc/merge-config: list ecmerge as a built-in merge tool
-
-* lt/bool-on-off (Thu Apr 9 12:40:39 2009 -0700) 1 commit
- + Allow users to un-configure rename detection
-
-* lt/pack-object-memuse (Fri Apr 10 18:15:26 2009 -0700) 2 commits
- + show_object(): push path_name() call further down
- + process_{tree,blob}: show objects without buffering
-
-* nd/archive-attribute (Mon Apr 13 14:18:39 2009 +0200) 5 commits
- + archive test: test new --fix-attributes feature
- + archive: do not read .gitattributes in working directory
- + unpack-trees: do not muck with attributes when we are not checking
-   out
- + attr: add GIT_ATTR_INDEX "direction"
- + archive tests: do not use .gitattributes in working directory
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
@@ -203,18 +145,67 @@ in binary mode as well.
  - cvsimport: extend testcase about patchset order to contain
    branches
  - cvsimport: add test illustrating a bug in cvsps
- + Add a test of "git cvsimport"'s handling of tags and branches
- + Add some tests of git-cvsimport's handling of vendor branches
- + Test contents of entire cvsimported "master" tree contents
- + Use CVS's -f option if available (ignore user's ~/.cvsrc file)
- + Start a library for cvsimport-related tests
-
-Two cvsimport test topics were rewound from 'next' and merged into this
-one.  I'll keep this in 'pu' so that people can polish their cvsps skilz
-to resolve issues these tests identify.
+ - Add a test of "git cvsimport"'s handling of tags and branches
+ - Add some tests of git-cvsimport's handling of vendor branches
+ - Test contents of entire cvsimported "master" tree contents
+ - Use CVS's -f option if available (ignore user's ~/.cvsrc file)
+ - Start a library for cvsimport-related tests
 
 ----------------------------------------------------------------
 [Actively cooking]
+
+* cc/bisect (Fri Apr 24 08:29:01 2009 +0200) 10 commits
+ - am: simplify "sq" function by using "git rev-parse --sq-quote"
+ - bisect: use "git rev-parse --sq-quote" instead of a custom "sq"
+   function
+ - rev-parse: add --sq-quote to shell quote arguments
+ - rev-list: remove stringed output flag from "show_bisect_vars"
+ - bisect--helper: remove "--next-vars" option as it is now useless
+ - bisect: use "git bisect--helper --next-exit" in "git-bisect.sh"
+ - bisect--helper: add "--next-exit" to output bisect results
+ - bisect: move common bisect functionality to "bisect_common"
+ - rev-list: refactor printing bisect vars
+ - rev-list: make "estimate_bisect_steps" non static
+
+Will merge to 'next'.
+
+* mh/show-branch-color (Sat Apr 25 13:46:14 2009 +0200) 2 commits
+ + bash completion: show-branch color support
+ + show-branch: color the commit status signs
+
+* ac/graph-horizontal-line (Tue Apr 21 08:47:01 2009 -0400) 1 commit
+ + graph API: Use horizontal lines for more compact graphs
+
+* ar/merge-one-file-diag (Wed Apr 29 23:40:50 2009 +0200) 1 commit
+ - Clarify kind of conflict in merge-one-file helper
+
+Will merge to 'next'.
+
+* mh/diff-stat-color (Sat Apr 25 00:06:47 2009 +0200) 1 commit
+ - diff: do not color --stat output like patch context
+
+Will merge to 'next'.
+
+* rc/http-push (Sat Apr 25 00:35:57 2009 +0800) 3 commits
+ - http-push: send out fetch requests on queue
+ - t5540-http-push: test fetching of packed objects
+ - t5540-http-push: test fetching of loose objects
+
+* ae/anon-fetch-info (Fri Apr 17 10:20:11 2009 +0200) 1 commit
+ + fetch: Strip usernames from url's before storing them
+
+* ar/unlink-err (Wed Apr 29 23:24:52 2009 +0200) 3 commits
+ - print unlink(2) errno in copy_or_link_directory
+ - replace direct calls to unlink(2) with unlink_or_warn
+ - Introduce an unlink(2) wrapper which gives warning if unlink
+   failed
+
+Will merge to 'next'.
+
+* ph/submodule-rebase (Fri Apr 24 09:06:38 2009 +1000) 1 commit
+ - git-submodule: add support for --rebase.
+
+Will merge to 'next'.
 
 * mw/send-email (Mon Apr 13 13:23:52 2009 -0500) 6 commits
  - send-email: Remove superfluous `my $editor = ...'
@@ -227,6 +218,8 @@ to resolve issues these tests identify.
 
 Only partially queued, but this is not 1.6.3 material and we are not in a
 hurry.
+
+Will merge to 'next'.
 
 * js/add-edit (Mon Apr 27 19:51:42 2009 +0200) 2 commits
  + t3702: fix reliance on SHELL_PATH being '/bin/sh'
@@ -252,18 +245,6 @@ I suspect an attempt to replace an object that is directly listed on the
 command line would not work very well with this series.
 
 ----------------------------------------------------------------
-[Reverted]
-
-* mh/cvsimport-tests (Mon Feb 23 06:08:14 2009 +0100) 5 commits
- + Add a test of "git cvsimport"'s handling of tags and branches
- + Add some tests of git-cvsimport's handling of vendor branches
- + Test contents of entire cvsimported "master" tree contents
- + Use CVS's -f option if available (ignore user's ~/.cvsrc file)
- + Start a library for cvsimport-related tests
-
-This has been reverted out of 'next' for some time now.
-
-----------------------------------------------------------------
 [On Hold]
 
 * jc/deny-delete-current-1.7.0 (Mon Feb 9 00:19:46 2009 -0800) 1 commit
@@ -274,4 +255,5 @@ This has been reverted out of 'next' for some time now.
    push
 
 These are for 1.7.0, but the messages when they trigger together may need
-to be rethought.
+to be rethought.  Will start merging them to 'next' shortly.
+
