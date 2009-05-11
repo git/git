@@ -828,7 +828,7 @@ if (!defined $action) {
 if (!defined($actions{$action})) {
 	die_error(400, "Unknown action");
 }
-if ($action !~ m/^(opml|project_list|project_index)$/ &&
+if ($action !~ m/^(?:opml|project_list|project_index)$/ &&
     !$project) {
 	die_error(400, "Project needed");
 }
