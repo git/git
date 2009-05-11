@@ -74,7 +74,7 @@ test_expect_success 'status when tracking lightweight tags' '
 	git checkout lighttrack
 '
 
-test_expect_failure 'status when tracking annotated tags' '
+test_expect_success 'status when tracking annotated tags' '
 	git checkout master &&
 	git tag -m heavy heavy &&
 	git branch --track heavytrack heavy >actual &&
