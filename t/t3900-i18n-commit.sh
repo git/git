@@ -9,7 +9,15 @@ test_description='commit and log output encodings'
 
 compare_with () {
 	git show -s $1 | sed -e '1,/^$/d' -e 's/^    //' >current &&
-	test_cmp current "$2"
+	case "$3" in
+	'')
+		test_cmp "$2" current ;;
+	?*)
+		iconv -f "$3" -t utf8 >current.utf8 <current &&
+		iconv -f "$3" -t utf8 >expect.utf8 <"$2" &&
+		test_cmp expect.utf8 current.utf8
+		;;
+	esac
 }
 
 test_expect_success setup '
@@ -103,11 +111,17 @@ done
 
 for J in EUCJP ISO-2022-JP
 do
+	if test "$J" = ISO-2022-JP
+	then
+		ICONV=$J
+	else
+		ICONV=
+	fi
 	git config i18n.logoutputencoding $J
 	for H in EUCJP ISO-2022-JP
 	do
 		test_expect_success "$H should be shown in $J now" '
-			compare_with '$H' "$TEST_DIRECTORY"/t3900/'$J'.txt
+			compare_with '$H' "$TEST_DIRECTORY"/t3900/'$J'.txt $ICONV
 		'
 	done
 done
