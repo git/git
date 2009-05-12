@@ -210,6 +210,7 @@ my %config_settings = (
     "envelopesender" => \$envelope_sender,
     "multiedit" => \$multiedit,
     "confirm"   => \$confirm,
+    "from" => \$sender,
 );
 
 # Handle Uncouth Termination
