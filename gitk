@@ -1798,6 +1798,7 @@ proc make_transient {window origin} {
 
 proc show_error {w top msg} {
     global NS
+    if {![info exists NS]} {set NS ""}
     if {[wm state $top] eq "withdrawn"} { wm deiconify $top }
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
@@ -1920,7 +1921,12 @@ proc mca {str} {
 proc makedroplist {w varname args} {
     global use_ttk
     if {$use_ttk} {
-	set gm [ttk::combobox $w -width 10 -state readonly\
+        set width 0
+        foreach label $args {
+            set cx [string length $label]
+            if {$cx > $width} {set width $cx}
+        }
+	set gm [ttk::combobox $w -width $width -state readonly\
 		    -textvariable $varname -values $args]
     } else {
 	set gm [eval [linsert $args 0 tk_optionMenu $w $varname]]
@@ -2141,7 +2147,7 @@ proc makewindow {} {
     pack .tf.lbar.flabel .tf.lbar.fnext .tf.lbar.fprev .tf.lbar.flab2 \
 	-side left -fill y
     set gdttype [mc "containing:"]
-    set gm [makedroplist .tf.lbar.gdttype gdtype \
+    set gm [makedroplist .tf.lbar.gdttype gdttype \
 		[mc "containing:"] \
 		[mc "touching paths:"] \
 		[mc "adding/removing string:"]]
