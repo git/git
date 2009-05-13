@@ -104,11 +104,12 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 {
 	const char *end = repo + strlen(repo), *start;
+	char *dir;
 
 	/*
-	 * Strip trailing slashes and /.git
+	 * Strip trailing spaces, slashes and /.git
 	 */
-	while (repo < end && is_dir_sep(end[-1]))
+	while (repo < end && (is_dir_sep(end[-1]) || isspace(end[-1])))
 		end--;
 	if (end - repo > 5 && is_dir_sep(end[-5]) &&
 	    !strncmp(end - 4, ".git", 4)) {
@@ -140,10 +141,33 @@ static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 	if (is_bare) {
 		struct strbuf result = STRBUF_INIT;
 		strbuf_addf(&result, "%.*s.git", (int)(end - start), start);
-		return strbuf_detach(&result, 0);
+		dir = strbuf_detach(&result, 0);
+	} else
+		dir = xstrndup(start, end - start);
+	/*
+	 * Replace sequences of 'control' characters and whitespace
+	 * with one ascii space, remove leading and trailing spaces.
+	 */
+	if (*dir) {
+		char *out = dir;
+		int prev_space = 1 /* strip leading whitespace */;
+		for (end = dir; *end; ++end) {
+			char ch = *end;
+			if ((unsigned char)ch < '\x20')
+				ch = '\x20';
+			if (isspace(ch)) {
+				if (prev_space)
+					continue;
+				prev_space = 1;
+			} else
+				prev_space = 0;
+			*out++ = ch;
+		}
+		*out = '\0';
+		if (out > dir && prev_space)
+			out[-1] = '\0';
 	}
-
-	return xstrndup(start, end - start);
+	return dir;
 }
 
 static void strip_trailing_slashes(char *dir)
