@@ -25,6 +25,10 @@ imposes the following rules on how references are named:
   grouping, but no slash-separated component can begin with a
   dot `.`.
 
+. They must contain at least one `/`. This enforces the presence of a
+  category like `heads/`, `tags/` etc. but the actual names are not
+  restricted.
+
 . They cannot have two consecutive dots `..` anywhere.
 
 . They cannot have ASCII control characters (i.e. bytes whose
