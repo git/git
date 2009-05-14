@@ -576,7 +576,7 @@ static int get_dtype(struct dirent *de, const char *path)
  */
 static int read_directory_recursive(struct dir_struct *dir, const char *path, const char *base, int baselen, int check_only, const struct path_simplify *simplify)
 {
-	DIR *fdir = opendir(path);
+	DIR *fdir = opendir(*path ? path : ".");
 	int contents = 0;
 
 	if (fdir) {
