@@ -69,7 +69,8 @@ OPTIONS
 
 --add::
 	Adds a new line to the option without altering any existing
-	values.  This is the same as providing '^$' as the value_regex.
+	values.  This is the same as providing '^$' as the value_regex
+	in `--replace-all`.
 
 --get::
 	Get the value for a given key (optionally filtered by a regex
@@ -155,7 +156,7 @@ See also <<FILES>>.
 	When the color setting for `name` is undefined, the command uses
 	`color.ui` as fallback.
 
---get-color name default::
+--get-color name [default]::
 
 	Find the color configured for `name` (e.g. `color.diff.new`) and
 	output it as the ANSI color escape sequence to the standard
