@@ -61,13 +61,12 @@ struct dir_struct {
 	char basebuf[PATH_MAX];
 };
 
-extern int common_prefix(const char **pathspec);
-
 #define MATCHED_RECURSIVELY 1
 #define MATCHED_FNMATCH 2
 #define MATCHED_EXACTLY 3
 extern int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen);
 
+extern int fill_directory(struct dir_struct *dir, const char **pathspec);
 extern int read_directory(struct dir_struct *, const char *path, const char *base, int baselen, const char **pathspec);
 
 extern int excluded(struct dir_struct *, const char *, int *);

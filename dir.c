@@ -19,7 +19,7 @@ static int read_directory_recursive(struct dir_struct *dir,
 	int check_only, const struct path_simplify *simplify);
 static int get_dtype(struct dirent *de, const char *path);
 
-int common_prefix(const char **pathspec)
+static int common_prefix(const char **pathspec)
 {
 	const char *path, *slash, *next;
 	int prefix;
@@ -50,6 +50,27 @@ int common_prefix(const char **pathspec)
 		}
 	}
 	return prefix;
+}
+
+int fill_directory(struct dir_struct *dir, const char **pathspec)
+{
+	const char *path, *base;
+	int baselen;
+
+	/*
+	 * Calculate common prefix for the pathspec, and
+	 * use that to optimize the directory walk
+	 */
+	baselen = common_prefix(pathspec);
+	path = "";
+	base = "";
+
+	if (baselen)
+		path = base = xmemdupz(*pathspec, baselen);
+
+	/* Read the directory and prune it */
+	read_directory(dir, path, base, baselen, pathspec);
+	return baselen;
 }
 
 /*
