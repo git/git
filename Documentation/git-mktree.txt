@@ -8,7 +8,7 @@ git-mktree - Build a tree-object from ls-tree formatted text
 
 SYNOPSIS
 --------
-'git mktree' [-z] [--missing]
+'git mktree' [-z] [--missing] [--batch]
 
 DESCRIPTION
 -----------
@@ -27,6 +27,12 @@ OPTIONS
 	is to verify that each tree entry's sha1 identifies an existing
 	object.  This option has no effect on the treatment of gitlink entries
 	(aka "submodules") which are always allowed to be missing.
+
+--batch::
+	Allow building of more than one tree object before exiting.  Each
+	tree is separated by as single blank line. The final new-line is
+	optional.  Note - if the '-z' option is used, lines are terminated
+	with NUL.
 
 Author
 ------

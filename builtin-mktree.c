@@ -63,7 +63,7 @@ static void write_tree(unsigned char *sha1)
 }
 
 static const char *mktree_usage[] = {
-	"git mktree [-z] [--missing]",
+	"git mktree [-z] [--missing] [--batch]",
 	NULL
 };
 
@@ -122,20 +122,46 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 	unsigned char sha1[20];
 	int line_termination = '\n';
 	int allow_missing = 0;
+	int is_batch_mode = 0;
+	int got_eof = 0;
+
 	const struct option option[] = {
 		OPT_SET_INT('z', NULL, &line_termination, "input is NUL terminated", '\0'),
 		OPT_SET_INT( 0 , "missing", &allow_missing, "allow missing objects", 1),
+		OPT_SET_INT( 0 , "batch", &is_batch_mode, "allow creation of more than one tree", 1),
 		OPT_END()
 	};
 
 	ac = parse_options(ac, av, option, mktree_usage, 0);
 
-	while (strbuf_getline(&sb, stdin, line_termination) != EOF)
-		mktree_line(sb.buf, sb.len, line_termination, allow_missing);
-
+	while (!got_eof) {
+		while (1) {
+			if (strbuf_getline(&sb, stdin, line_termination) == EOF) {
+				got_eof = 1;
+				break;
+			}
+			if (sb.buf[0] == '\0') {
+				/* empty lines denote tree boundaries in batch mode */
+				if (is_batch_mode)
+					break;
+				die("input format error: (blank line only valid in batch mode)");
+			}
+			mktree_line(sb.buf, sb.len, line_termination, allow_missing);
+		}
+		if (is_batch_mode && got_eof && used < 1) {
+			/*
+			 * Execution gets here if the last tree entry is terminated with a
+			 * new-line.  The final new-line has been made optional to be
+			 * consistent with the original non-batch behaviour of mktree.
+			 */
+			; /* skip creating an empty tree */
+		} else {
+			write_tree(sha1);
+			puts(sha1_to_hex(sha1));
+			fflush(stdout);
+		}
+		used=0; /* reset tree entry buffer for re-use in batch mode */
+	}
 	strbuf_release(&sb);
-
-	write_tree(sha1);
-	puts(sha1_to_hex(sha1));
 	exit(0);
 }
