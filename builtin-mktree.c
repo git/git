@@ -63,7 +63,7 @@ static void write_tree(unsigned char *sha1)
 }
 
 static const char *mktree_usage[] = {
-	"git mktree [-z]",
+	"git mktree [-z] [--missing]",
 	NULL
 };
 
