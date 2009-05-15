@@ -838,7 +838,7 @@ exit;
 ## ======================================================================
 ## action links
 
-sub href (%) {
+sub href {
 	my %params = @_;
 	# default is to use -absolute url() i.e. $my_uri
 	my $href = $params{-full} ? $my_url : $my_uri;
@@ -1036,7 +1036,7 @@ sub esc_url {
 }
 
 # replace invalid utf8 character with SUBSTITUTION sequence
-sub esc_html ($;%) {
+sub esc_html {
 	my $str = shift;
 	my %opts = @_;
 
@@ -1296,7 +1296,7 @@ use constant {
 };
 
 # submodule/subproject, a commit object reference
-sub S_ISGITLINK($) {
+sub S_ISGITLINK {
 	my $mode = shift;
 
 	return (($mode & S_IFMT) == S_IFGITLINK)
@@ -2615,7 +2615,7 @@ sub parsed_difftree_line {
 }
 
 # parse line of git-ls-tree output
-sub parse_ls_tree_line ($;%) {
+sub parse_ls_tree_line {
 	my $line = shift;
 	my %opts = @_;
 	my %res;
@@ -3213,7 +3213,6 @@ sub git_print_header_div {
 	      "\n</div>\n";
 }
 
-#sub git_print_authorship (\%) {
 sub git_print_authorship {
 	my $co = shift;
 
@@ -3269,8 +3268,7 @@ sub git_print_page_path {
 	print "<br/></div>\n";
 }
 
-# sub git_print_log (\@;%) {
-sub git_print_log ($;%) {
+sub git_print_log {
 	my $log = shift;
 	my %opts = @_;
 

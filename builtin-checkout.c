@@ -365,17 +365,14 @@ static int merge_working_tree(struct checkout_opts *opts,
 	int ret;
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 	int newfd = hold_locked_index(lock_file, 1);
-	int reprime_cache_tree = 0;
 
 	if (read_cache() < 0)
 		return error("corrupt index file");
 
-	cache_tree_free(&active_cache_tree);
 	if (opts->force) {
 		ret = reset_tree(new->commit->tree, opts, 1);
 		if (ret)
 			return ret;
-		reprime_cache_tree = 1;
 	} else {
 		struct tree_desc trees[2];
 		struct tree *tree;
@@ -411,9 +408,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		init_tree_desc(&trees[1], tree->buffer, tree->size);
 
 		ret = unpack_trees(2, trees, &topts);
-		if (ret != -1) {
-			reprime_cache_tree = 1;
-		} else {
+		if (ret == -1) {
 			/*
 			 * Unpack couldn't do a trivial merge; either
 			 * give up or do a real merge, depending on
@@ -457,8 +452,6 @@ static int merge_working_tree(struct checkout_opts *opts,
 		}
 	}
 
-	if (reprime_cache_tree)
-		prime_cache_tree(&active_cache_tree, new->commit->tree);
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_locked_index(lock_file))
 		die("unable to write new index file");
