@@ -165,4 +165,36 @@ test_expect_success FILEMODE 'stage mode but not hunk' '
 
 # end of tests disabled when filemode is not usable
 
+# Write the patch file with a new line at the top and bottom
+cat >patch <<EOF
+index 180b47c..b6f2c08 100644
+--- a/file
++++ b/file
+@@ -1,2 +1,4 @@
++firstline
+ baseline
+ content
++lastline
+EOF
+# Expected output, similar to the patch but w/ diff at the top
+cat >expected <<EOF
+diff --git a/file b/file
+index b6f2c08..61b9053 100755
+--- a/file
++++ b/file
+@@ -1,2 +1,4 @@
++firstline
+ baseline
+ content
++lastline
+EOF
+# Test splitting the first patch, then adding both
+test_expect_failure 'add first line works' '
+	git commit -am "clear local changes" &&
+	git apply patch &&
+	(echo s; echo y; echo y) | git add -p file &&
+	git diff --cached > diff &&
+	test_cmp expected diff
+'
+
 test_done
