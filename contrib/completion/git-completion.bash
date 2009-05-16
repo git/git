@@ -99,10 +99,10 @@ __git_ps1 ()
 		elif [ -d "$g/rebase-merge" ]; then
 			r="|REBASE-m"
 			b="$(cat "$g/rebase-merge/head-name")"
-		elif [ -f "$g/MERGE_HEAD" ]; then
-			r="|MERGING"
-			b="$(git symbolic-ref HEAD 2>/dev/null)"
 		else
+			if [ -f "$g/MERGE_HEAD" ]; then
+				r="|MERGING"
+			fi
 			if [ -f "$g/BISECT_LOG" ]; then
 				r="|BISECTING"
 			fi
