@@ -189,7 +189,7 @@ index b6f2c08..61b9053 100755
 +lastline
 EOF
 # Test splitting the first patch, then adding both
-test_expect_failure 'add first line works' '
+test_expect_success 'add first line works' '
 	git commit -am "clear local changes" &&
 	git apply patch &&
 	(echo s; echo y; echo y) | git add -p file &&
