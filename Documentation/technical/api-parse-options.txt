@@ -198,7 +198,7 @@ The function must be defined in this form:
 
 The callback mechanism is as follows:
 
-* Inside `funct`, the only interesting member of the structure
+* Inside `func`, the only interesting member of the structure
   given by `opt` is the void pointer `opt->value`.
   `\*opt->value` will be the value that is saved into `var`, if you
   use `OPT_CALLBACK()`.
