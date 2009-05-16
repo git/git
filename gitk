@@ -7267,8 +7267,13 @@ proc getblobdiffs {ids} {
     global ignorespace
     global limitdiffs vfilelimit curview
     global diffencoding targetline diffnparents
+    global git_version
 
-    set cmd [diffcmd $ids "-p --textconv -C --cc --no-commit-id -U$diffcontext"]
+    set textconv {}
+    if {[package vcompare $git_version "1.6.1"] >= 0} {
+	set textconv "--textconv"
+    }
+    set cmd [diffcmd $ids "-p $textconv -C --cc --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
 	append cmd " -w"
     }
@@ -11090,6 +11095,7 @@ set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
 set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
+set git_version [lindex [exec git version] end]
 
 set runq {}
 set history {}
