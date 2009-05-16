@@ -82,8 +82,10 @@ Output Format
 -------------
         <mode> SP <type> SP <object> TAB <file>
 
-When the `-z` option is not used, TAB, LF, and backslash characters
+Unless the `-z` option is used, TAB, LF, and backslash characters
 in pathnames are represented as `\t`, `\n`, and `\\`, respectively.
+This output format is compatible with what '--index-info --stdin' of
+'git update-index' expects.
 
 When the `-l` option is used, format changes to
 
