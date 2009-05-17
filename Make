@@ -100,7 +100,10 @@ sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 d="$d ASCIIDOC_NO_ROFF=YesPlease ASCIIDOC8=YesPlease"
 
 # Platform hack
-if test -z "${make:+set}" && test -x /usr/local/bin/gmake
+if test -z "${make:+set}" && {
+	test -x /usr/local/bin/gmake ||
+	test -x /usr/bin/gmake
+}
 then
 	make=gmake
 fi

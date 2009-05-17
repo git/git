@@ -24,6 +24,7 @@ while	case "$1" in
 	--noinstall) install=noinstall ;;
 	--nodoc) nodoc=y ;;
 	--notest) notest=y ;;
+	--test=*) test="$1" ;;
 	--bootstrap) bootstrap=y ;;
 	--base=*) BUILDBASE=${1#*=} ;;
 	--branches=*) branches=${1#*=} ;;
@@ -134,10 +135,10 @@ do
 
 		{
 			test "z$with_dash" != 'zy' ||
-			Meta/Make $M -- $jobs SHELL_PATH=/bin/dash $dotest
+			Meta/Make $M $test -- $jobs SHELL_PATH=/bin/dash $dotest
 		} &&
 
-		Meta/Make $M -- $jobs $dotest &&
+		Meta/Make $M $test -- $jobs $dotest &&
 		{
 			test -n "$nodoc" ||
 			Meta/Make $M -- doc install-doc
