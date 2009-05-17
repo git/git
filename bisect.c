@@ -553,7 +553,9 @@ struct commit_list *filter_skipped(struct commit_list *list,
 	return filtered;
 }
 
-static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
+static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
+			     const char *bad_format, const char *good_format,
+			     int read_paths)
 {
 	struct argv_array rev_argv = { NULL, 0, 0 };
 	int i;
@@ -564,26 +566,24 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
 
 	/* rev_argv.argv[0] will be ignored by setup_revisions */
 	argv_array_push(&rev_argv, xstrdup("bisect_rev_setup"));
-	argv_array_push_sha1(&rev_argv, current_bad_sha1, "%s");
+	argv_array_push_sha1(&rev_argv, current_bad_sha1, bad_format);
 	for (i = 0; i < good_revs.sha1_nr; i++)
-		argv_array_push_sha1(&rev_argv, good_revs.sha1[i], "^%s");
+		argv_array_push_sha1(&rev_argv, good_revs.sha1[i],
+				     good_format);
 	argv_array_push(&rev_argv, xstrdup("--"));
-	read_bisect_paths(&rev_argv);
+	if (read_paths)
+		read_bisect_paths(&rev_argv);
 	argv_array_push(&rev_argv, NULL);
 
 	setup_revisions(rev_argv.argv_nr, rev_argv.argv, revs, NULL);
-	revs->limited = 1;
 }
 
-static void bisect_common(struct rev_info *revs, int *reaches, int *all)
+static void bisect_common(struct rev_info *revs)
 {
 	if (prepare_revision_walk(revs))
 		die("revision walk setup failed");
 	if (revs->tree_objects)
 		mark_edges_uninteresting(revs->commits, revs, NULL);
-
-	revs->commits = find_bisection(revs->commits, reaches, all,
-				       !!skipped_revs.sha1_nr);
 }
 
 static void exit_if_skipped_commits(struct commit_list *tried,
@@ -843,10 +843,13 @@ int bisect_next_all(const char *prefix)
 
 	check_good_are_ancestors_of_bad(prefix);
 
-	bisect_rev_setup(&revs, prefix);
+	bisect_rev_setup(&revs, prefix, "%s", "^%s", 1);
+	revs.limited = 1;
 
-	bisect_common(&revs, &reaches, &all);
+	bisect_common(&revs);
 
+	revs.commits = find_bisection(revs.commits, &reaches, &all,
+				       !!skipped_revs.sha1_nr);
 	revs.commits = filter_skipped(revs.commits, &tried, 0);
 
 	if (!revs.commits) {
