@@ -1804,7 +1804,7 @@ _git_show ()
 		return
 		;;
 	--*)
-		__gitcomp "--pretty= --format=
+		__gitcomp "--pretty= --format= --abbrev-commit --oneline
 			$__git_diff_common_options
 			"
 		return
@@ -1821,7 +1821,7 @@ _git_show_branch ()
 		__gitcomp "
 			--all --remotes --topo-order --current --more=
 			--list --independent --merge-base --no-name
-			--sha1-name --topics --reflog
+			--sha1-name --sparse --topics --reflog
 			"
 		return
 		;;
