@@ -534,4 +534,12 @@ test_expect_success 'failing checkout -b should not break working tree' '
 
 '
 
+test_expect_success 'switch out of non-branch' '
+	git reset --hard master &&
+	git checkout master^0 &&
+	echo modified >one &&
+	test_must_fail git checkout renamer 2>error.log &&
+	! grep "^Previous HEAD" error.log
+'
+
 test_done

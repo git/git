@@ -99,20 +99,32 @@ __git_ps1 ()
 		elif [ -d "$g/rebase-merge" ]; then
 			r="|REBASE-m"
 			b="$(cat "$g/rebase-merge/head-name")"
-		elif [ -f "$g/MERGE_HEAD" ]; then
-			r="|MERGING"
-			b="$(git symbolic-ref HEAD 2>/dev/null)"
 		else
+			if [ -f "$g/MERGE_HEAD" ]; then
+				r="|MERGING"
+			fi
 			if [ -f "$g/BISECT_LOG" ]; then
 				r="|BISECTING"
 			fi
-			if ! b="$(git symbolic-ref HEAD 2>/dev/null)"; then
-				if ! b="$(git describe --exact-match HEAD 2>/dev/null)"; then
-					if [ -r "$g/HEAD" ]; then
-						b="$(cut -c1-7 "$g/HEAD")..."
-					fi
-				fi
-			fi
+
+			b="$(git symbolic-ref HEAD 2>/dev/null)" || {
+
+				b="$(
+				case "${GIT_PS1_DESCRIBE_STYLE-}" in
+				(contains)
+					git describe --contains HEAD ;;
+				(branch)
+					git describe --contains --all HEAD ;;
+				(describe)
+					git describe HEAD ;;
+				(* | default)
+					git describe --exact-match HEAD ;;
+				esac 2>/dev/null)" ||
+
+				b="$(cut -c1-7 "$g/HEAD" 2>/dev/null)..." ||
+				b="unknown"
+				b="($b)"
+			}
 		fi
 
 		local w

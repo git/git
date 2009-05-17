@@ -108,4 +108,10 @@ test_expect_success 'format.numbered = auto && --no-numbered' '
 
 '
 
+test_expect_success '--start-number && --numbered' '
+
+	git format-patch --start-number 3 --numbered --stdout HEAD~1 > patch8 &&
+	grep "^Subject: \[PATCH 3/3\]" patch8
+'
+
 test_done
