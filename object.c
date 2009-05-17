@@ -45,7 +45,8 @@ int type_from_string(const char *str)
 
 static unsigned int hash_obj(struct object *obj, unsigned int n)
 {
-	unsigned int hash = *(unsigned int *)obj->sha1;
+	unsigned int hash;
+	memcpy(&hash, obj->sha1, sizeof(unsigned int));
 	return hash % n;
 }
 
