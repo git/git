@@ -40,6 +40,8 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
 
 int parse_commit(struct commit *item);
 
+void unparse_commit(struct commit *item);
+
 struct commit_list * commit_list_insert(struct commit *item, struct commit_list **list_p);
 unsigned commit_list_count(const struct commit_list *l);
 struct commit_list * insert_by_date(struct commit *item, struct commit_list **list);
