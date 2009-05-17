@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2009, #01; Sat, 09)
-X-master-at: 6345d7a0d151afc3d2a10ada3ecacf54c3fee2d0
-X-next-at: 99c766e3a22715646df19711aeaf76e0c938bacd
+Subject: What's cooking in git.git (May 2009, #02; Sun, 17)
+X-master-at: 55524fcf9d6676ca3840227092bf3a14ba404615
+X-next-at: 540caa5c275c0ad44c1bc979c37075f58e3459de
 
-What's cooking in git.git (May 2009, #01; Sat, 09)
+What's cooking in git.git (May 2009, #02; Sun, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -17,18 +17,106 @@ meant to be merged to the maintenance series have "maint-" in their names.
 ----------------------------------------------------------------
 [New Topics]
 
-* mt/submodule-reference (Mon May 4 22:30:01 2009 +0300) 1 commit
- + Add --reference option to git submodule.
+* jc/mktree (Thu May 14 15:49:10 2009 -0700) 9 commits
+ - mktree: validate entry type in input
+ - mktree --batch: build more than one tree object
+ - mktree --missing: updated usage message and man page
+ - mktree --missing: allow missing objects
+ - t1010: add mktree test
+ - mktree: do not barf on a submodule commit
+ - builtin-mktree.c: use a helper function to handle one line of
+   input
+ - mktree: use parse-options
+ - build-in git-mktree
 
-* rr/forbid-bs-in-ref (Fri May 8 07:32:37 2009 +0200) 1 commit
- + Disallow '\' in ref names
+* ar/maint-1.6.2-merge-recursive-d-f (Mon May 11 21:25:36 2009 +0200) 2 commits
+ - Fix for a merge where a branch has an F->D transition
+ - Add a reminder test case for a merge with F/D transition
 
-This retroactively forbids use of what people could have been using
-happily, which, strictly speaking, is a no-no, but makes sense in the
-longer term.
+Although the reported breakage is covered with the patch, Alex feels the
+solution unsatisfactory. Cleaning up D/F conflict handling in merge-recursive
+may be long overdue but seems to be a hard problem.
+
+* jc/maint-add-p-coalesce-fix (Sat May 16 10:48:23 2009 -0700) 2 commits
+ + Revert "git-add--interactive: remove hunk coalescing"
+ + Splitting a hunk that adds a line at the top fails in "add -p"
+
+* sb/format-patch-parseopt (Sat May 16 02:24:46 2009 -0700) 1 commit
+ - format-patch: migrate to parse-options API
+
+* fc/decorate-tag (Thu May 14 00:32:53 2009 +0300) 2 commits
+ + Prettify log decorations even more
+ + Change prettify_ref to prettify_refname
+
+* mg/track (Mon May 11 16:42:54 2009 +0200) 2 commits
+ + Fix behavior with non-commit upstream references
+ + Test tracking of non-commit upstreams
+
+* jn/gitweb-cleanup (Mon May 11 19:45:11 2009 +0200) 8 commits
+ + gitweb: Remove unused $hash_base parameter from
+   normalize_link_target
+ + gitweb: Simplify snapshot format detection logic in
+   evaluate_path_info
+ + gitweb: Use capturing parentheses only when you intend to capture
+ + gitweb: Replace wrongly added tabs with spaces
+ + gitweb: Use block form of map/grep in a few cases more
+ + gitweb: Always use three argument form of open
+ + gitweb: Always use three argument form of open
+ + gitweb: Do not use bareword filehandles
+
+* js/maint-no-ln-across-libexec-and-bin (Mon May 11 13:02:18 2009 +0200) 1 commit
+ + Add NO_CROSS_DIRECTORY_HARDLINKS support to the Makefile
+
+* jh/notes (Sat May 16 13:44:17 2009 +0200) 5 commits
+ - Teach "-m <msg>" and "-F <file>" to "git notes edit"
+ - Add an expensive test for git-notes
+ - Speed up git notes lookup
+ - Add a script to edit/inspect notes
+ - Introduce commit notes
+
+* tp/send-email-from-config (Tue May 12 15:48:56 2009 -0700) 1 commit
+ + send-email: Add config option for sender address
+
+* lt/read-directory (Fri May 15 12:01:29 2009 -0700) 3 commits
+ - Add initial support for pathname conversion to UTF-8
+ - read_directory(): infrastructure for pathname character set
+   conversion
+ - Add 'fill_directory()' helper function for directory traversal
+
+----------------------------------------------------------------
+[Will merge to "master" soon]
+
+* mw/send-email (Mon Apr 13 13:23:52 2009 -0500) 6 commits
+ + send-email: Remove superfluous `my $editor = ...'
+ + send-email: 'References:' should only reference what is sent
+ + send-email: Handle "GIT:" rather than "GIT: " during --compose
+ + Docs: send-email: --smtp-server-port can take symbolic ports
+ + Docs: send-email: Refer to CONFIGURATION section for
+   sendemail.multiedit
+ + Docs: send-email: Put options back into alphabetical order
+
+* ae/anon-fetch-info (Fri Apr 17 10:20:11 2009 +0200) 1 commit
+ + fetch: Strip usernames from url's before storing them
+
+* ac/graph-horizontal-line (Tue Apr 21 08:47:01 2009 -0400) 1 commit
+ + graph API: Use horizontal lines for more compact graphs
+
+* ph/submodule-rebase (Fri Apr 24 09:06:38 2009 +1000) 1 commit
+ + git-submodule: add support for --rebase.
+
+* mh/show-branch-color (Sat Apr 25 13:46:14 2009 +0200) 2 commits
+ + bash completion: show-branch color support
+ + show-branch: color the commit status signs
+
+* mh/diff-stat-color (Sat Apr 25 00:06:47 2009 +0200) 1 commit
+ + diff: do not color --stat output like patch context
+
+* js/add-edit (Mon Apr 27 19:51:42 2009 +0200) 2 commits
+ + t3702: fix reliance on SHELL_PATH being '/bin/sh'
+ + git-add: introduce --edit (to edit the diff vs. the index)
 
 * jk/maint-add-empty (Tue Apr 28 23:21:01 2009 -0400) 1 commit
- - add: don't complain when adding empty project root
+ + add: don't complain when adding empty project root
 
 When you say "git add ." in an empty directory, you get "No path matches
 ''", instead of "No path matches '.'", and this "fixes" it by hiding the
@@ -36,17 +124,24 @@ error and making the command silently succeed.  Strictly speaking it
 introduces inconsistency, but I think an empty directory is so
 uninteresting special case that not signalling it as an error is Ok.
 
-Will merge to 'next'.
+* ar/unlink-err (Wed Apr 29 23:24:52 2009 +0200) 3 commits
+ + print unlink(2) errno in copy_or_link_directory
+ + replace direct calls to unlink(2) with unlink_or_warn
+ + Introduce an unlink(2) wrapper which gives warning if unlink
+   failed
 
-* lt/maint-diff-reduce-lstat (Sat May 9 15:11:17 2009 -0700) 2 commits
- + Teach 'git checkout' to preload the index contents
- + Avoid unnecessary 'lstat()' calls in 'get_stat_data()'
+* ar/merge-one-file-diag (Wed Apr 29 23:40:50 2009 +0200) 1 commit
+ + Clarify kind of conflict in merge-one-file helper
 
-* jk/maint-1.6.0-trace-argv (Fri May 8 05:06:15 2009 -0400) 1 commit
- + fix GIT_TRACE segfault with shell-quoted aliases
+* np/push-delta (Fri May 1 16:56:47 2009 -0400) 1 commit
+ + allow OFS_DELTA objects during a push
 
-* hv/sample-update (Fri May 8 17:22:30 2009 +0200) 1 commit
- + Extend sample update hook, disable modifying of existing tags
+* mt/submodule-reference (Mon May 4 22:30:01 2009 +0300) 1 commit
+ + Add --reference option to git submodule.
+
+* fl/git-pm (Thu May 7 15:41:28 2009 +0200) 2 commits
+ + Git.pm: Always set Repository to absolute path if autodetecting
+ + Git.pm: Set GIT_WORK_TREE if we set GIT_DIR
 
 * rs/grep-parseopt (Thu May 7 21:46:48 2009 +0200) 5 commits
  + grep: use parseopt
@@ -55,18 +150,6 @@ Will merge to 'next'.
  + parseopt: add OPT_NUMBER_CALLBACK
  + parseopt: add OPT_NEGBIT
 
-* do/maint-merge-recursive-fix (Sat May 9 14:49:59 2009 -0700) 1 commit
- + merge-recursive: never leave index unmerged while recursing
-
-* np/push-delta (Fri May 1 16:56:47 2009 -0400) 1 commit
- + allow OFS_DELTA objects during a push
-
-* jm/format-patch-no-auto-n-when-k-is-given (Sat May 9 10:12:01 2009 +0200) 1 commit
- + format-patch let -k override a config-specified format.numbered
-
-* da/mergetool-lib (Sat May 2 01:57:21 2009 -0700) 1 commit
- - mergetool--lib: specialize diff options for emerge and ecmerge
-
 * jk/no-no-no-empty-directory (Fri May 8 01:01:17 2009 -0400) 2 commits
  + parseopt: add OPT_NEGBIT
  + parseopt: add OPT_NEGBIT
@@ -74,13 +157,56 @@ Will merge to 'next'.
 I somehow botched the commit log message of the top one; it is about
 fixing "ls-files --no-empty-directory".
 
-* fl/git-pm (Thu May 7 15:41:28 2009 +0200) 2 commits
- + Git.pm: Always set Repository to absolute path if autodetecting
- + Git.pm: Set GIT_WORK_TREE if we set GIT_DIR
+* jk/maint-1.6.0-trace-argv (Fri May 8 05:06:15 2009 -0400) 1 commit
+ + fix GIT_TRACE segfault with shell-quoted aliases
 
-----------------------------------------------------------------
-[Will merge to "master" soon]
+* hv/sample-update (Fri May 8 17:22:30 2009 +0200) 1 commit
+ + Extend sample update hook, disable modifying of existing tags
 
+* rr/forbid-bs-in-ref (Fri May 8 07:32:37 2009 +0200) 1 commit
+ + Disallow '\' in ref names
+
+This retroactively forbids use of what people could have been using
+happily, which, strictly speaking, is a no-no, but makes sense in the
+longer term.
+
+* do/maint-merge-recursive-fix (Sat May 9 14:49:59 2009 -0700) 1 commit
+ + merge-recursive: never leave index unmerged while recursing
+
+* jm/format-patch-no-auto-n-when-k-is-given (Sat May 9 10:12:01 2009 +0200) 1 commit
+ + format-patch let -k override a config-specified format.numbered
+
+* lt/maint-diff-reduce-lstat (Sat May 9 15:11:17 2009 -0700) 2 commits
+ + Teach 'git checkout' to preload the index contents
+ + Avoid unnecessary 'lstat()' calls in 'get_stat_data()'
+
+* cc/bisect (Sat May 9 17:55:47 2009 +0200) 20 commits
+ + bisect: make "git bisect" use new "--next-all" bisect-helper
+   function
+ + bisect: add "check_good_are_ancestors_of_bad" function
+ + bisect: implement the "check_merge_bases" function
+ + bisect: automatically sort sha1_array if needed when looking it up
+ + bisect: make skipped array functions more generic
+ + bisect: remove too much function nesting
+ + bisect: use new "struct argv_array" to prepare argv for
+   "setup_revisions"
+ + bisect: store good revisions in a "sha1_array"
+ + bisect: implement "rev_argv_push" to fill an argv with revs
+ + bisect: use "sha1_array" to store skipped revisions
+ + am: simplify "sq" function by using "git rev-parse --sq-quote"
+ + bisect: use "git rev-parse --sq-quote" instead of a custom "sq"
+   function
+ + rev-parse: add --sq-quote to shell quote arguments
+ + rev-list: remove stringed output flag from "show_bisect_vars"
+ + bisect--helper: remove "--next-vars" option as it is now useless
+ + bisect: use "git bisect--helper --next-exit" in "git-bisect.sh"
+ + bisect--helper: add "--next-exit" to output bisect results
+ + bisect: move common bisect functionality to "bisect_common"
+ + rev-list: refactor printing bisect vars
+ + rev-list: make "estimate_bisect_steps" non static
+
+Rewriting major part of "git-bisect" shell script continues.  The patches
+seem to be reasonably clean.
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
@@ -123,23 +249,6 @@ in binary mode as well.
  - Document details of transport function APIs
  - Allow late reporting of fetched hashes
 
-* js/notes (Tue Apr 14 00:03:36 2009 +0200) 15 commits
- - Documentation: fix 'linkgit' macro in "git-notes.txt"
- - tests: fix "export var=val"
- - notes: refuse to edit notes outside refs/notes/
- - t3301: use test_must_fail instead of !
- - t3301: fix confusing quoting in test for valid notes ref
- - notes: use GIT_EDITOR and core.editor over VISUAL/EDITOR
- - notes: only clean up message file when editing
- - handle empty notes gracefully
- - git notes show: test empty notes
- - git-notes: fix printing of multi-line notes
- - notes: fix core.notesRef documentation
- - Add an expensive test for git-notes
- - Speed up git notes lookup
- - Add a script to edit/inspect notes
- - Introduce commit notes
-
 * hv/cvsps-tests (Sun Apr 5 01:40:50 2009 -0700) 8 commits
  - t/t9600: remove exit after test_done
  - cvsimport: extend testcase about patchset order to contain
@@ -154,76 +263,29 @@ in binary mode as well.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* cc/bisect (Fri Apr 24 08:29:01 2009 +0200) 10 commits
- - am: simplify "sq" function by using "git rev-parse --sq-quote"
- - bisect: use "git rev-parse --sq-quote" instead of a custom "sq"
-   function
- - rev-parse: add --sq-quote to shell quote arguments
- - rev-list: remove stringed output flag from "show_bisect_vars"
- - bisect--helper: remove "--next-vars" option as it is now useless
- - bisect: use "git bisect--helper --next-exit" in "git-bisect.sh"
- - bisect--helper: add "--next-exit" to output bisect results
- - bisect: move common bisect functionality to "bisect_common"
- - rev-list: refactor printing bisect vars
- - rev-list: make "estimate_bisect_steps" non static
+* da/mergetool-lib (Sat May 2 01:57:21 2009 -0700) 1 commit
+ - mergetool--lib: specialize diff options for emerge and ecmerge
 
-Will merge to 'next'.
+Can somebody tell me what the current status of this is?  I thought there
+was some objection, but I lost track...
 
-* mh/show-branch-color (Sat Apr 25 13:46:14 2009 +0200) 2 commits
- + bash completion: show-branch color support
- + show-branch: color the commit status signs
-
-* ac/graph-horizontal-line (Tue Apr 21 08:47:01 2009 -0400) 1 commit
- + graph API: Use horizontal lines for more compact graphs
-
-* ar/merge-one-file-diag (Wed Apr 29 23:40:50 2009 +0200) 1 commit
- - Clarify kind of conflict in merge-one-file helper
-
-Will merge to 'next'.
-
-* mh/diff-stat-color (Sat Apr 25 00:06:47 2009 +0200) 1 commit
- - diff: do not color --stat output like patch context
-
-Will merge to 'next'.
-
-* rc/http-push (Sat Apr 25 00:35:57 2009 +0800) 3 commits
+* rc/http-push (Sat May 16 11:51:52 2009 +0800) 12 commits
+ - http*: add fetch_http_pack_index
+ - http: create function end_url_with_slash
+ - http*: move common variables and macros to http.[ch]
+ - http-push: do not SEGV after fetching a bad pack idx file
+ - http*: copy string returned by sha1_to_hex
+ - http-walker: verify remote packs
+ - http-push, http-walker: style fixes
+ - t5550-http-fetch: test fetching of packed objects
+ - http-push: fix missing "#ifdef USE_CURL_MULTI" around
+   "is_running_queue"
  - http-push: send out fetch requests on queue
  - t5540-http-push: test fetching of packed objects
  - t5540-http-push: test fetching of loose objects
 
-* ae/anon-fetch-info (Fri Apr 17 10:20:11 2009 +0200) 1 commit
- + fetch: Strip usernames from url's before storing them
-
-* ar/unlink-err (Wed Apr 29 23:24:52 2009 +0200) 3 commits
- - print unlink(2) errno in copy_or_link_directory
- - replace direct calls to unlink(2) with unlink_or_warn
- - Introduce an unlink(2) wrapper which gives warning if unlink
-   failed
-
-Will merge to 'next'.
-
-* ph/submodule-rebase (Fri Apr 24 09:06:38 2009 +1000) 1 commit
- - git-submodule: add support for --rebase.
-
-Will merge to 'next'.
-
-* mw/send-email (Mon Apr 13 13:23:52 2009 -0500) 6 commits
- - send-email: Remove superfluous `my $editor = ...'
- - send-email: 'References:' should only reference what is sent
- - send-email: Handle "GIT:" rather than "GIT: " during --compose
- - Docs: send-email: --smtp-server-port can take symbolic ports
- - Docs: send-email: Refer to CONFIGURATION section for
-   sendemail.multiedit
- - Docs: send-email: Put options back into alphabetical order
-
-Only partially queued, but this is not 1.6.3 material and we are not in a
-hurry.
-
-Will merge to 'next'.
-
-* js/add-edit (Mon Apr 27 19:51:42 2009 +0200) 2 commits
- + t3702: fix reliance on SHELL_PATH being '/bin/sh'
- + git-add: introduce --edit (to edit the diff vs. the index)
+There was an 11-patch updates but in the middle there were some
+compilation breakage issues; only early part of that series is queued.
 
 * cc/replace (Tue Apr 14 00:36:59 2009 +0200) 13 commits
  - Documentation: add documentation for "git replace"
@@ -255,5 +317,27 @@ command line would not work very well with this series.
    push
 
 These are for 1.7.0, but the messages when they trigger together may need
-to be rethought.  Will start merging them to 'next' shortly.
+to be rethought.
+
+----------------------------------------------------------------
+[Discarded]
+
+* js/notes (Tue Apr 14 00:03:36 2009 +0200) 15 commits
+ . Documentation: fix 'linkgit' macro in "git-notes.txt"
+ . tests: fix "export var=val"
+ . notes: refuse to edit notes outside refs/notes/
+ . t3301: use test_must_fail instead of !
+ . t3301: fix confusing quoting in test for valid notes ref
+ . notes: use GIT_EDITOR and core.editor over VISUAL/EDITOR
+ . notes: only clean up message file when editing
+ . handle empty notes gracefully
+ . git notes show: test empty notes
+ . git-notes: fix printing of multi-line notes
+ . notes: fix core.notesRef documentation
+ . Add an expensive test for git-notes
+ . Speed up git notes lookup
+ . Add a script to edit/inspect notes
+ . Introduce commit notes
+
+This has been replaced by jh/notes series.
 
