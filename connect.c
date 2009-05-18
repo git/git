@@ -602,13 +602,15 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		die("command line too long");
 
 	conn->in = conn->out = -1;
-	conn->argv = arg = xcalloc(6, sizeof(*arg));
+	conn->argv = arg = xcalloc(7, sizeof(*arg));
 	if (protocol == PROTO_SSH) {
 		const char *ssh = getenv("GIT_SSH");
 		int putty = ssh && strstr(ssh, "plink");
 		if (!ssh) ssh = "ssh";
 
 		*arg++ = ssh;
+		if (putty)
+			*arg++ = "-batch";
 		if (port) {
 			/* P is for PuTTY, p is for OpenSSH */
 			*arg++ = putty ? "-P" : "-p";
