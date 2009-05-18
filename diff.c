@@ -839,10 +839,9 @@ static int scale_linear(int it, int width, int max_change)
 }
 
 static void show_name(FILE *file,
-		      const char *prefix, const char *name, int len,
-		      const char *reset, const char *set)
+		      const char *prefix, const char *name, int len)
 {
-	fprintf(file, " %s%s%-*s%s |", set, prefix, len, name, reset);
+	fprintf(file, " %s%-*s |", prefix, len, name);
 }
 
 static void show_graph(FILE *file, char ch, int cnt, const char *set, const char *reset)
@@ -956,7 +955,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		}
 
 		if (data->files[i]->is_binary) {
-			show_name(options->file, prefix, name, len, reset, set);
+			show_name(options->file, prefix, name, len);
 			fprintf(options->file, "  Bin ");
 			fprintf(options->file, "%s%d%s", del_c, deleted, reset);
 			fprintf(options->file, " -> ");
@@ -966,7 +965,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			continue;
 		}
 		else if (data->files[i]->is_unmerged) {
-			show_name(options->file, prefix, name, len, reset, set);
+			show_name(options->file, prefix, name, len);
 			fprintf(options->file, "  Unmerged\n");
 			continue;
 		}
@@ -988,7 +987,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			add = scale_linear(add, width, max_change);
 			del = scale_linear(del, width, max_change);
 		}
-		show_name(options->file, prefix, name, len, reset, set);
+		show_name(options->file, prefix, name, len);
 		fprintf(options->file, "%5d%s", added + deleted,
 				added + deleted ? " " : "");
 		show_graph(options->file, '+', add, add_c, reset);
@@ -996,8 +995,8 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		fprintf(options->file, "\n");
 	}
 	fprintf(options->file,
-	       "%s %d files changed, %d insertions(+), %d deletions(-)%s\n",
-	       set, total_files, adds, dels, reset);
+	       " %d files changed, %d insertions(+), %d deletions(-)\n",
+	       total_files, adds, dels);
 }
 
 static void show_shortstats(struct diffstat_t* data, struct diff_options *options)
