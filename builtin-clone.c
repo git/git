@@ -252,7 +252,8 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest)
 		}
 
 		if (unlink(dest->buf) && errno != ENOENT)
-			die("failed to unlink %s", dest->buf);
+			die("failed to unlink %s: %s",
+			    dest->buf, strerror(errno));
 		if (!option_no_hardlinks) {
 			if (!link(src->buf, dest->buf))
 				continue;
