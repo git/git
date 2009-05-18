@@ -193,8 +193,7 @@ static void handle_content_type(struct strbuf *line)
 		*content_top = boundary;
 		boundary = NULL;
 	}
-	if (slurp_attr(line->buf, "charset=", &charset))
-		strbuf_tolower(&charset);
+	slurp_attr(line->buf, "charset=", &charset);
 
 	if (boundary) {
 		strbuf_release(boundary);
@@ -494,7 +493,7 @@ static void convert_to_utf8(struct strbuf *line, const char *charset)
 			return;
 	}
 
-	if (!strcmp(metainfo_charset, charset))
+	if (!strcasecmp(metainfo_charset, charset))
 		return;
 	out = reencode_string(line->buf, metainfo_charset, charset);
 	if (!out)
@@ -550,7 +549,6 @@ static int decode_header_bq(struct strbuf *it)
 		if (cp + 3 - it->buf > it->len)
 			goto decode_header_bq_out;
 		strbuf_add(&charset_q, ep, cp - ep);
-		strbuf_tolower(&charset_q);
 
 		encoding = cp[1];
 		if (!encoding || cp[2] != '?')
