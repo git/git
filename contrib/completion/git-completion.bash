@@ -132,7 +132,7 @@ __git_ps1 ()
 		local c
 
 		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
-			if [ "true" = "$(git config --bool core.bare 2>/dev/null)" ]; then
+			if [ "true" = "$(git rev-parse --is-bare-repository 2>/dev/null)" ]; then
 				c="BARE:"
 			else
 				b="GIT_DIR!"
