@@ -63,7 +63,7 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 	fill_pathspec_matches(pathspec, seen, specs);
 
 	for (i = 0; i < specs; i++) {
-		if (!seen[i] && !file_exists(pathspec[i]))
+		if (!seen[i] && pathspec[i][0] && !file_exists(pathspec[i]))
 			die("pathspec '%s' did not match any files",
 					pathspec[i]);
 	}
