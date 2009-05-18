@@ -6,6 +6,7 @@ struct send_pack_args {
 		send_mirror:1,
 		force_update:1,
 		use_thin_pack:1,
+		use_ofs_delta:1,
 		dry_run:1;
 };
 
