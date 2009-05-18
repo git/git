@@ -289,7 +289,7 @@ static int update_local_ref(struct ref *ref,
 	}
 }
 
-static int store_updated_refs(const char *url, const char *remote_name,
+static int store_updated_refs(const char *raw_url, const char *remote_name,
 		struct ref *ref_map)
 {
 	FILE *fp;
@@ -298,11 +298,13 @@ static int store_updated_refs(const char *url, const char *remote_name,
 	char note[1024];
 	const char *what, *kind;
 	struct ref *rm;
-	char *filename = git_path("FETCH_HEAD");
+	char *url, *filename = git_path("FETCH_HEAD");
 
 	fp = fopen(filename, "a");
 	if (!fp)
 		return error("cannot open %s: %s\n", filename, strerror(errno));
+
+	url = transport_anonymize_url(raw_url);
 	for (rm = ref_map; rm; rm = rm->next) {
 		struct ref *ref = NULL;
 
@@ -382,6 +384,7 @@ static int store_updated_refs(const char *url, const char *remote_name,
 				fprintf(stderr, " %s\n", note);
 		}
 	}
+	free(url);
 	fclose(fp);
 	if (rc & 2)
 		error("some local refs could not be updated; try running\n"
