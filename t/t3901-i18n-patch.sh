@@ -19,7 +19,7 @@ check_encoding () {
 		8859)
 			grep "^encoding ISO-8859-1" ;;
 		*)
-			! grep "^encoding ISO-8859-1" ;;
+			grep "^encoding ISO-8859-1"; test "$?" != 0 ;;
 		esac || {
 			bad=1
 			break
