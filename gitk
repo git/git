@@ -11152,7 +11152,7 @@ set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
 set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
-set git_version [lindex [exec git version] end]
+set git_version [join [lrange [split [lindex [exec git version] end] .] 0 2] .]
 
 set runq {}
 set history {}
