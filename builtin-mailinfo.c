@@ -480,7 +480,7 @@ static const char *guess_charset(const struct strbuf *line, const char *target_c
 		if (is_utf8(line->buf))
 			return NULL;
 	}
-	return "latin1";
+	return "ISO8859-1";
 }
 
 static void convert_to_utf8(struct strbuf *line, const char *charset)
