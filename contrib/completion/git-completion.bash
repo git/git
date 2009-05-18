@@ -1394,7 +1394,8 @@ _git_config ()
 		__gitcomp "$(__git_merge_strategies)"
 		return
 		;;
-	color.branch|color.diff|color.interactive|color.status|color.ui)
+	color.branch|color.diff|color.interactive|\
+	color.showbranch|color.status|color.ui)
 		__gitcomp "always never auto"
 		return
 		;;
@@ -1543,6 +1544,7 @@ _git_config ()
 		color.interactive.help
 		color.interactive.prompt
 		color.pager
+		color.showbranch
 		color.status
 		color.status.added
 		color.status.changed
@@ -1854,6 +1856,7 @@ _git_show_branch ()
 		__gitcomp "
 			--all --remotes --topo-order --current --more=
 			--list --independent --merge-base --no-name
+			--color --no-color
 			--sha1-name --sparse --topics --reflog
 			"
 		return
