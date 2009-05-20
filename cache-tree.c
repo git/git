@@ -538,28 +538,32 @@ static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *pat
 	return it;
 }
 
-int write_cache_as_tree(unsigned char *sha1, int missing_ok, const char *prefix)
+int write_cache_as_tree(unsigned char *sha1, int flags, const char *prefix)
 {
 	int entries, was_valid, newfd;
+	struct lock_file *lock_file;
 
 	/*
 	 * We can't free this memory, it becomes part of a linked list
 	 * parsed atexit()
 	 */
-	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
+	lock_file = xcalloc(1, sizeof(struct lock_file));
 
 	newfd = hold_locked_index(lock_file, 1);
 
 	entries = read_cache();
 	if (entries < 0)
 		return WRITE_TREE_UNREADABLE_INDEX;
+	if (flags & WRITE_TREE_IGNORE_CACHE_TREE)
+		cache_tree_free(&(active_cache_tree));
 
 	if (!active_cache_tree)
 		active_cache_tree = cache_tree();
 
 	was_valid = cache_tree_fully_valid(active_cache_tree);
-
 	if (!was_valid) {
+		int missing_ok = flags & WRITE_TREE_MISSING_OK;
+
 		if (cache_tree_update(active_cache_tree,
 				      active_cache, active_nr,
 				      missing_ok, 0) < 0)
