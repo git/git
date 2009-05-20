@@ -305,6 +305,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 {
 	int hit = 0;
 	int saved_ch = 0;
+	const char *start = bol;
 
 	if ((p->token != GREP_PATTERN) &&
 	    ((p->token == GREP_PATTERN_HEAD) != (ctx == GREP_CONTEXT_HEAD)))
@@ -365,6 +366,10 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 	}
 	if (p->token == GREP_PATTERN_HEAD && saved_ch)
 		*eol = saved_ch;
+	if (hit) {
+		pmatch[0].rm_so += bol - start;
+		pmatch[0].rm_eo += bol - start;
+	}
 	return hit;
 }
 
