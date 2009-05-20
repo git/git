@@ -565,7 +565,8 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 	die("unable to grep from object of type %s", typename(obj->type));
 }
 
-int context_callback(const struct option *opt, const char *arg, int unset)
+static int context_callback(const struct option *opt, const char *arg,
+			    int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
 	int value;
@@ -584,7 +585,7 @@ int context_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-int file_callback(const struct option *opt, const char *arg, int unset)
+static int file_callback(const struct option *opt, const char *arg, int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
 	FILE *patterns;
@@ -606,42 +607,43 @@ int file_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-int not_callback(const struct option *opt, const char *arg, int unset)
+static int not_callback(const struct option *opt, const char *arg, int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
 	append_grep_pattern(grep_opt, "--not", "command line", 0, GREP_NOT);
 	return 0;
 }
 
-int and_callback(const struct option *opt, const char *arg, int unset)
+static int and_callback(const struct option *opt, const char *arg, int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
 	append_grep_pattern(grep_opt, "--and", "command line", 0, GREP_AND);
 	return 0;
 }
 
-int open_callback(const struct option *opt, const char *arg, int unset)
+static int open_callback(const struct option *opt, const char *arg, int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
 	append_grep_pattern(grep_opt, "(", "command line", 0, GREP_OPEN_PAREN);
 	return 0;
 }
 
-int close_callback(const struct option *opt, const char *arg, int unset)
+static int close_callback(const struct option *opt, const char *arg, int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
 	append_grep_pattern(grep_opt, ")", "command line", 0, GREP_CLOSE_PAREN);
 	return 0;
 }
 
-int pattern_callback(const struct option *opt, const char *arg, int unset)
+static int pattern_callback(const struct option *opt, const char *arg,
+			    int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
 	append_grep_pattern(grep_opt, arg, "-e option", 0, GREP_PATTERN);
 	return 0;
 }
 
-int help_callback(const struct option *opt, const char *arg, int unset)
+static int help_callback(const struct option *opt, const char *arg, int unset)
 {
 	return -1;
 }
