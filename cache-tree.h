@@ -2,6 +2,7 @@
 #define CACHE_TREE_H
 
 #include "tree.h"
+#include "tree-walk.h"
 
 struct cache_tree;
 struct cache_tree_sub {
@@ -41,5 +42,7 @@ int cache_tree_update(struct cache_tree *, struct cache_entry **, int, int, int)
 
 int write_cache_as_tree(unsigned char *sha1, int flags, const char *prefix);
 void prime_cache_tree(struct cache_tree **, struct tree *);
+
+extern int cache_tree_matches_traversal(struct cache_tree *, struct name_entry *ent, struct traverse_info *info);
 
 #endif

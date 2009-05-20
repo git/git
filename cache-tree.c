@@ -631,3 +631,35 @@ void prime_cache_tree(struct cache_tree **it, struct tree *tree)
 	*it = cache_tree();
 	prime_cache_tree_rec(*it, tree);
 }
+
+/*
+ * find the cache_tree that corresponds to the current level without
+ * exploding the full path into textual form.  The root of the
+ * cache tree is given as "root", and our current level is "info".
+ * (1) When at root level, info->prev is NULL, so it is "root" itself.
+ * (2) Otherwise, find the cache_tree that corresponds to one level
+ *     above us, and find ourselves in there.
+ */
+static struct cache_tree *find_cache_tree_from_traversal(struct cache_tree *root,
+							 struct traverse_info *info)
+{
+	struct cache_tree *our_parent;
+
+	if (!info->prev)
+		return root;
+	our_parent = find_cache_tree_from_traversal(root, info->prev);
+	return cache_tree_find(our_parent, info->name.path);
+}
+
+int cache_tree_matches_traversal(struct cache_tree *root,
+				 struct name_entry *ent,
+				 struct traverse_info *info)
+{
+	struct cache_tree *it;
+
+	it = find_cache_tree_from_traversal(root, info);
+	it = cache_tree_find(it, ent->path);
+	if (it && it->entry_count > 0 && !hashcmp(ent->sha1, it->sha1))
+		return it->entry_count;
+	return 0;
+}
