@@ -514,6 +514,8 @@ struct cache_tree *cache_tree_read(const char *buffer, unsigned long size)
 
 static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *path)
 {
+	if (!it)
+		return NULL;
 	while (*path) {
 		const char *slash;
 		struct cache_tree_sub *sub;
