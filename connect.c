@@ -605,11 +605,11 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 	conn->argv = arg = xcalloc(7, sizeof(*arg));
 	if (protocol == PROTO_SSH) {
 		const char *ssh = getenv("GIT_SSH");
-		int putty = ssh && strstr(ssh, "plink");
+		int putty = ssh && strcasestr(ssh, "plink");
 		if (!ssh) ssh = "ssh";
 
 		*arg++ = ssh;
-		if (putty)
+		if (putty && !strcasestr(ssh, "tortoiseplink"))
 			*arg++ = "-batch";
 		if (port) {
 			/* P is for PuTTY, p is for OpenSSH */
