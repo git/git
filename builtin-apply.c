@@ -320,6 +320,20 @@ static int name_terminate(const char *name, int namelen, int c, int terminate)
 	return 1;
 }
 
+/* remove double slashes to make --index work with such filenames */
+static char *squash_slash(char *name)
+{
+	int i = 0, j = 0;
+
+	while (name[i]) {
+		if ((name[j++] = name[i++]) == '/')
+			while (name[i] == '/')
+				i++;
+	}
+	name[j] = '\0';
+	return name;
+}
+
 static char *find_name(const char *line, char *def, int p_value, int terminate)
 {
 	int len;
@@ -349,7 +363,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 				free(def);
 				if (root)
 					strbuf_insert(&name, 0, root, root_len);
-				return strbuf_detach(&name, NULL);
+				return squash_slash(strbuf_detach(&name, NULL));
 			}
 		}
 		strbuf_release(&name);
@@ -369,10 +383,10 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 			start = line;
 	}
 	if (!start)
-		return def;
+		return squash_slash(def);
 	len = line - start;
 	if (!len)
-		return def;
+		return squash_slash(def);
 
 	/*
 	 * Generally we prefer the shorter name, especially
@@ -383,7 +397,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 	if (def) {
 		int deflen = strlen(def);
 		if (deflen < len && !strncmp(start, def, deflen))
-			return def;
+			return squash_slash(def);
 		free(def);
 	}
 
@@ -392,10 +406,10 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 		strcpy(ret, root);
 		memcpy(ret + root_len, start, len);
 		ret[root_len + len] = '\0';
-		return ret;
+		return squash_slash(ret);
 	}
 
-	return xmemdupz(start, len);
+	return squash_slash(xmemdupz(start, len));
 }
 
 static int count_slashes(const char *cp)
