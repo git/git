@@ -2326,7 +2326,7 @@ int main(int argc, char **argv)
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char old_hex[60], *new_hex;
-		const char *commit_argv[4];
+		const char *commit_argv[5];
 		int commit_argc;
 		char *new_sha1_hex, *old_sha1_hex;
 
@@ -2406,6 +2406,7 @@ int main(int argc, char **argv)
 			commit_argv[3] = old_sha1_hex;
 			commit_argc++;
 		}
+		commit_argv[commit_argc] = NULL;
 		init_revisions(&revs, setup_git_directory());
 		setup_revisions(commit_argc, commit_argv, &revs, NULL);
 		revs.edge_hint = 0; /* just in case */
