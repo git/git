@@ -720,6 +720,8 @@ static int open_packed_git_1(struct packed_git *p)
 		return error("packfile %s index unavailable", p->pack_name);
 
 	p->pack_fd = open(p->pack_name, O_RDONLY);
+	while (p->pack_fd < 0 && errno == EMFILE && unuse_one_window(p, -1))
+		p->pack_fd = open(p->pack_name, O_RDONLY);
 	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
 		return -1;
 
@@ -937,6 +939,8 @@ static void prepare_packed_git_one(char *objdir, int local)
 	sprintf(path, "%s/pack", objdir);
 	len = strlen(path);
 	dir = opendir(path);
+	while (!dir && errno == EMFILE && unuse_one_window(packed_git, -1))
+		dir = opendir(path);
 	if (!dir) {
 		if (errno != ENOENT)
 			error("unable to open object pack directory: %s: %s",
@@ -2339,6 +2343,8 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 
 	filename = sha1_file_name(sha1);
 	fd = create_tmpfile(tmpfile, sizeof(tmpfile), filename);
+	while (fd < 0 && errno == EMFILE && unuse_one_window(packed_git, -1))
+		fd = create_tmpfile(tmpfile, sizeof(tmpfile), filename);
 	if (fd < 0) {
 		if (errno == EACCES)
 			return error("insufficient permission for adding an object to repository database %s\n", get_object_directory());
