@@ -187,7 +187,8 @@ proc parseviewargs {n arglist} {
 	    "--until=*" - "--before=*" - "--max-age=*" - "--min-age=*" -
 	    "--author=*" - "--committer=*" - "--grep=*" - "-[iE]" -
 	    "--remove-empty" - "--first-parent" - "--cherry-pick" -
-	    "-S*" - "--pickaxe-all" - "--pickaxe-regex" {
+	    "-S*" - "--pickaxe-all" - "--pickaxe-regex" -
+	    "--simplify-by-decoration" {
 		# These mean that we get a subset of the commits
 		set filtered 1
 		lappend glflags $arg
@@ -3697,6 +3698,7 @@ set known_view_options {
     {dorder    b    *. {"--date-order" "-d"}      {mc "Strictly sort by date"}}
     {lright    b    .  "--left-right"   {mc "Mark branch sides"}}
     {first     b    .  "--first-parent" {mc "Limit to first parent"}}
+    {smplhst   b    .  "--simplify-by-decoration"   {mc "Simple history"}}
     {args      t50  *. {}               {mc "Additional arguments to git log:"}}
     {allpaths  path +  {}               {mc "Enter files and directories to include, one per line:"}}
     {cmd       t50= +  {}               {mc "Command to generate more commits to include:"}}
