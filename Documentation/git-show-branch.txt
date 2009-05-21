@@ -10,6 +10,7 @@ SYNOPSIS
 [verse]
 'git show-branch' [--all] [--remotes] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
+		[--color | --no-color]
 		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
 'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
@@ -106,6 +107,14 @@ OPTIONS
 	that entry.  <base> can be specified as count or date.
 	When no explicit <ref> parameter is given, it defaults to the
 	current branch (or `HEAD` if it is detached).
+
+--color::
+	Color the status sign (one of these: `*` `!` `+` `-`) of each commit
+	corresponding to the branch it's in.
+
+--no-color::
+	Turn off colored output, even when the configuration file gives the
+	default to color output.
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.
