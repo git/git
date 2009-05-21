@@ -21,7 +21,7 @@ test_expect_success 'initialize git svn' '
 	(
 		cd import &&
 		echo foo >foo &&
-		svn import -m "import for git svn" . "$svnrepo"
+		svn_cmd import -m "import for git svn" . "$svnrepo"
 	) &&
 	rm -rf import &&
 	git svn init "$svnrepo"
@@ -61,23 +61,23 @@ test_expect_success 'check resulting svn repository' '
 (
 	mkdir work &&
 	cd work &&
-	svn co "$svnrepo" &&
+	svn_cmd co "$svnrepo" &&
 	cd svnrepo &&
 
 	# Check properties from first commit.
-	test "x$(svn propget svn:executable exec1.sh)" = "x*" &&
-	test "x$(svn propget svn:mime-type exec1.sh)" = \
+	test "x$(svn_cmd propget svn:executable exec1.sh)" = "x*" &&
+	test "x$(svn_cmd propget svn:mime-type exec1.sh)" = \
 	     "xapplication/x-shellscript" &&
-	test "x$(svn propget svn:mime-type hello.txt)" = "xtext/plain" &&
-	test "x$(svn propget svn:eol-style hello.txt)" = "xnative" &&
-	test "x$(svn propget svn:mime-type bar)" = "x" &&
+	test "x$(svn_cmd propget svn:mime-type hello.txt)" = "xtext/plain" &&
+	test "x$(svn_cmd propget svn:eol-style hello.txt)" = "xnative" &&
+	test "x$(svn_cmd propget svn:mime-type bar)" = "x" &&
 
 	# Check properties from second commit.
-	test "x$(svn propget svn:executable exec2.sh)" = "x*" &&
-	test "x$(svn propget svn:mime-type exec2.sh)" = "x" &&
-	test "x$(svn propget svn:mime-type world.txt)" = "x" &&
-	test "x$(svn propget svn:eol-style world.txt)" = "x" &&
-	test "x$(svn propget svn:mime-type zot)" = "x"
+	test "x$(svn_cmd propget svn:executable exec2.sh)" = "x*" &&
+	test "x$(svn_cmd propget svn:mime-type exec2.sh)" = "x" &&
+	test "x$(svn_cmd propget svn:mime-type world.txt)" = "x" &&
+	test "x$(svn_cmd propget svn:eol-style world.txt)" = "x" &&
+	test "x$(svn_cmd propget svn:mime-type zot)" = "x"
 )
 '
 
@@ -89,12 +89,12 @@ test_expect_success 'check renamed file' '
 	git svn dcommit --config-dir=user &&
 	(
 		cd work/svnrepo &&
-		svn up &&
+		svn_cmd up &&
 		test ! -e foo &&
 		test -e foo.sh &&
-		test "x$(svn propget svn:mime-type foo.sh)" = \
+		test "x$(svn_cmd propget svn:mime-type foo.sh)" = \
 		     "xapplication/x-shellscript" &&
-		test "x$(svn propget svn:eol-style foo.sh)" = "xLF"
+		test "x$(svn_cmd propget svn:eol-style foo.sh)" = "xLF"
 	)
 '
 

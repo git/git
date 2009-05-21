@@ -9,7 +9,7 @@ test_description='git svn clone with percent escapes'
 test_expect_success 'setup svnrepo' '
 	mkdir project project/trunk project/branches project/tags &&
 	echo foo > project/trunk/foo &&
-	svn import -m "$test_description" project "$svnrepo/pr ject" &&
+	svn_cmd import -m "$test_description" project "$svnrepo/pr ject" &&
 	rm -rf project &&
 	start_httpd
 '
