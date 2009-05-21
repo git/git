@@ -409,7 +409,7 @@ my %parse_alias = (
 	mailrc => sub { my $fh = shift; while (<$fh>) {
 		if (/^alias\s+(\S+)\s+(.*)$/) {
 			# spaces delimit multiple addresses
-			$aliases{$1} = [ split(/\s+/, $2) ];
+			$aliases{$1} = [ quotewords('\s+', 0, $2) ];
 		}}},
 	pine => sub { my $fh = shift; my $f='\t[^\t]*';
 	        for (my $x = ''; defined($x); $x = $_) {
