@@ -20,7 +20,7 @@ test_expect_success 'setup the repository' '
 
 	echo "SJIS LINE" >> file &&
 	git add file &&
-	git config i18n.commitencoding shift-jis &&
+	git config i18n.commitencoding SJIS &&
 	git commit --author "$SJIS_NAME <sjis@localhost>" -m "$SJIS_MSG"
 '
 
@@ -67,8 +67,8 @@ summary $UTF8_MSG
 EOF
 
 test_expect_success \
-	'blame respects --encoding=utf-8' '
-	git blame --incremental --encoding=utf-8 file | \
+	'blame respects --encoding=UTF-8' '
+	git blame --incremental --encoding=UTF-8 file | \
 		egrep "^(author|summary) " > actual &&
 	test_cmp actual expected
 '
