@@ -4,7 +4,7 @@ test_description='git blame encoding conversion'
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/t8005/utf8.txt
-. "$TEST_DIRECTORY"/t8005/cp1251.txt
+. "$TEST_DIRECTORY"/t8005/iso8859-5.txt
 . "$TEST_DIRECTORY"/t8005/sjis.txt
 
 test_expect_success 'setup the repository' '
@@ -13,10 +13,10 @@ test_expect_success 'setup the repository' '
 	git add file &&
 	git commit --author "$UTF8_NAME <utf8@localhost>" -m "$UTF8_MSG" &&
 
-	echo "CP1251 LINE" >> file &&
+	echo "KOI8-R LINE" >> file &&
 	git add file &&
-	git config i18n.commitencoding cp1251 &&
-	git commit --author "$CP1251_NAME <cp1251@localhost>" -m "$CP1251_MSG" &&
+	git config i18n.commitencoding ISO8859-5 &&
+	git commit --author "$ISO8859_5_NAME <iso8859-5@localhost>" -m "$ISO8859_5_MSG" &&
 
 	echo "SJIS LINE" >> file &&
 	git add file &&
@@ -41,17 +41,17 @@ test_expect_success \
 '
 
 cat >expected <<EOF
-author $CP1251_NAME
-summary $CP1251_MSG
-author $CP1251_NAME
-summary $CP1251_MSG
-author $CP1251_NAME
-summary $CP1251_MSG
+author $ISO8859_5_NAME
+summary $ISO8859_5_MSG
+author $ISO8859_5_NAME
+summary $ISO8859_5_MSG
+author $ISO8859_5_NAME
+summary $ISO8859_5_MSG
 EOF
 
 test_expect_success \
 	'blame respects i18n.logoutputencoding' '
-	git config i18n.logoutputencoding cp1251 &&
+	git config i18n.logoutputencoding ISO8859-5 &&
 	git blame --incremental file | \
 		egrep "^(author|summary) " > actual &&
 	test_cmp actual expected
@@ -76,8 +76,8 @@ test_expect_success \
 cat >expected <<EOF
 author $SJIS_NAME
 summary $SJIS_MSG
-author $CP1251_NAME
-summary $CP1251_MSG
+author $ISO8859_5_NAME
+summary $ISO8859_5_MSG
 author $UTF8_NAME
 summary $UTF8_MSG
 EOF
