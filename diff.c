@@ -2378,6 +2378,20 @@ int diff_setup_done(struct diff_options *options)
 	if (count > 1)
 		die("--name-only, --name-status, --check and -s are mutually exclusive");
 
+	/*
+	 * Most of the time we can say "there are changes"
+	 * only by checking if there are changed paths, but
+	 * --ignore-whitespace* options force us to look
+	 * inside contets.
+	 */
+
+	if (DIFF_XDL_TST(options, IGNORE_WHITESPACE) ||
+	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_CHANGE) ||
+	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_AT_EOL))
+		DIFF_OPT_SET(options, DIFF_FROM_CONTENTS);
+	else
+		DIFF_OPT_CLR(options, DIFF_FROM_CONTENTS);
+
 	if (DIFF_OPT_TST(options, FIND_COPIES_HARDER))
 		options->detect_rename = DIFF_DETECT_COPY;
 
@@ -3330,6 +3344,18 @@ free_queue:
 	q->nr = q->alloc = 0;
 	if (options->close_file)
 		fclose(options->file);
+
+	/*
+	 * Report the contents level differences with HAS_CHANGES;
+	 * diff_addremove/diff_change does not set the bit when
+	 * DIFF_FROM_CONTENTS is in effect (e.g. with -w).
+	 */
+	if (DIFF_OPT_TST(options, DIFF_FROM_CONTENTS)) {
+		if (options->found_changes)
+			DIFF_OPT_SET(options, HAS_CHANGES);
+		else
+			DIFF_OPT_CLR(options, HAS_CHANGES);
+	}
 }
 
 static void diffcore_apply_filter(const char *filter)
@@ -3466,7 +3492,7 @@ void diffcore_std(struct diff_options *options)
 	diff_resolve_rename_copy();
 	diffcore_apply_filter(options->filter);
 
-	if (diff_queued_diff.nr)
+	if (diff_queued_diff.nr && !DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
 		DIFF_OPT_SET(options, HAS_CHANGES);
 	else
 		DIFF_OPT_CLR(options, HAS_CHANGES);
@@ -3526,7 +3552,8 @@ void diff_addremove(struct diff_options *options,
 		fill_filespec(two, sha1, mode);
 
 	diff_queue(&diff_queued_diff, one, two);
-	DIFF_OPT_SET(options, HAS_CHANGES);
+	if (!DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
+		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 void diff_change(struct diff_options *options,
@@ -3558,7 +3585,8 @@ void diff_change(struct diff_options *options,
 	fill_filespec(two, new_sha1, new_mode);
 
 	diff_queue(&diff_queued_diff, one, two);
-	DIFF_OPT_SET(options, HAS_CHANGES);
+	if (!DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
+		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 void diff_unmerge(struct diff_options *options,
