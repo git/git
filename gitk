@@ -3831,7 +3831,7 @@ proc vieweditor {top n title} {
     global known_view_options
 
     toplevel $top
-    wm title $top [concat $title "-- criteria for selecting revisions"]
+    wm title $top [concat $title [mc "-- criteria for selecting revisions"]]
     make_transient $top .
 
     # View name
