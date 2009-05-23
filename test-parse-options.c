@@ -19,6 +19,12 @@ int length_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+int number_callback(const struct option *opt, const char *arg, int unset)
+{
+	*(int *)opt->value = strtol(arg, NULL, 10);
+	return 0;
+}
+
 int main(int argc, const char **argv)
 {
 	const char *usage[] = {
@@ -29,6 +35,7 @@ int main(int argc, const char **argv)
 		OPT_BOOLEAN('b', "boolean", &boolean, "get a boolean"),
 		OPT_BIT('4', "or4", &boolean,
 			"bitwise-or boolean with ...0100", 4),
+		OPT_NEGBIT(0, "neg-or4", &boolean, "same as --no-or4", 4),
 		OPT_GROUP(""),
 		OPT_INTEGER('i', "integer", &integer, "get a integer"),
 		OPT_INTEGER('j', NULL, &integer, "get a integer, too"),
@@ -45,6 +52,10 @@ int main(int argc, const char **argv)
 			"set string to default", (unsigned long)"default"),
 		OPT_GROUP("Magic arguments"),
 		OPT_ARGUMENT("quux", "means --quux"),
+		OPT_NUMBER_CALLBACK(&integer, "set integer to NUM",
+			number_callback),
+		{ OPTION_BOOLEAN, '+', NULL, &boolean, NULL, "same as -b",
+		  PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_NODASH },
 		OPT_GROUP("Standard options"),
 		OPT__ABBREV(&abbrev),
 		OPT__VERBOSE(&verbose),

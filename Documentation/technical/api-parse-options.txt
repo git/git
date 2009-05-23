@@ -137,6 +137,10 @@ There are some macros to easily define options:
 	Introduce a boolean option.
 	If used, `int_var` is bitwise-ored with `mask`.
 
+`OPT_NEGBIT(short, long, &int_var, description, mask)`::
+	Introduce a boolean option.
+	If used, `int_var` is bitwise-anded with the inverted `mask`.
+
 `OPT_SET_INT(short, long, &int_var, description, integer)`::
 	Introduce a boolean option.
 	If used, set `int_var` to `integer`.
@@ -165,6 +169,14 @@ There are some macros to easily define options:
 
 `OPT_ARGUMENT(long, description)`::
 	Introduce a long-option argument that will be kept in `argv[]`.
+
+`OPT_NUMBER_CALLBACK(&var, description, func_ptr)`::
+	Recognize numerical options like -123 and feed the integer as
+	if it was an argument to the function given by `func_ptr`.
+	The result will be put into `var`.  There can be only one such
+	option definition.  It cannot be negated and it takes no
+	arguments.  Short options that happen to be digits take
+	precedence over it.
 
 
 The last element of the array must be `OPT_END()`.

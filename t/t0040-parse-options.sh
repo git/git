@@ -12,6 +12,7 @@ usage: test-parse-options <options>
 
     -b, --boolean         get a boolean
     -4, --or4             bitwise-or boolean with ...0100
+    --neg-or4             same as --no-or4
 
     -i, --integer <n>     get a integer
     -j <n>                get a integer, too
@@ -29,6 +30,8 @@ String options
 
 Magic arguments
     --quux                means --quux
+    -NUM                  set integer to NUM
+    +                     same as -b
 
 Standard options
     --abbrev[=<n>]        use <n> digits to display SHA-1s
@@ -245,7 +248,56 @@ test_expect_success 'OPT_BIT() and OPT_SET_INT() work' '
 	test_cmp expect output
 '
 
-# --or4
-# --no-or4
+test_expect_success 'OPT_NEGBIT() and OPT_SET_INT() work' '
+	test-parse-options --set23 -bbbbb --neg-or4 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+cat > expect <<EOF
+boolean: 6
+integer: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: no
+dry run: no
+EOF
+
+test_expect_success 'OPT_BIT() works' '
+	test-parse-options -bb --or4 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+test_expect_success 'OPT_NEGBIT() works' '
+	test-parse-options -bb --no-neg-or4 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+test_expect_success 'OPT_BOOLEAN() with PARSE_OPT_NODASH works' '
+	test-parse-options + + + + + + > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+cat > expect <<EOF
+boolean: 0
+integer: 12345
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: no
+dry run: no
+EOF
+
+test_expect_success 'OPT_NUMBER_CALLBACK() works' '
+	test-parse-options -12345 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
 
 test_done
