@@ -525,8 +525,8 @@ static const char *parse_interpreter(const char *cmd)
 	if (buf[0] != '#' || buf[1] != '!')
 		return NULL;
 	buf[n] = '\0';
-	p = strchr(buf, '\n');
-	if (!p)
+	p = buf + strcspn(buf, "\r\n");
+	if (!*p)
 		return NULL;
 
 	*p = '\0';
