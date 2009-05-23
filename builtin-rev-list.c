@@ -320,7 +320,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	memset(&info, 0, sizeof(info));
 	info.revs = &revs;
 
-	quiet = DIFF_OPT_TST(&revs.diffopt, QUIET);
+	quiet = DIFF_OPT_TST(&revs.diffopt, QUICK);
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
 

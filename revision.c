@@ -791,7 +791,7 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->ignore_merges = 1;
 	revs->simplify_history = 1;
 	DIFF_OPT_SET(&revs->pruning, RECURSIVE);
-	DIFF_OPT_SET(&revs->pruning, QUIET);
+	DIFF_OPT_SET(&revs->pruning, QUICK);
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
 	revs->lifo = 1;

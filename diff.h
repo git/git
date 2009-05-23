@@ -55,7 +55,7 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_COLOR_DIFF          (1 <<  8)
 #define DIFF_OPT_COLOR_DIFF_WORDS    (1 <<  9)
 #define DIFF_OPT_HAS_CHANGES         (1 << 10)
-#define DIFF_OPT_QUIET               (1 << 11)
+#define DIFF_OPT_QUICK               (1 << 11)
 #define DIFF_OPT_NO_INDEX            (1 << 12)
 #define DIFF_OPT_ALLOW_EXTERNAL      (1 << 13)
 #define DIFF_OPT_EXIT_WITH_STATUS    (1 << 14)
