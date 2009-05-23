@@ -446,7 +446,8 @@ int run_diff_index(struct rev_info *revs, int cached)
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
 	opts.index_only = cached;
-	opts.diff_index_cached = cached;
+	opts.diff_index_cached = (cached &&
+				  !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER));
 	opts.merge = 1;
 	opts.fn = oneway_diff;
 	opts.unpack_data = revs;
@@ -503,7 +504,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
 	opts.index_only = 1;
-	opts.diff_index_cached = 1;
+	opts.diff_index_cached = !DIFF_OPT_TST(opt, FIND_COPIES_HARDER);
 	opts.merge = 1;
 	opts.fn = oneway_diff;
 	opts.unpack_data = &revs;
