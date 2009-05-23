@@ -44,6 +44,10 @@
 #   --pretty %s", displaying the commit id, author, date and log
 #   message.  To list full patches separated by a blank line, you
 #   could set this to "git show -C %s; echo".
+#   To list a gitweb/cgit URL *and* a full patch for each change set, use this:
+#     "t=%s; printf 'http://.../?id=%%s' \$t; echo;echo; git show -C \$t; echo"
+#   Be careful if "..." contains things that will be expanded by shell "eval"
+#   or printf.
 #
 # Notes
 # -----
