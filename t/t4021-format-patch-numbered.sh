@@ -86,6 +86,13 @@ test_expect_success 'format.numbered && --no-numbered' '
 
 '
 
+test_expect_success 'format.numbered && --keep-subject' '
+
+	git format-patch --keep-subject --stdout HEAD^ >patch4a &&
+	grep "^Subject: Third" patch4a
+
+'
+
 test_expect_success 'format.numbered = auto' '
 
 	git config format.numbered auto
