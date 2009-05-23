@@ -751,9 +751,8 @@ int check_ref_format(const char *ref)
 	}
 }
 
-const char *prettify_ref(const struct ref *ref)
+const char *prettify_refname(const char *name)
 {
-	const char *name = ref->name;
 	return name + (
 		!prefixcmp(name, "refs/heads/") ? 11 :
 		!prefixcmp(name, "refs/tags/") ? 10 :
