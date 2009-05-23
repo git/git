@@ -1399,13 +1399,13 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 	base = branch->merge[0]->dst;
 	if (!resolve_ref(base, sha1, 1, NULL))
 		return 0;
-	theirs = lookup_commit(sha1);
+	theirs = lookup_commit_reference(sha1);
 	if (!theirs)
 		return 0;
 
 	if (!resolve_ref(branch->refname, sha1, 1, NULL))
 		return 0;
-	ours = lookup_commit(sha1);
+	ours = lookup_commit_reference(sha1);
 	if (!ours)
 		return 0;
 
