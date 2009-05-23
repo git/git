@@ -817,9 +817,6 @@ ifneq (,$(findstring CYGWIN,$(uname_S)))
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	pathsep = ;
-	prefix =
-	INSTALL = /bin/install
-	EXTLIBS += /mingw/lib/libz.a
 	NO_PREAD = YesPlease
 	NO_OPENSSL = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
@@ -838,8 +835,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	NO_SVN_TESTS = YesPlease
 	NO_PERL_MAKEMAKER = YesPlease
-	NO_R_TO_GCC_LINKER = YesPlease
-	INTERNAL_QSORT = YesPlease
 	RUNTIME_PREFIX = YesPlease
 	NO_POSIX_ONLY_PROGRAMS = YesPlease
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
@@ -853,7 +848,16 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/regex/regex.o compat/winansi.o
 	EXTLIBS += -lws2_32
 	X = .exe
+ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	htmldir=doc/git/html/
+	prefix =
+	INSTALL = /bin/install
+	EXTLIBS += /mingw/lib/libz.a
+	NO_R_TO_GCC_LINKER = YesPlease
+	INTERNAL_QSORT = YesPlease
+else
+	NO_CURL = YesPlease
+endif
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
