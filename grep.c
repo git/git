@@ -360,6 +360,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 			bol = pmatch[0].rm_so + bol + 1;
 			while (word_char(bol[-1]) && bol < eol)
 				bol++;
+			eflags |= REG_NOTBOL;
 			if (bol < eol)
 				goto again;
 		}
