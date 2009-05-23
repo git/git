@@ -29,6 +29,10 @@ test_expect_success \
      git add . &&
      git commit -m "first commit" &&
 
+     echo "new file in subdir 2" > directory2/file2 &&
+     git add . &&
+     git commit -m "commit in directory2" &&
+
      echo "changed file 1" > file1 &&
      git commit -a -m "second commit" &&
 
