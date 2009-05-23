@@ -155,7 +155,7 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
 		OPT_END()
 	};
 
-	ac = parse_options(ac, av, option, mktree_usage, 0);
+	ac = parse_options(ac, av, prefix, option, mktree_usage, 0);
 
 	while (!got_eof) {
 		while (1) {

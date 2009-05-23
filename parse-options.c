@@ -285,12 +285,14 @@ static void check_typos(const char *arg, const struct option *options)
 }
 
 void parse_options_start(struct parse_opt_ctx_t *ctx,
-			 int argc, const char **argv, int flags)
+			 int argc, const char **argv, const char *prefix,
+			 int flags)
 {
 	memset(ctx, 0, sizeof(*ctx));
 	ctx->argc = argc - 1;
 	ctx->argv = argv + 1;
 	ctx->out  = argv;
+	ctx->prefix = prefix;
 	ctx->cpidx = ((flags & PARSE_OPT_KEEP_ARGV0) != 0);
 	ctx->flags = flags;
 	if ((flags & PARSE_OPT_KEEP_UNKNOWN) &&
@@ -389,12 +391,13 @@ int parse_options_end(struct parse_opt_ctx_t *ctx)
 	return ctx->cpidx + ctx->argc;
 }
 
-int parse_options(int argc, const char **argv, const struct option *options,
-		  const char * const usagestr[], int flags)
+int parse_options(int argc, const char **argv, const char *prefix,
+		  const struct option *options, const char * const usagestr[],
+		  int flags)
 {
 	struct parse_opt_ctx_t ctx;
 
-	parse_options_start(&ctx, argc, argv, flags);
+	parse_options_start(&ctx, argc, argv, prefix, flags);
 	switch (parse_options_step(&ctx, options, usagestr)) {
 	case PARSE_OPT_HELP:
 		exit(129);

@@ -697,7 +697,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 {
 	int f = 0;
 
-	argc = parse_options(argc, argv, builtin_commit_options, usage, 0);
+	argc = parse_options(argc, argv, prefix, builtin_commit_options, usage,
+			     0);
 	logfile = parse_options_fix_filename(prefix, logfile);
 	if (logfile)
 		logfile = xstrdup(logfile);

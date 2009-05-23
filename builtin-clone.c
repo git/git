@@ -360,7 +360,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	junk_pid = getpid();
 
-	argc = parse_options(argc, argv, builtin_clone_options,
+	argc = parse_options(argc, argv, prefix, builtin_clone_options,
 			     builtin_clone_usage, 0);
 
 	if (argc == 0)

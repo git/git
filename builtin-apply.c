@@ -3313,7 +3313,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 	if (apply_default_whitespace)
 		parse_whitespace_option(apply_default_whitespace);
 
-	argc = parse_options(argc, argv, builtin_apply_options,
+	argc = parse_options(argc, argv, prefix, builtin_apply_options,
 			apply_usage, 0);
 	fake_ancestor = parse_options_fix_filename(prefix, fake_ancestor);
 	if (fake_ancestor)

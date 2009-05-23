@@ -605,7 +605,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	opts.track = BRANCH_TRACK_UNSPECIFIED;
 
-	argc = parse_options(argc, argv, options, checkout_usage,
+	argc = parse_options(argc, argv, prefix, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
 
 	/* --track without -b should DWIM */

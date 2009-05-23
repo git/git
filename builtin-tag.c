@@ -405,7 +405,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	git_config(git_tag_config, NULL);
 
-	argc = parse_options(argc, argv, options, git_tag_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, git_tag_usage, 0);
 	msgfile = parse_options_fix_filename(prefix, msgfile);
 
 	if (keyid) {

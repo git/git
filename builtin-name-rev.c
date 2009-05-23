@@ -238,7 +238,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 	};
 
 	git_config(git_default_config, NULL);
-	argc = parse_options(argc, argv, opts, name_rev_usage, 0);
+	argc = parse_options(argc, argv, prefix, opts, name_rev_usage, 0);
 	if (!!all + !!transform_stdin + !!argc > 1) {
 		error("Specify either a list, or --all, not both!");
 		usage_with_options(name_rev_usage, opts);
