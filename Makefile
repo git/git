@@ -698,7 +698,9 @@ ifeq ($(uname_S),SunOS)
 	NO_MEMMEM = YesPlease
 	NO_HSTRERROR = YesPlease
 	NO_MKDTEMP = YesPlease
-	OLD_ICONV = UnfortunatelyYes
+	ifneq ($(uname_R),5.11)
+		OLD_ICONV = UnfortunatelyYes
+	endif
 	ifeq ($(uname_R),5.8)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
