@@ -6,15 +6,30 @@
 #include "list-objects.h"
 #include "quote.h"
 #include "sha1-lookup.h"
+#include "run-command.h"
 #include "bisect.h"
 
-static unsigned char (*skipped_sha1)[20];
-static int skipped_sha1_nr;
-static int skipped_sha1_alloc;
+struct sha1_array {
+	unsigned char (*sha1)[20];
+	int sha1_nr;
+	int sha1_alloc;
+	int sorted;
+};
 
-static const char **rev_argv;
-static int rev_argv_nr;
-static int rev_argv_alloc;
+static struct sha1_array good_revs;
+static struct sha1_array skipped_revs;
+
+static const unsigned char *current_bad_sha1;
+
+struct argv_array {
+	const char **argv;
+	int argv_nr;
+	int argv_alloc;
+};
+
+static const char *argv_diff_tree[] = {"diff-tree", "--pretty", NULL, NULL};
+static const char *argv_checkout[] = {"checkout", "-q", NULL, "--", NULL};
+static const char *argv_show_branch[] = {"show-branch", NULL, NULL};
 
 /* bits #0-15 in revision.h */
 
@@ -398,23 +413,37 @@ struct commit_list *find_bisection(struct commit_list *list,
 	return best;
 }
 
+static void argv_array_push(struct argv_array *array, const char *string)
+{
+	ALLOC_GROW(array->argv, array->argv_nr + 1, array->argv_alloc);
+	array->argv[array->argv_nr++] = string;
+}
+
+static void argv_array_push_sha1(struct argv_array *array,
+				 const unsigned char *sha1,
+				 const char *format)
+{
+	struct strbuf buf = STRBUF_INIT;
+	strbuf_addf(&buf, format, sha1_to_hex(sha1));
+	argv_array_push(array, strbuf_detach(&buf, NULL));
+}
+
+static void sha1_array_push(struct sha1_array *array,
+			    const unsigned char *sha1)
+{
+	ALLOC_GROW(array->sha1, array->sha1_nr + 1, array->sha1_alloc);
+	hashcpy(array->sha1[array->sha1_nr++], sha1);
+}
+
 static int register_ref(const char *refname, const unsigned char *sha1,
 			int flags, void *cb_data)
 {
 	if (!strcmp(refname, "bad")) {
-		ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-		rev_argv[rev_argv_nr++] = xstrdup(sha1_to_hex(sha1));
+		current_bad_sha1 = sha1;
 	} else if (!prefixcmp(refname, "good-")) {
-		const char *hex = sha1_to_hex(sha1);
-		char *good = xmalloc(strlen(hex) + 2);
-		*good = '^';
-		memcpy(good + 1, hex, strlen(hex) + 1);
-		ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-		rev_argv[rev_argv_nr++] = good;
+		sha1_array_push(&good_revs, sha1);
 	} else if (!prefixcmp(refname, "skip-")) {
-		ALLOC_GROW(skipped_sha1, skipped_sha1_nr + 1,
-			   skipped_sha1_alloc);
-		hashcpy(skipped_sha1[skipped_sha1_nr++], sha1);
+		sha1_array_push(&skipped_revs, sha1);
 	}
 
 	return 0;
@@ -425,7 +454,7 @@ static int read_bisect_refs(void)
 	return for_each_ref_in("refs/bisect/", register_ref, NULL);
 }
 
-void read_bisect_paths(void)
+void read_bisect_paths(struct argv_array *array)
 {
 	struct strbuf str = STRBUF_INIT;
 	const char *filename = git_path("BISECT_NAMES");
@@ -440,8 +469,8 @@ void read_bisect_paths(void)
 
 		strbuf_trim(&str);
 		quoted = strbuf_detach(&str, NULL);
-		res = sq_dequote_to_argv(quoted, &rev_argv,
-					 &rev_argv_nr, &rev_argv_alloc);
+		res = sq_dequote_to_argv(quoted, &array->argv,
+					 &array->argv_nr, &array->argv_alloc);
 		if (res)
 			die("Badly quoted content in file '%s': %s",
 			    filename, quoted);
@@ -451,26 +480,45 @@ void read_bisect_paths(void)
 	fclose(fp);
 }
 
-static int skipcmp(const void *a, const void *b)
+static int array_cmp(const void *a, const void *b)
 {
 	return hashcmp(a, b);
 }
 
-static void prepare_skipped(void)
+static void sort_sha1_array(struct sha1_array *array)
 {
-	qsort(skipped_sha1, skipped_sha1_nr, sizeof(*skipped_sha1), skipcmp);
+	qsort(array->sha1, array->sha1_nr, sizeof(*array->sha1), array_cmp);
+
+	array->sorted = 1;
 }
 
-static const unsigned char *skipped_sha1_access(size_t index, void *table)
+static const unsigned char *sha1_access(size_t index, void *table)
 {
-	unsigned char (*skipped)[20] = table;
-	return skipped[index];
+	unsigned char (*array)[20] = table;
+	return array[index];
 }
 
-static int lookup_skipped(unsigned char *sha1)
+static int lookup_sha1_array(struct sha1_array *array,
+			     const unsigned char *sha1)
 {
-	return sha1_pos(sha1, skipped_sha1, skipped_sha1_nr,
-			skipped_sha1_access);
+	if (!array->sorted)
+		sort_sha1_array(array);
+
+	return sha1_pos(sha1, array->sha1, array->sha1_nr, sha1_access);
+}
+
+static char *join_sha1_array_hex(struct sha1_array *array, char delim)
+{
+	struct strbuf joined_hexs = STRBUF_INIT;
+	int i;
+
+	for (i = 0; i < array->sha1_nr; i++) {
+		strbuf_addstr(&joined_hexs, sha1_to_hex(array->sha1[i]));
+		if (i + 1 < array->sha1_nr)
+			strbuf_addch(&joined_hexs, delim);
+	}
+
+	return strbuf_detach(&joined_hexs, NULL);
 }
 
 struct commit_list *filter_skipped(struct commit_list *list,
@@ -481,15 +529,14 @@ struct commit_list *filter_skipped(struct commit_list *list,
 
 	*tried = NULL;
 
-	if (!skipped_sha1_nr)
+	if (!skipped_revs.sha1_nr)
 		return list;
-
-	prepare_skipped();
 
 	while (list) {
 		struct commit_list *next = list->next;
 		list->next = NULL;
-		if (0 <= lookup_skipped(list->item->object.sha1)) {
+		if (0 <= lookup_sha1_array(&skipped_revs,
+					   list->item->object.sha1)) {
 			/* Move current to tried list */
 			*tried = list;
 			tried = &list->next;
@@ -508,49 +555,328 @@ struct commit_list *filter_skipped(struct commit_list *list,
 
 static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
 {
+	struct argv_array rev_argv = { NULL, 0, 0 };
+	int i;
+
 	init_revisions(revs, prefix);
 	revs->abbrev = 0;
 	revs->commit_format = CMIT_FMT_UNSPECIFIED;
 
-	/* argv[0] will be ignored by setup_revisions */
-	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-	rev_argv[rev_argv_nr++] = xstrdup("bisect_rev_setup");
+	/* rev_argv.argv[0] will be ignored by setup_revisions */
+	argv_array_push(&rev_argv, xstrdup("bisect_rev_setup"));
+	argv_array_push_sha1(&rev_argv, current_bad_sha1, "%s");
+	for (i = 0; i < good_revs.sha1_nr; i++)
+		argv_array_push_sha1(&rev_argv, good_revs.sha1[i], "^%s");
+	argv_array_push(&rev_argv, xstrdup("--"));
+	read_bisect_paths(&rev_argv);
+	argv_array_push(&rev_argv, NULL);
+
+	setup_revisions(rev_argv.argv_nr, rev_argv.argv, revs, NULL);
+	revs->limited = 1;
+}
+
+static void bisect_common(struct rev_info *revs, int *reaches, int *all)
+{
+	if (prepare_revision_walk(revs))
+		die("revision walk setup failed");
+	if (revs->tree_objects)
+		mark_edges_uninteresting(revs->commits, revs, NULL);
+
+	revs->commits = find_bisection(revs->commits, reaches, all,
+				       !!skipped_revs.sha1_nr);
+}
+
+static void exit_if_skipped_commits(struct commit_list *tried,
+				    const unsigned char *bad)
+{
+	if (!tried)
+		return;
+
+	printf("There are only 'skip'ped commits left to test.\n"
+	       "The first bad commit could be any of:\n");
+	print_commit_list(tried, "%s\n", "%s\n");
+	if (bad)
+		printf("%s\n", sha1_to_hex(bad));
+	printf("We cannot bisect more!\n");
+	exit(2);
+}
+
+static int is_expected_rev(const unsigned char *sha1)
+{
+	const char *filename = git_path("BISECT_EXPECTED_REV");
+	struct stat st;
+	struct strbuf str = STRBUF_INIT;
+	FILE *fp;
+	int res = 0;
+
+	if (stat(filename, &st) || !S_ISREG(st.st_mode))
+		return 0;
+
+	fp = fopen(filename, "r");
+	if (!fp)
+		return 0;
+
+	if (strbuf_getline(&str, fp, '\n') != EOF)
+		res = !strcmp(str.buf, sha1_to_hex(sha1));
+
+	strbuf_release(&str);
+	fclose(fp);
+
+	return res;
+}
+
+static void mark_expected_rev(char *bisect_rev_hex)
+{
+	int len = strlen(bisect_rev_hex);
+	const char *filename = git_path("BISECT_EXPECTED_REV");
+	int fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+
+	if (fd < 0)
+		die("could not create file '%s': %s",
+		    filename, strerror(errno));
+
+	bisect_rev_hex[len] = '\n';
+	write_or_die(fd, bisect_rev_hex, len + 1);
+	bisect_rev_hex[len] = '\0';
+
+	if (close(fd) < 0)
+		die("closing file %s: %s", filename, strerror(errno));
+}
+
+static int bisect_checkout(char *bisect_rev_hex)
+{
+	int res;
+
+	mark_expected_rev(bisect_rev_hex);
+
+	argv_checkout[2] = bisect_rev_hex;
+	res = run_command_v_opt(argv_checkout, RUN_GIT_CMD);
+	if (res)
+		exit(res);
+
+	argv_show_branch[1] = bisect_rev_hex;
+	return run_command_v_opt(argv_show_branch, RUN_GIT_CMD);
+}
+
+static struct commit *get_commit_reference(const unsigned char *sha1)
+{
+	struct commit *r = lookup_commit_reference(sha1);
+	if (!r)
+		die("Not a valid commit name %s", sha1_to_hex(sha1));
+	return r;
+}
+
+static struct commit **get_bad_and_good_commits(int *rev_nr)
+{
+	int len = 1 + good_revs.sha1_nr;
+	struct commit **rev = xmalloc(len * sizeof(*rev));
+	int i, n = 0;
+
+	rev[n++] = get_commit_reference(current_bad_sha1);
+	for (i = 0; i < good_revs.sha1_nr; i++)
+		rev[n++] = get_commit_reference(good_revs.sha1[i]);
+	*rev_nr = n;
+
+	return rev;
+}
+
+static void handle_bad_merge_base(void)
+{
+	if (is_expected_rev(current_bad_sha1)) {
+		char *bad_hex = sha1_to_hex(current_bad_sha1);
+		char *good_hex = join_sha1_array_hex(&good_revs, ' ');
+
+		fprintf(stderr, "The merge base %s is bad.\n"
+			"This means the bug has been fixed "
+			"between %s and [%s].\n",
+			bad_hex, bad_hex, good_hex);
+
+		exit(3);
+	}
+
+	fprintf(stderr, "Some good revs are not ancestor of the bad rev.\n"
+		"git bisect cannot work properly in this case.\n"
+		"Maybe you mistake good and bad revs?\n");
+	exit(1);
+}
+
+void handle_skipped_merge_base(const unsigned char *mb)
+{
+	char *mb_hex = sha1_to_hex(mb);
+	char *bad_hex = sha1_to_hex(current_bad_sha1);
+	char *good_hex = join_sha1_array_hex(&good_revs, ' ');
+
+	fprintf(stderr, "Warning: the merge base between %s and [%s] "
+		"must be skipped.\n"
+		"So we cannot be sure the first bad commit is "
+		"between %s and %s.\n"
+		"We continue anyway.\n",
+		bad_hex, good_hex, mb_hex, bad_hex);
+	free(good_hex);
+}
+
+/*
+ * "check_merge_bases" checks that merge bases are not "bad".
+ *
+ * - If one is "bad", it means the user assumed something wrong
+ * and we must exit with a non 0 error code.
+ * - If one is "good", that's good, we have nothing to do.
+ * - If one is "skipped", we can't know but we should warn.
+ * - If we don't know, we should check it out and ask the user to test.
+ */
+static void check_merge_bases(void)
+{
+	struct commit_list *result;
+	int rev_nr;
+	struct commit **rev = get_bad_and_good_commits(&rev_nr);
+
+	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1, 0);
+
+	for (; result; result = result->next) {
+		const unsigned char *mb = result->item->object.sha1;
+		if (!hashcmp(mb, current_bad_sha1)) {
+			handle_bad_merge_base();
+		} else if (0 <= lookup_sha1_array(&good_revs, mb)) {
+			continue;
+		} else if (0 <= lookup_sha1_array(&skipped_revs, mb)) {
+			handle_skipped_merge_base(mb);
+		} else {
+			printf("Bisecting: a merge base must be tested\n");
+			exit(bisect_checkout(sha1_to_hex(mb)));
+		}
+	}
+
+	free(rev);
+	free_commit_list(result);
+}
+
+/*
+ * This function runs the command "git rev-list $_good ^$_bad"
+ * and returns 1 if it produces some output, 0 otherwise.
+ */
+static int check_ancestors(void)
+{
+	struct argv_array rev_argv = { NULL, 0, 0 };
+	struct strbuf str = STRBUF_INIT;
+	int i, result = 0;
+	struct child_process rls;
+	FILE *rls_fout;
+
+	argv_array_push(&rev_argv, xstrdup("rev-list"));
+	argv_array_push_sha1(&rev_argv, current_bad_sha1, "^%s");
+	for (i = 0; i < good_revs.sha1_nr; i++)
+		argv_array_push_sha1(&rev_argv, good_revs.sha1[i], "%s");
+	argv_array_push(&rev_argv, NULL);
+
+	memset(&rls, 0, sizeof(rls));
+	rls.argv = rev_argv.argv;
+	rls.out = -1;
+	rls.git_cmd = 1;
+	if (start_command(&rls))
+		die("Could not launch 'git rev-list' command.");
+	rls_fout = fdopen(rls.out, "r");
+	while (strbuf_getline(&str, rls_fout, '\n') != EOF) {
+		strbuf_trim(&str);
+		if (*str.buf) {
+			result = 1;
+			break;
+		}
+	}
+	fclose(rls_fout);
+	finish_command(&rls);
+
+	return result;
+}
+
+/*
+ * "check_good_are_ancestors_of_bad" checks that all "good" revs are
+ * ancestor of the "bad" rev.
+ *
+ * If that's not the case, we need to check the merge bases.
+ * If a merge base must be tested by the user, its source code will be
+ * checked out to be tested by the user and we will exit.
+ */
+static void check_good_are_ancestors_of_bad(const char *prefix)
+{
+	const char *filename = git_path("BISECT_ANCESTORS_OK");
+	struct stat st;
+	int fd;
+
+	if (!current_bad_sha1)
+		die("a bad revision is needed");
+
+	/* Check if file BISECT_ANCESTORS_OK exists. */
+	if (!stat(filename, &st) && S_ISREG(st.st_mode))
+		return;
+
+	/* Bisecting with no good rev is ok. */
+	if (good_revs.sha1_nr == 0)
+		return;
+
+	if (check_ancestors())
+		check_merge_bases();
+
+	/* Create file BISECT_ANCESTORS_OK. */
+	fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+	if (fd < 0)
+		warning("could not create file '%s': %s",
+			filename, strerror(errno));
+	else
+		close(fd);
+}
+
+/*
+ * We use the convention that exiting with an exit code 10 means that
+ * the bisection process finished successfully.
+ * In this case the calling shell script should exit 0.
+ */
+int bisect_next_all(const char *prefix)
+{
+	struct rev_info revs;
+	struct commit_list *tried;
+	int reaches = 0, all = 0, nr;
+	const unsigned char *bisect_rev;
+	char bisect_rev_hex[41];
 
 	if (read_bisect_refs())
 		die("reading bisect refs failed");
 
-	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-	rev_argv[rev_argv_nr++] = xstrdup("--");
-
-	read_bisect_paths();
-
-	ALLOC_GROW(rev_argv, rev_argv_nr + 1, rev_argv_alloc);
-	rev_argv[rev_argv_nr++] = NULL;
-
-	setup_revisions(rev_argv_nr, rev_argv, revs, NULL);
-
-	revs->limited = 1;
-}
-
-int bisect_next_vars(const char *prefix)
-{
-	struct rev_info revs;
-	struct rev_list_info info;
-	int reaches = 0, all = 0;
-
-	memset(&info, 0, sizeof(info));
-	info.revs = &revs;
-	info.bisect_show_flags = BISECT_SHOW_TRIED | BISECT_SHOW_STRINGED;
+	check_good_are_ancestors_of_bad(prefix);
 
 	bisect_rev_setup(&revs, prefix);
 
-	if (prepare_revision_walk(&revs))
-		die("revision walk setup failed");
-	if (revs.tree_objects)
-		mark_edges_uninteresting(revs.commits, &revs, NULL);
+	bisect_common(&revs, &reaches, &all);
 
-	revs.commits = find_bisection(revs.commits, &reaches, &all,
-				      !!skipped_sha1_nr);
+	revs.commits = filter_skipped(revs.commits, &tried, 0);
 
-	return show_bisect_vars(&info, reaches, all);
+	if (!revs.commits) {
+		/*
+		 * We should exit here only if the "bad"
+		 * commit is also a "skip" commit.
+		 */
+		exit_if_skipped_commits(tried, NULL);
+
+		printf("%s was both good and bad\n",
+		       sha1_to_hex(current_bad_sha1));
+		exit(1);
+	}
+
+	bisect_rev = revs.commits->item->object.sha1;
+	memcpy(bisect_rev_hex, sha1_to_hex(bisect_rev), 41);
+
+	if (!hashcmp(bisect_rev, current_bad_sha1)) {
+		exit_if_skipped_commits(tried, current_bad_sha1);
+		printf("%s is first bad commit\n", bisect_rev_hex);
+		argv_diff_tree[2] = bisect_rev_hex;
+		run_command_v_opt(argv_diff_tree, RUN_GIT_CMD);
+		/* This means the bisection process succeeded. */
+		exit(10);
+	}
+
+	nr = all - reaches - 1;
+	printf("Bisecting: %d revisions left to test after this "
+	       "(roughly %d steps)\n", nr, estimate_bisect_steps(all));
+
+	return bisect_checkout(bisect_rev_hex);
 }
+

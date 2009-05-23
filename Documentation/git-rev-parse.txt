@@ -30,6 +30,11 @@ OPTIONS
 	Only meaningful in `--parseopt` mode. Tells the option parser to echo
 	out the first `--` met instead of skipping it.
 
+--sq-quote::
+	Use 'git-rev-parse' in shell quoting mode (see SQ-QUOTE
+	section below). In contrast to the `--sq` option below, this
+	mode does only quoting. Nothing else is done to command input.
+
 --revs-only::
 	Do not output flags and parameters not meant for
 	'git-rev-list' command.
@@ -64,7 +69,8 @@ OPTIONS
 	properly quoted for consumption by shell.  Useful when
 	you expect your parameter to contain whitespaces and
 	newlines (e.g. when using pickaxe `-S` with
-	'git-diff-\*').
+	'git-diff-\*'). In contrast to the `--sq-quote` option,
+	the command input is still interpreted as usual.
 
 --not::
 	When showing object names, prefix them with '{caret}' and
@@ -404,6 +410,33 @@ bar=      some cool option --bar with an argument
 C?        option C with an optional argument"
 
 eval `echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?`
+------------
+
+SQ-QUOTE
+--------
+
+In `--sq-quote` mode, 'git-rev-parse' echoes on the standard output a
+single line suitable for `sh(1)` `eval`. This line is made by
+normalizing the arguments following `--sq-quote`. Nothing other than
+quoting the arguments is done.
+
+If you want command input to still be interpreted as usual by
+'git-rev-parse' before the output is shell quoted, see the `--sq`
+option.
+
+Example
+~~~~~~~
+
+------------
+$ cat >your-git-script.sh <<\EOF
+#!/bin/sh
+args=$(git rev-parse --sq-quote "$@")   # quote user-supplied arguments
+command="git frotz -n24 $args"          # and use it inside a handcrafted
+					# command line
+eval "$command"
+EOF
+
+$ sh your-git-script.sh "a b'c"
 ------------
 
 EXAMPLES
