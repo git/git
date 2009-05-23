@@ -38,6 +38,8 @@ struct passwd {
 	char *pw_dir;
 };
 
+extern char *getpass(const char *prompt);
+
 struct pollfd {
 	int fd;           /* file descriptor */
 	short events;     /* requested events */
