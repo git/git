@@ -7,6 +7,7 @@ static unsigned long timestamp;
 static int abbrev = 7;
 static int verbose = 0, dry_run = 0, quiet = 0;
 static char *string = NULL;
+static char *file = NULL;
 
 int length_callback(const struct option *opt, const char *arg, int unset)
 {
@@ -27,6 +28,7 @@ int number_callback(const struct option *opt, const char *arg, int unset)
 
 int main(int argc, const char **argv)
 {
+	const char *prefix = "prefix/";
 	const char *usage[] = {
 		"test-parse-options <options>",
 		NULL
@@ -43,6 +45,7 @@ int main(int argc, const char **argv)
 		OPT_DATE('t', NULL, &timestamp, "get timestamp of <time>"),
 		OPT_CALLBACK('L', "length", &integer, "str",
 			"get length of <str>", length_callback),
+		OPT_FILENAME('F', "file", &file, "set file to <FILE>"),
 		OPT_GROUP("String options"),
 		OPT_STRING('s', "string", &string, "string", "get a string"),
 		OPT_STRING(0, "string2", &string, "str", "get another string"),
@@ -65,7 +68,7 @@ int main(int argc, const char **argv)
 	};
 	int i;
 
-	argc = parse_options(argc, argv, NULL, options, usage, 0);
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
 	printf("boolean: %d\n", boolean);
 	printf("integer: %u\n", integer);
@@ -75,6 +78,7 @@ int main(int argc, const char **argv)
 	printf("verbose: %d\n", verbose);
 	printf("quiet: %s\n", quiet ? "yes" : "no");
 	printf("dry run: %s\n", dry_run ? "yes" : "no");
+	printf("file: %s\n", file ? file : "(not set)");
 
 	for (i = 0; i < argc; i++)
 		printf("arg %02d: %s\n", i, argv[i]);

@@ -88,13 +88,13 @@ static struct option builtin_commit_options[] = {
 	OPT__VERBOSE(&verbose),
 	OPT_GROUP("Commit message options"),
 
-	OPT_STRING('F', "file", &logfile, "FILE", "read log from file"),
+	OPT_FILENAME('F', "file", &logfile, "read log from file"),
 	OPT_STRING(0, "author", &force_author, "AUTHOR", "override author for commit"),
 	OPT_CALLBACK('m', "message", &message, "MESSAGE", "specify commit message", opt_parse_m),
 	OPT_STRING('c', "reedit-message", &edit_message, "COMMIT", "reuse and edit message from specified commit "),
 	OPT_STRING('C', "reuse-message", &use_message, "COMMIT", "reuse message from specified commit"),
 	OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
-	OPT_STRING('t', "template", &template_file, "FILE", "use specified template file"),
+	OPT_FILENAME('t', "template", &template_file, "use specified template file"),
 	OPT_BOOLEAN('e', "edit", &edit_flag, "force edit of commit"),
 
 	OPT_GROUP("Commit contents options"),
@@ -699,12 +699,6 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	argc = parse_options(argc, argv, prefix, builtin_commit_options, usage,
 			     0);
-	logfile = parse_options_fix_filename(prefix, logfile);
-	if (logfile)
-		logfile = xstrdup(logfile);
-	template_file = parse_options_fix_filename(prefix, template_file);
-	if (template_file)
-		template_file = xstrdup(template_file);
 
 	if (force_author && !strchr(force_author, '>'))
 		force_author = find_author_by_nickname(force_author);

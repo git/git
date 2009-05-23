@@ -167,6 +167,11 @@ There are some macros to easily define options:
 	and the result will be put into `var`.
 	See 'Option Callbacks' below for a more elaborate description.
 
+`OPT_FILENAME(short, long, &var, description)`::
+	Introduce an option with a filename argument.
+	The filename will be prefixed by passing the filename along with
+	the prefix argument of `parse_options()` to `prefix_filename()`.
+
 `OPT_ARGUMENT(long, description)`::
 	Introduce a long-option argument that will be kept in `argv[]`.
 

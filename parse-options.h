@@ -17,6 +17,7 @@ enum parse_opt_type {
 	OPTION_STRING,
 	OPTION_INTEGER,
 	OPTION_CALLBACK,
+	OPTION_FILENAME
 };
 
 enum parse_opt_flags {
@@ -117,6 +118,8 @@ struct option {
 #define OPT_NUMBER_CALLBACK(v, h, f) \
 	{ OPTION_NUMBER, 0, NULL, (v), NULL, (h), \
 	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, (f) }
+#define OPT_FILENAME(s, l, v, h)    { OPTION_FILENAME, (s), (l), (v), \
+				       "FILE", (h) }
 
 /* parse_options() will filter out the processed options and leave the
  * non-option arguments in argv[].
@@ -183,7 +186,5 @@ extern int parse_opt_with_commit(const struct option *, const char *, int);
 	{ OPTION_CALLBACK, 0, "abbrev", (var), "n", \
 	  "use <n> digits to display SHA-1s", \
 	  PARSE_OPT_OPTARG, &parse_opt_abbrev_cb, 0 }
-
-extern const char *parse_options_fix_filename(const char *prefix, const char *file);
 
 #endif

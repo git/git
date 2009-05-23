@@ -31,11 +31,20 @@ static int get_arg(struct parse_opt_ctx_t *p, const struct option *opt,
 	return 0;
 }
 
+static void fix_filename(const char *prefix, const char **file)
+{
+	if (!file || !*file || !prefix || is_absolute_path(*file)
+	    || !strcmp("-", *file))
+		return;
+	*file = xstrdup(prefix_filename(prefix, strlen(prefix), *file));
+}
+
 static int get_value(struct parse_opt_ctx_t *p,
 		     const struct option *opt, int flags)
 {
 	const char *s, *arg;
 	const int unset = flags & OPT_UNSET;
+	int err;
 
 	if (unset && p->opt)
 		return opterror(opt, "takes no value", flags);
@@ -94,6 +103,19 @@ static int get_value(struct parse_opt_ctx_t *p,
 		else
 			return get_arg(p, opt, flags, (const char **)opt->value);
 		return 0;
+
+	case OPTION_FILENAME:
+		err = 0;
+		if (unset)
+			*(const char **)opt->value = NULL;
+		else if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
+			*(const char **)opt->value = (const char *)opt->defval;
+		else
+			err = get_arg(p, opt, flags, (const char **)opt->value);
+
+		if (!err)
+			fix_filename(p->prefix, (const char **)opt->value);
+		return err;
 
 	case OPTION_CALLBACK:
 		if (unset)
@@ -494,6 +516,8 @@ int usage_with_options_internal(const char * const *usagestr,
 			if (opts->flags & PARSE_OPT_NOARG)
 				break;
 			/* FALLTHROUGH */
+		case OPTION_FILENAME:
+			/* FALLTHROUGH */
 		case OPTION_STRING:
 			if (opts->argh)
 				pos += usage_argh(opts);
@@ -604,15 +628,3 @@ int parse_opt_with_commit(const struct option *opt, const char *arg, int unset)
 	commit_list_insert(commit, opt->value);
 	return 0;
 }
-
-/*
- * This should really be OPTION_FILENAME type as a part of
- * parse_options that take prefix to do this while parsing.
- */
-extern const char *parse_options_fix_filename(const char *prefix, const char *file)
-{
-	if (!file || !prefix || is_absolute_path(file) || !strcmp("-", file))
-		return file;
-	return prefix_filename(prefix, strlen(prefix), file);
-}
-
