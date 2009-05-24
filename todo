@@ -1,8 +1,20 @@
+	
+	write proper docs (asciidoc format for git compatibility)
 
 	delete tempdir
+
 	--annotate-sometimes: only annotate if the patch also changes files
 	  outside the subdir?
+
 	'git subtree rejoin' option to do the same as --rejoin, eg. after a
 	  rebase
+
 	"-s subtree" should be given an explicit subtree option?
+
+	--prefix doesn't force the subtree correctly in merge/pull
+
+	add a 'push' subcommand to parallel 'pull'
+
+	add a --squash option so we don't merge histories but can still split
 	
+	add to-submodule and from-submodule commands
