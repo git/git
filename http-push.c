@@ -1378,8 +1378,9 @@ static void remove_locks(void)
 
 	fprintf(stderr, "Removing remote locks...\n");
 	while (lock) {
+		struct remote_lock *next = lock->next;
 		unlock_remote(lock);
-		lock = lock->next;
+		lock = next;
 	}
 }
 
