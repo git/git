@@ -165,6 +165,12 @@ test_expect_success FILEMODE 'stage mode but not hunk' '
 
 # end of tests disabled when filemode is not usable
 
+test_expect_success 'setup again' '
+	git reset --hard &&
+	test_chmod +x file &&
+	echo content >>file
+'
+
 # Write the patch file with a new line at the top and bottom
 cat >patch <<EOF
 index 180b47c..b6f2c08 100644
