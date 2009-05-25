@@ -38,6 +38,8 @@ struct passwd {
 	char *pw_dir;
 };
 
+extern char *getpass(const char *prompt);
+
 struct pollfd {
 	int fd;           /* file descriptor */
 	short events;     /* requested events */
@@ -66,8 +68,6 @@ struct itimerval {
 static inline int readlink(const char *path, char *buf, size_t bufsiz)
 { errno = ENOSYS; return -1; }
 static inline int symlink(const char *oldpath, const char *newpath)
-{ errno = ENOSYS; return -1; }
-static inline int link(const char *oldpath, const char *newpath)
 { errno = ENOSYS; return -1; }
 static inline int fchmod(int fildes, mode_t mode)
 { errno = ENOSYS; return -1; }
@@ -111,7 +111,7 @@ static inline int mingw_unlink(const char *pathname)
 }
 #define unlink mingw_unlink
 
-static inline int waitpid(pid_t pid, unsigned *status, unsigned options)
+static inline int waitpid(pid_t pid, int *status, unsigned options)
 {
 	if (options == 0)
 		return _cwait(status, pid, 0);
@@ -134,6 +134,7 @@ int getpagesize(void);	/* defined in MinGW's libgcc.a */
 struct passwd *getpwuid(int uid);
 int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
+int link(const char *oldpath, const char *newpath);
 
 /*
  * replacements of existing functions
@@ -160,14 +161,22 @@ int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
 
+#ifdef USE_WIN32_MMAP
+int mingw_getpagesize(void);
+#define getpagesize mingw_getpagesize
+#endif
+
 /* Use mingw_lstat() instead of lstat()/stat() and
  * mingw_fstat() instead of fstat() on Windows.
  */
+#define off_t off64_t
+#define stat _stati64
+#define lseek _lseeki64
 int mingw_lstat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
 #define fstat mingw_fstat
 #define lstat mingw_lstat
-#define stat(x,y) mingw_lstat(x,y)
+#define _stati64(x,y) mingw_lstat(x,y)
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
 #define utime mingw_utime

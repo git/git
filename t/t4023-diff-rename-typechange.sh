@@ -4,6 +4,12 @@ test_description='typechange rename detection'
 
 . ./test-lib.sh
 
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+fi
+
 test_expect_success setup '
 
 	rm -f foo bar &&

@@ -429,6 +429,37 @@ test_expect_success 'in-tree .gitattributes (4)' '
 	}
 '
 
+test_expect_success 'checkout with existing .gitattributes' '
+
+	git config core.autocrlf true &&
+	git config --unset core.safecrlf &&
+	echo ".file2 -crlfQ" | q_to_cr >> .gitattributes &&
+	git add .gitattributes &&
+	git commit -m initial &&
+	echo ".file -crlfQ" | q_to_cr >> .gitattributes &&
+	echo "contents" > .file &&
+	git add .gitattributes .file &&
+	git commit -m second &&
+
+	git checkout master~1 &&
+	git checkout master &&
+	test "$(git diff-files --raw)" = ""
+
+'
+
+test_expect_success 'checkout when deleting .gitattributes' '
+
+	git rm .gitattributes &&
+	echo "contentsQ" | q_to_cr > .file2 &&
+	git add .file2 &&
+	git commit -m third
+
+	git checkout master~1 &&
+	git checkout master &&
+	remove_cr .file2 >/dev/null
+
+'
+
 test_expect_success 'invalid .gitattributes (must not crash)' '
 
 	echo "three +crlf" >>.gitattributes &&

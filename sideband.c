@@ -19,7 +19,7 @@
 
 #define FIX_SIZE 10  /* large enough for any of the above */
 
-int recv_sideband(const char *me, int in_stream, int out, int err)
+int recv_sideband(const char *me, int in_stream, int out)
 {
 	unsigned pf = strlen(PREFIX);
 	unsigned sf;
@@ -41,8 +41,7 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 		if (len == 0)
 			break;
 		if (len < 1) {
-			len = sprintf(buf, "%s: protocol error: no band designator\n", me);
-			safe_write(err, buf, len);
+			fprintf(stderr, "%s: protocol error: no band designator\n", me);
 			return SIDEBAND_PROTOCOL_ERROR;
 		}
 		band = buf[pf] & 0xff;
@@ -50,8 +49,8 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 		switch (band) {
 		case 3:
 			buf[pf] = ' ';
-			buf[pf+1+len] = '\n';
-			safe_write(err, buf, pf+1+len+1);
+			buf[pf+1+len] = '\0';
+			fprintf(stderr, "%s\n", buf);
 			return SIDEBAND_REMOTE_ERROR;
 		case 2:
 			buf[pf] = ' ';
@@ -95,12 +94,12 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 					memcpy(save, b + brk, sf);
 					b[brk + sf - 1] = b[brk - 1];
 					memcpy(b + brk - 1, suffix, sf);
-					safe_write(err, b, brk + sf);
+					fprintf(stderr, "%.*s", brk + sf, b);
 					memcpy(b + brk, save, sf);
 					len -= brk;
 				} else {
 					int l = brk ? brk : len;
-					safe_write(err, b, l);
+					fprintf(stderr, "%.*s", l, b);
 					len -= l;
 				}
 
@@ -112,10 +111,8 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 			safe_write(out, buf + pf+1, len);
 			continue;
 		default:
-			len = sprintf(buf,
-				      "%s: protocol error: bad band #%d\n",
-				      me, band);
-			safe_write(err, buf, len);
+			fprintf(stderr, "%s: protocol error: bad band #%d\n",
+				me, band);
 			return SIDEBAND_PROTOCOL_ERROR;
 		}
 	}

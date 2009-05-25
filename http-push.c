@@ -97,7 +97,7 @@ struct repo
 	struct remote_lock *locks;
 };
 
-static struct repo *remote;
+static struct repo *repo;
 
 enum transfer_state {
 	NEED_FETCH,
@@ -185,6 +185,32 @@ enum dav_header_flag {
 	DAV_HEADER_LOCK = (1u << 1),
 	DAV_HEADER_TIMEOUT = (1u << 2)
 };
+
+static char *xml_entities(char *s)
+{
+	struct strbuf buf = STRBUF_INIT;
+	while (*s) {
+		size_t len = strcspn(s, "\"<>&");
+		strbuf_add(&buf, s, len);
+		s += len;
+		switch (*s) {
+		case '"':
+			strbuf_addstr(&buf, "&quot;");
+			break;
+		case '<':
+			strbuf_addstr(&buf, "&lt;");
+			break;
+		case '>':
+			strbuf_addstr(&buf, "&gt;");
+			break;
+		case '&':
+			strbuf_addstr(&buf, "&amp;");
+			break;
+		}
+		s++;
+	}
+	return strbuf_detach(&buf, NULL);
+}
 
 static struct curl_slist *get_dav_token_headers(struct remote_lock *lock, enum dav_header_flag options)
 {
@@ -289,9 +315,9 @@ static void start_fetch_loose(struct transfer_request *request)
 		 "%s.temp", filename);
 
 	snprintf(prevfile, sizeof(prevfile), "%s.prev", request->filename);
-	unlink(prevfile);
+	unlink_or_warn(prevfile);
 	rename(request->tmpfile, prevfile);
-	unlink(request->tmpfile);
+	unlink_or_warn(request->tmpfile);
 
 	if (request->local_fileno != -1)
 		error("fd leakage in start: %d", request->local_fileno);
@@ -324,7 +350,7 @@ static void start_fetch_loose(struct transfer_request *request)
 
 	git_SHA1_Init(&request->c);
 
-	url = get_remote_object_url(remote->url, hex, 0);
+	url = get_remote_object_url(repo->url, hex, 0);
 	request->url = xstrdup(url);
 
 	/* If a previous temp file is present, process what was already
@@ -346,7 +372,7 @@ static void start_fetch_loose(struct transfer_request *request)
 		} while (prev_read > 0);
 		close(prevlocal);
 	}
-	unlink(prevfile);
+	unlink_or_warn(prevfile);
 
 	/* Reset inflate/SHA1 if there was an error reading the previous temp
 	   file; also rewind to the beginning of the local file. */
@@ -389,7 +415,7 @@ static void start_fetch_loose(struct transfer_request *request)
 	request->state = RUN_FETCH_LOOSE;
 	if (!start_active_slot(slot)) {
 		fprintf(stderr, "Unable to start GET request\n");
-		remote->can_update_info_refs = 0;
+		repo->can_update_info_refs = 0;
 		release_request(request);
 	}
 }
@@ -399,7 +425,7 @@ static void start_mkcol(struct transfer_request *request)
 	char *hex = sha1_to_hex(request->obj->sha1);
 	struct active_request_slot *slot;
 
-	request->url = get_remote_object_url(remote->url, hex, 1);
+	request->url = get_remote_object_url(repo->url, hex, 1);
 
 	slot = get_active_slot();
 	slot->callback_func = process_response;
@@ -434,10 +460,10 @@ static void start_fetch_packed(struct transfer_request *request)
 	struct transfer_request *check_request = request_queue_head;
 	struct active_request_slot *slot;
 
-	target = find_sha1_pack(request->obj->sha1, remote->packs);
+	target = find_sha1_pack(request->obj->sha1, repo->packs);
 	if (!target) {
 		fprintf(stderr, "Unable to fetch %s, will not be able to update server info refs\n", sha1_to_hex(request->obj->sha1));
-		remote->can_update_info_refs = 0;
+		repo->can_update_info_refs = 0;
 		release_request(request);
 		return;
 	}
@@ -450,9 +476,9 @@ static void start_fetch_packed(struct transfer_request *request)
 	snprintf(request->tmpfile, sizeof(request->tmpfile),
 		 "%s.temp", filename);
 
-	url = xmalloc(strlen(remote->url) + 64);
+	url = xmalloc(strlen(repo->url) + 64);
 	sprintf(url, "%sobjects/pack/pack-%s.pack",
-		remote->url, sha1_to_hex(target->sha1));
+		repo->url, sha1_to_hex(target->sha1));
 
 	/* Make sure there isn't another open request for this pack */
 	while (check_request) {
@@ -469,7 +495,7 @@ static void start_fetch_packed(struct transfer_request *request)
 	if (!packfile) {
 		fprintf(stderr, "Unable to open local file %s for pack",
 			request->tmpfile);
-		remote->can_update_info_refs = 0;
+		repo->can_update_info_refs = 0;
 		free(url);
 		return;
 	}
@@ -505,7 +531,7 @@ static void start_fetch_packed(struct transfer_request *request)
 	request->state = RUN_FETCH_PACKED;
 	if (!start_active_slot(slot)) {
 		fprintf(stderr, "Unable to start GET request\n");
-		remote->can_update_info_refs = 0;
+		repo->can_update_info_refs = 0;
 		release_request(request);
 	}
 }
@@ -554,10 +580,10 @@ static void start_put(struct transfer_request *request)
 	request->buffer.buf.len = stream.total_out;
 
 	strbuf_addstr(&buf, "Destination: ");
-	append_remote_object_url(&buf, remote->url, hex, 0);
+	append_remote_object_url(&buf, repo->url, hex, 0);
 	request->dest = strbuf_detach(&buf, NULL);
 
-	append_remote_object_url(&buf, remote->url, hex, 0);
+	append_remote_object_url(&buf, repo->url, hex, 0);
 	strbuf_add(&buf, request->lock->tmpfile_suffix, 41);
 	request->url = strbuf_detach(&buf, NULL);
 
@@ -567,6 +593,10 @@ static void start_put(struct transfer_request *request)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &request->buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, request->buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &request->buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PUT);
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 1);
@@ -648,7 +678,7 @@ static int refresh_lock(struct remote_lock *lock)
 
 static void check_locks(void)
 {
-	struct remote_lock *lock = remote->locks;
+	struct remote_lock *lock = repo->locks;
 	time_t current_time = time(NULL);
 	int time_remaining;
 
@@ -754,18 +784,18 @@ static void finish_request(struct transfer_request *request)
 		    request->http_code != 416) {
 			if (stat(request->tmpfile, &st) == 0) {
 				if (st.st_size == 0)
-					unlink(request->tmpfile);
+					unlink_or_warn(request->tmpfile);
 			}
 		} else {
 			if (request->http_code == 416)
-				fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
+				warning("requested range invalid; we may already have all the data.");
 
 			git_inflate_end(&request->stream);
 			git_SHA1_Final(request->real_sha1, &request->c);
 			if (request->zret != Z_STREAM_END) {
-				unlink(request->tmpfile);
+				unlink_or_warn(request->tmpfile);
 			} else if (hashcmp(request->obj->sha1, request->real_sha1)) {
-				unlink(request->tmpfile);
+				unlink_or_warn(request->tmpfile);
 			} else {
 				request->rename =
 					move_temp_to_file(
@@ -787,7 +817,7 @@ static void finish_request(struct transfer_request *request)
 		if (request->curl_result != CURLE_OK) {
 			fprintf(stderr, "Unable to get pack file %s\n%s",
 				request->url, curl_errorstr);
-			remote->can_update_info_refs = 0;
+			repo->can_update_info_refs = 0;
 		} else {
 			off_t pack_size = ftell(request->local_stream);
 
@@ -797,7 +827,7 @@ static void finish_request(struct transfer_request *request)
 					       request->filename)) {
 				target = (struct packed_git *)request->userData;
 				target->pack_size = pack_size;
-				lst = &remote->packs;
+				lst = &repo->packs;
 				while (*lst != target)
 					lst = &((*lst)->next);
 				*lst = (*lst)->next;
@@ -805,7 +835,7 @@ static void finish_request(struct transfer_request *request)
 				if (!verify_pack(target))
 					install_packed_git(target);
 				else
-					remote->can_update_info_refs = 0;
+					repo->can_update_info_refs = 0;
 			}
 		}
 		release_request(request);
@@ -815,7 +845,7 @@ static void finish_request(struct transfer_request *request)
 #ifdef USE_CURL_MULTI
 static int fill_active_slot(void *unused)
 {
-	struct transfer_request *request = request_queue_head;
+	struct transfer_request *request;
 
 	if (aborted)
 		return 0;
@@ -888,7 +918,7 @@ static int add_send_request(struct object *obj, struct remote_lock *lock)
 		get_remote_object_list(obj->sha1[0]);
 	if (obj->flags & (REMOTE | PUSHING))
 		return 0;
-	target = find_sha1_pack(obj->sha1, remote->packs);
+	target = find_sha1_pack(obj->sha1, repo->packs);
 	if (target) {
 		obj->flags |= REMOTE;
 		return 0;
@@ -929,8 +959,8 @@ static int fetch_index(unsigned char *sha1)
 	struct slot_results results;
 
 	/* Don't use the index if the pack isn't there */
-	url = xmalloc(strlen(remote->url) + 64);
-	sprintf(url, "%sobjects/pack/pack-%s.pack", remote->url, hex);
+	url = xmalloc(strlen(repo->url) + 64);
+	sprintf(url, "%sobjects/pack/pack-%s.pack", repo->url, hex);
 	slot = get_active_slot();
 	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
@@ -955,7 +985,7 @@ static int fetch_index(unsigned char *sha1)
 	if (push_verbosely)
 		fprintf(stderr, "Getting index for pack %s\n", hex);
 
-	sprintf(url, "%sobjects/pack/pack-%s.idx", remote->url, hex);
+	sprintf(url, "%sobjects/pack/pack-%s.idx", repo->url, hex);
 
 	filename = sha1_pack_index_name(sha1);
 	snprintf(tmpfile, sizeof(tmpfile), "%s.temp", filename);
@@ -1017,8 +1047,8 @@ static int setup_index(unsigned char *sha1)
 		return -1;
 
 	new_pack = parse_pack_index(sha1);
-	new_pack->next = remote->packs;
-	remote->packs = new_pack;
+	new_pack->next = repo->packs;
+	repo->packs = new_pack;
 	return 0;
 }
 
@@ -1036,8 +1066,8 @@ static int fetch_indices(void)
 	if (push_verbosely)
 		fprintf(stderr, "Getting pack list\n");
 
-	url = xmalloc(strlen(remote->url) + 20);
-	sprintf(url, "%sobjects/info/packs", remote->url);
+	url = xmalloc(strlen(repo->url) + 20);
+	sprintf(url, "%sobjects/info/packs", repo->url);
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -1221,12 +1251,13 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	struct remote_lock *lock = NULL;
 	struct curl_slist *dav_headers = NULL;
 	struct xml_ctx ctx;
+	char *escaped;
 
-	url = xmalloc(strlen(remote->url) + strlen(path) + 1);
-	sprintf(url, "%s%s", remote->url, path);
+	url = xmalloc(strlen(repo->url) + strlen(path) + 1);
+	sprintf(url, "%s%s", repo->url, path);
 
 	/* Make sure leading directories exist for the remote ref */
-	ep = strchr(url + strlen(remote->url) + 1, '/');
+	ep = strchr(url + strlen(repo->url) + 1, '/');
 	while (ep) {
 		char saved_character = ep[1];
 		ep[1] = '\0';
@@ -1255,7 +1286,9 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 		ep = strchr(ep + 1, '/');
 	}
 
-	strbuf_addf(&out_buffer.buf, LOCK_REQUEST, git_default_email);
+	escaped = xml_entities(git_default_email);
+	strbuf_addf(&out_buffer.buf, LOCK_REQUEST, escaped);
+	free(escaped);
 
 	sprintf(timeout_header, "Timeout: Second-%ld", timeout);
 	dav_headers = curl_slist_append(dav_headers, timeout_header);
@@ -1266,6 +1299,10 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &out_buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
@@ -1318,8 +1355,8 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	} else {
 		lock->url = url;
 		lock->start_time = time(NULL);
-		lock->next = remote->locks;
-		remote->locks = lock;
+		lock->next = repo->locks;
+		repo->locks = lock;
 	}
 
 	return lock;
@@ -1329,7 +1366,7 @@ static int unlock_remote(struct remote_lock *lock)
 {
 	struct active_request_slot *slot;
 	struct slot_results results;
-	struct remote_lock *prev = remote->locks;
+	struct remote_lock *prev = repo->locks;
 	struct curl_slist *dav_headers;
 	int rc = 0;
 
@@ -1355,8 +1392,8 @@ static int unlock_remote(struct remote_lock *lock)
 
 	curl_slist_free_all(dav_headers);
 
-	if (remote->locks == lock) {
-		remote->locks = lock->next;
+	if (repo->locks == lock) {
+		repo->locks = lock->next;
 	} else {
 		while (prev && prev->next != lock)
 			prev = prev->next;
@@ -1374,12 +1411,13 @@ static int unlock_remote(struct remote_lock *lock)
 
 static void remove_locks(void)
 {
-	struct remote_lock *lock = remote->locks;
+	struct remote_lock *lock = repo->locks;
 
 	fprintf(stderr, "Removing remote locks...\n");
 	while (lock) {
+		struct remote_lock *next = lock->next;
 		unlock_remote(lock);
-		lock = lock->next;
+		lock = next;
 	}
 }
 
@@ -1456,7 +1494,7 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
 				}
 			}
 			if (path) {
-				path += remote->path_len;
+				path += repo->path_len;
 				ls->dentry_name = xstrdup(path);
 			}
 		} else if (!strcmp(ctx->name, DAV_PROPFIND_COLLECTION)) {
@@ -1479,7 +1517,7 @@ static void remote_ls(const char *path, int flags,
 		      void (*userFunc)(struct remote_ls_ctx *ls),
 		      void *userData)
 {
-	char *url = xmalloc(strlen(remote->url) + strlen(path) + 1);
+	char *url = xmalloc(strlen(repo->url) + strlen(path) + 1);
 	struct active_request_slot *slot;
 	struct slot_results results;
 	struct strbuf in_buffer = STRBUF_INIT;
@@ -1495,7 +1533,7 @@ static void remote_ls(const char *path, int flags,
 	ls.userData = userData;
 	ls.userFunc = userFunc;
 
-	sprintf(url, "%s%s", remote->url, path);
+	sprintf(url, "%s%s", repo->url, path);
 
 	strbuf_addf(&out_buffer.buf, PROPFIND_ALL_REQUEST);
 
@@ -1507,6 +1545,10 @@ static void remote_ls(const char *path, int flags,
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &out_buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
@@ -1572,8 +1614,11 @@ static int locking_available(void)
 	struct curl_slist *dav_headers = NULL;
 	struct xml_ctx ctx;
 	int lock_flags = 0;
+	char *escaped;
 
-	strbuf_addf(&out_buffer.buf, PROPFIND_SUPPORTEDLOCK_REQUEST, remote->url);
+	escaped = xml_entities(repo->url);
+	strbuf_addf(&out_buffer.buf, PROPFIND_SUPPORTEDLOCK_REQUEST, escaped);
+	free(escaped);
 
 	dav_headers = curl_slist_append(dav_headers, "Depth: 0");
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
@@ -1583,9 +1628,13 @@ static int locking_available(void)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &out_buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_URL, remote->url);
+	curl_easy_setopt(slot->curl, CURLOPT_URL, repo->url);
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PROPFIND);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
@@ -1615,16 +1664,16 @@ static int locking_available(void)
 			}
 			XML_ParserFree(parser);
 			if (!lock_flags)
-				error("Error: no DAV locking support on %s",
-				      remote->url);
+				error("no DAV locking support on %s",
+				      repo->url);
 
 		} else {
 			error("Cannot access URL %s, return code %d",
-			      remote->url, results.curl_result);
+			      repo->url, results.curl_result);
 			lock_flags = 0;
 		}
 	} else {
-		error("Unable to start PROPFIND request on %s", remote->url);
+		error("Unable to start PROPFIND request on %s", repo->url);
 	}
 
 	strbuf_release(&out_buffer.buf);
@@ -1765,6 +1814,10 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.buf.len);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &out_buffer);
+#endif
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PUT);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
@@ -1791,20 +1844,7 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 	return 1;
 }
 
-static struct ref *local_refs, **local_tail;
 static struct ref *remote_refs, **remote_tail;
-
-static int one_local_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
-{
-	struct ref *ref;
-	int len = strlen(refname) + 1;
-	ref = xcalloc(1, sizeof(*ref) + len);
-	hashcpy(ref->new_sha1, sha1);
-	memcpy(ref->name, refname, len);
-	*local_tail = ref;
-	local_tail = &ref->next;
-	return 0;
-}
 
 static void one_remote_ref(char *refname)
 {
@@ -1813,10 +1853,10 @@ static void one_remote_ref(char *refname)
 
 	ref = alloc_ref(refname);
 
-	if (http_fetch_ref(remote->url, ref) != 0) {
+	if (http_fetch_ref(repo->url, ref) != 0) {
 		fprintf(stderr,
 			"Unable to fetch ref %s from %s\n",
-			refname, remote->url);
+			refname, repo->url);
 		free(ref);
 		return;
 	}
@@ -1825,7 +1865,7 @@ static void one_remote_ref(char *refname)
 	 * Fetch a copy of the object if it doesn't exist locally - it
 	 * may be required for updating server info later.
 	 */
-	if (remote->can_update_info_refs && !has_sha1_file(ref->old_sha1)) {
+	if (repo->can_update_info_refs && !has_sha1_file(ref->old_sha1)) {
 		obj = lookup_unknown_object(ref->old_sha1);
 		if (obj) {
 			fprintf(stderr,	"  fetch %s for %s\n",
@@ -1836,12 +1876,6 @@ static void one_remote_ref(char *refname)
 
 	*remote_tail = ref;
 	remote_tail = &ref->next;
-}
-
-static void get_local_heads(void)
-{
-	local_tail = &local_refs;
-	for_each_ref(one_local_ref, NULL);
 }
 
 static void get_dav_remote_heads(void)
@@ -1861,55 +1895,6 @@ static int is_zero_sha1(const unsigned char *sha1)
 	return 1;
 }
 
-static void unmark_and_free(struct commit_list *list, unsigned int mark)
-{
-	while (list) {
-		struct commit_list *temp = list;
-		temp->item->object.flags &= ~mark;
-		list = temp->next;
-		free(temp);
-	}
-}
-
-static int ref_newer(const unsigned char *new_sha1,
-		     const unsigned char *old_sha1)
-{
-	struct object *o;
-	struct commit *old, *new;
-	struct commit_list *list, *used;
-	int found = 0;
-
-	/* Both new and old must be commit-ish and new is descendant of
-	 * old.  Otherwise we require --force.
-	 */
-	o = deref_tag(parse_object(old_sha1), NULL, 0);
-	if (!o || o->type != OBJ_COMMIT)
-		return 0;
-	old = (struct commit *) o;
-
-	o = deref_tag(parse_object(new_sha1), NULL, 0);
-	if (!o || o->type != OBJ_COMMIT)
-		return 0;
-	new = (struct commit *) o;
-
-	if (parse_commit(new) < 0)
-		return 0;
-
-	used = list = NULL;
-	commit_list_insert(new, &list);
-	while (list) {
-		new = pop_most_recent_commit(&list, TMP_MARK);
-		commit_list_insert(new, &used);
-		if (new == old) {
-			found = 1;
-			break;
-		}
-	}
-	unmark_and_free(list, TMP_MARK);
-	unmark_and_free(used, TMP_MARK);
-	return found;
-}
-
 static void add_remote_info_ref(struct remote_ls_ctx *ls)
 {
 	struct strbuf *buf = (struct strbuf *)ls->userData;
@@ -1920,10 +1905,10 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 
 	ref = alloc_ref(ls->dentry_name);
 
-	if (http_fetch_ref(remote->url, ref) != 0) {
+	if (http_fetch_ref(repo->url, ref) != 0) {
 		fprintf(stderr,
 			"Unable to fetch ref %s from %s\n",
-			ls->dentry_name, remote->url);
+			ls->dentry_name, repo->url);
 		aborted = 1;
 		free(ref);
 		return;
@@ -1977,6 +1962,10 @@ static void update_remote_info_refs(struct remote_lock *lock)
 		curl_easy_setopt(slot->curl, CURLOPT_INFILE, &buffer);
 		curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, buffer.buf.len);
 		curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
+#ifndef NO_CURL_IOCTL
+		curl_easy_setopt(slot->curl, CURLOPT_IOCTLFUNCTION, ioctl_buffer);
+		curl_easy_setopt(slot->curl, CURLOPT_IOCTLDATA, &buffer);
+#endif
 		curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_null);
 		curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PUT);
 		curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
@@ -1998,12 +1987,12 @@ static void update_remote_info_refs(struct remote_lock *lock)
 
 static int remote_exists(const char *path)
 {
-	char *url = xmalloc(strlen(remote->url) + strlen(path) + 1);
+	char *url = xmalloc(strlen(repo->url) + strlen(path) + 1);
 	struct active_request_slot *slot;
 	struct slot_results results;
 	int ret = -1;
 
-	sprintf(url, "%s%s", remote->url, path);
+	sprintf(url, "%s%s", repo->url, path);
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -2033,8 +2022,8 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	struct active_request_slot *slot;
 	struct slot_results results;
 
-	url = xmalloc(strlen(remote->url) + strlen(path) + 1);
-	sprintf(url, "%s%s", remote->url, path);
+	url = xmalloc(strlen(repo->url) + strlen(path) + 1);
+	sprintf(url, "%s%s", repo->url, path);
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -2149,7 +2138,7 @@ static int delete_remote_branch(char *pattern, int force)
 				     "of your current HEAD.\n"
 				     "If you are sure you want to delete it,"
 				     " run:\n\t'git http-push -D %s %s'",
-				     remote_ref->name, remote->url, pattern);
+				     remote_ref->name, repo->url, pattern);
 		}
 	}
 
@@ -2157,8 +2146,8 @@ static int delete_remote_branch(char *pattern, int force)
 	fprintf(stderr, "Removing remote branch '%s'\n", remote_ref->name);
 	if (dry_run)
 		return 0;
-	url = xmalloc(strlen(remote->url) + strlen(remote_ref->name) + 1);
-	sprintf(url, "%s%s", remote->url, remote_ref->name);
+	url = xmalloc(strlen(repo->url) + strlen(remote_ref->name) + 1);
+	sprintf(url, "%s%s", repo->url, remote_ref->name);
 	slot = get_active_slot();
 	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
@@ -2194,14 +2183,15 @@ int main(int argc, char **argv)
 	int rc = 0;
 	int i;
 	int new_refs;
-	struct ref *ref;
+	struct ref *ref, *local_refs;
+	struct remote *remote;
 	char *rewritten_url = NULL;
 
 	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 
-	remote = xcalloc(sizeof(*remote), 1);
+	repo = xcalloc(sizeof(*repo), 1);
 
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {
@@ -2234,14 +2224,14 @@ int main(int argc, char **argv)
 				continue;
 			}
 		}
-		if (!remote->url) {
+		if (!repo->url) {
 			char *path = strstr(arg, "//");
-			remote->url = arg;
-			remote->path_len = strlen(arg);
+			repo->url = arg;
+			repo->path_len = strlen(arg);
 			if (path) {
-				remote->path = strchr(path+2, '/');
-				if (remote->path)
-					remote->path_len = strlen(remote->path);
+				repo->path = strchr(path+2, '/');
+				if (repo->path)
+					repo->path_len = strlen(repo->path);
 			}
 			continue;
 		}
@@ -2254,7 +2244,7 @@ int main(int argc, char **argv)
 	die("git-push is not available for http/https repository when not compiled with USE_CURL_MULTI");
 #endif
 
-	if (!remote->url)
+	if (!repo->url)
 		usage(http_push_usage);
 
 	if (delete_branch && nr_refspec != 1)
@@ -2262,17 +2252,24 @@ int main(int argc, char **argv)
 
 	memset(remote_dir_exists, -1, 256);
 
-	http_init(NULL);
+	/*
+	 * Create a minimum remote by hand to give to http_init(),
+	 * primarily to allow it to look at the URL.
+	 */
+	remote = xcalloc(sizeof(*remote), 1);
+	ALLOC_GROW(remote->url, remote->url_nr + 1, remote->url_alloc);
+	remote->url[remote->url_nr++] = repo->url;
+	http_init(remote);
 
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
-	if (remote->url && remote->url[strlen(remote->url)-1] != '/') {
-		rewritten_url = xmalloc(strlen(remote->url)+2);
-		strcpy(rewritten_url, remote->url);
+	if (repo->url && repo->url[strlen(repo->url)-1] != '/') {
+		rewritten_url = xmalloc(strlen(repo->url)+2);
+		strcpy(rewritten_url, repo->url);
 		strcat(rewritten_url, "/");
-		remote->path = rewritten_url + (remote->path - remote->url);
-		remote->path_len++;
-		remote->url = rewritten_url;
+		repo->path = rewritten_url + (repo->path - repo->url);
+		repo->path_len++;
+		repo->url = rewritten_url;
 	}
 
 	/* Verify DAV compliance/lock support */
@@ -2284,24 +2281,24 @@ int main(int argc, char **argv)
 	sigchain_push_common(remove_locks_on_signal);
 
 	/* Check whether the remote has server info files */
-	remote->can_update_info_refs = 0;
-	remote->has_info_refs = remote_exists("info/refs");
-	remote->has_info_packs = remote_exists("objects/info/packs");
-	if (remote->has_info_refs) {
+	repo->can_update_info_refs = 0;
+	repo->has_info_refs = remote_exists("info/refs");
+	repo->has_info_packs = remote_exists("objects/info/packs");
+	if (repo->has_info_refs) {
 		info_ref_lock = lock_remote("info/refs", LOCK_TIME);
 		if (info_ref_lock)
-			remote->can_update_info_refs = 1;
+			repo->can_update_info_refs = 1;
 		else {
-			fprintf(stderr, "Error: cannot lock existing info/refs\n");
+			error("cannot lock existing info/refs");
 			rc = 1;
 			goto cleanup;
 		}
 	}
-	if (remote->has_info_packs)
+	if (repo->has_info_packs)
 		fetch_indices();
 
 	/* Get a list of all local and remote heads to validate refspecs */
-	get_local_heads();
+	local_refs = get_local_heads();
 	fprintf(stderr, "Fetching remote heads...\n");
 	get_dav_remote_heads();
 
@@ -2330,7 +2327,7 @@ int main(int argc, char **argv)
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char old_hex[60], *new_hex;
-		const char *commit_argv[4];
+		const char *commit_argv[5];
 		int commit_argc;
 		char *new_sha1_hex, *old_sha1_hex;
 
@@ -2410,6 +2407,7 @@ int main(int argc, char **argv)
 			commit_argv[3] = old_sha1_hex;
 			commit_argc++;
 		}
+		commit_argv[commit_argc] = NULL;
 		init_revisions(&revs, setup_git_directory());
 		setup_revisions(commit_argc, commit_argv, &revs, NULL);
 		revs.edge_hint = 0; /* just in case */
@@ -2455,8 +2453,8 @@ int main(int argc, char **argv)
 	}
 
 	/* Update remote server info if appropriate */
-	if (remote->has_info_refs && new_refs) {
-		if (info_ref_lock && remote->can_update_info_refs) {
+	if (repo->has_info_refs && new_refs) {
+		if (info_ref_lock && repo->can_update_info_refs) {
 			fprintf(stderr, "Updating remote server info\n");
 			if (!dry_run)
 				update_remote_info_refs(info_ref_lock);
@@ -2469,7 +2467,7 @@ int main(int argc, char **argv)
 	free(rewritten_url);
 	if (info_ref_lock)
 		unlock_remote(info_ref_lock);
-	free(remote);
+	free(repo);
 
 	curl_slist_free_all(no_pragma_header);
 

@@ -14,30 +14,30 @@ test_expect_success 'test refspec globbing' '
 	mkdir -p trunk/src/a trunk/src/b trunk/doc &&
 	echo "hello world" > trunk/src/a/readme &&
 	echo "goodbye world" > trunk/src/b/readme &&
-	svn import -m "initial" trunk "$svnrepo"/trunk &&
-	svn co "$svnrepo" tmp &&
+	svn_cmd import -m "initial" trunk "$svnrepo"/trunk &&
+	svn_cmd co "$svnrepo" tmp &&
 	(
 		cd tmp &&
 		mkdir branches tags &&
-		svn add branches tags &&
-		svn cp trunk branches/start &&
-		svn commit -m "start a new branch" &&
-		svn up &&
+		svn_cmd add branches tags &&
+		svn_cmd cp trunk branches/start &&
+		svn_cmd commit -m "start a new branch" &&
+		svn_cmd up &&
 		echo "hi" >> branches/start/src/b/readme &&
 		poke branches/start/src/b/readme &&
 		echo "hey" >> branches/start/src/a/readme &&
 		poke branches/start/src/a/readme &&
-		svn commit -m "hi" &&
-		svn up &&
-		svn cp branches/start tags/end &&
+		svn_cmd commit -m "hi" &&
+		svn_cmd up &&
+		svn_cmd cp branches/start tags/end &&
 		echo "bye" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
 		echo "aye" >> tags/end/src/a/readme &&
 		poke tags/end/src/a/readme &&
-		svn commit -m "the end" &&
+		svn_cmd commit -m "the end" &&
 		echo "byebye" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
-		svn commit -m "nothing to see here"
+		svn_cmd commit -m "nothing to see here"
 	) &&
 	git config --add svn-remote.svn.url "$svnrepo" &&
 	git config --add svn-remote.svn.fetch \
@@ -72,7 +72,7 @@ test_expect_success 'test left-hand-side only globbing' '
 		cd tmp &&
 		echo "try try" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
-		svn commit -m "try to try"
+		svn_cmd commit -m "try to try"
 	) &&
 	git svn fetch two &&
 	test `git rev-list refs/remotes/two/tags/end | wc -l` -eq 6 &&
@@ -102,7 +102,7 @@ test_expect_success 'test disallow multi-globs' '
 		cd tmp &&
 		echo "try try" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
-		svn commit -m "try to try"
+		svn_cmd commit -m "try to try"
 	) &&
 	test_must_fail git svn fetch three 2> stderr.three &&
 	test_cmp expect.three stderr.three

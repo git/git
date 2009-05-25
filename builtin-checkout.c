@@ -179,7 +179,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	/*
 	 * NEEDSWORK:
 	 * There is absolutely no reason to write this as a blob object
-	 * and create a phoney cache entry just to leak.  This hack is
+	 * and create a phony cache entry just to leak.  This hack is
 	 * primarily to get to the write_entry() machinery that massages
 	 * the contents to work-tree format and writes out which only
 	 * allows it for a cache entry.  The code in write_entry() needs
@@ -216,7 +216,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 
 	newfd = hold_locked_index(lock_file, 1);
-	if (read_cache() < 0)
+	if (read_cache_preload(pathspec) < 0)
 		return error("corrupt index file");
 
 	if (source_tree)
@@ -293,6 +293,8 @@ static void show_local_changes(struct object *head)
 	init_revisions(&rev, NULL);
 	rev.abbrev = 0;
 	rev.diffopt.output_format |= DIFF_FORMAT_NAME_STATUS;
+	if (diff_setup_done(&rev.diffopt) < 0)
+		die("diff_setup_done failed");
 	add_pending_object(&rev, head, NULL);
 	run_diff_index(&rev, 0);
 }
@@ -349,16 +351,11 @@ struct branch_info {
 static void setup_branch_path(struct branch_info *branch)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int ret;
 
-	if ((ret = interpret_nth_last_branch(branch->name, &buf))
-	    && ret == strlen(branch->name)) {
+	strbuf_branchname(&buf, branch->name);
+	if (strcmp(buf.buf, branch->name))
 		branch->name = xstrdup(buf.buf);
-		strbuf_splice(&buf, 0, 0, "refs/heads/", 11);
-	} else {
-		strbuf_addstr(&buf, "refs/heads/");
-		strbuf_addstr(&buf, branch->name);
-	}
+	strbuf_splice(&buf, 0, 0, "refs/heads/", 11);
 	branch->path = strbuf_detach(&buf, NULL);
 }
 
@@ -369,7 +366,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 	int newfd = hold_locked_index(lock_file, 1);
 
-	if (read_cache() < 0)
+	if (read_cache_preload(NULL) < 0)
 		return error("corrupt index file");
 
 	if (opts->force) {
@@ -403,7 +400,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.verbose_update = !opts->quiet;
 		topts.fn = twoway_merge;
 		topts.dir = xcalloc(1, sizeof(*topts.dir));
-		topts.dir->show_ignored = 1;
+		topts.dir->flags |= DIR_SHOW_IGNORED;
 		topts.dir->exclude_per_dir = ".gitignore";
 		tree = parse_tree_indirect(old->commit->object.sha1);
 		init_tree_desc(&trees[0], tree->buffer, tree->size);
@@ -544,18 +541,10 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 		parse_commit(new->commit);
 	}
 
-	/*
-	 * If we were on a detached HEAD, but we are now moving to
-	 * a new commit, we want to mention the old commit once more
-	 * to remind the user that it might be lost.
-	 */
-	if (!opts->quiet && !old.path && old.commit && new->commit != old.commit)
-		describe_detached_head("Previous HEAD position was", old.commit);
-
 	if (!old.commit && !opts->force) {
 		if (!opts->quiet) {
-			fprintf(stderr, "warning: You appear to be on a branch yet to be born.\n");
-			fprintf(stderr, "warning: Forcing checkout of %s.\n", new->name);
+			warning("You appear to be on a branch yet to be born.");
+			warning("Forcing checkout of %s.", new->name);
 		}
 		opts->force = 1;
 	}
@@ -563,6 +552,14 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 	ret = merge_working_tree(opts, &old, new);
 	if (ret)
 		return ret;
+
+	/*
+	 * If we were on a detached HEAD, but have now moved to
+	 * a new commit, we want to mention the old commit once more
+	 * to remind the user that it might be lost.
+	 */
+	if (!opts->quiet && !old.path && old.commit && new->commit != old.commit)
+		describe_detached_head("Previous HEAD position was", old.commit);
 
 	update_refs_for_switch(opts, &old, new);
 
@@ -734,12 +731,11 @@ no_reference:
 
 	if (opts.new_branch) {
 		struct strbuf buf = STRBUF_INIT;
-		strbuf_addstr(&buf, "refs/heads/");
-		strbuf_addstr(&buf, opts.new_branch);
+		if (strbuf_check_branch_ref(&buf, opts.new_branch))
+			die("git checkout: we do not like '%s' as a branch name.",
+			    opts.new_branch);
 		if (!get_sha1(buf.buf, rev))
 			die("git checkout: branch %s already exists", opts.new_branch);
-		if (check_ref_format(buf.buf))
-			die("git checkout: we do not like '%s' as a branch name.", opts.new_branch);
 		strbuf_release(&buf);
 	}
 

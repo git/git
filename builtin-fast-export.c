@@ -221,7 +221,8 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	if (message)
 		message += 2;
 
-	if (commit->parents) {
+	if (commit->parents &&
+	    get_object_mark(&commit->parents->item->object) != 0) {
 		parse_commit(commit->parents->item);
 		diff_tree_sha1(commit->parents->item->tree->object.sha1,
 			       commit->tree->object.sha1, "", &rev->diffopt);

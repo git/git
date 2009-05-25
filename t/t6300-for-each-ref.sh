@@ -26,6 +26,13 @@ test_expect_success 'Create sample commit with known timestamp' '
 	git tag -a -m "Tagging at $datestamp" testtag
 '
 
+test_expect_success 'Create upstream config' '
+	git update-ref refs/remotes/origin/master master &&
+	git remote add origin nowhere &&
+	git config branch.master.remote origin &&
+	git config branch.master.merge refs/heads/master
+'
+
 test_atom() {
 	case "$1" in
 		head) ref=refs/heads/master ;;
@@ -39,6 +46,7 @@ test_atom() {
 }
 
 test_atom head refname refs/heads/master
+test_atom head upstream refs/remotes/origin/master
 test_atom head objecttype commit
 test_atom head objectsize 171
 test_atom head objectname 67a36f10722846e891fbada1ba48ed035de75581
@@ -68,6 +76,7 @@ test_atom head contents 'Initial
 '
 
 test_atom tag refname refs/tags/testtag
+test_atom tag upstream ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
 test_atom tag objectname 98b46b1d36e5b07909de1b3886224e3e81e87322
@@ -203,6 +212,7 @@ test_expect_success 'Check format "rfc2822" date fields output' '
 
 cat >expected <<\EOF
 refs/heads/master
+refs/remotes/origin/master
 refs/tags/testtag
 EOF
 
@@ -214,6 +224,7 @@ test_expect_success 'Verify ascending sort' '
 
 cat >expected <<\EOF
 refs/tags/testtag
+refs/remotes/origin/master
 refs/heads/master
 EOF
 
@@ -224,6 +235,7 @@ test_expect_success 'Verify descending sort' '
 
 cat >expected <<\EOF
 'refs/heads/master'
+'refs/remotes/origin/master'
 'refs/tags/testtag'
 EOF
 
@@ -244,6 +256,7 @@ test_expect_success 'Quoting style: python' '
 
 cat >expected <<\EOF
 "refs/heads/master"
+"refs/remotes/origin/master"
 "refs/tags/testtag"
 EOF
 
@@ -273,16 +286,26 @@ test_expect_success 'Check short refname format' '
 	test_cmp expected actual
 '
 
+cat >expected <<EOF
+origin/master
+EOF
+
+test_expect_success 'Check short upstream format' '
+	git for-each-ref --format="%(upstream:short)" refs/heads >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'Check for invalid refname format' '
 	test_must_fail git for-each-ref --format="%(refname:INVALID)"
 '
 
 cat >expected <<\EOF
 heads/master
-master
+tags/master
 EOF
 
-test_expect_success 'Check ambiguous head and tag refs' '
+test_expect_success 'Check ambiguous head and tag refs (strict)' '
+	git config --bool core.warnambiguousrefs true &&
 	git checkout -b newtag &&
 	echo "Using $datestamp" > one &&
 	git add one &&
@@ -294,11 +317,22 @@ test_expect_success 'Check ambiguous head and tag refs' '
 '
 
 cat >expected <<\EOF
+heads/master
+master
+EOF
+
+test_expect_success 'Check ambiguous head and tag refs (loose)' '
+	git config --bool core.warnambiguousrefs false &&
+	git for-each-ref --format "%(refname:short)" refs/heads/master refs/tags/master >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
 heads/ambiguous
 ambiguous
 EOF
 
-test_expect_success 'Check ambiguous head and tag refs II' '
+test_expect_success 'Check ambiguous head and tag refs II (loose)' '
 	git checkout master &&
 	git tag ambiguous testtag^0 &&
 	git branch ambiguous testtag^0 &&

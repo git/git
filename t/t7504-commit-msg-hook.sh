@@ -136,7 +136,7 @@ test_expect_success '--no-verify with failing hook (editor)' '
 '
 
 chmod -x "$HOOK"
-test_expect_success 'with non-executable hook' '
+test_expect_success POSIXPERM 'with non-executable hook' '
 
 	echo "content" >> file &&
 	git add file &&
@@ -144,7 +144,7 @@ test_expect_success 'with non-executable hook' '
 
 '
 
-test_expect_success 'with non-executable hook (editor)' '
+test_expect_success POSIXPERM 'with non-executable hook (editor)' '
 
 	echo "content again" >> file &&
 	git add file &&
@@ -153,7 +153,7 @@ test_expect_success 'with non-executable hook (editor)' '
 
 '
 
-test_expect_success '--no-verify with non-executable hook' '
+test_expect_success POSIXPERM '--no-verify with non-executable hook' '
 
 	echo "more content" >> file &&
 	git add file &&
@@ -161,7 +161,7 @@ test_expect_success '--no-verify with non-executable hook' '
 
 '
 
-test_expect_success '--no-verify with non-executable hook (editor)' '
+test_expect_success POSIXPERM '--no-verify with non-executable hook (editor)' '
 
 	echo "even more content" >> file &&
 	git add file &&

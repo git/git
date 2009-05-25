@@ -338,7 +338,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 		exit(128);
 	}
 	if (path) {
-		unlink(path);
+		unlink_or_warn(path);
 		free(path);
 	}
 }

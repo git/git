@@ -16,7 +16,7 @@ cd_to_toplevel
 test -z "$(git ls-files -u)" ||
 	die "You are in the middle of a conflicted merge."
 
-strategy_args= no_stat= no_commit= squash= no_ff= log_arg= verbosity=
+strategy_args= diffstat= no_commit= squash= no_ff= log_arg= verbosity=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short=$(echo "$curr_branch" | sed "s|refs/heads/||")
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
@@ -28,9 +28,9 @@ do
 	-v|--verbose)
 		verbosity="$verbosity -v" ;;
 	-n|--no-stat|--no-summary)
-		no_stat=-n ;;
+		diffstat=--no-stat ;;
 	--stat|--summary)
-		no_stat=$1 ;;
+		diffstat=--stat ;;
 	--log|--no-log)
 		log_arg=$1 ;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
@@ -147,7 +147,7 @@ then
 	echo >&2 "Warning: fetch updated the current branch head."
 	echo >&2 "Warning: fast forwarding your working tree from"
 	echo >&2 "Warning: commit $orig_head."
-	git update-index --refresh 2>/dev/null
+	git update-index -q --refresh
 	git read-tree -u -m "$orig_head" "$curr_head" ||
 		die 'Cannot fast-forward your working tree.
 After making sure that you saved anything precious from
@@ -196,7 +196,7 @@ fi
 
 merge_name=$(git fmt-merge-msg $log_arg <"$GIT_DIR/FETCH_HEAD") || exit
 test true = "$rebase" &&
-	exec git-rebase $strategy_args --onto $merge_head \
+	exec git-rebase $diffstat $strategy_args --onto $merge_head \
 	${oldremoteref:-$merge_head}
-exec git-merge $no_stat $no_commit $squash $no_ff $log_arg $strategy_args \
+exec git-merge $diffstat $no_commit $squash $no_ff $log_arg $strategy_args \
 	"$merge_name" HEAD $merge_head $verbosity

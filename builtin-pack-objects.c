@@ -293,7 +293,7 @@ static unsigned long write_object(struct sha1file *f,
 				die("unable to read %s", sha1_to_hex(entry->idx.sha1));
 			/*
 			 * make sure no cached delta data remains from a
-			 * previous attempt before a pack split occured.
+			 * previous attempt before a pack split occurred.
 			 */
 			free(entry->delta_data);
 			entry->delta_data = NULL;
@@ -1612,7 +1612,7 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 		return;
 	}
 	if (progress > pack_to_stdout)
-		fprintf(stderr, "Delta compression using %d threads.\n",
+		fprintf(stderr, "Delta compression using up to %d threads.\n",
 				delta_search_threads);
 
 	/* Partition the work amongst work threads. */
@@ -1901,7 +1901,7 @@ static void read_object_list_from_stdin(void)
 
 #define OBJECT_ADDED (1u<<20)
 
-static void show_commit(struct commit *commit)
+static void show_commit(struct commit *commit, void *data)
 {
 	add_object_entry(commit->object.sha1, OBJ_COMMIT, NULL, 0);
 	commit->object.flags |= OBJECT_ADDED;
@@ -2079,7 +2079,7 @@ static void get_object_list(int ac, const char **av)
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
-	traverse_commit_list(&revs, show_commit, show_object);
+	traverse_commit_list(&revs, show_commit, show_object, NULL);
 
 	if (keep_unreachable)
 		add_objects_in_unpacked_packs(&revs);

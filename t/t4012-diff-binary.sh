@@ -87,7 +87,7 @@ nul_to_q() {
 
 test_expect_success 'diff --no-index with binary creation' '
 	echo Q | q_to_nul >binary &&
-	(:# hide error code from diff, which just indicates differences
+	(: hide error code from diff, which just indicates differences
 	 git diff --binary --no-index /dev/null binary >current ||
 	 true
 	) &&

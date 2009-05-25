@@ -126,7 +126,7 @@ test_expect_success 'no file/rev ambiguity check inside a bare repo' '
 	cd foo.git && git show -s HEAD
 '
 
-test_expect_success 'detection should not be fooled by a symlink' '
+test_expect_success SYMLINKS 'detection should not be fooled by a symlink' '
 	cd "$HERE" &&
 	rm -fr foo.git &&
 	git clone -s .git another &&

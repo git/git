@@ -6,8 +6,13 @@
 test_description='perl interface (Git.pm)'
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping perl interface tests, perl not available'
+	test_done
+fi
+
 perl -MTest::More -e 0 2>/dev/null || {
-	say_color skip "Perl Test::More unavailable, skipping test"
+	say "Perl Test::More unavailable, skipping test"
 	test_done
 }
 
@@ -23,6 +28,10 @@ test_expect_success \
      echo "in directory2" >> directory2/file &&
      git add . &&
      git commit -m "first commit" &&
+
+     echo "new file in subdir 2" > directory2/file2 &&
+     git add . &&
+     git commit -m "commit in directory2" &&
 
      echo "changed file 1" > file1 &&
      git commit -a -m "second commit" &&

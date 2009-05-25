@@ -64,6 +64,16 @@ test_expect_success 'submodule add' '
 	)
 '
 
+test_expect_success 'submodule add --branch' '
+	(
+		cd addtest &&
+		git submodule add -b initial "$submodurl" submod-branch &&
+		git submodule init &&
+		cd submod-branch &&
+		git branch | grep initial
+	)
+'
+
 test_expect_success 'submodule add with ./ in path' '
 	(
 		cd addtest &&

@@ -520,8 +520,12 @@ static void update_file_flags(struct merge_options *o,
 		unsigned long size;
 
 		if (S_ISGITLINK(mode))
-			die("cannot read object %s '%s': It is a submodule!",
-			    sha1_to_hex(sha), path);
+			/*
+			 * We may later decide to recursively descend into
+			 * the submodule directory and update its index
+			 * and/or work tree, but we do not do that now.
+			 */
+			goto update_index;
 
 		buf = read_sha1_file(sha, &type, &size);
 		if (!buf)
@@ -801,22 +805,19 @@ static int process_renames(struct merge_options *o,
 	}
 
 	for (i = 0, j = 0; i < a_renames->nr || j < b_renames->nr;) {
-		int compare;
 		char *src;
-		struct string_list *renames1, *renames2, *renames2Dst;
+		struct string_list *renames1, *renames2Dst;
 		struct rename *ren1 = NULL, *ren2 = NULL;
 		const char *branch1, *branch2;
 		const char *ren1_src, *ren1_dst;
 
 		if (i >= a_renames->nr) {
-			compare = 1;
 			ren2 = b_renames->items[j++].util;
 		} else if (j >= b_renames->nr) {
-			compare = -1;
 			ren1 = a_renames->items[i++].util;
 		} else {
-			compare = strcmp(a_renames->items[i].string,
-					b_renames->items[j].string);
+			int compare = strcmp(a_renames->items[i].string,
+					     b_renames->items[j].string);
 			if (compare <= 0)
 				ren1 = a_renames->items[i++].util;
 			if (compare >= 0)
@@ -826,14 +827,12 @@ static int process_renames(struct merge_options *o,
 		/* TODO: refactor, so that 1/2 are not needed */
 		if (ren1) {
 			renames1 = a_renames;
-			renames2 = b_renames;
 			renames2Dst = &b_by_dst;
 			branch1 = o->branch1;
 			branch2 = o->branch2;
 		} else {
 			struct rename *tmp;
 			renames1 = b_renames;
-			renames2 = a_renames;
 			renames2Dst = &a_by_dst;
 			branch1 = o->branch2;
 			branch2 = o->branch1;
@@ -934,11 +933,12 @@ static int process_renames(struct merge_options *o,
 				       ren1_src, ren1_dst, branch1,
 				       branch2);
 				update_file(o, 0, ren1->pair->two->sha1, ren1->pair->two->mode, ren1_dst);
-				update_stages(ren1_dst, NULL,
-						branch1 == o->branch1 ?
-						ren1->pair->two : NULL,
-						branch1 == o->branch1 ?
-						NULL : ren1->pair->two, 1);
+				if (!o->call_depth)
+					update_stages(ren1_dst, NULL,
+							branch1 == o->branch1 ?
+							ren1->pair->two : NULL,
+							branch1 == o->branch1 ?
+							NULL : ren1->pair->two, 1);
 			} else if (!sha_eq(dst_other.sha1, null_sha1)) {
 				const char *new_path;
 				clean_merge = 0;

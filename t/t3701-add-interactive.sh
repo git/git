@@ -3,6 +3,11 @@
 test_description='add -i basic tests'
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping git add -i tests, perl not available'
+	test_done
+fi
+
 test_expect_success 'setup (initial)' '
 	echo content >file &&
 	git add file &&
@@ -135,10 +140,12 @@ test_expect_success 'real edit works' '
 
 if test "$(git config --bool core.filemode)" = false
 then
-    say 'skipping filemode tests (filesystem does not properly support modes)'
+	say 'skipping filemode tests (filesystem does not properly support modes)'
 else
+	test_set_prereq FILEMODE
+fi
 
-test_expect_success 'patch does not affect mode' '
+test_expect_success FILEMODE 'patch does not affect mode' '
 	git reset --hard &&
 	echo content >>file &&
 	chmod +x file &&
@@ -147,7 +154,7 @@ test_expect_success 'patch does not affect mode' '
 	git diff file | grep "new mode"
 '
 
-test_expect_success 'stage mode but not hunk' '
+test_expect_success FILEMODE 'stage mode but not hunk' '
 	git reset --hard &&
 	echo content >>file &&
 	chmod +x file &&
@@ -156,7 +163,6 @@ test_expect_success 'stage mode but not hunk' '
 	git diff          file | grep "+content"
 '
 
-fi
 # end of tests disabled when filemode is not usable
 
 test_done

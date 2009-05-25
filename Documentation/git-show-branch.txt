@@ -10,6 +10,7 @@ SYNOPSIS
 [verse]
 'git show-branch' [--all] [--remotes] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
+		[--color | --no-color]
 		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
 'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
@@ -107,6 +108,14 @@ OPTIONS
 	When no explicit <ref> parameter is given, it defaults to the
 	current branch (or `HEAD` if it is detached).
 
+--color::
+	Color the status sign (one of these: `*` `!` `+` `-`) of each commit
+	corresponding to the branch it's in.
+
+--no-color::
+	Turn off colored output, even when the configuration file gives the
+	default to color output.
+
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.
 
@@ -148,9 +157,10 @@ $ git show-branch master fixes mhf
 ------------------------------------------------
 
 These three branches all forked from a common commit, [master],
-whose commit message is "Add 'git show-branch'.  "fixes" branch
-adds one commit 'Introduce "reset type"'.  "mhf" branch has many
-other commits.  The current branch is "master".
+whose commit message is "Add \'git show-branch\'". The "fixes"
+branch adds one commit "Introduce "reset type" flag to "git reset"".
+The "mhf" branch adds many other commits. The current branch
+is "master".
 
 
 EXAMPLE

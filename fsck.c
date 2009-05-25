@@ -148,20 +148,17 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 	struct tree_desc desc;
 	unsigned o_mode;
 	const char *o_name;
-	const unsigned char *o_sha1;
 
 	init_tree_desc(&desc, item->buffer, item->size);
 
 	o_mode = 0;
 	o_name = NULL;
-	o_sha1 = NULL;
 
 	while (desc.size) {
 		unsigned mode;
 		const char *name;
-		const unsigned char *sha1;
 
-		sha1 = tree_entry_extract(&desc, &name, &mode);
+		tree_entry_extract(&desc, &name, &mode);
 
 		if (strchr(name, '/'))
 			has_full_path = 1;
@@ -207,7 +204,6 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 
 		o_mode = mode;
 		o_name = name;
-		o_sha1 = sha1;
 	}
 
 	retval = 0;

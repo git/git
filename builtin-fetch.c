@@ -197,11 +197,7 @@ static int update_local_ref(struct ref *ref,
 	struct commit *current = NULL, *updated;
 	enum object_type type;
 	struct branch *current_branch = branch_get(NULL);
-	const char *pretty_ref = ref->name + (
-		!prefixcmp(ref->name, "refs/heads/") ? 11 :
-		!prefixcmp(ref->name, "refs/tags/") ? 10 :
-		!prefixcmp(ref->name, "refs/remotes/") ? 13 :
-		0);
+	const char *pretty_ref = prettify_refname(ref->name);
 
 	*display = 0;
 	type = sha1_object_info(ref->new_sha1, NULL);
@@ -293,7 +289,7 @@ static int update_local_ref(struct ref *ref,
 	}
 }
 
-static int store_updated_refs(const char *url, const char *remote_name,
+static int store_updated_refs(const char *raw_url, const char *remote_name,
 		struct ref *ref_map)
 {
 	FILE *fp;
@@ -302,11 +298,13 @@ static int store_updated_refs(const char *url, const char *remote_name,
 	char note[1024];
 	const char *what, *kind;
 	struct ref *rm;
-	char *filename = git_path("FETCH_HEAD");
+	char *url, *filename = git_path("FETCH_HEAD");
 
 	fp = fopen(filename, "a");
 	if (!fp)
 		return error("cannot open %s: %s\n", filename, strerror(errno));
+
+	url = transport_anonymize_url(raw_url);
 	for (rm = ref_map; rm; rm = rm->next) {
 		struct ref *ref = NULL;
 
@@ -357,12 +355,18 @@ static int store_updated_refs(const char *url, const char *remote_name,
 						    kind);
 			note_len += sprintf(note + note_len, "'%s' of ", what);
 		}
-		note_len += sprintf(note + note_len, "%.*s", url_len, url);
-		fprintf(fp, "%s\t%s\t%s\n",
+		note[note_len] = '\0';
+		fprintf(fp, "%s\t%s\t%s",
 			sha1_to_hex(commit ? commit->object.sha1 :
 				    rm->old_sha1),
 			rm->merge ? "" : "not-for-merge",
 			note);
+		for (i = 0; i < url_len; ++i)
+			if ('\n' == url[i])
+				fputs("\\n", fp);
+			else
+				fputc(url[i], fp);
+		fputc('\n', fp);
 
 		if (ref)
 			rc |= update_local_ref(ref, what, note);
@@ -380,6 +384,7 @@ static int store_updated_refs(const char *url, const char *remote_name,
 				fprintf(stderr, " %s\n", note);
 		}
 	}
+	free(url);
 	fclose(fp);
 	if (rc & 2)
 		error("some local refs could not be updated; try running\n"
@@ -544,7 +549,8 @@ static void check_not_current_branch(struct ref *ref_map)
 	for (; ref_map; ref_map = ref_map->next)
 		if (ref_map->peer_ref && !strcmp(current_branch->refname,
 					ref_map->peer_ref->name))
-			die("Refusing to fetch into current branch");
+			die("Refusing to fetch into current branch %s "
+			    "of non-bare repository", current_branch->refname);
 }
 
 static int do_fetch(struct transport *transport,

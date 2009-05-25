@@ -26,6 +26,8 @@ static int show_type = NORMAL;
 #define SHOW_SYMBOLIC_FULL 2
 static int symbolic;
 static int abbrev;
+static int abbrev_ref;
+static int abbrev_ref_strict;
 static int output_sq;
 
 /*
@@ -109,8 +111,8 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 		return;
 	def = NULL;
 
-	if (symbolic && name) {
-		if (symbolic == SHOW_SYMBOLIC_FULL) {
+	if ((symbolic || abbrev_ref) && name) {
+		if (symbolic == SHOW_SYMBOLIC_FULL || abbrev_ref) {
 			unsigned char discard[20];
 			char *full;
 
@@ -125,6 +127,9 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 				 */
 				break;
 			case 1: /* happy */
+				if (abbrev_ref)
+					full = shorten_unambiguous_ref(full,
+						abbrev_ref_strict);
 				show_with_type(type, full);
 				break;
 			default: /* ambiguous */
@@ -397,6 +402,18 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static int cmd_sq_quote(int argc, const char **argv)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	if (argc)
+		sq_quote_argv(&buf, argv, 0);
+	printf("%s\n", buf.buf);
+	strbuf_release(&buf);
+
+	return 0;
+}
+
 static void die_no_single_rev(int quiet)
 {
 	if (quiet)
@@ -413,6 +430,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
+
+	if (argc > 1 && !strcmp("--sq-quote", argv[1]))
+		return cmd_sq_quote(argc - 2, argv + 2);
 
 	prefix = setup_git_directory();
 	git_config(git_default_config, NULL);
@@ -504,6 +524,20 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--symbolic-full-name")) {
 				symbolic = SHOW_SYMBOLIC_FULL;
+				continue;
+			}
+			if (!prefixcmp(arg, "--abbrev-ref") &&
+			    (!arg[12] || arg[12] == '=')) {
+				abbrev_ref = 1;
+				abbrev_ref_strict = warn_ambiguous_refs;
+				if (arg[12] == '=') {
+					if (!strcmp(arg + 13, "strict"))
+						abbrev_ref_strict = 1;
+					else if (!strcmp(arg + 13, "loose"))
+						abbrev_ref_strict = 0;
+					else
+						die("unknown mode for %s", arg);
+				}
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {

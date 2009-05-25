@@ -334,7 +334,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		die("--long is incompatible with --abbrev=0");
 
 	if (contains) {
-		const char **args = xmalloc((7 + argc) * sizeof(char*));
+		const char **args = xmalloc((7 + argc) * sizeof(char *));
 		int i = 0;
 		args[i++] = "name-rev";
 		args[i++] = "--name-only";
@@ -349,7 +349,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 				args[i++] = s;
 			}
 		}
-		memcpy(args + i, argv, argc * sizeof(char*));
+		memcpy(args + i, argv, argc * sizeof(char *));
 		args[i + argc] = NULL;
 		return cmd_name_rev(i + argc, args, prefix);
 	}

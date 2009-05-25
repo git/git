@@ -20,6 +20,11 @@ void string_list_clear(struct string_list *list, int free_util);
 typedef void (*string_list_clear_func_t)(void *p, const char *str);
 void string_list_clear_func(struct string_list *list, string_list_clear_func_t clearfunc);
 
+/* Use this function to iterate over each item */
+typedef int (*string_list_each_func_t)(struct string_list_item *, void *);
+int for_each_string_list(string_list_each_func_t,
+			 struct string_list *list, void *cb_data);
+
 /* Use these functions only on sorted lists: */
 int string_list_has_string(const struct string_list *list, const char *string);
 int string_list_find_insert_index(const struct string_list *list, const char *string,

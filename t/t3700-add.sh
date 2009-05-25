@@ -30,7 +30,7 @@ test_expect_success \
 	 *) echo fail; git ls-files --stage xfoo1; (exit 1);;
 	 esac'
 
-test_expect_success 'git add: filemode=0 should not get confused by symlink' '
+test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo1 &&
 	ln -s foo xfoo1 &&
 	git add xfoo1 &&
@@ -51,7 +51,7 @@ test_expect_success \
 	 *) echo fail; git ls-files --stage xfoo2; (exit 1);;
 	 esac'
 
-test_expect_success 'git add: filemode=0 should not get confused by symlink' '
+test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo2 &&
 	ln -s foo xfoo2 &&
 	git update-index --add xfoo2 &&
@@ -61,7 +61,7 @@ test_expect_success 'git add: filemode=0 should not get confused by symlink' '
 	esac
 '
 
-test_expect_success \
+test_expect_success SYMLINKS \
 	'git update-index --add: Test that executable bit is not used...' \
 	'git config core.filemode 0 &&
 	 ln -s xfoo2 xfoo3 &&
@@ -179,7 +179,7 @@ test_expect_success 'git add --refresh' '
 	test -z "`git diff-index HEAD -- foo`"
 '
 
-test_expect_success 'git add should fail atomically upon an unreadable file' '
+test_expect_success POSIXPERM 'git add should fail atomically upon an unreadable file' '
 	git reset --hard &&
 	date >foo1 &&
 	date >foo2 &&
@@ -190,7 +190,7 @@ test_expect_success 'git add should fail atomically upon an unreadable file' '
 
 rm -f foo2
 
-test_expect_success 'git add --ignore-errors' '
+test_expect_success POSIXPERM 'git add --ignore-errors' '
 	git reset --hard &&
 	date >foo1 &&
 	date >foo2 &&
@@ -201,7 +201,7 @@ test_expect_success 'git add --ignore-errors' '
 
 rm -f foo2
 
-test_expect_success 'git add (add.ignore-errors)' '
+test_expect_success POSIXPERM 'git add (add.ignore-errors)' '
 	git config add.ignore-errors 1 &&
 	git reset --hard &&
 	date >foo1 &&
@@ -212,7 +212,7 @@ test_expect_success 'git add (add.ignore-errors)' '
 '
 rm -f foo2
 
-test_expect_success 'git add (add.ignore-errors = false)' '
+test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
 	git config add.ignore-errors 0 &&
 	git reset --hard &&
 	date >foo1 &&
@@ -222,7 +222,7 @@ test_expect_success 'git add (add.ignore-errors = false)' '
 	! ( git ls-files foo1 | grep foo1 )
 '
 
-test_expect_success 'git add '\''fo\[ou\]bar'\'' ignores foobar' '
+test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
 	git reset --hard &&
 	touch fo\[ou\]bar foobar &&
 	git add '\''fo\[ou\]bar'\'' &&

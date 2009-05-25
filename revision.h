@@ -85,8 +85,10 @@ struct rev_info {
 	struct log_info *loginfo;
 	int		nr, total;
 	const char	*mime_boundary;
+	const char	*patch_suffix;
+	int		numbered_files;
 	char		*message_id;
-	const char	*ref_message_id;
+	struct string_list *ref_message_ids;
 	const char	*add_signoff;
 	const char	*extra_headers;
 	const char	*log_reencode;

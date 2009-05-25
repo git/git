@@ -28,8 +28,8 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 		memcpy(pathname + len, de->d_name, 38);
 		if (opts & DRY_RUN)
 			printf("rm -f %s\n", pathname);
-		else if (unlink(pathname) < 0)
-			error("unable to unlink %s", pathname);
+		else
+			unlink_or_warn(pathname);
 		display_progress(progress, i + 1);
 	}
 	pathname[len] = 0;
@@ -55,6 +55,7 @@ void prune_packed_objects(int opts)
 	for (i = 0; i < 256; i++) {
 		DIR *d;
 
+		display_progress(progress, i + 1);
 		sprintf(pathname + len, "%02x/", i);
 		d = opendir(pathname);
 		if (!d)

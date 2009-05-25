@@ -146,7 +146,7 @@ proc tools_complete {fullname w {ok 1}} {
 	}
 
 	if {$ok} {
-		set msg [mc "Tool completed succesfully: %s" $fullname]
+		set msg [mc "Tool completed successfully: %s" $fullname]
 	} else {
 		set msg [mc "Tool failed: %s" $fullname]
 	}

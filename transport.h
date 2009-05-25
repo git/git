@@ -18,8 +18,9 @@ struct transport {
 	int (*set_option)(struct transport *connection, const char *name,
 			  const char *value);
 
-	struct ref *(*get_refs_list)(struct transport *transport);
+	struct ref *(*get_refs_list)(struct transport *transport, int for_push);
 	int (*fetch)(struct transport *transport, int refs_nr, const struct ref **refs);
+	int (*push_refs)(struct transport *transport, struct ref *refs, int flags);
 	int (*push)(struct transport *connection, int refspec_nr, const char **refspec, int flags);
 
 	int (*disconnect)(struct transport *connection);
@@ -73,5 +74,6 @@ const struct ref *transport_get_remote_refs(struct transport *transport);
 int transport_fetch_refs(struct transport *transport, const struct ref *refs);
 void transport_unlock_pack(struct transport *transport);
 int transport_disconnect(struct transport *transport);
+char *transport_anonymize_url(const char *url);
 
 #endif

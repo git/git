@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "refs.h"
 
 int prefixcmp(const char *str, const char *prefix)
 {
@@ -139,14 +140,11 @@ void strbuf_list_free(struct strbuf **sbs)
 
 int strbuf_cmp(const struct strbuf *a, const struct strbuf *b)
 {
-	int cmp;
-	if (a->len < b->len) {
-		cmp = memcmp(a->buf, b->buf, a->len);
-		return cmp ? cmp : -1;
-	} else {
-		cmp = memcmp(a->buf, b->buf, b->len);
-		return cmp ? cmp : a->len != b->len;
-	}
+	int len = a->len < b->len ? a->len: b->len;
+	int cmp = memcmp(a->buf, b->buf, len);
+	if (cmp)
+		return cmp;
+	return a->len < b->len ? -1: a->len != b->len;
 }
 
 void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
@@ -359,4 +357,20 @@ int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint)
 		return -1;
 
 	return len;
+}
+
+int strbuf_branchname(struct strbuf *sb, const char *name)
+{
+	int len = strlen(name);
+	if (interpret_branch_name(name, sb) == len)
+		return 0;
+	strbuf_add(sb, name, len);
+	return len;
+}
+
+int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
+{
+	strbuf_branchname(sb, name);
+	strbuf_splice(sb, 0, 0, "refs/heads/", 11);
+	return check_ref_format(sb->buf);
 }

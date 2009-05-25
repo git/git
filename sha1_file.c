@@ -720,6 +720,8 @@ static int open_packed_git_1(struct packed_git *p)
 		return error("packfile %s index unavailable", p->pack_name);
 
 	p->pack_fd = open(p->pack_name, O_RDONLY);
+	while (p->pack_fd < 0 && errno == EMFILE && unuse_one_window(p, -1))
+		p->pack_fd = open(p->pack_name, O_RDONLY);
 	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
 		return -1;
 
@@ -791,7 +793,7 @@ static int in_window(struct pack_window *win, off_t offset)
 		&& (offset + 20) <= (win_off + win->len);
 }
 
-unsigned char* use_pack(struct packed_git *p,
+unsigned char *use_pack(struct packed_git *p,
 		struct pack_window **w_cursor,
 		off_t offset,
 		unsigned int *left)
@@ -937,6 +939,8 @@ static void prepare_packed_git_one(char *objdir, int local)
 	sprintf(path, "%s/pack", objdir);
 	len = strlen(path);
 	dir = opendir(path);
+	while (!dir && errno == EMFILE && unuse_one_window(packed_git, -1))
+		dir = opendir(path);
 	if (!dir) {
 		if (errno != ENOENT)
 			error("unable to open object pack directory: %s: %s",
@@ -2225,7 +2229,9 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 {
 	int ret = 0;
 
-	if (link(tmpfile, filename))
+	if (object_creation_mode == OBJECT_CREATION_USES_RENAMES)
+		goto try_rename;
+	else if (link(tmpfile, filename))
 		ret = errno;
 
 	/*
@@ -2240,11 +2246,12 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 	 * left to unlink.
 	 */
 	if (ret && ret != EEXIST) {
+	try_rename:
 		if (!rename(tmpfile, filename))
 			goto out;
 		ret = errno;
 	}
-	unlink(tmpfile);
+	unlink_or_warn(tmpfile);
 	if (ret) {
 		if (ret != EEXIST) {
 			return error("unable to write sha1 filename %s: %s\n", filename, strerror(ret));
@@ -2336,6 +2343,8 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 
 	filename = sha1_file_name(sha1);
 	fd = create_tmpfile(tmpfile, sizeof(tmpfile), filename);
+	while (fd < 0 && errno == EMFILE && unuse_one_window(packed_git, -1))
+		fd = create_tmpfile(tmpfile, sizeof(tmpfile), filename);
 	if (fd < 0) {
 		if (errno == EACCES)
 			return error("insufficient permission for adding an object to repository database %s\n", get_object_directory());

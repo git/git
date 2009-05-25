@@ -135,6 +135,7 @@ struct imap_server_conf {
 	char *pass;
 	int use_ssl;
 	int ssl_verify;
+	int use_html;
 };
 
 struct imap_store_conf {
@@ -578,7 +579,7 @@ static struct imap_cmd *v_issue_imap_cmd(struct imap_store *ctx,
 			n = socket_write(&imap->buf.sock, cmd->cb.data, cmd->cb.dlen);
 			free(cmd->cb.data);
 			if (n != cmd->cb.dlen ||
-			    (n = socket_write(&imap->buf.sock, "\r\n", 2)) != 2) {
+			    socket_write(&imap->buf.sock, "\r\n", 2) != 2) {
 				free(cmd->cmd);
 				free(cmd);
 				return NULL;
@@ -1263,6 +1264,53 @@ static int imap_store_msg(struct store *gctx, struct msg_data *data, int *uid)
 	return DRV_OK;
 }
 
+static void encode_html_chars(struct strbuf *p)
+{
+	int i;
+	for (i = 0; i < p->len; i++) {
+		if (p->buf[i] == '&')
+			strbuf_splice(p, i, 1, "&amp;", 5);
+		if (p->buf[i] == '<')
+			strbuf_splice(p, i, 1, "&lt;", 4);
+		if (p->buf[i] == '>')
+			strbuf_splice(p, i, 1, "&gt;", 4);
+		if (p->buf[i] == '"')
+			strbuf_splice(p, i, 1, "&quot;", 6);
+	}
+}
+static void wrap_in_html(struct msg_data *msg)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf **lines;
+	struct strbuf **p;
+	static char *content_type = "Content-Type: text/html;\n";
+	static char *pre_open = "<pre>\n";
+	static char *pre_close = "</pre>\n";
+	int added_header = 0;
+
+	strbuf_attach(&buf, msg->data, msg->len, msg->len);
+	lines = strbuf_split(&buf, '\n');
+	strbuf_release(&buf);
+	for (p = lines; *p; p++) {
+		if (! added_header) {
+			if ((*p)->len == 1 && *((*p)->buf) == '\n') {
+				strbuf_addstr(&buf, content_type);
+				strbuf_addbuf(&buf, *p);
+				strbuf_addstr(&buf, pre_open);
+				added_header = 1;
+				continue;
+			}
+		}
+		else
+			encode_html_chars(*p);
+		strbuf_addbuf(&buf, *p);
+	}
+	strbuf_addstr(&buf, pre_close);
+	strbuf_list_free(lines);
+	msg->len  = buf.len;
+	msg->data = strbuf_detach(&buf, NULL);
+}
+
 #define CHUNKSIZE 0x1000
 
 static int read_message(FILE *f, struct msg_data *msg)
@@ -1339,6 +1387,7 @@ static struct imap_server_conf server = {
 	NULL,	/* pass */
 	0,   	/* use_ssl */
 	1,   	/* ssl_verify */
+	0,   	/* use_html */
 };
 
 static char *imap_folder;
@@ -1377,6 +1426,8 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 		server.tunnel = xstrdup(val);
 	else if (!strcmp("sslverify", key))
 		server.ssl_verify = git_config_bool(key, val);
+	else if (!strcmp("preformattedHTML", key))
+		server.use_html = git_config_bool(key, val);
 	return 0;
 }
 
@@ -1439,6 +1490,8 @@ int main(int argc, char **argv)
 		fprintf(stderr, "%4u%% (%d/%d) done\r", percent, n, total);
 		if (!split_msg(&all_msgs, &msg, &ofs))
 			break;
+		if (server.use_html)
+			wrap_in_html(&msg);
 		r = imap_store_msg(ctx, &msg, &uid);
 		if (r != DRV_OK)
 			break;

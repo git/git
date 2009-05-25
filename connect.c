@@ -177,18 +177,11 @@ static enum protocol get_protocol(const char *name)
 
 static const char *ai_name(const struct addrinfo *ai)
 {
-	static char addr[INET_ADDRSTRLEN];
-	if ( AF_INET == ai->ai_family ) {
-		struct sockaddr_in *in;
-		in = (struct sockaddr_in *)ai->ai_addr;
-		inet_ntop(ai->ai_family, &in->sin_addr, addr, sizeof(addr));
-	} else if ( AF_INET6 == ai->ai_family ) {
-		struct sockaddr_in6 *in;
-		in = (struct sockaddr_in6 *)ai->ai_addr;
-		inet_ntop(ai->ai_family, &in->sin6_addr, addr, sizeof(addr));
-	} else {
+	static char addr[NI_MAXHOST];
+	if (getnameinfo(ai->ai_addr, ai->ai_addrlen, addr, sizeof(addr), NULL, 0,
+			NI_NUMERICHOST) != 0)
 		strcpy(addr, "(unknown)");
-	}
+
 	return addr;
 }
 
@@ -373,8 +366,6 @@ static void git_tcp_connect(int fd[2], char *host, int flags)
 
 
 static char *git_proxy_command;
-static const char *rhost_name;
-static int rhost_len;
 
 static int git_proxy_command_options(const char *var, const char *value,
 		void *cb)
@@ -383,6 +374,8 @@ static int git_proxy_command_options(const char *var, const char *value,
 		const char *for_pos;
 		int matchlen = -1;
 		int hostlen;
+		const char *rhost_name = cb;
+		int rhost_len = strlen(rhost_name);
 
 		if (git_proxy_command)
 			return 0;
@@ -426,11 +419,8 @@ static int git_proxy_command_options(const char *var, const char *value,
 
 static int git_use_proxy(const char *host)
 {
-	rhost_name = host;
-	rhost_len = strlen(host);
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options, NULL);
-	rhost_name = NULL;
+	git_config(git_proxy_command_options, (void*)host);
 	return (git_proxy_command && *git_proxy_command);
 }
 
@@ -507,7 +497,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 				  const char *prog, int flags)
 {
 	char *url = xstrdup(url_orig);
-	char *host, *path = url;
+	char *host, *path;
 	char *end;
 	int c;
 	struct child_process *conn;

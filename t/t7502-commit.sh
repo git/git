@@ -234,7 +234,7 @@ cat >.git/FAKE_EDITOR <<EOF
 # kill -TERM command added below.
 EOF
 
-test_expect_success 'a SIGTERM should break locks' '
+test_expect_success EXECKEEPSPID 'a SIGTERM should break locks' '
 	echo >>negative &&
 	! "$SHELL_PATH" -c '\''
 	  echo kill -TERM $$ >> .git/FAKE_EDITOR

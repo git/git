@@ -6,6 +6,12 @@ test_description='git checkout to switch between branches with symlink<->dir'
 
 . ./test-lib.sh
 
+if ! test_have_prereq SYMLINKS
+then
+	say "symbolic links not supported - skipping tests"
+	test_done
+fi
+
 test_expect_success setup '
 
 	mkdir frotz &&

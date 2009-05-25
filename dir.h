@@ -34,11 +34,13 @@ struct exclude_stack {
 struct dir_struct {
 	int nr, alloc;
 	int ignored_nr, ignored_alloc;
-	unsigned int show_ignored:1,
-		     show_other_directories:1,
-		     hide_empty_directories:1,
-		     no_gitlinks:1,
-		     collect_ignored:1;
+	enum {
+		DIR_SHOW_IGNORED = 1<<0,
+		DIR_SHOW_OTHER_DIRECTORIES = 1<<1,
+		DIR_HIDE_EMPTY_DIRECTORIES = 1<<2,
+		DIR_NO_GITLINKS = 1<<3,
+		DIR_COLLECT_IGNORED = 1<<4
+	} flags;
 	struct dir_entry **entries;
 	struct dir_entry **ignored;
 

@@ -31,7 +31,7 @@ static int check_removed(const struct cache_entry *ce, struct stat *st)
 			return -1;
 		return 1;
 	}
-	if (has_symlink_leading_path(ce_namelen(ce), ce->name))
+	if (has_symlink_leading_path(ce->name, ce_namelen(ce)))
 		return 1;
 	if (S_ISDIR(st->st_mode)) {
 		unsigned char sub[20];
@@ -214,7 +214,7 @@ static int get_stat_data(struct cache_entry *ce,
 	const unsigned char *sha1 = ce->sha1;
 	unsigned int mode = ce->ce_mode;
 
-	if (!cached) {
+	if (!cached && !ce_uptodate(ce)) {
 		int changed;
 		struct stat st;
 		changed = check_removed(ce, &st);

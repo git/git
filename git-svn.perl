@@ -5,7 +5,7 @@ use warnings;
 use strict;
 use vars qw/	$AUTHOR $VERSION
 		$sha1 $sha1_short $_revision $_repository
-		$_q $_authors %users/;
+		$_q $_authors $_authors_prog %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
@@ -39,6 +39,7 @@ use Digest::MD5;
 use IO::File qw//;
 use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
+use File::Spec;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use IPC::Open3;
 use Git;
@@ -47,7 +48,8 @@ BEGIN {
 	# import functions from Git into our packages, en masse
 	no strict 'refs';
 	foreach (qw/command command_oneline command_noisy command_output_pipe
-	            command_input_pipe command_close_pipe/) {
+	            command_input_pipe command_close_pipe
+	            command_bidi_pipe command_close_bidi_pipe/) {
 		for my $package ( qw(SVN::Git::Editor SVN::Git::Fetcher
 			Git::SVN::Migration Git::SVN::Log Git::SVN),
 			__PACKAGE__) {
@@ -63,24 +65,26 @@ $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
 	$_message, $_file,
 	$_template, $_shared,
-	$_version, $_fetch_all, $_no_rebase,
+	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_git_format, $_commit_url, $_tag);
 $Git::SVN::_follow_parent = 1;
+$_q ||= 0;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
                     'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
                     'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex );
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
+		'authors-prog=s' => \$_authors_prog,
 		'repack:i' => \$Git::SVN::_repack,
 		'noMetadata' => \$Git::SVN::_no_metadata,
 		'useSvmProps' => \$Git::SVN::_use_svm_props,
 		'useSvnsyncProps' => \$Git::SVN::_use_svnsync_props,
 		'log-window-size=i' => \$Git::SVN::Ra::_log_window_size,
 		'no-checkout' => \$_no_checkout,
-		'quiet|q' => \$_q,
+		'quiet|q+' => \$_q,
 		'repack-flags|repack-args|repack-opts=s' =>
 		   \$Git::SVN::_repack_flags,
 		'use-log-author' => \$Git::SVN::_use_log_author,
@@ -111,6 +115,7 @@ my %cmd = (
 	fetch => [ \&cmd_fetch, "Download new revisions from SVN",
 			{ 'revision|r=s' => \$_revision,
 			  'fetch-all|all' => \$_fetch_all,
+			  'parent|p' => \$_fetch_parent,
 			   %fc_opts } ],
 	clone => [ \&cmd_clone, "Initialize and fetch revisions",
 			{ 'revision|r=s' => \$_revision,
@@ -260,6 +265,9 @@ usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
 load_authors() if $_authors;
+if (defined $_authors_prog) {
+	$_authors_prog = "'" . File::Spec->rel2abs($_authors_prog) . "'";
+}
 
 unless ($cmd =~ /^(?:clone|init|multi-init|commit-diff)$/) {
 	Git::SVN::Migration::migration_check();
@@ -325,6 +333,7 @@ sub do_git_init_db {
 		command_noisy(@init_db);
 		$_repository = Git->repository(Repository => ".git");
 	}
+	command_noisy('config', 'core.autocrlf', 'false');
 	my $set;
 	my $pfx = "svn-remote.$Git::SVN::default_repo_id";
 	foreach my $i (keys %icv) {
@@ -333,6 +342,9 @@ sub do_git_init_db {
 		command_noisy('config', "$pfx.$i", $icv{$i});
 		$set = $i;
 	}
+	my $ignore_regex = \$SVN::Git::Fetcher::_ignore_regex;
+	command_noisy('config', "$pfx.ignore-paths", $$ignore_regex)
+		if defined $$ignore_regex;
 }
 
 sub init_subdir {
@@ -354,6 +366,7 @@ sub cmd_clone {
 	$path = basename($url) if !defined $path || !length $path;
 	cmd_init($url, $path);
 	Git::SVN::fetch_all($Git::SVN::default_repo_id);
+	command_oneline('config', 'svn.authorsfile', $_authors) if $_authors;
 }
 
 sub cmd_init {
@@ -380,12 +393,21 @@ sub cmd_fetch {
 	}
 	my ($remote) = @_;
 	if (@_ > 1) {
-		die "Usage: $0 fetch [--all] [svn-remote]\n";
+		die "Usage: $0 fetch [--all] [--parent] [svn-remote]\n";
 	}
-	$remote ||= $Git::SVN::default_repo_id;
-	if ($_fetch_all) {
+	if ($_fetch_parent) {
+		my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+		unless ($gs) {
+			die "Unable to determine upstream SVN information from ",
+			    "working tree history\n";
+		}
+	        # just fetch, don't checkout.
+		$_no_checkout = 'true';
+		$_fetch_all ? $gs->fetch_all : $gs->fetch;
+	} elsif ($_fetch_all) {
 		cmd_multi_fetch();
 	} else {
+		$remote ||= $Git::SVN::default_repo_id;
 		Git::SVN::fetch_all($remote, Git::SVN::read_all_remotes());
 	}
 }
@@ -1251,6 +1273,40 @@ sub extract_metadata {
 sub cmt_metadata {
 	return extract_metadata((grep(/^git-svn-id: /,
 		command(qw/cat-file commit/, shift)))[-1]);
+}
+
+sub cmt_sha2rev_batch {
+	my %s2r;
+	my ($pid, $in, $out, $ctx) = command_bidi_pipe(qw/cat-file --batch/);
+	my $list = shift;
+
+	foreach my $sha (@{$list}) {
+		my $first = 1;
+		my $size = 0;
+		print $out $sha, "\n";
+
+		while (my $line = <$in>) {
+			if ($first && $line =~ /^[[:xdigit:]]{40}\smissing$/) {
+				last;
+			} elsif ($first &&
+			       $line =~ /^[[:xdigit:]]{40}\scommit\s(\d+)$/) {
+				$first = 0;
+				$size = $1;
+				next;
+			} elsif ($line =~ /^(git-svn-id: )/) {
+				my (undef, $rev, undef) =
+				                      extract_metadata($line);
+				$s2r{$sha} = $rev;
+			}
+
+			$size -= length($line);
+			last if ($size == 0);
+		}
+	}
+
+	command_close_bidi_pipe($pid, $in, $out, $ctx);
+
+	return \%s2r;
 }
 
 sub working_head_info {
@@ -2331,13 +2387,13 @@ sub do_git_commit {
 
 	$self->{last_rev} = $log_entry->{revision};
 	$self->{last_commit} = $commit;
-	print "r$log_entry->{revision}";
+	print "r$log_entry->{revision}" unless $::_q > 1;
 	if (defined $log_entry->{svm_revision}) {
-		 print " (\@$log_entry->{svm_revision})";
+		 print " (\@$log_entry->{svm_revision})" unless $::_q > 1;
 		 $self->rev_map_set($log_entry->{svm_revision}, $commit,
 		                   0, $self->svm_uuid);
 	}
-	print " = $commit ($self->{ref_id})\n";
+	print " = $commit ($self->{ref_id})\n" unless $::_q > 1;
 	if (--$_gc_nr == 0) {
 		$_gc_nr = $_gc_period;
 		gc();
@@ -2351,7 +2407,10 @@ sub match_paths {
 	if (my $path = $paths->{"/$self->{path}"}) {
 		return ($path->{action} eq 'D') ? 0 : 1;
 	}
-	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\//;
+	my $repos_root = $self->ra->{repos_root};
+	my $extended_path = $self->{url} . '/' . $self->{path};
+	$extended_path =~ s#^\Q$repos_root\E(/|$)##;
+	$self->{path_regex} ||= qr/^\/\Q$extended_path\E\//;
 	if (grep /$self->{path_regex}/, keys %$paths) {
 		return 1;
 	}
@@ -2610,12 +2669,33 @@ sub other_gs {
 	$gs
 }
 
+sub call_authors_prog {
+	my ($orig_author) = @_;
+	my $author = `$::_authors_prog $orig_author`;
+	if ($? != 0) {
+		die "$::_authors_prog failed with exit code $?\n"
+	}
+	if ($author =~ /^\s*(.+?)\s*<(.*)>\s*$/) {
+		my ($name, $email) = ($1, $2);
+		$email = undef if length $2 == 0;
+		return [$name, $email];
+	} else {
+		die "Author: $orig_author: $::_authors_prog returned "
+			. "invalid author format: $author\n";
+	}
+}
+
 sub check_author {
 	my ($author) = @_;
 	if (!defined $author || length $author == 0) {
 		$author = '(no author)';
-	} elsif (defined $::_authors && ! defined $::users{$author}) {
-		die "Author: $author not defined in $::_authors file\n";
+	}
+	if (!defined $::users{$author}) {
+		if (defined $::_authors_prog) {
+			$::users{$author} = call_authors_prog($author);
+		} elsif (defined $::_authors) {
+			die "Author: $author not defined in $::_authors file\n";
+		}
 	}
 	$author;
 }
@@ -3282,6 +3362,8 @@ sub new {
 		$self->{empty_symlinks} =
 		                  _mark_empty_symlinks($git_svn, $switch_path);
 	}
+	$self->{ignore_regex} = eval { command_oneline('config', '--get',
+			     "svn-remote.$git_svn->{repo_id}.ignore-paths") };
 	$self->{empty} = {};
 	$self->{dir_prop} = {};
 	$self->{file_prop} = {};
@@ -3346,8 +3428,10 @@ sub in_dot_git {
 
 # return value: 0 -- don't ignore, 1 -- ignore
 sub is_path_ignored {
-	my ($path) = @_;
+	my ($self, $path) = @_;
 	return 1 if in_dot_git($path);
+	return 1 if defined($self->{ignore_regex}) &&
+	            $path =~ m!$self->{ignore_regex}!;
 	return 0 unless defined($_ignore_regex);
 	return 1 if $path =~ m!$_ignore_regex!o;
 	return 0;
@@ -3378,7 +3462,7 @@ sub git_path {
 
 sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
-	return undef if is_path_ignored($path);
+	return undef if $self->is_path_ignored($path);
 
 	my $gpath = $self->git_path($path);
 	return undef if ($gpath eq '');
@@ -3411,7 +3495,7 @@ sub open_file {
 	my ($self, $path, $pb, $rev) = @_;
 	my ($mode, $blob);
 
-	goto out if is_path_ignored($path);
+	goto out if $self->is_path_ignored($path);
 
 	my $gpath = $self->git_path($path);
 	($mode, $blob) = (command('ls-tree', '-z', $self->{c}, "./$gpath")
@@ -3431,7 +3515,7 @@ sub add_file {
 	my ($self, $path, $pb, $cp_path, $cp_rev) = @_;
 	my $mode;
 
-	if (!is_path_ignored($path)) {
+	if (!$self->is_path_ignored($path)) {
 		my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
 		delete $self->{empty}->{$dir};
 		$mode = '100644';
@@ -3442,7 +3526,7 @@ sub add_file {
 
 sub add_directory {
 	my ($self, $path, $cp_path, $cp_rev) = @_;
-	goto out if is_path_ignored($path);
+	goto out if $self->is_path_ignored($path);
 	my $gpath = $self->git_path($path);
 	if ($gpath eq '') {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
@@ -3466,7 +3550,7 @@ out:
 
 sub change_dir_prop {
 	my ($self, $db, $prop, $value) = @_;
-	return undef if is_path_ignored($db->{path});
+	return undef if $self->is_path_ignored($db->{path});
 	$self->{dir_prop}->{$db->{path}} ||= {};
 	$self->{dir_prop}->{$db->{path}}->{$prop} = $value;
 	undef;
@@ -3474,7 +3558,7 @@ sub change_dir_prop {
 
 sub absent_directory {
 	my ($self, $path, $pb) = @_;
-	return undef if is_path_ignored($path);
+	return undef if $self->is_path_ignored($path);
 	$self->{absent_dir}->{$pb->{path}} ||= [];
 	push @{$self->{absent_dir}->{$pb->{path}}}, $path;
 	undef;
@@ -3482,7 +3566,7 @@ sub absent_directory {
 
 sub absent_file {
 	my ($self, $path, $pb) = @_;
-	return undef if is_path_ignored($path);
+	return undef if $self->is_path_ignored($path);
 	$self->{absent_file}->{$pb->{path}} ||= [];
 	push @{$self->{absent_file}->{$pb->{path}}}, $path;
 	undef;
@@ -3490,7 +3574,7 @@ sub absent_file {
 
 sub change_file_prop {
 	my ($self, $fb, $prop, $value) = @_;
-	return undef if is_path_ignored($fb->{path});
+	return undef if $self->is_path_ignored($fb->{path});
 	if ($prop eq 'svn:executable') {
 		if ($fb->{mode_b} != 120000) {
 			$fb->{mode_b} = defined $value ? 100755 : 100644;
@@ -3506,7 +3590,7 @@ sub change_file_prop {
 
 sub apply_textdelta {
 	my ($self, $fb, $exp) = @_;
-	return undef if is_path_ignored($fb->{path});
+	return undef if $self->is_path_ignored($fb->{path});
 	my $fh = $::_repository->temp_acquire('svn_delta');
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
@@ -3553,7 +3637,7 @@ sub apply_textdelta {
 
 sub close_file {
 	my ($self, $fb, $exp) = @_;
-	return undef if is_path_ignored($fb->{path});
+	return undef if $self->is_path_ignored($fb->{path});
 
 	my $hash;
 	my $path = $self->git_path($fb->{path});
@@ -4381,6 +4465,7 @@ sub gs_fetch_loop_common {
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my $longest_path = longest_common_path($gsv, $globs);
 	my $ra_url = $self->{url};
+	my $find_trailing_edge;
 	while (1) {
 		my %revs;
 		my $err;
@@ -4398,8 +4483,10 @@ sub gs_fetch_loop_common {
 		               sub { $revs{$_[1]} = _cb(@_) });
 		if ($err) {
 			print "Checked through r$max\r";
+		} else {
+			$find_trailing_edge = 1;
 		}
-		if ($err && $max >= $head) {
+		if ($err and $find_trailing_edge) {
 			print STDERR "Path '$longest_path' ",
 				     "was probably deleted:\n",
 				     $err->expanded_message,
@@ -4411,13 +4498,14 @@ sub gs_fetch_loop_common {
 				my $ok;
 				$self->get_log([$longest_path], $min, $hi,
 				               0, 1, 1, sub {
-				               $ok ||= $_[1];
+				               $ok = $_[1];
 				               $revs{$_[1]} = _cb(@_) });
 				if ($ok) {
 					print STDERR "r$min .. r$ok OK\n";
 					last;
 				}
 			}
+			$find_trailing_edge = 0;
 		}
 		$SVN::Error::handler = $err_handler;
 
@@ -4987,11 +5075,22 @@ sub cmd_blame {
 						  '--', $path);
 		my ($sha1);
 		my %authors;
+		my @buffer;
+		my %dsha; #distinct sha keys
+
 		while (my $line = <$fh>) {
+			push @buffer, $line;
 			if ($line =~ /^([[:xdigit:]]{40})\s\d+\s\d+/) {
-				$sha1 = $1;
-				(undef, $rev, undef) = ::cmt_metadata($1);
-				$rev = '0' if (!$rev);
+				$dsha{$1} = 1;
+			}
+		}
+
+		my $s2r = ::cmt_sha2rev_batch([keys %dsha]);
+
+		foreach my $line (@buffer) {
+			if ($line =~ /^([[:xdigit:]]{40})\s\d+\s\d+/) {
+				$rev = $s2r->{$1};
+				$rev = '0' if (!$rev)
 			}
 			elsif ($line =~ /^author (.*)/) {
 				$authors{$rev} = $1;

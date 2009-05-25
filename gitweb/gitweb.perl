@@ -458,8 +458,8 @@ sub filter_snapshot_fmts {
 	@fmts = map {
 		exists $known_snapshot_format_aliases{$_} ?
 		       $known_snapshot_format_aliases{$_} : $_} @fmts;
-	@fmts = grep(exists $known_snapshot_formats{$_}, @fmts);
-
+	@fmts = grep {
+		exists $known_snapshot_formats{$_} } @fmts;
 }
 
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
@@ -688,11 +688,12 @@ sub evaluate_path_info {
 		# extensions. Allowed extensions are both the defined suffix
 		# (which includes the initial dot already) and the snapshot
 		# format key itself, with a prepended dot
-		while (my ($fmt, %opt) = each %known_snapshot_formats) {
+		while (my ($fmt, $opt) = each %known_snapshot_formats) {
 			my $hash = $refname;
-			my $sfx;
-			$hash =~ s/(\Q$opt{'suffix'}\E|\Q.$fmt\E)$//;
-			next unless $sfx = $1;
+			unless ($hash =~ s/(\Q$opt->{'suffix'}\E|\Q.$fmt\E)$//) {
+				next;
+			}
+			my $sfx = $1;
 			# a valid suffix was found, so set the snapshot format
 			# and reset the hash parameter
 			$input_params{'snapshot_format'} = $fmt;
@@ -828,7 +829,7 @@ if (!defined $action) {
 if (!defined($actions{$action})) {
 	die_error(400, "Unknown action");
 }
-if ($action !~ m/^(opml|project_list|project_index)$/ &&
+if ($action !~ m/^(?:opml|project_list|project_index)$/ &&
     !$project) {
 	die_error(400, "Project needed");
 }
@@ -838,7 +839,7 @@ exit;
 ## ======================================================================
 ## action links
 
-sub href (%) {
+sub href {
 	my %params = @_;
 	# default is to use -absolute url() i.e. $my_uri
 	my $href = $params{-full} ? $my_url : $my_uri;
@@ -1036,7 +1037,7 @@ sub esc_url {
 }
 
 # replace invalid utf8 character with SUBSTITUTION sequence
-sub esc_html ($;%) {
+sub esc_html {
 	my $str = shift;
 	my %opts = @_;
 
@@ -1235,7 +1236,7 @@ sub chop_and_escape_str {
 	if ($chopped eq $str) {
 		return esc_html($chopped);
 	} else {
-		$str =~ s/([[:cntrl:]])/?/g;
+		$str =~ s/[[:cntrl:]]/?/g;
 		return $cgi->span({-title=>$str}, esc_html($chopped));
 	}
 }
@@ -1296,7 +1297,7 @@ use constant {
 };
 
 # submodule/subproject, a commit object reference
-sub S_ISGITLINK($) {
+sub S_ISGITLINK {
 	my $mode = shift;
 
 	return (($mode & S_IFMT) == S_IFGITLINK)
@@ -1458,6 +1459,7 @@ sub format_subject_html {
 	$extra = '' unless defined($extra);
 
 	if (length($short) < length($long)) {
+		$long =~ s/[[:cntrl:]]/?/g;
 		return $cgi->a({-href => $href, -class => "list subject",
 		                -title => to_utf8($long)},
 		       esc_html($short) . $extra);
@@ -1838,7 +1840,7 @@ sub git_cmd {
 # Try to avoid using this function wherever possible.
 sub quote_command {
 	return join(' ',
-		    map( { my $a = $_; $a =~ s/(['!])/'\\$1'/g; "'$a'" } @_ ));
+		map { my $a = $_; $a =~ s/(['!])/'\\$1'/g; "'$a'" } @_ );
 }
 
 # get HEAD ref of given project as hash
@@ -2050,7 +2052,7 @@ sub git_get_project_description {
 	my $path = shift;
 
 	$git_dir = "$projectroot/$path";
-	open my $fd, "$git_dir/description"
+	open my $fd, '<', "$git_dir/description"
 		or return git_get_project_config('description');
 	my $descr = <$fd>;
 	close $fd;
@@ -2065,18 +2067,17 @@ sub git_get_project_ctags {
 	my $ctags = {};
 
 	$git_dir = "$projectroot/$path";
-	unless (opendir D, "$git_dir/ctags") {
-		return $ctags;
-	}
-	foreach (grep { -f $_ } map { "$git_dir/ctags/$_" } readdir(D)) {
-		open CT, $_ or next;
-		my $val = <CT>;
+	opendir my $dh, "$git_dir/ctags"
+		or return $ctags;
+	foreach (grep { -f $_ } map { "$git_dir/ctags/$_" } readdir($dh)) {
+		open my $ct, '<', $_ or next;
+		my $val = <$ct>;
 		chomp $val;
-		close CT;
+		close $ct;
 		my $ctag = $_; $ctag =~ s#.*/##;
 		$ctags->{$ctag} = $val;
 	}
-	closedir D;
+	closedir $dh;
 	$ctags;
 }
 
@@ -2129,7 +2130,7 @@ sub git_get_project_url_list {
 	my $path = shift;
 
 	$git_dir = "$projectroot/$path";
-	open my $fd, "$git_dir/cloneurl"
+	open my $fd, '<', "$git_dir/cloneurl"
 		or return wantarray ?
 		@{ config_to_multi(git_get_project_config('url')) } :
 		   config_to_multi(git_get_project_config('url'));
@@ -2187,7 +2188,7 @@ sub git_get_projects_list {
 		# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
 		# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
 		my %paths;
-		open my ($fd), $projects_list or return;
+		open my $fd, '<', $projects_list or return;
 	PROJECT:
 		while (my $line = <$fd>) {
 			chomp $line;
@@ -2250,7 +2251,7 @@ sub git_get_project_list_from_file {
 	# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
 	# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
 	if (-f $projects_list) {
-		open (my $fd , $projects_list);
+		open(my $fd, '<', $projects_list);
 		while (my $line = <$fd>) {
 			chomp $line;
 			my ($pr, $ow) = split ' ', $line;
@@ -2615,7 +2616,7 @@ sub parsed_difftree_line {
 }
 
 # parse line of git-ls-tree output
-sub parse_ls_tree_line ($;%) {
+sub parse_ls_tree_line {
 	my $line = shift;
 	my %opts = @_;
 	my %res;
@@ -2804,18 +2805,18 @@ sub mimetype_guess_file {
 	-r $mimemap or return undef;
 
 	my %mimemap;
-	open(MIME, $mimemap) or return undef;
-	while (<MIME>) {
+	open(my $mh, '<', $mimemap) or return undef;
+	while (<$mh>) {
 		next if m/^#/; # skip comments
-		my ($mime, $exts) = split(/\t+/);
+		my ($mimetype, $exts) = split(/\t+/);
 		if (defined $exts) {
 			my @exts = split(/\s+/, $exts);
 			foreach my $ext (@exts) {
-				$mimemap{$ext} = $mime;
+				$mimemap{$ext} = $mimetype;
 			}
 		}
 	}
-	close(MIME);
+	close($mh);
 
 	$filename =~ /\.([^.]*)$/;
 	return $mimemap{$1};
@@ -3213,7 +3214,6 @@ sub git_print_header_div {
 	      "\n</div>\n";
 }
 
-#sub git_print_authorship (\%) {
 sub git_print_authorship {
 	my $co = shift;
 
@@ -3269,8 +3269,7 @@ sub git_print_page_path {
 	print "<br/></div>\n";
 }
 
-# sub git_print_log (\@;%) {
-sub git_print_log ($;%) {
+sub git_print_log {
 	my $log = shift;
 	my %opts = @_;
 
@@ -3328,7 +3327,7 @@ sub git_get_link_target {
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or return;
 	{
-		local $/;
+		local $/ = undef;
 		$link_target = <$fd>;
 	}
 	close $fd
@@ -3341,10 +3340,7 @@ sub git_get_link_target {
 # return target of link relative to top directory (top tree);
 # return undef if it is not possible (including absolute links).
 sub normalize_link_target {
-	my ($link_target, $basedir, $hash_base) = @_;
-
-	# we can normalize symlink target only if $hash_base is provided
-	return unless $hash_base;
+	my ($link_target, $basedir) = @_;
 
 	# absolute symlinks (beginning with '/') cannot be normalized
 	return if (substr($link_target, 0, 1) eq '/');
@@ -3400,7 +3396,7 @@ sub git_print_tree_entry {
 		if (S_ISLNK(oct $t->{'mode'})) {
 			my $link_target = git_get_link_target($t->{'hash'});
 			if ($link_target) {
-				my $norm_target = normalize_link_target($link_target, $basedir, $hash_base);
+				my $norm_target = normalize_link_target($link_target, $basedir);
 				if (defined $norm_target) {
 					print " -> " .
 					      $cgi->a({-href => href(action=>"object", hash_base=>$hash_base,
@@ -3993,7 +3989,7 @@ sub fill_project_list_info {
 			    ($pname !~ /\/$/) &&
 			    (-d "$projectroot/$pname")) {
 				$pr->{'forks'} = "-d $projectroot/$pname";
-			}	else {
+			} else {
 				$pr->{'forks'} = 0;
 			}
 		}
@@ -4803,11 +4799,10 @@ sub git_blob_plain {
 		-content_disposition =>
 			($sandbox ? 'attachment' : 'inline')
 			. '; filename="' . $save_as . '"');
-	undef $/;
+	local $/ = undef;
 	binmode STDOUT, ':raw';
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
-	$/ = "\n";
 	close $fd;
 }
 
@@ -4909,12 +4904,16 @@ sub git_tree {
 		}
 	}
 	die_error(404, "No such tree") unless defined($hash);
-	$/ = "\0";
-	open my $fd, "-|", git_cmd(), "ls-tree", '-z', $hash
-		or die_error(500, "Open git-ls-tree failed");
-	my @entries = map { chomp; $_ } <$fd>;
-	close $fd or die_error(404, "Reading tree failed");
-	$/ = "\n";
+
+	my @entries = ();
+	{
+		local $/ = "\0";
+		open my $fd, "-|", git_cmd(), "ls-tree", '-z', $hash
+			or die_error(500, "Open git-ls-tree failed");
+		@entries = map { chomp; $_ } <$fd>;
+		close $fd
+			or die_error(404, "Reading tree failed");
+	}
 
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $hash_base);
@@ -5809,7 +5808,7 @@ sub git_search {
 
 		print "<table class=\"pickaxe search\">\n";
 		my $alternate = 1;
-		$/ = "\n";
+		local $/ = "\n";
 		open my $fd, '-|', git_cmd(), '--no-pager', 'log', @diff_opts,
 			'--pretty=format:%H', '--no-abbrev', '--raw', "-S$searchtext",
 			($search_use_regexp ? '--pickaxe-regex' : ());
@@ -5879,7 +5878,7 @@ sub git_search {
 		print "<table class=\"grep_search\">\n";
 		my $alternate = 1;
 		my $matches = 0;
-		$/ = "\n";
+		local $/ = "\n";
 		open my $fd, "-|", git_cmd(), 'grep', '-n',
 			$search_use_regexp ? ('-E', '-i') : '-F',
 			$searchtext, $co{'tree'};
@@ -6282,7 +6281,7 @@ XML
 	# end of feed
 	if ($format eq 'rss') {
 		print "</channel>\n</rss>\n";
-	}	elsif ($format eq 'atom') {
+	} elsif ($format eq 'atom') {
 		print "</feed>\n";
 	}
 }

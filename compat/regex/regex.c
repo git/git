@@ -1043,7 +1043,7 @@ regex_compile (pattern, size, syntax, bufp)
      they can be reliably used as array indices.  */
   register unsigned char c, c1;
 
-  /* A random tempory spot in PATTERN.  */
+  /* A random temporary spot in PATTERN.  */
   const char *p1;
 
   /* Points to the end of the buffer, where we should append.  */
@@ -1796,7 +1796,7 @@ regex_compile (pattern, size, syntax, bufp)
 		    we're all done, the pattern will look like:
 		      set_number_at <jump count> <upper bound>
 		      set_number_at <succeed_n count> <lower bound>
-		      succeed_n <after jump addr> <succed_n count>
+		      succeed_n <after jump addr> <succeed_n count>
 		      <body of loop>
 		      jump_n <succeed_n addr> <jump count>
 		    (The upper bound and `jump_n' are omitted if

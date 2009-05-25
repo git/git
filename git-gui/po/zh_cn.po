@@ -676,16 +676,6 @@ msgstr "总是合并 (不作合并测试.)"
 msgid "The following branches are not completely merged into %s:"
 msgstr "下列分支没有完全被合并到 %s:"
 
-#: lib/branch_delete.tcl:115
-msgid ""
-"Recovering deleted branches is difficult. \n"
-"\n"
-" Delete the selected branches?"
-msgstr ""
-"恢复被删除的分支非常困难.\n"
-"\n"
-"是否要删除所选分支?"
-
 #: lib/branch_delete.tcl:141
 #, tcl-format
 msgid ""

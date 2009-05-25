@@ -8,7 +8,9 @@
 
 static unsigned int hash_obj(const struct object *obj, unsigned int n)
 {
-	unsigned int hash = *(unsigned int *)obj->sha1;
+	unsigned int hash;
+
+	memcpy(&hash, obj->sha1, sizeof(unsigned int));
 	return hash % n;
 }
 
@@ -16,7 +18,7 @@ static void *insert_decoration(struct decoration *n, const struct object *base, 
 {
 	int size = n->size;
 	struct object_decoration *hash = n->hash;
-	int j = hash_obj(base, size);
+	unsigned int j = hash_obj(base, size);
 
 	while (hash[j].base) {
 		if (hash[j].base == base) {
@@ -68,7 +70,7 @@ void *add_decoration(struct decoration *n, const struct object *obj,
 /* Lookup a decoration pointer */
 void *lookup_decoration(struct decoration *n, const struct object *obj)
 {
-	int j;
+	unsigned int j;
 
 	/* nothing to lookup */
 	if (!n->size)

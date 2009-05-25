@@ -105,8 +105,11 @@ endif
 
 ifeq ($(uname_S),Darwin)
 	TKFRAMEWORK = /Library/Frameworks/Tk.framework/Resources/Wish.app
-	ifeq ($(shell expr "$(uname_R)" : '9\.'),2)
-		TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish\ Shell.app
+	ifeq ($(shell echo "$(uname_R)" | awk -F. '{if ($$1 >= 9) print "y"}')_$(shell test -d $(TKFRAMEWORK) || echo n),y_n)
+		TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish.app
+		ifeq ($(shell test -d $(TKFRAMEWORK) || echo n),n)
+			TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish\ Shell.app
+		endif
 	endif
 	TKEXECUTABLE = $(shell basename "$(TKFRAMEWORK)" .app)
 endif

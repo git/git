@@ -6,12 +6,16 @@ test_description='Test export of commits to CVS'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping git cvsexportcommit tests, perl not available'
+	test_done
+fi
+
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git cvsexportcommit tests, cvs not found' :
+    say 'skipping git cvsexportcommit tests, cvs not found'
     test_done
-    exit
 fi
 
 CVSROOT=$(pwd)/cvsroot
@@ -225,11 +229,12 @@ test_expect_success \
       test_must_fail git cvsexportcommit -c $id
       )'
 
-case "$(git config --bool core.filemode)" in
-false)
-	;;
-*)
-test_expect_success \
+if ! test "$(git config --bool core.filemode)" = false
+then
+	test_set_prereq FILEMODE
+fi
+
+test_expect_success FILEMODE \
      'Retain execute bit' \
      'mkdir G &&
       echo executeon >G/on &&
@@ -243,8 +248,6 @@ test_expect_success \
       test -x G/on &&
       ! test -x G/off
       )'
-	;;
-esac
 
 test_expect_success '-w option should work with relative GIT_DIR' '
       mkdir W &&

@@ -5,7 +5,7 @@
 #include "run-command.h"
 
 const char git_usage_string[] =
-	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate|--no-pager] [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE] [--help] COMMAND [ARGS]";
+	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [--html-path] [-p|--paginate|--no-pager] [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE] [--help] COMMAND [ARGS]";
 
 const char git_more_info_string[] =
 	"See 'git help COMMAND' for more information on a specific command.";
@@ -47,7 +47,7 @@ static void commit_pager_choice(void) {
 	}
 }
 
-static int handle_options(const char*** argv, int* argc, int* envchanged)
+static int handle_options(const char ***argv, int *argc, int *envchanged)
 {
 	int handled = 0;
 
@@ -75,6 +75,9 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 				puts(git_exec_path());
 				exit(0);
 			}
+		} else if (!strcmp(cmd, "--html-path")) {
+			puts(system_path(GIT_HTML_PATH));
+			exit(0);
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
 			use_pager = 1;
 		} else if (!strcmp(cmd, "--no-pager")) {
@@ -133,7 +136,7 @@ static int handle_alias(int *argcp, const char ***argv)
 	int envchanged = 0, ret = 0, saved_errno = errno;
 	const char *subdir;
 	int count, option_count;
-	const char** new_argv;
+	const char **new_argv;
 	const char *alias_command;
 	char *alias_string;
 	int unused_nongit;
@@ -184,10 +187,10 @@ static int handle_alias(int *argcp, const char ***argv)
 				  "trace: alias expansion: %s =>",
 				  alias_command);
 
-		new_argv = xrealloc(new_argv, sizeof(char*) *
+		new_argv = xrealloc(new_argv, sizeof(char *) *
 				    (count + *argcp + 1));
 		/* insert after command name */
-		memcpy(new_argv + count, *argv + 1, sizeof(char*) * *argcp);
+		memcpy(new_argv + count, *argv + 1, sizeof(char *) * *argcp);
 		new_argv[count+*argcp] = NULL;
 
 		*argv = new_argv;
@@ -271,6 +274,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "annotate", cmd_annotate, RUN_SETUP },
 		{ "apply", cmd_apply },
 		{ "archive", cmd_archive },
+		{ "bisect--helper", cmd_bisect__helper, RUN_SETUP | NEED_WORK_TREE },
 		{ "blame", cmd_blame, RUN_SETUP },
 		{ "branch", cmd_branch, RUN_SETUP },
 		{ "bundle", cmd_bundle },
@@ -493,7 +497,7 @@ int main(int argc, const char **argv)
 
 	/*
 	 * We use PATH to find git commands, but we prepend some higher
-	 * precidence paths: the "--exec-path" option, the GIT_EXEC_PATH
+	 * precedence paths: the "--exec-path" option, the GIT_EXEC_PATH
 	 * environment, and the $(gitexecdir) from the Makefile at build
 	 * time.
 	 */

@@ -6,18 +6,18 @@
 test_description='git svn basic tests'
 GIT_SVN_LC_ALL=${LC_ALL:-$LANG}
 
-case "$GIT_SVN_LC_ALL" in
-*.UTF-8)
-	have_utf8=t
-	;;
-*)
-	have_utf8=
-	;;
-esac
-
 . ./lib-git-svn.sh
 
 say 'define NO_SVN_TESTS to skip git svn tests'
+
+case "$GIT_SVN_LC_ALL" in
+*.UTF-8)
+	test_set_prereq UTF8
+	;;
+*)
+	say "UTF-8 locale not set, some tests skipped ($GIT_SVN_LC_ALL)"
+	;;
+esac
 
 test_expect_success \
     'initialize git svn' '
@@ -31,7 +31,7 @@ test_expect_success \
 	echo "zzz" > bar/zzz &&
 	echo "#!/bin/sh" > exec.sh &&
 	chmod +x exec.sh &&
-	svn import -m "import for git svn" . "$svnrepo" >/dev/null &&
+	svn_cmd import -m "import for git svn" . "$svnrepo" >/dev/null &&
 	cd .. &&
 	rm -rf import &&
 	git svn init "$svnrepo"'
@@ -51,7 +51,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -d "$SVN_TREE"/dir && test ! -d "$SVN_TREE"/dir/a'
 
 
@@ -118,7 +118,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test ! -x "$SVN_TREE"/exec.sh'
 
 
@@ -129,7 +129,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/exec.sh'
 
 
@@ -141,7 +141,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -L "$SVN_TREE"/exec.sh'
 
 name='new symlink is added to a file that was also just made executable'
@@ -153,7 +153,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/bar/zzz &&
 	test -L "$SVN_TREE"/exec-2.sh'
 
@@ -166,25 +166,20 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -f "$SVN_TREE"/exec-2.sh &&
 	test ! -L "$SVN_TREE"/exec-2.sh &&
 	test_cmp help "$SVN_TREE"/exec-2.sh'
 
-if test "$have_utf8" = t
-then
-	name="commit with UTF-8 message: locale: $GIT_SVN_LC_ALL"
-	LC_ALL="$GIT_SVN_LC_ALL"
-	export LC_ALL
-	test_expect_success "$name" "
-		echo '# hello' >> exec-2.sh &&
-		git update-index exec-2.sh &&
-		git commit -m 'éï∏' &&
-		git svn set-tree HEAD"
-	unset LC_ALL
-else
-	say "UTF-8 locale not set, test skipped ($GIT_SVN_LC_ALL)"
-fi
+name="commit with UTF-8 message: locale: $GIT_SVN_LC_ALL"
+LC_ALL="$GIT_SVN_LC_ALL"
+export LC_ALL
+test_expect_success UTF8 "$name" "
+	echo '# hello' >> exec-2.sh &&
+	git update-index exec-2.sh &&
+	git commit -m 'éï∏' &&
+	git svn set-tree HEAD"
+unset LC_ALL
 
 name='test fetch functionality (svn => git) with alternate GIT_SVN_ID'
 GIT_SVN_ID=alt
@@ -197,7 +192,7 @@ test_expect_success "$name" \
 
 name='check imported tree checksums expected tree checksums'
 rm -f expected
-if test "$have_utf8" = t
+if test_have_prereq UTF8
 then
 	echo tree bf522353586b1b883488f2bc73dab0d9f774b9a9 > expected
 fi

@@ -29,7 +29,9 @@ test_expect_success setup '
 		git checkout -b b4 origin &&
 		advance e &&
 		advance f
-	)
+	) &&
+	git checkout -b follower --track master &&
+	advance g
 '
 
 script='s/^..\(b.\)[	 0-9a-f]*\[\([^]]*\)\].*/\1 \2/p'
@@ -56,6 +58,12 @@ test_expect_success 'checkout' '
 	grep "have 1 and 1 different" actual
 '
 
+test_expect_success 'checkout with local tracked branch' '
+	git checkout master &&
+	git checkout follower >actual
+	grep "is ahead of" actual
+'
+
 test_expect_success 'status' '
 	(
 		cd test &&
@@ -66,5 +74,19 @@ test_expect_success 'status' '
 	grep "have 1 and 1 different" actual
 '
 
+test_expect_success 'status when tracking lightweight tags' '
+	git checkout master &&
+	git tag light &&
+	git branch --track lighttrack light >actual &&
+	grep "set up to track" actual &&
+	git checkout lighttrack
+'
 
+test_expect_success 'status when tracking annotated tags' '
+	git checkout master &&
+	git tag -m heavy heavy &&
+	git branch --track heavytrack heavy >actual &&
+	grep "set up to track" actual &&
+	git checkout heavytrack
+'
 test_done

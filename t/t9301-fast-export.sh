@@ -8,6 +8,9 @@ test_description='git fast-export'
 
 test_expect_success 'setup' '
 
+	echo break it > file0 &&
+	git add file0 &&
+	test_tick &&
 	echo Wohlauf > file &&
 	git add file &&
 	test_tick &&
@@ -57,8 +60,8 @@ test_expect_success 'fast-export master~2..master' '
 		(cd new &&
 		 git fast-import &&
 		 test $MASTER != $(git rev-parse --verify refs/heads/partial) &&
-		 git diff master..partial &&
-		 git diff master^..partial^ &&
+		 git diff --exit-code master partial &&
+		 git diff --exit-code master^ partial^ &&
 		 test_must_fail git rev-parse partial~2)
 
 '

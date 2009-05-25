@@ -121,7 +121,7 @@ test_expect_success 'renaming a symref is not allowed' \
 	! test -f .git/refs/heads/master3
 '
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'git branch -m u v should fail when the reflog for u is a symlink' '
      git branch -l u &&
      mv .git/logs/refs/heads/u real-u &&

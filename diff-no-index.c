@@ -38,6 +38,10 @@ static int get_mode(const char *path, int *mode)
 
 	if (!path || !strcmp(path, "/dev/null"))
 		*mode = 0;
+#ifdef _WIN32
+	else if (!strcasecmp(path, "nul"))
+		*mode = 0;
+#endif
 	else if (!strcmp(path, "-"))
 		*mode = create_ce_mode(0666);
 	else if (lstat(path, &st))
@@ -229,7 +233,7 @@ void diff_no_index(struct rev_info *revs,
 	if (prefix) {
 		int len = strlen(prefix);
 
-		revs->diffopt.paths = xcalloc(2, sizeof(char*));
+		revs->diffopt.paths = xcalloc(2, sizeof(char *));
 		for (i = 0; i < 2; i++) {
 			const char *p = argv[argc - 2 + i];
 			/*

@@ -38,7 +38,7 @@ test_expect_success \
 	"echo King of the bongo >file &&
 	test_must_fail git commit -m foo -a file"
 
-test_expect_success \
+test_expect_success PERL \
 	"using paths with --interactive" \
 	"echo bong-o-bong >file &&
 	! (echo 7 | git commit -m foo --interactive file)"
@@ -119,7 +119,7 @@ test_expect_success \
 	"echo 'gak' >file && \
 	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a"
 
-test_expect_success \
+test_expect_success PERL \
 	"interactive add" \
 	"echo 7 | git commit --interactive | grep 'What now'"
 

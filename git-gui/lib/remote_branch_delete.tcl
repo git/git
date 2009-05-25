@@ -213,9 +213,7 @@ method _delete {} {
 		-type yesno \
 		-title [wm title $w] \
 		-parent $w \
-		-message [mc "Recovering deleted branches is difficult.
-
-Delete the selected branches?"]] ne yes} {
+		-message [mc "Recovering deleted branches is difficult.\n\nDelete the selected branches?"]] ne yes} {
 		return
 	}
 

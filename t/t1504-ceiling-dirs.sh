@@ -13,7 +13,7 @@ test_fail() {
 	"git rev-parse --show-prefix"
 }
 
-TRASH_ROOT="$(pwd)"
+TRASH_ROOT="$PWD"
 ROOT_PARENT=$(dirname "$TRASH_ROOT")
 
 

@@ -13,9 +13,15 @@
 # hooks.allowdeletetag
 #   This boolean sets whether deleting tags will be allowed in the
 #   repository.  By default they won't be.
+# hooks.allowmodifytag
+#   This boolean sets whether a tag may be modified after creation. By default
+#   it won't be.
 # hooks.allowdeletebranch
 #   This boolean sets whether deleting branches will be allowed in the
 #   repository.  By default they won't be.
+# hooks.denycreatebranch
+#   This boolean sets whether remotely creating branches will be denied
+#   in the repository.  By default this is allowed.
 #
 
 # --- Command line
@@ -39,18 +45,23 @@ fi
 # --- Config
 allowunannotated=$(git config --bool hooks.allowunannotated)
 allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
+denycreatebranch=$(git config --bool hooks.denycreatebranch)
 allowdeletetag=$(git config --bool hooks.allowdeletetag)
+allowmodifytag=$(git config --bool hooks.allowmodifytag)
 
 # check for no description
 projectdesc=$(sed -e '1q' "$GIT_DIR/description")
-if [ -z "$projectdesc" -o "$projectdesc" = "Unnamed repository; edit this file to name it for gitweb." ]; then
+case "$projectdesc" in
+"Unnamed repository"* | "")
 	echo "*** Project description file hasn't been set" >&2
 	exit 1
-fi
+	;;
+esac
 
 # --- Check types
 # if $newrev is 0000...0000, it's a commit to delete a ref.
-if [ "$newrev" = "0000000000000000000000000000000000000000" ]; then
+zero="0000000000000000000000000000000000000000"
+if [ "$newrev" = "$zero" ]; then
 	newrev_type=delete
 else
 	newrev_type=$(git-cat-file -t $newrev)
@@ -75,9 +86,19 @@ case "$refname","$newrev_type" in
 		;;
 	refs/tags/*,tag)
 		# annotated tag
+		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
+		then
+			echo "*** Tag '$refname' already exists." >&2
+			echo "*** Modifying a tag is not allowed in this repository." >&2
+			exit 1
+		fi
 		;;
 	refs/heads/*,commit)
 		# branch
+		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
+			echo "*** Creating a branch is not allowed in this repository" >&2
+			exit 1
+		fi
 		;;
 	refs/heads/*,delete)
 		# delete branch

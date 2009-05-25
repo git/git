@@ -69,7 +69,7 @@ test_expect_success 'packed obs in alt ODB are repacked even when local repo is 
 	done
 '
 
-test_expect_failure 'packed obs in alt ODB are repacked when local repo has packs' '
+test_expect_success 'packed obs in alt ODB are repacked when local repo has packs' '
 	rm -f .git/objects/pack/* &&
 	echo new_content >> file1 &&
 	git add file1 &&

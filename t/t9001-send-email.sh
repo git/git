@@ -3,6 +3,11 @@
 test_description='git send-email'
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping git send-email tests, perl not available'
+	test_done
+fi
+
 PROG='git send-email'
 test_expect_success \
     'prepare reference tree' \
@@ -35,6 +40,47 @@ test_expect_success 'Extract patches' '
     patches=`git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1`
 '
 
+# Test no confirm early to ensure remaining tests will not hang
+test_no_confirm () {
+	rm -f no_confirm_okay
+	echo n | \
+		GIT_SEND_EMAIL_NOTTY=1 \
+		git send-email \
+		--from="Example <from@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$@ \
+		$patches > stdout &&
+		test_must_fail grep "Send this email" stdout &&
+		> no_confirm_okay
+}
+
+# Exit immediately to prevent hang if a no-confirm test fails
+check_no_confirm () {
+	test -f no_confirm_okay || {
+		say 'No confirm test failed; skipping remaining tests to prevent hanging'
+		test_done
+	}
+}
+
+test_expect_success 'No confirm with --suppress-cc' '
+	test_no_confirm --suppress-cc=sob
+'
+check_no_confirm
+
+test_expect_success 'No confirm with --confirm=never' '
+	test_no_confirm --confirm=never
+'
+check_no_confirm
+
+# leave sendemail.confirm set to never after this so that none of the
+# remaining tests prompt unintentionally.
+test_expect_success 'No confirm with sendemail.confirm=never' '
+	git config sendemail.confirm never &&
+	test_no_confirm --compose --subject=foo
+'
+check_no_confirm
+
 test_expect_success 'Send patches' '
      git send-email --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
 '
@@ -47,7 +93,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'Verify commandline' \
-    'diff commandline1 expected'
+    'test_cmp expected commandline1'
 
 cat >expected-show-all-headers <<\EOF
 0001-Second.patch
@@ -87,6 +133,19 @@ test_expect_success 'Show all headers' '
 		-e "s/^\(X-Mailer:\).*/\1 X-MAILER-STRING/" \
 		>actual-show-all-headers &&
 	test_cmp expected-show-all-headers actual-show-all-headers
+'
+
+test_expect_success 'Prompting works' '
+	clean_fake_sendmail &&
+	(echo "Example <from@example.com>"
+	 echo "to@example.com"
+	 echo ""
+	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches \
+		2>errors &&
+		grep "^From: Example <from@example.com>$" msgtxt1 &&
+		grep "^To: to@example.com$" msgtxt1
 '
 
 z8=zzzzzzzz
@@ -175,15 +234,13 @@ test_set_editor "$(pwd)/fake-editor"
 
 test_expect_success '--compose works' '
 	clean_fake_sendmail &&
-	echo y | \
-		GIT_SEND_EMAIL_NOTTY=1 \
-		git send-email \
-		--compose --subject foo \
-		--from="Example <nobody@example.com>" \
-		--to=nobody@example.com \
-		--smtp-server="$(pwd)/fake.sendmail" \
-		$patches \
-		2>errors
+	git send-email \
+	--compose --subject foo \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--smtp-server="$(pwd)/fake.sendmail" \
+	$patches \
+	2>errors
 '
 
 test_expect_success 'first message is compose text' '
@@ -375,15 +432,117 @@ test_expect_success '--suppress-cc=cc' '
 	test_suppression cc
 '
 
+test_confirm () {
+	echo y | \
+		GIT_SEND_EMAIL_NOTTY=1 \
+		git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$@ $patches > stdout &&
+	grep "Send this email" stdout
+}
+
+test_expect_success '--confirm=always' '
+	test_confirm --confirm=always --suppress-cc=all
+'
+
+test_expect_success '--confirm=auto' '
+	test_confirm --confirm=auto
+'
+
+test_expect_success '--confirm=cc' '
+	test_confirm --confirm=cc
+'
+
+test_expect_success '--confirm=compose' '
+	test_confirm --confirm=compose --compose
+'
+
+test_expect_success 'confirm by default (due to cc)' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config --unset sendemail.confirm &&
+	test_confirm
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'confirm by default (due to --compose)' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config --unset sendemail.confirm &&
+	test_confirm --suppress-cc=all --compose
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'confirm detects EOF (inform assumes y)' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config --unset sendemail.confirm &&
+	rm -fr outdir &&
+	git format-patch -2 -o outdir &&
+	GIT_SEND_EMAIL_NOTTY=1 \
+		git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			outdir/*.patch < /dev/null
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'confirm detects EOF (auto causes failure)' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config sendemail.confirm auto &&
+	GIT_SEND_EMAIL_NOTTY=1 &&
+	export GIT_SEND_EMAIL_NOTTY &&
+		test_must_fail git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			$patches < /dev/null
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'confirm doesnt loop forever' '
+	CONFIRM=$(git config --get sendemail.confirm) &&
+	git config sendemail.confirm auto &&
+	GIT_SEND_EMAIL_NOTTY=1 &&
+	export GIT_SEND_EMAIL_NOTTY &&
+		yes "bogus" | test_must_fail git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			$patches
+	ret="$?"
+	git config sendemail.confirm ${CONFIRM:-never}
+	test $ret = "0"
+'
+
+test_expect_success 'utf8 Cc is rfc2047 encoded' '
+	clean_fake_sendmail &&
+	rm -fr outdir &&
+	git format-patch -1 -o outdir --cc="àéìöú <utf8@example.com>" &&
+	git send-email \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--smtp-server="$(pwd)/fake.sendmail" \
+	outdir/*.patch &&
+	grep "^Cc:" msgtxt1 |
+	grep "=?utf-8?q?=C3=A0=C3=A9=C3=AC=C3=B6=C3=BA?= <utf8@example.com>"
+'
+
 test_expect_success '--compose adds MIME for utf8 body' '
 	clean_fake_sendmail &&
 	(echo "#!$SHELL_PATH" &&
 	 echo "echo utf8 body: àéìöú >>\"\$1\""
 	) >fake-editor-utf8 &&
 	chmod +x fake-editor-utf8 &&
-	echo y | \
 	  GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
-	  GIT_SEND_EMAIL_NOTTY=1 \
 	  git send-email \
 	  --compose --subject foo \
 	  --from="Example <nobody@example.com>" \
@@ -405,9 +564,7 @@ test_expect_success '--compose respects user mime type' '
 	 echo " echo utf8 body: àéìöú) >\"\$1\""
 	) >fake-editor-utf8-mime &&
 	chmod +x fake-editor-utf8-mime &&
-	echo y | \
 	  GIT_EDITOR="\"$(pwd)/fake-editor-utf8-mime\"" \
-	  GIT_SEND_EMAIL_NOTTY=1 \
 	  git send-email \
 	  --compose --subject foo \
 	  --from="Example <nobody@example.com>" \
@@ -421,9 +578,7 @@ test_expect_success '--compose respects user mime type' '
 
 test_expect_success '--compose adds MIME for utf8 subject' '
 	clean_fake_sendmail &&
-	echo y | \
 	  GIT_EDITOR="\"$(pwd)/fake-editor\"" \
-	  GIT_SEND_EMAIL_NOTTY=1 \
 	  git send-email \
 	  --compose --subject utf8-sübjëct \
 	  --from="Example <nobody@example.com>" \
@@ -445,7 +600,7 @@ test_expect_success 'detects ambiguous reference/file conflict' '
 test_expect_success 'feed two files' '
 	rm -fr outdir &&
 	git format-patch -2 -o outdir &&
-	GIT_SEND_EMAIL_NOTTY=1 git send-email \
+	git send-email \
 	--dry-run \
 	--from="Example <nobody@example.com>" \
 	--to=nobody@example.com \
@@ -461,7 +616,7 @@ test_expect_success 'in-reply-to but no threading' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--in-reply-to="<in-reply-id@example.com>" \
-		--no-thread \
+		--nothread \
 		$patches |
 	grep "In-Reply-To: <in-reply-id@example.com>"
 '
