@@ -893,8 +893,10 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	 * name is a proper prefix of our refname.
 	 */
 	if (missing &&
-            !is_refname_available(ref, NULL, get_packed_refs(), 0))
+	     !is_refname_available(ref, NULL, get_packed_refs(), 0)) {
+		last_errno = ENOTDIR;
 		goto error_return;
+	}
 
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
