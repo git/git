@@ -826,7 +826,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
 	NO_MEMMEM = YesPlease
-	THREADED_DELTA_SEARCH = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
@@ -855,8 +854,10 @@ ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	EXTLIBS += /mingw/lib/libz.a
 	NO_R_TO_GCC_LINKER = YesPlease
 	INTERNAL_QSORT = YesPlease
+	THREADED_DELTA_SEARCH = YesPlease
 else
 	NO_CURL = YesPlease
+	NO_PTHREADS = YesPlease
 endif
 endif
 ifneq (,$(findstring arm,$(uname_M)))
