@@ -2568,7 +2568,6 @@ proc savestuff {w} {
 	}
 	puts $f "}"
 	close $f
-	catch {file delete "~/.gitk"}
 	file rename -force "~/.gitk-new" "~/.gitk"
     }
     set stuffsaved 1
