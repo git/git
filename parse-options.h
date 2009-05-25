@@ -34,6 +34,7 @@ enum parse_opt_option_flags {
 	PARSE_OPT_HIDDEN  = 8,
 	PARSE_OPT_LASTARG_DEFAULT = 16,
 	PARSE_OPT_NODASH = 32,
+	PARSE_OPT_LITERAL_ARGHELP = 64,
 };
 
 struct option;
@@ -72,6 +73,9 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *   PARSE_OPT_LASTARG_DEFAULT: if no argument is given, the default value
  *                              is used.
  *   PARSE_OPT_NODASH: this option doesn't start with a dash.
+ *   PARSE_OPT_LITERAL_ARGHELP: says that argh shouldn't be enclosed in brackets
+ *				(i.e. '<argh>') in the help message.
+ *				Useful for options with multiple parameters.
  *
  * `callback`::
  *   pointer to the callback to use for OPTION_CALLBACK.
