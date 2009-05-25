@@ -9,10 +9,12 @@ git-submodule - Initialize, update or inspect submodules
 SYNOPSIS
 --------
 [verse]
-'git submodule' [--quiet] add [-b branch] [--] <repository> <path>
+'git submodule' [--quiet] add [-b branch]
+	      [--reference <repository>] [--] <repository> <path>
 'git submodule' [--quiet] status [--cached] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
-'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--] [<path>...]
+'git submodule' [--quiet] update [--init] [-N|--no-fetch]
+	      [--reference <repository>] [--] [<path>...]
 'git submodule' [--quiet] summary [--summary-limit <n>] [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach <command>
 'git submodule' [--quiet] sync [--] [<path>...]
@@ -176,6 +178,14 @@ OPTIONS
 --no-fetch::
 	This option is only valid for the update command.
 	Don't fetch new objects from the remote site.
+
+--reference <repository>::
+	This option is only valid for add and update commands.  These
+	commands sometimes need to clone a remote repository. In this case,
+	this option will be passed to the linkgit:git-clone[1] command.
++
+*NOTE*: Do *not* use this option unless you have read the note
+for linkgit:git-clone[1]'s --reference and --shared options carefully.
 
 <path>...::
 	Paths to submodule(s). When specified this will restrict the command

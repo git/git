@@ -13,6 +13,9 @@
 # hooks.allowdeletetag
 #   This boolean sets whether deleting tags will be allowed in the
 #   repository.  By default they won't be.
+# hooks.allowmodifytag
+#   This boolean sets whether a tag may be modified after creation. By default
+#   it won't be.
 # hooks.allowdeletebranch
 #   This boolean sets whether deleting branches will be allowed in the
 #   repository.  By default they won't be.
@@ -44,6 +47,7 @@ allowunannotated=$(git config --bool hooks.allowunannotated)
 allowdeletebranch=$(git config --bool hooks.allowdeletebranch)
 denycreatebranch=$(git config --bool hooks.denycreatebranch)
 allowdeletetag=$(git config --bool hooks.allowdeletetag)
+allowmodifytag=$(git config --bool hooks.allowmodifytag)
 
 # check for no description
 projectdesc=$(sed -e '1q' "$GIT_DIR/description")
@@ -82,6 +86,12 @@ case "$refname","$newrev_type" in
 		;;
 	refs/tags/*,tag)
 		# annotated tag
+		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
+		then
+			echo "*** Tag '$refname' already exists." >&2
+			echo "*** Modifying a tag is not allowed in this repository." >&2
+			exit 1
+		fi
 		;;
 	refs/heads/*,commit)
 		# branch

@@ -15,6 +15,7 @@ require_work_tree
 command=
 branch=
 quiet=
+reference=
 cached=
 nofetch=
 
@@ -91,6 +92,7 @@ module_clone()
 {
 	path=$1
 	url=$2
+	reference="$3"
 
 	# If there already is a directory at the submodule path,
 	# expect it to be empty (since that is the default checkout
@@ -106,7 +108,12 @@ module_clone()
 	test -e "$path" &&
 	die "A file already exist at path '$path'"
 
-	git-clone -n "$url" "$path" ||
+	if test -n "$reference"
+	then
+		git-clone "$reference" -n "$url" "$path"
+	else
+		git-clone -n "$url" "$path"
+	fi ||
 	die "Clone of '$url' into submodule path '$path' failed"
 }
 
@@ -130,6 +137,15 @@ cmd_add()
 			;;
 		-q|--quiet)
 			quiet=1
+			;;
+		--reference)
+			case "$2" in '') usage ;; esac
+			reference="--reference=$2"
+			shift
+			;;
+		--reference=*)
+			reference="$1"
+			shift
 			;;
 		--)
 			shift
@@ -203,7 +219,7 @@ cmd_add()
 		git config submodule."$path".url "$url"
 	else
 
-		module_clone "$path" "$realrepo" || exit
+		module_clone "$path" "$realrepo" "$reference" || exit
 		(
 			unset GIT_DIR
 			cd "$path" &&
@@ -314,12 +330,21 @@ cmd_update()
 			quiet=1
 			;;
 		-i|--init)
+			init=1
 			shift
-			cmd_init "$@" || return
 			;;
 		-N|--no-fetch)
 			shift
 			nofetch=1
+			;;
+		--reference)
+			case "$2" in '') usage ;; esac
+			reference="--reference=$2"
+			shift 2
+			;;
+		--reference=*)
+			reference="$1"
+			shift
 			;;
 		--)
 			shift
@@ -333,6 +358,11 @@ cmd_update()
 			;;
 		esac
 	done
+
+	if test -n "$init"
+	then
+		cmd_init "--" "$@" || return
+	fi
 
 	module_list "$@" |
 	while read mode sha1 stage path
@@ -351,7 +381,7 @@ cmd_update()
 
 		if ! test -d "$path"/.git -o -f "$path"/.git
 		then
-			module_clone "$path" "$url" || exit
+			module_clone "$path" "$url" "$reference"|| exit
 			subsha1=
 		else
 			subsha1=$(unset GIT_DIR; cd "$path" &&

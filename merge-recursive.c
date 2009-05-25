@@ -933,11 +933,12 @@ static int process_renames(struct merge_options *o,
 				       ren1_src, ren1_dst, branch1,
 				       branch2);
 				update_file(o, 0, ren1->pair->two->sha1, ren1->pair->two->mode, ren1_dst);
-				update_stages(ren1_dst, NULL,
-						branch1 == o->branch1 ?
-						ren1->pair->two : NULL,
-						branch1 == o->branch1 ?
-						NULL : ren1->pair->two, 1);
+				if (!o->call_depth)
+					update_stages(ren1_dst, NULL,
+							branch1 == o->branch1 ?
+							ren1->pair->two : NULL,
+							branch1 == o->branch1 ?
+							NULL : ren1->pair->two, 1);
 			} else if (!sha_eq(dst_other.sha1, null_sha1)) {
 				const char *new_path;
 				clean_merge = 0;

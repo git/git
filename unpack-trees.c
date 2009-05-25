@@ -61,7 +61,7 @@ static void unlink_entry(struct cache_entry *ce)
 {
 	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
 		return;
-	if (unlink(ce->name))
+	if (unlink_or_warn(ce->name))
 		return;
 	schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }

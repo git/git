@@ -6,8 +6,10 @@ enum parse_opt_type {
 	OPTION_END,
 	OPTION_ARGUMENT,
 	OPTION_GROUP,
+	OPTION_NUMBER,
 	/* options with no arguments */
 	OPTION_BIT,
+	OPTION_NEGBIT,
 	OPTION_BOOLEAN, /* _INCR would have been a better name */
 	OPTION_SET_INT,
 	OPTION_SET_PTR,
@@ -31,6 +33,7 @@ enum parse_opt_option_flags {
 	PARSE_OPT_NONEG   = 4,
 	PARSE_OPT_HIDDEN  = 8,
 	PARSE_OPT_LASTARG_DEFAULT = 16,
+	PARSE_OPT_NODASH = 32,
 };
 
 struct option;
@@ -64,8 +67,11 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *   PARSE_OPT_OPTARG: says that the argument is optional (not for BOOLEANs)
  *   PARSE_OPT_NOARG: says that this option takes no argument, for CALLBACKs
  *   PARSE_OPT_NONEG: says that this option cannot be negated
- *   PARSE_OPT_HIDDEN this option is skipped in the default usage, showed in
- *                    the long one.
+ *   PARSE_OPT_HIDDEN: this option is skipped in the default usage, and
+ *                     shown only in the full usage.
+ *   PARSE_OPT_LASTARG_DEFAULT: if no argument is given, the default value
+ *                              is used.
+ *   PARSE_OPT_NODASH: this option doesn't start with a dash.
  *
  * `callback`::
  *   pointer to the callback to use for OPTION_CALLBACK.
@@ -93,6 +99,7 @@ struct option {
 #define OPT_ARGUMENT(l, h)          { OPTION_ARGUMENT, 0, (l), NULL, NULL, (h) }
 #define OPT_GROUP(h)                { OPTION_GROUP, 0, NULL, NULL, NULL, (h) }
 #define OPT_BIT(s, l, v, h, b)      { OPTION_BIT, (s), (l), (v), NULL, (h), 0, NULL, (b) }
+#define OPT_NEGBIT(s, l, v, h, b)   { OPTION_NEGBIT, (s), (l), (v), NULL, (h), 0, NULL, (b) }
 #define OPT_BOOLEAN(s, l, v, h)     { OPTION_BOOLEAN, (s), (l), (v), NULL, (h) }
 #define OPT_SET_INT(s, l, v, h, i)  { OPTION_SET_INT, (s), (l), (v), NULL, (h), 0, NULL, (i) }
 #define OPT_SET_PTR(s, l, v, h, p)  { OPTION_SET_PTR, (s), (l), (v), NULL, (h), 0, NULL, (p) }
@@ -103,6 +110,9 @@ struct option {
 	  parse_opt_approxidate_cb }
 #define OPT_CALLBACK(s, l, v, a, h, f) \
 	{ OPTION_CALLBACK, (s), (l), (v), (a), (h), 0, (f) }
+#define OPT_NUMBER_CALLBACK(v, h, f) \
+	{ OPTION_NUMBER, 0, NULL, (v), NULL, (h), \
+	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, (f) }
 
 /* parse_options() will filter out the processed options and leave the
  * non-option arguments in argv[].

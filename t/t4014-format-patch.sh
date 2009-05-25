@@ -505,4 +505,15 @@ test_expect_success 'format-patch from a subdirectory (3)' '
 	test -f "$basename"
 '
 
+test_expect_success 'format-patch --in-reply-to' '
+	git format-patch -1 --stdout --in-reply-to "baz@foo.bar" > patch8 &&
+	grep "^In-Reply-To: <baz@foo.bar>" patch8 &&
+	grep "^References: <baz@foo.bar>" patch8
+'
+
+test_expect_success 'format-patch --signoff' '
+	git format-patch -1 --signoff --stdout |
+	grep "^Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+'
+
 test_done

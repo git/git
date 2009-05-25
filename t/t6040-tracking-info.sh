@@ -74,5 +74,19 @@ test_expect_success 'status' '
 	grep "have 1 and 1 different" actual
 '
 
+test_expect_success 'status when tracking lightweight tags' '
+	git checkout master &&
+	git tag light &&
+	git branch --track lighttrack light >actual &&
+	grep "set up to track" actual &&
+	git checkout lighttrack
+'
 
+test_expect_success 'status when tracking annotated tags' '
+	git checkout master &&
+	git tag -m heavy heavy &&
+	git branch --track heavytrack heavy >actual &&
+	grep "set up to track" actual &&
+	git checkout heavytrack
+'
 test_done

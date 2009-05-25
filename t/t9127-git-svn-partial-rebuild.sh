@@ -14,21 +14,21 @@ test_expect_success 'initialize svnrepo' '
 		cd trunk &&
 		echo foo > foo &&
 		cd .. &&
-		svn import -m "import for git-svn" . "$svnrepo" >/dev/null &&
-		svn copy "$svnrepo"/trunk "$svnrepo"/branches/a \
+		svn_cmd import -m "import for git-svn" . "$svnrepo" >/dev/null &&
+		svn_cmd copy "$svnrepo"/trunk "$svnrepo"/branches/a \
 			-m "created branch a" &&
 		cd .. &&
 		rm -rf import &&
-		svn co "$svnrepo"/trunk trunk &&
+		svn_cmd co "$svnrepo"/trunk trunk &&
 		cd trunk &&
 		echo bar >> foo &&
-		svn ci -m "updated trunk" &&
+		svn_cmd ci -m "updated trunk" &&
 		cd .. &&
-		svn co "$svnrepo"/branches/a a &&
+		svn_cmd co "$svnrepo"/branches/a a &&
 		cd a &&
 		echo baz >> a &&
-		svn add a &&
-		svn ci -m "updated a" &&
+		svn_cmd add a &&
+		svn_cmd ci -m "updated a" &&
 		cd .. &&
 		git svn init --stdlayout "$svnrepo"
 	)

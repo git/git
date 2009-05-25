@@ -13,8 +13,8 @@ compare_with () {
 	'')
 		test_cmp "$2" current ;;
 	?*)
-		iconv -f "$3" -t utf8 >current.utf8 <current &&
-		iconv -f "$3" -t utf8 >expect.utf8 <"$2" &&
+		iconv -f "$3" -t UTF-8 >current.utf8 <current &&
+		iconv -f "$3" -t UTF-8 >expect.utf8 <"$2" &&
 		test_cmp expect.utf8 current.utf8
 		;;
 	esac

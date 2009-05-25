@@ -525,8 +525,8 @@ static const char *parse_interpreter(const char *cmd)
 	if (buf[0] != '#' || buf[1] != '!')
 		return NULL;
 	buf[n] = '\0';
-	p = strchr(buf, '\n');
-	if (!p)
+	p = buf + strcspn(buf, "\r\n");
+	if (!*p)
 		return NULL;
 
 	*p = '\0';
@@ -1155,4 +1155,19 @@ int link(const char *oldpath, const char *newpath)
 		return -1;
 	}
 	return 0;
+}
+
+char *getpass(const char *prompt)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	fputs(prompt, stderr);
+	for (;;) {
+		char c = _getch();
+		if (c == '\r' || c == '\n')
+			break;
+		strbuf_addch(&buf, c);
+	}
+	fputs("\n", stderr);
+	return strbuf_detach(&buf, NULL);
 }

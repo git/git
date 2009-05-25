@@ -14,13 +14,13 @@ test_expect_success 'initialize svnrepo' '
 		cd trunk &&
 		echo foo > foo &&
 		cd .. &&
-		svn import -m "import for git-svn" . "$svnrepo" >/dev/null &&
+		svn_cmd import -m "import for git-svn" . "$svnrepo" >/dev/null &&
 		cd .. &&
 		rm -rf import &&
-		svn co "$svnrepo"/trunk trunk &&
+		svn_cmd co "$svnrepo"/trunk trunk &&
 		cd trunk &&
 		echo bar >> foo &&
-		svn ci -m "updated trunk" &&
+		svn_cmd ci -m "updated trunk" &&
 		cd .. &&
 		rm -rf trunk
 	)
@@ -57,14 +57,14 @@ test_expect_success 'git svn branch tests' '
 '
 
 test_expect_success 'branch uses correct svn-remote' '
-	(svn co "$svnrepo" svn &&
+	(svn_cmd co "$svnrepo" svn &&
 	cd svn &&
 	mkdir mirror &&
-	svn add mirror &&
-	svn copy trunk mirror/ &&
-	svn copy tags mirror/ &&
-	svn copy branches mirror/ &&
-	svn ci -m "made mirror" ) &&
+	svn_cmd add mirror &&
+	svn_cmd copy trunk mirror/ &&
+	svn_cmd copy tags mirror/ &&
+	svn_cmd copy branches mirror/ &&
+	svn_cmd ci -m "made mirror" ) &&
 	rm -rf svn &&
 	git svn init -s -R mirror --prefix=mirror/ "$svnrepo"/mirror &&
 	git svn fetch -R mirror &&

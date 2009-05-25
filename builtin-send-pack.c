@@ -43,12 +43,16 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 		"--stdout",
 		NULL,
 		NULL,
+		NULL,
 	};
 	struct child_process po;
 	int i;
 
+	i = 4;
 	if (args->use_thin_pack)
-		argv[4] = "--thin";
+		argv[i++] = "--thin";
+	if (args->use_ofs_delta)
+		argv[i++] = "--delta-base-offset";
 	memset(&po, 0, sizeof(po));
 	po.argv = argv;
 	po.in = -1;
@@ -174,9 +178,9 @@ static void print_ref_status(char flag, const char *summary, struct ref *to, str
 {
 	fprintf(stderr, " %c %-*s ", flag, SUMMARY_WIDTH, summary);
 	if (from)
-		fprintf(stderr, "%s -> %s", prettify_ref(from), prettify_ref(to));
+		fprintf(stderr, "%s -> %s", prettify_refname(from->name), prettify_refname(to->name));
 	else
-		fputs(prettify_ref(to), stderr);
+		fputs(prettify_refname(to->name), stderr);
 	if (msg) {
 		fputs(" (", stderr);
 		fputs(msg, stderr);
@@ -315,6 +319,8 @@ int send_pack(struct send_pack_args *args,
 		ask_for_status_report = 1;
 	if (server_supports("delete-refs"))
 		allow_deleting_refs = 1;
+	if (server_supports("ofs-delta"))
+		args->use_ofs_delta = 1;
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"

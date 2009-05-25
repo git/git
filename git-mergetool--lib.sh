@@ -228,8 +228,8 @@ run_merge_tool () {
 			fi
 			check_unchanged
 		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE" \
-				--default --mode=merge2 --to="$MERGED"
+			"$merge_tool_path" --default --mode=diff2 \
+				"$LOCAL" "$REMOTE"
 		fi
 		;;
 	emerge)
@@ -248,7 +248,7 @@ run_merge_tool () {
 			status=$?
 		else
 			"$merge_tool_path" -f emerge-files-command \
-				"$LOCAL" "$REMOTE" "$(basename "$MERGED")"
+				"$LOCAL" "$REMOTE"
 		fi
 		;;
 	tortoisemerge)

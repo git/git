@@ -50,6 +50,7 @@ static int get_value(struct parse_opt_ctx_t *p,
 			/* FALLTHROUGH */
 		case OPTION_BOOLEAN:
 		case OPTION_BIT:
+		case OPTION_NEGBIT:
 		case OPTION_SET_INT:
 		case OPTION_SET_PTR:
 			return opterror(opt, "takes no value", flags);
@@ -64,6 +65,13 @@ static int get_value(struct parse_opt_ctx_t *p,
 			*(int *)opt->value &= ~opt->defval;
 		else
 			*(int *)opt->value |= opt->defval;
+		return 0;
+
+	case OPTION_NEGBIT:
+		if (unset)
+			*(int *)opt->value |= opt->defval;
+		else
+			*(int *)opt->value &= ~opt->defval;
 		return 0;
 
 	case OPTION_BOOLEAN:
@@ -121,11 +129,33 @@ static int get_value(struct parse_opt_ctx_t *p,
 
 static int parse_short_opt(struct parse_opt_ctx_t *p, const struct option *options)
 {
+	const struct option *numopt = NULL;
+
 	for (; options->type != OPTION_END; options++) {
 		if (options->short_name == *p->opt) {
 			p->opt = p->opt[1] ? p->opt + 1 : NULL;
 			return get_value(p, options, OPT_SHORT);
 		}
+
+		/*
+		 * Handle the numerical option later, explicit one-digit
+		 * options take precedence over it.
+		 */
+		if (options->type == OPTION_NUMBER)
+			numopt = options;
+	}
+	if (numopt && isdigit(*p->opt)) {
+		size_t len = 1;
+		char *arg;
+		int rc;
+
+		while (isdigit(p->opt[len]))
+			len++;
+		arg = xmemdupz(p->opt, len);
+		p->opt = p->opt[len] ? p->opt + len : NULL;
+		rc = (*numopt->callback)(numopt, arg, 0) ? (-1) : 0;
+		free(arg);
+		return rc;
 	}
 	return -2;
 }
@@ -215,6 +245,25 @@ is_abbreviated:
 	return -2;
 }
 
+static int parse_nodash_opt(struct parse_opt_ctx_t *p, const char *arg,
+			    const struct option *options)
+{
+	for (; options->type != OPTION_END; options++) {
+		if (!(options->flags & PARSE_OPT_NODASH))
+			continue;
+		if ((options->flags & PARSE_OPT_OPTARG) ||
+		    !(options->flags & PARSE_OPT_NOARG))
+			die("BUG: dashless options don't support arguments");
+		if (!(options->flags & PARSE_OPT_NONEG))
+			die("BUG: dashless options don't support negation");
+		if (options->long_name)
+			die("BUG: dashless options can't be long");
+		if (options->short_name == arg[0] && arg[1] == '\0')
+			return get_value(p, options, OPT_SHORT);
+	}
+	return -2;
+}
+
 static void check_typos(const char *arg, const struct option *options)
 {
 	if (strlen(arg) < 3)
@@ -265,6 +314,8 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		const char *arg = ctx->argv[0];
 
 		if (*arg != '-' || !arg[1]) {
+			if (parse_nodash_opt(ctx, arg, options) == 0)
+				continue;
 			if (ctx->flags & PARSE_OPT_STOP_AT_NON_OPTION)
 				break;
 			ctx->out[ctx->cpidx++] = ctx->argv[0];
@@ -397,12 +448,18 @@ int usage_with_options_internal(const char * const *usagestr,
 			continue;
 
 		pos = fprintf(stderr, "    ");
-		if (opts->short_name)
-			pos += fprintf(stderr, "-%c", opts->short_name);
+		if (opts->short_name) {
+			if (opts->flags & PARSE_OPT_NODASH)
+				pos += fprintf(stderr, "%c", opts->short_name);
+			else
+				pos += fprintf(stderr, "-%c", opts->short_name);
+		}
 		if (opts->long_name && opts->short_name)
 			pos += fprintf(stderr, ", ");
 		if (opts->long_name)
 			pos += fprintf(stderr, "--%s", opts->long_name);
+		if (opts->type == OPTION_NUMBER)
+			pos += fprintf(stderr, "-NUM");
 
 		switch (opts->type) {
 		case OPTION_ARGUMENT:
@@ -439,7 +496,7 @@ int usage_with_options_internal(const char * const *usagestr,
 					pos += fprintf(stderr, " ...");
 			}
 			break;
-		default: /* OPTION_{BIT,BOOLEAN,SET_INT,SET_PTR} */
+		default: /* OPTION_{BIT,BOOLEAN,NUMBER,SET_INT,SET_PTR} */
 			break;
 		}
 
