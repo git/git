@@ -14,17 +14,12 @@ test_expect_success 'setup svnrepo' '
 	start_httpd
 '
 
-if test "$SVN_HTTPD_PORT" = ""
-then
-	test_expect_failure 'test clone with percent escapes - needs SVN_HTTPD_PORT set' 'false'
-else
-	test_expect_success 'test clone with percent escapes' '
-		git svn clone "$svnrepo/pr%20ject" clone &&
-		cd clone &&
-			git rev-parse refs/${remotes_git_svn} &&
-		cd ..
-	'
-fi
+test_expect_success 'test clone with percent escapes' '
+	git svn clone "$svnrepo/pr%20ject" clone &&
+	cd clone &&
+		git rev-parse refs/${remotes_git_svn} &&
+	cd ..
+'
 
 stop_httpd
 
