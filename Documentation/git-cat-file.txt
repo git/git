@@ -9,8 +9,8 @@ git-cat-file - Provide content or type and size information for repository objec
 SYNOPSIS
 --------
 [verse]
-'git cat-file' [-t | -s | -e | -p | <type>] <object>
-'git cat-file' [--batch | --batch-check] < <list-of-objects>
+'git cat-file' (-t | -s | -e | -p | <type>) <object>
+'git cat-file' (--batch | --batch-check) < <list-of-objects>
 
 DESCRIPTION
 -----------

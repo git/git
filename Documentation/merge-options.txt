@@ -39,7 +39,8 @@
 
 --squash::
 	Produce the working tree and index state as if a real
-	merge happened, but do not actually make a commit or
+	merge happened (except for the merge information),
+	but do not actually make a commit or
 	move the `HEAD`, nor record `$GIT_DIR/MERGE_HEAD` to
 	cause the next `git commit` command to create a merge
 	commit.  This allows you to create a single commit on

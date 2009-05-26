@@ -167,6 +167,9 @@ static struct ref *get_ref_map(struct transport *transport,
 	return ref_map;
 }
 
+#define STORE_REF_ERROR_OTHER 1
+#define STORE_REF_ERROR_DF_CONFLICT 2
+
 static int s_update_ref(const char *action,
 			struct ref *ref,
 			int check_old)
@@ -181,9 +184,11 @@ static int s_update_ref(const char *action,
 	lock = lock_any_ref_for_update(ref->name,
 				       check_old ? ref->old_sha1 : NULL, 0);
 	if (!lock)
-		return 2;
+		return errno == ENOTDIR ? STORE_REF_ERROR_DF_CONFLICT :
+					  STORE_REF_ERROR_OTHER;
 	if (write_ref_sha1(lock, ref->new_sha1, msg) < 0)
-		return 2;
+		return errno == ENOTDIR ? STORE_REF_ERROR_DF_CONFLICT :
+					  STORE_REF_ERROR_OTHER;
 	return 0;
 }
 
@@ -386,7 +391,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	}
 	free(url);
 	fclose(fp);
-	if (rc & 2)
+	if (rc & STORE_REF_ERROR_DF_CONFLICT)
 		error("some local refs could not be updated; try running\n"
 		      " 'git remote prune %s' to remove any old, conflicting "
 		      "branches", remote_name);
