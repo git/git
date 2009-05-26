@@ -755,6 +755,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int cover_letter = 0;
 	int boundary_count = 0;
 	int no_binary_diff = 0;
+	int numbered_cmdline_opt = 0;
 	struct commit *origin = NULL, *head = NULL;
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
@@ -786,8 +787,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (!strcmp(argv[i], "--stdout"))
 			use_stdout = 1;
 		else if (!strcmp(argv[i], "-n") ||
-				!strcmp(argv[i], "--numbered"))
+				!strcmp(argv[i], "--numbered")) {
 			numbered = 1;
+			numbered_cmdline_opt = 1;
+		}
 		else if (!strcmp(argv[i], "-N") ||
 				!strcmp(argv[i], "--no-numbered")) {
 			numbered = 0;
@@ -918,6 +921,15 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (start_number < 0)
 		start_number = 1;
+
+	/*
+	 * If numbered is set solely due to format.numbered in config,
+	 * and it would conflict with --keep-subject (-k) from the
+	 * command line, reset "numbered".
+	 */
+	if (numbered && keep_subject && !numbered_cmdline_opt)
+		numbered = 0;
+
 	if (numbered && keep_subject)
 		die ("-n and -k are mutually exclusive.");
 	if (keep_subject && subject_prefix)
