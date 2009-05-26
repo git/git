@@ -27,7 +27,7 @@ static int prune_tmp_object(const char *path, const char *filename)
 	}
 	printf("Removing stale temporary file %s\n", fullpath);
 	if (!show_only)
-		unlink(fullpath);
+		unlink_or_warn(fullpath);
 	return 0;
 }
 
@@ -47,7 +47,7 @@ static int prune_object(char *path, const char *filename, const unsigned char *s
 		       (type > 0) ? typename(type) : "unknown");
 	}
 	if (!show_only)
-		unlink(fullpath);
+		unlink_or_warn(fullpath);
 	return 0;
 }
 
