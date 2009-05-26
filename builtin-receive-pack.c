@@ -27,10 +27,9 @@ static int receive_unpack_limit = -1;
 static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
 static int report_status;
+static int prefer_ofs_delta = 1;
 static const char *head_name;
-
-static char capabilities[] = " report-status delete-refs ";
-static int capabilities_sent;
+static char *capabilities_to_send;
 
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
@@ -84,24 +83,29 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (strcmp(var, "repack.usedeltabaseoffset") == 0) {
+		prefer_ofs_delta = git_config_bool(var, value);
+		return 0;
+	}
+
 	return git_default_config(var, value, cb);
 }
 
 static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
-	if (capabilities_sent)
+	if (!capabilities_to_send)
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
 	else
 		packet_write(1, "%s %s%c%s\n",
-			     sha1_to_hex(sha1), path, 0, capabilities);
-	capabilities_sent = 1;
+			     sha1_to_hex(sha1), path, 0, capabilities_to_send);
+	capabilities_to_send = NULL;
 	return 0;
 }
 
 static void write_head_info(void)
 {
 	for_each_ref(show_ref, NULL);
-	if (!capabilities_sent)
+	if (capabilities_to_send)
 		show_ref("capabilities^{}", null_sha1, 0, NULL);
 
 }
@@ -686,6 +690,10 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		unpack_limit = transfer_unpack_limit;
 	else if (0 <= receive_unpack_limit)
 		unpack_limit = receive_unpack_limit;
+
+	capabilities_to_send = (prefer_ofs_delta) ?
+		" report-status delete-refs ofs-delta " :
+		" report-status delete-refs ";
 
 	add_alternate_refs();
 	write_head_info();
