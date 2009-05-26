@@ -214,7 +214,7 @@ static int get_stat_data(struct cache_entry *ce,
 	const unsigned char *sha1 = ce->sha1;
 	unsigned int mode = ce->ce_mode;
 
-	if (!cached) {
+	if (!cached && !ce_uptodate(ce)) {
 		int changed;
 		struct stat st;
 		changed = check_removed(ce, &st);
