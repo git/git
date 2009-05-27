@@ -134,6 +134,12 @@ It does not apply to blobs recorded in its index."
     unset GITHEAD_$his_tree
 }
 
+clean_abort () {
+	test $# = 0 || echo >&2 "$@"
+	rm -fr "$dotest"
+	exit 1
+}
+
 patch_format=
 
 check_patch_format () {
@@ -180,22 +186,19 @@ check_patch_format () {
 			esac
 			;;
 		esac
-	} < "$1"
+	} < "$1" || clean_abort
 }
 
 split_patches () {
 	case "$patch_format" in
 	mbox)
-		git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
-			rm -fr "$dotest"
-			exit 1
-		}
+		git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||
+		clean_abort
 		;;
 	stgit-series)
 		if test $# -ne 1
 		then
-			echo "Only one StGIT patch series can be applied at once"
-			exit 1
+			clean_abort "Only one StGIT patch series can be applied at once"
 		fi
 		series_dir=`dirname "$1"`
 		series_file="$1"
@@ -210,7 +213,7 @@ split_patches () {
 			shift
 			# remove the arg coming from the first-line comment
 			shift
-		} < "$series_file"
+		} < "$series_file" || clean_abort
 		# set the patch format appropriately
 		patch_format=stgit
 		# now handle the actual StGIT patches
@@ -239,18 +242,14 @@ split_patches () {
 					print "Subject: ", $_ ;
 					$subject = 1;
 				}
-			' < "$stgit" > "$dotest/$msgnum" || {
-				echo "Failed to import $patch_format patch $stgit"
-				exit 1
-			}
+			' < "$stgit" > "$dotest/$msgnum" || clean_abort
 		done
 		echo "$this" > "$dotest/last"
 		this=
 		msgnum=
 		;;
 	*)
-		echo "Patch format $patch_format is not supported."
-		exit 1
+		clean_abort "Patch format $patch_format is not supported."
 		;;
 	esac
 }
