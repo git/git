@@ -299,11 +299,11 @@ static int get_push_ref_states(const struct ref *remote_refs,
 		return 0;
 
 	local_refs = get_local_heads();
-	ref = push_map = copy_ref_list(remote_refs);
-	while (ref->next)
-		ref = ref->next;
-	push_tail = &ref->next;
+	push_map = copy_ref_list(remote_refs);
 
+	push_tail = &push_map;
+	while (*push_tail)
+		push_tail = &((*push_tail)->next);
 	match_refs(local_refs, push_map, &push_tail, remote->push_refspec_nr,
 		   remote->push_refspec, MATCH_REFS_NONE);
 
