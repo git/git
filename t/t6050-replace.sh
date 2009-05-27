@@ -127,6 +127,74 @@ test_expect_success '"git replace" replacing' '
      test "$HASH2" = "$(git replace)"
 '
 
+# This creates a side branch where the bug in H2
+# does not appear because P2 is created by applying
+# H2 and squashing H5 into it.
+# P3, P4 and P6 are created by cherry-picking H3, H4
+# and H6 respectively.
+#
+# At this point, we should have the following:
+#
+#    P2--P3--P4--P6
+#   /
+# H1-H2-H3-H4-H5-H6-H7
+#
+# Then we replace H6 with P6.
+#
+test_expect_success 'create parallel branch without the bug' '
+     git replace -d $HASH2 &&
+     git show $HASH2 | grep "A U Thor" &&
+     git checkout $HASH1 &&
+     git cherry-pick $HASH2 &&
+     git show $HASH5 | git apply &&
+     git commit --amend -m "hello: 4 more lines WITHOUT the bug" hello &&
+     PARA2=$(git rev-parse --verify HEAD) &&
+     git cherry-pick $HASH3 &&
+     PARA3=$(git rev-parse --verify HEAD) &&
+     git cherry-pick $HASH4 &&
+     PARA4=$(git rev-parse --verify HEAD) &&
+     git cherry-pick $HASH6 &&
+     PARA6=$(git rev-parse --verify HEAD) &&
+     git replace $HASH6 $PARA6 &&
+     git checkout master &&
+     cur=$(git rev-parse --verify HEAD) &&
+     test "$cur" = "$HASH7" &&
+     git log --pretty=oneline | grep $PARA2 &&
+     git remote add cloned ./clone_dir
+'
+
+test_expect_success 'push to cloned repo' '
+     git push cloned $HASH6^:refs/heads/parallel &&
+     cd clone_dir &&
+     git checkout parallel &&
+     git log --pretty=oneline | grep $PARA2 &&
+     cd ..
+'
+
+test_expect_success 'push branch with replacement' '
+     git cat-file commit $PARA3 | grep "author A U Thor" &&
+     S=$(git cat-file commit $PARA3 | sed -e "s/A U/O/" | git hash-object -t commit --stdin -w) &&
+     git cat-file commit $S | grep "author O Thor" &&
+     git replace $PARA3 $S &&
+     git show $HASH6~2 | grep "O Thor" &&
+     git show $PARA3 | grep "O Thor" &&
+     git push cloned $HASH6^:refs/heads/parallel2 &&
+     cd clone_dir &&
+     git checkout parallel2 &&
+     git log --pretty=oneline | grep $PARA3 &&
+     git show $PARA3 | grep "A U Thor" &&
+     cd ..
+'
+
+test_expect_success 'fetch branch with replacement' '
+     git branch tofetch $HASH6 &&
+     cd clone_dir &&
+     git fetch origin refs/heads/tofetch:refs/heads/parallel3
+     git log --pretty=oneline parallel3 | grep $PARA3
+     git show $PARA3 | grep "A U Thor"
+     cd ..
+'
+
 #
 #
 test_done
