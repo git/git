@@ -142,7 +142,45 @@ check_patch_format () {
 	then
 		return 0
 	fi
-	patch_format=mbox
+
+	# we default to mbox format if input is from stdin and for
+	# directories
+	if test $# = 0 || test "x$1" = "x-" || test -d "$1"
+	then
+		patch_format=mbox
+		return 0
+	fi
+
+	# otherwise, check the first few lines of the first patch to try
+	# to detect its format
+	{
+		read l1
+		read l2
+		read l3
+		case "$l1" in
+		"From "* | "From: "*)
+			patch_format=mbox
+			;;
+		'# This series applies on GIT commit'*)
+			patch_format=stgit-series
+			;;
+		"# HG changeset patch")
+			patch_format=hg
+			;;
+		*)
+			# if the second line is empty and the third is
+			# a From, Author or Date entry, this is very
+			# likely an StGIT patch
+			case "$l2,$l3" in
+			,"From: "* | ,"Author: "* | ,"Date: "*)
+				patch_format=stgit
+				;;
+			*)
+				;;
+			esac
+			;;
+		esac
+	} < "$1"
 }
 
 split_patches () {
