@@ -771,7 +771,7 @@ static int check_ancestors(const char *prefix)
 	/* Clean up objects used, as they will be reused. */
 	for (i = 0; i < pending_copy.nr; i++) {
 		struct object *o = pending_copy.objects[i].item;
-		unparse_commit((struct commit *)o);
+		clear_commit_marks((struct commit *)o, ALL_REV_FLAGS);
 	}
 
 	return res;
