@@ -191,6 +191,63 @@ split_patches () {
 			exit 1
 		}
 		;;
+	stgit-series)
+		if test $# -ne 1
+		then
+			echo "Only one StGIT patch series can be applied at once"
+			exit 1
+		fi
+		series_dir=`dirname "$1"`
+		series_file="$1"
+		shift
+		{
+			set x
+			while read filename
+			do
+				set "$@" "$series_dir/$filename"
+			done
+			# remove the safety x
+			shift
+			# remove the arg coming from the first-line comment
+			shift
+		} < "$series_file"
+		# set the patch format appropriately
+		patch_format=stgit
+		# now handle the actual StGIT patches
+		split_patches "$@"
+		;;
+	stgit)
+		this=0
+		for stgit in "$@"
+		do
+			this=`expr "$this" + 1`
+			msgnum=`printf "%0${prec}d" $this`
+			# Perl version of StGIT parse_patch. The first nonemptyline
+			# not starting with Author, From or Date is the
+			# subject, and the body starts with the next nonempty
+			# line not starting with Author, From or Date
+			perl -ne 'BEGIN { $subject = 0 }
+				if ($subject > 1) { print ; }
+				elsif (/^\s+$/) { next ; }
+				elsif (/^Author:/) { print s/Author/From/ ; }
+				elsif (/^(From|Date)/) { print ; }
+				elsif ($subject) {
+					$subject = 2 ;
+					print "\n" ;
+					print ;
+				} else {
+					print "Subject: ", $_ ;
+					$subject = 1;
+				}
+			' < "$stgit" > "$dotest/$msgnum" || {
+				echo "Failed to import $patch_format patch $stgit"
+				exit 1
+			}
+		done
+		echo "$this" > "$dotest/last"
+		this=
+		msgnum=
+		;;
 	*)
 		echo "Patch format $patch_format is not supported."
 		exit 1
