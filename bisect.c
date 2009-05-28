@@ -7,6 +7,7 @@
 #include "quote.h"
 #include "sha1-lookup.h"
 #include "run-command.h"
+#include "log-tree.h"
 #include "bisect.h"
 
 struct sha1_array {
@@ -27,7 +28,6 @@ struct argv_array {
 	int argv_alloc;
 };
 
-static const char *argv_diff_tree[] = {"diff-tree", "--pretty", NULL, NULL};
 static const char *argv_checkout[] = {"checkout", "-q", NULL, "--", NULL};
 static const char *argv_show_branch[] = {"show-branch", NULL, NULL};
 
@@ -816,6 +816,31 @@ static void check_good_are_ancestors_of_bad(const char *prefix)
 }
 
 /*
+ * This does "git diff-tree --pretty COMMIT" without one fork+exec.
+ */
+static void show_diff_tree(const char *prefix, struct commit *commit)
+{
+	struct rev_info opt;
+
+	/* diff-tree init */
+	init_revisions(&opt, prefix);
+	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+	opt.abbrev = 0;
+	opt.diff = 1;
+
+	/* This is what "--pretty" does */
+	opt.verbose_header = 1;
+	opt.use_terminator = 0;
+	opt.commit_format = CMIT_FMT_DEFAULT;
+
+	/* diff-tree init */
+	if (!opt.diffopt.output_format)
+		opt.diffopt.output_format = DIFF_FORMAT_RAW;
+
+	log_tree_commit(&opt, commit);
+}
+
+/*
  * We use the convention that exiting with an exit code 10 means that
  * the bisection process finished successfully.
  * In this case the calling shell script should exit 0.
@@ -860,8 +885,7 @@ int bisect_next_all(const char *prefix)
 	if (!hashcmp(bisect_rev, current_bad_sha1)) {
 		exit_if_skipped_commits(tried, current_bad_sha1);
 		printf("%s is first bad commit\n", bisect_rev_hex);
-		argv_diff_tree[2] = bisect_rev_hex;
-		run_command_v_opt(argv_diff_tree, RUN_GIT_CMD);
+		show_diff_tree(prefix, revs.commits->item);
 		/* This means the bisection process succeeded. */
 		exit(10);
 	}
