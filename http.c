@@ -27,6 +27,17 @@ static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static char *user_name, *user_pass;
 
+#if LIBCURL_VERSION_NUM >= 0x071700
+/* Use CURLOPT_KEYPASSWD as is */
+#elif LIBCURL_VERSION_NUM >= 0x070903
+#define CURLOPT_KEYPASSWD CURLOPT_SSLKEYPASSWD
+#else
+#define CURLOPT_KEYPASSWD CURLOPT_SSLCERTPASSWD
+#endif
+
+static char *ssl_cert_password;
+static int ssl_cert_password_required;
+
 static struct curl_slist *pragma_header;
 
 static struct active_request_slot *active_queue_head;
@@ -167,6 +178,22 @@ static void init_curl_http_auth(CURL *result)
 	}
 }
 
+static int has_cert_password(void)
+{
+	if (ssl_cert_password != NULL)
+		return 1;
+	if (ssl_cert == NULL || ssl_cert_password_required != 1)
+		return 0;
+	/* Only prompt the user once. */
+	ssl_cert_password_required = -1;
+	ssl_cert_password = getpass("Certificate Password: ");
+	if (ssl_cert_password != NULL) {
+		ssl_cert_password = xstrdup(ssl_cert_password);
+		return 1;
+	} else
+		return 0;
+}
+
 static CURL *get_curl_handle(void)
 {
 	CURL *result = curl_easy_init();
@@ -189,6 +216,8 @@ static CURL *get_curl_handle(void)
 
 	if (ssl_cert != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
+	if (has_cert_password())
+		curl_easy_setopt(result, CURLOPT_KEYPASSWD, ssl_cert_password);
 #if LIBCURL_VERSION_NUM >= 0x070902
 	if (ssl_key != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLKEY, ssl_key);
@@ -329,8 +358,11 @@ void http_init(struct remote *remote)
 	if (getenv("GIT_CURL_FTP_NO_EPSV"))
 		curl_ftp_no_epsv = 1;
 
-	if (remote && remote->url && remote->url[0])
+	if (remote && remote->url && remote->url[0]) {
 		http_auth_init(remote->url[0]);
+		if (!prefixcmp(remote->url[0], "https://"))
+			ssl_cert_password_required = 1;
+	}
 
 #ifndef NO_CURL_EASY_DUPHANDLE
 	curl_default = get_curl_handle();
@@ -370,6 +402,13 @@ void http_cleanup(void)
 		free((void *)curl_http_proxy);
 		curl_http_proxy = NULL;
 	}
+
+	if (ssl_cert_password != NULL) {
+		memset(ssl_cert_password, 0, strlen(ssl_cert_password));
+		free(ssl_cert_password);
+		ssl_cert_password = NULL;
+	}
+	ssl_cert_password_required = 0;
 }
 
 struct active_request_slot *get_active_slot(void)
