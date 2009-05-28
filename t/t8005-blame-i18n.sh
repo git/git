@@ -13,7 +13,7 @@ test_expect_success 'setup the repository' '
 	git add file &&
 	git commit --author "$UTF8_NAME <utf8@localhost>" -m "$UTF8_MSG" &&
 
-	echo "KOI8-R LINE" >> file &&
+	echo "ISO-8859-5 LINE" >> file &&
 	git add file &&
 	git config i18n.commitencoding ISO8859-5 &&
 	git commit --author "$ISO8859_5_NAME <iso8859-5@localhost>" -m "$ISO8859_5_MSG" &&
