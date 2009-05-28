@@ -140,6 +140,11 @@ static int http_options(const char *var, const char *value, void *cb)
 #endif
 	if (!strcmp("http.sslcainfo", var))
 		return git_config_string(&ssl_cainfo, var, value);
+	if (!strcmp("http.sslcertpasswordprotected", var)) {
+		if (git_config_bool(var, value))
+			ssl_cert_password_required = 1;
+		return 0;
+	}
 #ifdef USE_CURL_MULTI
 	if (!strcmp("http.maxrequests", var)) {
 		max_requests = git_config_int(var, value);
@@ -360,7 +365,9 @@ void http_init(struct remote *remote)
 
 	if (remote && remote->url && remote->url[0]) {
 		http_auth_init(remote->url[0]);
-		if (!prefixcmp(remote->url[0], "https://"))
+		if (!ssl_cert_password_required &&
+		    getenv("GIT_SSL_CERT_PASSWORD_PROTECTED") &&
+		    !prefixcmp(remote->url[0], "https://"))
 			ssl_cert_password_required = 1;
 	}
 
