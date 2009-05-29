@@ -183,4 +183,14 @@ test_expect_success 'commit message from stdin' '
 	commit_msg_is "Log with foo word"
 '
 
+test_expect_success 'commit -F overrides -t' '
+	(
+		cd subdir &&
+		echo "-F log" > f.log &&
+		echo "-t template" > t.template &&
+		git commit --allow-empty -F f.log -t t.template
+	) &&
+	commit_msg_is "-F log"
+'
+
 test_done
