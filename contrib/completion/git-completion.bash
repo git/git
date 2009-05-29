@@ -150,12 +150,10 @@ __git_ps1 ()
 			fi
 		fi
 
-		if [ -n "$b" ]; then
-			if [ -n "${1-}" ]; then
-				printf "$1" "$c${b##refs/heads/}$w$i$r"
-			else
-				printf " (%s)" "$c${b##refs/heads/}$w$i$r"
-			fi
+		if [ -n "${1-}" ]; then
+			printf "$1" "$c${b##refs/heads/}$w$i$r"
+		else
+			printf " (%s)" "$c${b##refs/heads/}$w$i$r"
 		fi
 	fi
 }
