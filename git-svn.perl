@@ -454,8 +454,22 @@ sub cmd_dcommit {
 		'Cannot dcommit with a dirty index.  Commit your changes first, '
 		. "or stash them with `git stash'.\n";
 	$head ||= 'HEAD';
+
+	my $old_head;
+	if ($head ne 'HEAD') {
+		$old_head = eval {
+			command_oneline([qw/symbolic-ref -q HEAD/])
+		};
+		if ($old_head) {
+			$old_head =~ s{^refs/heads/}{};
+		} else {
+			$old_head = eval { command_oneline(qw/rev-parse HEAD/) };
+		}
+		command(['checkout', $head], STDERR => 0);
+	}
+
 	my @refs;
-	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD', \@refs);
 	unless ($gs) {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history.\nPerhaps the repository is empty.";
@@ -541,7 +555,7 @@ sub cmd_dcommit {
 			if (@diff) {
 				@refs = ();
 				my ($url_, $rev_, $uuid_, $gs_) =
-				              working_head_info($head, \@refs);
+				              working_head_info('HEAD', \@refs);
 				my ($linear_refs_, $parents_) =
 				              linearize_history($gs_, \@refs);
 				if (scalar(@$linear_refs) !=
@@ -579,6 +593,22 @@ sub cmd_dcommit {
 			}
 		}
 	}
+
+	if ($old_head) {
+		my $new_head = command_oneline(qw/rev-parse HEAD/);
+		my $new_is_symbolic = eval {
+			command_oneline(qw/symbolic-ref -q HEAD/);
+		};
+		if ($new_is_symbolic) {
+			print "dcommitted the branch ", $head, "\n";
+		} else {
+			print "dcommitted on a detached HEAD because you gave ",
+			      "a revision argument.\n",
+			      "The rewritten commit is: ", $new_head, "\n";
+		}
+		command(['checkout', $old_head], STDERR => 0);
+	}
+
 	unlink $gs->{index};
 }
 
