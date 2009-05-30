@@ -167,15 +167,46 @@ try_remove_previous()
 	fi
 }
 
+find_latest_squash()
+{
+	debug "Looking for latest squash..."
+	dir="$1"
+	git log --grep="^git-subtree-dir: $dir\$" \
+		--pretty=format:'START %H%n%s%n%n%b%nEND%n' HEAD |
+	while read a b junk; do
+		case "$a" in
+			START) sq="$b" ;;
+			git-subtree-mainline:) main="$b" ;;
+			git-subtree-split:) sub="$b" ;;
+			END)
+				if [ -n "$sub" ]; then
+					if [ -n "$main" ]; then
+						# a rejoin commit?
+						# Pretend its sub was a squash.
+						sq="$sub"
+					fi
+					debug "Squash found: $sq $sub"
+					echo "$sq" "$sub"
+					break
+				fi
+				sq=
+				main=
+				sub=
+				;;
+		esac
+	done
+}
+
 find_existing_splits()
 {
 	debug "Looking for prior splits..."
 	dir="$1"
 	revs="$2"
 	git log --grep="^git-subtree-dir: $dir\$" \
-		--pretty=format:'%s%n%n%b%nEND' $revs |
+		--pretty=format:'%s%n%n%b%nEND%n' $revs |
 	while read a b junk; do
 		case "$a" in
+			START) main="$b" ;;
 			git-subtree-mainline:) main="$b" ;;
 			git-subtree-split:) sub="$b" ;;
 			END)
@@ -244,6 +275,28 @@ rejoin_msg()
 	EOF
 }
 
+squash_msg()
+{
+	dir="$1"
+	oldsub="$2"
+	newsub="$3"
+	oldsub_short=$(git rev-parse --short "$oldsub")
+	newsub_short=$(git rev-parse --short "$newsub")
+	cat <<-EOF
+		Squashed '$dir/' changes from $oldsub_short..$newsub_short
+	
+	EOF
+	
+	git log --pretty=tformat:'%h %s' "$oldsub..$newsub"
+	git log --pretty=tformat:'REVERT: %h %s' "$newsub..$oldsub"
+	
+	cat <<-EOF
+		
+		git-subtree-dir: $dir
+		git-subtree-split: $newsub
+	EOF
+}
+
 toptree_for_commit()
 {
 	commit="$1"
@@ -276,6 +329,16 @@ tree_changed()
 			return 1   # not changed
 		fi
 	fi
+}
+
+new_squash_commit()
+{
+	old="$1"
+	oldsub="$2"
+	newsub="$3"
+	tree=$(toptree_for_commit $newsub) || exit $?
+	squash_msg "$dir" "$oldsub" "$newsub" | 
+		git commit-tree "$tree" -p "$old" || exit $?
 }
 
 copy_or_skip()
@@ -451,6 +514,19 @@ cmd_merge()
 		die "You must provide exactly one revision.  Got: '$revs'"
 	fi
 	rev="$1"
+	
+	if [ -n "$squash" ]; then
+		first_split="$(find_latest_squash "$dir")"
+		if [ -z "$first_split" ]; then
+			die "Can't squash-merge: '$dir' was never added."
+		fi
+		set $first_split
+		old=$1
+		sub=$2
+		new=$(new_squash_commit "$old" "$sub" "$rev") || exit $?
+		debug "New squash commit: $new"
+		rev="$new"
+	fi
 	
 	git merge -s subtree $rev
 }
