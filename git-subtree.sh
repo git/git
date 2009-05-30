@@ -178,15 +178,15 @@ find_existing_splits()
 		case "$a" in
 			git-subtree-mainline:) main="$b" ;;
 			git-subtree-split:) sub="$b" ;;
-			*)
+			END)
 				if [ -n "$main" -a -n "$sub" ]; then
 					debug "  Prior: $main -> $sub"
 					cache_set $main $sub
 					try_remove_previous "$main"
 					try_remove_previous "$sub"
-					main=
-					sub=
 				fi
+				main=
+				sub=
 				;;
 		esac
 	done
@@ -230,7 +230,7 @@ add_msg()
 	EOF
 }
 
-merge_msg()
+rejoin_msg()
 {
 	dir="$1"
 	latest_old="$2"
@@ -410,6 +410,9 @@ cmd_split()
 		
 		tree=$(subtree_for_commit $rev "$dir")
 		debug "  tree is: $tree"
+		
+		# ugly.  is there no better way to tell if this is a subtree
+		# vs. a mainline commit?  Does it matter?
 		[ -z $tree ] && continue
 
 		newrev=$(copy_or_skip "$rev" "$tree" "$newparents") || exit $?
@@ -427,7 +430,7 @@ cmd_split()
 		debug "Merging split branch into HEAD..."
 		latest_old=$(cache_get latest_old)
 		git merge -s ours \
-			-m "$(merge_msg $dir $latest_old $latest_new)" \
+			-m "$(rejoin_msg $dir $latest_old $latest_new)" \
 			$latest_new >&2 || exit $?
 	fi
 	if [ -n "$branch" ]; then
