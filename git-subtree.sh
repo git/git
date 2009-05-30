@@ -23,6 +23,8 @@ b,branch=     create a new branch from the split subtree
 ignore-joins  ignore prior --rejoin commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
+ options for 'merge' and 'pull'
+squash        merge subtree changes as a single commit
 "
 eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
 . git-sh-setup
@@ -36,6 +38,7 @@ onto=
 rejoin=
 ignore_joins=
 annotate=
+squash=
 
 debug()
 {
@@ -80,6 +83,8 @@ while [ $# -gt 0 ]; do
 		--no-rejoin) rejoin= ;;
 		--ignore-joins) ignore_joins=1 ;;
 		--no-ignore-joins) ignore_joins= ;;
+		--squash) squash=1 ;;
+		--no-squash) squash= ;;
 		--) break ;;
 		*) die "Unexpected option: $opt" ;;
 	esac
