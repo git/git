@@ -203,13 +203,17 @@ find_existing_splits()
 	dir="$1"
 	revs="$2"
 	git log --grep="^git-subtree-dir: $dir\$" \
-		--pretty=format:'%s%n%n%b%nEND%n' $revs |
+		--pretty=format:'START %H%n%s%n%n%b%nEND%n' $revs |
 	while read a b junk; do
 		case "$a" in
-			START) main="$b" ;;
+			START) main="$b"; sq="$b" ;;
 			git-subtree-mainline:) main="$b" ;;
 			git-subtree-split:) sub="$b" ;;
 			END)
+				if [ -z "$main" -a -n "$sub" ]; then
+					# squash commits refer to a subtree
+					cache_set "$sq" "$sub"
+				fi
 				if [ -n "$main" -a -n "$sub" ]; then
 					debug "  Prior: $main -> $sub"
 					cache_set $main $sub
