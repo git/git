@@ -223,6 +223,68 @@ OPTIONS FOR split
 	subproject's history to be part of your project anyway.
 
 
+EXAMPLES
+--------
+Let's use the repository for the git source code as an example. 
+First, get your own copy of the git.git repository:
+
+	$ git clone git://git.kernel.org/pub/scm/git/git.git test-git
+	$ cd test-git
+
+gitweb (commit 1130ef3) was merged into git as of commit
+0a8f4f0, after which it was no longer maintained separately. 
+But imagine it had been maintained separately, and we wanted to
+extract git's changes to gitweb since that time, to share with
+the upstream.  You could do this:
+
+	$ git subtree split --prefix=gitweb --annotate='(split) ' \
+        	0a8f4f0^.. --onto=1130ef3 --rejoin \
+        	--branch gitweb-latest
+        $ gitk gitweb-latest
+        $ git push git@github.com:whatever/gitweb gitweb-latest:master
+        
+(We use '0a8f4f0^..' because that means "all the changes from
+0a8f4f0 to the current version, including 0a8f4f0 itself.")
+
+If gitweb had originally been merged using 'git subtree add' (or
+a previous split had already been done with --rejoin specified)
+then you can do all your splits without having to remember any
+weird commit ids:
+
+	$ git subtree split --prefix=gitweb --annotate='(split) ' --rejoin \
+		--branch gitweb-latest2
+
+And you can merge changes back in from the upstream project just
+as easily:
+
+	$ git subtree pull --prefix=gitweb \
+		git@github.com:whatever/gitweb gitweb-latest:master
+
+Or, using '--squash', you can actually rewind to an earlier
+version of gitweb:
+
+	$ git subtree merge --prefix=gitweb --squash gitweb-latest~10
+
+Then make some changes:
+
+	$ date >gitweb/myfile
+	$ git add gitweb/myfile
+	$ git commit -m 'created myfile'
+
+And fast forward again:
+
+	$ git subtree merge --prefix=gitweb --squash gitweb-latest
+
+And notice that your change is still intact:
+	
+	$ ls -l gitweb/myfile
+
+And you can split it out and look at your changes versus
+the standard gitweb:
+
+	git log gitweb-latest..$(git subtree split --prefix=gitweb)
+
+
 AUTHOR
 ------
 Written by Avery Pennarun <apenwarr@gmail.com>
