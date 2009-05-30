@@ -8,10 +8,10 @@ if [ $# -eq 0 ]; then
     set -- -h
 fi
 OPTS_SPEC="\
-git subtree add --prefix=<prefix> <commit>
-git subtree split [options...] --prefix=<prefix> <commit...>
+git subtree add   --prefix=<prefix> <commit>
 git subtree merge --prefix=<prefix> <commit>
 git subtree pull  --prefix=<prefix> <repository> <refspec...>
+git subtree split --prefix=<prefix> <commit...>
 --
 h,help        show the help
 q             quiet
