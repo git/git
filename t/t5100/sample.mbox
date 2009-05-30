@@ -99,7 +99,7 @@ index 9123cdc..918dcf8 100644
 From nobody Sat Aug 27 23:07:49 2005
 Path: news.gmane.org!not-for-mail
 Message-ID: <20050721.091036.01119516.yoshfuji@linux-ipv6.org>
-From: YOSHIFUJI Hideaki / =?iso-2022-jp?B?GyRCNUhGIzFRTEAbKEI=?= 
+From: YOSHIFUJI Hideaki / =?ISO-2022-JP?B?GyRCNUhGIzFRTEAbKEI=?= 
 	<yoshfuji@linux-ipv6.org>
 Newsgroups: gmane.comp.version-control.git
 Subject: [PATCH 1/2] GIT: Try all addresses for given remote name
@@ -218,7 +218,7 @@ GPG-FP  : 9022 65EB 1ECF 3AD1 0BDF  80D8 4807 F894 E062 0EEA
 From nobody Sat Aug 27 23:07:49 2005
 Path: news.gmane.org!not-for-mail
 Message-ID: <u5tacjjdpxq.fsf@lysator.liu.se>
-From: =?iso-8859-1?Q?David_K=E5gedal?= <davidk@lysator.liu.se>
+From: =?ISO8859-1?Q?David_K=E5gedal?= <davidk@lysator.liu.se>
 Newsgroups: gmane.comp.version-control.git
 Subject: [PATCH] Fixed two bugs in git-cvsimport-script.
 Date: Mon, 15 Aug 2005 20:18:25 +0200
@@ -226,7 +226,7 @@ Lines: 83
 Approved: news@gmane.org
 NNTP-Posting-Host: main.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 X-Trace: sea.gmane.org 1124130247 31839 80.91.229.2 (15 Aug 2005 18:24:07 GMT)
 X-Complaints-To: usenet@sea.gmane.org
@@ -476,7 +476,7 @@ MIME-Version: 1.0
 Content-Type: multipart/mixed; boundary="=-=-="
 
 --=-=-=
-Content-Type: text/plain; charset=iso-8859-15
+Content-Type: text/plain; charset=ISO8859-15
 Content-Transfer-Encoding: quoted-printable
 
 Here comes a commit log message, and

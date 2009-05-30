@@ -590,7 +590,7 @@ test_expect_success \
 	 echo "ISO-8859-1" >> file &&
 	 git add file &&
 	 git config i18n.commitencoding ISO-8859-1 &&
-	 git commit -F "$TEST_DIRECTORY"/t3900/ISO-8859-1.txt &&
+	 git commit -F "$TEST_DIRECTORY"/t3900/ISO8859-1.txt &&
 	 git config --unset i18n.commitencoding &&
 	 gitweb_run "p=.git;a=commit"'
 test_debug 'cat gitweb.log'

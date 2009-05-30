@@ -619,7 +619,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	struct shortlog log;
 	struct strbuf sb = STRBUF_INIT;
 	int i;
-	const char *encoding = "utf-8";
+	const char *encoding = "UTF-8";
 	struct diff_options opts;
 	int need_8bit_cte = 0;
 	struct commit *commit = NULL;
