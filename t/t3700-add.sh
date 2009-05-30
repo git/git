@@ -230,4 +230,16 @@ test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
 	! ( git ls-files foobar | grep foobar )
 '
 
+test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
+	git reset --hard &&
+	H=$(git rev-parse :1/2/a) &&
+	(
+		echo "100644 $H 1	track-this"
+		echo "100644 $H 3	track-this"
+	) | git update-index --index-info &&
+	echo track-this >>.gitignore &&
+	echo resolved >track-this &&
+	git add track-this
+'
+
 test_done
