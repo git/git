@@ -523,6 +523,10 @@ cmd_merge()
 		set $first_split
 		old=$1
 		sub=$2
+		if [ "$sub" = "$rev" ]; then
+			say "Subtree is already at commit $rev."
+			exit 0
+		fi
 		new=$(new_squash_commit "$old" "$sub" "$rev") || exit $?
 		debug "New squash commit: $new"
 		rev="$new"
