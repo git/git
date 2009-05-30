@@ -10,11 +10,14 @@
 	"-s subtree" should be given an explicit subtree option?
 		There doesn't seem to be a way to do this.  We'd have to
 		patch git-merge-subtree.  Ugh.
+		(but we could avoid this problem by generating squashes with
+		exactly the right subtree structure, rather than using
+		subtree merge...)
 
 	add a 'push' subcommand to parallel 'pull'
 	
 	add a 'log' subcommand to see what's new in a subtree?
 
-	add a --squash option so we don't merge histories but can still split
-	
 	add to-submodule and from-submodule commands
+
+	automated tests for --squash stuff

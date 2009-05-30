@@ -23,7 +23,7 @@ b,branch=     create a new branch from the split subtree
 ignore-joins  ignore prior --rejoin commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
- options for 'merge' and 'pull'
+ options for 'add', 'merge', and 'pull'
 squash        merge subtree changes as a single commit
 "
 eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
@@ -169,11 +169,16 @@ try_remove_previous()
 
 find_latest_squash()
 {
-	debug "Looking for latest squash..."
+	debug "Looking for latest squash ($dir)..."
 	dir="$1"
+	sq=
+	main=
+	sub=
 	git log --grep="^git-subtree-dir: $dir\$" \
 		--pretty=format:'START %H%n%s%n%n%b%nEND%n' HEAD |
 	while read a b junk; do
+		debug "$a $b $junk"
+		debug "{{$sq/$main/$sub}}"
 		case "$a" in
 			START) sq="$b" ;;
 			git-subtree-mainline:) main="$b" ;;
@@ -202,6 +207,8 @@ find_existing_splits()
 	debug "Looking for prior splits..."
 	dir="$1"
 	revs="$2"
+	main=
+	sub=
 	git log --grep="^git-subtree-dir: $dir\$" \
 		--pretty=format:'START %H%n%s%n%n%b%nEND%n' $revs |
 	while read a b junk; do
@@ -284,21 +291,21 @@ squash_msg()
 	dir="$1"
 	oldsub="$2"
 	newsub="$3"
-	oldsub_short=$(git rev-parse --short "$oldsub")
 	newsub_short=$(git rev-parse --short "$newsub")
-	cat <<-EOF
-		Squashed '$dir/' changes from $oldsub_short..$newsub_short
 	
-	EOF
+	if [ -n "$oldsub" ]; then
+		oldsub_short=$(git rev-parse --short "$oldsub")
+		echo "Squashed '$dir/' changes from $oldsub_short..$newsub_short"
+		echo
+		git log --pretty=tformat:'%h %s' "$oldsub..$newsub"
+		git log --pretty=tformat:'REVERT: %h %s' "$newsub..$oldsub"
+	else
+		echo "Squashed '$dir/' content from commit $newsub_short"
+	fi
 	
-	git log --pretty=tformat:'%h %s' "$oldsub..$newsub"
-	git log --pretty=tformat:'REVERT: %h %s' "$newsub..$oldsub"
-	
-	cat <<-EOF
-		
-		git-subtree-dir: $dir
-		git-subtree-split: $newsub
-	EOF
+	echo
+	echo "git-subtree-dir: $dir"
+	echo "git-subtree-split: $newsub"
 }
 
 toptree_for_commit()
@@ -341,8 +348,13 @@ new_squash_commit()
 	oldsub="$2"
 	newsub="$3"
 	tree=$(toptree_for_commit $newsub) || exit $?
-	squash_msg "$dir" "$oldsub" "$newsub" | 
-		git commit-tree "$tree" -p "$old" || exit $?
+	if [ -n "$old" ]; then
+		squash_msg "$dir" "$oldsub" "$newsub" | 
+			git commit-tree "$tree" -p "$old" || exit $?
+	else
+		squash_msg "$dir" "" "$newsub" |
+			git commit-tree "$tree" || exit $?
+	fi
 }
 
 copy_or_skip()
@@ -422,9 +434,18 @@ cmd_add()
 	else
 		headp=
 	fi
-	commit=$(add_msg "$dir" "$headrev" "$rev" |
-		 git commit-tree $tree $headp -p "$rev") || exit $?
+	
+	if [ -n "$squash" ]; then
+		rev=$(new_squash_commit "" "" "$rev") || exit $?
+		commit=$(echo "Merge commit '$rev' as '$dir'" |
+			 git commit-tree $tree $headp -p "$rev") || exit $?
+	else
+		commit=$(add_msg "$dir" "$headrev" "$rev" |
+			 git commit-tree $tree $headp -p "$rev") || exit $?
+	fi
 	git reset "$commit" || exit $?
+	
+	say "Added dir '$dir'"
 }
 
 cmd_split()
