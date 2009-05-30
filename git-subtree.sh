@@ -19,15 +19,17 @@ d             show debug messages
 prefix=       the name of the subdir to split out
  options for 'split'
 annotate=     add a prefix to commit message of new commits
+b,branch=     create a new branch from the split subtree
+ignore-joins  ignore prior --rejoin commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
-ignore-joins  ignore prior --rejoin commits
 "
 eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
 . git-sh-setup
 require_work_tree
 
 quiet=
+branch=
 debug=
 command=
 onto=
@@ -69,6 +71,7 @@ while [ $# -gt 0 ]; do
 		-d) debug=1 ;;
 		--annotate) annotate="$1"; shift ;;
 		--no-annotate) annotate= ;;
+		-b) branch="$1"; shift ;;
 		--prefix) prefix="$1"; shift ;;
 		--no-prefix) prefix= ;;
 		--onto) onto="$1"; shift ;;
@@ -78,6 +81,7 @@ while [ $# -gt 0 ]; do
 		--ignore-joins) ignore_joins=1 ;;
 		--no-ignore-joins) ignore_joins= ;;
 		--) break ;;
+		*) die "Unexpected option: $opt" ;;
 	esac
 done
 
@@ -139,12 +143,21 @@ cache_set()
 	echo "$newrev" >"$cachedir/$oldrev"
 }
 
+rev_exists()
+{
+	if git rev-parse "$1" >/dev/null 2>&1; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 # if a commit doesn't have a parent, this might not work.  But we only want
 # to remove the parent from the rev-list, and since it doesn't exist, it won't
 # be there anyway, so do nothing in that case.
 try_remove_previous()
 {
-	if git rev-parse "$1^" >/dev/null 2>&1; then
+	if rev_exists "$1^"; then
 		echo "^$1^"
 	fi
 }
@@ -344,6 +357,10 @@ cmd_add()
 
 cmd_split()
 {
+	if [ -n "$branch" ] && rev_exists "refs/heads/$branch"; then
+		die "Branch '$branch' already exists."
+	fi
+
 	debug "Splitting $dir..."
 	cache_setup || exit $?
 	
@@ -407,6 +424,11 @@ cmd_split()
 		git merge -s ours \
 			-m "$(merge_msg $dir $latest_old $latest_new)" \
 			$latest_new >&2 || exit $?
+	fi
+	if [ -n "$branch" ]; then
+		git update-ref -m 'subtree split' "refs/heads/$branch" \
+			$latest_new "" || exit $?
+		say "Created branch '$branch'"
 	fi
 	echo $latest_new
 	exit 0
