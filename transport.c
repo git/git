@@ -1003,7 +1003,6 @@ int transport_push(struct transport *transport,
 	if (transport->push_refs) {
 		struct ref *remote_refs =
 			transport->get_refs_list(transport, 1);
-		struct ref **remote_tail;
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;
 		int verbose = flags & TRANSPORT_PUSH_VERBOSE;
@@ -1014,10 +1013,7 @@ int transport_push(struct transport *transport,
 		if (flags & TRANSPORT_PUSH_MIRROR)
 			match_flags |= MATCH_REFS_MIRROR;
 
-		remote_tail = &remote_refs;
-		while (*remote_tail)
-			remote_tail = &((*remote_tail)->next);
-		if (match_refs(local_refs, remote_refs, &remote_tail,
+		if (match_refs(local_refs, &remote_refs,
 			       refspec_nr, refspec, match_flags)) {
 			return -1;
 		}
