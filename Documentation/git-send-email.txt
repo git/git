@@ -39,6 +39,10 @@ OPTIONS
 Composing
 ~~~~~~~~~
 
+--annotate::
+	Review and edit each patch you're about to send. See the
+	CONFIGURATION section for 'sendemail.multiedit'.
+
 --bcc=<address>::
 	Specify a "Bcc:" value for each email. Default is the value of
 	'sendemail.bcc'.
@@ -51,11 +55,6 @@ The --bcc option must be repeated for each user you want on the bcc list.
 +
 The --cc option must be repeated for each user you want on the cc list.
 
---annotate::
-	Review each patch you're about to send in an editor. The setting
-	'sendemail.multiedit' defines if this will spawn one editor per patch
-	or one for all of them at once.
-
 --compose::
 	Use $GIT_EDITOR, core.editor, $VISUAL, or $EDITOR to edit an
 	introductory message for the patch series.
@@ -67,6 +66,8 @@ In-Reply-To headers specified in the message. If the body of the message
 and In-Reply-To headers will be used unless they are removed.
 +
 Missing From or In-Reply-To headers will be prompted for.
++
+See the CONFIGURATION section for 'sendemail.multiedit'.
 
 --from=<address>::
 	Specify the sender of the emails.  If not specified on the command line,
@@ -138,7 +139,9 @@ user is prompted for a password while the input is masked for privacy.
 --smtp-server-port=<port>::
 	Specifies a port different from the default port (SMTP
 	servers typically listen to smtp port 25 and ssmtp port
-	465). This can be set with 'sendemail.smtpserverport'.
+	465); symbolic port names (e.g. "submission" instead of 465)
+	are also accepted. The port can also be set with the
+	'sendemail.smtpserverport' configuration variable.
 
 --smtp-ssl::
 	Legacy alias for '--smtp-encryption ssl'.
@@ -233,6 +236,12 @@ have been specified, in which case default to 'compose'.
 --dry-run::
 	Do everything except actually send the emails.
 
+--[no-]format-patch::
+	When an argument may be understood either as a reference or as a file name,
+	choose to understand it as a format-patch argument ('--format-patch')
+	or as a file name ('--no-format-patch'). By default, when such a conflict
+	occurs, git send-email will fail.
+
 --quiet::
 	Make git-send-email less verbose.  One line per email should be
 	all that is output.
@@ -248,12 +257,6 @@ have been specified, in which case default to 'compose'.
 +
 Default is the value of 'sendemail.validate'; if this is not set,
 default to '--validate'.
-
---[no-]format-patch::
-	When an argument may be understood either as a reference or as a file name,
-	choose to understand it as a format-patch argument ('--format-patch')
-	or as a file name ('--no-format-patch'). By default, when such a conflict
-	occurs, git send-email will fail.
 
 
 CONFIGURATION
