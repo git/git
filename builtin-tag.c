@@ -387,7 +387,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 					"annotated tag, needs a message"),
 		OPT_CALLBACK('m', NULL, &msg, "msg",
 			     "message for the tag", parse_msg_arg),
-		OPT_STRING('F', NULL, &msgfile, "file", "message in a file"),
+		OPT_FILENAME('F', NULL, &msgfile, "message in a file"),
 		OPT_BOOLEAN('s', NULL, &sign, "annotated and GPG-signed tag"),
 		OPT_STRING('u', NULL, &keyid, "key-id",
 					"use another key to sign the tag"),
@@ -405,8 +405,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	git_config(git_tag_config, NULL);
 
-	argc = parse_options(argc, argv, options, git_tag_usage, 0);
-	msgfile = parse_options_fix_filename(prefix, msgfile);
+	argc = parse_options(argc, argv, prefix, options, git_tag_usage, 0);
 
 	if (keyid) {
 		sign = 1;

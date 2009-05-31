@@ -610,7 +610,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	}
 	hashcpy(merge_filter_ref, head_sha1);
 
-	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
+			     0);
 	if (!!delete + !!rename + !!force_create > 1)
 		usage_with_options(builtin_branch_usage, options);
 

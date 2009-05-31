@@ -84,7 +84,8 @@ int main(int argc, const char **argv)
 
 	git_extract_argv0_path(argv[0]);
 
-	argc = parse_options(argc, argv, hash_object_options, hash_object_usage, 0);
+	argc = parse_options(argc, argv, NULL, hash_object_options,
+			     hash_object_usage, 0);
 
 	if (write_object) {
 		prefix = setup_git_directory();

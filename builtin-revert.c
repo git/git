@@ -60,7 +60,7 @@ static void parse_args(int argc, const char **argv)
 		OPT_END(),
 	};
 
-	if (parse_options(argc, argv, options, usage_str, 0) != 1)
+	if (parse_options(argc, argv, NULL, options, usage_str, 0) != 1)
 		usage_with_options(usage_str, options);
 	arg = argv[0];
 

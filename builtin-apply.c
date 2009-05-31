@@ -3292,7 +3292,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			"apply a patch without touching the working tree"),
 		OPT_BOOLEAN(0, "apply", &force_apply,
 			"also apply the patch (use with --stat/--summary/--check)"),
-		OPT_STRING(0, "build-fake-ancestor", &fake_ancestor, "file",
+		OPT_FILENAME(0, "build-fake-ancestor", &fake_ancestor,
 			"build a temporary index based on embedded index information"),
 		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
 			"paths are separated with NUL character",
@@ -3327,11 +3327,8 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 	if (apply_default_whitespace)
 		parse_whitespace_option(apply_default_whitespace);
 
-	argc = parse_options(argc, argv, builtin_apply_options,
+	argc = parse_options(argc, argv, prefix, builtin_apply_options,
 			apply_usage, 0);
-	fake_ancestor = parse_options_fix_filename(prefix, fake_ancestor);
-	if (fake_ancestor)
-		fake_ancestor = xstrdup(fake_ancestor);
 
 	if (apply_with_reject)
 		apply = apply_verbosely = 1;

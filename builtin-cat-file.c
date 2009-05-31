@@ -231,7 +231,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	if (argc != 3 && argc != 2)
 		usage_with_options(cat_file_usage, options);
 
-	argc = parse_options(argc, argv, options, cat_file_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, cat_file_usage, 0);
 
 	if (opt) {
 		if (argc == 1)

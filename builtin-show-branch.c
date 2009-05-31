@@ -697,7 +697,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		av = default_arg - 1; /* ick; we would not address av[0] */
 	}
 
-	ac = parse_options(ac, av, builtin_show_branch_options,
+	ac = parse_options(ac, av, prefix, builtin_show_branch_options,
 			   show_branch_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 	if (all_heads)
 		all_remotes = 1;

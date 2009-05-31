@@ -79,7 +79,8 @@ static int add(int argc, const char **argv)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+			     0);
 
 	if (argc < 2)
 		usage_with_options(builtin_remote_usage, options);
@@ -986,7 +987,8 @@ static int show(int argc, const char **argv)
 	struct string_list info_list = { NULL, 0, 0, 0 };
 	struct show_info info;
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+			     0);
 
 	if (argc < 1)
 		return show_all();
@@ -1076,7 +1078,8 @@ static int set_head(int argc, const char **argv)
 			    "delete refs/remotes/<name>/HEAD"),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+			     0);
 	if (argc)
 		strbuf_addf(&buf, "refs/remotes/%s/HEAD", argv[0]);
 
@@ -1130,7 +1133,8 @@ static int prune(int argc, const char **argv)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+			     0);
 
 	if (argc < 1)
 		usage_with_options(builtin_remote_usage, options);
@@ -1220,7 +1224,7 @@ static int update(int argc, const char **argv)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
 			     PARSE_OPT_KEEP_ARGV0);
 	if (argc < 2) {
 		argc = 2;
@@ -1306,7 +1310,7 @@ int cmd_remote(int argc, const char **argv, const char *prefix)
 	};
 	int result;
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, prefix, options, builtin_remote_usage,
 		PARSE_OPT_STOP_AT_NON_OPTION);
 
 	if (argc < 1)
