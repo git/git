@@ -8,7 +8,7 @@ test_description='git svn refuses to dcommit non-UTF8 messages'
 
 # ISO-2022-JP can pass for valid UTF-8, so skipping that in this test
 
-for H in ISO-8859-1 EUCJP
+for H in ISO8859-1 eucJP
 do
 	test_expect_success "$H setup" '
 		mkdir $H &&
@@ -17,7 +17,7 @@ do
 	'
 done
 
-for H in ISO-8859-1 EUCJP
+for H in ISO8859-1 eucJP
 do
 	test_expect_success "$H commit on git side" '
 	(
@@ -33,7 +33,7 @@ do
 	'
 done
 
-for H in ISO-8859-1 EUCJP
+for H in ISO8859-1 eucJP
 do
 	test_expect_success "$H dcommit to svn" '
 	(
