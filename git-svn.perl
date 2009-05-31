@@ -219,6 +219,9 @@ for (my $i = 0; $i < @ARGV; $i++) {
 		$cmd = $ARGV[$i];
 		splice @ARGV, $i, 1;
 		last;
+	} elsif ($ARGV[$i] eq 'help') {
+		$cmd = $ARGV[$i+1];
+		usage(0);
 	}
 };
 
