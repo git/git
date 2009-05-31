@@ -54,6 +54,8 @@ all::
 #
 # Define NO_MKSTEMPS if you don't have mkstemps in the C library.
 #
+# Define NO_LIBGEN_H if you don't have libgen.h.
+#
 # Define NO_SYS_SELECT_H if you don't have sys/select.h.
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
@@ -834,6 +836,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_PREAD = YesPlease
 	NO_OPENSSL = YesPlease
 	NO_CURL = YesPlease
+	NO_LIBGEN_H = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
 	NO_IPV6 = YesPlease
 	NO_SETENV = YesPlease
@@ -897,6 +900,11 @@ ifndef CC_LD_DYNPATH
 	else
 		CC_LD_DYNPATH = -R
 	endif
+endif
+
+ifdef NO_LIBGEN_H
+	COMPAT_CFLAGS += -DNO_LIBGEN_H
+	COMPAT_OBJS += compat/basename.o
 endif
 
 ifdef NO_CURL

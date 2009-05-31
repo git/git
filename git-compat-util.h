@@ -97,6 +97,13 @@
 #include "compat/mingw.h"
 #endif	/* __MINGW32__ */
 
+#ifndef NO_LIBGEN_H
+#include <libgen.h>
+#else
+#define basename gitbasename
+extern char *gitbasename(char *);
+#endif
+
 #ifndef NO_ICONV
 #include <iconv.h>
 #endif
