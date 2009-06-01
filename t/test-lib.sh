@@ -147,7 +147,7 @@ fi
 
 error () {
 	say_color error "error: $*"
-	trap - EXIT
+	GIT_EXIT_OK=t
 	exit 1
 }
 
@@ -179,10 +179,17 @@ test_broken=0
 test_success=0
 
 die () {
-	echo >&5 "FATAL: Unexpected exit with code $?"
-	exit 1
+	code=$?
+	if test -n "$GIT_EXIT_OK"
+	then
+		exit $code
+	else
+		echo >&5 "FATAL: Unexpected exit with code $code"
+		exit 1
+	fi
 }
 
+GIT_EXIT_OK=
 trap 'die' EXIT
 
 # The semantics of the editor variables are that of invoking
@@ -285,7 +292,7 @@ test_failure_ () {
 	say_color error "FAIL $test_count: $1"
 	shift
 	echo "$@" | sed -e 's/^/	/'
-	test "$immediate" = "" || { trap - EXIT; exit 1; }
+	test "$immediate" = "" || { GIT_EXIT_OK=t; exit 1; }
 }
 
 test_known_broken_ok_ () {
@@ -347,7 +354,7 @@ test_expect_failure () {
 		then
 			test_known_broken_ok_ "$1"
 		else
-		    test_known_broken_failure_ "$1"
+			test_known_broken_failure_ "$1"
 		fi
 	fi
 	echo >&3 ""
@@ -498,7 +505,7 @@ test_create_repo () {
 }
 
 test_done () {
-	trap - EXIT
+	GIT_EXIT_OK=t
 	test_results_dir="$TEST_DIRECTORY/test-results"
 	mkdir -p "$test_results_dir"
 	test_results_path="$test_results_dir/${0%.sh}-$$"
@@ -640,7 +647,7 @@ fi
 test="trash directory.$(basename "$0" .sh)"
 test ! -z "$debug" || remove_trash="$TEST_DIRECTORY/$test"
 rm -fr "$test" || {
-	trap - EXIT
+	GIT_EXIT_OK=t
 	echo >&5 "FATAL: Cannot prepare test area"
 	exit 1
 }
