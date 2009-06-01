@@ -115,7 +115,7 @@ do
 	--tee)
 		shift ;; # was handled already
 	*)
-		break ;;
+		echo "error: unknown test option '$1'" >&2; exit 1 ;;
 	esac
 done
 
