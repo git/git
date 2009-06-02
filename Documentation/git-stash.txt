@@ -75,14 +75,22 @@ show [<stash>]::
 	it will accept any format known to 'git-diff' (e.g., `git stash show
 	-p stash@\{1}` to view the second most recent stash in patch form).
 
+pop [<stash>]::
+
+	Remove a single stashed state from the stash list and apply it
+	on top of the current working tree state, i.e., do the inverse
+	operation of `git stash save`. The working directory must
+	match the index.
++
+Applying the state can fail with conflicts; in this case, it is not
+removed from the stash list. You need to resolve the conflicts by hand
+and call `git stash drop` manually afterwards.
++
+When no `<stash>` is given, `stash@\{0}` is assumed. See also `apply`.
+
 apply [--index] [<stash>]::
 
-	Restore the changes recorded in the stash on top of the current
-	working tree state.  When no `<stash>` is given, applies the latest
-	one.  The working directory must match the index.
-+
-This operation can fail with conflicts; you need to resolve them
-by hand in the working tree.
+	Like `pop`, but do not remove the state from the stash list.
 +
 If the `--index` option is used, then tries to reinstate not only the working
 tree's changes, but also the index's ones. However, this can fail, when you
@@ -111,12 +119,6 @@ drop [<stash>]::
 
 	Remove a single stashed state from the stash list. When no `<stash>`
 	is given, it removes the latest one. i.e. `stash@\{0}`
-
-pop [<stash>]::
-
-	Remove a single stashed state from the stash list and apply on top
-	of the current working tree state. When no `<stash>` is given,
-	`stash@\{0}` is assumed. See also `apply`.
 
 create::
 
@@ -163,7 +165,7 @@ $ git pull
 file foobar not up to date, cannot merge.
 $ git stash
 $ git pull
-$ git stash apply
+$ git stash pop
 ----------------------------------------------------------------
 
 Interrupted workflow::
@@ -192,7 +194,7 @@ You can use 'git-stash' to simplify the above, like this:
 $ git stash
 $ edit emergency fix
 $ git commit -a -m "Fix in a hurry"
-$ git stash apply
+$ git stash pop
 # ... continue hacking ...
 ----------------------------------------------------------------
 
