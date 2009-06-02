@@ -54,6 +54,12 @@ deduxit me super semitas jusitiae,
 EOF
 printf "propter nomen suum." >> new4.txt
 
+test_expect_success 'merge with no changes' '
+	cp orig.txt test.txt &&
+	git merge-file test.txt orig.txt orig.txt &&
+	test_cmp test.txt orig.txt
+'
+
 cp new1.txt test.txt
 test_expect_success "merge without conflict" \
 	"git merge-file test.txt orig.txt new2.txt"
