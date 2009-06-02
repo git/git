@@ -767,6 +767,96 @@ sub split_hunk {
 	return @split;
 }
 
+sub find_last_o_ctx {
+	my ($it) = @_;
+	my $text = $it->{TEXT};
+	my ($o_ofs, $o_cnt) = parse_hunk_header($text->[0]);
+	my $i = @{$text};
+	my $last_o_ctx = $o_ofs + $o_cnt;
+	while (0 < --$i) {
+		my $line = $text->[$i];
+		if ($line =~ /^ /) {
+			$last_o_ctx--;
+			next;
+		}
+		last;
+	}
+	return $last_o_ctx;
+}
+
+sub merge_hunk {
+	my ($prev, $this) = @_;
+	my ($o0_ofs, $o0_cnt, $n0_ofs, $n0_cnt) =
+	    parse_hunk_header($prev->{TEXT}[0]);
+	my ($o1_ofs, $o1_cnt, $n1_ofs, $n1_cnt) =
+	    parse_hunk_header($this->{TEXT}[0]);
+
+	my (@line, $i, $ofs, $o_cnt, $n_cnt);
+	$ofs = $o0_ofs;
+	$o_cnt = $n_cnt = 0;
+	for ($i = 1; $i < @{$prev->{TEXT}}; $i++) {
+		my $line = $prev->{TEXT}[$i];
+		if ($line =~ /^\+/) {
+			$n_cnt++;
+			push @line, $line;
+			next;
+		}
+
+		last if ($o1_ofs <= $ofs);
+
+		$o_cnt++;
+		$ofs++;
+		if ($line =~ /^ /) {
+			$n_cnt++;
+		}
+		push @line, $line;
+	}
+
+	for ($i = 1; $i < @{$this->{TEXT}}; $i++) {
+		my $line = $this->{TEXT}[$i];
+		if ($line =~ /^\+/) {
+			$n_cnt++;
+			push @line, $line;
+			next;
+		}
+		$ofs++;
+		$o_cnt++;
+		if ($line =~ /^ /) {
+			$n_cnt++;
+		}
+		push @line, $line;
+	}
+	my $head = ("@@ -$o0_ofs" .
+		    (($o_cnt != 1) ? ",$o_cnt" : '') .
+		    " +$n0_ofs" .
+		    (($n_cnt != 1) ? ",$n_cnt" : '') .
+		    " @@\n");
+	@{$prev->{TEXT}} = ($head, @line);
+}
+
+sub coalesce_overlapping_hunks {
+	my (@in) = @_;
+	my @out = ();
+
+	my ($last_o_ctx, $last_was_dirty);
+
+	for (grep { $_->{USE} } @in) {
+		my $text = $_->{TEXT};
+		my ($o_ofs) = parse_hunk_header($text->[0]);
+		if (defined $last_o_ctx &&
+		    $o_ofs <= $last_o_ctx &&
+		    !$_->{DIRTY} &&
+		    !$last_was_dirty) {
+			merge_hunk($out[-1], $_);
+		}
+		else {
+			push @out, $_;
+		}
+		$last_o_ctx = find_last_o_ctx($out[-1]);
+		$last_was_dirty = $_->{DIRTY};
+	}
+	return @out;
+}
 
 sub color_diff {
 	return map {
@@ -878,7 +968,8 @@ sub edit_hunk_loop {
 		my $newhunk = {
 			TEXT => $text,
 			TYPE => $hunk->[$ix]->{TYPE},
-			USE => 1
+			USE => 1,
+			DIRTY => 1,
 		};
 		if (diff_applies($head,
 				 @{$hunk}[0..$ix-1],
@@ -1210,6 +1301,8 @@ sub patch_update_file {
 		}
 	}
 
+	@hunk = coalesce_overlapping_hunks(@hunk);
+
 	my $n_lofs = 0;
 	my @result = ();
 	for (@hunk) {
@@ -1224,6 +1317,7 @@ sub patch_update_file {
 		open $fh, '| git apply --cached --recount';
 		for (@{$head->{TEXT}}, @result) {
 			print $fh $_;
+			print STDERR $_;
 		}
 		if (!close $fh) {
 			for (@{$head->{TEXT}}, @result) {
