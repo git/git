@@ -3315,6 +3315,10 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 
 	argc = parse_options(argc, argv, builtin_apply_options,
 			apply_usage, 0);
+	fake_ancestor = parse_options_fix_filename(prefix, fake_ancestor);
+	if (fake_ancestor)
+		fake_ancestor = xstrdup(fake_ancestor);
+
 	if (apply_with_reject)
 		apply = apply_verbosely = 1;
 	if (!force_apply && (diffstat || numstat || summary || check || fake_ancestor))
