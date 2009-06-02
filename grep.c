@@ -360,6 +360,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 			bol = pmatch[0].rm_so + bol + 1;
 			while (word_char(bol[-1]) && bol < eol)
 				bol++;
+			eflags |= REG_NOTBOL;
 			if (bol < eol)
 				goto again;
 		}
@@ -499,6 +500,8 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 
 		*eol = '\0';
 		while (next_match(opt, bol, eol, ctx, &match, eflags)) {
+			if (match.rm_so == match.rm_eo)
+				break;
 			printf("%.*s%s%.*s%s",
 			       (int)match.rm_so, bol,
 			       opt->color_match,
