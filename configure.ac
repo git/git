@@ -627,6 +627,12 @@ AC_SUBST(SNPRINTF_RETURNS_BOGUS)
 ## (in default C library and libraries checked by AC_CHECK_LIB)
 AC_MSG_NOTICE([CHECKS for library functions])
 #
+# Define NO_LIBGEN_H if you don't have libgen.h.
+AC_CHECK_HEADER([libgen.h],
+[NO_LIBGEN_H=],
+[NO_LIBGEN_H=YesPlease])
+AC_SUBST(NO_LIBGEN_H)
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 GIT_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=],
@@ -676,6 +682,13 @@ GIT_CHECK_FUNC(mkdtemp,
 [NO_MKDTEMP=],
 [NO_MKDTEMP=YesPlease])
 AC_SUBST(NO_MKDTEMP)
+#
+# Define NO_MKSTEMPS if you don't have mkstemps in the C library.
+GIT_CHECK_FUNC(mkstemps,
+[NO_MKSTEMPS=],
+[NO_MKSTEMPS=YesPlease])
+AC_SUBST(NO_MKSTEMPS)
+#
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
