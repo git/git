@@ -1317,7 +1317,6 @@ sub patch_update_file {
 		open $fh, '| git apply --cached --recount';
 		for (@{$head->{TEXT}}, @result) {
 			print $fh $_;
-			print STDERR $_;
 		}
 		if (!close $fh) {
 			for (@{$head->{TEXT}}, @result) {

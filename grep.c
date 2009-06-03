@@ -500,6 +500,8 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 
 		*eol = '\0';
 		while (next_match(opt, bol, eol, ctx, &match, eflags)) {
+			if (match.rm_so == match.rm_eo)
+				break;
 			printf("%.*s%s%.*s%s",
 			       (int)match.rm_so, bol,
 			       opt->color_match,
