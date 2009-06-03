@@ -114,7 +114,7 @@ update::
 	Update the registered submodules, i.e. clone missing submodules and
 	checkout the commit specified in the index of the containing repository.
 	This will make the submodules HEAD be detached unless '--rebase' is
-	specified or the key `submodule.$name.rebase` is set to `true`.
+	specified or the key `submodule.$name.update` is set to	`rebase`.
 +
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in .gitmodules, you can automatically initialize the
@@ -184,7 +184,7 @@ OPTIONS
 	superproject. If this option is given, the submodule's HEAD will not
 	be detached. If a a merge failure prevents this process, you will have
 	to resolve these failures with linkgit:git-rebase[1].
-	If the key `submodule.$name.rebase` is set to `true`, this option is
+	If the key `submodule.$name.update` is set to `rebase`, this option is
 	implicit.
 
 <path>...::

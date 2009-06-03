@@ -76,9 +76,9 @@ test_expect_success 'submodule update --rebase staying on master' '
 	)
 '
 
-test_expect_success 'submodule update - rebase true in .git/config' '
+test_expect_success 'submodule update - rebase in .git/config' '
 	(cd super &&
-	 git config submodule.submodule.rebase true
+	 git config submodule.submodule.update rebase
 	) &&
 	(cd super/submodule &&
 	  git reset --hard HEAD~1
@@ -93,9 +93,9 @@ test_expect_success 'submodule update - rebase true in .git/config' '
 	)
 '
 
-test_expect_success 'submodule update - rebase false in .git/config but --rebase given' '
+test_expect_success 'submodule update - checkout in .git/config but --rebase given' '
 	(cd super &&
-	 git config submodule.submodule.rebase false
+	 git config submodule.submodule.update checkout
 	) &&
 	(cd super/submodule &&
 	  git reset --hard HEAD~1
@@ -110,9 +110,9 @@ test_expect_success 'submodule update - rebase false in .git/config but --rebase
 	)
 '
 
-test_expect_success 'submodule update - rebase false in .git/config' '
+test_expect_success 'submodule update - checkout in .git/config' '
 	(cd super &&
-	 git config submodule.submodule.rebase false
+	 git config submodule.submodule.update checkout
 	) &&
 	(cd super/submodule &&
 	  git reset --hard HEAD^
@@ -131,9 +131,9 @@ test_expect_success 'submodule init picks up rebase' '
 	(cd super &&
 	 git config submodule.rebasing.url git://non-existing/git &&
 	 git config submodule.rebasing.path does-not-matter &&
-	 git config submodule.rebasing.rebase true &&
+	 git config submodule.rebasing.update rebase &&
 	 git submodule init rebasing &&
-	 test true = $(git config --bool submodule.rebasing.rebase)
+	 test "rebase" = $(git config submodule.rebasing.update)
 	)
 '
 
