@@ -3171,6 +3171,8 @@ sub find_rev_before {
 	my ($self, $rev, $eq_ok, $min_rev) = @_;
 	--$rev unless $eq_ok;
 	$min_rev ||= 1;
+	my $max_rev = $self->rev_map_max;
+	$rev = $max_rev if ($rev > $max_rev);
 	while ($rev >= $min_rev) {
 		if (my $c = $self->rev_map_get($rev)) {
 			return ($rev, $c);
