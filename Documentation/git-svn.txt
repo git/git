@@ -216,7 +216,7 @@ config key: svn.commiturl (overwrites all svn-remote.<name>.commiturl options)
 The following features from `svn log' are supported:
 +
 --
---revision=<n>[:<n>];;
+-r/--revision=<n>[:<n>];;
 	is supported, non-numeric args are not:
 	HEAD, NEXT, BASE, PREV, etc ...
 -v/--verbose;;
@@ -313,6 +313,63 @@ Any other arguments are passed directly to 'git-log'
 'show-externals'::
 	Shows the Subversion externals.  Use -r/--revision to specify a
 	specific revision.
+
+'reset'::
+	Undoes the effects of 'fetch' back to the specified revision.
+	This allows you to re-'fetch' an SVN revision.  Normally the
+	contents of an SVN revision should never change and 'reset'
+	should not be necessary.  However, if SVN permissions change,
+	or if you alter your --ignore-paths option, a 'fetch' may fail
+	with "not found in commit" (file not previously visible) or
+	"checksum mismatch" (missed a modification).  If the problem
+	file cannot be ignored forever (with --ignore-paths) the only
+	way to repair the repo is to use 'reset'.
+
+Only the rev_map and refs/remotes/git-svn are changed.  Follow 'reset'
+with a 'fetch' and then 'git-reset' or 'git-rebase' to move local
+branches onto the new tree.
+
+-r/--revision=<n>;;
+	Specify the most recent revision to keep.  All later revisions
+	are discarded.
+-p/--parent;;
+	Discard the specified revision as well, keeping the nearest
+	parent instead.
+Example:;;
+Assume you have local changes in "master", but you need to refetch "r2".
+
+------------
+    r1---r2---r3 remotes/git-svn
+                \
+                 A---B master
+------------
+
+Fix the ignore-paths or SVN permissions problem that caused "r2" to
+be incomplete in the first place.  Then:
+
+[verse]
+git svn reset -r2 -p
+git svn fetch
+
+------------
+    r1---r2'--r3' remotes/git-svn
+      \
+       r2---r3---A---B master
+------------
+
+Then fixup "master" with 'git-rebase'.
+Do NOT use 'git-merge' or your history will not be compatible with a
+future 'dcommit'!
+
+[verse]
+git rebase --onto remotes/git-svn A^ master
+
+------------
+    r1---r2'--r3' remotes/git-svn
+                \
+                 A'--B' master
+------------
+
 
 --
 

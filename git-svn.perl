@@ -211,6 +211,10 @@ my %cmd = (
 	'blame' => [ \&Git::SVN::Log::cmd_blame,
 	            "Show what revision and author last modified each line of a file",
 		    { 'git-format' => \$_git_format } ],
+	'reset' => [ \&cmd_reset,
+		     "Undo fetches back to the specified SVN revision",
+		     { 'revision|r=s' => \$_revision,
+		       'parent|p' => \$_fetch_parent } ],
 );
 
 my $cmd;
@@ -1052,6 +1056,20 @@ sub cmd_info {
 	}
 
 	print $result, "\n";
+}
+
+sub cmd_reset {
+	my $target = shift || $_revision or die "SVN revision required\n";
+	$target = $1 if $target =~ /^r(\d+)$/;
+	$target =~ /^\d+$/ or die "Numeric SVN revision expected\n";
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	unless ($gs) {
+		die "Unable to determine upstream SVN information from ".
+		    "history\n";
+	}
+	my ($r, $c) = $gs->find_rev_before($target, not $_fetch_parent);
+	$gs->rev_map_set($r, $c, 'reset', $uuid);
+	print "r$r = $c ($gs->{ref_id})\n";
 }
 
 ########################### utility functions #########################
@@ -3023,6 +3041,14 @@ sub _rev_map_set {
 	  croak "write: $!";
 }
 
+sub _rev_map_reset {
+	my ($fh, $rev, $commit) = @_;
+	my $c = _rev_map_get($fh, $rev);
+	$c eq $commit or die "_rev_map_reset(@_) commit $c does not match!\n";
+	my $offset = sysseek($fh, 0, SEEK_CUR) or croak "seek: $!";
+	truncate $fh, $offset or croak "truncate: $!";
+}
+
 sub mkfile {
 	my ($path) = @_;
 	unless (-e $path) {
@@ -3039,6 +3065,7 @@ sub rev_map_set {
 	my $db = $self->map_path($uuid);
 	my $db_lock = "$db.lock";
 	my $sig;
+	$update_ref ||= 0;
 	if ($update_ref) {
 		$SIG{INT} = $SIG{HUP} = $SIG{TERM} = $SIG{ALRM} = $SIG{PIPE} =
 		            $SIG{USR1} = $SIG{USR2} = sub { $sig = $_[0] };
@@ -3062,7 +3089,8 @@ sub rev_map_set {
 
 	sysopen(my $fh, $db_lock, O_RDWR | O_CREAT)
 	     or croak "Couldn't open $db_lock: $!\n";
-	_rev_map_set($fh, $rev, $commit);
+	$update_ref eq 'reset' ? _rev_map_reset($fh, $rev, $commit) :
+				 _rev_map_set($fh, $rev, $commit);
 	if ($sync) {
 		$fh->flush or die "Couldn't flush $db_lock: $!\n";
 		$fh->sync or die "Couldn't sync $db_lock: $!\n";
@@ -3070,7 +3098,9 @@ sub rev_map_set {
 	close $fh or croak $!;
 	if ($update_ref) {
 		$_head = $self;
-		command_noisy('update-ref', '-m', "r$rev",
+		my $note = "";
+		$note = " ($update_ref)" if ($update_ref !~ /^\d*$/);
+		command_noisy('update-ref', '-m', "r$rev$note",
 		              $self->refname, $commit);
 	}
 	rename $db_lock, $db or die "rev_map_set(@_): ", "Failed to rename: ",
@@ -3132,12 +3162,19 @@ sub rev_map_get {
 	return undef unless -e $map_path;
 
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
+	my $c = _rev_map_get($fh, $rev);
+	close($fh) or croak "close: $!";
+	$c
+}
+
+sub _rev_map_get {
+	my ($fh, $rev) = @_;
+
 	binmode $fh or croak "binmode: $!";
 	my $size = (stat($fh))[7];
 	($size % 24) == 0 or croak "inconsistent size: $size";
 
 	if ($size == 0) {
-		close $fh or croak "close: $fh";
 		return undef;
 	}
 
@@ -3155,11 +3192,9 @@ sub rev_map_get {
 		} elsif ($r > $rev) {
 			$u = $i - 24;
 		} else { # $r == $rev
-			close($fh) or croak "close: $!";
 			return $c eq ('0' x 40) ? undef : $c;
 		}
 	}
-	close($fh) or croak "close: $!";
 	undef;
 }
 
