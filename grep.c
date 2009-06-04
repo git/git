@@ -331,7 +331,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 
 	if (hit && p->word_regexp) {
 		if ((pmatch[0].rm_so < 0) ||
-		    (eol - bol) <= pmatch[0].rm_so ||
+		    (eol - bol) < pmatch[0].rm_so ||
 		    (pmatch[0].rm_eo < 0) ||
 		    (eol - bol) < pmatch[0].rm_eo)
 			die("regexp returned nonsense");
@@ -348,6 +348,10 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 		      !word_char(bol[pmatch[0].rm_eo])) )
 			;
 		else
+			hit = 0;
+
+		/* Words consist of at least one character. */
+		if (pmatch->rm_so == pmatch->rm_eo)
 			hit = 0;
 
 		if (!hit && pmatch[0].rm_so + bol + 1 < eol) {

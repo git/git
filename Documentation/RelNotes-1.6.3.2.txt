@@ -37,13 +37,17 @@ Fixes since v1.6.3.1
    the first hunk that adds a line at the top was split into two and
    both halves are marked to be used.
 
+ * "git blame path" misbehaved at the commit where path became file
+   from a directory with some files in it.
+
  * "git for-each-ref" had a segfaulting bug when dealing with a tag object
    created by an ancient git.
 
  * "git format-patch -k" still added patch numbers if format.numbered
    configuration was set.
 
- * "git grep --color ''" did not terminate.
+ * "git grep --color ''" did not terminate.  The command also had
+   subtle bugs with its -w option.
 
  * http-push had a small use-after-free bug.
 
@@ -55,9 +59,3 @@ Fixes since v1.6.3.1
 
 Many other general usability updates around help text, diagnostic messages
 and documentation are included as well.
-
----
-exec >/var/tmp/1
-O=v1.6.3.1-68-g456cb4c
-echo O=$(git describe maint)
-git shortlog --no-merges $O..maint
