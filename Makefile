@@ -723,7 +723,7 @@ ifeq ($(uname_S),SunOS)
 	endif
 	INSTALL = /usr/ucb/install
 	TAR = gtar
-	BASIC_CFLAGS += -D__EXTENSIONS__
+	BASIC_CFLAGS += -D__EXTENSIONS__ -D__sun__
 endif
 ifeq ($(uname_O),Cygwin)
 	NO_D_TYPE_IN_DIRENT = YesPlease
