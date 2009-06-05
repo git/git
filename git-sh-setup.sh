@@ -11,6 +11,8 @@
 # exporting it.
 unset CDPATH
 
+# @@PATH@@:$PATH
+
 die() {
 	echo >&2 "$@"
 	exit 1
