@@ -705,7 +705,7 @@ ifeq ($(uname_S),SunOS)
 	NO_STRCASESTR = YesPlease
 	NO_MEMMEM = YesPlease
 	NO_MKDTEMP = YesPlease
-	OLD_ICONV = UnfortunatelyYes
+	NO_MKSTEMPS = YesPlease
 	ifeq ($(uname_R),5.8)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
