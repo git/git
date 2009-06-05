@@ -91,6 +91,10 @@ all::
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 #
+# Define NEEDS_RESOLV if linking with -lnsl and/or -lsocket is not enough.
+# Notably on Solaris hstrerror resides in libresolv and on Solaris 7
+# inet_ntop and inet_pton additionally reside there.
+#
 # Define NO_MMAP if you want to avoid mmap.
 #
 # Define NO_PTHREADS if you do not have or do not want to use Pthreads.
@@ -700,7 +704,6 @@ ifeq ($(uname_S),SunOS)
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
 	NO_MEMMEM = YesPlease
-	NO_HSTRERROR = YesPlease
 	NO_MKDTEMP = YesPlease
 	OLD_ICONV = UnfortunatelyYes
 	ifeq ($(uname_R),5.8)
@@ -714,6 +717,9 @@ ifeq ($(uname_S),SunOS)
 		NO_SETENV = YesPlease
 		NO_C99_FORMAT = YesPlease
 		NO_STRTOUMAX = YesPlease
+	endif
+	ifdef NO_IPV6
+		NEEDS_RESOLV = YesPlease
 	endif
 	INSTALL = /usr/ucb/install
 	TAR = gtar
@@ -955,6 +961,9 @@ ifdef NEEDS_SOCKET
 endif
 ifdef NEEDS_NSL
 	EXTLIBS += -lnsl
+endif
+ifdef NEEDS_RESOLV
+	EXTLIBS += -lresolv
 endif
 ifdef NO_D_TYPE_IN_DIRENT
 	BASIC_CFLAGS += -DNO_D_TYPE_IN_DIRENT
