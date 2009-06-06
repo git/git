@@ -585,6 +585,54 @@ struct commit_list *filter_skipped(struct commit_list *list,
 	return filtered;
 }
 
+static struct commit_list *apply_skip_ratio(struct commit_list *list,
+					    int count,
+					    int skip_num, int skip_denom)
+{
+	int index, i;
+	struct commit_list *cur, *previous;
+
+	cur = list;
+	previous = NULL;
+	index = count * skip_num / skip_denom;
+
+	for (i = 0; cur; cur = cur->next, i++) {
+		if (i == index) {
+			if (hashcmp(cur->item->object.sha1, current_bad_sha1))
+				return cur;
+			if (previous)
+				return previous;
+			return list;
+		}
+		previous = cur;
+	}
+
+	return list;
+}
+
+static struct commit_list *managed_skipped(struct commit_list *list,
+					   struct commit_list **tried)
+{
+	int count, skipped_first;
+	int skip_num, skip_denom;
+
+	*tried = NULL;
+
+	if (!skipped_revs.sha1_nr)
+		return list;
+
+	list = filter_skipped(list, tried, 0, &count, &skipped_first);
+
+	if (!skipped_first)
+		return list;
+
+	/* Use alternatively 1/5, 2/5 and 3/5 as skip ratio. */
+	skip_num = count % 3 + 1;
+	skip_denom = 5;
+
+	return apply_skip_ratio(list, count, skip_num, skip_denom);
+}
+
 static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
 			     const char *bad_format, const char *good_format,
 			     int read_paths)
@@ -897,7 +945,7 @@ int bisect_next_all(const char *prefix)
 
 	revs.commits = find_bisection(revs.commits, &reaches, &all,
 				       !!skipped_revs.sha1_nr);
-	revs.commits = filter_skipped(revs.commits, &tried, 0, NULL, NULL);
+	revs.commits = managed_skipped(revs.commits, &tried);
 
 	if (!revs.commits) {
 		/*
