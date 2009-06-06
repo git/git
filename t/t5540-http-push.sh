@@ -67,6 +67,22 @@ test_expect_success ' push to remote repository with unpacked refs' '
 	 test $HEAD = $(git rev-parse --verify HEAD))
 '
 
+test_expect_failure 'http-push fetches unpacked objects' '
+	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
+		"$HTTPD_DOCUMENT_ROOT_PATH"/test_repo_unpacked.git &&
+
+	git clone $HTTPD_URL/test_repo_unpacked.git \
+		"$ROOT_PATH"/fetch_unpacked &&
+
+	# By reset, we force git to retrieve the object
+	(cd "$ROOT_PATH"/fetch_unpacked &&
+	 git reset --hard HEAD^ &&
+	 git remote rm origin &&
+	 git reflog expire --expire=0 --all &&
+	 git prune &&
+	 git push -f -v $HTTPD_URL/test_repo_unpacked.git master)
+'
+
 test_expect_success 'create and delete remote branch' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	git checkout -b dev &&
