@@ -71,7 +71,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	struct object_request *obj_req = (struct object_request *)data;
 	do {
 		ssize_t retval = xwrite(obj_req->local,
-				       (char *) ptr + posn, size - posn);
+					(char *) ptr + posn, size - posn);
 		if (retval < 0)
 			return posn;
 		posn += retval;
@@ -84,7 +84,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 		obj_req->stream.avail_out = sizeof(expn);
 		obj_req->zret = git_inflate(&obj_req->stream, Z_SYNC_FLUSH);
 		git_SHA1_Update(&obj_req->c, expn,
-			    sizeof(expn) - obj_req->stream.avail_out);
+				sizeof(expn) - obj_req->stream.avail_out);
 	} while (obj_req->stream.avail_in && obj_req->zret == Z_OK);
 	data_received++;
 	return size;
@@ -119,7 +119,8 @@ static void start_object_request(struct walker *walker,
 		error("fd leakage in start: %d", obj_req->local);
 	obj_req->local = open(obj_req->tmpfile,
 			      O_WRONLY | O_CREAT | O_EXCL, 0666);
-	/* This could have failed due to the "lazy directory creation";
+	/*
+	 * This could have failed due to the "lazy directory creation";
 	 * try to mkdir the last path component.
 	 */
 	if (obj_req->local < 0 && errno == ENOENT) {
@@ -158,8 +159,10 @@ static void start_object_request(struct walker *walker,
 	strcpy(posn, hex + 2);
 	strcpy(obj_req->url, url);
 
-	/* If a previous temp file is present, process what was already
-	   fetched. */
+	/*
+	 * If a previous temp file is present, process what was already
+	 * fetched.
+	 */
 	prevlocal = open(prevfile, O_RDONLY);
 	if (prevlocal != -1) {
 		do {
@@ -168,19 +171,20 @@ static void start_object_request(struct walker *walker,
 				if (fwrite_sha1_file(prev_buf,
 						     1,
 						     prev_read,
-						     obj_req) == prev_read) {
+						     obj_req) == prev_read)
 					prev_posn += prev_read;
-				} else {
+				else
 					prev_read = -1;
-				}
 			}
 		} while (prev_read > 0);
 		close(prevlocal);
 	}
 	unlink_or_warn(prevfile);
 
-	/* Reset inflate/SHA1 if there was an error reading the previous temp
-	   file; also rewind to the beginning of the local file. */
+	/*
+	 * Reset inflate/SHA1 if there was an error reading the previous temp
+	 * file; also rewind to the beginning of the local file.
+	 */
 	if (prev_read == -1) {
 		memset(&obj_req->stream, 0, sizeof(obj_req->stream));
 		git_inflate_init(&obj_req->stream);
@@ -203,8 +207,10 @@ static void start_object_request(struct walker *walker,
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, data->no_pragma_header);
 
-	/* If we have successfully processed data from a previous fetch
-	   attempt, only fetch the data we don't already have. */
+	/*
+	 * If we have successfully processed data from a previous fetch
+	 * attempt, only fetch the data we don't already have.
+	 */
 	if (prev_posn>0) {
 		if (walker->get_verbosely)
 			fprintf(stderr,
@@ -221,7 +227,8 @@ static void start_object_request(struct walker *walker,
 	if (!start_active_slot(slot)) {
 		obj_req->state = ABORTED;
 		obj_req->slot = NULL;
-		close(obj_req->local); obj_req->local = -1;
+		close(obj_req->local);
+		obj_req->local = -1;
 		free(obj_req->url);
 		return;
 	}
@@ -231,7 +238,8 @@ static void finish_object_request(struct object_request *obj_req)
 {
 	struct stat st;
 
-	close(obj_req->local); obj_req->local = -1;
+	close(obj_req->local);
+	obj_req->local = -1;
 
 	if (obj_req->http_code == 416) {
 		fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
@@ -350,9 +358,8 @@ static void prefetch(struct walker *walker, unsigned char *sha1)
 		object_queue_head = newreq;
 	} else {
 		tail = object_queue_head;
-		while (tail->next != NULL) {
+		while (tail->next != NULL)
 			tail = tail->next;
-		}
 		tail->next = newreq;
 	}
 
@@ -401,8 +408,10 @@ static int fetch_index(struct walker *walker, struct alt_base *repo, unsigned ch
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, data->no_pragma_header);
 	slot->local = indexfile;
 
-	/* If there is data present from a previous transfer attempt,
-	   resume where it left off */
+	/*
+	 * If there is data present from a previous transfer attempt,
+	 * resume where it left off
+	 */
 	prev_posn = ftell(indexfile);
 	if (prev_posn>0) {
 		if (walker->get_verbosely)
@@ -507,7 +516,8 @@ static void process_alternates_response(void *callback_data)
 			struct alt_base *newalt;
 			char *target = NULL;
 			if (data[i] == '/') {
-				/* This counts
+				/*
+				 * This counts
 				 * http://git.host/pub/scm/linux.git/
 				 * -----------here^
 				 * so memcpy(dst, base, serverlen) will
@@ -520,7 +530,8 @@ static void process_alternates_response(void *callback_data)
 					okay = 1;
 				}
 			} else if (!memcmp(data + i, "../", 3)) {
-				/* Relative URL; chop the corresponding
+				/*
+				 * Relative URL; chop the corresponding
 				 * number of subpath from base (and ../
 				 * from data), and concatenate the result.
 				 *
@@ -549,7 +560,7 @@ static void process_alternates_response(void *callback_data)
 				}
 				/* If the server got removed, give up. */
 				okay = strchr(base, ':') - base + 3 <
-					serverlen;
+				       serverlen;
 			} else if (alt_req->http_specific) {
 				char *colon = strchr(data + i, ':');
 				char *slash = strchr(data + i, '/');
@@ -593,9 +604,11 @@ static void fetch_alternates(struct walker *walker, const char *base)
 	struct alternates_request alt_req;
 	struct walker_data *cdata = walker->data;
 
-	/* If another request has already started fetching alternates,
-	   wait for them to arrive and return to processing this request's
-	   curl message */
+	/*
+	 * If another request has already started fetching alternates,
+	 * wait for them to arrive and return to processing this request's
+	 * curl message
+	 */
 #ifdef USE_CURL_MULTI
 	while (cdata->got_alternates == 0) {
 		step_active_slots();
@@ -615,8 +628,10 @@ static void fetch_alternates(struct walker *walker, const char *base)
 	url = xmalloc(strlen(base) + 31);
 	sprintf(url, "%s/objects/info/http-alternates", base);
 
-	/* Use a callback to process the result, since another request
-	   may fail and need to have alternates loaded before continuing */
+	/*
+	 * Use a callback to process the result, since another request
+	 * may fail and need to have alternates loaded before continuing
+	 */
 	slot = get_active_slot();
 	slot->callback_func = process_alternates_response;
 	alt_req.walker = walker;
@@ -762,8 +777,10 @@ static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned cha
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, data->no_pragma_header);
 	slot->local = packfile;
 
-	/* If there is data present from a previous transfer attempt,
-	   resume where it left off */
+	/*
+	 * If there is data present from a previous transfer attempt,
+	 * resume where it left off
+	 */
 	prev_posn = ftell(packfile);
 	if (prev_posn>0) {
 		if (walker->get_verbosely)
@@ -840,18 +857,18 @@ static int fetch_object(struct walker *walker, struct alt_base *repo, unsigned c
 	}
 
 #ifdef USE_CURL_MULTI
-	while (obj_req->state == WAITING) {
+	while (obj_req->state == WAITING)
 		step_active_slots();
-	}
 #else
 	start_object_request(walker, obj_req);
 #endif
 
-	while (obj_req->state == ACTIVE) {
+	while (obj_req->state == ACTIVE)
 		run_active_slot(obj_req->slot);
-	}
+
 	if (obj_req->local != -1) {
-		close(obj_req->local); obj_req->local = -1;
+		close(obj_req->local);
+		obj_req->local = -1;
 	}
 
 	if (obj_req->state == ABORTED) {

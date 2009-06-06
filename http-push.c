@@ -276,7 +276,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	struct transfer_request *request = (struct transfer_request *)data;
 	do {
 		ssize_t retval = xwrite(request->local_fileno,
-				       (char *) ptr + posn, size - posn);
+					(char *) ptr + posn, size - posn);
 		if (retval < 0)
 			return posn;
 		posn += retval;
@@ -289,7 +289,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 		request->stream.avail_out = sizeof(expn);
 		request->zret = git_inflate(&request->stream, Z_SYNC_FLUSH);
 		git_SHA1_Update(&request->c, expn,
-			    sizeof(expn) - request->stream.avail_out);
+				sizeof(expn) - request->stream.avail_out);
 	} while (request->stream.avail_in && request->zret == Z_OK);
 	data_received++;
 	return size;
@@ -323,7 +323,8 @@ static void start_fetch_loose(struct transfer_request *request)
 		error("fd leakage in start: %d", request->local_fileno);
 	request->local_fileno = open(request->tmpfile,
 				     O_WRONLY | O_CREAT | O_EXCL, 0666);
-	/* This could have failed due to the "lazy directory creation";
+	/*
+	 * This could have failed due to the "lazy directory creation";
 	 * try to mkdir the last path component.
 	 */
 	if (request->local_fileno < 0 && errno == ENOENT) {
@@ -353,8 +354,10 @@ static void start_fetch_loose(struct transfer_request *request)
 	url = get_remote_object_url(repo->url, hex, 0);
 	request->url = xstrdup(url);
 
-	/* If a previous temp file is present, process what was already
-	   fetched. */
+	/*
+	 * If a previous temp file is present, process what was already
+	 * fetched.
+	 */
 	prevlocal = open(prevfile, O_RDONLY);
 	if (prevlocal != -1) {
 		do {
@@ -363,19 +366,20 @@ static void start_fetch_loose(struct transfer_request *request)
 				if (fwrite_sha1_file(prev_buf,
 						     1,
 						     prev_read,
-						     request) == prev_read) {
+						     request) == prev_read)
 					prev_posn += prev_read;
-				} else {
+				else
 					prev_read = -1;
-				}
 			}
 		} while (prev_read > 0);
 		close(prevlocal);
 	}
 	unlink_or_warn(prevfile);
 
-	/* Reset inflate/SHA1 if there was an error reading the previous temp
-	   file; also rewind to the beginning of the local file. */
+	/*
+	 * Reset inflate/SHA1 if there was an error reading the previous temp
+	 * file; also rewind to the beginning of the local file.
+	 */
 	if (prev_read == -1) {
 		memset(&request->stream, 0, sizeof(request->stream));
 		git_inflate_init(&request->stream);
@@ -398,8 +402,10 @@ static void start_fetch_loose(struct transfer_request *request)
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 
-	/* If we have successfully processed data from a previous fetch
-	   attempt, only fetch the data we don't already have. */
+	/*
+	 * If we have successfully processed data from a previous fetch
+	 * attempt, only fetch the data we don't already have.
+	 */
 	if (prev_posn>0) {
 		if (push_verbosely)
 			fprintf(stderr,
@@ -514,8 +520,10 @@ static void start_fetch_packed(struct transfer_request *request)
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 	slot->local = packfile;
 
-	/* If there is data present from a previous transfer attempt,
-	   resume where it left off */
+	/*
+	 * If there is data present from a previous transfer attempt,
+	 * resume where it left off
+	 */
 	prev_posn = ftell(packfile);
 	if (prev_posn>0) {
 		if (push_verbosely)
@@ -780,7 +788,8 @@ static void finish_request(struct transfer_request *request)
 			aborted = 1;
 		}
 	} else if (request->state == RUN_FETCH_LOOSE) {
-		close(request->local_fileno); request->local_fileno = -1;
+		close(request->local_fileno);
+		request->local_fileno = -1;
 
 		if (request->curl_result != CURLE_OK &&
 		    request->http_code != 416) {
@@ -803,9 +812,8 @@ static void finish_request(struct transfer_request *request)
 					move_temp_to_file(
 						request->tmpfile,
 						request->filename);
-				if (request->rename == 0) {
+				if (request->rename == 0)
 					request->obj->flags |= (LOCAL | REMOTE);
-				}
 			}
 		}
 
@@ -1010,8 +1018,10 @@ static int fetch_index(unsigned char *sha1)
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 	slot->local = indexfile;
 
-	/* If there is data present from a previous transfer attempt,
-	   resume where it left off */
+	/*
+	 * If there is data present from a previous transfer attempt,
+	 * resume where it left off
+	 */
 	prev_posn = ftell(indexfile);
 	if (prev_posn>0) {
 		if (push_verbosely)
