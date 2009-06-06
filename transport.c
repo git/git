@@ -519,6 +519,7 @@ static struct ref *get_refs_via_curl(struct transport *transport, int for_push)
 		free(ref);
 	}
 
+	free(refs_url);
 	return refs;
 }
 
