@@ -5,7 +5,6 @@
 #include "http.h"
 
 #define PREV_BUF_SIZE 4096
-#define RANGE_HEADER_SIZE 30
 
 struct alt_base
 {
@@ -57,7 +56,6 @@ struct walker_data {
 	const char *url;
 	int got_alternates;
 	struct alt_base *alt;
-	struct curl_slist *no_pragma_header;
 };
 
 static struct object_request *object_queue_head;
@@ -108,7 +106,6 @@ static void start_object_request(struct walker *walker,
 	char range[RANGE_HEADER_SIZE];
 	struct curl_slist *range_header = NULL;
 	struct active_request_slot *slot;
-	struct walker_data *data = walker->data;
 
 	snprintf(prevfile, sizeof(prevfile), "%s.prev", obj_req->filename);
 	unlink_or_warn(prevfile);
@@ -205,7 +202,7 @@ static void start_object_request(struct walker *walker,
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, obj_req->errorstr);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, data->no_pragma_header);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 
 	/*
 	 * If we have successfully processed data from a previous fetch
@@ -354,6 +351,8 @@ static void prefetch(struct walker *walker, unsigned char *sha1)
 	newreq->slot = NULL;
 	newreq->next = NULL;
 
+	http_is_verbose = walker->get_verbosely;
+
 	if (object_queue_head == NULL) {
 		object_queue_head = newreq;
 	} else {
@@ -379,7 +378,6 @@ static int fetch_index(struct walker *walker, struct alt_base *repo, unsigned ch
 	long prev_posn = 0;
 	char range[RANGE_HEADER_SIZE];
 	struct curl_slist *range_header = NULL;
-	struct walker_data *data = walker->data;
 
 	FILE *indexfile;
 	struct active_request_slot *slot;
@@ -430,7 +428,7 @@ static int fetch_index(struct walker *walker, struct alt_base *repo, unsigned ch
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, indexfile);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, data->no_pragma_header);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 	slot->local = indexfile;
 
 	/*
@@ -768,7 +766,6 @@ static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned cha
 	long prev_posn = 0;
 	char range[RANGE_HEADER_SIZE];
 	struct curl_slist *range_header = NULL;
-	struct walker_data *data = walker->data;
 
 	struct active_request_slot *slot;
 	struct slot_results results;
@@ -802,7 +799,7 @@ static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned cha
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, packfile);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, data->no_pragma_header);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 	slot->local = packfile;
 
 	/*
@@ -948,10 +945,7 @@ static int fetch_ref(struct walker *walker, struct ref *ref)
 
 static void cleanup(struct walker *walker)
 {
-	struct walker_data *data = walker->data;
 	http_cleanup();
-
-	curl_slist_free_all(data->no_pragma_header);
 }
 
 struct walker *get_http_walker(const char *url, struct remote *remote)
@@ -961,8 +955,6 @@ struct walker *get_http_walker(const char *url, struct remote *remote)
 	struct walker *walker = xmalloc(sizeof(struct walker));
 
 	http_init(remote);
-
-	data->no_pragma_header = curl_slist_append(NULL, "Pragma:");
 
 	data->alt = xmalloc(sizeof(*data->alt));
 	data->alt->base = xmalloc(strlen(url) + 1);

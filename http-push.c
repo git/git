@@ -27,7 +27,6 @@ enum XML_Status {
 #endif
 
 #define PREV_BUF_SIZE 4096
-#define RANGE_HEADER_SIZE 30
 
 /* DAV methods */
 #define DAV_LOCK "LOCK"
@@ -75,8 +74,6 @@ enum XML_Status {
 static int pushing;
 static int aborted;
 static signed char remote_dir_exists[256];
-
-static struct curl_slist *no_pragma_header;
 
 static int push_verbosely;
 static int push_all = MATCH_REFS_NONE;
@@ -2250,6 +2247,7 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--verbose")) {
 				push_verbosely = 1;
+				http_is_verbose = 1;
 				continue;
 			}
 			if (!strcmp(arg, "-d")) {
@@ -2298,8 +2296,6 @@ int main(int argc, char **argv)
 	ALLOC_GROW(remote->url, remote->url_nr + 1, remote->url_alloc);
 	remote->url[remote->url_nr++] = repo->url;
 	http_init(remote);
-
-	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
 	if (repo->url && repo->url[strlen(repo->url)-1] != '/') {
 		rewritten_url = xmalloc(strlen(repo->url)+2);
@@ -2502,8 +2498,6 @@ int main(int argc, char **argv)
 	if (info_ref_lock)
 		unlock_remote(info_ref_lock);
 	free(repo);
-
-	curl_slist_free_all(no_pragma_header);
 
 	http_cleanup();
 

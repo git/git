@@ -2,6 +2,7 @@
 
 int data_received;
 int active_requests;
+int http_is_verbose;
 
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
@@ -28,6 +29,8 @@ static const char *curl_http_proxy;
 static char *user_name, *user_pass;
 
 static struct curl_slist *pragma_header;
+
+struct curl_slist *no_pragma_header;
 
 static struct active_request_slot *active_queue_head;
 
@@ -276,6 +279,8 @@ void http_init(struct remote *remote)
 	char *low_speed_limit;
 	char *low_speed_time;
 
+	http_is_verbose = 0;
+
 	git_config(http_options, NULL);
 
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -284,6 +289,7 @@ void http_init(struct remote *remote)
 		curl_http_proxy = xstrdup(remote->http_proxy);
 
 	pragma_header = curl_slist_append(pragma_header, "Pragma: no-cache");
+	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
 #ifdef USE_CURL_MULTI
 	{
@@ -365,6 +371,9 @@ void http_cleanup(void)
 
 	curl_slist_free_all(pragma_header);
 	pragma_header = NULL;
+
+	curl_slist_free_all(no_pragma_header);
+	no_pragma_header = NULL;
 
 	if (curl_http_proxy) {
 		free((void *)curl_http_proxy);
