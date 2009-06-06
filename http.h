@@ -88,10 +88,6 @@ extern void add_fill_function(void *data, int (*fill)(void *));
 extern void step_active_slots(void);
 #endif
 
-extern struct curl_slist *no_pragma_header;
-
-#define RANGE_HEADER_SIZE 30
-
 extern void http_init(struct remote *remote);
 extern void http_cleanup(void);
 
@@ -113,6 +109,13 @@ static inline int missing__target(int code, int result)
 }
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
+
+/* Helpers for modifying and creating URLs */
+extern void append_remote_object_url(struct strbuf *buf, const char *url,
+				     const char *hex,
+				     int only_two_digit_prefix);
+extern char *get_remote_object_url(const char *url, const char *hex,
+				   int only_two_digit_prefix);
 
 /* Options for http_request_*() */
 #define HTTP_NO_CACHE		1
@@ -166,5 +169,31 @@ extern struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url);
 extern int finish_http_pack_request(struct http_pack_request *preq);
 extern void release_http_pack_request(struct http_pack_request *preq);
+
+/* Helpers for fetching object */
+struct http_object_request
+{
+	char *url;
+	char filename[PATH_MAX];
+	char tmpfile[PATH_MAX];
+	int localfile;
+	CURLcode curl_result;
+	char errorstr[CURL_ERROR_SIZE];
+	long http_code;
+	unsigned char sha1[20];
+	unsigned char real_sha1[20];
+	git_SHA_CTX c;
+	z_stream stream;
+	int zret;
+	int rename;
+	struct active_request_slot *slot;
+};
+
+extern struct http_object_request *new_http_object_request(
+	const char *base_url, unsigned char *sha1);
+extern void process_http_object_request(struct http_object_request *freq);
+extern int finish_http_object_request(struct http_object_request *freq);
+extern void abort_http_object_request(struct http_object_request *freq);
+extern void release_http_object_request(struct http_object_request *freq);
 
 #endif /* HTTP_H */
