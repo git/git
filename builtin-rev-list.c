@@ -262,7 +262,9 @@ int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 	if (!revs->commits && !(flags & BISECT_SHOW_TRIED))
 		return 1;
 
-	revs->commits = filter_skipped(revs->commits, &tried, flags & BISECT_SHOW_ALL);
+	revs->commits = filter_skipped(revs->commits, &tried,
+				       flags & BISECT_SHOW_ALL,
+				       NULL, NULL);
 
 	/*
 	 * revs->commits can reach "reaches" commits among
