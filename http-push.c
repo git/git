@@ -2297,7 +2297,9 @@ int main(int argc, char **argv)
 		repo->url = rewritten_url;
 	}
 
+#ifdef USE_CURL_MULTI
 	is_running_queue = 0;
+#endif
 
 	/* Verify DAV compliance/lock support */
 	if (!locking_available()) {
