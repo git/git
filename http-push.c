@@ -846,11 +846,12 @@ static void finish_request(struct transfer_request *request)
 }
 
 #ifdef USE_CURL_MULTI
+static int is_running_queue;
 static int fill_active_slot(void *unused)
 {
 	struct transfer_request *request;
 
-	if (aborted)
+	if (aborted || !is_running_queue)
 		return 0;
 
 	for (request = request_queue_head; request; request = request->next) {
@@ -2173,6 +2174,25 @@ static int delete_remote_branch(char *pattern, int force)
 	return 0;
 }
 
+void run_request_queue(void)
+{
+#ifdef USE_CURL_MULTI
+	is_running_queue = 1;
+	fill_active_slots();
+	add_fill_function(NULL, fill_active_slot);
+#endif
+	do {
+		finish_all_active_slots();
+#ifdef USE_CURL_MULTI
+		fill_active_slots();
+#endif
+	} while (request_queue_head && !aborted);
+
+#ifdef USE_CURL_MULTI
+	is_running_queue = 0;
+#endif
+}
+
 int main(int argc, char **argv)
 {
 	struct transfer_request *request;
@@ -2277,6 +2297,8 @@ int main(int argc, char **argv)
 		repo->url = rewritten_url;
 	}
 
+	is_running_queue = 0;
+
 	/* Verify DAV compliance/lock support */
 	if (!locking_available()) {
 		rc = 1;
@@ -2306,6 +2328,7 @@ int main(int argc, char **argv)
 	local_refs = get_local_heads();
 	fprintf(stderr, "Fetching remote heads...\n");
 	get_dav_remote_heads();
+	run_request_queue();
 
 	/* Remove a remote branch if -d or -D was specified */
 	if (delete_branch) {
@@ -2435,16 +2458,8 @@ int main(int argc, char **argv)
 		if (objects_to_send)
 			fprintf(stderr, "    sending %d objects\n",
 				objects_to_send);
-#ifdef USE_CURL_MULTI
-		fill_active_slots();
-		add_fill_function(NULL, fill_active_slot);
-#endif
-		do {
-			finish_all_active_slots();
-#ifdef USE_CURL_MULTI
-			fill_active_slots();
-#endif
-		} while (request_queue_head && !aborted);
+
+		run_request_queue();
 
 		/* Update the remote branch if all went well */
 		if (aborted || !update_remote(ref->new_sha1, ref_lock))
