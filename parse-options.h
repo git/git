@@ -71,8 +71,11 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *   PARSE_OPT_NONEG: says that this option cannot be negated
  *   PARSE_OPT_HIDDEN: this option is skipped in the default usage, and
  *                     shown only in the full usage.
- *   PARSE_OPT_LASTARG_DEFAULT: if no argument is given, the default value
- *                              is used.
+ *   PARSE_OPT_LASTARG_DEFAULT: says that this option will take the default
+ *				value if no argument is given when the option
+ *				is last on the command line. If the option is
+ *				not last it will require an argument.
+ *				Should not be used with PARSE_OPT_OPTARG.
  *   PARSE_OPT_NODASH: this option doesn't start with a dash.
  *   PARSE_OPT_LITERAL_ARGHELP: says that argh shouldn't be enclosed in brackets
  *				(i.e. '<argh>') in the help message.
