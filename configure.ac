@@ -467,6 +467,15 @@ AC_CHECK_LIB([c], [socket],
 AC_SUBST(NEEDS_SOCKET)
 test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 
+#
+# Define NEEDS_RESOLV if linking with -lnsl and/or -lsocket is not enough.
+# Notably on Solaris hstrerror resides in libresolv and on Solaris 7
+# inet_ntop and inet_pton additionally reside there.
+AC_CHECK_LIB([resolv], [hstrerror],
+[NEEDS_RESOLV=],
+[NEEDS_RESOLV=YesPlease])
+AC_SUBST(NEEDS_RESOLV)
+test -n "$NEEDS_RESOLV" && LIBS="$LIBS -lresolv"
 
 ## Checks for header files.
 AC_MSG_NOTICE([CHECKS for header files])
