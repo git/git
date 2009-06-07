@@ -577,7 +577,7 @@ EOT
 			if ($need_8bit_cte) {
 				print C2 "MIME-Version: 1.0\n",
 					 "Content-Type: text/plain; ",
-					   "charset=utf-8\n",
+					   "charset=UTF-8\n",
 					 "Content-Transfer-Encoding: 8bit\n";
 			}
 		} elsif (/^MIME-Version:/i) {
@@ -766,7 +766,7 @@ sub unquote_rfc2047 {
 
 sub quote_rfc2047 {
 	local $_ = shift;
-	my $encoding = shift || 'utf-8';
+	my $encoding = shift || 'UTF-8';
 	s/([^-a-zA-Z0-9!*+\/])/sprintf("=%02X", ord($1))/eg;
 	s/(.*)/=\?$encoding\?q\?$1\?=/;
 	return $_;

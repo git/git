@@ -533,7 +533,7 @@ test_expect_success 'utf8 Cc is rfc2047 encoded' '
 	--smtp-server="$(pwd)/fake.sendmail" \
 	outdir/*.patch &&
 	grep "^Cc:" msgtxt1 |
-	grep "=?utf-8?q?=C3=A0=C3=A9=C3=AC=C3=B6=C3=BA?= <utf8@example.com>"
+	grep "=?UTF-8?q?=C3=A0=C3=A9=C3=AC=C3=B6=C3=BA?= <utf8@example.com>"
 '
 
 test_expect_success '--compose adds MIME for utf8 body' '
@@ -550,7 +550,7 @@ test_expect_success '--compose adds MIME for utf8 body' '
 	  --smtp-server="$(pwd)/fake.sendmail" \
 	  $patches &&
 	grep "^utf8 body" msgtxt1 &&
-	grep "^Content-Type: text/plain; charset=utf-8" msgtxt1
+	grep "^Content-Type: text/plain; charset=UTF-8" msgtxt1
 '
 
 test_expect_success '--compose respects user mime type' '
@@ -573,7 +573,7 @@ test_expect_success '--compose respects user mime type' '
 	  $patches &&
 	grep "^utf8 body" msgtxt1 &&
 	grep "^Content-Type: text/plain; charset=iso-8859-1" msgtxt1 &&
-	! grep "^Content-Type: text/plain; charset=utf-8" msgtxt1
+	! grep "^Content-Type: text/plain; charset=UTF-8" msgtxt1
 '
 
 test_expect_success '--compose adds MIME for utf8 subject' '
@@ -586,7 +586,7 @@ test_expect_success '--compose adds MIME for utf8 subject' '
 	  --smtp-server="$(pwd)/fake.sendmail" \
 	  $patches &&
 	grep "^fake edit" msgtxt1 &&
-	grep "^Subject: =?utf-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
+	grep "^Subject: =?UTF-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
 '
 
 test_expect_success 'detects ambiguous reference/file conflict' '
