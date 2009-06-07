@@ -1520,10 +1520,10 @@ $ git commit -a -m "blorpl: typofix"
 ------------------------------------------------
 
 After that, you can go back to what you were working on with
-`git stash apply`:
+`git stash pop`:
 
 ------------------------------------------------
-$ git stash apply
+$ git stash pop
 ------------------------------------------------
 
 

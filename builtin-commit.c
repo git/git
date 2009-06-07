@@ -699,7 +699,11 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	argc = parse_options(argc, argv, builtin_commit_options, usage, 0);
 	logfile = parse_options_fix_filename(prefix, logfile);
+	if (logfile)
+		logfile = xstrdup(logfile);
 	template_file = parse_options_fix_filename(prefix, template_file);
+	if (template_file)
+		template_file = xstrdup(template_file);
 
 	if (force_author && !strchr(force_author, '>'))
 		force_author = find_author_by_nickname(force_author);

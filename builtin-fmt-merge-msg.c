@@ -363,6 +363,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, options, fmt_merge_msg_usage, 0);
 	if (argc > 0)
 		usage_with_options(fmt_merge_msg_usage, options);
+	inpath = parse_options_fix_filename(prefix, inpath);
 
 	if (inpath && strcmp(inpath, "-")) {
 		in = fopen(inpath, "r");

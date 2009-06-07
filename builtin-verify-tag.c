@@ -55,7 +55,7 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 	close(gpg.in);
 	ret = finish_command(&gpg);
 
-	unlink(path);
+	unlink_or_warn(path);
 
 	return ret;
 }

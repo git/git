@@ -825,7 +825,7 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 		fd = hold_lock_file_for_update(&lock, shallow,
 					       LOCK_DIE_ON_ERROR);
 		if (!write_shallow_commits(fd, 0)) {
-			unlink(shallow);
+			unlink_or_warn(shallow);
 			rollback_lock_file(&lock);
 		} else {
 			commit_lock_file(&lock);

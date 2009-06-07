@@ -176,6 +176,9 @@ all::
 # when hardlinking a file to another name and unlinking the original file right
 # away (some NTFS drivers seem to zero the contents in that scenario).
 #
+# Define NO_CROSS_DIRECTORY_HARDLINKS if you plan to distribute the installed
+# programs as a tar, where bin/ and libexec/ might be on different file systems.
+#
 # Define USE_NED_ALLOCATOR if you want to replace the platforms default
 # memory allocators with the nedmalloc allocator written by Niall Douglas.
 
@@ -753,6 +756,7 @@ endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
 	NO_MEMMEM = YesPlease
+	USE_ST_TIMESPEC = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
@@ -1569,6 +1573,7 @@ endif
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
 	{ $(RM) "$$execdir/git-add$X" && \
+		test -z "$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
 		ln "$$bindir/git$X" "$$execdir/git-add$X" 2>/dev/null || \
 		cp "$$bindir/git$X" "$$execdir/git-add$X"; } && \
 	{ for p in $(filter-out git-add$X,$(BUILT_INS)); do \

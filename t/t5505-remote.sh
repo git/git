@@ -494,5 +494,15 @@ test_expect_success 'remote prune to cause a dangling symref' '
 	grep "dangling symref" err
 '
 
+test_expect_success 'show empty remote' '
+
+	test_create_repo empty &&
+	git clone empty empty-clone &&
+	(
+		cd empty-clone &&
+		git remote show origin
+	)
+'
+
 test_done
 

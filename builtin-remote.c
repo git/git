@@ -299,11 +299,11 @@ static int get_push_ref_states(const struct ref *remote_refs,
 		return 0;
 
 	local_refs = get_local_heads();
-	ref = push_map = copy_ref_list(remote_refs);
-	while (ref->next)
-		ref = ref->next;
-	push_tail = &ref->next;
+	push_map = copy_ref_list(remote_refs);
 
+	push_tail = &push_map;
+	while (*push_tail)
+		push_tail = &((*push_tail)->next);
 	match_refs(local_refs, push_map, &push_tail, remote->push_refspec_nr,
 		   remote->push_refspec, MATCH_REFS_NONE);
 
@@ -525,8 +525,8 @@ static int migrate_file(struct remote *remote)
 		path = git_path("remotes/%s", remote->name);
 	else if (remote->origin == REMOTE_BRANCHES)
 		path = git_path("branches/%s", remote->name);
-	if (path && unlink(path))
-		warning("failed to remove '%s'", path);
+	if (path)
+		unlink_or_warn(path);
 	return 0;
 }
 
