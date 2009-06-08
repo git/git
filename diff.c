@@ -3590,6 +3590,7 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	if (start_command(&child) != 0 ||
 	    strbuf_read(&buf, child.out, 0) < 0 ||
 	    finish_command(&child) != 0) {
+		strbuf_release(&buf);
 		remove_tempfile();
 		error("error running textconv command '%s'", pgm);
 		return NULL;
