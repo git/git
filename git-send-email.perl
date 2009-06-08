@@ -772,6 +772,14 @@ sub quote_rfc2047 {
 	return $_;
 }
 
+sub is_rfc2047_quoted {
+	my $s = shift;
+	my $token = '[^][()<>@,;:"\/?.= \000-\037\177-\377]+';
+	my $encoded_text = '[!->@-~]+';
+	length($s) <= 75 &&
+	$s =~ m/^(?:"[[:ascii:]]*"|=\?$token\?$token\?$encoded_text\?=)$/o;
+}
+
 # use the simplest quoting being able to handle the recipient
 sub sanitize_address
 {
@@ -783,7 +791,7 @@ sub sanitize_address
 	}
 
 	# if recipient_name is already quoted, do nothing
-	if ($recipient_name =~ /^("[[:ascii:]]*"|=\?utf-8\?q\?.*\?=)$/) {
+	if (is_rfc2047_quoted($recipient_name)) {
 		return $recipient;
 	}
 
