@@ -1881,10 +1881,10 @@ _git_stash ()
 		save,--*)
 			__gitcomp "--keep-index"
 			;;
-		apply,--*)
+		apply,--*|pop,--*)
 			__gitcomp "--index"
 			;;
-		show,--*|drop,--*|pop,--*|branch,--*)
+		show,--*|drop,--*|branch,--*)
 			COMPREPLY=()
 			;;
 		show,*|apply,*|drop,*|pop,*|branch,*)
