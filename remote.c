@@ -106,6 +106,12 @@ static void add_url_alias(struct remote *remote, const char *url)
 	add_url(remote, alias_url(url));
 }
 
+static void add_pushurl(struct remote *remote, const char *pushurl)
+{
+	ALLOC_GROW(remote->pushurl, remote->pushurl_nr + 1, remote->pushurl_alloc);
+	remote->pushurl[remote->pushurl_nr++] = pushurl;
+}
+
 static struct remote *make_remote(const char *name, int len)
 {
 	struct remote *ret;
@@ -379,6 +385,11 @@ static int handle_config(const char *key, const char *value, void *cb)
 		if (git_config_string(&v, key, value))
 			return -1;
 		add_url(remote, v);
+	} else if (!strcmp(subkey, ".pushurl")) {
+		const char *v;
+		if (git_config_string(&v, key, value))
+			return -1;
+		add_pushurl(remote, v);
 	} else if (!strcmp(subkey, ".push")) {
 		const char *v;
 		if (git_config_string(&v, key, value))
@@ -423,6 +434,9 @@ static void alias_all_urls(void)
 			continue;
 		for (j = 0; j < remotes[i]->url_nr; j++) {
 			remotes[i]->url[j] = alias_url(remotes[i]->url[j]);
+		}
+		for (j = 0; j < remotes[i]->pushurl_nr; j++) {
+			remotes[i]->pushurl[j] = alias_url(remotes[i]->pushurl[j]);
 		}
 	}
 }

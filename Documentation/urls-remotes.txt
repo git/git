@@ -27,10 +27,13 @@ config file would appear like this:
 ------------
 	[remote "<name>"]
 		url = <url>
+		pushurl = <pushurl>
 		push = <refspec>
 		fetch = <refspec>
 ------------
 
+The `<pushurl>` is used for pushes only. It is optional and defaults
+to `<url>`.
 
 Named file in `$GIT_DIR/remotes`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
