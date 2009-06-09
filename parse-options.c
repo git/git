@@ -306,6 +306,28 @@ static void check_typos(const char *arg, const struct option *options)
 	}
 }
 
+static void parse_options_check(const struct option *opts)
+{
+	int err = 0;
+
+	for (; opts->type != OPTION_END; opts++) {
+		if ((opts->flags & PARSE_OPT_LASTARG_DEFAULT) &&
+		    (opts->flags & PARSE_OPT_OPTARG)) {
+			if (opts->long_name) {
+				error("`--%s` uses incompatible flags "
+				      "LASTARG_DEFAULT and OPTARG", opts->long_name);
+			} else {
+				error("`-%c` uses incompatible flags "
+				      "LASTARG_DEFAULT and OPTARG", opts->short_name);
+			}
+			err |= 1;
+		}
+	}
+
+	if (err)
+		exit(129);
+}
+
 void parse_options_start(struct parse_opt_ctx_t *ctx,
 			 int argc, const char **argv, const char *prefix,
 			 int flags)
@@ -330,6 +352,8 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 		       const char * const usagestr[])
 {
 	int internal_help = !(ctx->flags & PARSE_OPT_NO_INTERNAL_HELP);
+
+	parse_options_check(options);
 
 	/* we must reset ->opt, unknown short option leave it dangling */
 	ctx->opt = NULL;
