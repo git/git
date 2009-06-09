@@ -565,7 +565,15 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "showbranch.default")) {
 		if (!value)
 			return config_error_nonbool(var);
-		if (default_alloc <= default_num + 1) {
+		/*
+		 * default_arg is now passed to parse_options(), so we need to
+		 * mimick the real argv a bit better.
+		 */
+		if (!default_num) {
+			default_alloc = 20;
+			default_arg = xcalloc(default_alloc, sizeof(*default_arg));
+			default_arg[default_num++] = "show-branch";
+		} else if (default_alloc <= default_num + 1) {
 			default_alloc = default_alloc * 3 / 2 + 20;
 			default_arg = xrealloc(default_arg, sizeof *default_arg * default_alloc);
 		}
@@ -693,8 +701,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_num) {
-		ac = default_num + 1;
-		av = default_arg - 1; /* ick; we would not address av[0] */
+		ac = default_num;
+		av = default_arg;
 	}
 
 	ac = parse_options(ac, av, builtin_show_branch_options,
