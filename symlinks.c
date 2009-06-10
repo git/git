@@ -196,8 +196,9 @@ void invalidate_lstat_cache(const char *name, int len)
 			cache.path[previous_slash] = '\0';
 			cache.len = previous_slash;
 			cache.flags = FL_DIR;
-		} else
+		} else {
 			reset_lstat_cache();
+		}
 	}
 }
 
@@ -263,7 +264,6 @@ static void do_remove_scheduled_dirs(int new_len)
 			 removal.path[removal.len] != '/');
 	}
 	removal.len = new_len;
-	return;
 }
 
 void schedule_dir_for_removal(const char *name, int len)
@@ -296,11 +296,9 @@ void schedule_dir_for_removal(const char *name, int len)
 		       last_slash - match_len);
 		removal.len = last_slash;
 	}
-	return;
 }
 
 void remove_scheduled_dirs(void)
 {
 	do_remove_scheduled_dirs(0);
-	return;
 }

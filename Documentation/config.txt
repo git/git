@@ -438,6 +438,11 @@ On some file system/operating system combinations, this is unreliable.
 Set this config setting to 'rename' there; However, This will remove the
 check that makes sure that existing object files will not get overwritten.
 
+add.ignore-errors::
+	Tells 'git-add' to continue adding files when some files cannot be
+	added due to indexing errors. Equivalent to the '--ignore-errors'
+	option of linkgit:git-add[1].
+
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation

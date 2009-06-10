@@ -43,7 +43,12 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.6.3/git.html[documentation for release 1.6.3]
+* link:v1.6.3.2/git.html[documentation for release 1.6.3.2]
+
+* release notes for
+  link:RelNotes-1.6.3.2.txt[1.6.3.2],
+  link:RelNotes-1.6.3.1.txt[1.6.3.1],
+  link:RelNotes-1.6.3.txt[1.6.3].
 
 * release notes for
   link:RelNotes-1.6.2.5.txt[1.6.2.5],
@@ -226,6 +231,8 @@ probably more detail than necessary for a first-time user.
 The link:user-manual.html#git-concepts[git concepts chapter of the
 user-manual] and linkgit:gitcore-tutorial[7] both provide
 introductions to the underlying git architecture.
+
+See linkgit:gitworkflows[7] for an overview of recommended workflows.
 
 See also the link:howto-index.html[howto] documents for some useful
 examples.
@@ -644,7 +651,8 @@ SEE ALSO
 linkgit:gittutorial[7], linkgit:gittutorial-2[7],
 link:everyday.html[Everyday Git], linkgit:gitcvs-migration[7],
 linkgit:gitglossary[7], linkgit:gitcore-tutorial[7],
-linkgit:gitcli[7], link:user-manual.html[The Git User's Manual]
+linkgit:gitcli[7], link:user-manual.html[The Git User's Manual],
+linkgit:gitworkflows[7]
 
 GIT
 ---

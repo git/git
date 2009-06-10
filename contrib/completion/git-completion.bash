@@ -40,6 +40,10 @@
 #       with the bash.showDirtyState variable, which defaults to true
 #       once GIT_PS1_SHOWDIRTYSTATE is enabled.
 #
+#       You can also see if currently something is stashed, by setting
+#       GIT_PS1_SHOWSTASHSTATE to a nonempty value. If something is stashed,
+#       then a '$' will be shown next to the branch name.
+#
 # To submit patches:
 #
 #    *) Read Documentation/SubmittingPatches
@@ -84,26 +88,24 @@ __git_ps1 ()
 	if [ -n "$g" ]; then
 		local r
 		local b
-		if [ -d "$g/rebase-apply" ]; then
-			if [ -f "$g/rebase-apply/rebasing" ]; then
-				r="|REBASE"
-		elif [ -f "$g/rebase-apply/applying" ]; then
-				r="|AM"
-			else
-				r="|AM/REBASE"
-			fi
-			b="$(git symbolic-ref HEAD 2>/dev/null)"
-		elif [ -f "$g/rebase-merge/interactive" ]; then
+		if [ -f "$g/rebase-merge/interactive" ]; then
 			r="|REBASE-i"
 			b="$(cat "$g/rebase-merge/head-name")"
 		elif [ -d "$g/rebase-merge" ]; then
 			r="|REBASE-m"
 			b="$(cat "$g/rebase-merge/head-name")"
 		else
-			if [ -f "$g/MERGE_HEAD" ]; then
+			if [ -d "$g/rebase-apply" ]; then
+				if [ -f "$g/rebase-apply/rebasing" ]; then
+					r="|REBASE"
+				elif [ -f "$g/rebase-apply/applying" ]; then
+					r="|AM"
+				else
+					r="|AM/REBASE"
+				fi
+			elif [ -f "$g/MERGE_HEAD" ]; then
 				r="|MERGING"
-			fi
-			if [ -f "$g/BISECT_LOG" ]; then
+			elif [ -f "$g/BISECT_LOG" ]; then
 				r="|BISECTING"
 			fi
 
@@ -129,6 +131,7 @@ __git_ps1 ()
 
 		local w
 		local i
+		local s
 		local c
 
 		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
@@ -150,14 +153,15 @@ __git_ps1 ()
 					fi
 				fi
 			fi
+			if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
+			        git rev-parse --verify refs/stash >/dev/null 2>&1 && s="$"
+			fi
 		fi
 
-		if [ -n "$b" ]; then
-			if [ -n "${1-}" ]; then
-				printf "$1" "$c${b##refs/heads/}$w$i$r"
-			else
-				printf " (%s)" "$c${b##refs/heads/}$w$i$r"
-			fi
+		if [ -n "${1-}" ]; then
+			printf "$1" "$c${b##refs/heads/}$w$i$s$r"
+		else
+			printf " (%s)" "$c${b##refs/heads/}$w$i$s$r"
 		fi
 	fi
 }
@@ -1877,10 +1881,10 @@ _git_stash ()
 		save,--*)
 			__gitcomp "--keep-index"
 			;;
-		apply,--*)
+		apply,--*|pop,--*)
 			__gitcomp "--index"
 			;;
-		show,--*|drop,--*|pop,--*|branch,--*)
+		show,--*|drop,--*|branch,--*)
 			COMPREPLY=()
 			;;
 		show,*|apply,*|drop,*|pop,*|branch,*)

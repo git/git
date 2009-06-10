@@ -60,7 +60,7 @@ static void parse_args(int argc, const char **argv)
 		OPT_END(),
 	};
 
-	if (parse_options(argc, argv, options, usage_str, 0) != 1)
+	if (parse_options(argc, argv, NULL, options, usage_str, 0) != 1)
 		usage_with_options(usage_str, options);
 	arg = argv[0];
 
@@ -323,9 +323,9 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 
 	encoding = get_encoding(message);
 	if (!encoding)
-		encoding = "utf-8";
+		encoding = "UTF-8";
 	if (!git_commit_encoding)
-		git_commit_encoding = "utf-8";
+		git_commit_encoding = "UTF-8";
 	if ((reencoded_message = reencode_string(message,
 					git_commit_encoding, encoding)))
 		message = reencoded_message;

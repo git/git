@@ -309,7 +309,7 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, opts, archive_usage, 0);
+	argc = parse_options(argc, argv, NULL, opts, archive_usage, 0);
 
 	if (remote)
 		die("Unexpected option --remote");

@@ -406,15 +406,15 @@ static char *xstrdup_tolower(const char *str)
 }
 
 /*
- * Separate the "extra args" information as supplied by the client connection.
+ * Read the host as supplied by the client connection.
  */
-static void parse_extra_args(char *extra_args, int buflen)
+static void parse_host_arg(char *extra_args, int buflen)
 {
 	char *val;
 	int vallen;
 	char *end = extra_args + buflen;
 
-	while (extra_args < end && *extra_args) {
+	if (extra_args < end && *extra_args) {
 		saw_extended_args = 1;
 		if (strncasecmp("host=", extra_args, 5) == 0) {
 			val = extra_args + 5;
@@ -436,6 +436,8 @@ static void parse_extra_args(char *extra_args, int buflen)
 			/* On to the next one */
 			extra_args = val + vallen;
 		}
+		if (extra_args < end && *extra_args)
+			die("Invalid request");
 	}
 
 	/*
@@ -545,7 +547,7 @@ static int execute(struct sockaddr *addr)
 	hostname = canon_hostname = ip_address = tcp_port = NULL;
 
 	if (len != pktlen)
-		parse_extra_args(line + len + 1, pktlen - len - 1);
+		parse_host_arg(line + len + 1, pktlen - len - 1);
 
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);

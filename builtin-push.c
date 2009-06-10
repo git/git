@@ -198,7 +198,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, options, push_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
 
 	if (tags)
 		add_refspec("refs/tags/*");

@@ -1884,17 +1884,6 @@ static void get_dav_remote_heads(void)
 	remote_ls("refs/", (PROCESS_FILES | PROCESS_DIRS | RECURSIVE), process_ls_ref, NULL);
 }
 
-static int is_zero_sha1(const unsigned char *sha1)
-{
-	int i;
-
-	for (i = 0; i < 20; i++) {
-		if (*sha1++)
-			return 0;
-	}
-	return 1;
-}
-
 static void add_remote_info_ref(struct remote_ls_ctx *ls)
 {
 	struct strbuf *buf = (struct strbuf *)ls->userData;
@@ -2120,13 +2109,13 @@ static int delete_remote_branch(char *pattern, int force)
 		/* Remote HEAD must resolve to a known object */
 		if (symref)
 			return error("Remote HEAD symrefs too deep");
-		if (is_zero_sha1(head_sha1))
+		if (is_null_sha1(head_sha1))
 			return error("Unable to resolve remote HEAD");
 		if (!has_sha1_file(head_sha1))
 			return error("Remote HEAD resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", sha1_to_hex(head_sha1));
 
 		/* Remote branch must resolve to a known object */
-		if (is_zero_sha1(remote_ref->old_sha1))
+		if (is_null_sha1(remote_ref->old_sha1))
 			return error("Unable to resolve remote branch %s",
 				     remote_ref->name);
 		if (!has_sha1_file(remote_ref->old_sha1))
@@ -2334,7 +2323,7 @@ int main(int argc, char **argv)
 		if (!ref->peer_ref)
 			continue;
 
-		if (is_zero_sha1(ref->peer_ref->new_sha1)) {
+		if (is_null_sha1(ref->peer_ref->new_sha1)) {
 			if (delete_remote_branch(ref->name, 1) == -1) {
 				error("Could not remove %s", ref->name);
 				rc = -4;
@@ -2350,7 +2339,7 @@ int main(int argc, char **argv)
 		}
 
 		if (!force_all &&
-		    !is_zero_sha1(ref->old_sha1) &&
+		    !is_null_sha1(ref->old_sha1) &&
 		    !ref->force) {
 			if (!has_sha1_file(ref->old_sha1) ||
 			    !ref_newer(ref->peer_ref->new_sha1,
@@ -2400,7 +2389,7 @@ int main(int argc, char **argv)
 		old_sha1_hex = NULL;
 		commit_argv[1] = "--objects";
 		commit_argv[2] = new_sha1_hex;
-		if (!push_all && !is_zero_sha1(ref->old_sha1)) {
+		if (!push_all && !is_null_sha1(ref->old_sha1)) {
 			old_sha1_hex = xmalloc(42);
 			sprintf(old_sha1_hex, "^%s",
 				sha1_to_hex(ref->old_sha1));

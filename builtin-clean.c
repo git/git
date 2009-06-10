@@ -56,7 +56,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	else
 		config_set = 1;
 
-	argc = parse_options(argc, argv, options, builtin_clean_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, builtin_clean_usage,
+			     0);
 
 	memset(&dir, 0, sizeof(dir));
 	if (ignored_only)

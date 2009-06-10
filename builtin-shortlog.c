@@ -263,7 +263,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	git_config(git_default_config, NULL);
 	shortlog_init(&log);
 	init_revisions(&rev, prefix);
-	parse_options_start(&ctx, argc, argv, PARSE_OPT_KEEP_DASHDASH |
+	parse_options_start(&ctx, argc, argv, prefix, PARSE_OPT_KEEP_DASHDASH |
 			    PARSE_OPT_KEEP_ARGV0);
 
 	for (;;) {

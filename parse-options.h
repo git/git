@@ -17,6 +17,7 @@ enum parse_opt_type {
 	OPTION_STRING,
 	OPTION_INTEGER,
 	OPTION_CALLBACK,
+	OPTION_FILENAME
 };
 
 enum parse_opt_flags {
@@ -34,6 +35,7 @@ enum parse_opt_option_flags {
 	PARSE_OPT_HIDDEN  = 8,
 	PARSE_OPT_LASTARG_DEFAULT = 16,
 	PARSE_OPT_NODASH = 32,
+	PARSE_OPT_LITERAL_ARGHELP = 64,
 };
 
 struct option;
@@ -69,9 +71,15 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *   PARSE_OPT_NONEG: says that this option cannot be negated
  *   PARSE_OPT_HIDDEN: this option is skipped in the default usage, and
  *                     shown only in the full usage.
- *   PARSE_OPT_LASTARG_DEFAULT: if no argument is given, the default value
- *                              is used.
+ *   PARSE_OPT_LASTARG_DEFAULT: says that this option will take the default
+ *				value if no argument is given when the option
+ *				is last on the command line. If the option is
+ *				not last it will require an argument.
+ *				Should not be used with PARSE_OPT_OPTARG.
  *   PARSE_OPT_NODASH: this option doesn't start with a dash.
+ *   PARSE_OPT_LITERAL_ARGHELP: says that argh shouldn't be enclosed in brackets
+ *				(i.e. '<argh>') in the help message.
+ *				Useful for options with multiple parameters.
  *
  * `callback`::
  *   pointer to the callback to use for OPTION_CALLBACK.
@@ -113,12 +121,14 @@ struct option {
 #define OPT_NUMBER_CALLBACK(v, h, f) \
 	{ OPTION_NUMBER, 0, NULL, (v), NULL, (h), \
 	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, (f) }
+#define OPT_FILENAME(s, l, v, h)    { OPTION_FILENAME, (s), (l), (v), \
+				       "FILE", (h) }
 
 /* parse_options() will filter out the processed options and leave the
  * non-option arguments in argv[].
  * Returns the number of arguments left in argv[].
  */
-extern int parse_options(int argc, const char **argv,
+extern int parse_options(int argc, const char **argv, const char *prefix,
                          const struct option *options,
                          const char * const usagestr[], int flags);
 
@@ -144,13 +154,15 @@ struct parse_opt_ctx_t {
 	int argc, cpidx;
 	const char *opt;
 	int flags;
+	const char *prefix;
 };
 
 extern int parse_options_usage(const char * const *usagestr,
 			       const struct option *opts);
 
 extern void parse_options_start(struct parse_opt_ctx_t *ctx,
-				int argc, const char **argv, int flags);
+				int argc, const char **argv, const char *prefix,
+				int flags);
 
 extern int parse_options_step(struct parse_opt_ctx_t *ctx,
 			      const struct option *options,
@@ -177,7 +189,5 @@ extern int parse_opt_with_commit(const struct option *, const char *, int);
 	{ OPTION_CALLBACK, 0, "abbrev", (var), "n", \
 	  "use <n> digits to display SHA-1s", \
 	  PARSE_OPT_OPTARG, &parse_opt_abbrev_cb, 0 }
-
-extern const char *parse_options_fix_filename(const char *prefix, const char *file);
 
 #endif

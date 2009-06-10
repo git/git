@@ -590,7 +590,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 	errors_found = 0;
 
-	argc = parse_options(argc, argv, fsck_opts, fsck_usage, 0);
+	argc = parse_options(argc, argv, prefix, fsck_opts, fsck_usage, 0);
 	if (write_lost_and_found) {
 		check_full = 1;
 		include_reflogs = 0;

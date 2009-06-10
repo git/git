@@ -35,12 +35,43 @@ Updates since v1.6.3
 
 (subsystems)
 
+ * gitweb Perl style clean-up.
+
+ * git-svn updates, including a new --authors-prog option to map author
+   names by invoking an external program.
+
+(portability)
+
+ * We feed iconv with "UTF-8" instead of "utf8"; the former is
+   understood more widely.
+
 (performance)
 
 (usability, bells and whistles)
 
+ * "git add --edit" lets users edit the whole patch text to fine-tune what
+   is added to the index.
+
+ * "git log --graph" draws graphs more compactly by using horizonal lines
+   when able.
+
+ * "git log --decorate" shows shorter refnames by stripping well-known
+   refs/* prefix.
+
+ * "git send-email" understands quoted aliases in .mailrc files (might
+   have to be backported to 1.6.3.X).
+
+ * "git send-email" can fetch the sender address from the configuration
+   variable "sendmail.from" (and "sendmail.<identity>.from").
+
+ * "git show-branch" can color its output.
+
+ * "add" and "update" subcommands to "git submodule" learned --reference
+   option to use local clone with references.
+
 (developers)
 
+ * A major part of the "git bisect" wrapper has moved to C.
 
 Fixes since v1.6.3
 ------------------
@@ -51,9 +82,12 @@ release, unless otherwise noted.
 Here are fixes that this release has, but have not been backported to
 v1.6.3.X series.
 
+ * The way Git.pm sets up a Repository object was not friendly to callers
+   that chdir around.  It now internally records the repository location
+   as an absolute path when autodetected.
 
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.6.3
+O=v1.6.3.1-168-g23807fa
 git shortlog --no-merges $O..master ^maint

@@ -16,12 +16,13 @@ test_expect_success setup '
 		echo foo mmap bar_mmap
 		echo foo_mmap bar mmap baz
 	} >file &&
+	echo ww w >w &&
 	echo x x xx x >x &&
 	echo y yy >y &&
 	echo zzz > z &&
 	mkdir t &&
 	echo test >t/t &&
-	git add file x y z t/t &&
+	git add file w x y z t/t &&
 	test_tick &&
 	git commit -m initial
 '
@@ -46,6 +47,12 @@ do
 		} >expected &&
 		git grep -n -w -e mmap $H >actual &&
 		diff expected actual
+	'
+
+	test_expect_success "grep -w $L (w)" '
+		: >expected &&
+		! git grep -n -w -e "^w" >actual &&
+		test_cmp expected actual
 	'
 
 	test_expect_success "grep -w $L (x)" '

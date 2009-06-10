@@ -193,8 +193,7 @@ static void handle_content_type(struct strbuf *line)
 		*content_top = boundary;
 		boundary = NULL;
 	}
-	if (slurp_attr(line->buf, "charset=", &charset))
-		strbuf_tolower(&charset);
+	slurp_attr(line->buf, "charset=", &charset);
 
 	if (boundary) {
 		strbuf_release(boundary);
@@ -481,7 +480,7 @@ static const char *guess_charset(const struct strbuf *line, const char *target_c
 		if (is_utf8(line->buf))
 			return NULL;
 	}
-	return "latin1";
+	return "ISO8859-1";
 }
 
 static void convert_to_utf8(struct strbuf *line, const char *charset)
@@ -494,7 +493,7 @@ static void convert_to_utf8(struct strbuf *line, const char *charset)
 			return;
 	}
 
-	if (!strcmp(metainfo_charset, charset))
+	if (!strcasecmp(metainfo_charset, charset))
 		return;
 	out = reencode_string(line->buf, metainfo_charset, charset);
 	if (!out)
@@ -550,7 +549,6 @@ static int decode_header_bq(struct strbuf *it)
 		if (cp + 3 - it->buf > it->len)
 			goto decode_header_bq_out;
 		strbuf_add(&charset_q, ep, cp - ep);
-		strbuf_tolower(&charset_q);
 
 		encoding = cp[1];
 		if (!encoding || cp[2] != '?')
@@ -944,7 +942,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	 */
 	git_config(git_default_config, NULL);
 
-	def_charset = (git_commit_encoding ? git_commit_encoding : "utf-8");
+	def_charset = (git_commit_encoding ? git_commit_encoding : "UTF-8");
 	metainfo_charset = def_charset;
 
 	while (1 < argc && argv[1][0] == '-') {

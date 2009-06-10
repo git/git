@@ -79,7 +79,8 @@ static int add(int argc, const char **argv)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+			     0);
 
 	if (argc < 2)
 		usage_with_options(builtin_remote_usage, options);
@@ -299,11 +300,11 @@ static int get_push_ref_states(const struct ref *remote_refs,
 		return 0;
 
 	local_refs = get_local_heads();
-	ref = push_map = copy_ref_list(remote_refs);
-	while (ref->next)
-		ref = ref->next;
-	push_tail = &ref->next;
+	push_map = copy_ref_list(remote_refs);
 
+	push_tail = &push_map;
+	while (*push_tail)
+		push_tail = &((*push_tail)->next);
 	match_refs(local_refs, push_map, &push_tail, remote->push_refspec_nr,
 		   remote->push_refspec, MATCH_REFS_NONE);
 
@@ -986,7 +987,8 @@ static int show(int argc, const char **argv)
 	struct string_list info_list = { NULL, 0, 0, 0 };
 	struct show_info info;
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+			     0);
 
 	if (argc < 1)
 		return show_all();
@@ -1003,9 +1005,12 @@ static int show(int argc, const char **argv)
 
 		get_remote_ref_states(*argv, &states, query_flag);
 
-		printf("* remote %s\n  URL: %s\n", *argv,
-			states.remote->url_nr > 0 ?
-				states.remote->url[0] : "(no URL)");
+		printf("* remote %s\n", *argv);
+		if (states.remote->url_nr) {
+			for (i=0; i < states.remote->url_nr; i++)
+				printf("  URL: %s\n", states.remote->url[i]);
+		} else
+			printf("  URL: %s\n", "(no URL)");
 		if (no_query)
 			printf("  HEAD branch: (not queried)\n");
 		else if (!states.heads.nr)
@@ -1076,7 +1081,8 @@ static int set_head(int argc, const char **argv)
 			    "delete refs/remotes/<name>/HEAD"),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+			     0);
 	if (argc)
 		strbuf_addf(&buf, "refs/remotes/%s/HEAD", argv[0]);
 
@@ -1130,7 +1136,8 @@ static int prune(int argc, const char **argv)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage, 0);
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+			     0);
 
 	if (argc < 1)
 		usage_with_options(builtin_remote_usage, options);
@@ -1220,7 +1227,7 @@ static int update(int argc, const char **argv)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
 			     PARSE_OPT_KEEP_ARGV0);
 	if (argc < 2) {
 		argc = 2;
@@ -1306,7 +1313,7 @@ int cmd_remote(int argc, const char **argv, const char *prefix)
 	};
 	int result;
 
-	argc = parse_options(argc, argv, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, prefix, options, builtin_remote_usage,
 		PARSE_OPT_STOP_AT_NON_OPTION);
 
 	if (argc < 1)

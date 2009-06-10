@@ -249,7 +249,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		die("invalid cache");
 	}
 
-	argc = parse_options(argc, argv, builtin_checkout_index_options,
+	argc = parse_options(argc, argv, prefix, builtin_checkout_index_options,
 			builtin_checkout_index_usage, 0);
 	state.force = force;
 	state.quiet = quiet;

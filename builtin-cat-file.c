@@ -201,8 +201,8 @@ static int batch_objects(int print_contents)
 }
 
 static const char * const cat_file_usage[] = {
-	"git cat-file [-t|-s|-e|-p|<type>] <sha1>",
-	"git cat-file [--batch|--batch-check] < <list_of_sha1s>",
+	"git cat-file (-t|-s|-e|-p|<type>) <object>",
+	"git cat-file (--batch|--batch-check) < <list_of_objects>",
 	NULL
 };
 
@@ -231,7 +231,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	if (argc != 3 && argc != 2)
 		usage_with_options(cat_file_usage, options);
 
-	argc = parse_options(argc, argv, options, cat_file_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, cat_file_usage, 0);
 
 	if (opt) {
 		if (argc == 1)

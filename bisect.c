@@ -553,7 +553,9 @@ struct commit_list *filter_skipped(struct commit_list *list,
 	return filtered;
 }
 
-static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
+static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
+			     const char *bad_format, const char *good_format,
+			     int read_paths)
 {
 	struct argv_array rev_argv = { NULL, 0, 0 };
 	int i;
@@ -564,26 +566,24 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix)
 
 	/* rev_argv.argv[0] will be ignored by setup_revisions */
 	argv_array_push(&rev_argv, xstrdup("bisect_rev_setup"));
-	argv_array_push_sha1(&rev_argv, current_bad_sha1, "%s");
+	argv_array_push_sha1(&rev_argv, current_bad_sha1, bad_format);
 	for (i = 0; i < good_revs.sha1_nr; i++)
-		argv_array_push_sha1(&rev_argv, good_revs.sha1[i], "^%s");
+		argv_array_push_sha1(&rev_argv, good_revs.sha1[i],
+				     good_format);
 	argv_array_push(&rev_argv, xstrdup("--"));
-	read_bisect_paths(&rev_argv);
+	if (read_paths)
+		read_bisect_paths(&rev_argv);
 	argv_array_push(&rev_argv, NULL);
 
 	setup_revisions(rev_argv.argv_nr, rev_argv.argv, revs, NULL);
-	revs->limited = 1;
 }
 
-static void bisect_common(struct rev_info *revs, int *reaches, int *all)
+static void bisect_common(struct rev_info *revs)
 {
 	if (prepare_revision_walk(revs))
 		die("revision walk setup failed");
 	if (revs->tree_objects)
 		mark_edges_uninteresting(revs->commits, revs, NULL);
-
-	revs->commits = find_bisection(revs->commits, reaches, all,
-				       !!skipped_revs.sha1_nr);
 }
 
 static void exit_if_skipped_commits(struct commit_list *tried,
@@ -750,42 +750,31 @@ static void check_merge_bases(void)
 	free_commit_list(result);
 }
 
-/*
- * This function runs the command "git rev-list $_good ^$_bad"
- * and returns 1 if it produces some output, 0 otherwise.
- */
-static int check_ancestors(void)
+static int check_ancestors(const char *prefix)
 {
-	struct argv_array rev_argv = { NULL, 0, 0 };
-	struct strbuf str = STRBUF_INIT;
-	int i, result = 0;
-	struct child_process rls;
-	FILE *rls_fout;
+	struct rev_info revs;
+	struct object_array pending_copy;
+	int i, res;
 
-	argv_array_push(&rev_argv, xstrdup("rev-list"));
-	argv_array_push_sha1(&rev_argv, current_bad_sha1, "^%s");
-	for (i = 0; i < good_revs.sha1_nr; i++)
-		argv_array_push_sha1(&rev_argv, good_revs.sha1[i], "%s");
-	argv_array_push(&rev_argv, NULL);
+	bisect_rev_setup(&revs, prefix, "^%s", "%s", 0);
 
-	memset(&rls, 0, sizeof(rls));
-	rls.argv = rev_argv.argv;
-	rls.out = -1;
-	rls.git_cmd = 1;
-	if (start_command(&rls))
-		die("Could not launch 'git rev-list' command.");
-	rls_fout = fdopen(rls.out, "r");
-	while (strbuf_getline(&str, rls_fout, '\n') != EOF) {
-		strbuf_trim(&str);
-		if (*str.buf) {
-			result = 1;
-			break;
-		}
+	/* Save pending objects, so they can be cleaned up later. */
+	memset(&pending_copy, 0, sizeof(pending_copy));
+	for (i = 0; i < revs.pending.nr; i++)
+		add_object_array(revs.pending.objects[i].item,
+				 revs.pending.objects[i].name,
+				 &pending_copy);
+
+	bisect_common(&revs);
+	res = (revs.commits != NULL);
+
+	/* Clean up objects used, as they will be reused. */
+	for (i = 0; i < pending_copy.nr; i++) {
+		struct object *o = pending_copy.objects[i].item;
+		unparse_commit((struct commit *)o);
 	}
-	fclose(rls_fout);
-	finish_command(&rls);
 
-	return result;
+	return res;
 }
 
 /*
@@ -813,7 +802,8 @@ static void check_good_are_ancestors_of_bad(const char *prefix)
 	if (good_revs.sha1_nr == 0)
 		return;
 
-	if (check_ancestors())
+	/* Check if all good revs are ancestor of the bad rev. */
+	if (check_ancestors(prefix))
 		check_merge_bases();
 
 	/* Create file BISECT_ANCESTORS_OK. */
@@ -843,10 +833,13 @@ int bisect_next_all(const char *prefix)
 
 	check_good_are_ancestors_of_bad(prefix);
 
-	bisect_rev_setup(&revs, prefix);
+	bisect_rev_setup(&revs, prefix, "%s", "^%s", 1);
+	revs.limited = 1;
 
-	bisect_common(&revs, &reaches, &all);
+	bisect_common(&revs);
 
+	revs.commits = find_bisection(revs.commits, &reaches, &all,
+				       !!skipped_revs.sha1_nr);
 	revs.commits = filter_skipped(revs.commits, &tried, 0);
 
 	if (!revs.commits) {

@@ -19,6 +19,7 @@ usage: test-parse-options <options>
     --set23               set integer to 23
     -t <time>             get timestamp of <time>
     -L, --length <str>    get length of <str>
+    -F, --file <FILE>     set file to <FILE>
 
 String options
     -s, --string <string>
@@ -56,10 +57,12 @@ abbrev: 7
 verbose: 2
 quiet: no
 dry run: yes
+file: prefix/my.file
 EOF
 
 test_expect_success 'short options' '
-	test-parse-options -s123 -b -i 1729 -b -vv -n > output 2> output.err &&
+	test-parse-options -s123 -b -i 1729 -b -vv -n -F my.file \
+	> output 2> output.err &&
 	test_cmp expect output &&
 	test ! -s output.err
 '
@@ -73,11 +76,12 @@ abbrev: 10
 verbose: 2
 quiet: no
 dry run: no
+file: prefix/fi.le
 EOF
 
 test_expect_success 'long options' '
 	test-parse-options --boolean --integer 1729 --boolean --string2=321 \
-		--verbose --verbose --no-dry-run --abbrev=10 \
+		--verbose --verbose --no-dry-run --abbrev=10 --file fi.le\
 		> output 2> output.err &&
 	test ! -s output.err &&
 	test_cmp expect output
@@ -87,6 +91,8 @@ test_expect_success 'missing required value' '
 	test-parse-options -s;
 	test $? = 129 &&
 	test-parse-options --string;
+	test $? = 129 &&
+	test-parse-options --file;
 	test $? = 129
 '
 
@@ -99,6 +105,7 @@ abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 arg 00: a1
 arg 01: b1
 arg 02: --boolean
@@ -120,6 +127,7 @@ abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'unambiguously abbreviated option' '
@@ -148,6 +156,7 @@ abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'non ambiguous option (after two options it abbreviates)' '
@@ -175,6 +184,7 @@ abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 arg 00: --quux
 EOF
 
@@ -193,6 +203,7 @@ abbrev: 7
 verbose: 0
 quiet: yes
 dry run: no
+file: (not set)
 arg 00: foo
 EOF
 
@@ -213,6 +224,7 @@ abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'OPT_CALLBACK() and OPT_BIT() work' '
@@ -240,6 +252,7 @@ abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'OPT_BIT() and OPT_SET_INT() work' '
@@ -263,6 +276,7 @@ abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'OPT_BIT() works' '
@@ -292,6 +306,7 @@ abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'OPT_NUMBER_CALLBACK() works' '

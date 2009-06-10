@@ -93,14 +93,16 @@ prepare_httpd() {
 start_httpd() {
 	prepare_httpd >&3 2>&4
 
-	trap 'stop_httpd; die' EXIT
+	trap 'code=$?; stop_httpd; (exit $code); die' EXIT
 
 	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
 		-f "$TEST_PATH/apache.conf" $HTTPD_PARA \
 		-c "Listen 127.0.0.1:$LIB_HTTPD_PORT" -k start \
 		>&3 2>&4
-	if ! test $? = 0; then
+	if test $? -ne 0
+	then
 		say "skipping test, web server setup failed"
+		trap 'die' EXIT
 		test_done
 	fi
 }
