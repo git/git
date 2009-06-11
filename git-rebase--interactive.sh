@@ -156,7 +156,7 @@ do_next () {
 	OLDHEAD=$(cat "$DOTEST"/head) &&
 	SHORTONTO=$(git rev-parse --short $(cat "$DOTEST"/onto)) &&
 	NEWHEAD=$(git rev-parse HEAD) &&
-	message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
+	message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO" &&
 	git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
 	git symbolic-ref HEAD $HEADNAME &&
 	rm -rf "$DOTEST" &&
