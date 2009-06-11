@@ -232,7 +232,13 @@ get_remote_refs_for_fetch () {
 get_remote_merge_branch () {
 	case "$#" in
 	0|1)
-	    die "internal error: get-remote-merge-branch." ;;
+	    origin="$1"
+	    default=$(get_default_remote)
+	    test -z "$origin" && origin=$default
+	    curr_branch=$(git symbolic-ref -q HEAD)
+	    [ "$origin" = "$default" ] &&
+	    echo $(git for-each-ref --format='%(upstream)' $curr_branch)
+	    ;;
 	*)
 	    repo=$1
 	    shift
