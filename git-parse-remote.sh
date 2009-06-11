@@ -229,6 +229,34 @@ get_remote_refs_for_fetch () {
 	esac
 }
 
+get_remote_merge_branch () {
+	case "$#" in
+	0|1)
+	    die "internal error: get-remote-merge-branch." ;;
+	*)
+	    repo=$1
+	    shift
+	    ref=$1
+	    # FIXME: It should return the tracking branch
+	    #        Currently only works with the default mapping
+	    case "$ref" in
+	    +*)
+		ref=$(expr "z$ref" : 'z+\(.*\)')
+		;;
+	    esac
+	    expr "z$ref" : 'z.*:' >/dev/null || ref="${ref}:"
+	    remote=$(expr "z$ref" : 'z\([^:]*\):')
+	    case "$remote" in
+	    '' | HEAD ) remote=HEAD ;;
+	    heads/*) remote=${remote#heads/} ;;
+	    refs/heads/*) remote=${remote#refs/heads/} ;;
+	    refs/* | tags/* | remotes/* ) remote=
+	    esac
+
+	    [ -n "$remote" ] && echo "refs/remotes/$repo/$remote"
+	esac
+}
+
 resolve_alternates () {
 	# original URL (xxx.git)
 	top_=`expr "z$1" : 'z\([^:]*:/*[^/]*\)/'`
@@ -262,3 +290,4 @@ get_uploadpack () {
 		;;
 	esac
 }
+
