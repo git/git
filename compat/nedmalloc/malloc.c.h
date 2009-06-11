@@ -2543,7 +2543,7 @@ struct malloc_params {
 static struct malloc_params mparams;
 
 /* Ensure mparams initialized */
-#define ensure_initialization() ((void)(mparams.magic == 0 || init_mparams()))
+#define ensure_initialization() ((void)(mparams.magic != 0 || init_mparams()))
 
 #if !ONLY_MSPACES
 
