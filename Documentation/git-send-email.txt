@@ -14,6 +14,10 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Takes the patches given on the command line and emails them out.
+Patches can be specified as files, directories (which will send all
+files in the directory), or directly as a revision list.  In the
+last case, any format accepted by linkgit:git-format-patch[1] can
+be passed to git send-email.
 
 The header of the email is configurable by command line options.  If not
 specified on the command line, the user will be prompted with a ReadLine
