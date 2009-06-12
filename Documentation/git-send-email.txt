@@ -159,7 +159,7 @@ Automating
 	Output of this command must be single email address per line.
 	Default is the value of 'sendemail.cccmd' configuration value.
 
---[no-]chain-reply-to=<identifier>::
+--[no-]chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
 	the first will be sent as replies to the first email sent.  When using
@@ -208,7 +208,8 @@ specified, as well as 'body' if --no-signed-off-cc is specified.
 --[no-]thread::
 	If this is set, the In-Reply-To header will be set on each email sent.
 	If disabled with "--no-thread", no emails will have the In-Reply-To
-	header set. Default is the value of the 'sendemail.thread' configuration
+	header set, unless specified with --in-reply-to.
+	Default is the value of the 'sendemail.thread' configuration
 	value; if that is unspecified, default to --thread.
 
 
