@@ -812,7 +812,7 @@ sub sanitize_address
 }
 
 # Returns 1 if the message was sent, and 0 otherwise.
-# In actuality, the whole program dies when a there
+# In actuality, the whole program dies when there
 # is an error sending a message.
 
 sub send_message
