@@ -621,7 +621,7 @@ test_expect_success 'in-reply-to but no threading' '
 	grep "In-Reply-To: <in-reply-id@example.com>"
 '
 
-test_expect_failure 'threading but no chain-reply-to' '
+test_expect_success 'threading but no chain-reply-to' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
