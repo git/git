@@ -7,6 +7,7 @@
 #include "quote.h"
 #include "sha1-lookup.h"
 #include "run-command.h"
+#include "log-tree.h"
 #include "bisect.h"
 
 struct sha1_array {
@@ -27,7 +28,6 @@ struct argv_array {
 	int argv_alloc;
 };
 
-static const char *argv_diff_tree[] = {"diff-tree", "--pretty", NULL, NULL};
 static const char *argv_checkout[] = {"checkout", "-q", NULL, "--", NULL};
 static const char *argv_show_branch[] = {"show-branch", NULL, NULL};
 
@@ -521,13 +521,33 @@ static char *join_sha1_array_hex(struct sha1_array *array, char delim)
 	return strbuf_detach(&joined_hexs, NULL);
 }
 
+/*
+ * In this function, passing a not NULL skipped_first is very special.
+ * It means that we want to know if the first commit in the list is
+ * skipped because we will want to test a commit away from it if it is
+ * indeed skipped.
+ * So if the first commit is skipped, we cannot take the shortcut to
+ * just "return list" when we find the first non skipped commit, we
+ * have to return a fully filtered list.
+ *
+ * We use (*skipped_first == -1) to mean "it has been found that the
+ * first commit is not skipped". In this case *skipped_first is set back
+ * to 0 just before the function returns.
+ */
 struct commit_list *filter_skipped(struct commit_list *list,
 				   struct commit_list **tried,
-				   int show_all)
+				   int show_all,
+				   int *count,
+				   int *skipped_first)
 {
 	struct commit_list *filtered = NULL, **f = &filtered;
 
 	*tried = NULL;
+
+	if (skipped_first)
+		*skipped_first = 0;
+	if (count)
+		*count = 0;
 
 	if (!skipped_revs.sha1_nr)
 		return list;
@@ -537,20 +557,80 @@ struct commit_list *filter_skipped(struct commit_list *list,
 		list->next = NULL;
 		if (0 <= lookup_sha1_array(&skipped_revs,
 					   list->item->object.sha1)) {
+			if (skipped_first && !*skipped_first)
+				*skipped_first = 1;
 			/* Move current to tried list */
 			*tried = list;
 			tried = &list->next;
 		} else {
-			if (!show_all)
-				return list;
+			if (!show_all) {
+				if (!skipped_first || !*skipped_first)
+					return list;
+			} else if (skipped_first && !*skipped_first) {
+				/* This means we know it's not skipped */
+				*skipped_first = -1;
+			}
 			/* Move current to filtered list */
 			*f = list;
 			f = &list->next;
+			if (count)
+				(*count)++;
 		}
 		list = next;
 	}
 
+	if (skipped_first && *skipped_first == -1)
+		*skipped_first = 0;
+
 	return filtered;
+}
+
+static struct commit_list *apply_skip_ratio(struct commit_list *list,
+					    int count,
+					    int skip_num, int skip_denom)
+{
+	int index, i;
+	struct commit_list *cur, *previous;
+
+	cur = list;
+	previous = NULL;
+	index = count * skip_num / skip_denom;
+
+	for (i = 0; cur; cur = cur->next, i++) {
+		if (i == index) {
+			if (hashcmp(cur->item->object.sha1, current_bad_sha1))
+				return cur;
+			if (previous)
+				return previous;
+			return list;
+		}
+		previous = cur;
+	}
+
+	return list;
+}
+
+static struct commit_list *managed_skipped(struct commit_list *list,
+					   struct commit_list **tried)
+{
+	int count, skipped_first;
+	int skip_num, skip_denom;
+
+	*tried = NULL;
+
+	if (!skipped_revs.sha1_nr)
+		return list;
+
+	list = filter_skipped(list, tried, 0, &count, &skipped_first);
+
+	if (!skipped_first)
+		return list;
+
+	/* Use alternatively 1/5, 2/5 and 3/5 as skip ratio. */
+	skip_num = count % 3 + 1;
+	skip_denom = 5;
+
+	return apply_skip_ratio(list, count, skip_num, skip_denom);
 }
 
 static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
@@ -771,7 +851,7 @@ static int check_ancestors(const char *prefix)
 	/* Clean up objects used, as they will be reused. */
 	for (i = 0; i < pending_copy.nr; i++) {
 		struct object *o = pending_copy.objects[i].item;
-		unparse_commit((struct commit *)o);
+		clear_commit_marks((struct commit *)o, ALL_REV_FLAGS);
 	}
 
 	return res;
@@ -816,6 +896,31 @@ static void check_good_are_ancestors_of_bad(const char *prefix)
 }
 
 /*
+ * This does "git diff-tree --pretty COMMIT" without one fork+exec.
+ */
+static void show_diff_tree(const char *prefix, struct commit *commit)
+{
+	struct rev_info opt;
+
+	/* diff-tree init */
+	init_revisions(&opt, prefix);
+	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+	opt.abbrev = 0;
+	opt.diff = 1;
+
+	/* This is what "--pretty" does */
+	opt.verbose_header = 1;
+	opt.use_terminator = 0;
+	opt.commit_format = CMIT_FMT_DEFAULT;
+
+	/* diff-tree init */
+	if (!opt.diffopt.output_format)
+		opt.diffopt.output_format = DIFF_FORMAT_RAW;
+
+	log_tree_commit(&opt, commit);
+}
+
+/*
  * We use the convention that exiting with an exit code 10 means that
  * the bisection process finished successfully.
  * In this case the calling shell script should exit 0.
@@ -840,7 +945,7 @@ int bisect_next_all(const char *prefix)
 
 	revs.commits = find_bisection(revs.commits, &reaches, &all,
 				       !!skipped_revs.sha1_nr);
-	revs.commits = filter_skipped(revs.commits, &tried, 0);
+	revs.commits = managed_skipped(revs.commits, &tried);
 
 	if (!revs.commits) {
 		/*
@@ -860,8 +965,7 @@ int bisect_next_all(const char *prefix)
 	if (!hashcmp(bisect_rev, current_bad_sha1)) {
 		exit_if_skipped_commits(tried, current_bad_sha1);
 		printf("%s is first bad commit\n", bisect_rev_hex);
-		argv_diff_tree[2] = bisect_rev_hex;
-		run_command_v_opt(argv_diff_tree, RUN_GIT_CMD);
+		show_diff_tree(prefix, revs.commits->item);
 		/* This means the bisection process succeeded. */
 		exit(10);
 	}
