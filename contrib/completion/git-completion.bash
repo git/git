@@ -927,7 +927,7 @@ _git_diff ()
 }
 
 __git_mergetools_common="diffuse ecmerge emerge kdiff3 meld opendiff
-			tkdiff vimdiff gvimdiff xxdiff
+			tkdiff vimdiff gvimdiff xxdiff araxis
 "
 
 _git_difftool ()

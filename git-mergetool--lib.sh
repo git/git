@@ -18,6 +18,9 @@ translate_merge_tool_path () {
 	emerge)
 		echo emacs
 		;;
+	araxis)
+		echo compare
+		;;
 	*)
 		echo "$1"
 		;;
@@ -43,7 +46,7 @@ check_unchanged () {
 valid_tool () {
 	case "$1" in
 	kdiff3 | tkdiff | xxdiff | meld | opendiff | \
-	emerge | vimdiff | gvimdiff | ecmerge | diffuse)
+	emerge | vimdiff | gvimdiff | ecmerge | diffuse | araxis)
 		;; # happy
 	tortoisemerge)
 		if ! merge_mode; then
@@ -263,6 +266,24 @@ run_merge_tool () {
 			status=1
 		fi
 		;;
+	araxis)
+		if merge_mode; then
+			touch "$BACKUP"
+			if $base_present; then
+				"$merge_tool_path" -wait -merge -3 -a1 \
+					"$BASE" "$LOCAL" "$REMOTE" "$MERGED" \
+					>/dev/null 2>&1
+			else
+				"$merge_tool_path" -wait -2 \
+					"$LOCAL" "$REMOTE" "$MERGED" \
+					>/dev/null 2>&1
+			fi
+			check_unchanged
+		else
+			"$merge_tool_path" -wait -2 "$LOCAL" "$REMOTE" \
+				>/dev/null 2>&1
+		fi
+		;;
 	*)
 		merge_tool_cmd="$(get_merge_tool_cmd "$1")"
 		if test -z "$merge_tool_cmd"; then
@@ -302,7 +323,7 @@ guess_merge_tool () {
 		else
 			tools="opendiff kdiff3 tkdiff xxdiff meld $tools"
 		fi
-		tools="$tools gvimdiff diffuse ecmerge"
+		tools="$tools gvimdiff diffuse ecmerge araxis"
 	fi
 	if echo "${VISUAL:-$EDITOR}" | grep emacs > /dev/null 2>&1; then
 		# $EDITOR is emacs so add emerge as a candidate
