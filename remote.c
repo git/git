@@ -1085,12 +1085,20 @@ static const struct refspec *check_pattern_match(const struct refspec *rs,
 		return NULL;
 }
 
+static struct ref **tail_ref(struct ref **head)
+{
+	struct ref **tail = head;
+	while (*tail)
+		tail = &((*tail)->next);
+	return tail;
+}
+
 /*
  * Note. This is used only by "push"; refspec matching rules for
  * push and fetch are subtly different, so do not try to reuse it
  * without thinking.
  */
-int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
+int match_refs(struct ref *src, struct ref **dst,
 	       int nr_refspec, const char **refspec, int flags)
 {
 	struct refspec *rs;
@@ -1098,13 +1106,14 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	int send_mirror = flags & MATCH_REFS_MIRROR;
 	int errs;
 	static const char *default_refspec[] = { ":", 0 };
+	struct ref **dst_tail = tail_ref(dst);
 
 	if (!nr_refspec) {
 		nr_refspec = 1;
 		refspec = default_refspec;
 	}
 	rs = parse_push_refspec(nr_refspec, (const char **) refspec);
-	errs = match_explicit_refs(src, dst, dst_tail, rs, nr_refspec);
+	errs = match_explicit_refs(src, *dst, &dst_tail, rs, nr_refspec);
 
 	/* pick the remainder */
 	for ( ; src; src = src->next) {
@@ -1134,7 +1143,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 						     dst_side, &dst_name))
 				die("Didn't think it matches any more");
 		}
-		dst_peer = find_ref_by_name(dst, dst_name);
+		dst_peer = find_ref_by_name(*dst, dst_name);
 		if (dst_peer) {
 			if (dst_peer->peer_ref)
 				/* We're already sending something to this ref. */
@@ -1150,7 +1159,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 				goto free_name;
 
 			/* Create a new one and link it */
-			dst_peer = make_linked_ref(dst_name, dst_tail);
+			dst_peer = make_linked_ref(dst_name, &dst_tail);
 			hashcpy(dst_peer->new_sha1, src->new_sha1);
 		}
 		dst_peer->peer_ref = copy_ref(src);

@@ -1844,7 +1844,7 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 	return 1;
 }
 
-static struct ref *remote_refs, **remote_tail;
+static struct ref *remote_refs;
 
 static void one_remote_ref(char *refname)
 {
@@ -1874,13 +1874,12 @@ static void one_remote_ref(char *refname)
 		}
 	}
 
-	*remote_tail = ref;
-	remote_tail = &ref->next;
+	ref->next = remote_refs;
+	remote_refs = ref;
 }
 
 static void get_dav_remote_heads(void)
 {
-	remote_tail = &remote_refs;
 	remote_ls("refs/", (PROCESS_FILES | PROCESS_DIRS | RECURSIVE), process_ls_ref, NULL);
 }
 
@@ -2300,9 +2299,7 @@ int main(int argc, char **argv)
 	}
 
 	/* match them up */
-	if (!remote_tail)
-		remote_tail = &remote_refs;
-	if (match_refs(local_refs, remote_refs, &remote_tail,
+	if (match_refs(local_refs, &remote_refs,
 		       nr_refspec, (const char **) refspec, push_all)) {
 		rc = -1;
 		goto cleanup;
