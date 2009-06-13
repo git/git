@@ -225,7 +225,14 @@ if (@canstatusfiles) {
       foreach my $name (keys %todo) {
 	my $basename = basename($name);
 
-	$basename = "no file " . $basename if (exists($added{$basename}));
+	# CVS reports files that don't exist in the current revision as
+	# "no file $basename" in its "status" output, so we should
+	# anticipate that.  Totally unknown files will have a status
+	# "Unknown". However, if they exist in the Attic, their status
+	# will be "Up-to-date" (this means they were added once but have
+	# been removed).
+	$basename = "no file $basename" if $added{$basename};
+
 	$basename =~ s/^\s+//;
 	$basename =~ s/\s+$//;
 
@@ -233,31 +240,45 @@ if (@canstatusfiles) {
 	  $fullname{$basename} = $name;
 	  push (@canstatusfiles2, $name);
 	  delete($todo{$name});
-        }
+	}
       }
       my @cvsoutput;
       @cvsoutput = xargs_safe_pipe_capture([@cvs, 'status'], @canstatusfiles2);
       foreach my $l (@cvsoutput) {
-        chomp $l;
-        if ($l =~ /^File:\s+(.*\S)\s+Status: (.*)$/) {
-	  if (!exists($fullname{$1})) {
-	    print STDERR "Huh? Status reported for unexpected file '$1'\n";
-	  } else {
-	    $cvsstat{$fullname{$1}} = $2;
-	  }
-	}
+	chomp $l;
+	next unless
+	    my ($file, $status) = $l =~ /^File:\s+(.*\S)\s+Status: (.*)$/;
+
+	my $fullname = $fullname{$file};
+	print STDERR "Huh? Status '$status' reported for unexpected file '$file'\n"
+	    unless defined $fullname;
+
+	# This response means the file does not exist except in
+	# CVS's attic, so set the status accordingly
+	$status = "In-attic"
+	    if $file =~ /^no file /
+		&& $status eq 'Up-to-date';
+
+	$cvsstat{$fullname{$file}} = $status;
       }
     }
 }
 
-# ... validate new files,
+# ... Validate that new files have the correct status
 foreach my $f (@afiles) {
-    if (defined ($cvsstat{$f}) and $cvsstat{$f} ne "Unknown") {
-	$dirty = 1;
+    next unless defined(my $stat = $cvsstat{$f});
+
+    # This means the file has never been seen before
+    next if $stat eq 'Unknown';
+
+    # This means the file has been seen before but was removed
+    next if $stat eq 'In-attic';
+
+    $dirty = 1;
 	warn "File $f is already known in your CVS checkout -- perhaps it has been added by another user. Or this may indicate that it exists on a different branch. If this is the case, use -f to force the merge.\n";
 	warn "Status was: $cvsstat{$f}\n";
-    }
 }
+
 # ... validate known files.
 foreach my $f (@files) {
     next if grep { $_ eq $f } @afiles;

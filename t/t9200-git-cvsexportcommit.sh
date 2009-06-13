@@ -317,4 +317,22 @@ test_expect_success 'use the same checkout for Git and CVS' '
 
 '
 
+test_expect_success 're-commit a removed filename which remains in CVS attic' '
+
+    (cd "$CVSWORK" &&
+     echo >attic_gremlin &&
+     cvs -Q add attic_gremlin &&
+     cvs -Q ci -m "added attic_gremlin" &&
+     rm attic_gremlin &&
+     cvs -Q rm attic_gremlin &&
+     cvs -Q ci -m "removed attic_gremlin") &&
+
+    echo > attic_gremlin &&
+    git add attic_gremlin &&
+    git commit -m "Added attic_gremlin" &&
+	git cvsexportcommit -w "$CVSWORK" -c HEAD &&
+    (cd "$CVSWORK"; cvs -Q update -d) &&
+    test -f "$CVSWORK/attic_gremlin"
+'
+
 test_done
