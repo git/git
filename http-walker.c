@@ -418,15 +418,18 @@ static int fetch_index(struct walker *walker, struct alt_base *repo, unsigned ch
 		run_active_slot(slot);
 		if (results.curl_result != CURLE_OK) {
 			fclose(indexfile);
+			slot->local = NULL;
 			return error("Unable to get pack index %s\n%s", url,
 				     curl_errorstr);
 		}
 	} else {
 		fclose(indexfile);
+		slot->local = NULL;
 		return error("Unable to start request");
 	}
 
 	fclose(indexfile);
+	slot->local = NULL;
 
 	return move_temp_to_file(tmpfile, filename);
 }
@@ -776,16 +779,19 @@ static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned cha
 		run_active_slot(slot);
 		if (results.curl_result != CURLE_OK) {
 			fclose(packfile);
+			slot->local = NULL;
 			return error("Unable to get pack file %s\n%s", url,
 				     curl_errorstr);
 		}
 	} else {
 		fclose(packfile);
+		slot->local = NULL;
 		return error("Unable to start request");
 	}
 
 	target->pack_size = ftell(packfile);
 	fclose(packfile);
+	slot->local = NULL;
 
 	ret = move_temp_to_file(tmpfile, filename);
 	if (ret)
