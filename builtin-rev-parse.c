@@ -301,7 +301,7 @@ static const char *skipspaces(const char *s)
 
 static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 {
-	static int keep_dashdash = 0;
+	static int keep_dashdash = 0, stop_at_non_option = 0;
 	static char const * const parseopt_usage[] = {
 		"git rev-parse --parseopt [options] -- [<args>...]",
 		NULL
@@ -309,6 +309,9 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	static struct option parseopt_opts[] = {
 		OPT_BOOLEAN(0, "keep-dashdash", &keep_dashdash,
 					"keep the `--` passed as an arg"),
+		OPT_BOOLEAN(0, "stop-at-non-option", &stop_at_non_option,
+					"stop parsing after the "
+					"first non-option argument"),
 		OPT_END(),
 	};
 
@@ -394,7 +397,8 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	ALLOC_GROW(opts, onb + 1, osz);
 	memset(opts + onb, 0, sizeof(opts[onb]));
 	argc = parse_options(argc, argv, prefix, opts, usage,
-	                     keep_dashdash ? PARSE_OPT_KEEP_DASHDASH : 0);
+			keep_dashdash ? PARSE_OPT_KEEP_DASHDASH : 0 |
+			stop_at_non_option ? PARSE_OPT_STOP_AT_NON_OPTION : 0);
 
 	strbuf_addf(&parsed, " --");
 	sq_quote_argv(&parsed, argv, 0);
