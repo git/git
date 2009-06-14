@@ -233,7 +233,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(var, "merge.default")) {
 		if (value)
-			default_ll_merge = strdup(value);
+			default_ll_merge = xstrdup(value);
 		return 0;
 	}
 
@@ -267,7 +267,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 	if (!strcmp("name", ep)) {
 		if (!value)
 			return error("%s: lacks value", var);
-		fn->description = strdup(value);
+		fn->description = xstrdup(value);
 		return 0;
 	}
 
@@ -290,14 +290,14 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 		 * file named by %A, and signal that it has done with zero exit
 		 * status.
 		 */
-		fn->cmdline = strdup(value);
+		fn->cmdline = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp("recursive", ep)) {
 		if (!value)
 			return error("%s: lacks value", var);
-		fn->recursive = strdup(value);
+		fn->recursive = xstrdup(value);
 		return 0;
 	}
 
