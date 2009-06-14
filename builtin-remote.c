@@ -1285,7 +1285,7 @@ static int get_one_entry(struct remote *remote, void *priv)
 
 	if (remote->url_nr > 0) {
 		utilp = &(string_list_append(remote->name, list)->util);
-		*utilp = malloc(strlen(remote->url[0])+strlen(" (fetch)")+1);
+		*utilp = xmalloc(strlen(remote->url[0])+strlen(" (fetch)")+1);
 		strcpy((char *) *utilp, remote->url[0]);
 		strcat((char *) *utilp, " (fetch)");
 	} else
@@ -1300,7 +1300,7 @@ static int get_one_entry(struct remote *remote, void *priv)
 	for (i = 0; i < url_nr; i++)
 	{
 		utilp = &(string_list_append(remote->name, list)->util);
-		*utilp = malloc(strlen(url[i])+strlen(" (push)")+1);
+		*utilp = xmalloc(strlen(url[i])+strlen(" (push)")+1);
 		strcpy((char *) *utilp, url[i]);
 		strcat((char *) *utilp, " (push)");
 	}
