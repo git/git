@@ -26,7 +26,7 @@ test_expect_failure 'keep a/b-2/c/d across checkout' '
 	 test -f a/b-2/c/d
 '
 
-test_expect_failure 'checkout should not have deleted a/b-2/c/d' '
+test_expect_success 'checkout should not have deleted a/b-2/c/d' '
 	git checkout HEAD^0 &&
 	git reset --hard master &&
 	 git checkout start^0 &&
