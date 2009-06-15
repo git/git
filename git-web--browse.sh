@@ -161,9 +161,12 @@ case "$browser" in
 		;;
 	esac
 	;;
-    w3m|links|lynx|open|start)
+    w3m|links|lynx|open)
 	eval "$browser_path" "$@"
 	;;
+    start)
+        exec "$browser_path" '"web-browse"' "$@"
+        ;;
     dillo)
 	"$browser_path" "$@" &
 	;;

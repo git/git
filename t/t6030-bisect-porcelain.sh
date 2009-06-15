@@ -555,6 +555,18 @@ test_expect_success 'restricting bisection on one dir and a file' '
 	grep "$PARA_HASH4 is first bad commit" my_bisect_log.txt
 '
 
+test_expect_success 'skipping away from skipped commit' '
+	git bisect start $PARA_HASH7 $HASH1 &&
+	para4=$(git rev-parse --verify HEAD) &&
+	test "$para4" = "$PARA_HASH4" &&
+        git bisect skip &&
+	hash7=$(git rev-parse --verify HEAD) &&
+	test "$hash7" = "$HASH7" &&
+        git bisect skip &&
+	hash3=$(git rev-parse --verify HEAD) &&
+	test "$hash3" = "$HASH3"
+'
+
 #
 #
 test_done

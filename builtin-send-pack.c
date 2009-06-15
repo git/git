@@ -473,7 +473,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	int fd[2];
 	struct child_process *conn;
 	struct extra_have_objects extra_have;
-	struct ref *remote_refs, **remote_tail, *local_refs;
+	struct ref *remote_refs, *local_refs;
 	int ret;
 	int send_all = 0;
 	const char *receivepack = "git-receive-pack";
@@ -567,13 +567,8 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		flags |= MATCH_REFS_MIRROR;
 
 	/* match them up */
-	remote_tail = &remote_refs;
-	while (*remote_tail)
-		remote_tail = &((*remote_tail)->next);
-	if (match_refs(local_refs, remote_refs, &remote_tail,
-		       nr_refspecs, refspecs, flags)) {
+	if (match_refs(local_refs, &remote_refs, nr_refspecs, refspecs, flags))
 		return -1;
-	}
 
 	ret = send_pack(&args, fd, conn, remote_refs, &extra_have);
 

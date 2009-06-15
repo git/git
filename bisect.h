@@ -7,7 +7,9 @@ extern struct commit_list *find_bisection(struct commit_list *list,
 
 extern struct commit_list *filter_skipped(struct commit_list *list,
 					  struct commit_list **tried,
-					  int show_all);
+					  int show_all,
+					  int *count,
+					  int *skipped_first);
 
 extern void print_commit_list(struct commit_list *list,
 			      const char *format_cur,

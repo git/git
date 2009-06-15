@@ -295,17 +295,14 @@ static int get_push_ref_states(const struct ref *remote_refs,
 	struct ref_states *states)
 {
 	struct remote *remote = states->remote;
-	struct ref *ref, *local_refs, *push_map, **push_tail;
+	struct ref *ref, *local_refs, *push_map;
 	if (remote->mirror)
 		return 0;
 
 	local_refs = get_local_heads();
 	push_map = copy_ref_list(remote_refs);
 
-	push_tail = &push_map;
-	while (*push_tail)
-		push_tail = &((*push_tail)->next);
-	match_refs(local_refs, push_map, &push_tail, remote->push_refspec_nr,
+	match_refs(local_refs, &push_map, remote->push_refspec_nr,
 		   remote->push_refspec, MATCH_REFS_NONE);
 
 	states->push.strdup_strings = 1;

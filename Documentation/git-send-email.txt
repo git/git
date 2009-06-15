@@ -14,6 +14,10 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Takes the patches given on the command line and emails them out.
+Patches can be specified as files, directories (which will send all
+files in the directory), or directly as a revision list.  In the
+last case, any format accepted by linkgit:git-format-patch[1] can
+be passed to git send-email.
 
 The header of the email is configurable by command line options.  If not
 specified on the command line, the user will be prompted with a ReadLine
@@ -161,7 +165,7 @@ Automating
 	Output of this command must be single email address per line.
 	Default is the value of 'sendemail.cccmd' configuration value.
 
---[no-]chain-reply-to=<identifier>::
+--[no-]chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
 	the first will be sent as replies to the first email sent.  When using
@@ -210,7 +214,8 @@ specified, as well as 'body' if --no-signed-off-cc is specified.
 --[no-]thread::
 	If this is set, the In-Reply-To header will be set on each email sent.
 	If disabled with "--no-thread", no emails will have the In-Reply-To
-	header set. Default is the value of the 'sendemail.thread' configuration
+	header set, unless specified with --in-reply-to.
+	Default is the value of the 'sendemail.thread' configuration
 	value; if that is unspecified, default to --thread.
 
 

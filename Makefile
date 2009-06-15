@@ -3,6 +3,11 @@ all::
 
 # Define V=1 to have a more verbose compile.
 #
+# Define SHELL_PATH to a POSIX shell if your /bin/sh is broken.
+#
+# Define SANE_TOOL_PATH to a colon-separated list of paths to prepend
+# to PATH if your tools in /usr/bin are broken.
+#
 # Define SNPRINTF_RETURNS_BOGUS if your are on a system which snprintf()
 # or vsnprintf() return -1 instead of number of characters which would
 # have been written to the final string if enough space had been available.
@@ -95,6 +100,10 @@ all::
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 #
+# Define NEEDS_RESOLV if linking with -lnsl and/or -lsocket is not enough.
+# Notably on Solaris hstrerror resides in libresolv and on Solaris 7
+# inet_ntop and inet_pton additionally reside there.
+#
 # Define NO_MMAP if you want to avoid mmap.
 #
 # Define NO_PTHREADS if you do not have or do not want to use Pthreads.
@@ -182,6 +191,9 @@ all::
 #
 # Define NO_CROSS_DIRECTORY_HARDLINKS if you plan to distribute the installed
 # programs as a tar, where bin/ and libexec/ might be on different file systems.
+#
+# Define USE_NED_ALLOCATOR if you want to replace the platforms default
+# memory allocators with the nedmalloc allocator written by Niall Douglas.
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -706,13 +718,20 @@ ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
 	NEEDS_NSL = YesPlease
 	SHELL_PATH = /bin/bash
+	SANE_TOOL_PATH = /usr/xpg6/bin:/usr/xpg4/bin
 	NO_STRCASESTR = YesPlease
 	NO_MEMMEM = YesPlease
-	NO_HSTRERROR = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
-	ifneq ($(uname_R),5.11)
-		OLD_ICONV = UnfortunatelyYes
+	ifeq ($(uname_R),5.7)
+		NEEDS_RESOLV = YesPlease
+		NO_IPV6 = YesPlease
+		NO_SOCKADDR_STORAGE = YesPlease
+		NO_UNSETENV = YesPlease
+		NO_SETENV = YesPlease
+		NO_STRLCPY = YesPlease
+		NO_C99_FORMAT = YesPlease
+		NO_STRTOUMAX = YesPlease
 	endif
 	ifeq ($(uname_R),5.8)
 		NO_UNSETENV = YesPlease
@@ -726,9 +745,12 @@ ifeq ($(uname_S),SunOS)
 		NO_C99_FORMAT = YesPlease
 		NO_STRTOUMAX = YesPlease
 	endif
-	INSTALL = ginstall
+	ifdef NO_IPV6
+		NEEDS_RESOLV = YesPlease
+	endif
+	INSTALL = /usr/ucb/install
 	TAR = gtar
-	BASIC_CFLAGS += -D__EXTENSIONS__
+	BASIC_CFLAGS += -D__EXTENSIONS__ -D__sun__
 endif
 ifeq ($(uname_O),Cygwin)
 	NO_D_TYPE_IN_DIRENT = YesPlease
@@ -837,7 +859,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	pathsep = ;
 	NO_PREAD = YesPlease
 	NO_OPENSSL = YesPlease
-	NO_CURL = YesPlease
 	NO_LIBGEN_H = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
 	NO_IPV6 = YesPlease
@@ -846,7 +867,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
 	NO_MEMMEM = YesPlease
-	NO_PTHREADS = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
@@ -861,14 +881,26 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	NO_NSEC = YesPlease
 	USE_WIN32_MMAP = YesPlease
+	USE_NED_ALLOCATOR = YesPlease
 	UNRELIABLE_FSTAT = UnfortunatelyYes
 	OBJECT_CREATION_USES_RENAMES = UnfortunatelyNeedsTo
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/regex -Icompat/fnmatch
-	COMPAT_CFLAGS += -DSNPRINTF_SIZE_CORR=1
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/regex/regex.o compat/winansi.o
 	EXTLIBS += -lws2_32
 	X = .exe
+ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
+	htmldir=doc/git/html/
+	prefix =
+	INSTALL = /bin/install
+	EXTLIBS += /mingw/lib/libz.a
+	NO_R_TO_GCC_LINKER = YesPlease
+	INTERNAL_QSORT = YesPlease
+	THREADED_DELTA_SEARCH = YesPlease
+else
+	NO_CURL = YesPlease
+	NO_PTHREADS = YesPlease
+endif
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
@@ -877,6 +909,14 @@ endif
 
 -include config.mak.autogen
 -include config.mak
+
+ifdef SANE_TOOL_PATH
+SANE_TOOL_PATH_SQ = $(subst ','\'',$(SANE_TOOL_PATH))
+BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|git_broken_path_fix $(SANE_TOOL_PATH_SQ)|'
+PATH := $(SANE_TOOL_PATH):${PATH}
+else
+BROKEN_PATH_FIX = '/^\# @@BROKEN_PATH_FIX@@$$/d'
+endif
 
 ifeq ($(uname_S),Darwin)
 	ifndef NO_FINK
@@ -980,6 +1020,9 @@ ifdef NEEDS_SOCKET
 endif
 ifdef NEEDS_NSL
 	EXTLIBS += -lnsl
+endif
+ifdef NEEDS_RESOLV
+	EXTLIBS += -lresolv
 endif
 ifdef NO_D_TYPE_IN_DIRENT
 	BASIC_CFLAGS += -DNO_D_TYPE_IN_DIRENT
@@ -1158,6 +1201,11 @@ ifdef UNRELIABLE_FSTAT
 	BASIC_CFLAGS += -DUNRELIABLE_FSTAT
 endif
 
+ifdef USE_NED_ALLOCATOR
+       COMPAT_CFLAGS += -DUSE_NED_ALLOCATOR -DOVERRIDE_STRDUP -DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR -Icompat/nedmalloc
+       COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
+endif
+
 ifeq ($(TCLTK_PATH),)
 NO_TCLTK=NoThanks
 endif
@@ -1232,7 +1280,7 @@ SHELL = $(SHELL_PATH)
 
 all:: shell_compatibility_test $(ALL_PROGRAMS) $(BUILT_INS) $(OTHER_PROGRAMS) GIT-BUILD-OPTIONS
 ifneq (,$X)
-	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), test '$p' -ef '$p$X' || $(RM) '$p';)
+	$(QUIET_BUILT_IN)$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), test '$p' -ef '$p$X' || $(RM) '$p';)
 endif
 
 all::
@@ -1285,6 +1333,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	    -e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
+	    -e $(BROKEN_PATH_FIX) \
 	    $@.sh >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
@@ -1673,7 +1722,7 @@ distclean: clean
 	$(RM) configure
 
 clean:
-	$(RM) *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
+	$(RM) *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o compat/*/*.o xdiff/*.o \
 		$(LIB_FILE) $(XDIFF_LIB)
 	$(RM) $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS)

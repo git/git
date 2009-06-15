@@ -354,7 +354,7 @@ int is_encoding_utf8(const char *name)
  * with iconv.  If the conversion fails, returns NULL.
  */
 #ifndef NO_ICONV
-#ifdef OLD_ICONV
+#if defined(OLD_ICONV) || (defined(__sun__) && !defined(_XPG6))
 	typedef const char * iconv_ibp;
 #else
 	typedef char * iconv_ibp;

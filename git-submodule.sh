@@ -18,6 +18,7 @@ quiet=
 reference=
 cached=
 nofetch=
+update=
 
 #
 # print stuff on stdout unless -q was specified
@@ -310,6 +311,11 @@ cmd_init()
 		git config submodule."$name".url "$url" ||
 		die "Failed to register url for submodule path '$path'"
 
+		upd="$(git config -f .gitmodules submodule."$name".update)"
+		test -z "$upd" ||
+		git config submodule."$name".update "$upd" ||
+		die "Failed to register update mode for submodule path '$path'"
+
 		say "Submodule '$name' ($url) registered for path '$path'"
 	done
 }
@@ -336,6 +342,10 @@ cmd_update()
 		-N|--no-fetch)
 			shift
 			nofetch=1
+			;;
+		-r|--rebase)
+			shift
+			update="rebase"
 			;;
 		--reference)
 			case "$2" in '') usage ;; esac
@@ -369,6 +379,7 @@ cmd_update()
 	do
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
+		update_module=$(git config submodule."$name".update)
 		if test -z "$url"
 		then
 			# Only mention uninitialized submodules when its
@@ -389,6 +400,11 @@ cmd_update()
 			die "Unable to find current revision in submodule path '$path'"
 		fi
 
+		if ! test -z "$update"
+		then
+			update_module=$update
+		fi
+
 		if test "$subsha1" != "$sha1"
 		then
 			force=
@@ -404,11 +420,22 @@ cmd_update()
 				die "Unable to fetch in submodule path '$path'"
 			fi
 
-			(unset GIT_DIR; cd "$path" &&
-				  git-checkout $force -q "$sha1") ||
-			die "Unable to checkout '$sha1' in submodule path '$path'"
+			case "$update_module" in
+			rebase)
+				command="git rebase"
+				action="rebase"
+				msg="rebased onto"
+				;;
+			*)
+				command="git checkout $force -q"
+				action="checkout"
+				msg="checked out"
+				;;
+			esac
 
-			say "Submodule path '$path': checked out '$sha1'"
+			(unset GIT_DIR; cd "$path" && $command "$sha1") ||
+			die "Unable to $action '$sha1' in submodule path '$path'"
+			say "Submodule path '$path': $msg '$sha1'"
 		fi
 	done
 }

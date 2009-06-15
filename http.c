@@ -1,7 +1,9 @@
 #include "http.h"
+#include "pack.h"
 
 int data_received;
 int active_requests;
+int http_is_verbose;
 
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
@@ -10,6 +12,10 @@ static CURLM *curlm;
 #ifndef NO_CURL_EASY_DUPHANDLE
 static CURL *curl_default;
 #endif
+
+#define PREV_BUF_SIZE 4096
+#define RANGE_HEADER_SIZE 30
+
 char curl_errorstr[CURL_ERROR_SIZE];
 
 static int curl_ssl_verify = -1;
@@ -28,6 +34,7 @@ static const char *curl_http_proxy;
 static char *user_name, *user_pass;
 
 static struct curl_slist *pragma_header;
+static struct curl_slist *no_pragma_header;
 
 static struct active_request_slot *active_queue_head;
 
@@ -276,6 +283,8 @@ void http_init(struct remote *remote)
 	char *low_speed_limit;
 	char *low_speed_time;
 
+	http_is_verbose = 0;
+
 	git_config(http_options, NULL);
 
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -284,6 +293,7 @@ void http_init(struct remote *remote)
 		curl_http_proxy = xstrdup(remote->http_proxy);
 
 	pragma_header = curl_slist_append(pragma_header, "Pragma: no-cache");
+	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
 #ifdef USE_CURL_MULTI
 	{
@@ -365,6 +375,9 @@ void http_cleanup(void)
 
 	curl_slist_free_all(pragma_header);
 	pragma_header = NULL;
+
+	curl_slist_free_all(no_pragma_header);
+	no_pragma_header = NULL;
 
 	if (curl_http_proxy) {
 		free((void *)curl_http_proxy);
@@ -611,6 +624,7 @@ void finish_all_active_slots(void)
 		}
 }
 
+/* Helpers for modifying and creating URLs */
 static inline int needs_quote(int ch)
 {
 	if (((ch >= 'A') && (ch <= 'Z'))
@@ -631,15 +645,20 @@ static inline int hex(int v)
 		return 'A' + v - 10;
 }
 
+static void end_url_with_slash(struct strbuf *buf, const char *url)
+{
+	strbuf_addstr(buf, url);
+	if (buf->len && buf->buf[buf->len - 1] != '/')
+		strbuf_addstr(buf, "/");
+}
+
 static char *quote_ref_url(const char *base, const char *ref)
 {
 	struct strbuf buf = STRBUF_INIT;
 	const char *cp;
 	int ch;
 
-	strbuf_addstr(&buf, base);
-	if (buf.len && buf.buf[buf.len - 1] != '/' && *ref != '/')
-		strbuf_addstr(&buf, "/");
+	end_url_with_slash(&buf, base);
 
 	for (cp = ref; (ch = *cp) != 0; cp++)
 		if (needs_quote(ch))
@@ -650,41 +669,575 @@ static char *quote_ref_url(const char *base, const char *ref)
 	return strbuf_detach(&buf, NULL);
 }
 
+void append_remote_object_url(struct strbuf *buf, const char *url,
+			      const char *hex,
+			      int only_two_digit_prefix)
+{
+	strbuf_addf(buf, "%s/objects/%.*s/", url, 2, hex);
+	if (!only_two_digit_prefix)
+		strbuf_addf(buf, "%s", hex+2);
+}
+
+char *get_remote_object_url(const char *url, const char *hex,
+			    int only_two_digit_prefix)
+{
+	struct strbuf buf = STRBUF_INIT;
+	append_remote_object_url(&buf, url, hex, only_two_digit_prefix);
+	return strbuf_detach(&buf, NULL);
+}
+
+/* http_request() targets */
+#define HTTP_REQUEST_STRBUF	0
+#define HTTP_REQUEST_FILE	1
+
+static int http_request(const char *url, void *result, int target, int options)
+{
+	struct active_request_slot *slot;
+	struct slot_results results;
+	struct curl_slist *headers = NULL;
+	struct strbuf buf = STRBUF_INIT;
+	int ret;
+
+	slot = get_active_slot();
+	slot->results = &results;
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
+
+	if (result == NULL) {
+		curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 1);
+	} else {
+		curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
+		curl_easy_setopt(slot->curl, CURLOPT_FILE, result);
+
+		if (target == HTTP_REQUEST_FILE) {
+			long posn = ftell(result);
+			curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
+					 fwrite);
+			if (posn > 0) {
+				strbuf_addf(&buf, "Range: bytes=%ld-", posn);
+				headers = curl_slist_append(headers, buf.buf);
+				strbuf_reset(&buf);
+			}
+			slot->local = result;
+		} else
+			curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
+					 fwrite_buffer);
+	}
+
+	strbuf_addstr(&buf, "Pragma:");
+	if (options & HTTP_NO_CACHE)
+		strbuf_addstr(&buf, " no-cache");
+
+	headers = curl_slist_append(headers, buf.buf);
+
+	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
+
+	if (start_active_slot(slot)) {
+		run_active_slot(slot);
+		if (results.curl_result == CURLE_OK)
+			ret = HTTP_OK;
+		else if (missing_target(&results))
+			ret = HTTP_MISSING_TARGET;
+		else
+			ret = HTTP_ERROR;
+	} else {
+		error("Unable to start HTTP request for %s", url);
+		ret = HTTP_START_FAILED;
+	}
+
+	slot->local = NULL;
+	curl_slist_free_all(headers);
+	strbuf_release(&buf);
+
+	return ret;
+}
+
+int http_get_strbuf(const char *url, struct strbuf *result, int options)
+{
+	return http_request(url, result, HTTP_REQUEST_STRBUF, options);
+}
+
+int http_get_file(const char *url, const char *filename, int options)
+{
+	int ret;
+	struct strbuf tmpfile = STRBUF_INIT;
+	FILE *result;
+
+	strbuf_addf(&tmpfile, "%s.temp", filename);
+	result = fopen(tmpfile.buf, "a");
+	if (! result) {
+		error("Unable to open local file %s", tmpfile.buf);
+		ret = HTTP_ERROR;
+		goto cleanup;
+	}
+
+	ret = http_request(url, result, HTTP_REQUEST_FILE, options);
+	fclose(result);
+
+	if ((ret == HTTP_OK) && move_temp_to_file(tmpfile.buf, filename))
+		ret = HTTP_ERROR;
+cleanup:
+	strbuf_release(&tmpfile);
+	return ret;
+}
+
+int http_error(const char *url, int ret)
+{
+	/* http_request has already handled HTTP_START_FAILED. */
+	if (ret != HTTP_START_FAILED)
+		error("%s while accessing %s\n", curl_errorstr, url);
+
+	return ret;
+}
+
 int http_fetch_ref(const char *base, struct ref *ref)
 {
 	char *url;
 	struct strbuf buffer = STRBUF_INIT;
-	struct active_request_slot *slot;
-	struct slot_results results;
-	int ret;
+	int ret = -1;
 
 	url = quote_ref_url(base, ref->name);
-	slot = get_active_slot();
-	slot->results = &results;
-	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
-	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	if (start_active_slot(slot)) {
-		run_active_slot(slot);
-		if (results.curl_result == CURLE_OK) {
-			strbuf_rtrim(&buffer);
-			if (buffer.len == 40)
-				ret = get_sha1_hex(buffer.buf, ref->old_sha1);
-			else if (!prefixcmp(buffer.buf, "ref: ")) {
-				ref->symref = xstrdup(buffer.buf + 5);
-				ret = 0;
-			} else
-				ret = 1;
-		} else {
-			ret = error("Couldn't get %s for %s\n%s",
-				    url, ref->name, curl_errorstr);
+	if (http_get_strbuf(url, &buffer, HTTP_NO_CACHE) == HTTP_OK) {
+		strbuf_rtrim(&buffer);
+		if (buffer.len == 40)
+			ret = get_sha1_hex(buffer.buf, ref->old_sha1);
+		else if (!prefixcmp(buffer.buf, "ref: ")) {
+			ref->symref = xstrdup(buffer.buf + 5);
+			ret = 0;
 		}
-	} else {
-		ret = error("Unable to start request");
 	}
 
 	strbuf_release(&buffer);
 	free(url);
 	return ret;
+}
+
+/* Helpers for fetching packs */
+static int fetch_pack_index(unsigned char *sha1, const char *base_url)
+{
+	int ret = 0;
+	char *hex = xstrdup(sha1_to_hex(sha1));
+	char *filename;
+	char *url;
+	struct strbuf buf = STRBUF_INIT;
+
+	/* Don't use the index if the pack isn't there */
+	end_url_with_slash(&buf, base_url);
+	strbuf_addf(&buf, "objects/pack/pack-%s.pack", hex);
+	url = strbuf_detach(&buf, 0);
+
+	if (http_get_strbuf(url, NULL, 0)) {
+		ret = error("Unable to verify pack %s is available",
+			    hex);
+		goto cleanup;
+	}
+
+	if (has_pack_index(sha1)) {
+		ret = 0;
+		goto cleanup;
+	}
+
+	if (http_is_verbose)
+		fprintf(stderr, "Getting index for pack %s\n", hex);
+
+	end_url_with_slash(&buf, base_url);
+	strbuf_addf(&buf, "objects/pack/pack-%s.idx", hex);
+	url = strbuf_detach(&buf, NULL);
+
+	filename = sha1_pack_index_name(sha1);
+	if (http_get_file(url, filename, 0) != HTTP_OK)
+		ret = error("Unable to get pack index %s\n", url);
+
+cleanup:
+	free(hex);
+	free(url);
+	return ret;
+}
+
+static int fetch_and_setup_pack_index(struct packed_git **packs_head,
+	unsigned char *sha1, const char *base_url)
+{
+	struct packed_git *new_pack;
+
+	if (fetch_pack_index(sha1, base_url))
+		return -1;
+
+	new_pack = parse_pack_index(sha1);
+	if (!new_pack)
+		return -1; /* parse_pack_index() already issued error message */
+	new_pack->next = *packs_head;
+	*packs_head = new_pack;
+	return 0;
+}
+
+int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
+{
+	int ret = 0, i = 0;
+	char *url, *data;
+	struct strbuf buf = STRBUF_INIT;
+	unsigned char sha1[20];
+
+	end_url_with_slash(&buf, base_url);
+	strbuf_addstr(&buf, "objects/info/packs");
+	url = strbuf_detach(&buf, NULL);
+
+	ret = http_get_strbuf(url, &buf, HTTP_NO_CACHE);
+	if (ret != HTTP_OK)
+		goto cleanup;
+
+	data = buf.buf;
+	while (i < buf.len) {
+		switch (data[i]) {
+		case 'P':
+			i++;
+			if (i + 52 <= buf.len &&
+			    !prefixcmp(data + i, " pack-") &&
+			    !prefixcmp(data + i + 46, ".pack\n")) {
+				get_sha1_hex(data + i + 6, sha1);
+				fetch_and_setup_pack_index(packs_head, sha1,
+						      base_url);
+				i += 51;
+				break;
+			}
+		default:
+			while (i < buf.len && data[i] != '\n')
+				i++;
+		}
+		i++;
+	}
+
+cleanup:
+	free(url);
+	return ret;
+}
+
+void release_http_pack_request(struct http_pack_request *preq)
+{
+	if (preq->packfile != NULL) {
+		fclose(preq->packfile);
+		preq->packfile = NULL;
+		preq->slot->local = NULL;
+	}
+	if (preq->range_header != NULL) {
+		curl_slist_free_all(preq->range_header);
+		preq->range_header = NULL;
+	}
+	preq->slot = NULL;
+	free(preq->url);
+}
+
+int finish_http_pack_request(struct http_pack_request *preq)
+{
+	int ret;
+	struct packed_git **lst;
+
+	preq->target->pack_size = ftell(preq->packfile);
+
+	if (preq->packfile != NULL) {
+		fclose(preq->packfile);
+		preq->packfile = NULL;
+		preq->slot->local = NULL;
+	}
+
+	ret = move_temp_to_file(preq->tmpfile, preq->filename);
+	if (ret)
+		return ret;
+
+	lst = preq->lst;
+	while (*lst != preq->target)
+		lst = &((*lst)->next);
+	*lst = (*lst)->next;
+
+	if (verify_pack(preq->target))
+		return -1;
+	install_packed_git(preq->target);
+
+	return 0;
+}
+
+struct http_pack_request *new_http_pack_request(
+	struct packed_git *target, const char *base_url)
+{
+	char *url;
+	char *filename;
+	long prev_posn = 0;
+	char range[RANGE_HEADER_SIZE];
+	struct strbuf buf = STRBUF_INIT;
+	struct http_pack_request *preq;
+
+	preq = xmalloc(sizeof(*preq));
+	preq->target = target;
+	preq->range_header = NULL;
+
+	end_url_with_slash(&buf, base_url);
+	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
+		sha1_to_hex(target->sha1));
+	url = strbuf_detach(&buf, NULL);
+	preq->url = xstrdup(url);
+
+	filename = sha1_pack_name(target->sha1);
+	snprintf(preq->filename, sizeof(preq->filename), "%s", filename);
+	snprintf(preq->tmpfile, sizeof(preq->tmpfile), "%s.temp", filename);
+	preq->packfile = fopen(preq->tmpfile, "a");
+	if (!preq->packfile) {
+		error("Unable to open local file %s for pack",
+		      preq->tmpfile);
+		goto abort;
+	}
+
+	preq->slot = get_active_slot();
+	preq->slot->local = preq->packfile;
+	curl_easy_setopt(preq->slot->curl, CURLOPT_FILE, preq->packfile);
+	curl_easy_setopt(preq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
+	curl_easy_setopt(preq->slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(preq->slot->curl, CURLOPT_HTTPHEADER,
+		no_pragma_header);
+
+	/*
+	 * If there is data present from a previous transfer attempt,
+	 * resume where it left off
+	 */
+	prev_posn = ftell(preq->packfile);
+	if (prev_posn>0) {
+		if (http_is_verbose)
+			fprintf(stderr,
+				"Resuming fetch of pack %s at byte %ld\n",
+				sha1_to_hex(target->sha1), prev_posn);
+		sprintf(range, "Range: bytes=%ld-", prev_posn);
+		preq->range_header = curl_slist_append(NULL, range);
+		curl_easy_setopt(preq->slot->curl, CURLOPT_HTTPHEADER,
+			preq->range_header);
+	}
+
+	return preq;
+
+abort:
+	free(filename);
+	return NULL;
+}
+
+/* Helpers for fetching objects (loose) */
+static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
+			       void *data)
+{
+	unsigned char expn[4096];
+	size_t size = eltsize * nmemb;
+	int posn = 0;
+	struct http_object_request *freq =
+		(struct http_object_request *)data;
+	do {
+		ssize_t retval = xwrite(freq->localfile,
+					(char *) ptr + posn, size - posn);
+		if (retval < 0)
+			return posn;
+		posn += retval;
+	} while (posn < size);
+
+	freq->stream.avail_in = size;
+	freq->stream.next_in = ptr;
+	do {
+		freq->stream.next_out = expn;
+		freq->stream.avail_out = sizeof(expn);
+		freq->zret = git_inflate(&freq->stream, Z_SYNC_FLUSH);
+		git_SHA1_Update(&freq->c, expn,
+				sizeof(expn) - freq->stream.avail_out);
+	} while (freq->stream.avail_in && freq->zret == Z_OK);
+	data_received++;
+	return size;
+}
+
+struct http_object_request *new_http_object_request(const char *base_url,
+	unsigned char *sha1)
+{
+	char *hex = sha1_to_hex(sha1);
+	char *filename;
+	char prevfile[PATH_MAX];
+	char *url;
+	int prevlocal;
+	unsigned char prev_buf[PREV_BUF_SIZE];
+	ssize_t prev_read = 0;
+	long prev_posn = 0;
+	char range[RANGE_HEADER_SIZE];
+	struct curl_slist *range_header = NULL;
+	struct http_object_request *freq;
+
+	freq = xmalloc(sizeof(*freq));
+	hashcpy(freq->sha1, sha1);
+	freq->localfile = -1;
+
+	filename = sha1_file_name(sha1);
+	snprintf(freq->filename, sizeof(freq->filename), "%s", filename);
+	snprintf(freq->tmpfile, sizeof(freq->tmpfile),
+		 "%s.temp", filename);
+
+	snprintf(prevfile, sizeof(prevfile), "%s.prev", filename);
+	unlink_or_warn(prevfile);
+	rename(freq->tmpfile, prevfile);
+	unlink_or_warn(freq->tmpfile);
+
+	if (freq->localfile != -1)
+		error("fd leakage in start: %d", freq->localfile);
+	freq->localfile = open(freq->tmpfile,
+			       O_WRONLY | O_CREAT | O_EXCL, 0666);
+	/*
+	 * This could have failed due to the "lazy directory creation";
+	 * try to mkdir the last path component.
+	 */
+	if (freq->localfile < 0 && errno == ENOENT) {
+		char *dir = strrchr(freq->tmpfile, '/');
+		if (dir) {
+			*dir = 0;
+			mkdir(freq->tmpfile, 0777);
+			*dir = '/';
+		}
+		freq->localfile = open(freq->tmpfile,
+				       O_WRONLY | O_CREAT | O_EXCL, 0666);
+	}
+
+	if (freq->localfile < 0) {
+		error("Couldn't create temporary file %s for %s: %s",
+		      freq->tmpfile, freq->filename, strerror(errno));
+		goto abort;
+	}
+
+	memset(&freq->stream, 0, sizeof(freq->stream));
+
+	git_inflate_init(&freq->stream);
+
+	git_SHA1_Init(&freq->c);
+
+	url = get_remote_object_url(base_url, hex, 0);
+	freq->url = xstrdup(url);
+
+	/*
+	 * If a previous temp file is present, process what was already
+	 * fetched.
+	 */
+	prevlocal = open(prevfile, O_RDONLY);
+	if (prevlocal != -1) {
+		do {
+			prev_read = xread(prevlocal, prev_buf, PREV_BUF_SIZE);
+			if (prev_read>0) {
+				if (fwrite_sha1_file(prev_buf,
+						     1,
+						     prev_read,
+						     freq) == prev_read) {
+					prev_posn += prev_read;
+				} else {
+					prev_read = -1;
+				}
+			}
+		} while (prev_read > 0);
+		close(prevlocal);
+	}
+	unlink_or_warn(prevfile);
+
+	/*
+	 * Reset inflate/SHA1 if there was an error reading the previous temp
+	 * file; also rewind to the beginning of the local file.
+	 */
+	if (prev_read == -1) {
+		memset(&freq->stream, 0, sizeof(freq->stream));
+		git_inflate_init(&freq->stream);
+		git_SHA1_Init(&freq->c);
+		if (prev_posn>0) {
+			prev_posn = 0;
+			lseek(freq->localfile, 0, SEEK_SET);
+			ftruncate(freq->localfile, 0);
+		}
+	}
+
+	freq->slot = get_active_slot();
+
+	curl_easy_setopt(freq->slot->curl, CURLOPT_FILE, freq);
+	curl_easy_setopt(freq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
+	curl_easy_setopt(freq->slot->curl, CURLOPT_ERRORBUFFER, freq->errorstr);
+	curl_easy_setopt(freq->slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(freq->slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
+
+	/*
+	 * If we have successfully processed data from a previous fetch
+	 * attempt, only fetch the data we don't already have.
+	 */
+	if (prev_posn>0) {
+		if (http_is_verbose)
+			fprintf(stderr,
+				"Resuming fetch of object %s at byte %ld\n",
+				hex, prev_posn);
+		sprintf(range, "Range: bytes=%ld-", prev_posn);
+		range_header = curl_slist_append(range_header, range);
+		curl_easy_setopt(freq->slot->curl,
+				 CURLOPT_HTTPHEADER, range_header);
+	}
+
+	return freq;
+
+	free(url);
+abort:
+	free(filename);
+	free(freq);
+	return NULL;
+}
+
+void process_http_object_request(struct http_object_request *freq)
+{
+	if (freq->slot == NULL)
+		return;
+	freq->curl_result = freq->slot->curl_result;
+	freq->http_code = freq->slot->http_code;
+	freq->slot = NULL;
+}
+
+int finish_http_object_request(struct http_object_request *freq)
+{
+	struct stat st;
+
+	close(freq->localfile);
+	freq->localfile = -1;
+
+	process_http_object_request(freq);
+
+	if (freq->http_code == 416) {
+		fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
+	} else if (freq->curl_result != CURLE_OK) {
+		if (stat(freq->tmpfile, &st) == 0)
+			if (st.st_size == 0)
+				unlink_or_warn(freq->tmpfile);
+		return -1;
+	}
+
+	git_inflate_end(&freq->stream);
+	git_SHA1_Final(freq->real_sha1, &freq->c);
+	if (freq->zret != Z_STREAM_END) {
+		unlink_or_warn(freq->tmpfile);
+		return -1;
+	}
+	if (hashcmp(freq->sha1, freq->real_sha1)) {
+		unlink_or_warn(freq->tmpfile);
+		return -1;
+	}
+	freq->rename =
+		move_temp_to_file(freq->tmpfile, freq->filename);
+
+	return freq->rename;
+}
+
+void abort_http_object_request(struct http_object_request *freq)
+{
+	unlink_or_warn(freq->tmpfile);
+
+	release_http_object_request(freq);
+}
+
+void release_http_object_request(struct http_object_request *freq)
+{
+	if (freq->localfile != -1) {
+		close(freq->localfile);
+		freq->localfile = -1;
+	}
+	if (freq->url != NULL) {
+		free(freq->url);
+		freq->url = NULL;
+	}
+	freq->slot = NULL;
 }

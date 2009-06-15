@@ -276,6 +276,9 @@ test_expect_success 'fail if the index has unresolved entries' '
 
 	test_must_fail git merge "$c5" &&
 	test_must_fail git merge "$c5" 2> out &&
+	grep "You have not concluded your merge" out &&
+	rm -f .git/MERGE_HEAD &&
+	test_must_fail git merge "$c5" 2> out &&
 	grep "You are in the middle of a conflicted merge" out
 
 '
