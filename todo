@@ -21,3 +21,6 @@
 	add to-submodule and from-submodule commands
 
 	automated tests for --squash stuff
+
+	test.sh fails in msysgit?
+		sort error - see Thell's email
