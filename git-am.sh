@@ -502,7 +502,14 @@ do
 
 	case "$resolved" in
 	'')
-		eval 'git apply '"$git_apply_opt"' --index "$dotest/patch"'
+		# When we are allowed to fall back to 3-way later, don't give
+		# false errors during the initial attempt.
+		squelch=
+		if test "$threeway" = t
+		then
+			squelch='>/dev/null 2>&1 '
+		fi
+		eval "git apply $squelch$git_apply_opt"' --index "$dotest/patch"'
 		apply_status=$?
 		;;
 	t)
