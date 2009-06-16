@@ -305,4 +305,12 @@ test_expect_success 'am into an unborn branch' '
 	test "z$result" = "z$(git rev-parse first^{tree})"
 '
 
+test_expect_success 'am newline in subject' '
+	git checkout first &&
+	test_tick &&
+	sed -e "s/second/second \\\n foo/" patch1 > patchnl &&
+	git am < patchnl > output.out 2>&1 &&
+	grep "^Applying: second \\\n foo$" output.out
+'
+
 test_done
