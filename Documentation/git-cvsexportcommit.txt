@@ -63,6 +63,10 @@ OPTIONS
 -u::
 	Update affected files from CVS repository before attempting export.
 
+-k::
+	Reverse CVS keyword expansion (e.g. $Revision: 1.2.3.4$
+	becomes $Revision$) in working CVS checkout before applying patch.
+
 -w::
 	Specify the location of the CVS checkout to use for the export. This
 	option does not require GIT_DIR to be set before execution if the
