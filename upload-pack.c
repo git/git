@@ -28,7 +28,7 @@ static unsigned long oldest_have;
 
 static int multi_ack, nr_our_refs;
 static int use_thin_pack, use_ofs_delta, use_include_tag;
-static int no_progress;
+static int no_progress, daemon_mode;
 static struct object_array have_obj;
 static struct object_array want_obj;
 static unsigned int timeout;
@@ -521,6 +521,10 @@ static void receive_needs(void)
 	}
 	if (debug_fd)
 		write_in_full(debug_fd, "#E\n", 3);
+
+	if (!use_sideband && daemon_mode)
+		no_progress = 1;
+
 	if (depth == 0 && shallows.nr == 0)
 		return;
 	if (depth > 0) {
@@ -630,6 +634,7 @@ int main(int argc, char **argv)
 		}
 		if (!prefixcmp(arg, "--timeout=")) {
 			timeout = atoi(arg+10);
+			daemon_mode = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
