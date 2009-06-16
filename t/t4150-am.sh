@@ -180,6 +180,17 @@ test_expect_success 'am -3 falls back to 3-way merge' '
 	test -z "$(git diff lorem)"
 '
 
+test_expect_success 'am -3 -q is quiet' '
+	git reset master2 --hard &&
+	sed -n -e "3,\$p" msg >file &&
+	head -n 9 msg >>file &&
+	git add file &&
+	test_tick &&
+	git commit -m "copied stuff" &&
+	git am -3 -q lorem-move.patch > output.out 2>&1 &&
+	! test -s output.out
+'
+
 test_expect_success 'am pauses on conflict' '
 	git checkout lorem2^^ &&
 	test_must_fail git am lorem-move.patch &&
@@ -311,6 +322,13 @@ test_expect_success 'am newline in subject' '
 	sed -e "s/second/second \\\n foo/" patch1 > patchnl &&
 	git am < patchnl > output.out 2>&1 &&
 	grep "^Applying: second \\\n foo$" output.out
+'
+
+test_expect_success 'am -q is quiet' '
+	git checkout first &&
+	test_tick &&
+	git am -q < patch1 > output.out 2>&1 &&
+	! test -s output.out
 '
 
 test_done
