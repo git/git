@@ -82,10 +82,16 @@ foreach my $tar_file (@ARGV)
 		$mtime = oct $mtime;
 		next if $typeflag == 5; # directory
 
-		print FI "blob\n", "mark :$next_mark\n", "data $size\n";
-		while ($size > 0 && read(I, $_, 512) == 512) {
-			print FI substr($_, 0, $size);
-			$size -= 512;
+		print FI "blob\n", "mark :$next_mark\n";
+		if ($typeflag == 2) { # symbolic link
+			print FI "data ", length($linkname), "\n", $linkname;
+			$mode = 0120000;
+		} else {
+			print FI "data $size\n";
+			while ($size > 0 && read(I, $_, 512) == 512) {
+				print FI substr($_, 0, $size);
+				$size -= 512;
+			}
 		}
 		print FI "\n";
 
@@ -118,7 +124,8 @@ EOF
 	{
 		my ($mark, $mode) = @{$files{$path}};
 		$path =~ s,^([^/]+)/,, if $have_top_dir;
-		printf FI "M %o :%i %s\n", $mode & 0111 ? 0755 : 0644, $mark, $path;
+		$mode = $mode & 0111 ? 0755 : 0644 unless $mode == 0120000;
+		printf FI "M %o :%i %s\n", $mode, $mark, $path;
 	}
 	print FI "\n";
 
