@@ -464,7 +464,7 @@ int parse_options(int argc, const char **argv, const char *prefix,
 static int usage_argh(const struct option *opts)
 {
 	const char *s;
-	int literal = opts->flags & PARSE_OPT_LITERAL_ARGHELP;
+	int literal = (opts->flags & PARSE_OPT_LITERAL_ARGHELP) || !opts->argh;
 	if (opts->flags & PARSE_OPT_OPTARG)
 		if (opts->long_name)
 			s = literal ? "[=%s]" : "[=<%s>]";
@@ -472,7 +472,7 @@ static int usage_argh(const struct option *opts)
 			s = literal ? "[%s]" : "[<%s>]";
 	else
 		s = literal ? " %s" : " <%s>";
-	return fprintf(stderr, s, opts->argh);
+	return fprintf(stderr, s, opts->argh ? opts->argh : "...");
 }
 
 #define USAGE_OPTS_WIDTH 24
@@ -524,40 +524,8 @@ int usage_with_options_internal(const char * const *usagestr,
 		if (opts->type == OPTION_NUMBER)
 			pos += fprintf(stderr, "-NUM");
 
-		switch (opts->type) {
-		case OPTION_ARGUMENT:
-			break;
-		case OPTION_INTEGER:
-			if (opts->flags & PARSE_OPT_OPTARG)
-				if (opts->long_name)
-					pos += fprintf(stderr, "[=<n>]");
-				else
-					pos += fprintf(stderr, "[<n>]");
-			else
-				pos += fprintf(stderr, " <n>");
-			break;
-		case OPTION_CALLBACK:
-			if (opts->flags & PARSE_OPT_NOARG)
-				break;
-			/* FALLTHROUGH */
-		case OPTION_FILENAME:
-			/* FALLTHROUGH */
-		case OPTION_STRING:
-			if (opts->argh)
-				pos += usage_argh(opts);
-			else {
-				if (opts->flags & PARSE_OPT_OPTARG)
-					if (opts->long_name)
-						pos += fprintf(stderr, "[=...]");
-					else
-						pos += fprintf(stderr, "[...]");
-				else
-					pos += fprintf(stderr, " ...");
-			}
-			break;
-		default: /* OPTION_{BIT,BOOLEAN,NUMBER,SET_INT,SET_PTR} */
-			break;
-		}
+		if (!(opts->flags & PARSE_OPT_NOARG))
+			pos += usage_argh(opts);
 
 		if (pos <= USAGE_OPTS_WIDTH)
 			pad = USAGE_OPTS_WIDTH - pos;
