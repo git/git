@@ -824,7 +824,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_PREAD = YesPlease
 	NO_OPENSSL = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
-	NO_IPV6 = YesPlease
 	NO_SETENV = YesPlease
 	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
