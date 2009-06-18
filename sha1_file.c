@@ -1162,8 +1162,7 @@ unsigned long unpack_object_header_buffer(const unsigned char *buf,
 		unsigned long len, enum object_type *type, unsigned long *sizep)
 {
 	unsigned shift;
-	unsigned char c;
-	unsigned long size;
+	unsigned long size, c;
 	unsigned long used = 0;
 
 	c = buf[used++];
