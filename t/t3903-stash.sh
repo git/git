@@ -177,4 +177,27 @@ test_expect_success 'stash branch' '
 	test 0 = $(git stash list | wc -l)
 '
 
+test_expect_success 'apply -q is quiet' '
+	echo foo > file &&
+	git stash &&
+	git stash apply -q > output.out 2>&1 &&
+	test ! -s output.out
+'
+
+test_expect_success 'save -q is quiet' '
+	git stash save --quiet > output.out 2>&1 &&
+	test ! -s output.out
+'
+
+test_expect_success 'pop -q is quiet' '
+	git stash pop -q > output.out 2>&1 &&
+	test ! -s output.out
+'
+
+test_expect_success 'drop -q is quiet' '
+	git stash &&
+	git stash drop -q > output.out 2>&1 &&
+	test ! -s output.out
+'
+
 test_done
