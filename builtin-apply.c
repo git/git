@@ -2614,7 +2614,7 @@ static int get_current_sha1(const char *path, unsigned char *sha1)
 static void build_fake_ancestor(struct patch *list, const char *filename)
 {
 	struct patch *patch;
-	struct index_state result = { 0 };
+	struct index_state result = { NULL };
 	int fd;
 
 	/* Once we start supporting the reverse patch, it may be

@@ -158,7 +158,7 @@ struct obj_info {
 #define FLAG_WRITTEN (1u<<21)
 
 static struct obj_info *obj_list;
-unsigned nr_objects;
+static unsigned nr_objects;
 
 /*
  * Called only from check_object() after it verified this object
@@ -200,7 +200,7 @@ static int check_object(struct object *obj, int type, void *data)
 
 	if (fsck_object(obj, 1, fsck_error_function))
 		die("Error in object");
-	if (!fsck_walk(obj, check_object, 0))
+	if (!fsck_walk(obj, check_object, NULL))
 		die("Error on reachable objects of %s", sha1_to_hex(obj->sha1));
 	write_cached_object(obj);
 	return 1;
@@ -210,7 +210,7 @@ static void write_rest(void)
 {
 	unsigned i;
 	for (i = 0; i < nr_objects; i++)
-		check_object(obj_list[i].obj, OBJ_ANY, 0);
+		check_object(obj_list[i].obj, OBJ_ANY, NULL);
 }
 
 static void added_object(unsigned nr, enum object_type type,

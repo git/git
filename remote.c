@@ -307,7 +307,7 @@ static void read_branches_file(struct remote *remote)
 		strbuf_addstr(&branch, "HEAD:");
 	}
 	add_url_alias(remote, p);
-	add_fetch_refspec(remote, strbuf_detach(&branch, 0));
+	add_fetch_refspec(remote, strbuf_detach(&branch, NULL));
 	/*
 	 * Cogito compatible push: push current HEAD to remote #branch
 	 * (master if missing)
@@ -318,7 +318,7 @@ static void read_branches_file(struct remote *remote)
 		strbuf_addf(&branch, ":refs/heads/%s", frag);
 	else
 		strbuf_addstr(&branch, ":refs/heads/master");
-	add_push_refspec(remote, strbuf_detach(&branch, 0));
+	add_push_refspec(remote, strbuf_detach(&branch, NULL));
 	remote->fetch_tags = 1; /* always auto-follow */
 }
 
@@ -1119,7 +1119,7 @@ int match_refs(struct ref *src, struct ref **dst,
 	int send_all = flags & MATCH_REFS_ALL;
 	int send_mirror = flags & MATCH_REFS_MIRROR;
 	int errs;
-	static const char *default_refspec[] = { ":", 0 };
+	static const char *default_refspec[] = { ":", NULL };
 	struct ref **dst_tail = tail_ref(dst);
 
 	if (!nr_refspec) {

@@ -13,7 +13,7 @@
 
 int wt_status_relative_paths = 1;
 int wt_status_use_color = -1;
-int wt_status_submodule_summary;
+static int wt_status_submodule_summary;
 static char wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
 	GIT_COLOR_GREEN,  /* WT_STATUS_UPDATED */

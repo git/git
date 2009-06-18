@@ -740,7 +740,7 @@ static int rm(int argc, const char **argv)
 	return result;
 }
 
-void clear_push_info(void *util, const char *string)
+static void clear_push_info(void *util, const char *string)
 {
 	struct push_info *info = util;
 	free(info->dest);
@@ -815,7 +815,7 @@ struct show_info {
 	int any_rebase;
 };
 
-int add_remote_to_show_info(struct string_list_item *item, void *cb_data)
+static int add_remote_to_show_info(struct string_list_item *item, void *cb_data)
 {
 	struct show_info *info = cb_data;
 	int n = strlen(item->string);
@@ -825,7 +825,7 @@ int add_remote_to_show_info(struct string_list_item *item, void *cb_data)
 	return 0;
 }
 
-int show_remote_info_item(struct string_list_item *item, void *cb_data)
+static int show_remote_info_item(struct string_list_item *item, void *cb_data)
 {
 	struct show_info *info = cb_data;
 	struct ref_states *states = info->states;
@@ -852,7 +852,7 @@ int show_remote_info_item(struct string_list_item *item, void *cb_data)
 	return 0;
 }
 
-int add_local_to_show_info(struct string_list_item *branch_item, void *cb_data)
+static int add_local_to_show_info(struct string_list_item *branch_item, void *cb_data)
 {
 	struct show_info *show_info = cb_data;
 	struct ref_states *states = show_info->states;
@@ -874,7 +874,7 @@ int add_local_to_show_info(struct string_list_item *branch_item, void *cb_data)
 	return 0;
 }
 
-int show_local_info_item(struct string_list_item *item, void *cb_data)
+static int show_local_info_item(struct string_list_item *item, void *cb_data)
 {
 	struct show_info *show_info = cb_data;
 	struct branch_info *branch_info = item->util;
@@ -906,7 +906,7 @@ int show_local_info_item(struct string_list_item *item, void *cb_data)
 	return 0;
 }
 
-int add_push_to_show_info(struct string_list_item *push_item, void *cb_data)
+static int add_push_to_show_info(struct string_list_item *push_item, void *cb_data)
 {
 	struct show_info *show_info = cb_data;
 	struct push_info *push_info = push_item->util;
@@ -935,7 +935,7 @@ static int cmp_string_with_push(const void *va, const void *vb)
 	return cmp ? cmp : strcmp(a_push->dest, b_push->dest);
 }
 
-int show_push_info_item(struct string_list_item *item, void *cb_data)
+static int show_push_info_item(struct string_list_item *item, void *cb_data)
 {
 	struct show_info *show_info = cb_data;
 	struct push_info *push_info = item->util;
@@ -1197,7 +1197,7 @@ static int get_one_remote_for_update(struct remote *remote, void *priv)
 	return 0;
 }
 
-struct remote_group {
+static struct remote_group {
 	const char *name;
 	struct string_list *list;
 } remote_group;

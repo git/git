@@ -189,7 +189,7 @@ int interactive_add(int argc, const char **argv, const char *prefix)
 	return status;
 }
 
-int edit_patch(int argc, const char **argv, const char *prefix)
+static int edit_patch(int argc, const char **argv, const char *prefix)
 {
 	char *file = xstrdup(git_path("ADD_EDIT.patch"));
 	const char *apply_argv[] = { "apply", "--recount", "--cached",

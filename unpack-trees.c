@@ -140,7 +140,7 @@ static int unpack_index_entry(struct cache_entry *ce, struct unpack_trees_option
 	return call_unpack_fn(src, o);
 }
 
-int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
+static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
 {
 	int i;
 	struct tree_desc t[MAX_UNPACK_TREES];

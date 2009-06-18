@@ -38,7 +38,7 @@ static struct tree *shift_tree_object(struct tree *one, struct tree *two)
  * A virtual commit has (const char *)commit->util set to the name.
  */
 
-struct commit *make_virtual_commit(struct tree *tree, const char *comment)
+static struct commit *make_virtual_commit(struct tree *tree, const char *comment)
 {
 	struct commit *commit = xcalloc(1, sizeof(struct commit));
 	commit->tree = tree;

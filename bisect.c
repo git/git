@@ -454,7 +454,7 @@ static int read_bisect_refs(void)
 	return for_each_ref_in("refs/bisect/", register_ref, NULL);
 }
 
-void read_bisect_paths(struct argv_array *array)
+static void read_bisect_paths(struct argv_array *array)
 {
 	struct strbuf str = STRBUF_INIT;
 	const char *filename = git_path("BISECT_NAMES");
@@ -780,7 +780,7 @@ static void handle_bad_merge_base(void)
 	exit(1);
 }
 
-void handle_skipped_merge_base(const unsigned char *mb)
+static void handle_skipped_merge_base(const unsigned char *mb)
 {
 	char *mb_hex = sha1_to_hex(mb);
 	char *bad_hex = sha1_to_hex(current_bad_sha1);
