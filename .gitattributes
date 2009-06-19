@@ -1,2 +1,2 @@
 * whitespace=!indent,trail,space
-*.[ch] whitespace
+*.[ch] whitespace=indent,trail,space
