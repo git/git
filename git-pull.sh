@@ -176,13 +176,11 @@ case "$merge_head" in
 ?*' '?*)
 	if test -z "$orig_head"
 	then
-		echo >&2 "Cannot merge multiple branches into empty head"
-		exit 1
+		die "Cannot merge multiple branches into empty head"
 	fi
 	if test true = "$rebase"
 	then
-		echo >&2 "Cannot rebase onto multiple branches"
-		exit 1
+		die "Cannot rebase onto multiple branches"
 	fi
 	;;
 esac

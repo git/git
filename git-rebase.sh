@@ -168,10 +168,8 @@ run_pre_rebase_hook () {
 	if test -z "$OK_TO_SKIP_PRE_REBASE" &&
 	   test -x "$GIT_DIR/hooks/pre-rebase"
 	then
-		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
-			echo >&2 "The pre-rebase hook refused to rebase."
-			exit 1
-		}
+		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} ||
+		die "The pre-rebase hook refused to rebase."
 	fi
 }
 
@@ -359,8 +357,7 @@ fi
 
 # The tree must be really really clean.
 if ! git update-index --ignore-submodules --refresh; then
-	echo >&2 "cannot rebase: you have unstaged changes"
-	exit 1
+	die "cannot rebase: you have unstaged changes"
 fi
 diff=$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)
 case "$diff" in

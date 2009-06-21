@@ -20,7 +20,7 @@ char curl_errorstr[CURL_ERROR_SIZE];
 
 static int curl_ssl_verify = -1;
 static const char *ssl_cert;
-#if LIBCURL_VERSION_NUM >= 0x070902
+#if LIBCURL_VERSION_NUM >= 0x070903
 static const char *ssl_key;
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
@@ -126,7 +126,7 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp("http.sslcert", var))
 		return git_config_string(&ssl_cert, var, value);
-#if LIBCURL_VERSION_NUM >= 0x070902
+#if LIBCURL_VERSION_NUM >= 0x070903
 	if (!strcmp("http.sslkey", var))
 		return git_config_string(&ssl_key, var, value);
 #endif
@@ -196,7 +196,7 @@ static CURL *get_curl_handle(void)
 
 	if (ssl_cert != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
-#if LIBCURL_VERSION_NUM >= 0x070902
+#if LIBCURL_VERSION_NUM >= 0x070903
 	if (ssl_key != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLKEY, ssl_key);
 #endif
@@ -313,7 +313,7 @@ void http_init(struct remote *remote)
 		curl_ssl_verify = 0;
 
 	set_from_env(&ssl_cert, "GIT_SSL_CERT");
-#if LIBCURL_VERSION_NUM >= 0x070902
+#if LIBCURL_VERSION_NUM >= 0x070903
 	set_from_env(&ssl_key, "GIT_SSL_KEY");
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
