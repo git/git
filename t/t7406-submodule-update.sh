@@ -6,7 +6,7 @@
 test_description='Test updating submodules
 
 This test verifies that "git submodule update" detaches the HEAD of the
-submodule and "git submodule update --rebase" does not detach the HEAD.
+submodule and "git submodule update --rebase/--merge" does not detach the HEAD.
 '
 
 . ./test-lib.sh
@@ -76,6 +76,20 @@ test_expect_success 'submodule update --rebase staying on master' '
 	)
 '
 
+test_expect_success 'submodule update --merge staying on master' '
+	(cd super/submodule &&
+	  git reset --hard HEAD~1
+	) &&
+	(cd super &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 git submodule update --merge submodule &&
+	 cd submodule &&
+	 compare_head
+	)
+'
+
 test_expect_success 'submodule update - rebase in .git/config' '
 	(cd super &&
 	 git config submodule.submodule.update rebase
@@ -110,6 +124,40 @@ test_expect_success 'submodule update - checkout in .git/config but --rebase giv
 	)
 '
 
+test_expect_success 'submodule update - merge in .git/config' '
+	(cd super &&
+	 git config submodule.submodule.update merge
+	) &&
+	(cd super/submodule &&
+	  git reset --hard HEAD~1
+	) &&
+	(cd super &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 git submodule update submodule &&
+	 cd submodule &&
+	 compare_head
+	)
+'
+
+test_expect_success 'submodule update - checkout in .git/config but --merge given' '
+	(cd super &&
+	 git config submodule.submodule.update checkout
+	) &&
+	(cd super/submodule &&
+	  git reset --hard HEAD~1
+	) &&
+	(cd super &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 git submodule update --merge submodule &&
+	 cd submodule &&
+	 compare_head
+	)
+'
+
 test_expect_success 'submodule update - checkout in .git/config' '
 	(cd super &&
 	 git config submodule.submodule.update checkout
@@ -134,6 +182,16 @@ test_expect_success 'submodule init picks up rebase' '
 	 git config submodule.rebasing.update rebase &&
 	 git submodule init rebasing &&
 	 test "rebase" = $(git config submodule.rebasing.update)
+	)
+'
+
+test_expect_success 'submodule init picks up merge' '
+	(cd super &&
+	 git config submodule.merging.url git://non-existing/git &&
+	 git config submodule.merging.path does-not-matter &&
+	 git config submodule.merging.update merge &&
+	 git submodule init merging &&
+	 test "merge" = $(git config submodule.merging.update)
 	)
 '
 
