@@ -157,7 +157,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
-	argc = parse_options(argc, argv, builtin_rm_options, builtin_rm_usage, 0);
+	argc = parse_options(argc, argv, prefix, builtin_rm_options,
+			     builtin_rm_usage, 0);
 	if (!argc)
 		usage_with_options(builtin_rm_usage, builtin_rm_options);
 

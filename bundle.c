@@ -98,7 +98,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	 */
 	struct ref_list *p = &header->prerequisites;
 	struct rev_info revs;
-	const char *argv[] = {NULL, "--all"};
+	const char *argv[] = {NULL, "--all", NULL};
 	struct object_array refs;
 	struct commit *commit;
 	int i, ret = 0, req_nr;

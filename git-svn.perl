@@ -5,7 +5,7 @@ use warnings;
 use strict;
 use vars qw/	$AUTHOR $VERSION
 		$sha1 $sha1_short $_revision $_repository
-		$_q $_authors %users/;
+		$_q $_authors $_authors_prog %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
@@ -39,6 +39,7 @@ use Digest::MD5;
 use IO::File qw//;
 use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
+use File::Spec;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use IPC::Open3;
 use Git;
@@ -76,6 +77,7 @@ my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex );
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
+		'authors-prog=s' => \$_authors_prog,
 		'repack:i' => \$Git::SVN::_repack,
 		'noMetadata' => \$Git::SVN::_no_metadata,
 		'useSvmProps' => \$Git::SVN::_use_svm_props,
@@ -263,6 +265,9 @@ usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
 load_authors() if $_authors;
+if (defined $_authors_prog) {
+	$_authors_prog = "'" . File::Spec->rel2abs($_authors_prog) . "'";
+}
 
 unless ($cmd =~ /^(?:clone|init|multi-init|commit-diff)$/) {
 	Git::SVN::Migration::migration_check();
@@ -361,6 +366,7 @@ sub cmd_clone {
 	$path = basename($url) if !defined $path || !length $path;
 	cmd_init($url, $path);
 	Git::SVN::fetch_all($Git::SVN::default_repo_id);
+	command_oneline('config', 'svn.authorsfile', $_authors) if $_authors;
 }
 
 sub cmd_init {
@@ -1172,16 +1178,27 @@ sub get_commit_entry {
 	}
 	rename $commit_editmsg, $commit_msg or croak $!;
 	{
+		require Encode;
 		# SVN requires messages to be UTF-8 when entering the repo
 		local $/;
 		open $log_fh, '<', $commit_msg or croak $!;
 		binmode $log_fh;
 		chomp($log_entry{log} = <$log_fh>);
 
-		if (my $enc = Git::config('i18n.commitencoding')) {
-			require Encode;
-			Encode::from_to($log_entry{log}, $enc, 'UTF-8');
+		my $enc = Git::config('i18n.commitencoding') || 'UTF-8';
+		my $msg = $log_entry{log};
+
+		eval { $msg = Encode::decode($enc, $msg, 1) };
+		if ($@) {
+			die "Could not decode as $enc:\n", $msg,
+			    "\nPerhaps you need to set i18n.commitencoding\n";
 		}
+
+		eval { $msg = Encode::encode('UTF-8', $msg, 1) };
+		die "Could not encode as UTF-8:\n$msg\n" if $@;
+
+		$log_entry{log} = $msg;
+
 		close $log_fh or croak $!;
 	}
 	unlink $commit_msg;
@@ -2663,12 +2680,33 @@ sub other_gs {
 	$gs
 }
 
+sub call_authors_prog {
+	my ($orig_author) = @_;
+	my $author = `$::_authors_prog $orig_author`;
+	if ($? != 0) {
+		die "$::_authors_prog failed with exit code $?\n"
+	}
+	if ($author =~ /^\s*(.+?)\s*<(.*)>\s*$/) {
+		my ($name, $email) = ($1, $2);
+		$email = undef if length $2 == 0;
+		return [$name, $email];
+	} else {
+		die "Author: $orig_author: $::_authors_prog returned "
+			. "invalid author format: $author\n";
+	}
+}
+
 sub check_author {
 	my ($author) = @_;
 	if (!defined $author || length $author == 0) {
 		$author = '(no author)';
-	} elsif (defined $::_authors && ! defined $::users{$author}) {
-		die "Author: $author not defined in $::_authors file\n";
+	}
+	if (!defined $::users{$author}) {
+		if (defined $::_authors_prog) {
+			$::users{$author} = call_authors_prog($author);
+		} elsif (defined $::_authors) {
+			die "Author: $author not defined in $::_authors file\n";
+		}
 	}
 	$author;
 }
@@ -4438,6 +4476,7 @@ sub gs_fetch_loop_common {
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my $longest_path = longest_common_path($gsv, $globs);
 	my $ra_url = $self->{url};
+	my $find_trailing_edge;
 	while (1) {
 		my %revs;
 		my $err;
@@ -4455,8 +4494,10 @@ sub gs_fetch_loop_common {
 		               sub { $revs{$_[1]} = _cb(@_) });
 		if ($err) {
 			print "Checked through r$max\r";
+		} else {
+			$find_trailing_edge = 1;
 		}
-		if ($err && $max >= $head) {
+		if ($err and $find_trailing_edge) {
 			print STDERR "Path '$longest_path' ",
 				     "was probably deleted:\n",
 				     $err->expanded_message,
@@ -4468,13 +4509,14 @@ sub gs_fetch_loop_common {
 				my $ok;
 				$self->get_log([$longest_path], $min, $hi,
 				               0, 1, 1, sub {
-				               $ok ||= $_[1];
+				               $ok = $_[1];
 				               $revs{$_[1]} = _cb(@_) });
 				if ($ok) {
 					print STDERR "r$min .. r$ok OK\n";
 					last;
 				}
 			}
+			$find_trailing_edge = 0;
 		}
 		$SVN::Error::handler = $err_handler;
 

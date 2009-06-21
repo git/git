@@ -25,6 +25,10 @@ imposes the following rules on how references are named:
   grouping, but no slash-separated component can begin with a
   dot `.`.
 
+. They must contain at least one `/`. This enforces the presence of a
+  category like `heads/`, `tags/` etc. but the actual names are not
+  restricted.
+
 . They cannot have two consecutive dots `..` anywhere.
 
 . They cannot have ASCII control characters (i.e. bytes whose
@@ -37,6 +41,8 @@ imposes the following rules on how references are named:
 . They cannot end with the sequence `.lock`.
 
 . They cannot contain a sequence `@{`.
+
+- They cannot contain a `\\`.
 
 These rules make it easy for shell script based tools to parse
 reference names, pathname expansion by the shell when a reference name is used

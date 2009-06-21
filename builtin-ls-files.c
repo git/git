@@ -454,7 +454,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "directory", &dir.flags,
 			"show 'other' directories' name only",
 			DIR_SHOW_OTHER_DIRECTORIES),
-		OPT_BIT(0, "no-empty-directory", &dir.flags,
+		OPT_NEGBIT(0, "empty-directory", &dir.flags,
 			"don't show empty directories",
 			DIR_HIDE_EMPTY_DIRECTORIES),
 		OPT_BOOLEAN('u', "unmerged", &show_unmerged,
@@ -486,7 +486,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		prefix_offset = strlen(prefix);
 	git_config(git_default_config, NULL);
 
-	argc = parse_options(argc, argv, builtin_ls_files_options,
+	argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
 			ls_files_usage, 0);
 	if (show_tag || show_valid_bit) {
 		tag_cached = "H ";

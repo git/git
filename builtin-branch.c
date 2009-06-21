@@ -547,7 +547,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_GROUP("Generic options"),
 		OPT__VERBOSE(&verbose),
-		OPT_SET_INT( 0 , "track",  &track, "set up tracking mode (see git-pull(1))",
+		OPT_SET_INT('t', "track",  &track, "set up tracking mode (see git-pull(1))",
 			BRANCH_TRACK_EXPLICIT),
 		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
 		OPT_SET_INT('r', NULL,     &kinds, "act on remote-tracking branches",
@@ -610,7 +610,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	}
 	hashcpy(merge_filter_ref, head_sha1);
 
-	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
+			     0);
 	if (!!delete + !!rename + !!force_create > 1)
 		usage_with_options(builtin_branch_usage, options);
 

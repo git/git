@@ -1,0 +1,93 @@
+GIT v1.6.4 Release Notes
+========================
+
+With the next major release, "git push" into a branch that is
+currently checked out will be refused by default.  You can choose
+what should happen upon such a push by setting the configuration
+variable receive.denyCurrentBranch in the receiving repository.
+
+To ease the transition plan, the receiving repository of such a
+push running this release will issue a big warning when the
+configuration variable is missing.  Please refer to:
+
+  http://git.or.cz/gitwiki/GitFaq#non-bare
+  http://thread.gmane.org/gmane.comp.version-control.git/107758/focus=108007
+
+for more details on the reason why this change is needed and the
+transition plan.
+
+For a similar reason, "git push $there :$killed" to delete the branch
+$killed in a remote repository $there, if $killed branch is the current
+branch pointed at by its HEAD, gets a large warning.  You can choose what
+should happen upon such a push by setting the configuration variable
+receive.denyDeleteCurrent in the receiving repository.
+
+When the user does not tell "git push" what to push, it has always
+pushed matching refs.  For some people it is unexpected, and a new
+configuration variable push.default has been introduced to allow
+changing a different default behaviour.  To advertise the new feature,
+a big warning is issued if this is not configured and a git push without
+arguments is attempted.
+
+
+Updates since v1.6.3
+--------------------
+
+(subsystems)
+
+ * gitweb Perl style clean-up.
+
+ * git-svn updates, including a new --authors-prog option to map author
+   names by invoking an external program.
+
+(portability)
+
+ * We feed iconv with "UTF-8" instead of "utf8"; the former is
+   understood more widely.
+
+(performance)
+
+(usability, bells and whistles)
+
+ * "git add --edit" lets users edit the whole patch text to fine-tune what
+   is added to the index.
+
+ * "git log --graph" draws graphs more compactly by using horizonal lines
+   when able.
+
+ * "git log --decorate" shows shorter refnames by stripping well-known
+   refs/* prefix.
+
+ * "git send-email" understands quoted aliases in .mailrc files (might
+   have to be backported to 1.6.3.X).
+
+ * "git send-email" can fetch the sender address from the configuration
+   variable "sendmail.from" (and "sendmail.<identity>.from").
+
+ * "git show-branch" can color its output.
+
+ * "add" and "update" subcommands to "git submodule" learned --reference
+   option to use local clone with references.
+
+(developers)
+
+ * A major part of the "git bisect" wrapper has moved to C.
+
+Fixes since v1.6.3
+------------------
+
+All of the fixes in v1.6.3.X maintenance series are included in this
+release, unless otherwise noted.
+
+Here are fixes that this release has, but have not been backported to
+v1.6.3.X series.
+
+ * The way Git.pm sets up a Repository object was not friendly to callers
+   that chdir around.  It now internally records the repository location
+   as an absolute path when autodetected.
+
+---
+exec >/var/tmp/1
+echo O=$(git describe master)
+O=v1.6.3.1-168-g23807fa
+git shortlog --no-merges $O..master ^maint

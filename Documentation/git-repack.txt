@@ -31,11 +31,14 @@ OPTIONS
 	Instead of incrementally packing the unpacked objects,
 	pack everything referenced into a single pack.
 	Especially useful when packing a repository that is used
-	for private development and there is no need to worry
-	about people fetching via dumb protocols from it.  Use
+	for private development. Use
 	with '-d'.  This will clean up the objects that `git prune`
 	leaves behind, but `git fsck --full` shows as
 	dangling.
++
+Note that users fetching over dumb protocols will have to fetch the
+whole new pack in order to get any contained object, no matter how many
+other objects in that pack they already have locally.
 
 -A::
 	Same as `-a`, unless '-d' is used.  Then any unreachable

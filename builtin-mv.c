@@ -72,7 +72,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	if (read_cache() < 0)
 		die("index file corrupt");
 
-	argc = parse_options(argc, argv, builtin_mv_options, builtin_mv_usage, 0);
+	argc = parse_options(argc, argv, prefix, builtin_mv_options,
+			     builtin_mv_usage, 0);
 	if (--argc < 1)
 		usage_with_options(builtin_mv_usage, builtin_mv_options);
 

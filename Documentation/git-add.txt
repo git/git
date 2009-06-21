@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
-	  [--all | [--update | -u]] [--intent-to-add | -N]
+	  [--edit | -e] [--all | [--update | -u]] [--intent-to-add | -N]
 	  [--refresh] [--ignore-errors] [--] <filepattern>...
 
 DESCRIPTION
@@ -75,6 +75,15 @@ OPTIONS
 	Similar to Interactive mode but the initial command loop is
 	bypassed and the 'patch' subcommand is invoked using each of
 	the specified filepatterns before exiting.
+
+-e, \--edit::
+	Open the diff vs. the index in an editor and let the user
+	edit it.  After the editor was closed, adjust the hunk headers
+	and apply the patch to the index.
++
+*NOTE*: Obviously, if you change anything else than the first character
+on lines beginning with a space or a minus, the patch will no longer
+apply.
 
 -u::
 --update::

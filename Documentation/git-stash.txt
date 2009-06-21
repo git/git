@@ -9,8 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git stash' list [<options>]
-'git stash' (show | drop | pop ) [<stash>]
-'git stash' apply [--index] [<stash>]
+'git stash' ( show | drop ) [<stash>]
+'git stash' ( pop | apply ) [--index] [<stash>]
 'git stash' branch <branchname> [<stash>]
 'git stash' [save [--keep-index] [<message>]]
 'git stash' clear
@@ -86,16 +86,16 @@ Applying the state can fail with conflicts; in this case, it is not
 removed from the stash list. You need to resolve the conflicts by hand
 and call `git stash drop` manually afterwards.
 +
-When no `<stash>` is given, `stash@\{0}` is assumed. See also `apply`.
-
-apply [--index] [<stash>]::
-
-	Like `pop`, but do not remove the state from the stash list.
-+
 If the `--index` option is used, then tries to reinstate not only the working
 tree's changes, but also the index's ones. However, this can fail, when you
 have conflicts (which are stored in the index, where you therefore can no
 longer apply the changes as they were originally).
++
+When no `<stash>` is given, `stash@\{0}` is assumed.
+
+apply [--index] [<stash>]::
+
+	Like `pop`, but do not remove the state from the stash list.
 
 branch <branchname> [<stash>]::
 

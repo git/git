@@ -192,7 +192,6 @@ static int run_receive_hook(const char *hook_name)
 static int run_update_hook(struct command *cmd)
 {
 	static const char update_hook[] = "hooks/update";
-	struct child_process proc;
 	const char *argv[5];
 
 	if (access(update_hook, X_OK) < 0)
@@ -204,12 +203,9 @@ static int run_update_hook(struct command *cmd)
 	argv[3] = sha1_to_hex(cmd->new_sha1);
 	argv[4] = NULL;
 
-	memset(&proc, 0, sizeof(proc));
-	proc.argv = argv;
-	proc.no_stdin = 1;
-	proc.stdout_to_stderr = 1;
-
-	return hook_status(run_command(&proc), update_hook);
+	return hook_status(run_command_v_opt(argv, RUN_COMMAND_NO_STDIN |
+					RUN_COMMAND_STDOUT_TO_STDERR),
+			update_hook);
 }
 
 static int is_ref_checked_out(const char *ref)

@@ -23,7 +23,8 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	};
 
 	git_config(git_default_config, NULL);
-	argc = parse_options(argc, argv, options, git_update_ref_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, git_update_ref_usage,
+			     0);
 	if (msg && !*msg)
 		die("Refusing to perform update with empty message.");
 

@@ -3,8 +3,8 @@
 
 dashless=$(basename "$0" | sed -e 's/-/ /')
 USAGE="list [<options>]
-   or: $dashless (show | drop | pop ) [<stash>]
-   or: $dashless apply [--index] [<stash>]
+   or: $dashless ( show | drop ) [<stash>]
+   or: $dashless ( pop | apply ) [--index] [<stash>]
    or: $dashless branch <branchname> [<stash>]
    or: $dashless [save [--keep-index] [<message>]]
    or: $dashless clear"

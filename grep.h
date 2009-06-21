@@ -61,23 +61,23 @@ struct grep_opt {
 	struct grep_expr *pattern_expression;
 	int prefix_length;
 	regex_t regexp;
-	unsigned linenum:1;
-	unsigned invert:1;
-	unsigned status_only:1;
-	unsigned name_only:1;
-	unsigned unmatch_name_only:1;
-	unsigned count:1;
-	unsigned word_regexp:1;
-	unsigned fixed:1;
-	unsigned all_match:1;
+	int linenum;
+	int invert;
+	int status_only;
+	int name_only;
+	int unmatch_name_only;
+	int count;
+	int word_regexp;
+	int fixed;
+	int all_match;
 #define GREP_BINARY_DEFAULT	0
 #define GREP_BINARY_NOMATCH	1
 #define GREP_BINARY_TEXT	2
-	unsigned binary:2;
-	unsigned extended:1;
-	unsigned relative:1;
-	unsigned pathname:1;
-	unsigned null_following_name:1;
+	int binary;
+	int extended;
+	int relative;
+	int pathname;
+	int null_following_name;
 	int color;
 	char color_match[COLOR_MAXLEN];
 	const char *color_external;

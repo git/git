@@ -316,6 +316,26 @@ int parse_commit(struct commit *item)
 	return ret;
 }
 
+static void unparse_commit_list(struct commit_list *list)
+{
+	for (; list; list = list->next)
+		unparse_commit(list->item);
+}
+
+void unparse_commit(struct commit *item)
+{
+	item->object.flags = 0;
+	item->object.used = 0;
+	if (item->object.parsed) {
+		item->object.parsed = 0;
+		if (item->parents) {
+			unparse_commit_list(item->parents);
+			free_commit_list(item->parents);
+			item->parents = NULL;
+		}
+	}
+}
+
 struct commit_list *commit_list_insert(struct commit *item, struct commit_list **list_p)
 {
 	struct commit_list *new_list = xmalloc(sizeof(struct commit_list));

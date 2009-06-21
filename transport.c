@@ -732,9 +732,9 @@ static void print_ref_status(char flag, const char *summary, struct ref *to, str
 {
 	fprintf(stderr, " %c %-*s ", flag, SUMMARY_WIDTH, summary);
 	if (from)
-		fprintf(stderr, "%s -> %s", prettify_ref(from), prettify_ref(to));
+		fprintf(stderr, "%s -> %s", prettify_refname(from->name), prettify_refname(to->name));
 	else
-		fputs(prettify_ref(to), stderr);
+		fputs(prettify_refname(to->name), stderr);
 	if (msg) {
 		fputs(" (", stderr);
 		fputs(msg, stderr);
@@ -1003,7 +1003,6 @@ int transport_push(struct transport *transport,
 	if (transport->push_refs) {
 		struct ref *remote_refs =
 			transport->get_refs_list(transport, 1);
-		struct ref **remote_tail;
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;
 		int verbose = flags & TRANSPORT_PUSH_VERBOSE;
@@ -1014,10 +1013,7 @@ int transport_push(struct transport *transport,
 		if (flags & TRANSPORT_PUSH_MIRROR)
 			match_flags |= MATCH_REFS_MIRROR;
 
-		remote_tail = &remote_refs;
-		while (*remote_tail)
-			remote_tail = &((*remote_tail)->next);
-		if (match_refs(local_refs, remote_refs, &remote_tail,
+		if (match_refs(local_refs, &remote_refs,
 			       refspec_nr, refspec, match_flags)) {
 			return -1;
 		}
@@ -1082,4 +1078,52 @@ int transport_disconnect(struct transport *transport)
 		ret = transport->disconnect(transport);
 	free(transport);
 	return ret;
+}
+
+/*
+ * Strip username (and password) from an url and return
+ * it in a newly allocated string.
+ */
+char *transport_anonymize_url(const char *url)
+{
+	char *anon_url, *scheme_prefix, *anon_part;
+	size_t anon_len, prefix_len = 0;
+
+	anon_part = strchr(url, '@');
+	if (is_local(url) || !anon_part)
+		goto literal_copy;
+
+	anon_len = strlen(++anon_part);
+	scheme_prefix = strstr(url, "://");
+	if (!scheme_prefix) {
+		if (!strchr(anon_part, ':'))
+			/* cannot be "me@there:/path/name" */
+			goto literal_copy;
+	} else {
+		const char *cp;
+		/* make sure scheme is reasonable */
+		for (cp = url; cp < scheme_prefix; cp++) {
+			switch (*cp) {
+				/* RFC 1738 2.1 */
+			case '+': case '.': case '-':
+				break; /* ok */
+			default:
+				if (isalnum(*cp))
+					break;
+				/* it isn't */
+				goto literal_copy;
+			}
+		}
+		/* @ past the first slash does not count */
+		cp = strchr(scheme_prefix + 3, '/');
+		if (cp && cp < anon_part)
+			goto literal_copy;
+		prefix_len = scheme_prefix - url + 3;
+	}
+	anon_url = xcalloc(1, 1 + prefix_len + anon_len);
+	memcpy(anon_url, url, prefix_len);
+	memcpy(anon_url + prefix_len, anon_part, anon_len);
+	return anon_url;
+literal_copy:
+	return xstrdup(url);
 }

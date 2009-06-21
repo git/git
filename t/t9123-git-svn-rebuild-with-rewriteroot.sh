@@ -10,7 +10,7 @@ test_description='git svn respects rewriteRoot during rebuild'
 mkdir import
 cd import
 	touch foo
-	svn import -m 'import for git svn' . "$svnrepo" >/dev/null
+	svn_cmd import -m 'import for git svn' . "$svnrepo" >/dev/null
 cd ..
 rm -rf import
 

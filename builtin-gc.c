@@ -194,7 +194,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (pack_refs < 0)
 		pack_refs = !is_bare_repository();
 
-	argc = parse_options(argc, argv, builtin_gc_options, builtin_gc_usage, 0);
+	argc = parse_options(argc, argv, prefix, builtin_gc_options,
+			     builtin_gc_usage, 0);
 	if (argc > 0)
 		usage_with_options(builtin_gc_usage, builtin_gc_options);
 

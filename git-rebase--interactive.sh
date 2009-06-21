@@ -420,7 +420,7 @@ do_next () {
 	NEWHEAD=$(git rev-parse HEAD) &&
 	case $HEADNAME in
 	refs/*)
-		message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
+		message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO" &&
 		git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
 		git symbolic-ref HEAD $HEADNAME
 		;;

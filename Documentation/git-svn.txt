@@ -398,6 +398,14 @@ after the authors-file is modified should continue operation.
 
 config key: svn.authorsfile
 
+--authors-prog=<filename>::
+
+If this option is specified, for each SVN committer name that does not
+exist in the authors file, the given file is executed with the committer
+name as the first argument.  The program is expected to return a single
+line of the form "Name <email>", which will be treated as if included in
+the authors file.
+
 -q::
 --quiet::
 	Make 'git-svn' less verbose. Specify a second time to make it

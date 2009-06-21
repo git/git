@@ -74,5 +74,6 @@ const struct ref *transport_get_remote_refs(struct transport *transport);
 int transport_fetch_refs(struct transport *transport, const struct ref *refs);
 void transport_unlock_pack(struct transport *transport);
 int transport_disconnect(struct transport *transport);
+char *transport_anonymize_url(const char *url);
 
 #endif

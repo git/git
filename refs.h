@@ -80,7 +80,7 @@ extern int for_each_reflog(each_ref_fn, void *);
 #define CHECK_REF_FORMAT_WILDCARD (-3)
 extern int check_ref_format(const char *target);
 
-extern const char *prettify_ref(const struct ref *ref);
+extern const char *prettify_refname(const char *refname);
 extern char *shorten_unambiguous_ref(const char *ref, int strict);
 
 /** rename ref, return 0 on success **/

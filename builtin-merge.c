@@ -462,7 +462,7 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		argv = xrealloc(argv, sizeof(*argv) * (argc + 2));
 		memmove(argv + 1, argv, sizeof(*argv) * (argc + 1));
 		argc++;
-		parse_options(argc, argv, builtin_merge_options,
+		parse_options(argc, argv, NULL, builtin_merge_options,
 			      builtin_merge_usage, 0);
 		free(buf);
 	}
@@ -836,8 +836,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	struct commit_list **remotes = &remoteheads;
 
 	setup_work_tree();
+	if (file_exists(git_path("MERGE_HEAD")))
+		die("You have not concluded your merge. (MERGE_HEAD exists)");
 	if (read_cache_unmerged())
-		die("You are in the middle of a conflicted merge.");
+		die("You are in the middle of a conflicted merge."
+				" (index unmerged)");
 
 	/*
 	 * Check if we are _not_ on a detached HEAD, i.e. if there is a
@@ -855,7 +858,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
 
-	argc = parse_options(argc, argv, builtin_merge_options,
+	argc = parse_options(argc, argv, prefix, builtin_merge_options,
 			builtin_merge_usage, 0);
 	if (verbosity < 0)
 		show_diffstat = 0;

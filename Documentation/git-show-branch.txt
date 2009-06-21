@@ -8,9 +8,11 @@ git-show-branch - Show branches and their commits
 SYNOPSIS
 --------
 [verse]
-'git show-branch' [--all] [--remotes] [--topo-order] [--current]
+'git show-branch' [--all] [--remotes] [--topo-order | --date-order]
+		[--current] [--color | --no-color]
 		[--more=<n> | --list | --independent | --merge-base]
-		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
+		[--no-name | --sha1-name] [--topics]
+		[<rev> | <glob>]...
 'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
 DESCRIPTION
@@ -56,6 +58,11 @@ OPTIONS
         reverse chronological order.  This option makes them
         appear in topological order (i.e., descendant commits
         are shown before their parents).
+
+--date-order::
+	This option is similar to '--topo-order' in the sense that no
+	parent comes before all of its children, but otherwise commits
+	are ordered according to their commit date.
 
 --sparse::
 	By default, the output omits merges that are reachable
@@ -106,6 +113,14 @@ OPTIONS
 	that entry.  <base> can be specified as count or date.
 	When no explicit <ref> parameter is given, it defaults to the
 	current branch (or `HEAD` if it is detached).
+
+--color::
+	Color the status sign (one of these: `*` `!` `+` `-`) of each commit
+	corresponding to the branch it's in.
+
+--no-color::
+	Turn off colored output, even when the configuration file gives the
+	default to color output.
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.

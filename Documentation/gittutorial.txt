@@ -650,6 +650,9 @@ digressions that may be interesting at this point are:
     smart enough to perform a close-to-optimal search even in the
     case of complex non-linear history with lots of merged branches.
 
+  * linkgit:gitworkflows[7]: Gives an overview of recommended
+    workflows.
+
   * link:everyday.html[Everyday GIT with 20 Commands Or So]
 
   * linkgit:gitcvs-migration[7]: Git for CVS users.
@@ -661,6 +664,7 @@ linkgit:gitcvs-migration[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],
 linkgit:git-help[1],
+linkgit:gitworkflows[7],
 link:everyday.html[Everyday git],
 link:user-manual.html[The Git User's Manual]
 

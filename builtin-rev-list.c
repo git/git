@@ -211,7 +211,7 @@ static inline int exp2i(int n)
  *
  * and P(2^n + x) < 0.5 means 2^n < 3x
  */
-static int estimate_bisect_steps(int all)
+int estimate_bisect_steps(int all)
 {
 	int n, x, e;
 
@@ -225,20 +225,37 @@ static int estimate_bisect_steps(int all)
 	return (e < 3 * x) ? n : n - 1;
 }
 
-static void show_tried_revs(struct commit_list *tried, int stringed)
+void print_commit_list(struct commit_list *list,
+		       const char *format_cur,
+		       const char *format_last)
+{
+	for ( ; list; list = list->next) {
+		const char *format = list->next ? format_cur : format_last;
+		printf(format, sha1_to_hex(list->item->object.sha1));
+	}
+}
+
+static void show_tried_revs(struct commit_list *tried)
 {
 	printf("bisect_tried='");
-	for (;tried; tried = tried->next) {
-		char *format = tried->next ? "%s|" : "%s";
-		printf(format, sha1_to_hex(tried->item->object.sha1));
-	}
-	printf(stringed ? "' &&\n" : "'\n");
+	print_commit_list(tried, "%s|", "%s");
+	printf("'\n");
+}
+
+static void print_var_str(const char *var, const char *val)
+{
+	printf("%s='%s'\n", var, val);
+}
+
+static void print_var_int(const char *var, int val)
+{
+	printf("%s=%d\n", var, val);
 }
 
 int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 {
 	int cnt, flags = info->bisect_show_flags;
-	char hex[41] = "", *format;
+	char hex[41] = "";
 	struct commit_list *tried;
 	struct rev_info *revs = info->revs;
 
@@ -269,28 +286,14 @@ int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 	}
 
 	if (flags & BISECT_SHOW_TRIED)
-		show_tried_revs(tried, flags & BISECT_SHOW_STRINGED);
-	format = (flags & BISECT_SHOW_STRINGED) ?
-		"bisect_rev=%s &&\n"
-		"bisect_nr=%d &&\n"
-		"bisect_good=%d &&\n"
-		"bisect_bad=%d &&\n"
-		"bisect_all=%d &&\n"
-		"bisect_steps=%d\n"
-		:
-		"bisect_rev=%s\n"
-		"bisect_nr=%d\n"
-		"bisect_good=%d\n"
-		"bisect_bad=%d\n"
-		"bisect_all=%d\n"
-		"bisect_steps=%d\n";
-	printf(format,
-	       hex,
-	       cnt - 1,
-	       all - reaches - 1,
-	       reaches - 1,
-	       all,
-	       estimate_bisect_steps(all));
+		show_tried_revs(tried);
+
+	print_var_str("bisect_rev", hex);
+	print_var_int("bisect_nr", cnt - 1);
+	print_var_int("bisect_good", all - reaches - 1);
+	print_var_int("bisect_bad", reaches - 1);
+	print_var_int("bisect_all", all);
+	print_var_int("bisect_steps", estimate_bisect_steps(all));
 
 	return 0;
 }

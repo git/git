@@ -175,8 +175,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 		{ "B", temp[2] },
 		{ NULL }
 	};
-	struct child_process child;
-	const char *args[20];
+	const char *args[] = { "sh", "-c", NULL, NULL };
 	int status, fd, i;
 	struct stat st;
 
@@ -191,14 +190,8 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 
 	strbuf_expand(&cmd, fn->cmdline, strbuf_expand_dict_cb, &dict);
 
-	memset(&child, 0, sizeof(child));
-	child.argv = args;
-	args[0] = "sh";
-	args[1] = "-c";
 	args[2] = cmd.buf;
-	args[3] = NULL;
-
-	status = run_command(&child);
+	status = run_command_v_opt(args, 0);
 	if (status < -ERR_RUN_COMMAND_FORK)
 		; /* failure in run-command */
 	else

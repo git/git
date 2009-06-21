@@ -396,7 +396,7 @@ static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathna
 
 static struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
 {
-	if (cache_name_pos(pathname, len) >= 0)
+	if (!cache_name_is_other(pathname, len))
 		return NULL;
 
 	ALLOC_GROW(dir->ignored, dir->ignored_nr+1, dir->ignored_alloc);

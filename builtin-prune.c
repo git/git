@@ -142,7 +142,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	save_commit_buffer = 0;
 	init_revisions(&revs, prefix);
 
-	argc = parse_options(argc, argv, options, prune_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, prune_usage, 0);
 	while (argc--) {
 		unsigned char sha1[20];
 		const char *name = *argv++;

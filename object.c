@@ -52,7 +52,7 @@ static unsigned int hash_obj(struct object *obj, unsigned int n)
 
 static void insert_obj_hash(struct object *obj, struct object **hash, unsigned int size)
 {
-	int j = hash_obj(obj, size);
+	unsigned int j = hash_obj(obj, size);
 
 	while (hash[j]) {
 		j++;
@@ -62,16 +62,16 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
 	hash[j] = obj;
 }
 
-static int hashtable_index(const unsigned char *sha1)
+static unsigned int hashtable_index(const unsigned char *sha1)
 {
 	unsigned int i;
 	memcpy(&i, sha1, sizeof(unsigned int));
-	return (int)(i % obj_hash_size);
+	return i % obj_hash_size;
 }
 
 struct object *lookup_object(const unsigned char *sha1)
 {
-	int i;
+	unsigned int i;
 	struct object *obj;
 
 	if (!obj_hash)

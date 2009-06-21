@@ -18,7 +18,7 @@ static void *insert_decoration(struct decoration *n, const struct object *base, 
 {
 	int size = n->size;
 	struct object_decoration *hash = n->hash;
-	int j = hash_obj(base, size);
+	unsigned int j = hash_obj(base, size);
 
 	while (hash[j].base) {
 		if (hash[j].base == base) {
@@ -70,7 +70,7 @@ void *add_decoration(struct decoration *n, const struct object *obj,
 /* Lookup a decoration pointer */
 void *lookup_decoration(struct decoration *n, const struct object *obj)
 {
-	int j;
+	unsigned int j;
 
 	/* nothing to lookup */
 	if (!n->size)

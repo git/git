@@ -13,13 +13,13 @@ scary_ref='Abo-Uebernahme%20(Bug%20#994)'
 test_expect_success 'setup svnrepo' '
 	mkdir project project/trunk project/branches project/tags &&
 	echo foo > project/trunk/foo &&
-	svn import -m "$test_description" project "$svnrepo/pr ject" &&
+	svn_cmd import -m "$test_description" project "$svnrepo/pr ject" &&
 	rm -rf project &&
-	svn cp -m "fun" "$svnrepo/pr ject/trunk" \
+	svn_cmd cp -m "fun" "$svnrepo/pr ject/trunk" \
 	                "$svnrepo/pr ject/branches/fun plugin" &&
-	svn cp -m "more fun!" "$svnrepo/pr ject/branches/fun plugin" \
+	svn_cmd cp -m "more fun!" "$svnrepo/pr ject/branches/fun plugin" \
 	                      "$svnrepo/pr ject/branches/more fun plugin!" &&
-	svn cp -m "scary" "$svnrepo/pr ject/branches/fun plugin" \
+	svn_cmd cp -m "scary" "$svnrepo/pr ject/branches/fun plugin" \
 	              "$svnrepo/pr ject/branches/$scary_uri" &&
 	start_httpd
 	'
