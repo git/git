@@ -221,6 +221,19 @@ test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
 	test_must_fail git add --verbose . &&
 	! ( git ls-files foo1 | grep foo1 )
 '
+rm -f foo2
+
+test_expect_success '--no-ignore-errors overrides config' '
+       git config add.ignore-errors 1 &&
+       git reset --hard &&
+       date >foo1 &&
+       date >foo2 &&
+       chmod 0 foo2 &&
+       test_must_fail git add --verbose --no-ignore-errors . &&
+       ! ( git ls-files foo1 | grep foo1 ) &&
+       git config add.ignore-errors 0
+'
+rm -f foo2
 
 test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
 	git reset --hard &&
