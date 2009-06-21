@@ -999,15 +999,25 @@ static int show(int argc, const char **argv)
 	info.list = &info_list;
 	for (; argc; argc--, argv++) {
 		int i;
+		const char **url;
+		int url_nr;
 
 		get_remote_ref_states(*argv, &states, query_flag);
 
 		printf("* remote %s\n", *argv);
-		if (states.remote->url_nr) {
-			for (i=0; i < states.remote->url_nr; i++)
-				printf("  URL: %s\n", states.remote->url[i]);
-		} else
-			printf("  URL: %s\n", "(no URL)");
+		printf("  Fetch URL: %s\n", states.remote->url_nr > 0 ?
+			states.remote->url[0] : "(no URL)");
+		if (states.remote->pushurl_nr) {
+			url = states.remote->pushurl;
+			url_nr = states.remote->pushurl_nr;
+		} else {
+			url = states.remote->url;
+			url_nr = states.remote->url_nr;
+		}
+		for (i=0; i < url_nr; i++)
+			printf("  Push  URL: %s\n", url[i]);
+		if (!i)
+			printf("  Push  URL: %s\n", "(no URL)");
 		if (no_query)
 			printf("  HEAD branch: (not queried)\n");
 		else if (!states.heads.nr)
@@ -1266,14 +1276,31 @@ static int update(int argc, const char **argv)
 static int get_one_entry(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
+	const char **url;
+	int i, url_nr;
+	void **utilp;
 
 	if (remote->url_nr > 0) {
-		int i;
-
-		for (i = 0; i < remote->url_nr; i++)
-			string_list_append(remote->name, list)->util = (void *)remote->url[i];
+		utilp = &(string_list_append(remote->name, list)->util);
+		*utilp = xmalloc(strlen(remote->url[0])+strlen(" (fetch)")+1);
+		strcpy((char *) *utilp, remote->url[0]);
+		strcat((char *) *utilp, " (fetch)");
 	} else
 		string_list_append(remote->name, list)->util = NULL;
+	if (remote->pushurl_nr) {
+		url = remote->pushurl;
+		url_nr = remote->pushurl_nr;
+	} else {
+		url = remote->url;
+		url_nr = remote->url_nr;
+	}
+	for (i = 0; i < url_nr; i++)
+	{
+		utilp = &(string_list_append(remote->name, list)->util);
+		*utilp = xmalloc(strlen(url[i])+strlen(" (push)")+1);
+		strcpy((char *) *utilp, url[i]);
+		strcat((char *) *utilp, " (push)");
+	}
 
 	return 0;
 }
@@ -1281,7 +1308,10 @@ static int get_one_entry(struct remote *remote, void *priv)
 static int show_all(void)
 {
 	struct string_list list = { NULL, 0, 0 };
-	int result = for_each_remote(get_one_entry, &list);
+	int result;
+
+	list.strdup_strings = 1;
+	result = for_each_remote(get_one_entry, &list);
 
 	if (!result) {
 		int i;
@@ -1299,6 +1329,7 @@ static int show_all(void)
 			}
 		}
 	}
+	string_list_clear(&list, 1);
 	return result;
 }
 

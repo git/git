@@ -15,6 +15,10 @@ struct remote {
 	int url_nr;
 	int url_alloc;
 
+	const char **pushurl;
+	int pushurl_nr;
+	int pushurl_alloc;
+
 	const char **push_refspec;
 	struct refspec *push;
 	int push_refspec_nr;

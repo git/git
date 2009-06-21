@@ -117,6 +117,8 @@ static int do_push(const char *repo, int flags)
 {
 	int i, errs;
 	struct remote *remote = remote_get(repo);
+	const char **url;
+	int url_nr;
 
 	if (!remote) {
 		if (repo)
@@ -152,9 +154,16 @@ static int do_push(const char *repo, int flags)
 			setup_default_push_refspecs();
 	}
 	errs = 0;
-	for (i = 0; i < remote->url_nr; i++) {
+	if (remote->pushurl_nr) {
+		url = remote->pushurl;
+		url_nr = remote->pushurl_nr;
+	} else {
+		url = remote->url;
+		url_nr = remote->url_nr;
+	}
+	for (i = 0; i < url_nr; i++) {
 		struct transport *transport =
-			transport_get(remote, remote->url[i]);
+			transport_get(remote, url[i]);
 		int err;
 		if (receivepack)
 			transport_set_option(transport,
@@ -163,14 +172,14 @@ static int do_push(const char *repo, int flags)
 			transport_set_option(transport, TRANS_OPT_THIN, "yes");
 
 		if (flags & TRANSPORT_PUSH_VERBOSE)
-			fprintf(stderr, "Pushing to %s\n", remote->url[i]);
+			fprintf(stderr, "Pushing to %s\n", url[i]);
 		err = transport_push(transport, refspec_nr, refspec, flags);
 		err |= transport_disconnect(transport);
 
 		if (!err)
 			continue;
 
-		error("failed to push some refs to '%s'", remote->url[i]);
+		error("failed to push some refs to '%s'", url[i]);
 		errs++;
 	}
 	return !!errs;
