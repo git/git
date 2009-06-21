@@ -599,7 +599,7 @@ pulled or merged from.  This is because the author favored
 If you use `git svn set-tree A..B` to commit several diffs and you do
 not have the latest remotes/git-svn merged into my-branch, you should
 use `git svn rebase` to update your work branch instead of `git pull` or
-`git merge`.  `pull`/`merge' can cause non-linear history to be flattened
+`git merge`.  `pull`/`merge` can cause non-linear history to be flattened
 when committing into SVN, which can lead to merge commits reversing
 previous commits in SVN.
 
