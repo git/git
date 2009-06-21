@@ -205,15 +205,15 @@ static FORCEINLINE unsigned int size2binidx(size_t _size) THROWSPEC
 	/* 16=1		20=1	24=1	32=10	48=11	64=100	96=110	128=1000	4096=100000000 */
 
 #if defined(__GNUC__)
-        topbit = sizeof(size)*__CHAR_BIT__ - 1 - __builtin_clz(size);
+	topbit = sizeof(size)*__CHAR_BIT__ - 1 - __builtin_clz(size);
 #elif defined(_MSC_VER) && _MSC_VER>=1300
 	{
-            unsigned long bsrTopBit;
+	    unsigned long bsrTopBit;
 
-            _BitScanReverse(&bsrTopBit, size);
+	    _BitScanReverse(&bsrTopBit, size);
 
-            topbit = bsrTopBit;
-        }
+	    topbit = bsrTopBit;
+	}
 #else
 #if 0
 	union {
@@ -782,8 +782,8 @@ void * nedpmalloc(nedpool *p, size_t size) THROWSPEC
 #endif
 	if(!ret)
 	{	/* Use this thread's mspace */
-        GETMSPACE(m, p, tc, mymspace, size,
-                  ret=mspace_malloc(m, size));
+	GETMSPACE(m, p, tc, mymspace, size,
+		  ret=mspace_malloc(m, size));
 	}
 	return ret;
 }
@@ -803,8 +803,8 @@ void * nedpcalloc(nedpool *p, size_t no, size_t size) THROWSPEC
 #endif
 	if(!ret)
 	{	/* Use this thread's mspace */
-        GETMSPACE(m, p, tc, mymspace, rsize,
-                  ret=mspace_calloc(m, 1, rsize));
+	GETMSPACE(m, p, tc, mymspace, rsize,
+		  ret=mspace_calloc(m, 1, rsize));
 	}
 	return ret;
 }
@@ -861,8 +861,8 @@ void * nedpmemalign(nedpool *p, size_t alignment, size_t bytes) THROWSPEC
 	int mymspace;
 	GetThreadCache(&p, &tc, &mymspace, &bytes);
 	{	/* Use this thread's mspace */
-        GETMSPACE(m, p, tc, mymspace, bytes,
-                  ret=mspace_memalign(m, alignment, bytes));
+	GETMSPACE(m, p, tc, mymspace, bytes,
+		  ret=mspace_memalign(m, alignment, bytes));
 	}
 	return ret;
 }
@@ -927,7 +927,7 @@ void **nedpindependent_calloc(nedpool *p, size_t elemsno, size_t elemsize, void 
 	int mymspace;
 	GetThreadCache(&p, &tc, &mymspace, &elemsize);
     GETMSPACE(m, p, tc, mymspace, elemsno*elemsize,
-              ret=mspace_independent_calloc(m, elemsno, elemsize, chunks));
+	      ret=mspace_independent_calloc(m, elemsno, elemsize, chunks));
 	return ret;
 }
 void **nedpindependent_comalloc(nedpool *p, size_t elems, size_t *sizes, void **chunks) THROWSPEC
@@ -938,10 +938,10 @@ void **nedpindependent_comalloc(nedpool *p, size_t elems, size_t *sizes, void **
     size_t i, *adjustedsizes=(size_t *) alloca(elems*sizeof(size_t));
     if(!adjustedsizes) return 0;
     for(i=0; i<elems; i++)
-        adjustedsizes[i]=sizes[i]<sizeof(threadcacheblk) ? sizeof(threadcacheblk) : sizes[i];
+	adjustedsizes[i]=sizes[i]<sizeof(threadcacheblk) ? sizeof(threadcacheblk) : sizes[i];
 	GetThreadCache(&p, &tc, &mymspace, 0);
 	GETMSPACE(m, p, tc, mymspace, 0,
-              ret=mspace_independent_comalloc(m, elems, adjustedsizes, chunks));
+	      ret=mspace_independent_comalloc(m, elems, adjustedsizes, chunks));
 	return ret;
 }
 

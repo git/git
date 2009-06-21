@@ -69,7 +69,7 @@ test. The speed test is designed to be a representative synthetic
 memory allocator test. It works by randomly mixing allocations with frees
 with half of the allocation sizes being a two power multiple less than
 512 bytes (to mimic C++ stack instantiated objects) and the other half
-being a simple random value less than 16Kb. 
+being a simple random value less than 16Kb.
 
 The real world code results are from Tn's TestIO benchmark. This is a
 heavily multithreaded and memory intensive benchmark with a lot of branching
