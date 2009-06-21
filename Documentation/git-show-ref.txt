@@ -24,7 +24,7 @@ The --exclude-existing form is a filter that does the inverse, it shows the
 refs from stdin that don't exist in the local repository.
 
 Use of this utility is encouraged in favor of directly accessing files under
-in the `.git` directory.
+the `.git` directory.
 
 OPTIONS
 -------
@@ -50,7 +50,7 @@ OPTIONS
 -s::
 --hash::
 
-	Only show the SHA1 hash, not the reference name. When also using
+	Only show the SHA1 hash, not the reference name. When combined with
 	--dereference the dereferenced tag will still be shown after the SHA1.
 
 --verify::
