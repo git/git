@@ -27,6 +27,7 @@ struct unpack_trees_options {
 		     aggressive:1,
 		     skip_unmerged:1,
 		     initial_checkout:1,
+		     diff_index_cached:1,
 		     gently:1;
 	const char *prefix;
 	int pos;
