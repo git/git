@@ -422,8 +422,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 static void unpack_one(unsigned nr)
 {
 	unsigned shift;
-	unsigned char *pack, c;
-	unsigned long size;
+	unsigned char *pack;
+	unsigned long size, c;
 	enum object_type type;
 
 	obj_list[nr].offset = consumed_bytes;

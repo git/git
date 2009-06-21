@@ -44,7 +44,7 @@ void *patch_delta(const void *src_buf, unsigned long src_size,
 			if (cmd & 0x01) cp_off = *data++;
 			if (cmd & 0x02) cp_off |= (*data++ << 8);
 			if (cmd & 0x04) cp_off |= (*data++ << 16);
-			if (cmd & 0x08) cp_off |= (*data++ << 24);
+			if (cmd & 0x08) cp_off |= ((unsigned) *data++ << 24);
 			if (cmd & 0x10) cp_size = *data++;
 			if (cmd & 0x20) cp_size |= (*data++ << 8);
 			if (cmd & 0x40) cp_size |= (*data++ << 16);
