@@ -10,11 +10,12 @@
 static struct whitespace_rule {
 	const char *rule_name;
 	unsigned rule_bits;
+	unsigned loosens_error;
 } whitespace_rule_names[] = {
-	{ "trailing-space", WS_TRAILING_SPACE },
-	{ "space-before-tab", WS_SPACE_BEFORE_TAB },
-	{ "indent-with-non-tab", WS_INDENT_WITH_NON_TAB },
-	{ "cr-at-eol", WS_CR_AT_EOL },
+	{ "trailing-space", WS_TRAILING_SPACE, 0 },
+	{ "space-before-tab", WS_SPACE_BEFORE_TAB, 0 },
+	{ "indent-with-non-tab", WS_INDENT_WITH_NON_TAB, 0 },
+	{ "cr-at-eol", WS_CR_AT_EOL, 1 },
 };
 
 unsigned parse_whitespace_rule(const char *string)
@@ -79,7 +80,8 @@ unsigned whitespace_rule(const char *pathname)
 			unsigned all_rule = 0;
 			int i;
 			for (i = 0; i < ARRAY_SIZE(whitespace_rule_names); i++)
-				all_rule |= whitespace_rule_names[i].rule_bits;
+				if (!whitespace_rule_names[i].loosens_error)
+					all_rule |= whitespace_rule_names[i].rule_bits;
 			return all_rule;
 		} else if (ATTR_FALSE(value)) {
 			/* false (-whitespace) */
