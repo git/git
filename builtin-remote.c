@@ -1276,15 +1276,14 @@ static int update(int argc, const char **argv)
 static int get_one_entry(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
+	struct strbuf url_buf = STRBUF_INIT;
 	const char **url;
 	int i, url_nr;
-	void **utilp;
 
 	if (remote->url_nr > 0) {
-		utilp = &(string_list_append(remote->name, list)->util);
-		*utilp = xmalloc(strlen(remote->url[0])+strlen(" (fetch)")+1);
-		strcpy((char *) *utilp, remote->url[0]);
-		strcat((char *) *utilp, " (fetch)");
+		strbuf_addf(&url_buf, "%s (fetch)", remote->url[0]);
+		string_list_append(remote->name, list)->util =
+				strbuf_detach(&url_buf, NULL);
 	} else
 		string_list_append(remote->name, list)->util = NULL;
 	if (remote->pushurl_nr) {
@@ -1296,10 +1295,9 @@ static int get_one_entry(struct remote *remote, void *priv)
 	}
 	for (i = 0; i < url_nr; i++)
 	{
-		utilp = &(string_list_append(remote->name, list)->util);
-		*utilp = xmalloc(strlen(url[i])+strlen(" (push)")+1);
-		strcpy((char *) *utilp, url[i]);
-		strcat((char *) *utilp, " (push)");
+		strbuf_addf(&url_buf, "%s (push)", url[i]);
+		string_list_append(remote->name, list)->util =
+				strbuf_detach(&url_buf, NULL);
 	}
 
 	return 0;
