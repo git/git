@@ -223,7 +223,7 @@ test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
 '
 rm -f foo2
 
-test_expect_success '--no-ignore-errors overrides config' '
+test_expect_success POSIXPERM '--no-ignore-errors overrides config' '
        git config add.ignore-errors 1 &&
        git reset --hard &&
        date >foo1 &&
