@@ -91,7 +91,7 @@ void encode_85(char *buf, const unsigned char *data, int bytes)
 		unsigned acc = 0;
 		int cnt;
 		for (cnt = 24; cnt >= 0; cnt -= 8) {
-			int ch = *data++;
+			unsigned ch = *data++;
 			acc |= ch << cnt;
 			if (--bytes == 0)
 				break;

@@ -653,8 +653,7 @@ static void rehash_objects(void)
 
 static unsigned name_hash(const char *name)
 {
-	unsigned char c;
-	unsigned hash = 0;
+	unsigned c, hash = 0;
 
 	if (!name)
 		return 0;
