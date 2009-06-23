@@ -141,7 +141,7 @@ static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 	if (is_bare) {
 		struct strbuf result = STRBUF_INIT;
 		strbuf_addf(&result, "%.*s.git", (int)(end - start), start);
-		dir = strbuf_detach(&result, 0);
+		dir = strbuf_detach(&result, NULL);
 	} else
 		dir = xstrndup(start, end - start);
 	/*

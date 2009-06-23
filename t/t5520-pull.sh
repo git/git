@@ -92,13 +92,26 @@ test_expect_success '--rebase with rebased upstream' '
 
 	git remote add -f me . &&
 	git checkout copy &&
+	git tag copy-orig &&
 	git reset --hard HEAD^ &&
 	echo conflicting modification > file &&
 	git commit -m conflict file &&
 	git checkout to-rebase &&
 	echo file > file2 &&
 	git commit -m to-rebase file2 &&
+	git tag to-rebase-orig &&
 	git pull --rebase me copy &&
+	test "conflicting modification" = "$(cat file)" &&
+	test file = $(cat file2)
+
+'
+
+test_expect_success '--rebase with rebased default upstream' '
+
+	git update-ref refs/remotes/me/copy copy-orig &&
+	git checkout --track -b to-rebase2 me/copy &&
+	git reset --hard to-rebase-orig &&
+	git pull --rebase &&
 	test "conflicting modification" = "$(cat file)" &&
 	test file = $(cat file2)
 
@@ -106,6 +119,7 @@ test_expect_success '--rebase with rebased upstream' '
 
 test_expect_success 'pull --rebase dies early with dirty working directory' '
 
+	git checkout to-rebase &&
 	git update-ref refs/remotes/me/copy copy^ &&
 	COPY=$(git rev-parse --verify me/copy) &&
 	git rebase --onto $COPY copy &&

@@ -740,7 +740,7 @@ static int rm(int argc, const char **argv)
 	return result;
 }
 
-void clear_push_info(void *util, const char *string)
+static void clear_push_info(void *util, const char *string)
 {
 	struct push_info *info = util;
 	free(info->dest);
@@ -815,7 +815,7 @@ struct show_info {
 	int any_rebase;
 };
 
-int add_remote_to_show_info(struct string_list_item *item, void *cb_data)
+static int add_remote_to_show_info(struct string_list_item *item, void *cb_data)
 {
 	struct show_info *info = cb_data;
 	int n = strlen(item->string);
@@ -825,7 +825,7 @@ int add_remote_to_show_info(struct string_list_item *item, void *cb_data)
 	return 0;
 }
 
-int show_remote_info_item(struct string_list_item *item, void *cb_data)
+static int show_remote_info_item(struct string_list_item *item, void *cb_data)
 {
 	struct show_info *info = cb_data;
 	struct ref_states *states = info->states;
@@ -852,7 +852,7 @@ int show_remote_info_item(struct string_list_item *item, void *cb_data)
 	return 0;
 }
 
-int add_local_to_show_info(struct string_list_item *branch_item, void *cb_data)
+static int add_local_to_show_info(struct string_list_item *branch_item, void *cb_data)
 {
 	struct show_info *show_info = cb_data;
 	struct ref_states *states = show_info->states;
@@ -874,7 +874,7 @@ int add_local_to_show_info(struct string_list_item *branch_item, void *cb_data)
 	return 0;
 }
 
-int show_local_info_item(struct string_list_item *item, void *cb_data)
+static int show_local_info_item(struct string_list_item *item, void *cb_data)
 {
 	struct show_info *show_info = cb_data;
 	struct branch_info *branch_info = item->util;
@@ -906,7 +906,7 @@ int show_local_info_item(struct string_list_item *item, void *cb_data)
 	return 0;
 }
 
-int add_push_to_show_info(struct string_list_item *push_item, void *cb_data)
+static int add_push_to_show_info(struct string_list_item *push_item, void *cb_data)
 {
 	struct show_info *show_info = cb_data;
 	struct push_info *push_info = push_item->util;
@@ -935,7 +935,7 @@ static int cmp_string_with_push(const void *va, const void *vb)
 	return cmp ? cmp : strcmp(a_push->dest, b_push->dest);
 }
 
-int show_push_info_item(struct string_list_item *item, void *cb_data)
+static int show_push_info_item(struct string_list_item *item, void *cb_data)
 {
 	struct show_info *show_info = cb_data;
 	struct push_info *push_info = item->util;
@@ -999,15 +999,25 @@ static int show(int argc, const char **argv)
 	info.list = &info_list;
 	for (; argc; argc--, argv++) {
 		int i;
+		const char **url;
+		int url_nr;
 
 		get_remote_ref_states(*argv, &states, query_flag);
 
 		printf("* remote %s\n", *argv);
-		if (states.remote->url_nr) {
-			for (i=0; i < states.remote->url_nr; i++)
-				printf("  URL: %s\n", states.remote->url[i]);
-		} else
-			printf("  URL: %s\n", "(no URL)");
+		printf("  Fetch URL: %s\n", states.remote->url_nr > 0 ?
+			states.remote->url[0] : "(no URL)");
+		if (states.remote->pushurl_nr) {
+			url = states.remote->pushurl;
+			url_nr = states.remote->pushurl_nr;
+		} else {
+			url = states.remote->url;
+			url_nr = states.remote->url_nr;
+		}
+		for (i=0; i < url_nr; i++)
+			printf("  Push  URL: %s\n", url[i]);
+		if (!i)
+			printf("  Push  URL: %s\n", "(no URL)");
 		if (no_query)
 			printf("  HEAD branch: (not queried)\n");
 		else if (!states.heads.nr)
@@ -1187,7 +1197,7 @@ static int get_one_remote_for_update(struct remote *remote, void *priv)
 	return 0;
 }
 
-struct remote_group {
+static struct remote_group {
 	const char *name;
 	struct string_list *list;
 } remote_group;
@@ -1266,14 +1276,31 @@ static int update(int argc, const char **argv)
 static int get_one_entry(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
+	const char **url;
+	int i, url_nr;
+	void **utilp;
 
 	if (remote->url_nr > 0) {
-		int i;
-
-		for (i = 0; i < remote->url_nr; i++)
-			string_list_append(remote->name, list)->util = (void *)remote->url[i];
+		utilp = &(string_list_append(remote->name, list)->util);
+		*utilp = xmalloc(strlen(remote->url[0])+strlen(" (fetch)")+1);
+		strcpy((char *) *utilp, remote->url[0]);
+		strcat((char *) *utilp, " (fetch)");
 	} else
 		string_list_append(remote->name, list)->util = NULL;
+	if (remote->pushurl_nr) {
+		url = remote->pushurl;
+		url_nr = remote->pushurl_nr;
+	} else {
+		url = remote->url;
+		url_nr = remote->url_nr;
+	}
+	for (i = 0; i < url_nr; i++)
+	{
+		utilp = &(string_list_append(remote->name, list)->util);
+		*utilp = xmalloc(strlen(url[i])+strlen(" (push)")+1);
+		strcpy((char *) *utilp, url[i]);
+		strcat((char *) *utilp, " (push)");
+	}
 
 	return 0;
 }
@@ -1281,7 +1308,10 @@ static int get_one_entry(struct remote *remote, void *priv)
 static int show_all(void)
 {
 	struct string_list list = { NULL, 0, 0 };
-	int result = for_each_remote(get_one_entry, &list);
+	int result;
+
+	list.strdup_strings = 1;
+	result = for_each_remote(get_one_entry, &list);
 
 	if (!result) {
 		int i;
@@ -1299,6 +1329,7 @@ static int show_all(void)
 			}
 		}
 	}
+	string_list_clear(&list, 1);
 	return result;
 }
 

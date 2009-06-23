@@ -8,9 +8,9 @@ use File::Basename qw(basename dirname);
 use File::Spec;
 use Git;
 
-our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u, $opt_w, $opt_W);
+our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u, $opt_w, $opt_W, $opt_k);
 
-getopts('uhPpvcfam:d:w:W');
+getopts('uhPpvcfkam:d:w:W');
 
 $opt_h && usage();
 
@@ -287,7 +287,26 @@ foreach my $f (@files) {
 	$dirty = 1;
 	warn "File $f not up to date but has status '$cvsstat{$f}' in your CVS checkout!\n";
     }
+
+    # Depending on how your GIT tree got imported from CVS you may
+    # have a conflict between expanded keywords in your CVS tree and
+    # unexpanded keywords in the patch about to be applied.
+    if ($opt_k) {
+	my $orig_file ="$f.orig";
+	rename $f, $orig_file;
+	open(FILTER_IN, "<$orig_file") or die "Cannot open $orig_file\n";
+	open(FILTER_OUT, ">$f") or die "Cannot open $f\n";
+	while (<FILTER_IN>)
+	{
+	    my $line = $_;
+	    $line =~ s/\$([A-Z][a-z]+):[^\$]+\$/\$\1\$/g;
+	    print FILTER_OUT $line;
+	}
+	close FILTER_IN;
+	close FILTER_OUT;
+    }
 }
+
 if ($dirty) {
     if ($opt_f) {	warn "The tree is not clean -- forced merge\n";
 	$dirty = 0;
@@ -391,7 +410,7 @@ sleep(1);
 
 sub usage {
 	print STDERR <<END;
-Usage: GIT_DIR=/path/to/.git git cvsexportcommit [-h] [-p] [-v] [-c] [-f] [-u] [-w cvsworkdir] [-m msgprefix] [ parent ] commit
+Usage: GIT_DIR=/path/to/.git git cvsexportcommit [-h] [-p] [-v] [-c] [-f] [-u] [-k] [-w cvsworkdir] [-m msgprefix] [ parent ] commit
 END
 	exit(1);
 }

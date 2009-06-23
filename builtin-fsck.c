@@ -104,7 +104,7 @@ static int mark_object(struct object *obj, int type, void *data)
 
 static void mark_object_reachable(struct object *obj)
 {
-	mark_object(obj, OBJ_ANY, 0);
+	mark_object(obj, OBJ_ANY, NULL);
 }
 
 static int traverse_one_object(struct object *obj, struct object *parent)
@@ -292,7 +292,7 @@ static int fsck_sha1(const unsigned char *sha1)
 		fprintf(stderr, "Checking %s %s\n",
 			typename(obj->type), sha1_to_hex(obj->sha1));
 
-	if (fsck_walk(obj, mark_used, 0))
+	if (fsck_walk(obj, mark_used, NULL))
 		objerror(obj, "broken links");
 	if (fsck_object(obj, check_strict, fsck_error_func))
 		return -1;

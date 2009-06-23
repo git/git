@@ -135,7 +135,8 @@ EOF
 
 cat > test/expect << EOF
 * remote origin
-  URL: $(pwd)/one
+  Fetch URL: $(pwd)/one
+  Push  URL: $(pwd)/one
   HEAD branch: master
   Remote branches:
     master new (next fetch will store in remotes/origin)
@@ -151,7 +152,8 @@ cat > test/expect << EOF
     master pushes to master   (local out of date)
     master pushes to upstream (create)
 * remote two
-  URL: ../two
+  Fetch URL: ../two
+  Push  URL: ../three
   HEAD branch (remote HEAD is ambiguous, may be one of the following):
     another
     master
@@ -173,6 +175,7 @@ test_expect_success 'show' '
 	 git branch --track rebase origin/master &&
 	 git branch -d -r origin/master &&
 	 git config --add remote.two.url ../two &&
+	 git config --add remote.two.pushurl ../three &&
 	 git config branch.rebase.rebase true &&
 	 git config branch.octopus.merge "topic-a topic-b topic-c" &&
 	 (cd ../one &&
@@ -191,7 +194,8 @@ test_expect_success 'show' '
 
 cat > test/expect << EOF
 * remote origin
-  URL: $(pwd)/one
+  Fetch URL: $(pwd)/one
+  Push  URL: $(pwd)/one
   HEAD branch: (not queried)
   Remote branches: (status not queried)
     master

@@ -376,8 +376,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	struct commit_list *with_commit = NULL;
 	struct option options[] = {
 		OPT_BOOLEAN('l', NULL, &list, "list tag names"),
-		{ OPTION_INTEGER, 'n', NULL, &lines, NULL,
-				"print n lines of each tag message",
+		{ OPTION_INTEGER, 'n', NULL, &lines, "n",
+				"print <n> lines of each tag message",
 				PARSE_OPT_OPTARG, NULL, 1 },
 		OPT_BOOLEAN('d', NULL, &delete, "delete tags"),
 		OPT_BOOLEAN('v', NULL, &verify, "verify tags"),

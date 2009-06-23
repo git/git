@@ -2614,7 +2614,7 @@ static int get_current_sha1(const char *path, unsigned char *sha1)
 static void build_fake_ancestor(struct patch *list, const char *filename)
 {
 	struct patch *patch;
-	struct index_state result = { 0 };
+	struct index_state result = { NULL };
 	int fd;
 
 	/* Once we start supporting the reverse patch, it may be
@@ -3277,9 +3277,11 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 		OPT_BOOLEAN(0, "stat", &diffstat,
 			"instead of applying the patch, output diffstat for the input"),
 		{ OPTION_BOOLEAN, 0, "allow-binary-replacement", &binary,
-		  NULL, "old option, now no-op", PARSE_OPT_HIDDEN },
+		  NULL, "old option, now no-op",
+		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG },
 		{ OPTION_BOOLEAN, 0, "binary", &binary,
-		  NULL, "old option, now no-op", PARSE_OPT_HIDDEN },
+		  NULL, "old option, now no-op",
+		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG },
 		OPT_BOOLEAN(0, "numstat", &numstat,
 			"shows number of added and deleted lines in decimal notation"),
 		OPT_BOOLEAN(0, "summary", &summary,

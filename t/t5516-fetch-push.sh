@@ -419,6 +419,19 @@ test_expect_success 'push with config remote.*.push = HEAD' '
 git config --remove-section remote.there
 git config --remove-section branch.master
 
+test_expect_success 'push with config remote.*.pushurl' '
+
+	mk_test heads/master &&
+	git checkout master &&
+	git config remote.there.url test2repo &&
+	git config remote.there.pushurl testrepo &&
+	git push there &&
+	check_push_result $the_commit heads/master
+'
+
+# clean up the cruft left with the previous one
+git config --remove-section remote.there
+
 test_expect_success 'push with dry-run' '
 
 	mk_test heads/master &&

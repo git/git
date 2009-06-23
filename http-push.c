@@ -1750,7 +1750,7 @@ static int delete_remote_branch(char *pattern, int force)
 	return 0;
 }
 
-void run_request_queue(void)
+static void run_request_queue(void)
 {
 #ifdef USE_CURL_MULTI
 	is_running_queue = 1;

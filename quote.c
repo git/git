@@ -272,8 +272,8 @@ void write_name_quoted(const char *name, FILE *fp, int terminator)
 	fputc(terminator, fp);
 }
 
-extern void write_name_quotedpfx(const char *pfx, size_t pfxlen,
-                                 const char *name, FILE *fp, int terminator)
+void write_name_quotedpfx(const char *pfx, size_t pfxlen,
+			  const char *name, FILE *fp, int terminator)
 {
 	int needquote = 0;
 

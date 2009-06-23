@@ -5,7 +5,7 @@
 # Copyright (c) 2007 Lars Hjemli
 
 USAGE="[--quiet] [--cached] \
-[add [-b branch] <repo> <path>]|[status|init|update [-i|--init] [-N|--no-fetch]|summary [-n|--summary-limit <n>] [<commit>]] \
+[add [-b branch] <repo> <path>]|[status|init|update [-i|--init] [-N|--no-fetch] [--rebase|--merge]|summary [-n|--summary-limit <n>] [<commit>]] \
 [--] [<path>...]|[foreach <command>]|[sync [--] [<path>...]]"
 OPTIONS_SPEC=
 . git-sh-setup
@@ -356,6 +356,10 @@ cmd_update()
 			reference="$1"
 			shift
 			;;
+		-m|--merge)
+			shift
+			update="merge"
+			;;
 		--)
 			shift
 			break
@@ -425,6 +429,11 @@ cmd_update()
 				command="git rebase"
 				action="rebase"
 				msg="rebased onto"
+				;;
+			merge)
+				command="git merge"
+				action="merge"
+				msg="merged in"
 				;;
 			*)
 				command="git checkout $force -q"
