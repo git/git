@@ -719,19 +719,30 @@ static void update_tracking_ref(struct remote *remote, struct ref *ref, int verb
 
 #define SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
 
-static void print_ref_status(char flag, const char *summary, struct ref *to, struct ref *from, const char *msg)
+static void print_ref_status(char flag, const char *summary, struct ref *to, struct ref *from, const char *msg, int porcelain)
 {
-	fprintf(stderr, " %c %-*s ", flag, SUMMARY_WIDTH, summary);
-	if (from)
-		fprintf(stderr, "%s -> %s", prettify_refname(from->name), prettify_refname(to->name));
-	else
-		fputs(prettify_refname(to->name), stderr);
-	if (msg) {
-		fputs(" (", stderr);
-		fputs(msg, stderr);
-		fputc(')', stderr);
+	if (porcelain) {
+		if (from)
+			fprintf(stdout, "%c\t%s:%s\t", flag, from->name, to->name);
+		else
+			fprintf(stdout, "%c\t:%s\t", flag, to->name);
+		if (msg)
+			fprintf(stdout, "%s (%s)\n", summary, msg);
+		else
+			fprintf(stdout, "%s\n", summary);
+	} else {
+		fprintf(stderr, " %c %-*s ", flag, SUMMARY_WIDTH, summary);
+		if (from)
+			fprintf(stderr, "%s -> %s", prettify_refname(from->name), prettify_refname(to->name));
+		else
+			fputs(prettify_refname(to->name), stderr);
+		if (msg) {
+			fputs(" (", stderr);
+			fputs(msg, stderr);
+			fputc(')', stderr);
+		}
+		fputc('\n', stderr);
 	}
-	fputc('\n', stderr);
 }
 
 static const char *status_abbrev(unsigned char sha1[20])
@@ -739,15 +750,15 @@ static const char *status_abbrev(unsigned char sha1[20])
 	return find_unique_abbrev(sha1, DEFAULT_ABBREV);
 }
 
-static void print_ok_ref_status(struct ref *ref)
+static void print_ok_ref_status(struct ref *ref, int porcelain)
 {
 	if (ref->deletion)
-		print_ref_status('-', "[deleted]", ref, NULL, NULL);
+		print_ref_status('-', "[deleted]", ref, NULL, NULL, porcelain);
 	else if (is_null_sha1(ref->old_sha1))
 		print_ref_status('*',
 			(!prefixcmp(ref->name, "refs/tags/") ? "[new tag]" :
-			  "[new branch]"),
-			ref, ref->peer_ref, NULL);
+			"[new branch]"),
+			ref, ref->peer_ref, NULL, porcelain);
 	else {
 		char quickref[84];
 		char type;
@@ -765,50 +776,51 @@ static void print_ok_ref_status(struct ref *ref)
 		}
 		strcat(quickref, status_abbrev(ref->new_sha1));
 
-		print_ref_status(type, quickref, ref, ref->peer_ref, msg);
+		print_ref_status(type, quickref, ref, ref->peer_ref, msg, porcelain);
 	}
 }
 
-static int print_one_push_status(struct ref *ref, const char *dest, int count)
+static int print_one_push_status(struct ref *ref, const char *dest, int count, int porcelain)
 {
 	if (!count)
 		fprintf(stderr, "To %s\n", dest);
 
 	switch(ref->status) {
 	case REF_STATUS_NONE:
-		print_ref_status('X', "[no match]", ref, NULL, NULL);
+		print_ref_status('X', "[no match]", ref, NULL, NULL, porcelain);
 		break;
 	case REF_STATUS_REJECT_NODELETE:
 		print_ref_status('!', "[rejected]", ref, NULL,
-				"remote does not support deleting refs");
+						 "remote does not support deleting refs", porcelain);
 		break;
 	case REF_STATUS_UPTODATE:
 		print_ref_status('=', "[up to date]", ref,
-				ref->peer_ref, NULL);
+						 ref->peer_ref, NULL, porcelain);
 		break;
 	case REF_STATUS_REJECT_NONFASTFORWARD:
 		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
-				"non-fast forward");
+						 "non-fast forward", porcelain);
 		break;
 	case REF_STATUS_REMOTE_REJECT:
 		print_ref_status('!', "[remote rejected]", ref,
-				ref->deletion ? NULL : ref->peer_ref,
-				ref->remote_status);
+						 ref->deletion ? NULL : ref->peer_ref,
+						 ref->remote_status, porcelain);
 		break;
 	case REF_STATUS_EXPECTING_REPORT:
 		print_ref_status('!', "[remote failure]", ref,
-				ref->deletion ? NULL : ref->peer_ref,
-				"remote failed to report status");
+						 ref->deletion ? NULL : ref->peer_ref,
+						 "remote failed to report status", porcelain);
 		break;
 	case REF_STATUS_OK:
-		print_ok_ref_status(ref);
+		print_ok_ref_status(ref, porcelain);
 		break;
 	}
 
 	return 1;
 }
 
-static void print_push_status(const char *dest, struct ref *refs, int verbose)
+static void print_push_status(const char *dest, struct ref *refs,
+							  int verbose, int porcelain)
 {
 	struct ref *ref;
 	int n = 0;
@@ -816,18 +828,18 @@ static void print_push_status(const char *dest, struct ref *refs, int verbose)
 	if (verbose) {
 		for (ref = refs; ref; ref = ref->next)
 			if (ref->status == REF_STATUS_UPTODATE)
-				n += print_one_push_status(ref, dest, n);
+				n += print_one_push_status(ref, dest, n, porcelain);
 	}
 
 	for (ref = refs; ref; ref = ref->next)
 		if (ref->status == REF_STATUS_OK)
-			n += print_one_push_status(ref, dest, n);
+			n += print_one_push_status(ref, dest, n, porcelain);
 
 	for (ref = refs; ref; ref = ref->next) {
 		if (ref->status != REF_STATUS_NONE &&
 		    ref->status != REF_STATUS_UPTODATE &&
 		    ref->status != REF_STATUS_OK)
-			n += print_one_push_status(ref, dest, n);
+			n += print_one_push_status(ref, dest, n, porcelain);
 	}
 }
 
@@ -997,6 +1009,7 @@ int transport_push(struct transport *transport,
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;
 		int verbose = flags & TRANSPORT_PUSH_VERBOSE;
+		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int ret;
 
 		if (flags & TRANSPORT_PUSH_ALL)
@@ -1011,7 +1024,7 @@ int transport_push(struct transport *transport,
 
 		ret = transport->push_refs(transport, remote_refs, flags);
 
-		print_push_status(transport->url, remote_refs, verbose);
+		print_push_status(transport->url, remote_refs, verbose | porcelain, porcelain);
 
 		if (!(flags & TRANSPORT_PUSH_DRY_RUN)) {
 			struct ref *ref;

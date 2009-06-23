@@ -85,6 +85,11 @@ nor in any Push line of the corresponding remotes file---see below).
 --dry-run::
 	Do everything except actually send the updates.
 
+--porcelain::
+	Produce machine-readable output.  The output status line for each ref
+	will be tab-separated and sent to stdout instead of stderr.  The full
+	symbolic names of the refs will be given.
+
 --tags::
 	All refs under `$GIT_DIR/refs/tags` are pushed, in
 	addition to refspecs explicitly listed on the command
@@ -146,6 +151,12 @@ representing the status of a single ref. Each line is of the form:
 
 -------------------------------
  <flag> <summary> <from> -> <to> (<reason>)
+-------------------------------
+
+If --porcelain is used, then each line of the output is of the form:
+
+-------------------------------
+ <flag> \t <from>:<to> \t <summary> (<reason>)
 -------------------------------
 
 flag::
