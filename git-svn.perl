@@ -63,7 +63,7 @@ my ($SVN);
 $sha1 = qr/[a-f\d]{40}/;
 $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
-	$_message, $_file,
+	$_message, $_file, $_branch_dest,
 	$_template, $_shared,
 	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_merge, $_strategy, $_dry_run, $_local,
@@ -92,11 +92,11 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'localtime' => \$Git::SVN::_localtime,
 		%remote_opts );
 
-my ($_trunk, $_tags, $_branches, $_stdlayout);
+my ($_trunk, @_tags, @_branches, $_stdlayout);
 my %icv;
 my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
-                  'trunk|T=s' => \$_trunk, 'tags|t=s' => \$_tags,
-                  'branches|b=s' => \$_branches, 'prefix=s' => \$_prefix,
+                  'trunk|T=s' => \$_trunk, 'tags|t=s@' => \@_tags,
+                  'branches|b=s@' => \@_branches, 'prefix=s' => \$_prefix,
                   'stdlayout|s' => \$_stdlayout,
                   'minimize-url|m' => \$Git::SVN::_minimize_url,
 		  'no-metadata' => sub { $icv{noMetadata} = 1 },
@@ -141,11 +141,13 @@ my %cmd = (
 	branch => [ \&cmd_branch,
 	            'Create a branch in the SVN repository',
 	            { 'message|m=s' => \$_message,
+	              'destination|d=s' => \$_branch_dest,
 	              'dry-run|n' => \$_dry_run,
 		      'tag|t' => \$_tag } ],
 	tag => [ sub { $_tag = 1; cmd_branch(@_) },
 	         'Create a tag in the SVN repository',
 	         { 'message|m=s' => \$_message,
+	           'destination|d=s' => \$_branch_dest,
 	           'dry-run|n' => \$_dry_run } ],
 	'set-tree' => [ \&cmd_set_tree,
 	                "Set an SVN repository to a git tree-ish",
@@ -365,7 +367,7 @@ sub init_subdir {
 sub cmd_clone {
 	my ($url, $path) = @_;
 	if (!defined $path &&
-	    (defined $_trunk || defined $_branches || defined $_tags ||
+	    (defined $_trunk || @_branches || @_tags ||
 	     defined $_stdlayout) &&
 	    $url !~ m#^[a-z\+]+://#) {
 		$path = $url;
@@ -379,10 +381,10 @@ sub cmd_clone {
 sub cmd_init {
 	if (defined $_stdlayout) {
 		$_trunk = 'trunk' if (!defined $_trunk);
-		$_tags = 'tags' if (!defined $_tags);
-		$_branches = 'branches' if (!defined $_branches);
+		@_tags = 'tags' if (! @_tags);
+		@_branches = 'branches' if (! @_branches);
 	}
-	if (defined $_trunk || defined $_branches || defined $_tags) {
+	if (defined $_trunk || @_branches || @_tags) {
 		return cmd_multi_init(@_);
 	}
 	my $url = shift or die "SVN repository location required ",
@@ -630,7 +632,31 @@ sub cmd_branch {
 	my ($src, $rev, undef, $gs) = working_head_info($head);
 
 	my $remote = Git::SVN::read_all_remotes()->{$gs->{repo_id}};
-	my $glob = $remote->{ $_tag ? 'tags' : 'branches' };
+	my $allglobs = $remote->{ $_tag ? 'tags' : 'branches' };
+	my $glob;
+	if ($#{$allglobs} == 0) {
+		$glob = $allglobs->[0];
+	} else {
+		unless(defined $_branch_dest) {
+			die "Multiple ",
+			    $_tag ? "tag" : "branch",
+			    " paths defined for Subversion repository.\n",
+		            "You must specify where you want to create the ",
+		            $_tag ? "tag" : "branch",
+		            " with the --destination argument.\n";
+		}
+		foreach my $g (@{$allglobs}) {
+			if ($_branch_dest eq $g->{path}->{left}) {
+				$glob = $g;
+				last;
+			}
+		}
+		unless (defined $glob) {
+			die "Unknown ",
+			    $_tag ? "tag" : "branch",
+			    " destination $_branch_dest\n";
+		}
+	}
 	my ($lft, $rgt) = @{ $glob->{path} }{qw/left right/};
 	my $dst = join '/', $remote->{url}, $lft, $branch_name, ($rgt || ());
 
@@ -837,7 +863,7 @@ sub cmd_proplist {
 
 sub cmd_multi_init {
 	my $url = shift;
-	unless (defined $_trunk || defined $_branches || defined $_tags) {
+	unless (defined $_trunk || @_branches || @_tags) {
 		usage(1);
 	}
 
@@ -862,10 +888,14 @@ sub cmd_multi_init {
 						   undef, $trunk_ref);
 		}
 	}
-	return unless defined $_branches || defined $_tags;
+	return unless @_branches || @_tags;
 	my $ra = $url ? Git::SVN::Ra->new($url) : undef;
-	complete_url_ls_init($ra, $_branches, '--branches/-b', $_prefix);
-	complete_url_ls_init($ra, $_tags, '--tags/-t', $_prefix . 'tags/');
+	foreach my $path (@_branches) {
+		complete_url_ls_init($ra, $path, '--branches/-b', $_prefix);
+	}
+	foreach my $path (@_tags) {
+		complete_url_ls_init($ra, $path, '--tags/-t', $_prefix.'tags/');
+	}
 }
 
 sub cmd_multi_fetch {
@@ -1150,6 +1180,7 @@ sub complete_url_ls_init {
 		die "--prefix='$pfx' must have a trailing slash '/'\n";
 	}
 	command_noisy('config',
+		      '--add',
 	              "svn-remote.$gs->{repo_id}.$n",
 	              "$remote_path:refs/remotes/$pfx*" .
 	                ('/*' x (($remote_path =~ tr/*/*/) - 1)) );
@@ -1616,7 +1647,8 @@ sub fetch_all {
 	# read the max revs for wildcard expansion (branches/*, tags/*)
 	foreach my $t (qw/branches tags/) {
 		defined $remote->{$t} or next;
-		push @globs, $remote->{$t};
+		push @globs, @{$remote->{$t}};
+
 		my $max_rev = eval { tmp_config(qw/--int --get/,
 		                         "svn-remote.$repo_id.${t}-maxRev") };
 		if (defined $max_rev && ($max_rev < $base)) {
@@ -1663,15 +1695,16 @@ sub read_all_remotes {
 		} elsif (m!^(.+)\.(branches|tags)=
 		           (.*):refs/remotes/(.+)\s*$/!x) {
 			my ($p, $g) = ($3, $4);
-			my $rs = $r->{$1}->{$2} = {
-			                  t => $2,
-					  remote => $1,
-			                  path => Git::SVN::GlobSpec->new($p),
-			                  ref => Git::SVN::GlobSpec->new($g) };
+			my $rs = {
+			    t => $2,
+			    remote => $1,
+			    path => Git::SVN::GlobSpec->new($p),
+			    ref => Git::SVN::GlobSpec->new($g) };
 			if (length($rs->{ref}->{right}) != 0) {
 				die "The '*' glob character must be the last ",
 				    "character of '$g'\n";
 			}
+			push @{ $r->{$1}->{$2} }, $rs;
 		}
 	}
 
@@ -1811,9 +1844,10 @@ sub find_by_url { # repos_root and, path are optional
 		next if defined $repos_root && $repos_root ne $u;
 
 		my $fetch = $remotes->{$repo_id}->{fetch} || {};
-		foreach (qw/branches tags/) {
-			resolve_local_globs($u, $fetch,
-			                    $remotes->{$repo_id}->{$_});
+		foreach my $t (qw/branches tags/) {
+			foreach my $globspec (@{$remotes->{$repo_id}->{$t}}) {
+				resolve_local_globs($u, $fetch, $globspec);
+			}
 		}
 		my $p = $path;
 		my $rwr = rewrite_root({repo_id => $repo_id});
