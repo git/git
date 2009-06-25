@@ -646,7 +646,9 @@ sub cmd_branch {
 		            " with the --destination argument.\n";
 		}
 		foreach my $g (@{$allglobs}) {
-			if ($_branch_dest eq $g->{path}->{left}) {
+			# SVN::Git::Editor could probably be moved to Git.pm..
+			my $re = SVN::Git::Editor::glob2pat($g->{path}->{left});
+			if ($_branch_dest =~ /$re/) {
 				$glob = $g;
 				last;
 			}
