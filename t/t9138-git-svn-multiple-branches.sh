@@ -22,7 +22,6 @@ test_expect_success 'setup svnrepo' '
 			  "$svnrepo/project/tags_A/1.0" &&
 	svn co "$svnrepo/project" svn_project &&
 	cd svn_project &&
-		.
 		echo 2 > trunk/a.file &&
 		svn ci -m "Change 1" trunk/a.file &&
 		svn cp -m "Branch 2" "$svnrepo/project/trunk" \
