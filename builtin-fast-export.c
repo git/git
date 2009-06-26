@@ -530,6 +530,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 
 	init_revisions(&revs, prefix);
 	revs.topo_order = 1;
+	revs.show_source = 1;
 	argc = setup_revisions(argc, argv, &revs, NULL);
 	argc = parse_options(argc, argv, prefix, options, fast_export_usage, 0);
 	if (argc > 1)
@@ -546,11 +547,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	DIFF_OPT_SET(&revs.diffopt, RECURSIVE);
 	while ((commit = get_revision(&revs))) {
 		if (has_unshown_parent(commit)) {
-			struct commit_list *parent = commit->parents;
 			add_object_array(&commit->object, NULL, &commits);
-			for (; parent; parent = parent->next)
-				if (!parent->item->util)
-					parent->item->util = commit->util;
 		}
 		else {
 			handle_commit(commit, &revs);
