@@ -389,6 +389,7 @@ sub cmd_init {
 	}
 	my $url = shift or die "SVN repository location required ",
 	                       "as a command-line argument\n";
+	$url = canonicalize_url($url);
 	init_subdir(@_);
 	do_git_init_db();
 
@@ -806,6 +807,12 @@ sub canonicalize_path {
 	return $path;
 }
 
+sub canonicalize_url {
+	my ($url) = @_;
+	$url =~ s#^([^:]+://[^/]*/)(.*)$#$1 . canonicalize_path($2)#e;
+	return $url;
+}
+
 # get_svnprops(PATH)
 # ------------------
 # Helper for cmd_propget and cmd_proplist below.
@@ -875,7 +882,7 @@ sub cmd_multi_init {
 
 	$_prefix = '' unless defined $_prefix;
 	if (defined $url) {
-		$url =~ s#/+$##;
+		$url = canonicalize_url($url);
 		init_subdir(@_);
 	}
 	do_git_init_db();
