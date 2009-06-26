@@ -145,9 +145,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			continue;
 		}
 
-		/* using -u and -i at the same time makes no sense */
 		if (1 < opts.index_only + opts.update)
-			usage(read_tree_usage);
+			die("-u and -i at the same time makes no sense");
 
 		if (get_sha1(arg, sha1))
 			die("Not a valid object name %s", arg);
@@ -156,7 +155,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		stage++;
 	}
 	if ((opts.update||opts.index_only) && !opts.merge)
-		usage(read_tree_usage);
+		die("%s is meaningless without -m, --reset, or --prefix",
+		    opts.update ? "-u" : "-i");
 	if ((opts.dir && !opts.update))
 		die("--exclude-per-directory is meaningless unless -u");
 	if (opts.merge && !opts.index_only)
