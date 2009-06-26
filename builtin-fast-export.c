@@ -531,6 +531,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	init_revisions(&revs, prefix);
 	revs.topo_order = 1;
 	revs.show_source = 1;
+	revs.rewrite_parents = 1;
 	argc = setup_revisions(argc, argv, &revs, NULL);
 	argc = parse_options(argc, argv, prefix, options, fast_export_usage, 0);
 	if (argc > 1)
