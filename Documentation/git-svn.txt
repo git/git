@@ -3,7 +3,7 @@ git-svn(1)
 
 NAME
 ----
-git-svn - Bidirectional operation between a single Subversion branch and git
+git-svn - Bidirectional operation between a Subversion repository and git
 
 SYNOPSIS
 --------
@@ -15,13 +15,12 @@ DESCRIPTION
 It provides a bidirectional flow of changes between a Subversion and a git
 repository.
 
-'git-svn' can track a single Subversion branch simply by using a
-URL to the branch, follow branches laid out in the Subversion recommended
-method (trunk, branches, tags directories) with the --stdlayout option, or
-follow branches in any layout with the -T/-t/-b options (see options to
-'init' below, and also the 'clone' command).
+'git-svn' can track a standard Subversion repository,
+following the common "trunk/branches/tags" layout, with the --stdlayout option.
+It can also follow branches and tags in any layout with the -T/-t/-b options
+(see options to 'init' below, and also the 'clone' command).
 
-Once tracking a Subversion branch (with any of the above methods), the git
+Once tracking a Subversion repository (with any of the above methods), the git
 repository can be updated from Subversion by the 'fetch' command and
 Subversion updated from git by the 'dcommit' command.
 
@@ -48,8 +47,11 @@ COMMANDS
 --stdlayout;;
 	These are optional command-line options for init.  Each of
 	these flags can point to a relative repository path
-	(--tags=project/tags') or a full url
-	(--tags=https://foo.org/project/tags). The option --stdlayout is
+	(--tags=project/tags) or a full url
+	(--tags=https://foo.org/project/tags).
+	You can specify more than one --tags and/or --branches options, in case
+	your Subversion repository places tags or branches under multiple paths.
+	The option --stdlayout is
 	a shorthand way of setting trunk,tags,branches as the relative paths,
 	which is the Subversion default. If any of the other options are given
 	as well, they take precedence.
@@ -204,6 +206,20 @@ config key: svn.commiturl (overwrites all svn-remote.<name>.commiturl options)
 --tag;;
 	Create a tag by using the tags_subdir instead of the branches_subdir
 	specified during git svn init.
+
+-d;;
+--destination;;
+	If more than one --branches (or --tags) option was given to the 'init'
+	or 'clone' command, you must provide the location of the branch (or
+	tag) you wish to create in the SVN repository.  The value of this
+	option must match one of the paths specified by a --branches (or
+	--tags) option.  You can see these paths with the commands
++
+	git config --get-all svn-remote.<name>.branches
+	git config --get-all svn-remote.<name>.tags
++
+where <name> is the name of the SVN repository as specified by the -R option to
+'init' (or "svn" by default).
 
 'tag'::
 	Create a tag in the SVN repository. This is a shorthand for
@@ -726,6 +742,16 @@ Do not use the --amend option of linkgit:git-commit[1] on a change you've
 already dcommitted.  It is considered bad practice to --amend commits
 you've already pushed to a remote repository for other users, and
 dcommit with SVN is analogous to that.
+
+When using multiple --branches or --tags, 'git-svn' does not automatically
+handle name collisions (for example, if two branches from different paths have
+the same name, or if a branch and a tag have the same name).  In these cases,
+use 'init' to set up your git repository then, before your first 'fetch', edit
+the .git/config file so that the branches and tags are associated with
+different name spaces.  For example:
+
+	branches = stable/*:refs/remotes/svn/stable/*
+	branches = debug/*:refs/remotes/svn/debug/*
 
 BUGS
 ----
