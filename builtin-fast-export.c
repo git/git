@@ -23,7 +23,8 @@ static const char *fast_export_usage[] = {
 };
 
 static int progress;
-static enum { VERBATIM, WARN, STRIP, ABORT } signed_tag_mode = ABORT;
+static enum { ABORT, VERBATIM, WARN, STRIP } signed_tag_mode = ABORT;
+static enum { ERROR, DROP, REWRITE } tag_of_filtered_mode = ABORT;
 static int fake_missing_tagger;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
@@ -39,6 +40,20 @@ static int parse_opt_signed_tag_mode(const struct option *opt,
 		signed_tag_mode = STRIP;
 	else
 		return error("Unknown signed-tag mode: %s", arg);
+	return 0;
+}
+
+static int parse_opt_tag_of_filtered_mode(const struct option *opt,
+					  const char *arg, int unset)
+{
+	if (unset || !strcmp(arg, "abort"))
+		tag_of_filtered_mode = ABORT;
+	else if (!strcmp(arg, "drop"))
+		tag_of_filtered_mode = DROP;
+	else if (!strcmp(arg, "rewrite"))
+		tag_of_filtered_mode = REWRITE;
+	else
+		return error("Unknown tag-of-filtered mode: %s", arg);
 	return 0;
 }
 
@@ -290,6 +305,8 @@ static void handle_tag(const char *name, struct tag *tag)
 	const char *tagger, *tagger_end, *message;
 	size_t message_size = 0;
 	struct object *tagged;
+	int tagged_mark;
+	struct commit *p;
 
 	/* Trees have no identifer in fast-export output, thus we have no way
 	 * to output tags of trees, tags of tags of trees, etc.  Simply omit
@@ -348,10 +365,45 @@ static void handle_tag(const char *name, struct tag *tag)
 			}
 	}
 
+	/* handle tag->tagged having been filtered out due to paths specified */
+	tagged = tag->tagged;
+	tagged_mark = get_object_mark(tagged);
+	if (!tagged_mark) {
+		switch(tag_of_filtered_mode) {
+		case ABORT:
+			die ("Tag %s tags unexported object; use "
+			     "--tag-of-filtered-object=<mode> to handle it.",
+			     sha1_to_hex(tag->object.sha1));
+		case DROP:
+			/* Ignore this tag altogether */
+			return;
+		case REWRITE:
+			if (tagged->type != OBJ_COMMIT) {
+				die ("Tag %s tags unexported %s!",
+				     sha1_to_hex(tag->object.sha1),
+				     typename(tagged->type));
+			}
+			p = (struct commit *)tagged;
+			for (;;) {
+				if (p->parents && p->parents->next)
+					break;
+				if (p->object.flags & UNINTERESTING)
+					break;
+				if (!(p->object.flags & TREESAME))
+					break;
+				if (!p->parents)
+					die ("Can't find replacement commit for tag %s\n",
+					     sha1_to_hex(tag->object.sha1));
+				p = p->parents->item;
+			}
+			tagged_mark = get_object_mark(&p->object);
+		}
+	}
+
 	if (!prefixcmp(name, "refs/tags/"))
 		name += 10;
 	printf("tag %s\nfrom :%d\n%.*s%sdata %d\n%.*s\n",
-	       name, get_object_mark(tag->tagged),
+	       name, tagged_mark,
 	       (int)(tagger_end - tagger), tagger,
 	       tagger == tagger_end ? "" : "\n",
 	       (int)message_size, (int)message_size, message ? message : "");
@@ -513,6 +565,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK(0, "signed-tags", &signed_tag_mode, "mode",
 			     "select handling of signed tags",
 			     parse_opt_signed_tag_mode),
+		OPT_CALLBACK(0, "tag-of-filtered-object", &tag_of_filtered_mode, "mode",
+			     "select handling of tags that tag filtered objects",
+			     parse_opt_tag_of_filtered_mode),
 		OPT_STRING(0, "export-marks", &export_filename, "FILE",
 			     "Dump marks to this file"),
 		OPT_STRING(0, "import-marks", &import_filename, "FILE",
