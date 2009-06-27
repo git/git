@@ -125,6 +125,36 @@ do
 
 done
 
+cat >expected <<EOF
+file:foo mmap bar_mmap
+EOF
+
+test_expect_success 'grep -e A --and -e B' '
+	git grep -e "foo mmap" --and -e bar_mmap >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+file:foo_mmap bar mmap
+file:foo_mmap bar mmap baz
+EOF
+
+
+test_expect_success 'grep ( -e A --or -e B ) --and -e B' '
+	git grep \( -e foo_ --or -e baz \) \
+		--and -e " mmap" >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+file:foo mmap bar
+EOF
+
+test_expect_success 'grep -e A --and --not -e B' '
+	git grep -e "foo mmap" --and --not -e bar_mmap >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'log grep setup' '
 	echo a >>file &&
 	test_tick &&
