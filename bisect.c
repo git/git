@@ -461,7 +461,7 @@ void read_bisect_paths(struct argv_array *array)
 	FILE *fp = fopen(filename, "r");
 
 	if (!fp)
-		die("Could not open file '%s': %s", filename, strerror(errno));
+		die_errno("Could not open file '%s'", filename);
 
 	while (strbuf_getline(&str, fp, '\n') != EOF) {
 		char *quoted;
@@ -632,8 +632,7 @@ static void mark_expected_rev(char *bisect_rev_hex)
 	int fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 
 	if (fd < 0)
-		die("could not create file '%s': %s",
-		    filename, strerror(errno));
+		die_errno("could not create file '%s'", filename);
 
 	bisect_rev_hex[len] = '\n';
 	write_or_die(fd, bisect_rev_hex, len + 1);

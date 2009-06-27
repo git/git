@@ -308,8 +308,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 		path = git_pathdup("TAG_EDITMSG");
 		fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 		if (fd < 0)
-			die("could not create file '%s': %s",
-						path, strerror(errno));
+			die_errno("could not create file '%s'", path);
 
 		if (!is_null_sha1(prev))
 			write_tag_body(fd, prev);
@@ -446,8 +445,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 					die("cannot read %s", msgfile);
 			} else {
 				if (strbuf_read_file(&buf, msgfile, 1024) < 0)
-					die("could not open or read '%s': %s",
-						msgfile, strerror(errno));
+					die_errno("could not open or read '%s'",
+						msgfile);
 			}
 		}
 	}

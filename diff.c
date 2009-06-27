@@ -1975,7 +1975,7 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 	fd = git_mkstemps(temp->tmp_path, PATH_MAX, template.buf,
 			strlen(base) + 1);
 	if (fd < 0)
-		die("unable to create temp-file: %s", strerror(errno));
+		die_errno("unable to create temp-file");
 	if (convert_to_working_tree(path,
 			(const char *)blob, (size_t)size, &buf)) {
 		blob = buf.buf;
@@ -2021,7 +2021,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 		if (lstat(name, &st) < 0) {
 			if (errno == ENOENT)
 				goto not_a_valid_file;
-			die("stat(%s): %s", name, strerror(errno));
+			die_errno("stat(%s)", name);
 		}
 		if (S_ISLNK(st.st_mode)) {
 			struct strbuf sb = STRBUF_INIT;

@@ -2035,7 +2035,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 		contents_from = "standard input";
 		mode = 0;
 		if (strbuf_read(&buf, 0, 0) < 0)
-			die("read error %s from stdin", strerror(errno));
+			die_errno("failed to read from stdin");
 	}
 	convert_to_git(path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
@@ -2261,8 +2261,7 @@ parse_done:
 	argc = parse_options_end(&ctx);
 
 	if (revs_file && read_ancestry(revs_file))
-		die("reading graft file %s failed: %s",
-		    revs_file, strerror(errno));
+		die_errno("reading graft file '%s' failed", revs_file);
 
 	if (cmd_is_annotate) {
 		output_option |= OUTPUT_ANNOTATE_COMPAT;
@@ -2350,7 +2349,7 @@ parse_done:
 
 		setup_work_tree();
 		if (!has_string_in_work_tree(path))
-			die("cannot stat path %s: %s", path, strerror(errno));
+			die_errno("cannot stat path '%s'", path);
 	}
 
 	setup_revisions(argc, argv, &revs, NULL);

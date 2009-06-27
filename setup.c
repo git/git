@@ -81,7 +81,7 @@ void verify_filename(const char *prefix, const char *arg)
 	if (errno == ENOENT)
 		die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
 		    "Use '--' to separate paths from revisions", arg);
-	die("'%s': %s", arg, strerror(errno));
+	die_errno("failed to stat '%s'", arg);
 }
 
 /*
@@ -103,7 +103,7 @@ void verify_non_filename(const char *prefix, const char *arg)
 		die("ambiguous argument '%s': both revision and filename\n"
 		    "Use '--' to separate filenames from revisions", arg);
 	if (errno != ENOENT && errno != ENOTDIR)
-		die("'%s': %s", arg, strerror(errno));
+		die_errno("failed to stat '%s'", arg);
 }
 
 const char **get_pathspec(const char *prefix, const char **pathspec)
@@ -257,7 +257,7 @@ const char *read_gitfile_gently(const char *path)
 		return NULL;
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
-		die("Error opening %s: %s", path, strerror(errno));
+		die_errno("Error opening '%s'", path);
 	buf = xmalloc(st.st_size + 1);
 	len = read_in_full(fd, buf, st.st_size);
 	close(fd);
@@ -389,7 +389,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			die("Not a git repository (or any of the parent directories): %s", DEFAULT_GIT_DIR_ENVIRONMENT);
 		}
 		if (chdir(".."))
-			die("Cannot change to %s/..: %s", cwd, strerror(errno));
+			die_errno("Cannot change to '%s/..'", cwd);
 	}
 
 	inside_git_dir = 0;

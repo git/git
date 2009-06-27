@@ -280,7 +280,7 @@ static void say_patch_name(FILE *output, const char *pre,
 static void read_patch_file(struct strbuf *sb, int fd)
 {
 	if (strbuf_read(sb, fd, 0) < 0)
-		die("git apply: read returned %s", strerror(errno));
+		die_errno("git apply: failed to read");
 
 	/*
 	 * Make sure that we have some slop in the buffer
@@ -2864,7 +2864,7 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	strbuf_release(&nbuf);
 
 	if (close(fd) < 0)
-		die("closing file %s: %s", path, strerror(errno));
+		die_errno("closing file '%s'", path);
 	return 0;
 }
 
@@ -3354,7 +3354,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 
 		fd = open(arg, O_RDONLY);
 		if (fd < 0)
-			die("can't open patch '%s': %s", arg, strerror(errno));
+			die_errno("can't open patch '%s'", arg);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
 		errs |= apply_patch(fd, arg, options);

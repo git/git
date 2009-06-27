@@ -862,7 +862,7 @@ static int service_loop(int socknum, int *socklist)
 					case ECONNABORTED:
 						continue;
 					default:
-						die("accept returned %s", strerror(errno));
+						die_errno("accept returned");
 					}
 				}
 				handle(incoming, (struct sockaddr *)&ss, sslen);
@@ -878,7 +878,7 @@ static void sanitize_stdfds(void)
 	while (fd != -1 && fd < 2)
 		fd = dup(fd);
 	if (fd == -1)
-		die("open /dev/null or dup failed: %s", strerror(errno));
+		die_errno("open /dev/null or dup failed");
 	if (fd > 2)
 		close(fd);
 }
@@ -889,12 +889,12 @@ static void daemonize(void)
 		case 0:
 			break;
 		case -1:
-			die("fork failed: %s", strerror(errno));
+			die_errno("fork failed");
 		default:
 			exit(0);
 	}
 	if (setsid() == -1)
-		die("setsid failed: %s", strerror(errno));
+		die_errno("setsid failed");
 	close(0);
 	close(1);
 	close(2);
@@ -905,9 +905,9 @@ static void store_pid(const char *path)
 {
 	FILE *f = fopen(path, "w");
 	if (!f)
-		die("cannot open pid file %s: %s", path, strerror(errno));
+		die_errno("cannot open pid file '%s'", path);
 	if (fprintf(f, "%"PRIuMAX"\n", (uintmax_t) getpid()) < 0 || fclose(f) != 0)
-		die("failed to write pid file %s: %s", path, strerror(errno));
+		die_errno("failed to write pid file '%s'", path);
 }
 
 static int serve(char *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
@@ -1107,8 +1107,7 @@ int main(int argc, char **argv)
 		socklen_t slen = sizeof(ss);
 
 		if (!freopen("/dev/null", "w", stderr))
-			die("failed to redirect stderr to /dev/null: %s",
-			    strerror(errno));
+			die_errno("failed to redirect stderr to /dev/null");
 
 		if (getpeername(0, peer, &slen))
 			peer = NULL;

@@ -638,7 +638,7 @@ int add_file_to_index(struct index_state *istate, const char *path, int flags)
 {
 	struct stat st;
 	if (lstat(path, &st))
-		die("%s: unable to stat (%s)", path, strerror(errno));
+		die_errno("unable to stat '%s'", path);
 	return add_to_index(istate, path, &st, flags);
 }
 
@@ -1251,11 +1251,11 @@ int read_index_from(struct index_state *istate, const char *path)
 	if (fd < 0) {
 		if (errno == ENOENT)
 			return 0;
-		die("index file open failed (%s)", strerror(errno));
+		die_errno("index file open failed");
 	}
 
 	if (fstat(fd, &st))
-		die("cannot stat the open index (%s)", strerror(errno));
+		die_errno("cannot stat the open index");
 
 	errno = EINVAL;
 	mmap_size = xsize_t(st.st_size);

@@ -252,8 +252,7 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest)
 		}
 
 		if (unlink(dest->buf) && errno != ENOENT)
-			die("failed to unlink %s: %s",
-			    dest->buf, strerror(errno));
+			die_errno("failed to unlink '%s'", dest->buf);
 		if (!option_no_hardlinks) {
 			if (!link(src->buf, dest->buf))
 				continue;
@@ -420,11 +419,11 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (!option_bare) {
 		junk_work_tree = work_tree;
 		if (safe_create_leading_directories_const(work_tree) < 0)
-			die("could not create leading directories of '%s': %s",
-					work_tree, strerror(errno));
+			die_errno("could not create leading directories of '%s'",
+				  work_tree);
 		if (!dest_exists && mkdir(work_tree, 0755))
-			die("could not create work tree dir '%s': %s.",
-					work_tree, strerror(errno));
+			die_errno("could not create work tree dir '%s'.",
+				  work_tree);
 		set_git_work_tree(work_tree);
 	}
 	junk_git_dir = git_dir;

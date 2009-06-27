@@ -294,9 +294,9 @@ static void squash_message(void)
 			NULL, NULL, rev.date_mode, 0);
 	}
 	if (write(fd, out.buf, out.len) < 0)
-		die("Writing SQUASH_MSG: %s", strerror(errno));
+		die_errno("Writing SQUASH_MSG");
 	if (close(fd))
-		die("Finishing SQUASH_MSG: %s", strerror(errno));
+		die_errno("Finishing SQUASH_MSG");
 	strbuf_release(&out);
 }
 
@@ -428,8 +428,8 @@ static void merge_name(const char *remote, struct strbuf *msg)
 
 		fp = fopen(git_path("FETCH_HEAD"), "r");
 		if (!fp)
-			die("could not open %s for reading: %s",
-				git_path("FETCH_HEAD"), strerror(errno));
+			die_errno("could not open '%s' for reading",
+				  git_path("FETCH_HEAD"));
 		strbuf_getline(&line, fp, '\n');
 		fclose(fp);
 		ptr = strstr(line.buf, "\tnot-for-merge\t");

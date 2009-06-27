@@ -2342,7 +2342,7 @@ static void import_marks(const char *input_file)
 	char line[512];
 	FILE *f = fopen(input_file, "r");
 	if (!f)
-		die("cannot read %s: %s", input_file, strerror(errno));
+		die_errno("cannot read '%s'", input_file);
 	while (fgets(line, sizeof(line), f)) {
 		uintmax_t mark;
 		char *end;
@@ -2448,7 +2448,7 @@ int main(int argc, const char **argv)
 				fclose(pack_edges);
 			pack_edges = fopen(a + 20, "a");
 			if (!pack_edges)
-				die("Cannot open %s: %s", a + 20, strerror(errno));
+				die_errno("Cannot open '%s'", a + 20);
 		} else if (!strcmp(a, "--force"))
 			force_update = 1;
 		else if (!strcmp(a, "--quiet"))
