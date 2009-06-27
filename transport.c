@@ -158,7 +158,7 @@ static struct ref *get_refs_via_rsync(struct transport *transport, int for_push)
 
 	strbuf_addstr(&temp_dir, git_path("rsync-refs-XXXXXX"));
 	if (!mkdtemp(temp_dir.buf))
-		die ("Could not make temporary directory");
+		die_errno ("Could not make temporary directory");
 	temp_dir_len = temp_dir.len;
 
 	strbuf_addstr(&buf, rsync_url(transport->url));
@@ -321,7 +321,7 @@ static int rsync_transport_push(struct transport *transport,
 
 	strbuf_addstr(&temp_dir, git_path("rsync-refs-XXXXXX"));
 	if (!mkdtemp(temp_dir.buf))
-		die ("Could not make temporary directory");
+		die_errno ("Could not make temporary directory");
 	strbuf_addch(&temp_dir, '/');
 
 	if (flags & TRANSPORT_PUSH_ALL) {
