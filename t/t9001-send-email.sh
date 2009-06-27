@@ -152,7 +152,10 @@ test_expect_success 'cccmd works' '
 	clean_fake_sendmail &&
 	cp $patches cccmd.patch &&
 	echo cccmd--cccmd@example.com >>cccmd.patch &&
-	echo sed -n s/^cccmd--//p \"\$1\" > cccmd-sed &&
+	{
+	  echo "#!$SHELL_PATH"
+	  echo sed -n -e s/^cccmd--//p \"\$1\"
+	} > cccmd-sed &&
 	chmod +x cccmd-sed &&
 	git send-email \
 		--from="Example <nobody@example.com>" \
