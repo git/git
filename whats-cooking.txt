@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2009, #02; Thu, 18)
-X-master-at: da4e4a65a27ca912c3f48289acf9ff7a67476c3f
-X-next-at: 04d09b6708a8fa33788706f00bbf43c80ea6af0e
+Subject: What's cooking in git.git (Jun 2009, #03; Sat, 27)
+X-master-at: 4f2b15ce88b70dd9e269517a9903864393ca873b
+X-next-at: 98a794b5be3b0696055098d997dc22a127e8cd3d
 
-What's cooking in git.git (Jun 2009, #02; Thu, 18)
+What's cooking in git.git (Jun 2009, #03; Sat, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,180 +14,60 @@ holding onto them.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
-Unfortunately I am unusually short of time these days, and some of the
-topics unfortunately got less "final review before deciding to merge up"
-than I would have liked to give them.  This message itself has more
-"please comment/review" requests than usual.
-
 ----------------------------------------------------------------
 [New Topics]
 
-* ne/maint-1.6.0-diff-tree-t-r-show-directory (Sat Jun 13 17:06:09 2009 -0700) 1 commit
- - diff-tree -r -t: include added/removed directories in the output
+* gb/gitweb-avatar (Tue Jun 23 00:49:59 2009 +0200) 2 commits
+ - gitweb: gravatar support
+ - gitweb: refactor author name insertion
 
-* sb/maint-1.6.0-add-config-fix (Thu Jun 18 02:17:54 2009 -0700) 2 commits
- - add: allow configurations to be overriden by command line
- - use xstrdup, not strdup in ll-merge.c
+This was from way earlier round and will be replaced.
 
-* pb/maint-1.6.2-userdiff-fix (Wed Jun 17 12:11:10 2009 +0200) 2 commits
- - upload-archive: fix infinite loop on Cygwin
- - avoid exponential regex match for java and objc function names
+* ld/push-porcelain-out (Mon Jun 22 21:10:01 2009 -0400) 1 commit
+ - add --porcelain option to git-push
 
-* fc/user-manual (Fri May 1 11:44:20 2009 +0300) 2 commits
- . user-manual: use 'fast-forward' instead of 'fast forward'
- . user-manual: general quoting improvements
+* cf/maint-remote-uploadpack-useconfig-fix (Thu Jun 25 17:21:35 2009 -0400) 1 commit
+ + git-remote: fix missing .uploadpack usage for show command
 
-* uk/rev-parse-parse-opt (Sun Jun 14 01:58:43 2009 +0200) 2 commits
- - parse-opt: make PARSE_OPT_STOP_AT_NON_OPTION available to git rev-
-   parse
- - more tests for git rev-parse --parse-opt
+* en/fast-export (Thu Jun 25 22:48:33 2009 -0600) 7 commits
+ - fast-export: Document the fact that git-rev-list arguments are
+   accepted
+ - Add new fast-export testcases
+ - fast-export: Add a --tag-of-filtered-object option for newly
+   dangling tags
+ - fast-export: Do parent rewriting to avoid dropping relevant
+   commits
+ - fast-export: Make sure we show actual ref names instead of
+   "(null)"
+ - fast-export: Omit tags that tag trees
+ - fast-export: Set revs.topo_order before calling setup_revisions
 
-* js/daemon-log (Tue Jun 16 20:41:16 2009 +0200) 2 commits
- - upload-pack: squelch progress indicator if client cannot see it
- - daemon: send stderr of service programs to the syslog
+* sb/read-tree (Thu Jun 25 22:14:10 2009 -0700) 2 commits
+ - read-tree: migrate to parse-options
+ - read-tree: convert unhelpful usage()'s to helpful die()'s
 
-* sb/quiet-porcelains (Wed Jun 17 18:07:37 2009 -0700) 6 commits
- - stash: teach quiet option
- - am, rebase: teach quiet option
- - submodule, repack: migrate to git-sh-setup's say()
- - git-sh-setup: introduce say() for quiet options
- - am: suppress apply errors when using 3-way
- - t4150: test applying with a newline in subject
-
-* lt/maint-unsigned-left-shift (Wed Jun 17 17:22:27 2009 -0700) 1 commit
- - Fix big left-shifts of unsigned char
-
-* jk/use-our-regexp (Tue Jun 16 15:08:21 2009 -0400) 2 commits
- - Makefile: use compat regex on Solaris
- - Makefile: refactor regex compat support
-
-* cb/maint-fetch-refspec-wo-dst (Wed Jun 17 15:38:36 2009 +0200) 1 commit
- - fetch: do not create ref from empty name
-
-* pb/send-email-cccmd-fix (Thu Jun 18 14:31:32 2009 +0200) 1 commit
- - Test cccmd in t9001-send-email.sh and fix some bugs
+* sb/show-ref-parse-options (Sat Jun 20 21:40:46 2009 -0700) 1 commit
+ + show-ref: migrate to parse-options
 
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* cb/maint-no-double-merge (Mon Jun 1 11:20:56 2009 +0200) 1 commit
- + refuse to merge during a merge
+* sb/maint-1.6.0-add-config-fix (Thu Jun 18 02:17:54 2009 -0700) 2 commits
+ + add: allow configurations to be overriden by command line
+ + use xstrdup, not strdup in ll-merge.c
 
-* sp/msysgit (Thu Jun 11 22:56:12 2009 +0200) 13 commits
- + compat/ has subdirectories: do not omit them in 'make clean'
- + Fix typo in nedmalloc warning fix
- + MinGW: Teach Makefile to detect msysgit and apply specific
-   settings
- + Fix warnings in nedmalloc when compiling with GCC 4.4.0
- + Add custom memory allocator to MinGW and MacOS builds
- + MinGW readdir reimplementation to support d_type
- + connect.c: Support PuTTY plink and TortoisePlink as SSH on Windows
- + git: browsing paths with spaces when using the start command
- + MinGW: fix warning about implicit declaration of _getch()
- + test-chmtime: work around Windows limitation
- + Work around a regression in Windows 7, causing erase_in_line() to
-   crash sometimes
- + Quiet make: do not leave Windows behind
- + MinGW: GCC >= 4 does not need SNPRINTF_SIZE_CORR anymore
+* pb/maint-1.6.2-userdiff-fix (Wed Jun 17 12:11:10 2009 +0200) 2 commits
+ + upload-archive: fix infinite loop on Cygwin
+ + avoid exponential regex match for java and objc function names
 
-* mh/fix-send-email-threaded (Fri Jun 12 09:23:43 2009 -0700) 7 commits
- + Merge branch 'mh/maint-fix-send-email-threaded' into
-   mh/fix-send-email-threaded
- + send-email: fix a typo in a comment
- + send-email: fix threaded mails without chain-reply-to
- + add a test for git-send-email for threaded mails without chain-reply-to
- + doc/send-email: clarify the behavior of --in-reply-to with
-   --no-thread
- + send-email: fix non-threaded mails
- + add a test for git-send-email for non-threaded mails
+* lt/maint-unsigned-left-shift (Wed Jun 17 17:22:27 2009 -0700) 1 commit
+ + Fix big left-shifts of unsigned char
 
-* rc/maint-http-local-slot-fix (Sat Jun 6 16:43:26 2009 +0800) 1 commit
- + http*: cleanup slot->local after fclose
-
-* sb/parse-options-integer (Thu Jun 4 16:43:57 2009 -0700) 2 commits
- + parse-options: simplify usage argh handling
- + parse-options: make OPT_INTEGER's argh explicit
-
-* bc/solaris (Sun Jun 7 07:40:29 2009 +0200) 10 commits
- + configure: test whether -lresolv is needed
- + Makefile: insert SANE_TOOL_PATH to PATH before /bin or /usr/bin
- + git-compat-util.h: avoid using c99 flex array feature with Sun
-   compiler 5.8
- + Makefile: add section for SunOS 5.7
- + Makefile: introduce SANE_TOOL_PATH for prepending required
-   elements to PATH
- + Makefile: define __sun__ on SunOS
- + git-compat-util.h: tweak the way _XOPEN_SOURCE is set on Solaris
- + On Solaris choose the OLD_ICONV iconv() declaration based on the
-   UNIX spec
- + Makefile: add NEEDS_RESOLV to optionally add -lresolv to compile
-   arguments
- + Makefile: use /usr/ucb/install on SunOS platforms rather than
-   ginstall
-
-* cb/match_refs_internal_tail (Sun May 31 16:26:48 2009 +0200) 1 commit
- + match_refs: search ref list tail internally
-
-* nw/maint-cvsexportcommit (Fri May 29 00:23:33 2009 +0100) 1 commit
- + git-cvsexportcommit can't commit files which have been removed
-   from CVS
-
-* ak/maint-for-each-ref-no-lookup (Wed May 27 15:23:12 2009 -0400) 1 commit
- + for-each-ref: Do not lookup objects when they will not be used
-
-I think this makes sense, except that I have this nagging feeling that its
-use of for_each_rawref() where the original used for_each_ref() may have
-some unintended side effects in corner cases.
-
-* da/araxis-mergetool (Sun May 24 00:24:41 2009 +0000) 1 commit
- + mergetool--lib: add support for araxis merge
-
-* rc/http-push (Sat Jun 6 16:44:02 2009 +0800) 24 commits
- + http*: add helper methods for fetching objects (loose)
- + http*: add helper methods for fetching packs
- + http: use new http API in fetch_index()
- + http*: add http_get_info_packs
- + http-push.c::fetch_symref(): use the new http API
- + http-push.c::remote_exists(): use the new http API
- + http.c::http_fetch_ref(): use the new http API
- + transport.c::get_refs_via_curl(): use the new http API
- + http.c: new functions for the http API
- + http: create function end_url_with_slash
- + http*: move common variables and macros to http.[ch]
- + transport.c::get_refs_via_curl(): do not leak refs_url
- + Don't expect verify_pack() callers to set pack_size
- + http-push: do not SEGV after fetching a bad pack idx file
- + http*: copy string returned by sha1_to_hex
- + http-walker: verify remote packs
- + http-push, http-walker: style fixes
- + t5550-http-fetch: test fetching of packed objects
- + http-push: fix missing "#ifdef USE_CURL_MULTI" around
-   "is_running_queue"
- + http-push: send out fetch requests on queue
- + t5540-http-push: test fetching of packed objects
- + t5540-http-push: test fetching of loose objects
- + Merge branch 'rc/maint-http-local-slot-fix' into rc/http-push
- + http*: cleanup slot->local after fclose
-
-* cc/bisect (Sat Jun 6 06:41:35 2009 +0200) 5 commits
- + t6030: test skipping away from an already skipped commit
- + bisect: when skipping, choose a commit away from a skipped commit
- + bisect: add parameters to "filter_skipped"
- + bisect: display first bad commit without forking a new process
- + bisect: drop unparse_commit() and use clear_commit_marks()
-
-Regardless of metrics, this is an improvement from the current one.  Will
-merge to 'master', and let the finer details taken care of later, which
-is already happening.
-
-----------------------------------------------------------------
-[Will merge to "master" soon]
+* pb/send-email-cccmd-fix (Thu Jun 18 14:31:32 2009 +0200) 1 commit
+ + Test cccmd in t9001-send-email.sh and fix some bugs
 
 * ph/submodule-rebase (Wed Jun 3 00:59:12 2009 +0200) 1 commit
  + git-submodule: add support for --merge.
-
-Even though some might still argue that "update --merge" is not a good
-mode of operation.
 
 * jc/cache-tree (Fri May 22 23:14:25 2009 -0700) 5 commits
  + Avoid "diff-index --cached" optimization under --find-copies-
@@ -199,6 +79,19 @@ mode of operation.
 
 * mn/maint-iconv-autoconf (Mon Jun 8 20:46:38 2009 -0700) 1 commit
  + fix handling of iconv configuration options
+
+* sb/pull-rebase (Fri Jun 12 00:39:21 2009 +0200) 3 commits
+ + parse-remote: remove unused functions
+ + parse-remote: support default reflist in get_remote_merge_branch
+ + parse-remote: function to get the tracking branch to be merge
+
+* mg/pushurl (Sun Jun 14 21:46:10 2009 +0200) 6 commits
+ + avoid NULL dereference on failed malloc
+ + builtin-remote: Make "remote -v" display push urls
+ + builtin-remote: Show push urls as well
+ + technical/api-remote: Describe new struct remote member pushurl
+ + t5516: Check pushurl config setting
+ + Allow push and fetch urls to be different
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
@@ -282,8 +175,45 @@ in binary mode as well.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* tr/die_errno (Fri Jun 12 09:00:59 2009 -0700) 5 commits
- - DONTMERGE fix double per-cent
+* ne/maint-1.6.0-diff-tree-t-r-show-directory (Sat Jun 13 17:06:09 2009 -0700) 1 commit
+ + diff-tree -r -t: include added/removed directories in the output
+
+This changes the output from "diff-tree -r -t"; it brings more consistency
+to it, but it is a change and could break scripts.
+
+* uk/rev-parse-parse-opt (Sun Jun 14 01:58:43 2009 +0200) 2 commits
+ + parse-opt: make PARSE_OPT_STOP_AT_NON_OPTION available to git rev-
+   parse
+ + more tests for git rev-parse --parse-opt
+
+* js/daemon-log (Sun Jun 21 23:16:09 2009 +0200) 3 commits
+ + receive-pack: do not send error details to the client
+ + upload-pack: squelch progress indicator if client cannot see it
+ + daemon: send stderr of service programs to the syslog
+
+* sb/quiet-porcelains (Wed Jun 17 18:07:37 2009 -0700) 6 commits
+ + stash: teach quiet option
+ + am, rebase: teach quiet option
+ + submodule, repack: migrate to git-sh-setup's say()
+ + git-sh-setup: introduce say() for quiet options
+ + am: suppress apply errors when using 3-way
+ + t4150: test applying with a newline in subject
+
+* jk/use-our-regexp (Fri Jun 19 10:10:39 2009 -0500) 3 commits
+ + Makefile: Solaris needs HAVE_ALLOCA_H for alloca()
+ + Makefile: use compat regex on Solaris
+ + Makefile: refactor regex compat support
+
+* cb/maint-fetch-refspec-wo-dst (Wed Jun 17 15:38:36 2009 +0200) 1 commit
+ - fetch: do not create ref from empty name
+
+* cc/bisect (Sat Jun 13 13:11:02 2009 +0200) 2 commits
+ + Documentation: remove warning saying that "git bisect skip" may
+   slow bisection
+ + bisect: use a PRNG with a bias when skipping away from untestable
+   commits
+
+* tr/die_errno (Sat Jun 27 17:58:47 2009 +0200) 4 commits
  - Use die_errno() instead of die() when checking syscalls
  - Convert existing die(..., strerror(errno)) to die_errno()
  - die_errno(): double % in strerror() output just in case
@@ -291,19 +221,6 @@ in binary mode as well.
 
 I didn't check the individual conversion from die() to die_errno()
 in this latest round; comments?
-
-Thomas found issues in my "double per-cent hack", so this cannot be merged
-to yet until either it is fixed up, or drop the "double per-cent" attempt
-altogether.
-
-* sb/pull-rebase (Fri Jun 12 00:39:21 2009 +0200) 3 commits
- + parse-remote: remove unused functions
- + parse-remote: support default reflist in get_remote_merge_branch
- + parse-remote: function to get the tracking branch to be merge
-
-It would be nice if we can fix the "currently works only for the default
-mapping" before it goes to 'master'.  I looked at, but haven't queued any
-of the recent RFC updates here.
 
 * ne/futz-upload-pack (Wed Jun 10 01:50:18 2009 +0200) 1 commit
  - Shift object enumeration out of upload-pack
@@ -316,22 +233,6 @@ I've rewritten these two to (1) move the #ifdef out of the main codepath,
 and (2) use configuration/environment to make the misfeature of always
 asking for a passphrase even a key/cert is unencrypted optional.  I tried
 to be careful but extra sets of eyeballs would be nice to check the result.
-
-* mg/pushurl (Sun Jun 14 21:46:10 2009 +0200) 6 commits
- + avoid NULL dereference on failed malloc
- + builtin-remote: Make "remote -v" display push urls
- + builtin-remote: Show push urls as well
- + technical/api-remote: Describe new struct remote member pushurl
- + t5516: Check pushurl config setting
- + Allow push and fetch urls to be different
-
-* cc/bisect (Sat Jun 13 13:11:02 2009 +0200) 2 commits
- - Documentation: remove warning saying that "git bisect skip" may
-   slow bisection
- - bisect: use a PRNG with a bias when skipping away from untestable
-   commits
-
-Will be in 'next' shortly.
 
 * gb/am-foreign (Wed May 27 11:25:19 2009 +0200) 4 commits
  - git-am: refactor 'cleaning up and aborting'
