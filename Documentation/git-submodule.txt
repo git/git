@@ -137,8 +137,9 @@ foreach::
 	the processing to terminate. This can be overridden by adding '|| :'
 	to the end of the command.
 +
-As an example, "git submodule foreach 'echo $path `git rev-parse HEAD`' will
-show the path and currently checked out commit for each submodule.
+As an example, +git submodule foreach \'echo $path {backtick}git
+rev-parse HEAD{backtick}'+ will show the path and currently checked out
+commit for each submodule.
 
 sync::
 	Synchronizes submodules' remote URL configuration setting
