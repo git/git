@@ -195,6 +195,14 @@ our %known_snapshot_format_aliases = (
 	'x-zip' => undef, '' => undef,
 );
 
+# Pixel sizes for icons and avatars. If the default font sizes or lineheights
+# are changed, it may be appropriate to change these values too via
+# $GITWEB_CONFIG.
+our %avatar_size = (
+	'default' => 16,
+	'double'  => 32
+);
+
 # You define site-wide feature defaults here; override them with
 # $GITWEB_CONFIG as necessary.
 our %feature = (
@@ -365,6 +373,24 @@ our %feature = (
 		'sub' => \&feature_patches,
 		'override' => 0,
 		'default' => [16]},
+
+	# Avatar support. When this feature is enabled, views such as
+	# shortlog or commit will display an avatar associated with
+	# the email of the committer(s) and/or author(s).
+
+	# Currently only the gravatar provider is available, and it
+	# depends on Digest::MD5. If an unknown provider is specified,
+	# the feature is disabled.
+
+	# To enable system wide have in $GITWEB_CONFIG
+	# $feature{'avatar'}{'default'} = ['gravatar'];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'avatar'}{'override'} = 1;
+	# and in project config gitweb.avatar = gravatar;
+	'avatar' => {
+		'sub' => \&feature_avatar,
+		'override' => 0,
+		'default' => ['']},
 );
 
 sub gitweb_get_feature {
@@ -431,6 +457,12 @@ sub feature_patches {
 	}
 
 	return ($_[0]);
+}
+
+sub feature_avatar {
+	my @val = (git_get_project_config('avatar'));
+
+	return @val ? @val : @_;
 }
 
 # checking HEAD file with -e is fragile if the repository was
@@ -813,6 +845,17 @@ $git_dir = "$projectroot/$project" if $project;
 # list of supported snapshot formats
 our @snapshot_fmts = gitweb_get_feature('snapshot');
 @snapshot_fmts = filter_snapshot_fmts(@snapshot_fmts);
+
+# check that the avatar feature is set to a known provider name,
+# and for each provider check if the dependencies are satisfied.
+# if the provider name is invalid or the dependencies are not met,
+# reset $git_avatar to the empty string.
+our ($git_avatar) = gitweb_get_feature('avatar');
+if ($git_avatar eq 'gravatar') {
+	$git_avatar = '' unless (eval { require Digest::MD5; 1; });
+} else {
+	$git_avatar = '';
+}
 
 # dispatch
 if (!defined $action) {
@@ -1469,6 +1512,34 @@ sub format_subject_html {
 	}
 }
 
+# Insert an avatar for the given $email at the given $size if the feature
+# is enabled.
+sub git_get_avatar {
+	my ($email, %opts) = @_;
+	my $pre_white  = ($opts{-pad_before} ? "&nbsp;" : "");
+	my $post_white = ($opts{-pad_after}  ? "&nbsp;" : "");
+	$opts{-size} ||= 'default';
+	my $size = $avatar_size{$opts{-size}} || $avatar_size{'default'};
+	my $url = "";
+	if ($git_avatar eq 'gravatar') {
+		$url = "http://www.gravatar.com/avatar/" .
+			Digest::MD5::md5_hex(lc $email) . "?s=$size";
+	}
+	# Currently only gravatars are supported, but other forms such as
+	# picons can be added by putting an else up here and defining $url
+	# as needed. If no variant puts something in $url, we assume avatars
+	# are completely disabled/unavailable.
+	if ($url) {
+		return $pre_white .
+		       "<img width=\"$size\" " .
+		            "class=\"avatar\" " .
+		            "src=\"$url\" " .
+		       "/>" . $post_white;
+	} else {
+		return "";
+	}
+}
+
 # format the author name of the given commit with the given tag
 # the author name is chopped and escaped according to the other
 # optional parameters (see chop_str).
@@ -1476,7 +1547,9 @@ sub format_author_html {
 	my $tag = shift;
 	my $co = shift;
 	my $author = chop_and_escape_str($co->{'author_name'}, @_);
-	return "<$tag class=\"author\">" . $author . "</$tag>";
+	return "<$tag class=\"author\">" .
+	       git_get_avatar($co->{'author_email'}, -pad_after => 1) .
+	       $author . "</$tag>";
 }
 
 # format git diff header line, i.e. "diff --(git|combined|cc) ..."
@@ -3252,7 +3325,8 @@ sub git_print_authorship {
 	      esc_html($co->{'author_name'}) .
 	      " [$ad{'rfc2822'}";
 	print_local_time(%ad) if ($opts{-localtime});
-	print "]</$tag>\n";
+	print "]" . git_get_avatar($co->{'author_email'}, -pad_before => 1)
+		  . "</$tag>\n";
 }
 
 # Outputs table rows containing the full author or committer information,
@@ -3267,7 +3341,10 @@ sub git_print_authorship_rows {
 	@people = ('author', 'committer') unless @people;
 	foreach my $who (@people) {
 		my %wd = parse_date($co->{"${who}_epoch"}, $co->{"${who}_tz"});
-		print "<tr><td>$who</td><td>" . esc_html($co->{$who}) . "</td></tr>\n".
+		print "<tr><td>$who</td><td>" . esc_html($co->{$who}) . "</td>" .
+		      "<td rowspan=\"2\">" .
+		      git_get_avatar($co->{"${who}_email"}, -size => 'double') .
+		      "</td></tr>\n" .
 		      "<tr>" .
 		      "<td></td><td> $wd{'rfc2822'}";
 		print_local_time(%wd);

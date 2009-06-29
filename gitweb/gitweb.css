@@ -28,6 +28,10 @@ img.logo {
 	border-width: 0px;
 }
 
+img.avatar {
+	vertical-align: middle;
+}
+
 div.page_header {
 	height: 25px;
 	padding: 8px;
