@@ -2409,8 +2409,14 @@ sub parse_tag {
 			$tag{'name'} = $1;
 		} elsif ($line =~ m/^tagger (.*) ([0-9]+) (.*)$/) {
 			$tag{'author'} = $1;
-			$tag{'epoch'} = $2;
-			$tag{'tz'} = $3;
+			$tag{'author_epoch'} = $2;
+			$tag{'author_tz'} = $3;
+			if ($tag{'author'} =~ m/^([^<]+) <([^>]*)>/) {
+				$tag{'author_name'}  = $1;
+				$tag{'author_email'} = $2;
+			} else {
+				$tag{'author_name'} = $tag{'author'};
+			}
 		} elsif ($line =~ m/--BEGIN/) {
 			push @comment, $line;
 			last;
@@ -4620,11 +4626,7 @@ sub git_tag {
 	                                      $tag{'type'}) . "</td>\n" .
 	      "</tr>\n";
 	if (defined($tag{'author'})) {
-		my %ad = parse_date($tag{'epoch'}, $tag{'tz'});
-		print "<tr><td>author</td><td>" . esc_html($tag{'author'}) . "</td></tr>\n";
-		print "<tr><td></td><td>" . $ad{'rfc2822'} .
-			sprintf(" (%02d:%02d %s)", $ad{'hour_local'}, $ad{'minute_local'}, $ad{'tz_local'}) .
-			"</td></tr>\n";
+		git_print_authorship_rows(\%tag, 'author');
 	}
 	print "</table>\n\n" .
 	      "</div>\n";
