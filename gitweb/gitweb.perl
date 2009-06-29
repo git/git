@@ -1574,6 +1574,7 @@ sub git_get_avatar {
 		       "<img width=\"$size\" " .
 		            "class=\"avatar\" " .
 		            "src=\"$url\" " .
+			    "alt=\"\" " .
 		       "/>" . $post_white;
 	} else {
 		return "";
