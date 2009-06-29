@@ -378,15 +378,18 @@ our %feature = (
 	# shortlog or commit will display an avatar associated with
 	# the email of the committer(s) and/or author(s).
 
-	# Currently only the gravatar provider is available, and it
-	# depends on Digest::MD5. If an unknown provider is specified,
-	# the feature is disabled.
+	# Currently available providers are gravatar and picon.
+	# If an unknown provider is specified, the feature is disabled.
+
+	# Gravatar depends on Digest::MD5.
+	# Picon currently relies on the indiana.edu database.
 
 	# To enable system wide have in $GITWEB_CONFIG
-	# $feature{'avatar'}{'default'} = ['gravatar'];
+	# $feature{'avatar'}{'default'} = ['<provider>'];
+	# where <provider> is either gravatar or picon.
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'avatar'}{'override'} = 1;
-	# and in project config gitweb.avatar = gravatar;
+	# and in project config gitweb.avatar = <provider>;
 	'avatar' => {
 		'sub' => \&feature_avatar,
 		'override' => 0,
@@ -853,6 +856,8 @@ our @snapshot_fmts = gitweb_get_feature('snapshot');
 our ($git_avatar) = gitweb_get_feature('avatar');
 if ($git_avatar eq 'gravatar') {
 	$git_avatar = '' unless (eval { require Digest::MD5; 1; });
+} elsif ($git_avatar eq 'picon') {
+	# no dependencies
 } else {
 	$git_avatar = '';
 }
@@ -1520,6 +1525,20 @@ sub format_subject_html {
 # given page, there's no risk for cache conflicts.
 our %avatar_cache = ();
 
+# Compute the picon url for a given email, by using the picon search service over at
+# http://www.cs.indiana.edu/picons/search.html
+sub picon_url {
+	my $email = lc shift;
+	if (!$avatar_cache{$email}) {
+		my ($user, $domain) = split('@', $email);
+		$avatar_cache{$email} =
+			"http://www.cs.indiana.edu/cgi-pub/kinzler/piconsearch.cgi/" .
+			"$domain/$user/" .
+			"users+domains+unknown/up/single";
+	}
+	return $avatar_cache{$email};
+}
+
 # Compute the gravatar url for a given email, if it's not in the cache already.
 # Gravatar stores only the part of the URL before the size, since that's the
 # one computationally more expensive. This also allows reuse of the cache for
@@ -1544,9 +1563,10 @@ sub git_get_avatar {
 	my $url = "";
 	if ($git_avatar eq 'gravatar') {
 		$url = gravatar_url($email, $size);
+	} elsif ($git_avatar eq 'picon') {
+		$url = picon_url($email);
 	}
-	# Currently only gravatars are supported, but other forms such as
-	# picons can be added by putting an else up here and defining $url
+	# Other providers can be added by extending the if chain, defining $url
 	# as needed. If no variant puts something in $url, we assume avatars
 	# are completely disabled/unavailable.
 	if ($url) {
