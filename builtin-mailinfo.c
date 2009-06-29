@@ -222,6 +222,8 @@ static void cleanup_subject(struct strbuf *subject)
 {
 	char *pos;
 	size_t remove;
+	int brackets_removed = 0;
+
 	while (subject->len) {
 		switch (*subject->buf) {
 		case 'r': case 'R':
@@ -236,10 +238,15 @@ static void cleanup_subject(struct strbuf *subject)
 			strbuf_remove(subject, 0, 1);
 			continue;
 		case '[':
+			/* remove only one set of square brackets */
+			if (brackets_removed)
+				break;
+
 			if ((pos = strchr(subject->buf, ']'))) {
 				remove = pos - subject->buf;
 				if (remove <= (subject->len - remove) * 2) {
 					strbuf_remove(subject, 0, remove + 1);
+					brackets_removed = 1;
 					continue;
 				}
 			} else
