@@ -188,10 +188,9 @@ static int handle_alias(int *argcp, const char ***argv)
 				  alias_command);
 
 		new_argv = xrealloc(new_argv, sizeof(char *) *
-				    (count + *argcp + 1));
+				    (count + *argcp));
 		/* insert after command name */
 		memcpy(new_argv + count, *argv + 1, sizeof(char *) * *argcp);
-		new_argv[count+*argcp] = NULL;
 
 		*argv = new_argv;
 		*argcp += count - 1;
