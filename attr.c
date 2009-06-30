@@ -555,6 +555,8 @@ static void prepare_attr_stack(const char *path, int dirlen)
 		}
 	}
 
+	strbuf_release(&pathbuf);
+
 	/*
 	 * Finally push the "info" one at the top of the stack.
 	 */

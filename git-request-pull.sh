@@ -42,8 +42,8 @@ if [ -z "$branch" ]; then
 	status=1
 fi
 
-PAGER=
-export PAGER
+GIT_PAGER=
+export GIT_PAGER
 echo "The following changes since commit $baserev:"
 git shortlog --max-count=1 $baserev | sed -e 's/^\(.\)/  \1/'
 
