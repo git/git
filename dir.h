@@ -88,7 +88,10 @@ static inline int is_dot_or_dotdot(const char *name)
 extern int is_empty_dir(const char *dir);
 
 extern void setup_standard_excludes(struct dir_struct *dir);
-extern int remove_dir_recursively(struct strbuf *path, int only_empty);
+
+#define REMOVE_DIR_EMPTY_ONLY 01
+#define REMOVE_DIR_KEEP_NESTED_GIT 02
+extern int remove_dir_recursively(struct strbuf *path, int flag);
 
 /* tries to remove the path with empty directories along it, ignores ENOENT */
 extern int remove_path(const char *path);
