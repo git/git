@@ -1457,7 +1457,7 @@ _git_config ()
 	branch.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		__gitcomp "remote merge mergeoptions" "$pfx" "$cur"
+		__gitcomp "remote merge mergeoptions rebase" "$pfx" "$cur"
 		return
 		;;
 	branch.*)
@@ -1504,7 +1504,7 @@ _git_config ()
 		cur="${cur##*.}"
 		__gitcomp "
 			url proxy fetch push mirror skipDefaultUpdate
-			receivepack uploadpack tagopt
+			receivepack uploadpack tagopt pushurl
 			" "$pfx" "$cur"
 		return
 		;;
@@ -1522,6 +1522,7 @@ _git_config ()
 		;;
 	esac
 	__gitcomp "
+		add.ignore-errors
 		alias.
 		apply.whitespace
 		branch.autosetupmerge
