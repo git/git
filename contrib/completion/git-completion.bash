@@ -1357,11 +1357,12 @@ __git_config_get_set_variables ()
 		c=$((--c))
 	done
 
-	for i in $(git --git-dir="$(__gitdir)" config $config_file --list \
-			2>/dev/null); do
-		case "$i" in
-		*.*)
-			echo "${i/=*/}"
+	git --git-dir="$(__gitdir)" config $config_file --list 2>/dev/null |
+	while read line
+	do
+		case "$line" in
+		*.*=*)
+			echo "${line/=*/}"
 			;;
 		esac
 	done
