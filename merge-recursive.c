@@ -622,8 +622,13 @@ static int merge_3way(struct merge_options *o,
 	char *name1, *name2;
 	int merge_status;
 
-	name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
-	name2 = xstrdup(mkpath("%s:%s", branch2, b->path));
+	if (strcmp(a->path, b->path)) {
+		name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
+		name2 = xstrdup(mkpath("%s:%s", branch2, b->path));
+	} else {
+		name1 = xstrdup(mkpath("%s", branch1));
+		name2 = xstrdup(mkpath("%s", branch2));
+	}
 
 	fill_mm(one->sha1, &orig);
 	fill_mm(a->sha1, &src1);
