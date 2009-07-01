@@ -8,6 +8,15 @@ test_description='git grep various.
 
 . ./test-lib.sh
 
+cat >hello.c <<EOF
+#include <stdio.h>
+int main(int argc, const char **argv)
+{
+	printf("Hello world.\n");
+	return 0;
+}
+EOF
+
 test_expect_success setup '
 	{
 		echo foo mmap bar
@@ -22,7 +31,7 @@ test_expect_success setup '
 	echo zzz > z &&
 	mkdir t &&
 	echo test >t/t &&
-	git add file w x y z t/t &&
+	git add file w x y z t/t hello.c &&
 	test_tick &&
 	git commit -m initial
 '
@@ -229,9 +238,32 @@ test_expect_success 'log grep (6)' '
 test_expect_success 'grep with CE_VALID file' '
 	git update-index --assume-unchanged t/t &&
 	rm t/t &&
-	test "$(git grep --no-ext-grep t)" = "t/t:test" &&
+	test "$(git grep --no-ext-grep test)" = "t/t:test" &&
 	git update-index --no-assume-unchanged t/t &&
 	git checkout t/t
+'
+
+cat >expected <<EOF
+hello.c=int main(int argc, const char **argv)
+hello.c:	return 0;
+EOF
+
+test_expect_success 'grep -p' '
+	git grep -p return >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+hello.c-#include <stdio.h>
+hello.c=int main(int argc, const char **argv)
+hello.c-{
+hello.c-	printf("Hello world.\n");
+hello.c:	return 0;
+EOF
+
+test_expect_success 'grep -p -B5' '
+	git grep -p -B5 return >actual &&
+	test_cmp expected actual
 '
 
 test_done

@@ -122,6 +122,11 @@ OPTIONS
 -<num>::
 	A shortcut for specifying -C<num>.
 
+-p::
+--show-function::
+	Show the preceding line that contains the function name of
+	the match, unless the matching line is a function name itself.
+
 -f <file>::
 	Read patterns from <file>, one per line.
 

@@ -490,14 +490,18 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 {
 	int rest = eol - bol;
 
-	if (opt->pre_context || opt->post_context) {
+	if (opt->pre_context || opt->post_context || opt->funcname) {
 		if (opt->last_shown == 0) {
 			if (opt->show_hunk_mark)
-				fputs("--\n", stdout);
+				fputs(opt->funcname ? "==\n" : "--\n", stdout);
 			else
 				opt->show_hunk_mark = 1;
-		} else if (lno > opt->last_shown + 1)
-			fputs("--\n", stdout);
+		} else if (lno > opt->last_shown + 1) {
+			if (opt->pre_context || opt->post_context)
+				fputs((sign == '=') ? "==\n" : "--\n", stdout);
+			else if (sign == '=')
+				fputs("==\n", stdout);
+		}
 	}
 	opt->last_shown = lno;
 
@@ -531,10 +535,40 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	printf("%.*s\n", rest, bol);
 }
 
+static int match_funcname(char *bol, char *eol)
+{
+	if (bol == eol)
+		return 0;
+	if (isalpha(*bol) || *bol == '_' || *bol == '$')
+		return 1;
+	return 0;
+}
+
+static void show_funcname_line(struct grep_opt *opt, const char *name,
+			       char *buf, char *bol, unsigned lno)
+{
+	while (bol > buf) {
+		char *eol = --bol;
+
+		while (bol > buf && bol[-1] != '\n')
+			bol--;
+		lno--;
+
+		if (lno <= opt->last_shown)
+			break;
+
+		if (match_funcname(bol, eol)) {
+			show_line(opt, bol, eol, name, lno, '=');
+			break;
+		}
+	}
+}
+
 static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
 			     char *bol, unsigned lno)
 {
-	unsigned cur = lno, from = 1;
+	unsigned cur = lno, from = 1, funcname_lno = 0;
+	int funcname_needed = opt->funcname;
 
 	if (opt->pre_context < lno)
 		from = lno - opt->pre_context;
@@ -543,19 +577,28 @@ static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
 
 	/* Rewind. */
 	while (bol > buf && cur > from) {
-		bol--;
+		char *eol = --bol;
+
 		while (bol > buf && bol[-1] != '\n')
 			bol--;
 		cur--;
+		if (funcname_needed && match_funcname(bol, eol)) {
+			funcname_lno = cur;
+			funcname_needed = 0;
+		}
 	}
+
+	/* We need to look even further back to find a function signature. */
+	if (opt->funcname && funcname_needed)
+		show_funcname_line(opt, name, buf, bol, cur);
 
 	/* Back forward. */
 	while (cur < lno) {
-		char *eol = bol;
+		char *eol = bol, sign = (cur == funcname_lno) ? '=' : '-';
 
 		while (*eol != '\n')
 			eol++;
-		show_line(opt, bol, eol, name, cur, '-');
+		show_line(opt, bol, eol, name, cur, sign);
 		bol = eol + 1;
 		cur++;
 	}
@@ -635,6 +678,8 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 */
 			if (opt->pre_context)
 				show_pre_context(opt, name, buf, bol, lno);
+			else if (opt->funcname)
+				show_funcname_line(opt, name, buf, bol, lno);
 			if (!opt->count)
 				show_line(opt, bol, eol, name, lno, ':');
 			last_hit = lno;

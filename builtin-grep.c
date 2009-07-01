@@ -278,13 +278,13 @@ static int flush_grep(struct grep_opt *opt,
 		argc -= 2;
 	}
 
-	if (opt->pre_context || opt->post_context) {
+	if (opt->pre_context || opt->post_context || opt->funcname) {
 		/*
 		 * grep handles hunk marks between files, but we need to
 		 * do that ourselves between multiple calls.
 		 */
 		if (opt->show_hunk_mark)
-			write_or_die(1, "--\n", 3);
+			write_or_die(1, opt->funcname ? "==\n" : "--\n", 3);
 		else
 			opt->show_hunk_mark = 1;
 	}
@@ -721,6 +721,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			"show <n> context lines after matches"),
 		OPT_NUMBER_CALLBACK(&opt, "shortcut for -C NUM",
 			context_callback),
+		OPT_BOOLEAN('p', "show-function", &opt.funcname,
+			"show a line with the function name before matches"),
 		OPT_GROUP(""),
 		OPT_CALLBACK('f', NULL, &opt, "file",
 			"read patterns from file", file_callback),
@@ -789,7 +791,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		argc--;
 	}
 
-	if (opt.color && !opt.color_external)
+	if ((opt.color && !opt.color_external) || opt.funcname)
 		external_grep_allowed = 0;
 	if (!opt.pattern_list)
 		die("no pattern given.");

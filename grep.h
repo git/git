@@ -79,6 +79,7 @@ struct grep_opt {
 	int pathname;
 	int null_following_name;
 	int color;
+	int funcname;
 	char color_match[COLOR_MAXLEN];
 	const char *color_external;
 	int regflags;
