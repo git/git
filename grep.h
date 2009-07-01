@@ -84,6 +84,7 @@ struct grep_opt {
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
+	unsigned last_shown;
 };
 
 extern void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
