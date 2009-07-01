@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "grep.h"
+#include "userdiff.h"
 #include "xdiff-interface.h"
 
 void append_header_grep_pattern(struct grep_opt *opt, enum grep_header_field field, const char *pat)
@@ -535,8 +536,15 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	printf("%.*s\n", rest, bol);
 }
 
-static int match_funcname(char *bol, char *eol)
+static int match_funcname(struct grep_opt *opt, char *bol, char *eol)
 {
+	xdemitconf_t *xecfg = opt->priv;
+	if (xecfg && xecfg->find_func) {
+		char buf[1];
+		return xecfg->find_func(bol, eol - bol, buf, 1,
+					xecfg->find_func_priv) >= 0;
+	}
+
 	if (bol == eol)
 		return 0;
 	if (isalpha(*bol) || *bol == '_' || *bol == '$')
@@ -557,7 +565,7 @@ static void show_funcname_line(struct grep_opt *opt, const char *name,
 		if (lno <= opt->last_shown)
 			break;
 
-		if (match_funcname(bol, eol)) {
+		if (match_funcname(opt, bol, eol)) {
 			show_line(opt, bol, eol, name, lno, '=');
 			break;
 		}
@@ -582,7 +590,7 @@ static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
 		while (bol > buf && bol[-1] != '\n')
 			bol--;
 		cur--;
-		if (funcname_needed && match_funcname(bol, eol)) {
+		if (funcname_needed && match_funcname(opt, bol, eol)) {
 			funcname_lno = cur;
 			funcname_needed = 0;
 		}
@@ -614,6 +622,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	int binary_match_only = 0;
 	unsigned count = 0;
 	enum grep_context ctx = GREP_CONTEXT_HEAD;
+	xdemitconf_t xecfg;
 
 	opt->last_shown = 0;
 
@@ -627,6 +636,17 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			break;
 		default:
 			break;
+		}
+	}
+
+	memset(&xecfg, 0, sizeof(xecfg));
+	if (opt->funcname && !opt->unmatch_name_only && !opt->status_only &&
+	    !opt->name_only && !binary_match_only && !collect_hits) {
+		struct userdiff_driver *drv = userdiff_find_by_path(name);
+		if (drv && drv->funcname.pattern) {
+			const struct userdiff_funcname *pe = &drv->funcname;
+			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
+			opt->priv = &xecfg;
 		}
 	}
 
@@ -710,6 +730,9 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		show_name(opt, name);
 		return 1;
 	}
+
+	xdiff_clear_find_func(&xecfg);
+	opt->priv = NULL;
 
 	/* NEEDSWORK:
 	 * The real "grep -c foo *.c" gives many "bar.c:0" lines,

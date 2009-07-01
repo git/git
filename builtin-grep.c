@@ -11,6 +11,7 @@
 #include "tree-walk.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "userdiff.h"
 #include "grep.h"
 
 #ifndef NO_EXTERNAL_GREP
@@ -29,6 +30,12 @@ static char const * const grep_usage[] = {
 static int grep_config(const char *var, const char *value, void *cb)
 {
 	struct grep_opt *opt = cb;
+
+	switch (userdiff_config(var, value)) {
+	case 0: break;
+	case -1: return -1;
+	default: return 0;
+	}
 
 	if (!strcmp(var, "color.grep")) {
 		opt->color = git_config_colorbool(var, value, -1);

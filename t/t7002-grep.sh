@@ -244,11 +244,24 @@ test_expect_success 'grep with CE_VALID file' '
 '
 
 cat >expected <<EOF
+hello.c=#include <stdio.h>
+hello.c:	return 0;
+EOF
+
+test_expect_success 'grep -p with userdiff' '
+	git config diff.custom.funcname "^#" &&
+	echo "hello.c diff=custom" >.gitattributes &&
+	git grep -p return >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
 hello.c=int main(int argc, const char **argv)
 hello.c:	return 0;
 EOF
 
 test_expect_success 'grep -p' '
+	rm -f .gitattributes &&
 	git grep -p return >actual &&
 	test_cmp expected actual
 '
