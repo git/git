@@ -285,13 +285,13 @@ static int flush_grep(struct grep_opt *opt,
 		argc -= 2;
 	}
 
-	if (opt->pre_context || opt->post_context || opt->funcname) {
+	if (opt->pre_context || opt->post_context) {
 		/*
 		 * grep handles hunk marks between files, but we need to
 		 * do that ourselves between multiple calls.
 		 */
 		if (opt->show_hunk_mark)
-			write_or_die(1, opt->funcname ? "==\n" : "--\n", 3);
+			write_or_die(1, "--\n", 3);
 		else
 			opt->show_hunk_mark = 1;
 	}
