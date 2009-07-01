@@ -531,16 +531,42 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	printf("%.*s\n", rest, bol);
 }
 
+static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
+			     char *bol, unsigned lno)
+{
+	unsigned cur = lno, from = 1;
+
+	if (opt->pre_context < lno)
+		from = lno - opt->pre_context;
+	if (from <= opt->last_shown)
+		from = opt->last_shown + 1;
+
+	/* Rewind. */
+	while (bol > buf && cur > from) {
+		bol--;
+		while (bol > buf && bol[-1] != '\n')
+			bol--;
+		cur--;
+	}
+
+	/* Back forward. */
+	while (cur < lno) {
+		char *eol = bol;
+
+		while (*eol != '\n')
+			eol++;
+		show_line(opt, bol, eol, name, cur, '-');
+		bol = eol + 1;
+		cur++;
+	}
+}
+
 static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 char *buf, unsigned long size, int collect_hits)
 {
 	char *bol = buf;
 	unsigned long left = size;
 	unsigned lno = 1;
-	struct pre_context_line {
-		char *bol;
-		char *eol;
-	} *prev = NULL, *pcl;
 	unsigned last_hit = 0;
 	int binary_match_only = 0;
 	unsigned count = 0;
@@ -560,9 +586,6 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			break;
 		}
 	}
-
-	if (opt->pre_context)
-		prev = xcalloc(opt->pre_context, sizeof(*prev));
 
 	while (left) {
 		char *eol, ch;
@@ -610,21 +633,8 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 * the context which is nonsense, but the user
 			 * deserves to get that ;-).
 			 */
-			if (opt->pre_context) {
-				unsigned from;
-				if (opt->pre_context < lno)
-					from = lno - opt->pre_context;
-				else
-					from = 1;
-				if (from <= opt->last_shown)
-					from = opt->last_shown + 1;
-				while (from < lno) {
-					pcl = &prev[lno-from-1];
-					show_line(opt, pcl->bol, pcl->eol,
-						  name, from, '-');
-					from++;
-				}
-			}
+			if (opt->pre_context)
+				show_pre_context(opt, name, buf, bol, lno);
 			if (!opt->count)
 				show_line(opt, bol, eol, name, lno, ':');
 			last_hit = lno;
@@ -636,12 +646,6 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 */
 			show_line(opt, bol, eol, name, lno, '-');
 		}
-		if (opt->pre_context) {
-			memmove(prev+1, prev,
-				(opt->pre_context-1) * sizeof(*prev));
-			prev->bol = bol;
-			prev->eol = eol;
-		}
 
 	next_line:
 		bol = eol + 1;
@@ -651,7 +655,6 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		lno++;
 	}
 
-	free(prev);
 	if (collect_hits)
 		return 0;
 
