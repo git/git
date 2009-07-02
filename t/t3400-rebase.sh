@@ -54,8 +54,8 @@ test_expect_success 'rebase against master' '
      git rebase master'
 
 test_expect_success 'rebase against master twice' '
-     git rebase master 2>err &&
-     grep "Current branch my-topic-branch is up to date" err
+     git rebase master >out &&
+     grep "Current branch my-topic-branch is up to date" out
 '
 
 test_expect_success 'rebase against master twice with --force' '
@@ -65,14 +65,14 @@ test_expect_success 'rebase against master twice with --force' '
 
 test_expect_success 'rebase against master twice from another branch' '
      git checkout my-topic-branch^ &&
-     git rebase master my-topic-branch 2>err &&
-     grep "Current branch my-topic-branch is up to date" err
+     git rebase master my-topic-branch >out &&
+     grep "Current branch my-topic-branch is up to date" out
 '
 
 test_expect_success 'rebase fast-forward to master' '
      git checkout my-topic-branch^ &&
-     git rebase my-topic-branch 2>err &&
-     grep "Fast-forwarded HEAD to my-topic-branch" err
+     git rebase my-topic-branch >out &&
+     grep "Fast-forwarded HEAD to my-topic-branch" out
 '
 
 test_expect_success \
@@ -124,6 +124,13 @@ test_expect_success 'Show verbose error when HEAD could not be detached' '
      : > B &&
      test_must_fail git rebase topic 2> output.err > output.out &&
      grep "Untracked working tree file .B. would be overwritten" output.err
+'
+
+test_expect_success 'rebase -q is quiet' '
+     rm B &&
+     git checkout -b quiet topic &&
+     git rebase -q master > output.out 2>&1 &&
+     test ! -s output.out
 '
 
 test_done

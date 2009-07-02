@@ -3,10 +3,11 @@
 
 dashless=$(basename "$0" | sed -e 's/-/ /')
 USAGE="list [<options>]
-   or: $dashless ( show | drop ) [<stash>]
-   or: $dashless ( pop | apply ) [--index] [<stash>]
+   or: $dashless show [<stash>]
+   or: $dashless drop [-q|--quiet] [<stash>]
+   or: $dashless ( pop | apply ) [--index] [-q|--quiet] [<stash>]
    or: $dashless branch <branchname> [<stash>]
-   or: $dashless [save [--keep-index] [<message>]]
+   or: $dashless [save [--keep-index] [-q|--quiet] [<message>]]
    or: $dashless clear"
 
 SUBDIRECTORY_OK=Yes
@@ -94,18 +95,28 @@ create_stash () {
 
 save_stash () {
 	keep_index=
-	case "$1" in
-	--keep-index)
-		keep_index=t
+	while test $# != 0
+	do
+		case "$1" in
+		--keep-index)
+			keep_index=t
+			;;
+		-q|--quiet)
+			GIT_QUIET=t
+			;;
+		*)
+			break
+			;;
+		esac
 		shift
-	esac
+	done
 
 	stash_msg="$*"
 
 	git update-index -q --refresh
 	if no_changes
 	then
-		echo 'No local changes to save'
+		say 'No local changes to save'
 		exit 0
 	fi
 	test -f "$GIT_DIR/logs/$ref_stash" ||
@@ -118,9 +129,9 @@ save_stash () {
 
 	git update-ref -m "$stash_msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
-	printf 'Saved working directory and index state "%s"\n' "$stash_msg"
+	say Saved working directory and index state "$stash_msg"
 
-	git reset --hard
+	git reset --hard ${GIT_QUIET:+-q}
 
 	if test -n "$keep_index" && test -n $i_tree
 	then
@@ -156,11 +167,22 @@ apply_stash () {
 		die 'Cannot apply to a dirty working tree, please stage your changes'
 
 	unstash_index=
-	case "$1" in
-	--index)
-		unstash_index=t
+
+	while test $# != 0
+	do
+		case "$1" in
+		--index)
+			unstash_index=t
+			;;
+		-q|--quiet)
+			GIT_QUIET=t
+			;;
+		*)
+			break
+			;;
+		esac
 		shift
-	esac
+	done
 
 	# current index state
 	c_tree=$(git write-tree) ||
@@ -193,6 +215,10 @@ apply_stash () {
 		export GITHEAD_$w_tree GITHEAD_$c_tree GITHEAD_$b_tree
 	"
 
+	if test -n "$GIT_QUIET"
+	then
+		export GIT_MERGE_VERBOSITY=0
+	fi
 	if git-merge-recursive $b_tree -- $c_tree $w_tree
 	then
 		# No conflict
@@ -207,7 +233,12 @@ apply_stash () {
 				die "Cannot unstage modified files"
 			rm -f "$a"
 		fi
-		git status || :
+		squelch=
+		if test -n "$GIT_QUIET"
+		then
+			squelch='>/dev/null 2>&1'
+		fi
+		eval "git status $squelch" || :
 	else
 		# Merge conflict; keep the exit status from merge-recursive
 		status=$?
@@ -222,6 +253,19 @@ apply_stash () {
 drop_stash () {
 	have_stash || die 'No stash entries to drop'
 
+	while test $# != 0
+	do
+		case "$1" in
+		-q|--quiet)
+			GIT_QUIET=t
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
 	if test $# = 0
 	then
 		set x "$ref_stash@{0}"
@@ -235,7 +279,7 @@ drop_stash () {
 		die "$*: not a valid stashed state"
 
 	git reflog delete --updateref --rewrite "$@" &&
-		echo "Dropped $* ($s)" || die "$*: Could not drop stash entry"
+		say "Dropped $* ($s)" || die "$*: Could not drop stash entry"
 
 	# clear_stash if we just dropped the last stash entry
 	git rev-parse --verify "$ref_stash@{0}" > /dev/null 2>&1 || clear_stash
@@ -312,7 +356,7 @@ branch)
 	if test $# -eq 0
 	then
 		save_stash &&
-		echo '(To restore them type "git stash apply")'
+		say '(To restore them type "git stash apply")'
 	else
 		usage
 	fi
