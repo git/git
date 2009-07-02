@@ -563,8 +563,8 @@ test_expect_success 'skipping away from skipped commit' '
 	hash7=$(git rev-parse --verify HEAD) &&
 	test "$hash7" = "$HASH7" &&
         git bisect skip &&
-	hash3=$(git rev-parse --verify HEAD) &&
-	test "$hash3" = "$HASH3"
+	para3=$(git rev-parse --verify HEAD) &&
+	test "$para3" = "$PARA_HASH3"
 '
 
 #

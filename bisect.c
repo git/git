@@ -585,16 +585,49 @@ struct commit_list *filter_skipped(struct commit_list *list,
 	return filtered;
 }
 
-static struct commit_list *apply_skip_ratio(struct commit_list *list,
-					    int count,
-					    int skip_num, int skip_denom)
+#define PRN_MODULO 32768
+
+/*
+ * This is a pseudo random number generator based on "man 3 rand".
+ * It is not used properly because the seed is the argument and it
+ * is increased by one between each call, but that should not matter
+ * for this application.
+ */
+int get_prn(int count) {
+	count = count * 1103515245 + 12345;
+	return ((unsigned)(count/65536) % PRN_MODULO);
+}
+
+/*
+ * Custom integer square root from
+ * http://en.wikipedia.org/wiki/Integer_square_root
+ */
+static int sqrti(int val)
 {
-	int index, i;
+	float d, x = val;
+
+	if (val == 0)
+		return 0;
+
+	do {
+		float y = (x + (float)val / x) / 2;
+		d = (y > x) ? y - x : x - y;
+		x = y;
+	} while (d >= 0.5);
+
+	return (int)x;
+}
+
+static struct commit_list *skip_away(struct commit_list *list, int count)
+{
 	struct commit_list *cur, *previous;
+	int prn, index, i;
+
+	prn = get_prn(count);
+	index = (count * prn / PRN_MODULO) * sqrti(prn) / sqrti(PRN_MODULO);
 
 	cur = list;
 	previous = NULL;
-	index = count * skip_num / skip_denom;
 
 	for (i = 0; cur; cur = cur->next, i++) {
 		if (i == index) {
@@ -614,7 +647,6 @@ static struct commit_list *managed_skipped(struct commit_list *list,
 					   struct commit_list **tried)
 {
 	int count, skipped_first;
-	int skip_num, skip_denom;
 
 	*tried = NULL;
 
@@ -626,11 +658,7 @@ static struct commit_list *managed_skipped(struct commit_list *list,
 	if (!skipped_first)
 		return list;
 
-	/* Use alternatively 1/5, 2/5 and 3/5 as skip ratio. */
-	skip_num = count % 3 + 1;
-	skip_denom = 5;
-
-	return apply_skip_ratio(list, count, skip_num, skip_denom);
+	return skip_away(list, count);
 }
 
 static void bisect_rev_setup(struct rev_info *revs, const char *prefix,

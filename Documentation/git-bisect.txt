@@ -164,9 +164,8 @@ to do it for you by issuing the command:
 $ git bisect skip                 # Current version cannot be tested
 ------------
 
-But computing the commit to test may be slower afterwards and git may
-eventually not be able to tell the first bad commit among a bad commit
-and one or more skipped commits.
+But git may eventually be unable to tell the first bad commit among
+a bad commit and one or more skipped commits.
 
 You can even skip a range of commits, instead of just one commit,
 using the "'<commit1>'..'<commit2>'" notation. For example:
