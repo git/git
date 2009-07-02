@@ -1,5 +1,3 @@
-	
-	write proper docs (asciidoc format for git compatibility)
 
 	delete tempdir
 
@@ -24,3 +22,24 @@
 
 	test.sh fails in msysgit?
 		sort error - see Thell's email
+
+	"add" command non-obviously requires a commitid; would be easier if
+		it had a "pull" sort of mode instead
+
+	"pull" and "merge" commands should fail if you've never merged
+		that --prefix before
+		
+	docs should provide an example of "add"
+	
+	note that the initial split doesn't *have* to have a commitid
+		specified... that's just an optimization
+
+	if you try to add (or maybe merge?) with an invalid commitid, you
+		get a misleading "prefix must end with /" message from
+		one of the other git tools that git-subtree calls.  Should
+		detect this situation and print the *real* problem.
+	
+	In fact, the prefix should *not* end with slash, and we
+		should detect (and fix) it if it does.  Otherwise the
+		log message looks weird.
+		
