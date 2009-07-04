@@ -185,7 +185,7 @@ fail_pipe:
 
 	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
 	failed_errno = errno;
-	if (cmd->pid < 0 && errno != ENOENT)
+	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
 		error("cannot spawn %s: %s", cmd->argv[0], strerror(errno));
 
 	if (cmd->env)
@@ -233,7 +233,7 @@ fail_pipe:
 	return 0;
 }
 
-static int wait_or_whine(pid_t pid, const char *argv0)
+static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
 {
 	int status, code = -1;
 	pid_t waiting;
@@ -264,6 +264,9 @@ static int wait_or_whine(pid_t pid, const char *argv0)
 		if (code == 127) {
 			code = -1;
 			failed_errno = ENOENT;
+			if (!silent_exec_failure)
+				error("cannot run %s: %s", argv0,
+					strerror(ENOENT));
 		}
 	} else {
 		error("waitpid is confused (%s)", argv0);
@@ -274,7 +277,7 @@ static int wait_or_whine(pid_t pid, const char *argv0)
 
 int finish_command(struct child_process *cmd)
 {
-	return wait_or_whine(cmd->pid, cmd->argv[0]);
+	return wait_or_whine(cmd->pid, cmd->argv[0], cmd->silent_exec_failure);
 }
 
 int run_command(struct child_process *cmd)
@@ -294,6 +297,7 @@ static void prepare_run_command_v_opt(struct child_process *cmd,
 	cmd->no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
 	cmd->git_cmd = opt & RUN_GIT_CMD ? 1 : 0;
 	cmd->stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
+	cmd->silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
 }
 
 int run_command_v_opt(const char **argv, int opt)
@@ -358,7 +362,7 @@ int start_async(struct async *async)
 int finish_async(struct async *async)
 {
 #ifndef __MINGW32__
-	int ret = wait_or_whine(async->pid, "child process");
+	int ret = wait_or_whine(async->pid, "child process", 0);
 #else
 	DWORD ret = 0;
 	if (WaitForSingleObject(async->tid, INFINITE) != WAIT_OBJECT_0)
