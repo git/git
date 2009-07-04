@@ -241,14 +241,7 @@ static int wait_or_whine(pid_t pid)
 		if (!WIFEXITED(status))
 			return -ERR_RUN_COMMAND_WAITPID_NOEXIT;
 		code = WEXITSTATUS(status);
-		switch (code) {
-		case 127:
-			return -ERR_RUN_COMMAND_EXEC;
-		case 0:
-			return 0;
-		default:
-			return -code;
-		}
+		return code == 127 ? -ERR_RUN_COMMAND_EXEC : code;
 	}
 }
 

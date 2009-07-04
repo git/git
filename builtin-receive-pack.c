@@ -143,8 +143,8 @@ static int run_status(int code, const char *cmd_name)
 	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
 		return error("%s died strangely", cmd_name);
 	default:
-		error("%s exited with error code %d", cmd_name, -code);
-		return -code;
+		error("%s exited with error code %d", cmd_name, code);
+		return code;
 	}
 }
 

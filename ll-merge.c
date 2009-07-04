@@ -192,10 +192,6 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 
 	args[2] = cmd.buf;
 	status = run_command_v_opt(args, 0);
-	if (status < -ERR_RUN_COMMAND_FORK)
-		; /* failure in run-command */
-	else
-		status = -status;
 	fd = open(temp[1], O_RDONLY);
 	if (fd < 0)
 		goto bad;
