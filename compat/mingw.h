@@ -92,6 +92,8 @@ static inline int fcntl(int fd, int cmd, long arg)
 	errno = EINVAL;
 	return -1;
 }
+/* bash cannot reliably detect negative return codes as failure */
+#define exit(code) exit((code) & 0xff)
 
 /*
  * simple adaptors
