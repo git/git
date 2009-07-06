@@ -35,6 +35,9 @@ while	case "$1" in
 do
 	shift
 done
+
+sh -c 'asciidoc --version >/dev/null 2>&1' || nodoc=y
+
 test -f /bin/dash || with_dash=
 if test -z "$BUILDBASE"
 then
