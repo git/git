@@ -2538,9 +2538,8 @@ sub find_parent_branch {
 	unless (defined $paths) {
 		my $err_handler = $SVN::Error::handler;
 		$SVN::Error::handler = \&Git::SVN::Ra::skip_unknown_revs;
-		$self->ra->get_log([$self->{path}], $rev, $rev, 0, 1, 1, sub {
-		                   $paths =
-				      Git::SVN::Ra::dup_changed_paths($_[0]) });
+		$self->ra->get_log([$self->{path}], $rev, $rev, 0, 1, 1,
+				   sub { $paths = $_[0] });
 		$SVN::Error::handler = $err_handler;
 	}
 	return undef unless defined $paths;
@@ -4431,6 +4430,26 @@ sub get_log {
 	my ($self, @args) = @_;
 	my $pool = SVN::Pool->new;
 
+	# svn_log_changed_path_t objects passed to get_log are likely to be
+	# overwritten even if only the refs are copied to an external variable,
+	# so we should dup the structures in their entirety.  Using an
+	# externally passed pool (instead of our temporary and quickly cleared
+	# pool in Git::SVN::Ra) does not help matters at all...
+	my $receiver = pop @args;
+	push(@args, sub {
+		my ($paths) = $_[0];
+		return &$receiver(@_) unless $paths;
+		$_[0] = ();
+		foreach my $p (keys %$paths) {
+			my $i = $paths->{$p};
+			my %s = map { $_ => $i->$_ }
+				      qw/copyfrom_path copyfrom_rev action/;
+			$_[0]{$p} = \%s;
+		}
+		&$receiver(@_);
+	});
+
+
 	# the limit parameter was not supported in SVN 1.1.x, so we
 	# drop it.  Therefore, the receiver callback passed to it
 	# is made aware of this limitation by being wrapped if
@@ -4600,7 +4619,7 @@ sub gs_fetch_loop_common {
 		};
 		sub _cb {
 			my ($paths, $r, $author, $date, $log) = @_;
-			[ dup_changed_paths($paths),
+			[ $paths,
 			  { author => $author, date => $date, log => $log } ];
 		}
 		$self->get_log([$longest_path], $min, $max, 0, 1, 1,
@@ -4821,24 +4840,6 @@ sub skip_unknown_revs {
 		return;
 	}
 	die "Error from SVN, ($errno): ", $err->expanded_message,"\n";
-}
-
-# svn_log_changed_path_t objects passed to get_log are likely to be
-# overwritten even if only the refs are copied to an external variable,
-# so we should dup the structures in their entirety.  Using an externally
-# passed pool (instead of our temporary and quickly cleared pool in
-# Git::SVN::Ra) does not help matters at all...
-sub dup_changed_paths {
-	my ($paths) = @_;
-	return undef unless $paths;
-	my %ret;
-	foreach my $p (keys %$paths) {
-		my $i = $paths->{$p};
-		my %s = map { $_ => $i->$_ }
-		              qw/copyfrom_path copyfrom_rev action/;
-		$ret{$p} = \%s;
-	}
-	\%ret;
 }
 
 package Git::SVN::Log;
