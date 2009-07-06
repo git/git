@@ -876,10 +876,6 @@ sub cmd_multi_init {
 		usage(1);
 	}
 
-	# there are currently some bugs that prevent multi-init/multi-fetch
-	# setups from working well without this.
-	$Git::SVN::_minimize_url = 1;
-
 	$_prefix = '' unless defined $_prefix;
 	if (defined $url) {
 		$url = canonicalize_url($url);
@@ -1180,7 +1176,7 @@ sub complete_url_ls_init {
 		    "wanted to set to: $gs->{url}\n";
 	}
 	command_oneline('config', $k, $gs->{url}) unless $orig_url;
-	my $remote_path = "$ra->{svn_path}/$repo_path";
+	my $remote_path = "$gs->{path}/$repo_path";
 	$remote_path =~ s#/+#/#g;
 	$remote_path =~ s#^/##g;
 	$remote_path .= "/*" if $remote_path !~ /\*/;
@@ -2177,16 +2173,6 @@ sub ra {
 	$ra;
 }
 
-sub rel_path {
-	my ($self) = @_;
-	my $repos_root = $self->ra->{repos_root};
-	return $self->{path} if ($self->{url} eq $repos_root);
-	my $url = $self->{url} .
-	          (length $self->{path} ? "/$self->{path}" : $self->{path});
-	$url =~ s!^\Q$repos_root\E(?:/+|$)!!g;
-	$url;
-}
-
 # prop_walk(PATH, REV, SUB)
 # -------------------------
 # Recursively traverse PATH at revision REV and invoke SUB for each
@@ -2512,10 +2498,7 @@ sub match_paths {
 	if (my $path = $paths->{"/$self->{path}"}) {
 		return ($path->{action} eq 'D') ? 0 : 1;
 	}
-	my $repos_root = $self->ra->{repos_root};
-	my $extended_path = $self->{url} . '/' . $self->{path};
-	$extended_path =~ s#^\Q$repos_root\E(/|$)##;
-	$self->{path_regex} ||= qr/^\/\Q$extended_path\E\//;
+	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\//;
 	if (grep /$self->{path_regex}/, keys %$paths) {
 		return 1;
 	}
@@ -2545,7 +2528,7 @@ sub find_parent_branch {
 	return undef unless defined $paths;
 
 	# look for a parent from another branch:
-	my @b_path_components = split m#/#, $self->rel_path;
+	my @b_path_components = split m#/#, $self->{path};
 	my @a_path_components;
 	my $i;
 	while (@b_path_components) {
@@ -2563,11 +2546,11 @@ sub find_parent_branch {
 	my $r = $i->{copyfrom_rev};
 	my $repos_root = $self->ra->{repos_root};
 	my $url = $self->ra->{url};
-	my $new_url = $repos_root . $branch_from;
+	my $new_url = $url . $branch_from;
 	print STDERR  "Found possible branch point: ",
 	              "$new_url => ", $self->full_url, ", $r\n";
 	$branch_from =~ s#^/##;
-	my $gs = $self->other_gs($new_url, $url, $repos_root,
+	my $gs = $self->other_gs($new_url, $url,
 		                 $branch_from, $r, $self->{ref_id});
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	{
@@ -2752,9 +2735,9 @@ sub parse_svn_date {
 }
 
 sub other_gs {
-	my ($self, $new_url, $url, $repos_root,
+	my ($self, $new_url, $url,
 	    $branch_from, $r, $old_ref_id) = @_;
-	my $gs = Git::SVN->find_by_url($new_url, $repos_root, $branch_from);
+	my $gs = Git::SVN->find_by_url($new_url, $url, $branch_from);
 	unless ($gs) {
 		my $ref_id = $old_ref_id;
 		$ref_id =~ s/\@\d+$//;
@@ -4436,14 +4419,22 @@ sub get_log {
 	# externally passed pool (instead of our temporary and quickly cleared
 	# pool in Git::SVN::Ra) does not help matters at all...
 	my $receiver = pop @args;
+	my $prefix = "/".$self->{svn_path};
+	$prefix =~ s#/+($)##;
+	my $prefix_regex = qr#^\Q$prefix\E#;
 	push(@args, sub {
 		my ($paths) = $_[0];
 		return &$receiver(@_) unless $paths;
 		$_[0] = ();
 		foreach my $p (keys %$paths) {
 			my $i = $paths->{$p};
-			my %s = map { $_ => $i->$_ }
-				      qw/copyfrom_path copyfrom_rev action/;
+			# Make path relative to our url, not repos_root
+			$p =~ s/$prefix_regex//;
+			my %s = map { $_ => $i->$_; }
+				qw/copyfrom_path copyfrom_rev action/;
+			if ($s{'copyfrom_path'}) {
+				$s{'copyfrom_path'} =~ s/$prefix_regex//;
+			}
 			$_[0]{$p} = \%s;
 		}
 		&$receiver(@_);
