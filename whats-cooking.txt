@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2009, #03; Sat, 27)
-X-master-at: 4f2b15ce88b70dd9e269517a9903864393ca873b
-X-next-at: 98a794b5be3b0696055098d997dc22a127e8cd3d
+Subject: What's cooking in git.git (Jul 2009, #01; Mon, 06)
+X-master-at: f581de1b7b9d17c83b188bf8ffe536fb8a9dd2a4
+X-next-at: 8586bb07b181c75e65a39d88128e40a1c3e88e2c
 
-What's cooking in git.git (Jun 2009, #03; Sat, 27)
+What's cooking in git.git (Jul 2009, #01; Mon, 06)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,87 +14,130 @@ holding onto them.
 The topics list the commits in reverse chronological order.  The topics
 meant to be merged to the maintenance series have "maint-" in their names.
 
+It has been relatively quiet for the past few weeks.  The 'next' branch is
+getting quite thin, and it would be a good time to declare -rc0.  I'll do
+so by my Wednesday.
+
 ----------------------------------------------------------------
 [New Topics]
 
-* gb/gitweb-avatar (Tue Jun 23 00:49:59 2009 +0200) 2 commits
- - gitweb: gravatar support
- - gitweb: refactor author name insertion
+* ld/push-porcelain-output-format (Mon Jun 22 21:10:01 2009 -0400) 1 commit
+ + add --porcelain option to git-push
 
-This was from way earlier round and will be replaced.
+* js/run-command-updates (Sat Jul 4 21:26:43 2009 +0200) 7 commits
+ - receive-pack: remove unnecessary run_status report
+ - run_command: report failure to execute the program, but optionally
+   don't
+ - run_command: encode deadly signal number in the return value
+ - run_command: report system call errors instead of returning error
+   codes
+ - run_command: return exit code as positive value
+ - MinGW: simplify waitpid() emulation macros
+ - MinGW: truncate exit()'s argument to lowest 8 bits
 
-* ld/push-porcelain-out (Mon Jun 22 21:10:01 2009 -0400) 1 commit
- - add --porcelain option to git-push
+A few replacement/squash updates came in before it hit 'pu'; this should
+be the latest version.
 
-* cf/maint-remote-uploadpack-useconfig-fix (Thu Jun 25 17:21:35 2009 -0400) 1 commit
- + git-remote: fix missing .uploadpack usage for show command
+* cc/sequencer-rebase-i (Fri Jun 26 23:08:46 2009 +0200) 4 commits
+ - rebase -i: use "git sequencer--helper --make-patch"
+ - sequencer: free memory used in "make_patch" function
+ - sequencer: add "make_patch" function to save a patch
+ - sequencer: add "builtin-sequencer--helper.c"
 
-* en/fast-export (Thu Jun 25 22:48:33 2009 -0600) 7 commits
- - fast-export: Document the fact that git-rev-list arguments are
-   accepted
- - Add new fast-export testcases
- - fast-export: Add a --tag-of-filtered-object option for newly
-   dangling tags
- - fast-export: Do parent rewriting to avoid dropping relevant
-   commits
- - fast-export: Make sure we show actual ref names instead of
-   "(null)"
- - fast-export: Omit tags that tag trees
- - fast-export: Set revs.topo_order before calling setup_revisions
+* ae/maint-mailinfo-rm-only-one-patch-marker (Mon Jun 29 11:55:51 2009 +0200) 1 commit
+ - mailinfo: Remove only one set of square brackets
 
-* sb/read-tree (Thu Jun 25 22:14:10 2009 -0700) 2 commits
- - read-tree: migrate to parse-options
- - read-tree: convert unhelpful usage()'s to helpful die()'s
+The change needed to the test vector shows the extent of the damage this
+change may cause in the real world.  A handcrafted "Subject: [area] [PATCH] title"
+will be turned into "[PATCH] title".
 
-* sb/show-ref-parse-options (Sat Jun 20 21:40:46 2009 -0700) 1 commit
- + show-ref: migrate to parse-options
+* rs/grep-p (Thu Jul 2 00:06:34 2009 +0200) 7 commits
+ + grep: simplify -p output
+ + grep -p: support user defined regular expressions
+ + grep: add option -p/--show-function
+ + grep: handle pre context lines on demand
+ + grep: print context hunk marks between files
+ + grep: move context hunk mark handling into show_line()
+ + userdiff: add xdiff_clear_find_func()
 
 ----------------------------------------------------------------
 [Graduated to "master"]
 
-* sb/maint-1.6.0-add-config-fix (Thu Jun 18 02:17:54 2009 -0700) 2 commits
- + add: allow configurations to be overriden by command line
- + use xstrdup, not strdup in ll-merge.c
+* cf/maint-remote-uploadpack-useconfig-fix (Thu Jun 25 17:21:35 2009 -0400) 1 commit
+ + git-remote: fix missing .uploadpack usage for show command
 
-* pb/maint-1.6.2-userdiff-fix (Wed Jun 17 12:11:10 2009 +0200) 2 commits
- + upload-archive: fix infinite loop on Cygwin
- + avoid exponential regex match for java and objc function names
+* sb/show-ref-parse-options (Sat Jun 20 21:40:46 2009 -0700) 1 commit
+ + show-ref: migrate to parse-options
 
-* lt/maint-unsigned-left-shift (Wed Jun 17 17:22:27 2009 -0700) 1 commit
- + Fix big left-shifts of unsigned char
+* ne/maint-1.6.0-diff-tree-t-r-show-directory (Sat Jun 13 17:06:09 2009 -0700) 1 commit
+ + diff-tree -r -t: include added/removed directories in the output
 
-* pb/send-email-cccmd-fix (Thu Jun 18 14:31:32 2009 +0200) 1 commit
- + Test cccmd in t9001-send-email.sh and fix some bugs
+This changes the output from "diff-tree -r -t"; it brings more consistency
+to it, but it is a change and could break scripts.
 
-* ph/submodule-rebase (Wed Jun 3 00:59:12 2009 +0200) 1 commit
- + git-submodule: add support for --merge.
+* uk/rev-parse-parse-opt (Sun Jun 14 01:58:43 2009 +0200) 2 commits
+ + parse-opt: make PARSE_OPT_STOP_AT_NON_OPTION available to git rev-
+   parse
+ + more tests for git rev-parse --parse-opt
 
-* jc/cache-tree (Fri May 22 23:14:25 2009 -0700) 5 commits
- + Avoid "diff-index --cached" optimization under --find-copies-
-   harder
- + Optimize "diff-index --cached" using cache-tree
- + t4007: modernize the style
- + cache-tree.c::cache_tree_find(): simplify internal API
- + write-tree --ignore-cache-tree
+* js/daemon-log (Sun Jun 21 23:16:09 2009 +0200) 3 commits
+ + receive-pack: do not send error details to the client
+ + upload-pack: squelch progress indicator if client cannot see it
+ + daemon: send stderr of service programs to the syslog
 
-* mn/maint-iconv-autoconf (Mon Jun 8 20:46:38 2009 -0700) 1 commit
- + fix handling of iconv configuration options
+* sb/quiet-porcelains (Wed Jun 17 18:07:37 2009 -0700) 6 commits
+ + stash: teach quiet option
+ + am, rebase: teach quiet option
+ + submodule, repack: migrate to git-sh-setup's say()
+ + git-sh-setup: introduce say() for quiet options
+ + am: suppress apply errors when using 3-way
+ + t4150: test applying with a newline in subject
 
-* sb/pull-rebase (Fri Jun 12 00:39:21 2009 +0200) 3 commits
- + parse-remote: remove unused functions
- + parse-remote: support default reflist in get_remote_merge_branch
- + parse-remote: function to get the tracking branch to be merge
+* jk/use-our-regexp (Fri Jun 19 10:10:39 2009 -0500) 3 commits
+ + Makefile: Solaris needs HAVE_ALLOCA_H for alloca()
+ + Makefile: use compat regex on Solaris
+ + Makefile: refactor regex compat support
 
-* mg/pushurl (Sun Jun 14 21:46:10 2009 +0200) 6 commits
- + avoid NULL dereference on failed malloc
- + builtin-remote: Make "remote -v" display push urls
- + builtin-remote: Show push urls as well
- + technical/api-remote: Describe new struct remote member pushurl
- + t5516: Check pushurl config setting
- + Allow push and fetch urls to be different
+* cb/maint-fetch-refspec-wo-dst (Wed Jun 17 15:38:36 2009 +0200) 1 commit
+ - fetch: do not create ref from empty name
+
+* cc/bisect (Sat Jun 13 13:11:02 2009 +0200) 2 commits
+ + Documentation: remove warning saying that "git bisect skip" may
+   slow bisection
+ + bisect: use a PRNG with a bias when skipping away from untestable
+   commits
+
+* tr/die_errno (Sat Jun 27 17:58:47 2009 +0200) 4 commits
+ - Use die_errno() instead of die() when checking syscalls
+ - Convert existing die(..., strerror(errno)) to die_errno()
+ - die_errno(): double % in strerror() output just in case
+ - Introduce die_errno() that appends strerror(errno) to die()
+
+I didn't check the individual conversion from die() to die_errno()
+in this latest round; comments?
+
+* gb/am-foreign (Wed May 27 11:25:19 2009 +0200) 4 commits
+ - git-am: refactor 'cleaning up and aborting'
+ - git-am foreign patch support: StGIT support
+ - git-am foreign patch support: autodetect some patch formats
+ - git-am foreign patch support: introduce patch_format
+
+Will be in 'next' shortly.
 
 ----------------------------------------------------------------
 [Stalled and may need help and prodding to go forward]
+
+* ml/http (Wed May 27 23:16:03 2009 -0400) 2 commits
+ - http.c: add http.sslCertPasswordProtected option
+ - http.c: prompt for SSL client certificate password
+
+I've rewritten these two to (1) move the #ifdef out of the main codepath,
+and (2) use configuration/environment to make the misfeature of always
+asking for a passphrase even a key/cert is unencrypted optional.  I tried
+to be careful but extra sets of eyeballs would be nice to check the result.
+
+Nobody seems to be jumping up-and-down asking for this or helping to push
+this forward.  Perhaps it's time to drop it?
 
 * jh/notes (Sat May 16 13:44:17 2009 +0200) 5 commits
  - Teach "-m <msg>" and "-F <file>" to "git notes edit"
@@ -175,72 +218,32 @@ in binary mode as well.
 ----------------------------------------------------------------
 [Actively cooking]
 
-* ne/maint-1.6.0-diff-tree-t-r-show-directory (Sat Jun 13 17:06:09 2009 -0700) 1 commit
- + diff-tree -r -t: include added/removed directories in the output
+* gb/gitweb-avatar (Tue Jun 30 00:00:54 2009 +0200) 7 commits
+ - gitweb: add empty alt text to avatar img
+ - gitweb: picon avatar provider
+ - gitweb: gravatar url cache
+ - gitweb: (gr)avatar support
+ - gitweb: use git_print_authorship_rows in 'tag' view too
+ - gitweb: uniform author info for commit and commitdiff
+ - gitweb: refactor author name insertion
 
-This changes the output from "diff-tree -r -t"; it brings more consistency
-to it, but it is a change and could break scripts.
+This should be the latest one posted to the list, and I think it is
+reasonable, and Jakub seemed to concur.  Will be in 'next'
 
-* uk/rev-parse-parse-opt (Sun Jun 14 01:58:43 2009 +0200) 2 commits
- + parse-opt: make PARSE_OPT_STOP_AT_NON_OPTION available to git rev-
-   parse
- + more tests for git rev-parse --parse-opt
-
-* js/daemon-log (Sun Jun 21 23:16:09 2009 +0200) 3 commits
- + receive-pack: do not send error details to the client
- + upload-pack: squelch progress indicator if client cannot see it
- + daemon: send stderr of service programs to the syslog
-
-* sb/quiet-porcelains (Wed Jun 17 18:07:37 2009 -0700) 6 commits
- + stash: teach quiet option
- + am, rebase: teach quiet option
- + submodule, repack: migrate to git-sh-setup's say()
- + git-sh-setup: introduce say() for quiet options
- + am: suppress apply errors when using 3-way
- + t4150: test applying with a newline in subject
-
-* jk/use-our-regexp (Fri Jun 19 10:10:39 2009 -0500) 3 commits
- + Makefile: Solaris needs HAVE_ALLOCA_H for alloca()
- + Makefile: use compat regex on Solaris
- + Makefile: refactor regex compat support
-
-* cb/maint-fetch-refspec-wo-dst (Wed Jun 17 15:38:36 2009 +0200) 1 commit
- - fetch: do not create ref from empty name
-
-* cc/bisect (Sat Jun 13 13:11:02 2009 +0200) 2 commits
- + Documentation: remove warning saying that "git bisect skip" may
-   slow bisection
- + bisect: use a PRNG with a bias when skipping away from untestable
+* en/fast-export (Thu Jun 25 22:48:33 2009 -0600) 7 commits
+ - fast-export: Document the fact that git-rev-list arguments are
+   accepted
+ - Add new fast-export testcases
+ - fast-export: Add a --tag-of-filtered-object option for newly
+   dangling tags
+ - fast-export: Do parent rewriting to avoid dropping relevant
    commits
+ - fast-export: Make sure we show actual ref names instead of
+   "(null)"
+ - fast-export: Omit tags that tag trees
+ - fast-export: Set revs.topo_order before calling setup_revisions
 
-* tr/die_errno (Sat Jun 27 17:58:47 2009 +0200) 4 commits
- - Use die_errno() instead of die() when checking syscalls
- - Convert existing die(..., strerror(errno)) to die_errno()
- - die_errno(): double % in strerror() output just in case
- - Introduce die_errno() that appends strerror(errno) to die()
-
-I didn't check the individual conversion from die() to die_errno()
-in this latest round; comments?
-
-* ne/futz-upload-pack (Wed Jun 10 01:50:18 2009 +0200) 1 commit
- - Shift object enumeration out of upload-pack
-
-* ml/http (Wed May 27 23:16:03 2009 -0400) 2 commits
- - http.c: add http.sslCertPasswordProtected option
- - http.c: prompt for SSL client certificate password
-
-I've rewritten these two to (1) move the #ifdef out of the main codepath,
-and (2) use configuration/environment to make the misfeature of always
-asking for a passphrase even a key/cert is unencrypted optional.  I tried
-to be careful but extra sets of eyeballs would be nice to check the result.
-
-* gb/am-foreign (Wed May 27 11:25:19 2009 +0200) 4 commits
- - git-am: refactor 'cleaning up and aborting'
- - git-am foreign patch support: StGIT support
- - git-am foreign patch support: autodetect some patch formats
- - git-am foreign patch support: introduce patch_format
-
-Will be in 'next' shortly.
+Shawn?  Dscho?
 
 * jc/diff-whitespace-only-status (Sat May 23 01:15:35 2009 -0700) 2 commits
  - diff: Rename QUIET internal option to QUICK
@@ -249,6 +252,16 @@ Will be in 'next' shortly.
 I am not sure if it should wait for a major version bump but this is a
 good semantics change.  Perhaps merge to 'next' soonish, but I am
 undecided.  Comments?
+
+For the following three series, I have not managed to convince myself if
+these changes have real-world needs.
+
+* sb/read-tree (Thu Jun 25 22:14:10 2009 -0700) 2 commits
+ - read-tree: migrate to parse-options
+ - read-tree: convert unhelpful usage()'s to helpful die()'s
+
+* ne/futz-upload-pack (Wed Jun 10 01:50:18 2009 +0200) 1 commit
+ - Shift object enumeration out of upload-pack
 
 * cc/replace (Wed May 27 07:14:09 2009 +0200) 14 commits
  - t6050: check pushing something based on a replaced commit
