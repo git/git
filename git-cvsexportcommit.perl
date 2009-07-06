@@ -259,7 +259,8 @@ if (@canstatusfiles) {
 	    if $file =~ /^no file /
 		&& $status eq 'Up-to-date';
 
-	$cvsstat{$fullname{$file}} = $status;
+	$cvsstat{$fullname{$file}} = $status
+	    if defined $fullname{$file};
       }
     }
 }
