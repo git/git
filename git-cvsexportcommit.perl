@@ -299,7 +299,7 @@ foreach my $f (@files) {
 	while (<FILTER_IN>)
 	{
 	    my $line = $_;
-	    $line =~ s/\$([A-Z][a-z]+):[^\$]+\$/\$\1\$/g;
+	    $line =~ s/\$([A-Z][a-z]+):[^\$]+\$/\$$1\$/g;
 	    print FILTER_OUT $line;
 	}
 	close FILTER_IN;
