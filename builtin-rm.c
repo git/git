@@ -257,7 +257,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!removed)
-				die("git rm: %s: %s", path, strerror(errno));
+				die_errno("git rm: '%s'", path);
 		}
 	}
 

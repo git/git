@@ -81,7 +81,7 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 
 	fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
 	if (fd < 0)
-		die("cannot open output file %s", name);
+		die_errno("cannot open output file '%s'", name);
 	output = fdopen(fd, "w");
 
 	/* Copy it out, while searching for a line that begins with
@@ -91,7 +91,7 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 		int is_partial = len && buf[len-1] != '\n';
 
 		if (fwrite(buf, 1, len, output) != len)
-			die("cannot write output");
+			die_errno("cannot write output");
 
 		len = read_line_with_nul(buf, sizeof(buf), mbox);
 		if (len == 0) {
@@ -99,7 +99,7 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 				status = 1;
 				break;
 			}
-			die("cannot read mbox");
+			die_errno("cannot read mbox");
 		}
 		if (!is_partial && !is_bare && is_from_line(buf, len))
 			break; /* done with one message */

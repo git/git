@@ -536,11 +536,9 @@ static void write_pack_file(void)
 				 base_name, sha1_to_hex(sha1));
 			free_pack_by_name(tmpname);
 			if (adjust_perm(pack_tmp_name, mode))
-				die("unable to make temporary pack file readable: %s",
-				    strerror(errno));
+				die_errno("unable to make temporary pack file readable");
 			if (rename(pack_tmp_name, tmpname))
-				die("unable to rename temporary pack file: %s",
-				    strerror(errno));
+				die_errno("unable to rename temporary pack file");
 
 			/*
 			 * Packs are runtime accessed in their mtime
@@ -566,11 +564,9 @@ static void write_pack_file(void)
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.idx",
 				 base_name, sha1_to_hex(sha1));
 			if (adjust_perm(idx_tmp_name, mode))
-				die("unable to make temporary index file readable: %s",
-				    strerror(errno));
+				die_errno("unable to make temporary index file readable");
 			if (rename(idx_tmp_name, tmpname))
-				die("unable to rename temporary index file: %s",
-				    strerror(errno));
+				die_errno("unable to rename temporary index file");
 
 			free(idx_tmp_name);
 			free(pack_tmp_name);
@@ -1879,7 +1875,7 @@ static void read_object_list_from_stdin(void)
 			if (!ferror(stdin))
 				die("fgets returned NULL, not EOF, not error!");
 			if (errno != EINTR)
-				die("fgets: %s", strerror(errno));
+				die_errno("fgets");
 			clearerr(stdin);
 			continue;
 		}

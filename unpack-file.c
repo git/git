@@ -17,7 +17,7 @@ static char *create_temp_file(unsigned char *sha1)
 	strcpy(path, ".merge_file_XXXXXX");
 	fd = xmkstemp(path);
 	if (write_in_full(fd, buf, size) != size)
-		die("unable to write temp-file");
+		die_errno("unable to write temp-file");
 	close(fd);
 	return path;
 }

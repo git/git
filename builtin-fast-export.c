@@ -119,7 +119,7 @@ static void handle_object(const unsigned char *sha1)
 
 	printf("blob\nmark :%"PRIu32"\ndata %lu\n", last_idnum, size);
 	if (size && fwrite(buf, size, 1, stdout) != 1)
-		die ("Could not write blob %s", sha1_to_hex(sha1));
+		die_errno ("Could not write blob '%s'", sha1_to_hex(sha1));
 	printf("\n");
 
 	show_progress();
@@ -451,7 +451,7 @@ static void import_marks(char *input_file)
 	char line[512];
 	FILE *f = fopen(input_file, "r");
 	if (!f)
-		die("cannot read %s: %s", input_file, strerror(errno));
+		die_errno("cannot read '%s'", input_file);
 
 	while (fgets(line, sizeof(line), f)) {
 		uint32_t mark;

@@ -438,7 +438,7 @@ static void flush_buffer(int fd, const char *buf, unsigned long size)
 			/* Ignore epipe */
 			if (errno == EPIPE)
 				break;
-			die("merge-recursive: %s", strerror(errno));
+			die_errno("merge-recursive");
 		} else if (!ret) {
 			die("merge-recursive: disk full?");
 		}
@@ -554,7 +554,7 @@ static void update_file_flags(struct merge_options *o,
 				mode = 0666;
 			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
 			if (fd < 0)
-				die("failed to open %s: %s", path, strerror(errno));
+				die_errno("failed to open '%s'", path);
 			flush_buffer(fd, buf, size);
 			close(fd);
 		} else if (S_ISLNK(mode)) {
@@ -562,7 +562,7 @@ static void update_file_flags(struct merge_options *o,
 			safe_create_leading_directories_const(path);
 			unlink(path);
 			if (symlink(lnk, path))
-				die("failed to symlink %s: %s", path, strerror(errno));
+				die_errno("failed to symlink '%s'", path);
 			free(lnk);
 		} else
 			die("do not know what to do with %06o %s '%s'",

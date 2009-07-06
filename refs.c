@@ -1418,7 +1418,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	logfile = git_path("logs/%s", ref);
 	logfd = open(logfile, O_RDONLY, 0);
 	if (logfd < 0)
-		die("Unable to read log %s: %s", logfile, strerror(errno));
+		die_errno("Unable to read log '%s'", logfile);
 	fstat(logfd, &st);
 	if (!st.st_size)
 		die("Log %s is empty.", logfile);

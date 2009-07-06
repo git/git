@@ -199,7 +199,7 @@ static int handle_alias(int *argcp, const char ***argv)
 	}
 
 	if (subdir && chdir(subdir))
-		die("Cannot change to %s: %s", subdir, strerror(errno));
+		die_errno("Cannot change to '%s'", subdir);
 
 	errno = saved_errno;
 
@@ -256,11 +256,11 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 
 	/* Check for ENOSPC and EIO errors.. */
 	if (fflush(stdout))
-		die("write failure on standard output: %s", strerror(errno));
+		die_errno("write failure on standard output");
 	if (ferror(stdout))
 		die("unknown write failure on standard output");
 	if (fclose(stdout))
-		die("close failed on standard output: %s", strerror(errno));
+		die_errno("close failed on standard output");
 	return 0;
 }
 
