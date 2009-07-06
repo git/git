@@ -9,8 +9,9 @@ SYNOPSIS
 --------
 [verse]
 'git show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
-	     [-s|--hash] [--abbrev] [--tags] [--heads] [--] <pattern>...
-'git show-ref' --exclude-existing[=pattern]
+	     [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags]
+	     [--heads] [--] <pattern>...
+'git show-ref' --exclude-existing[=<pattern>] < ref-list
 
 DESCRIPTION
 -----------
@@ -48,7 +49,7 @@ OPTIONS
 	appended.
 
 -s::
---hash::
+--hash[=<n>]::
 
 	Only show the SHA1 hash, not the reference name. When combined with
 	--dereference the dereferenced tag will still be shown after the SHA1.
@@ -59,11 +60,10 @@ OPTIONS
 	Aside from returning an error code of 1, it will also print an error
 	message if '--quiet' was not specified.
 
---abbrev::
---abbrev=len::
+--abbrev[=<n>]::
 
 	Abbreviate the object name.  When using `--hash`, you do
-	not have to say `--hash --abbrev`; `--hash=len` would do.
+	not have to say `--hash --abbrev`; `--hash=n` would do.
 
 -q::
 --quiet::
@@ -71,8 +71,7 @@ OPTIONS
 	Do not print any results to stdout. When combined with '--verify' this
 	can be used to silently check if a reference exists.
 
---exclude-existing::
---exclude-existing=pattern::
+--exclude-existing[=<pattern>]::
 
 	Make 'git-show-ref' act as a filter that reads refs from stdin of the
 	form "^(?:<anything>\s)?<refname>(?:\^\{\})?$" and performs the
