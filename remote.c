@@ -1277,7 +1277,7 @@ struct ref *get_remote_ref(const struct ref *remote_refs, const char *name)
 
 static struct ref *get_local_ref(const char *name)
 {
-	if (!name)
+	if (!name || name[0] == '\0')
 		return NULL;
 
 	if (!prefixcmp(name, "refs/"))
