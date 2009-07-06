@@ -19,6 +19,7 @@ whitespace=     pass it through git-apply
 directory=      pass it through git-apply
 C=              pass it through git-apply
 p=              pass it through git-apply
+patch-format=   format the patch(es) are in
 reject          pass it through git-apply
 resolvemsg=     override error message when patch failure occurs
 r,resolved      to be used after a patch failure
@@ -138,6 +139,126 @@ It does not apply to blobs recorded in its index."
     unset GITHEAD_$his_tree
 }
 
+clean_abort () {
+	test $# = 0 || echo >&2 "$@"
+	rm -fr "$dotest"
+	exit 1
+}
+
+patch_format=
+
+check_patch_format () {
+	# early return if patch_format was set from the command line
+	if test -n "$patch_format"
+	then
+		return 0
+	fi
+
+	# we default to mbox format if input is from stdin and for
+	# directories
+	if test $# = 0 || test "x$1" = "x-" || test -d "$1"
+	then
+		patch_format=mbox
+		return 0
+	fi
+
+	# otherwise, check the first few lines of the first patch to try
+	# to detect its format
+	{
+		read l1
+		read l2
+		read l3
+		case "$l1" in
+		"From "* | "From: "*)
+			patch_format=mbox
+			;;
+		'# This series applies on GIT commit'*)
+			patch_format=stgit-series
+			;;
+		"# HG changeset patch")
+			patch_format=hg
+			;;
+		*)
+			# if the second line is empty and the third is
+			# a From, Author or Date entry, this is very
+			# likely an StGIT patch
+			case "$l2,$l3" in
+			,"From: "* | ,"Author: "* | ,"Date: "*)
+				patch_format=stgit
+				;;
+			*)
+				;;
+			esac
+			;;
+		esac
+	} < "$1" || clean_abort
+}
+
+split_patches () {
+	case "$patch_format" in
+	mbox)
+		git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||
+		clean_abort
+		;;
+	stgit-series)
+		if test $# -ne 1
+		then
+			clean_abort "Only one StGIT patch series can be applied at once"
+		fi
+		series_dir=`dirname "$1"`
+		series_file="$1"
+		shift
+		{
+			set x
+			while read filename
+			do
+				set "$@" "$series_dir/$filename"
+			done
+			# remove the safety x
+			shift
+			# remove the arg coming from the first-line comment
+			shift
+		} < "$series_file" || clean_abort
+		# set the patch format appropriately
+		patch_format=stgit
+		# now handle the actual StGIT patches
+		split_patches "$@"
+		;;
+	stgit)
+		this=0
+		for stgit in "$@"
+		do
+			this=`expr "$this" + 1`
+			msgnum=`printf "%0${prec}d" $this`
+			# Perl version of StGIT parse_patch. The first nonemptyline
+			# not starting with Author, From or Date is the
+			# subject, and the body starts with the next nonempty
+			# line not starting with Author, From or Date
+			perl -ne 'BEGIN { $subject = 0 }
+				if ($subject > 1) { print ; }
+				elsif (/^\s+$/) { next ; }
+				elsif (/^Author:/) { print s/Author/From/ ; }
+				elsif (/^(From|Date)/) { print ; }
+				elsif ($subject) {
+					$subject = 2 ;
+					print "\n" ;
+					print ;
+				} else {
+					print "Subject: ", $_ ;
+					$subject = 1;
+				}
+			' < "$stgit" > "$dotest/$msgnum" || clean_abort
+		done
+		echo "$this" > "$dotest/last"
+		this=
+		msgnum=
+		;;
+	*)
+		clean_abort "Patch format $patch_format is not supported."
+		;;
+	esac
+}
+
 prec=4
 dotest="$GIT_DIR/rebase-apply"
 sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
@@ -180,6 +301,8 @@ do
 		git_apply_opt="$git_apply_opt $(sq "$1=$2")"; shift ;;
 	-C|-p)
 		git_apply_opt="$git_apply_opt $(sq "$1$2")"; shift ;;
+	--patch-format)
+		shift ; patch_format="$1" ;;
 	--reject)
 		git_apply_opt="$git_apply_opt $1" ;;
 	--committer-date-is-author-date)
@@ -281,10 +404,10 @@ else
 		done
 		shift
 	fi
-	git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
-		rm -fr "$dotest"
-		exit 1
-	}
+
+	check_patch_format "$@"
+
+	split_patches "$@"
 
 	# -s, -u, -k, --whitespace, -3, -C, -q and -p flags are kept
 	# for the resuming session after a patch failure.
