@@ -43,3 +43,5 @@
 		should detect (and fix) it if it does.  Otherwise the
 		log message looks weird.
 		
+	totally weird behavior in 'git subtree add' if --prefix matches 
+		a branch name
