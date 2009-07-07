@@ -147,10 +147,10 @@ Skip "branches" and "tags" of first level directories;;
 	or if a second argument is passed; it will create a directory
 	and work within that.  It accepts all arguments that the
 	'init' and 'fetch' commands accept; with the exception of
-	'--fetch-all'.   After a repository is cloned, the 'fetch'
-	command will be able to update revisions without affecting
-	the working tree; and the 'rebase' command will be able
-	to update the working tree with the latest changes.
+	'--fetch-all' and '--parent'.  After a repository is cloned,
+	the 'fetch' command will be able to update revisions without
+	affecting the working tree; and the 'rebase' command will be
+	able to update the working tree with the latest changes.
 
 'rebase'::
 	This fetches revisions from the SVN parent of the current HEAD
