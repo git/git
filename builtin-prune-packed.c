@@ -1,9 +1,12 @@
 #include "builtin.h"
 #include "cache.h"
 #include "progress.h"
+#include "parse-options.h"
 
-static const char prune_packed_usage[] =
-"git prune-packed [-n] [-q]";
+static const char * const prune_packed_usage[] = {
+	"git prune-packed [-n|--dry-run] [-q|--quiet]",
+	NULL
+};
 
 #define DRY_RUN 01
 #define VERBOSE 02
@@ -68,24 +71,16 @@ void prune_packed_objects(int opts)
 
 int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 {
-	int i;
 	int opts = VERBOSE;
+	const struct option prune_packed_options[] = {
+		OPT_BIT('n', "dry-run", &opts, "dry run", DRY_RUN),
+		OPT_NEGBIT('q', "quiet", &opts, "be quiet", VERBOSE),
+		OPT_END()
+	};
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
+	argc = parse_options(argc, argv, prefix, prune_packed_options,
+			     prune_packed_usage, 0);
 
-		if (*arg == '-') {
-			if (!strcmp(arg, "-n"))
-				opts |= DRY_RUN;
-			else if (!strcmp(arg, "-q"))
-				opts &= ~VERBOSE;
-			else
-				usage(prune_packed_usage);
-			continue;
-		}
-		/* Handle arguments here .. */
-		usage(prune_packed_usage);
-	}
 	prune_packed_objects(opts);
 	return 0;
 }
