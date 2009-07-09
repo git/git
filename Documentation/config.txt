@@ -1045,6 +1045,12 @@ http.sslKey::
 	over HTTPS. Can be overridden by the 'GIT_SSL_KEY' environment
 	variable.
 
+http.sslCertPasswordProtected::
+	Enable git's password prompt for the SSL certificate.  Otherwise
+	OpenSSL will prompt the user, possibly many times, if the
+	certificate or private key is encrypted.  Can be overridden by the
+	'GIT_SSL_CERT_PASSWORD_PROTECTED' environment variable.
+
 http.sslCAInfo::
 	File containing the certificates to verify the peer with when
 	fetching or pushing over HTTPS. Can be overridden by the
