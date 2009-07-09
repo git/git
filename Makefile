@@ -1641,15 +1641,15 @@ ifneq (,$X)
 endif
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
-	{ $(RM) "$$execdir/git-add$X" && \
+	{ $(RM) "$$execdir/git$X" && \
 		test -z "$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
-		ln "$$bindir/git$X" "$$execdir/git-add$X" 2>/dev/null || \
-		cp "$$bindir/git$X" "$$execdir/git-add$X"; } && \
-	{ for p in $(filter-out git-add$X,$(BUILT_INS)); do \
+		ln "$$bindir/git$X" "$$execdir/git$X" 2>/dev/null || \
+		cp "$$bindir/git$X" "$$execdir/git$X"; } && \
+	{ for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
-		ln "$$execdir/git-add$X" "$$execdir/$$p" 2>/dev/null || \
-		ln -s "git-add$X" "$$execdir/$$p" 2>/dev/null || \
-		cp "$$execdir/git-add$X" "$$execdir/$$p" || exit; \
+		ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
+		ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
+		cp "$$execdir/git$X" "$$execdir/$$p" || exit; \
 	  done; } && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
