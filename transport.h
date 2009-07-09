@@ -35,6 +35,7 @@ struct transport {
 #define TRANSPORT_PUSH_DRY_RUN 4
 #define TRANSPORT_PUSH_MIRROR 8
 #define TRANSPORT_PUSH_VERBOSE 16
+#define TRANSPORT_PUSH_PORCELAIN 32
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
