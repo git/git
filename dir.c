@@ -566,18 +566,55 @@ static int in_pathspec(const char *path, int len, const struct path_simplify *si
 	return 0;
 }
 
+static int get_index_dtype(const char *path, int len)
+{
+	int pos;
+	struct cache_entry *ce;
+
+	ce = cache_name_exists(path, len, 0);
+	if (ce) {
+		if (!ce_uptodate(ce))
+			return DT_UNKNOWN;
+		if (S_ISGITLINK(ce->ce_mode))
+			return DT_DIR;
+		/*
+		 * Nobody actually cares about the
+		 * difference between DT_LNK and DT_REG
+		 */
+		return DT_REG;
+	}
+
+	/* Try to look it up as a directory */
+	pos = cache_name_pos(path, len);
+	if (pos >= 0)
+		return DT_UNKNOWN;
+	pos = -pos-1;
+	while (pos < active_nr) {
+		ce = active_cache[pos++];
+		if (strncmp(ce->name, path, len))
+			break;
+		if (ce->name[len] > '/')
+			break;
+		if (ce->name[len] < '/')
+			continue;
+		if (!ce_uptodate(ce))
+			break;	/* continue? */
+		return DT_DIR;
+	}
+	return DT_UNKNOWN;
+}
+
 static int get_dtype(struct dirent *de, const char *path, int len)
 {
 	int dtype = de ? DTYPE(de) : DT_UNKNOWN;
-	struct cache_entry *ce;
 	struct stat st;
 
 	if (dtype != DT_UNKNOWN)
 		return dtype;
-	ce = cache_name_exists(path, len, 0);
-	if (ce && ce_uptodate(ce))
-		st.st_mode = ce->ce_mode;
-	else if (lstat(path, &st))
+	dtype = get_index_dtype(path, len);
+	if (dtype != DT_UNKNOWN)
+		return dtype;
+	if (lstat(path, &st))
 		return dtype;
 	if (S_ISREG(st.st_mode))
 		return DT_REG;
