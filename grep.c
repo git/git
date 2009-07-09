@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "grep.h"
+#include "userdiff.h"
 #include "xdiff-interface.h"
 
 void append_header_grep_pattern(struct grep_opt *opt, enum grep_header_field field, const char *pat)
@@ -490,6 +491,17 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 {
 	int rest = eol - bol;
 
+	if (opt->pre_context || opt->post_context) {
+		if (opt->last_shown == 0) {
+			if (opt->show_hunk_mark)
+				fputs("--\n", stdout);
+			else
+				opt->show_hunk_mark = 1;
+		} else if (lno > opt->last_shown + 1)
+			fputs("--\n", stdout);
+	}
+	opt->last_shown = lno;
+
 	if (opt->null_following_name)
 		sign = '\0';
 	if (opt->pathname)
@@ -520,22 +532,95 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	printf("%.*s\n", rest, bol);
 }
 
+static int match_funcname(struct grep_opt *opt, char *bol, char *eol)
+{
+	xdemitconf_t *xecfg = opt->priv;
+	if (xecfg && xecfg->find_func) {
+		char buf[1];
+		return xecfg->find_func(bol, eol - bol, buf, 1,
+					xecfg->find_func_priv) >= 0;
+	}
+
+	if (bol == eol)
+		return 0;
+	if (isalpha(*bol) || *bol == '_' || *bol == '$')
+		return 1;
+	return 0;
+}
+
+static void show_funcname_line(struct grep_opt *opt, const char *name,
+			       char *buf, char *bol, unsigned lno)
+{
+	while (bol > buf) {
+		char *eol = --bol;
+
+		while (bol > buf && bol[-1] != '\n')
+			bol--;
+		lno--;
+
+		if (lno <= opt->last_shown)
+			break;
+
+		if (match_funcname(opt, bol, eol)) {
+			show_line(opt, bol, eol, name, lno, '=');
+			break;
+		}
+	}
+}
+
+static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
+			     char *bol, unsigned lno)
+{
+	unsigned cur = lno, from = 1, funcname_lno = 0;
+	int funcname_needed = opt->funcname;
+
+	if (opt->pre_context < lno)
+		from = lno - opt->pre_context;
+	if (from <= opt->last_shown)
+		from = opt->last_shown + 1;
+
+	/* Rewind. */
+	while (bol > buf && cur > from) {
+		char *eol = --bol;
+
+		while (bol > buf && bol[-1] != '\n')
+			bol--;
+		cur--;
+		if (funcname_needed && match_funcname(opt, bol, eol)) {
+			funcname_lno = cur;
+			funcname_needed = 0;
+		}
+	}
+
+	/* We need to look even further back to find a function signature. */
+	if (opt->funcname && funcname_needed)
+		show_funcname_line(opt, name, buf, bol, cur);
+
+	/* Back forward. */
+	while (cur < lno) {
+		char *eol = bol, sign = (cur == funcname_lno) ? '=' : '-';
+
+		while (*eol != '\n')
+			eol++;
+		show_line(opt, bol, eol, name, cur, sign);
+		bol = eol + 1;
+		cur++;
+	}
+}
+
 static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 char *buf, unsigned long size, int collect_hits)
 {
 	char *bol = buf;
 	unsigned long left = size;
 	unsigned lno = 1;
-	struct pre_context_line {
-		char *bol;
-		char *eol;
-	} *prev = NULL, *pcl;
 	unsigned last_hit = 0;
-	unsigned last_shown = 0;
 	int binary_match_only = 0;
-	const char *hunk_mark = "";
 	unsigned count = 0;
 	enum grep_context ctx = GREP_CONTEXT_HEAD;
+	xdemitconf_t xecfg;
+
+	opt->last_shown = 0;
 
 	if (buffer_is_binary(buf, size)) {
 		switch (opt->binary) {
@@ -550,10 +635,16 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		}
 	}
 
-	if (opt->pre_context)
-		prev = xcalloc(opt->pre_context, sizeof(*prev));
-	if (opt->pre_context || opt->post_context)
-		hunk_mark = "--\n";
+	memset(&xecfg, 0, sizeof(xecfg));
+	if (opt->funcname && !opt->unmatch_name_only && !opt->status_only &&
+	    !opt->name_only && !binary_match_only && !collect_hits) {
+		struct userdiff_driver *drv = userdiff_find_by_path(name);
+		if (drv && drv->funcname.pattern) {
+			const struct userdiff_funcname *pe = &drv->funcname;
+			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
+			opt->priv = &xecfg;
+		}
+	}
 
 	while (left) {
 		char *eol, ch;
@@ -601,45 +692,20 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 * the context which is nonsense, but the user
 			 * deserves to get that ;-).
 			 */
-			if (opt->pre_context) {
-				unsigned from;
-				if (opt->pre_context < lno)
-					from = lno - opt->pre_context;
-				else
-					from = 1;
-				if (from <= last_shown)
-					from = last_shown + 1;
-				if (last_shown && from != last_shown + 1)
-					fputs(hunk_mark, stdout);
-				while (from < lno) {
-					pcl = &prev[lno-from-1];
-					show_line(opt, pcl->bol, pcl->eol,
-						  name, from, '-');
-					from++;
-				}
-				last_shown = lno-1;
-			}
-			if (last_shown && lno != last_shown + 1)
-				fputs(hunk_mark, stdout);
+			if (opt->pre_context)
+				show_pre_context(opt, name, buf, bol, lno);
+			else if (opt->funcname)
+				show_funcname_line(opt, name, buf, bol, lno);
 			if (!opt->count)
 				show_line(opt, bol, eol, name, lno, ':');
-			last_shown = last_hit = lno;
+			last_hit = lno;
 		}
 		else if (last_hit &&
 			 lno <= last_hit + opt->post_context) {
 			/* If the last hit is within the post context,
 			 * we need to show this line.
 			 */
-			if (last_shown && lno != last_shown + 1)
-				fputs(hunk_mark, stdout);
 			show_line(opt, bol, eol, name, lno, '-');
-			last_shown = lno;
-		}
-		if (opt->pre_context) {
-			memmove(prev+1, prev,
-				(opt->pre_context-1) * sizeof(*prev));
-			prev->bol = bol;
-			prev->eol = eol;
 		}
 
 	next_line:
@@ -650,7 +716,6 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		lno++;
 	}
 
-	free(prev);
 	if (collect_hits)
 		return 0;
 
@@ -661,6 +726,9 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		show_name(opt, name);
 		return 1;
 	}
+
+	xdiff_clear_find_func(&xecfg);
+	opt->priv = NULL;
 
 	/* NEEDSWORK:
 	 * The real "grep -c foo *.c" gives many "bar.c:0" lines,

@@ -8,6 +8,15 @@ test_description='git grep various.
 
 . ./test-lib.sh
 
+cat >hello.c <<EOF
+#include <stdio.h>
+int main(int argc, const char **argv)
+{
+	printf("Hello world.\n");
+	return 0;
+}
+EOF
+
 test_expect_success setup '
 	{
 		echo foo mmap bar
@@ -22,7 +31,7 @@ test_expect_success setup '
 	echo zzz > z &&
 	mkdir t &&
 	echo test >t/t &&
-	git add file w x y z t/t &&
+	git add file w x y z t/t hello.c &&
 	test_tick &&
 	git commit -m initial
 '
@@ -155,6 +164,28 @@ test_expect_success 'grep -e A --and --not -e B' '
 	test_cmp expected actual
 '
 
+cat >expected <<EOF
+y:y yy
+--
+z:zzz
+EOF
+
+# Create 1024 file names that sort between "y" and "z" to make sure
+# the two files are handled by different calls to an external grep.
+# This depends on MAXARGS in builtin-grep.c being 1024 or less.
+c32="0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v"
+test_expect_success 'grep -C1, hunk mark between files' '
+	for a in $c32; do for b in $c32; do : >y-$a$b; done; done &&
+	git add y-?? &&
+	git grep -C1 "^[yz]" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -C1 --no-ext-grep, hunk mark between files' '
+	git grep -C1 --no-ext-grep "^[yz]" >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'log grep setup' '
 	echo a >>file &&
 	test_tick &&
@@ -207,9 +238,45 @@ test_expect_success 'log grep (6)' '
 test_expect_success 'grep with CE_VALID file' '
 	git update-index --assume-unchanged t/t &&
 	rm t/t &&
-	test "$(git grep --no-ext-grep t)" = "t/t:test" &&
+	test "$(git grep --no-ext-grep test)" = "t/t:test" &&
 	git update-index --no-assume-unchanged t/t &&
 	git checkout t/t
+'
+
+cat >expected <<EOF
+hello.c=#include <stdio.h>
+hello.c:	return 0;
+EOF
+
+test_expect_success 'grep -p with userdiff' '
+	git config diff.custom.funcname "^#" &&
+	echo "hello.c diff=custom" >.gitattributes &&
+	git grep -p return >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+hello.c=int main(int argc, const char **argv)
+hello.c:	return 0;
+EOF
+
+test_expect_success 'grep -p' '
+	rm -f .gitattributes &&
+	git grep -p return >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+hello.c-#include <stdio.h>
+hello.c=int main(int argc, const char **argv)
+hello.c-{
+hello.c-	printf("Hello world.\n");
+hello.c:	return 0;
+EOF
+
+test_expect_success 'grep -p -B5' '
+	git grep -p -B5 return >actual &&
+	test_cmp expected actual
 '
 
 test_done

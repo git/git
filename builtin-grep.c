@@ -11,6 +11,7 @@
 #include "tree-walk.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "userdiff.h"
 #include "grep.h"
 
 #ifndef NO_EXTERNAL_GREP
@@ -29,6 +30,12 @@ static char const * const grep_usage[] = {
 static int grep_config(const char *var, const char *value, void *cb)
 {
 	struct grep_opt *opt = cb;
+
+	switch (userdiff_config(var, value)) {
+	case 0: break;
+	case -1: return -1;
+	default: return 0;
+	}
 
 	if (!strcmp(var, "color.grep")) {
 		opt->color = git_config_colorbool(var, value, -1);
@@ -276,6 +283,17 @@ static int flush_grep(struct grep_opt *opt,
 		kept_0 = argv[argc-2];
 		argv[argc-2] = NULL;
 		argc -= 2;
+	}
+
+	if (opt->pre_context || opt->post_context) {
+		/*
+		 * grep handles hunk marks between files, but we need to
+		 * do that ourselves between multiple calls.
+		 */
+		if (opt->show_hunk_mark)
+			write_or_die(1, "--\n", 3);
+		else
+			opt->show_hunk_mark = 1;
 	}
 
 	status = exec_grep(argc, argv);
@@ -710,6 +728,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			"show <n> context lines after matches"),
 		OPT_NUMBER_CALLBACK(&opt, "shortcut for -C NUM",
 			context_callback),
+		OPT_BOOLEAN('p', "show-function", &opt.funcname,
+			"show a line with the function name before matches"),
 		OPT_GROUP(""),
 		OPT_CALLBACK('f', NULL, &opt, "file",
 			"read patterns from file", file_callback),
@@ -778,7 +798,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		argc--;
 	}
 
-	if (opt.color && !opt.color_external)
+	if ((opt.color && !opt.color_external) || opt.funcname)
 		external_grep_allowed = 0;
 	if (!opt.pattern_list)
 		die("no pattern given.");

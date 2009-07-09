@@ -1603,6 +1603,7 @@ static void builtin_diff(const char *name_a,
 			free(mf1.ptr);
 		if (textconv_two)
 			free(mf2.ptr);
+		xdiff_clear_find_func(&xecfg);
 	}
 
  free_ab_and_return:

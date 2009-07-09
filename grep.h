@@ -79,11 +79,15 @@ struct grep_opt {
 	int pathname;
 	int null_following_name;
 	int color;
+	int funcname;
 	char color_match[COLOR_MAXLEN];
 	const char *color_external;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
+	unsigned last_shown;
+	int show_hunk_mark;
+	void *priv;
 };
 
 extern void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
