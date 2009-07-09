@@ -16,7 +16,7 @@ struct path_simplify {
 
 static int read_directory_recursive(struct dir_struct *dir, const char *path, int len,
 	int check_only, const struct path_simplify *simplify);
-static int get_dtype(struct dirent *de, const char *path);
+static int get_dtype(struct dirent *de, const char *path, int len);
 
 static int common_prefix(const char **pathspec)
 {
@@ -326,7 +326,7 @@ static int excluded_1(const char *pathname,
 
 			if (x->flags & EXC_FLAG_MUSTBEDIR) {
 				if (*dtype == DT_UNKNOWN)
-					*dtype = get_dtype(NULL, pathname);
+					*dtype = get_dtype(NULL, pathname, pathlen);
 				if (*dtype != DT_DIR)
 					continue;
 			}
@@ -566,14 +566,18 @@ static int in_pathspec(const char *path, int len, const struct path_simplify *si
 	return 0;
 }
 
-static int get_dtype(struct dirent *de, const char *path)
+static int get_dtype(struct dirent *de, const char *path, int len)
 {
 	int dtype = de ? DTYPE(de) : DT_UNKNOWN;
+	struct cache_entry *ce;
 	struct stat st;
 
 	if (dtype != DT_UNKNOWN)
 		return dtype;
-	if (lstat(path, &st))
+	ce = cache_name_exists(path, len, 0);
+	if (ce && ce_uptodate(ce))
+		st.st_mode = ce->ce_mode;
+	else if (lstat(path, &st))
 		return dtype;
 	if (S_ISREG(st.st_mode))
 		return DT_REG;
@@ -633,7 +637,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *base, in
 				continue;
 
 			if (dtype == DT_UNKNOWN)
-				dtype = get_dtype(de, path);
+				dtype = get_dtype(de, path, len);
 
 			/*
 			 * Do we want to see just the ignored files?
