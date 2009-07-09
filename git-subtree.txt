@@ -241,7 +241,7 @@ the upstream.  You could do this:
         	0a8f4f0^.. --onto=1130ef3 --rejoin \
         	--branch gitweb-latest
         $ gitk gitweb-latest
-        $ git push git@github.com:whatever/gitweb gitweb-latest:master
+        $ git push git@github.com:whatever/gitweb.git gitweb-latest:master
         
 (We use '0a8f4f0^..' because that means "all the changes from
 0a8f4f0 to the current version, including 0a8f4f0 itself.")
@@ -258,7 +258,7 @@ And you can merge changes back in from the upstream project just
 as easily:
 
 	$ git subtree pull --prefix=gitweb \
-		git@github.com:whatever/gitweb gitweb-latest:master
+		git@github.com:whatever/gitweb.git gitweb-latest:master
 
 Or, using '--squash', you can actually rewind to an earlier
 version of gitweb:
