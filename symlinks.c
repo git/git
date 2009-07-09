@@ -32,13 +32,7 @@ static int longest_path_match(const char *name_a, int len_a,
 	return match_len;
 }
 
-static struct cache_def {
-	char path[PATH_MAX + 1];
-	int len;
-	int flags;
-	int track_flags;
-	int prefix_len_stat_func;
-} default_cache;
+static struct cache_def default_cache;
 
 static inline void reset_lstat_cache(struct cache_def *cache)
 {
@@ -217,12 +211,17 @@ void clear_lstat_cache(void)
 /*
  * Return non-zero if path 'name' has a leading symlink component
  */
+int threaded_has_symlink_leading_path(struct cache_def *cache, const char *name, int len)
+{
+	return lstat_cache(cache, name, len, FL_SYMLINK|FL_DIR, USE_ONLY_LSTAT) & FL_SYMLINK;
+}
+
+/*
+ * Return non-zero if path 'name' has a leading symlink component
+ */
 int has_symlink_leading_path(const char *name, int len)
 {
-	struct cache_def *cache = &default_cache;	/* FIXME */
-	return lstat_cache(cache, name, len,
-			   FL_SYMLINK|FL_DIR, USE_ONLY_LSTAT) &
-		FL_SYMLINK;
+	return threaded_has_symlink_leading_path(&default_cache, name, len);
 }
 
 /*
