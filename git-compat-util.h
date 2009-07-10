@@ -52,7 +52,7 @@
 # else
 # define _XOPEN_SOURCE 500
 # endif
-#elif !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__USLC__) && !defined(_M_UNIX)
+#elif !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__USLC__) && !defined(_M_UNIX) && !defined(sgi)
 #define _XOPEN_SOURCE 600 /* glibc2 and AIX 5.3L need 500, OpenBSD needs 600 for S_ISLNK() */
 #ifndef __sun__
 #define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
@@ -62,6 +62,7 @@
 #define _GNU_SOURCE 1
 #define _BSD_SOURCE 1
 #define _NETBSD_SOURCE 1
+#define _SGI_SOURCE 1
 
 #include <unistd.h>
 #include <stdio.h>
