@@ -45,3 +45,6 @@
 		
 	totally weird behavior in 'git subtree add' if --prefix matches 
 		a branch name
+
+	"pull --squash" should do fetch-synthesize-merge, but instead just
+		does "pull" directly, which doesn't work at all.
