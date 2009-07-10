@@ -61,6 +61,8 @@ all::
 #
 # Define NO_LIBGEN_H if you don't have libgen.h.
 #
+# Define NEEDS_LIBGEN if your libgen needs -lgen when linking
+#
 # Define NO_SYS_SELECT_H if you don't have sys/select.h.
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
@@ -1018,6 +1020,9 @@ ifdef NEEDS_LIBICONV
 		ICONV_LINK =
 	endif
 	EXTLIBS += $(ICONV_LINK) -liconv
+endif
+ifdef NEEDS_LIBGEN
+	EXTLIBS += -lgen
 endif
 ifdef NEEDS_SOCKET
 	EXTLIBS += -lsocket
