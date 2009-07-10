@@ -1165,7 +1165,7 @@ _git_log ()
 			$__git_log_shortlog_options
 			$__git_log_gitk_options
 			--root --topo-order --date-order --reverse
-			--follow
+			--follow --full-diff
 			--abbrev-commit --abbrev=
 			--relative-date --date=
 			--pretty= --format= --oneline
@@ -1357,11 +1357,12 @@ __git_config_get_set_variables ()
 		c=$((--c))
 	done
 
-	for i in $(git --git-dir="$(__gitdir)" config $config_file --list \
-			2>/dev/null); do
-		case "$i" in
-		*.*)
-			echo "${i/=*/}"
+	git --git-dir="$(__gitdir)" config $config_file --list 2>/dev/null |
+	while read line
+	do
+		case "$line" in
+		*.*=*)
+			echo "${line/=*/}"
 			;;
 		esac
 	done
@@ -1457,7 +1458,7 @@ _git_config ()
 	branch.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		__gitcomp "remote merge mergeoptions" "$pfx" "$cur"
+		__gitcomp "remote merge mergeoptions rebase" "$pfx" "$cur"
 		return
 		;;
 	branch.*)
@@ -1504,7 +1505,7 @@ _git_config ()
 		cur="${cur##*.}"
 		__gitcomp "
 			url proxy fetch push mirror skipDefaultUpdate
-			receivepack uploadpack tagopt
+			receivepack uploadpack tagopt pushurl
 			" "$pfx" "$cur"
 		return
 		;;
@@ -1522,6 +1523,7 @@ _git_config ()
 		;;
 	esac
 	__gitcomp "
+		add.ignore-errors
 		alias.
 		apply.whitespace
 		branch.autosetupmerge

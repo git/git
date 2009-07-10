@@ -194,6 +194,8 @@ all::
 #
 # Define USE_NED_ALLOCATOR if you want to replace the platforms default
 # memory allocators with the nedmalloc allocator written by Niall Douglas.
+#
+# Define NO_REGEX if you have no or inferior regex support in your C library.
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -723,6 +725,7 @@ ifeq ($(uname_S),SunOS)
 	NO_MEMMEM = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
+	NO_REGEX = YesPlease
 	ifeq ($(uname_R),5.7)
 		NEEDS_RESOLV = YesPlease
 		NO_IPV6 = YesPlease
@@ -750,7 +753,7 @@ ifeq ($(uname_S),SunOS)
 	endif
 	INSTALL = /usr/ucb/install
 	TAR = gtar
-	BASIC_CFLAGS += -D__EXTENSIONS__ -D__sun__
+	BASIC_CFLAGS += -D__EXTENSIONS__ -D__sun__ -DHAVE_ALLOCA_H
 endif
 ifeq ($(uname_O),Cygwin)
 	NO_D_TYPE_IN_DIRENT = YesPlease
@@ -884,9 +887,10 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	USE_NED_ALLOCATOR = YesPlease
 	UNRELIABLE_FSTAT = UnfortunatelyYes
 	OBJECT_CREATION_USES_RENAMES = UnfortunatelyNeedsTo
-	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/regex -Icompat/fnmatch
+	NO_REGEX = YesPlease
+	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/fnmatch
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
-	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/regex/regex.o compat/winansi.o
+	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/winansi.o
 	EXTLIBS += -lws2_32
 	X = .exe
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
@@ -1200,6 +1204,10 @@ endif
 ifdef UNRELIABLE_FSTAT
 	BASIC_CFLAGS += -DUNRELIABLE_FSTAT
 endif
+ifdef NO_REGEX
+	COMPAT_CFLAGS += -Icompat/regex
+	COMPAT_OBJS += compat/regex/regex.o
+endif
 
 ifdef USE_NED_ALLOCATOR
        COMPAT_CFLAGS += -DUSE_NED_ALLOCATOR -DOVERRIDE_STRDUP -DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR -Icompat/nedmalloc
@@ -1464,7 +1472,7 @@ git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
-$(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H) $(wildcard */*.h)
+$(patsubst git-%$X,%.o,$(PROGRAMS)) git.o: $(LIB_H) $(wildcard */*.h)
 builtin-revert.o wt-status.o: wt-status.h
 
 $(LIB_FILE): $(LIB_OBJS)
@@ -1633,15 +1641,15 @@ ifneq (,$X)
 endif
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
-	{ $(RM) "$$execdir/git-add$X" && \
+	{ $(RM) "$$execdir/git$X" && \
 		test -z "$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
-		ln "$$bindir/git$X" "$$execdir/git-add$X" 2>/dev/null || \
-		cp "$$bindir/git$X" "$$execdir/git-add$X"; } && \
-	{ for p in $(filter-out git-add$X,$(BUILT_INS)); do \
+		ln "$$bindir/git$X" "$$execdir/git$X" 2>/dev/null || \
+		cp "$$bindir/git$X" "$$execdir/git$X"; } && \
+	{ for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
-		ln "$$execdir/git-add$X" "$$execdir/$$p" 2>/dev/null || \
-		ln -s "git-add$X" "$$execdir/$$p" 2>/dev/null || \
-		cp "$$execdir/git-add$X" "$$execdir/$$p" || exit; \
+		ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
+		ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
+		cp "$$execdir/git$X" "$$execdir/$$p" || exit; \
 	  done; } && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 

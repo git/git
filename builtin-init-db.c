@@ -61,20 +61,20 @@ static void copy_templates_1(char *path, int baselen,
 		memcpy(template + template_baselen, de->d_name, namelen+1);
 		if (lstat(path, &st_git)) {
 			if (errno != ENOENT)
-				die("cannot stat %s", path);
+				die_errno("cannot stat '%s'", path);
 		}
 		else
 			exists = 1;
 
 		if (lstat(template, &st_template))
-			die("cannot stat template %s", template);
+			die_errno("cannot stat template '%s'", template);
 
 		if (S_ISDIR(st_template.st_mode)) {
 			DIR *subdir = opendir(template);
 			int baselen_sub = baselen + namelen;
 			int template_baselen_sub = template_baselen + namelen;
 			if (!subdir)
-				die("cannot opendir %s", template);
+				die_errno("cannot opendir '%s'", template);
 			path[baselen_sub++] =
 				template[template_baselen_sub++] = '/';
 			path[baselen_sub] =
@@ -91,16 +91,17 @@ static void copy_templates_1(char *path, int baselen,
 			int len;
 			len = readlink(template, lnk, sizeof(lnk));
 			if (len < 0)
-				die("cannot readlink %s", template);
+				die_errno("cannot readlink '%s'", template);
 			if (sizeof(lnk) <= len)
 				die("insanely long symlink %s", template);
 			lnk[len] = 0;
 			if (symlink(lnk, path))
-				die("cannot symlink %s %s", lnk, path);
+				die_errno("cannot symlink '%s' '%s'", lnk, path);
 		}
 		else if (S_ISREG(st_template.st_mode)) {
 			if (copy_file(path, template, st_template.st_mode))
-				die("cannot copy %s to %s", template, path);
+				die_errno("cannot copy '%s' to '%s'", template,
+					  path);
 		}
 		else
 			error("ignoring template %s", template);
@@ -350,7 +351,7 @@ static int guess_repository_type(const char *git_dir)
 	if (!strcmp(".", git_dir))
 		return 1;
 	if (!getcwd(cwd, sizeof(cwd)))
-		die("cannot tell cwd");
+		die_errno("cannot tell cwd");
 	if (!strcmp(git_dir, cwd))
 		return 1;
 	/*
@@ -440,11 +441,11 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		if (!git_work_tree_cfg) {
 			git_work_tree_cfg = xcalloc(PATH_MAX, 1);
 			if (!getcwd(git_work_tree_cfg, PATH_MAX))
-				die ("Cannot access current working directory.");
+				die_errno ("Cannot access current working directory");
 		}
 		if (access(get_git_work_tree(), X_OK))
-			die ("Cannot access work tree '%s'",
-			     get_git_work_tree());
+			die_errno ("Cannot access work tree '%s'",
+				   get_git_work_tree());
 	}
 
 	set_git_dir(make_absolute_path(git_dir));

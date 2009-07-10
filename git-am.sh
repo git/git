@@ -11,6 +11,7 @@ git am [options] (--resolved | --skip | --abort)
 i,interactive   run interactively
 b,binary*       (historical option -- no-op)
 3,3way          allow fall back on 3way merging if needed
+q,quiet         be quiet
 s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
 k,keep          pass -k flag to git-mailinfo
@@ -18,6 +19,7 @@ whitespace=     pass it through git-apply
 directory=      pass it through git-apply
 C=              pass it through git-apply
 p=              pass it through git-apply
+patch-format=   format the patch(es) are in
 reject          pass it through git-apply
 resolvemsg=     override error message when patch failure occurs
 r,resolved      to be used after a patch failure
@@ -99,7 +101,7 @@ fall_back_3way () {
     git write-tree >"$dotest/patch-merge-base+" ||
     cannot_fallback "Repository lacks necessary blobs to fall back on 3-way merge."
 
-    echo Using index info to reconstruct a base tree...
+    say Using index info to reconstruct a base tree...
     if GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
 	git apply --cached <"$dotest/patch"
     then
@@ -115,7 +117,7 @@ It does not apply to blobs recorded in its index."
     orig_tree=$(cat "$dotest/patch-merge-base") &&
     rm -fr "$dotest"/patch-merge-* || exit 1
 
-    echo Falling back to patching base and 3-way merge...
+    say Falling back to patching base and 3-way merge...
 
     # This is not so wrong.  Depending on which base we picked,
     # orig_tree may be wildly different from ours, but his_tree
@@ -125,12 +127,136 @@ It does not apply to blobs recorded in its index."
 
     eval GITHEAD_$his_tree='"$FIRSTLINE"'
     export GITHEAD_$his_tree
+    if test -n "$GIT_QUIET"
+    then
+	    export GIT_MERGE_VERBOSITY=0
+    fi
     git-merge-recursive $orig_tree -- HEAD $his_tree || {
 	    git rerere
 	    echo Failed to merge in the changes.
 	    exit 1
     }
     unset GITHEAD_$his_tree
+}
+
+clean_abort () {
+	test $# = 0 || echo >&2 "$@"
+	rm -fr "$dotest"
+	exit 1
+}
+
+patch_format=
+
+check_patch_format () {
+	# early return if patch_format was set from the command line
+	if test -n "$patch_format"
+	then
+		return 0
+	fi
+
+	# we default to mbox format if input is from stdin and for
+	# directories
+	if test $# = 0 || test "x$1" = "x-" || test -d "$1"
+	then
+		patch_format=mbox
+		return 0
+	fi
+
+	# otherwise, check the first few lines of the first patch to try
+	# to detect its format
+	{
+		read l1
+		read l2
+		read l3
+		case "$l1" in
+		"From "* | "From: "*)
+			patch_format=mbox
+			;;
+		'# This series applies on GIT commit'*)
+			patch_format=stgit-series
+			;;
+		"# HG changeset patch")
+			patch_format=hg
+			;;
+		*)
+			# if the second line is empty and the third is
+			# a From, Author or Date entry, this is very
+			# likely an StGIT patch
+			case "$l2,$l3" in
+			,"From: "* | ,"Author: "* | ,"Date: "*)
+				patch_format=stgit
+				;;
+			*)
+				;;
+			esac
+			;;
+		esac
+	} < "$1" || clean_abort
+}
+
+split_patches () {
+	case "$patch_format" in
+	mbox)
+		git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||
+		clean_abort
+		;;
+	stgit-series)
+		if test $# -ne 1
+		then
+			clean_abort "Only one StGIT patch series can be applied at once"
+		fi
+		series_dir=`dirname "$1"`
+		series_file="$1"
+		shift
+		{
+			set x
+			while read filename
+			do
+				set "$@" "$series_dir/$filename"
+			done
+			# remove the safety x
+			shift
+			# remove the arg coming from the first-line comment
+			shift
+		} < "$series_file" || clean_abort
+		# set the patch format appropriately
+		patch_format=stgit
+		# now handle the actual StGIT patches
+		split_patches "$@"
+		;;
+	stgit)
+		this=0
+		for stgit in "$@"
+		do
+			this=`expr "$this" + 1`
+			msgnum=`printf "%0${prec}d" $this`
+			# Perl version of StGIT parse_patch. The first nonemptyline
+			# not starting with Author, From or Date is the
+			# subject, and the body starts with the next nonempty
+			# line not starting with Author, From or Date
+			perl -ne 'BEGIN { $subject = 0 }
+				if ($subject > 1) { print ; }
+				elsif (/^\s+$/) { next ; }
+				elsif (/^Author:/) { print s/Author/From/ ; }
+				elsif (/^(From|Date)/) { print ; }
+				elsif ($subject) {
+					$subject = 2 ;
+					print "\n" ;
+					print ;
+				} else {
+					print "Subject: ", $_ ;
+					$subject = 1;
+				}
+			' < "$stgit" > "$dotest/$msgnum" || clean_abort
+		done
+		echo "$this" > "$dotest/last"
+		this=
+		msgnum=
+		;;
+	*)
+		clean_abort "Patch format $patch_format is not supported."
+		;;
+	esac
 }
 
 prec=4
@@ -175,12 +301,16 @@ do
 		git_apply_opt="$git_apply_opt $(sq "$1=$2")"; shift ;;
 	-C|-p)
 		git_apply_opt="$git_apply_opt $(sq "$1$2")"; shift ;;
+	--patch-format)
+		shift ; patch_format="$1" ;;
 	--reject)
 		git_apply_opt="$git_apply_opt $1" ;;
 	--committer-date-is-author-date)
 		committer_date_is_author_date=t ;;
 	--ignore-date)
 		ignore_date=t ;;
+	-q|--quiet)
+		GIT_QUIET=t ;;
 	--)
 		shift; break ;;
 	*)
@@ -274,12 +404,12 @@ else
 		done
 		shift
 	fi
-	git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
-		rm -fr "$dotest"
-		exit 1
-	}
 
-	# -s, -u, -k, --whitespace, -3, -C and -p flags are kept
+	check_patch_format "$@"
+
+	split_patches "$@"
+
+	# -s, -u, -k, --whitespace, -3, -C, -q and -p flags are kept
 	# for the resuming session after a patch failure.
 	# -i can and must be given when resuming.
 	echo " $git_apply_opt" >"$dotest/apply-opt"
@@ -287,6 +417,7 @@ else
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
+	echo "$GIT_QUIET" >"$dotest/quiet"
 	echo 1 >"$dotest/next"
 	if test -n "$rebasing"
 	then
@@ -327,6 +458,10 @@ if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
 fi
+if test "$(cat "$dotest/quiet")" = t
+then
+	GIT_QUIET=t
+fi
 if test "$(cat "$dotest/threeway")" = t
 then
 	threeway=t
@@ -352,7 +487,7 @@ fi
 
 if test "$this" -gt "$last"
 then
-	echo Nothing to do.
+	say Nothing to do.
 	rm -fr "$dotest"
 	exit
 fi
@@ -498,11 +633,18 @@ do
 		stop_here $this
 	fi
 
-	printf 'Applying: %s\n' "$FIRSTLINE"
+	say "Applying: $FIRSTLINE"
 
 	case "$resolved" in
 	'')
-		eval 'git apply '"$git_apply_opt"' --index "$dotest/patch"'
+		# When we are allowed to fall back to 3-way later, don't give
+		# false errors during the initial attempt.
+		squelch=
+		if test "$threeway" = t
+		then
+			squelch='>/dev/null 2>&1 '
+		fi
+		eval "git apply $squelch$git_apply_opt"' --index "$dotest/patch"'
 		apply_status=$?
 		;;
 	t)
@@ -534,7 +676,7 @@ do
 		    # Applying the patch to an earlier tree and merging the
 		    # result may have produced the same tree as ours.
 		    git diff-index --quiet --cached HEAD -- && {
-			echo No changes -- Patch already applied.
+			say No changes -- Patch already applied.
 			go_next
 			continue
 		    }
@@ -560,7 +702,7 @@ do
 			GIT_AUTHOR_DATE=
 		fi
 		parent=$(git rev-parse --verify -q HEAD) ||
-		echo >&2 "applying to an empty history"
+		say >&2 "applying to an empty history"
 
 		if test -n "$committer_date_is_author_date"
 		then

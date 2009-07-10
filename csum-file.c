@@ -26,7 +26,7 @@ static void flush(struct sha1file *f, void * buf, unsigned int count)
 		}
 		if (!ret)
 			die("sha1 file '%s' write error. Out of diskspace", f->name);
-		die("sha1 file '%s' write error (%s)", f->name, strerror(errno));
+		die_errno("sha1 file '%s' write error", f->name);
 	}
 }
 
@@ -55,8 +55,7 @@ int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
 		if (flags & CSUM_FSYNC)
 			fsync_or_die(f->fd, f->name);
 		if (close(f->fd))
-			die("%s: sha1 file error on close (%s)",
-			    f->name, strerror(errno));
+			die_errno("%s: sha1 file error on close", f->name);
 		fd = 0;
 	} else
 		fd = f->fd;

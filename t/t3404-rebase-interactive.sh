@@ -119,11 +119,11 @@ index e69de29..00750ed 100644
 EOF
 
 cat > expect2 << EOF
-<<<<<<< HEAD:file1
+<<<<<<< HEAD
 2
 =======
 3
->>>>>>> b7ca976... G:file1
+>>>>>>> b7ca976... G
 EOF
 
 test_expect_success 'stop on conflicting pick' '

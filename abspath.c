@@ -41,13 +41,13 @@ const char *make_absolute_path(const char *path)
 
 		if (*buf) {
 			if (!*cwd && !getcwd(cwd, sizeof(cwd)))
-				die ("Could not get current working directory");
+				die_errno ("Could not get current working directory");
 
 			if (chdir(buf))
-				die ("Could not switch to '%s'", buf);
+				die_errno ("Could not switch to '%s'", buf);
 		}
 		if (!getcwd(buf, PATH_MAX))
-			die ("Could not get current working directory");
+			die_errno ("Could not get current working directory");
 
 		if (last_elem) {
 			int len = strlen(buf);
@@ -63,7 +63,7 @@ const char *make_absolute_path(const char *path)
 		if (!lstat(buf, &st) && S_ISLNK(st.st_mode)) {
 			len = readlink(buf, next_buf, PATH_MAX);
 			if (len < 0)
-				die ("Invalid symlink: %s", buf);
+				die_errno ("Invalid symlink '%s'", buf);
 			if (PATH_MAX <= len)
 				die("symbolic link too long: %s", buf);
 			next_buf[len] = '\0';
@@ -75,7 +75,7 @@ const char *make_absolute_path(const char *path)
 	}
 
 	if (*cwd && chdir(cwd))
-		die ("Could not change back to '%s'", cwd);
+		die_errno ("Could not change back to '%s'", cwd);
 
 	return buf;
 }
@@ -109,7 +109,7 @@ const char *make_nonrelative_path(const char *path)
 	} else {
 		const char *cwd = get_pwd_cwd();
 		if (!cwd)
-			die("Cannot determine the current working directory");
+			die_errno("Cannot determine the current working directory");
 		if (snprintf(buf, PATH_MAX, "%s/%s", cwd, path) >= PATH_MAX)
 			die("Too long path: %.*s", 60, path);
 	}

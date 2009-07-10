@@ -746,7 +746,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 			done = read_in_full(fd, result, len);
 			if (done < 0)
-				die("read error '%s'", elem->path);
+				die_errno("read error '%s'", elem->path);
 			else if (done < len)
 				die("early EOF '%s'", elem->path);
 

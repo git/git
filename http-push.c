@@ -193,6 +193,8 @@ static char *xml_entities(char *s)
 		case '&':
 			strbuf_addstr(&buf, "&amp;");
 			break;
+		case 0:
+			return strbuf_detach(&buf, NULL);
 		}
 		s++;
 	}

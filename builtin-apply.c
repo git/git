@@ -280,7 +280,7 @@ static void say_patch_name(FILE *output, const char *pre,
 static void read_patch_file(struct strbuf *sb, int fd)
 {
 	if (strbuf_read(sb, fd, 0) < 0)
-		die("git apply: read returned %s", strerror(errno));
+		die_errno("git apply: failed to read");
 
 	/*
 	 * Make sure that we have some slop in the buffer
@@ -2823,8 +2823,8 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	} else {
 		if (!cached) {
 			if (lstat(path, &st) < 0)
-				die("unable to stat newly created file %s",
-				    path);
+				die_errno("unable to stat newly created file '%s'",
+					  path);
 			fill_stat_cache_info(ce, &st);
 		}
 		if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0)
@@ -2864,7 +2864,7 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	strbuf_release(&nbuf);
 
 	if (close(fd) < 0)
-		die("closing file %s: %s", path, strerror(errno));
+		die_errno("closing file '%s'", path);
 	return 0;
 }
 
@@ -2913,7 +2913,7 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 			++nr;
 		}
 	}
-	die("unable to write file %s mode %o", path, mode);
+	die_errno("unable to write file '%s' mode %o", path, mode);
 }
 
 static void create_file(struct patch *patch)
@@ -3356,7 +3356,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 
 		fd = open(arg, O_RDONLY);
 		if (fd < 0)
-			die("can't open patch '%s': %s", arg, strerror(errno));
+			die_errno("can't open patch '%s'", arg);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
 		errs |= apply_patch(fd, arg, options);

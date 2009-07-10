@@ -220,7 +220,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	launch_editor(file, NULL, NULL);
 
 	if (stat(file, &st))
-		die("Could not stat '%s'", file);
+		die_errno("Could not stat '%s'", file);
 	if (!st.st_size)
 		die("Empty patch. Aborted.");
 

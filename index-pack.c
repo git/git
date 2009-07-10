@@ -143,7 +143,7 @@ static void *fill(int min)
 		if (ret <= 0) {
 			if (!ret)
 				die("early EOF");
-			die("read error on input: %s", strerror(errno));
+			die_errno("read error on input");
 		}
 		input_len += ret;
 		if (from_stdin)
@@ -178,13 +178,12 @@ static char *open_pack_file(char *pack_name)
 		} else
 			output_fd = open(pack_name, O_CREAT|O_EXCL|O_RDWR, 0600);
 		if (output_fd < 0)
-			die("unable to create %s: %s", pack_name, strerror(errno));
+			die_errno("unable to create '%s'", pack_name);
 		pack_fd = output_fd;
 	} else {
 		input_fd = open(pack_name, O_RDONLY);
 		if (input_fd < 0)
-			die("cannot open packfile '%s': %s",
-			    pack_name, strerror(errno));
+			die_errno("cannot open packfile '%s'", pack_name);
 		output_fd = -1;
 		pack_fd = input_fd;
 	}
@@ -370,7 +369,7 @@ static void *get_data_from_pack(struct object_entry *obj)
 	do {
 		ssize_t n = pread(pack_fd, data + rdy, len - rdy, from + rdy);
 		if (n < 0)
-			die("cannot pread pack file: %s", strerror(errno));
+			die_errno("cannot pread pack file");
 		if (!n)
 			die("premature end of pack file, %lu bytes missing",
 			    len - rdy);
@@ -631,7 +630,7 @@ static void parse_pack_objects(unsigned char *sha1)
 
 	/* If input_fd is a file, we should have reached its end now. */
 	if (fstat(input_fd, &st))
-		die("cannot fstat packfile: %s", strerror(errno));
+		die_errno("cannot fstat packfile");
 	if (S_ISREG(st.st_mode) &&
 			lseek(input_fd, 0, SEEK_CUR) - input_len != st.st_size)
 		die("pack has junk at the end");
@@ -788,7 +787,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		fsync_or_die(output_fd, curr_pack_name);
 		err = close(output_fd);
 		if (err)
-			die("error while closing pack file: %s", strerror(errno));
+			die_errno("error while closing pack file");
 	}
 
 	if (keep_msg) {
@@ -801,16 +800,16 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 
 		if (keep_fd < 0) {
 			if (errno != EEXIST)
-				die("cannot write keep file '%s' (%s)",
-				    keep_name, strerror(errno));
+				die_errno("cannot write keep file '%s'",
+					  keep_name);
 		} else {
 			if (keep_msg_len > 0) {
 				write_or_die(keep_fd, keep_msg, keep_msg_len);
 				write_or_die(keep_fd, "\n", 1);
 			}
 			if (close(keep_fd) != 0)
-				die("cannot close written keep file '%s' (%s)",
-				    keep_name, strerror(errno));
+				die_errno("cannot close written keep file '%s'",
+				    keep_name);
 			report = "keep";
 		}
 	}

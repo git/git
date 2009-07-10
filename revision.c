@@ -1077,6 +1077,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->show_all = 1;
 	} else if (!strcmp(arg, "--remove-empty")) {
 		revs->remove_empty_trees = 1;
+	} else if (!strcmp(arg, "--merges")) {
+		revs->merges_only = 1;
 	} else if (!strcmp(arg, "--no-merges")) {
 		revs->no_merges = 1;
 	} else if (!strcmp(arg, "--boundary")) {
@@ -1675,6 +1677,8 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 	if (revs->min_age != -1 && (commit->date > revs->min_age))
 		return commit_ignore;
 	if (revs->no_merges && commit->parents && commit->parents->next)
+		return commit_ignore;
+	if (revs->merges_only && !(commit->parents && commit->parents->next))
 		return commit_ignore;
 	if (!commit_match(commit, revs))
 		return commit_ignore;

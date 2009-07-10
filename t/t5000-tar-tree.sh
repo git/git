@@ -94,6 +94,10 @@ test_expect_success 'git archive with --output' \
     'git archive --output=b4.tar HEAD &&
     test_cmp b.tar b4.tar'
 
+test_expect_success 'git archive --remote' \
+    'git archive --remote=. HEAD >b5.tar &&
+    test_cmp b.tar b5.tar'
+
 test_expect_success \
     'validate file modification time' \
     'mkdir extract &&

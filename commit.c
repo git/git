@@ -50,7 +50,6 @@ struct commit *lookup_commit(const unsigned char *sha1)
 
 static unsigned long parse_commit_date(const char *buf, const char *tail)
 {
-	unsigned long date;
 	const char *dateptr;
 
 	if (buf + 6 >= tail)
@@ -73,10 +72,7 @@ static unsigned long parse_commit_date(const char *buf, const char *tail)
 	if (buf >= tail)
 		return 0;
 	/* dateptr < buf && buf[-1] == '\n', so strtoul will stop at buf-1 */
-	date = strtoul(dateptr, NULL, 10);
-	if (date == ULONG_MAX)
-		date = 0;
-	return date;
+	return strtoul(dateptr, NULL, 10);
 }
 
 static struct commit_graft **commit_graft;

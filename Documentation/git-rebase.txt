@@ -236,6 +236,10 @@ OPTIONS
 	is used instead ('git-merge-recursive' when merging a single
 	head, 'git-merge-octopus' otherwise).  This implies --merge.
 
+-q::
+--quiet::
+	Be quiet. Implies --no-stat.
+
 -v::
 --verbose::
 	Be verbose. Implies --stat.

@@ -377,7 +377,7 @@ named without a .git extension (e.g. /pub/git/project instead of
 
 	DocumentRoot /var/www/gitweb
 
-	AliasMatch ^(/.*?)(\.git)(/.*)? /pub/git$1$3
+	AliasMatch ^(/.*?)(\.git)(/.*)?$ /pub/git$1$3
 	<Directory /var/www/gitweb>
 		Options ExecCGI
 		AddHandler cgi-script cgi
@@ -401,6 +401,14 @@ be cloned), while
 http://git.example.com/project
 
 will provide human-friendly gitweb access.
+
+This solution is not 100% bulletproof, in the sense that if some project
+has a named ref (branch, tag) starting with 'git/', then paths such as
+
+http://git.example.com/project/command/abranch..git/abranch
+
+will fail with a 404 error.
+
 
 
 Originally written by:
