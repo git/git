@@ -844,17 +844,17 @@ ifeq ($(uname_S),IRIX)
 	NEEDS_LIBGEN = YesPlease
 endif
 ifeq ($(uname_S),IRIX64)
-	NO_IPV6=YesPlease
 	NO_SETENV=YesPlease
+	NO_UNSETENV = YesPlease
 	NO_STRCASESTR=YesPlease
 	NO_MEMMEM = YesPlease
 	NO_MKSTEMPS = YesPlease
-	NO_STRLCPY = YesPlease
-	NO_SOCKADDR_STORAGE=YesPlease
+	NO_MKDTEMP = YesPlease
+	NO_MMAP = YesPlease
+	NO_EXTERNAL_GREP = UnfortunatelyYes
+	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH=/usr/gnu/bin/bash
-	BASIC_CFLAGS += -DPATH_MAX=1024
-	# for now, build 32-bit version
-	BASIC_LDFLAGS += -L/usr/lib32
+	NEEDS_LIBGEN = YesPlease
 endif
 ifeq ($(uname_S),HP-UX)
 	NO_IPV6=YesPlease
