@@ -1641,10 +1641,11 @@ ifneq (,$X)
 endif
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
-	{ $(RM) "$$execdir/git$X" && \
+	{ test "$$bindir/" = "$$execdir/" || \
+		{ $(RM) "$$execdir/git$X" && \
 		test -z "$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
 		ln "$$bindir/git$X" "$$execdir/git$X" 2>/dev/null || \
-		cp "$$bindir/git$X" "$$execdir/git$X"; } && \
+		cp "$$bindir/git$X" "$$execdir/git$X"; } ; } && \
 	{ for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
 		ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
