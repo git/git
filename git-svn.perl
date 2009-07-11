@@ -1359,11 +1359,11 @@ sub read_repo_config {
 sub extract_metadata {
 	my $id = shift or return (undef, undef, undef);
 	my ($url, $rev, $uuid) = ($id =~ /^\s*git-svn-id:\s+(.*)\@(\d+)
-							\s([a-f\d\-]+)$/x);
+							\s([a-f\d\-]+)$/ix);
 	if (!defined $rev || !$uuid || !$url) {
 		# some of the original repositories I made had
 		# identifiers like this:
-		($rev, $uuid) = ($id =~/^\s*git-svn-id:\s(\d+)\@([a-f\d\-]+)/);
+		($rev, $uuid) = ($id =~/^\s*git-svn-id:\s(\d+)\@([a-f\d\-]+)/i);
 	}
 	return ($url, $rev, $uuid);
 }
@@ -2010,7 +2010,7 @@ sub _set_svm_vars {
 
 		chomp($src, $uuid);
 
-		$uuid =~ m{^[0-9a-f\-]{30,}$}
+		$uuid =~ m{^[0-9a-f\-]{30,}$}i
 		    or die "doesn't look right - svm:uuid is '$uuid'\n";
 
 		# the '!' is used to mark the repos_root!/relative/path
@@ -2096,7 +2096,7 @@ sub svnsync {
 		   die "doesn't look right - svn:sync-from-url is '$url'\n";
 
 		my $uuid = tmp_config('--get', "$section.svnsync-uuid");
-		($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}) or
+		($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}i) or
 		   die "doesn't look right - svn:sync-from-uuid is '$uuid'\n";
 
 		$svnsync = { url => $url, uuid => $uuid }
@@ -2114,7 +2114,7 @@ sub svnsync {
 	           die "doesn't look right - svn:sync-from-url is '$url'\n";
 
 	my $uuid = $rp->{'svn:sync-from-uuid'} or die $err . "uuid\n";
-	($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}) or
+	($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}i) or
 	           die "doesn't look right - svn:sync-from-uuid is '$uuid'\n";
 
 	my $section = "svn-remote.$self->{repo_id}";
@@ -2130,7 +2130,7 @@ sub ra_uuid {
 	unless ($self->{ra_uuid}) {
 		my $key = "svn-remote.$self->{repo_id}.uuid";
 		my $uuid = eval { tmp_config('--get', $key) };
-		if (!$@ && $uuid && $uuid =~ /^([a-f\d\-]{30,})$/) {
+		if (!$@ && $uuid && $uuid =~ /^([a-f\d\-]{30,})$/i) {
 			$self->{ra_uuid} = $uuid;
 		} else {
 			die "ra_uuid called without URL\n" unless $self->{url};
@@ -2848,7 +2848,7 @@ sub make_log_entry {
 			die "Can't have both 'useSvmProps' and 'rewriteRoot' ",
 			    "options set!\n";
 		}
-		my ($uuid, $r) = $headrev =~ m{^([a-f\d\-]{30,}):(\d+)$};
+		my ($uuid, $r) = $headrev =~ m{^([a-f\d\-]{30,}):(\d+)$}i;
 		# we don't want "SVM: initializing mirror for junk" ...
 		return undef if $r == 0;
 		my $svm = $self->svm;
