@@ -1114,7 +1114,7 @@ _git_ls_tree ()
 __git_log_common_options="
 	--not --all
 	--branches --tags --remotes
-	--first-parent --no-merges
+	--first-parent --merges --no-merges
 	--max-count=
 	--max-age= --since= --after=
 	--min-age= --until= --before=
