@@ -14,12 +14,11 @@ struct path_simplify {
 	const char *path;
 };
 
-static int read_directory_recursive(struct dir_struct *dir,
-	const char *path, const char *base, int baselen,
+static int read_directory_recursive(struct dir_struct *dir, const char *path, int len,
 	int check_only, const struct path_simplify *simplify);
-static int get_dtype(struct dirent *de, const char *path);
+static int get_dtype(struct dirent *de, const char *path, int len);
 
-int common_prefix(const char **pathspec)
+static int common_prefix(const char **pathspec)
 {
 	const char *path, *slash, *next;
 	int prefix;
@@ -50,6 +49,26 @@ int common_prefix(const char **pathspec)
 		}
 	}
 	return prefix;
+}
+
+int fill_directory(struct dir_struct *dir, const char **pathspec)
+{
+	const char *path;
+	int len;
+
+	/*
+	 * Calculate common prefix for the pathspec, and
+	 * use that to optimize the directory walk
+	 */
+	len = common_prefix(pathspec);
+	path = "";
+
+	if (len)
+		path = xmemdupz(*pathspec, len);
+
+	/* Read the directory and prune it */
+	read_directory(dir, path, len, pathspec);
+	return len;
 }
 
 /*
@@ -307,7 +326,7 @@ static int excluded_1(const char *pathname,
 
 			if (x->flags & EXC_FLAG_MUSTBEDIR) {
 				if (*dtype == DT_UNKNOWN)
-					*dtype = get_dtype(NULL, pathname);
+					*dtype = get_dtype(NULL, pathname, pathlen);
 				if (*dtype != DT_DIR)
 					continue;
 			}
@@ -505,7 +524,7 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 	/* This is the "show_other_directories" case */
 	if (!(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
 		return show_directory;
-	if (!read_directory_recursive(dir, dirname, dirname, len, 1, simplify))
+	if (!read_directory_recursive(dir, dirname, len, 1, simplify))
 		return ignore_directory;
 	return show_directory;
 }
@@ -547,11 +566,52 @@ static int in_pathspec(const char *path, int len, const struct path_simplify *si
 	return 0;
 }
 
-static int get_dtype(struct dirent *de, const char *path)
+static int get_index_dtype(const char *path, int len)
+{
+	int pos;
+	struct cache_entry *ce;
+
+	ce = cache_name_exists(path, len, 0);
+	if (ce) {
+		if (!ce_uptodate(ce))
+			return DT_UNKNOWN;
+		if (S_ISGITLINK(ce->ce_mode))
+			return DT_DIR;
+		/*
+		 * Nobody actually cares about the
+		 * difference between DT_LNK and DT_REG
+		 */
+		return DT_REG;
+	}
+
+	/* Try to look it up as a directory */
+	pos = cache_name_pos(path, len);
+	if (pos >= 0)
+		return DT_UNKNOWN;
+	pos = -pos-1;
+	while (pos < active_nr) {
+		ce = active_cache[pos++];
+		if (strncmp(ce->name, path, len))
+			break;
+		if (ce->name[len] > '/')
+			break;
+		if (ce->name[len] < '/')
+			continue;
+		if (!ce_uptodate(ce))
+			break;	/* continue? */
+		return DT_DIR;
+	}
+	return DT_UNKNOWN;
+}
+
+static int get_dtype(struct dirent *de, const char *path, int len)
 {
 	int dtype = de ? DTYPE(de) : DT_UNKNOWN;
 	struct stat st;
 
+	if (dtype != DT_UNKNOWN)
+		return dtype;
+	dtype = get_index_dtype(path, len);
 	if (dtype != DT_UNKNOWN)
 		return dtype;
 	if (lstat(path, &st))
@@ -574,15 +634,15 @@ static int get_dtype(struct dirent *de, const char *path)
  * Also, we ignore the name ".git" (even if it is not a directory).
  * That likely will not change.
  */
-static int read_directory_recursive(struct dir_struct *dir, const char *path, const char *base, int baselen, int check_only, const struct path_simplify *simplify)
+static int read_directory_recursive(struct dir_struct *dir, const char *base, int baselen, int check_only, const struct path_simplify *simplify)
 {
-	DIR *fdir = opendir(*path ? path : ".");
+	DIR *fdir = opendir(*base ? base : ".");
 	int contents = 0;
 
 	if (fdir) {
 		struct dirent *de;
-		char fullname[PATH_MAX + 1];
-		memcpy(fullname, base, baselen);
+		char path[PATH_MAX + 1];
+		memcpy(path, base, baselen);
 
 		while ((de = readdir(fdir)) != NULL) {
 			int len, dtype;
@@ -593,17 +653,18 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 				continue;
 			len = strlen(de->d_name);
 			/* Ignore overly long pathnames! */
-			if (len + baselen + 8 > sizeof(fullname))
+			if (len + baselen + 8 > sizeof(path))
 				continue;
-			memcpy(fullname + baselen, de->d_name, len+1);
-			if (simplify_away(fullname, baselen + len, simplify))
+			memcpy(path + baselen, de->d_name, len+1);
+			len = baselen + len;
+			if (simplify_away(path, len, simplify))
 				continue;
 
 			dtype = DTYPE(de);
-			exclude = excluded(dir, fullname, &dtype);
+			exclude = excluded(dir, path, &dtype);
 			if (exclude && (dir->flags & DIR_COLLECT_IGNORED)
-			    && in_pathspec(fullname, baselen + len, simplify))
-				dir_add_ignored(dir, fullname, baselen + len);
+			    && in_pathspec(path, len, simplify))
+				dir_add_ignored(dir, path,len);
 
 			/*
 			 * Excluded? If we don't explicitly want to show
@@ -613,7 +674,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 				continue;
 
 			if (dtype == DT_UNKNOWN)
-				dtype = get_dtype(de, fullname);
+				dtype = get_dtype(de, path, len);
 
 			/*
 			 * Do we want to see just the ignored files?
@@ -630,9 +691,9 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			default:
 				continue;
 			case DT_DIR:
-				memcpy(fullname + baselen + len, "/", 2);
+				memcpy(path + len, "/", 2);
 				len++;
-				switch (treat_directory(dir, fullname, baselen + len, simplify)) {
+				switch (treat_directory(dir, path, len, simplify)) {
 				case show_directory:
 					if (exclude != !!(dir->flags
 							& DIR_SHOW_IGNORED))
@@ -640,7 +701,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 					break;
 				case recurse_into_directory:
 					contents += read_directory_recursive(dir,
-						fullname, fullname, baselen + len, 0, simplify);
+						path, len, 0, simplify);
 					continue;
 				case ignore_directory:
 					continue;
@@ -654,7 +715,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			if (check_only)
 				goto exit_early;
 			else
-				dir_add_name(dir, fullname, baselen + len);
+				dir_add_name(dir, path, len);
 		}
 exit_early:
 		closedir(fdir);
@@ -717,15 +778,15 @@ static void free_simplify(struct path_simplify *simplify)
 	free(simplify);
 }
 
-int read_directory(struct dir_struct *dir, const char *path, const char *base, int baselen, const char **pathspec)
+int read_directory(struct dir_struct *dir, const char *path, int len, const char **pathspec)
 {
 	struct path_simplify *simplify;
 
-	if (has_symlink_leading_path(path, strlen(path)))
+	if (has_symlink_leading_path(path, len))
 		return dir->nr;
 
 	simplify = create_simplify(pathspec);
-	read_directory_recursive(dir, path, base, baselen, 0, simplify);
+	read_directory_recursive(dir, path, len, 0, simplify);
 	free_simplify(simplify);
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
 	qsort(dir->ignored, dir->ignored_nr, sizeof(struct dir_entry *), cmp_name);

@@ -97,35 +97,6 @@ static void treat_gitlinks(const char **pathspec)
 	}
 }
 
-static void fill_directory(struct dir_struct *dir, const char **pathspec,
-		int ignored_too)
-{
-	const char *path, *base;
-	int baselen;
-
-	/* Set up the default git porcelain excludes */
-	memset(dir, 0, sizeof(*dir));
-	if (!ignored_too) {
-		dir->flags |= DIR_COLLECT_IGNORED;
-		setup_standard_excludes(dir);
-	}
-
-	/*
-	 * Calculate common prefix for the pathspec, and
-	 * use that to optimize the directory walk
-	 */
-	baselen = common_prefix(pathspec);
-	path = ".";
-	base = "";
-	if (baselen)
-		path = base = xmemdupz(*pathspec, baselen);
-
-	/* Read the directory and prune it */
-	read_directory(dir, path, base, baselen, pathspec);
-	if (pathspec)
-		prune_directory(dir, pathspec, baselen);
-}
-
 static void refresh(int verbose, const char **pathspec)
 {
 	char *seen;
@@ -343,9 +314,21 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		die("index file corrupt");
 	treat_gitlinks(pathspec);
 
-	if (add_new_files)
+	if (add_new_files) {
+		int baselen;
+
+		/* Set up the default git porcelain excludes */
+		memset(&dir, 0, sizeof(dir));
+		if (!ignored_too) {
+			dir.flags |= DIR_COLLECT_IGNORED;
+			setup_standard_excludes(&dir);
+		}
+
 		/* This picks up the paths that are not tracked */
-		fill_directory(&dir, pathspec, ignored_too);
+		baselen = fill_directory(&dir, pathspec);
+		if (pathspec)
+			prune_directory(&dir, pathspec, baselen);
+	}
 
 	if (refresh_only) {
 		refresh(verbose, pathspec);

@@ -34,7 +34,9 @@ static void *preload_thread(void *_data)
 	struct thread_data *p = _data;
 	struct index_state *index = p->index;
 	struct cache_entry **cep = index->cache + p->offset;
+	struct cache_def cache;
 
+	memset(&cache, 0, sizeof(cache));
 	nr = p->nr;
 	if (nr + p->offset > index->cache_nr)
 		nr = index->cache_nr - p->offset;
@@ -48,6 +50,8 @@ static void *preload_thread(void *_data)
 		if (ce_uptodate(ce))
 			continue;
 		if (!ce_path_match(ce, p->pathspec))
+			continue;
+		if (threaded_has_symlink_leading_path(&cache, ce->name, ce_namelen(ce)))
 			continue;
 		if (lstat(ce->name, &st))
 			continue;

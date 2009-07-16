@@ -876,10 +876,6 @@ sub cmd_multi_init {
 		usage(1);
 	}
 
-	# there are currently some bugs that prevent multi-init/multi-fetch
-	# setups from working well without this.
-	$Git::SVN::_minimize_url = 1;
-
 	$_prefix = '' unless defined $_prefix;
 	if (defined $url) {
 		$url = canonicalize_url($url);
@@ -1180,7 +1176,7 @@ sub complete_url_ls_init {
 		    "wanted to set to: $gs->{url}\n";
 	}
 	command_oneline('config', $k, $gs->{url}) unless $orig_url;
-	my $remote_path = "$ra->{svn_path}/$repo_path";
+	my $remote_path = "$gs->{path}/$repo_path";
 	$remote_path =~ s#/+#/#g;
 	$remote_path =~ s#^/##g;
 	$remote_path .= "/*" if $remote_path !~ /\*/;
@@ -1363,11 +1359,11 @@ sub read_repo_config {
 sub extract_metadata {
 	my $id = shift or return (undef, undef, undef);
 	my ($url, $rev, $uuid) = ($id =~ /^\s*git-svn-id:\s+(.*)\@(\d+)
-							\s([a-f\d\-]+)$/x);
+							\s([a-f\d\-]+)$/ix);
 	if (!defined $rev || !$uuid || !$url) {
 		# some of the original repositories I made had
 		# identifiers like this:
-		($rev, $uuid) = ($id =~/^\s*git-svn-id:\s(\d+)\@([a-f\d\-]+)/);
+		($rev, $uuid) = ($id =~/^\s*git-svn-id:\s(\d+)\@([a-f\d\-]+)/i);
 	}
 	return ($url, $rev, $uuid);
 }
@@ -2014,7 +2010,7 @@ sub _set_svm_vars {
 
 		chomp($src, $uuid);
 
-		$uuid =~ m{^[0-9a-f\-]{30,}$}
+		$uuid =~ m{^[0-9a-f\-]{30,}$}i
 		    or die "doesn't look right - svm:uuid is '$uuid'\n";
 
 		# the '!' is used to mark the repos_root!/relative/path
@@ -2100,7 +2096,7 @@ sub svnsync {
 		   die "doesn't look right - svn:sync-from-url is '$url'\n";
 
 		my $uuid = tmp_config('--get', "$section.svnsync-uuid");
-		($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}) or
+		($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}i) or
 		   die "doesn't look right - svn:sync-from-uuid is '$uuid'\n";
 
 		$svnsync = { url => $url, uuid => $uuid }
@@ -2118,7 +2114,7 @@ sub svnsync {
 	           die "doesn't look right - svn:sync-from-url is '$url'\n";
 
 	my $uuid = $rp->{'svn:sync-from-uuid'} or die $err . "uuid\n";
-	($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}) or
+	($uuid) = ($uuid =~ m{^([0-9a-f\-]{30,})$}i) or
 	           die "doesn't look right - svn:sync-from-uuid is '$uuid'\n";
 
 	my $section = "svn-remote.$self->{repo_id}";
@@ -2134,7 +2130,7 @@ sub ra_uuid {
 	unless ($self->{ra_uuid}) {
 		my $key = "svn-remote.$self->{repo_id}.uuid";
 		my $uuid = eval { tmp_config('--get', $key) };
-		if (!$@ && $uuid && $uuid =~ /^([a-f\d\-]{30,})$/) {
+		if (!$@ && $uuid && $uuid =~ /^([a-f\d\-]{30,})$/i) {
 			$self->{ra_uuid} = $uuid;
 		} else {
 			die "ra_uuid called without URL\n" unless $self->{url};
@@ -2175,16 +2171,6 @@ sub ra {
 		$self->{-want_revprops} = 1;
 	}
 	$ra;
-}
-
-sub rel_path {
-	my ($self) = @_;
-	my $repos_root = $self->ra->{repos_root};
-	return $self->{path} if ($self->{url} eq $repos_root);
-	my $url = $self->{url} .
-	          (length $self->{path} ? "/$self->{path}" : $self->{path});
-	$url =~ s!^\Q$repos_root\E(?:/+|$)!!g;
-	$url;
 }
 
 # prop_walk(PATH, REV, SUB)
@@ -2512,10 +2498,7 @@ sub match_paths {
 	if (my $path = $paths->{"/$self->{path}"}) {
 		return ($path->{action} eq 'D') ? 0 : 1;
 	}
-	my $repos_root = $self->ra->{repos_root};
-	my $extended_path = $self->{url} . '/' . $self->{path};
-	$extended_path =~ s#^\Q$repos_root\E(/|$)##;
-	$self->{path_regex} ||= qr/^\/\Q$extended_path\E\//;
+	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\//;
 	if (grep /$self->{path_regex}/, keys %$paths) {
 		return 1;
 	}
@@ -2538,15 +2521,14 @@ sub find_parent_branch {
 	unless (defined $paths) {
 		my $err_handler = $SVN::Error::handler;
 		$SVN::Error::handler = \&Git::SVN::Ra::skip_unknown_revs;
-		$self->ra->get_log([$self->{path}], $rev, $rev, 0, 1, 1, sub {
-		                   $paths =
-				      Git::SVN::Ra::dup_changed_paths($_[0]) });
+		$self->ra->get_log([$self->{path}], $rev, $rev, 0, 1, 1,
+				   sub { $paths = $_[0] });
 		$SVN::Error::handler = $err_handler;
 	}
 	return undef unless defined $paths;
 
 	# look for a parent from another branch:
-	my @b_path_components = split m#/#, $self->rel_path;
+	my @b_path_components = split m#/#, $self->{path};
 	my @a_path_components;
 	my $i;
 	while (@b_path_components) {
@@ -2564,11 +2546,11 @@ sub find_parent_branch {
 	my $r = $i->{copyfrom_rev};
 	my $repos_root = $self->ra->{repos_root};
 	my $url = $self->ra->{url};
-	my $new_url = $repos_root . $branch_from;
+	my $new_url = $url . $branch_from;
 	print STDERR  "Found possible branch point: ",
 	              "$new_url => ", $self->full_url, ", $r\n";
 	$branch_from =~ s#^/##;
-	my $gs = $self->other_gs($new_url, $url, $repos_root,
+	my $gs = $self->other_gs($new_url, $url,
 		                 $branch_from, $r, $self->{ref_id});
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	{
@@ -2753,9 +2735,9 @@ sub parse_svn_date {
 }
 
 sub other_gs {
-	my ($self, $new_url, $url, $repos_root,
+	my ($self, $new_url, $url,
 	    $branch_from, $r, $old_ref_id) = @_;
-	my $gs = Git::SVN->find_by_url($new_url, $repos_root, $branch_from);
+	my $gs = Git::SVN->find_by_url($new_url, $url, $branch_from);
 	unless ($gs) {
 		my $ref_id = $old_ref_id;
 		$ref_id =~ s/\@\d+$//;
@@ -2866,7 +2848,7 @@ sub make_log_entry {
 			die "Can't have both 'useSvmProps' and 'rewriteRoot' ",
 			    "options set!\n";
 		}
-		my ($uuid, $r) = $headrev =~ m{^([a-f\d\-]{30,}):(\d+)$};
+		my ($uuid, $r) = $headrev =~ m{^([a-f\d\-]{30,}):(\d+)$}i;
 		# we don't want "SVM: initializing mirror for junk" ...
 		return undef if $r == 0;
 		my $svm = $self->svm;
@@ -4431,6 +4413,34 @@ sub get_log {
 	my ($self, @args) = @_;
 	my $pool = SVN::Pool->new;
 
+	# svn_log_changed_path_t objects passed to get_log are likely to be
+	# overwritten even if only the refs are copied to an external variable,
+	# so we should dup the structures in their entirety.  Using an
+	# externally passed pool (instead of our temporary and quickly cleared
+	# pool in Git::SVN::Ra) does not help matters at all...
+	my $receiver = pop @args;
+	my $prefix = "/".$self->{svn_path};
+	$prefix =~ s#/+($)##;
+	my $prefix_regex = qr#^\Q$prefix\E#;
+	push(@args, sub {
+		my ($paths) = $_[0];
+		return &$receiver(@_) unless $paths;
+		$_[0] = ();
+		foreach my $p (keys %$paths) {
+			my $i = $paths->{$p};
+			# Make path relative to our url, not repos_root
+			$p =~ s/$prefix_regex//;
+			my %s = map { $_ => $i->$_; }
+				qw/copyfrom_path copyfrom_rev action/;
+			if ($s{'copyfrom_path'}) {
+				$s{'copyfrom_path'} =~ s/$prefix_regex//;
+			}
+			$_[0]{$p} = \%s;
+		}
+		&$receiver(@_);
+	});
+
+
 	# the limit parameter was not supported in SVN 1.1.x, so we
 	# drop it.  Therefore, the receiver callback passed to it
 	# is made aware of this limitation by being wrapped if
@@ -4600,7 +4610,7 @@ sub gs_fetch_loop_common {
 		};
 		sub _cb {
 			my ($paths, $r, $author, $date, $log) = @_;
-			[ dup_changed_paths($paths),
+			[ $paths,
 			  { author => $author, date => $date, log => $log } ];
 		}
 		$self->get_log([$longest_path], $min, $max, 0, 1, 1,
@@ -4821,24 +4831,6 @@ sub skip_unknown_revs {
 		return;
 	}
 	die "Error from SVN, ($errno): ", $err->expanded_message,"\n";
-}
-
-# svn_log_changed_path_t objects passed to get_log are likely to be
-# overwritten even if only the refs are copied to an external variable,
-# so we should dup the structures in their entirety.  Using an externally
-# passed pool (instead of our temporary and quickly cleared pool in
-# Git::SVN::Ra) does not help matters at all...
-sub dup_changed_paths {
-	my ($paths) = @_;
-	return undef unless $paths;
-	my %ret;
-	foreach my $p (keys %$paths) {
-		my $i = $paths->{$p};
-		my %s = map { $_ => $i->$_ }
-		              qw/copyfrom_path copyfrom_rev action/;
-		$ret{$p} = \%s;
-	}
-	\%ret;
 }
 
 package Git::SVN::Log;

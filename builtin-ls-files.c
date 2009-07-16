@@ -161,12 +161,7 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 
 	/* For cached/deleted files we don't need to even do the readdir */
 	if (show_others || show_killed) {
-		const char *path = ".", *base = "";
-		int baselen = prefix_len;
-
-		if (baselen)
-			path = base = prefix;
-		read_directory(dir, path, base, baselen, pathspec);
+		fill_directory(dir, pathspec);
 		if (show_others)
 			show_other_files(dir);
 		if (show_killed)

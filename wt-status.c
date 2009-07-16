@@ -255,7 +255,7 @@ static void wt_status_print_untracked(struct wt_status *s)
 			DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
 	setup_standard_excludes(&dir);
 
-	read_directory(&dir, ".", "", 0, NULL);
+	fill_directory(&dir, NULL);
 	for(i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
 		if (!cache_name_is_other(ent->name, ent->len))

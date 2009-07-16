@@ -485,6 +485,12 @@ AC_CHECK_LIB([resolv], [hstrerror],
 AC_SUBST(NEEDS_RESOLV)
 test -n "$NEEDS_RESOLV" && LIBS="$LIBS -lresolv"
 
+AC_CHECK_LIB([gen], [basename],
+[NEEDS_LIBGEN=],
+[NEEDS_LIBGEN=YesPlease])
+AC_SUBST(NEEDS_LIBGEN)
+test -n "$NEEDS_LIBGEN" && LIBS="$LIBS -lgen"
+
 ## Checks for header files.
 AC_MSG_NOTICE([CHECKS for header files])
 #
