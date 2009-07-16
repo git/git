@@ -777,8 +777,6 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 	for_each_recent_reflog_ent("HEAD", grab_nth_branch_switch, 40960, &cb);
 	if (cb.cnt < nth) {
 		cb.cnt = 0;
-		for (i = 0; i < nth; i++)
-			strbuf_release(&cb.buf[i]);
 		for_each_reflog_ent("HEAD", grab_nth_branch_switch, &cb);
 	}
 	if (cb.cnt < nth)
