@@ -1525,8 +1525,10 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs,
 		if (fstat(fileno(logfp), &statbuf) ||
 		    statbuf.st_size < ofs ||
 		    fseek(logfp, -ofs, SEEK_END) ||
-		    fgets(buf, sizeof(buf), logfp))
+		    fgets(buf, sizeof(buf), logfp)) {
+			fclose(logfp);
 			return -1;
+		}
 	}
 
 	while (fgets(buf, sizeof(buf), logfp)) {
