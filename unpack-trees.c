@@ -982,7 +982,7 @@ int oneway_merge(struct cache_entry **src, struct unpack_trees_options *o)
 		return error("Cannot do a oneway merge of %d trees",
 			     o->merge_size);
 
-	if (!a)
+	if (!a || a == o->df_conflict_entry)
 		return deleted_entry(old, old, o);
 
 	if (old && same(old, a)) {
