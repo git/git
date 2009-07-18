@@ -256,7 +256,7 @@ apache2_conf () {
 	mkdir -p "$GIT_DIR/gitweb/logs"
 	bind=
 	test x"$local" = xtrue && bind='127.0.0.1:'
-	echo 'text/css css' > $fqgitdir/mime.types
+	echo 'text/css css' > "$fqgitdir/mime.types"
 	cat > "$conf" <<EOF
 ServerName "git-instaweb"
 ServerRoot "$fqgitdir/gitweb"
@@ -272,7 +272,7 @@ EOF
 		fi
 	done
 	cat >> "$conf" <<EOF
-TypesConfig $fqgitdir/mime.types
+TypesConfig "$fqgitdir/mime.types"
 DirectoryIndex gitweb.cgi
 EOF
 
