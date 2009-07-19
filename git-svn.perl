@@ -31,6 +31,7 @@ require SVN::Delta;
 if ($SVN::Core::VERSION lt '1.1.0') {
 	fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)";
 }
+my $can_compress = eval { require Compress::Zlib; 1};
 push @Git::SVN::Ra::ISA, 'SVN::Ra';
 push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
 push @SVN::Git::Fetcher::ISA, 'SVN::Delta::Editor';
@@ -40,6 +41,7 @@ use IO::File qw//;
 use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
 use File::Spec;
+use File::Find;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use IPC::Open3;
 use Git;
@@ -217,6 +219,10 @@ my %cmd = (
 		     "Undo fetches back to the specified SVN revision",
 		     { 'revision|r=s' => \$_revision,
 		       'parent|p' => \$_fetch_parent } ],
+	'gc' => [ \&cmd_gc,
+		  "Compress unhandled.log files in .git/svn and remove " .
+		  "index files in .git/svn",
+		{} ],
 );
 
 my $cmd;
@@ -1107,6 +1113,14 @@ sub cmd_reset {
 	print "r$r = $c ($gs->{ref_id})\n";
 }
 
+sub cmd_gc {
+	if (!$can_compress) {
+		warn "Compress::Zlib could not be found; unhandled.log " .
+		     "files will not be compressed.\n";
+	}
+	find({ wanted => \&gc_directory, no_chdir => 1}, "$ENV{GIT_DIR}/svn");
+}
+
 ########################### utility functions #########################
 
 sub rebase_cmd {
@@ -1525,6 +1539,25 @@ sub md5sum {
 		::fatal "Can't provide MD5 hash for unknown ref type: '", $ref, "'";
 	}
 	return $md5->hexdigest();
+}
+
+sub gc_directory {
+	if ($can_compress && -f $_ && basename($_) eq "unhandled.log") {
+		my $out_filename = $_ . ".gz";
+		open my $in_fh, "<", $_ or die "Unable to open $_: $!\n";
+		binmode $in_fh;
+		my $gz = Compress::Zlib::gzopen($out_filename, "ab") or
+				die "Unable to open $out_filename: $!\n";
+
+		my $res;
+		while ($res = sysread($in_fh, my $str, 1024)) {
+			$gz->gzwrite($str) or
+				die "Unable to write: ".$gz->gzerror()."!\n";
+		}
+		unlink $_ or die "unlink $File::Find::name: $!\n";
+	} elsif (-f $_ && basename($_) eq "index") {
+		unlink $_ or die "unlink $_: $!\n";
+	}
 }
 
 package Git::SVN;

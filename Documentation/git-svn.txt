@@ -338,6 +338,10 @@ Any other arguments are passed directly to 'git log'
 	Shows the Subversion externals.  Use -r/--revision to specify a
 	specific revision.
 
+'gc'::
+	Compress $GIT_DIR/svn/<refname>/unhandled.log files in .git/svn
+	and remove $GIT_DIR/svn/<refname>index files in .git/svn.
+
 'reset'::
 	Undoes the effects of 'fetch' back to the specified revision.
 	This allows you to re-'fetch' an SVN revision.  Normally the
