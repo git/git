@@ -117,15 +117,14 @@ test_expect_success '--rebase with rebased default upstream' '
 
 '
 
-test_expect_failure 'rebased upstream + fetch + pull --rebase' '
+test_expect_success 'rebased upstream + fetch + pull --rebase' '
 
 	git update-ref refs/remotes/me/copy copy-orig &&
 	git reset --hard to-rebase-orig &&
 	git checkout --track -b to-rebase3 me/copy &&
 	git reset --hard to-rebase-orig &&
 	git fetch &&
-	test_must_fail git pull --rebase &&
-	git rebase --abort &&
+	git pull --rebase &&
 	test "conflicting modification" = "$(cat file)" &&
 	test file = "$(cat file2)"
 
