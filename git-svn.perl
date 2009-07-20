@@ -4525,10 +4525,12 @@ sub gs_do_switch {
 
 	my $full_url = $self->{url};
 	my $old_url = $full_url;
-	$full_url .= '/' . escape_uri_only($path) if length $path;
+	$full_url .= '/' . $path if length $path;
 	my ($ra, $reparented);
 
-	if ($old_url =~ m#^svn(\+ssh)?://#) {
+	if ($old_url =~ m#^svn(\+ssh)?://# ||
+	    ($full_url =~ m#^https?://# &&
+	     escape_url($full_url) ne $full_url)) {
 		$_[0] = undef;
 		$self = undef;
 		$RA = undef;
