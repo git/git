@@ -479,13 +479,13 @@ test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 # Define NEEDS_RESOLV if linking with -lnsl and/or -lsocket is not enough.
 # Notably on Solaris hstrerror resides in libresolv and on Solaris 7
 # inet_ntop and inet_pton additionally reside there.
-AC_CHECK_LIB([resolv], [hstrerror],
+AC_CHECK_LIB([c], [hstrerror],
 [NEEDS_RESOLV=],
 [NEEDS_RESOLV=YesPlease])
 AC_SUBST(NEEDS_RESOLV)
 test -n "$NEEDS_RESOLV" && LIBS="$LIBS -lresolv"
 
-AC_CHECK_LIB([gen], [basename],
+AC_CHECK_LIB([c], [basename],
 [NEEDS_LIBGEN=],
 [NEEDS_LIBGEN=YesPlease])
 AC_SUBST(NEEDS_LIBGEN)
