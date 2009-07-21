@@ -3212,7 +3212,7 @@ proc popup_diff_menu {ctxm ctxmmg x y X Y} {
 			set l [mc "Stage Hunk For Commit"]
 			set t [mc "Stage Line For Commit"]
 		}
-		if {$::is_3way_diff
+		if {$::is_3way_diff || $::is_submodule_diff
 			|| $current_diff_path eq {}
 			|| {__} eq $state
 			|| {_O} eq $state
