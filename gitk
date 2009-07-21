@@ -10901,7 +10901,7 @@ proc gitattr {path attr default} {
     } else {
 	set r "unspecified"
 	if {![catch {set line [exec git check-attr $attr -- $path]}]} {
-	    regexp "(.*): encoding: (.*)" $line m f r
+	    regexp "(.*): $attr: (.*)" $line m f r
 	}
 	set path_attr_cache($attr,$path) $r
     }
@@ -10929,7 +10929,7 @@ proc cache_gitattr {attr pathlist} {
 	set newlist [lrange $newlist $lim end]
 	if {![catch {set rlist [eval exec git check-attr $attr -- $head]}]} {
 	    foreach row [split $rlist "\n"] {
-		if {[regexp "(.*): encoding: (.*)" $row m path value]} {
+		if {[regexp "(.*): $attr: (.*)" $row m path value]} {
 		    if {[string index $path 0] eq "\""} {
 			set path [encoding convertfrom [lindex $path 0]]
 		    }
