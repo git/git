@@ -893,7 +893,7 @@ static struct column *find_new_column_by_commit(struct git_graph *graph,
 		if (graph->new_columns[i].commit == commit)
 			return &graph->new_columns[i];
 	}
-	return 0;
+	return NULL;
 }
 
 static void graph_output_post_merge_line(struct git_graph *graph, struct strbuf *sb)
