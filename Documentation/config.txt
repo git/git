@@ -1387,6 +1387,50 @@ rerere.enabled::
 	default enabled if you create `rr-cache` directory under
 	`$GIT_DIR`, but can be disabled by setting this option to false.
 
+sendemail.identity::
+	A configuration identity. When given, causes values in the
+	'sendemail.<identity>' subsection to take precedence over
+	values in the 'sendemail' section. The default identity is
+	the value of 'sendemail.identity'.
+
+sendemail.smtpencryption::
+	See linkgit:git-send-email[1] for description.  Note that this
+	setting is not subject to the 'identity' mechanism.
+
+sendemail.smtpssl::
+	Deprecated alias for 'sendemail.smtpencryption = ssl'.
+
+sendemail.<identity>.*::
+	Identity-specific versions of the 'sendemail.*' parameters
+	found below, taking precedence over those when the this
+	identity is selected, through command-line or
+	'sendemail.identity'.
+
+sendemail.aliasesfile::
+sendemail.aliasfiletype::
+sendemail.bcc::
+sendemail.cc::
+sendemail.cccmd::
+sendemail.chainreplyto::
+sendemail.confirm::
+sendemail.envelopesender::
+sendemail.from::
+sendemail.multiedit::
+sendemail.signedoffbycc::
+sendemail.smtppass::
+sendemail.suppresscc::
+sendemail.suppressfrom::
+sendemail.to::
+sendemail.smtpserver::
+sendemail.smtpserverport::
+sendemail.smtpuser::
+sendemail.thread::
+sendemail.validate::
+	See linkgit:git-send-email[1] for description.
+
+sendemail.signedoffcc::
+	Deprecated alias for 'sendemail.signedoffbycc'.
+
 showbranch.default::
 	The default set of branches for linkgit:git-show-branch[1].
 	See linkgit:git-show-branch[1].
