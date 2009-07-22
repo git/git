@@ -17,6 +17,7 @@ SYNOPSIS
 	   [-l | --files-with-matches] [-L | --files-without-match]
 	   [-z | --null]
 	   [-c | --count] [--all-match]
+	   [--max-depth <depth>]
 	   [--color | --no-color]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-f <file>] [-e] <pattern>
@@ -46,6 +47,10 @@ OPTIONS
 
 -I::
 	Don't match the pattern in binary files.
+
+--max-depth <depth>::
+	For each pathspec given on command line, descend at most <depth>
+	levels of directories. A negative value means no limit.
 
 -w::
 --word-regexp::

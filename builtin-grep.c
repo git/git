@@ -53,25 +53,57 @@ static int grep_config(const char *var, const char *value, void *cb)
 }
 
 /*
+ * Return non-zero if max_depth is negative or path has no more then max_depth
+ * slashes.
+ */
+static int accept_subdir(const char *path, int max_depth)
+{
+	if (max_depth < 0)
+		return 1;
+
+	while ((path = strchr(path, '/')) != NULL) {
+		max_depth--;
+		if (max_depth < 0)
+			return 0;
+		path++;
+	}
+	return 1;
+}
+
+/*
+ * Return non-zero if name is a subdirectory of match and is not too deep.
+ */
+static int is_subdir(const char *name, int namelen,
+		const char *match, int matchlen, int max_depth)
+{
+	if (matchlen > namelen || strncmp(name, match, matchlen))
+		return 0;
+
+	if (name[matchlen] == '\0') /* exact match */
+		return 1;
+
+	if (!matchlen || match[matchlen-1] == '/' || name[matchlen] == '/')
+		return accept_subdir(name + matchlen + 1, max_depth);
+
+	return 0;
+}
+
+/*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;
  * pathname wildcards are allowed.
  */
-static int pathspec_matches(const char **paths, const char *name)
+static int pathspec_matches(const char **paths, const char *name, int max_depth)
 {
 	int namelen, i;
 	if (!paths || !*paths)
-		return 1;
+		return accept_subdir(name, max_depth);
 	namelen = strlen(name);
 	for (i = 0; paths[i]; i++) {
 		const char *match = paths[i];
 		int matchlen = strlen(match);
 		const char *cp, *meta;
 
-		if (!matchlen ||
-		    ((matchlen <= namelen) &&
-		     !strncmp(name, match, matchlen) &&
-		     (match[matchlen-1] == '/' ||
-		      name[matchlen] == '\0' || name[matchlen] == '/')))
+		if (is_subdir(name, namelen, match, matchlen, max_depth))
 			return 1;
 		if (!fnmatch(match, name, 0))
 			return 1;
@@ -421,7 +453,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		int kept;
 		if (!S_ISREG(ce->ce_mode))
 			continue;
-		if (!pathspec_matches(paths, ce->name))
+		if (!pathspec_matches(paths, ce->name, opt->max_depth))
 			continue;
 		name = ce->name;
 		if (name[0] == '-') {
@@ -478,7 +510,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached,
 		struct cache_entry *ce = active_cache[nr];
 		if (!S_ISREG(ce->ce_mode))
 			continue;
-		if (!pathspec_matches(paths, ce->name))
+		if (!pathspec_matches(paths, ce->name, opt->max_depth))
 			continue;
 		/*
 		 * If CE_VALID is on, we assume worktree file and its cache entry
@@ -538,7 +570,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			strbuf_addch(&pathbuf, '/');
 
 		down = pathbuf.buf + tn_len;
-		if (!pathspec_matches(paths, down))
+		if (!pathspec_matches(paths, down, opt->max_depth))
 			;
 		else if (S_ISREG(entry.mode))
 			hit |= grep_sha1(opt, entry.sha1, pathbuf.buf, tn_len);
@@ -692,6 +724,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT('I', NULL, &opt.binary,
 			"don't match patterns in binary files",
 			GREP_BINARY_NOMATCH),
+		{ OPTION_INTEGER, 0, "max-depth", &opt.max_depth, "depth",
+			"descend at most <depth> levels", PARSE_OPT_NONEG,
+			NULL, 1 },
 		OPT_GROUP(""),
 		OPT_BIT('E', "extended-regexp", &opt.regflags,
 			"use extended POSIX regular expressions", REG_EXTENDED),
@@ -768,6 +803,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	opt.pathname = 1;
 	opt.pattern_tail = &opt.pattern_list;
 	opt.regflags = REG_NEWLINE;
+	opt.max_depth = -1;
 
 	strcpy(opt.color_match, GIT_COLOR_RED GIT_COLOR_BOLD);
 	opt.color = -1;
