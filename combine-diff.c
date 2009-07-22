@@ -164,20 +164,22 @@ static void consume_line(void *state_, char *line, unsigned long len)
 				      &state->nb, &state->nn))
 			return;
 		state->lno = state->nb;
-		if (!state->nb)
-			/* @@ -1,2 +0,0 @@ to remove the
-			 * first two lines...
-			 */
-			state->nb = 1;
-		if (state->nn == 0)
+		if (state->nn == 0) {
 			/* @@ -X,Y +N,0 @@ removed Y lines
 			 * that would have come *after* line N
 			 * in the result.  Our lost buckets hang
 			 * to the line after the removed lines,
+			 *
+			 * Note that this is correct even when N == 0,
+			 * in which case the hunk removes the first
+			 * line in the file.
 			 */
 			state->lost_bucket = &state->sline[state->nb];
-		else
+			if (!state->nb)
+				state->nb = 1;
+		} else {
 			state->lost_bucket = &state->sline[state->nb-1];
+		}
 		if (!state->sline[state->nb-1].p_lno)
 			state->sline[state->nb-1].p_lno =
 				xcalloc(state->num_parent,
