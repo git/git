@@ -26,7 +26,7 @@
 
 #define XDL_MAX_COST_MIN 256
 #define XDL_HEUR_MIN_COST 256
-#define XDL_LINE_MAX (long)((1UL << (8 * sizeof(long) - 1)) - 1)
+#define XDL_LINE_MAX (long)((1UL << (CHAR_BIT * sizeof(long) - 1)) - 1)
 #define XDL_SNAKE_CNT 20
 #define XDL_K_HEUR 4
 
