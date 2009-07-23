@@ -191,7 +191,7 @@ struct ref_item {
 
 struct ref_list {
 	struct rev_info revs;
-	int index, alloc, maxwidth;
+	int index, alloc, maxwidth, verbose;
 	struct ref_item *list;
 	struct commit_list *with_commit;
 	int kinds;
@@ -244,17 +244,20 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	if ((kind & ref_list->kinds) == 0)
 		return 0;
 
-	commit = lookup_commit_reference_gently(sha1, 1);
-	if (!commit)
-		return error("branch '%s' does not point at a commit", refname);
+	commit = NULL;
+	if (ref_list->verbose || ref_list->with_commit || merge_filter != NO_FILTER) {
+		commit = lookup_commit_reference_gently(sha1, 1);
+		if (!commit)
+			return error("branch '%s' does not point at a commit", refname);
 
-	/* Filter with with_commit if specified */
-	if (!is_descendant_of(commit, ref_list->with_commit))
-		return 0;
+		/* Filter with with_commit if specified */
+		if (!is_descendant_of(commit, ref_list->with_commit))
+			return 0;
 
-	if (merge_filter != NO_FILTER)
-		add_pending_object(&ref_list->revs,
-				   (struct object *)commit, refname);
+		if (merge_filter != NO_FILTER)
+			add_pending_object(&ref_list->revs,
+					   (struct object *)commit, refname);
+	}
 
 	/* Resize buffer */
 	if (ref_list->index >= ref_list->alloc) {
@@ -423,6 +426,7 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 
 	memset(&ref_list, 0, sizeof(ref_list));
 	ref_list.kinds = kinds;
+	ref_list.verbose = verbose;
 	ref_list.with_commit = with_commit;
 	if (merge_filter != NO_FILTER)
 		init_revisions(&ref_list.revs, NULL);
