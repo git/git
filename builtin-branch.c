@@ -191,7 +191,7 @@ struct ref_item {
 
 struct ref_list {
 	struct rev_info revs;
-	int index, alloc, maxwidth, verbose;
+	int index, alloc, maxwidth, verbose, abbrev;
 	struct ref_item *list;
 	struct commit_list *with_commit;
 	int kinds;
@@ -418,15 +418,34 @@ static int calc_maxwidth(struct ref_list *refs)
 	return w;
 }
 
+
+static void show_detached(struct ref_list *ref_list)
+{
+	struct commit *head_commit = lookup_commit_reference_gently(head_sha1, 1);
+
+	if (head_commit && is_descendant_of(head_commit, ref_list->with_commit)) {
+		struct ref_item item;
+		item.name = xstrdup("(no branch)");
+		item.len = strlen(item.name);
+		item.kind = REF_LOCAL_BRANCH;
+		item.dest = NULL;
+		item.commit = head_commit;
+		if (item.len > ref_list->maxwidth)
+			ref_list->maxwidth = item.len;
+		print_ref_item(&item, ref_list->maxwidth, ref_list->verbose, ref_list->abbrev, 1, "");
+		free(item.name);
+	}
+}
+
 static void print_ref_list(int kinds, int detached, int verbose, int abbrev, struct commit_list *with_commit)
 {
 	int i;
 	struct ref_list ref_list;
-	struct commit *head_commit = lookup_commit_reference_gently(head_sha1, 1);
 
 	memset(&ref_list, 0, sizeof(ref_list));
 	ref_list.kinds = kinds;
 	ref_list.verbose = verbose;
+	ref_list.abbrev = abbrev;
 	ref_list.with_commit = with_commit;
 	if (merge_filter != NO_FILTER)
 		init_revisions(&ref_list.revs, NULL);
@@ -446,19 +465,8 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 	qsort(ref_list.list, ref_list.index, sizeof(struct ref_item), ref_cmp);
 
 	detached = (detached && (kinds & REF_LOCAL_BRANCH));
-	if (detached && head_commit &&
-	    is_descendant_of(head_commit, with_commit)) {
-		struct ref_item item;
-		item.name = xstrdup("(no branch)");
-		item.len = strlen(item.name);
-		item.kind = REF_LOCAL_BRANCH;
-		item.dest = NULL;
-		item.commit = head_commit;
-		if (item.len > ref_list.maxwidth)
-			ref_list.maxwidth = item.len;
-		print_ref_item(&item, ref_list.maxwidth, verbose, abbrev, 1, "");
-		free(item.name);
-	}
+	if (detached)
+		show_detached(&ref_list);
 
 	for (i = 0; i < ref_list.index; i++) {
 		int current = !detached &&
