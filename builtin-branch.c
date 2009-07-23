@@ -240,16 +240,16 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	if (ARRAY_SIZE(ref_kind) <= i)
 		return 0;
 
+	/* Don't add types the caller doesn't want */
+	if ((kind & ref_list->kinds) == 0)
+		return 0;
+
 	commit = lookup_commit_reference_gently(sha1, 1);
 	if (!commit)
 		return error("branch '%s' does not point at a commit", refname);
 
 	/* Filter with with_commit if specified */
 	if (!is_descendant_of(commit, ref_list->with_commit))
-		return 0;
-
-	/* Don't add types the caller doesn't want */
-	if ((kind & ref_list->kinds) == 0)
 		return 0;
 
 	if (merge_filter != NO_FILTER)
@@ -426,7 +426,7 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 	ref_list.with_commit = with_commit;
 	if (merge_filter != NO_FILTER)
 		init_revisions(&ref_list.revs, NULL);
-	for_each_ref(append_ref, &ref_list);
+	for_each_rawref(append_ref, &ref_list);
 	if (merge_filter != NO_FILTER) {
 		struct commit *filter;
 		filter = lookup_commit_reference_gently(merge_filter_ref, 0);
