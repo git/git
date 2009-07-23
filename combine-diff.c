@@ -80,6 +80,7 @@ struct lline {
 /* Lines surviving in the merge result */
 struct sline {
 	struct lline *lost_head, **lost_tail;
+	struct lline *next_lost;
 	char *bol;
 	int len;
 	/* bit 0 up to (N-1) are on if the parent has this line (i.e.
@@ -121,18 +122,12 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 
 	/* Check to see if we can squash things */
 	if (sline->lost_head) {
-		struct lline *last_one = NULL;
-		/* We cannot squash it with earlier one */
-		for (lline = sline->lost_head;
-		     lline;
-		     lline = lline->next)
-			if (lline->parent_map & this_mask)
-				last_one = lline;
-		lline = last_one ? last_one->next : sline->lost_head;
+		lline = sline->next_lost;
 		while (lline) {
 			if (lline->len == len &&
 			    !memcmp(lline->line, line, len)) {
 				lline->parent_map |= this_mask;
+				sline->next_lost = lline->next;
 				return;
 			}
 			lline = lline->next;
@@ -147,6 +142,7 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 	lline->line[len] = 0;
 	*sline->lost_tail = lline;
 	sline->lost_tail = &lline->next;
+	sline->next_lost = NULL;
 }
 
 struct combine_diff_state {
@@ -168,25 +164,28 @@ static void consume_line(void *state_, char *line, unsigned long len)
 				      &state->nb, &state->nn))
 			return;
 		state->lno = state->nb;
-		if (!state->nb)
-			/* @@ -1,2 +0,0 @@ to remove the
-			 * first two lines...
-			 */
-			state->nb = 1;
-		if (state->nn == 0)
+		if (state->nn == 0) {
 			/* @@ -X,Y +N,0 @@ removed Y lines
 			 * that would have come *after* line N
 			 * in the result.  Our lost buckets hang
 			 * to the line after the removed lines,
+			 *
+			 * Note that this is correct even when N == 0,
+			 * in which case the hunk removes the first
+			 * line in the file.
 			 */
 			state->lost_bucket = &state->sline[state->nb];
-		else
+			if (!state->nb)
+				state->nb = 1;
+		} else {
 			state->lost_bucket = &state->sline[state->nb-1];
+		}
 		if (!state->sline[state->nb-1].p_lno)
 			state->sline[state->nb-1].p_lno =
 				xcalloc(state->num_parent,
 					sizeof(unsigned long));
 		state->sline[state->nb-1].p_lno[state->n] = state->ob;
+		state->lost_bucket->next_lost = state->lost_bucket->lost_head;
 		return;
 	}
 	if (!state->lost_bucket)

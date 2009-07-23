@@ -76,7 +76,7 @@ static void preload_index(struct index_state *index, const char **pathspec)
 	if (threads > MAX_PARALLEL)
 		threads = MAX_PARALLEL;
 	offset = 0;
-	work = (index->cache_nr + threads - 1) / threads;
+	work = DIV_ROUND_UP(index->cache_nr, threads);
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
 		p->index = index;

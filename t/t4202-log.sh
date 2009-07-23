@@ -149,6 +149,26 @@ test_expect_success 'git log --follow' '
 
 '
 
+cat > expect << EOF
+804a787 sixth
+394ef78 fifth
+5d31159 fourth
+EOF
+test_expect_success 'git log --no-walk <commits> sorts by commit time' '
+	git log --no-walk --oneline 5d31159 804a787 394ef78 > actual &&
+	test_cmp expect actual
+'
+
+cat > expect << EOF
+5d31159 fourth
+804a787 sixth
+394ef78 fifth
+EOF
+test_expect_success 'git show <commits> leaves list of commits as given' '
+	git show --oneline -s 5d31159 804a787 394ef78 > actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'setup case sensitivity tests' '
 	echo case >one &&
 	test_tick &&
