@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=N] [--depth=N] [--all-progress]
-	[--revs [--unpacked | --all]*] [--stdout | base-name] < object-list
+	[--revs [--unpacked | --all]*] [--stdout | base-name]
+	[--keep-true-parents] < object-list
 
 
 DESCRIPTION
@@ -196,6 +197,10 @@ base-name::
 	This is intended to be used by the test suite only. It allows
 	to force the version for the generated pack index, and to force
 	64-bit index entries on objects located above the given offset.
+
+--keep-true-parents::
+	With this option, parents that are hidden by grafts are packed
+	nevertheless.
 
 
 Author

@@ -81,7 +81,7 @@ case ",$all_into_one," in
 esac
 
 args="$args $local $quiet $no_reuse$extra"
-names=$(git pack-objects --honor-pack-keep --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
+names=$(git pack-objects --keep-true-parents --honor-pack-keep --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
 if [ -z "$names" ]; then
 	if test -z "$quiet"; then
