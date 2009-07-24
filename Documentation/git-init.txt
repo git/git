@@ -8,7 +8,7 @@ git-init - Create an empty git repository or reinitialize an existing one
 
 SYNOPSIS
 --------
-'git init' [-q | --quiet] [--bare] [--template=<template_directory>] [--shared[=<permissions>]]
+'git init' [-q | --quiet] [--bare] [--template=<template_directory>] [--shared[=<permissions>]] [directory]
 
 
 OPTIONS
@@ -73,6 +73,9 @@ is given:
 By default, the configuration flag receive.denyNonFastForwards is enabled
 in shared repositories, so that you cannot force a non fast-forwarding push
 into it.
+
+If you name a (possibly non-existent) directory at the end of the command
+line, the command is run inside the directory (possibly after creating it).
 
 --
 
