@@ -4855,6 +4855,14 @@ HTML
 			                             hash=>$full_rev,
 			                             file_name=>$file_name)},
 			              esc_html($short_rev));
+			if ($group_size >= 2) {
+				my @author_initials = ($author =~ /\b([[:upper:]])\B/g);
+				if (@author_initials) {
+					print "<br />" .
+					      esc_html(join('', @author_initials));
+					#           or join('.', ...)
+				}
+			}
 			print "</td>\n";
 		}
 		# 'previous' <sha1 of parent commit> <filename at commit>
