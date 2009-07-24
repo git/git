@@ -1237,6 +1237,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	while (fgets(buf, sizeof(buf), config_file)) {
 		int i;
 		int length;
+		char *output = buf;
 		for (i = 0; buf[i] && isspace(buf[i]); i++)
 			; /* do nothing */
 		if (buf[i] == '[') {
@@ -1253,14 +1254,29 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 					ret = write_error(lock->filename);
 					goto out;
 				}
-				continue;
+				/*
+				 * We wrote out the new section, with
+				 * a newline, now skip the old
+				 * section's length
+				 */
+				output += offset + i;
+				if (strlen(output) > 0) {
+					/*
+					 * More content means there's
+					 * a declaration to put on the
+					 * next line; indent with a
+					 * tab
+					 */
+					output -= 1;
+					output[0] = '\t';
+				}
 			}
 			remove = 0;
 		}
 		if (remove)
 			continue;
-		length = strlen(buf);
-		if (write_in_full(out_fd, buf, length) != length) {
+		length = strlen(output);
+		if (write_in_full(out_fd, output, length) != length) {
 			ret = write_error(lock->filename);
 			goto out;
 		}
