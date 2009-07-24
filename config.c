@@ -1174,7 +1174,9 @@ write_err_out:
 static int section_name_match (const char *buf, const char *name)
 {
 	int i = 0, j = 0, dot = 0;
-	for (; buf[i] && buf[i] != ']'; i++) {
+	if (buf[i] != '[')
+		return 0;
+	for (i = 1; buf[i] && buf[i] != ']'; i++) {
 		if (!dot && isspace(buf[i])) {
 			dot = 1;
 			if (name[j++] != '.')
@@ -1195,7 +1197,17 @@ static int section_name_match (const char *buf, const char *name)
 		if (buf[i] != name[j++])
 			break;
 	}
-	return (buf[i] == ']' && name[j] == 0);
+	if (buf[i] == ']' && name[j] == 0) {
+		/*
+		 * We match, now just find the right length offset by
+		 * gobbling up any whitespace after it, as well
+		 */
+		i++;
+		for (; buf[i] && isspace(buf[i]); i++)
+			; /* do nothing */
+		return i;
+	}
+	return 0;
 }
 
 /* if new_name == NULL, the section is removed instead */
@@ -1229,7 +1241,8 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 			; /* do nothing */
 		if (buf[i] == '[') {
 			/* it's a section */
-			if (section_name_match (&buf[i+1], old_name)) {
+			int offset = section_name_match(&buf[i], old_name);
+			if (offset > 0) {
 				ret++;
 				if (new_name == NULL) {
 					remove = 1;
