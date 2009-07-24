@@ -702,6 +702,7 @@ ifeq ($(uname_S),SunOS)
 	NO_HSTRERROR = YesPlease
 	NO_MKDTEMP = YesPlease
 	OLD_ICONV = UnfortunatelyYes
+	NO_EXTERNAL_GREP = YesPlease
 	ifeq ($(uname_R),5.8)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
