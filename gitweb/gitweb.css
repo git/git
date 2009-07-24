@@ -242,6 +242,10 @@ tr.dark:hover {
 	background-color: #edece6;
 }
 
+tr.boundary td.sha1 {
+	font-weight: bold;
+}
+
 td {
 	padding: 2px 5px;
 	font-size: 100%;

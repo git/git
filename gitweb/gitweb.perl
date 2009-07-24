@@ -4826,7 +4826,7 @@ HTML
 		while ($data = <$fd>) {
 			chomp $data;
 			last if ($data =~ s/^\t//); # contents of line
-			if ($data =~ /^(\S+) (.*)$/) {
+			if ($data =~ /^(\S+)(?: (.*))?$/) {
 				$meta->{$1} = $2;
 			}
 		}
@@ -4838,7 +4838,9 @@ HTML
 		if ($group_size) {
 			$current_color = ($current_color + 1) % $num_colors;
 		}
-		print "<tr id=\"l$lineno\" class=\"$rev_color[$current_color]\">\n";
+		my $tr_class = $rev_color[$current_color];
+		$tr_class .= ' boundary' if (exists $meta->{'boundary'});
+		print "<tr id=\"l$lineno\" class=\"$tr_class\">\n";
 		if ($group_size) {
 			print "<td class=\"sha1\"";
 			print " title=\"". esc_html($author) . ", $date\"";
