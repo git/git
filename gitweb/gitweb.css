@@ -226,22 +226,25 @@ th {
 	text-align: left;
 }
 
-tr.light:hover {
-	background-color: #edece6;
+/* do not change row style on hover for 'blame' view */
+tr.light,
+table.blame .light:hover {
+	background-color: #ffffff;
 }
 
-tr.dark {
+tr.dark,
+table.blame .dark:hover {
 	background-color: #f6f6f0;
 }
 
-tr.dark2 {
-	background-color: #f6f6f0;
-}
-
+/* currently both use the same, but it can change */
+tr.light:hover,
 tr.dark:hover {
 	background-color: #edece6;
 }
 
+/* boundary commits in 'blame' view */
+/* and commits without "previous" */
 tr.boundary td.sha1,
 tr.no-previous td.linenr {
 	font-weight: bold;
