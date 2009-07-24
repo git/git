@@ -4827,7 +4827,7 @@ HTML
 			chomp $data;
 			last if ($data =~ s/^\t//); # contents of line
 			if ($data =~ /^(\S+)(?: (.*))?$/) {
-				$meta->{$1} = $2;
+				$meta->{$1} = $2 unless exists $meta->{$1};
 			}
 		}
 		my $short_rev = substr($full_rev, 0, 8);
@@ -4852,20 +4852,21 @@ HTML
 			              esc_html($short_rev));
 			print "</td>\n";
 		}
-		my $parent_commit;
-		if (!exists $meta->{'parent'}) {
-			open (my $dd, "-|", git_cmd(), "rev-parse", "$full_rev^")
-				or die_error(500, "Open git-rev-parse failed");
-			$parent_commit = <$dd>;
-			close $dd;
-			chomp($parent_commit);
-			$meta->{'parent'} = $parent_commit;
-		} else {
-			$parent_commit = $meta->{'parent'};
+		# 'previous' <sha1 of parent commit> <filename at commit>
+		if (exists $meta->{'previous'} &&
+		    $meta->{'previous'} =~ /^([a-fA-F0-9]{40}) (.*)$/) {
+			$meta->{'parent'} = $1;
+			$meta->{'file_parent'} = unquote($2);
 		}
+		my $linenr_commit =
+			exists($meta->{'parent'}) ?
+			$meta->{'parent'} : $full_rev;
+		my $linenr_filename =
+			exists($meta->{'file_parent'}) ?
+			$meta->{'file_parent'} : unquote($meta->{'filename'});
 		my $blamed = href(action => 'blame',
-		                  file_name => $meta->{'filename'},
-		                  hash_base => $parent_commit);
+		                  file_name => $linenr_filename,
+		                  hash_base => $linenr_commit);
 		print "<td class=\"linenr\">";
 		print $cgi->a({ -href => "$blamed#l$orig_lineno",
 		                -class => "linenr" },
