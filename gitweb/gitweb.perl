@@ -4819,7 +4819,7 @@ HTML
 		my ($full_rev, $orig_lineno, $lineno, $group_size) =
 		   ($line =~ /^([0-9a-f]{40}) (\d+) (\d+)(?: (\d+))?$/);
 		if (!exists $metainfo{$full_rev}) {
-			$metainfo{$full_rev} = {};
+			$metainfo{$full_rev} = { 'nprevious' => 0 };
 		}
 		my $meta = $metainfo{$full_rev};
 		my $data;
@@ -4828,6 +4828,9 @@ HTML
 			last if ($data =~ s/^\t//); # contents of line
 			if ($data =~ /^(\S+)(?: (.*))?$/) {
 				$meta->{$1} = $2 unless exists $meta->{$1};
+			}
+			if ($data =~ /^previous /) {
+				$meta->{'nprevious'}++;
 			}
 		}
 		my $short_rev = substr($full_rev, 0, 8);
@@ -4840,6 +4843,8 @@ HTML
 		}
 		my $tr_class = $rev_color[$current_color];
 		$tr_class .= ' boundary' if (exists $meta->{'boundary'});
+		$tr_class .= ' no-previous' if ($meta->{'nprevious'} == 0);
+		$tr_class .= ' multiple-previous' if ($meta->{'nprevious'} > 1);
 		print "<tr id=\"l$lineno\" class=\"$tr_class\">\n";
 		if ($group_size) {
 			print "<td class=\"sha1\"";

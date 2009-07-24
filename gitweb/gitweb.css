@@ -242,7 +242,8 @@ tr.dark:hover {
 	background-color: #edece6;
 }
 
-tr.boundary td.sha1 {
+tr.boundary td.sha1,
+tr.no-previous td.linenr {
 	font-weight: bold;
 }
 
