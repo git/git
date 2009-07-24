@@ -262,7 +262,7 @@ td.sha1 {
 	font-family: monospace;
 }
 
-td.error {
+.error {
 	color: red;
 	background-color: yellow;
 }
