@@ -4831,7 +4831,11 @@ sub minimize_url {
 	my $c = '';
 	do {
 		$url .= "/$c" if length $c;
-		eval { (ref $self)->new($url)->get_latest_revnum };
+		eval {
+			my $ra = (ref $self)->new($url);
+			my $latest = $ra->get_latest_revnum;
+			$ra->get_log("", $latest, 0, 1, 0, 1, sub {});
+		};
 	} while ($@ && ($c = shift @components));
 	$url;
 }
