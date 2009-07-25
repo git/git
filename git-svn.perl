@@ -666,9 +666,22 @@ sub cmd_branch {
 			}
 		}
 		unless (defined $glob) {
-			die "Unknown ",
-			    $_tag ? "tag" : "branch",
-			    " destination $_branch_dest\n";
+			my $dest_re = qr/\b\Q$_branch_dest\E\b/;
+			foreach my $g (@{$allglobs}) {
+				$g->{path}->{left} =~ /$dest_re/ or next;
+				if (defined $glob) {
+					die "Ambiguous destination: ",
+					    $_branch_dest, "\nmatches both '",
+					    $glob->{path}->{left}, "' and '",
+					    $g->{path}->{left}, "'\n";
+				}
+				$glob = $g;
+			}
+			unless (defined $glob) {
+				die "Unknown ",
+				    $_tag ? "tag" : "branch",
+				    " destination $_branch_dest\n";
+			}
 		}
 	}
 	my ($lft, $rgt) = @{ $glob->{path} }{qw/left right/};
