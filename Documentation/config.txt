@@ -49,7 +49,8 @@ There is also a case insensitive alternative `[section.subsection]` syntax.
 In this syntax, subsection names follow the same restrictions as for section
 names.
 
-All the other lines are recognized as setting variables, in the form
+All the other lines (and the remainder of the line after the section
+header) are recognized as setting variables, in the form
 'name = value'.  If there is no equal sign on the line, the entire line
 is taken as 'name' and the variable is recognized as boolean "true".
 The variable names are case-insensitive and only alphanumeric
