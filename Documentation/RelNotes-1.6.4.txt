@@ -38,7 +38,7 @@ Updates since v1.6.3
 
  * We feed iconv with "UTF-8" instead of "utf8"; the former is
    understood more widely.  Similarly updated test scripts to use
-   encoding names more widely understood (e.g. use "ISO8850-1" instead
+   encoding names more widely understood (e.g. use "ISO8859-1" instead
    of "ISO-8859-1").
 
  * Various portability fixes/workarounds for different vintages of
@@ -123,8 +123,19 @@ v1.6.3.X series.
    that chdir around.  It now internally records the repository location
    as an absolute path when autodetected.
 
+ * Removing a section with "git config --remove-section", when its
+   section header has a variable definition on the same line, lost
+   that variable definition.
+
+ * "git repack" used to faithfully follow grafts and considered true
+   parents recorded in the commit object unreachable from the commit.
+   After such a repacking, you cannot remove grafts without corrupting
+   the repository.
+
+ * "git send-email" did not detect errorneous loops in alias expansion.
+
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.6.4-rc1-7-gbba0fd2
+O=v1.6.4-rc2-17-g130b04a
 git shortlog --no-merges $O..master ^maint
