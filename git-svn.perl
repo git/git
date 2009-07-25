@@ -19,6 +19,7 @@ $ENV{GIT_DIR} ||= '.git';
 $Git::SVN::default_repo_id = 'svn';
 $Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
 $Git::SVN::Ra::_log_window_size = 100;
+$Git::SVN::_minimize_url = 'unset';
 
 $Git::SVN::Log::TZ = $ENV{TZ};
 $ENV{TZ} = 'UTC';
@@ -100,7 +101,7 @@ my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
                   'trunk|T=s' => \$_trunk, 'tags|t=s@' => \@_tags,
                   'branches|b=s@' => \@_branches, 'prefix=s' => \$_prefix,
                   'stdlayout|s' => \$_stdlayout,
-                  'minimize-url|m' => \$Git::SVN::_minimize_url,
+                  'minimize-url|m!' => \$Git::SVN::_minimize_url,
 		  'no-metadata' => sub { $icv{noMetadata} = 1 },
 		  'use-svm-props' => sub { $icv{useSvmProps} = 1 },
 		  'use-svnsync-props' => sub { $icv{useSvnsyncProps} = 1 },
@@ -398,6 +399,10 @@ sub cmd_init {
 	$url = canonicalize_url($url);
 	init_subdir(@_);
 	do_git_init_db();
+
+	if ($Git::SVN::_minimize_url eq 'unset') {
+		$Git::SVN::_minimize_url = 0;
+	}
 
 	Git::SVN->init($url);
 }

@@ -99,22 +99,22 @@ test_expect_success 'Multiple branch or tag paths require -d' '
 
 test_expect_success 'create new branches and tags' '
 	( cd git_project &&
-		git svn branch -m "New branch 1" -d b_one New1 ) &&
+		git svn branch -m "New branch 1" -d project/b_one New1 ) &&
 	( cd svn_project &&
 		svn_cmd up && test -e b_one/New1/a.file ) &&
 
 	( cd git_project &&
-		git svn branch -m "New branch 2" -d b_two New2 ) &&
+		git svn branch -m "New branch 2" -d project/b_two New2 ) &&
 	( cd svn_project &&
 		svn_cmd up && test -e b_two/New2/a.file ) &&
 
 	( cd git_project &&
-		git svn branch -t -m "New tag 1" -d tags_A Tag1 ) &&
+		git svn branch -t -m "New tag 1" -d project/tags_A Tag1 ) &&
 	( cd svn_project &&
 		svn_cmd up && test -e tags_A/Tag1/a.file ) &&
 
 	( cd git_project &&
-		git svn tag -m "New tag 2" -d tags_B Tag2 ) &&
+		git svn tag -m "New tag 2" -d project/tags_B Tag2 ) &&
 	( cd svn_project &&
 		svn_cmd up && test -e tags_B/Tag2/a.file )
 '
