@@ -3,6 +3,7 @@
 #include "sideband.h"
 #include "run-command.h"
 #include "url.h"
+#include "exec_cmd.h"
 
 int data_received;
 int active_requests;
@@ -139,6 +140,18 @@ static void process_curl_messages(void)
 }
 #endif
 
+static int git_config_path(const char **result,
+		const char *var, const char *value)
+{
+	if (git_config_string(result, var, value))
+		return 1;
+#ifdef __MINGW32__
+	if (**result == '/')
+		*result = system_path((*result) + 1);
+#endif
+	return 0;
+}
+
 static int http_options(const char *var, const char *value, void *cb)
 {
 	if (!strcmp("http.sslverify", var)) {
@@ -146,17 +159,17 @@ static int http_options(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp("http.sslcert", var))
-		return git_config_string(&ssl_cert, var, value);
+		return git_config_path(&ssl_cert, var, value);
 #if LIBCURL_VERSION_NUM >= 0x070903
 	if (!strcmp("http.sslkey", var))
-		return git_config_string(&ssl_key, var, value);
+		return git_config_path(&ssl_key, var, value);
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
 	if (!strcmp("http.sslcapath", var))
-		return git_config_string(&ssl_capath, var, value);
+		return git_config_path(&ssl_capath, var, value);
 #endif
 	if (!strcmp("http.sslcainfo", var))
-		return git_config_string(&ssl_cainfo, var, value);
+		return git_config_path(&ssl_cainfo, var, value);
 	if (!strcmp("http.sslcertpasswordprotected", var)) {
 		if (git_config_bool(var, value))
 			ssl_cert_password_required = 1;
