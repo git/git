@@ -32,7 +32,8 @@ Updates since v1.6.3
 
  * git-svn updates, including a new --authors-prog option to map author
    names by invoking an external program, 'git svn reset' to unwind
-   'git svn fetch', support for more than one branches, etc.
+   'git svn fetch', support for more than one branches, documenting
+   of the useful --minimize-url feature, new "git svn gc" command, etc.
 
 (portability)
 
@@ -75,7 +76,7 @@ Updates since v1.6.3
 
  * "git imap-send" is IPv6 aware.
 
- * "git log --graph" draws graphs more compactly by using horizonal lines
+ * "git log --graph" draws graphs more compactly by using horizontal lines
    when able.
 
  * "git log --decorate" shows shorter refnames by stripping well-known
@@ -105,6 +106,8 @@ Updates since v1.6.3
 
  * A major part of the "git bisect" wrapper has moved to C.
 
+ * Formatting with the new version of AsciiDoc 8.4.1 is now supported.
+
 Fixes since v1.6.3
 ------------------
 
@@ -132,10 +135,10 @@ v1.6.3.X series.
    After such a repacking, you cannot remove grafts without corrupting
    the repository.
 
- * "git send-email" did not detect errorneous loops in alias expansion.
+ * "git send-email" did not detect erroneous loops in alias expansion.
 
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.6.4-rc2-17-g130b04a
+O=v1.6.4-rc2-31-g2ceb639
 git shortlog --no-merges $O..master ^maint
