@@ -19,6 +19,7 @@ $ENV{GIT_DIR} ||= '.git';
 $Git::SVN::default_repo_id = 'svn';
 $Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
 $Git::SVN::Ra::_log_window_size = 100;
+$Git::SVN::_minimize_url = 'unset';
 
 $Git::SVN::Log::TZ = $ENV{TZ};
 $ENV{TZ} = 'UTC';
@@ -31,6 +32,7 @@ require SVN::Delta;
 if ($SVN::Core::VERSION lt '1.1.0') {
 	fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)";
 }
+my $can_compress = eval { require Compress::Zlib; 1};
 push @Git::SVN::Ra::ISA, 'SVN::Ra';
 push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
 push @SVN::Git::Fetcher::ISA, 'SVN::Delta::Editor';
@@ -40,6 +42,7 @@ use IO::File qw//;
 use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
 use File::Spec;
+use File::Find;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use IPC::Open3;
 use Git;
@@ -98,7 +101,7 @@ my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
                   'trunk|T=s' => \$_trunk, 'tags|t=s@' => \@_tags,
                   'branches|b=s@' => \@_branches, 'prefix=s' => \$_prefix,
                   'stdlayout|s' => \$_stdlayout,
-                  'minimize-url|m' => \$Git::SVN::_minimize_url,
+                  'minimize-url|m!' => \$Git::SVN::_minimize_url,
 		  'no-metadata' => sub { $icv{noMetadata} = 1 },
 		  'use-svm-props' => sub { $icv{useSvmProps} = 1 },
 		  'use-svnsync-props' => sub { $icv{useSvnsyncProps} = 1 },
@@ -217,6 +220,10 @@ my %cmd = (
 		     "Undo fetches back to the specified SVN revision",
 		     { 'revision|r=s' => \$_revision,
 		       'parent|p' => \$_fetch_parent } ],
+	'gc' => [ \&cmd_gc,
+		  "Compress unhandled.log files in .git/svn and remove " .
+		  "index files in .git/svn",
+		{} ],
 );
 
 my $cmd;
@@ -392,6 +399,10 @@ sub cmd_init {
 	$url = canonicalize_url($url);
 	init_subdir(@_);
 	do_git_init_db();
+
+	if ($Git::SVN::_minimize_url eq 'unset') {
+		$Git::SVN::_minimize_url = 0;
+	}
 
 	Git::SVN->init($url);
 }
@@ -655,9 +666,22 @@ sub cmd_branch {
 			}
 		}
 		unless (defined $glob) {
-			die "Unknown ",
-			    $_tag ? "tag" : "branch",
-			    " destination $_branch_dest\n";
+			my $dest_re = qr/\b\Q$_branch_dest\E\b/;
+			foreach my $g (@{$allglobs}) {
+				$g->{path}->{left} =~ /$dest_re/ or next;
+				if (defined $glob) {
+					die "Ambiguous destination: ",
+					    $_branch_dest, "\nmatches both '",
+					    $glob->{path}->{left}, "' and '",
+					    $g->{path}->{left}, "'\n";
+				}
+				$glob = $g;
+			}
+			unless (defined $glob) {
+				die "Unknown ",
+				    $_tag ? "tag" : "branch",
+				    " destination $_branch_dest\n";
+			}
 		}
 	}
 	my ($lft, $rgt) = @{ $glob->{path} }{qw/left right/};
@@ -1107,6 +1131,14 @@ sub cmd_reset {
 	print "r$r = $c ($gs->{ref_id})\n";
 }
 
+sub cmd_gc {
+	if (!$can_compress) {
+		warn "Compress::Zlib could not be found; unhandled.log " .
+		     "files will not be compressed.\n";
+	}
+	find({ wanted => \&gc_directory, no_chdir => 1}, "$ENV{GIT_DIR}/svn");
+}
+
 ########################### utility functions #########################
 
 sub rebase_cmd {
@@ -1525,6 +1557,25 @@ sub md5sum {
 		::fatal "Can't provide MD5 hash for unknown ref type: '", $ref, "'";
 	}
 	return $md5->hexdigest();
+}
+
+sub gc_directory {
+	if ($can_compress && -f $_ && basename($_) eq "unhandled.log") {
+		my $out_filename = $_ . ".gz";
+		open my $in_fh, "<", $_ or die "Unable to open $_: $!\n";
+		binmode $in_fh;
+		my $gz = Compress::Zlib::gzopen($out_filename, "ab") or
+				die "Unable to open $out_filename: $!\n";
+
+		my $res;
+		while ($res = sysread($in_fh, my $str, 1024)) {
+			$gz->gzwrite($str) or
+				die "Unable to write: ".$gz->gzerror()."!\n";
+		}
+		unlink $_ or die "unlink $File::Find::name: $!\n";
+	} elsif (-f $_ && basename($_) eq "index") {
+		unlink $_ or die "unlink $_: $!\n";
+	}
 }
 
 package Git::SVN;
@@ -3954,7 +4005,7 @@ sub repo_path {
 sub url_path {
 	my ($self, $path) = @_;
 	if ($self->{url} =~ m#^https?://#) {
-		$path =~ s/([^~a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
+		$path =~ s!([^~a-zA-Z0-9_./-])!uc sprintf("%%%02x",ord($1))!eg;
 	}
 	$self->{url} . '/' . $self->repo_path($path);
 }
@@ -4780,7 +4831,11 @@ sub minimize_url {
 	my $c = '';
 	do {
 		$url .= "/$c" if length $c;
-		eval { (ref $self)->new($url)->get_latest_revnum };
+		eval {
+			my $ra = (ref $self)->new($url);
+			my $latest = $ra->get_latest_revnum;
+			$ra->get_log("", $latest, 0, 1, 0, 1, sub {});
+		};
 	} while ($@ && ($c = shift @components));
 	$url;
 }
