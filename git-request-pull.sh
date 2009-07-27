@@ -8,12 +8,32 @@ USAGE='<start> <url> [<end>]'
 LONG_USAGE='Summarizes the changes between two commits to the standard output,
 and includes the given URL in the generated summary.'
 SUBDIRECTORY_OK='Yes'
-OPTIONS_SPEC=
+OPTIONS_SPEC='git request-pull [options] start url [end]
+--
+p    show patch text as well
+'
+
 . git-sh-setup
 . git-parse-remote
 
 GIT_PAGER=
 export GIT_PAGER
+
+patch=
+while	case "$#" in 0) break ;; esac
+do
+	case "$1" in
+	-p)
+		patch=-p ;;
+	--)
+		shift; break ;;
+	-*)
+		usage ;;
+	*)
+		break ;;
+	esac
+	shift
+done
 
 base=$1
 url=$2
@@ -54,5 +74,5 @@ echo "  $url $branch"
 echo
 
 git shortlog ^$baserev $headrev
-git diff -M --stat --summary $merge_base $headrev
+git diff -M --stat --summary $patch $merge_base..$headrev
 exit $status
