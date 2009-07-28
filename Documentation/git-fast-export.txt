@@ -82,6 +82,14 @@ marks the same across runs.
 	allow that.  So fake a tagger to be able to fast-import the
 	output.
 
+--no-data::
+	Skip output of blob objects and instead refer to blobs via
+	their original SHA-1 hash.  This is useful when rewriting the
+	directory structure or history of a repository without
+	touching the contents of individual files.  Note that the
+	resulting stream can only be used by a repository which
+	already contains the necessary objects.
+
 [git-rev-list-args...]::
        A list of arguments, acceptable to 'git-rev-parse' and
        'git-rev-list', that specifies the specific objects and references
