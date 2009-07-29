@@ -64,6 +64,13 @@ test_expect_success 'config to remove customization' '
 	git config i18n.commitencoding UTF-8
 '
 
+iconv --help 2>/dev/null >/dev/null
+test $? = 127 && {
+	say "No iconv found; skip rest"
+	test_done
+	exit
+}
+
 test_expect_success 'ISO8859-1 should be shown in UTF-8 now' '
 	compare_with ISO8859-1 "$TEST_DIRECTORY"/t3900/1-UTF-8.txt
 '
