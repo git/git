@@ -159,8 +159,7 @@ HEAD commits it finds, which is even more interesting.
 
 in case you care).
 
-Output format
--------------
+
 include::diff-format.txt[]
 
 

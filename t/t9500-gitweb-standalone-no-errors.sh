@@ -663,6 +663,7 @@ cat >>gitweb_config.perl <<EOF
 
 \$feature{'blame'}{'override'} = 1;
 \$feature{'snapshot'}{'override'} = 1;
+\$feature{'avatar'}{'override'} = 1;
 EOF
 
 test_expect_success \
@@ -674,6 +675,7 @@ test_expect_success \
 	'config override: tree view, features disabled in repo config' \
 	'git config gitweb.blame no &&
 	 git config gitweb.snapshot none &&
+	 git config gitweb.avatar gravatar &&
 	 gitweb_run "p=.git;a=tree"'
 test_debug 'cat gitweb.log'
 

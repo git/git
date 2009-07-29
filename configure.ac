@@ -342,9 +342,8 @@ GIT_STASH_FLAGS($OPENSSLDIR)
 AC_CHECK_LIB([crypto], [SHA1_Init],
 [NEEDS_SSL_WITH_CRYPTO=],
 [AC_CHECK_LIB([ssl], [SHA1_Init],
- [NEEDS_SSL_WITH_CRYPTO=YesPlease
-  NEEDS_SSL_WITH_CRYPTO=],
- [NO_OPENSSL=YesPlease])])
+ [NEEDS_SSL_WITH_CRYPTO=YesPlease],
+ [NEEDS_SSL_WITH_CRYPTO= NO_OPENSSL=YesPlease])])
 
 GIT_UNSTASH_FLAGS($OPENSSLDIR)
 
@@ -384,6 +383,8 @@ AC_SUBST(NO_EXPAT)
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin and
 # some Solaris installations).
 # Define NO_ICONV if neither libc nor libiconv support iconv.
+
+if test -z "$NO_ICONV"; then
 
 GIT_STASH_FLAGS($ICONVDIR)
 
@@ -431,6 +432,12 @@ GIT_UNSTASH_FLAGS($ICONVDIR)
 AC_SUBST(NEEDS_LIBICONV)
 AC_SUBST(NO_ICONV)
 
+if test -n "$NO_ICONV"; then
+    NEEDS_LIBICONV=
+fi
+
+fi
+
 #
 # Define NO_DEFLATE_BOUND if deflateBound is missing from zlib.
 
@@ -471,11 +478,17 @@ test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 # Define NEEDS_RESOLV if linking with -lnsl and/or -lsocket is not enough.
 # Notably on Solaris hstrerror resides in libresolv and on Solaris 7
 # inet_ntop and inet_pton additionally reside there.
-AC_CHECK_LIB([resolv], [hstrerror],
+AC_CHECK_LIB([c], [hstrerror],
 [NEEDS_RESOLV=],
 [NEEDS_RESOLV=YesPlease])
 AC_SUBST(NEEDS_RESOLV)
 test -n "$NEEDS_RESOLV" && LIBS="$LIBS -lresolv"
+
+AC_CHECK_LIB([c], [basename],
+[NEEDS_LIBGEN=],
+[NEEDS_LIBGEN=YesPlease])
+AC_SUBST(NEEDS_LIBGEN)
+test -n "$NEEDS_LIBGEN" && LIBS="$LIBS -lgen"
 
 ## Checks for header files.
 AC_MSG_NOTICE([CHECKS for header files])

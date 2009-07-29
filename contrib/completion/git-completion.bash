@@ -44,6 +44,10 @@
 #       GIT_PS1_SHOWSTASHSTATE to a nonempty value. If something is stashed,
 #       then a '$' will be shown next to the branch name.
 #
+#       If you would like to see if there're untracked files, then you can
+#       set GIT_PS1_SHOWUNTRACKEDFILES to a nonempty value. If there're
+#       untracked files, then a '%' will be shown next to the branch name.
+#
 # To submit patches:
 #
 #    *) Read Documentation/SubmittingPatches
@@ -132,6 +136,7 @@ __git_ps1 ()
 		local w
 		local i
 		local s
+		local u
 		local c
 
 		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
@@ -156,12 +161,18 @@ __git_ps1 ()
 			if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
 			        git rev-parse --verify refs/stash >/dev/null 2>&1 && s="$"
 			fi
+
+			if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ]; then
+			   if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+			      u="%"
+			   fi
+			fi
 		fi
 
 		if [ -n "${1-}" ]; then
-			printf "$1" "$c${b##refs/heads/}$w$i$s$r"
+			printf "$1" "$c${b##refs/heads/}$w$i$s$u$r"
 		else
-			printf " (%s)" "$c${b##refs/heads/}$w$i$s$r"
+			printf " (%s)" "$c${b##refs/heads/}$w$i$s$u$r"
 		fi
 	fi
 }
@@ -1114,7 +1125,7 @@ _git_ls_tree ()
 __git_log_common_options="
 	--not --all
 	--branches --tags --remotes
-	--first-parent --no-merges
+	--first-parent --merges --no-merges
 	--max-count=
 	--max-age= --since= --after=
 	--min-age= --until= --before=
@@ -1165,7 +1176,7 @@ _git_log ()
 			$__git_log_shortlog_options
 			$__git_log_gitk_options
 			--root --topo-order --date-order --reverse
-			--follow
+			--follow --full-diff
 			--abbrev-commit --abbrev=
 			--relative-date --date=
 			--pretty= --format= --oneline
@@ -1299,7 +1310,7 @@ _git_rebase ()
 }
 
 __git_send_email_confirm_options="always never auto cc compose"
-__git_send_email_suppresscc_options="author self cc ccbody sob cccmd body all"
+__git_send_email_suppresscc_options="author self cc bodycc sob cccmd body all"
 
 _git_send_email ()
 {
@@ -1357,11 +1368,12 @@ __git_config_get_set_variables ()
 		c=$((--c))
 	done
 
-	for i in $(git --git-dir="$(__gitdir)" config $config_file --list \
-			2>/dev/null); do
-		case "$i" in
-		*.*)
-			echo "${i/=*/}"
+	git --git-dir="$(__gitdir)" config $config_file --list 2>/dev/null |
+	while read line
+	do
+		case "$line" in
+		*.*=*)
+			echo "${line/=*/}"
 			;;
 		esac
 	done
@@ -1457,7 +1469,7 @@ _git_config ()
 	branch.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		__gitcomp "remote merge mergeoptions" "$pfx" "$cur"
+		__gitcomp "remote merge mergeoptions rebase" "$pfx" "$cur"
 		return
 		;;
 	branch.*)
@@ -1504,7 +1516,7 @@ _git_config ()
 		cur="${cur##*.}"
 		__gitcomp "
 			url proxy fetch push mirror skipDefaultUpdate
-			receivepack uploadpack tagopt
+			receivepack uploadpack tagopt pushurl
 			" "$pfx" "$cur"
 		return
 		;;
@@ -1522,6 +1534,7 @@ _git_config ()
 		;;
 	esac
 	__gitcomp "
+		add.ignore-errors
 		alias.
 		apply.whitespace
 		branch.autosetupmerge

@@ -152,6 +152,25 @@ test_expect_success 'Prompting works' '
 		grep "^To: to@example.com$" msgtxt1
 '
 
+test_expect_success 'cccmd works' '
+	clean_fake_sendmail &&
+	cp $patches cccmd.patch &&
+	echo cccmd--cccmd@example.com >>cccmd.patch &&
+	{
+	  echo "#!$SHELL_PATH"
+	  echo sed -n -e s/^cccmd--//p \"\$1\"
+	} > cccmd-sed &&
+	chmod +x cccmd-sed &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--cc-cmd=./cccmd-sed \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		cccmd.patch \
+		&&
+	grep ^Cc:.*cccmd@example.com msgtxt1
+'
+
 z8=zzzzzzzz
 z64=$z8$z8$z8$z8$z8$z8$z8$z8
 z512=$z64$z64$z64$z64$z64$z64$z64$z64
@@ -278,7 +297,7 @@ EOF
 test_suppression () {
 	git send-email \
 		--dry-run \
-		--suppress-cc=$1 \
+		--suppress-cc=$1 ${2+"--suppress-cc=$2"} \
 		--from="Example <from@example.com>" \
 		--to=to@example.com \
 		--smtp-server relay.example.com \
@@ -286,8 +305,8 @@ test_suppression () {
 	sed	-e "s/^\(Date:\).*/\1 DATE-STRING/" \
 		-e "s/^\(Message-Id:\).*/\1 MESSAGE-ID-STRING/" \
 		-e "s/^\(X-Mailer:\).*/\1 X-MAILER-STRING/" \
-		>actual-suppress-$1 &&
-	test_cmp expected-suppress-$1 actual-suppress-$1
+		>actual-suppress-$1${2+"-$2"} &&
+	test_cmp expected-suppress-$1${2+"-$2"} actual-suppress-$1${2+"-$2"}
 }
 
 test_expect_success 'sendemail.cc set' '
@@ -320,6 +339,34 @@ test_expect_success 'sendemail.cc unset' '
 	test_suppression sob
 '
 
+cat >expected-suppress-cccmd <<\EOF
+0001-Second.patch
+(mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
+(mbox) Adding cc: One <one@example.com> from line 'Cc: One <one@example.com>, two@example.com'
+(mbox) Adding cc: two@example.com from line 'Cc: One <one@example.com>, two@example.com'
+(body) Adding cc: C O Mitter <committer@example.com> from line 'Signed-off-by: C O Mitter <committer@example.com>'
+Dry-OK. Log says:
+Server: relay.example.com
+MAIL FROM:<from@example.com>
+RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>,<committer@example.com>
+From: Example <from@example.com>
+To: to@example.com
+Cc: A <author@example.com>, One <one@example.com>, two@example.com, C O Mitter <committer@example.com>
+Subject: [PATCH 1/1] Second.
+Date: DATE-STRING
+Message-Id: MESSAGE-ID-STRING
+X-Mailer: X-MAILER-STRING
+
+Result: OK
+EOF
+
+test_expect_success 'sendemail.cccmd' '
+	echo echo cc-cmd@example.com > cccmd &&
+	chmod +x cccmd &&
+	git config sendemail.cccmd ./cccmd &&
+	test_suppression cccmd
+'
+
 cat >expected-suppress-all <<\EOF
 0001-Second.patch
 Dry-OK. Log says:
@@ -345,6 +392,31 @@ cat >expected-suppress-body <<\EOF
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
 (mbox) Adding cc: One <one@example.com> from line 'Cc: One <one@example.com>, two@example.com'
 (mbox) Adding cc: two@example.com from line 'Cc: One <one@example.com>, two@example.com'
+(cc-cmd) Adding cc: cc-cmd@example.com from: './cccmd'
+Dry-OK. Log says:
+Server: relay.example.com
+MAIL FROM:<from@example.com>
+RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>,<cc-cmd@example.com>
+From: Example <from@example.com>
+To: to@example.com
+Cc: A <author@example.com>, One <one@example.com>, two@example.com, cc-cmd@example.com
+Subject: [PATCH 1/1] Second.
+Date: DATE-STRING
+Message-Id: MESSAGE-ID-STRING
+X-Mailer: X-MAILER-STRING
+
+Result: OK
+EOF
+
+test_expect_success '--suppress-cc=body' '
+	test_suppression body
+'
+
+cat >expected-suppress-body-cccmd <<\EOF
+0001-Second.patch
+(mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
+(mbox) Adding cc: One <one@example.com> from line 'Cc: One <one@example.com>, two@example.com'
+(mbox) Adding cc: two@example.com from line 'Cc: One <one@example.com>, two@example.com'
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
@@ -360,8 +432,8 @@ X-Mailer: X-MAILER-STRING
 Result: OK
 EOF
 
-test_expect_success '--suppress-cc=body' '
-	test_suppression body
+test_expect_success '--suppress-cc=body --suppress-cc=cccmd' '
+	test_suppression body cccmd
 '
 
 cat >expected-suppress-sob <<\EOF
@@ -385,6 +457,7 @@ Result: OK
 EOF
 
 test_expect_success '--suppress-cc=sob' '
+	git config --unset sendemail.cccmd
 	test_suppression sob
 '
 

@@ -104,7 +104,7 @@ static int mark_object(struct object *obj, int type, void *data)
 
 static void mark_object_reachable(struct object *obj)
 {
-	mark_object(obj, OBJ_ANY, 0);
+	mark_object(obj, OBJ_ANY, NULL);
 }
 
 static int traverse_one_object(struct object *obj, struct object *parent)
@@ -217,7 +217,7 @@ static void check_unreachable_object(struct object *obj)
 				return;
 			}
 			if (!(f = fopen(filename, "w")))
-				die("Could not open %s", filename);
+				die_errno("Could not open '%s'", filename);
 			if (obj->type == OBJ_BLOB) {
 				enum object_type type;
 				unsigned long size;
@@ -225,15 +225,15 @@ static void check_unreachable_object(struct object *obj)
 						&type, &size);
 				if (buf) {
 					if (fwrite(buf, size, 1, f) != 1)
-						die("Could not write %s: %s",
-						    filename, strerror(errno));
+						die_errno("Could not write '%s'",
+							  filename);
 					free(buf);
 				}
 			} else
 				fprintf(f, "%s\n", sha1_to_hex(obj->sha1));
 			if (fclose(f))
-				die("Could not finish %s: %s",
-				    filename, strerror(errno));
+				die_errno("Could not finish '%s'",
+					  filename);
 		}
 		return;
 	}
@@ -292,7 +292,7 @@ static int fsck_sha1(const unsigned char *sha1)
 		fprintf(stderr, "Checking %s %s\n",
 			typename(obj->type), sha1_to_hex(obj->sha1));
 
-	if (fsck_walk(obj, mark_used, 0))
+	if (fsck_walk(obj, mark_used, NULL))
 		objerror(obj, "broken links");
 	if (fsck_object(obj, check_strict, fsck_error_func))
 		return -1;

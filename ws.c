@@ -10,11 +10,12 @@
 static struct whitespace_rule {
 	const char *rule_name;
 	unsigned rule_bits;
+	unsigned loosens_error;
 } whitespace_rule_names[] = {
-	{ "trailing-space", WS_TRAILING_SPACE },
-	{ "space-before-tab", WS_SPACE_BEFORE_TAB },
-	{ "indent-with-non-tab", WS_INDENT_WITH_NON_TAB },
-	{ "cr-at-eol", WS_CR_AT_EOL },
+	{ "trailing-space", WS_TRAILING_SPACE, 0 },
+	{ "space-before-tab", WS_SPACE_BEFORE_TAB, 0 },
+	{ "indent-with-non-tab", WS_INDENT_WITH_NON_TAB, 0 },
+	{ "cr-at-eol", WS_CR_AT_EOL, 1 },
 };
 
 unsigned parse_whitespace_rule(const char *string)
@@ -79,7 +80,8 @@ unsigned whitespace_rule(const char *pathname)
 			unsigned all_rule = 0;
 			int i;
 			for (i = 0; i < ARRAY_SIZE(whitespace_rule_names); i++)
-				all_rule |= whitespace_rule_names[i].rule_bits;
+				if (!whitespace_rule_names[i].loosens_error)
+					all_rule |= whitespace_rule_names[i].rule_bits;
 			return all_rule;
 		} else if (ATTR_FALSE(value)) {
 			/* false (-whitespace) */
@@ -259,12 +261,11 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 	/*
 	 * Strip trailing whitespace
 	 */
-	if ((ws_rule & WS_TRAILING_SPACE) &&
-	    (2 <= len && isspace(src[len-2]))) {
-		if (src[len - 1] == '\n') {
+	if (ws_rule & WS_TRAILING_SPACE) {
+		if (0 < len && src[len - 1] == '\n') {
 			add_nl_to_tail = 1;
 			len--;
-			if (1 < len && src[len - 1] == '\r') {
+			if (0 < len && src[len - 1] == '\r') {
 				add_cr_to_tail = !!(ws_rule & WS_CR_AT_EOL);
 				len--;
 			}

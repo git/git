@@ -193,6 +193,8 @@ static char *xml_entities(char *s)
 		case '&':
 			strbuf_addstr(&buf, "&amp;");
 			break;
+		case 0:
+			return strbuf_detach(&buf, NULL);
 		}
 		s++;
 	}
@@ -1750,7 +1752,7 @@ static int delete_remote_branch(char *pattern, int force)
 	return 0;
 }
 
-void run_request_queue(void)
+static void run_request_queue(void)
 {
 #ifdef USE_CURL_MULTI
 	is_running_queue = 1;

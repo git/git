@@ -24,14 +24,10 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 	result[count] = NULL;
 	for (i = 0; i < count; i++) {
 		int length = strlen(result[i]);
-		if (length > 0 && result[i][length - 1] == '/') {
+		if (length > 0 && is_dir_sep(result[i][length - 1]))
 			result[i] = xmemdupz(result[i], length - 1);
-		}
-		if (base_name) {
-			const char *last_slash = strrchr(result[i], '/');
-			if (last_slash)
-				result[i] = last_slash + 1;
-		}
+		if (base_name)
+			result[i] = basename((char *)result[i]);
 	}
 	return get_pathspec(prefix, result);
 }
@@ -209,7 +205,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			printf("Renaming %s to %s\n", src, dst);
 		if (!show_only && mode != INDEX &&
 				rename(src, dst) < 0 && !ignore_errors)
-			die ("renaming %s failed: %s", src, strerror(errno));
+			die_errno ("renaming '%s' failed", src);
 
 		if (mode == WORKING_DIRECTORY)
 			continue;

@@ -400,14 +400,14 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 /*
  * We would want to bypass the object transfer altogether if
- * everything we are going to fetch already exists and connected
+ * everything we are going to fetch already exists and is connected
  * locally.
  *
- * The refs we are going to fetch are in to_fetch (nr_heads in
- * total).  If running
+ * The refs we are going to fetch are in ref_map.  If running
  *
- *  $ git rev-list --objects to_fetch[0] to_fetch[1] ... --not --all
+ *  $ git rev-list --objects --stdin --not --all
  *
+ * (feeding all the refs in ref_map on its standard input)
  * does not error out, that means everything reachable from the
  * refs we are going to fetch exists and is connected to some of
  * our existing refs.
@@ -416,8 +416,9 @@ static int quickfetch(struct ref *ref_map)
 {
 	struct child_process revlist;
 	struct ref *ref;
-	char **argv;
-	int i, err;
+	int err;
+	const char *argv[] = {"rev-list",
+		"--quiet", "--objects", "--stdin", "--not", "--all", NULL};
 
 	/*
 	 * If we are deepening a shallow clone we already have these
@@ -429,34 +430,46 @@ static int quickfetch(struct ref *ref_map)
 	if (depth)
 		return -1;
 
-	for (i = 0, ref = ref_map; ref; ref = ref->next)
-		i++;
-	if (!i)
+	if (!ref_map)
 		return 0;
 
-	argv = xmalloc(sizeof(*argv) * (i + 6));
-	i = 0;
-	argv[i++] = xstrdup("rev-list");
-	argv[i++] = xstrdup("--quiet");
-	argv[i++] = xstrdup("--objects");
-	for (ref = ref_map; ref; ref = ref->next)
-		argv[i++] = xstrdup(sha1_to_hex(ref->old_sha1));
-	argv[i++] = xstrdup("--not");
-	argv[i++] = xstrdup("--all");
-	argv[i++] = NULL;
-
 	memset(&revlist, 0, sizeof(revlist));
-	revlist.argv = (const char**)argv;
+	revlist.argv = argv;
 	revlist.git_cmd = 1;
-	revlist.no_stdin = 1;
 	revlist.no_stdout = 1;
 	revlist.no_stderr = 1;
-	err = run_command(&revlist);
+	revlist.in = -1;
 
-	for (i = 0; argv[i]; i++)
-		free(argv[i]);
-	free(argv);
-	return err;
+	err = start_command(&revlist);
+	if (err) {
+		error("could not run rev-list");
+		return err;
+	}
+
+	/*
+	 * If rev-list --stdin encounters an unknown commit, it terminates,
+	 * which will cause SIGPIPE in the write loop below.
+	 */
+	sigchain_push(SIGPIPE, SIG_IGN);
+
+	for (ref = ref_map; ref; ref = ref->next) {
+		if (write_in_full(revlist.in, sha1_to_hex(ref->old_sha1), 40) < 0 ||
+		    write_in_full(revlist.in, "\n", 1) < 0) {
+			if (errno != EPIPE && errno != EINVAL)
+				error("failed write to rev-list: %s", strerror(errno));
+			err = -1;
+			break;
+		}
+	}
+
+	if (close(revlist.in)) {
+		error("failed to close rev-list's stdin: %s", strerror(errno));
+		err = -1;
+	}
+
+	sigchain_pop(SIGPIPE);
+
+	return finish_command(&revlist) || err;
 }
 
 static int fetch_refs(struct transport *transport, struct ref *ref_map)

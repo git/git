@@ -24,7 +24,7 @@ SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
 no_update_info= all_into_one= remove_redundant= unpack_unreachable=
-local= quiet= no_reuse= extra=
+local= no_reuse= extra=
 while test $# != 0
 do
 	case "$1" in
@@ -33,7 +33,7 @@ do
 	-A)	all_into_one=t
 		unpack_unreachable=--unpack-unreachable ;;
 	-d)	remove_redundant=t ;;
-	-q)	quiet=-q ;;
+	-q)	GIT_QUIET=t ;;
 	-f)	no_reuse=--no-reuse-object ;;
 	-l)	local=--local ;;
 	--max-pack-size|--window|--window-memory|--depth)
@@ -80,13 +80,11 @@ case ",$all_into_one," in
 	;;
 esac
 
-args="$args $local $quiet $no_reuse$extra"
-names=$(git pack-objects --honor-pack-keep --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
+args="$args $local ${GIT_QUIET:+-q} $no_reuse$extra"
+names=$(git pack-objects --keep-true-parents --honor-pack-keep --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
 if [ -z "$names" ]; then
-	if test -z "$quiet"; then
-		echo Nothing new to pack.
-	fi
+	say Nothing new to pack.
 fi
 
 # Ok we have prepared all new packfiles.
@@ -176,7 +174,7 @@ then
 		  done
 		)
 	fi
-	git prune-packed $quiet
+	git prune-packed ${GIT_QUIET:+-q}
 fi
 
 case "$no_update_info" in

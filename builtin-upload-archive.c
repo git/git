@@ -80,16 +80,17 @@ static void error_clnt(const char *fmt, ...)
 	die("sent error to the client: %s", buf);
 }
 
-static void process_input(int child_fd, int band)
+static ssize_t process_input(int child_fd, int band)
 {
 	char buf[16384];
 	ssize_t sz = read(child_fd, buf, sizeof(buf));
 	if (sz < 0) {
 		if (errno != EAGAIN && errno != EINTR)
 			error_clnt("read error: %s\n", strerror(errno));
-		return;
+		return sz;
 	}
 	send_sideband(1, band, buf, sz, LARGE_PACKET_MAX);
+	return sz;
 }
 
 int cmd_upload_archive(int argc, const char **argv, const char *prefix)
@@ -131,6 +132,7 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 
 	while (1) {
 		struct pollfd pfd[2];
+		ssize_t processed[2] = { 0, 0 };
 		int status;
 
 		pfd[0].fd = fd1[0];
@@ -147,12 +149,12 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 		}
 		if (pfd[0].revents & POLLIN)
 			/* Data stream ready */
-			process_input(pfd[0].fd, 1);
+			processed[0] = process_input(pfd[0].fd, 1);
 		if (pfd[1].revents & POLLIN)
 			/* Status stream ready */
-			process_input(pfd[1].fd, 2);
+			processed[1] = process_input(pfd[1].fd, 2);
 		/* Always finish to read data when available */
-		if ((pfd[0].revents | pfd[1].revents) & POLLIN)
+		if (processed[0] || processed[1])
 			continue;
 
 		if (waitpid(writer, &status, 0) < 0)

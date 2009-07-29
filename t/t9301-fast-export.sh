@@ -262,6 +262,94 @@ test_expect_success 'cope with tagger-less tags' '
 
 '
 
+test_expect_success 'setup for limiting exports by PATH' '
+	mkdir limit-by-paths &&
+	cd limit-by-paths &&
+	git init &&
+	echo hi > there &&
+	git add there &&
+	git commit -m "First file" &&
+	echo foo > bar &&
+	git add bar &&
+	git commit -m "Second file" &&
+	git tag -a -m msg mytag &&
+	echo morefoo >> bar &&
+	git add bar &&
+	git commit -m "Change to second file" &&
+	cd ..
+'
+
+cat > limit-by-paths/expected << EOF
+blob
+mark :1
+data 3
+hi
+
+reset refs/tags/mytag
+commit refs/tags/mytag
+mark :2
+author A U Thor <author@example.com> 1112912713 -0700
+committer C O Mitter <committer@example.com> 1112912713 -0700
+data 11
+First file
+M 100644 :1 there
+
+EOF
+
+test_expect_success 'dropping tag of filtered out object' '
+	cd limit-by-paths &&
+	git fast-export --tag-of-filtered-object=drop mytag -- there > output &&
+	test_cmp output expected &&
+	cd ..
+'
+
+cat >> limit-by-paths/expected << EOF
+tag mytag
+from :2
+tagger C O Mitter <committer@example.com> 1112912713 -0700
+data 4
+msg
+
+EOF
+
+test_expect_success 'rewriting tag of filtered out object' '
+	cd limit-by-paths &&
+	git fast-export --tag-of-filtered-object=rewrite mytag -- there > output &&
+	test_cmp output expected &&
+	cd ..
+'
+
+cat > limit-by-paths/expected << EOF
+blob
+mark :1
+data 4
+foo
+
+blob
+mark :2
+data 3
+hi
+
+reset refs/heads/master
+commit refs/heads/master
+mark :3
+author A U Thor <author@example.com> 1112912713 -0700
+committer C O Mitter <committer@example.com> 1112912713 -0700
+data 12
+Second file
+M 100644 :1 bar
+M 100644 :2 there
+
+EOF
+
+test_expect_failure 'no exact-ref revisions included' '
+	cd limit-by-paths &&
+	git fast-export master~2..master~1 > output &&
+	test_cmp output expected &&
+	cd ..
+'
+
+
 test_expect_success 'set-up a few more tags for tag export tests' '
 	git checkout -f master &&
 	HEAD_TREE=`git show -s --pretty=raw HEAD | grep tree | sed "s/tree //"` &&
@@ -271,8 +359,14 @@ test_expect_success 'set-up a few more tags for tag export tests' '
 	git tag -a tag-obj_tag-obj -m "tagging a tag" tree_tag-obj
 '
 
+test_expect_success 'tree_tag'        '
+	mkdir result &&
+	(cd result && git init) &&
+	git fast-export tree_tag > fe-stream &&
+	(cd result && git fast-import < ../fe-stream)
+'
+
 # NEEDSWORK: not just check return status, but validate the output
-test_expect_success 'tree_tag'        'git fast-export tree_tag'
 test_expect_success 'tree_tag-obj'    'git fast-export tree_tag-obj'
 test_expect_success 'tag-obj_tag'     'git fast-export tag-obj_tag'
 test_expect_success 'tag-obj_tag-obj' 'git fast-export tag-obj_tag-obj'

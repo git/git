@@ -28,7 +28,7 @@ ssize_t safe_write(int fd, const void *buf, ssize_t n)
 		}
 		if (!ret)
 			die("write error (disk full?)");
-		die("write error (%s)", strerror(errno));
+		die_errno("write error");
 	}
 	return nn;
 }
@@ -67,7 +67,7 @@ static void safe_read(int fd, void *buffer, unsigned size)
 {
 	ssize_t ret = read_in_full(fd, buffer, size);
 	if (ret < 0)
-		die("read error (%s)", strerror(errno));
+		die_errno("read error");
 	else if (ret < size)
 		die("The remote end hung up unexpectedly");
 }

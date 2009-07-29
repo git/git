@@ -36,6 +36,7 @@ struct rev_info {
 	unsigned int	dense:1,
 			prune:1,
 			no_merges:1,
+			merges_only:1,
 			no_walk:1,
 			show_all:1,
 			remove_empty_trees:1,

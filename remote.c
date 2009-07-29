@@ -106,6 +106,12 @@ static void add_url_alias(struct remote *remote, const char *url)
 	add_url(remote, alias_url(url));
 }
 
+static void add_pushurl(struct remote *remote, const char *pushurl)
+{
+	ALLOC_GROW(remote->pushurl, remote->pushurl_nr + 1, remote->pushurl_alloc);
+	remote->pushurl[remote->pushurl_nr++] = pushurl;
+}
+
 static struct remote *make_remote(const char *name, int len)
 {
 	struct remote *ret;
@@ -301,7 +307,7 @@ static void read_branches_file(struct remote *remote)
 		strbuf_addstr(&branch, "HEAD:");
 	}
 	add_url_alias(remote, p);
-	add_fetch_refspec(remote, strbuf_detach(&branch, 0));
+	add_fetch_refspec(remote, strbuf_detach(&branch, NULL));
 	/*
 	 * Cogito compatible push: push current HEAD to remote #branch
 	 * (master if missing)
@@ -312,7 +318,7 @@ static void read_branches_file(struct remote *remote)
 		strbuf_addf(&branch, ":refs/heads/%s", frag);
 	else
 		strbuf_addstr(&branch, ":refs/heads/master");
-	add_push_refspec(remote, strbuf_detach(&branch, 0));
+	add_push_refspec(remote, strbuf_detach(&branch, NULL));
 	remote->fetch_tags = 1; /* always auto-follow */
 }
 
@@ -379,6 +385,11 @@ static int handle_config(const char *key, const char *value, void *cb)
 		if (git_config_string(&v, key, value))
 			return -1;
 		add_url(remote, v);
+	} else if (!strcmp(subkey, ".pushurl")) {
+		const char *v;
+		if (git_config_string(&v, key, value))
+			return -1;
+		add_pushurl(remote, v);
 	} else if (!strcmp(subkey, ".push")) {
 		const char *v;
 		if (git_config_string(&v, key, value))
@@ -423,6 +434,9 @@ static void alias_all_urls(void)
 			continue;
 		for (j = 0; j < remotes[i]->url_nr; j++) {
 			remotes[i]->url[j] = alias_url(remotes[i]->url[j]);
+		}
+		for (j = 0; j < remotes[i]->pushurl_nr; j++) {
+			remotes[i]->pushurl[j] = alias_url(remotes[i]->pushurl[j]);
 		}
 	}
 }
@@ -1105,7 +1119,7 @@ int match_refs(struct ref *src, struct ref **dst,
 	int send_all = flags & MATCH_REFS_ALL;
 	int send_mirror = flags & MATCH_REFS_MIRROR;
 	int errs;
-	static const char *default_refspec[] = { ":", 0 };
+	static const char *default_refspec[] = { ":", NULL };
 	struct ref **dst_tail = tail_ref(dst);
 
 	if (!nr_refspec) {
@@ -1263,7 +1277,7 @@ struct ref *get_remote_ref(const struct ref *remote_refs, const char *name)
 
 static struct ref *get_local_ref(const char *name)
 {
-	if (!name)
+	if (!name || name[0] == '\0')
 		return NULL;
 
 	if (!prefixcmp(name, "refs/"))

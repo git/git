@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "pkt-line.h"
 #include "exec_cmd.h"
+#include "run-command.h"
+#include "strbuf.h"
 
 #include <syslog.h>
 
@@ -343,28 +345,66 @@ static int run_service(char *dir, struct daemon_service *service)
 	return service->fn();
 }
 
+static void copy_to_log(int fd)
+{
+	struct strbuf line = STRBUF_INIT;
+	FILE *fp;
+
+	fp = fdopen(fd, "r");
+	if (fp == NULL) {
+		logerror("fdopen of error channel failed");
+		close(fd);
+		return;
+	}
+
+	while (strbuf_getline(&line, fp, '\n') != EOF) {
+		logerror("%s", line.buf);
+		strbuf_setlen(&line, 0);
+	}
+
+	strbuf_release(&line);
+	fclose(fp);
+}
+
+static int run_service_command(const char **argv)
+{
+	struct child_process cld;
+
+	memset(&cld, 0, sizeof(cld));
+	cld.argv = argv;
+	cld.git_cmd = 1;
+	cld.err = -1;
+	if (start_command(&cld))
+		return -1;
+
+	close(0);
+	close(1);
+
+	copy_to_log(cld.err);
+
+	return finish_command(&cld);
+}
+
 static int upload_pack(void)
 {
 	/* Timeout as string */
 	char timeout_buf[64];
+	const char *argv[] = { "upload-pack", "--strict", timeout_buf, ".", NULL };
 
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
-
-	/* git-upload-pack only ever reads stuff, so this is safe */
-	execl_git_cmd("upload-pack", "--strict", timeout_buf, ".", NULL);
-	return -1;
+	return run_service_command(argv);
 }
 
 static int upload_archive(void)
 {
-	execl_git_cmd("upload-archive", ".", NULL);
-	return -1;
+	static const char *argv[] = { "upload-archive", ".", NULL };
+	return run_service_command(argv);
 }
 
 static int receive_pack(void)
 {
-	execl_git_cmd("receive-pack", ".", NULL);
-	return -1;
+	static const char *argv[] = { "receive-pack", ".", NULL };
+	return run_service_command(argv);
 }
 
 static struct daemon_service daemon_service[] = {
@@ -453,7 +493,7 @@ static void parse_host_arg(char *extra_args, int buflen)
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_flags = AI_CANONNAME;
 
-		gai = getaddrinfo(hostname, 0, &hints, &ai);
+		gai = getaddrinfo(hostname, NULL, &hints, &ai);
 		if (!gai) {
 			struct sockaddr_in *sin_addr = (void *)ai->ai_addr;
 
@@ -862,7 +902,7 @@ static int service_loop(int socknum, int *socklist)
 					case ECONNABORTED:
 						continue;
 					default:
-						die("accept returned %s", strerror(errno));
+						die_errno("accept returned");
 					}
 				}
 				handle(incoming, (struct sockaddr *)&ss, sslen);
@@ -878,7 +918,7 @@ static void sanitize_stdfds(void)
 	while (fd != -1 && fd < 2)
 		fd = dup(fd);
 	if (fd == -1)
-		die("open /dev/null or dup failed: %s", strerror(errno));
+		die_errno("open /dev/null or dup failed");
 	if (fd > 2)
 		close(fd);
 }
@@ -889,12 +929,12 @@ static void daemonize(void)
 		case 0:
 			break;
 		case -1:
-			die("fork failed: %s", strerror(errno));
+			die_errno("fork failed");
 		default:
 			exit(0);
 	}
 	if (setsid() == -1)
-		die("setsid failed: %s", strerror(errno));
+		die_errno("setsid failed");
 	close(0);
 	close(1);
 	close(2);
@@ -905,9 +945,9 @@ static void store_pid(const char *path)
 {
 	FILE *f = fopen(path, "w");
 	if (!f)
-		die("cannot open pid file %s: %s", path, strerror(errno));
+		die_errno("cannot open pid file '%s'", path);
 	if (fprintf(f, "%"PRIuMAX"\n", (uintmax_t) getpid()) < 0 || fclose(f) != 0)
-		die("failed to write pid file %s: %s", path, strerror(errno));
+		die_errno("failed to write pid file '%s'", path);
 }
 
 static int serve(char *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
@@ -1107,8 +1147,7 @@ int main(int argc, char **argv)
 		socklen_t slen = sizeof(ss);
 
 		if (!freopen("/dev/null", "w", stderr))
-			die("failed to redirect stderr to /dev/null: %s",
-			    strerror(errno));
+			die_errno("failed to redirect stderr to /dev/null");
 
 		if (getpeername(0, peer, &slen))
 			peer = NULL;

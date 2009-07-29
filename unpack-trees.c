@@ -128,7 +128,7 @@ static inline int call_unpack_fn(struct cache_entry **src, struct unpack_trees_o
 
 static int unpack_index_entry(struct cache_entry *ce, struct unpack_trees_options *o)
 {
-	struct cache_entry *src[5] = { ce, };
+	struct cache_entry *src[5] = { ce, NULL, };
 
 	o->pos++;
 	if (ce_stage(ce)) {
@@ -140,7 +140,7 @@ static int unpack_index_entry(struct cache_entry *ce, struct unpack_trees_option
 	return call_unpack_fn(src, o);
 }
 
-int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
+static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
 {
 	int i;
 	struct tree_desc t[MAX_UNPACK_TREES];
@@ -326,6 +326,23 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 			if (src[0])
 				conflicts |= 1;
 		}
+
+		/* special case: "diff-index --cached" looking at a tree */
+		if (o->diff_index_cached &&
+		    n == 1 && dirmask == 1 && S_ISDIR(names->mode)) {
+			int matches;
+			matches = cache_tree_matches_traversal(o->src_index->cache_tree,
+							       names, info);
+			/*
+			 * Everything under the name matches.  Adjust o->pos to
+			 * skip the entire hierarchy.
+			 */
+			if (matches) {
+				o->pos += matches;
+				return mask;
+			}
+		}
+
 		if (traverse_trees_recursive(n, dirmask, conflicts,
 					     names, info) < 0)
 			return -1;
@@ -534,7 +551,7 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 	memset(&d, 0, sizeof(d));
 	if (o->dir)
 		d.exclude_per_dir = o->dir->exclude_per_dir;
-	i = read_directory(&d, ce->name, pathbuf, namelen+1, NULL);
+	i = read_directory(&d, pathbuf, namelen+1, NULL);
 	if (i)
 		return o->gently ? -1 :
 			error(ERRORMSG(o, not_uptodate_dir), ce->name);
@@ -982,12 +999,12 @@ int oneway_merge(struct cache_entry **src, struct unpack_trees_options *o)
 		return error("Cannot do a oneway merge of %d trees",
 			     o->merge_size);
 
-	if (!a)
+	if (!a || a == o->df_conflict_entry)
 		return deleted_entry(old, old, o);
 
 	if (old && same(old, a)) {
 		int update = 0;
-		if (o->reset) {
+		if (o->reset && !ce_uptodate(old)) {
 			struct stat st;
 			if (lstat(old->name, &st) ||
 			    ie_match_stat(o->src_index, old, &st, CE_MATCH_IGNORE_VALID))

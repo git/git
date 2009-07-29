@@ -188,10 +188,9 @@ static int handle_alias(int *argcp, const char ***argv)
 				  alias_command);
 
 		new_argv = xrealloc(new_argv, sizeof(char *) *
-				    (count + *argcp + 1));
+				    (count + *argcp));
 		/* insert after command name */
 		memcpy(new_argv + count, *argv + 1, sizeof(char *) * *argcp);
-		new_argv[count+*argcp] = NULL;
 
 		*argv = new_argv;
 		*argcp += count - 1;
@@ -200,7 +199,7 @@ static int handle_alias(int *argcp, const char ***argv)
 	}
 
 	if (subdir && chdir(subdir))
-		die("Cannot change to %s: %s", subdir, strerror(errno));
+		die_errno("Cannot change to '%s'", subdir);
 
 	errno = saved_errno;
 
@@ -246,7 +245,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 
 	status = p->fn(argc, argv, prefix);
 	if (status)
-		return status & 0xff;
+		return status;
 
 	/* Somebody closed stdout? */
 	if (fstat(fileno(stdout), &st))
@@ -257,11 +256,11 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 
 	/* Check for ENOSPC and EIO errors.. */
 	if (fflush(stdout))
-		die("write failure on standard output: %s", strerror(errno));
+		die_errno("write failure on standard output");
 	if (ferror(stdout))
 		die("unknown write failure on standard output");
 	if (fclose(stdout))
-		die("close failed on standard output: %s", strerror(errno));
+		die_errno("close failed on standard output");
 	return 0;
 }
 

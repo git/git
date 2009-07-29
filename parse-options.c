@@ -478,7 +478,7 @@ static int usage_argh(const struct option *opts)
 #define USAGE_OPTS_WIDTH 24
 #define USAGE_GAP         2
 
-int usage_with_options_internal(const char * const *usagestr,
+static int usage_with_options_internal(const char * const *usagestr,
 				const struct option *opts, int full)
 {
 	if (!usagestr)

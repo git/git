@@ -231,6 +231,25 @@ test_expect_success \
                               "^:refs/${remotes_git_svn}$"
         '
 
+test_expect_success 'dcommit $rev does not clobber current branch' '
+	git svn fetch -i bar &&
+	git checkout -b my-bar refs/remotes/bar &&
+	echo 1 > foo &&
+	git add foo &&
+	git commit -m "change 1" &&
+	echo 2 > foo &&
+	git add foo &&
+	git commit -m "change 2" &&
+	old_head=$(git rev-parse HEAD) &&
+	git svn dcommit -i bar HEAD^ &&
+	test $old_head = $(git rev-parse HEAD) &&
+	test refs/heads/my-bar = $(git symbolic-ref HEAD) &&
+	git log refs/remotes/bar | grep "change 1" &&
+	! git log refs/remotes/bar | grep "change 2" &&
+	git checkout master &&
+	git branch -D my-bar
+	'
+
 test_expect_success 'able to dcommit to a subdirectory' "
 	git svn fetch -i bar &&
 	git checkout -b my-bar refs/remotes/bar &&

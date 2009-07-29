@@ -334,7 +334,7 @@ if (@suppress_cc) {
 }
 
 if ($suppress_cc{'all'}) {
-	foreach my $entry (qw (ccmd cc author self sob body bodycc)) {
+	foreach my $entry (qw (cccmd cc author self sob body bodycc)) {
 		$suppress_cc{$entry} = 1;
 	}
 	delete $suppress_cc{'all'};
@@ -654,13 +654,17 @@ if (!@to) {
 }
 
 sub expand_aliases {
-	my @cur = @_;
-	my @last;
-	do {
-		@last = @cur;
-		@cur = map { $aliases{$_} ? @{$aliases{$_}} : $_ } @last;
-	} while (join(',',@cur) ne join(',',@last));
-	return @cur;
+	return map { expand_one_alias($_) } @_;
+}
+
+my %EXPANDED_ALIASES;
+sub expand_one_alias {
+	my $alias = shift;
+	if ($EXPANDED_ALIASES{$alias}) {
+		die "fatal: alias '$alias' expands to itself\n";
+	}
+	local $EXPANDED_ALIASES{$alias} = 1;
+	return $aliases{$alias} ? expand_aliases(@{$aliases{$alias}}) : $alias;
 }
 
 @to = expand_aliases(@to);
@@ -1104,7 +1108,7 @@ foreach my $t (@files) {
 	close F;
 
 	if (defined $cc_cmd && !$suppress_cc{'cccmd'}) {
-		open(F, "$cc_cmd $t |")
+		open(F, "$cc_cmd \Q$t\E |")
 			or die "(cc-cmd) Could not execute '$cc_cmd'";
 		while(<F>) {
 			my $c = $_;

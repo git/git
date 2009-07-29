@@ -94,7 +94,7 @@ static void show_early_header(struct rev_info *rev, const char *stage, int nr)
 	printf("Final output: %d %s\n", nr, stage);
 }
 
-struct itimerval early_output_timer;
+static struct itimerval early_output_timer;
 
 static void log_show_early(struct rev_info *revs, struct commit_list *list)
 {
@@ -977,7 +977,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		strbuf_addch(&buf, '\n');
 	}
 
-	rev.extra_headers = strbuf_detach(&buf, 0);
+	rev.extra_headers = strbuf_detach(&buf, NULL);
 
 	if (start_number < 0)
 		start_number = 1;
@@ -1013,8 +1013,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (use_stdout)
 			die("standard output, or directory, which one?");
 		if (mkdir(output_directory, 0777) < 0 && errno != EEXIST)
-			die("Could not create directory %s",
-			    output_directory);
+			die_errno("Could not create directory '%s'",
+				  output_directory);
 	}
 
 	if (rev.pending.nr == 1) {

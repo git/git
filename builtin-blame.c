@@ -2008,23 +2008,23 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 
 		if (contents_from) {
 			if (stat(contents_from, &st) < 0)
-				die("Cannot stat %s", contents_from);
+				die_errno("Cannot stat '%s'", contents_from);
 			read_from = contents_from;
 		}
 		else {
 			if (lstat(path, &st) < 0)
-				die("Cannot lstat %s", path);
+				die_errno("Cannot lstat '%s'", path);
 			read_from = path;
 		}
 		mode = canon_mode(st.st_mode);
 		switch (st.st_mode & S_IFMT) {
 		case S_IFREG:
 			if (strbuf_read_file(&buf, read_from, st.st_size) != st.st_size)
-				die("cannot open or read %s", read_from);
+				die_errno("cannot open or read '%s'", read_from);
 			break;
 		case S_IFLNK:
 			if (strbuf_readlink(&buf, read_from, st.st_size) < 0)
-				die("cannot readlink %s", read_from);
+				die_errno("cannot readlink '%s'", read_from);
 			break;
 		default:
 			die("unsupported file type %s", read_from);
@@ -2035,7 +2035,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 		contents_from = "standard input";
 		mode = 0;
 		if (strbuf_read(&buf, 0, 0) < 0)
-			die("read error %s from stdin", strerror(errno));
+			die_errno("failed to read from stdin");
 	}
 	convert_to_git(path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
@@ -2261,8 +2261,7 @@ parse_done:
 	argc = parse_options_end(&ctx);
 
 	if (revs_file && read_ancestry(revs_file))
-		die("reading graft file %s failed: %s",
-		    revs_file, strerror(errno));
+		die_errno("reading graft file '%s' failed", revs_file);
 
 	if (cmd_is_annotate) {
 		output_option |= OUTPUT_ANNOTATE_COMPAT;
@@ -2350,7 +2349,7 @@ parse_done:
 
 		setup_work_tree();
 		if (!has_string_in_work_tree(path))
-			die("cannot stat path %s: %s", path, strerror(errno));
+			die_errno("cannot stat path '%s'", path);
 	}
 
 	setup_revisions(argc, argv, &revs, NULL);

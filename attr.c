@@ -35,8 +35,7 @@ static struct git_attr *(git_attr_hash[HASHSIZE]);
 
 static unsigned hash_name(const char *name, int namelen)
 {
-	unsigned val = 0;
-	unsigned char c;
+	unsigned val = 0, c;
 
 	while (namelen--) {
 		c = *name++;
@@ -555,6 +554,8 @@ static void prepare_attr_stack(const char *path, int dirlen)
 			debug_push(elem);
 		}
 	}
+
+	strbuf_release(&pathbuf);
 
 	/*
 	 * Finally push the "info" one at the top of the stack.

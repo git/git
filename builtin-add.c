@@ -97,35 +97,6 @@ static void treat_gitlinks(const char **pathspec)
 	}
 }
 
-static void fill_directory(struct dir_struct *dir, const char **pathspec,
-		int ignored_too)
-{
-	const char *path, *base;
-	int baselen;
-
-	/* Set up the default git porcelain excludes */
-	memset(dir, 0, sizeof(*dir));
-	if (!ignored_too) {
-		dir->flags |= DIR_COLLECT_IGNORED;
-		setup_standard_excludes(dir);
-	}
-
-	/*
-	 * Calculate common prefix for the pathspec, and
-	 * use that to optimize the directory walk
-	 */
-	baselen = common_prefix(pathspec);
-	path = ".";
-	base = "";
-	if (baselen)
-		path = base = xmemdupz(*pathspec, baselen);
-
-	/* Read the directory and prune it */
-	read_directory(dir, path, base, baselen, pathspec);
-	if (pathspec)
-		prune_directory(dir, pathspec, baselen);
-}
-
 static void refresh(int verbose, const char **pathspec)
 {
 	char *seen;
@@ -189,7 +160,7 @@ int interactive_add(int argc, const char **argv, const char *prefix)
 	return status;
 }
 
-int edit_patch(int argc, const char **argv, const char *prefix)
+static int edit_patch(int argc, const char **argv, const char *prefix)
 {
 	char *file = xstrdup(git_path("ADD_EDIT.patch"));
 	const char *apply_argv[] = { "apply", "--recount", "--cached",
@@ -220,7 +191,7 @@ int edit_patch(int argc, const char **argv, const char *prefix)
 	launch_editor(file, NULL, NULL);
 
 	if (stat(file, &st))
-		die("Could not stat '%s'", file);
+		die_errno("Could not stat '%s'", file);
 	if (!st.st_size)
 		die("Empty patch. Aborted.");
 
@@ -298,14 +269,14 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int add_new_files;
 	int require_pathspec;
 
+	git_config(add_config, NULL);
+
 	argc = parse_options(argc, argv, prefix, builtin_add_options,
 			  builtin_add_usage, PARSE_OPT_KEEP_ARGV0);
 	if (patch_interactive)
 		add_interactive = 1;
 	if (add_interactive)
 		exit(interactive_add(argc - 1, argv + 1, prefix));
-
-	git_config(add_config, NULL);
 
 	if (edit_interactive)
 		return(edit_patch(argc, argv, prefix));
@@ -343,9 +314,21 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		die("index file corrupt");
 	treat_gitlinks(pathspec);
 
-	if (add_new_files)
+	if (add_new_files) {
+		int baselen;
+
+		/* Set up the default git porcelain excludes */
+		memset(&dir, 0, sizeof(dir));
+		if (!ignored_too) {
+			dir.flags |= DIR_COLLECT_IGNORED;
+			setup_standard_excludes(&dir);
+		}
+
 		/* This picks up the paths that are not tracked */
-		fill_directory(&dir, pathspec, ignored_too);
+		baselen = fill_directory(&dir, pathspec);
+		if (pathspec)
+			prune_directory(&dir, pathspec, baselen);
+	}
 
 	if (refresh_only) {
 		refresh(verbose, pathspec);

@@ -149,5 +149,17 @@ test_expect_success 'local packed unreachable obs that exist in alternate ODB ar
 	test_must_fail git show $csha1
 '
 
+test_expect_success 'objects made unreachable by grafts only are kept' '
+	test_tick &&
+	git commit --allow-empty -m "commit 4" &&
+	H0=$(git rev-parse HEAD) &&
+	H1=$(git rev-parse HEAD^) &&
+	H2=$(git rev-parse HEAD^^) &&
+	echo "$H0 $H2" > .git/info/grafts &&
+	git reflog expire --expire=now --expire-unreachable=now --all &&
+	git repack -a -d &&
+	git cat-file -t $H1
+	'
+
 test_done
 

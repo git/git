@@ -12,6 +12,9 @@ OPTIONS_SPEC=
 . git-sh-setup
 . git-parse-remote
 
+GIT_PAGER=
+export GIT_PAGER
+
 base=$1
 url=$2
 head=${3-HEAD}
@@ -25,16 +28,16 @@ headrev=`git rev-parse --verify "$head"^0` || exit
 merge_base=`git merge-base $baserev $headrev` ||
 die "fatal: No commits in common between $base and $head"
 
-url=$(get_remote_url "$url")
 branch=$(git ls-remote "$url" \
 	| sed -n -e "/^$headrev	refs.heads./{
 		s/^.*	refs.heads.//
 		p
 		q
 	}")
+url=$(get_remote_url "$url")
 if [ -z "$branch" ]; then
 	echo "warn: No branch of $url is at:" >&2
-	git log --max-count=1 --pretty='format:warn:   %h: %s' $headrev >&2
+	git log --max-count=1 --pretty='tformat:warn:   %h: %s' $headrev >&2
 	echo "warn: Are you sure you pushed $head there?" >&2
 	echo >&2
 	echo >&2
@@ -42,8 +45,6 @@ if [ -z "$branch" ]; then
 	status=1
 fi
 
-PAGER=
-export PAGER
 echo "The following changes since commit $baserev:"
 git shortlog --max-count=1 $baserev | sed -e 's/^\(.\)/  \1/'
 

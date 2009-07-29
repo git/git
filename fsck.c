@@ -229,7 +229,7 @@ static int fsck_commit(struct commit *commit, fsck_error error_func)
 	struct commit_graft *graft;
 	int parents = 0;
 
-	if (!commit->date)
+	if (commit->date == ULONG_MAX)
 		return error_func(&commit->object, FSCK_ERROR, "invalid author/committer line");
 
 	if (memcmp(buffer, "tree ", 5))

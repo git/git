@@ -148,4 +148,26 @@ do
 	done
 done
 
+create_patch () {
+	sed -e "s/_/ /" <<-\EOF
+		diff --git a/target b/target
+		index e69de29..8bd6648 100644
+		--- a/target
+		+++ b/target
+		@@ -0,0 +1,3 @@
+		+An empty line follows
+		+
+		+A line with trailing whitespace and no newline_
+		\ No newline at end of file
+	EOF
+}
+
+test_expect_success 'trailing whitespace & no newline at the end of file' '
+	>target &&
+	create_patch >patch-file &&
+	git apply --whitespace=fix patch-file &&
+	grep "newline$" target &&
+	grep "^$" target
+'
+
 test_done

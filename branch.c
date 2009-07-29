@@ -172,7 +172,7 @@ void create_branch(const char *head,
 
 	lock = lock_any_ref_for_update(ref.buf, NULL, 0);
 	if (!lock)
-		die("Failed to lock ref for update: %s.", strerror(errno));
+		die_errno("Failed to lock ref for update");
 
 	if (reflog)
 		log_all_ref_updates = 1;
@@ -188,7 +188,7 @@ void create_branch(const char *head,
 		setup_tracking(name, real_ref, track);
 
 	if (write_ref_sha1(lock, sha1, msg) < 0)
-		die("Failed to write ref: %s.", strerror(errno));
+		die_errno("Failed to write ref");
 
 	strbuf_release(&ref);
 	free(real_ref);

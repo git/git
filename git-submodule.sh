@@ -5,7 +5,7 @@
 # Copyright (c) 2007 Lars Hjemli
 
 USAGE="[--quiet] [--cached] \
-[add [-b branch] <repo> <path>]|[status|init|update [-i|--init] [-N|--no-fetch]|summary [-n|--summary-limit <n>] [<commit>]] \
+[add [-b branch] <repo> <path>]|[status|init|update [-i|--init] [-N|--no-fetch] [--rebase|--merge]|summary [-n|--summary-limit <n>] [<commit>]] \
 [--] [<path>...]|[foreach <command>]|[sync [--] [<path>...]]"
 OPTIONS_SPEC=
 . git-sh-setup
@@ -14,22 +14,10 @@ require_work_tree
 
 command=
 branch=
-quiet=
 reference=
 cached=
 nofetch=
 update=
-
-#
-# print stuff on stdout unless -q was specified
-#
-say()
-{
-	if test -z "$quiet"
-	then
-		echo "$@"
-	fi
-}
 
 # Resolve relative url by appending to parent's url
 resolve_relative_url ()
@@ -137,7 +125,7 @@ cmd_add()
 			shift
 			;;
 		-q|--quiet)
-			quiet=1
+			GIT_QUIET=1
 			;;
 		--reference)
 			case "$2" in '') usage ;; esac
@@ -273,7 +261,7 @@ cmd_init()
 	do
 		case "$1" in
 		-q|--quiet)
-			quiet=1
+			GIT_QUIET=1
 			;;
 		--)
 			shift
@@ -333,7 +321,7 @@ cmd_update()
 		case "$1" in
 		-q|--quiet)
 			shift
-			quiet=1
+			GIT_QUIET=1
 			;;
 		-i|--init)
 			init=1
@@ -355,6 +343,10 @@ cmd_update()
 		--reference=*)
 			reference="$1"
 			shift
+			;;
+		-m|--merge)
+			shift
+			update="merge"
 			;;
 		--)
 			shift
@@ -425,6 +417,11 @@ cmd_update()
 				command="git rebase"
 				action="rebase"
 				msg="rebased onto"
+				;;
+			merge)
+				command="git merge"
+				action="merge"
+				msg="merged in"
 				;;
 			*)
 				command="git checkout $force -q"
@@ -650,7 +647,7 @@ cmd_status()
 	do
 		case "$1" in
 		-q|--quiet)
-			quiet=1
+			GIT_QUIET=1
 			;;
 		--cached)
 			cached=1
@@ -704,7 +701,7 @@ cmd_sync()
 	do
 		case "$1" in
 		-q|--quiet)
-			quiet=1
+			GIT_QUIET=1
 			shift
 			;;
 		--)
@@ -759,7 +756,7 @@ do
 		command=$1
 		;;
 	-q|--quiet)
-		quiet=1
+		GIT_QUIET=1
 		;;
 	-b|--branch)
 		case "$2" in
