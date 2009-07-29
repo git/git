@@ -67,6 +67,12 @@ Updates since v1.6.3
 
  * "git cvsexportcommit" learned -k option to stop CVS keywords expansion
 
+ * "git fast-export" learned to handle history simplification more
+   gracefully.
+
+ * "git fast-export" learned an option --tag-of-filtered-object to handle
+   dangling tags resulting from history simplification more usefully.
+
  * "git grep" learned -p option to show the location of the match using the
    same context hunk marker "git diff" uses.
 
@@ -130,15 +136,12 @@ v1.6.3.X series.
    section header has a variable definition on the same line, lost
    that variable definition.
 
+ * "git rebase -p --onto" used to always leave side branches of a merge
+   intact, even when both branches are subject to rewriting.
+
  * "git repack" used to faithfully follow grafts and considered true
    parents recorded in the commit object unreachable from the commit.
    After such a repacking, you cannot remove grafts without corrupting
    the repository.
 
  * "git send-email" did not detect erroneous loops in alias expansion.
-
----
-exec >/var/tmp/1
-echo O=$(git describe master)
-O=v1.6.4-rc2-31-g2ceb639
-git shortlog --no-merges $O..master ^maint
