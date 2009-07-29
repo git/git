@@ -2255,6 +2255,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 				die("bad %s", arg);
 			continue;
 		}
+		if (!strcmp(arg, "--keep-true-parents")) {
+			grafts_replace_parents = 0;
+			continue;
+		}
 		usage(pack_usage);
 	}
 

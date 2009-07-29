@@ -32,13 +32,14 @@ Updates since v1.6.3
 
  * git-svn updates, including a new --authors-prog option to map author
    names by invoking an external program, 'git svn reset' to unwind
-   'git svn fetch', support for more than one branches, etc.
+   'git svn fetch', support for more than one branches, documenting
+   of the useful --minimize-url feature, new "git svn gc" command, etc.
 
 (portability)
 
  * We feed iconv with "UTF-8" instead of "utf8"; the former is
    understood more widely.  Similarly updated test scripts to use
-   encoding names more widely understood (e.g. use "ISO8850-1" instead
+   encoding names more widely understood (e.g. use "ISO8859-1" instead
    of "ISO-8859-1").
 
  * Various portability fixes/workarounds for different vintages of
@@ -66,6 +67,12 @@ Updates since v1.6.3
 
  * "git cvsexportcommit" learned -k option to stop CVS keywords expansion
 
+ * "git fast-export" learned to handle history simplification more
+   gracefully.
+
+ * "git fast-export" learned an option --tag-of-filtered-object to handle
+   dangling tags resulting from history simplification more usefully.
+
  * "git grep" learned -p option to show the location of the match using the
    same context hunk marker "git diff" uses.
 
@@ -75,7 +82,7 @@ Updates since v1.6.3
 
  * "git imap-send" is IPv6 aware.
 
- * "git log --graph" draws graphs more compactly by using horizonal lines
+ * "git log --graph" draws graphs more compactly by using horizontal lines
    when able.
 
  * "git log --decorate" shows shorter refnames by stripping well-known
@@ -105,6 +112,8 @@ Updates since v1.6.3
 
  * A major part of the "git bisect" wrapper has moved to C.
 
+ * Formatting with the new version of AsciiDoc 8.4.1 is now supported.
+
 Fixes since v1.6.3
 ------------------
 
@@ -123,8 +132,16 @@ v1.6.3.X series.
    that chdir around.  It now internally records the repository location
    as an absolute path when autodetected.
 
----
-exec >/var/tmp/1
-echo O=$(git describe master)
-O=v1.6.4-rc1-7-gbba0fd2
-git shortlog --no-merges $O..master ^maint
+ * Removing a section with "git config --remove-section", when its
+   section header has a variable definition on the same line, lost
+   that variable definition.
+
+ * "git rebase -p --onto" used to always leave side branches of a merge
+   intact, even when both branches are subject to rewriting.
+
+ * "git repack" used to faithfully follow grafts and considered true
+   parents recorded in the commit object unreachable from the commit.
+   After such a repacking, you cannot remove grafts without corrupting
+   the repository.
+
+ * "git send-email" did not detect erroneous loops in alias expansion.

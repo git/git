@@ -36,6 +36,17 @@ when encountering a signed tag.  With 'strip', the tags will be made
 unsigned, with 'verbatim', they will be silently exported
 and with 'warn', they will be exported, but you will see a warning.
 
+--tag-of-filtered-object=(abort|drop|rewrite)::
+	Specify how to handle tags whose tagged objectis filtered out.
+	Since revisions and files to export can be limited by path,
+	tagged objects may be filtered completely.
++
+When asking to 'abort' (which is the default), this program will die
+when encountering such a tag.  With 'drop' it will omit such tags from
+the output.  With 'rewrite', if the tagged object is a commit, it will
+rewrite the tag to tag an ancestor commit (via parent rewriting; see
+linkgit:git-rev-list[1])
+
 -M::
 -C::
 	Perform move and/or copy detection, as described in the
@@ -71,6 +82,12 @@ marks the same across runs.
 	allow that.  So fake a tagger to be able to fast-import the
 	output.
 
+[git-rev-list-args...]::
+       A list of arguments, acceptable to 'git-rev-parse' and
+       'git-rev-list', that specifies the specific objects and references
+       to export.  For example, `master\~10..master` causes the
+       current master reference to be exported along with all objects
+       added since its 10th ancestor commit.
 
 EXAMPLES
 --------

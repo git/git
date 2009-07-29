@@ -560,6 +560,8 @@ enum object_creation_mode {
 
 extern enum object_creation_mode object_creation_mode;
 
+extern int grafts_replace_parents;
+
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
 extern int check_repository_format(void);

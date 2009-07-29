@@ -44,6 +44,10 @@
 #       GIT_PS1_SHOWSTASHSTATE to a nonempty value. If something is stashed,
 #       then a '$' will be shown next to the branch name.
 #
+#       If you would like to see if there're untracked files, then you can
+#       set GIT_PS1_SHOWUNTRACKEDFILES to a nonempty value. If there're
+#       untracked files, then a '%' will be shown next to the branch name.
+#
 # To submit patches:
 #
 #    *) Read Documentation/SubmittingPatches
@@ -132,6 +136,7 @@ __git_ps1 ()
 		local w
 		local i
 		local s
+		local u
 		local c
 
 		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
@@ -156,12 +161,18 @@ __git_ps1 ()
 			if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
 			        git rev-parse --verify refs/stash >/dev/null 2>&1 && s="$"
 			fi
+
+			if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ]; then
+			   if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+			      u="%"
+			   fi
+			fi
 		fi
 
 		if [ -n "${1-}" ]; then
-			printf "$1" "$c${b##refs/heads/}$w$i$s$r"
+			printf "$1" "$c${b##refs/heads/}$w$i$s$u$r"
 		else
-			printf " (%s)" "$c${b##refs/heads/}$w$i$s$r"
+			printf " (%s)" "$c${b##refs/heads/}$w$i$s$u$r"
 		fi
 	fi
 }

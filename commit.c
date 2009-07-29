@@ -262,7 +262,11 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 		    bufptr[47] != '\n')
 			return error("bad parents in commit %s", sha1_to_hex(item->object.sha1));
 		bufptr += 48;
-		if (graft)
+		/*
+		 * The clone is shallow if nr_parent < 0, and we must
+		 * not traverse its real parents even when we unhide them.
+		 */
+		if (graft && (graft->nr_parent < 0 || grafts_replace_parents))
 			continue;
 		new_parent = lookup_commit(parent);
 		if (new_parent)
