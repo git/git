@@ -1,0 +1,36 @@
+GIT v1.6.3.4 Release Notes
+==========================
+
+Fixes since v1.6.3.3
+--------------------
+
+ * "git add --no-ignore-errors" did not override configured
+   add.ignore-errors configuration.
+
+ * "git apply --whitespace=fix" did not fix trailing whitespace on an
+   incomplete line.
+
+ * "git branch" opened too many commit objects unnecessarily.
+
+ * "git checkout -f $commit" with a path that is a file (or a symlink) in
+   the work tree to a commit that has a directory at the path issued an
+   unnecessary error message.
+
+ * "git diff -c/--cc" was very inefficient in coalescing the removed lines
+   shared between parents.
+
+ * "git diff -c/--cc" showed removed lines at the beginning of a file
+   incorrectly.
+
+ * "git remote show nickname" did not honor configured
+   remote.nickname.uploadpack when inspecting the branches at the remote.
+
+ * "git request-pull" when talking to the terminal for a preview
+   showed some of the output in the pager.
+
+ * "git request-pull start nickname [end]" did not honor configured
+   remote.nickname.uploadpack when it ran git-ls-remote against the remote
+   repository to learn the current tip of branches.
+
+Includes other documentation updates and minor fixes.
+
