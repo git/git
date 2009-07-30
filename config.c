@@ -62,7 +62,8 @@ static char *parse_value(void)
 		if (comment)
 			continue;
 		if (isspace(c) && !quote) {
-			space = 1;
+			if (len)
+				space++;
 			continue;
 		}
 		if (!quote) {
@@ -71,11 +72,8 @@ static char *parse_value(void)
 				continue;
 			}
 		}
-		if (space) {
-			if (len)
-				value[len++] = ' ';
-			space = 0;
-		}
+		for (; space; space--)
+			value[len++] = ' ';
 		if (c == '\\') {
 			c = get_next_char();
 			switch (c) {
