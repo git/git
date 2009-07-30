@@ -17,7 +17,7 @@ test_expect_success 'create a commit where dir a/b changed to symlink' '
 	git commit -m "dir to symlink"
 '
 
-test_expect_failure 'keep a/b-2/c/d across checkout' '
+test_expect_success 'keep a/b-2/c/d across checkout' '
 	git checkout HEAD^0 &&
 	git reset --hard master &&
 	git rm --cached a/b &&
