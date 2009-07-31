@@ -940,10 +940,13 @@ sub href {
 			if (defined $params{'hash_parent_base'}) {
 				$href .= esc_url($params{'hash_parent_base'});
 				# skip the file_parent if it's the same as the file_name
-				delete $params{'file_parent'} if $params{'file_parent'} eq $params{'file_name'};
-				if (defined $params{'file_parent'} && $params{'file_parent'} !~ /\.\./) {
-					$href .= ":/".esc_url($params{'file_parent'});
-					delete $params{'file_parent'};
+				if (defined $params{'file_parent'}) {
+					if (defined $params{'file_name'} && $params{'file_parent'} eq $params{'file_name'}) {
+						delete $params{'file_parent'};
+					} elsif ($params{'file_parent'} !~ /\.\./) {
+						$href .= ":/".esc_url($params{'file_parent'});
+						delete $params{'file_parent'};
+					}
 				}
 				$href .= "..";
 				delete $params{'hash_parent'};
