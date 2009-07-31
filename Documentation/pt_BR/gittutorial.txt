@@ -16,7 +16,7 @@ Este tutorial explica como importar um novo projeto para o git,
 adicionar mudanças a ele, e compartilhar mudanças com outros
 desenvolvedores.
 
-If, ao invés disso, você está interessado primariamente em usar git para
+Se, ao invés disso, você está interessado primariamente em usar git para
 obter um projeto, por exemplo, para testar a última versão, você pode
 preferir começar com os primeiros dois capítulos de
 link:user-manual.html[O Manual do Usuário Git].
@@ -37,9 +37,8 @@ $ git help log
 Com a última forma, você pode usar o visualizador de manual de sua
 escolha; veja linkgit:git-help[1] para maior informação.
 
-É uma boa idéia se introduzir ao git com seu nome e endereço público de
-email antes de fazer qualquer operação. A maneira mais fácil de fazê-lo
-é:
+É uma boa idéia informar ao git seu nome e endereço público de email
+antes de fazer qualquer operação. A maneira mais fácil de fazê-lo é:
 
 ------------------------------------------------
 $ git config --global user.name "Seu Nome Vem Aqui"
@@ -51,7 +50,7 @@ Importando um novo projeto
 -----------------------
 
 Assuma que você tem um tarball project.tar.gz com seu trabalho inicial.
-Você pode colocá-lo sob controle de revisão git como a seguir.
+Você pode colocá-lo sob controle de revisão git da seguinte forma:
 
 ------------------------------------------------
 $ tar xzf project.tar.gz
@@ -76,7 +75,7 @@ $ git add .
 ------------------------------------------------
 
 Este instantâneo está agora armazenado em uma área temporária que o git
-chama de "index" ou índice. Você pode permanetemente armazenar o
+chama de "index" ou índice. Você pode armazenar permanentemente o
 conteúdo do índice no repositório com 'git-commit':
 
 ------------------------------------------------
@@ -142,7 +141,7 @@ novos), adicioná-los ao índices, e gravar, tudo em um único passo.
 Uma nota em mensagens de commit: Apesar de não ser exigido, é uma boa
 idéia começar a mensagem com uma simples e curta (menos de 50
 caracteres) linha sumarizando a mudança, seguida de uma linha em branco
-e, então, uma descrição mais detalhada.  Ferramentas que transformam
+e, então, uma descrição mais detalhada. Ferramentas que transformam
 commits em email, por exemplo, usam a primeira linha no campo de
 cabeçalho Subject: e o resto no corpo.
 
@@ -150,7 +149,7 @@ Git rastreia conteúdo, não arquivos
 ----------------------------
 
 Muitos sistemas de controle de revisão provêem um comando `add` que diz
-ao sistema para começar a rastrear mudanças em um novo arquivo.  O
+ao sistema para começar a rastrear mudanças em um novo arquivo. O
 comando `add` do git faz algo mais simples e mais poderoso: 'git-add' é
 usado tanto para arquivos novos e arquivos recentemente modificados, e
 em ambos os casos, ele tira o instantâneo dos arquivos dados e armazena
@@ -183,7 +182,7 @@ Gerenciando "branches"/ramos
 -----------------
 
 Um simples repositório git pode manter múltiplos ramos de
-desenvolvimento.  Para criar um novo ramo chamado "experimental", use
+desenvolvimento. Para criar um novo ramo chamado "experimental", use
 
 ------------------------------------------------
 $ git branch experimental
@@ -203,14 +202,14 @@ você vai obter uma lista de todos os ramos existentes:
 ------------------------------------------------
 
 O ramo "experimental" é o que você acaba de criar, e o ramo "master" é o
-ramo padrão que foi criado pra você automaticamente.  O asterisco marca
+ramo padrão que foi criado pra você automaticamente. O asterisco marca
 o ramo em que você está atualmente; digite
 
 ------------------------------------------------
 $ git checkout experimental
 ------------------------------------------------
 
-para mudar para o ramo experimental.  Agora edite um arquivo, grave a
+para mudar para o ramo experimental. Agora edite um arquivo, grave a
 mudança, e mude de volta para o ramo master:
 
 ------------------------------------------------
@@ -230,14 +229,14 @@ $ git commit -a
 ------------------------------------------------
 
 neste ponto, os dois ramos divergiram, com diferentes mudanças feitas em
-cada um.  Para unificar as mudanças feitas no experimental para o
+cada um. Para unificar as mudanças feitas no experimental para o
 master, execute
 
 ------------------------------------------------
 $ git merge experimental
 ------------------------------------------------
 
-Se as mudanças não conflitam, está pronto.  Se existirem conflitos,
+Se as mudanças não conflitarem, estará pronto. Se existirem conflitos,
 marcadores serão deixados nos arquivos problemáticos exibindo o
 conflito;
 
@@ -245,7 +244,7 @@ conflito;
 $ git diff
 ------------------------------------------------
 
-vai exibir isto.  Após você editar os arquivos para resolver os
+vai exibir isto. Após você editar os arquivos para resolver os
 conflitos,
 
 ------------------------------------------------
@@ -273,7 +272,7 @@ Se você desenvolve em um ramo ideia-louca, e se arrepende, você pode
 sempre remover o ramo com
 
 -------------------------------------
-$ git branch -D crazy-idea
+$ git branch -D ideia-louca
 -------------------------------------
 
 Ramos são baratos e fáceis, então isto é uma boa maneira de experimentar
@@ -293,7 +292,7 @@ bob$ git clone /home/alice/project myrepo
 ------------------------------------------------
 
 Isso cria um novo diretório "myrepo" contendo um clone do repositório de
-Alice.  O clone está no mesmo pé que o projeto original, possuindo sua
+Alice. O clone está no mesmo pé que o projeto original, possuindo sua
 própria cópia da história do projeto original.
 
 Bob então faz algumas mudanças e as grava:
@@ -305,7 +304,7 @@ bob$ git commit -a
 ------------------------------------------------
 
 Quanto está pronto, ele diz a Alice para puxar as mudanças do
-repositório em /home/bob/myrepo.  Ela o faz com:
+repositório em /home/bob/myrepo. Ela o faz com:
 
 ------------------------------------------------
 alice$ cd /home/alice/project
@@ -314,14 +313,14 @@ alice$ git pull /home/bob/myrepo master
 
 Isto unifica as mudanças do ramo "master" do Bob ao ramo atual de Alice.
 Se Alice fez suas próprias mudanças no intervalo, ela, então, pode
-precisar corrigir manualmente quaiquer conflitos.  (Note que o argumento
+precisar corrigir manualmente quaisquer conflitos. (Note que o argumento
 "master" no comando acima é, de fato, desnecessário, já que é o padrão.)
 
 O comando "pull" executa, então, duas operações: ele obtém mudanças de
 um ramo remoto, e, então, as unifica no ramo atual.
 
 Note que, em geral, Alice gostaria que suas mudanças locais fossem
-gravadas antes de iniciar este "pull".  Se o trabalho de Bobo conflita
+gravadas antes de iniciar este "pull". Se o trabalho de Bob conflita
 com o que Alice fez desde que suas histórias se ramificaram, Alice irá
 usar seu diretório de trabalho e o índice para resolver conflitos, e
 mudanças locais existentes irão interferir com o processo de resolução
@@ -341,18 +340,18 @@ alice$ git log -p HEAD..FETCH_HEAD
 
 Esta operação é segura mesmo se Alice tem mudanças locais não gravadas.
 A notação de intervalo "HEAD..FETCH_HEAD" significa mostrar tudo que é
-alcançável de FETCH_HEAD mas exclua tudo que é alcançável de HEAD. Alcie
-já sabe tudo que leva a seu estado atual (HEAD), e revisa o que Bob tem
-em seu estado (FETCH_HEAD) que ela ainda não viu com esse comando.
+alcançável de FETCH_HEAD mas exclua tudo o que é alcançável de HEAD.
+Alice já sabe tudo que leva a seu estado atual (HEAD), e revisa o que Bob
+tem em seu estado (FETCH_HEAD) que ela ainda não viu com esse comando.
 
-Se Alice quer visualizar o que Bob fez desde que suas história
+Se Alice quer visualizar o que Bob fez desde que suas histórias se
 ramificaram, ela pode disparar o seguinte comando:
 
 ------------------------------------------------
 $ gitk HEAD..FETCH_HEAD
 ------------------------------------------------
 
-Isto usar a mesma notação de intervaldo que vimos antes com 'git log'.
+Isto usa a mesma notação de intervalo que vimos antes com 'git log'.
 
 Alice pode querer ver o que ambos fizeram desde que ramificaram. Ela
 pode usar a forma com três pontos ao invés da forma com dois pontos:
@@ -361,23 +360,21 @@ pode usar a forma com três pontos ao invés da forma com dois pontos:
 $ gitk HEAD...FETCH_HEAD
 ------------------------------------------------
 
-Isto significa "mostre tudo que é alcançavel de qualquer um, mas exclua
-tudo que é alcançavel a partir de ambos".
-This means "show everything that is reachable from either one, but
-exclude anything that is reachable from both of them".
+Isto significa "mostre tudo que é alcançável de qualquer um deles, mas
+exclua tudo que é alcançável a partir de ambos".
 
 Por favor, note que essas notações de intervalo podem ser usadas tanto
 com gitk quanto com "git log".
 
-Apoós inspecionar o que Bob fez, se não há nada urgente, Alice pode
-decidir continuar trabalhando sem puxar de Bob.  Se a história de Bob
+Após inspecionar o que Bob fez, se não há nada urgente, Alice pode
+decidir continuar trabalhando sem puxar de Bob. Se a história de Bob
 tem alguma coisa que Alice precisa imediatamente, Alice pode optar por
 separar seu trabalho em progresso primeiro, fazer um "pull", e, então,
 finalmente, retomar seu trabalho em progresso em cima da história
 resultante.
 
-Quanto você está trabalhando em um pequeno grupo unido, não é incomum
-interagir com o mesmo repositório várias e várias vezes.  Definindo um
+Quando você está trabalhando em um pequeno grupo unido, não é incomum
+interagir com o mesmo repositório várias e várias vezes. Definindo um
 repositório remoto antes de tudo, você pode fazê-lo mais facilmente:
 
 ------------------------------------------------
@@ -394,7 +391,7 @@ alice$ git fetch bob
 
 Diferente da forma longa, quando Alice obteve de Bob usando um
 repositório remoto antes definido com 'git-remote', o que foi obtido é
-armazenado um ramo remoto, neste caso `bob/master`.  Então, após isso:
+armazenado em um ramo remoto, neste caso `bob/master`. Então, após isso:
 
 -------------------------------------
 alice$ git log -p master..bob/master
@@ -417,7 +414,7 @@ alice$ git pull . remotes/bob/master
 -------------------------------------
 
 Note que 'git pull' sempre unifica ao ramo atual, independente do que
-mais foi dado na linha de comando.
+mais foi passado na linha de comando.
 
 Depois, Bob pode atualizar seu repositório com as últimas mudanças de
 Alice, usando
@@ -428,7 +425,7 @@ bob$ git pull
 
 Note que ele não precisa dar o caminho do repositório de Alice; quando
 Bob clonou seu repositório, o git armazenou a localização de seu
-repositório na configuração do repositório, e essa localização é usada
+repositório na configuração do mesmo, e essa localização é usada
 para puxar:
 
 -------------------------------------
@@ -459,15 +456,15 @@ Alternativamente, o git tem um protocolo nativo, ou pode usar rsync ou
 http; veja linkgit:git-pull[1] para detalhes.
 
 Git pode também ser usado em um modo parecido com CVS, com um
-repositório central para o qual que vários usuários empurram
-modificações; veja linkgit:git-push[1] e linkgit:gitcvs-migration[7].
+repositório central para o qual vários usuários empurram modificações;
+veja linkgit:git-push[1] e linkgit:gitcvs-migration[7].
 
 Explorando história
 -----------------
 
 A história no git é representada como uma série de commits
-interrelacionados.  Nós já vimos que o comando 'git-log' pode listar
-esses commits. Note que a primeira linha de cama entrada no log também
+interrelacionados. Nós já vimos que o comando 'git-log' pode listar
+esses commits. Note que a primeira linha de cada entrada no log também
 dá o nome para o commit:
 
 -------------------------------------
@@ -486,9 +483,9 @@ commit.
 $ git show c82a22c39cbc32576f64f5c6b3f24b99ea8149c7
 -------------------------------------
 
-Mas há outras formas de se referir a commits.  Você pode usar qualquer
-parte inicial do nome que seja longo o bastante para unicamente
-identificar o commit:
+Mas há outras formas de se referir aos commits. Você pode usar qualquer
+parte inicial do nome que seja longo o bastante para identificar
+unicamente o commit:
 
 -------------------------------------
 $ git show c82a22c39c	# os primeiros caracteres do nome são o bastante
@@ -497,7 +494,7 @@ $ git show HEAD		# a ponta do ramo atual
 $ git show experimental	# a ponta do ramo "experimental"
 -------------------------------------
 
-Todo commit usualmente tem um commit "pai" que aponta para o estado
+Todo commit normalmente tem um commit "pai" que aponta para o estado
 anterior do projeto:
 
 -------------------------------------
@@ -513,19 +510,19 @@ $ git show HEAD^1 # mostra o primeiro pai de HEAD (o mesmo que HEAD^)
 $ git show HEAD^2 # mostra o segundo pai de HEAD
 -------------------------------------
 
-Você também pode dar aos commits nomes seus; após executar
+Você também pode dar aos commits nomes à sua escolha; após executar
 
 -------------------------------------
 $ git tag v2.5 1b2e1d63ff
 -------------------------------------
 
-você pode se referir a 1b2e1d63ff pelo nome "v2.5".  Se você pretende
+você pode se referir a 1b2e1d63ff pelo nome "v2.5". Se você pretende
 compartilhar esse nome com outras pessoas (por exemplo, para identificar
-uma versão de lançamento), você deve criar um objeto "tag", e talvez
+uma versão de lançamento), você deveria criar um objeto "tag", e talvez
 assiná-lo; veja linkgit:git-tag[1] para detalhes.
 
 Qualquer comando git que precise conhecer um commit pode receber
-quaisquer desses nomes.  Por exemplo:
+quaisquer desses nomes. Por exemplo:
 
 -------------------------------------
 $ git diff v2.5 HEAD	 # compara o HEAD atual com v2.5
@@ -537,8 +534,8 @@ $ git reset --hard HEAD^ # reseta seu ramo atual e seu diretório de
 
 Seja cuidadoso com o último comando: além de perder quaisquer mudanças
 em seu diretório de trabalho, ele também remove todos os commits
-posteriores desse ramo.  Se esse ramo é o único ramo contendo esses
-commits, eles serão perdidos.  Também, não use 'git-reset' num ramo
+posteriores desse ramo. Se esse ramo é o único ramo contendo esses
+commits, eles serão perdidos. Também, não use 'git-reset' num ramo
 publicamente visível de onde outros desenvolvedores puxam, já que vai
 forçar unificações desnecessárias para que outros desenvolvedores limpem
 a história. Se você precisa desfazer mudanças que você empurrou, use
@@ -551,10 +548,10 @@ projeto, então
 $ git grep "hello" v2.5
 -------------------------------------
 
-procura por todas as ocorreências de "hello" em v2.5.
+procura por todas as ocorrências de "hello" em v2.5.
 
 Se você deixar de fora o nome do commit, 'git-grep' irá procurar
-quaisquer dos arquivos que ele gerencia no diretório corrente.  Então
+quaisquer dos arquivos que ele gerencia no diretório corrente. Então
 
 -------------------------------------
 $ git grep "hello"
@@ -564,8 +561,7 @@ $ git grep "hello"
 git.
 
 Muitos comandos git também recebem um conjunto de commits, o que pode
-ser especificado de um bom número de formas.  Aqui estão alguns exemplos
-com 'git-log':
+ser especificado de várias formas. Aqui estão alguns exemplos com 'git-log':
 
 -------------------------------------
 $ git log v2.5..v2.6            # commits entre v2.5 e v2.6
@@ -584,7 +580,7 @@ comum algum tempo atrás, então
 $ git log stable..master
 -------------------------------------
 
-irá listas os commits feitos no ramo "master" mas não no ramo
+irá listar os commits feitos no ramo "master" mas não no ramo
 "stable", enquanto
 
 -------------------------------------
@@ -594,26 +590,26 @@ $ git log master..stable
 irá listar a lista de commits feitos no ramo "stable" mas não no ramo
 "master".
 
-O comando 'git-log' tem uma fraquza: ele precisa mostrar os commits em
+O comando 'git-log' tem uma fraqueza: ele precisa mostrar os commits em
 uma lista. Quando a história tem linhas de desenvolvimento que
 divergiram e então foram unificadas novamente, a ordem em que 'git-log'
-apresenta essas mudanças é insignificante.
+apresenta essas mudanças é irrelevante.
 
 A maioria dos projetos com múltiplos contribuidores (como o kernel
-linux, ou o git mesmo) tem unificações frequentes, e 'gitk' faz um
-trabalho melhor de visualizar sua história.  Por exemplo,
+Linux, ou o próprio git) tem unificações frequentes, e 'gitk' faz um
+trabalho melhor de visualizar sua história. Por exemplo,
 
 -------------------------------------
 $ gitk --since="2 weeks ago" drivers/
 -------------------------------------
 
-permite você navegar em quaisquer commits desde as últimas duas semanas
-de commits que modificaram arquivos sob o diretório "drivers".  (Nota:
+permite a você navegar em quaisquer commits desde as últimas duas semanas
+de commits que modificaram arquivos sob o diretório "drivers". (Nota:
 você pode ajustar as fontes do gitk segurando a tecla control enquanto
 pressiona "-" ou "+".)
 
-Finalmente, a maioria dos comandos que recebem nomes de arquivo
-te permitirão opcionalmente preceder qualquer nome de arquivo por um
+Finalmente, a maioria dos comandos que recebem nomes de arquivo permitirão
+também, opcionalmente, preceder qualquer nome de arquivo por um
 commit, para especificar uma versão particular do arquivo:
 
 -------------------------------------
@@ -630,33 +626,33 @@ Próximos passos
 ----------
 
 Este tutorial deve ser o bastante para operar controle de revisão
-distribuído básico para seus projetos.  No entanto, para entender
+distribuído básico para seus projetos. No entanto, para entender
 plenamente a profundidade e o poder do git você precisa entender duas
 idéias simples nas quais ele se baseia:
 
   * A base de objetos é um sistema bem elegante usado para armazenar a
     história de seu projeto--arquivos, diretórios, e commits.
 
-  * O arquivo de índica é um cache do estado de uma árvore de diretório,
+  * O arquivo de índice é um cache do estado de uma árvore de diretório,
     usado para criar commits, restaurar diretórios de trabalho, e
-    compreender as várias árvores involvidas em uma unificação.
+    armazenar as várias árvores envolvidas em uma unificação.
 
-Parte dois deste tutorial explica a base de objetos, o arquivo de
+A parte dois deste tutorial explica a base de objetos, o arquivo de
 índice, e algumas outras coisinhas que você vai precisar pra usar o
 máximo do git. Você pode encontrá-la em linkgit:gittutorial-2[7].
 
-Se você não quer continuar do jeito certo, algumas outras disgressões
-que podem ser interessantes neste ponto são:
+Se você não quiser continuar com o tutorial agora nesse momento, algumas
+outras digressões que podem ser interessantes neste ponto são:
 
   * linkgit:git-format-patch[1], linkgit:git-am[1]: Estes convertem
-    séries de commits em patches em email, e vice-versa, úteis para
-    projetos como o kernel linux que dependem pesadamente em patches
+    séries de commits em patches para email, e vice-versa, úteis para
+    projetos como o kernel Linux que dependem fortemente de patches
     enviados por email.
 
   * linkgit:git-bisect[1]: Quando há uma regressão em seu projeto, uma
     forma de rastrear um bug é procurando pela história para encontrar o
-    commit culpado.  Git bisect pode ajudar a executar uma busca binária
-    por esse commit.  Ele é inteligente o bastante para executar uma
+    commit culpado. Git bisect pode ajudar a executar uma busca binária
+    por esse commit. Ele é inteligente o bastante para executar uma
     busca próxima da ótima mesmo no caso de uma história complexa
     não-linear com muitos ramos unificados.
 
@@ -664,7 +660,7 @@ que podem ser interessantes neste ponto são:
 
   * linkgit:gitcvs-migration[7]: Git para usuários de CVS.
 
-Veja Também
+VEJA TAMBÉM
 --------
 linkgit:gittutorial-2[7],
 linkgit:gitcvs-migration[7],
