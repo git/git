@@ -53,3 +53,5 @@
 		already exists.  That way we can help people who imported
 		subtrees "incorrectly" (eg. by just copying in the files) in
 		the past.
+
+	guess --prefix automatically if possible based on pwd
