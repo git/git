@@ -55,3 +55,6 @@
 		the past.
 
 	guess --prefix automatically if possible based on pwd
+
+	make a 'git subtree grafts' that automatically expands --squash'd
+		commits so you can see the full history if you want it.
