@@ -1677,6 +1677,7 @@ proc readrefs {} {
     global tagids idtags headids idheads tagobjid
     global otherrefids idotherrefs mainhead mainheadid
     global selecthead selectheadid
+    global hideremotes
 
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
 	catch {unset $v}
@@ -1689,7 +1690,7 @@ proc readrefs {} {
 	if {![string match "refs/*" $ref]} continue
 	set name [string range $ref 5 end]
 	if {[string match "remotes/*" $name]} {
-	    if {![string match "*/HEAD" $name]} {
+	    if {![string match "*/HEAD" $name] && !$hideremotes} {
 		set headids($name) $id
 		lappend idheads($id) $name
 	    }
@@ -2520,6 +2521,7 @@ proc savestuff {w} {
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
     global autoselect extdifftool perfile_attrs markbgcolor
+    global hideremotes
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -2539,6 +2541,7 @@ proc savestuff {w} {
 	puts $f [list set wrapcomment $wrapcomment]
 	puts $f [list set autoselect $autoselect]
 	puts $f [list set showneartags $showneartags]
+	puts $f [list set hideremotes $hideremotes]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
 	puts $f [list set limitdiffs $limitdiffs]
@@ -10383,6 +10386,7 @@ proc doprefs {} {
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global tabstop limitdiffs autoselect extdifftool perfile_attrs
+    global hideremotes
 
     set top .gitkprefs
     set prefstop $top
@@ -10391,7 +10395,7 @@ proc doprefs {} {
 	return
     }
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-		   limitdiffs tabstop perfile_attrs} {
+		   limitdiffs tabstop perfile_attrs hideremotes} {
 	set oldprefs($v) [set $v]
     }
     toplevel $top
@@ -10423,6 +10427,9 @@ proc doprefs {} {
     checkbutton $top.ntag -text [mc "Display nearby tags"] \
 	-font optionfont -variable showneartags
     grid x $top.ntag -sticky w
+    checkbutton $top.hideremotes -text [mc "Hide remote refs"] \
+	-font optionfont -variable hideremotes
+    grid x $top.hideremotes -sticky w
     checkbutton $top.ldiff -text [mc "Limit diffs to listed paths"] \
 	-font optionfont -variable limitdiffs
     grid x $top.ldiff -sticky w
@@ -10547,7 +10554,7 @@ proc prefscan {} {
     global oldprefs prefstop
 
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-		   limitdiffs tabstop perfile_attrs} {
+		   limitdiffs tabstop perfile_attrs hideremotes} {
 	global $v
 	set $v $oldprefs($v)
     }
@@ -10561,6 +10568,7 @@ proc prefsok {} {
     global oldprefs prefstop showneartags showlocalchanges
     global fontpref mainfont textfont uifont
     global limitdiffs treediffs perfile_attrs
+    global hideremotes
 
     catch {destroy $prefstop}
     unset prefstop
@@ -10605,6 +10613,9 @@ proc prefsok {} {
     } elseif {$showneartags != $oldprefs(showneartags) ||
 	  $limitdiffs != $oldprefs(limitdiffs)} {
 	reselectline
+    }
+    if {$hideremotes != $oldprefs(hideremotes)} {
+	rereadrefs
     }
 }
 
@@ -11011,6 +11022,7 @@ set mingaplen 100
 set cmitmode "patch"
 set wrapcomment "none"
 set showneartags 1
+set hideremotes 0
 set maxrefs 20
 set maxlinelen 200
 set showlocalchanges 1
