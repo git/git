@@ -56,7 +56,15 @@ test_expect_success 'initialize a multi-repository repo' '
 	git config --add svn-remote.svn.fetch "branches/b:refs/remotes/b" &&
 	for i in tags/0.1 tags/0.2 tags/0.3; do
 		git config --add svn-remote.svn.fetch \
-		                 $i:refs/remotes/$i || exit 1; done
+		                 $i:refs/remotes/$i || exit 1; done &&
+	git config --get-all svn-remote.svn.fetch > fetch.out &&
+	grep "^trunk:refs/remotes/trunk$" fetch.out &&
+	grep "^branches/a:refs/remotes/a$" fetch.out &&
+	grep "^branches/b:refs/remotes/b$" fetch.out &&
+	grep "^tags/0\.1:refs/remotes/tags/0\.1$" fetch.out &&
+	grep "^tags/0\.2:refs/remotes/tags/0\.2$" fetch.out &&
+	grep "^tags/0\.3:refs/remotes/tags/0\.3$" fetch.out &&
+	grep "^:refs/${remotes_git_svn}" fetch.out
 	'
 
 # refs should all be different, but the trees should all be the same:
@@ -86,14 +94,14 @@ test_expect_success 'migrate --minimize on old inited layout' '
 		echo "$svnrepo"$path > "$GIT_DIR"/svn/$ref/info/url ) || exit 1;
 	done &&
 	git svn migrate --minimize &&
-	test -z "`git config -l |grep -v "^svn-remote\.git-svn\."`" &&
+	test -z "`git config -l | grep "^svn-remote\.git-svn\."`" &&
 	git config --get-all svn-remote.svn.fetch > fetch.out &&
 	grep "^trunk:refs/remotes/trunk$" fetch.out &&
 	grep "^branches/a:refs/remotes/a$" fetch.out &&
 	grep "^branches/b:refs/remotes/b$" fetch.out &&
 	grep "^tags/0\.1:refs/remotes/tags/0\.1$" fetch.out &&
 	grep "^tags/0\.2:refs/remotes/tags/0\.2$" fetch.out &&
-	grep "^tags/0\.3:refs/remotes/tags/0\.3$" fetch.out
+	grep "^tags/0\.3:refs/remotes/tags/0\.3$" fetch.out &&
 	grep "^:refs/${remotes_git_svn}" fetch.out
 	'
 
