@@ -348,8 +348,8 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	match_missing = !revs->ignore_merges;
 
 	if (cached && idx && ce_stage(idx)) {
-		if (tree)
-			diff_unmerge(&revs->diffopt, idx->name, idx->ce_mode, idx->sha1);
+		diff_unmerge(&revs->diffopt, idx->name, idx->ce_mode,
+			     idx->sha1);
 		return;
 	}
 
