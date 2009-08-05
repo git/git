@@ -765,7 +765,6 @@ static void handle_filter(struct strbuf *line)
 
 static void handle_body(void)
 {
-	int len = 0;
 	struct strbuf prev = STRBUF_INIT;
 
 	/* Skip up to the first boundary */
@@ -775,8 +774,6 @@ static void handle_body(void)
 	}
 
 	do {
-		strbuf_setlen(&line, line.len + len);
-
 		/* process any boundary lines */
 		if (*content_top && is_multipart_boundary(&line)) {
 			/* flush any leftover */
@@ -832,10 +829,7 @@ static void handle_body(void)
 			handle_filter(&line);
 		}
 
-		strbuf_reset(&line);
-		if (strbuf_avail(&line) < 100)
-			strbuf_grow(&line, 100);
-	} while ((len = read_line_with_nul(line.buf, strbuf_avail(&line), fin)));
+	} while (!strbuf_getwholeline(&line, fin, '\n'));
 
 handle_body_out:
 	strbuf_release(&prev);
