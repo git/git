@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "pack.h"
 #include "pack-revindex.h"
+#include "parse-options.h"
 
 #define MAX_CHAIN 50
 
@@ -107,36 +108,31 @@ static int verify_one_pack(const char *path, int verbose)
 	return err;
 }
 
-static const char verify_pack_usage[] = "git verify-pack [-v] <pack>...";
+static const char * const verify_pack_usage[] = {
+	"git verify-pack [-v|--verbose] <pack>...",
+	NULL
+};
 
 int cmd_verify_pack(int argc, const char **argv, const char *prefix)
 {
 	int err = 0;
 	int verbose = 0;
-	int no_more_options = 0;
-	int nothing_done = 1;
+	int i;
+	const struct option verify_pack_options[] = {
+		OPT__VERBOSE(&verbose),
+		OPT_END()
+	};
 
 	git_config(git_default_config, NULL);
-	while (1 < argc) {
-		if (!no_more_options && argv[1][0] == '-') {
-			if (!strcmp("-v", argv[1]))
-				verbose = 1;
-			else if (!strcmp("--", argv[1]))
-				no_more_options = 1;
-			else
-				usage(verify_pack_usage);
-		}
-		else {
-			if (verify_one_pack(argv[1], verbose))
-				err = 1;
-			discard_revindex();
-			nothing_done = 0;
-		}
-		argc--; argv++;
+	argc = parse_options(argc, argv, prefix, verify_pack_options,
+			     verify_pack_usage, 0);
+	if (argc < 1)
+		usage_with_options(verify_pack_usage, verify_pack_options);
+	for (i = 0; i < argc; i++) {
+		if (verify_one_pack(argv[i], verbose))
+			err = 1;
+		discard_revindex();
 	}
-
-	if (nothing_done)
-		usage(verify_pack_usage);
 
 	return err;
 }
