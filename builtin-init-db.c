@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "exec_cmd.h"
+#include "parse-options.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
@@ -370,8 +371,16 @@ static int guess_repository_type(const char *git_dir)
 	return 1;
 }
 
-static const char init_db_usage[] =
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]]";
+static int shared_callback(const struct option *opt, const char *arg, int unset)
+{
+	*((int *) opt->value) = (arg) ? git_config_perm("arg", arg) : PERM_GROUP;
+	return 0;
+}
+
+static const char *const init_db_usage[] = {
+	"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]]",
+	NULL
+};
 
 /*
  * If you want to, you can share the DB area with any number of branches.
@@ -384,25 +393,25 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	const char *git_dir;
 	const char *template_dir = NULL;
 	unsigned int flags = 0;
-	int i;
+	const struct option init_db_options[] = {
+		OPT_STRING(0, "template", &template_dir, "template-directory",
+				"provide the directory from which templates will be used"),
+		OPT_SET_INT(0, "bare", &is_bare_repository_cfg,
+				"create a bare repository", 1),
+		{ OPTION_CALLBACK, 0, "shared", &init_shared_repository,
+			"permissions",
+			"specify that the git repository is to be shared amongst several users",
+			PARSE_OPT_OPTARG | PARSE_OPT_NONEG, shared_callback, 0},
+		OPT_BIT('q', "quiet", &flags, "be quiet", INIT_DB_QUIET),
+		OPT_END()
+	};
 
-	for (i = 1; i < argc; i++, argv++) {
-		const char *arg = argv[1];
-		if (!prefixcmp(arg, "--template="))
-			template_dir = arg+11;
-		else if (!strcmp(arg, "--bare")) {
-			static char git_dir[PATH_MAX+1];
-			is_bare_repository_cfg = 1;
-			setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir,
-						sizeof(git_dir)), 0);
-		} else if (!strcmp(arg, "--shared"))
-			init_shared_repository = PERM_GROUP;
-		else if (!prefixcmp(arg, "--shared="))
-			init_shared_repository = git_config_perm("arg", arg+9);
-		else if (!strcmp(arg, "-q") || !strcmp(arg, "--quiet"))
-			flags |= INIT_DB_QUIET;
-		else
-			usage(init_db_usage);
+	parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
+
+	if(is_bare_repository_cfg == 1) {
+		static char git_dir[PATH_MAX+1];
+		setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir,
+					sizeof(git_dir)), 0);
 	}
 
 	if (init_shared_repository != -1)
