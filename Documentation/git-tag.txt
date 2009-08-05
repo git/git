@@ -17,7 +17,10 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Adds a 'tag' reference in `.git/refs/tags/`
+
+Adds a 'tag' reference in `.git/refs/tags/`.  The tag <name> must pass
+linkgit:git-check-ref-format[1] which basicly means that control characters,
+space, ~, ^, :, ?, *, [ and \ are prohibited.
 
 Unless `-f` is given, the tag must not yet exist in
 `.git/refs/tags/` directory.
