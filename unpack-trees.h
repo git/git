@@ -17,18 +17,18 @@ struct unpack_trees_error_msgs {
 };
 
 struct unpack_trees_options {
-	unsigned int reset:1,
-		     merge:1,
-		     update:1,
-		     index_only:1,
-		     nontrivial_merge:1,
-		     trivial_merges_only:1,
-		     verbose_update:1,
-		     aggressive:1,
-		     skip_unmerged:1,
-		     initial_checkout:1,
-		     diff_index_cached:1,
-		     gently:1;
+	unsigned int reset,
+		     merge,
+		     update,
+		     index_only,
+		     nontrivial_merge,
+		     trivial_merges_only,
+		     verbose_update,
+		     aggressive,
+		     skip_unmerged,
+		     initial_checkout,
+		     diff_index_cached,
+		     gently;
 	const char *prefix;
 	int pos;
 	struct dir_struct *dir;
