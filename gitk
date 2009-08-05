@@ -288,7 +288,7 @@ proc parseviewrevs {view revs} {
 	    if {$sdm != 2} {
 		lappend ret $id
 	    } else {
-		lset ret end [lindex $ret end]...$id
+		lset ret end $id...[lindex $ret end]
 	    }
 	    lappend pos $id
 	}
