@@ -168,6 +168,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	const char *repo = NULL;	/* default repository */
 
 	struct option options[] = {
+		OPT_BIT('q', "quiet", &flags, "be quiet", TRANSPORT_PUSH_QUIET),
 		OPT_BIT('v', "verbose", &flags, "be verbose", TRANSPORT_PUSH_VERBOSE),
 		OPT_STRING( 0 , "repo", &repo, "repository", "repository"),
 		OPT_BIT( 0 , "all", &flags, "push all refs", TRANSPORT_PUSH_ALL),
