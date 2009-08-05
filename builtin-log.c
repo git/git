@@ -257,7 +257,7 @@ static void show_tagger(char *buf, int len, struct rev_info *rev)
 	pp_user_info("Tagger", rev->commit_format, &out, buf, rev->date_mode,
 		git_log_output_encoding ?
 		git_log_output_encoding: git_commit_encoding);
-	printf("%s\n", out.buf);
+	printf("%s", out.buf);
 	strbuf_release(&out);
 }
 
@@ -329,11 +329,14 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 		case OBJ_TAG: {
 			struct tag *t = (struct tag *)o;
 
+			if (rev.shown_one)
+				putchar('\n');
 			printf("%stag %s%s\n",
 					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
 					t->tag,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			ret = show_object(o->sha1, 1, &rev);
+			rev.shown_one = 1;
 			if (ret)
 				break;
 			o = parse_object(t->tagged->sha1);
@@ -345,12 +348,15 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			break;
 		}
 		case OBJ_TREE:
+			if (rev.shown_one)
+				putchar('\n');
 			printf("%stree %s%s\n\n",
 					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
 					name,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			read_tree_recursive((struct tree *)o, "", 0, 0, NULL,
 					show_tree_object, NULL);
+			rev.shown_one = 1;
 			break;
 		case OBJ_COMMIT:
 			rev.pending.nr = rev.pending.alloc = 0;
