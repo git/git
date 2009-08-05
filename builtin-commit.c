@@ -217,12 +217,15 @@ static void create_base_index(void)
 		exit(128); /* We've already reported the error, finish dying */
 }
 
-static char *prepare_index(int argc, const char **argv, const char *prefix)
+static char *prepare_index(int argc, const char **argv, const char *prefix, int is_status)
 {
 	int fd;
 	struct string_list partial;
 	const char **pathspec = NULL;
+	int refresh_flags = REFRESH_QUIET;
 
+	if (is_status)
+		refresh_flags |= REFRESH_UNMERGED;
 	if (interactive) {
 		if (interactive_add(argc, argv, prefix) != 0)
 			die("interactive add failed");
@@ -253,7 +256,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 	if (all || (also && pathspec && *pathspec)) {
 		int fd = hold_locked_index(&index_lock, 1);
 		add_files_to_cache(also ? prefix : NULL, pathspec, 0);
-		refresh_cache(REFRESH_QUIET);
+		refresh_cache(refresh_flags);
 		if (write_cache(fd, active_cache, active_nr) ||
 		    close_lock_file(&index_lock))
 			die("unable to write new_index file");
@@ -272,7 +275,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix)
 	 */
 	if (!pathspec || !*pathspec) {
 		fd = hold_locked_index(&index_lock, 1);
-		refresh_cache(REFRESH_QUIET);
+		refresh_cache(refresh_flags);
 		if (write_cache(fd, active_cache, active_nr) ||
 		    commit_locked_index(&index_lock))
 			die("unable to write new_index file");
@@ -825,7 +828,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	argc = parse_and_validate_options(argc, argv, builtin_status_usage, prefix);
 
-	index_file = prepare_index(argc, argv, prefix);
+	index_file = prepare_index(argc, argv, prefix, 1);
 
 	commitable = run_status(stdout, index_file, prefix, 0);
 
@@ -907,7 +910,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage, prefix);
 
-	index_file = prepare_index(argc, argv, prefix);
+	index_file = prepare_index(argc, argv, prefix, 0);
 
 	/* Set up everything for writing the commit object.  This includes
 	   running hooks, writing the trees, and interacting with the user.  */

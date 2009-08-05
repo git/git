@@ -2,6 +2,7 @@
 #define STATUS_H
 
 #include <stdio.h>
+#include "string-list.h"
 
 enum color_wt_status {
 	WT_STATUS_HEADER,
@@ -18,6 +19,13 @@ enum untracked_status_type {
 };
 extern enum untracked_status_type show_untracked_files;
 
+struct wt_status_change_data {
+	int worktree_status;
+	int index_status;
+	int stagemask;
+	char *head_path;
+};
+
 struct wt_status {
 	int is_initial;
 	char *branch;
@@ -33,6 +41,7 @@ struct wt_status {
 	const char *index_file;
 	FILE *fp;
 	const char *prefix;
+	struct string_list change;
 };
 
 int git_status_config(const char *var, const char *value, void *cb);
@@ -40,5 +49,6 @@ extern int wt_status_use_color;
 extern int wt_status_relative_paths;
 void wt_status_prepare(struct wt_status *s);
 void wt_status_print(struct wt_status *s);
+void wt_status_collect_changes(struct wt_status *s);
 
 #endif /* STATUS_H */
