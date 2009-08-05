@@ -44,6 +44,7 @@ static int is_from_line(const char *line, int len)
 }
 
 static struct strbuf buf = STRBUF_INIT;
+static int keep_cr;
 
 /* Called with the first line (potentially partial)
  * already in buf[] -- normally that should begin with
@@ -69,6 +70,12 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	 * "From " and having something that looks like a date format.
 	 */
 	for (;;) {
+		if (!keep_cr && buf.len > 1 && buf.buf[buf.len-1] == '\n' &&
+			buf.buf[buf.len-2] == '\r') {
+			strbuf_setlen(&buf, buf.len-2);
+			strbuf_addch(&buf, '\n');
+		}
+
 		if (fwrite(buf.buf, 1, buf.len, output) != buf.len)
 			die_errno("cannot write output");
 
@@ -226,6 +233,8 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 			nr = strtol(arg+2, NULL, 10);
 		} else if ( arg[1] == 'b' && !arg[2] ) {
 			allow_bare = 1;
+		} else if (!strcmp(arg, "--keep-cr")) {
+			keep_cr = 1;
 		} else if ( arg[1] == 'o' && arg[2] ) {
 			dir = arg+2;
 		} else if ( arg[1] == '-' && !arg[2] ) {

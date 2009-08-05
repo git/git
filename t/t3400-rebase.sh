@@ -3,9 +3,10 @@
 # Copyright (c) 2005 Amos Waterland
 #
 
-test_description='git rebase should not destroy author information
+test_description='git rebase assorted tests
 
-This test runs git rebase and checks that the author information is not lost.
+This test runs git rebase and checks that the author information is not lost
+among other things.
 '
 . ./test-lib.sh
 
@@ -131,6 +132,27 @@ test_expect_success 'rebase -q is quiet' '
      git checkout -b quiet topic &&
      git rebase -q master > output.out 2>&1 &&
      test ! -s output.out
+'
+
+q_to_cr () {
+	tr Q '\015'
+}
+
+test_expect_success 'Rebase a commit that sprinkles CRs in' '
+	(
+		echo "One"
+		echo "TwoQ"
+		echo "Three"
+		echo "FQur"
+		echo "Five"
+	) | q_to_cr >CR &&
+	git add CR &&
+	test_tick &&
+	git commit -a -m "A file with a line with CR" &&
+	git tag file-with-cr &&
+	git checkout HEAD^0 &&
+	git rebase --onto HEAD^^ HEAD^ &&
+	git diff --exit-code file-with-cr:CR HEAD:CR
 '
 
 test_done
