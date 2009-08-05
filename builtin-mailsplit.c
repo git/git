@@ -45,24 +45,6 @@ static int is_from_line(const char *line, int len)
 
 static struct strbuf buf = STRBUF_INIT;
 
-/* We cannot use fgets() because our lines can contain NULs */
-int read_line_with_nul(char *buf, int size, FILE *in)
-{
-	int len = 0, c;
-
-	for (;;) {
-		c = getc(in);
-		if (c == EOF)
-			break;
-		buf[len++] = c;
-		if (c == '\n' || len + 1 >= size)
-			break;
-	}
-	buf[len] = '\0';
-
-	return len;
-}
-
 /* Called with the first line (potentially partial)
  * already in buf[] -- normally that should begin with
  * the Unix "From " line.  Write it into the specified
