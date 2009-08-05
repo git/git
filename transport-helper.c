@@ -75,7 +75,7 @@ static int fetch_with_fetch(struct transport *transport,
 	struct strbuf buf = STRBUF_INIT;
 
 	for (i = 0; i < nr_heads; i++) {
-		struct ref *posn = to_fetch[i];
+		const struct ref *posn = to_fetch[i];
 		if (posn->status & REF_STATUS_UPTODATE)
 			continue;
 		write_in_full(helper->in, "fetch ", 6);
