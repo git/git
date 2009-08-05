@@ -28,4 +28,31 @@ test_expect_success 'Report new path with conflict' '
 	test_cmp expect actual
 '
 
+cat >expect <<EOF
+# On branch side
+# Unmerged paths:
+#   (use "git reset HEAD <file>..." to unstage)
+#   (use "git add <file>..." to mark resolution)
+#
+#	deleted by us:      foo
+#
+no changes added to commit (use "git add" and/or "git commit -a")
+EOF
+
+test_expect_success 'M/D conflict does not segfault' '
+	mkdir mdconflict &&
+	(
+		cd mdconflict &&
+		git init &&
+		test_commit initial foo "" &&
+		test_commit modify foo foo &&
+		git checkout -b side HEAD^ &&
+		git rm foo &&
+		git commit -m delete &&
+		test_must_fail git merge master &&
+		test_must_fail git status > ../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_done

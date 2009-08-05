@@ -20,6 +20,7 @@ static char wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RED,    /* WT_STATUS_CHANGED */
 	GIT_COLOR_RED,    /* WT_STATUS_UNTRACKED */
 	GIT_COLOR_RED,    /* WT_STATUS_NOBRANCH */
+	GIT_COLOR_RED,    /* WT_STATUS_UNMERGED */
 };
 
 enum untracked_status_type show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
@@ -37,6 +38,8 @@ static int parse_status_slot(const char *var, int offset)
 		return WT_STATUS_UNTRACKED;
 	if (!strcasecmp(var+offset, "nobranch"))
 		return WT_STATUS_NOBRANCH;
+	if (!strcasecmp(var+offset, "unmerged"))
+		return WT_STATUS_UNMERGED;
 	die("bad config variable '%s'", var);
 }
 
@@ -57,6 +60,18 @@ void wt_status_prepare(struct wt_status *s)
 	s->fp = stdout;
 	s->index_file = get_index_file();
 	s->change.strdup_strings = 1;
+}
+
+static void wt_status_print_unmerged_header(struct wt_status *s)
+{
+	const char *c = color(WT_STATUS_HEADER);
+	color_fprintf_ln(s->fp, c, "# Unmerged paths:");
+	if (!s->is_initial)
+		color_fprintf_ln(s->fp, c, "#   (use \"git reset %s <file>...\" to unstage)", s->reference);
+	else
+		color_fprintf_ln(s->fp, c, "#   (use \"git rm --cached <file>...\" to unstage)");
+	color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to mark resolution)");
+	color_fprintf_ln(s->fp, c, "#");
 }
 
 static void wt_status_print_cached_header(struct wt_status *s)
@@ -98,6 +113,29 @@ static void wt_status_print_trailer(struct wt_status *s)
 }
 
 #define quote_path quote_path_relative
+
+static void wt_status_print_unmerged_data(struct wt_status *s,
+					  struct string_list_item *it)
+{
+	const char *c = color(WT_STATUS_UNMERGED);
+	struct wt_status_change_data *d = it->util;
+	struct strbuf onebuf = STRBUF_INIT;
+	const char *one, *how = "bug";
+
+	one = quote_path(it->string, -1, &onebuf, s->prefix);
+	color_fprintf(s->fp, color(WT_STATUS_HEADER), "#\t");
+	switch (d->stagemask) {
+	case 1: how = "both deleted:"; break;
+	case 2: how = "added by us:"; break;
+	case 3: how = "deleted by them:"; break;
+	case 4: how = "added by them:"; break;
+	case 5: how = "deleted by us:"; break;
+	case 6: how = "both added:"; break;
+	case 7: how = "both modified:"; break;
+	}
+	color_fprintf(s->fp, c, "%-20s%s\n", how, one);
+	strbuf_release(&onebuf);
+}
 
 static void wt_status_print_change_data(struct wt_status *s,
 					int change_type,
@@ -187,6 +225,26 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 	}
 }
 
+static int unmerged_mask(const char *path)
+{
+	int pos, mask;
+	struct cache_entry *ce;
+
+	pos = cache_name_pos(path, strlen(path));
+	if (0 <= pos)
+		return 0;
+
+	mask = 0;
+	pos = -pos-1;
+	while (pos < active_nr) {
+		ce = active_cache[pos++];
+		if (strcmp(ce->name, path) || !ce_stage(ce))
+			break;
+		mask |= (1 << (ce_stage(ce) - 1));
+	}
+	return mask;
+}
+
 static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 					 struct diff_options *options,
 					 void *data)
@@ -212,6 +270,9 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 		case DIFF_STATUS_COPIED:
 		case DIFF_STATUS_RENAMED:
 			d->head_path = xstrdup(p->one->path);
+			break;
+		case DIFF_STATUS_UNMERGED:
+			d->stagemask = unmerged_mask(p->two->path);
 			break;
 		}
 	}
@@ -260,8 +321,10 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 			d = xcalloc(1, sizeof(*d));
 			it->util = d;
 		}
-		if (ce_stage(ce))
+		if (ce_stage(ce)) {
 			d->index_status = DIFF_STATUS_UNMERGED;
+			d->stagemask |= (1 << (ce_stage(ce) - 1));
+		}
 		else
 			d->index_status = DIFF_STATUS_ADDED;
 	}
@@ -275,6 +338,29 @@ void wt_status_collect_changes(struct wt_status *s)
 		wt_status_collect_changes_initial(s);
 	else
 		wt_status_collect_changes_index(s);
+}
+
+static void wt_status_print_unmerged(struct wt_status *s)
+{
+	int shown_header = 0;
+	int i;
+
+	for (i = 0; i < s->change.nr; i++) {
+		struct wt_status_change_data *d;
+		struct string_list_item *it;
+		it = &(s->change.items[i]);
+		d = it->util;
+		if (!d->stagemask)
+			continue;
+		if (!shown_header) {
+			wt_status_print_unmerged_header(s);
+			shown_header = 1;
+		}
+		wt_status_print_unmerged_data(s, it);
+	}
+	if (shown_header)
+		wt_status_print_trailer(s);
+
 }
 
 static void wt_status_print_updated(struct wt_status *s)
@@ -314,7 +400,8 @@ static int wt_status_check_worktree_changes(struct wt_status *s)
 	for (i = 0; i < s->change.nr; i++) {
 		struct wt_status_change_data *d;
 		d = s->change.items[i].util;
-		if (!d->worktree_status)
+		if (!d->worktree_status ||
+		    d->worktree_status == DIFF_STATUS_UNMERGED)
 			continue;
 		changes = 1;
 		if (d->worktree_status == DIFF_STATUS_DELETED)
@@ -338,7 +425,8 @@ static void wt_status_print_changed(struct wt_status *s)
 		struct string_list_item *it;
 		it = &(s->change.items[i]);
 		d = it->util;
-		if (!d->worktree_status)
+		if (!d->worktree_status ||
+		    d->worktree_status == DIFF_STATUS_UNMERGED)
 			continue;
 		wt_status_print_change_data(s, WT_STATUS_CHANGED, it);
 	}
@@ -479,6 +567,7 @@ void wt_status_print(struct wt_status *s)
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER), "#");
 	}
 
+	wt_status_print_unmerged(s);
 	wt_status_print_updated(s);
 	wt_status_print_changed(s);
 	if (wt_status_submodule_summary)
