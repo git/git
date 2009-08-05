@@ -450,7 +450,6 @@ sub check_file_rev_conflict($) {
 	try {
 		$repo->command('rev-parse', '--verify', '--quiet', $f);
 		if (defined($format_patch)) {
-			print "foo\n";
 			return $format_patch;
 		}
 		die(<<EOF);

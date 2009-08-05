@@ -755,6 +755,11 @@ echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
 
+test_expect_success 'inner whitespace kept verbatim' '
+	git config section.val "foo 	  bar" &&
+	test "z$(git config section.val)" = "zfoo 	  bar"
+'
+
 test_expect_success SYMLINKS 'symlinked configuration' '
 
 	ln -s notyet myconfig &&
