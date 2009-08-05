@@ -84,6 +84,10 @@ all::
 # specify your own (or DarwinPort's) include directories and
 # library directories by defining CFLAGS and LDFLAGS appropriately.
 #
+# Define BLK_SHA1 environment variable if you want the C version
+# of the SHA1 that assumes you can do unaligned 32-bit loads and
+# have a fast htonl() function.
+#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
@@ -1167,6 +1171,10 @@ ifdef NO_DEFLATE_BOUND
 	BASIC_CFLAGS += -DNO_DEFLATE_BOUND
 endif
 
+ifdef BLK_SHA1
+	SHA1_HEADER = "block-sha1/sha1.h"
+	LIB_OBJS += block-sha1/sha1.o
+else
 ifdef PPC_SHA1
 	SHA1_HEADER = "ppc/sha1.h"
 	LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
@@ -1181,6 +1189,7 @@ ifdef MOZILLA_SHA1
 else
 	SHA1_HEADER = <openssl/sha.h>
 	EXTLIBS += $(LIB_4_CRYPTO)
+endif
 endif
 endif
 endif
