@@ -1218,12 +1218,20 @@ pack.compression::
 
 pack.deltaCacheSize::
 	The maximum memory in bytes used for caching deltas in
-	linkgit:git-pack-objects[1].
-	A value of 0 means no limit. Defaults to 0.
+	linkgit:git-pack-objects[1] before writing them out to a pack.
+	This cache is used to speed up the writing object phase by not
+	having to recompute the final delta result once the best match
+	for all objects is found.  Repacking large repositories on machines
+	which are tight with memory might be badly impacted by this though,
+	especially if this cache pushes the system into swapping.
+	A value of 0 means no limit. The smallest size of 1 byte may be
+	used to virtually disable this cache. Defaults to 256 MiB.
 
 pack.deltaCacheLimit::
 	The maximum size of a delta, that is cached in
-	linkgit:git-pack-objects[1]. Defaults to 1000.
+	linkgit:git-pack-objects[1]. This cache is used to speed up the
+	writing object phase by not having to recompute the final delta
+	result once the best match for all objects is found. Defaults to 1000.
 
 pack.threads::
 	Specifies the number of threads to spawn when searching for best
