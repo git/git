@@ -6,8 +6,8 @@
 #include "parse-options.h"
 
 static const char* show_branch_usage[] = {
-    "git show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base] [--topics] [--color] [<refs>...]",
-    "--reflog[=n[,b]] [--list] [--color] <branch>",
+    "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [<rev> | <glob>]...",
+    "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]",
     NULL
 };
 
