@@ -665,7 +665,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		OPT_BOOLEAN(0, "sha1-name", &sha1_name,
 			    "name commits with their object names"),
 		OPT_BOOLEAN(0, "merge-base", &merge_base,
-			    "act like git merge-base -a"),
+			    "show possible merge bases"),
 		OPT_BOOLEAN(0, "independent", &independent,
 			    "show refs unreachable from any other ref"),
 		OPT_BOOLEAN(0, "topo-order", &lifo,

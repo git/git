@@ -27,6 +27,10 @@ commits on the command line.  As the most common special case, specifying only
 two commits on the command line means computing the merge base between
 the given two commits.
 
+As a consequence, the 'merge base' is not necessarily contained in each of the
+commit arguments if more than two commits are specified. This is different
+from linkgit:git-show-branch[1] when used with the `--merge-base` option.
+
 OPTIONS
 -------
 -a::

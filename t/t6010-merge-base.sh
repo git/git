@@ -149,6 +149,12 @@ test_expect_success 'merge-base A B C' '
 	test "$MM1" = "$MB"
 '
 
+test_expect_success 'merge-base A B C using show-branch' '
+	MB=$(git show-branch --merge-base MMA MMB MMC) &&
+	MMR=$(git rev-parse --verify MMR) &&
+	test "$MMR" = "$MB"
+'
+
 test_expect_success 'criss-cross merge-base for octopus-step (setup)' '
 	git reset --hard MMR &&
 	test_tick && git commit --allow-empty -m 1 && git tag CC1 &&
