@@ -902,18 +902,96 @@ static int git_status_config(const char *k, const char *v, void *cb)
 	return git_diff_ui_config(k, v, NULL);
 }
 
+#define quote_path quote_path_relative
+
+static void short_unmerged(int null_termination, struct string_list_item *it,
+			   struct wt_status *s)
+{
+	struct wt_status_change_data *d = it->util;
+	const char *how = "??";
+
+	switch (d->stagemask) {
+	case 1: how = "DD"; break; /* both deleted */
+	case 2: how = "AU"; break; /* added by us */
+	case 3: how = "UD"; break; /* deleted by them */
+	case 4: how = "UA"; break; /* added by them */
+	case 5: how = "DU"; break; /* deleted by us */
+	case 6: how = "AA"; break; /* both added */
+	case 7: how = "UU"; break; /* both modified */
+	}
+	printf("%s ", how);
+	if (null_termination) {
+		fprintf(stdout, "%s%c", it->string, 0);
+	} else {
+		struct strbuf onebuf = STRBUF_INIT;
+		const char *one;
+		one = quote_path(it->string, -1, &onebuf, s->prefix);
+		printf("%s\n", one);
+		strbuf_release(&onebuf);
+	}
+}
+
+static void short_status(int null_termination, struct string_list_item *it,
+			 struct wt_status *s)
+{
+	struct wt_status_change_data *d = it->util;
+
+	printf("%c%c ",
+	       !d->index_status ? ' ' : d->index_status,
+	       !d->worktree_status ? ' ' : d->worktree_status);
+	if (null_termination) {
+		fprintf(stdout, "%s%c", it->string, 0);
+		if (d->head_path)
+			fprintf(stdout, "%s%c", d->head_path, 0);
+	} else {
+		struct strbuf onebuf = STRBUF_INIT;
+		const char *one;
+		if (d->head_path) {
+			one = quote_path(d->head_path, -1, &onebuf, s->prefix);
+			printf("%s -> ", one);
+			strbuf_release(&onebuf);
+		}
+		one = quote_path(it->string, -1, &onebuf, s->prefix);
+		printf("%s\n", one);
+		strbuf_release(&onebuf);
+	}
+}
+
+static void short_untracked(int null_termination, struct string_list_item *it,
+			    struct wt_status *s)
+{
+	if (null_termination) {
+		fprintf(stdout, "?? %s%c", it->string, 0);
+	} else {
+		struct strbuf onebuf = STRBUF_INIT;
+		const char *one;
+		one = quote_path(it->string, -1, &onebuf, s->prefix);
+		printf("?? %s\n", one);
+		strbuf_release(&onebuf);
+	}
+}
+
 int cmd_stat(int argc, const char **argv, const char *prefix)
 {
 	struct wt_status s;
+	static int null_termination, shortstatus;
+	int i;
 	unsigned char sha1[20];
 	static struct option builtin_stat_options[] = {
 		OPT__VERBOSE(&verbose),
+		OPT_BOOLEAN('s', "short", &shortstatus,
+			    "show status concicely"),
+		OPT_BOOLEAN('z', "null", &null_termination,
+			    "terminate entries with NUL"),
 		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
 		  "mode",
 		  "show untracked files, optional modes: all, normal, no. (Default: all)",
 		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 		OPT_END(),
 	};
+
+	if (null_termination)
+		shortstatus = 1;
 
 	wt_status_prepare(&s);
 	git_config(git_status_config, &s);
@@ -930,14 +1008,34 @@ int cmd_stat(int argc, const char **argv, const char *prefix)
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
 	wt_status_collect(&s);
 
-	s.verbose = verbose;
-	if (s.relative_paths)
-		s.prefix = prefix;
-	if (s.use_color == -1)
-		s.use_color = git_use_color_default;
-	if (diff_use_color_default == -1)
-		diff_use_color_default = git_use_color_default;
-	wt_status_print(&s);
+	if (shortstatus) {
+		for (i = 0; i < s.change.nr; i++) {
+			struct wt_status_change_data *d;
+			struct string_list_item *it;
+
+			it = &(s.change.items[i]);
+			d = it->util;
+			if (d->stagemask)
+				short_unmerged(null_termination, it, &s);
+			else
+				short_status(null_termination, it, &s);
+		}
+		for (i = 0; i < s.untracked.nr; i++) {
+			struct string_list_item *it;
+
+			it = &(s.untracked.items[i]);
+			short_untracked(null_termination, it, &s);
+		}
+	} else {
+		s.verbose = verbose;
+		if (s.relative_paths)
+			s.prefix = prefix;
+		if (s.use_color == -1)
+			s.use_color = git_use_color_default;
+		if (diff_use_color_default == -1)
+			diff_use_color_default = git_use_color_default;
+		wt_status_print(&s);
+	}
 	return 0;
 }
 
