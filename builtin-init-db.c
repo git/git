@@ -378,7 +378,7 @@ static int shared_callback(const struct option *opt, const char *arg, int unset)
 }
 
 static const char *const init_db_usage[] = {
-	"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]]",
+	"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared[=<permissions>]] [directory]",
 	NULL
 };
 
@@ -406,12 +406,47 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
+	argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
 
-	if(is_bare_repository_cfg == 1) {
+	if (argc == 1) {
+		int mkdir_tried = 0;
+	retry:
+		if (chdir(argv[0]) < 0) {
+			if (!mkdir_tried) {
+				int saved;
+				/*
+				 * At this point we haven't read any configuration,
+				 * and we know shared_repository should always be 0;
+				 * but just in case we play safe.
+				 */
+				saved = shared_repository;
+				shared_repository = 0;
+				switch (safe_create_leading_directories_const(argv[0])) {
+				case -3:
+					errno = EEXIST;
+					/* fallthru */
+				case -1:
+					die_errno("cannot mkdir %s", argv[0]);
+					break;
+				default:
+					break;
+				}
+				shared_repository = saved;
+				if (mkdir(argv[0], 0777) < 0)
+					die_errno("cannot mkdir %s", argv[0]);
+				mkdir_tried = 1;
+				goto retry;
+			}
+			die_errno("cannot chdir to %s", argv[0]);
+		}
+	} else if (0 < argc) {
+		usage(init_db_usage[0]);
+	}
+	if (is_bare_repository_cfg == 1) {
 		static char git_dir[PATH_MAX+1];
-		setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir,
-					sizeof(git_dir)), 0);
+
+		setenv(GIT_DIR_ENVIRONMENT,
+			getcwd(git_dir, sizeof(git_dir)), 0);
 	}
 
 	if (init_shared_repository != -1)
