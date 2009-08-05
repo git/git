@@ -110,6 +110,18 @@ test_expect_success 'compute merge-base (all)' \
 
 # Another set to demonstrate base between one commit and a merge
 # in the documentation.
+#
+# * C (MMC) * B (MMB) * A  (MMA)
+# * o       * o       * o
+# * o       * o       * o
+# * o       * o       * o
+# * o       | _______/
+# |         |/
+# |         * 1 (MM1)
+# | _______/
+# |/
+# * root (MMR)
+
 
 test_expect_success 'merge-base for octopus-step (setup)' '
 	test_tick && git commit --allow-empty -m root && git tag MMR &&
