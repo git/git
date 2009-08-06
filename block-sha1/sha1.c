@@ -112,7 +112,7 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 #define T_0_15(t)  SHA_ROUND(t, SHA_SRC, (((C^D)&B)^D) , 0x5a827999 )
 #define T_16_19(t) SHA_ROUND(t, SHA_MIX, (((C^D)&B)^D) , 0x5a827999 )
 #define T_20_39(t) SHA_ROUND(t, SHA_MIX, (B^C^D) , 0x6ed9eba1 )
-#define T_40_59(t) SHA_ROUND(t, SHA_MIX, ((B&C)|(D&(B|C))) , 0x8f1bbcdc )
+#define T_40_59(t) SHA_ROUND(t, SHA_MIX, ((B&C)+(D&(B^C))) , 0x8f1bbcdc )
 #define T_60_79(t) SHA_ROUND(t, SHA_MIX, (B^C^D) ,  0xca62c1d6 )
 
 static void blk_SHA1Block(blk_SHA_CTX *ctx, const unsigned int *data)
