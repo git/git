@@ -27,6 +27,10 @@ static int default_show_root = 1;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
+static const char * const builtin_log_usage =
+	"git log [<options>] [<since>..<until>] [[--] <path>...]\n"
+	"   or: git show [options] <object>...";
+
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
@@ -61,6 +65,8 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 			rev->show_decorations = 1;
 		} else if (!strcmp(arg, "--source")) {
 			rev->show_source = 1;
+		} else if (!strcmp(arg, "-h")) {
+			usage(builtin_log_usage);
 		} else
 			die("unrecognized argument: %s", arg);
 	}
