@@ -20,6 +20,7 @@ static int tags;	/* Allow lightweight tags */
 static int longformat;
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
+static int found_names;
 static const char *pattern;
 static int always;
 
@@ -49,6 +50,7 @@ static void add_to_known_names(const char *path,
 		memcpy(e->path, path, len);
 		commit->util = e;
 	}
+	found_names = 1;
 }
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
@@ -194,6 +196,9 @@ static void describe(const char *arg, int last_one)
 		initialized = 1;
 		for_each_ref(get_name, NULL);
 	}
+
+	if (!found_names)
+		die("cannot describe '%s'", sha1_to_hex(sha1));
 
 	n = cmit->util;
 	if (n) {
