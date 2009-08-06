@@ -100,27 +100,31 @@ static void blk_SHA1Block(blk_SHA_CTX *ctx, const unsigned int *data)
 	unsigned int A,B,C,D,E,TEMP;
 	unsigned int W[80];
 
-	for (t = 0; t < 16; t++)
-		W[t] = htonl(data[t]);
-
-	/* Unroll it? */
-	for (t = 16; t <= 79; t++)
-		W[t] = SHA_ROL(W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16], 1);
-
 	A = ctx->H[0];
 	B = ctx->H[1];
 	C = ctx->H[2];
 	D = ctx->H[3];
 	E = ctx->H[4];
 
-#define T_0_19(t) \
+#define T_0_15(t) \
+	TEMP = htonl(data[t]); W[t] = TEMP; \
+	TEMP += SHA_ROL(A,5) + (((C^D)&B)^D)     + E + 0x5a827999; \
+	E = D; D = C; C = SHA_ROR(B, 2); B = A; A = TEMP; \
+
+	T_0_15( 0); T_0_15( 1); T_0_15( 2); T_0_15( 3); T_0_15( 4);
+	T_0_15( 5); T_0_15( 6); T_0_15( 7); T_0_15( 8); T_0_15( 9);
+	T_0_15(10); T_0_15(11); T_0_15(12); T_0_15(13); T_0_15(14);
+	T_0_15(15);
+
+	/* Unroll it? */
+	for (t = 16; t <= 79; t++)
+		W[t] = SHA_ROL(W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16], 1);
+
+#define T_16_19(t) \
 	TEMP = SHA_ROL(A,5) + (((C^D)&B)^D)     + E + W[t] + 0x5a827999; \
 	E = D; D = C; C = SHA_ROR(B, 2); B = A; A = TEMP;
 
-	T_0_19( 0); T_0_19( 1); T_0_19( 2); T_0_19( 3); T_0_19( 4);
-	T_0_19( 5); T_0_19( 6); T_0_19( 7); T_0_19( 8); T_0_19( 9);
-	T_0_19(10); T_0_19(11); T_0_19(12); T_0_19(13); T_0_19(14);
-	T_0_19(15); T_0_19(16); T_0_19(17); T_0_19(18); T_0_19(19);
+	T_16_19(16); T_16_19(17); T_16_19(18); T_16_19(19);
 
 #define T_20_39(t) \
 	TEMP = SHA_ROL(A,5) + (B^C^D)           + E + W[t] + 0x6ed9eba1; \
