@@ -96,9 +96,8 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 
 static void blk_SHA1Block(blk_SHA_CTX *ctx, const unsigned int *data)
 {
-	int t;
 	unsigned int A,B,C,D,E,TEMP;
-	unsigned int W[80];
+	unsigned int array[16];
 
 	A = ctx->H[0];
 	B = ctx->H[1];
@@ -107,8 +106,8 @@ static void blk_SHA1Block(blk_SHA_CTX *ctx, const unsigned int *data)
 	E = ctx->H[4];
 
 #define T_0_15(t) \
-	TEMP = htonl(data[t]); W[t] = TEMP; \
-	TEMP += SHA_ROL(A,5) + (((C^D)&B)^D)     + E + 0x5a827999; \
+	TEMP = htonl(data[t]); array[t] = TEMP; \
+	TEMP += SHA_ROL(A,5) + (((C^D)&B)^D) + E + 0x5a827999; \
 	E = D; D = C; C = SHA_ROR(B, 2); B = A; A = TEMP; \
 
 	T_0_15( 0); T_0_15( 1); T_0_15( 2); T_0_15( 3); T_0_15( 4);
@@ -116,18 +115,21 @@ static void blk_SHA1Block(blk_SHA_CTX *ctx, const unsigned int *data)
 	T_0_15(10); T_0_15(11); T_0_15(12); T_0_15(13); T_0_15(14);
 	T_0_15(15);
 
-	/* Unroll it? */
-	for (t = 16; t <= 79; t++)
-		W[t] = SHA_ROL(W[t-3] ^ W[t-8] ^ W[t-14] ^ W[t-16], 1);
+/* This "rolls" over the 512-bit array */
+#define W(x) (array[(x)&15])
+#define SHA_XOR(t) \
+	TEMP = SHA_ROL(W(t+13) ^ W(t+8) ^ W(t+2) ^ W(t), 1); W(t) = TEMP;
 
 #define T_16_19(t) \
-	TEMP = SHA_ROL(A,5) + (((C^D)&B)^D)     + E + W[t] + 0x5a827999; \
-	E = D; D = C; C = SHA_ROR(B, 2); B = A; A = TEMP;
+	SHA_XOR(t); \
+	TEMP += SHA_ROL(A,5) + (((C^D)&B)^D) + E + 0x5a827999; \
+	E = D; D = C; C = SHA_ROR(B, 2); B = A; A = TEMP; \
 
 	T_16_19(16); T_16_19(17); T_16_19(18); T_16_19(19);
 
 #define T_20_39(t) \
-	TEMP = SHA_ROL(A,5) + (B^C^D)           + E + W[t] + 0x6ed9eba1; \
+	SHA_XOR(t); \
+	TEMP += SHA_ROL(A,5) + (B^C^D) + E + 0x6ed9eba1; \
 	E = D; D = C; C = SHA_ROR(B, 2); B = A; A = TEMP;
 
 	T_20_39(20); T_20_39(21); T_20_39(22); T_20_39(23); T_20_39(24);
@@ -136,7 +138,8 @@ static void blk_SHA1Block(blk_SHA_CTX *ctx, const unsigned int *data)
 	T_20_39(35); T_20_39(36); T_20_39(37); T_20_39(38); T_20_39(39);
 
 #define T_40_59(t) \
-	TEMP = SHA_ROL(A,5) + ((B&C)|(D&(B|C))) + E + W[t] + 0x8f1bbcdc; \
+	SHA_XOR(t); \
+	TEMP += SHA_ROL(A,5) + ((B&C)|(D&(B|C))) + E + 0x8f1bbcdc; \
 	E = D; D = C; C = SHA_ROR(B, 2); B = A; A = TEMP;
 
 	T_40_59(40); T_40_59(41); T_40_59(42); T_40_59(43); T_40_59(44);
@@ -145,7 +148,8 @@ static void blk_SHA1Block(blk_SHA_CTX *ctx, const unsigned int *data)
 	T_40_59(55); T_40_59(56); T_40_59(57); T_40_59(58); T_40_59(59);
 
 #define T_60_79(t) \
-	TEMP = SHA_ROL(A,5) + (B^C^D)           + E + W[t] + 0xca62c1d6; \
+	SHA_XOR(t); \
+	TEMP += SHA_ROL(A,5) + (B^C^D) + E + 0xca62c1d6; \
 	E = D; D = C; C = SHA_ROR(B, 2); B = A; A = TEMP;
 
 	T_60_79(60); T_60_79(61); T_60_79(62); T_60_79(63); T_60_79(64);
