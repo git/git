@@ -31,7 +31,7 @@ void blk_SHA1_Update(blk_SHA_CTX *ctx, const void *data, unsigned long len)
 {
 	int lenW = ctx->lenW;
 
-	ctx->size += len;
+	ctx->size += (unsigned long long) len << 3;
 
 	/* Read the data into W and process blocks as they get full
 	 */
@@ -68,8 +68,8 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 
 	/* Pad with a binary 1 (ie 0x80), then zeroes, then length
 	 */
-	padlen[0] = htonl(ctx->size >> (32 - 3));
-	padlen[1] = htonl(ctx->size << 3);
+	padlen[0] = htonl(ctx->size >> 32);
+	padlen[1] = htonl(ctx->size);
 
 	blk_SHA1_Update(ctx, pad, 1+ (63 & (55 - ctx->lenW)));
 	blk_SHA1_Update(ctx, padlen, 8);
