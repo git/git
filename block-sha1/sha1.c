@@ -82,13 +82,13 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 
 #if defined(__i386__) || defined(__x86_64__)
 
-#define SHA_ASM(op, x, n) ({ unsigned int __res; asm(op " %1,%0":"=r" (__res):"i" (n), "0" (x)); __res; })
+#define SHA_ASM(op, x, n) ({ unsigned int __res; __asm__(op " %1,%0":"=r" (__res):"i" (n), "0" (x)); __res; })
 #define SHA_ROL(x,n)	SHA_ASM("rol", x, n)
 #define SHA_ROR(x,n)	SHA_ASM("ror", x, n)
 
 #else
 
-#define SHA_ROT(X,n)	(((X) << (l)) | ((X) >> (r)))
+#define SHA_ROT(X,l,r)	(((X) << (l)) | ((X) >> (r)))
 #define SHA_ROL(X,n)	SHA_ROT(X,n,32-(n))
 #define SHA_ROR(X,n)	SHA_ROT(X,32-(n),n)
 
