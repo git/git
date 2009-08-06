@@ -7,7 +7,6 @@
 typedef struct {
 	unsigned int H[5];
 	unsigned int W[16];
-	int lenW;
 	unsigned long long size;
 } blk_SHA_CTX;
 

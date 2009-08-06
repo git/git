@@ -14,7 +14,6 @@ static void blk_SHA1Block(blk_SHA_CTX *ctx, const unsigned int *data);
 
 void blk_SHA1_Init(blk_SHA_CTX *ctx)
 {
-	ctx->lenW = 0;
 	ctx->size = 0;
 
 	/* Initialize H with the magic constants (see FIPS180 for constants)
@@ -29,9 +28,9 @@ void blk_SHA1_Init(blk_SHA_CTX *ctx)
 
 void blk_SHA1_Update(blk_SHA_CTX *ctx, const void *data, unsigned long len)
 {
-	int lenW = ctx->lenW;
+	int lenW = ctx->size & 63;
 
-	ctx->size += (unsigned long long) len << 3;
+	ctx->size += len;
 
 	/* Read the data into W and process blocks as they get full
 	 */
@@ -43,7 +42,6 @@ void blk_SHA1_Update(blk_SHA_CTX *ctx, const void *data, unsigned long len)
 		lenW = (lenW + left) & 63;
 		len -= left;
 		data += left;
-		ctx->lenW = lenW;
 		if (lenW)
 			return;
 		blk_SHA1Block(ctx, ctx->W);
@@ -53,10 +51,8 @@ void blk_SHA1_Update(blk_SHA_CTX *ctx, const void *data, unsigned long len)
 		data += 64;
 		len -= 64;
 	}
-	if (len) {
+	if (len)
 		memcpy(ctx->W, data, len);
-		ctx->lenW = len;
-	}
 }
 
 
@@ -68,10 +64,11 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 
 	/* Pad with a binary 1 (ie 0x80), then zeroes, then length
 	 */
-	padlen[0] = htonl(ctx->size >> 32);
-	padlen[1] = htonl(ctx->size);
+	padlen[0] = htonl(ctx->size >> 29);
+	padlen[1] = htonl(ctx->size << 3);
 
-	blk_SHA1_Update(ctx, pad, 1+ (63 & (55 - ctx->lenW)));
+	i = ctx->size & 63;
+	blk_SHA1_Update(ctx, pad, 1+ (63 & (55 - i)));
 	blk_SHA1_Update(ctx, padlen, 8);
 
 	/* Output hash
