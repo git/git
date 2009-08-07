@@ -4131,7 +4131,7 @@ What does this mean?
 
 `git rev-list` is the original version of the revision walker, which
 _always_ printed a list of revisions to stdout.  It is still functional,
-and needs to, since most new Git programs start out as scripts using
+and needs to, since most new Git commands start out as scripts using
 `git rev-list`.
 
 `git rev-parse` is not as important any more; it was only used to filter out

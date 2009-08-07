@@ -404,7 +404,7 @@ Performing a three-way merge
 
 The attribute `merge` affects how three versions of a file is
 merged when a file-level merge is necessary during `git merge`,
-and other programs such as `git revert` and `git cherry-pick`.
+and other commands such as `git revert` and `git cherry-pick`.
 
 Set::
 
