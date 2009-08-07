@@ -764,6 +764,7 @@ sub cmd_show_ignore {
 		print STDOUT "\n# $path\n";
 		my $s = $props->{'svn:ignore'} or return;
 		$s =~ s/[\r\n]+/\n/g;
+		$s =~ s/^\n+//;
 		chomp $s;
 		$s =~ s#^#$path#gm;
 		print STDOUT "$s\n";
@@ -801,6 +802,7 @@ sub cmd_create_ignore {
 		open(GITIGNORE, '>', $ignore)
 		  or fatal("Failed to open `$ignore' for writing: $!");
 		$s =~ s/[\r\n]+/\n/g;
+		$s =~ s/^\n+//;
 		chomp $s;
 		# Prefix all patterns so that the ignore doesn't apply
 		# to sub-directories.
