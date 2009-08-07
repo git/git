@@ -268,7 +268,11 @@ split_patches () {
 		msgnum=
 		;;
 	*)
-		clean_abort "Patch format $patch_format is not supported."
+		if test -n "$parse_patch" ; then
+			clean_abort "Patch format $patch_format is not supported."
+		else
+			clean_abort "Patch format detection failed."
+		fi
 		;;
 	esac
 }
