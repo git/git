@@ -50,6 +50,7 @@ enum push_default_type push_default = PUSH_DEFAULT_MATCHING;
 #endif
 enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
 int grafts_replace_parents = 1;
+int hide_dotfiles = 1;
 
 /* Parallel index stat data preload? */
 int core_preload_index = 0;
