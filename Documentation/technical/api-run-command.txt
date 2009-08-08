@@ -35,11 +35,31 @@ Functions
 	Convenience functions that encapsulate a sequence of
 	start_command() followed by finish_command(). The argument argv
 	specifies the program and its arguments. The argument opt is zero
-	or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_GIT_CMD`, or
-	`RUN_COMMAND_STDOUT_TO_STDERR` that correspond to the members
-	.no_stdin, .git_cmd, .stdout_to_stderr of `struct child_process`.
+	or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_GIT_CMD`,
+	`RUN_COMMAND_STDOUT_TO_STDERR`, or `RUN_SILENT_EXEC_FAILURE`
+	that correspond to the members .no_stdin, .git_cmd,
+	.stdout_to_stderr, .silent_exec_failure of `struct child_process`.
 	The argument dir corresponds the member .dir. The argument env
 	corresponds to the member .env.
+
+The functions above do the following:
+
+. If a system call failed, errno is set and -1 is returned. A diagnostic
+  is printed.
+
+. If the program was not found, then -1 is returned and errno is set to
+  ENOENT; a diagnostic is printed only if .silent_exec_failure is 0.
+
+. Otherwise, the program is run. If it terminates regularly, its exit
+  code is returned. No diagnistic is printed, even if the exit code is
+  non-zero.
+
+. If the program terminated due to a signal, then the return value is the
+  signal number - 128, ie. it is negative and so indicates an unusual
+  condition; a diagnostic is printed. This return value can be passed to
+  exit(2), which will report the same code to the parent process that a
+  POSIX shell's $? would report for a program that died from the signal.
+
 
 `start_async`::
 
@@ -142,6 +162,11 @@ string pointers (NULL terminated) in .env:
 
 To specify a new initial working directory for the sub-process,
 specify it in the .dir member.
+
+If the program cannot be found, the functions return -1 and set
+errno to ENOENT. Normally, an error message is printed, but if
+.silent_exec_failure is set to 1, no message is printed for this
+special error condition.
 
 
 * `struct async`
