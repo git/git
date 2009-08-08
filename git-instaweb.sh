@@ -278,7 +278,7 @@ EOF
 
 	# check to see if Dennis Stosberg's mod_perl compatibility patch
 	# (<20060621130708.Gcbc6e5c@leonov.stosberg.net>) has been applied
-	if test -f "$module_path/mod_perl.so" && grep '^our $gitbin' \
+	if test -f "$module_path/mod_perl.so" && grep 'MOD_PERL' \
 				"$GIT_DIR/gitweb/gitweb.cgi" >/dev/null
 	then
 		# favor mod_perl if available
