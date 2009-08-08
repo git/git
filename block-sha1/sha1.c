@@ -93,6 +93,7 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 
 /* This "rolls" over the 512-bit array */
 #define W(x) (array[(x)&15])
+#define setW(x, val) (*(volatile unsigned int *)&W(x) = (val))
 
 /*
  * Where do we get the source from? The first 16 iterations get it from
@@ -102,9 +103,9 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 #define SHA_MIX(t) SHA_ROL(W(t+13) ^ W(t+8) ^ W(t+2) ^ W(t), 1)
 
 #define SHA_ROUND(t, input, fn, constant, A, B, C, D, E) do { \
-	unsigned int TEMP = input(t); W(t) = TEMP; \
-	TEMP += E + SHA_ROL(A,5) + (fn) + (constant); \
-	B = SHA_ROR(B, 2); E = TEMP; } while (0)
+	unsigned int TEMP = input(t); setW(t, TEMP); \
+	E += TEMP + SHA_ROL(A,5) + (fn) + (constant); \
+	B = SHA_ROR(B, 2); } while (0)
 
 #define T_0_15(t, A, B, C, D, E)  SHA_ROUND(t, SHA_SRC, (((C^D)&B)^D) , 0x5a827999, A, B, C, D, E )
 #define T_16_19(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (((C^D)&B)^D) , 0x5a827999, A, B, C, D, E )
