@@ -24,6 +24,7 @@
 #include "string-list.h"
 #include "rerere.h"
 #include "unpack-trees.h"
+#include "quote.h"
 
 static const char * const builtin_commit_usage[] = {
 	"git commit [options] [--] <filepattern>...",
@@ -32,6 +33,11 @@ static const char * const builtin_commit_usage[] = {
 
 static const char * const builtin_status_usage[] = {
 	"git status [options] [--] <filepattern>...",
+	NULL
+};
+
+static const char * const builtin_stat_usage[] = {
+	"git stat [options]",
 	NULL
 };
 
@@ -346,6 +352,8 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 static int run_status(FILE *fp, const char *index_file, const char *prefix, int nowarn,
 		      struct wt_status *s)
 {
+	unsigned char sha1[20];
+
 	if (s->relative_paths)
 		s->prefix = prefix;
 
@@ -357,7 +365,9 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 	s->index_file = index_file;
 	s->fp = fp;
 	s->nowarn = nowarn;
+	s->is_initial = get_sha1(s->reference, sha1) ? 1 : 0;
 
+	wt_status_collect(s);
 	wt_status_print(s);
 
 	return s->commitable;
@@ -691,6 +701,21 @@ static const char *find_author_by_nickname(const char *name)
 	die("No existing author found with '%s'", name);
 }
 
+
+static void handle_untracked_files_arg(struct wt_status *s)
+{
+	if (!untracked_files_arg)
+		; /* default already initialized */
+	else if (!strcmp(untracked_files_arg, "no"))
+		s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
+	else if (!strcmp(untracked_files_arg, "normal"))
+		s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
+	else if (!strcmp(untracked_files_arg, "all"))
+		s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
+	else
+		die("Invalid untracked files mode '%s'", untracked_files_arg);
+}
+
 static int parse_and_validate_options(int argc, const char *argv[],
 				      const char * const usage[],
 				      const char *prefix,
@@ -794,16 +819,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	else
 		die("Invalid cleanup mode %s", cleanup_arg);
 
-	if (!untracked_files_arg)
-		; /* default already initialized */
-	else if (!strcmp(untracked_files_arg, "no"))
-		s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
-	else if (!strcmp(untracked_files_arg, "normal"))
-		s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
-	else if (!strcmp(untracked_files_arg, "all"))
-		s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
-	else
-		die("Invalid untracked files mode '%s'", untracked_files_arg);
+	handle_untracked_files_arg(s);
 
 	if (all && argc > 0)
 		die("Paths with -a does not make sense.");
@@ -884,6 +900,45 @@ static int git_status_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 	return git_diff_ui_config(k, v, NULL);
+}
+
+int cmd_stat(int argc, const char **argv, const char *prefix)
+{
+	struct wt_status s;
+	unsigned char sha1[20];
+	static struct option builtin_stat_options[] = {
+		OPT__VERBOSE(&verbose),
+		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
+		  "mode",
+		  "show untracked files, optional modes: all, normal, no. (Default: all)",
+		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
+		OPT_END(),
+	};
+
+	wt_status_prepare(&s);
+	git_config(git_status_config, &s);
+	argc = parse_options(argc, argv, prefix,
+			     builtin_stat_options,
+			     builtin_stat_usage, 0);
+	handle_untracked_files_arg(&s);
+
+	if (*argv)
+		s.pathspec = get_pathspec(prefix, argv);
+
+	read_cache();
+	refresh_cache(REFRESH_QUIET|REFRESH_UNMERGED);
+	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
+	wt_status_collect(&s);
+
+	s.verbose = verbose;
+	if (s.relative_paths)
+		s.prefix = prefix;
+	if (s.use_color == -1)
+		s.use_color = git_use_color_default;
+	if (diff_use_color_default == -1)
+		diff_use_color_default = git_use_color_default;
+	wt_status_print(&s);
+	return 0;
 }
 
 int cmd_status(int argc, const char **argv, const char *prefix)

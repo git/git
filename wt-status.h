@@ -31,6 +31,7 @@ struct wt_status {
 	int is_initial;
 	char *branch;
 	const char *reference;
+	const char **pathspec;
 	int verbose;
 	int amend;
 	int nowarn;

@@ -269,6 +269,7 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_collect_changed_cb;
 	rev.diffopt.format_callback_data = s;
+	rev.prune_data = s->pathspec;
 	run_diff_files(&rev, 0);
 }
 
@@ -285,6 +286,7 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 200;
 	rev.diffopt.break_opt = 0;
+	rev.prune_data = s->pathspec;
 	run_diff_index(&rev, 1);
 }
 
@@ -297,6 +299,8 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 		struct wt_status_change_data *d;
 		struct cache_entry *ce = active_cache[i];
 
+		if (!ce_path_match(ce, s->pathspec))
+			continue;
 		it = string_list_insert(ce->name, &s->change);
 		d = it->util;
 		if (!d) {
@@ -329,6 +333,8 @@ static void wt_status_collect_untracked(struct wt_status *s)
 	for(i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
 		if (!cache_name_is_other(ent->name, ent->len))
+			continue;
+		if (!match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
 			continue;
 		s->workdir_untracked = 1;
 		string_list_insert(ent->name, &s->untracked);
@@ -533,10 +539,8 @@ static void wt_status_print_tracking(struct wt_status *s)
 
 void wt_status_print(struct wt_status *s)
 {
-	unsigned char sha1[20];
 	const char *branch_color = color(WT_STATUS_HEADER, s);
 
-	s->is_initial = get_sha1(s->reference, sha1) ? 1 : 0;
 	if (s->branch) {
 		const char *on_what = "On branch ";
 		const char *branch_name = s->branch;
@@ -552,8 +556,6 @@ void wt_status_print(struct wt_status *s)
 		if (!s->is_initial)
 			wt_status_print_tracking(s);
 	}
-
-	wt_status_collect(s);
 
 	if (s->is_initial) {
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "#");
