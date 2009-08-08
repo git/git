@@ -118,6 +118,32 @@ static int err_win_to_posix(DWORD winerr)
 	return error;
 }
 
+static int make_hidden(const char *path)
+{
+	DWORD attribs = GetFileAttributes(path);
+	if (SetFileAttributes(path, FILE_ATTRIBUTE_HIDDEN | attribs))
+		return 0;
+	errno = err_win_to_posix(GetLastError());
+	return -1;
+}
+
+#undef mkdir
+int mingw_mkdir(const char *path, int mode)
+{
+	int ret = mkdir(path);
+	if (!ret) {
+		/*
+		 * In Windows a file or dir starting with a dot is not
+		 * automatically hidden. So lets mark it as hidden when
+		 * such a directory is created.
+		 */
+		const char *start = basename((char*)path);
+		if (*start == '.')
+			return make_hidden(path);
+	}
+	return ret;
+}
+
 #undef open
 int mingw_open (const char *filename, int oflags, ...)
 {
