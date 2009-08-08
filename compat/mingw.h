@@ -98,12 +98,6 @@ static inline int fcntl(int fd, int cmd, long arg)
  * simple adaptors
  */
 
-static inline int mingw_mkdir(const char *path, int mode)
-{
-	return mkdir(path);
-}
-#define mkdir mingw_mkdir
-
 static inline int mingw_unlink(const char *pathname)
 {
 	/* read-only files cannot be removed */
@@ -142,6 +136,9 @@ int readlink(const char *path, char *buf, size_t bufsiz);
 /*
  * replacements of existing functions
  */
+
+int mingw_mkdir(const char *path, int mode);
+#define mkdir mingw_mkdir
 
 int mingw_open (const char *filename, int oflags, ...);
 #define open mingw_open
