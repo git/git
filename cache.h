@@ -518,6 +518,7 @@ extern size_t delta_base_cache_limit;
 extern int auto_crlf;
 extern int fsync_object_files;
 extern int core_preload_index;
+extern int hide_dotfiles;
 
 enum safe_crlf {
 	SAFE_CRLF_FALSE = 0,

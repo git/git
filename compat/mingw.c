@@ -130,8 +130,9 @@ static int make_hidden(const char *path)
 #undef mkdir
 int mingw_mkdir(const char *path, int mode)
 {
+	extern int hide_dotfiles;
 	int ret = mkdir(path);
-	if (!ret) {
+	if (!ret && hide_dotfiles) {
 		/*
 		 * In Windows a file or dir starting with a dot is not
 		 * automatically hidden. So lets mark it as hidden when
