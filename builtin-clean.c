@@ -33,7 +33,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	int ignored_only = 0, baselen = 0, config_set = 0, errors = 0;
 	struct strbuf directory = STRBUF_INIT;
 	struct dir_struct dir;
-	const char *path, *base;
 	static const char **pathspec;
 	struct strbuf buf = STRBUF_INIT;
 	const char *qname;
@@ -78,16 +77,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	pathspec = get_pathspec(prefix, argv);
 	read_cache();
 
-	/*
-	 * Calculate common prefix for the pathspec, and
-	 * use that to optimize the directory walk
-	 */
-	baselen = common_prefix(pathspec);
-	path = ".";
-	base = "";
-	if (baselen)
-		path = base = xmemdupz(*pathspec, baselen);
-	read_directory(&dir, path, base, baselen, pathspec);
+	fill_directory(&dir, pathspec);
 
 	if (pathspec)
 		seen = xmalloc(argc > 0 ? argc : 1);

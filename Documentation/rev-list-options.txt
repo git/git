@@ -201,6 +201,10 @@ endif::git-rev-list[]
 
 	Stop when a given path disappears from the tree.
 
+--merges::
+
+	Print only merge commits.
+
 --no-merges::
 
 	Do not print commits with more than one parent.

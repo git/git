@@ -14,8 +14,8 @@ SYNOPSIS
 'git submodule' [--quiet] status [--cached] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
-	      [--reference <repository>] [--] [<path>...]
-'git submodule' [--quiet] summary [--summary-limit <n>] [commit] [--] [<path>...]
+	      [--reference <repository>] [--merge] [--] [<path>...]
+'git submodule' [--quiet] summary [--cached] [--summary-limit <n>] [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach <command>
 'git submodule' [--quiet] sync [--] [<path>...]
 

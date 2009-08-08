@@ -34,8 +34,6 @@ include::diff-options.txt[]
 	'git-diff-index' say that all non-checked-out files are up
 	to date.
 
-Output format
--------------
 include::diff-format.txt[]
 
 Operating Modes

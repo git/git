@@ -450,7 +450,6 @@ sub check_file_rev_conflict($) {
 	try {
 		$repo->command('rev-parse', '--verify', '--quiet', $f);
 		if (defined($format_patch)) {
-			print "foo\n";
 			return $format_patch;
 		}
 		die(<<EOF);
@@ -654,13 +653,17 @@ if (!@to) {
 }
 
 sub expand_aliases {
-	my @cur = @_;
-	my @last;
-	do {
-		@last = @cur;
-		@cur = map { $aliases{$_} ? @{$aliases{$_}} : $_ } @last;
-	} while (join(',',@cur) ne join(',',@last));
-	return @cur;
+	return map { expand_one_alias($_) } @_;
+}
+
+my %EXPANDED_ALIASES;
+sub expand_one_alias {
+	my $alias = shift;
+	if ($EXPANDED_ALIASES{$alias}) {
+		die "fatal: alias '$alias' expands to itself\n";
+	}
+	local $EXPANDED_ALIASES{$alias} = 1;
+	return $aliases{$alias} ? expand_aliases(@{$aliases{$alias}}) : $alias;
 }
 
 @to = expand_aliases(@to);

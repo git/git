@@ -703,7 +703,7 @@ first and then run 'git rebase --continue' again."
 					preserve=t
 					for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -s -f2-)
 					do
-						if test -f "$REWRITTEN"/$p -a \( $p != $UPSTREAM -o $sha1 = $first_after_upstream \)
+						if test -f "$REWRITTEN"/$p -a \( $p != $ONTO -o $sha1 = $first_after_upstream \)
 						then
 							preserve=f
 						fi

@@ -1170,7 +1170,7 @@ unsigned long unpack_object_header_buffer(const unsigned char *buf,
 	size = c & 15;
 	shift = 4;
 	while (c & 0x80) {
-		if (len <= used || sizeof(long) * 8 <= shift) {
+		if (len <= used || bitsizeof(long) <= shift) {
 			error("bad object header");
 			return 0;
 		}

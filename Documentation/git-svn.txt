@@ -80,6 +80,17 @@ COMMANDS
 	When passed to 'init' or 'clone' this regular expression will
 	be preserved as a config key.  See 'fetch' for a description
 	of '--ignore-paths'.
+--no-minimize-url;;
+	When tracking multiple directories (using --stdlayout,
+	--branches, or --tags options), git svn will attempt to connect
+	to the root (or highest allowed level) of the Subversion
+	repository.  This default allows better tracking of history if
+	entire projects are moved within a repository, but may cause
+	issues on repositories where read access restrictions are in
+	place.  Passing '--no-minimize-url' will allow git svn to
+	accept URLs as-is without attempting to connect to a higher
+	level directory.  This option is off by default when only
+	one URL/branch is tracked (it would do little good).
 
 'fetch'::
 	Fetch unfetched revisions from the Subversion remote we are
@@ -337,6 +348,10 @@ Any other arguments are passed directly to 'git log'
 'show-externals'::
 	Shows the Subversion externals.  Use -r/--revision to specify a
 	specific revision.
+
+'gc'::
+	Compress $GIT_DIR/svn/<refname>/unhandled.log files in .git/svn
+	and remove $GIT_DIR/svn/<refname>index files in .git/svn.
 
 'reset'::
 	Undoes the effects of 'fetch' back to the specified revision.

@@ -261,12 +261,11 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 	/*
 	 * Strip trailing whitespace
 	 */
-	if ((ws_rule & WS_TRAILING_SPACE) &&
-	    (2 <= len && isspace(src[len-2]))) {
-		if (src[len - 1] == '\n') {
+	if (ws_rule & WS_TRAILING_SPACE) {
+		if (0 < len && src[len - 1] == '\n') {
 			add_nl_to_tail = 1;
 			len--;
-			if (1 < len && src[len - 1] == '\r') {
+			if (0 < len && src[len - 1] == '\r') {
 				add_cr_to_tail = !!(ws_rule & WS_CR_AT_EOL);
 				len--;
 			}

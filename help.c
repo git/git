@@ -100,7 +100,7 @@ static void pretty_print_string_list(struct cmdnames *cmds, int longest)
 
 	if (space < max_cols)
 		cols = max_cols / space;
-	rows = (cmds->cnt + cols - 1) / cols;
+	rows = DIV_ROUND_UP(cmds->cnt, cols);
 
 	for (i = 0; i < rows; i++) {
 		printf("  ");

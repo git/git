@@ -43,8 +43,7 @@ omit diff output for unmerged entries and just show "Unmerged".
 -q::
 	Remain silent even on nonexistent files
 
-Output format
--------------
+
 include::diff-format.txt[]
 
 

@@ -531,9 +531,10 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 {
 	if (strncmp(base, entry->name, trim))
 		return 0;
+	/* Is this a "negative ref" that represents a deleted ref? */
+	if (is_null_sha1(entry->sha1))
+		return 0;
 	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
-		if (is_null_sha1(entry->sha1))
-			return 0;
 		if (!has_sha1_file(entry->sha1)) {
 			error("%s does not point to a valid object!", entry->name);
 			return 0;
@@ -1525,8 +1526,10 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs,
 		if (fstat(fileno(logfp), &statbuf) ||
 		    statbuf.st_size < ofs ||
 		    fseek(logfp, -ofs, SEEK_END) ||
-		    fgets(buf, sizeof(buf), logfp))
+		    fgets(buf, sizeof(buf), logfp)) {
+			fclose(logfp);
 			return -1;
+		}
 	}
 
 	while (fgets(buf, sizeof(buf), logfp)) {

@@ -460,6 +460,28 @@ EOF
 test_expect_success "rename succeeded" "test_cmp expect .git/config"
 
 cat >> .git/config << EOF
+[branch "vier"] z = 1
+EOF
+
+test_expect_success "rename a section with a var on the same line" \
+	'git config --rename-section branch.vier branch.zwei'
+
+cat > expect << EOF
+# Hallo
+	#Bello
+[branch "zwei"]
+	x = 1
+[branch "zwei"]
+	y = 1
+[branch "drei"]
+weird
+[branch "zwei"]
+	z = 1
+EOF
+
+test_expect_success "rename succeeded" "test_cmp expect .git/config"
+
+cat >> .git/config << EOF
   [branch "zwei"] a = 1 [branch "vier"]
 EOF
 
@@ -732,6 +754,11 @@ git config --null --get-regexp 'val[0-9]' | perl -pe 'y/\000/Q/' > result
 echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
+
+test_expect_success 'inner whitespace kept verbatim' '
+	git config section.val "foo 	  bar" &&
+	test "z$(git config section.val)" = "zfoo 	  bar"
+'
 
 test_expect_success SYMLINKS 'symlinked configuration' '
 

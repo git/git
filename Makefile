@@ -61,6 +61,8 @@ all::
 #
 # Define NO_LIBGEN_H if you don't have libgen.h.
 #
+# Define NEEDS_LIBGEN if your libgen needs -lgen when linking
+#
 # Define NO_SYS_SELECT_H if you don't have sys/select.h.
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
@@ -726,6 +728,7 @@ ifeq ($(uname_S),SunOS)
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
 	NO_REGEX = YesPlease
+	NO_EXTERNAL_GREP = YesPlease
 	ifeq ($(uname_R),5.7)
 		NEEDS_RESOLV = YesPlease
 		NO_IPV6 = YesPlease
@@ -828,18 +831,31 @@ ifeq ($(uname_S),GNU)
 	NO_STRLCPY=YesPlease
 	NO_MKSTEMPS = YesPlease
 endif
+ifeq ($(uname_S),IRIX)
+	NO_SETENV = YesPlease
+	NO_UNSETENV = YesPlease
+	NO_STRCASESTR = YesPlease
+	NO_MEMMEM = YesPlease
+	NO_MKSTEMPS = YesPlease
+	NO_MKDTEMP = YesPlease
+	NO_MMAP = YesPlease
+	NO_EXTERNAL_GREP = UnfortunatelyYes
+	SNPRINTF_RETURNS_BOGUS = YesPlease
+	SHELL_PATH = /usr/gnu/bin/bash
+	NEEDS_LIBGEN = YesPlease
+endif
 ifeq ($(uname_S),IRIX64)
-	NO_IPV6=YesPlease
 	NO_SETENV=YesPlease
+	NO_UNSETENV = YesPlease
 	NO_STRCASESTR=YesPlease
 	NO_MEMMEM = YesPlease
 	NO_MKSTEMPS = YesPlease
-	NO_STRLCPY = YesPlease
-	NO_SOCKADDR_STORAGE=YesPlease
+	NO_MKDTEMP = YesPlease
+	NO_MMAP = YesPlease
+	NO_EXTERNAL_GREP = UnfortunatelyYes
+	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH=/usr/gnu/bin/bash
-	BASIC_CFLAGS += -DPATH_MAX=1024
-	# for now, build 32-bit version
-	BASIC_LDFLAGS += -L/usr/lib32
+	NEEDS_LIBGEN = YesPlease
 endif
 ifeq ($(uname_S),HP-UX)
 	NO_IPV6=YesPlease
@@ -1018,6 +1034,9 @@ ifdef NEEDS_LIBICONV
 		ICONV_LINK =
 	endif
 	EXTLIBS += $(ICONV_LINK) -liconv
+endif
+ifdef NEEDS_LIBGEN
+	EXTLIBS += -lgen
 endif
 ifdef NEEDS_SOCKET
 	EXTLIBS += -lsocket
@@ -1641,10 +1660,11 @@ ifneq (,$X)
 endif
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
-	{ $(RM) "$$execdir/git$X" && \
+	{ test "$$bindir/" = "$$execdir/" || \
+		{ $(RM) "$$execdir/git$X" && \
 		test -z "$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
 		ln "$$bindir/git$X" "$$execdir/git$X" 2>/dev/null || \
-		cp "$$bindir/git$X" "$$execdir/git$X"; } && \
+		cp "$$bindir/git$X" "$$execdir/git$X"; } ; } && \
 	{ for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
 		ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \

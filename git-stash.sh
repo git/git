@@ -203,7 +203,7 @@ apply_stash () {
 		git diff-tree --binary $s^2^..$s^2 | git apply --cached
 		test $? -ne 0 &&
 			die 'Conflicts in index. Try without --index.'
-		unstashed_index_tree=$(git-write-tree) ||
+		unstashed_index_tree=$(git write-tree) ||
 			die 'Could not save index tree'
 		git reset
 	fi
@@ -219,7 +219,7 @@ apply_stash () {
 	then
 		export GIT_MERGE_VERBOSITY=0
 	fi
-	if git-merge-recursive $b_tree -- $c_tree $w_tree
+	if git merge-recursive $b_tree -- $c_tree $w_tree
 	then
 		# No conflict
 		if test -n "$unstashed_index_tree"
@@ -297,7 +297,7 @@ apply_to_branch () {
 	fi
 	stash=$2
 
-	git-checkout -b $branch $stash^ &&
+	git checkout -b $branch $stash^ &&
 	apply_stash --index $stash &&
 	drop_stash $stash
 }

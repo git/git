@@ -84,7 +84,7 @@ endif
 #
 
 ifdef ASCIIDOC8
-ASCIIDOC_EXTRA += -a asciidoc7compatible
+ASCIIDOC_EXTRA += -a asciidoc7compatible -a no-inline-literal
 endif
 ifdef DOCBOOK_XSL_172
 ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
