@@ -51,7 +51,7 @@ static const char *template_file;
 static char *edit_message, *use_message;
 static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
-static int quiet, verbose, no_verify, allow_empty;
+static int quiet, verbose, no_verify, allow_empty, dry_run;
 static char *untracked_files_arg;
 /*
  * The default commit message cleanup mode will remove the lines
@@ -103,6 +103,7 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN(0, "interactive", &interactive, "interactively add files"),
 	OPT_BOOLEAN('o', "only", &only, "commit only specified files"),
 	OPT_BOOLEAN('n', "no-verify", &no_verify, "bypass pre-commit hook"),
+	OPT_BOOLEAN(0, "dry-run", &dry_run, "show what would be committed"),
 	OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
 	{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, "mode", "show untracked files, optional modes: all, normal, no. (Default: all)", PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 	OPT_BOOLEAN(0, "allow-empty", &allow_empty, "ok to record an empty change"),
@@ -813,28 +814,28 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	return argc;
 }
 
+static int dry_run_commit(int argc, const char **argv, const char *prefix)
+{
+	int commitable;
+	const char *index_file;
+
+	index_file = prepare_index(argc, argv, prefix, 1);
+	commitable = run_status(stdout, index_file, prefix, 0);
+	rollback_index_files();
+
+	return commitable ? 0 : 1;
+}
+
 int cmd_status(int argc, const char **argv, const char *prefix)
 {
-	const char *index_file;
-	int commitable;
-
 	git_config(git_status_config, NULL);
-
 	if (wt_status_use_color == -1)
 		wt_status_use_color = git_use_color_default;
-
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
 
 	argc = parse_and_validate_options(argc, argv, builtin_status_usage, prefix);
-
-	index_file = prepare_index(argc, argv, prefix, 1);
-
-	commitable = run_status(stdout, index_file, prefix, 0);
-
-	rollback_index_files();
-
-	return commitable ? 0 : 1;
+	return dry_run_commit(argc, argv, prefix);
 }
 
 static void print_summary(const char *prefix, const unsigned char *sha1)
@@ -909,6 +910,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		wt_status_use_color = git_use_color_default;
 
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage, prefix);
+	if (dry_run)
+		return dry_run_commit(argc, argv, prefix);
 
 	index_file = prepare_index(argc, argv, prefix, 0);
 
