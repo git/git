@@ -375,6 +375,11 @@ static void merge_name(const char *remote, struct strbuf *msg)
 				    sha1_to_hex(branch_head), remote);
 			goto cleanup;
 		}
+		if (!prefixcmp(found_ref, "refs/remotes/")) {
+			strbuf_addf(msg, "%s\t\tremote branch '%s' of .\n",
+				    sha1_to_hex(branch_head), remote);
+			goto cleanup;
+		}
 	}
 
 	/* See if remote matches <name>^^^.. or <name>~<number> */
