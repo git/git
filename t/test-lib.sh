@@ -114,6 +114,9 @@ do
 		valgrind=t; verbose=t; shift ;;
 	--tee)
 		shift ;; # was handled already
+	--root=*)
+		root=$(expr "z$1" : 'z[^=]*=\(.*\)')
+		shift ;;
 	*)
 		echo "error: unknown test option '$1'" >&2; exit 1 ;;
 	esac
@@ -645,7 +648,11 @@ fi
 
 # Test repository
 test="trash directory.$(basename "$0" .sh)"
-TRASH_DIRECTORY="$TEST_DIRECTORY/$test"
+test -n "$root" && test="$root/$test"
+case "$test" in
+/*) TRASH_DIRECTORY="$test" ;;
+ *) TRASH_DIRECTORY="$TEST_DIRECTORY/$test" ;;
+esac
 test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
 rm -fr "$test" || {
 	GIT_EXIT_OK=t
