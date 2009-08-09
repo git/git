@@ -133,6 +133,10 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See linkgit:git-update-index[1]. True by default.
 
+core.hideDotFiles::
+	(Windows-only) If true (which is the default), mark newly-created
+	directories whose name starts with a dot as hidden.
+
 core.ignoreCygwinFSTricks::
 	This option is only used by Cygwin implementation of Git. If false,
 	the Cygwin stat() and lstat() functions are used. This may be useful
