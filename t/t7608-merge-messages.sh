@@ -38,7 +38,7 @@ test_expect_success 'merge tag' '
 	check_oneline "Merge commit Qtag-1Q"
 '
 
-test_expect_failure 'ambiguous tag' '
+test_expect_success 'ambiguous tag' '
 	git checkout -b ambiguous master &&
 	test_commit ambiguous &&
 	git checkout master &&

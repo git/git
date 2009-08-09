@@ -320,11 +320,11 @@ test_expect_success 'set up more tangled history' '
 '
 
 cat > expect <<\EOF
-*   Merge branch 'reach'
+*   Merge commit 'reach'
 |\
 | \
 |  \
-*-. \   Merge branches 'octopus-a' and 'octopus-b'
+*-. \   Merge commit 'octopus-a'; commit 'octopus-b'
 |\ \ \
 * | | | seventh
 | | * | octopus-b
