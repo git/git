@@ -493,13 +493,12 @@ test_expect_success 'format-patch from a subdirectory (2)' '
 '
 
 test_expect_success 'format-patch from a subdirectory (3)' '
-	here="$TEST_DIRECTORY/$test" &&
 	rm -f 0* &&
 	filename=$(
 		rm -rf sub &&
 		mkdir -p sub/dir &&
 		cd sub/dir &&
-		git format-patch -1 -o "$here"
+		git format-patch -1 -o "$TRASH_DIRECTORY"
 	) &&
 	basename=$(expr "$filename" : ".*/\(.*\)") &&
 	test -f "$basename"

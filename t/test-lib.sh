@@ -645,7 +645,8 @@ fi
 
 # Test repository
 test="trash directory.$(basename "$0" .sh)"
-test ! -z "$debug" || remove_trash="$TEST_DIRECTORY/$test"
+TRASH_DIRECTORY="$TEST_DIRECTORY/$test"
+test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
 rm -fr "$test" || {
 	GIT_EXIT_OK=t
 	echo >&5 "FATAL: Cannot prepare test area"
