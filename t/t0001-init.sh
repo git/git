@@ -251,7 +251,7 @@ test_expect_success 'init creates a new deep directory' '
 		git init --bare --shared=0660 newdir/a/b/c &&
 		test -d newdir/a/b/c/refs &&
 		ls -ld newdir/a newdir/a/b > lsab.out &&
-		! grep -v "^drwxrw[sx]r-x" ls.out &&
+		! grep -v "^drwxrw[sx]r-x" lsab.out &&
 		ls -ld newdir/a/b/c > lsc.out &&
 		! grep -v "^drwxrw[sx]---" lsc.out
 	)
