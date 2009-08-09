@@ -10,7 +10,7 @@ that the result still makes sense.
 '
 . ./test-lib.sh
 
-. ../lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rebase.sh
 
 set_fake_editor
 
