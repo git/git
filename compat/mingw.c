@@ -2,9 +2,11 @@
 #include "win32.h"
 #include <conio.h>
 #include <winioctl.h>
+#include <shellapi.h>
 #include "../strbuf.h"
 
-#include <shellapi.h>
+extern int hide_dotfiles;
+unsigned int _CRT_fmode = _O_BINARY;
 
 static int err_win_to_posix(DWORD winerr)
 {
@@ -131,7 +133,6 @@ static int make_hidden(const char *path)
 #undef mkdir
 int mingw_mkdir(const char *path, int mode)
 {
-	extern int hide_dotfiles;
 	int ret = mkdir(path);
 	if (!ret && hide_dotfiles) {
 		/*
@@ -166,6 +167,16 @@ int mingw_open (const char *filename, int oflags, ...)
 		DWORD attrs = GetFileAttributes(filename);
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
 			errno = EISDIR;
+	}
+	if ((oflags & O_CREAT) && fd >= 0 && hide_dotfiles) {
+		/*
+		 * In Windows a file or dir starting with a dot is not
+		 * automatically hidden. So lets mark it as hidden when
+		 * such a file is created.
+		 */
+		const char *start = basename((char*)filename);
+		if (*start == '.' && make_hidden(filename))
+			warning("Could not mark '%s' as hidden.", filename);
 	}
 	return fd;
 }
