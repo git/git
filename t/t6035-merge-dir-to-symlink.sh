@@ -3,6 +3,12 @@
 test_description='merging when a directory was replaced with a symlink'
 . ./test-lib.sh
 
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+fi
+
 test_expect_success 'create a commit where dir a/b changed to symlink' '
 	mkdir -p a/b/c a/b-2/c &&
 	> a/b/c/d &&
