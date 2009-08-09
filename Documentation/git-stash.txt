@@ -114,7 +114,8 @@ no conflicts.
 
 clear::
 	Remove all the stashed states. Note that those states will then
-	be subject to pruning, and may be difficult or impossible to recover.
+	be subject to pruning, and may be impossible to recover (see
+	'Examples' below for a possible strategy).
 
 drop [-q|--quiet] [<stash>]::
 
@@ -216,6 +217,20 @@ $ git stash pop                  # prepare to work on all other changes
 $ edit/build/test remaining parts
 $ git commit foo -m 'Remaining parts'
 ----------------------------------------------------------------
+
+Recovering stashes that were cleared/dropped erroneously::
+
+If you mistakenly drop or clear stashes, they cannot be recovered
+through the normal safety mechanisms.  However, you can try the
+following incantation to get a list of stashes that are still in your
+repository, but not reachable any more:
++
+----------------------------------------------------------------
+git fsck --unreachable |
+grep commit | cut -d\  -f3 |
+xargs git log --merges --no-walk --grep=WIP
+----------------------------------------------------------------
+
 
 SEE ALSO
 --------
