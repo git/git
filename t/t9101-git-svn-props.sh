@@ -142,7 +142,9 @@ test_expect_success 'test show-ignore' "
 	touch deeply/nested/directory/.keep &&
 	svn_cmd add deeply &&
 	svn_cmd up &&
-	svn_cmd propset -R svn:ignore 'no-such-file*' .
+	svn_cmd propset -R svn:ignore '
+no-such-file*
+' .
 	svn_cmd commit -m 'propset svn:ignore'
 	cd .. &&
 	git svn show-ignore > show-ignore.got &&
@@ -171,6 +173,7 @@ test_expect_success 'test create-ignore' "
 	"
 
 cat >prop.expect <<\EOF
+
 no-such-file*
 
 EOF

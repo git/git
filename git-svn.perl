@@ -764,6 +764,7 @@ sub cmd_show_ignore {
 		print STDOUT "\n# $path\n";
 		my $s = $props->{'svn:ignore'} or return;
 		$s =~ s/[\r\n]+/\n/g;
+		$s =~ s/^\n+//;
 		chomp $s;
 		$s =~ s#^#$path#gm;
 		print STDOUT "$s\n";
@@ -801,6 +802,7 @@ sub cmd_create_ignore {
 		open(GITIGNORE, '>', $ignore)
 		  or fatal("Failed to open `$ignore' for writing: $!");
 		$s =~ s/[\r\n]+/\n/g;
+		$s =~ s/^\n+//;
 		chomp $s;
 		# Prefix all patterns so that the ignore doesn't apply
 		# to sub-directories.
@@ -3317,7 +3319,8 @@ sub _new {
 		$repo_id = $Git::SVN::default_repo_id;
 	}
 	unless (defined $ref_id && length $ref_id) {
-		$_[2] = $ref_id = $Git::SVN::default_ref_id;
+		$_prefix = '' unless defined($_prefix);
+		$_[2] = $ref_id = $_prefix . $Git::SVN::default_ref_id;
 	}
 	$_[1] = $repo_id;
 	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
