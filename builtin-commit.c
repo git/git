@@ -343,27 +343,24 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	return false_lock.filename;
 }
 
-static int run_status(FILE *fp, const char *index_file, const char *prefix, int nowarn)
+static int run_status(FILE *fp, const char *index_file, const char *prefix, int nowarn,
+		      struct wt_status *s)
 {
-	struct wt_status s;
-
-	wt_status_prepare(&s);
-	if (wt_status_relative_paths)
-		s.prefix = prefix;
+	if (s->relative_paths)
+		s->prefix = prefix;
 
 	if (amend) {
-		s.amend = 1;
-		s.reference = "HEAD^1";
+		s->amend = 1;
+		s->reference = "HEAD^1";
 	}
-	s.verbose = verbose;
-	s.untracked = (show_untracked_files == SHOW_ALL_UNTRACKED_FILES);
-	s.index_file = index_file;
-	s.fp = fp;
-	s.nowarn = nowarn;
+	s->verbose = verbose;
+	s->index_file = index_file;
+	s->fp = fp;
+	s->nowarn = nowarn;
 
-	wt_status_print(&s);
+	wt_status_print(s);
 
-	return s.commitable;
+	return s->commitable;
 }
 
 static int is_a_merge(const unsigned char *sha1)
@@ -417,7 +414,8 @@ static void determine_author_info(void)
 	author_date = date;
 }
 
-static int prepare_to_commit(const char *index_file, const char *prefix)
+static int prepare_to_commit(const char *index_file, const char *prefix,
+			     struct wt_status *s)
 {
 	struct stat statbuf;
 	int commitable, saved_color_setting;
@@ -559,10 +557,10 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 		if (ident_shown)
 			fprintf(fp, "#\n");
 
-		saved_color_setting = wt_status_use_color;
-		wt_status_use_color = 0;
-		commitable = run_status(fp, index_file, prefix, 1);
-		wt_status_use_color = saved_color_setting;
+		saved_color_setting = s->use_color;
+		s->use_color = 0;
+		commitable = run_status(fp, index_file, prefix, 1, s);
+		s->use_color = saved_color_setting;
 	} else {
 		unsigned char sha1[20];
 		const char *parent = "HEAD";
@@ -583,7 +581,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix)
 
 	if (!commitable && !in_merge && !allow_empty &&
 	    !(amend && is_a_merge(head_sha1))) {
-		run_status(stdout, index_file, prefix, 0);
+		run_status(stdout, index_file, prefix, 0, s);
 		return 0;
 	}
 
@@ -695,7 +693,8 @@ static const char *find_author_by_nickname(const char *name)
 
 static int parse_and_validate_options(int argc, const char *argv[],
 				      const char * const usage[],
-				      const char *prefix)
+				      const char *prefix,
+				      struct wt_status *s)
 {
 	int f = 0;
 
@@ -798,11 +797,11 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	if (!untracked_files_arg)
 		; /* default already initialized */
 	else if (!strcmp(untracked_files_arg, "no"))
-		show_untracked_files = SHOW_NO_UNTRACKED_FILES;
+		s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
 	else if (!strcmp(untracked_files_arg, "normal"))
-		show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
+		s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 	else if (!strcmp(untracked_files_arg, "all"))
-		show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
+		s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
 	else
 		die("Invalid untracked files mode '%s'", untracked_files_arg);
 
@@ -814,13 +813,14 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	return argc;
 }
 
-static int dry_run_commit(int argc, const char **argv, const char *prefix)
+static int dry_run_commit(int argc, const char **argv, const char *prefix,
+			  struct wt_status *s)
 {
 	int commitable;
 	const char *index_file;
 
 	index_file = prepare_index(argc, argv, prefix, 1);
-	commitable = run_status(stdout, index_file, prefix, 0);
+	commitable = run_status(stdout, index_file, prefix, 0, s);
 	rollback_index_files();
 
 	return commitable ? 0 : 1;
@@ -828,14 +828,18 @@ static int dry_run_commit(int argc, const char **argv, const char *prefix)
 
 int cmd_status(int argc, const char **argv, const char *prefix)
 {
-	git_config(git_status_config, NULL);
-	if (wt_status_use_color == -1)
-		wt_status_use_color = git_use_color_default;
+	struct wt_status s;
+
+	wt_status_prepare(&s);
+	git_config(git_status_config, &s);
+	if (s.use_color == -1)
+		s.use_color = git_use_color_default;
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
 
-	argc = parse_and_validate_options(argc, argv, builtin_status_usage, prefix);
-	return dry_run_commit(argc, argv, prefix);
+	argc = parse_and_validate_options(argc, argv, builtin_status_usage,
+					  prefix, &s);
+	return dry_run_commit(argc, argv, prefix, &s);
 }
 
 static void print_summary(const char *prefix, const unsigned char *sha1)
@@ -887,10 +891,12 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 static int git_commit_config(const char *k, const char *v, void *cb)
 {
+	struct wt_status *s = cb;
+
 	if (!strcmp(k, "commit.template"))
 		return git_config_string(&template_file, k, v);
 
-	return git_status_config(k, v, cb);
+	return git_status_config(k, v, s);
 }
 
 int cmd_commit(int argc, const char **argv, const char *prefix)
@@ -903,21 +909,24 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	struct commit_list *parents = NULL, **pptr = &parents;
 	struct stat statbuf;
 	int allow_fast_forward = 1;
+	struct wt_status s;
 
-	git_config(git_commit_config, NULL);
+	wt_status_prepare(&s);
+	git_config(git_commit_config, &s);
 
-	if (wt_status_use_color == -1)
-		wt_status_use_color = git_use_color_default;
+	if (s.use_color == -1)
+		s.use_color = git_use_color_default;
 
-	argc = parse_and_validate_options(argc, argv, builtin_commit_usage, prefix);
+	argc = parse_and_validate_options(argc, argv, builtin_commit_usage,
+					  prefix, &s);
 	if (dry_run)
-		return dry_run_commit(argc, argv, prefix);
+		return dry_run_commit(argc, argv, prefix, &s);
 
 	index_file = prepare_index(argc, argv, prefix, 0);
 
 	/* Set up everything for writing the commit object.  This includes
 	   running hooks, writing the trees, and interacting with the user.  */
-	if (!prepare_to_commit(index_file, prefix)) {
+	if (!prepare_to_commit(index_file, prefix, &s)) {
 		rollback_index_files();
 		return 1;
 	}
