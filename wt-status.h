@@ -3,9 +3,10 @@
 
 #include <stdio.h>
 #include "string-list.h"
+#include "color.h"
 
 enum color_wt_status {
-	WT_STATUS_HEADER,
+	WT_STATUS_HEADER = 0,
 	WT_STATUS_UPDATED,
 	WT_STATUS_CHANGED,
 	WT_STATUS_UNTRACKED,
@@ -37,6 +38,7 @@ struct wt_status {
 	int relative_paths;
 	int submodule_summary;
 	enum untracked_status_type show_untracked_files;
+	char color_palette[WT_STATUS_UNMERGED+1][COLOR_MAXLEN];
 
 	/* These are computed during processing of the individual sections */
 	int commitable;

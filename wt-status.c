@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "wt-status.h"
-#include "color.h"
 #include "object.h"
 #include "dir.h"
 #include "commit.h"
@@ -11,7 +10,7 @@
 #include "run-command.h"
 #include "remote.h"
 
-static char wt_status_colors[][COLOR_MAXLEN] = {
+static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
 	GIT_COLOR_GREEN,  /* WT_STATUS_UPDATED */
 	GIT_COLOR_RED,    /* WT_STATUS_CHANGED */
@@ -40,7 +39,7 @@ static int parse_status_slot(const char *var, int offset)
 
 static const char *color(int slot, struct wt_status *s)
 {
-	return s->use_color > 0 ? wt_status_colors[slot] : "";
+	return s->use_color > 0 ? s->color_palette[slot] : "";
 }
 
 void wt_status_prepare(struct wt_status *s)
@@ -49,6 +48,8 @@ void wt_status_prepare(struct wt_status *s)
 	const char *head;
 
 	memset(s, 0, sizeof(*s));
+	memcpy(s->color_palette, default_wt_status_colors,
+	       sizeof(default_wt_status_colors));
 	s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 	s->use_color = -1;
 	s->relative_paths = 1;
@@ -613,7 +614,7 @@ int git_status_config(const char *k, const char *v, void *cb)
 		int slot = parse_status_slot(k, 13);
 		if (!v)
 			return config_error_nonbool(k);
-		color_parse(v, k, wt_status_colors[slot]);
+		color_parse(v, k, s->color_palette[slot]);
 		return 0;
 	}
 	if (!strcmp(k, "status.relativepaths")) {
