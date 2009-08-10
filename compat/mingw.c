@@ -1,6 +1,7 @@
 #include "../git-compat-util.h"
 #include "win32.h"
 #include <conio.h>
+#include <winioctl.h>
 #include "../strbuf.h"
 
 unsigned int _CRT_fmode = _O_BINARY;
@@ -166,6 +167,21 @@ static int do_lstat(const char *file_name, struct stat *buf)
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
+		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+			WIN32_FIND_DATAA findbuf;
+			HANDLE handle = FindFirstFileA(file_name, &findbuf);
+			if (handle != INVALID_HANDLE_VALUE) {
+				if ((findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+						(findbuf.dwReserved0 == IO_REPARSE_TAG_SYMLINK)) {
+					char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+					buf->st_mode = S_IREAD | S_IFLNK;
+					if (!(findbuf.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+						buf->st_mode |= S_IWRITE;
+					buf->st_size = readlink(file_name, buffer, MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+				}
+				FindClose(handle);
+			}
+		}
 		return 0;
 	}
 	return -1;
@@ -1334,6 +1350,58 @@ int link(const char *oldpath, const char *newpath)
 	return 0;
 }
 
+int symlink(const char *oldpath, const char *newpath)
+{
+	typedef BOOL WINAPI (*symlink_fn)(const char*, const char*, DWORD);
+	static symlink_fn create_symbolic_link = NULL;
+	if (!create_symbolic_link) {
+		create_symbolic_link = (symlink_fn) GetProcAddress(
+				GetModuleHandle("kernel32.dll"), "CreateSymbolicLinkA");
+		if (!create_symbolic_link)
+			create_symbolic_link = (symlink_fn)-1;
+	}
+	if (create_symbolic_link == (symlink_fn)-1) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (!create_symbolic_link(newpath, oldpath, 0)) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+	return 0;
+}
+
+int readlink(const char *path, char *buf, size_t bufsiz)
+{
+	HANDLE handle = CreateFile(path, GENERIC_READ,
+			FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+			NULL, OPEN_EXISTING,
+			FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+			NULL);
+
+	if (handle != INVALID_HANDLE_VALUE) {
+		unsigned char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+		DWORD dummy = 0;
+		if (DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer,
+			MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dummy, NULL)) {
+			REPARSE_DATA_BUFFER *b = (REPARSE_DATA_BUFFER *) buffer;
+			if (b->ReparseTag == IO_REPARSE_TAG_SYMLINK) {
+				int len = b->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(wchar_t);
+				int offset = b->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(wchar_t);
+				snprintf(buf, bufsiz, "%*ls", len,  & b->SymbolicLinkReparseBuffer.PathBuffer[offset]);
+				CloseHandle(handle);
+				return len;
+			}
+		}
+
+		CloseHandle(handle);
+	}
+
+	errno = EINVAL;
+	return -1;
+}
+
 char *getpass(const char *prompt)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -1399,7 +1467,10 @@ struct dirent *mingw_readdir(DIR *dir)
 
 	/* Set file type, based on WIN32_FIND_DATA */
 	mdir->dd_dir.d_type = 0;
-	if (buf.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	if ((buf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+			(buf.dwReserved0 == IO_REPARSE_TAG_SYMLINK))
+		mdir->dd_dir.d_type |= DT_LNK;
+	else if (buf.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		mdir->dd_dir.d_type |= DT_DIR;
 	else
 		mdir->dd_dir.d_type |= DT_REG;
