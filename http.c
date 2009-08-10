@@ -1004,7 +1004,6 @@ int finish_http_pack_request(struct http_pack_request *preq)
 struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url)
 {
-	char *url;
 	char *filename;
 	long prev_posn = 0;
 	char range[RANGE_HEADER_SIZE];
@@ -1018,8 +1017,7 @@ struct http_pack_request *new_http_pack_request(
 	end_url_with_slash(&buf, base_url);
 	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
 		sha1_to_hex(target->sha1));
-	url = strbuf_detach(&buf, NULL);
-	preq->url = xstrdup(url);
+	preq->url = strbuf_detach(&buf, NULL);
 
 	filename = sha1_pack_name(target->sha1);
 	snprintf(preq->filename, sizeof(preq->filename), "%s", filename);
@@ -1035,7 +1033,7 @@ struct http_pack_request *new_http_pack_request(
 	preq->slot->local = preq->packfile;
 	curl_easy_setopt(preq->slot->curl, CURLOPT_FILE, preq->packfile);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
-	curl_easy_setopt(preq->slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(preq->slot->curl, CURLOPT_URL, preq->url);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_HTTPHEADER,
 		no_pragma_header);
 
@@ -1059,6 +1057,7 @@ struct http_pack_request *new_http_pack_request(
 
 abort:
 	free(filename);
+	free(preq->url);
 	free(preq);
 	return NULL;
 }
@@ -1099,7 +1098,6 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	char *hex = sha1_to_hex(sha1);
 	char *filename;
 	char prevfile[PATH_MAX];
-	char *url;
 	int prevlocal;
 	unsigned char prev_buf[PREV_BUF_SIZE];
 	ssize_t prev_read = 0;
@@ -1153,8 +1151,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 
 	git_SHA1_Init(&freq->c);
 
-	url = get_remote_object_url(base_url, hex, 0);
-	freq->url = xstrdup(url);
+	freq->url = get_remote_object_url(base_url, hex, 0);
 
 	/*
 	 * If a previous temp file is present, process what was already
@@ -1199,7 +1196,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	curl_easy_setopt(freq->slot->curl, CURLOPT_FILE, freq);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_ERRORBUFFER, freq->errorstr);
-	curl_easy_setopt(freq->slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(freq->slot->curl, CURLOPT_URL, freq->url);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 
 	/*
@@ -1219,9 +1216,9 @@ struct http_object_request *new_http_object_request(const char *base_url,
 
 	return freq;
 
-	free(url);
 abort:
 	free(filename);
+	free(freq->url);
 	free(freq);
 	return NULL;
 }
