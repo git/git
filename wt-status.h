@@ -48,10 +48,11 @@ struct wt_status {
 	FILE *fp;
 	const char *prefix;
 	struct string_list change;
+	struct string_list untracked;
 };
 
 void wt_status_prepare(struct wt_status *s);
 void wt_status_print(struct wt_status *s);
-void wt_status_collect_changes(struct wt_status *s);
+void wt_status_collect(struct wt_status *s);
 
 #endif /* STATUS_H */

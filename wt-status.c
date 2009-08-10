@@ -41,6 +41,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->fp = stdout;
 	s->index_file = get_index_file();
 	s->change.strdup_strings = 1;
+	s->untracked.strdup_strings = 1;
 }
 
 static void wt_status_print_unmerged_header(struct wt_status *s)
@@ -311,7 +312,30 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 	}
 }
 
-void wt_status_collect_changes(struct wt_status *s)
+static void wt_status_collect_untracked(struct wt_status *s)
+{
+	int i;
+	struct dir_struct dir;
+
+	if (!s->show_untracked_files)
+		return;
+	memset(&dir, 0, sizeof(dir));
+	if (s->show_untracked_files != SHOW_ALL_UNTRACKED_FILES)
+		dir.flags |=
+			DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
+	setup_standard_excludes(&dir);
+
+	fill_directory(&dir, NULL);
+	for(i = 0; i < dir.nr; i++) {
+		struct dir_entry *ent = dir.entries[i];
+		if (!cache_name_is_other(ent->name, ent->len))
+			continue;
+		s->workdir_untracked = 1;
+		string_list_insert(ent->name, &s->untracked);
+	}
+}
+
+void wt_status_collect(struct wt_status *s)
 {
 	wt_status_collect_changes_worktree(s);
 
@@ -319,6 +343,7 @@ void wt_status_collect_changes(struct wt_status *s)
 		wt_status_collect_changes_initial(s);
 	else
 		wt_status_collect_changes_index(s);
+	wt_status_collect_untracked(s);
 }
 
 static void wt_status_print_unmerged(struct wt_status *s)
@@ -446,31 +471,20 @@ static void wt_status_print_submodule_summary(struct wt_status *s)
 
 static void wt_status_print_untracked(struct wt_status *s)
 {
-	struct dir_struct dir;
 	int i;
-	int shown_header = 0;
 	struct strbuf buf = STRBUF_INIT;
 
-	memset(&dir, 0, sizeof(dir));
-	if (s->show_untracked_files != SHOW_ALL_UNTRACKED_FILES)
-		dir.flags |=
-			DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
-	setup_standard_excludes(&dir);
+	if (!s->untracked.nr)
+		return;
 
-	fill_directory(&dir, NULL);
-	for(i = 0; i < dir.nr; i++) {
-		struct dir_entry *ent = dir.entries[i];
-		if (!cache_name_is_other(ent->name, ent->len))
-			continue;
-		if (!shown_header) {
-			s->workdir_untracked = 1;
-			wt_status_print_untracked_header(s);
-			shown_header = 1;
-		}
+	wt_status_print_untracked_header(s);
+	for (i = 0; i < s->untracked.nr; i++) {
+		struct string_list_item *it;
+		it = &(s->untracked.items[i]);
 		color_fprintf(s->fp, color(WT_STATUS_HEADER, s), "#\t");
 		color_fprintf_ln(s->fp, color(WT_STATUS_UNTRACKED, s), "%s",
-				quote_path(ent->name, ent->len,
-					&buf, s->prefix));
+				 quote_path(it->string, strlen(it->string),
+					    &buf, s->prefix));
 	}
 	strbuf_release(&buf);
 }
@@ -539,7 +553,7 @@ void wt_status_print(struct wt_status *s)
 			wt_status_print_tracking(s);
 	}
 
-	wt_status_collect_changes(s);
+	wt_status_collect(s);
 
 	if (s->is_initial) {
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "#");
@@ -566,7 +580,7 @@ void wt_status_print(struct wt_status *s)
 			; /* nothing */
 		else if (s->workdir_dirty)
 			printf("no changes added to commit (use \"git add\" and/or \"git commit -a\")\n");
-		else if (s->workdir_untracked)
+		else if (s->untracked.nr)
 			printf("nothing added to commit but untracked files present (use \"git add\" to track)\n");
 		else if (s->is_initial)
 			printf("nothing to commit (create/copy files and use \"git add\" to track)\n");
