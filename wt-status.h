@@ -50,7 +50,6 @@ struct wt_status {
 	struct string_list change;
 };
 
-int git_status_config(const char *var, const char *value, void *cb);
 void wt_status_prepare(struct wt_status *s);
 void wt_status_print(struct wt_status *s);
 void wt_status_collect_changes(struct wt_status *s);
