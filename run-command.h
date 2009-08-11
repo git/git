@@ -1,17 +1,6 @@
 #ifndef RUN_COMMAND_H
 #define RUN_COMMAND_H
 
-enum {
-	ERR_RUN_COMMAND_FORK = 10000,
-	ERR_RUN_COMMAND_EXEC,
-	ERR_RUN_COMMAND_PIPE,
-	ERR_RUN_COMMAND_WAITPID,
-	ERR_RUN_COMMAND_WAITPID_WRONG_PID,
-	ERR_RUN_COMMAND_WAITPID_SIGNAL,
-	ERR_RUN_COMMAND_WAITPID_NOEXIT,
-};
-#define IS_RUN_COMMAND_ERR(x) (-(x) >= ERR_RUN_COMMAND_FORK)
-
 struct child_process {
 	const char **argv;
 	pid_t pid;
@@ -42,6 +31,7 @@ struct child_process {
 	unsigned no_stdout:1;
 	unsigned no_stderr:1;
 	unsigned git_cmd:1; /* if this is to be git sub-command */
+	unsigned silent_exec_failure:1;
 	unsigned stdout_to_stderr:1;
 	void (*preexec_cb)(void);
 };
@@ -55,6 +45,7 @@ extern int run_hook(const char *index_file, const char *name, ...);
 #define RUN_COMMAND_NO_STDIN 1
 #define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
 #define RUN_COMMAND_STDOUT_TO_STDERR 4
+#define RUN_SILENT_EXEC_FAILURE 8
 int run_command_v_opt(const char **argv, int opt);
 
 /*

@@ -396,7 +396,6 @@ static int curl_transport_push(struct transport *transport, int refspec_nr, cons
 {
 	const char **argv;
 	int argc;
-	int err;
 
 	if (flags & TRANSPORT_PUSH_MIRROR)
 		return error("http transport does not support mirror mode");
@@ -416,20 +415,7 @@ static int curl_transport_push(struct transport *transport, int refspec_nr, cons
 	while (refspec_nr--)
 		argv[argc++] = *refspec++;
 	argv[argc] = NULL;
-	err = run_command_v_opt(argv, RUN_GIT_CMD);
-	switch (err) {
-	case -ERR_RUN_COMMAND_FORK:
-		error("unable to fork for %s", argv[0]);
-	case -ERR_RUN_COMMAND_EXEC:
-		error("unable to exec %s", argv[0]);
-		break;
-	case -ERR_RUN_COMMAND_WAITPID:
-	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
-	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
-		error("%s died with strange error", argv[0]);
-	}
-	return !!err;
+	return !!run_command_v_opt(argv, RUN_GIT_CMD);
 }
 
 static struct ref *get_refs_via_curl(struct transport *transport, int for_push)

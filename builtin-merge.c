@@ -594,7 +594,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		discard_cache();
 		if (read_cache() < 0)
 			die("failed to read the cache");
-		return -ret;
+		return ret;
 	}
 }
 
