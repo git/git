@@ -302,7 +302,7 @@ const char *help_unknown_cmd(const char *cmd)
 	struct cmdnames main_cmds, other_cmds;
 
 	memset(&main_cmds, 0, sizeof(main_cmds));
-	memset(&other_cmds, 0, sizeof(main_cmds));
+	memset(&other_cmds, 0, sizeof(other_cmds));
 	memset(&aliases, 0, sizeof(aliases));
 
 	git_config(git_unknown_cmd_config, NULL);
