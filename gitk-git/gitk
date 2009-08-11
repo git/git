@@ -10172,7 +10172,19 @@ proc getallcommits {} {
 	}
     }
     if {$ids ne {}} {
-	set fd [open [concat $cmd $ids] r]
+	set cmd [concat $cmd $ids]
+	# The maximum command line length for the CreateProcess function is 32767 characters, see
+	# http://blogs.msdn.com/oldnewthing/archive/2003/12/10/56028.aspx
+	# Be a little conservative in case Tcl adds some more stuff to the command line we do not
+	# know about and truncate the command line at a SHA1-boundary below 32000 characters.
+	if {[tk windowingsystem] == "win32" &&
+		[string length $cmd] > 32000} {
+	    set ndx [string last " " $cmd 32000]
+	    if {$ndx != -1} {
+		set cmd [string range $cmd 0 $ndx]
+	    }
+	}
+	set fd [open $cmd r]
 	fconfigure $fd -blocking 0
 	incr allcommits
 	nowbusy allcommits
