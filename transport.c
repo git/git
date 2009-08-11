@@ -667,6 +667,21 @@ static int fetch_refs_via_pack(struct transport *transport,
 	return (refs ? 0 : -1);
 }
 
+static int push_had_errors(struct ref *ref)
+{
+	for (; ref; ref = ref->next) {
+		switch (ref->status) {
+		case REF_STATUS_NONE:
+		case REF_STATUS_UPTODATE:
+		case REF_STATUS_OK:
+			break;
+		default:
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static int refs_pushed(struct ref *ref)
 {
 	for (; ref; ref = ref->next) {
@@ -878,6 +893,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
 	args.use_thin_pack = data->thin;
 	args.verbose = !!(flags & TRANSPORT_PUSH_VERBOSE);
+	args.quiet = !!(flags & TRANSPORT_PUSH_QUIET);
 	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
 
 	ret = send_pack(&args, data->fd, data->conn, remote_refs,
@@ -995,6 +1011,7 @@ int transport_push(struct transport *transport,
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;
 		int verbose = flags & TRANSPORT_PUSH_VERBOSE;
+		int quiet = flags & TRANSPORT_PUSH_QUIET;
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int ret;
 
@@ -1010,7 +1027,9 @@ int transport_push(struct transport *transport,
 
 		ret = transport->push_refs(transport, remote_refs, flags);
 
-		print_push_status(transport->url, remote_refs, verbose | porcelain, porcelain);
+		if (!quiet || push_had_errors(remote_refs))
+			print_push_status(transport->url, remote_refs,
+					verbose | porcelain, porcelain);
 
 		if (!(flags & TRANSPORT_PUSH_DRY_RUN)) {
 			struct ref *ref;
