@@ -151,7 +151,8 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
 	return (time_t)winTime;
 }
 
-/* We keep the do_lstat code in a separate function to avoid recursion.
+/*
+ * We keep the do_lstat code in a separate function to avoid recursion.
  * When a path ends with a slash, the stat will fail with ENOENT. In
  * this case, we strip the trailing slashes and stat again.
  */
@@ -191,7 +192,8 @@ static int do_lstat(const char *file_name, struct stat *buf)
 	return -1;
 }
 
-/* We provide our own lstat/fstat functions, since the provided
+/*
+ * We provide our own lstat/fstat functions, since the provided
  * lstat/fstat functions are so slow. These stat functions are
  * tailored for Git's usage (read: fast), and are not meant to be
  * complete. Note that Git stat()s are redirected to mingw_lstat()
@@ -205,7 +207,8 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 	if (!do_lstat(file_name, buf))
 		return 0;
 
-	/* if file_name ended in a '/', Windows returned ENOENT;
+	/*
+	 * if file_name ended in a '/', Windows returned ENOENT;
 	 * try again without trailing slashes
 	 */
 	if (errno != ENOENT)
@@ -372,7 +375,8 @@ int poll(struct pollfd *ufds, unsigned int nfds, int timeout)
 		return errno = EINVAL, error("poll timeout not supported");
 	}
 
-	/* When there is only one fd to wait for, then we pretend that
+	/*
+	 * When there is only one fd to wait for, then we pretend that
 	 * input is available and let the actual wait happen when the
 	 * caller invokes read().
 	 */
@@ -412,7 +416,8 @@ repeat:
 			ufds[i].revents = 0;
 	}
 	if (!pending) {
-		/* The only times that we spin here is when the process
+		/*
+		 * The only times that we spin here is when the process
 		 * that is connected through the pipes is waiting for
 		 * its own input data to become available. But since
 		 * the process (pack-objects) is itself CPU intensive,
@@ -668,7 +673,8 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 			FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
 			FILE_ATTRIBUTE_NORMAL, NULL);
 	if (cons == INVALID_HANDLE_VALUE) {
-		/* There is no console associated with this process.
+		/*
+		 * There is no console associated with this process.
 		 * Since the child is a console process, Windows
 		 * would normally create a console window. But
 		 * since we'll be redirecting std streams, we do
@@ -679,7 +685,8 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 		 */
 		flags = DETACHED_PROCESS;
 	} else {
-		/* There is already a console. If we specified
+		/*
+		 * There is already a console. If we specified
 		 * DETACHED_PROCESS here, too, Windows would
 		 * disassociate the child from the console.
 		 * The same is true for CREATE_NO_WINDOW.
@@ -1036,7 +1043,8 @@ static int timer_interval;
 static int one_shot;
 static sig_handler_t timer_fn = SIG_DFL;
 
-/* The timer works like this:
+/*
+ * The timer works like this:
  * The thread, ticktack(), is a trivial routine that most of the time
  * only waits to receive the signal to terminate. The main thread tells
  * the thread to terminate by setting the timer_event to the signalled
@@ -1296,8 +1304,10 @@ struct dirent *mingw_readdir(DIR *dir)
 		DWORD lasterr = GetLastError();
 		FindClose((HANDLE)dir->dd_handle);
 		dir->dd_handle = (long)INVALID_HANDLE_VALUE;
-		/* POSIX says you shouldn't set errno when readdir can't
-		   find any more files; so, if another error we leave it set. */
+		/*
+		 * POSIX says you shouldn't set errno when readdir can't
+		 * find any more files; so, if another error we leave it set.
+		 */
 		if (lasterr != ERROR_NO_MORE_FILES)
 			errno = err_win_to_posix(lasterr);
 		return NULL;
