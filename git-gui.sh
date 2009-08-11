@@ -745,6 +745,8 @@ set default_config(gui.newbranchtemplate) {}
 set default_config(gui.spellingdictionary) {}
 set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
+# TODO: this option should be added to the git-config documentation
+set default_config(gui.maxfilesdisplayed) 5000
 set font_descs {
 	{fontui   font_ui   {mc "Main Font"}}
 	{fontdiff font_diff {mc "Diff/Console Font"}}
@@ -1698,10 +1700,12 @@ proc display_all_files_helper {w path icon_name m} {
 	$w insert end "[escape_path $path]\n"
 }
 
+set files_warning 0
 proc display_all_files {} {
 	global ui_index ui_workdir
 	global file_states file_lists
 	global last_clicked
+	global files_warning
 
 	$ui_index conf -state normal
 	$ui_workdir conf -state normal
@@ -1713,7 +1717,18 @@ proc display_all_files {} {
 	set file_lists($ui_index) [list]
 	set file_lists($ui_workdir) [list]
 
-	foreach path [lsort [array names file_states]] {
+	set to_display [lsort [array names file_states]]
+	set display_limit [get_config gui.maxfilesdisplayed]
+	if {[llength $to_display] > $display_limit} {
+		if {!$files_warning} {
+			# do not repeatedly warn:
+			set files_warning 1
+			info_popup [mc "Displaying only %s of %s files." \
+				$display_limit [llength $to_display]]
+		}
+		set to_display [lrange $to_display 0 [expr {$display_limit-1}]]
+	}
+	foreach path $to_display {
 		set s $file_states($path)
 		set m [lindex $s 0]
 		set icon_name [lindex $s 1]
