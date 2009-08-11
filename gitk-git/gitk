@@ -9417,7 +9417,14 @@ proc getallcommits {} {
 	}
     }
     if {$ids ne {}} {
-	set fd [open [concat $cmd $ids] r]
+	set cmd [concat $cmd $ids]
+	# XP and later accept up to 8191 characters in the command line
+	# see http://support.microsoft.com/kb/830473
+	if {[tk windowingsystem] == "win32" &&
+		[string length $cmd] > 8191} {
+	    set cmd [regsub "^(.{1,8191}) .*\$" $cmd "\\1"]
+	}
+	set fd [open $cmd r]
 	fconfigure $fd -blocking 0
 	incr allcommits
 	nowbusy allcommits
