@@ -162,10 +162,6 @@ show_stash () {
 }
 
 apply_stash () {
-	git update-index -q --refresh &&
-	git diff-files --quiet --ignore-submodules ||
-		die 'Cannot apply to a dirty working tree, please stage your changes'
-
 	unstash_index=
 
 	while test $# != 0
@@ -184,17 +180,26 @@ apply_stash () {
 		shift
 	done
 
-	# current index state
-	c_tree=$(git write-tree) ||
-		die 'Cannot apply a stash in the middle of a merge'
+	if test $# = 0
+	then
+		have_stash || die 'Nothing to apply'
+	fi
 
 	# stash records the work tree, and is a merge between the
 	# base commit (first parent) and the index tree (second parent).
-	s=$(git rev-parse --verify --default $ref_stash "$@") &&
-	w_tree=$(git rev-parse --verify "$s:") &&
-	b_tree=$(git rev-parse --verify "$s^1:") &&
-	i_tree=$(git rev-parse --verify "$s^2:") ||
+	s=$(git rev-parse --quiet --verify --default $ref_stash "$@") &&
+	w_tree=$(git rev-parse --quiet --verify "$s:") &&
+	b_tree=$(git rev-parse --quiet --verify "$s^1:") &&
+	i_tree=$(git rev-parse --quiet --verify "$s^2:") ||
 		die "$*: no valid stashed state found"
+
+	git update-index -q --refresh &&
+	git diff-files --quiet --ignore-submodules ||
+		die 'Cannot apply to a dirty working tree, please stage your changes'
+
+	# current index state
+	c_tree=$(git write-tree) ||
+		die 'Cannot apply a stash in the middle of a merge'
 
 	unstashed_index_tree=
 	if test -n "$unstash_index" && test "$b_tree" != "$i_tree" &&
