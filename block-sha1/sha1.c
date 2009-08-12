@@ -60,6 +60,34 @@
   #define setW(x, val) (W(x) = (val))
 #endif
 
+/*
+ * Performance might be improved if the CPU architecture is OK with
+ * unaligned 32-bit loads and a fast ntohl() is available.
+ * Otherwise fall back to byte loads and shifts which is portable,
+ * and is faster on architectures with memory alignment issues.
+ */
+
+#if defined(__i386__) || defined(__x86_64__)
+
+#define get_be32(p)	ntohl(*(unsigned int *)(p))
+#define put_be32(p, v)	do { *(unsigned int *)(p) = htonl(v); } while (0)
+
+#else
+
+#define get_be32(p)	( \
+	(*((unsigned char *)(p) + 0) << 24) | \
+	(*((unsigned char *)(p) + 1) << 16) | \
+	(*((unsigned char *)(p) + 2) <<  8) | \
+	(*((unsigned char *)(p) + 3) <<  0) )
+#define put_be32(p, v)	do { \
+	unsigned int __v = (v); \
+	*((unsigned char *)(p) + 0) = __v >> 24; \
+	*((unsigned char *)(p) + 1) = __v >> 16; \
+	*((unsigned char *)(p) + 2) = __v >>  8; \
+	*((unsigned char *)(p) + 3) = __v >>  0; } while (0)
+
+#endif
+
 /* This "rolls" over the 512-bit array */
 #define W(x) (array[(x)&15])
 
@@ -67,7 +95,7 @@
  * Where do we get the source from? The first 16 iterations get it from
  * the input data, the next mix it from the 512-bit array.
  */
-#define SHA_SRC(t) htonl(data[t])
+#define SHA_SRC(t) get_be32(data + t)
 #define SHA_MIX(t) SHA_ROL(W(t+13) ^ W(t+8) ^ W(t+2) ^ W(t), 1)
 
 #define SHA_ROUND(t, input, fn, constant, A, B, C, D, E) do { \
@@ -245,5 +273,5 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 
 	/* Output hash */
 	for (i = 0; i < 5; i++)
-		((unsigned int *)hashout)[i] = htonl(ctx->H[i]);
+		put_be32(hashout + i*4, ctx->H[i]);
 }
