@@ -11,10 +11,16 @@
 
 #if defined(__i386__) || defined(__x86_64__)
 
+/*
+ * Force usage of rol or ror by selecting the one with the smaller constant.
+ * It _can_ generate slightly smaller code (a constant of 1 is special), but
+ * perhaps more importantly it's possibly faster on any uarch that does a
+ * rotate with a loop.
+ */
+
 #define SHA_ASM(op, x, n) ({ unsigned int __res; __asm__(op " %1,%0":"=r" (__res):"i" (n), "0" (x)); __res; })
 #define SHA_ROL(x,n)	SHA_ASM("rol", x, n)
 #define SHA_ROR(x,n)	SHA_ASM("ror", x, n)
-#define SMALL_REGISTER_SET
 
 #else
 
@@ -23,9 +29,6 @@
 #define SHA_ROR(X,n)	SHA_ROT(X,32-(n),n)
 
 #endif
-
-/* This "rolls" over the 512-bit array */
-#define W(x) (array[(x)&15])
 
 /*
  * If you have 32 registers or more, the compiler can (and should)
@@ -43,12 +46,22 @@
  * Ben Herrenschmidt reports that on PPC, the C version comes close
  * to the optimized asm with this (ie on PPC you don't want that
  * 'volatile', since there are lots of registers).
+ *
+ * On ARM we get the best code generation by forcing a full memory barrier
+ * between each SHA_ROUND, otherwise gcc happily get wild with spilling and
+ * the stack frame size simply explode and performance goes down the drain.
  */
-#ifdef SMALL_REGISTER_SET
+
+#if defined(__i386__) || defined(__x86_64__)
   #define setW(x, val) (*(volatile unsigned int *)&W(x) = (val))
+#elif defined(__arm__)
+  #define setW(x, val) do { W(x) = (val); __asm__("":::"memory"); } while (0)
 #else
   #define setW(x, val) (W(x) = (val))
 #endif
+
+/* This "rolls" over the 512-bit array */
+#define W(x) (array[(x)&15])
 
 /*
  * Where do we get the source from? The first 16 iterations get it from
