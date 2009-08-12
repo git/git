@@ -1156,6 +1156,17 @@ sub post_fetch_checkout {
 	my $gs = $Git::SVN::_head or return;
 	return if verify_ref('refs/heads/master^0');
 
+	# look for "trunk" ref if it exists
+	my $remote = Git::SVN::read_all_remotes()->{$gs->{repo_id}};
+	my $fetch = $remote->{fetch};
+	if ($fetch) {
+		foreach my $p (keys %$fetch) {
+			basename($fetch->{$p}) eq 'trunk' or next;
+			$gs = Git::SVN->new($fetch->{$p}, $gs->{repo_id}, $p);
+			last;
+		}
+	}
+
 	my $valid_head = verify_ref('HEAD^0');
 	command_noisy(qw(update-ref refs/heads/master), $gs->refname);
 	return if ($valid_head || !verify_ref('HEAD^0'));
