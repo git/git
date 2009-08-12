@@ -175,6 +175,24 @@ int mingw_open (const char *filename, int oflags, ...)
 	return fd;
 }
 
+#undef fopen
+FILE *mingw_fopen (const char *filename, const char *mode)
+{
+	int hide = 0;
+	if (hide_dotfiles && basename((char*)filename)[0] == '.')
+		hide = access(filename, F_OK);
+
+	FILE *file = fopen(filename, mode);
+	/*
+	 * In Windows a file or dir starting with a dot is not
+	 * automatically hidden. So lets mark it as hidden when
+	 * such a file is created.
+	 */
+	if (file && hide && make_hidden(filename))
+		warning("Could not mark '%s' as hidden.", filename);
+	return file;
+}
+
 static inline time_t filetime_to_time_t(const FILETIME *ft)
 {
 	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;

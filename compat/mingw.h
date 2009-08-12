@@ -143,6 +143,9 @@ int mingw_mkdir(const char *path, int mode);
 int mingw_open (const char *filename, int oflags, ...);
 #define open mingw_open
 
+FILE *mingw_fopen (const char *filename, const char *mode);
+#define fopen mingw_fopen
+
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
