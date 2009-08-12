@@ -160,7 +160,7 @@ check_equal "$mainfiles" "$chkm $chkms_sub $chks_sub"
 # changes that were split into their own history.  And 'subdir/sub??' never
 # change, since they were *only* changed in the subtree branch.
 allchanges=$(git log --name-only --pretty=format:'' | sort | fixnl)
-check_equal "$allchanges" "$chkms $chkm $chks $chkms_sub"
+check_equal "$allchanges" "$(echo $chkms $chkm $chks $chkms_sub | multiline | sort | fixnl)"
 
 # make sure the --rejoin commits never make it into subproj
 check_equal "$(git log --pretty=format:'%s' HEAD^2 | grep -i split)" ""
