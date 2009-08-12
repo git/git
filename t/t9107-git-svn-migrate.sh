@@ -16,9 +16,7 @@ test_expect_success 'setup old-looking metadata' '
 		cd .. &&
 	git svn init "$svnrepo" &&
 	git svn fetch &&
-	mv "$GIT_DIR"/svn/* "$GIT_DIR"/ &&
-	mv "$GIT_DIR"/svn/.metadata "$GIT_DIR"/ &&
-	rmdir "$GIT_DIR"/svn &&
+	rm -rf "$GIT_DIR"/svn &&
 	git update-ref refs/heads/git-svn-HEAD refs/${remotes_git_svn} &&
 	git update-ref refs/heads/svn-HEAD refs/${remotes_git_svn} &&
 	git update-ref -d refs/${remotes_git_svn} refs/${remotes_git_svn}
@@ -87,7 +85,7 @@ test_expect_success 'migrate --minimize on old inited layout' '
 	rm -rf "$GIT_DIR"/svn &&
 	for i in `cat fetch.out`; do
 		path=`expr $i : "\([^:]*\):.*$"`
-		ref=`expr $i : "[^:]*:refs/remotes/\(.*\)$"`
+		ref=`expr $i : "[^:]*:\(refs/remotes/.*\)$"`
 		if test -z "$ref"; then continue; fi
 		if test -n "$path"; then path="/$path"; fi
 		( mkdir -p "$GIT_DIR"/svn/$ref/info/ &&
@@ -107,16 +105,16 @@ test_expect_success 'migrate --minimize on old inited layout' '
 
 test_expect_success  ".rev_db auto-converted to .rev_map.UUID" '
 	git svn fetch -i trunk &&
-	test -z "$(ls "$GIT_DIR"/svn/trunk/.rev_db.* 2>/dev/null)" &&
-	expect="$(ls "$GIT_DIR"/svn/trunk/.rev_map.*)" &&
+	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/trunk/.rev_db.* 2>/dev/null)" &&
+	expect="$(ls "$GIT_DIR"/svn/refs/remotes/trunk/.rev_map.*)" &&
 	test -n "$expect" &&
 	rev_db="$(echo $expect | sed -e "s,_map,_db,")" &&
 	convert_to_rev_db "$expect" "$rev_db" &&
 	rm -f "$expect" &&
 	test -f "$rev_db" &&
 	git svn fetch -i trunk &&
-	test -z "$(ls "$GIT_DIR"/svn/trunk/.rev_db.* 2>/dev/null)" &&
-	test ! -e "$GIT_DIR"/svn/trunk/.rev_db &&
+	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/trunk/.rev_db.* 2>/dev/null)" &&
+	test ! -e "$GIT_DIR"/svn/refs/remotes/trunk/.rev_db &&
 	test -f "$expect"
 	'
 

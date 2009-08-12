@@ -909,7 +909,7 @@ sub cmd_multi_init {
 	}
 	do_git_init_db();
 	if (defined $_trunk) {
-		my $trunk_ref = $_prefix . 'trunk';
+		my $trunk_ref = 'refs/remotes/' . $_prefix . 'trunk';
 		# try both old-style and new-style lookups:
 		my $gs_trunk = eval { Git::SVN->new($trunk_ref) };
 		unless ($gs_trunk) {
@@ -1654,23 +1654,23 @@ sub resolve_local_globs {
 	return unless defined $glob_spec;
 	my $ref = $glob_spec->{ref};
 	my $path = $glob_spec->{path};
-	foreach (command(qw#for-each-ref --format=%(refname) refs/remotes#)) {
-		next unless m#^refs/remotes/$ref->{regex}$#;
+	foreach (command(qw#for-each-ref --format=%(refname) refs/#)) {
+		next unless m#^$ref->{regex}$#;
 		my $p = $1;
 		my $pathname = desanitize_refname($path->full_path($p));
 		my $refname = desanitize_refname($ref->full_path($p));
 		if (my $existing = $fetch->{$pathname}) {
 			if ($existing ne $refname) {
 				die "Refspec conflict:\n",
-				    "existing: refs/remotes/$existing\n",
-				    " globbed: refs/remotes/$refname\n";
+				    "existing: $existing\n",
+				    " globbed: $refname\n";
 			}
-			my $u = (::cmt_metadata("refs/remotes/$refname"))[0];
+			my $u = (::cmt_metadata("$refname"))[0];
 			$u =~ s!^\Q$url\E(/|$)!! or die
-			  "refs/remotes/$refname: '$url' not found in '$u'\n";
+			  "$refname: '$url' not found in '$u'\n";
 			if ($pathname ne $u) {
 				warn "W: Refspec glob conflict ",
-				     "(ref: refs/remotes/$refname):\n",
+				     "(ref: $refname):\n",
 				     "expected path: $pathname\n",
 				     "    real path: $u\n",
 				     "Continuing ahead with $u\n";
@@ -1748,33 +1748,35 @@ sub read_all_remotes {
 	my $use_svm_props = eval { command_oneline(qw/config --bool
 	    svn.useSvmProps/) };
 	$use_svm_props = $use_svm_props eq 'true' if $use_svm_props;
+	my $svn_refspec = qr{\s*/?(.*?)\s*:\s*(.+?)\s*};
 	foreach (grep { s/^svn-remote\.// } command(qw/config -l/)) {
-		if (m!^(.+)\.fetch=\s*(.*)\s*:\s*(.+)\s*$!) {
-			my ($remote, $local_ref, $_remote_ref) = ($1, $2, $3);
-			die("svn-remote.$remote: remote ref '$_remote_ref' "
-			    . "must start with 'refs/remotes/'\n")
-				unless $_remote_ref =~ m{^refs/remotes/(.+)};
-			my $remote_ref = $1;
-			$local_ref =~ s{^/}{};
+		if (m!^(.+)\.fetch=$svn_refspec$!) {
+			my ($remote, $local_ref, $remote_ref) = ($1, $2, $3);
+			die("svn-remote.$remote: remote ref '$remote_ref' "
+			    . "must start with 'refs/'\n")
+				unless $remote_ref =~ m{^refs/};
 			$r->{$remote}->{fetch}->{$local_ref} = $remote_ref;
 			$r->{$remote}->{svm} = {} if $use_svm_props;
 		} elsif (m!^(.+)\.usesvmprops=\s*(.*)\s*$!) {
 			$r->{$1}->{svm} = {};
 		} elsif (m!^(.+)\.url=\s*(.*)\s*$!) {
 			$r->{$1}->{url} = $2;
-		} elsif (m!^(.+)\.(branches|tags)=
-		           (.*):refs/remotes/(.+)\s*$/!x) {
-			my ($p, $g) = ($3, $4);
+		} elsif (m!^(.+)\.(branches|tags)=$svn_refspec$!) {
+			my ($remote, $t, $local_ref, $remote_ref) =
+			                                     ($1, $2, $3, $4);
+			die("svn-remote.$remote: remote ref '$remote_ref' ($t) "
+			    . "must start with 'refs/'\n")
+				unless $remote_ref =~ m{^refs/};
 			my $rs = {
-			    t => $2,
-			    remote => $1,
-			    path => Git::SVN::GlobSpec->new($p),
-			    ref => Git::SVN::GlobSpec->new($g) };
+			    t => $t,
+			    remote => $remote,
+			    path => Git::SVN::GlobSpec->new($local_ref),
+			    ref => Git::SVN::GlobSpec->new($remote_ref) };
 			if (length($rs->{ref}->{right}) != 0) {
 				die "The '*' glob character must be the last ",
-				    "character of '$g'\n";
+				    "character of '$remote_ref'\n";
 			}
-			push @{ $r->{$1}->{$2} }, $rs;
+			push @{ $r->{$remote}->{$t} }, $rs;
 		}
 	}
 
@@ -1882,9 +1884,9 @@ sub init_remote_config {
 		}
 	}
 	my ($xrepo_id, $xpath) = find_ref($self->refname);
-	if (defined $xpath) {
+	if (!$no_write && defined $xpath) {
 		die "svn-remote.$xrepo_id.fetch already set to track ",
-		    "$xpath:refs/remotes/", $self->refname, "\n";
+		    "$xpath:", $self->refname, "\n";
 	}
 	unless ($no_write) {
 		command_noisy('config',
@@ -1959,7 +1961,7 @@ sub find_ref {
 	my ($ref_id) = @_;
 	foreach (command(qw/config -l/)) {
 		next unless m!^svn-remote\.(.+)\.fetch=
-		              \s*(.*)\s*:\s*refs/remotes/(.+)\s*$!x;
+		              \s*/?(.*?)\s*:\s*(.+?)\s*$!x;
 		my ($repo_id, $path, $ref) = ($1, $2, $3);
 		if ($ref eq $ref_id) {
 			$path = '' if ($path =~ m#^\./?#);
@@ -1976,16 +1978,16 @@ sub new {
 		if (!defined $repo_id) {
 			die "Could not find a \"svn-remote.*.fetch\" key ",
 			    "in the repository configuration matching: ",
-			    "refs/remotes/$ref_id\n";
+			    "$ref_id\n";
 		}
 	}
 	my $self = _new($class, $repo_id, $ref_id, $path);
 	if (!defined $self->{path} || !length $self->{path}) {
 		my $fetch = command_oneline('config', '--get',
 		                            "svn-remote.$repo_id.fetch",
-		                            ":refs/remotes/$ref_id\$") or
+		                            ":$ref_id\$") or
 		     die "Failed to read \"svn-remote.$repo_id.fetch\" ",
-		         "\":refs/remotes/$ref_id\$\" in config\n";
+		         "\":$ref_id\$\" in config\n";
 		($self->{path}, undef) = split(/\s*:\s*/, $fetch);
 	}
 	$self->{url} = command_oneline('config', '--get',
@@ -1996,7 +1998,7 @@ sub new {
 }
 
 sub refname {
-	my ($refname) = "refs/remotes/$_[0]->{ref_id}" ;
+	my ($refname) = $_[0]->{ref_id} ;
 
 	# It cannot end with a slash /, we'll throw up on this because
 	# SVN can't have directories with a slash in their name, either:
@@ -3331,12 +3333,23 @@ sub _new {
 	}
 	unless (defined $ref_id && length $ref_id) {
 		$_prefix = '' unless defined($_prefix);
-		$_[2] = $ref_id = $_prefix . $Git::SVN::default_ref_id;
+		$_[2] = $ref_id =
+		             "refs/remotes/$_prefix$Git::SVN::default_ref_id";
 	}
 	$_[1] = $repo_id;
 	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
+
+	# Older repos imported by us used $GIT_DIR/svn/foo instead of
+	# $GIT_DIR/svn/refs/remotes/foo when tracking refs/remotes/foo
+	if ($ref_id =~ m{^refs/remotes/(.*)}) {
+		my $old_dir = "$ENV{GIT_DIR}/svn/$1";
+		if (-d $old_dir && ! -d $dir) {
+			$dir = $old_dir;
+		}
+	}
+
 	$_[3] = $path = '' unless (defined $path);
-	mkpath(["$ENV{GIT_DIR}/svn"]);
+	mkpath([$dir]);
 	bless {
 		ref_id => $ref_id, dir => $dir, index => "$dir/index",
 	        path => $path, config => "$ENV{GIT_DIR}/svn/config",
@@ -5509,7 +5522,7 @@ sub minimize_connections {
 			my $pfx = "svn-remote.$x->{old_repo_id}";
 
 			my $old_fetch = quotemeta("$x->{old_path}:".
-			                          "refs/remotes/$x->{ref_id}");
+			                          "$x->{ref_id}");
 			command_noisy(qw/config --unset/,
 			              "$pfx.fetch", '^'. $old_fetch . '$');
 			delete $r->{$x->{old_repo_id}}->
@@ -5578,7 +5591,7 @@ sub new {
 	my ($class, $glob) = @_;
 	my $re = $glob;
 	$re =~ s!/+$!!g; # no need for trailing slashes
-	$re =~ m!^([^*]*)(\*(?:/\*)*)([^*]*)$!;
+	$re =~ m!^([^*]*)(\*(?:/\*)*)(.*)$!;
 	my $temp = $re;
 	my ($left, $right) = ($1, $3);
 	$re = $2;
