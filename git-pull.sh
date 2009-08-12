@@ -119,11 +119,19 @@ error_on_no_merge_candidates () {
 }
 
 test true = "$rebase" && {
-	git update-index --ignore-submodules --refresh &&
-	git diff-files --ignore-submodules --quiet &&
-	git diff-index --ignore-submodules --cached --quiet HEAD -- ||
-	die "refusing to pull with rebase: your working tree is not up-to-date"
-
+	if ! git rev-parse -q --verify HEAD >/dev/null
+	then
+		# On an unborn branch
+		if test -f "$GIT_DIR/index"
+		then
+			die "updating an unborn branch with changes added to the index"
+		fi
+	else
+		git update-index --ignore-submodules --refresh &&
+		git diff-files --ignore-submodules --quiet &&
+		git diff-index --ignore-submodules --cached --quiet HEAD -- ||
+		die "refusing to pull with rebase: your working tree is not up-to-date"
+	fi
 	oldremoteref= &&
 	. git-parse-remote &&
 	remoteref="$(get_remote_merge_branch "$@" 2>/dev/null)" &&

@@ -149,4 +149,15 @@ test_expect_success 'pull --rebase dies early with dirty working directory' '
 
 '
 
+test_expect_success 'pull --rebase works on branch yet to be born' '
+	git rev-parse master >expect &&
+	mkdir empty_repo &&
+	(cd empty_repo &&
+	 git init &&
+	 git pull --rebase .. master &&
+	 git rev-parse HEAD >../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_done
