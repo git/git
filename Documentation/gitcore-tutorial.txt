@@ -12,7 +12,7 @@ git *
 DESCRIPTION
 -----------
 
-This tutorial explains how to use the "core" git programs to set up and
+This tutorial explains how to use the "core" git commands to set up and
 work with a git repository.
 
 If you just need to use git as a revision control system you may prefer
@@ -1328,7 +1328,7 @@ into it later. Obviously, this repository creation needs to be
 done only once.
 
 [NOTE]
-'git-push' uses a pair of programs,
+'git-push' uses a pair of commands,
 'git-send-pack' on your local machine, and 'git-receive-pack'
 on the remote machine. The communication between the two over
 the network internally uses an SSH connection.

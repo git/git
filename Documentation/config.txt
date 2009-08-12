@@ -605,7 +605,7 @@ color.interactive.<slot>::
 	Use customized color for 'git-add --interactive'
 	output. `<slot>` may be `prompt`, `header`, `help` or `error`, for
 	four distinct types of normal output from interactive
-	programs.  The values of these variables may be specified as
+	commands.  The values of these variables may be specified as
 	in color.branch.<slot>.
 
 color.pager::
@@ -1113,7 +1113,7 @@ instaweb.port::
 	linkgit:git-instaweb[1].
 
 interactive.singlekey::
-	In interactive programs, allow the user to provide one-letter
+	In interactive commands, allow the user to provide one-letter
 	input with a single key (i.e., without hitting enter).
 	Currently this is used only by the `\--patch` mode of
 	linkgit:git-add[1].  Note that this setting is silently
