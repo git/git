@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2007 Lars Hjemli
 
-USAGE="[--quiet] [--cached] \
+USAGE="[--quiet] [--cached|--files] \
 [add [-b branch] <repo> <path>]|[status|init|update [-i|--init] [-N|--no-fetch] [--rebase|--merge]|summary [-n|--summary-limit <n>] [<commit>]] \
 [--] [<path>...]|[foreach <command>]|[sync [--] [<path>...]]"
 OPTIONS_SPEC=
@@ -16,6 +16,7 @@ command=
 branch=
 reference=
 cached=
+files=
 nofetch=
 update=
 
@@ -460,6 +461,7 @@ set_name_rev () {
 cmd_summary() {
 	summary_limit=-1
 	for_status=
+	diff_cmd=diff-index
 
 	# parse $args after "submodule ... summary".
 	while test $# -ne 0
@@ -467,6 +469,9 @@ cmd_summary() {
 		case "$1" in
 		--cached)
 			cached="$1"
+			;;
+		--files)
+			files="$1"
 			;;
 		--for-status)
 			for_status="$1"
@@ -504,9 +509,17 @@ cmd_summary() {
 		head=HEAD
 	fi
 
+	if [ -n "$files" ]
+	then
+		test -n "$cached" &&
+		die "--cached cannot be used with --files"
+		diff_cmd=diff-files
+		head=
+	fi
+
 	cd_to_toplevel
 	# Get modified modules cared by user
-	modules=$(git diff-index $cached --raw $head -- "$@" |
+	modules=$(git $diff_cmd $cached --raw $head -- "$@" |
 		egrep '^:([0-7]* )?160000' |
 		while read mod_src mod_dst sha1_src sha1_dst status name
 		do
@@ -520,7 +533,7 @@ cmd_summary() {
 
 	test -z "$modules" && return
 
-	git diff-index $cached --raw $head -- $modules |
+	git $diff_cmd $cached --raw $head -- $modules |
 	egrep '^:([0-7]* )?160000' |
 	cut -c2- |
 	while read mod_src mod_dst sha1_src sha1_dst status name

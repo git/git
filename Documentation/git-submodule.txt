@@ -15,7 +15,7 @@ SYNOPSIS
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
 	      [--reference <repository>] [--merge] [--] [<path>...]
-'git submodule' [--quiet] summary [--cached] [--summary-limit <n>] [commit] [--] [<path>...]
+'git submodule' [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach <command>
 'git submodule' [--quiet] sync [--] [<path>...]
 
@@ -127,7 +127,11 @@ summary::
 	Show commit summary between the given commit (defaults to HEAD) and
 	working tree/index. For a submodule in question, a series of commits
 	in the submodule between the given super project commit and the
-	index or working tree (switched by --cached) are shown.
+	index or working tree (switched by --cached) are shown. If the option
+	--files is given, show the series of commits in the submodule between
+	the index of super project the and the working tree of the submodule
+	(this option doesn't allow to use the --cached option or to provide an
+	explicit commit).
 
 foreach::
 	Evaluates an arbitrary shell command in each checked out submodule.
@@ -168,6 +172,11 @@ OPTIONS
 	This option is only valid for status and summary commands.  These
 	commands typically use the commit found in the submodule HEAD, but
 	with this option, the commit stored in the index is used instead.
+
+--files::
+	This option is only valid for the summary command. This command
+	compares the commit in the index with that in the submodule HEAD
+	when this option is used.
 
 -n::
 --summary-limit::
