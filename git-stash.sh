@@ -406,8 +406,8 @@ branch)
 	apply_to_branch "$@"
 	;;
 *)
-	case $#,"$1" in
-	0,|1,-k|1,--keep-index)
+	case $#,"$1","$2" in
+	0,,|1,-k,|1,--keep-index,|1,-p,|1,--patch,|2,-p,--no-keep-index|2,--patch,--no-keep-index)
 		save_stash "$@" &&
 		say '(To restore them type "git stash apply")'
 		;;

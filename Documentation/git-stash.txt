@@ -14,7 +14,7 @@ SYNOPSIS
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
 'git stash' [save [--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
-'git stash' [-k|--keep-index]
+'git stash' [-p|--patch|-k|--keep-index]
 'git stash' clear
 'git stash' create
 
