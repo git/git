@@ -76,6 +76,7 @@ my $patch_mode_revision;
 
 sub apply_patch;
 sub apply_patch_for_checkout_commit;
+sub apply_patch_for_stash;
 
 my %patch_modes = (
 	'stage' => {
@@ -86,6 +87,15 @@ my %patch_modes = (
 		TARGET => '',
 		PARTICIPLE => 'staging',
 		FILTER => 'file-only',
+	},
+	'stash' => {
+		DIFF => 'diff-index -p HEAD',
+		APPLY => sub { apply_patch 'apply --cached', @_; },
+		APPLY_CHECK => 'apply --cached',
+		VERB => 'Stash',
+		TARGET => '',
+		PARTICIPLE => 'stashing',
+		FILTER => undef,
 	},
 	'reset_head' => {
 		DIFF => 'diff-index -p --cached',
@@ -1493,8 +1503,8 @@ sub process_args {
 						       'checkout_head' : 'checkout_nothead');
 					$arg = shift @ARGV or die "missing --";
 				}
-			} elsif ($1 eq 'stage') {
-				$patch_mode = 'stage';
+			} elsif ($1 eq 'stage' or $1 eq 'stash') {
+				$patch_mode = $1;
 				$arg = shift @ARGV or die "missing --";
 			} else {
 				die "unknown --patch mode: $1";
