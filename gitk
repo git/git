@@ -7909,6 +7909,11 @@ proc gotocommit {} {
 		}
 		set id [lindex $matches 0]
 	    }
+	} else {
+	    if {[catch {set id [exec git rev-parse --verify $sha1string]}]} {
+		error_popup [mc "Revision %s is not known" $sha1string]
+		return
+	    }
 	}
     }
     if {[commitinview $id $curview]} {
@@ -7918,7 +7923,7 @@ proc gotocommit {} {
     if {[regexp {^[0-9a-fA-F]{4,}$} $sha1string]} {
 	set msg [mc "SHA1 id %s is not known" $sha1string]
     } else {
-	set msg [mc "Tag/Head %s is not known" $sha1string]
+	set msg [mc "Revision %s is not in the current view" $sha1string]
     }
     error_popup $msg
 }
