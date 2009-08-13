@@ -73,6 +73,22 @@ sub colored {
 # command line options
 my $patch_mode;
 
+sub apply_patch;
+
+my %patch_modes = (
+	'stage' => {
+		DIFF => 'diff-files -p',
+		APPLY => sub { apply_patch 'apply --cached', @_; },
+		APPLY_CHECK => 'apply --cached',
+		VERB => 'Stage',
+		TARGET => '',
+		PARTICIPLE => 'staging',
+		FILTER => 'file-only',
+	},
+);
+
+my %patch_mode_flavour = %{$patch_modes{stage}};
+
 sub run_cmd_pipe {
 	if ($^O eq 'MSWin32' || $^O eq 'msys') {
 		my @invalid = grep {m/[":*]/} @_;
@@ -613,12 +629,21 @@ sub add_untracked_cmd {
 	print "\n";
 }
 
+sub run_git_apply {
+	my $cmd = shift;
+	my $fh;
+	open $fh, '| git ' . $cmd;
+	print $fh @_;
+	return close $fh;
+}
+
 sub parse_diff {
 	my ($path) = @_;
-	my @diff = run_cmd_pipe(qw(git diff-files -p --), $path);
+	my @diff_cmd = split(" ", $patch_mode_flavour{DIFF});
+	my @diff = run_cmd_pipe("git", @diff_cmd, "--", $path);
 	my @colored = ();
 	if ($diff_use_color) {
-		@colored = run_cmd_pipe(qw(git diff-files -p --color --), $path);
+		@colored = run_cmd_pipe("git", @diff_cmd, qw(--color --), $path);
 	}
 	my (@hunk) = { TEXT => [], DISPLAY => [], TYPE => 'header' };
 
@@ -877,6 +902,7 @@ sub edit_hunk_manually {
 		or die "failed to open hunk edit file for writing: " . $!;
 	print $fh "# Manual hunk edit mode -- see bottom for a quick guide\n";
 	print $fh @$oldtext;
+	my $participle = $patch_mode_flavour{PARTICIPLE};
 	print $fh <<EOF;
 # ---
 # To remove '-' lines, make them ' ' lines (context).
@@ -884,7 +910,7 @@ sub edit_hunk_manually {
 # Lines starting with # will be removed.
 #
 # If the patch applies cleanly, the edited hunk will immediately be
-# marked for staging. If it does not apply cleanly, you will be given
+# marked for $participle. If it does not apply cleanly, you will be given
 # an opportunity to edit again. If all lines of the hunk are removed,
 # then the edit is aborted and the hunk is left unchanged.
 EOF
@@ -918,11 +944,8 @@ EOF
 
 sub diff_applies {
 	my $fh;
-	open $fh, '| git apply --recount --cached --check';
-	for my $h (@_) {
-		print $fh @{$h->{TEXT}};
-	}
-	return close $fh;
+	return run_git_apply($patch_mode_flavour{APPLY_CHECK} . ' --recount --check',
+			     map { @{$_->{TEXT}} } @_);
 }
 
 sub _restore_terminal_and_die {
@@ -988,12 +1011,14 @@ sub edit_hunk_loop {
 }
 
 sub help_patch_cmd {
-	print colored $help_color, <<\EOF ;
-y - stage this hunk
-n - do not stage this hunk
-q - quit, do not stage this hunk nor any of the remaining ones
-a - stage this and all the remaining hunks in the file
-d - do not stage this hunk nor any of the remaining hunks in the file
+	my $verb = lc $patch_mode_flavour{VERB};
+	my $target = $patch_mode_flavour{TARGET};
+	print colored $help_color, <<EOF ;
+y - $verb this hunk$target
+n - do not $verb this hunk$target
+q - quit, do not $verb this hunk nor any of the remaining ones
+a - $verb this and all the remaining hunks in the file
+d - do not $verb this hunk nor any of the remaining hunks in the file
 g - select a hunk to go to
 / - search for a hunk matching the given regex
 j - leave this hunk undecided, see next undecided hunk
@@ -1006,8 +1031,17 @@ e - manually edit the current hunk
 EOF
 }
 
+sub apply_patch {
+	my $cmd = shift;
+	my $ret = run_git_apply $cmd . ' --recount', @_;
+	if (!$ret) {
+		print STDERR @_;
+	}
+	return $ret;
+}
+
 sub patch_update_cmd {
-	my @all_mods = list_modified('file-only');
+	my @all_mods = list_modified($patch_mode_flavour{FILTER});
 	my @mods = grep { !($_->{BINARY}) } @all_mods;
 	my @them;
 
@@ -1138,8 +1172,9 @@ sub patch_update_file {
 		for (@{$hunk[$ix]{DISPLAY}}) {
 			print;
 		}
-		print colored $prompt_color, 'Stage ',
-		  ($hunk[$ix]{TYPE} eq 'mode' ? 'mode change' : 'this hunk'),
+		print colored $prompt_color, $patch_mode_flavour{VERB},
+		  ($hunk[$ix]{TYPE} eq 'mode' ? ' mode change' : ' this hunk'),
+		  $patch_mode_flavour{TARGET},
 		  " [y,n,q,a,d,/$other,?]? ";
 		my $line = prompt_single_character;
 		if ($line) {
@@ -1313,16 +1348,9 @@ sub patch_update_file {
 
 	if (@result) {
 		my $fh;
-
-		open $fh, '| git apply --cached --recount';
-		for (@{$head->{TEXT}}, @result) {
-			print $fh $_;
-		}
-		if (!close $fh) {
-			for (@{$head->{TEXT}}, @result) {
-				print STDERR $_;
-			}
-		}
+		my @patch = (@{$head->{TEXT}}, @result);
+		my $apply_routine = $patch_mode_flavour{APPLY};
+		&$apply_routine(@patch);
 		refresh();
 	}
 
