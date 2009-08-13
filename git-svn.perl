@@ -3277,7 +3277,7 @@ sub _rev_map_get {
 		my $i = int(($l/24 + $u/24) / 2) * 24;
 		sysseek($fh, $i, SEEK_SET) or croak "seek: $!";
 		sysread($fh, my $buf, 24) == 24 or croak "read: $!";
-		my ($r, $c) = unpack('NH40', $buf);
+		my ($r, $c) = unpack(rev_map_fmt, $buf);
 
 		if ($r < $rev) {
 			$l = $i + 24;
