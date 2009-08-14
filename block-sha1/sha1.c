@@ -246,14 +246,14 @@ void blk_SHA1_Update(blk_SHA_CTX *ctx, const void *data, unsigned long len)
 		memcpy(lenW + (char *)ctx->W, data, left);
 		lenW = (lenW + left) & 63;
 		len -= left;
-		data += left;
+		data = ((const char *)data + left);
 		if (lenW)
 			return;
 		blk_SHA1_Block(ctx, ctx->W);
 	}
 	while (len >= 64) {
 		blk_SHA1_Block(ctx, data);
-		data += 64;
+		data = ((const char *)data + 64);
 		len -= 64;
 	}
 	if (len)
