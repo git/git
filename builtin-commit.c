@@ -36,11 +36,6 @@ static const char * const builtin_status_usage[] = {
 	NULL
 };
 
-static const char * const builtin_stat_usage[] = {
-	"git stat [options]",
-	NULL
-};
-
 static unsigned char head_sha1[20], merge_head_sha1[20];
 static char *use_message_buffer;
 static const char commit_editmsg[] = "COMMIT_EDITMSG";
@@ -971,13 +966,13 @@ static void short_untracked(int null_termination, struct string_list_item *it,
 	}
 }
 
-int cmd_stat(int argc, const char **argv, const char *prefix)
+int cmd_status(int argc, const char **argv, const char *prefix)
 {
 	struct wt_status s;
 	static int null_termination, shortstatus;
 	int i;
 	unsigned char sha1[20];
-	static struct option builtin_stat_options[] = {
+	static struct option builtin_status_options[] = {
 		OPT__VERBOSE(&verbose),
 		OPT_BOOLEAN('s', "short", &shortstatus,
 			    "show status concicely"),
@@ -996,8 +991,8 @@ int cmd_stat(int argc, const char **argv, const char *prefix)
 	wt_status_prepare(&s);
 	git_config(git_status_config, &s);
 	argc = parse_options(argc, argv, prefix,
-			     builtin_stat_options,
-			     builtin_stat_usage, 0);
+			     builtin_status_options,
+			     builtin_status_usage, 0);
 	handle_untracked_files_arg(&s);
 
 	if (*argv)
@@ -1037,22 +1032,6 @@ int cmd_stat(int argc, const char **argv, const char *prefix)
 		wt_status_print(&s);
 	}
 	return 0;
-}
-
-int cmd_status(int argc, const char **argv, const char *prefix)
-{
-	struct wt_status s;
-
-	wt_status_prepare(&s);
-	git_config(git_status_config, &s);
-	if (s.use_color == -1)
-		s.use_color = git_use_color_default;
-	if (diff_use_color_default == -1)
-		diff_use_color_default = git_use_color_default;
-
-	argc = parse_and_validate_options(argc, argv, builtin_status_usage,
-					  prefix, &s);
-	return dry_run_commit(argc, argv, prefix, &s);
 }
 
 static void print_summary(const char *prefix, const unsigned char *sha1)

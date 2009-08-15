@@ -19,8 +19,8 @@ test_expect_success 'status clean' '
 	git status |
 	grep "nothing to commit"
 '
-test_expect_success 'status -a clean' '
-	git status -a |
+test_expect_success 'commit --dry-run -a clean' '
+	git commit --dry-run -a |
 	grep "nothing to commit"
 '
 test_expect_success 'rm submodule contents' '
@@ -31,7 +31,7 @@ test_expect_success 'status clean (empty submodule dir)' '
 	grep "nothing to commit"
 '
 test_expect_success 'status -a clean (empty submodule dir)' '
-	git status -a |
+	git commit --dry-run -a |
 	grep "nothing to commit"
 '
 

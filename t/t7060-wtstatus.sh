@@ -50,9 +50,11 @@ test_expect_success 'M/D conflict does not segfault' '
 		git rm foo &&
 		git commit -m delete &&
 		test_must_fail git merge master &&
-		test_must_fail git status > ../actual
-	) &&
-	test_cmp expect actual
+		test_must_fail git commit --dry-run >../actual &&
+		test_cmp ../expect ../actual &&
+		git status >../actual &&
+		test_cmp ../expect ../actual
+	)
 '
 
 test_done

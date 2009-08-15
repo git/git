@@ -248,8 +248,8 @@ cat <<EOF >expect
 #	output
 #	untracked
 EOF
-test_expect_success 'status of partial commit excluding new file in index' '
-	git status dir1/modified >output &&
+test_expect_success 'dry-run of partial commit excluding new file in index' '
+	git commit --dry-run dir1/modified >output &&
 	test_cmp expect output
 '
 
@@ -358,7 +358,9 @@ EOF
 test_expect_success 'status submodule summary (clean submodule)' '
 	git commit -m "commit submodule" &&
 	git config status.submodulesummary 10 &&
-	test_must_fail git status >output &&
+	test_must_fail git commit --dry-run >output &&
+	test_cmp expect output &&
+	git status >output &&
 	test_cmp expect output
 '
 
@@ -391,9 +393,9 @@ cat >expect <<EOF
 #	output
 #	untracked
 EOF
-test_expect_success 'status submodule summary (--amend)' '
+test_expect_success 'commit --dry-run submodule summary (--amend)' '
 	git config status.submodulesummary 10 &&
-	git status --amend >output &&
+	git commit --dry-run --amend >output &&
 	test_cmp expect output
 '
 
