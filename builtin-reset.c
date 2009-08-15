@@ -142,6 +142,17 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 	}
 }
 
+static int interactive_reset(const char *revision, const char **argv,
+			     const char *prefix)
+{
+	const char **pathspec = NULL;
+
+	if (*argv)
+		pathspec = get_pathspec(prefix, argv);
+
+	return run_add_interactive(revision, "--patch=reset", pathspec);
+}
+
 static int read_from_tree(const char *prefix, const char **argv,
 		unsigned char *tree_sha1, int refresh_flags)
 {
@@ -183,6 +194,7 @@ static void prepend_reflog_action(const char *action, char *buf, size_t size)
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
 	int i = 0, reset_type = NONE, update_ref_status = 0, quiet = 0;
+	int patch_mode = 0;
 	const char *rev = "HEAD";
 	unsigned char sha1[20], *orig = NULL, sha1_orig[20],
 				*old_orig = NULL, sha1_old_orig[20];
@@ -198,6 +210,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				"reset HEAD, index and working tree", MERGE),
 		OPT_BOOLEAN('q', NULL, &quiet,
 				"disable showing new HEAD in hard reset and progress message"),
+		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
 		OPT_END()
 	};
 
@@ -250,6 +263,12 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (!commit)
 		die("Could not parse object '%s'.", rev);
 	hashcpy(sha1, commit->object.sha1);
+
+	if (patch_mode) {
+		if (reset_type != NONE)
+			die("--patch is incompatible with --{hard,mixed,soft}");
+		return interactive_reset(rev, argv + i, prefix);
+	}
 
 	/* git reset tree [--] paths... can be used to
 	 * load chosen paths from the tree into the index without

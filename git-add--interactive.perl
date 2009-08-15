@@ -72,6 +72,7 @@ sub colored {
 
 # command line options
 my $patch_mode;
+my $patch_mode_revision;
 
 sub apply_patch;
 
@@ -84,6 +85,24 @@ my %patch_modes = (
 		TARGET => '',
 		PARTICIPLE => 'staging',
 		FILTER => 'file-only',
+	},
+	'reset_head' => {
+		DIFF => 'diff-index -p --cached',
+		APPLY => sub { apply_patch 'apply -R --cached', @_; },
+		APPLY_CHECK => 'apply -R --cached',
+		VERB => 'Unstage',
+		TARGET => '',
+		PARTICIPLE => 'unstaging',
+		FILTER => 'index-only',
+	},
+	'reset_nothead' => {
+		DIFF => 'diff-index -R -p --cached',
+		APPLY => sub { apply_patch 'apply --cached', @_; },
+		APPLY_CHECK => 'apply --cached',
+		VERB => 'Apply',
+		TARGET => ' to index',
+		PARTICIPLE => 'applying',
+		FILTER => 'index-only',
 	},
 );
 
@@ -206,7 +225,14 @@ sub list_modified {
 		return if (!@tracked);
 	}
 
-	my $reference = is_initial_commit() ? get_empty_tree() : 'HEAD';
+	my $reference;
+	if (defined $patch_mode_revision and $patch_mode_revision ne 'HEAD') {
+		$reference = $patch_mode_revision;
+	} elsif (is_initial_commit()) {
+		$reference = get_empty_tree();
+	} else {
+		$reference = 'HEAD';
+	}
 	for (run_cmd_pipe(qw(git diff-index --cached
 			     --numstat --summary), $reference,
 			     '--', @tracked)) {
@@ -640,6 +666,9 @@ sub run_git_apply {
 sub parse_diff {
 	my ($path) = @_;
 	my @diff_cmd = split(" ", $patch_mode_flavour{DIFF});
+	if (defined $patch_mode_revision) {
+		push @diff_cmd, $patch_mode_revision;
+	}
 	my @diff = run_cmd_pipe("git", @diff_cmd, "--", $path);
 	my @colored = ();
 	if ($diff_use_color) {
@@ -1391,11 +1420,31 @@ EOF
 sub process_args {
 	return unless @ARGV;
 	my $arg = shift @ARGV;
-	if ($arg eq "--patch") {
-		$patch_mode = 1;
-		$arg = shift @ARGV or die "missing --";
+	if ($arg =~ /--patch(?:=(.*))?/) {
+		if (defined $1) {
+			if ($1 eq 'reset') {
+				$patch_mode = 'reset_head';
+				$patch_mode_revision = 'HEAD';
+				$arg = shift @ARGV or die "missing --";
+				if ($arg ne '--') {
+					$patch_mode_revision = $arg;
+					$patch_mode = ($arg eq 'HEAD' ?
+						       'reset_head' : 'reset_nothead');
+					$arg = shift @ARGV or die "missing --";
+				}
+			} elsif ($1 eq 'stage') {
+				$patch_mode = 'stage';
+				$arg = shift @ARGV or die "missing --";
+			} else {
+				die "unknown --patch mode: $1";
+			}
+		} else {
+			$patch_mode = 'stage';
+			$arg = shift @ARGV or die "missing --";
+		}
 		die "invalid argument $arg, expecting --"
 		    unless $arg eq "--";
+		%patch_mode_flavour = %{$patch_modes{$patch_mode}};
 	}
 	elsif ($arg ne "--") {
 		die "invalid argument $arg, expecting --";
