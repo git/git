@@ -25,7 +25,8 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	struct object *obj = parse_object(sha1);
 	if (!obj)
 		return 0;
-	refname = prettify_refname(refname);
+	if (!cb_data || *(int *)cb_data == DECORATE_SHORT_REFS)
+		refname = prettify_refname(refname);
 	add_name_decoration("", refname, obj);
 	while (obj->type == OBJ_TAG) {
 		obj = ((struct tag *)obj)->tagged;
@@ -36,12 +37,12 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	return 0;
 }
 
-void load_ref_decorations(void)
+void load_ref_decorations(int flags)
 {
 	static int loaded;
 	if (!loaded) {
 		loaded = 1;
-		for_each_ref(add_ref_decoration, NULL);
+		for_each_ref(add_ref_decoration, &flags);
 	}
 }
 

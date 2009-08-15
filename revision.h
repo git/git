@@ -15,6 +15,9 @@
 #define SYMMETRIC_LEFT	(1u<<8)
 #define ALL_REV_FLAGS	((1u<<9)-1)
 
+#define DECORATE_SHORT_REFS	1
+#define DECORATE_FULL_REFS	2
+
 struct rev_info;
 struct log_info;
 

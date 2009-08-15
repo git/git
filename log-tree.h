@@ -17,7 +17,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			     const char **subject_p,
 			     const char **extra_headers_p,
 			     int *need_8bit_cte_p);
-void load_ref_decorations(void);
+void load_ref_decorations(int flags);
 
 #define FORMAT_PATCH_NAME_MAX 64
 void get_patch_filename(struct commit *commit, int nr, const char *suffix,
