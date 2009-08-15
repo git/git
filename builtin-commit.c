@@ -979,9 +979,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage,
 					  prefix, &s);
-	if (dry_run)
+	if (dry_run) {
+		if (diff_use_color_default == -1)
+			diff_use_color_default = git_use_color_default;
 		return dry_run_commit(argc, argv, prefix, &s);
-
+	}
 	index_file = prepare_index(argc, argv, prefix, 0);
 
 	/* Set up everything for writing the commit object.  This includes
