@@ -129,7 +129,7 @@ summary::
 	in the submodule between the given super project commit and the
 	index or working tree (switched by --cached) are shown. If the option
 	--files is given, show the series of commits in the submodule between
-	the index of super project the and the working tree of the submodule
+	the index of the super project and the working tree of the submodule
 	(this option doesn't allow to use the --cached option or to provide an
 	explicit commit).
 
