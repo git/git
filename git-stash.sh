@@ -7,7 +7,8 @@ USAGE="list [<options>]
    or: $dashless drop [-q|--quiet] [<stash>]
    or: $dashless ( pop | apply ) [--index] [-q|--quiet] [<stash>]
    or: $dashless branch <branchname> [<stash>]
-   or: $dashless [save [--keep-index] [-q|--quiet] [<message>]]
+   or: $dashless [save [-k|--keep-index] [-q|--quiet] [<message>]]
+   or: $dashless [-k|--keep-index]
    or: $dashless clear"
 
 SUBDIRECTORY_OK=Yes
@@ -132,7 +133,7 @@ save_stash () {
 	while test $# != 0
 	do
 		case "$1" in
-		--keep-index)
+		-k|--keep-index)
 			keep_index=t
 			;;
 		--no-keep-index)
@@ -405,12 +406,13 @@ branch)
 	apply_to_branch "$@"
 	;;
 *)
-	if test $# -eq 0
-	then
-		save_stash &&
+	case $#,"$1" in
+	0,|1,-k|1,--keep-index)
+		save_stash "$@" &&
 		say '(To restore them type "git stash apply")'
-	else
+		;;
+	*)
 		usage
-	fi
+	esac
 	;;
 esac

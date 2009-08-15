@@ -200,4 +200,12 @@ test_expect_success 'drop -q is quiet' '
 	test ! -s output.out
 '
 
+test_expect_success 'stash -k' '
+	echo bar3 > file &&
+	echo bar4 > file2 &&
+	git add file2 &&
+	git stash -k &&
+	test bar,bar4 = $(cat file),$(cat file2)
+'
+
 test_done
