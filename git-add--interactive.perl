@@ -75,6 +75,7 @@ my $patch_mode;
 my $patch_mode_revision;
 
 sub apply_patch;
+sub apply_patch_for_checkout_commit;
 
 my %patch_modes = (
 	'stage' => {
@@ -103,6 +104,33 @@ my %patch_modes = (
 		TARGET => ' to index',
 		PARTICIPLE => 'applying',
 		FILTER => 'index-only',
+	},
+	'checkout_index' => {
+		DIFF => 'diff-files -p',
+		APPLY => sub { apply_patch 'apply -R', @_; },
+		APPLY_CHECK => 'apply -R',
+		VERB => 'Discard',
+		TARGET => ' from worktree',
+		PARTICIPLE => 'discarding',
+		FILTER => 'file-only',
+	},
+	'checkout_head' => {
+		DIFF => 'diff-index -p',
+		APPLY => sub { apply_patch_for_checkout_commit '-R', @_ },
+		APPLY_CHECK => 'apply -R',
+		VERB => 'Discard',
+		TARGET => ' from index and worktree',
+		PARTICIPLE => 'discarding',
+		FILTER => undef,
+	},
+	'checkout_nothead' => {
+		DIFF => 'diff-index -R -p',
+		APPLY => sub { apply_patch_for_checkout_commit '', @_ },
+		APPLY_CHECK => 'apply',
+		VERB => 'Apply',
+		TARGET => ' to index and worktree',
+		PARTICIPLE => 'applying',
+		FILTER => undef,
 	},
 );
 
@@ -1069,6 +1097,29 @@ sub apply_patch {
 	return $ret;
 }
 
+sub apply_patch_for_checkout_commit {
+	my $reverse = shift;
+	my $applies_index = run_git_apply 'apply '.$reverse.' --cached --recount --check', @_;
+	my $applies_worktree = run_git_apply 'apply '.$reverse.' --recount --check', @_;
+
+	if ($applies_worktree && $applies_index) {
+		run_git_apply 'apply '.$reverse.' --cached --recount', @_;
+		run_git_apply 'apply '.$reverse.' --recount', @_;
+		return 1;
+	} elsif (!$applies_index) {
+		print colored $error_color, "The selected hunks do not apply to the index!\n";
+		if (prompt_yesno "Apply them to the worktree anyway? ") {
+			return run_git_apply 'apply '.$reverse.' --recount', @_;
+		} else {
+			print colored $error_color, "Nothing was applied.\n";
+			return 0;
+		}
+	} else {
+		print STDERR @_;
+		return 0;
+	}
+}
+
 sub patch_update_cmd {
 	my @all_mods = list_modified($patch_mode_flavour{FILTER});
 	my @mods = grep { !($_->{BINARY}) } @all_mods;
@@ -1430,6 +1481,16 @@ sub process_args {
 					$patch_mode_revision = $arg;
 					$patch_mode = ($arg eq 'HEAD' ?
 						       'reset_head' : 'reset_nothead');
+					$arg = shift @ARGV or die "missing --";
+				}
+			} elsif ($1 eq 'checkout') {
+				$arg = shift @ARGV or die "missing --";
+				if ($arg eq '--') {
+					$patch_mode = 'checkout_index';
+				} else {
+					$patch_mode_revision = $arg;
+					$patch_mode = ($arg eq 'HEAD' ?
+						       'checkout_head' : 'checkout_nothead');
 					$arg = shift @ARGV or die "missing --";
 				}
 			} elsif ($1 eq 'stage') {
