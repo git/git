@@ -164,7 +164,7 @@ test_expect_success FILEMODE 'stage mode but not hunk' '
 '
 
 
-test_expect_failure FILEMODE 'stage mode and hunk' '
+test_expect_success FILEMODE 'stage mode and hunk' '
 	git reset --hard &&
 	echo content >>file &&
 	chmod +x file &&

@@ -841,6 +841,10 @@ sub coalesce_overlapping_hunks {
 	my ($last_o_ctx, $last_was_dirty);
 
 	for (grep { $_->{USE} } @in) {
+		if ($_->{TYPE} ne 'hunk') {
+			push @out, $_;
+			next;
+		}
 		my $text = $_->{TEXT};
 		my ($o_ofs) = parse_hunk_header($text->[0]);
 		if (defined $last_o_ctx &&
