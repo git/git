@@ -1222,6 +1222,7 @@ sub complete_url_ls_init {
 	}
 	command_oneline('config', $k, $gs->{url}) unless $orig_url;
 	my $remote_path = "$gs->{path}/$repo_path";
+	$remote_path =~ s{%([0-9A-F]{2})}{chr hex($1)}ieg;
 	$remote_path =~ s#/+#/#g;
 	$remote_path =~ s#^/##g;
 	$remote_path .= "/*" if $remote_path !~ /\*/;
@@ -1892,6 +1893,7 @@ sub init_remote_config {
 		command_noisy('config',
 			      "svn-remote.$self->{repo_id}.url", $url);
 		$self->{path} =~ s{^/}{};
+		$self->{path} =~ s{%([0-9A-F]{2})}{chr hex($1)}ieg;
 		command_noisy('config', '--add',
 			      "svn-remote.$self->{repo_id}.fetch",
 			      "$self->{path}:".$self->refname);
