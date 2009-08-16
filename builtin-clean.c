@@ -31,6 +31,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	int i;
 	int show_only = 0, remove_directories = 0, quiet = 0, ignored = 0;
 	int ignored_only = 0, baselen = 0, config_set = 0, errors = 0;
+	int rm_flags = REMOVE_DIR_KEEP_NESTED_GIT;
 	struct strbuf directory = STRBUF_INIT;
 	struct dir_struct dir;
 	static const char **pathspec;
@@ -68,6 +69,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	if (!show_only && !force)
 		die("clean.requireForce%s set and -n or -f not given; "
 		    "refusing to clean", config_set ? "" : " not");
+
+	if (force > 1)
+		rm_flags = 0;
 
 	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 
@@ -131,7 +135,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				   (matches == MATCHED_EXACTLY)) {
 				if (!quiet)
 					printf("Removing %s\n", qname);
-				if (remove_dir_recursively(&directory, 0) != 0) {
+				if (remove_dir_recursively(&directory,
+							   rm_flags) != 0) {
 					warning("failed to remove '%s'", qname);
 					errors++;
 				}

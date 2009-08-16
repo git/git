@@ -861,12 +861,20 @@ int is_empty_dir(const char *path)
 	return ret;
 }
 
-int remove_dir_recursively(struct strbuf *path, int only_empty)
+int remove_dir_recursively(struct strbuf *path, int flag)
 {
-	DIR *dir = opendir(path->buf);
+	DIR *dir;
 	struct dirent *e;
 	int ret = 0, original_len = path->len, len;
+	int only_empty = (flag & REMOVE_DIR_EMPTY_ONLY);
+	unsigned char submodule_head[20];
 
+	if ((flag & REMOVE_DIR_KEEP_NESTED_GIT) &&
+	    !resolve_gitlink_ref(path->buf, "HEAD", submodule_head))
+		/* Do not descend and nuke a nested git work tree. */
+		return 0;
+
+	dir = opendir(path->buf);
 	if (!dir)
 		return -1;
 	if (path->buf[original_len - 1] != '/')

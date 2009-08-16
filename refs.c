@@ -821,7 +821,7 @@ static int remove_empty_directories(const char *file)
 	strbuf_init(&path, 20);
 	strbuf_addstr(&path, file);
 
-	result = remove_dir_recursively(&path, 1);
+	result = remove_dir_recursively(&path, REMOVE_DIR_EMPTY_ONLY);
 
 	strbuf_release(&path);
 
