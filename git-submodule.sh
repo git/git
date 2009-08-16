@@ -243,6 +243,7 @@ cmd_foreach()
 		if test -e "$path"/.git
 		then
 			say "Entering '$path'"
+			name=$(module_name "$path")
 			(cd "$path" && eval "$@") ||
 			die "Stopping at '$path'; script returned non-zero status."
 		fi
