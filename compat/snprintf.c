@@ -6,7 +6,7 @@
  * number of characters to write without the trailing NUL.
  */
 #ifndef SNPRINTF_SIZE_CORR
-#if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ < 4
+#if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ < 4 || defined(_MSC_VER)
 #define SNPRINTF_SIZE_CORR 1
 #else
 #define SNPRINTF_SIZE_CORR 0
@@ -14,6 +14,11 @@
 #endif
 
 #undef vsnprintf
+
+#if defined(_MSC_VER)
+#define vsnprintf _vsnprintf
+#endif
+
 int git_vsnprintf(char *str, size_t maxsize, const char *format, va_list ap)
 {
 	char *s;
