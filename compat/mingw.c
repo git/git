@@ -1,6 +1,7 @@
 #include "../git-compat-util.h"
 #include "win32.h"
 #include <conio.h>
+#include <winioctl.h>
 #include "../strbuf.h"
 
 extern int hide_dotfiles;
@@ -201,7 +202,8 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
 	return (time_t)winTime;
 }
 
-/* We keep the do_lstat code in a separate function to avoid recursion.
+/*
+ * We keep the do_lstat code in a separate function to avoid recursion.
  * When a path ends with a slash, the stat will fail with ENOENT. In
  * this case, we strip the trailing slashes and stat again.
  */
@@ -221,12 +223,28 @@ static int do_lstat(const char *file_name, struct stat *buf)
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
+		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+			WIN32_FIND_DATAA findbuf;
+			HANDLE handle = FindFirstFileA(file_name, &findbuf);
+			if (handle != INVALID_HANDLE_VALUE) {
+				if ((findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+						(findbuf.dwReserved0 == IO_REPARSE_TAG_SYMLINK)) {
+					char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+					buf->st_mode = S_IREAD | S_IFLNK;
+					if (!(findbuf.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+						buf->st_mode |= S_IWRITE;
+					buf->st_size = readlink(file_name, buffer, MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+				}
+				FindClose(handle);
+			}
+		}
 		return 0;
 	}
 	return -1;
 }
 
-/* We provide our own lstat/fstat functions, since the provided
+/*
+ * We provide our own lstat/fstat functions, since the provided
  * lstat/fstat functions are so slow. These stat functions are
  * tailored for Git's usage (read: fast), and are not meant to be
  * complete. Note that Git stat()s are redirected to mingw_lstat()
@@ -240,7 +258,8 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 	if (!do_lstat(file_name, buf))
 		return 0;
 
-	/* if file_name ended in a '/', Windows returned ENOENT;
+	/*
+	 * if file_name ended in a '/', Windows returned ENOENT;
 	 * try again without trailing slashes
 	 */
 	if (errno != ENOENT)
@@ -407,7 +426,8 @@ int poll(struct pollfd *ufds, unsigned int nfds, int timeout)
 		return errno = EINVAL, error("poll timeout not supported");
 	}
 
-	/* When there is only one fd to wait for, then we pretend that
+	/*
+	 * When there is only one fd to wait for, then we pretend that
 	 * input is available and let the actual wait happen when the
 	 * caller invokes read().
 	 */
@@ -447,7 +467,8 @@ repeat:
 			ufds[i].revents = 0;
 	}
 	if (!pending) {
-		/* The only times that we spin here is when the process
+		/*
+		 * The only times that we spin here is when the process
 		 * that is connected through the pipes is waiting for
 		 * its own input data to become available. But since
 		 * the process (pack-objects) is itself CPU intensive,
@@ -702,7 +723,8 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 			FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
 			FILE_ATTRIBUTE_NORMAL, NULL);
 	if (cons == INVALID_HANDLE_VALUE) {
-		/* There is no console associated with this process.
+		/*
+		 * There is no console associated with this process.
 		 * Since the child is a console process, Windows
 		 * would normally create a console window. But
 		 * since we'll be redirecting std streams, we do
@@ -713,7 +735,8 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 		 */
 		flags = DETACHED_PROCESS;
 	} else {
-		/* There is already a console. If we specified
+		/*
+		 * There is already a console. If we specified
 		 * DETACHED_PROCESS here, too, Windows would
 		 * disassociate the child from the console.
 		 * The same is true for CREATE_NO_WINDOW.
@@ -913,9 +936,7 @@ static int lookup_env(char **env, const char *name, size_t nmln)
 	return -1;
 }
 
-/*
- * If name contains '=', then sets the variable, otherwise it unsets it
- */
+/* If name contains '=', then sets the variable, otherwise it unsets it */
 char **env_setenv(char **env, const char *name)
 {
 	char *eq = strchrnul(name, '=');
@@ -1234,7 +1255,8 @@ static int timer_interval;
 static int one_shot;
 static sig_handler_t timer_fn = SIG_DFL;
 
-/* The timer works like this:
+/*
+ * The timer works like this:
  * The thread, ticktack(), is a trivial routine that most of the time
  * only waits to receive the signal to terminate. The main thread tells
  * the thread to terminate by setting the timer_event to the signalled
@@ -1389,6 +1411,58 @@ int link(const char *oldpath, const char *newpath)
 	return 0;
 }
 
+int symlink(const char *oldpath, const char *newpath)
+{
+	typedef BOOL WINAPI (*symlink_fn)(const char*, const char*, DWORD);
+	static symlink_fn create_symbolic_link = NULL;
+	if (!create_symbolic_link) {
+		create_symbolic_link = (symlink_fn) GetProcAddress(
+				GetModuleHandle("kernel32.dll"), "CreateSymbolicLinkA");
+		if (!create_symbolic_link)
+			create_symbolic_link = (symlink_fn)-1;
+	}
+	if (create_symbolic_link == (symlink_fn)-1) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (!create_symbolic_link(newpath, oldpath, 0)) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+	return 0;
+}
+
+int readlink(const char *path, char *buf, size_t bufsiz)
+{
+	HANDLE handle = CreateFile(path, GENERIC_READ,
+			FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+			NULL, OPEN_EXISTING,
+			FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+			NULL);
+
+	if (handle != INVALID_HANDLE_VALUE) {
+		unsigned char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+		DWORD dummy = 0;
+		if (DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer,
+			MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dummy, NULL)) {
+			REPARSE_DATA_BUFFER *b = (REPARSE_DATA_BUFFER *) buffer;
+			if (b->ReparseTag == IO_REPARSE_TAG_SYMLINK) {
+				int len = b->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(wchar_t);
+				int offset = b->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(wchar_t);
+				snprintf(buf, bufsiz, "%*ls", len,  & b->SymbolicLinkReparseBuffer.PathBuffer[offset]);
+				CloseHandle(handle);
+				return len;
+			}
+		}
+
+		CloseHandle(handle);
+	}
+
+	errno = EINVAL;
+	return -1;
+}
+
 char *getpass(const char *prompt)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -1441,8 +1515,10 @@ struct dirent *mingw_readdir(DIR *dir)
 		DWORD lasterr = GetLastError();
 		FindClose((HANDLE)dir->dd_handle);
 		dir->dd_handle = (long)INVALID_HANDLE_VALUE;
-		/* POSIX says you shouldn't set errno when readdir can't
-		   find any more files; so, if another error we leave it set. */
+		/*
+		 * POSIX says you shouldn't set errno when readdir can't
+		 * find any more files; so, if another error we leave it set.
+		 */
 		if (lasterr != ERROR_NO_MORE_FILES)
 			errno = err_win_to_posix(lasterr);
 		return NULL;
@@ -1454,7 +1530,10 @@ struct dirent *mingw_readdir(DIR *dir)
 
 	/* Set file type, based on WIN32_FIND_DATA */
 	mdir->dd_dir.d_type = 0;
-	if (buf.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	if ((buf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+			(buf.dwReserved0 == IO_REPARSE_TAG_SYMLINK))
+		mdir->dd_dir.d_type |= DT_LNK;
+	else if (buf.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		mdir->dd_dir.d_type |= DT_DIR;
 	else
 		mdir->dd_dir.d_type |= DT_REG;
