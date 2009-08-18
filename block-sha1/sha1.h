@@ -5,9 +5,9 @@
  */
 
 typedef struct {
+	unsigned long long size;
 	unsigned int H[5];
 	unsigned int W[16];
-	unsigned long long size;
 } blk_SHA_CTX;
 
 void blk_SHA1_Init(blk_SHA_CTX *ctx);
