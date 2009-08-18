@@ -67,7 +67,7 @@ int start_command(struct child_process *cmd)
 
 	trace_argv_printf(cmd->argv, "trace: run_command:");
 
-#ifndef __MINGW32__
+#ifndef WIN32
 	fflush(NULL);
 	cmd->pid = fork();
 	if (!cmd->pid) {
@@ -294,7 +294,7 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 	return run_command(&cmd);
 }
 
-#ifdef __MINGW32__
+#ifdef WIN32
 static __stdcall unsigned run_thread(void *data)
 {
 	struct async *async = data;
@@ -310,7 +310,7 @@ int start_async(struct async *async)
 		return error("cannot create pipe: %s", strerror(errno));
 	async->out = pipe_out[0];
 
-#ifndef __MINGW32__
+#ifndef WIN32
 	/* Flush stdio before fork() to avoid cloning buffers */
 	fflush(NULL);
 
@@ -339,7 +339,7 @@ int start_async(struct async *async)
 
 int finish_async(struct async *async)
 {
-#ifndef __MINGW32__
+#ifndef WIN32
 	int ret = 0;
 
 	if (wait_or_whine(async->pid))
