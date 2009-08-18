@@ -72,8 +72,16 @@ These objects may be removed by normal git operations (such as 'git-commit')
 which automatically call `git gc --auto`. (See linkgit:git-gc[1].)
 If these objects are removed and were referenced by the cloned repository,
 then the cloned repository will become corrupt.
-
-
++
+Note that running `git repack` without the `-l` option in a repository
+cloned with `-s` will copy objects from the source repository into a pack
+in the cloned repository, removing the disk space savings of `clone -s`.
+It is safe, however, to run `git gc`, which uses the `-l` option by
+default.
++
+If you want to break the dependency of a repository cloned with `-s` on
+its source repository, you can simply run `git repack -a` to copy all
+objects from the source repository into a pack in the cloned repository.
 
 --reference <repository>::
 	If the reference repository is on the local machine
