@@ -23,7 +23,7 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 }
 
 static const char * const merge_base_usage[] = {
-	"git merge-base [--all] <commit-id> <commit-id>...",
+	"git merge-base [-a|--all] <commit> <commit>...",
 	NULL
 };
 

@@ -1,0 +1,51 @@
+GIT v1.6.5 Release Notes
+========================
+
+In git 1.7.0, which is planned to be the release after 1.6.5, "git push"
+into a branch that is currently checked out will be refused by default.
+
+You can choose what should happen upon such a push by setting the
+configuration variable receive.denyCurrentBranch in the receiving
+repository.
+
+Also, "git push $there :$killed" to delete the branch $killed in a remote
+repository $there, when $killed branch is the current branch pointed at by
+its HEAD, will be refused by default.
+
+You can choose what should happen upon such a push by setting the
+configuration variable receive.denyDeleteCurrent in the receiving
+repository.
+
+To ease the transition plan, the receiving repository of such a
+push running this release will issue a big warning when the
+configuration variable is missing.  Please refer to:
+
+  http://git.or.cz/gitwiki/GitFaq#non-bare
+  http://thread.gmane.org/gmane.comp.version-control.git/107758/focus=108007
+
+for more details on the reason why this change is needed and the
+transition plan.
+
+Updates since v1.6.4
+--------------------
+
+(subsystems)
+
+(portability)
+
+(performance)
+
+(usability, bells and whistles)
+
+(developers)
+
+Fixes since v1.6.4
+------------------
+
+# All of the fixes in v1.6.4.X maintenance series are included in this
+# release, unless otherwise noted.
+
+# Here are fixes that this release has, but have not been backported to
+# v1.6.4.X series.
+
+

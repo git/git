@@ -429,16 +429,19 @@ Each entry is a cons of (SHORT-NAME . FULL-NAME)."
     (git-get-string-sha1
      (git-call-process-string-display-error "write-tree"))))
 
-(defun git-commit-tree (buffer tree head)
-  "Call git-commit-tree with buffer as input and return the resulting commit SHA1."
+(defun git-commit-tree (buffer tree parent)
+  "Create a commit and possibly update HEAD.
+Create a commit with the message in BUFFER using the tree with hash TREE.
+Use PARENT as the parent of the new commit. If PARENT is the current \"HEAD\",
+update the \"HEAD\" reference to the new commit."
   (let ((author-name (git-get-committer-name))
         (author-email (git-get-committer-email))
         (subject "commit (initial): ")
         author-date log-start log-end args coding-system-for-write)
-    (when head
+    (when parent
       (setq subject "commit: ")
       (push "-p" args)
-      (push head args))
+      (push parent args))
     (with-current-buffer buffer
       (goto-char (point-min))
       (if
@@ -474,7 +477,7 @@ Each entry is a cons of (SHORT-NAME . FULL-NAME)."
               (apply #'git-run-command-region
                      buffer log-start log-end env
                      "commit-tree" tree (nreverse args))))))
-      (when commit (git-update-ref "HEAD" commit head subject))
+      (when commit (git-update-ref "HEAD" commit parent subject))
       commit)))
 
 (defun git-empty-db-p ()

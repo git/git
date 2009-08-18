@@ -14,7 +14,7 @@ if ! test_have_prereq PERL; then
 fi
 
 GIT_DIR=$PWD/.git
-GIT_SVN_DIR=$GIT_DIR/svn/git-svn
+GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
 
 svn >/dev/null 2>&1

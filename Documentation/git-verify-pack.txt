@@ -8,7 +8,7 @@ git-verify-pack - Validate packed git archive files
 
 SYNOPSIS
 --------
-'git verify-pack' [-v] [--] <pack>.idx ...
+'git verify-pack' [-v|--verbose] [--] <pack>.idx ...
 
 
 DESCRIPTION
@@ -23,6 +23,7 @@ OPTIONS
 	The idx files to verify.
 
 -v::
+--verbose::
 	After verifying the pack, show list of objects contained
 	in the pack.
 \--::

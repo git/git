@@ -25,13 +25,17 @@ test_expect_success setup '
 		echo foo mmap bar_mmap
 		echo foo_mmap bar mmap baz
 	} >file &&
+	echo vvv >v &&
 	echo ww w >w &&
 	echo x x xx x >x &&
 	echo y yy >y &&
 	echo zzz > z &&
 	mkdir t &&
 	echo test >t/t &&
-	git add file w x y z t/t hello.c &&
+	echo vvv >t/v &&
+	mkdir t/a &&
+	echo vvv >t/a/v &&
+	git add . &&
 	test_tick &&
 	git commit -m initial
 '
@@ -131,6 +135,51 @@ do
 	test_expect_success "grep -c $L (no /dev/null)" '
 		! git grep -c test $H | grep /dev/null
         '
+
+	test_expect_success "grep --max-depth -1 $L" '
+		{
+			echo ${HC}t/a/v:1:vvv
+			echo ${HC}t/v:1:vvv
+			echo ${HC}v:1:vvv
+		} >expected &&
+		git grep --max-depth -1 -n -e vvv $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep --max-depth 0 $L" '
+		{
+			echo ${HC}v:1:vvv
+		} >expected &&
+		git grep --max-depth 0 -n -e vvv $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep --max-depth 0 -- '*' $L" '
+		{
+			echo ${HC}t/a/v:1:vvv
+			echo ${HC}t/v:1:vvv
+			echo ${HC}v:1:vvv
+		} >expected &&
+		git grep --max-depth 0 -n -e vvv $H -- "*" >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep --max-depth 1 $L" '
+		{
+			echo ${HC}t/v:1:vvv
+			echo ${HC}v:1:vvv
+		} >expected &&
+		git grep --max-depth 1 -n -e vvv $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep --max-depth 0 -- t $L" '
+		{
+			echo ${HC}t/v:1:vvv
+		} >expected &&
+		git grep --max-depth 0 -n -e vvv $H -- t >actual &&
+		test_cmp expected actual
+	'
 
 done
 

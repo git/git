@@ -327,7 +327,7 @@ Synching repositories
 
 include::cmds-synchingrepositories.txt[]
 
-The following are helper programs used by the above; end users
+The following are helper commands used by the above; end users
 typically do not use them directly.
 
 include::cmds-synchelpers.txt[]

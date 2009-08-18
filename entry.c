@@ -175,6 +175,19 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 	return 0;
 }
 
+/*
+ * This is like 'lstat()', except it refuses to follow symlinks
+ * in the path.
+ */
+int check_path(const char *path, int len, struct stat *st)
+{
+	if (has_symlink_leading_path(path, len)) {
+		errno = ENOENT;
+		return -1;
+	}
+	return lstat(path, st);
+}
+
 int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath)
 {
 	static char path[PATH_MAX + 1];
@@ -188,7 +201,7 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *t
 	strcpy(path + len, ce->name);
 	len += ce_namelen(ce);
 
-	if (!lstat(path, &st)) {
+	if (!check_path(path, len, &st)) {
 		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID);
 		if (!changed)
 			return 0;

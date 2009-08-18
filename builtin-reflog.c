@@ -694,7 +694,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
  */
 
 static const char reflog_usage[] =
-"git reflog (expire | ...)";
+"git reflog [ show | expire | delete ]";
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {

@@ -36,6 +36,7 @@ enum parse_opt_option_flags {
 	PARSE_OPT_LASTARG_DEFAULT = 16,
 	PARSE_OPT_NODASH = 32,
 	PARSE_OPT_LITERAL_ARGHELP = 64,
+	PARSE_OPT_NEGHELP = 128,
 };
 
 struct option;
@@ -80,6 +81,9 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *   PARSE_OPT_LITERAL_ARGHELP: says that argh shouldn't be enclosed in brackets
  *				(i.e. '<argh>') in the help message.
  *				Useful for options with multiple parameters.
+ *   PARSE_OPT_NEGHELP: says that the long option should always be shown with
+ *				the --no prefix in the usage message. Sometimes
+ *				useful for users of OPTION_NEGBIT.
  *
  * `callback`::
  *   pointer to the callback to use for OPTION_CALLBACK.

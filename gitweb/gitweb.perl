@@ -940,10 +940,13 @@ sub href {
 			if (defined $params{'hash_parent_base'}) {
 				$href .= esc_url($params{'hash_parent_base'});
 				# skip the file_parent if it's the same as the file_name
-				delete $params{'file_parent'} if $params{'file_parent'} eq $params{'file_name'};
-				if (defined $params{'file_parent'} && $params{'file_parent'} !~ /\.\./) {
-					$href .= ":/".esc_url($params{'file_parent'});
-					delete $params{'file_parent'};
+				if (defined $params{'file_parent'}) {
+					if (defined $params{'file_name'} && $params{'file_parent'} eq $params{'file_name'}) {
+						delete $params{'file_parent'};
+					} elsif ($params{'file_parent'} !~ /\.\./) {
+						$href .= ":/".esc_url($params{'file_parent'});
+						delete $params{'file_parent'};
+					}
 				}
 				$href .= "..";
 				delete $params{'hash_parent'};
@@ -2570,7 +2573,7 @@ sub parse_commit_text {
 		} elsif ((!defined $withparents) && ($line =~ m/^parent ([0-9a-fA-F]{40})$/)) {
 			push @parents, $1;
 		} elsif ($line =~ m/^author (.*) ([0-9]+) (.*)$/) {
-			$co{'author'} = $1;
+			$co{'author'} = to_utf8($1);
 			$co{'author_epoch'} = $2;
 			$co{'author_tz'} = $3;
 			if ($co{'author'} =~ m/^([^<]+) <([^>]*)>/) {
@@ -2580,10 +2583,9 @@ sub parse_commit_text {
 				$co{'author_name'} = $co{'author'};
 			}
 		} elsif ($line =~ m/^committer (.*) ([0-9]+) (.*)$/) {
-			$co{'committer'} = $1;
+			$co{'committer'} = to_utf8($1);
 			$co{'committer_epoch'} = $2;
 			$co{'committer_tz'} = $3;
-			$co{'committer_name'} = $co{'committer'};
 			if ($co{'committer'} =~ m/^([^<]+) <([^>]*)>/) {
 				$co{'committer_name'}  = $1;
 				$co{'committer_email'} = $2;
@@ -4801,7 +4803,7 @@ sub git_blame {
 	git_print_page_path($file_name, $ftype, $hash_base);
 
 	# page body
-	my @rev_color = qw(light2 dark2);
+	my @rev_color = qw(light dark);
 	my $num_colors = scalar(@rev_color);
 	my $current_color = 0;
 	my %metainfo = ();
@@ -4819,15 +4821,18 @@ HTML
 		my ($full_rev, $orig_lineno, $lineno, $group_size) =
 		   ($line =~ /^([0-9a-f]{40}) (\d+) (\d+)(?: (\d+))?$/);
 		if (!exists $metainfo{$full_rev}) {
-			$metainfo{$full_rev} = {};
+			$metainfo{$full_rev} = { 'nprevious' => 0 };
 		}
 		my $meta = $metainfo{$full_rev};
 		my $data;
 		while ($data = <$fd>) {
 			chomp $data;
 			last if ($data =~ s/^\t//); # contents of line
-			if ($data =~ /^(\S+) (.*)$/) {
-				$meta->{$1} = $2;
+			if ($data =~ /^(\S+)(?: (.*))?$/) {
+				$meta->{$1} = $2 unless exists $meta->{$1};
+			}
+			if ($data =~ /^previous /) {
+				$meta->{'nprevious'}++;
 			}
 		}
 		my $short_rev = substr($full_rev, 0, 8);
@@ -4838,7 +4843,11 @@ HTML
 		if ($group_size) {
 			$current_color = ($current_color + 1) % $num_colors;
 		}
-		print "<tr id=\"l$lineno\" class=\"$rev_color[$current_color]\">\n";
+		my $tr_class = $rev_color[$current_color];
+		$tr_class .= ' boundary' if (exists $meta->{'boundary'});
+		$tr_class .= ' no-previous' if ($meta->{'nprevious'} == 0);
+		$tr_class .= ' multiple-previous' if ($meta->{'nprevious'} > 1);
+		print "<tr id=\"l$lineno\" class=\"$tr_class\">\n";
 		if ($group_size) {
 			print "<td class=\"sha1\"";
 			print " title=\"". esc_html($author) . ", $date\"";
@@ -4848,22 +4857,31 @@ HTML
 			                             hash=>$full_rev,
 			                             file_name=>$file_name)},
 			              esc_html($short_rev));
+			if ($group_size >= 2) {
+				my @author_initials = ($author =~ /\b([[:upper:]])\B/g);
+				if (@author_initials) {
+					print "<br />" .
+					      esc_html(join('', @author_initials));
+					#           or join('.', ...)
+				}
+			}
 			print "</td>\n";
 		}
-		my $parent_commit;
-		if (!exists $meta->{'parent'}) {
-			open (my $dd, "-|", git_cmd(), "rev-parse", "$full_rev^")
-				or die_error(500, "Open git-rev-parse failed");
-			$parent_commit = <$dd>;
-			close $dd;
-			chomp($parent_commit);
-			$meta->{'parent'} = $parent_commit;
-		} else {
-			$parent_commit = $meta->{'parent'};
+		# 'previous' <sha1 of parent commit> <filename at commit>
+		if (exists $meta->{'previous'} &&
+		    $meta->{'previous'} =~ /^([a-fA-F0-9]{40}) (.*)$/) {
+			$meta->{'parent'} = $1;
+			$meta->{'file_parent'} = unquote($2);
 		}
+		my $linenr_commit =
+			exists($meta->{'parent'}) ?
+			$meta->{'parent'} : $full_rev;
+		my $linenr_filename =
+			exists($meta->{'file_parent'}) ?
+			$meta->{'file_parent'} : unquote($meta->{'filename'});
 		my $blamed = href(action => 'blame',
-		                  file_name => $meta->{'filename'},
-		                  hash_base => $parent_commit);
+		                  file_name => $linenr_filename,
+		                  hash_base => $linenr_commit);
 		print "<td class=\"linenr\">";
 		print $cgi->a({ -href => "$blamed#l$orig_lineno",
 		                -class => "linenr" },

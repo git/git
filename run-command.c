@@ -19,6 +19,7 @@ int start_command(struct child_process *cmd)
 {
 	int need_in, need_out, need_err;
 	int fdin[2], fdout[2], fderr[2];
+	int failed_errno = failed_errno;
 
 	/*
 	 * In case of errors we must keep the promise to close FDs
@@ -28,9 +29,10 @@ int start_command(struct child_process *cmd)
 	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
 		if (pipe(fdin) < 0) {
+			failed_errno = errno;
 			if (cmd->out > 0)
 				close(cmd->out);
-			return -ERR_RUN_COMMAND_PIPE;
+			goto fail_pipe;
 		}
 		cmd->in = fdin[1];
 	}
@@ -40,11 +42,12 @@ int start_command(struct child_process *cmd)
 		&& cmd->out < 0;
 	if (need_out) {
 		if (pipe(fdout) < 0) {
+			failed_errno = errno;
 			if (need_in)
 				close_pair(fdin);
 			else if (cmd->in)
 				close(cmd->in);
-			return -ERR_RUN_COMMAND_PIPE;
+			goto fail_pipe;
 		}
 		cmd->out = fdout[0];
 	}
@@ -52,6 +55,7 @@ int start_command(struct child_process *cmd)
 	need_err = !cmd->no_stderr && cmd->err < 0;
 	if (need_err) {
 		if (pipe(fderr) < 0) {
+			failed_errno = errno;
 			if (need_in)
 				close_pair(fdin);
 			else if (cmd->in)
@@ -60,7 +64,11 @@ int start_command(struct child_process *cmd)
 				close_pair(fdout);
 			else if (cmd->out)
 				close(cmd->out);
-			return -ERR_RUN_COMMAND_PIPE;
+fail_pipe:
+			error("cannot create pipe for %s: %s",
+				cmd->argv[0], strerror(failed_errno));
+			errno = failed_errno;
+			return -1;
 		}
 		cmd->err = fderr[0];
 	}
@@ -122,6 +130,9 @@ int start_command(struct child_process *cmd)
 				strerror(errno));
 		exit(127);
 	}
+	if (cmd->pid < 0)
+		error("cannot fork() for %s: %s", cmd->argv[0],
+			strerror(failed_errno = errno));
 #else
 	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
 	const char **sargv = cmd->argv;
@@ -173,6 +184,9 @@ int start_command(struct child_process *cmd)
 	}
 
 	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
+	failed_errno = errno;
+	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
+		error("cannot spawn %s: %s", cmd->argv[0], strerror(errno));
 
 	if (cmd->env)
 		free_environ(env);
@@ -189,7 +203,6 @@ int start_command(struct child_process *cmd)
 #endif
 
 	if (cmd->pid < 0) {
-		int err = errno;
 		if (need_in)
 			close_pair(fdin);
 		else if (cmd->in)
@@ -200,9 +213,8 @@ int start_command(struct child_process *cmd)
 			close(cmd->out);
 		if (need_err)
 			close_pair(fderr);
-		return err == ENOENT ?
-			-ERR_RUN_COMMAND_EXEC :
-			-ERR_RUN_COMMAND_FORK;
+		errno = failed_errno;
+		return -1;
 	}
 
 	if (need_in)
@@ -221,40 +233,51 @@ int start_command(struct child_process *cmd)
 	return 0;
 }
 
-static int wait_or_whine(pid_t pid)
+static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
 {
-	for (;;) {
-		int status, code;
-		pid_t waiting = waitpid(pid, &status, 0);
+	int status, code = -1;
+	pid_t waiting;
+	int failed_errno = 0;
 
-		if (waiting < 0) {
-			if (errno == EINTR)
-				continue;
-			error("waitpid failed (%s)", strerror(errno));
-			return -ERR_RUN_COMMAND_WAITPID;
-		}
-		if (waiting != pid)
-			return -ERR_RUN_COMMAND_WAITPID_WRONG_PID;
-		if (WIFSIGNALED(status))
-			return -ERR_RUN_COMMAND_WAITPID_SIGNAL;
+	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
+		;	/* nothing */
 
-		if (!WIFEXITED(status))
-			return -ERR_RUN_COMMAND_WAITPID_NOEXIT;
+	if (waiting < 0) {
+		failed_errno = errno;
+		error("waitpid for %s failed: %s", argv0, strerror(errno));
+	} else if (waiting != pid) {
+		error("waitpid is confused (%s)", argv0);
+	} else if (WIFSIGNALED(status)) {
+		code = WTERMSIG(status);
+		error("%s died of signal %d", argv0, code);
+		/*
+		 * This return value is chosen so that code & 0xff
+		 * mimics the exit code that a POSIX shell would report for
+		 * a program that died from this signal.
+		 */
+		code -= 128;
+	} else if (WIFEXITED(status)) {
 		code = WEXITSTATUS(status);
-		switch (code) {
-		case 127:
-			return -ERR_RUN_COMMAND_EXEC;
-		case 0:
-			return 0;
-		default:
-			return -code;
+		/*
+		 * Convert special exit code when execvp failed.
+		 */
+		if (code == 127) {
+			code = -1;
+			failed_errno = ENOENT;
+			if (!silent_exec_failure)
+				error("cannot run %s: %s", argv0,
+					strerror(ENOENT));
 		}
+	} else {
+		error("waitpid is confused (%s)", argv0);
 	}
+	errno = failed_errno;
+	return code;
 }
 
 int finish_command(struct child_process *cmd)
 {
-	return wait_or_whine(cmd->pid);
+	return wait_or_whine(cmd->pid, cmd->argv[0], cmd->silent_exec_failure);
 }
 
 int run_command(struct child_process *cmd)
@@ -274,6 +297,7 @@ static void prepare_run_command_v_opt(struct child_process *cmd,
 	cmd->no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
 	cmd->git_cmd = opt & RUN_GIT_CMD ? 1 : 0;
 	cmd->stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
+	cmd->silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
 }
 
 int run_command_v_opt(const char **argv, int opt)
@@ -338,10 +362,7 @@ int start_async(struct async *async)
 int finish_async(struct async *async)
 {
 #ifndef __MINGW32__
-	int ret = 0;
-
-	if (wait_or_whine(async->pid))
-		ret = error("waitpid (async) failed");
+	int ret = wait_or_whine(async->pid, "child process", 0);
 #else
 	DWORD ret = 0;
 	if (WaitForSingleObject(async->tid, INFINITE) != WAIT_OBJECT_0)
@@ -385,15 +406,7 @@ int run_hook(const char *index_file, const char *name, ...)
 		hook.env = env;
 	}
 
-	ret = start_command(&hook);
+	ret = run_command(&hook);
 	free(argv);
-	if (ret) {
-		warning("Could not spawn %s", argv[0]);
-		return ret;
-	}
-	ret = finish_command(&hook);
-	if (ret == -ERR_RUN_COMMAND_WAITPID_SIGNAL)
-		warning("%s exited due to uncaught signal", argv[0]);
-
 	return ret;
 }

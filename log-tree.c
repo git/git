@@ -168,18 +168,6 @@ static unsigned int digits_in_number(unsigned int number)
 	return result;
 }
 
-static int has_non_ascii(const char *s)
-{
-	int ch;
-	if (!s)
-		return 0;
-	while ((ch = *s++) != '\0') {
-		if (non_ascii(ch))
-			return 1;
-	}
-	return 0;
-}
-
 void get_patch_filename(struct commit *commit, int nr, const char *suffix,
 			struct strbuf *buf)
 {

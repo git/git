@@ -511,7 +511,7 @@ static int usage_with_options_internal(const char * const *usagestr,
 			continue;
 
 		pos = fprintf(stderr, "    ");
-		if (opts->short_name) {
+		if (opts->short_name && !(opts->flags & PARSE_OPT_NEGHELP)) {
 			if (opts->flags & PARSE_OPT_NODASH)
 				pos += fprintf(stderr, "%c", opts->short_name);
 			else
@@ -520,7 +520,9 @@ static int usage_with_options_internal(const char * const *usagestr,
 		if (opts->long_name && opts->short_name)
 			pos += fprintf(stderr, ", ");
 		if (opts->long_name)
-			pos += fprintf(stderr, "--%s", opts->long_name);
+			pos += fprintf(stderr, "--%s%s",
+				(opts->flags & PARSE_OPT_NEGHELP) ?  "no-" : "",
+				opts->long_name);
 		if (opts->type == OPTION_NUMBER)
 			pos += fprintf(stderr, "-NUM");
 

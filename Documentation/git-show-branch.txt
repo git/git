@@ -8,11 +8,12 @@ git-show-branch - Show branches and their commits
 SYNOPSIS
 --------
 [verse]
-'git show-branch' [--all] [--remotes] [--topo-order | --date-order]
-		[--current] [--color | --no-color]
+'git show-branch' [-a|--all] [-r|--remotes] [--topo-order | --date-order]
+		[--current] [--color | --no-color] [--sparse]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics]
 		[<rev> | <glob>]...
+
 'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
 DESCRIPTION
@@ -81,9 +82,11 @@ OPTIONS
 	Synonym to `--more=-1`
 
 --merge-base::
-	Instead of showing the commit list, just act like the
-	'git-merge-base -a' command, except that it can accept
-	more than two heads.
+	Instead of showing the commit list, determine possible
+	merge bases for the specified commits. All merge bases
+	will be contained in all specified commits. This is
+	different from how linkgit:git-merge-base[1] handles
+	the case of three or more commits.
 
 --independent::
 	Among the <reference>s given, display only the ones that

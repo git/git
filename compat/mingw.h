@@ -17,9 +17,10 @@ typedef int pid_t;
 #define S_IROTH 0
 #define S_IXOTH 0
 
-#define WIFEXITED(x) ((unsigned)(x) < 259)	/* STILL_ACTIVE */
+#define WIFEXITED(x) 1
+#define WIFSIGNALED(x) 0
 #define WEXITSTATUS(x) ((x) & 0xff)
-#define WIFSIGNALED(x) ((unsigned)(x) > 259)
+#define WTERMSIG(x) SIGTERM
 
 #define SIGHUP 1
 #define SIGQUIT 3

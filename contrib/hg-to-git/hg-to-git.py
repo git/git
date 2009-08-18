@@ -20,7 +20,7 @@
 """
 
 import os, os.path, sys
-import tempfile, popen2, pickle, getopt
+import tempfile, pickle, getopt
 import re
 
 # Maps hg version -> git version

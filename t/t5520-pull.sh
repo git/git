@@ -117,6 +117,19 @@ test_expect_success '--rebase with rebased default upstream' '
 
 '
 
+test_expect_success 'rebased upstream + fetch + pull --rebase' '
+
+	git update-ref refs/remotes/me/copy copy-orig &&
+	git reset --hard to-rebase-orig &&
+	git checkout --track -b to-rebase3 me/copy &&
+	git reset --hard to-rebase-orig &&
+	git fetch &&
+	git pull --rebase &&
+	test "conflicting modification" = "$(cat file)" &&
+	test file = "$(cat file2)"
+
+'
+
 test_expect_success 'pull --rebase dies early with dirty working directory' '
 
 	git checkout to-rebase &&
@@ -134,6 +147,17 @@ test_expect_success 'pull --rebase dies early with dirty working directory' '
 	git pull &&
 	test $COPY != $(git rev-parse --verify me/copy)
 
+'
+
+test_expect_success 'pull --rebase works on branch yet to be born' '
+	git rev-parse master >expect &&
+	mkdir empty_repo &&
+	(cd empty_repo &&
+	 git init &&
+	 git pull --rebase .. master &&
+	 git rev-parse HEAD >../actual
+	) &&
+	test_cmp expect actual
 '
 
 test_done

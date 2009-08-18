@@ -380,4 +380,43 @@ test_expect_success 'removal failure' '
 '
 chmod 755 foo
 
+test_expect_success 'nested git work tree' '
+	rm -fr foo bar &&
+	mkdir foo bar &&
+	(
+		cd foo &&
+		git init &&
+		>hello.world
+		git add . &&
+		git commit -a -m nested
+	) &&
+	(
+		cd bar &&
+		>goodbye.people
+	) &&
+	git clean -f -d &&
+	test -f foo/.git/index &&
+	test -f foo/hello.world &&
+	! test -d bar
+'
+
+test_expect_success 'force removal of nested git work tree' '
+	rm -fr foo bar &&
+	mkdir foo bar &&
+	(
+		cd foo &&
+		git init &&
+		>hello.world
+		git add . &&
+		git commit -a -m nested
+	) &&
+	(
+		cd bar &&
+		>goodbye.people
+	) &&
+	git clean -f -f -d &&
+	! test -d foo &&
+	! test -d bar
+'
+
 test_done

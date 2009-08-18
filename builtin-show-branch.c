@@ -6,8 +6,8 @@
 #include "parse-options.h"
 
 static const char* show_branch_usage[] = {
-    "git show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base] [--topics] [--color] [<refs>...]",
-    "--reflog[=n[,b]] [--list] [--color] <branch>",
+    "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [<rev> | <glob>]...",
+    "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]",
     NULL
 };
 
@@ -665,7 +665,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		OPT_BOOLEAN(0, "sha1-name", &sha1_name,
 			    "name commits with their object names"),
 		OPT_BOOLEAN(0, "merge-base", &merge_base,
-			    "act like git merge-base -a"),
+			    "show possible merge bases"),
 		OPT_BOOLEAN(0, "independent", &independent,
 			    "show refs unreachable from any other ref"),
 		OPT_BOOLEAN(0, "topo-order", &lifo,
