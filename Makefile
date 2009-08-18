@@ -16,7 +16,7 @@ all::
 # when attempting to read from an fopen'ed directory.
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# This also implies MOZILLA_SHA1.
+# This also implies BLK_SHA1.
 #
 # Define NO_CURL if you do not have libcurl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
@@ -90,14 +90,6 @@ all::
 #
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
-#
-# Define ARM_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine optimized for ARM.
-#
-# Define MOZILLA_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine coming from Mozilla. It is GPL'd and should be fast
-# on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
-# choice) has very fast version optimized for i586.
 #
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
 #
@@ -926,10 +918,6 @@ else
 	NO_PTHREADS = YesPlease
 endif
 endif
-ifneq (,$(findstring arm,$(uname_M)))
-	ARM_SHA1 = YesPlease
-	NO_MKSTEMPS = YesPlease
-endif
 
 -include config.mak.autogen
 -include config.mak
@@ -1022,7 +1010,7 @@ ifndef NO_OPENSSL
 	endif
 else
 	BASIC_CFLAGS += -DNO_OPENSSL
-	MOZILLA_SHA1 = 1
+	BLK_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
 ifdef NEEDS_SSL_WITH_CRYPTO
@@ -1179,18 +1167,8 @@ ifdef PPC_SHA1
 	SHA1_HEADER = "ppc/sha1.h"
 	LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
 else
-ifdef ARM_SHA1
-	SHA1_HEADER = "arm/sha1.h"
-	LIB_OBJS += arm/sha1.o arm/sha1_arm.o
-else
-ifdef MOZILLA_SHA1
-	SHA1_HEADER = "mozilla-sha1/sha1.h"
-	LIB_OBJS += mozilla-sha1/sha1.o
-else
 	SHA1_HEADER = <openssl/sha.h>
 	EXTLIBS += $(LIB_4_CRYPTO)
-endif
-endif
 endif
 endif
 ifdef NO_PERL_MAKEMAKER

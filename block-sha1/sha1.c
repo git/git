@@ -1,7 +1,9 @@
 /*
- * Based on the Mozilla SHA1 (see mozilla-sha1/sha1.c),
- * optimized to do word accesses rather than byte accesses,
+ * SHA1 routine optimized to do word accesses rather than byte accesses,
  * and to avoid unnecessary copies into the context array.
+ *
+ * This was initially based on the Mozilla SHA1 implementation, although
+ * none of the original Mozilla code remains.
  */
 
 /* this is only to get definitions for memcpy(), ntohl() and htonl() */
