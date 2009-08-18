@@ -8,7 +8,6 @@ USAGE="list [<options>]
    or: $dashless ( pop | apply ) [--index] [-q|--quiet] [<stash>]
    or: $dashless branch <branchname> [<stash>]
    or: $dashless [save [-k|--keep-index] [-q|--quiet] [<message>]]
-   or: $dashless [-k|--keep-index]
    or: $dashless clear"
 
 SUBDIRECTORY_OK=Yes
@@ -145,6 +144,14 @@ save_stash () {
 			;;
 		-q|--quiet)
 			GIT_QUIET=t
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			echo "error: unknown option for 'stash save': $1"
+			usage
 			;;
 		*)
 			break
@@ -355,6 +362,18 @@ apply_to_branch () {
 	drop_stash $stash
 }
 
+# The default command is "save" if nothing but options are given
+seen_non_option=
+for opt
+do
+	case "$opt" in
+	-*) ;;
+	*) seen_non_option=t; break ;;
+	esac
+done
+
+test -n "$seen_non_option" || set "save" "$@"
+
 # Main command set
 case "$1" in
 list)
@@ -406,9 +425,9 @@ branch)
 	apply_to_branch "$@"
 	;;
 *)
-	case $#,"$1","$2" in
-	0,,|1,-k,|1,--keep-index,|1,-p,|1,--patch,|2,-p,--no-keep-index|2,--patch,--no-keep-index)
-		save_stash "$@" &&
+	case $# in
+	0)
+		save_stash &&
 		say '(To restore them type "git stash apply")'
 		;;
 	*)
