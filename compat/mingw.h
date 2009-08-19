@@ -80,7 +80,7 @@ static inline int getppid(void)
 { return 1; }
 static inline void sync(void)
 {}
-static inline int getuid()
+static inline int getuid(void)
 { return 1; }
 static inline struct passwd *getpwnam(const char *name)
 { return NULL; }
