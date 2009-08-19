@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git submodule' [--quiet] add [-b branch]
 	      [--reference <repository>] [--] <repository> <path>
-'git submodule' [--quiet] status [--cached] [--] [<path>...]
+'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
 	      [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
@@ -100,6 +100,9 @@ status::
 	initialized and `+` if the currently checked out submodule commit
 	does not match the SHA-1 found in the index of the containing
 	repository. This command is the default command for 'git-submodule'.
++
+If '--recursive' is specified, this command will recurse into nested
+submodules, and show their status as well.
 
 init::
 	Initialize the submodules, i.e. register each submodule name
@@ -216,7 +219,7 @@ OPTIONS
 for linkgit:git-clone[1]'s --reference and --shared options carefully.
 
 --recursive::
-	This option is only valid for foreach and update commands.
+	This option is only valid for foreach, update and status commands.
 	Traverse submodules recursively. The operation is performed not
 	only in the submodules of the current repo, but also
 	in any nested submodules inside those submodules (and so on).

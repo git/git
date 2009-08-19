@@ -194,4 +194,30 @@ test_expect_success 'use "update --recursive" to checkout all submodules' '
 	)
 '
 
+nested1sha1=$(cd clone3/nested1 && git rev-parse HEAD)
+nested2sha1=$(cd clone3/nested1/nested2 && git rev-parse HEAD)
+nested3sha1=$(cd clone3/nested1/nested2/nested3 && git rev-parse HEAD)
+submodulesha1=$(cd clone3/nested1/nested2/nested3/submodule && git rev-parse HEAD)
+sub1sha1=$(cd clone3/sub1 && git rev-parse HEAD)
+sub2sha1=$(cd clone3/sub2 && git rev-parse HEAD)
+sub3sha1=$(cd clone3/sub3 && git rev-parse HEAD)
+
+cat > expect <<EOF
+ $nested1sha1 nested1 (heads/master)
+ $nested2sha1 nested1/nested2 (heads/master)
+ $nested3sha1 nested1/nested2/nested3 (heads/master)
+ $submodulesha1 nested1/nested2/nested3/submodule (heads/master)
+ $sub1sha1 sub1 (${sub1sha1:0:7})
+ $sub2sha1 sub2 (${sub1sha1:0:7})
+ $sub3sha1 sub3 (heads/master)
+EOF
+
+test_expect_success 'test "status --recursive"' '
+	(
+		cd clone3 &&
+		git submodule status --recursive > ../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_done

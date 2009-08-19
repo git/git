@@ -6,7 +6,7 @@
 
 dashless=$(basename "$0" | sed -e 's/-/ /')
 USAGE="[--quiet] add [-b branch] [--reference <repository>] [--] <repository> <path>
-   or: $dashless [--quiet] status [--cached] [--] [<path>...]
+   or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] summary [--cached] [--summary-limit <n>] [commit] [--] [<path>...]
@@ -690,6 +690,7 @@ cmd_summary() {
 cmd_status()
 {
 	# parse $args after "submodule ... status".
+	orig_args="$@"
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -698,6 +699,9 @@ cmd_status()
 			;;
 		--cached)
 			cached=1
+			;;
+		--recursive)
+			recursive=1
 			;;
 		--)
 			shift
@@ -718,22 +722,34 @@ cmd_status()
 	do
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
+		displaypath="$prefix$path"
 		if test -z "$url" || ! test -d "$path"/.git -o -f "$path"/.git
 		then
-			say "-$sha1 $path"
+			say "-$sha1 $displaypath"
 			continue;
 		fi
 		set_name_rev "$path" "$sha1"
 		if git diff-files --quiet -- "$path"
 		then
-			say " $sha1 $path$revname"
+			say " $sha1 $displaypath$revname"
 		else
 			if test -z "$cached"
 			then
 				sha1=$(unset GIT_DIR; cd "$path" && git rev-parse --verify HEAD)
 				set_name_rev "$path" "$sha1"
 			fi
-			say "+$sha1 $path$revname"
+			say "+$sha1 $displaypath$revname"
+		fi
+
+		if test -n "$recursive"
+		then
+			(
+				prefix="$displaypath/"
+				unset GIT_DIR
+				cd "$path" &&
+				cmd_status $orig_args
+			) ||
+			die "Failed to recurse into submodule path '$path'"
 		fi
 	done
 }
