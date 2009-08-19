@@ -719,7 +719,9 @@ void append_remote_object_url(struct strbuf *buf, const char *url,
 			      const char *hex,
 			      int only_two_digit_prefix)
 {
-	strbuf_addf(buf, "%s/objects/%.*s/", url, 2, hex);
+	end_url_with_slash(buf, url);
+
+	strbuf_addf(buf, "objects/%.*s/", 2, hex);
 	if (!only_two_digit_prefix)
 		strbuf_addf(buf, "%s", hex+2);
 }
