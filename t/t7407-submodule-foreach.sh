@@ -61,9 +61,9 @@ sub3sha1=$(cd super/sub3 && git rev-parse HEAD)
 
 cat > expect <<EOF
 Entering 'sub1'
-sub1-$sub1sha1
+foo1-sub1-$sub1sha1
 Entering 'sub3'
-sub3-$sub3sha1
+foo3-sub3-$sub3sha1
 EOF
 
 test_expect_success 'test basic "submodule foreach" usage' '
@@ -71,7 +71,7 @@ test_expect_success 'test basic "submodule foreach" usage' '
 	(
 		cd clone &&
 		git submodule update --init -- sub1 sub3 &&
-		git submodule foreach "echo \$path-\$sha1" > ../actual
+		git submodule foreach "echo \$name-\$path-\$sha1" > ../actual
 	) &&
 	test_cmp expect actual
 '
