@@ -1664,7 +1664,7 @@ static inline int want_ancestry(struct rev_info *revs)
 	return (revs->rewrite_parents || revs->children.name);
 }
 
-enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
+enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
 		return commit_ignore;
@@ -1692,10 +1692,21 @@ enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 			if (!commit->parents || !commit->parents->next)
 				return commit_ignore;
 		}
-		if (want_ancestry(revs) && rewrite_parents(revs, commit) < 0)
-			return commit_error;
 	}
 	return commit_show;
+}
+
+enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
+{
+	enum commit_action action = get_commit_action(revs, commit);
+
+	if (action == commit_show &&
+	    !revs->show_all &&
+	    revs->prune && revs->dense && want_ancestry(revs)) {
+		if (rewrite_parents(revs, commit) < 0)
+			return commit_error;
+	}
+	return action;
 }
 
 static struct commit *get_revision_1(struct rev_info *revs)
