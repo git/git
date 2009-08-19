@@ -222,4 +222,16 @@ test_expect_success 'test "status --recursive"' '
 	test_cmp expect actual
 '
 
+test_expect_success 'use "git clone --recursive" to checkout all submodules' '
+	git clone --recursive super clone4 &&
+	test -d clone4/.git &&
+	test -d clone4/sub1/.git &&
+	test -d clone4/sub2/.git &&
+	test -d clone4/sub3/.git &&
+	test -d clone4/nested1/.git &&
+	test -d clone4/nested1/nested2/.git &&
+	test -d clone4/nested1/nested2/nested3/.git &&
+	test -d clone4/nested1/nested2/nested3/submodule/.git
+'
+
 test_done
