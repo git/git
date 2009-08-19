@@ -907,7 +907,7 @@ void mingw_execvp(const char *cmd, char *const *argv)
 	free_path_split(path);
 }
 
-char **copy_environ()
+char **copy_environ(void)
 {
 	char **env;
 	int i = 0;

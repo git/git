@@ -1802,7 +1802,7 @@ struct win32_mlock_t
 
 static MLOCK_T malloc_global_mutex = { 0, 0, 0};
 
-static FORCEINLINE long win32_getcurrentthreadid() {
+static FORCEINLINE long win32_getcurrentthreadid(void) {
 #ifdef _MSC_VER
 #if defined(_M_IX86)
   long *threadstruct=(long *)__readfsdword(0x18);
