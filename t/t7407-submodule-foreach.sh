@@ -175,4 +175,23 @@ test_expect_success 'test "foreach --quiet --recursive"' '
 	test_cmp expect actual
 '
 
+test_expect_success 'use "update --recursive" to checkout all submodules' '
+	git clone super clone3 &&
+	(
+		cd clone3 &&
+		test ! -d sub1/.git &&
+		test ! -d sub2/.git &&
+		test ! -d sub3/.git &&
+		test ! -d nested1/.git &&
+		git submodule update --init --recursive &&
+		test -d sub1/.git &&
+		test -d sub2/.git &&
+		test -d sub3/.git &&
+		test -d nested1/.git &&
+		test -d nested1/nested2/.git &&
+		test -d nested1/nested2/nested3/.git &&
+		test -d nested1/nested2/nested3/submodule/.git
+	)
+'
+
 test_done

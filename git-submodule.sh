@@ -8,7 +8,7 @@ dashless=$(basename "$0" | sed -e 's/-/ /')
 USAGE="[--quiet] add [-b branch] [--reference <repository>] [--] <repository> <path>
    or: $dashless [--quiet] status [--cached] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
-   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--] [<path>...]
+   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] summary [--cached] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--] [<path>...]"
@@ -352,6 +352,7 @@ cmd_init()
 cmd_update()
 {
 	# parse $args after "submodule ... update".
+	orig_args="$@"
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -383,6 +384,10 @@ cmd_update()
 		-m|--merge)
 			shift
 			update="merge"
+			;;
+		--recursive)
+			shift
+			recursive=1
 			;;
 		--)
 			shift
@@ -469,6 +474,12 @@ cmd_update()
 			(unset GIT_DIR; cd "$path" && $command "$sha1") ||
 			die "Unable to $action '$sha1' in submodule path '$path'"
 			say "Submodule path '$path': $msg '$sha1'"
+		fi
+
+		if test -n "$recursive"
+		then
+			(unset GIT_DIR; cd "$path" && cmd_update $orig_args) ||
+			die "Failed to recurse into submodule path '$path'"
 		fi
 	done
 }

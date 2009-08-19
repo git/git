@@ -14,7 +14,7 @@ SYNOPSIS
 'git submodule' [--quiet] status [--cached] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
-	      [--reference <repository>] [--merge] [--] [<path>...]
+	      [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] summary [--cached] [--summary-limit <n>] [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach [--recursive] <command>
 'git submodule' [--quiet] sync [--] [<path>...]
@@ -122,6 +122,9 @@ update::
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in .gitmodules, you can automatically initialize the
 submodule with the --init option.
++
+If '--recursive' is specified, this command will recurse into the
+registered submodules, and update any nested submodules within.
 
 summary::
 	Show commit summary between the given commit (defaults to HEAD) and
@@ -213,7 +216,7 @@ OPTIONS
 for linkgit:git-clone[1]'s --reference and --shared options carefully.
 
 --recursive::
-	This option is only valid for the foreach command.
+	This option is only valid for foreach and update commands.
 	Traverse submodules recursively. The operation is performed not
 	only in the submodules of the current repo, but also
 	in any nested submodules inside those submodules (and so on).
