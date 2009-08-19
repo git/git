@@ -980,6 +980,9 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_REGEX = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/fnmatch
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
+	# We have GCC, so let's make use of those nice options
+	COMPAT_CFLAGS += -Werror -Wno-pointer-to-int-cast \
+	        -Wold-style-definition -Wdeclaration-after-statement
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/winansi.o
 	EXTLIBS += -lws2_32
 	X = .exe
