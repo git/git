@@ -76,4 +76,103 @@ test_expect_success 'test basic "submodule foreach" usage' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup nested submodules' '
+	git clone submodule nested1 &&
+	git clone submodule nested2 &&
+	git clone submodule nested3 &&
+	(
+		cd nested3 &&
+		git submodule add ../submodule submodule &&
+		test_tick &&
+		git commit -m "submodule" &&
+		git submodule init submodule
+	) &&
+	(
+		cd nested2 &&
+		git submodule add ../nested3 nested3 &&
+		test_tick &&
+		git commit -m "nested3" &&
+		git submodule init nested3
+	) &&
+	(
+		cd nested1 &&
+		git submodule add ../nested2 nested2 &&
+		test_tick &&
+		git commit -m "nested2" &&
+		git submodule init nested2
+	) &&
+	(
+		cd super &&
+		git submodule add ../nested1 nested1 &&
+		test_tick &&
+		git commit -m "nested1" &&
+		git submodule init nested1
+	)
+'
+
+test_expect_success 'use "submodule foreach" to checkout 2nd level submodule' '
+	git clone super clone2 &&
+	(
+		cd clone2 &&
+		test ! -d sub1/.git &&
+		test ! -d sub2/.git &&
+		test ! -d sub3/.git &&
+		test ! -d nested1/.git &&
+		git submodule update --init &&
+		test -d sub1/.git &&
+		test -d sub2/.git &&
+		test -d sub3/.git &&
+		test -d nested1/.git &&
+		test ! -d nested1/nested2/.git &&
+		git submodule foreach "git submodule update --init" &&
+		test -d nested1/nested2/.git &&
+		test ! -d nested1/nested2/nested3/.git
+	)
+'
+
+test_expect_success 'use "foreach --recursive" to checkout all submodules' '
+	(
+		cd clone2 &&
+		git submodule foreach --recursive "git submodule update --init" &&
+		test -d nested1/nested2/nested3/.git &&
+		test -d nested1/nested2/nested3/submodule/.git
+	)
+'
+
+cat > expect <<EOF
+Entering 'nested1'
+Entering 'nested1/nested2'
+Entering 'nested1/nested2/nested3'
+Entering 'nested1/nested2/nested3/submodule'
+Entering 'sub1'
+Entering 'sub2'
+Entering 'sub3'
+EOF
+
+test_expect_success 'test messages from "foreach --recursive"' '
+	(
+		cd clone2 &&
+		git submodule foreach --recursive "true" > ../actual
+	) &&
+	test_cmp expect actual
+'
+
+cat > expect <<EOF
+nested1-nested1
+nested2-nested2
+nested3-nested3
+submodule-submodule
+foo1-sub1
+foo2-sub2
+foo3-sub3
+EOF
+
+test_expect_success 'test "foreach --quiet --recursive"' '
+	(
+		cd clone2 &&
+		git submodule foreach -q --recursive "echo \$name-\$path" > ../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_done

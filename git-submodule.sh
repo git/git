@@ -10,7 +10,7 @@ USAGE="[--quiet] add [-b branch] [--reference <repository>] [--] <repository> <p
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--] [<path>...]
    or: $dashless [--quiet] summary [--cached] [--summary-limit <n>] [commit] [--] [<path>...]
-   or: $dashless [--quiet] foreach <command>
+   or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
@@ -23,6 +23,7 @@ reference=
 cached=
 nofetch=
 update=
+prefix=
 
 # Resolve relative url by appending to parent's url
 resolve_relative_url ()
@@ -249,6 +250,9 @@ cmd_foreach()
 		-q|--quiet)
 			GIT_QUIET=1
 			;;
+		--recursive)
+			recursive=1
+			;;
 		-*)
 			usage
 			;;
@@ -264,9 +268,18 @@ cmd_foreach()
 	do
 		if test -e "$path"/.git
 		then
-			say "Entering '$path'"
+			say "Entering '$prefix$path'"
 			name=$(module_name "$path")
-			(cd "$path" && eval "$@") ||
+			(
+				prefix="$prefix$path/"
+				unset GIT_DIR
+				cd "$path" &&
+				eval "$@" &&
+				if test -n "$recursive"
+				then
+					cmd_foreach "--recursive" "$@"
+				fi
+			) ||
 			die "Stopping at '$path'; script returned non-zero status."
 		fi
 	done

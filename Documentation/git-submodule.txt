@@ -16,7 +16,7 @@ SYNOPSIS
 'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
 	      [--reference <repository>] [--merge] [--] [<path>...]
 'git submodule' [--quiet] summary [--cached] [--summary-limit <n>] [commit] [--] [<path>...]
-'git submodule' [--quiet] foreach <command>
+'git submodule' [--quiet] foreach [--recursive] <command>
 'git submodule' [--quiet] sync [--] [<path>...]
 
 
@@ -138,6 +138,8 @@ foreach::
 	Any submodules defined in the superproject but not checked out are
 	ignored by this command. Unless given --quiet, foreach prints the name
 	of each submodule before evaluating the command.
+	If --recursive is given, submodules are traversed recursively (i.e.
+	the given shell command is evaluated in nested submodules as well).
 	A non-zero return from the command in any submodule causes
 	the processing to terminate. This can be overridden by adding '|| :'
 	to the end of the command.
@@ -209,6 +211,12 @@ OPTIONS
 +
 *NOTE*: Do *not* use this option unless you have read the note
 for linkgit:git-clone[1]'s --reference and --shared options carefully.
+
+--recursive::
+	This option is only valid for the foreach command.
+	Traverse submodules recursively. The operation is performed not
+	only in the submodules of the current repo, but also
+	in any nested submodules inside those submodules (and so on).
 
 <path>...::
 	Paths to submodule(s). When specified this will restrict the command
