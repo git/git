@@ -4,9 +4,14 @@
 #
 # Copyright (c) 2007 Lars Hjemli
 
-USAGE="[--quiet] [--cached] \
-[add [-b branch] <repo> <path>]|[status|init|update [-i|--init] [-N|--no-fetch] [--rebase|--merge]|summary [-n|--summary-limit <n>] [<commit>]] \
-[--] [<path>...]|[foreach <command>]|[sync [--] [<path>...]]"
+dashless=$(basename "$0" | sed -e 's/-/ /')
+USAGE="[--quiet] add [-b branch] [--reference <repository>] [--] <repository> <path>
+   or: $dashless [--quiet] status [--cached] [--] [<path>...]
+   or: $dashless [--quiet] init [--] [<path>...]
+   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--] [<path>...]
+   or: $dashless [--quiet] summary [--cached] [--summary-limit <n>] [commit] [--] [<path>...]
+   or: $dashless [--quiet] foreach <command>
+   or: $dashless [--quiet] sync [--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
 . git-parse-remote
@@ -237,6 +242,23 @@ cmd_add()
 #
 cmd_foreach()
 {
+	# parse $args after "submodule ... foreach".
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			GIT_QUIET=1
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
 	module_list |
 	while read mode sha1 stage path
 	do
