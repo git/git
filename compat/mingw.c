@@ -185,10 +185,11 @@ int mingw_open (const char *filename, int oflags, ...)
 FILE *mingw_fopen (const char *filename, const char *mode)
 {
 	int hide = 0;
+	FILE *file;
 	if (hide_dotfiles && basename((char*)filename)[0] == '.')
 		hide = access(filename, F_OK);
 
-	FILE *file = fopen(filename, mode);
+	file = fopen(filename, mode);
 	/*
 	 * In Windows a file or dir starting with a dot is not
 	 * automatically hidden. So lets mark it as hidden when
