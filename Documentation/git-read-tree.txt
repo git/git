@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 'git read-tree' [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>]
 		[-u [--exclude-per-directory=<gitignore>] | -i]]
-		[--index-output=<file>]
+		[--index-output=<file>] [--no-sparse-checkout]
 		<tree-ish1> [<tree-ish2> [<tree-ish3>]]
 
 
@@ -109,6 +109,10 @@ OPTIONS
 	file itself, and you need write permission to the
 	directories the index file and index output file are
 	located in.
+
+--no-sparse-checkout::
+	Disable sparse checkout support even if `core.sparseCheckout`
+	is true.
 
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
