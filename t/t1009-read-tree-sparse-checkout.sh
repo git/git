@@ -55,20 +55,16 @@ test_expect_success 'read-tree --no-sparse-checkout with empty .git/info/sparse-
 	test -f sub/added
 '
 
-cat >expected.swt <<EOF
-S init.t
-S sub/added
-EOF
 test_expect_success 'read-tree with empty .git/info/sparse-checkout' '
 	git config core.sparsecheckout true &&
 	echo > .git/info/sparse-checkout &&
-	git read-tree -m -u HEAD &&
+	test_must_fail git read-tree -m -u HEAD &&
 	git ls-files --stage > result &&
 	test_cmp expected result &&
 	git ls-files -t > result &&
 	test_cmp expected.swt result &&
-	test ! -f init.t &&
-	test ! -f sub/added
+	test -f init.t &&
+	test -f sub/added
 '
 
 cat >expected.swt <<EOF

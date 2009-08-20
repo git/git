@@ -498,6 +498,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	}
 
 	if (!o->skip_sparse_checkout) {
+		int empty_worktree = 1;
 		for (i = 0;i < o->result.cache_nr;i++) {
 			struct cache_entry *ce = o->result.cache[i];
 
@@ -512,7 +513,13 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			 */
 			if (ce_skip_worktree(ce))
 				ce->ce_flags &= ~(CE_UPDATE | CE_REMOVE);
+			else
+				empty_worktree = 0;
 
+		}
+		if (o->result.cache_nr && empty_worktree) {
+			ret = unpack_failed(o, "Sparse checkout leaves no entry on working directory");
+			goto done;
 		}
 	}
 
