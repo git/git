@@ -37,6 +37,7 @@ static const char *tag_removed = "";
 static const char *tag_other = "";
 static const char *tag_killed = "";
 static const char *tag_modified = "";
+static const char *tag_skip_worktree = "";
 
 static void show_dir_entry(const char *tag, struct dir_entry *ent)
 {
@@ -178,7 +179,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
-			show_ce_entry(ce_stage(ce) ? tag_unmerged : tag_cached, ce);
+			show_ce_entry(ce_stage(ce) ? tag_unmerged :
+				(ce_skip_worktree(ce) ? tag_skip_worktree : tag_cached), ce);
 		}
 	}
 	if (show_deleted | show_modified) {
@@ -490,6 +492,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		tag_modified = "C ";
 		tag_other = "? ";
 		tag_killed = "K ";
+		tag_skip_worktree = "S ";
 	}
 	if (show_modified || show_others || show_deleted || (dir.flags & DIR_SHOW_IGNORED) || show_killed)
 		require_work_tree = 1;

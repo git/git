@@ -24,6 +24,7 @@ static int info_only;
 static int force_remove;
 static int verbose;
 static int mark_valid_only;
+static int mark_skip_worktree_only;
 #define MARK_FLAG 1
 #define UNMARK_FLAG 2
 
@@ -276,6 +277,11 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 			die("Unable to mark file %s", path);
 		goto free_return;
 	}
+	if (mark_skip_worktree_only) {
+		if (mark_ce_flags(p, CE_SKIP_WORKTREE, mark_skip_worktree_only == MARK_FLAG))
+			die("Unable to mark file %s", path);
+		goto free_return;
+	}
 
 	if (force_remove) {
 		if (remove_file_from_cache(p))
@@ -384,7 +390,7 @@ static void read_index_info(int line_termination)
 }
 
 static const char update_index_usage[] =
-"git update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
+"git update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--skip-worktree|--no-skip-worktree] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
 
 static unsigned char head_sha1[20];
 static unsigned char merge_head_sha1[20];
@@ -648,6 +654,14 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(path, "--no-assume-unchanged")) {
 				mark_valid_only = UNMARK_FLAG;
+				continue;
+			}
+			if (!strcmp(path, "--no-skip-worktree")) {
+				mark_skip_worktree_only = UNMARK_FLAG;
+				continue;
+			}
+			if (!strcmp(path, "--skip-worktree")) {
+				mark_skip_worktree_only = MARK_FLAG;
 				continue;
 			}
 			if (!strcmp(path, "--info-only")) {
