@@ -200,11 +200,35 @@ void add_exclude(const char *string, const char *base,
 	which->excludes[which->nr++] = x;
 }
 
+static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
+{
+	int pos, len;
+	unsigned long sz;
+	enum object_type type;
+	void *data;
+	struct index_state *istate = &the_index;
+
+	len = strlen(path);
+	pos = index_name_pos(istate, path, len);
+	if (pos < 0)
+		return NULL;
+	if (!ce_skip_worktree(istate->cache[pos]))
+		return NULL;
+	data = read_sha1_file(istate->cache[pos]->sha1, &type, &sz);
+	if (!data || type != OBJ_BLOB) {
+		free(data);
+		return NULL;
+	}
+	*size = xsize_t(sz);
+	return data;
+}
+
 static int add_excludes_from_file_1(const char *fname,
 				    const char *base,
 				    int baselen,
 				    char **buf_p,
-				    struct exclude_list *which)
+				    struct exclude_list *which,
+				    int check_index)
 {
 	struct stat st;
 	int fd, i;
@@ -212,20 +236,26 @@ static int add_excludes_from_file_1(const char *fname,
 	char *buf, *entry;
 
 	fd = open(fname, O_RDONLY);
-	if (fd < 0 || fstat(fd, &st) < 0)
-		goto err;
-	size = xsize_t(st.st_size);
-	if (size == 0) {
+	if (fd < 0 || fstat(fd, &st) < 0) {
+		if (0 <= fd)
+			close(fd);
+		if (!check_index ||
+		    (buf = read_skip_worktree_file_from_index(fname, &size)) == NULL)
+			return -1;
+	}
+	else {
+		size = xsize_t(st.st_size);
+		if (size == 0) {
+			close(fd);
+			return 0;
+		}
+		buf = xmalloc(size);
+		if (read_in_full(fd, buf, size) != size) {
+			close(fd);
+			return -1;
+		}
 		close(fd);
-		return 0;
 	}
-	buf = xmalloc(size+1);
-	if (read_in_full(fd, buf, size) != size)
-	{
-		free(buf);
-		goto err;
-	}
-	close(fd);
 
 	if (buf_p)
 		*buf_p = buf;
@@ -240,17 +270,12 @@ static int add_excludes_from_file_1(const char *fname,
 		}
 	}
 	return 0;
-
- err:
-	if (0 <= fd)
-		close(fd);
-	return -1;
 }
 
 void add_excludes_from_file(struct dir_struct *dir, const char *fname)
 {
 	if (add_excludes_from_file_1(fname, "", 0, NULL,
-				     &dir->exclude_list[EXC_FILE]) < 0)
+				     &dir->exclude_list[EXC_FILE], 0) < 0)
 		die("cannot use %s as an exclude file", fname);
 }
 
@@ -301,7 +326,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 		strcpy(dir->basebuf + stk->baselen, dir->exclude_per_dir);
 		add_excludes_from_file_1(dir->basebuf,
 					 dir->basebuf, stk->baselen,
-					 &stk->filebuf, el);
+					 &stk->filebuf, el, 1);
 		dir->exclude_stack = stk;
 		current = stk->baselen;
 	}

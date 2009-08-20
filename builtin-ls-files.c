@@ -485,6 +485,9 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		prefix_offset = strlen(prefix);
 	git_config(git_default_config, NULL);
 
+	if (read_cache() < 0)
+		die("index file corrupt");
+
 	argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
 			ls_files_usage, 0);
 	if (show_tag || show_valid_bit) {
@@ -513,7 +516,6 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 	pathspec = get_pathspec(prefix, argv);
 
 	/* be nice with submodule paths ending in a slash */
-	read_cache();
 	if (pathspec)
 		strip_trailing_slash_from_submodules();
 
