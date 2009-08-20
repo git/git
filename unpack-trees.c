@@ -452,8 +452,9 @@ static int same(struct cache_entry *a, struct cache_entry *b)
  * When a CE gets turned into an unmerged entry, we
  * want it to be up-to-date
  */
-static int verify_uptodate(struct cache_entry *ce,
-		struct unpack_trees_options *o)
+static int verify_uptodate_1(struct cache_entry *ce,
+				   struct unpack_trees_options *o,
+				   const char *error_msg)
 {
 	struct stat st;
 
@@ -478,7 +479,13 @@ static int verify_uptodate(struct cache_entry *ce,
 	if (errno == ENOENT)
 		return 0;
 	return o->gently ? -1 :
-		error(ERRORMSG(o, not_uptodate_file), ce->name);
+		error(error_msg, ce->name);
+}
+
+static int verify_uptodate(struct cache_entry *ce,
+			   struct unpack_trees_options *o)
+{
+	return verify_uptodate_1(ce, o, ERRORMSG(o, not_uptodate_file));
 }
 
 static void invalidate_ce_path(struct cache_entry *ce, struct unpack_trees_options *o)
@@ -586,8 +593,9 @@ static int icase_exists(struct unpack_trees_options *o, struct cache_entry *dst,
  * We do not want to remove or overwrite a working tree file that
  * is not tracked, unless it is ignored.
  */
-static int verify_absent(struct cache_entry *ce, const char *action,
-			 struct unpack_trees_options *o)
+static int verify_absent_1(struct cache_entry *ce, const char *action,
+				 struct unpack_trees_options *o,
+				 const char *error_msg)
 {
 	struct stat st;
 
@@ -666,6 +674,11 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 			error(ERRORMSG(o, would_lose_untracked), ce->name, action);
 	}
 	return 0;
+}
+static int verify_absent(struct cache_entry *ce, const char *action,
+			 struct unpack_trees_options *o)
+{
+	return verify_absent_1(ce, action, o, ERRORMSG(o, would_lose_untracked));
 }
 
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
