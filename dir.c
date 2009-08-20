@@ -229,10 +229,9 @@ static int add_excludes_from_file_1(const char *fname,
 
 	if (buf_p)
 		*buf_p = buf;
-	buf[size++] = '\n';
 	entry = buf;
-	for (i = 0; i < size; i++) {
-		if (buf[i] == '\n') {
+	for (i = 0; i <= size; i++) {
+		if (i == size || buf[i] == '\n') {
 			if (entry != buf + i && entry[0] != '#') {
 				buf[i - (i && buf[i-1] == '\r')] = 0;
 				add_exclude(entry, base, baselen, which);
