@@ -1580,6 +1580,7 @@ TEST_PROGRAMS += test-parse-options$X
 TEST_PROGRAMS += test-path-utils$X
 TEST_PROGRAMS += test-sha1$X
 TEST_PROGRAMS += test-sigchain$X
+TEST_PROGRAMS += test-index-version$X
 
 all:: $(TEST_PROGRAMS)
 
