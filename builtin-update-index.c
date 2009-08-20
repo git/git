@@ -172,28 +172,28 @@ static int process_directory(const char *path, int len, struct stat *st)
 	return error("%s: is a directory - add files inside instead", path);
 }
 
-/*
- * Process a regular file
- */
-static int process_file(const char *path, int len, struct stat *st)
-{
-	int pos = cache_name_pos(path, len);
-	struct cache_entry *ce = pos < 0 ? NULL : active_cache[pos];
-
-	if (ce && S_ISGITLINK(ce->ce_mode))
-		return error("%s is already a gitlink, not replacing", path);
-
-	return add_one_path(ce, path, len, st);
-}
-
 static int process_path(const char *path)
 {
-	int len;
+	int pos, len;
 	struct stat st;
+	struct cache_entry *ce;
 
 	len = strlen(path);
 	if (has_symlink_leading_path(path, len))
 		return error("'%s' is beyond a symbolic link", path);
+
+	pos = cache_name_pos(path, len);
+	ce = pos < 0 ? NULL : active_cache[pos];
+	if (ce && ce_skip_worktree(ce)) {
+		/*
+		 * working directory version is assumed "good"
+		 * so updating it does not make sense.
+		 * On the other hand, removing it from index should work
+		 */
+		if (allow_remove && remove_file_from_cache(path))
+			return error("%s: cannot remove from the index", path);
+		return 0;
+	}
 
 	/*
 	 * First things first: get the stat information, to decide
@@ -205,7 +205,13 @@ static int process_path(const char *path)
 	if (S_ISDIR(st.st_mode))
 		return process_directory(path, len, &st);
 
-	return process_file(path, len, &st);
+	/*
+	 * Process a regular file
+	 */
+	if (ce && S_ISGITLINK(ce->ce_mode))
+		return error("%s is already a gitlink, not replacing", path);
+
+	return add_one_path(ce, path, len, &st);
 }
 
 static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,

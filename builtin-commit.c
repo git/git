@@ -180,6 +180,11 @@ static void add_remove_files(struct string_list *list)
 	for (i = 0; i < list->nr; i++) {
 		struct stat st;
 		struct string_list_item *p = &(list->items[i]);
+		int pos = index_name_pos(&the_index, p->string, strlen(p->string));
+		struct cache_entry *ce = pos < 0 ? NULL : active_cache[pos];
+
+		if (ce && ce_skip_worktree(ce))
+			continue;
 
 		if (!lstat(p->string, &st)) {
 			if (add_to_cache(p->string, &st, 0))

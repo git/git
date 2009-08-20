@@ -194,6 +194,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
+			if (ce_skip_worktree(ce))
+				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
 				show_ce_entry(tag_removed, ce);

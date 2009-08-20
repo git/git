@@ -265,7 +265,7 @@ int ie_match_stat(const struct index_state *istate,
 	 * If it's marked as always valid in the index, it's
 	 * valid whatever the checked-out copy says.
 	 */
-	if (!ignore_valid && (ce->ce_flags & CE_VALID))
+	if (!ignore_valid && ((ce->ce_flags & CE_VALID) || ce_skip_worktree(ce)))
 		return 0;
 
 	/*
@@ -1004,11 +1004,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	if (ce_uptodate(ce))
 		return ce;
 
-	/*
-	 * CE_VALID means the user promised us that the change to
-	 * the work tree does not matter and told us not to worry.
-	 */
-	if (!ignore_valid && (ce->ce_flags & CE_VALID)) {
+	if (!ignore_valid && ((ce->ce_flags & CE_VALID) || ce_skip_worktree(ce))) {
 		ce_mark_uptodate(ce);
 		return ce;
 	}
