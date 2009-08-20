@@ -505,6 +505,14 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 				ret = -1;
 				goto done;
 			}
+			/*
+			 * Merge strategies may set CE_UPDATE|CE_REMOVE outside checkout
+			 * area as a result of ce_skip_worktree() shortcuts in
+			 * verify_absent() and verify_uptodate(). Clear them.
+			 */
+			if (ce_skip_worktree(ce))
+				ce->ce_flags &= ~(CE_UPDATE | CE_REMOVE);
+
 		}
 	}
 
@@ -577,6 +585,8 @@ static int verify_uptodate_1(struct cache_entry *ce,
 static int verify_uptodate(struct cache_entry *ce,
 			   struct unpack_trees_options *o)
 {
+	if (!o->skip_sparse_checkout && will_have_skip_worktree(ce, o))
+		return 0;
 	return verify_uptodate_1(ce, o, ERRORMSG(o, not_uptodate_file));
 }
 
@@ -776,6 +786,8 @@ static int verify_absent_1(struct cache_entry *ce, const char *action,
 static int verify_absent(struct cache_entry *ce, const char *action,
 			 struct unpack_trees_options *o)
 {
+	if (!o->skip_sparse_checkout && will_have_skip_worktree(ce, o))
+		return 0;
 	return verify_absent_1(ce, action, o, ERRORMSG(o, would_lose_untracked));
 }
 
