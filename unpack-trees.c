@@ -78,7 +78,7 @@ static int check_updates(struct unpack_trees_options *o)
 	if (o->update && o->verbose_update) {
 		for (total = cnt = 0; cnt < index->cache_nr; cnt++) {
 			struct cache_entry *ce = index->cache[cnt];
-			if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
+			if (ce->ce_flags & (CE_UPDATE | CE_REMOVE | CE_WT_REMOVE))
 				total++;
 		}
 
@@ -91,6 +91,13 @@ static int check_updates(struct unpack_trees_options *o)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT, &o->result);
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
+
+		if (ce->ce_flags & CE_WT_REMOVE) {
+			display_progress(progress, ++cnt);
+			if (o->update)
+				unlink_entry(ce);
+			continue;
+		}
 
 		if (ce->ce_flags & CE_REMOVE) {
 			display_progress(progress, ++cnt);
