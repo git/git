@@ -349,6 +349,12 @@ static int excluded_1(const char *pathname,
 			int to_exclude = x->to_exclude;
 
 			if (x->flags & EXC_FLAG_MUSTBEDIR) {
+				if (!dtype) {
+					if (!prefixcmp(pathname, exclude))
+						return to_exclude;
+					else
+						continue;
+				}
 				if (*dtype == DT_UNKNOWN)
 					*dtype = get_dtype(NULL, pathname, pathlen);
 				if (*dtype != DT_DIR)
