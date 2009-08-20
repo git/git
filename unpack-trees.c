@@ -378,6 +378,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 {
 	int ret;
 	static struct cache_entry *dfc;
+	struct exclude_list el;
 
 	if (len > MAX_UNPACK_TREES)
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
@@ -386,6 +387,16 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	state.force = 1;
 	state.quiet = 1;
 	state.refresh_cache = 1;
+
+	memset(&el, 0, sizeof(el));
+	if (!core_apply_sparse_checkout || !o->update)
+		o->skip_sparse_checkout = 1;
+	if (!o->skip_sparse_checkout) {
+		if (add_excludes_from_file_to_list(git_path("info/sparse-checkout"), "", 0, NULL, &el, 0) < 0)
+			o->skip_sparse_checkout = 1;
+		else
+			o->el = &el;
+	}
 
 	memset(&o->result, 0, sizeof(o->result));
 	o->result.initialized = 1;
@@ -407,26 +418,39 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		info.fn = unpack_callback;
 		info.data = o;
 
-		if (traverse_trees(len, t, &info) < 0)
-			return unpack_failed(o, NULL);
+		if (traverse_trees(len, t, &info) < 0) {
+			ret = unpack_failed(o, NULL);
+			goto done;
+		}
 	}
 
 	/* Any left-over entries in the index? */
 	if (o->merge) {
 		while (o->pos < o->src_index->cache_nr) {
 			struct cache_entry *ce = o->src_index->cache[o->pos];
-			if (unpack_index_entry(ce, o) < 0)
-				return unpack_failed(o, NULL);
+			if (unpack_index_entry(ce, o) < 0) {
+				ret = unpack_failed(o, NULL);
+				goto done;
+			}
 		}
 	}
 
-	if (o->trivial_merges_only && o->nontrivial_merge)
-		return unpack_failed(o, "Merge requires file-level merging");
+	if (o->trivial_merges_only && o->nontrivial_merge) {
+		ret = unpack_failed(o, "Merge requires file-level merging");
+		goto done;
+	}
 
 	o->src_index = NULL;
 	ret = check_updates(o) ? (-2) : 0;
 	if (o->dst_index)
 		*o->dst_index = o->result;
+
+done:
+	for (i = 0;i < el.nr;i++)
+		free(el.excludes[i]);
+	if (el.excludes)
+		free(el.excludes);
+
 	return ret;
 }
 
