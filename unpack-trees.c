@@ -680,6 +680,8 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		} else {
 			if (verify_uptodate(old, o))
 				return -1;
+			if (ce_skip_worktree(old))
+				update |= CE_SKIP_WORKTREE;
 			invalidate_ce_path(old, o);
 		}
 	}
