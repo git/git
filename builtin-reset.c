@@ -261,7 +261,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			die("Cannot do %s reset with paths.",
 					reset_type_names[reset_type]);
 		return read_from_tree(prefix, argv + i, sha1,
-				quiet ? REFRESH_QUIET : REFRESH_SAY_CHANGED);
+				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 	}
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
@@ -302,7 +302,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		break;
 	case MIXED: /* Report what has not been updated. */
 		update_index_refresh(0, NULL,
-				quiet ? REFRESH_QUIET : REFRESH_SAY_CHANGED);
+				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 		break;
 	}
 

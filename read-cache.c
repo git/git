@@ -1077,7 +1077,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	unsigned int options = really ? CE_MATCH_IGNORE_VALID : 0;
 	const char *needs_update_message;
 
-	needs_update_message = ((flags & REFRESH_SAY_CHANGED)
+	needs_update_message = ((flags & REFRESH_IN_PORCELAIN)
 				? "locally modified" : "needs update");
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new;
