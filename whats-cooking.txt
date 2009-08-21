@@ -1,15 +1,15 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2009, #02; Wed, 12)
-X-master-at: 6ffd781226f04629eff63a684b47ad7555143312
-X-next-at: e5cd0abadfa20eaf7a76784ad5802115c75eff2f
+Subject: What's cooking in git.git (Aug 2009, #03; Thu, 20)
+X-master-at: 044239b0a1fbdcccefafe1dab5f9c21e5a2a9150
+X-next-at: ea167d76afdd01db4b4f4cbd6429abff15cc2ccc
 
-What's cooking in git.git (Aug 2009, #02; Wed, 12)
+What's cooking in git.git (Aug 2009, #03; Thu, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
-marked with '.' do not appear in any of the branches, but I am still
-holding onto them.
+marked with '.' do not appear in any of the integration branches, but I am
+still holding onto them.
 
 After the 1.6.5 cycle, the next release will be 1.7.0, and we will push
 out the planned "push safety" change.  1.7.0 would be a good time to
@@ -17,75 +17,197 @@ introduce "justifiable" changes that are not strictly backward compatible.
 
 During 1.6.5 cycle, 'next' will hold topics meant for 1.6.5 and 1.7.0.
 
-----------------------------------------------------------------
+--------------------------------------------------
 [New Topics]
 
-* ld/p4 (Thu Jul 30 00:13:46 2009 +0100) 1 commit
- - git-p4: stream from perforce to speed up clones
+* aj/fix-read-tree-from-scratch (2009-08-17) 1 commit
+  (merged to 'next' on 2009-08-20 at 7a04133)
+ + read-tree: Fix regression with creation of a new index file.
 
-Waiting for Ack/Nack from stakeholders.  Probably I should merge this to
-'next' soon, keep it there for a week and see if anybody screams, aka
-"Nack now or forever hold your peace" ;-).
+* as/maint-graph-interesting-fix (2009-08-18) 1 commit.
+ - graph API: fix bug in graph_is_interesting()
 
-* mr/gitweb-xz (Thu Aug 6 10:28:25 2009 -0400) 3 commits
- - gitweb: add support for XZ compressed snapshots
- - gitweb: update INSTALL regarding specific snapshot settings
- - gitweb: support to globally disable a snapshot format
+* jc/1.7.0-status (2009-08-15) 7 commits
+ - git-status: adjust tests
+ - git status: not "commit --dry-run" anymore
+ - git stat -s: short status output
+ - git stat: pathspec limits, unlike traditional "git status"
+ - git stat: show traditional status headers and trailers as well
+ - git stat: honor relative paths setting
+ - git stat: the beginning
+ (this branch uses jc/shortstatus.)
 
-This should be safe as long as it does not silently enable itself for
-folks who merely updated gitweb to this version without explicitly asking
-for the new format (but I do not remember if that is what the patch does).
+* jc/maint-checkout-index-to-prefix (2009-08-16) 1 commit
+  (merged to 'next' on 2009-08-20 at 2f6aea2)
+ + check_path(): allow symlinked directories to checkout-index --prefix
 
-* jh/cvs-helper (Wed Aug 12 02:13:51 2009 +0200) 4 commits
- - Add simple selftests of git-remote-cvs functionality
- - Third draft of CVS remote helper program
- - Add Python support library for CVS remote helper
- - Basic build infrastructure for Python scripts
+* jc/maint-unpack-objects-strict (2009-08-13) 1 commit.
+ - Fix "unpack-objects --strict"
 
-Builds on db/vcs-helper.  The last round failed its own selftest for me,
-but this one seems to be Ok.  Documentation/git-remote-cvs.txt needs to be
-fixed to build, though.
+* jh/submodule-foreach (2009-08-20) 9 commits
+  (merged to 'next' on 2009-08-20 at 671bea4)
+ + git clone: Add --recursive to automatically checkout (nested) submodules
+ + t7407: Use 'rev-parse --short' rather than bash's substring expansion notation
+  (merged to 'next' on 2009-08-18 at f4a881d)
+ + git submodule status: Add --recursive to recurse into nested submodules
+ + git submodule update: Introduce --recursive to update nested submodules
+ + git submodule foreach: Add --recursive to recurse into nested submodules
+ + git submodule foreach: test access to submodule name as '$name'
+ + Add selftest for 'git submodule foreach'
+ + git submodule: Cleanup usage string and add option parsing to cmd_foreach()
+ + git submodule foreach: Provide access to submodule name, as '$name'
+
+* jl/submodule-summary-diff-files (2009-08-15) 2 commits
+  (merged to 'next' on 2009-08-15 at 165bd8e)
+ + Documentaqtion/git-submodule.txt: Typofix
+  (merged to 'next' on 2009-08-14 at a702e78)
+ + git submodule summary: add --files option
+
+* lh/short-decorate (2009-08-15) 1 commit
+  (merged to 'next' on 2009-08-18 at b8c1d96)
+ + git-log: allow --decorate[=short|full]
+
+* oa/stash-na (2009-08-11) 1 commit
+  (merged to 'next' on 2009-08-14 at 12c2e2b)
+ + git stash: Give friendlier errors when there is nothing to apply
+
+* sr/gfi-options (2009-08-13) 3 commits
+ - fast-import: test the new option command
+ - fast-import: add option command
+ - fast-import: put option parsing code in seperate functions
+
+--------------------------------------------------
+[Graduated to "master"]
 
 * bc/maint-am-email (Thu Aug 6 20:08:13 2009 -0500) 2 commits
  + git-am: print fair error message when format detection fails
  + am: allow individual e-mail files as input
 
 It seems that the "not mbox but a single piece of e-mail" format was
-something many people relied on.  I'm cooking this in 'next', and
-hopefully it can graduate both to 'master' and 'maint'.
+something many people relied on.  Hopefully this can also be sent
+to 'maint'.
 
 * js/maint-cover-letter-non-ascii (Mon Aug 10 18:22:22 2009 +0200) 2 commits
  + Correctly mark cover letters' encodings if they are not pure ASCII
  + Expose the has_non_ascii() function
 
-* jc/verify-pack-stat (Fri Aug 7 15:45:30 2009 -0700) 2 commits
+* jk/maint-merge-msg-fix (Sun Aug 9 06:02:51 2009 -0400) 3 commits
+ + merge: indicate remote tracking branches in merge message
+ + merge: fix incorrect merge message for ambiguous tag/branch
+ + add tests for merge message headings
+
+* jc/maint-clean-nested-dir-safety (Tue Jun 30 15:33:45 2009 -0700) 1 commit
+ + clean: require double -f options to nuke nested git repository and
+   work tree
+
+--------------------------------------------------
+[Stalled]
+
+* cc/sequencer-rebase-i (2009-08-05) 8 commits.
+ - rebase -i: use "git sequencer--helper --reset-hard"
+ - sequencer: add "--reset-hard" option to "git sequencer--helper"
+ - sequencer: add comments about reset_almost_hard()
+ - sequencer: add "reset_almost_hard()" and related functions
+ - rebase -i: use "git sequencer--helper --make-patch"
+ - sequencer: free memory used in "make_patch" function
+ - sequencer: add "make_patch" function to save a patch
+ - sequencer: add "builtin-sequencer--helper.c"
+
+More sequencer updates.  I didn't look at the latest round that had a
+handful "oops, fix that earlier botch" patches, expecting a cleaner
+reroll (which hasn't happened yet).
+
+* pb/tracking (2009-07-16) 7 commits.
+ . branch.c: if remote is not config'd for branch, don't try delete push config
+ . branch, checkout: introduce autosetuppush
+ . move deletion of merge configuration to branch.c
+ . remote: add per-remote autosetupmerge and autosetuprebase configuration
+ . introduce a struct tracking_config
+ . branch: install_branch_config and struct tracking refactoring
+ . config: allow false and true values for branch.autosetuprebase
+
+Has been ejected from 'pu' for some time, expecting a reroll.
+
+* db/vcs-helper (2009-08-09) 17 commits
+ - Allow helpers to request marks for fast-import
+ - Allow helpers to report in "list" command that the ref is unchanged
+ - Add support for "import" helper command
+ - transport-helper_init(): fix a memory leak in error path
+ - Add a config option for remotes to specify a foreign vcs
+ - Allow programs to not depend on remotes having urls
+ - Allow fetch to modify refs
+ - Use a function to determine whether a remote is valid
+ - Use a clearer style to issue commands to remote helpers
+  (merged to 'next' on 2009-08-07 at f3533ba)
+ + Makefile: install hardlinks for git-remote-<scheme> supported by libcurl if possible
+ + Makefile: do not link three copies of git-remote-* programs
+ + Makefile: git-http-fetch does not need expat
+  (merged to 'next' on 2009-08-06 at 15da79d)
+ + http-fetch: Fix Makefile dependancies
+ + Add transport native helper executables to .gitignore
+  (merged to 'next' on 2009-08-05 at 33d491e)
+ + git-http-fetch: not a builtin
+ + Use an external program to implement fetching with curl
+ + Add support for external programs for handling native fetches
+ (this branch is used by jh/cvs-helper.)
+
+There was a discussion that suggests that the use of colon ':' before vcs
+helper name needs to be corrected.  Nothing happened since.
+
+* je/send-email-no-subject (2009-08-05) 1 commit
+ - send-email: confirm on empty mail subjects
+
+This seems to break t9001.  Near the tip of 'pu' I have a iffy
+workaround.
+
+--------------------------------------------------
+[Cooking]
+
+* ld/p4 (2009-07-30) 1 commit
+  (merged to 'next' on 2009-08-14 at 36d310d)
+ + git-p4: stream from perforce to speed up clones
+
+Should graduate to 'master' soon.
+
+* mr/gitweb-xz (2009-08-06) 3 commits
+  (merged to 'next' on 2009-08-14 at b63b8e6)
+ + gitweb: add support for XZ compressed snapshots
+ + gitweb: update INSTALL regarding specific snapshot settings
+ + gitweb: support to globally disable a snapshot format
+
+Should graduate to 'master' soon.
+
+* jh/cvs-helper (2009-08-18) 7 commits
+ - More fixes to the git-remote-cvs installation procedure
+ - Fix the Makefile-generated path to the git_remote_cvs package
+   in git-remote-cvs
+ - Add simple selftests of git-remote-cvs functionality
+ - git-remote-cvs: Remote helper program for CVS repositories
+ - 2/2: Add Python support library for CVS remote helper
+ - 1/2: Add Python support library for CVS remote helper
+ - Basic build infrastructure for Python scripts
+ (this branch uses db/vcs-helper.)
+
+Builds on db/vcs-helper.  The testing of Python part seemed to be
+still fragile even with the latest fix on one of my boches with an
+earlier round already installed, but I didn't look very deeply before
+removing the older installation.
+
+* jc/verify-pack-stat (2009-08-07) 1 commit
+  (merged to 'next' on 2009-08-10 at f80d0e9)
  + verify-pack --stat-only: show histogram without verifying
- + Merge branch 'maint' into jc/verify-pack-stat
 
-* lt/block-sha1 (Wed Aug 12 15:47:55 2009 -0400) 15 commits
- + block-sha1: support for architectures with memory alignment
-   restrictions
- + block-sha1: split the different "hacks" to be individually
-   selected
- + block-sha1: move code around
- + block-sha1: improve code on large-register-set machines
- + block-sha1: improved SHA1 hashing
- + block-sha1: perform register rotation using cpp
- + block-sha1: get rid of redundant 'lenW' context
- + block-sha1: Use '(B&C)+(D&(B^C))' instead of '(B&C)|(D&(B|C))' in
-   round 3
- + block-sha1: macroize the rounds a bit further
- + block-sha1: re-use the temporary array as we calculate the SHA1
- + block-sha1: make the 'ntohl()' part of the first SHA1 loop
- + block-sha1: minor fixups
- + block-sha1: try to use rol/ror appropriately
- + block-sha1: undo ctx->size change
- + Add new optimized C 'block-sha1' routines
+* lt/block-sha1 (2009-08-17) 4 commits
+  (merged to 'next' on 2009-08-18 at 67a1ce8)
+ + remove ARM and Mozilla SHA1 implementations
+ + block-sha1: guard gcc extensions with __GNUC__
+ + make sure byte swapping is optimal for git
+ + block-sha1: make the size member first in the context struct
 
-Linus's "written in C, faster than handcrafted asm" SHA-1 implementation
-with clean-up and ARM support from Nico.
+Finishing touches ;-)  There were a few Solaris portability patches
+floated around that I didn't pick up, waiting for them to finalize.
 
-* nd/sparse (Tue Aug 11 22:44:06 2009 +0700) 8 commits
+* nd/sparse (2009-08-11) 8 commits
  . --sparse for porcelains
  . Support sparse checkout in unpack_trees() and read-tree
  . unpack-trees.c: generalize verify_* functions
@@ -93,61 +215,29 @@ with clean-up and ARM support from Nico.
  . excluded_1(): support exclude "directories" in index
  . Read .gitignore from index if it is assume-unchanged
  . Avoid writing to buffer in add_excludes_from_file_1()
- . Prevent diff machinery from examining assume-unchanged entries on
-   worktree
+  (merged to 'next' on 2009-08-20 at ea167d7)
+ + Prevent diff machinery from examining assume-unchanged entries on worktree
 
-Privately applied but not yet queued to 'pu', expecting a minor reroll
-near the tip.
+The first one was an independent fix; the rest will be discarded and
+replaced with the "return of no-checkout" series.
 
-* jk/maint-merge-msg-fix (Sun Aug 9 06:02:51 2009 -0400) 3 commits
- + merge: indicate remote tracking branches in merge message
- + merge: fix incorrect merge message for ambiguous tag/branch
- + add tests for merge message headings
-
-----------------------------------------------------------------
-[Graduated to "master"]
-
-* zf/maint-gitweb-acname (Sun Aug 2 09:42:24 2009 +0200) 1 commit
- - gitweb: parse_commit_text encoding fix
-
-* jc/maint-merge-recursive-fix (Thu Jul 30 17:38:15 2009 -0700) 1 commit
- - merge-recursive: don't segfault while handling rename clashes
-
-* js/run-command-updates (Tue Aug 4 11:28:40 2009 +0200) 7 commits
- + run-command.c: squelch a "use before assignment" warning
- + receive-pack: remove unnecessary run_status report
- + run_command: report failure to execute the program, but optionally
-   don't
- + run_command: encode deadly signal number in the return value
- + run_command: report system call errors instead of returning error
-   codes
- + run_command: return exit code as positive value
- + MinGW: simplify waitpid() emulation macros
-
-* mk/grep-max-depth (Wed Jul 22 19:52:15 2009 +0200) 1 commit
- + grep: Add --max-depth option.
-
-* jp/symlink-dirs (Wed Jul 29 20:22:25 2009 -0700) 3 commits
- + git-checkout: be careful about untracked symlinks
- + lstat_cache: guard against full match of length of 'name'
-   parameter
- + Demonstrate bugs when a directory is replaced with a symlink
-
-----------------------------------------------------------------
-[In 'next']
-
-* bc/mailsplit-cr-at-eol (Tue Aug 4 22:31:59 2009 -0500) 4 commits
- + Allow mailsplit (and hence git-am) to handle mails with CRLF line-
-   endings
- + builtin-mailsplit.c: remove read_line_with_nul() since it is no
-   longer used
+* bc/mailsplit-cr-at-eol (2009-08-04) 4 commits
+  (merged to 'next' on 2009-08-06 at 6bc7c5c)
+ + Allow mailsplit (and hence git-am) to handle mails with CRLF line-endings
+ + builtin-mailsplit.c: remove read_line_with_nul() since it is no longer used
  + builtin-mailinfo,builtin-mailsplit: use strbufs
  + strbuf: add new function strbuf_getwholeline()
 
-* gb/apply-ignore-whitespace (Tue Aug 4 13:16:49 2009 +0200) 1 commit
+Will merge.
+
+* gb/apply-ignore-whitespace (2009-08-04) 1 commit
+  (merged to 'next' on 2009-08-06 at 59e2c86)
  + git apply: option to ignore whitespace differences
 
-* cc/replace (Wed May 27 07:14:09 2009 +0200) 14 commits
+Will merge.
+
+* cc/replace (2009-05-27) 14 commits.
+  (merged to 'next' on 2009-08-02 at b9c4bc0)
  + t6050: check pushing something based on a replaced commit
  + Documentation: add documentation for "git replace"
  + Add git-replace to .gitignore
@@ -160,103 +250,52 @@ near the tip.
  + replace_object: add a test case
  + object: call "check_sha1_signature" with the replacement sha1
  + sha1_file: add a "read_sha1_file_repl" function
- + replace_object: add mechanism to replace objects found in
-   "refs/replace/"
+ + replace_object: add mechanism to replace objects found in "refs/replace/"
  + refs: add a "for_each_replace_ref" function
 
-* jc/1.7.0-diff-whitespace-only-status (Sat May 23 01:15:35 2009 -0700) 2 commits
+Will merge.
+
+* jc/1.7.0-diff-whitespace-only-status (2009-05-23) 2 commits.
+  (merged to 'next' on 2009-08-02 at 9c08420)
  + diff: Rename QUIET internal option to QUICK
  + diff: change semantics of "ignore whitespace" options
 
-This changes exit code from "git diff --ignore-whitespace" and friends
-when there is no actual output.  It is a backward incompatible change, but
-we could argue that it is a bugfix.
+For 1.7.0.  This changes exit code from "git diff --ignore-whitespace" and
+friends when there is no actual output.  It is a backward incompatible
+change, but we could argue that it is a bugfix.
 
-* jc/1.7.0-push-safety (Mon Feb 9 00:19:46 2009 -0800) 2 commits
+* jc/1.7.0-push-safety (2009-02-09) 2 commits
+  (merged to 'next' on 2009-08-02 at 38b82fe)
  + Refuse deleting the current branch via push
- + Refuse updating the current branch in a non-bare repository via
-   push
+ + Refuse updating the current branch in a non-bare repository via push
 
-----------------------------------------------------------------
-[In 'pu']
+For 1.7.0.
 
-* jn/gitweb-blame (Thu Aug 6 19:11:52 2009 +0200) 14 commits
- - gitweb: Create links leading to 'blame_incremental' using
-   JavaScript
- - gitweb: Incremental blame (proof of concept)
+* jn/gitweb-blame (2009-08-06) 3 commits
+ - gitweb: Create links leading to 'blame_incremental' using JavaScript
+ - gitweb: Incremental blame (WIP)
  - gitweb: Add optional "time to generate page" info in footer
- + Revert the four topmost commits from jn/gitweb-blame topic
- + gitweb: Create links leading to 'blame_incremental' using
-   JavaScript
- + gitweb: Incremental blame (proof of concept)
- + gitweb: Add optional "time to generate page" info in footer
- + gitweb: Add -partial_query option to href() subroutine
- + gitweb: Use light/dark for class names also in 'blame' view
- + gitweb: Add author initials in 'blame' view, a la "git gui blame"
- + gitweb: Mark commits with no "previous" in 'blame' view
- + gitweb: Use "previous" header of git-blame -p in 'blame' view
- + gitweb: Mark boundary commits in 'blame' view
- + gitweb: Make .error style generic
 
-I haven't picked up Jakub's replacement to the second one from the tip.
-We probably should merge up to "Use light/dark" (aef3768) to 'master' and
-start the rest over.
-
-* jc/maint-clean-nested-dir-safety (Tue Jun 30 15:33:45 2009 -0700) 1 commit
- + clean: require double -f options to nuke nested git repository and
-   work tree
-
-This probably should go in 'master' soonish.
-
-* jc/shortstatus (Tue Aug 4 23:55:22 2009 -0700) 12 commits
- - git stat -s: short status output
- - git stat: pathspec limits, unlike traditional "git status"
- - git stat: the beginning
+* jc/shortstatus (2009-08-15) 11 commits
+  (merged to 'next' on 2009-08-15 at 7e40766)
+ + git commit --dry-run -v: show diff in color when asked
+ + Documentation/git-commit.txt: describe --dry-run
+  (merged to 'next' on 2009-08-12 at 53bda17)
  + wt-status: collect untracked files in a separate "collect" phase
  + Make git_status_config() file scope static to builtin-commit.c
  + wt-status: move wt_status_colors[] into wt_status structure
  + wt-status: move many global settings to wt_status structure
  + commit: --dry-run
+  (merged to 'next' on 2009-08-06 at fe8cb94)
  + status: show worktree status of conflicted paths separately
- + wt-status.c: rework the way changes to the index and work tree are
-   summarized
+ + wt-status.c: rework the way changes to the index and work tree are summarized
  + diff-index: keep the original index intact
  + diff-index: report unmerged new entries
+ (this branch is used by jc/1.7.0-status.)
 
-Slowly progressing.  I've addressed issues pointed out by Jeff in his
-review, and hopefully the whole thing would be ready to go.
+Will cook for a bit more and then merge.
 
-* db/vcs-helper (Sun Aug 9 15:28:28 2009 -0400) 17 commits
- - Allow helpers to request marks for fast-import
- - Allow helpers to report in "list" command that the ref is
-   unchanged
- - Add support for "import" helper command
- - transport-helper_init(): fix a memory leak in error path
- - Add a config option for remotes to specify a foreign vcs
- - Allow programs to not depend on remotes having urls
- - Allow fetch to modify refs
- - Use a function to determine whether a remote is valid
- - Use a clearer style to issue commands to remote helpers
- + Makefile: install hardlinks for git-remote-<scheme> supported by
-   libcurl if possible
- + Makefile: do not link three copies of git-remote-* programs
- + Makefile: git-http-fetch does not need expat
- + http-fetch: Fix Makefile dependancies
- + Add transport native helper executables to .gitignore
- + git-http-fetch: not a builtin
- + Use an external program to implement fetching with curl
- + Add support for external programs for handling native fetches
-
-This consolidates various previous rounds from Daniel and Johan.  It seems
-that the use of colon ':' before vcs helper name needs to be corrected
-before this series can go further.
-
-* je/send-email-no-subject (Wed Aug 5 18:49:54 2009 +0200) 1 commit
- - send-email: confirm on empty mail subjects
-
-This seems to break t9001.  Near the tip of 'pu' I have a iffy workaround.
-
-* jh/notes (Wed Jul 29 04:25:26 2009 +0200) 8 commits
+* jh/notes (2009-07-29) 8 commits.
  - t3302-notes-index-expensive: Speed up create_repo()
  - fast-import: Add support for importing commit notes
  - First draft of notes tree parser with support for fanout subtrees
@@ -266,54 +305,59 @@ This seems to break t9001.  Near the tip of 'pu' I have a iffy workaround.
  - Add a script to edit/inspect notes
  - Introduce commit notes
 
-* cc/sequencer-rebase-i (Wed Aug 5 22:53:00 2009 +0200) 8 commits
- - rebase -i: use "git sequencer--helper --reset-hard"
- - sequencer: add "--reset-hard" option to "git sequencer--helper"
- - sequencer: add comments about reset_almost_hard()
- - sequencer: add "reset_almost_hard()" and related functions
- - rebase -i: use "git sequencer--helper --make-patch"
- - sequencer: free memory used in "make_patch" function
- - sequencer: add "make_patch" function to save a patch
- - sequencer: add "builtin-sequencer--helper.c"
+The cvs-helper series depends on this one.
 
-More sequencer updates.  I didn't look at the latest round that had a
-handful "oops, fix that earlier botch" patches, expecting a cleaner
-reroll.
+* tr/reset-checkout-patch (2009-08-18) 8 commits.
+  (merged to 'next' on 2009-08-18 at e465bb3)
+ + tests: disable interactive hunk selection tests if perl is not available
+  (merged to 'next' on 2009-08-16 at 67896c4)
+ + DWIM 'git stash save -p' for 'git stash -p'
+ + Implement 'git stash save --patch'
+ + Implement 'git checkout --patch'
+ + Implement 'git reset --patch'
+ + builtin-add: refactor the meat of interactive_add()
+ + Add a small patch-mode testing library
+ + git-apply--interactive: Refactor patch mode code
+ (this branch uses js/stash-dwim.)
 
-* jc/mailinfo-remove-brackets (Wed Jul 15 15:31:12 2009 -0700) 1 commit
- - mailinfo: -b option keeps [bracketed] strings that is not a
-   [PATCH] marker
+There was a discussion on better DWIMmery to (1) forbid "git stash save
+--anything-with-dash" and (2) redirect with any option "git stash --opt"
+to "git stash save --opt", to keep it flexible and safe at the same time.
+I think it is a sane thing to do.
 
-* tr/reset-checkout-patch (Tue Jul 28 23:20:12 2009 +0200) 8 commits
- - DWIM 'git stash save -p' for 'git stash -p'
- - Merge branch 'js/stash-dwim' into tr/reset-checkout-patch
- - Make 'git stash -k' a short form for 'git stash save --keep-index'
- - Implement 'git stash save --patch'
- - Implement 'git checkout --patch'
- - Implement 'git reset --patch'
- - builtin-add: refactor the meat of interactive_add()
- - git-apply--interactive: Refactor patch mode code
+* js/stash-dwim (2009-07-27) 1 commit.
+  (merged to 'next' on 2009-08-16 at 67896c4)
+ + Make 'git stash -k' a short form for 'git stash save --keep-index'
+ (this branch is used by tr/reset-checkout-patch.)
 
-Progress?
-
-* js/stash-dwim (Mon Jul 27 20:37:10 2009 +0200) 1 commit
- - Make 'git stash -k' a short form for 'git stash save --keep-index'
-
-This should be merged to 'next' soonish, but I keep forgetting.
-
-* pb/tracking (Thu Jul 16 16:26:15 2009 -0500) 7 commits
- . branch.c: if remote is not config'd for branch, don't try delete
-   push config
- . branch, checkout: introduce autosetuppush
- . move deletion of merge configuration to branch.c
- . remote: add per-remote autosetupmerge and autosetuprebase
-   configuration
- . introduce a struct tracking_config
- . branch: install_branch_config and struct tracking refactoring
- . config: allow false and true values for branch.autosetuprebase
-
-Has been ejected from 'pu' for some time, expecting a reroll.
-
-* jc/log-tz (Tue Mar 3 00:45:37 2009 -0800) 1 commit
+* jc/log-tz (2009-03-03) 1 commit.
  - Allow --date=local --date=other-format to work as expected
 
+* jc/mailinfo-remove-brackets (2009-07-15) 1 commit.
+ - mailinfo: -b option keeps [bracketed] strings that is not a [PATCH] marker
+
+--------------------------------------------------
+[I have been too busy to purge these]
+
+* ar/maint-1.6.2-merge-recursive-d-f (2009-05-11) 2 commits.
+ . Fix for a merge where a branch has an F->D transition
+ . Add a reminder test case for a merge with F/D transition
+
+* jc/merge-convert (2009-01-26) 1 commit.
+ . git-merge-file: allow converting the results for the work tree
+
+* lt/read-directory (2009-05-15) 3 commits.
+ . Add initial support for pathname conversion to UTF-8
+ . read_directory(): infrastructure for pathname character set conversion
+ . Add 'fill_directory()' helper function for directory traversal
+
+* ne/rev-cache (2009-08-17) 6 commits
+ . support for path name caching of blobs/trees in rev-cache
+ . full integration of rev-cache into git's revision walker, completed test suite
+ . administrative functions for rev-cache, and start of integration into git
+ . non-commit object support for rev-cache
+ . bare minimum revision cache system, no integration with git
+ . revision caching documentation: man page and technical discussion
+
+* ps/blame (2009-03-12) 1 commit.
+ . blame.c: start libifying the blame infrastructure
