@@ -1,0 +1,325 @@
+#!/bin/sh
+
+LANG=C LC_ALL=C GIT_PAGER=cat
+export LANG LC_ALL GIT_PAGER
+
+tmp=/var/tmp/cook.$$
+trap 'rm -f "$tmp".*' 0
+
+git branch --merged "master" | sed -n -e 's/^..//' -e '/\//p' >"$tmp.in.master"
+git branch --merged "pu" | sed -n -e 's/^..//' -e '/\//p' >"$tmp.in.pu"
+{
+	comm -13 "$tmp.in.master" "$tmp.in.pu" 
+	git branch --no-merged pu |
+	sed -n -e 's/^..//' -e '/\//p'
+} >"$tmp.branches"
+
+git log --first-parent --format="%H %ci" master..next |
+sed -e 's/ [0-2][0-9]:[0-6][0-9]:[0-6][0-9] [-+][0-2][0-9][0-6][0-9]$//' >"$tmp.next"
+git rev-list master..pu >"$tmp.commits.in.pu"
+
+format_branch () {
+	# branch=$1 others=$2
+	git rev-list --no-merges --topo-order "master..$1" --not $2 >"$tmp.list"
+	count=$(wc -l <"$tmp.list" | tr -d ' ')
+	label="* $1 ($(git show -s --format="%ai" $1 | sed -e 's/ .*//')) $count commit"
+	test "$count" = 1 || label="${label}s"
+
+	count=$(git rev-list "master..$1" | wc -l)
+	mcount=$(git rev-list "maint..$1" | wc -l)
+	if test $mcount = $count
+	then
+	    label="$label."
+	fi
+
+	echo "$label"
+	lasttimelabel=
+	lastfoundmerge=
+	while read commit
+	do
+		merged= merged_with=
+		while read merge at
+		do
+			if test -n "$lastfoundmerge"
+			then
+				if test "$lastfoundmerge" = "$merge"
+				then
+					lastfoundmerge=
+				else
+					continue
+				fi
+			fi
+			mb=$(git merge-base $merge $commit)
+			if test "$mb" = "$commit"
+			then
+				merged=$at merged_with=$merge
+			else
+				break
+			fi
+		done <"$tmp.next"
+
+		lastfoundmerge=$merged_with
+		thistimelabel=
+		if test -n "$merged"
+		then
+			thistimelabel=$merged
+			commitlabel="+"
+		elif grep "$commit" "$tmp.commits.in.pu" >/dev/null
+		then
+			commitlabel="-"
+		else
+			commitlabel="."
+		fi
+		if test "$lasttimelabel" != "$thistimelabel"
+		then
+			with=$(git rev-parse --short $merged_with)
+			echo "  (merged to 'next' on $thistimelabel at $with)"
+			lasttimelabel=$thistimelabel
+		fi
+		git show -s --format=" $commitlabel %s" $commit
+	done <"$tmp.list"
+}
+
+add_desc () {
+	kind=$1
+	shift
+	test -z "$description" || description="$description;"
+	others=
+	while :
+	do
+		other=$1
+		shift
+		case "$#,$others" in
+		0,)
+			others="$other"
+			break ;;
+		0,?*)
+			others="$others and $other"
+			break ;;
+		*,)
+			others="$other"
+			;;
+		*,?*)
+			others="$others, $other"
+			;;
+		esac
+	done
+	description="$description $kind $others"
+}
+
+while read b
+do
+	git rev-list --no-merges "master..$b"
+done <"$tmp.branches" | sort | uniq -d >"$tmp.shared"
+
+while read shared
+do
+	b=$(git branch --contains "$shared" | sed -n -e 's/^..//' -e '/\//p')
+	echo "" $b ""
+done <"$tmp.shared" | sort -u >"$tmp.related"
+
+serial=1
+while read b
+do
+	related=$(grep " $b " "$tmp.related" | tr ' ' '\012' | sort -u | sed -e '/^$/d')
+
+	based_on=
+	used_by=
+	forks=
+	same_as=
+	if test -n "$related"
+	then
+		for r in $related
+		do
+			test "$b" = "$r" && continue
+			based=$(git rev-list --no-merges $b..$r | wc -l | tr -d ' ')
+			bases=$(git rev-list --no-merges $r..$b | wc -l | tr -d ' ')
+			case "$based,$bases" in
+			0,0)
+				same_as="$same_as$r "
+				;;
+			0,*)
+				based_on="$based_on$r "
+				;;
+			*,0)
+				used_by="$used_by$r "
+				;;
+			*,*)
+				forks="$forks$r "
+				;;
+			esac
+		done
+	fi
+
+	{
+		format_branch "$b" "$based_on"
+
+		description=
+		test -z "$same_as" || add_desc 'is same as' $same_as
+		test -z "$based_on" || add_desc 'uses' $based_on
+		test -z "$used_by" || add_desc 'is used by' $used_by
+		test -z "$forks" || add_desc 'is related to' $forks
+
+		test -z "$description" ||
+		echo " (this branch$description.)"
+	} >"$tmp.output.$serial"
+	echo "$b $serial"
+	serial=$(( $serial + 1 ))
+done <"$tmp.branches" >"$tmp.output.toc"
+
+eval $(date +"monthname=%b month=%m year=%Y date=%d dow=%a")
+lead="whats/cooking/$year/$month"
+issue=$(
+	cd Meta &&
+	git ls-tree -r --name-only HEAD "$lead"  | tail -n 1
+)
+if test -n "$issue"
+then
+	issue=$( expr "$issue" : '.*/0*\([1-9][0-9]*\)\.txt$' )
+	issue=$(( $issue + 1 ))
+else
+	issue=1
+fi
+issue=$( printf "%02d" $issue )
+mkdir -p "Meta/$lead"
+
+last=$(
+	cd Meta &&
+	git ls-tree -r --name-only HEAD "whats/cooking"  | tail -n 1
+)
+
+master_at=$(git rev-parse --verify refs/heads/master)
+next_at=$(git rev-parse --verify refs/heads/next)
+cat >"$tmp.output.0" <<EOF
+To: git@vger.kernel.org
+Subject: What's cooking in git.git ($monthname $year, #$issue; $dow, $date)
+X-master-at: $master_at
+X-next-at: $next_at
+
+What's cooking in git.git ($monthname $year, #$issue; $dow, $date)
+--------------------------------------------------
+
+Here are the topics that have been cooking.  Commits prefixed with '-' are
+only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
+marked with '.' do not appear in any of the branches, but I am still
+holding onto them.
+
+EOF
+
+if test -z "$NO_TEMPLATE" && test -f "Meta/$last"
+then
+	template="Meta/$last"
+else
+	template=/dev/null
+fi
+perl -w -e '
+	my $section = undef;
+	my $serial = 1;
+	my $branch = "b:l:u:r:b";
+	my $tmp = $ARGV[0];
+	my $last_empty = undef;
+
+	open TOC, ">$tmp.template.toc";
+	open O, ">$tmp.template.0";
+
+	while (<STDIN>) {
+		if (defined $section && /^-{20,}/) {
+			$_ = "\n";
+		}
+		if (/^$/) {
+			$last_empty = 1;
+			next;
+		}
+		if (/\[(.*)\]\s*$/) {
+			$section = $1;
+			$branch = undef;
+			next;
+		}
+		if (defined $section && /^\* (\S+) /) {
+			$branch = $1;
+			$last_empty = 0;
+			open O, ">$tmp.template.$serial";
+			print TOC "$branch $serial $section\n";
+			$serial++;
+		}
+		if (defined $branch) {
+			print O "\n" if ($last_empty);
+			$last_empty = 0;
+			print O "$_";
+		}
+	}
+' <"$template" "$tmp"
+
+# Assemble them all
+
+if test -z "$TO_STDOUT"
+then
+	exec >"Meta/$lead/$issue.txt"
+fi
+
+if test -s "$tmp.template.0"
+then
+	sed -e '/^---------------*/q' <"$tmp.output.0"
+	sed -e '1,/^---------------*/d' <"$tmp.template.0"
+else
+	cat "$tmp.output.0"
+fi | sed -e '$d'
+
+current='--------------------------------------------------
+[New Topics]
+'
+while read branch serial
+do
+	grep "^$branch " "$tmp.template.toc" >/dev/null && continue 
+	if test -n "$current"
+	then
+		echo "$current"
+		current=
+	else
+		echo
+	fi
+	cat "$tmp.output.$serial"
+done <"$tmp.output.toc"
+
+current='--------------------------------------------------
+[Graduated to "master"]
+'
+while read branch oldserial section
+do
+	test "$section" = 'Graduated to "master"' && continue
+	tip=$(git rev-parse --quiet --verify "refs/heads/$branch")
+	mb=$(git merge-base master $tip)
+	test "$mb" = "$tip" || continue
+	if test -n "$current"
+	then
+		echo "$current"
+		current=
+	else
+		echo
+	fi
+	cat "$tmp.template.$oldserial"
+done <"$tmp.template.toc"
+
+current=
+while read branch oldserial section
+do
+	found=$(grep "^$branch " "$tmp.output.toc") || continue
+	newserial=$(expr "$found" : '[^ ]* \(.*\)')
+	if test "$section" = "New Topics"
+	then
+		section="Old New Topics"
+	fi 
+	if test "$current" != "$section"
+	then
+		current=$section
+		echo "--------------------------------------------------
+[$section]
+"
+	else
+		echo
+	fi
+	cat "$tmp.output.$newserial"
+	echo "<<"
+	cat "$tmp.template.$oldserial"
+	echo ">>"
+done <"$tmp.template.toc"
