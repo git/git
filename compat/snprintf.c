@@ -3,7 +3,8 @@
 /*
  * The size parameter specifies the available space, i.e. includes
  * the trailing NUL byte; but Windows's vsnprintf expects the
- * number of characters to write without the trailing NUL.
+ * number of characters to write, and does not necessarily write the
+ * trailing NUL.
  */
 #ifndef SNPRINTF_SIZE_CORR
 #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ < 4
