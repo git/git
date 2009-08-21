@@ -1065,7 +1065,18 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	return updated;
 }
 
-int refresh_index(struct index_state *istate, unsigned int flags, const char **pathspec, char *seen)
+static void show_file(const char * fmt, const char * name, int in_porcelain,
+		      int * first, char *header_msg)
+{
+	if (in_porcelain && *first && header_msg) {
+		printf("%s\n", header_msg);
+		*first=0;
+	}
+	printf(fmt, name);
+}
+
+int refresh_index(struct index_state *istate, unsigned int flags, const char **pathspec,
+		  char *seen, char *header_msg)
 {
 	int i;
 	int has_errors = 0;
@@ -1074,11 +1085,14 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	int quiet = (flags & REFRESH_QUIET) != 0;
 	int not_new = (flags & REFRESH_IGNORE_MISSING) != 0;
 	int ignore_submodules = (flags & REFRESH_IGNORE_SUBMODULES) != 0;
+	int first = 1;
+	int in_porcelain = (flags & REFRESH_IN_PORCELAIN);
 	unsigned int options = really ? CE_MATCH_IGNORE_VALID : 0;
-	const char *needs_update_message;
+	const char *needs_update_fmt;
+	const char *needs_merge_fmt;
 
-	needs_update_message = ((flags & REFRESH_IN_PORCELAIN)
-				? "locally modified" : "needs update");
+	needs_update_fmt = (in_porcelain ? "M\t%s\n" : "%s: needs update\n");
+	needs_merge_fmt = (in_porcelain ? "U\t%s\n" : "%s: needs merge\n");
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new;
 		int cache_errno = 0;
@@ -1094,7 +1108,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			i--;
 			if (allow_unmerged)
 				continue;
-			printf("%s: needs merge\n", ce->name);
+			show_file(needs_merge_fmt, ce->name, in_porcelain, &first, header_msg);
 			has_errors = 1;
 			continue;
 		}
@@ -1117,7 +1131,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			}
 			if (quiet)
 				continue;
-			printf("%s: %s\n", ce->name, needs_update_message);
+			show_file(needs_update_fmt, ce->name, in_porcelain, &first, header_msg);
 			has_errors = 1;
 			continue;
 		}
