@@ -86,7 +86,7 @@ static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
 
 static unsigned long delta_cache_size = 0;
-static unsigned long max_delta_cache_size = 0;
+static unsigned long max_delta_cache_size = 256 * 1024 * 1024;
 static unsigned long cache_max_small_delta_size = 1000;
 
 static unsigned long window_memory_limit = 0;
