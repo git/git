@@ -322,7 +322,7 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 	return -1;
 }
 
-int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
+int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 {
 	int ch;
 
@@ -332,15 +332,24 @@ int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
 
 	strbuf_reset(sb);
 	while ((ch = fgetc(fp)) != EOF) {
-		if (ch == term)
-			break;
 		strbuf_grow(sb, 1);
 		sb->buf[sb->len++] = ch;
+		if (ch == term)
+			break;
 	}
 	if (ch == EOF && sb->len == 0)
 		return EOF;
 
 	sb->buf[sb->len] = '\0';
+	return 0;
+}
+
+int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
+{
+	if (strbuf_getwholeline(sb, fp, term))
+		return EOF;
+	if (sb->buf[sb->len-1] == term)
+		strbuf_setlen(sb, sb->len-1);
 	return 0;
 }
 

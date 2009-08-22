@@ -211,7 +211,13 @@ check_patch_format () {
 split_patches () {
 	case "$patch_format" in
 	mbox)
-		git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||
+		case "$rebasing" in
+		'')
+			keep_cr= ;;
+		?*)
+			keep_cr=--keep-cr ;;
+		esac
+		git mailsplit -d"$prec" -o"$dotest" -b $keep_cr -- "$@" > "$dotest/last" ||
 		clean_abort
 		;;
 	stgit-series)
