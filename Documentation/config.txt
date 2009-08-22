@@ -461,6 +461,14 @@ it will be treated as a shell command.  For example, defining
 executed from the top-level directory of a repository, which may
 not necessarily be the current directory.
 
+apply.ignorewhitespace::
+	When set to 'change', tells 'git-apply' to ignore changes in
+	whitespace, in the same way as the '--ignore-space-change'
+	option.
+	When set to one of: no, none, never, false tells 'git-apply' to
+	respect all whitespace differences.
+	See linkgit:git-apply[1].
+
 apply.whitespace::
 	Tells 'git-apply' how to handle whitespaces, in the same way
 	as the '--whitespace' option. See linkgit:git-apply[1].

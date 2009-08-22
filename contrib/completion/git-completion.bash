@@ -674,6 +674,7 @@ _git_am ()
 	--*)
 		__gitcomp "
 			--3way --committer-date-is-author-date --ignore-date
+			--ignore-whitespace --ignore-space-change
 			--interactive --keep --no-utf8 --signoff --utf8
 			--whitespace=
 			"
@@ -695,6 +696,7 @@ _git_apply ()
 			--stat --numstat --summary --check --index
 			--cached --index-info --reverse --reject --unidiff-zero
 			--apply --no-add --exclude=
+			--ignore-whitespace --ignore-space-change
 			--whitespace= --inaccurate-eof --verbose
 			"
 		return
@@ -1537,6 +1539,7 @@ _git_config ()
 	__gitcomp "
 		add.ignore-errors
 		alias.
+		apply.ignorewhitespace
 		apply.whitespace
 		branch.autosetupmerge
 		branch.autosetuprebase
