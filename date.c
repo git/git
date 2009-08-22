@@ -525,11 +525,8 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
 		}
 	}
 
-	if (num > 0 && num < 32) {
-		tm->tm_mday = num;
-	} else if (num > 0 && num < 13) {
+	if (num > 0 && num < 13 && tm->tm_mon < 0)
 		tm->tm_mon = num-1;
-	}
 
 	return n;
 }
@@ -657,42 +654,59 @@ void datestamp(char *buf, int bufsize)
 	date_string(now, offset, buf, bufsize);
 }
 
-static void update_tm(struct tm *tm, unsigned long sec)
+/*
+ * Relative time update (eg "2 days ago").  If we haven't set the time
+ * yet, we need to set it from current time.
+ */
+static unsigned long update_tm(struct tm *tm, struct tm *now, unsigned long sec)
 {
-	time_t n = mktime(tm) - sec;
+	time_t n;
+
+	if (tm->tm_mday < 0)
+		tm->tm_mday = now->tm_mday;
+	if (tm->tm_mon < 0)
+		tm->tm_mon = now->tm_mon;
+	if (tm->tm_year < 0) {
+		tm->tm_year = now->tm_year;
+		if (tm->tm_mon > now->tm_mon)
+			tm->tm_year--;
+	}
+
+	n = mktime(tm) - sec;
 	localtime_r(&n, tm);
+	return n;
 }
 
-static void date_yesterday(struct tm *tm, int *num)
+static void date_yesterday(struct tm *tm, struct tm *now, int *num)
 {
-	update_tm(tm, 24*60*60);
+	update_tm(tm, now, 24*60*60);
 }
 
-static void date_time(struct tm *tm, int hour)
+static void date_time(struct tm *tm, struct tm *now, int hour)
 {
 	if (tm->tm_hour < hour)
-		date_yesterday(tm, NULL);
+		date_yesterday(tm, now, NULL);
 	tm->tm_hour = hour;
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
 }
 
-static void date_midnight(struct tm *tm, int *num)
+static void date_midnight(struct tm *tm, struct tm *now, int *num)
 {
-	date_time(tm, 0);
+	date_time(tm, now, 0);
 }
 
-static void date_noon(struct tm *tm, int *num)
+static void date_noon(struct tm *tm, struct tm *now, int *num)
 {
-	date_time(tm, 12);
+	date_time(tm, now, 12);
 }
 
-static void date_tea(struct tm *tm, int *num)
+static void date_tea(struct tm *tm, struct tm *now, int *num)
 {
-	date_time(tm, 17);
+	date_time(tm, now, 17);
 }
 
-static void date_pm(struct tm *tm, int *num)
+static void date_pm(struct tm *tm, struct tm *now, int *num)
 {
 	int hour, n = *num;
 	*num = 0;
@@ -706,7 +720,7 @@ static void date_pm(struct tm *tm, int *num)
 	tm->tm_hour = (hour % 12) + 12;
 }
 
-static void date_am(struct tm *tm, int *num)
+static void date_am(struct tm *tm, struct tm *now, int *num)
 {
 	int hour, n = *num;
 	*num = 0;
@@ -720,7 +734,7 @@ static void date_am(struct tm *tm, int *num)
 	tm->tm_hour = (hour % 12);
 }
 
-static void date_never(struct tm *tm, int *num)
+static void date_never(struct tm *tm, struct tm *now, int *num)
 {
 	time_t n = 0;
 	localtime_r(&n, tm);
@@ -728,7 +742,7 @@ static void date_never(struct tm *tm, int *num)
 
 static const struct special {
 	const char *name;
-	void (*fn)(struct tm *, int *);
+	void (*fn)(struct tm *, struct tm *, int *);
 } special[] = {
 	{ "yesterday", date_yesterday },
 	{ "noon", date_noon },
@@ -757,7 +771,7 @@ static const struct typelen {
 	{ NULL }
 };
 
-static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
+static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm *now, int *num)
 {
 	const struct typelen *tl;
 	const struct special *s;
@@ -778,7 +792,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 	for (s = special; s->name; s++) {
 		int len = strlen(s->name);
 		if (match_string(date, s->name) == len) {
-			s->fn(tm, num);
+			s->fn(tm, now, num);
 			return end;
 		}
 	}
@@ -800,7 +814,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 	while (tl->type) {
 		int len = strlen(tl->type);
 		if (match_string(date, tl->type) >= len-1) {
-			update_tm(tm, tl->length * *num);
+			update_tm(tm, now, tl->length * *num);
 			*num = 0;
 			return end;
 		}
@@ -818,7 +832,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 				n++;
 			diff += 7*n;
 
-			update_tm(tm, diff * 24 * 60 * 60);
+			update_tm(tm, now, diff * 24 * 60 * 60);
 			return end;
 		}
 	}
@@ -866,6 +880,22 @@ static const char *approxidate_digit(const char *date, struct tm *tm, int *num)
 	return end;
 }
 
+/*
+ * Do we have a pending number at the end, or when
+ * we see a new one? Let's assume it's a month day,
+ * as in "Dec 6, 1992"
+ */
+static void pending_number(struct tm *tm, int *num)
+{
+	int number = *num;
+
+	if (number) {
+		*num = 0;
+		if (tm->tm_mday < 0 && number < 32)
+			tm->tm_mday = number;
+	}
+}
+
 unsigned long approxidate(const char *date)
 {
 	int number = 0;
@@ -881,21 +911,24 @@ unsigned long approxidate(const char *date)
 	time_sec = tv.tv_sec;
 	localtime_r(&time_sec, &tm);
 	now = tm;
+
+	tm.tm_year = -1;
+	tm.tm_mon = -1;
+	tm.tm_mday = -1;
+
 	for (;;) {
 		unsigned char c = *date;
 		if (!c)
 			break;
 		date++;
 		if (isdigit(c)) {
+			pending_number(&tm, &number);
 			date = approxidate_digit(date-1, &tm, &number);
 			continue;
 		}
 		if (isalpha(c))
-			date = approxidate_alpha(date-1, &tm, &number);
+			date = approxidate_alpha(date-1, &tm, &now, &number);
 	}
-	if (number > 0 && number < 32)
-		tm.tm_mday = number;
-	if (tm.tm_mon > now.tm_mon && tm.tm_year == now.tm_year)
-		tm.tm_year--;
-	return mktime(&tm);
+	pending_number(&tm, &number);
+	return update_tm(&tm, &now, 0);
 }
