@@ -209,6 +209,12 @@ but different purposes:
 - `--no-merged` is used to find branches which are candidates for merging
   into HEAD, since those branches are not fully contained by HEAD.
 
+SEE ALSO
+--------
+linkgit:git-check-ref-format[1],
+linkgit:git-fetch[1],
+linkgit:git-remote[1].
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <gitster@pobox.com>

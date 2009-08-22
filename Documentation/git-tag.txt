@@ -10,17 +10,15 @@ SYNOPSIS
 --------
 [verse]
 'git tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]
-	<name> [<commit> | <object>]
-'git tag' -d <name>...
+	<tagname> [<commit> | <object>]
+'git tag' -d <tagname>...
 'git tag' [-n[<num>]] -l [--contains <commit>] [<pattern>]
-'git tag' -v <name>...
+'git tag' -v <tagname>...
 
 DESCRIPTION
 -----------
 
-Adds a 'tag' reference in `.git/refs/tags/`.  The tag <name> must pass
-linkgit:git-check-ref-format[1] which basicly means that control characters,
-space, ~, ^, :, ?, *, [ and \ are prohibited.
+Adds a tag reference in `.git/refs/tags/`.
 
 Unless `-f` is given, the tag must not yet exist in
 `.git/refs/tags/` directory.
@@ -87,6 +85,12 @@ OPTIONS
 	read the message from the standard input.
 	Implies `-a` if none of `-a`, `-s`, or `-u <key-id>`
 	is given.
+
+<tagname>::
+	The name of the tag to create, delete, or describe.
+	The new tag name must pass all checks defined by
+	linkgit:git-check-ref-format[1].  Some of these checks
+	may restrict the characters allowed in a tag name.
 
 CONFIGURATION
 -------------
@@ -251,6 +255,10 @@ An example follows.
 $ GIT_COMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 ------------
 
+
+SEE ALSO
+--------
+linkgit:git-check-ref-format[1].
 
 Author
 ------
