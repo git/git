@@ -520,6 +520,7 @@ extern size_t packed_git_window_size;
 extern size_t packed_git_limit;
 extern size_t delta_base_cache_limit;
 extern int auto_crlf;
+extern int read_replace_refs;
 extern int fsync_object_files;
 extern int core_preload_index;
 
@@ -656,7 +657,11 @@ char *strip_path_suffix(const char *path, const char *suffix);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int sha1_object_info(const unsigned char *, unsigned long *);
-extern void * read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size);
+extern void *read_sha1_file_repl(const unsigned char *sha1, enum object_type *type, unsigned long *size, const unsigned char **replacement);
+static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
+{
+	return read_sha1_file_repl(sha1, type, size, NULL);
+}
 extern int hash_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
 extern int pretend_sha1_file(void *, unsigned long, enum object_type, unsigned char *);
