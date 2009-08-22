@@ -71,7 +71,7 @@ git send-email [options] <file | directory | rev-list options >
     --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, all.
     --[no-]signed-off-by-cc        * Send to Signed-off-by: addresses. Default on.
     --[no-]suppress-from           * Send to self. Default off.
-    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default on.
+    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default off.
     --[no-]thread                  * Use In-Reply-To: field. Default on.
 
   Administering:
@@ -188,7 +188,7 @@ my (@suppress_cc);
 
 my %config_bool_settings = (
     "thread" => [\$thread, 1],
-    "chainreplyto" => [\$chain_reply_to, 1],
+    "chainreplyto" => [\$chain_reply_to, undef],
     "suppressfrom" => [\$suppress_from, undef],
     "signedoffbycc" => [\$signed_off_by_cc, undef],
     "signedoffcc" => [\$signed_off_by_cc, undef],      # Deprecated
