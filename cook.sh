@@ -107,6 +107,22 @@ add_desc () {
 	description="$description $kind $others"
 }
 
+show_topic () {
+	old=$1 new=$2
+
+	sed -n -e '/^ ..*/p' "$old" >"$tmp.old.nc"
+	sed -n -e '/^ ..*/p' "$new" >"$tmp.new.nc"
+	if cmp "$tmp.old.nc" "$tmp.new.nc" >/dev/null
+	then
+		cat "$old"
+	else
+		cat "$new"
+		echo "<<"
+		cat "$old"
+		echo ">>"
+	fi
+}
+
 while read b
 do
 	git rev-list --no-merges "master..$b"
@@ -230,7 +246,7 @@ perl -w -e '
 			$last_empty = 1;
 			next;
 		}
-		if (/\[(.*)\]\s*$/) {
+		if (/^\[(.*)\]\s*$/) {
 			$section = $1;
 			$branch = undef;
 			next;
@@ -318,8 +334,6 @@ do
 	else
 		echo
 	fi
-	cat "$tmp.output.$newserial"
-	echo "<<"
-	cat "$tmp.template.$oldserial"
-	echo ">>"
+
+	show_topic "$tmp.template.$oldserial" "$tmp.output.$newserial"
 done <"$tmp.template.toc"
