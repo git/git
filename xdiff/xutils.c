@@ -242,18 +242,20 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 	for (; ptr < top && *ptr != '\n'; ptr++) {
 		if (isspace(*ptr)) {
 			const char *ptr2 = ptr;
+			int at_eol;
 			while (ptr + 1 < top && isspace(ptr[1])
 					&& ptr[1] != '\n')
 				ptr++;
+			at_eol = (top <= ptr + 1 || ptr[1] == '\n');
 			if (flags & XDF_IGNORE_WHITESPACE)
 				; /* already handled */
 			else if (flags & XDF_IGNORE_WHITESPACE_CHANGE
-					&& ptr[1] != '\n') {
+				 && !at_eol) {
 				ha += (ha << 5);
 				ha ^= (unsigned long) ' ';
 			}
 			else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL
-					&& ptr[1] != '\n') {
+				 && !at_eol) {
 				while (ptr2 != ptr + 1) {
 					ha += (ha << 5);
 					ha ^= (unsigned long) *ptr2;
