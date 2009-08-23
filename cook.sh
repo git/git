@@ -214,7 +214,7 @@ fi
 
 master_at=$(git rev-parse --verify refs/heads/master)
 next_at=$(git rev-parse --verify refs/heads/next)
-cat >"$tmp.output.0" <<EOF
+cat >"$tmp.output.blurb" <<EOF
 To: git@vger.kernel.org
 Subject: What's cooking in git.git ($monthname $year, #$issue; $dow, $date)
 X-master-at: $master_at
@@ -239,16 +239,15 @@ fi
 perl -w -e '
 	my $section = undef;
 	my $serial = 1;
-	my $branch = "b:l:u:r:b";
+	my $blurb = "b..l..u..r..b";
+	my $branch = $blurb;
 	my $tmp = $ARGV[0];
 	my $incremental = $ARGV[1] eq "yes";
 	my $last_empty = undef;
-
-	open TOC, ">$tmp.template.toc";
-	open O, ">$tmp.template.0";
+	my (@section, %section, @branch, %branch, %description, @leader);
 
 	while (<STDIN>) {
-		if (defined $section && /^-{20,}/) {
+		if (defined $section && /^-{20,}$/) {
 			$_ = "\n";
 		}
 		if (/^$/) {
@@ -261,19 +260,49 @@ perl -w -e '
 			if ($section eq "New Topics" && !$incremental) {
 				$section = "Old New Topics";
 			}
+			if (!exists $section{$section}) {
+				push @section, $section;
+				$section{$section} = [];
+			}
 			next;
 		}
 		if (defined $section && /^\* (\S+) /) {
 			$branch = $1;
 			$last_empty = 0;
-			open O, ">$tmp.template.$serial";
-			print TOC "$branch $serial $section\n";
-			$serial++;
+			if (!exists $branch{$branch}) {
+				push @branch, [$branch, $section];
+				$branch{$branch} = (scalar @branch) - 1;
+			}
+			push @{$section{$section}}, $branch;
 		}
 		if (defined $branch) {
-			print O "\n" if ($last_empty);
+			if ($last_empty) {
+				$_ = "\n$_";
+			}
 			$last_empty = 0;
-			print O "$_";
+			if (!exists $description{$branch}) {
+				$description{$branch} = [];
+			}
+			push @{$description{$branch}}, $_;
+		}
+	}
+
+	open O, ">$tmp.template.blurb";
+	for (@{$description{$blurb}}) {
+		print O $_;
+	}
+	close O;
+
+	open TOC, ">$tmp.template.toc";
+	for my $section (@section) {
+		for my $branch (@{$section{$section}}) {
+			my $serial = $branch{$branch};
+			print TOC "$branch $serial $section\n";
+			open O, ">$tmp.template.$serial";
+			for (@{$description{$branch}}) {
+				print O $_;
+			}
+			close O;
 		}
 	}
 ' <"$template" "$tmp" "$incremental"
@@ -289,12 +318,12 @@ then
 	exec >"Meta/$lead/$issue.txt"
 fi
 
-if test -s "$tmp.template.0"
+if test -s "$tmp.template.blurb"
 then
-	sed -e '/^---------------*/q' <"$tmp.output.0"
-	sed -e '1,/^---------------*/d' <"$tmp.template.0"
+	sed -e '/^---------------*/q' <"$tmp.output.blurb"
+	sed -e '1,/^---------------*/d' <"$tmp.template.blurb"
 else
-	cat "$tmp.output.0"
+	cat "$tmp.output.blurb"
 fi | sed -e '$d'
 
 while read branch serial
