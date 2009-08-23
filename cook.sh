@@ -204,6 +204,14 @@ last=$(
 	git ls-tree -r --name-only HEAD "whats/cooking"  | tail -n 1
 )
 
+# We may have a half-written one already.
+incremental=no
+if test -f "Meta/$lead/$issue.txt"
+then
+	last="$lead/$issue.txt"
+	incremental=yes
+fi
+
 master_at=$(git rev-parse --verify refs/heads/master)
 next_at=$(git rev-parse --verify refs/heads/next)
 cat >"$tmp.output.0" <<EOF
@@ -233,6 +241,7 @@ perl -w -e '
 	my $serial = 1;
 	my $branch = "b:l:u:r:b";
 	my $tmp = $ARGV[0];
+	my $incremental = $ARGV[1] eq "yes";
 	my $last_empty = undef;
 
 	open TOC, ">$tmp.template.toc";
@@ -249,6 +258,9 @@ perl -w -e '
 		if (/^\[(.*)\]\s*$/) {
 			$section = $1;
 			$branch = undef;
+			if ($section eq "New Topics" && !$incremental) {
+				$section = "Old New Topics";
+			}
 			next;
 		}
 		if (defined $section && /^\* (\S+) /) {
@@ -264,7 +276,11 @@ perl -w -e '
 			print O "$_";
 		}
 	}
-' <"$template" "$tmp"
+' <"$template" "$tmp" "$incremental"
+
+tmpserial=$(
+	tail -n 1 "$tmp.template.toc" | read branch serial section && echo $serial
+)
 
 # Assemble them all
 
@@ -281,20 +297,13 @@ else
 	cat "$tmp.output.0"
 fi | sed -e '$d'
 
-current='--------------------------------------------------
-[New Topics]
-'
 while read branch serial
 do
 	grep "^$branch " "$tmp.template.toc" >/dev/null && continue 
-	if test -n "$current"
-	then
-		echo "$current"
-		current=
-	else
-		echo
-	fi
-	cat "$tmp.output.$serial"
+
+	tmpserial=$(( $tmpserial + 1 ))
+	echo "$branch $tmpserial New Topics" >>"$tmp.template.toc"
+	cp "$tmp.output.$serial" "$tmp.template.$tmpserial"
 done <"$tmp.output.toc"
 
 current='--------------------------------------------------
@@ -302,7 +311,9 @@ current='--------------------------------------------------
 '
 while read branch oldserial section
 do
-	test "$section" = 'Graduated to "master"' && continue
+	test "$section" = 'Graduated to "master"' &&
+	test "$incremental" = no && continue
+
 	tip=$(git rev-parse --quiet --verify "refs/heads/$branch")
 	mb=$(git merge-base master $tip)
 	test "$mb" = "$tip" || continue
@@ -321,10 +332,6 @@ while read branch oldserial section
 do
 	found=$(grep "^$branch " "$tmp.output.toc") || continue
 	newserial=$(expr "$found" : '[^ ]* \(.*\)')
-	if test "$section" = "New Topics"
-	then
-		section="Old New Topics"
-	fi 
 	if test "$current" != "$section"
 	then
 		current=$section
