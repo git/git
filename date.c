@@ -24,6 +24,8 @@ time_t tm_to_time_t(const struct tm *tm)
 		return -1;
 	if (month < 2 || (year + 2) % 4)
 		day--;
+	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_sec < 0)
+		return -1;
 	return (year * 365 + (year + 1) / 4 + mdays[month] + day) * 24*60*60UL +
 		tm->tm_hour * 60*60 + tm->tm_min * 60 + tm->tm_sec;
 }
@@ -425,13 +427,19 @@ static int match_multi_number(unsigned long num, char c, const char *date, char 
 	return end - date;
 }
 
-/* Have we filled in any part of the time/date yet? */
+/*
+ * Have we filled in any part of the time/date yet?
+ * We just do a binary 'and' to see if the sign bit
+ * is set in all the values.
+ */
 static inline int nodate(struct tm *tm)
 {
-	return tm->tm_year < 0 &&
-		tm->tm_mon < 0 &&
-		tm->tm_mday < 0 &&
-		!(tm->tm_hour | tm->tm_min | tm->tm_sec);
+	return (tm->tm_year &
+		tm->tm_mon &
+		tm->tm_mday &
+		tm->tm_hour &
+		tm->tm_min &
+		tm->tm_sec) < 0;
 }
 
 /*
@@ -580,6 +588,9 @@ int parse_date(const char *date, char *result, int maxlen)
 	tm.tm_mon = -1;
 	tm.tm_mday = -1;
 	tm.tm_isdst = -1;
+	tm.tm_hour = -1;
+	tm.tm_min = -1;
+	tm.tm_sec = -1;
 	offset = -1;
 	tm_gmt = 0;
 
@@ -893,6 +904,17 @@ static void pending_number(struct tm *tm, int *num)
 		*num = 0;
 		if (tm->tm_mday < 0 && number < 32)
 			tm->tm_mday = number;
+		else if (tm->tm_mon < 0 && number < 13)
+			tm->tm_mon = number-1;
+		else if (tm->tm_year < 0) {
+			if (number > 1969 && number < 2100)
+				tm->tm_year = number - 1900;
+			else if (number > 69 && number < 100)
+				tm->tm_year = number;
+			else if (number < 38)
+				tm->tm_year = 100 + number;
+			/* We screw up for number = 00 ? */
+		}
 	}
 }
 
