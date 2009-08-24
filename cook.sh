@@ -287,6 +287,29 @@ perl -w -e '
 		}
 	}
 
+	if (open I, "<$tmp.output.toc") {
+		$section = "New Topics";
+		while (<I>) {
+			my ($branch, $oldserial) = /^(\S*) (\d+)$/;
+			next if (exists $branch{$branch});
+			if (!exists $section{$section}) {
+				push @section, $section;
+				$section{$section} = [];
+			}
+			push @branch, [$branch, $section];
+			$branch{$branch} = (scalar @branch) - 1;
+			if (!exists $description{$branch}) {
+				$description{$branch} = [];
+			}
+			open II, "<$tmp.output.$oldserial";
+			while (<II>) {
+				push @{$description{$branch}}, $_;
+			}
+			close II;
+		}
+		close I;
+	}
+
 	open O, ">$tmp.template.blurb";
 	for (@{$description{$blurb}}) {
 		print O $_;
@@ -325,15 +348,6 @@ then
 else
 	cat "$tmp.output.blurb"
 fi | sed -e '$d'
-
-while read branch serial
-do
-	grep "^$branch " "$tmp.template.toc" >/dev/null && continue 
-
-	tmpserial=$(( $tmpserial + 1 ))
-	echo "$branch $tmpserial New Topics" >>"$tmp.template.toc"
-	cp "$tmp.output.$serial" "$tmp.template.$tmpserial"
-done <"$tmp.output.toc"
 
 current='--------------------------------------------------
 [Graduated to "master"]
