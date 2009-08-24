@@ -160,7 +160,8 @@ our %known_snapshot_formats = (
 	# 	'suffix' => filename suffix,
 	# 	'format' => --format for git-archive,
 	# 	'compressor' => [compressor command and arguments]
-	# 	                (array reference, optional)}
+	# 	                (array reference, optional)
+	# 	'disabled' => boolean (optional)}
 	#
 	'tgz' => {
 		'display' => 'tar.gz',
@@ -176,6 +177,14 @@ our %known_snapshot_formats = (
 		'format' => 'tar',
 		'compressor' => ['bzip2']},
 
+	'txz' => {
+		'display' => 'tar.xz',
+		'type' => 'application/x-xz',
+		'suffix' => '.tar.xz',
+		'format' => 'tar',
+		'compressor' => ['xz'],
+		'disabled' => 1},
+
 	'zip' => {
 		'display' => 'zip',
 		'type' => 'application/x-zip',
@@ -188,6 +197,7 @@ our %known_snapshot_formats = (
 our %known_snapshot_format_aliases = (
 	'gzip'  => 'tgz',
 	'bzip2' => 'tbz2',
+	'xz'    => 'txz',
 
 	# backward compatibility: legacy gitweb config support
 	'x-gzip' => undef, 'gz' => undef,
@@ -494,7 +504,8 @@ sub filter_snapshot_fmts {
 		exists $known_snapshot_format_aliases{$_} ?
 		       $known_snapshot_format_aliases{$_} : $_} @fmts;
 	@fmts = grep {
-		exists $known_snapshot_formats{$_} } @fmts;
+		exists $known_snapshot_formats{$_} &&
+		!$known_snapshot_formats{$_}{'disabled'}} @fmts;
 }
 
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
@@ -5181,6 +5192,8 @@ sub git_snapshot {
 		die_error(400, "Unknown snapshot format");
 	} elsif (!grep($_ eq $format, @snapshot_fmts)) {
 		die_error(403, "Unsupported snapshot format");
+	} elsif ($known_snapshot_formats{$format}{'disabled'}) {
+		die_error(403, "Snapshot format not allowed");
 	}
 
 	if (!defined $hash) {
