@@ -13,7 +13,6 @@ extern const char git_more_info_string[];
 extern void list_common_cmds_help(void);
 extern const char *help_unknown_cmd(const char *cmd);
 extern void prune_packed_objects(int);
-extern int read_line_with_nul(char *buf, int size, FILE *file);
 extern int fmt_merge_msg(int merge_summary, struct strbuf *in,
 	struct strbuf *out);
 extern int commit_tree(const char *msg, unsigned char *tree,
@@ -112,5 +111,6 @@ extern int cmd_write_tree(int argc, const char **argv, const char *prefix);
 extern int cmd_verify_pack(int argc, const char **argv, const char *prefix);
 extern int cmd_show_ref(int argc, const char **argv, const char *prefix);
 extern int cmd_pack_refs(int argc, const char **argv, const char *prefix);
+extern int cmd_replace(int argc, const char **argv, const char *prefix);
 
 #endif

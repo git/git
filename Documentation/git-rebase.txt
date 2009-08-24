@@ -268,8 +268,9 @@ OPTIONS
 	exit with the message "Current branch is up to date" in such a
 	situation.
 
+--ignore-whitespace::
 --whitespace=<option>::
-	This flag is passed to the 'git-apply' program
+	These flag are passed to the 'git-apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
 	Incompatible with the --interactive option.
 

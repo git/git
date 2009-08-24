@@ -21,6 +21,15 @@ $Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
 $Git::SVN::Ra::_log_window_size = 100;
 $Git::SVN::_minimize_url = 'unset';
 
+if (! exists $ENV{SVN_SSH}) {
+	if (exists $ENV{GIT_SSH}) {
+		$ENV{SVN_SSH} = $ENV{GIT_SSH};
+		if ($^O eq 'msys') {
+			$ENV{SVN_SSH} =~ s/\\/\\\\/g;
+		}
+	}
+}
+
 $Git::SVN::Log::TZ = $ENV{TZ};
 $ENV{TZ} = 'UTC';
 $| = 1; # unbuffer STDOUT
@@ -1222,6 +1231,7 @@ sub complete_url_ls_init {
 	}
 	command_oneline('config', $k, $gs->{url}) unless $orig_url;
 	my $remote_path = "$gs->{path}/$repo_path";
+	$remote_path =~ s{%([0-9A-F]{2})}{chr hex($1)}ieg;
 	$remote_path =~ s#/+#/#g;
 	$remote_path =~ s#^/##g;
 	$remote_path .= "/*" if $remote_path !~ /\*/;
@@ -1892,6 +1902,7 @@ sub init_remote_config {
 		command_noisy('config',
 			      "svn-remote.$self->{repo_id}.url", $url);
 		$self->{path} =~ s{^/}{};
+		$self->{path} =~ s{%([0-9A-F]{2})}{chr hex($1)}ieg;
 		command_noisy('config', '--add',
 			      "svn-remote.$self->{repo_id}.fetch",
 			      "$self->{path}:".$self->refname);

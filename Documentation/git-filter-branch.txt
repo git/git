@@ -305,6 +305,16 @@ range in addition to the new branch name.  The new branch name will
 point to the top-most revision that a 'git-rev-list' of this range
 will print.
 
+If you need to add 'Acked-by' lines to, say, the last 10 commits (none
+of which is a merge), use this command:
+
+--------------------------------------------------------
+git filter-branch --msg-filter '
+	cat &&
+	echo "Acked-by: Bugs Bunny <bunny@bugzilla.org>"
+' HEAD~10..HEAD
+--------------------------------------------------------
+
 *NOTE* the changes introduced by the commits, and which are not reverted
 by subsequent commits, will still be in the rewritten branch. If you want
 to throw out _changes_ together with the commits, you should use the

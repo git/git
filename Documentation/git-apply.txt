@@ -13,6 +13,7 @@ SYNOPSIS
 	  [--apply] [--no-add] [--build-fake-ancestor=<file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-pNUM] [-CNUM] [--inaccurate-eof] [--recount] [--cached]
+	  [--ignore-space-change | --ignore-whitespace ]
 	  [--whitespace=<nowarn|warn|fix|error|error-all>]
 	  [--exclude=PATH] [--include=PATH] [--directory=<root>]
 	  [--verbose] [<patch>...]
@@ -149,6 +150,14 @@ patch to each path is used.  A patch to a path that does not match any
 include/exclude pattern is used by default if there is no include pattern
 on the command line, and ignored if there is any include pattern.
 
+--ignore-space-change::
+--ignore-whitespace::
+	When applying a patch, ignore changes in whitespace in context
+	lines if necessary.
+	Context lines will preserve their whitespace, and they will not
+	undergo whitespace fixing regardless of the value of the
+	`--whitespace` option. New lines will still be fixed, though.
+
 --whitespace=<action>::
 	When applying a patch, detect a new or modified line that has
 	whitespace errors.  What are considered whitespace errors is
@@ -205,6 +214,10 @@ running `git apply --directory=modules/git-gui`.
 Configuration
 -------------
 
+apply.ignorewhitespace::
+	Set to 'change' if you want changes in whitespace to be ignored by default.
+	Set to one of: no, none, never, false if you want changes in
+	whitespace to be significant.
 apply.whitespace::
 	When no `--whitespace` flag is given from the command
 	line, this configuration item is used as the default.

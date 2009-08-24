@@ -26,6 +26,7 @@ const char *git_commit_encoding;
 const char *git_log_output_encoding;
 int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
+const char *apply_default_ignorewhitespace;
 int zlib_compression_level = Z_BEST_SPEED;
 int core_compression_level;
 int core_compression_seen;
@@ -38,6 +39,7 @@ int pager_use_color = 1;
 const char *editor_program;
 const char *excludes_file;
 int auto_crlf = 0;	/* 1: both ways, -1: only when adding git objects */
+int read_replace_refs = 1;
 enum safe_crlf safe_crlf = SAFE_CRLF_WARN;
 unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
 enum branch_track git_branch_track = BRANCH_TRACK_REMOTE;
