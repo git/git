@@ -402,7 +402,9 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.dir = xcalloc(1, sizeof(*topts.dir));
 		topts.dir->flags |= DIR_SHOW_IGNORED;
 		topts.dir->exclude_per_dir = ".gitignore";
-		tree = parse_tree_indirect(old->commit->object.sha1);
+		tree = parse_tree_indirect(old->commit ?
+					   old->commit->object.sha1 :
+					   (unsigned char *)EMPTY_TREE_SHA1_BIN);
 		init_tree_desc(&trees[0], tree->buffer, tree->size);
 		tree = parse_tree_indirect(new->commit->object.sha1);
 		init_tree_desc(&trees[1], tree->buffer, tree->size);
@@ -539,14 +541,6 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 		if (!new->commit)
 			die("You are on a branch yet to be born");
 		parse_commit(new->commit);
-	}
-
-	if (!old.commit && !opts->force) {
-		if (!opts->quiet) {
-			warning("You appear to be on a branch yet to be born.");
-			warning("Forcing checkout of %s.", new->name);
-		}
-		opts->force = 1;
 	}
 
 	ret = merge_working_tree(opts, &old, new);
