@@ -177,11 +177,15 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 
 /*
  * This is like 'lstat()', except it refuses to follow symlinks
- * in the path.
+ * in the path, after skipping "skiplen".
  */
-int check_path(const char *path, int len, struct stat *st)
+int check_path(const char *path, int len, struct stat *st, int skiplen)
 {
-	if (has_symlink_leading_path(path, len)) {
+	const char *slash = path + len;
+
+	while (path < slash && *slash != '/')
+		slash--;
+	if (!has_dirs_only_path(path, slash - path, skiplen)) {
 		errno = ENOENT;
 		return -1;
 	}
@@ -201,7 +205,7 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *t
 	strcpy(path + len, ce->name);
 	len += ce_namelen(ce);
 
-	if (!check_path(path, len, &st)) {
+	if (!check_path(path, len, &st, state->base_dir_len)) {
 		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID);
 		if (!changed)
 			return 0;
