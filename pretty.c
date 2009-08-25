@@ -583,7 +583,7 @@ static void format_decoration(struct strbuf *sb, const struct commit *commit)
 	struct name_decoration *d;
 	const char *prefix = " (";
 
-	load_ref_decorations();
+	load_ref_decorations(DECORATE_SHORT_REFS);
 	d = lookup_decoration(&name_decoration, &commit->object);
 	while (d) {
 		strbuf_addstr(sb, prefix);
