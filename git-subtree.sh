@@ -27,7 +27,8 @@ rejoin        merge the new branch back into HEAD
 squash        merge subtree changes as a single commit
 "
 eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
-. $(git --exec-path)/git-sh-setup
+PATH=$(git --exec-path):$PATH
+. git-sh-setup
 require_work_tree
 
 quiet=
