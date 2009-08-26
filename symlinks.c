@@ -91,6 +91,10 @@ static int lstat_cache(struct cache_def *cache, const char *name, int len,
 			longest_path_match(name, len, cache->path, cache->len,
 					   &previous_slash);
 		match_flags = cache->flags & track_flags & (FL_NOENT|FL_SYMLINK);
+
+		if (!(track_flags & FL_FULLPATH) && match_len == len)
+			match_len = last_slash = previous_slash;
+
 		if (match_flags && match_len == cache->len)
 			return match_flags;
 		/*
