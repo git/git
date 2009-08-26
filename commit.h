@@ -64,6 +64,7 @@ enum cmit_fmt {
 };
 
 extern int non_ascii(int);
+extern int has_non_ascii(const char *text);
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
 extern char *reencode_commit_message(const struct commit *commit,
 				     const char **encoding_p);

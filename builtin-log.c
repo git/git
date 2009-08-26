@@ -664,6 +664,10 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	log_write_email_headers(rev, head, &subject_start, &extra_headers,
 				&need_8bit_cte);
 
+	for (i = 0; !need_8bit_cte && i < nr; i++)
+		if (has_non_ascii(list[i]->buffer))
+			need_8bit_cte = 1;
+
 	msg = body;
 	pp_user_info(NULL, CMIT_FMT_EMAIL, &sb, committer, DATE_RFC2822,
 		     encoding);
