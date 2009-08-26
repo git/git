@@ -20,9 +20,6 @@
 
 	automated tests for --squash stuff
 
-	test.sh fails in msysgit?
-		sort error - see Thell's email
-
 	"add" command non-obviously requires a commitid; would be easier if
 		it had a "pull" sort of mode instead
 
@@ -43,9 +40,6 @@
 		should detect (and fix) it if it does.  Otherwise the
 		log message looks weird.
 		
-	totally weird behavior in 'git subtree add' if --prefix matches 
-		a branch name
-
 	"pull --squash" should do fetch-synthesize-merge, but instead just
 		does "pull" directly, which doesn't work at all.
 

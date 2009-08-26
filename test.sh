@@ -78,6 +78,7 @@ git init
 create main4
 git commit -m 'main4'
 git branch -m master mainline
+git branch subdir
 
 git fetch ../subproj sub1
 git branch sub1 FETCH_HEAD

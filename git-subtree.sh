@@ -426,7 +426,7 @@ cmd_add()
 	
 	debug "Adding $dir as '$rev'..."
 	git read-tree --prefix="$dir" $rev || exit $?
-	git checkout "$dir" || exit $?
+	git checkout -- "$dir" || exit $?
 	tree=$(git write-tree) || exit $?
 	
 	headrev=$(git rev-parse HEAD) || exit $?
