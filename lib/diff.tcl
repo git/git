@@ -298,7 +298,12 @@ proc start_show_diff {cont_info {add_opts {}}} {
 
 	if {[string match {160000 *} [lindex $s 2]]
         || [string match {160000 *} [lindex $s 3]]} {
-		set cmd {submodule summary -- $current_diff_path}
+		set is_submodule_diff 1
+		if {$w eq $ui_index} {
+			set cmd {submodule summary --cached -- $current_diff_path}
+		} else {
+			set cmd {submodule summary --files -- $current_diff_path}
+		}
 	}
 
 	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
@@ -343,9 +348,6 @@ proc read_diff {fd cont_info} {
 		}
 		set ::current_diff_inheader 0
 
-		if {[regexp {^\* } $line]} {
-			set is_submodule_diff 1
-		}
 		# -- Automatically detect if this is a 3 way diff.
 		#
 		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
