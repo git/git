@@ -175,7 +175,7 @@ test_expect_success 'bisect skip: successfull result' '
 	git bisect start $HASH4 $HASH1 &&
 	git bisect skip &&
 	git bisect bad > my_bisect_log.txt &&
-	grep "$HASH2 is first bad commit" my_bisect_log.txt &&
+	grep "$HASH2 is the first bad commit" my_bisect_log.txt &&
 	git bisect reset
 '
 
@@ -261,7 +261,7 @@ test_expect_success \
      git bisect good $HASH1 &&
      git bisect bad $HASH4 &&
      git bisect run ./test_script.sh > my_bisect_log.txt &&
-     grep "$HASH3 is first bad commit" my_bisect_log.txt &&
+     grep "$HASH3 is the first bad commit" my_bisect_log.txt &&
      git bisect reset'
 
 # We want to automatically find the commit that
@@ -274,7 +274,7 @@ test_expect_success \
      chmod +x test_script.sh &&
      git bisect start $HASH4 $HASH1 &&
      git bisect run ./test_script.sh > my_bisect_log.txt &&
-     grep "$HASH4 is first bad commit" my_bisect_log.txt &&
+     grep "$HASH4 is the first bad commit" my_bisect_log.txt &&
      git bisect reset'
 
 # $HASH1 is good, $HASH5 is bad, we skip $HASH3
@@ -287,14 +287,14 @@ test_expect_success 'bisect skip: add line and then a new test' '
 	git bisect start $HASH5 $HASH1 &&
 	git bisect skip &&
 	git bisect good > my_bisect_log.txt &&
-	grep "$HASH5 is first bad commit" my_bisect_log.txt &&
+	grep "$HASH5 is the first bad commit" my_bisect_log.txt &&
 	git bisect log > log_to_replay.txt &&
 	git bisect reset
 '
 
 test_expect_success 'bisect skip and bisect replay' '
 	git bisect replay log_to_replay.txt > my_bisect_log.txt &&
-	grep "$HASH5 is first bad commit" my_bisect_log.txt &&
+	grep "$HASH5 is the first bad commit" my_bisect_log.txt &&
 	git bisect reset
 '
 
@@ -335,7 +335,7 @@ test_expect_success 'bisect run & skip: find first bad' '
 	chmod +x test_script.sh &&
 	git bisect start $HASH7 $HASH1 &&
 	git bisect run ./test_script.sh > my_bisect_log.txt &&
-	grep "$HASH6 is first bad commit" my_bisect_log.txt
+	grep "$HASH6 is the first bad commit" my_bisect_log.txt
 '
 
 test_expect_success 'bisect skip only one range' '
@@ -385,7 +385,7 @@ test_expect_success 'bisect does not create a "bisect" branch' '
 	rev_hash6=$(git rev-parse --verify HEAD) &&
 	test "$rev_hash6" = "$HASH6" &&
 	git bisect good > my_bisect_log.txt &&
-	grep "$HASH7 is first bad commit" my_bisect_log.txt &&
+	grep "$HASH7 is the first bad commit" my_bisect_log.txt &&
 	git bisect reset &&
 	rev_hash6=$(git rev-parse --verify bisect) &&
 	test "$rev_hash6" = "$HASH6" &&
@@ -534,7 +534,7 @@ test_expect_success 'restricting bisection on one dir' '
 	para1=$(git rev-parse --verify HEAD) &&
 	test "$para1" = "$PARA_HASH1" &&
 	git bisect bad > my_bisect_log.txt &&
-	grep "$PARA_HASH1 is first bad commit" my_bisect_log.txt
+	grep "$PARA_HASH1 is the first bad commit" my_bisect_log.txt
 '
 
 test_expect_success 'restricting bisection on one dir and a file' '
@@ -552,7 +552,7 @@ test_expect_success 'restricting bisection on one dir and a file' '
 	para1=$(git rev-parse --verify HEAD) &&
 	test "$para1" = "$PARA_HASH1" &&
 	git bisect good > my_bisect_log.txt &&
-	grep "$PARA_HASH4 is first bad commit" my_bisect_log.txt
+	grep "$PARA_HASH4 is the first bad commit" my_bisect_log.txt
 '
 
 test_expect_success 'skipping away from skipped commit' '
