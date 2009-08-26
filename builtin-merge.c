@@ -358,6 +358,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf bname = STRBUF_INIT;
 	const char *ptr;
+	char *found_ref;
 	int len, early;
 
 	strbuf_branchname(&bname, remote);
@@ -368,14 +369,17 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	if (!remote_head)
 		die("'%s' does not point to a commit", remote);
 
-	strbuf_addstr(&buf, "refs/heads/");
-	strbuf_addstr(&buf, remote);
-	resolve_ref(buf.buf, branch_head, 0, NULL);
-
-	if (!hashcmp(remote_head->sha1, branch_head)) {
-		strbuf_addf(msg, "%s\t\tbranch '%s' of .\n",
-			sha1_to_hex(branch_head), remote);
-		goto cleanup;
+	if (dwim_ref(remote, strlen(remote), branch_head, &found_ref) > 0) {
+		if (!prefixcmp(found_ref, "refs/heads/")) {
+			strbuf_addf(msg, "%s\t\tbranch '%s' of .\n",
+				    sha1_to_hex(branch_head), remote);
+			goto cleanup;
+		}
+		if (!prefixcmp(found_ref, "refs/remotes/")) {
+			strbuf_addf(msg, "%s\t\tremote branch '%s' of .\n",
+				    sha1_to_hex(branch_head), remote);
+			goto cleanup;
+		}
 	}
 
 	/* See if remote matches <name>^^^.. or <name>~<number> */
