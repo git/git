@@ -12,7 +12,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Creates a tree object using the current index.
+Creates a tree object using the current index. The name of the new
+tree object is printed to standard output.
 
 The index must be in a fully merged state.
 
