@@ -405,7 +405,7 @@ bisect_run () {
 	  exit $res
       fi
 
-      if grep "is first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
+      if grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
 	  echo "bisect run success"
 	  exit 0;
       fi
