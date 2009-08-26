@@ -163,6 +163,17 @@ test_expect_success FILEMODE 'stage mode but not hunk' '
 	git diff          file | grep "+content"
 '
 
+
+test_expect_success FILEMODE 'stage mode and hunk' '
+	git reset --hard &&
+	echo content >>file &&
+	chmod +x file &&
+	printf "y\\ny\\n" | git add -p &&
+	git diff --cached file | grep "new mode" &&
+	git diff --cached file | grep "+content" &&
+	test -z "$(git diff file)"
+'
+
 # end of tests disabled when filemode is not usable
 
 test_expect_success 'setup again' '
