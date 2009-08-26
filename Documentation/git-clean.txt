@@ -27,6 +27,9 @@ OPTIONS
 -------
 -d::
 	Remove untracked directories in addition to untracked files.
+	If an untracked directory is managed by a different git
+	repository, it is not removed by default.  Use -f option twice
+	if you really want to remove such a directory.
 
 -f::
 	If the git configuration specifies clean.requireForce as true,
