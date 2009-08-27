@@ -991,6 +991,18 @@ static int mailinfo(FILE *in, FILE *out, const char *msg, const char *patch)
 	return 0;
 }
 
+static int git_mailinfo_config(const char *var, const char *value, void *unused)
+{
+	if (prefixcmp(var, "mailinfo."))
+		return git_default_config(var, value, unused);
+	if (!strcmp(var, "mailinfo.scissors")) {
+		use_scissors = git_config_bool(var, value);
+		return 0;
+	}
+	/* perhaps others here */
+	return 0;
+}
+
 static const char mailinfo_usage[] =
 	"git mailinfo [-k] [-u | --encoding=<encoding> | -n] msg patch <mail >info";
 
@@ -1001,7 +1013,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery
 	 */
-	git_config(git_default_config, NULL);
+	git_config(git_mailinfo_config, NULL);
 
 	def_charset = (git_commit_encoding ? git_commit_encoding : "UTF-8");
 	metainfo_charset = def_charset;
