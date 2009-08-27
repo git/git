@@ -8,7 +8,7 @@ git-mailinfo - Extracts patch and authorship from a single e-mail message
 
 SYNOPSIS
 --------
-'git mailinfo' [-k] [-u | --encoding=<encoding> | -n] <msg> <patch>
+'git mailinfo' [-k] [-u | --encoding=<encoding> | -n] [--scissors] <msg> <patch>
 
 
 DESCRIPTION
@@ -48,6 +48,20 @@ conversion, even with this flag.
 
 -n::
 	Disable all charset re-coding of the metadata.
+
+--scissors::
+	Remove everything in body before a scissors line.  A line that
+	mainly consists of scissors (either ">8" or "8<") and perforation
+	(dash "-") marks is called a scissors line, and is used to request
+	the reader to cut the message at that line.  If such a line
+	appears in the body of the message before the patch, everything
+	before it (including the scissors line itself) is ignored when
+	this option is used.
++
+This is useful if you want to begin your message in a discussion thread
+with comments and suggestions on the message you are responding to, and to
+conclude it with a patch submission, separating the discussion and the
+beginning of the proposed commit log message with a scissors line.
 
 <msg>::
 	The commit log message extracted from e-mail, usually

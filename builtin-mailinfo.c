@@ -25,6 +25,7 @@ static enum  {
 static struct strbuf charset = STRBUF_INIT;
 static int patch_lines;
 static struct strbuf **p_hdr_data, **s_hdr_data;
+static int use_scissors;
 
 #define MAX_HDR_PARSED 10
 #define MAX_BOUNDARIES 5
@@ -782,7 +783,7 @@ static int handle_commit_msg(struct strbuf *line)
 	if (metainfo_charset)
 		convert_to_utf8(line, charset.buf);
 
-	if (is_scissors_line(line)) {
+	if (use_scissors && is_scissors_line(line)) {
 		int i;
 		rewind(cmitmsg);
 		ftruncate(fileno(cmitmsg), 0);
@@ -1014,6 +1015,10 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 			metainfo_charset = NULL;
 		else if (!prefixcmp(argv[1], "--encoding="))
 			metainfo_charset = argv[1] + 11;
+		else if (!strcmp(argv[1], "--scissors"))
+			use_scissors = 1;
+		else if (!strcmp(argv[1], "--no-scissors"))
+			use_scissors = 0;
 		else
 			usage(mailinfo_usage);
 		argc--; argv++;

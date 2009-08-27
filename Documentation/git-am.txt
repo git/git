@@ -13,7 +13,7 @@ SYNOPSIS
 	 [--3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
-	 [--reject] [-q | --quiet]
+	 [--reject] [-q | --quiet] [--scissors]
 	 [<mbox> | <Maildir>...]
 'git am' (--skip | --resolved | --abort)
 
@@ -38,6 +38,11 @@ OPTIONS
 -k::
 --keep::
 	Pass `-k` flag to 'git-mailinfo' (see linkgit:git-mailinfo[1]).
+
+-c::
+--scissors::
+	Remove everything in body before a scissors line (see
+	linkgit:git-mailinfo[1]).
 
 -q::
 --quiet::
@@ -127,16 +132,6 @@ of the message.  The "Subject: " line is used as the title of
 the commit, after stripping common prefix "[PATCH <anything>]".
 The "Subject: " line is supposed to concisely describe what the
 commit is about in one line of text.
-
-A line that mainly consists of scissors (either ">8" or "8<") and
-perforation (dash "-") marks is called a scissors line, and is used to
-request the reader to cut the message at that line.  If such a line
-appears in the body of the message before the patch, everything before it
-(including the scissors line itself) is ignored. This is useful if you
-want to begin your message in a discussion thread with comments and
-suggestions on the message you are responding to, and to conclude it with
-a patch submission, separating the discussion and the beginning of the
-proposed commit log message with a scissors line.
 
 "From: " and "Subject: " lines starting the body override the respective
 commit author name and title values taken from the headers.
