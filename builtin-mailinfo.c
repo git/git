@@ -885,12 +885,9 @@ static void handle_info(void)
 	fprintf(fout, "\n");
 }
 
-static int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
-		    const char *msg, const char *patch)
+static int mailinfo(FILE *in, FILE *out, const char *msg, const char *patch)
 {
 	int peek;
-	keep_subject = ks;
-	metainfo_charset = encoding;
 	fin = in;
 	fout = out;
 
@@ -956,5 +953,5 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	if (argc != 3)
 		usage(mailinfo_usage);
 
-	return !!mailinfo(stdin, stdout, keep_subject, metainfo_charset, argv[1], argv[2]);
+	return !!mailinfo(stdin, stdout, argv[1], argv[2]);
 }
