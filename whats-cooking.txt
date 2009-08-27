@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2009, #04; Sun, 23)
-X-master-at: 2e1176d51ef4fc07f487818acdfcf2fc4b789203
-X-next-at: 38eb7501aaddd72a8e6007f281d6a3cfa42a2a02
+Subject: What's cooking in git.git (Aug 2009, #05; Wed, 26)
+X-master-at: 68ea4741643d9e7c4bdac7cbbe6292edc69430ef
+X-next-at: 4fc77847c70f00e94586150f808d0418ca64bbb8
 
-What's cooking in git.git (Aug 2009, #04; Sun, 23)
+What's cooking in git.git (Aug 2009, #05; Wed, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -20,90 +20,44 @@ During 1.6.5 cycle, 'next' will hold topics meant for 1.6.5 and 1.7.0.
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/mailsplit-cr-at-eol (2009-08-04) 4 commits
-  (merged to 'next' on 2009-08-06 at 6bc7c5c)
- + Allow mailsplit (and hence git-am) to handle mails with CRLF line-endings
- + builtin-mailsplit.c: remove read_line_with_nul() since it is no longer used
- + builtin-mailinfo,builtin-mailsplit: use strbufs
- + strbuf: add new function strbuf_getwholeline()
+* aj/fix-read-tree-from-scratch (2009-08-17) 1 commit
+  (merged to 'next' on 2009-08-20 at 7a04133)
+ + read-tree: Fix regression with creation of a new index file.
 
-* gb/apply-ignore-whitespace (2009-08-04) 1 commit
-  (merged to 'next' on 2009-08-06 at 59e2c86)
- + git apply: option to ignore whitespace differences
+* jc/maint-checkout-index-to-prefix (2009-08-16) 1 commit
+  (merged to 'next' on 2009-08-20 at 2f6aea2)
+ + check_path(): allow symlinked directories to checkout-index --prefix
 
-* cc/replace (2009-05-27) 14 commits.
-  (merged to 'next' on 2009-08-02 at b9c4bc0)
- + t6050: check pushing something based on a replaced commit
- + Documentation: add documentation for "git replace"
- + Add git-replace to .gitignore
- + builtin-replace: use "usage_msg_opt" to give better error messages
- + parse-options: add new function "usage_msg_opt"
- + builtin-replace: teach "git replace" to actually replace
- + Add new "git replace" command
- + environment: add global variable to disable replacement
- + mktag: call "check_sha1_signature" with the replacement sha1
- + replace_object: add a test case
- + object: call "check_sha1_signature" with the replacement sha1
- + sha1_file: add a "read_sha1_file_repl" function
- + replace_object: add mechanism to replace objects found in "refs/replace/"
- + refs: add a "for_each_replace_ref" function
+* jl/submodule-summary-diff-files (2009-08-15) 2 commits
+  (merged to 'next' on 2009-08-15 at 165bd8e)
+ + Documentaqtion/git-submodule.txt: Typofix
+  (merged to 'next' on 2009-08-14 at a702e78)
+ + git submodule summary: add --files option
 
-* ld/p4 (2009-07-30) 1 commit
-  (merged to 'next' on 2009-08-14 at 36d310d)
- + git-p4: stream from perforce to speed up clones
+* lh/short-decorate (2009-08-15) 1 commit
+  (merged to 'next' on 2009-08-18 at b8c1d96)
+ + git-log: allow --decorate[=short|full]
 
-* mr/gitweb-xz (2009-08-06) 3 commits
-  (merged to 'next' on 2009-08-14 at b63b8e6)
- + gitweb: add support for XZ compressed snapshots
- + gitweb: update INSTALL regarding specific snapshot settings
- + gitweb: support to globally disable a snapshot format
-
-* jc/verify-pack-stat (2009-08-07) 1 commit
-  (merged to 'next' on 2009-08-10 at f80d0e9)
- + verify-pack --stat-only: show histogram without verifying
+* oa/stash-na (2009-08-11) 1 commit
+  (merged to 'next' on 2009-08-14 at 12c2e2b)
+ + git stash: Give friendlier errors when there is nothing to apply
 --------------------------------------------------
 [New Topics]
 
-* jc/mailinfo-scissors (2009-08-23) 1 commit
- - Teach mailinfo to ignore everything before -- >8 -- mark
+* np/maint-1.6.3-deepen (2009-08-24) 1 commit.
+  (merged to 'next' on 2009-08-25 at 8e383d4)
+ + fix simple deepening of a repo
 
-* tf/diff-whitespace-incomplete-line (2009-08-23) 2 commits.
- - xutils: Fix xdl_recmatch() on incomplete lines
- - xutils: Fix hashing an incomplete line with whitespaces at the end
+* jk/maint-1.6.3-checkout-unborn (2009-08-24) 1 commit.
+  (merged to 'next' on 2009-08-25 at 5f29625)
+ + checkout: do not imply "-f" on unborn branches
 
-* jc/1.7.0-send-email-no-thread-default (2009-08-22) 1 commit
-  (merged to 'next' on 2009-08-22 at 5106de8)
- + send-email: make --no-chain-reply-to the default
-
-* lt/approxidate (2009-08-22) 2 commits
- - Further 'approxidate' improvements
- - Improve on 'approxidate'
-
-* mm/reset-report (2009-08-21) 2 commits
- - reset: make the reminder output consistent with "checkout"
- - Rename REFRESH_SAY_CHANGED to REFRESH_IN_PORCELAIN.
-
-* wl/insta-mongoose (2009-08-21) 1 commit
- - Add support for the Mongoose web server.
+* mr/gitweb-snapshot (2009-08-25) 3 commits
+ - gitweb: add t9501 tests for checking HTTP status codes
+ - gitweb: split test suite into library and tests
+ - gitweb: improve snapshot error handling
 --------------------------------------------------
 [Stalled]
-
-* sr/gfi-options (2009-08-13) 3 commits
- - fast-import: test the new option command
- - fast-import: add option command
- - fast-import: put option parsing code in seperate functions
-
-What is this used by?
-
-* lt/block-sha1 (2009-08-17) 4 commits
-  (merged to 'next' on 2009-08-18 at 67a1ce8)
- + remove ARM and Mozilla SHA1 implementations
- + block-sha1: guard gcc extensions with __GNUC__
- + make sure byte swapping is optimal for git
- + block-sha1: make the size member first in the context struct
-
-Finishing touches ;-)  There were a few Solaris portability patches
-floated around that I didn't pick up, waiting for them to finalize.
 
 * js/stash-dwim (2009-07-27) 1 commit.
   (merged to 'next' on 2009-08-16 at 67896c4)
@@ -167,9 +121,35 @@ helper name needs to be corrected.  Nothing happened since.
 
 This seems to break t9001.  Near the tip of 'pu' I have a iffy
 workaround.
-
 --------------------------------------------------
 [Cooking]
+
+* mm/reset-report (2009-08-21) 2 commits
+  (merged to 'next' on 2009-08-25 at f2a4424)
+ + reset: make the reminder output consistent with "checkout"
+ + Rename REFRESH_SAY_CHANGED to REFRESH_IN_PORCELAIN.
+
+* wl/insta-mongoose (2009-08-21) 1 commit
+  (merged to 'next' on 2009-08-25 at da1d566)
+ + Add support for the Mongoose web server.
+
+* lt/approxidate (2009-08-22) 2 commits
+  (merged to 'next' on 2009-08-26 at 62853f9)
+ + Further 'approxidate' improvements
+ + Improve on 'approxidate'
+
+Fixes a few "reasonably formatted but thus-far misparsed" date strings.
+As Nico suggested, we would need a test to prevent regression to existing
+support for date strings that are "reasonably formatted".
+
+* jc/mailinfo-scissors (2009-08-25) 2 commits
+ - Documentation: describe the scissors mark support of "git am"
+ - Teach mailinfo to ignore everything before -- >8 -- mark
+
+* tf/diff-whitespace-incomplete-line (2009-08-23) 2 commits.
+  (merged to 'next' on 2009-08-26 at 4fc7784)
+ + xutils: Fix xdl_recmatch() on incomplete lines
+ + xutils: Fix hashing an incomplete line with whitespaces at the end
 
 * cc/sequencer-rebase-i (2009-08-21) 17 commits.
  - rebase -i: use "git sequencer--helper --cherry-pick"
@@ -195,26 +175,12 @@ that maybe this approach forces the migration to follow the structure of
 the shell script too much, and could force a suboptimal end result, but
 we'll see.
 
-* aj/fix-read-tree-from-scratch (2009-08-17) 1 commit
-  (merged to 'next' on 2009-08-20 at 7a04133)
- + read-tree: Fix regression with creation of a new index file.
+* as/maint-graph-interesting-fix (2009-08-21) 2 commits.
+  (merged to 'next' on 2009-08-25 at 9d5e215)
+ + Add tests for rev-list --graph with options that simplify history
+ + graph API: fix bug in graph_is_interesting()
 
-Will merge.
-
-* as/maint-graph-interesting-fix (2009-08-18) 1 commit.
- - graph API: fix bug in graph_is_interesting()
-
-I need to queue the associated test after getting it signed-off.
-
-* jc/1.7.0-status (2009-08-15) 3 commits
-  (merged to 'next' on 2009-08-22 at b3507bb)
- + git status: not "commit --dry-run" anymore
- + git stat -s: short status output
- + git stat: the beginning of "status that is not a dry-run of commit"
- (this branch uses jc/shortstatus.)
-
-As promised, I squashed incremental "fix-up" into the commits they fix;
-this will be kept in 'next' until 1.7.0
+Looked sane.
 
 * jc/shortstatus (2009-08-15) 11 commits
   (merged to 'next' on 2009-08-15 at 7e40766)
@@ -235,15 +201,11 @@ this will be kept in 'next' until 1.7.0
 
 Will cook for a bit more and then merge.
 
-* jc/maint-checkout-index-to-prefix (2009-08-16) 1 commit
-  (merged to 'next' on 2009-08-20 at 2f6aea2)
- + check_path(): allow symlinked directories to checkout-index --prefix
-
-Will merge.
-
 * jc/maint-unpack-objects-strict (2009-08-13) 1 commit.
   (merged to 'next' on 2009-08-23 at 38eb750)
  + Fix "unpack-objects --strict"
+
+Will merge.
 
 * jh/submodule-foreach (2009-08-20) 9 commits
   (merged to 'next' on 2009-08-20 at 671bea4)
@@ -258,24 +220,6 @@ Will merge.
  + git submodule: Cleanup usage string and add option parsing to cmd_foreach()
  + git submodule foreach: Provide access to submodule name, as '$name'
 
-* jl/submodule-summary-diff-files (2009-08-15) 2 commits
-  (merged to 'next' on 2009-08-15 at 165bd8e)
- + Documentaqtion/git-submodule.txt: Typofix
-  (merged to 'next' on 2009-08-14 at a702e78)
- + git submodule summary: add --files option
-
-Will merge.
-
-* lh/short-decorate (2009-08-15) 1 commit
-  (merged to 'next' on 2009-08-18 at b8c1d96)
- + git-log: allow --decorate[=short|full]
-
-Will merge.
-
-* oa/stash-na (2009-08-11) 1 commit
-  (merged to 'next' on 2009-08-14 at 12c2e2b)
- + git stash: Give friendlier errors when there is nothing to apply
-
 Will merge.
 
 * jh/notes (2009-07-29) 8 commits.
@@ -288,7 +232,9 @@ Will merge.
  - Add a script to edit/inspect notes
  - Introduce commit notes
 
-The cvs-helper series depends on this one.
+The cvs-helper series depends on this one.  I have a recollection
+that some people were not happy about the fan-out of the notes tree
+layout, but has the issue been resolved to a concensus?
 
 * ne/rev-cache (2009-08-21) 6 commits
  . support for path name caching in rev-cache
@@ -298,8 +244,9 @@ The cvs-helper series depends on this one.
  . basic revision cache system, no integration or features
  . man page and technical discussion for rev-cache
 
-Updated but seems to break tests when merged to 'pu'; didn't look at the
-issue deeply.
+Updated but seems to break upload-pack tests when merged to 'pu'; given
+what this series touches, breakages in that area are expected.
+May discard if a working reroll comes, to give it a fresh start.
 
 * jh/cvs-helper (2009-08-18) 7 commits
  - More fixes to the git-remote-cvs installation procedure
@@ -311,10 +258,29 @@ issue deeply.
  - Basic build infrastructure for Python scripts
  (this branch uses db/vcs-helper.)
 
-Builds on db/vcs-helper.  The testing of Python part seemed to be
-still fragile even with the latest fix on one of my boches with an
-earlier round already installed, but I didn't look very deeply before
-removing the older installation.
+Builds on db/vcs-helper (which is stalled, so this cannot move).
+
+The testing of Python part seemed to be still fragile even with the latest
+fix on one of my boches with an earlier round already installed, but I
+didn't look very deeply before removing the older installation.
+
+* sr/gfi-options (2009-08-24) 4 commits
+ - fast-import: test the new option command
+ - fast-import: add option command
+ - fast-import: put marks reading in it's own function
+ - fast-import: put option parsing code in seperate functions
+
+Will merge to 'next' shortly.
+
+* lt/block-sha1 (2009-08-17) 4 commits
+  (merged to 'next' on 2009-08-18 at 67a1ce8)
+ + remove ARM and Mozilla SHA1 implementations
+ + block-sha1: guard gcc extensions with __GNUC__
+ + make sure byte swapping is optimal for git
+ + block-sha1: make the size member first in the context struct
+
+May merge soon; Solaris performance patches that was discussed
+earlier can happen on 'master', as the series is usable as-is.
 
 * nd/sparse (2009-08-20) 20 commits
  - sparse checkout: inhibit empty worktree
@@ -341,30 +307,47 @@ removing the older installation.
 
 The first one was an independent fix; the rest has been replaced with the
 "return of no-checkout" series.
+--------------------------------------------------
+[For 1.7.0]
+
+* jc/1.7.0-status (2009-08-15) 3 commits
+  (merged to 'next' on 2009-08-22 at b3507bb)
+ + git status: not "commit --dry-run" anymore
+ + git stat -s: short status output
+ + git stat: the beginning of "status that is not a dry-run of commit"
+ (this branch uses jc/shortstatus.)
+
+With this, "git status" is no longer "git commit --preview".
+
+* jc/1.7.0-send-email-no-thread-default (2009-08-22) 1 commit
+  (merged to 'next' on 2009-08-22 at 5106de8)
+ + send-email: make --no-chain-reply-to the default
 
 * jc/1.7.0-diff-whitespace-only-status (2009-05-23) 2 commits.
   (merged to 'next' on 2009-08-02 at 9c08420)
  + diff: Rename QUIET internal option to QUICK
  + diff: change semantics of "ignore whitespace" options
 
-For 1.7.0.  This changes exit code from "git diff --ignore-whitespace" and
-friends when there is no actual output.  It is a backward incompatible
-change, but we could argue that it is a bugfix.
+This changes exit code from "git diff --ignore-whitespace" and friends
+when there is no actual output.  It is a backward incompatible change, but
+we could argue that it is a bugfix.
 
 * jc/1.7.0-push-safety (2009-02-09) 2 commits
   (merged to 'next' on 2009-08-02 at 38b82fe)
  + Refuse deleting the current branch via push
  + Refuse updating the current branch in a non-bare repository via push
-
-For 1.7.0.
+--------------------------------------------------
+[I have been too busy to purge these]
 
 * jc/log-tz (2009-03-03) 1 commit.
  - Allow --date=local --date=other-format to work as expected
 
+Maybe some people care about this.  I dunno.
+
 * jc/mailinfo-remove-brackets (2009-07-15) 1 commit.
  - mailinfo: -b option keeps [bracketed] strings that is not a [PATCH] marker
---------------------------------------------------
-[I have been too busy to purge these]
+
+Maybe some people care about this.  I dunno.
 
 * ar/maint-1.6.2-merge-recursive-d-f (2009-05-11) 2 commits.
  . Fix for a merge where a branch has an F->D transition
