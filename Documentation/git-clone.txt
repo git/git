@@ -12,7 +12,7 @@ SYNOPSIS
 'git clone' [--template=<template_directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--depth <depth>] [--] <repository> [<directory>]
+	  [--depth <depth>] [--recursive] [--] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -146,6 +146,14 @@ objects from the source repository into a pack in the cloned repository.
 	are only interested in the recent history of a large project
 	with a long history, and would want to send in fixes
 	as patches.
+
+--recursive::
+	After the clone is created, initialize all submodules within,
+	using their default settings. This is equivalent to running
+	'git submodule update --init --recursive' immediately after
+	the clone is finished. This option is ignored if the cloned
+	repository does not have a worktree/checkout (i.e. if any of
+	`--no-checkout`/`-n`, `--bare`, or `--mirror` is given)
 
 <repository>::
 	The (possibly remote) repository to clone from.  See the

@@ -11,12 +11,12 @@ SYNOPSIS
 [verse]
 'git submodule' [--quiet] add [-b branch]
 	      [--reference <repository>] [--] <repository> <path>
-'git submodule' [--quiet] status [--cached] [--] [<path>...]
+'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
-	      [--reference <repository>] [--merge] [--] [<path>...]
+	      [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
-'git submodule' [--quiet] foreach <command>
+'git submodule' [--quiet] foreach [--recursive] <command>
 'git submodule' [--quiet] sync [--] [<path>...]
 
 
@@ -100,6 +100,9 @@ status::
 	initialized and `+` if the currently checked out submodule commit
 	does not match the SHA-1 found in the index of the containing
 	repository. This command is the default command for 'git-submodule'.
++
+If '--recursive' is specified, this command will recurse into nested
+submodules, and show their status as well.
 
 init::
 	Initialize the submodules, i.e. register each submodule name
@@ -122,6 +125,9 @@ update::
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in .gitmodules, you can automatically initialize the
 submodule with the --init option.
++
+If '--recursive' is specified, this command will recurse into the
+registered submodules, and update any nested submodules within.
 
 summary::
 	Show commit summary between the given commit (defaults to HEAD) and
@@ -135,12 +141,15 @@ summary::
 
 foreach::
 	Evaluates an arbitrary shell command in each checked out submodule.
-	The command has access to the variables $path and $sha1:
+	The command has access to the variables $name, $path and $sha1:
+	$name is the name of the relevant submodule section in .gitmodules,
 	$path is the name of the submodule directory relative to the
 	superproject, and $sha1 is the commit as recorded in the superproject.
 	Any submodules defined in the superproject but not checked out are
 	ignored by this command. Unless given --quiet, foreach prints the name
 	of each submodule before evaluating the command.
+	If --recursive is given, submodules are traversed recursively (i.e.
+	the given shell command is evaluated in nested submodules as well).
 	A non-zero return from the command in any submodule causes
 	the processing to terminate. This can be overridden by adding '|| :'
 	to the end of the command.
@@ -217,6 +226,12 @@ OPTIONS
 +
 *NOTE*: Do *not* use this option unless you have read the note
 for linkgit:git-clone[1]'s --reference and --shared options carefully.
+
+--recursive::
+	This option is only valid for foreach, update and status commands.
+	Traverse submodules recursively. The operation is performed not
+	only in the submodules of the current repo, but also
+	in any nested submodules inside those submodules (and so on).
 
 <path>...::
 	Paths to submodule(s). When specified this will restrict the command

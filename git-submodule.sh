@@ -4,9 +4,14 @@
 #
 # Copyright (c) 2007 Lars Hjemli
 
-USAGE="[--quiet] [--cached|--files] \
-[add [-b branch] <repo> <path>]|[status|init|update [-i|--init] [-N|--no-fetch] [--rebase|--merge]|summary [-n|--summary-limit <n>] [<commit>]] \
-[--] [<path>...]|[foreach <command>]|[sync [--] [<path>...]]"
+dashless=$(basename "$0" | sed -e 's/-/ /')
+USAGE="[--quiet] add [-b branch] [--reference <repository>] [--] <repository> <path>
+   or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] init [--] [<path>...]
+   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
+   or: $dashless [--quiet] foreach [--recursive] <command>
+   or: $dashless [--quiet] sync [--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
 . git-parse-remote
@@ -19,6 +24,7 @@ cached=
 files=
 nofetch=
 update=
+prefix=
 
 # Resolve relative url by appending to parent's url
 resolve_relative_url ()
@@ -238,13 +244,43 @@ cmd_add()
 #
 cmd_foreach()
 {
+	# parse $args after "submodule ... foreach".
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			GIT_QUIET=1
+			;;
+		--recursive)
+			recursive=1
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
 	module_list |
 	while read mode sha1 stage path
 	do
 		if test -e "$path"/.git
 		then
-			say "Entering '$path'"
-			(cd "$path" && eval "$@") ||
+			say "Entering '$prefix$path'"
+			name=$(module_name "$path")
+			(
+				prefix="$prefix$path/"
+				unset GIT_DIR
+				cd "$path" &&
+				eval "$@" &&
+				if test -n "$recursive"
+				then
+					cmd_foreach "--recursive" "$@"
+				fi
+			) ||
 			die "Stopping at '$path'; script returned non-zero status."
 		fi
 	done
@@ -317,6 +353,7 @@ cmd_init()
 cmd_update()
 {
 	# parse $args after "submodule ... update".
+	orig_args="$@"
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -348,6 +385,10 @@ cmd_update()
 		-m|--merge)
 			shift
 			update="merge"
+			;;
+		--recursive)
+			shift
+			recursive=1
 			;;
 		--)
 			shift
@@ -434,6 +475,12 @@ cmd_update()
 			(unset GIT_DIR; cd "$path" && $command "$sha1") ||
 			die "Unable to $action '$sha1' in submodule path '$path'"
 			say "Submodule path '$path': $msg '$sha1'"
+		fi
+
+		if test -n "$recursive"
+		then
+			(unset GIT_DIR; cd "$path" && cmd_update $orig_args) ||
+			die "Failed to recurse into submodule path '$path'"
 		fi
 	done
 }
@@ -656,6 +703,7 @@ cmd_summary() {
 cmd_status()
 {
 	# parse $args after "submodule ... status".
+	orig_args="$@"
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -664,6 +712,9 @@ cmd_status()
 			;;
 		--cached)
 			cached=1
+			;;
+		--recursive)
+			recursive=1
 			;;
 		--)
 			shift
@@ -684,22 +735,34 @@ cmd_status()
 	do
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
+		displaypath="$prefix$path"
 		if test -z "$url" || ! test -d "$path"/.git -o -f "$path"/.git
 		then
-			say "-$sha1 $path"
+			say "-$sha1 $displaypath"
 			continue;
 		fi
 		set_name_rev "$path" "$sha1"
 		if git diff-files --quiet -- "$path"
 		then
-			say " $sha1 $path$revname"
+			say " $sha1 $displaypath$revname"
 		else
 			if test -z "$cached"
 			then
 				sha1=$(unset GIT_DIR; cd "$path" && git rev-parse --verify HEAD)
 				set_name_rev "$path" "$sha1"
 			fi
-			say "+$sha1 $path$revname"
+			say "+$sha1 $displaypath$revname"
+		fi
+
+		if test -n "$recursive"
+		then
+			(
+				prefix="$displaypath/"
+				unset GIT_DIR
+				cd "$path" &&
+				cmd_status $orig_args
+			) ||
+			die "Failed to recurse into submodule path '$path'"
 		fi
 	done
 }
