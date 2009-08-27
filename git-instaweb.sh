@@ -77,11 +77,30 @@ start_httpd () {
 	resolve_full_httpd
 
 	# don't quote $full_httpd, there can be arguments to it (-f)
-	$full_httpd "$fqgitdir/gitweb/httpd.conf"
-	if test $? != 0; then
-		echo "Could not execute http daemon $httpd."
-		exit 1
-	fi
+	case "$httpd" in
+	*mongoose*)
+		#The mongoose server doesn't have a daemon mode so we'll have to fork it
+		$full_httpd "$fqgitdir/gitweb/httpd.conf" &
+		#Save the pid before doing anything else (we'll print it later)
+		pid=$!
+
+		if test $? != 0; then
+			echo "Could not execute http daemon $httpd."
+			exit 1
+		fi
+
+		cat > "$fqgitdir/pid" <<EOF
+$pid
+EOF
+		;;
+	*)
+		$full_httpd "$fqgitdir/gitweb/httpd.conf"
+		if test $? != 0; then
+			echo "Could not execute http daemon $httpd."
+			exit 1
+		fi
+		;;
+	esac
 }
 
 stop_httpd () {
@@ -308,6 +327,31 @@ EOF
 	fi
 }
 
+mongoose_conf() {
+	cat > "$conf" <<EOF
+# Mongoose web server configuration file.
+# Lines starting with '#' and empty lines are ignored.
+# For detailed description of every option, visit
+# http://code.google.com/p/mongoose/wiki/MongooseManual
+
+root		$fqgitdir/gitweb
+ports		$port
+index_files	gitweb.cgi
+#ssl_cert	$fqgitdir/gitweb/ssl_cert.pem
+error_log	$fqgitdir/gitweb/error.log
+access_log	$fqgitdir/gitweb/access.log
+
+#cgi setup
+cgi_env		PATH=/usr/local/bin:/usr/bin:/bin,GIT_DIR=$GIT_DIR,GIT_EXEC_PATH=$GIT_EXEC_PATH
+cgi_interp	$PERL
+cgi_ext		cgi,pl
+
+# mimetype mapping
+mime_types	.gz=application/x-gzip,.tar.gz=application/x-tgz,.tgz=application/x-tgz,.tar=application/x-tar,.zip=application/zip,.gif=image/gif,.jpg=image/jpeg,.jpeg=image/jpeg,.png=image/png,.css=text/css,.html=text/html,.htm=text/html,.js=text/javascript,.c=text/plain,.cpp=text/plain,.log=text/plain,.conf=text/plain,.text=text/plain,.txt=text/plain,.dtd=text/xml,.bz2=application/x-bzip,.tbz=application/x-bzip-compressed-tar,.tar.bz2=application/x-bzip-compressed-tar
+EOF
+}
+
+
 script='
 s#^(my|our) \$projectroot =.*#$1 \$projectroot = "'$(dirname "$fqgitdir")'";#;
 s#(my|our) \$gitbin =.*#$1 \$gitbin = "'$GIT_EXEC_PATH'";#;
@@ -343,6 +387,9 @@ case "$httpd" in
 	;;
 webrick)
 	webrick_conf
+	;;
+*mongoose*)
+	mongoose_conf
 	;;
 *)
 	echo "Unknown httpd specified: $httpd"
