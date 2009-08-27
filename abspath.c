@@ -18,7 +18,7 @@ const char *make_absolute_path(const char *path)
 {
 	static char bufs[2][PATH_MAX + 1], *buf = bufs[0], *next_buf = bufs[1];
 	char cwd[1024] = "";
-	int buf_index = 1, len;
+	int buf_index = 1;
 
 	int depth = MAXDEPTH;
 	char *last_elem = NULL;
@@ -50,7 +50,7 @@ const char *make_absolute_path(const char *path)
 			die_errno ("Could not get current working directory");
 
 		if (last_elem) {
-			int len = strlen(buf);
+			size_t len = strlen(buf);
 			if (len + strlen(last_elem) + 2 > PATH_MAX)
 				die ("Too long path name: '%s/%s'",
 						buf, last_elem);
@@ -61,7 +61,7 @@ const char *make_absolute_path(const char *path)
 		}
 
 		if (!lstat(buf, &st) && S_ISLNK(st.st_mode)) {
-			len = readlink(buf, next_buf, PATH_MAX);
+			ssize_t len = readlink(buf, next_buf, PATH_MAX);
 			if (len < 0)
 				die_errno ("Invalid symlink '%s'", buf);
 			if (PATH_MAX <= len)
