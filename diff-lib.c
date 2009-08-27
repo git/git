@@ -162,7 +162,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		if (ce_uptodate(ce))
 			continue;
 
-		changed = check_removed(ce, &st);
+		/* If CE_VALID is set, don't look at workdir for file removal */
+		changed = (ce->ce_flags & CE_VALID) ? 0 : check_removed(ce, &st);
 		if (changed) {
 			if (changed < 0) {
 				perror(ce->name);
@@ -337,6 +338,8 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	struct rev_info *revs = o->unpack_data;
 	int match_missing, cached;
 
+	/* if the entry is not checked out, don't examine work tree */
+	cached = o->index_only || (idx && (idx->ce_flags & CE_VALID));
 	/*
 	 * Backward compatibility wart - "diff-index -m" does
 	 * not mean "do not ignore merges", but "match_missing".
@@ -344,7 +347,6 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	 * But with the revision flag parsing, that's found in
 	 * "!revs->ignore_merges".
 	 */
-	cached = o->index_only;
 	match_missing = !revs->ignore_merges;
 
 	if (cached && idx && ce_stage(idx)) {
