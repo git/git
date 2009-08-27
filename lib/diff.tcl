@@ -300,9 +300,9 @@ proc start_show_diff {cont_info {add_opts {}}} {
         || [string match {160000 *} [lindex $s 3]]} {
 		set is_submodule_diff 1
 		if {$w eq $ui_index} {
-			set cmd {submodule summary --cached -- $current_diff_path}
+			set cmd [list submodule summary --cached -- $path]
 		} else {
-			set cmd {submodule summary --files -- $current_diff_path}
+			set cmd [list submodule summary --files -- $path]
 		}
 	}
 
