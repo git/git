@@ -3,8 +3,10 @@
 LANG=C LC_ALL=C GIT_PAGER=cat
 export LANG LC_ALL GIT_PAGER
 
-tmp=/var/tmp/cook.$$
-trap 'rm -f "$tmp".*' 0
+tmpdir=/var/tmp/cook.$$
+mkdir "$tmpdir" || exit
+tmp="$tmpdir/t"
+trap 'rm -fr "$tmpdir"' 0
 
 git branch --merged "master" | sed -n -e 's/^..//' -e '/\//p' >"$tmp.in.master"
 git branch --merged "pu" | sed -n -e 's/^..//' -e '/\//p' >"$tmp.in.pu"
@@ -245,8 +247,22 @@ perl -w -e '
 	my $incremental = $ARGV[1] eq "yes";
 	my $last_empty = undef;
 	my (@section, %section, @branch, %branch, %description, @leader);
+	my $in_unedited_olde = 0;
 
 	while (<STDIN>) {
+		if ($in_unedited_olde) {
+			if (/^>>$/) {
+				$in_unedited_olde = 0;
+				$_ = " | $_";
+			}
+		} elsif (/^<<$/) {
+			$in_unedited_olde = 1;
+		}
+
+		if ($in_unedited_olde) {
+			$_ = " | $_";
+		}
+
 		if (defined $section && /^-{20,}$/) {
 			$_ = "\n";
 		}
@@ -296,6 +312,7 @@ perl -w -e '
 				push @section, $section;
 				$section{$section} = [];
 			}
+			push @{$section{$section}}, $branch;
 			push @branch, [$branch, $section];
 			$branch{$branch} = (scalar @branch) - 1;
 			if (!exists $description{$branch}) {
