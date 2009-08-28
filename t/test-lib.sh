@@ -685,6 +685,21 @@ do
 	esac
 done
 
+# Provide an implementation of the 'yes' utility
+yes () {
+	if test $# = 0
+	then
+		y=y
+	else
+		y="$*"
+	fi
+
+	while echo "$y"
+	do
+		:
+	done
+}
+
 # Fix some commands on Windows
 case $(uname -s) in
 *MINGW*)
