@@ -415,7 +415,7 @@ sub gitweb_get_feature {
 		@{$feature{$name}{'default'}});
 	if (!$override) { return @defaults; }
 	if (!defined $sub) {
-		warn "feature $name is not overrideable";
+		warn "feature $name is not overridable";
 		return @defaults;
 	}
 	return $sub->(@defaults);

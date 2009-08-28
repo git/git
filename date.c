@@ -135,7 +135,7 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 		}
 		/* Give years and months for 5 years or so */
 		if (diff < 1825) {
-			unsigned long years = (diff + 183) / 365;
+			unsigned long years = diff / 365;
 			unsigned long months = (diff % 365 + 15) / 30;
 			int n;
 			n = snprintf(timebuf, sizeof(timebuf), "%lu year%s",
