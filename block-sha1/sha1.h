@@ -1,13 +1,15 @@
 /*
- * Based on the Mozilla SHA1 (see mozilla-sha1/sha1.h),
- * optimized to do word accesses rather than byte accesses,
+ * SHA1 routine optimized to do word accesses rather than byte accesses,
  * and to avoid unnecessary copies into the context array.
+ *
+ * This was initially based on the Mozilla SHA1 implementation, although
+ * none of the original Mozilla code remains.
  */
 
 typedef struct {
+	unsigned long long size;
 	unsigned int H[5];
 	unsigned int W[16];
-	unsigned long long size;
 } blk_SHA_CTX;
 
 void blk_SHA1_Init(blk_SHA_CTX *ctx);
