@@ -287,17 +287,18 @@ perl -w -e '
 			$last_empty = 0;
 			if (!exists $branch{$branch}) {
 				push @branch, [$branch, $section];
-				$branch{$branch} = (scalar @branch) - 1;
+				$branch{$branch} = 1;
 			}
 			push @{$section{$section}}, $branch;
 		}
 		if (defined $branch) {
-			if ($last_empty) {
-				$_ = "\n$_";
-			}
+			my $was_last_empty = $last_empty;
 			$last_empty = 0;
 			if (!exists $description{$branch}) {
 				$description{$branch} = [];
+			}
+			if ($was_last_empty) {
+				push @{$description{$branch}}, "\n";
 			}
 			push @{$description{$branch}}, $_;
 		}
@@ -309,12 +310,13 @@ perl -w -e '
 			my ($branch, $oldserial) = /^(\S*) (\d+)$/;
 			next if (exists $branch{$branch});
 			if (!exists $section{$section}) {
-				push @section, $section;
+				# Have it at the beginning
+				unshift @section, $section;
 				$section{$section} = [];
 			}
 			push @{$section{$section}}, $branch;
 			push @branch, [$branch, $section];
-			$branch{$branch} = (scalar @branch) - 1;
+			$branch{$branch} = 1;
 			if (!exists $description{$branch}) {
 				$description{$branch} = [];
 			}
@@ -327,6 +329,16 @@ perl -w -e '
 		close I;
 	}
 
+	while (0 <= @{$description{$blurb}}) {
+		my $last = pop @{$description{$blurb}};
+		if ($last =~ /^$/ || $last =~ /^-{20,}$/) {
+			next;
+		} else {
+			push @{$description{$blurb}}, $last;
+			last;
+		}
+	}
+
 	open O, ">$tmp.template.blurb";
 	for (@{$description{$blurb}}) {
 		print O $_;
@@ -334,15 +346,16 @@ perl -w -e '
 	close O;
 
 	open TOC, ">$tmp.template.toc";
+	$serial = 1;
 	for my $section (@section) {
 		for my $branch (@{$section{$section}}) {
-			my $serial = $branch{$branch};
 			print TOC "$branch $serial $section\n";
 			open O, ">$tmp.template.$serial";
 			for (@{$description{$branch}}) {
 				print O $_;
 			}
 			close O;
+			$serial++;
 		}
 	}
 ' <"$template" "$tmp" "$incremental"
@@ -360,13 +373,14 @@ fi
 
 if test -s "$tmp.template.blurb"
 then
-	sed -e '/^---------------*/q' <"$tmp.output.blurb"
-	sed -e '1,/^---------------*/d' <"$tmp.template.blurb"
+	sed -e '/^---------------*$/q' <"$tmp.output.blurb"
+	sed -e '1,/^---------------*$/d' <"$tmp.template.blurb"
 else
 	cat "$tmp.output.blurb"
-fi | sed -e '$d'
+fi
 
-current='--------------------------------------------------
+current='
+--------------------------------------------------
 [Graduated to "master"]
 '
 while read branch oldserial section
@@ -395,7 +409,8 @@ do
 	if test "$current" != "$section"
 	then
 		current=$section
-		echo "--------------------------------------------------
+		echo "
+--------------------------------------------------
 [$section]
 "
 	else
