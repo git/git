@@ -29,7 +29,9 @@ test_expect_success initial '
 	) &&
 	want=$(sed -n "s/^want //p" "$LOGFILE") &&
 	test "$want" = "$(git rev-parse --verify B)" &&
-	! grep "^have " "$LOGFILE"
+	! grep "^have " "$LOGFILE" &&
+	kind=$(sed -n "s/^kind //p" "$LOGFILE") &&
+	test "$kind" = fetch
 '
 
 test_expect_success second '
@@ -43,7 +45,25 @@ test_expect_success second '
 	want=$(sed -n "s/^want //p" "$LOGFILE") &&
 	test "$want" = "$(git rev-parse --verify C)" &&
 	have=$(sed -n "s/^have //p" "$LOGFILE") &&
-	test "$have" = "$(git rev-parse --verify B)"
+	test "$have" = "$(git rev-parse --verify B)" &&
+	kind=$(sed -n "s/^kind //p" "$LOGFILE") &&
+	test "$kind" = fetch
+'
+
+test_expect_success all '
+	rm -fr sub &&
+	HERE=$(pwd) &&
+	git init sub &&
+	(
+		cd sub &&
+		git clone "file://$HERE/.git" new
+	) &&
+	sed -n "s/^want //p" "$LOGFILE" | sort >actual &&
+	git rev-parse A B C | sort >expect &&
+	test_cmp expect actual &&
+	! grep "^have " "$LOGFILE" &&
+	kind=$(sed -n "s/^kind //p" "$LOGFILE") &&
+	test "$kind" = clone
 '
 
 test_done

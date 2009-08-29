@@ -332,6 +332,10 @@ time float::
 size decimal::
     Size of the resulting packfile in bytes.
 
+kind string:
+    Either "clone" (when the client did not give us any "have", and asked
+    for all our refs with "want"), or "fetch" (otherwise).
+
 pre-auto-gc
 -----------
 

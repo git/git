@@ -187,6 +187,10 @@ static int run_post_upload_pack_hook(size_t total, struct timeval *tv)
 					(long)tv->tv_sec, (long)tv->tv_usec);
 	if (!err)
 		err |= feed_msg_to_hook(proc.in, "size %ld\n", (long)total);
+	if (!err)
+		err |= feed_msg_to_hook(proc.in, "kind %s\n",
+					(nr_our_refs == want_obj.nr && !have_obj.nr)
+					? "clone" : "fetch");
 	if (close(proc.in))
 		err = 1;
 	if (finish_command(&proc))
