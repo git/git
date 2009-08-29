@@ -108,7 +108,8 @@ static int update_index_refresh(int fd, struct lock_file *index_lock, int flags)
 	if (read_cache() < 0)
 		return error("Could not read index");
 
-	result = refresh_cache(flags) ? 1 : 0;
+	result = refresh_index(&the_index, (flags), NULL, NULL,
+			       "Unstaged changes after reset:") ? 1 : 0;
 	if (write_cache(fd, active_cache, active_nr) ||
 			commit_locked_index(index_lock))
 		return error ("Could not refresh index");
@@ -261,7 +262,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			die("Cannot do %s reset with paths.",
 					reset_type_names[reset_type]);
 		return read_from_tree(prefix, argv + i, sha1,
-				quiet ? REFRESH_QUIET : REFRESH_SAY_CHANGED);
+				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 	}
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
@@ -302,7 +303,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		break;
 	case MIXED: /* Report what has not been updated. */
 		update_index_refresh(0, NULL,
-				quiet ? REFRESH_QUIET : REFRESH_SAY_CHANGED);
+				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 		break;
 	}
 
