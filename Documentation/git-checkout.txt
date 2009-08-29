@@ -45,9 +45,11 @@ file can be discarded to recreate the original conflicted merge result.
 OPTIONS
 -------
 -q::
+--quiet::
 	Quiet, suppress feedback messages.
 
 -f::
+--force::
 	When switching branches, proceed even if the index or the
 	working tree differs from HEAD.  This is used to throw away
 	local changes.

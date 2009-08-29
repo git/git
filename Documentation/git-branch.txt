@@ -76,6 +76,7 @@ OPTIONS
 	based sha1 expressions such as "<branchname>@\{yesterday}".
 
 -f::
+--force::
 	Reset <branchname> to <startpoint> if <branchname> exists
 	already. Without `-f` 'git-branch' refuses to change an existing branch.
 

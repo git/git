@@ -51,6 +51,7 @@ OPTIONS
 	Make a GPG-signed tag, using the given key
 
 -f::
+--force::
 	Replace an existing tag with the given name (instead of failing)
 
 -d::
