@@ -31,13 +31,67 @@ Updates since v1.6.4
 
 (subsystems)
 
+ * various updates to git-svn and gitweb.
+
 (portability)
+
+ * more improvements on mingw port.
 
 (performance)
 
+ * On major platforms, the system can be compiled to use with Linus's
+   block-sha1 implementation of the SHA-1 hash algorithm, which
+   outperforms the default fallback implementation we borrowed from
+   Mozzilla.
+
 (usability, bells and whistles)
 
+ * refs/replace/ hierarchy is designed to be usable as a replacement
+   of the "grafts" mechanism, with the added advantage that it can be
+   transferred across repositories.
+
+ * "git am" learned to optionally ignore whitespace differences.
+
+ * "git am" handles input e-mail files that has CRLF line endings sensibly.
+
+ * "git commit --dry-run $args" is a new recommended way to ask "what would
+   happen if I try to commit with these arguments."
+
+ * "git cvsimport" now supports password-protected pserver access.
+
+ * "git fast-export" learned --no-data option that can be useful when
+   reordering commits and trees without touching the contents of
+   blobs.
+
+ * "git init" learned to mkdir/chdir into a directory when given an
+   extra argument (i.e. "git init this").
+
+ * "git instaweb" optionally can use mongoose as the web server.
+
+ * "git log --decorate" can optionally be told with --decorate=full to
+   give the reference name in full.
+
+ * "git push" can be told to be --quiet.
+
+ * informational output from "git reset" that lists the locally modified
+   paths is made consistent with that of "git checkout $another_branch".
+
+ * "git status" gives more descriptive output for unmerged paths.
+
+ * "git submodule" learned to give submodule name to scripts run with
+   "foreach" subcommand.
+
+ * various subcommands to "git submodule" learned --recursive option.
+
+ * "git submodule summary" learned --files option to compare the work
+   tree vs the commit bound at submodule path, instead of comparing
+   the index.
+
 (developers)
+
+ * With GIT_TEST_OPTS="--root=/p/a/t/h", tests can be run outside the
+   source directory; using tmpfs may give faster turnaround.
+
 
 Fixes since v1.6.4
 ------------------
@@ -48,4 +102,8 @@ Fixes since v1.6.4
 # Here are fixes that this release has, but have not been backported to
 # v1.6.4.X series.
 
-
+--
+exec >/var/tmp/1
+O=v1.6.4.1-266-g235db15
+echo O=$(git describe master)
+git shortlog --no-merges $O..master --not maint
