@@ -2382,7 +2382,7 @@ int diff_setup_done(struct diff_options *options)
 	 * Most of the time we can say "there are changes"
 	 * only by checking if there are changed paths, but
 	 * --ignore-whitespace* options force us to look
-	 * inside contets.
+	 * inside contents.
 	 */
 
 	if (DIFF_XDL_TST(options, IGNORE_WHITESPACE) ||
@@ -3346,7 +3346,7 @@ free_queue:
 		fclose(options->file);
 
 	/*
-	 * Report the contents level differences with HAS_CHANGES;
+	 * Report the content-level differences with HAS_CHANGES;
 	 * diff_addremove/diff_change does not set the bit when
 	 * DIFF_FROM_CONTENTS is in effect (e.g. with -w).
 	 */
