@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2009, #05; Wed, 26)
-X-master-at: 68ea4741643d9e7c4bdac7cbbe6292edc69430ef
-X-next-at: 4fc77847c70f00e94586150f808d0418ca64bbb8
+Subject: What's cooking in git.git (Aug 2009, #06; Sun, 30)
+X-master-at: f324cb50be3d88c6fb6123c85da749695a749f60
+X-next-at: 5fc6248250e68c3b723efb9b868d8fc27499065a
 
-What's cooking in git.git (Aug 2009, #05; Wed, 26)
+What's cooking in git.git (Aug 2009, #06; Sun, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -20,29 +20,38 @@ During 1.6.5 cycle, 'next' will hold topics meant for 1.6.5 and 1.7.0.
 --------------------------------------------------
 [Graduated to "master"]
 
-* aj/fix-read-tree-from-scratch (2009-08-17) 1 commit
-  (merged to 'next' on 2009-08-20 at 7a04133)
- + read-tree: Fix regression with creation of a new index file.
+* wl/insta-mongoose (2009-08-21) 1 commit
+  (merged to 'next' on 2009-08-25 at da1d566)
+ + Add support for the Mongoose web server.
 
-* jc/maint-checkout-index-to-prefix (2009-08-16) 1 commit
-  (merged to 'next' on 2009-08-20 at 2f6aea2)
- + check_path(): allow symlinked directories to checkout-index --prefix
+* as/maint-graph-interesting-fix (2009-08-21) 2 commits.
+  (merged to 'next' on 2009-08-25 at 9d5e215)
+ + Add tests for rev-list --graph with options that simplify history
+ + graph API: fix bug in graph_is_interesting()
 
-* jl/submodule-summary-diff-files (2009-08-15) 2 commits
-  (merged to 'next' on 2009-08-15 at 165bd8e)
- + Documentaqtion/git-submodule.txt: Typofix
-  (merged to 'next' on 2009-08-14 at a702e78)
- + git submodule summary: add --files option
+* jc/maint-unpack-objects-strict (2009-08-13) 1 commit.
+  (merged to 'next' on 2009-08-23 at 38eb750)
+ + Fix "unpack-objects --strict"
 
-* lh/short-decorate (2009-08-15) 1 commit
-  (merged to 'next' on 2009-08-18 at b8c1d96)
- + git-log: allow --decorate[=short|full]
+* jh/submodule-foreach (2009-08-20) 9 commits
+  (merged to 'next' on 2009-08-20 at 671bea4)
+ + git clone: Add --recursive to automatically checkout (nested) submodules
+ + t7407: Use 'rev-parse --short' rather than bash's substring expansion notation
+  (merged to 'next' on 2009-08-18 at f4a881d)
+ + git submodule status: Add --recursive to recurse into nested submodules
+ + git submodule update: Introduce --recursive to update nested submodules
+ + git submodule foreach: Add --recursive to recurse into nested submodules
+ + git submodule foreach: test access to submodule name as '$name'
+ + Add selftest for 'git submodule foreach'
+ + git submodule: Cleanup usage string and add option parsing to cmd_foreach()
+ + git submodule foreach: Provide access to submodule name, as '$name'
 
-* oa/stash-na (2009-08-11) 1 commit
-  (merged to 'next' on 2009-08-14 at 12c2e2b)
- + git stash: Give friendlier errors when there is nothing to apply
---------------------------------------------------
-[New Topics]
+* lt/block-sha1 (2009-08-17) 4 commits
+  (merged to 'next' on 2009-08-18 at 67a1ce8)
+ + remove ARM and Mozilla SHA1 implementations
+ + block-sha1: guard gcc extensions with __GNUC__
+ + make sure byte swapping is optimal for git
+ + block-sha1: make the size member first in the context struct
 
 * np/maint-1.6.3-deepen (2009-08-24) 1 commit.
   (merged to 'next' on 2009-08-25 at 8e383d4)
@@ -52,19 +61,100 @@ During 1.6.5 cycle, 'next' will hold topics meant for 1.6.5 and 1.7.0.
   (merged to 'next' on 2009-08-25 at 5f29625)
  + checkout: do not imply "-f" on unborn branches
 
-* mr/gitweb-snapshot (2009-08-25) 3 commits
- - gitweb: add t9501 tests for checking HTTP status codes
- - gitweb: split test suite into library and tests
- - gitweb: improve snapshot error handling
+* mm/reset-report (2009-08-21) 2 commits
+  (merged to 'next' on 2009-08-25 at f2a4424)
+ + reset: make the reminder output consistent with "checkout"
+ + Rename REFRESH_SAY_CHANGED to REFRESH_IN_PORCELAIN.
+
+* jc/shortstatus (2009-08-15) 11 commits
+  (merged to 'next' on 2009-08-15 at 7e40766)
+ + git commit --dry-run -v: show diff in color when asked
+ + Documentation/git-commit.txt: describe --dry-run
+  (merged to 'next' on 2009-08-12 at 53bda17)
+ + wt-status: collect untracked files in a separate "collect" phase
+ + Make git_status_config() file scope static to builtin-commit.c
+ + wt-status: move wt_status_colors[] into wt_status structure
+ + wt-status: move many global settings to wt_status structure
+ + commit: --dry-run
+  (merged to 'next' on 2009-08-06 at fe8cb94)
+ + status: show worktree status of conflicted paths separately
+ + wt-status.c: rework the way changes to the index and work tree are summarized
+ + diff-index: keep the original index intact
+ + diff-index: report unmerged new entries
+ (this branch is used by jc/1.7.0-status.)
+
+--------------------------------------------------
+[New Topics]
+
+* jc/upload-pack-hook (2009-08-28) 2 commits
+ - upload-pack: feed "kind [clone|fetch]" to post-upload-pack hook
+ - upload-pack: add a trigger for post-upload-pack hook
+
+I do not know if the distinction between fetching some but not all refs
+and fetching full set of refs into an empty repository is something worth
+making, so in that sense the tip commit is somewhat iffy.
+
+One reason this series makes me somewhat uneasy is that Tom, the original
+starter of the discussion went dark after sending a proposed patch.  Maybe
+he has been too busy, but I have been hoping that GitHub as a stakeholder
+has somebody who monitors the list when he is not available.
+
+Does anybody from GitHub have any input?  Is there something that needs to
+be improved to fill GitHub's needs?  Does GitHub want to stick to its own
+fork, and were all these discussions for improvements unwanted?
+
+* jk/clone-b (2009-08-26) 1 commit
+  (merged to 'next' on 2009-08-30 at 10a68d1)
+ + clone: add --branch option to select a different HEAD
+
+* pk/import-dirs (2009-08-24) 1 commit
+ - Add script for importing bits-and-pieces to Git.
+
+This version makes me suspect that the author might regret the choice of
+the import format that does not allow escaping of paths, nor does not
+allow leading blanks for readability without changing semantics, both of
+which make it somewhat limiting and error prone.  These issues will be
+hard to rectify without breaking the backward compatibility, for a tool
+that could otherwise turn out to be useful.
+
+As a contrib/ material, I probably shouldn't be too worried about these
+issues, but I am keeping this out of 'next' for now, just in case the
+author chooses to polish the usability of the tool for general audience.
+
+It is a different story if the submission was just throwing out a one-time
+hack in the open in the hope that some other people might find it useful,
+but without any intention of maintaining it.  But then I do not have a
+strong reason to keep this in my tree, either.  The mailing list archive
+is a more suitable storage media for such a patch.
+
 --------------------------------------------------
 [Stalled]
+
+* jh/notes (2009-08-27) 12 commits.
+ - Add '%N'-format for pretty-printing commit notes
+ - Add flags to get_commit_notes() to control the format of the note string
+ - notes.c: Implement simple memory pooling of leaf nodes
+ - Selftests verifying semantics when loading notes trees with various fanouts
+ - Teach the notes lookup code to parse notes trees with various fanout schemes
+ - t3302-notes-index-expensive: Speed up create_repo()
+ - fast-import: Add support for importing commit notes
+ - Teach "-m <msg>" and "-F <file>" to "git notes edit"
+ - Add an expensive test for git-notes
+ - Speed up git notes lookup
+ - Add a script to edit/inspect notes
+ - Introduce commit notes
+
+I heard the cvs-helper series depends on this one.  It seems that the
+fan-out strategy is being rethought?
 
 * js/stash-dwim (2009-07-27) 1 commit.
   (merged to 'next' on 2009-08-16 at 67896c4)
  + Make 'git stash -k' a short form for 'git stash save --keep-index'
  (this branch is used by tr/reset-checkout-patch.)
 
-* tr/reset-checkout-patch (2009-08-18) 8 commits.
+* tr/reset-checkout-patch (2009-08-27) 9 commits.
+  (merged to 'next' on 2009-08-27 at d314281)
+ + Make test case number unique
   (merged to 'next' on 2009-08-18 at e465bb3)
  + tests: disable interactive hunk selection tests if perl is not available
   (merged to 'next' on 2009-08-16 at 67896c4)
@@ -82,13 +172,6 @@ forbid "git stash save --anything-with-dash" and (2) redirect with any
 option "git stash --opt" to "git stash save --opt", to keep it flexible
 and safe at the same time.  I think it is a sane thing to do, but nothing
 has happened lately.
-
-* jn/gitweb-blame (2009-08-06) 3 commits
- - gitweb: Create links leading to 'blame_incremental' using JavaScript
- - gitweb: Incremental blame (WIP)
- - gitweb: Add optional "time to generate page" info in footer
-
-Ajax-y blame WIP
 
 * db/vcs-helper (2009-08-09) 17 commits
  - Allow helpers to request marks for fast-import
@@ -113,140 +196,85 @@ Ajax-y blame WIP
  + Add support for external programs for handling native fetches
  (this branch is used by jh/cvs-helper.)
 
-There was a discussion that suggests that the use of colon ':' before vcs
-helper name needs to be corrected.  Nothing happened since.
+We had a few messages on what the list consensus was with this series.  My
+impression, after going back to the archive, is that there wasn't.
 
-* je/send-email-no-subject (2009-08-05) 1 commit
- - send-email: confirm on empty mail subjects
+* jn/gitweb-blame (2009-08-06) 3 commits
+ - gitweb: Create links leading to 'blame_incremental' using JavaScript
+ - gitweb: Incremental blame (WIP)
+ - gitweb: Add optional "time to generate page" info in footer
 
-This seems to break t9001.  Near the tip of 'pu' I have a iffy
-workaround.
+Ajax-y blame WIP
+
 --------------------------------------------------
 [Cooking]
 
-* mm/reset-report (2009-08-21) 2 commits
-  (merged to 'next' on 2009-08-25 at f2a4424)
- + reset: make the reminder output consistent with "checkout"
- + Rename REFRESH_SAY_CHANGED to REFRESH_IN_PORCELAIN.
+* je/send-email-no-subject (2009-08-05) 1 commit
+  (merged to 'next' on 2009-08-30 at b6455c2)
+ + send-email: confirm on empty mail subjects
 
-* wl/insta-mongoose (2009-08-21) 1 commit
-  (merged to 'next' on 2009-08-25 at da1d566)
- + Add support for the Mongoose web server.
+The existing tests to covers the positive case (i.e. as long as the user
+says "yes" to the "do you really want to send this message that lacks
+subject", the message is sent) of this feature, but the feature itself
+needs its own test to verify the negative case (i.e. does it correctly
+stop if the user says "no"?)
 
-* lt/approxidate (2009-08-22) 2 commits
+* lt/approxidate (2009-08-30) 6 commits
+  (merged to 'next' on 2009-08-30 at e016e3d)
+ + fix approxidate parsing of relative months and years
+ + tests: add date printing and parsing tests
+ + refactor test-date interface
+ + Add date formatting and parsing functions relative to a given time
   (merged to 'next' on 2009-08-26 at 62853f9)
  + Further 'approxidate' improvements
  + Improve on 'approxidate'
 
 Fixes a few "reasonably formatted but thus-far misparsed" date strings.
-As Nico suggested, we would need a test to prevent regression to existing
-support for date strings that are "reasonably formatted".
+With tests by Peff, this should be ready for -rc0.
 
-* jc/mailinfo-scissors (2009-08-25) 2 commits
- - Documentation: describe the scissors mark support of "git am"
- - Teach mailinfo to ignore everything before -- >8 -- mark
+* mr/gitweb-snapshot (2009-08-25) 3 commits
+  (merged to 'next' on 2009-08-30 at e4edd0b)
+ + gitweb: add t9501 tests for checking HTTP status codes
+ + gitweb: split test suite into library and tests
+ + gitweb: improve snapshot error handling
+
+* jc/mailinfo-scissors (2009-08-26) 5 commits
+  (merged to 'next' on 2009-08-30 at 5fc6248)
+ + mailinfo.scissors: new configuration
+ + am/mailinfo: Disable scissors processing by default
+ + Documentation: describe the scissors mark support of "git am"
+ + Teach mailinfo to ignore everything before -- >8 -- mark
+ + builtin-mailinfo.c: fix confusing internal API to mailinfo()
+
+I didn't pick up the patch to simplify the definition of scissors. I do
+not have strong opinion on it either way, but the list would hopefully
+decide it before too long.
 
 * tf/diff-whitespace-incomplete-line (2009-08-23) 2 commits.
   (merged to 'next' on 2009-08-26 at 4fc7784)
  + xutils: Fix xdl_recmatch() on incomplete lines
  + xutils: Fix hashing an incomplete line with whitespaces at the end
 
-* cc/sequencer-rebase-i (2009-08-21) 17 commits.
+Will merge.
+
+* cc/sequencer-rebase-i (2009-08-28) 15 commits
  - rebase -i: use "git sequencer--helper --cherry-pick"
  - sequencer: add "--cherry-pick" option to "git sequencer--helper"
- - sequencer: add "do_commit()" and related functions
+ - sequencer: add "do_commit()" and related functions working on "next_commit"
  - pick: libify "pick_help_msg()"
- - revert: libify pick
+ - revert: libify cherry-pick and revert functionnality
  - rebase -i: use "git sequencer--helper --fast-forward"
  - sequencer: let "git sequencer--helper" callers set "allow_dirty"
  - sequencer: add "--fast-forward" option to "git sequencer--helper"
  - sequencer: add "do_fast_forward()" to perform a fast forward
  - rebase -i: use "git sequencer--helper --reset-hard"
  - sequencer: add "--reset-hard" option to "git sequencer--helper"
- - sequencer: add comments about reset_almost_hard()
  - sequencer: add "reset_almost_hard()" and related functions
  - rebase -i: use "git sequencer--helper --make-patch"
- - sequencer: free memory used in "make_patch" function
  - sequencer: add "make_patch" function to save a patch
  - sequencer: add "builtin-sequencer--helper.c"
 
-Migrating "rebase -i" bit by bit to C.  I am inclined to agree with Dscho
-that maybe this approach forces the migration to follow the structure of
-the shell script too much, and could force a suboptimal end result, but
-we'll see.
-
-* as/maint-graph-interesting-fix (2009-08-21) 2 commits.
-  (merged to 'next' on 2009-08-25 at 9d5e215)
- + Add tests for rev-list --graph with options that simplify history
- + graph API: fix bug in graph_is_interesting()
-
-Looked sane.
-
-* jc/shortstatus (2009-08-15) 11 commits
-  (merged to 'next' on 2009-08-15 at 7e40766)
- + git commit --dry-run -v: show diff in color when asked
- + Documentation/git-commit.txt: describe --dry-run
-  (merged to 'next' on 2009-08-12 at 53bda17)
- + wt-status: collect untracked files in a separate "collect" phase
- + Make git_status_config() file scope static to builtin-commit.c
- + wt-status: move wt_status_colors[] into wt_status structure
- + wt-status: move many global settings to wt_status structure
- + commit: --dry-run
-  (merged to 'next' on 2009-08-06 at fe8cb94)
- + status: show worktree status of conflicted paths separately
- + wt-status.c: rework the way changes to the index and work tree are summarized
- + diff-index: keep the original index intact
- + diff-index: report unmerged new entries
- (this branch is used by jc/1.7.0-status.)
-
-Will cook for a bit more and then merge.
-
-* jc/maint-unpack-objects-strict (2009-08-13) 1 commit.
-  (merged to 'next' on 2009-08-23 at 38eb750)
- + Fix "unpack-objects --strict"
-
-Will merge.
-
-* jh/submodule-foreach (2009-08-20) 9 commits
-  (merged to 'next' on 2009-08-20 at 671bea4)
- + git clone: Add --recursive to automatically checkout (nested) submodules
- + t7407: Use 'rev-parse --short' rather than bash's substring expansion notation
-  (merged to 'next' on 2009-08-18 at f4a881d)
- + git submodule status: Add --recursive to recurse into nested submodules
- + git submodule update: Introduce --recursive to update nested submodules
- + git submodule foreach: Add --recursive to recurse into nested submodules
- + git submodule foreach: test access to submodule name as '$name'
- + Add selftest for 'git submodule foreach'
- + git submodule: Cleanup usage string and add option parsing to cmd_foreach()
- + git submodule foreach: Provide access to submodule name, as '$name'
-
-Will merge.
-
-* jh/notes (2009-07-29) 8 commits.
- - t3302-notes-index-expensive: Speed up create_repo()
- - fast-import: Add support for importing commit notes
- - First draft of notes tree parser with support for fanout subtrees
- - Teach "-m <msg>" and "-F <file>" to "git notes edit"
- - Add an expensive test for git-notes
- - Speed up git notes lookup
- - Add a script to edit/inspect notes
- - Introduce commit notes
-
-The cvs-helper series depends on this one.  I have a recollection
-that some people were not happy about the fan-out of the notes tree
-layout, but has the issue been resolved to a concensus?
-
-* ne/rev-cache (2009-08-21) 6 commits
- . support for path name caching in rev-cache
- . full integration of rev-cache into git, completed test suite
- . administrative functions for rev-cache, start of integration into git
- . support for non-commit object caching in rev-cache
- . basic revision cache system, no integration or features
- . man page and technical discussion for rev-cache
-
-Updated but seems to break upload-pack tests when merged to 'pu'; given
-what this series touches, breakages in that area are expected.
-May discard if a working reroll comes, to give it a fresh start.
+Migrating "rebase -i" bit by bit to C.
 
 * jh/cvs-helper (2009-08-18) 7 commits
  - More fixes to the git-remote-cvs installation procedure
@@ -258,31 +286,22 @@ May discard if a working reroll comes, to give it a fresh start.
  - Basic build infrastructure for Python scripts
  (this branch uses db/vcs-helper.)
 
-Builds on db/vcs-helper (which is stalled, so this cannot move).
+Builds on db/vcs-helper (which is stalled, so this cannot move further at
+the moment).  There is a re-roll planned, so I did not pick up test fixes
+from Brandon myself.
 
-The testing of Python part seemed to be still fragile even with the latest
-fix on one of my boches with an earlier round already installed, but I
-didn't look very deeply before removing the older installation.
-
-* sr/gfi-options (2009-08-24) 4 commits
+* sr/gfi-options (2009-08-27) 6 commits
  - fast-import: test the new option command
  - fast-import: add option command
+ - fast-import: test the new feature command
+ - fast-import: add feature command
  - fast-import: put marks reading in it's own function
- - fast-import: put option parsing code in seperate functions
+ - fast-import: put option parsing code in separate functions
 
-Will merge to 'next' shortly.
+Re-rolled, based on an off-list discussion I was/am not aware of.
+Looked ready for 'next'.
 
-* lt/block-sha1 (2009-08-17) 4 commits
-  (merged to 'next' on 2009-08-18 at 67a1ce8)
- + remove ARM and Mozilla SHA1 implementations
- + block-sha1: guard gcc extensions with __GNUC__
- + make sure byte swapping is optimal for git
- + block-sha1: make the size member first in the context struct
-
-May merge soon; Solaris performance patches that was discussed
-earlier can happen on 'master', as the series is usable as-is.
-
-* nd/sparse (2009-08-20) 20 commits
+* nd/sparse (2009-08-20) 19 commits
  - sparse checkout: inhibit empty worktree
  - Add tests for sparse checkout
  - read-tree: add --no-sparse-checkout to disable sparse checkout support
@@ -302,11 +321,7 @@ earlier can happen on 'master', as the series is usable as-is.
  - Introduce "skip-worktree" bit in index, teach Git to get/set this bit
  - Add test-index-version
  - update-index: refactor mark_valid() in preparation for new options
-  (merged to 'next' on 2009-08-20 at ea167d7)
- + Prevent diff machinery from examining assume-unchanged entries on worktree
 
-The first one was an independent fix; the rest has been replaced with the
-"return of no-checkout" series.
 --------------------------------------------------
 [For 1.7.0]
 
@@ -315,7 +330,6 @@ The first one was an independent fix; the rest has been replaced with the
  + git status: not "commit --dry-run" anymore
  + git stat -s: short status output
  + git stat: the beginning of "status that is not a dry-run of commit"
- (this branch uses jc/shortstatus.)
 
 With this, "git status" is no longer "git commit --preview".
 
@@ -323,7 +337,11 @@ With this, "git status" is no longer "git commit --preview".
   (merged to 'next' on 2009-08-22 at 5106de8)
  + send-email: make --no-chain-reply-to the default
 
-* jc/1.7.0-diff-whitespace-only-status (2009-05-23) 2 commits.
+* jc/1.7.0-diff-whitespace-only-status (2009-08-30) 4 commits.
+  (merged to 'next' on 2009-08-30 at 0623572)
+ + diff.c: fix typoes in comments
+  (merged to 'next' on 2009-08-27 at 81fb2bd)
+ + Make test case number unique
   (merged to 'next' on 2009-08-02 at 9c08420)
  + diff: Rename QUIET internal option to QUICK
  + diff: change semantics of "ignore whitespace" options
@@ -336,6 +354,7 @@ we could argue that it is a bugfix.
   (merged to 'next' on 2009-08-02 at 38b82fe)
  + Refuse deleting the current branch via push
  + Refuse updating the current branch in a non-bare repository via push
+
 --------------------------------------------------
 [I have been too busy to purge these]
 
@@ -374,3 +393,15 @@ Maybe some people care about this.  I dunno.
  . config: allow false and true values for branch.autosetuprebase
 
 Has been ejected from 'pu' for some time, expecting a reroll.
+
+* ne/rev-cache (2009-08-21) 6 commits
+ . support for path name caching in rev-cache
+ . full integration of rev-cache into git, completed test suite
+ . administrative functions for rev-cache, start of integration into git
+ . support for non-commit object caching in rev-cache
+ . basic revision cache system, no integration or features
+ . man page and technical discussion for rev-cache
+
+Updated but seems to break upload-pack tests when merged to 'pu'; given
+what this series touches, breakages in that area are expected.
+May discard if a working reroll comes, to give it a fresh start.
