@@ -857,7 +857,9 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 	}
 
 	if (match_string(date, "months") >= 5) {
-		int n = tm->tm_mon - *num;
+		int n;
+		update_tm(tm, now, 0); /* fill in date fields if needed */
+		n = tm->tm_mon - *num;
 		*num = 0;
 		while (n < 0) {
 			n += 12;
@@ -868,6 +870,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 	}
 
 	if (match_string(date, "years") >= 4) {
+		update_tm(tm, now, 0); /* fill in date fields if needed */
 		tm->tm_year -= *num;
 		*num = 0;
 		return end;
