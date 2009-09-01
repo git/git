@@ -5190,10 +5190,10 @@ sub git_snapshot {
 		die_error(400, "Invalid snapshot format parameter");
 	} elsif (!exists($known_snapshot_formats{$format})) {
 		die_error(400, "Unknown snapshot format");
-	} elsif (!grep($_ eq $format, @snapshot_fmts)) {
-		die_error(403, "Unsupported snapshot format");
 	} elsif ($known_snapshot_formats{$format}{'disabled'}) {
 		die_error(403, "Snapshot format not allowed");
+	} elsif (!grep($_ eq $format, @snapshot_fmts)) {
+		die_error(403, "Unsupported snapshot format");
 	}
 
 	if (!defined $hash) {
