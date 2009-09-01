@@ -7,6 +7,39 @@
  * @license GPLv2 or later
  */
 
+/* ============================================================ */
+/* functions for generic gitweb actions and views */
+
+/**
+ * used to check if link has 'js' query parameter already (at end),
+ * and other reasons to not add 'js=1' param at the end of link
+ * @constant
+ */
+var jsExceptionsRe = /[;?]js=[01]$/;
+
+/**
+ * Add '?js=1' or ';js=1' to the end of every link in the document
+ * that doesn't have 'js' query parameter set already.
+ *
+ * Links with 'js=1' lead to JavaScript version of given action, if it
+ * exists (currently there is only 'blame_incremental' for 'blame')
+ *
+ * @globals jsExceptionsRe
+ */
+function fixLinks() {
+	var allLinks = document.getElementsByTagName("a") || document.links;
+	for (var i = 0, len = allLinks.length; i < len; i++) {
+		var link = allLinks[i];
+		if (!jsExceptionsRe.test(link)) { // =~ /[;?]js=[01]$/;
+			link.href +=
+				(link.href.indexOf('?') === -1 ? '?' : ';') + 'js=1';
+		}
+	}
+}
+
+
+/* ============================================================ */
+
 /*
  * This code uses DOM methods instead of (nonstandard) innerHTML
  * to modify page.
@@ -88,6 +121,7 @@ function createRequestObject() {
 
 	return null;
 }
+
 
 /* ============================================================ */
 /* utility/helper functions (and variables) */

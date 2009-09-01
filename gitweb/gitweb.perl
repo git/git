@@ -560,6 +560,8 @@ our @cgi_param_mapping = (
 	snapshot_format => "sf",
 	extra_options => "opt",
 	search_use_regexp => "sr",
+	# this must be last entry (for manipulation from JavaScript)
+	javascript => "js"
 );
 our %cgi_param_mapping = @cgi_param_mapping;
 
@@ -3242,6 +3244,18 @@ sub git_footer_html {
 		insert_file($site_footer);
 	}
 
+	print qq!<script type="text/javascript" src="$javascript"></script>\n!;
+	if ($action eq 'blame_incremental') {
+		print qq!<script type="text/javascript">\n!.
+		      qq!startBlame("!. href(action=>"blame_data", -replay=>1) .qq!",\n!.
+		      qq!           "!. href() .qq!");\n!.
+		      qq!</script>\n!;
+	} else {
+		print qq!<script type="text/javascript">\n!.
+		      qq!window.onload = fixLinks;\n!.
+		      qq!</script>\n!;
+	}
+
 	print "</body>\n" .
 	      "</html>";
 }
@@ -4793,6 +4807,10 @@ sub git_tag {
 
 sub git_blame_common {
 	my $format = shift || 'porcelain';
+	if ($format eq 'porcelain' && $cgi->param('js')) {
+		$format = 'incremental';
+		$action = 'blame_incremental'; # for page title etc
+	}
 
 	# permissions
 	gitweb_check_feature('blame')
@@ -4872,7 +4890,7 @@ sub git_blame_common {
 	if ($format eq 'incremental') {
 		print "<noscript>\n<div class=\"error\"><center><b>\n".
 		      "This page requires JavaScript to run.\n Use ".
-		      $cgi->a({-href => href(action=>'blame',-replay=>1)},
+		      $cgi->a({-href => href(action=>'blame',javascript=>0,-replay=>1)},
 		              'this page').
 		      " instead.\n".
 		      "</b></center></div>\n</noscript>\n";
@@ -5002,14 +5020,6 @@ sub git_blame_common {
 	print "</div>\n";   # class="blame_body"
 	close $fd
 		or print "Reading blob failed\n";
-
-	if ($format eq 'incremental') {
-		print qq!<script type="text/javascript" src="$javascript"></script>\n!.
-		      qq!<script type="text/javascript">\n!.
-		      qq!startBlame("!. href(action=>"blame_data", -replay=>1) .qq!",\n!.
-		      qq!           "!. href() .qq!");\n!.
-		      qq!</script>\n!;
-	}
 
 	git_footer_html();
 }
