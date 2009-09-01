@@ -56,7 +56,7 @@ static void insert_one_record(struct shortlog *log,
 	/* copy author name to namebuf, to support matching on both name and email */
 	memcpy(namebuf, author, boemail - author);
 	len = boemail - author;
-	while(len > 0 && isspace(namebuf[len-1]))
+	while (len > 0 && isspace(namebuf[len-1]))
 		len--;
 	namebuf[len] = 0;
 

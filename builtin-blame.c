@@ -1348,7 +1348,7 @@ static void get_ac_line(const char *inbuf, const char *what,
 	/*
 	 * Now, convert both name and e-mail using mailmap
 	 */
-	if(map_user(&mailmap, mail+1, mail_len-1, person, tmp-person-1)) {
+	if (map_user(&mailmap, mail+1, mail_len-1, person, tmp-person-1)) {
 		/* Add a trailing '>' to email, since map_user returns plain emails
 		   Note: It already has '<', since we replace from mail+1 */
 		mailpos = memchr(mail, '\0', mail_len);

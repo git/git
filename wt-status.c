@@ -326,7 +326,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 	setup_standard_excludes(&dir);
 
 	fill_directory(&dir, NULL);
-	for(i = 0; i < dir.nr; i++) {
+	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
 		if (!cache_name_is_other(ent->name, ent->len))
 			continue;

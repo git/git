@@ -1808,7 +1808,7 @@ static void prepare_pack(int window, int depth)
 
 static int git_pack_config(const char *k, const char *v, void *cb)
 {
-	if(!strcmp(k, "pack.window")) {
+	if (!strcmp(k, "pack.window")) {
 		window = git_config_int(k, v);
 		return 0;
 	}

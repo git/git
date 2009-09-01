@@ -513,7 +513,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 	signal(SIGCHLD, SIG_DFL);
 
 	host = strstr(url, "://");
-	if(host) {
+	if (host) {
 		*host = '\0';
 		protocol = get_protocol(url);
 		host += 3;

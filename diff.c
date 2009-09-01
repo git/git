@@ -2691,7 +2691,7 @@ static int parse_num(const char **cp_p)
 	num = 0;
 	scale = 1;
 	dot = 0;
-	for(;;) {
+	for (;;) {
 		ch = *cp;
 		if ( !dot && ch == '.' ) {
 			scale = 1;

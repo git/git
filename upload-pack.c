@@ -427,7 +427,7 @@ static int get_common_commits(void)
 
 	save_commit_buffer = 0;
 
-	for(;;) {
+	for (;;) {
 		int len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
 
