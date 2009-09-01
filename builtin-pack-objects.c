@@ -1599,7 +1599,7 @@ static void *threaded_find_deltas(void *arg)
 static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 			   int window, int depth, unsigned *processed)
 {
-	struct thread_params p[delta_search_threads];
+	struct thread_params *p;
 	int i, ret, active_threads = 0;
 
 	if (delta_search_threads <= 1) {
@@ -1609,6 +1609,7 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 	if (progress > pack_to_stdout)
 		fprintf(stderr, "Delta compression using up to %d threads.\n",
 				delta_search_threads);
+	p = xcalloc(delta_search_threads, sizeof(*p));
 
 	/* Partition the work amongst work threads. */
 	for (i = 0; i < delta_search_threads; i++) {
@@ -1717,6 +1718,7 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 			active_threads--;
 		}
 	}
+	free(p);
 }
 
 #else
