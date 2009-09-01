@@ -561,8 +561,8 @@ void wt_status_print(struct wt_status *s)
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "#");
 	}
 
-	wt_status_print_unmerged(s);
 	wt_status_print_updated(s);
+	wt_status_print_unmerged(s);
 	wt_status_print_changed(s);
 	if (s->submodule_summary)
 		wt_status_print_submodule_summary(s);
