@@ -1875,18 +1875,16 @@ static int match_fragment(struct image *img,
 		size_t imgoff = 0;
 		size_t preoff = 0;
 		size_t postlen = postimage->len;
-		size_t imglen[preimage->nr];
 		for (i = 0; i < preimage->nr; i++) {
 			size_t prelen = preimage->line[i].len;
+			size_t imglen = img->line[try_lno+i].len;
 
-			imglen[i] = img->line[try_lno+i].len;
-			if (!fuzzy_matchlines(
-				img->buf + try + imgoff, imglen[i],
-				preimage->buf + preoff, prelen))
+			if (!fuzzy_matchlines(img->buf + try + imgoff, imglen,
+					      preimage->buf + preoff, prelen))
 				return 0;
 			if (preimage->line[i].flag & LINE_COMMON)
-				postlen += imglen[i] - prelen;
-			imgoff += imglen[i];
+				postlen += imglen - prelen;
+			imgoff += imglen;
 			preoff += prelen;
 		}
 
@@ -1900,7 +1898,7 @@ static int match_fragment(struct image *img,
 		fixed_buf = xmalloc(imgoff);
 		memcpy(fixed_buf, img->buf + try, imgoff);
 		for (i = 0; i < preimage->nr; i++)
-			preimage->line[i].len = imglen[i];
+			preimage->line[i].len = img->line[try_lno+i].len;
 
 		/*
 		 * Update the preimage buffer and the postimage context lines.
