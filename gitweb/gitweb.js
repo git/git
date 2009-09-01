@@ -211,6 +211,101 @@ function errorInfo(str) {
 }
 
 /* ............................................................ */
+/* coloring rows during blame_data (git blame --incremental) run */
+
+/**
+ * used to extract N from 'colorN', where N is a number,
+ * @constant
+ */
+var colorRe = /\bcolor([0-9]*)\b/;
+
+/**
+ * return N if <tr class="colorN">, otherwise return null
+ * (some browsers require CSS class names to begin with letter)
+ *
+ * @param {HTMLElement} tr: table row element to check
+ * @param {String} tr.className: 'class' attribute of tr element
+ * @returns {Number|null} N if tr.className == 'colorN', otherwise null
+ *
+ * @globals colorRe
+ */
+function getColorNo(tr) {
+	if (!tr) {
+		return null;
+	}
+	var className = tr.className;
+	if (className) {
+		var match = colorRe.exec(className);
+		if (match) {
+			return parseInt(match[1], 10);
+		}
+	}
+	return null;
+}
+
+var colorsFreq = [0, 0, 0];
+/**
+ * return one of given possible colors (curently least used one)
+ * example: chooseColorNoFrom(2, 3) returns 2 or 3
+ *
+ * @param {Number[]} arguments: one or more numbers
+ *        assumes that  1 <= arguments[i] <= colorsFreq.length
+ * @returns {Number} Least used color number from arguments
+ * @globals colorsFreq
+ */
+function chooseColorNoFrom() {
+	// choose the color which is least used
+	var colorNo = arguments[0];
+	for (var i = 1; i < arguments.length; i++) {
+		if (colorsFreq[arguments[i]-1] < colorsFreq[colorNo-1]) {
+			colorNo = arguments[i];
+		}
+	}
+	colorsFreq[colorNo-1]++;
+	return colorNo;
+}
+
+/**
+ * given two neigbour <tr> elements, find color which would be different
+ * from color of both of neighbours; used to 3-color blame table
+ *
+ * @param {HTMLElement} tr_prev
+ * @param {HTMLElement} tr_next
+ * @returns {Number} color number N such that
+ * colorN != tr_prev.className && colorN != tr_next.className
+ */
+function findColorNo(tr_prev, tr_next) {
+	var color_prev = getColorNo(tr_prev);
+	var color_next = getColorNo(tr_next);
+
+
+	// neither of neighbours has color set
+	// THEN we can use any of 3 possible colors
+	if (!color_prev && !color_next) {
+		return chooseColorNoFrom(1,2,3);
+	}
+
+	// either both neighbours have the same color,
+	// or only one of neighbours have color set
+	// THEN we can use any color except given
+	var color;
+	if (color_prev === color_next) {
+		color = color_prev; // = color_next;
+	} else if (!color_prev) {
+		color = color_next;
+	} else if (!color_next) {
+		color = color_prev;
+	}
+	if (color) {
+		return chooseColorNoFrom((color % 3) + 1, ((color+1) % 3) + 1);
+	}
+
+	// neighbours have different colors
+	// THEN there is only one color left
+	return (3 - ((color_prev + color_next) % 3));
+}
+
+/* ............................................................ */
 /* coloring rows like 'blame' after 'blame_data' finishes */
 
 /**
@@ -223,8 +318,6 @@ function errorInfo(str) {
 function isStartOfGroup(tr) {
 	return tr.firstChild.className === 'sha1';
 }
-
-var colorRe = /(?:light|dark)/;
 
 /**
  * change colors to use zebra coloring (2 colors) instead of 3 colors
@@ -391,6 +484,12 @@ function handleLine(commit, group) {
 			formatDateISOLocal(commit.authorTime, commit.authorTimezone);
 	}
 
+	// color depends on group of lines, not only on blamed commit
+	var colorNo = findColorNo(
+		document.getElementById('l'+(resline-1)),
+		document.getElementById('l'+(resline+group.numlines))
+	);
+
 	// loop over lines in commit group
 	for (var i = 0; i < group.numlines; i++, resline++) {
 		var tr = document.getElementById('l'+resline);
@@ -409,7 +508,10 @@ function handleLine(commit, group) {
 		var a_linenr = td_sha1.nextSibling.firstChild;
 
 		/* <tr id="l123" class=""> */
-		var tr_class = 'light'; // or tr.className
+		var tr_class = '';
+		if (colorNo !== null) {
+			tr_class = 'color'+colorNo;
+		}
 		if (commit.boundary) {
 			tr_class += ' boundary';
 		}
