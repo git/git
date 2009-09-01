@@ -18,6 +18,12 @@ use File::Find qw();
 use File::Basename qw(basename);
 binmode STDOUT, ':utf8';
 
+our $t0;
+if (eval { require Time::HiRes; 1; }) {
+	$t0 = [Time::HiRes::gettimeofday()];
+}
+our $number_of_git_cmds = 0;
+
 BEGIN {
 	CGI->compile() if $ENV{'MOD_PERL'};
 }
@@ -394,6 +400,13 @@ our %feature = (
 		'sub' => \&feature_avatar,
 		'override' => 0,
 		'default' => ['']},
+
+	# Enable displaying how much time and how many git commands
+	# it took to generate and display page.  Disabled by default.
+	# Project specific override is not supported.
+	'timed' => {
+		'override' => 0,
+		'default' => [0]},
 );
 
 sub gitweb_get_feature {
@@ -507,6 +520,7 @@ if (-e $GITWEB_CONFIG) {
 
 # version of the core git binary
 our $git_version = qx("$GIT" --version) =~ m/git version (.*)$/ ? $1 : "unknown";
+$number_of_git_cmds++;
 
 $projects_list ||= $projectroot;
 
@@ -1955,6 +1969,7 @@ sub get_feed_info {
 
 # returns path to the core git executable and the --git-dir parameter as list
 sub git_cmd {
+	$number_of_git_cmds++;
 	return $GIT, '--git-dir='.$git_dir;
 }
 
@@ -3204,6 +3219,20 @@ sub git_footer_html {
 		              -class => $feed_class}, "TXT") . "\n";
 	}
 	print "</div>\n"; # class="page_footer"
+
+	if (defined $t0 && gitweb_check_feature('timed')) {
+		print "<div id=\"generating_info\">\n";
+		print 'This page took '.
+		      '<span id="generating_time" class="time_span">'.
+		      Time::HiRes::tv_interval($t0, [Time::HiRes::gettimeofday()]).
+		      ' seconds </span>'.
+		      ' and '.
+		      '<span id="generating_cmd">'.
+		      $number_of_git_cmds.
+		      '</span> git commands '.
+		      " to generate.\n";
+		print "</div>\n"; # class="page_footer"
+	}
 
 	if (-f $site_footer) {
 		insert_file($site_footer);

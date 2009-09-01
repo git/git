@@ -75,6 +75,13 @@ div.page_footer_text {
 	font-style: italic;
 }
 
+div#generating_info {
+	margin: 4px;
+	font-size: smaller;
+	text-align: center;
+	color: #505050;
+}
+
 div.page_body {
 	padding: 8px;
 	font-family: monospace;
