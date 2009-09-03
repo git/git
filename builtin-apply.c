@@ -126,6 +126,7 @@ struct fragment {
 	const char *patch;
 	int size;
 	int rejected;
+	int linenr;
 	struct fragment *next;
 };
 
@@ -1193,6 +1194,7 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 		int len;
 
 		fragment = xcalloc(1, sizeof(*fragment));
+		fragment->linenr = linenr;
 		len = parse_fragment(line, size, patch, fragment);
 		if (len <= 0)
 			die("corrupt patch at line %d", linenr);
@@ -2079,17 +2081,24 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	}
 
 	if (applied_pos >= 0) {
-		if (ws_error_action == correct_ws_error &&
-		    new_blank_lines_at_end &&
-		    preimage.nr + applied_pos == img->nr) {
+		if (new_blank_lines_at_end &&
+		    preimage.nr + applied_pos == img->nr &&
+		    (ws_rule & WS_BLANK_AT_EOF) &&
+		    ws_error_action != nowarn_ws_error) {
+			record_ws_error(WS_BLANK_AT_EOF, "+", 1, frag->linenr);
+			if (ws_error_action == correct_ws_error) {
+				while (new_blank_lines_at_end--)
+					remove_last_line(&postimage);
+			}
 			/*
-			 * If the patch application adds blank lines
-			 * at the end, and if the patch applies at the
-			 * end of the image, remove those added blank
-			 * lines.
+			 * We would want to prevent write_out_results()
+			 * from taking place in apply_patch() that follows
+			 * the callchain led us here, which is:
+			 * apply_patch->check_patch_list->check_patch->
+			 * apply_data->apply_fragments->apply_one_fragment
 			 */
-			while (new_blank_lines_at_end--)
-				remove_last_line(&postimage);
+			if (ws_error_action == die_on_ws_error)
+				apply = 0;
 		}
 
 		/*

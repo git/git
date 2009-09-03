@@ -15,6 +15,7 @@ static struct whitespace_rule {
 	{ "space-before-tab", WS_SPACE_BEFORE_TAB },
 	{ "indent-with-non-tab", WS_INDENT_WITH_NON_TAB },
 	{ "cr-at-eol", WS_CR_AT_EOL },
+	{ "blank-at-eof", WS_BLANK_AT_EOF },
 };
 
 unsigned parse_whitespace_rule(const char *string)
@@ -112,6 +113,11 @@ char *whitespace_error_string(unsigned ws)
 		if (err.len)
 			strbuf_addstr(&err, ", ");
 		strbuf_addstr(&err, "indent with spaces");
+	}
+	if (ws & WS_BLANK_AT_EOF) {
+		if (err.len)
+			strbuf_addstr(&err, ", ");
+		strbuf_addstr(&err, "new blank line at EOF");
 	}
 	return strbuf_detach(&err, NULL);
 }
