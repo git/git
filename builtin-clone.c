@@ -580,8 +580,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		option_no_checkout = 1;
 	}
 
-	if (transport)
+	if (transport) {
 		transport_unlock_pack(transport);
+		transport_disconnect(transport);
+	}
 
 	if (!option_no_checkout) {
 		struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
