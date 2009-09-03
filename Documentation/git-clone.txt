@@ -76,7 +76,7 @@ then the cloned repository will become corrupt.
 
 
 --reference <repository>::
-	If the reference repository is on the local machine
+	If the reference repository is on the local machine,
 	automatically setup .git/objects/info/alternates to
 	obtain objects from the reference repository.  Using
 	an already existing repository as an alternate will
