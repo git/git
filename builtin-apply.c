@@ -1913,6 +1913,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		int len = linelen(patch, size);
 		int plen, added;
 		int added_blank_line = 0;
+		int is_blank_context = 0;
 
 		if (!len)
 			break;
@@ -1945,8 +1946,11 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 			*new++ = '\n';
 			add_line_info(&preimage, "\n", 1, LINE_COMMON);
 			add_line_info(&postimage, "\n", 1, LINE_COMMON);
+			is_blank_context = 1;
 			break;
 		case ' ':
+			if (plen && patch[1] == '\n')
+				is_blank_context = 1;
 		case '-':
 			memcpy(old, patch + 1, plen);
 			add_line_info(&preimage, old, plen,
@@ -1986,6 +1990,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		}
 		if (added_blank_line)
 			new_blank_lines_at_end++;
+		else if (is_blank_context)
+			;
 		else
 			new_blank_lines_at_end = 0;
 		patch += len;

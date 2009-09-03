@@ -177,4 +177,28 @@ test_expect_success 'blank at EOF with --whitespace=fix (2)' '
 	test_cmp expect one
 '
 
+test_expect_success 'blank at EOF with --whitespace=fix (3)' '
+	{ echo a; echo b; echo; } >one &&
+	git add one &&
+	{ echo a; echo c; echo; } >expect &&
+	{ cat expect; echo; echo; } >one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=fix patch &&
+	test_cmp expect one
+'
+
+test_expect_success 'blank at end of hunk, not at EOF with --whitespace=fix' '
+	{ echo a; echo b; echo; echo; echo; echo; echo; echo d; } >one &&
+	git add one &&
+	{ echo a; echo c; echo; echo; echo; echo; echo; echo; echo d; } >expect &&
+	cp expect one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=fix patch &&
+	test_cmp expect one
+'
+
 test_done
