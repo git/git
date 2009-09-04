@@ -491,6 +491,8 @@ struct emit_callback {
 	struct xdiff_emit_state xm;
 	int color_diff;
 	unsigned ws_rule;
+	int blank_at_eof;
+	int lno_in_preimage;
 	sane_truncate_fn truncate;
 	const char **label_path;
 	struct diff_words_data *diff_words;
@@ -547,6 +549,12 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 
 	if (!*ws)
 		emit_line(ecbdata->file, set, reset, line, len);
+	else if ((ecbdata->ws_rule & WS_BLANK_AT_EOF) &&
+		 ecbdata->blank_at_eof &&
+		 (ecbdata->blank_at_eof <= ecbdata->lno_in_preimage) &&
+		 ws_blank_line(line + 1, len - 1, ecbdata->ws_rule))
+		/* Blank line at EOF */
+		emit_line(ecbdata->file, ws, reset, line, len);
 	else {
 		/* Emit just the prefix, then the rest. */
 		emit_line(ecbdata->file, set, reset, line, 1);
@@ -573,9 +581,16 @@ static unsigned long sane_truncate_line(struct emit_callback *ecb, char *line, u
 	return allot - l;
 }
 
+static int find_preimage_lno(const char *line)
+{
+	char *p = strchr(line, '-');
+	if (!p)
+		return 0; /* should not happen */
+	return strtol(p+1, NULL, 10);
+}
+
 static void fn_out_consume(void *priv, char *line, unsigned long len)
 {
-	int color;
 	struct emit_callback *ecbdata = priv;
 	const char *meta = diff_get_color(ecbdata->color_diff, DIFF_METAINFO);
 	const char *plain = diff_get_color(ecbdata->color_diff, DIFF_PLAIN);
@@ -598,6 +613,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 
 	if (line[0] == '@') {
 		len = sane_truncate_line(ecbdata, line, len);
+		ecbdata->lno_in_preimage = find_preimage_lno(line);
 		emit_line(ecbdata->file,
 			  diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO),
 			  reset, line, len);
@@ -611,7 +627,6 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		return;
 	}
 
-	color = DIFF_PLAIN;
 	if (ecbdata->diff_words) {
 		if (line[0] == '-') {
 			diff_words_append(line, len,
@@ -630,14 +645,13 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		emit_line(ecbdata->file, plain, reset, line, len);
 		return;
 	}
-	if (line[0] == '-')
-		color = DIFF_FILE_OLD;
-	else if (line[0] == '+')
-		color = DIFF_FILE_NEW;
-	if (color != DIFF_FILE_NEW) {
-		emit_line(ecbdata->file,
-			  diff_get_color(ecbdata->color_diff, color),
-			  reset, line, len);
+
+	if (line[0] != '+') {
+		const char *color =
+			diff_get_color(ecbdata->color_diff,
+				       line[0] == '-' ? DIFF_FILE_OLD : DIFF_PLAIN);
+		ecbdata->lno_in_preimage++;
+		emit_line(ecbdata->file, color, reset, line, len);
 		return;
 	}
 	emit_add_line(reset, ecbdata, line, len);
@@ -1557,6 +1571,9 @@ static void builtin_diff(const char *name_a,
 		ecbdata.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
 		ecbdata.found_changesp = &o->found_changes;
 		ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
+		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
+			ecbdata.blank_at_eof =
+				adds_blank_at_eof(&mf1, &mf2, ecbdata.ws_rule);
 		ecbdata.file = o->file;
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
