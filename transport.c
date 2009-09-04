@@ -818,7 +818,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	} else if (!prefixcmp(url, "http://")
 	        || !prefixcmp(url, "https://")
 	        || !prefixcmp(url, "ftp://")) {
-		transport_helper_init(ret);
+		transport_helper_init(ret, "curl");
 #ifdef NO_CURL
 		error("git was compiled without libcurl support.");
 #else

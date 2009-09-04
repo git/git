@@ -152,13 +152,10 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 	return ret;
 }
 
-int transport_helper_init(struct transport *transport)
+int transport_helper_init(struct transport *transport, const char *name)
 {
 	struct helper_data *data = xcalloc(sizeof(*data), 1);
-	char *eom = strchr(transport->url, ':');
-	if (!eom)
-		return -1;
-	data->name = xstrndup(transport->url, eom - transport->url);
+	data->name = name;
 
 	transport->data = data;
 	transport->get_refs_list = get_refs_list;
