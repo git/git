@@ -489,7 +489,7 @@ typedef unsigned long (*sane_truncate_fn)(char *line, unsigned long len);
 
 struct emit_callback {
 	struct xdiff_emit_state xm;
-	int nparents, color_diff;
+	int color_diff;
 	unsigned ws_rule;
 	sane_truncate_fn truncate;
 	const char **label_path;
@@ -549,9 +549,8 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 		emit_line(ecbdata->file, set, reset, line, len);
 	else {
 		/* Emit just the prefix, then the rest. */
-		emit_line(ecbdata->file, set, reset, line, ecbdata->nparents);
-		ws_check_emit(line + ecbdata->nparents,
-			      len - ecbdata->nparents, ecbdata->ws_rule,
+		emit_line(ecbdata->file, set, reset, line, 1);
+		ws_check_emit(line + 1, len - 1, ecbdata->ws_rule,
 			      ecbdata->file, set, reset, ws);
 	}
 }
@@ -576,7 +575,6 @@ static unsigned long sane_truncate_line(struct emit_callback *ecb, char *line, u
 
 static void fn_out_consume(void *priv, char *line, unsigned long len)
 {
-	int i;
 	int color;
 	struct emit_callback *ecbdata = priv;
 	const char *meta = diff_get_color(ecbdata->color_diff, DIFF_METAINFO);
@@ -598,13 +596,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		ecbdata->label_path[0] = ecbdata->label_path[1] = NULL;
 	}
 
-	/* This is not really necessary for now because
-	 * this codepath only deals with two-way diffs.
-	 */
-	for (i = 0; i < len && line[i] == '@'; i++)
-		;
-	if (2 <= i && i < len && line[i] == ' ') {
-		ecbdata->nparents = i - 1;
+	if (line[0] == '@') {
 		len = sane_truncate_line(ecbdata, line, len);
 		emit_line(ecbdata->file,
 			  diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO),
@@ -614,15 +606,12 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		return;
 	}
 
-	if (len < ecbdata->nparents) {
+	if (len < 1) {
 		emit_line(ecbdata->file, reset, reset, line, len);
 		return;
 	}
 
 	color = DIFF_PLAIN;
-	if (ecbdata->diff_words && ecbdata->nparents != 1)
-		/* fall back to normal diff */
-		free_diff_words_data(ecbdata);
 	if (ecbdata->diff_words) {
 		if (line[0] == '-') {
 			diff_words_append(line, len,
@@ -641,13 +630,10 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		emit_line(ecbdata->file, plain, reset, line, len);
 		return;
 	}
-	for (i = 0; i < ecbdata->nparents && len; i++) {
-		if (line[i] == '-')
-			color = DIFF_FILE_OLD;
-		else if (line[i] == '+')
-			color = DIFF_FILE_NEW;
-	}
-
+	if (line[0] == '-')
+		color = DIFF_FILE_OLD;
+	else if (line[0] == '+')
+		color = DIFF_FILE_NEW;
 	if (color != DIFF_FILE_NEW) {
 		emit_line(ecbdata->file,
 			  diff_get_color(ecbdata->color_diff, color),
