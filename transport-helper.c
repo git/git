@@ -37,7 +37,10 @@ static struct child_process *get_helper(struct transport *transport)
 		die("Unable to run helper: git %s", helper->argv[0]);
 	data->helper = helper;
 
-	write_in_full(data->helper->in, "capabilities\n", 13);
+	strbuf_addstr(&buf, "capabilities\n");
+	write_in_full(helper->in, buf.buf, buf.len);
+	strbuf_reset(&buf);
+
 	file = fdopen(helper->out, "r");
 	while (1) {
 		if (strbuf_getline(&buf, file, '\n') == EOF)
@@ -78,11 +81,12 @@ static int fetch_with_fetch(struct transport *transport,
 		const struct ref *posn = to_fetch[i];
 		if (posn->status & REF_STATUS_UPTODATE)
 			continue;
-		write_in_full(helper->in, "fetch ", 6);
-		write_in_full(helper->in, sha1_to_hex(posn->old_sha1), 40);
-		write_in_full(helper->in, " ", 1);
-		write_in_full(helper->in, posn->name, strlen(posn->name));
-		write_in_full(helper->in, "\n", 1);
+
+		strbuf_addf(&buf, "fetch %s %s\n",
+			    sha1_to_hex(posn->old_sha1), posn->name);
+		write_in_full(helper->in, buf.buf, buf.len);
+		strbuf_reset(&buf);
+
 		if (strbuf_getline(&buf, file, '\n') == EOF)
 			exit(128); /* child died, message supplied already */
 	}
@@ -119,7 +123,10 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 	FILE *file;
 
 	helper = get_helper(transport);
-	write_in_full(helper->in, "list\n", 5);
+
+	strbuf_addstr(&buf, "list\n");
+	write_in_full(helper->in, buf.buf, buf.len);
+	strbuf_reset(&buf);
 
 	file = fdopen(helper->out, "r");
 	while (1) {
