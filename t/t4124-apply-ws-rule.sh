@@ -148,4 +148,33 @@ do
 	done
 done
 
+
+test_expect_success 'blank at EOF with --whitespace=fix (1)' '
+	: these can fail depending on what we did before
+	git config --unset core.whitespace
+	rm -f .gitattributes
+
+	{ echo a; echo b; echo c; } >one &&
+	git add one &&
+	{ echo a; echo b; echo c; } >expect &&
+	{ cat expect; echo; } >one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=fix patch &&
+	test_cmp expect one
+'
+
+test_expect_success 'blank at EOF with --whitespace=fix (2)' '
+	{ echo a; echo b; echo c; } >one &&
+	git add one &&
+	{ echo a; echo c; } >expect &&
+	{ cat expect; echo; echo; } >one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=fix patch &&
+	test_cmp expect one
+'
+
 test_done

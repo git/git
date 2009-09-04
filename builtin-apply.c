@@ -2069,7 +2069,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	if (applied_pos >= 0) {
 		if (ws_error_action == correct_ws_error &&
 		    new_blank_lines_at_end &&
-		    postimage.nr + applied_pos == img->nr) {
+		    preimage.nr + applied_pos == img->nr) {
 			/*
 			 * If the patch application adds blank lines
 			 * at the end, and if the patch applies at the
