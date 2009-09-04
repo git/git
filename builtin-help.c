@@ -417,9 +417,6 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	const char *alias;
 	load_command_list("git-", &main_cmds, &other_cmds);
 
-	setup_git_directory_gently(&nongit);
-	git_config(git_help_config, NULL);
-
 	argc = parse_options(argc, argv, prefix, builtin_help_options,
 			builtin_help_usage, 0);
 
@@ -429,6 +426,9 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		printf("%s\n", git_more_info_string);
 		return 0;
 	}
+
+	setup_git_directory_gently(&nongit);
+	git_config(git_help_config, NULL);
 
 	if (!argv[0]) {
 		printf("usage: %s\n\n", git_usage_string);
