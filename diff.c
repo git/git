@@ -1149,7 +1149,6 @@ struct checkdiff_t {
 	struct diff_options *o;
 	unsigned ws_rule;
 	unsigned status;
-	int trailing_blanks_start;
 };
 
 static int is_conflict_marker(const char *line, unsigned long len)
@@ -1193,10 +1192,6 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		unsigned bad;
 		data->lineno++;
-		if (!ws_blank_line(line + 1, len - 1, data->ws_rule))
-			data->trailing_blanks_start = 0;
-		else if (!data->trailing_blanks_start)
-			data->trailing_blanks_start = data->lineno;
 		if (is_conflict_marker(line + 1, len - 1)) {
 			data->status |= 1;
 			fprintf(data->o->file,
@@ -1216,14 +1211,12 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 			      data->o->file, set, reset, ws);
 	} else if (line[0] == ' ') {
 		data->lineno++;
-		data->trailing_blanks_start = 0;
 	} else if (line[0] == '@') {
 		char *plus = strchr(line, '+');
 		if (plus)
 			data->lineno = strtol(plus, NULL, 10) - 1;
 		else
 			die("invalid diff");
-		data->trailing_blanks_start = 0;
 	}
 }
 
@@ -1435,6 +1428,44 @@ static const struct funcname_pattern_entry *diff_funcname_pattern(struct diff_fi
 			return &builtin_funcname_pattern[i];
 
 	return NULL;
+}
+
+static int count_trailing_blank(mmfile_t *mf, unsigned ws_rule)
+{
+	char *ptr = mf->ptr;
+	long size = mf->size;
+	int cnt = 0;
+
+	if (!size)
+		return cnt;
+	ptr += size - 1; /* pointing at the very end */
+	if (*ptr != '\n')
+		; /* incomplete line */
+	else
+		ptr--; /* skip the last LF */
+	while (mf->ptr < ptr) {
+		char *prev_eol;
+		for (prev_eol = ptr; mf->ptr <= prev_eol; prev_eol--)
+			if (*prev_eol == '\n')
+				break;
+		if (!ws_blank_line(prev_eol + 1, ptr - prev_eol, ws_rule))
+			break;
+		cnt++;
+		ptr = prev_eol - 1;
+	}
+	return cnt;
+}
+
+static int adds_blank_at_eof(mmfile_t *mf1, mmfile_t *mf2, unsigned ws_rule)
+{
+	int l1, l2, at;
+	l1 = count_trailing_blank(mf1, ws_rule);
+	l2 = count_trailing_blank(mf2, ws_rule);
+	if (l2 <= l1)
+		return 0;
+	/* starting where? */
+	at = count_lines(mf1->ptr, mf1->size);
+	return (at - l1) + 1; /* the line number counts from 1 */
 }
 
 static void builtin_diff(const char *name_a,
@@ -1650,15 +1681,16 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		ecb.priv = &data;
 		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 
-		if ((data.ws_rule & WS_BLANK_AT_EOF) &&
-		    data.trailing_blanks_start) {
-			static char *err;
-
-			if (!err)
-				err = whitespace_error_string(WS_BLANK_AT_EOF);
-			fprintf(o->file, "%s:%d: %s\n",
-				data.filename, data.trailing_blanks_start, err);
-			data.status = 1; /* report errors */
+		if (data.ws_rule & WS_BLANK_AT_EOF) {
+			int blank_at_eof = adds_blank_at_eof(&mf1, &mf2, data.ws_rule);
+			if (blank_at_eof) {
+				static char *err;
+				if (!err)
+					err = whitespace_error_string(WS_BLANK_AT_EOF);
+				fprintf(o->file, "%s:%d: %s.\n",
+					data.filename, blank_at_eof, err);
+				data.status = 1; /* report errors */
+			}
 		}
 	}
  free_and_return:
