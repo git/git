@@ -1957,7 +1957,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 			is_blank_context = 1;
 			break;
 		case ' ':
-			if (plen && patch[1] == '\n')
+			if (plen && (ws_rule & WS_BLANK_AT_EOF) &&
+			    ws_blank_line(patch + 1, plen, ws_rule))
 				is_blank_context = 1;
 		case '-':
 			memcpy(old, patch + 1, plen);
@@ -1985,7 +1986,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				      (first == '+' ? 0 : LINE_COMMON));
 			new += added;
 			if (first == '+' &&
-			    added == 1 && new[-1] == '\n')
+			    (ws_rule & WS_BLANK_AT_EOF) &&
+			    ws_blank_line(patch + 1, plen, ws_rule))
 				added_blank_line = 1;
 			break;
 		case '@': case '\\':
