@@ -991,12 +991,16 @@ static void short_print(struct wt_status *s, int null_termination)
 int cmd_status(int argc, const char **argv, const char *prefix)
 {
 	struct wt_status s;
-	static int null_termination, shortstatus;
+	static int null_termination;
+	static enum {
+		STATUS_FORMAT_LONG,
+		STATUS_FORMAT_SHORT,
+	} status_format = STATUS_FORMAT_LONG;
 	unsigned char sha1[20];
 	static struct option builtin_status_options[] = {
 		OPT__VERBOSE(&verbose),
-		OPT_BOOLEAN('s', "short", &shortstatus,
-			    "show status concisely"),
+		OPT_SET_INT('s', "short", &status_format,
+			    "show status concisely", STATUS_FORMAT_SHORT),
 		OPT_BOOLEAN('z', "null", &null_termination,
 			    "terminate entries with NUL"),
 		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
@@ -1006,8 +1010,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	if (null_termination)
-		shortstatus = 1;
+	if (null_termination && status_format == STATUS_FORMAT_LONG)
+		status_format = STATUS_FORMAT_SHORT;
 
 	wt_status_prepare(&s);
 	git_config(git_status_config, &s);
@@ -1024,9 +1028,11 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
 	wt_status_collect(&s);
 
-	if (shortstatus)
+	switch (status_format) {
+	case STATUS_FORMAT_SHORT:
 		short_print(&s, null_termination);
-	else {
+		break;
+	case STATUS_FORMAT_LONG:
 		s.verbose = verbose;
 		if (s.relative_paths)
 			s.prefix = prefix;
@@ -1035,6 +1041,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		if (diff_use_color_default == -1)
 			diff_use_color_default = git_use_color_default;
 		wt_status_print(&s);
+		break;
 	}
 	return 0;
 }
