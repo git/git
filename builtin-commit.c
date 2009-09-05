@@ -975,7 +975,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	static struct option builtin_status_options[] = {
 		OPT__VERBOSE(&verbose),
 		OPT_BOOLEAN('s', "short", &shortstatus,
-			    "show status concicely"),
+			    "show status concisely"),
 		OPT_BOOLEAN('z', "null", &null_termination,
 			    "terminate entries with NUL"),
 		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
