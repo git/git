@@ -966,11 +966,32 @@ static void short_untracked(int null_termination, struct string_list_item *it,
 	}
 }
 
+static void short_print(struct wt_status *s, int null_termination)
+{
+	int i;
+	for (i = 0; i < s->change.nr; i++) {
+		struct wt_status_change_data *d;
+		struct string_list_item *it;
+
+		it = &(s->change.items[i]);
+		d = it->util;
+		if (d->stagemask)
+			short_unmerged(null_termination, it, s);
+		else
+			short_status(null_termination, it, s);
+	}
+	for (i = 0; i < s->untracked.nr; i++) {
+		struct string_list_item *it;
+
+		it = &(s->untracked.items[i]);
+		short_untracked(null_termination, it, s);
+	}
+}
+
 int cmd_status(int argc, const char **argv, const char *prefix)
 {
 	struct wt_status s;
 	static int null_termination, shortstatus;
-	int i;
 	unsigned char sha1[20];
 	static struct option builtin_status_options[] = {
 		OPT__VERBOSE(&verbose),
@@ -1003,25 +1024,9 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
 	wt_status_collect(&s);
 
-	if (shortstatus) {
-		for (i = 0; i < s.change.nr; i++) {
-			struct wt_status_change_data *d;
-			struct string_list_item *it;
-
-			it = &(s.change.items[i]);
-			d = it->util;
-			if (d->stagemask)
-				short_unmerged(null_termination, it, &s);
-			else
-				short_status(null_termination, it, &s);
-		}
-		for (i = 0; i < s.untracked.nr; i++) {
-			struct string_list_item *it;
-
-			it = &(s.untracked.items[i]);
-			short_untracked(null_termination, it, &s);
-		}
-	} else {
+	if (shortstatus)
+		short_print(&s, null_termination);
+	else {
 		s.verbose = verbose;
 		if (s.relative_paths)
 			s.prefix = prefix;
