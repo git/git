@@ -212,4 +212,21 @@ test_expect_success 'grep with CE_VALID file' '
 	git checkout t/t
 '
 
+test_expect_success 'grep from a subdirectory to search wider area (1)' '
+	mkdir -p s &&
+	(
+		cd s && git grep "x x x" ..
+	)
+'
+
+test_expect_success 'grep from a subdirectory to search wider area (2)' '
+	mkdir -p s &&
+	(
+		cd s || exit 1
+		( git grep xxyyzz .. >out ; echo $? >status )
+		! test -s out &&
+		test 1 = $(cat status)
+	)
+'
+
 test_done
