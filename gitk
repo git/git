@@ -2606,7 +2606,7 @@ proc savestuff {w} {
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
     global autoselect extdifftool perfile_attrs markbgcolor use_ttk
-    global hideremotes
+    global hideremotes want_ttk
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -2630,6 +2630,7 @@ proc savestuff {w} {
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
 	puts $f [list set limitdiffs $limitdiffs]
+	puts $f [list set want_ttk $want_ttk]
 	puts $f [list set bgcolor $bgcolor]
 	puts $f [list set fgcolor $fgcolor]
 	puts $f [list set colors $colors]
@@ -10586,7 +10587,7 @@ proc doprefs {} {
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global tabstop limitdiffs autoselect extdifftool perfile_attrs
-    global hideremotes
+    global hideremotes want_ttk have_ttk
 
     set top .gitkprefs
     set prefstop $top
@@ -10595,7 +10596,7 @@ proc doprefs {} {
 	return
     }
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-		   limitdiffs tabstop perfile_attrs hideremotes} {
+		   limitdiffs tabstop perfile_attrs hideremotes want_ttk} {
 	set oldprefs($v) [set $v]
     }
     ttk_toplevel $top
@@ -10616,6 +10617,9 @@ proc doprefs {} {
     ${NS}::checkbutton $top.autoselect -text [mc "Auto-select SHA1"] \
 	-variable autoselect
     grid x $top.autoselect -sticky w
+    ${NS}::checkbutton $top.hideremotes -text [mc "Hide remote refs"] \
+	-variable hideremotes
+    grid x $top.hideremotes -sticky w
 
     ${NS}::label $top.ddisp -text [mc "Diff display options"]
     grid $top.ddisp - -sticky w -pady 10
@@ -10625,9 +10629,6 @@ proc doprefs {} {
     ${NS}::checkbutton $top.ntag -text [mc "Display nearby tags"] \
 	-variable showneartags
     grid x $top.ntag -sticky w
-    ${NS}::checkbutton $top.hideremotes -text [mc "Hide remote refs"] \
-	-variable hideremotes
-    grid x $top.hideremotes -sticky w
     ${NS}::checkbutton $top.ldiff -text [mc "Limit diffs to listed paths"] \
 	-variable limitdiffs
     grid x $top.ldiff -sticky w
@@ -10642,6 +10643,17 @@ proc doprefs {} {
     pack $top.extdifff.l $top.extdifff.b -side left
     pack configure $top.extdifff.l -padx 10
     grid x $top.extdifff $top.extdifft -sticky ew
+
+    ${NS}::label $top.lgen -text [mc "General options"]
+    grid $top.lgen - -sticky w -pady 10
+    ${NS}::checkbutton $top.want_ttk -variable want_ttk \
+	-text [mc "Use themed widgets"]
+    if {$have_ttk} {
+	${NS}::label $top.ttk_note -text [mc "(change requires restart)"]
+    } else {
+	${NS}::label $top.ttk_note -text [mc "(currently unavailable)"]
+    }
+    grid x $top.want_ttk $top.ttk_note -sticky w
 
     ${NS}::label $top.cdisp -text [mc "Colors: press to choose"]
     grid $top.cdisp - -sticky w -pady 10
@@ -10689,7 +10701,8 @@ proc doprefs {} {
     if {!$use_ttk} {
 	foreach w {maxpctl maxwidthl showlocal autoselect tabstopl ntag
 	    ldiff lattr extdifff.l extdifff.b bgbut fgbut
-	    diffoldbut diffnewbut hunksepbut markbgbut selbgbut} {
+	    diffoldbut diffnewbut hunksepbut markbgbut selbgbut
+	    want_ttk ttk_note} {
 	    $top.$w configure -font optionfont
 	}
     }
@@ -10760,7 +10773,7 @@ proc prefscan {} {
     global oldprefs prefstop
 
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-		   limitdiffs tabstop perfile_attrs hideremotes} {
+		   limitdiffs tabstop perfile_attrs hideremotes want_ttk} {
 	global $v
 	set $v $oldprefs($v)
     }
@@ -11236,6 +11249,7 @@ set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autoselect 1
 set perfile_attrs 0
+set want_ttk 1
 
 if {[tk windowingsystem] eq "aqua"} {
     set extdifftool "opendiff"
@@ -11372,10 +11386,12 @@ set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
 set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
-if {![info exists use_ttk]} {
-    set use_ttk [llength [info commands ::ttk::style]]
+if {![info exists have_ttk]} {
+    set have_ttk [llength [info commands ::ttk::style]]
 }
+set use_ttk [expr {$have_ttk && $want_ttk}]
 set NS [expr {$use_ttk ? "ttk" : ""}]
+
 set git_version [join [lrange [split [lindex [exec git version] end] .] 0 2] .]
 
 set runq {}
