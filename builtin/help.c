@@ -26,11 +26,12 @@ enum help_format {
 	HELP_FORMAT_NONE,
 	HELP_FORMAT_MAN,
 	HELP_FORMAT_INFO,
-	HELP_FORMAT_WEB
+	HELP_FORMAT_WEB,
+	HELP_FORMAT_CHM
 };
 
 static int show_all = 0;
-static enum help_format help_format = HELP_FORMAT_NONE;
+static enum help_format help_format = HELP_FORMAT_CHM;
 static struct option builtin_help_options[] = {
 	OPT_BOOLEAN('a', "all", &show_all, "print all available commands"),
 	OPT_SET_INT('m', "man", &help_format, "show man page", HELP_FORMAT_MAN),
@@ -402,6 +403,26 @@ static void open_html(const char *path)
 }
 #endif
 
+static void show_chm_page(const char *git_cmd)
+{
+	//const char *page = cmd_to_page(git_cmd);
+	struct strbuf page_path; /* it leaks but we exec bellow */
+
+	struct stat st;
+	const char *git_path = system_path(GIT_EXEC_PATH);
+	int i;
+
+	/* Check that we have a git documentation directory. */
+	if (stat(mkpath("%s/TortoiseGit_en.chm", git_path), &st)
+	    || !S_ISREG(st.st_mode))
+		die("'%s': not a documentation directory.", git_path);
+
+	strbuf_init(&page_path, 0);
+	strbuf_addf(&page_path, "%s/TortoiseGit_en.chm::/git-%s(1).html", git_path, git_cmd);
+	
+	ShellExecute(NULL, "open","hh.exe", page_path.buf,NULL, SW_SHOW);
+}
+
 static void show_html_page(const char *git_cmd)
 {
 	const char *page = cmd_to_page(git_cmd);
@@ -460,6 +481,8 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	case HELP_FORMAT_WEB:
 		show_html_page(argv[0]);
 		break;
+	case HELP_FORMAT_CHM:
+		show_chm_page(argv[0]);
 	}
 
 	return 0;

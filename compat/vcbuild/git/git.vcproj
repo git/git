@@ -21,7 +21,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)\bin"
+			OutputDirectory="$(SolutionDir)\..\bin\$(ConfigurationName)\bin"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="0"
@@ -65,6 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="wininet.lib ws2_32.lib "
+				OutputFile="$(OutDir)\tgit.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -94,7 +95,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)\$(ConfigurationName)64\bin"
+			OutputDirectory="$(SolutionDir)\..\bin\$(ConfigurationName)64\bin"
 			IntermediateDirectory="$(ConfigurationName)64"
 			ConfigurationType="1"
 			CharacterSet="2"
@@ -140,6 +141,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="wininet.lib ws2_32.lib "
+				OutputFile="$(OutDir)\tgit.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -171,7 +173,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)\bin"
+			OutputDirectory="$(SolutionDir)\..\bin\$(ConfigurationName)\bin"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="0"
@@ -216,6 +218,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="wininet.lib ws2_32.lib "
+				OutputFile="$(OutDir)\tgit.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -247,7 +250,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)\$(ConfigurationName)64\bin"
+			OutputDirectory="$(SolutionDir)\..\bin\\$(ConfigurationName)64\bin"
 			IntermediateDirectory="$(ConfigurationName)64"
 			ConfigurationType="1"
 			CharacterSet="0"
@@ -293,6 +296,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="wininet.lib ws2_32.lib "
+				OutputFile="$(OutDir)\tgit.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
