@@ -27,6 +27,11 @@ OPTIONS
 --short::
 	Give the output in the short-format.
 
+--porcelain::
+	Give the output in a stable, easy-to-parse format for scripts.
+	Currently this is identical to --short output, but is guaranteed
+	not to change in the future, making it safe for scripts.
+
 -u[<mode>]::
 --untracked-files[=<mode>]::
 	Show untracked files (Default: 'all').
@@ -45,8 +50,8 @@ used to change the default for when the option is not
 specified.
 
 -z::
-	Terminate entries with NUL, instead of LF.  This implies `-s`
-	(short status) output format.
+	Terminate entries with NUL, instead of LF.  This implies
+	the `--porcelain` output format if no other format is given.
 
 
 OUTPUT

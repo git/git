@@ -995,12 +995,16 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	static enum {
 		STATUS_FORMAT_LONG,
 		STATUS_FORMAT_SHORT,
+		STATUS_FORMAT_PORCELAIN,
 	} status_format = STATUS_FORMAT_LONG;
 	unsigned char sha1[20];
 	static struct option builtin_status_options[] = {
 		OPT__VERBOSE(&verbose),
 		OPT_SET_INT('s', "short", &status_format,
 			    "show status concisely", STATUS_FORMAT_SHORT),
+		OPT_SET_INT(0, "porcelain", &status_format,
+			    "show porcelain output format",
+			    STATUS_FORMAT_PORCELAIN),
 		OPT_BOOLEAN('z', "null", &null_termination,
 			    "terminate entries with NUL"),
 		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
@@ -1011,7 +1015,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	};
 
 	if (null_termination && status_format == STATUS_FORMAT_LONG)
-		status_format = STATUS_FORMAT_SHORT;
+		status_format = STATUS_FORMAT_PORCELAIN;
 
 	wt_status_prepare(&s);
 	git_config(git_status_config, &s);
@@ -1030,6 +1034,9 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	switch (status_format) {
 	case STATUS_FORMAT_SHORT:
+		short_print(&s, null_termination);
+		break;
+	case STATUS_FORMAT_PORCELAIN:
 		short_print(&s, null_termination);
 		break;
 	case STATUS_FORMAT_LONG:
