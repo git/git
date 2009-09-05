@@ -189,7 +189,8 @@ proc parseviewargs {n arglist} {
 	    "--until=*" - "--before=*" - "--max-age=*" - "--min-age=*" -
 	    "--author=*" - "--committer=*" - "--grep=*" - "-[iE]" -
 	    "--remove-empty" - "--first-parent" - "--cherry-pick" -
-	    "-S*" - "--pickaxe-all" - "--pickaxe-regex" {
+	    "-S*" - "--pickaxe-all" - "--pickaxe-regex" -
+	    "--simplify-by-decoration" {
 		# These mean that we get a subset of the commits
 		set filtered 1
 		lappend glflags $arg
@@ -289,7 +290,7 @@ proc parseviewrevs {view revs} {
 	    if {$sdm != 2} {
 		lappend ret $id
 	    } else {
-		lset ret end [lindex $ret end]...$id
+		lset ret end $id...[lindex $ret end]
 	    }
 	    lappend pos $id
 	}
@@ -1678,6 +1679,7 @@ proc readrefs {} {
     global tagids idtags headids idheads tagobjid
     global otherrefids idotherrefs mainhead mainheadid
     global selecthead selectheadid
+    global hideremotes
 
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
 	catch {unset $v}
@@ -1690,7 +1692,7 @@ proc readrefs {} {
 	if {![string match "refs/*" $ref]} continue
 	set name [string range $ref 5 end]
 	if {[string match "remotes/*" $name]} {
-	    if {![string match "*/HEAD" $name]} {
+	    if {![string match "*/HEAD" $name] && !$hideremotes} {
 		set headids($name) $id
 		lappend idheads($id) $name
 	    }
@@ -2213,7 +2215,7 @@ proc makewindow {} {
     ${NS}::label .bleft.mid.labeldiffcontext -text "      [mc "Lines of context"]: "
     pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left
     spinbox .bleft.mid.diffcontext -width 5 -font textfont \
-	-from 1 -increment 1 -to 10000000 \
+	-from 0 -increment 1 -to 10000000 \
 	-validate all -validatecommand "diffcontextvalidate %P" \
 	-textvariable diffcontextstring
     .bleft.mid.diffcontext set $diffcontext
@@ -2604,6 +2606,7 @@ proc savestuff {w} {
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
     global autoselect extdifftool perfile_attrs markbgcolor use_ttk
+    global hideremotes
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -2623,6 +2626,7 @@ proc savestuff {w} {
 	puts $f [list set wrapcomment $wrapcomment]
 	puts $f [list set autoselect $autoselect]
 	puts $f [list set showneartags $showneartags]
+	puts $f [list set hideremotes $hideremotes]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
 	puts $f [list set limitdiffs $limitdiffs]
@@ -3781,17 +3785,36 @@ proc newview {ishighlight} {
 }
 
 set known_view_options {
-    {perm    b    . {}               {mc "Remember this view"}}
-    {args    t50= + {}               {mc "Commits to include (arguments to git log):"}}
-    {all     b    * "--all"          {mc "Use all refs"}}
-    {dorder  b    . {"--date-order" "-d"}      {mc "Strictly sort by date"}}
-    {lright  b    . "--left-right"   {mc "Mark branch sides"}}
-    {since   t15  + {"--since=*" "--after=*"}  {mc "Since date:"}}
-    {until   t15  . {"--until=*" "--before=*"} {mc "Until date:"}}
-    {limit   t10  + "--max-count=*"  {mc "Max count:"}}
-    {skip    t10  . "--skip=*"       {mc "Skip:"}}
-    {first   b    . "--first-parent" {mc "Limit to first parent"}}
-    {cmd     t50= + {}               {mc "Command to generate more commits to include:"}}
+    {perm      b    .  {}               {mc "Remember this view"}}
+    {reflabel  l    +  {}               {mc "References (space separated list):"}}
+    {refs      t15  .. {}               {mc "Branches & tags:"}}
+    {allrefs   b    *. "--all"          {mc "All refs"}}
+    {branches  b    .  "--branches"     {mc "All (local) branches"}}
+    {tags      b    .  "--tags"         {mc "All tags"}}
+    {remotes   b    .  "--remotes"      {mc "All remote-tracking branches"}}
+    {commitlbl l    +  {}               {mc "Commit Info (regular expressions):"}}
+    {author    t15  .. "--author=*"     {mc "Author:"}}
+    {committer t15  .  "--committer=*"  {mc "Committer:"}}
+    {loginfo   t15  .. "--grep=*"       {mc "Commit Message:"}}
+    {allmatch  b    .. "--all-match"    {mc "Matches all Commit Info criteria"}}
+    {changes_l l    +  {}               {mc "Changes to Files:"}}
+    {pickaxe_s r0   .  {}               {mc "Fixed String"}}
+    {pickaxe_t r1   .  "--pickaxe-regex"  {mc "Regular Expression"}}
+    {pickaxe   t15  .. "-S*"            {mc "Search string:"}}
+    {datelabel l    +  {}               {mc "Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 15:27:38\"):"}}
+    {since     t15  ..  {"--since=*" "--after=*"}  {mc "Since:"}}
+    {until     t15  .   {"--until=*" "--before=*"} {mc "Until:"}}
+    {limit_lbl l    +  {}               {mc "Limit and/or skip a number of revisions (positive integer):"}}
+    {limit     t10  *. "--max-count=*"  {mc "Number to show:"}}
+    {skip      t10  .  "--skip=*"       {mc "Number to skip:"}}
+    {misc_lbl  l    +  {}               {mc "Miscellaneous options:"}}
+    {dorder    b    *. {"--date-order" "-d"}      {mc "Strictly sort by date"}}
+    {lright    b    .  "--left-right"   {mc "Mark branch sides"}}
+    {first     b    .  "--first-parent" {mc "Limit to first parent"}}
+    {smplhst   b    .  "--simplify-by-decoration"   {mc "Simple history"}}
+    {args      t50  *. {}               {mc "Additional arguments to git log:"}}
+    {allpaths  path +  {}               {mc "Enter files and directories to include, one per line:"}}
+    {cmd       t50= +  {}               {mc "Command to generate more commits to include:"}}
     }
 
 proc encode_view_opts {n} {
@@ -3803,13 +3826,19 @@ proc encode_view_opts {n} {
 	if {$patterns eq {}} continue
 	set pattern [lindex $patterns 0]
 
-	set val $newviewopts($n,[lindex $opt 0])
-
 	if {[lindex $opt 1] eq "b"} {
+	    set val $newviewopts($n,[lindex $opt 0])
 	    if {$val} {
 		lappend rargs $pattern
 	    }
+	} elseif {[regexp {^r(\d+)$} [lindex $opt 1] type value]} {
+	    regexp {^(.*_)} [lindex $opt 0] uselessvar button_id
+	    set val $newviewopts($n,$button_id)
+	    if {$val eq $value} {
+		lappend rargs $pattern
+	    }
 	} else {
+	    set val $newviewopts($n,[lindex $opt 0])
 	    set val [string trim $val]
 	    if {$val ne {}} {
 		set pfix [string range $pattern 0 end-1]
@@ -3817,6 +3846,7 @@ proc encode_view_opts {n} {
 	    }
 	}
     }
+    set rargs [concat $rargs [shellsplit $newviewopts($n,refs)]]
     return [concat $rargs [shellsplit $newviewopts($n,args)]]
 }
 
@@ -3824,14 +3854,22 @@ proc decode_view_opts {n view_args} {
     global known_view_options newviewopts
 
     foreach opt $known_view_options {
+	set id [lindex $opt 0]
 	if {[lindex $opt 1] eq "b"} {
+	    # Checkboxes
+	    set val 0
+        } elseif {[regexp {^r(\d+)$} [lindex $opt 1]]} {
+	    # Radiobuttons
+	    regexp {^(.*_)} $id uselessvar id
 	    set val 0
 	} else {
+	    # Text fields
 	    set val {}
 	}
-	set newviewopts($n,[lindex $opt 0]) $val
+	set newviewopts($n,$id) $val
     }
     set oargs [list]
+    set refargs [list]
     foreach arg $view_args {
 	if {[regexp -- {^-([0-9]+)$} $arg arg cnt]
 	    && ![info exists found(limit)]} {
@@ -3845,11 +3883,17 @@ proc decode_view_opts {n view_args} {
 	    if {[info exists found($id)]} continue
 	    foreach pattern [lindex $opt 3] {
 		if {![string match $pattern $arg]} continue
-		if {[lindex $opt 1] ne "b"} {
+		if {[lindex $opt 1] eq "b"} {
+		    # Check buttons
+		    set val 1
+		} elseif {[regexp {^r(\d+)$} [lindex $opt 1] match num]} {
+		    # Radio buttons
+		    regexp {^(.*_)} $id uselessvar id
+		    set val $num
+		} else {
+		    # Text input fields
 		    set size [string length $pattern]
 		    set val [string range $arg [expr {$size-1}] end]
-		} else {
-		    set val 1
 		}
 		set newviewopts($n,$id) $val
 		set found($id) 1
@@ -3858,8 +3902,13 @@ proc decode_view_opts {n view_args} {
 	    if {[info exists val]} break
 	}
 	if {[info exists val]} continue
-	lappend oargs $arg
+	if {[regexp {^-} $arg]} {
+	    lappend oargs $arg
+	} else {
+	    lappend refargs $arg
+	}
     }
+    set newviewopts($n,refs) [shellarglist $refargs]
     set newviewopts($n,args) [shellarglist $oargs]
 }
 
@@ -3895,16 +3944,16 @@ proc vieweditor {top n title} {
     global known_view_options NS
 
     ttk_toplevel $top
-    wm title $top $title
+    wm title $top [concat $title [mc "-- criteria for selecting revisions"]]
     make_transient $top .
 
     # View name
     ${NS}::frame $top.nfr
-    ${NS}::label $top.nl -text [mc "Name"]
+    ${NS}::label $top.nl -text [mc "View Name"]
     ${NS}::entry $top.name -width 20 -textvariable newviewname($n)
     pack $top.nfr -in $top -fill x -pady 5 -padx 3
-    pack $top.nl -in $top.nfr -side left -padx {0 30}
-    pack $top.name -in $top.nfr -side left
+    pack $top.nl -in $top.nfr -side left -padx {0 5}
+    pack $top.name -in $top.nfr -side left -padx {0 25}
 
     # View options
     set cframe $top.nfr
@@ -3923,12 +3972,26 @@ proc vieweditor {top n title} {
 	    ${NS}::frame $cframe
 	    pack $cframe -in $top -fill x -pady 3 -padx 3
 	    set cexpand [expr {$flags eq "*"}]
+        } elseif {$flags eq ".." || $flags eq "*."} {
+	    set cframe $top.fr$cnt
+	    incr cnt
+	    ${NS}::frame $cframe
+	    pack $cframe -in $top -fill x -pady 3 -padx [list 15 3]
+	    set cexpand [expr {$flags eq "*."}]
 	} else {
 	    set lxpad 5
 	}
 
-	if {$type eq "b"} {
+	if {$type eq "l"} {
+            ${NS}::label $cframe.l_$id -text $title
+            pack $cframe.l_$id -in $cframe -side left -pady [list 3 0] -anchor w
+	} elseif {$type eq "b"} {
 	    ${NS}::checkbutton $cframe.c_$id -text $title -variable newviewopts($n,$id)
+	    pack $cframe.c_$id -in $cframe -side left \
+		-padx [list $lxpad 0] -expand $cexpand -anchor w
+	} elseif {[regexp {^r(\d+)$} $type type sz]} {
+	    regexp {^(.*_)} $id uselessvar button_id
+	    ${NS}::radiobutton $cframe.c_$id -text $title -variable newviewopts($n,$button_id) -value $sz
 	    pack $cframe.c_$id -in $cframe -side left \
 		-padx [list $lxpad 0] -expand $cexpand -anchor w
 	} elseif {[regexp {^t(\d+)$} $type type sz]} {
@@ -3943,23 +4006,22 @@ proc vieweditor {top n title} {
 		-textvariable newviewopts($n,$id)
 	    pack $cframe.l_$id -in $cframe -side top -pady [list 3 0] -anchor w
 	    pack $cframe.e_$id -in $cframe -side top -fill x
+	} elseif {$type eq "path"} {
+	    ${NS}::label $top.l -text $title
+	    pack $top.l -in $top -side top -pady [list 3 0] -anchor w -padx 3
+	    text $top.t -width 40 -height 5 -background $bgcolor -font uifont
+	    if {[info exists viewfiles($n)]} {
+		foreach f $viewfiles($n) {
+		    $top.t insert end $f
+		    $top.t insert end "\n"
+		}
+		$top.t delete {end - 1c} end
+		$top.t mark set insert 0.0
+	    }
+	    pack $top.t -in $top -side top -pady [list 0 5] -fill both -expand 1 -padx 3
 	}
     }
 
-    # Path list
-    ${NS}::label $top.l \
-	-text [mc "Enter files and directories to include, one per line:"]
-    pack $top.l -in $top -side top -pady [list 7 0] -anchor w -padx 3
-    text $top.t -width 40 -height 5 -background $bgcolor -font uifont
-    if {[info exists viewfiles($n)]} {
-	foreach f $viewfiles($n) {
-	    $top.t insert end $f
-	    $top.t insert end "\n"
-	}
-	$top.t delete {end - 1c} end
-	$top.t mark set insert 0.0
-    }
-    pack $top.t -in $top -side top -pady [list 0 5] -fill both -expand 1 -padx 3
     ${NS}::frame $top.buts
     ${NS}::button $top.buts.ok -text [mc "OK"] -command [list newviewok $top $n]
     ${NS}::button $top.buts.apply -text [mc "Apply (F5)"] -command [list newviewok $top $n 1]
@@ -7393,7 +7455,7 @@ proc diffcontextchange {n1 n2 op} {
     global diffcontextstring diffcontext
 
     if {[string is integer -strict $diffcontextstring]} {
-	if {$diffcontextstring > 0} {
+	if {$diffcontextstring >= 0} {
 	    set diffcontext $diffcontextstring
 	    reselectline
 	}
@@ -7411,8 +7473,13 @@ proc getblobdiffs {ids} {
     global ignorespace
     global limitdiffs vfilelimit curview
     global diffencoding targetline diffnparents
+    global git_version
 
-    set cmd [diffcmd $ids "-p -C --cc --no-commit-id -U$diffcontext"]
+    set textconv {}
+    if {[package vcompare $git_version "1.6.1"] >= 0} {
+	set textconv "--textconv"
+    }
+    set cmd [diffcmd $ids "-p $textconv -C --cc --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
 	append cmd " -w"
     }
@@ -8015,6 +8082,11 @@ proc gotocommit {} {
 		}
 		set id [lindex $matches 0]
 	    }
+	} else {
+	    if {[catch {set id [exec git rev-parse --verify $sha1string]}]} {
+		error_popup [mc "Revision %s is not known" $sha1string]
+		return
+	    }
 	}
     }
     if {[commitinview $id $curview]} {
@@ -8024,7 +8096,7 @@ proc gotocommit {} {
     if {[regexp {^[0-9a-fA-F]{4,}$} $sha1string]} {
 	set msg [mc "SHA1 id %s is not known" $sha1string]
     } else {
-	set msg [mc "Tag/Head %s is not known" $sha1string]
+	set msg [mc "Revision %s is not in the current view" $sha1string]
     }
     error_popup $msg
 }
@@ -10514,6 +10586,7 @@ proc doprefs {} {
     global oldprefs prefstop showneartags showlocalchanges
     global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global tabstop limitdiffs autoselect extdifftool perfile_attrs
+    global hideremotes
 
     set top .gitkprefs
     set prefstop $top
@@ -10522,7 +10595,7 @@ proc doprefs {} {
 	return
     }
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-		   limitdiffs tabstop perfile_attrs} {
+		   limitdiffs tabstop perfile_attrs hideremotes} {
 	set oldprefs($v) [set $v]
     }
     ttk_toplevel $top
@@ -10552,6 +10625,9 @@ proc doprefs {} {
     ${NS}::checkbutton $top.ntag -text [mc "Display nearby tags"] \
 	-variable showneartags
     grid x $top.ntag -sticky w
+    ${NS}::checkbutton $top.hideremotes -text [mc "Hide remote refs"] \
+	-variable hideremotes
+    grid x $top.hideremotes -sticky w
     ${NS}::checkbutton $top.ldiff -text [mc "Limit diffs to listed paths"] \
 	-variable limitdiffs
     grid x $top.ldiff -sticky w
@@ -10684,7 +10760,7 @@ proc prefscan {} {
     global oldprefs prefstop
 
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-		   limitdiffs tabstop perfile_attrs} {
+		   limitdiffs tabstop perfile_attrs hideremotes} {
 	global $v
 	set $v $oldprefs($v)
     }
@@ -10698,6 +10774,7 @@ proc prefsok {} {
     global oldprefs prefstop showneartags showlocalchanges
     global fontpref mainfont textfont uifont
     global limitdiffs treediffs perfile_attrs
+    global hideremotes
 
     catch {destroy $prefstop}
     unset prefstop
@@ -10742,6 +10819,9 @@ proc prefsok {} {
     } elseif {$showneartags != $oldprefs(showneartags) ||
 	  $limitdiffs != $oldprefs(limitdiffs)} {
 	reselectline
+    }
+    if {$hideremotes != $oldprefs(hideremotes)} {
+	rereadrefs
     }
 }
 
@@ -11038,7 +11118,7 @@ proc gitattr {path attr default} {
     } else {
 	set r "unspecified"
 	if {![catch {set line [exec git check-attr $attr -- $path]}]} {
-	    regexp "(.*): encoding: (.*)" $line m f r
+	    regexp "(.*): $attr: (.*)" $line m f r
 	}
 	set path_attr_cache($attr,$path) $r
     }
@@ -11066,7 +11146,7 @@ proc cache_gitattr {attr pathlist} {
 	set newlist [lrange $newlist $lim end]
 	if {![catch {set rlist [eval exec git check-attr $attr -- $head]}]} {
 	    foreach row [split $rlist "\n"] {
-		if {[regexp "(.*): encoding: (.*)" $row m path value]} {
+		if {[regexp "(.*): $attr: (.*)" $row m path value]} {
 		    if {[string index $path 0] eq "\""} {
 			set path [encoding convertfrom [lindex $path 0]]
 		    }
@@ -11148,6 +11228,7 @@ set mingaplen 100
 set cmitmode "patch"
 set wrapcomment "none"
 set showneartags 1
+set hideremotes 0
 set maxrefs 20
 set maxlinelen 200
 set showlocalchanges 1
@@ -11295,6 +11376,7 @@ if {![info exists use_ttk]} {
     set use_ttk [llength [info commands ::ttk::style]]
 }
 set NS [expr {$use_ttk ? "ttk" : ""}]
+set git_version [join [lrange [split [lindex [exec git version] end] .] 0 2] .]
 
 set runq {}
 set history {}
