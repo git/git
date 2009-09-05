@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2009, #06; Sun, 30)
-X-master-at: f324cb50be3d88c6fb6123c85da749695a749f60
-X-next-at: 5fc6248250e68c3b723efb9b868d8fc27499065a
+Subject: What's cooking in git.git (Sep 2009, #01; Sat, 05)
+X-master-at: 79b4fde573eb5e86a8109d100ad182be1eb5fc54
+X-next-at: 85dc3ec32928a03c0f4996b00d7a74f5a8f9045e
 
-What's cooking in git.git (Aug 2009, #06; Sun, 30)
+What's cooking in git.git (Sep 2009, #01; Sat, 05)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -17,115 +17,49 @@ introduce "justifiable" changes that are not strictly backward compatible.
 
 During 1.6.5 cycle, 'next' will hold topics meant for 1.6.5 and 1.7.0.
 
+I will probably do 1.6.5-rc0 this weekend, leaving some topics still
+cooking in 'next'.
+
 --------------------------------------------------
 [Graduated to "master"]
 
-* wl/insta-mongoose (2009-08-21) 1 commit
-  (merged to 'next' on 2009-08-25 at da1d566)
- + Add support for the Mongoose web server.
+* lt/approxidate (2009-08-30) 6 commits
+  (merged to 'next' on 2009-08-30 at e016e3d)
+ + fix approxidate parsing of relative months and years
+ + tests: add date printing and parsing tests
+ + refactor test-date interface
+ + Add date formatting and parsing functions relative to a given time
+  (merged to 'next' on 2009-08-26 at 62853f9)
+ + Further 'approxidate' improvements
+ + Improve on 'approxidate'
 
-* as/maint-graph-interesting-fix (2009-08-21) 2 commits.
-  (merged to 'next' on 2009-08-25 at 9d5e215)
- + Add tests for rev-list --graph with options that simplify history
- + graph API: fix bug in graph_is_interesting()
+* mr/gitweb-snapshot (2009-08-25) 3 commits
+  (merged to 'next' on 2009-08-30 at e4edd0b)
+ + gitweb: add t9501 tests for checking HTTP status codes
+ + gitweb: split test suite into library and tests
+ + gitweb: improve snapshot error handling
 
-* jc/maint-unpack-objects-strict (2009-08-13) 1 commit.
-  (merged to 'next' on 2009-08-23 at 38eb750)
- + Fix "unpack-objects --strict"
-
-* jh/submodule-foreach (2009-08-20) 9 commits
-  (merged to 'next' on 2009-08-20 at 671bea4)
- + git clone: Add --recursive to automatically checkout (nested) submodules
- + t7407: Use 'rev-parse --short' rather than bash's substring expansion notation
-  (merged to 'next' on 2009-08-18 at f4a881d)
- + git submodule status: Add --recursive to recurse into nested submodules
- + git submodule update: Introduce --recursive to update nested submodules
- + git submodule foreach: Add --recursive to recurse into nested submodules
- + git submodule foreach: test access to submodule name as '$name'
- + Add selftest for 'git submodule foreach'
- + git submodule: Cleanup usage string and add option parsing to cmd_foreach()
- + git submodule foreach: Provide access to submodule name, as '$name'
-
-* lt/block-sha1 (2009-08-17) 4 commits
-  (merged to 'next' on 2009-08-18 at 67a1ce8)
- + remove ARM and Mozilla SHA1 implementations
- + block-sha1: guard gcc extensions with __GNUC__
- + make sure byte swapping is optimal for git
- + block-sha1: make the size member first in the context struct
-
-* np/maint-1.6.3-deepen (2009-08-24) 1 commit.
-  (merged to 'next' on 2009-08-25 at 8e383d4)
- + fix simple deepening of a repo
-
-* jk/maint-1.6.3-checkout-unborn (2009-08-24) 1 commit.
-  (merged to 'next' on 2009-08-25 at 5f29625)
- + checkout: do not imply "-f" on unborn branches
-
-* mm/reset-report (2009-08-21) 2 commits
-  (merged to 'next' on 2009-08-25 at f2a4424)
- + reset: make the reminder output consistent with "checkout"
- + Rename REFRESH_SAY_CHANGED to REFRESH_IN_PORCELAIN.
-
-* jc/shortstatus (2009-08-15) 11 commits
-  (merged to 'next' on 2009-08-15 at 7e40766)
- + git commit --dry-run -v: show diff in color when asked
- + Documentation/git-commit.txt: describe --dry-run
-  (merged to 'next' on 2009-08-12 at 53bda17)
- + wt-status: collect untracked files in a separate "collect" phase
- + Make git_status_config() file scope static to builtin-commit.c
- + wt-status: move wt_status_colors[] into wt_status structure
- + wt-status: move many global settings to wt_status structure
- + commit: --dry-run
-  (merged to 'next' on 2009-08-06 at fe8cb94)
- + status: show worktree status of conflicted paths separately
- + wt-status.c: rework the way changes to the index and work tree are summarized
- + diff-index: keep the original index intact
- + diff-index: report unmerged new entries
- (this branch is used by jc/1.7.0-status.)
+* tf/diff-whitespace-incomplete-line (2009-08-23) 2 commits.
+  (merged to 'next' on 2009-08-26 at 4fc7784)
+ + xutils: Fix xdl_recmatch() on incomplete lines
+ + xutils: Fix hashing an incomplete line with whitespaces at the end
 
 --------------------------------------------------
 [New Topics]
 
-* jc/upload-pack-hook (2009-08-28) 2 commits
- - upload-pack: feed "kind [clone|fetch]" to post-upload-pack hook
- - upload-pack: add a trigger for post-upload-pack hook
+* pk/fast-import-tars (2009-09-03) 1 commit
+ - import-tars: Allow per-tar author and commit message.
 
-I do not know if the distinction between fetching some but not all refs
-and fetching full set of refs into an empty repository is something worth
-making, so in that sense the tip commit is somewhat iffy.
-
-One reason this series makes me somewhat uneasy is that Tom, the original
-starter of the discussion went dark after sending a proposed patch.  Maybe
-he has been too busy, but I have been hoping that GitHub as a stakeholder
-has somebody who monitors the list when he is not available.
-
-Does anybody from GitHub have any input?  Is there something that needs to
-be improved to fill GitHub's needs?  Does GitHub want to stick to its own
-fork, and were all these discussions for improvements unwanted?
-
-* jk/clone-b (2009-08-26) 1 commit
-  (merged to 'next' on 2009-08-30 at 10a68d1)
- + clone: add --branch option to select a different HEAD
-
-* pk/import-dirs (2009-08-24) 1 commit
- - Add script for importing bits-and-pieces to Git.
-
-This version makes me suspect that the author might regret the choice of
-the import format that does not allow escaping of paths, nor does not
-allow leading blanks for readability without changing semantics, both of
-which make it somewhat limiting and error prone.  These issues will be
-hard to rectify without breaking the backward compatibility, for a tool
-that could otherwise turn out to be useful.
-
-As a contrib/ material, I probably shouldn't be too worried about these
-issues, but I am keeping this out of 'next' for now, just in case the
-author chooses to polish the usability of the tool for general audience.
-
-It is a different story if the submission was just throwing out a one-time
-hack in the open in the hope that some other people might find it useful,
-but without any intention of maintaining it.  But then I do not have a
-strong reason to keep this in my tree, either.  The mailing list archive
-is a more suitable storage media for such a patch.
+* jc/maint-1.6.0-blank-at-eof (2009-09-04) 9 commits.
+ - diff --color: color blank-at-eof
+ - diff --whitespace=warn/error: fix blank-at-eof check
+ - diff --whitespace=warn/error: obey blank-at-eof
+ - diff.c: the builtin_diff() deals with only two-file comparison
+ - apply --whitespace: warn blank but not necessarily empty lines at EOF
+ - apply --whitespace=warn/error: diagnose blank at EOF
+ - apply.c: split check_whitespace() into two
+ - apply --whitespace=fix: detect new blank lines at eof correctly
+ - apply --whitespace=fix: fix handling of blank lines at the eof
 
 --------------------------------------------------
 [Stalled]
@@ -147,12 +81,68 @@ is a more suitable storage media for such a patch.
 I heard the cvs-helper series depends on this one.  It seems that the
 fan-out strategy is being rethought?
 
+--------------------------------------------------
+[Cooking]
+
+* db/vcs-helper (2009-09-03) 16 commits
+ - Allow helpers to report in "list" command that the ref is unchanged
+ - Add support for "import" helper command
+ - Add a config option for remotes to specify a foreign vcs
+ - Allow programs to not depend on remotes having urls
+ - Allow fetch to modify refs
+ - Use a function to determine whether a remote is valid
+ - Use a clearer style to issue commands to remote helpers
+ - Make the "traditionally-supported" URLs a special case
+  (merged to 'next' on 2009-08-07 at f3533ba)
+ + Makefile: install hardlinks for git-remote-<scheme> supported by libcurl if possible
+ + Makefile: do not link three copies of git-remote-* programs
+ + Makefile: git-http-fetch does not need expat
+  (merged to 'next' on 2009-08-06 at 15da79d)
+ + http-fetch: Fix Makefile dependancies
+ + Add transport native helper executables to .gitignore
+  (merged to 'next' on 2009-08-05 at 33d491e)
+ + git-http-fetch: not a builtin
+ + Use an external program to implement fetching with curl
+ + Add support for external programs for handling native fetches
+ (this branch is used by jh/cvs-helper)
+
+* jh/cvs-helper (2009-08-18) 8 commits
+ - More fixes to the git-remote-cvs installation procedure
+ - Fix the Makefile-generated path to the git_remote_cvs package in git-remote-cvs
+ - Add simple selftests of git-remote-cvs functionality
+ - git-remote-cvs: Remote helper program for CVS repositories
+ - 2/2: Add Python support library for CVS remote helper
+ - 1/2: Add Python support library for CVS remote helper
+ - Basic build infrastructure for Python scripts
+ - Allow helpers to request marks for fast-import
+ (this branch uses db/vcs-helper)
+
+Builds on db/vcs-helper.  There is a re-roll planned.
+
+* pk/fast-import-dirs (2009-09-03) 1 commit
+ - Add script for importing bits-and-pieces to Git.
+
+With an updated key-value quoting rules, which I haven't carefully looked
+at.  Aren't there standard libraries to do this sort of thing without us
+having to hand-roll these logic every time, I have to wonder...
+
+* jn/gitweb-blame (2009-09-01) 5 commits
+ - gitweb: Minify gitweb.js if JSMIN is defined
+ - gitweb: Create links leading to 'blame_incremental' using JavaScript
+ - gitweb: Colorize 'blame_incremental' view during processing
+ - gitweb: Incremental blame (using JavaScript)
+ - gitweb: Add optional "time to generate page" info in footer
+
+Ajax-y blame.  The first part should be in 'next' shortly.
+
 * js/stash-dwim (2009-07-27) 1 commit.
   (merged to 'next' on 2009-08-16 at 67896c4)
  + Make 'git stash -k' a short form for 'git stash save --keep-index'
  (this branch is used by tr/reset-checkout-patch.)
 
-* tr/reset-checkout-patch (2009-08-27) 9 commits.
+* tr/reset-checkout-patch (2009-08-18) 10 commits.
+  (merged to 'next' on 2009-09-03 at d4f2ed7)
+ + stash: simplify defaulting to "save" and reject unknown options
   (merged to 'next' on 2009-08-27 at d314281)
  + Make test case number unique
   (merged to 'next' on 2009-08-18 at e465bb3)
@@ -167,47 +157,17 @@ fan-out strategy is being rethought?
  + git-apply--interactive: Refactor patch mode code
  (this branch uses js/stash-dwim.)
 
-There was a discussion on better DWIMmery for the above two topics to (1)
-forbid "git stash save --anything-with-dash" and (2) redirect with any
-option "git stash --opt" to "git stash save --opt", to keep it flexible
-and safe at the same time.  I think it is a sane thing to do, but nothing
-has happened lately.
+DWIMmery of the two series tightened for safety.  This should be ready for
+1.6.5.
 
-* db/vcs-helper (2009-08-09) 17 commits
- - Allow helpers to request marks for fast-import
- - Allow helpers to report in "list" command that the ref is unchanged
- - Add support for "import" helper command
- - transport-helper_init(): fix a memory leak in error path
- - Add a config option for remotes to specify a foreign vcs
- - Allow programs to not depend on remotes having urls
- - Allow fetch to modify refs
- - Use a function to determine whether a remote is valid
- - Use a clearer style to issue commands to remote helpers
-  (merged to 'next' on 2009-08-07 at f3533ba)
- + Makefile: install hardlinks for git-remote-<scheme> supported by libcurl if possible
- + Makefile: do not link three copies of git-remote-* programs
- + Makefile: git-http-fetch does not need expat
-  (merged to 'next' on 2009-08-06 at 15da79d)
- + http-fetch: Fix Makefile dependancies
- + Add transport native helper executables to .gitignore
-  (merged to 'next' on 2009-08-05 at 33d491e)
- + git-http-fetch: not a builtin
- + Use an external program to implement fetching with curl
- + Add support for external programs for handling native fetches
- (this branch is used by jh/cvs-helper.)
+* jc/upload-pack-hook (2009-08-28) 2 commits
+  (merged to 'next' on 2009-08-31 at f9933a5)
+ + upload-pack: feed "kind [clone|fetch]" to post-upload-pack hook
+ + upload-pack: add a trigger for post-upload-pack hook
 
-We had a few messages on what the list consensus was with this series.  My
-impression, after going back to the archive, is that there wasn't.
-
-* jn/gitweb-blame (2009-08-06) 3 commits
- - gitweb: Create links leading to 'blame_incremental' using JavaScript
- - gitweb: Incremental blame (WIP)
- - gitweb: Add optional "time to generate page" info in footer
-
-Ajax-y blame WIP
-
---------------------------------------------------
-[Cooking]
+* jk/clone-b (2009-08-26) 1 commit
+  (merged to 'next' on 2009-08-30 at 10a68d1)
+ + clone: add --branch option to select a different HEAD
 
 * je/send-email-no-subject (2009-08-05) 1 commit
   (merged to 'next' on 2009-08-30 at b6455c2)
@@ -218,25 +178,6 @@ says "yes" to the "do you really want to send this message that lacks
 subject", the message is sent) of this feature, but the feature itself
 needs its own test to verify the negative case (i.e. does it correctly
 stop if the user says "no"?)
-
-* lt/approxidate (2009-08-30) 6 commits
-  (merged to 'next' on 2009-08-30 at e016e3d)
- + fix approxidate parsing of relative months and years
- + tests: add date printing and parsing tests
- + refactor test-date interface
- + Add date formatting and parsing functions relative to a given time
-  (merged to 'next' on 2009-08-26 at 62853f9)
- + Further 'approxidate' improvements
- + Improve on 'approxidate'
-
-Fixes a few "reasonably formatted but thus-far misparsed" date strings.
-With tests by Peff, this should be ready for -rc0.
-
-* mr/gitweb-snapshot (2009-08-25) 3 commits
-  (merged to 'next' on 2009-08-30 at e4edd0b)
- + gitweb: add t9501 tests for checking HTTP status codes
- + gitweb: split test suite into library and tests
- + gitweb: improve snapshot error handling
 
 * jc/mailinfo-scissors (2009-08-26) 5 commits
   (merged to 'next' on 2009-08-30 at 5fc6248)
@@ -249,13 +190,6 @@ With tests by Peff, this should be ready for -rc0.
 I didn't pick up the patch to simplify the definition of scissors. I do
 not have strong opinion on it either way, but the list would hopefully
 decide it before too long.
-
-* tf/diff-whitespace-incomplete-line (2009-08-23) 2 commits.
-  (merged to 'next' on 2009-08-26 at 4fc7784)
- + xutils: Fix xdl_recmatch() on incomplete lines
- + xutils: Fix hashing an incomplete line with whitespaces at the end
-
-Will merge.
 
 * cc/sequencer-rebase-i (2009-08-28) 15 commits
  - rebase -i: use "git sequencer--helper --cherry-pick"
@@ -276,21 +210,7 @@ Will merge.
 
 Migrating "rebase -i" bit by bit to C.
 
-* jh/cvs-helper (2009-08-18) 7 commits
- - More fixes to the git-remote-cvs installation procedure
- - Fix the Makefile-generated path to the git_remote_cvs package in git-remote-cvs
- - Add simple selftests of git-remote-cvs functionality
- - git-remote-cvs: Remote helper program for CVS repositories
- - 2/2: Add Python support library for CVS remote helper
- - 1/2: Add Python support library for CVS remote helper
- - Basic build infrastructure for Python scripts
- (this branch uses db/vcs-helper.)
-
-Builds on db/vcs-helper (which is stalled, so this cannot move further at
-the moment).  There is a re-roll planned, so I did not pick up test fixes
-from Brandon myself.
-
-* sr/gfi-options (2009-08-27) 6 commits
+* sr/gfi-options (2009-09-02) 6 commits
  - fast-import: test the new option command
  - fast-import: add option command
  - fast-import: test the new feature command
@@ -298,8 +218,7 @@ from Brandon myself.
  - fast-import: put marks reading in it's own function
  - fast-import: put option parsing code in separate functions
 
-Re-rolled, based on an off-list discussion I was/am not aware of.
-Looked ready for 'next'.
+Re-rolled again.
 
 * nd/sparse (2009-08-20) 19 commits
  - sparse checkout: inhibit empty worktree
