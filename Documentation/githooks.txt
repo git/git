@@ -26,8 +26,11 @@ executable by default.
 
 This document describes the currently defined hooks.
 
+HOOKS
+-----
+
 applypatch-msg
---------------
+~~~~~~~~~~~~~~
 
 This hook is invoked by 'git-am' script.  It takes a single
 parameter, the name of the file that holds the proposed commit
@@ -43,7 +46,7 @@ The default 'applypatch-msg' hook, when enabled, runs the
 'commit-msg' hook, if the latter is enabled.
 
 pre-applypatch
---------------
+~~~~~~~~~~~~~~
 
 This hook is invoked by 'git-am'.  It takes no parameter, and is
 invoked after the patch is applied, but before a commit is made.
@@ -58,7 +61,7 @@ The default 'pre-applypatch' hook, when enabled, runs the
 'pre-commit' hook, if the latter is enabled.
 
 post-applypatch
----------------
+~~~~~~~~~~~~~~~
 
 This hook is invoked by 'git-am'.  It takes no parameter,
 and is invoked after the patch is applied and a commit is made.
@@ -67,7 +70,7 @@ This hook is meant primarily for notification, and cannot affect
 the outcome of 'git-am'.
 
 pre-commit
-----------
+~~~~~~~~~~
 
 This hook is invoked by 'git-commit', and can be bypassed
 with `\--no-verify` option.  It takes no parameter, and is
@@ -84,7 +87,7 @@ variable `GIT_EDITOR=:` if the command will not bring up an editor
 to modify the commit message.
 
 prepare-commit-msg
-------------------
+~~~~~~~~~~~~~~~~~~
 
 This hook is invoked by 'git-commit' right after preparing the
 default log message, and before the editor is started.
@@ -109,7 +112,7 @@ The sample `prepare-commit-msg` hook that comes with git comments
 out the `Conflicts:` part of a merge's commit message.
 
 commit-msg
-----------
+~~~~~~~~~~
 
 This hook is invoked by 'git-commit', and can be bypassed
 with `\--no-verify` option.  It takes a single parameter, the
@@ -126,7 +129,7 @@ The default 'commit-msg' hook, when enabled, detects duplicate
 "Signed-off-by" lines, and aborts the commit if one is found.
 
 post-commit
------------
+~~~~~~~~~~~
 
 This hook is invoked by 'git-commit'.  It takes no
 parameter, and is invoked after a commit is made.
@@ -135,14 +138,14 @@ This hook is meant primarily for notification, and cannot affect
 the outcome of 'git-commit'.
 
 pre-rebase
-----------
+~~~~~~~~~~
 
 This hook is called by 'git-rebase' and can be used to prevent a branch
 from getting rebased.
 
 
 post-checkout
------------
+~~~~~~~~~~~~~
 
 This hook is invoked when a 'git-checkout' is run after having updated the
 worktree.  The hook is given three parameters: the ref of the previous HEAD,
@@ -160,7 +163,7 @@ differences from the previous HEAD if different, or set working dir metadata
 properties.
 
 post-merge
------------
+~~~~~~~~~~
 
 This hook is invoked by 'git-merge', which happens when a 'git-pull'
 is done on a local repository.  The hook takes a single parameter, a status
@@ -175,7 +178,7 @@ for an example of how to do this.
 
 [[pre-receive]]
 pre-receive
------------
+~~~~~~~~~~~
 
 This hook is invoked by 'git-receive-pack' on the remote repository,
 which happens when a 'git-push' is done on a local repository.
@@ -204,7 +207,7 @@ for the user.
 
 [[update]]
 update
-------
+~~~~~~
 
 This hook is invoked by 'git-receive-pack' on the remote repository,
 which happens when a 'git-push' is done on a local repository.
@@ -247,7 +250,7 @@ unannotated tags to be pushed.
 
 [[post-receive]]
 post-receive
-------------
+~~~~~~~~~~~~
 
 This hook is invoked by 'git-receive-pack' on the remote repository,
 which happens when a 'git-push' is done on a local repository.
@@ -277,7 +280,7 @@ emails.
 
 [[post-update]]
 post-update
------------
+~~~~~~~~~~~
 
 This hook is invoked by 'git-receive-pack' on the remote repository,
 which happens when a 'git-push' is done on a local repository.
@@ -308,7 +311,7 @@ Both standard output and standard error output are forwarded to
 for the user.
 
 pre-auto-gc
------------
+~~~~~~~~~~~
 
 This hook is invoked by 'git-gc --auto'. It takes no parameter, and
 exiting with non-zero status from this script causes the 'git-gc --auto'
