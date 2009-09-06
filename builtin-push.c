@@ -160,7 +160,7 @@ static int do_push(const char *repo, int flags)
 		if (nonfastforward) {
 			printf("To prevent you from losing history, non-fast-forward updates were rejected.\n"
 			       "Merge the remote changes before pushing again.\n"
-			       "See 'non-fast forward' section of 'git push --help' for details.\n");
+			       "See the 'non-fast forward' section of 'git push --help' for details.\n");
 		}
 		errs++;
 	}
