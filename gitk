@@ -3278,6 +3278,28 @@ proc flist_hl {only} {
     set gdttype [mc "touching paths:"]
 }
 
+proc gitknewtmpdir {} {
+    global diffnum gitktmpdir gitdir
+
+    if {![info exists gitktmpdir]} {
+	set gitktmpdir [file join [file dirname $gitdir] \
+			    [format ".gitk-tmp.%s" [pid]]]
+	if {[catch {file mkdir $gitktmpdir} err]} {
+	    error_popup "[mc "Error creating temporary directory %s:" $gitktmpdir] $err"
+	    unset gitktmpdir
+	    return {}
+	}
+	set diffnum 0
+    }
+    incr diffnum
+    set diffdir [file join $gitktmpdir $diffnum]
+    if {[catch {file mkdir $diffdir} err]} {
+	error_popup "[mc "Error creating temporary directory %s:" $diffdir] $err"
+	return {}
+    }
+    return $diffdir
+}
+
 proc save_file_from_commit {filename output what} {
     global nullfile
 
@@ -3312,11 +3334,10 @@ proc external_diff_get_one_file {diffid filename diffdir} {
 }
 
 proc external_diff {} {
-    global gitktmpdir nullid nullid2
+    global nullid nullid2
     global flist_menu_file
     global diffids
-    global diffnum
-    global gitdir extdifftool
+    global extdifftool
 
     if {[llength $diffids] == 1} {
         # no reference commit given
@@ -3338,22 +3359,8 @@ proc external_diff {} {
     }
 
     # make sure that several diffs wont collide
-    if {![info exists gitktmpdir]} {
-	set gitktmpdir [file join [file dirname $gitdir] \
-			    [format ".gitk-tmp.%s" [pid]]]
-	if {[catch {file mkdir $gitktmpdir} err]} {
-	    error_popup "[mc "Error creating temporary directory %s:" $gitktmpdir] $err"
-	    unset gitktmpdir
-	    return
-	}
-	set diffnum 0
-    }
-    incr diffnum
-    set diffdir [file join $gitktmpdir $diffnum]
-    if {[catch {file mkdir $diffdir} err]} {
-	error_popup "[mc "Error creating temporary directory %s:" $diffdir] $err"
-	return
-    }
+    set diffdir [gitknewtmpdir]
+    if {$diffdir eq {}} return
 
     # gather files to diff
     set difffromfile [external_diff_get_one_file $diffidfrom $flist_menu_file $diffdir]
@@ -7573,7 +7580,7 @@ proc getblobdiffline {bdf ids} {
     $ctext conf -state normal
     while {[incr nr] <= 1000 && [gets $bdf line] >= 0} {
 	if {$ids != $diffids || $bdf != $blobdifffd($ids)} {
-	    close $bdf
+	    catch {close $bdf}
 	    return 0
 	}
 	if {![string compare -length 5 "diff " $line]} {
@@ -7726,7 +7733,7 @@ proc getblobdiffline {bdf ids} {
     maybe_scroll_ctext [eof $bdf]
     $ctext conf -state disabled
     if {[eof $bdf]} {
-	close $bdf
+	catch {close $bdf}
 	return 0
     }
     return [expr {$nr >= 1000? 2: 1}]
@@ -8448,8 +8455,11 @@ proc do_cmp_commits {a b} {
 		appendshortlink $a [mc "Commit "] "  $heada\n"
 		appendshortlink $b [mc " differs from\n       "] \
 		    "  $headb\n"
-		$ctext insert end [mc "- stopping\n"]
-		break
+		$ctext insert end [mc "Diff of commits:\n\n"]
+		$ctext conf -state disabled
+		update
+		diffcommits $a $b
+		return
 	    }
 	}
 	if {$skipa} {
@@ -8473,6 +8483,31 @@ proc do_cmp_commits {a b} {
 	}
     }
     $ctext conf -state disabled
+}
+
+proc diffcommits {a b} {
+    global diffcontext diffids blobdifffd diffinhdr
+
+    set tmpdir [gitknewtmpdir]
+    set fna [file join $tmpdir "commit-[string range $a 0 7]"]
+    set fnb [file join $tmpdir "commit-[string range $b 0 7]"]
+    if {[catch {
+	exec git diff-tree -p --pretty $a >$fna
+	exec git diff-tree -p --pretty $b >$fnb
+    } err]} {
+	error_popup [mc "Error writing commit to file: %s" $err]
+	return
+    }
+    if {[catch {
+	set fd [open "| diff -U$diffcontext $fna $fnb" r]
+    } err]} {
+	error_popup [mc "Error diffing commits: %s" $err]
+	return
+    }
+    set diffids [list commits $a $b]
+    set blobdifffd($diffids) $fd
+    set diffinhdr 0
+    filerun $fd [list getblobdiffline $fd $diffids]
 }
 
 proc diffvssel {dirn} {
