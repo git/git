@@ -32,6 +32,7 @@ static int no_progress, daemon_mode;
 static int shallow_nr;
 static struct object_array have_obj;
 static struct object_array want_obj;
+static struct object_array extra_edge_obj;
 static unsigned int timeout;
 /* 0 for no sideband,
  * otherwise maximum packet size (up to 65520 bytes).
@@ -135,6 +136,10 @@ static int do_rev_list(int fd, void *create_full_pack)
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
+	if (use_thin_pack)
+		for (i = 0; i < extra_edge_obj.nr; i++)
+			fprintf(pack_pipe, "-%s\n", sha1_to_hex(
+					extra_edge_obj.objects[i].item->sha1));
 	traverse_commit_list(&revs, show_commit, show_object, NULL);
 	fflush(pack_pipe);
 	fclose(pack_pipe);
@@ -492,7 +497,6 @@ static void receive_needs(void)
 		if (!prefixcmp(line, "shallow ")) {
 			unsigned char sha1[20];
 			struct object *object;
-			use_thin_pack = 0;
 			if (get_sha1(line + 8, sha1))
 				die("invalid shallow line: %s", line);
 			object = parse_object(sha1);
@@ -504,7 +508,6 @@ static void receive_needs(void)
 		}
 		if (!prefixcmp(line, "deepen ")) {
 			char *end;
-			use_thin_pack = 0;
 			depth = strtol(line + 7, &end, 0);
 			if (end == line + 7 || depth <= 0)
 				die("Invalid deepen: %s", line);
@@ -587,6 +590,7 @@ static void receive_needs(void)
 							NULL, &want_obj);
 					parents = parents->next;
 				}
+				add_object_array(object, NULL, &extra_edge_obj);
 			}
 			/* make sure commit traversal conforms to client */
 			register_shallow(object->sha1);
