@@ -127,6 +127,13 @@ objects from the source repository into a pack in the cloned repository.
 	Instead of using the remote name 'origin' to keep track
 	of the upstream repository, use <name>.
 
+--branch <name>::
+-b <name>::
+	Instead of pointing the newly created HEAD to the branch pointed
+	to by the cloned repositoroy's HEAD, point to <name> branch
+	instead. In a non-bare repository, this is the branch that will
+	be checked out.
+
 --upload-pack <upload-pack>::
 -u <upload-pack>::
 	When given, and the repository to clone from is accessed
