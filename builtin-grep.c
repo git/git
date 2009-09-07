@@ -448,6 +448,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 		hit = external_grep(opt, paths, cached);
 		if (hit >= 0)
 			return hit;
+		hit = 0;
 	}
 #endif
 
