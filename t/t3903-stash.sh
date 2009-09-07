@@ -200,4 +200,23 @@ test_expect_success 'drop -q is quiet' '
 	test ! -s output.out
 '
 
+test_expect_success 'stash -k' '
+	echo bar3 > file &&
+	echo bar4 > file2 &&
+	git add file2 &&
+	git stash -k &&
+	test bar,bar4 = $(cat file),$(cat file2)
+'
+
+test_expect_success 'stash --invalid-option' '
+	echo bar5 > file &&
+	echo bar6 > file2 &&
+	git add file2 &&
+	test_must_fail git stash --invalid-option &&
+	test_must_fail git stash save --invalid-option &&
+	test bar5,bar6 = $(cat file),$(cat file2) &&
+	git stash -- -message-starting-with-dash &&
+	test bar,bar2 = $(cat file),$(cat file2)
+'
+
 test_done

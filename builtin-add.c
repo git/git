@@ -131,10 +131,37 @@ static const char **validate_pathspec(int argc, const char **argv, const char *p
 	return pathspec;
 }
 
+int run_add_interactive(const char *revision, const char *patch_mode,
+			const char **pathspec)
+{
+	int status, ac, pc = 0;
+	const char **args;
+
+	if (pathspec)
+		while (pathspec[pc])
+			pc++;
+
+	args = xcalloc(sizeof(const char *), (pc + 5));
+	ac = 0;
+	args[ac++] = "add--interactive";
+	if (patch_mode)
+		args[ac++] = patch_mode;
+	if (revision)
+		args[ac++] = revision;
+	args[ac++] = "--";
+	if (pc) {
+		memcpy(&(args[ac]), pathspec, sizeof(const char *) * pc);
+		ac += pc;
+	}
+	args[ac] = NULL;
+
+	status = run_command_v_opt(args, RUN_GIT_CMD);
+	free(args);
+	return status;
+}
+
 int interactive_add(int argc, const char **argv, const char *prefix)
 {
-	int status, ac;
-	const char **args;
 	const char **pathspec = NULL;
 
 	if (argc) {
@@ -143,21 +170,9 @@ int interactive_add(int argc, const char **argv, const char *prefix)
 			return -1;
 	}
 
-	args = xcalloc(sizeof(const char *), (argc + 4));
-	ac = 0;
-	args[ac++] = "add--interactive";
-	if (patch_interactive)
-		args[ac++] = "--patch";
-	args[ac++] = "--";
-	if (argc) {
-		memcpy(&(args[ac]), pathspec, sizeof(const char *) * argc);
-		ac += argc;
-	}
-	args[ac] = NULL;
-
-	status = run_command_v_opt(args, RUN_GIT_CMD);
-	free(args);
-	return status;
+	return run_add_interactive(NULL,
+				   patch_interactive ? "--patch" : NULL,
+				   pathspec);
 }
 
 static int edit_patch(int argc, const char **argv, const char *prefix)

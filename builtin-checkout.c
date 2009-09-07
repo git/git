@@ -566,6 +566,13 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 	return git_xmerge_config(var, value, cb);
 }
 
+static int interactive_checkout(const char *revision, const char **pathspec,
+				struct checkout_opts *opts)
+{
+	return run_add_interactive(revision, "--patch=checkout", pathspec);
+}
+
+
 int cmd_checkout(int argc, const char **argv, const char *prefix)
 {
 	struct checkout_opts opts;
@@ -574,6 +581,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	struct branch_info new;
 	struct tree *source_tree = NULL;
 	char *conflict_style = NULL;
+	int patch_mode = 0;
 	struct option options[] = {
 		OPT__QUIET(&opts.quiet),
 		OPT_STRING('b', NULL, &opts.new_branch, "new branch", "branch"),
@@ -588,6 +596,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('m', "merge", &opts.merge, "merge"),
 		OPT_STRING(0, "conflict", &conflict_style, "style",
 			   "conflict style (merge or diff3)"),
+		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
 		OPT_END(),
 	};
 	int has_dash_dash;
@@ -601,6 +610,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
+
+	if (patch_mode && (opts.track > 0 || opts.new_branch
+			   || opts.new_branch_log || opts.merge || opts.force))
+		die ("--patch is incompatible with all other options");
 
 	/* --track without -b should DWIM */
 	if (0 < opts.track && !opts.new_branch) {
@@ -708,6 +721,9 @@ no_reference:
 		if (!pathspec)
 			die("invalid path specification");
 
+		if (patch_mode)
+			return interactive_checkout(new.name, pathspec, &opts);
+
 		/* Checkout paths */
 		if (opts.new_branch) {
 			if (argc == 1) {
@@ -722,6 +738,9 @@ no_reference:
 
 		return checkout_paths(source_tree, pathspec, &opts);
 	}
+
+	if (patch_mode)
+		return interactive_checkout(new.name, NULL, &opts);
 
 	if (opts.new_branch) {
 		struct strbuf buf = STRBUF_INIT;
