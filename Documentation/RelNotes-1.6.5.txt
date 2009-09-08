@@ -1,8 +1,9 @@
 GIT v1.6.5 Release Notes
 ========================
 
-In git 1.7.0, which is planned to be the release after 1.6.5, "git push"
-into a branch that is currently checked out will be refused by default.
+In git 1.7.0, which was planned to be the release after 1.6.5, "git
+push" into a branch that is currently checked out will be refused by
+default.
 
 You can choose what should happen upon such a push by setting the
 configuration variable receive.denyCurrentBranch in the receiving
@@ -44,7 +45,13 @@ Updates since v1.6.4
    outperforms the default fallback implementation we borrowed from
    Mozzilla.
 
+ * Unnecessary inefficiency in deepening of a shallow repository has
+   been removed.
+
 (usability, bells and whistles)
+
+ * Human writable date format to various options, e.g. --since=yesterday,
+   master@{2000.09.17}, are taught to infer some omitted input properly.
 
  * refs/replace/ hierarchy is designed to be usable as a replacement
    of the "grafts" mechanism, with the added advantage that it can be
@@ -54,10 +61,23 @@ Updates since v1.6.4
 
  * "git am" handles input e-mail files that has CRLF line endings sensibly.
 
+ * "git am" learned "--scissors" option to allow you to discard early part
+   of an incoming e-mail.
+
+ * "git checkout", "git reset" and "git stash" learned to pick and
+   choose to use selected changes you made, similar to "git add -p".
+
+ * "git clone" learned a "-b" option to pick a HEAD to check out
+   different from the remote's default branch.
+
  * "git commit --dry-run $args" is a new recommended way to ask "what would
    happen if I try to commit with these arguments."
 
- * "git cvsimport" now supports password-protected pserver access.
+ * "git commit --dry-run" and "git status" shows conflicted paths in a
+   separate section to make them easier to spot during a merge.
+
+ * "git cvsimport" now supports password-protected pserver access even
+   when the password is not taken from ~/.cvspass file.
 
  * "git fast-export" learned --no-data option that can be useful when
    reordering commits and trees without touching the contents of
@@ -76,8 +96,6 @@ Updates since v1.6.4
  * informational output from "git reset" that lists the locally modified
    paths is made consistent with that of "git checkout $another_branch".
 
- * "git status" gives more descriptive output for unmerged paths.
-
  * "git submodule" learned to give submodule name to scripts run with
    "foreach" subcommand.
 
@@ -86,6 +104,9 @@ Updates since v1.6.4
  * "git submodule summary" learned --files option to compare the work
    tree vs the commit bound at submodule path, instead of comparing
    the index.
+
+ * "git upload-pack", which is the server side support for "git clone" and
+   "git fetch", can call a new post-upload-pack hook for statistics purposes.
 
 (developers)
 
@@ -104,6 +125,6 @@ Fixes since v1.6.4
 
 --
 exec >/var/tmp/1
-O=v1.6.4.1-266-g235db15
+O=v1.6.4.2-298-gdf01e7c
 echo O=$(git describe master)
 git shortlog --no-merges $O..master --not maint
