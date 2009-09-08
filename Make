@@ -26,7 +26,7 @@ LANG=C
 old_style_def_fix=b79d18c92d9f4841a6a1a29b7b2373a8ff9871e1
 
 : ${O=-O2}
-Wall='-Wall -Wdeclaration-after-statement' tests=
+Wall='-Wall -Wdeclaration-after-statement' tests= jobs=
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
@@ -38,7 +38,11 @@ do
 			o=-Wold-style-definition ;;
 		esac
 		O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast"
+		# -Wvla
 		# O="$O -fwrapv -fno-strict-overflow"
+		;;
+	-j*)
+		jobs=$1
 		;;
 	-loose | --loose)
 		Wall=
@@ -97,7 +101,7 @@ sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 	$GIT describe --abbrev=4 HEAD | sed -e 's/-/./g' >version
 }
 
-d="$d ASCIIDOC_NO_ROFF=YesPlease ASCIIDOC8=YesPlease"
+d="$d ASCIIDOC_NO_ROFF=YesPlease ASCIIDOC8=YesPlease BLK_SHA1=YesPlease"
 
 # Platform hack
 if test -z "${make:+set}" && {
@@ -123,6 +127,7 @@ ${make-make} $d \
      ETC_GITCONFIG=$prefix/etc/gitconfig \
      ${OK_TO_USE_CFLAGS+"CFLAGS=$CFLAGS"} \
      ${tests:+"T=$tests"} \
+     $jobs \
      "$@"
 status=$?
 rm -f version
