@@ -60,6 +60,15 @@ test_expect_success 'modified submodule(forward)' "
 EOF
 "
 
+test_expect_success 'modified submodule(forward), --files' "
+	git submodule summary --files >actual &&
+	diff actual - <<-EOF
+* sm1 $head1...$head2 (1):
+  > Add foo3
+
+EOF
+"
+
 commit_file sm1 &&
 cd sm1 &&
 git reset --hard HEAD~2 >/dev/null &&
@@ -114,6 +123,15 @@ test_expect_success 'typechanged submodule(submodule->blob), --cached' "
     test_cmp actual - <<-EOF
 * sm1 $head4(submodule)->$head5(blob) (3):
   < Add foo5
+
+EOF
+"
+
+test_expect_success 'typechanged submodule(submodule->blob), --files' "
+    git submodule summary --files >actual &&
+    diff actual - <<-EOF
+* sm1 $head5(blob)->$head4(submodule) (3):
+  > Add foo5
 
 EOF
 "
@@ -207,6 +225,10 @@ test_expect_success '--for-status' "
 #   > Add foo9
 #
 EOF
+"
+
+test_expect_success 'fail when using --files together with --cached' "
+    test_must_fail git submodule summary --files --cached
 "
 
 test_done

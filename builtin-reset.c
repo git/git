@@ -108,7 +108,8 @@ static int update_index_refresh(int fd, struct lock_file *index_lock, int flags)
 	if (read_cache() < 0)
 		return error("Could not read index");
 
-	result = refresh_cache(flags) ? 1 : 0;
+	result = refresh_index(&the_index, (flags), NULL, NULL,
+			       "Unstaged changes after reset:") ? 1 : 0;
 	if (write_cache(fd, active_cache, active_nr) ||
 			commit_locked_index(index_lock))
 		return error ("Could not refresh index");
@@ -140,6 +141,17 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 		} else
 			remove_file_from_cache(one->path);
 	}
+}
+
+static int interactive_reset(const char *revision, const char **argv,
+			     const char *prefix)
+{
+	const char **pathspec = NULL;
+
+	if (*argv)
+		pathspec = get_pathspec(prefix, argv);
+
+	return run_add_interactive(revision, "--patch=reset", pathspec);
 }
 
 static int read_from_tree(const char *prefix, const char **argv,
@@ -183,6 +195,7 @@ static void prepend_reflog_action(const char *action, char *buf, size_t size)
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
 	int i = 0, reset_type = NONE, update_ref_status = 0, quiet = 0;
+	int patch_mode = 0;
 	const char *rev = "HEAD";
 	unsigned char sha1[20], *orig = NULL, sha1_orig[20],
 				*old_orig = NULL, sha1_old_orig[20];
@@ -198,6 +211,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				"reset HEAD, index and working tree", MERGE),
 		OPT_BOOLEAN('q', NULL, &quiet,
 				"disable showing new HEAD in hard reset and progress message"),
+		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
 		OPT_END()
 	};
 
@@ -251,6 +265,12 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die("Could not parse object '%s'.", rev);
 	hashcpy(sha1, commit->object.sha1);
 
+	if (patch_mode) {
+		if (reset_type != NONE)
+			die("--patch is incompatible with --{hard,mixed,soft}");
+		return interactive_reset(rev, argv + i, prefix);
+	}
+
 	/* git reset tree [--] paths... can be used to
 	 * load chosen paths from the tree into the index without
 	 * affecting the working tree nor HEAD. */
@@ -261,7 +281,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			die("Cannot do %s reset with paths.",
 					reset_type_names[reset_type]);
 		return read_from_tree(prefix, argv + i, sha1,
-				quiet ? REFRESH_QUIET : REFRESH_SAY_CHANGED);
+				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 	}
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
@@ -302,7 +322,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		break;
 	case MIXED: /* Report what has not been updated. */
 		update_index_refresh(0, NULL,
-				quiet ? REFRESH_QUIET : REFRESH_SAY_CHANGED);
+				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 		break;
 	}
 

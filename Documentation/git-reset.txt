@@ -10,6 +10,7 @@ SYNOPSIS
 [verse]
 'git reset' [--mixed | --soft | --hard | --merge] [-q] [<commit>]
 'git reset' [-q] [<commit>] [--] <paths>...
+'git reset' --patch [<commit>] [--] [<paths>...]
 
 DESCRIPTION
 -----------
@@ -23,8 +24,9 @@ the undo in the history.
 If you want to undo a commit other than the latest on a branch,
 linkgit:git-revert[1] is your friend.
 
-The second form with 'paths' is used to revert selected paths in
-the index from a given commit, without moving HEAD.
+The second and third forms with 'paths' and/or --patch are used to
+revert selected paths in the index from a given commit, without moving
+HEAD.
 
 
 OPTIONS
@@ -49,6 +51,15 @@ OPTIONS
 	Resets the index to match the tree recorded by the named commit,
 	and updates the files that are different between the named commit
 	and the current commit in the working tree.
+
+-p::
+--patch::
+	Interactively select hunks in the difference between the index
+	and <commit> (defaults to HEAD).  The chosen hunks are applied
+	in reverse to the index.
++
+This means that `git reset -p` is the opposite of `git add -p` (see
+linkgit:git-add[1]).
 
 -q::
 	Be quiet, only report errors.

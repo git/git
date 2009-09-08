@@ -1,15 +1,17 @@
 /*
- * Based on the Mozilla SHA1 (see mozilla-sha1/sha1.c),
- * optimized to do word accesses rather than byte accesses,
+ * SHA1 routine optimized to do word accesses rather than byte accesses,
  * and to avoid unnecessary copies into the context array.
+ *
+ * This was initially based on the Mozilla SHA1 implementation, although
+ * none of the original Mozilla code remains.
  */
 
-#include <string.h>
-#include <arpa/inet.h>
+/* this is only to get definitions for memcpy(), ntohl() and htonl() */
+#include "../git-compat-util.h"
 
 #include "sha1.h"
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
 /*
  * Force usage of rol or ror by selecting the one with the smaller constant.
@@ -54,7 +56,7 @@
 
 #if defined(__i386__) || defined(__x86_64__)
   #define setW(x, val) (*(volatile unsigned int *)&W(x) = (val))
-#elif defined(__arm__)
+#elif defined(__GNUC__) && defined(__arm__)
   #define setW(x, val) do { W(x) = (val); __asm__("":::"memory"); } while (0)
 #else
   #define setW(x, val) (W(x) = (val))

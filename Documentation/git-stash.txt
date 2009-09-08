@@ -13,7 +13,7 @@ SYNOPSIS
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
-'git stash' [save [--keep-index] [-q|--quiet] [<message>]]
+'git stash' [save [--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
 'git stash' clear
 'git stash' create
 
@@ -42,15 +42,27 @@ is also possible).
 OPTIONS
 -------
 
-save [--keep-index] [-q|--quiet] [<message>]::
+save [--patch] [--[no-]keep-index] [-q|--quiet] [<message>]::
 
 	Save your local modifications to a new 'stash', and run `git reset
-	--hard` to revert them.  This is the default action when no
-	subcommand is given. The <message> part is optional and gives
-	the description along with the stashed state.
+	--hard` to revert them.  The <message> part is optional and gives
+	the description along with the stashed state.  For quickly making
+	a snapshot, you can omit _both_ "save" and <message>, but giving
+	only <message> does not trigger this action to prevent a misspelled
+	subcommand from making an unwanted stash.
 +
 If the `--keep-index` option is used, all changes already added to the
 index are left intact.
++
+With `--patch`, you can interactively select hunks from in the diff
+between HEAD and the working tree to be stashed.  The stash entry is
+constructed such that its index state is the same as the index state
+of your repository, and its worktree contains only the changes you
+selected interactively.  The selected changes are then rolled back
+from your worktree.
++
+The `--patch` option implies `--keep-index`.  You can use
+`--no-keep-index` to override this.
 
 list [<options>]::
 

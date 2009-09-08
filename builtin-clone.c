@@ -38,9 +38,10 @@ static const char * const builtin_clone_usage[] = {
 };
 
 static int option_quiet, option_no_checkout, option_bare, option_mirror;
-static int option_local, option_no_hardlinks, option_shared;
+static int option_local, option_no_hardlinks, option_shared, option_recursive;
 static char *option_template, *option_reference, *option_depth;
 static char *option_origin = NULL;
+static char *option_branch = NULL;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbose;
 
@@ -59,18 +60,26 @@ static struct option builtin_clone_options[] = {
 		    "don't use local hardlinks, always copy"),
 	OPT_BOOLEAN('s', "shared", &option_shared,
 		    "setup as shared repository"),
+	OPT_BOOLEAN(0, "recursive", &option_recursive,
+		    "setup as shared repository"),
 	OPT_STRING(0, "template", &option_template, "path",
 		   "path the template repository"),
 	OPT_STRING(0, "reference", &option_reference, "repo",
 		   "reference repository"),
 	OPT_STRING('o', "origin", &option_origin, "branch",
 		   "use <branch> instead of 'origin' to track upstream"),
+	OPT_STRING('b', "branch", &option_branch, "branch",
+		   "checkout <branch> instead of the remote's HEAD"),
 	OPT_STRING('u', "upload-pack", &option_upload_pack, "path",
 		   "path to git-upload-pack on the remote"),
 	OPT_STRING(0, "depth", &option_depth, "depth",
 		    "create a shallow clone of that depth"),
 
 	OPT_END()
+};
+
+static const char *argv_submodule[] = {
+	"submodule", "update", "--init", "--recursive", NULL
 };
 
 static char *get_repo_path(const char *repo, int *is_bundle)
@@ -347,7 +356,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	const char *repo_name, *repo, *work_tree, *git_dir;
 	char *path, *dir;
 	int dest_exists;
-	const struct ref *refs, *head_points_at, *remote_head, *mapped_refs;
+	const struct ref *refs, *remote_head, *mapped_refs;
+	const struct ref *remote_head_points_at;
+	const struct ref *our_head_points_at;
 	struct strbuf key = STRBUF_INIT, value = STRBUF_INIT;
 	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
@@ -509,7 +520,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 					     option_upload_pack);
 
 		refs = transport_get_remote_refs(transport);
-		if(refs)
+		if (refs)
 			transport_fetch_refs(transport, refs);
 	}
 
@@ -519,11 +530,31 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		mapped_refs = write_remote_refs(refs, refspec, reflog_msg.buf);
 
 		remote_head = find_ref_by_name(refs, "HEAD");
-		head_points_at = guess_remote_head(remote_head, mapped_refs, 0);
+		remote_head_points_at =
+			guess_remote_head(remote_head, mapped_refs, 0);
+
+		if (option_branch) {
+			struct strbuf head = STRBUF_INIT;
+			strbuf_addstr(&head, src_ref_prefix);
+			strbuf_addstr(&head, option_branch);
+			our_head_points_at =
+				find_ref_by_name(mapped_refs, head.buf);
+			strbuf_release(&head);
+
+			if (!our_head_points_at) {
+				warning("Remote branch %s not found in "
+					"upstream %s, using HEAD instead",
+					option_branch, option_origin);
+				our_head_points_at = remote_head_points_at;
+			}
+		}
+		else
+			our_head_points_at = remote_head_points_at;
 	}
 	else {
 		warning("You appear to have cloned an empty repository.");
-		head_points_at = NULL;
+		our_head_points_at = NULL;
+		remote_head_points_at = NULL;
 		remote_head = NULL;
 		option_no_checkout = 1;
 		if (!option_bare)
@@ -531,41 +562,35 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 					      "refs/heads/master");
 	}
 
-	if (head_points_at) {
+	if (remote_head_points_at && !option_bare) {
+		struct strbuf head_ref = STRBUF_INIT;
+		strbuf_addstr(&head_ref, branch_top.buf);
+		strbuf_addstr(&head_ref, "HEAD");
+		create_symref(head_ref.buf,
+			      remote_head_points_at->peer_ref->name,
+			      reflog_msg.buf);
+	}
+
+	if (our_head_points_at) {
 		/* Local default branch link */
-		create_symref("HEAD", head_points_at->name, NULL);
-
+		create_symref("HEAD", our_head_points_at->name, NULL);
 		if (!option_bare) {
-			struct strbuf head_ref = STRBUF_INIT;
-			const char *head = head_points_at->name;
-
-			if (!prefixcmp(head, "refs/heads/"))
-				head += 11;
-
-			/* Set up the initial local branch */
-
-			/* Local branch initial value */
+			const char *head = skip_prefix(our_head_points_at->name,
+						       "refs/heads/");
 			update_ref(reflog_msg.buf, "HEAD",
-				   head_points_at->old_sha1,
+				   our_head_points_at->old_sha1,
 				   NULL, 0, DIE_ON_ERR);
-
-			strbuf_addstr(&head_ref, branch_top.buf);
-			strbuf_addstr(&head_ref, "HEAD");
-
-			/* Remote branch link */
-			create_symref(head_ref.buf,
-				      head_points_at->peer_ref->name,
-				      reflog_msg.buf);
-
 			install_branch_config(0, head, option_origin,
-					      head_points_at->name);
+					      our_head_points_at->name);
 		}
 	} else if (remote_head) {
 		/* Source had detached HEAD pointing somewhere. */
-		if (!option_bare)
+		if (!option_bare) {
 			update_ref(reflog_msg.buf, "HEAD",
 				   remote_head->old_sha1,
 				   NULL, REF_NODEREF, DIE_ON_ERR);
+			our_head_points_at = remote_head;
+		}
 	} else {
 		/* Nothing to checkout out */
 		if (!option_no_checkout)
@@ -574,8 +599,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		option_no_checkout = 1;
 	}
 
-	if (transport)
+	if (transport) {
 		transport_unlock_pack(transport);
+		transport_disconnect(transport);
+	}
 
 	if (!option_no_checkout) {
 		struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
@@ -597,7 +624,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		opts.src_index = &the_index;
 		opts.dst_index = &the_index;
 
-		tree = parse_tree_indirect(remote_head->old_sha1);
+		tree = parse_tree_indirect(our_head_points_at->old_sha1);
 		parse_tree(tree);
 		init_tree_desc(&t, tree->buffer, tree->size);
 		unpack_trees(1, &t, &opts);
@@ -608,6 +635,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 		err |= run_hook(NULL, "post-checkout", sha1_to_hex(null_sha1),
 				sha1_to_hex(remote_head->old_sha1), "1", NULL);
+
+		if (!err && option_recursive)
+			err = run_command_v_opt(argv_submodule, RUN_GIT_CMD);
 	}
 
 	strbuf_release(&reflog_msg);

@@ -385,7 +385,7 @@ static int get_head_names(const struct ref *remote_refs, struct ref_states *stat
 	get_fetch_map(remote_refs, &refspec, &fetch_map_tail, 0);
 	matches = guess_remote_head(find_ref_by_name(remote_refs, "HEAD"),
 				    fetch_map, 1);
-	for(ref = matches; ref; ref = ref->next)
+	for (ref = matches; ref; ref = ref->next)
 		string_list_append(abbrev_branch(ref->name), &states->heads);
 
 	free_refs(fetch_map);
@@ -484,7 +484,7 @@ static int read_remote_branches(const char *refname,
 	const char *symref;
 
 	strbuf_addf(&buf, "refs/remotes/%s", rename->old);
-	if(!prefixcmp(refname, buf.buf)) {
+	if (!prefixcmp(refname, buf.buf)) {
 		item = string_list_append(xstrdup(refname), rename->remote_branches);
 		symref = resolve_ref(refname, orig_sha1, 1, &flag);
 		if (flag & REF_ISSYMREF)

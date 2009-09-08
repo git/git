@@ -55,16 +55,15 @@ static inline struct llist_item *llist_item_get(void)
 	} else {
 		int i = 1;
 		new = xmalloc(sizeof(struct llist_item) * BLKSIZE);
-		for(;i < BLKSIZE; i++) {
+		for (; i < BLKSIZE; i++)
 			llist_item_put(&new[i]);
-		}
 	}
 	return new;
 }
 
 static void llist_free(struct llist *list)
 {
-	while((list->back = list->front)) {
+	while ((list->back = list->front)) {
 		list->front = list->front->next;
 		llist_item_put(list->back);
 	}
@@ -146,7 +145,7 @@ static inline struct llist_item *llist_insert_sorted_unique(struct llist *list,
 		if (cmp > 0) { /* we insert before this entry */
 			return llist_insert(list, prev, sha1);
 		}
-		if(!cmp) { /* already exists */
+		if (!cmp) { /* already exists */
 			return l;
 		}
 		prev = l;
@@ -168,7 +167,7 @@ redo_from_start:
 		int cmp = hashcmp(l->sha1, sha1);
 		if (cmp > 0) /* not in list, since sorted */
 			return prev;
-		if(!cmp) { /* found */
+		if (!cmp) { /* found */
 			if (prev == NULL) {
 				if (hint != NULL && hint != list->front) {
 					/* we don't know the previous element */
@@ -218,7 +217,7 @@ static inline struct pack_list * pack_list_insert(struct pack_list **pl,
 static inline size_t pack_list_size(struct pack_list *pl)
 {
 	size_t ret = 0;
-	while(pl) {
+	while (pl) {
 		ret++;
 		pl = pl->next;
 	}
@@ -396,7 +395,7 @@ static size_t get_pack_redundancy(struct pack_list *pl)
 		return 0;
 
 	while ((subset = pl->next)) {
-		while(subset) {
+		while (subset) {
 			ret += sizeof_union(pl->pack, subset->pack);
 			subset = subset->next;
 		}
@@ -427,7 +426,7 @@ static void minimize(struct pack_list **min)
 
 	pl = local_packs;
 	while (pl) {
-		if(pl->unique_objects->size)
+		if (pl->unique_objects->size)
 			pack_list_insert(&unique, pl);
 		else
 			pack_list_insert(&non_unique, pl);
@@ -479,7 +478,7 @@ static void minimize(struct pack_list **min)
 	*min = min_perm;
 	/* add the unique packs to the list */
 	pl = unique;
-	while(pl) {
+	while (pl) {
 		pack_list_insert(min, pl);
 		pl = pl->next;
 	}
@@ -516,7 +515,7 @@ static void cmp_local_packs(void)
 	struct pack_list *subset, *pl = local_packs;
 
 	while ((subset = pl)) {
-		while((subset = subset->next))
+		while ((subset = subset->next))
 			cmp_two_packs(pl, subset);
 		pl = pl->next;
 	}
@@ -608,23 +607,23 @@ int main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if(!strcmp(arg, "--")) {
+		if (!strcmp(arg, "--")) {
 			i++;
 			break;
 		}
-		if(!strcmp(arg, "--all")) {
+		if (!strcmp(arg, "--all")) {
 			load_all_packs = 1;
 			continue;
 		}
-		if(!strcmp(arg, "--verbose")) {
+		if (!strcmp(arg, "--verbose")) {
 			verbose = 1;
 			continue;
 		}
-		if(!strcmp(arg, "--alt-odb")) {
+		if (!strcmp(arg, "--alt-odb")) {
 			alt_odb = 1;
 			continue;
 		}
-		if(*arg == '-')
+		if (*arg == '-')
 			usage(pack_redundant_usage);
 		else
 			break;

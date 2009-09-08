@@ -76,6 +76,7 @@ OPTIONS
 	based sha1 expressions such as "<branchname>@\{yesterday}".
 
 -f::
+--force::
 	Reset <branchname> to <startpoint> if <branchname> exists
 	already. Without `-f` 'git-branch' refuses to change an existing branch.
 
@@ -208,6 +209,12 @@ but different purposes:
 
 - `--no-merged` is used to find branches which are candidates for merging
   into HEAD, since those branches are not fully contained by HEAD.
+
+SEE ALSO
+--------
+linkgit:git-check-ref-format[1],
+linkgit:git-fetch[1],
+linkgit:git-remote[1].
 
 Author
 ------

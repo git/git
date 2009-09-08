@@ -41,7 +41,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT__QUIET(&quiet),
 		OPT__DRY_RUN(&show_only),
-		OPT_BOOLEAN('f', NULL, &force, "force"),
+		OPT_BOOLEAN('f', "force", &force, "force"),
 		OPT_BOOLEAN('d', NULL, &remove_directories,
 				"remove whole directories"),
 		OPT_BOOLEAN('x', NULL, &ignored, "remove ignored files, too"),

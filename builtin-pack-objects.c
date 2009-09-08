@@ -1008,6 +1008,33 @@ static void add_preferred_base(unsigned char *sha1)
 	it->pcache.tree_size = size;
 }
 
+static void cleanup_preferred_base(void)
+{
+	struct pbase_tree *it;
+	unsigned i;
+
+	it = pbase_tree;
+	pbase_tree = NULL;
+	while (it) {
+		struct pbase_tree *this = it;
+		it = this->next;
+		free(this->pcache.tree_data);
+		free(this);
+	}
+
+	for (i = 0; i < ARRAY_SIZE(pbase_tree_cache); i++) {
+		if (!pbase_tree_cache[i])
+			continue;
+		free(pbase_tree_cache[i]->tree_data);
+		free(pbase_tree_cache[i]);
+		pbase_tree_cache[i] = NULL;
+	}
+
+	free(done_pbase_paths);
+	done_pbase_paths = NULL;
+	done_pbase_paths_num = done_pbase_paths_alloc = 0;
+}
+
 static void check_object(struct object_entry *entry)
 {
 	if (entry->in_pack) {
@@ -1599,7 +1626,7 @@ static void *threaded_find_deltas(void *arg)
 static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 			   int window, int depth, unsigned *processed)
 {
-	struct thread_params p[delta_search_threads];
+	struct thread_params *p;
 	int i, ret, active_threads = 0;
 
 	if (delta_search_threads <= 1) {
@@ -1609,6 +1636,7 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 	if (progress > pack_to_stdout)
 		fprintf(stderr, "Delta compression using up to %d threads.\n",
 				delta_search_threads);
+	p = xcalloc(delta_search_threads, sizeof(*p));
 
 	/* Partition the work amongst work threads. */
 	for (i = 0; i < delta_search_threads; i++) {
@@ -1717,6 +1745,7 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 			active_threads--;
 		}
 	}
+	free(p);
 }
 
 #else
@@ -1808,7 +1837,7 @@ static void prepare_pack(int window, int depth)
 
 static int git_pack_config(const char *k, const char *v, void *cb)
 {
-	if(!strcmp(k, "pack.window")) {
+	if (!strcmp(k, "pack.window")) {
 		window = git_config_int(k, v);
 		return 0;
 	}
@@ -2310,6 +2339,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		rp_av[rp_ac] = NULL;
 		get_object_list(rp_ac, rp_av);
 	}
+	cleanup_preferred_base();
 	if (include_tag && nr_result)
 		for_each_ref(add_ref_tag, NULL);
 	stop_progress(&progress_state);

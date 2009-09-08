@@ -162,7 +162,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		if (ce_uptodate(ce))
 			continue;
 
-		changed = check_removed(ce, &st);
+		/* If CE_VALID is set, don't look at workdir for file removal */
+		changed = (ce->ce_flags & CE_VALID) ? 0 : check_removed(ce, &st);
 		if (changed) {
 			if (changed < 0) {
 				perror(ce->name);
@@ -309,22 +310,6 @@ static int show_modified(struct rev_info *revs,
 }
 
 /*
- * This turns all merge entries into "stage 3". That guarantees that
- * when we read in the new tree (into "stage 1"), we won't lose sight
- * of the fact that we had unmerged entries.
- */
-static void mark_merge_entries(void)
-{
-	int i;
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		if (!ce_stage(ce))
-			continue;
-		ce->ce_flags |= CE_STAGEMASK;
-	}
-}
-
-/*
  * This gets a mix of an existing index and a tree, one pathname entry
  * at a time. The index entry may be a single stage-0 one, but it could
  * also be multiple unmerged entries (in which case idx_pos/idx_nr will
@@ -337,6 +322,8 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	struct rev_info *revs = o->unpack_data;
 	int match_missing, cached;
 
+	/* if the entry is not checked out, don't examine work tree */
+	cached = o->index_only || (idx && (idx->ce_flags & CE_VALID));
 	/*
 	 * Backward compatibility wart - "diff-index -m" does
 	 * not mean "do not ignore merges", but "match_missing".
@@ -344,12 +331,11 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	 * But with the revision flag parsing, that's found in
 	 * "!revs->ignore_merges".
 	 */
-	cached = o->index_only;
 	match_missing = !revs->ignore_merges;
 
 	if (cached && idx && ce_stage(idx)) {
-		if (tree)
-			diff_unmerge(&revs->diffopt, idx->name, idx->ce_mode, idx->sha1);
+		diff_unmerge(&revs->diffopt, idx->name, idx->ce_mode,
+			     idx->sha1);
 		return;
 	}
 
@@ -434,8 +420,6 @@ int run_diff_index(struct rev_info *revs, int cached)
 	const char *tree_name;
 	struct unpack_trees_options opts;
 	struct tree_desc t;
-
-	mark_merge_entries();
 
 	ent = revs->pending.objects[0].item;
 	tree_name = revs->pending.objects[0].name;
