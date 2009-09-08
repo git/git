@@ -112,8 +112,8 @@ add_desc () {
 show_topic () {
 	old=$1 new=$2
 
-	sed -n -e '/^ ..*/p' "$old" >"$tmp.old.nc"
-	sed -n -e '/^ ..*/p' "$new" >"$tmp.new.nc"
+	sed -n -e '/^ ..*/p' -e '/^\* /p' "$old" >"$tmp.old.nc"
+	sed -n -e '/^ ..*/p' -e '/^\* /p' "$new" >"$tmp.new.nc"
 	if cmp "$tmp.old.nc" "$tmp.new.nc" >/dev/null
 	then
 		cat "$old"
