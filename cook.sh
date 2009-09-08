@@ -388,7 +388,7 @@ do
 	test "$section" = 'Graduated to "master"' &&
 	test "$incremental" = no && continue
 
-	tip=$(git rev-parse --quiet --verify "refs/heads/$branch")
+	tip=$(git rev-parse --quiet --verify "refs/heads/$branch") || continue
 	mb=$(git merge-base master $tip)
 	test "$mb" = "$tip" || continue
 	if test -n "$current"
