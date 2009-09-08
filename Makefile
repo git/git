@@ -91,7 +91,9 @@ all::
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
-# Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
+# Define NEEDS_CRYPTO_WITH_SSL if you need -lcrypto when using -lssl (Darwin).
+#
+# Define NEEDS_SSL_WITH_CRYPTO if you need -lssl when using -lcrypto (Darwin).
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
 #
@@ -704,6 +706,7 @@ ifeq ($(uname_S),SCO_SV)
 	TAR = gtar
 endif
 ifeq ($(uname_S),Darwin)
+	NEEDS_CRYPTO_WITH_SSL = YesPlease
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	ifeq ($(shell expr "$(uname_R)" : '[15678]\.'),2)
@@ -1006,6 +1009,9 @@ ifndef NO_OPENSSL
 		OPENSSL_LINK = -L$(OPENSSLDIR)/$(lib) $(CC_LD_DYNPATH)$(OPENSSLDIR)/$(lib)
 	else
 		OPENSSL_LINK =
+	endif
+	ifdef NEEDS_CRYPTO_WITH_SSL
+		OPENSSL_LINK += -lcrypto
 	endif
 else
 	BASIC_CFLAGS += -DNO_OPENSSL
