@@ -2025,6 +2025,19 @@ proc do_quit {{rc {1}}} {
 
 		# -- Stash our current window geometry into this repository.
 		#
+		set cfg_wmstate [wm state .]
+		if {[catch {set rc_wmstate $repo_config(gui.wmstate)}]} {
+			set rc_wmstate {}
+		}
+		if {$cfg_wmstate ne $rc_wmstate} {
+			catch {git config gui.wmstate $cfg_wmstate}
+		}
+		if {$cfg_wmstate eq {zoomed}} {
+			# on Windows wm geometry will lie about window
+			# position (but not size) when window is zoomed
+			# restore the window before querying wm geometry
+			wm state . normal
+		}
 		set cfg_geometry [list]
 		lappend cfg_geometry [wm geometry .]
 		lappend cfg_geometry [lindex [.vpane sash coord 0] 0]
@@ -3262,6 +3275,14 @@ wm geometry . [lindex $gm 0]
 	[lindex [.vpane.files sash coord 0] 0] \
 	[lindex $gm 2]
 unset gm
+}
+
+# -- Load window state
+#
+catch {
+set gws $repo_config(gui.wmstate)
+wm state . $gws
+unset gws
 }
 
 # -- Key Bindings
