@@ -52,7 +52,7 @@ then
 		exit 1
 	fi
 fi
-test -n "$branches" || branches='next master maint pu jch'
+test -n "$branches" || branches='next master maint jch pu'
 test -n "$jobs" || jobs=-j2
 
 for branch in $branches
@@ -136,6 +136,7 @@ do
 			;;
 		esac &&
 
+		save=$(git rev-parse HEAD) &&
 		{
 			test "z$with_dash" != 'zy' ||
 			Meta/Make $M $test -- $jobs SHELL_PATH=/bin/dash $dotest
@@ -149,7 +150,12 @@ do
 
 		{
 			test z$install = znoinstall ||
-			Meta/Make $M -- install
+			if test "$save" = "$(git rev-parse HEAD)"
+			then
+				Meta/Make $M -- install
+			else
+				echo >&2 "Head moved--not installing"
+			fi
 		} || exit $?
 
 		git reset --hard
