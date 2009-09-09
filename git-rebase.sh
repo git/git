@@ -387,7 +387,7 @@ fi
 # The tree must be really really clean.
 if ! git update-index --ignore-submodules --refresh > /dev/null; then
 	echo >&2 "cannot rebase: you have unstaged changes"
-	git diff --name-status -r --ignore-submodules -- >&2
+	git diff-files --name-status -r --ignore-submodules -- >&2
 	exit 1
 fi
 diff=$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)
