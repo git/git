@@ -52,6 +52,15 @@ Issues of note:
 
 	- "zlib", the compression library. Git won't build without it.
 
+	- "ssh" is used to push and pull over the net.
+
+	- A POSIX-compliant shell is required to run many scripts needed
+	  for everyday use (e.g. "bisect", "pull").
+
+	- "Perl" is needed to use some of the features (e.g. preparing a
+	  partial commit using "git add -i/-p", interacting with svn
+	  repositories with "git svn").
+
 	- "openssl".  Unless you specify otherwise, you'll get the SHA1
 	  library from here.
 
@@ -69,11 +78,6 @@ Issues of note:
 
         - "wish", the Tcl/Tk windowing shell is used in gitk to show the
           history graphically, and in git-gui.
-
-	- "ssh" is used to push and pull over the net
-
-	- "perl" and POSIX-compliant shells are needed to use most of
-	  the bare-bones Porcelainish scripts.
 
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not
