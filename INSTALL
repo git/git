@@ -56,8 +56,8 @@ Issues of note:
 	  library from here.
 
 	  If you don't have openssl, you can use one of the SHA1 libraries
-	  that come with git (git includes the one from Mozilla, and has
-	  its own PowerPC and ARM optimized ones too - see the Makefile).
+	  that come with git (git includes one inspired by Mozilla's and a
+	  PowerPC optimized one too - see the Makefile).
 
 	- libcurl library; git-http-fetch and git-fetch use them.  You
 	  might also want the "curl" executable for debugging purposes.
