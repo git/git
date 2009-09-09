@@ -113,6 +113,17 @@ For command-specific variables, you will find a more detailed description
 in the appropriate manual page. You will find a description of non-core
 porcelain configuration variables in the respective porcelain documentation.
 
+advice.*::
+	When set to 'true', display the given optional help message.
+	When set to 'false', do not display. The configuration variables
+	are:
++
+--
+	pushNonFastForward::
+		Advice shown when linkgit:git-push[1] refuses
+		non-fast-forward refs. Default: true.
+--
+
 core.fileMode::
 	If false, the executable bit differences between the index and
 	the working copy are ignored; useful on broken filesystems like FAT.
