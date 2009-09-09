@@ -1,12 +1,14 @@
 #include "cache.h"
 
 int advice_push_nonfastforward = 1;
+int advice_status_hints = 1;
 
 static struct {
 	const char *name;
 	int *preference;
 } advice_config[] = {
 	{ "pushnonfastforward", &advice_push_nonfastforward },
+	{ "statushints", &advice_status_hints },
 };
 
 int git_default_advice_config(const char *var, const char *value)
