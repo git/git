@@ -8,11 +8,9 @@
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
 
-import optparse, sys, os, marshal, popen2, subprocess, shelve
-import tempfile, getopt, sha, os.path, time, platform
+import optparse, sys, os, marshal, subprocess, shelve
+import tempfile, getopt, os.path, time, platform
 import re
-
-from sets import Set;
 
 verbose = False
 
@@ -864,8 +862,8 @@ class P4Sync(Command):
 
         self.usage += " //depot/path[@revRange]"
         self.silent = False
-        self.createdBranches = Set()
-        self.committedChanges = Set()
+        self.createdBranches = set()
+        self.committedChanges = set()
         self.branch = ""
         self.detectBranches = False
         self.detectLabels = False
@@ -1662,7 +1660,7 @@ class P4Sync(Command):
 
             if len(self.changesFile) > 0:
                 output = open(self.changesFile).readlines()
-                changeSet = Set()
+                changeSet = set()
                 for line in output:
                     changeSet.add(int(line))
 
