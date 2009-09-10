@@ -5,6 +5,7 @@
 #include "blob.h"
 #include "tree-walk.h"
 #include "refs.h"
+#include "remote.h"
 
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
@@ -238,9 +239,24 @@ static int ambiguous_path(const char *path, int len)
 	return slash;
 }
 
+static inline int tracked_suffix(const char *string, int len)
+{
+	const char *suffix[] = { "@{upstream}", "@{u}" };
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(suffix); i++) {
+		int suffix_len = strlen(suffix[i]);
+		if (len >= suffix_len && !memcmp(string + len - suffix_len,
+					suffix[i], suffix_len))
+			return suffix_len;
+	}
+	return 0;
+}
+
 /*
  * *string and *len will only be substituted, and *string returned (for
- * later free()ing) if the string passed in is of the form @{-<n>}.
+ * later free()ing) if the string passed in is of the form @{-<n>} or
+ * of the form <branch>@{upstream}.
  */
 static char *substitute_branch_name(const char **string, int *len)
 {
@@ -252,6 +268,21 @@ static char *substitute_branch_name(const char **string, int *len)
 		*string = strbuf_detach(&buf, &size);
 		*len = size;
 		return (char *)*string;
+	}
+
+	ret = tracked_suffix(*string, *len);
+	if (ret) {
+		char *ref = xstrndup(*string, *len - ret);
+		struct branch *tracking = branch_get(*ref ? ref : NULL);
+
+		if (!tracking)
+			die ("No tracking branch found for '%s'", ref);
+		free(ref);
+		if (tracking->merge && tracking->merge[0]->dst) {
+			*string = xstrdup(tracking->merge[0]->dst);
+			*len = strlen(*string);
+			return (char *)*string;
+		}
 	}
 
 	return NULL;
@@ -340,8 +371,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (len && str[len-1] == '}') {
 		for (at = len-2; at >= 0; at--) {
 			if (str[at] == '@' && str[at+1] == '{') {
-				reflog_len = (len-1) - (at+2);
-				len = at;
+				if (!tracked_suffix(str + at, len - at)) {
+					reflog_len = (len-1) - (at+2);
+					len = at;
+				}
 				break;
 			}
 		}
