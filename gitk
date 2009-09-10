@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright © 2005-2008 Paul Mackerras.  All rights reserved.
+# Copyright © 2005-2009 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
@@ -987,6 +987,18 @@ proc removefakerow {id} {
     }
     setcanvscroll
     drawvisible
+}
+
+proc real_children {vp} {
+    global children nullid nullid2
+
+    set kids {}
+    foreach id $children($vp) {
+	if {$id ne $nullid && $id ne $nullid2} {
+	    lappend kids $id
+	}
+    }
+    return $kids
 }
 
 proc first_real_child {vp} {
@@ -8463,23 +8475,23 @@ proc do_cmp_commits {a b} {
 	    }
 	}
 	if {$skipa} {
-	    if {[llength $children($curview,$a)] != 1} {
+	    set kids [real_children $curview,$a]
+	    if {[llength $kids] != 1} {
 		$ctext insert end "\n"
 		appendshortlink $a [mc "Commit "] \
-		    [mc " has %s children - stopping\n" \
-			 [llength $children($curview,$a)]]
+		    [mc " has %s children - stopping\n" [llength $kids]]
 		break
 	    }
-	    set a [lindex $children($curview,$a) 0]
+	    set a [lindex $kids 0]
 	}
 	if {$skipb} {
-	    if {[llength $children($curview,$b)] != 1} {
+	    set kids [real_children $curview,$b]
+	    if {[llength $kids] != 1} {
 		appendshortlink $b [mc "Commit "] \
-		    [mc " has %s children - stopping\n" \
-			 [llength $children($curview,$b)]]
+		    [mc " has %s children - stopping\n" [llength $kids]]
 		break
 	    }
-	    set b [lindex $children($curview,$b) 0]
+	    set b [lindex $kids 0]
 	}
     }
     $ctext conf -state disabled
