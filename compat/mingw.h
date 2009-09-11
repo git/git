@@ -222,9 +222,8 @@ void mingw_open_html(const char *path);
  * helpers
  */
 
-char **copy_environ(void);
+char **make_augmented_environ(const char *const *vars);
 void free_environ(char **env);
-char **env_setenv(char **env, const char *name);
 
 /*
  * A replacement of main() that ensures that argv[0] has a path
