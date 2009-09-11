@@ -62,6 +62,11 @@ This is useful if you want to begin your message in a discussion thread
 with comments and suggestions on the message you are responding to, and to
 conclude it with a patch submission, separating the discussion and the
 beginning of the proposed commit log message with a scissors line.
++
+This can enabled by default with the configuration option mailinfo.scissors.
+
+--no-scissors::
+	Ignore scissors lines. Useful for overriding mailinfo.scissors settings.
 
 <msg>::
 	The commit log message extracted from e-mail, usually
