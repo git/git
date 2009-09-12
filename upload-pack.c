@@ -553,7 +553,7 @@ static void receive_needs(void)
 
 	shallow_nr = 0;
 	if (debug_fd)
-		write_in_full(debug_fd, "#S\n", 3);
+		write_str_in_full(debug_fd, "#S\n");
 	for (;;) {
 		struct object *o;
 		unsigned char sha1_buf[20];
@@ -619,7 +619,7 @@ static void receive_needs(void)
 		}
 	}
 	if (debug_fd)
-		write_in_full(debug_fd, "#E\n", 3);
+		write_str_in_full(debug_fd, "#E\n");
 
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;

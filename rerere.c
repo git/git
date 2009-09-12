@@ -61,7 +61,7 @@ static int write_rr(struct string_list *rr, int out_fd)
 		path = rr->items[i].string;
 		length = strlen(path) + 1;
 		if (write_in_full(out_fd, rr->items[i].util, 40) != 40 ||
-		    write_in_full(out_fd, "\t", 1) != 1 ||
+		    write_str_in_full(out_fd, "\t") != 1 ||
 		    write_in_full(out_fd, path, length) != length)
 			die("unable to write rerere record");
 	}
