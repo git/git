@@ -108,7 +108,7 @@ static int do_rev_list(int fd, void *create_full_pack)
 	int i;
 	struct rev_info revs;
 
-	pack_pipe = fdopen(fd, "w");
+	pack_pipe = xfdopen(fd, "w");
 	init_revisions(&revs, NULL);
 	revs.tag_objects = 1;
 	revs.tree_objects = 1;
@@ -255,7 +255,7 @@ static void create_pack_file(void)
 
 	/* pass on revisions we (don't) want */
 	if (!shallow_nr) {
-		FILE *pipe_fd = fdopen(pack_objects.in, "w");
+		FILE *pipe_fd = xfdopen(pack_objects.in, "w");
 		if (!create_full_pack) {
 			int i;
 			for (i = 0; i < want_obj.nr; i++)

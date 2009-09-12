@@ -39,7 +39,7 @@ static struct child_process *get_helper(struct transport *transport)
 
 	write_str_in_full(helper->in, "capabilities\n");
 
-	file = fdopen(helper->out, "r");
+	file = xfdopen(helper->out, "r");
 	while (1) {
 		if (strbuf_getline(&buf, file, '\n') == EOF)
 			exit(128); /* child died, message supplied already */
@@ -71,7 +71,7 @@ static int fetch_with_fetch(struct transport *transport,
 			    int nr_heads, const struct ref **to_fetch)
 {
 	struct child_process *helper = get_helper(transport);
-	FILE *file = fdopen(helper->out, "r");
+	FILE *file = xfdopen(helper->out, "r");
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 
@@ -124,7 +124,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 
 	write_str_in_full(helper->in, "list\n");
 
-	file = fdopen(helper->out, "r");
+	file = xfdopen(helper->out, "r");
 	while (1) {
 		char *eov, *eon;
 		if (strbuf_getline(&buf, file, '\n') == EOF)
