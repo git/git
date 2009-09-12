@@ -37,9 +37,7 @@ static struct child_process *get_helper(struct transport *transport)
 		die("Unable to run helper: git %s", helper->argv[0]);
 	data->helper = helper;
 
-	strbuf_addstr(&buf, "capabilities\n");
-	write_in_full(helper->in, buf.buf, buf.len);
-	strbuf_reset(&buf);
+	write_str_in_full(helper->in, "capabilities\n");
 
 	file = fdopen(helper->out, "r");
 	while (1) {
@@ -58,7 +56,7 @@ static int disconnect_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
 	if (data->helper) {
-		write_in_full(data->helper->in, "\n", 1);
+		write_str_in_full(data->helper->in, "\n");
 		close(data->helper->in);
 		finish_command(data->helper);
 		free((char *)data->helper->argv[0]);
@@ -124,9 +122,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 
 	helper = get_helper(transport);
 
-	strbuf_addstr(&buf, "list\n");
-	write_in_full(helper->in, buf.buf, buf.len);
-	strbuf_reset(&buf);
+	write_str_in_full(helper->in, "list\n");
 
 	file = fdopen(helper->out, "r");
 	while (1) {
