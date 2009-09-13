@@ -2836,6 +2836,7 @@ sub other_gs {
 
 sub call_authors_prog {
 	my ($orig_author) = @_;
+	$orig_author = command_oneline('rev-parse', '--sq-quote', $orig_author);
 	my $author = `$::_authors_prog $orig_author`;
 	if ($? != 0) {
 		die "$::_authors_prog failed with exit code $?\n"

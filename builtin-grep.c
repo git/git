@@ -13,6 +13,7 @@
 #include "parse-options.h"
 #include "userdiff.h"
 #include "grep.h"
+#include "quote.h"
 
 #ifndef NO_EXTERNAL_GREP
 #ifdef __unix__
@@ -157,8 +158,8 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1, const char
 	unsigned long size;
 	char *data;
 	enum object_type type;
-	char *to_free = NULL;
 	int hit;
+	struct strbuf pathbuf = STRBUF_INIT;
 
 	data = read_sha1_file(sha1, &type, &size);
 	if (!data) {
@@ -166,26 +167,13 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1, const char
 		return 0;
 	}
 	if (opt->relative && opt->prefix_length) {
-		static char name_buf[PATH_MAX];
-		char *cp;
-		int name_len = strlen(name) - opt->prefix_length + 1;
-
-		if (!tree_name_len)
-			name += opt->prefix_length;
-		else {
-			if (ARRAY_SIZE(name_buf) <= name_len)
-				cp = to_free = xmalloc(name_len);
-			else
-				cp = name_buf;
-			memcpy(cp, name, tree_name_len);
-			strcpy(cp + tree_name_len,
-			       name + tree_name_len + opt->prefix_length);
-			name = cp;
-		}
+		quote_path_relative(name + tree_name_len, -1, &pathbuf, opt->prefix);
+		strbuf_insert(&pathbuf, 0, name, tree_name_len);
+		name = pathbuf.buf;
 	}
 	hit = grep_buffer(opt, name, data, size);
+	strbuf_release(&pathbuf);
 	free(data);
-	free(to_free);
 	return hit;
 }
 
@@ -195,6 +183,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	int i;
 	char *data;
 	size_t sz;
+	struct strbuf buf = STRBUF_INIT;
 
 	if (lstat(filename, &st) < 0) {
 	err_ret:
@@ -219,8 +208,9 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	}
 	close(i);
 	if (opt->relative && opt->prefix_length)
-		filename += opt->prefix_length;
+		filename = quote_path_relative(filename, -1, &buf, opt->prefix);
 	i = grep_buffer(opt, filename, data, sz);
+	strbuf_release(&buf);
 	free(data);
 	return i;
 }
@@ -503,6 +493,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached,
 		hit = external_grep(opt, paths, cached);
 		if (hit >= 0)
 			return hit;
+		hit = 0;
 	}
 #endif
 
@@ -798,6 +789,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	};
 
 	memset(&opt, 0, sizeof(opt));
+	opt.prefix = prefix;
 	opt.prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
 	opt.relative = 1;
 	opt.pathname = 1;
@@ -868,15 +860,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			verify_filename(prefix, argv[j]);
 	}
 
-	if (i < argc) {
+	if (i < argc)
 		paths = get_pathspec(prefix, argv + i);
-		if (opt.prefix_length && opt.relative) {
-			/* Make sure we do not get outside of paths */
-			for (i = 0; paths[i]; i++)
-				if (strncmp(prefix, paths[i], opt.prefix_length))
-					die("git grep: cannot generate relative filenames containing '..'");
-		}
-	}
 	else if (prefix) {
 		paths = xcalloc(2, sizeof(const char *));
 		paths[0] = prefix;
