@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend] [--dry-run]
-	   [(-c | -C) <commit>] [-F <file> | -m <msg>] [--dry-run]
+	   [(-c | -C) <commit>] [-F <file> | -m <msg>]
 	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
 	   [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
 
@@ -68,12 +68,6 @@ OPTIONS
 --reedit-message=<commit>::
 	Like '-C', but with '-c' the editor is invoked, so that
 	the user can further edit the commit message.
-
---dry-run::
-	Do not actually make a commit, but show the list of paths
-	with updates in the index, paths with changes in the work tree,
-	and paths that are untracked, similar to the one that is given
-	in the commit log editor.
 
 -F <file>::
 --file=<file>::
