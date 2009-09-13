@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2009, #02; Mon, 07)
-X-master-at: 5ad9dce7e691106fecde413de8cc321b937367a6
-X-next-at: 5f6b0ffff13f5cd762d0a5a4e1c4dede58e8a537
+Subject: What's cooking in git.git (Sep 2009, #03; Sun, 13)
+X-master-at: eaf1c941bbc10f5aa67fcf64e316fb548b910cfe
+X-next-at: ad50cbaea8afd009cb843c743b248c53ed6285ee
 
-What's cooking in git.git (Sep 2009, #02; Mon, 07)
+What's cooking in git.git (Sep 2009, #03; Sun, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -53,121 +53,99 @@ backward compatible.  Currently planeed changes are:
 
 During 1.6.5 cycle, 'next' will hold topics meant for 1.6.5 and 1.7.0.
 
-I tagged and pushed out 1.6.5-rc0.  There are still some topics cooking in
-'next' I would rather not leave out, but I've been hoping to keep this
-cycle short, and I'm also hoping to tag the real 1.6.5 before I vanish for
-about a week and half later in the month. so in the worst case there may
-have to be a 1.6.6 to include the leftover topics.
+I tagged and pushed out 1.6.5-rc1.  As far as I am concered, all the big
+topics eligible for 1.6.5 are now in, except for possibly gfi-options
+series from Sverre.  Updates to subsystems (svn, gitk, gui, and gitweb)
+may still need to be merged in.
+
+I've been hoping to keep this cycle short, and I'm also hoping to tag the
+real 1.6.5 before I vanish for about a week and half later in the
+month. so it looks like there may have to be a 1.6.6 to include the
+leftover topics.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* np/maint-1.6.3-deepen (2009-09-03) 2 commits
-  (merged to 'next' on 2009-09-06 at d597fba)
- + pack-objects: free preferred base memory after usage
- + make shallow repository deepening more network efficient
+* jc/merge-saner-messages (2009-09-07) 1 commit
+ + merge-recursive: give less scary messages when merge did not start
 
-Further optimization and fixing of the object transfer around the "shallow
-repository" codepaths.
+* rc/maint-http-no-head-pack-check (2009-09-09) 1 commit.
+ + http.c: remove verification of remote packs
 
-* js/stash-dwim (2009-07-27) 1 commit.
-  (merged to 'next' on 2009-08-16 at 67896c4)
- + Make 'git stash -k' a short form for 'git stash save --keep-index'
- (this branch is used by tr/reset-checkout-patch.)
+* db/vcs-helper (2009-09-03) 16 commits
+ + Use a clearer style to issue commands to remote helpers
+ + Make the "traditionally-supported" URLs a special case
+  (merged to 'next' on 2009-08-07 at f3533ba)
+ + Makefile: install hardlinks for git-remote-<scheme> supported by libcurl if possible
+ + Makefile: do not link three copies of git-remote-* programs
+ + Makefile: git-http-fetch does not need expat
+ + http-fetch: Fix Makefile dependancies
+ + Add transport native helper executables to .gitignore
+ + git-http-fetch: not a builtin
+ + Use an external program to implement fetching with curl
+ + Add support for external programs for handling native fetches
 
-* tr/reset-checkout-patch (2009-08-18) 10 commits.
-  (merged to 'next' on 2009-09-03 at d4f2ed7)
- + stash: simplify defaulting to "save" and reject unknown options
-  (merged to 'next' on 2009-08-27 at d314281)
- + Make test case number unique
-  (merged to 'next' on 2009-08-18 at e465bb3)
- + tests: disable interactive hunk selection tests if perl is not available
-  (merged to 'next' on 2009-08-16 at 67896c4)
- + DWIM 'git stash save -p' for 'git stash -p'
- + Implement 'git stash save --patch'
- + Implement 'git checkout --patch'
- + Implement 'git reset --patch'
- + builtin-add: refactor the meat of interactive_add()
- + Add a small patch-mode testing library
- + git-apply--interactive: Refactor patch mode code
- (this branch uses js/stash-dwim.)
+Up to the part that eject -lcurl from the main "git" binary cleanly are
+now in 'master', with a few fix-ups from Jim Mayering.
 
-DWIMmery of the two series tightened for safety a few days ago.  Otherwise
-the same as what have been cooking in 'next' for a few weeks.
+* cb/maint-1.6.3-grep-relative-up (2009-09-05) 2 commits.
+ + grep: accept relative paths outside current working directory
+ + grep: fix exit status if external_grep() punts
 
-* jc/upload-pack-hook (2009-08-28) 2 commits
-  (merged to 'next' on 2009-08-31 at f9933a5)
- + upload-pack: feed "kind [clone|fetch]" to post-upload-pack hook
- + upload-pack: add a trigger for post-upload-pack hook
+* jk/unwanted-advices (2009-09-09) 2 commits
+ + status: make "how to stage" messages optional
+ + push: make non-fast-forward help message configurable
 
-* jk/clone-b (2009-08-26) 1 commit
-  (merged to 'next' on 2009-08-30 at 10a68d1)
- + clone: add --branch option to select a different HEAD
+* jt/pushinsteadof (2009-09-07) 2 commits
+ + Add url.<base>.pushInsteadOf: URL rewriting for push only
+ + Wrap rewrite globals in a struct in preparation for adding another set
 
-* jc/mailinfo-scissors (2009-08-26) 5 commits
-  (merged to 'next' on 2009-08-30 at 5fc6248)
- + mailinfo.scissors: new configuration
- + am/mailinfo: Disable scissors processing by default
- + Documentation: describe the scissors mark support of "git am"
- + Teach mailinfo to ignore everything before -- >8 -- mark
- + builtin-mailinfo.c: fix confusing internal API to mailinfo()
+* pk/fast-import-tars (2009-09-03) 1 commit
+ + import-tars: Allow per-tar author and commit message.
 
-I didn't pick up the patch to simplify the definition of scissors. I do
-not have strong opinion on it either way, and nobody on the list seemed to
-care too much either.
+* pk/fast-import-dirs (2009-09-03) 1 commit
+ + Add script for importing bits-and-pieces to Git.
 
 --------------------------------------------------
 [New Topics]
 
-* cb/maint-1.6.3-grep-relative-up (2009-09-05) 2 commits.
-  (merged to 'next' on 2009-09-07 at f9b5b48)
- + grep: accept relative paths outside current working directory
- + grep: fix exit status if external_grep() punts
+* db/vcs-helper-rest (2009-09-03) 6 commits
+ - Allow helpers to report in "list" command that the ref is unchanged
+ - Add support for "import" helper command
+ - Add a config option for remotes to specify a foreign vcs
+ - Allow programs to not depend on remotes having urls
+ - Allow fetch to modify refs
+ - Use a function to determine whether a remote is valid
+ (this branch is used by jh/cvs-helper.)
 
-1.6.5 material.
+This is not exactly new.  It holds the remainder of the db/vcs-helper
+topic.
 
-* jk/1.7.0-status (2009-09-05) 5 commits
- - docs: note that status configuration affects only long format
-  (merged to 'next' on 2009-09-07 at 8a7c563)
- + commit: support alternate status formats
- + status: add --porcelain output format
- + status: refactor format option parsing
- + status: refactor short-mode printing to its own function
- (this branch uses jc/1.7.0-status.)
+--------------------------------------------------
+[Stalled]
 
-Gives the --short output format to post 1.7.0 "git commit --dry-run" that
-is similar to that of post 1.7.0 "git status".
+* je/send-email-no-subject (2009-08-05) 1 commit
+  (merged to 'next' on 2009-08-30 at b6455c2)
+ + send-email: confirm on empty mail subjects
 
-It might be a good idea to make the --short format part of 1.6.6 without
-waiting for 1.7.0; it would require some branch shuffling to bring the
-short-status patch earlier than the one that makes "status" different from
-"commit --dry-run", though.
+The existing tests to covers the positive case (i.e. as long as the user
+says "yes" to the "do you really want to send this message that lacks
+subject", the message is sent) of this feature, but the feature itself
+needs its own test to verify the negative case (i.e. does it correctly
+stop if the user says "no"?)
 
-* jk/unwanted-advices (2009-09-06) 2 commits
- - status: make "how to stage" messages optional
- - push: make non-fast-forward help message configurable
+* jh/cvs-helper (2009-08-18) 8 commits
+ - More fixes to the git-remote-cvs installation procedure
+ - Fix the Makefile-generated path to the git_remote_cvs package in git-remote-cvs
+ - Add simple selftests of git-remote-cvs functionality
+ - git-remote-cvs: Remote helper program for CVS repositories
+ - 2/2: Add Python support library for CVS remote helper
+ - 1/2: Add Python support library for CVS remote helper
+ - Basic build infrastructure for Python scripts
+ - Allow helpers to request marks for fast-import
+ (this branch uses db/vcs-helper-rest.)
 
-Post 1.3.0 "newbie friendliness drive" introduced a lot of "helpful"
-advice messages that are sometimes found to be irritating once the user
-got used to working with git.  This series introduces a general mechanism
-to allow us to make them less loud using the config mechanism.  The config
-option hierarchy in these two are "message.*" but it is planned to be
-renamed to "advice.*".
-
-* jn/gitweb-show-size (2009-09-07) 1 commit
- - gitweb: Add 'show-sizes' feature to show blob sizes in tree view
-
-* jt/pushinsteadof (2009-09-07) 2 commits
- - Add url.<base>.pushInsteadOf: URL rewriting for push only
- - Wrap rewrite globals in a struct in preparation for adding another set
-
-Probably 1.6.5 material.
-
-* lt/maint-traverse-trees-fix (2009-09-06) 1 commit.
- - Prepare 'traverse_trees()' for D/F conflict lookahead
-
-Beginning of the fix to a rather nasty longstanding issue of merging trees
-with ("a" "a-b"), ("a/b" "a-b") and just ("a-b").
+Builds on db/vcs-helper.  There is a re-roll planned.
 
 * ne/rev-cache (2009-09-07) 7 commits
  . support for commit grafts, slight change to general mechanism
@@ -181,14 +159,15 @@ with ("a" "a-b"), ("a/b" "a-b") and just ("a-b").
 Replaced but I do not think this is ready for 'pu' yet.
 
 --------------------------------------------------
-[Stalled]
+[Cooking]
 
-* jh/notes (2009-08-27) 12 commits.
- - Add '%N'-format for pretty-printing commit notes
- - Add flags to get_commit_notes() to control the format of the note string
- - notes.c: Implement simple memory pooling of leaf nodes
+* jh/notes (2009-09-12) 13 commits
  - Selftests verifying semantics when loading notes trees with various fanouts
  - Teach the notes lookup code to parse notes trees with various fanout schemes
+ - notes.[ch] fixup: avoid old-style declaration
+ - Teach notes code to free its internal data structures on request.
+ - Add '%N'-format for pretty-printing commit notes
+ - Add flags to get_commit_notes() to control the format of the note string
  - t3302-notes-index-expensive: Speed up create_repo()
  - fast-import: Add support for importing commit notes
  - Teach "-m <msg>" and "-F <file>" to "git notes edit"
@@ -196,85 +175,20 @@ Replaced but I do not think this is ready for 'pu' yet.
  - Speed up git notes lookup
  - Add a script to edit/inspect notes
  - Introduce commit notes
+ (this branch uses sr/gfi-options.)
 
-I heard the cvs-helper series depends on this one.  It seems that the
-fan-out strategy is being rethought?
+Rerolled and queued.
 
-* je/send-email-no-subject (2009-08-05) 1 commit
-  (merged to 'next' on 2009-08-30 at b6455c2)
- + send-email: confirm on empty mail subjects
+* jn/gitweb-show-size (2009-09-07) 1 commit
+ - gitweb: Add 'show-sizes' feature to show blob sizes in tree view
 
-The existing tests to covers the positive case (i.e. as long as the user
-says "yes" to the "do you really want to send this message that lacks
-subject", the message is sent) of this feature, but the feature itself
-needs its own test to verify the negative case (i.e. does it correctly
-stop if the user says "no"?)
+* lt/maint-traverse-trees-fix (2009-09-06) 1 commit.
+ - Prepare 'traverse_trees()' for D/F conflict lookahead
 
-* db/vcs-helper (2009-09-03) 16 commits
- - Allow helpers to report in "list" command that the ref is unchanged
- - Add support for "import" helper command
- - Add a config option for remotes to specify a foreign vcs
- - Allow programs to not depend on remotes having urls
- - Allow fetch to modify refs
- - Use a function to determine whether a remote is valid
- - Use a clearer style to issue commands to remote helpers
- - Make the "traditionally-supported" URLs a special case
-  (merged to 'next' on 2009-08-07 at f3533ba)
- + Makefile: install hardlinks for git-remote-<scheme> supported by libcurl if possible
- + Makefile: do not link three copies of git-remote-* programs
- + Makefile: git-http-fetch does not need expat
-  (merged to 'next' on 2009-08-06 at 15da79d)
- + http-fetch: Fix Makefile dependancies
- + Add transport native helper executables to .gitignore
-  (merged to 'next' on 2009-08-05 at 33d491e)
- + git-http-fetch: not a builtin
- + Use an external program to implement fetching with curl
- + Add support for external programs for handling native fetches
- (this branch is used by jh/cvs-helper.)
-
-I'd really want to have this in 1.6.5 so that we can eject -lcurl from the
-main "git" binary.  The patches in 'pu' got some review comments, and I
-thought Daniel's responses were sensible.  Comments?
-
-* jh/cvs-helper (2009-08-18) 8 commits
- - More fixes to the git-remote-cvs installation procedure
- - Fix the Makefile-generated path to the git_remote_cvs package in git-remote-cvs
- - Add simple selftests of git-remote-cvs functionality
- - git-remote-cvs: Remote helper program for CVS repositories
- - 2/2: Add Python support library for CVS remote helper
- - 1/2: Add Python support library for CVS remote helper
- - Basic build infrastructure for Python scripts
- - Allow helpers to request marks for fast-import
- (this branch uses db/vcs-helper.)
-
-Builds on db/vcs-helper.  There is a re-roll planned.
-
-* cc/sequencer-rebase-i (2009-08-28) 15 commits
- - rebase -i: use "git sequencer--helper --cherry-pick"
- - sequencer: add "--cherry-pick" option to "git sequencer--helper"
- - sequencer: add "do_commit()" and related functions working on "next_commit"
- - pick: libify "pick_help_msg()"
- - revert: libify cherry-pick and revert functionnality
- - rebase -i: use "git sequencer--helper --fast-forward"
- - sequencer: let "git sequencer--helper" callers set "allow_dirty"
- - sequencer: add "--fast-forward" option to "git sequencer--helper"
- - sequencer: add "do_fast_forward()" to perform a fast forward
- - rebase -i: use "git sequencer--helper --reset-hard"
- - sequencer: add "--reset-hard" option to "git sequencer--helper"
- - sequencer: add "reset_almost_hard()" and related functions
- - rebase -i: use "git sequencer--helper --make-patch"
- - sequencer: add "make_patch" function to save a patch
- - sequencer: add "builtin-sequencer--helper.c"
-
-Migrating "rebase -i" bit by bit to C.
-Not a 1.6.5 material yet.
-
---------------------------------------------------
-[Cooking]
-
-* pk/fast-import-tars (2009-09-03) 1 commit
-  (merged to 'next' on 2009-09-07 at 8fbf027)
- + import-tars: Allow per-tar author and commit message.
+Beginning of the fix to a rather nasty longstanding issue of merging trees
+with ("a" "a-b"), ("a/b" "a-b") and just ("a-b"), but my reading of it is
+that it is just the first step to demonstrate one-entry lookahead and not
+a full solution yet.
 
 * jc/maint-1.6.0-blank-at-eof (2009-09-05) 10 commits.
   (merged to 'next' on 2009-09-07 at 165dc3c)
@@ -289,16 +203,8 @@ Not a 1.6.5 material yet.
  + apply --whitespace=fix: detect new blank lines at eof correctly
  + apply --whitespace=fix: fix handling of blank lines at the eof
 
-Hopefully in 1.6.5
-
-* pk/fast-import-dirs (2009-09-03) 1 commit
-  (merged to 'next' on 2009-09-07 at 836cba2)
- + Add script for importing bits-and-pieces to Git.
-
-With an updated key-value quoting rules, which I haven't carefully looked
-at.  I have to wonder if there are standard libraries to do this sort of
-thing without having to hand-roll these logic every time.  But perhaps I
-shouldn't be too picky on contrib/ material.
+This started a bit late in the cycle, and I'd rather hold it back during
+this feature freeze and push it out after 1.6.5 final.
 
 * jn/gitweb-blame (2009-09-01) 5 commits
  - gitweb: Minify gitweb.js if JSMIN is defined
@@ -318,6 +224,7 @@ Ajax-y blame.
  + fast-import: add feature command
  + fast-import: put marks reading in it's own function
  + fast-import: put option parsing code in separate functions
+ (this branch is used by jh/notes.)
 
 Perhaps 1.6.5 material but I wasn't sure.
 
@@ -344,6 +251,18 @@ Perhaps 1.6.5 material but I wasn't sure.
 
 --------------------------------------------------
 [For 1.7.0]
+
+* jk/1.7.0-status (2009-09-05) 5 commits
+ - docs: note that status configuration affects only long format
+  (merged to 'next' on 2009-09-07 at 8a7c563)
+ + commit: support alternate status formats
+ + status: add --porcelain output format
+ + status: refactor format option parsing
+ + status: refactor short-mode printing to its own function
+ (this branch uses jc/1.7.0-status.)
+
+Gives the --short output format to post 1.7.0 "git commit --dry-run" that
+is similar to that of post 1.7.0 "git status".
 
 * jc/1.7.0-status (2009-09-05) 4 commits
   (merged to 'next' on 2009-09-06 at 19d4beb)
@@ -395,3 +314,23 @@ Maybe some people care about this.  I dunno.
  . Add initial support for pathname conversion to UTF-8
  . read_directory(): infrastructure for pathname character set conversion
  . Add 'fill_directory()' helper function for directory traversal
+
+* cc/sequencer-rebase-i (2009-08-28) 15 commits
+ - rebase -i: use "git sequencer--helper --cherry-pick"
+ - sequencer: add "--cherry-pick" option to "git sequencer--helper"
+ - sequencer: add "do_commit()" and related functions working on "next_commit"
+ - pick: libify "pick_help_msg()"
+ - revert: libify cherry-pick and revert functionnality
+ - rebase -i: use "git sequencer--helper --fast-forward"
+ - sequencer: let "git sequencer--helper" callers set "allow_dirty"
+ - sequencer: add "--fast-forward" option to "git sequencer--helper"
+ - sequencer: add "do_fast_forward()" to perform a fast forward
+ - rebase -i: use "git sequencer--helper --reset-hard"
+ - sequencer: add "--reset-hard" option to "git sequencer--helper"
+ - sequencer: add "reset_almost_hard()" and related functions
+ - rebase -i: use "git sequencer--helper --make-patch"
+ - sequencer: add "make_patch" function to save a patch
+ - sequencer: add "builtin-sequencer--helper.c"
+
+This was to be replaced with multiple bite-sized smaller topics.  We've
+seen one such topic for "git reset" on the list.
