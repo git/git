@@ -48,6 +48,8 @@ static void wt_status_print_unmerged_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 	color_fprintf_ln(s->fp, c, "# Unmerged paths:");
+	if (!advice_status_hints)
+		return;
 	if (!s->is_initial)
 		color_fprintf_ln(s->fp, c, "#   (use \"git reset %s <file>...\" to unstage)", s->reference);
 	else
@@ -60,6 +62,8 @@ static void wt_status_print_cached_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 	color_fprintf_ln(s->fp, c, "# Changes to be committed:");
+	if (!advice_status_hints)
+		return;
 	if (!s->is_initial) {
 		color_fprintf_ln(s->fp, c, "#   (use \"git reset %s <file>...\" to unstage)", s->reference);
 	} else {
@@ -73,6 +77,8 @@ static void wt_status_print_dirty_header(struct wt_status *s,
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 	color_fprintf_ln(s->fp, c, "# Changed but not updated:");
+	if (!advice_status_hints)
+		return;
 	if (!has_deleted)
 		color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to update what will be committed)");
 	else
@@ -85,6 +91,8 @@ static void wt_status_print_untracked_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 	color_fprintf_ln(s->fp, c, "# Untracked files:");
+	if (!advice_status_hints)
+		return;
 	color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to include in what will be committed)");
 	color_fprintf_ln(s->fp, c, "#");
 }
