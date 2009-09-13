@@ -1515,6 +1515,19 @@ url.<base>.insteadOf::
 	never-before-seen repository on the site.  When more than one
 	insteadOf strings match a given URL, the longest match is used.
 
+url.<base>.pushInsteadOf::
+	Any URL that starts with this value will not be pushed to;
+	instead, it will be rewritten to start with <base>, and the
+	resulting URL will be pushed to. In cases where some site serves
+	a large number of repositories, and serves them with multiple
+	access methods, some of which do not allow push, this feature
+	allows people to specify a pull-only URL and have git
+	automatically use an appropriate URL to push, even for a
+	never-before-seen repository on the site.  When more than one
+	pushInsteadOf strings match a given URL, the longest match is
+	used.  If a remote has an explicit pushurl, git will ignore this
+	setting for that remote.
+
 user.email::
 	Your email address to be recorded in any newly created commits.
 	Can be overridden by the 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_EMAIL', and

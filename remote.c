@@ -28,6 +28,11 @@ struct rewrite {
 	int instead_of_nr;
 	int instead_of_alloc;
 };
+struct rewrites {
+	struct rewrite **rewrite;
+	int rewrite_alloc;
+	int rewrite_nr;
+};
 
 static struct remote **remotes;
 static int remotes_alloc;
@@ -41,14 +46,13 @@ static struct branch *current_branch;
 static const char *default_remote_name;
 static int explicit_default_remote_name;
 
-static struct rewrite **rewrite;
-static int rewrite_alloc;
-static int rewrite_nr;
+static struct rewrites rewrites;
+static struct rewrites rewrites_push;
 
 #define BUF_SIZE (2048)
 static char buffer[BUF_SIZE];
 
-static const char *alias_url(const char *url)
+static const char *alias_url(const char *url, struct rewrites *r)
 {
 	int i, j;
 	char *ret;
@@ -57,14 +61,14 @@ static const char *alias_url(const char *url)
 
 	longest = NULL;
 	longest_i = -1;
-	for (i = 0; i < rewrite_nr; i++) {
-		if (!rewrite[i])
+	for (i = 0; i < r->rewrite_nr; i++) {
+		if (!r->rewrite[i])
 			continue;
-		for (j = 0; j < rewrite[i]->instead_of_nr; j++) {
-			if (!prefixcmp(url, rewrite[i]->instead_of[j].s) &&
+		for (j = 0; j < r->rewrite[i]->instead_of_nr; j++) {
+			if (!prefixcmp(url, r->rewrite[i]->instead_of[j].s) &&
 			    (!longest ||
-			     longest->len < rewrite[i]->instead_of[j].len)) {
-				longest = &(rewrite[i]->instead_of[j]);
+			     longest->len < r->rewrite[i]->instead_of[j].len)) {
+				longest = &(r->rewrite[i]->instead_of[j]);
 				longest_i = i;
 			}
 		}
@@ -72,10 +76,10 @@ static const char *alias_url(const char *url)
 	if (!longest)
 		return url;
 
-	ret = xmalloc(rewrite[longest_i]->baselen +
+	ret = xmalloc(r->rewrite[longest_i]->baselen +
 		     (strlen(url) - longest->len) + 1);
-	strcpy(ret, rewrite[longest_i]->base);
-	strcpy(ret + rewrite[longest_i]->baselen, url + longest->len);
+	strcpy(ret, r->rewrite[longest_i]->base);
+	strcpy(ret + r->rewrite[longest_i]->baselen, url + longest->len);
 	return ret;
 }
 
@@ -101,15 +105,23 @@ static void add_url(struct remote *remote, const char *url)
 	remote->url[remote->url_nr++] = url;
 }
 
-static void add_url_alias(struct remote *remote, const char *url)
-{
-	add_url(remote, alias_url(url));
-}
-
 static void add_pushurl(struct remote *remote, const char *pushurl)
 {
 	ALLOC_GROW(remote->pushurl, remote->pushurl_nr + 1, remote->pushurl_alloc);
 	remote->pushurl[remote->pushurl_nr++] = pushurl;
+}
+
+static void add_pushurl_alias(struct remote *remote, const char *url)
+{
+	const char *pushurl = alias_url(url, &rewrites_push);
+	if (pushurl != url)
+		add_pushurl(remote, pushurl);
+}
+
+static void add_url_alias(struct remote *remote, const char *url)
+{
+	add_url(remote, alias_url(url, &rewrites));
+	add_pushurl_alias(remote, url);
 }
 
 static struct remote *make_remote(const char *name, int len)
@@ -169,22 +181,22 @@ static struct branch *make_branch(const char *name, int len)
 	return ret;
 }
 
-static struct rewrite *make_rewrite(const char *base, int len)
+static struct rewrite *make_rewrite(struct rewrites *r, const char *base, int len)
 {
 	struct rewrite *ret;
 	int i;
 
-	for (i = 0; i < rewrite_nr; i++) {
+	for (i = 0; i < r->rewrite_nr; i++) {
 		if (len
-		    ? (len == rewrite[i]->baselen &&
-		       !strncmp(base, rewrite[i]->base, len))
-		    : !strcmp(base, rewrite[i]->base))
-			return rewrite[i];
+		    ? (len == r->rewrite[i]->baselen &&
+		       !strncmp(base, r->rewrite[i]->base, len))
+		    : !strcmp(base, r->rewrite[i]->base))
+			return r->rewrite[i];
 	}
 
-	ALLOC_GROW(rewrite, rewrite_nr + 1, rewrite_alloc);
+	ALLOC_GROW(r->rewrite, r->rewrite_nr + 1, r->rewrite_alloc);
 	ret = xcalloc(1, sizeof(struct rewrite));
-	rewrite[rewrite_nr++] = ret;
+	r->rewrite[r->rewrite_nr++] = ret;
 	if (len) {
 		ret->base = xstrndup(base, len);
 		ret->baselen = len;
@@ -355,8 +367,13 @@ static int handle_config(const char *key, const char *value, void *cb)
 		subkey = strrchr(name, '.');
 		if (!subkey)
 			return 0;
-		rewrite = make_rewrite(name, subkey - name);
 		if (!strcmp(subkey, ".insteadof")) {
+			rewrite = make_rewrite(&rewrites, name, subkey - name);
+			if (!value)
+				return config_error_nonbool(key);
+			add_instead_of(rewrite, xstrdup(value));
+		} else if (!strcmp(subkey, ".pushinsteadof")) {
+			rewrite = make_rewrite(&rewrites_push, name, subkey - name);
 			if (!value)
 				return config_error_nonbool(key);
 			add_instead_of(rewrite, xstrdup(value));
@@ -430,13 +447,17 @@ static void alias_all_urls(void)
 {
 	int i, j;
 	for (i = 0; i < remotes_nr; i++) {
+		int add_pushurl_aliases;
 		if (!remotes[i])
 			continue;
-		for (j = 0; j < remotes[i]->url_nr; j++) {
-			remotes[i]->url[j] = alias_url(remotes[i]->url[j]);
-		}
 		for (j = 0; j < remotes[i]->pushurl_nr; j++) {
-			remotes[i]->pushurl[j] = alias_url(remotes[i]->pushurl[j]);
+			remotes[i]->pushurl[j] = alias_url(remotes[i]->pushurl[j], &rewrites);
+		}
+		add_pushurl_aliases = remotes[i]->pushurl_nr == 0;
+		for (j = 0; j < remotes[i]->url_nr; j++) {
+			if (add_pushurl_aliases)
+				add_pushurl_alias(remotes[i], remotes[i]->url[j]);
+			remotes[i]->url[j] = alias_url(remotes[i]->url[j], &rewrites);
 		}
 	}
 }
