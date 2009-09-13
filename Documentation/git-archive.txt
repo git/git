@@ -34,8 +34,11 @@ OPTIONS
 -------
 
 --format=<fmt>::
-	Format of the resulting archive: 'tar' or 'zip'.  The default
-	is 'tar'.
+	Format of the resulting archive: 'tar' or 'zip'. If this option
+	is not given, and the output file is specified, the format is
+	inferred from the filename if possible (e.g. writing to "foo.zip"
+	makes the output to be in the zip format). Otherwise the output
+	format is `tar`.
 
 -l::
 --list::
@@ -129,6 +132,12 @@ git archive --format=zip --prefix=git-docs/ HEAD:Documentation/ > git-1.4.0-docs
 
 	Put everything in the current head's Documentation/ directory
 	into 'git-1.4.0-docs.zip', with the prefix 'git-docs/'.
+
+git archive -o latest.zip HEAD::
+
+	Create a Zip archive that contains the contents of the latest
+	commit on the current branch. Note that the output format is
+	inferred by the extension of the output file.
 
 
 SEE ALSO
