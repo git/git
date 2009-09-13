@@ -1,0 +1,71 @@
+git-remote-helpers(1)
+=====================
+
+NAME
+----
+git-remote-helpers - Helper programs for interoperation with remote git
+
+SYNOPSIS
+--------
+'git remote-<transport>' <remote>
+
+DESCRIPTION
+-----------
+
+These programs are normally not used directly by end users, but are
+invoked by various git programs that interact with remote repositories
+when the repository they would operate on will be accessed using
+transport code not linked into the main git binary. Various particular
+helper programs will behave as documented here.
+
+COMMANDS
+--------
+
+Commands are given by the caller on the helper's standard input, one per line.
+
+'capabilities'::
+	Lists the capabilities of the helper, one per line, ending
+	with a blank line.
+
+'list'::
+	Lists the refs, one per line, in the format "<value> <name>
+	[<attr> ...]". The value may be a hex sha1 hash, "@<dest>" for
+	a symref, or "?" to indicate that the helper could not get the
+	value of the ref. A space-separated list of attributes follows
+	the name; unrecognized attributes are ignored. After the
+	complete list, outputs a blank line.
+
+'fetch' <sha1> <name>::
+	Fetches the given object, writing the necessary objects to the
+	database. Outputs a blank line when the fetch is
+	complete. Only objects which were reported in the ref list
+	with a sha1 may be fetched this way.
++
+Supported if the helper has the "fetch" capability.
+
+If a fatal error occurs, the program writes the error message to
+stderr and exits. The caller should expect that a suitable error
+message has been printed if the child closes the connection without
+completing a valid response for the current command.
+
+Additional commands may be supported, as may be determined from
+capabilities reported by the helper.
+
+CAPABILITIES
+------------
+
+'fetch'::
+	This helper supports the 'fetch' command.
+
+REF LIST ATTRIBUTES
+-------------------
+
+None are defined yet, but the caller must accept any which are supplied.
+
+Documentation
+-------------
+Documentation by Daniel Barkalow.
+
+GIT
+---
+Part of the linkgit:git[1] suite
