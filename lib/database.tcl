@@ -89,27 +89,26 @@ proc do_fsck_objects {} {
 }
 
 proc hint_gc {} {
-	set object_limit 8
+	set ndirs 1
+	set limit 8
 	if {[is_Windows]} {
-		set object_limit 1
+		set ndirs 4
+		set limit 1
 	}
 
-	set objects_current [llength [glob \
-		-directory [gitdir objects 42] \
+	set count [llength [glob \
 		-nocomplain \
-		-tails \
 		-- \
-		*]]
+		[gitdir objects 4\[0-[expr {$ndirs-1}]\]/*]]]
 
-	if {$objects_current >= $object_limit} {
-		set objects_current [expr {$objects_current * 250}]
-		set object_limit    [expr {$object_limit    * 250}]
+	if {$count >= $limit * $ndirs} {
+		set objects_current [expr {$count * 256/$ndirs}]
 		if {[ask_popup \
 			[mc "This repository currently has approximately %i loose objects.
 
-To maintain optimal performance it is strongly recommended that you compress the database when more than %i loose objects exist.
+To maintain optimal performance it is strongly recommended that you compress the database.
 
-Compress the database now?" $objects_current $object_limit]] eq yes} {
+Compress the database now?" $objects_current]] eq yes} {
 			do_gc
 		}
 	}
