@@ -28,6 +28,7 @@ struct unpack_trees_options {
 		     skip_unmerged,
 		     initial_checkout,
 		     diff_index_cached,
+		     debug_unpack,
 		     gently;
 	const char *prefix;
 	int cache_bottom;

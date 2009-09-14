@@ -501,6 +501,38 @@ static struct cache_entry *find_cache_entry(struct traverse_info *info,
 		return NULL;
 }
 
+static void debug_path(struct traverse_info *info)
+{
+	if (info->prev) {
+		debug_path(info->prev);
+		if (*info->prev->name.path)
+			putchar('/');
+	}
+	printf("%s", info->name.path);
+}
+
+static void debug_name_entry(int i, struct name_entry *n)
+{
+	printf("ent#%d %06o %s\n", i,
+	       n->path ? n->mode : 0,
+	       n->path ? n->path : "(missing)");
+}
+
+static void debug_unpack_callback(int n,
+				  unsigned long mask,
+				  unsigned long dirmask,
+				  struct name_entry *names,
+				  struct traverse_info *info)
+{
+	int i;
+	printf("* unpack mask %lu, dirmask %lu, cnt %d ",
+	       mask, dirmask, n);
+	debug_path(info);
+	putchar('\n');
+	for (i = 0; i < n; i++)
+		debug_name_entry(i, names + i);
+}
+
 static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, struct name_entry *names, struct traverse_info *info)
 {
 	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
@@ -510,6 +542,9 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 	/* Find first entry with a real name (we could use "mask" too) */
 	while (!p->mode)
 		p++;
+
+	if (o->debug_unpack)
+		debug_unpack_callback(n, mask, dirmask, names, info);
 
 	/* Are we supposed to look at the index too? */
 	if (o->merge) {
