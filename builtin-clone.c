@@ -269,7 +269,7 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest)
 				die_errno("failed to create link '%s'", dest->buf);
 			option_no_hardlinks = 1;
 		}
-		if (copy_file(dest->buf, src->buf, 0666))
+		if (copy_file_with_time(dest->buf, src->buf, 0666))
 			die_errno("failed to copy file to '%s'", dest->buf);
 	}
 	closedir(dir);

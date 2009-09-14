@@ -104,6 +104,7 @@ git-receive-pack
 git-reflog
 git-relink
 git-remote
+git-remote-curl
 git-repack
 git-replace
 git-repo-config

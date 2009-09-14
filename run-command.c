@@ -173,11 +173,8 @@ fail_pipe:
 
 	if (cmd->dir)
 		die("chdir in start_command() not implemented");
-	if (cmd->env) {
-		env = copy_environ();
-		for (; *cmd->env; cmd->env++)
-			env = env_setenv(env, *cmd->env);
-	}
+	if (cmd->env)
+		env = make_augmented_environ(cmd->env);
 
 	if (cmd->git_cmd) {
 		cmd->argv = prepare_git_cmd(cmd->argv);

@@ -824,7 +824,7 @@ void mingw_execvp(const char *cmd, char *const *argv)
 	free_path_split(path);
 }
 
-char **copy_environ()
+static char **copy_environ(void)
 {
 	char **env;
 	int i = 0;
@@ -861,7 +861,7 @@ static int lookup_env(char **env, const char *name, size_t nmln)
 /*
  * If name contains '=', then sets the variable, otherwise it unsets it
  */
-char **env_setenv(char **env, const char *name)
+static char **env_setenv(char **env, const char *name)
 {
 	char *eq = strchrnul(name, '=');
 	int i = lookup_env(env, name, eq-name);
@@ -883,6 +883,18 @@ char **env_setenv(char **env, const char *name)
 			for (; env[i]; i++)
 				env[i] = env[i+1];
 	}
+	return env;
+}
+
+/*
+ * Copies global environ and adjusts variables as specified by vars.
+ */
+char **make_augmented_environ(const char *const *vars)
+{
+	char **env = copy_environ();
+
+	while (*vars)
+		env = env_setenv(env, *vars++);
 	return env;
 }
 

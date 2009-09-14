@@ -13,7 +13,7 @@ SYNOPSIS
 	 [--3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
-	 [--reject] [-q | --quiet] [--scissors]
+	 [--reject] [-q | --quiet] [--scissors | --no-scissors]
 	 [<mbox> | <Maildir>...]
 'git am' (--skip | --resolved | --abort)
 
@@ -43,6 +43,9 @@ OPTIONS
 --scissors::
 	Remove everything in body before a scissors line (see
 	linkgit:git-mailinfo[1]).
+
+---no-scissors::
+	Ignore scissors lines (see linkgit:git-mailinfo[1]).
 
 -q::
 --quiet::

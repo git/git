@@ -66,4 +66,18 @@ test_expect_success 'authors-file overrode authors-prog' '
 	)
 	'
 
+git --git-dir=x/.git config --unset svn.authorsfile
+git --git-dir=x/.git config --unset svn.authorsprog
+
+test_expect_success 'authors-prog handled special characters in username' '
+	svn mkdir -m bad --username "xyz; touch evil" "$svnrepo"/bad &&
+	(
+		cd x &&
+		git svn --authors-prog=../svn-authors-prog fetch &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn |
+		grep "^author xyz; touch evil <xyz; touch evil@example\.com> " &&
+		! test -f evil
+	)
+'
+
 test_done

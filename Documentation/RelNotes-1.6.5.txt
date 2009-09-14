@@ -38,6 +38,9 @@ Updates since v1.6.4
 
  * more improvements on mingw port.
 
+ * mingw will also give FRSX as the default value for the LESS
+   environment variable when the user does not have one.
+
 (performance)
 
  * On major platforms, the system can be compiled to use with Linus's
@@ -48,10 +51,27 @@ Updates since v1.6.4
  * Unnecessary inefficiency in deepening of a shallow repository has
    been removed.
 
+ * The "git" main binary used to link with libcurl, which then dragged
+   in a large number of external libraries.  When using basic plumbing
+   commands in scripts, this unnecessarily slowed things down.  We now
+   implement http/https/ftp transfer as a separate executable as we
+   used to.
+
+ * "git clone" run locally hardlinks or copies the files in .git/ to
+   newly created repository.  It used to give new mtime to copied files,
+   but this delayed garbage collection to trigger unnecessarily in the
+   cloned repository.  We now preserve mtime for these files to avoid
+   this issue.
+
 (usability, bells and whistles)
 
  * Human writable date format to various options, e.g. --since=yesterday,
    master@{2000.09.17}, are taught to infer some omitted input properly.
+
+ * A few programs gave verbose "advice" messages to help uninitiated
+   people when issuing error messages.  An infrastructure to allow
+   users to squelch them has been introduced, and a few such messages
+   can be silenced now.
 
  * refs/replace/ hierarchy is designed to be usable as a replacement
    of the "grafts" mechanism, with the added advantage that it can be
@@ -83,6 +103,8 @@ Updates since v1.6.4
    reordering commits and trees without touching the contents of
    blobs.
 
+ * "git fast-import" has a pair of new front-end in contrib/ area.
+
  * "git init" learned to mkdir/chdir into a directory when given an
    extra argument (i.e. "git init this").
 
@@ -91,7 +113,15 @@ Updates since v1.6.4
  * "git log --decorate" can optionally be told with --decorate=full to
    give the reference name in full.
 
+ * "git merge" issued an unnecessarily scary message when it detected
+   that the merge may have to touch the path that the user has local
+   uncommitted changes to. The message has been reworded to make it
+   clear that the command aborted, without doing any harm.
+
  * "git push" can be told to be --quiet.
+
+ * "git push" pays attention to url.$base.pushInsteadOf and uses a URL
+   that is derived from the URL used for fetching.
 
  * informational output from "git reset" that lists the locally modified
    paths is made consistent with that of "git checkout $another_branch".
@@ -126,5 +156,6 @@ Fixes since v1.6.4
 --
 exec >/var/tmp/1
 O=v1.6.4.2-298-gdf01e7c
+O=v1.6.5-rc0-49-g5f2b1e6
 echo O=$(git describe master)
 git shortlog --no-merges $O..master --not maint

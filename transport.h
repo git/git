@@ -79,4 +79,7 @@ void transport_unlock_pack(struct transport *transport);
 int transport_disconnect(struct transport *transport);
 char *transport_anonymize_url(const char *url);
 
+/* Transport methods defined outside transport.c */
+int transport_helper_init(struct transport *transport, const char *name);
+
 #endif

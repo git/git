@@ -72,9 +72,14 @@ OPTIONS
 
 -p::
 --patch::
-	Similar to Interactive mode but the initial command loop is
-	bypassed and the 'patch' subcommand is invoked using each of
-	the specified filepatterns before exiting.
+	Interactively choose hunks of patch between the index and the
+	work tree and add them to the index. This gives the user a chance
+	to review the difference before adding modified contents to the
+	index.
+
+	This effectively runs ``add --interactive``, but bypasses the
+	initial command menu and directly jumps to `patch` subcommand.
+	See ``Interactive mode'' for details.
 
 -e, \--edit::
 	Open the diff vs. the index in an editor and let the user

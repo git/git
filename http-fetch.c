@@ -1,8 +1,9 @@
 #include "cache.h"
 #include "walker.h"
 
-int cmd_http_fetch(int argc, const char **argv, const char *prefix)
+int main(int argc, const char **argv)
 {
+	const char *prefix;
 	struct walker *walker;
 	int commits_on_stdin = 0;
 	int commits;
@@ -17,6 +18,8 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 	int get_all = 0;
 	int get_verbosely = 0;
 	int get_recover = 0;
+
+	prefix = setup_git_directory();
 
 	git_config(git_default_config, NULL);
 

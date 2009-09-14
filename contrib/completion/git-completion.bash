@@ -1532,7 +1532,7 @@ _git_config ()
 	url.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		__gitcomp "insteadof" "$pfx" "$cur"
+		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur"
 		return
 		;;
 	esac

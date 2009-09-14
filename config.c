@@ -627,6 +627,9 @@ int git_default_config(const char *var, const char *value, void *dummy)
 	if (!prefixcmp(var, "mailmap."))
 		return git_default_mailmap_config(var, value);
 
+	if (!prefixcmp(var, "advice."))
+		return git_default_advice_config(var, value);
+
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);
 		return 0;
@@ -1116,7 +1119,7 @@ int git_config_set_multivar(const char *key, const char *value,
 				    copy_end - copy_begin)
 					goto write_err_out;
 				if (new_line &&
-				    write_in_full(fd, "\n", 1) != 1)
+				    write_str_in_full(fd, "\n") != 1)
 					goto write_err_out;
 			}
 			copy_begin = store.offset[i];

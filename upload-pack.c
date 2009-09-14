@@ -108,7 +108,7 @@ static int do_rev_list(int fd, void *create_full_pack)
 	int i;
 	struct rev_info revs;
 
-	pack_pipe = fdopen(fd, "w");
+	pack_pipe = xfdopen(fd, "w");
 	init_revisions(&revs, NULL);
 	revs.tag_objects = 1;
 	revs.tree_objects = 1;
@@ -255,7 +255,7 @@ static void create_pack_file(void)
 
 	/* pass on revisions we (don't) want */
 	if (!shallow_nr) {
-		FILE *pipe_fd = fdopen(pack_objects.in, "w");
+		FILE *pipe_fd = xfdopen(pack_objects.in, "w");
 		if (!create_full_pack) {
 			int i;
 			for (i = 0; i < want_obj.nr; i++)
@@ -553,7 +553,7 @@ static void receive_needs(void)
 
 	shallow_nr = 0;
 	if (debug_fd)
-		write_in_full(debug_fd, "#S\n", 3);
+		write_str_in_full(debug_fd, "#S\n");
 	for (;;) {
 		struct object *o;
 		unsigned char sha1_buf[20];
@@ -619,7 +619,7 @@ static void receive_needs(void)
 		}
 	}
 	if (debug_fd)
-		write_in_full(debug_fd, "#E\n", 3);
+		write_str_in_full(debug_fd, "#E\n");
 
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;

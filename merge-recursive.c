@@ -170,6 +170,18 @@ static int git_merge_trees(int index_only,
 	int rc;
 	struct tree_desc t[3];
 	struct unpack_trees_options opts;
+	static const struct unpack_trees_error_msgs msgs = {
+		/* would_overwrite */
+		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
+		/* not_uptodate_file */
+		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
+		/* not_uptodate_dir */
+		"Updating '%s' would lose untracked files in it.  Aborting.",
+		/* would_lose_untracked */
+		"Untracked working tree file '%s' would be %s by merge.  Aborting",
+		/* bind_overlap -- will not happen here */
+		NULL,
+	};
 
 	memset(&opts, 0, sizeof(opts));
 	if (index_only)
@@ -181,6 +193,7 @@ static int git_merge_trees(int index_only,
 	opts.fn = threeway_merge;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
+	opts.msgs = msgs;
 
 	init_tree_desc_from_tree(t+0, common);
 	init_tree_desc_from_tree(t+1, head);
@@ -1188,10 +1201,14 @@ int merge_trees(struct merge_options *o,
 
 	code = git_merge_trees(o->call_depth, common, head, merge);
 
-	if (code != 0)
-		die("merging of trees %s and %s failed",
-		    sha1_to_hex(head->object.sha1),
-		    sha1_to_hex(merge->object.sha1));
+	if (code != 0) {
+		if (show(o, 4) || o->call_depth)
+			die("merging of trees %s and %s failed",
+			    sha1_to_hex(head->object.sha1),
+			    sha1_to_hex(merge->object.sha1));
+		else
+			exit(128);
+	}
 
 	if (unmerged_cache()) {
 		struct string_list *entries, *re_head, *re_merge;
