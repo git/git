@@ -866,7 +866,7 @@ static int fetch_pack_index(unsigned char *sha1, const char *base_url)
 	int ret = 0;
 	char *hex = xstrdup(sha1_to_hex(sha1));
 	char *filename;
-	char *url;
+	char *url = NULL;
 	struct strbuf buf = STRBUF_INIT;
 
 	if (has_pack_index(sha1)) {
