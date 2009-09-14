@@ -233,7 +233,7 @@ rm -rf $RPM_BUILD_ROOT
 * Tue Mar 27 2007 Eygene Ryabinkin <rea-git@codelabs.ru>
 - Added the git-p4 package: Perforce import stuff.
 
-* Mon Feb 13 2007 Nicolas Pitre <nico@cam.org>
+* Mon Feb 13 2007 Nicolas Pitre <nico@fluxnic.net>
 - Update core package description (Git isn't as stupid as it used to be)
 
 * Mon Feb 12 2007 Junio C Hamano <junkio@cox.net>
