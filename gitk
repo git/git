@@ -2526,6 +2526,7 @@ proc savestuff {w} {
     if {$stuffsaved} return
     if {![winfo viewable .]} return
     catch {
+	if {[file exists ~/.gitk-new]} {file delete -force ~/.gitk-new}
 	set f [open "~/.gitk-new" w]
 	if {$::tcl_platform(platform) eq {windows}} {
 	    file attributes "~/.gitk-new" -hidden true
