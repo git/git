@@ -273,24 +273,43 @@ static void check_blank_at_eof(mmfile_t *mf1, mmfile_t *mf2,
 	ecbdata->blank_at_eof_in_postimage = (at - l2) + 1;
 }
 
-static void emit_line(FILE *file, const char *set, const char *reset, const char *line, int len)
+static void emit_line_0(FILE *file, const char *set, const char *reset,
+			int first, const char *line, int len)
 {
 	int has_trailing_newline, has_trailing_carriage_return;
+	int nofirst;
 
-	has_trailing_newline = (len > 0 && line[len-1] == '\n');
-	if (has_trailing_newline)
-		len--;
-	has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
-	if (has_trailing_carriage_return)
-		len--;
+	if (len == 0) {
+		has_trailing_newline = (first == '\n');
+		has_trailing_carriage_return = (!has_trailing_newline &&
+						(first == '\r'));
+		nofirst = has_trailing_newline || has_trailing_carriage_return;
+	} else {
+		has_trailing_newline = (len > 0 && line[len-1] == '\n');
+		if (has_trailing_newline)
+			len--;
+		has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
+		if (has_trailing_carriage_return)
+			len--;
+		nofirst = 0;
+	}
 
 	fputs(set, file);
+
+	if (!nofirst)
+		fputc(first, file);
 	fwrite(line, len, 1, file);
 	fputs(reset, file);
 	if (has_trailing_carriage_return)
 		fputc('\r', file);
 	if (has_trailing_newline)
 		fputc('\n', file);
+}
+
+static void emit_line(FILE *file, const char *set, const char *reset,
+		      const char *line, int len)
+{
+	emit_line_0(file, set, reset, line[0], line+1, len-1);
 }
 
 static int new_blank_line_at_eof(struct emit_callback *ecbdata, const char *line, int len)
@@ -301,23 +320,25 @@ static int new_blank_line_at_eof(struct emit_callback *ecbdata, const char *line
 	      ecbdata->blank_at_eof_in_preimage <= ecbdata->lno_in_preimage &&
 	      ecbdata->blank_at_eof_in_postimage <= ecbdata->lno_in_postimage))
 		return 0;
-	return ws_blank_line(line + 1, len - 1, ecbdata->ws_rule);
+	return ws_blank_line(line, len, ecbdata->ws_rule);
 }
 
-static void emit_add_line(const char *reset, struct emit_callback *ecbdata, const char *line, int len)
+static void emit_add_line(const char *reset,
+			  struct emit_callback *ecbdata,
+			  const char *line, int len)
 {
 	const char *ws = diff_get_color(ecbdata->color_diff, DIFF_WHITESPACE);
 	const char *set = diff_get_color(ecbdata->color_diff, DIFF_FILE_NEW);
 
 	if (!*ws)
-		emit_line(ecbdata->file, set, reset, line, len);
+		emit_line_0(ecbdata->file, set, reset, '+', line, len);
 	else if (new_blank_line_at_eof(ecbdata, line, len))
 		/* Blank line at EOF - paint '+' as well */
-		emit_line(ecbdata->file, ws, reset, line, len);
+		emit_line_0(ecbdata->file, ws, reset, '+', line, len);
 	else {
 		/* Emit just the prefix, then the rest. */
-		emit_line(ecbdata->file, set, reset, line, 1);
-		ws_check_emit(line + 1, len - 1, ecbdata->ws_rule,
+		emit_line_0(ecbdata->file, set, reset, '+', "", 0);
+		ws_check_emit(line, len, ecbdata->ws_rule,
 			      ecbdata->file, set, reset, ws);
 	}
 }
@@ -770,7 +791,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		emit_line(ecbdata->file, color, reset, line, len);
 	} else {
 		ecbdata->lno_in_postimage++;
-		emit_add_line(reset, ecbdata, line, len);
+		emit_add_line(reset, ecbdata, line + 1, len - 1);
 	}
 }
 
