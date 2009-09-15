@@ -296,28 +296,6 @@ static void print_line_count(FILE *file, int count)
 	}
 }
 
-static void copy_file_with_prefix(FILE *file,
-				  int prefix, const char *data, int size,
-				  const char *set, const char *reset)
-{
-	int ch, nl_just_seen = 1;
-	while (0 < size--) {
-		ch = *data++;
-		if (nl_just_seen) {
-			fputs(set, file);
-			putc(prefix, file);
-		}
-		if (ch == '\n') {
-			nl_just_seen = 1;
-			fputs(reset, file);
-		} else
-			nl_just_seen = 0;
-		putc(ch, file);
-	}
-	if (!nl_just_seen)
-		fprintf(file, "%s\n\\ No newline at end of file\n", reset);
-}
-
 static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one)) {
@@ -447,6 +425,38 @@ static void emit_add_line(const char *reset,
 	}
 }
 
+static void emit_rewrite_lines(struct emit_callback *ecb,
+			       int prefix, const char *data, int size)
+{
+	const char *endp = NULL;
+	static const char *nneof = " No newline at end of file\n";
+	const char *old = diff_get_color(ecb->color_diff, DIFF_FILE_OLD);
+	const char *reset = diff_get_color(ecb->color_diff, DIFF_RESET);
+
+	while (0 < size) {
+		int len;
+
+		endp = memchr(data, '\n', size);
+		len = endp ? (endp - data + 1) : size;
+		if (prefix != '+') {
+			ecb->lno_in_preimage++;
+			emit_line_0(ecb->file, old, reset, '-',
+				    data, len);
+		} else {
+			ecb->lno_in_postimage++;
+			emit_add_line(reset, ecb, data, len);
+		}
+		size -= len;
+		data += len;
+	}
+	if (!endp) {
+		const char *plain = diff_get_color(ecb->color_diff,
+						   DIFF_PLAIN);
+		emit_line_0(ecb->file, plain, reset, '\\',
+			    nneof, strlen(nneof));
+	}
+}
+
 static void emit_rewrite_diff(const char *name_a,
 			      const char *name_b,
 			      struct diff_filespec *one,
@@ -458,10 +468,23 @@ static void emit_rewrite_diff(const char *name_a,
 	const char *name_a_tab, *name_b_tab;
 	const char *metainfo = diff_get_color(color_diff, DIFF_METAINFO);
 	const char *fraginfo = diff_get_color(color_diff, DIFF_FRAGINFO);
-	const char *old = diff_get_color(color_diff, DIFF_FILE_OLD);
-	const char *new = diff_get_color(color_diff, DIFF_FILE_NEW);
 	const char *reset = diff_get_color(color_diff, DIFF_RESET);
 	static struct strbuf a_name = STRBUF_INIT, b_name = STRBUF_INIT;
+	struct emit_callback ecbdata;
+
+	memset(&ecbdata, 0, sizeof(ecbdata));
+	ecbdata.color_diff = color_diff;
+	ecbdata.found_changesp = &o->found_changes;
+	ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
+	ecbdata.file = o->file;
+	if (ecbdata.ws_rule & WS_BLANK_AT_EOF) {
+		mmfile_t mf1, mf2;
+		fill_mmfile(&mf1, one);
+		fill_mmfile(&mf2, two);
+		check_blank_at_eof(&mf1, &mf2, &ecbdata);
+	}
+	ecbdata.lno_in_preimage = 1;
+	ecbdata.lno_in_postimage = 1;
 
 	name_a += (*name_a == '/');
 	name_b += (*name_b == '/');
@@ -486,9 +509,9 @@ static void emit_rewrite_diff(const char *name_a,
 	print_line_count(o->file, lc_b);
 	fprintf(o->file, " @@%s\n", reset);
 	if (lc_a)
-		copy_file_with_prefix(o->file, '-', one->data, one->size, old, reset);
+		emit_rewrite_lines(&ecbdata, '-', one->data, one->size);
 	if (lc_b)
-		copy_file_with_prefix(o->file, '+', two->data, two->size, new, reset);
+		emit_rewrite_lines(&ecbdata, '+', two->data, two->size);
 }
 
 struct diff_words_buffer {
