@@ -1876,18 +1876,30 @@ _git_show_branch ()
 
 _git_stash ()
 {
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local save_opts='--keep-index --no-keep-index --quiet --patch'
 	local subcommands='save list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
-		__gitcomp "$subcommands"
+		case "$cur" in
+		--*)
+			__gitcomp "$save_opts"
+			;;
+		*)
+			if [ -z "$(__git_find_on_cmdline "$save_opts")" ]; then
+				__gitcomp "$subcommands"
+			else
+				COMPREPLY=()
+			fi
+			;;
+		esac
 	else
-		local cur="${COMP_WORDS[COMP_CWORD]}"
 		case "$subcommand,$cur" in
 		save,--*)
-			__gitcomp "--keep-index"
+			__gitcomp "$save_opts"
 			;;
 		apply,--*|pop,--*)
-			__gitcomp "--index"
+			__gitcomp "--index --quiet"
 			;;
 		show,--*|drop,--*|branch,--*)
 			COMPREPLY=()
