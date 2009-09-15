@@ -193,7 +193,7 @@ test_expect_success 'do not color trailing cr in context' '
 test_expect_success 'color new trailing blank lines' '
 	{ echo a; echo b; echo; echo; } >x &&
 	git add x &&
-	{ echo a; echo; echo; echo; echo; } >x &&
+	{ echo a; echo; echo; echo; echo c; echo; echo; echo; echo; } >x &&
 	git diff --color x >output &&
 	cnt=$(grep "${blue_grep}" output | wc -l) &&
 	test $cnt = 2

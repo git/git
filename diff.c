@@ -491,8 +491,10 @@ struct emit_callback {
 	struct xdiff_emit_state xm;
 	int color_diff;
 	unsigned ws_rule;
-	int blank_at_eof;
+	int blank_at_eof_in_preimage;
+	int blank_at_eof_in_postimage;
 	int lno_in_preimage;
+	int lno_in_postimage;
 	sane_truncate_fn truncate;
 	const char **label_path;
 	struct diff_words_data *diff_words;
@@ -542,6 +544,17 @@ static void emit_line(FILE *file, const char *set, const char *reset, const char
 		fputc('\n', file);
 }
 
+static int new_blank_line_at_eof(struct emit_callback *ecbdata, const char *line, int len)
+{
+	if (!((ecbdata->ws_rule & WS_BLANK_AT_EOF) &&
+	      ecbdata->blank_at_eof_in_preimage &&
+	      ecbdata->blank_at_eof_in_postimage &&
+	      ecbdata->blank_at_eof_in_preimage <= ecbdata->lno_in_preimage &&
+	      ecbdata->blank_at_eof_in_postimage <= ecbdata->lno_in_postimage))
+		return 0;
+	return ws_blank_line(line + 1, len - 1, ecbdata->ws_rule);
+}
+
 static void emit_add_line(const char *reset, struct emit_callback *ecbdata, const char *line, int len)
 {
 	const char *ws = diff_get_color(ecbdata->color_diff, DIFF_WHITESPACE);
@@ -549,11 +562,8 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 
 	if (!*ws)
 		emit_line(ecbdata->file, set, reset, line, len);
-	else if ((ecbdata->ws_rule & WS_BLANK_AT_EOF) &&
-		 ecbdata->blank_at_eof &&
-		 (ecbdata->blank_at_eof <= ecbdata->lno_in_preimage) &&
-		 ws_blank_line(line + 1, len - 1, ecbdata->ws_rule))
-		/* Blank line at EOF */
+	else if (new_blank_line_at_eof(ecbdata, line, len))
+		/* Blank line at EOF - paint '+' as well */
 		emit_line(ecbdata->file, ws, reset, line, len);
 	else {
 		/* Emit just the prefix, then the rest. */
@@ -581,12 +591,19 @@ static unsigned long sane_truncate_line(struct emit_callback *ecb, char *line, u
 	return allot - l;
 }
 
-static int find_preimage_lno(const char *line)
+static void find_lno(const char *line, struct emit_callback *ecbdata)
 {
-	char *p = strchr(line, '-');
+	const char *p;
+	ecbdata->lno_in_preimage = 0;
+	ecbdata->lno_in_postimage = 0;
+	p = strchr(line, '-');
 	if (!p)
-		return 0; /* should not happen */
-	return strtol(p+1, NULL, 10);
+		return; /* cannot happen */
+	ecbdata->lno_in_preimage = strtol(p + 1, NULL, 10);
+	p = strchr(p, '+');
+	if (!p)
+		return; /* cannot happen */
+	ecbdata->lno_in_postimage = strtol(p + 1, NULL, 10);
 }
 
 static void fn_out_consume(void *priv, char *line, unsigned long len)
@@ -613,7 +630,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 
 	if (line[0] == '@') {
 		len = sane_truncate_line(ecbdata, line, len);
-		ecbdata->lno_in_preimage = find_preimage_lno(line);
+		find_lno(line, ecbdata);
 		emit_line(ecbdata->file,
 			  diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO),
 			  reset, line, len);
@@ -651,10 +668,13 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 			diff_get_color(ecbdata->color_diff,
 				       line[0] == '-' ? DIFF_FILE_OLD : DIFF_PLAIN);
 		ecbdata->lno_in_preimage++;
+		if (line[0] == ' ')
+			ecbdata->lno_in_postimage++;
 		emit_line(ecbdata->file, color, reset, line, len);
-		return;
+	} else {
+		ecbdata->lno_in_postimage++;
+		emit_add_line(reset, ecbdata, line, len);
 	}
-	emit_add_line(reset, ecbdata, line, len);
 }
 
 static char *pprint_rename(const char *a, const char *b)
@@ -1470,16 +1490,23 @@ static int count_trailing_blank(mmfile_t *mf, unsigned ws_rule)
 	return cnt;
 }
 
-static int adds_blank_at_eof(mmfile_t *mf1, mmfile_t *mf2, unsigned ws_rule)
+static void check_blank_at_eof(mmfile_t *mf1, mmfile_t *mf2,
+			       struct emit_callback *ecbdata)
 {
 	int l1, l2, at;
+	unsigned ws_rule = ecbdata->ws_rule;
 	l1 = count_trailing_blank(mf1, ws_rule);
 	l2 = count_trailing_blank(mf2, ws_rule);
-	if (l2 <= l1)
-		return 0;
-	/* starting where? */
+	if (l2 <= l1) {
+		ecbdata->blank_at_eof_in_preimage = 0;
+		ecbdata->blank_at_eof_in_postimage = 0;
+		return;
+	}
 	at = count_lines(mf1->ptr, mf1->size);
-	return (at - l1) + 1; /* the line number counts from 1 */
+	ecbdata->blank_at_eof_in_preimage = (at - l1) + 1;
+
+	at = count_lines(mf2->ptr, mf2->size);
+	ecbdata->blank_at_eof_in_postimage = (at - l2) + 1;
 }
 
 static void builtin_diff(const char *name_a,
@@ -1572,8 +1599,7 @@ static void builtin_diff(const char *name_a,
 		ecbdata.found_changesp = &o->found_changes;
 		ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
 		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
-			ecbdata.blank_at_eof =
-				adds_blank_at_eof(&mf1, &mf2, ecbdata.ws_rule);
+			check_blank_at_eof(&mf1, &mf2, &ecbdata);
 		ecbdata.file = o->file;
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
@@ -1699,7 +1725,13 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		xdi_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 
 		if (data.ws_rule & WS_BLANK_AT_EOF) {
-			int blank_at_eof = adds_blank_at_eof(&mf1, &mf2, data.ws_rule);
+			struct emit_callback ecbdata;
+			int blank_at_eof;
+
+			ecbdata.ws_rule = data.ws_rule;
+			check_blank_at_eof(&mf1, &mf2, &ecbdata);
+			blank_at_eof = ecbdata.blank_at_eof_in_preimage;
+
 			if (blank_at_eof) {
 				static char *err;
 				if (!err)
