@@ -1780,7 +1780,7 @@ _git_reset ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		__gitcomp "--merge --mixed --hard --soft"
+		__gitcomp "--merge --mixed --hard --soft --patch"
 		return
 		;;
 	esac
