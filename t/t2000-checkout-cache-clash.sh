@@ -48,4 +48,13 @@ test_expect_success \
     'git checkout-index conflicting paths.' \
     'test -f path0 && test -d path1 && test -f path1/file1'
 
+test_expect_success SYMLINKS 'checkout-index -f twice with --prefix' '
+	mkdir -p tar/get &&
+	ln -s tar/get there &&
+	echo first &&
+	git checkout-index -a -f --prefix=there/ &&
+	echo second &&
+	git checkout-index -a -f --prefix=there/
+'
+
 test_done
