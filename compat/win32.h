@@ -1,3 +1,6 @@
+#ifndef WIN32_H
+#define WIN32_H
+
 /* common Win32 functions for MinGW and Cygwin */
 #include <windows.h>
 
@@ -32,3 +35,5 @@ static inline int get_file_attr(const char *fname, WIN32_FILE_ATTRIBUTE_DATA *fd
 		return ENOENT;
 	}
 }
+
+#endif
