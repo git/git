@@ -41,6 +41,7 @@ struct passwd {
 
 extern char *getpass(const char *prompt);
 
+#ifndef POLLIN
 struct pollfd {
 	int fd;           /* file descriptor */
 	short events;     /* requested events */
@@ -48,6 +49,7 @@ struct pollfd {
 };
 #define POLLIN 1
 #define POLLHUP 2
+#endif
 
 typedef void (__cdecl *sig_handler_t)(int);
 struct sigaction {

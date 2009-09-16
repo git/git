@@ -3,6 +3,8 @@
 #include <conio.h>
 #include "../strbuf.h"
 
+#include <shellapi.h>
+
 static int err_win_to_posix(DWORD winerr)
 {
 	int error = ENOSYS;

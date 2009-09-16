@@ -65,6 +65,12 @@
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
 
+#ifdef WIN32 /* Both MinGW and MSVC */
+#define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
+#include <winsock2.h>
+#include <windows.h>
+#endif
+
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/stat.h>

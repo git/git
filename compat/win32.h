@@ -2,7 +2,9 @@
 #define WIN32_H
 
 /* common Win32 functions for MinGW and Cygwin */
+#ifndef WIN32         /* Not defined by Cygwin */
 #include <windows.h>
+#endif
 
 static inline int file_attr_to_st_mode (DWORD attr)
 {
