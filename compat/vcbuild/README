@@ -33,7 +33,18 @@ The Steps of Build Git with VS2008
        make common-cmds.h
    to generate the common-cmds.h file needed to compile git.
 
-4. Then build Git with the GNU Make Makefile in the Git projects root
+4. Then either build Git with the GNU Make Makefile in the Git projects
+   root
        make MSVC=1
+   or generate Visual Studio solution/projects (.sln/.vcproj) with the
+   command
+       perl contrib/buildsystems/generate -g Vcproj
+   and open and build the solution with the IDE
+       devenv git.sln /useenv
+   or build with the IDE build engine directly from the command line
+       devenv git.sln /useenv /build "Release|Win32"
+   The /useenv option is required, so Visual Studio picks up the
+   environment variables for the support libraries required to build
+   Git, which you set up in step 1.
 
 Done!
