@@ -134,6 +134,7 @@ fail_pipe:
 		error("cannot fork() for %s: %s", cmd->argv[0],
 			strerror(failed_errno = errno));
 #else
+{
 	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
 	const char **sargv = cmd->argv;
 	char **env = environ;
@@ -197,6 +198,7 @@ fail_pipe:
 		dup2(s1, 1), close(s1);
 	if (s2 >= 0)
 		dup2(s2, 2), close(s2);
+}
 #endif
 
 	if (cmd->pid < 0) {
