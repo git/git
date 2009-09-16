@@ -316,7 +316,7 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 }
 
 #ifdef __MINGW32__
-static __stdcall unsigned run_thread(void *data)
+static unsigned __stdcall run_thread(void *data)
 {
 	struct async *async = data;
 	return async->proc(async->fd_for_proc, async->data);
