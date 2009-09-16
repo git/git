@@ -227,12 +227,17 @@ void free_environ(char **env);
 
 /*
  * A replacement of main() that ensures that argv[0] has a path
+ * and that default fmode and std(in|out|err) are in binary mode
  */
 
 #define main(c,v) dummy_decl_mingw_main(); \
 static int mingw_main(); \
 int main(int argc, const char **argv) \
 { \
+	_fmode = _O_BINARY; \
+	_setmode(_fileno(stdin), _O_BINARY); \
+	_setmode(_fileno(stdout), _O_BINARY); \
+	_setmode(_fileno(stderr), _O_BINARY); \
 	argv[0] = xstrdup(_pgmptr); \
 	return mingw_main(argc, argv); \
 } \

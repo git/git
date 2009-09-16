@@ -3,8 +3,6 @@
 #include <conio.h>
 #include "../strbuf.h"
 
-unsigned int _CRT_fmode = _O_BINARY;
-
 static int err_win_to_posix(DWORD winerr)
 {
 	int error = ENOSYS;
