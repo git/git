@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2009, #03; Sun, 13)
-X-master-at: eaf1c941bbc10f5aa67fcf64e316fb548b910cfe
-X-next-at: ad50cbaea8afd009cb843c743b248c53ed6285ee
+Subject: What's cooking in git.git (Sep 2009, #04; Wed, 16)
+X-master-at: 8426f672fc65239135b1f1580bb79ecb16fd05f0
+X-next-at: 63b02d52a162438e5262062b3e6768beb3962be8
 
-What's cooking in git.git (Sep 2009, #03; Sun, 13)
+What's cooking in git.git (Sep 2009, #04; Wed, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -51,75 +51,35 @@ backward compatible.  Currently planeed changes are:
 
    http://thread.gmane.org/gmane.comp.version-control.git/119731/focus=119751
 
-During 1.6.5 cycle, 'next' will hold topics meant for 1.6.5 and 1.7.0.
+We are in pre-release feature freeze.  'next' will hold topics meant for
+1.6.6 and 1.7.0.
 
-I tagged and pushed out 1.6.5-rc1.  As far as I am concered, all the big
-topics eligible for 1.6.5 are now in, except for possibly gfi-options
-series from Sverre.  Updates to subsystems (svn, gitk, gui, and gitweb)
-may still need to be merged in.
-
-I've been hoping to keep this cycle short, and I'm also hoping to tag the
-real 1.6.5 before I vanish for about a week and half later in the
-month. so it looks like there may have to be a 1.6.6 to include the
-leftover topics.
+Except for possibly gfi-options series from Sverre, and updates to
+subsystems (svn, gitk, gui, and gitweb) may still need to be merged in,
+but otherwise 'master' is ready for -rc2.  I am still hoping that I can
+tag the final before I take a vacation starting on 24th for a week, but we
+may have to give the final -rc a week to shake out any possible last
+minute regressions and release 1.6.5 at the beginning of next month.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* jc/merge-saner-messages (2009-09-07) 1 commit
- + merge-recursive: give less scary messages when merge did not start
-
-* rc/maint-http-no-head-pack-check (2009-09-09) 1 commit.
+* rc/maint-http-no-head-pack-check (2009-09-14) 2 commits.
+ + http.c: avoid freeing an uninitialized pointer
  + http.c: remove verification of remote packs
 
-* db/vcs-helper (2009-09-03) 16 commits
- + Use a clearer style to issue commands to remote helpers
- + Make the "traditionally-supported" URLs a special case
-  (merged to 'next' on 2009-08-07 at f3533ba)
- + Makefile: install hardlinks for git-remote-<scheme> supported by libcurl if possible
- + Makefile: do not link three copies of git-remote-* programs
- + Makefile: git-http-fetch does not need expat
- + http-fetch: Fix Makefile dependancies
- + Add transport native helper executables to .gitignore
- + git-http-fetch: not a builtin
- + Use an external program to implement fetching with curl
- + Add support for external programs for handling native fetches
-
-Up to the part that eject -lcurl from the main "git" binary cleanly are
-now in 'master', with a few fix-ups from Jim Mayering.
-
-* cb/maint-1.6.3-grep-relative-up (2009-09-05) 2 commits.
- + grep: accept relative paths outside current working directory
- + grep: fix exit status if external_grep() punts
-
-* jk/unwanted-advices (2009-09-09) 2 commits
- + status: make "how to stage" messages optional
- + push: make non-fast-forward help message configurable
-
-* jt/pushinsteadof (2009-09-07) 2 commits
- + Add url.<base>.pushInsteadOf: URL rewriting for push only
- + Wrap rewrite globals in a struct in preparation for adding another set
-
-* pk/fast-import-tars (2009-09-03) 1 commit
- + import-tars: Allow per-tar author and commit message.
-
-* pk/fast-import-dirs (2009-09-03) 1 commit
- + Add script for importing bits-and-pieces to Git.
+Graduated to master and maint but then needed a small fixup.
 
 --------------------------------------------------
 [New Topics]
 
-* db/vcs-helper-rest (2009-09-03) 6 commits
- - Allow helpers to report in "list" command that the ref is unchanged
- - Add support for "import" helper command
- - Add a config option for remotes to specify a foreign vcs
- - Allow programs to not depend on remotes having urls
- - Allow fetch to modify refs
- - Use a function to determine whether a remote is valid
- (this branch is used by jh/cvs-helper.)
+* jc/maint-blank-at-eof (2009-09-15) 0 commits.
+ (this branch uses jc/maint-1.6.0-blank-at-eof.)
 
-This is not exactly new.  It holds the remainder of the db/vcs-helper
-topic.
+The series does not have a commit of its own but is a preparation for
+merging the original jc/1.6.0-maint-blank-at-eof topic to 'maint' and then
+'master'.  It is a fix for longstanding bug and 1.6.5 will likely to ship
+without this topic.
 
 --------------------------------------------------
 [Stalled]
@@ -161,6 +121,18 @@ Replaced but I do not think this is ready for 'pu' yet.
 --------------------------------------------------
 [Cooking]
 
+* db/vcs-helper-rest (2009-09-03) 6 commits
+ - Allow helpers to report in "list" command that the ref is unchanged
+ - Add support for "import" helper command
+ - Add a config option for remotes to specify a foreign vcs
+ - Allow programs to not depend on remotes having urls
+ - Allow fetch to modify refs
+ - Use a function to determine whether a remote is valid
+ (this branch is used by jh/cvs-helper.)
+
+This holds the remainder of the db/vcs-helper topic that has already
+merged for 1.6.5.
+
 * jh/notes (2009-09-12) 13 commits
  - Selftests verifying semantics when loading notes trees with various fanouts
  - Teach the notes lookup code to parse notes trees with various fanout schemes
@@ -190,7 +162,16 @@ with ("a" "a-b"), ("a/b" "a-b") and just ("a-b"), but my reading of it is
 that it is just the first step to demonstrate one-entry lookahead and not
 a full solution yet.
 
-* jc/maint-1.6.0-blank-at-eof (2009-09-05) 10 commits.
+I started writing a replacement series but the progress is a bit slower
+than I would have liked.
+
+* jc/maint-1.6.0-blank-at-eof (2009-09-14) 15 commits.
+  (merged to 'next' on 2009-09-15 at 9cbfa00)
+ + diff -B: colour whitespace errors
+ + diff.c: emit_add_line() takes only the rest of the line
+ + diff.c: split emit_line() from the first char and the rest of the line
+ + diff.c: shuffling code around
+ + diff --whitespace: fix blank lines at end
   (merged to 'next' on 2009-09-07 at 165dc3c)
  + core.whitespace: split trailing-space into blank-at-{eol,eof}
  + diff --color: color blank-at-eof
@@ -202,9 +183,13 @@ a full solution yet.
  + apply.c: split check_whitespace() into two
  + apply --whitespace=fix: detect new blank lines at eof correctly
  + apply --whitespace=fix: fix handling of blank lines at the eof
+ (this branch is used by jc/maint-blank-at-eof.)
 
-This started a bit late in the cycle, and I'd rather hold it back during
-this feature freeze and push it out after 1.6.5 final.
+This is a fix for an ancient bug (or inconsistent set of features); the
+topic is based on an ancient codebase and is designed to be merged
+upwards.  jc/maint-blank-at-eof serves that purpose.
+
+Will not be in 1.6.5.
 
 * jn/gitweb-blame (2009-09-01) 5 commits
  - gitweb: Minify gitweb.js if JSMIN is defined
@@ -226,7 +211,7 @@ Ajax-y blame.
  + fast-import: put option parsing code in separate functions
  (this branch is used by jh/notes.)
 
-Perhaps 1.6.5 material but I wasn't sure.
+Ping?
 
 * nd/sparse (2009-08-20) 19 commits
  - sparse checkout: inhibit empty worktree
@@ -314,23 +299,3 @@ Maybe some people care about this.  I dunno.
  . Add initial support for pathname conversion to UTF-8
  . read_directory(): infrastructure for pathname character set conversion
  . Add 'fill_directory()' helper function for directory traversal
-
-* cc/sequencer-rebase-i (2009-08-28) 15 commits
- - rebase -i: use "git sequencer--helper --cherry-pick"
- - sequencer: add "--cherry-pick" option to "git sequencer--helper"
- - sequencer: add "do_commit()" and related functions working on "next_commit"
- - pick: libify "pick_help_msg()"
- - revert: libify cherry-pick and revert functionnality
- - rebase -i: use "git sequencer--helper --fast-forward"
- - sequencer: let "git sequencer--helper" callers set "allow_dirty"
- - sequencer: add "--fast-forward" option to "git sequencer--helper"
- - sequencer: add "do_fast_forward()" to perform a fast forward
- - rebase -i: use "git sequencer--helper --reset-hard"
- - sequencer: add "--reset-hard" option to "git sequencer--helper"
- - sequencer: add "reset_almost_hard()" and related functions
- - rebase -i: use "git sequencer--helper --make-patch"
- - sequencer: add "make_patch" function to save a patch
- - sequencer: add "builtin-sequencer--helper.c"
-
-This was to be replaced with multiple bite-sized smaller topics.  We've
-seen one such topic for "git reset" on the list.
