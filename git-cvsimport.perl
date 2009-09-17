@@ -253,6 +253,7 @@ sub conn {
 					}
 				}
 			};
+			$pass = "A" unless $pass;
 		}
 
 		my ($s, $rep);
