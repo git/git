@@ -22,15 +22,15 @@
 #include <pthread.h>
 #endif
 
-static const char pack_usage[] = "\
-git pack-objects [{ -q | --progress | --all-progress }] \n\
-	[--max-pack-size=N] [--local] [--incremental] \n\
-	[--window=N] [--window-memory=N] [--depth=N] \n\
-	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
-	[--threads=N] [--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
-	[--stdout | base-name] [--include-tag] \n\
-	[--keep-unreachable | --unpack-unreachable] \n\
-	[<ref-list | <object-list]";
+static const char pack_usage[] =
+  "git pack-objects [{ -q | --progress | --all-progress }]\n"
+  "        [--max-pack-size=N] [--local] [--incremental]\n"
+  "        [--window=N] [--window-memory=N] [--depth=N]\n"
+  "        [--no-reuse-delta] [--no-reuse-object] [--delta-base-offset]\n"
+  "        [--threads=N] [--non-empty] [--revs [--unpacked | --all]*]\n"
+  "        [--reflog] [--stdout | base-name] [--include-tag]\n"
+  "        [--keep-unreachable | --unpack-unreachable \n"
+  "        [<ref-list | <object-list]";
 
 struct object_entry {
 	struct pack_idx_entry idx;
