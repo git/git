@@ -76,7 +76,7 @@ test_expect_failure '3-way (2)' '
 	EOF
 '
 
-test_expect_success '3-way (3)' '
+test_expect_failure '3-way (3)' '
 	settree A-010 &&
 	git read-tree -m -u O-010 A-010 B-010 &&
 	checkindex <<-EOF
@@ -90,7 +90,7 @@ test_expect_success '3-way (3)' '
 	EOF
 '
 
-test_expect_success '2-way (1)' '
+test_expect_failure '2-way (1)' '
 	settree O-020 &&
 	git read-tree -m -u O-020 A-020 &&
 	checkindex <<-EOF
