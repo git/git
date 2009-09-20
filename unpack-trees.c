@@ -617,7 +617,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 			 * found "foo/." in the working tree.
 			 * This is tricky -- if we have modified
 			 * files that are in "foo/" we would lose
-			 * it.
+			 * them.
 			 */
 			ret = verify_clean_subdirectory(ce, action, o);
 			if (ret < 0)
