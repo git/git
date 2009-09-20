@@ -26,8 +26,6 @@ read_tree_twoway () {
     git read-tree -m "$1" "$2" && git ls-files --stage
 }
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 compare_change () {
 	sed -n >current \
 	    -e '/^--- /d; /^+++ /d; /^@@ /d;' \
