@@ -231,9 +231,37 @@ static int unpack_index_entry(struct cache_entry *ce,
 	return ret;
 }
 
+static int find_cache_pos(struct traverse_info *, const struct name_entry *);
+
+static void restore_cache_bottom(struct traverse_info *info, int bottom)
+{
+	struct unpack_trees_options *o = info->data;
+
+	if (o->diff_index_cached)
+		return;
+	o->cache_bottom = bottom;
+}
+
+static int switch_cache_bottom(struct traverse_info *info)
+{
+	struct unpack_trees_options *o = info->data;
+	int ret, pos;
+
+	if (o->diff_index_cached)
+		return 0;
+	ret = o->cache_bottom;
+	pos = find_cache_pos(info->prev, &info->name);
+
+	if (pos < -1)
+		o->cache_bottom = -2 - pos;
+	else if (pos < 0)
+		o->cache_bottom = o->src_index->cache_nr;
+	return ret;
+}
+
 static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
 {
-	int i;
+	int i, ret, bottom;
 	struct tree_desc t[MAX_UNPACK_TREES];
 	struct traverse_info newinfo;
 	struct name_entry *p;
@@ -254,7 +282,11 @@ static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long 
 			sha1 = names[i].sha1;
 		fill_tree_descriptor(t+i, sha1);
 	}
-	return traverse_trees(n, t, &newinfo);
+
+	bottom = switch_cache_bottom(&newinfo);
+	ret = traverse_trees(n, t, &newinfo);
+	restore_cache_bottom(&newinfo, bottom);
+	return ret;
 }
 
 /*
@@ -393,6 +425,82 @@ static int unpack_failed(struct unpack_trees_options *o, const char *message)
 	return -1;
 }
 
+/* NEEDSWORK: give this a better name and share with tree-walk.c */
+static int name_compare(const char *a, int a_len,
+			const char *b, int b_len)
+{
+	int len = (a_len < b_len) ? a_len : b_len;
+	int cmp = memcmp(a, b, len);
+	if (cmp)
+		return cmp;
+	return (a_len - b_len);
+}
+
+/*
+ * The tree traversal is looking at name p.  If we have a matching entry,
+ * return it.  If name p is a directory in the index, do not return
+ * anything, as we will want to match it when the traversal descends into
+ * the directory.
+ */
+static int find_cache_pos(struct traverse_info *info,
+			  const struct name_entry *p)
+{
+	int pos;
+	struct unpack_trees_options *o = info->data;
+	struct index_state *index = o->src_index;
+	int pfxlen = info->pathlen;
+	int p_len = tree_entry_len(p->path, p->sha1);
+
+	for (pos = o->cache_bottom; pos < index->cache_nr; pos++) {
+		struct cache_entry *ce = index->cache[pos];
+		const char *ce_name, *ce_slash;
+		int cmp, ce_len;
+
+		if (!ce_in_traverse_path(ce, info))
+			continue;
+		if (ce->ce_flags & CE_UNPACKED)
+			continue;
+		ce_name = ce->name + pfxlen;
+		ce_slash = strchr(ce_name, '/');
+		if (ce_slash)
+			ce_len = ce_slash - ce_name;
+		else
+			ce_len = ce_namelen(ce) - pfxlen;
+		cmp = name_compare(p->path, p_len, ce_name, ce_len);
+		/*
+		 * Exact match; if we have a directory we need to
+		 * delay returning it.
+		 */
+		if (!cmp)
+			return ce_slash ? -2 - pos : pos;
+		if (0 < cmp)
+			continue; /* keep looking */
+		/*
+		 * ce_name sorts after p->path; could it be that we
+		 * have files under p->path directory in the index?
+		 * E.g.  ce_name == "t-i", and p->path == "t"; we may
+		 * have "t/a" in the index.
+		 */
+		if (p_len < ce_len && !memcmp(ce_name, p->path, p_len) &&
+		    ce_name[p_len] < '/')
+			continue; /* keep looking */
+		break;
+	}
+	return -1;
+}
+
+static struct cache_entry *find_cache_entry(struct traverse_info *info,
+					    const struct name_entry *p)
+{
+	int pos = find_cache_pos(info, p);
+	struct unpack_trees_options *o = info->data;
+
+	if (0 <= pos)
+		return o->src_index->cache[pos];
+	else
+		return NULL;
+}
+
 static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, struct name_entry *names, struct traverse_info *info)
 {
 	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
@@ -406,8 +514,14 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 	/* Are we supposed to look at the index too? */
 	if (o->merge) {
 		while (1) {
-			struct cache_entry *ce = next_cache_entry(o);
 			int cmp;
+			struct cache_entry *ce;
+
+			if (o->diff_index_cached)
+				ce = next_cache_entry(o);
+			else
+				ce = find_cache_entry(info, p);
+
 			if (!ce)
 				break;
 			cmp = compare_entry(ce, info, p);

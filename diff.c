@@ -3628,6 +3628,23 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 	*q = outq;
 }
 
+static int diffnamecmp(const void *a_, const void *b_)
+{
+	const struct diff_filepair *a = *((const struct diff_filepair **)a_);
+	const struct diff_filepair *b = *((const struct diff_filepair **)b_);
+	const char *name_a, *name_b;
+
+	name_a = a->one ? a->one->path : a->two->path;
+	name_b = b->one ? b->one->path : b->two->path;
+	return strcmp(name_a, name_b);
+}
+
+void diffcore_fix_diff_index(struct diff_options *options)
+{
+	struct diff_queue_struct *q = &diff_queued_diff;
+	qsort(q->queue, q->nr, sizeof(q->queue[0]), diffnamecmp);
+}
+
 void diffcore_std(struct diff_options *options)
 {
 	if (options->skip_stat_unmatch)
