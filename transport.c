@@ -1001,8 +1001,9 @@ int transport_set_option(struct transport *transport,
 
 int transport_push(struct transport *transport,
 		   int refspec_nr, const char **refspec, int flags,
-		   int * nonfastforward)
+		   int *nonfastforward)
 {
+	*nonfastforward = 0;
 	verify_remote_names(refspec_nr, refspec);
 
 	if (transport->push)
