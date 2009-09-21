@@ -111,7 +111,8 @@ if test -z "$browser" ; then
 	browser_candidates="w3m links lynx"
     fi
     # SECURITYSESSIONID indicates an OS X GUI login session
-    if test -n "$SECURITYSESSIONID"; then
+    if test -n "$SECURITYSESSIONID" \
+	    -o "$TERM_PROGRAM" = "Apple_Terminal" ; then
 	browser_candidates="open $browser_candidates"
     fi
     # /bin/start indicates MinGW

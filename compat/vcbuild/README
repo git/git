@@ -1,0 +1,50 @@
+The Steps of Build Git with VS2008
+
+1. You need the build environment, which contains the Git dependencies
+   to be able to compile, link and run Git with MSVC.
+
+   You can either use the binary repository:
+
+       WWW: http://repo.or.cz/w/msvcgit.git
+       Git: git clone git://repo.or.cz/msvcgit.git
+       Zip: http://repo.or.cz/w/msvcgit.git?a=snapshot;h=master;sf=zip
+
+   and call the setup_32bit_env.cmd batch script before compiling Git,
+   (see repo/package README for details), or the source repository:
+
+       WWW: http://repo.or.cz/w/gitbuild.git
+       Git: git clone git://repo.or.cz/gitbuild.git
+       Zip: (None, as it's a project with submodules)
+
+   and build the support libs as instructed in that repo/package.
+
+2. Ensure you have the msysgit environment in your path, so you have
+   GNU Make, bash and perl available.
+
+       WWW: http://repo.or.cz/w/msysgit.git
+       Git: git clone git://repo.or.cz/msysgit.git
+       Zip: http://repo.or.cz/w/msysgit.git?a=snapshot;h=master;sf=zip
+
+   This environment is also needed when you use the resulting
+   executables, since Git might need to run scripts which are part of
+   the git operations.
+
+3. Inside Git's directory run the command:
+       make common-cmds.h
+   to generate the common-cmds.h file needed to compile git.
+
+4. Then either build Git with the GNU Make Makefile in the Git projects
+   root
+       make MSVC=1
+   or generate Visual Studio solution/projects (.sln/.vcproj) with the
+   command
+       perl contrib/buildsystems/generate -g Vcproj
+   and open and build the solution with the IDE
+       devenv git.sln /useenv
+   or build with the IDE build engine directly from the command line
+       devenv git.sln /useenv /build "Release|Win32"
+   The /useenv option is required, so Visual Studio picks up the
+   environment variables for the support libraries required to build
+   Git, which you set up in step 1.
+
+Done!

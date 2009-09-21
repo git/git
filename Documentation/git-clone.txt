@@ -130,7 +130,7 @@ objects from the source repository into a pack in the cloned repository.
 --branch <name>::
 -b <name>::
 	Instead of pointing the newly created HEAD to the branch pointed
-	to by the cloned repositoroy's HEAD, point to <name> branch
+	to by the cloned repository's HEAD, point to <name> branch
 	instead. In a non-bare repository, this is the branch that will
 	be checked out.
 

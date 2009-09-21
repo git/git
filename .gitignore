@@ -179,3 +179,14 @@ configure
 tags
 TAGS
 cscope*
+*.obj
+*.lib
+*.sln
+*.suo
+*.ncb
+*.vcproj
+*.user
+*.idb
+*.pdb
+Debug/
+Release/
