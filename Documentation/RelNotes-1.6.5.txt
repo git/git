@@ -32,7 +32,7 @@ Updates since v1.6.4
 
 (subsystems)
 
- * various updates to git-svn and gitweb.
+ * various updates to gitk, git-svn and gitweb.
 
 (portability)
 
@@ -41,12 +41,14 @@ Updates since v1.6.4
  * mingw will also give FRSX as the default value for the LESS
    environment variable when the user does not have one.
 
+ * initial support to compile git on Windows with MSVC.
+
 (performance)
 
  * On major platforms, the system can be compiled to use with Linus's
    block-sha1 implementation of the SHA-1 hash algorithm, which
    outperforms the default fallback implementation we borrowed from
-   Mozzilla.
+   Mozilla.
 
  * Unnecessary inefficiency in deepening of a shallow repository has
    been removed.
@@ -84,11 +86,20 @@ Updates since v1.6.4
  * "git am" learned "--scissors" option to allow you to discard early part
    of an incoming e-mail.
 
+ * "git archive -o output.zip" works without being told what format to
+   use with an explicit "--format=zip".option.
+
  * "git checkout", "git reset" and "git stash" learned to pick and
    choose to use selected changes you made, similar to "git add -p".
 
  * "git clone" learned a "-b" option to pick a HEAD to check out
    different from the remote's default branch.
+
+ * "git clone" learned --recursive option.
+
+ * "git clone" from a local repository on a different filesystem used to
+   copy individual object files without preserving the old timestamp, giving
+   them extra lifetime in the new repository until they gc'ed.
 
  * "git commit --dry-run $args" is a new recommended way to ask "what would
    happen if I try to commit with these arguments."
@@ -155,7 +166,6 @@ Fixes since v1.6.4
 
 --
 exec >/var/tmp/1
-O=v1.6.4.2-298-gdf01e7c
-O=v1.6.5-rc0-49-g5f2b1e6
+O=v1.6.5-rc1-44-ga16753d
 echo O=$(git describe master)
 git shortlog --no-merges $O..master --not maint
