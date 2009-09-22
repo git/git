@@ -81,7 +81,7 @@ couple of magic command line options:
 +
 ---------------------------------------------
 $ git describe -h
-usage: git-describe [options] <committish>*
+usage: git describe [options] <committish>*
 
     --contains            find the tag that comes after the commit
     --debug               debug search strategy on stderr
