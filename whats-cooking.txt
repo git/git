@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2009, #04; Wed, 16)
-X-master-at: 8426f672fc65239135b1f1580bb79ecb16fd05f0
-X-next-at: 63b02d52a162438e5262062b3e6768beb3962be8
+Subject: What's cooking in git.git (Sep 2009, #05; Wed, 23)
+X-master-at: a6dbf8814f433a7fbfa9cde6333c98019f6db1e4
+X-next-at: a9dd6c4e8ab38f5c4af9c0710381d3844f1d904f
 
-What's cooking in git.git (Sep 2009, #04; Wed, 16)
+What's cooking in git.git (Sep 2009, #05; Wed, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -54,32 +54,50 @@ backward compatible.  Currently planeed changes are:
 We are in pre-release feature freeze.  'next' will hold topics meant for
 1.6.6 and 1.7.0.
 
-Except for possibly gfi-options series from Sverre, and updates to
-subsystems (svn, gitk, gui, and gitweb) may still need to be merged in,
-but otherwise 'master' is ready for -rc2.  I am still hoping that I can
-tag the final before I take a vacation starting on 24th for a week, but we
-may have to give the final -rc a week to shake out any possible last
-minute regressions and release 1.6.5 at the beginning of next month.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* rc/maint-http-no-head-pack-check (2009-09-14) 2 commits.
- + http.c: avoid freeing an uninitialized pointer
- + http.c: remove verification of remote packs
-
-Graduated to master and maint but then needed a small fixup.
+Tonight's tip of 'master' is 1.6.5-rc2, and I'll disappear for about a
+week.  Hopefully when I come back in early October all the regressions are
+found and already squashed ;-)
 
 --------------------------------------------------
 [New Topics]
 
-* jc/maint-blank-at-eof (2009-09-15) 0 commits.
- (this branch uses jc/maint-1.6.0-blank-at-eof.)
+* jc/fix-tree-walk (2009-09-14) 9 commits
+ - read-tree --debug-unpack
+ - unpack-trees.c: look ahead in the index
+ - unpack-trees.c: prepare for looking ahead in the index
+ - traverse_trees(): handle D/F conflict case sanely
+ - more D/F conflict tests
+ - tests: move convenience regexp to match object names to test-lib.sh
+ - unpack_callback(): use unpack_failed() consistently
+ - unpack-trees: typofix
+ - diff-lib.c: fix misleading comments on oneway_diff()
 
-The series does not have a commit of its own but is a preparation for
-merging the original jc/1.6.0-maint-blank-at-eof topic to 'maint' and then
-'master'.  It is a fix for longstanding bug and 1.6.5 will likely to ship
-without this topic.
+This is my replacement for Linus's lt/maint-traverse-trees-fix patch.  It
+is not so much as a counter-proposal; I originally thought it might make
+sense to walk the index and drive the walker to return the entries from
+trees to match entries from the index, but I ended up doing pretty much
+what Linus outlined --- walk the trees, and have the index walker follow
+it.  It turned out that the index side also needed some hairy look-ahead,
+and I am only half satisfied with the current status of the series.
+
+To fix the resolve merge regression seen in t6035, git-merge-resolve needs
+to be rewritten not to use the one-path-at-a-time "git merge-index".
+
+* jp/fetch-tag-match (2009-09-17) 1 commit
+ - fetch: Speed up fetch by rewriting find_non_local_tags
+
+I did not have much energy left while dealing with the "fix-tree-walk"
+series, so I just queued this without reading nor thinking about it very
+much.  I personally liked my version that had far smaller number of lines
+changed (which means I can be fairly certain that it did not introduce any
+regression), but perhaps the majorly rewritten logic this patch gives us
+may be easier to follow and maintain.  We'll see.
+
+* jg/log-format-body-indent (2009-09-19) 1 commit
+ - [NEEDSWORK: tests] git-log --format: Add %B tag with %B(x) option
+
+* jl/submodule-add-noname (2009-09-22) 1 commit
+ - git submodule add: make the <path> parameter optional
 
 --------------------------------------------------
 [Stalled]
@@ -88,11 +106,11 @@ without this topic.
   (merged to 'next' on 2009-08-30 at b6455c2)
  + send-email: confirm on empty mail subjects
 
-The existing tests to covers the positive case (i.e. as long as the user
-says "yes" to the "do you really want to send this message that lacks
-subject", the message is sent) of this feature, but the feature itself
-needs its own test to verify the negative case (i.e. does it correctly
-stop if the user says "no"?)
+The existing tests cover the positive case (i.e. as long as the user says
+"yes" to the "do you really want to send this message that lacks subject",
+the message is sent) of this feature, but the feature itself needs its own
+test to verify the negative case (i.e. does it correctly stop if the user
+says "no"?)
 
 * jh/cvs-helper (2009-08-18) 8 commits
  - More fixes to the git-remote-cvs installation procedure
@@ -108,18 +126,27 @@ stop if the user says "no"?)
 Builds on db/vcs-helper.  There is a re-roll planned.
 
 * ne/rev-cache (2009-09-07) 7 commits
- . support for commit grafts, slight change to general mechanism
- . support for path name caching in rev-cache
- . full integration of rev-cache into git, completed test suite
- . administrative functions for rev-cache, start of integration into git
- . support for non-commit object caching in rev-cache
- . basic revision cache system, no integration or features
- . man page and technical discussion for rev-cache
+ - support for commit grafts, slight change to general mechanism
+ - support for path name caching in rev-cache
+ - full integration of rev-cache into git, completed test suite
+ - administrative functions for rev-cache, start of integration into git
+ - support for non-commit object caching in rev-cache
+ - basic revision cache system, no integration or features
+ - man page and technical discussion for rev-cache
 
-Replaced but I do not think this is ready for 'pu' yet.
+Tonight's 'pu' ships with this and this series seems to break a few
+tests.  I didn't debug.
 
 --------------------------------------------------
 [Cooking]
+
+* jc/maint-blank-at-eof (2009-09-15) 0 commits.
+ (this branch uses jc/maint-1.6.0-blank-at-eof.)
+
+The series does not have a commit of its own but is a preparation for
+merging the original jc/1.6.0-maint-blank-at-eof topic to 'maint' and then
+'master'.  It is a fix for longstanding bug and 1.6.5 will not contain
+this topic.
 
 * db/vcs-helper-rest (2009-09-03) 6 commits
  - Allow helpers to report in "list" command that the ref is unchanged
@@ -155,15 +182,9 @@ Rerolled and queued.
  - gitweb: Add 'show-sizes' feature to show blob sizes in tree view
 
 * lt/maint-traverse-trees-fix (2009-09-06) 1 commit.
- - Prepare 'traverse_trees()' for D/F conflict lookahead
+ . Prepare 'traverse_trees()' for D/F conflict lookahead
 
-Beginning of the fix to a rather nasty longstanding issue of merging trees
-with ("a" "a-b"), ("a/b" "a-b") and just ("a-b"), but my reading of it is
-that it is just the first step to demonstrate one-entry lookahead and not
-a full solution yet.
-
-I started writing a replacement series but the progress is a bit slower
-than I would have liked.
+Ejected from 'pu' (see jc/fix-tree-walk above).
 
 * jc/maint-1.6.0-blank-at-eof (2009-09-14) 15 commits.
   (merged to 'next' on 2009-09-15 at 9cbfa00)
@@ -299,3 +320,26 @@ Maybe some people care about this.  I dunno.
  . Add initial support for pathname conversion to UTF-8
  . read_directory(): infrastructure for pathname character set conversion
  . Add 'fill_directory()' helper function for directory traversal
+
+* cc/reset-merge (2009-09-16) 4 commits
+ . reset: add test cases for "--merge-safe" option
+ . reset: add option "--merge-safe" to "git reset"
+ . reset: use "unpack_trees()" directly instead of "git read-tree"
+ . reset: add a few tests for "git reset --merge"
+
+* cc/sequencer-rebase-i (2009-08-28) 15 commits
+ . rebase -i: use "git sequencer--helper --cherry-pick"
+ . sequencer: add "--cherry-pick" option to "git sequencer--helper"
+ . sequencer: add "do_commit()" and related functions working on "next_commit"
+ . pick: libify "pick_help_msg()"
+ . revert: libify cherry-pick and revert functionnality
+ . rebase -i: use "git sequencer--helper --fast-forward"
+ . sequencer: let "git sequencer--helper" callers set "allow_dirty"
+ . sequencer: add "--fast-forward" option to "git sequencer--helper"
+ . sequencer: add "do_fast_forward()" to perform a fast forward
+ . rebase -i: use "git sequencer--helper --reset-hard"
+ . sequencer: add "--reset-hard" option to "git sequencer--helper"
+ . sequencer: add "reset_almost_hard()" and related functions
+ . rebase -i: use "git sequencer--helper --make-patch"
+ . sequencer: add "make_patch" function to save a patch
+ . sequencer: add "builtin-sequencer--helper.c"
