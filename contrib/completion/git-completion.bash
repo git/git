@@ -810,7 +810,21 @@ _git_checkout ()
 {
 	__git_has_doubledash && return
 
-	__gitcomp "$(__git_refs)"
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--conflict=*)
+		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
+		;;
+	--*)
+		__gitcomp "
+			--quiet --ours --theirs --track --no-track --merge
+			--conflict= --patch
+			"
+		;;
+	*)
+		__gitcomp "$(__git_refs)"
+		;;
+	esac
 }
 
 _git_cherry ()
