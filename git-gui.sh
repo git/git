@@ -1134,6 +1134,7 @@ set current_branch {}
 set is_detached 0
 set current_diff_path {}
 set is_3way_diff 0
+set is_submodule_diff 0
 set is_conflict_diff 0
 set selected_commit_type new
 set diff_empty_count 0
