@@ -230,6 +230,9 @@ is_abbreviated:
 				abbrev_flags = flags;
 				continue;
 			}
+			/* negation allowed? */
+			if (options->flags & PARSE_OPT_NONEG)
+				continue;
 			/* negated and abbreviated very much? */
 			if (!prefixcmp("no-", arg)) {
 				flags |= OPT_UNSET;
