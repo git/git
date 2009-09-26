@@ -5196,8 +5196,11 @@ sub git_snapshot {
 		die_error(403, "Unsupported snapshot format");
 	}
 
-	if (!defined $hash) {
-		$hash = git_get_head_hash($project);
+	my $type = git_get_type("$hash^{}");
+	if (!$type) {
+		die_error(404, 'Object does not exist');
+	}  elsif ($type eq 'blob') {
+		die_error(400, 'Object is not a tree-ish');
 	}
 
 	my $name = $project;
