@@ -329,24 +329,28 @@ static void remove_junk_on_signal(int signo)
 	raise(signo);
 }
 
-static struct ref *write_remote_refs(const struct ref *refs,
-		struct refspec *refspec, const char *reflog)
+static struct ref *wanted_peer_refs(const struct ref *refs,
+		struct refspec *refspec)
 {
 	struct ref *local_refs = NULL;
 	struct ref **tail = &local_refs;
-	struct ref *r;
 
 	get_fetch_map(refs, refspec, &tail, 0);
 	if (!option_mirror)
 		get_fetch_map(refs, tag_refspec, &tail, 0);
+
+	return local_refs;
+}
+
+static void write_remote_refs(const struct ref *local_refs)
+{
+	const struct ref *r;
 
 	for (r = local_refs; r; r = r->next)
 		add_extra_ref(r->peer_ref->name, r->old_sha1, 0);
 
 	pack_refs(PACK_REFS_ALL);
 	clear_extra_refs();
-
-	return local_refs;
 }
 
 int cmd_clone(int argc, const char **argv, const char *prefix)
@@ -495,9 +499,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	strbuf_reset(&value);
 
-	if (path && !is_bundle)
+	if (path && !is_bundle) {
 		refs = clone_local(path, git_dir);
-	else {
+		mapped_refs = wanted_peer_refs(refs, refspec);
+	} else {
 		struct remote *remote = remote_get(argv[0]);
 		transport = transport_get(remote, remote->url[0]);
 
@@ -520,14 +525,16 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 					     option_upload_pack);
 
 		refs = transport_get_remote_refs(transport);
-		if (refs)
-			transport_fetch_refs(transport, refs);
+		if (refs) {
+			mapped_refs = wanted_peer_refs(refs, refspec);
+			transport_fetch_refs(transport, mapped_refs);
+		}
 	}
 
 	if (refs) {
 		clear_extra_refs();
 
-		mapped_refs = write_remote_refs(refs, refspec, reflog_msg.buf);
+		write_remote_refs(mapped_refs);
 
 		remote_head = find_ref_by_name(refs, "HEAD");
 		remote_head_points_at =
