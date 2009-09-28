@@ -89,6 +89,7 @@ error_on_no_merge_candidates () {
 	done
 
 	curr_branch=${curr_branch#refs/heads/}
+	upstream=$(git config "branch.$curr_branch.merge")
 
 	if [ -z "$curr_branch" ]; then
 		echo "You are not currently on a branch, so I cannot use any"
@@ -96,7 +97,7 @@ error_on_no_merge_candidates () {
 		echo "Please specify which branch you want to merge on the command"
 		echo "line and try again (e.g. 'git pull <repository> <refspec>')."
 		echo "See git-pull(1) for details."
-	else
+	elif [ -z "$upstream" ]; then
 		echo "You asked me to pull without telling me which branch you"
 		echo "want to merge with, and 'branch.${curr_branch}.merge' in"
 		echo "your configuration file does not tell me either.	Please"
@@ -114,6 +115,10 @@ error_on_no_merge_candidates () {
 		echo "    remote.<nickname>.fetch = <refspec>"
 		echo
 		echo "See git-config(1) for details."
+	else
+		echo "Your configuration specifies to merge the ref"
+		echo "'${upstream#refs/heads/}' from the remote, but no such ref"
+		echo "was fetched."
 	fi
 	exit 1
 }
