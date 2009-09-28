@@ -571,45 +571,29 @@ sub createGlueProject {
         print F "\"${libname}\", \"${libname}\\${libname}.vcproj\", \"${uuid}\"";
         print F "$SLN_POST";
     }
+    my $uuid_libgit = $build_structure{"LIBS_libgit_GUID"};
+    my $uuid_xdiff_lib = $build_structure{"LIBS_xdiff_lib_GUID"};
     foreach (@apps) {
         my $appname = $_;
         my $uuid = $build_structure{"APPS_${appname}_GUID"};
         print F "$SLN_PRE";
-        print F "\"${appname}\", \"${appname}\\${appname}.vcproj\", \"${uuid}\"";
+        print F "\"${appname}\", \"${appname}\\${appname}.vcproj\", \"${uuid}\"\n";
+        print F "	ProjectSection(ProjectDependencies) = postProject\n";
+        print F "		${uuid_libgit} = ${uuid_libgit}\n";
+        print F "		${uuid_xdiff_lib} = ${uuid_xdiff_lib}\n";
+        print F "	EndProjectSection";
         print F "$SLN_POST";
     }
 
     print F << "EOM";
 Global
-	GlobalSection(SolutionConfiguration) = preSolution
-		ConfigName.0 = Debug|Win32
-		ConfigName.1 = Release|Win32
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
 	EndGlobalSection
-	GlobalSection(ProjectDependencies) = postSolution
 EOM
-    foreach (@{$build_structure{"APPS"}}) {
-        my $appname = $_;
-        my $appname_clean = $_;
-        $appname_clean =~ s/\//_/g;
-        $appname_clean =~ s/\.exe//;
-
-        my $uuid = $build_structure{"APPS_${appname_clean}_GUID"};
-        my $dep_index = 0;
-        foreach(@{$build_structure{"APPS_${appname}_LIBS"}}) {
-            my $libname = $_;
-            $libname =~ s/\//_/g;
-            $libname =~ s/\.(a|lib)//;
-            my $libuuid = $build_structure{"LIBS_${libname}_GUID"};
-            if (defined $libuuid) {
-                print F "\t\t${uuid}.${dep_index} = ${libuuid}\n";
-                $dep_index += 1;
-            }
-        }
-    }
-
     print F << "EOM";
-	EndGlobalSection
-	GlobalSection(ProjectConfiguration) = postSolution
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 EOM
     foreach (@libs) {
         my $libname = $_;
@@ -629,10 +613,6 @@ EOM
     }
 
     print F << "EOM";
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-	EndGlobalSection
-	GlobalSection(ExtensibilityAddIns) = postSolution
 	EndGlobalSection
 EndGlobal
 EOM
