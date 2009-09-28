@@ -131,6 +131,7 @@ sub createLibProject {
     $includes =~ s/-I//g;
     mkdir "$target" || die "Could not create the directory $target for lib project!\n";
     open F, ">$target/$target.vcproj" || die "Could not open $target/$target.pro for writing!\n";
+    binmode F, ":crlf";
     print F << "EOM";
 <?xml version="1.0" encoding = "Windows-1252"?>
 <VisualStudioProject
@@ -353,6 +354,7 @@ sub createAppProject {
     $includes =~ s/-I//g;
     mkdir "$target" || die "Could not create the directory $target for lib project!\n";
     open F, ">$target/$target.vcproj" || die "Could not open $target/$target.pro for writing!\n";
+    binmode F, ":crlf";
     print F << "EOM";
 <?xml version="1.0" encoding = "Windows-1252"?>
 <VisualStudioProject
@@ -537,7 +539,7 @@ sub createGlueProject {
     print "Generate solutions file\n";
     $rel_dir = "..\\$rel_dir";
     $rel_dir =~ s/\//\\/g;
-    my $SLN_HEAD = "Microsoft Visual Studio Solution File, Format Version 10.00\n";
+    my $SLN_HEAD = "Microsoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2008\n";
     my $SLN_PRE  = "Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = ";
     my $SLN_POST = "\nEndProject\n";
 
@@ -560,6 +562,7 @@ sub createGlueProject {
     @apps = @tmp;
 
     open F, ">git.sln" || die "Could not open git.sln for writing!\n";
+    binmode F, ":crlf";
     print F "$SLN_HEAD";
     foreach (@libs) {
         my $libname = $_;
