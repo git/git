@@ -176,8 +176,10 @@ extern char *gitbasename(char *);
 
 #ifdef __GNUC__
 #define NORETURN __attribute__((__noreturn__))
+#define NORETURN_PTR __attribute__((__noreturn__))
 #else
 #define NORETURN
+#define NORETURN_PTR
 #ifndef __attribute__
 #define __attribute__(x)
 #endif
@@ -192,7 +194,7 @@ extern NORETURN void die_errno(const char *err, ...) __attribute__((format (prin
 extern int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
 
-extern void set_die_routine(NORETURN void (*routine)(const char *err, va_list params));
+extern void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params));
 
 extern int prefixcmp(const char *str, const char *prefix);
 extern time_t tm_to_time_t(const struct tm *tm);
