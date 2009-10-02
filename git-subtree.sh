@@ -567,8 +567,9 @@ cmd_merge()
 cmd_pull()
 {
 	ensure_clean
-	set -x
-	git pull -s subtree "$@"
+	git fetch "$@" || exit $?
+	revs=FETCH_HEAD
+	cmd_merge
 }
 
 "cmd_$command" "$@"
