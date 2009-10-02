@@ -214,12 +214,14 @@ find_existing_splits()
 		--pretty=format:'START %H%n%s%n%n%b%nEND%n' $revs |
 	while read a b junk; do
 		case "$a" in
-			START) main="$b"; sq="$b" ;;
+			START) sq="$b" ;;
 			git-subtree-mainline:) main="$b" ;;
 			git-subtree-split:) sub="$b" ;;
 			END)
+				debug "  Main is: '$main'"
 				if [ -z "$main" -a -n "$sub" ]; then
 					# squash commits refer to a subtree
+					debug "  Squash: $sq from $sub"
 					cache_set "$sq" "$sub"
 				fi
 				if [ -n "$main" -a -n "$sub" ]; then
