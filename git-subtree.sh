@@ -322,6 +322,7 @@ subtree_for_commit()
 	git ls-tree "$commit" -- "$dir" |
 	while read mode type tree name; do
 		assert [ "$name" = "$dir" ]
+		assert [ "$type" = "tree" ]
 		echo $tree
 		break
 	done
