@@ -36,10 +36,6 @@
 		one of the other git tools that git-subtree calls.  Should
 		detect this situation and print the *real* problem.
 	
-	In fact, the prefix should *not* end with slash, and we
-		should detect (and fix) it if it does.  Otherwise the
-		log message looks weird.
-		
 	"pull --squash" should do fetch-synthesize-merge, but instead just
 		does "pull" directly, which doesn't work at all.
 

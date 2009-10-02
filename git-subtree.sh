@@ -102,7 +102,7 @@ esac
 if [ -z "$prefix" ]; then
 	die "You must provide the --prefix option."
 fi
-dir="$prefix"
+dir="$(dirname "$prefix/.")"
 
 if [ "$command" != "pull" ]; then
 	revs=$(git rev-parse $default --revs-only "$@") || exit $?
@@ -175,7 +175,7 @@ find_latest_squash()
 	sq=
 	main=
 	sub=
-	git log --grep="^git-subtree-dir: $dir\$" \
+	git log --grep="^git-subtree-dir: $dir/*\$" \
 		--pretty=format:'START %H%n%s%n%n%b%nEND%n' HEAD |
 	while read a b junk; do
 		debug "$a $b $junk"
@@ -210,7 +210,7 @@ find_existing_splits()
 	revs="$2"
 	main=
 	sub=
-	git log --grep="^git-subtree-dir: $dir\$" \
+	git log --grep="^git-subtree-dir: $dir/*\$" \
 		--pretty=format:'START %H%n%s%n%n%b%nEND%n' $revs |
 	while read a b junk; do
 		case "$a" in

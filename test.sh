@@ -82,7 +82,7 @@ git branch subdir
 
 git fetch ../subproj sub1
 git branch sub1 FETCH_HEAD
-git subtree add --prefix=subdir FETCH_HEAD
+git subtree add --prefix=subdir/ FETCH_HEAD
 
 # this shouldn't actually do anything, since FETCH_HEAD is already a parent
 git merge -m 'merge -s -ours' -s ours FETCH_HEAD
@@ -118,7 +118,7 @@ create sub9
 git commit -m 'sub9'
 
 cd ../mainline
-split2=$(git subtree split --annotate='*' --prefix subdir --rejoin)
+split2=$(git subtree split --annotate='*' --prefix subdir/ --rejoin)
 git branch split2 "$split2"
 
 create subdir/main-sub10
