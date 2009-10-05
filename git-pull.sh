@@ -182,14 +182,7 @@ merge_head=$(sed -e '/	not-for-merge	/d' \
 
 case "$merge_head" in
 '')
-	case $? in
-	0) error_on_no_merge_candidates "$@";;
-	1) echo >&2 "You are not currently on a branch; you must explicitly"
-	   echo >&2 "specify which branch you wish to merge:"
-	   echo >&2 "  git pull <remote> <branch>"
-	   exit 1;;
-	*) exit $?;;
-	esac
+	error_on_no_merge_candidates "$@"
 	;;
 ?*' '?*)
 	if test -z "$orig_head"
