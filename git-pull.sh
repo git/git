@@ -90,8 +90,17 @@ error_on_no_merge_candidates () {
 
 	curr_branch=${curr_branch#refs/heads/}
 	upstream=$(git config "branch.$curr_branch.merge")
+	remote=$(git config "branch.$curr_branch.remote")
 
-	if [ -z "$curr_branch" ]; then
+	if [ $# -gt 1 ]; then
+		echo "There are no candidates for merging in the refs that you just fetched."
+		echo "Generally this means that you provided a wildcard refspec which had no"
+		echo "matches on the remote end."
+	elif [ $# -gt 0 ] && [ "$1" != "$remote" ]; then
+		echo "You asked to pull from the remote '$1', but did not specify"
+		echo "a branch to merge. Because this is not the default configured remote"
+		echo "for your current branch, you must specify a branch on the command line."
+	elif [ -z "$curr_branch" ]; then
 		echo "You are not currently on a branch, so I cannot use any"
 		echo "'branch.<branchname>.merge' in your configuration file."
 		echo "Please specify which branch you want to merge on the command"
@@ -116,9 +125,8 @@ error_on_no_merge_candidates () {
 		echo
 		echo "See git-config(1) for details."
 	else
-		echo "Your configuration specifies to merge the ref"
-		echo "'${upstream#refs/heads/}' from the remote, but no such ref"
-		echo "was fetched."
+		echo "Your configuration specifies to merge the ref '${upstream#refs/heads/}' from the"
+		echo "remote, but no such ref was fetched."
 	fi
 	exit 1
 }
