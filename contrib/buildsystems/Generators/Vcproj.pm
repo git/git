@@ -178,6 +178,7 @@ sub createLibProject {
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="\$(IntDir)\\\$(TargetName).pdb"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -244,6 +245,7 @@ sub createLibProject {
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="\$(IntDir)\\\$(TargetName).pdb"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -401,6 +403,7 @@ sub createAppProject {
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="\$(IntDir)\\\$(TargetName).pdb"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -472,6 +475,7 @@ sub createAppProject {
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="\$(IntDir)\\\$(TargetName).pdb"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
