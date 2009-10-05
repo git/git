@@ -123,7 +123,7 @@ const char *show_date_relative(unsigned long time, int tz,
 		return timebuf;
 	}
 	/* Say months for the past 12 months or so */
-	if (diff < 360) {
+	if (diff < 365) {
 		snprintf(timebuf, timebuf_size, "%lu months ago", (diff + 15) / 30);
 		return timebuf;
 	}

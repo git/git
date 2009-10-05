@@ -9,7 +9,7 @@
  * Default version that the compiler ought to optimize properly with
  * constant values.
  */
-static inline unsigned int default_swab32(unsigned int val)
+static inline uint32_t default_swab32(uint32_t val)
 {
 	return (((val & 0xff000000) >> 24) |
 		((val & 0x00ff0000) >>  8) |
@@ -20,7 +20,7 @@ static inline unsigned int default_swab32(unsigned int val)
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
 #define bswap32(x) ({ \
-	unsigned int __res; \
+	uint32_t __res; \
 	if (__builtin_constant_p(x)) { \
 		__res = default_swab32(x); \
 	} else { \

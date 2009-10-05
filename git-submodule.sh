@@ -98,7 +98,7 @@ module_clone()
 	if test -d "$path"
 	then
 		rmdir "$path" 2>/dev/null ||
-		die "Directory '$path' exist, but is neither empty nor a git repository"
+		die "Directory '$path' exists, but is neither empty nor a git repository"
 	fi
 
 	test -e "$path" &&

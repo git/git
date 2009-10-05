@@ -131,6 +131,7 @@ sub createLibProject {
     $includes =~ s/-I//g;
     mkdir "$target" || die "Could not create the directory $target for lib project!\n";
     open F, ">$target/$target.vcproj" || die "Could not open $target/$target.pro for writing!\n";
+    binmode F, ":crlf";
     print F << "EOM";
 <?xml version="1.0" encoding = "Windows-1252"?>
 <VisualStudioProject
@@ -173,7 +174,7 @@ sub createLibProject {
 				Optimization="0"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="$includes"
-				PreprocessorDefinitions="UNICODE,WIN32,_DEBUG,$defines"
+				PreprocessorDefinitions="WIN32,_DEBUG,$defines"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
@@ -239,7 +240,7 @@ sub createLibProject {
 				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="$includes"
-				PreprocessorDefinitions="UNICODE,WIN32,NDEBUG,$defines"
+				PreprocessorDefinitions="WIN32,NDEBUG,$defines"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -353,6 +354,7 @@ sub createAppProject {
     $includes =~ s/-I//g;
     mkdir "$target" || die "Could not create the directory $target for lib project!\n";
     open F, ">$target/$target.vcproj" || die "Could not open $target/$target.pro for writing!\n";
+    binmode F, ":crlf";
     print F << "EOM";
 <?xml version="1.0" encoding = "Windows-1252"?>
 <VisualStudioProject
@@ -395,7 +397,7 @@ sub createAppProject {
 				Optimization="0"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="$includes"
-				PreprocessorDefinitions="UNICODE,WIN32,_DEBUG,$defines"
+				PreprocessorDefinitions="WIN32,_DEBUG,$defines"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
@@ -466,7 +468,7 @@ sub createAppProject {
 				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="$includes"
-				PreprocessorDefinitions="UNICODE,WIN32,NDEBUG,$defines"
+				PreprocessorDefinitions="WIN32,NDEBUG,$defines"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -537,7 +539,7 @@ sub createGlueProject {
     print "Generate solutions file\n";
     $rel_dir = "..\\$rel_dir";
     $rel_dir =~ s/\//\\/g;
-    my $SLN_HEAD = "Microsoft Visual Studio Solution File, Format Version 10.00\n";
+    my $SLN_HEAD = "Microsoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2008\n";
     my $SLN_PRE  = "Project(\"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}\") = ";
     my $SLN_POST = "\nEndProject\n";
 
@@ -560,6 +562,7 @@ sub createGlueProject {
     @apps = @tmp;
 
     open F, ">git.sln" || die "Could not open git.sln for writing!\n";
+    binmode F, ":crlf";
     print F "$SLN_HEAD";
     foreach (@libs) {
         my $libname = $_;
@@ -568,45 +571,29 @@ sub createGlueProject {
         print F "\"${libname}\", \"${libname}\\${libname}.vcproj\", \"${uuid}\"";
         print F "$SLN_POST";
     }
+    my $uuid_libgit = $build_structure{"LIBS_libgit_GUID"};
+    my $uuid_xdiff_lib = $build_structure{"LIBS_xdiff_lib_GUID"};
     foreach (@apps) {
         my $appname = $_;
         my $uuid = $build_structure{"APPS_${appname}_GUID"};
         print F "$SLN_PRE";
-        print F "\"${appname}\", \"${appname}\\${appname}.vcproj\", \"${uuid}\"";
+        print F "\"${appname}\", \"${appname}\\${appname}.vcproj\", \"${uuid}\"\n";
+        print F "	ProjectSection(ProjectDependencies) = postProject\n";
+        print F "		${uuid_libgit} = ${uuid_libgit}\n";
+        print F "		${uuid_xdiff_lib} = ${uuid_xdiff_lib}\n";
+        print F "	EndProjectSection";
         print F "$SLN_POST";
     }
 
     print F << "EOM";
 Global
-	GlobalSection(SolutionConfiguration) = preSolution
-		ConfigName.0 = Debug|Win32
-		ConfigName.1 = Release|Win32
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
 	EndGlobalSection
-	GlobalSection(ProjectDependencies) = postSolution
 EOM
-    foreach (@{$build_structure{"APPS"}}) {
-        my $appname = $_;
-        my $appname_clean = $_;
-        $appname_clean =~ s/\//_/g;
-        $appname_clean =~ s/\.exe//;
-
-        my $uuid = $build_structure{"APPS_${appname_clean}_GUID"};
-        my $dep_index = 0;
-        foreach(@{$build_structure{"APPS_${appname}_LIBS"}}) {
-            my $libname = $_;
-            $libname =~ s/\//_/g;
-            $libname =~ s/\.(a|lib)//;
-            my $libuuid = $build_structure{"LIBS_${libname}_GUID"};
-            if (defined $libuuid) {
-                print F "\t\t${uuid}.${dep_index} = ${libuuid}\n";
-                $dep_index += 1;
-            }
-        }
-    }
-
     print F << "EOM";
-	EndGlobalSection
-	GlobalSection(ProjectConfiguration) = postSolution
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 EOM
     foreach (@libs) {
         my $libname = $_;
@@ -626,10 +613,6 @@ EOM
     }
 
     print F << "EOM";
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-	EndGlobalSection
-	GlobalSection(ExtensibilityAddIns) = postSolution
 	EndGlobalSection
 EndGlobal
 EOM

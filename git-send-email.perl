@@ -921,7 +921,7 @@ X-Mailer: git-send-email $gitversion
 			$smtp ||= Net::SMTP->new((defined $smtp_server_port)
 						 ? "$smtp_server:$smtp_server_port"
 						 : $smtp_server);
-			if ($smtp_encryption eq 'tls') {
+			if ($smtp_encryption eq 'tls' && $smtp) {
 				require Net::SMTP::SSL;
 				$smtp->command('STARTTLS');
 				$smtp->response();
