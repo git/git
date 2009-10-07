@@ -340,6 +340,14 @@ do_next () {
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		;;
+	reword|r)
+		comment_for_reflog reword
+
+		mark_action_done
+		pick_one $sha1 ||
+			die_with_patch $sha1 "Could not apply $sha1... $rest"
+		output git commit --amend
+		;;
 	edit|e)
 		comment_for_reflog edit
 
@@ -752,6 +760,7 @@ first and then run 'git rebase --continue' again."
 #
 # Commands:
 #  p, pick = use commit
+#  r, reword = use commit, but edit the commit message
 #  e, edit = use commit, but stop for amending
 #  s, squash = use commit, but meld into previous commit
 #
