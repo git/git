@@ -668,7 +668,7 @@ _git_am ()
 			--3way --committer-date-is-author-date --ignore-date
 			--ignore-whitespace --ignore-space-change
 			--interactive --keep --no-utf8 --signoff --utf8
-			--whitespace=
+			--whitespace= --scissors
 			"
 		return
 	esac
@@ -894,6 +894,7 @@ _git_commit ()
 		__gitcomp "
 			--all --author= --signoff --verify --no-verify
 			--edit --amend --include --only --interactive
+			--dry-run
 			"
 		return
 	esac
@@ -1179,6 +1180,10 @@ _git_log ()
 		__gitcomp "$__git_log_date_formats" "" "${cur##--date=}"
 		return
 		;;
+	--decorate=*)
+		__gitcomp "long short" "" "${cur##--decorate=}"
+		return
+		;;
 	--*)
 		__gitcomp "
 			$__git_log_common_options
@@ -1191,7 +1196,7 @@ _git_log ()
 			--pretty= --format= --oneline
 			--cherry-pick
 			--graph
-			--decorate
+			--decorate --decorate=
 			--walk-reflogs
 			--parents --children
 			$merge
