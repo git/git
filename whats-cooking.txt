@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2009, #05; Wed, 23)
-X-master-at: a6dbf8814f433a7fbfa9cde6333c98019f6db1e4
-X-next-at: a9dd6c4e8ab38f5c4af9c0710381d3844f1d904f
+Subject: What's cooking in git.git (Oct 2009, #01; Wed, 07)
+X-master-at: 8fd2cfa7accd6b8f877014bf3e4bf8547b8e0d2a
+X-next-at: df7ac2094d6cd7280e3254a772061a64edac2d37
 
-What's cooking in git.git (Sep 2009, #05; Wed, 23)
+What's cooking in git.git (Oct 2009, #01; Wed, 07)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -54,50 +54,108 @@ backward compatible.  Currently planeed changes are:
 We are in pre-release feature freeze.  'next' will hold topics meant for
 1.6.6 and 1.7.0.
 
-Tonight's tip of 'master' is 1.6.5-rc2, and I'll disappear for about a
-week.  Hopefully when I come back in early October all the regressions are
-found and already squashed ;-)
+Tonight's tip of 'master' is 1.6.5-rc3.
 
 --------------------------------------------------
 [New Topics]
 
-* jc/fix-tree-walk (2009-09-14) 9 commits
- - read-tree --debug-unpack
- - unpack-trees.c: look ahead in the index
- - unpack-trees.c: prepare for looking ahead in the index
- - traverse_trees(): handle D/F conflict case sanely
- - more D/F conflict tests
- - tests: move convenience regexp to match object names to test-lib.sh
- - unpack_callback(): use unpack_failed() consistently
- - unpack-trees: typofix
- - diff-lib.c: fix misleading comments on oneway_diff()
+* ch/am-header (2009-09-25) 2 commits
+  (merged to 'next' on 2009-09-25 at f86e197)
+ + git-am: force egrep to use correct characters set
+ + git-am: fixed patch_format detection according to RFC2822
 
-This is my replacement for Linus's lt/maint-traverse-trees-fix patch.  It
-is not so much as a counter-proposal; I originally thought it might make
-sense to walk the index and drive the walker to return the entries from
-trees to match entries from the index, but I ended up doing pretty much
-what Linus outlined --- walk the trees, and have the index walker follow
-it.  It turned out that the index side also needed some hairy look-ahead,
-and I am only half satisfied with the current status of the series.
+* dk/blame-el (2009-09-29) 1 commit
+ - git-blame.el: Change how blame information is shown.
 
-To fix the resolve merge regression seen in t6035, git-merge-resolve needs
-to be rewritten not to use the one-path-at-a-time "git merge-index".
+* ef/msvc-noreturn (2009-09-30) 2 commits
+  (merged to 'next' on 2009-10-07 at 66137a0)
+ + add NORETURN_PTR for function pointers
+ + increase portability of NORETURN declarations
 
-* jp/fetch-tag-match (2009-09-17) 1 commit
- - fetch: Speed up fetch by rewriting find_non_local_tags
+jk: This is the latest round and I think should be ready for at least
+'next' (maybe even 'master' as it is really about the build and not about
+functionality).
 
-I did not have much energy left while dealing with the "fix-tree-walk"
-series, so I just queued this without reading nor thinking about it very
-much.  I personally liked my version that had far smaller number of lines
-changed (which means I can be fairly certain that it did not introduce any
-regression), but perhaps the majorly rewritten logic this patch gives us
-may be easier to follow and maintain.  We'll see.
+* ef/msys-imap (2009-10-03) 7 commits
+ - mingw: enable OpenSSL
+ - mingw: wrap SSL_set_(w|r)fd to call _get_osfhandle
+ - imap-send: provide fall-back random-source
+ - imap-send: build imap-send on Windows
+ - imap-send: fix compilation-error on Windows
+ - imap-send: use run-command API for tunneling
+ - imap-send: use separate read and write fds
+
+jk: This is from an RFC which has generated some comments. He should be
+posting another round soon. 'pu' at best.
+
+* fc/mutt-alias (2009-09-30) 1 commit
+  (merged to 'next' on 2009-10-07 at df7ac20)
+ + send-email: fix mutt regex for grouped aliases
+
+jk: Latest round that addressed comments. Ready for 'next' if not
+'master'.
+
+* jk/reflog-date (2009-09-24) 1 commit
+  (merged to 'next' on 2009-09-29 at 43d444a)
+ + improve reflog date/number heuristic
+
+* jn/gitweb-patch (2009-09-30) 1 commit
+ - gitweb: Do not show 'patch' link in 'commit' view for merges
+
+jk: After some comments with Jakub, I think the code is right but he
+promised a re-roll with more in the commit message.
+
+* mr/gitweb-snapshot (2009-09-26) 2 commits
+ - gitweb: append short hash ids to snapshot files
+ - gitweb: check given hash before trying to create snapshot
+
+jk: He posted a v5 of his series. I didn't look at it closely, but Jakub
+ack'd it.
+
+* mr/instaweb-cgid (2009-09-26) 1 commit
+  (merged to 'next' on 2009-09-29 at 3524604)
+ + instaweb: support mod_cgid for apache2
+
+* tf/doc-pt-br (2009-09-23) 1 commit
+ - Documentation: update pt-BR
+
+The current AsciiDoc may barf on NOME and SINOPSE, as pt_BR language
+definition is not widely distributed yet (it just hit the development
+tree).  Need to revert these headings (or change the length of the section
+underlines to match the length of translated names).
+
+* jc/pretty-lf (2009-10-04) 1 commit
+ - Pretty-format: %[+-]x to tweak inter-item newlines
+
+I am not happy with this one yet.  I am contemplating to introduce a new
+syntax "%[magic(param)<anything>%]" to generalize expressions of this and
+line wrapping features in an extensible way.
+
+* js/log-rewrap (2008-11-10) 3 commits
+ . Add "%w" to pretty formats, which rewraps the commit message
+ - Add strbuf_add_wrapped_text() to utf8.[ch]
+ - print_wrapped_text(): allow hard newlines
+
+... and the first two from this series will be useful to implement an
+example magic "wrap", e.g. "%{wrap(i,j,w)%s%+b%]".
 
 * jg/log-format-body-indent (2009-09-19) 1 commit
- - [NEEDSWORK: tests] git-log --format: Add %B tag with %B(x) option
+ . git-log --format: Add %B tag with %B(x) option
 
-* jl/submodule-add-noname (2009-09-22) 1 commit
- - git submodule add: make the <path> parameter optional
+I think we should redo this on top of the first two patches from
+js/log-rewrap series; %B(x) is just a special case %B(x,x,0), no?  If a
+magic value 0 (or negative) given to wrap-width does not disable wrapping,
+we probably should make it so.  I merged this to 'pu' but then ejected it
+because it seems to break at least t6006.
+
+* bg/rebase-reword (2009-10-07) 1 commit
+ - Teach 'rebase -i' the command "reword"
+
+* js/diff-verbose-submodule (2009-10-04) 1 commit
+ - Add the --submodule-summary option to the diff option family
+
+Dscho sounded like he has some corrections after list comments, but I did
+not pick up his interdiff in the middle.
 
 --------------------------------------------------
 [Stalled]
@@ -134,11 +192,52 @@ Builds on db/vcs-helper.  There is a re-roll planned.
  - basic revision cache system, no integration or features
  - man page and technical discussion for rev-cache
 
-Tonight's 'pu' ships with this and this series seems to break a few
-tests.  I didn't debug.
+I merged this to 'pu' but then ejected it because it seems to break at
+least t6001.
 
 --------------------------------------------------
 [Cooking]
+
+* jl/submodule-add-noname (2009-09-22) 1 commit
+ - git submodule add: make the <path> parameter optional
+
+Dscho started an interesting discussion regarding the larger workflow in
+which the "submodule add" is used.  I think the patch itself makes sense
+but at the same time it probably makes sense to also take the <path> and
+infer the <repository> as Dscho suggested, probably in "git submodule
+add", not in "git add" proper, at least initially.
+
+* jc/fix-tree-walk (2009-09-14) 9 commits
+ - read-tree --debug-unpack
+ - unpack-trees.c: look ahead in the index
+ - unpack-trees.c: prepare for looking ahead in the index
+ - traverse_trees(): handle D/F conflict case sanely
+ - more D/F conflict tests
+ - tests: move convenience regexp to match object names to test-lib.sh
+ - unpack_callback(): use unpack_failed() consistently
+ - unpack-trees: typofix
+ - diff-lib.c: fix misleading comments on oneway_diff()
+
+This is my replacement for Linus's lt/maint-traverse-trees-fix patch.  It
+is not so much as a counter-proposal; I originally thought it might make
+sense to walk the index and drive the walker to return the entries from
+trees to match entries from the index, but I ended up doing pretty much
+what Linus outlined --- walk the trees, and have the index walker follow
+it.  It turned out that the index side also needed some hairy look-ahead,
+and I am only half satisfied with the current status of the series.
+
+To fix the resolve merge regression seen in t6035, git-merge-resolve needs
+to be rewritten not to use the one-path-at-a-time "git merge-index".
+
+* jp/fetch-tag-match (2009-09-17) 1 commit
+ - fetch: Speed up fetch by rewriting find_non_local_tags
+
+I did not have much energy left while dealing with the "fix-tree-walk"
+series, so I just queued this without reading nor thinking about it very
+much.  I personally liked my version that had far smaller number of lines
+changed (which means I can be fairly certain that it did not introduce any
+regression), but perhaps the majorly rewritten logic this patch gives us
+may be easier to follow and maintain.  We'll see.
 
 * jc/maint-blank-at-eof (2009-09-15) 0 commits.
  (this branch uses jc/maint-1.6.0-blank-at-eof.)
