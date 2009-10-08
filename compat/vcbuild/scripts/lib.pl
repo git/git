@@ -23,4 +23,4 @@ while (@ARGV) {
 }
 unshift(@args, "lib.exe");
 # printf("**** @args\n");
-exit system(@args);
+exit (system(@args) != 0);
