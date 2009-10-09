@@ -115,6 +115,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 
 	strbuf_reset(&path);
 	strbuf_grow(&path, PATH_MAX);
+	strbuf_add(&path, args->base, args->baselen);
 	strbuf_add(&path, base, baselen);
 	strbuf_addstr(&path, filename);
 	path_without_prefix = path.buf + args->baselen;
@@ -187,8 +188,8 @@ int write_archive_entries(struct archiver_args *args,
 		git_attr_set_direction(GIT_ATTR_INDEX, &the_index);
 	}
 
-	err =  read_tree_recursive(args->tree, args->base, args->baselen, 0,
-			args->pathspec, write_archive_entry, &context);
+	err = read_tree_recursive(args->tree, "", 0, 0, args->pathspec,
+				  write_archive_entry, &context);
 	if (err == READ_TREE_RECURSIVE)
 		err = 0;
 	return err;
@@ -211,7 +212,7 @@ static const struct archiver *lookup_archiver(const char *name)
 static void parse_pathspec_arg(const char **pathspec,
 		struct archiver_args *ar_args)
 {
-	ar_args->pathspec = get_pathspec(ar_args->base, pathspec);
+	ar_args->pathspec = get_pathspec("", pathspec);
 }
 
 static void parse_treeish_arg(const char **argv,
