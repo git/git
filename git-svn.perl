@@ -603,8 +603,15 @@ sub cmd_dcommit {
 					  "\nBefore dcommitting";
 				}
 				if ($url_ ne $expect_url) {
-					fatal "URL mismatch after rebase: ",
-					      "$url_ != $expect_url";
+					if ($url_ eq $gs->metadata_url) {
+						print
+						  "Accepting rewritten URL:",
+						  " $url_\n";
+					} else {
+						fatal
+						  "URL mismatch after rebase:",
+						  " $url_ != $expect_url";
+					}
 				}
 				if ($uuid_ ne $uuid) {
 					fatal "uuid mismatch after rebase: ",
