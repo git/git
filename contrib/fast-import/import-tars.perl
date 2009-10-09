@@ -140,7 +140,7 @@ foreach my $tar_file (@ARGV)
 				} elsif (!$header_done && /^Author:\s+([^<>]*)\s+<(.*)>\s*$/i) {
 					$this_author_name = $1;
 					$this_author_email = $2;
-				} elsif (!$header_done && /^$/ { # empty line ends header.
+				} elsif (!$header_done && /^$/) { # empty line ends header.
 					$header_done = 1;
 				} else {
 					$commit_msg .= $_;
