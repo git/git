@@ -28,9 +28,10 @@ OPTIONS
 include::merge-options.txt[]
 
 -m <msg>::
-	The commit message to be used for the merge commit (in case
-	it is created). The 'git-fmt-merge-msg' script can be used
-	to give a good default for automated 'git-merge' invocations.
+	Set the commit message to be used for the merge commit (in
+	case one is created). The 'git fmt-merge-msg' command can be
+	used to give a good default for automated 'git merge'
+	invocations.
 
 <remote>...::
 	Other branch heads to merge into our branch.  You need at
