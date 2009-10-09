@@ -467,6 +467,11 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.notesref")) {
+		notes_ref_name = xstrdup(value);
+		return 0;
+	}
+
 	if (!strcmp(var, "core.pager"))
 		return git_config_string(&pager_program, var, value);
 
