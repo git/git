@@ -1798,6 +1798,11 @@ _git_remote ()
 	esac
 }
 
+_git_replace ()
+{
+	__gitcomp "$(__git_refs)"
+}
+
 _git_reset ()
 {
 	__git_has_doubledash && return
@@ -2166,6 +2171,7 @@ _git ()
 	push)        _git_push ;;
 	rebase)      _git_rebase ;;
 	remote)      _git_remote ;;
+	replace)     _git_replace ;;
 	reset)       _git_reset ;;
 	revert)      _git_revert ;;
 	rm)          _git_rm ;;
