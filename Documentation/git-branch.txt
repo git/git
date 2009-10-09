@@ -30,10 +30,8 @@ commit) will be listed.  With `--no-merged` only branches not merged into
 the named commit will be listed.  If the <commit> argument is missing it
 defaults to 'HEAD' (i.e. the tip of the current branch).
 
-In the command's second form, a new branch named <branchname> will be created.
-It will start out with a head equal to the one given as <start-point>.
-If no <start-point> is given, the branch will be created with a head
-equal to that of the currently checked out branch.
+The command's second form creates a new branch head named <branchname>
+which points to the current 'HEAD', or <start-point> if given.
 
 Note that this will create the new branch, but it will not switch the
 working tree to it; use "git checkout <newbranch>" to switch to the
@@ -149,9 +147,9 @@ start-point is either a local or remote branch.
 	may restrict the characters allowed in a branch name.
 
 <start-point>::
-	The new branch will be created with a HEAD equal to this.  It may
-	be given as a branch name, a commit-id, or a tag.  If this option
-	is omitted, the current branch is assumed.
+	The new branch head will point to this commit.  It may be
+	given as a branch name, a commit-id, or a tag.  If this
+	option is omitted, the current HEAD will be used instead.
 
 <oldbranch>::
 	The name of an existing branch to rename.
@@ -216,7 +214,9 @@ SEE ALSO
 --------
 linkgit:git-check-ref-format[1],
 linkgit:git-fetch[1],
-linkgit:git-remote[1].
+linkgit:git-remote[1],
+link:user-manual.html#what-is-a-branch[``Understanding history: What is
+a branch?''] in the Git User's Manual.
 
 Author
 ------
