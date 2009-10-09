@@ -702,6 +702,10 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	case 'd':
 		format_decoration(sb, commit);
 		return 1;
+	case 'N':
+		get_commit_notes(commit, sb, git_log_output_encoding ?
+			     git_log_output_encoding : git_commit_encoding, 0);
+		return 1;
 	}
 
 	/* For the rest we have to parse the commit header. */
