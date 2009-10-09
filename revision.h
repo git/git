@@ -81,7 +81,8 @@ struct rev_info {
 			show_merge:1,
 			abbrev_commit:1,
 			use_terminator:1,
-			missing_newline:1;
+			missing_newline:1,
+			date_mode_explicit:1;
 	enum date_mode date_mode;
 
 	unsigned int	abbrev;
