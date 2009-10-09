@@ -45,4 +45,4 @@ if ($is_linking) {
 	push(@args, @cflags);
 }
 #printf("**** @args\n");
-exit system(@args);
+exit (system(@args) != 0);
