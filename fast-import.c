@@ -1744,10 +1744,12 @@ static int validate_raw_date(const char *src, char *result, int maxlen)
 {
 	const char *orig_src = src;
 	char *endp;
+	unsigned long num;
 
 	errno = 0;
 
-	strtoul(src, &endp, 10);
+	num = strtoul(src, &endp, 10);
+	/* NEEDSWORK: perhaps check for reasonable values? */
 	if (errno || endp == src || *endp != ' ')
 		return -1;
 
@@ -1755,8 +1757,9 @@ static int validate_raw_date(const char *src, char *result, int maxlen)
 	if (*src != '-' && *src != '+')
 		return -1;
 
-	strtoul(src + 1, &endp, 10);
-	if (errno || endp == src || *endp || (endp - orig_src) >= maxlen)
+	num = strtoul(src + 1, &endp, 10);
+	if (errno || endp == src + 1 || *endp || (endp - orig_src) >= maxlen ||
+	    1400 < num)
 		return -1;
 
 	strcpy(result, orig_src);
