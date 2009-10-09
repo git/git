@@ -841,6 +841,12 @@ ifeq ($(uname_S),IRIX)
 	NO_MEMMEM = YesPlease
 	NO_MKSTEMPS = YesPlease
 	NO_MKDTEMP = YesPlease
+	# When compiled with the MIPSpro 7.4.4m compiler, and without pthreads
+	# (i.e. NO_PTHREADS is set), and _with_ MMAP (i.e. NO_MMAP is not set),
+	# git dies with a segmentation fault when trying to access the first
+	# entry of a reflog.  The conservative choice is made to always set
+	# NO_MMAP.  If you suspect that your compiler is not affected by this
+	# issue, comment out the NO_MMAP statement.
 	NO_MMAP = YesPlease
 	NO_EXTERNAL_GREP = UnfortunatelyYes
 	SNPRINTF_RETURNS_BOGUS = YesPlease
@@ -855,6 +861,12 @@ ifeq ($(uname_S),IRIX64)
 	NO_MEMMEM = YesPlease
 	NO_MKSTEMPS = YesPlease
 	NO_MKDTEMP = YesPlease
+	# When compiled with the MIPSpro 7.4.4m compiler, and without pthreads
+	# (i.e. NO_PTHREADS is set), and _with_ MMAP (i.e. NO_MMAP is not set),
+	# git dies with a segmentation fault when trying to access the first
+	# entry of a reflog.  The conservative choice is made to always set
+	# NO_MMAP.  If you suspect that your compiler is not affected by this
+	# issue, comment out the NO_MMAP statement.
 	NO_MMAP = YesPlease
 	NO_EXTERNAL_GREP = UnfortunatelyYes
 	SNPRINTF_RETURNS_BOGUS = YesPlease
