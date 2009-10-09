@@ -105,6 +105,13 @@ static unsigned char *lookup_notes(const unsigned char *commit_sha1)
 	return hash_map.entries[index].notes_sha1;
 }
 
+void free_notes(void)
+{
+	free(hash_map.entries);
+	memset(&hash_map, 0, sizeof(struct hash_map));
+	initialized = 0;
+}
+
 void get_commit_notes(const struct commit *commit, struct strbuf *sb,
 		const char *output_encoding, int flags)
 {
