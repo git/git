@@ -602,8 +602,12 @@ __git_aliases ()
 {
 	local i IFS=$'\n'
 	for i in $(git --git-dir="$(__gitdir)" config --get-regexp "alias\..*" 2>/dev/null); do
-		i="${i#alias.}"
-		echo "${i/ */}"
+		case "$i" in
+		alias.*)
+			i="${i#alias.}"
+			echo "${i/ */}"
+			;;
+		esac
 	done
 }
 
