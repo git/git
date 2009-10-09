@@ -74,6 +74,7 @@ git-mktag                               plumbingmanipulators
 git-mktree                              plumbingmanipulators
 git-mv                                  mainporcelain common
 git-name-rev                            plumbinginterrogators
+git-notes                               mainporcelain
 git-pack-objects                        plumbingmanipulators
 git-pack-redundant                      plumbinginterrogators
 git-pack-refs                           ancillarymanipulators
