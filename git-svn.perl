@@ -2633,7 +2633,8 @@ sub find_parent_branch {
 	my $url = $self->ra->{url};
 	my $new_url = $url . $branch_from;
 	print STDERR  "Found possible branch point: ",
-	              "$new_url => ", $self->full_url, ", $r\n";
+	              "$new_url => ", $self->full_url, ", $r\n"
+	              unless $::_q > 1;
 	$branch_from =~ s#^/##;
 	my $gs = $self->other_gs($new_url, $url,
 		                 $branch_from, $r, $self->{ref_id});
@@ -2654,11 +2655,13 @@ sub find_parent_branch {
 		($r0, $parent) = $gs->find_rev_before($r, 1);
 	}
 	if (defined $r0 && defined $parent) {
-		print STDERR "Found branch parent: ($self->{ref_id}) $parent\n";
+		print STDERR "Found branch parent: ($self->{ref_id}) $parent\n"
+		             unless $::_q > 1;
 		my $ed;
 		if ($self->ra->can_do_switch) {
 			$self->assert_index_clean($parent);
-			print STDERR "Following parent with do_switch\n";
+			print STDERR "Following parent with do_switch\n"
+			             unless $::_q > 1;
 			# do_switch works with svn/trunk >= r22312, but that
 			# is not included with SVN 1.4.3 (the latest version
 			# at the moment), so we can't rely on it
@@ -2673,18 +2676,20 @@ sub find_parent_branch {
 			print STDERR "Trees match:\n",
 			             "  $new_url\@$r0\n",
 			             "  ${\$self->full_url}\@$rev\n",
-				     "Following parent with no changes\n";
+			             "Following parent with no changes\n"
+			             unless $::_q > 1;
 			$self->tmp_index_do(sub {
 			    command_noisy('read-tree', $parent);
 			});
 			$self->{last_commit} = $parent;
 		} else {
-			print STDERR "Following parent with do_update\n";
+			print STDERR "Following parent with do_update\n"
+			             unless $::_q > 1;
 			$ed = SVN::Git::Fetcher->new($self);
 			$self->ra->gs_do_update($rev, $rev, $self, $ed)
 			  or die "SVN connection failed somewhere...\n";
 		}
-		print STDERR "Successfully followed parent\n";
+		print STDERR "Successfully followed parent\n" unless $::_q > 1;
 		return $self->make_log_entry($rev, [$parent], $ed);
 	}
 	return undef;
@@ -2829,7 +2834,7 @@ sub other_gs {
 		$ref_id .= "\@$r";
 		# just grow a tail if we're not unique enough :x
 		$ref_id .= '-' while find_ref($ref_id);
-		print STDERR "Initializing parent: $ref_id\n";
+		print STDERR "Initializing parent: $ref_id\n" unless $::_q > 1;
 		my ($u, $p, $repo_id) = ($new_url, '', $ref_id);
 		if ($u =~ s#^\Q$url\E(/|$)##) {
 			$p = $u;
