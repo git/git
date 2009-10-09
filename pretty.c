@@ -978,7 +978,8 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 		strbuf_addch(sb, '\n');
 
 	if (fmt != CMIT_FMT_ONELINE)
-		get_commit_notes(commit, sb, encoding);
+		get_commit_notes(commit, sb, encoding,
+				 NOTES_SHOW_HEADER | NOTES_INDENT);
 
 	free(reencoded);
 }

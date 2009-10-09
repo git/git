@@ -106,7 +106,7 @@ static unsigned char *lookup_notes(const unsigned char *commit_sha1)
 }
 
 void get_commit_notes(const struct commit *commit, struct strbuf *sb,
-		const char *output_encoding)
+		const char *output_encoding, int flags)
 {
 	static const char utf8[] = "utf-8";
 	unsigned char *sha1;
@@ -148,12 +148,14 @@ void get_commit_notes(const struct commit *commit, struct strbuf *sb,
 	if (msglen && msg[msglen - 1] == '\n')
 		msglen--;
 
-	strbuf_addstr(sb, "\nNotes:\n");
+	if (flags & NOTES_SHOW_HEADER)
+		strbuf_addstr(sb, "\nNotes:\n");
 
 	for (msg_p = msg; msg_p < msg + msglen; msg_p += linelen + 1) {
 		linelen = strchrnul(msg_p, '\n') - msg_p;
 
-		strbuf_addstr(sb, "    ");
+		if (flags & NOTES_INDENT)
+			strbuf_addstr(sb, "    ");
 		strbuf_add(sb, msg_p, linelen);
 		strbuf_addch(sb, '\n');
 	}
