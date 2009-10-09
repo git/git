@@ -53,6 +53,10 @@ Updates since v1.6.4
  * Unnecessary inefficiency in deepening of a shallow repository has
    been removed.
 
+ * "git clone" does not grab objects that it does not need (i.e.
+   referenced only from refs outside refs/heads and refs/tags
+   hierarchy) anymore.
+
  * The "git" main binary used to link with libcurl, which then dragged
    in a large number of external libraries.  When using basic plumbing
    commands in scripts, this unnecessarily slowed things down.  We now
@@ -154,18 +158,18 @@ Updates since v1.6.4
  * With GIT_TEST_OPTS="--root=/p/a/t/h", tests can be run outside the
    source directory; using tmpfs may give faster turnaround.
 
+ * With NO_PERL_MAKEMAKER set, DESTDIR= is now honoured, so you can
+   build for one location, and install into another location to tar it
+   up.
 
 Fixes since v1.6.4
 ------------------
 
-# All of the fixes in v1.6.4.X maintenance series are included in this
-# release, unless otherwise noted.
-
-# Here are fixes that this release has, but have not been backported to
-# v1.6.4.X series.
+All of the fixes in v1.6.4.X maintenance series are included in this
+release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.5-rc1-44-ga16753d
+O=v1.6.5-rc3-4-gbf8fc21
 echo O=$(git describe master)
 git shortlog --no-merges $O..master --not maint
