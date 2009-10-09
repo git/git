@@ -134,11 +134,13 @@ start-point is either a local or remote branch.
 --contains <commit>::
 	Only list branches which contain the specified commit.
 
---merged::
-	Only list branches which are fully contained by HEAD.
+--merged [<commit>]::
+	Only list branches whose tips are reachable from the
+	specified commit (HEAD if not specified).
 
---no-merged::
-	Do not list branches which are fully contained by HEAD.
+--no-merged [<commit>]::
+	Only list branches whose tips are not reachable from the
+	specified commit (HEAD if not specified).
 
 <branchname>::
 	The name of the branch to create or delete.
