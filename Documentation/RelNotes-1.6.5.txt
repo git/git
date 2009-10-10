@@ -167,9 +167,3 @@ Fixes since v1.6.4
 
 All of the fixes in v1.6.4.X maintenance series are included in this
 release, unless otherwise noted.
-
---
-exec >/var/tmp/1
-O=v1.6.5-rc3-4-gbf8fc21
-echo O=$(git describe master)
-git shortlog --no-merges $O..master --not maint
