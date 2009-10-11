@@ -767,7 +767,8 @@ int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o)
 		remote = NULL;
 	}
 
-	/* First, if there's a #16 situation, note that to prevent #13
+	/*
+	 * First, if there's a #16 situation, note that to prevent #13
 	 * and #14.
 	 */
 	if (!same(remote, head)) {
@@ -781,7 +782,8 @@ int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o)
 		}
 	}
 
-	/* We start with cases where the index is allowed to match
+	/*
+	 * We start with cases where the index is allowed to match
 	 * something other than the head: #14(ALT) and #2ALT, where it
 	 * is permitted to match the result instead.
 	 */
@@ -811,12 +813,13 @@ int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o)
 	if (!head && !remote && any_anc_missing)
 		return 0;
 
-	/* Under the new "aggressive" rule, we resolve mostly trivial
+	/*
+	 * Under the "aggressive" rule, we resolve mostly trivial
 	 * cases that we historically had git-merge-one-file resolve.
 	 */
 	if (o->aggressive) {
-		int head_deleted = !head && !df_conflict_head;
-		int remote_deleted = !remote && !df_conflict_remote;
+		int head_deleted = !head;
+		int remote_deleted = !remote;
 		struct cache_entry *ce = NULL;
 
 		if (index)
