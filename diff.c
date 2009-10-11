@@ -999,7 +999,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	       total_files, adds, dels);
 }
 
-static void show_shortstats(struct diffstat_t* data, struct diff_options *options)
+static void show_shortstats(struct diffstat_t *data, struct diff_options *options)
 {
 	int i, adds = 0, dels = 0, total_files = data->nr;
 
