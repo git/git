@@ -42,10 +42,12 @@ compared, but this is not enabled by default because this member
 is not stable on network filesystems.  With `USE_NSEC`
 compile-time option, `st_mtim.tv_nsec` and `st_ctim.tv_nsec`
 members are also compared, but this is not enabled by default
-because the value of this member becomes meaningless once the
-inode is evicted from the inode cache on filesystems that do not
-store it on disk.
-
+because in-core timestamps can have finer granularity than
+on-disk timestamps, resulting in meaningless changes when an
+inode is evicted from the inode cache.  See commit 8ce13b0
+of git://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
+([PATCH] Sync in core time granuality with filesystems,
+2005-01-04).
 
 Racy git
 --------

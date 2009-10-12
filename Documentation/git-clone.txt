@@ -19,8 +19,9 @@ DESCRIPTION
 
 Clones a repository into a newly created directory, creates
 remote-tracking branches for each branch in the cloned repository
-(visible using `git branch -r`), and creates and checks out an initial
-branch equal to the cloned repository's currently active branch.
+(visible using `git branch -r`), and creates and checks out an
+initial branch that is forked from the cloned repository's
+currently active branch.
 
 After the clone, a plain `git fetch` without arguments will update
 all the remote-tracking branches, and a `git pull` without

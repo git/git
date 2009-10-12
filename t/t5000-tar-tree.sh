@@ -230,4 +230,16 @@ test_expect_success \
     'git archive --list outside of a git repo' \
     'GIT_DIR=some/non-existing/directory git archive --list'
 
+test_expect_success 'git-archive --prefix=olde-' '
+	git archive --prefix=olde- >h.tar HEAD &&
+	(
+		mkdir h &&
+		cd h &&
+		"$TAR" xf - <../h.tar
+	) &&
+	test -d h/olde-a &&
+	test -d h/olde-a/bin &&
+	test -f h/olde-a/bin/sh
+'
+
 test_done
