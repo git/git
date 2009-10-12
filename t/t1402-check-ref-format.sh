@@ -41,4 +41,21 @@ test_expect_success "check-ref-format --branch @{-1}" '
 	refname2=$(git check-ref-format --branch @{-2}) &&
 	test "$refname2" = master'
 
+valid_ref_normalized() {
+	test_expect_success "ref name '$1' simplifies to '$2'" "
+		refname=\$(git check-ref-format --print '$1') &&
+		test \"\$refname\" = '$2'"
+}
+invalid_ref_normalized() {
+	test_expect_success "check-ref-format --print rejects '$1'" "
+		test_must_fail git check-ref-format --print '$1'"
+}
+
+valid_ref_normalized 'heads/foo' 'heads/foo'
+valid_ref_normalized 'refs///heads/foo' 'refs/heads/foo'
+invalid_ref_normalized 'foo'
+invalid_ref_normalized 'heads/foo/../bar'
+invalid_ref_normalized 'heads/./foo'
+invalid_ref_normalized 'heads\foo'
+
 test_done
