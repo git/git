@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [--html-path]
-    [-p|--paginate|--no-pager]
+    [-p|--paginate|--no-pager] [--no-replace-objects]
     [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]
     [--help] COMMAND [ARGS]
 
@@ -236,6 +236,10 @@ help ...`.
 	Treat the repository as a bare repository.  If GIT_DIR
 	environment is not set, it is set to the current working
 	directory.
+
+--no-replace-objects::
+	Do not use replacement refs to replace git objects. See
+	linkgit:git-replace[1] for more information.
 
 
 FURTHER DOCUMENTATION
