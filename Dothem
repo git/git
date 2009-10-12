@@ -17,6 +17,7 @@ inst_prefix=$(
 )
 
 force= with_dash= M= install= nodoc= notest= bootstrap= branches= jobs=
+scratch=
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
@@ -25,6 +26,7 @@ while	case "$1" in
 	--nodoc) nodoc=y ;;
 	--notest) notest=y ;;
 	--test=*) test="$1" ;;
+	--scratch) scratch=y ;;
 	--bootstrap) bootstrap=y ;;
 	--base=*) BUILDBASE=${1#*=} ;;
 	--branches=*) branches=${1#*=} ;;
@@ -123,6 +125,14 @@ do
 		*)
 			git checkout "$branch" &&
 			git reset --hard || exit
+		esac &&
+
+		case "$scratch" in
+		'')
+			;;
+		y)
+			Meta/Make clean
+			;;
 		esac &&
 
 		case "$private" in
