@@ -3,6 +3,7 @@
 #include "strbuf.h"
 #include "walker.h"
 #include "http.h"
+#include "exec_cmd.h"
 
 static struct ref *get_refs(struct walker *walker, const char *url)
 {
