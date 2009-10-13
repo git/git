@@ -1083,8 +1083,7 @@ sub to_utf8 {
 # correct, but quoted slashes look too horrible in bookmarks
 sub esc_param {
 	my $str = shift;
-	$str =~ s/([^A-Za-z0-9\-_.~()\/:@])/sprintf("%%%02X", ord($1))/eg;
-	$str =~ s/\+/%2B/g;
+	$str =~ s/([^A-Za-z0-9\-_.~()\/:@ ]+)/CGI::escape($1)/eg;
 	$str =~ s/ /\+/g;
 	return $str;
 }
