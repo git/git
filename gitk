@@ -2519,7 +2519,7 @@ proc savestuff {w} {
     global maxwidth showneartags showlocalchanges
     global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
-    global colors bgcolor fgcolor diffcolors diffcontext selectbgcolor
+    global colors uicolor bgcolor fgcolor diffcolors diffcontext selectbgcolor
     global autoselect extdifftool perfile_attrs markbgcolor
     global hideremotes
 
@@ -2546,6 +2546,7 @@ proc savestuff {w} {
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
 	puts $f [list set limitdiffs $limitdiffs]
+	puts $f [list set uicolor $uicolor]
 	puts $f [list set bgcolor $bgcolor]
 	puts $f [list set fgcolor $fgcolor]
 	puts $f [list set colors $colors]
@@ -10425,7 +10426,7 @@ proc chg_fontparam {v sub op} {
 proc doprefs {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags showlocalchanges
-    global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global tabstop limitdiffs autoselect extdifftool perfile_attrs
     global hideremotes
 
@@ -10489,6 +10490,10 @@ proc doprefs {} {
 
     label $top.cdisp -text [mc "Colors: press to choose"]
     grid $top.cdisp - -sticky w -pady 10
+    label $top.ui -padx 40 -relief sunk -background $uicolor
+    button $top.uibut -text [mc "Interface"] -font optionfont \
+       -command [list choosecolor uicolor {} $top.ui [mc "interface"] setui]
+    grid x $top.uibut $top.ui -sticky w
     label $top.bg -padx 40 -relief sunk -background $bgcolor
     button $top.bgbut -text [mc "Background"] -font optionfont \
 	-command [list choosecolor bgcolor {} $top.bg [mc "background"] setbg]
@@ -10570,6 +10575,10 @@ proc setselbg {c} {
     $cflist tag configure highlight \
 	-background [$cflist cget -selectbackground]
     allcanvs itemconf secsel -fill $c
+}
+
+proc setui {c} {
+    tk_setPalette $c
 }
 
 proc setbg {c} {
@@ -11079,6 +11088,7 @@ if {[tk windowingsystem] eq "aqua"} {
 }
 
 set colors {green red blue magenta darkgrey brown orange}
+set uicolor grey85
 set bgcolor white
 set fgcolor black
 set diffcolors {red "#00a000" blue}
@@ -11129,6 +11139,8 @@ eval font create textfontbold [fontflags textfont 1]
 
 parsefont uifont $uifont
 eval font create uifont [fontflags uifont]
+
+tk_setPalette $uicolor
 
 setoptions
 
