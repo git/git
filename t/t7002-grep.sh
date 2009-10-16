@@ -164,6 +164,72 @@ test_expect_success 'grep -e A --and --not -e B' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep -f, non-existent file' '
+	test_must_fail git grep -f patterns
+'
+
+cat >expected <<EOF
+file:foo mmap bar
+file:foo_mmap bar
+file:foo_mmap bar mmap
+file:foo mmap bar_mmap
+file:foo_mmap bar mmap baz
+EOF
+
+cat >pattern <<EOF
+mmap
+EOF
+
+test_expect_success 'grep -f, one pattern' '
+	git grep -f pattern >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+file:foo mmap bar
+file:foo_mmap bar
+file:foo_mmap bar mmap
+file:foo mmap bar_mmap
+file:foo_mmap bar mmap baz
+t/a/v:vvv
+t/v:vvv
+v:vvv
+EOF
+
+cat >patterns <<EOF
+mmap
+vvv
+EOF
+
+test_expect_success 'grep -f, multiple patterns' '
+	git grep -f patterns >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+file:foo mmap bar
+file:foo_mmap bar
+file:foo_mmap bar mmap
+file:foo mmap bar_mmap
+file:foo_mmap bar mmap baz
+t/a/v:vvv
+t/v:vvv
+v:vvv
+EOF
+
+cat >patterns <<EOF
+
+mmap
+
+vvv
+
+EOF
+
+test_expect_success 'grep -f, ignore empty lines' '
+	git grep -f patterns >actual &&
+	test_cmp expected actual
+'
+
 cat >expected <<EOF
 y:y yy
 --
