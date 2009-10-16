@@ -346,7 +346,7 @@ do_next () {
 		mark_action_done
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
-		output git commit --amend
+		git commit --amend
 		;;
 	edit|e)
 		comment_for_reflog edit
