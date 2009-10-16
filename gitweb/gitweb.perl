@@ -1594,6 +1594,29 @@ sub git_get_avatar {
 	}
 }
 
+sub format_search_author {
+	my ($author, $searchtype, $displaytext) = @_;
+	my $have_search = gitweb_check_feature('search');
+
+	if ($have_search) {
+		my $performed = "";
+		if ($searchtype eq 'author') {
+			$performed = "authored";
+		} elsif ($searchtype eq 'committer') {
+			$performed = "committed";
+		}
+
+		return $cgi->a({-href => href(action=>"search", hash=>$hash,
+				searchtext=>$author,
+				searchtype=>$searchtype), class=>"list",
+				title=>"Search for commits $performed by $author"},
+				$displaytext);
+
+	} else {
+		return $displaytext;
+	}
+}
+
 # format the author name of the given commit with the given tag
 # the author name is chopped and escaped according to the other
 # optional parameters (see chop_str).
@@ -1602,8 +1625,10 @@ sub format_author_html {
 	my $co = shift;
 	my $author = chop_and_escape_str($co->{'author_name'}, @_);
 	return "<$tag class=\"author\">" .
-	       git_get_avatar($co->{'author_email'}, -pad_after => 1) .
-	       $author . "</$tag>";
+	       format_search_author($co->{'author_name'}, "author",
+		       git_get_avatar($co->{'author_email'}, -pad_after => 1) .
+		       $author) .
+	       "</$tag>";
 }
 
 # format git diff header line, i.e. "diff --(git|combined|cc) ..."
@@ -3372,10 +3397,11 @@ sub git_print_authorship {
 	my $co = shift;
 	my %opts = @_;
 	my $tag = $opts{-tag} || 'div';
+	my $author = $co->{'author_name'};
 
 	my %ad = parse_date($co->{'author_epoch'}, $co->{'author_tz'});
 	print "<$tag class=\"author_date\">" .
-	      esc_html($co->{'author_name'}) .
+	      format_search_author($author, "author", esc_html($author)) .
 	      " [$ad{'rfc2822'}";
 	print_local_time(%ad) if ($opts{-localtime});
 	print "]" . git_get_avatar($co->{'author_email'}, -pad_before => 1)
@@ -3394,8 +3420,12 @@ sub git_print_authorship_rows {
 	@people = ('author', 'committer') unless @people;
 	foreach my $who (@people) {
 		my %wd = parse_date($co->{"${who}_epoch"}, $co->{"${who}_tz"});
-		print "<tr><td>$who</td><td>" . esc_html($co->{$who}) . "</td>" .
-		      "<td rowspan=\"2\">" .
+		print "<tr><td>$who</td><td>" .
+		      format_search_author($co->{"${who}_name"}, $who,
+			       esc_html($co->{"${who}_name"})) . " " .
+		      format_search_author($co->{"${who}_email"}, $who,
+			       esc_html("<" . $co->{"${who}_email"} . ">")) .
+		      "</td><td rowspan=\"2\">" .
 		      git_get_avatar($co->{"${who}_email"}, -size => 'double') .
 		      "</td></tr>\n" .
 		      "<tr>" .
