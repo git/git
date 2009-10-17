@@ -180,7 +180,6 @@ static void describe(const char *arg, int last_one)
 	unsigned char sha1[20];
 	struct commit *cmit, *gave_up_on = NULL;
 	struct commit_list *list;
-	static int initialized = 0;
 	struct commit_name *n;
 	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
@@ -191,14 +190,6 @@ static void describe(const char *arg, int last_one)
 	cmit = lookup_commit_reference(sha1);
 	if (!cmit)
 		die("%s is not a valid '%s' object", arg, commit_type);
-
-	if (!initialized) {
-		initialized = 1;
-		for_each_ref(get_name, NULL);
-	}
-
-	if (!found_names)
-		die("cannot describe '%s'", sha1_to_hex(sha1));
 
 	n = cmit->util;
 	if (n) {
@@ -358,6 +349,10 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		args[i + argc] = NULL;
 		return cmd_name_rev(i + argc, args, prefix);
 	}
+
+	for_each_ref(get_name, NULL);
+	if (!found_names)
+		die("No names found, cannot describe anything.");
 
 	if (argc == 0) {
 		describe("HEAD", 1);
