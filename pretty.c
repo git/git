@@ -445,6 +445,7 @@ struct format_commit_context {
 	enum date_mode dmode;
 	unsigned commit_header_parsed:1;
 	unsigned commit_message_parsed:1;
+	size_t width, indent1, indent2;
 
 	/* These offsets are relative to the start of the commit message. */
 	struct chunk author;
@@ -458,6 +459,7 @@ struct format_commit_context {
 	struct chunk abbrev_commit_hash;
 	struct chunk abbrev_tree_hash;
 	struct chunk abbrev_parent_hashes;
+	size_t wrap_start;
 };
 
 static int add_again(struct strbuf *sb, struct chunk *chunk)
@@ -595,6 +597,35 @@ static void format_decoration(struct strbuf *sb, const struct commit *commit)
 		strbuf_addch(sb, ')');
 }
 
+static void strbuf_wrap(struct strbuf *sb, size_t pos,
+			size_t width, size_t indent1, size_t indent2)
+{
+	struct strbuf tmp = STRBUF_INIT;
+
+	if (pos)
+		strbuf_add(&tmp, sb->buf, pos);
+	strbuf_add_wrapped_text(&tmp, sb->buf + pos,
+				(int) indent1, (int) indent2, (int) width);
+	strbuf_swap(&tmp, sb);
+	strbuf_release(&tmp);
+}
+
+static void rewrap_message_tail(struct strbuf *sb,
+				struct format_commit_context *c,
+				size_t new_width, size_t new_indent1,
+				size_t new_indent2)
+{
+	if (c->width == new_width && c->indent1 == new_indent1 &&
+	    c->indent2 == new_indent2)
+		return;
+	if (c->wrap_start && c->wrap_start < sb->len)
+		strbuf_wrap(sb, c->wrap_start, c->width, c->indent1, c->indent2);
+	c->wrap_start = sb->len;
+	c->width = new_width;
+	c->indent1 = new_indent1;
+	c->indent2 = new_indent2;
+}
+
 static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
                                void *context)
 {
@@ -643,6 +674,30 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 		    h2 <= 16) {
 			strbuf_addch(sb, (h1<<4)|h2);
 			return 3;
+		} else
+			return 0;
+	case 'w':
+		if (placeholder[1] == '(') {
+			unsigned long width = 0, indent1 = 0, indent2 = 0;
+			char *next;
+			const char *start = placeholder + 2;
+			const char *end = strchr(start, ')');
+			if (!end)
+				return 0;
+			if (end > start) {
+				width = strtoul(start, &next, 10);
+				if (*next == ',') {
+					indent1 = strtoul(next + 1, &next, 10);
+					if (*next == ',') {
+						indent2 = strtoul(next + 1,
+								 &next, 10);
+					}
+				}
+				if (*next != ')')
+					return 0;
+			}
+			rewrap_message_tail(sb, c, width, indent1, indent2);
+			return end - placeholder + 1;
 		} else
 			return 0;
 	}
@@ -748,7 +803,9 @@ void format_commit_message(const struct commit *commit,
 	memset(&context, 0, sizeof(context));
 	context.commit = commit;
 	context.dmode = dmode;
+	context.wrap_start = sb->len;
 	strbuf_expand(sb, format, format_commit_item, &context);
+	rewrap_message_tail(sb, &context, 0, 0, 0);
 }
 
 static void pp_header(enum cmit_fmt fmt,
