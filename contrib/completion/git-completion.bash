@@ -1323,8 +1323,18 @@ _git_rebase ()
 	fi
 	__git_complete_strategy && return
 	case "$cur" in
+	--whitespace=*)
+		__gitcomp "$__git_whitespacelist" "" "${cur##--whitespace=}"
+		return
+		;;
 	--*)
-		__gitcomp "--onto --merge --strategy --interactive"
+		__gitcomp "
+			--onto --merge --strategy --interactive
+			--preserve-merges --stat --no-stat
+			--committer-date-is-author-date --ignore-date
+			--ignore-whitespace --whitespace=
+			"
+
 		return
 	esac
 	__gitcomp "$(__git_refs)"
