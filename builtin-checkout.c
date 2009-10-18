@@ -616,6 +616,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	struct tree *source_tree = NULL;
 	char *conflict_style = NULL;
 	int patch_mode = 0;
+	int dwim_new_local_branch = 1;
 	struct option options[] = {
 		OPT__QUIET(&opts.quiet),
 		OPT_STRING('b', NULL, &opts.new_branch, "new branch", "branch"),
@@ -631,6 +632,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "conflict", &conflict_style, "style",
 			   "conflict style (merge or diff3)"),
 		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
+		{ OPTION_BOOLEAN, 0, "guess", &dwim_new_local_branch, NULL,
+		  "second guess 'git checkout no-such-branch'",
+		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 		OPT_END(),
 	};
 	int has_dash_dash;
@@ -715,6 +719,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			if (has_dash_dash)          /* case (1) */
 				die("invalid reference: %s", arg);
 			if (!patch_mode &&
+			    dwim_new_local_branch &&
 			    opts.track == BRANCH_TRACK_UNSPECIFIED &&
 			    !opts.new_branch &&
 			    !check_filename(NULL, arg) &&
