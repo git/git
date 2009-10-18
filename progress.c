@@ -131,7 +131,13 @@ static void throughput_string(struct throughput *tp, off_t total,
 	} else {
 		l -= snprintf(tp->display, l, ", %u bytes", (int)total);
 	}
-	if (rate)
+
+	if (rate > 1 << 10) {
+		int x = rate + 5;  /* for rounding */
+		snprintf(tp->display + sizeof(tp->display) - l, l,
+			 " | %u.%2.2u MiB/s",
+			 x >> 10, ((x & ((1 << 10) - 1)) * 100) >> 10);
+	} else if (rate)
 		snprintf(tp->display + sizeof(tp->display) - l, l,
 			 " | %u KiB/s", rate);
 }

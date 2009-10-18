@@ -641,7 +641,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			die("unable to write new index file");
 
 		err |= run_hook(NULL, "post-checkout", sha1_to_hex(null_sha1),
-				sha1_to_hex(remote_head->old_sha1), "1", NULL);
+				sha1_to_hex(our_head_points_at->old_sha1), "1",
+				NULL);
 
 		if (!err && option_recursive)
 			err = run_command_v_opt(argv_submodule, RUN_GIT_CMD);
