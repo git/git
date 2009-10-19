@@ -317,7 +317,21 @@ EOF
 		resolve_full_httpd
 		list_mods=$(echo "$full_httpd" | sed "s/-f$/-l/")
 		$list_mods | grep 'mod_cgi\.c' >/dev/null 2>&1 || \
-		echo "LoadModule cgi_module $module_path/mod_cgi.so" >> "$conf"
+		if test -f "$module_path/mod_cgi.so"
+		then
+			echo "LoadModule cgi_module $module_path/mod_cgi.so" >> "$conf"
+		else
+			$list_mods | grep 'mod_cgid\.c' >/dev/null 2>&1 || \
+			if test -f "$module_path/mod_cgid.so"
+			then
+				echo "LoadModule cgid_module $module_path/mod_cgid.so" \
+					>> "$conf"
+			else
+				echo "You have no CGI support!"
+				exit 2
+			fi
+			echo "ScriptSock logs/gitweb.sock" >> "$conf"
+		fi
 		cat >> "$conf" <<EOF
 AddHandler cgi-script .cgi
 <Location /gitweb.cgi>
