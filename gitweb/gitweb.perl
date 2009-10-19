@@ -297,6 +297,19 @@ our %feature = (
 		'override' => 0,
 		'default' => [1]},
 
+	# Enable showing size of blobs in a 'tree' view, in a separate
+	# column, similar to what 'ls -l' does.  This cost a bit of IO.
+
+	# To disable system wide have in $GITWEB_CONFIG
+	# $feature{'show-sizes'}{'default'} = [0];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'show-sizes'}{'override'} = 1;
+	# and in project config gitweb.showsizes = 0|1;
+	'show-sizes' => {
+		'sub' => sub { feature_bool('showsizes', @_) },
+		'override' => 0,
+		'default' => [1]},
+
 	# Make gitweb use an alternative format of the URLs which can be
 	# more readable and natural-looking: project name is embedded
 	# directly in the path and the query string contains other
@@ -2764,16 +2777,31 @@ sub parse_ls_tree_line {
 	my %opts = @_;
 	my %res;
 
-	#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
-	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/s;
+	if ($opts{'-l'}) {
+		#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa   16717	panic.c'
+		$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40}) +(-|[0-9]+)\t(.+)$/s;
 
-	$res{'mode'} = $1;
-	$res{'type'} = $2;
-	$res{'hash'} = $3;
-	if ($opts{'-z'}) {
-		$res{'name'} = $4;
+		$res{'mode'} = $1;
+		$res{'type'} = $2;
+		$res{'hash'} = $3;
+		$res{'size'} = $4;
+		if ($opts{'-z'}) {
+			$res{'name'} = $5;
+		} else {
+			$res{'name'} = unquote($5);
+		}
 	} else {
-		$res{'name'} = unquote($4);
+		#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
+		$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/s;
+
+		$res{'mode'} = $1;
+		$res{'type'} = $2;
+		$res{'hash'} = $3;
+		if ($opts{'-z'}) {
+			$res{'name'} = $4;
+		} else {
+			$res{'name'} = unquote($4);
+		}
 	}
 
 	return wantarray ? %res : \%res;
@@ -3564,6 +3592,9 @@ sub git_print_tree_entry {
 	# and link is the action links of the entry.
 
 	print "<td class=\"mode\">" . mode_str($t->{'mode'}) . "</td>\n";
+	if (exists $t->{'size'}) {
+		print "<td class=\"size\">$t->{'size'}</td>\n";
+	}
 	if ($t->{'type'} eq "blob") {
 		print "<td class=\"list\">" .
 			$cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
@@ -3609,12 +3640,14 @@ sub git_print_tree_entry {
 	} elsif ($t->{'type'} eq "tree") {
 		print "<td class=\"list\">";
 		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
-		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		                             file_name=>"$basedir$t->{'name'}",
+		                             %base_key)},
 		              esc_path($t->{'name'}));
 		print "</td>\n";
 		print "<td class=\"link\">";
 		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
-		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		                             file_name=>"$basedir$t->{'name'}",
+		                             %base_key)},
 		              "tree");
 		if (defined $hash_base) {
 			print " | " .
@@ -5088,10 +5121,14 @@ sub git_tree {
 	}
 	die_error(404, "No such tree") unless defined($hash);
 
+	my $show_sizes = gitweb_check_feature('show-sizes');
+	my $have_blame = gitweb_check_feature('blame');
+
 	my @entries = ();
 	{
 		local $/ = "\0";
-		open my $fd, "-|", git_cmd(), "ls-tree", '-z', $hash
+		open my $fd, "-|", git_cmd(), "ls-tree", '-z',
+			($show_sizes ? '-l' : ()), @extra_options, $hash
 			or die_error(500, "Open git-ls-tree failed");
 		@entries = map { chomp; $_ } <$fd>;
 		close $fd
@@ -5102,7 +5139,6 @@ sub git_tree {
 	my $ref = format_ref_marker($refs, $hash_base);
 	git_header_html();
 	my $basedir = '';
-	my $have_blame = gitweb_check_feature('blame');
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 		my @views_nav = ();
 		if (defined $file_name) {
@@ -5118,7 +5154,8 @@ sub git_tree {
 			# FIXME: Should be available when we have no hash base as well.
 			push @views_nav, $snapshot_links;
 		}
-		git_print_page_nav('tree','', $hash_base, undef, undef, join(' | ', @views_nav));
+		git_print_page_nav('tree','', $hash_base, undef, undef,
+		                   join(' | ', @views_nav));
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash_base);
 	} else {
 		undef $hash_base;
@@ -5151,8 +5188,10 @@ sub git_tree {
 		undef $up unless $up;
 		# based on git_print_tree_entry
 		print '<td class="mode">' . mode_str('040000') . "</td>\n";
+		print '<td class="size">&nbsp;</td>'."\n" if $show_sizes;
 		print '<td class="list">';
-		print $cgi->a({-href => href(action=>"tree", hash_base=>$hash_base,
+		print $cgi->a({-href => href(action=>"tree",
+		                             hash_base=>$hash_base,
 		                             file_name=>$up)},
 		              "..");
 		print "</td>\n";
@@ -5161,7 +5200,7 @@ sub git_tree {
 		print "</tr>\n";
 	}
 	foreach my $line (@entries) {
-		my %t = parse_ls_tree_line($line, -z => 1);
+		my %t = parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
 
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";

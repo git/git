@@ -341,6 +341,12 @@ td.mode {
 	font-family: monospace;
 }
 
+/* format of (optional) objects size in 'tree' view */
+td.size {
+	font-family: monospace;
+	text-align: right;
+}
+
 /* styling of diffs (patchsets): commitdiff and blobdiff views */
 div.diff.header,
 div.diff.extended_header {
