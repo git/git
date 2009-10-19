@@ -310,6 +310,19 @@ int strbuf_add_wrapped_text(struct strbuf *buf,
 	int w = indent, assume_utf8 = is_utf8(text);
 	const char *bol = text, *space = NULL;
 
+	if (width <= 0) {
+		/* just indent */
+		while (*text) {
+			const char *eol = strchrnul(text, '\n');
+			if (*eol == '\n')
+				eol++;
+			print_spaces(buf, indent);
+			strbuf_write(buf, text, eol-text);
+			text = eol;
+		}
+		return 1;
+	}
+
 	if (indent < 0) {
 		w = -indent;
 		space = text;
