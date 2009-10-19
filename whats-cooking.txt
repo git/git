@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2009, #02; Sun, 11)
-X-master-at: 78d553b7d7b269bb22ebd8b1198657c37484a3a0
-X-next-at: 0ff2e96835a8890f86b5b69d8967d350fe89e9e8
+Subject: What's cooking in git.git (Oct 2009, #03; Mon, 19)
+X-master-at: e79999b1a285d4dcf1d84bc893c864516a390cfa
+X-next-at: e01f7ce260cd5923cc9a088b74793a58379b5cc0
 
-What's cooking in git.git (Oct 2009, #02; Sun, 11)
+What's cooking in git.git (Oct 2009, #03; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -51,57 +51,133 @@ backward compatible.  Currently planeed changes are:
 
    http://thread.gmane.org/gmane.comp.version-control.git/119731/focus=119751
 
-As a post-release ritual, I've rebuilt 'next' on top of 'master'.
-
 --------------------------------------------------
 [Graduated to "master"]
 
-* ch/am-header (2009-09-25) 2 commits
-  (merged to 'next' on 2009-09-25 at f86e197)
- + git-am: force egrep to use correct characters set
- + git-am: fixed patch_format detection according to RFC2822
-
-* ef/msvc-noreturn (2009-09-30) 2 commits
-  (merged to 'next' on 2009-10-07 at 66137a0)
- + add NORETURN_PTR for function pointers
- + increase portability of NORETURN declarations
-
-jk: This is the latest round and I think should be ready for at least
-'next' (maybe even 'master' as it is really about the build and not about
-functionality).
-
-* fc/mutt-alias (2009-09-30) 1 commit
-  (merged to 'next' on 2009-10-07 at df7ac20)
- + send-email: fix mutt regex for grouped aliases
-
-jk: Latest round that addressed comments. Ready for 'next' if not
-'master'.
-
-* jk/reflog-date (2009-09-24) 1 commit
-  (merged to 'next' on 2009-09-29 at 43d444a)
- + improve reflog date/number heuristic
-
---------------------------------------------------
-[New Topics]
-
 * jp/maint-send-email-fold (2009-10-08) 1 commit.
- - git-send-email.perl: fold multiple entry "Cc:" and multiple single line "RCPT TO:"s
-
-* ks/precompute-completion (2009-10-05) 1 commit.
- - Speedup bash completion loading
+ + git-send-email.perl: fold multiple entry "Cc:" and multiple single line "RCPT TO:"s
 
 * pv/maint-add-p-no-exclude (2009-10-10) 1 commit.
   (merged to 'next' on 2009-10-11 at 0ff2e96)
  + git-add--interactive: never skip files included in index
 
-* sp/smart-http (2009-10-08) 4 commits.
- - Smart fetch and push over HTTP: server side
- - Add smart-http options to upload-pack, receive-pack
- - Git-aware CGI to provide dumb HTTP transport
- - Document the HTTP transport protocol
+* dk/blame-el (2009-09-29) 1 commit.
+ + git-blame.el: Change how blame information is shown.
+
+* jn/gitweb-patch (2009-10-09) 1 commit.
+ + gitweb: Do not show 'patch' link for merge commits
+
+* mr/instaweb-cgid (2009-09-26) 1 commit.
+  (merged to 'next' on 2009-10-11 at 99bcfaf)
+ + instaweb: support mod_cgid for apache2
+
+* tf/doc-pt-br (2009-09-23) 1 commit.
+ + Documentation: update pt-BR
+
+The current AsciiDoc may barf on NOME and SINOPSE, as pt_BR language
+definition is not widely distributed yet (it just hit the development
+tree).
+
+* bg/rebase-reword (2009-10-07) 2 commits.
+ + rebase-i: fix reword when using a terminal editor
+ + Teach 'rebase -i' the command "reword"
+
+* jp/fetch-tag-match (2009-09-17) 1 commit.
+ + fetch: Speed up fetch by rewriting find_non_local_tags
+
+* jn/gitweb-show-size (2009-09-07) 1 commit.
+ + gitweb: Add 'show-sizes' feature to show blob sizes in tree view
+
+* jc/maint-1.6.0-blank-at-eof (2009-09-14) 15 commits.
+  (merged to 'next' on 2009-10-11 at 7f34fb3)
+ + diff -B: colour whitespace errors
+ + diff.c: emit_add_line() takes only the rest of the line
+ + diff.c: split emit_line() from the first char and the rest of the line
+ + diff.c: shuffling code around
+ + diff --whitespace: fix blank lines at end
+ + core.whitespace: split trailing-space into blank-at-{eol,eof}
+ + diff --color: color blank-at-eof
+ + diff --whitespace=warn/error: fix blank-at-eof check
+ + diff --whitespace=warn/error: obey blank-at-eof
+ + diff.c: the builtin_diff() deals with only two-file comparison
+ + apply --whitespace: warn blank but not necessarily empty lines at EOF
+ + apply --whitespace=warn/error: diagnose blank at EOF
+ + apply.c: split check_whitespace() into two
+ + apply --whitespace=fix: detect new blank lines at eof correctly
+ + apply --whitespace=fix: fix handling of blank lines at the eof
+ (this branch is used by jc/maint-blank-at-eof.)
+
+This is a fix for an ancient bug (or inconsistent set of features); the
+topic is based on an ancient codebase and is designed to be merged
+upwards.  jc/maint-blank-at-eof serves that purpose.
+
+--------------------------------------------------
+[New Topics]
+
+* ak/bisect-reset-to-switch (2009-10-13) 1 commit.
+ - bisect reset: Allow resetting to any commit, not just a branch
+
+* fc/doc-fast-forward (2009-10-11) 1 commit.
+ - user-manual: use 'fast-forward'
+
+* gb/maint-gitweb-esc-param (2009-10-13) 1 commit.
+  (merged to 'next' on 2009-10-14 at 105f997)
+ + gitweb: fix esc_param
+ (this branch is used by sb/gitweb-link-author.)
+
+* jc/maint-1.6.3-graft-trailing-space (2009-10-14) 1 commit.
+ - info/grafts: allow trailing whitespaces at the end of line
+
+* jc/strbuf-nested-expand (2009-10-18) 5 commits
+ - Teach --wrap to only indent without wrapping
+ - Add %[wrap(width,in1,in2)<<any-string>>%] implementation
+ - strbuf_nested_expand(): allow expansion to interrupt in the middle
+ - Add strbuf_add_wrapped_text() to utf8.[ch]
+ - print_wrapped_text(): allow hard newlines
+ (this branch uses js/log-rewrap.)
+
+* jk/maint-cvsimport-pathname (2009-10-19) 1 commit.
+  (merged to 'next' on 2009-10-19 at 77824f2)
+ + cvsimport: fix relative argument filenames
+
+* jn/show-normalized-refs (2009-10-12) 3 commits.
+ - check-ref-format: simplify --print implementation
+ - git check-ref-format --print
+ - Add tests for git check-ref-format
+
+* sb/gitweb-link-author (2009-10-14) 1 commit.
+ - gitweb: linkify author/committer names with search
+ (this branch uses gb/maint-gitweb-esc-param.)
+
+* jc/checkout-auto-track (2009-10-18) 3 commits
+ - git checkout --nodwim
+ - DWIM "git checkout frotz" to "git checkout -b frotz origin/frotz"
+ - check_filename(): make verify_filename() callable without dying
 
 --------------------------------------------------
 [Stalled]
+
+* db/vcs-helper-rest (2009-09-03) 6 commits.
+ - Allow helpers to report in "list" command that the ref is unchanged
+ - Add support for "import" helper command
+ - Add a config option for remotes to specify a foreign vcs
+ - Allow programs to not depend on remotes having urls
+ - Allow fetch to modify refs
+ - Use a function to determine whether a remote is valid
+ (this branch is used by jh/cvs-helper.)
+
+This holds the remainder of the db/vcs-helper topic that has already
+merged in 1.6.5.  If people want to replace this with improvements it
+would be a good time to do so.
+
+* jl/submodule-add-noname (2009-09-22) 1 commit.
+ - git submodule add: make the <path> parameter optional
+
+Dscho started an interesting discussion regarding the larger workflow in
+which the "submodule add" is used.  I think the patch itself makes sense
+but at the same time it probably makes sense to also take the <path> and
+infer the <repository> as Dscho suggested, probably in "git submodule
+add", not in "git add" proper, at least initially.
 
 * sr/gfi-options (2009-09-06) 6 commits.
  - fast-import: test the new option command
@@ -110,6 +186,7 @@ jk: Latest round that addressed comments. Ready for 'next' if not
  - fast-import: add feature command
  - fast-import: put marks reading in it's own function
  - fast-import: put option parsing code in separate functions
+ (this branch is used by jh/notes.)
 
 Ejected from 'next' as fast-import folks still seem to be discussing with
 how to proceed.
@@ -135,28 +212,44 @@ says "no"?)
  - Allow helpers to request marks for fast-import
  (this branch uses db/vcs-helper-rest.)
 
-Builds on db/vcs-helper.  There is a re-roll planned.
-
-* ne/rev-cache (2009-09-07) 7 commits.
- . support for commit grafts, slight change to general mechanism
- . support for path name caching in rev-cache
- . full integration of rev-cache into git, completed test suite
- . administrative functions for rev-cache, start of integration into git
- . support for non-commit object caching in rev-cache
- . basic revision cache system, no integration or features
- . man page and technical discussion for rev-cache
-
-This seems to break at least t6001 when merged to 'pu'.
+Builds on db/vcs-helper.
 
 --------------------------------------------------
 [Cooking]
 
-* dk/blame-el (2009-09-29) 1 commit.
- - git-blame.el: Change how blame information is shown.
+* tr/stash-format (2009-10-16) 5 commits
+ . stash list: drop the default limit of 10 stashes
+ . stash list: use new %g formats instead of sed
+ . Introduce new pretty formats %g[sdD] for reflog information
+ . reflog-walk: refactor the branch@{num} formatting
+ . Refactor pretty_print_commit arguments into a struct
 
-Soon in 'next'.
+Expecting a re-roll.
 
-* ef/msys-imap (2009-10-09) 8 commits.
+* ks/precompute-completion (2009-10-05) 1 commit.
+  (merged to 'next' on 2009-10-14 at adf722a)
+ + Speedup bash completion loading
+
+* sp/smart-http (2009-10-14) 17 commits
+ - Smart HTTP fetch: gzip requests
+ - Smart fetch over HTTP: client side
+ - Smart push over HTTP: client side
+ - Discover refs via smart HTTP server when available
+ - Smart fetch and push over HTTP: server side
+ - Add stateless RPC options to upload-pack, receive-pack
+ - Git-aware CGI to provide dumb HTTP transport
+ - Move WebDAV HTTP push under remote-curl
+ - remote-helpers: Support custom transport options
+ - remote-helpers: Fetch more than one ref in a batch
+ - fetch: Allow transport -v -v -v to set verbosity to 3
+ - remote-curl: Refactor walker initialization
+ - Add multi_ack_detailed capability to fetch-pack/upload-pack
+ - Move "get_ack()" back to fetch-pack
+ - fetch-pack: Use a strbuf to compose the want list
+ - pkt-line: Make packet_read_line easier to debug
+ - pkt-line: Add strbuf based functions
+
+* ef/msys-imap (2009-10-13) 8 commits.
  - MSVC: Enable OpenSSL, and translate -lcrypto
  - mingw: enable OpenSSL
  - mingw: wrap SSL_set_(w|r)fd to call _get_osfhandle
@@ -166,81 +259,43 @@ Soon in 'next'.
  - imap-send: use separate read and write fds
  - imap-send: remove useless uid code
 
-* jn/gitweb-patch (2009-10-09) 1 commit.
- - gitweb: Do not show 'patch' link for merge commits
-
-Soon in 'next'
+Is this good to go yet?
 
 * mr/gitweb-snapshot (2009-09-26) 2 commits.
  - gitweb: append short hash ids to snapshot files
   (merged to 'next' on 2009-10-11 at 22ba047)
  + gitweb: check given hash before trying to create snapshot
 
-* mr/instaweb-cgid (2009-09-26) 1 commit.
-  (merged to 'next' on 2009-10-11 at 99bcfaf)
- + instaweb: support mod_cgid for apache2
-
-* tf/doc-pt-br (2009-09-23) 1 commit.
- - Documentation: update pt-BR
-
-The current AsciiDoc may barf on NOME and SINOPSE, as pt_BR language
-definition is not widely distributed yet (it just hit the development
-tree).  Need to revert these headings (or change the length of the section
-underlines to match the length of translated names).
-
 * jc/pretty-lf (2009-10-04) 1 commit.
  - Pretty-format: %[+-]x to tweak inter-item newlines
 
-I am not happy with this one yet.  I am contemplating to introduce a new
-syntax "%[magic(param)<anything>%]" to generalize expressions of this and
-line wrapping features in an extensible way.
-
-* js/log-rewrap (2008-11-10) 3 commits.
- . Add "%w" to pretty formats, which rewraps the commit message
+* js/log-rewrap (2008-11-10) 2 commits
  - Add strbuf_add_wrapped_text() to utf8.[ch]
  - print_wrapped_text(): allow hard newlines
-... and the first two from this series will be useful to implement an
-example magic "wrap", e.g. "%[wrap(i,j,w)%s%+b%]".
+ (this branch is used by jc/strbuf-nested-expand.)
 
-* jg/log-format-body-indent (2009-09-19) 1 commit.
- - git-log --format: Add %B tag with %B(x) option
-
-I think we should redo this on top of the first two patches from
-js/log-rewrap series; %B(x) is just a special case %B(x,x,0), no?  If a
-magic value 0 (or negative) given to wrap-width does not disable wrapping,
-we probably should make it so.
-
-* bg/rebase-reword (2009-10-07) 1 commit.
- - Teach 'rebase -i' the command "reword"
-
-Soon in 'next'
-
-* js/diff-verbose-submodule (2009-10-04) 1 commit.
+* js/diff-verbose-submodule (2009-10-14) 4 commits.
+ - add tests for git diff --submodule-summary
+ - fix output for deleted submodules in git diff --submodule-summary
+ - fix indentation depth for git diff --submodule-summary
  - Add the --submodule-summary option to the diff option family
 
-Dscho sounded like he has some corrections after list comments, but I did
-not pick up his interdiff in the middle.
-
-* jl/submodule-add-noname (2009-09-22) 1 commit.
- - git submodule add: make the <path> parameter optional
-
-Dscho started an interesting discussion regarding the larger workflow in
-which the "submodule add" is used.  I think the patch itself makes sense
-but at the same time it probably makes sense to also take the <path> and
-infer the <repository> as Dscho suggested, probably in "git submodule
-add", not in "git add" proper, at least initially.
+There was an attempted re-roll and it looked very promising with a minor
+fix-up, but I ran out of time to pick it up and unilaterally tweaking it.
+Waiting for a response.
 
 * jc/fix-tree-walk (2009-09-14) 10 commits.
  - read-tree --debug-unpack
- - unpack-trees.c: look ahead in the index
- - unpack-trees.c: prepare for looking ahead in the index
- - Aggressive three-way merge: fix D/F case
- - traverse_trees(): handle D/F conflict case sanely
- - more D/F conflict tests
- - tests: move convenience regexp to match object names to test-lib.sh
- - unpack_callback(): use unpack_failed() consistently
- - unpack-trees: typofix
- - diff-lib.c: fix misleading comments on oneway_diff()
+  (merged to 'next' on 2009-10-11 at 0b058e2)
+ + unpack-trees.c: look ahead in the index
+ + unpack-trees.c: prepare for looking ahead in the index
+ + Aggressive three-way merge: fix D/F case
+ + traverse_trees(): handle D/F conflict case sanely
+ + more D/F conflict tests
+ + tests: move convenience regexp to match object names to test-lib.sh
+ + unpack_callback(): use unpack_failed() consistently
+ + unpack-trees: typofix
+ + diff-lib.c: fix misleading comments on oneway_diff()
 
 This is my replacement for Linus's lt/maint-traverse-trees-fix patch.  It
 is not so much as a counter-proposal; I originally thought it might make
@@ -250,37 +305,7 @@ what Linus outlined --- walk the trees, and have the index walker follow
 it.  It turned out that the index side also needed some hairy look-ahead,
 
 This includes the fix to aggressive mode of three-way merge used by the
-resolve strategy.  I think the series is Ok for 'next'.
-
-* jp/fetch-tag-match (2009-09-17) 1 commit.
- - fetch: Speed up fetch by rewriting find_non_local_tags
-
-I just queued this without reading nor thinking about it very much.  I
-personally liked my version that had far smaller number of lines changed
-(which means I can be fairly certain that it did not introduce any
-regression), but perhaps the majorly rewritten logic this patch gives us
-may be easier to follow and maintain.
-
-* jc/maint-blank-at-eof (2009-09-15) 0 commits.
- (this branch uses jc/maint-1.6.0-blank-at-eof.)
-
-The series does not have a commit of its own but is a preparation for
-merging the original jc/1.6.0-maint-blank-at-eof topic to 'maint' and then
-'master'
-
-Soon in 'next'
-
-* db/vcs-helper-rest (2009-09-03) 6 commits.
- - Allow helpers to report in "list" command that the ref is unchanged
- - Add support for "import" helper command
- - Add a config option for remotes to specify a foreign vcs
- - Allow programs to not depend on remotes having urls
- - Allow fetch to modify refs
- - Use a function to determine whether a remote is valid
- (this branch is used by jh/cvs-helper.)
-
-This holds the remainder of the db/vcs-helper topic that has already
-merged in 1.6.5.
+resolve strategy.
 
 * jh/notes (2009-10-09) 22 commits.
  - fast-import: Proper notes tree manipulation using the notes API
@@ -305,36 +330,9 @@ merged in 1.6.5.
  - Speed up git notes lookup
  - Add a script to edit/inspect notes
  - Introduce commit notes
+ (this branch uses sr/gfi-options.)
 
-Rerolled and queued.
-
-* jn/gitweb-show-size (2009-09-07) 1 commit.
- - gitweb: Add 'show-sizes' feature to show blob sizes in tree view
-
-Soon in 'next'
-
-* jc/maint-1.6.0-blank-at-eof (2009-09-14) 15 commits.
-  (merged to 'next' on 2009-10-11 at 7f34fb3)
- + diff -B: colour whitespace errors
- + diff.c: emit_add_line() takes only the rest of the line
- + diff.c: split emit_line() from the first char and the rest of the line
- + diff.c: shuffling code around
- + diff --whitespace: fix blank lines at end
- + core.whitespace: split trailing-space into blank-at-{eol,eof}
- + diff --color: color blank-at-eof
- + diff --whitespace=warn/error: fix blank-at-eof check
- + diff --whitespace=warn/error: obey blank-at-eof
- + diff.c: the builtin_diff() deals with only two-file comparison
- + apply --whitespace: warn blank but not necessarily empty lines at EOF
- + apply --whitespace=warn/error: diagnose blank at EOF
- + apply.c: split check_whitespace() into two
- + apply --whitespace=fix: detect new blank lines at eof correctly
- + apply --whitespace=fix: fix handling of blank lines at the eof
- (this branch is used by jc/maint-blank-at-eof.)
-
-This is a fix for an ancient bug (or inconsistent set of features); the
-topic is based on an ancient codebase and is designed to be merged
-upwards.  jc/maint-blank-at-eof serves that purpose.
+Is this good for 'next' now?
 
 * jn/gitweb-blame (2009-09-01) 5 commits.
  - gitweb: Minify gitweb.js if JSMIN is defined
@@ -425,33 +423,18 @@ Maybe some people care about this.  I dunno.
 
 Maybe some people care about this.  I dunno.
 
-* lt/read-directory (2009-05-15) 3 commits.
- . Add initial support for pathname conversion to UTF-8
- . read_directory(): infrastructure for pathname character set conversion
- . Add 'fill_directory()' helper function for directory traversal
+* ne/rev-cache (2009-09-07) 7 commits.
+ . support for commit grafts, slight change to general mechanism
+ . support for path name caching in rev-cache
+ . full integration of rev-cache into git, completed test suite
+ . administrative functions for rev-cache, start of integration into git
+ . support for non-commit object caching in rev-cache
+ . basic revision cache system, no integration or features
+ . man page and technical discussion for rev-cache
 
-* cc/reset-merge (2009-09-16) 4 commits.
- . reset: add test cases for "--merge-safe" option
- . reset: add option "--merge-safe" to "git reset"
- . reset: use "unpack_trees()" directly instead of "git read-tree"
- . reset: add a few tests for "git reset --merge"
+This seems to break at least t6001 when merged to 'pu'.
 
-* cc/sequencer-rebase-i (2009-08-28) 15 commits.
- . rebase -i: use "git sequencer--helper --cherry-pick"
- . sequencer: add "--cherry-pick" option to "git sequencer--helper"
- . sequencer: add "do_commit()" and related functions working on "next_commit"
- . pick: libify "pick_help_msg()"
- . revert: libify cherry-pick and revert functionnality
- . rebase -i: use "git sequencer--helper --fast-forward"
- . sequencer: let "git sequencer--helper" callers set "allow_dirty"
- . sequencer: add "--fast-forward" option to "git sequencer--helper"
- . sequencer: add "do_fast_forward()" to perform a fast forward
- . rebase -i: use "git sequencer--helper --reset-hard"
- . sequencer: add "--reset-hard" option to "git sequencer--helper"
- . sequencer: add "reset_almost_hard()" and related functions
- . rebase -i: use "git sequencer--helper --make-patch"
- . sequencer: add "make_patch" function to save a patch
- . sequencer: add "builtin-sequencer--helper.c"
+* jg/log-format-body-indent (2009-09-19) 1 commit.
+ . git-log --format: Add %B tag with %B(x) option
 
-* lt/maint-traverse-trees-fix (2009-09-06) 1 commit.
- . Prepare 'traverse_trees()' for D/F conflict lookahead
+Ejected from 'pu' as this is merely a short-hand for %[wrap(0,x,x)%b%].
