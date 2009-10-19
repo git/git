@@ -470,4 +470,18 @@ test_expect_success 'avoid unnecessary reset' '
 	test 123456789 = $MTIME
 '
 
+test_expect_success 'reword' '
+	git checkout -b reword-branch master &&
+	FAKE_LINES="1 2 3 reword 4" FAKE_COMMIT_MESSAGE="E changed" git rebase -i A &&
+	git show HEAD | grep "E changed" &&
+	test $(git rev-parse master) != $(git rev-parse HEAD) &&
+	test $(git rev-parse master^) = $(git rev-parse HEAD^) &&
+	FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" git rebase -i A &&
+	git show HEAD^ | grep "D changed" &&
+	FAKE_LINES="reword 1 2 3 4" FAKE_COMMIT_MESSAGE="B changed" git rebase -i A &&
+	git show HEAD~3 | grep "B changed" &&
+	FAKE_LINES="1 reword 2 3 4" FAKE_COMMIT_MESSAGE="C changed" git rebase -i A &&
+	git show HEAD~2 | grep "C changed"
+'
+
 test_done

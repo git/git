@@ -368,14 +368,17 @@ By replacing the command "pick" with the command "edit", you can tell
 the files and/or the commit message, amend the commit, and continue
 rebasing.
 
+If you just want to edit the commit message for a commit, replace the
+command "pick" with the command "reword".
+
 If you want to fold two or more commits into one, replace the command
 "pick" with "squash" for the second and subsequent commit.  If the
 commits had different authors, it will attribute the squashed commit to
 the author of the first commit.
 
-In both cases, or when a "pick" does not succeed (because of merge
-errors), the loop will stop to let you fix things, and you can continue
-the loop with `git rebase --continue`.
+'git-rebase' will stop when "pick" has been replaced with "edit" or
+when a command fails due to merge errors. When you are done editing
+and/or resolving conflicts you can continue with `git rebase --continue`.
 
 For example, if you want to reorder the last 5 commits, such that what
 was HEAD~4 becomes the new HEAD. To achieve that, you would call
