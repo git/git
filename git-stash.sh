@@ -205,8 +205,7 @@ have_stash () {
 
 list_stash () {
 	have_stash || return 0
-	git log --no-color --pretty=oneline -g "$@" $ref_stash -- |
-	sed -n -e 's/^[.0-9a-f]* refs\///p'
+	git log --format="%gd: %gs" -g "$@" $ref_stash --
 }
 
 show_stash () {
