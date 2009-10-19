@@ -94,6 +94,7 @@ struct msg_data {
 	unsigned int crlf:1;
 };
 
+#undef DRV_OK
 #define DRV_OK          0
 #define DRV_MSG_BAD     -1
 #define DRV_BOX_BAD     -2
