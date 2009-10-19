@@ -63,6 +63,15 @@ enum cmit_fmt {
 	CMIT_FMT_UNSPECIFIED,
 };
 
+struct pretty_print_context
+{
+	int abbrev;
+	const char *subject;
+	const char *after_subject;
+	enum date_mode date_mode;
+	int need_8bit_cte;
+};
+
 extern int non_ascii(int);
 extern int has_non_ascii(const char *text);
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
@@ -71,12 +80,10 @@ extern char *reencode_commit_message(const struct commit *commit,
 extern void get_commit_format(const char *arg, struct rev_info *);
 extern void format_commit_message(const struct commit *commit,
 				  const void *format, struct strbuf *sb,
-				  enum date_mode dmode);
-extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit*,
-                                struct strbuf *,
-                                int abbrev, const char *subject,
-                                const char *after_subject, enum date_mode,
-				int need_8bit_cte);
+				  const struct pretty_print_context *context);
+extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
+				struct strbuf *sb,
+				const struct pretty_print_context *context);
 void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 		   const char *line, enum date_mode dmode,
 		   const char *encoding);
