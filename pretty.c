@@ -7,6 +7,7 @@
 #include "mailmap.h"
 #include "log-tree.h"
 #include "color.h"
+#include "reflog-walk.h"
 
 static char *user_format;
 
@@ -701,6 +702,22 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	case 'd':
 		format_decoration(sb, commit);
 		return 1;
+	case 'g':		/* reflog info */
+		switch(placeholder[1]) {
+		case 'd':	/* reflog selector */
+		case 'D':
+			if (c->pretty_ctx->reflog_info)
+				get_reflog_selector(sb,
+						    c->pretty_ctx->reflog_info,
+						    c->pretty_ctx->date_mode,
+						    (placeholder[1] == 'd'));
+			return 2;
+		case 's':	/* reflog message */
+			if (c->pretty_ctx->reflog_info)
+				get_reflog_message(sb, c->pretty_ctx->reflog_info);
+			return 2;
+		}
+		return 0;	/* unknown %g placeholder */
 	}
 
 	/* For the rest we have to parse the commit header. */
