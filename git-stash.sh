@@ -382,11 +382,6 @@ test -n "$seen_non_option" || set "save" "$@"
 case "$1" in
 list)
 	shift
-	if test $# = 0
-	then
-		set x -n 10
-		shift
-	fi
 	list_stash "$@"
 	;;
 show)
