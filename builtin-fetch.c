@@ -504,57 +504,98 @@ static int will_fetch(struct ref **head, const unsigned char *sha1)
 	return 0;
 }
 
+struct tag_data {
+	struct ref **head;
+	struct ref ***tail;
+};
+
+static int add_to_tail(struct string_list_item *item, void *cb_data)
+{
+	struct tag_data *data = (struct tag_data *)cb_data;
+	struct ref *rm = NULL;
+
+	/* We have already decided to ignore this item */
+	if (!item->util)
+		return 0;
+
+	rm = alloc_ref(item->string);
+	rm->peer_ref = alloc_ref(item->string);
+	hashcpy(rm->old_sha1, item->util);
+
+	**data->tail = rm;
+	*data->tail = &rm->next;
+
+	return 0;
+}
+
 static void find_non_local_tags(struct transport *transport,
 			struct ref **head,
 			struct ref ***tail)
 {
 	struct string_list existing_refs = { NULL, 0, 0, 0 };
-	struct string_list new_refs = { NULL, 0, 0, 1 };
-	char *ref_name;
-	int ref_name_len;
-	const unsigned char *ref_sha1;
-	const struct ref *tag_ref;
-	struct ref *rm = NULL;
+	struct string_list remote_refs = { NULL, 0, 0, 0 };
+	struct tag_data data = {head, tail};
 	const struct ref *ref;
+	struct string_list_item *item = NULL;
 
 	for_each_ref(add_existing, &existing_refs);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
 		if (prefixcmp(ref->name, "refs/tags"))
 			continue;
 
-		ref_name = xstrdup(ref->name);
-		ref_name_len = strlen(ref_name);
-		ref_sha1 = ref->old_sha1;
-
-		if (!strcmp(ref_name + ref_name_len - 3, "^{}")) {
-			ref_name[ref_name_len - 3] = 0;
-			tag_ref = transport_get_remote_refs(transport);
-			while (tag_ref) {
-				if (!strcmp(tag_ref->name, ref_name)) {
-					ref_sha1 = tag_ref->old_sha1;
-					break;
-				}
-				tag_ref = tag_ref->next;
-			}
+		/*
+		 * The peeled ref always follows the matching base
+		 * ref, so if we see a peeled ref that we don't want
+		 * to fetch then we can mark the ref entry in the list
+		 * as one to ignore by setting util to NULL.
+		 */
+		if (!strcmp(ref->name + strlen(ref->name) - 3, "^{}")) {
+			if (item && !has_sha1_file(ref->old_sha1) &&
+			    !will_fetch(head, ref->old_sha1) &&
+			    !has_sha1_file(item->util) &&
+			    !will_fetch(head, item->util))
+				item->util = NULL;
+			item = NULL;
+			continue;
 		}
 
-		if (!string_list_has_string(&existing_refs, ref_name) &&
-		    !string_list_has_string(&new_refs, ref_name) &&
-		    (has_sha1_file(ref->old_sha1) ||
-		     will_fetch(head, ref->old_sha1))) {
-			string_list_insert(ref_name, &new_refs);
+		/*
+		 * If item is non-NULL here, then we previously saw a
+		 * ref not followed by a peeled reference, so we need
+		 * to check if it is a lightweight tag that we want to
+		 * fetch.
+		 */
+		if (item && !has_sha1_file(item->util) &&
+		    !will_fetch(head, item->util))
+			item->util = NULL;
 
-			rm = alloc_ref(ref_name);
-			rm->peer_ref = alloc_ref(ref_name);
-			hashcpy(rm->old_sha1, ref_sha1);
+		item = NULL;
 
-			**tail = rm;
-			*tail = &rm->next;
-		}
-		free(ref_name);
+		/* skip duplicates and refs that we already have */
+		if (string_list_has_string(&remote_refs, ref->name) ||
+		    string_list_has_string(&existing_refs, ref->name))
+			continue;
+
+		item = string_list_insert(ref->name, &remote_refs);
+		item->util = (void *)ref->old_sha1;
 	}
 	string_list_clear(&existing_refs, 0);
-	string_list_clear(&new_refs, 0);
+
+	/*
+	 * We may have a final lightweight tag that needs to be
+	 * checked to see if it needs fetching.
+	 */
+	if (item && !has_sha1_file(item->util) &&
+	    !will_fetch(head, item->util))
+		item->util = NULL;
+
+	/*
+	 * For all the tags in the remote_refs string list, call
+	 * add_to_tail to add them to the list of refs to be fetched
+	 */
+	for_each_string_list(add_to_tail, &remote_refs, &data);
+
+	string_list_clear(&remote_refs, 0);
 }
 
 static void check_not_current_branch(struct ref *ref_map)
