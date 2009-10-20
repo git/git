@@ -2918,6 +2918,93 @@ sub find_extra_svk_parents {
 	}
 }
 
+# note: this function should only be called if the various dirprops
+# have actually changed
+sub find_extra_svn_parents {
+	my ($self, $ed, $mergeinfo, $parents) = @_;
+	# aha!  svk:merge property changed...
+
+	# We first search for merged tips which are not in our
+	# history.  Then, we figure out which git revisions are in
+	# that tip, but not this revision.  If all of those revisions
+	# are now marked as merge, we can add the tip as a parent.
+	my @merges = split "\n", $mergeinfo;
+	my @merge_tips;
+	my @merged_commit_ranges;
+	my $url = $self->rewrite_root || $self->{url};
+	for my $merge ( @merges ) {
+		my ($source, $revs) = split ":", $merge;
+		my $path = $source;
+		$path =~ s{^/}{};
+		my $gs = Git::SVN->find_by_url($url.$source, $url, $path);
+		if ( !$gs ) {
+			warn "Couldn't find revmap for $url$source\n";
+			next;
+		}
+		my @ranges = split ",", $revs;
+		my ($tip, $tip_commit);
+		# find the tip
+		for my $range ( @ranges ) {
+			my ($bottom, $top) = split "-", $range;
+			$top ||= $bottom;
+			my $bottom_commit =
+				$gs->rev_map_get($bottom, $self->ra_uuid) ||
+				$gs->rev_map_get($bottom+1, $self->ra_uuid);
+			my $top_commit =
+				$gs->rev_map_get($top, $self->ra_uuid);
+
+			unless ($top_commit and $bottom_commit) {
+				warn "W:unknown path/rev in svn:mergeinfo "
+					."dirprop: $source:$range\n";
+				next;
+			}
+
+			push @merged_commit_ranges,
+				"$bottom_commit..$top_commit";
+
+			if ( !defined $tip or $top > $tip ) {
+				$tip = $top;
+				$tip_commit = $top_commit;
+			}
+		}
+		unless (!$tip_commit or
+				grep { $_ eq $tip_commit } @$parents ) {
+			push @merge_tips, $tip_commit;
+		} else {
+			push @merge_tips, undef;
+		}
+	}
+	for my $merge_tip ( @merge_tips ) {
+		my $spec = shift @merges;
+		next unless $merge_tip;
+		my @cmd = ('rev-list', "-1", $merge_tip,
+			   "--not", @$parents );
+		my ($msg_fh, $ctx) = command_output_pipe(@cmd);
+		my $new;
+		while ( <$msg_fh> ) {
+			$new=1;last;
+		}
+		command_close_pipe($msg_fh, $ctx);
+		if ( $new ) {
+			push @cmd, @merged_commit_ranges;
+			my ($msg_fh, $ctx) = command_output_pipe(@cmd);
+			my $unmerged;
+			while ( <$msg_fh> ) {
+				$unmerged=1;last;
+			}
+			command_close_pipe($msg_fh, $ctx);
+			if ( $unmerged ) {
+				warn "W:svn cherry-pick ignored ($spec)\n";
+			} else {
+				warn
+				  "Found merge parent (svn:mergeinfo prop): ",
+				  $merge_tip, "\n";
+				push @$parents, $merge_tip;
+			}
+		}
+	}
+}
+
 sub make_log_entry {
 	my ($self, $rev, $parents, $ed) = @_;
 	my $untracked = $self->get_untracked($ed);
@@ -2929,6 +3016,12 @@ sub make_log_entry {
 		if ( $props->{"svk:merge"} ) {
 			$self->find_extra_svk_parents
 				($ed, $props->{"svk:merge"}, \@parents);
+		}
+		if ( $props->{"svn:mergeinfo"} ) {
+			$self->find_extra_svn_parents
+				($ed,
+				 $props->{"svn:mergeinfo"},
+				 \@parents);
 		}
 	}
 
