@@ -2878,14 +2878,64 @@ sub check_author {
 	$author;
 }
 
+sub find_extra_svk_parents {
+	my ($self, $ed, $tickets, $parents) = @_;
+	# aha!  svk:merge property changed...
+	my @tickets = split "\n", $tickets;
+	my @known_parents;
+	for my $ticket ( @tickets ) {
+		my ($uuid, $path, $rev) = split /:/, $ticket;
+		if ( $uuid eq $self->ra_uuid ) {
+			my $url = $self->rewrite_root || $self->{url};
+			my $repos_root = $url;
+			my $branch_from = $path;
+			$branch_from =~ s{^/}{};
+			my $gs = $self->other_gs($repos_root."/".$branch_from,
+			                         $url,
+			                         $branch_from,
+			                         $rev,
+			                         $self->{ref_id});
+			if ( my $commit = $gs->rev_map_get($rev, $uuid) ) {
+				# wahey!  we found it, but it might be
+				# an old one (!)
+				push @known_parents, $commit;
+			}
+		}
+	}
+	for my $parent ( @known_parents ) {
+		my @cmd = ('rev-list', $parent, map { "^$_" } @$parents );
+		my ($msg_fh, $ctx) = command_output_pipe(@cmd);
+		my $new;
+		while ( <$msg_fh> ) {
+			$new=1;last;
+		}
+		command_close_pipe($msg_fh, $ctx);
+		if ( $new ) {
+			print STDERR
+			    "Found merge parent (svk:merge ticket): $parent\n";
+			push @$parents, $parent;
+		}
+	}
+}
+
 sub make_log_entry {
 	my ($self, $rev, $parents, $ed) = @_;
 	my $untracked = $self->get_untracked($ed);
 
+	my @parents = @$parents;
+	my $ps = $ed->{path_strip} || "";
+	for my $path ( grep { m/$ps/ } %{$ed->{dir_prop}} ) {
+		my $props = $ed->{dir_prop}{$path};
+		if ( $props->{"svk:merge"} ) {
+			$self->find_extra_svk_parents
+				($ed, $props->{"svk:merge"}, \@parents);
+		}
+	}
+
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;
 	print $un "r$rev\n" or croak $!;
 	print $un $_, "\n" foreach @$untracked;
-	my %log_entry = ( parents => $parents || [], revision => $rev,
+	my %log_entry = ( parents => \@parents, revision => $rev,
 	                  log => '');
 
 	my $headrev;
