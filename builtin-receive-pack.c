@@ -28,6 +28,8 @@ static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
 static int report_status;
 static int prefer_ofs_delta = 1;
+static int auto_update_server_info;
+static int auto_gc = 1;
 static const char *head_name;
 static char *capabilities_to_send;
 
@@ -85,6 +87,16 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 	if (strcmp(var, "repack.usedeltabaseoffset") == 0) {
 		prefer_ofs_delta = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.updateserverinfo") == 0) {
+		auto_update_server_info = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.autogc") == 0) {
+		auto_gc = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -672,6 +684,14 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			report(unpack_status);
 		run_receive_hook(post_receive_hook);
 		run_update_post_hook(commands);
+		if (auto_gc) {
+			const char *argv_gc_auto[] = {
+				"gc", "--auto", "--quiet", NULL,
+			};
+			run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
+		}
+		if (auto_update_server_info)
+			update_server_info(0);
 	}
 	return 0;
 }
