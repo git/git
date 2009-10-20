@@ -19,7 +19,7 @@ static int show_root;
 static int show_tags;
 static int show_unreachable;
 static int include_reflogs = 1;
-static int check_full;
+static int check_full = 1;
 static int check_strict;
 static int keep_cache_objects;
 static unsigned char head_sha1[20];
