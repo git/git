@@ -560,6 +560,16 @@ in the file.  E.g. the string `$Format:%H$` will be replaced by the
 commit hash.
 
 
+Packing objects
+~~~~~~~~~~~~~~~
+
+`delta`
+^^^^^^^
+
+Delta compression will not be attempted for blobs for paths with the
+attribute `delta` set to false.
+
+
 Viewing files in GUI tools
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
