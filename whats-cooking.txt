@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2009, #03; Mon, 19)
-X-master-at: e79999b1a285d4dcf1d84bc893c864516a390cfa
-X-next-at: e01f7ce260cd5923cc9a088b74793a58379b5cc0
+Subject: What's cooking in git.git (Oct 2009, #04; Wed, 21)
+X-master-at: 3694209ca16c033fb4c539cc23b0b370e48952dd
+X-next-at: fef13efd27479ba3d90fd511ea198445ed434a73
 
-What's cooking in git.git (Oct 2009, #03; Mon, 19)
+What's cooking in git.git (Oct 2009, #04; Wed, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -54,108 +54,116 @@ backward compatible.  Currently planeed changes are:
 --------------------------------------------------
 [Graduated to "master"]
 
-* jp/maint-send-email-fold (2009-10-08) 1 commit.
- + git-send-email.perl: fold multiple entry "Cc:" and multiple single line "RCPT TO:"s
-
-* pv/maint-add-p-no-exclude (2009-10-10) 1 commit.
-  (merged to 'next' on 2009-10-11 at 0ff2e96)
- + git-add--interactive: never skip files included in index
-
-* dk/blame-el (2009-09-29) 1 commit.
- + git-blame.el: Change how blame information is shown.
-
-* jn/gitweb-patch (2009-10-09) 1 commit.
- + gitweb: Do not show 'patch' link for merge commits
-
-* mr/instaweb-cgid (2009-09-26) 1 commit.
-  (merged to 'next' on 2009-10-11 at 99bcfaf)
- + instaweb: support mod_cgid for apache2
-
-* tf/doc-pt-br (2009-09-23) 1 commit.
- + Documentation: update pt-BR
-
-The current AsciiDoc may barf on NOME and SINOPSE, as pt_BR language
-definition is not widely distributed yet (it just hit the development
-tree).
-
-* bg/rebase-reword (2009-10-07) 2 commits.
- + rebase-i: fix reword when using a terminal editor
- + Teach 'rebase -i' the command "reword"
-
-* jp/fetch-tag-match (2009-09-17) 1 commit.
- + fetch: Speed up fetch by rewriting find_non_local_tags
-
-* jn/gitweb-show-size (2009-09-07) 1 commit.
- + gitweb: Add 'show-sizes' feature to show blob sizes in tree view
-
-* jc/maint-1.6.0-blank-at-eof (2009-09-14) 15 commits.
-  (merged to 'next' on 2009-10-11 at 7f34fb3)
- + diff -B: colour whitespace errors
- + diff.c: emit_add_line() takes only the rest of the line
- + diff.c: split emit_line() from the first char and the rest of the line
- + diff.c: shuffling code around
- + diff --whitespace: fix blank lines at end
- + core.whitespace: split trailing-space into blank-at-{eol,eof}
- + diff --color: color blank-at-eof
- + diff --whitespace=warn/error: fix blank-at-eof check
- + diff --whitespace=warn/error: obey blank-at-eof
- + diff.c: the builtin_diff() deals with only two-file comparison
- + apply --whitespace: warn blank but not necessarily empty lines at EOF
- + apply --whitespace=warn/error: diagnose blank at EOF
- + apply.c: split check_whitespace() into two
- + apply --whitespace=fix: detect new blank lines at eof correctly
- + apply --whitespace=fix: fix handling of blank lines at the eof
- (this branch is used by jc/maint-blank-at-eof.)
-
-This is a fix for an ancient bug (or inconsistent set of features); the
-topic is based on an ancient codebase and is designed to be merged
-upwards.  jc/maint-blank-at-eof serves that purpose.
-
---------------------------------------------------
-[New Topics]
-
-* ak/bisect-reset-to-switch (2009-10-13) 1 commit.
- - bisect reset: Allow resetting to any commit, not just a branch
-
-* fc/doc-fast-forward (2009-10-11) 1 commit.
- - user-manual: use 'fast-forward'
-
 * gb/maint-gitweb-esc-param (2009-10-13) 1 commit.
   (merged to 'next' on 2009-10-14 at 105f997)
  + gitweb: fix esc_param
  (this branch is used by sb/gitweb-link-author.)
 
-* jc/maint-1.6.3-graft-trailing-space (2009-10-14) 1 commit.
- - info/grafts: allow trailing whitespaces at the end of line
+--------------------------------------------------
+[New Topics]
 
-* jc/strbuf-nested-expand (2009-10-18) 5 commits
- - Teach --wrap to only indent without wrapping
- - Add %[wrap(width,in1,in2)<<any-string>>%] implementation
- - strbuf_nested_expand(): allow expansion to interrupt in the middle
- - Add strbuf_add_wrapped_text() to utf8.[ch]
- - print_wrapped_text(): allow hard newlines
- (this branch uses js/log-rewrap.)
+* vl/git-gui (2009-10-16) 1 commit.
+ - git-gui: adjust the minimum height of diff pane for shorter screen height
 
-* jk/maint-cvsimport-pathname (2009-10-19) 1 commit.
-  (merged to 'next' on 2009-10-19 at 77824f2)
- + cvsimport: fix relative argument filenames
+Shawn?
 
-* jn/show-normalized-refs (2009-10-12) 3 commits.
- - check-ref-format: simplify --print implementation
- - git check-ref-format --print
- - Add tests for git check-ref-format
+* cb/doc-fetch-pull-merge (2009-10-21) 1 commit.
+  (merged to 'next' on 2009-10-21 at 1d9190d)
+ + modernize fetch/merge/pull examples
 
-* sb/gitweb-link-author (2009-10-14) 1 commit.
- - gitweb: linkify author/committer names with search
- (this branch uses gb/maint-gitweb-esc-param.)
+* ja/fetch-doc (2009-10-21) 1 commit.
+  (merged to 'next' on 2009-10-21 at bf09f62)
+ + Documentation/fetch-options.txt: order options alphabetically
 
-* jc/checkout-auto-track (2009-10-18) 3 commits
- - git checkout --nodwim
- - DWIM "git checkout frotz" to "git checkout -b frotz origin/frotz"
- - check_filename(): make verify_filename() callable without dying
+Helps 'git-fetch.{1,html}' without helping 'git-pull.{1,html}'.
+
+* jc/1.7.0-no-commit-no-ff-2 (2009-10-21) 1 commit.
+ - git-merge: forbid fast-forward and up-to-date when --no-commit is given
+
+This makes "git merge --no-commit" fail when it results in fast-forward or
+up-to-date.  I haven't described this at the beginning of this message
+yet, as it is not clear if this is even necessary, but since I already
+wrote it and many people seem to be interested in UI and behaviour
+warts,...
+
+Some tests expect the traditional behaviour of silently ignoring --no-commit
+upon fast-forward, and tonight's 'pu' does not pass them.
+
+* jc/1.7.0-no-commit-no-ff (2009-10-21) 1 commit.
+ . git-merge: imply --no-ff when --no-commit is given
+
+This is an alternative patch to the same issue.
+
+* jc/fsck-default-full (2009-10-20) 1 commit
+  (merged to 'next' on 2009-10-21 at 1375192)
+ + fsck: default to "git fsck --full"
+
+Should be safe enough to be in 'master' soon.
+
+* jc/maint-fix-unpack-zlib-check (2009-10-21) 1 commit.
+ - Fix incorrect error check while reading deflated pack data
+
+This is the final round from 2009-10-21, not my earlier botched attempts.
+
+* jc/receive-pack-auto (2009-10-20) 2 commits.
+  (merged to 'next' on 2009-10-21 at fef13ef)
+ + receive-pack: run "gc --auto --quiet" and optionally "update-server-info"
+ + gc --auto --quiet: make the notice a bit less verboase
+
+* jp/dirty-describe (2009-10-21) 1 commit.
+ - Teach "git describe" --dirty option
+
+Ack?
+
+* tr/filter-branch (2009-10-21) 2 commits.
+ - filter-branch: nearest-ancestor rewriting outside subdir filter
+ - filter-branch: stop special-casing $filter_subdir argument
+
+J6t already has some comments on this.
+
+* tr/maint-roff-quote (2009-10-21) 2 commits.
+ - Document GNU_ROFF in Makefile
+ - Quote ' as \(aq in manpages
+
+The doc may need to be clarified a bit more.
+
+* bg/clone-doc (2009-10-20) 1 commit.
+  (merged to 'next' on 2009-10-21 at 3016736)
+ + git-clone.txt: Fix grammar and formatting
+
+Should be correct enough to be in 'master' soon.
+
+* iv/tar-lzma-xz (2009-10-20) 1 commit.
+  (merged to 'next' on 2009-10-21 at cb0df8a)
+ + import-tars: Add support for tarballs compressed with lzma, xz
+
+Should be safe enough to be in 'master' soon.
+
+* rs/pretty-wrap (2009-10-17) 1 commit
+ - Implement wrap format %w() as if it is a mode switch
+ (this branch uses js/log-rewrap; is related to jc/strbuf-nested-expand.)
+
+When it comes to design issues to keep unnecessary complexity out, I tend
+to trust Réne (and Nico) a lot more than I trust myself.  Tonight's 'pu'
+queues this series instead of my "nested" one.
+
+* sr/blame-incomplete (2009-10-19) 1 commit.
+ - blame: make sure that the last line ends in an LF
+
+I think this is _good enough_ as-is; although it would be better if we
+added some hint to the output for Porcelain implementations, that can be
+done as a follow-up fix.
 
 --------------------------------------------------
 [Stalled]
+
+* mr/gitweb-snapshot (2009-09-26) 2 commits.
+ - gitweb: append short hash ids to snapshot files
+  (merged to 'next' on 2009-10-11 at 22ba047)
+ + gitweb: check given hash before trying to create snapshot
+
+I lost track of the discussion around the tip commit.  The bottom one may
+better go to 'master' regardless.
 
 * db/vcs-helper-rest (2009-09-03) 6 commits.
  - Allow helpers to report in "list" command that the ref is unchanged
@@ -186,10 +194,6 @@ add", not in "git add" proper, at least initially.
  - fast-import: add feature command
  - fast-import: put marks reading in it's own function
  - fast-import: put option parsing code in separate functions
- (this branch is used by jh/notes.)
-
-Ejected from 'next' as fast-import folks still seem to be discussing with
-how to proceed.
 
 * je/send-email-no-subject (2009-08-05) 1 commit.
   (merged to 'next' on 2009-10-11 at 1b99c56)
@@ -202,33 +206,96 @@ test to verify the negative case (i.e. does it correctly stop if the user
 says "no"?)
 
 * jh/cvs-helper (2009-08-18) 8 commits.
- - More fixes to the git-remote-cvs installation procedure
- - Fix the Makefile-generated path to the git_remote_cvs package in git-remote-cvs
- - Add simple selftests of git-remote-cvs functionality
- - git-remote-cvs: Remote helper program for CVS repositories
- - 2/2: Add Python support library for CVS remote helper
- - 1/2: Add Python support library for CVS remote helper
- - Basic build infrastructure for Python scripts
- - Allow helpers to request marks for fast-import
+ . More fixes to the git-remote-cvs installation procedure
+ . Fix the Makefile-generated path to the git_remote_cvs package in git-remote-cvs
+ . Add simple selftests of git-remote-cvs functionality
+ . git-remote-cvs: Remote helper program for CVS repositories
+ . 2/2: Add Python support library for CVS remote helper
+ . 1/2: Add Python support library for CVS remote helper
+ . Basic build infrastructure for Python scripts
+ . Allow helpers to request marks for fast-import
  (this branch uses db/vcs-helper-rest.)
 
-Builds on db/vcs-helper.
+* jc/strbuf-nested-expand (2009-10-18) 3 commits
+ . Teach --wrap to only indent without wrapping
+ . Add %[wrap(width,in1,in2)<<any-string>>%] implementation
+ . strbuf_nested_expand(): allow expansion to interrupt in the middle
+ (this branch uses js/log-rewrap; is related to rs/pretty-wrap.)
+
+Ejected from 'pu' to let rs/pretty-wrap in as described above.
 
 --------------------------------------------------
 [Cooking]
 
-* tr/stash-format (2009-10-16) 5 commits
- . stash list: drop the default limit of 10 stashes
- . stash list: use new %g formats instead of sed
- . Introduce new pretty formats %g[sdD] for reflog information
- . reflog-walk: refactor the branch@{num} formatting
- . Refactor pretty_print_commit arguments into a struct
+* ne/rev-cache (2009-10-19) 7 commits.
+ - support for commit grafts, slight change to general mechanism
+ - support for path name caching in rev-cache
+ - full integration of rev-cache into git, completed test suite
+ - administrative functions for rev-cache, start of integration into git
+ - support for non-commit object caching in rev-cache
+ - basic revision cache system, no integration or features
+ - man page and technical discussion for rev-cache
 
-Expecting a re-roll.
+Still unstable?  Has an extra test squashed in; tonight's 'pu' does not
+pass tests.
+
+* ak/bisect-reset-to-switch (2009-10-13) 1 commit.
+ - bisect reset: Allow resetting to any commit, not just a branch
+
+Soon in 'next'.
+
+* fc/doc-fast-forward (2009-10-11) 1 commit.
+ - user-manual: use 'fast-forward'
+
+* jc/maint-1.6.3-graft-trailing-space (2009-10-14) 1 commit.
+ - info/grafts: allow trailing whitespaces at the end of line
+
+Soon in 'next'.
+
+* jk/maint-cvsimport-pathname (2009-10-19) 1 commit.
+  (merged to 'next' on 2009-10-19 at 77824f2)
+ + cvsimport: fix relative argument filenames
+
+Should be safe enough to be in 'master' soon.
+
+* jn/show-normalized-refs (2009-10-12) 3 commits.
+ - check-ref-format: simplify --print implementation
+ - git check-ref-format --print
+ - Add tests for git check-ref-format
+
+This was for helping Porcelains like git-gui to sanely cope with user
+input that has redundant // in refnames.  Are potential users happy with
+the series?  I think this is ready for 'next'.
+
+* sb/gitweb-link-author (2009-10-15) 1 commit
+ - gitweb: linkify author/committer names with search
+
+Soon in 'next'.
+
+* jc/checkout-auto-track (2009-10-18) 3 commits
+ - git checkout --no-guess
+ - DWIM "git checkout frotz" to "git checkout -b frotz origin/frotz"
+ - check_filename(): make verify_filename() callable without dying
+
+The final shape of this series ended up to be more or less exactly what
+Dscho hinted he wanted to have in one of the discussion. Is everybody
+happy with this kind of new user-friendliness?  I think it is safe enough
+to be queued to 'next'.
+
+* tr/stash-format (2009-10-19) 5 commits
+ - stash list: drop the default limit of 10 stashes
+ - stash list: use new %g formats instead of sed
+ - Introduce new pretty formats %g[sdD] for reflog information
+ - reflog-walk: refactor the branch@{num} formatting
+ - Refactor pretty_print_commit arguments into a struct
+
+Soon in 'next'.
 
 * ks/precompute-completion (2009-10-05) 1 commit.
   (merged to 'next' on 2009-10-14 at adf722a)
  + Speedup bash completion loading
+
+Are people happy with this?
 
 * sp/smart-http (2009-10-14) 17 commits
  - Smart HTTP fetch: gzip requests
@@ -249,7 +316,9 @@ Expecting a re-roll.
  - pkt-line: Make packet_read_line easier to debug
  - pkt-line: Add strbuf based functions
 
-* ef/msys-imap (2009-10-13) 8 commits.
+What's the doneness of this series?
+
+* ef/msys-imap (2009-10-21) 8 commits.
  - MSVC: Enable OpenSSL, and translate -lcrypto
  - mingw: enable OpenSSL
  - mingw: wrap SSL_set_(w|r)fd to call _get_osfhandle
@@ -259,12 +328,8 @@ Expecting a re-roll.
  - imap-send: use separate read and write fds
  - imap-send: remove useless uid code
 
-Is this good to go yet?
-
-* mr/gitweb-snapshot (2009-09-26) 2 commits.
- - gitweb: append short hash ids to snapshot files
-  (merged to 'next' on 2009-10-11 at 22ba047)
- + gitweb: check given hash before trying to create snapshot
+Another re-roll.  Waiting for an Ack from MSVC folks but otherwise it is
+ready for 'next', I think.
 
 * jc/pretty-lf (2009-10-04) 1 commit.
  - Pretty-format: %[+-]x to tweak inter-item newlines
@@ -272,17 +337,21 @@ Is this good to go yet?
 * js/log-rewrap (2008-11-10) 2 commits
  - Add strbuf_add_wrapped_text() to utf8.[ch]
  - print_wrapped_text(): allow hard newlines
- (this branch is used by jc/strbuf-nested-expand.)
+ (this branch is used by jc/strbuf-nested-expand and rs/pretty-wrap.)
 
-* js/diff-verbose-submodule (2009-10-14) 4 commits.
+Soon in 'next'; regardless of how wrapping is exposed to --pretty=format,
+this code will be used, and it seems to be leak-free and reasonably done.
+
+We _might_ want to cherry-pick the tip of jc/strbuf-nested-expand to this
+series, though.
+
+* js/diff-verbose-submodule (2009-10-14) 2 commits.
  - add tests for git diff --submodule-summary
- - fix output for deleted submodules in git diff --submodule-summary
- - fix indentation depth for git diff --submodule-summary
- - Add the --submodule-summary option to the diff option family
+ - Add the --submodule option to the diff option family
 
-There was an attempted re-roll and it looked very promising with a minor
-fix-up, but I ran out of time to pick it up and unilaterally tweaking it.
-Waiting for a response.
+I should retitle and fix some comments in the tip commit (the tests have
+already been adjusted to use the real option name), but otherwise I think
+this is ready for 'next'.
 
 * jc/fix-tree-walk (2009-09-14) 10 commits.
  - read-tree --debug-unpack
@@ -330,9 +399,9 @@ resolve strategy.
  - Speed up git notes lookup
  - Add a script to edit/inspect notes
  - Introduce commit notes
- (this branch uses sr/gfi-options.)
 
-Is this good for 'next' now?
+Rebased so that it does not pull in anything else.  Presumably it is ready
+for next?
 
 * jn/gitweb-blame (2009-09-01) 5 commits.
  - gitweb: Minify gitweb.js if JSMIN is defined
@@ -342,7 +411,7 @@ Is this good for 'next' now?
  + gitweb: Incremental blame (using JavaScript)
  + gitweb: Add optional "time to generate page" info in footer
 
-Ajax-y blame.
+Ajax-y blame.  Probably the first three should go to 'master' by now?
 
 * nd/sparse (2009-08-20) 19 commits.
  - sparse checkout: inhibit empty worktree
@@ -423,18 +492,5 @@ Maybe some people care about this.  I dunno.
 
 Maybe some people care about this.  I dunno.
 
-* ne/rev-cache (2009-09-07) 7 commits.
- . support for commit grafts, slight change to general mechanism
- . support for path name caching in rev-cache
- . full integration of rev-cache into git, completed test suite
- . administrative functions for rev-cache, start of integration into git
- . support for non-commit object caching in rev-cache
- . basic revision cache system, no integration or features
- . man page and technical discussion for rev-cache
-
-This seems to break at least t6001 when merged to 'pu'.
-
 * jg/log-format-body-indent (2009-09-19) 1 commit.
  . git-log --format: Add %B tag with %B(x) option
-
-Ejected from 'pu' as this is merely a short-hand for %[wrap(0,x,x)%b%].
