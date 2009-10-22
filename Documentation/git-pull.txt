@@ -26,6 +26,10 @@ Also note that options meant for 'git-pull' itself and underlying
 
 OPTIONS
 -------
+
+Options related to merging
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 include::merge-options.txt[]
 
 :git-pull: 1
@@ -46,6 +50,9 @@ unless you have read linkgit:git-rebase[1] carefully.
 
 --no-rebase::
 	Override earlier --rebase.
+
+Options related to fetching
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 include::fetch-options.txt[]
 
