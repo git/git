@@ -1956,6 +1956,7 @@ info:
 pdf:
 	$(MAKE) -C Documentation pdf
 
+ifeq (,$(findstring MINGW,$(uname_S)))
 TAGS:
 	$(RM) TAGS
 	$(FIND) . -name '*.[hcS]' -print | xargs etags -a
@@ -1963,6 +1964,7 @@ TAGS:
 tags:
 	$(RM) tags
 	$(FIND) . -name '*.[hcS]' -print | xargs ctags -a
+endif
 
 cscope:
 	$(RM) cscope*
