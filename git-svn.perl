@@ -1765,7 +1765,7 @@ sub read_all_remotes {
 	my $use_svm_props = eval { command_oneline(qw/config --bool
 	    svn.useSvmProps/) };
 	$use_svm_props = $use_svm_props eq 'true' if $use_svm_props;
-	my $svn_refspec = qr{\s*/?(.*?)\s*:\s*(.+?)\s*};
+	my $svn_refspec = qr{\s*(.*?)\s*:\s*(.+?)\s*};
 	foreach (grep { s/^svn-remote\.// } command(qw/config -l/)) {
 		if (m!^(.+)\.fetch=$svn_refspec$!) {
 			my ($remote, $local_ref, $remote_ref) = ($1, $2, $3);
@@ -1979,7 +1979,7 @@ sub find_ref {
 	my ($ref_id) = @_;
 	foreach (command(qw/config -l/)) {
 		next unless m!^svn-remote\.(.+)\.fetch=
-		              \s*/?(.*?)\s*:\s*(.+?)\s*$!x;
+		              \s*(.*?)\s*:\s*(.+?)\s*$!x;
 		my ($repo_id, $path, $ref) = ($1, $2, $3);
 		if ($ref eq $ref_id) {
 			$path = '' if ($path =~ m#^\./?#);
