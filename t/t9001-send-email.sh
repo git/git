@@ -103,10 +103,18 @@ cat >expected-show-all-headers <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<cc@example.com>,<author@example.com>,<one@example.com>,<two@example.com>,<bcc@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<cc@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
+RCPT TO:<bcc@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: cc@example.com, A <author@example.com>, One <one@example.com>, two@example.com
+Cc: cc@example.com,
+	A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -164,7 +172,7 @@ test_expect_success 'cccmd works' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		cccmd.patch \
 		&&
-	grep ^Cc:.*cccmd@example.com msgtxt1
+	grep "^	cccmd@example.com" msgtxt1
 '
 
 z8=zzzzzzzz
@@ -278,10 +286,17 @@ cat >expected-suppress-sob <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<cc@example.com>,<author@example.com>,<one@example.com>,<two@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<cc@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: cc@example.com, A <author@example.com>, One <one@example.com>, two@example.com
+Cc: cc@example.com,
+	A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -318,10 +333,15 @@ cat >expected-suppress-sob <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -344,10 +364,17 @@ cat >expected-suppress-cccmd <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>,<committer@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
+RCPT TO:<committer@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com, C O Mitter <committer@example.com>
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com,
+	C O Mitter <committer@example.com>
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -392,10 +419,17 @@ cat >expected-suppress-body <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>,<cc-cmd@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
+RCPT TO:<cc-cmd@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com, cc-cmd@example.com
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com,
+	cc-cmd@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -416,10 +450,15 @@ cat >expected-suppress-body-cccmd <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -440,10 +479,15 @@ cat >expected-suppress-sob <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -466,10 +510,17 @@ cat >expected-suppress-bodycc <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>,<committer@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
+RCPT TO:<committer@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com, C O Mitter <committer@example.com>
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com,
+	C O Mitter <committer@example.com>
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -489,10 +540,13 @@ cat >expected-suppress-cc <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<committer@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<committer@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, C O Mitter <committer@example.com>
+Cc: A <author@example.com>,
+	C O Mitter <committer@example.com>
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -605,7 +659,7 @@ test_expect_success 'utf8 Cc is rfc2047 encoded' '
 	--to=nobody@example.com \
 	--smtp-server="$(pwd)/fake.sendmail" \
 	outdir/*.patch &&
-	grep "^Cc:" msgtxt1 |
+	grep "^	" msgtxt1 |
 	grep "=?UTF-8?q?=C3=A0=C3=A9=C3=AC=C3=B6=C3=BA?= <utf8@example.com>"
 '
 

@@ -70,6 +70,13 @@ test_expect_success 'replace the author' '
      git show $HASH2 | grep "O Thor"
 '
 
+test_expect_success 'test --no-replace-objects option' '
+     git cat-file commit $HASH2 | grep "author O Thor" &&
+     git --no-replace-objects cat-file commit $HASH2 | grep "author A U Thor" &&
+     git show $HASH2 | grep "O Thor" &&
+     git --no-replace-objects show $HASH2 | grep "A U Thor"
+'
+
 cat >tag.sig <<EOF
 object $HASH2
 type commit

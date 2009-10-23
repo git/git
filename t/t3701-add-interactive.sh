@@ -138,6 +138,20 @@ test_expect_success 'real edit works' '
 	test_cmp expected output
 '
 
+test_expect_success 'skip files similarly as commit -a' '
+	git reset &&
+	echo file >.gitignore &&
+	echo changed >file &&
+	echo y | git add -p file &&
+	git diff >output &&
+	git reset &&
+	git commit -am commit &&
+	git diff >expected &&
+	test_cmp expected output &&
+	git reset --hard HEAD^
+'
+rm -f .gitignore
+
 if test "$(git config --bool core.filemode)" = false
 then
 	say 'skipping filemode tests (filesystem does not properly support modes)'

@@ -43,6 +43,7 @@ void load_ref_decorations(int flags)
 	if (!loaded) {
 		loaded = 1;
 		for_each_ref(add_ref_decoration, &flags);
+		head_ref(add_ref_decoration, &flags);
 	}
 }
 

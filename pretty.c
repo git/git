@@ -740,7 +740,7 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 }
 
 void format_commit_message(const struct commit *commit,
-			   const void *format, struct strbuf *sb,
+			   const char *format, struct strbuf *sb,
 			   enum date_mode dmode)
 {
 	struct format_commit_context context;

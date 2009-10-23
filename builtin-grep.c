@@ -631,7 +631,7 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 	struct grep_opt *grep_opt = opt->value;
 	FILE *patterns;
 	int lno = 0;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
 	patterns = fopen(arg, "r");
 	if (!patterns)

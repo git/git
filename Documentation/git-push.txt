@@ -138,6 +138,11 @@ useful if you write an alias or script around 'git-push'.
 --verbose::
 	Run verbosely.
 
+-q::
+--quiet::
+	Suppress all output, including the listing of updated refs,
+	unless an error occurs.
+
 include::urls-remotes.txt[]
 
 OUTPUT

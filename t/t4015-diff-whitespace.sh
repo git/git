@@ -362,10 +362,17 @@ test_expect_success 'line numbers in --check output are correct' '
 
 '
 
-test_expect_success 'checkdiff detects trailing blank lines' '
+test_expect_success 'checkdiff detects new trailing blank lines (1)' '
 	echo "foo();" >x &&
 	echo "" >>x &&
-	git diff --check | grep "ends with blank"
+	git diff --check | grep "new blank line"
+'
+
+test_expect_success 'checkdiff detects new trailing blank lines (2)' '
+	{ echo a; echo b; echo; echo; } >x &&
+	git add x &&
+	{ echo a; echo; echo; echo; echo; } >x &&
+	git diff --check | grep "new blank line"
 '
 
 test_expect_success 'checkdiff allows new blank lines' '
