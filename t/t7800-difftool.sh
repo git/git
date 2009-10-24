@@ -136,7 +136,7 @@ test_expect_success 'GIT_DIFFTOOL_PROMPT variable' '
 	GIT_DIFFTOOL_PROMPT=true &&
 	export GIT_DIFFTOOL_PROMPT &&
 
-	prompt=$(echo | git difftool --prompt branch | tail -1) &&
+	prompt=$(echo | git difftool branch | tail -1) &&
 	prompt_given "$prompt" &&
 
 	restore_test_defaults
