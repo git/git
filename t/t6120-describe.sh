@@ -34,6 +34,8 @@ test_expect_success setup '
 	echo one >file && git add file && git commit -m initial &&
 	one=$(git rev-parse HEAD) &&
 
+	git describe --always HEAD &&
+
 	test_tick &&
 	echo two >file && git add file && git commit -m second &&
 	two=$(git rev-parse HEAD) &&
