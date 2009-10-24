@@ -259,7 +259,7 @@ sub list_modified {
 		@tracked = map {
 			chomp $_;
 			unquote_path($_);
-		} run_cmd_pipe(qw(git ls-files --exclude-standard --), @ARGV);
+		} run_cmd_pipe(qw(git ls-files --), @ARGV);
 		return if (!@tracked);
 	}
 
