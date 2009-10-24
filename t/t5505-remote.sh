@@ -158,7 +158,7 @@ cat > test/expect << EOF
     another
     master
   Local refs configured for 'git push':
-    ahead  forces to master  (fast forwardable)
+    ahead  forces to master  (fast-forwardable)
     master pushes to another (up to date)
 EOF
 

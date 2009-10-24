@@ -166,7 +166,7 @@ static struct option builtin_merge_options[] = {
 	OPT_BOOLEAN(0, "commit", &option_commit,
 		"perform a commit if the merge succeeds (default)"),
 	OPT_BOOLEAN(0, "ff", &allow_fast_forward,
-		"allow fast forward (default)"),
+		"allow fast-forward (default)"),
 	OPT_CALLBACK('s', "strategy", &use_strategies, "strategy",
 		"merge strategy to use", option_parse_strategy),
 	OPT_CALLBACK('m', "message", &merge_msg, "message",
@@ -1013,7 +1013,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 				hex,
 				find_unique_abbrev(remoteheads->item->object.sha1,
 				DEFAULT_ABBREV));
-		strbuf_addstr(&msg, "Fast forward");
+		strbuf_addstr(&msg, "Fast-forward");
 		if (have_message)
 			strbuf_addstr(&msg,
 				" (no commit created; -m option ignored)");
@@ -1031,12 +1031,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	} else if (!remoteheads->next && common->next)
 		;
 		/*
-		 * We are not doing octopus and not fast forward.  Need
+		 * We are not doing octopus and not fast-forward.  Need
 		 * a real merge.
 		 */
 	else if (!remoteheads->next && !common->next && option_commit) {
 		/*
-		 * We are not doing octopus, not fast forward, and have
+		 * We are not doing octopus, not fast-forward, and have
 		 * only one common.
 		 */
 		refresh_cache(REFRESH_QUIET);

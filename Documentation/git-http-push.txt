@@ -82,11 +82,11 @@ destination side.
 
 Without '--force', the <src> ref is stored at the remote only if
 <dst> does not exist, or <dst> is a proper subset (i.e. an
-ancestor) of <src>.  This check, known as "fast forward check",
+ancestor) of <src>.  This check, known as "fast-forward check",
 is performed in order to avoid accidentally overwriting the
 remote ref and lose other peoples' commits from there.
 
-With '--force', the fast forward check is disabled for all refs.
+With '--force', the fast-forward check is disabled for all refs.
 
 Optionally, a <ref> parameter can be prefixed with a plus '+' sign
 to disable the fast-forward check only on that ref.

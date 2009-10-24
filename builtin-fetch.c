@@ -269,7 +269,7 @@ static int update_local_ref(struct ref *ref,
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "..");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
-		r = s_update_ref("fast forward", ref, 1);
+		r = s_update_ref("fast-forward", ref, 1);
 		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : ' ',
 			SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote,
 			pretty_ref, r ? "  (unable to update local ref)" : "");
@@ -287,7 +287,7 @@ static int update_local_ref(struct ref *ref,
 			r ? "unable to update local ref" : "forced update");
 		return r;
 	} else {
-		sprintf(display, "! %-*s %-*s -> %s  (non fast forward)",
+		sprintf(display, "! %-*s %-*s -> %s  (non-fast-forward)",
 			SUMMARY_WIDTH, "[rejected]", REFCOL_WIDTH, remote,
 			pretty_ref);
 		return 1;

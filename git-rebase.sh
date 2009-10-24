@@ -496,7 +496,7 @@ then
 fi
 
 # If the $onto is a proper descendant of the tip of the branch, then
-# we just fast forwarded.
+# we just fast-forwarded.
 if test "$mb" = "$branch"
 then
 	say "Fast-forwarded $branch_name to $onto_name."

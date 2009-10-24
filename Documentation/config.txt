@@ -1351,7 +1351,7 @@ receive.denyCurrentBranch::
 
 receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is
-	not a fast forward. Use this to prevent such an update via a push,
+	not a fast-forward. Use this to prevent such an update via a push,
 	even if that push is forced. This configuration variable is
 	set when initializing a shared repository.
 
