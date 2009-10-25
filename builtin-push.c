@@ -66,7 +66,6 @@ static void setup_push_tracking(void)
 
 static void setup_default_push_refspecs(void)
 {
-	git_config(git_default_config, NULL);
 	switch (push_default) {
 	default:
 	case PUSH_DEFAULT_MATCHING:
@@ -173,7 +172,6 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	int tags = 0;
 	int rc;
 	const char *repo = NULL;	/* default repository */
-
 	struct option options[] = {
 		OPT_BIT('q', "quiet", &flags, "be quiet", TRANSPORT_PUSH_QUIET),
 		OPT_BIT('v', "verbose", &flags, "be verbose", TRANSPORT_PUSH_VERBOSE),
@@ -191,6 +189,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
 
 	if (tags)
