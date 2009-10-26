@@ -32,6 +32,10 @@ img.avatar {
 	vertical-align: middle;
 }
 
+a.list img.avatar {
+	border-style: none;
+}
+
 div.page_header {
 	height: 25px;
 	padding: 8px;
