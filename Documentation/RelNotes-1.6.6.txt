@@ -46,10 +46,27 @@ Updates since v1.6.5
 
 (usability, bells and whistles)
 
+ * The object replace mechanism can be bypassed with --no-replace-objects
+   global option given to the "git" program.
+
  * "git fsck" by default checks the packfiles (i.e. "--full" is the
    default); you can turn it off with "git fsck --no-full".
 
+ * import-tars contributed fast-import frontend learned more types of
+   compressed tarballs.
+
+ * "git instaweb" knows how to talk with mod_cgid to apache2.
+
  * "git log --decorate" shows the location of HEAD as well.
+
+ * "git rebase -i" learned "reword" that acts like "edit" but immediately
+   starts an editor to tweak the log message without returning control to
+   the shell, which is done by "edit" to give an opportunity to tweak the
+   contents.
+
+ * Author names shown in gitweb output are links to search commits by the
+   author.
+
 
 (developers)
 
@@ -69,3 +86,23 @@ release, unless otherwise noted.
    whitespace attribute).  The 'trailing-space' whitespace error class has
    become a short-hand to cover both of these and there is no behaviour
    change for existing set-ups.
+
+ * "git cvsimport" did not work well when it is fed filenames from the
+   command line and is not started at the top of the work tree.  We should
+   backport this by merging f6fdbb6 (cvsimport: fix relative argument
+   filenames, 2009-10-19).
+
+ * The way gitweb escapes its CGI parameters were broken especially when
+   the parameter was a UTF-8 string.  We may want to backport this to
+   1.6.5.X series by merging 452e225 (gitweb: fix esc_param, 2009-10-13).
+
+ * gitweb used to show 'patch' link for merge commits but the output from
+   it is not usable to feed "git am" with.  We may want to backport this
+   to 1.6.5.X series by merging 1655c98 (gitweb: Do not show 'patch' link
+   for merge commits, 2009-10-09).
+
+---
+exec >/var/tmp/1
+echo O=$(git describe master)
+O=v1.6.5.2-73-g9b12444
+git shortlog --no-merges $O..master --not maint
