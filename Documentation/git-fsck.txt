@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
-	 [--full] [--strict] [--verbose] [--lost-found] [<object>*]
+	 [--[no-]full] [--strict] [--verbose] [--lost-found] [<object>*]
 
 DESCRIPTION
 -----------
@@ -52,7 +52,8 @@ index file, all SHA1 references in .git/refs/*, and all reflogs (unless
 	or $GIT_DIR/objects/info/alternates,
 	and in packed git archives found in $GIT_DIR/objects/pack
 	and corresponding pack subdirectories in alternate
-	object pools.
+	object pools.  This is now default; you can turn it off
+	with --no-full.
 
 --strict::
 	Enable more strict checking, namely to catch a file mode

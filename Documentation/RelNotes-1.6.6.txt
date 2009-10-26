@@ -1,6 +1,14 @@
 GIT v1.6.6 Release Notes
 ========================
 
+In this release, "git fsck" defaults to "git fsck --full" and checks
+packfiles, and because of this it will take much longer to complete
+than before.  If you prefer a quicker check only on loose objects (the
+old default), you can say "git fsck --no-full".  This has been
+supported by 1.5.4 and newer versions of git, so it is safe to write
+it in your script even if you use slightly older git on some of your
+machines.
+
 In git 1.7.0, which is planned to be the release after 1.6.6, "git
 push" into a branch that is currently checked out will be refused by
 default.
@@ -37,6 +45,9 @@ Updates since v1.6.5
 (performance)
 
 (usability, bells and whistles)
+
+ * "git fsck" by default checks the packfiles (i.e. "--full" is the
+   default); you can turn it off with "git fsck --no-full".
 
  * "git log --decorate" shows the location of HEAD as well.
 
