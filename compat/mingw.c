@@ -1213,9 +1213,8 @@ sig_handler_t mingw_signal(int sig, sig_handler_t handler)
 	return old;
 }
 
-static const char *make_backslash_path(const char *path)
+static const char *make_backslash_path(const char *path, char *buf)
 {
-	static char buf[PATH_MAX + 1];
 	char *c;
 
 	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
@@ -1230,7 +1229,8 @@ static const char *make_backslash_path(const char *path)
 
 void mingw_open_html(const char *unixpath)
 {
-	const char *htmlpath = make_backslash_path(unixpath);
+	char buf[PATH_MAX + 1];
+	const char *htmlpath = make_backslash_path(unixpath, buf);
 	printf("Launching default browser to display HTML ...\n");
 	ShellExecute(NULL, "open", htmlpath, NULL, "\\", 0);
 }
@@ -1260,6 +1260,8 @@ int symlink(const char *oldpath, const char *newpath)
 {
 	typedef BOOL WINAPI (*symlink_fn)(const char*, const char*, DWORD);
 	static symlink_fn create_symbolic_link = NULL;
+	char buf[PATH_MAX + 1];
+
 	if (!create_symbolic_link) {
 		create_symbolic_link = (symlink_fn) GetProcAddress(
 				GetModuleHandle("kernel32.dll"), "CreateSymbolicLinkA");
@@ -1271,7 +1273,7 @@ int symlink(const char *oldpath, const char *newpath)
 		return -1;
 	}
 
-	if (!create_symbolic_link(newpath, oldpath, 0)) {
+	if (!create_symbolic_link(newpath, make_backslash_path(oldpath, buf), 0)) {
 		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
@@ -1295,7 +1297,11 @@ int readlink(const char *path, char *buf, size_t bufsiz)
 			if (b->ReparseTag == IO_REPARSE_TAG_SYMLINK) {
 				int len = b->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(wchar_t);
 				int offset = b->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(wchar_t);
+				int i;
 				snprintf(buf, bufsiz, "%*ls", len,  & b->SymbolicLinkReparseBuffer.PathBuffer[offset]);
+				for (i = 0; i < len; i++)
+					if (buf[i] == '\\')
+						buf[i] = '/';
 				CloseHandle(handle);
 				return len;
 			}
