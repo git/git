@@ -1324,6 +1324,11 @@ rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
 	rebase. False by default.
 
+receive.autogc::
+	By default, git-receive-pack will run "git-gc --auto" after
+	receiving data from git-push and updating refs.  You can stop
+	it by setting this variable to false.
+
 receive.fsckObjects::
 	If it is set to true, git-receive-pack will check all received
 	objects. It will abort in the case of a malformed object or a
@@ -1358,6 +1363,10 @@ receive.denyNonFastForwards::
 	not a fast forward. Use this to prevent such an update via a push,
 	even if that push is forced. This configuration variable is
 	set when initializing a shared repository.
+
+receive.updateserverinfo::
+	If set to true, git-receive-pack will run git-update-server-info
+	after receiving data from git-push and updating refs.
 
 remote.<name>.url::
 	The URL of a remote repository.  See linkgit:git-fetch[1] or
