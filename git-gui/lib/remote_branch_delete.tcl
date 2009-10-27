@@ -208,13 +208,15 @@ method _delete {} {
 		return
 	}
 
-	if {[tk_messageBox \
-		-icon warning \
-		-type yesno \
-		-title [wm title $w] \
-		-parent $w \
-		-message [mc "Recovering deleted branches is difficult.\n\nDelete the selected branches?"]] ne yes} {
-		return
+	if {$checktype ne {head}} {
+		if {[tk_messageBox \
+			-icon warning \
+			-type yesno \
+			-title [wm title $w] \
+			-parent $w \
+			-message [mc "Recovering deleted branches is difficult.\n\nDelete the selected branches?"]] ne yes} {
+			return
+		}
 	}
 
 	destroy $w

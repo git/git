@@ -255,7 +255,7 @@ proc show_other_diff {path w m cont_info} {
 
 proc start_show_diff {cont_info {add_opts {}}} {
 	global file_states file_lists
-	global is_3way_diff diff_active repo_config
+	global is_3way_diff is_submodule_diff diff_active repo_config
 	global ui_diff ui_index ui_workdir
 	global current_diff_path current_diff_side current_diff_header
 
@@ -265,6 +265,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	set s $file_states($path)
 	set m [lindex $s 0]
 	set is_3way_diff 0
+	set is_submodule_diff 0
 	set diff_active 1
 	set current_diff_header {}
 
@@ -295,6 +296,16 @@ proc start_show_diff {cont_info {add_opts {}}} {
 		lappend cmd $path
 	}
 
+	if {[string match {160000 *} [lindex $s 2]]
+        || [string match {160000 *} [lindex $s 3]]} {
+		set is_submodule_diff 1
+		if {$w eq $ui_index} {
+			set cmd [list submodule summary --cached -- $path]
+		} else {
+			set cmd [list submodule summary --files -- $path]
+		}
+	}
+
 	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
 		set diff_active 0
 		unlock_index
@@ -312,7 +323,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 }
 
 proc read_diff {fd cont_info} {
-	global ui_diff diff_active
+	global ui_diff diff_active is_submodule_diff
 	global is_3way_diff is_conflict_diff current_diff_header
 	global current_diff_queue
 	global diff_empty_count
@@ -373,6 +384,23 @@ proc read_diff {fd cont_info} {
 				puts "error: Unhandled 3 way diff marker: {$op}"
 				set tags {}
 			}
+			}
+		} elseif {$is_submodule_diff} {
+			if {$line == ""} continue
+			if {[regexp {^\* } $line]} {
+				set line [string replace $line 0 1 {Submodule }]
+				set tags d_@
+			} else {
+				set op [string range $line 0 2]
+				switch -- $op {
+				{  <} {set tags d_-}
+				{  >} {set tags d_+}
+				{  W} {set tags {}}
+				default {
+					puts "error: Unhandled submodule diff marker: {$op}"
+					set tags {}
+				}
+				}
 			}
 		} else {
 			set op [string index $line 0]
