@@ -20,7 +20,7 @@ use Getopt::Long;
 
 my $metaext = '';
 
-die "usage: import-tars [--metainfo=extension] *.tar.{gz,bz2,Z}\n"
+die "usage: import-tars [--metainfo=extension] *.tar.{gz,bz2,lzma,xz,Z}\n"
 	unless GetOptions('metainfo=s' => \$metaext) && @ARGV;
 
 my $branch_name = 'import-tars';
@@ -49,6 +49,9 @@ foreach my $tar_file (@ARGV)
 	} elsif ($tar_name =~ s/\.tar\.Z$//) {
 		open(I, '-|', 'uncompress', '-c', $tar_file)
 			or die "Unable to uncompress -c $tar_file: $!\n";
+	} elsif ($tar_name =~ s/\.(tar\.(lzma|xz)|(tlz|txz))$//) {
+		open(I, '-|', 'xz', '-dc', $tar_file)
+			or die "Unable to xz -dc $tar_file: $!\n";
 	} elsif ($tar_name =~ s/\.tar$//) {
 		open(I, $tar_file) or die "Unable to open $tar_file: $!\n";
 	} else {

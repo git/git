@@ -351,7 +351,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	}
 
 	for_each_ref(get_name, NULL);
-	if (!found_names)
+	if (!found_names && !always)
 		die("No names found, cannot describe anything.");
 
 	if (argc == 0) {

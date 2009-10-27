@@ -579,10 +579,21 @@ sub get_headref ($) {
 	return $r;
 }
 
+my $user_filename_prepend = '';
+sub munge_user_filename {
+	my $name = shift;
+	return File::Spec->file_name_is_absolute($name) ?
+		$name :
+		$user_filename_prepend . $name;
+}
+
 -d $git_tree
 	or mkdir($git_tree,0777)
 	or die "Could not create $git_tree: $!";
-chdir($git_tree);
+if ($git_tree ne '.') {
+	$user_filename_prepend = getwd() . '/';
+	chdir($git_tree);
+}
 
 my $last_branch = "";
 my $orig_branch = "";
@@ -644,7 +655,7 @@ unless (-d $git_dir) {
 -f "$git_dir/cvs-authors" and
   read_author_info("$git_dir/cvs-authors");
 if ($opt_A) {
-	read_author_info($opt_A);
+	read_author_info(munge_user_filename($opt_A));
 	write_author_info("$git_dir/cvs-authors");
 }
 
@@ -679,7 +690,7 @@ unless ($opt_P) {
 	$? == 0 or die "git-cvsimport: fatal: cvsps reported error\n";
 	close $cvspsfh;
 } else {
-	$cvspsfile = $opt_P;
+	$cvspsfile = munge_user_filename($opt_P);
 }
 
 open(CVS, "<$cvspsfile") or die $!;
