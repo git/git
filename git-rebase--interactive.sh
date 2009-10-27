@@ -408,7 +408,12 @@ do_next () {
 		;;
 	*)
 		warn "Unknown command: $command $sha1 $rest"
-		die_with_patch $sha1 "Please fix this in the file $TODO."
+		if git rev-parse --verify -q "$sha1" >/dev/null
+		then
+			die_with_patch $sha1 "Please fix this in the file $TODO."
+		else
+			die "Please fix this in the file $TODO."
+		fi
 		;;
 	esac
 	test -s "$TODO" && return
