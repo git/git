@@ -994,7 +994,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	if (!strcmp(arg, "--all") || !strcmp(arg, "--branches") ||
 	    !strcmp(arg, "--tags") || !strcmp(arg, "--remotes") ||
 	    !strcmp(arg, "--reflog") || !strcmp(arg, "--not") ||
-	    !strcmp(arg, "--no-walk") || !strcmp(arg, "--do-walk"))
+	    !strcmp(arg, "--no-walk") || !strcmp(arg, "--do-walk") ||
+	    !strcmp(arg, "--bisect"))
 	{
 		unkv[(*unkc)++] = arg;
 		return 1;
@@ -1218,6 +1219,16 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 	ctx->argc -= n;
 }
 
+static int for_each_bad_bisect_ref(each_ref_fn fn, void *cb_data)
+{
+	return for_each_ref_in("refs/bisect/bad", fn, cb_data);
+}
+
+static int for_each_good_bisect_ref(each_ref_fn fn, void *cb_data)
+{
+	return for_each_ref_in("refs/bisect/good", fn, cb_data);
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -1257,6 +1268,12 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--branches")) {
 				handle_refs(revs, flags, for_each_branch_ref);
+				continue;
+			}
+			if (!strcmp(arg, "--bisect")) {
+				handle_refs(revs, flags, for_each_bad_bisect_ref);
+				handle_refs(revs, flags ^ UNINTERESTING, for_each_good_bisect_ref);
+				revs->bisect = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--tags")) {

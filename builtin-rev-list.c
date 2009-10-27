@@ -319,6 +319,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	memset(&info, 0, sizeof(info));
 	info.revs = &revs;
+	if (revs.bisect)
+		bisect_list = 1;
 
 	quiet = DIFF_OPT_TST(&revs.diffopt, QUIET);
 	for (i = 1 ; i < argc; i++) {

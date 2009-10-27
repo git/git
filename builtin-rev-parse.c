@@ -180,6 +180,12 @@ static int show_reference(const char *refname, const unsigned char *sha1, int fl
 	return 0;
 }
 
+static int anti_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+{
+	show_rev(REVERSED, sha1, refname);
+	return 0;
+}
+
 static void show_datestring(const char *flag, const char *datestr)
 {
 	static char buffer[100];
@@ -546,6 +552,11 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--all")) {
 				for_each_ref(show_reference, NULL);
+				continue;
+			}
+			if (!strcmp(arg, "--bisect")) {
+				for_each_ref_in("refs/bisect/bad", show_reference, NULL);
+				for_each_ref_in("refs/bisect/good", anti_reference, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--branches")) {
