@@ -7225,7 +7225,7 @@ proc diffcmd {ids flags} {
 	set cmd [concat | git diff-index --cached $flags]
 	if {[llength $ids] > 1} {
 	    # comparing index with specific revision
-	    if {$i == 0} {
+	    if {$j == 0} {
 		lappend cmd -R [lindex $ids 1]
 	    } else {
 		lappend cmd [lindex $ids 0]
