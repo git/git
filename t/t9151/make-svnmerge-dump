@@ -1,0 +1,73 @@
+#!/bin/sh
+#
+# this script sets up a Subversion repository for Makefile in the
+# first ever git merge, as if it were done with svnmerge (SVN 1.5+)
+#
+
+rm -rf foo.svn foo
+set -e
+
+mkdir foo.svn
+svnadmin create foo.svn
+svn co file://`pwd`/foo.svn foo
+
+cd foo
+mkdir trunk
+mkdir branches
+svn add trunk branches
+svn commit -m "Setup trunk and branches"
+cd trunk
+
+git cat-file blob 6683463e:Makefile > Makefile
+svn add Makefile 
+
+echo "Committing ANCESTOR"
+svn commit -m "ancestor"
+cd ..
+svn cp trunk branches/left
+
+echo "Committing BRANCH POINT"
+svn commit -m "make left branch"
+cd branches/left/
+
+#$sm init
+#svn commit -m "init svnmerge"
+
+git cat-file blob 5873b67e:Makefile > Makefile
+echo "Committing BRANCH UPDATE 1"
+svn commit -m "left update 1"
+cd ../..
+
+cd trunk
+git cat-file blob 75118b13:Makefile > Makefile
+echo "Committing TRUNK UPDATE"
+svn commit -m "trunk update"
+
+cd ../branches/left
+git cat-file blob ff5ebe39:Makefile > Makefile
+echo "Committing BRANCH UPDATE 2"
+svn commit -m "left update 2"
+
+git cat-file blob b5039db6:Makefile > Makefile
+echo "Committing BRANCH UPDATE 3"
+svn commit -m "left update 3"
+
+# merge to trunk
+
+cd ../..
+svn update
+cd trunk
+
+svn merge ../branches/left --accept postpone
+
+git cat-file blob b51ad431:Makefile > Makefile
+
+svn resolved Makefile
+
+svn commit -m "Merge trunk"
+
+cd ../..
+
+svnadmin dump foo.svn > svn-mergeinfo.dump
+
+rm -rf foo foo.svn
