@@ -958,6 +958,8 @@ __git_mergetools_common="diffuse ecmerge emerge kdiff3 meld opendiff
 
 _git_difftool ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--tool=*)
@@ -965,11 +967,15 @@ _git_difftool ()
 		return
 		;;
 	--*)
-		__gitcomp "--tool="
+		__gitcomp "--cached --staged --pickaxe-all --pickaxe-regex
+			--base --ours --theirs
+			--no-renames --diff-filter= --find-copies-harder
+			--relative --ignore-submodules
+			--tool="
 		return
 		;;
 	esac
-	COMPREPLY=()
+	__git_complete_file
 }
 
 __git_fetch_options="
