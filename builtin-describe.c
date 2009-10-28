@@ -96,8 +96,6 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	if (!all) {
 		if (!prio)
 			return 0;
-		if (!tags && prio < 2)
-			return 0;
 	}
 	add_to_known_names(all ? path + 5 : path + 10, commit, prio, sha1);
 	return 0;
@@ -184,6 +182,7 @@ static void describe(const char *arg, int last_one)
 	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
 	unsigned long seen_commits = 0;
+	unsigned int unannotated_cnt = 0;
 
 	if (get_sha1(arg, sha1))
 		die("Not a valid object name %s", arg);
@@ -217,7 +216,9 @@ static void describe(const char *arg, int last_one)
 		seen_commits++;
 		n = c->util;
 		if (n) {
-			if (match_cnt < max_candidates) {
+			if (!tags && !all && n->prio < 2) {
+				unannotated_cnt++;
+			} else if (match_cnt < max_candidates) {
 				struct possible_tag *t = &all_matches[match_cnt++];
 				t->name = n;
 				t->depth = seen_commits - 1;
@@ -259,7 +260,14 @@ static void describe(const char *arg, int last_one)
 			printf("%s\n", find_unique_abbrev(sha1, abbrev));
 			return;
 		}
-		die("cannot describe '%s'", sha1_to_hex(sha1));
+		if (unannotated_cnt)
+			die("No annotated tags can describe '%s'.\n"
+			    "However, there were unannotated tags: try --tags.",
+			    sha1_to_hex(sha1));
+		else
+			die("No tags can describe '%s'.\n"
+			    "Try --always, or create some tags.",
+			    sha1_to_hex(sha1));
 	}
 
 	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
