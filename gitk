@@ -7344,7 +7344,11 @@ proc getblobdiffs {ids} {
     if {[package vcompare $git_version "1.6.1"] >= 0} {
 	set textconv "--textconv"
     }
-    set cmd [diffcmd $ids "-p $textconv -C --cc --no-commit-id -U$diffcontext"]
+    set submodule {}
+    if {[package vcompare $git_version "1.6.6"] >= 0} {
+	set submodule "--submodule"
+    }
+    set cmd [diffcmd $ids "-p $textconv $submodule  -C --cc --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
 	append cmd " -w"
     }
@@ -7482,6 +7486,21 @@ proc getblobdiffline {bdf ids} {
 	    set diffnparents [expr {[string length $ats] - 1}]
 	    set diffinhdr 0
 
+	} elseif {![string compare -length 10 "Submodule " $line]} {
+	    # start of a new submodule
+	    if {[string compare [$ctext get "end - 4c" end] "\n \n\n"]} {
+		$ctext insert end "\n";     # Add newline after commit message
+	    }
+	    set curdiffstart [$ctext index "end - 1c"]
+	    lappend ctext_file_names ""
+	    set fname [string range $line 10 [expr [string last " " $line] - 1]]
+	    lappend ctext_file_lines $fname
+	    makediffhdr $fname $ids
+	    $ctext insert end "\n$line\n" filesep
+	} elseif {![string compare -length 3 "  >" $line]} {
+	    $ctext insert end "$line\n" dresult
+	} elseif {![string compare -length 3 "  <" $line]} {
+	    $ctext insert end "$line\n" d0
 	} elseif {$diffinhdr} {
 	    if {![string compare -length 12 "rename from " $line]} {
 		set fname [string range $line [expr 6 + [string first " from " $line] ] end]
