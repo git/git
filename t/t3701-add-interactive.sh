@@ -214,4 +214,21 @@ test_expect_success 'add first line works' '
 	test_cmp expected diff
 '
 
+cat >expected <<EOF
+diff --git a/empty b/empty
+deleted file mode 100644
+index e69de29..0000000
+EOF
+
+test_expect_success 'deleting an empty file' '
+	git reset --hard &&
+	> empty &&
+	git add empty &&
+	git commit -m empty &&
+	rm empty &&
+	echo y | git add -p empty &&
+	git diff --cached >diff &&
+	test_cmp expected diff
+'
+
 test_done
