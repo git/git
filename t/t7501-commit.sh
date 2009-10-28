@@ -247,6 +247,47 @@ $existing" &&
 
 '
 
+test_expect_success 'signoff gap' '
+
+	echo 3 >positive &&
+	git add positive &&
+	alt="Alt-RFC-822-Header: Value" &&
+	git commit -s -m "welcome
+
+$alt" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo welcome
+		echo
+		echo $alt
+		git var GIT_COMMITTER_IDENT |
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+	) >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'signoff gap 2' '
+
+	echo 4 >positive &&
+	git add positive &&
+	alt="fixed: 34" &&
+	git commit -s -m "welcome
+
+We have now
+$alt" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo welcome
+		echo
+		echo We have now
+		echo $alt
+		echo
+		git var GIT_COMMITTER_IDENT |
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+	) >expected &&
+	test_cmp expected actual
+'
+
 test_expect_success 'multiple -m' '
 
 	>negative &&
