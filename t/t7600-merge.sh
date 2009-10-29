@@ -243,6 +243,16 @@ test_expect_success 'merge c0 with c1' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'merge c0 with c1 with --ff-only' '
+	git reset --hard c0 &&
+	git merge --ff-only c1 &&
+	git merge --ff-only HEAD c0 c1 &&
+	verify_merge file result.1 &&
+	verify_head "$c1"
+'
+
+test_debug 'gitk --all'
+
 test_expect_success 'merge c1 with c2' '
 	git reset --hard c1 &&
 	test_tick &&
@@ -262,6 +272,14 @@ test_expect_success 'merge c1 with c2 and c3' '
 '
 
 test_debug 'gitk --all'
+
+test_expect_success 'failing merges with --ff-only' '
+	git reset --hard c1 &&
+	test_tick &&
+	test_must_fail git merge --ff-only c2 &&
+	test_must_fail git merge --ff-only c3 &&
+	test_must_fail git merge --ff-only c2 c3
+'
 
 test_expect_success 'merge c0 with c1 (no-commit)' '
 	git reset --hard c0 &&
@@ -303,6 +321,17 @@ test_expect_success 'merge c0 with c1 (squash)' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'merge c0 with c1 (squash, ff-only)' '
+	git reset --hard c0 &&
+	git merge --squash --ff-only c1 &&
+	verify_merge file result.1 &&
+	verify_head $c0 &&
+	verify_no_mergehead &&
+	verify_diff squash.1 .git/SQUASH_MSG "[OOPS] bad squash message"
+'
+
+test_debug 'gitk --all'
+
 test_expect_success 'merge c1 with c2 (squash)' '
 	git reset --hard c1 &&
 	git merge --squash c2 &&
@@ -310,6 +339,13 @@ test_expect_success 'merge c1 with c2 (squash)' '
 	verify_head $c1 &&
 	verify_no_mergehead &&
 	verify_diff squash.1-5 .git/SQUASH_MSG "[OOPS] bad squash message"
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'unsuccesful merge of c1 with c2 (squash, ff-only)' '
+	git reset --hard c1 &&
+	test_must_fail git merge --squash --ff-only c2
 '
 
 test_debug 'gitk --all'
@@ -430,6 +466,11 @@ test_debug 'gitk --all'
 test_expect_success 'combining --squash and --no-ff is refused' '
 	test_must_fail git merge --squash --no-ff c1 &&
 	test_must_fail git merge --no-ff --squash c1
+'
+
+test_expect_success 'combining --ff-only and --no-ff is refused' '
+	test_must_fail git merge --ff-only --no-ff c1 &&
+	test_must_fail git merge --no-ff --ff-only c1
 '
 
 test_expect_success 'merge c0 with c1 (ff overrides no-ff)' '

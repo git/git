@@ -43,6 +43,7 @@ static const char * const builtin_merge_usage[] = {
 
 static int show_diffstat = 1, option_log, squash;
 static int option_commit = 1, allow_fast_forward = 1;
+static int fast_forward_only;
 static int allow_trivial = 1, have_message;
 static struct strbuf merge_msg;
 static struct commit_list *remoteheads;
@@ -167,6 +168,8 @@ static struct option builtin_merge_options[] = {
 		"perform a commit if the merge succeeds (default)"),
 	OPT_BOOLEAN(0, "ff", &allow_fast_forward,
 		"allow fast forward (default)"),
+	OPT_BOOLEAN(0, "ff-only", &fast_forward_only,
+		"abort if fast forward is not possible"),
 	OPT_CALLBACK('s', "strategy", &use_strategies, "strategy",
 		"merge strategy to use", option_parse_strategy),
 	OPT_CALLBACK('m', "message", &merge_msg, "message",
@@ -874,6 +877,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		option_commit = 0;
 	}
 
+	if (!allow_fast_forward && fast_forward_only)
+		die("You cannot combine --no-ff with --ff-only.");
+
 	if (!argc)
 		usage_with_options(builtin_merge_usage,
 			builtin_merge_options);
@@ -1040,7 +1046,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * only one common.
 		 */
 		refresh_cache(REFRESH_QUIET);
-		if (allow_trivial) {
+		if (allow_trivial && !fast_forward_only) {
 			/* See if it is really trivial. */
 			git_committer_info(IDENT_ERROR_ON_NO_NAME);
 			printf("Trying really trivial in-index merge...\n");
@@ -1078,6 +1084,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			return 0;
 		}
 	}
+
+	if (fast_forward_only)
+		die("Not possible to fast forward, aborting.");
 
 	/* We are going to make a new commit. */
 	git_committer_info(IDENT_ERROR_ON_NO_NAME);
