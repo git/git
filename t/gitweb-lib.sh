@@ -52,10 +52,14 @@ gitweb_run () {
 	rm -f gitweb.log &&
 	perl -- "$SCRIPT_NAME" \
 		>gitweb.output 2>gitweb.log &&
+	sed -e   '/^\r$/q' <gitweb.output >gitweb.headers &&
+	sed -e '1,/^\r$/d' <gitweb.output >gitweb.body    &&
 	if grep '^[[]' gitweb.log >/dev/null 2>&1; then false; else true; fi
 
 	# gitweb.log is left for debugging
-	# gitweb.output is used to parse http output
+	# gitweb.output is used to parse HTTP output
+	# gitweb.headers contains only HTTP headers
+	# gitweb.body contains body of message, without headers
 }
 
 . ./test-lib.sh
