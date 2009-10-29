@@ -656,6 +656,12 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	for (i = 0; i < len && line[i] == '@'; i++)
 		;
 	if (2 <= i && i < len && line[i] == ' ') {
+		/* flush --color-words even for --unified=0 */
+		if (ecbdata->diff_words &&
+		    (ecbdata->diff_words->minus.text.size ||
+		     ecbdata->diff_words->plus.text.size))
+			diff_words_show(ecbdata->diff_words);
+
 		ecbdata->nparents = i - 1;
 		len = sane_truncate_line(ecbdata, line, len);
 		emit_line(ecbdata->file,

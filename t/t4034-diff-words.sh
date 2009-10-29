@@ -77,7 +77,7 @@ cat > expect <<\EOF
 <GREEN>aeff = aeff * ( aaa )<RESET>
 EOF
 
-test_expect_failure 'word diff without context' '
+test_expect_success 'word diff without context' '
 
 	word_diff --color-words --unified=0
 
