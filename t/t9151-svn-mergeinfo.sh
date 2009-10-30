@@ -8,7 +8,8 @@ test_description='git-svn svn mergeinfo properties'
 . ./lib-git-svn.sh
 
 test_expect_success 'load svn dump' "
-	svnadmin load -q '$rawsvnrepo' < '../t9151/svn-mergeinfo.dump' &&
+	svnadmin load -q '$rawsvnrepo' \
+	  < '$TEST_DIRECTORY/t9151/svn-mergeinfo.dump' &&
 	git svn init --minimize-url -R svnmerge \
 	  -T trunk -b branches '$svnrepo' &&
 	git svn fetch --all
