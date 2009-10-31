@@ -4,7 +4,21 @@ test_description='GIT_EDITOR, core.editor, and stuff'
 
 . ./test-lib.sh
 
-for i in GIT_EDITOR core_editor EDITOR VISUAL vi
+unset EDITOR VISUAL GIT_EDITOR
+
+test_expect_success 'determine default editor' '
+
+	vi=$(TERM=vt100 git var GIT_EDITOR) &&
+	test -n "$vi"
+
+'
+
+if ! expr "$vi" : '^[a-z]*$' >/dev/null
+then
+	vi=
+fi
+
+for i in GIT_EDITOR core_editor EDITOR VISUAL $vi
 do
 	cat >e-$i.sh <<-EOF
 	#!$SHELL_PATH
@@ -12,19 +26,18 @@ do
 	EOF
 	chmod +x e-$i.sh
 done
-unset vi
-mv e-vi.sh vi
-unset EDITOR VISUAL GIT_EDITOR
+
+if ! test -z "$vi"
+then
+	mv e-$vi.sh $vi
+fi
 
 test_expect_success setup '
 
-	msg="Hand edited" &&
+	msg="Hand-edited" &&
+	test_commit "$msg" &&
 	echo "$msg" >expect &&
-	git add vi &&
-	test_tick &&
-	git commit -m "$msg" &&
-	git show -s --pretty=oneline |
-	sed -e "s/^[0-9a-f]* //" >actual &&
+	git show -s --format=%s > actual &&
 	diff actual expect
 
 '
@@ -54,7 +67,7 @@ test_expect_success 'dumb should prefer EDITOR to VISUAL' '
 
 TERM=vt100
 export TERM
-for i in vi EDITOR VISUAL core_editor GIT_EDITOR
+for i in $vi EDITOR VISUAL core_editor GIT_EDITOR
 do
 	echo "Edited by $i" >expect
 	unset EDITOR VISUAL GIT_EDITOR
@@ -78,7 +91,7 @@ done
 
 unset EDITOR VISUAL GIT_EDITOR
 git config --unset-all core.editor
-for i in vi EDITOR VISUAL core_editor GIT_EDITOR
+for i in $vi EDITOR VISUAL core_editor GIT_EDITOR
 do
 	echo "Edited by $i" >expect
 	case "$i" in

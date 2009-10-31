@@ -2,6 +2,10 @@
 #include "strbuf.h"
 #include "run-command.h"
 
+#ifndef DEFAULT_EDITOR
+#define DEFAULT_EDITOR "vi"
+#endif
+
 const char *git_editor(void)
 {
 	const char *editor = getenv("GIT_EDITOR");
@@ -19,7 +23,7 @@ const char *git_editor(void)
 		return NULL;
 
 	if (!editor)
-		editor = "vi";
+		editor = DEFAULT_EDITOR;
 
 	return editor;
 }

@@ -200,6 +200,14 @@ all::
 # memory allocators with the nedmalloc allocator written by Niall Douglas.
 #
 # Define NO_REGEX if you have no or inferior regex support in your C library.
+#
+# Define DEFAULT_EDITOR to a sensible editor command (defaults to "vi") if you
+# want to use something different.  The value will be interpreted by the shell
+# if necessary when it is used.  Examples:
+#
+#   DEFAULT_EDITOR='~/bin/vi',
+#   DEFAULT_EDITOR='$GIT_FALLBACK_EDITOR',
+#   DEFAULT_EDITOR='"C:\Program Files\Vim\gvim.exe" --nofork'
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1362,6 +1370,15 @@ LIBS = $(GITLIBS) $(EXTLIBS)
 BASIC_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' \
 	$(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
+
+# Quote for C
+
+ifdef DEFAULT_EDITOR
+DEFAULT_EDITOR_CQ = "$(subst ",\",$(subst \,\\,$(DEFAULT_EDITOR)))"
+DEFAULT_EDITOR_CQ_SQ = $(subst ','\'',$(DEFAULT_EDITOR_CQ))
+
+BASIC_CFLAGS += -DDEFAULT_EDITOR='$(DEFAULT_EDITOR_CQ_SQ)'
+endif
 
 ALL_CFLAGS += $(BASIC_CFLAGS)
 ALL_LDFLAGS += $(BASIC_LDFLAGS)
