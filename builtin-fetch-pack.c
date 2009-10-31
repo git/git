@@ -157,7 +157,15 @@ static const unsigned char *get_rev(void)
 	return commit->object.sha1;
 }
 
-static int get_ack(int fd, unsigned char *result_sha1)
+enum ack_type {
+	NAK = 0,
+	ACK,
+	ACK_continue,
+	ACK_common,
+	ACK_ready
+};
+
+static enum ack_type get_ack(int fd, unsigned char *result_sha1)
 {
 	static char line[1000];
 	int len = packet_read_line(fd, line, sizeof(line));
@@ -167,12 +175,16 @@ static int get_ack(int fd, unsigned char *result_sha1)
 	if (line[len-1] == '\n')
 		line[--len] = 0;
 	if (!strcmp(line, "NAK"))
-		return 0;
+		return NAK;
 	if (!prefixcmp(line, "ACK ")) {
 		if (!get_sha1_hex(line+4, result_sha1)) {
 			if (strstr(line+45, "continue"))
-				return 2;
-			return 1;
+				return ACK_continue;
+			if (strstr(line+45, "common"))
+				return ACK_common;
+			if (strstr(line+45, "ready"))
+				return ACK_ready;
+			return ACK;
 		}
 	}
 	die("git fetch_pack: expected ACK/NAK, got '%s'", line);
@@ -218,7 +230,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		remote_hex = sha1_to_hex(remote);
 		if (!fetching) {
 			struct strbuf c = STRBUF_INIT;
-			if (multi_ack)          strbuf_addstr(&c, " multi_ack");
+			if (multi_ack == 2)     strbuf_addstr(&c, " multi_ack_detailed");
+			if (multi_ack == 1)     strbuf_addstr(&c, " multi_ack");
 			if (use_sideband == 2)  strbuf_addstr(&c, " side-band-64k");
 			if (use_sideband == 1)  strbuf_addstr(&c, " side-band");
 			if (args.use_thin_pack) strbuf_addstr(&c, " thin-pack");
@@ -298,18 +311,23 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 				if (args.verbose && ack)
 					fprintf(stderr, "got ack %d %s\n", ack,
 							sha1_to_hex(result_sha1));
-				if (ack == 1) {
+				switch (ack) {
+				case ACK:
 					flushes = 0;
 					multi_ack = 0;
 					retval = 0;
 					goto done;
-				} else if (ack == 2) {
+				case ACK_common:
+				case ACK_ready:
+				case ACK_continue: {
 					struct commit *commit =
 						lookup_commit(result_sha1);
 					mark_common(commit, 0, 1);
 					retval = 0;
 					in_vain = 0;
 					got_continue = 1;
+					break;
+					}
 				}
 			} while (ack);
 			flushes--;
@@ -336,7 +354,7 @@ done:
 			if (args.verbose)
 				fprintf(stderr, "got ack (%d) %s\n", ack,
 					sha1_to_hex(result_sha1));
-			if (ack == 1)
+			if (ack == ACK)
 				return 0;
 			multi_ack = 1;
 			continue;
@@ -618,7 +636,12 @@ static struct ref *do_fetch_pack(int fd[2],
 
 	if (is_repository_shallow() && !server_supports("shallow"))
 		die("Server does not support shallow clients");
-	if (server_supports("multi_ack")) {
+	if (server_supports("multi_ack_detailed")) {
+		if (args.verbose)
+			fprintf(stderr, "Server supports multi_ack_detailed\n");
+		multi_ack = 2;
+	}
+	else if (server_supports("multi_ack")) {
 		if (args.verbose)
 			fprintf(stderr, "Server supports multi_ack\n");
 		multi_ack = 1;

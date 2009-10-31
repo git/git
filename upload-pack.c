@@ -498,7 +498,7 @@ static int get_common_commits(void)
 {
 	static char line[1000];
 	unsigned char sha1[20];
-	char hex[41], last_hex[41];
+	char last_hex[41];
 
 	save_commit_buffer = 0;
 
@@ -515,19 +515,22 @@ static int get_common_commits(void)
 		if (!prefixcmp(line, "have ")) {
 			switch (got_sha1(line+5, sha1)) {
 			case -1: /* they have what we do not */
-				if (multi_ack && ok_to_give_up())
-					packet_write(1, "ACK %s continue\n",
-						     sha1_to_hex(sha1));
+				if (multi_ack && ok_to_give_up()) {
+					const char *hex = sha1_to_hex(sha1);
+					if (multi_ack == 2)
+						packet_write(1, "ACK %s ready\n", hex);
+					else
+						packet_write(1, "ACK %s continue\n", hex);
+				}
 				break;
 			default:
-				memcpy(hex, sha1_to_hex(sha1), 41);
-				if (multi_ack) {
-					const char *msg = "ACK %s continue\n";
-					packet_write(1, msg, hex);
-					memcpy(last_hex, hex, 41);
-				}
+				memcpy(last_hex, sha1_to_hex(sha1), 41);
+				if (multi_ack == 2)
+					packet_write(1, "ACK %s common\n", last_hex);
+				else if (multi_ack)
+					packet_write(1, "ACK %s continue\n", last_hex);
 				else if (have_obj.nr == 1)
-					packet_write(1, "ACK %s\n", hex);
+					packet_write(1, "ACK %s\n", last_hex);
 				break;
 			}
 			continue;
@@ -587,7 +590,9 @@ static void receive_needs(void)
 		    get_sha1_hex(line+5, sha1_buf))
 			die("git upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
-		if (strstr(line+45, "multi_ack"))
+		if (strstr(line+45, "multi_ack_detailed"))
+			multi_ack = 2;
+		else if (strstr(line+45, "multi_ack"))
 			multi_ack = 1;
 		if (strstr(line+45, "thin-pack"))
 			use_thin_pack = 1;
@@ -681,7 +686,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow no-progress"
-		" include-tag";
+		" include-tag multi_ack_detailed";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
