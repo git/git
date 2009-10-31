@@ -58,7 +58,7 @@ test_expect_success 'push to remote repository with packed refs' '
 	 test $HEAD = $(git rev-parse --verify HEAD))
 '
 
-test_expect_failure 'push already up-to-date' '
+test_expect_success 'push already up-to-date' '
 	git push
 '
 

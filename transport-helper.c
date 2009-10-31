@@ -263,6 +263,8 @@ static int push_refs(struct transport *transport,
 		strbuf_addstr(&buf, ref->name);
 		strbuf_addch(&buf, '\n');
 	}
+	if (buf.len == 0)
+		return 0;
 
 	transport->verbose = flags & TRANSPORT_PUSH_VERBOSE ? 1 : 0;
 	standard_options(transport);
