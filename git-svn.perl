@@ -1321,9 +1321,8 @@ sub get_commit_entry {
 	close $log_fh or croak $!;
 
 	if ($_edit || ($type eq 'tree')) {
-		my $editor = $ENV{VISUAL} || $ENV{EDITOR} || 'vi';
-		# TODO: strip out spaces, comments, like git-commit.sh
-		system($editor, $commit_editmsg);
+		chomp(my $editor = command_oneline(qw(var GIT_EDITOR)));
+		system('sh', '-c', $editor.' "$@"', $editor, $commit_editmsg);
 	}
 	rename $commit_editmsg, $commit_msg or croak $!;
 	{

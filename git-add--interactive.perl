@@ -987,8 +987,7 @@ sub edit_hunk_manually {
 EOF
 	close $fh;
 
-	my $editor = $ENV{GIT_EDITOR} || $repo->config("core.editor")
-		|| $ENV{VISUAL} || $ENV{EDITOR} || "vi";
+	chomp(my $editor = run_cmd_pipe(qw(git var GIT_EDITOR)));
 	system('sh', '-c', $editor.' "$@"', $editor, $hunkfile);
 
 	if ($? != 0) {

@@ -323,7 +323,7 @@ ENVIRONMENT AND CONFIGURATION VARIABLES
 The editor used to edit the commit log message will be chosen from the
 GIT_EDITOR environment variable, the core.editor configuration variable, the
 VISUAL environment variable, or the EDITOR environment variable (in that
-order).
+order).  See linkgit:git-var[1] for details.
 
 HOOKS
 -----
