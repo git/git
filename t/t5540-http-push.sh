@@ -116,9 +116,7 @@ test_expect_success 'create and delete remote branch' '
 	test_tick &&
 	git commit -m dev &&
 	git push origin dev &&
-	git fetch &&
 	git push origin :dev &&
-	git fetch &&
 	test_must_fail git show-ref --verify refs/remotes/origin/dev
 '
 
