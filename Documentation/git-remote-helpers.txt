@@ -36,10 +36,16 @@ Commands are given by the caller on the helper's standard input, one per line.
 	complete list, outputs a blank line.
 
 'fetch' <sha1> <name>::
-	Fetches the given object, writing the necessary objects to the
-	database. Outputs a blank line when the fetch is
-	complete. Only objects which were reported in the ref list
-	with a sha1 may be fetched this way.
+	Fetches the given object, writing the necessary objects
+	to the database.  Fetch commands are sent in a batch, one
+	per line, and the batch is terminated with a blank line.
+	Outputs a single blank line when all fetch commands in the
+	same batch are complete. Only objects which were reported
+	in the ref list with a sha1 may be fetched this way.
++
+Optionally may output a 'lock <file>' line indicating a file under
+GIT_DIR/objects/pack which is keeping a pack until refs can be
+suitably updated.
 +
 Supported if the helper has the "fetch" capability.
 

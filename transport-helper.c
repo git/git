@@ -10,6 +10,7 @@ struct helper_data
 {
 	const char *name;
 	struct child_process *helper;
+	FILE *out;
 	unsigned fetch : 1;
 };
 
@@ -18,7 +19,6 @@ static struct child_process *get_helper(struct transport *transport)
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process *helper;
-	FILE *file;
 
 	if (data->helper)
 		return data->helper;
@@ -39,9 +39,9 @@ static struct child_process *get_helper(struct transport *transport)
 
 	write_str_in_full(helper->in, "capabilities\n");
 
-	file = xfdopen(helper->out, "r");
+	data->out = xfdopen(helper->out, "r");
 	while (1) {
-		if (strbuf_getline(&buf, file, '\n') == EOF)
+		if (strbuf_getline(&buf, data->out, '\n') == EOF)
 			exit(128); /* child died, message supplied already */
 
 		if (!*buf.buf)
@@ -58,6 +58,7 @@ static int disconnect_helper(struct transport *transport)
 	if (data->helper) {
 		write_str_in_full(data->helper->in, "\n");
 		close(data->helper->in);
+		fclose(data->out);
 		finish_command(data->helper);
 		free((char *)data->helper->argv[0]);
 		free(data->helper->argv);
@@ -70,8 +71,7 @@ static int disconnect_helper(struct transport *transport)
 static int fetch_with_fetch(struct transport *transport,
 			    int nr_heads, const struct ref **to_fetch)
 {
-	struct child_process *helper = get_helper(transport);
-	FILE *file = xfdopen(helper->out, "r");
+	struct helper_data *data = transport->data;
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 
@@ -82,12 +82,30 @@ static int fetch_with_fetch(struct transport *transport,
 
 		strbuf_addf(&buf, "fetch %s %s\n",
 			    sha1_to_hex(posn->old_sha1), posn->name);
-		write_in_full(helper->in, buf.buf, buf.len);
-		strbuf_reset(&buf);
-
-		if (strbuf_getline(&buf, file, '\n') == EOF)
-			exit(128); /* child died, message supplied already */
 	}
+
+	strbuf_addch(&buf, '\n');
+	if (write_in_full(data->helper->in, buf.buf, buf.len) != buf.len)
+		die_errno("cannot send fetch to %s", data->name);
+
+	while (1) {
+		strbuf_reset(&buf);
+		if (strbuf_getline(&buf, data->out, '\n') == EOF)
+			exit(128); /* child died, message supplied already */
+
+		if (!prefixcmp(buf.buf, "lock ")) {
+			const char *name = buf.buf + 5;
+			if (transport->pack_lockfile)
+				warning("%s also locked %s", data->name, name);
+			else
+				transport->pack_lockfile = xstrdup(name);
+		}
+		else if (!buf.len)
+			break;
+		else
+			warning("%s unexpectedly said: '%s'", data->name, buf.buf);
+	}
+	strbuf_release(&buf);
 	return 0;
 }
 
@@ -113,21 +131,20 @@ static int fetch(struct transport *transport,
 
 static struct ref *get_refs_list(struct transport *transport, int for_push)
 {
+	struct helper_data *data = transport->data;
 	struct child_process *helper;
 	struct ref *ret = NULL;
 	struct ref **tail = &ret;
 	struct ref *posn;
 	struct strbuf buf = STRBUF_INIT;
-	FILE *file;
 
 	helper = get_helper(transport);
 
 	write_str_in_full(helper->in, "list\n");
 
-	file = xfdopen(helper->out, "r");
 	while (1) {
 		char *eov, *eon;
-		if (strbuf_getline(&buf, file, '\n') == EOF)
+		if (strbuf_getline(&buf, data->out, '\n') == EOF)
 			exit(128); /* child died, message supplied already */
 
 		if (!*buf.buf)
