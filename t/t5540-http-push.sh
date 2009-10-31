@@ -36,6 +36,7 @@ test_expect_success 'setup remote repository' '
 	cd test_repo.git &&
 	git --bare update-server-info &&
 	mv hooks/post-update.sample hooks/post-update &&
+	ORIG_HEAD=$(git rev-parse --verify HEAD) &&
 	cd - &&
 	mv test_repo.git "$HTTPD_DOCUMENT_ROOT_PATH"
 '
@@ -45,7 +46,7 @@ test_expect_success 'clone remote repository' '
 	git clone $HTTPD_URL/test_repo.git test_repo_clone
 '
 
-test_expect_failure 'push to remote repository with packed refs' '
+test_expect_success 'push to remote repository with packed refs' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	: >path2 &&
 	git add path2 &&
@@ -57,11 +58,15 @@ test_expect_failure 'push to remote repository with packed refs' '
 	 test $HEAD = $(git rev-parse --verify HEAD))
 '
 
-test_expect_success ' push to remote repository with unpacked refs' '
+test_expect_failure 'push already up-to-date' '
+	git push
+'
+
+test_expect_success 'push to remote repository with unpacked refs' '
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
 	 rm packed-refs &&
-	 git update-ref refs/heads/master \
-		0c973ae9bd51902a28466f3850b543fa66a6aaf4) &&
+	 git update-ref refs/heads/master $ORIG_HEAD &&
+	 git --bare update-server-info) &&
 	git push &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
 	 test $HEAD = $(git rev-parse --verify HEAD))
@@ -113,7 +118,6 @@ test_expect_success 'create and delete remote branch' '
 	git push origin dev &&
 	git fetch &&
 	git push origin :dev &&
-	git branch -d -r origin/dev &&
 	git fetch &&
 	test_must_fail git show-ref --verify refs/remotes/origin/dev
 '

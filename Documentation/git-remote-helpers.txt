@@ -34,6 +34,10 @@ Commands are given by the caller on the helper's standard input, one per line.
 	value of the ref. A space-separated list of attributes follows
 	the name; unrecognized attributes are ignored. After the
 	complete list, outputs a blank line.
++
+If 'push' is supported this may be called as 'list for-push'
+to obtain the current refs prior to sending one or more 'push'
+commands to the helper.
 
 'option' <name> <value>::
 	Set the transport helper option <name> to <value>.  Outputs a
@@ -59,6 +63,22 @@ suitably updated.
 +
 Supported if the helper has the "fetch" capability.
 
+'push' +<src>:<dst>::
+	Pushes the given <src> commit or branch locally to the
+	remote branch described by <dst>.  A batch sequence of
+	one or more push commands is terminated with a blank line.
++
+Zero or more protocol options may be entered after the last 'push'
+command, before the batch's terminating blank line.
++
+When the push is complete, outputs one or more 'ok <dst>' or
+'error <dst> <why>?' lines to indicate success or failure of
+each pushed ref.  The status report output is terminated by
+a blank line.  The option field <why> may be quoted in a C
+style string if it contains an LF.
++
+Supported if the helper has the "push" capability.
+
 If a fatal error occurs, the program writes the error message to
 stderr and exits. The caller should expect that a suitable error
 message has been printed if the child closes the connection without
@@ -76,10 +96,16 @@ CAPABILITIES
 'option'::
 	This helper supports the option command.
 
+'push'::
+	This helper supports the 'push' command.
+
 REF LIST ATTRIBUTES
 -------------------
 
-None are defined yet, but the caller must accept any which are supplied.
+'for-push'::
+	The caller wants to use the ref list to prepare push
+	commands.  A helper might chose to acquire the ref list by
+	opening a different type of connection to the destination.
 
 OPTIONS
 -------
@@ -105,6 +131,11 @@ OPTIONS
 	the helper a second fetch command will usually be sent to
 	ask for the tag specifically.  Some helpers may be able to
 	use this option to avoid a second network connection.
+
+'option dry-run' \{'true'|'false'\}:
+	If true, pretend the operation completed successfully,
+	but don't actually change any repository data.	For most
+	helpers this only applies to the 'push', if supported.
 
 Documentation
 -------------

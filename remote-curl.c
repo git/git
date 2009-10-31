@@ -4,6 +4,7 @@
 #include "walker.h"
 #include "http.h"
 #include "exec_cmd.h"
+#include "run-command.h"
 
 static struct remote *remote;
 static const char *url;
@@ -13,7 +14,8 @@ struct options {
 	int verbosity;
 	unsigned long depth;
 	unsigned progress : 1,
-		followtags : 1;
+		followtags : 1,
+		dry_run : 1;
 };
 static struct options options;
 
@@ -58,6 +60,15 @@ static int set_option(const char *name, const char *value)
 		else
 			return -1;
 		return 1 /* TODO implement later */;
+	}
+	else if (!strcmp(name, "dry-run")) {
+		if (!strcmp(value, "true"))
+			options.dry_run = 1;
+		else if (!strcmp(value, "false"))
+			options.dry_run = 0;
+		else
+			return -1;
+		return 0;
 	}
 	else {
 		return 1 /* unsupported */;
@@ -136,6 +147,20 @@ static struct ref *get_refs(void)
 	return refs;
 }
 
+static void output_refs(struct ref *refs)
+{
+	struct ref *posn;
+	for (posn = refs; posn; posn = posn->next) {
+		if (posn->symref)
+			printf("@%s %s\n", posn->symref, posn->name);
+		else
+			printf("%s %s\n", sha1_to_hex(posn->old_sha1), posn->name);
+	}
+	printf("\n");
+	fflush(stdout);
+	free_refs(refs);
+}
+
 static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 {
 	char **targets = xmalloc(nr_heads * sizeof(char*));
@@ -211,6 +236,58 @@ static void parse_fetch(struct strbuf *buf)
 	strbuf_reset(buf);
 }
 
+static int push_dav(int nr_spec, char **specs)
+{
+	const char **argv = xmalloc((10 + nr_spec) * sizeof(char*));
+	int argc = 0, i;
+
+	argv[argc++] = "http-push";
+	argv[argc++] = "--helper-status";
+	if (options.dry_run)
+		argv[argc++] = "--dry-run";
+	if (options.verbosity > 1)
+		argv[argc++] = "--verbose";
+	argv[argc++] = url;
+	for (i = 0; i < nr_spec; i++)
+		argv[argc++] = specs[i];
+	argv[argc++] = NULL;
+
+	if (run_command_v_opt(argv, RUN_GIT_CMD))
+		die("git-%s failed", argv[0]);
+	free(argv);
+	return 0;
+}
+
+static void parse_push(struct strbuf *buf)
+{
+	char **specs = NULL;
+	int alloc_spec = 0, nr_spec = 0, i;
+
+	do {
+		if (!prefixcmp(buf->buf, "push ")) {
+			ALLOC_GROW(specs, nr_spec + 1, alloc_spec);
+			specs[nr_spec++] = xstrdup(buf->buf + 5);
+		}
+		else
+			die("http transport does not support %s", buf->buf);
+
+		strbuf_reset(buf);
+		if (strbuf_getline(buf, stdin, '\n') == EOF)
+			return;
+		if (!*buf->buf)
+			break;
+	} while (1);
+
+	if (push_dav(nr_spec, specs))
+		exit(128); /* error already reported */
+	for (i = 0; i < nr_spec; i++)
+		free(specs[i]);
+	free(specs);
+
+	printf("\n");
+	fflush(stdout);
+}
+
 int main(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -239,17 +316,12 @@ int main(int argc, const char **argv)
 		if (!prefixcmp(buf.buf, "fetch ")) {
 			parse_fetch(&buf);
 
-		} else if (!strcmp(buf.buf, "list")) {
-			struct ref *refs = get_refs();
-			struct ref *posn;
-			for (posn = refs; posn; posn = posn->next) {
-				if (posn->symref)
-					printf("@%s %s\n", posn->symref, posn->name);
-				else
-					printf("%s %s\n", sha1_to_hex(posn->old_sha1), posn->name);
-			}
-			printf("\n");
-			fflush(stdout);
+		} else if (!strcmp(buf.buf, "list") || !prefixcmp(buf.buf, "list ")) {
+			output_refs(get_refs());
+
+		} else if (!prefixcmp(buf.buf, "push ")) {
+			parse_push(&buf);
+
 		} else if (!prefixcmp(buf.buf, "option ")) {
 			char *name = buf.buf + strlen("option ");
 			char *value = strchr(name, ' ');
@@ -272,6 +344,7 @@ int main(int argc, const char **argv)
 		} else if (!strcmp(buf.buf, "capabilities")) {
 			printf("fetch\n");
 			printf("option\n");
+			printf("push\n");
 			printf("\n");
 			fflush(stdout);
 		} else {
