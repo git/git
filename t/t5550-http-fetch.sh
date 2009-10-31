@@ -30,7 +30,7 @@ test_expect_success 'create http-accessible bare repository' '
 '
 
 test_expect_success 'clone http repository' '
-	git clone $HTTPD_URL/repo.git clone &&
+	git clone $HTTPD_URL/dumb/repo.git clone &&
 	test_cmp file clone/file
 '
 
@@ -58,7 +58,7 @@ test_expect_success 'fetch packed objects' '
 	cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
 	git --bare repack &&
 	git --bare prune-packed &&
-	git clone $HTTPD_URL/repo_pack.git
+	git clone $HTTPD_URL/dumb/repo_pack.git
 '
 
 stop_httpd

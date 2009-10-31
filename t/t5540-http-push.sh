@@ -42,7 +42,7 @@ test_expect_success 'setup remote repository' '
 
 test_expect_success 'clone remote repository' '
 	cd "$ROOT_PATH" &&
-	git clone $HTTPD_URL/test_repo.git test_repo_clone
+	git clone $HTTPD_URL/dumb/test_repo.git test_repo_clone
 '
 
 test_expect_success 'push to remote repository with packed refs' '
@@ -75,7 +75,7 @@ test_expect_success 'http-push fetches unpacked objects' '
 	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
 		"$HTTPD_DOCUMENT_ROOT_PATH"/test_repo_unpacked.git &&
 
-	git clone $HTTPD_URL/test_repo_unpacked.git \
+	git clone $HTTPD_URL/dumb/test_repo_unpacked.git \
 		"$ROOT_PATH"/fetch_unpacked &&
 
 	# By reset, we force git to retrieve the object
@@ -84,14 +84,14 @@ test_expect_success 'http-push fetches unpacked objects' '
 	 git remote rm origin &&
 	 git reflog expire --expire=0 --all &&
 	 git prune &&
-	 git push -f -v $HTTPD_URL/test_repo_unpacked.git master)
+	 git push -f -v $HTTPD_URL/dumb/test_repo_unpacked.git master)
 '
 
 test_expect_success 'http-push fetches packed objects' '
 	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
 		"$HTTPD_DOCUMENT_ROOT_PATH"/test_repo_packed.git &&
 
-	git clone $HTTPD_URL/test_repo_packed.git \
+	git clone $HTTPD_URL/dumb/test_repo_packed.git \
 		"$ROOT_PATH"/test_repo_clone_packed &&
 
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo_packed.git &&
@@ -104,7 +104,7 @@ test_expect_success 'http-push fetches packed objects' '
 	 git remote rm origin &&
 	 git reflog expire --expire=0 --all &&
 	 git prune &&
-	 git push -f -v $HTTPD_URL/test_repo_packed.git master)
+	 git push -f -v $HTTPD_URL/dumb/test_repo_packed.git master)
 '
 
 test_expect_success 'create and delete remote branch' '
