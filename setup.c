@@ -61,6 +61,19 @@ const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 	return path;
 }
 
+int check_filename(const char *prefix, const char *arg)
+{
+	const char *name;
+	struct stat st;
+
+	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
+	if (!lstat(name, &st))
+		return 1; /* file exists */
+	if (errno == ENOENT || errno == ENOTDIR)
+		return 0; /* file does not exist */
+	die_errno("failed to stat '%s'", arg);
+}
+
 /*
  * Verify a filename that we got as an argument for a pathspec
  * entry. Note that a filename that begins with "-" never verifies
@@ -70,18 +83,12 @@ const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
  */
 void verify_filename(const char *prefix, const char *arg)
 {
-	const char *name;
-	struct stat st;
-
 	if (*arg == '-')
 		die("bad flag '%s' used after filename", arg);
-	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
-	if (!lstat(name, &st))
+	if (check_filename(prefix, arg))
 		return;
-	if (errno == ENOENT)
-		die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
-		    "Use '--' to separate paths from revisions", arg);
-	die_errno("failed to stat '%s'", arg);
+	die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
+	    "Use '--' to separate paths from revisions", arg);
 }
 
 /*
@@ -91,19 +98,14 @@ void verify_filename(const char *prefix, const char *arg)
  */
 void verify_non_filename(const char *prefix, const char *arg)
 {
-	const char *name;
-	struct stat st;
-
 	if (!is_inside_work_tree() || is_inside_git_dir())
 		return;
 	if (*arg == '-')
 		return; /* flag */
-	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
-	if (!lstat(name, &st))
-		die("ambiguous argument '%s': both revision and filename\n"
-		    "Use '--' to separate filenames from revisions", arg);
-	if (errno != ENOENT && errno != ENOTDIR)
-		die_errno("failed to stat '%s'", arg);
+	if (!check_filename(prefix, arg))
+		return;
+	die("ambiguous argument '%s': both revision and filename\n"
+	    "Use '--' to separate filenames from revisions", arg);
 }
 
 const char **get_pathspec(const char *prefix, const char **pathspec)

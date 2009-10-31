@@ -572,6 +572,40 @@ static int interactive_checkout(const char *revision, const char **pathspec,
 	return run_add_interactive(revision, "--patch=checkout", pathspec);
 }
 
+struct tracking_name_data {
+	const char *name;
+	char *remote;
+	int unique;
+};
+
+static int check_tracking_name(const char *refname, const unsigned char *sha1,
+			       int flags, void *cb_data)
+{
+	struct tracking_name_data *cb = cb_data;
+	const char *slash;
+
+	if (prefixcmp(refname, "refs/remotes/"))
+		return 0;
+	slash = strchr(refname + 13, '/');
+	if (!slash || strcmp(slash + 1, cb->name))
+		return 0;
+	if (cb->remote) {
+		cb->unique = 0;
+		return 0;
+	}
+	cb->remote = xstrdup(refname);
+	return 0;
+}
+
+static const char *unique_tracking_name(const char *name)
+{
+	struct tracking_name_data cb_data = { name, NULL, 1 };
+	for_each_ref(check_tracking_name, &cb_data);
+	if (cb_data.unique)
+		return cb_data.remote;
+	free(cb_data.remote);
+	return NULL;
+}
 
 int cmd_checkout(int argc, const char **argv, const char *prefix)
 {
@@ -582,6 +616,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	struct tree *source_tree = NULL;
 	char *conflict_style = NULL;
 	int patch_mode = 0;
+	int dwim_new_local_branch = 1;
 	struct option options[] = {
 		OPT__QUIET(&opts.quiet),
 		OPT_STRING('b', NULL, &opts.new_branch, "new branch", "branch"),
@@ -597,6 +632,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "conflict", &conflict_style, "style",
 			   "conflict style (merge or diff3)"),
 		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
+		{ OPTION_BOOLEAN, 0, "guess", &dwim_new_local_branch, NULL,
+		  "second guess 'git checkout no-such-branch'",
+		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 		OPT_END(),
 	};
 	int has_dash_dash;
@@ -630,8 +668,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		opts.new_branch = argv0 + 1;
 	}
 
-	if (opts.track == BRANCH_TRACK_UNSPECIFIED)
-		opts.track = git_branch_track;
 	if (conflict_style) {
 		opts.merge = 1; /* implied */
 		git_xmerge_config("merge.conflictstyle", conflict_style, NULL);
@@ -655,6 +691,11 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	 *   With no paths, if <something> is a commit, that is to
 	 *   switch to the branch or detach HEAD at it.
 	 *
+	 *   With no paths, if <something> is _not_ a commit, no -t nor -b
+	 *   was given, and there is a tracking branch whose name is
+	 *   <something> in one and only one remote, then this is a short-hand
+	 *   to fork local <something> from that remote tracking branch.
+	 *
 	 *   Otherwise <something> shall not be ambiguous.
 	 *   - If it's *only* a reference, treat it like case (1).
 	 *   - If it's only a path, treat it like case (2).
@@ -677,7 +718,21 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		if (get_sha1(arg, rev)) {
 			if (has_dash_dash)          /* case (1) */
 				die("invalid reference: %s", arg);
-			goto no_reference;          /* case (3 -> 2) */
+			if (!patch_mode &&
+			    dwim_new_local_branch &&
+			    opts.track == BRANCH_TRACK_UNSPECIFIED &&
+			    !opts.new_branch &&
+			    !check_filename(NULL, arg) &&
+			    argc == 1) {
+				const char *remote = unique_tracking_name(arg);
+				if (!remote || get_sha1(remote, rev))
+					goto no_reference;
+				opts.new_branch = arg;
+				arg = remote;
+				/* DWIMmed to create local branch */
+			}
+			else
+				goto no_reference;
 		}
 
 		/* we can't end up being in (2) anymore, eat the argument */
@@ -715,6 +770,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	}
 
 no_reference:
+
+	if (opts.track == BRANCH_TRACK_UNSPECIFIED)
+		opts.track = git_branch_track;
+
 	if (argc) {
 		const char **pathspec = get_pathspec(prefix, argv);
 
