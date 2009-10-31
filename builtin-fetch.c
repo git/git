@@ -665,7 +665,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	transport = transport_get(remote, remote->url[0]);
 	if (verbosity >= 2)
-		transport->verbose = 1;
+		transport->verbose = verbosity <= 3 ? verbosity : 3;
 	if (verbosity < 0)
 		transport->verbose = -1;
 	if (upload_pack)
