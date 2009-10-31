@@ -165,6 +165,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	const unsigned char *sha1;
 	unsigned in_vain = 0;
 	int got_continue = 0;
+	struct strbuf req_buf = STRBUF_INIT;
 
 	if (marked)
 		for_each_ref(clear_marks, NULL);
@@ -175,6 +176,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
 		unsigned char *remote = refs->old_sha1;
+		const char *remote_hex;
 		struct object *o;
 
 		/*
@@ -192,27 +194,36 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			continue;
 		}
 
-		if (!fetching)
-			packet_write(fd[1], "want %s%s%s%s%s%s%s%s\n",
-				     sha1_to_hex(remote),
-				     (multi_ack ? " multi_ack" : ""),
-				     (use_sideband == 2 ? " side-band-64k" : ""),
-				     (use_sideband == 1 ? " side-band" : ""),
-				     (args.use_thin_pack ? " thin-pack" : ""),
-				     (args.no_progress ? " no-progress" : ""),
-				     (args.include_tag ? " include-tag" : ""),
-				     (prefer_ofs_delta ? " ofs-delta" : ""));
-		else
-			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
+		remote_hex = sha1_to_hex(remote);
+		if (!fetching) {
+			struct strbuf c = STRBUF_INIT;
+			if (multi_ack)          strbuf_addstr(&c, " multi_ack");
+			if (use_sideband == 2)  strbuf_addstr(&c, " side-band-64k");
+			if (use_sideband == 1)  strbuf_addstr(&c, " side-band");
+			if (args.use_thin_pack) strbuf_addstr(&c, " thin-pack");
+			if (args.no_progress)   strbuf_addstr(&c, " no-progress");
+			if (args.include_tag)   strbuf_addstr(&c, " include-tag");
+			if (prefer_ofs_delta)   strbuf_addstr(&c, " ofs-delta");
+			packet_buf_write(&req_buf, "want %s%s\n", remote_hex, c.buf);
+			strbuf_release(&c);
+		} else
+			packet_buf_write(&req_buf, "want %s\n", remote_hex);
 		fetching++;
 	}
-	if (is_repository_shallow())
-		write_shallow_commits(fd[1], 1);
-	if (args.depth > 0)
-		packet_write(fd[1], "deepen %d", args.depth);
-	packet_flush(fd[1]);
-	if (!fetching)
+
+	if (!fetching) {
+		strbuf_release(&req_buf);
+		packet_flush(fd[1]);
 		return 1;
+	}
+
+	if (is_repository_shallow())
+		write_shallow_commits(&req_buf, 1);
+	if (args.depth > 0)
+		packet_buf_write(&req_buf, "deepen %d", args.depth);
+	packet_buf_flush(&req_buf);
+
+	safe_write(fd[1], req_buf.buf, req_buf.len);
 
 	if (args.depth > 0) {
 		char line[1024];
@@ -296,6 +307,8 @@ done:
 		multi_ack = 0;
 		flushes++;
 	}
+	strbuf_release(&req_buf);
+
 	while (flushes || multi_ack) {
 		int ack = get_ack(fd[0], result_sha1);
 		if (ack) {
@@ -809,6 +822,7 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 
 	if (args.depth > 0) {
 		struct cache_time mtime;
+		struct strbuf sb = STRBUF_INIT;
 		char *shallow = git_path("shallow");
 		int fd;
 
@@ -826,12 +840,14 @@ struct ref *fetch_pack(struct fetch_pack_args *my_args,
 
 		fd = hold_lock_file_for_update(&lock, shallow,
 					       LOCK_DIE_ON_ERROR);
-		if (!write_shallow_commits(fd, 0)) {
+		if (!write_shallow_commits(&sb, 0)
+		 || write_in_full(fd, sb.buf, sb.len) != sb.len) {
 			unlink_or_warn(shallow);
 			rollback_lock_file(&lock);
 		} else {
 			commit_lock_file(&lock);
 		}
+		strbuf_release(&sb);
 	}
 
 	reprepare_packed_git();
