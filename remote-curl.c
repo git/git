@@ -289,6 +289,7 @@ struct rpc_state {
 	int in;
 	int out;
 	struct strbuf result;
+	unsigned gzip_request : 1;
 };
 
 static size_t rpc_out(void *ptr, size_t eltsize,
@@ -327,6 +328,8 @@ static int post_rpc(struct rpc_state *rpc)
 	struct active_request_slot *slot;
 	struct slot_results results;
 	struct curl_slist *headers = NULL;
+	int use_gzip = rpc->gzip_request;
+	char *gzip_body = NULL;
 	int err = 0, large_request = 0;
 
 	/* Try to load the entire request, if we can fit it into the
@@ -340,6 +343,7 @@ static int post_rpc(struct rpc_state *rpc)
 
 		if (left < LARGE_PACKET_MAX) {
 			large_request = 1;
+			use_gzip = 0;
 			break;
 		}
 
@@ -355,6 +359,7 @@ static int post_rpc(struct rpc_state *rpc)
 	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, rpc->service_url);
+	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "");
 
 	headers = curl_slist_append(headers, rpc->hdr_content_type);
 	headers = curl_slist_append(headers, rpc->hdr_accept);
@@ -372,6 +377,49 @@ static int post_rpc(struct rpc_state *rpc)
 			fflush(stderr);
 		}
 
+	} else if (use_gzip && 1024 < rpc->len) {
+		/* The client backend isn't giving us compressed data so
+		 * we can try to deflate it ourselves, this may save on.
+		 * the transfer time.
+		 */
+		size_t size;
+		z_stream stream;
+		int ret;
+
+		memset(&stream, 0, sizeof(stream));
+		ret = deflateInit2(&stream, Z_BEST_COMPRESSION,
+				Z_DEFLATED, (15 + 16),
+				8, Z_DEFAULT_STRATEGY);
+		if (ret != Z_OK)
+			die("cannot deflate request; zlib init error %d", ret);
+		size = deflateBound(&stream, rpc->len);
+		gzip_body = xmalloc(size);
+
+		stream.next_in = (unsigned char *)rpc->buf;
+		stream.avail_in = rpc->len;
+		stream.next_out = (unsigned char *)gzip_body;
+		stream.avail_out = size;
+
+		ret = deflate(&stream, Z_FINISH);
+		if (ret != Z_STREAM_END)
+			die("cannot deflate request; zlib deflate error %d", ret);
+
+		ret = deflateEnd(&stream);
+		if (ret != Z_OK)
+			die("cannot deflate request; zlib end error %d", ret);
+
+		size = stream.total_out;
+
+		headers = curl_slist_append(headers, "Content-Encoding: gzip");
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, gzip_body);
+		curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE, size);
+
+		if (options.verbosity > 1) {
+			fprintf(stderr, "POST %s (gzip %lu to %lu bytes)\n",
+				rpc->service_name,
+				(unsigned long)rpc->len, (unsigned long)size);
+			fflush(stderr);
+		}
 	} else {
 		/* We know the complete request size in advance, use the
 		 * more normal Content-Length approach.
@@ -398,6 +446,7 @@ static int post_rpc(struct rpc_state *rpc)
 	}
 
 	curl_slist_free_all(headers);
+	free(gzip_body);
 	return err;
 }
 
@@ -523,6 +572,7 @@ static int fetch_git(struct discovery *heads,
 	memset(&rpc, 0, sizeof(rpc));
 	rpc.service_name = "git-upload-pack",
 	rpc.argv = argv;
+	rpc.gzip_request = 1;
 
 	err = rpc_service(&rpc, heads);
 	if (rpc.result.len)
