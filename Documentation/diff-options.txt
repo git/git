@@ -87,6 +87,13 @@ endif::git-format-patch[]
 	Show only names and status of changed files. See the description
 	of the `--diff-filter` option on what the status letters mean.
 
+--submodule[=<format>]::
+	Chose the output format for submodule differences. <format> can be one of
+	'short' and 'log'. 'short' just shows pairs of commit names, this format
+	is used when this option is not given. 'log' is the default value for this
+	option and lists the commits in that commit range like the 'summary'
+	option of linkgit:git-submodule[1] does.
+
 --color::
 	Show colored diff.
 
