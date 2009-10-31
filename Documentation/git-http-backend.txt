@@ -14,13 +14,15 @@ DESCRIPTION
 -----------
 A simple CGI program to serve the contents of a Git repository to Git
 clients accessing the repository over http:// and https:// protocols.
+The program supports clients fetching using both the smart HTTP protcol
+and the backwards-compatible dumb HTTP protocol, as well as clients
+pushing using the smart HTTP protocol.
 
 By default, only the `upload-pack` service is enabled, which serves
 'git-fetch-pack' and 'git-ls-remote' clients, which are invoked from
-'git-fetch', 'git-pull', and 'git-clone'.
-
-This is ideally suited for read-only updates, i.e., pulling from
-git repositories.
+'git-fetch', 'git-pull', and 'git-clone'.  If the client is authenticated,
+the `receive-pack` service is enabled, which serves 'git-send-pack'
+clients, which is invoked from 'git-push'.
 
 SERVICES
 --------
@@ -50,6 +52,8 @@ automatically by the web server.
 
 EXAMPLES
 --------
+All of the following examples map 'http://$hostname/git/foo/bar.git'
+to '/var/www/git/foo/bar.git'.
 
 Apache 2.x::
 	Ensure mod_cgi, mod_alias, and mod_env are enabled, set
