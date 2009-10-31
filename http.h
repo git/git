@@ -79,6 +79,7 @@ extern curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
 extern struct active_request_slot *get_active_slot(void);
 extern int start_active_slot(struct active_request_slot *slot);
 extern void run_active_slot(struct active_request_slot *slot);
+extern void finish_active_slot(struct active_request_slot *slot);
 extern void finish_all_active_slots(void);
 extern void release_active_slot(struct active_request_slot *slot);
 
@@ -94,6 +95,7 @@ extern void http_cleanup(void);
 extern int data_received;
 extern int active_requests;
 extern int http_is_verbose;
+extern size_t http_post_buffer;
 
 extern char curl_errorstr[CURL_ERROR_SIZE];
 

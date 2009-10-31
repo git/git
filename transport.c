@@ -731,6 +731,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 				 NULL);
 	}
 
+	memset(&args, 0, sizeof(args));
 	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
 	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
 	args.use_thin_pack = data->thin;

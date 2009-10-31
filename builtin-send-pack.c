@@ -2,9 +2,11 @@
 #include "commit.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include "sideband.h"
 #include "run-command.h"
 #include "remote.h"
 #include "send-pack.h"
+#include "quote.h"
 
 static const char send_pack_usage[] =
 "git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
@@ -59,7 +61,7 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 	memset(&po, 0, sizeof(po));
 	po.argv = argv;
 	po.in = -1;
-	po.out = fd;
+	po.out = args->stateless_rpc ? -1 : fd;
 	po.git_cmd = 1;
 	if (start_command(&po))
 		die_errno("git pack-objects failed");
@@ -83,6 +85,20 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 	}
 
 	close(po.in);
+
+	if (args->stateless_rpc) {
+		char *buf = xmalloc(LARGE_PACKET_MAX);
+		while (1) {
+			ssize_t n = xread(po.out, buf, LARGE_PACKET_MAX);
+			if (n <= 0)
+				break;
+			send_sideband(fd, -1, buf, n, LARGE_PACKET_MAX);
+		}
+		free(buf);
+		close(po.out);
+		po.out = -1;
+	}
+
 	if (finish_command(&po))
 		return error("pack-objects died with strange error");
 	return 0;
@@ -303,6 +319,59 @@ static int refs_pushed(struct ref *ref)
 	return 0;
 }
 
+static void print_helper_status(struct ref *ref)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	for (; ref; ref = ref->next) {
+		const char *msg = NULL;
+		const char *res;
+
+		switch(ref->status) {
+		case REF_STATUS_NONE:
+			res = "error";
+			msg = "no match";
+			break;
+
+		case REF_STATUS_OK:
+			res = "ok";
+			break;
+
+		case REF_STATUS_UPTODATE:
+			res = "ok";
+			msg = "up to date";
+			break;
+
+		case REF_STATUS_REJECT_NONFASTFORWARD:
+			res = "error";
+			msg = "non-fast forward";
+			break;
+
+		case REF_STATUS_REJECT_NODELETE:
+		case REF_STATUS_REMOTE_REJECT:
+			res = "error";
+			break;
+
+		case REF_STATUS_EXPECTING_REPORT:
+		default:
+			continue;
+		}
+
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "%s %s", res, ref->name);
+		if (ref->remote_status)
+			msg = ref->remote_status;
+		if (msg) {
+			strbuf_addch(&buf, ' ');
+			quote_two_c_style(&buf, "", msg, 0);
+		}
+		strbuf_addch(&buf, '\n');
+
+		safe_write(1, buf.buf, buf.len);
+	}
+	strbuf_release(&buf);
+}
+
 int send_pack(struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
 	      struct ref *remote_refs,
@@ -310,6 +379,7 @@ int send_pack(struct send_pack_args *args,
 {
 	int in = fd[0];
 	int out = fd[1];
+	struct strbuf req_buf = STRBUF_INIT;
 	struct ref *ref;
 	int new_refs;
 	int ask_for_status_report = 0;
@@ -391,14 +461,14 @@ int send_pack(struct send_pack_args *args,
 			char *new_hex = sha1_to_hex(ref->new_sha1);
 
 			if (ask_for_status_report) {
-				packet_write(out, "%s %s %s%c%s",
+				packet_buf_write(&req_buf, "%s %s %s%c%s",
 					old_hex, new_hex, ref->name, 0,
 					"report-status");
 				ask_for_status_report = 0;
 				expect_status_report = 1;
 			}
 			else
-				packet_write(out, "%s %s %s",
+				packet_buf_write(&req_buf, "%s %s %s",
 					old_hex, new_hex, ref->name);
 		}
 		ref->status = expect_status_report ?
@@ -406,7 +476,17 @@ int send_pack(struct send_pack_args *args,
 			REF_STATUS_OK;
 	}
 
-	packet_flush(out);
+	if (args->stateless_rpc) {
+		if (!args->dry_run) {
+			packet_buf_flush(&req_buf);
+			send_sideband(out, -1, req_buf.buf, req_buf.len, LARGE_PACKET_MAX);
+		}
+	} else {
+		safe_write(out, req_buf.buf, req_buf.len);
+		packet_flush(out);
+	}
+	strbuf_release(&req_buf);
+
 	if (new_refs && !args->dry_run) {
 		if (pack_objects(out, remote_refs, extra_have, args) < 0) {
 			for (ref = remote_refs; ref; ref = ref->next)
@@ -414,11 +494,15 @@ int send_pack(struct send_pack_args *args,
 			return -1;
 		}
 	}
+	if (args->stateless_rpc && !args->dry_run)
+		packet_flush(out);
 
 	if (expect_status_report)
 		ret = receive_status(in, remote_refs);
 	else
 		ret = 0;
+	if (args->stateless_rpc)
+		packet_flush(out);
 
 	if (ret < 0)
 		return ret;
@@ -478,6 +562,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	struct extra_have_objects extra_have;
 	struct ref *remote_refs, *local_refs;
 	int ret;
+	int helper_status = 0;
 	int send_all = 0;
 	const char *receivepack = "git-receive-pack";
 	int flags;
@@ -523,6 +608,14 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 				args.use_thin_pack = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--stateless-rpc")) {
+				args.stateless_rpc = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--helper-status")) {
+				helper_status = 1;
+				continue;
+			}
 			usage(send_pack_usage);
 		}
 		if (!dest) {
@@ -551,7 +644,14 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	conn = git_connect(fd, dest, receivepack, args.verbose ? CONNECT_VERBOSE : 0);
+	if (args.stateless_rpc) {
+		conn = NULL;
+		fd[0] = 0;
+		fd[1] = 1;
+	} else {
+		conn = git_connect(fd, dest, receivepack,
+			args.verbose ? CONNECT_VERBOSE : 0);
+	}
 
 	memset(&extra_have, 0, sizeof(extra_have));
 
@@ -575,12 +675,16 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 
 	ret = send_pack(&args, fd, conn, remote_refs, &extra_have);
 
+	if (helper_status)
+		print_helper_status(remote_refs);
+
 	close(fd[1]);
 	close(fd[0]);
 
 	ret |= finish_connect(conn);
 
-	print_push_status(dest, remote_refs);
+	if (!helper_status)
+		print_push_status(dest, remote_refs);
 
 	if (!args.dry_run && remote) {
 		struct ref *ref;
