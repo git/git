@@ -5,7 +5,17 @@
 #include "http.h"
 #include "exec_cmd.h"
 
-static struct ref *get_refs(struct walker *walker, const char *url)
+static struct remote *remote;
+static const char *url;
+static struct walker *walker;
+
+static void init_walker(void)
+{
+	if (!walker)
+		walker = get_http_walker(url, remote);
+}
+
+static struct ref *get_refs(void)
 {
 	struct strbuf buffer = STRBUF_INIT;
 	char *data, *start, *mid;
@@ -21,6 +31,7 @@ static struct ref *get_refs(struct walker *walker, const char *url)
 	refs_url = xmalloc(strlen(url) + 11);
 	sprintf(refs_url, "%s/info/refs", url);
 
+	init_walker();
 	http_ret = http_get_strbuf(refs_url, &buffer, HTTP_NO_CACHE);
 	switch (http_ret) {
 	case HTTP_OK:
@@ -78,10 +89,7 @@ static struct ref *get_refs(struct walker *walker, const char *url)
 
 int main(int argc, const char **argv)
 {
-	struct remote *remote;
 	struct strbuf buf = STRBUF_INIT;
-	const char *url;
-	struct walker *walker = NULL;
 
 	git_extract_argv0_path(argv[0]);
 	setup_git_directory();
@@ -103,8 +111,7 @@ int main(int argc, const char **argv)
 			break;
 		if (!prefixcmp(buf.buf, "fetch ")) {
 			char *obj = buf.buf + strlen("fetch ");
-			if (!walker)
-				walker = get_http_walker(url, remote);
+			init_walker();
 			walker->get_all = 1;
 			walker->get_tree = 1;
 			walker->get_history = 1;
@@ -115,11 +122,8 @@ int main(int argc, const char **argv)
 			printf("\n");
 			fflush(stdout);
 		} else if (!strcmp(buf.buf, "list")) {
-			struct ref *refs;
+			struct ref *refs = get_refs();
 			struct ref *posn;
-			if (!walker)
-				walker = get_http_walker(url, remote);
-			refs = get_refs(walker, url);
 			for (posn = refs; posn; posn = posn->next) {
 				if (posn->symref)
 					printf("@%s %s\n", posn->symref, posn->name);
