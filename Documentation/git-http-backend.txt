@@ -98,13 +98,9 @@ Accelerated static Apache 2.x::
 ----------------------------------------------------------------
 SetEnv GIT_PROJECT_ROOT /var/www/git
 
-ScriptAlias /git/        /usr/libexec/git-core/git-http-backend/
-Alias       /git_static/ /var/www/git/
-
-RewriteEngine on
-RewriteRule ^/git/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$    /git_static/$1 [PT]
-RewriteRule ^/git/(.*/objects/pack/pack-[0-9a-f]{40}.pack)$ /git_static/$1 [PT]
-RewriteRule ^/git/(.*/objects/pack/pack-[0-9a-f]{40}.idx)$  /git_static/$1 [PT]
+AliasMatch ^/git/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$          /var/www/git/$1
+AliasMatch ^/git/(.*/objects/pack/pack-[0-9a-f]{40}.(pack|idx))$ /var/www/git/$1
+ScriptAlias /git/ /usr/libexec/git-core/git-http-backend/
 ----------------------------------------------------------------
 
 
