@@ -41,29 +41,24 @@ http.receivepack::
 
 URL TRANSLATION
 ---------------
-'git-http-backend' relies on the invoking web server to perform
-URL to path translation, and store the repository path into the
-PATH_TRANSLATED environment variable.  Most web servers will do
-this translation automatically, resolving the suffix after the
-CGI name relative to the server's document root.
+To determine the location of the repository on disk, 'git-http-backend'
+concatenates the environment variables PATH_INFO, which is set
+automatically by the web server, and GIT_PROJECT_ROOT, which must be set
+manually in the web server configuration.  If GIT_PROJECT_ROOT is not
+set, 'git-http-backend' reads PATH_TRANSLATED, which is also set
+automatically by the web server.
 
 EXAMPLES
 --------
 
 Apache 2.x::
-	To serve all Git repositories contained within the '/git/'
-	subdirectory of the DocumentRoot, ensure mod_cgi and
-	mod_alias are enabled, and create a ScriptAlias to the CGI:
+	Ensure mod_cgi, mod_alias, and mod_env are enabled, set
+	GIT_PROJECT_ROOT (or DocumentRoot) appropriately, and
+	create a ScriptAlias to the CGI:
 +
 ----------------------------------------------------------------
-ScriptAlias /git/ /usr/libexec/git-core/git-http-backend/git/
-
-<Directory /usr/libexec/git-core>
-	Options None
-</Directory>
-<Files /usr/libexec/git-core/git-http-backend>
-	Options ExecCGI
-</Files>
+SetEnv GIT_PROJECT_ROOT /var/www/git
+ScriptAlias /git/ /usr/libexec/git-core/git-http-backend/
 ----------------------------------------------------------------
 +
 To enable anonymous read access but authenticated write access,
@@ -78,16 +73,16 @@ require authorization with a LocationMatch directive:
 </LocationMatch>
 ----------------------------------------------------------------
 +
-To require authentication for both reads and writes, use a Directory
+To require authentication for both reads and writes, use a Location
 directive around the repository, or one of its parent directories:
 +
 ----------------------------------------------------------------
-<Directory /var/www/git/private>
+<Location /git/private>
 	AuthType Basic
 	AuthName "Private Git Access"
 	Require group committers
 	...
-</Directory>
+</Location>
 ----------------------------------------------------------------
 
 Accelerated static Apache 2.x::
@@ -97,9 +92,9 @@ Accelerated static Apache 2.x::
 	file contents from the file system directly to the network:
 +
 ----------------------------------------------------------------
-DocumentRoot /var/www
+SetEnv GIT_PROJECT_ROOT /var/www/git
 
-ScriptAlias /git/        /usr/libexec/git-core/git-http-backend/git/
+ScriptAlias /git/        /usr/libexec/git-core/git-http-backend/
 Alias       /git_static/ /var/www/git/
 
 RewriteEngine on
@@ -114,7 +109,7 @@ ENVIRONMENT
 'git-http-backend' relies upon the CGI environment variables set
 by the invoking web server, including:
 
-* PATH_TRANSLATED
+* PATH_INFO (if GIT_PROJECT_ROOT is set, otherwise PATH_TRANSLATED)
 * REMOTE_USER
 * REMOTE_ADDR
 * CONTENT_TYPE

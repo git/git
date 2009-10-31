@@ -528,6 +528,26 @@ static NORETURN void die_webcgi(const char *err, va_list params)
 	exit(0);
 }
 
+static char* getdir(void)
+{
+	struct strbuf buf = STRBUF_INIT;
+	char *pathinfo = getenv("PATH_INFO");
+	char *root = getenv("GIT_PROJECT_ROOT");
+	char *path = getenv("PATH_TRANSLATED");
+
+	if (root && *root) {
+		if (!pathinfo || !*pathinfo)
+			die("GIT_PROJECT_ROOT is set but PATH_INFO is not");
+		strbuf_addstr(&buf, root);
+		strbuf_addstr(&buf, pathinfo);
+		return strbuf_detach(&buf, NULL);
+	} else if (path && *path) {
+		return xstrdup(path);
+	} else
+		die("No GIT_PROJECT_ROOT or PATH_TRANSLATED from server");
+	return NULL;
+}
+
 static struct service_cmd {
 	const char *method;
 	const char *pattern;
@@ -549,7 +569,7 @@ static struct service_cmd {
 int main(int argc, char **argv)
 {
 	char *method = getenv("REQUEST_METHOD");
-	char *dir = getenv("PATH_TRANSLATED");
+	char *dir;
 	struct service_cmd *cmd = NULL;
 	char *cmd_arg = NULL;
 	int i;
@@ -561,8 +581,7 @@ int main(int argc, char **argv)
 		die("No REQUEST_METHOD from server");
 	if (!strcmp(method, "HEAD"))
 		method = "GET";
-	if (!dir)
-		die("No PATH_TRANSLATED from server");
+	dir = getdir();
 
 	for (i = 0; i < ARRAY_SIZE(services); i++) {
 		struct service_cmd *c = &services[i];
