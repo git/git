@@ -28,7 +28,7 @@ int launch_editor(const char *path, struct strbuf *buffer, const char *const *en
 		const char *args[6];
 		struct strbuf arg0 = STRBUF_INIT;
 
-		if (strcspn(editor, "$ \t'") != len) {
+		if (strcspn(editor, "|&;<>()$`\\\"' \t\n*?[#~=%") != len) {
 			/* there are specials */
 			strbuf_addf(&arg0, "%s \"$@\"", editor);
 			args[i++] = "sh";
