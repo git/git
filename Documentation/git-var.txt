@@ -44,6 +44,12 @@ GIT_EDITOR::
     environment variable, then `core.editor` configuration, then
     `$VISUAL`, then `$EDITOR`, and then finally 'vi'.
 
+GIT_PAGER::
+    Text viewer for use by git commands (e.g., 'less').  The value
+    is meant to be interpreted by the shell.  The order of preference
+    is the `$GIT_PAGER` environment variable, then `core.pager`
+    configuration, then `$PAGER`, and then finally 'less'.
+
 Diagnostics
 -----------
 You don't exist. Go away!::
