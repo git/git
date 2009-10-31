@@ -201,6 +201,10 @@ all::
 #
 # Define NO_REGEX if you have no or inferior regex support in your C library.
 #
+# Define DEFAULT_PAGER to a sensible pager command (defaults to "less") if
+# you want to use something different.  The value will be interpreted by the
+# shell at runtime when it is used.
+#
 # Define DEFAULT_EDITOR to a sensible editor command (defaults to "vi") if you
 # want to use something different.  The value will be interpreted by the shell
 # if necessary when it is used.  Examples:
@@ -1378,6 +1382,13 @@ DEFAULT_EDITOR_CQ = "$(subst ",\",$(subst \,\\,$(DEFAULT_EDITOR)))"
 DEFAULT_EDITOR_CQ_SQ = $(subst ','\'',$(DEFAULT_EDITOR_CQ))
 
 BASIC_CFLAGS += -DDEFAULT_EDITOR='$(DEFAULT_EDITOR_CQ_SQ)'
+endif
+
+ifdef DEFAULT_PAGER
+DEFAULT_PAGER_CQ = "$(subst ",\",$(subst \,\\,$(DEFAULT_PAGER)))"
+DEFAULT_PAGER_CQ_SQ = $(subst ','\'',$(DEFAULT_PAGER_CQ))
+
+BASIC_CFLAGS += -DDEFAULT_PAGER='$(DEFAULT_PAGER_CQ_SQ)'
 endif
 
 ALL_CFLAGS += $(BASIC_CFLAGS)
