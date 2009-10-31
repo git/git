@@ -123,6 +123,9 @@ The placeholders are:
 - '%s': subject
 - '%f': sanitized subject line, suitable for a filename
 - '%b': body
+- '%gD': reflog selector, e.g., `refs/stash@\{1\}`
+- '%gd': shortened reflog selector, e.g., `stash@\{1\}`
+- '%gs': reflog subject
 - '%Cred': switch color to red
 - '%Cgreen': switch color to green
 - '%Cblue': switch color to blue
@@ -131,6 +134,12 @@ The placeholders are:
 - '%m': left, right or boundary mark
 - '%n': newline
 - '%x00': print a byte from a hex code
+
+NOTE: Some placeholders may depend on other options given to the
+revision traversal engine. For example, the `%g*` reflog options will
+insert an empty string unless we are traversing reflog entries (e.g., by
+`git log -g`). The `%d` placeholder will use the "short" decoration
+format if `--decorate` was not already provided on the command line.
 
 * 'tformat:'
 +

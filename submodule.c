@@ -92,6 +92,8 @@ void show_submodule_summary(FILE *f, const char *path,
 
 	if (!message) {
 		while ((commit = get_revision(&rev))) {
+			struct pretty_print_context ctx = {0};
+			ctx.date_mode = rev.date_mode;
 			strbuf_setlen(&sb, 0);
 			if (commit->object.flags & SYMMETRIC_LEFT) {
 				if (del)
@@ -99,8 +101,7 @@ void show_submodule_summary(FILE *f, const char *path,
 			}
 			else if (add)
 				strbuf_addstr(&sb, add);
-			format_commit_message(commit, format, &sb,
-					rev.date_mode);
+			format_commit_message(commit, format, &sb, &ctx);
 			if (reset)
 				strbuf_addstr(&sb, reset);
 			strbuf_addch(&sb, '\n');

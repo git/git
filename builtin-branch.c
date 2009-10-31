@@ -387,8 +387,9 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 
 		commit = item->commit;
 		if (commit && !parse_commit(commit)) {
+			struct pretty_print_context ctx = {0};
 			pretty_print_commit(CMIT_FMT_ONELINE, commit,
-					    &subject, 0, NULL, NULL, 0, 0);
+					    &subject, &ctx);
 			sub = subject.buf;
 		}
 
