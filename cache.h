@@ -856,7 +856,6 @@ extern struct ref *find_ref_by_name(const struct ref *list, const char *name);
 extern struct child_process *git_connect(int fd[2], const char *url, const char *prog, int flags);
 extern int finish_connect(struct child_process *conn);
 extern int path_match(const char *path, int nr, char **match);
-extern int get_ack(int fd, unsigned char *result_sha1);
 struct extra_have_objects {
 	int nr, alloc;
 	unsigned char (*array)[20];
