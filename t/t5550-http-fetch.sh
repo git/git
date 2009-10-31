@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test fetching over http'
+test_description='test dumb fetching over http via static file'
 . ./test-lib.sh
 
 if test -n "$NO_CURL"; then
@@ -59,6 +59,12 @@ test_expect_success 'fetch packed objects' '
 	git --bare repack &&
 	git --bare prune-packed &&
 	git clone $HTTPD_URL/dumb/repo_pack.git
+'
+
+test_expect_success 'did not use upload-pack service' '
+	grep '/git-upload-pack' <"$HTTPD_ROOT_PATH"/access.log >act
+	: >exp
+	test_cmp exp act
 '
 
 stop_httpd

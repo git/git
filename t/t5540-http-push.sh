@@ -3,7 +3,7 @@
 # Copyright (c) 2008 Clemens Buchacher <drizzd@aon.at>
 #
 
-test_description='test http-push
+test_description='test WebDAV http-push
 
 This test runs various sanity checks on http-push.'
 
