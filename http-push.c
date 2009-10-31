@@ -604,7 +604,7 @@ static void finish_request(struct transfer_request *request)
 			preq = (struct http_pack_request *)request->userData;
 
 			if (preq) {
-				if (finish_http_pack_request(preq) > 0)
+				if (finish_http_pack_request(preq) == 0)
 					fail = 0;
 				release_http_pack_request(preq);
 			}
