@@ -35,6 +35,16 @@ Commands are given by the caller on the helper's standard input, one per line.
 	the name; unrecognized attributes are ignored. After the
 	complete list, outputs a blank line.
 
+'option' <name> <value>::
+	Set the transport helper option <name> to <value>.  Outputs a
+	single line containing one of 'ok' (option successfully set),
+	'unsupported' (option not recognized) or 'error <msg>'
+	(option <name> is supported but <value> is not correct
+	for it).  Options should be set before other commands,
+	and may how those commands behave.
++
+Supported if the helper has the "option" capability.
+
 'fetch' <sha1> <name>::
 	Fetches the given object, writing the necessary objects
 	to the database.  Fetch commands are sent in a batch, one
@@ -63,10 +73,38 @@ CAPABILITIES
 'fetch'::
 	This helper supports the 'fetch' command.
 
+'option'::
+	This helper supports the option command.
+
 REF LIST ATTRIBUTES
 -------------------
 
 None are defined yet, but the caller must accept any which are supplied.
+
+OPTIONS
+-------
+'option verbosity' <N>::
+	Change the level of messages displayed by the helper.
+	When N is 0 the end-user has asked the process to be
+	quiet, and the helper should produce only error output.
+	N of 1 is the default level of verbosity, higher values
+	of N correspond to the number of -v flags passed on the
+	command line.
+
+'option progress' \{'true'|'false'\}::
+	Enable (or disable) progress messages displayed by the
+	transport helper during a command.
+
+'option depth' <depth>::
+	Deepen the history of a shallow repository.
+
+'option followtags' \{'true'|'false'\}::
+	If enabled the helper should automatically fetch annotated
+	tag objects if the object the tag points at was transferred
+	during the fetch command.  If the tag is not fetched by
+	the helper a second fetch command will usually be sent to
+	ask for the tag specifically.  Some helpers may be able to
+	use this option to avoid a second network connection.
 
 Documentation
 -------------

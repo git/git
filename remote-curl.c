@@ -9,10 +9,59 @@ static struct remote *remote;
 static const char *url;
 static struct walker *walker;
 
+struct options {
+	int verbosity;
+	unsigned long depth;
+	unsigned progress : 1,
+		followtags : 1;
+};
+static struct options options;
+
 static void init_walker(void)
 {
 	if (!walker)
 		walker = get_http_walker(url, remote);
+}
+
+static int set_option(const char *name, const char *value)
+{
+	if (!strcmp(name, "verbosity")) {
+		char *end;
+		int v = strtol(value, &end, 10);
+		if (value == end || *end)
+			return -1;
+		options.verbosity = v;
+		return 0;
+	}
+	else if (!strcmp(name, "progress")) {
+		if (!strcmp(value, "true"))
+			options.progress = 1;
+		else if (!strcmp(value, "false"))
+			options.progress = 0;
+		else
+			return -1;
+		return 1 /* TODO implement later */;
+	}
+	else if (!strcmp(name, "depth")) {
+		char *end;
+		unsigned long v = strtoul(value, &end, 10);
+		if (value == end || *end)
+			return -1;
+		options.depth = v;
+		return 1 /* TODO implement later */;
+	}
+	else if (!strcmp(name, "followtags")) {
+		if (!strcmp(value, "true"))
+			options.followtags = 1;
+		else if (!strcmp(value, "false"))
+			options.followtags = 0;
+		else
+			return -1;
+		return 1 /* TODO implement later */;
+	}
+	else {
+		return 1 /* unsupported */;
+	}
 }
 
 static struct ref *get_refs(void)
@@ -99,7 +148,7 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 	walker->get_all = 1;
 	walker->get_tree = 1;
 	walker->get_history = 1;
-	walker->get_verbosely = 0;
+	walker->get_verbosely = options.verbosity >= 3;
 	walker->get_recover = 0;
 	ret = walker_fetch(walker, nr_heads, targets, NULL, NULL);
 
@@ -173,6 +222,9 @@ int main(int argc, const char **argv)
 		return 1;
 	}
 
+	options.verbosity = 1;
+	options.progress = !!isatty(2);
+
 	remote = remote_get(argv[1]);
 
 	if (argc > 2) {
@@ -198,8 +250,28 @@ int main(int argc, const char **argv)
 			}
 			printf("\n");
 			fflush(stdout);
+		} else if (!prefixcmp(buf.buf, "option ")) {
+			char *name = buf.buf + strlen("option ");
+			char *value = strchr(name, ' ');
+			int result;
+
+			if (value)
+				*value++ = '\0';
+			else
+				value = "true";
+
+			result = set_option(name, value);
+			if (!result)
+				printf("ok\n");
+			else if (result < 0)
+				printf("error invalid value\n");
+			else
+				printf("unsupported\n");
+			fflush(stdout);
+
 		} else if (!strcmp(buf.buf, "capabilities")) {
 			printf("fetch\n");
+			printf("option\n");
 			printf("\n");
 			fflush(stdout);
 		} else {
