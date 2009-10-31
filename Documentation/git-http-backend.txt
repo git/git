@@ -22,6 +22,23 @@ By default, only the `upload-pack` service is enabled, which serves
 This is ideally suited for read-only updates, i.e., pulling from
 git repositories.
 
+SERVICES
+--------
+These services can be enabled/disabled using the per-repository
+configuration file:
+
+http.uploadpack::
+	This serves 'git-fetch-pack' and 'git-ls-remote' clients.
+	It is enabled by default, but a repository can disable it
+	by setting this configuration item to `false`.
+
+http.receivepack::
+	This serves 'git-send-pack' clients, allowing push.  It is
+	disabled by default for anonymous users, and enabled by
+	default for users authenticated by the web server.  It can be
+	disabled by setting this item to `false`, or enabled for all
+	users, including anonymous users, by setting it to `true`.
+
 URL TRANSLATION
 ---------------
 'git-http-backend' relies on the invoking web server to perform
@@ -49,7 +66,19 @@ ScriptAlias /git/ /usr/libexec/git-core/git-http-backend/git/
 </Files>
 ----------------------------------------------------------------
 +
-To require authentication for reads, use a Directory
+To enable anonymous read access but authenticated write access,
+require authorization with a LocationMatch directive:
++
+----------------------------------------------------------------
+<LocationMatch ".*/git-receive-pack$">
+	AuthType Basic
+	AuthName "Git Access"
+	Require group committers
+	...
+</LocationMatch>
+----------------------------------------------------------------
++
+To require authentication for both reads and writes, use a Directory
 directive around the repository, or one of its parent directories:
 +
 ----------------------------------------------------------------
@@ -91,6 +120,14 @@ by the invoking web server, including:
 * CONTENT_TYPE
 * QUERY_STRING
 * REQUEST_METHOD
+
+The backend process sets GIT_COMMITTER_NAME to '$REMOTE_USER' and
+GIT_COMMITTER_EMAIL to '$\{REMOTE_USER}@http.$\{REMOTE_ADDR\}',
+ensuring that any reflogs created by 'git-receive-pack' contain some
+identifying information of the remote user who performed the push.
+
+All CGI environment variables are available to each of the hooks
+invoked by the 'git-receive-pack'.
 
 Author
 ------
