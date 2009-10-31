@@ -1,0 +1,105 @@
+git-http-backend(1)
+===================
+
+NAME
+----
+git-http-backend - Server side implementation of Git over HTTP
+
+SYNOPSIS
+--------
+[verse]
+'git-http-backend'
+
+DESCRIPTION
+-----------
+A simple CGI program to serve the contents of a Git repository to Git
+clients accessing the repository over http:// and https:// protocols.
+
+By default, only the `upload-pack` service is enabled, which serves
+'git-fetch-pack' and 'git-ls-remote' clients, which are invoked from
+'git-fetch', 'git-pull', and 'git-clone'.
+
+This is ideally suited for read-only updates, i.e., pulling from
+git repositories.
+
+URL TRANSLATION
+---------------
+'git-http-backend' relies on the invoking web server to perform
+URL to path translation, and store the repository path into the
+PATH_TRANSLATED environment variable.  Most web servers will do
+this translation automatically, resolving the suffix after the
+CGI name relative to the server's document root.
+
+EXAMPLES
+--------
+
+Apache 2.x::
+	To serve all Git repositories contained within the '/git/'
+	subdirectory of the DocumentRoot, ensure mod_cgi and
+	mod_alias are enabled, and create a ScriptAlias to the CGI:
++
+----------------------------------------------------------------
+ScriptAlias /git/ /usr/libexec/git-core/git-http-backend/git/
+
+<Directory /usr/libexec/git-core>
+	Options None
+</Directory>
+<Files /usr/libexec/git-core/git-http-backend>
+	Options ExecCGI
+</Files>
+----------------------------------------------------------------
++
+To require authentication for reads, use a Directory
+directive around the repository, or one of its parent directories:
++
+----------------------------------------------------------------
+<Directory /var/www/git/private>
+	AuthType Basic
+	AuthName "Private Git Access"
+	Require group committers
+	...
+</Directory>
+----------------------------------------------------------------
+
+Accelerated static Apache 2.x::
+	Similar to the above, but Apache can be used to return static
+	files that are stored on disk.	On many systems this may
+	be more efficient as Apache can ask the kernel to copy the
+	file contents from the file system directly to the network:
++
+----------------------------------------------------------------
+DocumentRoot /var/www
+
+ScriptAlias /git/        /usr/libexec/git-core/git-http-backend/git/
+Alias       /git_static/ /var/www/git/
+
+RewriteEngine on
+RewriteRule ^/git/(.*/objects/[0-9a-f]{2}/[0-9a-f]{38})$    /git_static/$1 [PT]
+RewriteRule ^/git/(.*/objects/pack/pack-[0-9a-f]{40}.pack)$ /git_static/$1 [PT]
+RewriteRule ^/git/(.*/objects/pack/pack-[0-9a-f]{40}.idx)$  /git_static/$1 [PT]
+----------------------------------------------------------------
+
+
+ENVIRONMENT
+-----------
+'git-http-backend' relies upon the CGI environment variables set
+by the invoking web server, including:
+
+* PATH_TRANSLATED
+* REMOTE_USER
+* REMOTE_ADDR
+* CONTENT_TYPE
+* QUERY_STRING
+* REQUEST_METHOD
+
+Author
+------
+Written by Shawn O. Pearce <spearce@spearce.org>.
+
+Documentation
+--------------
+Documentation by Shawn O. Pearce <spearce@spearce.org>.
+
+GIT
+---
+Part of the linkgit:git[1] suite
