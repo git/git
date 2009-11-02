@@ -416,6 +416,7 @@ LIB_H += builtin.h
 LIB_H += cache.h
 LIB_H += cache-tree.h
 LIB_H += commit.h
+LIB_H += compat/bswap.h
 LIB_H += compat/cygwin.h
 LIB_H += compat/mingw.h
 LIB_H += csum-file.h
