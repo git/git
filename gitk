@@ -1787,10 +1787,10 @@ proc make_transient {window origin} {
     }
 }
 
-proc show_error {w top msg} {
+proc show_error {w top msg {mc mc}} {
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
-    button $w.ok -text [mc OK] -command "destroy $top"
+    button $w.ok -text [$mc OK] -command "destroy $top"
     pack $w.ok -side bottom -fill x
     bind $top <Visibility> "grab $top; focus $top"
     bind $top <Key-Return> "destroy $top"
@@ -11034,8 +11034,8 @@ proc get_path_encoding {path} {
 
 # First check that Tcl/Tk is recent enough
 if {[catch {package require Tk 8.4} err]} {
-    show_error {} . [mc "Sorry, gitk cannot run with this version of Tcl/Tk.\n\
-		     Gitk requires at least Tcl/Tk 8.4."]
+    show_error {} . "Sorry, gitk cannot run with this version of Tcl/Tk.\n\
+		     Gitk requires at least Tcl/Tk 8.4." list
     exit 1
 }
 
