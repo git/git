@@ -39,7 +39,7 @@ OPTIONS
 --local::
 -l::
 	When the repository to clone from is on a local machine,
-	this flag bypasses normal "git aware" transport
+	this flag bypasses the normal "git aware" transport
 	mechanism and clones the repository by making a copy of
 	HEAD and everything under objects and refs directories.
 	The files under `.git/objects/` directory are hardlinked
@@ -60,7 +60,7 @@ OPTIONS
 -s::
 	When the repository to clone is on the local machine,
 	instead of using hard links, automatically setup
-	.git/objects/info/alternates to share the objects
+	`.git/objects/info/alternates` to share the objects
 	with the source repository.  The resulting repository
 	starts out without any object of its own.
 +
@@ -69,7 +69,7 @@ it unless you understand what it does. If you clone your
 repository using this option and then delete branches (or use any
 other git command that makes any existing commit unreferenced) in the
 source repository, some objects may become unreferenced (or dangling).
-These objects may be removed by normal git operations (such as 'git-commit')
+These objects may be removed by normal git operations (such as `git commit`)
 which automatically call `git gc --auto`. (See linkgit:git-gc[1].)
 If these objects are removed and were referenced by the cloned repository,
 then the cloned repository will become corrupt.
@@ -86,13 +86,13 @@ objects from the source repository into a pack in the cloned repository.
 
 --reference <repository>::
 	If the reference repository is on the local machine,
-	automatically setup .git/objects/info/alternates to
+	automatically setup `.git/objects/info/alternates` to
 	obtain objects from the reference repository.  Using
 	an already existing repository as an alternate will
 	require fewer objects to be copied from the repository
 	being cloned, reducing network and local storage costs.
 +
-*NOTE*: see NOTE to --shared option.
+*NOTE*: see the NOTE for the `--shared` option.
 
 --quiet::
 -q::
@@ -101,7 +101,7 @@ objects from the source repository into a pack in the cloned repository.
 
 --verbose::
 -v::
-	Display the progressbar, even in case the standard output is not
+	Display the progress bar, even in case the standard output is not
 	a terminal.
 
 --no-checkout::
@@ -121,17 +121,17 @@ objects from the source repository into a pack in the cloned repository.
 	configuration variables are created.
 
 --mirror::
-	Set up a mirror of the remote repository.  This implies --bare.
+	Set up a mirror of the remote repository.  This implies `--bare`.
 
 --origin <name>::
 -o <name>::
-	Instead of using the remote name 'origin' to keep track
-	of the upstream repository, use <name>.
+	Instead of using the remote name `origin` to keep track
+	of the upstream repository, use `<name>`.
 
 --branch <name>::
 -b <name>::
 	Instead of pointing the newly created HEAD to the branch pointed
-	to by the cloned repository's HEAD, point to <name> branch
+	to by the cloned repository's HEAD, point to `<name>` branch
 	instead. In a non-bare repository, this is the branch that will
 	be checked out.
 
@@ -158,7 +158,7 @@ objects from the source repository into a pack in the cloned repository.
 --recursive::
 	After the clone is created, initialize all submodules within,
 	using their default settings. This is equivalent to running
-	'git submodule update --init --recursive' immediately after
+	`git submodule update --init --recursive` immediately after
 	the clone is finished. This option is ignored if the cloned
 	repository does not have a worktree/checkout (i.e. if any of
 	`--no-checkout`/`-n`, `--bare`, or `--mirror` is given)
@@ -171,8 +171,8 @@ objects from the source repository into a pack in the cloned repository.
 <directory>::
 	The name of a new directory to clone into.  The "humanish"
 	part of the source repository is used if no directory is
-	explicitly given ("repo" for "/path/to/repo.git" and "foo"
-	for "host.xz:foo/.git").  Cloning into an existing directory
+	explicitly given (`repo` for `/path/to/repo.git` and `foo`
+	for `host.xz:foo/.git`).  Cloning into an existing directory
 	is only allowed if the directory is empty.
 
 :git-clone: 1
