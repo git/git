@@ -243,12 +243,12 @@ endif::git-rev-list[]
 	Pretend as if all the refs in `$GIT_DIR/refs/remotes` are listed
 	on the command line as '<commit>'.
 
-ifdef::git-rev-list[]
 --stdin::
 
 	In addition to the '<commit>' listed on the command
 	line, read them from the standard input.
 
+ifdef::git-rev-list[]
 --quiet::
 
 	Don't print anything to standard output.  This form

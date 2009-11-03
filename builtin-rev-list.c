@@ -306,7 +306,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	struct rev_info revs;
 	struct rev_list_info info;
 	int i;
-	int read_from_stdin = 0;
 	int bisect_list = 0;
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
@@ -347,12 +346,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--bisect-vars")) {
 			bisect_list = 1;
 			bisect_show_vars = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--stdin")) {
-			if (read_from_stdin++)
-				die("--stdin given twice?");
-			read_revisions_from_stdin(&revs);
 			continue;
 		}
 		usage(rev_list_usage);

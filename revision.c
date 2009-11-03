@@ -953,7 +953,7 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 	return 0;
 }
 
-void read_revisions_from_stdin(struct rev_info *revs)
+static void read_revisions_from_stdin(struct rev_info *revs)
 {
 	struct strbuf sb;
 
@@ -1229,7 +1229,7 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
  */
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def)
 {
-	int i, flags, left, seen_dashdash;
+	int i, flags, left, seen_dashdash, read_from_stdin;
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
@@ -1247,6 +1247,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 
 	/* Second, deal with arguments and options */
 	flags = 0;
+	read_from_stdin = 0;
 	for (left = i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (*arg == '-') {
@@ -1283,6 +1284,16 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--do-walk")) {
 				revs->no_walk = 0;
+				continue;
+			}
+			if (!strcmp(arg, "--stdin")) {
+				if (revs->disable_stdin) {
+					argv[left++] = arg;
+					continue;
+				}
+				if (read_from_stdin++)
+					die("--stdin given twice?");
+				read_revisions_from_stdin(revs);
 				continue;
 			}
 
