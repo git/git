@@ -3378,6 +3378,9 @@ proc index_sha1 {fname} {
 
 # Turn an absolute path into one relative to the current directory
 proc make_relative {f} {
+    if {[file pathtype $f] eq "relative"} {
+	return $f
+    }
     set elts [file split $f]
     set here [file split [pwd]]
     set ei 0
