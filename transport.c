@@ -812,6 +812,9 @@ struct transport *transport_get(struct remote *remote, const char *url)
 {
 	struct transport *ret = xcalloc(1, sizeof(*ret));
 
+	if (!remote)
+		die("No remote provided to transport_get()");
+
 	ret->remote = remote;
 	ret->url = url;
 
@@ -849,10 +852,10 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		data->thin = 1;
 		data->conn = NULL;
 		data->uploadpack = "git-upload-pack";
-		if (remote && remote->uploadpack)
+		if (remote->uploadpack)
 			data->uploadpack = remote->uploadpack;
 		data->receivepack = "git-receive-pack";
-		if (remote && remote->receivepack)
+		if (remote->receivepack)
 			data->receivepack = remote->receivepack;
 	}
 
