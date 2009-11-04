@@ -1,5 +1,6 @@
 default:
 	@echo "git-subtree doesn't need to be built."
+	@echo "Just copy it somewhere on your PATH, like /usr/local/bin."
 	@echo
 	@echo "Try: make doc"
 	@false
