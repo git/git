@@ -82,9 +82,10 @@ int main(int argc, const char **argv)
 	struct strbuf buf = STRBUF_INIT;
 	const char *url;
 	struct walker *walker = NULL;
+	int nongit;
 
 	git_extract_argv0_path(argv[0]);
-	setup_git_directory();
+	setup_git_directory_gently(&nongit);
 	if (argc < 2) {
 		fprintf(stderr, "Remote needed\n");
 		return 1;
@@ -103,6 +104,8 @@ int main(int argc, const char **argv)
 			break;
 		if (!prefixcmp(buf.buf, "fetch ")) {
 			char *obj = buf.buf + strlen("fetch ");
+			if (nongit)
+				die("Fetch attempted without a local repo");
 			if (!walker)
 				walker = get_http_walker(url, remote);
 			walker->get_all = 1;
