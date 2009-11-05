@@ -10,6 +10,7 @@
 static const char content_type[] = "Content-Type";
 static const char content_length[] = "Content-Length";
 static const char last_modified[] = "Last-Modified";
+static int getanyfile = 1;
 
 static struct string_list *query_params;
 
@@ -194,6 +195,12 @@ static NORETURN void forbidden(const char *err, ...)
 	exit(0);
 }
 
+static void select_getanyfile(void)
+{
+	if (!getanyfile)
+		forbidden("Unsupported service: getanyfile");
+}
+
 static void send_strbuf(const char *type, struct strbuf *buf)
 {
 	hdr_int(content_length, buf->len);
@@ -238,36 +245,49 @@ static void send_file(const char *the_type, const char *name)
 
 static void get_text_file(char *name)
 {
+	select_getanyfile();
 	hdr_nocache();
 	send_file("text/plain", name);
 }
 
 static void get_loose_object(char *name)
 {
+	select_getanyfile();
 	hdr_cache_forever();
 	send_file("application/x-git-loose-object", name);
 }
 
 static void get_pack_file(char *name)
 {
+	select_getanyfile();
 	hdr_cache_forever();
 	send_file("application/x-git-packed-objects", name);
 }
 
 static void get_idx_file(char *name)
 {
+	select_getanyfile();
 	hdr_cache_forever();
 	send_file("application/x-git-packed-objects-toc", name);
 }
 
 static int http_config(const char *var, const char *value, void *cb)
 {
-	struct rpc_service *svc = cb;
-
-	if (!prefixcmp(var, "http.") &&
-	    !strcmp(var + 5, svc->config_name)) {
-		svc->enabled = git_config_bool(var, value);
+	if (!strcmp(var, "http.getanyfile")) {
+		getanyfile = git_config_bool(var, value);
 		return 0;
+	}
+
+	if (!prefixcmp(var, "http.")) {
+		int i;
+
+		for (i = 0; i < ARRAY_SIZE(rpc_service); i++) {
+			struct rpc_service *svc = &rpc_service[i];
+			if (!strcmp(var + 5, svc->config_name)) {
+				svc->enabled = git_config_bool(var, value);
+				return 0;
+			}
+		}
 	}
 
 	/* we are not interested in parsing any other configuration here */
@@ -293,7 +313,6 @@ static struct rpc_service *select_service(const char *name)
 	if (!svc)
 		forbidden("Unsupported service: '%s'", name);
 
-	git_config(http_config, svc);
 	if (svc->enabled < 0) {
 		const char *user = getenv("REMOTE_USER");
 		svc->enabled = (user && *user) ? 1 : 0;
@@ -442,6 +461,7 @@ static void get_info_refs(char *arg)
 		run_service(argv);
 
 	} else {
+		select_getanyfile();
 		for_each_ref(show_text_ref, &buf);
 		send_strbuf("text/plain", &buf);
 	}
@@ -455,6 +475,7 @@ static void get_info_packs(char *arg)
 	struct packed_git *p;
 	size_t cnt = 0;
 
+	select_getanyfile();
 	prepare_packed_git();
 	for (p = packed_git; p; p = p->next) {
 		if (p->pack_local)
@@ -621,6 +642,7 @@ int main(int argc, char **argv)
 	if (!enter_repo(dir, 0))
 		not_found("Not a git repository: '%s'", dir);
 
+	git_config(http_config, NULL);
 	cmd->imp(cmd_arg);
 	return 0;
 }
