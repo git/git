@@ -132,8 +132,8 @@ struct commit_graft *read_graft_line(char *buf, int len)
 	int i;
 	struct commit_graft *graft = NULL;
 
-	if (buf[len-1] == '\n')
-		buf[--len] = 0;
+	while (len && isspace(buf[len-1]))
+		buf[--len] = '\0';
 	if (buf[0] == '#' || buf[0] == '\0')
 		return NULL;
 	if ((len + 1) % 41) {

@@ -78,8 +78,7 @@ stash@{1}: On master: 9cc0589... Add git-stash
 ----------------------------------------------------------------
 +
 The command takes options applicable to the 'git-log'
-command to control what is shown and how. If no options are set, the
-default is `-n 10`. See linkgit:git-log[1].
+command to control what is shown and how. See linkgit:git-log[1].
 
 show [<stash>]::
 

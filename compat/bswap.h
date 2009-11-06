@@ -28,6 +28,16 @@ static inline uint32_t default_swab32(uint32_t val)
 	} \
 	__res; })
 
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+
+#include <stdlib.h>
+
+#define bswap32(x) _byteswap_ulong(x)
+
+#endif
+
+#ifdef bswap32
+
 #undef ntohl
 #undef htonl
 #define ntohl(x) bswap32(x)

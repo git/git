@@ -372,6 +372,7 @@ static void show_info_page(const char *git_cmd)
 	const char *page = cmd_to_page(git_cmd);
 	setenv("INFOPATH", system_path(GIT_INFO_PATH), 1);
 	execlp("info", "info", "gitman", page, NULL);
+	die("no info viewer handled the request");
 }
 
 static void get_html_page_path(struct strbuf *page_path, const char *page)
@@ -416,9 +417,6 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	const char *alias;
 	load_command_list("git-", &main_cmds, &other_cmds);
 
-	setup_git_directory_gently(&nongit);
-	git_config(git_help_config, NULL);
-
 	argc = parse_options(argc, argv, prefix, builtin_help_options,
 			builtin_help_usage, 0);
 
@@ -428,6 +426,9 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		printf("%s\n", git_more_info_string);
 		return 0;
 	}
+
+	setup_git_directory_gently(&nongit);
+	git_config(git_help_config, NULL);
 
 	if (!argv[0]) {
 		printf("usage: %s\n\n", git_usage_string);

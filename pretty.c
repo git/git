@@ -7,6 +7,7 @@
 #include "mailmap.h"
 #include "log-tree.h"
 #include "color.h"
+#include "reflog-walk.h"
 
 static char *user_format;
 
@@ -442,7 +443,7 @@ struct chunk {
 
 struct format_commit_context {
 	const struct commit *commit;
-	enum date_mode dmode;
+	const struct pretty_print_context *pretty_ctx;
 	unsigned commit_header_parsed:1;
 	unsigned commit_message_parsed:1;
 
@@ -701,6 +702,22 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	case 'd':
 		format_decoration(sb, commit);
 		return 1;
+	case 'g':		/* reflog info */
+		switch(placeholder[1]) {
+		case 'd':	/* reflog selector */
+		case 'D':
+			if (c->pretty_ctx->reflog_info)
+				get_reflog_selector(sb,
+						    c->pretty_ctx->reflog_info,
+						    c->pretty_ctx->date_mode,
+						    (placeholder[1] == 'd'));
+			return 2;
+		case 's':	/* reflog message */
+			if (c->pretty_ctx->reflog_info)
+				get_reflog_message(sb, c->pretty_ctx->reflog_info);
+			return 2;
+		}
+		return 0;	/* unknown %g placeholder */
 	}
 
 	/* For the rest we have to parse the commit header. */
@@ -711,11 +728,11 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	case 'a':	/* author ... */
 		return format_person_part(sb, placeholder[1],
 				   msg + c->author.off, c->author.len,
-				   c->dmode);
+				   c->pretty_ctx->date_mode);
 	case 'c':	/* committer ... */
 		return format_person_part(sb, placeholder[1],
 				   msg + c->committer.off, c->committer.len,
-				   c->dmode);
+				   c->pretty_ctx->date_mode);
 	case 'e':	/* encoding */
 		strbuf_add(sb, msg + c->encoding.off, c->encoding.len);
 		return 1;
@@ -741,13 +758,13 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 
 void format_commit_message(const struct commit *commit,
 			   const char *format, struct strbuf *sb,
-			   enum date_mode dmode)
+			   const struct pretty_print_context *pretty_ctx)
 {
 	struct format_commit_context context;
 
 	memset(&context, 0, sizeof(context));
 	context.commit = commit;
-	context.dmode = dmode;
+	context.pretty_ctx = pretty_ctx;
 	strbuf_expand(sb, format, format_commit_item, &context);
 }
 
@@ -900,18 +917,18 @@ char *reencode_commit_message(const struct commit *commit, const char **encoding
 }
 
 void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
-			 struct strbuf *sb, int abbrev,
-			 const char *subject, const char *after_subject,
-			 enum date_mode dmode, int need_8bit_cte)
+			 struct strbuf *sb,
+			 const struct pretty_print_context *context)
 {
 	unsigned long beginning_of_body;
 	int indent = 4;
 	const char *msg = commit->buffer;
 	char *reencoded;
 	const char *encoding;
+	int need_8bit_cte = context->need_8bit_cte;
 
 	if (fmt == CMIT_FMT_USERFORMAT) {
-		format_commit_message(commit, user_format, sb, dmode);
+		format_commit_message(commit, user_format, sb, context);
 		return;
 	}
 
@@ -946,8 +963,9 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 		}
 	}
 
-	pp_header(fmt, abbrev, dmode, encoding, commit, &msg, sb);
-	if (fmt != CMIT_FMT_ONELINE && !subject) {
+	pp_header(fmt, context->abbrev, context->date_mode, encoding,
+		  commit, &msg, sb);
+	if (fmt != CMIT_FMT_ONELINE && !context->subject) {
 		strbuf_addch(sb, '\n');
 	}
 
@@ -956,8 +974,8 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 
 	/* These formats treat the title line specially. */
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
-		pp_title_line(fmt, &msg, sb, subject,
-			      after_subject, encoding, need_8bit_cte);
+		pp_title_line(fmt, &msg, sb, context->subject,
+			      context->after_subject, encoding, need_8bit_cte);
 
 	beginning_of_body = sb->len;
 	if (fmt != CMIT_FMT_ONELINE)
