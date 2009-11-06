@@ -10732,7 +10732,7 @@ proc doprefs {} {
     ${NS}::label $top.cdisp -text [mc "Colors: press to choose"]
     grid $top.cdisp - -sticky w -pady 10
     label $top.ui -padx 40 -relief sunk -background $uicolor
-    button $top.uibut -text [mc "Interface"] -font optionfont \
+    ${NS}::button $top.uibut -text [mc "Interface"] \
        -command [list choosecolor uicolor {} $top.ui [mc "interface"] setui]
     grid x $top.uibut $top.ui -sticky w
     label $top.bg -padx 40 -relief sunk -background $bgcolor
@@ -11350,13 +11350,20 @@ if {[tk windowingsystem] eq "aqua"} {
 }
 
 set colors {green red blue magenta darkgrey brown orange}
-set uicolor grey85
-set bgcolor white
-set fgcolor black
+if {[tk windowingsystem] eq "win32"} {
+    set uicolor SystemButtonFace
+    set bgcolor SystemWindow
+    set fgcolor SystemButtonText
+    set selectbgcolor SystemHighlight
+} else {
+    set uicolor grey85
+    set bgcolor white
+    set fgcolor black
+    set selectbgcolor gray85
+}
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
 set ignorespace 0
-set selectbgcolor gray85
 set markbgcolor "#e0e0ff"
 
 set circlecolors {white blue gray blue blue}
