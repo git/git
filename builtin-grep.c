@@ -367,7 +367,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		push_arg("-h");
 	if (opt->regflags & REG_EXTENDED)
 		push_arg("-E");
-	if (opt->regflags & REG_ICASE)
+	if (opt->ignore_case)
 		push_arg("-i");
 	if (opt->binary == GREP_BINARY_NOMATCH)
 		push_arg("-I");
@@ -706,8 +706,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_GROUP(""),
 		OPT_BOOLEAN('v', "invert-match", &opt.invert,
 			"show non-matching lines"),
-		OPT_BIT('i', "ignore-case", &opt.regflags,
-			"case insensitive matching", REG_ICASE),
+		OPT_BOOLEAN('i', "ignore-case", &opt.ignore_case,
+			"case insensitive matching"),
 		OPT_BOOLEAN('w', "word-regexp", &opt.word_regexp,
 			"match patterns only at word boundaries"),
 		OPT_SET_INT('a', "text", &opt.binary,
@@ -830,6 +830,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		external_grep_allowed = 0;
 	if (!opt.pattern_list)
 		die("no pattern given.");
+	if (!opt.fixed && opt.ignore_case)
+		opt.regflags |= REG_ICASE;
 	if ((opt.regflags != REG_NEWLINE) && opt.fixed)
 		die("cannot mix --fixed-strings and regexp");
 	compile_grep_patterns(&opt);
