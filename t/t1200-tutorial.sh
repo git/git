@@ -33,12 +33,12 @@ EOF
 
 test_expect_success 'git diff-files -p' '
 	git diff-files -p > diff.output &&
-	cmp diff.expect diff.output
+	test_cmp diff.expect diff.output
 '
 
 test_expect_success 'git diff' '
 	git diff > diff.output &&
-	cmp diff.expect diff.output
+	test_cmp diff.expect diff.output
 '
 
 test_expect_success 'tree' '
@@ -51,12 +51,12 @@ test_expect_success 'git diff-index -p HEAD' '
 	commit=$(echo "Initial commit" | git commit-tree $tree) &&
 	git update-ref HEAD $commit &&
 	git diff-index -p HEAD > diff.output &&
-	cmp diff.expect diff.output
+	test_cmp diff.expect diff.output
 '
 
 test_expect_success 'git diff HEAD' '
 	git diff HEAD > diff.output &&
-	cmp diff.expect diff.output
+	test_cmp diff.expect diff.output
 '
 
 cat > whatchanged.expect << EOF
@@ -83,21 +83,21 @@ index 0000000..557db03
 EOF
 
 test_expect_success 'git whatchanged -p --root' '
-	git whatchanged -p --root | \
+	git whatchanged -p --root |
 		sed -e "1s/^\(.\{7\}\).\{40\}/\1VARIABLE/" \
 		-e "2,3s/^\(.\{8\}\).*$/\1VARIABLE/" \
 	> whatchanged.output &&
-	cmp whatchanged.expect whatchanged.output
+	test_cmp whatchanged.expect whatchanged.output
 '
 
 test_expect_success 'git tag my-first-tag' '
 	git tag my-first-tag &&
-	cmp .git/refs/heads/master .git/refs/tags/my-first-tag
+	test_cmp .git/refs/heads/master .git/refs/tags/my-first-tag
 '
 
 test_expect_success 'git checkout -b mybranch' '
 	git checkout -b mybranch &&
-	cmp .git/refs/heads/master .git/refs/heads/mybranch
+	test_cmp .git/refs/heads/master .git/refs/heads/mybranch
 '
 
 cat > branch.expect <<EOF
@@ -107,7 +107,7 @@ EOF
 
 test_expect_success 'git branch' '
 	git branch > branch.output &&
-	cmp branch.expect branch.output
+	test_cmp branch.expect branch.output
 '
 
 test_expect_success 'git resolve now fails' '
@@ -144,7 +144,7 @@ test_expect_success 'git show-branch' '
 	git commit -m "Merge work in mybranch" -i hello &&
 	git show-branch --topo-order --more=1 master mybranch \
 		> show-branch.output &&
-	cmp show-branch.expect show-branch.output
+	test_cmp show-branch.expect show-branch.output
 '
 
 cat > resolve.expect << EOF
@@ -157,9 +157,9 @@ EOF
 
 test_expect_success 'git resolve' '
 	git checkout mybranch &&
-	git merge -m "Merge upstream changes." master | \
+	git merge -m "Merge upstream changes." master |
 		sed -e "1s/[0-9a-f]\{7\}/VARIABLE/g" >resolve.output &&
-	cmp resolve.expect resolve.output
+	test_cmp resolve.expect resolve.output
 '
 
 cat > show-branch2.expect << EOF
@@ -171,7 +171,7 @@ EOF
 
 test_expect_success 'git show-branch (part 2)' '
 	git show-branch --topo-order master mybranch > show-branch2.output &&
-	cmp show-branch2.expect show-branch2.output
+	test_cmp show-branch2.expect show-branch2.output
 '
 
 cat > show-branch3.expect << EOF
@@ -186,7 +186,7 @@ EOF
 test_expect_success 'git show-branch (part 3)' '
 	git show-branch --topo-order --more=2 master mybranch \
 		> show-branch3.output &&
-	cmp show-branch3.expect show-branch3.output
+	test_cmp show-branch3.expect show-branch3.output
 '
 
 test_expect_success 'rewind to "Some fun." and "Some work."' '
@@ -207,7 +207,7 @@ EOF
 
 test_expect_success 'git show-branch (part 4)' '
 	git show-branch --topo-order > show-branch4.output &&
-	cmp show-branch4.expect show-branch4.output
+	test_cmp show-branch4.expect show-branch4.output
 '
 
 test_expect_success 'manual merge' '
@@ -227,7 +227,7 @@ EOF
 
 test_expect_success 'git ls-files --stage' '
 	git ls-files --stage > ls-files.output &&
-	cmp ls-files.expect ls-files.output
+	test_cmp ls-files.expect ls-files.output
 '
 
 cat > ls-files-unmerged.expect << EOF
@@ -238,7 +238,7 @@ EOF
 
 test_expect_success 'git ls-files --unmerged' '
 	git ls-files --unmerged > ls-files-unmerged.output &&
-	cmp ls-files-unmerged.expect ls-files-unmerged.output
+	test_cmp ls-files-unmerged.expect ls-files-unmerged.output
 '
 
 test_expect_success 'git-merge-index' '
@@ -247,7 +247,7 @@ test_expect_success 'git-merge-index' '
 
 test_expect_success 'git ls-files --stage (part 2)' '
 	git ls-files --stage > ls-files.output2 &&
-	cmp ls-files.expect ls-files.output2
+	test_cmp ls-files.expect ls-files.output2
 '
 
 test_expect_success 'git repack' 'git repack'
