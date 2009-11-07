@@ -1000,6 +1000,18 @@ repeat:
 	return -1;
 }
 
+/*
+ * Note that this doesn't return the actual pagesize, but
+ * the allocation granularity. If future Windows specific git code
+ * needs the real getpagesize function, we need to find another solution.
+ */
+int mingw_getpagesize(void)
+{
+	SYSTEM_INFO si;
+	GetSystemInfo(&si);
+	return si.dwAllocationGranularity;
+}
+
 struct passwd *getpwuid(int uid)
 {
 	static char user_name[100];
