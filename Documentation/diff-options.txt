@@ -32,9 +32,11 @@ ifndef::git-format-patch[]
 	Implies "-p".
 endif::git-format-patch[]
 
+ifndef::git-format-patch[]
 --raw::
 	Generate the raw format.
 	{git-diff-core? This is the default.}
+endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 --patch-with-raw::
@@ -81,19 +83,18 @@ ifndef::git-format-patch[]
 	Synonym for "-p --stat".
 endif::git-format-patch[]
 
+ifndef::git-format-patch[]
 -z::
 	NUL-line termination on output.  This affects the --raw
 	output field terminator.  Also output from commands such
 	as "git-log" will be delimited with NUL between commits.
 
-ifndef::git-format-patch[]
 --name-only::
 	Show only names of changed files.
 
 --name-status::
 	Show only names and status of changed files. See the description
 	of the `--diff-filter` option on what the status letters mean.
-endif::git-format-patch[]
 
 --color::
 	Show colored diff.
@@ -118,6 +119,7 @@ The regex can also be set via a diff driver or configuration option, see
 linkgit:gitattributes[1] or linkgit:git-config[1].  Giving it explicitly
 overrides any diff driver or configuration setting.  Diff drivers
 override configuration settings.
+endif::git-format-patch[]
 
 --no-renames::
 	Turn off rename detection, even when the configuration
@@ -157,6 +159,7 @@ endif::git-format-patch[]
 -C::
 	Detect copies as well as renames.  See also `--find-copies-harder`.
 
+ifndef::git-format-patch[]
 --diff-filter=[ACDMRTUXB*]::
 	Select only files that are Added (`A`), Copied (`C`),
 	Deleted (`D`), Modified (`M`), Renamed (`R`), have their
@@ -168,6 +171,7 @@ endif::git-format-patch[]
 	paths are selected if there is any file that matches
 	other criteria in the comparison; if there is no file
 	that matches other criteria, nothing is selected.
+endif::git-format-patch[]
 
 --find-copies-harder::
 	For performance reasons, by default, `-C` option finds copies only
@@ -185,6 +189,7 @@ endif::git-format-patch[]
 	the number of rename/copy targets exceeds the specified
 	number.
 
+ifndef::git-format-patch[]
 -S<string>::
 	Look for differences that introduce or remove an instance of
 	<string>. Note that this is different than the string simply
@@ -199,11 +204,13 @@ endif::git-format-patch[]
 --pickaxe-regex::
 	Make the <string> not a plain string but an extended POSIX
 	regex to match.
+endif::git-format-patch[]
 
 -O<orderfile>::
 	Output the patch in the order specified in the
 	<orderfile>, which has one shell glob pattern per line.
 
+ifndef::git-format-patch[]
 -R::
 	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
@@ -215,6 +222,7 @@ endif::git-format-patch[]
 	not in a subdirectory (e.g. in a bare repository), you
 	can name which subdirectory to make the output relative
 	to by giving a <path> as an argument.
+endif::git-format-patch[]
 
 -a::
 --text::
@@ -239,6 +247,7 @@ endif::git-format-patch[]
 	Show the context between diff hunks, up to the specified number
 	of lines, thereby fusing hunks that are close to each other.
 
+ifndef::git-format-patch[]
 --exit-code::
 	Make the program exit with codes similar to diff(1).
 	That is, it exits with 1 if there were differences and
@@ -246,6 +255,7 @@ endif::git-format-patch[]
 
 --quiet::
 	Disable all output of the program. Implies --exit-code.
+endif::git-format-patch[]
 
 --ext-diff::
 	Allow an external diff helper to be executed. If you set an
