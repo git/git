@@ -14,6 +14,7 @@ endif::git-format-patch[]
 
 ifdef::git-format-patch[]
 -p::
+--no-stat::
 	Generate plain patches without any diffstats.
 endif::git-format-patch[]
 
