@@ -14,7 +14,7 @@ endif::git-format-patch[]
 
 ifdef::git-format-patch[]
 -p::
-	Generate patches without diffstat.
+	Generate plain patches without any diffstats.
 endif::git-format-patch[]
 
 ifndef::git-format-patch[]
@@ -27,14 +27,19 @@ endif::git-format-patch[]
 -U<n>::
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
-	the usual three. Implies "-p".
+	the usual three.
+ifndef::git-format-patch[]
+	Implies "-p".
+endif::git-format-patch[]
 
 --raw::
 	Generate the raw format.
 	{git-diff-core? This is the default.}
 
+ifndef::git-format-patch[]
 --patch-with-raw::
 	Synonym for "-p --raw".
+endif::git-format-patch[]
 
 --patience::
 	Generate a diff using the "patience diff" algorithm.
@@ -71,21 +76,24 @@ endif::git-format-patch[]
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
 
+ifndef::git-format-patch[]
 --patch-with-stat::
 	Synonym for "-p --stat".
-	{git-format-patch? This is the default.}
+endif::git-format-patch[]
 
 -z::
 	NUL-line termination on output.  This affects the --raw
 	output field terminator.  Also output from commands such
 	as "git-log" will be delimited with NUL between commits.
 
+ifndef::git-format-patch[]
 --name-only::
 	Show only names of changed files.
 
 --name-status::
 	Show only names and status of changed files. See the description
 	of the `--diff-filter` option on what the status letters mean.
+endif::git-format-patch[]
 
 --color::
 	Show colored diff.
@@ -115,11 +123,13 @@ override configuration settings.
 	Turn off rename detection, even when the configuration
 	file gives the default to do so.
 
+ifndef::git-format-patch[]
 --check::
 	Warn if changes introduce trailing whitespace
 	or an indent that uses a space before a tab. Exits with
 	non-zero status if problems are found. Not compatible with
 	--exit-code.
+endif::git-format-patch[]
 
 --full-index::
 	Instead of the first handful of characters, show the full

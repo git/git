@@ -536,4 +536,22 @@ test_expect_success 'format-patch --signoff' '
 	grep "^Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 '
 
+echo "fatal: --name-only does not make sense" > expect.name-only
+echo "fatal: --name-status does not make sense" > expect.name-status
+echo "fatal: --check does not make sense" > expect.check
+
+test_expect_success 'options no longer allowed for format-patch' '
+	test_must_fail git format-patch --name-only 2> output &&
+	test_cmp expect.name-only output &&
+	test_must_fail git format-patch --name-status 2> output &&
+	test_cmp expect.name-status output &&
+	test_must_fail git format-patch --check 2> output &&
+	test_cmp expect.check output'
+
+test_expect_success 'format-patch --numstat should produce a patch' '
+	git format-patch --numstat --stdout master..side |
+	grep "^diff --git a/" |
+	wc -l |
+	xargs test 6 = '
+
 test_done

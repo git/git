@@ -921,10 +921,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    PARSE_OPT_NOARG | PARSE_OPT_NONEG, keep_callback },
 		OPT_BOOLEAN(0, "no-binary", &no_binary_diff,
 			    "don't output binary diffs"),
-		OPT_BOOLEAN('p', NULL, &use_patch_format,
-			"show patch format instead of default (patch + stat)"),
 		OPT_BOOLEAN(0, "ignore-if-in-upstream", &ignore_if_in_upstream,
 			    "don't include a patch matching a commit upstream"),
+		OPT_BOOLEAN('p', NULL, &use_patch_format,
+			"show patch format instead of default (patch + stat)"),
 		OPT_GROUP("Messaging"),
 		{ OPTION_CALLBACK, 0, "add-header", NULL, "header",
 			    "add email header", PARSE_OPT_NONEG,
@@ -1030,11 +1030,20 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
 
-	if (use_patch_format)
-		rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
-	else if (!rev.diffopt.output_format ||
-		  rev.diffopt.output_format == DIFF_FORMAT_PATCH)
-		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
+	if (rev.diffopt.output_format & DIFF_FORMAT_NAME)
+		die("--name-only does not make sense");
+	if (rev.diffopt.output_format & DIFF_FORMAT_NAME_STATUS)
+		die("--name-status does not make sense");
+	if (rev.diffopt.output_format & DIFF_FORMAT_CHECKDIFF)
+		die("--check does not make sense");
+
+	if (!use_patch_format &&
+		(!rev.diffopt.output_format ||
+		 rev.diffopt.output_format == DIFF_FORMAT_PATCH))
+		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY;
+
+	/* Always generate a patch */
+	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 
 	if (!DIFF_OPT_TST(&rev.diffopt, TEXT) && !no_binary_diff)
 		DIFF_OPT_SET(&rev.diffopt, BINARY);
