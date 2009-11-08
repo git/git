@@ -618,7 +618,7 @@ static void rewrap_message_tail(struct strbuf *sb,
 	if (c->width == new_width && c->indent1 == new_indent1 &&
 	    c->indent2 == new_indent2)
 		return;
-	if (c->wrap_start && c->wrap_start < sb->len)
+	if (c->wrap_start < sb->len)
 		strbuf_wrap(sb, c->wrap_start, c->width, c->indent1, c->indent2);
 	c->wrap_start = sb->len;
 	c->width = new_width;
