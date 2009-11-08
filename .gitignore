@@ -168,6 +168,7 @@ git.spec
 *.exe
 *.[aos]
 *.py[co]
+*+
 config.mak
 autom4te.cache
 config.cache
