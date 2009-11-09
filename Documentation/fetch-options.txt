@@ -1,3 +1,6 @@
+--all::
+	Fetch all remotes.
+
 -a::
 --append::
 	Append ref names and object names of fetched refs to the

@@ -14,6 +14,8 @@
 
 static const char * const builtin_fetch_usage[] = {
 	"git fetch [options] [<repository> <refspec>...]",
+	"git fetch [options] <group>",
+	"git fetch --all [options]",
 	NULL
 };
 
@@ -23,7 +25,7 @@ enum {
 	TAGS_SET = 2
 };
 
-static int append, force, keep, update_head_ok, verbosity;
+static int all, append, force, keep, update_head_ok, verbosity;
 static int tags = TAGS_DEFAULT;
 static const char *depth;
 static const char *upload_pack;
@@ -32,6 +34,8 @@ static struct transport *transport;
 
 static struct option builtin_fetch_options[] = {
 	OPT__VERBOSITY(&verbosity),
+	OPT_BOOLEAN(0, "all", &all,
+		    "fetch from all remotes"),
 	OPT_BOOLEAN('a', "append", &append,
 		    "append to .git/FETCH_HEAD instead of overwriting"),
 	OPT_STRING(0, "upload-pack", &upload_pack, "PATH",
@@ -639,26 +643,88 @@ static void set_option(const char *name, const char *value)
 			name, transport->url);
 }
 
-int cmd_fetch(int argc, const char **argv, const char *prefix)
+static int get_one_remote_for_fetch(struct remote *remote, void *priv)
 {
-	struct remote *remote;
+	struct string_list *list = priv;
+	string_list_append(remote->name, list);
+	return 0;
+}
+
+struct remote_group_data {
+	const char *name;
+	struct string_list *list;
+};
+
+static int get_remote_group(const char *key, const char *value, void *priv)
+{
+	struct remote_group_data *g = priv;
+
+	if (!prefixcmp(key, "remotes.") &&
+			!strcmp(key + 8, g->name)) {
+		/* split list by white space */
+		int space = strcspn(value, " \t\n");
+		while (*value) {
+			if (space > 1) {
+				string_list_append(xstrndup(value, space),
+						   g->list);
+			}
+			value += space + (value[space] != '\0');
+			space = strcspn(value, " \t\n");
+		}
+	}
+
+	return 0;
+}
+
+static int add_remote_or_group(const char *name, struct string_list *list)
+{
+	int prev_nr = list->nr;
+	struct remote_group_data g = { name, list };
+
+	git_config(get_remote_group, &g);
+	if (list->nr == prev_nr) {
+		struct remote *remote;
+		if (!remote_is_configured(name))
+			return 0;
+		remote = remote_get(name);
+		string_list_append(remote->name, list);
+	}
+	return 1;
+}
+
+static int fetch_multiple(struct string_list *list)
+{
+	int i, result = 0;
+	const char *argv[] = { "fetch", NULL, NULL, NULL, NULL };
+	int argc = 1;
+
+	if (verbosity >= 2)
+		argv[argc++] = "-v";
+	if (verbosity >= 1)
+		argv[argc++] = "-v";
+	else if (verbosity < 0)
+		argv[argc++] = "-q";
+
+	for (i = 0; i < list->nr; i++) {
+		const char *name = list->items[i].string;
+		argv[argc] = name;
+		if (verbosity >= 0)
+			printf("Fetching %s\n", name);
+		if (run_command_v_opt(argv, RUN_GIT_CMD)) {
+			error("Could not fetch %s", name);
+			result = 1;
+		}
+	}
+
+	return result;
+}
+
+static int fetch_one(struct remote *remote, int argc, const char **argv)
+{
 	int i;
 	static const char **refs = NULL;
 	int ref_nr = 0;
 	int exit_code;
-
-	/* Record the command line for the reflog */
-	strbuf_addstr(&default_rla, "fetch");
-	for (i = 1; i < argc; i++)
-		strbuf_addf(&default_rla, " %s", argv[i]);
-
-	argc = parse_options(argc, argv, prefix,
-			     builtin_fetch_options, builtin_fetch_usage, 0);
-
-	if (argc == 0)
-		remote = remote_get(NULL);
-	else
-		remote = remote_get(argv[0]);
 
 	if (!remote)
 		die("Where do you want to fetch from today?");
@@ -675,10 +741,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (depth)
 		set_option(TRANS_OPT_DEPTH, depth);
 
-	if (argc > 1) {
+	if (argc > 0) {
 		int j = 0;
 		refs = xcalloc(argc + 1, sizeof(const char *));
-		for (i = 1; i < argc; i++) {
+		for (i = 0; i < argc; i++) {
 			if (!strcmp(argv[i], "tag")) {
 				char *ref;
 				i++;
@@ -704,4 +770,52 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	transport_disconnect(transport);
 	transport = NULL;
 	return exit_code;
+}
+
+int cmd_fetch(int argc, const char **argv, const char *prefix)
+{
+	int i;
+	struct string_list list = { NULL, 0, 0, 0 };
+	struct remote *remote;
+	int result = 0;
+
+	/* Record the command line for the reflog */
+	strbuf_addstr(&default_rla, "fetch");
+	for (i = 1; i < argc; i++)
+		strbuf_addf(&default_rla, " %s", argv[i]);
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_fetch_options, builtin_fetch_usage, 0);
+
+	if (all) {
+		if (argc == 1)
+			die("fetch --all does not take a repository argument");
+		else if (argc > 1)
+			die("fetch --all does not make sense with refspecs");
+		(void) for_each_remote(get_one_remote_for_fetch, &list);
+		result = fetch_multiple(&list);
+	} else if (argc == 0) {
+		/* No arguments -- use default remote */
+		remote = remote_get(NULL);
+		result = fetch_one(remote, argc, argv);
+	} else {
+		/* Single remote or group */
+		(void) add_remote_or_group(argv[0], &list);
+		if (list.nr > 1) {
+			/* More than one remote */
+			if (argc > 1)
+				die("Fetching a group and specifying refspecs does not make sense");
+			result = fetch_multiple(&list);
+		} else {
+			/* Zero or one remotes */
+			remote = remote_get(argv[0]);
+			result = fetch_one(remote, argc-1, argv+1);
+		}
+	}
+
+	/* All names were strdup()ed or strndup()ed */
+	list.strdup_strings = 1;
+	string_list_clear(&list, 0);
+
+	return result;
 }
