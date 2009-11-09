@@ -7,6 +7,10 @@
 #include "builtin.h"
 #include "strbuf.h"
 
+static const char builtin_check_ref_format_usage[] =
+"git check-ref-format [--print] <refname>\n"
+"   or: git check-ref-format --branch <branchname-shorthand>";
+
 int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 {
 	if (argc == 3 && !strcmp(argv[1], "--branch")) {
@@ -18,6 +22,6 @@ int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 		exit(0);
 	}
 	if (argc != 2)
-		usage("git check-ref-format refname");
+		usage(builtin_check_ref_format_usage);
 	return !!check_ref_format(argv[1]);
 }
