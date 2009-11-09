@@ -1237,6 +1237,9 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 		argv++;
 	}
 
+	if (argc > 1 && !strcmp(argv[1], "-h"))
+		usage(cherry_usage);
+
 	switch (argc) {
 	case 4:
 		limit = argv[3];
