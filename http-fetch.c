@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "exec_cmd.h"
 #include "walker.h"
 
 int main(int argc, const char **argv)
@@ -19,8 +20,8 @@ int main(int argc, const char **argv)
 	int get_verbosely = 0;
 	int get_recover = 0;
 
+	git_extract_argv0_path(argv[0]);
 	prefix = setup_git_directory();
-
 	git_config(git_default_config, NULL);
 
 	while (arg < argc && argv[arg][0] == '-') {
