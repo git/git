@@ -146,6 +146,37 @@ test_expect_success 'http.receivepack false' '
 	POST git-receive-pack 0000 "403 Forbidden"
 '
 
+run_backend() {
+	REQUEST_METHOD=GET \
+	GIT_PROJECT_ROOT="$HTTPD_DOCUMENT_ROOT_PATH" \
+	PATH_INFO="$2" \
+	git http-backend >act.out 2>act.err
+}
+
+path_info() {
+	if test $1 = 0; then
+		run_backend "$2"
+	else
+		test_must_fail run_backend "$2" &&
+		echo "fatal: '$2': aliased" >exp.err &&
+		test_cmp exp.err act.err
+	fi
+}
+
+test_expect_success 'http-backend blocks bad PATH_INFO' '
+	config http.getanyfile true &&
+
+	run_backend 0 /repo.git/HEAD &&
+
+	run_backend 1 /repo.git/../HEAD &&
+	run_backend 1 /../etc/passwd &&
+	run_backend 1 ../etc/passwd &&
+	run_backend 1 /etc//passwd &&
+	run_backend 1 /etc/./passwd &&
+	run_backend 1 /etc/.../passwd &&
+	run_backend 1 //domain/data.txt
+'
+
 cat >exp <<EOF
 
 ###  refs/heads/master
