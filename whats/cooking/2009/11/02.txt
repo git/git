@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2009, #01; Wed, 04)
-X-master-at: 1b52ac5935c3773596fa41f6cf83578ab86b6b83
-X-next-at: 13162391f0c3d2cbb810fc00a877496042919b10
+Subject: What's cooking in git.git (Nov 2009, #02; Sun, 08)
+X-master-at: bb471bf74fdff4e6e93e39677e9dab36e716b6f1
+X-next-at: 0943296449b78c52223791a99498a308364fe99b
 
-What's cooking in git.git (Nov 2009, #01; Wed, 04)
+What's cooking in git.git (Nov 2009, #02; Sun, 08)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -63,25 +63,69 @@ backward compatible.  Currently planeed changes are:
 
 I just picked better bits from both versions.
 
-* jk/maint-format-patch-p-suppress-stat (2009-11-04) 2 commits.
- - format-patch: make "-p" suppress diffstat
- - Revert "format-patch -p is now a no-op" series
- (this branch uses bg/format-patch-p-noop.)
+* jk/maint-format-patch-p-suppress-stat (2009-11-04) 1 commit.
+  (merged to 'next' on 2009-11-08 at 0943296)
+ + format-patch: make "-p" suppress diffstat
+ (this branch is used by bg/format-patch-doc-update.)
 
-This corrects a mistake made soon after 1.6.0.
+* bg/format-patch-doc-update (2009-11-07) 3 commits.
+ - format-patch documentation: Fix formatting
+ - format-patch documentation: Remove diff options that are not useful
+ - format-patch: Always generate a patch
+ (this branch uses jk/maint-format-patch-p-suppress-stat.)
 
 * rj/maint-simplify-cygwin-makefile (2009-10-27) 1 commit.
  - Makefile: merge two Cygwin configuration sections into one
+ (this branch is used by rj/cygwin-msvc.)
 
 This is one of the most obviously correct bit from "Compiling on Cygwin
-using MSVC fails" topic I didn't really look at.  If J6t is Ok with the
-series, I don't mind queueing the whole thing myself.
+using MSVC fails" topic.
+
+* rj/cygwin-msvc (2009-11-07) 3 commits.
+ - Add explicit Cygwin check to guard WIN32 header inclusion
+ - MSVC: Add support for building with NO_MMAP
+ - Makefile: keep MSVC and Cygwin configuration separate
+ (this branch uses rj/maint-simplify-cygwin-makefile.)
 
 * vl/maint-openssl-signature-change (2009-10-31) 1 commit.
   (merged to 'next' on 2009-10-31 at 0e1ce6b)
  + imap-send.c: fix compiler warnings for OpenSSL 1.0
 
 Prepare ourselves before newer versions of OpenSSL hits more platforms.
+
+* bg/fetch-multi (2009-11-08) 4 commits.
+ - Re-implement 'git remote update' using 'git fetch'
+ - Add the configure variable skipFetchAll
+ - Teach the --multiple option to 'git fetch'
+ - Teach the --all option to 'git fetch'
+
+* bs/maint-pre-commit-hook-sample (2009-11-05) 1 commit.
+  (merged to 'next' on 2009-11-06 at d70f646)
+ + pre-commit.sample: Diff against the empty tree when HEAD is invalid
+
+* cc/bisect-doc (2009-11-08) 1 commit
+ - Documentation: add "Fighting regressions with git bisect" article
+
+* jn/add-h-to-all-commands (2009-11-08) 1 commit.
+ - Show usage string for 'git grep -h'
+
+* pb/maint-gitweb-blob-lineno (2009-11-06) 1 commit.
+  (merged to 'next' on 2009-11-06 at 27b86ec)
+ + gitweb: Fix blob linenr links in pathinfo mode
+
+* sb/tutorial-test (2009-11-06) 4 commits
+ - t1200: prepare for merging with Fast-forward bikeshedding
+ - t1200: further modernize test script style
+ - t1200: Make documentation and test agree
+ - t1200: cleanup and modernize test style
+
+* pb/gitweb-no-project-list (2009-11-06) 3 commits.
+ . gitweb: Polish the content tags support
+ . gitweb: Support for no project list on gitweb front page
+ . gitweb: Refactor project list routines
+
+I picked these up but didn't queue as Warthog9's comments made certain
+amount of sense to me.
 
 --------------------------------------------------
 [Stalled]
@@ -91,18 +135,6 @@ Prepare ourselves before newer versions of OpenSSL hits more platforms.
  - filter-branch: stop special-casing $filter_subdir argument
 
 J6t had some comments on this.
-
-* ne/rev-cache (2009-10-19) 7 commits.
- - support for commit grafts, slight change to general mechanism
- - support for path name caching in rev-cache
- - full integration of rev-cache into git, completed test suite
- - administrative functions for rev-cache, start of integration into git
- - support for non-commit object caching in rev-cache
- - basic revision cache system, no integration or features
- - man page and technical discussion for rev-cache
-
-The author indicated that there is another round coming.  Does not seem to
-pass the tests when merged to 'pu'.
 
 * jl/submodule-add-noname (2009-09-22) 1 commit.
  - git submodule add: make the <path> parameter optional
@@ -170,13 +202,12 @@ Fixes a corner case of running --color-words with -U0.
 
 There is the final draft posted, but I haven't picked it up yet.
 
-* sr/vcs-helper (2009-11-04) 13 commits
+* sr/vcs-helper (2009-11-06) 12 commits
  - Add Python support library for remote helpers
  - Basic build infrastructure for Python scripts
  - Allow helpers to request the path to the .git directory
  - Allow helpers to report in "list" command that the ref is unchanged
- - Honour the refspec when updating refs after import
- - Write local refs written by the "import" helper command only once
+ - Allow helper to map private ref names into normal names
  - Add support for "import" helper command
  - Allow specifying the remote helper in the url
  - Add a config option for remotes to specify a foreign vcs
@@ -185,20 +216,20 @@ There is the final draft posted, but I haven't picked it up yet.
  - Allow programs to not depend on remotes having urls
  - Fix memory leak in helper method for disconnect
 
-Supposed to replace db/vcs-helper-rest.  Still does not pass tests in
-'pu'.
+Re-rolled series that contains Daniel's and Johan's.
 
 * tr/describe-advice (2009-10-28) 1 commit
   (merged to 'next' on 2009-10-31 at 8084850)
  + describe: when failing, tell the user about options that work
 
-* mr/gitweb-snapshot (2009-10-29) 3 commits.
+* mr/gitweb-snapshot (2009-11-07) 4 commits.
  - gitweb: Smarter snapshot names
+ - gitweb: Document current snapshot rules via new tests
  - t/gitweb-lib.sh: Split gitweb output into headers and body
   (merged to 'next' on 2009-10-11 at 22ba047)
  + gitweb: check given hash before trying to create snapshot
 
-Replaced the tip with Jakub's updates.
+Replaced commits near the tip with recent updates.
 
 * jp/dirty-describe (2009-10-21) 1 commit.
   (merged to 'next' on 2009-10-30 at 19c7fc7)
@@ -209,14 +240,16 @@ Replaced the tip with Jakub's updates.
  + fetch: Speed up fetch of large numbers of refs
  + remote: Make ref_remove_duplicates faster for large numbers of refs
 
-* bg/format-patch-p-noop (2009-10-25) 3 commits.
+* bg/format-patch-p-noop (2009-11-04) 4 commits.
+  (merged to 'next' on 2009-11-08 at 6220d55)
+ + Revert "format-patch -p is now a no-op" series
   (merged to 'next' on 2009-10-30 at e34a3db)
  + format-patch documentation: Fix formatting
  + format-patch documentation: Remove diff options that are not useful
  + format-patch: Make implementation and documentation agree
- (this branch is used by jk/maint-format-patch-p-suppress-stat.)
 
-Will revert from 'next' by merging Peff's fix.
+This is now a no-op; jk/maint-format-patch-p-suppress-stat and
+bg/format-patch-doc-update topics will replace this.
 
 * jk/gitignore-anchored (2009-10-26) 1 commit
   (merged to 'next' on 2009-10-30 at 9391a93)
@@ -237,7 +270,9 @@ Will revert from 'next' by merging Peff's fix.
 * jc/pretty-lf (2009-10-04) 1 commit.
  - Pretty-format: %[+-]x to tweak inter-item newlines
 
-* rs/pretty-wrap (2009-10-17) 1 commit
+* rs/pretty-wrap (2009-11-08) 2 commits
+  (merged to 'next' on 2009-11-08 at 8973fd8)
+ + log --format: don't ignore %w() at the start of format string
   (merged to 'next' on 2009-10-30 at 403bbfe)
  + Implement wrap format %w() as if it is a mode switch
  (this branch uses js/log-rewrap.)
@@ -270,38 +305,39 @@ done as a follow-up fix.
  + Speedup bash completion loading
 
 * sp/smart-http (2009-11-04) 30 commits
- - http-backend: Test configuration options
- - http-backend: Use http.getanyfile to disable dumb HTTP serving
- - test smart http fetch and push
- - http tests: use /dumb/ URL prefix
- - set httpd port before sourcing lib-httpd
- - t5540-http-push: remove redundant fetches
- - Smart HTTP fetch: gzip requests
- - Smart fetch over HTTP: client side
- - Smart push over HTTP: client side
- - Discover refs via smart HTTP server when available
- - http-backend: more explict LocationMatch
- - http-backend: add example for gitweb on same URL
- - http-backend: use mod_alias instead of mod_rewrite
- - http-backend: reword some documentation
- - http-backend: add GIT_PROJECT_ROOT environment var
- - Smart fetch and push over HTTP: server side
- - Add stateless RPC options to upload-pack, receive-pack
- - Git-aware CGI to provide dumb HTTP transport
- - remote-helpers: return successfully if everything up-to-date
- - Move WebDAV HTTP push under remote-curl
- - remote-helpers: Support custom transport options
- - remote-helpers: Fetch more than one ref in a batch
- - fetch: Allow transport -v -v -v to set verbosity to 3
- - remote-curl: Refactor walker initialization
- - Add multi_ack_detailed capability to fetch-pack/upload-pack
- - Move "get_ack()" back to fetch-pack
- - fetch-pack: Use a strbuf to compose the want list
- - pkt-line: Make packet_read_line easier to debug
- - pkt-line: Add strbuf based functions
- - http-push: fix check condition on http.c::finish_http_pack_request()
+  (merged to 'next' on 2009-11-06 at 666837c)
+ + http-backend: Test configuration options
+ + http-backend: Use http.getanyfile to disable dumb HTTP serving
+ + test smart http fetch and push
+ + http tests: use /dumb/ URL prefix
+ + set httpd port before sourcing lib-httpd
+ + t5540-http-push: remove redundant fetches
+ + Smart HTTP fetch: gzip requests
+ + Smart fetch over HTTP: client side
+ + Smart push over HTTP: client side
+ + Discover refs via smart HTTP server when available
+ + http-backend: more explict LocationMatch
+ + http-backend: add example for gitweb on same URL
+ + http-backend: use mod_alias instead of mod_rewrite
+ + http-backend: reword some documentation
+ + http-backend: add GIT_PROJECT_ROOT environment var
+ + Smart fetch and push over HTTP: server side
+ + Add stateless RPC options to upload-pack, receive-pack
+ + Git-aware CGI to provide dumb HTTP transport
+ + remote-helpers: return successfully if everything up-to-date
+ + Move WebDAV HTTP push under remote-curl
+ + remote-helpers: Support custom transport options
+ + remote-helpers: Fetch more than one ref in a batch
+ + fetch: Allow transport -v -v -v to set verbosity to 3
+ + remote-curl: Refactor walker initialization
+ + Add multi_ack_detailed capability to fetch-pack/upload-pack
+ + Move "get_ack()" back to fetch-pack
+ + fetch-pack: Use a strbuf to compose the want list
+ + pkt-line: Make packet_read_line easier to debug
+ + pkt-line: Add strbuf based functions
+ + http-push: fix check condition on http.c::finish_http_pack_request()
 
-v5 plus 3 more fix-up patches from today.
+v5 plus 3 more fix-up patches, started cooking in 'next'.
 
 * ef/msys-imap (2009-10-22) 9 commits.
   (merged to 'next' on 2009-10-31 at 8630603)
@@ -448,6 +484,18 @@ we could argue that it is a bugfix.
 --------------------------------------------------
 [I have been too busy to purge these]
 
+* ne/rev-cache (2009-10-19) 7 commits.
+ . support for commit grafts, slight change to general mechanism
+ . support for path name caching in rev-cache
+ . full integration of rev-cache into git, completed test suite
+ . administrative functions for rev-cache, start of integration into git
+ . support for non-commit object caching in rev-cache
+ . basic revision cache system, no integration or features
+ . man page and technical discussion for rev-cache
+
+The author indicated that there is another round coming.  Does not seem to
+pass the tests when merged to 'pu', so it has been ejected for now.
+
 * jc/log-tz (2009-03-03) 1 commit.
  - Allow --date=local --date=other-format to work as expected
 
@@ -460,3 +508,27 @@ Maybe some people care about this.  I dunno.
 
 * jg/log-format-body-indent (2009-09-19) 1 commit.
  . git-log --format: Add %B tag with %B(x) option
+
+* db/vcs-helper-rest (2009-10-27) 7 commits.
+ . Fix memory leak in helper method for disconnect
+ . Allow helpers to report in "list" command that the ref is unchanged
+ . Add support for "import" helper command
+ . Add a config option for remotes to specify a foreign vcs
+ . Allow programs to not depend on remotes having urls
+ . Allow fetch to modify refs
+ . Use a function to determine whether a remote is valid
+ (this branch is used by jh/cvs-helper.)
+
+* jc/log-stdin (2009-11-03) 1 commit
+ . Teach --stdin option to "log" family
+
+* jh/cvs-helper (2009-08-18) 8 commits.
+ . More fixes to the git-remote-cvs installation procedure
+ . Fix the Makefile-generated path to the git_remote_cvs package in git-remote-cvs
+ . Add simple selftests of git-remote-cvs functionality
+ . git-remote-cvs: Remote helper program for CVS repositories
+ . 2/2: Add Python support library for CVS remote helper
+ . 1/2: Add Python support library for CVS remote helper
+ . Basic build infrastructure for Python scripts
+ . Allow helpers to request marks for fast-import
+ (this branch uses db/vcs-helper-rest.)
