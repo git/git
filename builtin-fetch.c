@@ -649,7 +649,8 @@ static void set_option(const char *name, const char *value)
 static int get_one_remote_for_fetch(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
-	string_list_append(remote->name, list);
+	if (!remote->skip_default_update)
+		string_list_append(remote->name, list);
 	return 0;
 }
 

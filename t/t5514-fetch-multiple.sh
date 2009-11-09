@@ -94,9 +94,6 @@ test_expect_success 'git fetch --multiple (but only one remote)' '
 cat > expect << EOF
   one/master
   one/side
-  origin/HEAD -> origin/master
-  origin/master
-  origin/side
   two/another
   two/master
   two/side
@@ -105,6 +102,7 @@ EOF
 test_expect_success 'git fetch --multiple (two remotes)' '
 	(git clone one test4 &&
 	 cd test4 &&
+	 git remote rm origin &&
 	 git remote add one ../one &&
 	 git remote add two ../two &&
 	 git fetch --multiple one two &&
@@ -115,6 +113,42 @@ test_expect_success 'git fetch --multiple (two remotes)' '
 test_expect_success 'git fetch --multiple (bad remote names)' '
 	(cd test4 &&
 	 test_must_fail git fetch --multiple four)
+'
+
+
+test_expect_success 'git fetch --all (skipFetchAll)' '
+	(cd test4 &&
+	 for b in $(git branch -r)
+	 do
+		git branch -r -d $b || break
+	 done &&
+	 git remote add three ../three &&
+	 git config remote.three.skipFetchAll true &&
+	 git fetch --all &&
+	 git branch -r > output &&
+	 test_cmp ../expect output)
+'
+
+cat > expect << EOF
+  one/master
+  one/side
+  three/another
+  three/master
+  three/side
+  two/another
+  two/master
+  two/side
+EOF
+
+test_expect_success 'git fetch --multiple (ignoring skipFetchAll)' '
+	(cd test4 &&
+	 for b in $(git branch -r)
+	 do
+		git branch -r -d $b || break
+	 done &&
+	 git fetch --multiple one two three &&
+	 git branch -r > output &&
+	 test_cmp ../expect output)
 '
 
 test_done
