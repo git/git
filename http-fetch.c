@@ -2,6 +2,9 @@
 #include "exec_cmd.h"
 #include "walker.h"
 
+static const char http_fetch_usage[] = "git http-fetch "
+"[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin] commit-id url";
+
 int main(int argc, const char **argv)
 {
 	const char *prefix;
@@ -21,8 +24,6 @@ int main(int argc, const char **argv)
 	int get_recover = 0;
 
 	git_extract_argv0_path(argv[0]);
-	prefix = setup_git_directory();
-	git_config(git_default_config, NULL);
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
@@ -38,6 +39,8 @@ int main(int argc, const char **argv)
 		} else if (argv[arg][1] == 'w') {
 			write_ref = &argv[arg + 1];
 			arg++;
+		} else if (argv[arg][1] == 'h') {
+			usage(http_fetch_usage);
 		} else if (!strcmp(argv[arg], "--recover")) {
 			get_recover = 1;
 		} else if (!strcmp(argv[arg], "--stdin")) {
@@ -45,10 +48,8 @@ int main(int argc, const char **argv)
 		}
 		arg++;
 	}
-	if (argc < arg + 2 - commits_on_stdin) {
-		usage("git http-fetch [-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin] commit-id url");
-		return 1;
-	}
+	if (argc != arg + 2 - commits_on_stdin)
+		usage(http_fetch_usage);
 	if (commits_on_stdin) {
 		commits = walker_targets_stdin(&commit_id, &write_ref);
 	} else {
@@ -56,6 +57,11 @@ int main(int argc, const char **argv)
 		commits = 1;
 	}
 	url = argv[arg];
+
+	prefix = setup_git_directory();
+
+	git_config(git_default_config, NULL);
+
 	if (url && url[strlen(url)-1] != '/') {
 		rewritten_url = xmalloc(strlen(url)+2);
 		strcpy(rewritten_url, url);
