@@ -209,7 +209,7 @@ static void send_strbuf(const char *type, struct strbuf *buf)
 	safe_write(1, buf->buf, buf->len);
 }
 
-static void send_file(const char *the_type, const char *name)
+static void send_local_file(const char *the_type, const char *name)
 {
 	const char *p = git_path("%s", name);
 	size_t buf_alloc = 8192;
@@ -247,28 +247,28 @@ static void get_text_file(char *name)
 {
 	select_getanyfile();
 	hdr_nocache();
-	send_file("text/plain", name);
+	send_local_file("text/plain", name);
 }
 
 static void get_loose_object(char *name)
 {
 	select_getanyfile();
 	hdr_cache_forever();
-	send_file("application/x-git-loose-object", name);
+	send_local_file("application/x-git-loose-object", name);
 }
 
 static void get_pack_file(char *name)
 {
 	select_getanyfile();
 	hdr_cache_forever();
-	send_file("application/x-git-packed-objects", name);
+	send_local_file("application/x-git-packed-objects", name);
 }
 
 static void get_idx_file(char *name)
 {
 	select_getanyfile();
 	hdr_cache_forever();
-	send_file("application/x-git-packed-objects-toc", name);
+	send_local_file("application/x-git-packed-objects-toc", name);
 }
 
 static int http_config(const char *var, const char *value, void *cb)
