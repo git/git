@@ -31,6 +31,9 @@ static void collapse_slashes(char *dst, const char *src)
 
 int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 {
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(builtin_check_ref_format_usage);
+
 	if (argc == 3 && !strcmp(argv[1], "--branch")) {
 		struct strbuf sb = STRBUF_INIT;
 
