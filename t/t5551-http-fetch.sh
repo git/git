@@ -61,6 +61,9 @@ test_expect_success 'clone http repository' '
 
 		/^> User-Agent: /d
 		/^> Host: /d
+		/^> POST /,$ {
+			/^> Accept: [*]\\/[*]/d
+		}
 		s/^> Content-Length: .*/> Content-Length: xxx/
 		/^> 00..want /d
 		/^> 00.*done/d
