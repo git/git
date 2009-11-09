@@ -31,23 +31,19 @@ cat >exp <<EOF
 > GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
 > Accept: */*
 > Pragma: no-cache
-
 < HTTP/1.1 200 OK
 < Pragma: no-cache
 < Cache-Control: no-cache, max-age=0, must-revalidate
 < Content-Type: application/x-git-upload-pack-advertisement
-< 
 > POST /smart/repo.git/git-upload-pack HTTP/1.1
 > Accept-Encoding: deflate, gzip
 > Content-Type: application/x-git-upload-pack-request
 > Accept: application/x-git-upload-pack-response
 > Content-Length: xxx
-
 < HTTP/1.1 200 OK
 < Pragma: no-cache
 < Cache-Control: no-cache, max-age=0, must-revalidate
 < Content-Type: application/x-git-upload-pack-result
-< 
 EOF
 test_expect_success 'clone http repository' '
 	GIT_CURL_VERBOSE=1 git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
@@ -56,6 +52,8 @@ test_expect_success 'clone http repository' '
 	sed -e "
 		s/Q\$//
 		/^[*] /d
+		/^$/d
+		/^< $/d
 
 		/^[^><]/{
 			s/^/> /
@@ -64,6 +62,8 @@ test_expect_success 'clone http repository' '
 		/^> User-Agent: /d
 		/^> Host: /d
 		s/^> Content-Length: .*/> Content-Length: xxx/
+		/^> 00..want /d
+		/^> 00.*done/d
 
 		/^< Server: /d
 		/^< Expires: /d
