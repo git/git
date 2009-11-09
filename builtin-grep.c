@@ -788,6 +788,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	/*
+	 * 'git grep -h', unlike 'git grep -h <pattern>', is a request
+	 * to show usage information and exit.
+	 */
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage_with_options(grep_usage, options);
+
 	memset(&opt, 0, sizeof(opt));
 	opt.prefix = prefix;
 	opt.prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
