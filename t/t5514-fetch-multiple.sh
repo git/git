@@ -73,4 +73,48 @@ test_expect_success 'git fetch --all does not allow non-option arguments' '
 	 test_must_fail git fetch --all origin master)
 '
 
+cat > expect << EOF
+  origin/HEAD -> origin/master
+  origin/master
+  origin/side
+  three/another
+  three/master
+  three/side
+EOF
+
+test_expect_success 'git fetch --multiple (but only one remote)' '
+	(git clone one test3 &&
+	 cd test3 &&
+	 git remote add three ../three &&
+	 git fetch --multiple three &&
+	 git branch -r > output &&
+	 test_cmp ../expect output)
+'
+
+cat > expect << EOF
+  one/master
+  one/side
+  origin/HEAD -> origin/master
+  origin/master
+  origin/side
+  two/another
+  two/master
+  two/side
+EOF
+
+test_expect_success 'git fetch --multiple (two remotes)' '
+	(git clone one test4 &&
+	 cd test4 &&
+	 git remote add one ../one &&
+	 git remote add two ../two &&
+	 git fetch --multiple one two &&
+	 git branch -r > output &&
+	 test_cmp ../expect output)
+'
+
+test_expect_success 'git fetch --multiple (bad remote names)' '
+	(cd test4 &&
+	 test_must_fail git fetch --multiple four)
+'
+
 test_done

@@ -24,6 +24,12 @@
 --keep::
 	Keep downloaded pack.
 
+ifndef::git-pull[]
+--multiple::
+	Allow several <repository> and <group> arguments to be
+	specified. No <refspec>s may be specified.
+endif::git-pull[]
+
 ifdef::git-pull[]
 --no-tags::
 endif::git-pull[]

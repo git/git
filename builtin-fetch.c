@@ -15,6 +15,7 @@
 static const char * const builtin_fetch_usage[] = {
 	"git fetch [options] [<repository> <refspec>...]",
 	"git fetch [options] <group>",
+	"git fetch --multiple [options] [<repository> | <group>]...",
 	"git fetch --all [options]",
 	NULL
 };
@@ -25,7 +26,7 @@ enum {
 	TAGS_SET = 2
 };
 
-static int all, append, force, keep, update_head_ok, verbosity;
+static int all, append, force, keep, multiple, update_head_ok, verbosity;
 static int tags = TAGS_DEFAULT;
 static const char *depth;
 static const char *upload_pack;
@@ -42,6 +43,8 @@ static struct option builtin_fetch_options[] = {
 		   "path to upload pack on remote end"),
 	OPT_BOOLEAN('f', "force", &force,
 		    "force overwrite of local branch"),
+	OPT_BOOLEAN('m', "multiple", &multiple,
+		    "fetch from multiple remotes"),
 	OPT_SET_INT('t', "tags", &tags,
 		    "fetch all tags and associated objects", TAGS_SET),
 	OPT_SET_INT('n', NULL, &tags,
@@ -798,6 +801,12 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		/* No arguments -- use default remote */
 		remote = remote_get(NULL);
 		result = fetch_one(remote, argc, argv);
+	} else if (multiple) {
+		/* All arguments are assumed to be remotes or groups */
+		for (i = 0; i < argc; i++)
+			if (!add_remote_or_group(argv[i], &list))
+				die("No such remote or remote group: %s", argv[i]);
+		result = fetch_multiple(&list);
 	} else {
 		/* Single remote or group */
 		(void) add_remote_or_group(argv[0], &list);
