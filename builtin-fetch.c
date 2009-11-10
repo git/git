@@ -26,7 +26,7 @@ enum {
 	TAGS_SET = 2
 };
 
-static int all, append, force, keep, multiple, update_head_ok, verbosity;
+static int all, append, force, keep, multiple, prune, update_head_ok, verbosity;
 static int tags = TAGS_DEFAULT;
 static const char *depth;
 static const char *upload_pack;
@@ -49,6 +49,8 @@ static struct option builtin_fetch_options[] = {
 		    "fetch all tags and associated objects", TAGS_SET),
 	OPT_SET_INT('n', NULL, &tags,
 		    "do not fetch all tags (--no-tags)", TAGS_UNSET),
+	OPT_BOOLEAN('p', "prune", &prune,
+		    "prune tracking branches no longer on remote"),
 	OPT_BOOLEAN('k', "keep", &keep, "keep downloaded pack"),
 	OPT_BOOLEAN('u', "update-head-ok", &update_head_ok,
 		    "allow updating of HEAD ref"),
@@ -492,6 +494,28 @@ static int fetch_refs(struct transport *transport, struct ref *ref_map)
 	return ret;
 }
 
+static int prune_refs(struct transport *transport, struct ref *ref_map)
+{
+	int result = 0;
+	struct ref *ref, *stale_refs = get_stale_heads(transport->remote, ref_map);
+	const char *dangling_msg = dry_run
+		? "   (%s will become dangling)\n"
+		: "   (%s has become dangling)\n";
+
+	for (ref = stale_refs; ref; ref = ref->next) {
+		if (!dry_run)
+			result |= delete_ref(ref->name, NULL, 0);
+		if (verbosity >= 0) {
+			fprintf(stderr, " x %-*s %-*s -> %s\n",
+				SUMMARY_WIDTH, "[deleted]",
+				REFCOL_WIDTH, "(none)", prettify_refname(ref->name));
+			warn_dangling_symref(stderr, dangling_msg, ref->name);
+		}
+	}
+	free_refs(stale_refs);
+	return result;
+}
+
 static int add_existing(const char *refname, const unsigned char *sha1,
 			int flag, void *cbdata)
 {
@@ -616,6 +640,8 @@ static int do_fetch(struct transport *transport,
 		free_refs(ref_map);
 		return 1;
 	}
+	if (prune)
+		prune_refs(transport, ref_map);
 	free_refs(ref_map);
 
 	/* if neither --no-tags nor --tags was specified, do automated tag
@@ -699,9 +725,11 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 static int fetch_multiple(struct string_list *list)
 {
 	int i, result = 0;
-	const char *argv[] = { "fetch", NULL, NULL, NULL, NULL };
+	const char *argv[] = { "fetch", NULL, NULL, NULL, NULL, NULL };
 	int argc = 1;
 
+	if (prune)
+		argv[argc++] = "--prune";
 	if (verbosity >= 2)
 		argv[argc++] = "-v";
 	if (verbosity >= 1)
