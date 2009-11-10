@@ -12,6 +12,11 @@
 	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
 	by the specified number of commits.
 
+ifndef::git-pull[]
+--dry-run::
+	Show what would be done, without making any changes.
+endif::git-pull[]
+
 -f::
 --force::
 	When 'git-fetch' is used with `<rbranch>:<lbranch>`
