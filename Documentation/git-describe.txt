@@ -9,6 +9,7 @@ git-describe - Show the most recent tag that is reachable from a commit
 SYNOPSIS
 --------
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] <committish>...
+'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]
 
 DESCRIPTION
 -----------
@@ -26,6 +27,11 @@ OPTIONS
 -------
 <committish>...::
 	Committish object names to describe.
+
+--dirty[=<mark>]::
+	Describe the working tree.
+	It means describe HEAD and appends <mark> (`-dirty` by
+	default) if the working tree is dirty.
 
 --all::
 	Instead of using only the annotated tags, use any ref
