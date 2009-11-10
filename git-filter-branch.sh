@@ -125,6 +125,7 @@ filter_subdir=
 orig_namespace=refs/original/
 force=
 prune_empty=
+remap_to_ancestor=
 while :
 do
 	case "$1" in
@@ -135,6 +136,11 @@ do
 	--force|-f)
 		shift
 		force=t
+		continue
+		;;
+	--remap-to-ancestor)
+		shift
+		remap_to_ancestor=t
 		continue
 		;;
 	--prune-empty)
@@ -182,6 +188,7 @@ do
 		;;
 	--subdirectory-filter)
 		filter_subdir="$OPTARG"
+		remap_to_ancestor=t
 		;;
 	--original)
 		orig_namespace=$(expr "$OPTARG/" : '\(.*[^/]\)/*$')/
@@ -354,12 +361,13 @@ while read commit parents; do
 			die "could not write rewritten commit"
 done <../revs
 
-# In case of a subdirectory filter, it is possible that a specified head
-# is not in the set of rewritten commits, because it was pruned by the
-# revision walker.  Fix it by mapping these heads to the unique nearest
-# ancestor that survived the pruning.
+# If we are filtering for paths, as in the case of a subdirectory
+# filter, it is possible that a specified head is not in the set of
+# rewritten commits, because it was pruned by the revision walker.
+# Ancestor remapping fixes this by mapping these heads to the unique
+# nearest ancestor that survived the pruning.
 
-if test "$filter_subdir"
+if test "$remap_to_ancestor" = t
 then
 	while read ref
 	do
