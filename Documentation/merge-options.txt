@@ -49,6 +49,11 @@ merge.
 With --no-squash perform the merge and commit the result. This
 option can be used to override --squash.
 
+--ff-only::
+	Refuse to merge and exit with a non-zero status unless the
+	current `HEAD` is already up-to-date or the merge can be
+	resolved as a fast-forward.
+
 -s <strategy>::
 --strategy=<strategy>::
 	Use the given merge strategy; can be supplied more than
