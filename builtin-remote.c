@@ -227,32 +227,10 @@ struct ref_states {
 	int queried;
 };
 
-static int handle_one_branch(const char *refname,
-	const unsigned char *sha1, int flags, void *cb_data)
-{
-	struct ref_states *states = cb_data;
-	struct refspec refspec;
-
-	memset(&refspec, 0, sizeof(refspec));
-	refspec.dst = (char *)refname;
-	if (!remote_find_tracking(states->remote, &refspec)) {
-		struct string_list_item *item;
-		const char *name = abbrev_branch(refspec.src);
-		/* symbolic refs pointing nowhere were handled already */
-		if ((flags & REF_ISSYMREF) ||
-		    string_list_has_string(&states->tracked, name) ||
-		    string_list_has_string(&states->new, name))
-			return 0;
-		item = string_list_append(name, &states->stale);
-		item->util = xstrdup(refname);
-	}
-	return 0;
-}
-
 static int get_ref_states(const struct ref *remote_refs, struct ref_states *states)
 {
 	struct ref *fetch_map = NULL, **tail = &fetch_map;
-	struct ref *ref;
+	struct ref *ref, *stale_refs;
 	int i;
 
 	for (i = 0; i < states->remote->fetch_refspec_nr; i++)
@@ -268,11 +246,17 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 		else
 			string_list_append(abbrev_branch(ref->name), &states->tracked);
 	}
+	stale_refs = get_stale_heads(states->remote, fetch_map);
+	for (ref = stale_refs; ref; ref = ref->next) {
+		struct string_list_item *item =
+			string_list_append(abbrev_branch(ref->name), &states->stale);
+		item->util = xstrdup(ref->name);
+	}
+	free_refs(stale_refs);
 	free_refs(fetch_map);
 
 	sort_string_list(&states->new);
 	sort_string_list(&states->tracked);
-	for_each_ref(handle_one_branch, states);
 	sort_string_list(&states->stale);
 
 	return 0;
