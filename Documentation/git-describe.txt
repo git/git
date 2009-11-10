@@ -8,6 +8,7 @@ git-describe - Show the most recent tag that is reachable from a commit
 
 SYNOPSIS
 --------
+[verse]
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] <committish>...
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]
 
