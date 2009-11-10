@@ -846,7 +846,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	const char *best_strategy = NULL, *wt_strategy = NULL;
 	struct commit_list **remotes = &remoteheads;
 
-	setup_work_tree();
 	if (file_exists(git_path("MERGE_HEAD")))
 		die("You have not concluded your merge. (MERGE_HEAD exists)");
 	if (read_cache_unmerged())
