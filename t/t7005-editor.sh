@@ -42,6 +42,16 @@ test_expect_success 'dumb should error out when falling back on vi' '
 	fi
 '
 
+test_expect_success 'dumb should prefer EDITOR to VISUAL' '
+
+	EDITOR=./e-EDITOR.sh &&
+	VISUAL=./e-VISUAL.sh &&
+	export EDITOR VISUAL &&
+	git commit --amend &&
+	test "$(git show -s --format=%s)" = "Edited by EDITOR"
+
+'
+
 TERM=vt100
 export TERM
 for i in vi EDITOR VISUAL core_editor GIT_EDITOR
