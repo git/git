@@ -8,7 +8,7 @@
 #include "strbuf.h"
 
 static const char builtin_check_ref_format_usage[] =
-"git check-ref-format [--print] <refname>\n"
+"git check-ref-format <refname>\n"
 "   or: git check-ref-format --branch <branchname-shorthand>";
 
 int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
