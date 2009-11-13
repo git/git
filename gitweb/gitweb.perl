@@ -4361,6 +4361,46 @@ sub git_project_list_body {
 	print "</table>\n";
 }
 
+sub git_log_body {
+	# uses global variable $project
+	my ($commitlist, $from, $to, $refs, $extra) = @_;
+
+	$from = 0 unless defined $from;
+	$to = $#{$commitlist} if (!defined $to || $#{$commitlist} < $to);
+
+	for (my $i = 0; $i <= $to; $i++) {
+		my %co = %{$commitlist->[$i]};
+		next if !%co;
+		my $commit = $co{'id'};
+		my $ref = format_ref_marker($refs, $commit);
+		my %ad = parse_date($co{'author_epoch'});
+		git_print_header_div('commit',
+		               "<span class=\"age\">$co{'age_string'}</span>" .
+		               esc_html($co{'title'}) . $ref,
+		               $commit);
+		print "<div class=\"title_text\">\n" .
+		      "<div class=\"log_link\">\n" .
+		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") .
+		      " | " .
+		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") .
+		      " | " .
+		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree") .
+		      "<br/>\n" .
+		      "</div>\n";
+		      git_print_authorship(\%co, -tag => 'span');
+		      print "<br/>\n</div>\n";
+
+		print "<div class=\"log_body\">\n";
+		git_print_log($co{'comment'}, -final_empty_line=> 1);
+		print "</div>\n";
+	}
+	if ($extra) {
+		print "<div class=\"page_nav\">\n";
+		print "$extra\n";
+		print "</div>\n";
+	}
+}
+
 sub git_shortlog_body {
 	# uses global variable $project
 	my ($commitlist, $from, $to, $refs, $extra) = @_;
@@ -5310,7 +5350,12 @@ sub git_log {
 	my @commitlist = parse_commits($hash, 101, (100 * $page));
 
 	my $paging_nav = format_paging_nav('log', $hash, $head, $page, $#commitlist >= 100);
-
+	my $next_link;
+	if ($#commitlist >= 100) {
+		$next_link =
+			$cgi->a({-href => href(-replay=>1, page=>$page+1),
+			         -accesskey => "n", -title => "Alt-n"}, "next");
+	}
 	my ($patch_max) = gitweb_get_feature('patches');
 	if ($patch_max) {
 		if ($patch_max < 0 || @commitlist <= $patch_max) {
@@ -5329,39 +5374,9 @@ sub git_log {
 		git_print_header_div('summary', $project);
 		print "<div class=\"page_body\"> Last change $co{'age_string'}.<br/><br/></div>\n";
 	}
-	my $to = ($#commitlist >= 99) ? (99) : ($#commitlist);
-	for (my $i = 0; $i <= $to; $i++) {
-		my %co = %{$commitlist[$i]};
-		next if !%co;
-		my $commit = $co{'id'};
-		my $ref = format_ref_marker($refs, $commit);
-		my %ad = parse_date($co{'author_epoch'});
-		git_print_header_div('commit',
-		               "<span class=\"age\">$co{'age_string'}</span>" .
-		               esc_html($co{'title'}) . $ref,
-		               $commit);
-		print "<div class=\"title_text\">\n" .
-		      "<div class=\"log_link\">\n" .
-		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") .
-		      " | " .
-		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") .
-		      " | " .
-		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree") .
-		      "<br/>\n" .
-		      "</div>\n";
-		      git_print_authorship(\%co, -tag => 'span');
-		      print "<br/>\n</div>\n";
 
-		print "<div class=\"log_body\">\n";
-		git_print_log($co{'comment'}, -final_empty_line=> 1);
-		print "</div>\n";
-	}
-	if ($#commitlist >= 100) {
-		print "<div class=\"page_nav\">\n";
-		print $cgi->a({-href => href(-replay=>1, page=>$page+1),
-			       -accesskey => "n", -title => "Alt-n"}, "next");
-		print "</div>\n";
-	}
+	git_log_body(\@commitlist, 0, 99, $refs, $next_link);
+
 	git_footer_html();
 }
 
