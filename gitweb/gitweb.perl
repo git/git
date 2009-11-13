@@ -3363,22 +3363,18 @@ sub git_print_page_nav {
 }
 
 sub format_paging_nav {
-	my ($action, $hash, $head, $page, $has_next_link) = @_;
+	my ($action, $page, $has_next_link) = @_;
 	my $paging_nav;
 
 
-	if ($hash ne $head || $page) {
-		$paging_nav .= $cgi->a({-href => href(action=>$action)}, "HEAD");
-	} else {
-		$paging_nav .= "HEAD";
-	}
-
 	if ($page > 0) {
-		$paging_nav .= " &sdot; " .
+		$paging_nav .=
+			$cgi->a({-href => href(-replay=>1, page=>undef)}, "first") .
+			" &sdot; " .
 			$cgi->a({-href => href(-replay=>1, page=>$page-1),
 			         -accesskey => "p", -title => "Alt-p"}, "prev");
 	} else {
-		$paging_nav .= " &sdot; prev";
+		$paging_nav .= "first &sdot; prev";
 	}
 
 	if ($has_next_link) {
@@ -4447,7 +4443,8 @@ sub git_shortlog_body {
 
 sub git_history_body {
 	# Warning: assumes constant type (blob or tree) during history
-	my ($commitlist, $from, $to, $refs, $hash_base, $ftype, $extra) = @_;
+	my ($commitlist, $from, $to, $refs, $extra,
+	    $file_name, $file_hash, $ftype) = @_;
 
 	$from = 0 unless defined $from;
 	$to = $#{$commitlist} unless (defined $to && $to <= $#{$commitlist});
@@ -4481,7 +4478,7 @@ sub git_history_body {
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff");
 
 		if ($ftype eq 'blob') {
-			my $blob_current = git_get_hash_by_path($hash_base, $file_name);
+			my $blob_current = $file_hash;
 			my $blob_parent  = git_get_hash_by_path($commit, $file_name);
 			if (defined $blob_current && defined $blob_parent &&
 					$blob_current ne $blob_parent) {
@@ -5338,25 +5335,48 @@ sub git_snapshot {
 }
 
 sub git_log_generic {
-	my ($fmt_name, $body_subr) = @_;
+	my ($fmt_name, $body_subr, $base, $parent, $file_name, $file_hash) = @_;
 
 	my $head = git_get_head_hash($project);
-	if (!defined $hash) {
-		$hash = $head;
+	if (!defined $base) {
+		$base = $head;
 	}
 	if (!defined $page) {
 		$page = 0;
 	}
 	my $refs = git_get_references();
 
-	my $commit_hash = $hash;
-	if (defined $hash_parent) {
-		$commit_hash = "$hash_parent..$hash";
+	my $commit_hash = $base;
+	if (defined $parent) {
+		$commit_hash = "$parent..$base";
 	}
-	my @commitlist = parse_commits($commit_hash, 101, (100 * $page));
+	my @commitlist =
+		parse_commits($commit_hash, 101, (100 * $page),
+		              defined $file_name ? ($file_name, "--full-history") : ());
 
-	my $paging_nav = format_paging_nav($fmt_name, $hash, $head,
-	                                   $page, $#commitlist >= 100);
+	my $ftype;
+	if (!defined $file_hash && defined $file_name) {
+		# some commits could have deleted file in question,
+		# and not have it in tree, but one of them has to have it
+		for (my $i = 0; $i < @commitlist; $i++) {
+			$file_hash = git_get_hash_by_path($commitlist[$i]{'id'}, $file_name);
+			last if defined $file_hash;
+		}
+	}
+	if (defined $file_hash) {
+		$ftype = git_get_type($file_hash);
+	}
+	if (defined $file_name && !defined $ftype) {
+		die_error(500, "Unknown type of object");
+	}
+	my %co;
+	if (defined $file_name) {
+		%co = parse_commit($base)
+			or die_error(404, "Unknown commit object");
+	}
+
+
+	my $paging_nav = format_paging_nav($fmt_name, $page, $#commitlist >= 100);
 	my $next_link = '';
 	if ($#commitlist >= 100) {
 		$next_link =
@@ -5364,7 +5384,7 @@ sub git_log_generic {
 			         -accesskey => "n", -title => "Alt-n"}, "next");
 	}
 	my $patch_max = gitweb_get_feature('patches');
-	if ($patch_max) {
+	if ($patch_max && !defined $file_name) {
 		if ($patch_max < 0 || @commitlist <= $patch_max) {
 			$paging_nav .= " &sdot; " .
 				$cgi->a({-href => href(action=>"patches", -replay=>1)},
@@ -5374,15 +5394,23 @@ sub git_log_generic {
 
 	git_header_html();
 	git_print_page_nav($fmt_name,'', $hash,$hash,$hash, $paging_nav);
-	git_print_header_div('summary', $project);
+	if (defined $file_name) {
+		git_print_header_div('commit', esc_html($co{'title'}), $base);
+	} else {
+		git_print_header_div('summary', $project)
+	}
+	git_print_page_path($file_name, $ftype, $hash_base)
+		if (defined $file_name);
 
-	$body_subr->(\@commitlist, 0, 99, $refs, $next_link);
+	$body_subr->(\@commitlist, 0, 99, $refs, $next_link,
+	             $file_name, $file_hash, $ftype);
 
 	git_footer_html();
 }
 
 sub git_log {
-	git_log_generic('log', \&git_log_body);
+	git_log_generic('log', \&git_log_body,
+	                $hash, $hash_parent);
 }
 
 sub git_commit {
@@ -5921,70 +5949,9 @@ sub git_patches {
 }
 
 sub git_history {
-	if (!defined $hash_base) {
-		$hash_base = git_get_head_hash($project);
-	}
-	if (!defined $page) {
-		$page = 0;
-	}
-	my $ftype;
-	my %co = parse_commit($hash_base)
-	    or die_error(404, "Unknown commit object");
-
-	my $refs = git_get_references();
-	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-
-	my @commitlist = parse_commits($hash_base, 101, (100 * $page),
-	                               $file_name, "--full-history")
-	    or die_error(404, "No such file or directory on given branch");
-
-	if (!defined $hash && defined $file_name) {
-		# some commits could have deleted file in question,
-		# and not have it in tree, but one of them has to have it
-		for (my $i = 0; $i <= @commitlist; $i++) {
-			$hash = git_get_hash_by_path($commitlist[$i]{'id'}, $file_name);
-			last if defined $hash;
-		}
-	}
-	if (defined $hash) {
-		$ftype = git_get_type($hash);
-	}
-	if (!defined $ftype) {
-		die_error(500, "Unknown type of object");
-	}
-
-	my $paging_nav = '';
-	if ($page > 0) {
-		$paging_nav .=
-			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
-			                       file_name=>$file_name)},
-			        "first");
-		$paging_nav .= " &sdot; " .
-			$cgi->a({-href => href(-replay=>1, page=>$page-1),
-			         -accesskey => "p", -title => "Alt-p"}, "prev");
-	} else {
-		$paging_nav .= "first";
-		$paging_nav .= " &sdot; prev";
-	}
-	my $next_link = '';
-	if ($#commitlist >= 100) {
-		$next_link =
-			$cgi->a({-href => href(-replay=>1, page=>$page+1),
-			         -accesskey => "n", -title => "Alt-n"}, "next");
-		$paging_nav .= " &sdot; $next_link";
-	} else {
-		$paging_nav .= " &sdot; next";
-	}
-
-	git_header_html();
-	git_print_page_nav('history','', $hash_base,$co{'tree'},$hash_base, $paging_nav);
-	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
-	git_print_page_path($file_name, $ftype, $hash_base);
-
-	git_history_body(\@commitlist, 0, 99,
-	                 $refs, $hash_base, $ftype, $next_link);
-
-	git_footer_html();
+	git_log_generic('history', \&git_history_body,
+	                $hash_base, $hash_parent_base,
+	                $file_name, $hash);
 }
 
 sub git_search {
@@ -6248,7 +6215,8 @@ EOT
 }
 
 sub git_shortlog {
-	git_log_generic('shortlog', \&git_shortlog_body);
+	git_log_generic('shortlog', \&git_shortlog_body,
+	                $hash, $hash_parent);
 }
 
 ## ......................................................................
