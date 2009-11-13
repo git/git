@@ -5337,7 +5337,9 @@ sub git_snapshot {
 	close $fd;
 }
 
-sub git_log {
+sub git_log_generic {
+	my ($fmt_name, $body_subr) = @_;
+
 	my $head = git_get_head_hash($project);
 	if (!defined $hash) {
 		$hash = $head;
@@ -5347,16 +5349,21 @@ sub git_log {
 	}
 	my $refs = git_get_references();
 
-	my @commitlist = parse_commits($hash, 101, (100 * $page));
+	my $commit_hash = $hash;
+	if (defined $hash_parent) {
+		$commit_hash = "$hash_parent..$hash";
+	}
+	my @commitlist = parse_commits($commit_hash, 101, (100 * $page));
 
-	my $paging_nav = format_paging_nav('log', $hash, $head, $page, $#commitlist >= 100);
-	my $next_link;
+	my $paging_nav = format_paging_nav($fmt_name, $hash, $head,
+	                                   $page, $#commitlist >= 100);
+	my $next_link = '';
 	if ($#commitlist >= 100) {
 		$next_link =
 			$cgi->a({-href => href(-replay=>1, page=>$page+1),
 			         -accesskey => "n", -title => "Alt-n"}, "next");
 	}
-	my ($patch_max) = gitweb_get_feature('patches');
+	my $patch_max = gitweb_get_feature('patches');
 	if ($patch_max) {
 		if ($patch_max < 0 || @commitlist <= $patch_max) {
 			$paging_nav .= " &sdot; " .
@@ -5366,18 +5373,16 @@ sub git_log {
 	}
 
 	git_header_html();
-	git_print_page_nav('log','', $hash,undef,undef, $paging_nav);
+	git_print_page_nav($fmt_name,'', $hash,$hash,$hash, $paging_nav);
+	git_print_header_div('summary', $project);
 
-	if (!@commitlist) {
-		my %co = parse_commit($hash);
-
-		git_print_header_div('summary', $project);
-		print "<div class=\"page_body\"> Last change $co{'age_string'}.<br/><br/></div>\n";
-	}
-
-	git_log_body(\@commitlist, 0, 99, $refs, $next_link);
+	$body_subr->(\@commitlist, 0, 99, $refs, $next_link);
 
 	git_footer_html();
+}
+
+sub git_log {
+	git_log_generic('log', \&git_log_body);
 }
 
 sub git_commit {
@@ -6243,44 +6248,7 @@ EOT
 }
 
 sub git_shortlog {
-	my $head = git_get_head_hash($project);
-	if (!defined $hash) {
-		$hash = $head;
-	}
-	if (!defined $page) {
-		$page = 0;
-	}
-	my $refs = git_get_references();
-
-	my $commit_hash = $hash;
-	if (defined $hash_parent) {
-		$commit_hash = "$hash_parent..$hash";
-	}
-	my @commitlist = parse_commits($commit_hash, 101, (100 * $page));
-
-	my $paging_nav = format_paging_nav('shortlog', $hash, $head, $page, $#commitlist >= 100);
-	my $next_link = '';
-	if ($#commitlist >= 100) {
-		$next_link =
-			$cgi->a({-href => href(-replay=>1, page=>$page+1),
-			         -accesskey => "n", -title => "Alt-n"}, "next");
-	}
-	my $patch_max = gitweb_check_feature('patches');
-	if ($patch_max) {
-		if ($patch_max < 0 || @commitlist <= $patch_max) {
-			$paging_nav .= " &sdot; " .
-				$cgi->a({-href => href(action=>"patches", -replay=>1)},
-					"patches");
-		}
-	}
-
-	git_header_html();
-	git_print_page_nav('shortlog','', $hash,$hash,$hash, $paging_nav);
-	git_print_header_div('summary', $project);
-
-	git_shortlog_body(\@commitlist, 0, 99, $refs, $next_link);
-
-	git_footer_html();
+	git_log_generic('shortlog', \&git_shortlog_body);
 }
 
 ## ......................................................................
