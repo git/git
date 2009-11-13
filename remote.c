@@ -754,6 +754,8 @@ void ref_remove_duplicates(struct ref *ref_map)
 			prev->next = ref_map->next;
 			free(ref_map->peer_ref);
 			free(ref_map);
+			ref_map = prev; /* skip this; we freed it */
+			continue;
 		}
 
 		item = string_list_insert(ref_map->peer_ref->name, &refs);
