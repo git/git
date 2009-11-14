@@ -274,7 +274,7 @@ unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
-read_repo_config(\%opts);
+read_git_config(\%opts);
 if ($cmd && ($cmd eq 'log' || $cmd eq 'blame')) {
 	Getopt::Long::Configure('pass_through');
 }
@@ -1390,8 +1390,7 @@ sub load_authors {
 }
 
 # convert GetOpt::Long specs for use by git-config
-sub read_repo_config {
-	return unless -d $ENV{GIT_DIR};
+sub read_git_config {
 	my $opts = shift;
 	my @config_only;
 	foreach my $o (keys %$opts) {
