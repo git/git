@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Older first!
-old_maint='maint-1.6.0 maint-1.6.1'
+old_maint='maint-1.6.0 maint-1.6.1 maint-1.6.2 maint-1.6.3 maint-1.6.4'
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
