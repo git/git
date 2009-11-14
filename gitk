@@ -10596,8 +10596,18 @@ proc setselbg {c} {
     allcanvs itemconf secsel -fill $c
 }
 
+# This sets the background color and the color scheme for the whole UI.
+# For some reason, tk_setPalette chooses a nasty dark red for selectColor
+# if we don't specify one ourselves, which makes the checkbuttons and
+# radiobuttons look bad.  This chooses white for selectColor if the
+# background color is light, or black if it is dark.
 proc setui {c} {
-    tk_setPalette $c
+    set bg [winfo rgb . $c]
+    set selc black
+    if {[lindex $bg 0] + 1.5 * [lindex $bg 1] + 0.5 * [lindex $bg 2] > 100000} {
+	set selc white
+    }
+    tk_setPalette background $c selectColor $selc
 }
 
 proc setbg {c} {
@@ -11159,7 +11169,7 @@ eval font create textfontbold [fontflags textfont 1]
 parsefont uifont $uifont
 eval font create uifont [fontflags uifont]
 
-tk_setPalette $uicolor
+setui $uicolor
 
 setoptions
 
