@@ -2950,8 +2950,11 @@ sub find_extra_svn_parents {
 			my $bottom_commit =
 				$gs->rev_map_get($bottom, $self->ra_uuid) ||
 				$gs->rev_map_get($bottom+1, $self->ra_uuid);
-			my $top_commit =
-				$gs->rev_map_get($top, $self->ra_uuid);
+			my $top_commit;
+			for (; !$top_commit && $top >= $bottom; --$top) {
+				$top_commit =
+					$gs->rev_map_get($top, $self->ra_uuid);
+			}
 
 			unless ($top_commit and $bottom_commit) {
 				warn "W:unknown path/rev in svn:mergeinfo "

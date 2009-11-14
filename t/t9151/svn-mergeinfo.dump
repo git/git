@@ -1,6 +1,6 @@
 SVN-fs-dump-format-version: 2
 
-UUID: 1ce241d1-ba54-4eb9-bded-03057fe48a33
+UUID: 1530d5a2-a1dc-4438-8ad5-d95e96db8945
 
 Revision-number: 0
 Prop-content-length: 56
@@ -9,12 +9,12 @@ Content-length: 56
 K 8
 svn:date
 V 27
-2009-10-20T01:33:37.692723Z
+2009-11-12T20:29:38.812226Z
 PROPS-END
 
 Revision-number: 1
-Prop-content-length: 123
-Content-length: 123
+Prop-content-length: 127
+Content-length: 127
 
 K 7
 svn:log
@@ -22,12 +22,12 @@ V 24
 Setup trunk and branches
 K 10
 svn:author
-V 4
-samv
+V 8
+tallsopp
 K 8
 svn:date
 V 27
-2009-10-20T01:33:38.159933Z
+2009-11-12T20:29:39.045856Z
 PROPS-END
 
 Node-path: branches
@@ -49,8 +49,8 @@ PROPS-END
 
 
 Revision-number: 2
-Prop-content-length: 106
-Content-length: 106
+Prop-content-length: 110
+Content-length: 110
 
 K 7
 svn:log
@@ -58,12 +58,12 @@ V 8
 ancestor
 K 10
 svn:author
-V 4
-samv
+V 8
+tallsopp
 K 8
 svn:date
 V 27
-2009-10-20T01:33:39.160059Z
+2009-11-12T20:29:40.079587Z
 PROPS-END
 
 Node-path: trunk/Makefile
@@ -72,6 +72,7 @@ Node-action: add
 Prop-content-length: 10
 Text-content-length: 2401
 Text-content-md5: bfd8ff778d1492dc6758567373176a89
+Text-content-sha1: 103205ce331f7d64086dba497574734f78439590
 Content-length: 2411
 
 PROPS-END
@@ -155,8 +156,8 @@ backup: clean
 
 
 Revision-number: 3
-Prop-content-length: 115
-Content-length: 115
+Prop-content-length: 119
+Content-length: 119
 
 K 7
 svn:log
@@ -164,12 +165,12 @@ V 16
 make left branch
 K 10
 svn:author
-V 4
-samv
+V 8
+tallsopp
 K 8
 svn:date
 V 27
-2009-10-20T01:33:41.148192Z
+2009-11-12T20:29:42.084439Z
 PROPS-END
 
 Node-path: branches/left
@@ -177,14 +178,6 @@ Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 1
 Node-copyfrom-path: trunk
-Prop-content-length: 34
-Content-length: 34
-
-K 13
-svn:mergeinfo
-V 0
-
-PROPS-END
 
 
 Node-path: branches/left/Makefile
@@ -193,11 +186,46 @@ Node-action: add
 Node-copyfrom-rev: 2
 Node-copyfrom-path: trunk/Makefile
 Text-copy-source-md5: bfd8ff778d1492dc6758567373176a89
+Text-copy-source-sha1: 103205ce331f7d64086dba497574734f78439590
 
 
 Revision-number: 4
-Prop-content-length: 112
-Content-length: 112
+Prop-content-length: 120
+Content-length: 120
+
+K 7
+svn:log
+V 17
+make right branch
+K 10
+svn:author
+V 8
+tallsopp
+K 8
+svn:date
+V 27
+2009-11-12T20:29:44.065452Z
+PROPS-END
+
+Node-path: branches/right
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: trunk
+
+
+Node-path: branches/right/Makefile
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk/Makefile
+Text-copy-source-md5: bfd8ff778d1492dc6758567373176a89
+Text-copy-source-sha1: 103205ce331f7d64086dba497574734f78439590
+
+
+Revision-number: 5
+Prop-content-length: 116
+Content-length: 116
 
 K 7
 svn:log
@@ -205,12 +233,12 @@ V 13
 left update 1
 K 10
 svn:author
-V 4
-samv
+V 8
+tallsopp
 K 8
 svn:date
 V 27
-2009-10-20T01:33:42.148773Z
+2009-11-12T20:29:45.066262Z
 PROPS-END
 
 Node-path: branches/left/Makefile
@@ -218,6 +246,7 @@ Node-kind: file
 Node-action: change
 Text-content-length: 2465
 Text-content-md5: 16e38d9753b061731650561ce01b1195
+Text-content-sha1: 36da4b84ea9b64218ab48171dfc5c48ae025f38b
 Content-length: 2465
 
 # -DCOLLISION_CHECK if you believe that SHA1's
@@ -299,9 +328,9 @@ backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
 
 
-Revision-number: 5
-Prop-content-length: 111
-Content-length: 111
+Revision-number: 6
+Prop-content-length: 115
+Content-length: 115
 
 K 7
 svn:log
@@ -309,12 +338,12 @@ V 12
 trunk update
 K 10
 svn:author
-V 4
-samv
+V 8
+tallsopp
 K 8
 svn:date
 V 27
-2009-10-20T01:33:43.159959Z
+2009-11-12T20:29:46.278498Z
 PROPS-END
 
 Node-path: trunk/Makefile
@@ -322,6 +351,7 @@ Node-kind: file
 Node-action: change
 Text-content-length: 2521
 Text-content-md5: 0668418a621333f4aa8b6632cd63e2a0
+Text-content-sha1: 4f29afd038e52f45acb5ef8c41acfc70062a741a
 Content-length: 2521
 
 # -DCOLLISION_CHECK if you believe that SHA1's
@@ -406,9 +436,9 @@ backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
 
 
-Revision-number: 6
-Prop-content-length: 112
-Content-length: 112
+Revision-number: 7
+Prop-content-length: 116
+Content-length: 116
 
 K 7
 svn:log
@@ -416,12 +446,12 @@ V 13
 left update 2
 K 10
 svn:author
-V 4
-samv
+V 8
+tallsopp
 K 8
 svn:date
 V 27
-2009-10-20T01:33:44.164175Z
+2009-11-12T20:29:47.069090Z
 PROPS-END
 
 Node-path: branches/left/Makefile
@@ -429,6 +459,7 @@ Node-kind: file
 Node-action: change
 Text-content-length: 2529
 Text-content-md5: f6b197cc3f2e89a83e545d4bb003de73
+Text-content-sha1: 2f656677cfec0bceec85e53036ffb63e25126f8e
 Content-length: 2529
 
 # -DCOLLISION_CHECK if you believe that SHA1's
@@ -510,9 +541,9 @@ backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
 
 
-Revision-number: 7
-Prop-content-length: 112
-Content-length: 112
+Revision-number: 8
+Prop-content-length: 116
+Content-length: 116
 
 K 7
 svn:log
@@ -520,12 +551,12 @@ V 13
 left update 3
 K 10
 svn:author
-V 4
-samv
+V 8
+tallsopp
 K 8
 svn:date
 V 27
-2009-10-20T01:33:45.144214Z
+2009-11-12T20:29:48.053835Z
 PROPS-END
 
 Node-path: branches/left/Makefile
@@ -533,6 +564,7 @@ Node-kind: file
 Node-action: change
 Text-content-length: 2593
 Text-content-md5: 5ccff689fb290e00b85fe18ee50c54ba
+Text-content-sha1: a13de8e23f1483efca3e57b2b64b0ae6f740ce10
 Content-length: 2593
 
 # -DCOLLISION_CHECK if you believe that SHA1's
@@ -614,22 +646,22 @@ backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
 
 
-Revision-number: 8
-Prop-content-length: 110
-Content-length: 110
+Revision-number: 9
+Prop-content-length: 116
+Content-length: 116
 
 K 7
 svn:log
-V 11
-Merge trunk
+V 13
+Merge trunk 1
 K 10
 svn:author
-V 4
-samv
+V 8
+tallsopp
 K 8
 svn:date
 V 27
-2009-10-20T01:33:48.176135Z
+2009-11-12T20:29:51.098306Z
 PROPS-END
 
 Node-path: trunk
@@ -641,7 +673,7 @@ Content-length: 53
 K 13
 svn:mergeinfo
 V 18
-/branches/left:2-7
+/branches/left:2-8
 PROPS-END
 
 
@@ -650,6 +682,7 @@ Node-kind: file
 Node-action: change
 Text-content-length: 2713
 Text-content-md5: 0afbe34f244cd662b1f97d708c687f90
+Text-content-sha1: 46d9377d783e67a9b581da110352e799517c8a14
 Content-length: 2713
 
 # -DCOLLISION_CHECK if you believe that SHA1's
@@ -732,5 +765,246 @@ clean:
 
 backup: clean
 	cd .. ; tar czvf dircache.tar.gz dir-cache
+
+
+Revision-number: 10
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 13
+left update 4
+K 10
+svn:author
+V 8
+tallsopp
+K 8
+svn:date
+V 27
+2009-11-12T20:29:52.081644Z
+PROPS-END
+
+Node-path: branches/left/Makefile
+Node-kind: file
+Node-action: change
+Text-content-length: 2529
+Text-content-md5: f6b197cc3f2e89a83e545d4bb003de73
+Text-content-sha1: 2f656677cfec0bceec85e53036ffb63e25126f8e
+Content-length: 2529
+
+# -DCOLLISION_CHECK if you believe that SHA1's
+# 1461501637330902918203684832716283019655932542976 hashes do not give you
+# enough guarantees about no collisions between objects ever hapenning.
+#
+# -DNSEC if you want git to care about sub-second file mtimes and ctimes.
+# Note that you need some new glibc (at least >2.2.4) for this, and it will
+# BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
+# break unless your underlying filesystem supports those sub-second times
+# (my ext3 doesn't).
+CFLAGS=-g -O3 -Wall
+
+CC=gcc
+
+
+PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
+	check-files ls-tree merge-base
+
+all: $(PROG)
+
+install: $(PROG)
+	install $(PROG) $(HOME)/bin/
+
+LIBS= -lssl -lz
+
+init-db: init-db.o
+
+update-cache: update-cache.o read-cache.o
+	$(CC) $(CFLAGS) -o update-cache update-cache.o read-cache.o $(LIBS)
+
+show-diff: show-diff.o read-cache.o
+	$(CC) $(CFLAGS) -o show-diff show-diff.o read-cache.o $(LIBS)
+
+write-tree: write-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o write-tree write-tree.o read-cache.o $(LIBS)
+
+read-tree: read-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
+
+commit-tree: commit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+
+cat-file: cat-file.o read-cache.o
+	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
+
+fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+
+checkout-cache: checkout-cache.o read-cache.o
+	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
+
+diff-tree: diff-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
+
+rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+
+show-files: show-files.o read-cache.o
+	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
+
+check-files: check-files.o read-cache.o
+	$(CC) $(CFLAGS) -o check-files check-files.o read-cache.o $(LIBS)
+
+ls-tree: ls-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
+
+merge-base: merge-base.o read-cache.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o $(LIBS)
+
+read-cache.o: cache.h
+show-diff.o: cache.h
+
+clean:
+	rm -f *.o $(PROG)
+
+backup: clean
+	cd .. ; tar czvf dircache.tar.gz dir-cache
+
+
+Revision-number: 11
+Prop-content-length: 117
+Content-length: 117
+
+K 7
+svn:log
+V 14
+right update 1
+K 10
+svn:author
+V 8
+tallsopp
+K 8
+svn:date
+V 27
+2009-11-12T20:29:53.059636Z
+PROPS-END
+
+Node-path: branches/right/Makefile
+Node-kind: file
+Node-action: change
+Text-content-length: 2593
+Text-content-md5: 5ccff689fb290e00b85fe18ee50c54ba
+Text-content-sha1: a13de8e23f1483efca3e57b2b64b0ae6f740ce10
+Content-length: 2593
+
+# -DCOLLISION_CHECK if you believe that SHA1's
+# 1461501637330902918203684832716283019655932542976 hashes do not give you
+# enough guarantees about no collisions between objects ever hapenning.
+#
+# -DNSEC if you want git to care about sub-second file mtimes and ctimes.
+# Note that you need some new glibc (at least >2.2.4) for this, and it will
+# BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely randomly
+# break unless your underlying filesystem supports those sub-second times
+# (my ext3 doesn't).
+CFLAGS=-g -O3 -Wall
+
+CC=gcc
+
+
+PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
+	check-files ls-tree merge-base
+
+all: $(PROG)
+
+install: $(PROG)
+	install $(PROG) $(HOME)/bin/
+
+LIBS= -lssl -lz
+
+init-db: init-db.o
+
+update-cache: update-cache.o read-cache.o
+	$(CC) $(CFLAGS) -o update-cache update-cache.o read-cache.o $(LIBS)
+
+show-diff: show-diff.o read-cache.o
+	$(CC) $(CFLAGS) -o show-diff show-diff.o read-cache.o $(LIBS)
+
+write-tree: write-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o write-tree write-tree.o read-cache.o $(LIBS)
+
+read-tree: read-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
+
+commit-tree: commit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+
+cat-file: cat-file.o read-cache.o
+	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
+
+fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+
+checkout-cache: checkout-cache.o read-cache.o
+	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
+
+diff-tree: diff-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
+
+rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+
+show-files: show-files.o read-cache.o
+	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
+
+check-files: check-files.o read-cache.o
+	$(CC) $(CFLAGS) -o check-files check-files.o read-cache.o $(LIBS)
+
+ls-tree: ls-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
+
+merge-base: merge-base.o read-cache.o object.o commit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+
+read-cache.o: cache.h
+show-diff.o: cache.h
+
+clean:
+	rm -f *.o $(PROG)
+
+backup: clean
+	cd .. ; tar czvf dircache.tar.gz dir-cache
+
+
+Revision-number: 12
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 13
+Merge trunk 2
+K 10
+svn:author
+V 8
+tallsopp
+K 8
+svn:date
+V 27
+2009-11-12T20:29:56.083003Z
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 54
+Content-length: 54
+
+K 13
+svn:mergeinfo
+V 19
+/branches/left:2-11
+PROPS-END
 
 
