@@ -86,6 +86,7 @@ static void flush_output(struct merge_options *o)
 	}
 }
 
+__attribute__((format (printf, 3, 4)))
 static void output(struct merge_options *o, int v, const char *fmt, ...)
 {
 	int len;
@@ -214,7 +215,8 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			if (ce_stage(ce))
-				output(o, 0, "%d %.*s", ce_stage(ce), ce_namelen(ce), ce->name);
+				output(o, 0, "%d %.*s", ce_stage(ce),
+				       (int)ce_namelen(ce), ce->name);
 		}
 		return NULL;
 	}

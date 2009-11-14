@@ -961,7 +961,9 @@ extern void *alloc_object_node(void);
 extern void alloc_report(void);
 
 /* trace.c */
+__attribute__((format (printf, 1, 2)))
 extern void trace_printf(const char *format, ...);
+__attribute__((format (printf, 2, 3)))
 extern void trace_argv_printf(const char **argv, const char *format, ...);
 
 /* convert.c */
