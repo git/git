@@ -2,6 +2,8 @@ prefix ?= /usr/local
 mandir ?= $(prefix)/share/man
 gitdir ?= $(shell git --exec-path)
 
+gitver ?= $(word 3,$(shell git --version))
+
 # this should be set to a 'standard' bsd-type install program
 INSTALL ?= install
 INSTALL_DATA = $(INSTALL) -c -m 0644
@@ -32,7 +34,7 @@ doc: git-subtree.1
 
 %.xml: %.txt
 	asciidoc -b docbook -d manpage -f asciidoc.conf \
-		-agit_version=1.6.3 $^
+		-agit_version=$(gitver) $^
 
 clean:
 	rm -f *~ *.xml *.html *.1
