@@ -10489,7 +10489,7 @@ proc showtag {tag isnew} {
 	set text "[mc "Tag"]: $tag\n[mc "Id"]:  $tagids($tag)"
     }
     appendwithlinks $text {}
-    maybe_scroll_ctext
+    maybe_scroll_ctext 1
     $ctext conf -state disabled
     init_flist {}
 }
