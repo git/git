@@ -615,7 +615,7 @@ int main(int argc, char **argv)
 		if (regcomp(&re, c->pattern, REG_EXTENDED))
 			die("Bogus regex in service table: %s", c->pattern);
 		if (!regexec(&re, dir, 1, out, 0)) {
-			size_t n = out[0].rm_eo - out[0].rm_so;
+			size_t n;
 
 			if (strcmp(method, c->method)) {
 				const char *proto = getenv("SERVER_PROTOCOL");
@@ -629,9 +629,10 @@ int main(int argc, char **argv)
 			}
 
 			cmd = c;
+			n = out[0].rm_eo - out[0].rm_so;
 			cmd_arg = xmalloc(n);
-			strncpy(cmd_arg, dir + out[0].rm_so + 1, n);
-			cmd_arg[n] = '\0';
+			memcpy(cmd_arg, dir + out[0].rm_so + 1, n-1);
+			cmd_arg[n-1] = '\0';
 			dir[out[0].rm_so] = 0;
 			break;
 		}
