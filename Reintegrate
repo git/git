@@ -28,7 +28,7 @@ accept_rerere () {
 	then
 		return 1
 	else
-		EDITOR=: git commit -a
+		EDITOR=: git commit -a --no-verify
 		return 0
 	fi
 }
