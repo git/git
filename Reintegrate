@@ -38,7 +38,13 @@ do
 	case "$eh" in
 	"")
 		echo >&2 "* $branch"
-		git merge "$branch" || accept_rerere || exit ;;
+		git merge "$branch" || accept_rerere || exit
+		if git show-ref -q --verify "refs/merge-fix/$branch"
+		then
+			git cherry-pick --no-commit "refs/merge-fix/$branch" &&
+			EDITOR=: git commit --amend -a
+		fi
+		;;
 	pick" "*)
 		echo >&2 "* $eh"
 		git cherry-pick "$branch" || exit ;;
