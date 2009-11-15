@@ -29,8 +29,9 @@ octopus::
 	pulling or merging more than one branch.
 
 ours::
-	This resolves any number of heads, but the result of the
-	merge is always the current branch head.  It is meant to
+	This resolves any number of heads, but the resulting tree of the
+	merge is always that of the current branch head, effectively
+	ignoring all changes from all other branches.  It is meant to
 	be used to supersede old development history of side
 	branches.
 
