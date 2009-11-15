@@ -71,18 +71,17 @@ do
 	rm -fr doc-$type-inst
 done
 
-case "$(asciidoc --version 2>&1)" in
-asciidoc' 8'.*)
-	ASCIIDOC8=YesPlease
-	export ASCIIDOC8 ;;
-esac
+dd='ASCIIDOC_NO_ROFF=YesPlease
+ASCIIDOC8=YesPlease
+BLK_SHA1=YesPlease
+GNU_ROFF=YesPlease'
 
 make >./:html.log 2>&1 \
-	-C Documentation -j 2 \
+	-C Documentation -j 2 $dd \
 	WEBDOC_DEST="$DOCREPO/doc-html-inst" install-webdoc || exit
 
 make >./:man.log 2>&1 \
-	-C Documentation -j 2 \
+	-C Documentation -j 2 $dd \
 	man1="$DOCREPO/doc-man-inst/man1" \
 	man5="$DOCREPO/doc-man-inst/man5" \
 	man7="$DOCREPO/doc-man-inst/man7" \
