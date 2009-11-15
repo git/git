@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2009, #02; Sun, 08)
-X-master-at: bb471bf74fdff4e6e93e39677e9dab36e716b6f1
-X-next-at: 0943296449b78c52223791a99498a308364fe99b
+Subject: What's cooking in git.git (Nov 2009, #03; Sun, 15)
+X-master-at: b7fba061e05d16fd2c61db5c279b6ad4db98aba4
+X-next-at: 2a326b29e43e05e9ccc1bcf1af09cb27ff606193
 
-What's cooking in git.git (Nov 2009, #02; Sun, 08)
+What's cooking in git.git (Nov 2009, #03; Sun, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -13,7 +13,7 @@ still holding onto them.
 
 In 1.7.0, we plan to correct handful of warts in the interfaces everybody
 agrees that they were mistakes.  The resulting system may not be strictly
-backward compatible.  Currently planeed changes are:
+backward compatible.  Currently planned changes are:
 
  * refuse push to update the checked out branch in a non-bare repo by
    default
@@ -51,41 +51,17 @@ backward compatible.  Currently planeed changes are:
 
    http://thread.gmane.org/gmane.comp.version-control.git/119731/focus=119751
 
+I wasn't fully functioning for the past few days, so this round we have
+only added new topics and new patches to existing ones, without changing
+the status of individual topics very much.
+
 --------------------------------------------------
-[New Topics]
-
-* bw/autoconf-more (2009-11-04) 2 commits
- - configure: add settings for gitconfig, editor and pager
- - configure: add macro to set arbitrary make variables
-
-* em/commit-claim (2009-11-04) 1 commit
- - commit -c/-C/--amend: reset timestamp and authorship to committer with --reset-author
-
-I just picked better bits from both versions.
+[Graduated to "master"]
 
 * jk/maint-format-patch-p-suppress-stat (2009-11-04) 1 commit.
   (merged to 'next' on 2009-11-08 at 0943296)
  + format-patch: make "-p" suppress diffstat
  (this branch is used by bg/format-patch-doc-update.)
-
-* bg/format-patch-doc-update (2009-11-07) 3 commits.
- - format-patch documentation: Fix formatting
- - format-patch documentation: Remove diff options that are not useful
- - format-patch: Always generate a patch
- (this branch uses jk/maint-format-patch-p-suppress-stat.)
-
-* rj/maint-simplify-cygwin-makefile (2009-10-27) 1 commit.
- - Makefile: merge two Cygwin configuration sections into one
- (this branch is used by rj/cygwin-msvc.)
-
-This is one of the most obviously correct bit from "Compiling on Cygwin
-using MSVC fails" topic.
-
-* rj/cygwin-msvc (2009-11-07) 3 commits.
- - Add explicit Cygwin check to guard WIN32 header inclusion
- - MSVC: Add support for building with NO_MMAP
- - Makefile: keep MSVC and Cygwin configuration separate
- (this branch uses rj/maint-simplify-cygwin-makefile.)
 
 * vl/maint-openssl-signature-change (2009-10-31) 1 commit.
   (merged to 'next' on 2009-10-31 at 0e1ce6b)
@@ -93,48 +69,117 @@ using MSVC fails" topic.
 
 Prepare ourselves before newer versions of OpenSSL hits more platforms.
 
-* bg/fetch-multi (2009-11-08) 4 commits.
- - Re-implement 'git remote update' using 'git fetch'
- - Add the configure variable skipFetchAll
- - Teach the --multiple option to 'git fetch'
- - Teach the --all option to 'git fetch'
-
-* bs/maint-pre-commit-hook-sample (2009-11-05) 1 commit.
-  (merged to 'next' on 2009-11-06 at d70f646)
- + pre-commit.sample: Diff against the empty tree when HEAD is invalid
-
-* cc/bisect-doc (2009-11-08) 1 commit
- - Documentation: add "Fighting regressions with git bisect" article
-
-* jn/add-h-to-all-commands (2009-11-08) 1 commit.
- - Show usage string for 'git grep -h'
-
 * pb/maint-gitweb-blob-lineno (2009-11-06) 1 commit.
   (merged to 'next' on 2009-11-06 at 27b86ec)
  + gitweb: Fix blob linenr links in pathinfo mode
 
-* sb/tutorial-test (2009-11-06) 4 commits
- - t1200: prepare for merging with Fast-forward bikeshedding
- - t1200: further modernize test script style
- - t1200: Make documentation and test agree
- - t1200: cleanup and modernize test style
+* bg/merge-ff-only (2009-10-29) 1 commit
+  (merged to 'next' on 2009-10-31 at b6b49aa)
+ + Teach 'git merge' and 'git pull' the option --ff-only
 
-* pb/gitweb-no-project-list (2009-11-06) 3 commits.
- . gitweb: Polish the content tags support
- . gitweb: Support for no project list on gitweb front page
- . gitweb: Refactor project list routines
+* jk/maint-1.6.3-ls-files-i (2009-10-30) 1 commit.
+  (merged to 'next' on 2009-10-31 at 3a31fcc)
+ + ls-files: unbreak "ls-files -i"
 
-I picked these up but didn't queue as Warthog9's comments made certain
-amount of sense to me.
+* tr/describe-advice (2009-10-28) 1 commit
+  (merged to 'next' on 2009-10-31 at 8084850)
+ + describe: when failing, tell the user about options that work
+
+* jp/dirty-describe (2009-10-21) 1 commit.
+  (merged to 'next' on 2009-10-30 at 19c7fc7)
+ + Teach "git describe" --dirty option
+
+* jk/gitignore-anchored (2009-10-26) 1 commit
+  (merged to 'next' on 2009-10-30 at 9391a93)
+ + gitignore: root most patterns at the top-level directory
+
+* jk/maint-push-config (2009-10-25) 1 commit.
+  (merged to 'next' on 2009-10-30 at 934e3c5)
+ + push: always load default config
+
+* sr/blame-incomplete (2009-10-19) 1 commit.
+  (merged to 'next' on 2009-10-22 at 133e0ce)
+ + blame: make sure that the last line ends in an LF
+
+I think this is _good enough_ as-is; although it would be better if we
+added some hint to the output for Porcelain implementations, that can be
+done as a follow-up fix.
+
+--------------------------------------------------
+[New Topics]
+
+* jn/help-everywhere (2009-11-09) 21 commits
+ - diff --no-index: make the usage string less scary
+ - merge-{recursive,subtree}: use usagef() to print usage
+ - Introduce usagef() that takes a printf-style format
+ - Let 'git <command> -h' show usage without a git dir
+ - Show usage string for 'git http-push -h'
+ - Let 'git http-fetch -h' show usage outside any git repository
+ - Show usage string for 'git stripspace -h'
+ - Show usage string for 'git unpack-file -h'
+ - Show usage string for 'git show-index -h'
+ - Show usage string for 'git rev-parse -h'
+ - Show usage string for 'git merge-one-file -h'
+ - Show usage string for 'git mailsplit -h'
+ - Show usage string for 'git imap-send -h'
+ - Show usage string for 'git get-tar-commit-id -h'
+ - Show usage string for 'git fast-import -h'
+ - Show usage string for 'git check-ref-format -h'
+ - Show usage string for 'git show-ref -h'
+ - Show usage string for 'git merge-ours -h'
+ - Show usage string for 'git commit-tree -h'
+ - Show usage string for 'git cherry -h'
+ - Show usage string for 'git grep -h'
+ (this branch uses jn/maint-http-fetch-mingw and jn/remove-fetch--tool.)
+
+There were unrelated but still worthy fixes, so I reordered some of them;
+also the "usage()" change is different from the one that was posted (see
+my comment in $gmane/132592).
+
+* jn/maint-http-fetch-mingw (2009-11-09) 1 commit.
+ - http-fetch: add missing initialization of argv0_path
+ (this branch is used by jn/help-everywhere.)
+
+* jn/remove-fetch--tool (2009-11-09) 1 commit
+ - Retire fetch--tool helper to contrib/examples
+ (this branch is used by jn/help-everywhere.)
+
+These two were originally part of the "help-everywhere" topic but
+they can stand on their own.
+
+* jc/log-stdin (2009-11-03) 1 commit
+ - Teach --stdin option to "log" family
+
+This is not signed-off (see $gmane/131971 for list of things you can do to
+help advancing this topic).
+
+* jn/gitweb-log-history (2009-11-13) 3 commits
+ - gitweb: Make 'history' view (re)use git_log_generic()
+ - gitweb: Refactor common parts of 'log' and 'shortlog' views
+ - gitweb: Refactor 'log' action generation, adding git_log_body()
+
+* jn/rfc-pull-rebase-error-message (2009-11-12) 1 commit
+ - git-pull.sh --rebase: overhaul error handling when no candidates are found
+
+* np/maint-sideband-favor-status (2009-11-11) 1 commit.
+ - give priority to progress messages
+
+This looked obviously correct but I wasn't fully up to speed after being
+ill for a few days, so it is queued in 'pu' with everything else.
+
+* rg/doc-workflow (2009-11-14) 2 commits.
+ - Corrections to release management section in gitworkflows.txt
+ - Add branch management for releases to gitworkflows
+
+* sb/ls-tree-parseopt (2009-11-13) 2 commits.
+ - ls-tree: migrate to parse-options
+ - t3101: test more ls-tree options
+
+* tz/maint-rpm (2009-11-11) 1 commit.
+ - Makefile: Ensure rpm packages can be read by older rpm versions
 
 --------------------------------------------------
 [Stalled]
-
-* tr/filter-branch (2009-10-28) 2 commits.
- - filter-branch: nearest-ancestor rewriting outside subdir filter
- - filter-branch: stop special-casing $filter_subdir argument
-
-J6t had some comments on this.
 
 * jl/submodule-add-noname (2009-09-22) 1 commit.
  - git submodule add: make the <path> parameter optional
@@ -145,211 +190,7 @@ but at the same time it probably makes sense to also take the <path> and
 infer the <repository> as Dscho suggested, probably in "git submodule
 add", not in "git add" proper, at least initially.
 
-* sr/gfi-options (2009-09-06) 6 commits.
- - fast-import: test the new option command
- - fast-import: add option command
- - fast-import: test the new feature command
- - fast-import: add feature command
- - fast-import: put marks reading in it's own function
- - fast-import: put option parsing code in separate functions
-
-Seems to be moving again soon.
-
-* je/send-email-no-subject (2009-08-05) 1 commit.
-  (merged to 'next' on 2009-10-11 at 1b99c56)
- + send-email: confirm on empty mail subjects
-
-The existing tests cover the positive case (i.e. as long as the user says
-"yes" to the "do you really want to send this message that lacks subject",
-the message is sent) of this feature, but the feature itself needs its own
-test to verify the negative case (i.e. does it correctly stop if the user
-says "no"?)
-
---------------------------------------------------
-[Cooking]
-
-* bg/merge-ff-only (2009-10-29) 1 commit
-  (merged to 'next' on 2009-10-31 at b6b49aa)
- + Teach 'git merge' and 'git pull' the option --ff-only
-
-* jk/maint-1.6.3-ls-files-i (2009-10-30) 1 commit.
-  (merged to 'next' on 2009-10-31 at 3a31fcc)
- + ls-files: unbreak "ls-files -i"
-
-* jn/editor-pager (2009-10-30) 8 commits
- - Provide a build time default-pager setting
- - Provide a build time default-editor setting
- - am -i, git-svn: use "git var GIT_PAGER"
- - add -i, send-email, svn, p4, etc: use "git var GIT_EDITOR"
- - Teach git var about GIT_PAGER
- - Teach git var about GIT_EDITOR
- - Do not use VISUAL editor on dumb terminals
- - Handle more shell metacharacters in editor names
-
-* js/maint-diff-color-words (2009-10-30) 3 commits.
- - diff --color-words: bit of clean-up
- - diff --color-words -U0: fix the location of hunk headers
- - t4034-diff-words: add a test for word diff without context
-
-Fixes a corner case of running --color-words with -U0.
-
-* sc/difftool-p4merge (2009-10-28) 1 commit
-  (merged to 'next' on 2009-10-31 at 194b5c5)
- + mergetool--lib: add p4merge as a pre-configured mergetool option
-
-* sc/protocol-doc (2009-10-29) 1 commit
- - Update packfile transfer protocol documentation
-
-There is the final draft posted, but I haven't picked it up yet.
-
-* sr/vcs-helper (2009-11-06) 12 commits
- - Add Python support library for remote helpers
- - Basic build infrastructure for Python scripts
- - Allow helpers to request the path to the .git directory
- - Allow helpers to report in "list" command that the ref is unchanged
- - Allow helper to map private ref names into normal names
- - Add support for "import" helper command
- - Allow specifying the remote helper in the url
- - Add a config option for remotes to specify a foreign vcs
- - Allow fetch to modify refs
- - Use a function to determine whether a remote is valid
- - Allow programs to not depend on remotes having urls
- - Fix memory leak in helper method for disconnect
-
-Re-rolled series that contains Daniel's and Johan's.
-
-* tr/describe-advice (2009-10-28) 1 commit
-  (merged to 'next' on 2009-10-31 at 8084850)
- + describe: when failing, tell the user about options that work
-
-* mr/gitweb-snapshot (2009-11-07) 4 commits.
- - gitweb: Smarter snapshot names
- - gitweb: Document current snapshot rules via new tests
- - t/gitweb-lib.sh: Split gitweb output into headers and body
-  (merged to 'next' on 2009-10-11 at 22ba047)
- + gitweb: check given hash before trying to create snapshot
-
-Replaced commits near the tip with recent updates.
-
-* jp/dirty-describe (2009-10-21) 1 commit.
-  (merged to 'next' on 2009-10-30 at 19c7fc7)
- + Teach "git describe" --dirty option
-
-* jp/fetch-cull-many-refs (2009-10-25) 2 commits
-  (merged to 'next' on 2009-11-01 at 1f09ce9)
- + fetch: Speed up fetch of large numbers of refs
- + remote: Make ref_remove_duplicates faster for large numbers of refs
-
-* bg/format-patch-p-noop (2009-11-04) 4 commits.
-  (merged to 'next' on 2009-11-08 at 6220d55)
- + Revert "format-patch -p is now a no-op" series
-  (merged to 'next' on 2009-10-30 at e34a3db)
- + format-patch documentation: Fix formatting
- + format-patch documentation: Remove diff options that are not useful
- + format-patch: Make implementation and documentation agree
-
-This is now a no-op; jk/maint-format-patch-p-suppress-stat and
-bg/format-patch-doc-update topics will replace this.
-
-* jk/gitignore-anchored (2009-10-26) 1 commit
-  (merged to 'next' on 2009-10-30 at 9391a93)
- + gitignore: root most patterns at the top-level directory
-
-* jk/maint-add-p-empty (2009-10-27) 1 commit.
-  (merged to 'next' on 2009-10-30 at 2bd302f)
- + add-interactive: handle deletion of empty files
-
-* jk/maint-push-config (2009-10-25) 1 commit.
-  (merged to 'next' on 2009-10-30 at 934e3c5)
- + push: always load default config
-
-* lt/revision-bisect (2009-10-27) 1 commit.
-  (merged to 'next' on 2009-10-30 at 81ee52b)
- + Add '--bisect' revision machinery argument
-
-* jc/pretty-lf (2009-10-04) 1 commit.
- - Pretty-format: %[+-]x to tweak inter-item newlines
-
-* rs/pretty-wrap (2009-11-08) 2 commits
-  (merged to 'next' on 2009-11-08 at 8973fd8)
- + log --format: don't ignore %w() at the start of format string
-  (merged to 'next' on 2009-10-30 at 403bbfe)
- + Implement wrap format %w() as if it is a mode switch
- (this branch uses js/log-rewrap.)
-
-* js/log-rewrap (2009-10-18) 3 commits
-  (merged to 'next' on 2009-10-30 at 403bbfe)
- + Teach --wrap to only indent without wrapping
- + Add strbuf_add_wrapped_text() to utf8.[ch]
- + print_wrapped_text(): allow hard newlines
- (this branch is used by rs/pretty-wrap.)
-
-* sr/blame-incomplete (2009-10-19) 1 commit.
-  (merged to 'next' on 2009-10-22 at 133e0ce)
- + blame: make sure that the last line ends in an LF
-
-I think this is _good enough_ as-is; although it would be better if we
-added some hint to the output for Porcelain implementations, that can be
-done as a follow-up fix.
-
-* fc/doc-fast-forward (2009-10-24) 1 commit.
-  (merged to 'next' on 2009-11-01 at faaad90)
- + Use 'fast-forward' all over the place
-
-* ks/precompute-completion (2009-10-26) 3 commits.
-  (merged to 'next' on 2009-10-28 at cd5177f)
- + completion: ignore custom merge strategies when pre-generating
-  (merged to 'next' on 2009-10-22 at f46a28a)
- + bug: precomputed completion includes scripts sources
-  (merged to 'next' on 2009-10-14 at adf722a)
- + Speedup bash completion loading
-
-* sp/smart-http (2009-11-04) 30 commits
-  (merged to 'next' on 2009-11-06 at 666837c)
- + http-backend: Test configuration options
- + http-backend: Use http.getanyfile to disable dumb HTTP serving
- + test smart http fetch and push
- + http tests: use /dumb/ URL prefix
- + set httpd port before sourcing lib-httpd
- + t5540-http-push: remove redundant fetches
- + Smart HTTP fetch: gzip requests
- + Smart fetch over HTTP: client side
- + Smart push over HTTP: client side
- + Discover refs via smart HTTP server when available
- + http-backend: more explict LocationMatch
- + http-backend: add example for gitweb on same URL
- + http-backend: use mod_alias instead of mod_rewrite
- + http-backend: reword some documentation
- + http-backend: add GIT_PROJECT_ROOT environment var
- + Smart fetch and push over HTTP: server side
- + Add stateless RPC options to upload-pack, receive-pack
- + Git-aware CGI to provide dumb HTTP transport
- + remote-helpers: return successfully if everything up-to-date
- + Move WebDAV HTTP push under remote-curl
- + remote-helpers: Support custom transport options
- + remote-helpers: Fetch more than one ref in a batch
- + fetch: Allow transport -v -v -v to set verbosity to 3
- + remote-curl: Refactor walker initialization
- + Add multi_ack_detailed capability to fetch-pack/upload-pack
- + Move "get_ack()" back to fetch-pack
- + fetch-pack: Use a strbuf to compose the want list
- + pkt-line: Make packet_read_line easier to debug
- + pkt-line: Add strbuf based functions
- + http-push: fix check condition on http.c::finish_http_pack_request()
-
-v5 plus 3 more fix-up patches, started cooking in 'next'.
-
-* ef/msys-imap (2009-10-22) 9 commits.
-  (merged to 'next' on 2009-10-31 at 8630603)
- + Windows: use BLK_SHA1 again
- + MSVC: Enable OpenSSL, and translate -lcrypto
- + mingw: enable OpenSSL
- + mingw: wrap SSL_set_(w|r)fd to call _get_osfhandle
- + imap-send: build imap-send on Windows
- + imap-send: fix compilation-error on Windows
- + imap-send: use run-command API for tunneling
- + imap-send: use separate read and write fds
- + imap-send: remove useless uid code
+Any objections against merging this to 'next'?
 
 * jc/fix-tree-walk (2009-10-22) 11 commits.
   (merged to 'next' on 2009-10-22 at 10c0c8f)
@@ -394,6 +235,9 @@ fix it, but the "temporarily" turned out to be very loooong.  Sigh...
  + Add a script to edit/inspect notes
  + Introduce commit notes
 
+I somehow thought that the later API part was waiting for updates but
+nothing seems to be happening.
+
 * jn/gitweb-blame (2009-09-01) 5 commits.
  - gitweb: Minify gitweb.js if JSMIN is defined
  - gitweb: Create links leading to 'blame_incremental' using JavaScript
@@ -402,7 +246,280 @@ fix it, but the "temporarily" turned out to be very loooong.  Sigh...
  + gitweb: Incremental blame (using JavaScript)
  + gitweb: Add optional "time to generate page" info in footer
 
-Ajax-y blame.
+Ajax-y blame.  Any progress or RFH?
+
+* sr/gfi-options (2009-09-06) 6 commits.
+ - fast-import: test the new option command
+ - fast-import: add option command
+ - fast-import: test the new feature command
+ - fast-import: add feature command
+ - fast-import: put marks reading in it's own function
+ - fast-import: put option parsing code in separate functions
+
+It seemed to be moving again soon, but nothing has happened yet...
+
+* je/send-email-no-subject (2009-08-05) 1 commit.
+  (merged to 'next' on 2009-10-11 at 1b99c56)
+ + send-email: confirm on empty mail subjects
+
+The existing tests cover the positive case (i.e. as long as the user says
+"yes" to the "do you really want to send this message that lacks subject",
+the message is sent) of this feature, but the feature itself needs its own
+test to verify the negative case (i.e. does it correctly stop if the user
+says "no"?)
+
+--------------------------------------------------
+[Cooking]
+
+* sc/protocol-doc (2009-11-03) 1 commit.
+ - Update packfile transfer protocol documentation
+
+* tr/filter-branch (2009-11-10) 2 commits.
+ - filter-branch: nearest-ancestor rewriting outside subdir filter
+ - filter-branch: stop special-casing $filter_subdir argument
+
+Updated again.  Looked sane, except that the option might not be
+necessary.  But that can be fixed while in 'next', so unless anybody
+sees further issues, I'll move this to 'next' soon.
+
+* em/commit-claim (2009-11-04) 1 commit
+ - commit -c/-C/--amend: reset timestamp and authorship to committer with --reset-author
+
+I just picked better bits from both versions, but this needs to be
+rethought.
+
+* bg/format-patch-doc-update (2009-11-07) 4 commits
+ - format-patch: Add "--no-stat" as a synonym for "-p"
+ - format-patch documentation: Fix formatting
+ - format-patch documentation: Remove diff options that are not useful
+ - format-patch: Always generate a patch
+
+Looked sensible, even though this may want to wait for 1.7.0.  We'll see
+when we merge this to 'next'.  I tweaked the --no-stat patch with noneg
+bit; please check for sanity.
+
+* rj/maint-simplify-cygwin-makefile (2009-10-27) 1 commit.
+ - Makefile: merge two Cygwin configuration sections into one
+ (this branch is used by rj/cygwin-msvc.)
+
+This is one of the most obviously correct bit from "Compiling on Cygwin
+using MSVC fails" topic.
+
+* rj/cygwin-msvc (2009-11-09) 3 commits.
+ - Add explicit Cygwin check to guard WIN32 header inclusion
+ - MSVC: Add support for building with NO_MMAP
+ - Makefile: keep MSVC and Cygwin configuration separate
+ (this branch uses rj/maint-simplify-cygwin-makefile.)
+
+I think J6t was not happy with the tip one.
+
+* bg/fetch-multi (2009-11-10) 9 commits
+ - Re-implement 'git remote update' using 'git fetch'
+ - builtin-fetch: add --dry-run option
+ - builtin-fetch: add --prune option
+ - teach warn_dangling_symref to take a FILE argument
+ - remote: refactor some logic into get_stale_heads()
+ - Add missing test for 'git remote update --prune'
+ - Add the configuration option skipFetchAll
+ - Teach the --multiple option to 'git fetch'
+ - Teach the --all option to 'git fetch'
+
+This series from Björn Gustavsson contains 4 patches from Jay Soffian as
+well.  I haven't looked at the code very closely yet.
+
+* bs/maint-pre-commit-hook-sample (2009-11-05) 1 commit.
+  (merged to 'next' on 2009-11-06 at d70f646)
+ + pre-commit.sample: Diff against the empty tree when HEAD is invalid
+
+Looked Ok.
+
+* cc/bisect-doc (2009-11-08) 1 commit
+ - Documentation: add "Fighting regressions with git bisect" article
+
+Any comments?  Should it go to Documentation/technical instead?
+
+* sb/tutorial-test (2009-11-06) 4 commits
+ - t1200: prepare for merging with Fast-forward bikeshedding
+ - t1200: further modernize test script style
+ - t1200: Make documentation and test agree
+ - t1200: cleanup and modernize test style
+
+Ready for 'next', I think.
+
+* jn/editor-pager (2009-10-30) 9 commits
+ - Provide a build time default-pager setting
+ - Provide a build time default-editor setting
+ - am -i, git-svn: use "git var GIT_PAGER"
+ - add -i, send-email, svn, p4, etc: use "git var GIT_EDITOR"
+ - Teach git var about GIT_PAGER
+ - Teach git var about GIT_EDITOR
+ - Suppress warnings from "git var -l"
+ - Do not use VISUAL editor on dumb terminals
+ - Handle more shell metacharacters in editor names
+
+* bw/autoconf-more (2009-11-04) 2 commits
+ - configure: add settings for gitconfig, editor and pager
+ - configure: add macro to set arbitrary make variables
+
+This will follow jn/editor-pager series.
+
+* js/maint-diff-color-words (2009-10-30) 3 commits.
+  (merged to 'next' on 2009-11-10 at 5619714)
+ + diff --color-words: bit of clean-up
+ + diff --color-words -U0: fix the location of hunk headers
+ + t4034-diff-words: add a test for word diff without context
+
+Fixes a corner case of running --color-words with -U0.
+
+* sc/difftool-p4merge (2009-10-28) 1 commit
+  (merged to 'next' on 2009-10-31 at 194b5c5)
+ + mergetool--lib: add p4merge as a pre-configured mergetool option
+
+I do not do p4 nor use difftool, so it's much easier for me to merge this
+to 'master' and wait for anybody to scream if there is breakage.  I'll do
+so, unless I hear objections in a few days.
+
+* sr/vcs-helper (2009-11-06) 12 commits
+ - Add Python support library for remote helpers
+ - Basic build infrastructure for Python scripts
+ - Allow helpers to request the path to the .git directory
+ - Allow helpers to report in "list" command that the ref is unchanged
+ - Allow helper to map private ref names into normal names
+ - Add support for "import" helper command
+ - Allow specifying the remote helper in the url
+ - Add a config option for remotes to specify a foreign vcs
+ - Allow fetch to modify refs
+ - Use a function to determine whether a remote is valid
+ - Allow programs to not depend on remotes having urls
+ - Fix memory leak in helper method for disconnect
+
+Re-rolled series that contains Daniel's and Johan's.
+Any comments?  Is everybody happy?
+
+* mr/gitweb-snapshot (2009-11-07) 4 commits.
+ - gitweb: Smarter snapshot names
+ - gitweb: Document current snapshot rules via new tests
+ - t/gitweb-lib.sh: Split gitweb output into headers and body
+  (merged to 'next' on 2009-10-11 at 22ba047)
+ + gitweb: check given hash before trying to create snapshot
+
+Replaced commits near the tip with recent updates.
+
+* jp/fetch-cull-many-refs (2009-11-13) 3 commits
+  (merged to 'next' on 2009-11-15 at db0f967)
+ + remote: fix use-after-free error detected by glibc in ref_remove_duplicates
+  (merged to 'next' on 2009-11-01 at 1f09ce9)
+ + fetch: Speed up fetch of large numbers of refs
+ + remote: Make ref_remove_duplicates faster for large numbers of refs
+
+Soon in 'master'.
+
+* jk/maint-add-p-empty (2009-10-27) 1 commit.
+  (merged to 'next' on 2009-10-30 at 2bd302f)
+ + add-interactive: handle deletion of empty files
+
+Soon in 'master'.
+
+* lt/revision-bisect (2009-10-27) 1 commit.
+  (merged to 'next' on 2009-10-30 at 81ee52b)
+ + Add '--bisect' revision machinery argument
+
+Soon in 'master'.
+
+* jc/pretty-lf (2009-10-04) 1 commit.
+ - Pretty-format: %[+-]x to tweak inter-item newlines
+
+* rs/pretty-wrap (2009-11-08) 2 commits
+  (merged to 'next' on 2009-11-08 at 8973fd8)
+ + log --format: don't ignore %w() at the start of format string
+  (merged to 'next' on 2009-10-30 at 403bbfe)
+ + Implement wrap format %w() as if it is a mode switch
+ (this branch uses js/log-rewrap.)
+
+Soon in 'master'.
+
+* js/log-rewrap (2009-10-18) 3 commits
+  (merged to 'next' on 2009-10-30 at 403bbfe)
+ + Teach --wrap to only indent without wrapping
+ + Add strbuf_add_wrapped_text() to utf8.[ch]
+ + print_wrapped_text(): allow hard newlines
+ (this branch is used by rs/pretty-wrap.)
+
+Soon in 'master'.
+
+* fc/doc-fast-forward (2009-10-24) 1 commit.
+  (merged to 'next' on 2009-11-01 at faaad90)
+ + Use 'fast-forward' all over the place
+
+Soon in 'master'; carrying this in 'next' for too long is turning out to
+be quite painful.
+
+* ks/precompute-completion (2009-10-26) 3 commits.
+  (merged to 'next' on 2009-10-28 at cd5177f)
+ + completion: ignore custom merge strategies when pre-generating
+  (merged to 'next' on 2009-10-22 at f46a28a)
+ + bug: precomputed completion includes scripts sources
+  (merged to 'next' on 2009-10-14 at adf722a)
+ + Speedup bash completion loading
+
+I didn't follow the discussion from the past few days closely, but I am
+getting an impression that the consensus is we shouldn't precompute, so I
+may have to revert this and replace with what's cooking on the list when
+it stabilizes.
+
+* sp/smart-http (2009-11-11) 35 commits
+  (merged to 'next' on 2009-11-15 at 2a326b2)
+ + http-backend: Fix bad treatment of uintmax_t in Content-Length
+ + t5551-http-fetch: Work around broken Accept header in libcurl
+ + t5551-http-fetch: Work around some libcurl versions
+ + http-backend: Protect GIT_PROJECT_ROOT from /../ requests
+ + Git-aware CGI to provide dumb HTTP transport
+  (merged to 'next' on 2009-11-06 at 666837c)
+ + http-backend: Test configuration options
+ + http-backend: Use http.getanyfile to disable dumb HTTP serving
+ + test smart http fetch and push
+ + http tests: use /dumb/ URL prefix
+ + set httpd port before sourcing lib-httpd
+ + t5540-http-push: remove redundant fetches
+ + Smart HTTP fetch: gzip requests
+ + Smart fetch over HTTP: client side
+ + Smart push over HTTP: client side
+ + Discover refs via smart HTTP server when available
+ + http-backend: more explict LocationMatch
+ + http-backend: add example for gitweb on same URL
+ + http-backend: use mod_alias instead of mod_rewrite
+ + http-backend: reword some documentation
+ + http-backend: add GIT_PROJECT_ROOT environment var
+ + Smart fetch and push over HTTP: server side
+ + Add stateless RPC options to upload-pack, receive-pack
+ + Git-aware CGI to provide dumb HTTP transport
+ + remote-helpers: return successfully if everything up-to-date
+ + Move WebDAV HTTP push under remote-curl
+ + remote-helpers: Support custom transport options
+ + remote-helpers: Fetch more than one ref in a batch
+ + fetch: Allow transport -v -v -v to set verbosity to 3
+ + remote-curl: Refactor walker initialization
+ + Add multi_ack_detailed capability to fetch-pack/upload-pack
+ + Move "get_ack()" back to fetch-pack
+ + fetch-pack: Use a strbuf to compose the want list
+ + pkt-line: Make packet_read_line easier to debug
+ + pkt-line: Add strbuf based functions
+ + http-push: fix check condition on http.c::finish_http_pack_request()
+
+* ef/msys-imap (2009-10-22) 9 commits.
+  (merged to 'next' on 2009-10-31 at 8630603)
+ + Windows: use BLK_SHA1 again
+ + MSVC: Enable OpenSSL, and translate -lcrypto
+ + mingw: enable OpenSSL
+ + mingw: wrap SSL_set_(w|r)fd to call _get_osfhandle
+ + imap-send: build imap-send on Windows
+ + imap-send: fix compilation-error on Windows
+ + imap-send: use run-command API for tunneling
+ + imap-send: use separate read and write fds
+ + imap-send: remove useless uid code
+
+Soon in 'master', unless I hear objections from msys folks or imap-send
+users.
 
 * nd/sparse (2009-08-20) 19 commits.
  - sparse checkout: inhibit empty worktree
@@ -424,6 +541,10 @@ Ajax-y blame.
  - Introduce "skip-worktree" bit in index, teach Git to get/set this bit
  - Add test-index-version
  - update-index: refactor mark_valid() in preparation for new options
+
+The latest update I didn't look at very closely but I had an impression
+that it was touching very generic codepath that would affect non sparse
+cases, iow the patch looked very scary (the entire series already is).
 
 --------------------------------------------------
 [For 1.7.0]
@@ -506,29 +627,10 @@ Maybe some people care about this.  I dunno.
 
 Maybe some people care about this.  I dunno.
 
-* jg/log-format-body-indent (2009-09-19) 1 commit.
- . git-log --format: Add %B tag with %B(x) option
+* pb/gitweb-no-project-list (2009-11-06) 3 commits.
+ . gitweb: Polish the content tags support
+ . gitweb: Support for no project list on gitweb front page
+ . gitweb: Refactor project list routines
 
-* db/vcs-helper-rest (2009-10-27) 7 commits.
- . Fix memory leak in helper method for disconnect
- . Allow helpers to report in "list" command that the ref is unchanged
- . Add support for "import" helper command
- . Add a config option for remotes to specify a foreign vcs
- . Allow programs to not depend on remotes having urls
- . Allow fetch to modify refs
- . Use a function to determine whether a remote is valid
- (this branch is used by jh/cvs-helper.)
-
-* jc/log-stdin (2009-11-03) 1 commit
- . Teach --stdin option to "log" family
-
-* jh/cvs-helper (2009-08-18) 8 commits.
- . More fixes to the git-remote-cvs installation procedure
- . Fix the Makefile-generated path to the git_remote_cvs package in git-remote-cvs
- . Add simple selftests of git-remote-cvs functionality
- . git-remote-cvs: Remote helper program for CVS repositories
- . 2/2: Add Python support library for CVS remote helper
- . 1/2: Add Python support library for CVS remote helper
- . Basic build infrastructure for Python scripts
- . Allow helpers to request marks for fast-import
- (this branch uses db/vcs-helper-rest.)
+I picked these up but didn't queue as Warthog9's comments made certain
+amount of sense to me.
