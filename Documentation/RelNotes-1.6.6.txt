@@ -1,4 +1,4 @@
-GIT v1.6.6 Release Notes
+Git v1.6.6 Release Notes
 ========================
 
 In this release, "git fsck" defaults to "git fsck --full" and checks
@@ -40,6 +40,8 @@ Updates since v1.6.5
 
 (subsystems)
 
+ * various git-gui updates including new translations, wm states, etc.
+
 (portability)
 
 (performance)
@@ -48,6 +50,17 @@ Updates since v1.6.5
 
  * The object replace mechanism can be bypassed with --no-replace-objects
    global option given to the "git" program.
+
+ * "git bisect reset" can reset to an arbitrary commit.
+
+ * "git checkout frotz" when there is no local branch "frotz" but there
+   is only one remote tracking branch "frotz" is taken as a request to
+   start the named branch at the corresponding remote tracking branch.
+
+ * "git describe" can be told to add "-dirty" suffix with "--dirty" option.
+
+ * "git diff" learned --submodule option to show a list of one-line logs
+   instead of differences between the commit object names.
 
  * "git fsck" by default checks the packfiles (i.e. "--full" is the
    default); you can turn it off with "git fsck --no-full".
@@ -59,10 +72,22 @@ Updates since v1.6.5
 
  * "git log --decorate" shows the location of HEAD as well.
 
+ * "--pretty=format" option to "log" family of commands learned:
+
+   . to wrap text with the "%w()" specifier.
+   . to show reflog information with "%g[sdD]" specifier.
+
+ * "git merge" (and "git pull") learned --ff-only option to make it fail
+   if the merge does not result in a fast-forward.
+
+ * "git mergetool" learned to use p4merge.
+
  * "git rebase -i" learned "reword" that acts like "edit" but immediately
    starts an editor to tweak the log message without returning control to
    the shell, which is done by "edit" to give an opportunity to tweak the
    contents.
+
+ * "git svn" learned to read SVN 1.5+ and SVK merge tickets.
 
  * Author names shown in gitweb output are links to search commits by the
    author.
@@ -76,33 +101,8 @@ Fixes since v1.6.5
 All of the fixes in v1.6.5.X maintenance series are included in this
 release, unless otherwise noted.
 
- * "git apply" and "git diff" (including patch output from "git log -p")
-   now flags trailing blank lines as whitespace errors correctly (only
-   "apply --whitespace=fix" stripped them but "apply --whitespace=warn"
-   did not even warn).
-
- * Two whitespace error classes, 'blank-at-eof' and 'blank-at-eol', have
-   been introduced (settable by core.whitespace configuration variable and
-   whitespace attribute).  The 'trailing-space' whitespace error class has
-   become a short-hand to cover both of these and there is no behaviour
-   change for existing set-ups.
-
- * "git cvsimport" did not work well when it is fed filenames from the
-   command line and is not started at the top of the work tree.  We should
-   backport this by merging f6fdbb6 (cvsimport: fix relative argument
-   filenames, 2009-10-19).
-
- * The way gitweb escapes its CGI parameters were broken especially when
-   the parameter was a UTF-8 string.  We may want to backport this to
-   1.6.5.X series by merging 452e225 (gitweb: fix esc_param, 2009-10-13).
-
- * gitweb used to show 'patch' link for merge commits but the output from
-   it is not usable to feed "git am" with.  We may want to backport this
-   to 1.6.5.X series by merging 1655c98 (gitweb: Do not show 'patch' link
-   for merge commits, 2009-10-09).
-
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.6.5.2-73-g9b12444
+O=v1.6.5.3-152-g122d0f6
 git shortlog --no-merges $O..master --not maint
