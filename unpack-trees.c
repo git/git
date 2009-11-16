@@ -895,7 +895,7 @@ int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o)
  * Two-way merge.
  *
  * The rule is to "carry forward" what is in the index without losing
- * information across a "fast forward", favoring a successful merge
+ * information across a "fast-forward", favoring a successful merge
  * over a merge failure when it makes sense.  For details of the
  * "carry forward" rule, please see <Documentation/git-read-tree.txt>.
  *

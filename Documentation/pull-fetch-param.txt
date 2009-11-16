@@ -11,9 +11,9 @@
 +
 The remote ref that matches <src>
 is fetched, and if <dst> is not empty string, the local
-ref that matches it is fast forwarded using <src>.
+ref that matches it is fast-forwarded using <src>.
 If the optional plus `+` is used, the local ref
-is updated even if it does not result in a fast forward
+is updated even if it does not result in a fast-forward
 update.
 +
 [NOTE]

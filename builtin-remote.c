@@ -953,7 +953,7 @@ static int show_push_info_item(struct string_list_item *item, void *cb_data)
 		status = "up to date";
 		break;
 	case PUSH_STATUS_FASTFORWARD:
-		status = "fast forwardable";
+		status = "fast-forwardable";
 		break;
 	case PUSH_STATUS_OUTOFDATE:
 		status = "local out of date";

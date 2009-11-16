@@ -50,9 +50,9 @@ updated.
 +
 The object referenced by <src> is used to update the <dst> reference
 on the remote side, but by default this is only allowed if the
-update can fast forward <dst>.  By having the optional leading `{plus}`,
+update can fast-forward <dst>.  By having the optional leading `{plus}`,
 you can tell git to update the <dst> ref even when the update is not a
-fast forward.  This does *not* attempt to merge <src> into <dst>.  See
+fast-forward.  This does *not* attempt to merge <src> into <dst>.  See
 EXAMPLES below for details.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
@@ -60,7 +60,7 @@ EXAMPLES below for details.
 Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
 +
-The special refspec `:` (or `{plus}:` to allow non-fast forward updates)
+The special refspec `:` (or `{plus}:` to allow non-fast-forward updates)
 directs git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.  This is the default operation mode
@@ -176,10 +176,10 @@ summary::
 	For a successfully pushed ref, the summary shows the old and new
 	values of the ref in a form suitable for using as an argument to
 	`git log` (this is `<old>..<new>` in most cases, and
-	`<old>...<new>` for forced non-fast forward updates). For a
+	`<old>...<new>` for forced non-fast-forward updates). For a
 	failed update, more details are given for the failure.
 	The string `rejected` indicates that git did not try to send the
-	ref at all (typically because it is not a fast forward). The
+	ref at all (typically because it is not a fast-forward). The
 	string `remote rejected` indicates that the remote end refused
 	the update; this rejection is typically caused by a hook on the
 	remote side. The string `remote failure` indicates that the
@@ -347,9 +347,9 @@ git push origin :experimental::
 
 git push origin {plus}dev:master::
 	Update the origin repository's master branch with the dev branch,
-	allowing non-fast forward updates.  *This can leave unreferenced
+	allowing non-fast-forward updates.  *This can leave unreferenced
 	commits dangling in the origin repository.*  Consider the
-	following situation, where a fast forward is not possible:
+	following situation, where a fast-forward is not possible:
 +
 ----
 	    o---o---o---A---B  origin/master

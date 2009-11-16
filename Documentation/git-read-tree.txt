@@ -144,7 +144,7 @@ Two Tree Merge
 Typically, this is invoked as `git read-tree -m $H $M`, where $H
 is the head commit of the current repository, and $M is the head
 of a foreign tree, which is simply ahead of $H (i.e. we are in a
-fast forward situation).
+fast-forward situation).
 
 When two trees are specified, the user is telling 'git-read-tree'
 the following:
