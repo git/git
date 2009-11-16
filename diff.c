@@ -686,14 +686,18 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	diff_words->minus.text.size = diff_words->plus.text.size = 0;
 }
 
+/* In "color-words" mode, show word-diff of words accumulated in the buffer */
+static void diff_words_flush(struct emit_callback *ecbdata)
+{
+	if (ecbdata->diff_words->minus.text.size ||
+	    ecbdata->diff_words->plus.text.size)
+		diff_words_show(ecbdata->diff_words);
+}
+
 static void free_diff_words_data(struct emit_callback *ecbdata)
 {
 	if (ecbdata->diff_words) {
-		/* flush buffers */
-		if (ecbdata->diff_words->minus.text.size ||
-				ecbdata->diff_words->plus.text.size)
-			diff_words_show(ecbdata->diff_words);
-
+		diff_words_flush(ecbdata);
 		free (ecbdata->diff_words->minus.text.ptr);
 		free (ecbdata->diff_words->minus.orig);
 		free (ecbdata->diff_words->plus.text.ptr);
@@ -773,6 +777,8 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	}
 
 	if (line[0] == '@') {
+		if (ecbdata->diff_words)
+			diff_words_flush(ecbdata);
 		len = sane_truncate_line(ecbdata, line, len);
 		find_lno(line, ecbdata);
 		emit_line(ecbdata->file,
@@ -798,9 +804,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 					  &ecbdata->diff_words->plus);
 			return;
 		}
-		if (ecbdata->diff_words->minus.text.size ||
-		    ecbdata->diff_words->plus.text.size)
-			diff_words_show(ecbdata->diff_words);
+		diff_words_flush(ecbdata);
 		line++;
 		len--;
 		emit_line(ecbdata->file, plain, reset, line, len);
