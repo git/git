@@ -5328,7 +5328,7 @@ sub git_commit {
 			} @$parents ) .
 			')';
 	}
-	if (gitweb_check_feature('patches')) {
+	if (gitweb_check_feature('patches') && @$parents <= 1) {
 		$formats_nav .= " | " .
 			$cgi->a({-href => href(action=>"patch", -replay=>1)},
 				"patch");
@@ -5616,7 +5616,7 @@ sub git_commitdiff {
 		$formats_nav =
 			$cgi->a({-href => href(action=>"commitdiff_plain", -replay=>1)},
 			        "raw");
-		if ($patch_max) {
+		if ($patch_max && @{$co{'parents'}} <= 1) {
 			$formats_nav .= " | " .
 				$cgi->a({-href => href(action=>"patch", -replay=>1)},
 					"patch");
@@ -5824,7 +5824,7 @@ sub git_commitdiff_plain {
 
 # format-patch-style patches
 sub git_patch {
-	git_commitdiff(-format => 'patch', -single=> 1);
+	git_commitdiff(-format => 'patch', -single => 1);
 }
 
 sub git_patches {
