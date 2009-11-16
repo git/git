@@ -103,6 +103,14 @@ ifdef DOCBOOK_SUPPRESS_SP
 XMLTO_EXTRA += -m manpage-suppress-sp.xsl
 endif
 
+# If your target system uses GNU groff, it may try to render
+# apostrophes as a "pretty" apostrophe using unicode.  This breaks
+# cut&paste, so you should set GNU_ROFF to force them to be ASCII
+# apostrophes.  Unfortunately does not work with non-GNU roff.
+ifdef GNU_ROFF
+XMLTO_EXTRA += -m manpage-quote-apos.xsl
+endif
+
 SHELL_PATH ?= $(SHELL)
 # Shell quote;
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
