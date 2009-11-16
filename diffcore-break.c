@@ -204,12 +204,16 @@ void diffcore_break(int break_score)
 				dp->score = score;
 				dp->broken_pair = 1;
 
+				diff_free_filespec_data(p->one);
+				diff_free_filespec_data(p->two);
 				free(p); /* not diff_free_filepair(), we are
 					  * reusing one and two here.
 					  */
 				continue;
 			}
 		}
+		diff_free_filespec_data(p->one);
+		diff_free_filespec_data(p->two);
 		diff_q(&outq, p);
 	}
 	free(q->queue);
