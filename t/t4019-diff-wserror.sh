@@ -165,7 +165,7 @@ test_expect_success 'trailing empty lines (1)' '
 
 	rm -f .gitattributes &&
 	test_must_fail git diff --check >output &&
-	grep "ends with blank lines." output &&
+	grep "new blank line at" output &&
 	grep "trailing whitespace" output
 
 '
@@ -188,6 +188,15 @@ test_expect_success 'do not color trailing cr in context' '
 	grep "BBB.*${blue_grep}Q" output &&
 	grep "AAA.*\[mQ" output
 
+'
+
+test_expect_success 'color new trailing blank lines' '
+	{ echo a; echo b; echo; echo; } >x &&
+	git add x &&
+	{ echo a; echo; echo; echo; echo c; echo; echo; echo; echo; } >x &&
+	git diff --color x >output &&
+	cnt=$(grep "${blue_grep}" output | wc -l) &&
+	test $cnt = 2
 '
 
 test_done
