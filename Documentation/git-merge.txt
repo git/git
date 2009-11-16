@@ -212,6 +212,39 @@ You can work through the conflict with a number of tools:
    common ancestor, 'git show :2:filename' shows the HEAD
    version and 'git show :3:filename' shows the remote version.
 
+
+EXAMPLES
+--------
+
+* Merge branches `fixes` and `enhancements` on top of
+  the current branch, making an octopus merge:
++
+------------------------------------------------
+$ git merge fixes enhancements
+------------------------------------------------
+
+* Merge branch `obsolete` into the current branch, using `ours`
+  merge strategy:
++
+------------------------------------------------
+$ git merge -s ours obsolete
+------------------------------------------------
+
+* Merge branch `maint` into the current branch, but do not make
+  a new commit automatically:
++
+------------------------------------------------
+$ git merge --no-commit maint
+------------------------------------------------
++
+This can be used when you want to include further changes to the
+merge, or want to write your own merge commit message.
++
+You should refrain from abusing this option to sneak substantial
+changes into a merge commit.  Small fixups like bumping
+release/version name would be acceptable.
+
+
 SEE ALSO
 --------
 linkgit:git-fmt-merge-msg[1], linkgit:git-pull[1],

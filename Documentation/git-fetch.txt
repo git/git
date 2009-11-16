@@ -37,6 +37,35 @@ include::pull-fetch-param.txt[]
 
 include::urls-remotes.txt[]
 
+
+EXAMPLES
+--------
+
+* Update the remote-tracking branches:
++
+------------------------------------------------
+$ git fetch origin
+------------------------------------------------
++
+The above command copies all branches from the remote refs/heads/
+namespace and stores them to the local refs/remotes/origin/ namespace,
+unless the branch.<name>.fetch option is used to specify a non-default
+refspec.
+
+* Using refspecs explicitly:
++
+------------------------------------------------
+$ git fetch origin +pu:pu maint:tmp
+------------------------------------------------
++
+This updates (or creates, as necessary) branches `pu` and `tmp` in
+the local repository by fetching from the branches (respectively)
+`pu` and `maint` from the remote repository.
++
+The `pu` branch will be updated even if it is does not fast-forward,
+because it is prefixed with a plus sign; `tmp` will not be.
+
+
 SEE ALSO
 --------
 linkgit:git-pull[1]
