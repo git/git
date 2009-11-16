@@ -320,6 +320,13 @@ Any other arguments are passed directly to 'git log'
 	directories.  The output is suitable for appending to
 	the $GIT_DIR/info/exclude file.
 
+'mkdirs'::
+	Attempts to recreate empty directories that core git cannot track
+	based on information in $GIT_DIR/svn/<refname>/unhandled.log files.
+	Empty directories are automatically recreated when using
+	"git svn clone" and "git svn rebase", so "mkdirs" is intended
+	for use after commands like "git checkout" or "git reset".
+
 'commit-diff'::
 	Commits the diff of two tree-ish arguments from the
 	command-line.  This command does not rely on being inside an `git svn

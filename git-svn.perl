@@ -168,6 +168,9 @@ my %cmd = (
 			     'Create a .gitignore per svn:ignore',
 			     { 'revision|r=i' => \$_revision
 			     } ],
+	'mkdirs' => [ \&cmd_mkdirs ,
+	              "recreate empty directories after a checkout",
+	              { 'revision|r=i' => \$_revision } ],
         'propget' => [ \&cmd_propget,
 		       'Print the value of a property on a file or directory',
 		       { 'revision|r=i' => \$_revision } ],
@@ -769,6 +772,7 @@ sub cmd_rebase {
 		$_fetch_all ? $gs->fetch_all : $gs->fetch;
 	}
 	command_noisy(rebase_cmd(), $gs->refname);
+	$gs->mkemptydirs;
 }
 
 sub cmd_show_ignore {
@@ -828,6 +832,12 @@ sub cmd_create_ignore {
 		  or fatal("Failed to close `$ignore': $!");
 		command_noisy('add', '-f', $ignore);
 	});
+}
+
+sub cmd_mkdirs {
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	$gs ||= Git::SVN->new;
+	$gs->mkemptydirs($_revision);
 }
 
 sub canonicalize_path {
@@ -1196,6 +1206,7 @@ sub post_fetch_checkout {
 	command_noisy(qw/read-tree -m -u -v HEAD HEAD/);
 	print STDERR "Checked out HEAD:\n  ",
 	             $gs->full_url, " r", $gs->last_rev, "\n";
+	$gs->mkemptydirs($gs->last_rev);
 }
 
 sub complete_svn_url {
@@ -2724,6 +2735,34 @@ sub do_fetch {
 	$self->make_log_entry($rev, \@parents, $ed);
 }
 
+sub mkemptydirs {
+	my ($self, $r) = @_;
+	my %empty_dirs = ();
+
+	open my $fh, '<', "$self->{dir}/unhandled.log" or return;
+	binmode $fh or croak "binmode: $!";
+	while (<$fh>) {
+		if (defined $r && /^r(\d+)$/) {
+			last if $1 > $r;
+		} elsif (/^  \+empty_dir: (.+)$/) {
+			$empty_dirs{$1} = 1;
+		} elsif (/^  \-empty_dir: (.+)$/) {
+			delete $empty_dirs{$1};
+		}
+	}
+	close $fh;
+	foreach my $d (sort keys %empty_dirs) {
+		$d = uri_decode($d);
+		next if -d $d;
+		if (-e _) {
+			warn "$d exists but is not a directory\n";
+		} else {
+			print "creating empty directory: $d\n";
+			mkpath([$d]);
+		}
+	}
+}
+
 sub get_untracked {
 	my ($self, $ed) = @_;
 	my @out;
@@ -3553,6 +3592,12 @@ sub map_path {
 sub uri_encode {
 	my ($f) = @_;
 	$f =~ s#([^a-zA-Z0-9\*!\:_\./\-])#uc sprintf("%%%02x",ord($1))#eg;
+	$f
+}
+
+sub uri_decode {
+	my ($f) = @_;
+	$f =~ s#%([0-9a-fA-F]{2})#chr(hex($1))#eg;
 	$f
 }
 
