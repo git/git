@@ -1,25 +1,13 @@
-ifndef::git-pull[]
--q::
---quiet::
-	Pass --quiet to git-fetch-pack and silence any other internally
-	used git commands.
-
--v::
---verbose::
-	Be verbose.
-endif::git-pull[]
-
 -a::
 --append::
 	Append ref names and object names of fetched refs to the
 	existing contents of `.git/FETCH_HEAD`.  Without this
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
---upload-pack <upload-pack>::
-	When given, and the repository to fetch from is handled
-	by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
-	the command to specify non-default path for the command
-	run on the other end.
+--depth=<depth>::
+	Deepen the history of a 'shallow' repository created by
+	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
+	by the specified number of commits.
 
 -f::
 --force::
@@ -28,6 +16,10 @@ endif::git-pull[]
 	`<lbranch>` unless the remote branch `<rbranch>` it
 	fetches is a descendant of `<lbranch>`.  This option
 	overrides that check.
+
+-k::
+--keep::
+	Keep downloaded pack.
 
 ifdef::git-pull[]
 --no-tags::
@@ -49,10 +41,6 @@ endif::git-pull[]
 	flag lets all tags and their associated objects be
 	downloaded.
 
--k::
---keep::
-	Keep downloaded pack.
-
 -u::
 --update-head-ok::
 	By default 'git-fetch' refuses to update the head which
@@ -62,7 +50,19 @@ endif::git-pull[]
 	implementing your own Porcelain you are not supposed to
 	use it.
 
---depth=<depth>::
-	Deepen the history of a 'shallow' repository created by
-	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
-	by the specified number of commits.
+--upload-pack <upload-pack>::
+	When given, and the repository to fetch from is handled
+	by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
+	the command to specify non-default path for the command
+	run on the other end.
+
+ifndef::git-pull[]
+-q::
+--quiet::
+	Pass --quiet to git-fetch-pack and silence any other internally
+	used git commands.
+
+-v::
+--verbose::
+	Be verbose.
+endif::git-pull[]
