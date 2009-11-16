@@ -63,6 +63,7 @@ struct rev_info {
 			reverse:1,
 			reverse_output_stage:1,
 			cherry_pick:1,
+			bisect:1,
 			first_parent_only:1;
 
 	/* Diff flags */
