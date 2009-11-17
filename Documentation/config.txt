@@ -380,7 +380,8 @@ Common unit suffixes of 'k', 'm', or 'g' are supported.
 core.excludesfile::
 	In addition to '.gitignore' (per-directory) and
 	'.git/info/exclude', git looks into this file for patterns
-	of files which are not meant to be tracked.  See
+	of files which are not meant to be tracked.  "~/" and "~user/"
+	are expanded to the specified user's home directory.  See
 	linkgit:gitignore[5].
 
 core.editor::
@@ -666,6 +667,7 @@ color.ui::
 
 commit.template::
 	Specify a file to use as the template for new commit messages.
+	"~/" and "~user/" are expanded to the specified user's home directory.
 
 diff.autorefreshindex::
 	When using 'git-diff' to compare with work tree
