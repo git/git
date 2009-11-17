@@ -1604,6 +1604,9 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 		} while (ch != '\n' &&
 			 cp < sb->final_buf + sb->final_buf_size);
 	}
+
+	if (sb->final_buf_size && cp[-1] != '\n')
+		putchar('\n');
 }
 
 static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
@@ -1667,6 +1670,9 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 		} while (ch != '\n' &&
 			 cp < sb->final_buf + sb->final_buf_size);
 	}
+
+	if (sb->final_buf_size && cp[-1] != '\n')
+		putchar('\n');
 }
 
 static void output(struct scoreboard *sb, int option)

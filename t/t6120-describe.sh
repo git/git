@@ -125,6 +125,20 @@ test_expect_success 'rename tag Q back to A' '
 test_expect_success 'pack tag refs' 'git pack-refs'
 check_describe A-* HEAD
 
+check_describe "A-*[0-9a-f]" --dirty
+
+test_expect_success 'set-up dirty work tree' '
+	echo >>file
+'
+
+check_describe "A-*[0-9a-f]-dirty" --dirty
+
+check_describe "A-*[0-9a-f].mod" --dirty=.mod
+
+test_expect_success 'describe --dirty HEAD' '
+	test_must_fail git describe --dirty HEAD
+'
+
 test_expect_success 'set-up matching pattern tests' '
 	git tag -a -m test-annotated test-annotated &&
 	echo >>file &&

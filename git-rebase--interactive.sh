@@ -168,7 +168,7 @@ pick_one () {
 		output git reset --hard $sha1
 		test "a$1" = a-n && output git reset --soft $current_sha1
 		sha1=$(git rev-parse --short $sha1)
-		output warn Fast forward to $sha1
+		output warn Fast-forward to $sha1
 	else
 		output git cherry-pick "$@"
 	fi
@@ -248,9 +248,9 @@ pick_one_preserving_merges () {
 	done
 	case $fast_forward in
 	t)
-		output warn "Fast forward to $sha1"
+		output warn "Fast-forward to $sha1"
 		output git reset --hard $sha1 ||
-			die "Cannot fast forward to $sha1"
+			die "Cannot fast-forward to $sha1"
 		;;
 	f)
 		first_parent=$(expr "$new_parents" : ' \([^ ]*\)')

@@ -1806,7 +1806,10 @@ dist: git.spec git-archive$(X) configure
 	gzip -f -9 $(GIT_TARNAME).tar
 
 rpm: dist
-	$(RPMBUILD) -ta $(GIT_TARNAME).tar.gz
+	$(RPMBUILD) \
+		--define "_source_filedigest_algorithm md5" \
+		--define "_binary_filedigest_algorithm md5" \
+		-ta $(GIT_TARNAME).tar.gz
 
 htmldocs = git-htmldocs-$(GIT_VERSION)
 manpages = git-manpages-$(GIT_VERSION)

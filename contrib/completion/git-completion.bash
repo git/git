@@ -953,7 +953,7 @@ _git_diff ()
 }
 
 __git_mergetools_common="diffuse ecmerge emerge kdiff3 meld opendiff
-			tkdiff vimdiff gvimdiff xxdiff araxis
+			tkdiff vimdiff gvimdiff xxdiff araxis p4merge
 "
 
 _git_difftool ()
@@ -1224,7 +1224,7 @@ _git_log ()
 
 __git_merge_options="
 	--no-commit --no-stat --log --no-log --squash --strategy
-	--commit --stat --no-squash --ff --no-ff
+	--commit --stat --no-squash --ff --no-ff --ff-only
 "
 
 _git_merge ()

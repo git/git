@@ -22,7 +22,7 @@ test_expect_success setup '
 	git commit -a -m next
 '
 
-test_expect_success 'non fast forward fetch' '
+test_expect_success 'non-fast-forward fetch' '
 
 	test_must_fail git fetch . master:side
 

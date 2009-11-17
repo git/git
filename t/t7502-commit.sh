@@ -258,4 +258,13 @@ test_expect_success 'Hand committing of a redundant merge removes dups' '
 
 '
 
+test_expect_success 'A single-liner subject with a token plus colon is not a footer' '
+
+	git reset --hard &&
+	git commit -s -m "hello: kitty" --allow-empty &&
+	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
+	test $(wc -l <actual) = 3
+
+'
+
 test_done

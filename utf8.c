@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "strbuf.h"
 #include "utf8.h"
 
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
@@ -279,14 +280,22 @@ int is_utf8(const char *text)
 	return 1;
 }
 
-static void print_spaces(int count)
+static inline void strbuf_write(struct strbuf *sb, const char *buf, int len)
+{
+	if (sb)
+		strbuf_insert(sb, sb->len, buf, len);
+	else
+		fwrite(buf, len, 1, stdout);
+}
+
+static void print_spaces(struct strbuf *buf, int count)
 {
 	static const char s[] = "                    ";
 	while (count >= sizeof(s)) {
-		fwrite(s, sizeof(s) - 1, 1, stdout);
+		strbuf_write(buf, s, sizeof(s) - 1);
 		count -= sizeof(s) - 1;
 	}
-	fwrite(s, count, 1, stdout);
+	strbuf_write(buf, s, count);
 }
 
 /*
@@ -295,10 +304,24 @@ static void print_spaces(int count)
  * If indent is negative, assume that already -indent columns have been
  * consumed (and no extra indent is necessary for the first line).
  */
-int print_wrapped_text(const char *text, int indent, int indent2, int width)
+int strbuf_add_wrapped_text(struct strbuf *buf,
+		const char *text, int indent, int indent2, int width)
 {
 	int w = indent, assume_utf8 = is_utf8(text);
 	const char *bol = text, *space = NULL;
+
+	if (width <= 0) {
+		/* just indent */
+		while (*text) {
+			const char *eol = strchrnul(text, '\n');
+			if (*eol == '\n')
+				eol++;
+			print_spaces(buf, indent);
+			strbuf_write(buf, text, eol-text);
+			text = eol;
+		}
+		return 1;
+	}
 
 	if (indent < 0) {
 		w = -indent;
@@ -310,21 +333,35 @@ int print_wrapped_text(const char *text, int indent, int indent2, int width)
 		if (!c || isspace(c)) {
 			if (w < width || !space) {
 				const char *start = bol;
+				if (!c && text == start)
+					return w;
 				if (space)
 					start = space;
 				else
-					print_spaces(indent);
-				fwrite(start, text - start, 1, stdout);
+					print_spaces(buf, indent);
+				strbuf_write(buf, start, text - start);
 				if (!c)
 					return w;
-				else if (c == '\t')
-					w |= 0x07;
 				space = text;
+				if (c == '\t')
+					w |= 0x07;
+				else if (c == '\n') {
+					space++;
+					if (*space == '\n') {
+						strbuf_write(buf, "\n", 1);
+						goto new_line;
+					}
+					else if (!isalnum(*space))
+						goto new_line;
+					else
+						strbuf_write(buf, " ", 1);
+				}
 				w++;
 				text++;
 			}
 			else {
-				putchar('\n');
+new_line:
+				strbuf_write(buf, "\n", 1);
 				text = bol = space + isspace(*space);
 				space = NULL;
 				w = indent = indent2;
@@ -338,6 +375,11 @@ int print_wrapped_text(const char *text, int indent, int indent2, int width)
 			text++;
 		}
 	}
+}
+
+int print_wrapped_text(const char *text, int indent, int indent2, int width)
+{
+	return strbuf_add_wrapped_text(NULL, text, indent, indent2, width);
 }
 
 int is_encoding_utf8(const char *name)

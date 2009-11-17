@@ -76,10 +76,10 @@ OPTIONS
 	work tree and add them to the index. This gives the user a chance
 	to review the difference before adding modified contents to the
 	index.
-
-	This effectively runs ``add --interactive``, but bypasses the
-	initial command menu and directly jumps to `patch` subcommand.
-	See ``Interactive mode'' for details.
++
+This effectively runs `add --interactive`, but bypasses the
+initial command menu and directly jumps to the `patch` subcommand.
+See ``Interactive mode'' for details.
 
 -e, \--edit::
 	Open the diff vs. the index in an editor and let the user
