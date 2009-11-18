@@ -189,7 +189,7 @@ eval $(date +"monthname=%b month=%m year=%Y date=%d dow=%a")
 lead="whats/cooking/$year/$month"
 issue=$(
 	cd Meta &&
-	git ls-tree -r --name-only HEAD "$lead"  | tail -n 1
+	git ls-files "$lead" | tail -n 1
 )
 if test -n "$issue"
 then
@@ -203,7 +203,7 @@ mkdir -p "Meta/$lead"
 
 last=$(
 	cd Meta &&
-	git ls-tree -r --name-only HEAD "whats/cooking"  | tail -n 1
+	git ls-files "whats/cooking"  | tail -n 1
 )
 
 # We may have a half-written one already.
