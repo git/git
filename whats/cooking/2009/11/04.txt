@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2009, #04; Mon, 16)
-X-master-at: 785c58e5c7b7eaade64621a1ad5090da080c1788
-X-next-at: 5b5a93f7582d21b81a76f70ff8760e431d28fedb
+Subject: What's cooking in git.git (Nov 2009, #04; Tue, 17)
+X-master-at: e36e6c00cd60130f8792319a5aa0f56d2da68e14
+X-next-at: 11067eb355ca45876c3b9ea258b494823a3a78d1
 
-What's cooking in git.git (Nov 2009, #04; Mon, 16)
+What's cooking in git.git (Nov 2009, #04; Tue, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -106,10 +106,33 @@ to 'master' and wait for anybody to scream if there is breakage.
 * tz/maint-rpm (2009-11-11) 1 commit.
  + Makefile: Ensure rpm packages can be read by older rpm versions
 
+* np/maint-sideband-favor-status (2009-11-11) 1 commit.
+  (merged to 'next' on 2009-11-15 at 3ecd874)
+ + give priority to progress messages
+
+* sb/tutorial-test (2009-11-06) 4 commits
+  (merged to 'next' on 2009-11-15 at 5c82651)
+ + t1200: prepare for merging with Fast-forward bikeshedding
+ + t1200: further modernize test script style
+ + t1200: Make documentation and test agree
+ + t1200: cleanup and modernize test style
+
+* ef/msys-imap (2009-10-22) 9 commits.
+  (merged to 'next' on 2009-10-31 at 8630603)
+ + Windows: use BLK_SHA1 again
+ + MSVC: Enable OpenSSL, and translate -lcrypto
+ + mingw: enable OpenSSL
+ + mingw: wrap SSL_set_(w|r)fd to call _get_osfhandle
+ + imap-send: build imap-send on Windows
+ + imap-send: fix compilation-error on Windows
+ + imap-send: use run-command API for tunneling
+ + imap-send: use separate read and write fds
+ + imap-send: remove useless uid code
+
 --------------------------------------------------
 [New Topics]
 
-* jn/faster-completion-startup (2009-11-15) 1 commit.
+* jn/faster-completion-startup (2009-11-17) 1 commit.
  - Speed up bash completion loading
 
 * th/maint-remote-update-help-string (2009-11-15) 1 commit.
@@ -117,8 +140,9 @@ to 'master' and wait for anybody to scream if there is breakage.
 
 * tr/maint-merge-ours-clarification (2009-11-15) 3 commits.
  - rebase: refuse to rebase with -s ours
- - rebase docs: clarify --merge and --strategy
- - Documentation: clarify 'ours' merge strategy
+  (merged to 'next' on 2009-11-17 at 3291125)
+ + rebase docs: clarify --merge and --strategy
+ + Documentation: clarify 'ours' merge strategy
 
 * tc/format-attribute (2009-11-14) 1 commit
  - Check the format of more printf-type functions
@@ -129,20 +153,23 @@ to 'master' and wait for anybody to scream if there is breakage.
  + diffcore-break: free filespec data as we go
 
 * bc/grep-i-F (2009-11-06) 1 commit.
- - grep: Allow case insensitive search of fixed-strings
+  (merged to 'next' on 2009-11-17 at a9b138c)
+ + grep: Allow case insensitive search of fixed-strings
 
-* mm/config-pathname-tilde-expand (2009-11-16) 2 commits.
- - Squash as a fix-up
- - Expand ~ and ~user in core.excludesfile, commit.template
+* mm/config-pathname-tilde-expand (2009-11-17) 1 commit.
+  (merged to 'next' on 2009-11-17 at 7ba213d)
+ + Expand ~ and ~user in core.excludesfile, commit.template
 
 * pb/maint-use-custom-perl (2009-11-17) 1 commit.
- - Make sure $PERL_PATH is defined when the test suite is run.
+  (merged to 'next' on 2009-11-17 at 1ee8d46)
+ + Make sure $PERL_PATH is defined when the test suite is run.
 
 * th/remote-usage (2009-11-16) 1 commit.
  - git remote: Separate usage strings for subcommands
 
 * mo/maint-crlf-doc (2009-11-14) 1 commit.
- - core.autocrlf documentation: mention the crlf attribute
+  (merged to 'next' on 2009-11-17 at abd9133)
+ + core.autocrlf documentation: mention the crlf attribute
 
 --------------------------------------------------
 [Stalled]
@@ -234,28 +261,38 @@ says "no"?)
 --------------------------------------------------
 [Cooking]
 
+* jp/fetch-cull-many-refs (2009-11-13) 3 commits
+  (merged to 'next' on 2009-11-15 at db0f967)
+ + remote: fix use-after-free error detected by glibc in ref_remove_duplicates
+  (merged to 'next' on 2009-11-01 at 1f09ce9)
+ + fetch: Speed up fetch of large numbers of refs
+ + remote: Make ref_remove_duplicates faster for large numbers of refs
+
+Soon in 'master'.
+
 * jn/help-everywhere (2009-11-09) 21 commits
- - diff --no-index: make the usage string less scary
- - merge-{recursive,subtree}: use usagef() to print usage
- - Introduce usagef() that takes a printf-style format
- - Let 'git <command> -h' show usage without a git dir
- - Show usage string for 'git http-push -h'
- - Let 'git http-fetch -h' show usage outside any git repository
- - Show usage string for 'git stripspace -h'
- - Show usage string for 'git unpack-file -h'
- - Show usage string for 'git show-index -h'
- - Show usage string for 'git rev-parse -h'
- - Show usage string for 'git merge-one-file -h'
- - Show usage string for 'git mailsplit -h'
- - Show usage string for 'git imap-send -h'
- - Show usage string for 'git get-tar-commit-id -h'
- - Show usage string for 'git fast-import -h'
- - Show usage string for 'git check-ref-format -h'
- - Show usage string for 'git show-ref -h'
- - Show usage string for 'git merge-ours -h'
- - Show usage string for 'git commit-tree -h'
- - Show usage string for 'git cherry -h'
- - Show usage string for 'git grep -h'
+  (merged to 'next' on 2009-11-17 at 3a2dffe)
+ + diff --no-index: make the usage string less scary
+ + merge-{recursive,subtree}: use usagef() to print usage
+ + Introduce usagef() that takes a printf-style format
+ + Let 'git <command> -h' show usage without a git dir
+ + Show usage string for 'git http-push -h'
+ + Let 'git http-fetch -h' show usage outside any git repository
+ + Show usage string for 'git stripspace -h'
+ + Show usage string for 'git unpack-file -h'
+ + Show usage string for 'git show-index -h'
+ + Show usage string for 'git rev-parse -h'
+ + Show usage string for 'git merge-one-file -h'
+ + Show usage string for 'git mailsplit -h'
+ + Show usage string for 'git imap-send -h'
+ + Show usage string for 'git get-tar-commit-id -h'
+ + Show usage string for 'git fast-import -h'
+ + Show usage string for 'git check-ref-format -h'
+ + Show usage string for 'git show-ref -h'
+ + Show usage string for 'git merge-ours -h'
+ + Show usage string for 'git commit-tree -h'
+ + Show usage string for 'git cherry -h'
+ + Show usage string for 'git grep -h'
  (this branch uses jn/maint-http-fetch-mingw and jn/remove-fetch--tool.)
 
 There were unrelated but still worthy fixes, so I reordered some of them;
@@ -263,17 +300,17 @@ also the "usage()" change is different from the one that was posted (see
 my comment in $gmane/132592).
 
 * jn/maint-http-fetch-mingw (2009-11-09) 1 commit.
- - http-fetch: add missing initialization of argv0_path
+  (merged to 'next' on 2009-11-17 at cd35125)
+ + http-fetch: add missing initialization of argv0_path
  (this branch is used by jn/help-everywhere.)
 
 * jn/remove-fetch--tool (2009-11-09) 1 commit
- - Retire fetch--tool helper to contrib/examples
+  (merged to 'next' on 2009-11-17 at 72f6c3b)
+ + Retire fetch--tool helper to contrib/examples
  (this branch is used by jn/help-everywhere.)
 
 These two were originally part of the "help-everywhere" topic but
 they can stand on their own.
-
-All of the above should be ready for 'next'.
 
 * jc/log-stdin (2009-11-03) 1 commit
  - Teach --stdin option to "log" family
@@ -282,37 +319,28 @@ This is not signed-off (see $gmane/131971 for list of things you can do to
 help advancing this topic).
 
 * jn/gitweb-log-history (2009-11-13) 3 commits
- - gitweb: Make 'history' view (re)use git_log_generic()
- - gitweb: Refactor common parts of 'log' and 'shortlog' views
- - gitweb: Refactor 'log' action generation, adding git_log_body()
-
-Soon in 'next'
+  (merged to 'next' on 2009-11-17 at d225f7d)
+ + gitweb: Make 'history' view (re)use git_log_generic()
+ + gitweb: Refactor common parts of 'log' and 'shortlog' views
+ + gitweb: Refactor 'log' action generation, adding git_log_body()
 
 * jn/rfc-pull-rebase-error-message (2009-11-12) 1 commit
  - git-pull.sh --rebase: overhaul error handling when no candidates are found
 
 I heard this needs at least retitling among other changes?
 
-* np/maint-sideband-favor-status (2009-11-11) 1 commit.
-  (merged to 'next' on 2009-11-15 at 3ecd874)
- + give priority to progress messages
-
-Soon in 'master'.
-
-* rg/doc-workflow (2009-11-15) 3 commits.
+* rg/doc-workflow (2009-11-17) 4 commits.
+ - [Further RFC updates from Raman]
  - [An RFC fix-up to further reword release section]
  - Corrections to release management section in gitworkflows.txt
  - Add branch management for releases to gitworkflows
 
-Thomas's further rewording is added to the top but its log message needs
-rewriting and the text might need further restructuring.
+The top three patches are meant to be squashed into the first one.
 
 * sb/ls-tree-parseopt (2009-11-13) 2 commits.
- - ls-tree: migrate to parse-options
- - t3101: test more ls-tree options
-
-Looked fine but the test needs to be updated.  --abbrev=5 does not
-guarantee that output is always 5 hexdigits long.
+  (merged to 'next' on 2009-11-17 at c383204)
+ + ls-tree: migrate to parse-options
+ + t3101: test more ls-tree options
 
 * jl/submodule-add-noname (2009-09-22) 1 commit.
   (merged to 'next' on 2009-11-15 at 3a77d01)
@@ -343,14 +371,13 @@ I just picked better bits from both versions, but this needs to be
 rethought.
 
 * bg/format-patch-doc-update (2009-11-07) 4 commits.
- - format-patch: Add "--no-stat" as a synonym for "-p"
- - format-patch documentation: Fix formatting
- - format-patch documentation: Remove diff options that are not useful
- - format-patch: Always generate a patch
+  (merged to 'next' on 2009-11-17 at 68b9056)
+ + format-patch: Add "--no-stat" as a synonym for "-p"
+ + format-patch documentation: Fix formatting
+ + format-patch documentation: Remove diff options that are not useful
+ + format-patch: Always generate a patch
 
-Looked sensible, even though this may want to wait for 1.7.0.  We'll see
-when we merge this to 'next'.  I tweaked the --no-stat patch with noneg
-bit; please check for sanity.
+Looked sensible, even though this may want to wait for 1.7.0.  We'll see.
 
 * rj/maint-simplify-cygwin-makefile (2009-10-27) 1 commit.
  - Makefile: merge two Cygwin configuration sections into one
@@ -375,13 +402,6 @@ using MSVC fails" topic.
 
 Any comments?  Should it go to Documentation/technical instead?
 
-* sb/tutorial-test (2009-11-06) 4 commits
-  (merged to 'next' on 2009-11-15 at 5c82651)
- + t1200: prepare for merging with Fast-forward bikeshedding
- + t1200: further modernize test script style
- + t1200: Make documentation and test agree
- + t1200: cleanup and modernize test style
-
 * jn/editor-pager (2009-10-30) 9 commits
   (merged to 'next' on 2009-11-15 at 7f3e3ae)
  + Provide a build time default-pager setting
@@ -401,11 +421,11 @@ Any comments?  Should it go to Documentation/technical instead?
 
 This will follow jn/editor-pager series.
 
-* sr/vcs-helper (2009-11-06) 12 commits
+* sr/vcs-helper (2009-11-18) 12 commits
  - Add Python support library for remote helpers
  - Basic build infrastructure for Python scripts
- - Allow helpers to request the path to the .git directory
  - Allow helpers to report in "list" command that the ref is unchanged
+ - Fix various memory leaks in transport-helper.c
  - Allow helper to map private ref names into normal names
  - Add support for "import" helper command
  - Allow specifying the remote helper in the url
@@ -415,8 +435,7 @@ This will follow jn/editor-pager series.
  - Allow programs to not depend on remotes having urls
  - Fix memory leak in helper method for disconnect
 
-Re-rolled series that contains Daniel's and Johan's.
-Any comments?  Is everybody happy?
+Replaced again.
 
 * mr/gitweb-snapshot (2009-11-07) 4 commits.
  - gitweb: Smarter snapshot names
@@ -426,15 +445,6 @@ Any comments?  Is everybody happy?
  + gitweb: check given hash before trying to create snapshot
 
 Replaced commits near the tip with recent updates.
-
-* jp/fetch-cull-many-refs (2009-11-13) 3 commits
-  (merged to 'next' on 2009-11-15 at db0f967)
- + remote: fix use-after-free error detected by glibc in ref_remove_duplicates
-  (merged to 'next' on 2009-11-01 at 1f09ce9)
- + fetch: Speed up fetch of large numbers of refs
- + remote: Make ref_remove_duplicates faster for large numbers of refs
-
-Soon in 'master'.
 
 * jc/pretty-lf (2009-10-04) 1 commit.
  - Pretty-format: %[+-]x to tweak inter-item newlines
@@ -453,8 +463,9 @@ Reverted out of 'next', to be replaced with jn/faster-completion-startup
 topic.
 
 * sp/smart-http (2009-11-14) 37 commits
- - http-backend: Let gcc check the format of more printf-type functions.
- - http-backend: Fix access beyond end of string.
+  (merged to 'next' on 2009-11-17 at 11067eb)
+ + http-backend: Let gcc check the format of more printf-type functions.
+ + http-backend: Fix access beyond end of string.
   (merged to 'next' on 2009-11-15 at 2a326b2)
  + http-backend: Fix bad treatment of uintmax_t in Content-Length
  + t5551-http-fetch: Work around broken Accept header in libcurl
@@ -492,21 +503,6 @@ topic.
  + pkt-line: Make packet_read_line easier to debug
  + pkt-line: Add strbuf based functions
  + http-push: fix check condition on http.c::finish_http_pack_request()
-
-* ef/msys-imap (2009-10-22) 9 commits.
-  (merged to 'next' on 2009-10-31 at 8630603)
- + Windows: use BLK_SHA1 again
- + MSVC: Enable OpenSSL, and translate -lcrypto
- + mingw: enable OpenSSL
- + mingw: wrap SSL_set_(w|r)fd to call _get_osfhandle
- + imap-send: build imap-send on Windows
- + imap-send: fix compilation-error on Windows
- + imap-send: use run-command API for tunneling
- + imap-send: use separate read and write fds
- + imap-send: remove useless uid code
-
-Soon in 'master', unless I hear objections from msys folks or imap-send
-users.
 
 * nd/sparse (2009-08-20) 19 commits.
  - sparse checkout: inhibit empty worktree
