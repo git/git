@@ -74,6 +74,7 @@ static struct child_process *get_helper(struct transport *transport)
 		}
 		free(refspecs);
 	}
+	strbuf_release(&buf);
 	return data->helper;
 }
 
@@ -163,6 +164,8 @@ static int fetch_with_import(struct transport *transport,
 	}
 	disconnect_helper(transport);
 	finish_command(&fastimport);
+	free(fastimport.argv);
+	fastimport.argv = NULL;
 
 	for (i = 0; i < nr_heads; i++) {
 		char *private;
@@ -176,6 +179,7 @@ static int fetch_with_import(struct transport *transport,
 		read_ref(private, posn->old_sha1);
 		free(private);
 	}
+	strbuf_release(&buf);
 	return 0;
 }
 
