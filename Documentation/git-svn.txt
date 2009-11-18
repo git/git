@@ -320,6 +320,13 @@ Any other arguments are passed directly to 'git log'
 	directories.  The output is suitable for appending to
 	the $GIT_DIR/info/exclude file.
 
+'mkdirs'::
+	Attempts to recreate empty directories that core git cannot track
+	based on information in $GIT_DIR/svn/<refname>/unhandled.log files.
+	Empty directories are automatically recreated when using
+	"git svn clone" and "git svn rebase", so "mkdirs" is intended
+	for use after commands like "git checkout" or "git reset".
+
 'commit-diff'::
 	Commits the diff of two tree-ish arguments from the
 	command-line.  This command does not rely on being inside an `git svn
@@ -734,6 +741,16 @@ reasonable or useful fashion; so users using Subversion cannot see any
 merges you've made.  Furthermore, if you merge or pull from a git branch
 that is a mirror of an SVN branch, 'dcommit' may commit to the wrong
 branch.
+
+If you do merge, note the following rule: 'git svn dcommit' will
+attempt to commit on top of the SVN commit named in
+------------------------------------------------------------------------
+git log --grep=^git-svn-id: --first-parent -1
+------------------------------------------------------------------------
+You 'must' therefore ensure that the most recent commit of the branch
+you want to dcommit to is the 'first' parent of the merge.  Chaos will
+ensue otherwise, especially if the first parent is an older commit on
+the same SVN branch.
 
 'git clone' does not clone branches under the refs/remotes/ hierarchy or
 any 'git svn' metadata, or config.  So repositories created and managed with

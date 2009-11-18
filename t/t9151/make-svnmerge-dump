@@ -28,6 +28,10 @@ svn cp trunk branches/left
 
 echo "Committing BRANCH POINT"
 svn commit -m "make left branch"
+svn cp trunk branches/right
+
+echo "Committing other BRANCH POINT"
+svn commit -m "make right branch"
 cd branches/left/
 
 #$sm init
@@ -64,7 +68,33 @@ git cat-file blob b51ad431:Makefile > Makefile
 
 svn resolved Makefile
 
-svn commit -m "Merge trunk"
+svn commit -m "Merge trunk 1"
+
+# create commits on both branches
+
+cd ../branches/left
+git cat-file blob ff5ebe39:Makefile > Makefile
+echo "Committing BRANCH UPDATE 4"
+svn commit -m "left update 4"
+
+cd ../right
+git cat-file blob b5039db6:Makefile > Makefile
+echo "Committing other BRANCH UPDATE 1"
+svn commit -m "right update 1"
+
+# merge to trun again
+
+cd ../..
+svn update
+cd trunk
+
+svn merge ../branches/left --accept postpone
+
+git cat-file blob b51ad431:Makefile > Makefile
+
+svn resolved Makefile
+
+svn commit -m "Merge trunk 2"
 
 cd ../..
 

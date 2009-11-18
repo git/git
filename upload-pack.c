@@ -308,6 +308,23 @@ static void create_pack_file(void)
 			}
 			continue;
 		}
+		if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
+			/* Status ready; we ship that in the side-band
+			 * or dump to the standard error.
+			 */
+			sz = xread(pack_objects.err, progress,
+				  sizeof(progress));
+			if (0 < sz)
+				send_client_data(2, progress, sz);
+			else if (sz == 0) {
+				close(pack_objects.err);
+				pack_objects.err = -1;
+			}
+			else
+				goto fail;
+			/* give priority to status messages */
+			continue;
+		}
 		if (0 <= pu && (pfd[pu].revents & (POLLIN|POLLHUP))) {
 			/* Data ready; we keep the last byte to ourselves
 			 * in case we detect broken rev-list, so that we
@@ -343,21 +360,6 @@ static void create_pack_file(void)
 				buffered = -1;
 			sz = send_client_data(1, data, sz);
 			if (sz < 0)
-				goto fail;
-		}
-		if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
-			/* Status ready; we ship that in the side-band
-			 * or dump to the standard error.
-			 */
-			sz = xread(pack_objects.err, progress,
-				  sizeof(progress));
-			if (0 < sz)
-				send_client_data(2, progress, sz);
-			else if (sz == 0) {
-				close(pack_objects.err);
-				pack_objects.err = -1;
-			}
-			else
 				goto fail;
 		}
 	}
