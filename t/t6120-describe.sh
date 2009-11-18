@@ -92,12 +92,18 @@ check_describe A-* HEAD^
 check_describe D-* HEAD^^
 check_describe A-* HEAD^^2
 check_describe B HEAD^^2^
+check_describe D-* HEAD^^^
 
 check_describe c-* --tags HEAD
 check_describe c-* --tags HEAD^
 check_describe e-* --tags HEAD^^
 check_describe c-* --tags HEAD^^2
 check_describe B --tags HEAD^^2^
+check_describe e --tags HEAD^^^
+
+check_describe heads/master --all HEAD
+check_describe tags/c-* --all HEAD^
+check_describe tags/e --all HEAD^^^
 
 check_describe B-0-* --long HEAD^^2^
 check_describe A-3-* --long HEAD^^2
