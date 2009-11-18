@@ -43,6 +43,13 @@ Commands are given by the caller on the helper's standard input, one per line.
 +
 Supported if the helper has the "fetch" capability.
 
+'import' <name>::
+	Produces a fast-import stream which imports the current value
+	of the named ref. It may additionally import other refs as
+	needed to construct the history efficiently.
++
+Supported if the helper has the "import" capability.
+
 If a fatal error occurs, the program writes the error message to
 stderr and exits. The caller should expect that a suitable error
 message has been printed if the child closes the connection without
@@ -56,6 +63,9 @@ CAPABILITIES
 
 'fetch'::
 	This helper supports the 'fetch' command.
+
+'import'::
+	This helper supports the 'import' command.
 
 REF LIST ATTRIBUTES
 -------------------
