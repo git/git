@@ -673,6 +673,16 @@ static struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
 	return parse_refspec_internal(nr_refspec, refspec, 0, 0);
 }
 
+void free_refspec(int nr_refspec, struct refspec *refspec)
+{
+	int i;
+	for (i = 0; i < nr_refspec; i++) {
+		free(refspec[i].src);
+		free(refspec[i].dst);
+	}
+	free(refspec);
+}
+
 static int valid_remote_nick(const char *name)
 {
 	if (!name[0] || is_dot_or_dotdot(name))
@@ -809,6 +819,23 @@ static int match_name_with_pattern(const char *key, const char *name,
 		       vstar + 1);
 	}
 	return ret;
+}
+
+char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
+		     const char *name)
+{
+	int i;
+	char *ret = NULL;
+	for (i = 0; i < nr_refspec; i++) {
+		struct refspec *refspec = refspecs + i;
+		if (refspec->pattern) {
+			if (match_name_with_pattern(refspec->src, name,
+						    refspec->dst, &ret))
+				return ret;
+		} else if (!strcmp(refspec->src, name))
+			return strdup(refspec->dst);
+	}
+	return NULL;
 }
 
 int remote_find_tracking(struct remote *remote, struct refspec *refspec)

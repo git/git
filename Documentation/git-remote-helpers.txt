@@ -46,7 +46,11 @@ Supported if the helper has the "fetch" capability.
 'import' <name>::
 	Produces a fast-import stream which imports the current value
 	of the named ref. It may additionally import other refs as
-	needed to construct the history efficiently.
+	needed to construct the history efficiently. The script writes
+	to a helper-specific private namespace. The value of the named
+	ref should be written to a location in this namespace derived
+	by applying the refspecs from the "refspec" capability to the
+	name of the ref.
 +
 Supported if the helper has the "import" capability.
 
@@ -66,6 +70,16 @@ CAPABILITIES
 
 'import'::
 	This helper supports the 'import' command.
+
+'refspec' 'spec'::
+	When using the import command, expect the source ref to have
+	been written to the destination ref. The earliest applicable
+	refspec takes precedence. For example
+	"refs/heads/*:refs/svn/origin/branches/*" means that, after an
+	"import refs/heads/name", the script has written to
+	refs/svn/origin/branches/name. If this capability is used at
+	all, it must cover all refs reported by the list command; if
+	it is not used, it is effectively "*:*"
 
 REF LIST ATTRIBUTES
 -------------------

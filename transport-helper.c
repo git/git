@@ -5,6 +5,7 @@
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
+#include "remote.h"
 
 struct helper_data
 {
@@ -12,6 +13,9 @@ struct helper_data
 	struct child_process *helper;
 	unsigned fetch : 1;
 	unsigned import : 1;
+	/* These go from remote name (as in "list") to private name */
+	struct refspec *refspecs;
+	int refspec_nr;
 };
 
 static struct child_process *get_helper(struct transport *transport)
@@ -20,6 +24,9 @@ static struct child_process *get_helper(struct transport *transport)
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process *helper;
 	FILE *file;
+	const char **refspecs = NULL;
+	int refspec_nr = 0;
+	int refspec_alloc = 0;
 
 	if (data->helper)
 		return data->helper;
@@ -51,6 +58,21 @@ static struct child_process *get_helper(struct transport *transport)
 			data->fetch = 1;
 		if (!strcmp(buf.buf, "import"))
 			data->import = 1;
+		if (!data->refspecs && !prefixcmp(buf.buf, "refspec ")) {
+			ALLOC_GROW(refspecs,
+				   refspec_nr + 1,
+				   refspec_alloc);
+			refspecs[refspec_nr++] = strdup(buf.buf + strlen("refspec "));
+		}
+	}
+	if (refspecs) {
+		int i;
+		data->refspec_nr = refspec_nr;
+		data->refspecs = parse_fetch_refspec(refspec_nr, refspecs);
+		for (i = 0; i < refspec_nr; i++) {
+			free((char *)refspecs[i]);
+		}
+		free(refspecs);
 	}
 	return data->helper;
 }
@@ -72,6 +94,9 @@ static int disconnect_helper(struct transport *transport)
 
 static int release_helper(struct transport *transport)
 {
+	struct helper_data *data = transport->data;
+	free_refspec(data->refspec_nr, data->refspecs);
+	data->refspecs = NULL;
 	disconnect_helper(transport);
 	free(transport->data);
 	return 0;
@@ -119,6 +144,7 @@ static int fetch_with_import(struct transport *transport,
 {
 	struct child_process fastimport;
 	struct child_process *helper = get_helper(transport);
+	struct helper_data *data = transport->data;
 	int i;
 	struct ref *posn;
 	struct strbuf buf = STRBUF_INIT;
@@ -139,10 +165,16 @@ static int fetch_with_import(struct transport *transport,
 	finish_command(&fastimport);
 
 	for (i = 0; i < nr_heads; i++) {
+		char *private;
 		posn = to_fetch[i];
 		if (posn->status & REF_STATUS_UPTODATE)
 			continue;
-		read_ref(posn->name, posn->old_sha1);
+		if (data->refspecs)
+			private = apply_refspecs(data->refspecs, data->refspec_nr, posn->name);
+		else
+			private = strdup(posn->name);
+		read_ref(private, posn->old_sha1);
+		free(private);
 	}
 	return 0;
 }
