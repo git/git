@@ -67,6 +67,13 @@ static int disconnect_helper(struct transport *transport)
 	return 0;
 }
 
+static int release_helper(struct transport *transport)
+{
+	disconnect_helper(transport);
+	free(transport->data);
+	return 0;
+}
+
 static int fetch_with_fetch(struct transport *transport,
 			    int nr_heads, const struct ref **to_fetch)
 {
@@ -163,6 +170,6 @@ int transport_helper_init(struct transport *transport, const char *name)
 	transport->data = data;
 	transport->get_refs_list = get_refs_list;
 	transport->fetch = fetch;
-	transport->disconnect = disconnect_helper;
+	transport->disconnect = release_helper;
 	return 0;
 }
