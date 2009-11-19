@@ -566,8 +566,11 @@ function handleLine(commit, group) {
 			if (group.numlines >= 2) {
 				var fragment = document.createDocumentFragment();
 				var br   = document.createElement("br");
-				var text = document.createTextNode(
-					commit.author.match(/\b([A-Z])\B/g).join(''));
+				var match = commit.author.match(/\b([A-Z])\B/g);
+				if (match) {
+					var text = document.createTextNode(
+							match.join(''));
+				}
 				if (br && text) {
 					var elem = fragment || td_sha1;
 					elem.appendChild(br);
