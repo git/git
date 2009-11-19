@@ -235,10 +235,15 @@ char *expand_user_path(const char *path)
 	if (path[0] == '~') {
 		const char *username = path + 1;
 		size_t username_len = first_slash - username;
-		struct passwd *pw = getpw_str(username, username_len);
-		if (!pw)
-			goto return_null;
-		strbuf_add(&user_path, pw->pw_dir, strlen(pw->pw_dir));
+		if (username_len == 0) {
+			const char *home = getenv("HOME");
+			strbuf_add(&user_path, home, strlen(home));
+		} else {
+			struct passwd *pw = getpw_str(username, username_len);
+			if (!pw)
+				goto return_null;
+			strbuf_add(&user_path, pw->pw_dir, strlen(pw->pw_dir));
+		}
 		to_copy = first_slash;
 	}
 	strbuf_add(&user_path, to_copy, strlen(to_copy));
