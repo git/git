@@ -1230,6 +1230,7 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def)
 {
 	int i, flags, left, seen_dashdash, read_from_stdin;
+	const char **prune_data = NULL;
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
@@ -1240,7 +1241,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		argv[i] = NULL;
 		argc = i;
 		if (argv[i + 1])
-			revs->prune_data = get_pathspec(revs->prefix, argv + i + 1);
+			prune_data = argv + i + 1;
 		seen_dashdash = 1;
 		break;
 	}
@@ -1321,11 +1322,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			for (j = i; j < argc; j++)
 				verify_filename(revs->prefix, argv[j]);
 
-			revs->prune_data = get_pathspec(revs->prefix,
-							argv + i);
+			prune_data = argv + i;
 			break;
 		}
 	}
+
+	if (prune_data)
+		revs->prune_data = get_pathspec(revs->prefix, prune_data);
 
 	if (revs->def == NULL)
 		revs->def = def;
