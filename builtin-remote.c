@@ -12,10 +12,45 @@ static const char * const builtin_remote_usage[] = {
 	"git remote add [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>",
 	"git remote rename <old> <new>",
 	"git remote rm <name>",
-	"git remote set-head <name> [-a | -d | <branch>]",
-	"git remote show [-n] <name>",
+	"git remote set-head <name> (-a | -d | <branch>)",
+	"git remote [-v | --verbose] show [-n] <name>",
 	"git remote prune [-n | --dry-run] <name>",
 	"git remote [-v | --verbose] update [-p | --prune] [group]",
+	NULL
+};
+
+static const char * const builtin_remote_add_usage[] = {
+	"git remote add [<options>] <name> <url>",
+	NULL
+};
+
+static const char * const builtin_remote_rename_usage[] = {
+	"git remote rename <old> <new>",
+	NULL
+};
+
+static const char * const builtin_remote_rm_usage[] = {
+	"git remote rm <name>",
+	NULL
+};
+
+static const char * const builtin_remote_sethead_usage[] = {
+	"git remote set-head <name> (-a | -d | <branch>])",
+	NULL
+};
+
+static const char * const builtin_remote_show_usage[] = {
+	"git remote show [<options>] <name>",
+	NULL
+};
+
+static const char * const builtin_remote_prune_usage[] = {
+	"git remote prune [<options>] <name>",
+	NULL
+};
+
+static const char * const builtin_remote_update_usage[] = {
+	"git remote update [<options>] [<group> | <remote>]...",
 	NULL
 };
 
@@ -70,7 +105,6 @@ static int add(int argc, const char **argv)
 	int i;
 
 	struct option options[] = {
-		OPT_GROUP("add specific options"),
 		OPT_BOOLEAN('f', "fetch", &fetch, "fetch the remote branches"),
 		OPT_CALLBACK('t', "track", &track, "branch",
 			"branch(es) to track", opt_parse_track),
@@ -79,11 +113,11 @@ static int add(int argc, const char **argv)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_add_usage,
 			     0);
 
 	if (argc < 2)
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_add_usage, options);
 
 	name = argv[0];
 	url = argv[1];
@@ -540,7 +574,7 @@ static int mv(int argc, const char **argv)
 	int i;
 
 	if (argc != 3)
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_rename_usage, options);
 
 	rename.old = argv[1];
 	rename.new = argv[2];
@@ -681,7 +715,7 @@ static int rm(int argc, const char **argv)
 	int i, result;
 
 	if (argc != 2)
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_rm_usage, options);
 
 	remote = remote_get(argv[1]);
 	if (!remote)
@@ -976,7 +1010,6 @@ static int show(int argc, const char **argv)
 {
 	int no_query = 0, result = 0, query_flag = 0;
 	struct option options[] = {
-		OPT_GROUP("show specific options"),
 		OPT_BOOLEAN('n', NULL, &no_query, "do not query remotes"),
 		OPT_END()
 	};
@@ -984,7 +1017,7 @@ static int show(int argc, const char **argv)
 	struct string_list info_list = { NULL, 0, 0, 0 };
 	struct show_info info;
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_show_usage,
 			     0);
 
 	if (argc < 1)
@@ -1081,14 +1114,13 @@ static int set_head(int argc, const char **argv)
 	char *head_name = NULL;
 
 	struct option options[] = {
-		OPT_GROUP("set-head specific options"),
 		OPT_BOOLEAN('a', "auto", &opt_a,
 			    "set refs/remotes/<name>/HEAD according to remote"),
 		OPT_BOOLEAN('d', "delete", &opt_d,
 			    "delete refs/remotes/<name>/HEAD"),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_sethead_usage,
 			     0);
 	if (argc)
 		strbuf_addf(&buf, "refs/remotes/%s/HEAD", argv[0]);
@@ -1114,7 +1146,7 @@ static int set_head(int argc, const char **argv)
 		if (delete_ref(buf.buf, NULL, REF_NODEREF))
 			result |= error("Could not delete %s", buf.buf);
 	} else
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_sethead_usage, options);
 
 	if (head_name) {
 		unsigned char sha1[20];
@@ -1138,16 +1170,15 @@ static int prune(int argc, const char **argv)
 {
 	int dry_run = 0, result = 0;
 	struct option options[] = {
-		OPT_GROUP("prune specific options"),
 		OPT__DRY_RUN(&dry_run),
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_prune_usage,
 			     0);
 
 	if (argc < 1)
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_prune_usage, options);
 
 	for (; argc; argc--, argv++)
 		result |= prune_remote(*argv, dry_run);
@@ -1228,13 +1259,12 @@ static int update(int argc, const char **argv)
 	struct string_list list = { NULL, 0, 0, 0 };
 	static const char *default_argv[] = { NULL, "default", NULL };
 	struct option options[] = {
-		OPT_GROUP("update specific options"),
 		OPT_BOOLEAN('p', "prune", &prune,
 			    "prune remotes after fetching"),
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_update_usage,
 			     PARSE_OPT_KEEP_ARGV0);
 	if (argc < 2) {
 		argc = 2;
@@ -1334,7 +1364,7 @@ static int show_all(void)
 int cmd_remote(int argc, const char **argv, const char *prefix)
 {
 	struct option options[] = {
-		OPT__VERBOSE(&verbose),
+		OPT_BOOLEAN('v', "verbose", &verbose, "be verbose; must be placed before a subcommand"),
 		OPT_END()
 	};
 	int result;
