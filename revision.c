@@ -953,9 +953,38 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 	return 0;
 }
 
-static void read_revisions_from_stdin(struct rev_info *revs)
+static void read_pathspec_from_stdin(struct rev_info *revs, struct strbuf *sb, const char ***prune_data)
+{
+	const char **prune = *prune_data;
+	int prune_nr;
+	int prune_alloc;
+
+	/* count existing ones */
+	if (!prune)
+		prune_nr = 0;
+	else
+		for (prune_nr = 0; prune[prune_nr]; prune_nr++)
+			;
+	prune_alloc = prune_nr; /* not really, but we do not know */
+
+	while (strbuf_getwholeline(sb, stdin, '\n') != EOF) {
+		int len = sb->len;
+		if (len && sb->buf[len - 1] == '\n')
+			sb->buf[--len] = '\0';
+		ALLOC_GROW(prune, prune_nr+1, prune_alloc);
+		prune[prune_nr++] = xstrdup(sb->buf);
+	}
+	if (prune) {
+		ALLOC_GROW(prune, prune_nr+1, prune_alloc);
+		prune[prune_nr] = NULL;
+	}
+	*prune_data = prune;
+}
+
+static void read_revisions_from_stdin(struct rev_info *revs, const char ***prune)
 {
 	struct strbuf sb;
+	int seen_dashdash = 0;
 
 	strbuf_init(&sb, 1000);
 	while (strbuf_getwholeline(&sb, stdin, '\n') != EOF) {
@@ -964,11 +993,18 @@ static void read_revisions_from_stdin(struct rev_info *revs)
 			sb.buf[--len] = '\0';
 		if (!len)
 			break;
-		if (sb.buf[0] == '-')
+		if (sb.buf[0] == '-') {
+			if (len == 2 && sb.buf[1] == '-') {
+				seen_dashdash = 1;
+				break;
+			}
 			die("options not supported in --stdin mode");
+		}
 		if (handle_revision_arg(sb.buf, revs, 0, 1))
 			die("bad revision '%s'", sb.buf);
 	}
+	if (seen_dashdash)
+		read_pathspec_from_stdin(revs, &sb, prune);
 	strbuf_release(&sb);
 }
 
@@ -1220,6 +1256,34 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 	ctx->argc -= n;
 }
 
+static void append_prune_data(const char ***prune_data, const char **av)
+{
+	const char **prune = *prune_data;
+	int prune_nr;
+	int prune_alloc;
+
+	if (!prune) {
+		*prune_data = av;
+		return;
+	}
+
+	/* count existing ones */
+	for (prune_nr = 0; prune[prune_nr]; prune_nr++)
+		;
+	prune_alloc = prune_nr; /* not really, but we do not know */
+
+	while (*av) {
+		ALLOC_GROW(prune, prune_nr+1, prune_alloc);
+		prune[prune_nr++] = *av;
+		av++;
+	}
+	if (prune) {
+		ALLOC_GROW(prune, prune_nr+1, prune_alloc);
+		prune[prune_nr] = NULL;
+	}
+	*prune_data = prune;
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -1294,7 +1358,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				}
 				if (read_from_stdin++)
 					die("--stdin given twice?");
-				read_revisions_from_stdin(revs);
+				read_revisions_from_stdin(revs, &prune_data);
 				continue;
 			}
 
@@ -1322,7 +1386,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			for (j = i; j < argc; j++)
 				verify_filename(revs->prefix, argv[j]);
 
-			prune_data = argv + i;
+			append_prune_data(&prune_data, argv + i);
 			break;
 		}
 	}
