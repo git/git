@@ -649,7 +649,10 @@ do
 		[eE]*) git_editor "$dotest/final-commit"
 		       action=again ;;
 		[vV]*) action=again
-		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;
+		       : ${GIT_PAGER=$(git var GIT_PAGER)}
+		       : ${LESS=-FRSX}
+		       export LESS
+		       $GIT_PAGER "$dotest/patch" ;;
 		*)     action=again ;;
 		esac
 	    done
