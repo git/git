@@ -87,6 +87,7 @@
 /git-mktree
 /git-name-rev
 /git-mv
+/git-notes
 /git-pack-redundant
 /git-pack-objects
 /git-pack-refs

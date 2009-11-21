@@ -49,6 +49,7 @@ enum push_default_type push_default = PUSH_DEFAULT_MATCHING;
 #define OBJECT_CREATION_MODE OBJECT_CREATION_USES_HARDLINKS
 #endif
 enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
+char *notes_ref_name;
 int grafts_replace_parents = 1;
 
 /* Parallel index stat data preload? */
