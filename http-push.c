@@ -1792,8 +1792,6 @@ int main(int argc, char **argv)
 
 	git_extract_argv0_path(argv[0]);
 
-	setup_git_directory();
-
 	repo = xcalloc(sizeof(*repo), 1);
 
 	argv++;
@@ -1827,6 +1825,8 @@ int main(int argc, char **argv)
 				force_delete = 1;
 				continue;
 			}
+			if (!strcmp(arg, "-h"))
+				usage(http_push_usage);
 		}
 		if (!repo->url) {
 			char *path = strstr(arg, "//");
@@ -1853,6 +1853,8 @@ int main(int argc, char **argv)
 
 	if (delete_branch && nr_refspec != 1)
 		die("You must specify only one branch name when deleting a remote branch");
+
+	setup_git_directory();
 
 	memset(remote_dir_exists, -1, 256);
 

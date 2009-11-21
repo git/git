@@ -108,10 +108,10 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 
 	git_config(git_default_config, NULL);
 
-	newfd = hold_locked_index(&lock_file, 1);
-
 	argc = parse_options(argc, argv, unused_prefix, read_tree_options,
 			     read_tree_usage, 0);
+
+	newfd = hold_locked_index(&lock_file, 1);
 
 	prefix_set = opts.prefix ? 1 : 0;
 	if (1 < opts.merge + opts.reset + prefix_set)

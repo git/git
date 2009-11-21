@@ -432,6 +432,13 @@ static void die_no_single_rev(int quiet)
 		die("Needed a single revision");
 }
 
+static const char builtin_rev_parse_usage[] =
+"git rev-parse --parseopt [options] -- [<args>...]\n"
+"   or: git rev-parse --sq-quote [<arg>...]\n"
+"   or: git rev-parse [options] [<arg>...]\n"
+"\n"
+"Run \"git rev-parse --parseopt -h\" for more information on the first usage.";
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
@@ -443,6 +450,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 
 	if (argc > 1 && !strcmp("--sq-quote", argv[1]))
 		return cmd_sq_quote(argc - 2, argv + 2);
+
+	if (argc > 1 && !strcmp("-h", argv[1]))
+		usage(builtin_rev_parse_usage);
 
 	prefix = setup_git_directory();
 	git_config(git_default_config, NULL);

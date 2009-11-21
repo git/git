@@ -229,21 +229,24 @@ struct cmd_struct {
 
 static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 {
-	int status;
+	int status, help;
 	struct stat st;
 	const char *prefix;
 
 	prefix = NULL;
-	if (p->option & RUN_SETUP)
-		prefix = setup_git_directory();
+	help = argc == 2 && !strcmp(argv[1], "-h");
+	if (!help) {
+		if (p->option & RUN_SETUP)
+			prefix = setup_git_directory();
 
-	if (use_pager == -1 && p->option & RUN_SETUP)
-		use_pager = check_pager_config(p->cmd);
-	if (use_pager == -1 && p->option & USE_PAGER)
-		use_pager = 1;
+		if (use_pager == -1 && p->option & RUN_SETUP)
+			use_pager = check_pager_config(p->cmd);
+		if (use_pager == -1 && p->option & USE_PAGER)
+			use_pager = 1;
+	}
 	commit_pager_choice();
 
-	if (p->option & NEED_WORK_TREE)
+	if (!help && p->option & NEED_WORK_TREE)
 		setup_work_tree();
 
 	trace_argv_printf(argv, "trace: built-in: git");
@@ -304,7 +307,6 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "fast-export", cmd_fast_export, RUN_SETUP },
 		{ "fetch", cmd_fetch, RUN_SETUP },
 		{ "fetch-pack", cmd_fetch_pack, RUN_SETUP },
-		{ "fetch--tool", cmd_fetch__tool, RUN_SETUP },
 		{ "fmt-merge-msg", cmd_fmt_merge_msg, RUN_SETUP },
 		{ "for-each-ref", cmd_for_each_ref, RUN_SETUP },
 		{ "format-patch", cmd_format_patch, RUN_SETUP },

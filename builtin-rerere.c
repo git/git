@@ -106,6 +106,9 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 	if (argc < 2)
 		return rerere();
 
+	if (!strcmp(argv[1], "-h"))
+		usage(git_rerere_usage);
+
 	fd = setup_rerere(&merge_rr);
 	if (fd < 0)
 		return 0;

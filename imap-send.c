@@ -94,6 +94,8 @@ struct msg_data {
 	unsigned int crlf:1;
 };
 
+static const char imap_send_usage[] = "git imap-send < <mbox>";
+
 #undef DRV_OK
 #define DRV_OK          0
 #define DRV_MSG_BAD     -1
@@ -1369,6 +1371,9 @@ int main(int argc, char **argv)
 	int nongit_ok;
 
 	git_extract_argv0_path(argv[0]);
+
+	if (argc != 1)
+		usage(imap_send_usage);
 
 	setup_git_directory_gently(&nongit_ok);
 	git_config(git_imap_config, NULL);
