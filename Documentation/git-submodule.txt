@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git submodule' [--quiet] add [-b branch]
-	      [--reference <repository>] [--] <repository> <path>
+	      [--reference <repository>] [--] <repository> [<path>]
 'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
@@ -69,7 +69,11 @@ add::
 	to the changeset to be committed next to the current
 	project: the current project is termed the "superproject".
 +
-This requires two arguments: <repository> and <path>.
+This requires at least one argument: <repository>. The optional
+argument <path> is the relative location for the cloned submodule
+to exist in the superproject. If <path> is not given, the
+"humanish" part of the source repository is used ("repo" for
+"/path/to/repo.git" and "foo" for "host.xz:foo/.git").
 +
 <repository> is the URL of the new submodule's origin repository.
 This may be either an absolute URL, or (if it begins with ./
