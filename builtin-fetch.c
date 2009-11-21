@@ -489,7 +489,8 @@ static int add_existing(const char *refname, const unsigned char *sha1,
 			int flag, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
-	string_list_insert(refname, list);
+	struct string_list_item *item = string_list_insert(refname, list);
+	item->util = (void *)sha1;
 	return 0;
 }
 
@@ -615,9 +616,14 @@ static void check_not_current_branch(struct ref *ref_map)
 static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
+	struct string_list existing_refs = { NULL, 0, 0, 0 };
+	struct string_list_item *peer_item = NULL;
 	struct ref *ref_map;
 	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
+
+	for_each_ref(add_existing, &existing_refs);
+
 	if (transport->remote->fetch_tags == 2 && tags != TAGS_UNSET)
 		tags = TAGS_SET;
 	if (transport->remote->fetch_tags == -1)
@@ -640,8 +646,13 @@ static int do_fetch(struct transport *transport,
 		check_not_current_branch(ref_map);
 
 	for (rm = ref_map; rm; rm = rm->next) {
-		if (rm->peer_ref)
-			read_ref(rm->peer_ref->name, rm->peer_ref->old_sha1);
+		if (rm->peer_ref) {
+			peer_item = string_list_lookup(rm->peer_ref->name,
+						       &existing_refs);
+			if (peer_item)
+				hashcpy(rm->peer_ref->old_sha1,
+					peer_item->util);
+		}
 	}
 
 	if (tags == TAGS_DEFAULT && autotags)
