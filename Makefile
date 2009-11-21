@@ -216,6 +216,12 @@ uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
 uname_P := $(shell sh -c 'uname -p 2>/dev/null || echo not')
 uname_V := $(shell sh -c 'uname -v 2>/dev/null || echo not')
 
+ifdef MSVC
+	# avoid the MingW and Cygwin configuration sections
+	uname_S := Windows
+	uname_O := Windows
+endif
+
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
 CFLAGS = -g -O2 -Wall
@@ -900,7 +906,7 @@ ifeq ($(uname_S),HP-UX)
 	NO_SYS_SELECT_H = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 endif
-ifdef MSVC
+ifeq ($(uname_S),Windows)
 	GIT_VERSION := $(GIT_VERSION).MSVC
 	pathsep = ;
 	NO_PREAD = YesPlease
@@ -953,7 +959,7 @@ else
 	BASIC_CFLAGS += -Zi -MTd
 endif
 	X = .exe
-else
+endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	pathsep = ;
 	NO_PREAD = YesPlease
@@ -1001,7 +1007,6 @@ ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 else
 	NO_CURL = YesPlease
 	NO_PTHREADS = YesPlease
-endif
 endif
 endif
 
