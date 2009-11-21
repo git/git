@@ -15,6 +15,7 @@ default:
 	@echo "Just copy it somewhere on your PATH, like /usr/local/bin."
 	@echo
 	@echo "Try: make doc"
+	@echo " or: make test"
 	@false
 
 install: install-exe install-doc
@@ -35,6 +36,9 @@ doc: git-subtree.1
 %.xml: %.txt
 	asciidoc -b docbook -d manpage -f asciidoc.conf \
 		-agit_version=$(gitver) $^
+		
+test:
+	./test.sh
 
 clean:
 	rm -f *~ *.xml *.html *.1
