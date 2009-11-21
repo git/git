@@ -1,9 +1,11 @@
 #include "http.h"
 #include "pack.h"
+#include "sideband.h"
 
 int data_received;
 int active_requests;
 int http_is_verbose;
+size_t http_post_buffer = 16 * LARGE_PACKET_MAX;
 
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
@@ -97,8 +99,6 @@ size_t fwrite_null(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf)
 	return eltsize * nmemb;
 }
 
-static void finish_active_slot(struct active_request_slot *slot);
-
 #ifdef USE_CURL_MULTI
 static void process_curl_messages(void)
 {
@@ -173,6 +173,13 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp("http.proxy", var))
 		return git_config_string(&curl_http_proxy, var, value);
+
+	if (!strcmp("http.postbuffer", var)) {
+		http_post_buffer = git_config_int(var, value);
+		if (http_post_buffer < LARGE_PACKET_MAX)
+			http_post_buffer = LARGE_PACKET_MAX;
+		return 0;
+	}
 
 	/* Fall back on the default ones */
 	return git_default_config(var, value, cb);
@@ -638,7 +645,7 @@ void release_active_slot(struct active_request_slot *slot)
 #endif
 }
 
-static void finish_active_slot(struct active_request_slot *slot)
+void finish_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
 	curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);

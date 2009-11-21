@@ -55,6 +55,7 @@
 /git-grep
 /git-hash-object
 /git-help
+/git-http-backend
 /git-http-fetch
 /git-http-push
 /git-imap-send
