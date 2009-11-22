@@ -37,7 +37,7 @@ OPTIONS
 	input.  Turns off "apply".
 
 --numstat::
-	Similar to \--stat, but shows the number of added and
+	Similar to `--stat`, but shows the number of added and
 	deleted lines in decimal notation and the pathname without
 	abbreviation, to make it more machine friendly.  For
 	binary files, outputs two `-` instead of saying
@@ -55,7 +55,7 @@ OPTIONS
 	file and detects errors.  Turns off "apply".
 
 --index::
-	When --check is in effect, or when applying the patch
+	When `--check` is in effect, or when applying the patch
 	(which is the default when none of the options that
 	disables it is in effect), make sure the patch is
 	applicable to what the current index file records.  If
@@ -66,7 +66,7 @@ OPTIONS
 --cached::
 	Apply a patch without touching the working tree. Instead take the
 	cached data, apply the patch, and store the result in the index
-	without using the working tree. This implies '--index'.
+	without using the working tree. This implies `--index`.
 
 --build-fake-ancestor=<file>::
 	Newer 'git-diff' output has embedded 'index information'
@@ -112,8 +112,8 @@ any of those replacements occurred.
 	By default, 'git-apply' expects that the patch being
 	applied is a unified diff with at least one line of context.
 	This provides good safety measures, but breaks down when
-	applying a diff generated with --unified=0. To bypass these
-	checks use '--unidiff-zero'.
+	applying a diff generated with `--unified=0`. To bypass these
+	checks use `--unidiff-zero`.
 +
 Note, for the reasons stated above usage of context-free patches is
 discouraged.
@@ -149,7 +149,7 @@ discouraged.
 	be useful when importing patchsets, where you want to include certain
 	files or directories.
 +
-When --exclude and --include patterns are used, they are examined in the
+When `--exclude` and `--include` patterns are used, they are examined in the
 order they appear on the command line, and the first match determines if a
 patch to each path is used.  A patch to a path that does not match any
 include/exclude pattern is used by default if there is no include pattern
@@ -232,13 +232,13 @@ Submodules
 If the patch contains any changes to submodules then 'git-apply'
 treats these changes as follows.
 
-If --index is specified (explicitly or implicitly), then the submodule
+If `--index` is specified (explicitly or implicitly), then the submodule
 commits must match the index exactly for the patch to apply.  If any
 of the submodules are checked-out, then these check-outs are completely
 ignored, i.e., they are not required to be up-to-date or clean and they
 are not updated.
 
-If --index is not specified, then the submodule commits in the patch
+If `--index` is not specified, then the submodule commits in the patch
 are ignored and only the absence or presence of the corresponding
 subdirectory is checked and (if possible) updated.
 
