@@ -1183,7 +1183,23 @@ $ git merge branchname
 -------------------------------------------------
 
 merges the development in the branch "branchname" into the current
-branch.  If there are conflicts--for example, if the same file is
+branch.
+
+A merge is made by combining the changes made in "branchname" and the
+changes made up to the latest commit in your current branch since
+their histories forked. The work tree is overwritten by the result of
+the merge when this combining is done cleanly, or overwritten by a
+half-merged results when this combining results in conflicts.
+Therefore, if you have uncommitted changes touching the same files as
+the ones impacted by the merge, Git will refuse to proceed. Most of
+the time, you will want to commit your changes before you can merge,
+and if you don't, then linkgit:git-stash[1] can take these changes
+away while you're doing the merge, and reapply them afterwards.
+
+If the changes are independant enough, Git will automatically complete
+the merge and commit the result (or reuse an existing commit in case
+of <<fast-forwards,fast-forward>>, see below). On the other hand,
+if there are conflicts--for example, if the same file is
 modified in two different ways in the remote branch and the local
 branch--then you are warned; the output may look something like this:
 
@@ -1679,7 +1695,7 @@ Sharing development with others
 Getting updates with git pull
 -----------------------------
 
-After you clone a repository and make a few changes of your own, you
+After you clone a repository and commit a few changes of your own, you
 may wish to check the original repository for updates and merge them
 into your own work.
 
