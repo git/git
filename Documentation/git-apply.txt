@@ -51,7 +51,7 @@ OPTIONS
 
 --check::
 	Instead of applying the patch, see if the patch is
-	applicable to the current work tree and/or the index
+	applicable to the current working tree and/or the index
 	file and detects errors.  Turns off "apply".
 
 --index::
@@ -59,7 +59,7 @@ OPTIONS
 	(which is the default when none of the options that
 	disables it is in effect), make sure the patch is
 	applicable to what the current index file records.  If
-	the file to be patched in the work tree is not
+	the file to be patched in the working tree is not
 	up-to-date, it is flagged as an error.  This flag also
 	causes the index file to be updated.
 
