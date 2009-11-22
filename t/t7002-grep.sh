@@ -213,6 +213,11 @@ test_expect_success 'grep -e A --and --not -e B' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep should ignore GREP_OPTIONS' '
+	GREP_OPTIONS=-v git grep " mmap bar\$" >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'grep -f, non-existent file' '
 	test_must_fail git grep -f patterns
 '

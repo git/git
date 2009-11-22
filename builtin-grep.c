@@ -433,7 +433,11 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 
 		if (opt->color_external && strlen(opt->color_external) > 0)
 			push_arg(opt->color_external);
+	} else {
+		unsetenv("GREP_COLOR");
+		unsetenv("GREP_COLORS");
 	}
+	unsetenv("GREP_OPTIONS");
 
 	hit = 0;
 	argc = nr;
