@@ -3,6 +3,7 @@
 
 extern int advice_push_nonfastforward;
 extern int advice_status_hints;
+extern int advice_commit_before_merge;
 
 int git_default_advice_config(const char *var, const char *value);
 
