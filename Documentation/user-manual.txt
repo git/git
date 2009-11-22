@@ -2569,7 +2569,7 @@ them again with linkgit:git-am[1].
 Other tools
 -----------
 
-There are numerous other tools, such as StGIT, which exist for the
+There are numerous other tools, such as StGit, which exist for the
 purpose of maintaining a patch series.  These are outside of the scope of
 this manual.
 
@@ -4275,7 +4275,7 @@ You see, Git is actually the best tool to find out about the source of Git
 itself!
 
 [[glossary]]
-GIT Glossary
+Git Glossary
 ============
 
 include::glossary-content.txt[]
