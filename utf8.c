@@ -298,6 +298,22 @@ static void print_spaces(struct strbuf *buf, int count)
 	strbuf_write(buf, s, count);
 }
 
+static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
+				     int indent, int indent2)
+{
+	if (indent < 0)
+		indent = 0;
+	while (*text) {
+		const char *eol = strchrnul(text, '\n');
+		if (*eol == '\n')
+			eol++;
+		print_spaces(buf, indent);
+		strbuf_write(buf, text, eol - text);
+		text = eol;
+		indent = indent2;
+	}
+}
+
 /*
  * Wrap the text, if necessary. The variable indent is the indent for the
  * first line, indent2 is the indent for all other lines.
@@ -311,15 +327,7 @@ int strbuf_add_wrapped_text(struct strbuf *buf,
 	const char *bol = text, *space = NULL;
 
 	if (width <= 0) {
-		/* just indent */
-		while (*text) {
-			const char *eol = strchrnul(text, '\n');
-			if (*eol == '\n')
-				eol++;
-			print_spaces(buf, indent);
-			strbuf_write(buf, text, eol-text);
-			text = eol;
-		}
+		strbuf_add_indented_text(buf, text, indent, indent2);
 		return 1;
 	}
 
