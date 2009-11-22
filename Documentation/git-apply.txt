@@ -87,11 +87,13 @@ the information is read from the current index instead.
 	rejected hunks in corresponding *.rej files.
 
 -z::
-	When showing the index information, do not munge paths,
-	but use NUL terminated machine readable format.  Without
-	this flag, the pathnames output will have TAB, LF, and
-	backslash characters replaced with `\t`, `\n`, and `\\`,
-	respectively.
+	When `--numstat` has been given, do not munge pathnames,
+	but use a NUL-terminated machine-readable format.
++
+Without this option, each pathname output will have TAB, LF, double quotes,
+and backslash characters replaced with `\t`, `\n`, `\"`, and `\\`,
+respectively, and the pathname will be enclosed in double quotes if
+any of those replacements occurred.
 
 -p<n>::
 	Remove <n> leading slashes from traditional diff paths. The
