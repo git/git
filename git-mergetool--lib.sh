@@ -325,15 +325,14 @@ guess_merge_tool () {
 		fi
 		tools="$tools gvimdiff diffuse ecmerge araxis"
 	fi
-	if echo "${VISUAL:-$EDITOR}" | grep emacs > /dev/null 2>&1; then
-		# $EDITOR is emacs so add emerge as a candidate
-		tools="$tools emerge vimdiff"
-	elif echo "${VISUAL:-$EDITOR}" | grep vim > /dev/null 2>&1; then
-		# $EDITOR is vim so add vimdiff as a candidate
+	case "${VISUAL:-$EDITOR}" in
+	*vim*)
 		tools="$tools vimdiff emerge"
-	else
+		;;
+	*)
 		tools="$tools emerge vimdiff"
-	fi
+		;;
+	esac
 	echo >&2 "merge tool candidates: $tools"
 
 	# Loop over each candidate and stop when a valid merge tool is found.
