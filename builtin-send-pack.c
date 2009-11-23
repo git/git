@@ -38,7 +38,7 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 	 */
 	const char *argv[] = {
 		"pack-objects",
-		"--all-progress",
+		"--all-progress-implied",
 		"--revs",
 		"--stdout",
 		NULL,

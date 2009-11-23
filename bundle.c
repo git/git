@@ -351,7 +351,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 
 	/* write pack */
 	argv_pack[0] = "pack-objects";
-	argv_pack[1] = "--all-progress";
+	argv_pack[1] = "--all-progress-implied";
 	argv_pack[2] = "--stdout";
 	argv_pack[3] = "--thin";
 	argv_pack[4] = NULL;
