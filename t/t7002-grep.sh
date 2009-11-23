@@ -14,6 +14,7 @@ int main(int argc, const char **argv)
 {
 	printf("Hello world.\n");
 	return 0;
+	/* char ?? */
 }
 EOF
 
@@ -414,6 +415,15 @@ test_expect_success 'grep from a subdirectory to search wider area (2)' '
 		! test -s out &&
 		test 1 = $(cat status)
 	)
+'
+
+cat >expected <<EOF
+hello.c:int main(int argc, const char **argv)
+EOF
+
+test_expect_success 'grep -Fi' '
+	git grep -Fi "CHAR *" >actual &&
+	test_cmp expected actual
 '
 
 test_done

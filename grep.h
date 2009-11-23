@@ -32,6 +32,7 @@ struct grep_pat {
 	enum grep_header_field field;
 	regex_t regexp;
 	unsigned fixed:1;
+	unsigned ignore_case:1;
 	unsigned word_regexp:1;
 };
 
@@ -64,6 +65,7 @@ struct grep_opt {
 	regex_t regexp;
 	int linenum;
 	int invert;
+	int ignore_case;
 	int status_only;
 	int name_only;
 	int unmatch_name_only;

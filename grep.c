@@ -41,6 +41,7 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	int err;
 
 	p->word_regexp = opt->word_regexp;
+	p->ignore_case = opt->ignore_case;
 
 	if (opt->fixed || is_fixed(p->pattern))
 		p->fixed = 1;
@@ -262,9 +263,15 @@ static void show_name(struct grep_opt *opt, const char *name)
 	printf("%s%c", name, opt->null_following_name ? '\0' : '\n');
 }
 
-static int fixmatch(const char *pattern, char *line, regmatch_t *match)
+
+static int fixmatch(const char *pattern, char *line, int ignore_case, regmatch_t *match)
 {
-	char *hit = strstr(line, pattern);
+	char *hit;
+	if (ignore_case)
+		hit = strcasestr(line, pattern);
+	else
+		hit = strstr(line, pattern);
+
 	if (!hit) {
 		match->rm_so = match->rm_eo = -1;
 		return REG_NOMATCH;
@@ -326,7 +333,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 
  again:
 	if (p->fixed)
-		hit = !fixmatch(p->pattern, bol, pmatch);
+		hit = !fixmatch(p->pattern, bol, p->ignore_case, pmatch);
 	else
 		hit = !regexec(&p->regexp, bol, 1, pmatch, eflags);
 
