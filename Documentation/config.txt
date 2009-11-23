@@ -131,7 +131,11 @@ advice.*::
 core.fileMode::
 	If false, the executable bit differences between the index and
 	the working copy are ignored; useful on broken filesystems like FAT.
-	See linkgit:git-update-index[1]. True by default.
+	See linkgit:git-update-index[1].
++
+The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
+will probe and set core.fileMode false if appropriate when the
+repository is created.
 
 core.ignoreCygwinFSTricks::
 	This option is only used by Cygwin implementation of Git. If false,
@@ -143,6 +147,18 @@ core.ignoreCygwinFSTricks::
 	normal Cygwin l/stat() functions. True by default, unless core.filemode
 	is true, in which case ignoreCygwinFSTricks is ignored as Cygwin's
 	POSIX emulation is required to support core.filemode.
+
+core.ignorecase::
+	If true, this option enables various workarounds to enable
+	git to work better on filesystems that are not case sensitive,
+	like FAT. For example, if a directory listing finds
+	"makefile" when git expects "Makefile", git will assume
+	it is really the same file, and continue to remember it as
+	"Makefile".
++
+The default is false, except linkgit:git-clone[1] or linkgit:git-init[1]
+will probe and set core.ignorecase true if appropriate when the repository
+is created.
 
 core.trustctime::
 	If false, the ctime differences between the index and the
@@ -224,7 +240,11 @@ core.symlinks::
 	contain the link text. linkgit:git-update-index[1] and
 	linkgit:git-add[1] will not change the recorded type to regular
 	file. Useful on filesystems like FAT that do not support
-	symbolic links. True by default.
+	symbolic links.
++
+The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
+will probe and set core.symlinks false if appropriate when the repository
+is created.
 
 core.gitProxy::
 	A "proxy command" to execute (as 'command host port') instead
