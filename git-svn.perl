@@ -428,6 +428,7 @@ sub cmd_fetch {
 	if (@_ > 1) {
 		die "Usage: $0 fetch [--all] [--parent] [svn-remote]\n";
 	}
+	$Git::SVN::no_reuse_existing = undef;
 	if ($_fetch_parent) {
 		my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
 		unless ($gs) {
@@ -956,6 +957,7 @@ sub cmd_multi_init {
 }
 
 sub cmd_multi_fetch {
+	$Git::SVN::no_reuse_existing = undef;
 	my $remotes = Git::SVN::read_all_remotes();
 	foreach my $repo_id (sort keys %$remotes) {
 		if ($remotes->{$repo_id}->{url}) {
@@ -2750,8 +2752,11 @@ sub mkemptydirs {
 		}
 	}
 	close $fh;
+
+	my $strip = qr/\A\Q$self->{path}\E(?:\/|$)/;
 	foreach my $d (sort keys %empty_dirs) {
 		$d = uri_decode($d);
+		$d =~ s/$strip//;
 		next if -d $d;
 		if (-e _) {
 			warn "$d exists but is not a directory\n";
