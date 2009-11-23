@@ -903,16 +903,25 @@ char **make_augmented_environ(const char *const *vars)
 	return env;
 }
 
-/* this is the first function to call into WS_32; initialize it */
-#undef gethostbyname
-struct hostent *mingw_gethostbyname(const char *host)
+static void ensure_socket_initialization(void)
 {
 	WSADATA wsa;
+	static int initialized = 0;
+
+	if (initialized)
+		return;
 
 	if (WSAStartup(MAKEWORD(2,2), &wsa))
 		die("unable to initialize winsock subsystem, error %d",
 			WSAGetLastError());
 	atexit((void(*)(void)) WSACleanup);
+	initialized = 1;
+}
+
+#undef gethostbyname
+struct hostent *mingw_gethostbyname(const char *host)
+{
+	ensure_socket_initialization();
 	return gethostbyname(host);
 }
 
