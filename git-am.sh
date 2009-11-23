@@ -205,7 +205,7 @@ check_patch_format () {
 			# and see if it looks like that they all begin with the
 			# header field names...
 			sed -n -e '/^$/q' -e '/^[ 	]/d' -e p "$1" |
-			LC_ALL=C egrep -v '^[!-9;-~]+:' >/dev/null ||
+			sane_egrep -v '^[!-9;-~]+:' >/dev/null ||
 			patch_format=mbox
 		fi
 	} < "$1" || clean_abort
@@ -554,7 +554,7 @@ do
 			stop_here $this
 
 		# skip pine's internal folder data
-		grep '^Author: Mail System Internal Data$' \
+		sane_grep '^Author: Mail System Internal Data$' \
 			<"$dotest"/info >/dev/null &&
 			go_next && continue
 

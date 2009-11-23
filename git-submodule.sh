@@ -57,7 +57,7 @@ resolve_relative_url ()
 #
 module_list()
 {
-	git ls-files --error-unmatch --stage -- "$@" | grep '^160000 '
+	git ls-files --error-unmatch --stage -- "$@" | sane_grep '^160000 '
 }
 
 #
@@ -567,7 +567,7 @@ cmd_summary() {
 	cd_to_toplevel
 	# Get modified modules cared by user
 	modules=$(git $diff_cmd $cached --raw $head -- "$@" |
-		egrep '^:([0-7]* )?160000' |
+		sane_egrep '^:([0-7]* )?160000' |
 		while read mod_src mod_dst sha1_src sha1_dst status name
 		do
 			# Always show modules deleted or type-changed (blob<->module)
@@ -581,7 +581,7 @@ cmd_summary() {
 	test -z "$modules" && return
 
 	git $diff_cmd $cached --raw $head -- $modules |
-	egrep '^:([0-7]* )?160000' |
+	sane_egrep '^:([0-7]* )?160000' |
 	cut -c2- |
 	while read mod_src mod_dst sha1_src sha1_dst status name
 	do

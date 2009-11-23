@@ -114,6 +114,14 @@ git_editor() {
 	eval "${GIT_EDITOR:=vi}" '"$@"'
 }
 
+sane_grep () {
+	GREP_OPTIONS= LC_ALL=C grep "$@"
+}
+
+sane_egrep () {
+	GREP_OPTIONS= LC_ALL=C egrep "$@"
+}
+
 is_bare_repository () {
 	git rev-parse --is-bare-repository
 }

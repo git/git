@@ -41,7 +41,7 @@ resolve_full_httpd () {
 	case "$httpd" in
 	*apache2*|*lighttpd*)
 		# ensure that the apache2/lighttpd command ends with "-f"
-		if ! echo "$httpd" | grep -- '-f *$' >/dev/null 2>&1
+		if ! echo "$httpd" | sane_grep -- '-f *$' >/dev/null 2>&1
 		then
 			httpd="$httpd -f"
 		fi
@@ -297,8 +297,8 @@ EOF
 
 	# check to see if Dennis Stosberg's mod_perl compatibility patch
 	# (<20060621130708.Gcbc6e5c@leonov.stosberg.net>) has been applied
-	if test -f "$module_path/mod_perl.so" && grep 'MOD_PERL' \
-				"$GIT_DIR/gitweb/gitweb.cgi" >/dev/null
+	if test -f "$module_path/mod_perl.so" &&
+	   sane_grep 'MOD_PERL' "$GIT_DIR/gitweb/gitweb.cgi" >/dev/null
 	then
 		# favor mod_perl if available
 		cat >> "$conf" <<EOF
@@ -316,7 +316,7 @@ EOF
 		# plain-old CGI
 		resolve_full_httpd
 		list_mods=$(echo "$full_httpd" | sed "s/-f$/-l/")
-		$list_mods | grep 'mod_cgi\.c' >/dev/null 2>&1 || \
+		$list_mods | sane_grep 'mod_cgi\.c' >/dev/null 2>&1 || \
 		echo "LoadModule cgi_module $module_path/mod_cgi.so" >> "$conf"
 		cat >> "$conf" <<EOF
 AddHandler cgi-script .cgi
