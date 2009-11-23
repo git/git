@@ -104,13 +104,16 @@ static const char imap_send_usage[] = "git imap-send < <mbox>";
 
 static int Verbose, Quiet;
 
+__attribute__((format (printf, 1, 2)))
 static void imap_info(const char *, ...);
+__attribute__((format (printf, 1, 2)))
 static void imap_warn(const char *, ...);
 
 static char *next_arg(char **);
 
 static void free_generic_messages(struct message *);
 
+__attribute__((format (printf, 3, 4)))
 static int nfsnprintf(char *buf, int blen, const char *fmt, ...);
 
 static int nfvasprintf(char **strp, const char *fmt, va_list ap)
@@ -562,6 +565,7 @@ static struct imap_cmd *v_issue_imap_cmd(struct imap_store *ctx,
 	return cmd;
 }
 
+__attribute__((format (printf, 3, 4)))
 static struct imap_cmd *issue_imap_cmd(struct imap_store *ctx,
 				       struct imap_cmd_cb *cb,
 				       const char *fmt, ...)
@@ -575,6 +579,7 @@ static struct imap_cmd *issue_imap_cmd(struct imap_store *ctx,
 	return ret;
 }
 
+__attribute__((format (printf, 3, 4)))
 static int imap_exec(struct imap_store *ctx, struct imap_cmd_cb *cb,
 		     const char *fmt, ...)
 {
@@ -590,6 +595,7 @@ static int imap_exec(struct imap_store *ctx, struct imap_cmd_cb *cb,
 	return get_cmd_result(ctx, cmdp);
 }
 
+__attribute__((format (printf, 3, 4)))
 static int imap_exec_m(struct imap_store *ctx, struct imap_cmd_cb *cb,
 		       const char *fmt, ...)
 {
@@ -880,7 +886,7 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 				if (!strcmp("NO", arg)) {
 					if (cmdp->cb.create && cmd && (cmdp->cb.trycreate || !memcmp(cmd, "[TRYCREATE]", 11))) { /* SELECT, APPEND or UID COPY */
 						p = strchr(cmdp->cmd, '"');
-						if (!issue_imap_cmd(ctx, NULL, "CREATE \"%.*s\"", strchr(p + 1, '"') - p + 1, p)) {
+						if (!issue_imap_cmd(ctx, NULL, "CREATE \"%.*s\"", (int)(strchr(p + 1, '"') - p + 1), p)) {
 							resp = RESP_BAD;
 							goto normal;
 						}

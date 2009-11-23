@@ -47,6 +47,7 @@ static void objreport(struct object *obj, const char *severity,
 	fputs("\n", stderr);
 }
 
+__attribute__((format (printf, 2, 3)))
 static int objerror(struct object *obj, const char *err, ...)
 {
 	va_list params;
@@ -57,6 +58,7 @@ static int objerror(struct object *obj, const char *err, ...)
 	return -1;
 }
 
+__attribute__((format (printf, 3, 4)))
 static int fsck_error_func(struct object *obj, int type, const char *err, ...)
 {
 	va_list params;
