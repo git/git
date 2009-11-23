@@ -306,4 +306,20 @@ test_expect_success 'submodule <invalid-path> warns' '
 
 '
 
+test_expect_success 'add submodules without specifying an explicit path' '
+	mkdir repo &&
+	cd repo &&
+	git init &&
+	echo r >r &&
+	git add r &&
+	git commit -m "repo commit 1" &&
+	cd .. &&
+	git clone --bare repo/ bare.git &&
+	cd addtest &&
+	git submodule add "$submodurl/repo" &&
+	git config -f .gitmodules submodule.repo.path repo &&
+	git submodule add "$submodurl/bare.git" &&
+	git config -f .gitmodules submodule.bare.path bare
+'
+
 test_done

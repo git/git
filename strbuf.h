@@ -117,7 +117,7 @@ struct strbuf_expand_dict_entry {
 };
 extern size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder, void *context);
 
-__attribute__((format(printf,2,3)))
+__attribute__((format (printf,2,3)))
 extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
 
 extern size_t strbuf_fread(struct strbuf *, size_t, FILE *);

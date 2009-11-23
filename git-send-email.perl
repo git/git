@@ -162,7 +162,8 @@ my $compose_filename;
 
 # Handle interactive edition of files.
 my $multiedit;
-my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
+my $editor = Git::command_oneline('var', 'GIT_EDITOR');
+
 sub do_edit {
 	if (defined($multiedit) && !$multiedit) {
 		map {

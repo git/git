@@ -428,6 +428,7 @@ sub cmd_fetch {
 	if (@_ > 1) {
 		die "Usage: $0 fetch [--all] [--parent] [svn-remote]\n";
 	}
+	$Git::SVN::no_reuse_existing = undef;
 	if ($_fetch_parent) {
 		my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
 		unless ($gs) {
@@ -956,6 +957,7 @@ sub cmd_multi_init {
 }
 
 sub cmd_multi_fetch {
+	$Git::SVN::no_reuse_existing = undef;
 	my $remotes = Git::SVN::read_all_remotes();
 	foreach my $repo_id (sort keys %$remotes) {
 		if ($remotes->{$repo_id}->{url}) {
@@ -1332,9 +1334,8 @@ sub get_commit_entry {
 	close $log_fh or croak $!;
 
 	if ($_edit || ($type eq 'tree')) {
-		my $editor = $ENV{VISUAL} || $ENV{EDITOR} || 'vi';
-		# TODO: strip out spaces, comments, like git-commit.sh
-		system($editor, $commit_editmsg);
+		chomp(my $editor = command_oneline(qw(var GIT_EDITOR)));
+		system('sh', '-c', $editor.' "$@"', $editor, $commit_editmsg);
 	}
 	rename $commit_editmsg, $commit_msg or croak $!;
 	{
@@ -2751,8 +2752,11 @@ sub mkemptydirs {
 		}
 	}
 	close $fh;
+
+	my $strip = qr/\A\Q$self->{path}\E(?:\/|$)/;
 	foreach my $d (sort keys %empty_dirs) {
 		$d = uri_decode($d);
+		$d =~ s/$strip//;
 		next if -d $d;
 		if (-e _) {
 			warn "$d exists but is not a directory\n";
@@ -5219,10 +5223,8 @@ sub git_svn_log_cmd {
 
 # adapted from pager.c
 sub config_pager {
-	$pager ||= $ENV{GIT_PAGER} || $ENV{PAGER};
-	if (!defined $pager) {
-		$pager = 'less';
-	} elsif (length $pager == 0 || $pager eq 'cat') {
+	chomp(my $pager = command_oneline(qw(var GIT_PAGER)));
+	if ($pager eq 'cat') {
 		$pager = undef;
 	}
 	$ENV{GIT_PAGER_IN_USE} = defined($pager);

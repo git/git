@@ -200,7 +200,7 @@ static void describe(const char *arg, int last_one)
 		die("%s is not a valid '%s' object", arg, commit_type);
 
 	n = cmit->util;
-	if (n) {
+	if (n && (tags || all || n->prio == 2)) {
 		/*
 		 * Exact match to an existing ref.
 		 */

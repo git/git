@@ -7,7 +7,7 @@
 #include "parse-options.h"
 
 static const char * const show_ref_usage[] = {
-	"git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--dereference] [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] ",
+	"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] ",
 	"git show-ref --exclude-existing[=pattern] < ref-list",
 	NULL
 };
@@ -183,7 +183,10 @@ static const struct option show_ref_options[] = {
 	OPT_BOOLEAN(0, "heads", &heads_only, "only show heads (can be combined with tags)"),
 	OPT_BOOLEAN(0, "verify", &verify, "stricter reference checking, "
 		    "requires exact ref path"),
-	OPT_BOOLEAN('h', "head", &show_head, "show the HEAD reference"),
+	{ OPTION_BOOLEAN, 'h', NULL, &show_head, NULL,
+	  "show the HEAD reference",
+	  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
+	OPT_BOOLEAN(0, "head", &show_head, "show the HEAD reference"),
 	OPT_BOOLEAN('d', "dereference", &deref_tags,
 		    "dereference tags into object IDs"),
 	{ OPTION_CALLBACK, 's', "hash", &abbrev, "n",
@@ -201,6 +204,9 @@ static const struct option show_ref_options[] = {
 
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage_with_options(show_ref_usage, show_ref_options);
+
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, PARSE_OPT_NO_INTERNAL_HELP);
 

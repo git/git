@@ -42,14 +42,28 @@ Updates since v1.6.5
 
  * various git-gui updates including new translations, wm states, etc.
 
+ * git-svn updates.
+
+ * "git fetch" over http learned a new mode that is different from the
+   traditional "dumb commit walker".
+
 (portability)
 
+ * imap-send can be built on mingw port.
+
 (performance)
+
+ * "git diff -B" has smaller memory footprint.
 
 (usability, bells and whistles)
 
  * The object replace mechanism can be bypassed with --no-replace-objects
    global option given to the "git" program.
+
+ * In configuration files, a few variables that name paths can begin with ~/
+   and ~username/ and they are expanded as expected.
+
+ * "git subcmd -h" now shows short usage help for many more subcommands.
 
  * "git bisect reset" can reset to an arbitrary commit.
 
@@ -65,6 +79,8 @@ Updates since v1.6.5
  * "git fsck" by default checks the packfiles (i.e. "--full" is the
    default); you can turn it off with "git fsck --no-full".
 
+ * "git grep" can use -F (fixed strings) and -i (ignore case) together.
+
  * import-tars contributed fast-import frontend learned more types of
    compressed tarballs.
 
@@ -77,6 +93,8 @@ Updates since v1.6.5
    . to wrap text with the "%w()" specifier.
    . to show reflog information with "%g[sdD]" specifier.
 
+ * "git notes" command to annotate existing commits.
+
  * "git merge" (and "git pull") learned --ff-only option to make it fail
    if the merge does not result in a fast-forward.
 
@@ -86,6 +104,9 @@ Updates since v1.6.5
    starts an editor to tweak the log message without returning control to
    the shell, which is done by "edit" to give an opportunity to tweak the
    contents.
+
+ * In "git submodule add <repository> <path>", <path> is now optional and
+   inferred from <repository> the same way "git clone <repository>" does.
 
  * "git svn" learned to read SVN 1.5+ and SVK merge tickets.
 
@@ -104,5 +125,5 @@ release, unless otherwise noted.
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.6.5.3-152-g122d0f6
+O=v1.6.5.3-337-gf341feb
 git shortlog --no-merges $O..master --not maint

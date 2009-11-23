@@ -82,4 +82,27 @@ test_expect_success 'git svn mkdirs -r works' '
 	)
 '
 
+test_expect_success 'initialize trunk' '
+	for i in trunk trunk/a trunk/"weird file name"
+	do
+		svn_cmd mkdir -m "mkdir $i" "$svnrepo"/"$i"
+	done
+'
+
+test_expect_success 'clone trunk' 'git svn clone -s "$svnrepo" trunk'
+
+test_expect_success 'empty directories in trunk exist' '
+	(
+		cd trunk &&
+		for i in a "weird file name"
+		do
+			if ! test -d "$i"
+			then
+				echo >&2 "$i does not exist"
+				exit 1
+			fi
+		done
+	)
+'
+
 test_done
