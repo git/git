@@ -87,19 +87,21 @@ endif::git-format-patch[]
 ifndef::git-format-patch[]
 
 -z::
+ifdef::git-log[]
+	Separate the commits with NULs instead of with new newlines.
++
+Also, when `--raw` or `--numstat` has been given, do not munge
+pathnames and use NULs as output field terminators.
+endif::git-log[]
 ifndef::git-log[]
 	When `--raw` or `--numstat` has been given, do not munge
 	pathnames and use NULs as output field terminators.
+endif::git-log[]
 +
 Without this option, each pathname output will have TAB, LF, double quotes,
 and backslash characters replaced with `\t`, `\n`, `\"`, and `\\`,
 respectively, and the pathname will be enclosed in double quotes if
 any of those replacements occurred.
-endif::git-log[]
-
-ifdef::git-log[]
-	Separate the commits with NULs instead of with new newlines.
-endif::git-log[]
 
 --name-only::
 	Show only names of changed files.
