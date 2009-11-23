@@ -549,9 +549,7 @@ test_expect_success 'options no longer allowed for format-patch' '
 	test_cmp expect.check output'
 
 test_expect_success 'format-patch --numstat should produce a patch' '
-	git format-patch --numstat --stdout master..side |
-	grep "^diff --git a/" |
-	wc -l |
-	xargs test 6 = '
+	git format-patch --numstat --stdout master..side > output &&
+	test 6 = $(grep "^diff --git a/" output | wc -l)'
 
 test_done
