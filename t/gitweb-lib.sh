@@ -52,8 +52,18 @@ gitweb_run () {
 	rm -f gitweb.log &&
 	perl -- "$SCRIPT_NAME" \
 		>gitweb.output 2>gitweb.log &&
-	sed -e   '/^\r$/q' <gitweb.output >gitweb.headers &&
-	sed -e '1,/^\r$/d' <gitweb.output >gitweb.body    &&
+	perl -w -e '
+		open O, ">gitweb.headers";
+		while (<>) {
+			print O;
+			last if (/^\r$/ || /^$/);
+		}
+		open O, ">gitweb.body";
+		while (<>) {
+			print O;
+		}
+		close O;
+	' gitweb.output &&
 	if grep '^[[]' gitweb.log >/dev/null 2>&1; then false; else true; fi
 
 	# gitweb.log is left for debugging
