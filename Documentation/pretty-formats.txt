@@ -136,9 +136,7 @@ The placeholders are:
 - '%n': newline
 - '%x00': print a byte from a hex code
 - '%w([<w>[,<i1>[,<i2>]]])': switch line wrapping, like the -w option of
-  linkgit:git-shortlog[1].  NOTE: Color placeholders (`%C*`) are not
-  recognized as having no width, so they should not be put into wrapped
-  sections.
+  linkgit:git-shortlog[1].
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will
