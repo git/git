@@ -2752,8 +2752,11 @@ sub mkemptydirs {
 		}
 	}
 	close $fh;
+
+	my $strip = qr/\A\Q$self->{path}\E(?:\/|$)/;
 	foreach my $d (sort keys %empty_dirs) {
 		$d = uri_decode($d);
+		$d =~ s/$strip//;
 		next if -d $d;
 		if (-e _) {
 			warn "$d exists but is not a directory\n";
