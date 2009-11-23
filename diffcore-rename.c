@@ -523,10 +523,13 @@ void diffcore_rename(struct diff_options *options)
 			this_src.dst = i;
 			this_src.src = j;
 			record_if_better(m, &this_src);
+			/*
+			 * Once we run estimate_similarity,
+			 * We do not need the text anymore.
+			 */
 			diff_free_filespec_blob(one);
+			diff_free_filespec_blob(two);
 		}
-		/* We do not need the text anymore */
-		diff_free_filespec_blob(two);
 		dst_cnt++;
 	}
 
