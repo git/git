@@ -1186,9 +1186,9 @@ $ git show-branch
 * [master] Some fun.
  ! [mybranch] Some work.
 --
- + [mybranch] Some work.
 *  [master] Some fun.
-*+ [mybranch^] Initial commit
+ + [mybranch] Some work.
+*+ [master^] Initial commit
 ------------
 
 Now we are ready to experiment with the merge by hand.
