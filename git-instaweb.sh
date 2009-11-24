@@ -73,6 +73,11 @@ resolve_full_httpd () {
 }
 
 start_httpd () {
+	if test -f "$fqgitdir/pid"; then
+		say "Instance already running. Restarting..."
+		stop_httpd
+	fi
+
 	# here $httpd should have a meaningful value
 	resolve_full_httpd
 
