@@ -243,6 +243,15 @@ endif::git-rev-list[]
 	Pretend as if all the refs in `$GIT_DIR/refs/remotes` are listed
 	on the command line as '<commit>'.
 
+ifndef::git-rev-list[]
+--bisect::
+
+	Pretend as if the bad bisection ref `$GIT_DIR/refs/bisect/bad`
+	was listed and as if it was followed by `--not` and the good
+	bisection refs `$GIT_DIR/refs/bisect/good-*` on the command
+	line.
+endif::git-rev-list[]
+
 --stdin::
 
 	In addition to the '<commit>' listed on the command
@@ -538,7 +547,11 @@ Bisection Helpers
 --bisect::
 
 Limit output to the one commit object which is roughly halfway between
-the included and excluded commits. Thus, if
+included and excluded commits. Note that the bad bisection ref
+`$GIT_DIR/refs/bisect/bad` is added to the included commits (if it
+exists) and the good bisection refs `$GIT_DIR/refs/bisect/good-*` are
+added to the excluded commits (if they exist). Thus, supposing there
+are no refs in `$GIT_DIR/refs/bisect/`, if
 
 -----------------------------------------------------------------------
 	$ git rev-list --bisect foo ^bar ^baz
@@ -558,22 +571,24 @@ one.
 
 --bisect-vars::
 
-This calculates the same as `--bisect`, but outputs text ready
-to be eval'ed by the shell. These lines will assign the name of
-the midpoint revision to the variable `bisect_rev`, and the
-expected number of commits to be tested after `bisect_rev` is
-tested to `bisect_nr`, the expected number of commits to be
-tested if `bisect_rev` turns out to be good to `bisect_good`,
-the expected number of commits to be tested if `bisect_rev`
-turns out to be bad to `bisect_bad`, and the number of commits
-we are bisecting right now to `bisect_all`.
+This calculates the same as `--bisect`, except that refs in
+`$GIT_DIR/refs/bisect/` are not used, and except that this outputs
+text ready to be eval'ed by the shell. These lines will assign the
+name of the midpoint revision to the variable `bisect_rev`, and the
+expected number of commits to be tested after `bisect_rev` is tested
+to `bisect_nr`, the expected number of commits to be tested if
+`bisect_rev` turns out to be good to `bisect_good`, the expected
+number of commits to be tested if `bisect_rev` turns out to be bad to
+`bisect_bad`, and the number of commits we are bisecting right now to
+`bisect_all`.
 
 --bisect-all::
 
 This outputs all the commit objects between the included and excluded
 commits, ordered by their distance to the included and excluded
-commits. The farthest from them is displayed first. (This is the only
-one displayed by `--bisect`.)
+commits. Refs in `$GIT_DIR/refs/bisect/` are not used. The farthest
+from them is displayed first. (This is the only one displayed by
+`--bisect`.)
 +
 This is useful because it makes it easy to choose a good commit to
 test when you want to avoid to test some of them for some reason (they
