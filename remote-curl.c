@@ -307,7 +307,7 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 		rpc->len = avail;
 	}
 
-	if (max < avail);
+	if (max < avail)
 		avail = max;
 	memcpy(ptr, rpc->buf + rpc->pos, avail);
 	rpc->pos += avail;
