@@ -84,6 +84,8 @@ static void setup_git_env(void)
 	git_graft_file = getenv(GRAFT_ENVIRONMENT);
 	if (!git_graft_file)
 		git_graft_file = git_pathdup("info/grafts");
+	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
+		read_replace_refs = 0;
 }
 
 int is_bare_repository(void)
