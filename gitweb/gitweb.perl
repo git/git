@@ -2020,16 +2020,27 @@ sub quote_command {
 
 # get HEAD ref of given project as hash
 sub git_get_head_hash {
-	my $project = shift;
+	return git_get_full_hash(shift, 'HEAD');
+}
+
+sub git_get_full_hash {
+	return git_get_hash(@_);
+}
+
+sub git_get_short_hash {
+	return git_get_hash(@_, '--short=7');
+}
+
+sub git_get_hash {
+	my ($project, $hash, @options) = @_;
 	my $o_git_dir = $git_dir;
 	my $retval = undef;
 	$git_dir = "$projectroot/$project";
-	if (open my $fd, "-|", git_cmd(), "rev-parse", "--verify", "HEAD") {
-		my $head = <$fd>;
+	if (open my $fd, '-|', git_cmd(), 'rev-parse',
+	    '--verify', '-q', @options, $hash) {
+		$retval = <$fd>;
+		chomp $retval if defined $retval;
 		close $fd;
-		if (defined $head && $head =~ /^([0-9a-fA-F]{40})$/) {
-			$retval = $1;
-		}
 	}
 	if (defined $o_git_dir) {
 		$git_dir = $o_git_dir;
@@ -5285,6 +5296,43 @@ sub git_tree {
 	git_footer_html();
 }
 
+sub snapshot_name {
+	my ($project, $hash) = @_;
+
+	# path/to/project.git  -> project
+	# path/to/project/.git -> project
+	my $name = to_utf8($project);
+	$name =~ s,([^/])/*\.git$,$1,;
+	$name = basename($name);
+	# sanitize name
+	$name =~ s/[[:cntrl:]]/?/g;
+
+	my $ver = $hash;
+	if ($hash =~ /^[0-9a-fA-F]+$/) {
+		# shorten SHA-1 hash
+		my $full_hash = git_get_full_hash($project, $hash);
+		if ($full_hash =~ /^$hash/ && length($hash) > 7) {
+			$ver = git_get_short_hash($project, $hash);
+		}
+	} elsif ($hash =~ m!^refs/tags/(.*)$!) {
+		# tags don't need shortened SHA-1 hash
+		$ver = $1;
+	} else {
+		# branches and other need shortened SHA-1 hash
+		if ($hash =~ m!^refs/(?:heads|remotes)/(.*)$!) {
+			$ver = $1;
+		}
+		$ver .= '-' . git_get_short_hash($project, $hash);
+	}
+	# in case of hierarchical branch names
+	$ver =~ s!/!.!g;
+
+	# name = project-version_string
+	$name = "$name-$ver";
+
+	return wantarray ? ($name, $name) : $name;
+}
+
 sub git_snapshot {
 	my $format = $input_params{'snapshot_format'};
 	if (!@snapshot_fmts) {
@@ -5302,28 +5350,27 @@ sub git_snapshot {
 		die_error(403, "Unsupported snapshot format");
 	}
 
-	if (!defined $hash) {
-		$hash = git_get_head_hash($project);
+	my $type = git_get_type("$hash^{}");
+	if (!$type) {
+		die_error(404, 'Object does not exist');
+	}  elsif ($type eq 'blob') {
+		die_error(400, 'Object is not a tree-ish');
 	}
 
-	my $name = $project;
-	$name =~ s,([^/])/*\.git$,$1,;
-	$name = basename($name);
-	my $filename = to_utf8($name);
-	$name =~ s/\047/\047\\\047\047/g;
-	my $cmd;
-	$filename .= "-$hash$known_snapshot_formats{$format}{'suffix'}";
-	$cmd = quote_command(
+	my ($name, $prefix) = snapshot_name($project, $hash);
+	my $filename = "$name$known_snapshot_formats{$format}{'suffix'}";
+	my $cmd = quote_command(
 		git_cmd(), 'archive',
 		"--format=$known_snapshot_formats{$format}{'format'}",
-		"--prefix=$name/", $hash);
+		"--prefix=$prefix/", $hash);
 	if (exists $known_snapshot_formats{$format}{'compressor'}) {
 		$cmd .= ' | ' . quote_command(@{$known_snapshot_formats{$format}{'compressor'}});
 	}
 
+	$filename =~ s/(["\\])/\\$1/g;
 	print $cgi->header(
 		-type => $known_snapshot_formats{$format}{'type'},
-		-content_disposition => 'inline; filename="' . "$filename" . '"',
+		-content_disposition => 'inline; filename="' . $filename . '"',
 		-status => '200 OK');
 
 	open my $fd, "-|", $cmd
