@@ -204,7 +204,6 @@ int create_bundle(struct bundle_header *header, const char *path,
 	int i, ref_count = 0;
 	char buffer[1024];
 	struct rev_info revs;
-	int read_from_stdin = 0;
 	struct child_process rls;
 	FILE *rls_fout;
 
@@ -256,15 +255,8 @@ int create_bundle(struct bundle_header *header, const char *path,
 	/* write references */
 	argc = setup_revisions(argc, argv, &revs, NULL);
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--stdin")) {
-			if (read_from_stdin++)
-				die("--stdin given twice?");
-			read_revisions_from_stdin(&revs);
-			continue;
-		}
-		return error("unrecognized argument: %s'", argv[i]);
-	}
+	if (argc > 1)
+		return error("unrecognized argument: %s'", argv[1]);
 
 	object_array_remove_duplicates(&revs.pending);
 
