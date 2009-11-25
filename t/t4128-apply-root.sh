@@ -58,6 +58,23 @@ test_expect_success 'apply --directory (new file)' '
 '
 
 cat > patch << EOF
+diff --git a/c/newfile2 b/c/newfile2
+new file mode 100644
+index 0000000..d95f3ad
+--- /dev/null
++++ b/c/newfile2
+@@ -0,0 +1 @@
++content
+EOF
+
+test_expect_success 'apply --directory -p (new file)' '
+	git reset --hard initial &&
+	git apply -p2 --directory=some/sub/dir/ --index patch &&
+	test content = $(git show :some/sub/dir/newfile2) &&
+	test content = $(cat some/sub/dir/newfile2)
+'
+
+cat > patch << EOF
 diff --git a/delfile b/delfile
 deleted file mode 100644
 index d95f3ad..0000000
