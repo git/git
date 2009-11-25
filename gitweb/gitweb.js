@@ -64,19 +64,19 @@ function fixLinks() {
 
 /**
  * pad number N with nonbreakable spaces on the left, to WIDTH characters
- * example: padLeftStr(12, 3, '&nbsp;') == '&nbsp;12'
- *          ('&nbsp;' is nonbreakable space)
+ * example: padLeftStr(12, 3, '\u00A0') == '\u00A012'
+ *          ('\u00A0' is nonbreakable space)
  *
  * @param {Number|String} input: number to pad
  * @param {Number} width: visible width of output
- * @param {String} str: string to prefix to string, e.g. '&nbsp;'
+ * @param {String} str: string to prefix to string, e.g. '\u00A0'
  * @returns {String} INPUT prefixed with (WIDTH - INPUT.length) x STR
  */
 function padLeftStr(input, width, str) {
 	var prefix = '';
 
 	width -= input.toString().length;
-	while (width > 1) {
+	while (width > 0) {
 		prefix += str;
 		width--;
 	}
@@ -192,7 +192,7 @@ function updateProgressInfo() {
 
 	if (div_progress_info) {
 		div_progress_info.firstChild.data  = blamedLines + ' / ' + totalLines +
-			' (' + padLeftStr(percentage, 3, '&nbsp;') + '%)';
+			' (' + padLeftStr(percentage, 3, '\u00A0') + '%)';
 	}
 
 	if (div_progress_bar) {
