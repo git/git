@@ -562,7 +562,12 @@ function handleLine(commit, group) {
 			td_sha1.rowSpan = group.numlines;
 
 			a_sha1.href = projectUrl + 'a=commit;h=' + commit.sha1;
-			a_sha1.firstChild.data = commit.sha1.substr(0, 8);
+			if (a_sha1.firstChild) {
+				a_sha1.firstChild.data = commit.sha1.substr(0, 8);
+			} else {
+				a_sha1.appendChild(
+					document.createTextNode(commit.sha1.substr(0, 8)));
+			}
 			if (group.numlines >= 2) {
 				var fragment = document.createDocumentFragment();
 				var br   = document.createElement("br");
