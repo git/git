@@ -409,6 +409,13 @@ our %feature = (
 	'timed' => {
 		'override' => 0,
 		'default' => [0]},
+
+	# Enable turning some links into links to actions which require
+	# JavaScript to run (like 'blame_incremental').  Not enabled by
+	# default.  Project specific override is currently not supported.
+	'javascript-actions' => {
+		'override' => 0,
+		'default' => [0]},
 );
 
 sub gitweb_get_feature {
@@ -3250,7 +3257,7 @@ sub git_footer_html {
 		      qq!startBlame("!. href(action=>"blame_data", -replay=>1) .qq!",\n!.
 		      qq!           "!. href() .qq!");\n!.
 		      qq!</script>\n!;
-	} else {
+	} elsif (gitweb_check_feature('javascript-actions')) {
 		print qq!<script type="text/javascript">\n!.
 		      qq!window.onload = fixLinks;\n!.
 		      qq!</script>\n!;
