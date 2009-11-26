@@ -50,6 +50,8 @@ static struct commit_list *remoteheads;
 static unsigned char head[20], stash[20];
 static struct strategy **use_strategies;
 static size_t use_strategies_nr, use_strategies_alloc;
+static const char **xopts;
+static size_t xopts_nr, xopts_alloc;
 static const char *branch;
 static int verbosity;
 
@@ -146,6 +148,17 @@ static int option_parse_strategy(const struct option *opt,
 	return 0;
 }
 
+static int option_parse_x(const struct option *opt,
+			  const char *arg, int unset)
+{
+	if (unset)
+		return 0;
+
+	ALLOC_GROW(xopts, xopts_nr + 1, xopts_alloc);
+	xopts[xopts_nr++] = xstrdup(arg);
+	return 0;
+}
+
 static int option_parse_n(const struct option *opt,
 			  const char *arg, int unset)
 {
@@ -172,6 +185,8 @@ static struct option builtin_merge_options[] = {
 		"abort if fast-forward is not possible"),
 	OPT_CALLBACK('s', "strategy", &use_strategies, "strategy",
 		"merge strategy to use", option_parse_strategy),
+	OPT_CALLBACK('X', "strategy-option", &xopts, "option=value",
+		"option for selected merge strategy", option_parse_x),
 	OPT_CALLBACK('m', "message", &merge_msg, "message",
 		"message to be used for the merge commit (if any)",
 		option_parse_message),
@@ -534,7 +549,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 			      const char *head_arg)
 {
 	const char **args;
-	int i = 0, ret;
+	int i = 0, x = 0, ret;
 	struct commit_list *j;
 	struct strbuf buf = STRBUF_INIT;
 	int index_fd;
@@ -563,7 +578,18 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 
 		init_merge_options(&o);
 		if (!strcmp(strategy, "subtree"))
-			o.subtree_merge = 1;
+			o.recursive_variant = MERGE_RECURSIVE_SUBTREE;
+
+		for (x = 0; x < xopts_nr; x++) {
+			if (!strcmp(xopts[x], "ours"))
+				o.recursive_variant = MERGE_RECURSIVE_OURS;
+			else if (!strcmp(xopts[x], "theirs"))
+				o.recursive_variant = MERGE_RECURSIVE_THEIRS;
+			else if (!strcmp(xopts[x], "subtree"))
+				o.recursive_variant = MERGE_RECURSIVE_SUBTREE;
+			else
+				die("Unknown option for merge-recursive: -X%s", xopts[x]);
+		}
 
 		o.branch1 = head_arg;
 		o.branch2 = remoteheads->item->util;
@@ -581,10 +607,16 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		rollback_lock_file(lock);
 		return clean ? 0 : 1;
 	} else {
-		args = xmalloc((4 + commit_list_count(common) +
+		args = xmalloc((4 + xopts_nr + commit_list_count(common) +
 					commit_list_count(remoteheads)) * sizeof(char *));
 		strbuf_addf(&buf, "merge-%s", strategy);
 		args[i++] = buf.buf;
+		for (x = 0; x < xopts_nr; x++) {
+			char *s = xmalloc(strlen(xopts[x])+2+1);
+			strcpy(s, "--");
+			strcpy(s+2, xopts[x]);
+			args[i++] = s;
+		}
 		for (j = common; j; j = j->next)
 			args[i++] = xstrdup(sha1_to_hex(j->item->object.sha1));
 		args[i++] = "--";
@@ -595,6 +627,8 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		ret = run_command_v_opt(args, RUN_GIT_CMD);
 		strbuf_release(&buf);
 		i = 1;
+		for (x = 0; x < xopts_nr; x++)
+			free((void *)args[i++]);
 		for (j = common; j; j = j->next)
 			free((void *)args[i++]);
 		i += 2;

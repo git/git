@@ -642,6 +642,23 @@ static int merge_3way(struct merge_options *o,
 	mmfile_t orig, src1, src2;
 	char *name1, *name2;
 	int merge_status;
+	int favor;
+
+	if (o->call_depth)
+		favor = 0;
+	else {
+		switch (o->recursive_variant) {
+		case MERGE_RECURSIVE_OURS:
+			favor = XDL_MERGE_FAVOR_OURS;
+			break;
+		case MERGE_RECURSIVE_THEIRS:
+			favor = XDL_MERGE_FAVOR_THEIRS;
+			break;
+		default:
+			favor = 0;
+			break;
+		}
+	}
 
 	if (strcmp(a->path, b->path)) {
 		name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
@@ -657,7 +674,7 @@ static int merge_3way(struct merge_options *o,
 
 	merge_status = ll_merge(result_buf, a->path, &orig,
 				&src1, name1, &src2, name2,
-				o->call_depth);
+				(!!o->call_depth) | (favor << 1));
 
 	free(name1);
 	free(name2);
@@ -1196,7 +1213,7 @@ int merge_trees(struct merge_options *o,
 {
 	int code, clean;
 
-	if (o->subtree_merge) {
+	if (o->recursive_variant == MERGE_RECURSIVE_SUBTREE) {
 		merge = shift_tree_object(head, merge);
 		common = shift_tree_object(head, common);
 	}
