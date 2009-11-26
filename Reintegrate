@@ -1,56 +1,60 @@
 #!/bin/sh
 
+accept_rerere=t generate=no
+while case "$#,$1" in 0,*) break;; *,-*) ;; esac
+do
+	case "$1" in
+	-n)	accept_rerere= ;;
+	*)	generate=yes
+		break ;;
+	esac
+	shift
+done
+
+case "$generate" in
+no)
+	accept_rerere () {
+		if test -z "$accept_rerere"
+		then
+			return 1
+		fi
+		if git diff |
+		   grep -e "^.+" -e "^+." |
+		   grep -e "^..<<<<<<<" -e "^..=======" -e "^..>>>>>>>" >/dev/null
+		then
+			return 1
+		else
+			EDITOR=: git commit -a --no-verify
+			return 0
+		fi
+	}
+
+	while read branch eh
+	do
+		case "$eh" in
+		"")
+			echo >&2 "* $branch"
+			git merge "$branch" || accept_rerere || exit
+			if git show-ref -q --verify "refs/merge-fix/$branch"
+			then
+				git cherry-pick --no-commit "refs/merge-fix/$branch" &&
+				EDITOR=: git commit --amend -a
+			fi
+			;;
+		pick" "*)
+			echo >&2 "* $eh"
+			git cherry-pick "$branch" || exit ;;
+		*) echo >&2 "Eh? $branch $eh"; exit ;;
+		esac
+	done
+	exit
+esac
+
 merge_msg="Merge branch '\(.*\)'"
 x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 x40="$x40$x40$x40$x40$x40$x40$x40$x40"
 LF='
 '
-
-echo '#!/bin/sh
-accept_rerere=t
-while case "$#,$1" in 0,*) break;; *,-*) ;; *) break ;; esac
-do
-	case "$1" in
-	-n)	accept_rerere= ;;
-	*)	echo "$0 [-n]"; exit 1 ;;
-	esac
-	shift
-done
-
-accept_rerere () {
-	if test -z "$accept_rerere"
-	then
-		return 1
-	fi
-	if git diff |
-	   grep -e "^.+" -e "^+." |
-	   grep -e "^..<<<<<<<" -e "^..=======" -e "^..>>>>>>>" >/dev/null
-	then
-		return 1
-	else
-		EDITOR=: git commit -a --no-verify
-		return 0
-	fi
-}
-
-while read branch eh
-do
-	case "$eh" in
-	"")
-		echo >&2 "* $branch"
-		git merge "$branch" || accept_rerere || exit
-		if git show-ref -q --verify "refs/merge-fix/$branch"
-		then
-			git cherry-pick --no-commit "refs/merge-fix/$branch" &&
-			EDITOR=: git commit --amend -a
-		fi
-		;;
-	pick" "*)
-		echo >&2 "* $eh"
-		git cherry-pick "$branch" || exit ;;
-	*) echo >&2 "Eh? $branch $eh"; exit ;;
-	esac
-done <<EOF'
 
 show_merge () {
 	branch=$(expr "$msg" : "$merge_msg") &&
@@ -66,6 +70,9 @@ show_merge () {
 show_pick () {
 	merged="$(git rev-parse --verify "$commit") pick $msg" 
 }
+
+echo '#!/bin/sh'
+echo "$0 <<\\EOF"
 
 git log --pretty=oneline --first-parent "$1" |
 {
@@ -89,4 +96,4 @@ git log --pretty=oneline --first-parent "$1" |
 	echo "$series"
 }
 
-echo 'EOF'
+echo EOF
