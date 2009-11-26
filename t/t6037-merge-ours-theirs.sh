@@ -53,4 +53,12 @@ test_expect_success 'recursive favouring ours' '
 	! grep 1 file
 '
 
+test_expect_success 'pull with -X' '
+	git reset --hard master && git pull -s recursive -Xours . side &&
+	git reset --hard master && git pull -s recursive -X ours . side &&
+	git reset --hard master && git pull -s recursive -Xtheirs . side &&
+	git reset --hard master && git pull -s recursive -X theirs . side &&
+	git reset --hard master && ! git pull -s recursive -X bork . side
+'
+
 test_done
