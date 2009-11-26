@@ -861,7 +861,9 @@ X-Mailer: git-send-email $gitversion
 
 	my @sendmail_parameters = ('-i', @recipients);
 	my $raw_from = $sanitized_sender;
-	$raw_from = $envelope_sender if (defined $envelope_sender);
+	if (defined $envelope_sender && $envelope_sender ne "auto") {
+		$raw_from = $envelope_sender;
+	}
 	$raw_from = extract_valid_address($raw_from);
 	unshift (@sendmail_parameters,
 			'-f', $raw_from) if(defined $envelope_sender);
