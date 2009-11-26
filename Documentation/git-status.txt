@@ -114,8 +114,8 @@ compatibility) and `color.status.<slot>` configuration variables
 to colorize its output.
 
 If the config variable `status.relativePaths` is set to false, then all
-paths shown in the long format are relative to the repository root, not
-to the current directory.
+paths shown are relative to the repository root, not to the current
+directory.
 
 If `status.submodulesummary` is set to a non zero number or true (identical
 to -1 or an unlimited number), the submodule summary will be enabled for
