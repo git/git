@@ -823,12 +823,13 @@ static int gitdiff_unrecognized(const char *line, struct patch *patch)
 
 static const char *stop_at_slash(const char *line, int llen)
 {
+	int nslash = p_value;
 	int i;
 
 	for (i = 0; i < llen; i++) {
 		int ch = line[i];
-		if (ch == '/')
-			return line + i;
+		if (ch == '/' && --nslash <= 0)
+			return &line[i];
 	}
 	return NULL;
 }
