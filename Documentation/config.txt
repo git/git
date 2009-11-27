@@ -1158,6 +1158,13 @@ http.noEPSV::
 	support EPSV mode. Can be overridden by the 'GIT_CURL_FTP_NO_EPSV'
 	environment variable. Default is false (curl will use EPSV).
 
+http.authAny::
+	Allow any HTTP authentication method, not only basic. Enabling
+	this lowers the performance slightly, by having to do requests
+	without any authentication to discover the authentication method
+	to use. Can be overridden by the 'GIT_HTTP_AUTH_ANY'
+	environment variable. Default is false.
+
 i18n.commitEncoding::
 	Character encoding the commit messages are stored in; git itself
 	does not care per se, but this information is necessary e.g. when

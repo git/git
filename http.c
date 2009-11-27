@@ -7,6 +7,10 @@ int active_requests;
 int http_is_verbose;
 size_t http_post_buffer = 16 * LARGE_PACKET_MAX;
 
+#if LIBCURL_VERSION_NUM >= 0x070a06
+#define LIBCURL_CAN_HANDLE_AUTH_ANY
+#endif
+
 static int min_curl_sessions = 1;
 static int curl_session_count;
 #ifdef USE_CURL_MULTI
@@ -36,6 +40,9 @@ static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static char *user_name, *user_pass;
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+static int curl_http_auth_any = 0;
+#endif
 
 #if LIBCURL_VERSION_NUM >= 0x071700
 /* Use CURLOPT_KEYPASSWD as is */
@@ -190,6 +197,12 @@ static int http_options(const char *var, const char *value, void *cb)
 			http_post_buffer = LARGE_PACKET_MAX;
 		return 0;
 	}
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+	if (!strcmp("http.authany", var)) {
+		curl_http_auth_any = git_config_bool(var, value);
+		return 0;
+	}
+#endif
 
 	/* Fall back on the default ones */
 	return git_default_config(var, value, cb);
@@ -239,6 +252,10 @@ static CURL *get_curl_handle(void)
 
 #if LIBCURL_VERSION_NUM >= 0x070907
 	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+#endif
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+	if (curl_http_auth_any)
+		curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 #endif
 
 	init_curl_http_auth(result);
@@ -390,6 +407,11 @@ void http_init(struct remote *remote)
 
 	if (getenv("GIT_CURL_FTP_NO_EPSV"))
 		curl_ftp_no_epsv = 1;
+
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+	if (getenv("GIT_HTTP_AUTH_ANY"))
+		curl_http_auth_any = 1;
+#endif
 
 	if (remote && remote->url && remote->url[0]) {
 		http_auth_init(remote->url[0]);
