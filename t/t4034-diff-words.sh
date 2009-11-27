@@ -8,6 +8,7 @@ test_expect_success setup '
 
 	git config diff.color.old red
 	git config diff.color.new green
+	git config diff.color.func magenta
 
 '
 
@@ -16,6 +17,7 @@ decrypt_color () {
 		-e 's/.\[1m/<WHITE>/g' \
 		-e 's/.\[31m/<RED>/g' \
 		-e 's/.\[32m/<GREEN>/g' \
+		-e 's/.\[35m/<MAGENTA>/g' \
 		-e 's/.\[36m/<BROWN>/g' \
 		-e 's/.\[m/<RESET>/g'
 }
@@ -70,7 +72,7 @@ cat > expect <<\EOF
 <WHITE>+++ b/post<RESET>
 <BROWN>@@ -1 +1 @@<RESET>
 <RED>h(4)<RESET><GREEN>h(4),hh[44]<RESET>
-<BROWN>@@ -3,0 +4,4 @@ a = b + c<RESET>
+<BROWN>@@ -3,0 +4,4 @@<RESET> <RESET><MAGENTA>a = b + c<RESET>
 
 <GREEN>aa = a<RESET>
 

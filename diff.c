@@ -39,6 +39,7 @@ static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_GREEN,	/* NEW */
 	GIT_COLOR_YELLOW,	/* COMMIT */
 	GIT_COLOR_BG_RED,	/* WHITESPACE */
+	GIT_COLOR_NORMAL,	/* FUNCINFO */
 };
 
 static void diff_filespec_load_driver(struct diff_filespec *one);
@@ -60,6 +61,8 @@ static int parse_diff_color_slot(const char *var, int ofs)
 		return DIFF_COMMIT;
 	if (!strcasecmp(var+ofs, "whitespace"))
 		return DIFF_WHITESPACE;
+	if (!strcasecmp(var+ofs, "func"))
+		return DIFF_FUNCINFO;
 	die("bad config variable '%s'", var);
 }
 
@@ -343,6 +346,42 @@ static void emit_add_line(const char *reset,
 		ws_check_emit(line, len, ecbdata->ws_rule,
 			      ecbdata->file, set, reset, ws);
 	}
+}
+
+static void emit_hunk_header(struct emit_callback *ecbdata,
+			     const char *line, int len)
+{
+	const char *plain = diff_get_color(ecbdata->color_diff, DIFF_PLAIN);
+	const char *frag = diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO);
+	const char *func = diff_get_color(ecbdata->color_diff, DIFF_FUNCINFO);
+	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
+	static const char atat[2] = { '@', '@' };
+	const char *cp, *ep;
+
+	/*
+	 * As a hunk header must begin with "@@ -<old>, +<new> @@",
+	 * it always is at least 10 bytes long.
+	 */
+	if (len < 10 ||
+	    memcmp(line, atat, 2) ||
+	    !(ep = memmem(line + 2, len - 2, atat, 2))) {
+		emit_line(ecbdata->file, plain, reset, line, len);
+		return;
+	}
+	ep += 2; /* skip over @@ */
+
+	/* The hunk header in fraginfo color */
+	emit_line(ecbdata->file, frag, reset, line, ep - line);
+
+	/* blank before the func header */
+	for (cp = ep; ep - line < len; ep++)
+		if (*ep != ' ' && *ep != '\t')
+			break;
+	if (ep != cp)
+		emit_line(ecbdata->file, plain, reset, cp, ep - cp);
+
+	if (ep < line + len)
+		emit_line(ecbdata->file, func, reset, ep, line + len - ep);
 }
 
 static struct diff_tempfile *claim_diff_tempfile(void) {
@@ -782,9 +821,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 			diff_words_flush(ecbdata);
 		len = sane_truncate_line(ecbdata, line, len);
 		find_lno(line, ecbdata);
-		emit_line(ecbdata->file,
-			  diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO),
-			  reset, line, len);
+		emit_hunk_header(ecbdata, line, len);
 		if (line[len-1] != '\n')
 			putc('\n', ecbdata->file);
 		return;
