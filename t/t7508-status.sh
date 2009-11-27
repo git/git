@@ -68,6 +68,24 @@ test_expect_success 'status (2)' '
 
 '
 
+cat > expect << \EOF
+ M dir1/modified
+A  dir2/added
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? expect
+?? output
+?? untracked
+EOF
+
+test_expect_success 'status -s (2)' '
+
+	git status -s > output &&
+	test_cmp expect output
+
+'
+
 cat >expect <<EOF
 # On branch master
 # Changes to be committed:
@@ -94,6 +112,22 @@ test_expect_success 'status -uno' '
 test_expect_success 'status (status.showUntrackedFiles no)' '
 	git config status.showuntrackedfiles no
 	git status >output &&
+	test_cmp expect output
+'
+
+cat >expect << EOF
+ M dir1/modified
+A  dir2/added
+EOF
+test_expect_success 'status -s -uno' '
+	git config --unset status.showuntrackedfiles
+	git status -s -uno >output &&
+	test_cmp expect output
+'
+
+test_expect_success 'status -s (status.showUntrackedFiles no)' '
+	git config status.showuntrackedfiles no
+	git status -s >output &&
 	test_cmp expect output
 '
 
@@ -129,6 +163,29 @@ test_expect_success 'status -unormal' '
 test_expect_success 'status (status.showUntrackedFiles normal)' '
 	git config status.showuntrackedfiles normal
 	git status >output &&
+	test_cmp expect output
+'
+
+cat >expect <<EOF
+ M dir1/modified
+A  dir2/added
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? dir3/
+?? expect
+?? output
+?? untracked
+EOF
+test_expect_success 'status -s -unormal' '
+	git config --unset status.showuntrackedfiles
+	git status -s -unormal >output &&
+	test_cmp expect output
+'
+
+test_expect_success 'status -s (status.showUntrackedFiles normal)' '
+	git config status.showuntrackedfiles normal
+	git status -s >output &&
 	test_cmp expect output
 '
 
@@ -169,6 +226,29 @@ test_expect_success 'status (status.showUntrackedFiles all)' '
 	test_cmp expect output
 '
 
+cat >expect <<EOF
+ M dir1/modified
+A  dir2/added
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? expect
+?? output
+?? untracked
+EOF
+test_expect_success 'status -s -uall' '
+	git config --unset status.showuntrackedfiles
+	git status -s -uall >output &&
+	test_cmp expect output
+'
+test_expect_success 'status -s (status.showUntrackedFiles all)' '
+	git config status.showuntrackedfiles all
+	git status -s >output &&
+	rm -rf dir3 &&
+	git config --unset status.showuntrackedfiles &&
+	test_cmp expect output
+'
+
 cat > expect << \EOF
 # On branch master
 # Changes to be committed:
@@ -201,6 +281,23 @@ test_expect_success 'status with relative paths' '
 '
 
 cat > expect << \EOF
+ M modified
+A  ../dir2/added
+?? untracked
+?? ../dir2/modified
+?? ../dir2/untracked
+?? ../expect
+?? ../output
+?? ../untracked
+EOF
+test_expect_success 'status -s with relative paths' '
+
+	(cd dir1 && git status -s) > output &&
+	test_cmp expect output
+
+'
+
+cat > expect << \EOF
 # On branch master
 # Changes to be committed:
 #   (use "git reset HEAD <file>..." to unstage)
@@ -228,6 +325,24 @@ test_expect_success 'status without relative paths' '
 
 	git config status.relativePaths false
 	(cd dir1 && git status) > output &&
+	test_cmp expect output
+
+'
+
+cat > expect << \EOF
+ M dir1/modified
+A  dir2/added
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? expect
+?? output
+?? untracked
+EOF
+
+test_expect_success 'status -s without relative paths' '
+
+	(cd dir1 && git status -s) > output &&
 	test_cmp expect output
 
 '
@@ -298,6 +413,28 @@ test_expect_success 'status --untracked-files=all does not show submodule' '
 	test_cmp expect output
 '
 
+cat >expect <<EOF
+ M dir1/modified
+A  dir2/added
+A  sm
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? expect
+?? output
+?? untracked
+EOF
+test_expect_success 'status -s submodule summary is disabled by default' '
+	git status -s >output &&
+	test_cmp expect output
+'
+
+# we expect the same as the previous test
+test_expect_success 'status -s --untracked-files=all does not show submodule' '
+	git status -s --untracked-files=all >output &&
+	test_cmp expect output
+'
+
 head=$(cd sm && git rev-parse --short=7 --verify HEAD)
 
 cat >expect <<EOF
@@ -335,6 +472,21 @@ test_expect_success 'status submodule summary' '
 	test_cmp expect output
 '
 
+cat >expect <<EOF
+ M dir1/modified
+A  dir2/added
+A  sm
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? expect
+?? output
+?? untracked
+EOF
+test_expect_success 'status -s submodule summary' '
+	git status -s >output &&
+	test_cmp expect output
+'
 
 cat >expect <<EOF
 # On branch master
@@ -361,6 +513,20 @@ test_expect_success 'status submodule summary (clean submodule)' '
 	test_must_fail git commit --dry-run >output &&
 	test_cmp expect output &&
 	git status >output &&
+	test_cmp expect output
+'
+
+cat >expect <<EOF
+ M dir1/modified
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? expect
+?? output
+?? untracked
+EOF
+test_expect_success 'status -s submodule summary (clean submodule)' '
+	git status -s >output &&
 	test_cmp expect output
 '
 
