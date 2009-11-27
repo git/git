@@ -7,6 +7,8 @@ int active_requests;
 int http_is_verbose;
 size_t http_post_buffer = 16 * LARGE_PACKET_MAX;
 
+static int min_curl_sessions = 1;
+static int curl_session_count;
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
 static CURLM *curlm;
@@ -150,6 +152,14 @@ static int http_options(const char *var, const char *value, void *cb)
 	if (!strcmp("http.sslcertpasswordprotected", var)) {
 		if (git_config_bool(var, value))
 			ssl_cert_password_required = 1;
+		return 0;
+	}
+	if (!strcmp("http.minsessions", var)) {
+		min_curl_sessions = git_config_int(var, value);
+#ifndef USE_CURL_MULTI
+		if (min_curl_sessions > 1)
+			min_curl_sessions = 1;
+#endif
 		return 0;
 	}
 #ifdef USE_CURL_MULTI
@@ -372,6 +382,7 @@ void http_init(struct remote *remote)
 	if (curl_ssl_verify == -1)
 		curl_ssl_verify = 1;
 
+	curl_session_count = 0;
 #ifdef USE_CURL_MULTI
 	if (max_requests < 1)
 		max_requests = DEFAULT_MAX_REQUESTS;
@@ -480,6 +491,7 @@ struct active_request_slot *get_active_slot(void)
 #else
 		slot->curl = curl_easy_duphandle(curl_default);
 #endif
+		curl_session_count++;
 	}
 
 	active_requests++;
@@ -558,9 +570,11 @@ void fill_active_slots(void)
 	}
 
 	while (slot != NULL) {
-		if (!slot->in_use && slot->curl != NULL) {
+		if (!slot->in_use && slot->curl != NULL
+			&& curl_session_count > min_curl_sessions) {
 			curl_easy_cleanup(slot->curl);
 			slot->curl = NULL;
+			curl_session_count--;
 		}
 		slot = slot->next;
 	}
@@ -633,12 +647,13 @@ static void closedown_active_slot(struct active_request_slot *slot)
 void release_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
-	if (slot->curl) {
+	if (slot->curl && curl_session_count > min_curl_sessions) {
 #ifdef USE_CURL_MULTI
 		curl_multi_remove_handle(curlm, slot->curl);
 #endif
 		curl_easy_cleanup(slot->curl);
 		slot->curl = NULL;
+		curl_session_count--;
 	}
 #ifdef USE_CURL_MULTI
 	fill_active_slots();

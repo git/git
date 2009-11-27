@@ -1132,6 +1132,12 @@ http.maxRequests::
 	How many HTTP requests to launch in parallel. Can be overridden
 	by the 'GIT_HTTP_MAX_REQUESTS' environment variable. Default is 5.
 
+http.minSessions::
+	The number of curl sessions (counted across slots) to be kept across
+	requests. They will not be ended with curl_easy_cleanup() until
+	http_cleanup() is invoked. If USE_CURL_MULTI is not defined, this
+	value will be capped at 1. Defaults to 1.
+
 http.postBuffer::
 	Maximum size in bytes of the buffer used by smart HTTP
 	transports when POSTing data to the remote system.
