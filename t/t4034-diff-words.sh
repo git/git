@@ -49,7 +49,7 @@ cat > expect <<\EOF
 <WHITE>+++ b/post<RESET>
 <BROWN>@@ -1,3 +1,7 @@<RESET>
 <RED>h(4)<RESET><GREEN>h(4),hh[44]<RESET>
-<RESET>
+
 a = b + c<RESET>
 
 <GREEN>aa = a<RESET>
@@ -90,7 +90,7 @@ cat > expect <<\EOF
 <WHITE>+++ b/post<RESET>
 <BROWN>@@ -1,3 +1,7 @@<RESET>
 h(4),<GREEN>hh<RESET>[44]
-<RESET>
+
 a = b + c<RESET>
 
 <GREEN>aa = a<RESET>
@@ -126,7 +126,7 @@ cat > expect <<\EOF
 <WHITE>+++ b/post<RESET>
 <BROWN>@@ -1,3 +1,7 @@<RESET>
 h(4)<GREEN>,hh[44]<RESET>
-<RESET>
+
 a = b + c<RESET>
 
 <GREEN>aa = a<RESET>
@@ -168,7 +168,7 @@ cat > expect <<\EOF
 <WHITE>+++ b/post<RESET>
 <BROWN>@@ -1,3 +1,7 @@<RESET>
 h(4),<GREEN>hh[44<RESET>]
-<RESET>
+
 a = b + c<RESET>
 
 <GREEN>aa = a<RESET>

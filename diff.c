@@ -295,12 +295,13 @@ static void emit_line_0(FILE *file, const char *set, const char *reset,
 		nofirst = 0;
 	}
 
-	fputs(set, file);
-
-	if (!nofirst)
-		fputc(first, file);
-	fwrite(line, len, 1, file);
-	fputs(reset, file);
+	if (len || !nofirst) {
+		fputs(set, file);
+		if (!nofirst)
+			fputc(first, file);
+		fwrite(line, len, 1, file);
+		fputs(reset, file);
+	}
 	if (has_trailing_carriage_return)
 		fputc('\r', file);
 	if (has_trailing_newline)
