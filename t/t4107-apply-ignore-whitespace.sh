@@ -136,37 +136,37 @@ void print_int(int num) {
 EOF
 
 test_expect_success 'file creation' '
-	git-apply patch1.patch
+	git apply patch1.patch
 '
 
 test_expect_success 'patch2 fails (retab)' '
-	test_must_fail git-apply patch2.patch
+	test_must_fail git apply patch2.patch
 '
 
 test_expect_success 'patch2 applies with --ignore-whitespace' '
-	git-apply --ignore-whitespace patch2.patch
+	git apply --ignore-whitespace patch2.patch
 '
 
 test_expect_success 'patch2 reverse applies with --ignore-space-change' '
-	git-apply -R --ignore-space-change patch2.patch
+	git apply -R --ignore-space-change patch2.patch
 '
 
 git config apply.ignorewhitespace change
 
 test_expect_success 'patch2 applies (apply.ignorewhitespace = change)' '
-	git-apply patch2.patch
+	git apply patch2.patch
 '
 
 test_expect_success 'patch3 fails (missing string at EOL)' '
-	test_must_fail git-apply patch3.patch
+	test_must_fail git apply patch3.patch
 '
 
 test_expect_success 'patch4 fails (missing EOL at EOF)' '
-	test_must_fail git-apply patch4.patch
+	test_must_fail git apply patch4.patch
 '
 
 test_expect_success 'patch5 applies (leading whitespace)' '
-	git-apply patch5.patch
+	git apply patch5.patch
 '
 
 test_expect_success 'patches do not mangle whitespace' '
@@ -175,11 +175,11 @@ test_expect_success 'patches do not mangle whitespace' '
 
 test_expect_success 're-create file (with --ignore-whitespace)' '
 	rm -f main.c &&
-	git-apply patch1.patch
+	git apply patch1.patch
 '
 
 test_expect_success 'patch5 fails (--no-ignore-whitespace)' '
-	test_must_fail git-apply --no-ignore-whitespace patch5.patch
+	test_must_fail git apply --no-ignore-whitespace patch5.patch
 '
 
 test_done
