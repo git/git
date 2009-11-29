@@ -2940,10 +2940,14 @@ sub find_extra_svk_parents {
 			if ( my $commit = $gs->rev_map_get($rev, $uuid) ) {
 				# wahey!  we found it, but it might be
 				# an old one (!)
-				push @known_parents, $commit;
+				push @known_parents, [ $rev, $commit ];
 			}
 		}
 	}
+	# Ordering matters; highest-numbered commit merge tickets
+	# first, as they may account for later merge ticket additions
+	# or changes.
+	@known_parents = map {$_->[1]} sort {$b->[0] <=> $a->[0]} @known_parents;
 	for my $parent ( @known_parents ) {
 		my @cmd = ('rev-list', $parent, map { "^$_" } @$parents );
 		my ($msg_fh, $ctx) = command_output_pipe(@cmd);
