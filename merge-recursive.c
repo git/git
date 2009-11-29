@@ -170,18 +170,6 @@ static int git_merge_trees(int index_only,
 	int rc;
 	struct tree_desc t[3];
 	struct unpack_trees_options opts;
-	static const struct unpack_trees_error_msgs msgs = {
-		/* would_overwrite */
-		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
-		/* not_uptodate_file */
-		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
-		/* not_uptodate_dir */
-		"Updating '%s' would lose untracked files in it.  Aborting.",
-		/* would_lose_untracked */
-		"Untracked working tree file '%s' would be %s by merge.  Aborting",
-		/* bind_overlap -- will not happen here */
-		NULL,
-	};
 
 	memset(&opts, 0, sizeof(opts));
 	if (index_only)
@@ -193,7 +181,7 @@ static int git_merge_trees(int index_only,
 	opts.fn = threeway_merge;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
-	opts.msgs = msgs;
+	opts.msgs = get_porcelain_error_msgs();
 
 	init_tree_desc_from_tree(t+0, common);
 	init_tree_desc_from_tree(t+1, head);
@@ -1178,6 +1166,23 @@ static int process_entry(struct merge_options *o,
 		die("Fatal merge failure, shouldn't happen.");
 
 	return clean_merge;
+}
+
+struct unpack_trees_error_msgs get_porcelain_error_msgs(void)
+{
+	struct unpack_trees_error_msgs msgs = {
+		/* would_overwrite */
+		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
+		/* not_uptodate_file */
+		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
+		/* not_uptodate_dir */
+		"Updating '%s' would lose untracked files in it.  Aborting.",
+		/* would_lose_untracked */
+		"Untracked working tree file '%s' would be %s by merge.  Aborting",
+		/* bind_overlap -- will not happen here */
+		NULL,
+	};
+	return msgs;
 }
 
 int merge_trees(struct merge_options *o,
