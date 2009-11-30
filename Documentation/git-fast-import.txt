@@ -316,7 +316,7 @@ change to the project.
 	data
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
-	(filemodify | filedelete | filecopy | filerename | filedeleteall)*
+	(filemodify | filedelete | filecopy | filerename | filedeleteall | notemodify)*
 	LF?
 ....
 
@@ -339,14 +339,13 @@ commit message use a 0 length data.  Commit messages are free-form
 and are not interpreted by Git.  Currently they must be encoded in
 UTF-8, as fast-import does not permit other encodings to be specified.
 
-Zero or more `filemodify`, `filedelete`, `filecopy`, `filerename`
-and `filedeleteall` commands
+Zero or more `filemodify`, `filedelete`, `filecopy`, `filerename`,
+`filedeleteall` and `notemodify` commands
 may be included to update the contents of the branch prior to
 creating the commit.  These commands may be supplied in any order.
 However it is recommended that a `filedeleteall` command precede
-all `filemodify`, `filecopy` and `filerename` commands in the same
-commit, as `filedeleteall`
-wipes the branch clean (see below).
+all `filemodify`, `filecopy`, `filerename` and `notemodify` commands in
+the same commit, as `filedeleteall` wipes the branch clean (see below).
 
 The `LF` after the command is optional (it used to be required).
 
@@ -594,6 +593,40 @@ The `filedeleteall` approach may however require fast-import to use slightly
 more memory per active branch (less than 1 MiB for even most large
 projects); so frontends that can easily obtain only the affected
 paths for a commit are encouraged to do so.
+
+`notemodify`
+^^^^^^^^^^^^
+Included in a `commit` command to add a new note (annotating a given
+commit) or change the content of an existing note.  This command has
+two different means of specifying the content of the note.
+
+External data format::
+	The data content for the note was already supplied by a prior
+	`blob` command.  The frontend just needs to connect it to the
+	commit that is to be annotated.
++
+....
+	'N' SP <dataref> SP <committish> LF
+....
++
+Here `<dataref>` can be either a mark reference (`:<idnum>`)
+set by a prior `blob` command, or a full 40-byte SHA-1 of an
+existing Git blob object.
+
+Inline data format::
+	The data content for the note has not been supplied yet.
+	The frontend wants to supply it as part of this modify
+	command.
++
+....
+	'N' SP 'inline' SP <committish> LF
+	data
+....
++
+See below for a detailed description of the `data` command.
+
+In both formats `<committish>` is any of the commit specification
+expressions also accepted by `from` (see above).
 
 `mark`
 ~~~~~~

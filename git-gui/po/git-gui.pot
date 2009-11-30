@@ -90,6 +90,11 @@ msgstr ""
 msgid "Ready."
 msgstr ""
 
+#: git-gui.sh:1726
+#, tcl-format
+msgid "Displaying only %s of %s files."
+msgstr ""
+
 #: git-gui.sh:1819
 msgid "Unmodified"
 msgstr ""

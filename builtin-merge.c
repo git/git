@@ -43,6 +43,7 @@ static const char * const builtin_merge_usage[] = {
 
 static int show_diffstat = 1, option_log, squash;
 static int option_commit = 1, allow_fast_forward = 1;
+static int fast_forward_only;
 static int allow_trivial = 1, have_message;
 static struct strbuf merge_msg;
 static struct commit_list *remoteheads;
@@ -166,7 +167,9 @@ static struct option builtin_merge_options[] = {
 	OPT_BOOLEAN(0, "commit", &option_commit,
 		"perform a commit if the merge succeeds (default)"),
 	OPT_BOOLEAN(0, "ff", &allow_fast_forward,
-		"allow fast forward (default)"),
+		"allow fast-forward (default)"),
+	OPT_BOOLEAN(0, "ff-only", &fast_forward_only,
+		"abort if fast-forward is not possible"),
 	OPT_CALLBACK('s', "strategy", &use_strategies, "strategy",
 		"merge strategy to use", option_parse_strategy),
 	OPT_CALLBACK('m', "message", &merge_msg, "message",
@@ -264,6 +267,7 @@ static void squash_message(void)
 	struct strbuf out = STRBUF_INIT;
 	struct commit_list *j;
 	int fd;
+	struct pretty_print_context ctx = {0};
 
 	printf("Squash commit -- not updating HEAD\n");
 	fd = open(git_path("SQUASH_MSG"), O_WRONLY | O_CREAT, 0666);
@@ -285,13 +289,15 @@ static void squash_message(void)
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
 
+	ctx.abbrev = rev.abbrev;
+	ctx.date_mode = rev.date_mode;
+
 	strbuf_addstr(&out, "Squashed commit of the following:\n");
 	while ((commit = get_revision(&rev)) != NULL) {
 		strbuf_addch(&out, '\n');
 		strbuf_addf(&out, "commit %s\n",
 			sha1_to_hex(commit->object.sha1));
-		pretty_print_commit(rev.commit_format, commit, &out, rev.abbrev,
-			NULL, NULL, rev.date_mode, 0);
+		pretty_print_commit(rev.commit_format, commit, &out, &ctx);
 	}
 	if (write(fd, out.buf, out.len) < 0)
 		die_errno("Writing SQUASH_MSG");
@@ -840,7 +846,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	const char *best_strategy = NULL, *wt_strategy = NULL;
 	struct commit_list **remotes = &remoteheads;
 
-	setup_work_tree();
 	if (file_exists(git_path("MERGE_HEAD")))
 		die("You have not concluded your merge. (MERGE_HEAD exists)");
 	if (read_cache_unmerged())
@@ -873,6 +878,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			die("You cannot combine --squash with --no-ff.");
 		option_commit = 0;
 	}
+
+	if (!allow_fast_forward && fast_forward_only)
+		die("You cannot combine --no-ff with --ff-only.");
 
 	if (!argc)
 		usage_with_options(builtin_merge_usage,
@@ -1013,7 +1021,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 				hex,
 				find_unique_abbrev(remoteheads->item->object.sha1,
 				DEFAULT_ABBREV));
-		strbuf_addstr(&msg, "Fast forward");
+		strbuf_addstr(&msg, "Fast-forward");
 		if (have_message)
 			strbuf_addstr(&msg,
 				" (no commit created; -m option ignored)");
@@ -1031,16 +1039,16 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	} else if (!remoteheads->next && common->next)
 		;
 		/*
-		 * We are not doing octopus and not fast forward.  Need
+		 * We are not doing octopus and not fast-forward.  Need
 		 * a real merge.
 		 */
 	else if (!remoteheads->next && !common->next && option_commit) {
 		/*
-		 * We are not doing octopus, not fast forward, and have
+		 * We are not doing octopus, not fast-forward, and have
 		 * only one common.
 		 */
 		refresh_cache(REFRESH_QUIET);
-		if (allow_trivial) {
+		if (allow_trivial && !fast_forward_only) {
 			/* See if it is really trivial. */
 			git_committer_info(IDENT_ERROR_ON_NO_NAME);
 			printf("Trying really trivial in-index merge...\n");
@@ -1078,6 +1086,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			return 0;
 		}
 	}
+
+	if (fast_forward_only)
+		die("Not possible to fast-forward, aborting.");
 
 	/* We are going to make a new commit. */
 	git_committer_info(IDENT_ERROR_ON_NO_NAME);

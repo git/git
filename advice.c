@@ -2,6 +2,7 @@
 
 int advice_push_nonfastforward = 1;
 int advice_status_hints = 1;
+int advice_commit_before_merge = 1;
 
 static struct {
 	const char *name;
@@ -9,6 +10,7 @@ static struct {
 } advice_config[] = {
 	{ "pushnonfastforward", &advice_push_nonfastforward },
 	{ "statushints", &advice_status_hints },
+	{ "commitbeforemerge", &advice_commit_before_merge },
 };
 
 int git_default_advice_config(const char *var, const char *value)

@@ -60,8 +60,8 @@ The --bcc option must be repeated for each user you want on the bcc list.
 The --cc option must be repeated for each user you want on the cc list.
 
 --compose::
-	Use $GIT_EDITOR, core.editor, $VISUAL, or $EDITOR to edit an
-	introductory message for the patch series.
+	Invoke a text editor (see GIT_EDITOR in linkgit:git-var[1])
+	to edit an introductory message for the patch series.
 +
 When '--compose' is used, git send-email will use the From, Subject, and
 In-Reply-To headers specified in the message. If the body of the message

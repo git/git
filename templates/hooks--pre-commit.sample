@@ -7,6 +7,14 @@
 #
 # To enable this hook, rename this file to "pre-commit".
 
+if git-rev-parse --verify HEAD >/dev/null 2>&1
+then
+	against=HEAD
+else
+	# Initial commit: diff against an empty tree object
+	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+
 # If you want to allow non-ascii filenames set this variable to true.
 allownonascii=$(git config hooks.allownonascii)
 
@@ -17,7 +25,7 @@ if [ "$allownonascii" != "true" ] &&
 	# Note that the use of brackets around a tr range is ok here, (it's
 	# even required, for portability to Solaris 10's /usr/bin/tr), since
 	# the square bracket bytes happen to fall in the designated range.
-	test "$(git diff --cached --name-only --diff-filter=A -z |
+	test "$(git diff --cached --name-only --diff-filter=A -z $against |
 	  LC_ALL=C tr -d '[ -~]\0')"
 then
 	echo "Error: Attempt to add a non-ascii file name."
@@ -33,14 +41,6 @@ then
 	echo "  git config hooks.allownonascii true"
 	echo
 	exit 1
-fi
-
-if git-rev-parse --verify HEAD >/dev/null 2>&1
-then
-	against=HEAD
-else
-	# Initial commit: diff against an empty tree object
-	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
 fi
 
 exec git diff-index --check --cached $against --

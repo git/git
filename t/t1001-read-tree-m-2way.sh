@@ -5,7 +5,7 @@
 
 test_description='Two way merge with read-tree -m $H $M
 
-This test tries two-way merge (aka fast forward with carry forward).
+This test tries two-way merge (aka fast-forward with carry forward).
 
 There is the head (called H) and another commit (called M), which is
 simply ahead of H.  The index and the work tree contains a state that
@@ -51,7 +51,7 @@ check_cache_at () {
 }
 
 cat >bozbar-old <<\EOF
-This is a sample file used in two-way fast forward merge
+This is a sample file used in two-way fast-forward merge
 tests.  Its second line ends with a magic word bozbar
 which will be modified by the merged head to gnusto.
 It has some extra lines so that external tools can
@@ -300,7 +300,7 @@ test_expect_success \
      echo gnusto gnusto >bozbar &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
-# This fails with straight two-way fast forward.
+# This fails with straight two-way fast-forward.
 test_expect_success \
     '22 - local change cache updated.' \
     'rm -f .git/index &&

@@ -126,12 +126,20 @@ advice.*::
 		Directions on how to stage/unstage/add shown in the
 		output of linkgit:git-status[1] and the template shown
 		when writing commit messages. Default: true.
+	commitBeforeMerge::
+		Advice shown when linkgit:git-merge[1] refuses to
+		merge to avoid overwritting local changes.
+		Default: true.
 --
 
 core.fileMode::
 	If false, the executable bit differences between the index and
 	the working copy are ignored; useful on broken filesystems like FAT.
-	See linkgit:git-update-index[1]. True by default.
+	See linkgit:git-update-index[1].
++
+The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
+will probe and set core.fileMode false if appropriate when the
+repository is created.
 
 core.ignoreCygwinFSTricks::
 	This option is only used by Cygwin implementation of Git. If false,
@@ -143,6 +151,18 @@ core.ignoreCygwinFSTricks::
 	normal Cygwin l/stat() functions. True by default, unless core.filemode
 	is true, in which case ignoreCygwinFSTricks is ignored as Cygwin's
 	POSIX emulation is required to support core.filemode.
+
+core.ignorecase::
+	If true, this option enables various workarounds to enable
+	git to work better on filesystems that are not case sensitive,
+	like FAT. For example, if a directory listing finds
+	"makefile" when git expects "Makefile", git will assume
+	it is really the same file, and continue to remember it as
+	"Makefile".
++
+The default is false, except linkgit:git-clone[1] or linkgit:git-init[1]
+will probe and set core.ignorecase true if appropriate when the repository
+is created.
 
 core.trustctime::
 	If false, the ctime differences between the index and the
@@ -169,9 +189,10 @@ core.autocrlf::
 	writing to the filesystem.  The variable can be set to
 	'input', in which case the conversion happens only while
 	reading from the filesystem but files are written out with
-	`LF` at the end of lines.  Currently, which paths to consider
-	"text" (i.e. be subjected to the autocrlf mechanism) is
-	decided purely based on the contents.
+	`LF` at the end of lines.  A file is considered
+	"text" (i.e. be subjected to the autocrlf mechanism) based on
+	the file's `crlf` attribute, or if `crlf` is unspecified,
+	based on the file's contents.  See linkgit:gitattributes[5].
 
 core.safecrlf::
 	If true, makes git check if converting `CRLF` as controlled by
@@ -223,7 +244,11 @@ core.symlinks::
 	contain the link text. linkgit:git-update-index[1] and
 	linkgit:git-add[1] will not change the recorded type to regular
 	file. Useful on filesystems like FAT that do not support
-	symbolic links. True by default.
+	symbolic links.
++
+The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
+will probe and set core.symlinks false if appropriate when the repository
+is created.
 
 core.gitProxy::
 	A "proxy command" to execute (as 'command host port') instead
@@ -380,16 +405,15 @@ Common unit suffixes of 'k', 'm', or 'g' are supported.
 core.excludesfile::
 	In addition to '.gitignore' (per-directory) and
 	'.git/info/exclude', git looks into this file for patterns
-	of files which are not meant to be tracked.  See
-	linkgit:gitignore[5].
+	of files which are not meant to be tracked.  "{tilde}/" is expanded
+	to the value of `$HOME` and "{tilde}user/" to the specified user's
+	home directory.  See linkgit:gitignore[5].
 
 core.editor::
 	Commands such as `commit` and `tag` that lets you edit
 	messages by launching an editor uses the value of this
 	variable when it is set, and the environment variable
-	`GIT_EDITOR` is not set.  The order of preference is
-	`GIT_EDITOR` environment, `core.editor`, `VISUAL` and
-	`EDITOR` environment variables and then finally `vi`.
+	`GIT_EDITOR` is not set.  See linkgit:git-var[1].
 
 core.pager::
 	The command that git will use to paginate output.  Can
@@ -416,13 +440,17 @@ core.whitespace::
 	consider them as errors.  You can prefix `-` to disable
 	any of them (e.g. `-trailing-space`):
 +
-* `trailing-space` treats trailing whitespaces at the end of the line
+* `blank-at-eol` treats trailing whitespaces at the end of the line
   as an error (enabled by default).
 * `space-before-tab` treats a space character that appears immediately
   before a tab character in the initial indent part of the line as an
   error (enabled by default).
 * `indent-with-non-tab` treats a line that is indented with 8 or more
   space characters as an error (not enabled by default).
+* `blank-at-eof` treats blank lines added at the end of file as an error
+  (enabled by default).
+* `trailing-space` is a short-hand to cover both `blank-at-eol` and
+  `blank-at-eof`.
 * `cr-at-eol` treats a carriage-return at the end of line as
   part of the line terminator, i.e. with it, `trailing-space`
   does not trigger if the character before such a carriage-return
@@ -453,6 +481,19 @@ core.createObject::
 On some file system/operating system combinations, this is unreliable.
 Set this config setting to 'rename' there; However, This will remove the
 check that makes sure that existing object files will not get overwritten.
+
+core.notesRef::
+	When showing commit messages, also show notes which are stored in
+	the given ref.  This ref is expected to contain files named
+	after the full SHA-1 of the commit they annotate.
++
+If such a file exists in the given ref, the referenced blob is read, and
+appended to the commit message, separated by a "Notes:" line.  If the
+given ref itself does not exist, it is not an error, but means that no
+notes should be printed.
++
+This setting defaults to "refs/notes/commits", and can be overridden by
+the `GIT_NOTES_REF` environment variable.
 
 add.ignore-errors::
 	Tells 'git-add' to continue adding files when some files cannot be
@@ -666,6 +707,8 @@ color.ui::
 
 commit.template::
 	Specify a file to use as the template for new commit messages.
+	"{tilde}/" is expanded to the value of `$HOME` and "{tilde}user/" to the
+	specified user's home directory.
 
 diff.autorefreshindex::
 	When using 'git-diff' to compare with work tree
@@ -1089,6 +1132,14 @@ http.maxRequests::
 	How many HTTP requests to launch in parallel. Can be overridden
 	by the 'GIT_HTTP_MAX_REQUESTS' environment variable. Default is 5.
 
+http.postBuffer::
+	Maximum size in bytes of the buffer used by smart HTTP
+	transports when POSTing data to the remote system.
+	For requests larger than this buffer size, HTTP/1.1 and
+	Transfer-Encoding: chunked is used to avoid creating a
+	massive pack file locally.  Default is 1 MiB, which is
+	sufficient for most requests.
+
 http.lowSpeedLimit, http.lowSpeedTime::
 	If the HTTP transfer speed is less than 'http.lowSpeedLimit'
 	for longer than 'http.lowSpeedTime' seconds, the transfer is aborted.
@@ -1320,6 +1371,11 @@ rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
 	rebase. False by default.
 
+receive.autogc::
+	By default, git-receive-pack will run "git-gc --auto" after
+	receiving data from git-push and updating refs.  You can stop
+	it by setting this variable to false.
+
 receive.fsckObjects::
 	If it is set to true, git-receive-pack will check all received
 	objects. It will abort in the case of a malformed object or a
@@ -1351,9 +1407,13 @@ receive.denyCurrentBranch::
 
 receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is
-	not a fast forward. Use this to prevent such an update via a push,
+	not a fast-forward. Use this to prevent such an update via a push,
 	even if that push is forced. This configuration variable is
 	set when initializing a shared repository.
+
+receive.updateserverinfo::
+	If set to true, git-receive-pack will run git-update-server-info
+	after receiving data from git-push and updating refs.
 
 remote.<name>.url::
 	The URL of a remote repository.  See linkgit:git-fetch[1] or
@@ -1381,7 +1441,13 @@ remote.<name>.mirror::
 
 remote.<name>.skipDefaultUpdate::
 	If true, this remote will be skipped by default when updating
-	using the update subcommand of linkgit:git-remote[1].
+	using linkgit:git-fetch[1] or the `update` subcommand of
+	linkgit:git-remote[1].
+
+remote.<name>.skipFetchAll::
+	If true, this remote will be skipped by default when updating
+	using linkgit:git-fetch[1] or the `update` subcommand of
+	linkgit:git-remote[1].
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See

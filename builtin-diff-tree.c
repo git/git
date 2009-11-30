@@ -104,6 +104,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	opt->abbrev = 0;
 	opt->diff = 1;
+	opt->disable_stdin = 1;
 	argc = setup_revisions(argc, argv, opt, NULL);
 
 	while (--argc > 0) {

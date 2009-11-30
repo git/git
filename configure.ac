@@ -68,6 +68,26 @@ else \
 	GIT_CONF_APPEND_LINE(${PACKAGE}DIR=$withval); \
 fi \
 ])# GIT_PARSE_WITH
+#
+# GIT_PARSE_WITH_SET_MAKE_VAR(WITHNAME, VAR, HELP_TEXT)
+# ---------------------
+# Set VAR to the value specied by --with-WITHNAME.
+# No verification of arguments is performed, but warnings are issued
+# if either 'yes' or 'no' is specified.
+# HELP_TEXT is presented when --help is called.
+# This is a direct way to allow setting variables in the Makefile.
+AC_DEFUN([GIT_PARSE_WITH_SET_MAKE_VAR],
+[AC_ARG_WITH([$1],
+ [AS_HELP_STRING([--with-$1=VALUE], $3)],
+ if test -n "$withval"; then \
+  if test "$withval" = "yes" -o "$withval" = "no"; then \
+    AC_MSG_WARN([You likely do not want either 'yes' or 'no' as]
+		     [a value for $1 ($2).  Maybe you do...?]); \
+  fi; \
+  \
+  AC_MSG_NOTICE([Setting $2 to $withval]); \
+  GIT_CONF_APPEND_LINE($2=$withval); \
+ fi)])# GIT_PARSE_WITH_SET_MAKE_VAR
 
 dnl
 dnl GIT_CHECK_FUNC(FUNCTION, IFTRUE, IFFALSE)
@@ -225,6 +245,29 @@ GIT_PARSE_WITH(iconv))
 #
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-index perspective.
+
+#
+# Allow user to set ETC_GITCONFIG variable
+GIT_PARSE_WITH_SET_MAKE_VAR(gitconfig, ETC_GITCONFIG,
+			Use VALUE instead of /etc/gitconfig as the
+			global git configuration file.
+			If VALUE is not fully qualified it will be interpretted
+			as a path relative to the computed prefix at runtime.)
+
+#
+# Allow user to set the default pager
+GIT_PARSE_WITH_SET_MAKE_VAR(pager, DEFAULT_PAGER,
+			Use VALUE as the fall-back pager instead of 'less'.
+			This is used by things like 'git log' when the user
+			does not specify a pager to use through alternate
+			methods. eg: /usr/bin/pager)
+#
+# Allow user to set the default editor
+GIT_PARSE_WITH_SET_MAKE_VAR(editor, DEFAULT_EDITOR,
+			Use VALUE as the fall-back editor instead of 'vi'.
+			This is used by things like 'git commit' when the user
+			does not specify a preferred editor through other
+			methods. eg: /usr/bin/editor)
 
 #
 # Define SHELL_PATH to provide path to shell.

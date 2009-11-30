@@ -367,7 +367,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		push_arg("-h");
 	if (opt->regflags & REG_EXTENDED)
 		push_arg("-E");
-	if (opt->regflags & REG_ICASE)
+	if (opt->ignore_case)
 		push_arg("-i");
 	if (opt->binary == GREP_BINARY_NOMATCH)
 		push_arg("-I");
@@ -433,7 +433,11 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 
 		if (opt->color_external && strlen(opt->color_external) > 0)
 			push_arg(opt->color_external);
+	} else {
+		unsetenv("GREP_COLOR");
+		unsetenv("GREP_COLORS");
 	}
+	unsetenv("GREP_OPTIONS");
 
 	hit = 0;
 	argc = nr;
@@ -631,7 +635,7 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 	struct grep_opt *grep_opt = opt->value;
 	FILE *patterns;
 	int lno = 0;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
 	patterns = fopen(arg, "r");
 	if (!patterns)
@@ -706,8 +710,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_GROUP(""),
 		OPT_BOOLEAN('v', "invert-match", &opt.invert,
 			"show non-matching lines"),
-		OPT_BIT('i', "ignore-case", &opt.regflags,
-			"case insensitive matching", REG_ICASE),
+		OPT_BOOLEAN('i', "ignore-case", &opt.ignore_case,
+			"case insensitive matching"),
 		OPT_BOOLEAN('w', "word-regexp", &opt.word_regexp,
 			"match patterns only at word boundaries"),
 		OPT_SET_INT('a', "text", &opt.binary,
@@ -788,6 +792,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	/*
+	 * 'git grep -h', unlike 'git grep -h <pattern>', is a request
+	 * to show usage information and exit.
+	 */
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage_with_options(grep_usage, options);
+
 	memset(&opt, 0, sizeof(opt));
 	opt.prefix = prefix;
 	opt.prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
@@ -830,6 +841,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		external_grep_allowed = 0;
 	if (!opt.pattern_list)
 		die("no pattern given.");
+	if (!opt.fixed && opt.ignore_case)
+		opt.regflags |= REG_ICASE;
 	if ((opt.regflags != REG_NEWLINE) && opt.fixed)
 		die("cannot mix --fixed-strings and regexp");
 	compile_grep_patterns(&opt);

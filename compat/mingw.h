@@ -1,4 +1,5 @@
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
 /*
  * things that are not available in header files
@@ -124,6 +125,27 @@ static inline int waitpid(pid_t pid, int *status, unsigned options)
 	return -1;
 }
 
+#ifndef NO_OPENSSL
+#include <openssl/ssl.h>
+static inline int mingw_SSL_set_fd(SSL *ssl, int fd)
+{
+	return SSL_set_fd(ssl, _get_osfhandle(fd));
+}
+#define SSL_set_fd mingw_SSL_set_fd
+
+static inline int mingw_SSL_set_rfd(SSL *ssl, int fd)
+{
+	return SSL_set_rfd(ssl, _get_osfhandle(fd));
+}
+#define SSL_set_rfd mingw_SSL_set_rfd
+
+static inline int mingw_SSL_set_wfd(SSL *ssl, int fd)
+{
+	return SSL_set_wfd(ssl, _get_osfhandle(fd));
+}
+#define SSL_set_wfd mingw_SSL_set_wfd
+#endif
+
 /*
  * implementations of missing functions
  */
@@ -157,6 +179,18 @@ char *mingw_getenv(const char *name);
 struct hostent *mingw_gethostbyname(const char *host);
 #define gethostbyname mingw_gethostbyname
 
+void mingw_freeaddrinfo(struct addrinfo *res);
+#define freeaddrinfo mingw_freeaddrinfo
+
+int mingw_getaddrinfo(const char *node, const char *service,
+		      const struct addrinfo *hints, struct addrinfo **res);
+#define getaddrinfo mingw_getaddrinfo
+
+int mingw_getnameinfo(const struct sockaddr *sa, socklen_t salen,
+		      char *host, DWORD hostlen, char *serv, DWORD servlen,
+		      int flags);
+#define getnameinfo mingw_getnameinfo
+
 int mingw_socket(int domain, int type, int protocol);
 #define socket mingw_socket
 
@@ -166,7 +200,7 @@ int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
 int mingw_rename(const char*, const char*);
 #define rename mingw_rename
 
-#ifdef USE_WIN32_MMAP
+#if defined(USE_WIN32_MMAP) || defined(_MSC_VER)
 int mingw_getpagesize(void);
 #define getpagesize mingw_getpagesize
 #endif

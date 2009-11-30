@@ -6,6 +6,7 @@
 #include "revision.h"
 #include "dir.h"
 #include "tag.h"
+#include "string-list.h"
 
 static struct refspec s_tag_refspec = {
 	0,
@@ -396,7 +397,8 @@ static int handle_config(const char *key, const char *value, void *cb)
 		remote->mirror = git_config_bool(key, value);
 	else if (!strcmp(subkey, ".skipdefaultupdate"))
 		remote->skip_default_update = git_config_bool(key, value);
-
+	else if (!strcmp(subkey, ".skipfetchall"))
+		remote->skip_default_update = git_config_bool(key, value);
 	else if (!strcmp(subkey, ".url")) {
 		const char *v;
 		if (git_config_string(&v, key, value))
@@ -734,29 +736,33 @@ int for_each_remote(each_remote_fn fn, void *priv)
 
 void ref_remove_duplicates(struct ref *ref_map)
 {
-	struct ref **posn;
-	struct ref *next;
-	for (; ref_map; ref_map = ref_map->next) {
+	struct string_list refs = { NULL, 0, 0, 0 };
+	struct string_list_item *item = NULL;
+	struct ref *prev = NULL, *next = NULL;
+	for (; ref_map; prev = ref_map, ref_map = next) {
+		next = ref_map->next;
 		if (!ref_map->peer_ref)
 			continue;
-		posn = &ref_map->next;
-		while (*posn) {
-			if ((*posn)->peer_ref &&
-			    !strcmp((*posn)->peer_ref->name,
-				    ref_map->peer_ref->name)) {
-				if (strcmp((*posn)->name, ref_map->name))
-					die("%s tracks both %s and %s",
-					    ref_map->peer_ref->name,
-					    (*posn)->name, ref_map->name);
-				next = (*posn)->next;
-				free((*posn)->peer_ref);
-				free(*posn);
-				*posn = next;
-			} else {
-				posn = &(*posn)->next;
-			}
+
+		item = string_list_lookup(ref_map->peer_ref->name, &refs);
+		if (item) {
+			if (strcmp(((struct ref *)item->util)->name,
+				   ref_map->name))
+				die("%s tracks both %s and %s",
+				    ref_map->peer_ref->name,
+				    ((struct ref *)item->util)->name,
+				    ref_map->name);
+			prev->next = ref_map->next;
+			free(ref_map->peer_ref);
+			free(ref_map);
+			ref_map = prev; /* skip this; we freed it */
+			continue;
 		}
+
+		item = string_list_insert(ref_map->peer_ref->name, &refs);
+		item->util = ref_map;
 	}
+	string_list_clear(&refs, 0);
 }
 
 int remote_has_url(struct remote *remote, const char *url)
@@ -1585,4 +1591,43 @@ struct ref *guess_remote_head(const struct ref *head,
 	}
 
 	return list;
+}
+
+struct stale_heads_info {
+	struct remote *remote;
+	struct string_list *ref_names;
+	struct ref **stale_refs_tail;
+};
+
+static int get_stale_heads_cb(const char *refname,
+	const unsigned char *sha1, int flags, void *cb_data)
+{
+	struct stale_heads_info *info = cb_data;
+	struct refspec refspec;
+	memset(&refspec, 0, sizeof(refspec));
+	refspec.dst = (char *)refname;
+	if (!remote_find_tracking(info->remote, &refspec)) {
+		if (!((flags & REF_ISSYMREF) ||
+		    string_list_has_string(info->ref_names, refspec.src))) {
+			struct ref *ref = make_linked_ref(refname, &info->stale_refs_tail);
+			hashcpy(ref->new_sha1, sha1);
+		}
+	}
+	return 0;
+}
+
+struct ref *get_stale_heads(struct remote *remote, struct ref *fetch_map)
+{
+	struct ref *ref, *stale_refs = NULL;
+	struct string_list ref_names = { NULL, 0, 0, 0 };
+	struct stale_heads_info info;
+	info.remote = remote;
+	info.ref_names = &ref_names;
+	info.stale_refs_tail = &stale_refs;
+	for (ref = fetch_map; ref; ref = ref->next)
+		string_list_append(ref->name, &ref_names);
+	sort_string_list(&ref_names);
+	for_each_ref(get_stale_heads_cb, &info);
+	string_list_clear(&ref_names, 0);
+	return stale_refs;
 }

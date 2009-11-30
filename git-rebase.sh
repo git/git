@@ -467,7 +467,7 @@ orig_head=$branch
 mb=$(git merge-base "$onto" "$branch")
 if test "$upstream" = "$onto" && test "$mb" = "$onto" &&
 	# linear history?
-	! (git rev-list --parents "$onto".."$branch" | grep " .* ") > /dev/null
+	! (git rev-list --parents "$onto".."$branch" | sane_grep " .* ") > /dev/null
 then
 	if test -z "$force_rebase"
 	then
@@ -496,7 +496,7 @@ then
 fi
 
 # If the $onto is a proper descendant of the tip of the branch, then
-# we just fast forwarded.
+# we just fast-forwarded.
 if test "$mb" = "$branch"
 then
 	say "Fast-forwarded $branch_name to $onto_name."

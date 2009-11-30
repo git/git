@@ -205,7 +205,7 @@ check_patch_format () {
 			# and see if it looks like that they all begin with the
 			# header field names...
 			sed -n -e '/^$/q' -e '/^[ 	]/d' -e p "$1" |
-			LC_ALL=C egrep -v '^[!-9;-~]+:' >/dev/null ||
+			sane_egrep -v '^[!-9;-~]+:' >/dev/null ||
 			patch_format=mbox
 		fi
 	} < "$1" || clean_abort
@@ -289,7 +289,7 @@ split_patches () {
 prec=4
 dotest="$GIT_DIR/rebase-apply"
 sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
-resolvemsg= resume= scissors=
+resolvemsg= resume= scissors= no_inbody_headers=
 git_apply_opt=
 committer_date_is_author_date=
 ignore_date=
@@ -322,7 +322,7 @@ do
 	--abort)
 		abort=t ;;
 	--rebasing)
-		rebasing=t threeway=t keep=t scissors=f ;;
+		rebasing=t threeway=t keep=t scissors=f no_inbody_headers=t ;;
 	-d|--dotest)
 		die "-d option is no longer supported.  Do not use."
 		;;
@@ -448,6 +448,7 @@ else
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
 	echo "$scissors" >"$dotest/scissors"
+	echo "$no_inbody_headers" >"$dotest/no_inbody_headers"
 	echo "$GIT_QUIET" >"$dotest/quiet"
 	echo 1 >"$dotest/next"
 	if test -n "$rebasing"
@@ -495,6 +496,12 @@ t)
 f)
 	scissors=--no-scissors ;;
 esac
+if test "$(cat "$dotest/no_inbody_headers")" = t
+then
+	no_inbody_headers=--no-inbody-headers
+else
+	no_inbody_headers=
+fi
 if test "$(cat "$dotest/quiet")" = t
 then
 	GIT_QUIET=t
@@ -549,12 +556,12 @@ do
 	# by the user, or the user can tell us to do so by --resolved flag.
 	case "$resume" in
 	'')
-		git mailinfo $keep $scissors $utf8 "$dotest/msg" "$dotest/patch" \
+		git mailinfo $keep $no_inbody_headers $scissors $utf8 "$dotest/msg" "$dotest/patch" \
 			<"$dotest/$msgnum" >"$dotest/info" ||
 			stop_here $this
 
 		# skip pine's internal folder data
-		grep '^Author: Mail System Internal Data$' \
+		sane_grep '^Author: Mail System Internal Data$' \
 			<"$dotest"/info >/dev/null &&
 			go_next && continue
 
@@ -649,7 +656,10 @@ do
 		[eE]*) git_editor "$dotest/final-commit"
 		       action=again ;;
 		[vV]*) action=again
-		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;
+		       : ${GIT_PAGER=$(git var GIT_PAGER)}
+		       : ${LESS=-FRSX}
+		       export LESS
+		       $GIT_PAGER "$dotest/patch" ;;
 		*)     action=again ;;
 		esac
 	    done

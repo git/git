@@ -228,13 +228,23 @@ OPTIONS
 	Use merging strategies to rebase.  When the recursive (default) merge
 	strategy is used, this allows rebase to be aware of renames on the
 	upstream side.
++
+Note that a rebase merge works by replaying each commit from the working
+branch on top of the <upstream> branch.  Because of this, when a merge
+conflict happens, the side reported as 'ours' is the so-far rebased
+series, starting with <upstream>, and 'theirs' is the working branch.  In
+other words, the sides are swapped.
 
 -s <strategy>::
 --strategy=<strategy>::
 	Use the given merge strategy.
-	If there is no `-s` option, a built-in list of strategies
-	is used instead ('git-merge-recursive' when merging a single
-	head, 'git-merge-octopus' otherwise).  This implies --merge.
+	If there is no `-s` option 'git-merge-recursive' is used
+	instead.  This implies --merge.
++
+Because 'git-rebase' replays each commit from the working branch
+on top of the <upstream> branch using the given strategy, using
+the 'ours' strategy simply discards all patches from the <branch>,
+which makes little sense.
 
 -q::
 --quiet::
@@ -368,14 +378,17 @@ By replacing the command "pick" with the command "edit", you can tell
 the files and/or the commit message, amend the commit, and continue
 rebasing.
 
+If you just want to edit the commit message for a commit, replace the
+command "pick" with the command "reword".
+
 If you want to fold two or more commits into one, replace the command
 "pick" with "squash" for the second and subsequent commit.  If the
 commits had different authors, it will attribute the squashed commit to
 the author of the first commit.
 
-In both cases, or when a "pick" does not succeed (because of merge
-errors), the loop will stop to let you fix things, and you can continue
-the loop with `git rebase --continue`.
+'git-rebase' will stop when "pick" has been replaced with "edit" or
+when a command fails due to merge errors. When you are done editing
+and/or resolving conflicts you can continue with `git rebase --continue`.
 
 For example, if you want to reorder the last 5 commits, such that what
 was HEAD~4 becomes the new HEAD. To achieve that, you would call

@@ -882,6 +882,9 @@ int main(int argc, char **argv)
 
 	git_extract_argv0_path(argv[0]);
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(index_pack_usage);
+
 	/*
 	 * We wish to read the repository's config file if any, and
 	 * for that it is necessary to call setup_git_directory_gently().

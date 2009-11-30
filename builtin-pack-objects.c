@@ -24,6 +24,7 @@
 
 static const char pack_usage[] =
   "git pack-objects [{ -q | --progress | --all-progress }]\n"
+  "        [--all-progress-implied]\n"
   "        [--max-pack-size=N] [--local] [--incremental]\n"
   "        [--window=N] [--window-memory=N] [--depth=N]\n"
   "        [--no-reuse-delta] [--no-reuse-object] [--delta-base-offset]\n"
@@ -1629,6 +1630,8 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 	struct thread_params *p;
 	int i, ret, active_threads = 0;
 
+	if (!delta_search_threads)	/* --threads=0 means autodetect */
+		delta_search_threads = online_cpus();
 	if (delta_search_threads <= 1) {
 		find_deltas(list, &list_size, window, depth, processed);
 		return;
@@ -2122,6 +2125,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
 	int use_internal_rev_list = 0;
 	int thin = 0;
+	int all_progress_implied = 0;
 	uint32_t i;
 	const char **rp_av;
 	int rp_ac_alloc = 64;
@@ -2219,6 +2223,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--all-progress", arg)) {
 			progress = 2;
+			continue;
+		}
+		if (!strcmp("--all-progress-implied", arg)) {
+			all_progress_implied = 1;
 			continue;
 		}
 		if (!strcmp("-q", arg)) {
@@ -2324,10 +2332,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (keep_unreachable && unpack_unreachable)
 		die("--keep-unreachable and --unpack-unreachable are incompatible.");
 
-#ifdef THREADED_DELTA_SEARCH
-	if (!delta_search_threads)	/* --threads=0 means autodetect */
-		delta_search_threads = online_cpus();
-#endif
+	if (progress && all_progress_implied)
+		progress = 2;
 
 	prepare_packed_git();
 

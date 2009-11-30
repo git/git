@@ -1,17 +1,5 @@
 #include "../git-compat-util.h"
 
-/*
- * Note that this doesn't return the actual pagesize, but
- * the allocation granularity. If future Windows specific git code
- * needs the real getpagesize function, we need to find another solution.
- */
-int mingw_getpagesize(void)
-{
-	SYSTEM_INFO si;
-	GetSystemInfo(&si);
-	return si.dwAllocationGranularity;
-}
-
 void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
 	HANDLE hmap;

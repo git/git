@@ -27,6 +27,7 @@ static int mark_valid_only;
 #define MARK_VALID 1
 #define UNMARK_VALID 2
 
+__attribute__((format (printf, 1, 2)))
 static void report(const char *fmt, ...)
 {
 	va_list vp;

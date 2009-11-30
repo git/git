@@ -67,6 +67,7 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 	return write_archive(sent_argc, sent_argv, prefix, 0);
 }
 
+__attribute__((format (printf, 1, 2)))
 static void error_clnt(const char *fmt, ...)
 {
 	char buf[1024];
@@ -132,7 +133,6 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 
 	while (1) {
 		struct pollfd pfd[2];
-		ssize_t processed[2] = { 0, 0 };
 		int status;
 
 		pfd[0].fd = fd1[0];
@@ -147,15 +147,14 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 			}
 			continue;
 		}
-		if (pfd[0].revents & POLLIN)
-			/* Data stream ready */
-			processed[0] = process_input(pfd[0].fd, 1);
 		if (pfd[1].revents & POLLIN)
 			/* Status stream ready */
-			processed[1] = process_input(pfd[1].fd, 2);
-		/* Always finish to read data when available */
-		if (processed[0] || processed[1])
-			continue;
+			if (process_input(pfd[1].fd, 2))
+				continue;
+		if (pfd[0].revents & POLLIN)
+			/* Data stream ready */
+			if (process_input(pfd[0].fd, 1))
+				continue;
 
 		if (waitpid(writer, &status, 0) < 0)
 			error_clnt("%s", lostchild);

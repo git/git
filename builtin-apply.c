@@ -153,6 +153,7 @@ struct fragment {
 	const char *patch;
 	int size;
 	int rejected;
+	int linenr;
 	struct fragment *next;
 };
 
@@ -822,12 +823,13 @@ static int gitdiff_unrecognized(const char *line, struct patch *patch)
 
 static const char *stop_at_slash(const char *line, int llen)
 {
+	int nslash = p_value;
 	int i;
 
 	for (i = 0; i < llen; i++) {
 		int ch = line[i];
-		if (ch == '/')
-			return line + i;
+		if (ch == '/' && --nslash <= 0)
+			return &line[i];
 	}
 	return NULL;
 }
@@ -1227,23 +1229,29 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 	return -1;
 }
 
-static void check_whitespace(const char *line, int len, unsigned ws_rule)
+static void record_ws_error(unsigned result, const char *line, int len, int linenr)
 {
 	char *err;
-	unsigned result = ws_check(line + 1, len - 1, ws_rule);
+
 	if (!result)
 		return;
 
 	whitespace_error++;
 	if (squelch_whitespace_errors &&
 	    squelch_whitespace_errors < whitespace_error)
-		;
-	else {
-		err = whitespace_error_string(result);
-		fprintf(stderr, "%s:%d: %s.\n%.*s\n",
-			patch_input_file, linenr, err, len - 2, line + 1);
-		free(err);
-	}
+		return;
+
+	err = whitespace_error_string(result);
+	fprintf(stderr, "%s:%d: %s.\n%.*s\n",
+		patch_input_file, linenr, err, len, line);
+	free(err);
+}
+
+static void check_whitespace(const char *line, int len, unsigned ws_rule)
+{
+	unsigned result = ws_check(line + 1, len - 1, ws_rule);
+
+	record_ws_error(result, line + 1, len - 2, linenr);
 }
 
 /*
@@ -1359,6 +1367,7 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 		int len;
 
 		fragment = xcalloc(1, sizeof(*fragment));
+		fragment->linenr = linenr;
 		len = parse_fragment(line, size, patch, fragment);
 		if (len <= 0)
 			die("corrupt patch at line %d", linenr);
@@ -2142,6 +2151,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		int len = linelen(patch, size);
 		int plen, added;
 		int added_blank_line = 0;
+		int is_blank_context = 0;
 
 		if (!len)
 			break;
@@ -2174,8 +2184,12 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 			*new++ = '\n';
 			add_line_info(&preimage, "\n", 1, LINE_COMMON);
 			add_line_info(&postimage, "\n", 1, LINE_COMMON);
+			is_blank_context = 1;
 			break;
 		case ' ':
+			if (plen && (ws_rule & WS_BLANK_AT_EOF) &&
+			    ws_blank_line(patch + 1, plen, ws_rule))
+				is_blank_context = 1;
 		case '-':
 			memcpy(old, patch + 1, plen);
 			add_line_info(&preimage, old, plen,
@@ -2202,7 +2216,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				      (first == '+' ? 0 : LINE_COMMON));
 			new += added;
 			if (first == '+' &&
-			    added == 1 && new[-1] == '\n')
+			    (ws_rule & WS_BLANK_AT_EOF) &&
+			    ws_blank_line(patch + 1, plen, ws_rule))
 				added_blank_line = 1;
 			break;
 		case '@': case '\\':
@@ -2215,6 +2230,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		}
 		if (added_blank_line)
 			new_blank_lines_at_end++;
+		else if (is_blank_context)
+			;
 		else
 			new_blank_lines_at_end = 0;
 		patch += len;
@@ -2296,17 +2313,24 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	}
 
 	if (applied_pos >= 0) {
-		if (ws_error_action == correct_ws_error &&
-		    new_blank_lines_at_end &&
-		    postimage.nr + applied_pos == img->nr) {
+		if (new_blank_lines_at_end &&
+		    preimage.nr + applied_pos == img->nr &&
+		    (ws_rule & WS_BLANK_AT_EOF) &&
+		    ws_error_action != nowarn_ws_error) {
+			record_ws_error(WS_BLANK_AT_EOF, "+", 1, frag->linenr);
+			if (ws_error_action == correct_ws_error) {
+				while (new_blank_lines_at_end--)
+					remove_last_line(&postimage);
+			}
 			/*
-			 * If the patch application adds blank lines
-			 * at the end, and if the patch applies at the
-			 * end of the image, remove those added blank
-			 * lines.
+			 * We would want to prevent write_out_results()
+			 * from taking place in apply_patch() that follows
+			 * the callchain led us here, which is:
+			 * apply_patch->check_patch_list->check_patch->
+			 * apply_data->apply_fragments->apply_one_fragment
 			 */
-			while (new_blank_lines_at_end--)
-				remove_last_line(&postimage);
+			if (ws_error_action == die_on_ws_error)
+				apply = 0;
 		}
 
 		/*

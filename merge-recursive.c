@@ -3,6 +3,7 @@
  * Fredrik Kuivinen.
  * The thieves were Alex Riesen and Johannes Schindelin, in June/July 2006
  */
+#include "advice.h"
 #include "cache.h"
 #include "cache-tree.h"
 #include "commit.h"
@@ -86,6 +87,7 @@ static void flush_output(struct merge_options *o)
 	}
 }
 
+__attribute__((format (printf, 3, 4)))
 static void output(struct merge_options *o, int v, const char *fmt, ...)
 {
 	int len;
@@ -170,7 +172,7 @@ static int git_merge_trees(int index_only,
 	int rc;
 	struct tree_desc t[3];
 	struct unpack_trees_options opts;
-	static const struct unpack_trees_error_msgs msgs = {
+	struct unpack_trees_error_msgs msgs = {
 		/* would_overwrite */
 		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
 		/* not_uptodate_file */
@@ -182,6 +184,11 @@ static int git_merge_trees(int index_only,
 		/* bind_overlap -- will not happen here */
 		NULL,
 	};
+	if (advice_commit_before_merge) {
+		msgs.would_overwrite = msgs.not_uptodate_file =
+			"Your local changes to '%s' would be overwritten by merge.  Aborting.\n"
+			"Please, commit your changes or stash them before you can merge.";
+	}
 
 	memset(&opts, 0, sizeof(opts));
 	if (index_only)
@@ -214,7 +221,8 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			if (ce_stage(ce))
-				output(o, 0, "%d %.*s", ce_stage(ce), ce_namelen(ce), ce->name);
+				output(o, 0, "%d %.*s", ce_stage(ce),
+				       (int)ce_namelen(ce), ce->name);
 		}
 		return NULL;
 	}

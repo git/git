@@ -138,6 +138,20 @@ test_expect_success 'real edit works' '
 	test_cmp expected output
 '
 
+test_expect_success 'skip files similarly as commit -a' '
+	git reset &&
+	echo file >.gitignore &&
+	echo changed >file &&
+	echo y | git add -p file &&
+	git diff >output &&
+	git reset &&
+	git commit -am commit &&
+	git diff >expected &&
+	test_cmp expected output &&
+	git reset --hard HEAD^
+'
+rm -f .gitignore
+
 if test "$(git config --bool core.filemode)" = false
 then
 	say 'skipping filemode tests (filesystem does not properly support modes)'
@@ -211,6 +225,23 @@ test_expect_success 'add first line works' '
 	git apply patch &&
 	(echo s; echo y; echo y) | git add -p file &&
 	git diff --cached > diff &&
+	test_cmp expected diff
+'
+
+cat >expected <<EOF
+diff --git a/empty b/empty
+deleted file mode 100644
+index e69de29..0000000
+EOF
+
+test_expect_success 'deleting an empty file' '
+	git reset --hard &&
+	> empty &&
+	git add empty &&
+	git commit -m empty &&
+	rm empty &&
+	echo y | git add -p empty &&
+	git diff --cached >diff &&
 	test_cmp expected diff
 '
 

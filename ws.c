@@ -16,6 +16,8 @@ static struct whitespace_rule {
 	{ "space-before-tab", WS_SPACE_BEFORE_TAB, 0 },
 	{ "indent-with-non-tab", WS_INDENT_WITH_NON_TAB, 0 },
 	{ "cr-at-eol", WS_CR_AT_EOL, 1 },
+	{ "blank-at-eol", WS_BLANK_AT_EOL, 0 },
+	{ "blank-at-eof", WS_BLANK_AT_EOF, 0 },
 };
 
 unsigned parse_whitespace_rule(const char *string)
@@ -102,8 +104,17 @@ unsigned whitespace_rule(const char *pathname)
 char *whitespace_error_string(unsigned ws)
 {
 	struct strbuf err = STRBUF_INIT;
-	if (ws & WS_TRAILING_SPACE)
+	if ((ws & WS_TRAILING_SPACE) == WS_TRAILING_SPACE)
 		strbuf_addstr(&err, "trailing whitespace");
+	else {
+		if (ws & WS_BLANK_AT_EOL)
+			strbuf_addstr(&err, "trailing whitespace");
+		if (ws & WS_BLANK_AT_EOF) {
+			if (err.len)
+				strbuf_addstr(&err, ", ");
+			strbuf_addstr(&err, "new blank line at EOF");
+		}
+	}
 	if (ws & WS_SPACE_BEFORE_TAB) {
 		if (err.len)
 			strbuf_addstr(&err, ", ");
@@ -141,11 +152,11 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 	}
 
 	/* Check for trailing whitespace. */
-	if (ws_rule & WS_TRAILING_SPACE) {
+	if (ws_rule & WS_BLANK_AT_EOL) {
 		for (i = len - 1; i >= 0; i--) {
 			if (isspace(line[i])) {
 				trailing_whitespace = i;
-				result |= WS_TRAILING_SPACE;
+				result |= WS_BLANK_AT_EOL;
 			}
 			else
 				break;
@@ -261,7 +272,7 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 	/*
 	 * Strip trailing whitespace
 	 */
-	if (ws_rule & WS_TRAILING_SPACE) {
+	if (ws_rule & WS_BLANK_AT_EOL) {
 		if (0 < len && src[len - 1] == '\n') {
 			add_nl_to_tail = 1;
 			len--;

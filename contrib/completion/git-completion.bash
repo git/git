@@ -21,13 +21,7 @@
 #    2) Added the following line to your .bashrc:
 #        source ~/.git-completion.sh
 #
-#    3) You may want to make sure the git executable is available
-#       in your PATH before this script is sourced, as some caching
-#       is performed while the script loads.  If git isn't found
-#       at source time then all lookups will be done on demand,
-#       which may be slightly slower.
-#
-#    4) Consider changing your PS1 to also show the current branch:
+#    3) Consider changing your PS1 to also show the current branch:
 #        PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
 #
 #       The argument to __git_ps1 will be displayed only if you
@@ -324,12 +318,8 @@ __git_remotes ()
 	done
 }
 
-__git_merge_strategies ()
+__git_list_merge_strategies ()
 {
-	if [ -n "${__git_merge_strategylist-}" ]; then
-		echo "$__git_merge_strategylist"
-		return
-	fi
 	git merge -s help 2>&1 |
 	sed -n -e '/[Aa]vailable strategies are: /,/^$/{
 		s/\.$//
@@ -339,8 +329,17 @@ __git_merge_strategies ()
 		p
 	}'
 }
-__git_merge_strategylist=
-__git_merge_strategylist=$(__git_merge_strategies 2>/dev/null)
+
+__git_merge_strategies=
+# 'git merge -s help' (and thus detection of the merge strategy
+# list) fails, unfortunately, if run outside of any git working
+# tree.  __git_merge_strategies is set to the empty string in
+# that case, and the detection will be repeated the next time it
+# is needed.
+__git_compute_merge_strategies ()
+{
+	: ${__git_merge_strategies:=$(__git_list_merge_strategies)}
+}
 
 __git_complete_file ()
 {
@@ -474,27 +473,24 @@ __git_complete_remote_or_refspec ()
 
 __git_complete_strategy ()
 {
+	__git_compute_merge_strategies
 	case "${COMP_WORDS[COMP_CWORD-1]}" in
 	-s|--strategy)
-		__gitcomp "$(__git_merge_strategies)"
+		__gitcomp "$__git_merge_strategies"
 		return 0
 	esac
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--strategy=*)
-		__gitcomp "$(__git_merge_strategies)" "" "${cur##--strategy=}"
+		__gitcomp "$__git_merge_strategies" "" "${cur##--strategy=}"
 		return 0
 		;;
 	esac
 	return 1
 }
 
-__git_all_commands ()
+__git_list_all_commands ()
 {
-	if [ -n "${__git_all_commandlist-}" ]; then
-		echo "$__git_all_commandlist"
-		return
-	fi
 	local i IFS=" "$'\n'
 	for i in $(git help -a|egrep '^  [a-zA-Z0-9]')
 	do
@@ -504,17 +500,18 @@ __git_all_commands ()
 		esac
 	done
 }
-__git_all_commandlist=
-__git_all_commandlist="$(__git_all_commands 2>/dev/null)"
 
-__git_porcelain_commands ()
+__git_all_commands=
+__git_compute_all_commands ()
 {
-	if [ -n "${__git_porcelain_commandlist-}" ]; then
-		echo "$__git_porcelain_commandlist"
-		return
-	fi
+	: ${__git_all_commands:=$(__git_list_all_commands)}
+}
+
+__git_list_porcelain_commands ()
+{
 	local i IFS=" "$'\n'
-	for i in "help" $(__git_all_commands)
+	__git_compute_all_commands
+	for i in "help" $__git_all_commands
 	do
 		case $i in
 		*--*)             : helper pattern;;
@@ -595,8 +592,13 @@ __git_porcelain_commands ()
 		esac
 	done
 }
-__git_porcelain_commandlist=
-__git_porcelain_commandlist="$(__git_porcelain_commands 2>/dev/null)"
+
+__git_porcelain_commands=
+__git_compute_porcelain_commands ()
+{
+	__git_compute_all_commands
+	: ${__git_porcelain_commands:=$(__git_list_porcelain_commands)}
+}
 
 __git_aliases ()
 {
@@ -953,11 +955,13 @@ _git_diff ()
 }
 
 __git_mergetools_common="diffuse ecmerge emerge kdiff3 meld opendiff
-			tkdiff vimdiff gvimdiff xxdiff araxis
+			tkdiff vimdiff gvimdiff xxdiff araxis p4merge
 "
 
 _git_difftool ()
 {
+	__git_has_doubledash && return
+
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--tool=*)
@@ -965,11 +969,15 @@ _git_difftool ()
 		return
 		;;
 	--*)
-		__gitcomp "--tool="
+		__gitcomp "--cached --staged --pickaxe-all --pickaxe-regex
+			--base --ours --theirs
+			--no-renames --diff-filter= --find-copies-harder
+			--relative --ignore-submodules
+			--tool="
 		return
 		;;
 	esac
-	COMPREPLY=()
+	__git_complete_file
 }
 
 __git_fetch_options="
@@ -1069,7 +1077,8 @@ _git_grep ()
 		return
 		;;
 	esac
-	COMPREPLY=()
+
+	__gitcomp "$(__git_refs)"
 }
 
 _git_help ()
@@ -1081,7 +1090,8 @@ _git_help ()
 		return
 		;;
 	esac
-	__gitcomp "$(__git_all_commands)
+	__git_compute_all_commands
+	__gitcomp "$__git_all_commands
 		attributes cli core-tutorial cvs-migration
 		diffcore gitk glossary hooks ignore modules
 		repository-layout tutorial tutorial-2
@@ -1217,7 +1227,7 @@ _git_log ()
 
 __git_merge_options="
 	--no-commit --no-stat --log --no-log --squash --strategy
-	--commit --stat --no-squash --ff --no-ff
+	--commit --stat --no-squash --ff --no-ff --ff-only
 "
 
 _git_merge ()
@@ -1322,8 +1332,18 @@ _git_rebase ()
 	fi
 	__git_complete_strategy && return
 	case "$cur" in
+	--whitespace=*)
+		__gitcomp "$__git_whitespacelist" "" "${cur##--whitespace=}"
+		return
+		;;
 	--*)
-		__gitcomp "--onto --merge --strategy --interactive"
+		__gitcomp "
+			--onto --merge --strategy --interactive
+			--preserve-merges --stat --no-stat
+			--committer-date-is-author-date --ignore-date
+			--ignore-whitespace --whitespace=
+			"
+
 		return
 	esac
 	__gitcomp "$(__git_refs)"
@@ -1427,7 +1447,8 @@ _git_config ()
 		return
 		;;
 	pull.twohead|pull.octopus)
-		__gitcomp "$(__git_merge_strategies)"
+		__git_compute_merge_strategies
+		__gitcomp "$__git_merge_strategies"
 		return
 		;;
 	color.branch|color.diff|color.interactive|\
@@ -1528,7 +1549,8 @@ _git_config ()
 	pager.*)
 		local pfx="${cur%.*}."
 		cur="${cur#*.}"
-		__gitcomp "$(__git_all_commands)" "$pfx" "$cur"
+		__git_compute_all_commands
+		__gitcomp "$__git_all_commands" "$pfx" "$cur"
 		return
 		;;
 	remote.*.*)
@@ -2125,7 +2147,8 @@ _git ()
 			--help
 			"
 			;;
-		*)     __gitcomp "$(__git_porcelain_commands) $(__git_aliases)" ;;
+		*)     __git_compute_porcelain_commands
+		       __gitcomp "$__git_porcelain_commands $(__git_aliases)" ;;
 		esac
 		return
 	fi

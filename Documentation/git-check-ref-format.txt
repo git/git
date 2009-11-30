@@ -9,7 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git check-ref-format' <refname>
-'git check-ref-format' [--branch] <branchname-shorthand>
+'git check-ref-format' --print <refname>
+'git check-ref-format' --branch <branchname-shorthand>
 
 DESCRIPTION
 -----------
@@ -63,16 +64,31 @@ reference name expressions (see linkgit:git-rev-parse[1]):
 
 . at-open-brace `@{` is used as a notation to access a reflog entry.
 
-With the `--branch` option, it expands a branch name shorthand and
-prints the name of the branch the shorthand refers to.
+With the `--print` option, if 'refname' is acceptable, it prints the
+canonicalized name of a hypothetical reference with that name.  That is,
+it prints 'refname' with any extra `/` characters removed.
 
-EXAMPLE
--------
+With the `--branch` option, it expands the ``previous branch syntax''
+`@{-n}`.  For example, `@{-1}` is a way to refer the last branch you
+were on.  This option should be used by porcelains to accept this
+syntax anywhere a branch name is expected, so they can act as if you
+typed the branch name.
 
-git check-ref-format --branch @{-1}::
+EXAMPLES
+--------
 
-Print the name of the previous branch.
+* Print the name of the previous branch:
++
+------------
+$ git check-ref-format --branch @{-1}
+------------
 
+* Determine the reference name to use for a new branch:
++
+------------
+$ ref=$(git check-ref-format --print "refs/heads/$newbranch") ||
+die "we do not like '$newbranch' as a branch name."
+------------
 
 GIT
 ---

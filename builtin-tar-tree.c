@@ -11,6 +11,9 @@ static const char tar_tree_usage[] =
 "git tar-tree [--remote=<repo>] <tree-ish> [basedir]\n"
 "*** Note that this command is now deprecated; use \"git archive\" instead.";
 
+static const char builtin_get_tar_commit_id_usage[] =
+"git get-tar-commit-id < <tarfile>";
+
 int cmd_tar_tree(int argc, const char **argv, const char *prefix)
 {
 	/*
@@ -80,6 +83,9 @@ int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 	struct ustar_header *header = (struct ustar_header *)buffer;
 	char *content = buffer + RECORDSIZE;
 	ssize_t n;
+
+	if (argc != 1)
+		usage(builtin_get_tar_commit_id_usage);
 
 	n = read_in_full(0, buffer, HEADERSIZE);
 	if (n < HEADERSIZE)

@@ -32,6 +32,10 @@ img.avatar {
 	vertical-align: middle;
 }
 
+a.list img.avatar {
+	border-style: none;
+}
+
 div.page_header {
 	height: 25px;
 	padding: 8px;
@@ -339,6 +343,12 @@ td.pre, div.pre, div.diff {
 
 td.mode {
 	font-family: monospace;
+}
+
+/* format of (optional) objects size in 'tree' view */
+td.size {
+	font-family: monospace;
+	text-align: right;
 }
 
 /* styling of diffs (patchsets): commitdiff and blobdiff views */

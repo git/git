@@ -455,6 +455,27 @@ test_expect_success 'format-patch respects -U' '
 
 '
 
+cat > expect << EOF
+
+diff --git a/file b/file
+index 40f36c6..2dc5c23 100644
+--- a/file
++++ b/file
+@@ -14,3 +14,19 @@ C
+ D
+ E
+ F
++5
+EOF
+
+test_expect_success 'format-patch -p suppresses stat' '
+
+	git format-patch -p -2 &&
+	sed -e "1,/^$/d" -e "/^+5/q" < 0001-This-is-an-excessively-long-subject-line-for-a-messa.patch > output &&
+	test_cmp expect output
+
+'
+
 test_expect_success 'format-patch from a subdirectory (1)' '
 	filename=$(
 		rm -rf sub &&
@@ -514,5 +535,21 @@ test_expect_success 'format-patch --signoff' '
 	git format-patch -1 --signoff --stdout |
 	grep "^Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 '
+
+echo "fatal: --name-only does not make sense" > expect.name-only
+echo "fatal: --name-status does not make sense" > expect.name-status
+echo "fatal: --check does not make sense" > expect.check
+
+test_expect_success 'options no longer allowed for format-patch' '
+	test_must_fail git format-patch --name-only 2> output &&
+	test_cmp expect.name-only output &&
+	test_must_fail git format-patch --name-status 2> output &&
+	test_cmp expect.name-status output &&
+	test_must_fail git format-patch --check 2> output &&
+	test_cmp expect.check output'
+
+test_expect_success 'format-patch --numstat should produce a patch' '
+	git format-patch --numstat --stdout master..side > output &&
+	test 6 = $(grep "^diff --git a/" output | wc -l)'
 
 test_done

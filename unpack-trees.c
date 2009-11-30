@@ -277,6 +277,17 @@ static int unpack_nondirectories(int n, unsigned long mask,
 	return 0;
 }
 
+static int unpack_failed(struct unpack_trees_options *o, const char *message)
+{
+	discard_index(&o->result);
+	if (!o->gently) {
+		if (message)
+			return error("%s", message);
+		return -1;
+	}
+	return -1;
+}
+
 static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, struct name_entry *names, struct traverse_info *info)
 {
 	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
@@ -294,7 +305,7 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 			int cmp = compare_entry(ce, info, p);
 			if (cmp < 0) {
 				if (unpack_index_entry(ce, o) < 0)
-					return -1;
+					return unpack_failed(o, NULL);
 				continue;
 			}
 			if (!cmp) {
@@ -350,17 +361,6 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 	}
 
 	return mask;
-}
-
-static int unpack_failed(struct unpack_trees_options *o, const char *message)
-{
-	discard_index(&o->result);
-	if (!o->gently) {
-		if (message)
-			return error("%s", message);
-		return -1;
-	}
-	return -1;
 }
 
 /*
@@ -617,7 +617,7 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 			 * found "foo/." in the working tree.
 			 * This is tricky -- if we have modified
 			 * files that are in "foo/" we would lose
-			 * it.
+			 * them.
 			 */
 			ret = verify_clean_subdirectory(ce, action, o);
 			if (ret < 0)
@@ -895,7 +895,7 @@ int threeway_merge(struct cache_entry **stages, struct unpack_trees_options *o)
  * Two-way merge.
  *
  * The rule is to "carry forward" what is in the index without losing
- * information across a "fast forward", favoring a successful merge
+ * information across a "fast-forward", favoring a successful merge
  * over a merge failure when it makes sense.  For details of the
  * "carry forward" rule, please see <Documentation/git-read-tree.txt>.
  *

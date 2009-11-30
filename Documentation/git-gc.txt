@@ -120,7 +120,7 @@ Notes
 particular, it will keep not only objects referenced by your current set
 of branches and tags, but also objects referenced by the index, remote
 tracking branches, refs saved by 'git-filter-branch' in
-refs/original/, or reflogs (which may references commits in branches
+refs/original/, or reflogs (which may reference commits in branches
 that were later amended or rewound).
 
 If you are expecting some objects to be collected and they aren't, check

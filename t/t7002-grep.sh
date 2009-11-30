@@ -14,6 +14,7 @@ int main(int argc, const char **argv)
 {
 	printf("Hello world.\n");
 	return 0;
+	/* char ?? */
 }
 EOF
 
@@ -213,6 +214,77 @@ test_expect_success 'grep -e A --and --not -e B' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep should ignore GREP_OPTIONS' '
+	GREP_OPTIONS=-v git grep " mmap bar\$" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -f, non-existent file' '
+	test_must_fail git grep -f patterns
+'
+
+cat >expected <<EOF
+file:foo mmap bar
+file:foo_mmap bar
+file:foo_mmap bar mmap
+file:foo mmap bar_mmap
+file:foo_mmap bar mmap baz
+EOF
+
+cat >pattern <<EOF
+mmap
+EOF
+
+test_expect_success 'grep -f, one pattern' '
+	git grep -f pattern >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+file:foo mmap bar
+file:foo_mmap bar
+file:foo_mmap bar mmap
+file:foo mmap bar_mmap
+file:foo_mmap bar mmap baz
+t/a/v:vvv
+t/v:vvv
+v:vvv
+EOF
+
+cat >patterns <<EOF
+mmap
+vvv
+EOF
+
+test_expect_success 'grep -f, multiple patterns' '
+	git grep -f patterns >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+file:foo mmap bar
+file:foo_mmap bar
+file:foo_mmap bar mmap
+file:foo mmap bar_mmap
+file:foo_mmap bar mmap baz
+t/a/v:vvv
+t/v:vvv
+v:vvv
+EOF
+
+cat >patterns <<EOF
+
+mmap
+
+vvv
+
+EOF
+
+test_expect_success 'grep -f, ignore empty lines' '
+	git grep -f patterns >actual &&
+	test_cmp expected actual
+'
+
 cat >expected <<EOF
 y:y yy
 --
@@ -343,6 +415,15 @@ test_expect_success 'grep from a subdirectory to search wider area (2)' '
 		! test -s out &&
 		test 1 = $(cat status)
 	)
+'
+
+cat >expected <<EOF
+hello.c:int main(int argc, const char **argv)
+EOF
+
+test_expect_success 'grep -Fi' '
+	git grep -Fi "CHAR *" >actual &&
+	test_cmp expected actual
 '
 
 test_done

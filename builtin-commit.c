@@ -414,6 +414,47 @@ static void determine_author_info(void)
 	author_date = date;
 }
 
+static int ends_rfc2822_footer(struct strbuf *sb)
+{
+	int ch;
+	int hit = 0;
+	int i, j, k;
+	int len = sb->len;
+	int first = 1;
+	const char *buf = sb->buf;
+
+	for (i = len - 1; i > 0; i--) {
+		if (hit && buf[i] == '\n')
+			break;
+		hit = (buf[i] == '\n');
+	}
+
+	while (i < len - 1 && buf[i] == '\n')
+		i++;
+
+	for (; i < len; i = k) {
+		for (k = i; k < len && buf[k] != '\n'; k++)
+			; /* do nothing */
+		k++;
+
+		if ((buf[k] == ' ' || buf[k] == '\t') && !first)
+			continue;
+
+		first = 0;
+
+		for (j = 0; i + j < len; j++) {
+			ch = buf[i + j];
+			if (ch == ':')
+				break;
+			if (isalnum(ch) ||
+			    (ch == '-'))
+				continue;
+			return 0;
+		}
+	}
+	return 1;
+}
+
 static int prepare_to_commit(const char *index_file, const char *prefix,
 			     struct wt_status *s)
 {
@@ -489,7 +530,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		for (i = sb.len - 1; i > 0 && sb.buf[i - 1] != '\n'; i--)
 			; /* do nothing */
 		if (prefixcmp(sb.buf + i, sob.buf)) {
-			if (prefixcmp(sb.buf + i, sign_off_header))
+			if (!i || !ends_rfc2822_footer(&sb))
 				strbuf_addch(&sb, '\n');
 			strbuf_addbuf(&sb, &sob);
 		}
@@ -684,8 +725,10 @@ static const char *find_author_by_nickname(const char *name)
 	prepare_revision_walk(&revs);
 	commit = get_revision(&revs);
 	if (commit) {
+		struct pretty_print_context ctx = {0};
+		ctx.date_mode = DATE_NORMAL;
 		strbuf_release(&buf);
-		format_commit_message(commit, "%an <%ae>", &buf, DATE_NORMAL);
+		format_commit_message(commit, "%an <%ae>", &buf, &ctx);
 		return strbuf_detach(&buf, NULL);
 	}
 	die("No existing author found with '%s'", name);
@@ -942,8 +985,10 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 		initial_commit ? " (root-commit)" : "");
 
 	if (!log_tree_commit(&rev, commit)) {
+		struct pretty_print_context ctx = {0};
 		struct strbuf buf = STRBUF_INIT;
-		format_commit_message(commit, format + 7, &buf, DATE_NORMAL);
+		ctx.date_mode = DATE_NORMAL;
+		format_commit_message(commit, format + 7, &buf, &ctx);
 		printf("%s\n", buf.buf);
 		strbuf_release(&buf);
 	}
@@ -954,7 +999,7 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 	struct wt_status *s = cb;
 
 	if (!strcmp(k, "commit.template"))
-		return git_config_string(&template_file, k, v);
+		return git_config_pathname(&template_file, k, v);
 
 	return git_status_config(k, v, s);
 }
