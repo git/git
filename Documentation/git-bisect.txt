@@ -330,6 +330,11 @@ Documentation
 -------------
 Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
+SEE ALSO
+--------
+link:git-bisect-lk2009.html[Fighting regressions with git bisect],
+linkgit:git-blame[1].
+
 GIT
 ---
 Part of the linkgit:git[1] suite
