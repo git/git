@@ -524,6 +524,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 	int i;
 	unsigned long lno = 0;
 	const char *c_frag = diff_get_color(use_color, DIFF_FRAGINFO);
+	const char *c_func = diff_get_color(use_color, DIFF_FUNCINFO);
 	const char *c_new = diff_get_color(use_color, DIFF_FILE_NEW);
 	const char *c_old = diff_get_color(use_color, DIFF_FILE_OLD);
 	const char *c_plain = diff_get_color(use_color, DIFF_PLAIN);
@@ -588,7 +589,9 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 				    comment_end = i;
 			}
 			if (comment_end)
-				putchar(' ');
+				printf("%s%s %s%s", c_reset,
+						    c_plain, c_reset,
+						    c_func);
 			for (i = 0; i < comment_end; i++)
 				putchar(hunk_comment[i]);
 		}
