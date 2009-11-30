@@ -1,7 +1,10 @@
 #!/bin/sh
 
 # Older first!
-old_maint='maint-1.6.0 maint-1.6.1 maint-1.6.2 maint-1.6.3 maint-1.6.4'
+old_maint=$(
+	git for-each-ref --format='%(refname)' 'refs/heads/maint-*' |
+	sed -e 's|^refs/heads/||'
+)
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
@@ -41,7 +44,8 @@ do
 		echo "# Graduated to both $m and master"
 		while read branch
 		do
-			echo "$(git show -s --format='%ct' "$branch") $branch"
+			d=$(git describe $branch)
+			echo "$(git show -s --format='%ct' "$branch") $branch ;# $d"
 		done <"$tmp.both" |
 		sort -r -n |
 		sed -e 's/^[0-9]* //' \
@@ -84,11 +88,11 @@ comm -13 "$tmp.maint" "$tmp.master" |
 
 	if test -s "$tmp.unmergeable"
 	then
-		echo "# Graduated to master; unmergeable to maint"
+		echo ": # Graduated to master; unmergeable to maint"
 		sort -n "$tmp.unmergeable" |
 		while read timestamp merge topic
 		do
-			git show -s --pretty="format:# %h %cd" $merge
+			git show -s --pretty="format:: # %h %cd" $merge
 			echo "git branch -d $topic"
 		done
 		echo
@@ -102,7 +106,7 @@ comm -13 "$tmp.maint" "$tmp.master" |
 				git show -s --pretty="format:%h %cd" $merge
 				git log --pretty=oneline --abbrev-commit maint..$topic 
 			} |
-			sed -e 's/^/# /'
+			sed -e 's/^/: # /'
 			echo "git checkout maint && git merge $topic"
 			echo
 		done
