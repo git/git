@@ -577,11 +577,12 @@ do
 			git cat-file commit "$commit" |
 			sed -e '1,/^$/d' >"$dotest/msg-clean"
 		else
-			SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
-			case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
-
-			(printf '%s\n\n' "$SUBJECT"; cat "$dotest/msg") |
-				git stripspace > "$dotest/msg-clean"
+			{
+				sed -n '/^Subject/ s/Subject: //p' "$dotest/info"
+				echo
+				cat "$dotest/msg"
+			} |
+			git stripspace > "$dotest/msg-clean"
 		fi
 		;;
 	esac
