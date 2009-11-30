@@ -144,6 +144,14 @@ insert an empty string unless we are traversing reflog entries (e.g., by
 `git log -g`). The `%d` placeholder will use the "short" decoration
 format if `--decorate` was not already provided on the command line.
 
+If you add a `{plus}` (plus sign) after '%' of a placeholder, a line-feed
+is inserted immediately before the expansion if and only if the
+placeholder expands to a non-empty string.
+
+If you add a `-` (minus sign) after '%' of a placeholder, line-feeds that
+immediately precede the expansion are deleted if and only if the
+placeholder expands to an empty string.
+
 * 'tformat:'
 +
 The 'tformat:' format works exactly like 'format:', except that it

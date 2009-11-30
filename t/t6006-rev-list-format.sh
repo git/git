@@ -162,6 +162,28 @@ test_expect_success 'empty email' '
 	}
 '
 
+test_expect_success 'del LF before empty (1)' '
+	git show -s --pretty=format:"%s%n%-b%nThanks%n" HEAD^^ >actual &&
+	test $(wc -l <actual) = 2
+'
+
+test_expect_success 'del LF before empty (2)' '
+	git show -s --pretty=format:"%s%n%-b%nThanks%n" HEAD >actual &&
+	test $(wc -l <actual) = 6 &&
+	grep "^$" actual
+'
+
+test_expect_success 'add LF before non-empty (1)' '
+	git show -s --pretty=format:"%s%+b%nThanks%n" HEAD^^ >actual &&
+	test $(wc -l <actual) = 2
+'
+
+test_expect_success 'add LF before non-empty (2)' '
+	git show -s --pretty=format:"%s%+b%nThanks%n" HEAD >actual &&
+	test $(wc -l <actual) = 6 &&
+	grep "^$" actual
+'
+
 test_expect_success '"%h %gD: %gs" is same as git-reflog' '
 	git reflog >expect &&
 	git log -g --format="%h %gD: %gs" >actual &&
