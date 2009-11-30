@@ -24,23 +24,25 @@ the sake of backward compatibility.
 
 When necessary, transition strategy for existing users has been designed
 not to force them running around setting configuration variables and
-updating their scripts in order to keep the traditional behaviour on the
-day their sysadmin decides to install the new version of git.  When we
-switched from "git-foo" to "git foo" in 1.6.0, even though the change had
-been advertised and the transition guide had been provided for a very long
-time, the users procrastinated during the entire transtion period, and
-ended up panicking on the day their sysadmins updated their git.
+updating their scripts in order to either keep the traditional behaviour
+or use the new behaviour on the day their sysadmin decides to install
+the new version of git.  When we switched from "git-foo" to "git foo" in
+1.6.0, even though the change had been advertised and the transition
+guide had been provided for a very long time, the users procrastinated
+during the entire transtion period, and ended up panicking on the day
+their sysadmins updated their git installation.  We tried very hard to
+avoid repeating that unpleasantness.
 
 For changes decided to be in 1.7.0, we have been much louder to strongly
 discourage such procrastination.  If you have been using recent versions
 of git, you would have already seen warnings issued when you exercised
-features whose behaviour will change, with the instruction on how to keep
-the existing behaviour if you choose to.  You hopefully should be well
-prepared already.
+features whose behaviour will change, with the instruction on how to
+keep the existing behaviour if you want to.  You hopefully should be
+well prepared already.
 
-Of course, we have also given "this and that will change in 1.7.0; prepare
-yourselves" warnings in the release notes and announcement messages.
-Let's see how well users will fare this time.
+Of course, we have also given "this and that will change in 1.7.0;
+prepare yourselves" warnings in the release notes and announcement
+messages.  Let's see how well users will fare this time.
 
  * "git push" into a branch that is currently checked out (i.e. pointed by
    HEAD in a repository that is not bare) will be refused by default.
@@ -54,8 +56,8 @@ Let's see how well users will fare this time.
    can be used to override these safety features.  Versions of git
    since 1.6.2 have issued a loud warning when you tried to do them
    without setting the configuration, so repositories of people who
-   still need to be able to perform such a push should already been
-   future proofed.
+   still need to be able to perform such a push should already have
+   been future proofed.
 
    Please refer to:
 
@@ -66,11 +68,18 @@ Let's see how well users will fare this time.
    transition process that already took place so far.
 
  * "git send-email" will not make deep threads by default when sending a
-   patch series with more than two messages.  All messages will be sent as
-   a reply to the first message, i.e. cover letter.  It has been possible
-   to configure send-email to do this by setting sendemail.chainreplyto
-   configuration variable to false.  The only thing the new release will
-   do is to change the default when you haven't configured that variable.
+   patch series with more than two messages.  All messages will be sent
+   as a reply to the first message, i.e. cover letter.  Git 1.6.6 (this
+   release) will issue a warning about the upcoming default change, when
+   it uses the traditional "deep threading" behaviour as the built-in
+   default.  To squelch the warning but still use the "deep threading"
+   behaviour, give --chain-reply-to option or set sendemail.chainreplyto
+   to true.
+
+   It has been possible to configure send-email to send "shallow thread"
+   by setting sendemail.chainreplyto configuration variable to false.
+   The only thing 1.7.0 release will do is to change the default when
+   you haven't configured that variable.
 
  * "git status" will not be "git commit --dry-run".  This change does not
    affect you if you run the command without pathspec.
@@ -129,10 +138,18 @@ Updates since v1.6.5
    is only one remote tracking branch "frotz" is taken as a request to
    start the named branch at the corresponding remote tracking branch.
 
+ * "git commit -c/-C/--amend" can be told with a new "--reset-author" option
+   to ignore authorship information in the commit it is taking the message
+   from.
+
  * "git describe" can be told to add "-dirty" suffix with "--dirty" option.
 
  * "git diff" learned --submodule option to show a list of one-line logs
    instead of differences between the commit object names.
+
+ * "git diff" learned to honor diff.color.func configuration to paint
+   function name hint printed on the hunk header "@@ -j,k +l,m @@" line
+   in the specified color.
 
  * "git fetch" learned --all and --multiple options, to run fetch from
    many repositories, and --prune option to remove remote tracking
@@ -165,6 +182,10 @@ Updates since v1.6.5
  * "git merge" (and "git pull") learned --ff-only option to make it fail
    if the merge does not result in a fast-forward.
 
+ * The ancient "git merge <message> HEAD <branch>..." syntax will be
+   removed in later versions of git.  A warning is given and tells
+   users to use the "git merge -m <message> <branch>..." instead.
+
  * "git mergetool" learned to use p4merge.
 
  * "git rebase -i" learned "reword" that acts like "edit" but immediately
@@ -172,10 +193,20 @@ Updates since v1.6.5
    the shell, which is done by "edit" to give an opportunity to tweak the
    contents.
 
+ * "git send-email" can be told with "--envelope-sender=auto" to use the
+   same address as "From:" address as the envelope sender address.
+
+ * "git send-email" will issue a warning when it defaults to the
+   --chain-reply-to behaviour without being told by the user and
+   instructs to prepare for the change of the default in 1.7.0 release.
+
  * In "git submodule add <repository> <path>", <path> is now optional and
    inferred from <repository> the same way "git clone <repository>" does.
 
  * "git svn" learned to read SVN 1.5+ and SVK merge tickets.
+
+ * "gitweb" can optionally render its "blame" output incrementally (this
+   requires JavaScript on the client side).
 
  * Author names shown in gitweb output are links to search commits by the
    author.
@@ -189,8 +220,24 @@ Fixes since v1.6.5
 All of the fixes in v1.6.5.X maintenance series are included in this
 release, unless otherwise noted.
 
+ * Enumeration of available merge strategies iterated over the list of
+   commands in a wrong way, sometimes producing an incorrect result.
+   Will backport by merging ed87465 (builtin-merge.c: call
+   exclude_cmds() correctly., 2009-11-25).
+
+ * "git format-patch revisions... -- path" issued an incorrect error
+   message that suggested to use "--" on the command line when path
+   does not exist in the current work tree (it is a separate matter if
+   it makes sense to limit format-patch with pathspecs like that
+   without using the --full-diff option).  Will backport by merging
+   7e93d3b (format-patch: add test for parsing of "--", 2009-11-26).
+
+ * "git shortlog" did not honor the "encoding" header embedded in the
+   commit object like "git log" did.  Will backport by merging 79f7ca0
+   (shortlog: respect commit encoding, 2009-11-25).
+
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.6.6-rc0-62-g7fc9d15
+O=v1.6.6-rc0-96-gb5d4cf2
 git shortlog --no-merges $O..master --not maint
