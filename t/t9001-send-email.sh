@@ -769,4 +769,53 @@ test_expect_success 'threading but no chain-reply-to' '
 	grep "In-Reply-To: " stdout
 '
 
+test_expect_success 'warning with an implicit --chain-reply-to' '
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with an explicit --chain-reply-to' '
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--chain-reply-to \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with an explicit --no-chain-reply-to' '
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--no-chain-reply-to \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with sendemail.chainreplyto = false' '
+	git config sendemail.chainreplyto false &&
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with sendemail.chainreplyto = true' '
+	git config sendemail.chainreplyto true &&
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
 test_done
