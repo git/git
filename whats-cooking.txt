@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2009, #07; Sun, 29)
-X-master-at: 66abce05dd5b9da9c889034781dc3de38b6e231b
-X-next-at: c4469778c3a4538c370b02fd190f6ed5a8139b58
+Subject: What's cooking in git.git (Dec 2009, #01; Tue, 01)
+X-master-at: c86485dd15d54fc6ff2cd0dda3b2a9faa4f2d66e
+X-next-at: e913581093e7da8bef58b143c6da65c845d9fea3
 
-What's cooking in git.git (Nov 2009, #07; Sun, 29)
+What's cooking in git.git (Dec 2009, #01; Tue, 01)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -57,11 +57,11 @@ backward compatible.  Currently planned changes are:
    http://thread.gmane.org/gmane.comp.version-control.git/133256
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * fc/maint-format-patch-pathspec-dashes (2009-11-26) 2 commits.
- - format-patch: add test for parsing of "--"
- - format-patch: fix parsing of "--" on the command line
+ + format-patch: add test for parsing of "--"
+ + format-patch: fix parsing of "--" on the command line
 
 * bw/diff-color-hunk-header (2009-11-27) 2 commits
   (merged to 'next' on 2009-11-29 at c446977)
@@ -73,37 +73,74 @@ backward compatible.  Currently planned changes are:
   (merged to 'next' on 2009-11-27 at 7663874)
  + Remove dead code from "git am"
 
-* tr/http-updates (2009-11-27) 2 commits
- - Add an option for using any HTTP authentication scheme, not only basic
- - http: maintain curl sessions
-
-* jc/diff-whitespace-prepare (2009-11-28) 2 commits
- - diff: flip the default diff.bwoutputonly to true
- - diff: optionally allow traditional "-b/-w affects only output" semantics
- (this branch uses gb/1.7.0-diff-whitespace-only-output and jc/1.7.0-diff-whitespace-only-status; is used by jc/1.7.0-diff-whitespace-prepare.)
-
-This is to redo the two -b/-w semantic changes to prepare the migration of
-existing users before 1.7.0 happens.
-
-* jc/1.7.0-diff-whitespace-prepare (2009-11-28) 2 commits
- - diff: disable diff.bwoutputonly warning
- - diff: flip the diff.bwoutputonly default to false
- (this branch uses gb/1.7.0-diff-whitespace-only-output, jc/1.7.0-diff-whitespace-only-status and jc/diff-whitespace-prepare.)
-
-And this is to actually flip the default and eventually remove the warning.
-
 * ns/send-email-no-chain-reply-to (2009-11-29) 1 commit
- - prepare send-email for smoother change of --chain-reply-to default
- (this branch is used by ns/1.7.0-send-email-no-chain-reply-to.)
+ + prepare send-email for smoother change of --chain-reply-to default
+  (this branch is used by ns/1.7.0-send-email-no-chain-reply-to.)
 
-Similarly, this is to start warning about the change to --no-chain-reply-to
+This starts warning about the change to --no-chain-reply-to
 in 1.7.0 for smoother transition.
 
-* ns/1.7.0-send-email-no-chain-reply-to (2009-08-22) 1 commit
- - send-email: make --no-chain-reply-to the default
- (this branch uses ns/send-email-no-chain-reply-to.)
+* uk/maint-shortlog-encoding (2009-11-25) 1 commit.
+ - shortlog: respect commit encoding
 
-And this is to actually flip the default in 1.7.0.
+* fc/send-email-envelope (2009-11-26) 2 commits.
+  (merged to 'next' on 2009-11-27 at 2d0257d)
+ + send-email: automatic envelope sender
+ + t9001: test --envelope-sender option of send-email
+
+* jc/mailinfo-remove-brackets (2009-07-15) 1 commit.
+  (merged to 'next' on 2009-11-25 at 09d498f)
+ + mailinfo: -b option keeps [bracketed] strings that is not a [PATCH] marker
+
+Jim Meyering sent a patch to do a subset of what this does; to allow
+keeping '[SECURITY]' when the subject says '[SECURITY][PATCH]', you need
+to also teach "am" to pass the new -b option, but that is independent of
+what Jim showed the need in real-world, so I think this can go in as-is.
+
+* jn/gitweb-blame (2009-11-24) 8 commits.
+  (merged to 'next' on 2009-11-25 at 0a5b649)
+ + gitweb.js: fix padLeftStr() and its usage
+ + gitweb.js: Harden setting blamed commit info in incremental blame
+ + gitweb.js: fix null object exception in initials calculation
+ + gitweb: Minify gitweb.js if JSMIN is defined
+ + gitweb: Create links leading to 'blame_incremental' using JavaScript
+  (merged to 'next' on 2009-10-11 at 73c4a83)
+ + gitweb: Colorize 'blame_incremental' view during processing
+ + gitweb: Incremental blame (using JavaScript)
+ + gitweb: Add optional "time to generate page" info in footer
+
+With two more changes to disable this by default to make it
+suitable as "new feature with known breakages" for 1.6.6
+
+* em/commit-claim (2009-11-04) 1 commit
+  (merged to 'next' on 2009-11-23 at b5df6fd)
+ + commit -c/-C/--amend: reset timestamp and authorship to committer with --reset-author
+
+* cc/bisect-doc (2009-11-08) 1 commit
+  (merged to 'next' on 2009-11-27 at c46d648)
+ + Documentation: add "Fighting regressions with git bisect" article
+
+* jc/pretty-lf (2009-10-04) 1 commit.
+  (merged to 'next' on 2009-11-27 at 73651c4)
+ + Pretty-format: %[+-]x to tweak inter-item newlines
+
+--------------------------------------------------
+[New Topics]
+
+* ap/merge-backend-opts (2008-07-18) 6 commits
+ - Document that merge strategies can now take their own options
+ - Extend merge-subtree tests to test -Xsubtree=dir.
+ - Make "subtree" part more orthogonal to the rest of merge-recursive.
+ - Teach git-pull to pass -X<option> to git-merge
+ - git merge -X<option>
+ - git-merge-file --ours, --theirs
+
+"git pull" patch needs sq-then-eval fix but otherwise seemed good.
+
+* mo/bin-wrappers (2009-11-29) 3 commits
+ - INSTALL: document a simpler way to run uninstalled builds
+ - run test suite without dashed git-commands in PATH
+ - build dashless "bin-wrappers" directory similar to installed bindir
 
 --------------------------------------------------
 [Stalled]
@@ -159,7 +196,8 @@ seems to think otherwise.
  + tests: move convenience regexp to match object names to test-lib.sh
 
 This has some stupid bugs and reverted from 'next' until I can fix it, but
-the "temporarily" turned out to be very loooong.  Sigh...
+the "temporarily" turned out to be very loooong.  Sigh.  We won't have a
+proper fix in 1.6.6.
 
 * sr/gfi-options (2009-09-06) 6 commits.
  - fast-import: test the new option command
@@ -173,6 +211,20 @@ Sverre is working on a re-roll to address comments from Shawn.
 
 --------------------------------------------------
 [Cooking]
+
+* tr/http-updates (2009-11-27) 2 commits
+ - Add an option for using any HTTP authentication scheme, not only basic
+ - http: maintain curl sessions
+
+It seems that this is still under discussion...
+
+* jc/diff-whitespace-prepare (2009-11-28) 2 commits
+ - diff: flip the default diff.bwoutputonly to true
+ - diff: optionally allow traditional "-b/-w affects only output" semantics
+ (this branch uses gb/1.7.0-diff-whitespace-only-output and jc/1.7.0-diff-whitespace-only-status; is used by jc/1.7.0-diff-whitespace-prepare.)
+
+This is to redo the two -b/-w semantic changes to prepare the migration of
+existing users before 1.7.0 happens.
 
 * sr/vcs-helper (2009-11-18) 12 commits
   (merged to 'next' on 2009-11-27 at 83268ab)
@@ -189,39 +241,14 @@ Sverre is working on a re-roll to address comments from Shawn.
  + Allow programs to not depend on remotes having urls
  + Fix memory leak in helper method for disconnect
 
+Should be among the first to graduate after 1.6.6 final.
+
 * jc/grep-full-tree (2009-11-24) 1 commit.
  - grep: --full-tree
 
 The interaction with this option and pathspecs need to be worked out
 better.  I _think_ "grep --full-tree -e pattern -- '*.h'" should find from
 all the header files in the tree, for example.
-
-* uk/maint-shortlog-encoding (2009-11-25) 1 commit.
- - shortlog: respect commit encoding
-
-The fix is a maint material but the patch was against next, so I
-back-rebased it myself.  I tried to be careful but please double check the
-result.
-
-Perhaps merge it to 'master' before 1.6.6-rc1?
-
-* fc/send-email-envelope (2009-11-26) 2 commits.
-  (merged to 'next' on 2009-11-27 at 2d0257d)
- + send-email: automatic envelope sender
- + t9001: test --envelope-sender option of send-email
-
-Perhaps merge it to 'master' before 1.6.6-rc1?
-
-* jc/mailinfo-remove-brackets (2009-07-15) 1 commit.
-  (merged to 'next' on 2009-11-25 at 09d498f)
- + mailinfo: -b option keeps [bracketed] strings that is not a [PATCH] marker
-
-Jim Meyering sent a patch to do a subset of what this does; to allow
-keeping '[SECURITY]' when the subject says '[SECURITY][PATCH]', you need
-to also teach "am" to pass the new -b option, but that is independent of
-what Jim showed the need in real-world, so I think this can go in as-is.
-
-Perhaps merge it to 'master' before 1.6.6-rc1?
 
 * jc/checkout-merge-base (2009-11-20) 2 commits
  - "rebase --onto A...B" replays history on the merge base between A and B
@@ -235,41 +262,8 @@ want this (yet); the new feature is not urgent anyway.
  + {checkout,reset} -p: make patch direction configurable
 
 I do not particularly like a configuration like this that changes the
-behaviour of a command in a drastic way---it will make helping others much
-harder.
-
-Perhaps merge it to 'master' before 1.6.6-rc1?
-
-* jn/gitweb-blame (2009-11-24) 8 commits.
-  (merged to 'next' on 2009-11-25 at 0a5b649)
- + gitweb.js: fix padLeftStr() and its usage
- + gitweb.js: Harden setting blamed commit info in incremental blame
- + gitweb.js: fix null object exception in initials calculation
- + gitweb: Minify gitweb.js if JSMIN is defined
- + gitweb: Create links leading to 'blame_incremental' using JavaScript
-  (merged to 'next' on 2009-10-11 at 73c4a83)
- + gitweb: Colorize 'blame_incremental' view during processing
- + gitweb: Incremental blame (using JavaScript)
- + gitweb: Add optional "time to generate page" info in footer
-
-Ajax-y blame, with further fixes.  As this does not seem to break existing
-features, I am inclined to say that we push this out early, as a new
-feature with known breakages, to give it wider audience.
-
-* em/commit-claim (2009-11-04) 1 commit
-  (merged to 'next' on 2009-11-23 at b5df6fd)
- + commit -c/-C/--amend: reset timestamp and authorship to committer with --reset-author
-
-I am not sure if the option name does a good job at explaining it to the
-end users, but I think the code and feature is solid.
-
-Perhaps merge it to 'master' before 1.6.6-rc1?
-
-* cc/bisect-doc (2009-11-08) 1 commit
-  (merged to 'next' on 2009-11-27 at c46d648)
- + Documentation: add "Fighting regressions with git bisect" article
-
-Perhaps merge it to 'master' before 1.6.6-rc1?
+behaviour of a command in a drastic way---it will make helping others
+much harder.
 
 * nd/sparse (2009-11-25) 20 commits.
   (merged to 'next' on 2009-11-25 at 71380f5)
@@ -295,11 +289,9 @@ Perhaps merge it to 'master' before 1.6.6-rc1?
  + Add test-index-version
  + update-index: refactor mark_valid() in preparation for new options
 
-* jc/pretty-lf (2009-10-04) 1 commit.
-  (merged to 'next' on 2009-11-27 at 73651c4)
- + Pretty-format: %[+-]x to tweak inter-item newlines
-
-Perhaps merge it to 'master' before 1.6.6-rc1?
+There were some test glitches reported and at least one test seems to 
+be broken in the sense that it is not testing what it is trying to.
+Fix-up expected.
 
 --------------------------------------------------
 [For 1.7.0]
@@ -338,6 +330,13 @@ With this, "git status" is no longer "git commit --dry-run".
   (merged to 'next' on 2009-10-11 at 043acdf)
  + send-email: make --no-chain-reply-to the default
 
+As the title says.
+
+* jc/1.7.0-push-safety (2009-02-09) 2 commits.
+  (merged to 'next' on 2009-10-11 at 81b8128)
+ + Refuse deleting the current branch via push
+ + Refuse updating the current branch in a non-bare repository via push
+
 * jc/1.7.0-diff-whitespace-only-status (2009-08-30) 4 commits.
   (merged to 'next' on 2009-10-11 at 546c74d)
  + diff.c: fix typoes in comments
@@ -355,12 +354,20 @@ and jc/diff-whitespace-prepare topic is meant to ease the transition.
  + No diff -b/-w output for all-whitespace changes
  (this branch is used by jc/1.7.0-diff-whitespace-prepare and jc/diff-whitespace-prepare.)
 
-Likewise.
+Likewise but for the output of "diff --git" headers.
 
-* jc/1.7.0-push-safety (2009-02-09) 2 commits.
-  (merged to 'next' on 2009-10-11 at 81b8128)
- + Refuse deleting the current branch via push
- + Refuse updating the current branch in a non-bare repository via push
+* jc/1.7.0-diff-whitespace-prepare (2009-11-28) 2 commits
+ - diff: disable diff.bwoutputonly warning
+ - diff: flip the diff.bwoutputonly default to false
+ (this branch uses gb/1.7.0-diff-whitespace-only-output, jc/1.7.0-diff-whitespace-only-status and jc/diff-whitespace-prepare.)
+
+And this is to actually flip the default and eventually remove the warning.
+
+* ns/1.7.0-send-email-no-chain-reply-to (2009-08-22) 1 commit
+ - send-email: make --no-chain-reply-to the default
+
+And this is to actually flip the default in 1.7.0.
+
 
 --------------------------------------------------
 [Reverted from 'next']
