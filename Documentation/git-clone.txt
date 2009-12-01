@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git clone' [--template=<template_directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
-	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
+	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--depth <depth>] [--recursive] [--] <repository> [<directory>]
 
 DESCRIPTION

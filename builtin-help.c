@@ -427,15 +427,15 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 
-	setup_git_directory_gently(&nongit);
-	git_config(git_help_config, NULL);
-
 	if (!argv[0]) {
 		printf("usage: %s\n\n", git_usage_string);
 		list_common_cmds_help();
 		printf("\n%s\n", git_more_info_string);
 		return 0;
 	}
+
+	setup_git_directory_gently(&nongit);
+	git_config(git_help_config, NULL);
 
 	alias = alias_lookup(argv[0]);
 	if (alias && !is_git_command(argv[0])) {
