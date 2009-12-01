@@ -4883,6 +4883,17 @@ sub git_blame_common {
 	my $formats_nav =
 		$cgi->a({-href => href(action=>"blob", -replay=>1)},
 		        "blob") .
+		" | ";
+	if ($format eq 'incremental') {
+		$formats_nav .=
+			$cgi->a({-href => href(action=>"blame", javascript=>0, -replay=>1)},
+			        "blame") . " (non-incremental)";
+	} else {
+		$formats_nav .=
+			$cgi->a({-href => href(action=>"blame_incremental", -replay=>1)},
+			        "blame") . " (incremental)";
+	}
+	$formats_nav .=
 		" | " .
 		$cgi->a({-href => href(action=>"history", -replay=>1)},
 		        "history") .
