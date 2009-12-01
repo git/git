@@ -272,7 +272,9 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 			die("Could not get fetch map for refspec %s",
 				states->remote->fetch_refspec[i]);
 
-	states->new.strdup_strings = states->tracked.strdup_strings = 1;
+	states->new.strdup_strings = 1;
+	states->tracked.strdup_strings = 1;
+	states->stale.strdup_strings = 1;
 	for (ref = fetch_map; ref; ref = ref->next) {
 		unsigned char sha1[20];
 		if (!ref->peer_ref || read_ref(ref->peer_ref->name, sha1))
@@ -768,7 +770,7 @@ static void clear_push_info(void *util, const char *string)
 static void free_remote_ref_states(struct ref_states *states)
 {
 	string_list_clear(&states->new, 0);
-	string_list_clear(&states->stale, 0);
+	string_list_clear(&states->stale, 1);
 	string_list_clear(&states->tracked, 0);
 	string_list_clear(&states->heads, 0);
 	string_list_clear_func(&states->push, clear_push_info);
