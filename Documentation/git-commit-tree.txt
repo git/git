@@ -73,6 +73,7 @@ A commit comment is read from stdin. If a changelog
 entry is not provided via "<" redirection, 'git-commit-tree' will just wait
 for one to be entered and terminated with ^D.
 
+include::date-formats.txt[]
 
 Diagnostics
 -----------

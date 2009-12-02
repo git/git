@@ -220,6 +220,8 @@ specified.
 	these files are also staged for the next commit on top
 	of what have been staged before.
 
+:git-commit: 1
+include::date-formats.txt[]
 
 EXAMPLES
 --------
