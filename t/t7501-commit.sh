@@ -211,6 +211,21 @@ test_expect_success 'amend commit to fix author' '
 
 '
 
+test_expect_success 'amend commit to fix date' '
+
+	test_tick &&
+	newtick=$GIT_AUTHOR_DATE &&
+	git reset --hard &&
+	git cat-file -p HEAD |
+	sed -e "s/author.*/author $author $newtick/" \
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
+		expected &&
+	git commit --amend --date="$newtick" &&
+	git cat-file -p HEAD > current &&
+	test_cmp expected current
+
+'
+
 test_expect_success 'sign off (1)' '
 
 	echo 1 >positive &&

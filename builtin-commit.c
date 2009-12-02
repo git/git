@@ -52,7 +52,7 @@ static char *edit_message, *use_message;
 static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
-static char *untracked_files_arg;
+static char *untracked_files_arg, *force_date;
 /*
  * The default commit message cleanup mode will remove the lines
  * beginning with # (shell comments) and leading and trailing
@@ -90,6 +90,7 @@ static struct option builtin_commit_options[] = {
 
 	OPT_FILENAME('F', "file", &logfile, "read log from file"),
 	OPT_STRING(0, "author", &force_author, "AUTHOR", "override author for commit"),
+	OPT_STRING(0, "date", &force_date, "DATE", "override date for commit"),
 	OPT_CALLBACK('m', "message", &message, "MESSAGE", "specify commit message", opt_parse_m),
 	OPT_STRING('c', "reedit-message", &edit_message, "COMMIT", "reuse and edit message from specified commit"),
 	OPT_STRING('C', "reuse-message", &use_message, "COMMIT", "reuse message from specified commit"),
@@ -409,6 +410,9 @@ static void determine_author_info(void)
 		name = xstrndup(force_author, lb - force_author);
 		email = xstrndup(lb + 2, rb - (lb + 2));
 	}
+
+	if (force_date)
+		date = force_date;
 
 	author_name = name;
 	author_email = email;
