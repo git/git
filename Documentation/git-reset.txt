@@ -62,6 +62,7 @@ This means that `git reset -p` is the opposite of `git add -p` (see
 linkgit:git-add[1]).
 
 -q::
+--quiet::
 	Be quiet, only report errors.
 
 <commit>::
