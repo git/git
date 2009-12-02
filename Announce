@@ -34,11 +34,11 @@ esac
 
 echo "To: git@vger.kernel.org"
 Meta/ProjectContact -b
-echo "Subject: [ANNOUNCE] GIT $vername
+echo "Subject: [ANNOUNCE] Git $vername
 "
 
 fmt -70 <<EOF
-$kind GIT $vername is available at the usual places$for_testing:
+$kind Git $vername is available at the usual places$for_testing:
 
   http://www.kernel.org/pub/software/scm/git/
 
