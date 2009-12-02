@@ -71,7 +71,7 @@ static int option_parse_message(const struct option *opt,
 	if (unset)
 		strbuf_setlen(buf, 0);
 	else if (arg) {
-		strbuf_addf(buf, "%s\n\n", arg);
+		strbuf_addf(buf, "%s%s", buf->len ? "\n\n" : "", arg);
 		have_message = 1;
 	} else
 		return error("switch `m' requires a value");
@@ -804,7 +804,7 @@ static const char deprecation_warning[] =
 static struct commit *is_old_style_invocation(int argc, const char **argv)
 {
 	struct commit *second_token = NULL;
-	if (argc > 1) {
+	if (argc > 2) {
 		unsigned char second_sha1[20];
 
 		if (get_sha1(argv[1], second_sha1))
@@ -943,11 +943,13 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * codepath so we discard the error in this
 		 * loop.
 		 */
-		for (i = 0; i < argc; i++)
-			merge_name(argv[i], &msg);
-		fmt_merge_msg(option_log, &msg, &merge_msg);
-		if (merge_msg.len)
-			strbuf_setlen(&merge_msg, merge_msg.len-1);
+		if (!have_message) {
+			for (i = 0; i < argc; i++)
+				merge_name(argv[i], &msg);
+			fmt_merge_msg(option_log, &msg, &merge_msg);
+			if (merge_msg.len)
+				strbuf_setlen(&merge_msg, merge_msg.len-1);
+		}
 	}
 
 	if (head_invalid || !argc)
