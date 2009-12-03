@@ -787,6 +787,8 @@ ifeq ($(uname_O),Cygwin)
 	NO_MMAP = YesPlease
 	NO_IPV6 = YesPlease
 	X = .exe
+	COMPAT_OBJS += compat/cygwin.o
+	UNRELIABLE_FSTAT = UnfortunatelyYes
 endif
 ifeq ($(uname_S),FreeBSD)
 	NEEDS_LIBICONV = YesPlease
@@ -895,10 +897,6 @@ ifeq ($(uname_S),HP-UX)
 	NO_HSTRERROR = YesPlease
 	NO_SYS_SELECT_H = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
-endif
-ifneq (,$(findstring CYGWIN,$(uname_S)))
-	COMPAT_OBJS += compat/cygwin.o
-	UNRELIABLE_FSTAT = UnfortunatelyYes
 endif
 ifdef MSVC
 	GIT_VERSION := $(GIT_VERSION).MSVC
