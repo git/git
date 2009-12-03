@@ -106,8 +106,8 @@ static struct strategy *get_strategy(const char *name)
 					found = 1;
 			if (!found)
 				add_cmdname(&not_strategies, ent->name, ent->len);
-			exclude_cmds(&main_cmds, &not_strategies);
 		}
+		exclude_cmds(&main_cmds, &not_strategies);
 	}
 	if (!is_in_cmdlist(&main_cmds, name) && !is_in_cmdlist(&other_cmds, name)) {
 		fprintf(stderr, "Could not find merge strategy '%s'.\n", name);
