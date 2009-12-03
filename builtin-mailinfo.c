@@ -26,6 +26,7 @@ static struct strbuf charset = STRBUF_INIT;
 static int patch_lines;
 static struct strbuf **p_hdr_data, **s_hdr_data;
 static int use_scissors;
+static int use_inbody_headers = 1;
 
 #define MAX_HDR_PARSED 10
 #define MAX_BOUNDARIES 5
@@ -774,10 +775,17 @@ static int handle_commit_msg(struct strbuf *line)
 		strbuf_ltrim(line);
 		if (!line->len)
 			return 0;
+	}
+
+	if (use_inbody_headers && still_looking) {
 		still_looking = check_header(line, s_hdr_data, 0);
 		if (still_looking)
 			return 0;
-	}
+	} else
+		/* Only trim the first (blank) line of the commit message
+		 * when ignoring in-body headers.
+		 */
+		still_looking = 0;
 
 	/* normalize the log message to UTF-8. */
 	if (metainfo_charset)
@@ -1033,6 +1041,8 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 			use_scissors = 1;
 		else if (!strcmp(argv[1], "--no-scissors"))
 			use_scissors = 0;
+		else if (!strcmp(argv[1], "--no-inbody-headers"))
+			use_inbody_headers = 0;
 		else
 			usage(mailinfo_usage);
 		argc--; argv++;
