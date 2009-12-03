@@ -6,6 +6,13 @@ G=/pub/software/scm/git &&
 HERE=$(git symbolic-ref HEAD) || exit 1
 THIS=$(git describe HEAD)
 
+d='
+MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
+ASCIIDOC_NO_ROFF=YesPlease
+ASCIIDOC8=YesPlease
+BLK_SHA1=YesPlease
+GNU_ROFF=YesPlease'
+
 rm -f version
 case `hostname` in
 hera.kernel.org)
@@ -25,7 +32,7 @@ esac &&
 echo "* Building $THIS" &&
 make $J git >./:all.log 2>&1 &&
 V=`./git --version | sed -e 's/git version //'` &&
-make rpm >>./:all.log 2>&1 &&
+make $d rpm >>./:all.log 2>&1 &&
 case "$narch" in
 '')
 	# This is not the primary build machine.
@@ -47,7 +54,7 @@ case "$narch" in
 	esac
 	exit $status ;;
 *)
-	make dist-doc >>./:all.log 2>&1 &&
+	make $d dist-doc >>./:all.log 2>&1 &&
 	ln -f git-$V.tar.gz $G/. &&
 	ln -f git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/.
 	;;
