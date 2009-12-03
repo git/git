@@ -314,6 +314,20 @@ static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
 	}
 }
 
+static size_t display_mode_esc_sequence_len(const char *s)
+{
+	const char *p = s;
+	if (*p++ != '\033')
+		return 0;
+	if (*p++ != '[')
+		return 0;
+	while (isdigit(*p) || *p == ';')
+		p++;
+	if (*p++ != 'm')
+		return 0;
+	return p - s;
+}
+
 /*
  * Wrap the text, if necessary. The variable indent is the indent for the
  * first line, indent2 is the indent for all other lines.
@@ -337,7 +351,13 @@ int strbuf_add_wrapped_text(struct strbuf *buf,
 	}
 
 	for (;;) {
-		char c = *text;
+		char c;
+		size_t skip;
+
+		while ((skip = display_mode_esc_sequence_len(text)))
+			text += skip;
+
+		c = *text;
 		if (!c || isspace(c)) {
 			if (w < width || !space) {
 				const char *start = bol;

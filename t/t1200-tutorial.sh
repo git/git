@@ -47,7 +47,8 @@ test_expect_success 'tree' '
 '
 
 test_expect_success 'git diff-index -p HEAD' '
-	tree=$(git write-tree)
+	test_tick &&
+	tree=$(git write-tree) &&
 	commit=$(echo "Initial commit" | git commit-tree $tree) &&
 	git update-ref HEAD $commit &&
 	git diff-index -p HEAD > diff.output &&
@@ -113,12 +114,14 @@ test_expect_success 'git branch' '
 test_expect_success 'git resolve now fails' '
 	git checkout mybranch &&
 	echo "Work, work, work" >>hello &&
+	test_tick &&
 	git commit -m "Some work." -i hello &&
 
 	git checkout master &&
 
 	echo "Play, play, play" >>hello &&
 	echo "Lots of fun" >>example &&
+	test_tick &&
 	git commit -m "Some fun." -i hello example &&
 
 	test_must_fail git merge -m "Merge work in mybranch" mybranch
@@ -141,6 +144,7 @@ cat > show-branch.expect << EOF
 EOF
 
 test_expect_success 'git show-branch' '
+	test_tick &&
 	git commit -m "Merge work in mybranch" -i hello &&
 	git show-branch --topo-order --more=1 master mybranch \
 		> show-branch.output &&
@@ -201,9 +205,9 @@ cat > show-branch4.expect << EOF
 * [master] Some fun.
  ! [mybranch] Some work.
 --
- + [mybranch] Some work.
 *  [master] Some fun.
-*+ [mybranch^] Initial commit
+ + [mybranch] Some work.
+*+ [master^] Initial commit
 EOF
 
 test_expect_success 'git show-branch (part 4)' '

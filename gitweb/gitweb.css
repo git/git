@@ -79,6 +79,13 @@ div.page_footer_text {
 	font-style: italic;
 }
 
+div#generating_info {
+	margin: 4px;
+	font-size: smaller;
+	text-align: center;
+	color: #505050;
+}
+
 div.page_body {
 	padding: 8px;
 	font-family: monospace;
@@ -254,6 +261,11 @@ tr.no-previous td.linenr {
 	font-weight: bold;
 }
 
+/* for 'blame_incremental', during processing */
+tr.color1 { background-color: #f6fff6; }
+tr.color2 { background-color: #f6f6ff; }
+tr.color3 { background-color: #fff6f6; }
+
 td {
 	padding: 2px 5px;
 	font-size: 100%;
@@ -343,6 +355,17 @@ td.pre, div.pre, div.diff {
 
 td.mode {
 	font-family: monospace;
+}
+
+/* progress of blame_interactive */
+div#progress_bar {
+	height: 2px;
+	margin-bottom: -2px;
+	background-color: #d8d9d0;
+}
+div#progress_info {
+	float: right;
+	text-align: right;
 }
 
 /* format of (optional) objects size in 'tree' view */

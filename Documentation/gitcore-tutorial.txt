@@ -602,7 +602,7 @@ $ git tag -s <tagname>
 ----------------
 
 which will sign the current `HEAD` (but you can also give it another
-argument that specifies the thing to tag, i.e., you could have tagged the
+argument that specifies the thing to tag, e.g., you could have tagged the
 current `mybranch` point by using `git tag <tagname> mybranch`).
 
 You normally only do signed tags for major releases or things
@@ -1186,9 +1186,9 @@ $ git show-branch
 * [master] Some fun.
  ! [mybranch] Some work.
 --
- + [mybranch] Some work.
 *  [master] Some fun.
-*+ [mybranch^] Initial commit
+ + [mybranch] Some work.
+*+ [master^] Initial commit
 ------------
 
 Now we are ready to experiment with the merge by hand.

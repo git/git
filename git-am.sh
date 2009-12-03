@@ -205,7 +205,7 @@ check_patch_format () {
 			# and see if it looks like that they all begin with the
 			# header field names...
 			sed -n -e '/^$/q' -e '/^[ 	]/d' -e p "$1" |
-			LC_ALL=C egrep -v '^[!-9;-~]+:' >/dev/null ||
+			sane_egrep -v '^[!-9;-~]+:' >/dev/null ||
 			patch_format=mbox
 		fi
 	} < "$1" || clean_abort
@@ -561,7 +561,7 @@ do
 			stop_here $this
 
 		# skip pine's internal folder data
-		grep '^Author: Mail System Internal Data$' \
+		sane_grep '^Author: Mail System Internal Data$' \
 			<"$dotest"/info >/dev/null &&
 			go_next && continue
 
@@ -577,11 +577,12 @@ do
 			git cat-file commit "$commit" |
 			sed -e '1,/^$/d' >"$dotest/msg-clean"
 		else
-			SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
-			case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
-
-			(printf '%s\n\n' "$SUBJECT"; cat "$dotest/msg") |
-				git stripspace > "$dotest/msg-clean"
+			{
+				sed -n '/^Subject/ s/Subject: //p' "$dotest/info"
+				echo
+				cat "$dotest/msg"
+			} |
+			git stripspace > "$dotest/msg-clean"
 		fi
 		;;
 	esac

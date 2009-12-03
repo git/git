@@ -4,6 +4,13 @@
 	(see the section <<URLS,GIT URLS>> below) or the name
 	of a remote (see the section <<REMOTES,REMOTES>> below).
 
+ifndef::git-pull[]
+<group>::
+	A name referring to a list of repositories as the value
+	of remotes.<group> in the configuration file.
+	(See linkgit:git-config[1]).
+endif::git-pull[]
+
 <refspec>::
 	The format of a <refspec> parameter is an optional plus
 	`{plus}`, followed by the source ref <src>, followed

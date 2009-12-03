@@ -628,8 +628,8 @@ static void rewrap_message_tail(struct strbuf *sb,
 	c->indent2 = new_indent2;
 }
 
-static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
-                               void *context)
+static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
+				void *context)
 {
 	struct format_commit_context *c = context;
 	const struct commit *commit = c->commit;
@@ -814,6 +814,44 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 		return 1;
 	}
 	return 0;	/* unknown placeholder */
+}
+
+static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
+				 void *context)
+{
+	int consumed;
+	size_t orig_len;
+	enum {
+		NO_MAGIC,
+		ADD_LF_BEFORE_NON_EMPTY,
+		DEL_LF_BEFORE_EMPTY,
+	} magic = NO_MAGIC;
+
+	switch (placeholder[0]) {
+	case '-':
+		magic = DEL_LF_BEFORE_EMPTY;
+		break;
+	case '+':
+		magic = ADD_LF_BEFORE_NON_EMPTY;
+		break;
+	default:
+		break;
+	}
+	if (magic != NO_MAGIC)
+		placeholder++;
+
+	orig_len = sb->len;
+	consumed = format_commit_one(sb, placeholder, context);
+	if (magic == NO_MAGIC)
+		return consumed;
+
+	if ((orig_len == sb->len) && magic == DEL_LF_BEFORE_EMPTY) {
+		while (sb->len && sb->buf[sb->len - 1] == '\n')
+			strbuf_setlen(sb, sb->len - 1);
+	} else if ((orig_len != sb->len) && magic == ADD_LF_BEFORE_NON_EMPTY) {
+		strbuf_insert(sb, orig_len, "\n", 1);
+	}
+	return consumed + 1;
 }
 
 void format_commit_message(const struct commit *commit,

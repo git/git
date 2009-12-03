@@ -108,9 +108,10 @@ Sending
 --envelope-sender=<address>::
 	Specify the envelope sender used to send the emails.
 	This is useful if your default address is not the address that is
-	subscribed to a list. If you use the sendmail binary, you must have
-	suitable privileges for the -f parameter. Default is the value of
-	the 'sendemail.envelopesender' configuration variable; if that is
+	subscribed to a list. In order to use the 'From' address, set the
+	value to "auto". If you use the sendmail binary, you must have
+	suitable privileges for the -f parameter.  Default is the value of the
+	'sendemail.envelopesender' configuration variable; if that is
 	unspecified, choosing the envelope sender is left to your MTA.
 
 --smtp-encryption=<encryption>::

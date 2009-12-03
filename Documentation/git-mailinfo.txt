@@ -8,7 +8,7 @@ git-mailinfo - Extracts patch and authorship from a single e-mail message
 
 SYNOPSIS
 --------
-'git mailinfo' [-k] [-u | --encoding=<encoding> | -n] [--scissors] <msg> <patch>
+'git mailinfo' [-k|-b] [-u | --encoding=<encoding> | -n] [--scissors] <msg> <patch>
 
 
 DESCRIPTION
@@ -31,6 +31,11 @@ OPTIONS
 	then prepends "[PATCH] ".  This flag forbids this
 	munging, and is most useful when used to read back
 	'git-format-patch -k' output.
+
+-b::
+	When -k is not in effect, all leading strings bracketed with '['
+	and ']' pairs are stripped.  This option limits the stripping to
+	only the pairs whose bracketed string contains the word "PATCH".
 
 -u::
 	The commit log message, author name and author email are

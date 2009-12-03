@@ -77,6 +77,11 @@ test_expect_success 'test --no-replace-objects option' '
      git --no-replace-objects show $HASH2 | grep "A U Thor"
 '
 
+test_expect_success 'test GIT_NO_REPLACE_OBJECTS env variable' '
+     GIT_NO_REPLACE_OBJECTS=1 git cat-file commit $HASH2 | grep "author A U Thor" &&
+     GIT_NO_REPLACE_OBJECTS=1 git show $HASH2 | grep "A U Thor"
+'
+
 cat >tag.sig <<EOF
 object $HASH2
 type commit
@@ -200,6 +205,18 @@ test_expect_success 'fetch branch with replacement' '
      git log --pretty=oneline parallel3 | grep $PARA3
      git show $PARA3 | grep "A U Thor"
      cd ..
+'
+
+test_expect_success 'bisect and replacements' '
+     git bisect start $HASH7 $HASH1 &&
+     test "$S" = "$(git rev-parse --verify HEAD)" &&
+     git bisect reset &&
+     GIT_NO_REPLACE_OBJECTS=1 git bisect start $HASH7 $HASH1 &&
+     test "$HASH4" = "$(git rev-parse --verify HEAD)" &&
+     git bisect reset &&
+     git --no-replace-objects bisect start $HASH7 $HASH1 &&
+     test "$HASH4" = "$(git rev-parse --verify HEAD)" &&
+     git bisect reset
 '
 
 #

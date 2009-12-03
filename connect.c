@@ -609,6 +609,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 			GIT_WORK_TREE_ENVIRONMENT,
 			GRAFT_ENVIRONMENT,
 			INDEX_ENVIRONMENT,
+			NO_REPLACE_OBJECTS_ENVIRONMENT,
 			NULL
 		};
 		conn->env = env;

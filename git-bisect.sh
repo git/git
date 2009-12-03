@@ -300,8 +300,7 @@ bisect_visualize() {
 		esac
 	fi
 
-	not=$(git for-each-ref --format='%(refname)' "refs/bisect/good-*")
-	eval '"$@"' refs/bisect/bad --not $not -- $(cat "$GIT_DIR/BISECT_NAMES")
+	eval '"$@"' --bisect -- $(cat "$GIT_DIR/BISECT_NAMES")
 }
 
 bisect_reset() {
@@ -393,7 +392,7 @@ bisect_run () {
 
       cat "$GIT_DIR/BISECT_RUN"
 
-      if grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
+      if sane_grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
 		> /dev/null; then
 	  echo >&2 "bisect run cannot continue any more"
 	  exit $res
@@ -405,7 +404,7 @@ bisect_run () {
 	  exit $res
       fi
 
-      if grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
+      if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
 	  echo "bisect run success"
 	  exit 0;
       fi

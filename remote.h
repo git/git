@@ -154,4 +154,7 @@ struct ref *guess_remote_head(const struct ref *head,
 			      const struct ref *refs,
 			      int all);
 
+/* Return refs which no longer exist on remote */
+struct ref *get_stale_heads(struct remote *remote, struct ref *fetch_map);
+
 #endif

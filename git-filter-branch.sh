@@ -473,7 +473,7 @@ if [ "$filter_tag_name" ]; then
 				git mktag) ||
 				die "Could not create new tag object for $ref"
 			if git cat-file tag "$ref" | \
-			   grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
+			   sane_grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
 			then
 				warn "gpg signature stripped from tag object $sha1t"
 			fi

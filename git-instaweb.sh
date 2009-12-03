@@ -41,7 +41,7 @@ resolve_full_httpd () {
 	case "$httpd" in
 	*apache2*|*lighttpd*)
 		# ensure that the apache2/lighttpd command ends with "-f"
-		if ! echo "$httpd" | grep -- '-f *$' >/dev/null 2>&1
+		if ! echo "$httpd" | sane_grep -- '-f *$' >/dev/null 2>&1
 		then
 			httpd="$httpd -f"
 		fi
@@ -73,6 +73,11 @@ resolve_full_httpd () {
 }
 
 start_httpd () {
+	if test -f "$fqgitdir/pid"; then
+		say "Instance already running. Restarting..."
+		stop_httpd
+	fi
+
 	# here $httpd should have a meaningful value
 	resolve_full_httpd
 
@@ -297,8 +302,8 @@ EOF
 
 	# check to see if Dennis Stosberg's mod_perl compatibility patch
 	# (<20060621130708.Gcbc6e5c@leonov.stosberg.net>) has been applied
-	if test -f "$module_path/mod_perl.so" && grep 'MOD_PERL' \
-				"$GIT_DIR/gitweb/gitweb.cgi" >/dev/null
+	if test -f "$module_path/mod_perl.so" &&
+	   sane_grep 'MOD_PERL' "$GIT_DIR/gitweb/gitweb.cgi" >/dev/null
 	then
 		# favor mod_perl if available
 		cat >> "$conf" <<EOF
@@ -316,7 +321,7 @@ EOF
 		# plain-old CGI
 		resolve_full_httpd
 		list_mods=$(echo "$full_httpd" | sed "s/-f$/-l/")
-		$list_mods | grep 'mod_cgi\.c' >/dev/null 2>&1 || \
+		$list_mods | sane_grep 'mod_cgi\.c' >/dev/null 2>&1 || \
 		if test -f "$module_path/mod_cgi.so"
 		then
 			echo "LoadModule cgi_module $module_path/mod_cgi.so" >> "$conf"
@@ -389,8 +394,15 @@ gitweb_css () {
 EOFGITWEB
 }
 
+gitweb_js () {
+	cat > "$1" <<\EOFGITWEB
+@@GITWEB_JS@@
+EOFGITWEB
+}
+
 gitweb_cgi "$GIT_DIR/gitweb/gitweb.cgi"
 gitweb_css "$GIT_DIR/gitweb/gitweb.css"
+gitweb_js  "$GIT_DIR/gitweb/gitweb.js"
 
 case "$httpd" in
 *lighttpd*)

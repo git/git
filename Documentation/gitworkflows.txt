@@ -229,7 +229,7 @@ To verify that 'master' is indeed a superset of 'maint', use git log:
 .Verify 'master' is a superset of 'maint'
 [caption="Recipe: "]
 =====================================
-git log master..maint
+`git log master..maint`
 =====================================
 
 This command should not list any commits.  Otherwise, check out

@@ -24,7 +24,7 @@ ssh, rsync, http) cannot be used.  This command provides support for
 'git-fetch' and 'git-pull' to operate by packaging objects and references
 in an archive at the originating machine, then importing those into
 another repository using 'git-fetch' and 'git-pull'
-after moving the archive by some means (i.e., by sneakernet).  As no
+after moving the archive by some means (e.g., by sneakernet).  As no
 direct connection between the repositories exists, the user must specify a
 basis for the bundle that is held by the destination repository: the
 bundle assumes that all objects in the basis are already in the

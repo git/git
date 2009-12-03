@@ -307,7 +307,7 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 		rpc->len = avail;
 	}
 
-	if (max < avail);
+	if (max < avail)
 		avail = max;
 	memcpy(ptr, rpc->buf + rpc->pos, avail);
 	rpc->pos += avail;
@@ -356,8 +356,8 @@ static int post_rpc(struct rpc_state *rpc)
 	slot = get_active_slot();
 	slot->results = &results;
 
-	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
+	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, rpc->service_url);
 	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "");
 

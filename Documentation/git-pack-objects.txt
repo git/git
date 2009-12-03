@@ -9,8 +9,9 @@ git-pack-objects - Create a packed archive of objects
 SYNOPSIS
 --------
 [verse]
-'git pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
-	[--local] [--incremental] [--window=N] [--depth=N] [--all-progress]
+'git pack-objects' [-q | --progress | --all-progress] [--all-progress-implied]
+	[--no-reuse-delta] [--delta-base-offset] [--non-empty]
+	[--local] [--incremental] [--window=N] [--depth=N]
 	[--revs [--unpacked | --all]*] [--stdout | base-name]
 	[--keep-true-parents] < object-list
 
@@ -137,7 +138,7 @@ base-name::
 
 --all-progress::
 	When --stdout is specified then progress report is
-	displayed during the object count and deltification phases
+	displayed during the object count and compression phases
 	but inhibited during the write-out phase. The reason is
 	that in some cases the output stream is directly linked
 	to another command which may wish to display progress
@@ -145,6 +146,11 @@ base-name::
 	This flag is like --progress except that it forces progress
 	report for the write-out phase as well even if --stdout is
 	used.
+
+--all-progress-implied::
+	This is used to imply --all-progress whenever progress display
+	is activated.  Unlike --all-progress this flag doesn't actually
+	force any progress display by itself.
 
 -q::
 	This flag makes the command not to report its progress
