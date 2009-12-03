@@ -103,9 +103,12 @@ ifdef DOCBOOK_SUPPRESS_SP
 XMLTO_EXTRA += -m manpage-suppress-sp.xsl
 endif
 
-ifdef MAN_BASE_URL
+# Newer DocBook stylesheet emits warning cruft in the output when
+# this is not set, and if set it shows an absolute link.  We can
+# use MAN_BASE_URL=http://www.kernel.org/pub/software/scm/git/docs/
+# but distros may want to set it to /usr/share/doc/git-core/docs/ or
+# something like that.
 XMLTO_EXTRA += --stringparam man.base.url.for.relative.links=$(MAN_BASE_URL)
-endif
 
 # If your target system uses GNU groff, it may try to render
 # apostrophes as a "pretty" apostrophe using unicode.  This breaks
