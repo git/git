@@ -139,8 +139,12 @@ static void read_from_stdin(struct shortlog *log)
 void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 {
 	const char *author = NULL, *buffer;
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf ufbuf = STRBUF_INIT;
 
-	buffer = commit->buffer;
+	pretty_print_commit(CMIT_FMT_RAW, commit, &buf,
+			    0, NULL, NULL, DATE_NORMAL, 0);
+	buffer = buf.buf;
 	while (*buffer && *buffer != '\n') {
 		const char *eol = strchr(buffer, '\n');
 
@@ -157,17 +161,15 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 		die("Missing author: %s",
 		    sha1_to_hex(commit->object.sha1));
 	if (log->user_format) {
-		struct strbuf buf = STRBUF_INIT;
-
-		pretty_print_commit(CMIT_FMT_USERFORMAT, commit, &buf,
+		pretty_print_commit(CMIT_FMT_USERFORMAT, commit, &ufbuf,
 			DEFAULT_ABBREV, "", "", DATE_NORMAL, 0);
-		insert_one_record(log, author, buf.buf);
-		strbuf_release(&buf);
-		return;
-	}
-	if (*buffer)
+		buffer = ufbuf.buf;
+	} else if (*buffer) {
 		buffer++;
+	}
 	insert_one_record(log, author, !*buffer ? "<none>" : buffer);
+	strbuf_release(&ufbuf);
+	strbuf_release(&buf);
 }
 
 static void get_from_rev(struct rev_info *rev, struct shortlog *log)
