@@ -38,13 +38,17 @@ Issues of note:
    Interactive Tools package still can install "git", but you can build it
    with --disable-transition option to avoid this.
 
- - You can use git after building but without installing if you
-   wanted to.  Various git commands need to find other git
-   commands and scripts to do their work, so you would need to
-   arrange a few environment variables to tell them that their
-   friends will be found in your built source area instead of at
-   their standard installation area.  Something like this works
-   for me:
+ - You can use git after building but without installing if you want
+   to test drive it.  Simply run git found in bin-wrappers directory
+   in the build directory, or prepend that directory to your $PATH.
+   This however is less efficient than running an installed git, as
+   you always need an extra fork+exec to run any git subcommand.
+
+   It is still possible to use git without installing by setting a few
+   environment variables, which was the way this was done
+   traditionally.  But using git found in bin-wrappers directory in
+   the build directory is far simpler.  As a historical reference, the
+   old way went like this:
 
 	GIT_EXEC_PATH=`pwd`
 	PATH=`pwd`:$PATH
