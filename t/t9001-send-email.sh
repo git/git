@@ -827,7 +827,7 @@ test_expect_success 'no warning with an explicit --no-chain-reply-to' '
 	--dry-run \
 	--from="Example <nobody@example.com>" \
 	--to=nobody@example.com \
-	--no-chain-reply-to \
+	--nochain-reply-to \
 	outdir/000?-*.patch 2>errors >out &&
 	! grep "no-chain-reply-to" errors
 '
