@@ -331,6 +331,8 @@ static void load_subtree(struct leaf_node *subtree, struct int_node *node,
 			hashcpy(l->key_sha1, commit_sha1);
 			hashcpy(l->val_sha1, entry.sha1);
 			if (len < 20) {
+				if (!S_ISDIR(entry.mode))
+					continue; /* entry cannot be subtree */
 				l->key_sha1[19] = (unsigned char) len;
 				type = PTR_TYPE_SUBTREE;
 			}
