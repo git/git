@@ -102,12 +102,13 @@ static int push_with_options(struct transport *transport, int flags)
 		fprintf(stderr, "Pushing to %s\n", transport->url);
 	err = transport_push(transport, refspec_nr, refspec, flags,
 			     &nonfastforward);
+	if (err != 0)
+		error("failed to push some refs to '%s'", transport->url);
+
 	err |= transport_disconnect(transport);
 
 	if (!err)
 		return 0;
-
-	error("failed to push some refs to '%s'", transport->url);
 
 	if (nonfastforward && advice_push_nonfastforward) {
 		printf("To prevent you from losing history, non-fast-forward updates were rejected\n"
