@@ -106,8 +106,8 @@ mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
-	count=$(grep -c '^[^#]' < "$DONE")
-	total=$(($count+$(grep -c '^[^#]' < "$TODO")))
+	count=$(sane_grep -c '^[^#]' < "$DONE")
+	total=$(($count+$(sane_grep -c '^[^#]' < "$TODO")))
 	if test "$last_count" != "$count"
 	then
 		last_count=$count
@@ -147,7 +147,7 @@ die_abort () {
 }
 
 has_action () {
-	grep '^[^#]' "$1" >/dev/null
+	sane_grep '^[^#]' "$1" >/dev/null
 }
 
 pick_one () {
@@ -736,7 +736,7 @@ first and then run 'git rebase --continue' again."
 			git rev-list $REVISIONS |
 			while read rev
 			do
-				if test -f "$REWRITTEN"/$rev -a "$(grep "$rev" "$DOTEST"/not-cherry-picks)" = ""
+				if test -f "$REWRITTEN"/$rev -a "$(sane_grep "$rev" "$DOTEST"/not-cherry-picks)" = ""
 				then
 					# Use -f2 because if rev-list is telling us this commit is
 					# not worthwhile, we don't want to track its multiple heads,
@@ -744,7 +744,7 @@ first and then run 'git rebase --continue' again."
 					# be rebasing on top of it
 					git rev-list --parents -1 $rev | cut -d' ' -s -f2 > "$DROPPED"/$rev
 					short=$(git rev-list -1 --abbrev-commit --abbrev=7 $rev)
-					grep -v "^[a-z][a-z]* $short" <"$TODO" > "${TODO}2" ; mv "${TODO}2" "$TODO"
+					sane_grep -v "^[a-z][a-z]* $short" <"$TODO" > "${TODO}2" ; mv "${TODO}2" "$TODO"
 					rm "$REWRITTEN"/$rev
 				fi
 			done
