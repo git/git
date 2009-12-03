@@ -53,7 +53,7 @@ GIT_DIR=non-existing git shortlog -w < log > out
 test_expect_success 'shortlog from non-git directory' 'test_cmp expect out'
 
 iconvfromutf8toiso88591() {
-	printf "%s" "$*" | iconv -f UTF-8 -t ISO-8859-1
+	printf "%s" "$*" | iconv -f UTF-8 -t ISO8859-1
 }
 
 DSCHO="Jöhännës \"Dschö\" Schindëlin"
@@ -72,7 +72,7 @@ test_expect_success 'shortlog encoding' '
 	git config --unset i18n.commitencoding &&
 	echo 2 > a1 &&
 	git commit --quiet -m "$MSG1" --author="$DSCHOE" a1 &&
-	git config i18n.commitencoding "ISO-8859-1" &&
+	git config i18n.commitencoding "ISO8859-1" &&
 	echo 3 > a1 &&
 	git commit --quiet -m "$(iconvfromutf8toiso88591 "$MSG2")" \
 		--author="$(iconvfromutf8toiso88591 "$DSCHOE")" a1 &&
