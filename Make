@@ -102,6 +102,7 @@ sh -c 'git describe --abbrev=4 HEAD' >/dev/null 2>&1 || {
 }
 
 d="$d "'
+MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
 ASCIIDOC_NO_ROFF=YesPlease
 ASCIIDOC8=YesPlease
 BLK_SHA1=YesPlease
