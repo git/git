@@ -75,6 +75,20 @@ OPTIONS
 	set of marks.  If a mark is defined to different values,
 	the last file wins.
 
+--relative-marks::
+	After specifying --relative-marks= the paths specified
+	with --import-marks= and --export-marks= are relative
+	to an internal directory in the current repository.
+	In git-fast-import this means that the paths are relative
+	to the .git/info/fast-import directory. However, other
+	importers may use a different location.
+
+--no-relative-marks::
+	Negates a previous --relative-marks. Allows for combining
+	relative and non-relative marks by interweaving
+	--(no-)-relative-marks= with the --(import|export)-marks=
+	options.
+
 --export-pack-edges=<file>::
 	After creating a packfile, print a line of data to
 	<file> listing the filename of the packfile and the last
@@ -875,6 +889,8 @@ The following features are currently supported:
 * date-format
 * import-marks
 * export-marks
+* relative-marks
+* no-relative-marks
 * force
 
 The import-marks behaves differently from when it is specified as

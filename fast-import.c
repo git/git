@@ -323,6 +323,7 @@ static struct mark_set *marks;
 static const char *export_marks_file;
 static const char *import_marks_file;
 static int import_marks_file_from_stream;
+static int relative_marks_paths;
 
 /* Our last blob */
 static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
@@ -2470,6 +2471,16 @@ static void parse_progress(void)
 	skip_optional_lf();
 }
 
+static char* make_fast_import_path(const char *path)
+{
+	struct strbuf abs_path = STRBUF_INIT;
+
+	if (!relative_marks_paths || is_absolute_path(path))
+		return xstrdup(path);
+	strbuf_addf(&abs_path, "%s/info/fast-import/%s", get_git_dir(), path);
+	return strbuf_detach(&abs_path, NULL);
+}
+
 static void option_import_marks(const char *marks, int from_stream)
 {
 	if (import_marks_file) {
@@ -2481,7 +2492,7 @@ static void option_import_marks(const char *marks, int from_stream)
 			read_marks();
 	}
 
-	import_marks_file = xstrdup(marks);
+	import_marks_file = make_fast_import_path(marks);
 	import_marks_file_from_stream = from_stream;
 }
 
@@ -2516,7 +2527,7 @@ static void option_active_branches(const char *branches)
 
 static void option_export_marks(const char *marks)
 {
-	export_marks_file = xstrdup(marks);
+	export_marks_file = make_fast_import_path(marks);
 }
 
 static void option_export_pack_edges(const char *edges)
@@ -2557,6 +2568,10 @@ static int parse_one_feature(const char *feature, int from_stream)
 		option_import_marks(feature + 13, from_stream);
 	} else if (!prefixcmp(feature, "export-marks=")) {
 		option_export_marks(feature + 13);
+	} else if (!prefixcmp(feature, "relative-marks")) {
+		relative_marks_paths = 1;
+	} else if (!prefixcmp(feature, "no-relative-marks")) {
+		relative_marks_paths = 0;
 	} else if (!prefixcmp(feature, "force")) {
 		force_update = 1;
 	} else {

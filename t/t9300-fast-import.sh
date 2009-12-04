@@ -1346,6 +1346,31 @@ test_expect_success 'R: multiple --import-marks= should be honoured' '
     test_cmp marks.out combined.marks
 '
 
+cat >input <<EOF
+feature relative-marks
+feature import-marks=relative.in
+feature export-marks=relative.out
+EOF
+
+test_expect_success 'R: feature relative-marks should be honoured' '
+    mkdir -p .git/info/fast-import/ &&
+    cp marks.new .git/info/fast-import/relative.in &&
+    git fast-import <input &&
+    test_cmp marks.new .git/info/fast-import/relative.out
+'
+
+cat >input <<EOF
+feature relative-marks
+feature import-marks=relative.in
+feature no-relative-marks
+feature export-marks=non-relative.out
+EOF
+
+test_expect_success 'R: feature no-relative-marks should be honoured' '
+    git fast-import <input &&
+    test_cmp marks.new non-relative.out
+'
+
 cat >input << EOF
 option git quiet
 blob
