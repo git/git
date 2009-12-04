@@ -74,8 +74,9 @@ OPTIONS
 	The tree or commit to produce an archive for.
 
 path::
-	If one or more paths are specified, include only these in the
-	archive, otherwise include all files and subdirectories.
+	Without an optional path parameter, all files and subdirectories
+	of the current working directory are included in the archive.
+	If one or more paths are specified, only these are included.
 
 BACKEND EXTRA OPTIONS
 ---------------------
