@@ -1255,7 +1255,7 @@ test_expect_success \
 	'git cat-file blob refs/notes/foobar:$commit3 >actual && test_cmp expect actual'
 
 ###
-### series R (feature)
+### series R (feature and option)
 ###
 
 cat >input <<EOF
@@ -1323,5 +1323,40 @@ test_expect_success \
     'R: import marks prefers commandline marks file over the stream' \
     'cat input | git fast-import --import-marks=marks.out &&
     test_cmp marks.out marks.new'
+
+cat >input << EOF
+option git quiet
+blob
+data 3
+hi
+
+EOF
+
+touch empty
+
+test_expect_success 'R: quiet option results in no stats being output' '
+    cat input | git fast-import 2> output &&
+    test_cmp empty output
+'
+
+cat >input <<EOF
+option git non-existing-option
+EOF
+
+test_expect_success 'R: die on unknown option' '
+    test_must_fail git fast-import <input
+'
+
+test_expect_success 'R: unknown commandline options are rejected' '\
+    test_must_fail git fast-import --non-existing-option < /dev/null
+'
+
+cat >input <<EOF
+option non-existing-vcs non-existing-option
+EOF
+
+test_expect_success 'R: ignore non-git options' '
+    git fast-import <input
+'
 
 test_done
