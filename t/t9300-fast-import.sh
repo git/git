@@ -1254,4 +1254,74 @@ test_expect_success \
 	'Q: verify note for third commit' \
 	'git cat-file blob refs/notes/foobar:$commit3 >actual && test_cmp expect actual'
 
+###
+### series R (feature)
+###
+
+cat >input <<EOF
+feature no-such-feature-exists
+EOF
+
+test_expect_success 'R: abort on unsupported feature' '
+	test_must_fail git fast-import <input
+'
+
+cat >input <<EOF
+feature date-format=now
+EOF
+
+test_expect_success 'R: supported feature is accepted' '
+	git fast-import <input
+'
+
+cat >input << EOF
+blob
+data 3
+hi
+feature date-format=now
+EOF
+
+test_expect_success 'R: abort on receiving feature after data command' '
+	test_must_fail git fast-import <input
+'
+
+cat >input << EOF
+feature export-marks=git.marks
+blob
+mark :1
+data 3
+hi
+
+EOF
+
+test_expect_success \
+    'R: export-marks feature results in a marks file being created' \
+    'cat input | git fast-import &&
+    grep :1 git.marks'
+
+test_expect_success \
+    'R: export-marks options can be overriden by commandline options' \
+    'cat input | git fast-import --export-marks=other.marks &&
+    grep :1 other.marks'
+
+cat >input << EOF
+feature import-marks=marks.out
+feature export-marks=marks.new
+EOF
+
+test_expect_success \
+    'R: import to output marks works without any content' \
+    'cat input | git fast-import &&
+    test_cmp marks.out marks.new'
+
+cat >input <<EOF
+feature import-marks=nonexistant.marks
+feature export-marks=marks.new
+EOF
+
+test_expect_success \
+    'R: import marks prefers commandline marks file over the stream' \
+    'cat input | git fast-import --import-marks=marks.out &&
+    test_cmp marks.out marks.new'
+
 test_done

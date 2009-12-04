@@ -353,6 +353,7 @@ static struct recent_command *rc_free;
 static unsigned int cmd_save = 100;
 static uintmax_t next_mark;
 static struct strbuf new_data = STRBUF_INIT;
+static int seen_data_command;
 
 static void write_branch_report(FILE *rpt, struct branch *b)
 {
@@ -1704,6 +1705,11 @@ static int read_next_command(void)
 			if (stdin_eof)
 				return EOF;
 
+			if (!seen_data_command
+				&& prefixcmp(command_buf.buf, "feature ")) {
+				seen_data_command = 1;
+			}
+
 			rc = rc_free;
 			if (rc)
 				rc_free = rc->next;
@@ -2533,6 +2539,36 @@ static void parse_one_option(const char *option)
 	}
 }
 
+static int parse_one_feature(const char *feature)
+{
+	if (!prefixcmp(feature, "date-format=")) {
+		option_date_format(feature + 12);
+	} else if (!prefixcmp(feature, "import-marks=")) {
+		option_import_marks(feature + 13);
+	} else if (!prefixcmp(feature, "export-marks=")) {
+		option_export_marks(feature + 13);
+	} else if (!prefixcmp(feature, "force")) {
+		force_update = 1;
+	} else {
+		return 0;
+	}
+
+	return 1;
+}
+
+static void parse_feature(void)
+{
+	char *feature = command_buf.buf + 8;
+
+	if (seen_data_command)
+		die("Got feature command '%s' after data command", feature);
+
+	if (parse_one_feature(feature))
+		return;
+
+	die("This version of fast-import does not support feature %s.", feature);
+}
+
 static int git_pack_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "pack.depth")) {
@@ -2612,6 +2648,8 @@ int main(int argc, const char **argv)
 			parse_checkpoint();
 		else if (!prefixcmp(command_buf.buf, "progress "))
 			parse_progress();
+		else if (!prefixcmp(command_buf.buf, "feature "))
+			parse_feature();
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}

@@ -303,6 +303,10 @@ and control the current import process.  More detailed discussion
 	standard output.  This command is optional and is not needed
 	to perform an import.
 
+`feature`::
+	Require that fast-import supports the specified feature, or
+	abort if it does not.
+
 `commit`
 ~~~~~~~~
 Create or update a branch with a new commit, recording one logical
@@ -845,6 +849,27 @@ remove the leading part of the line, for example:
 Placing a `progress` command immediately after a `checkpoint` will
 inform the reader when the `checkpoint` has been completed and it
 can safely access the refs that fast-import updated.
+
+`feature`
+~~~~~~~~~
+Require that fast-import supports the specified feature, or abort if
+it does not.
+
+....
+	'feature' SP <feature> LF
+....
+
+The <feature> part of the command may be any string matching
+^[a-zA-Z][a-zA-Z-]*$ and should be understood by fast-import.
+
+Feature work identical as their option counterparts.
+
+The following features are currently supported:
+
+* date-format
+* import-marks
+* export-marks
+* force
 
 Crash Reports
 -------------
