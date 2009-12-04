@@ -8,3 +8,4 @@ gitman.info
 howto-index.txt
 doc.dep
 cmds-*.txt
+manpage-base-url.xsl

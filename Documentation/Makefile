@@ -104,18 +104,15 @@ XMLTO_EXTRA += -m manpage-suppress-sp.xsl
 endif
 
 # Newer DocBook stylesheet emits warning cruft in the output when
-# this is not set, and if set it shows an absolute link.  We can
-# use MAN_BASE_URL=http://www.kernel.org/pub/software/scm/git/docs/
-# but distros may want to set it to /usr/share/doc/git-core/docs/ or
-# something like that.
+# this is not set, and if set it shows an absolute link.  Older
+# stylesheets simply ignore this parameter.
 #
-# As older stylesheets simply ignore this parameter, it ought to be
-# safe to set it to empty string when the base URL is not specified,
-# but unfortunately we cannot do so unconditionally because at least
-# xmlto 0.0.18 is reported to lack --stringparam option.
-ifdef MAN_BASE_URL
-XMLTO_EXTRA += --stringparam man.base.url.for.relative.links=$(MAN_BASE_URL)
+# Distros may want to use MAN_BASE_URL=file:///path/to/git/docs/
+# or similar.
+ifndef MAN_BASE_URL
+MAN_BASE_URL = file://$(htmldir)/
 endif
+XMLTO_EXTRA += -m manpage-base-url.xsl
 
 # If your target system uses GNU groff, it may try to render
 # apostrophes as a "pretty" apostrophe using unicode.  This breaks
@@ -244,6 +241,7 @@ clean:
 	$(RM) howto-index.txt howto/*.html doc.dep
 	$(RM) technical/api-*.html technical/api-index.txt
 	$(RM) $(cmds_txt) *.made
+	$(RM) manpage-base-url.xsl
 
 $(MAN_HTML): %.html : %.txt
 	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
@@ -251,7 +249,10 @@ $(MAN_HTML): %.html : %.txt
 		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $< && \
 	mv $@+ $@
 
-%.1 %.5 %.7 : %.xml
+manpage-base-url.xsl: manpage-base-url.xsl.in
+	sed "s|@@MAN_BASE_URL@@|$(MAN_BASE_URL)|" $< > $@
+
+%.1 %.5 %.7 : %.xml manpage-base-url.xsl
 	$(QUIET_XMLTO)$(RM) $@ && \
 	xmlto -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
