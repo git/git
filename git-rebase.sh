@@ -50,6 +50,7 @@ diffstat=$(git config --bool rebase.stat)
 git_am_opt=
 rebase_root=
 force_rebase=
+allow_rerere_autoupdate=
 
 continue_merge () {
 	test -n "$prev_head" || die "prev_head must be defined"
@@ -118,7 +119,7 @@ call_merge () {
 		return
 		;;
 	1)
-		git rerere
+		git rerere $allow_rerere_autoupdate
 		die "$RESOLVEMSG"
 		;;
 	2)
@@ -348,6 +349,9 @@ do
 		;;
 	-f|--f|--fo|--for|--forc|force|--force-r|--force-re|--force-reb|--force-reba|--force-rebas|--force-rebase)
 		force_rebase=t
+		;;
+	--rerere-autoupdate|--no-rerere-autoupdate)
+		allow_rerere_autoupdate="$1"
 		;;
 	-*)
 		usage

@@ -1150,7 +1150,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		     "new_index file. Check that disk is not full or quota is\n"
 		     "not exceeded, and then \"git reset HEAD\" to recover.");
 
-	rerere();
+	rerere(0);
 	run_hook(get_index_file(), "post-commit", NULL);
 	if (!quiet)
 		print_summary(prefix, commit_sha1);
