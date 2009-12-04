@@ -318,7 +318,8 @@ static unsigned int object_entry_alloc = 5000;
 static struct object_entry_pool *blocks;
 static struct object_entry *object_table[1 << 16];
 static struct mark_set *marks;
-static const char *mark_file;
+static const char *export_marks_file;
+static const char *import_marks_file;
 
 /* Our last blob */
 static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
@@ -455,8 +456,8 @@ static void write_crash_report(const char *err)
 	fputc('\n', rpt);
 	fputs("Marks\n", rpt);
 	fputs("-----\n", rpt);
-	if (mark_file)
-		fprintf(rpt, "  exported to %s\n", mark_file);
+	if (export_marks_file)
+		fprintf(rpt, "  exported to %s\n", export_marks_file);
 	else
 		dump_marks_helper(rpt, 0, marks);
 
@@ -1603,13 +1604,13 @@ static void dump_marks(void)
 	int mark_fd;
 	FILE *f;
 
-	if (!mark_file)
+	if (!export_marks_file)
 		return;
 
-	mark_fd = hold_lock_file_for_update(&mark_lock, mark_file, 0);
+	mark_fd = hold_lock_file_for_update(&mark_lock, export_marks_file, 0);
 	if (mark_fd < 0) {
 		failure |= error("Unable to write marks file %s: %s",
-			mark_file, strerror(errno));
+			export_marks_file, strerror(errno));
 		return;
 	}
 
@@ -1618,7 +1619,7 @@ static void dump_marks(void)
 		int saved_errno = errno;
 		rollback_lock_file(&mark_lock);
 		failure |= error("Unable to write marks file %s: %s",
-			mark_file, strerror(saved_errno));
+			export_marks_file, strerror(saved_errno));
 		return;
 	}
 
@@ -1634,7 +1635,7 @@ static void dump_marks(void)
 		int saved_errno = errno;
 		rollback_lock_file(&mark_lock);
 		failure |= error("Unable to write marks file %s: %s",
-			mark_file, strerror(saved_errno));
+			export_marks_file, strerror(saved_errno));
 		return;
 	}
 
@@ -1642,10 +1643,46 @@ static void dump_marks(void)
 		int saved_errno = errno;
 		rollback_lock_file(&mark_lock);
 		failure |= error("Unable to commit marks file %s: %s",
-			mark_file, strerror(saved_errno));
+			export_marks_file, strerror(saved_errno));
 		return;
 	}
 }
+
+static void read_marks(void)
+{
+	char line[512];
+	FILE *f = fopen(import_marks_file, "r");
+	if (!f)
+		die_errno("cannot read '%s'", import_marks_file);
+	while (fgets(line, sizeof(line), f)) {
+		uintmax_t mark;
+		char *end;
+		unsigned char sha1[20];
+		struct object_entry *e;
+
+		end = strchr(line, '\n');
+		if (line[0] != ':' || !end)
+			die("corrupt mark line: %s", line);
+		*end = 0;
+		mark = strtoumax(line + 1, &end, 10);
+		if (!mark || end == line + 1
+			|| *end != ' ' || get_sha1(end + 1, sha1))
+			die("corrupt mark line: %s", line);
+		e = find_object(sha1);
+		if (!e) {
+			enum object_type type = sha1_object_info(sha1, NULL);
+			if (type < 0)
+				die("object not found: %s", sha1_to_hex(sha1));
+			e = insert_object(sha1);
+			e->type = type;
+			e->pack_id = MAX_PACK_ID;
+			e->offset = 1; /* just not zero! */
+		}
+		insert_mark(mark, e);
+	}
+	fclose(f);
+}
+
 
 static int read_next_command(void)
 {
@@ -2421,39 +2458,9 @@ static void parse_progress(void)
 	skip_optional_lf();
 }
 
-static void option_import_marks(const char *input_file)
+static void option_import_marks(const char *marks)
 {
-	char line[512];
-	FILE *f = fopen(input_file, "r");
-	if (!f)
-		die_errno("cannot read '%s'", input_file);
-	while (fgets(line, sizeof(line), f)) {
-		uintmax_t mark;
-		char *end;
-		unsigned char sha1[20];
-		struct object_entry *e;
-
-		end = strchr(line, '\n');
-		if (line[0] != ':' || !end)
-			die("corrupt mark line: %s", line);
-		*end = 0;
-		mark = strtoumax(line + 1, &end, 10);
-		if (!mark || end == line + 1
-			|| *end != ' ' || get_sha1(end + 1, sha1))
-			die("corrupt mark line: %s", line);
-		e = find_object(sha1);
-		if (!e) {
-			enum object_type type = sha1_object_info(sha1, NULL);
-			if (type < 0)
-				die("object not found: %s", sha1_to_hex(sha1));
-			e = insert_object(sha1);
-			e->type = type;
-			e->pack_id = MAX_PACK_ID;
-			e->offset = 1; /* just not zero! */
-		}
-		insert_mark(mark, e);
-	}
-	fclose(f);
+	import_marks_file = xstrdup(marks);
 }
 
 static void option_date_format(const char *fmt)
@@ -2487,7 +2494,7 @@ static void option_active_branches(const char *branches)
 
 static void option_export_marks(const char *marks)
 {
-	mark_file = xstrdup(marks);
+	export_marks_file = xstrdup(marks);
 }
 
 static void option_export_pack_edges(const char *edges)
@@ -2581,6 +2588,8 @@ int main(int argc, const char **argv)
 	}
 	if (i != argc)
 		usage(fast_import_usage);
+	if (import_marks_file)
+		read_marks();
 
 	rc_free = pool_alloc(cmd_save * sizeof(*rc_free));
 	for (i = 0; i < (cmd_save - 1); i++)
