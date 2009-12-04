@@ -307,6 +307,11 @@ and control the current import process.  More detailed discussion
 	Require that fast-import supports the specified feature, or
 	abort if it does not.
 
+`option`::
+	Specify any of the options listed under OPTIONS that do not
+	change stream semantic to suit the frontend's needs. This
+	command is optional and is not needed to perform an import.
+
 `commit`
 ~~~~~~~~
 Create or update a branch with a new commit, recording one logical
@@ -865,6 +870,33 @@ The <feature> part of the command may be any string matching
 Feature work identical as their option counterparts.
 
 The following features are currently supported:
+
+* date-format
+* import-marks
+* export-marks
+* force
+
+`option`
+~~~~~~~~
+Processes the specified option so that git fast-import behaves in a
+way that suits the frontend's needs.
+Note that options specified by the frontend are overridden by any
+options the user may specify to git fast-import itself.
+
+....
+    'option' SP <option> LF
+....
+
+The `<option>` part of the command may contain any of the options
+listed in the OPTIONS section that do not change import semantics,
+without the leading '--' and is treated in the same way.
+
+Option commands must be the first commands on the input (not counting
+feature commands), to give an option command after any non-option
+command is an error.
+
+The following commandline options change import semantics and may therefore
+not be passed as option:
 
 * date-format
 * import-marks

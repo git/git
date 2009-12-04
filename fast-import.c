@@ -296,6 +296,8 @@ static unsigned long branch_load_count;
 static int failure;
 static FILE *pack_edges;
 static unsigned int show_stats = 1;
+static int global_argc;
+static const char **global_argv;
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -354,6 +356,8 @@ static unsigned int cmd_save = 100;
 static uintmax_t next_mark;
 static struct strbuf new_data = STRBUF_INIT;
 static int seen_data_command;
+
+static void parse_argv(void);
 
 static void write_branch_report(FILE *rpt, struct branch *b)
 {
@@ -1706,8 +1710,9 @@ static int read_next_command(void)
 				return EOF;
 
 			if (!seen_data_command
-				&& prefixcmp(command_buf.buf, "feature ")) {
-				seen_data_command = 1;
+				&& prefixcmp(command_buf.buf, "feature ")
+				&& prefixcmp(command_buf.buf, "option ")) {
+				parse_argv();
 			}
 
 			rc = rc_free;
@@ -2512,31 +2517,25 @@ static void option_export_pack_edges(const char *edges)
 		die_errno("Cannot open '%s'", edges);
 }
 
-static void parse_one_option(const char *option)
+static int parse_one_option(const char *option)
 {
-	if (!prefixcmp(option, "date-format=")) {
-		option_date_format(option + 12);
-	} else if (!prefixcmp(option, "max-pack-size=")) {
+	if (!prefixcmp(option, "max-pack-size=")) {
 		option_max_pack_size(option + 14);
 	} else if (!prefixcmp(option, "depth=")) {
 		option_depth(option + 6);
 	} else if (!prefixcmp(option, "active-branches=")) {
 		option_active_branches(option + 16);
-	} else if (!prefixcmp(option, "import-marks=")) {
-		option_import_marks(option + 13);
-	} else if (!prefixcmp(option, "export-marks=")) {
-		option_export_marks(option + 13);
 	} else if (!prefixcmp(option, "export-pack-edges=")) {
 		option_export_pack_edges(option + 18);
-	} else if (!prefixcmp(option, "force")) {
-		force_update = 1;
 	} else if (!prefixcmp(option, "quiet")) {
 		show_stats = 0;
 	} else if (!prefixcmp(option, "stats")) {
 		show_stats = 1;
 	} else {
-		die("Unsupported option: %s", option);
+		return 0;
 	}
+
+	return 1;
 }
 
 static int parse_one_feature(const char *feature)
@@ -2569,6 +2568,19 @@ static void parse_feature(void)
 	die("This version of fast-import does not support feature %s.", feature);
 }
 
+static void parse_option(void)
+{
+	char *option = command_buf.buf + 11;
+
+	if (seen_data_command)
+		die("Got option command '%s' after data command", option);
+
+	if (parse_one_option(option))
+		return;
+
+	die("This version of fast-import does not support option: %s", option);
+}
+
 static int git_pack_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "pack.depth")) {
@@ -2593,6 +2605,32 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 static const char fast_import_usage[] =
 "git fast-import [--date-format=f] [--max-pack-size=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
 
+static void parse_argv(void)
+{
+	unsigned int i;
+
+	for (i = 1; i < global_argc; i++) {
+		const char *a = global_argv[i];
+
+		if (*a != '-' || !strcmp(a, "--"))
+			break;
+
+		if (parse_one_option(a + 2))
+			continue;
+
+		if (parse_one_feature(a + 2))
+			continue;
+
+		die("unknown option %s", a);
+	}
+	if (i != global_argc)
+		usage(fast_import_usage);
+
+	seen_data_command = 1;
+	if (import_marks_file)
+		read_marks();
+}
+
 int main(int argc, const char **argv)
 {
 	unsigned int i;
@@ -2614,18 +2652,8 @@ int main(int argc, const char **argv)
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
 	marks = pool_calloc(1, sizeof(struct mark_set));
 
-	for (i = 1; i < argc; i++) {
-		const char *a = argv[i];
-
-		if (*a != '-' || !strcmp(a, "--"))
-			break;
-
-		parse_one_option(a + 2);
-	}
-	if (i != argc)
-		usage(fast_import_usage);
-	if (import_marks_file)
-		read_marks();
+	global_argc = argc;
+	global_argv = argv;
 
 	rc_free = pool_alloc(cmd_save * sizeof(*rc_free));
 	for (i = 0; i < (cmd_save - 1); i++)
@@ -2650,9 +2678,18 @@ int main(int argc, const char **argv)
 			parse_progress();
 		else if (!prefixcmp(command_buf.buf, "feature "))
 			parse_feature();
+		else if (!prefixcmp(command_buf.buf, "option git "))
+			parse_option();
+		else if (!prefixcmp(command_buf.buf, "option "))
+			/* ignore non-git options*/;
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}
+
+	/* argv hasn't been parsed yet, do so */
+	if (!seen_data_command)
+		parse_argv();
+
 	end_packfile();
 
 	dump_branches();
