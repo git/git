@@ -1286,6 +1286,15 @@ test_expect_success 'R: abort on receiving feature after data command' '
 '
 
 cat >input << EOF
+feature import-marks=git.marks
+feature import-marks=git2.marks
+EOF
+
+test_expect_success 'R: only one import-marks feature allowed per stream' '
+	test_must_fail git fast-import <input
+'
+
+cat >input << EOF
 feature export-marks=git.marks
 blob
 mark :1
@@ -1323,6 +1332,19 @@ test_expect_success \
     'R: import marks prefers commandline marks file over the stream' \
     'cat input | git fast-import --import-marks=marks.out &&
     test_cmp marks.out marks.new'
+
+
+cat >input <<EOF
+feature import-marks=nonexistant.marks
+feature export-marks=combined.marks
+EOF
+
+test_expect_success 'R: multiple --import-marks= should be honoured' '
+    head -n2 marks.out > one.marks &&
+    tail -n +3 marks.out > two.marks &&
+    git fast-import --import-marks=one.marks --import-marks=two.marks <input &&
+    test_cmp marks.out combined.marks
+'
 
 cat >input << EOF
 option git quiet

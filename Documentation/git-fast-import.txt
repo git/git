@@ -867,7 +867,8 @@ it does not.
 The <feature> part of the command may be any string matching
 ^[a-zA-Z][a-zA-Z-]*$ and should be understood by fast-import.
 
-Feature work identical as their option counterparts.
+Feature work identical as their option counterparts with the
+exception of the import-marks feature, see below.
 
 The following features are currently supported:
 
@@ -875,6 +876,11 @@ The following features are currently supported:
 * import-marks
 * export-marks
 * force
+
+The import-marks behaves differently from when it is specified as
+commandline option in that only one "feature import-marks" is allowed
+per stream. Also, any --import-marks= specified on the commandline
+will override those from the stream (if any).
 
 `option`
 ~~~~~~~~

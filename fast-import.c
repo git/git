@@ -322,6 +322,7 @@ static struct object_entry *object_table[1 << 16];
 static struct mark_set *marks;
 static const char *export_marks_file;
 static const char *import_marks_file;
+static int import_marks_file_from_stream;
 
 /* Our last blob */
 static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
@@ -2469,9 +2470,19 @@ static void parse_progress(void)
 	skip_optional_lf();
 }
 
-static void option_import_marks(const char *marks)
+static void option_import_marks(const char *marks, int from_stream)
 {
+	if (import_marks_file) {
+		if (from_stream)
+			die("Only one import-marks command allowed per stream");
+
+		/* read previous mark file */
+		if(!import_marks_file_from_stream)
+			read_marks();
+	}
+
 	import_marks_file = xstrdup(marks);
+	import_marks_file_from_stream = from_stream;
 }
 
 static void option_date_format(const char *fmt)
@@ -2538,12 +2549,12 @@ static int parse_one_option(const char *option)
 	return 1;
 }
 
-static int parse_one_feature(const char *feature)
+static int parse_one_feature(const char *feature, int from_stream)
 {
 	if (!prefixcmp(feature, "date-format=")) {
 		option_date_format(feature + 12);
 	} else if (!prefixcmp(feature, "import-marks=")) {
-		option_import_marks(feature + 13);
+		option_import_marks(feature + 13, from_stream);
 	} else if (!prefixcmp(feature, "export-marks=")) {
 		option_export_marks(feature + 13);
 	} else if (!prefixcmp(feature, "force")) {
@@ -2562,7 +2573,7 @@ static void parse_feature(void)
 	if (seen_data_command)
 		die("Got feature command '%s' after data command", feature);
 
-	if (parse_one_feature(feature))
+	if (parse_one_feature(feature, 1))
 		return;
 
 	die("This version of fast-import does not support feature %s.", feature);
@@ -2618,7 +2629,7 @@ static void parse_argv(void)
 		if (parse_one_option(a + 2))
 			continue;
 
-		if (parse_one_feature(a + 2))
+		if (parse_one_feature(a + 2, 0))
 			continue;
 
 		die("unknown option %s", a);
