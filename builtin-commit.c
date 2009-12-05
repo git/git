@@ -79,8 +79,6 @@ static enum {
 	STATUS_FORMAT_PORCELAIN,
 } status_format = STATUS_FORMAT_LONG;
 
-static void short_print(struct wt_status *s, int null_termination);
-
 static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 {
 	struct strbuf *buf = opt->value;
@@ -381,10 +379,10 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 
 	switch (status_format) {
 	case STATUS_FORMAT_SHORT:
-		short_print(s, null_termination);
+		wt_shortstatus_print(s, null_termination);
 		break;
 	case STATUS_FORMAT_PORCELAIN:
-		short_print(s, null_termination);
+		wt_shortstatus_print(s, null_termination);
 		break;
 	case STATUS_FORMAT_LONG:
 		wt_status_print(s);
@@ -928,97 +926,6 @@ static int git_status_config(const char *k, const char *v, void *cb)
 	return git_diff_ui_config(k, v, NULL);
 }
 
-#define quote_path quote_path_relative
-
-static void short_unmerged(int null_termination, struct string_list_item *it,
-			   struct wt_status *s)
-{
-	struct wt_status_change_data *d = it->util;
-	const char *how = "??";
-
-	switch (d->stagemask) {
-	case 1: how = "DD"; break; /* both deleted */
-	case 2: how = "AU"; break; /* added by us */
-	case 3: how = "UD"; break; /* deleted by them */
-	case 4: how = "UA"; break; /* added by them */
-	case 5: how = "DU"; break; /* deleted by us */
-	case 6: how = "AA"; break; /* both added */
-	case 7: how = "UU"; break; /* both modified */
-	}
-	printf("%s ", how);
-	if (null_termination) {
-		fprintf(stdout, "%s%c", it->string, 0);
-	} else {
-		struct strbuf onebuf = STRBUF_INIT;
-		const char *one;
-		one = quote_path(it->string, -1, &onebuf, s->prefix);
-		printf("%s\n", one);
-		strbuf_release(&onebuf);
-	}
-}
-
-static void short_status(int null_termination, struct string_list_item *it,
-			 struct wt_status *s)
-{
-	struct wt_status_change_data *d = it->util;
-
-	printf("%c%c ",
-	       !d->index_status ? ' ' : d->index_status,
-	       !d->worktree_status ? ' ' : d->worktree_status);
-	if (null_termination) {
-		fprintf(stdout, "%s%c", it->string, 0);
-		if (d->head_path)
-			fprintf(stdout, "%s%c", d->head_path, 0);
-	} else {
-		struct strbuf onebuf = STRBUF_INIT;
-		const char *one;
-		if (d->head_path) {
-			one = quote_path(d->head_path, -1, &onebuf, s->prefix);
-			printf("%s -> ", one);
-			strbuf_release(&onebuf);
-		}
-		one = quote_path(it->string, -1, &onebuf, s->prefix);
-		printf("%s\n", one);
-		strbuf_release(&onebuf);
-	}
-}
-
-static void short_untracked(int null_termination, struct string_list_item *it,
-			    struct wt_status *s)
-{
-	if (null_termination) {
-		fprintf(stdout, "?? %s%c", it->string, 0);
-	} else {
-		struct strbuf onebuf = STRBUF_INIT;
-		const char *one;
-		one = quote_path(it->string, -1, &onebuf, s->prefix);
-		printf("?? %s\n", one);
-		strbuf_release(&onebuf);
-	}
-}
-
-static void short_print(struct wt_status *s, int null_termination)
-{
-	int i;
-	for (i = 0; i < s->change.nr; i++) {
-		struct wt_status_change_data *d;
-		struct string_list_item *it;
-
-		it = &(s->change.items[i]);
-		d = it->util;
-		if (d->stagemask)
-			short_unmerged(null_termination, it, s);
-		else
-			short_status(null_termination, it, s);
-	}
-	for (i = 0; i < s->untracked.nr; i++) {
-		struct string_list_item *it;
-
-		it = &(s->untracked.items[i]);
-		short_untracked(null_termination, it, s);
-	}
-}
-
 int cmd_status(int argc, const char **argv, const char *prefix)
 {
 	struct wt_status s;
@@ -1061,10 +968,10 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	case STATUS_FORMAT_SHORT:
 		if (s.relative_paths)
 			s.prefix = prefix;
-		short_print(&s, null_termination);
+		wt_shortstatus_print(&s, null_termination);
 		break;
 	case STATUS_FORMAT_PORCELAIN:
-		short_print(&s, null_termination);
+		wt_shortstatus_print(&s, null_termination);
 		break;
 	case STATUS_FORMAT_LONG:
 		s.verbose = verbose;
