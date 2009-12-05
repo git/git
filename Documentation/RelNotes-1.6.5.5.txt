@@ -18,6 +18,9 @@ Fixes since v1.6.5.4
    twice, and held onto memory after it has used the data in it
    unnecessarily before it freed.
 
+ * "git diff -B" and "git diff --dirstat" was not counting newly added
+   contents correctly.
+
  * "git format-patch revisions... -- path" issued an incorrect error
    message that suggested to use "--" on the command line when path
    does not exist in the current work tree (it is a separate matter if
@@ -39,6 +42,8 @@ Fixes since v1.6.5.4
  * "git rebase" got confused when the log message began with certain
    strings that looked like Subject:, Date: or From: header.
 
-Other minor documentation updates are included.
+ * "git reset" accidentally run in .git/ directory checked out the
+   work tree contents in there.
 
-v1.6.5.4-47-gdda8f4b
+
+Other minor documentation updates are included.
