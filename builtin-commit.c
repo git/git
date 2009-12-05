@@ -968,6 +968,10 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	case STATUS_FORMAT_SHORT:
 		if (s.relative_paths)
 			s.prefix = prefix;
+		if (s.use_color == -1)
+			s.use_color = git_use_color_default;
+		if (diff_use_color_default == -1)
+			diff_use_color_default = git_use_color_default;
 		wt_shortstatus_print(&s, null_termination);
 		break;
 	case STATUS_FORMAT_PORCELAIN:

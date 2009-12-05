@@ -608,14 +608,14 @@ static void wt_shortstatus_unmerged(int null_termination, struct string_list_ite
 	case 6: how = "AA"; break; /* both added */
 	case 7: how = "UU"; break; /* both modified */
 	}
-	printf("%s ", how);
+	color_fprintf(s->fp, color(WT_STATUS_UNMERGED, s), "%s", how);
 	if (null_termination) {
-		fprintf(stdout, "%s%c", it->string, 0);
+		fprintf(stdout, " %s%c", it->string, 0);
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
 		one = quote_path(it->string, -1, &onebuf, s->prefix);
-		printf("%s\n", one);
+		printf(" %s\n", one);
 		strbuf_release(&onebuf);
 	}
 }
@@ -625,9 +625,15 @@ static void wt_shortstatus_status(int null_termination, struct string_list_item 
 {
 	struct wt_status_change_data *d = it->util;
 
-	printf("%c%c ",
-		!d->index_status ? ' ' : d->index_status,
-		!d->worktree_status ? ' ' : d->worktree_status);
+	if (d->index_status)
+		color_fprintf(s->fp, color(WT_STATUS_UPDATED, s), "%c", d->index_status);
+	else
+		putchar(' ');
+	if (d->worktree_status)
+		color_fprintf(s->fp, color(WT_STATUS_CHANGED, s), "%c", d->worktree_status);
+	else
+		putchar(' ');
+	putchar(' ');
 	if (null_termination) {
 		fprintf(stdout, "%s%c", it->string, 0);
 		if (d->head_path)
@@ -655,7 +661,8 @@ static void wt_shortstatus_untracked(int null_termination, struct string_list_it
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
 		one = quote_path(it->string, -1, &onebuf, s->prefix);
-		printf("?? %s\n", one);
+		color_fprintf(s->fp, color(WT_STATUS_UNTRACKED, s), "??");
+		printf(" %s\n", one);
 		strbuf_release(&onebuf);
 	}
 }
