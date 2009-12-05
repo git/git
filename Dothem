@@ -155,7 +155,7 @@ do
 		Meta/Make $M $test -- $jobs $dotest &&
 		{
 			test -n "$nodoc" ||
-			Meta/Make $M -- doc install-doc
+			Meta/Make $M -- doc install-man install-html
 		} &&
 
 		{
