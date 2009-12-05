@@ -896,11 +896,31 @@ _git_commit ()
 
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
+	--cleanup=*)
+		__gitcomp "default strip verbatim whitespace
+			" "" "${cur##--cleanup=}"
+		return
+		;;
+	--reuse-message=*)
+		__gitcomp "$(__git_refs)" "" "${cur##--reuse-message=}"
+		return
+		;;
+	--reedit-message=*)
+		__gitcomp "$(__git_refs)" "" "${cur##--reedit-message=}"
+		return
+		;;
+	--untracked-files=*)
+		__gitcomp "all no normal" "" "${cur##--untracked-files=}"
+		return
+		;;
 	--*)
 		__gitcomp "
 			--all --author= --signoff --verify --no-verify
 			--edit --amend --include --only --interactive
-			--dry-run
+			--dry-run --reuse-message= --reedit-message=
+			--reset-author --file= --message= --template=
+			--cleanup= --untracked-files --untracked-files=
+			--verbose --quiet
 			"
 		return
 	esac
