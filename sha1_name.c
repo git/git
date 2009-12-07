@@ -804,7 +804,96 @@ int get_sha1(const char *name, unsigned char *sha1)
 	return get_sha1_with_mode(name, sha1, &unused);
 }
 
-int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
+/* Must be called only when object_name:filename doesn't exist. */
+static void diagnose_invalid_sha1_path(const char *prefix,
+				       const char *filename,
+				       const unsigned char *tree_sha1,
+				       const char *object_name)
+{
+	struct stat st;
+	unsigned char sha1[20];
+	unsigned mode;
+
+	if (!prefix)
+		prefix = "";
+
+	if (!lstat(filename, &st))
+		die("Path '%s' exists on disk, but not in '%s'.",
+		    filename, object_name);
+	if (errno == ENOENT || errno == ENOTDIR) {
+		char *fullname = xmalloc(strlen(filename)
+					     + strlen(prefix) + 1);
+		strcpy(fullname, prefix);
+		strcat(fullname, filename);
+
+		if (!get_tree_entry(tree_sha1, fullname,
+				    sha1, &mode)) {
+			die("Path '%s' exists, but not '%s'.\n"
+			    "Did you mean '%s:%s'?",
+			    fullname,
+			    filename,
+			    object_name,
+			    fullname);
+		}
+		die("Path '%s' does not exist in '%s'",
+		    filename, object_name);
+	}
+}
+
+/* Must be called only when :stage:filename doesn't exist. */
+static void diagnose_invalid_index_path(int stage,
+					const char *prefix,
+					const char *filename)
+{
+	struct stat st;
+	struct cache_entry *ce;
+	int pos;
+	unsigned namelen = strlen(filename);
+	unsigned fullnamelen;
+	char *fullname;
+
+	if (!prefix)
+		prefix = "";
+
+	/* Wrong stage number? */
+	pos = cache_name_pos(filename, namelen);
+	if (pos < 0)
+		pos = -pos - 1;
+	ce = active_cache[pos];
+	if (ce_namelen(ce) == namelen &&
+	    !memcmp(ce->name, filename, namelen))
+		die("Path '%s' is in the index, but not at stage %d.\n"
+		    "Did you mean ':%d:%s'?",
+		    filename, stage,
+		    ce_stage(ce), filename);
+
+	/* Confusion between relative and absolute filenames? */
+	fullnamelen = namelen + strlen(prefix);
+	fullname = xmalloc(fullnamelen + 1);
+	strcpy(fullname, prefix);
+	strcat(fullname, filename);
+	pos = cache_name_pos(fullname, fullnamelen);
+	if (pos < 0)
+		pos = -pos - 1;
+	ce = active_cache[pos];
+	if (ce_namelen(ce) == fullnamelen &&
+	    !memcmp(ce->name, fullname, fullnamelen))
+		die("Path '%s' is in the index, but not '%s'.\n"
+		    "Did you mean ':%d:%s'?",
+		    fullname, filename,
+		    ce_stage(ce), fullname);
+
+	if (!lstat(filename, &st))
+		die("Path '%s' exists on disk, but not in the index.", filename);
+	if (errno == ENOENT || errno == ENOTDIR)
+		die("Path '%s' does not exist (neither on disk nor in the index).",
+		    filename);
+
+	free(fullname);
+}
+
+
+int get_sha1_with_mode_1(const char *name, unsigned char *sha1, unsigned *mode, int gently, const char *prefix)
 {
 	int ret, bracket_depth;
 	int namelen = strlen(name);
@@ -850,6 +939,8 @@ int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
 			}
 			pos++;
 		}
+		if (!gently)
+			diagnose_invalid_index_path(stage, prefix, cp);
 		return -1;
 	}
 	for (cp = name, bracket_depth = 0; *cp; cp++) {
@@ -862,9 +953,25 @@ int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
 	}
 	if (*cp == ':') {
 		unsigned char tree_sha1[20];
-		if (!get_sha1_1(name, cp-name, tree_sha1))
-			return get_tree_entry(tree_sha1, cp+1, sha1,
-					      mode);
+		char *object_name = NULL;
+		if (!gently) {
+			object_name = xmalloc(cp-name+1);
+			strncpy(object_name, name, cp-name);
+			object_name[cp-name] = '\0';
+		}
+		if (!get_sha1_1(name, cp-name, tree_sha1)) {
+			const char *filename = cp+1;
+			ret = get_tree_entry(tree_sha1, filename, sha1, mode);
+			if (!gently) {
+				diagnose_invalid_sha1_path(prefix, filename,
+							   tree_sha1, object_name);
+				free(object_name);
+			}
+			return ret;
+		} else {
+			if (!gently)
+				die("Invalid object name '%s'.", object_name);
+		}
 	}
 	return ret;
 }
