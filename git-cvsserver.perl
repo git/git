@@ -981,12 +981,28 @@ sub req_update
 
     #$log->debug("update state : " . Dumper($state));
 
+    my $last_dirname = "///";
+
     # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
 
         $log->debug("Processing file $filename");
+
+        unless ( $state->{globaloptions}{-Q} || $state->{globaloptions}{-q} )
+        {
+            my $cur_dirname = dirname($filename);
+            if ( $cur_dirname ne $last_dirname )
+            {
+                $last_dirname = $cur_dirname;
+                if ( $cur_dirname eq "" )
+                {
+                    $cur_dirname = ".";
+                }
+                print "E cvs update: Updating $cur_dirname\n";
+            }
+        }
 
         # if we have a -C we should pretend we never saw modified stuff
         if ( exists ( $state->{opt}{C} ) )
