@@ -235,6 +235,36 @@ test_expect_success 'multi-squash only fires up editor once' '
 	test 1 = $(git show | grep ONCE | wc -l)
 '
 
+test_expect_success 'multi-fixup only fires up editor once' '
+	git checkout -b multi-fixup E &&
+	base=$(git rev-parse HEAD~4) &&
+	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 fixup 2 fixup 3 fixup 4" \
+		git rebase -i $base &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 1 = $(git show | grep ONCE | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D multi-fixup
+'
+
+cat > expect-squash-fixup << EOF
+B
+
+D
+
+ONCE
+EOF
+
+test_expect_success 'squash and fixup generate correct log messages' '
+	git checkout -b squash-fixup E &&
+	base=$(git rev-parse HEAD~4) &&
+	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 fixup 2 squash 3 fixup 4" \
+		git rebase -i $base &&
+	git cat-file commit HEAD | sed -e 1,/^\$/d > actual-squash-fixup &&
+	test_cmp expect-squash-fixup actual-squash-fixup &&
+	git checkout to-be-rebased &&
+	git branch -D squash-fixup
+'
+
 test_expect_success 'squash works as expected' '
 	for n in one two three four
 	do

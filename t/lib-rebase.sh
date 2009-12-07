@@ -9,8 +9,9 @@
 #
 #	"[<lineno1>] [<lineno2>]..."
 #
-#   If a line number is prefixed with "squash", "edit", or "reword", the
-#   respective line's command will be replaced with the specified one.
+#   If a line number is prefixed with "squash", "fixup", "edit", or
+#   "reword", the respective line's command will be replaced with the
+#   specified one.
 
 set_fake_editor () {
 	echo "#!$SHELL_PATH" >fake-editor.sh
@@ -32,7 +33,7 @@ cat "$1".tmp
 action=pick
 for line in $FAKE_LINES; do
 	case $line in
-	squash|edit|reword)
+	squash|fixup|edit|reword)
 		action="$line";;
 	*)
 		echo sed -n "${line}s/^pick/$action/p"
