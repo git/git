@@ -14,8 +14,12 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This command adds the current content of new or modified files to the
-index, thus staging that content for inclusion in the next commit.
+This command updates the index using the current content found in
+the working tree, to prepare the content staged for the next commit.
+It typically adds the current content of existing paths as a whole,
+but with some options it can also be used to add content with
+only part of the changes made to the working tree files applied, or
+remove paths that do not exist in the working tree anymore.
 
 The "index" holds a snapshot of the content of the working tree, and it
 is this snapshot that is taken as the contents of the next commit.  Thus
@@ -92,20 +96,23 @@ apply.
 
 -u::
 --update::
-	Update only files that git already knows about, staging modified
-	content for commit and marking deleted files for removal. This
-	is similar
-	to what "git commit -a" does in preparation for making a commit,
-	except that the update is limited to paths specified on the
-	command line. If no paths are specified, all tracked files in the
-	current directory and its subdirectories are updated.
+	Only match <filepattern> against already tracked files in
+	the index rather than the working tree. That means that it
+	will never stage new files, but that it will stage modified
+	new contents of tracked files and that it will remove files
+	from the index if the corresponding files in the working tree
+	have been removed.
++
+If no <filepattern> is given, default to "."; in other words,
+update all tracked files in the current directory and its
+subdirectories.
 
 -A::
 --all::
-	Update files that git already knows about (same as '\--update')
-	and add all untracked files that are not ignored by '.gitignore'
-	mechanism.
-
+	Like `-u`, but match <filepattern> against files in the
+	working tree in addition to the index. That means that it
+	will find new files as well as staging modified content and
+	removing files that are no longer in the working tree.
 
 -N::
 --intent-to-add::
