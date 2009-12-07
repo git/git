@@ -632,13 +632,15 @@ GIT_CONFIG_NOSYSTEM=1
 GIT_CONFIG_NOGLOBAL=1
 export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_CONFIG_NOGLOBAL
 
+. ../GIT-BUILD-OPTIONS
+
 GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
 export GITPERLLIB
 test -d ../templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
-if test -z "$GIT_TEST_INSTALLED"
+if test -z "$GIT_TEST_INSTALLED" && test -z "$NO_PYTHON"
 then
 	GITPYTHONLIB="$(pwd)/../git_remote_helpers/build/lib"
 	export GITPYTHONLIB
@@ -652,8 +654,6 @@ if ! test -x ../test-chmtime; then
 	echo >&2 'Run "make test-chmtime" in the source (toplevel) directory'
 	exit 1
 fi
-
-. ../GIT-BUILD-OPTIONS
 
 # Test repository
 test="trash directory.$(basename "$0" .sh)"
