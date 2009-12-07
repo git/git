@@ -91,4 +91,27 @@ test_expect_success 'fetch continues after authors-file is fixed' '
 	)
 	'
 
+test_expect_success 'fresh clone with svn.authors-file in config' '
+	(
+		rm -r "$GIT_DIR" &&
+		test x = x"$(git config svn.authorsfile)" &&
+		HOME="`pwd`" &&
+		export HOME &&
+		test_config="$HOME"/.gitconfig &&
+		unset GIT_CONFIG_NOGLOBAL &&
+		unset GIT_DIR &&
+		unset GIT_CONFIG &&
+		git config --global \
+		  svn.authorsfile "$HOME"/svn-authors &&
+		test x"$HOME"/svn-authors = x"$(git config svn.authorsfile)" &&
+		git svn clone "$svnrepo" gitconfig.clone &&
+		cd gitconfig.clone &&
+		nr_ex=$(git log | grep "^Author:.*example.com" | wc -l) &&
+		nr_rev=$(git rev-list HEAD | wc -l) &&
+		test $nr_rev -eq $nr_ex
+	)
+'
+
+test_debug 'GIT_DIR=gitconfig.clone/.git git log'
+
 test_done

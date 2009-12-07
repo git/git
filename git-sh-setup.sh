@@ -99,19 +99,20 @@ set_reflog_action() {
 }
 
 git_editor() {
-	: "${GIT_EDITOR:=$(git config core.editor)}"
-	: "${GIT_EDITOR:=${VISUAL:-${EDITOR}}}"
-	case "$GIT_EDITOR,$TERM" in
-	,dumb)
-		echo >&2 "No editor specified in GIT_EDITOR, core.editor, VISUAL,"
-		echo >&2 "or EDITOR. Tried to fall back to vi but terminal is dumb."
-		echo >&2 "Please set one of these variables to an appropriate"
-		echo >&2 "editor or run $0 with options that will not cause an"
-		echo >&2 "editor to be invoked (e.g., -m or -F for git-commit)."
-		exit 1
-		;;
-	esac
-	eval "${GIT_EDITOR:=vi}" '"$@"'
+	if test -z "${GIT_EDITOR:+set}"
+	then
+		GIT_EDITOR="$(git var GIT_EDITOR)" || return $?
+	fi
+
+	eval "$GIT_EDITOR" '"$@"'
+}
+
+sane_grep () {
+	GREP_OPTIONS= LC_ALL=C grep "$@"
+}
+
+sane_egrep () {
+	GREP_OPTIONS= LC_ALL=C egrep "$@"
 }
 
 is_bare_repository () {

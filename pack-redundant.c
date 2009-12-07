@@ -603,6 +603,9 @@ int main(int argc, char **argv)
 
 	git_extract_argv0_path(argv[0]);
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(pack_redundant_usage);
+
 	setup_git_directory();
 
 	for (i = 1; i < argc; i++) {

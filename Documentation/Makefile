@@ -17,6 +17,7 @@ DOC_HTML=$(MAN_HTML)
 ARTICLES = howto-index
 ARTICLES += everyday
 ARTICLES += git-tools
+ARTICLES += git-bisect-lk2009
 # with their own formatting rules.
 SP_ARTICLES = howto/revert-branch-rebase howto/using-merge-subtree user-manual
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
@@ -101,6 +102,25 @@ XMLTO_EXTRA += -m manpage-bold-literal.xsl
 endif
 ifdef DOCBOOK_SUPPRESS_SP
 XMLTO_EXTRA += -m manpage-suppress-sp.xsl
+endif
+
+# Newer DocBook stylesheet emits warning cruft in the output when
+# this is not set, and if set it shows an absolute link.  Older
+# stylesheets simply ignore this parameter.
+#
+# Distros may want to use MAN_BASE_URL=file:///path/to/git/docs/
+# or similar.
+ifndef MAN_BASE_URL
+MAN_BASE_URL = file://$(htmldir)/
+endif
+XMLTO_EXTRA += -m manpage-base-url.xsl
+
+# If your target system uses GNU groff, it may try to render
+# apostrophes as a "pretty" apostrophe using unicode.  This breaks
+# cut&paste, so you should set GNU_ROFF to force them to be ASCII
+# apostrophes.  Unfortunately does not work with non-GNU roff.
+ifdef GNU_ROFF
+XMLTO_EXTRA += -m manpage-quote-apos.xsl
 endif
 
 SHELL_PATH ?= $(SHELL)
@@ -222,6 +242,7 @@ clean:
 	$(RM) howto-index.txt howto/*.html doc.dep
 	$(RM) technical/api-*.html technical/api-index.txt
 	$(RM) $(cmds_txt) *.made
+	$(RM) manpage-base-url.xsl
 
 $(MAN_HTML): %.html : %.txt
 	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
@@ -229,7 +250,10 @@ $(MAN_HTML): %.html : %.txt
 		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $< && \
 	mv $@+ $@
 
-%.1 %.5 %.7 : %.xml
+manpage-base-url.xsl: manpage-base-url.xsl.in
+	sed "s|@@MAN_BASE_URL@@|$(MAN_BASE_URL)|" $< > $@
+
+%.1 %.5 %.7 : %.xml manpage-base-url.xsl
 	$(QUIET_XMLTO)$(RM) $@ && \
 	xmlto -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 

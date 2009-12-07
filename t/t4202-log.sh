@@ -64,6 +64,27 @@ test_expect_success 'format' '
 '
 
 cat > expect << EOF
+ This is
+  the sixth
+  commit.
+ This is
+  the fifth
+  commit.
+EOF
+
+test_expect_success 'format %w(12,1,2)' '
+
+	git log -2 --format="%w(12,1,2)This is the %s commit." > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format %w(,1,2)' '
+
+	git log -2 --format="%w(,1,2)This is%nthe %s%ncommit." > actual &&
+	test_cmp expect actual
+'
+
+cat > expect << EOF
 804a787 sixth
 394ef78 fifth
 5d31159 fourth

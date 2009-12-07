@@ -24,9 +24,19 @@ static inline uint32_t default_swab32(uint32_t val)
 	if (__builtin_constant_p(x)) { \
 		__res = default_swab32(x); \
 	} else { \
-		__asm__("bswap %0" : "=r" (__res) : "0" (x)); \
+		__asm__("bswap %0" : "=r" (__res) : "0" ((uint32_t)(x))); \
 	} \
 	__res; })
+
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+
+#include <stdlib.h>
+
+#define bswap32(x) _byteswap_ulong(x)
+
+#endif
+
+#ifdef bswap32
 
 #undef ntohl
 #undef htonl

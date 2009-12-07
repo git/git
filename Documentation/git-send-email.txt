@@ -60,8 +60,8 @@ The --bcc option must be repeated for each user you want on the bcc list.
 The --cc option must be repeated for each user you want on the cc list.
 
 --compose::
-	Use $GIT_EDITOR, core.editor, $VISUAL, or $EDITOR to edit an
-	introductory message for the patch series.
+	Invoke a text editor (see GIT_EDITOR in linkgit:git-var[1])
+	to edit an introductory message for the patch series.
 +
 When '--compose' is used, git send-email will use the From, Subject, and
 In-Reply-To headers specified in the message. If the body of the message
@@ -108,9 +108,10 @@ Sending
 --envelope-sender=<address>::
 	Specify the envelope sender used to send the emails.
 	This is useful if your default address is not the address that is
-	subscribed to a list. If you use the sendmail binary, you must have
-	suitable privileges for the -f parameter. Default is the value of
-	the 'sendemail.envelopesender' configuration variable; if that is
+	subscribed to a list. In order to use the 'From' address, set the
+	value to "auto". If you use the sendmail binary, you must have
+	suitable privileges for the -f parameter.  Default is the value of the
+	'sendemail.envelopesender' configuration variable; if that is
 	unspecified, choosing the envelope sender is left to your MTA.
 
 --smtp-encryption=<encryption>::

@@ -17,31 +17,35 @@ DESCRIPTION
 Adds a 'replace' reference in `.git/refs/replace/`
 
 The name of the 'replace' reference is the SHA1 of the object that is
-replaced. The content of the replace reference is the SHA1 of the
+replaced. The content of the 'replace' reference is the SHA1 of the
 replacement object.
 
-Unless `-f` is given, the replace reference must not yet exist in
+Unless `-f` is given, the 'replace' reference must not yet exist in
 `.git/refs/replace/` directory.
 
-Replace references will be used by default by all git commands except
-those doing reachability traversal (prune, pack transfer and fsck).
+Replacement references will be used by default by all git commands
+except those doing reachability traversal (prune, pack transfer and
+fsck).
 
-It is possible to disable use of replacement refs for any command
-using the --no-replace-objects option just after "git".
+It is possible to disable use of replacement references for any
+command using the `--no-replace-objects` option just after 'git'.
 
-For example if commit "foo" has been replaced by commit "bar":
+For example if commit 'foo' has been replaced by commit 'bar':
 
 ------------------------------------------------
-$ git --no-replace-object cat-file commit foo
+$ git --no-replace-objects cat-file commit foo
 ------------------------------------------------
 
-show information about commit "foo", while:
+shows information about commit 'foo', while:
 
 ------------------------------------------------
 $ git cat-file commit foo
 ------------------------------------------------
 
-show information about commit "bar".
+shows information about commit 'bar'.
+
+The 'GIT_NO_REPLACE_OBJECTS' environment variable can be set to
+achieve the same effect as the `--no-replace-objects` option.
 
 OPTIONS
 -------

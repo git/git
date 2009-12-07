@@ -158,7 +158,7 @@ cat > test/expect << EOF
     another
     master
   Local refs configured for 'git push':
-    ahead  forces to master  (fast forwardable)
+    ahead  forces to master  (fast-forwardable)
     master pushes to another (up to date)
 EOF
 
@@ -363,6 +363,17 @@ test_expect_success 'update with arguments' '
 	 git branch -r > output &&
 	 test_cmp expect output)
 
+'
+
+test_expect_success 'update --prune' '
+
+	(cd one &&
+	 git branch -m side2 side3) &&
+	(cd test &&
+	 git remote update --prune &&
+	 (cd ../one && git branch -m side3 side2)
+	 git rev-parse refs/remotes/origin/side3 &&
+	 test_must_fail git rev-parse refs/remotes/origin/side2)
 '
 
 cat > one/expect << EOF

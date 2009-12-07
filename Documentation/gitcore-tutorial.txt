@@ -185,7 +185,7 @@ object is. git will tell you that you have a "blob" object (i.e., just a
 regular file), and you can see the contents with
 
 ----------------
-$ git cat-file "blob" 557db03
+$ git cat-file blob 557db03
 ----------------
 
 which will print out "Hello World". The object `557db03` is nothing
@@ -602,7 +602,7 @@ $ git tag -s <tagname>
 ----------------
 
 which will sign the current `HEAD` (but you can also give it another
-argument that specifies the thing to tag, i.e., you could have tagged the
+argument that specifies the thing to tag, e.g., you could have tagged the
 current `mybranch` point by using `git tag <tagname> mybranch`).
 
 You normally only do signed tags for major releases or things
@@ -993,7 +993,7 @@ would be different)
 
 ----------------
 Updating from ae3a2da... to a80b4aa....
-Fast forward (no commit created; -m option ignored)
+Fast-forward (no commit created; -m option ignored)
  example |    1 +
  hello   |    1 +
  2 files changed, 2 insertions(+), 0 deletions(-)
@@ -1003,7 +1003,7 @@ Because your branch did not contain anything more than what had
 already been merged into the `master` branch, the merge operation did
 not actually do a merge. Instead, it just updated the top of
 the tree of your branch to that of the `master` branch. This is
-often called 'fast forward' merge.
+often called 'fast-forward' merge.
 
 You can run `gitk \--all` again to see how the commit ancestry
 looks like, or run 'show-branch', which tells you this.
@@ -1186,9 +1186,9 @@ $ git show-branch
 * [master] Some fun.
  ! [mybranch] Some work.
 --
- + [mybranch] Some work.
 *  [master] Some fun.
-*+ [mybranch^] New day.
+ + [mybranch] Some work.
+*+ [master^] Initial commit
 ------------
 
 Now we are ready to experiment with the merge by hand.
@@ -1204,11 +1204,11 @@ $ mb=$(git merge-base HEAD mybranch)
 The command writes the commit object name of the common ancestor
 to the standard output, so we captured its output to a variable,
 because we will be using it in the next step.  By the way, the common
-ancestor commit is the "New day." commit in this case.  You can
+ancestor commit is the "Initial commit" commit in this case.  You can
 tell it by:
 
 ------------
-$ git name-rev $mb
+$ git name-rev --name-only --tags $mb
 my-first-tag
 ------------
 
@@ -1237,8 +1237,8 @@ inspect the index file with this command:
 ------------
 $ git ls-files --stage
 100644 7f8b141b65fdcee47321e399a2598a235a032422 0	example
-100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello
-100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello
+100644 557db03de997c86a4a028e1ebd3a1ceb225be238 1	hello
+100644 ba42a2a96e3027f3333e13ede4ccf4498c3ae942 2	hello
 100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
 ------------
 
@@ -1253,8 +1253,8 @@ To look at only non-zero stages, use `\--unmerged` flag:
 
 ------------
 $ git ls-files --unmerged
-100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello
-100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello
+100644 557db03de997c86a4a028e1ebd3a1ceb225be238 1	hello
+100644 ba42a2a96e3027f3333e13ede4ccf4498c3ae942 2	hello
 100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
 ------------
 
@@ -1283,8 +1283,8 @@ the working tree..  This can be seen if you run `ls-files
 ------------
 $ git ls-files --stage
 100644 7f8b141b65fdcee47321e399a2598a235a032422 0	example
-100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello
-100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello
+100644 557db03de997c86a4a028e1ebd3a1ceb225be238 1	hello
+100644 ba42a2a96e3027f3333e13ede4ccf4498c3ae942 2	hello
 100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
 ------------
 

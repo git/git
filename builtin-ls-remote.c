@@ -86,8 +86,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			pattern[j - i] = p;
 		}
 	}
-	remote = nongit ? NULL : remote_get(dest);
-	if (remote && !remote->url_nr)
+	remote = remote_get(dest);
+	if (!remote->url_nr)
 		die("remote %s has no configured URL", dest);
 	transport = transport_get(remote, NULL);
 	if (uploadpack != NULL)

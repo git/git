@@ -341,9 +341,9 @@ static const char *update(struct command *cmd)
 				break;
 		free_commit_list(bases);
 		if (!ent) {
-			error("denying non-fast forward %s"
+			error("denying non-fast-forward %s"
 			      " (you should pull first)", name);
-			return "non-fast forward";
+			return "non-fast-forward";
 		}
 	}
 	if (run_update_hook(cmd)) {
@@ -627,6 +627,8 @@ static void add_alternate_refs(void)
 
 int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 {
+	int advertise_refs = 0;
+	int stateless_rpc = 0;
 	int i;
 	char *dir = NULL;
 
@@ -635,7 +637,15 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		const char *arg = *argv++;
 
 		if (*arg == '-') {
-			/* Do flag handling here */
+			if (!strcmp(arg, "--advertise-refs")) {
+				advertise_refs = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--stateless-rpc")) {
+				stateless_rpc = 1;
+				continue;
+			}
+
 			usage(receive_pack_usage);
 		}
 		if (dir)
@@ -664,12 +674,16 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		" report-status delete-refs ofs-delta " :
 		" report-status delete-refs ";
 
-	add_alternate_refs();
-	write_head_info();
-	clear_extra_refs();
+	if (advertise_refs || !stateless_rpc) {
+		add_alternate_refs();
+		write_head_info();
+		clear_extra_refs();
 
-	/* EOF */
-	packet_flush(1);
+		/* EOF */
+		packet_flush(1);
+	}
+	if (advertise_refs)
+		return 0;
 
 	read_head_info();
 	if (commands) {

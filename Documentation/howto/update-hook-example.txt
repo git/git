@@ -76,7 +76,7 @@ case "$1" in
     if expr "$2" : '0*$' >/dev/null; then
       info "The branch '$1' is new..."
     else
-      # updating -- make sure it is a fast forward
+      # updating -- make sure it is a fast-forward
       mb=$(git-merge-base "$2" "$3")
       case "$mb,$2" in
         "$2,$mb") info "Update is fast-forward" ;;

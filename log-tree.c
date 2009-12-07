@@ -179,8 +179,10 @@ void get_patch_filename(struct commit *commit, int nr, const char *suffix,
 	strbuf_addf(buf, commit ? "%04d-" : "%d", nr);
 	if (commit) {
 		int max_len = start_len + FORMAT_PATCH_NAME_MAX - suffix_len;
+		struct pretty_print_context ctx = {0};
+		ctx.date_mode = DATE_NORMAL;
 
-		format_commit_message(commit, "%f", buf, DATE_NORMAL);
+		format_commit_message(commit, "%f", buf, &ctx);
 		if (max_len < buf->len)
 			strbuf_setlen(buf, max_len);
 		strbuf_addstr(buf, suffix);
@@ -277,10 +279,9 @@ void show_log(struct rev_info *opt)
 	struct strbuf msgbuf = STRBUF_INIT;
 	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
-	int abbrev = opt->diffopt.abbrev;
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
-	const char *subject = NULL, *extra_headers = opt->extra_headers;
-	int need_8bit_cte = 0;
+	const char *extra_headers = opt->extra_headers;
+	struct pretty_print_context ctx = {0};
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
@@ -347,8 +348,8 @@ void show_log(struct rev_info *opt)
 	 */
 
 	if (opt->commit_format == CMIT_FMT_EMAIL) {
-		log_write_email_headers(opt, commit, &subject, &extra_headers,
-					&need_8bit_cte);
+		log_write_email_headers(opt, commit, &ctx.subject, &extra_headers,
+					&ctx.need_8bit_cte);
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_COMMIT), stdout);
 		if (opt->commit_format != CMIT_FMT_ONELINE)
@@ -405,11 +406,13 @@ void show_log(struct rev_info *opt)
 	/*
 	 * And then the pretty-printed message itself
 	 */
-	if (need_8bit_cte >= 0)
-		need_8bit_cte = has_non_ascii(opt->add_signoff);
-	pretty_print_commit(opt->commit_format, commit, &msgbuf,
-			    abbrev, subject, extra_headers, opt->date_mode,
-			    need_8bit_cte);
+	if (ctx.need_8bit_cte >= 0)
+		ctx.need_8bit_cte = has_non_ascii(opt->add_signoff);
+	ctx.date_mode = opt->date_mode;
+	ctx.abbrev = opt->diffopt.abbrev;
+	ctx.after_subject = extra_headers;
+	ctx.reflog_info = opt->reflog_info;
+	pretty_print_commit(opt->commit_format, commit, &msgbuf, &ctx);
 
 	if (opt->add_signoff)
 		append_signoff(&msgbuf, opt->add_signoff);

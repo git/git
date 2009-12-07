@@ -96,9 +96,10 @@ static void show_commit(struct commit *commit, void *data)
 
 	if (revs->verbose_header && commit->buffer) {
 		struct strbuf buf = STRBUF_INIT;
-		pretty_print_commit(revs->commit_format, commit,
-				    &buf, revs->abbrev, NULL, NULL,
-				    revs->date_mode, 0);
+		struct pretty_print_context ctx = {0};
+		ctx.abbrev = revs->abbrev;
+		ctx.date_mode = revs->date_mode;
+		pretty_print_commit(revs->commit_format, commit, &buf, &ctx);
 		if (revs->graph) {
 			if (buf.len) {
 				if (revs->commit_format != CMIT_FMT_ONELINE)
@@ -305,7 +306,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	struct rev_info revs;
 	struct rev_list_info info;
 	int i;
-	int read_from_stdin = 0;
 	int bisect_list = 0;
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
@@ -319,6 +319,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	memset(&info, 0, sizeof(info));
 	info.revs = &revs;
+	if (revs.bisect)
+		bisect_list = 1;
 
 	quiet = DIFF_OPT_TST(&revs.diffopt, QUIET);
 	for (i = 1 ; i < argc; i++) {
@@ -346,12 +348,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--bisect-vars")) {
 			bisect_list = 1;
 			bisect_show_vars = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--stdin")) {
-			if (read_from_stdin++)
-				die("--stdin given twice?");
-			read_revisions_from_stdin(&revs);
 			continue;
 		}
 		usage(rev_list_usage);

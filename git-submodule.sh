@@ -5,7 +5,7 @@
 # Copyright (c) 2007 Lars Hjemli
 
 dashless=$(basename "$0" | sed -e 's/-/ /')
-USAGE="[--quiet] add [-b branch] [--reference <repository>] [--] <repository> <path>
+USAGE="[--quiet] add [-b branch] [--reference <repository>] [--] <repository> [<path>]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
@@ -57,7 +57,7 @@ resolve_relative_url ()
 #
 module_list()
 {
-	git ls-files --error-unmatch --stage -- "$@" | grep '^160000 '
+	git ls-files --error-unmatch --stage -- "$@" | sane_grep '^160000 '
 }
 
 #
@@ -159,6 +159,11 @@ cmd_add()
 
 	repo=$1
 	path=$2
+
+	if test -z "$path"; then
+		path=$(echo "$repo" |
+			sed -e 's|/$||' -e 's|:*/*\.git$||' -e 's|.*[/:]||g')
+	fi
 
 	if test -z "$repo" -o -z "$path"; then
 		usage
@@ -567,7 +572,7 @@ cmd_summary() {
 	cd_to_toplevel
 	# Get modified modules cared by user
 	modules=$(git $diff_cmd $cached --raw $head -- "$@" |
-		egrep '^:([0-7]* )?160000' |
+		sane_egrep '^:([0-7]* )?160000' |
 		while read mod_src mod_dst sha1_src sha1_dst status name
 		do
 			# Always show modules deleted or type-changed (blob<->module)
@@ -581,7 +586,7 @@ cmd_summary() {
 	test -z "$modules" && return
 
 	git $diff_cmd $cached --raw $head -- $modules |
-	egrep '^:([0-7]* )?160000' |
+	sane_egrep '^:([0-7]* )?160000' |
 	cut -c2- |
 	while read mod_src mod_dst sha1_src sha1_dst status name
 	do

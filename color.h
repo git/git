@@ -4,6 +4,11 @@
 /* "\033[1;38;5;2xx;48;5;2xxm\0" is 23 bytes */
 #define COLOR_MAXLEN 24
 
+/*
+ * IMPORTANT: Due to the way these color codes are emulated on Windows,
+ * write them only using printf(), fprintf(), and fputs(). In particular,
+ * do not use puts() or write().
+ */
 #define GIT_COLOR_NORMAL	""
 #define GIT_COLOR_RESET		"\033[m"
 #define GIT_COLOR_BOLD		"\033[1m"
@@ -29,7 +34,9 @@ int git_color_default_config(const char *var, const char *value, void *cb);
 int git_config_colorbool(const char *var, const char *value, int stdout_is_tty);
 void color_parse(const char *value, const char *var, char *dst);
 void color_parse_mem(const char *value, int len, const char *var, char *dst);
+__attribute__((format (printf, 3, 4)))
 int color_fprintf(FILE *fp, const char *color, const char *fmt, ...);
+__attribute__((format (printf, 3, 4)))
 int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
 int color_fwrite_lines(FILE *fp, const char *color, size_t count, const char *buf);
 

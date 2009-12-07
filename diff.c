@@ -13,6 +13,7 @@
 #include "utf8.h"
 #include "userdiff.h"
 #include "sigchain.h"
+#include "submodule.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -38,6 +39,7 @@ static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_GREEN,	/* NEW */
 	GIT_COLOR_YELLOW,	/* COMMIT */
 	GIT_COLOR_BG_RED,	/* WHITESPACE */
+	GIT_COLOR_NORMAL,	/* FUNCINFO */
 };
 
 static void diff_filespec_load_driver(struct diff_filespec *one);
@@ -59,6 +61,8 @@ static int parse_diff_color_slot(const char *var, int ofs)
 		return DIFF_COMMIT;
 	if (!strcasecmp(var+ofs, "whitespace"))
 		return DIFF_WHITESPACE;
+	if (!strcasecmp(var+ofs, "func"))
+		return DIFF_FUNCINFO;
 	die("bad config variable '%s'", var);
 }
 
@@ -294,12 +298,13 @@ static void emit_line_0(FILE *file, const char *set, const char *reset,
 		nofirst = 0;
 	}
 
-	fputs(set, file);
-
-	if (!nofirst)
-		fputc(first, file);
-	fwrite(line, len, 1, file);
-	fputs(reset, file);
+	if (len || !nofirst) {
+		fputs(set, file);
+		if (!nofirst)
+			fputc(first, file);
+		fwrite(line, len, 1, file);
+		fputs(reset, file);
+	}
 	if (has_trailing_carriage_return)
 		fputc('\r', file);
 	if (has_trailing_newline)
@@ -341,6 +346,42 @@ static void emit_add_line(const char *reset,
 		ws_check_emit(line, len, ecbdata->ws_rule,
 			      ecbdata->file, set, reset, ws);
 	}
+}
+
+static void emit_hunk_header(struct emit_callback *ecbdata,
+			     const char *line, int len)
+{
+	const char *plain = diff_get_color(ecbdata->color_diff, DIFF_PLAIN);
+	const char *frag = diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO);
+	const char *func = diff_get_color(ecbdata->color_diff, DIFF_FUNCINFO);
+	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
+	static const char atat[2] = { '@', '@' };
+	const char *cp, *ep;
+
+	/*
+	 * As a hunk header must begin with "@@ -<old>, +<new> @@",
+	 * it always is at least 10 bytes long.
+	 */
+	if (len < 10 ||
+	    memcmp(line, atat, 2) ||
+	    !(ep = memmem(line + 2, len - 2, atat, 2))) {
+		emit_line(ecbdata->file, plain, reset, line, len);
+		return;
+	}
+	ep += 2; /* skip over @@ */
+
+	/* The hunk header in fraginfo color */
+	emit_line(ecbdata->file, frag, reset, line, ep - line);
+
+	/* blank before the func header */
+	for (cp = ep; ep - line < len; ep++)
+		if (*ep != ' ' && *ep != '\t')
+			break;
+	if (ep != cp)
+		emit_line(ecbdata->file, plain, reset, cp, ep - cp);
+
+	if (ep < line + len)
+		emit_line(ecbdata->file, func, reset, ep, line + len - ep);
 }
 
 static struct diff_tempfile *claim_diff_tempfile(void) {
@@ -685,14 +726,18 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	diff_words->minus.text.size = diff_words->plus.text.size = 0;
 }
 
+/* In "color-words" mode, show word-diff of words accumulated in the buffer */
+static void diff_words_flush(struct emit_callback *ecbdata)
+{
+	if (ecbdata->diff_words->minus.text.size ||
+	    ecbdata->diff_words->plus.text.size)
+		diff_words_show(ecbdata->diff_words);
+}
+
 static void free_diff_words_data(struct emit_callback *ecbdata)
 {
 	if (ecbdata->diff_words) {
-		/* flush buffers */
-		if (ecbdata->diff_words->minus.text.size ||
-				ecbdata->diff_words->plus.text.size)
-			diff_words_show(ecbdata->diff_words);
-
+		diff_words_flush(ecbdata);
 		free (ecbdata->diff_words->minus.text.ptr);
 		free (ecbdata->diff_words->minus.orig);
 		free (ecbdata->diff_words->plus.text.ptr);
@@ -772,11 +817,11 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	}
 
 	if (line[0] == '@') {
+		if (ecbdata->diff_words)
+			diff_words_flush(ecbdata);
 		len = sane_truncate_line(ecbdata, line, len);
 		find_lno(line, ecbdata);
-		emit_line(ecbdata->file,
-			  diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO),
-			  reset, line, len);
+		emit_hunk_header(ecbdata, line, len);
 		if (line[len-1] != '\n')
 			putc('\n', ecbdata->file);
 		return;
@@ -797,9 +842,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 					  &ecbdata->diff_words->plus);
 			return;
 		}
-		if (ecbdata->diff_words->minus.text.size ||
-		    ecbdata->diff_words->plus.text.size)
-			diff_words_show(ecbdata->diff_words);
+		diff_words_flush(ecbdata);
 		line++;
 		len--;
 		emit_line(ecbdata->file, plain, reset, line, len);
@@ -1556,6 +1599,17 @@ static void builtin_diff(const char *name_a,
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 	const char *a_prefix, *b_prefix;
 	const char *textconv_one = NULL, *textconv_two = NULL;
+
+	if (DIFF_OPT_TST(o, SUBMODULE_LOG) &&
+			(!one->mode || S_ISGITLINK(one->mode)) &&
+			(!two->mode || S_ISGITLINK(two->mode))) {
+		const char *del = diff_get_color_opt(o, DIFF_FILE_OLD);
+		const char *add = diff_get_color_opt(o, DIFF_FILE_NEW);
+		show_submodule_summary(o->file, one ? one->path : two->path,
+				one->sha1, two->sha1,
+				del, add, reset);
+		return;
+	}
 
 	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
 		textconv_one = get_textconv(one);
@@ -2757,6 +2811,12 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_CLR(options, ALLOW_TEXTCONV);
 	else if (!strcmp(arg, "--ignore-submodules"))
 		DIFF_OPT_SET(options, IGNORE_SUBMODULES);
+	else if (!strcmp(arg, "--submodule"))
+		DIFF_OPT_SET(options, SUBMODULE_LOG);
+	else if (!prefixcmp(arg, "--submodule=")) {
+		if (!strcmp(arg + 12, "log"))
+			DIFF_OPT_SET(options, SUBMODULE_LOG);
+	}
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))

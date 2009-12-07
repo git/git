@@ -99,6 +99,10 @@ in the index e.g. when merging in a commit;
 thus, in case the assumed-untracked file is changed upstream,
 you will need to handle the situation manually.
 
+--really-refresh::
+	Like '--refresh', but checks stat information unconditionally,
+	without regard to the "assume unchanged" setting.
+
 -g::
 --again::
 	Runs 'git-update-index' itself on the paths whose index
@@ -308,7 +312,7 @@ Configuration
 -------------
 
 The command honors `core.filemode` configuration variable.  If
-your repository is on an filesystem whose executable bits are
+your repository is on a filesystem whose executable bits are
 unreliable, this should be set to 'false' (see linkgit:git-config[1]).
 This causes the command to ignore differences in file modes recorded
 in the index and the file mode on the filesystem if they differ only on

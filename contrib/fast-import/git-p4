@@ -729,13 +729,10 @@ class P4Submit(Command):
             tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
             tmpFile.close()
             mtime = os.stat(fileName).st_mtime
-            defaultEditor = "vi"
-            if platform.system() == "Windows":
-                defaultEditor = "notepad"
             if os.environ.has_key("P4EDITOR"):
                 editor = os.environ.get("P4EDITOR")
             else:
-                editor = os.environ.get("EDITOR", defaultEditor);
+                editor = read_pipe("git var GIT_EDITOR")
             system(editor + " " + fileName)
 
             response = "y"

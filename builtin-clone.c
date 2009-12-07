@@ -51,7 +51,9 @@ static struct option builtin_clone_options[] = {
 	OPT_BOOLEAN('n', "no-checkout", &option_no_checkout,
 		    "don't create a checkout"),
 	OPT_BOOLEAN(0, "bare", &option_bare, "create a bare repository"),
-	OPT_BOOLEAN(0, "naked", &option_bare, "create a bare repository"),
+	{ OPTION_BOOLEAN, 0, "naked", &option_bare, NULL,
+		"create a bare repository",
+		PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 	OPT_BOOLEAN(0, "mirror", &option_mirror,
 		    "create a mirror repository (implies bare)"),
 	OPT_BOOLEAN('l', "local", &option_local,
@@ -61,7 +63,7 @@ static struct option builtin_clone_options[] = {
 	OPT_BOOLEAN('s', "shared", &option_shared,
 		    "setup as shared repository"),
 	OPT_BOOLEAN(0, "recursive", &option_recursive,
-		    "setup as shared repository"),
+		    "initialize submodules in the clone"),
 	OPT_STRING(0, "template", &option_template, "path",
 		   "path the template repository"),
 	OPT_STRING(0, "reference", &option_reference, "repo",
@@ -378,8 +380,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, builtin_clone_options,
 			     builtin_clone_usage, 0);
 
+	if (argc > 2)
+		usage_msg_opt("Too many arguments.",
+			builtin_clone_usage, builtin_clone_options);
+
 	if (argc == 0)
-		die("You must specify a repository to clone.");
+		usage_msg_opt("You must specify a repository to clone.",
+			builtin_clone_usage, builtin_clone_options);
 
 	if (option_mirror)
 		option_bare = 1;

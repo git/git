@@ -5,6 +5,7 @@
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
+#include "notes.h"
 
 int save_commit_buffer = 1;
 
@@ -132,8 +133,8 @@ struct commit_graft *read_graft_line(char *buf, int len)
 	int i;
 	struct commit_graft *graft = NULL;
 
-	if (buf[len-1] == '\n')
-		buf[--len] = 0;
+	while (len && isspace(buf[len-1]))
+		buf[--len] = '\0';
 	if (buf[0] == '#' || buf[0] == '\0')
 		return NULL;
 	if ((len + 1) % 41) {
@@ -199,7 +200,7 @@ struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
 	return commit_graft[pos];
 }
 
-int write_shallow_commits(int fd, int use_pack_protocol)
+int write_shallow_commits(struct strbuf *out, int use_pack_protocol)
 {
 	int i, count = 0;
 	for (i = 0; i < commit_graft_nr; i++)
@@ -208,12 +209,10 @@ int write_shallow_commits(int fd, int use_pack_protocol)
 				sha1_to_hex(commit_graft[i]->sha1);
 			count++;
 			if (use_pack_protocol)
-				packet_write(fd, "shallow %s", hex);
+				packet_buf_write(out, "shallow %s", hex);
 			else {
-				if (write_in_full(fd, hex,  40) != 40)
-					break;
-				if (write_str_in_full(fd, "\n") != 1)
-					break;
+				strbuf_addstr(out, hex);
+				strbuf_addch(out, '\n');
 			}
 		}
 	return count;

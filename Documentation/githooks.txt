@@ -229,7 +229,7 @@ from updating that ref.
 This hook can be used to prevent 'forced' update on certain refs by
 making sure that the object name is a commit object that is a
 descendant of the commit object named by the old object name.
-That is, to enforce a "fast forward only" policy.
+That is, to enforce a "fast-forward only" policy.
 
 It could also be used to log the old..new status.  However, it
 does not know the entire set of branches, so it would end up

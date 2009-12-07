@@ -10,6 +10,7 @@
 static FILE *cmitmsg, *patchfile, *fin, *fout;
 
 static int keep_subject;
+static int keep_non_patch_brackets_in_subject;
 static const char *metainfo_charset;
 static struct strbuf line = STRBUF_INIT;
 static struct strbuf name = STRBUF_INIT;
@@ -26,6 +27,7 @@ static struct strbuf charset = STRBUF_INIT;
 static int patch_lines;
 static struct strbuf **p_hdr_data, **s_hdr_data;
 static int use_scissors;
+static int use_inbody_headers = 1;
 
 #define MAX_HDR_PARSED 10
 #define MAX_BOUNDARIES 5
@@ -220,35 +222,41 @@ static int is_multipart_boundary(const struct strbuf *line)
 
 static void cleanup_subject(struct strbuf *subject)
 {
-	char *pos;
-	size_t remove;
-	while (subject->len) {
-		switch (*subject->buf) {
+	size_t at = 0;
+
+	while (at < subject->len) {
+		char *pos;
+		size_t remove;
+
+		switch (subject->buf[at]) {
 		case 'r': case 'R':
-			if (subject->len <= 3)
+			if (subject->len <= at + 3)
 				break;
-			if (!memcmp(subject->buf + 1, "e:", 2)) {
-				strbuf_remove(subject, 0, 3);
+			if (!memcmp(subject->buf + at + 1, "e:", 2)) {
+				strbuf_remove(subject, at, 3);
 				continue;
 			}
+			at++;
 			break;
 		case ' ': case '\t': case ':':
-			strbuf_remove(subject, 0, 1);
+			strbuf_remove(subject, at, 1);
 			continue;
 		case '[':
-			if ((pos = strchr(subject->buf, ']'))) {
-				remove = pos - subject->buf;
-				if (remove <= (subject->len - remove) * 2) {
-					strbuf_remove(subject, 0, remove + 1);
-					continue;
-				}
-			} else
-				strbuf_remove(subject, 0, 1);
-			break;
+			pos = strchr(subject->buf + at, ']');
+			if (!pos)
+				break;
+			remove = pos - subject->buf + at + 1;
+			if (!keep_non_patch_brackets_in_subject ||
+			    (7 <= remove &&
+			     memmem(subject->buf + at, remove, "PATCH", 5)))
+				strbuf_remove(subject, at, remove);
+			else
+				at += remove;
+			continue;
 		}
-		strbuf_trim(subject);
-		return;
+		break;
 	}
+	strbuf_trim(subject);
 }
 
 static void cleanup_space(struct strbuf *sb)
@@ -774,10 +782,17 @@ static int handle_commit_msg(struct strbuf *line)
 		strbuf_ltrim(line);
 		if (!line->len)
 			return 0;
+	}
+
+	if (use_inbody_headers && still_looking) {
 		still_looking = check_header(line, s_hdr_data, 0);
 		if (still_looking)
 			return 0;
-	}
+	} else
+		/* Only trim the first (blank) line of the commit message
+		 * when ignoring in-body headers.
+		 */
+		still_looking = 0;
 
 	/* normalize the log message to UTF-8. */
 	if (metainfo_charset)
@@ -1006,7 +1021,7 @@ static int git_mailinfo_config(const char *var, const char *value, void *unused)
 }
 
 static const char mailinfo_usage[] =
-	"git mailinfo [-k] [-u | --encoding=<encoding> | -n] [--scissors | --no-scissors] msg patch < mail >info";
+	"git mailinfo [-k|-b] [-u | --encoding=<encoding> | -n] [--scissors | --no-scissors] msg patch < mail >info";
 
 int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
@@ -1023,6 +1038,8 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-k"))
 			keep_subject = 1;
+		else if (!strcmp(argv[1], "-b"))
+			keep_non_patch_brackets_in_subject = 1;
 		else if (!strcmp(argv[1], "-u"))
 			metainfo_charset = def_charset;
 		else if (!strcmp(argv[1], "-n"))
@@ -1033,6 +1050,8 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 			use_scissors = 1;
 		else if (!strcmp(argv[1], "--no-scissors"))
 			use_scissors = 0;
+		else if (!strcmp(argv[1], "--no-inbody-headers"))
+			use_inbody_headers = 0;
 		else
 			usage(mailinfo_usage);
 		argc--; argv++;

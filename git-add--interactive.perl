@@ -731,14 +731,17 @@ sub parse_diff_header {
 
 	my $head = { TEXT => [], DISPLAY => [], TYPE => 'header' };
 	my $mode = { TEXT => [], DISPLAY => [], TYPE => 'mode' };
+	my $deletion = { TEXT => [], DISPLAY => [], TYPE => 'deletion' };
 
 	for (my $i = 0; $i < @{$src->{TEXT}}; $i++) {
-		my $dest = $src->{TEXT}->[$i] =~ /^(old|new) mode (\d+)$/ ?
-			$mode : $head;
+		my $dest =
+		   $src->{TEXT}->[$i] =~ /^(old|new) mode (\d+)$/ ? $mode :
+		   $src->{TEXT}->[$i] =~ /^deleted file/ ? $deletion :
+		   $head;
 		push @{$dest->{TEXT}}, $src->{TEXT}->[$i];
 		push @{$dest->{DISPLAY}}, $src->{DISPLAY}->[$i];
 	}
-	return ($head, $mode);
+	return ($head, $mode, $deletion);
 }
 
 sub hunk_splittable {
@@ -987,8 +990,7 @@ sub edit_hunk_manually {
 EOF
 	close $fh;
 
-	my $editor = $ENV{GIT_EDITOR} || $repo->config("core.editor")
-		|| $ENV{VISUAL} || $ENV{EDITOR} || "vi";
+	chomp(my $editor = run_cmd_pipe(qw(git var GIT_EDITOR)));
 	system('sh', '-c', $editor.' "$@"', $editor, $hunkfile);
 
 	if ($? != 0) {
@@ -1206,13 +1208,16 @@ sub patch_update_file {
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
-	($head, my $mode) = parse_diff_header($head);
+	($head, my $mode, my $deletion) = parse_diff_header($head);
 	for (@{$head->{DISPLAY}}) {
 		print;
 	}
 
 	if (@{$mode->{TEXT}}) {
 		unshift @hunk, $mode;
+	}
+	if (@{$deletion->{TEXT}} && !@hunk) {
+		@hunk = ($deletion);
 	}
 
 	$num = scalar @hunk;
@@ -1267,7 +1272,9 @@ sub patch_update_file {
 			print;
 		}
 		print colored $prompt_color, $patch_mode_flavour{VERB},
-		  ($hunk[$ix]{TYPE} eq 'mode' ? ' mode change' : ' this hunk'),
+		  ($hunk[$ix]{TYPE} eq 'mode' ? ' mode change' :
+		   $hunk[$ix]{TYPE} eq 'deletion' ? ' deletion' :
+		   ' this hunk'),
 		  $patch_mode_flavour{TARGET},
 		  " [y,n,q,a,d,/$other,?]? ";
 		my $line = prompt_single_character;

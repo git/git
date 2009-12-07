@@ -13,7 +13,7 @@ use File::Basename;
 BEGIN { use_ok('Git') }
 
 # set up
-our $abs_repo_dir = Cwd->cwd;
+our $abs_repo_dir = cwd();
 ok(our $r = Git->repository(Directory => "."), "open repository");
 
 # config

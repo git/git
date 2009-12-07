@@ -92,6 +92,11 @@ You can specify the following configuration variables when building GIT:
    web browsers that support favicons (website icons) may display them
    in the browser's URL bar and next to site name in bookmarks).  Relative
    to base URI of gitweb.  [Default: git-favicon.png]
+ * GITWEB_JS
+   Points to the localtion where you put gitweb.js on your web server
+   (or to be more generic URI of JavaScript code used by gitweb).
+   Relative to base URI of gitweb.  [Default: gitweb.js (or gitweb.min.js
+   if JSMIN build variable is defined / JavaScript minifier is used)]
  * GITWEB_CONFIG
    This Perl file will be loaded using 'do' and can be used to override any
    of the options above as well as some other options -- see the "Runtime

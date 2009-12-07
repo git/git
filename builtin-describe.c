@@ -5,12 +5,14 @@
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "parse-options.h"
+#include "diff.h"
 
 #define SEEN		(1u<<0)
 #define MAX_TAGS	(FLAG_BITS - 1)
 
 static const char * const describe_usage[] = {
 	"git describe [options] <committish>*",
+	"git describe [options] --dirty",
 	NULL
 };
 
@@ -23,6 +25,13 @@ static int max_candidates = 10;
 static int found_names;
 static const char *pattern;
 static int always;
+static const char *dirty;
+
+/* diff-index command arguments to check if working tree is dirty. */
+static const char *diff_index_args[] = {
+	"diff-index", "--quiet", "HEAD", "--", NULL
+};
+
 
 struct commit_name {
 	struct tag *tag;
@@ -95,8 +104,6 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 
 	if (!all) {
 		if (!prio)
-			return 0;
-		if (!tags && prio < 2)
 			return 0;
 	}
 	add_to_known_names(all ? path + 5 : path + 10, commit, prio, sha1);
@@ -184,6 +191,7 @@ static void describe(const char *arg, int last_one)
 	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
 	unsigned long seen_commits = 0;
+	unsigned int unannotated_cnt = 0;
 
 	if (get_sha1(arg, sha1))
 		die("Not a valid object name %s", arg);
@@ -192,13 +200,15 @@ static void describe(const char *arg, int last_one)
 		die("%s is not a valid '%s' object", arg, commit_type);
 
 	n = cmit->util;
-	if (n) {
+	if (n && (tags || all || n->prio == 2)) {
 		/*
 		 * Exact match to an existing ref.
 		 */
 		display_name(n);
 		if (longformat)
 			show_suffix(0, n->tag ? n->tag->tagged->sha1 : sha1);
+		if (dirty)
+			printf("%s", dirty);
 		printf("\n");
 		return;
 	}
@@ -217,7 +227,9 @@ static void describe(const char *arg, int last_one)
 		seen_commits++;
 		n = c->util;
 		if (n) {
-			if (match_cnt < max_candidates) {
+			if (!tags && !all && n->prio < 2) {
+				unannotated_cnt++;
+			} else if (match_cnt < max_candidates) {
 				struct possible_tag *t = &all_matches[match_cnt++];
 				t->name = n;
 				t->depth = seen_commits - 1;
@@ -256,10 +268,20 @@ static void describe(const char *arg, int last_one)
 	if (!match_cnt) {
 		const unsigned char *sha1 = cmit->object.sha1;
 		if (always) {
-			printf("%s\n", find_unique_abbrev(sha1, abbrev));
+			printf("%s", find_unique_abbrev(sha1, abbrev));
+			if (dirty)
+				printf("%s", dirty);
+			printf("\n");
 			return;
 		}
-		die("cannot describe '%s'", sha1_to_hex(sha1));
+		if (unannotated_cnt)
+			die("No annotated tags can describe '%s'.\n"
+			    "However, there were unannotated tags: try --tags.",
+			    sha1_to_hex(sha1));
+		else
+			die("No tags can describe '%s'.\n"
+			    "Try --always, or create some tags.",
+			    sha1_to_hex(sha1));
 	}
 
 	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
@@ -291,6 +313,8 @@ static void describe(const char *arg, int last_one)
 	display_name(all_matches[0].name);
 	if (abbrev)
 		show_suffix(all_matches[0].depth, cmit->object.sha1);
+	if (dirty)
+		printf("%s", dirty);
 	printf("\n");
 
 	if (!last_one)
@@ -315,6 +339,9 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			   "only consider tags matching <pattern>"),
 		OPT_BOOLEAN(0, "always",     &always,
 			   "show abbreviated commit object as fallback"),
+		{OPTION_STRING, 0, "dirty",  &dirty, "mark",
+			   "append <mark> on dirty working tree (default: \"-dirty\")",
+		 PARSE_OPT_OPTARG, NULL, (intptr_t) "-dirty"},
 		OPT_END(),
 	};
 
@@ -355,7 +382,11 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		die("No names found, cannot describe anything.");
 
 	if (argc == 0) {
+		if (dirty && !cmd_diff_index(ARRAY_SIZE(diff_index_args) - 1, diff_index_args, prefix))
+			dirty = NULL;
 		describe("HEAD", 1);
+	} else if (dirty) {
+		die("--dirty is incompatible with committishes");
 	} else {
 		while (argc-- > 0) {
 			describe(*argv++, argc == 0);

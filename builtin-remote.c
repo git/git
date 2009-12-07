@@ -12,10 +12,45 @@ static const char * const builtin_remote_usage[] = {
 	"git remote add [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>",
 	"git remote rename <old> <new>",
 	"git remote rm <name>",
-	"git remote set-head <name> [-a | -d | <branch>]",
-	"git remote show [-n] <name>",
+	"git remote set-head <name> (-a | -d | <branch>)",
+	"git remote [-v | --verbose] show [-n] <name>",
 	"git remote prune [-n | --dry-run] <name>",
-	"git remote [-v | --verbose] update [-p | --prune] [group]",
+	"git remote [-v | --verbose] update [-p | --prune] [group | remote]",
+	NULL
+};
+
+static const char * const builtin_remote_add_usage[] = {
+	"git remote add [<options>] <name> <url>",
+	NULL
+};
+
+static const char * const builtin_remote_rename_usage[] = {
+	"git remote rename <old> <new>",
+	NULL
+};
+
+static const char * const builtin_remote_rm_usage[] = {
+	"git remote rm <name>",
+	NULL
+};
+
+static const char * const builtin_remote_sethead_usage[] = {
+	"git remote set-head <name> (-a | -d | <branch>])",
+	NULL
+};
+
+static const char * const builtin_remote_show_usage[] = {
+	"git remote show [<options>] <name>",
+	NULL
+};
+
+static const char * const builtin_remote_prune_usage[] = {
+	"git remote prune [<options>] <name>",
+	NULL
+};
+
+static const char * const builtin_remote_update_usage[] = {
+	"git remote update [<options>] [<group> | <remote>]...",
 	NULL
 };
 
@@ -70,7 +105,6 @@ static int add(int argc, const char **argv)
 	int i;
 
 	struct option options[] = {
-		OPT_GROUP("add specific options"),
 		OPT_BOOLEAN('f', "fetch", &fetch, "fetch the remote branches"),
 		OPT_CALLBACK('t', "track", &track, "branch",
 			"branch(es) to track", opt_parse_track),
@@ -79,11 +113,11 @@ static int add(int argc, const char **argv)
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_add_usage,
 			     0);
 
 	if (argc < 2)
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_add_usage, options);
 
 	name = argv[0];
 	url = argv[1];
@@ -227,32 +261,10 @@ struct ref_states {
 	int queried;
 };
 
-static int handle_one_branch(const char *refname,
-	const unsigned char *sha1, int flags, void *cb_data)
-{
-	struct ref_states *states = cb_data;
-	struct refspec refspec;
-
-	memset(&refspec, 0, sizeof(refspec));
-	refspec.dst = (char *)refname;
-	if (!remote_find_tracking(states->remote, &refspec)) {
-		struct string_list_item *item;
-		const char *name = abbrev_branch(refspec.src);
-		/* symbolic refs pointing nowhere were handled already */
-		if ((flags & REF_ISSYMREF) ||
-		    string_list_has_string(&states->tracked, name) ||
-		    string_list_has_string(&states->new, name))
-			return 0;
-		item = string_list_append(name, &states->stale);
-		item->util = xstrdup(refname);
-	}
-	return 0;
-}
-
 static int get_ref_states(const struct ref *remote_refs, struct ref_states *states)
 {
 	struct ref *fetch_map = NULL, **tail = &fetch_map;
-	struct ref *ref;
+	struct ref *ref, *stale_refs;
 	int i;
 
 	for (i = 0; i < states->remote->fetch_refspec_nr; i++)
@@ -260,7 +272,9 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 			die("Could not get fetch map for refspec %s",
 				states->remote->fetch_refspec[i]);
 
-	states->new.strdup_strings = states->tracked.strdup_strings = 1;
+	states->new.strdup_strings = 1;
+	states->tracked.strdup_strings = 1;
+	states->stale.strdup_strings = 1;
 	for (ref = fetch_map; ref; ref = ref->next) {
 		unsigned char sha1[20];
 		if (!ref->peer_ref || read_ref(ref->peer_ref->name, sha1))
@@ -268,11 +282,17 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 		else
 			string_list_append(abbrev_branch(ref->name), &states->tracked);
 	}
+	stale_refs = get_stale_heads(states->remote, fetch_map);
+	for (ref = stale_refs; ref; ref = ref->next) {
+		struct string_list_item *item =
+			string_list_append(abbrev_branch(ref->name), &states->stale);
+		item->util = xstrdup(ref->name);
+	}
+	free_refs(stale_refs);
 	free_refs(fetch_map);
 
 	sort_string_list(&states->new);
 	sort_string_list(&states->tracked);
-	for_each_ref(handle_one_branch, states);
 	sort_string_list(&states->stale);
 
 	return 0;
@@ -540,7 +560,7 @@ static int mv(int argc, const char **argv)
 	int i;
 
 	if (argc != 3)
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_rename_usage, options);
 
 	rename.old = argv[1];
 	rename.new = argv[2];
@@ -681,7 +701,7 @@ static int rm(int argc, const char **argv)
 	int i, result;
 
 	if (argc != 2)
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_rm_usage, options);
 
 	remote = remote_get(argv[1]);
 	if (!remote)
@@ -750,7 +770,7 @@ static void clear_push_info(void *util, const char *string)
 static void free_remote_ref_states(struct ref_states *states)
 {
 	string_list_clear(&states->new, 0);
-	string_list_clear(&states->stale, 0);
+	string_list_clear(&states->stale, 1);
 	string_list_clear(&states->tracked, 0);
 	string_list_clear(&states->heads, 0);
 	string_list_clear_func(&states->push, clear_push_info);
@@ -953,7 +973,7 @@ static int show_push_info_item(struct string_list_item *item, void *cb_data)
 		status = "up to date";
 		break;
 	case PUSH_STATUS_FASTFORWARD:
-		status = "fast forwardable";
+		status = "fast-forwardable";
 		break;
 	case PUSH_STATUS_OUTOFDATE:
 		status = "local out of date";
@@ -976,7 +996,6 @@ static int show(int argc, const char **argv)
 {
 	int no_query = 0, result = 0, query_flag = 0;
 	struct option options[] = {
-		OPT_GROUP("show specific options"),
 		OPT_BOOLEAN('n', NULL, &no_query, "do not query remotes"),
 		OPT_END()
 	};
@@ -984,7 +1003,7 @@ static int show(int argc, const char **argv)
 	struct string_list info_list = { NULL, 0, 0, 0 };
 	struct show_info info;
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_show_usage,
 			     0);
 
 	if (argc < 1)
@@ -1081,14 +1100,13 @@ static int set_head(int argc, const char **argv)
 	char *head_name = NULL;
 
 	struct option options[] = {
-		OPT_GROUP("set-head specific options"),
 		OPT_BOOLEAN('a', "auto", &opt_a,
 			    "set refs/remotes/<name>/HEAD according to remote"),
 		OPT_BOOLEAN('d', "delete", &opt_d,
 			    "delete refs/remotes/<name>/HEAD"),
 		OPT_END()
 	};
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_sethead_usage,
 			     0);
 	if (argc)
 		strbuf_addf(&buf, "refs/remotes/%s/HEAD", argv[0]);
@@ -1114,7 +1132,7 @@ static int set_head(int argc, const char **argv)
 		if (delete_ref(buf.buf, NULL, REF_NODEREF))
 			result |= error("Could not delete %s", buf.buf);
 	} else
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_sethead_usage, options);
 
 	if (head_name) {
 		unsigned char sha1[20];
@@ -1138,16 +1156,15 @@ static int prune(int argc, const char **argv)
 {
 	int dry_run = 0, result = 0;
 	struct option options[] = {
-		OPT_GROUP("prune specific options"),
 		OPT__DRY_RUN(&dry_run),
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_prune_usage,
 			     0);
 
 	if (argc < 1)
-		usage_with_options(builtin_remote_usage, options);
+		usage_with_options(builtin_remote_prune_usage, options);
 
 	for (; argc; argc--, argv++)
 		result |= prune_remote(*argv, dry_run);
@@ -1182,95 +1199,62 @@ static int prune_remote(const char *remote, int dry_run)
 
 		printf(" * [%s] %s\n", dry_run ? "would prune" : "pruned",
 		       abbrev_ref(refname, "refs/remotes/"));
-		warn_dangling_symref(dangling_msg, refname);
+		warn_dangling_symref(stdout, dangling_msg, refname);
 	}
 
 	free_remote_ref_states(&states);
 	return result;
 }
 
-static int get_one_remote_for_update(struct remote *remote, void *priv)
+static int get_remote_default(const char *key, const char *value, void *priv)
 {
-	struct string_list *list = priv;
-	if (!remote->skip_default_update)
-		string_list_append(remote->name, list);
-	return 0;
-}
-
-static struct remote_group {
-	const char *name;
-	struct string_list *list;
-} remote_group;
-
-static int get_remote_group(const char *key, const char *value, void *num_hits)
-{
-	if (!prefixcmp(key, "remotes.") &&
-			!strcmp(key + 8, remote_group.name)) {
-		/* split list by white space */
-		int space = strcspn(value, " \t\n");
-		while (*value) {
-			if (space > 1) {
-				string_list_append(xstrndup(value, space),
-						remote_group.list);
-				++*((int *)num_hits);
-			}
-			value += space + (value[space] != '\0');
-			space = strcspn(value, " \t\n");
-		}
+	if (strcmp(key, "remotes.default") == 0) {
+		int *found = priv;
+		*found = 1;
 	}
-
 	return 0;
 }
 
 static int update(int argc, const char **argv)
 {
-	int i, result = 0, prune = 0;
-	struct string_list list = { NULL, 0, 0, 0 };
-	static const char *default_argv[] = { NULL, "default", NULL };
+	int i, prune = 0;
 	struct option options[] = {
-		OPT_GROUP("update specific options"),
 		OPT_BOOLEAN('p', "prune", &prune,
 			    "prune remotes after fetching"),
 		OPT_END()
 	};
+	const char **fetch_argv;
+	int fetch_argc = 0;
+	int default_defined = 0;
 
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_usage,
+	fetch_argv = xmalloc(sizeof(char *) * (argc+5));
+
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_update_usage,
 			     PARSE_OPT_KEEP_ARGV0);
+
+	fetch_argv[fetch_argc++] = "fetch";
+
+	if (prune)
+		fetch_argv[fetch_argc++] = "--prune";
+	if (verbose)
+		fetch_argv[fetch_argc++] = "-v";
 	if (argc < 2) {
-		argc = 2;
-		argv = default_argv;
+		fetch_argv[fetch_argc++] = "default";
+	} else {
+		fetch_argv[fetch_argc++] = "--multiple";
+		for (i = 1; i < argc; i++)
+			fetch_argv[fetch_argc++] = argv[i];
 	}
 
-	remote_group.list = &list;
-	for (i = 1; i < argc; i++) {
-		int groups_found = 0;
-		remote_group.name = argv[i];
-		result = git_config(get_remote_group, &groups_found);
-		if (!groups_found && (i != 1 || strcmp(argv[1], "default"))) {
-			struct remote *remote;
-			if (!remote_is_configured(argv[i]))
-				die("No such remote or remote group: %s",
-				    argv[i]);
-			remote = remote_get(argv[i]);
-			string_list_append(remote->name, remote_group.list);
-		}
+	if (strcmp(fetch_argv[fetch_argc-1], "default") == 0) {
+		git_config(get_remote_default, &default_defined);
+		if (!default_defined)
+			fetch_argv[fetch_argc-1] = "--all";
 	}
 
-	if (!result && !list.nr  && argc == 2 && !strcmp(argv[1], "default"))
-		result = for_each_remote(get_one_remote_for_update, &list);
+	fetch_argv[fetch_argc] = NULL;
 
-	for (i = 0; i < list.nr; i++) {
-		int err = fetch_remote(list.items[i].string);
-		result |= err;
-		if (!err && prune)
-			result |= prune_remote(list.items[i].string, 0);
-	}
-
-	/* all names were strdup()ed or strndup()ed */
-	list.strdup_strings = 1;
-	string_list_clear(&list, 0);
-
-	return result;
+	return run_command_v_opt(fetch_argv, RUN_GIT_CMD);
 }
 
 static int get_one_entry(struct remote *remote, void *priv)
@@ -1334,7 +1318,7 @@ static int show_all(void)
 int cmd_remote(int argc, const char **argv, const char *prefix)
 {
 	struct option options[] = {
-		OPT__VERBOSE(&verbose),
+		OPT_BOOLEAN('v', "verbose", &verbose, "be verbose; must be placed before a subcommand"),
 		OPT_END()
 	};
 	int result;

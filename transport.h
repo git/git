@@ -62,7 +62,7 @@ struct transport {
 	 **/
 	int (*disconnect)(struct transport *connection);
 	char *pack_lockfile;
-	signed verbose : 2;
+	signed verbose : 3;
 	/* Force progress even if the output is not a tty */
 	unsigned progress : 1;
 };

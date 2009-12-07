@@ -105,7 +105,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
-	if (argc < 2)
+	if (argc < 2 || !strcmp(argv[1], "-h"))
 		usage(commit_tree_usage);
 	if (get_sha1(argv[1], tree_sha1))
 		die("Not a valid object name %s", argv[1]);

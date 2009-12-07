@@ -8,7 +8,9 @@ git-describe - Show the most recent tag that is reachable from a commit
 
 SYNOPSIS
 --------
+[verse]
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] <committish>...
+'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]
 
 DESCRIPTION
 -----------
@@ -27,6 +29,11 @@ OPTIONS
 <committish>...::
 	Committish object names to describe.
 
+--dirty[=<mark>]::
+	Describe the working tree.
+	It means describe HEAD and appends <mark> (`-dirty` by
+	default) if the working tree is dirty.
+
 --all::
 	Instead of using only the annotated tags, use any ref
 	found in `.git/refs/`.  This option enables matching
@@ -44,7 +51,9 @@ OPTIONS
 
 --abbrev=<n>::
 	Instead of using the default 7 hexadecimal digits as the
-	abbreviated object name, use <n> digits.
+	abbreviated object name, use <n> digits, or as many digits
+	as needed to form a unique object name.  An <n> of 0
+	will suppress long format, only showing the closest tag.
 
 --candidates=<n>::
 	Instead of considering only the 10 most recent tags as
@@ -68,8 +77,8 @@ OPTIONS
 	This is useful when you want to see parts of the commit object name
 	in "describe" output, even when the commit in question happens to be
 	a tagged version.  Instead of just emitting the tag name, it will
-	describe such a commit as v1.2-0-deadbeef (0th commit since tag v1.2
-	that points at object deadbeef....).
+	describe such a commit as v1.2-0-gdeadbee (0th commit since tag v1.2
+	that points at object deadbee....).
 
 --match <pattern>::
 	Only consider tags matching the given pattern (can be used to avoid
@@ -108,7 +117,7 @@ the output shows the reference path as well:
 	[torvalds@g5 git]$ git describe --all --abbrev=4 v1.0.5^2
 	tags/v1.0.0-21-g975b
 
-	[torvalds@g5 git]$ git describe --all HEAD^
+	[torvalds@g5 git]$ git describe --all --abbrev=4 HEAD^
 	heads/lt/describe-7-g975b
 
 With --abbrev set to 0, the command can be used to find the
@@ -116,6 +125,13 @@ closest tagname without any suffix:
 
 	[torvalds@g5 git]$ git describe --abbrev=0 v1.0.5^2
 	tags/v1.0.0
+
+Note that the suffix you get if you type these commands today may be
+longer than what Linus saw above when he ran these commands, as your
+git repository may have new commits whose object names begin with
+975b that did not exist back then, and "-g975b" suffix alone may not
+be sufficient to disambiguate these commits.
+
 
 SEARCH STRATEGY
 ---------------

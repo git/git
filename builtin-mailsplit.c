@@ -231,6 +231,8 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 			continue;
 		} else if ( arg[1] == 'f' ) {
 			nr = strtol(arg+2, NULL, 10);
+		} else if ( arg[1] == 'h' ) {
+			usage(git_mailsplit_usage);
 		} else if ( arg[1] == 'b' && !arg[2] ) {
 			allow_bare = 1;
 		} else if (!strcmp(arg, "--keep-cr")) {

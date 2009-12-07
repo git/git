@@ -383,7 +383,7 @@ static inline void skip_same_name(struct cache_entry *ce, struct unpack_trees_op
  * For diffing, the index is more important, and we only have a
  * single tree.
  *
- * We're supposed to return how many index entries we want to skip.
+ * We're supposed to advance o->pos to skip what we have already processed.
  *
  * This wrapper makes it all more readable, and takes care of all
  * the fairly complex unpack_trees() semantic requirements, including

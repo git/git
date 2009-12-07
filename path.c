@@ -11,6 +11,7 @@
  * which is what it's designed for.
  */
 #include "cache.h"
+#include "strbuf.h"
 
 static char bad_path[] = "/bad-path/";
 
@@ -207,43 +208,49 @@ int validate_headref(const char *path)
 	return -1;
 }
 
-static char *user_path(char *buf, char *path, int sz)
+static struct passwd *getpw_str(const char *username, size_t len)
 {
 	struct passwd *pw;
-	char *slash;
-	int len, baselen;
+	char *username_z = xmalloc(len + 1);
+	memcpy(username_z, username, len);
+	username_z[len] = '\0';
+	pw = getpwnam(username_z);
+	free(username_z);
+	return pw;
+}
 
-	if (!path || path[0] != '~')
-		return NULL;
-	path++;
-	slash = strchr(path, '/');
-	if (path[0] == '/' || !path[0]) {
-		pw = getpwuid(getuid());
-	}
-	else {
-		if (slash) {
-			*slash = 0;
-			pw = getpwnam(path);
-			*slash = '/';
+/*
+ * Return a string with ~ and ~user expanded via getpw*.  If buf != NULL,
+ * then it is a newly allocated string. Returns NULL on getpw failure or
+ * if path is NULL.
+ */
+char *expand_user_path(const char *path)
+{
+	struct strbuf user_path = STRBUF_INIT;
+	const char *first_slash = strchrnul(path, '/');
+	const char *to_copy = path;
+
+	if (path == NULL)
+		goto return_null;
+	if (path[0] == '~') {
+		const char *username = path + 1;
+		size_t username_len = first_slash - username;
+		if (username_len == 0) {
+			const char *home = getenv("HOME");
+			strbuf_add(&user_path, home, strlen(home));
+		} else {
+			struct passwd *pw = getpw_str(username, username_len);
+			if (!pw)
+				goto return_null;
+			strbuf_add(&user_path, pw->pw_dir, strlen(pw->pw_dir));
 		}
-		else
-			pw = getpwnam(path);
+		to_copy = first_slash;
 	}
-	if (!pw || !pw->pw_dir || sz <= strlen(pw->pw_dir))
-		return NULL;
-	baselen = strlen(pw->pw_dir);
-	memcpy(buf, pw->pw_dir, baselen);
-	while ((1 < baselen) && (buf[baselen-1] == '/')) {
-		buf[baselen-1] = 0;
-		baselen--;
-	}
-	if (slash && slash[1]) {
-		len = strlen(slash);
-		if (sz <= baselen + len)
-			return NULL;
-		memcpy(buf + baselen, slash, len + 1);
-	}
-	return buf;
+	strbuf_add(&user_path, to_copy, strlen(to_copy));
+	return strbuf_detach(&user_path, NULL);
+return_null:
+	strbuf_release(&user_path);
+	return NULL;
 }
 
 /*
@@ -291,8 +298,18 @@ char *enter_repo(char *path, int strict)
 		if (PATH_MAX <= len)
 			return NULL;
 		if (path[0] == '~') {
-			if (!user_path(used_path, path, PATH_MAX))
+			char *newpath = expand_user_path(path);
+			if (!newpath || (PATH_MAX - 10 < strlen(newpath))) {
+				free(newpath);
 				return NULL;
+			}
+			/*
+			 * Copy back into the static buffer. A pity
+			 * since newpath was not bounded, but other
+			 * branches of the if are limited by PATH_MAX
+			 * anyway.
+			 */
+			strcpy(used_path, newpath); free(newpath);
 			strcpy(validated_path, path);
 			path = used_path;
 		}
@@ -563,4 +580,51 @@ char *strip_path_suffix(const char *path, const char *suffix)
 	if (path_len && !is_dir_sep(path[path_len - 1]))
 		return NULL;
 	return xstrndup(path, chomp_trailing_dir_sep(path, path_len));
+}
+
+int daemon_avoid_alias(const char *p)
+{
+	int sl, ndot;
+
+	/*
+	 * This resurrects the belts and suspenders paranoia check by HPA
+	 * done in <435560F7.4080006@zytor.com> thread, now enter_repo()
+	 * does not do getcwd() based path canonicalizations.
+	 *
+	 * sl becomes true immediately after seeing '/' and continues to
+	 * be true as long as dots continue after that without intervening
+	 * non-dot character.
+	 */
+	if (!p || (*p != '/' && *p != '~'))
+		return -1;
+	sl = 1; ndot = 0;
+	p++;
+
+	while (1) {
+		char ch = *p++;
+		if (sl) {
+			if (ch == '.')
+				ndot++;
+			else if (ch == '/') {
+				if (ndot < 3)
+					/* reject //, /./ and /../ */
+					return -1;
+				ndot = 0;
+			}
+			else if (ch == 0) {
+				if (0 < ndot && ndot < 3)
+					/* reject /.$ and /..$ */
+					return -1;
+				return 0;
+			}
+			else
+				sl = ndot = 0;
+		}
+		else if (ch == 0)
+			return 0;
+		else if (ch == '/') {
+			sl = 1;
+			ndot = 0;
+		}
+	}
 }

@@ -30,7 +30,7 @@ TZ=UTC
 TERM=dumb
 export LANG LC_ALL PAGER TERM TZ
 EDITOR=:
-VISUAL=:
+unset VISUAL
 unset GIT_EDITOR
 unset AUTHOR_DATE
 unset AUTHOR_EMAIL
@@ -58,7 +58,7 @@ GIT_MERGE_VERBOSITY=5
 export GIT_MERGE_VERBOSITY
 export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
-export EDITOR VISUAL
+export EDITOR
 GIT_TEST_CMP=${GIT_TEST_CMP:-diff -u}
 
 # Protect ourselves from common misconfiguration to export
@@ -207,8 +207,8 @@ trap 'die' EXIT
 test_set_editor () {
 	FAKE_EDITOR="$1"
 	export FAKE_EDITOR
-	VISUAL='"$FAKE_EDITOR"'
-	export VISUAL
+	EDITOR='"$FAKE_EDITOR"'
+	export EDITOR
 }
 
 test_tick () {

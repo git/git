@@ -48,8 +48,10 @@ OPTIONS
 
 -i::
 --ignored::
-	Show ignored files in the output.
-	Note that this also reverses any exclude list present.
+	Show only ignored files in the output. When showing files in the
+	index, print only those matched by an exclude pattern. When
+	showing "other" files, show only those matched by an exclude
+	pattern.
 
 -s::
 --stage::

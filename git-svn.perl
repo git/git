@@ -168,6 +168,9 @@ my %cmd = (
 			     'Create a .gitignore per svn:ignore',
 			     { 'revision|r=i' => \$_revision
 			     } ],
+	'mkdirs' => [ \&cmd_mkdirs ,
+	              "recreate empty directories after a checkout",
+	              { 'revision|r=i' => \$_revision } ],
         'propget' => [ \&cmd_propget,
 		       'Print the value of a property on a file or directory',
 		       { 'revision|r=i' => \$_revision } ],
@@ -274,7 +277,7 @@ unless ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
-read_repo_config(\%opts);
+read_git_config(\%opts);
 if ($cmd && ($cmd eq 'log' || $cmd eq 'blame')) {
 	Getopt::Long::Configure('pass_through');
 }
@@ -425,6 +428,7 @@ sub cmd_fetch {
 	if (@_ > 1) {
 		die "Usage: $0 fetch [--all] [--parent] [svn-remote]\n";
 	}
+	$Git::SVN::no_reuse_existing = undef;
 	if ($_fetch_parent) {
 		my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
 		unless ($gs) {
@@ -769,6 +773,7 @@ sub cmd_rebase {
 		$_fetch_all ? $gs->fetch_all : $gs->fetch;
 	}
 	command_noisy(rebase_cmd(), $gs->refname);
+	$gs->mkemptydirs;
 }
 
 sub cmd_show_ignore {
@@ -828,6 +833,12 @@ sub cmd_create_ignore {
 		  or fatal("Failed to close `$ignore': $!");
 		command_noisy('add', '-f', $ignore);
 	});
+}
+
+sub cmd_mkdirs {
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	$gs ||= Git::SVN->new;
+	$gs->mkemptydirs($_revision);
 }
 
 sub canonicalize_path {
@@ -946,6 +957,7 @@ sub cmd_multi_init {
 }
 
 sub cmd_multi_fetch {
+	$Git::SVN::no_reuse_existing = undef;
 	my $remotes = Git::SVN::read_all_remotes();
 	foreach my $repo_id (sort keys %$remotes) {
 		if ($remotes->{$repo_id}->{url}) {
@@ -1196,6 +1208,7 @@ sub post_fetch_checkout {
 	command_noisy(qw/read-tree -m -u -v HEAD HEAD/);
 	print STDERR "Checked out HEAD:\n  ",
 	             $gs->full_url, " r", $gs->last_rev, "\n";
+	$gs->mkemptydirs($gs->last_rev);
 }
 
 sub complete_svn_url {
@@ -1321,9 +1334,8 @@ sub get_commit_entry {
 	close $log_fh or croak $!;
 
 	if ($_edit || ($type eq 'tree')) {
-		my $editor = $ENV{VISUAL} || $ENV{EDITOR} || 'vi';
-		# TODO: strip out spaces, comments, like git-commit.sh
-		system($editor, $commit_editmsg);
+		chomp(my $editor = command_oneline(qw(var GIT_EDITOR)));
+		system('sh', '-c', $editor.' "$@"', $editor, $commit_editmsg);
 	}
 	rename $commit_editmsg, $commit_msg or croak $!;
 	{
@@ -1390,8 +1402,7 @@ sub load_authors {
 }
 
 # convert GetOpt::Long specs for use by git-config
-sub read_repo_config {
-	return unless -d $ENV{GIT_DIR};
+sub read_git_config {
 	my $opts = shift;
 	my @config_only;
 	foreach my $o (keys %$opts) {
@@ -2725,6 +2736,37 @@ sub do_fetch {
 	$self->make_log_entry($rev, \@parents, $ed);
 }
 
+sub mkemptydirs {
+	my ($self, $r) = @_;
+	my %empty_dirs = ();
+
+	open my $fh, '<', "$self->{dir}/unhandled.log" or return;
+	binmode $fh or croak "binmode: $!";
+	while (<$fh>) {
+		if (defined $r && /^r(\d+)$/) {
+			last if $1 > $r;
+		} elsif (/^  \+empty_dir: (.+)$/) {
+			$empty_dirs{$1} = 1;
+		} elsif (/^  \-empty_dir: (.+)$/) {
+			delete $empty_dirs{$1};
+		}
+	}
+	close $fh;
+
+	my $strip = qr/\A\Q$self->{path}\E(?:\/|$)/;
+	foreach my $d (sort keys %empty_dirs) {
+		$d = uri_decode($d);
+		$d =~ s/$strip//;
+		next if -d $d;
+		if (-e _) {
+			warn "$d exists but is not a directory\n";
+		} else {
+			print "creating empty directory: $d\n";
+			mkpath([$d]);
+		}
+	}
+}
+
 sub get_untracked {
 	my ($self, $ed) = @_;
 	my @out;
@@ -2950,8 +2992,11 @@ sub find_extra_svn_parents {
 			my $bottom_commit =
 				$gs->rev_map_get($bottom, $self->ra_uuid) ||
 				$gs->rev_map_get($bottom+1, $self->ra_uuid);
-			my $top_commit =
-				$gs->rev_map_get($top, $self->ra_uuid);
+			my $top_commit;
+			for (; !$top_commit && $top >= $bottom; --$top) {
+				$top_commit =
+					$gs->rev_map_get($top, $self->ra_uuid);
+			}
 
 			unless ($top_commit and $bottom_commit) {
 				warn "W:unknown path/rev in svn:mergeinfo "
@@ -3551,6 +3596,12 @@ sub map_path {
 sub uri_encode {
 	my ($f) = @_;
 	$f =~ s#([^a-zA-Z0-9\*!\:_\./\-])#uc sprintf("%%%02x",ord($1))#eg;
+	$f
+}
+
+sub uri_decode {
+	my ($f) = @_;
+	$f =~ s#%([0-9a-fA-F]{2})#chr(hex($1))#eg;
 	$f
 }
 
@@ -5172,10 +5223,8 @@ sub git_svn_log_cmd {
 
 # adapted from pager.c
 sub config_pager {
-	$pager ||= $ENV{GIT_PAGER} || $ENV{PAGER};
-	if (!defined $pager) {
-		$pager = 'less';
-	} elsif (length $pager == 0 || $pager eq 'cat') {
+	chomp(my $pager = command_oneline(qw(var GIT_PAGER)));
+	if ($pager eq 'cat') {
 		$pager = undef;
 	}
 	$ENV{GIT_PAGER_IN_USE} = defined($pager);

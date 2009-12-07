@@ -162,4 +162,44 @@ test_expect_success 'empty email' '
 	}
 '
 
+test_expect_success 'del LF before empty (1)' '
+	git show -s --pretty=format:"%s%n%-b%nThanks%n" HEAD^^ >actual &&
+	test $(wc -l <actual) = 2
+'
+
+test_expect_success 'del LF before empty (2)' '
+	git show -s --pretty=format:"%s%n%-b%nThanks%n" HEAD >actual &&
+	test $(wc -l <actual) = 6 &&
+	grep "^$" actual
+'
+
+test_expect_success 'add LF before non-empty (1)' '
+	git show -s --pretty=format:"%s%+b%nThanks%n" HEAD^^ >actual &&
+	test $(wc -l <actual) = 2
+'
+
+test_expect_success 'add LF before non-empty (2)' '
+	git show -s --pretty=format:"%s%+b%nThanks%n" HEAD >actual &&
+	test $(wc -l <actual) = 6 &&
+	grep "^$" actual
+'
+
+test_expect_success '"%h %gD: %gs" is same as git-reflog' '
+	git reflog >expect &&
+	git log -g --format="%h %gD: %gs" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '"%h %gD: %gs" is same as git-reflog (with date)' '
+	git reflog --date=raw >expect &&
+	git log -g --format="%h %gD: %gs" --date=raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%gd shortens ref name' '
+	echo "master@{0}" >expect.gd-short &&
+	git log -g -1 --format=%gd refs/heads/master >actual.gd-short &&
+	test_cmp expect.gd-short actual.gd-short
+'
+
 test_done

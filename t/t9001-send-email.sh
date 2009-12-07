@@ -95,6 +95,40 @@ test_expect_success \
     'Verify commandline' \
     'test_cmp expected commandline1'
 
+test_expect_success 'Send patches with --envelope-sender' '
+    clean_fake_sendmail &&
+     git send-email --envelope-sender="Patch Contributer <patch@example.com>" --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
+'
+
+cat >expected <<\EOF
+!patch@example.com!
+!-i!
+!nobody@example.com!
+!author@example.com!
+!one@example.com!
+!two@example.com!
+EOF
+test_expect_success \
+    'Verify commandline' \
+    'test_cmp expected commandline1'
+
+test_expect_success 'Send patches with --envelope-sender=auto' '
+    clean_fake_sendmail &&
+     git send-email --envelope-sender=auto --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
+'
+
+cat >expected <<\EOF
+!nobody@example.com!
+!-i!
+!nobody@example.com!
+!author@example.com!
+!one@example.com!
+!two@example.com!
+EOF
+test_expect_success \
+    'Verify commandline' \
+    'test_cmp expected commandline1'
+
 cat >expected-show-all-headers <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -767,6 +801,55 @@ test_expect_success 'threading but no chain-reply-to' '
 		--nochain-reply-to \
 		$patches $patches >stdout &&
 	grep "In-Reply-To: " stdout
+'
+
+test_expect_success 'warning with an implicit --chain-reply-to' '
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with an explicit --chain-reply-to' '
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--chain-reply-to \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with an explicit --no-chain-reply-to' '
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--nochain-reply-to \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with sendemail.chainreplyto = false' '
+	git config sendemail.chainreplyto false &&
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with sendemail.chainreplyto = true' '
+	git config sendemail.chainreplyto true &&
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
 '
 
 test_done
