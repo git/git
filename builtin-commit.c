@@ -964,14 +964,15 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
 	wt_status_collect(&s);
 
+	if (s.relative_paths)
+		s.prefix = prefix;
+	if (s.use_color == -1)
+		s.use_color = git_use_color_default;
+	if (diff_use_color_default == -1)
+		diff_use_color_default = git_use_color_default;
+
 	switch (status_format) {
 	case STATUS_FORMAT_SHORT:
-		if (s.relative_paths)
-			s.prefix = prefix;
-		if (s.use_color == -1)
-			s.use_color = git_use_color_default;
-		if (diff_use_color_default == -1)
-			diff_use_color_default = git_use_color_default;
 		wt_shortstatus_print(&s, null_termination);
 		break;
 	case STATUS_FORMAT_PORCELAIN:
@@ -979,12 +980,6 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		break;
 	case STATUS_FORMAT_LONG:
 		s.verbose = verbose;
-		if (s.relative_paths)
-			s.prefix = prefix;
-		if (s.use_color == -1)
-			s.use_color = git_use_color_default;
-		if (diff_use_color_default == -1)
-			diff_use_color_default = git_use_color_default;
 		wt_status_print(&s);
 		break;
 	}
