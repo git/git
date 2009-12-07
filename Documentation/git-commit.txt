@@ -11,7 +11,8 @@ SYNOPSIS
 'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend] [--dry-run]
 	   [(-c | -C) <commit>] [-F <file> | -m <msg>] [--reset-author]
 	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
-	   [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
+	   [--cleanup=<mode>] [--status | --no-status] [--]
+	   [[-i | -o ]<file>...]
 
 DESCRIPTION
 -----------
@@ -206,6 +207,17 @@ specified.
 	Do not create a commit, but show a list of paths that are
 	to be committed, paths with local changes that will be left
 	uncommitted and paths that are untracked.
+
+--status::
+	Include the output of linkgit:git-status[1] in the commit
+	message template when using an editor to prepare the commit
+	message.  Defaults to on, but can be used to override
+	configuration variable commit.status.
+
+--no-status::
+	Do not include the output of linkgit:git-status[1] in the
+	commit message template when using an editor to prepare the
+	default commit message.
 
 \--::
 	Do not interpret any more arguments as options.
