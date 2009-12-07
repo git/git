@@ -16,53 +16,26 @@ set_fake_editor
 
 # set up two branches like this:
 #
-# A - B - C - D - E
+# A - B - C - D - E     (master)
 #   \
-#     F - G - H
+#     F - G - H         (branch1)
 #       \
-#         I
+#         I             (branch2)
 #
-# where B, D and G touch the same file.
+# where A, B, D and G touch the same file.
 
 test_expect_success 'setup' '
-	: > file1 &&
-	git add file1 &&
-	test_tick &&
-	git commit -m A &&
-	git tag A &&
-	echo 1 > file1 &&
-	test_tick &&
-	git commit -m B file1 &&
-	: > file2 &&
-	git add file2 &&
-	test_tick &&
-	git commit -m C &&
-	echo 2 > file1 &&
-	test_tick &&
-	git commit -m D file1 &&
-	: > file3 &&
-	git add file3 &&
-	test_tick &&
-	git commit -m E &&
+	test_commit A file1 &&
+	test_commit B file1 &&
+	test_commit C file2 &&
+	test_commit D file1 &&
+	test_commit E file3 &&
 	git checkout -b branch1 A &&
-	: > file4 &&
-	git add file4 &&
-	test_tick &&
-	git commit -m F &&
-	git tag F &&
-	echo 3 > file1 &&
-	test_tick &&
-	git commit -m G file1 &&
-	: > file5 &&
-	git add file5 &&
-	test_tick &&
-	git commit -m H &&
+	test_commit F file4 &&
+	test_commit G file1 &&
+	test_commit H file5 &&
 	git checkout -b branch2 F &&
-	: > file6 &&
-	git add file6 &&
-	test_tick &&
-	git commit -m I &&
-	git tag I
+	test_commit I file6
 '
 
 test_expect_success 'no changes are a nop' '
@@ -111,19 +84,20 @@ test_expect_success 'exchange two commits' '
 
 cat > expect << EOF
 diff --git a/file1 b/file1
-index e69de29..00750ed 100644
+index f70f10e..fd79235 100644
 --- a/file1
 +++ b/file1
-@@ -0,0 +1 @@
-+3
+@@ -1 +1 @@
+-A
++G
 EOF
 
 cat > expect2 << EOF
 <<<<<<< HEAD
-2
+D
 =======
-3
->>>>>>> b7ca976... G
+G
+>>>>>>> 91201e5... G
 EOF
 
 test_expect_success 'stop on conflicting pick' '
