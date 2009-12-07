@@ -57,5 +57,6 @@ void wt_status_print(struct wt_status *s);
 void wt_status_collect(struct wt_status *s);
 
 void wt_shortstatus_print(struct wt_status *s, int null_termination);
+void wt_porcelain_print(struct wt_status *s, int null_termination);
 
 #endif /* STATUS_H */

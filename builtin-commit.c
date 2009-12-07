@@ -382,7 +382,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 		wt_shortstatus_print(s, null_termination);
 		break;
 	case STATUS_FORMAT_PORCELAIN:
-		wt_shortstatus_print(s, null_termination);
+		wt_porcelain_print(s, null_termination);
 		break;
 	case STATUS_FORMAT_LONG:
 		wt_status_print(s);
@@ -975,7 +975,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		wt_shortstatus_print(&s, null_termination);
 		break;
 	case STATUS_FORMAT_PORCELAIN:
-		wt_shortstatus_print(&s, null_termination);
+		wt_porcelain_print(&s, null_termination);
 		break;
 	case STATUS_FORMAT_LONG:
 		s.verbose = verbose;
