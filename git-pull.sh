@@ -216,7 +216,7 @@ fi
 
 merge_name=$(git fmt-merge-msg $log_arg <"$GIT_DIR/FETCH_HEAD") || exit
 test true = "$rebase" &&
-	exec git rebase $diffstat $strategy_args --onto $merge_head \
+	exec git-rebase $diffstat $strategy_args --onto $merge_head \
 	${oldremoteref:-$merge_head}
-exec git merge $verbosity $diffstat $no_commit $squash $no_ff $ff_only $log_arg $strategy_args \
-	-m "$merge_name" $merge_head
+exec git-merge $diffstat $no_commit $squash $no_ff $ff_only $log_arg $strategy_args \
+	"$merge_name" HEAD $merge_head $verbosity
