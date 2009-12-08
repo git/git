@@ -298,6 +298,24 @@ test_expect_success 'status -s with relative paths' '
 '
 
 cat > expect << \EOF
+ M dir1/modified
+A  dir2/added
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? expect
+?? output
+?? untracked
+EOF
+
+test_expect_success 'status --porcelain ignores relative paths setting' '
+
+	(cd dir1 && git status --porcelain) > output &&
+	test_cmp expect output
+
+'
+
+cat > expect << \EOF
 # On branch master
 # Changes to be committed:
 #   (use "git reset HEAD <file>..." to unstage)
