@@ -394,9 +394,9 @@ sub cmd_clone {
 	$path = basename($url) if !defined $path || !length $path;
 	my $authors_absolute = $_authors ? File::Spec->rel2abs($_authors) : "";
 	cmd_init($url, $path);
-	Git::SVN::fetch_all($Git::SVN::default_repo_id);
 	command_oneline('config', 'svn.authorsfile', $authors_absolute)
 	    if $_authors;
+	Git::SVN::fetch_all($Git::SVN::default_repo_id);
 }
 
 sub cmd_init {
