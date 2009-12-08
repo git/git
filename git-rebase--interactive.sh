@@ -28,6 +28,7 @@ abort              abort rebasing process and restore original branch
 skip               skip current patch and continue rebasing process
 no-verify          override pre-rebase hook from stopping the operation
 root               rebase all reachable commmits up to the root(s)
+autosquash         move commits that begin with squash!/fixup! under -i
 "
 
 . git-sh-setup
@@ -46,6 +47,7 @@ ONTO=
 VERBOSE=
 OK_TO_SKIP_PRE_REBASE=
 REBASE_ROOT=
+AUTOSQUASH=
 
 GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
 mark the corrected paths with 'git add <paths>', and
@@ -519,6 +521,37 @@ get_saved_options () {
 	test -f "$DOTEST"/rebase-root && REBASE_ROOT=t
 }
 
+# Rearrange the todo list that has both "pick sha1 msg" and
+# "pick sha1 fixup!/squash! msg" appears in it so that the latter
+# comes immediately after the former, and change "pick" to
+# "fixup"/"squash".
+rearrange_squash () {
+	sed -n -e 's/^pick \([0-9a-f]*\) \(squash\)! /\1 \2 /p' \
+		-e 's/^pick \([0-9a-f]*\) \(fixup\)! /\1 \2 /p' \
+		"$1" >"$1.sq"
+	test -s "$1.sq" || return
+
+	used=
+	while read pick sha1 message
+	do
+		case " $used" in
+		*" $sha1 "*) continue ;;
+		esac
+		echo "$pick $sha1 $message"
+		while read squash action msg
+		do
+			case "$message" in
+			"$msg"*)
+				echo "$action $squash $action! $msg"
+				used="$used$squash "
+				;;
+			esac
+		done <"$1.sq"
+	done >"$1.rearranged" <"$1"
+	cat "$1.rearranged" >"$1"
+	rm -f "$1.sq" "$1.rearranged"
+}
+
 while test $# != 0
 do
 	case "$1" in
@@ -623,6 +656,9 @@ first and then run 'git rebase --continue' again."
 		;;
 	--root)
 		REBASE_ROOT=t
+		;;
+	--autosquash)
+		AUTOSQUASH=t
 		;;
 	--onto)
 		shift
@@ -783,6 +819,7 @@ first and then run 'git rebase --continue' again."
 		fi
 
 		test -s "$TODO" || echo noop >> "$TODO"
+		test -n "$AUTOSQUASH" && rearrange_squash "$TODO"
 		cat >> "$TODO" << EOF
 
 # Rebase $SHORTREVISIONS onto $SHORTONTO

@@ -308,6 +308,16 @@ which makes little sense.
 	root commits will be rewritten to have <newbase> as parent
 	instead.
 
+--autosquash::
+	When the commit log message begins with "squash! ..." (or
+	"fixup! ..."), and there is a commit whose title begins with
+	the same ..., automatically modify the todo list of rebase -i
+	so that the commit marked for quashing come right after the
+	commit to be modified, and change the action of the moved
+	commit from `pick` to `squash` (or `fixup`).
++
+This option is only valid when '--interactive' option is used.
+
 include::merge-strategies.txt[]
 
 NOTES
