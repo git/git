@@ -3891,11 +3891,11 @@ sub delete_entry {
 		}
 		print "\tD\t$gpath/\n" unless $::_q;
 		command_close_pipe($ls, $ctx);
-		$self->{empty}->{$path} = 0
 	} else {
 		$self->{gii}->remove($gpath);
 		print "\tD\t$gpath\n" unless $::_q;
 	}
+	$self->{empty}->{$path} = 0;
 	undef;
 }
 
