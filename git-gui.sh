@@ -3266,7 +3266,7 @@ set ui_diff_applyhunk [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
 $ctxm add command \
 	-label [mc "Apply/Reverse Line"] \
-	-command {apply_line $cursorX $cursorY; do_rescan}
+	-command {apply_range_or_line $cursorX $cursorY; do_rescan}
 set ui_diff_applyline [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyline -state]
 $ctxm add separator
@@ -3348,12 +3348,21 @@ proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 	} elseif {$::is_submodule_diff} {
 		tk_popup $ctxmsm $X $Y
 	} else {
+		set has_range [expr {[$::ui_diff tag nextrange sel 0.0] != {}}]
 		if {$::ui_index eq $::current_diff_side} {
 			set l [mc "Unstage Hunk From Commit"]
-			set t [mc "Unstage Line From Commit"]
+			if {$has_range} {
+				set t [mc "Unstage Lines From Commit"]
+			} else {
+				set t [mc "Unstage Line From Commit"]
+			}
 		} else {
 			set l [mc "Stage Hunk For Commit"]
-			set t [mc "Stage Line For Commit"]
+			if {$has_range} {
+				set t [mc "Stage Lines For Commit"]
+			} else {
+				set t [mc "Stage Line For Commit"]
+			}
 		}
 		if {$::is_3way_diff
 			|| $current_diff_path eq {}
