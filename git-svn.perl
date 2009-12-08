@@ -2748,7 +2748,8 @@ sub mkemptydirs {
 		} elsif (/^  \+empty_dir: (.+)$/) {
 			$empty_dirs{$1} = 1;
 		} elsif (/^  \-empty_dir: (.+)$/) {
-			delete $empty_dirs{$1};
+			my @d = grep {m[^\Q$1\E(/|$)]} (keys %empty_dirs);
+			delete @empty_dirs{@d};
 		}
 	}
 	close $fh;
