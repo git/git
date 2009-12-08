@@ -208,6 +208,17 @@ test_set_editor () {
 	export VISUAL
 }
 
+test_decode_color () {
+	sed	-e 's/.\[1m/<WHITE>/g' \
+		-e 's/.\[31m/<RED>/g' \
+		-e 's/.\[32m/<GREEN>/g' \
+		-e 's/.\[33m/<YELLOW>/g' \
+		-e 's/.\[34m/<BLUE>/g' \
+		-e 's/.\[35m/<MAGENTA>/g' \
+		-e 's/.\[36m/<CYAN>/g' \
+		-e 's/.\[m/<RESET>/g'
+}
+
 test_tick () {
 	if test -z "${test_tick+set}"
 	then
