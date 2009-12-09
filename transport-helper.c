@@ -22,6 +22,10 @@ struct helper_data
 	/* These go from remote name (as in "list") to private name */
 	struct refspec *refspecs;
 	int refspec_nr;
+	/* Transport options for fetch-pack/send-pack (should one of
+	 * those be invoked).
+	 */
+	struct git_transport_options transport_options;
 };
 
 static void sendline(struct helper_data *helper, struct strbuf *buffer)
@@ -81,6 +85,7 @@ static struct child_process *get_helper(struct transport *transport)
 	const char **refspecs = NULL;
 	int refspec_nr = 0;
 	int refspec_alloc = 0;
+	int duped;
 
 	if (data->helper)
 		return data->helper;
@@ -99,9 +104,19 @@ static struct child_process *get_helper(struct transport *transport)
 		die("Unable to run helper: git %s", helper->argv[0]);
 	data->helper = helper;
 
+	/*
+	 * Open the output as FILE* so strbuf_getline() can be used.
+	 * Do this with duped fd because fclose() will close the fd,
+	 * and stuff like taking over will require the fd to remain.
+	 *
+	 */
+	duped = dup(helper->out);
+	if (duped < 0)
+		die_errno("Can't dup helper output fd");
+	data->out = xfdopen(duped, "r");
+
 	write_constant(helper->in, "capabilities\n");
 
-	data->out = xfdopen(helper->out, "r");
 	while (1) {
 		const char *capname;
 		int mandatory = 0;
@@ -163,6 +178,7 @@ static int disconnect_helper(struct transport *transport)
 		strbuf_addf(&buf, "\n");
 		sendline(data, &buf);
 		close(data->helper->in);
+		close(data->helper->out);
 		fclose(data->out);
 		finish_command(data->helper);
 		free((char *)data->helper->argv[0]);
@@ -583,5 +599,6 @@ int transport_helper_init(struct transport *transport, const char *name)
 	transport->fetch = fetch;
 	transport->push_refs = push_refs;
 	transport->disconnect = release_helper;
+	transport->smart_options = &(data->transport_options);
 	return 0;
 }
