@@ -90,6 +90,9 @@ add_desc () {
 	while :
 	do
 		other=$1
+		case "$other" in
+		"#EPO-"*) other="early parts of ${other#"#EPO-"}"
+		esac
 		shift
 		case "$#,$others" in
 		0,)
@@ -125,11 +128,13 @@ show_topic () {
 	fi
 }
 
+# List commits that are shared between more than one topic branches
 while read b
 do
 	git rev-list --no-merges "master..$b"
 done <"$tmp.branches" | sort | uniq -d >"$tmp.shared"
 
+# Set of branches related to each other due to sharing the same commit
 while read shared
 do
 	b=$(git branch --contains "$shared" | sed -n -e 's/^..//' -e '/\//p')
@@ -141,7 +146,7 @@ while read b
 do
 	related=$(grep " $b " "$tmp.related" | tr ' ' '\012' | sort -u | sed -e '/^$/d')
 
-	based_on=
+	based_on= based_on_msg=
 	used_by=
 	forks=
 	same_as=
@@ -158,12 +163,19 @@ do
 				;;
 			0,*)
 				based_on="$based_on$r "
+				based_on_msg="$based_on_msg$r "
 				;;
 			*,0)
 				used_by="$used_by$r "
 				;;
 			*,*)
-				forks="$forks$r "
+				if test $based -lt $bases
+				then
+					based_on="$based_on$r "
+					based_on_msg="${based_on_msg}#EPO-$r "
+				else
+					forks="$forks$r "
+				fi
 				;;
 			esac
 		done
@@ -174,9 +186,9 @@ do
 
 		description=
 		test -z "$same_as" || add_desc 'is same as' $same_as
-		test -z "$based_on" || add_desc 'uses' $based_on
+		test -z "$based_on" || add_desc 'uses' $based_on_msg
 		test -z "$used_by" || add_desc 'is used by' $used_by
-		test -z "$forks" || add_desc 'is related to' $forks
+		test -z "$forks" || add_desc 'shares commits with' $forks
 
 		test -z "$description" ||
 		echo " (this branch$description.)"
