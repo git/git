@@ -63,6 +63,16 @@ static void write_constant(int fd, const char *str)
 		die_errno("Full write to remote helper failed");
 }
 
+const char *remove_ext_force(const char *url)
+{
+	if (url) {
+		const char *colon = strchr(url, ':');
+		if (colon && colon[1] == ':')
+			return colon + 2;
+	}
+	return url;
+}
+
 static struct child_process *get_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
@@ -83,7 +93,7 @@ static struct child_process *get_helper(struct transport *transport)
 	strbuf_addf(&buf, "remote-%s", data->name);
 	helper->argv[0] = strbuf_detach(&buf, NULL);
 	helper->argv[1] = transport->remote->name;
-	helper->argv[2] = transport->url;
+	helper->argv[2] = remove_ext_force(transport->url);
 	helper->git_cmd = 1;
 	if (start_command(helper))
 		die("Unable to run helper: git %s", helper->argv[0]);
