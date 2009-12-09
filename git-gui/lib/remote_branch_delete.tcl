@@ -250,6 +250,8 @@ method _write_url        {args} { set urltype url    }
 method _write_check_head {args} { set checktype head }
 
 method _write_head_list {args} {
+	global current_branch
+
 	$head_m delete 0 end
 	foreach abr $head_list {
 		$head_m insert end radiobutton \
@@ -258,7 +260,11 @@ method _write_head_list {args} {
 			-variable @check_head
 	}
 	if {[lsearch -exact -sorted $head_list $check_head] < 0} {
-		set check_head {}
+		if {[lsearch -exact -sorted $head_list $current_branch] < 0} {
+			set check_head {}
+		} else {
+			set check_head $current_branch
+		}
 	}
 }
 
