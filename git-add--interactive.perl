@@ -1217,7 +1217,11 @@ sub patch_update_file {
 	if (@{$mode->{TEXT}}) {
 		unshift @hunk, $mode;
 	}
-	if (@{$deletion->{TEXT}} && !@hunk) {
+	if (@{$deletion->{TEXT}}) {
+		foreach my $hunk (@hunk) {
+			push @{$deletion->{TEXT}}, @{$hunk->{TEXT}};
+			push @{$deletion->{DISPLAY}}, @{$hunk->{DISPLAY}};
+		}
 		@hunk = ($deletion);
 	}
 
