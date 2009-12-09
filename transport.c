@@ -395,41 +395,35 @@ static int close_bundle(struct transport *transport)
 }
 
 struct git_transport_data {
-	unsigned thin : 1;
-	unsigned keep : 1;
-	unsigned followtags : 1;
-	int depth;
+	struct git_transport_options options;
 	struct child_process *conn;
 	int fd[2];
-	const char *uploadpack;
-	const char *receivepack;
 	struct extra_have_objects extra_have;
 };
 
-static int set_git_option(struct transport *connection,
+static int set_git_option(struct git_transport_options *opts,
 			  const char *name, const char *value)
 {
-	struct git_transport_data *data = connection->data;
 	if (!strcmp(name, TRANS_OPT_UPLOADPACK)) {
-		data->uploadpack = value;
+		opts->uploadpack = value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_RECEIVEPACK)) {
-		data->receivepack = value;
+		opts->receivepack = value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_THIN)) {
-		data->thin = !!value;
+		opts->thin = !!value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_FOLLOWTAGS)) {
-		data->followtags = !!value;
+		opts->followtags = !!value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_KEEP)) {
-		data->keep = !!value;
+		opts->keep = !!value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_DEPTH)) {
 		if (!value)
-			data->depth = 0;
+			opts->depth = 0;
 		else
-			data->depth = atoi(value);
+			opts->depth = atoi(value);
 		return 0;
 	}
 	return 1;
@@ -439,7 +433,8 @@ static int connect_setup(struct transport *transport, int for_push, int verbose)
 {
 	struct git_transport_data *data = transport->data;
 	data->conn = git_connect(data->fd, transport->url,
-				 for_push ? data->receivepack : data->uploadpack,
+				 for_push ? data->options.receivepack :
+				 data->options.uploadpack,
 				 verbose ? CONNECT_VERBOSE : 0);
 	return 0;
 }
@@ -469,15 +464,15 @@ static int fetch_refs_via_pack(struct transport *transport,
 	struct ref *refs_tmp = NULL;
 
 	memset(&args, 0, sizeof(args));
-	args.uploadpack = data->uploadpack;
-	args.keep_pack = data->keep;
+	args.uploadpack = data->options.uploadpack;
+	args.keep_pack = data->options.keep;
 	args.lock_pack = 1;
-	args.use_thin_pack = data->thin;
-	args.include_tag = data->followtags;
+	args.use_thin_pack = data->options.thin;
+	args.include_tag = data->options.followtags;
 	args.verbose = (transport->verbose > 0);
 	args.quiet = (transport->verbose < 0);
 	args.no_progress = args.quiet || (!transport->progress && !isatty(1));
-	args.depth = data->depth;
+	args.depth = data->options.depth;
 
 	for (i = 0; i < nr_heads; i++)
 		origh[i] = heads[i] = xstrdup(to_fetch[i]->name);
@@ -734,7 +729,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	memset(&args, 0, sizeof(args));
 	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
 	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
-	args.use_thin_pack = data->thin;
+	args.use_thin_pack = data->options.thin;
 	args.verbose = !!(flags & TRANSPORT_PUSH_VERBOSE);
 	args.quiet = !!(flags & TRANSPORT_PUSH_QUIET);
 	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
@@ -847,12 +842,14 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->get_refs_list = get_refs_via_rsync;
 		ret->fetch = fetch_objs_via_rsync;
 		ret->push = rsync_transport_push;
+		ret->smart_options = NULL;
 	} else if (is_local(url) && is_file(url)) {
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
 		ret->data = data;
 		ret->get_refs_list = get_refs_from_bundle;
 		ret->fetch = fetch_refs_from_bundle;
 		ret->disconnect = close_bundle;
+		ret->smart_options = NULL;
 	} else if (!is_url(url)
 		|| !prefixcmp(url, "file://")
 		|| !prefixcmp(url, "git://")
@@ -862,20 +859,14 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		/* These are builtin smart transports. */
 		struct git_transport_data *data = xcalloc(1, sizeof(*data));
 		ret->data = data;
-		ret->set_option = set_git_option;
+		ret->set_option = NULL;
 		ret->get_refs_list = get_refs_via_connect;
 		ret->fetch = fetch_refs_via_pack;
 		ret->push_refs = git_transport_push;
 		ret->disconnect = disconnect_git;
+		ret->smart_options = &(data->options);
 
-		data->thin = 1;
 		data->conn = NULL;
-		data->uploadpack = "git-upload-pack";
-		if (remote->uploadpack)
-			data->uploadpack = remote->uploadpack;
-		data->receivepack = "git-receive-pack";
-		if (remote->receivepack)
-			data->receivepack = remote->receivepack;
 	} else if (!prefixcmp(url, "http://")
 		|| !prefixcmp(url, "https://")
 		|| !prefixcmp(url, "ftp://")) {
@@ -893,14 +884,39 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		transport_helper_init(ret, handler);
 	}
 
+	if (ret->smart_options) {
+		ret->smart_options->thin = 1;
+		ret->smart_options->uploadpack = "git-upload-pack";
+		if (remote->uploadpack)
+			ret->smart_options->uploadpack = remote->uploadpack;
+		ret->smart_options->receivepack = "git-receive-pack";
+		if (remote->receivepack)
+			ret->smart_options->receivepack = remote->receivepack;
+	}
+
 	return ret;
 }
 
 int transport_set_option(struct transport *transport,
 			 const char *name, const char *value)
 {
+	int git_reports = 1, protocol_reports = 1;
+
+	if (transport->smart_options)
+		git_reports = set_git_option(transport->smart_options,
+					     name, value);
+
 	if (transport->set_option)
-		return transport->set_option(transport, name, value);
+		protocol_reports = transport->set_option(transport, name,
+							value);
+
+	/* If either report is 0, report 0 (success). */
+	if (!git_reports || !protocol_reports)
+		return 0;
+	/* If either reports -1 (invalid value), report -1. */
+	if ((git_reports == -1) || (protocol_reports == -1))
+		return -1;
+	/* Otherwise if both report unknown, report unknown. */
 	return 1;
 }
 

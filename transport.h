@@ -4,6 +4,15 @@
 #include "cache.h"
 #include "remote.h"
 
+struct git_transport_options {
+	unsigned thin : 1;
+	unsigned keep : 1;
+	unsigned followtags : 1;
+	int depth;
+	const char *uploadpack;
+	const char *receivepack;
+};
+
 struct transport {
 	struct remote *remote;
 	const char *url;
@@ -65,6 +74,12 @@ struct transport {
 	signed verbose : 3;
 	/* Force progress even if the output is not a tty */
 	unsigned progress : 1;
+	/*
+	 * If transport is at least potentially smart, this points to
+	 * git_transport_options structure to use in case transport
+	 * actually turns out to be smart.
+	 */
+	struct git_transport_options *smart_options;
 };
 
 #define TRANSPORT_PUSH_ALL 1
