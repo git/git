@@ -756,6 +756,17 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	return ret;
 }
 
+static int connect_git(struct transport *transport, const char *name,
+		       const char *executable, int fd[2])
+{
+	struct git_transport_data *data = transport->data;
+	data->conn = git_connect(data->fd, transport->url,
+				 executable, 0);
+	fd[0] = data->fd[0];
+	fd[1] = data->fd[1];
+	return 0;
+}
+
 static int disconnect_git(struct transport *transport)
 {
 	struct git_transport_data *data = transport->data;
@@ -901,6 +912,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->get_refs_list = get_refs_via_connect;
 		ret->fetch = fetch_refs_via_pack;
 		ret->push_refs = git_transport_push;
+		ret->connect = connect_git;
 		ret->disconnect = disconnect_git;
 		ret->smart_options = &(data->options);
 
@@ -1059,6 +1071,15 @@ void transport_unlock_pack(struct transport *transport)
 		free(transport->pack_lockfile);
 		transport->pack_lockfile = NULL;
 	}
+}
+
+int transport_connect(struct transport *transport, const char *name,
+		      const char *exec, int fd[2])
+{
+	if (transport->connect)
+		return transport->connect(transport, name, exec, fd);
+	else
+		die("Operation not supported by protocol");
 }
 
 int transport_disconnect(struct transport *transport)

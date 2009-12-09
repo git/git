@@ -5,6 +5,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "archive.h"
+#include "transport.h"
 #include "parse-options.h"
 #include "pkt-line.h"
 #include "sideband.h"
@@ -25,12 +26,16 @@ static void create_output_file(const char *output_file)
 static int run_remote_archiver(int argc, const char **argv,
 			       const char *remote, const char *exec)
 {
-	char *url, buf[LARGE_PACKET_MAX];
+	char buf[LARGE_PACKET_MAX];
 	int fd[2], i, len, rv;
-	struct child_process *conn;
+	struct transport *transport;
+	struct remote *_remote;
 
-	url = xstrdup(remote);
-	conn = git_connect(fd, url, exec, 0);
+	_remote = remote_get(remote);
+	if (!_remote->url[0])
+		die("git archive: Remote with no URL");
+	transport = transport_get(_remote, _remote->url[0]);
+	transport_connect(transport, "git-upload-archive", exec, fd);
 
 	for (i = 1; i < argc; i++)
 		packet_write(fd[1], "argument %s\n", argv[i]);
@@ -53,9 +58,7 @@ static int run_remote_archiver(int argc, const char **argv,
 
 	/* Now, start reading from fd[0] and spit it out to stdout */
 	rv = recv_sideband("archive", fd[0], 1);
-	close(fd[0]);
-	close(fd[1]);
-	rv |= finish_connect(conn);
+	rv |= transport_disconnect(transport);
 
 	return !!rv;
 }
