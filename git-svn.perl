@@ -392,9 +392,11 @@ sub cmd_clone {
 		$path = $url;
 	}
 	$path = basename($url) if !defined $path || !length $path;
+	my $authors_absolute = $_authors ? File::Spec->rel2abs($_authors) : "";
 	cmd_init($url, $path);
+	command_oneline('config', 'svn.authorsfile', $authors_absolute)
+	    if $_authors;
 	Git::SVN::fetch_all($Git::SVN::default_repo_id);
-	command_oneline('config', 'svn.authorsfile', $_authors) if $_authors;
 }
 
 sub cmd_init {
@@ -2748,7 +2750,8 @@ sub mkemptydirs {
 		} elsif (/^  \+empty_dir: (.+)$/) {
 			$empty_dirs{$1} = 1;
 		} elsif (/^  \-empty_dir: (.+)$/) {
-			delete $empty_dirs{$1};
+			my @d = grep {m[^\Q$1\E(/|$)]} (keys %empty_dirs);
+			delete @empty_dirs{@d};
 		}
 	}
 	close $fh;
@@ -2940,10 +2943,14 @@ sub find_extra_svk_parents {
 			if ( my $commit = $gs->rev_map_get($rev, $uuid) ) {
 				# wahey!  we found it, but it might be
 				# an old one (!)
-				push @known_parents, $commit;
+				push @known_parents, [ $rev, $commit ];
 			}
 		}
 	}
+	# Ordering matters; highest-numbered commit merge tickets
+	# first, as they may account for later merge ticket additions
+	# or changes.
+	@known_parents = map {$_->[1]} sort {$b->[0] <=> $a->[0]} @known_parents;
 	for my $parent ( @known_parents ) {
 		my @cmd = ('rev-list', $parent, map { "^$_" } @$parents );
 		my ($msg_fh, $ctx) = command_output_pipe(@cmd);
@@ -3886,11 +3893,11 @@ sub delete_entry {
 		}
 		print "\tD\t$gpath/\n" unless $::_q;
 		command_close_pipe($ls, $ctx);
-		$self->{empty}->{$path} = 0
 	} else {
 		$self->{gii}->remove($gpath);
 		print "\tD\t$gpath\n" unless $::_q;
 	}
+	$self->{empty}->{$path} = 0;
 	undef;
 }
 

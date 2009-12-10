@@ -105,4 +105,14 @@ test_expect_success 'empty directories in trunk exist' '
 	)
 '
 
+test_expect_success 'remove a top-level directory from svn' '
+	svn_cmd rm -m "remove d" "$svnrepo"/d
+'
+
+test_expect_success 'removed top-level directory does not exist' '
+	git svn clone "$svnrepo" removed &&
+	test ! -e removed/d
+
+'
+
 test_done

@@ -2052,6 +2052,11 @@ proc do_quit {{rc {1}}} {
 	}
 
 	set ret_code $rc
+
+	# Briefly enable send again, working around Tk bug
+	# http://sourceforge.net/tracker/?func=detail&atid=112997&aid=1821174&group_id=12997
+	tk appname [appname]
+
 	destroy .
 }
 
