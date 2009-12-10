@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2009, #03; Tue, 08)
-X-master-at: f9ad77a739c0d012ee58b64eda2d7ec0d4e1df9d
-X-next-at: 3c2c08adfbff17e13665b5151a337380f57275d8
+Subject: What's cooking in git.git (Dec 2009, #04; Wed, 09)
+X-master-at: 80d93611c55fec171e0d9aba98db079952f9d7aa
+X-next-at: 245e2a65f71e0255a90a3c45ea82bcdd19f85eff
 
-What's cooking in git.git (Dec 2009, #03; Tue, 08)
+What's cooking in git.git (Dec 2009, #04; Wed, 09)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,32 +12,7 @@ marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
 --------------------------------------------------
-[New Topics]
-
-* bg/maint-add-all-doc (2009-12-07) 4 commits.
- - squash! rm documentation--also mention add-u where we mention commit-a
- - git-rm doc: Describe how to sync index & work tree
- - git-add/rm doc: Consistently back-quote
- - Documentation: 'git add -A' can remove files
-
-I didn't like the existing documentation for "add -u" myself (especially
-because I wrote the initial version) and this neatly fix it as well.
-
-* il/vcs-helper (2009-12-06) 8 commits
- - Remove special casing of http, https and ftp
- - Support remote archive from external protocol helpers
- - Support remote helpers implementing smart transports
- - Support taking over transports
- - Refactor git transport options parsing
- - Pass unknown protocols to external protocol handlers
- - Support mandatory capabilities
- - Add remote helper debug mode
- (this branch is related to sr/vcs-helper.)
-
-Under active discussion and review; another round expected.
-
-* jh/commit-status (2009-12-07) 1 commit
- - [test?] Add commit.status, --status, and --no-status
+[Graduated to "master"]
 
 * jk/maint-add-p-delete-fix (2009-12-08) 1 commit.
   (merged to 'next' on 2009-12-08 at 3c2c08a)
@@ -45,12 +20,33 @@ Under active discussion and review; another round expected.
 
 Fixes a regression in 1.6.5.3.
 
-* mm/diag-path-in-treeish (2009-12-07) 1 commit
- - Detailed diagnosis when parsing an object name fails.
+* jn/maint-pull-rebase-error-message (2009-11-27) 1 commit.
+  (merged to 'next' on 2009-12-03 at 2ced03c)
+ + pull: clarify advice for the unconfigured error case
 
-* ns/rebase-auto-squash (2009-12-08) 1 commit
- - rebase -i --autosquash: auto-squash commits
- (this branch uses mh/rebase-fixup.)
+Replaces old 'jn/rfc-pull-rebase-error-message' topic.
+
+--------------------------------------------------
+[New Topics]
+
+* cc/reset-more (2009-12-08) 6 commits
+ - Documentation: reset: add some tables to describe the different options
+ - Documentation: reset: describe new "--keep-local-changes" option
+ - reset: add test cases for "--keep-local-changes" option
+ - reset: add option "--keep-local-changes" to "git reset"
+ - reset: use "unpack_trees()" directly instead of "git read-tree"
+ - reset: add a few tests for "git reset --merge"
+
+The documentation is much clearer than the previous round in describing
+what it does, but I find it a bit unclear in describing what it is _good_
+for (iow, scenarios and use cases).
+
+Breaks 'pu' and does not pass test on its own yet.
+
+* tr/http-push-ref-status (2009-12-08) 3 commits
+ - transport-helper.c::push_refs(): emit "no refs" error message
+ - transport.c::transport_push(): make ref status affect return value
+ - refactor ref status logic for pushing
 
 --------------------------------------------------
 [Stalled]
@@ -97,15 +93,41 @@ This has some stupid bugs and reverted from 'next' until I can fix it, but
 the "temporarily" turned out to be very loooong.  Sigh.  We won't have a
 proper fix in 1.6.6.
 
-* jc/grep-full-tree (2009-11-24) 1 commit.
- - grep: --full-tree
-
-The interaction with this option and pathspecs need to be worked out
-better.  I _think_ "grep --full-tree -e pattern -- '*.h'" should find from
-all the header files in the tree, for example.
-
 --------------------------------------------------
 [Cooking]
+
+* bg/maint-add-all-doc (2009-12-07) 4 commits.
+ - squash! rm documentation--also mention add-u where we mention commit-a
+ - git-rm doc: Describe how to sync index & work tree
+ - git-add/rm doc: Consistently back-quote
+ - Documentation: 'git add -A' can remove files
+
+I didn't like the existing documentation for "add -u" myself (especially
+because I wrote the initial version) and this neatly fix it as well.
+
+* il/vcs-helper (2009-12-09) 8 commits
+ - Remove special casing of http, https and ftp
+ - Support remote archive from all smart transports
+ - Support remote helpers implementing smart transports
+ - Support taking over transports
+ - Refactor git transport options parsing
+ - Pass unknown protocols to external protocol handlers
+ - Support mandatory capabilities
+ - Add remote helper debug mode
+ (this branch uses early parts of sr/vcs-helper.)
+
+Yet another round.
+
+* jh/commit-status (2009-12-07) 1 commit
+ - [test?] Add commit.status, --status, and --no-status
+
+* mm/diag-path-in-treeish (2009-12-07) 1 commit
+ - Detailed diagnosis when parsing an object name fails.
+
+* ns/rebase-auto-squash (2009-12-08) 2 commits
+ - fixup! rebase -i --autosquash
+ - rebase -i --autosquash: auto-squash commits
+ (this branch uses mh/rebase-fixup.)
 
 * jh/notes (2009-12-07) 11 commits
  - Refactor notes concatenation into a flexible interface for combining notes
@@ -121,12 +143,6 @@ all the header files in the tree, for example.
  - fast-import: Proper notes tree manipulation
 
 Rerolled and under discussion.
-
-* jn/maint-pull-rebase-error-message (2009-11-27) 1 commit.
-  (merged to 'next' on 2009-12-03 at 2ced03c)
- + pull: clarify advice for the unconfigured error case
-
-Replaces old 'jn/rfc-pull-rebase-error-message' topic.
 
 * fc/opt-quiet-gc-reset (2009-12-02) 1 commit
  - General --quiet improvements
@@ -209,7 +225,7 @@ Comments?
  + Use a function to determine whether a remote is valid
  + Allow programs to not depend on remotes having urls
  + Fix memory leak in helper method for disconnect
- (this branch is related to il/vcs-helper.)
+ (this branch shares commits with il/vcs-helper.)
 
 Should be among the first to graduate after 1.6.6 final.
 
@@ -254,7 +270,10 @@ Fix-up expected.
 --------------------------------------------------
 [For 1.7.0]
 
-* jk/1.7.0-status (2009-12-07) 11 commits.
+* jk/1.7.0-status (2009-12-08) 13 commits.
+  (merged to 'next' on 2009-12-08 at 9b57d84)
+ + t7508-status: test all modes with color
+ + t7508-status: status --porcelain ignores relative paths setting
   (merged to 'next' on 2009-12-07 at 7723acf)
  + status: reduce duplicated setup code
  + status: disable color for porcelain format
@@ -278,7 +297,7 @@ is similar to that of post 1.7.0 "git status".
 
 Immediately after 1.6.6 while rebuilding 'next', we may want to reorder a
 few commits at the tip, as "docs: affects only long format" describes a
-limitation that will disappear soon.
+limitation that has disappeared.
 
 * jc/1.7.0-status (2009-09-05) 4 commits.
   (merged to 'next' on 2009-10-11 at 9558627)
@@ -358,3 +377,13 @@ fix from Ramsay is already in 'master'.
 
 Reverted out of 'next', to be replaced with jn/faster-completion-startup
 topic.
+
+--------------------------------------------------
+[Haven't been purged from 'pu' yet]
+
+* jc/grep-full-tree (2009-11-24) 1 commit.
+ - grep: --full-tree
+
+The interaction with this option and pathspecs need to be worked out
+better.  I _think_ "grep --full-tree -e pattern -- '*.h'" should find from
+all the header files in the tree, for example.
