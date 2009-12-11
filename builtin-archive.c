@@ -106,13 +106,17 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 	if (format) {
 		sprintf(fmt_opt, "--format=%s", format);
 		/*
-		 * This is safe because either --format and/or --output must
-		 * have been given on the original command line if we get to
-		 * this point, and parse_options() must have eaten at least
-		 * one argument, i.e. we have enough room to append to argv[].
+		 * We have enough room in argv[] to muck it in place,
+		 * because either --format and/or --output must have
+		 * been given on the original command line if we get
+		 * to this point, and parse_options() must have eaten
+		 * it, i.e. we can add back one element to the array.
+		 * But argv[] may contain "--"; we should make it the
+		 * first option.
 		 */
-		argv[argc++] = fmt_opt;
-		argv[argc] = NULL;
+		memmove(argv + 2, argv + 1, sizeof(*argv) * argc);
+		argv[1] = fmt_opt;
+		argv[++argc] = NULL;
 	}
 
 	if (remote)

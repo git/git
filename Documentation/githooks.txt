@@ -310,35 +310,6 @@ Both standard output and standard error output are forwarded to
 'git-send-pack' on the other end, so you can simply `echo` messages
 for the user.
 
-post-upload-pack
-----------------
-
-After upload-pack successfully finishes its operation, this hook is called
-for logging purposes.
-
-The hook is passed various pieces of information, one per line, from its
-standard input.  Currently the following items can be fed to the hook, but
-more types of information may be added in the future:
-
-want SHA-1::
-    40-byte hexadecimal object name the client asked to include in the
-    resulting pack.  Can occur one or more times in the input.
-
-have SHA-1::
-    40-byte hexadecimal object name the client asked to exclude from
-    the resulting pack, claiming to have them already.  Can occur zero
-    or more times in the input.
-
-time float::
-    Number of seconds spent for creating the packfile.
-
-size decimal::
-    Size of the resulting packfile in bytes.
-
-kind string:
-    Either "clone" (when the client did not give us any "have", and asked
-    for all our refs with "want"), or "fetch" (otherwise).
-
 pre-auto-gc
 ~~~~~~~~~~~
 
