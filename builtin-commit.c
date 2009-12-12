@@ -36,7 +36,7 @@ static const char * const builtin_status_usage[] = {
 	NULL
 };
 
-static unsigned char head_sha1[20], merge_head_sha1[20];
+static unsigned char head_sha1[20];
 static char *use_message_buffer;
 static const char commit_editmsg[] = "COMMIT_EDITMSG";
 static struct lock_file index_lock; /* real index */
@@ -319,7 +319,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	 */
 	commit_style = COMMIT_PARTIAL;
 
-	if (file_exists(git_path("MERGE_HEAD")))
+	if (in_merge)
 		die("cannot do a partial commit during a merge.");
 
 	memset(&partial, 0, sizeof(partial));
@@ -758,9 +758,6 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	if (get_sha1("HEAD", head_sha1))
 		initial_commit = 1;
 
-	if (!get_sha1("MERGE_HEAD", merge_head_sha1))
-		in_merge = 1;
-
 	/* Sanity check options */
 	if (amend && initial_commit)
 		die("You have nothing to amend.");
@@ -951,6 +948,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	wt_status_prepare(&s);
 	git_config(git_status_config, &s);
+	in_merge = file_exists(git_path("MERGE_HEAD"));
 	argc = parse_options(argc, argv, prefix,
 			     builtin_status_options,
 			     builtin_status_usage, 0);
@@ -1057,10 +1055,10 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	wt_status_prepare(&s);
 	git_config(git_commit_config, &s);
+	in_merge = file_exists(git_path("MERGE_HEAD"));
 
 	if (s.use_color == -1)
 		s.use_color = git_use_color_default;
-
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage,
 					  prefix, &s);
 	if (dry_run) {
