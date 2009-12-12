@@ -47,8 +47,11 @@ void wt_status_prepare(struct wt_status *s)
 static void wt_status_print_unmerged_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
+
 	color_fprintf_ln(s->fp, c, "# Unmerged paths:");
-	if (!s->is_initial)
+	if (s->in_merge)
+		;
+	else if (!s->is_initial)
 		color_fprintf_ln(s->fp, c, "#   (use \"git reset %s <file>...\" to unstage)", s->reference);
 	else
 		color_fprintf_ln(s->fp, c, "#   (use \"git rm --cached <file>...\" to unstage)");
@@ -59,12 +62,14 @@ static void wt_status_print_unmerged_header(struct wt_status *s)
 static void wt_status_print_cached_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
+
 	color_fprintf_ln(s->fp, c, "# Changes to be committed:");
-	if (!s->is_initial) {
+	if (s->in_merge)
+		; /* NEEDSWORK: use "git reset --unresolve"??? */
+	else if (!s->is_initial)
 		color_fprintf_ln(s->fp, c, "#   (use \"git reset %s <file>...\" to unstage)", s->reference);
-	} else {
+	else
 		color_fprintf_ln(s->fp, c, "#   (use \"git rm --cached <file>...\" to unstage)");
-	}
 	color_fprintf_ln(s->fp, c, "#");
 }
 
@@ -72,6 +77,7 @@ static void wt_status_print_dirty_header(struct wt_status *s,
 					 int has_deleted)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
+
 	color_fprintf_ln(s->fp, c, "# Changed but not updated:");
 	if (!has_deleted)
 		color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to update what will be committed)");

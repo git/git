@@ -34,6 +34,7 @@ struct wt_status {
 	const char **pathspec;
 	int verbose;
 	int amend;
+	int in_merge;
 	int nowarn;
 	int use_color;
 	int relative_paths;

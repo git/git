@@ -960,6 +960,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	read_cache();
 	refresh_cache(REFRESH_QUIET|REFRESH_UNMERGED);
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
+	s.in_merge = in_merge;
 	wt_status_collect(&s);
 
 	if (s.relative_paths)
@@ -1056,6 +1057,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	wt_status_prepare(&s);
 	git_config(git_commit_config, &s);
 	in_merge = file_exists(git_path("MERGE_HEAD"));
+	s.in_merge = in_merge;
 
 	if (s.use_color == -1)
 		s.use_color = git_use_color_default;
