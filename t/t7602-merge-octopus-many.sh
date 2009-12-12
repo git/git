@@ -82,4 +82,22 @@ test_expect_success 'merge up-to-date output uses pretty names' '
 	git merge c4 c5 >actual &&
 	test_cmp actual expected
 '
+
+cat >expected <<\EOF
+Fast-forwarding to: c1
+Trying simple merge with c2
+Merge made by octopus.
+ c1.c |    1 +
+ c2.c |    1 +
+ 2 files changed, 2 insertions(+), 0 deletions(-)
+ create mode 100644 c1.c
+ create mode 100644 c2.c
+EOF
+
+test_expect_success 'merge fast-forward output uses pretty names' '
+	git reset --hard c0 &&
+	git merge c1 c2 >actual &&
+	test_cmp actual expected
+'
+
 test_done

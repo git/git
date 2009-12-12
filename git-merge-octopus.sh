@@ -44,7 +44,7 @@ esac
 # MRC is the current "merge reference commit"
 # MRT is the current "merge result tree"
 
-MRC=$head MSG= PARENT="-p $head"
+MRC=$(git rev-parse --verify -q $head) MSG= PARENT="-p $head"
 MRT=$(git write-tree)
 CNT=1 ;# counting our head
 NON_FF_MERGE=0
