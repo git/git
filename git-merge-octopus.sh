@@ -44,9 +44,8 @@ esac
 # MRC is the current "merge reference commit"
 # MRT is the current "merge result tree"
 
-MRC=$(git rev-parse --verify -q $head) MSG= PARENT="-p $head"
+MRC=$(git rev-parse --verify -q $head)
 MRT=$(git write-tree)
-CNT=1 ;# counting our head
 NON_FF_MERGE=0
 OCTOPUS_FAILURE=0
 for SHA1 in $remotes
@@ -71,9 +70,6 @@ do
 		continue
 		;;
 	esac
-
-	CNT=`expr $CNT + 1`
-	PARENT="$PARENT -p $SHA1"
 
 	if test "$common,$NON_FF_MERGE" = "$MRC,0"
 	then
