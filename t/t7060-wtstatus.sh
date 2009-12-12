@@ -32,7 +32,7 @@ cat >expect <<EOF
 # On branch side
 # Unmerged paths:
 #   (use "git reset HEAD <file>..." to unstage)
-#   (use "git add <file>..." to mark resolution)
+#   (use "git add/rm <file>..." as appropriate to mark resolution)
 #
 #	deleted by us:      foo
 #
