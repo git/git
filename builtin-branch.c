@@ -65,7 +65,7 @@ static int parse_branch_color_slot(const char *var, int ofs)
 		return BRANCH_COLOR_LOCAL;
 	if (!strcasecmp(var+ofs, "current"))
 		return BRANCH_COLOR_CURRENT;
-	die("bad config variable '%s'", var);
+	return -1;
 }
 
 static int git_branch_config(const char *var, const char *value, void *cb)
@@ -76,6 +76,8 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 	}
 	if (!prefixcmp(var, "color.branch.")) {
 		int slot = parse_branch_color_slot(var, 13);
+		if (slot < 0)
+			return 0;
 		if (!value)
 			return config_error_nonbool(var);
 		color_parse(value, var, branch_colors[slot]);

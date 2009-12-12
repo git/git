@@ -66,4 +66,21 @@ test_expect_success 'extra character after attribute' '
 	invalid_color "dimX"
 '
 
+test_expect_success 'unknown color slots are ignored (diff)' '
+	git config --unset diff.color.new
+	git config color.diff.nosuchslotwilleverbedefined white &&
+	git diff --color
+'
+
+test_expect_success 'unknown color slots are ignored (branch)' '
+	git config color.branch.nosuchslotwilleverbedefined white &&
+	git branch -a
+'
+
+test_expect_success 'unknown color slots are ignored (status)' '
+	git config color.status.nosuchslotwilleverbedefined white || exit
+	git status
+	case $? in 0|1) : ok ;; *) false ;; esac
+'
+
 test_done

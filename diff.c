@@ -59,7 +59,7 @@ static int parse_diff_color_slot(const char *var, int ofs)
 		return DIFF_COMMIT;
 	if (!strcasecmp(var+ofs, "whitespace"))
 		return DIFF_WHITESPACE;
-	die("bad config variable '%s'", var);
+	return -1;
 }
 
 static int git_config_rename(const char *var, const char *value)
@@ -118,6 +118,8 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
+		if (slot < 0)
+			return 0;
 		if (!value)
 			return config_error_nonbool(var);
 		color_parse(value, var, diff_colors[slot]);
