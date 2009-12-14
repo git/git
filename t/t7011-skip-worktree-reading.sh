@@ -148,13 +148,13 @@ test_expect_success 'git-rm succeeds on skip-worktree absent entries' '
 	git rm 1
 '
 
-test_expect_failure 'commit on skip-worktree absent entries' '
+test_expect_success 'commit on skip-worktree absent entries' '
 	git reset &&
 	setup_absent &&
 	test_must_fail git commit -m null 1
 '
 
-test_expect_failure 'commit on skip-worktree dirty entries' '
+test_expect_success 'commit on skip-worktree dirty entries' '
 	git reset &&
 	setup_dirty &&
 	test_must_fail git commit -m null 1

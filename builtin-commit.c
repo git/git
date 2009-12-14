@@ -164,11 +164,15 @@ static int list_paths(struct string_list *list, const char *with_tree,
 
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
+		struct string_list_item *item;
+
 		if (ce->ce_flags & CE_UPDATE)
 			continue;
 		if (!match_pathspec(pattern, ce->name, ce_namelen(ce), 0, m))
 			continue;
-		string_list_insert(ce->name, list);
+		item = string_list_insert(ce->name, list);
+		if (ce_skip_worktree(ce))
+			item->util = item; /* better a valid pointer than a fake one */
 	}
 
 	return report_path_error(m, pattern, prefix ? strlen(prefix) : 0);
@@ -180,10 +184,9 @@ static void add_remove_files(struct string_list *list)
 	for (i = 0; i < list->nr; i++) {
 		struct stat st;
 		struct string_list_item *p = &(list->items[i]);
-		int pos = index_name_pos(&the_index, p->string, strlen(p->string));
-		struct cache_entry *ce = pos < 0 ? NULL : active_cache[pos];
 
-		if (ce && ce_skip_worktree(ce))
+		/* p->util is skip-worktree */
+		if (p->util)
 			continue;
 
 		if (!lstat(p->string, &st)) {
