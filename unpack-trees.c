@@ -569,7 +569,7 @@ static int verify_uptodate_1(struct cache_entry *ce,
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
-		unsigned changed = ie_match_stat(o->src_index, ce, &st, CE_MATCH_IGNORE_VALID);
+		unsigned changed = ie_match_stat(o->src_index, ce, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 		if (!changed)
 			return 0;
 		/*
@@ -701,7 +701,7 @@ static int icase_exists(struct unpack_trees_options *o, struct cache_entry *dst,
 	struct cache_entry *src;
 
 	src = index_name_exists(o->src_index, dst->name, ce_namelen(dst), 1);
-	return src && !ie_match_stat(o->src_index, src, st, CE_MATCH_IGNORE_VALID);
+	return src && !ie_match_stat(o->src_index, src, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 }
 
 /*
@@ -1152,7 +1152,7 @@ int oneway_merge(struct cache_entry **src, struct unpack_trees_options *o)
 		if (o->reset && !ce_uptodate(old) && !ce_skip_worktree(old)) {
 			struct stat st;
 			if (lstat(old->name, &st) ||
-			    ie_match_stat(o->src_index, old, &st, CE_MATCH_IGNORE_VALID))
+			    ie_match_stat(o->src_index, old, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE))
 				update |= CE_UPDATE;
 		}
 		add_entry(o, old, update, 0);

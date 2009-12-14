@@ -464,7 +464,9 @@ extern int index_name_is_other(const struct index_state *, const char *, int);
 /* do stat comparison even if CE_VALID is true */
 #define CE_MATCH_IGNORE_VALID		01
 /* do not check the contents but report dirty on racily-clean entries */
-#define CE_MATCH_RACY_IS_DIRTY	02
+#define CE_MATCH_RACY_IS_DIRTY		02
+/* do stat comparison even if CE_SKIP_WORKTREE is true */
+#define CE_MATCH_IGNORE_SKIP_WORKTREE	04
 extern int ie_match_stat(const struct index_state *, struct cache_entry *, struct stat *, unsigned int);
 extern int ie_modified(const struct index_state *, struct cache_entry *, struct stat *, unsigned int);
 
