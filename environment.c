@@ -63,6 +63,7 @@ int core_apply_sparse_checkout;
 int merge_log_config = -1;
 struct startup_info *startup_info;
 unsigned long pack_size_limit_cfg;
+enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 
 /* Parallel index stat data preload? */
 int core_preload_index = 0;
