@@ -18,9 +18,12 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 	if (normalize_path_copy(sanitized, sanitized))
 		goto error_out;
 	if (is_absolute_path(orig)) {
+		size_t len, total;
 		const char *work_tree = get_git_work_tree();
-		size_t len = strlen(work_tree);
-		size_t total = strlen(sanitized) + 1;
+		if (!work_tree)
+			goto error_out;
+		len = strlen(work_tree);
+		total = strlen(sanitized) + 1;
 		if (strncmp(sanitized, work_tree, len) ||
 		    (sanitized[len] != '\0' && sanitized[len] != '/')) {
 		error_out:

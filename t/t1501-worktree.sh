@@ -174,4 +174,19 @@ test_expect_success 'git grep' '
 	GIT_DIR=../.. GIT_WORK_TREE=.. git grep -l changed | grep dir/tracked)
 '
 
+test_expect_success 'git commit' '
+	(
+		cd repo.git &&
+		GIT_DIR=. GIT_WORK_TREE=work git commit -a -m done
+	)
+'
+
+test_expect_success 'absolute pathspec should fail gracefully' '
+	(
+		cd repo.git || exit 1
+		git config --unset core.worktree
+		test_must_fail git log HEAD -- /home
+	)
+'
+
 test_done
