@@ -650,4 +650,8 @@ void warn_on_inaccessible(const char *path);
 /* Get the passwd entry for the UID of the current process. */
 struct passwd *xgetpwuid_self(void);
 
+#ifndef mark_as_git_dir
+#define mark_as_git_dir(x) /* noop */
+#endif
+
 #endif
