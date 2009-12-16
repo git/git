@@ -464,4 +464,8 @@ void git_qsort(void *base, size_t nmemb, size_t size,
  */
 int unlink_or_warn(const char *path);
 
+#ifndef mark_as_git_dir
+#define mark_as_git_dir(x) /* noop */
+#endif
+
 #endif

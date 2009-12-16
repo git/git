@@ -525,7 +525,13 @@ extern int auto_crlf;
 extern int read_replace_refs;
 extern int fsync_object_files;
 extern int core_preload_index;
-extern int hide_dotfiles;
+
+enum hide_dotfiles_type {
+	HIDE_DOTFILES_FALSE = 0,
+	HIDE_DOTFILES_TRUE,
+	HIDE_DOTFILES_DOTGITONLY,
+};
+extern enum hide_dotfiles_type hide_dotfiles;
 
 enum safe_crlf {
 	SAFE_CRLF_FALSE = 0,

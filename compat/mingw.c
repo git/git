@@ -4,8 +4,8 @@
 #include <winioctl.h>
 #include <shellapi.h>
 #include "../strbuf.h"
+#include "../cache.h"
 
-extern int hide_dotfiles;
 unsigned int _CRT_fmode = _O_BINARY;
 
 static int err_win_to_posix(DWORD winerr)
@@ -130,11 +130,17 @@ static int make_hidden(const char *path)
 	return -1;
 }
 
+void mingw_mark_as_git_dir(const char *dir)
+{
+	if (hide_dotfiles != HIDE_DOTFILES_FALSE && make_hidden(dir))
+		warning("Failed to make '%s' hidden", dir);
+}
+
 #undef mkdir
 int mingw_mkdir(const char *path, int mode)
 {
 	int ret = mkdir(path);
-	if (!ret && hide_dotfiles) {
+	if (!ret && hide_dotfiles == HIDE_DOTFILES_TRUE) {
 		/*
 		 * In Windows a file or dir starting with a dot is not
 		 * automatically hidden. So lets mark it as hidden when
@@ -168,7 +174,8 @@ int mingw_open (const char *filename, int oflags, ...)
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
 			errno = EISDIR;
 	}
-	if ((oflags & O_CREAT) && fd >= 0 && hide_dotfiles) {
+	if ((oflags & O_CREAT) && fd >= 0 &&
+	    hide_dotfiles == HIDE_DOTFILES_TRUE) {
 		/*
 		 * In Windows a file or dir starting with a dot is not
 		 * automatically hidden. So lets mark it as hidden when
@@ -186,7 +193,8 @@ FILE *mingw_fopen (const char *filename, const char *mode)
 {
 	int hide = 0;
 	FILE *file;
-	if (hide_dotfiles && basename((char*)filename)[0] == '.')
+	if (hide_dotfiles == HIDE_DOTFILES_TRUE &&
+	    basename((char*)filename)[0] == '.')
 		hide = access(filename, F_OK);
 
 	file = fopen(filename, mode);

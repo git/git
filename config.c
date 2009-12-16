@@ -504,6 +504,10 @@ static int git_default_core_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "core.hidedotfiles")) {
+		if (value && !strcasecmp(value, "dotgitonly")) {
+			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+			return 0;
+		}
 		hide_dotfiles = git_config_bool(var, value);
 		return 0;
 	}
