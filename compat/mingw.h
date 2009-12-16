@@ -116,10 +116,7 @@ static inline int fcntl(int fd, int cmd, ...)
  * simple adaptors
  */
 
-static inline int mingw_mkdir(const char *path, int mode)
-{
-	return mkdir(path);
-}
+int mingw_mkdir(const char *path, int mode);
 #define mkdir mingw_mkdir
 
 static inline int mingw_unlink(const char *pathname)
@@ -279,6 +276,9 @@ int winansi_fprintf(FILE *stream, const char *format, ...) __attribute__((format
 
 void mingw_open_html(const char *path);
 #define open_html mingw_open_html
+
+void mingw_mark_as_git_dir(const char *dir);
+#define mark_as_git_dir mingw_mark_as_git_dir
 
 /*
  * helpers
