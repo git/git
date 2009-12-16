@@ -575,4 +575,8 @@ int rmdir_or_warn(const char *path);
  */
 int remove_or_warn(unsigned int mode, const char *path);
 
+#ifndef mark_as_git_dir
+#define mark_as_git_dir(x) /* noop */
+#endif
+
 #endif
