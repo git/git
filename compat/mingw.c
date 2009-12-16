@@ -3,8 +3,10 @@
 #include <conio.h>
 #include "../strbuf.h"
 #include "../run-command.h"
+#include "../cache.h"
 
 static const int delay[] = { 0, 1, 10, 20, 40 };
+unsigned int _CRT_fmode = _O_BINARY;
 
 int err_win_to_posix(DWORD winerr)
 {
@@ -278,6 +280,38 @@ int mingw_rmdir(const char *pathname)
 	return ret;
 }
 
+static int make_hidden(const char *path)
+{
+	DWORD attribs = GetFileAttributes(path);
+	if (SetFileAttributes(path, FILE_ATTRIBUTE_HIDDEN | attribs))
+		return 0;
+	errno = err_win_to_posix(GetLastError());
+	return -1;
+}
+
+void mingw_mark_as_git_dir(const char *dir)
+{
+	if (hide_dotfiles != HIDE_DOTFILES_FALSE && make_hidden(dir))
+		warning("Failed to make '%s' hidden", dir);
+}
+
+#undef mkdir
+int mingw_mkdir(const char *path, int mode)
+{
+	int ret = mkdir(path);
+	if (!ret && hide_dotfiles == HIDE_DOTFILES_TRUE) {
+		/*
+		 * In Windows a file or dir starting with a dot is not
+		 * automatically hidden. So lets mark it as hidden when
+		 * such a directory is created.
+		 */
+		const char *start = basename((char*)path);
+		if (*start == '.')
+			return make_hidden(path);
+	}
+	return ret;
+}
+
 #undef open
 int mingw_open (const char *filename, int oflags, ...)
 {
@@ -298,6 +332,17 @@ int mingw_open (const char *filename, int oflags, ...)
 		DWORD attrs = GetFileAttributes(filename);
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
 			errno = EISDIR;
+	}
+	if ((oflags & O_CREAT) && fd >= 0 &&
+	    hide_dotfiles == HIDE_DOTFILES_TRUE) {
+		/*
+		 * In Windows a file or dir starting with a dot is not
+		 * automatically hidden. So lets mark it as hidden when
+		 * such a file is created.
+		 */
+		const char *start = basename((char*)filename);
+		if (*start == '.' && make_hidden(filename))
+			warning("Could not mark '%s' as hidden.", filename);
 	}
 	return fd;
 }
@@ -322,17 +367,33 @@ ssize_t mingw_write(int fd, const void *buf, size_t count)
 #undef fopen
 FILE *mingw_fopen (const char *filename, const char *otype)
 {
+	int hide = 0;
+	FILE *file;
+	if (hide_dotfiles == HIDE_DOTFILES_TRUE &&
+	    basename((char*)filename)[0] == '.')
+		hide = access(filename, F_OK);
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
-	return fopen(filename, otype);
+	file = fopen(filename, otype);
+	if (file && hide && make_hidden(filename))
+		warning("Could not mark '%s' as hidden.", filename);
+	return file;
 }
 
 #undef freopen
 FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
 {
+	int hide = 0;
+	FILE *file;
+	if (hide_dotfiles == HIDE_DOTFILES_TRUE &&
+	    basename((char*)filename)[0] == '.')
+		hide = access(filename, F_OK);
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
-	return freopen(filename, otype, stream);
+	file = freopen(filename, otype, stream);
+	if (file && hide && make_hidden(filename))
+		warning("Could not mark '%s' as hidden.", filename);
+	return file;
 }
 
 /*
