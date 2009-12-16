@@ -312,6 +312,7 @@ int init_db(const char *template_dir, unsigned int flags)
 	check_repository_format();
 
 	reinit = create_default_files(template_dir);
+	mark_as_git_dir(get_git_dir());
 
 	sha1_dir = get_object_directory();
 	len = strlen(sha1_dir);
