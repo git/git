@@ -222,9 +222,3 @@ Fixes since v1.6.5
 
 All of the fixes in v1.6.5.X maintenance series are included in this
 release, unless otherwise noted.
-
----
-exec >/var/tmp/1
-echo O=$(git describe master)
-O=v1.6.6-rc1-79-g529f8c6
-git shortlog --no-merges $O..master --not maint
