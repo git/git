@@ -417,7 +417,17 @@ __git_complete_remote_or_refspec ()
 	while [ $c -lt $COMP_CWORD ]; do
 		i="${COMP_WORDS[c]}"
 		case "$i" in
-		--all|--mirror) [ "$cmd" = "push" ] && no_complete_refspec=1 ;;
+		--mirror) [ "$cmd" = "push" ] && no_complete_refspec=1 ;;
+		--all)
+			case "$cmd" in
+			push) no_complete_refspec=1 ;;
+			fetch)
+				COMPREPLY=()
+				return
+				;;
+			*) ;;
+			esac
+			;;
 		-*) ;;
 		*) remote="$i"; break ;;
 		esac
@@ -1002,7 +1012,7 @@ _git_difftool ()
 
 __git_fetch_options="
 	--quiet --verbose --append --upload-pack --force --keep --depth=
-	--tags --no-tags
+	--tags --no-tags --all --prune --dry-run
 "
 
 _git_fetch ()

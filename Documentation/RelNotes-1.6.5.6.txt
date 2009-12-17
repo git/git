@@ -1,0 +1,23 @@
+Git v1.6.5.6 Release Notes
+==========================
+
+Fixes since v1.6.5.5
+--------------------
+
+ * "git add -p" had a regression since v1.6.5.3 that broke deletion of
+   non-empty files.
+
+ * "git archive -o o.zip -- Makefile" produced an archive in o.zip
+   but in POSIX tar format.
+
+ * Error message given to "git pull --rebase" when the user didn't give
+   enough clue as to what branch to integrate with still talked about
+   "merging with" the branch.
+
+ * Error messages given by "git merge" when the merge resulted in a
+   fast-forward still were in plumbing lingo, even though in v1.6.5
+   we reworded messages in other cases.
+
+ * The post-upload-hook run by upload-pack in response to "git fetch" has
+   been removed, due to security concerns (the hook first appeared in
+   1.6.5).

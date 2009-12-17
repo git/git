@@ -148,66 +148,8 @@ static int do_rev_list(int fd, void *create_full_pack)
 	return 0;
 }
 
-static int feed_msg_to_hook(int fd, const char *fmt, ...)
-{
-	int cnt;
-	char buf[1024];
-	va_list params;
-
-	va_start(params, fmt);
-	cnt = vsprintf(buf, fmt, params);
-	va_end(params);
-	return write_in_full(fd, buf, cnt) != cnt;
-}
-
-static int feed_obj_to_hook(const char *label, struct object_array *oa, int i, int fd)
-{
-	return feed_msg_to_hook(fd, "%s %s\n", label,
-				sha1_to_hex(oa->objects[i].item->sha1));
-}
-
-static int run_post_upload_pack_hook(size_t total, struct timeval *tv)
-{
-	const char *argv[2];
-	struct child_process proc;
-	int err, i;
-
-	argv[0] = "hooks/post-upload-pack";
-	argv[1] = NULL;
-
-	if (access(argv[0], X_OK) < 0)
-		return 0;
-
-	memset(&proc, 0, sizeof(proc));
-	proc.argv = argv;
-	proc.in = -1;
-	proc.stdout_to_stderr = 1;
-	err = start_command(&proc);
-	if (err)
-		return err;
-	for (i = 0; !err && i < want_obj.nr; i++)
-		err |= feed_obj_to_hook("want", &want_obj, i, proc.in);
-	for (i = 0; !err && i < have_obj.nr; i++)
-		err |= feed_obj_to_hook("have", &have_obj, i, proc.in);
-	if (!err)
-		err |= feed_msg_to_hook(proc.in, "time %ld.%06ld\n",
-					(long)tv->tv_sec, (long)tv->tv_usec);
-	if (!err)
-		err |= feed_msg_to_hook(proc.in, "size %ld\n", (long)total);
-	if (!err)
-		err |= feed_msg_to_hook(proc.in, "kind %s\n",
-					(nr_our_refs == want_obj.nr && !have_obj.nr)
-					? "clone" : "fetch");
-	if (close(proc.in))
-		err = 1;
-	if (finish_command(&proc))
-		err = 1;
-	return err;
-}
-
 static void create_pack_file(void)
 {
-	struct timeval start_tv, tv;
 	struct async rev_list;
 	struct child_process pack_objects;
 	int create_full_pack = (nr_our_refs == want_obj.nr && !have_obj.nr);
@@ -215,12 +157,10 @@ static void create_pack_file(void)
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
 	int buffered = -1;
-	ssize_t sz, total_sz;
+	ssize_t sz;
 	const char *argv[10];
 	int arg = 0;
 
-	gettimeofday(&start_tv, NULL);
-	total_sz = 0;
 	if (shallow_nr) {
 		rev_list.proc = do_rev_list;
 		rev_list.data = 0;
@@ -346,7 +286,7 @@ static void create_pack_file(void)
 			sz = xread(pack_objects.out, cp,
 				  sizeof(data) - outsz);
 			if (0 < sz)
-				total_sz += sz;
+				;
 			else if (sz == 0) {
 				close(pack_objects.out);
 				pack_objects.out = -1;
@@ -383,16 +323,6 @@ static void create_pack_file(void)
 	}
 	if (use_sideband)
 		packet_flush(1);
-
-	gettimeofday(&tv, NULL);
-	tv.tv_sec -= start_tv.tv_sec;
-	if (tv.tv_usec < start_tv.tv_usec) {
-		tv.tv_sec--;
-		tv.tv_usec += 1000000;
-	}
-	tv.tv_usec -= start_tv.tv_usec;
-	if (run_post_upload_pack_hook(total_sz, &tv))
-		warning("post-upload-hook failed");
 	return;
 
  fail:
