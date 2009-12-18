@@ -618,11 +618,10 @@ static void count_diff_files(struct diff_queue_struct *q,
 
 static int count_unmerged_entries(void)
 {
-	const struct index_state *state = &the_index;
 	int i, ret = 0;
 
-	for (i = 0; i < state->cache_nr; i++)
-		if (ce_stage(state->cache[i]))
+	for (i = 0; i < active_nr; i++)
+		if (ce_stage(active_cache[i]))
 			ret++;
 
 	return ret;
