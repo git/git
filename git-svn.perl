@@ -1634,6 +1634,7 @@ use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
 use IPC::Open3;
+use Memoize;  # core since 5.8.0, Jul 2002
 
 my ($_gc_nr, $_gc_period);
 
@@ -2994,6 +2995,55 @@ sub find_extra_svk_parents {
 	}
 }
 
+sub lookup_svn_merge {
+	my $uuid = shift;
+	my $url = shift;
+	my $merge = shift;
+
+	my ($source, $revs) = split ":", $merge;
+	my $path = $source;
+	$path =~ s{^/}{};
+	my $gs = Git::SVN->find_by_url($url.$source, $url, $path);
+	if ( !$gs ) {
+		warn "Couldn't find revmap for $url$source\n";
+		return;
+	}
+	my @ranges = split ",", $revs;
+	my ($tip, $tip_commit);
+	my @merged_commit_ranges;
+	# find the tip
+	for my $range ( @ranges ) {
+		my ($bottom, $top) = split "-", $range;
+		$top ||= $bottom;
+		my $bottom_commit =
+			$gs->rev_map_get($bottom, $uuid) ||
+			$gs->rev_map_get($bottom+1, $uuid);
+		my $top_commit;
+		for (; !$top_commit && $top >= $bottom; --$top) {
+			$top_commit =
+				$gs->rev_map_get($top, $uuid);
+		}
+
+		unless ($top_commit and $bottom_commit) {
+			warn "W:unknown path/rev in svn:mergeinfo "
+				."dirprop: $source:$range\n";
+			next;
+		}
+
+		push @merged_commit_ranges,
+			"$bottom_commit..$top_commit";
+
+		if ( !defined $tip or $top > $tip ) {
+			$tip = $top;
+			$tip_commit = $top_commit;
+		}
+	}
+	return ($tip_commit, @merged_commit_ranges);
+}
+BEGIN {
+	memoize 'lookup_svn_merge';
+}
+
 # note: this function should only be called if the various dirprops
 # have actually changed
 sub find_extra_svn_parents {
@@ -3008,44 +3058,11 @@ sub find_extra_svn_parents {
 	my @merge_tips;
 	my @merged_commit_ranges;
 	my $url = $self->rewrite_root || $self->{url};
+	my $uuid = $self->ra_uuid;
 	for my $merge ( @merges ) {
-		my ($source, $revs) = split ":", $merge;
-		my $path = $source;
-		$path =~ s{^/}{};
-		my $gs = Git::SVN->find_by_url($url.$source, $url, $path);
-		if ( !$gs ) {
-			warn "Couldn't find revmap for $url$source\n";
-			next;
-		}
-		my @ranges = split ",", $revs;
-		my ($tip, $tip_commit);
-		# find the tip
-		for my $range ( @ranges ) {
-			my ($bottom, $top) = split "-", $range;
-			$top ||= $bottom;
-			my $bottom_commit =
-				$gs->rev_map_get($bottom, $self->ra_uuid) ||
-				$gs->rev_map_get($bottom+1, $self->ra_uuid);
-			my $top_commit;
-			for (; !$top_commit && $top >= $bottom; --$top) {
-				$top_commit =
-					$gs->rev_map_get($top, $self->ra_uuid);
-			}
-
-			unless ($top_commit and $bottom_commit) {
-				warn "W:unknown path/rev in svn:mergeinfo "
-					."dirprop: $source:$range\n";
-				next;
-			}
-
-			push @merged_commit_ranges,
-				"$bottom_commit..$top_commit";
-
-			if ( !defined $tip or $top > $tip ) {
-				$tip = $top;
-				$tip_commit = $top_commit;
-			}
-		}
+		my ($tip_commit, @ranges) =
+			lookup_svn_merge( $uuid, $url, $merge );
+		push @merged_commit_ranges, @ranges;
 		unless (!$tip_commit or
 				grep { $_ eq $tip_commit } @$parents ) {
 			push @merge_tips, $tip_commit;
