@@ -770,7 +770,7 @@ EOF
 
 		cp "$TODO" "$TODO".backup
 		git_editor "$TODO" ||
-			die "Could not execute editor"
+			die_abort "Could not execute editor"
 
 		has_action "$TODO" ||
 			die_abort "Nothing to do"
