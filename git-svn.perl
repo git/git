@@ -3015,14 +3015,8 @@ sub lookup_svn_merge {
 	for my $range ( @ranges ) {
 		my ($bottom, $top) = split "-", $range;
 		$top ||= $bottom;
-		my $bottom_commit =
-			$gs->rev_map_get($bottom, $uuid) ||
-			$gs->rev_map_get($bottom+1, $uuid);
-		my $top_commit;
-		for (; !$top_commit && $top >= $bottom; --$top) {
-			$top_commit =
-				$gs->rev_map_get($top, $uuid);
-		}
+		my $bottom_commit = $gs->find_rev_after( $bottom, 1, $top );
+		my $top_commit = $gs->find_rev_before( $top, 1, $bottom );
 
 		unless ($top_commit and $bottom_commit) {
 			warn "W:unknown path/rev in svn:mergeinfo "
@@ -3031,7 +3025,7 @@ sub lookup_svn_merge {
 		}
 
 		push @merged_commit_ranges,
-			"$bottom_commit..$top_commit";
+			"$bottom_commit^..$top_commit";
 
 		if ( !defined $tip or $top > $tip ) {
 			$tip = $top;
