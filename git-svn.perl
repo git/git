@@ -3038,6 +3038,41 @@ BEGIN {
 	memoize 'lookup_svn_merge';
 }
 
+sub parents_exclude {
+	my $parents = shift;
+	my @commits = @_;
+	return unless @commits;
+
+	my @excluded;
+	my $excluded;
+	do {
+		my @cmd = ('rev-list', "-1", @commits, "--not", @$parents );
+		$excluded = command_oneline(@cmd);
+		if ( $excluded ) {
+			my @new;
+			my $found;
+			for my $commit ( @commits ) {
+				if ( $commit eq $excluded ) {
+					push @excluded, $commit;
+					$found++;
+					last;
+				}
+				else {
+					push @new, $commit;
+				}
+			}
+			die "saw commit '$excluded' in rev-list output, "
+				."but we didn't ask for that commit (wanted: @commits --not @$parents)"
+					unless $found;
+			@commits = @new;
+		}
+	}
+		while ($excluded and @commits);
+
+	return @excluded;
+}
+
+
 # note: this function should only be called if the various dirprops
 # have actually changed
 sub find_extra_svn_parents {
@@ -3050,23 +3085,32 @@ sub find_extra_svn_parents {
 	# are now marked as merge, we can add the tip as a parent.
 	my @merges = split "\n", $mergeinfo;
 	my @merge_tips;
-	my @merged_commit_ranges;
 	my $url = $self->rewrite_root || $self->{url};
 	my $uuid = $self->ra_uuid;
+	my %ranges;
 	for my $merge ( @merges ) {
 		my ($tip_commit, @ranges) =
 			lookup_svn_merge( $uuid, $url, $merge );
-		push @merged_commit_ranges, @ranges;
 		unless (!$tip_commit or
 				grep { $_ eq $tip_commit } @$parents ) {
 			push @merge_tips, $tip_commit;
+			$ranges{$tip_commit} = \@ranges;
 		} else {
 			push @merge_tips, undef;
 		}
 	}
+
+	my %excluded = map { $_ => 1 }
+		parents_exclude($parents, grep { defined } @merge_tips);
+
+	# check merge tips for new parents
+	my @new_parents;
 	for my $merge_tip ( @merge_tips ) {
 		my $spec = shift @merges;
-		next unless $merge_tip;
+		next unless $merge_tip and $excluded{$merge_tip};
+
+		my $ranges = $ranges{$merge_tip};
+
 		my @cmd = ('rev-list', "-1", $merge_tip,
 			   "--not", @$parents );
 		my ($msg_fh, $ctx) = command_output_pipe(@cmd);
@@ -3076,7 +3120,7 @@ sub find_extra_svn_parents {
 		}
 		command_close_pipe($msg_fh, $ctx);
 		if ( $new ) {
-			push @cmd, @merged_commit_ranges;
+			push @cmd, @$ranges;
 			my ($msg_fh, $ctx) = command_output_pipe(@cmd);
 			my $unmerged;
 			while ( <$msg_fh> ) {
