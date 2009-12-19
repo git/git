@@ -114,5 +114,29 @@ test_expect_success 'removed top-level directory does not exist' '
 	test ! -e removed/d
 
 '
+unhandled=.git/svn/refs/remotes/git-svn/unhandled.log
+test_expect_success 'git svn gc-ed files work' '
+	(
+		cd removed &&
+		git svn gc &&
+		: Compress::Zlib may not be available &&
+		if test -f "$unhandled".gz
+		then
+			svn mkdir -m gz "$svnrepo"/gz &&
+			git reset --hard $(git rev-list HEAD | tail -1) &&
+			git svn rebase &&
+			test -f "$unhandled".gz &&
+			test -f "$unhandled" &&
+			for i in a b c "weird file name" gz "! !"
+			do
+				if ! test -d "$i"
+				then
+					echo >&2 "$i does not exist"
+					exit 1
+				fi
+			done
+		fi
+	)
+'
 
 test_done

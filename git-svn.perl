@@ -2740,21 +2740,44 @@ sub do_fetch {
 
 sub mkemptydirs {
 	my ($self, $r) = @_;
-	my %empty_dirs = ();
 
-	open my $fh, '<', "$self->{dir}/unhandled.log" or return;
-	binmode $fh or croak "binmode: $!";
-	while (<$fh>) {
-		if (defined $r && /^r(\d+)$/) {
-			last if $1 > $r;
-		} elsif (/^  \+empty_dir: (.+)$/) {
-			$empty_dirs{$1} = 1;
-		} elsif (/^  \-empty_dir: (.+)$/) {
-			my @d = grep {m[^\Q$1\E(/|$)]} (keys %empty_dirs);
-			delete @empty_dirs{@d};
+	sub scan {
+		my ($r, $empty_dirs, $line) = @_;
+		if (defined $r && $line =~ /^r(\d+)$/) {
+			return 0 if $1 > $r;
+		} elsif ($line =~ /^  \+empty_dir: (.+)$/) {
+			$empty_dirs->{$1} = 1;
+		} elsif ($line =~ /^  \-empty_dir: (.+)$/) {
+			my @d = grep {m[^\Q$1\E(/|$)]} (keys %$empty_dirs);
+			delete @$empty_dirs{@d};
+		}
+		1; # continue
+	};
+
+	my %empty_dirs = ();
+	my $gz_file = "$self->{dir}/unhandled.log.gz";
+	if (-f $gz_file) {
+		if (!$can_compress) {
+			warn "Compress::Zlib could not be found; ",
+			     "empty directories in $gz_file will not be read\n";
+		} else {
+			my $gz = Compress::Zlib::gzopen($gz_file, "rb") or
+				die "Unable to open $gz_file: $!\n";
+			my $line;
+			while ($gz->gzreadline($line) > 0) {
+				scan($r, \%empty_dirs, $line) or last;
+			}
+			$gz->gzclose;
 		}
 	}
-	close $fh;
+
+	if (open my $fh, '<', "$self->{dir}/unhandled.log") {
+		binmode $fh or croak "binmode: $!";
+		while (<$fh>) {
+			scan($r, \%empty_dirs, $_) or last;
+		}
+		close $fh;
+	}
 
 	my $strip = qr/\A\Q$self->{path}\E(?:\/|$)/;
 	foreach my $d (sort keys %empty_dirs) {
