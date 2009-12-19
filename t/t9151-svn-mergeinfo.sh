@@ -15,13 +15,13 @@ test_expect_success 'load svn dump' "
 	git svn fetch --all
 	"
 
-test_expect_failure 'all svn merges became git merge commits' '
+test_expect_success 'all svn merges became git merge commits' '
 	unmarked=$(git rev-list --parents --all --grep=Merge |
 		grep -v " .* " | cut -f1 -d" ")
 	[ -z "$unmarked" ]
 	'
 
-test_expect_failure 'cherry picks did not become git merge commits' '
+test_expect_success 'cherry picks did not become git merge commits' '
 	bad_cherries=$(git rev-list --parents --all --grep=Cherry |
 		grep " .* " | cut -f1 -d" ")
 	[ -z "$bad_cherries" ]

@@ -3034,8 +3034,35 @@ sub lookup_svn_merge {
 	}
 	return ($tip_commit, @merged_commit_ranges);
 }
+
+sub _rev_list {
+	my ($msg_fh, $ctx) = command_output_pipe(
+		"rev-list", @_,
+	       );
+	my @rv;
+	while ( <$msg_fh> ) {
+		chomp;
+		push @rv, $_;
+	}
+	command_close_pipe($msg_fh, $ctx);
+	@rv;
+}
+
+sub check_cherry_pick {
+	my $base = shift;
+	my $tip = shift;
+	my @ranges = @_;
+	my %commits = map { $_ => 1 }
+		_rev_list("--no-merges", $tip, "--not", $base);
+	for my $range ( @ranges ) {
+		delete @commits{_rev_list($range)};
+	}
+	return (keys %commits);
+}
+
 BEGIN {
 	memoize 'lookup_svn_merge';
+	memoize 'check_cherry_pick';
 }
 
 sub parents_exclude {
@@ -3111,32 +3138,46 @@ sub find_extra_svn_parents {
 
 		my $ranges = $ranges{$merge_tip};
 
-		my @cmd = ('rev-list', "-1", $merge_tip,
-			   "--not", @$parents );
-		my ($msg_fh, $ctx) = command_output_pipe(@cmd);
-		my $new;
-		while ( <$msg_fh> ) {
-			$new=1;last;
+		# check out 'new' tips
+		my $merge_base = command_oneline(
+			"merge-base",
+			@$parents, $merge_tip,
+		       );
+
+		# double check that there are no missing non-merge commits
+		my (@incomplete) = check_cherry_pick(
+			$merge_base, $merge_tip,
+			@$ranges,
+		       );
+
+		if ( @incomplete ) {
+			warn "W:svn cherry-pick ignored ($spec) - missing "
+				.@incomplete." commit(s) (eg $incomplete[0])\n";
+		} else {
+			warn
+				"Found merge parent (svn:mergeinfo prop): ",
+					$merge_tip, "\n";
+			push @new_parents, $merge_tip;
 		}
-		command_close_pipe($msg_fh, $ctx);
-		if ( $new ) {
-			push @cmd, @$ranges;
-			my ($msg_fh, $ctx) = command_output_pipe(@cmd);
-			my $unmerged;
-			while ( <$msg_fh> ) {
-				$unmerged=1;last;
-			}
-			command_close_pipe($msg_fh, $ctx);
-			if ( $unmerged ) {
-				warn "W:svn cherry-pick ignored ($spec)\n";
-			} else {
-				warn
-				  "Found merge parent (svn:mergeinfo prop): ",
-				  $merge_tip, "\n";
-				push @$parents, $merge_tip;
+	}
+
+	# cater for merges which merge commits from multiple branches
+	if ( @new_parents > 1 ) {
+		for ( my $i = 0; $i <= $#new_parents; $i++ ) {
+			for ( my $j = 0; $j <= $#new_parents; $j++ ) {
+				next if $i == $j;
+				next unless $new_parents[$i];
+				next unless $new_parents[$j];
+				my $revs = command_oneline(
+					"rev-list", "-1", "$i..$j",
+				       );
+				if ( !$revs ) {
+					undef($new_parents[$i]);
+				}
 			}
 		}
 	}
+	push @$parents, grep { defined } @new_parents;
 }
 
 sub make_log_entry {
