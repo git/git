@@ -14,29 +14,31 @@ proc _close_updateindex {fd after} {
 		toplevel $w
 		wm title $w [strcat "[appname] ([reponame]): " [mc "Index Error"]]
 		wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-		pack [label $w.msg \
-			-justify left \
-			-anchor w \
-			-text [strcat \
-				[mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."] \
-				"\n\n$err"] \
-			] -anchor w
+		set s [mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."]
+		text $w.msg -yscrollcommand [list $w.vs set] \
+			-width [string length $s] -relief flat \
+			-borderwidth 0 -highlightthickness 0 \
+			-background [$w cget -background]
+		$w.msg tag configure bold -font font_uibold -justify center
+		scrollbar $w.vs -command [list $w.msg yview]
+		$w.msg insert end $s bold \n\n$err {}
+		$w.msg configure -state disabled
 
-		frame $w.buttons
-		button $w.buttons.continue \
+		button $w.continue \
 			-text [mc "Continue"] \
 			-command [list destroy $w]
-		pack $w.buttons.continue -side right -padx 5
-		button $w.buttons.unlock \
+		button $w.unlock \
 			-text [mc "Unlock Index"] \
 			-command "destroy $w; _delete_indexlock"
-		pack $w.buttons.unlock -side right
-		pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+		grid $w.msg - $w.vs -sticky news
+		grid $w.unlock $w.continue - -sticky se -padx 2 -pady 2
+		grid columnconfigure $w 0 -weight 1
+		grid rowconfigure $w 0 -weight 1
 
 		wm protocol $w WM_DELETE_WINDOW update
-		bind $w.buttons.continue <Visibility> "
+		bind $w.continue <Visibility> "
 			grab $w
-			focus $w.buttons.continue
+			focus %W
 		"
 		tkwait window $w
 
