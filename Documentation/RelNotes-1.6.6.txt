@@ -22,10 +22,10 @@ These changes were discussed long time ago and existing behaviours have
 been identified as more problematic to the userbase than keeping them for
 the sake of backward compatibility.
 
-When necessary, transition strategy for existing users has been designed
+When necessary, a transition strategy for existing users has been designed
 not to force them running around setting configuration variables and
 updating their scripts in order to either keep the traditional behaviour
-or adjust to the new behaviour on the day their sysadmin decides to install
+or adjust to the new behaviour, on the day their sysadmin decides to install
 the new version of git.  When we switched from "git-foo" to "git foo" in
 1.6.0, even though the change had been advertised and the transition
 guide had been provided for a very long time, the users procrastinated
@@ -34,11 +34,12 @@ their sysadmins updated their git installation.  We are trying to avoid
 repeating that unpleasantness in the 1.7.0 release.
 
 For changes decided to be in 1.7.0, commands that will be affected
-have been much louder to strongly discourage such procrastination.  If
-you have been using recent versions of git, you would have seen
-warnings issued when you exercised features whose behaviour will
-change, with a clear instruction on how to keep the existing behaviour
-if you want to.  You hopefully are already well prepared.
+have been much louder to strongly discourage such procrastination, and
+they continue to be in this release.  If you have been using recent
+versions of git, you would have seen warnings issued when you used
+features whose behaviour will change, with a clear instruction on how
+to keep the existing behaviour if you want to.  You hopefully are
+already well prepared.
 
 Of course, we have also been giving "this and that will change in
 1.7.0; prepare yourselves" warnings in the release notes and
