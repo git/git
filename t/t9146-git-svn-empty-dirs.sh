@@ -122,7 +122,7 @@ test_expect_success 'git svn gc-ed files work' '
 		: Compress::Zlib may not be available &&
 		if test -f "$unhandled".gz
 		then
-			svn mkdir -m gz "$svnrepo"/gz &&
+			svn_cmd mkdir -m gz "$svnrepo"/gz &&
 			git reset --hard $(git rev-list HEAD | tail -1) &&
 			git svn rebase &&
 			test -f "$unhandled".gz &&
