@@ -2451,12 +2451,6 @@ sub get_commit_parents {
 		next if $seen{$p};
 		$seen{$p} = 1;
 		push @ret, $p;
-		# MAXPARENT is defined to 16 in commit-tree.c:
-		last if @ret >= 16;
-	}
-	if (@tmp) {
-		die "r$log_entry->{revision}: No room for parents:\n\t",
-		    join("\n\t", @tmp), "\n";
 	}
 	@ret;
 }
