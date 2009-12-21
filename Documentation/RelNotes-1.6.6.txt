@@ -209,6 +209,8 @@ Updates since v1.6.5
 
  * "git svn" learned to read SVN 1.5+ and SVK merge tickets.
 
+ * "git svn" learned to recreate empty directories tracked only by SVN.
+
  * "gitweb" can optionally render its "blame" output incrementally (this
    requires JavaScript on the client side).
 
