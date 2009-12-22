@@ -382,6 +382,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP },
 		{ "status", cmd_status, RUN_SETUP | NEED_WORK_TREE },
+		{ "statusex", statusex_buildin, RUN_SETUP | NEED_WORK_TREE },
 		{ "stripspace", cmd_stripspace },
 		{ "symbolic-ref", cmd_symbolic_ref, RUN_SETUP },
 		{ "tag", cmd_tag, RUN_SETUP },

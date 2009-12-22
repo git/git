@@ -901,10 +901,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\builtin-ls-files.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\builtin-ls-remote.c"
 				>
 			</File>

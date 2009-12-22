@@ -1677,3 +1677,108 @@ int index_name_is_other(const struct index_state *istate, const char *name,
 	}
 	return 1;
 }
+
+int read_index_from_ex(struct index_state *istate, const char *path, int skip_header_bytes)
+{
+	int fd, i;
+	struct stat st;
+	unsigned long src_offset, dst_offset;
+	struct cache_header *hdr;
+	void *mmap;
+	size_t mmap_size;
+
+	errno = EBUSY;
+	if (istate->initialized)
+		return istate->cache_nr;
+
+	errno = ENOENT;
+	istate->timestamp.sec = 0;
+	istate->timestamp.nsec = 0;
+	fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		if (errno == ENOENT)
+			return 0;
+		die("index file open failed (%s)", strerror(errno));
+	}
+
+	if (fstat(fd, &st))
+		die("cannot stat the open index (%s)", strerror(errno));
+
+	errno = EINVAL;
+	mmap_size = xsize_t(st.st_size);
+	if (mmap_size < sizeof(struct cache_header) + 20 + skip_header_bytes)
+		die("index file smaller than expected");
+
+	mmap = xmmap(NULL, mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+	close(fd);
+	if (mmap == MAP_FAILED)
+		die("unable to map index file");
+
+	// skip custom file header (allows utility funcions to store index files with additional custom header)
+	mmap = (char*)mmap + skip_header_bytes;
+	mmap_size -= skip_header_bytes;
+
+	hdr = mmap;
+	if (verify_hdr(hdr, mmap_size) < 0)
+		goto unmap;
+
+	istate->cache_nr = ntohl(hdr->hdr_entries);
+	istate->cache_alloc = alloc_nr(istate->cache_nr);
+	istate->cache = xcalloc(istate->cache_alloc, sizeof(struct cache_entry *));
+
+	/*
+	 * The disk format is actually larger than the in-memory format,
+	 * due to space for nsec etc, so even though the in-memory one
+	 * has room for a few  more flags, we can allocate using the same
+	 * index size
+	 */
+	istate->alloc = xmalloc(estimate_cache_size(mmap_size, istate->cache_nr));
+	istate->initialized = 1;
+
+	src_offset = sizeof(*hdr);
+	dst_offset = 0;
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct ondisk_cache_entry *disk_ce;
+		struct cache_entry *ce;
+
+		disk_ce = (struct ondisk_cache_entry *)((char *)mmap + src_offset);
+		ce = (struct cache_entry *)((char *)istate->alloc + dst_offset);
+		convert_from_disk(disk_ce, ce);
+		set_index_entry(istate, i, ce);
+
+		src_offset += ondisk_ce_size(ce);
+		dst_offset += ce_size(ce);
+	}
+	istate->timestamp.sec = st.st_mtime;
+	istate->timestamp.nsec = ST_MTIME_NSEC(st);
+
+	while (src_offset <= mmap_size - 20 - 8) {
+		/* After an array of active_nr index entries,
+		 * there can be arbitrary number of extended
+		 * sections, each of which is prefixed with
+		 * extension name (4-byte) and section length
+		 * in 4-byte network byte order.
+		 */
+		unsigned long extsize;
+		memcpy(&extsize, (char *)mmap + src_offset + 4, 4);
+		extsize = ntohl(extsize);
+		if (read_index_extension(istate,
+					 (const char *) mmap + src_offset,
+					 (char *) mmap + src_offset + 8,
+					 extsize) < 0)
+			goto unmap;
+		src_offset += 8;
+		src_offset += extsize;
+	}
+	mmap = (char*)mmap - skip_header_bytes;
+	mmap_size += skip_header_bytes;
+	munmap(mmap, mmap_size);
+	return istate->cache_nr;
+
+unmap:
+	mmap = (char*)mmap - skip_header_bytes;
+	mmap_size += skip_header_bytes;
+	munmap(mmap, mmap_size);
+	errno = EINVAL;
+	die("index file corrupt");
+}
