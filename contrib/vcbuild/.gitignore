@@ -1,0 +1,6 @@
+Debug
+Release
+Debug64
+Release64
+*.user
+*.obj
