@@ -3163,7 +3163,8 @@ sub find_extra_svn_parents {
 				next unless $new_parents[$i];
 				next unless $new_parents[$j];
 				my $revs = command_oneline(
-					"rev-list", "-1", "$i..$j",
+					"rev-list", "-1",
+					"$new_parents[$i]..$new_parents[$j]",
 				       );
 				if ( !$revs ) {
 					undef($new_parents[$i]);
