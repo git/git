@@ -217,9 +217,6 @@ Updates since v1.6.5
  * Author names shown in gitweb output are links to search commits by the
    author.
 
-
-(developers)
-
 Fixes since v1.6.5
 ------------------
 
