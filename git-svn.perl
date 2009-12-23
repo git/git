@@ -663,7 +663,8 @@ sub cmd_branch {
 	}
 	$head ||= 'HEAD';
 
-	my ($src, $rev, undef, $gs) = working_head_info($head);
+	my (undef, $rev, undef, $gs) = working_head_info($head);
+	my $src = $gs->full_url;
 
 	my $remote = Git::SVN::read_all_remotes()->{$gs->{repo_id}};
 	my $allglobs = $remote->{ $_tag ? 'tags' : 'branches' };
