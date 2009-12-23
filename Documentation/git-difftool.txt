@@ -58,6 +58,12 @@ is set to the name of the temporary file containing the contents
 of the diff post-image.  `$BASE` is provided for compatibility
 with custom merge tool commands and has the same value as `$LOCAL`.
 
+-g::
+--gui::
+	When 'git-difftool' is invoked with the `-g` or `--gui` option
+	the default diff tool will be read from the configured
+	`diff.guitool` variable instead of `diff.tool`.
+
 See linkgit:git-diff[1] for the full list of supported options.
 
 CONFIG VARIABLES
@@ -67,6 +73,9 @@ difftool equivalents have not been defined.
 
 diff.tool::
 	The default diff tool to use.
+
+diff.guitool::
+	The default diff tool to use when `--gui` is specified.
 
 difftool.<tool>.path::
 	Override the path for the given tool.  This is useful in case

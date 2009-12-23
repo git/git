@@ -15,13 +15,16 @@ use warnings;
 use Cwd qw(abs_path);
 use File::Basename qw(dirname);
 
+require Git;
+
 my $DIR = abs_path(dirname($0));
 
 
 sub usage
 {
 	print << 'USAGE';
-usage: git difftool [--tool=<tool>] [-y|--no-prompt] ["git diff" options]
+usage: git difftool [-g|--gui] [-t|--tool=<tool>] [-y|--no-prompt]
+                    ["git diff" options]
 USAGE
 	exit 1;
 }
@@ -61,6 +64,14 @@ sub generate_command
 		}
 		if ($arg =~ /^--tool=/) {
 			$ENV{GIT_DIFF_TOOL} = substr($arg, 7);
+			next;
+		}
+		if ($arg eq '-g' || $arg eq '--gui') {
+			my $tool = Git::command_oneline('config',
+			                                'diff.guitool');
+			if (length($tool)) {
+				$ENV{GIT_DIFF_TOOL} = $tool;
+			}
 			next;
 		}
 		if ($arg eq '-y' || $arg eq '--no-prompt') {
