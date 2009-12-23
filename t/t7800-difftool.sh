@@ -36,6 +36,7 @@ restore_test_defaults()
 	unset GIT_DIFFTOOL_NO_PROMPT
 	git config diff.tool test-tool &&
 	git config difftool.test-tool.cmd 'cat $LOCAL'
+	git config difftool.bogus-tool.cmd false
 }
 
 prompt_given()
@@ -71,7 +72,7 @@ test_expect_success 'custom commands' '
 
 # Ensures that git-difftool ignores bogus --tool values
 test_expect_success 'difftool ignores bad --tool values' '
-	diff=$(git difftool --no-prompt --tool=bogus-tool branch)
+	diff=$(git difftool --no-prompt --tool=bad-tool branch)
 	test "$?" = 1 &&
 	test "$diff" = ""
 '
