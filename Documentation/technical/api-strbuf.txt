@@ -12,7 +12,7 @@ strbuf API actually relies on the string being free of NULs.
 
 strbufs has some invariants that are very important to keep in mind:
 
-. The `buf` member is never NULL, so you it can be used in any usual C
+. The `buf` member is never NULL, so it can be used in any usual C
 string operations safely. strbuf's _have_ to be initialized either by
 `strbuf_init()` or by `= STRBUF_INIT` before the invariants, though.
 +
@@ -55,7 +55,7 @@ Data structures
 
 * `struct strbuf`
 
-This is string buffer structure. The `len` member can be used to
+This is the string buffer structure. The `len` member can be used to
 determine the current length of the string, and `buf` member provides access to
 the string itself.
 
@@ -253,3 +253,9 @@ same behaviour as well.
 	comments are considered contents to be removed or not.
 
 `launch_editor`::
+
+	Launch the user preferred editor to edit a file and fill the buffer
+	with the file's contents upon the user completing their editing. The
+	third argument can be used to set the environment which the editor is
+	run in. If the buffer is NULL the editor is launched as usual but the
+	file's contents are not read into the buffer upon completion.

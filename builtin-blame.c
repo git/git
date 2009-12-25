@@ -1305,6 +1305,7 @@ static void get_ac_line(const char *inbuf, const char *what,
 	error_out:
 		/* Ugh */
 		*tz = "(unknown)";
+		strcpy(person, *tz);
 		strcpy(mail, *tz);
 		*time = 0;
 		return;
@@ -1314,20 +1315,26 @@ static void get_ac_line(const char *inbuf, const char *what,
 	tmp = person;
 	tmp += len;
 	*tmp = 0;
-	while (*tmp != ' ')
+	while (person < tmp && *tmp != ' ')
 		tmp--;
+	if (tmp <= person)
+		goto error_out;
 	*tz = tmp+1;
 	tzlen = (person+len)-(tmp+1);
 
 	*tmp = 0;
-	while (*tmp != ' ')
+	while (person < tmp && *tmp != ' ')
 		tmp--;
+	if (tmp <= person)
+		goto error_out;
 	*time = strtoul(tmp, NULL, 10);
 	timepos = tmp;
 
 	*tmp = 0;
-	while (*tmp != ' ')
+	while (person < tmp && *tmp != ' ')
 		tmp--;
+	if (tmp <= person)
+		return;
 	mailpos = tmp + 1;
 	*tmp = 0;
 	maillen = timepos - tmp;

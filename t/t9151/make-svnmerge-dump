@@ -11,93 +11,151 @@ mkdir foo.svn
 svnadmin create foo.svn
 svn co file://`pwd`/foo.svn foo
 
+commit() {
+    i=$(( $1 + 1 ))
+    shift;
+    svn commit -m "(r$i) $*" >/dev/null || exit 1
+    echo $i
+}
+
+say() {
+    echo "[1m * $*[0m"
+}
+
+i=0
 cd foo
 mkdir trunk
 mkdir branches
 svn add trunk branches
-svn commit -m "Setup trunk and branches"
-cd trunk
+i=$(commit $i "Setup trunk and branches")
 
-git cat-file blob 6683463e:Makefile > Makefile
-svn add Makefile 
+git cat-file blob 6683463e:Makefile > trunk/Makefile
+svn add trunk/Makefile 
 
-echo "Committing ANCESTOR"
-svn commit -m "ancestor"
-cd ..
+say "Committing ANCESTOR"
+i=$(commit $i "ancestor")
 svn cp trunk branches/left
 
-echo "Committing BRANCH POINT"
-svn commit -m "make left branch"
+say "Committing BRANCH POINT"
+i=$(commit $i "make left branch")
 svn cp trunk branches/right
 
-echo "Committing other BRANCH POINT"
-svn commit -m "make right branch"
-cd branches/left/
+say "Committing other BRANCH POINT"
+i=$(commit $i "make right branch")
 
-#$sm init
-#svn commit -m "init svnmerge"
+say "Committing LEFT UPDATE"
+git cat-file blob 5873b67e:Makefile > branches/left/Makefile
+i=$(commit $i "left update 1")
 
-git cat-file blob 5873b67e:Makefile > Makefile
-echo "Committing BRANCH UPDATE 1"
-svn commit -m "left update 1"
-cd ../..
+git cat-file blob 75118b13:Makefile > branches/right/Makefile
+say "Committing RIGHT UPDATE"
+pre_right_update_1=$i
+i=$(commit $i "right update 1")
 
-cd trunk
-git cat-file blob 75118b13:Makefile > Makefile
-echo "Committing TRUNK UPDATE"
-svn commit -m "trunk update"
+say "Making more commits on LEFT"
+git cat-file blob ff5ebe39:Makefile > branches/left/Makefile
+i=$(commit $i "left update 2")
+git cat-file blob b5039db6:Makefile > branches/left/Makefile
+i=$(commit $i "left update 3")
 
-cd ../branches/left
-git cat-file blob ff5ebe39:Makefile > Makefile
-echo "Committing BRANCH UPDATE 2"
-svn commit -m "left update 2"
+say "Making a LEFT SUB-BRANCH"
+svn cp branches/left branches/left-sub
+sub_left_make=$i
+i=$(commit $i "make left sub-branch")
 
-git cat-file blob b5039db6:Makefile > Makefile
-echo "Committing BRANCH UPDATE 3"
-svn commit -m "left update 3"
+say "Making a commit on LEFT SUB-BRANCH"
+echo "crunch" > branches/left-sub/README
+svn add branches/left-sub/README
+i=$(commit $i "left sub-branch update 1")
 
-# merge to trunk
-
-cd ../..
+say "Merging LEFT to TRUNK"
 svn update
 cd trunk
-
 svn merge ../branches/left --accept postpone
-
-git cat-file blob b51ad431:Makefile > Makefile
-
-svn resolved Makefile
-
-svn commit -m "Merge trunk 1"
-
-# create commits on both branches
-
-cd ../branches/left
-git cat-file blob ff5ebe39:Makefile > Makefile
-echo "Committing BRANCH UPDATE 4"
-svn commit -m "left update 4"
-
-cd ../right
 git cat-file blob b5039db6:Makefile > Makefile
-echo "Committing other BRANCH UPDATE 1"
-svn commit -m "right update 1"
+svn resolved Makefile
+i=$(commit $i "Merge left to trunk 1")
+cd ..
 
-# merge to trun again
+say "Making more commits on LEFT and RIGHT"
+echo "touche" > branches/left/zlonk
+svn add branches/left/zlonk
+i=$(commit $i "left update 4")
+echo "thwacke" > branches/right/bang
+svn add branches/right/bang
+i=$(commit $i "right update 2")
 
-cd ../..
+say "Squash merge of RIGHT tip 2 commits onto TRUNK"
 svn update
 cd trunk
+svn merge -r$pre_right_update_1:$i ../branches/right
+i=$(commit $i "Cherry-pick right 2 commits to trunk")
+cd ..
 
-svn merge ../branches/left --accept postpone
-
+say "Merging RIGHT to TRUNK"
+svn update
+cd trunk
+svn merge ../branches/right --accept postpone
 git cat-file blob b51ad431:Makefile > Makefile
-
 svn resolved Makefile
+i=$(commit $i "Merge right to trunk 1")
+cd ..
 
-svn commit -m "Merge trunk 2"
+say "Making more commits on RIGHT and TRUNK"
+echo "whamm" > branches/right/urkkk
+svn add branches/right/urkkk
+i=$(commit $i "right update 3")
+echo "pow" > trunk/vronk
+svn add trunk/vronk
+i=$(commit $i "trunk update 1")
 
+say "Merging RIGHT to LEFT SUB-BRANCH"
+svn update
+cd branches/left-sub
+svn merge ../right --accept postpone
+git cat-file blob b51ad431:Makefile > Makefile
+svn resolved Makefile
+i=$(commit $i "Merge right to left sub-branch")
 cd ../..
 
+say "Making more commits on LEFT SUB-BRANCH and LEFT"
+echo "zowie" > branches/left-sub/wham_eth
+svn add branches/left-sub/wham_eth
+pre_sub_left_update_2=$i
+i=$(commit $i "left sub-branch update 2")
+sub_left_update_2=$i
+echo "eee_yow" > branches/left/glurpp
+svn add branches/left/glurpp
+i=$(commit $i "left update 5")
+
+say "Cherry pick LEFT SUB-BRANCH commit to LEFT"
+svn update
+cd branches/left
+svn merge -r$pre_sub_left_update_2:$sub_left_update_2 ../left-sub
+i=$(commit $i "Cherry-pick left sub-branch commit to left")
+cd ../..
+
+say "Merging LEFT SUB-BRANCH back to LEFT"
+svn update
+cd branches/left
+# it's only a merge because the previous merge cherry-picked the top commit
+svn merge -r$sub_left_make:$sub_left_update_2 ../left-sub --accept postpone
+i=$(commit $i "Merge left sub-branch to left")
+cd ../..
+
+say "Merging EVERYTHING to TRUNK"
+svn update
+cd trunk
+svn merge ../branches/left --accept postpone
+svn resolved bang
+i=$(commit $i "Merge left to trunk 2")
+# this merge, svn happily updates the mergeinfo, but there is actually
+# nothing to merge.  git-svn will not make a meaningless merge commit.
+svn merge ../branches/right --accept postpone
+i=$(commit $i "non-merge right to trunk 2")
+cd ..
+
+cd ..
 svnadmin dump foo.svn > svn-mergeinfo.dump
 
 rm -rf foo foo.svn
