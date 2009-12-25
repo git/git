@@ -101,7 +101,7 @@ objects from the source repository into a pack in the cloned repository.
 
 --verbose::
 -v::
-	Display the progress bar, even in case the standard output is not
+	Display the progress bar, even in case the standard error is not
 	a terminal.
 
 --no-checkout::
