@@ -83,8 +83,37 @@ static inline void ferr_puts(const char *s, FILE *fp, int *err)
 	ferr_write(s, strlen(s), fp, err);
 }
 
-static int handle_file(const char *path,
-	 unsigned char *sha1, const char *output)
+struct rerere_io {
+	int (*getline)(struct strbuf *, struct rerere_io *);
+	FILE *output;
+	int wrerror;
+	/* some more stuff */
+};
+
+static void rerere_io_putstr(const char *str, struct rerere_io *io)
+{
+	if (io->output)
+		ferr_puts(str, io->output, &io->wrerror);
+}
+
+static void rerere_io_putmem(const char *mem, size_t sz, struct rerere_io *io)
+{
+	if (io->output)
+		ferr_write(mem, sz, io->output, &io->wrerror);
+}
+
+struct rerere_io_file {
+	struct rerere_io io;
+	FILE *input;
+};
+
+static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
+{
+	struct rerere_io_file *io = (struct rerere_io_file *)io_;
+	return strbuf_getwholeline(sb, io->input, '\n');
+}
+
+static int handle_path(unsigned char *sha1, struct rerere_io *io)
 {
 	git_SHA_CTX ctx;
 	int hunk_no = 0;
@@ -93,25 +122,11 @@ static int handle_file(const char *path,
 	} hunk = RR_CONTEXT;
 	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
-	FILE *f = fopen(path, "r");
-	FILE *out = NULL;
-	int wrerror = 0;
-
-	if (!f)
-		return error("Could not open %s", path);
-
-	if (output) {
-		out = fopen(output, "w");
-		if (!out) {
-			fclose(f);
-			return error("Could not write %s", output);
-		}
-	}
 
 	if (sha1)
 		git_SHA1_Init(&ctx);
 
-	while (!strbuf_getwholeline(&buf, f, '\n')) {
+	while (!io->getline(&buf, io)) {
 		if (!prefixcmp(buf.buf, "<<<<<<< ")) {
 			if (hunk != RR_CONTEXT)
 				goto bad;
@@ -131,13 +146,11 @@ static int handle_file(const char *path,
 				strbuf_swap(&one, &two);
 			hunk_no++;
 			hunk = RR_CONTEXT;
-			if (out) {
-				ferr_puts("<<<<<<<\n", out, &wrerror);
-				ferr_write(one.buf, one.len, out, &wrerror);
-				ferr_puts("=======\n", out, &wrerror);
-				ferr_write(two.buf, two.len, out, &wrerror);
-				ferr_puts(">>>>>>>\n", out, &wrerror);
-			}
+			rerere_io_putstr("<<<<<<<\n", io);
+			rerere_io_putmem(one.buf, one.len, io);
+			rerere_io_putstr("=======\n", io);
+			rerere_io_putmem(two.buf, two.len, io);
+			rerere_io_putstr(">>>>>>>\n", io);
 			if (sha1) {
 				git_SHA1_Update(&ctx, one.buf ? one.buf : "",
 					    one.len + 1);
@@ -152,8 +165,8 @@ static int handle_file(const char *path,
 			; /* discard */
 		else if (hunk == RR_SIDE_2)
 			strbuf_addstr(&two, buf.buf);
-		else if (out)
-			ferr_puts(buf.buf, out, &wrerror);
+		else
+			rerere_io_putstr(buf.buf, io);
 		continue;
 	bad:
 		hunk = 99; /* force error exit */
@@ -163,21 +176,49 @@ static int handle_file(const char *path,
 	strbuf_release(&two);
 	strbuf_release(&buf);
 
-	fclose(f);
-	if (wrerror)
-		error("There were errors while writing %s (%s)",
-		      path, strerror(wrerror));
-	if (out && fclose(out))
-		wrerror = error("Failed to flush %s: %s",
-				path, strerror(errno));
 	if (sha1)
 		git_SHA1_Final(sha1, &ctx);
-	if (hunk != RR_CONTEXT) {
+	if (hunk != RR_CONTEXT)
+		return -1;
+	return hunk_no;
+}
+
+static int handle_file(const char *path, unsigned char *sha1, const char *output)
+{
+	int hunk_no = 0;
+	struct rerere_io_file io;
+
+	memset(&io, 0, sizeof(io));
+	io.io.getline = rerere_file_getline;
+	io.input = fopen(path, "r");
+	io.io.wrerror = 0;
+	if (!io.input)
+		return error("Could not open %s", path);
+
+	if (output) {
+		io.io.output = fopen(output, "w");
+		if (!io.io.output) {
+			fclose(io.input);
+			return error("Could not write %s", output);
+		}
+	}
+
+	hunk_no = handle_path(sha1, (struct rerere_io *)&io);
+
+	fclose(io.input);
+	if (io.io.wrerror)
+		error("There were errors while writing %s (%s)",
+		      path, strerror(io.io.wrerror));
+	if (io.io.output && fclose(io.io.output))
+		io.io.wrerror = error("Failed to flush %s: %s",
+				      path, strerror(errno));
+
+	if (hunk_no < 0) {
 		if (output)
 			unlink_or_warn(output);
 		return error("Could not parse conflict hunks in %s", path);
 	}
-	if (wrerror)
+	if (io.io.wrerror)
 		return -1;
 	return hunk_no;
 }
