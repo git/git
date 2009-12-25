@@ -76,8 +76,8 @@ static int score_trees(const unsigned char *hash1, const unsigned char *hash2)
 		const unsigned char *elem2 = elem2;
 		const char *path1 = path1;
 		const char *path2 = path2;
-		unsigned mode1 = mode1;
-		unsigned mode2 = mode2;
+		unsigned mode1 = 0;
+		unsigned mode2 = 0;
 		int cmp;
 
 		if (one.size)

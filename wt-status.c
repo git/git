@@ -149,7 +149,7 @@ static void wt_status_print_change_data(struct wt_status *s,
 {
 	struct wt_status_change_data *d = it->util;
 	const char *c = color(change_type, s);
-	int status = status;
+	int status = 0;
 	char *one_name;
 	char *two_name;
 	const char *one, *two;
