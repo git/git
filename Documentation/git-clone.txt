@@ -102,6 +102,9 @@ objects from the source repository into a pack in the cloned repository.
 
 --verbose::
 -v::
+	Run verbosely.
+
+--progress::
 	Progress status is reported on the standard error stream
 	by default when it is attached to a terminal, unless -q
 	is specified. This flag forces progress status even if the
