@@ -3,6 +3,9 @@
 #include "rerere.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
+#include "dir.h"
+#include "resolve-undo.h"
+#include "ll-merge.h"
 
 /* if rerere_enabled == -1, fall back to detection of .git/rr-cache */
 static int rerere_enabled = -1;
@@ -223,6 +226,87 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 	return hunk_no;
 }
 
+struct rerere_io_mem {
+	struct rerere_io io;
+	struct strbuf input;
+};
+
+static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
+{
+	struct rerere_io_mem *io = (struct rerere_io_mem *)io_;
+	char *ep;
+	size_t len;
+
+	strbuf_release(sb);
+	if (!io->input.len)
+		return -1;
+	ep = strchrnul(io->input.buf, '\n');
+	if (*ep == '\n')
+		ep++;
+	len = ep - io->input.buf;
+	strbuf_add(sb, io->input.buf, len);
+	strbuf_remove(&io->input, 0, len);
+	return 0;
+}
+
+static int handle_cache(const char *path, unsigned char *sha1, const char *output)
+{
+	mmfile_t mmfile[3];
+	mmbuffer_t result = {NULL, 0};
+	struct cache_entry *ce;
+	int pos, len, i, hunk_no;
+	struct rerere_io_mem io;
+
+	/*
+	 * Reproduce the conflicted merge in-core
+	 */
+	len = strlen(path);
+	pos = cache_name_pos(path, len);
+	if (0 <= pos)
+		return -1;
+	pos = -pos - 1;
+
+	for (i = 0; i < 3; i++) {
+		enum object_type type;
+		unsigned long size;
+
+		mmfile[i].size = 0;
+		mmfile[i].ptr = NULL;
+		if (active_nr <= pos)
+			break;
+		ce = active_cache[pos++];
+		if (ce_namelen(ce) != len || memcmp(ce->name, path, len)
+		    || ce_stage(ce) != i + 1)
+			break;
+		mmfile[i].ptr = read_sha1_file(ce->sha1, &type, &size);
+		mmfile[i].size = size;
+	}
+	for (i = 0; i < 3; i++) {
+		if (!mmfile[i].ptr && !mmfile[i].size)
+			mmfile[i].ptr = xstrdup("");
+	}
+	ll_merge(&result, path, &mmfile[0],
+		 &mmfile[1], "ours",
+		 &mmfile[2], "theirs", 0);
+	for (i = 0; i < 3; i++)
+		free(mmfile[i].ptr);
+
+	memset(&io, 0, sizeof(&io));
+	io.io.getline = rerere_mem_getline;
+	if (output)
+		io.io.output = fopen(output, "w");
+	else
+		io.io.output = NULL;
+	strbuf_init(&io.input, 0);
+	strbuf_attach(&io.input, result.ptr, result.size, result.size);
+
+	hunk_no = handle_path(sha1, (struct rerere_io *)&io);
+	strbuf_release(&io.input);
+	if (io.io.output)
+		fclose(io.io.output);
+	return hunk_no;
+}
+
 static int find_conflict(struct string_list *conflict)
 {
 	int i;
@@ -433,4 +517,53 @@ int rerere(void)
 	if (fd < 0)
 		return 0;
 	return do_plain_rerere(&merge_rr, fd);
+}
+
+static int rerere_forget_one_path(const char *path, struct string_list *rr)
+{
+	const char *filename;
+	char *hex;
+	unsigned char sha1[20];
+	int ret;
+
+	ret = handle_cache(path, sha1, NULL);
+	if (ret < 1)
+		return error("Could not parse conflict hunks in '%s'", path);
+	hex = xstrdup(sha1_to_hex(sha1));
+	filename = rerere_path(hex, "postimage");
+	if (unlink(filename))
+		return (errno == ENOENT
+			? error("no remembered resolution for %s", path)
+			: error("cannot unlink %s: %s", filename, strerror(errno)));
+
+	handle_cache(path, sha1, rerere_path(hex, "preimage"));
+	fprintf(stderr, "Updated preimage for '%s'\n", path);
+
+
+	string_list_insert(path, rr)->util = hex;
+	fprintf(stderr, "Forgot resolution for %s\n", path);
+	return 0;
+}
+
+int rerere_forget(const char **pathspec)
+{
+	int i, fd;
+	struct string_list conflict = { NULL, 0, 0, 1 };
+	struct string_list merge_rr = { NULL, 0, 0, 1 };
+
+	if (read_cache() < 0)
+		return error("Could not read index");
+
+	fd = setup_rerere(&merge_rr);
+
+	unmerge_cache(pathspec);
+	find_conflict(&conflict);
+	for (i = 0; i < conflict.nr; i++) {
+		struct string_list_item *it = &conflict.items[i];
+		if (!match_pathspec(pathspec, it->string, strlen(it->string),
+				    0, NULL))
+			continue;
+		rerere_forget_one_path(it->string, &merge_rr);
+	}
+	return write_rr(&merge_rr, fd);
 }

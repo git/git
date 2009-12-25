@@ -115,4 +115,29 @@ test_expect_success 'unmerge with plumbing' '
 	test $(wc -l <actual) = 3
 '
 
+test_expect_success 'rerere and rerere --forget' '
+	mkdir .git/rr-cache &&
+	prime_resolve_undo &&
+	echo record the resolution &&
+	git rerere &&
+	rerere_id=$(cd .git/rr-cache && echo */postimage) &&
+	rerere_id=${rerere_id%/postimage} &&
+	test -f .git/rr-cache/$rerere_id/postimage &&
+	git checkout -m file &&
+	echo resurrect the conflict &&
+	grep "^=======" file &&
+	echo reresolve the conflict &&
+	git rerere &&
+	test "z$(cat file)" = zdifferent &&
+	echo register the resolution again &&
+	git add file &&
+	check_resolve_undo kept file initial:file second:file third:file &&
+	test -z "$(git ls-files -u)" &&
+	git rerere forget file &&
+	! test -f .git/rr-cache/$rerere_id/postimage &&
+	tr "\0" "\n" <.git/MERGE_RR >actual &&
+	echo "$rerere_id	file" >expect &&
+	test_cmp expect actual
+'
+
 test_done

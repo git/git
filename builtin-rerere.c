@@ -110,6 +110,8 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 
 	if (!strcmp(argv[1], "-h"))
 		usage(git_rerere_usage);
+	else if (!strcmp(argv[1], "forget"))
+		return rerere_forget(argv + 2);
 
 	fd = setup_rerere(&merge_rr);
 	if (fd < 0)
