@@ -87,12 +87,12 @@ static int handle_file(const char *path,
 	 unsigned char *sha1, const char *output)
 {
 	git_SHA_CTX ctx;
-	char buf[1024];
 	int hunk_no = 0;
 	enum {
 		RR_CONTEXT = 0, RR_SIDE_1, RR_SIDE_2, RR_ORIGINAL,
 	} hunk = RR_CONTEXT;
 	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT;
 	FILE *f = fopen(path, "r");
 	FILE *out = NULL;
 	int wrerror = 0;
@@ -111,20 +111,20 @@ static int handle_file(const char *path,
 	if (sha1)
 		git_SHA1_Init(&ctx);
 
-	while (fgets(buf, sizeof(buf), f)) {
-		if (!prefixcmp(buf, "<<<<<<< ")) {
+	while (!strbuf_getwholeline(&buf, f, '\n')) {
+		if (!prefixcmp(buf.buf, "<<<<<<< ")) {
 			if (hunk != RR_CONTEXT)
 				goto bad;
 			hunk = RR_SIDE_1;
-		} else if (!prefixcmp(buf, "|||||||") && isspace(buf[7])) {
+		} else if (!prefixcmp(buf.buf, "|||||||") && isspace(buf.buf[7])) {
 			if (hunk != RR_SIDE_1)
 				goto bad;
 			hunk = RR_ORIGINAL;
-		} else if (!prefixcmp(buf, "=======") && isspace(buf[7])) {
+		} else if (!prefixcmp(buf.buf, "=======") && isspace(buf.buf[7])) {
 			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
 				goto bad;
 			hunk = RR_SIDE_2;
-		} else if (!prefixcmp(buf, ">>>>>>> ")) {
+		} else if (!prefixcmp(buf.buf, ">>>>>>> ")) {
 			if (hunk != RR_SIDE_2)
 				goto bad;
 			if (strbuf_cmp(&one, &two) > 0)
@@ -147,13 +147,13 @@ static int handle_file(const char *path,
 			strbuf_reset(&one);
 			strbuf_reset(&two);
 		} else if (hunk == RR_SIDE_1)
-			strbuf_addstr(&one, buf);
+			strbuf_addstr(&one, buf.buf);
 		else if (hunk == RR_ORIGINAL)
 			; /* discard */
 		else if (hunk == RR_SIDE_2)
-			strbuf_addstr(&two, buf);
+			strbuf_addstr(&two, buf.buf);
 		else if (out)
-			ferr_puts(buf, out, &wrerror);
+			ferr_puts(buf.buf, out, &wrerror);
 		continue;
 	bad:
 		hunk = 99; /* force error exit */
@@ -161,6 +161,7 @@ static int handle_file(const char *path,
 	}
 	strbuf_release(&one);
 	strbuf_release(&two);
+	strbuf_release(&buf);
 
 	fclose(f);
 	if (wrerror)
