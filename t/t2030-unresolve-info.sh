@@ -97,4 +97,15 @@ test_expect_success 'plumbing clears' '
 	check_resolve_undo cleared
 '
 
+test_expect_success 'add records checkout -m undoes' '
+	prime_resolve_undo &&
+	git diff HEAD &&
+	git checkout --conflict=merge file &&
+	echo checkout used the record and removed it &&
+	check_resolve_undo removed &&
+	echo the index and the work tree is unmerged again &&
+	git diff >actual &&
+	grep "^++<<<<<<<" actual
+'
+
 test_done

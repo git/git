@@ -338,6 +338,7 @@ static inline void remove_name_hash(struct cache_entry *ce)
 #define cache_name_exists(name, namelen, igncase) index_name_exists(&the_index, (name), (namelen), (igncase))
 #define cache_name_is_other(name, namelen) index_name_is_other(&the_index, (name), (namelen))
 #define resolve_undo_clear() resolve_undo_clear_index(&the_index)
+#define unmerge_cache(pathspec) unmerge_index(&the_index, pathspec)
 #endif
 
 enum object_type {

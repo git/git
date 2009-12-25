@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "dir.h"
 #include "resolve-undo.h"
 #include "string-list.h"
 
@@ -114,4 +115,62 @@ void resolve_undo_clear_index(struct index_state *istate)
 	free(resolve_undo);
 	istate->resolve_undo = NULL;
 	istate->cache_changed = 1;
+}
+
+int unmerge_index_entry_at(struct index_state *istate, int pos)
+{
+	struct cache_entry *ce;
+	struct string_list_item *item;
+	struct resolve_undo_info *ru;
+	int i, err = 0;
+
+	if (!istate->resolve_undo)
+		return pos;
+
+	ce = istate->cache[pos];
+	if (ce_stage(ce)) {
+		/* already unmerged */
+		while ((pos < istate->cache_nr) &&
+		       ! strcmp(istate->cache[pos]->name, ce->name))
+			pos++;
+		return pos - 1; /* return the last entry processed */
+	}
+	item = string_list_lookup(ce->name, istate->resolve_undo);
+	if (!item)
+		return pos;
+	ru = item->util;
+	if (!ru)
+		return pos;
+	remove_index_entry_at(istate, pos);
+	for (i = 0; i < 3; i++) {
+		struct cache_entry *nce;
+		if (!ru->mode[i])
+			continue;
+		nce = make_cache_entry(ru->mode[i], ru->sha1[i],
+				       ce->name, i + 1, 0);
+		if (add_index_entry(istate, nce, ADD_CACHE_OK_TO_ADD)) {
+			err = 1;
+			error("cannot unmerge '%s'", ce->name);
+		}
+	}
+	if (err)
+		return pos;
+	free(ru);
+	item->util = NULL;
+	return unmerge_index_entry_at(istate, pos);
+}
+
+void unmerge_index(struct index_state *istate, const char **pathspec)
+{
+	int i;
+
+	if (!istate->resolve_undo)
+		return;
+
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		if (!match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, NULL))
+			continue;
+		i = unmerge_index_entry_at(istate, i);
+	}
 }

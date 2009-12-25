@@ -235,6 +235,10 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	if (report_path_error(ps_matched, pathspec, 0))
 		return 1;
 
+	/* "checkout -m path" to recreate conflicted state */
+	if (opts->merge)
+		unmerge_cache(pathspec);
+
 	/* Any unmerged paths? */
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
