@@ -108,4 +108,11 @@ test_expect_success 'add records checkout -m undoes' '
 	grep "^++<<<<<<<" actual
 '
 
+test_expect_success 'unmerge with plumbing' '
+	prime_resolve_undo &&
+	git update-index --unresolve file &&
+	git ls-files -u >actual &&
+	test $(wc -l <actual) = 3
+'
+
 test_done

@@ -433,7 +433,18 @@ static int unresolve_one(const char *path)
 
 	/* See if there is such entry in the index. */
 	pos = cache_name_pos(path, namelen);
-	if (pos < 0) {
+	if (0 <= pos) {
+		/* already merged */
+		pos = unmerge_cache_entry_at(pos);
+		if (pos < active_nr) {
+			struct cache_entry *ce = active_cache[pos];
+			if (ce_stage(ce) &&
+			    ce_namelen(ce) == namelen &&
+			    !memcmp(ce->name, path, namelen))
+				return 0;
+		}
+		/* no resolve-undo information; fall back */
+	} else {
 		/* If there isn't, either it is unmerged, or
 		 * resolved as "removed" by mistake.  We do not
 		 * want to do anything in the former case.
