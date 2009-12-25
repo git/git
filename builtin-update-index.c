@@ -9,6 +9,7 @@
 #include "tree-walk.h"
 #include "builtin.h"
 #include "refs.h"
+#include "resolve-undo.h"
 
 /*
  * Default to not allowing changes to the list of files. The
@@ -701,6 +702,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(path, "--verbose")) {
 				verbose = 1;
+				continue;
+			}
+			if (!strcmp(path, "--clear-resolve-undo")) {
+				resolve_undo_clear();
 				continue;
 			}
 			if (!strcmp(path, "-h") || !strcmp(path, "--help"))

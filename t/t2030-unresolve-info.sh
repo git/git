@@ -85,4 +85,16 @@ test_expect_success 'rm records reset clears' '
 	check_resolve_undo discarded
 '
 
+test_expect_success 'plumbing clears' '
+	prime_resolve_undo &&
+	test_tick &&
+	git commit -m merged &&
+	echo committing keeps &&
+	check_resolve_undo kept file initial:file second:file third:file &&
+
+	echo plumbing clear &&
+	git update-index --clear-resolve-undo &&
+	check_resolve_undo cleared
+'
+
 test_done
