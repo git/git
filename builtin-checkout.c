@@ -17,6 +17,7 @@
 #include "blob.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
+#include "resolve-undo.h"
 
 static const char * const checkout_usage[] = {
 	"git checkout [options] <branch>",
@@ -370,6 +371,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 	if (read_cache_preload(NULL) < 0)
 		return error("corrupt index file");
 
+	resolve_undo_clear();
 	if (opts->force) {
 		ret = reset_tree(new->commit->tree, opts, 1);
 		if (ret)

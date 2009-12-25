@@ -24,6 +24,7 @@
 #include "rerere.h"
 #include "help.h"
 #include "merge-recursive.h"
+#include "resolve-undo.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -604,6 +605,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		discard_cache();
 		if (read_cache() < 0)
 			die("failed to read the cache");
+		resolve_undo_clear();
 		return ret;
 	}
 }
@@ -851,7 +853,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (read_cache_unmerged())
 		die("You are in the middle of a conflicted merge."
 				" (index unmerged)");
-
+	resolve_undo_clear();
 	/*
 	 * Check if we are _not_ on a detached HEAD, i.e. if there is a
 	 * current branch.
