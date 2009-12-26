@@ -6,6 +6,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "quote.h"
+#include "remote.h"
 
 struct helper_data
 {
@@ -13,8 +14,12 @@ struct helper_data
 	struct child_process *helper;
 	FILE *out;
 	unsigned fetch : 1,
+		import : 1,
 		option : 1,
 		push : 1;
+	/* These go from remote name (as in "list") to private name */
+	struct refspec *refspecs;
+	int refspec_nr;
 };
 
 static struct child_process *get_helper(struct transport *transport)
@@ -22,6 +27,9 @@ static struct child_process *get_helper(struct transport *transport)
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process *helper;
+	const char **refspecs = NULL;
+	int refspec_nr = 0;
+	int refspec_alloc = 0;
 
 	if (data->helper)
 		return data->helper;
@@ -55,7 +63,25 @@ static struct child_process *get_helper(struct transport *transport)
 			data->option = 1;
 		if (!strcmp(buf.buf, "push"))
 			data->push = 1;
+		if (!strcmp(buf.buf, "import"))
+			data->import = 1;
+		if (!data->refspecs && !prefixcmp(buf.buf, "refspec ")) {
+			ALLOC_GROW(refspecs,
+				   refspec_nr + 1,
+				   refspec_alloc);
+			refspecs[refspec_nr++] = strdup(buf.buf + strlen("refspec "));
+		}
 	}
+	if (refspecs) {
+		int i;
+		data->refspec_nr = refspec_nr;
+		data->refspecs = parse_fetch_refspec(refspec_nr, refspecs);
+		for (i = 0; i < refspec_nr; i++) {
+			free((char *)refspecs[i]);
+		}
+		free(refspecs);
+	}
+	strbuf_release(&buf);
 	return data->helper;
 }
 
@@ -72,7 +98,6 @@ static int disconnect_helper(struct transport *transport)
 		free(data->helper);
 		data->helper = NULL;
 	}
-	free(data);
 	return 0;
 }
 
@@ -154,8 +179,18 @@ static void standard_options(struct transport *t)
 	set_helper_option(t, "verbosity", buf);
 }
 
+static int release_helper(struct transport *transport)
+{
+	struct helper_data *data = transport->data;
+	free_refspec(data->refspec_nr, data->refspecs);
+	data->refspecs = NULL;
+	disconnect_helper(transport);
+	free(transport->data);
+	return 0;
+}
+
 static int fetch_with_fetch(struct transport *transport,
-			    int nr_heads, const struct ref **to_fetch)
+			    int nr_heads, struct ref **to_fetch)
 {
 	struct helper_data *data = transport->data;
 	int i;
@@ -197,8 +232,64 @@ static int fetch_with_fetch(struct transport *transport,
 	return 0;
 }
 
+static int get_importer(struct transport *transport, struct child_process *fastimport)
+{
+	struct child_process *helper = get_helper(transport);
+	memset(fastimport, 0, sizeof(*fastimport));
+	fastimport->in = helper->out;
+	fastimport->argv = xcalloc(5, sizeof(*fastimport->argv));
+	fastimport->argv[0] = "fast-import";
+	fastimport->argv[1] = "--quiet";
+
+	fastimport->git_cmd = 1;
+	return start_command(fastimport);
+}
+
+static int fetch_with_import(struct transport *transport,
+			     int nr_heads, struct ref **to_fetch)
+{
+	struct child_process fastimport;
+	struct child_process *helper = get_helper(transport);
+	struct helper_data *data = transport->data;
+	int i;
+	struct ref *posn;
+	struct strbuf buf = STRBUF_INIT;
+
+	if (get_importer(transport, &fastimport))
+		die("Couldn't run fast-import");
+
+	for (i = 0; i < nr_heads; i++) {
+		posn = to_fetch[i];
+		if (posn->status & REF_STATUS_UPTODATE)
+			continue;
+
+		strbuf_addf(&buf, "import %s\n", posn->name);
+		write_in_full(helper->in, buf.buf, buf.len);
+		strbuf_reset(&buf);
+	}
+	disconnect_helper(transport);
+	finish_command(&fastimport);
+	free(fastimport.argv);
+	fastimport.argv = NULL;
+
+	for (i = 0; i < nr_heads; i++) {
+		char *private;
+		posn = to_fetch[i];
+		if (posn->status & REF_STATUS_UPTODATE)
+			continue;
+		if (data->refspecs)
+			private = apply_refspecs(data->refspecs, data->refspec_nr, posn->name);
+		else
+			private = strdup(posn->name);
+		read_ref(private, posn->old_sha1);
+		free(private);
+	}
+	strbuf_release(&buf);
+	return 0;
+}
+
 static int fetch(struct transport *transport,
-		 int nr_heads, const struct ref **to_fetch)
+		 int nr_heads, struct ref **to_fetch)
 {
 	struct helper_data *data = transport->data;
 	int i, count;
@@ -213,6 +304,9 @@ static int fetch(struct transport *transport,
 
 	if (data->fetch)
 		return fetch_with_fetch(transport, nr_heads, to_fetch);
+
+	if (data->import)
+		return fetch_with_import(transport, nr_heads, to_fetch);
 
 	return -1;
 }
@@ -343,6 +437,22 @@ static int push_refs(struct transport *transport,
 	return 0;
 }
 
+static int has_attribute(const char *attrs, const char *attr) {
+	int len;
+	if (!attrs)
+		return 0;
+
+	len = strlen(attr);
+	for (;;) {
+		const char *space = strchrnul(attrs, ' ');
+		if (len == space - attrs && !strncmp(attrs, attr, len))
+			return 1;
+		if (!*space)
+			return 0;
+		attrs = space + 1;
+	}
+}
+
 static struct ref *get_refs_list(struct transport *transport, int for_push)
 {
 	struct helper_data *data = transport->data;
@@ -379,6 +489,12 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 			(*tail)->symref = xstrdup(buf.buf + 1);
 		else if (buf.buf[0] != '?')
 			get_sha1_hex(buf.buf, (*tail)->old_sha1);
+		if (eon) {
+			if (has_attribute(eon + 1, "unchanged")) {
+				(*tail)->status |= REF_STATUS_UPTODATE;
+				read_ref((*tail)->name, (*tail)->old_sha1);
+			}
+		}
 		tail = &((*tail)->next);
 	}
 	strbuf_release(&buf);
@@ -399,6 +515,6 @@ int transport_helper_init(struct transport *transport, const char *name)
 	transport->get_refs_list = get_refs_list;
 	transport->fetch = fetch;
 	transport->push_refs = push_refs;
-	transport->disconnect = disconnect_helper;
+	transport->disconnect = release_helper;
 	return 0;
 }

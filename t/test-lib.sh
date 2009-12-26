@@ -632,19 +632,28 @@ GIT_CONFIG_NOSYSTEM=1
 GIT_CONFIG_NOGLOBAL=1
 export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_CONFIG_NOGLOBAL
 
+. ../GIT-BUILD-OPTIONS
+
 GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
 export GITPERLLIB
 test -d ../templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
+if test -z "$GIT_TEST_INSTALLED" && test -z "$NO_PYTHON"
+then
+	GITPYTHONLIB="$(pwd)/../git_remote_helpers/build/lib"
+	export GITPYTHONLIB
+	test -d ../git_remote_helpers/build || {
+		error "You haven't built git_remote_helpers yet, have you?"
+	}
+fi
+
 if ! test -x ../test-chmtime; then
 	echo >&2 'You need to build test-chmtime:'
 	echo >&2 'Run "make test-chmtime" in the source (toplevel) directory'
 	exit 1
 fi
-
-. ../GIT-BUILD-OPTIONS
 
 # Test repository
 test="trash directory.$(basename "$0" .sh)"
@@ -729,6 +738,7 @@ case $(uname -s) in
 esac
 
 test -z "$NO_PERL" && test_set_prereq PERL
+test -z "$NO_PYTHON" && test_set_prereq PYTHON
 
 # test whether the filesystem supports symbolic links
 ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
