@@ -194,6 +194,7 @@ struct emit_callback {
 	struct diff_words_data *diff_words;
 	int *found_changesp;
 	FILE *file;
+	struct strbuf *header;
 };
 
 static int count_lines(const char *data, int size)
@@ -797,6 +798,11 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	const char *plain = diff_get_color(ecbdata->color_diff, DIFF_PLAIN);
 	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
 
+	if (ecbdata->header) {
+		fprintf(ecbdata->file, "%s", ecbdata->header->buf);
+		strbuf_reset(ecbdata->header);
+		ecbdata->header = NULL;
+	}
 	*(ecbdata->found_changesp) = 1;
 
 	if (ecbdata->label_path[0]) {
@@ -1601,6 +1607,7 @@ static void builtin_diff(const char *name_a,
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 	const char *a_prefix, *b_prefix;
 	const char *textconv_one = NULL, *textconv_two = NULL;
+	struct strbuf header = STRBUF_INIT;
 
 	if (DIFF_OPT_TST(o, SUBMODULE_LOG) &&
 			(!one->mode || S_ISGITLINK(one->mode)) &&
@@ -1635,25 +1642,26 @@ static void builtin_diff(const char *name_a,
 	b_two = quote_two(b_prefix, name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
-	fprintf(o->file, "%sdiff --git %s %s%s\n", set, a_one, b_two, reset);
+	strbuf_addf(&header, "%sdiff --git %s %s%s\n", set, a_one, b_two, reset);
 	if (lbl[0][0] == '/') {
 		/* /dev/null */
-		fprintf(o->file, "%snew file mode %06o%s\n", set, two->mode, reset);
+		strbuf_addf(&header, "%snew file mode %06o%s\n", set, two->mode, reset);
 		if (xfrm_msg && xfrm_msg[0])
-			fprintf(o->file, "%s%s%s\n", set, xfrm_msg, reset);
+			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
 	}
 	else if (lbl[1][0] == '/') {
-		fprintf(o->file, "%sdeleted file mode %06o%s\n", set, one->mode, reset);
+		strbuf_addf(&header, "%sdeleted file mode %06o%s\n", set, one->mode, reset);
 		if (xfrm_msg && xfrm_msg[0])
-			fprintf(o->file, "%s%s%s\n", set, xfrm_msg, reset);
+			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
 	}
 	else {
 		if (one->mode != two->mode) {
-			fprintf(o->file, "%sold mode %06o%s\n", set, one->mode, reset);
-			fprintf(o->file, "%snew mode %06o%s\n", set, two->mode, reset);
+			strbuf_addf(&header, "%sold mode %06o%s\n", set, one->mode, reset);
+			strbuf_addf(&header, "%snew mode %06o%s\n", set, two->mode, reset);
 		}
 		if (xfrm_msg && xfrm_msg[0])
-			fprintf(o->file, "%s%s%s\n", set, xfrm_msg, reset);
+			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
+
 		/*
 		 * we do not run diff between different kind
 		 * of objects.
@@ -1663,6 +1671,8 @@ static void builtin_diff(const char *name_a,
 		if (complete_rewrite &&
 		    (textconv_one || !diff_filespec_is_binary(one)) &&
 		    (textconv_two || !diff_filespec_is_binary(two))) {
+			fprintf(o->file, "%s", header.buf);
+			strbuf_reset(&header);
 			emit_rewrite_diff(name_a, name_b, one, two,
 						textconv_one, textconv_two, o);
 			o->found_changes = 1;
@@ -1680,6 +1690,8 @@ static void builtin_diff(const char *name_a,
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
 			goto free_ab_and_return;
+		fprintf(o->file, "%s", header.buf);
+		strbuf_reset(&header);
 		if (DIFF_OPT_TST(o, BINARY))
 			emit_binary_diff(o->file, &mf1, &mf2);
 		else
@@ -1695,6 +1707,11 @@ static void builtin_diff(const char *name_a,
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
 		const struct userdiff_funcname *pe;
+
+		if (!DIFF_XDL_TST(o, WHITESPACE_FLAGS)) {
+			fprintf(o->file, "%s", header.buf);
+			strbuf_reset(&header);
+		}
 
 		if (textconv_one) {
 			size_t size;
@@ -1725,6 +1742,7 @@ static void builtin_diff(const char *name_a,
 		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
 			check_blank_at_eof(&mf1, &mf2, &ecbdata);
 		ecbdata.file = o->file;
+		ecbdata.header = header.len ? &header : NULL;
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
@@ -1769,6 +1787,7 @@ static void builtin_diff(const char *name_a,
 	}
 
  free_ab_and_return:
+	strbuf_release(&header);
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
 	free(a_one);
