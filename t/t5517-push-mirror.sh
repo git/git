@@ -19,7 +19,8 @@ mk_repo_pair () {
 	mkdir mirror &&
 	(
 		cd mirror &&
-		git init
+		git init &&
+		git config receive.denyCurrentBranch warn
 	) &&
 	mkdir master &&
 	(
