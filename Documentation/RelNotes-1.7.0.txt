@@ -1,0 +1,64 @@
+Git v1.7.0 Release Notes
+========================
+
+Notes on behaviour change
+-------------------------
+
+ * "git push" into a branch that is currently checked out (i.e. pointed by
+   HEAD in a repository that is not bare) is refused by default.
+
+   Similarly, "git push $there :$killed" to delete the branch $killed
+   in a remote repository $there, when $killed branch is the current
+   branch pointed at by its HEAD, will be refused by default.
+
+   Setting the configuration variables receive.denyCurrentBranch and
+   receive.denyDeleteCurrent to 'ignore' in the receiving repository
+   can be used to override these safety features.
+
+ * "git send-email" does not make deep threads by default when sending a
+   patch series with more than two messages.  All messages will be sent
+   as a reply to the first message, i.e. cover letter.
+
+   It has been possible to configure send-email to send "shallow thread"
+   by setting sendemail.chainreplyto configuration variable to false.  The
+   only thing this release does is to change the default when you haven't
+   configured that variable.
+
+ * "git status" is not "git commit --dry-run" anymore.  This change does
+   not affect you if you run the command without pathspec.
+
+ * "git diff" traditionally treated various "ignore whitespace" options
+   only as a way to filter the patch output.  "git diff --exit-code -b"
+   exited with non-zero status even if all changes were about changing the
+   ammount of whitespace and nothing else.  and "git diff -b" showed the
+   "diff --git" header line for such a change without patch text.
+
+   In this release, the "ignore whitespaces" options affect the semantics
+   of the diff operation.  A change that does not affect anything but
+   whitespaces is reported with zero exit status when run with
+   --exit-code, and there is no "diff --git" header for such a change.
+
+
+Updates since v1.6.6
+--------------------
+
+(subsystems)
+
+(portability)
+
+(performance)
+
+(usability, bells and whistles)
+
+
+Fixes since v1.6.6
+------------------
+
+All of the fixes in v1.6.6.X maintenance series are included in this
+release, unless otherwise noted.
+
+--
+exec >/var/tmp/1
+O=v1.6.6-27-g648f407
+echo O=$(git describe master)
+git shortlog --no-merges $O..master ^maint
