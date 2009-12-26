@@ -259,7 +259,7 @@ test_expect_success 'git repack' 'git repack'
 test_expect_success 'git prune-packed' 'git prune-packed'
 test_expect_success '-> only packed objects' '
 	git prune && # Remove conflict marked blobs
-	! find .git/objects/[0-9a-f][0-9a-f] -type f
+	test $(find .git/objects/[0-9a-f][0-9a-f] -type f -print 2>/dev/null | wc -l) = 0
 '
 
 test_done
