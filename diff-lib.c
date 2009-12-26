@@ -73,7 +73,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		struct cache_entry *ce = active_cache[i];
 		int changed;
 
-		if (DIFF_OPT_TST(&revs->diffopt, QUIET) &&
+		if (DIFF_OPT_TST(&revs->diffopt, QUICK) &&
 			DIFF_OPT_TST(&revs->diffopt, HAS_CHANGES))
 			break;
 
@@ -507,7 +507,7 @@ int index_differs_from(const char *def, int diff_flags)
 
 	init_revisions(&rev, NULL);
 	setup_revisions(0, NULL, &rev, def);
-	DIFF_OPT_SET(&rev.diffopt, QUIET);
+	DIFF_OPT_SET(&rev.diffopt, QUICK);
 	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
 	rev.diffopt.flags |= diff_flags;
 	run_diff_index(&rev, 1);
