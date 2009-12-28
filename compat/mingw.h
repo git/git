@@ -5,6 +5,7 @@
  */
 
 typedef int pid_t;
+typedef int uid_t;
 #define hstrerror strerror
 
 #define S_IFLNK    0120000 /* Symbolic link */
@@ -70,17 +71,17 @@ struct itimerval {
 
 static inline int fchmod(int fildes, mode_t mode)
 { errno = ENOSYS; return -1; }
-static inline int fork(void)
+static inline pid_t fork(void)
 { errno = ENOSYS; return -1; }
 static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
 static inline int fsync(int fd)
 { return 0; }
-static inline int getppid(void)
+static inline pid_t getppid(void)
 { return 1; }
 static inline void sync(void)
 {}
-static inline int getuid(void)
+static inline uid_t getuid(void)
 { return 1; }
 static inline struct passwd *getpwnam(const char *name)
 { return NULL; }
@@ -106,7 +107,7 @@ static inline int mingw_unlink(const char *pathname)
 }
 #define unlink mingw_unlink
 
-static inline int waitpid(pid_t pid, int *status, unsigned options)
+static inline pid_t waitpid(pid_t pid, int *status, unsigned options)
 {
 	if (options == 0)
 		return _cwait(status, pid, 0);
@@ -126,7 +127,7 @@ int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
 struct tm *gmtime_r(const time_t *timep, struct tm *result);
 struct tm *localtime_r(const time_t *timep, struct tm *result);
 int getpagesize(void);	/* defined in MinGW's libgcc.a */
-struct passwd *getpwuid(int uid);
+struct passwd *getpwuid(uid_t uid);
 int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 int link(const char *oldpath, const char *newpath);
