@@ -74,6 +74,20 @@ OPTIONS
 	authorship of the resulting commit now belongs of the committer.
 	This also renews the author timestamp.
 
+--short::
+	When doing a dry-run, give the output in the short-format. See
+	linkgit:git-status[1] for details. Implies `--dry-run`.
+
+--porcelain::
+	When doing a dry-run, give the output in a porcelain-ready
+	format. See linkgit:git-status[1] for details. Implies
+	`--dry-run`.
+
+-z::
+	When showing `short` or `porcelain` status output, terminate
+	entries in the status output with NUL, instead of LF. If no
+	format is given, implies the `--porcelain` output format.
+
 -F <file>::
 --file=<file>::
 	Take the commit message from the given file.  Use '-' to

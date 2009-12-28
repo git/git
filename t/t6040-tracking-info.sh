@@ -69,7 +69,7 @@ test_expect_success 'status' '
 		cd test &&
 		git checkout b1 >/dev/null &&
 		# reports nothing to commit
-		test_must_fail git status
+		test_must_fail git commit --dry-run
 	) >actual &&
 	grep "have 1 and 1 different" actual
 '
