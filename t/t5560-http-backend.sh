@@ -23,7 +23,7 @@ config() {
 }
 
 GET() {
-	curl --include "$HTTPD_URL/smart/repo.git/$1" >out 2>/dev/null &&
+	curl --include "$HTTPD_URL/$SMART/repo.git/$1" >out 2>/dev/null &&
 	tr '\015' Q <out |
 	sed '
 		s/Q$//
@@ -91,6 +91,7 @@ get_static_files() {
 	GET $IDX_URL "$1"
 }
 
+SMART=smart
 test_expect_success 'direct refs/heads/master not found' '
 	log_div "refs/heads/master"
 	GET refs/heads/master "404 Not Found"
@@ -99,6 +100,19 @@ test_expect_success 'static file is ok' '
 	log_div "getanyfile default"
 	get_static_files "200 OK"
 '
+SMART=smart_noexport
+test_expect_success 'no export by default' '
+	log_div "no git-daemon-export-ok"
+	get_static_files "404 Not Found"
+'
+test_expect_success 'export if git-daemon-export-ok' '
+	log_div "git-daemon-export-ok"
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+	 touch git-daemon-export-ok
+	) &&
+	get_static_files "200 OK"
+'
+SMART=smart
 test_expect_success 'static file if http.getanyfile true is ok' '
 	log_div "getanyfile true"
 	config http.getanyfile true &&
@@ -145,7 +159,6 @@ test_expect_success 'http.receivepack false' '
 	GET info/refs?service=git-receive-pack "403 Forbidden" &&
 	POST git-receive-pack 0000 "403 Forbidden"
 '
-
 run_backend() {
 	REQUEST_METHOD=GET \
 	GIT_PROJECT_ROOT="$HTTPD_DOCUMENT_ROOT_PATH" \
@@ -193,6 +206,28 @@ GET  /smart/repo.git/objects/info/http-alternates HTTP/1.1 200 -
 GET  /smart/repo.git/$LOOSE_URL HTTP/1.1 200
 GET  /smart/repo.git/$PACK_URL HTTP/1.1 200
 GET  /smart/repo.git/$IDX_URL HTTP/1.1 200
+
+###  no git-daemon-export-ok
+###
+GET  /smart_noexport/repo.git/HEAD HTTP/1.1 404 -
+GET  /smart_noexport/repo.git/info/refs HTTP/1.1 404 -
+GET  /smart_noexport/repo.git/objects/info/packs HTTP/1.1 404 -
+GET  /smart_noexport/repo.git/objects/info/alternates HTTP/1.1 404 -
+GET  /smart_noexport/repo.git/objects/info/http-alternates HTTP/1.1 404 -
+GET  /smart_noexport/repo.git/$LOOSE_URL HTTP/1.1 404 -
+GET  /smart_noexport/repo.git/$PACK_URL HTTP/1.1 404 -
+GET  /smart_noexport/repo.git/$IDX_URL HTTP/1.1 404 -
+
+###  git-daemon-export-ok
+###
+GET  /smart_noexport/repo.git/HEAD HTTP/1.1 200
+GET  /smart_noexport/repo.git/info/refs HTTP/1.1 200
+GET  /smart_noexport/repo.git/objects/info/packs HTTP/1.1 200
+GET  /smart_noexport/repo.git/objects/info/alternates HTTP/1.1 200 -
+GET  /smart_noexport/repo.git/objects/info/http-alternates HTTP/1.1 200 -
+GET  /smart_noexport/repo.git/$LOOSE_URL HTTP/1.1 200
+GET  /smart_noexport/repo.git/$PACK_URL HTTP/1.1 200
+GET  /smart_noexport/repo.git/$IDX_URL HTTP/1.1 200
 
 ###  getanyfile true
 ###
