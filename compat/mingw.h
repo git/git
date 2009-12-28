@@ -12,12 +12,24 @@ typedef int uid_t;
 #define S_IFLNK    0120000 /* Symbolic link */
 #define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(x) 0
+
+#ifndef _STAT_H_
+#define S_IRUSR 0
+#define S_IWUSR 0
+#define S_IXUSR 0
+#define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
+#endif
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
-#define S_ISGID 0
+#define S_IRWXG (S_IRGRP | S_IWGRP | S_IXGRP)
 #define S_IROTH 0
+#define S_IWOTH 0
 #define S_IXOTH 0
+#define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
+#define S_ISUID 0
+#define S_ISGID 0
+#define S_ISVTX 0
 
 #define WIFEXITED(x) 1
 #define WIFSIGNALED(x) 0
