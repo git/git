@@ -49,7 +49,7 @@ static int parse_decoration_style(const char *var, const char *value)
 	return -1;
 }
 
-static void cmd_log_init(int argc, const char **argv, const char *prefix,
+void cmd_log_init(int argc, const char **argv, const char *prefix,
 			 struct rev_info *rev, struct setup_revision_opt *opt)
 {
 	int i;
