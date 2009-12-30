@@ -37,11 +37,12 @@ existing values that match the regexp are updated or unset.  If
 you want to handle the lines that do *not* match the regex, just
 prepend a single exclamation mark in front (see also <<EXAMPLES>>).
 
-The type specifier can be either '--int' or '--bool', which will make
+The type specifier can be either '--int' or '--bool', to make
 'git-config' ensure that the variable(s) are of the given type and
 convert the value to the canonical form (simple decimal number for int,
-a "true" or "false" string for bool).  If no type specifier is passed,
-no checks or transformations are performed on the value.
+a "true" or "false" string for bool), or '--path', which does some
+path expansion (see '--path' below).  If no type specifier is passed, no
+checks or transformations are performed on the value.
 
 The file-option can be one of '--system', '--global' or '--file'
 which specify where the values will be read from or written to.
@@ -135,6 +136,13 @@ See also <<FILES>>.
 --bool-or-int::
 	'git-config' will ensure that the output matches the format of
 	either --bool or --int, as described above.
+
+--path::
+	'git-config' will expand leading '{tilde}' to the value of
+	'$HOME', and '{tilde}user' to the home directory for the
+	specified user.  This option has no effect when setting the
+	value (but you can use 'git config bla {tilde}/' from the
+	command line to let your shell do the expansion).
 
 -z::
 --null::
