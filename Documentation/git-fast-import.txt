@@ -311,8 +311,8 @@ change to the project.
 ....
 	'commit' SP <ref> LF
 	mark?
-	('author' SP <name> SP LT <email> GT SP <when> LF)?
-	'committer' SP <name> SP LT <email> GT SP <when> LF
+	('author' (SP <name>)? SP LT <email> GT SP <when> LF)?
+	'committer' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
@@ -657,7 +657,7 @@ lightweight (non-annotated) tags see the `reset` command below.
 ....
 	'tag' SP <name> LF
 	'from' SP <committish> LF
-	'tagger' SP <name> SP LT <email> GT SP <when> LF
+	'tagger' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
 ....
 
