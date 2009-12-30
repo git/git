@@ -175,7 +175,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 		{ "B", temp[2] },
 		{ NULL }
 	};
-	const char *args[] = { "sh", "-c", NULL, NULL };
+	const char *args[] = { NULL, NULL };
 	int status, fd, i;
 	struct stat st;
 
@@ -190,8 +190,8 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 
 	strbuf_expand(&cmd, fn->cmdline, strbuf_expand_dict_cb, &dict);
 
-	args[2] = cmd.buf;
-	status = run_command_v_opt(args, 0);
+	args[0] = cmd.buf;
+	status = run_command_v_opt(args, RUN_USING_SHELL);
 	fd = open(temp[1], O_RDONLY);
 	if (fd < 0)
 		goto bad;
