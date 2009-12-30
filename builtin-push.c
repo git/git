@@ -15,6 +15,7 @@ static const char * const push_usage[] = {
 };
 
 static int thin;
+static int deleterefs;
 static const char *receivepack;
 
 static const char **refspec;
@@ -39,11 +40,24 @@ static void set_refspecs(const char **refs, int nr)
 			if (nr <= ++i)
 				die("tag shorthand without <tag>");
 			len = strlen(refs[i]) + 11;
-			tag = xmalloc(len);
-			strcpy(tag, "refs/tags/");
+			if (deleterefs) {
+				tag = xmalloc(len+1);
+				strcpy(tag, ":refs/tags/");
+			} else {
+				tag = xmalloc(len);
+				strcpy(tag, "refs/tags/");
+			}
 			strcat(tag, refs[i]);
 			ref = tag;
-		}
+		} else if (deleterefs && !strchr(ref, ':')) {
+			char *delref;
+			int len = strlen(ref)+1;
+			delref = xmalloc(len);
+			strcpy(delref, ":");
+			strcat(delref, ref);
+			ref = delref;
+		} else if (deleterefs)
+			die("--delete only accepts plain target ref names");
 		add_refspec(ref);
 	}
 }
@@ -179,6 +193,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT( 0 , "all", &flags, "push all refs", TRANSPORT_PUSH_ALL),
 		OPT_BIT( 0 , "mirror", &flags, "mirror all refs",
 			    (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE)),
+		OPT_BOOLEAN( 0, "delete", &deleterefs, "delete refs"),
 		OPT_BOOLEAN( 0 , "tags", &tags, "push tags (can't be used with --all or --mirror)"),
 		OPT_BIT('n' , "dry-run", &flags, "dry run", TRANSPORT_PUSH_DRY_RUN),
 		OPT_BIT( 0,  "porcelain", &flags, "machine-readable output", TRANSPORT_PUSH_PORCELAIN),
@@ -191,6 +206,11 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
+
+	if (deleterefs && (tags || (flags & (TRANSPORT_PUSH_ALL | TRANSPORT_PUSH_MIRROR))))
+		die("--delete is incompatible with --all, --mirror and --tags");
+	if (deleterefs && argc < 2)
+		die("--delete doesn't make sense without any refs");
 
 	if (tags)
 		add_refspec("refs/tags/*");
