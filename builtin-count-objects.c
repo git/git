@@ -11,7 +11,7 @@
 
 static void count_objects(DIR *d, char *path, int len, int verbose,
 			  unsigned long *loose,
-			  unsigned long *loose_size,
+			  off_t *loose_size,
 			  unsigned long *packed_loose,
 			  unsigned long *garbage)
 {
@@ -77,7 +77,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 	int len = strlen(objdir);
 	char *path = xmalloc(len + 50);
 	unsigned long loose = 0, packed = 0, packed_loose = 0, garbage = 0;
-	unsigned long loose_size = 0;
+	off_t loose_size = 0;
 	struct option opts[] = {
 		OPT__VERBOSE(&verbose),
 		OPT_END(),
@@ -103,7 +103,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 	if (verbose) {
 		struct packed_git *p;
 		unsigned long num_pack = 0;
-		unsigned long size_pack = 0;
+		off_t size_pack = 0;
 		if (!packed_git)
 			prepare_packed_git();
 		for (p = packed_git; p; p = p->next) {
@@ -116,15 +116,15 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 			num_pack++;
 		}
 		printf("count: %lu\n", loose);
-		printf("size: %lu\n", loose_size / 1024);
+		printf("size: %lu\n", (unsigned long) (loose_size / 1024));
 		printf("in-pack: %lu\n", packed);
 		printf("packs: %lu\n", num_pack);
-		printf("size-pack: %lu\n", size_pack / 1024);
+		printf("size-pack: %lu\n", (unsigned long) (size_pack / 1024));
 		printf("prune-packable: %lu\n", packed_loose);
 		printf("garbage: %lu\n", garbage);
 	}
 	else
 		printf("%lu objects, %lu kilobytes\n",
-		       loose, loose_size / 1024);
+		       loose, (unsigned long) (loose_size / 1024));
 	return 0;
 }
