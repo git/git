@@ -3485,11 +3485,13 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	if (start_command(&child) != 0 ||
 	    strbuf_read(&buf, child.out, 0) < 0 ||
 	    finish_command(&child) != 0) {
+		close(child.out);
 		if (temp.name == temp.tmp_path)
 			unlink(temp.name);
 		error("error running textconv command '%s'", pgm);
 		return NULL;
 	}
+	close(child.out);
 	if (temp.name == temp.tmp_path)
 		unlink(temp.name);
 
