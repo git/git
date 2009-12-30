@@ -67,6 +67,72 @@ linkgit:git-add[1]).
 <commit>::
 	Commit to make the current HEAD. If not given defaults to HEAD.
 
+DISCUSSION
+----------
+
+The tables below show what happens when running:
+
+----------
+git reset --option target
+----------
+
+to reset the HEAD to another commit (`target`) with the different
+reset options depending on the state of the files.
+
+      working index HEAD target         working index HEAD
+      ----------------------------------------------------
+       A       B     C    D     --soft   A       B     D
+				--mixed  A       D     D
+				--hard   D       D     D
+				--merge (disallowed)
+
+      working index HEAD target         working index HEAD
+      ----------------------------------------------------
+       A       B     C    C     --soft   A       B     C
+				--mixed  A       C     C
+				--hard   C       C     C
+				--merge (disallowed)
+
+      working index HEAD target         working index HEAD
+      ----------------------------------------------------
+       B       B     C    D     --soft   B       B     D
+				--mixed  B       D     D
+				--hard   D       D     D
+				--merge  D       D     D
+
+      working index HEAD target         working index HEAD
+      ----------------------------------------------------
+       B       B     C    C     --soft   B       B     C
+				--mixed  B       C     C
+				--hard   C       C     C
+				--merge  C       C     C
+
+In these tables, A, B, C and D are some different states of a
+file. For example, the last line of the last table means that if a
+file is in state B in the working tree and the index, and in a
+different state C in HEAD and in the target, then "git reset
+--merge target" will put the file in state C in the working tree,
+in the index and in HEAD.
+
+The following tables show what happens when there are unmerged
+entries:
+
+      working index HEAD target         working index HEAD
+      ----------------------------------------------------
+       X       U     A    B     --soft  (disallowed)
+				--mixed  X       B     B
+				--hard   B       B     B
+				--merge (disallowed)
+
+      working index HEAD target         working index HEAD
+      ----------------------------------------------------
+       X       U     A    A     --soft  (disallowed)
+				--mixed  X       A     A
+				--hard   A       A     A
+				--merge (disallowed)
+
+X means any state and U means an unmerged index.
+
 Examples
 --------
 
