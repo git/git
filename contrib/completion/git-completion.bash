@@ -2022,7 +2022,7 @@ _git_svn ()
 		init fetch clone rebase dcommit log find-rev
 		set-tree commit-diff info create-ignore propget
 		proplist show-ignore show-externals branch tag blame
-		migrate
+		migrate mkdirs reset gc
 		"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
@@ -2069,7 +2069,7 @@ _git_svn ()
 			__gitcomp "--stdin $cmt_opts $fc_opts"
 			;;
 		create-ignore,--*|propget,--*|proplist,--*|show-ignore,--*|\
-		show-externals,--*)
+		show-externals,--*|mkdirs,--*)
 			__gitcomp "--revision="
 			;;
 		log,--*)
@@ -2105,6 +2105,9 @@ _git_svn ()
 				--config-dir= --ignore-paths= --minimize
 				--no-auth-cache --username=
 				"
+			;;
+		reset,--*)
+			__gitcomp "--revision= --parent"
 			;;
 		*)
 			COMPREPLY=()
