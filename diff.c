@@ -3771,6 +3771,7 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	*arg = NULL;
 
 	memset(&child, 0, sizeof(child));
+	child.use_shell = 1;
 	child.argv = argv;
 	child.out = -1;
 	if (start_command(&child) != 0 ||
