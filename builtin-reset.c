@@ -291,6 +291,10 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		die("%s reset requires a work tree",
 		    reset_type_names[reset_type]);
 
+	if (reset_type == MIXED && is_bare_repository())
+		die("%s reset is not allowed in a bare repository",
+		    reset_type_names[reset_type]);
+
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset
 	 * the index file to the tree object we are switching to. */
