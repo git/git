@@ -357,6 +357,21 @@ static void grep_add_color(struct strbuf *sb, const char *escape_seq)
 		strbuf_setlen(sb, sb->len - 1);
 }
 
+static int has_skip_worktree_entry(struct grep_opt *opt, const char **paths)
+{
+	int nr;
+	for (nr = 0; nr < active_nr; nr++) {
+		struct cache_entry *ce = active_cache[nr];
+		if (!S_ISREG(ce->ce_mode))
+			continue;
+		if (!pathspec_matches(paths, ce->name, opt->max_depth))
+			continue;
+		if (ce_skip_worktree(ce))
+			return 1;
+	}
+	return 0;
+}
+
 static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 {
 	int i, nr, argc, hit, len, status;
@@ -365,7 +380,8 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 	char *argptr = randarg;
 	struct grep_pat *p;
 
-	if (opt->extended || (opt->relative && opt->prefix_length))
+	if (opt->extended || (opt->relative && opt->prefix_length)
+	    || has_skip_worktree_entry(opt, paths))
 		return -1;
 	len = nr = 0;
 	push_arg("grep");
