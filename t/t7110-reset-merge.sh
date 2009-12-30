@@ -135,12 +135,14 @@ test_expect_success 'setup 2 different branches' '
 #
 #           working index HEAD target         working index HEAD
 #           ----------------------------------------------------
-# file1:     X       U     B    C     --merge  (disallowed)
-test_expect_success '"reset --merge HEAD^" fails with pending merge' '
+# file1:     X       U     B    C     --merge  X       C     C
+test_expect_success '"reset --merge HEAD^" is ok with pending merge' '
     test_must_fail git merge branch1 &&
-    test_must_fail git reset --merge HEAD^ &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse third)" &&
-    test -n "$(git diff --cached)"
+    cat file1 >orig_file1 &&
+    git reset --merge HEAD^ &&
+    test "$(git rev-parse HEAD)" = "$(git rev-parse second)" &&
+    test -z "$(git diff --cached)" &&
+    test_cmp file1 orig_file1
 '
 
 # The next test will test the following:

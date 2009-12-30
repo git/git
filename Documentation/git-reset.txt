@@ -122,7 +122,7 @@ entries:
        X       U     A    B     --soft  (disallowed)
 				--mixed  X       B     B
 				--hard   B       B     B
-				--merge (disallowed)
+				--merge  X       B     B
 
       working index HEAD target         working index HEAD
       ----------------------------------------------------
