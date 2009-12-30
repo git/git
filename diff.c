@@ -2275,7 +2275,7 @@ static void run_external_diff(const char *pgm,
 	}
 	*arg = NULL;
 	fflush(NULL);
-	retval = run_command_v_opt(spawn_arg, 0);
+	retval = run_command_v_opt(spawn_arg, RUN_USING_SHELL);
 	remove_tempfile();
 	if (retval) {
 		fprintf(stderr, "external diff died, stopping at %s.\n", name);
