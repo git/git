@@ -7,19 +7,19 @@ test_description='Test the post-checkout hook.'
 . ./test-lib.sh
 
 test_expect_success setup '
-	 echo Data for commit0. >a &&
-	 echo Data for commit0. >b &&
-	 git update-index --add a &&
-	 git update-index --add b &&
-	 tree0=$(git write-tree) &&
-	 commit0=$(echo setup | git commit-tree $tree0) &&
-        git update-ref refs/heads/master $commit0 &&
-	 git clone ./. clone1 &&
-	 git clone ./. clone2 &&
-        GIT_DIR=clone2/.git git branch -a new2 &&
-        echo Data for commit1. >clone2/b &&
-	 GIT_DIR=clone2/.git git add clone2/b &&
-	 GIT_DIR=clone2/.git git commit -m new2
+	echo Data for commit0. >a &&
+	echo Data for commit0. >b &&
+	git update-index --add a &&
+	git update-index --add b &&
+	tree0=$(git write-tree) &&
+	commit0=$(echo setup | git commit-tree $tree0) &&
+	git update-ref refs/heads/master $commit0 &&
+	git clone ./. clone1 &&
+	git clone ./. clone2 &&
+	GIT_DIR=clone2/.git git branch new2 &&
+	echo Data for commit1. >clone2/b &&
+	GIT_DIR=clone2/.git git add clone2/b &&
+	GIT_DIR=clone2/.git git commit -m new2
 '
 
 for clone in 1 2; do
