@@ -26,7 +26,46 @@ LANG=C
 old_style_def_fix=b79d18c92d9f4841a6a1a29b7b2373a8ff9871e1
 
 : ${O=-O2}
+
+for cv in PYTHON_PATH=python TCL_PATH=tclsh TCLTKPATH=wish
+do
+	cmd=${cv#*=}
+	var=${cv%=*}
+	eval $(
+		if test -f "/usr/bin/$cmd"
+		then
+			break
+		fi
+		for p in /usr/bin /usr/local/bin
+		do
+			if test -f "$p/$cmd"
+			then
+				echo "$var=$p/$cmd; export $var"
+				break
+			fi
+			found=$(find "$p/$cmd"* -type f 2>/dev/null | head -n 1)
+			if test -f "$found"
+			then
+				echo "$var=$found; export $var"
+				break
+			fi
+		done
+	)
+done
+
 Wall='-Wall -Wdeclaration-after-statement' tests= jobs=
+case `uname` in
+OpenBSD)
+	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
+	Wall= ;;
+FreeBSD)
+	OLD_ICONV=YesPlease; export OLD_ICONV
+	;;
+SunOS)
+	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
+	;;
+esac
+
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
