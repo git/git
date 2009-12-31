@@ -19,8 +19,8 @@ Format of STDIN stream:
 
   new_commit ::= 'commit' sp ref_str lf
     mark?
-    ('author' sp name sp '<' email '>' sp when lf)?
-    'committer' sp name sp '<' email '>' sp when lf
+    ('author' (sp name)? sp '<' email '>' sp when lf)?
+    'committer' (sp name)? sp '<' email '>' sp when lf
     commit_msg
     ('from' sp committish lf)?
     ('merge' sp committish lf)*
@@ -47,7 +47,7 @@ Format of STDIN stream:
 
   new_tag ::= 'tag' sp tag_str lf
     'from' sp committish lf
-    ('tagger' sp name sp '<' email '>' sp when lf)?
+    ('tagger' (sp name)? sp '<' email '>' sp when lf)?
     tag_msg;
   tag_msg ::= data;
 

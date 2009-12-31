@@ -280,6 +280,20 @@ people play with it without having to pick up and apply the patch to
 their trees themselves.
 
 ------------------------------------------------
+Know the status of your patch after submission
+
+* You can use Git itself to find out when your patch is merged in
+  master. 'git pull --rebase' will automatically skip already-applied
+  patches, and will let you know. This works only if you rebase on top
+  of the branch in which your patch has been merged (i.e. it will not
+  tell you if your patch is merged in pu if you rebase on top of
+  master).
+
+* Read the git mailing list, the maintainer regularly posts messages
+  entitled "What's cooking in git.git" and "What's in git.git" giving
+  the status of various proposed changes.
+
+------------------------------------------------
 MUA specific hints
 
 Some of patches I receive or pick up from the list share common
