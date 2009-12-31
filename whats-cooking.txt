@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2009, #05; Mon, 28)
-X-master-at: c2ff10c98e22ae64d553273e6d67bb123a1c916f
-X-next-at: ba67783643e94c85cfa57edf932dea2abdf68711
+Subject: What's cooking in git.git (Dec 2009, #06; Thu, 31)
+X-master-at: 37bae10e38a66e4f1ddd5350daded00b21735126
+X-next-at: 442ff22addab31be84a7a93a389d265fc8a49f93
 
-What's cooking in git.git (Dec 2009, #05; Mon, 28)
+What's cooking in git.git (Dec 2009, #06; Thu, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,96 +11,74 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
---------------------------------------------------
-[Graduated to "master"]
+The tip of 'next' will soon be rebuilt on top of the current 'master'.
 
-* sr/vcs-helper (2009-12-07) 14 commits
-  (merged to 'next' on 2009-12-07 at 8f041bc)
- + tests: handle NO_PYTHON setting
-  (merged to 'next' on 2009-12-03 at e45b562)
- + builtin-push: don't access freed transport->url
-  (merged to 'next' on 2009-11-27 at 83268ab)
- + Add Python support library for remote helpers
- + Basic build infrastructure for Python scripts
- + Allow helpers to report in "list" command that the ref is unchanged
- + Fix various memory leaks in transport-helper.c
- + Allow helper to map private ref names into normal names
- + Add support for "import" helper command
- + Allow specifying the remote helper in the url
- + Add a config option for remotes to specify a foreign vcs
- + Allow fetch to modify refs
- + Use a function to determine whether a remote is valid
- + Allow programs to not depend on remotes having urls
- + Fix memory leak in helper method for disconnect
-
-* jc/1.7.0-send-email-no-thread-default (2009-08-22) 1 commit
-  (merged to 'next' on 2009-10-11 at 043acdf)
- + send-email: make --no-chain-reply-to the default
-
-* jc/1.7.0-push-safety (2009-02-09) 2 commits
-  (merged to 'next' on 2009-10-11 at 81b8128)
- + Refuse deleting the current branch via push
- + Refuse updating the current branch in a non-bare repository via push
-
-* jc/1.7.0-diff-whitespace-only-status (2009-08-30) 4 commits
-  (merged to 'next' on 2009-10-11 at 546c74d)
- + diff.c: fix typoes in comments
- + Make test case number unique
- + diff: Rename QUIET internal option to QUICK
- + diff: change semantics of "ignore whitespace" options
- (this branch is used by jc/1.7.0-diff-whitespace-prepare and jc/diff-whitespace-prepare.)
-
-This changes exit code from "git diff --ignore-whitespace" and friends
-when there is no actual output.
-
-* gb/1.7.0-diff-whitespace-only-output (2009-11-19) 1 commit
-  (merged to 'next' on 2009-11-21 at 3375bf4)
- + No diff -b/-w output for all-whitespace changes
- (this branch is used by jc/1.7.0-diff-whitespace-prepare and jc/diff-whitespace-prepare.)
-
-Likewise but for the output of "diff --git" headers.
-
-* jk/1.7.0-status (2009-12-11) 16 commits
-  (merged to 'next' on 2009-12-24 at e9929b3)
- + status/commit: do not suggest "reset HEAD <path>" while merging
- + commit/status: "git add <path>" is not necessarily how to resolve
- + commit/status: check $GIT_DIR/MERGE_HEAD only once
-  (merged to 'next' on 2009-12-08 at 9b57d84)
- + t7508-status: test all modes with color
- + t7508-status: status --porcelain ignores relative paths setting
-  (merged to 'next' on 2009-12-07 at 7723acf)
- + status: reduce duplicated setup code
- + status: disable color for porcelain format
-  (merged to 'next' on 2009-12-05 at 44dcefd)
- + status -s: obey color.status
- + builtin-commit: refactor short-status code into wt-status.c
-  (merged to 'next' on 2009-11-27 at 91691ec)
- + t7508-status.sh: Add tests for status -s
- + status -s: respect the status.relativePaths option
-  (merged to 'next' on 2009-11-21 at 884bb56)
- + docs: note that status configuration affects only long format
-  (merged to 'next' on 2009-10-11 at 65c8513)
- + commit: support alternate status formats
- + status: add --porcelain output format
- + status: refactor format option parsing
- + status: refactor short-mode printing to its own function
- (this branch uses jc/1.7.0-status.)
-
-Gives the --short output format to post 1.7.0 "git commit --dry-run" that
-is similar to that of post 1.7.0 "git status".
-
-* jc/1.7.0-status (2009-09-05) 4 commits
-  (merged to 'next' on 2009-10-11 at 9558627)
- + status: typo fix in usage
- + git status: not "commit --dry-run" anymore
- + git stat -s: short status output
- + git stat: the beginning of "status that is not a dry-run of commit"
- (this branch is used by jk/1.7.0-status.)
-
-With this, "git status" is no longer "git commit --dry-run".
+This will be the last "What's cooking" message in year 2009 ;-)
 
 --------------------------------------------------
 [New Topics]
+
+* cc/reset-more (2009-12-30) 4 commits
+ - reset: use "unpack_trees()" directly instead of "git read-tree"
+ - reset: add a few tests for "git reset --merge"
+ - Documentation: reset: add some tables to describe the different options
+ - reset: improve mixed reset error message when in a bare repo
+
+Resurrected from "Ejected" category.  Haven't looked at it yet myself,
+though...
+
+* bg/maint-remote-update-default (2009-12-31) 1 commit
+ - Fix "git remote update" with remotes.defalt set
+
+* jc/branch-d (2009-12-29) 1 commit
+ - branch -d: base the "already-merged" safety on the branch it merges with
+
+* jc/rerere (2009-12-04) 1 commit
+ - Teach --[no-]rerere-autoupdate option to merge, revert and friends
+
+* jk/maint-1.6.5-reset-hard (2009-12-30) 1 commit
+  (merged to 'next' on 2009-12-30 at de97679)
+ + reset: unbreak hard resets with GIT_WORK_TREE
+
+* jk/push-to-delete (2009-12-30) 1 commit
+ - builtin-push: add --delete as syntactic sugar for :foo
+
+* jk/run-command-use-shell (2009-12-30) 6 commits
+ - diff: run external diff helper with shell
+ - textconv: use shell to run helper
+ - editor: use run_command's shell feature
+ - run-command: optimize out useless shell calls
+ - run-command: convert simple callsites to use_shell
+ - run-command: add "use shell" option
+
+* mm/config-path (2009-12-30) 1 commit
+ - builtin-config: add --path option doing ~ and ~user expansion.
+
+* pm/cvs-environ (2009-12-30) 1 commit
+ - CVS Server: Support reading base and roots from environment
+
+* rs/maint-archive-match-pathspec (2009-12-12) 1 commit
+ - archive: complain about path specs that don't match anything
+
+* so/cvsserver-update (2009-12-07) 1 commit
+ - cvsserver: make the output of 'update' more compatible with cvs.
+
+* tc/clone-v-progress (2009-12-26) 4 commits
+ - clone: use --progress to force progress reporting
+ - clone: set transport->verbose when -v/--verbose is used
+ - git-clone.txt: reword description of progress behaviour
+ - check stderr with isatty() instead of stdout when deciding to show progress
+
+* tc/smart-http-restrict (2009-12-30) 3 commits
+ - Smart-http tests: Test http-backend without curl or a webserver
+ - Smart-http tests: Break test t5560-http-backend into pieces
+ - Smart-http: check if repository is OK to export before serving it
+
+* tr/maint-1.6.5-bash-prompt-show-submodule-changes (2009-12-31) 1 commit
+ - bash completion: factor submodules into dirty state
+
+--------------------------------------------------
+[Cooking]
 
 * jc/cache-unmerge (2009-12-25) 9 commits
  - rerere forget path: forget recorded resolution
@@ -123,13 +101,6 @@ With this, "git status" is no longer "git commit --dry-run".
  - octopus: remove dead code
  - octopus: reenable fast-forward merges
  - octopus: make merge process simpler to follow
-
-* il/exec-error-report (2009-12-24) 2 commits
- - Improve transport helper exec failure reporting
- - Report exec errors from run-command
-
---------------------------------------------------
-[Cooking]
 
 * jh/commit-status (2009-12-07) 1 commit
  - [test?] Add commit.status, --status, and --no-status
@@ -194,9 +165,10 @@ improvement to skip opening the editor if a pick is followed only by
  - Notes API: init_notes(): Initialize the notes tree from the given notes ref
  - Notes API: get_commit_notes() -> format_note() + remove the commit restriction
  - Minor style fixes to notes.c
- - Add more testcases to test fast-import of notes
- - Rename t9301 to t9350, to make room for more fast-import tests
- - fast-import: Proper notes tree manipulation
+  (merged to 'next' on 2009-12-29 at c89a730)
+ + Add more testcases to test fast-import of notes
+ + Rename t9301 to t9350, to make room for more fast-import tests
+ + fast-import: Proper notes tree manipulation
 
 * fc/opt-quiet-gc-reset (2009-12-02) 1 commit
  - General --quiet improvements
@@ -230,13 +202,17 @@ but otherwise seemed good.
  - run test suite without dashed git-commands in PATH
  - build dashless "bin-wrappers" directory similar to installed bindir
 
-* tr/http-updates (2009-12-01) 3 commits
+* tr/http-updates (2009-12-28) 4 commits
+  (merged to 'next' on 2009-12-30 at e143bc9)
+ + Remove http.authAny
   (merged to 'next' on 2009-12-07 at f08d447)
  + Allow curl to rewind the RPC read buffer
  + Add an option for using any HTTP authentication scheme, not only basic
  + http: maintain curl sessions
 
-* nd/sparse (2009-12-14) 22 commits
+* nd/sparse (2009-12-30) 23 commits
+  (merged to 'next' on 2009-12-31 at 442ff22)
+ + grep: do not do external grep on skip-worktree entries
   (merged to 'next' on 2009-12-24 at 1fa9ff3)
  + commit: correctly respect skip-worktree bit
  + ie_match_stat(): do not ignore skip-worktree bit with CE_MATCH_IGNORE_VALID
@@ -266,6 +242,13 @@ but otherwise seemed good.
 --------------------------------------------------
 [Ejected]
 
+* il/exec-error-report (2009-12-30) 2 commits
+ . Improve transport helper exec failure reporting
+ . Report exec errors from run-command
+
+Freezes "git log" or anything that uses pager; J6t made quite a many good
+suggestions.  Expecting more rounds of reroll.
+
 * je/send-email-no-subject (2009-08-05) 1 commit
   (merged to 'next' on 2009-10-11 at 1b99c56)
  + send-email: confirm on empty mail subjects
@@ -291,17 +274,3 @@ the "temporarily" turned out to be very loooong.
 The interaction with this option and pathspecs need to be worked out
 better.  I _think_ "grep --full-tree -e pattern -- '*.h'" should find from
 all the header files in the tree, for example.
-
-* cc/reset-more (2009-12-08) 6 commits
- . Documentation: reset: add some tables to describe the different options
- . Documentation: reset: describe new "--keep-local-changes" option
- . reset: add test cases for "--keep-local-changes" option
- . reset: add option "--keep-local-changes" to "git reset"
- . reset: use "unpack_trees()" directly instead of "git read-tree"
- . reset: add a few tests for "git reset --merge"
-
-The documentation is much clearer than the previous round in describing
-what it does, but I find it a bit unclear in describing what it is _good_
-for (iow, scenarios and use cases).
-
-Breaks 'pu' and does not pass test on its own yet.
