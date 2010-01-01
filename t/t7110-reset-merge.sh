@@ -116,10 +116,11 @@ test_expect_success 'reset --merge fails with changes in file it touches' '
     grep file1 err.log | grep "not uptodate"
 '
 
-test_expect_success 'setup 2 different branches' '
+test_expect_success 'setup 3 different branches' '
     git reset --hard second &&
     git branch branch1 &&
     git branch branch2 &&
+    git branch branch3 &&
     git checkout branch1 &&
     echo "line 5 in branch1" >> file1 &&
     test_tick &&
@@ -128,34 +129,55 @@ test_expect_success 'setup 2 different branches' '
     echo "line 5 in branch2" >> file1 &&
     test_tick &&
     git commit -a -m "change in branch2" &&
-    git tag third
+    git tag third &&
+    git checkout branch3 &&
+    echo a new file >file3 &&
+    rm -f file1 &&
+    git add file3 &&
+    test_tick &&
+    git commit -a -m "change in branch3"
 '
 
 # The next test will test the following:
 #
 #           working index HEAD target         working index HEAD
 #           ----------------------------------------------------
-# file1:     X       U     B    C     --merge  X       C     C
+# file1:     X       U     B    C     --merge  C       C     C
 test_expect_success '"reset --merge HEAD^" is ok with pending merge' '
+    git checkout third &&
     test_must_fail git merge branch1 &&
-    cat file1 >orig_file1 &&
     git reset --merge HEAD^ &&
     test "$(git rev-parse HEAD)" = "$(git rev-parse second)" &&
     test -z "$(git diff --cached)" &&
-    test_cmp file1 orig_file1
+    test -z "$(git diff)"
 '
 
 # The next test will test the following:
 #
 #           working index HEAD target         working index HEAD
 #           ----------------------------------------------------
-# file1:     X       U     B    B     --merge  (disallowed)
-test_expect_success '"reset --merge HEAD" fails with pending merge' '
+# file1:     X       U     B    B     --merge  B       B     B
+test_expect_success '"reset --merge HEAD" is ok with pending merge' '
     git reset --hard third &&
     test_must_fail git merge branch1 &&
-    test_must_fail git reset --merge HEAD &&
+    git reset --merge HEAD &&
     test "$(git rev-parse HEAD)" = "$(git rev-parse third)" &&
-    test -n "$(git diff --cached)"
+    test -z "$(git diff --cached)" &&
+    test -z "$(git diff)"
+'
+
+test_expect_success '--merge with added/deleted' '
+    git reset --hard third &&
+    rm -f file2 &&
+    test_must_fail git merge branch3 &&
+    ! test -f file2 &&
+    test -f file3 &&
+    git diff --exit-code file3 &&
+    git diff --exit-code branch3 file3 &&
+    git reset --merge HEAD &&
+    ! test -f file3 &&
+    ! test -f file2 &&
+    git diff --exit-code --cached
 '
 
 test_done

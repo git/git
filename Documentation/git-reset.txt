@@ -122,14 +122,14 @@ entries:
        X       U     A    B     --soft  (disallowed)
 				--mixed  X       B     B
 				--hard   B       B     B
-				--merge  X       B     B
+				--merge  B       B     B
 
       working index HEAD target         working index HEAD
       ----------------------------------------------------
        X       U     A    A     --soft  (disallowed)
 				--mixed  X       A     A
 				--hard   A       A     A
-				--merge (disallowed)
+				--merge  A       A     A
 
 X means any state and U means an unmerged index.
 
