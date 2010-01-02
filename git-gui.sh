@@ -1933,7 +1933,9 @@ proc incr_font_size {font {amt 1}} {
 
 set starting_gitk_msg [mc "Starting gitk... please wait..."]
 
-proc do_gitk {revs} {
+proc do_gitk {revs {is_submodule false}} {
+	global current_diff_path file_states current_diff_side ui_index
+
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
@@ -1951,14 +1953,73 @@ proc do_gitk {revs} {
 		}
 
 		set pwd [pwd]
-		cd [file dirname [gitdir]]
-		set env(GIT_DIR) [file tail [gitdir]]
 
+		if {!$is_submodule} {
+			cd [file dirname [gitdir]]
+			set env(GIT_DIR) [file tail [gitdir]]
+		} else {
+			cd $current_diff_path
+			if {$revs eq {--}} {
+				set s $file_states($current_diff_path)
+				set old_sha1 {}
+				set new_sha1 {}
+				switch -glob -- [lindex $s 0] {
+				M_ { set old_sha1 [lindex [lindex $s 2] 1] }
+				_M { set old_sha1 [lindex [lindex $s 3] 1] }
+				MM {
+					if {$current_diff_side eq $ui_index} {
+						set old_sha1 [lindex [lindex $s 2] 1]
+						set new_sha1 [lindex [lindex $s 3] 1]
+					} else {
+						set old_sha1 [lindex [lindex $s 3] 1]
+					}
+				}
+				}
+				set revs $old_sha1...$new_sha1
+			}
+			if {[info exists env(GIT_DIR)]} {
+				unset env(GIT_DIR)
+			}
+		}
 		eval exec $cmd $revs "--" "--" &
 
-		if {$old_GIT_DIR eq {}} {
+		if {$old_GIT_DIR ne {}} {
+			set env(GIT_DIR) $old_GIT_DIR
+		}
+		cd $pwd
+
+		ui_status $::starting_gitk_msg
+		after 10000 {
+			ui_ready $starting_gitk_msg
+		}
+	}
+}
+
+proc do_git_gui {} {
+	global current_diff_path
+
+	# -- Always start git gui through whatever we were loaded with.  This
+	#    lets us bypass using shell process on Windows systems.
+	#
+	set exe [_which git]
+	if {$exe eq {}} {
+		error_popup [mc "Couldn't find git gui in PATH"]
+	} else {
+		global env
+
+		if {[info exists env(GIT_DIR)]} {
+			set old_GIT_DIR $env(GIT_DIR)
 			unset env(GIT_DIR)
 		} else {
+			set old_GIT_DIR {}
+		}
+
+		set pwd [pwd]
+		cd $current_diff_path
+
+		eval exec $exe gui &
+
+		if {$old_GIT_DIR ne {}} {
 			set env(GIT_DIR) $old_GIT_DIR
 		}
 		cd $pwd
@@ -3155,15 +3216,6 @@ $ui_diff tag raise sel
 
 proc create_common_diff_popup {ctxm} {
 	$ctxm add command \
-		-label [mc "Show Less Context"] \
-		-command show_less_context
-	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-	$ctxm add command \
-		-label [mc "Show More Context"] \
-		-command show_more_context
-	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
-	$ctxm add separator
-	$ctxm add command \
 		-label [mc Refresh] \
 		-command reshow_diff
 	lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
@@ -3218,6 +3270,15 @@ $ctxm add command \
 set ui_diff_applyline [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyline -state]
 $ctxm add separator
+$ctxm add command \
+	-label [mc "Show Less Context"] \
+	-command show_less_context
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add command \
+	-label [mc "Show More Context"] \
+	-command show_more_context
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add separator
 create_common_diff_popup $ctxm
 
 set ctxmmg .vpane.lower.diff.body.ctxmmg
@@ -3240,9 +3301,40 @@ $ctxmmg add command \
 	-command {merge_resolve_one 1}
 lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
 $ctxmmg add separator
+$ctxmmg add command \
+	-label [mc "Show Less Context"] \
+	-command show_less_context
+lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
+$ctxmmg add command \
+	-label [mc "Show More Context"] \
+	-command show_more_context
+lappend diff_actions [list $ctxmmg entryconf [$ctxmmg index last] -state]
+$ctxmmg add separator
 create_common_diff_popup $ctxmmg
 
-proc popup_diff_menu {ctxm ctxmmg x y X Y} {
+set ctxmsm .vpane.lower.diff.body.ctxmsm
+menu $ctxmsm -tearoff 0
+$ctxmsm add command \
+	-label [mc "Visualize These Changes In The Submodule"] \
+	-command {do_gitk -- true}
+lappend diff_actions [list $ctxmsm entryconf [$ctxmsm index last] -state]
+$ctxmsm add command \
+	-label [mc "Visualize Current Branch History In The Submodule"] \
+	-command {do_gitk {} true}
+lappend diff_actions [list $ctxmsm entryconf [$ctxmsm index last] -state]
+$ctxmsm add command \
+	-label [mc "Visualize All Branch History In The Submodule"] \
+	-command {do_gitk --all true}
+lappend diff_actions [list $ctxmsm entryconf [$ctxmsm index last] -state]
+$ctxmsm add separator
+$ctxmsm add command \
+	-label [mc "Start git gui In The Submodule"] \
+	-command {do_git_gui}
+lappend diff_actions [list $ctxmsm entryconf [$ctxmsm index last] -state]
+$ctxmsm add separator
+create_common_diff_popup $ctxmsm
+
+proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 	global current_diff_path file_states
 	set ::cursorX $x
 	set ::cursorY $y
@@ -3253,6 +3345,8 @@ proc popup_diff_menu {ctxm ctxmmg x y X Y} {
 	}
 	if {[string first {U} $state] >= 0} {
 		tk_popup $ctxmmg $X $Y
+	} elseif {$::is_submodule_diff} {
+		tk_popup $ctxmsm $X $Y
 	} else {
 		if {$::ui_index eq $::current_diff_side} {
 			set l [mc "Unstage Hunk From Commit"]
@@ -3261,7 +3355,7 @@ proc popup_diff_menu {ctxm ctxmmg x y X Y} {
 			set l [mc "Stage Hunk For Commit"]
 			set t [mc "Stage Line For Commit"]
 		}
-		if {$::is_3way_diff || $::is_submodule_diff
+		if {$::is_3way_diff
 			|| $current_diff_path eq {}
 			|| {__} eq $state
 			|| {_O} eq $state
@@ -3276,7 +3370,7 @@ proc popup_diff_menu {ctxm ctxmmg x y X Y} {
 		tk_popup $ctxm $X $Y
 	}
 }
-bind_button3 $ui_diff [list popup_diff_menu $ctxm $ctxmmg %x %y %X %Y]
+bind_button3 $ui_diff [list popup_diff_menu $ctxm $ctxmmg $ctxmsm %x %y %X %Y]
 
 # -- Status Bar
 #
