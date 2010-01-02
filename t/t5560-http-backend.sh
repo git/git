@@ -162,15 +162,15 @@ test_expect_success 'http.receivepack false' '
 run_backend() {
 	REQUEST_METHOD=GET \
 	GIT_PROJECT_ROOT="$HTTPD_DOCUMENT_ROOT_PATH" \
-	PATH_INFO="$2" \
+	PATH_INFO="$1" \
 	git http-backend >act.out 2>act.err
 }
 
-path_info() {
+expect_aliased() {
 	if test $1 = 0; then
 		run_backend "$2"
 	else
-		test_must_fail run_backend "$2" &&
+		run_backend "$2" &&
 		echo "fatal: '$2': aliased" >exp.err &&
 		test_cmp exp.err act.err
 	fi
@@ -179,15 +179,14 @@ path_info() {
 test_expect_success 'http-backend blocks bad PATH_INFO' '
 	config http.getanyfile true &&
 
-	run_backend 0 /repo.git/HEAD &&
+	expect_aliased 0 /repo.git/HEAD &&
 
-	run_backend 1 /repo.git/../HEAD &&
-	run_backend 1 /../etc/passwd &&
-	run_backend 1 ../etc/passwd &&
-	run_backend 1 /etc//passwd &&
-	run_backend 1 /etc/./passwd &&
-	run_backend 1 /etc/.../passwd &&
-	run_backend 1 //domain/data.txt
+	expect_aliased 1 /repo.git/../HEAD &&
+	expect_aliased 1 /../etc/passwd &&
+	expect_aliased 1 ../etc/passwd &&
+	expect_aliased 1 /etc//passwd &&
+	expect_aliased 1 /etc/./passwd &&
+	expect_aliased 1 //domain/data.txt
 '
 
 cat >exp <<EOF
