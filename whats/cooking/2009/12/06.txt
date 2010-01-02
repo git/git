@@ -13,6 +13,8 @@ still holding onto them.
 
 The tip of 'next' will soon be rebuilt on top of the current 'master'.
 
+This will be the last "What's cooking" message in year 2009 ;-)
+
 --------------------------------------------------
 [New Topics]
 
@@ -207,13 +209,6 @@ but otherwise seemed good.
  + Allow curl to rewind the RPC read buffer
  + Add an option for using any HTTP authentication scheme, not only basic
  + http: maintain curl sessions
-<<
-* tr/http-updates (2009-12-01) 3 commits
-  (merged to 'next' on 2009-12-07 at f08d447)
- + Allow curl to rewind the RPC read buffer
- + Add an option for using any HTTP authentication scheme, not only basic
- + http: maintain curl sessions
->>
 
 * nd/sparse (2009-12-30) 23 commits
   (merged to 'next' on 2009-12-31 at 442ff22)
