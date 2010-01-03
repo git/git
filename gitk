@@ -10493,7 +10493,7 @@ proc showtag {tag isnew} {
     set linknum 0
     if {![info exists tagcontents($tag)]} {
 	catch {
-	    set tagcontents($tag) [exec git cat-file tag $tagobjid($tag)]
+           set tagcontents($tag) [exec git cat-file tag $tag]
 	}
     }
     if {[info exists tagcontents($tag)]} {
