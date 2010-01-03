@@ -8701,6 +8701,11 @@ proc mktag {} {
     ${NS}::label $top.tlab -text [mc "Tag name:"]
     ${NS}::entry $top.tag -width 60
     grid $top.tlab $top.tag -sticky w
+    ${NS}::label $top.op -text [mc "Tag message is optional"]
+    grid $top.op -columnspan 2 -sticky we
+    ${NS}::label $top.mlab -text [mc "Tag message:"]
+    ${NS}::entry $top.msg -width 60
+    grid $top.mlab $top.msg -sticky w
     ${NS}::frame $top.buts
     ${NS}::button $top.buts.gen -text [mc "Create"] -command mktaggo
     ${NS}::button $top.buts.can -text [mc "Cancel"] -command mktagcan
@@ -8718,6 +8723,7 @@ proc domktag {} {
 
     set id [$mktagtop.sha1 get]
     set tag [$mktagtop.tag get]
+    set msg [$mktagtop.msg get]
     if {$tag == {}} {
 	error_popup [mc "No tag name specified"] $mktagtop
 	return 0
@@ -8727,7 +8733,11 @@ proc domktag {} {
 	return 0
     }
     if {[catch {
-	exec git tag $tag $id
+	if {$msg != {}} {
+	    exec git tag -a -m $msg $tag $id
+	} else {
+	    exec git tag $tag $id
+	}
     } err]} {
 	error_popup "[mc "Error creating tag:"] $err" $mktagtop
 	return 0
