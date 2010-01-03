@@ -1244,7 +1244,7 @@ int finish_http_object_request(struct http_object_request *freq)
 	process_http_object_request(freq);
 
 	if (freq->http_code == 416) {
-		fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
+		warning("requested range invalid; we may already have all the data.");
 	} else if (freq->curl_result != CURLE_OK) {
 		if (stat(freq->tmpfile, &st) == 0)
 			if (st.st_size == 0)
