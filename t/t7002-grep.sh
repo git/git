@@ -8,6 +8,18 @@ test_description='git grep various.
 
 . ./test-lib.sh
 
+test_expect_success 'Check for external grep support' '
+	case "$(git grep -h 2>&1|grep ext-grep)" in
+	*"(default)"*)
+		test_set_prereq EXTGREP
+		true;;
+	*"(ignored by this build)"*)
+		true;;
+	*)
+		false;;
+	esac
+'
+
 cat >hello.c <<EOF
 #include <stdio.h>
 int main(int argc, const char **argv)
