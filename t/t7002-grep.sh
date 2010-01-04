@@ -340,4 +340,16 @@ test_expect_success 'grep -p -B5' '
 	test_cmp expected actual
 '
 
+test_expect_success EXTGREP 'external grep is called' '
+	GIT_TRACE=2 git grep foo >/dev/null 2>actual &&
+	grep "trace: grep:.*foo" actual >/dev/null
+'
+
+test_expect_success EXTGREP 'no external grep when skip-worktree entries exist' '
+	git update-index --skip-worktree file &&
+	GIT_TRACE=2 git grep foo >/dev/null 2>actual &&
+	! grep "trace: grep:" actual >/dev/null &&
+	git update-index --no-skip-worktree file
+'
+
 test_done

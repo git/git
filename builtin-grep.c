@@ -232,6 +232,7 @@ static int exec_grep(int argc, const char **argv)
 	int status;
 
 	argv[argc] = NULL;
+	trace_argv_printf(argv, "trace: grep:");
 	pid = fork();
 	if (pid < 0)
 		return pid;
