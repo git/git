@@ -27,13 +27,6 @@ format_branch () {
 	label="* $1 ($(git show -s --format="%ai" $1 | sed -e 's/ .*//')) $count commit"
 	test "$count" = 1 || label="${label}s"
 
-	count=$(git rev-list "master..$1" | wc -l)
-	mcount=$(git rev-list "maint..$1" | wc -l)
-	if test $mcount = $count
-	then
-	    label="$label."
-	fi
-
 	echo "$label"
 	lasttimelabel=
 	lastfoundmerge=
@@ -198,33 +191,36 @@ do
 done <"$tmp.branches" >"$tmp.output.toc"
 
 eval $(date +"monthname=%b month=%m year=%Y date=%d dow=%a")
-lead="whats/cooking/$year/$month"
-issue=$(
+
+incremental=$(
 	cd Meta &&
-	git ls-files "$lead" | tail -n 1
+	if git diff --quiet HEAD -- whats-cooking.txt >/dev/null
+	then
+		echo no
+	else
+		echo yes
+	fi
 )
-if test -n "$issue"
+
+# Find the current issue
+eval $(sed -ne '/^Subject: /{
+	s/^Subject: What.s cooking in git.git (\([A-Z][a-z][a-z]\) \([0-9][0-9][0-9][0-9]\), #\([0-9][0-9]*\); [A-Z][a-z][a-z], [0-9][0-9])$/lastmon=\1 lastyear=\2 lastissue=\3/p
+	q
+}' Meta/whats-cooking.txt)
+if test "$monthname $year" = "$lastmon $lastyear"
 then
-	issue=$( expr "$issue" : '.*/0*\([1-9][0-9]*\)\.txt$' )
-	issue=$(( $issue + 1 ))
+	if test "$incremental" = no
+	then
+		issue=$(( $lastissue + 1 ))
+	else
+		issue=$(( lastissue + 0 ))
+	fi
 else
 	issue=1
 fi
+
 issue=$( printf "%02d" $issue )
-mkdir -p "Meta/$lead"
-
-last=$(
-	cd Meta &&
-	git ls-files "whats/cooking"  | tail -n 1
-)
-
-# We may have a half-written one already.
-incremental=no
-if test -f "Meta/$lead/$issue.txt"
-then
-	last="$lead/$issue.txt"
-	incremental=yes
-fi
+last=whats-cooking.txt
 
 master_at=$(git rev-parse --verify refs/heads/master)
 next_at=$(git rev-parse --verify refs/heads/next)
@@ -373,14 +369,16 @@ perl -w -e '
 ' <"$template" "$tmp" "$incremental"
 
 tmpserial=$(
-	tail -n 1 "$tmp.template.toc" | read branch serial section && echo $serial
+	tail -n 1 "$tmp.template.toc" |
+	read branch serial section &&
+	echo $serial
 )
 
 # Assemble them all
 
 if test -z "$TO_STDOUT"
 then
-	exec >"Meta/$lead/$issue.txt"
+	exec >"Meta/whats-cooking.txt"
 fi
 
 if test -s "$tmp.template.blurb"
