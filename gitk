@@ -7689,8 +7689,10 @@ proc getblobdiffline {bdf ids} {
 	    makediffhdr $fname $ids
 	    $ctext insert end "\n$line\n" filesep
 	} elseif {![string compare -length 3 "  >" $line]} {
+	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" dresult
 	} elseif {![string compare -length 3 "  <" $line]} {
+	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" d0
 	} elseif {$diffinhdr} {
 	    if {![string compare -length 12 "rename from " $line]} {
