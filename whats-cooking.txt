@@ -81,6 +81,10 @@ Resurrected from "Ejected" category.
  - run-command: convert simple callsites to use_shell
  - run-command: add "use shell" option
 
+   Xref: news.gmane.org gmane.comp.version-control.git:136128
+   * check t0021: drop one to t4030;
+   * reorder and move t0021 up, immediately after run-command: optimize
+
 * mm/config-path (2009-12-30) 1 commit
   (merged to 'next' on 2010-01-03 at 9c0e81a)
  + builtin-config: add --path option doing ~ and ~user expansion.
