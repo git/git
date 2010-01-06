@@ -147,15 +147,23 @@ do
 		esac &&
 
 		save=$(git rev-parse HEAD) &&
+
 		{
 			test "z$with_dash" != 'zy' ||
-			Meta/Make $M $test -- $jobs SHELL_PATH=/bin/dash $dotest
+			Meta/Make $M ${test+"$test"} -- $jobs SHELL_PATH=/bin/dash $dotest
 		} &&
 
-		Meta/Make $M $test -- $jobs $dotest &&
+		Meta/Make $M ${test+"$test"} -- $jobs $dotest &&
+
 		{
 			test -n "$nodoc" ||
-			Meta/Make $M -- doc install-man install-html
+			if test "$save" = "$(git rev-parse HEAD)"
+			then
+				Meta/Make $M -- $jobs doc &&
+				Meta/Make $M -- install-man install-html
+			else
+				echo >&2 "Head moved--not installing docs"
+			fi
 		} &&
 
 		{

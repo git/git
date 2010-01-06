@@ -57,12 +57,16 @@ Wall='-Wall -Wdeclaration-after-statement' tests= jobs=
 case `uname` in
 OpenBSD)
 	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
-	Wall= ;;
+	GIT_SKIP_TESTS="t9200 t9502 $GIT_SKIP_TESTS"; export GIT_SKIP_TESTS
+	NO_PEDANTIC=CannotDo Wall=
+	;;
 FreeBSD)
 	OLD_ICONV=YesPlease; export OLD_ICONV
 	;;
 SunOS)
 	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
+	GIT_SKIP_TESTS="$GIT_SKIP_TESTS"; export GIT_SKIP_TESTS
+	NO_PEDANTIC=CannotDo Wall=
 	;;
 esac
 
@@ -76,7 +80,11 @@ do
 		$old_style_def_fix)
 			o=-Wold-style-definition ;;
 		esac
-		O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast"
+		case "$NO_PEDANTIC" in
+		?*)	;;
+		'')
+			O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast" ;;
+		esac
 		# -Wvla
 		# O="$O -fwrapv -fno-strict-overflow"
 		;;
