@@ -3052,12 +3052,36 @@ sub check_cherry_pick {
 	for my $range ( @ranges ) {
 		delete @commits{_rev_list($range)};
 	}
+	for my $commit (keys %commits) {
+		if (has_no_changes($commit)) {
+			delete $commits{$commit};
+		}
+	}
 	return (keys %commits);
+}
+
+sub has_no_changes {
+	my $commit = shift;
+
+	my @revs = split / /, command_oneline(
+		qw(rev-list --parents -1 -m), $commit);
+
+	# Commits with no parents, e.g. the start of a partial branch,
+	# have changes by definition.
+	return 1 if (@revs < 2);
+
+	# Commits with multiple parents, e.g a merge, have no changes
+	# by definition.
+	return 0 if (@revs > 2);
+
+	return (command_oneline("rev-parse", "$commit^{tree}") eq
+		command_oneline("rev-parse", "$commit~1^{tree}"));
 }
 
 BEGIN {
 	memoize 'lookup_svn_merge';
 	memoize 'check_cherry_pick';
+	memoize 'has_no_changes';
 }
 
 sub parents_exclude {
