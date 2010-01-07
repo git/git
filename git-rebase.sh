@@ -419,22 +419,27 @@ fi
 
 # Make sure the branch to rebase onto is valid.
 onto_name=${newbase-"$upstream_name"}
-if	left=$(expr "$onto_name" : '\(.*\)\.\.\.') &&
-	right=$(expr "$onto_name" : '\.\.\.\(.*\)$') &&
-	: ${left:=HEAD} ${right:=HEAD} &&
-	onto=$(git merge-base "$left" "$right")
-then
-	case "$onto" in
-	?*"$LF"?*)
-		die "$onto_name: there are more than one merge bases"
-		;;
-	'')
+case "$onto_name" in
+*...*)
+	if	left=${onto_name%...*} right=${onto_name#*...} &&
+		onto=$(git merge-base --all ${left:-HEAD} ${right:-HEAD})
+	then
+		case "$onto" in
+		?*"$LF"?*)
+			die "$onto_name: there are more than one merge bases"
+			;;
+		'')
+			die "$onto_name: there is no merge base"
+			;;
+		esac
+	else
 		die "$onto_name: there is no merge base"
-		;;
-	esac
-else
+	fi
+	;;
+*)
 	onto=$(git rev-parse --verify "${onto_name}^0") || exit
-fi
+	;;
+esac
 
 # If a hook exists, give it a chance to interrupt
 run_pre_rebase_hook "$upstream_arg" "$@"
