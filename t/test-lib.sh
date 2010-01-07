@@ -105,6 +105,8 @@ do
 		verbose=t; shift ;;
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t; shift ;;
+	--with-dashes)
+		with_dashes=t; shift ;;
 	--no-color)
 		color=; shift ;;
 	--no-python)
@@ -562,19 +564,8 @@ test_done () {
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
 TEST_DIRECTORY=$(pwd)
-if test -z "$valgrind"
+if test -n "$valgrind"
 then
-	if test -z "$GIT_TEST_INSTALLED"
-	then
-		PATH=$TEST_DIRECTORY/..:$PATH
-		GIT_EXEC_PATH=$TEST_DIRECTORY/..
-	else
-		GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
-		error "Cannot run git from $GIT_TEST_INSTALLED."
-		PATH=$GIT_TEST_INSTALLED:$TEST_DIRECTORY/..:$PATH
-		GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
-	fi
-else
 	make_symlink () {
 		test -h "$2" &&
 		test "$1" = "$(readlink "$2")" || {
@@ -636,6 +627,24 @@ else
 	PATH=$GIT_VALGRIND/bin:$PATH
 	GIT_EXEC_PATH=$GIT_VALGRIND/bin
 	export GIT_VALGRIND
+elif test -n "$GIT_TEST_INSTALLED" ; then
+	GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
+	error "Cannot run git from $GIT_TEST_INSTALLED."
+	PATH=$GIT_TEST_INSTALLED:$TEST_DIRECTORY/..:$PATH
+	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
+else # normal case, use ../bin-wrappers only unless $with_dashes:
+	git_bin_dir="$TEST_DIRECTORY/../bin-wrappers"
+	if ! test -x "$git_bin_dir/git" ; then
+		if test -z "$with_dashes" ; then
+			say "$git_bin_dir/git is not executable; using GIT_EXEC_PATH"
+		fi
+		with_dashes=t
+	fi
+	PATH="$git_bin_dir:$PATH"
+	GIT_EXEC_PATH=$TEST_DIRECTORY/..
+	if test -n "$with_dashes" ; then
+		PATH="$TEST_DIRECTORY/..:$PATH"
+	fi
 fi
 GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 unset GIT_CONFIG
