@@ -259,7 +259,6 @@ test -s "$tempdir"/heads ||
 
 GIT_INDEX_FILE="$(pwd)/../index"
 export GIT_INDEX_FILE
-git read-tree || die "Could not seed the index"
 
 # map old->new commit ids for rewriting parents
 mkdir ../map || die "Could not create map/ directory"
