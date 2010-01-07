@@ -11,7 +11,7 @@ SYNOPSIS
 'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend] [--dry-run]
 	   [(-c | -C) <commit>] [-F <file> | -m <msg>] [--reset-author]
 	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
-	   [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
+	   [--date=<date>] [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
 -----------
@@ -98,6 +98,9 @@ OPTIONS
 	standard `A U Thor <author@example.com>` format.  Otherwise,
 	an existing commit that matches the given string and its author
 	name is used.
+
+--date=<date>::
+	Override the author date used in the commit.
 
 -m <msg>::
 --message=<msg>::
@@ -231,6 +234,8 @@ specified.
 	these files are also staged for the next commit on top
 	of what have been staged before.
 
+:git-commit: 1
+include::date-formats.txt[]
 
 EXAMPLES
 --------
