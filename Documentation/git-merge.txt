@@ -22,6 +22,10 @@ The second syntax (<msg> `HEAD` <commit>...) is supported for
 historical reasons.  Do not use it from the command line or in
 new scripts.  It is the same as `git merge -m <msg> <commit>...`.
 
+*Warning*: Running 'git-merge' with uncommitted changes is
+discouraged: while possible, it leaves you in a state that is hard to
+back out of in the case of a conflict.
+
 
 OPTIONS
 -------

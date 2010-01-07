@@ -24,6 +24,10 @@ when merging local branches into the current branch.
 Also note that options meant for 'git-pull' itself and underlying
 'git-merge' must be given before the options meant for 'git-fetch'.
 
+*Warning*: Running 'git-pull' (actually, the underlying 'git-merge')
+with uncommitted changes is discouraged: while possible, it leaves you
+in a state that is hard to back out of in the case of a conflict.
+
 OPTIONS
 -------
 
