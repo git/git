@@ -741,15 +741,15 @@ diff.mnemonicprefix::
 	standard "a/" and "b/" depending on what is being compared.  When
 	this configuration is in effect, reverse diff output also swaps
 	the order of the prefixes:
-'git-diff';;
+`git diff`;;
 	compares the (i)ndex and the (w)ork tree;
-'git-diff HEAD';;
+`git diff HEAD`;;
 	 compares a (c)ommit and the (w)ork tree;
-'git diff --cached';;
+`git diff --cached`;;
 	compares a (c)ommit and the (i)ndex;
-'git-diff HEAD:file1 file2';;
+`git diff HEAD:file1 file2`;;
 	compares an (o)bject and a (w)ork tree entity;
-'git diff --no-index a b';;
+`git diff --no-index a b`;;
 	compares two non-git things (1) and (2).
 
 diff.renameLimit::
@@ -1015,7 +1015,7 @@ gui.spellingdictionary::
 	off.
 
 gui.fastcopyblame::
-	If true, 'git gui blame' uses '-C' instead of '-C -C' for original
+	If true, 'git gui blame' uses `-C` instead of `-C -C` for original
 	location detection. It makes blame significantly faster on huge
 	repositories at the expense of less thorough copy detection.
 

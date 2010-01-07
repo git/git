@@ -20,7 +20,7 @@ OPTIONS
 	Cause the logical variables to be listed. In addition, all the
 	variables of the git configuration file .git/config are listed
 	as well. (However, the configuration variables listing functionality
-	is deprecated in favor of 'git config -l'.)
+	is deprecated in favor of `git config -l`.)
 
 EXAMPLE
 --------

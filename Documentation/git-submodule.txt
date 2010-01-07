@@ -114,8 +114,8 @@ init::
 	The key used in .git/config is `submodule.$name.url`.
 	This command does not alter existing information in .git/config.
 	You can then customize the submodule clone URLs in .git/config
-	for your local setup and proceed to 'git submodule update';
-	you can also just use 'git submodule update --init' without
+	for your local setup and proceed to `git submodule update`;
+	you can also just use `git submodule update --init` without
 	the explicit 'init' step if you do not intend to customize
 	any submodule locations.
 

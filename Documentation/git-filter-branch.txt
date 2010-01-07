@@ -129,8 +129,8 @@ convenience functions, too.  For example, calling 'skip_commit "$@"'
 will leave out the current commit (but not its changes! If you want
 that, use 'git-rebase' instead).
 +
-You can also use the 'git_commit_non_empty_tree "$@"' instead of
-'git commit-tree "$@"' if you don't wish to keep commits with a single parent
+You can also use the `git_commit_non_empty_tree "$@"` instead of
+`git commit-tree "$@"` if you don't wish to keep commits with a single parent
 and that makes no change to the tree.
 
 --tag-name-filter <command>::
@@ -179,7 +179,7 @@ the nearest ancestor that was not excluded.
 	and only one parent, it will hence keep merges points. Also, this
 	option is not compatible with the use of '--commit-filter'. Though you
 	just need to use the function 'git_commit_non_empty_tree "$@"' instead
-	of the 'git commit-tree "$@"' idiom in your commit filter to make that
+	of the `git commit-tree "$@"` idiom in your commit filter to make that
 	happen.
 
 --original <namespace>::

@@ -50,7 +50,7 @@ Housekeeping is required if there are too many loose objects or
 too many packs in the repository. If the number of loose objects
 exceeds the value of the `gc.auto` configuration variable, then
 all loose objects are combined into a single pack using
-'git-repack -d -l'.  Setting the value of `gc.auto` to 0
+`git-repack -d -l`.  Setting the value of `gc.auto` to 0
 disables automatic packing of loose objects.
 +
 If the number of packs exceeds the value of `gc.autopacklimit`,

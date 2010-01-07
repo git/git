@@ -193,7 +193,7 @@ After seeing a conflict, you can do two things:
 
  * Decide not to merge.  The only clean-ups you need are to reset
    the index file to the `HEAD` commit to reverse 2. and to clean
-   up working tree changes made by 2. and 3.; 'git-reset --hard' can
+   up working tree changes made by 2. and 3.; `git-reset --hard` can
    be used for this.
 
  * Resolve the conflicts.  Git will mark the conflicts in
@@ -202,19 +202,19 @@ After seeing a conflict, you can do two things:
 
 You can work through the conflict with a number of tools:
 
- * Use a mergetool.  'git mergetool' to launch a graphical
+ * Use a mergetool.  `git mergetool` to launch a graphical
    mergetool which will work you through the merge.
 
- * Look at the diffs.  'git diff' will show a three-way diff,
+ * Look at the diffs.  `git diff` will show a three-way diff,
    highlighting changes from both the HEAD and their versions.
 
- * Look at the diffs on their own. 'git log --merge -p <path>'
+ * Look at the diffs on their own. `git log --merge -p <path>`
    will show diffs first for the HEAD version and then
    their version.
 
- * Look at the originals.  'git show :1:filename' shows the
-   common ancestor, 'git show :2:filename' shows the HEAD
-   version and 'git show :3:filename' shows their version.
+ * Look at the originals.  `git show :1:filename` shows the
+   common ancestor, `git show :2:filename` shows the HEAD
+   version and `git show :3:filename` shows their version.
 
 
 EXAMPLES
