@@ -10,17 +10,17 @@ SYNOPSIS
 --------
 [verse]
 'git merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
-	[-m <msg>] <remote>...
-'git merge' <msg> HEAD <remote>...
+	[-m <msg>] <commit>...
+'git merge' <msg> HEAD <commit>...
 
 DESCRIPTION
 -----------
-This is the top-level interface to the merge machinery
-which drives multiple merge strategy scripts.
+Merges the history specified by <commit> into HEAD, optionally using a
+specific merge strategy.
 
-The second syntax (<msg> `HEAD` <remote>) is supported for
+The second syntax (<msg> `HEAD` <commit>...) is supported for
 historical reasons.  Do not use it from the command line or in
-new scripts.  It is the same as `git merge -m <msg> <remote>`.
+new scripts.  It is the same as `git merge -m <msg> <commit>...`.
 
 
 OPTIONS
@@ -33,10 +33,10 @@ include::merge-options.txt[]
 	used to give a good default for automated 'git merge'
 	invocations.
 
-<remote>...::
-	Other branch heads to merge into our branch.  You need at
-	least one <remote>.  Specifying more than one <remote>
-	obviously means you are trying an Octopus.
+<commit>...::
+	Commits, usually other branch heads, to merge into our branch.
+	You need at least one <commit>.  Specifying more than one
+	<commit> obviously means you are trying an Octopus.
 
 include::merge-strategies.txt[]
 
@@ -96,8 +96,8 @@ file matches exactly the current `HEAD` commit; otherwise we
 will write out your local changes already registered in your
 index file along with the merge result, which is not good.
 Because 1. involves only those paths differing between your
-branch and the remote branch you are pulling from during the
-merge (which is typically a fraction of the whole tree), you can
+branch and the branch you are merging
+(which is typically a fraction of the whole tree), you can
 have local modifications in your working tree as long as they do
 not overlap with what the merge updates.
 
@@ -110,7 +110,7 @@ When there are conflicts, the following happens:
 
 3. For conflicting paths, the index file records up to three
    versions; stage1 stores the version from the common ancestor,
-   stage2 from `HEAD`, and stage3 from the remote branch (you
+   stage2 from `HEAD`, and stage3 from the other branch (you
    can inspect the stages with `git ls-files -u`).  The working
    tree files contain the result of the "merge" program; i.e. 3-way
    merge results with familiar conflict markers `<<< === >>>`.
@@ -202,15 +202,15 @@ You can work through the conflict with a number of tools:
    mergetool which will work you through the merge.
 
  * Look at the diffs.  'git diff' will show a three-way diff,
-   highlighting changes from both the HEAD and remote versions.
+   highlighting changes from both the HEAD and their versions.
 
  * Look at the diffs on their own. 'git log --merge -p <path>'
-   will show diffs first for the HEAD version and then the
-   remote version.
+   will show diffs first for the HEAD version and then
+   their version.
 
  * Look at the originals.  'git show :1:filename' shows the
    common ancestor, 'git show :2:filename' shows the HEAD
-   version and 'git show :3:filename' shows the remote version.
+   version and 'git show :3:filename' shows their version.
 
 
 EXAMPLES
