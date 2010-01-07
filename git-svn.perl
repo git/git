@@ -3158,10 +3158,21 @@ sub find_extra_svn_parents {
 		my $ranges = $ranges{$merge_tip};
 
 		# check out 'new' tips
-		my $merge_base = command_oneline(
-			"merge-base",
-			@$parents, $merge_tip,
-		       );
+		my $merge_base;
+		eval {
+			$merge_base = command_oneline(
+				"merge-base",
+				@$parents, $merge_tip,
+			);
+		};
+		if ($@) {
+			die "An error occurred during merge-base"
+				unless $@->isa("Git::Error::Command");
+
+			warn "W: Cannot find common ancestor between ".
+			     "@$parents and $merge_tip. Ignoring merge info.\n";
+			next;
+		}
 
 		# double check that there are no missing non-merge commits
 		my (@incomplete) = check_cherry_pick(
