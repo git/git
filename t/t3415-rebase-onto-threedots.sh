@@ -72,4 +72,34 @@ test_expect_success 'rebase --onto master...side' '
 	test_must_fail git rebase --onto master...side J
 '
 
+test_expect_success 'rebase -i --onto master...topic' '
+	git reset --hard &&
+	git checkout topic &&
+	git reset --hard G &&
+	set_fake_editor &&
+	EXPECT_COUNT=1 git rebase -i --onto master...topic F &&
+	git rev-parse HEAD^1 >actual &&
+	git rev-parse C^0 >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rebase -i --onto master...' '
+	git reset --hard &&
+	git checkout topic &&
+	git reset --hard G &&
+	set_fake_editor &&
+	EXPECT_COUNT=1 git rebase -i --onto master... F &&
+	git rev-parse HEAD^1 >actual &&
+	git rev-parse C^0 >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rebase -i --onto master...side' '
+	git reset --hard &&
+	git checkout side &&
+	git reset --hard K &&
+
+	test_must_fail git rebase -i --onto master...side J
+'
+
 test_done
