@@ -359,21 +359,6 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	show_modified(revs, tree, idx, 1, cached, match_missing);
 }
 
-static inline void skip_same_name(struct cache_entry *ce, struct unpack_trees_options *o)
-{
-	int len = ce_namelen(ce);
-	const struct index_state *index = o->src_index;
-
-	while (o->pos < index->cache_nr) {
-		struct cache_entry *next = index->cache[o->pos];
-		if (len != ce_namelen(next))
-			break;
-		if (memcmp(ce->name, next->name, len))
-			break;
-		o->pos++;
-	}
-}
-
 /*
  * The unpack_trees() interface is designed for merging, so
  * the different source entries are designed primarily for
@@ -394,9 +379,6 @@ static int oneway_diff(struct cache_entry **src, struct unpack_trees_options *o)
 	struct cache_entry *idx = src[0];
 	struct cache_entry *tree = src[1];
 	struct rev_info *revs = o->unpack_data;
-
-	if (idx && ce_stage(idx))
-		skip_same_name(idx, o);
 
 	/*
 	 * Unpack-trees generates a DF/conflict entry if

@@ -126,18 +126,109 @@ static inline int call_unpack_fn(struct cache_entry **src, struct unpack_trees_o
 	return ret;
 }
 
-static int unpack_index_entry(struct cache_entry *ce, struct unpack_trees_options *o)
+static void mark_ce_used(struct cache_entry *ce, struct unpack_trees_options *o)
+{
+	ce->ce_flags |= CE_UNPACKED;
+
+	if (o->cache_bottom < o->src_index->cache_nr &&
+	    o->src_index->cache[o->cache_bottom] == ce) {
+		int bottom = o->cache_bottom;
+		while (bottom < o->src_index->cache_nr &&
+		       o->src_index->cache[bottom]->ce_flags & CE_UNPACKED)
+			bottom++;
+		o->cache_bottom = bottom;
+	}
+}
+
+static void mark_all_ce_unused(struct index_state *index)
+{
+	int i;
+	for (i = 0; i < index->cache_nr; i++)
+		index->cache[i]->ce_flags &= ~CE_UNPACKED;
+}
+
+static int locate_in_src_index(struct cache_entry *ce,
+			       struct unpack_trees_options *o)
+{
+	struct index_state *index = o->src_index;
+	int len = ce_namelen(ce);
+	int pos = index_name_pos(index, ce->name, len);
+	if (pos < 0)
+		pos = -1 - pos;
+	return pos;
+}
+
+/*
+ * We call unpack_index_entry() with an unmerged cache entry
+ * only in diff-index, and it wants a single callback.  Skip
+ * the other unmerged entry with the same name.
+ */
+static void mark_ce_used_same_name(struct cache_entry *ce,
+				   struct unpack_trees_options *o)
+{
+	struct index_state *index = o->src_index;
+	int len = ce_namelen(ce);
+	int pos;
+
+	for (pos = locate_in_src_index(ce, o); pos < index->cache_nr; pos++) {
+		struct cache_entry *next = index->cache[pos];
+		if (len != ce_namelen(next) ||
+		    memcmp(ce->name, next->name, len))
+			break;
+		mark_ce_used(next, o);
+	}
+}
+
+static struct cache_entry *next_cache_entry(struct unpack_trees_options *o)
+{
+	const struct index_state *index = o->src_index;
+	int pos = o->cache_bottom;
+
+	while (pos < index->cache_nr) {
+		struct cache_entry *ce = index->cache[pos];
+		if (!(ce->ce_flags & CE_UNPACKED))
+			return ce;
+		pos++;
+	}
+	return NULL;
+}
+
+static void add_same_unmerged(struct cache_entry *ce,
+			      struct unpack_trees_options *o)
+{
+	struct index_state *index = o->src_index;
+	int len = ce_namelen(ce);
+	int pos = index_name_pos(index, ce->name, len);
+
+	if (0 <= pos)
+		die("programming error in a caller of mark_ce_used_same_name");
+	for (pos = -pos - 1; pos < index->cache_nr; pos++) {
+		struct cache_entry *next = index->cache[pos];
+		if (len != ce_namelen(next) ||
+		    memcmp(ce->name, next->name, len))
+			break;
+		add_entry(o, next, 0, 0);
+		mark_ce_used(next, o);
+	}
+}
+
+static int unpack_index_entry(struct cache_entry *ce,
+			      struct unpack_trees_options *o)
 {
 	struct cache_entry *src[5] = { ce, NULL, };
+	int ret;
 
-	o->pos++;
+	mark_ce_used(ce, o);
 	if (ce_stage(ce)) {
 		if (o->skip_unmerged) {
 			add_entry(o, ce, 0, 0);
 			return 0;
 		}
 	}
-	return call_unpack_fn(src, o);
+	ret = call_unpack_fn(src, o);
+	if (ce_stage(ce))
+		mark_ce_used_same_name(ce, o);
+	return ret;
 }
 
 static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
@@ -210,6 +301,20 @@ static int compare_entry(const struct cache_entry *ce, const struct traverse_inf
 	 * compare as bigger than a directory leading up to it!
 	 */
 	return ce_namelen(ce) > traverse_path_len(info, n);
+}
+
+static int ce_in_traverse_path(const struct cache_entry *ce,
+			       const struct traverse_info *info)
+{
+	if (!info->prev)
+		return 1;
+	if (do_compare_entry(ce, info->prev, &info->name))
+		return 0;
+	/*
+	 * If ce (blob) is the same name as the path (which is a tree
+	 * we will be descending into), it won't be inside it.
+	 */
+	return (info->pathlen < ce_namelen(ce));
 }
 
 static struct cache_entry *create_ce_entry(const struct traverse_info *info, const struct name_entry *n, int stage)
@@ -300,23 +405,27 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 
 	/* Are we supposed to look at the index too? */
 	if (o->merge) {
-		while (o->pos < o->src_index->cache_nr) {
-			struct cache_entry *ce = o->src_index->cache[o->pos];
-			int cmp = compare_entry(ce, info, p);
+		while (1) {
+			struct cache_entry *ce = next_cache_entry(o);
+			int cmp;
+			if (!ce)
+				break;
+			cmp = compare_entry(ce, info, p);
 			if (cmp < 0) {
 				if (unpack_index_entry(ce, o) < 0)
 					return unpack_failed(o, NULL);
 				continue;
 			}
 			if (!cmp) {
-				o->pos++;
 				if (ce_stage(ce)) {
 					/*
-					 * If we skip unmerged index entries, we'll skip this
-					 * entry *and* the tree entries associated with it!
+					 * If we skip unmerged index
+					 * entries, we'll skip this
+					 * entry *and* the tree
+					 * entries associated with it!
 					 */
 					if (o->skip_unmerged) {
-						add_entry(o, ce, 0, 0);
+						add_same_unmerged(ce, o);
 						return mask;
 					}
 				}
@@ -328,6 +437,13 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 
 	if (unpack_nondirectories(n, mask, dirmask, src, names, info) < 0)
 		return -1;
+
+	if (src[0]) {
+		if (ce_stage(src[0]))
+			mark_ce_used_same_name(src[0], o);
+		else
+			mark_ce_used(src[0], o);
+	}
 
 	/* Now handle any directories.. */
 	if (dirmask) {
@@ -345,11 +461,13 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 			matches = cache_tree_matches_traversal(o->src_index->cache_tree,
 							       names, info);
 			/*
-			 * Everything under the name matches.  Adjust o->pos to
-			 * skip the entire hierarchy.
+			 * Everything under the name matches; skip the
+			 * entire hierarchy.  diff_index_cached codepath
+			 * special cases D/F conflicts in such a way that
+			 * it does not do any look-ahead, so this is safe.
 			 */
 			if (matches) {
-				o->pos += matches;
+				o->cache_bottom += matches;
 				return mask;
 			}
 		}
@@ -382,11 +500,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	memset(&o->result, 0, sizeof(o->result));
 	o->result.initialized = 1;
-	if (o->src_index) {
-		o->result.timestamp.sec = o->src_index->timestamp.sec;
-		o->result.timestamp.nsec = o->src_index->timestamp.nsec;
-	}
+	o->result.timestamp.sec = o->src_index->timestamp.sec;
+	o->result.timestamp.nsec = o->src_index->timestamp.nsec;
 	o->merge_size = len;
+	mark_all_ce_unused(o->src_index);
 
 	if (!dfc)
 		dfc = xcalloc(1, cache_entry_size(0));
@@ -400,18 +517,38 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		info.fn = unpack_callback;
 		info.data = o;
 
+		if (o->prefix) {
+			/*
+			 * Unpack existing index entries that sort before the
+			 * prefix the tree is spliced into.  Note that o->merge
+			 * is always true in this case.
+			 */
+			while (1) {
+				struct cache_entry *ce = next_cache_entry(o);
+				if (!ce)
+					break;
+				if (ce_in_traverse_path(ce, &info))
+					break;
+				if (unpack_index_entry(ce, o) < 0)
+					goto return_failed;
+			}
+		}
+
 		if (traverse_trees(len, t, &info) < 0)
-			return unpack_failed(o, NULL);
+			goto return_failed;
 	}
 
 	/* Any left-over entries in the index? */
 	if (o->merge) {
-		while (o->pos < o->src_index->cache_nr) {
-			struct cache_entry *ce = o->src_index->cache[o->pos];
+		while (1) {
+			struct cache_entry *ce = next_cache_entry(o);
+			if (!ce)
+				break;
 			if (unpack_index_entry(ce, o) < 0)
-				return unpack_failed(o, NULL);
+				goto return_failed;
 		}
 	}
+	mark_all_ce_unused(o->src_index);
 
 	if (o->trivial_merges_only && o->nontrivial_merge)
 		return unpack_failed(o, "Merge requires file-level merging");
@@ -421,6 +558,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	if (o->dst_index)
 		*o->dst_index = o->result;
 	return ret;
+
+return_failed:
+	mark_all_ce_unused(o->src_index);
+	return unpack_failed(o, NULL);
 }
 
 /* Here come the merge functions */
@@ -522,7 +663,9 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 	 * in that directory.
 	 */
 	namelen = strlen(ce->name);
-	for (i = o->pos; i < o->src_index->cache_nr; i++) {
+	for (i = locate_in_src_index(ce, o);
+	     i < o->src_index->cache_nr;
+	     i++) {
 		struct cache_entry *ce2 = o->src_index->cache[i];
 		int len = ce_namelen(ce2);
 		if (len < namelen ||
@@ -530,12 +673,14 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 		    ce2->name[namelen] != '/')
 			break;
 		/*
-		 * ce2->name is an entry in the subdirectory.
+		 * ce2->name is an entry in the subdirectory to be
+		 * removed.
 		 */
 		if (!ce_stage(ce2)) {
 			if (verify_uptodate(ce2, o))
 				return -1;
 			add_entry(o, ce2, CE_REMOVE, 0);
+			mark_ce_used(ce2, o);
 		}
 		cnt++;
 	}
@@ -591,7 +736,6 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
-		int ret;
 		int dtype = ce_to_dtype(ce);
 		struct cache_entry *result;
 
@@ -619,28 +763,8 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 			 * files that are in "foo/" we would lose
 			 * them.
 			 */
-			ret = verify_clean_subdirectory(ce, action, o);
-			if (ret < 0)
-				return ret;
-
-			/*
-			 * If this removed entries from the index,
-			 * what that means is:
-			 *
-			 * (1) the caller unpack_callback() saw path/foo
-			 * in the index, and it has not removed it because
-			 * it thinks it is handling 'path' as blob with
-			 * D/F conflict;
-			 * (2) we will return "ok, we placed a merged entry
-			 * in the index" which would cause o->pos to be
-			 * incremented by one;
-			 * (3) however, original o->pos now has 'path/foo'
-			 * marked with "to be removed".
-			 *
-			 * We need to increment it by the number of
-			 * deleted entries here.
-			 */
-			o->pos += ret;
+			if (verify_clean_subdirectory(ce, action, o) < 0)
+				return -1;
 			return 0;
 		}
 
