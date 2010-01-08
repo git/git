@@ -84,8 +84,6 @@ int decode_85(char *dst, const char *buffer, int len)
 
 void encode_85(char *buf, const unsigned char *data, int bytes)
 {
-	prep_base85();
-
 	say("encode 85");
 	while (bytes) {
 		unsigned acc = 0;
