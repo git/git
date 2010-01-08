@@ -85,10 +85,11 @@ static void setup_ident(void)
 	if (!git_default_email[0]) {
 		const char *email = getenv("EMAIL");
 
-		if (email && email[0])
+		if (email && email[0]) {
 			strlcpy(git_default_email, email,
 				sizeof(git_default_email));
-		else {
+			user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		} else {
 			if (!pw)
 				pw = getpwuid(getuid());
 			if (!pw)
