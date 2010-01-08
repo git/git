@@ -430,6 +430,15 @@ static int push_refs(struct transport *transport,
 			continue;
 		}
 
+		if (ref->status != REF_STATUS_NONE) {
+			/*
+			 * Earlier, the ref was marked not to be pushed, so ignore the ref
+			 * status reported by the remote helper if the latter is 'no match'.
+			 */
+			if (status == REF_STATUS_NONE)
+				continue;
+		}
+
 		ref->status = status;
 		ref->remote_status = msg;
 	}
