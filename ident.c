@@ -168,8 +168,6 @@ static int copy(char *buf, size_t size, int offset, const char *src)
 	return offset;
 }
 
-static const char au_env[] = "GIT_AUTHOR_NAME";
-static const char co_env[] = "GIT_COMMITTER_NAME";
 static const char *env_hint =
 "\n"
 "*** Please tell me who you are.\n"
@@ -204,7 +202,7 @@ const char *fmt_ident(const char *name, const char *email,
 
 		if ((warn_on_no_name || error_on_no_name) &&
 		    name == git_default_name && env_hint) {
-			fprintf(stderr, env_hint, au_env, co_env);
+			fprintf(stderr, env_hint);
 			env_hint = NULL; /* warn only once */
 		}
 		if (error_on_no_name)
