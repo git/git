@@ -321,8 +321,11 @@ static int push_refs(struct transport *transport,
 	struct child_process *helper;
 	struct ref *ref;
 
-	if (!remote_refs)
+	if (!remote_refs) {
+		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
+			"Perhaps you should specify a branch such as 'master'.\n");
 		return 0;
+	}
 
 	helper = get_helper(transport);
 	if (!data->push)
