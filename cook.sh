@@ -194,7 +194,7 @@ eval $(date +"monthname=%b month=%m year=%Y date=%d dow=%a")
 
 incremental=$(
 	cd Meta &&
-	if git diff --quiet HEAD -- whats-cooking.txt >/dev/null
+	if git diff --quiet --no-ext-diff HEAD -- whats-cooking.txt >/dev/null
 	then
 		echo no
 	else
