@@ -925,6 +925,9 @@ extern const char *config_exclusive_filename;
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];
 extern char git_default_name[MAX_GITNAME];
+#define IDENT_NAME_GIVEN 01
+#define IDENT_MAIL_GIVEN 02
+#define IDENT_ALL_GIVEN (IDENT_NAME_GIVEN|IDENT_MAIL_GIVEN)
 extern int user_ident_explicitly_given;
 
 extern const char *git_commit_encoding;
