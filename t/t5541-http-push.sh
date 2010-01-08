@@ -88,7 +88,7 @@ test_expect_success 'used receive-pack service' '
 	test_cmp exp act
 '
 
-test_expect_success 'non-fast-forward push fails' '
+test_expect_failure 'non-fast-forward push fails' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	git checkout master &&
 	echo "changed" > path2 &&
@@ -100,7 +100,7 @@ test_expect_success 'non-fast-forward push fails' '
 	 test $HEAD != $(git rev-parse --verify HEAD))
 '
 
-test_expect_failure 'non-fast-forward push show ref status' '
+test_expect_success 'non-fast-forward push show ref status' '
 	grep "^ ! \[rejected\][ ]*master -> master (non-fast-forward)$" output
 '
 

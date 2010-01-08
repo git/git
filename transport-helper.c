@@ -329,16 +329,16 @@ static int push_refs(struct transport *transport,
 		return 1;
 
 	for (ref = remote_refs; ref; ref = ref->next) {
-		if (ref->peer_ref)
-			hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
-		else if (!mirror)
+		if (!ref->peer_ref && !mirror)
 			continue;
 
-		ref->deletion = is_null_sha1(ref->new_sha1);
-		if (!ref->deletion &&
-			!hashcmp(ref->old_sha1, ref->new_sha1)) {
-			ref->status = REF_STATUS_UPTODATE;
+		/* Check for statuses set by set_ref_status_for_push() */
+		switch (ref->status) {
+		case REF_STATUS_REJECT_NONFASTFORWARD:
+		case REF_STATUS_UPTODATE:
 			continue;
+		default:
+			; /* do nothing */
 		}
 
 		if (force_all)
