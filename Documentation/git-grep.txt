@@ -98,7 +98,7 @@ OPTIONS
 --files-without-match::
 	Instead of showing every matched line, show only the
 	names of files that contain (or do not contain) matches.
-	For better compatibility with 'git-diff', --name-only is a
+	For better compatibility with 'git diff', --name-only is a
 	synonym for --files-with-matches.
 
 -z::

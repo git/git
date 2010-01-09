@@ -15,15 +15,15 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-'git-merge-file' incorporates all changes that lead from the `<base-file>`
+'git merge-file' incorporates all changes that lead from the `<base-file>`
 to `<other-file>` into `<current-file>`. The result ordinarily goes into
-`<current-file>`. 'git-merge-file' is useful for combining separate changes
+`<current-file>`. 'git merge-file' is useful for combining separate changes
 to an original. Suppose `<base-file>` is the original, and both
 `<current-file>` and `<other-file>` are modifications of `<base-file>`,
-then 'git-merge-file' combines both changes.
+then 'git merge-file' combines both changes.
 
 A conflict occurs if both `<current-file>` and `<other-file>` have changes
-in a common segment of lines. If a conflict is found, 'git-merge-file'
+in a common segment of lines. If a conflict is found, 'git merge-file'
 normally outputs a warning and brackets the conflict with lines containing
 <<<<<<< and >>>>>>> markers. A typical conflict will look like this:
 
@@ -39,7 +39,7 @@ the alternatives.
 The exit value of this program is negative on error, and the number of
 conflicts otherwise. If the merge was clean, the exit value is 0.
 
-'git-merge-file' is designed to be a minimal clone of RCS 'merge'; that is, it
+'git merge-file' is designed to be a minimal clone of RCS 'merge'; that is, it
 implements all of RCS 'merge''s functionality which is needed by
 linkgit:git[1].
 

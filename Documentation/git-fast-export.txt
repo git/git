@@ -13,18 +13,18 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This program dumps the given revisions in a form suitable to be piped
-into 'git-fast-import'.
+into 'git fast-import'.
 
 You can use it as a human-readable bundle replacement (see
 linkgit:git-bundle[1]), or as a kind of an interactive
-'git-filter-branch'.
+'git filter-branch'.
 
 
 OPTIONS
 -------
 --progress=<n>::
 	Insert 'progress' statements every <n> objects, to be shown by
-	'git-fast-import' during import.
+	'git fast-import' during import.
 
 --signed-tags=(verbatim|warn|strip|abort)::
 	Specify how to handle signed tags.  Since any transformation
@@ -91,8 +91,8 @@ marks the same across runs.
 	already contains the necessary objects.
 
 [git-rev-list-args...]::
-       A list of arguments, acceptable to 'git-rev-parse' and
-       'git-rev-list', that specifies the specific objects and references
+       A list of arguments, acceptable to 'git rev-parse' and
+       'git rev-list', that specifies the specific objects and references
        to export.  For example, `master\~10..master` causes the
        current master reference to be exported along with all objects
        added since its 10th ancestor commit.
@@ -125,7 +125,7 @@ referenced by that revision range contains the string
 Limitations
 -----------
 
-Since 'git-fast-import' cannot tag trees, you will not be
+Since 'git fast-import' cannot tag trees, you will not be
 able to export the linux-2.6.git repository completely, as it contains
 a tag referencing a tree instead of a commit.
 

@@ -3,7 +3,7 @@ git-shortlog(1)
 
 NAME
 ----
-git-shortlog - Summarize 'git-log' output
+git-shortlog - Summarize 'git log' output
 
 SYNOPSIS
 --------
@@ -13,7 +13,7 @@ git shortlog [-n|--numbered] [-s|--summary] [-e|--email] [-w[<width>[,<indent1>[
 
 DESCRIPTION
 -----------
-Summarizes 'git-log' output in a format suitable for inclusion
+Summarizes 'git log' output in a format suitable for inclusion
 in release announcements. Each commit will be grouped by author and
 the first line of the commit message will be shown.
 

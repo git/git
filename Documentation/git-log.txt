@@ -14,9 +14,9 @@ DESCRIPTION
 -----------
 Shows the commit logs.
 
-The command takes options applicable to the 'git-rev-list'
+The command takes options applicable to the 'git rev-list'
 command to control what is shown and how, and options applicable to
-the 'git-diff-*' commands to control how the changes
+the 'git diff-*' commands to control how the changes
 each commit introduces are shown.
 
 

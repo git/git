@@ -33,7 +33,7 @@ OPTIONS
 
 -e::
 --edit::
-	With this option, 'git-revert' will let you edit the commit
+	With this option, 'git revert' will let you edit the commit
 	message prior to committing the revert. This is the default if
 	you run the command from a terminal.
 
@@ -54,7 +54,7 @@ See the link:howto/revert-a-faulty-merge.txt[revert-a-faulty-merge How-To] for
 more details.
 
 --no-edit::
-	With this option, 'git-revert' will not start the commit
+	With this option, 'git revert' will not start the commit
 	message editor.
 
 -n::

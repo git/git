@@ -22,7 +22,7 @@ cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 Usage:
 
 [verse]
-'git cvsserver' [options] [pserver|server] [<directory> ...]
+'git-cvsserver' [options] [pserver|server] [<directory> ...]
 
 OPTIONS
 -------
@@ -206,7 +206,7 @@ them write access to the directory, too.
 The database can not be reliably regenerated in a
 consistent form after the branch it is tracking has changed.
 Example: For merged branches, 'git-cvsserver' only tracks
-one branch of development, and after a 'git-merge' an
+one branch of development, and after a 'git merge' an
 incrementally updated database may track a different branch
 than a database regenerated from scratch, causing inconsistent
 CVS revision numbers. `git-cvsserver` has no way of knowing which
