@@ -302,6 +302,10 @@ void mingw_mark_as_git_dir(const char *dir)
 	if (hide_dotfiles != HIDE_DOTFILES_FALSE && !is_bare_repository())
 		if (xutftowcs_path(wdir, dir) < 0 || make_hidden(wdir))
 			warning("Failed to make '%s' hidden", dir);
+	git_config_set("core.hideDotFiles",
+		hide_dotfiles == HIDE_DOTFILES_FALSE ? "false" :
+		(hide_dotfiles == HIDE_DOTFILES_DOTGITONLY ?
+		 "dotGitOnly" : "true"));
 }
 
 int mingw_mkdir(const char *path, int mode)
