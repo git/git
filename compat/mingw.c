@@ -294,6 +294,10 @@ void mingw_mark_as_git_dir(const char *dir)
 {
 	if (hide_dotfiles != HIDE_DOTFILES_FALSE && make_hidden(dir))
 		warning("Failed to make '%s' hidden", dir);
+	git_config_set("core.hideDotFiles",
+		hide_dotfiles == HIDE_DOTFILES_FALSE ? "false" :
+		(hide_dotfiles == HIDE_DOTFILES_DOTGITONLY ?
+		 "dotGitOnly" : "true"));
 }
 
 #undef mkdir
