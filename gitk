@@ -2088,7 +2088,7 @@ proc makewindow {} {
     set sha1entry .tf.bar.sha1
     set entries $sha1entry
     set sha1but .tf.bar.sha1label
-    button $sha1but -text [mc "SHA1 ID: "] -state disabled -relief flat \
+    button $sha1but -text "[mc "SHA1 ID:"] " -state disabled -relief flat \
 	-command gotocommit -width 8
     $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .tf.bar.sha1label -side left

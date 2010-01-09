@@ -708,7 +708,7 @@ msgstr "Gehe zu:"
 
 #: gitk:7821
 msgid "SHA1 ID:"
-msgstr "SHA1-Hashwert:"
+msgstr "SHA1 ID:"
 
 #: gitk:7840
 #, tcl-format
