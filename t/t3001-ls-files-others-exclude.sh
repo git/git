@@ -183,7 +183,7 @@ test_expect_success 'subdirectory ignore (l1/l2)' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'subdirectory ignore (l1)' '
+test_expect_success 'subdirectory ignore (l1)' '
 	(
 		cd top/l1 &&
 		git ls-files -o --exclude-standard

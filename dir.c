@@ -813,6 +813,41 @@ static void free_simplify(struct path_simplify *simplify)
 	free(simplify);
 }
 
+static int treat_leading_path(struct dir_struct *dir,
+			      const char *path, int len,
+			      const struct path_simplify *simplify)
+{
+	char pathbuf[PATH_MAX];
+	int baselen, blen;
+	const char *cp;
+
+	while (len && path[len - 1] == '/')
+		len--;
+	if (!len)
+		return 1;
+	baselen = 0;
+	while (1) {
+		cp = path + baselen + !!baselen;
+		cp = memchr(cp, '/', path + len - cp);
+		if (!cp)
+			baselen = len;
+		else
+			baselen = cp - path;
+		memcpy(pathbuf, path, baselen);
+		pathbuf[baselen] = '\0';
+		if (!is_directory(pathbuf))
+			return 0;
+		if (simplify_away(pathbuf, baselen, simplify))
+			return 0;
+		blen = baselen;
+		if (treat_one_path(dir, pathbuf, &blen, simplify,
+				   DT_DIR, NULL) == path_ignored)
+			return 0; /* do not recurse into it */
+		if (len <= baselen)
+			return 1; /* finished checking */
+	}
+}
+
 int read_directory(struct dir_struct *dir, const char *path, int len, const char **pathspec)
 {
 	struct path_simplify *simplify;
@@ -821,7 +856,8 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const char
 		return dir->nr;
 
 	simplify = create_simplify(pathspec);
-	read_directory_recursive(dir, path, len, 0, simplify);
+	if (!len || treat_leading_path(dir, path, len, simplify))
+		read_directory_recursive(dir, path, len, 0, simplify);
 	free_simplify(simplify);
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
 	qsort(dir->ignored, dir->ignored_nr, sizeof(struct dir_entry *), cmp_name);
