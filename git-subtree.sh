@@ -161,6 +161,20 @@ rev_exists()
 	fi
 }
 
+rev_is_descendant_of_branch()
+{
+	newrev="$1"
+	branch="$2"
+	branch_hash=$(git rev-parse $branch)
+	match=$(git rev-list $newrev | grep $branch_hash)
+
+	if [ -n "$match" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 # if a commit doesn't have a parent, this might not work.  But we only want
 # to remove the parent from the rev-list, and since it doesn't exist, it won't
 # be there anyway, so do nothing in that case.
@@ -476,10 +490,6 @@ cmd_add()
 
 cmd_split()
 {
-	if [ -n "$branch" ] && rev_exists "refs/heads/$branch"; then
-		die "Branch '$branch' already exists."
-	fi
-
 	debug "Splitting $dir..."
 	cache_setup || exit $?
 	
@@ -510,7 +520,8 @@ cmd_split()
 	eval "$grl" |
 	while read rev parents; do
 		revcount=$(($revcount + 1))
-		say -n "$revcount/$revmax ($createcount)"
+		say -n "$revcount/$revmax ($createcount)
+"
 		debug "Processing commit: $rev"
 		exists=$(cache_get $rev)
 		if [ -n "$exists" ]; then
@@ -548,9 +559,16 @@ cmd_split()
 			$latest_new >&2 || exit $?
 	fi
 	if [ -n "$branch" ]; then
-		git update-ref -m 'subtree split' "refs/heads/$branch" \
-			$latest_new "" || exit $?
-		say "Created branch '$branch'"
+		if rev_exists "refs/heads/$branch"; then
+			if ! rev_is_descendant_of_branch $latest_new $branch; then
+				die "Branch '$branch' is not an ancestor of commit '$latest_new'."
+			fi
+			action='Updated'
+		else
+			action='Created'
+		fi
+		git update-ref -m 'subtree split' "refs/heads/$branch" $latest_new || exit $?
+		say "$action branch '$branch'"
 	fi
 	echo $latest_new
 	exit 0
