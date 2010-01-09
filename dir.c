@@ -631,28 +631,12 @@ enum path_treatment {
 	path_recurse,
 };
 
-static enum path_treatment treat_path(struct dir_struct *dir,
-				      struct dirent *de,
-				      char *path, int path_max,
-				      int baselen,
-				      const struct path_simplify *simplify,
-				      int *len)
+static enum path_treatment treat_one_path(struct dir_struct *dir,
+					  char *path, int *len,
+					  const struct path_simplify *simplify,
+					  int dtype, struct dirent *de)
 {
-	int dtype, exclude;
-
-	if (is_dot_or_dotdot(de->d_name) || !strcmp(de->d_name, ".git"))
-		return path_ignored;
-	*len = strlen(de->d_name);
-	/* Ignore overly long pathnames! */
-	if (*len + baselen + 8 > path_max)
-		return path_ignored;
-	memcpy(path + baselen, de->d_name, *len + 1);
-	*len += baselen;
-	if (simplify_away(path, *len, simplify))
-		return path_ignored;
-
-	dtype = DTYPE(de);
-	exclude = excluded(dir, path, &dtype);
+	int exclude = excluded(dir, path, &dtype);
 	if (exclude && (dir->flags & DIR_COLLECT_IGNORED)
 	    && in_pathspec(path, *len, simplify))
 		dir_add_ignored(dir, path, *len);
@@ -701,6 +685,30 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 		break;
 	}
 	return path_handled;
+}
+
+static enum path_treatment treat_path(struct dir_struct *dir,
+				      struct dirent *de,
+				      char *path, int path_max,
+				      int baselen,
+				      const struct path_simplify *simplify,
+				      int *len)
+{
+	int dtype;
+
+	if (is_dot_or_dotdot(de->d_name) || !strcmp(de->d_name, ".git"))
+		return path_ignored;
+	*len = strlen(de->d_name);
+	/* Ignore overly long pathnames! */
+	if (*len + baselen + 8 > path_max)
+		return path_ignored;
+	memcpy(path + baselen, de->d_name, *len + 1);
+	*len += baselen;
+	if (simplify_away(path, *len, simplify))
+		return path_ignored;
+
+	dtype = DTYPE(de);
+	return treat_one_path(dir, path, len, simplify, dtype, de);
 }
 
 /*
