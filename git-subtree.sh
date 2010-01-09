@@ -538,7 +538,10 @@ cmd_split()
 		
 		# ugly.  is there no better way to tell if this is a subtree
 		# vs. a mainline commit?  Does it matter?
-		[ -z $tree ] && continue
+		if [ -z $tree ]; then
+			cache_set $rev $rev
+			continue
+		fi
 
 		newrev=$(copy_or_skip "$rev" "$tree" "$newparents") || exit $?
 		debug "  newrev is: $newrev"
