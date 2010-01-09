@@ -875,6 +875,9 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		url = remote->url[0];
 	ret->url = url;
 
+	/* In case previous URL had helper forced, reset it. */
+	remote->foreign_vcs = NULL;
+
 	/* maybe it is a foreign URL? */
 	if (url) {
 		const char *p = url;
