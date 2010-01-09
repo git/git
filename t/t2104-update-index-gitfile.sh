@@ -31,7 +31,7 @@ test_expect_success 'submodule with relative .git file' '
 	 test_commit first)
 '
 
-test_expect_failure 'add gitlink to relative .git file' '
+test_expect_success 'add gitlink to relative .git file' '
 	git update-index --add -- sub2
 '
 
