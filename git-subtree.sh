@@ -17,6 +17,7 @@ h,help        show the help
 q             quiet
 d             show debug messages
 p,prefix=     the name of the subdir to split out
+m,message=    use the given message as the commit message for the merge commit
  options for 'split'
 annotate=     add a prefix to commit message of new commits
 b,branch=     create a new branch from the split subtree
@@ -40,6 +41,7 @@ rejoin=
 ignore_joins=
 annotate=
 squash=
+message=
 
 debug()
 {
@@ -77,6 +79,7 @@ while [ $# -gt 0 ]; do
 		--no-annotate) annotate= ;;
 		-b) branch="$1"; shift ;;
 		-p) prefix="$1"; shift ;;
+		-m) message="$1"; shift ;;
 		--no-prefix) prefix= ;;
 		--onto) onto="$1"; shift ;;
 		--no-onto) onto= ;;
@@ -266,8 +269,13 @@ add_msg()
 	dir="$1"
 	latest_old="$2"
 	latest_new="$3"
+	if [ -n "$message" ]; then
+		commit_message="$message"
+	else
+		commit_message="Add '$dir/' from commit '$latest_new'"
+	fi
 	cat <<-EOF
-		Add '$dir/' from commit '$latest_new'
+		$commit_message
 		
 		git-subtree-dir: $dir
 		git-subtree-mainline: $latest_old
@@ -275,13 +283,27 @@ add_msg()
 	EOF
 }
 
+add_squashed_msg()
+{
+	if [ -n "$message" ]; then
+		echo "$message"
+	else
+		echo "Merge commit '$1' as '$2'"
+	fi
+}
+
 rejoin_msg()
 {
 	dir="$1"
 	latest_old="$2"
 	latest_new="$3"
+	if [ -n "$message" ]; then
+		commit_message="$message"
+	else
+		commit_message="Split '$dir/' into commit '$latest_new'"
+	fi
 	cat <<-EOF
-		Split '$dir/' into commit '$latest_new'
+		$message
 		
 		git-subtree-dir: $dir
 		git-subtree-mainline: $latest_old
@@ -441,7 +463,7 @@ cmd_add()
 	
 	if [ -n "$squash" ]; then
 		rev=$(new_squash_commit "" "" "$rev") || exit $?
-		commit=$(echo "Merge commit '$rev' as '$dir'" |
+		commit=$(add_squashed_msg "$rev" "$dir" |
 			 git commit-tree $tree $headp -p "$rev") || exit $?
 	else
 		commit=$(add_msg "$dir" "$headrev" "$rev" |
@@ -561,7 +583,7 @@ cmd_merge()
 		rev="$new"
 	fi
 	
-	git merge -s subtree $rev
+	git merge -s subtree --message="$message" $rev
 }
 
 cmd_pull()
