@@ -29,6 +29,12 @@ test_expect_success 'soft reset is ok' '
 	(cd .git && git reset --soft)
 '
 
+test_expect_success 'hard reset works with GIT_WORK_TREE' '
+	mkdir worktree &&
+	GIT_WORK_TREE=$PWD/worktree GIT_DIR=$PWD/.git git reset --hard &&
+	test_cmp file worktree/file
+'
+
 test_expect_success 'setup bare' '
 	git clone --bare . bare.git &&
 	cd bare.git
