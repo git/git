@@ -875,15 +875,12 @@ gc.autopacklimit::
 	default	value is 50.  Setting this to 0 disables it.
 
 gc.packrefs::
-	'git gc' does not run `git pack-refs` in a bare repository by
-	default so that older dumb-transport clients can still fetch
-	from the repository.  Setting this to `true` lets 'git gc'
-	to run `git pack-refs`.  Setting this to `false` tells
-	'git gc' never to run `git pack-refs`. The default setting is
-	`notbare`. Enable it only when you know you do not have to
-	support such clients.  The default setting will change to `true`
-	at some stage, and setting this to `false` will continue to
-	prevent `git pack-refs` from being run from 'git gc'.
+	Running `git pack-refs` in a repository renders it
+	unclonable by Git versions prior to 1.5.1.2 over dumb
+	transports such as HTTP.  This variable determines whether
+	'git gc' runs `git pack-refs`. This can be set to "nobare"
+	to enable it within all non-bare repos or it can be set to a
+	boolean value.  The default is `true`.
 
 gc.pruneexpire::
 	When 'git gc' is run, it will call 'prune --expire 2.weeks.ago'.
