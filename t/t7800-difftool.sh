@@ -214,7 +214,24 @@ test_expect_success 'difftool.<tool>.path' '
 	diff=$(git difftool --tool=tkdiff --no-prompt branch) &&
 	git config --unset difftool.tkdiff.path &&
 	lines=$(echo "$diff" | grep file | wc -l) &&
-	test "$lines" -eq 1
+	test "$lines" -eq 1 &&
+
+	restore_test_defaults
+'
+
+test_expect_success 'difftool --extcmd=...' '
+	diff=$(git difftool --no-prompt --extcmd=cat branch) &&
+
+	lines=$(echo "$diff" | wc -l) &&
+	test "$lines" -eq 2 &&
+
+	lines=$(echo "$diff" | grep master | wc -l) &&
+	test "$lines" -eq 1 &&
+
+	lines=$(echo "$diff" | grep branch | wc -l) &&
+	test "$lines" -eq 1 &&
+
+	restore_test_defaults
 '
 
 test_done

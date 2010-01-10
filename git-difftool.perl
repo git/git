@@ -62,6 +62,10 @@ sub generate_command
 			$skip_next = 1;
 			next;
 		}
+		if ($arg =~ /^--extcmd=/) {
+			$ENV{GIT_DIFFTOOL_EXTCMD} = substr($arg, 9);
+			next;
+		}
 		if ($arg =~ /^--tool=/) {
 			$ENV{GIT_DIFF_TOOL} = substr($arg, 7);
 			next;

@@ -58,6 +58,11 @@ is set to the name of the temporary file containing the contents
 of the diff post-image.  `$BASE` is provided for compatibility
 with custom merge tool commands and has the same value as `$LOCAL`.
 
+--extcmd=<command>::
+	Specify a custom command for viewing diffs.
+	'git-difftool' ignores the configured defaults and runs
+	`$command $LOCAL $REMOTE` when this option is specified.
+
 -g::
 --gui::
 	When 'git-difftool' is invoked with the `-g` or `--gui` option

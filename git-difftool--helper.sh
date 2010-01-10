@@ -19,6 +19,11 @@ should_prompt () {
 	fi
 }
 
+# Indicates that --extcmd=... was specified
+use_ext_cmd () {
+	test -n "$GIT_DIFFTOOL_EXTCMD"
+}
+
 launch_merge_tool () {
 	# Merged is the filename as it appears in the work tree
 	# Local is the contents of a/filename
@@ -33,18 +38,29 @@ launch_merge_tool () {
 	# the user with the real $MERGED name before launching $merge_tool.
 	if should_prompt; then
 		printf "\nViewing: '$MERGED'\n"
-		printf "Hit return to launch '%s': " "$merge_tool"
+		if use_ext_cmd; then
+			printf "Hit return to launch '%s': " \
+				"$GIT_DIFFTOOL_EXTCMD"
+		else
+			printf "Hit return to launch '%s': " "$merge_tool"
+		fi
 		read ans
 	fi
 
-	run_merge_tool "$merge_tool"
+	if use_ext_cmd; then
+		$GIT_DIFFTOOL_EXTCMD "$LOCAL" "$REMOTE"
+	else
+		run_merge_tool "$merge_tool"
+	fi
+
 }
 
-# GIT_DIFF_TOOL indicates that --tool=... was specified
-if test -n "$GIT_DIFF_TOOL"; then
-	merge_tool="$GIT_DIFF_TOOL"
-else
-	merge_tool="$(get_merge_tool)" || exit
+if ! use_ext_cmd; then
+	if test -n "$GIT_DIFF_TOOL"; then
+		merge_tool="$GIT_DIFF_TOOL"
+	else
+		merge_tool="$(get_merge_tool)" || exit
+	fi
 fi
 
 # Launch the merge tool on each path provided by 'git diff'
