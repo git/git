@@ -397,7 +397,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.initial_checkout = is_cache_unborn();
 		topts.update = 1;
 		topts.merge = 1;
-		topts.gently = opts->merge;
+		topts.gently = opts->merge && old->commit;
 		topts.verbose_update = !opts->quiet;
 		topts.fn = twoway_merge;
 		topts.dir = xcalloc(1, sizeof(*topts.dir));
@@ -422,7 +422,13 @@ static int merge_working_tree(struct checkout_opts *opts,
 			struct merge_options o;
 			if (!opts->merge)
 				return 1;
-			parse_commit(old->commit);
+
+			/*
+			 * Without old->commit, the below is the same as
+			 * the two-tree unpack we already tried and failed.
+			 */
+			if (!old->commit)
+				return 1;
 
 			/* Do more real merge */
 
