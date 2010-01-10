@@ -547,6 +547,32 @@ test_expect_success 'allow deleting an invalid remote ref' '
 
 '
 
+test_expect_success 'allow deleting a ref using --delete' '
+	mk_test heads/master &&
+	(cd testrepo && git config receive.denyDeleteCurrent warn) &&
+	git push testrepo --delete master &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/master)
+'
+
+test_expect_success 'allow deleting a tag using --delete' '
+	mk_test heads/master &&
+	git tag -a -m dummy_message deltag heads/master &&
+	git push testrepo --tags &&
+	(cd testrepo && git rev-parse --verify -q refs/tags/deltag) &&
+	git push testrepo --delete tag deltag &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/tags/deltag)
+'
+
+test_expect_success 'push --delete without args aborts' '
+	mk_test heads/master &&
+	test_must_fail git push testrepo --delete
+'
+
+test_expect_success 'push --delete refuses src:dest refspecs' '
+	mk_test heads/master &&
+	test_must_fail git push testrepo --delete master:foo
+'
+
 test_expect_success 'warn on push to HEAD of non-bare repository' '
 	mk_test heads/master
 	(cd testrepo &&
