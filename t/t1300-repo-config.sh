@@ -683,6 +683,34 @@ test_expect_success 'set --bool-or-int' '
 
 rm .git/config
 
+cat >expect <<\EOF
+[path]
+	home = ~/
+	normal = /dev/null
+	trailingtilde = foo~
+EOF
+
+test_expect_success 'set --path' '
+	git config --path path.home "~/" &&
+	git config --path path.normal "/dev/null" &&
+	git config --path path.trailingtilde "foo~" &&
+	test_cmp expect .git/config'
+
+cat >expect <<EOF
+$HOME/
+/dev/null
+foo~
+EOF
+
+test_expect_success 'get --path' '
+	git config --get --path path.home > result &&
+	git config --get --path path.normal >> result &&
+	git config --get --path path.trailingtilde >> result &&
+	test_cmp expect result
+'
+
+rm .git/config
+
 git config quote.leading " test"
 git config quote.ending "test "
 git config quote.semicolon "test;test"
