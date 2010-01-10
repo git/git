@@ -537,7 +537,7 @@ apply.whitespace::
 	as the '--whitespace' option. See linkgit:git-apply[1].
 
 branch.autosetupmerge::
-	Tells 'git-branch' and 'git-checkout' to setup new branches
+	Tells 'git-branch' and 'git-checkout' to set up new branches
 	so that linkgit:git-pull[1] will appropriately merge from the
 	starting point branch. Note that even if this option is not set,
 	this behavior can be chosen per-branch using the `--track`
@@ -725,7 +725,7 @@ diff.autorefreshindex::
 	contents in the work tree match the contents in the
 	index.  This option defaults to true.  Note that this
 	affects only 'git-diff' Porcelain, and not lower level
-	'diff' commands, such as 'git-diff-files'.
+	'diff' commands such as 'git-diff-files'.
 
 diff.external::
 	If this config variable is set, diff generation is not
@@ -841,8 +841,8 @@ format.pretty::
 
 format.thread::
 	The default threading style for 'git-format-patch'.  Can be
-	either a boolean value, `shallow` or `deep`.  `shallow`
-	threading makes every mail a reply to the head of the series,
+	a boolean value, or `shallow` or `deep`.  `shallow` threading
+	makes every mail a reply to the head of the series,
 	where the head is chosen from the cover letter, the
 	`\--in-reply-to`, and the first patch mail, in this order.
 	`deep` threading makes every mail a reply to the previous one.
@@ -875,15 +875,12 @@ gc.autopacklimit::
 	default	value is 50.  Setting this to 0 disables it.
 
 gc.packrefs::
-	'git-gc' does not run `git pack-refs` in a bare repository by
-	default so that older dumb-transport clients can still fetch
-	from the repository.  Setting this to `true` lets 'git-gc'
-	to run `git pack-refs`.  Setting this to `false` tells
-	'git-gc' never to run `git pack-refs`. The default setting is
-	`notbare`. Enable it only when you know you do not have to
-	support such clients.  The default setting will change to `true`
-	at some stage, and setting this to `false` will continue to
-	prevent `git pack-refs` from being run from 'git-gc'.
+	Running `git pack-refs` in a repository renders it
+	unclonable by Git versions prior to 1.5.1.2 over dumb
+	transports such as HTTP.  This variable determines whether
+	'git gc' runs `git pack-refs`. This can be set to "nobare"
+	to enable it within all non-bare repos or it can be set to a
+	boolean value.  The default is `true`.
 
 gc.pruneexpire::
 	When 'git-gc' is run, it will call 'prune --expire 2.weeks.ago'.
