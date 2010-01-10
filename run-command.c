@@ -15,6 +15,30 @@ static inline void dup_devnull(int to)
 	close(fd);
 }
 
+#ifndef WIN32
+static int child_err = 2;
+
+static NORETURN void die_child(const char *err, va_list params)
+{
+	char msg[4096];
+	int len = vsnprintf(msg, sizeof(msg), err, params);
+	if (len > sizeof(msg))
+		len = sizeof(msg);
+
+	write(child_err, "fatal: ", 7);
+	write(child_err, msg, len);
+	write(child_err, "\n", 1);
+	exit(128);
+}
+
+static inline void set_cloexec(int fd)
+{
+	int flags = fcntl(fd, F_GETFD);
+	if (flags >= 0)
+		fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+}
+#endif
+
 int start_command(struct child_process *cmd)
 {
 	int need_in, need_out, need_err;
@@ -79,6 +103,17 @@ fail_pipe:
 	fflush(NULL);
 	cmd->pid = fork();
 	if (!cmd->pid) {
+		/*
+		 * Redirect the channel to write syscall error messages to
+		 * before redirecting the process's stderr so that all die()
+		 * in subsequent call paths use the parent's stderr.
+		 */
+		if (cmd->no_stderr || need_err) {
+			child_err = dup(2);
+			set_cloexec(child_err);
+		}
+		set_die_routine(die_child);
+
 		if (cmd->no_stdin)
 			dup_devnull(0);
 		else if (need_in) {
@@ -126,9 +161,14 @@ fail_pipe:
 		} else {
 			execvp(cmd->argv[0], (char *const*) cmd->argv);
 		}
-		trace_printf("trace: exec '%s' failed: %s\n", cmd->argv[0],
-				strerror(errno));
-		exit(127);
+		/*
+		 * Do not check for cmd->silent_exec_failure; the parent
+		 * process will check it when it sees this exit code.
+		 */
+		if (errno == ENOENT)
+			exit(127);
+		else
+			die_errno("cannot exec '%s'", cmd->argv[0]);
 	}
 	if (cmd->pid < 0)
 		error("cannot fork() for %s: %s", cmd->argv[0],
