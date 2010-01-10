@@ -1785,6 +1785,7 @@ TEST_PROGRAMS += test-genrandom$X
 TEST_PROGRAMS += test-match-trees$X
 TEST_PROGRAMS += test-parse-options$X
 TEST_PROGRAMS += test-path-utils$X
+TEST_PROGRAMS += test-run-command$X
 TEST_PROGRAMS += test-sha1$X
 TEST_PROGRAMS += test-sigchain$X
 

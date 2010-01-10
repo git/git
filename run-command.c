@@ -17,6 +17,12 @@ static inline void dup_devnull(int to)
 
 #ifndef WIN32
 static int child_err = 2;
+static int child_notifier = -1;
+
+static void notify_parent(void)
+{
+	write(child_notifier, "", 1);
+}
 
 static NORETURN void die_child(const char *err, va_list params)
 {
@@ -142,6 +148,11 @@ fail_pipe:
 	trace_argv_printf(cmd->argv, "trace: run_command:");
 
 #ifndef WIN32
+{
+	int notify_pipe[2];
+	if (pipe(notify_pipe))
+		notify_pipe[0] = notify_pipe[1] = -1;
+
 	fflush(NULL);
 	cmd->pid = fork();
 	if (!cmd->pid) {
@@ -155,6 +166,11 @@ fail_pipe:
 			set_cloexec(child_err);
 		}
 		set_die_routine(die_child);
+
+		close(notify_pipe[0]);
+		set_cloexec(notify_pipe[1]);
+		child_notifier = notify_pipe[1];
+		atexit(notify_parent);
 
 		if (cmd->no_stdin)
 			dup_devnull(0);
@@ -196,8 +212,16 @@ fail_pipe:
 					unsetenv(*cmd->env);
 			}
 		}
-		if (cmd->preexec_cb)
+		if (cmd->preexec_cb) {
+			/*
+			 * We cannot predict what the pre-exec callback does.
+			 * Forgo parent notification.
+			 */
+			close(child_notifier);
+			child_notifier = -1;
+
 			cmd->preexec_cb();
+		}
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
 		} else {
@@ -215,6 +239,27 @@ fail_pipe:
 	if (cmd->pid < 0)
 		error("cannot fork() for %s: %s", cmd->argv[0],
 			strerror(failed_errno = errno));
+
+	/*
+	 * Wait for child's execvp. If the execvp succeeds (or if fork()
+	 * failed), EOF is seen immediately by the parent. Otherwise, the
+	 * child process sends a single byte.
+	 * Note that use of this infrastructure is completely advisory,
+	 * therefore, we keep error checks minimal.
+	 */
+	close(notify_pipe[1]);
+	if (read(notify_pipe[0], &notify_pipe[1], 1) == 1) {
+		/*
+		 * At this point we know that fork() succeeded, but execvp()
+		 * failed. Errors have been reported to our stderr.
+		 */
+		wait_or_whine(cmd->pid, cmd->argv[0],
+			      cmd->silent_exec_failure);
+		failed_errno = errno;
+		cmd->pid = -1;
+	}
+	close(notify_pipe[0]);
+}
 #else
 {
 	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
