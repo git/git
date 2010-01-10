@@ -3,9 +3,8 @@
 # This script is typically launched by using the 'git difftool'
 # convenience command.
 #
-# Copyright (c) 2009 David Aguilar
+# Copyright (c) 2009-2010 David Aguilar
 
-# Load common functions from git-mergetool--lib
 TOOL_MODE=diff
 . git-mergetool--lib
 
@@ -20,7 +19,6 @@ should_prompt () {
 	fi
 }
 
-# Sets up shell variables and runs a merge tool
 launch_merge_tool () {
 	# Merged is the filename as it appears in the work tree
 	# Local is the contents of a/filename
@@ -39,7 +37,6 @@ launch_merge_tool () {
 		read ans
 	fi
 
-	# Run the appropriate merge tool command
 	run_merge_tool "$merge_tool"
 }
 
