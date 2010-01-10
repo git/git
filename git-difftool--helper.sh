@@ -40,11 +40,10 @@ launch_merge_tool () {
 	run_merge_tool "$merge_tool"
 }
 
-# Allow GIT_DIFF_TOOL and GIT_MERGE_TOOL to provide default values
-test -n "$GIT_MERGE_TOOL" && merge_tool="$GIT_MERGE_TOOL"
-test -n "$GIT_DIFF_TOOL" && merge_tool="$GIT_DIFF_TOOL"
-
-if test -z "$merge_tool"; then
+# GIT_DIFF_TOOL indicates that --tool=... was specified
+if test -n "$GIT_DIFF_TOOL"; then
+	merge_tool="$GIT_DIFF_TOOL"
+else
 	merge_tool="$(get_merge_tool)" || exit
 fi
 
