@@ -104,6 +104,7 @@ $log->info("--------------- STARTING -----------------");
 my $usage =
     "Usage: git cvsserver [options] [pserver|server] [<directory> ...]\n".
     "    --base-path <path>  : Prepend to requested CVSROOT\n".
+    "                          Can be read from GIT_CVSSERVER_BASE_PATH\n".
     "    --strict-paths      : Don't allow recursing into subdirectories\n".
     "    --export-all        : Don't check for gitcvs.enabled in config\n".
     "    --version, -V       : Print version information and exit\n".
@@ -111,7 +112,8 @@ my $usage =
     "\n".
     "<directory> ... is a list of allowed directories. If no directories\n".
     "are given, all are allowed. This is an additional restriction, gitcvs\n".
-    "access still needs to be enabled by the gitcvs.enabled config option.\n";
+    "access still needs to be enabled by the gitcvs.enabled config option.\n".
+    "Alternately, one directory may be specified in GIT_CVSSERVER_ROOT.\n";
 
 my @opts = ( 'help|h|H', 'version|V',
 	     'base-path=s', 'strict-paths', 'export-all' );
@@ -146,6 +148,24 @@ $state->{allowed_roots} = [ @ARGV ];
 # don't export the whole system unless the users requests it
 if ($state->{'export-all'} && !@{$state->{allowed_roots}}) {
     die "--export-all can only be used together with an explicit whitelist\n";
+}
+
+# Environment handling for running under git-shell
+if (exists $ENV{GIT_CVSSERVER_BASE_PATH}) {
+    if ($state->{'base-path'}) {
+	die "Cannot specify base path both ways.\n";
+    }
+    my $base_path = $ENV{GIT_CVSSERVER_BASE_PATH};
+    $state->{'base-path'} = $base_path;
+    $log->debug("Picked up base path '$base_path' from environment.\n");
+}
+if (exists $ENV{GIT_CVSSERVER_ROOT}) {
+    if (@{$state->{allowed_roots}}) {
+	die "Cannot specify roots both ways: @ARGV\n";
+    }
+    my $allowed_root = $ENV{GIT_CVSSERVER_ROOT};
+    $state->{allowed_roots} = [ $allowed_root ];
+    $log->debug("Picked up allowed root '$allowed_root' from environment.\n");
 }
 
 # if we are called with a pserver argument,
