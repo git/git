@@ -169,9 +169,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				 * check both source and destination
 				 */
 				if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
-					fprintf(stderr, "Warning: %s;"
-							" will overwrite!\n",
-							bad);
+					warning("%s; will overwrite!", bad);
 					bad = NULL;
 				} else
 					bad = "Cannot overwrite";

@@ -7,6 +7,12 @@ int active_requests;
 int http_is_verbose;
 size_t http_post_buffer = 16 * LARGE_PACKET_MAX;
 
+#if LIBCURL_VERSION_NUM >= 0x070a06
+#define LIBCURL_CAN_HANDLE_AUTH_ANY
+#endif
+
+static int min_curl_sessions = 1;
+static int curl_session_count;
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
 static CURLM *curlm;
@@ -152,6 +158,14 @@ static int http_options(const char *var, const char *value, void *cb)
 			ssl_cert_password_required = 1;
 		return 0;
 	}
+	if (!strcmp("http.minsessions", var)) {
+		min_curl_sessions = git_config_int(var, value);
+#ifndef USE_CURL_MULTI
+		if (min_curl_sessions > 1)
+			min_curl_sessions = 1;
+#endif
+		return 0;
+	}
 #ifdef USE_CURL_MULTI
 	if (!strcmp("http.maxrequests", var)) {
 		max_requests = git_config_int(var, value);
@@ -229,6 +243,9 @@ static CURL *get_curl_handle(void)
 
 #if LIBCURL_VERSION_NUM >= 0x070907
 	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+#endif
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+	curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 #endif
 
 	init_curl_http_auth(result);
@@ -372,6 +389,7 @@ void http_init(struct remote *remote)
 	if (curl_ssl_verify == -1)
 		curl_ssl_verify = 1;
 
+	curl_session_count = 0;
 #ifdef USE_CURL_MULTI
 	if (max_requests < 1)
 		max_requests = DEFAULT_MAX_REQUESTS;
@@ -480,6 +498,7 @@ struct active_request_slot *get_active_slot(void)
 #else
 		slot->curl = curl_easy_duphandle(curl_default);
 #endif
+		curl_session_count++;
 	}
 
 	active_requests++;
@@ -558,9 +577,11 @@ void fill_active_slots(void)
 	}
 
 	while (slot != NULL) {
-		if (!slot->in_use && slot->curl != NULL) {
+		if (!slot->in_use && slot->curl != NULL
+			&& curl_session_count > min_curl_sessions) {
 			curl_easy_cleanup(slot->curl);
 			slot->curl = NULL;
+			curl_session_count--;
 		}
 		slot = slot->next;
 	}
@@ -633,12 +654,13 @@ static void closedown_active_slot(struct active_request_slot *slot)
 void release_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
-	if (slot->curl) {
+	if (slot->curl && curl_session_count > min_curl_sessions) {
 #ifdef USE_CURL_MULTI
 		curl_multi_remove_handle(curlm, slot->curl);
 #endif
 		curl_easy_cleanup(slot->curl);
 		slot->curl = NULL;
+		curl_session_count--;
 	}
 #ifdef USE_CURL_MULTI
 	fill_active_slots();
@@ -1244,7 +1266,7 @@ int finish_http_object_request(struct http_object_request *freq)
 	process_http_object_request(freq);
 
 	if (freq->http_code == 416) {
-		fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
+		warning("requested range invalid; we may already have all the data.");
 	} else if (freq->curl_result != CURLE_OK) {
 		if (stat(freq->tmpfile, &st) == 0)
 			if (st.st_size == 0)

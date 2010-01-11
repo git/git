@@ -202,6 +202,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	struct commit *commit;
 	char *reflog_action, msg[1024];
 	const struct option options[] = {
+		OPT__QUIET(&quiet),
 		OPT_SET_INT(0, "mixed", &reset_type,
 						"reset HEAD and index", MIXED),
 		OPT_SET_INT(0, "soft", &reset_type, "reset only HEAD", SOFT),
@@ -209,8 +210,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				"reset HEAD, index and working tree", HARD),
 		OPT_SET_INT(0, "merge", &reset_type,
 				"reset HEAD, index and working tree", MERGE),
-		OPT_BOOLEAN('q', NULL, &quiet,
-				"disable showing new HEAD in hard reset and progress message"),
 		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
 		OPT_END()
 	};
@@ -286,10 +285,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
 
-	if ((reset_type == HARD || reset_type == MERGE)
-	    && !is_inside_work_tree())
-		die("%s reset requires a work tree",
-		    reset_type_names[reset_type]);
+	if (reset_type == HARD || reset_type == MERGE)
+		setup_work_tree();
 
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset

@@ -1,0 +1,15 @@
+Git v1.6.6.1 Release Notes
+==========================
+
+Fixes since v1.6.6
+------------------
+
+ * http-backend was not listed in the command list in the documentation.
+
+Other minor documentation updates are included.
+
+--
+exec >/var/tmp/1
+O=v1.6.6-4-gd828fdb
+echo O=$(git describe maint)
+git shortlog --no-merges $O..maint

@@ -11,7 +11,7 @@ SYNOPSIS
 'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend] [--dry-run]
 	   [(-c | -C) <commit>] [-F <file> | -m <msg>] [--reset-author]
 	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
-	   [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
+	   [--date=<date>] [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
 -----------
@@ -74,6 +74,20 @@ OPTIONS
 	authorship of the resulting commit now belongs of the committer.
 	This also renews the author timestamp.
 
+--short::
+	When doing a dry-run, give the output in the short-format. See
+	linkgit:git-status[1] for details. Implies `--dry-run`.
+
+--porcelain::
+	When doing a dry-run, give the output in a porcelain-ready
+	format. See linkgit:git-status[1] for details. Implies
+	`--dry-run`.
+
+-z::
+	When showing `short` or `porcelain` status output, terminate
+	entries in the status output with NUL, instead of LF. If no
+	format is given, implies the `--porcelain` output format.
+
 -F <file>::
 --file=<file>::
 	Take the commit message from the given file.  Use '-' to
@@ -84,6 +98,9 @@ OPTIONS
 	standard `A U Thor <author@example.com>` format.  Otherwise,
 	an existing commit that matches the given string and its author
 	name is used.
+
+--date=<date>::
+	Override the author date used in the commit.
 
 -m <msg>::
 --message=<msg>::
@@ -217,6 +234,8 @@ specified.
 	these files are also staged for the next commit on top
 	of what have been staged before.
 
+:git-commit: 1
+include::date-formats.txt[]
 
 EXAMPLES
 --------

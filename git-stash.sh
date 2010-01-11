@@ -7,7 +7,7 @@ USAGE="list [<options>]
    or: $dashless drop [-q|--quiet] [<stash>]
    or: $dashless ( pop | apply ) [--index] [-q|--quiet] [<stash>]
    or: $dashless branch <branchname> [<stash>]
-   or: $dashless [save [-k|--keep-index] [-q|--quiet] [<message>]]
+   or: $dashless [save [--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
    or: $dashless clear"
 
 SUBDIRECTORY_OK=Yes

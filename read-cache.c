@@ -1322,7 +1322,7 @@ int read_index_from(struct index_state *istate, const char *path)
 		 * extension name (4-byte) and section length
 		 * in 4-byte network byte order.
 		 */
-		unsigned long extsize;
+		uint32_t extsize;
 		memcpy(&extsize, (char *)mmap + src_offset + 4, 4);
 		extsize = ntohl(extsize);
 		if (read_index_extension(istate,

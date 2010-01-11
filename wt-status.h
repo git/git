@@ -31,8 +31,10 @@ struct wt_status {
 	int is_initial;
 	char *branch;
 	const char *reference;
+	const char **pathspec;
 	int verbose;
 	int amend;
+	int in_merge;
 	int nowarn;
 	int use_color;
 	int relative_paths;
@@ -54,5 +56,8 @@ struct wt_status {
 void wt_status_prepare(struct wt_status *s);
 void wt_status_print(struct wt_status *s);
 void wt_status_collect(struct wt_status *s);
+
+void wt_shortstatus_print(struct wt_status *s, int null_termination);
+void wt_porcelain_print(struct wt_status *s, int null_termination);
 
 #endif /* STATUS_H */

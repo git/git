@@ -277,6 +277,21 @@ In `dbdriver` and `dbuser` you can use the following variables:
 	If no name can be determined, the
 	numeric uid is used.
 
+ENVIRONMENT
+-----------
+
+These variables obviate the need for command-line options in some
+circumstances, allowing easier restricted usage through git-shell.
+
+GIT_CVSSERVER_BASE_PATH takes the place of the argument to --base-path.
+
+GIT_CVSSERVER_ROOT specifies a single-directory whitelist. The
+repository must still be configured to allow access through
+git-cvsserver, as described above.
+
+When these environment variables are set, the corresponding
+command-line arguments may not be used.
+
 Eclipse CVS Client Notes
 ------------------------
 

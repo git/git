@@ -142,11 +142,9 @@ __git_ps1 ()
 		elif [ "true" = "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]; then
 			if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ]; then
 				if [ "$(git config --bool bash.showDirtyState)" != "false" ]; then
-					git diff --no-ext-diff --ignore-submodules \
-						--quiet --exit-code || w="*"
+					git diff --no-ext-diff --quiet --exit-code || w="*"
 					if git rev-parse --quiet --verify HEAD >/dev/null; then
-						git diff-index --cached --quiet \
-							--ignore-submodules HEAD -- || i="+"
+						git diff-index --cached --quiet HEAD -- || i="+"
 					else
 						i="#"
 					fi
@@ -163,11 +161,8 @@ __git_ps1 ()
 			fi
 		fi
 
-		if [ -n "${1-}" ]; then
-			printf "$1" "$c${b##refs/heads/}$w$i$s$u$r"
-		else
-			printf " (%s)" "$c${b##refs/heads/}$w$i$s$u$r"
-		fi
+		local f="$w$i$s$u"
+		printf "${1:- (%s)}" "$c${b##refs/heads/}${f:+ $f}$r"
 	fi
 }
 
@@ -2022,7 +2017,7 @@ _git_svn ()
 		init fetch clone rebase dcommit log find-rev
 		set-tree commit-diff info create-ignore propget
 		proplist show-ignore show-externals branch tag blame
-		migrate
+		migrate mkdirs reset gc
 		"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
@@ -2069,7 +2064,7 @@ _git_svn ()
 			__gitcomp "--stdin $cmt_opts $fc_opts"
 			;;
 		create-ignore,--*|propget,--*|proplist,--*|show-ignore,--*|\
-		show-externals,--*)
+		show-externals,--*|mkdirs,--*)
 			__gitcomp "--revision="
 			;;
 		log,--*)
@@ -2105,6 +2100,9 @@ _git_svn ()
 				--config-dir= --ignore-paths= --minimize
 				--no-auth-cache --username=
 				"
+			;;
+		reset,--*)
+			__gitcomp "--revision= --parent"
 			;;
 		*)
 			COMPREPLY=()

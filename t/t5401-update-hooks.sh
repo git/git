@@ -18,6 +18,7 @@ test_expect_success setup '
 	git update-ref refs/heads/master $commit0 &&
 	git update-ref refs/heads/tofail $commit1 &&
 	git clone ./. victim &&
+	GIT_DIR=victim/.git git config receive.denyCurrentBranch warn &&
 	GIT_DIR=victim/.git git update-ref refs/heads/tofail $commit1 &&
 	git update-ref refs/heads/master $commit1 &&
 	git update-ref refs/heads/tofail $commit0
