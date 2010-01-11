@@ -172,7 +172,7 @@ check_patch_format () {
 		read l2
 		read l3
 		case "$l1" in
-		"From "* | "From: "* | "Path:news.gmane.org"*)
+		"From "* | "From: "*)
 			patch_format=mbox
 			;;
 		'# This series applies on GIT commit'*)
