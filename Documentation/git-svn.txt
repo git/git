@@ -239,6 +239,19 @@ discouraged.
 where <name> is the name of the SVN repository as specified by the -R option to
 'init' (or "svn" by default).
 
+--username;;
+	Specify the SVN username to perform the commit as.  This option overrides
+	configuration property 'username'.
+
+--commit-url;;
+	Use the specified URL to connect to the destination Subversion
+	repository.  This is useful in cases where the source SVN
+	repository is read-only.  This option overrides configuration
+	property 'commiturl'.
++
+	git config --get-all svn-remote.<name>.commiturl
++
+
 'tag'::
 	Create a tag in the SVN repository. This is a shorthand for
 	'branch -t'.
