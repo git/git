@@ -299,6 +299,15 @@ test_expect_success 'ls-files gracefully handles trailing slash' '
 
 '
 
+test_expect_success 'moving to a commit without submodule does not leave empty dir' '
+	rm -rf init &&
+	mkdir init &&
+	git reset --hard &&
+	git checkout initial &&
+	test ! -d init &&
+	git checkout second
+'
+
 test_expect_success 'submodule <invalid-path> warns' '
 
 	git submodule no-such-submodule 2> output.err &&
