@@ -710,6 +710,10 @@ sub cmd_branch {
 	my ($lft, $rgt) = @{ $glob->{path} }{qw/left right/};
 	my $dst = join '/', $remote->{url}, $lft, $branch_name, ($rgt || ());
 
+	if ($dst =~ /^https:/ && $src =~ /^http:/) {
+		$src=~s/^http:/https:/;
+	}
+
 	my $ctx = SVN::Client->new(
 		auth    => Git::SVN::Ra::_auth_providers(),
 		log_msg => sub {
