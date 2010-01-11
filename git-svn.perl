@@ -708,7 +708,17 @@ sub cmd_branch {
 		}
 	}
 	my ($lft, $rgt) = @{ $glob->{path} }{qw/left right/};
-	my $dst = join '/', $remote->{url}, $lft, $branch_name, ($rgt || ());
+	my $url;
+	if (defined $_commit_url) {
+		$url = $_commit_url;
+	} else {
+		$url = eval { command_oneline('config', '--get',
+			"svn-remote.$gs->{repo_id}.commiturl") };
+		if (!$url) {
+			$url = $remote->{url};
+		}
+	}
+	my $dst = join '/', $url, $lft, $branch_name, ($rgt || ());
 
 	if ($dst =~ /^https:/ && $src =~ /^http:/) {
 		$src=~s/^http:/https:/;
