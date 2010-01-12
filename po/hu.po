@@ -1,0 +1,1149 @@
+# Translation of gitk to Hungarian.
+# Copyright (C) 2007 Paul Mackerras.
+# This file is distributed under the same license as the gitk package.
+#
+# Laszlo Papp <laszlo.papp@arhungary.hu>, 2009.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: git-gui\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-05-12 21:55+0200\n"
+"PO-Revision-Date: 2009-12-14 13:28+0100\n"
+"Last-Translator: Laszlo Papp <djszapi@archlinux.us>\n"
+"Language-Team: Hungarian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: gitk:113
+msgid "Couldn't get list of unmerged files:"
+msgstr "Nem sikerült letölteni az unmerged fájl listát:"
+
+#: gitk:268
+msgid "Error parsing revisions:"
+msgstr "Hiba történt értelmezés közben:"
+
+#: gitk:323
+msgid "Error executing --argscmd command:"
+msgstr "Hiba történt a végrehajtáskor --argscmd parancs:"
+
+#: gitk:336
+msgid "No files selected: --merge specified but no files are unmerged."
+msgstr "Nincsen fájl kiválasztva: --merge megadve, de egyetlen fájl sem unmerged."
+
+#: gitk:339
+msgid ""
+"No files selected: --merge specified but no unmerged files are within file "
+"limit."
+msgstr ""
+"Nincsen fájl kiválasztva: --merge megadva, de nincsenek unmerged fájlok a fájlon belül "
+"limit."
+
+#: gitk:361 gitk:508
+msgid "Error executing git log:"
+msgstr "Hiba történt a git log végrehajtása közben:"
+
+#: gitk:379 gitk:524
+msgid "Reading"
+msgstr "Olvasás"
+
+#: gitk:439 gitk:4061
+msgid "Reading commits..."
+msgstr "Commitok olvasása ..."
+
+#: gitk:442 gitk:1560 gitk:4064
+msgid "No commits selected"
+msgstr "Nincsen commit kiválasztva"
+
+#: gitk:1436
+msgid "Can't parse git log output:"
+msgstr "Nem lehet értelmezni a git log kimenetét:"
+
+#: gitk:1656
+msgid "No commit information available"
+msgstr "Nincsen elérhető commit információ"
+
+#: gitk:1791 gitk:1815 gitk:3854 gitk:8714 gitk:10250 gitk:10422
+msgid "OK"
+msgstr "OK"
+
+#: gitk:1817 gitk:3856 gitk:8311 gitk:8385 gitk:8495 gitk:8544 gitk:8716
+#: gitk:10251 gitk:10423
+msgid "Cancel"
+msgstr "Visszavonás"
+
+#: gitk:1917
+msgid "Update"
+msgstr "Frissités"
+
+#: gitk:1918
+msgid "Reload"
+msgstr "Újratöltés"
+
+#: gitk:1919
+msgid "Reread references"
+msgstr "Referenciák újraolvasása"
+
+#: gitk:1920
+msgid "List references"
+msgstr "Referenciák listázása"
+
+#: gitk:1922
+msgid "Start git gui"
+msgstr "Git gui indítása"
+
+#: gitk:1924
+msgid "Quit"
+msgstr "Kilépés"
+
+#: gitk:1916
+msgid "File"
+msgstr "Fájl"
+
+#: gitk:1928
+msgid "Preferences"
+msgstr "Beállítások"
+
+#: gitk:1927
+msgid "Edit"
+msgstr "Szerkesztés"
+
+#: gitk:1932
+msgid "New view..."
+msgstr "Új nézet ..."
+
+#: gitk:1933
+msgid "Edit view..."
+msgstr "Nézet szerkesztése ..."
+
+#: gitk:1934
+msgid "Delete view"
+msgstr "Nézet törlése"
+
+#: gitk:1936
+msgid "All files"
+msgstr "Minden fájl"
+
+#: gitk:1931 gitk:3666
+msgid "View"
+msgstr "Nézet"
+
+#: gitk:1941 gitk:1951 gitk:2650
+msgid "About gitk"
+msgstr "Gitk névjegy"
+
+#: gitk:1942 gitk:1956
+msgid "Key bindings"
+msgstr "Billentyűkombináció"
+
+#: gitk:1940 gitk:1955
+msgid "Help"
+msgstr "Segítség"
+
+#: gitk:2016
+msgid "SHA1 ID: "
+msgstr "SHA1 ID: "
+
+#: gitk:2047
+msgid "Row"
+msgstr "Sor"
+
+#: gitk:2078
+msgid "Find"
+msgstr "Keresés"
+
+#: gitk:2079
+msgid "next"
+msgstr "következő"
+
+#: gitk:2080
+msgid "prev"
+msgstr "előző"
+
+#: gitk:2081
+msgid "commit"
+msgstr "commit"
+
+#: gitk:2084 gitk:2086 gitk:4222 gitk:4245 gitk:4269 gitk:6210 gitk:6282
+#: gitk:6366
+msgid "containing:"
+msgstr "tartalmazás:"
+
+#: gitk:2087 gitk:3158 gitk:3163 gitk:4297
+msgid "touching paths:"
+msgstr "érintendő útvonalak:"
+
+#: gitk:2088 gitk:4302
+msgid "adding/removing string:"
+msgstr "string hozzáadása/törlése:"
+
+#: gitk:2097 gitk:2099
+msgid "Exact"
+msgstr "Pontos"
+
+#: gitk:2099 gitk:4377 gitk:6178
+msgid "IgnCase"
+msgstr "Kis/nagy betű nem számít"
+
+#: gitk:2099 gitk:4271 gitk:4375 gitk:6174
+msgid "Regexp"
+msgstr "Regexp"
+
+#: gitk:2101 gitk:2102 gitk:4396 gitk:4426 gitk:4433 gitk:6302 gitk:6370
+msgid "All fields"
+msgstr "Minden mező"
+
+#: gitk:2102 gitk:4394 gitk:4426 gitk:6241
+msgid "Headline"
+msgstr "Főcím"
+
+#: gitk:2103 gitk:4394 gitk:6241 gitk:6370 gitk:6804
+msgid "Comments"
+msgstr "Megjegyzések"
+
+#: gitk:2103 gitk:4394 gitk:4398 gitk:4433 gitk:6241 gitk:6739 gitk:7991
+#: gitk:8006
+msgid "Author"
+msgstr "Szerző"
+
+#: gitk:2103 gitk:4394 gitk:6241 gitk:6741
+msgid "Committer"
+msgstr "Commitoló"
+
+#: gitk:2132
+msgid "Search"
+msgstr "Keresés"
+
+#: gitk:2139
+msgid "Diff"
+msgstr "Diff"
+
+#: gitk:2141
+msgid "Old version"
+msgstr "Régi verzió"
+
+#: gitk:2143
+msgid "New version"
+msgstr "Új verzió"
+
+#: gitk:2145
+msgid "Lines of context"
+msgstr "Tartalmi sorok"
+
+#: gitk:2155
+msgid "Ignore space change"
+msgstr "Space váltás mellőzése"
+
+#: gitk:2213
+msgid "Patch"
+msgstr "Patch"
+
+#: gitk:2215
+msgid "Tree"
+msgstr "Tree"
+
+#: gitk:2359 gitk:2376
+msgid "Diff this -> selected"
+msgstr "Diff ezeket -> kiválasztott"
+
+#: gitk:2360 gitk:2377
+msgid "Diff selected -> this"
+msgstr "Diff kiválasztottakat -> ezt"
+
+#: gitk:2361 gitk:2378
+msgid "Make patch"
+msgstr "Patch készítése"
+
+#: gitk:2362 gitk:8369
+msgid "Create tag"
+msgstr "Tag készítése"
+
+#: gitk:2363 gitk:8475
+msgid "Write commit to file"
+msgstr "Commit fáljba írása"
+
+#: gitk:2364 gitk:8532
+msgid "Create new branch"
+msgstr "Új branch készítése"
+
+#: gitk:2365
+msgid "Cherry-pick this commit"
+msgstr "Cherry-pick erre a commitra"
+
+#: gitk:2366
+msgid "Reset HEAD branch to here"
+msgstr "HEAD branch újraindítása ide"
+
+#: gitk:2367
+msgid "Mark this commit"
+msgstr "Ezen commit megjelölése"
+
+#: gitk:2368
+msgid "Return to mark"
+msgstr "Visszatérés a megjelöléshez"
+
+#: gitk:2369
+msgid "Find descendant of this and mark"
+msgstr "Találd meg ezen utódokat és jelöld meg"
+
+#: gitk:2370
+msgid "Compare with marked commit"
+msgstr "Összehasonlítás a megjelölt commit-tal"
+
+#: gitk:2384
+msgid "Check out this branch"
+msgstr "Check out ezt a branchot"
+
+#: gitk:2385
+msgid "Remove this branch"
+msgstr "Töröld ezt a branch-ot"
+
+#: gitk:2392
+msgid "Highlight this too"
+msgstr "Emeld ki ezt is"
+
+#: gitk:2393
+msgid "Highlight this only"
+msgstr "Csak ezt emeld ki"
+
+#: gitk:2394
+msgid "External diff"
+msgstr "Külső diff"
+
+#: gitk:2395
+msgid "Blame parent commit"
+msgstr "Blame szülő kommitra"
+
+#: gitk:2402
+msgid "Show origin of this line"
+msgstr "Mutasd meg ennek a sornak az eredetét"
+
+#: gitk:2403
+msgid "Run git gui blame on this line"
+msgstr "Futtasd a git gui blame-t ezen a soron"
+
+#: gitk:2652
+msgid ""
+"\n"
+"Gitk - a commit viewer for git\n"
+"\n"
+"Copyright © 2005-2008 Paul Mackerras\n"
+"\n"
+"Use and redistribute under the terms of the GNU General Public License"
+msgstr ""
+"\n"
+"Gitk - commit nézegető a githez\n"
+"\n"
+"Szerzői jog © 2005-2008 Paul Mackerras\n"
+"\n"
+"Használd és terjeszd a GNU General Public License feltételei mellett "
+"Licensz"
+
+#: gitk:2660 gitk:2722 gitk:8897
+msgid "Close"
+msgstr "Bezárás"
+
+#: gitk:2679
+msgid "Gitk key bindings"
+msgstr "Gitk-billentyű hozzárendelés"
+
+#: gitk:2682
+msgid "Gitk key bindings:"
+msgstr "Gitk-billentyű hozzaárendelés:"
+
+#: gitk:2684
+#, tcl-format
+msgid "<%s-Q>\t\tQuit"
+msgstr "<%s-Q>\t\tKilépés"
+
+#: gitk:2685
+msgid "<Home>\t\tMove to first commit"
+msgstr "<Pos1>\t\tElső commithoz"
+
+#: gitk:2686
+msgid "<End>\t\tMove to last commit"
+msgstr "<Ende>\t\tUtolsó commithoz"
+
+#: gitk:2687
+msgid "<Up>, p, i\tMove up one commit"
+msgstr "<Hoch>, p, i\tEgy committal feljebb"
+
+#: gitk:2688
+msgid "<Down>, n, k\tMove down one commit"
+msgstr "<Runter>, n, k\tEgy committal lejjebb"
+
+#: gitk:2689
+msgid "<Left>, z, j\tGo back in history list"
+msgstr "<Links>, z, j\tVissza a history listába"
+
+#: gitk:2690
+msgid "<Right>, x, l\tGo forward in history list"
+msgstr "<Rechts>, x, l\tElőre a history listába"
+
+#: gitk:2691
+msgid "<PageUp>\tMove up one page in commit list"
+msgstr "<BildHoch>\tEgy lappal feljebb a commit listába"
+
+#: gitk:2692
+msgid "<PageDown>\tMove down one page in commit list"
+msgstr "<BildRunter>\tEgy lappal lejjebb a commit listába"
+
+#: gitk:2693
+#, tcl-format
+msgid "<%s-Home>\tScroll to top of commit list"
+msgstr "<%s-Pos1>\tGörgetés a commit lista tetejéhez"
+
+#: gitk:2694
+#, tcl-format
+msgid "<%s-End>\tScroll to bottom of commit list"
+msgstr "<%s-Ende>\tGörgetés a commit lista aljához"
+
+#: gitk:2695
+#, tcl-format
+msgid "<%s-Up>\tScroll commit list up one line"
+msgstr "<%s-Hoch>\tEgy sorral feljebb görgetés a commit listában"
+
+#: gitk:2696
+#, tcl-format
+msgid "<%s-Down>\tScroll commit list down one line"
+msgstr "<%s-Runter>\tEgy sorral lejjebb görgetés a commit listában"
+
+#: gitk:2697
+#, tcl-format
+msgid "<%s-PageUp>\tScroll commit list up one page"
+msgstr "<%s-BildHoch>\tEgy lappal feljebb görgetés a commit listában"
+
+#: gitk:2698
+#, tcl-format
+msgid "<%s-PageDown>\tScroll commit list down one page"
+msgstr "<%s-BildRunter>\tEgy sorral lejjebb görgetés a commit listában"
+
+#: gitk:2699
+msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgstr "<Umschalt-Hoch>\tKeresés visszafele (felfele, utolsó commitok)"
+
+#: gitk:2700
+msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgstr "<Umschalt-Runter>\tKeresés előre (lefelé; korábbi commitok)"
+
+#: gitk:2701
+msgid "<Delete>, b\tScroll diff view up one page"
+msgstr "<Entf>, b\t\tEgy lappal feljebb görgetés a diff nézetben"
+
+#: gitk:2702
+msgid "<Backspace>\tScroll diff view up one page"
+msgstr "<Löschtaste>\tEgy lappal feljebb görgetés a diff nézetben"
+
+#: gitk:2703
+msgid "<Space>\t\tScroll diff view down one page"
+msgstr "<Leertaste>\tEgy lappal lejjebb görgetés a diff nézetben"
+
+#: gitk:2704
+msgid "u\t\tScroll diff view up 18 lines"
+msgstr "u\t\t18 sorral felfelé görgetés diff nézetben"
+
+#: gitk:2705
+msgid "d\t\tScroll diff view down 18 lines"
+msgstr "d\t\t18 sorral lejjebb görgetés a diff nézetben"
+
+#: gitk:2706
+#, tcl-format
+msgid "<%s-F>\t\tFind"
+msgstr "<%s-F>\t\tKeresés"
+
+#: gitk:2707
+#, tcl-format
+msgid "<%s-G>\t\tMove to next find hit"
+msgstr "<%s-G>\t\tKövetkező találathoz"
+
+#: gitk:2708
+msgid "<Return>\tMove to next find hit"
+msgstr "<Eingabetaste>\tKövetkező találathoz"
+
+#: gitk:2709
+msgid "/\t\tFocus the search box"
+msgstr "/\t\tLépj a keresési mezőre"
+
+#: gitk:2710
+msgid "?\t\tMove to previous find hit"
+msgstr "?\t\tElőző találathoz"
+
+#: gitk:2711
+msgid "f\t\tScroll diff view to next file"
+msgstr "f\t\tKövetkező fájlra görgetés diff nézetben"
+
+#: gitk:2712
+#, tcl-format
+msgid "<%s-S>\t\tSearch for next hit in diff view"
+msgstr "<%s-S>\t\tKövetkező találatra keresés diff nézetben"
+
+#: gitk:2713
+#, tcl-format
+msgid "<%s-R>\t\tSearch for previous hit in diff view"
+msgstr "<%s-R>\t\tElőző találatra keresés diff nézetben"
+
+#: gitk:2714
+#, tcl-format
+msgid "<%s-KP+>\tIncrease font size"
+msgstr "<%s-Nummerblock-Plus>\tBetűméret növelése"
+
+#: gitk:2715
+#, tcl-format
+msgid "<%s-plus>\tIncrease font size"
+msgstr "<%s-Plus>\tBetűméret növelése"
+
+#: gitk:2716
+#, tcl-format
+msgid "<%s-KP->\tDecrease font size"
+msgstr "<%s-Nummernblock-Minus> Betűméret csökkentése"
+
+#: gitk:2717
+#, tcl-format
+msgid "<%s-minus>\tDecrease font size"
+msgstr "<%s-Minus>\tBetűméret csökkentése"
+
+#: gitk:2718
+msgid "<F5>\t\tUpdate"
+msgstr "<F5>\t\tFrissítés"
+
+#: gitk:3173
+#, tcl-format
+msgid "Error getting \"%s\" from %s:"
+msgstr "Hiba történt \"%s\" letöltése közben %s-ről:"
+
+#: gitk:3230 gitk:3239
+#, tcl-format
+msgid "Error creating temporary directory %s:"
+msgstr "Hiba történt az ideiglenes könyvtár létrehozása közben %s:"
+
+#: gitk:3251
+msgid "command failed:"
+msgstr "parancs hiba:"
+
+#: gitk:3397
+msgid "No such commit"
+msgstr "Nincs ilyen commit"
+
+#: gitk:3411
+msgid "git gui blame: command failed:"
+msgstr "git gui blame: parancs hiba:"
+
+#: gitk:3442
+#, tcl-format
+msgid "Couldn't read merge head: %s"
+msgstr "Nem sikerült a Merge head olvasása: %s"
+
+#: gitk:3450
+#, tcl-format
+msgid "Error reading index: %s"
+msgstr "Hiba történt az index olvasása közben: %s"
+
+#: gitk:3475
+#, tcl-format
+msgid "Couldn't start git blame: %s"
+msgstr "Nem sikerült a git blame indítása: %s"
+
+#: gitk:3478 gitk:6209
+msgid "Searching"
+msgstr "Keresés"
+
+#: gitk:3510
+#, tcl-format
+msgid "Error running git blame: %s"
+msgstr "Hiba történt a git blame futtatása közben: %s"
+
+#: gitk:3538
+#, tcl-format
+msgid "That line comes from commit %s,  which is not in this view"
+msgstr ""
+"A %s commitból származik az a sor, amelyik nem található ebben a nézetben"
+
+#: gitk:3552
+msgid "External diff viewer failed:"
+msgstr "Külső diff nézegető hiba:"
+
+#: gitk:3670
+msgid "Gitk view definition"
+msgstr "Gitk nézet meghatározása"
+
+#: gitk:3674
+msgid "Remember this view"
+msgstr "Maradj ennél a nézetnél"
+
+#: gitk:3675
+msgid "Commits to include (arguments to git log):"
+msgstr "Beleértendő commitok (Argumentok a git log-hoz):"
+
+#: gitk:3676
+msgid "Use all refs"
+msgstr "Használd az összes referenciát"
+
+#: gitk:3677
+msgid "Strictly sort by date"
+msgstr "Szigorú rendezás dátum alapján"
+
+#: gitk:3678
+msgid "Mark branch sides"
+msgstr "Jelölje meg az ágakat"
+
+#: gitk:3679
+msgid "Since date:"
+msgstr "Ettől:"
+
+#: gitk:3680
+msgid "Until date:"
+msgstr "Eddig:"
+
+#: gitk:3681
+msgid "Max count:"
+msgstr "Max. szám:"
+
+#: gitk:3682
+msgid "Skip:"
+msgstr "Kihagy:"
+
+#: gitk:3683
+msgid "Limit to first parent"
+msgstr "Korlátozás az első szülőre"
+
+#: gitk:3684
+msgid "Command to generate more commits to include:"
+msgstr "Parancs több tartalmazó commit generálására:"
+
+#: gitk:3780
+msgid "Gitk: edit view"
+msgstr "Gitk: szerkesztés nézet"
+
+#: gitk:3793
+msgid "Name"
+msgstr "Név"
+
+#: gitk:3841
+msgid "Enter files and directories to include, one per line:"
+msgstr "Fájlok és könyvtárak bejegyzése amiket tartalmaz, soronként:"
+
+#: gitk:3855
+msgid "Apply (F5)"
+msgstr "Alkalmaz (F5)"
+
+#: gitk:3893
+msgid "Error in commit selection arguments:"
+msgstr "Hiba történt a commit argumentumok kiválasztása közben:"
+
+#: gitk:3946 gitk:3998 gitk:4446 gitk:4460 gitk:5721 gitk:11114 gitk:11115
+msgid "None"
+msgstr "Keine"
+
+#: gitk:4394 gitk:6241 gitk:7993 gitk:8008
+msgid "Date"
+msgstr "Dátum"
+
+#: gitk:4394 gitk:6241
+msgid "CDate"
+msgstr "Dátum"
+
+#: gitk:4543 gitk:4548
+msgid "Descendant"
+msgstr "Leszármazott"
+
+#: gitk:4544
+msgid "Not descendant"
+msgstr "Nem leszármazott"
+
+#: gitk:4551 gitk:4556
+msgid "Ancestor"
+msgstr "Előd"
+
+#: gitk:4552
+msgid "Not ancestor"
+msgstr "Nem előd"
+
+#: gitk:4842
+msgid "Local changes checked in to index but not committed"
+msgstr "Lokális változtatások, melyek be vannak téve az indexbe, de még nincsenek commitolva"
+
+#: gitk:4878
+msgid "Local uncommitted changes, not checked in to index"
+msgstr "Lokális nem commitolt változások, nincsenek betéve az indexbe"
+
+#: gitk:6559
+msgid "many"
+msgstr "sok"
+
+#: gitk:6743
+msgid "Tags:"
+msgstr "Tagek:"
+
+#: gitk:6760 gitk:6766 gitk:7986
+msgid "Parent"
+msgstr "Eltern"
+
+#: gitk:6771
+msgid "Child"
+msgstr "Gyerek"
+
+#: gitk:6780
+msgid "Branch"
+msgstr "Ág"
+
+#: gitk:6783
+msgid "Follows"
+msgstr "Következők"
+
+#: gitk:6786
+msgid "Precedes"
+msgstr "Megelőzők"
+
+#: gitk:7279
+#, tcl-format
+msgid "Error getting diffs: %s"
+msgstr "Hiba történt a diff-ek letöltése közben: %s"
+
+#: gitk:7819
+msgid "Goto:"
+msgstr "Menj:"
+
+#: gitk:7821
+msgid "SHA1 ID:"
+msgstr "SHA1 ID:"
+
+#: gitk:7840
+#, tcl-format
+msgid "Short SHA1 id %s is ambiguous"
+msgstr "Rövid SHA1 id %s félreérthető"
+
+#: gitk:7852
+#, tcl-format
+msgid "SHA1 id %s is not known"
+msgstr "SHA1 id %s nem ismert"
+
+#: gitk:7854
+#, tcl-format
+msgid "Tag/Head %s is not known"
+msgstr "Tag/Head %s nem ismert"
+
+#: gitk:7996
+msgid "Children"
+msgstr "Gyerekek"
+
+#: gitk:8053
+#, tcl-format
+msgid "Reset %s branch to here"
+msgstr "Állítsd vissza a %s branch-ot ide"
+
+#: gitk:8055
+msgid "Detached head: can't reset"
+msgstr "Elkülönített head: nem lehet visszaállítani"
+
+#: gitk:8164 gitk:8170
+msgid "Skipping merge commit "
+msgstr "Merge commit kihagyása "
+
+#: gitk:8179 gitk:8184
+msgid "Error getting patch ID for "
+msgstr "Hiba történt a patch ID megszerzése közben a következőnél "
+
+#: gitk:8180 gitk:8185
+msgid " - stopping\n"
+msgstr " - abbahagyás\n"
+
+#: gitk:8190 gitk:8193 gitk:8201 gitk:8211 gitk:8220
+msgid "Commit "
+msgstr "Commit "
+
+#: gitk:8194
+msgid ""
+" is the same patch as\n"
+"       "
+msgstr ""
+" Ugyanaz a patch mint\n"
+"       "
+
+#: gitk:8202
+msgid ""
+" differs from\n"
+"       "
+msgstr ""
+" különbözik innentől\n"
+"       "
+
+#: gitk:8204
+msgid "- stopping\n"
+msgstr "- abbahagyás.\n"
+
+#: gitk:8212 gitk:8221
+#, tcl-format
+msgid " has %s children - stopping\n"
+msgstr " %s gyereke van. abbahagyás\n"
+
+#: gitk:8252
+msgid "Top"
+msgstr "Teteje"
+
+#: gitk:8253
+msgid "From"
+msgstr "Innen"
+
+#: gitk:8258
+msgid "To"
+msgstr "Ide"
+
+#: gitk:8282
+msgid "Generate patch"
+msgstr "Patch generálása"
+
+#: gitk:8284
+msgid "From:"
+msgstr "Innen:"
+
+#: gitk:8293
+msgid "To:"
+msgstr "Ide:"
+
+#: gitk:8302
+msgid "Reverse"
+msgstr "Visszafele"
+
+#: gitk:8304 gitk:8489
+msgid "Output file:"
+msgstr "Kimeneti fájl:"
+
+#: gitk:8310
+msgid "Generate"
+msgstr "Generálás"
+
+#: gitk:8348
+msgid "Error creating patch:"
+msgstr "Hiba törtét a patch készítése közben:"
+
+#: gitk:8371 gitk:8477 gitk:8534
+msgid "ID:"
+msgstr "ID:"
+
+#: gitk:8380
+msgid "Tag name:"
+msgstr "Tag név:"
+
+#: gitk:8384 gitk:8543
+msgid "Create"
+msgstr "Létrehozás"
+
+#: gitk:8401
+msgid "No tag name specified"
+msgstr "A tag neve nincsen megadva"
+
+#: gitk:8405
+#, tcl-format
+msgid "Tag \"%s\" already exists"
+msgstr "%s Tag már létezik"
+
+#: gitk:8411
+msgid "Error creating tag:"
+msgstr "Hiba történt a tag létrehozása közben:"
+
+#: gitk:8486
+msgid "Command:"
+msgstr "Parancs:"
+
+#: gitk:8494
+msgid "Write"
+msgstr "Írás"
+
+#: gitk:8512
+msgid "Error writing commit:"
+msgstr "Hiba történt a commit írása közben:"
+
+#: gitk:8539
+msgid "Name:"
+msgstr "Név:"
+
+#: gitk:8562
+msgid "Please specify a name for the new branch"
+msgstr "Kérem adja meg a nevét az új branchhoz"
+
+#: gitk:8567
+#, tcl-format
+msgid "Branch '%s' already exists. Overwrite?"
+msgstr "%s branch már létezik. Felülírja?"
+
+#: gitk:8633
+#, tcl-format
+msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgstr ""
+"%s commit már benne van a %s branchban -- biztos hogy újra csinálja ?"
+"eintragen?"
+
+#: gitk:8638
+msgid "Cherry-picking"
+msgstr "Cherry-picking"
+
+#: gitk:8647
+#, tcl-format
+msgid ""
+"Cherry-pick failed because of local changes to file '%s'.\n"
+"Please commit, reset or stash your changes and try again."
+msgstr ""
+"Cherry-pick hiba történt lokális váltotások miatt a '%s' fájlban.\n"
+"Kérem commitolja, indítsa újra vagy rejtse el a változtatásait és próbálja újra."
+
+#: gitk:8653
+msgid ""
+"Cherry-pick failed because of merge conflict.\n"
+"Do you wish to run git citool to resolve it?"
+msgstr ""
+"Cherry-pick hiba történt merge konfliktus miatt.\n"
+"Kívánja futtatni a git citool-t a probléma megoldásához?"
+
+#: gitk:8669
+msgid "No changes committed"
+msgstr "Nincsen változás commitolva"
+
+#: gitk:8695
+msgid "Confirm reset"
+msgstr "Újraindítás megerősítése"
+
+#: gitk:8697
+#, tcl-format
+msgid "Reset branch %s to %s?"
+msgstr "Újraindítja a %s branchot %s-ig?"
+
+#: gitk:8701
+msgid "Reset type:"
+msgstr "Újraindítás típusa:"
+
+#: gitk:8705
+msgid "Soft: Leave working tree and index untouched"
+msgstr "Soft: Hagyd a working tree-t és az indexet érintetlenül"
+
+#: gitk:8708
+msgid "Mixed: Leave working tree untouched, reset index"
+msgstr ""
+"Kevert: Hagyd a working tree-t érintetlenül, töröld az indexet"
+
+#: gitk:8711
+msgid ""
+"Hard: Reset working tree and index\n"
+"(discard ALL local changes)"
+msgstr ""
+"Hard: Indítsd újra a working tree-t és az indexet\n"
+"(MINDEN lokális változás eldobása)"
+
+#: gitk:8728
+msgid "Resetting"
+msgstr "Újraindítás"
+
+#: gitk:8785
+msgid "Checking out"
+msgstr "Kivesz"
+
+#: gitk:8838
+msgid "Cannot delete the currently checked-out branch"
+msgstr ""
+"Nem lehet a jelenleg kivett branch-ot törölni"
+
+#: gitk:8844
+#, tcl-format
+msgid ""
+"The commits on branch %s aren't on any other branch.\n"
+"Really delete branch %s?"
+msgstr ""
+"A %s branchon található commit nem található meg semelyik másik branchon.\n"
+"Tényleg törli a %s branchot?"
+
+#: gitk:8875
+#, tcl-format
+msgid "Tags and heads: %s"
+msgstr "Tagek és headek: %s"
+
+#: gitk:8890
+msgid "Filter"
+msgstr "Szűrő"
+
+#: gitk:9185
+msgid ""
+"Error reading commit topology information; branch and preceding/following "
+"tag information will be incomplete."
+msgstr ""
+"Hiba történt a commit topológiai információ olvasása közben; branch és"
+"a megelőző/következő információ nem lesz teljes."
+
+#: gitk:10171
+msgid "Tag"
+msgstr "Tag"
+
+#: gitk:10171
+msgid "Id"
+msgstr "Id"
+
+#: gitk:10219
+msgid "Gitk font chooser"
+msgstr "Gitk-betű kiválasztó"
+
+#: gitk:10236
+msgid "B"
+msgstr "F"
+
+#: gitk:10239
+msgid "I"
+msgstr "K"
+
+#: gitk:10334
+msgid "Gitk preferences"
+msgstr "Gitk beállítások"
+
+#: gitk:10336
+msgid "Commit list display options"
+msgstr "Commit lista kijelzési opciók"
+
+#: gitk:10339
+msgid "Maximum graph width (lines)"
+msgstr "Maximális grafikon szélesség (sorok)"
+
+#: gitk:10343
+#, tcl-format
+msgid "Maximum graph width (% of pane)"
+msgstr "Maximális grafikon szélesség (táble %-je)"
+
+#: gitk:10347
+msgid "Show local changes"
+msgstr "Mutasd a lokális változtatásokat"
+
+#: gitk:10350
+msgid "Auto-select SHA1"
+msgstr "SHA1 Automatikus kiválasztása"
+
+#: gitk:10354
+msgid "Diff display options"
+msgstr "Diff kijelző opciók"
+
+#: gitk:10356
+msgid "Tab spacing"
+msgstr "Tab sorköz"
+
+#: gitk:10359
+msgid "Display nearby tags"
+msgstr "Szomszédos tagek kijelzése"
+
+#: gitk:10362
+msgid "Limit diffs to listed paths"
+msgstr "Korlátozott diffek a kilistázott útvonalakhoz"
+
+#: gitk:10365
+msgid "Support per-file encodings"
+msgstr "Fájlonkénti kódolás támgatása"
+
+#: gitk:10371 gitk:10436
+msgid "External diff tool"
+msgstr "Külső diff alkalmazás"
+
+#: gitk:10373
+msgid "Choose..."
+msgstr "Válaszd ..."
+
+#: gitk:10378
+msgid "Colors: press to choose"
+msgstr "Színek: nyomja meg a kiválasztáshoz"
+
+#: gitk:10381
+msgid "Background"
+msgstr "Háttér"
+
+#: gitk:10382 gitk:10412
+msgid "background"
+msgstr "háttér"
+
+#: gitk:10385
+msgid "Foreground"
+msgstr "Előtér"
+
+#: gitk:10386
+msgid "foreground"
+msgstr "előtér"
+
+#: gitk:10389
+msgid "Diff: old lines"
+msgstr "Diff: régi sorok"
+
+#: gitk:10390
+msgid "diff old lines"
+msgstr "diff régi sorok"
+
+#: gitk:10394
+msgid "Diff: new lines"
+msgstr "Diff: új sorok"
+
+#: gitk:10395
+msgid "diff new lines"
+msgstr "diff - új sorok"
+
+#: gitk:10399
+msgid "Diff: hunk header"
+msgstr "Diff: nagy headerök"
+
+#: gitk:10401
+msgid "diff hunk header"
+msgstr "diff - nagy headerök"
+
+#: gitk:10405
+msgid "Marked line bg"
+msgstr "Megjelölt sor háttér"
+
+#: gitk:10407
+msgid "marked line background"
+msgstr "megjelölt sor háttér"
+
+#: gitk:10411
+msgid "Select bg"
+msgstr "Válasszon hátteret"
+
+#: gitk:10415
+msgid "Fonts: press to choose"
+msgstr "Betű: nyomja meg a kiválasztáshoz"
+
+#: gitk:10417
+msgid "Main font"
+msgstr "Fő betű"
+
+#: gitk:10418
+msgid "Diff display font"
+msgstr "Diff kijelző betű"
+
+#: gitk:10419
+msgid "User interface font"
+msgstr "Felhasználói interfész betű"
+
+#: gitk:10446
+#, tcl-format
+msgid "Gitk: choose color for %s"
+msgstr "Gitk: válasszon színt a %s-ra"
+
+#: gitk:10893
+msgid ""
+"Sorry, gitk cannot run with this version of Tcl/Tk.\n"
+" Gitk requires at least Tcl/Tk 8.4."
+msgstr ""
+"Sajnáljuk, de a gitk nem futtatható ezzel a Tcl/Tk verzióval.\n"
+"Gitk futtatásához legalább Tcl/Tk 8.4 szükséges."
+
+#: gitk:11020
+msgid "Cannot find a git repository here."
+msgstr "Nem találhatü git repository itt."
+
+#: gitk:11024
+#, tcl-format
+msgid "Cannot find the git directory \"%s\"."
+msgstr "Nem található a \"%s\" könyvtár."
+
+#: gitk:11071
+#, tcl-format
+msgid "Ambiguous argument '%s': both revision and filename"
+msgstr "Félreérthető argumentum '%s': revízió és fájlnév is"
+
+#: gitk:11083
+msgid "Bad arguments to gitk:"
+msgstr "Rossz gitk argumentumok:"
+
+#: gitk:11167
+msgid "Command line"
+msgstr "Parancs sor"
