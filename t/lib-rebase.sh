@@ -29,6 +29,7 @@ test -z "$EXPECT_COUNT" ||
 test -z "$FAKE_LINES" && exit
 grep -v '^#' < "$1" > "$1".tmp
 rm -f "$1"
+echo 'rebase -i script before editing:'
 cat "$1".tmp
 action=pick
 for line in $FAKE_LINES; do
@@ -36,12 +37,12 @@ for line in $FAKE_LINES; do
 	squash|fixup|edit|reword)
 		action="$line";;
 	*)
-		echo sed -n "${line}s/^pick/$action/p"
-		sed -n "${line}p" < "$1".tmp
 		sed -n "${line}s/^pick/$action/p" < "$1".tmp >> "$1"
 		action=pick;;
 	esac
 done
+echo 'rebase -i script after editing:'
+cat "$1"
 EOF
 
 	test_set_editor "$(pwd)/fake-editor.sh"
