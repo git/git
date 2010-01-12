@@ -72,11 +72,6 @@ struct object *lookup_unknown_object(const unsigned  char *sha1);
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);
 
-void object_list_append(struct object *item,
-			struct object_list **list_p);
-
-unsigned object_list_length(struct object_list *list);
-
 int object_list_contains(struct object_list *list, struct object *obj);
 
 /* Object array handling .. */
