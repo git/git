@@ -16,7 +16,7 @@ git subtree split --prefix=<prefix> <commit...>
 h,help        show the help
 q             quiet
 d             show debug messages
-p,prefix=     the name of the subdir to split out
+P,prefix=     the name of the subdir to split out
 m,message=    use the given message as the commit message for the merge commit
  options for 'split'
 annotate=     add a prefix to commit message of new commits
@@ -78,7 +78,7 @@ while [ $# -gt 0 ]; do
 		--annotate) annotate="$1"; shift ;;
 		--no-annotate) annotate= ;;
 		-b) branch="$1"; shift ;;
-		-p) prefix="$1"; shift ;;
+		-P) prefix="$1"; shift ;;
 		-m) message="$1"; shift ;;
 		--no-prefix) prefix= ;;
 		--onto) onto="$1"; shift ;;
