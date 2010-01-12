@@ -166,9 +166,9 @@ rev_is_descendant_of_branch()
 	newrev="$1"
 	branch="$2"
 	branch_hash=$(git rev-parse $branch)
-	match=$(git rev-list $newrev | grep $branch_hash)
+	match=$(git rev-list -1 $branch_hash ^$newrev)
 
-	if [ -n "$match" ]; then
+	if [ -z "$match" ]; then
 		return 0
 	else
 		return 1
