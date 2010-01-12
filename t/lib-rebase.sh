@@ -5,13 +5,20 @@
 # - override the commit message with $FAKE_COMMIT_MESSAGE,
 # - amend the commit message with $FAKE_COMMIT_AMEND
 # - check that non-commit messages have a certain line count with $EXPECT_COUNT
-# - rewrite a rebase -i script with $FAKE_LINES in the form
+# - rewrite a rebase -i script as directed by $FAKE_LINES.
+#   $FAKE_LINES consists of a sequence of words separated by spaces.
+#   The following word combinations are possible:
 #
-#	"[<lineno1>] [<lineno2>]..."
+#   "<lineno>" -- add a "pick" line with the SHA1 taken from the
+#       specified line.
 #
-#   If a line number is prefixed with "squash", "fixup", "edit", or
-#   "reword", the respective line's command will be replaced with the
-#   specified one.
+#   "<cmd> <lineno>" -- add a line with the specified command
+#       ("squash", "fixup", "edit", or "reword") and the SHA1 taken
+#       from the specified line.
+#
+#   "#" -- Add a comment line.
+#
+#   ">" -- Add a blank line.
 
 set_fake_editor () {
 	echo "#!$SHELL_PATH" >fake-editor.sh
@@ -36,6 +43,10 @@ for line in $FAKE_LINES; do
 	case $line in
 	squash|fixup|edit|reword)
 		action="$line";;
+	"#")
+		echo '# comment' >> "$1";;
+	">")
+		echo >> "$1";;
 	*)
 		sed -n "${line}s/^pick/$action/p" < "$1".tmp >> "$1"
 		action=pick;;
