@@ -473,9 +473,6 @@ extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_obje
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 
-/* "careful lstat()" */
-extern int check_path(const char *path, int len, struct stat *st, int skiplen);
-
 #define REFRESH_REALLY		0x0001	/* ignore_valid */
 #define REFRESH_UNMERGED	0x0002	/* allow unmerged */
 #define REFRESH_QUIET		0x0004	/* be quiet about it */
