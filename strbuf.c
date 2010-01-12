@@ -91,13 +91,6 @@ void strbuf_ltrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-void strbuf_tolower(struct strbuf *sb)
-{
-	int i;
-	for (i = 0; i < sb->len; i++)
-		sb->buf[i] = tolower(sb->buf[i]);
-}
-
 struct strbuf **strbuf_split(const struct strbuf *sb, int delim)
 {
 	int alloc = 2, pos = 0;
