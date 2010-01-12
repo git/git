@@ -2458,14 +2458,6 @@ int has_pack_index(const unsigned char *sha1)
 	return 1;
 }
 
-int has_pack_file(const unsigned char *sha1)
-{
-	struct stat st;
-	if (stat(sha1_pack_name(sha1), &st))
-		return 0;
-	return 1;
-}
-
 int has_sha1_pack(const unsigned char *sha1)
 {
 	struct pack_entry e;
