@@ -5,7 +5,7 @@
 #include "commit.h"
 #include "revision.h"
 
-int add_submodule_odb(const char *path)
+static int add_submodule_odb(const char *path)
 {
 	struct strbuf objects_directory = STRBUF_INIT;
 	struct alternate_object_database *alt_odb;
