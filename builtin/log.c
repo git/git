@@ -132,7 +132,7 @@ void cmd_log_init(int argc, const char **argv, const char *prefix,
  * This gives a rough estimate for how many commits we
  * will print out in the list.
  */
-static int estimate_commit_count(struct rev_info *rev, struct commit_list *list)
+int estimate_commit_count(struct rev_info *rev, struct commit_list *list)
 {
 	int n = 0;
 
