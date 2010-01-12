@@ -243,8 +243,3 @@ int map_user(struct string_list *map,
 	debug_mm("map_user:  --\n");
 	return 0;
 }
-
-int map_email(struct string_list *map, const char *email, char *name, int maxlen)
-{
-	return map_user(map, (char *)email, 0, name, maxlen);
-}
