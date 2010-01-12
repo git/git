@@ -130,6 +130,10 @@ advice.*::
 		Advice shown when linkgit:git-merge[1] refuses to
 		merge to avoid overwritting local changes.
 		Default: true.
+	resolveConflict::
+		Advices shown by various commands when conflicts
+		prevent the operation from being performed.
+		Default: true.
 --
 
 core.fileMode::
