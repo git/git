@@ -265,6 +265,30 @@ test_expect_success 'squash and fixup generate correct log messages' '
 	git branch -D squash-fixup
 '
 
+test_expect_success 'squash ignores comments' '
+	git checkout -b skip-comments E &&
+	base=$(git rev-parse HEAD~4) &&
+	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="# 1 # squash 2 # squash 3 # squash 4 #" \
+		EXPECT_HEADER_COUNT=4 \
+		git rebase -i $base &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 1 = $(git show | grep ONCE | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D skip-comments
+'
+
+test_expect_success 'squash ignores blank lines' '
+	git checkout -b skip-blank-lines E &&
+	base=$(git rev-parse HEAD~4) &&
+	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="> 1 > squash 2 > squash 3 > squash 4 >" \
+		EXPECT_HEADER_COUNT=4 \
+		git rebase -i $base &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 1 = $(git show | grep ONCE | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D skip-blank-lines
+'
+
 test_expect_success 'squash works as expected' '
 	for n in one two three four
 	do
