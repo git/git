@@ -191,8 +191,6 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 			error("'%s': %s", filename, strerror(errno));
 		return 0;
 	}
-	if (!st.st_size)
-		return 0; /* empty file -- no grep hit */
 	if (!S_ISREG(st.st_mode))
 		return 0;
 	sz = xsize_t(st.st_size);

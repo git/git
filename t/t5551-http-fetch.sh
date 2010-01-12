@@ -38,7 +38,7 @@ cat >exp <<EOF
 > POST /smart/repo.git/git-upload-pack HTTP/1.1
 > Accept-Encoding: deflate, gzip
 > Content-Type: application/x-git-upload-pack-request
-> Accept: application/x-git-upload-pack-response
+> Accept: application/x-git-upload-pack-result
 > Content-Length: xxx
 < HTTP/1.1 200 OK
 < Pragma: no-cache
