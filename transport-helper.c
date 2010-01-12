@@ -102,6 +102,7 @@ static struct child_process *get_helper(struct transport *transport)
 	int refspec_nr = 0;
 	int refspec_alloc = 0;
 	int duped;
+	int code;
 
 	if (data->helper)
 		return data->helper;
@@ -111,13 +112,18 @@ static struct child_process *get_helper(struct transport *transport)
 	helper->out = -1;
 	helper->err = 0;
 	helper->argv = xcalloc(4, sizeof(*helper->argv));
-	strbuf_addf(&buf, "remote-%s", data->name);
+	strbuf_addf(&buf, "git-remote-%s", data->name);
 	helper->argv[0] = strbuf_detach(&buf, NULL);
 	helper->argv[1] = transport->remote->name;
 	helper->argv[2] = remove_ext_force(transport->url);
-	helper->git_cmd = 1;
-	if (start_command(helper))
-		die("Unable to run helper: git %s", helper->argv[0]);
+	helper->git_cmd = 0;
+	helper->silent_exec_failure = 1;
+	code = start_command(helper);
+	if (code < 0 && errno == ENOENT)
+		die("Unable to find remote helper for '%s'", data->name);
+	else if (code != 0)
+		exit(code);
+
 	data->helper = helper;
 	data->no_disconnect_req = 0;
 
