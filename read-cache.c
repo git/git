@@ -15,6 +15,8 @@
 #include "revision.h"
 #include "blob.h"
 
+static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
+
 /* Index extensions.
  *
  * The first letter should be 'A'..'Z' for extensions that are not
@@ -156,7 +158,7 @@ static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
 	return 0;
 }
 
-int is_empty_blob_sha1(const unsigned char *sha1)
+static int is_empty_blob_sha1(const unsigned char *sha1)
 {
 	static const unsigned char empty_blob_sha1[20] = {
 		0xe6,0x9d,0xe2,0x9b,0xb2,0xd1,0xd6,0x43,0x4b,0x8b,
@@ -1141,7 +1143,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	return has_errors;
 }
 
-struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really)
+static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really)
 {
 	return refresh_cache_ent(&the_index, ce, really, NULL);
 }
