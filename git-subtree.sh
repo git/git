@@ -317,7 +317,7 @@ rejoin_msg()
 		commit_message="Split '$dir/' into commit '$latest_new'"
 	fi
 	cat <<-EOF
-		$message
+		$commit_message
 		
 		git-subtree-dir: $dir
 		git-subtree-mainline: $latest_old
