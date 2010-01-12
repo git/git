@@ -3,6 +3,9 @@
 #include "cache.h"
 #include "commit.h"
 
+static int parse_options_usage(const char * const *usagestr,
+			       const struct option *opts);
+
 #define OPT_SHORT 1
 #define OPT_UNSET 2
 
@@ -560,8 +563,8 @@ void usage_msg_opt(const char *msg,
 	usage_with_options(usagestr, options);
 }
 
-int parse_options_usage(const char * const *usagestr,
-			const struct option *opts)
+static int parse_options_usage(const char * const *usagestr,
+			       const struct option *opts)
 {
 	return usage_with_options_internal(usagestr, opts, 0);
 }
