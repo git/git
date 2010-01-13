@@ -199,6 +199,10 @@ character if the letter `n` appears after a `%`.  The function returns
 the length of the placeholder recognized and `strbuf_expand()` skips
 over it.
 +
+The format `%%` is automatically expanded to a single `%` as a quoting
+mechanism; callers do not need to handle the `%` placeholder themselves,
+and the callback function will not be invoked for this placeholder.
++
 All other characters (non-percent and not skipped ones) are copied
 verbatim to the strbuf.  If the callback returned zero, meaning that the
 placeholder is unknown, then the percent sign is copied, too.

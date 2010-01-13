@@ -147,7 +147,6 @@ static char *path_ok(char *directory)
 			{ "IP", ip_address },
 			{ "P", tcp_port },
 			{ "D", directory },
-			{ "%", "%" },
 			{ NULL }
 		};
 

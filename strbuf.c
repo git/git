@@ -227,6 +227,12 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 			break;
 		format = percent + 1;
 
+		if (*format == '%') {
+			strbuf_addch(sb, '%');
+			format++;
+			continue;
+		}
+
 		consumed = fn(sb, format, context);
 		if (consumed)
 			format += consumed;
