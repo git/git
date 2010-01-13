@@ -29,13 +29,6 @@ void append_grep_pattern(struct grep_opt *opt, const char *pat,
 	p->next = NULL;
 }
 
-static int is_fixed(const char *s)
-{
-	while (*s && !is_regex_special(*s))
-		s++;
-	return !*s;
-}
-
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
@@ -43,7 +36,7 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
 
-	if (opt->fixed || is_fixed(p->pattern))
+	if (opt->fixed)
 		p->fixed = 1;
 	if (opt->regflags & REG_ICASE)
 		p->fixed = 0;
