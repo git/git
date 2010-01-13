@@ -8,6 +8,18 @@ test_description='git grep various.
 
 . ./test-lib.sh
 
+test_expect_success 'Check for external grep support' '
+	case "$(git grep -h 2>&1|grep ext-grep)" in
+	*"(default)"*)
+		test_set_prereq EXTGREP
+		true;;
+	*"(ignored by this build)"*)
+		true;;
+	*)
+		false;;
+	esac
+'
+
 cat >hello.c <<EOF
 #include <stdio.h>
 int main(int argc, const char **argv)
@@ -424,6 +436,18 @@ EOF
 test_expect_success 'grep -Fi' '
 	git grep -Fi "CHAR *" >actual &&
 	test_cmp expected actual
+'
+
+test_expect_success EXTGREP 'external grep is called' '
+	GIT_TRACE=2 git grep foo >/dev/null 2>actual &&
+	grep "trace: grep:.*foo" actual >/dev/null
+'
+
+test_expect_success EXTGREP 'no external grep when skip-worktree entries exist' '
+	git update-index --skip-worktree file &&
+	GIT_TRACE=2 git grep foo >/dev/null 2>actual &&
+	! grep "trace: grep:" actual >/dev/null &&
+	git update-index --no-skip-worktree file
 '
 
 test_done

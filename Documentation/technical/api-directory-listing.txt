@@ -58,6 +58,9 @@ The result of the enumeration is left in these fields::
 Calling sequence
 ----------------
 
+Note: index may be looked at for .gitignore files that are CE_SKIP_WORKTREE
+marked. If you to exclude files, make sure you have loaded index first.
+
 * Prepare `struct dir_struct dir` and clear it with `memset(&dir, 0,
   sizeof(dir))`.
 

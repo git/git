@@ -31,7 +31,7 @@ static int list_tree(unsigned char *sha1)
 }
 
 static const char * const read_tree_usage[] = {
-	"git read-tree [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u [--exclude-per-directory=<gitignore>] | -i]]  [--index-output=<file>] <tree-ish1> [<tree-ish2> [<tree-ish3>]]",
+	"git read-tree [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u [--exclude-per-directory=<gitignore>] | -i]] [--no-sparse-checkout] [--index-output=<file>] <tree-ish1> [<tree-ish2> [<tree-ish3>]]",
 	NULL
 };
 
@@ -98,6 +98,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		  PARSE_OPT_NONEG, exclude_per_directory_cb },
 		OPT_SET_INT('i', NULL, &opts.index_only,
 			    "don't check the working tree after merging", 1),
+		OPT_SET_INT(0, "no-sparse-checkout", &opts.skip_sparse_checkout,
+			    "skip applying sparse checkout filter", 1),
 		OPT_END()
 	};
 

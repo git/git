@@ -109,6 +109,7 @@ OPTIONS
 	Identify the file status with the following tags (followed by
 	a space) at the start of each line:
 	H::	cached
+	S::	skip-worktree
 	M::	unmerged
 	R::	removed/deleted
 	C::	modified/changed

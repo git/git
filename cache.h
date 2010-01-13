@@ -178,14 +178,18 @@ struct cache_entry {
 #define CE_HASHED    (0x100000)
 #define CE_UNHASHED  (0x200000)
 
+/* Only remove in work directory, not index */
+#define CE_WT_REMOVE (0x400000)
+
 /*
  * Extended on-disk flags
  */
 #define CE_INTENT_TO_ADD 0x20000000
+#define CE_SKIP_WORKTREE 0x40000000
 /* CE_EXTENDED2 is for future extension */
 #define CE_EXTENDED2 0x80000000
 
-#define CE_EXTENDED_FLAGS (CE_INTENT_TO_ADD)
+#define CE_EXTENDED_FLAGS (CE_INTENT_TO_ADD | CE_SKIP_WORKTREE)
 
 /*
  * Safeguard to avoid saving wrong flags:
@@ -234,6 +238,7 @@ static inline size_t ce_namelen(const struct cache_entry *ce)
 			    ondisk_cache_entry_size(ce_namelen(ce)))
 #define ce_stage(ce) ((CE_STAGEMASK & (ce)->ce_flags) >> CE_STAGESHIFT)
 #define ce_uptodate(ce) ((ce)->ce_flags & CE_UPTODATE)
+#define ce_skip_worktree(ce) ((ce)->ce_flags & CE_SKIP_WORKTREE)
 #define ce_mark_uptodate(ce) ((ce)->ce_flags |= CE_UPTODATE)
 
 #define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
@@ -464,7 +469,9 @@ extern int index_name_is_other(const struct index_state *, const char *, int);
 /* do stat comparison even if CE_VALID is true */
 #define CE_MATCH_IGNORE_VALID		01
 /* do not check the contents but report dirty on racily-clean entries */
-#define CE_MATCH_RACY_IS_DIRTY	02
+#define CE_MATCH_RACY_IS_DIRTY		02
+/* do stat comparison even if CE_SKIP_WORKTREE is true */
+#define CE_MATCH_IGNORE_SKIP_WORKTREE	04
 extern int ie_match_stat(const struct index_state *, struct cache_entry *, struct stat *, unsigned int);
 extern int ie_modified(const struct index_state *, struct cache_entry *, struct stat *, unsigned int);
 
@@ -529,6 +536,7 @@ extern int auto_crlf;
 extern int read_replace_refs;
 extern int fsync_object_files;
 extern int core_preload_index;
+extern int core_apply_sparse_checkout;
 
 enum safe_crlf {
 	SAFE_CRLF_FALSE = 0,

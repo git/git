@@ -32,6 +32,12 @@ static struct unpack_trees_error_msgs unpack_plumbing_errors = {
 
 	/* bind_overlap */
 	"Entry '%s' overlaps with '%s'.  Cannot bind.",
+
+	/* sparse_not_uptodate_file */
+	"Entry '%s' not uptodate. Cannot update sparse checkout.",
+
+	/* would_lose_orphaned */
+	"Working tree file '%s' would be %s by sparse checkout update.",
 };
 
 #define ERRORMSG(o,fld) \
@@ -78,7 +84,7 @@ static int check_updates(struct unpack_trees_options *o)
 	if (o->update && o->verbose_update) {
 		for (total = cnt = 0; cnt < index->cache_nr; cnt++) {
 			struct cache_entry *ce = index->cache[cnt];
-			if (ce->ce_flags & (CE_UPDATE | CE_REMOVE))
+			if (ce->ce_flags & (CE_UPDATE | CE_REMOVE | CE_WT_REMOVE))
 				total++;
 		}
 
@@ -91,6 +97,13 @@ static int check_updates(struct unpack_trees_options *o)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT, &o->result);
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
+
+		if (ce->ce_flags & CE_WT_REMOVE) {
+			display_progress(progress, ++cnt);
+			if (o->update)
+				unlink_entry(ce);
+			continue;
+		}
 
 		if (ce->ce_flags & CE_REMOVE) {
 			display_progress(progress, ++cnt);
@@ -116,6 +129,57 @@ static int check_updates(struct unpack_trees_options *o)
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKIN, NULL);
 	return errs != 0;
+}
+
+static int verify_uptodate_sparse(struct cache_entry *ce, struct unpack_trees_options *o);
+static int verify_absent_sparse(struct cache_entry *ce, const char *action, struct unpack_trees_options *o);
+
+static int will_have_skip_worktree(const struct cache_entry *ce, struct unpack_trees_options *o)
+{
+	const char *basename;
+
+	if (ce_stage(ce))
+		return 0;
+
+	basename = strrchr(ce->name, '/');
+	basename = basename ? basename+1 : ce->name;
+	return excluded_from_list(ce->name, ce_namelen(ce), basename, NULL, o->el) <= 0;
+}
+
+static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_options *o)
+{
+	int was_skip_worktree = ce_skip_worktree(ce);
+
+	if (will_have_skip_worktree(ce, o))
+		ce->ce_flags |= CE_SKIP_WORKTREE;
+	else
+		ce->ce_flags &= ~CE_SKIP_WORKTREE;
+
+	/*
+	 * We only care about files getting into the checkout area
+	 * If merge strategies want to remove some, go ahead, this
+	 * flag will be removed eventually in unpack_trees() if it's
+	 * outside checkout area.
+	 */
+	if (ce->ce_flags & CE_REMOVE)
+		return 0;
+
+	if (!was_skip_worktree && ce_skip_worktree(ce)) {
+		/*
+		 * If CE_UPDATE is set, verify_uptodate() must be called already
+		 * also stat info may have lost after merged_entry() so calling
+		 * verify_uptodate() again may fail
+		 */
+		if (!(ce->ce_flags & CE_UPDATE) && verify_uptodate_sparse(ce, o))
+			return -1;
+		ce->ce_flags |= CE_WT_REMOVE;
+	}
+	if (was_skip_worktree && !ce_skip_worktree(ce)) {
+		if (verify_absent_sparse(ce, "overwritten", o))
+			return -1;
+		ce->ce_flags |= CE_UPDATE;
+	}
+	return 0;
 }
 
 static inline int call_unpack_fn(struct cache_entry **src, struct unpack_trees_options *o)
@@ -369,8 +433,9 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
  */
 int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)
 {
-	int ret;
+	int i, ret;
 	static struct cache_entry *dfc;
+	struct exclude_list el;
 
 	if (len > MAX_UNPACK_TREES)
 		die("unpack_trees takes at most %d trees", MAX_UNPACK_TREES);
@@ -379,6 +444,16 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	state.force = 1;
 	state.quiet = 1;
 	state.refresh_cache = 1;
+
+	memset(&el, 0, sizeof(el));
+	if (!core_apply_sparse_checkout || !o->update)
+		o->skip_sparse_checkout = 1;
+	if (!o->skip_sparse_checkout) {
+		if (add_excludes_from_file_to_list(git_path("info/sparse-checkout"), "", 0, NULL, &el, 0) < 0)
+			o->skip_sparse_checkout = 1;
+		else
+			o->el = &el;
+	}
 
 	memset(&o->result, 0, sizeof(o->result));
 	o->result.initialized = 1;
@@ -400,26 +475,65 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		info.fn = unpack_callback;
 		info.data = o;
 
-		if (traverse_trees(len, t, &info) < 0)
-			return unpack_failed(o, NULL);
+		if (traverse_trees(len, t, &info) < 0) {
+			ret = unpack_failed(o, NULL);
+			goto done;
+		}
 	}
 
 	/* Any left-over entries in the index? */
 	if (o->merge) {
 		while (o->pos < o->src_index->cache_nr) {
 			struct cache_entry *ce = o->src_index->cache[o->pos];
-			if (unpack_index_entry(ce, o) < 0)
-				return unpack_failed(o, NULL);
+			if (unpack_index_entry(ce, o) < 0) {
+				ret = unpack_failed(o, NULL);
+				goto done;
+			}
 		}
 	}
 
-	if (o->trivial_merges_only && o->nontrivial_merge)
-		return unpack_failed(o, "Merge requires file-level merging");
+	if (o->trivial_merges_only && o->nontrivial_merge) {
+		ret = unpack_failed(o, "Merge requires file-level merging");
+		goto done;
+	}
+
+	if (!o->skip_sparse_checkout) {
+		int empty_worktree = 1;
+		for (i = 0;i < o->result.cache_nr;i++) {
+			struct cache_entry *ce = o->result.cache[i];
+
+			if (apply_sparse_checkout(ce, o)) {
+				ret = -1;
+				goto done;
+			}
+			/*
+			 * Merge strategies may set CE_UPDATE|CE_REMOVE outside checkout
+			 * area as a result of ce_skip_worktree() shortcuts in
+			 * verify_absent() and verify_uptodate(). Clear them.
+			 */
+			if (ce_skip_worktree(ce))
+				ce->ce_flags &= ~(CE_UPDATE | CE_REMOVE);
+			else
+				empty_worktree = 0;
+
+		}
+		if (o->result.cache_nr && empty_worktree) {
+			ret = unpack_failed(o, "Sparse checkout leaves no entry on working directory");
+			goto done;
+		}
+	}
 
 	o->src_index = NULL;
 	ret = check_updates(o) ? (-2) : 0;
 	if (o->dst_index)
 		*o->dst_index = o->result;
+
+done:
+	for (i = 0;i < el.nr;i++)
+		free(el.excludes[i]);
+	if (el.excludes)
+		free(el.excludes);
+
 	return ret;
 }
 
@@ -445,16 +559,17 @@ static int same(struct cache_entry *a, struct cache_entry *b)
  * When a CE gets turned into an unmerged entry, we
  * want it to be up-to-date
  */
-static int verify_uptodate(struct cache_entry *ce,
-		struct unpack_trees_options *o)
+static int verify_uptodate_1(struct cache_entry *ce,
+				   struct unpack_trees_options *o,
+				   const char *error_msg)
 {
 	struct stat st;
 
-	if (o->index_only || o->reset || ce_uptodate(ce))
+	if (o->index_only || (!ce_skip_worktree(ce) && (o->reset || ce_uptodate(ce))))
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
-		unsigned changed = ie_match_stat(o->src_index, ce, &st, CE_MATCH_IGNORE_VALID);
+		unsigned changed = ie_match_stat(o->src_index, ce, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 		if (!changed)
 			return 0;
 		/*
@@ -471,7 +586,21 @@ static int verify_uptodate(struct cache_entry *ce,
 	if (errno == ENOENT)
 		return 0;
 	return o->gently ? -1 :
-		error(ERRORMSG(o, not_uptodate_file), ce->name);
+		error(error_msg, ce->name);
+}
+
+static int verify_uptodate(struct cache_entry *ce,
+			   struct unpack_trees_options *o)
+{
+	if (!o->skip_sparse_checkout && will_have_skip_worktree(ce, o))
+		return 0;
+	return verify_uptodate_1(ce, o, ERRORMSG(o, not_uptodate_file));
+}
+
+static int verify_uptodate_sparse(struct cache_entry *ce,
+				  struct unpack_trees_options *o)
+{
+	return verify_uptodate_1(ce, o, ERRORMSG(o, sparse_not_uptodate_file));
 }
 
 static void invalidate_ce_path(struct cache_entry *ce, struct unpack_trees_options *o)
@@ -572,15 +701,16 @@ static int icase_exists(struct unpack_trees_options *o, struct cache_entry *dst,
 	struct cache_entry *src;
 
 	src = index_name_exists(o->src_index, dst->name, ce_namelen(dst), 1);
-	return src && !ie_match_stat(o->src_index, src, st, CE_MATCH_IGNORE_VALID);
+	return src && !ie_match_stat(o->src_index, src, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 }
 
 /*
  * We do not want to remove or overwrite a working tree file that
  * is not tracked, unless it is ignored.
  */
-static int verify_absent(struct cache_entry *ce, const char *action,
-			 struct unpack_trees_options *o)
+static int verify_absent_1(struct cache_entry *ce, const char *action,
+				 struct unpack_trees_options *o,
+				 const char *error_msg)
 {
 	struct stat st;
 
@@ -660,6 +790,19 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 	}
 	return 0;
 }
+static int verify_absent(struct cache_entry *ce, const char *action,
+			 struct unpack_trees_options *o)
+{
+	if (!o->skip_sparse_checkout && will_have_skip_worktree(ce, o))
+		return 0;
+	return verify_absent_1(ce, action, o, ERRORMSG(o, would_lose_untracked));
+}
+
+static int verify_absent_sparse(struct cache_entry *ce, const char *action,
+			 struct unpack_trees_options *o)
+{
+	return verify_absent_1(ce, action, o, ERRORMSG(o, would_lose_orphaned));
+}
 
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		struct unpack_trees_options *o)
@@ -680,6 +823,8 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		} else {
 			if (verify_uptodate(old, o))
 				return -1;
+			if (ce_skip_worktree(old))
+				update |= CE_SKIP_WORKTREE;
 			invalidate_ce_path(old, o);
 		}
 	}
@@ -1004,10 +1149,10 @@ int oneway_merge(struct cache_entry **src, struct unpack_trees_options *o)
 
 	if (old && same(old, a)) {
 		int update = 0;
-		if (o->reset && !ce_uptodate(old)) {
+		if (o->reset && !ce_uptodate(old) && !ce_skip_worktree(old)) {
 			struct stat st;
 			if (lstat(old->name, &st) ||
-			    ie_match_stat(o->src_index, old, &st, CE_MATCH_IGNORE_VALID))
+			    ie_match_stat(o->src_index, old, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE))
 				update |= CE_UPDATE;
 		}
 		add_entry(o, old, update, 0);

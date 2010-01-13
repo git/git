@@ -51,6 +51,7 @@ enum push_default_type push_default = PUSH_DEFAULT_MATCHING;
 enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
 char *notes_ref_name;
 int grafts_replace_parents = 1;
+int core_apply_sparse_checkout;
 
 /* Parallel index stat data preload? */
 int core_preload_index = 0;

@@ -159,7 +159,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 		}
 
-		if (ce_uptodate(ce))
+		if (ce_uptodate(ce) || ce_skip_worktree(ce))
 			continue;
 
 		/* If CE_VALID is set, don't look at workdir for file removal */
@@ -323,7 +323,8 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	int match_missing, cached;
 
 	/* if the entry is not checked out, don't examine work tree */
-	cached = o->index_only || (idx && (idx->ce_flags & CE_VALID));
+	cached = o->index_only ||
+		(idx && ((idx->ce_flags & CE_VALID) || ce_skip_worktree(idx)));
 	/*
 	 * Backward compatibility wart - "diff-index -m" does
 	 * not mean "do not ignore merges", but "match_missing".

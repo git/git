@@ -1997,7 +1997,7 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	 * If ce is marked as "assume unchanged", there is no
 	 * guarantee that work tree matches what we are looking for.
 	 */
-	if (ce->ce_flags & CE_VALID)
+	if ((ce->ce_flags & CE_VALID) || ce_skip_worktree(ce))
 		return 0;
 
 	/*

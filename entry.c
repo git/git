@@ -206,7 +206,7 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *t
 	len += ce_namelen(ce);
 
 	if (!check_path(path, len, &st, state->base_dir_len)) {
-		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID);
+		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 		if (!changed)
 			return 0;
 		if (!state->force) {
