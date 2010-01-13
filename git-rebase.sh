@@ -34,6 +34,8 @@ set_reflog_action rebase
 require_work_tree
 cd_to_toplevel
 
+LF='
+'
 OK_TO_SKIP_PRE_REBASE=
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".
@@ -417,7 +419,27 @@ fi
 
 # Make sure the branch to rebase onto is valid.
 onto_name=${newbase-"$upstream_name"}
-onto=$(git rev-parse --verify "${onto_name}^0") || exit
+case "$onto_name" in
+*...*)
+	if	left=${onto_name%...*} right=${onto_name#*...} &&
+		onto=$(git merge-base --all ${left:-HEAD} ${right:-HEAD})
+	then
+		case "$onto" in
+		?*"$LF"?*)
+			die "$onto_name: there are more than one merge bases"
+			;;
+		'')
+			die "$onto_name: there is no merge base"
+			;;
+		esac
+	else
+		die "$onto_name: there is no merge base"
+	fi
+	;;
+*)
+	onto=$(git rev-parse --verify "${onto_name}^0") || exit
+	;;
+esac
 
 # If a hook exists, give it a chance to interrupt
 run_pre_rebase_hook "$upstream_arg" "$@"
