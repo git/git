@@ -1877,7 +1877,8 @@ proc setoptions {} {
     option add *Menubutton.font uifont startupFile
     option add *Label.font uifont startupFile
     option add *Message.font uifont startupFile
-    option add *Entry.font uifont startupFile
+    option add *Entry.font textfont startupFile
+    option add *Text.font textfont startupFile
     option add *Labelframe.font uifont startupFile
     option add *Spinbox.font textfont startupFile
     option add *Listbox.font mainfont startupFile
@@ -2176,7 +2177,7 @@ proc makewindow {} {
     set findstring {}
     set fstring .tf.lbar.findstring
     lappend entries $fstring
-    ${NS}::entry $fstring -width 30 -font textfont -textvariable findstring
+    ${NS}::entry $fstring -width 30 -textvariable findstring
     trace add variable findstring write find_change
     set findtype [mc "Exact"]
     set findtypemenu [makedroplist .tf.lbar.findtype \
@@ -2219,7 +2220,7 @@ proc makewindow {} {
     pack .bleft.top.search -side left -padx 5
     set sstring .bleft.top.sstring
     set searchstring ""
-    ${NS}::entry $sstring -width 20 -font textfont -textvariable searchstring
+    ${NS}::entry $sstring -width 20 -textvariable searchstring
     lappend entries $sstring
     trace add variable searchstring write incrsearch
     pack $sstring -side left -expand 1 -fill x
@@ -4042,7 +4043,7 @@ proc vieweditor {top n title} {
 	} elseif {$type eq "path"} {
 	    ${NS}::label $top.l -text $title
 	    pack $top.l -in $top -side top -pady [list 3 0] -anchor w -padx 3
-	    text $top.t -width 40 -height 5 -background $bgcolor -font uifont
+	    text $top.t -width 40 -height 5 -background $bgcolor
 	    if {[info exists viewfiles($n)]} {
 		foreach f $viewfiles($n) {
 		    $top.t insert end $f
