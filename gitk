@@ -1880,6 +1880,7 @@ proc setoptions {} {
     option add *Entry.font uifont startupFile
     option add *Labelframe.font uifont startupFile
     option add *Spinbox.font textfont startupFile
+    option add *Listbox.font mainfont startupFile
 }
 
 # Make a menu and submenus.
