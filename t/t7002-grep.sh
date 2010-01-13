@@ -302,8 +302,8 @@ test_expect_success 'grep -C1, hunk mark between files' '
 	test_cmp expected actual
 '
 
-test_expect_success 'grep -C1 --no-ext-grep, hunk mark between files' '
-	git grep -C1 --no-ext-grep "^[yz]" >actual &&
+test_expect_success 'grep -C1 hunk mark between files' '
+	git grep -C1 "^[yz]" >actual &&
 	test_cmp expected actual
 '
 
@@ -359,7 +359,7 @@ test_expect_success 'log grep (6)' '
 test_expect_success 'grep with CE_VALID file' '
 	git update-index --assume-unchanged t/t &&
 	rm t/t &&
-	test "$(git grep --no-ext-grep test)" = "t/t:test" &&
+	test "$(git grep test)" = "t/t:test" &&
 	git update-index --no-assume-unchanged t/t &&
 	git checkout t/t
 '
