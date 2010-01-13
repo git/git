@@ -10531,7 +10531,6 @@ proc mkfontdisp {font top which} {
     set fontpref($font) [set $font]
     ${NS}::button $top.${font}but -text $which \
 	-command [list choosefont $font $which]
-    if {!$use_ttk} {$top.${font}but configure  -font optionfont}
     ${NS}::label $top.$font -relief flat -font $font \
 	-text $fontattr($font,family) -justify left
     grid x $top.${font}but $top.$font -sticky w
@@ -10793,15 +10792,6 @@ proc doprefs {} {
     mkfontdisp mainfont $top [mc "Main font"]
     mkfontdisp textfont $top [mc "Diff display font"]
     mkfontdisp uifont $top [mc "User interface font"]
-
-    if {!$use_ttk} {
-	foreach w {maxpctl maxwidthl showlocal autoselect tabstopl ntag
-	    ldiff lattr extdifff.l extdifff.b bgbut fgbut
-	    diffoldbut diffnewbut hunksepbut markbgbut selbgbut
-	    want_ttk ttk_note} {
-	    $top.$w configure -font optionfont
-	}
-    }
 
     ${NS}::frame $top.buts
     ${NS}::button $top.buts.ok -text [mc "OK"] -command prefsok -default active
@@ -11413,8 +11403,6 @@ namespace import ::msgcat::mc
 ::msgcat::mcload $gitk_msgsdir
 
 catch {source ~/.gitk}
-
-font create optionfont -family sans-serif -size -12
 
 parsefont mainfont $mainfont
 eval font create mainfont [fontflags mainfont]
