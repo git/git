@@ -994,8 +994,10 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	if (!user_ident_explicitly_given) {
 		strbuf_addstr(&format, "\n Committer: ");
 		strbuf_addbuf_percentquote(&format, &committer_ident);
-		strbuf_addch(&format, '\n');
-		strbuf_addstr(&format, implicit_ident_advice);
+		if (advice_implicit_identity) {
+			strbuf_addch(&format, '\n');
+			strbuf_addstr(&format, implicit_ident_advice);
+		}
 	}
 	strbuf_release(&author_ident);
 	strbuf_release(&committer_ident);
