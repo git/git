@@ -121,6 +121,24 @@ show_topic () {
 	fi
 }
 
+compare_topic () {
+	b=$1 r=$2
+	based=$(git rev-list --no-merges $b..$r | wc -l | tr -d ' ')
+	bases=$(git rev-list --no-merges $r..$b | wc -l | tr -d ' ')
+	case "$based,$bases" in
+	0,0)	echo same; exit ;;
+	0,*)	echo left; exit ;;
+	*,0)	echo right; exit ;;
+	esac
+
+	if test $based -lt $bases
+	then
+		echo left-p
+	else
+		echo fork
+	fi
+}
+
 # List commits that are shared between more than one topic branches
 while read b
 do
@@ -148,27 +166,23 @@ do
 		for r in $related
 		do
 			test "$b" = "$r" && continue
-			based=$(git rev-list --no-merges $b..$r | wc -l | tr -d ' ')
-			bases=$(git rev-list --no-merges $r..$b | wc -l | tr -d ' ')
-			case "$based,$bases" in
-			0,0)
+			case "$(compare_topic "$b" "$r")" in
+			same)
 				same_as="$same_as$r "
 				;;
-			0,*)
+			left)
 				based_on="$based_on$r "
 				based_on_msg="$based_on_msg$r "
 				;;
-			*,0)
+			left-p)
+				based_on="$based_on$r "
+				based_on_msg="${based_on_msg}#EPO-$r "
+				;;
+			right)
 				used_by="$used_by$r "
 				;;
-			*,*)
-				if test $based -lt $bases
-				then
-					based_on="$based_on$r "
-					based_on_msg="${based_on_msg}#EPO-$r "
-				else
-					forks="$forks$r "
-				fi
+			fork)
+				forks="$forks$r "
 				;;
 			esac
 		done
