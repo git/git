@@ -257,6 +257,17 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
 	return 0;
 }
 
+void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
+{
+	int i, len = src->len;
+
+	for (i = 0; i < len; i++) {
+		if (src->buf[i] == '%')
+			strbuf_addch(dst, '%');
+		strbuf_addch(dst, src->buf[i]);
+	}
+}
+
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
 {
 	size_t res;

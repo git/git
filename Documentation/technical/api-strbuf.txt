@@ -218,6 +218,13 @@ which can be used by the programmer of the callback as she sees fit.
 	placeholder and replacement string.  The array needs to be
 	terminated by an entry with placeholder set to NULL.
 
+`strbuf_addbuf_percentquote`::
+
+	Append the contents of one strbuf to another, quoting any
+	percent signs ("%") into double-percents ("%%") in the
+	destination. This is useful for literal data to be fed to either
+	strbuf_expand or to the *printf family of functions.
+
 `strbuf_addf`::
 
 	Add a formatted string to the buffer.
