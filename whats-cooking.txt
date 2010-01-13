@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2010, #03; Sun, 10)
-X-master-at: 637afcf4e07616d1dd15d33f56c6b72f90f39821
-X-next-at: e295b7f76150bd2ee9a82c569ccbbde6b8fba391
+Subject: What's cooking in git.git (Jan 2010, #04; Wed, 13)
+X-master-at: 1f73566af5bec28cd8489c6139a9ede95817349c
+X-next-at: 20f8f4b285926bc486429e4b6b1d6fcf8a74804d
 
-What's cooking in git.git (Jan 2010, #03; Sun, 10)
+What's cooking in git.git (Jan 2010, #04; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,70 +14,162 @@ still holding onto them.
 --------------------------------------------------
 [Graduated to "master"]
 
-* tr/http-updates (2009-12-28) 4 commits
-  (merged to 'next' on 2010-01-02 at cf25698)
- + Remove http.authAny
- + Allow curl to rewind the RPC read buffer
- + Add an option for using any HTTP authentication scheme, not only basic
- + http: maintain curl sessions
+* nd/sparse (2010-01-04) 25 commits
+  (merged to 'next' on 2010-01-10 at fa73d6e)
+ + t7002: test for not using external grep on skip-worktree paths
+ + t7002: set test prerequisite "external-grep" if supported
+  (merged to 'next' on 2010-01-02 at 5499bbe)
+ + grep: do not do external grep on skip-worktree entries
+ + commit: correctly respect skip-worktree bit
+ + ie_match_stat(): do not ignore skip-worktree bit with CE_MATCH_IGNORE_VALID
+ + tests: rename duplicate t1009
+ + sparse checkout: inhibit empty worktree
+ + Add tests for sparse checkout
+ + read-tree: add --no-sparse-checkout to disable sparse checkout support
+ + unpack-trees(): ignore worktree check outside checkout area
+ + unpack_trees(): apply $GIT_DIR/info/sparse-checkout to the final index
+ + unpack-trees(): "enable" sparse checkout and load $GIT_DIR/info/sparse-checkout
+ + unpack-trees.c: generalize verify_* functions
+ + unpack-trees(): add CE_WT_REMOVE to remove on worktree alone
+ + Introduce "sparse checkout"
+ + dir.c: export excluded_1() and add_excludes_from_file_1()
+ + excluded_1(): support exclude files in index
+ + unpack-trees(): carry skip-worktree bit over in merged_entry()
+ + Read .gitignore from index if it is skip-worktree
+ + Avoid writing to buffer in add_excludes_from_file_1()
+ + Teach Git to respect skip-worktree bit (writing part)
+ + Teach Git to respect skip-worktree bit (reading part)
+ + Introduce "skip-worktree" bit in index, teach Git to get/set this bit
+ + Add test-index-version
+ + update-index: refactor mark_valid() in preparation for new options
 
-* jk/maint-1.6.5-reset-hard (2009-12-30) 1 commit
-  (merged to 'next' on 2010-01-02 at 190d63b)
- + reset: unbreak hard resets with GIT_WORK_TREE
+With the removal of external grep near future, some codepaths will be
+slightly simplified.
 
-* jk/push-to-delete (2009-12-30) 1 commit
-  (merged to 'next' on 2010-01-03 at 9ee293b)
- + builtin-push: add --delete as syntactic sugar for :foo
+* cc/reset-more (2010-01-08) 8 commits
+  (merged to 'next' on 2010-01-10 at 84730de)
+ + t7111: check that reset options work as described in the tables
+  (merged to 'next' on 2010-01-06 at 96639cb)
+ + Documentation: reset: add some missing tables
+  (merged to 'next' on 2010-01-04 at 8802c2c)
+ + Fix bit assignment for CE_CONFLICTED
+  (merged to 'next' on 2010-01-03 at f83d4c6)
+ + "reset --merge": fix unmerged case
+ + reset: use "unpack_trees()" directly instead of "git read-tree"
+ + reset: add a few tests for "git reset --merge"
+ + Documentation: reset: add some tables to describe the different options
+ + reset: improve mixed reset error message when in a bare repo
 
-* mm/config-path (2009-12-30) 1 commit
-  (merged to 'next' on 2010-01-03 at 9c0e81a)
- + builtin-config: add --path option doing ~ and ~user expansion.
+* rs/maint-archive-match-pathspec (2009-12-12) 1 commit
+  (merged to 'next' on 2010-01-03 at 92d7d15)
+ + archive: complain about path specs that don't match anything
 
-* pm/cvs-environ (2009-12-30) 1 commit
-  (merged to 'next' on 2010-01-03 at 4c22932)
- + CVS Server: Support reading base and roots from environment
+* il/vcs-helper (2010-01-09) 9 commits
+  (merged to 'next' on 2010-01-10 at 11e448e)
+ + Reset possible helper before reusing remote structure
+  (merged to 'next' on 2010-01-06 at 7c79f42)
+ + Remove special casing of http, https and ftp
+ + Support remote archive from all smart transports
+ + Support remote helpers implementing smart transports
+ + Support taking over transports
+ + Refactor git transport options parsing
+ + Pass unknown protocols to external protocol handlers
+ + Support mandatory capabilities
+ + Add remote helper debug mode
 
-* tr/maint-1.6.5-bash-prompt-show-submodule-changes (2009-12-31) 1 commit
-  (merged to 'next' on 2010-01-03 at b785974)
- + bash completion: factor submodules into dirty state
-
-* bg/maint-remote-update-default (2009-12-31) 1 commit
-  (merged to 'next' on 2010-01-03 at 113009e)
- + Fix "git remote update" with remotes.defalt set
-
-* mm/diag-path-in-treeish (2009-12-07) 1 commit
-  (merged to 'next' on 2010-01-06 at 6b4201e)
- + Detailed diagnosis when parsing an object name fails.
-
-* fc/opt-quiet-gc-reset (2009-12-02) 1 commit
-  (merged to 'next' on 2010-01-06 at 03e00cd)
- + General --quiet improvements
+* jc/checkout-merge-base (2010-01-07) 4 commits
+  (merged to 'next' on 2010-01-07 at 5229608)
+ + rebase -i: teach --onto A...B syntax
+ + rebase: fix --onto A...B parsing and add tests
+  (merged to 'next' on 2010-01-02 at 6a8f6fc)
+ + "rebase --onto A...B" replays history on the merge base between A and B
+ + "checkout A...B" switches to the merge base between A and B
 
 --------------------------------------------------
 [New Topics]
 
-* bk/fix-relative-gitdir-file (2010-01-08) 2 commits
- - Handle relative paths in submodule .git files
- - Test update-index for a gitlink to a .git file
+* jc/maint-1.6.4-grep-lookahead (2010-01-10) 1 commit
+  (merged to 'next' on 2010-01-13 at 20f8f4b)
+ + grep: optimize built-in grep by skipping lines that do not hit
+ (this branch is used by jc/grep-lookahead and jc/maint-grep-lookahead.)
 
-* jc/ident (2010-01-08) 3 commits
- - ident.c: treat $EMAIL as giving user.email identity explicitly
-  (merged to 'next' on 2010-01-10 at f1f9ded)
- + ident.c: check explicit identity for name and email separately
- + ident.c: remove unused variables
+Optimize the "line-by-line" internal grep by skiping en masse over lines
+that cannot possibly match.
 
-* jc/ls-files-ignored-pathspec (2010-01-08) 4 commits
- - ls-files: fix overeager pathspec optimization
- - read_directory(): further split treat_path()
- - read_directory_recursive(): refactor handling of a single path into a separate function
- - t3001: test ls-files -o ignored/dir
+* jc/maint-grep-lookahead (2010-01-12) 0 commits
+ (this branch uses jc/maint-1.6.4-grep-lookahead; is used by jc/grep-lookahead.)
 
-* js/exec-error-report (2010-01-10) 4 commits
- - Improve error message when a transport helper was not found
- - start_command: detect execvp failures early
- - run-command: move wait_or_whine earlier
- - start_command: report child process setup errors to the parent's stderr
- (this branch uses il/vcs-helper.)
+Early conflict resolution for the above for recent git.
+
+* jc/grep-lookahead (2010-01-12) 2 commits
+  (merged to 'next' on 2010-01-13 at 20f8f4b)
+ + grep: rip out pessimization to use fixmatch()
+ + grep: rip out support for external grep
+ (this branch uses jc/maint-1.6.4-grep-lookahead and jc/maint-grep-lookahead.)
+
+This is for eventual inclusion for the next release.
+
+* jc/symbol-static (2010-01-11) 17 commits
+ - symlinks.c: remove unused functions
+ - object.c: remove unused functions
+ - blob.c: remove unused function
+ - strbuf.c: remove unused function
+ - sha1_file.c: remove unused function
+ - mailmap.c: remove unused function
+ - utf8.c: mark file-local function static
+ - submodule.c: mark file-local function static
+ - quote.c: mark file-local function static
+ - remote-curl.c: mark file-local function static
+ - read-cache.c: mark file-local functions static
+ - parse-options.c: mark file-local function static
+ - entry.c: mark file-local function static
+ - http.c: mark file-local functions static
+ - pretty.c: mark file-local function static
+ - builtin-rev-list.c: mark file-local function static
+ - bisect.c: mark file-local function static
+
+Mark file-local symbols "static", and remove unused functions.  Daniel
+suggests to leave some comment for blob.c and I agree in principle, but
+I don't think of a good description myself.
+
+* nd/include-termios-for-osol (2010-01-11) 1 commit
+ - Add missing #include to support TIOCGWINSZ on Solaris
+
+* pc/uninteresting-submodule-disappear-upon-switch-branches (2010-01-11) 1 commit
+ - Remove empty directories when checking out a commit with fewer submodules
+
+Instead of using unlink(2) that will never succeed, use rmdir(2) to remove
+an empty directory, knowing that this won't harm a populated directory.
+
+* sd/cd-p-show-toplevel (2010-01-12) 2 commits
+ - Use $(git rev-parse --show-toplevel) in cd_to_toplevel().
+ - Add 'git rev-parse --show-toplevel' option.
+
+Avoid having to use "cd -P" that may not be available on some platforms'
+shells.
+
+* jk/warn-author-committer-after-commit (2010-01-13) 4 commits
+ - commit: allow suppression of implicit identity advice
+ - commit: show interesting ident information in summary
+ - strbuf: add strbuf_addbuf_percentquote
+ - strbuf_expand: convert "%%" to "%"
+
+* js/refer-upstream (2009-09-10) 1 commit
+ - Introduce <branch>@{upstream} notation
+
+This does not teach the public interface about the new syntax; callers
+that care about distinction between name vs SHA-1 might not work as well
+as they should.
+
+* mm/conflict-advice (2010-01-12) 1 commit
+ - Be more user-friendly when refusing to do something because of conflict.
+
+* jc/maint-strbuf-add-fix-doubling (2010-01-12) 1 commit
+ - strbuf_addbuf(): allow passing the same buf to dst and src
+
+* jl/submodule-diff (2010-01-13) 2 commits
+ - Teach diff that modified submodule directory is dirty
+ - Show submodules as modified when they contain a dirty work tree
 
 --------------------------------------------------
 [Stalled]
@@ -93,12 +185,11 @@ still holding onto them.
 "git pull" patch needs sq-then-eval fix to protect it from $IFS
 but otherwise seemed good.
 
-* jh/commit-status (2009-12-07) 1 commit
- - [test?] Add commit.status, --status, and --no-status
-
-Needs tests.
-
-* mh/rebase-fixup (2009-12-07) 2 commits
+* mh/rebase-fixup (2010-01-12) 5 commits
+  (merged to 'next' on 2010-01-12 at e84eab0)
+ + rebase-i: Ignore comments and blank lines in peek_next_command
+ + lib-rebase: Allow comments and blank lines to be added to the rebase script
+ + lib-rebase: Provide clearer debugging info about what the editor did
   (merged to 'next' on 2010-01-06 at c4779a7)
  + Add a command "fixup" to rebase --interactive
  + t3404: Use test_commit to set up test repository
@@ -137,76 +228,53 @@ file complaints before I do so if people have objections.
 
 Hold: JH on 2010-01-05, http://article.gmane.org/gmane.comp.version-control.git/136183
 
---------------------------------------------------
-[Will graduate after a bit more cooking]
+* jh/gitweb-cached (2010-01-13) 7 commits
+ - (sign-off?) gitweb: File based caching layer (from git.kernel.org)
+ - (sign-off?) gitweb: add a get function to compliment print_local_time
+ - (sign-off?) gitweb: Convert output to using indirect file handle
+ - gitweb: Optionally add "git" links in project list page
+ - gitweb: Makefile improvements
+ - gitweb: Add option to force version match
+ - gitweb: Load checking
 
-* nd/sparse (2010-01-04) 25 commits
-  (merged to 'next' on 2010-01-10 at fa73d6e)
- + t7002: test for not using external grep on skip-worktree paths
- + t7002: set test prerequisite "external-grep" if supported
-  (merged to 'next' on 2010-01-02 at 5499bbe)
- + grep: do not do external grep on skip-worktree entries
- + commit: correctly respect skip-worktree bit
- + ie_match_stat(): do not ignore skip-worktree bit with CE_MATCH_IGNORE_VALID
- + tests: rename duplicate t1009
- + sparse checkout: inhibit empty worktree
- + Add tests for sparse checkout
- + read-tree: add --no-sparse-checkout to disable sparse checkout support
- + unpack-trees(): ignore worktree check outside checkout area
- + unpack_trees(): apply $GIT_DIR/info/sparse-checkout to the final index
- + unpack-trees(): "enable" sparse checkout and load $GIT_DIR/info/sparse-checkout
- + unpack-trees.c: generalize verify_* functions
- + unpack-trees(): add CE_WT_REMOVE to remove on worktree alone
- + Introduce "sparse checkout"
- + dir.c: export excluded_1() and add_excludes_from_file_1()
- + excluded_1(): support exclude files in index
- + unpack-trees(): carry skip-worktree bit over in merged_entry()
- + Read .gitignore from index if it is skip-worktree
- + Avoid writing to buffer in add_excludes_from_file_1()
- + Teach Git to respect skip-worktree bit (writing part)
- + Teach Git to respect skip-worktree bit (reading part)
- + Introduce "skip-worktree" bit in index, teach Git to get/set this bit
- + Add test-index-version
- + update-index: refactor mark_valid() in preparation for new options
-
-I've queued the (close to) original tests for external grep, but as a belt
-and suspender measure Nguyễn may also want to add the whitebox test
-in the review thread.
-
-* cc/reset-more (2010-01-08) 8 commits
-  (merged to 'next' on 2010-01-10 at 84730de)
- + t7111: check that reset options work as described in the tables
-  (merged to 'next' on 2010-01-06 at 96639cb)
- + Documentation: reset: add some missing tables
-  (merged to 'next' on 2010-01-04 at 8802c2c)
- + Fix bit assignment for CE_CONFLICTED
-  (merged to 'next' on 2010-01-03 at f83d4c6)
- + "reset --merge": fix unmerged case
- + reset: use "unpack_trees()" directly instead of "git read-tree"
- + reset: add a few tests for "git reset --merge"
- + Documentation: reset: add some tables to describe the different options
- + reset: improve mixed reset error message when in a bare repo
-
-* rs/maint-archive-match-pathspec (2009-12-12) 1 commit
-  (merged to 'next' on 2010-01-03 at 92d7d15)
- + archive: complain about path specs that don't match anything
-
-* il/vcs-helper (2010-01-09) 9 commits
-  (merged to 'next' on 2010-01-10 at 11e448e)
- + Reset possible helper before reusing remote structure
-  (merged to 'next' on 2010-01-06 at 7c79f42)
- + Remove special casing of http, https and ftp
- + Support remote archive from all smart transports
- + Support remote helpers implementing smart transports
- + Support taking over transports
- + Refactor git transport options parsing
- + Pass unknown protocols to external protocol handlers
- + Support mandatory capabilities
- + Add remote helper debug mode
- (this branch is used by js/exec-error-report.)
+Replaced with a re-roll.  Update to t9500 is probably needed.
 
 --------------------------------------------------
 [Cooking]
+
+* jh/commit-status (2010-01-13) 2 commits
+  (merged to 'next' on 2010-01-13 at 0905d59)
+ + t7502: test commit.status, --status and --no-status
+ + commit: support commit.status, --status, and --no-status
+
+I have already given ample time for people to react, but ended up getting
+tired of waiting for tests to materialize and doing it myself, as I want
+to close merge window for 1.7.0-rc0 by the end of next week to have the
+final release early next month.
+
+* bk/fix-relative-gitdir-file (2010-01-08) 2 commits
+ - Handle relative paths in submodule .git files
+ - Test update-index for a gitlink to a .git file
+
+* jc/ident (2010-01-08) 3 commits
+ - ident.c: treat $EMAIL as giving user.email identity explicitly
+  (merged to 'next' on 2010-01-10 at f1f9ded)
+ + ident.c: check explicit identity for name and email separately
+ + ident.c: remove unused variables
+
+Opinions on the topmost one?
+
+* jc/ls-files-ignored-pathspec (2010-01-08) 4 commits
+ - ls-files: fix overeager pathspec optimization
+ - read_directory(): further split treat_path()
+ - read_directory_recursive(): refactor handling of a single path into a separate function
+ - t3001: test ls-files -o ignored/dir
+
+* js/exec-error-report (2010-01-12) 4 commits
+ - Improve error message when a transport helper was not found
+ - start_command: detect execvp failures early
+ - run-command: move wait_or_whine earlier
+ - start_command: report child process setup errors to the parent's stderr
 
 * jc/maint-1.6.1-checkout-m-custom-merge (2010-01-06) 1 commit
   (merged to 'next' on 2010-01-10 at df14116)
@@ -229,30 +297,23 @@ in the review thread.
  + git-difftool: Add '--gui' for selecting a GUI tool
  + t7800-difftool: Set a bogus tool for use by tests
 
-* jh/gitweb-cached (2010-01-03) 4 commits
- - gitweb: Makefile improvements
- - gitweb: Optionally add "git" links in project list page
- - gitweb: Add option to force version match
- - gitweb: Load checking
-
-Hold: Warthog on 2010-01-06, http://article.gmane.org/gmane.comp.version-control.git/136306
-
 * tc/test-locate-httpd (2010-01-02) 1 commit
   (merged to 'next' on 2010-01-06 at 9d913e5)
  + t/lib-http.sh: Restructure finding of default httpd location
 
 * jc/fix-tree-walk (2009-09-14) 7 commits
- - read-tree --debug-unpack
- - unpack-trees.c: look ahead in the index
- - unpack-trees.c: prepare for looking ahead in the index
- - Aggressive three-way merge: fix D/F case
- - traverse_trees(): handle D/F conflict case sanely
- - more D/F conflict tests
- - tests: move convenience regexp to match object names to test-lib.sh
+  (merged to 'next' on 2010-01-13 at 1c01b87)
+ + read-tree --debug-unpack
+ + unpack-trees.c: look ahead in the index
+ + unpack-trees.c: prepare for looking ahead in the index
+ + Aggressive three-way merge: fix D/F case
+ + traverse_trees(): handle D/F conflict case sanely
+ + more D/F conflict tests
+ + tests: move convenience regexp to match object names to test-lib.sh
 
 Resurrected from "Ejected" category.  This is fix for a tricky codepath
-and testing and improving before it hits 'next' by brave souls is greatly
-appreciated (I am using this in my private build).
+and testing and improving before it hits 'master' is greatly appreciated.
+(I have been using this in my private build for some time).
 
 * jc/branch-d (2009-12-29) 1 commit
   (merged to 'next' on 2010-01-10 at 61a14b7)
@@ -293,26 +354,16 @@ Perhaps needs an entry in the Release Notes, but otherwise looked Ok.
  + Smart-http: check if repository is OK to export before serving it
 
 * jc/cache-unmerge (2009-12-25) 9 commits
- - rerere forget path: forget recorded resolution
- - rerere: refactor rerere logic to make it independent from I/O
- - rerere: remove silly 1024-byte line limit
- - resolve-undo: teach "update-index --unresolve" to use resolve-undo info
- - resolve-undo: "checkout -m path" uses resolve-undo information
- - resolve-undo: allow plumbing to clear the information
- - resolve-undo: basic tests
- - resolve-undo: record resolved conflicts in a new index extension section
- - builtin-merge.c: use standard active_cache macros
-
-Will wait a bit more before moving it to 'next'.  J6t spotted an issue
-with "rerere forget" and has a test script.
-
-* jc/checkout-merge-base (2010-01-07) 4 commits
-  (merged to 'next' on 2010-01-07 at 5229608)
- + rebase -i: teach --onto A...B syntax
- + rebase: fix --onto A...B parsing and add tests
-  (merged to 'next' on 2010-01-02 at 6a8f6fc)
- + "rebase --onto A...B" replays history on the merge base between A and B
- + "checkout A...B" switches to the merge base between A and B
+  (merged to 'next' on 2010-01-13 at 2290c44)
+ + rerere forget path: forget recorded resolution
+ + rerere: refactor rerere logic to make it independent from I/O
+ + rerere: remove silly 1024-byte line limit
+ + resolve-undo: teach "update-index --unresolve" to use resolve-undo info
+ + resolve-undo: "checkout -m path" uses resolve-undo information
+ + resolve-undo: allow plumbing to clear the information
+ + resolve-undo: basic tests
+ + resolve-undo: record resolved conflicts in a new index extension section
+ + builtin-merge.c: use standard active_cache macros
 
 * tr/http-push-ref-status (2010-01-08) 6 commits
  - transport-helper.c::push_refs(): emit "no refs" error message
