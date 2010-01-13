@@ -550,6 +550,8 @@ static int same(struct cache_entry *a, struct cache_entry *b)
 		return 0;
 	if (!a && !b)
 		return 1;
+	if ((a->ce_flags | b->ce_flags) & CE_CONFLICTED)
+		return 0;
 	return a->ce_mode == b->ce_mode &&
 	       !hashcmp(a->sha1, b->sha1);
 }
@@ -809,7 +811,11 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 {
 	int update = CE_UPDATE;
 
-	if (old) {
+	if (!old) {
+		if (verify_absent(merge, "overwritten", o))
+			return -1;
+		invalidate_ce_path(merge, o);
+	} else if (!(old->ce_flags & CE_CONFLICTED)) {
 		/*
 		 * See if we can re-use the old CE directly?
 		 * That way we get the uptodate stat info.
@@ -827,11 +833,12 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 				update |= CE_SKIP_WORKTREE;
 			invalidate_ce_path(old, o);
 		}
-	}
-	else {
-		if (verify_absent(merge, "overwritten", o))
-			return -1;
-		invalidate_ce_path(merge, o);
+	} else {
+		/*
+		 * Previously unmerged entry left as an existence
+		 * marker by read_index_unmerged();
+		 */
+		invalidate_ce_path(old, o);
 	}
 
 	add_entry(o, merge, update, CE_STAGEMASK);
@@ -847,7 +854,7 @@ static int deleted_entry(struct cache_entry *ce, struct cache_entry *old,
 			return -1;
 		return 0;
 	}
-	if (verify_uptodate(old, o))
+	if (!(old->ce_flags & CE_CONFLICTED) && verify_uptodate(old, o))
 		return -1;
 	add_entry(o, ce, CE_REMOVE, 0);
 	invalidate_ce_path(ce, o);
