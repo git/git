@@ -4,6 +4,15 @@
 #include "cache.h"
 #include "remote.h"
 
+struct git_transport_options {
+	unsigned thin : 1;
+	unsigned keep : 1;
+	unsigned followtags : 1;
+	int depth;
+	const char *uploadpack;
+	const char *receivepack;
+};
+
 struct transport {
 	struct remote *remote;
 	const char *url;
@@ -55,6 +64,8 @@ struct transport {
 	 **/
 	int (*push_refs)(struct transport *transport, struct ref *refs, int flags);
 	int (*push)(struct transport *connection, int refspec_nr, const char **refspec, int flags);
+	int (*connect)(struct transport *connection, const char *name,
+		       const char *executable, int fd[2]);
 
 	/** get_refs_list(), fetch(), and push_refs() can keep
 	 * resources (such as a connection) reserved for futher
@@ -65,6 +76,12 @@ struct transport {
 	signed verbose : 3;
 	/* Force progress even if the output is not a tty */
 	unsigned progress : 1;
+	/*
+	 * If transport is at least potentially smart, this points to
+	 * git_transport_options structure to use in case transport
+	 * actually turns out to be smart.
+	 */
+	struct git_transport_options *smart_options;
 };
 
 #define TRANSPORT_PUSH_ALL 1
@@ -115,6 +132,11 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs);
 void transport_unlock_pack(struct transport *transport);
 int transport_disconnect(struct transport *transport);
 char *transport_anonymize_url(const char *url);
+void transport_take_over(struct transport *transport,
+			 struct child_process *child);
+
+int transport_connect(struct transport *transport, const char *name,
+		      const char *exec, int fd[2]);
 
 /* Transport methods defined outside transport.c */
 int transport_helper_init(struct transport *transport, const char *name);

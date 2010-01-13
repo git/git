@@ -8,6 +8,8 @@
 #include "quote.h"
 #include "remote.h"
 
+static int debug;
+
 struct helper_data
 {
 	const char *name;
@@ -16,11 +18,80 @@ struct helper_data
 	unsigned fetch : 1,
 		import : 1,
 		option : 1,
-		push : 1;
+		push : 1,
+		connect : 1,
+		no_disconnect_req : 1;
 	/* These go from remote name (as in "list") to private name */
 	struct refspec *refspecs;
 	int refspec_nr;
+	/* Transport options for fetch-pack/send-pack (should one of
+	 * those be invoked).
+	 */
+	struct git_transport_options transport_options;
 };
+
+static void sendline(struct helper_data *helper, struct strbuf *buffer)
+{
+	if (debug)
+		fprintf(stderr, "Debug: Remote helper: -> %s", buffer->buf);
+	if (write_in_full(helper->helper->in, buffer->buf, buffer->len)
+		!= buffer->len)
+		die_errno("Full write to remote helper failed");
+}
+
+static int recvline_fh(FILE *helper, struct strbuf *buffer)
+{
+	strbuf_reset(buffer);
+	if (debug)
+		fprintf(stderr, "Debug: Remote helper: Waiting...\n");
+	if (strbuf_getline(buffer, helper, '\n') == EOF) {
+		if (debug)
+			fprintf(stderr, "Debug: Remote helper quit.\n");
+		exit(128);
+	}
+
+	if (debug)
+		fprintf(stderr, "Debug: Remote helper: <- %s\n", buffer->buf);
+	return 0;
+}
+
+static int recvline(struct helper_data *helper, struct strbuf *buffer)
+{
+	return recvline_fh(helper->out, buffer);
+}
+
+static void xchgline(struct helper_data *helper, struct strbuf *buffer)
+{
+	sendline(helper, buffer);
+	recvline(helper, buffer);
+}
+
+static void write_constant(int fd, const char *str)
+{
+	if (debug)
+		fprintf(stderr, "Debug: Remote helper: -> %s", str);
+	if (write_in_full(fd, str, strlen(str)) != strlen(str))
+		die_errno("Full write to remote helper failed");
+}
+
+const char *remove_ext_force(const char *url)
+{
+	if (url) {
+		const char *colon = strchr(url, ':');
+		if (colon && colon[1] == ':')
+			return colon + 2;
+	}
+	return url;
+}
+
+static void do_take_over(struct transport *transport)
+{
+	struct helper_data *data;
+	data = (struct helper_data *)transport->data;
+	transport_take_over(transport, data->helper);
+	fclose(data->out);
+	free(data);
+}
 
 static struct child_process *get_helper(struct transport *transport)
 {
@@ -30,6 +101,7 @@ static struct child_process *get_helper(struct transport *transport)
 	const char **refspecs = NULL;
 	int refspec_nr = 0;
 	int refspec_alloc = 0;
+	int duped;
 
 	if (data->helper)
 		return data->helper;
@@ -42,34 +114,60 @@ static struct child_process *get_helper(struct transport *transport)
 	strbuf_addf(&buf, "remote-%s", data->name);
 	helper->argv[0] = strbuf_detach(&buf, NULL);
 	helper->argv[1] = transport->remote->name;
-	helper->argv[2] = transport->url;
+	helper->argv[2] = remove_ext_force(transport->url);
 	helper->git_cmd = 1;
 	if (start_command(helper))
 		die("Unable to run helper: git %s", helper->argv[0]);
 	data->helper = helper;
+	data->no_disconnect_req = 0;
 
-	write_str_in_full(helper->in, "capabilities\n");
+	/*
+	 * Open the output as FILE* so strbuf_getline() can be used.
+	 * Do this with duped fd because fclose() will close the fd,
+	 * and stuff like taking over will require the fd to remain.
+	 */
+	duped = dup(helper->out);
+	if (duped < 0)
+		die_errno("Can't dup helper output fd");
+	data->out = xfdopen(duped, "r");
 
-	data->out = xfdopen(helper->out, "r");
+	write_constant(helper->in, "capabilities\n");
+
 	while (1) {
-		if (strbuf_getline(&buf, data->out, '\n') == EOF)
-			exit(128); /* child died, message supplied already */
+		const char *capname;
+		int mandatory = 0;
+		recvline(data, &buf);
 
 		if (!*buf.buf)
 			break;
-		if (!strcmp(buf.buf, "fetch"))
+
+		if (*buf.buf == '*') {
+			capname = buf.buf + 1;
+			mandatory = 1;
+		} else
+			capname = buf.buf;
+
+		if (debug)
+			fprintf(stderr, "Debug: Got cap %s\n", capname);
+		if (!strcmp(capname, "fetch"))
 			data->fetch = 1;
-		if (!strcmp(buf.buf, "option"))
+		else if (!strcmp(capname, "option"))
 			data->option = 1;
-		if (!strcmp(buf.buf, "push"))
+		else if (!strcmp(capname, "push"))
 			data->push = 1;
-		if (!strcmp(buf.buf, "import"))
+		else if (!strcmp(capname, "import"))
 			data->import = 1;
-		if (!data->refspecs && !prefixcmp(buf.buf, "refspec ")) {
+		else if (!data->refspecs && !prefixcmp(capname, "refspec ")) {
 			ALLOC_GROW(refspecs,
 				   refspec_nr + 1,
 				   refspec_alloc);
 			refspecs[refspec_nr++] = strdup(buf.buf + strlen("refspec "));
+		} else if (!strcmp(capname, "connect")) {
+			data->connect = 1;
+		} else if (mandatory) {
+			die("Unknown madatory capability %s. This remote "
+			    "helper probably needs newer version of Git.\n",
+			    capname);
 		}
 	}
 	if (refspecs) {
@@ -82,15 +180,25 @@ static struct child_process *get_helper(struct transport *transport)
 		free(refspecs);
 	}
 	strbuf_release(&buf);
+	if (debug)
+		fprintf(stderr, "Debug: Capabilities complete.\n");
 	return data->helper;
 }
 
 static int disconnect_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
+	struct strbuf buf = STRBUF_INIT;
+
 	if (data->helper) {
-		write_str_in_full(data->helper->in, "\n");
+		if (debug)
+			fprintf(stderr, "Debug: Disconnecting.\n");
+		if (!data->no_disconnect_req) {
+			strbuf_addf(&buf, "\n");
+			sendline(data, &buf);
+		}
 		close(data->helper->in);
+		close(data->helper->out);
 		fclose(data->out);
 		finish_command(data->helper);
 		free((char *)data->helper->argv[0]);
@@ -117,9 +225,10 @@ static int set_helper_option(struct transport *transport,
 			  const char *name, const char *value)
 {
 	struct helper_data *data = transport->data;
-	struct child_process *helper = get_helper(transport);
 	struct strbuf buf = STRBUF_INIT;
 	int i, ret, is_bool = 0;
+
+	get_helper(transport);
 
 	if (!data->option)
 		return 1;
@@ -143,12 +252,7 @@ static int set_helper_option(struct transport *transport,
 		quote_c_style(value, &buf, NULL, 0);
 	strbuf_addch(&buf, '\n');
 
-	if (write_in_full(helper->in, buf.buf, buf.len) != buf.len)
-		die_errno("cannot send option to %s", data->name);
-
-	strbuf_reset(&buf);
-	if (strbuf_getline(&buf, data->out, '\n') == EOF)
-		exit(128); /* child died, message supplied already */
+	xchgline(data, &buf);
 
 	if (!strcmp(buf.buf, "ok"))
 		ret = 0;
@@ -208,13 +312,10 @@ static int fetch_with_fetch(struct transport *transport,
 	}
 
 	strbuf_addch(&buf, '\n');
-	if (write_in_full(data->helper->in, buf.buf, buf.len) != buf.len)
-		die_errno("cannot send fetch to %s", data->name);
+	sendline(data, &buf);
 
 	while (1) {
-		strbuf_reset(&buf);
-		if (strbuf_getline(&buf, data->out, '\n') == EOF)
-			exit(128); /* child died, message supplied already */
+		recvline(data, &buf);
 
 		if (!prefixcmp(buf.buf, "lock ")) {
 			const char *name = buf.buf + 5;
@@ -249,11 +350,12 @@ static int fetch_with_import(struct transport *transport,
 			     int nr_heads, struct ref **to_fetch)
 {
 	struct child_process fastimport;
-	struct child_process *helper = get_helper(transport);
 	struct helper_data *data = transport->data;
 	int i;
 	struct ref *posn;
 	struct strbuf buf = STRBUF_INIT;
+
+	get_helper(transport);
 
 	if (get_importer(transport, &fastimport))
 		die("Couldn't run fast-import");
@@ -264,7 +366,7 @@ static int fetch_with_import(struct transport *transport,
 			continue;
 
 		strbuf_addf(&buf, "import %s\n", posn->name);
-		write_in_full(helper->in, buf.buf, buf.len);
+		sendline(data, &buf);
 		strbuf_reset(&buf);
 	}
 	disconnect_helper(transport);
@@ -288,11 +390,111 @@ static int fetch_with_import(struct transport *transport,
 	return 0;
 }
 
+static int process_connect_service(struct transport *transport,
+				   const char *name, const char *exec)
+{
+	struct helper_data *data = transport->data;
+	struct strbuf cmdbuf = STRBUF_INIT;
+	struct child_process *helper;
+	int r, duped, ret = 0;
+	FILE *input;
+
+	helper = get_helper(transport);
+
+	/*
+	 * Yes, dup the pipe another time, as we need unbuffered version
+	 * of input pipe as FILE*. fclose() closes the underlying fd and
+	 * stream buffering only can be changed before first I/O operation
+	 * on it.
+	 */
+	duped = dup(helper->out);
+	if (duped < 0)
+		die_errno("Can't dup helper output fd");
+	input = xfdopen(duped, "r");
+	setvbuf(input, NULL, _IONBF, 0);
+
+	/*
+	 * Handle --upload-pack and friends. This is fire and forget...
+	 * just warn if it fails.
+	 */
+	if (strcmp(name, exec)) {
+		r = set_helper_option(transport, "servpath", exec);
+		if (r > 0)
+			warning("Setting remote service path not supported by protocol.");
+		else if (r < 0)
+			warning("Invalid remote service path.");
+	}
+
+	if (data->connect)
+		strbuf_addf(&cmdbuf, "connect %s\n", name);
+	else
+		goto exit;
+
+	sendline(data, &cmdbuf);
+	recvline_fh(input, &cmdbuf);
+	if (!strcmp(cmdbuf.buf, "")) {
+		data->no_disconnect_req = 1;
+		if (debug)
+			fprintf(stderr, "Debug: Smart transport connection "
+				"ready.\n");
+		ret = 1;
+	} else if (!strcmp(cmdbuf.buf, "fallback")) {
+		if (debug)
+			fprintf(stderr, "Debug: Falling back to dumb "
+				"transport.\n");
+	} else
+		die("Unknown response to connect: %s",
+			cmdbuf.buf);
+
+exit:
+	fclose(input);
+	return ret;
+}
+
+static int process_connect(struct transport *transport,
+				     int for_push)
+{
+	struct helper_data *data = transport->data;
+	const char *name;
+	const char *exec;
+
+	name = for_push ? "git-receive-pack" : "git-upload-pack";
+	if (for_push)
+		exec = data->transport_options.receivepack;
+	else
+		exec = data->transport_options.uploadpack;
+
+	return process_connect_service(transport, name, exec);
+}
+
+static int connect_helper(struct transport *transport, const char *name,
+		   const char *exec, int fd[2])
+{
+	struct helper_data *data = transport->data;
+
+	/* Get_helper so connect is inited. */
+	get_helper(transport);
+	if (!data->connect)
+		die("Operation not supported by protocol.");
+
+	if (!process_connect_service(transport, name, exec))
+		die("Can't connect to subservice %s.", name);
+
+	fd[0] = data->helper->out;
+	fd[1] = data->helper->in;
+	return 0;
+}
+
 static int fetch(struct transport *transport,
 		 int nr_heads, struct ref **to_fetch)
 {
 	struct helper_data *data = transport->data;
 	int i, count;
+
+	if (process_connect(transport, 0)) {
+		do_take_over(transport);
+		return transport->fetch(transport, nr_heads, to_fetch);
+	}
 
 	count = 0;
 	for (i = 0; i < nr_heads; i++)
@@ -320,6 +522,11 @@ static int push_refs(struct transport *transport,
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process *helper;
 	struct ref *ref;
+
+	if (process_connect(transport, 1)) {
+		do_take_over(transport);
+		return transport->push_refs(transport, remote_refs, flags);
+	}
 
 	if (!remote_refs)
 		return 0;
@@ -369,17 +576,14 @@ static int push_refs(struct transport *transport,
 	}
 
 	strbuf_addch(&buf, '\n');
-	if (write_in_full(helper->in, buf.buf, buf.len) != buf.len)
-		exit(128);
+	sendline(data, &buf);
 
 	ref = remote_refs;
 	while (1) {
 		char *refname, *msg;
 		int status;
 
-		strbuf_reset(&buf);
-		if (strbuf_getline(&buf, data->out, '\n') == EOF)
-			exit(128); /* child died, message supplied already */
+		recvline(data, &buf);
 		if (!buf.len)
 			break;
 
@@ -464,6 +668,11 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 
 	helper = get_helper(transport);
 
+	if (process_connect(transport, for_push)) {
+		do_take_over(transport);
+		return transport->get_refs_list(transport, for_push);
+	}
+
 	if (data->push && for_push)
 		write_str_in_full(helper->in, "list for-push\n");
 	else
@@ -471,8 +680,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 
 	while (1) {
 		char *eov, *eon;
-		if (strbuf_getline(&buf, data->out, '\n') == EOF)
-			exit(128); /* child died, message supplied already */
+		recvline(data, &buf);
 
 		if (!*buf.buf)
 			break;
@@ -497,6 +705,8 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 		}
 		tail = &((*tail)->next);
 	}
+	if (debug)
+		fprintf(stderr, "Debug: Read ref listing.\n");
 	strbuf_release(&buf);
 
 	for (posn = ret; posn; posn = posn->next)
@@ -510,11 +720,16 @@ int transport_helper_init(struct transport *transport, const char *name)
 	struct helper_data *data = xcalloc(sizeof(*data), 1);
 	data->name = name;
 
+	if (getenv("GIT_TRANSPORT_HELPER_DEBUG"))
+		debug = 1;
+
 	transport->data = data;
 	transport->set_option = set_helper_option;
 	transport->get_refs_list = get_refs_list;
 	transport->fetch = fetch;
 	transport->push_refs = push_refs;
 	transport->disconnect = release_helper;
+	transport->connect = connect_helper;
+	transport->smart_options = &(data->transport_options);
 	return 0;
 }
