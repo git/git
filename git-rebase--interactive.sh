@@ -408,6 +408,21 @@ peek_next_command () {
 	sed -n -e "/^#/d" -e "/^$/d" -e "s/ .*//p" -e "q" < "$TODO"
 }
 
+# A squash/fixup has failed.  Prepare the long version of the squash
+# commit message, then die_with_patch.  This code path requires the
+# user to edit the combined commit message for all commits that have
+# been squashed/fixedup so far.  So also erase the old squash
+# messages, effectively causing the combined commit to be used as the
+# new basis for any further squash/fixups.  Args: sha1 rest
+die_failed_squash() {
+	mv "$SQUASH_MSG" "$MSG" || exit
+	rm -f "$FIXUP_MSG"
+	cp "$MSG" "$GIT_DIR"/MERGE_MSG || exit
+	warn
+	warn "Could not apply $1... $2"
+	die_with_patch $1 ""
+}
+
 do_next () {
 	rm -f "$MSG" "$AUTHOR_SCRIPT" "$AMEND" || exit
 	read command sha1 rest < "$TODO"
@@ -465,58 +480,31 @@ do_next () {
 
 		mark_action_done
 		update_squash_messages $squash_style $sha1
-		failed=f
 		author_script=$(get_author_ident_from_commit HEAD)
 		echo "$author_script" > "$AUTHOR_SCRIPT"
 		eval "$author_script"
 		output git reset --soft HEAD^
-		pick_one -n $sha1 || failed=t
+		pick_one -n $sha1 || die_failed_squash $sha1 "$rest"
 		case "$(peek_next_command)" in
 		squash|s|fixup|f)
 			# This is an intermediate commit; its message will only be
 			# used in case of trouble.  So use the long version:
-			if test $failed = f
-			then
-				do_with_author output git commit --no-verify -F "$SQUASH_MSG" ||
-					failed=t
-			fi
-			if test $failed = t
-			then
-				cp "$SQUASH_MSG" "$MSG" || exit
-				# After any kind of hiccup, prevent committing without
-				# opening the commit message editor:
-				rm -f "$FIXUP_MSG"
-				cp "$MSG" "$GIT_DIR"/MERGE_MSG || exit
-				warn
-				warn "Could not apply $sha1... $rest"
-				die_with_patch $sha1 ""
-			fi
+			do_with_author output git commit --no-verify -F "$SQUASH_MSG" ||
+				die_failed_squash $sha1 "$rest"
 			;;
 		*)
 			# This is the final command of this squash/fixup group
-			if test $failed = f
+			if test -f "$FIXUP_MSG"
 			then
-				if test -f "$FIXUP_MSG"
-				then
-					do_with_author git commit --no-verify -F "$FIXUP_MSG" ||
-						failed=t
-				else
-					cp "$SQUASH_MSG" "$GIT_DIR"/SQUASH_MSG || exit
-					rm -f "$GIT_DIR"/MERGE_MSG
-					do_with_author git commit --no-verify -e ||
-						failed=t
-				fi
+				do_with_author git commit --no-verify -F "$FIXUP_MSG" ||
+					die_failed_squash $sha1 "$rest"
+			else
+				cp "$SQUASH_MSG" "$GIT_DIR"/SQUASH_MSG || exit
+				rm -f "$GIT_DIR"/MERGE_MSG
+				do_with_author git commit --no-verify -e ||
+					die_failed_squash $sha1 "$rest"
 			fi
-			rm -f "$FIXUP_MSG"
-			if test $failed = t
-			then
-				mv "$SQUASH_MSG" "$MSG" || exit
-				cp "$MSG" "$GIT_DIR"/MERGE_MSG || exit
-				warn
-				warn "Could not apply $sha1... $rest"
-				die_with_patch $sha1 ""
-			fi
-			rm -f "$SQUASH_MSG"
+			rm -f "$SQUASH_MSG" "$FIXUP_MSG"
 			;;
 		esac
 		;;

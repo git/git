@@ -264,6 +264,42 @@ test_expect_success 'multi-fixup does not fire up editor' '
 	git branch -D multi-fixup
 '
 
+test_expect_success 'commit message used after conflict' '
+	git checkout -b conflict-fixup conflict-branch &&
+	base=$(git rev-parse HEAD~4) &&
+	(
+		FAKE_LINES="1 fixup 3 fixup 4" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i $base
+	) &&
+	echo three > conflict &&
+	git add conflict &&
+	FAKE_COMMIT_AMEND="ONCE" EXPECT_HEADER_COUNT=2 \
+		git rebase --continue &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 1 = $(git show | grep ONCE | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D conflict-fixup
+'
+
+test_expect_success 'commit message retained after conflict' '
+	git checkout -b conflict-squash conflict-branch &&
+	base=$(git rev-parse HEAD~4) &&
+	(
+		FAKE_LINES="1 fixup 3 squash 4" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i $base
+	) &&
+	echo three > conflict &&
+	git add conflict &&
+	FAKE_COMMIT_AMEND="TWICE" EXPECT_HEADER_COUNT=2 \
+		git rebase --continue &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 2 = $(git show | grep TWICE | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D conflict-squash
+'
+
 cat > expect-squash-fixup << EOF
 B
 
