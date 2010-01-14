@@ -2,9 +2,10 @@
 
 # After setting the fake editor with this function, you can
 #
-# - override the commit message with $FAKE_COMMIT_MESSAGE,
+# - override the commit message with $FAKE_COMMIT_MESSAGE
 # - amend the commit message with $FAKE_COMMIT_AMEND
 # - check that non-commit messages have a certain line count with $EXPECT_COUNT
+# - check the commit count in the commit message header with $EXPECT_HEADER_COUNT
 # - rewrite a rebase -i script as directed by $FAKE_LINES.
 #   $FAKE_LINES consists of a sequence of words separated by spaces.
 #   The following word combinations are possible:
@@ -25,6 +26,9 @@ set_fake_editor () {
 	cat >> fake-editor.sh <<\EOF
 case "$1" in
 */COMMIT_EDITMSG)
+	test -z "$EXPECT_HEADER_COUNT" ||
+		test "$EXPECT_HEADER_COUNT" = $(sed -n '1s/^# This is a combination of \(.*\) commits\./\1/p' < "$1") ||
+		exit
 	test -z "$FAKE_COMMIT_MESSAGE" || echo "$FAKE_COMMIT_MESSAGE" > "$1"
 	test -z "$FAKE_COMMIT_AMEND" || echo "$FAKE_COMMIT_AMEND" >> "$1"
 	exit

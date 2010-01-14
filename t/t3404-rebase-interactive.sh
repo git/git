@@ -135,7 +135,8 @@ test_expect_success 'squash' '
 	test_tick &&
 	GIT_AUTHOR_NAME="Nitfol" git commit -m "nitfol" file7 &&
 	echo "******************************" &&
-	FAKE_LINES="1 squash 2" git rebase -i --onto master HEAD~2 &&
+	FAKE_LINES="1 squash 2" EXPECT_HEADER_COUNT=two \
+		git rebase -i --onto master HEAD~2 &&
 	test B = $(cat file7) &&
 	test $(git rev-parse HEAD^) = $(git rev-parse master)
 '
@@ -230,6 +231,7 @@ test_expect_success 'verbose flag is heeded, even after --continue' '
 test_expect_success 'multi-squash only fires up editor once' '
 	base=$(git rev-parse HEAD~4) &&
 	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 squash 2 squash 3 squash 4" \
+		EXPECT_HEADER_COUNT=4 \
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l)
@@ -239,6 +241,7 @@ test_expect_success 'multi-fixup only fires up editor once' '
 	git checkout -b multi-fixup E &&
 	base=$(git rev-parse HEAD~4) &&
 	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 fixup 2 fixup 3 fixup 4" \
+		EXPECT_HEADER_COUNT=4 \
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
@@ -258,6 +261,7 @@ test_expect_success 'squash and fixup generate correct log messages' '
 	git checkout -b squash-fixup E &&
 	base=$(git rev-parse HEAD~4) &&
 	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 fixup 2 squash 3 fixup 4" \
+		EXPECT_HEADER_COUNT=4 \
 		git rebase -i $base &&
 	git cat-file commit HEAD | sed -e 1,/^\$/d > actual-squash-fixup &&
 	test_cmp expect-squash-fixup actual-squash-fixup &&
@@ -297,7 +301,8 @@ test_expect_success 'squash works as expected' '
 		git commit -m $n
 	done &&
 	one=$(git rev-parse HEAD~3) &&
-	FAKE_LINES="1 squash 3 2" git rebase -i HEAD~3 &&
+	FAKE_LINES="1 squash 3 2" EXPECT_HEADER_COUNT=two \
+		git rebase -i HEAD~3 &&
 	test $one = $(git rev-parse HEAD~2)
 '
 
