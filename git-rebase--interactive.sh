@@ -74,6 +74,12 @@ SQUASH_MSG="$DOTEST"/message-squash
 REWRITTEN="$DOTEST"/rewritten
 
 DROPPED="$DOTEST"/dropped
+
+# A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
+# GIT_AUTHOR_DATE that will be used for the commit that is currently
+# being rebased.
+AUTHOR_SCRIPT="$DOTEST"/author-script
+
 PRESERVE_MERGES=
 STRATEGY=
 ONTO=
@@ -165,8 +171,8 @@ make_patch () {
 	esac > "$DOTEST"/patch
 	test -f "$MSG" ||
 		git cat-file commit "$1" | sed "1,/^$/d" > "$MSG"
-	test -f "$DOTEST"/author-script ||
-		get_author_ident_from_commit "$1" > "$DOTEST"/author-script
+	test -f "$AUTHOR_SCRIPT" ||
+		get_author_ident_from_commit "$1" > "$AUTHOR_SCRIPT"
 }
 
 die_with_patch () {
@@ -375,8 +381,7 @@ peek_next_command () {
 }
 
 do_next () {
-	rm -f "$MSG" "$DOTEST"/author-script \
-		"$DOTEST"/amend || exit
+	rm -f "$MSG" "$AUTHOR_SCRIPT" "$DOTEST"/amend || exit
 	read command sha1 rest < "$TODO"
 	case "$command" in
 	'#'*|''|noop)
@@ -452,7 +457,7 @@ do_next () {
 			rm -f "$GIT_DIR"/MERGE_MSG || exit
 			;;
 		esac
-		echo "$author_script" > "$DOTEST"/author-script
+		echo "$author_script" > "$AUTHOR_SCRIPT"
 		if test $failed = f
 		then
 			# This is like --amend, but with a different message
@@ -579,7 +584,7 @@ do
 		then
 			: Nothing to commit -- skip this
 		else
-			. "$DOTEST"/author-script ||
+			. "$AUTHOR_SCRIPT" ||
 				die "Cannot find the author identity"
 			amend=
 			if test -f "$DOTEST"/amend
