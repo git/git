@@ -259,12 +259,17 @@ int ie_match_stat(const struct index_state *istate,
 {
 	unsigned int changed;
 	int ignore_valid = options & CE_MATCH_IGNORE_VALID;
+	int ignore_skip_worktree = options & CE_MATCH_IGNORE_SKIP_WORKTREE;
 	int assume_racy_is_modified = options & CE_MATCH_RACY_IS_DIRTY;
 
 	/*
 	 * If it's marked as always valid in the index, it's
 	 * valid whatever the checked-out copy says.
+	 *
+	 * skip-worktree has the same effect with higher precedence
 	 */
+	if (!ignore_skip_worktree && ce_skip_worktree(ce))
+		return 0;
 	if (!ignore_valid && (ce->ce_flags & CE_VALID))
 		return 0;
 
@@ -564,7 +569,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	int size, namelen, was_same;
 	mode_t st_mode = st->st_mode;
 	struct cache_entry *ce, *alias;
-	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_RACY_IS_DIRTY;
+	unsigned ce_option = CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE|CE_MATCH_RACY_IS_DIRTY;
 	int verbose = flags & (ADD_CACHE_VERBOSE | ADD_CACHE_PRETEND);
 	int pretend = flags & ADD_CACHE_PRETEND;
 	int intent_only = flags & ADD_CACHE_INTENT;
@@ -1000,14 +1005,20 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	struct cache_entry *updated;
 	int changed, size;
 	int ignore_valid = options & CE_MATCH_IGNORE_VALID;
+	int ignore_skip_worktree = options & CE_MATCH_IGNORE_SKIP_WORKTREE;
 
 	if (ce_uptodate(ce))
 		return ce;
 
 	/*
-	 * CE_VALID means the user promised us that the change to
-	 * the work tree does not matter and told us not to worry.
+	 * CE_VALID or CE_SKIP_WORKTREE means the user promised us
+	 * that the change to the work tree does not matter and told
+	 * us not to worry.
 	 */
+	if (!ignore_skip_worktree && ce_skip_worktree(ce)) {
+		ce_mark_uptodate(ce);
+		return ce;
+	}
 	if (!ignore_valid && (ce->ce_flags & CE_VALID)) {
 		ce_mark_uptodate(ce);
 		return ce;
@@ -1606,9 +1617,8 @@ int read_index_unmerged(struct index_state *istate)
 		len = strlen(ce->name);
 		size = cache_entry_size(len);
 		new_ce = xcalloc(1, size);
-		hashcpy(new_ce->sha1, ce->sha1);
 		memcpy(new_ce->name, ce->name, len);
-		new_ce->ce_flags = create_ce_flags(len, 0);
+		new_ce->ce_flags = create_ce_flags(len, 0) | CE_CONFLICTED;
 		new_ce->ce_mode = ce->ce_mode;
 		if (add_index_entry(istate, new_ce, 0))
 			return error("%s: cannot drop to stage #0",

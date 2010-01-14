@@ -200,11 +200,35 @@ void add_exclude(const char *string, const char *base,
 	which->excludes[which->nr++] = x;
 }
 
-static int add_excludes_from_file_1(const char *fname,
-				    const char *base,
-				    int baselen,
-				    char **buf_p,
-				    struct exclude_list *which)
+static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
+{
+	int pos, len;
+	unsigned long sz;
+	enum object_type type;
+	void *data;
+	struct index_state *istate = &the_index;
+
+	len = strlen(path);
+	pos = index_name_pos(istate, path, len);
+	if (pos < 0)
+		return NULL;
+	if (!ce_skip_worktree(istate->cache[pos]))
+		return NULL;
+	data = read_sha1_file(istate->cache[pos]->sha1, &type, &sz);
+	if (!data || type != OBJ_BLOB) {
+		free(data);
+		return NULL;
+	}
+	*size = xsize_t(sz);
+	return data;
+}
+
+int add_excludes_from_file_to_list(const char *fname,
+				   const char *base,
+				   int baselen,
+				   char **buf_p,
+				   struct exclude_list *which,
+				   int check_index)
 {
 	struct stat st;
 	int fd, i;
@@ -212,27 +236,32 @@ static int add_excludes_from_file_1(const char *fname,
 	char *buf, *entry;
 
 	fd = open(fname, O_RDONLY);
-	if (fd < 0 || fstat(fd, &st) < 0)
-		goto err;
-	size = xsize_t(st.st_size);
-	if (size == 0) {
+	if (fd < 0 || fstat(fd, &st) < 0) {
+		if (0 <= fd)
+			close(fd);
+		if (!check_index ||
+		    (buf = read_skip_worktree_file_from_index(fname, &size)) == NULL)
+			return -1;
+	}
+	else {
+		size = xsize_t(st.st_size);
+		if (size == 0) {
+			close(fd);
+			return 0;
+		}
+		buf = xmalloc(size);
+		if (read_in_full(fd, buf, size) != size) {
+			close(fd);
+			return -1;
+		}
 		close(fd);
-		return 0;
 	}
-	buf = xmalloc(size+1);
-	if (read_in_full(fd, buf, size) != size)
-	{
-		free(buf);
-		goto err;
-	}
-	close(fd);
 
 	if (buf_p)
 		*buf_p = buf;
-	buf[size++] = '\n';
 	entry = buf;
-	for (i = 0; i < size; i++) {
-		if (buf[i] == '\n') {
+	for (i = 0; i <= size; i++) {
+		if (i == size || buf[i] == '\n') {
 			if (entry != buf + i && entry[0] != '#') {
 				buf[i - (i && buf[i-1] == '\r')] = 0;
 				add_exclude(entry, base, baselen, which);
@@ -241,17 +270,12 @@ static int add_excludes_from_file_1(const char *fname,
 		}
 	}
 	return 0;
-
- err:
-	if (0 <= fd)
-		close(fd);
-	return -1;
 }
 
 void add_excludes_from_file(struct dir_struct *dir, const char *fname)
 {
-	if (add_excludes_from_file_1(fname, "", 0, NULL,
-				     &dir->exclude_list[EXC_FILE]) < 0)
+	if (add_excludes_from_file_to_list(fname, "", 0, NULL,
+					   &dir->exclude_list[EXC_FILE], 0) < 0)
 		die("cannot use %s as an exclude file", fname);
 }
 
@@ -300,9 +324,9 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 		memcpy(dir->basebuf + current, base + current,
 		       stk->baselen - current);
 		strcpy(dir->basebuf + stk->baselen, dir->exclude_per_dir);
-		add_excludes_from_file_1(dir->basebuf,
-					 dir->basebuf, stk->baselen,
-					 &stk->filebuf, el);
+		add_excludes_from_file_to_list(dir->basebuf,
+					       dir->basebuf, stk->baselen,
+					       &stk->filebuf, el, 1);
 		dir->exclude_stack = stk;
 		current = stk->baselen;
 	}
@@ -312,9 +336,9 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 /* Scan the list and let the last match determine the fate.
  * Return 1 for exclude, 0 for include and -1 for undecided.
  */
-static int excluded_1(const char *pathname,
-		      int pathlen, const char *basename, int *dtype,
-		      struct exclude_list *el)
+int excluded_from_list(const char *pathname,
+		       int pathlen, const char *basename, int *dtype,
+		       struct exclude_list *el)
 {
 	int i;
 
@@ -325,6 +349,12 @@ static int excluded_1(const char *pathname,
 			int to_exclude = x->to_exclude;
 
 			if (x->flags & EXC_FLAG_MUSTBEDIR) {
+				if (!dtype) {
+					if (!prefixcmp(pathname, exclude))
+						return to_exclude;
+					else
+						continue;
+				}
 				if (*dtype == DT_UNKNOWN)
 					*dtype = get_dtype(NULL, pathname, pathlen);
 				if (*dtype != DT_DIR)
@@ -382,8 +412,8 @@ int excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
 
 	prep_exclude(dir, pathname, basename-pathname);
 	for (st = EXC_CMDL; st <= EXC_FILE; st++) {
-		switch (excluded_1(pathname, pathlen, basename,
-				   dtype_p, &dir->exclude_list[st])) {
+		switch (excluded_from_list(pathname, pathlen, basename,
+					   dtype_p, &dir->exclude_list[st])) {
 		case 0:
 			return 0;
 		case 1:

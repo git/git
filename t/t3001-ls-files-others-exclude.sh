@@ -64,6 +64,8 @@ two/*.4
 echo '!*.2
 !*.8' >one/two/.gitignore
 
+allignores='.gitignore one/.gitignore one/two/.gitignore'
+
 test_expect_success \
     'git ls-files --others with various exclude options.' \
     'git ls-files --others \
@@ -84,6 +86,26 @@ test_expect_success \
        --exclude-from=.git/ignore \
        >output &&
      test_cmp expect output'
+
+test_expect_success 'setup skip-worktree gitignore' '
+	git add $allignores &&
+	git update-index --skip-worktree $allignores &&
+	rm $allignores
+'
+
+test_expect_success \
+    'git ls-files --others with various exclude options.' \
+    'git ls-files --others \
+       --exclude=\*.6 \
+       --exclude-per-directory=.gitignore \
+       --exclude-from=.git/ignore \
+       >output &&
+     test_cmp expect output'
+
+test_expect_success 'restore gitignore' '
+	git checkout $allignores &&
+	rm .git/index
+'
 
 cat > excludes-file <<\EOF
 *.[1-8]

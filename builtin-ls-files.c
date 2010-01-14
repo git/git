@@ -37,6 +37,7 @@ static const char *tag_removed = "";
 static const char *tag_other = "";
 static const char *tag_killed = "";
 static const char *tag_modified = "";
+static const char *tag_skip_worktree = "";
 
 static void show_dir_entry(const char *tag, struct dir_entry *ent)
 {
@@ -178,7 +179,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
-			show_ce_entry(ce_stage(ce) ? tag_unmerged : tag_cached, ce);
+			show_ce_entry(ce_stage(ce) ? tag_unmerged :
+				(ce_skip_worktree(ce) ? tag_skip_worktree : tag_cached), ce);
 		}
 	}
 	if (show_deleted | show_modified) {
@@ -191,6 +193,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 			    !excluded(dir, ce->name, &dtype))
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
+				continue;
+			if (ce_skip_worktree(ce))
 				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
@@ -481,6 +485,9 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		prefix_offset = strlen(prefix);
 	git_config(git_default_config, NULL);
 
+	if (read_cache() < 0)
+		die("index file corrupt");
+
 	argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
 			ls_files_usage, 0);
 	if (show_tag || show_valid_bit) {
@@ -490,6 +497,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		tag_modified = "C ";
 		tag_other = "? ";
 		tag_killed = "K ";
+		tag_skip_worktree = "S ";
 	}
 	if (show_modified || show_others || show_deleted || (dir.flags & DIR_SHOW_IGNORED) || show_killed)
 		require_work_tree = 1;
@@ -508,7 +516,6 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 	pathspec = get_pathspec(prefix, argv);
 
 	/* be nice with submodule paths ending in a slash */
-	read_cache();
 	if (pathspec)
 		strip_trailing_slash_from_submodules();
 

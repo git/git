@@ -4,6 +4,7 @@
 #define MAX_UNPACK_TREES 8
 
 struct unpack_trees_options;
+struct exclude_list;
 
 typedef int (*merge_fn_t)(struct cache_entry **src,
 		struct unpack_trees_options *options);
@@ -14,6 +15,8 @@ struct unpack_trees_error_msgs {
 	const char *not_uptodate_dir;
 	const char *would_lose_untracked;
 	const char *bind_overlap;
+	const char *sparse_not_uptodate_file;
+	const char *would_lose_orphaned;
 };
 
 struct unpack_trees_options {
@@ -28,6 +31,7 @@ struct unpack_trees_options {
 		     skip_unmerged,
 		     initial_checkout,
 		     diff_index_cached,
+		     skip_sparse_checkout,
 		     gently;
 	const char *prefix;
 	int pos;
@@ -44,6 +48,8 @@ struct unpack_trees_options {
 	struct index_state *dst_index;
 	struct index_state *src_index;
 	struct index_state result;
+
+	struct exclude_list *el; /* for internal use */
 };
 
 extern int unpack_trees(unsigned n, struct tree_desc *t,

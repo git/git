@@ -2666,7 +2666,7 @@ static int verify_index_match(struct cache_entry *ce, struct stat *st)
 			return -1;
 		return 0;
 	}
-	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID);
+	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 }
 
 static int check_preimage(struct patch *patch, struct cache_entry **ce, struct stat *st)

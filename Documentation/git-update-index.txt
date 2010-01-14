@@ -15,6 +15,7 @@ SYNOPSIS
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]
+	     [--skip-worktree | --no-skip-worktree]
 	     [--ignore-submodules]
 	     [--really-refresh] [--unresolve] [--again | -g]
 	     [--info-only] [--index-info]
@@ -102,6 +103,13 @@ you will need to handle the situation manually.
 --really-refresh::
 	Like '--refresh', but checks stat information unconditionally,
 	without regard to the "assume unchanged" setting.
+
+--skip-worktree::
+--no-skip-worktree::
+	When one of these flags is specified, the object name recorded
+	for the paths are not updated. Instead, these options
+	set and unset the "skip-worktree" bit for the paths. See
+	section "Skip-worktree bit" below for more information.
 
 -g::
 --again::
@@ -306,6 +314,27 @@ M foo.c
 <7> even after you edit it.
 <8> you can tell about the change after the fact.
 <9> now it checks with lstat(2) and finds it has been changed.
+
+
+Skip-worktree bit
+-----------------
+
+Skip-worktree bit can be defined in one (long) sentence: When reading
+an entry, if it is marked as skip-worktree, then Git pretends its
+working directory version is up to date and read the index version
+instead.
+
+To elaborate, "reading" means checking for file existence, reading
+file attributes or file content. The working directory version may be
+present or absent. If present, its content may match against the index
+version or not. Writing is not affected by this bit, content safety
+is still first priority. Note that Git _can_ update working directory
+file, that is marked skip-worktree, if it is safe to do so (i.e.
+working directory version matches index version)
+
+Although this bit looks similar to assume-unchanged bit, its goal is
+different from assume-unchanged bit's. Skip-worktree also takes
+precedence over assume-unchanged bit when both are set.
 
 
 Configuration
