@@ -156,7 +156,7 @@ pick_one () {
 	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$REWRITTEN" &&
 		pick_one_preserving_merges "$@" && return
-	if test ! -z "$REBASE_ROOT"
+	if test -n "$REBASE_ROOT"
 	then
 		output git cherry-pick "$@"
 		return
