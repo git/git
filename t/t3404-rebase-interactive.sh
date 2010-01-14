@@ -14,15 +14,20 @@ that the result still makes sense.
 
 set_fake_editor
 
-# set up two branches like this:
+# Set up the repository like this:
 #
-# A - B - C - D - E     (master)
+#     one - two - three - four (conflict-branch)
+#   /
+# A - B - C - D - E            (master)
+# | \
+# |   F - G - H                (branch1)
+# |     \
+#  \      I                    (branch2)
 #   \
-#     F - G - H         (branch1)
-#       \
-#         I             (branch2)
+#     J - K - L - M            (no-conflict-branch)
 #
-# where A, B, D and G touch the same file.
+# where A, B, D and G all touch file1, and one, two, three, four all
+# touch file "conflict".
 
 test_expect_success 'setup' '
 	test_commit A file1 &&
@@ -36,9 +41,20 @@ test_expect_success 'setup' '
 	test_commit H file5 &&
 	git checkout -b branch2 F &&
 	test_commit I file6
+	git checkout -b conflict-branch A &&
+	for n in one two three four
+	do
+		test_commit $n conflict
+	done &&
+	git checkout -b no-conflict-branch A &&
+	for n in J K L M
+	do
+		test_commit $n file$n
+	done
 '
 
 test_expect_success 'no changes are a nop' '
+	git checkout branch2 &&
 	git rebase -i F &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
 	test $(git rev-parse I) = $(git rev-parse HEAD)
@@ -97,7 +113,7 @@ cat > expect2 << EOF
 D
 =======
 G
->>>>>>> 91201e5... G
+>>>>>>> 51047de... G
 EOF
 
 test_expect_success 'stop on conflicting pick' '
@@ -293,12 +309,7 @@ test_expect_success 'squash ignores blank lines' '
 '
 
 test_expect_success 'squash works as expected' '
-	for n in one two three four
-	do
-		echo $n >> file$n &&
-		git add file$n &&
-		git commit -m $n
-	done &&
+	git checkout -b squash-works no-conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	FAKE_LINES="1 squash 3 2" EXPECT_HEADER_COUNT=2 \
 		git rebase -i HEAD~3 &&
@@ -306,12 +317,7 @@ test_expect_success 'squash works as expected' '
 '
 
 test_expect_success 'interrupted squash works as expected' '
-	for n in one two three four
-	do
-		echo $n >> conflict &&
-		git add conflict &&
-		git commit -m $n
-	done &&
+	git checkout -b interrupted-squash conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	(
 		FAKE_LINES="1 squash 3 2" &&
@@ -328,12 +334,7 @@ test_expect_success 'interrupted squash works as expected' '
 '
 
 test_expect_success 'interrupted squash works as expected (case 2)' '
-	for n in one two three four
-	do
-		echo $n >> conflict &&
-		git add conflict &&
-		git commit -m $n
-	done &&
+	git checkout -b interrupted-squash2 conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	(
 		FAKE_LINES="3 squash 1 2" &&
