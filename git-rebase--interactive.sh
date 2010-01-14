@@ -203,6 +203,15 @@ has_action () {
 	sane_grep '^[^#]' "$1" >/dev/null
 }
 
+# Run command with GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
+# GIT_AUTHOR_DATE exported from the current environment.
+do_with_author () {
+	GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
+	GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
+	GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
+	"$@"
+}
+
 pick_one () {
 	no_ff=
 	case "$1" in -n) sha1=$2; no_ff=t ;; *) sha1=$1 ;; esac
@@ -324,11 +333,8 @@ pick_one_preserving_merges () {
 			msg="$(commit_message $sha1)"
 			# No point in merging the first parent, that's HEAD
 			new_parents=${new_parents# $first_parent}
-			if ! GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
-				GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
-				GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-				output git merge $STRATEGY -m "$msg" \
-					$new_parents
+			if ! do_with_author output \
+				git merge $STRATEGY -m "$msg" $new_parents
 			then
 				printf "%s\n" "$msg" > "$GIT_DIR"/MERGE_MSG
 				die_with_patch $sha1 "Error redoing merge $sha1"
@@ -470,11 +476,9 @@ do_next () {
 		if test $failed = f
 		then
 			# This is like --amend, but with a different message
-			GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
-			GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
-			GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-			$USE_OUTPUT git commit --no-verify \
-				$MSG_OPT "$EDIT_OR_FILE" || failed=t
+			do_with_author $USE_OUTPUT git commit --no-verify \
+				$MSG_OPT "$EDIT_OR_FILE" ||
+				failed=t
 		fi
 		if test $failed = t
 		then
@@ -605,8 +609,7 @@ first and then run 'git rebase --continue' again."
 				git reset --soft HEAD^ ||
 				die "Cannot rewind the HEAD"
 			fi
-			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
-			git commit --no-verify -F "$MSG" -e || {
+			do_with_author git commit --no-verify -F "$MSG" -e || {
 				test -n "$amend" && git reset --soft $amend
 				die "Could not commit staged changes."
 			}
