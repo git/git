@@ -358,21 +358,26 @@ nth_string () {
 	esac
 }
 
-make_squash_message () {
+update_squash_message () {
 	if test -f "$SQUASH_MSG"; then
+		mv "$SQUASH_MSG" "$SQUASH_MSG".bak || exit
 		COUNT=$(($(sed -n \
 			-e "1s/^# This is a combination of \(.*\) commits\./\1/p" \
-			-e "q" < "$SQUASH_MSG")+1))
-		echo "# This is a combination of $COUNT commits."
-		sed -e 1d -e '2,/^./{
-			/^$/d
-		}' <"$SQUASH_MSG"
+			-e "q" < "$SQUASH_MSG".bak)+1))
+		{
+			echo "# This is a combination of $COUNT commits."
+			sed -e 1d -e '2,/^./{
+				/^$/d
+			}' <"$SQUASH_MSG".bak
+		} >$SQUASH_MSG
 	else
 		COUNT=2
-		echo "# This is a combination of 2 commits."
-		echo "# The first commit's message is:"
-		echo
-		commit_message HEAD
+		{
+			echo "# This is a combination of 2 commits."
+			echo "# The first commit's message is:"
+			echo
+			commit_message HEAD
+		} >$SQUASH_MSG
 	fi
 	case $1 in
 	squash)
@@ -387,7 +392,7 @@ make_squash_message () {
 		echo
 		commit_message $2 | sed -e 's/^/#	/'
 		;;
-	esac
+	esac >>$SQUASH_MSG
 }
 
 peek_next_command () {
@@ -450,7 +455,7 @@ do_next () {
 			die "Cannot '$squash_style' without a previous commit"
 
 		mark_action_done
-		make_squash_message $squash_style $sha1 > "$MSG"
+		update_squash_message $squash_style $sha1
 		failed=f
 		author_script=$(get_author_ident_from_commit HEAD)
 		echo "$author_script" > "$AUTHOR_SCRIPT"
@@ -460,16 +465,16 @@ do_next () {
 		case "$(peek_next_command)" in
 		squash|s|fixup|f)
 			USE_OUTPUT=output
+			cp "$SQUASH_MSG" "$MSG" || exit
 			MSG_OPT=-F
 			EDIT_OR_FILE="$MSG"
-			cp "$MSG" "$SQUASH_MSG"
 			;;
 		*)
 			USE_OUTPUT=
 			MSG_OPT=
 			EDIT_OR_FILE=-e
-			rm -f "$SQUASH_MSG" || exit
-			cp "$MSG" "$GIT_DIR"/SQUASH_MSG
+			cp "$SQUASH_MSG" "$MSG" || exit
+			mv "$SQUASH_MSG" "$GIT_DIR"/SQUASH_MSG || exit
 			rm -f "$GIT_DIR"/MERGE_MSG || exit
 			;;
 		esac
