@@ -360,7 +360,7 @@ make_squash_message () {
 		}' <"$SQUASH_MSG"
 	else
 		COUNT=2
-		echo "# This is a combination of two commits."
+		echo "# This is a combination of 2 commits."
 		echo "# The first commit's message is:"
 		echo
 		git cat-file commit HEAD | sed -e '1,/^$/d'

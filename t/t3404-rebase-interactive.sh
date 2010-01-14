@@ -135,7 +135,7 @@ test_expect_success 'squash' '
 	test_tick &&
 	GIT_AUTHOR_NAME="Nitfol" git commit -m "nitfol" file7 &&
 	echo "******************************" &&
-	FAKE_LINES="1 squash 2" EXPECT_HEADER_COUNT=two \
+	FAKE_LINES="1 squash 2" EXPECT_HEADER_COUNT=2 \
 		git rebase -i --onto master HEAD~2 &&
 	test B = $(cat file7) &&
 	test $(git rev-parse HEAD^) = $(git rev-parse master)
@@ -301,7 +301,7 @@ test_expect_success 'squash works as expected' '
 		git commit -m $n
 	done &&
 	one=$(git rev-parse HEAD~3) &&
-	FAKE_LINES="1 squash 3 2" EXPECT_HEADER_COUNT=two \
+	FAKE_LINES="1 squash 3 2" EXPECT_HEADER_COUNT=2 \
 		git rebase -i HEAD~3 &&
 	test $one = $(git rev-parse HEAD~2)
 '
