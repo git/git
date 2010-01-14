@@ -65,6 +65,13 @@ MSG="$DOTEST"/message
 # updated.  It is deleted just before the combined commit is made.
 SQUASH_MSG="$DOTEST"/message-squash
 
+# If the current series of squash/fixups has not yet included a squash
+# command, then this file exists and holds the commit message of the
+# original "pick" commit.  (If the series ends without a "squash"
+# command, then this can be used as the commit message of the combined
+# commit without opening the editor.)
+FIXUP_MSG="$DOTEST"/message-fixup
+
 # $REWRITTEN is the name of a directory containing files for each
 # commit that is reachable by at least one merge base of $HEAD and
 # $UPSTREAM. They are not necessarily rewritten, but their children
@@ -358,7 +365,7 @@ nth_string () {
 	esac
 }
 
-update_squash_message () {
+update_squash_messages () {
 	if test -f "$SQUASH_MSG"; then
 		mv "$SQUASH_MSG" "$SQUASH_MSG".bak || exit
 		COUNT=$(($(sed -n \
@@ -371,16 +378,18 @@ update_squash_message () {
 			}' <"$SQUASH_MSG".bak
 		} >$SQUASH_MSG
 	else
+		commit_message HEAD > "$FIXUP_MSG" || die "Cannot write $FIXUP_MSG"
 		COUNT=2
 		{
 			echo "# This is a combination of 2 commits."
 			echo "# The first commit's message is:"
 			echo
-			commit_message HEAD
+			cat "$FIXUP_MSG"
 		} >$SQUASH_MSG
 	fi
 	case $1 in
 	squash)
+		rm -f "$FIXUP_MSG"
 		echo
 		echo "# This is the $(nth_string $COUNT) commit message:"
 		echo
@@ -455,7 +464,7 @@ do_next () {
 			die "Cannot '$squash_style' without a previous commit"
 
 		mark_action_done
-		update_squash_message $squash_style $sha1
+		update_squash_messages $squash_style $sha1
 		failed=f
 		author_script=$(get_author_ident_from_commit HEAD)
 		echo "$author_script" > "$AUTHOR_SCRIPT"
@@ -464,34 +473,52 @@ do_next () {
 		pick_one -n $sha1 || failed=t
 		case "$(peek_next_command)" in
 		squash|s|fixup|f)
-			USE_OUTPUT=output
-			cp "$SQUASH_MSG" "$MSG" || exit
-			MSG_OPT=-F
-			EDIT_OR_FILE="$MSG"
+			# This is an intermediate commit; its message will only be
+			# used in case of trouble.  So use the long version:
+			if test $failed = f
+			then
+				do_with_author output git commit --no-verify -F "$SQUASH_MSG" ||
+					failed=t
+			fi
+			if test $failed = t
+			then
+				cp "$SQUASH_MSG" "$MSG" || exit
+				# After any kind of hiccup, prevent committing without
+				# opening the commit message editor:
+				rm -f "$FIXUP_MSG"
+				cp "$MSG" "$GIT_DIR"/MERGE_MSG || exit
+				warn
+				warn "Could not apply $sha1... $rest"
+				die_with_patch $sha1 ""
+			fi
 			;;
 		*)
-			USE_OUTPUT=
-			MSG_OPT=
-			EDIT_OR_FILE=-e
-			cp "$SQUASH_MSG" "$MSG" || exit
-			mv "$SQUASH_MSG" "$GIT_DIR"/SQUASH_MSG || exit
-			rm -f "$GIT_DIR"/MERGE_MSG || exit
+			# This is the final command of this squash/fixup group
+			if test $failed = f
+			then
+				if test -f "$FIXUP_MSG"
+				then
+					do_with_author git commit --no-verify -F "$FIXUP_MSG" ||
+						failed=t
+				else
+					cp "$SQUASH_MSG" "$GIT_DIR"/SQUASH_MSG || exit
+					rm -f "$GIT_DIR"/MERGE_MSG
+					do_with_author git commit --no-verify -e ||
+						failed=t
+				fi
+			fi
+			rm -f "$FIXUP_MSG"
+			if test $failed = t
+			then
+				mv "$SQUASH_MSG" "$MSG" || exit
+				cp "$MSG" "$GIT_DIR"/MERGE_MSG || exit
+				warn
+				warn "Could not apply $sha1... $rest"
+				die_with_patch $sha1 ""
+			fi
+			rm -f "$SQUASH_MSG"
 			;;
 		esac
-		if test $failed = f
-		then
-			# This is like --amend, but with a different message
-			do_with_author $USE_OUTPUT git commit --no-verify \
-				$MSG_OPT "$EDIT_OR_FILE" ||
-				failed=t
-		fi
-		if test $failed = t
-		then
-			cp "$MSG" "$GIT_DIR"/MERGE_MSG
-			warn
-			warn "Could not apply $sha1... $rest"
-			die_with_patch $sha1 ""
-		fi
 		;;
 	*)
 		warn "Unknown command: $command $sha1 $rest"
