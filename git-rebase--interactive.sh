@@ -80,6 +80,14 @@ DROPPED="$DOTEST"/dropped
 # being rebased.
 AUTHOR_SCRIPT="$DOTEST"/author-script
 
+# When an "edit" rebase command is being processed, the SHA1 of the
+# commit to be edited is recorded in this file.  When "git rebase
+# --continue" is executed, if there are any staged changes then they
+# will be amended to the HEAD commit, but only provided the HEAD
+# commit is still the commit to be edited.  When any other rebase
+# command is processed, this file is deleted.
+AMEND="$DOTEST"/amend
+
 PRESERVE_MERGES=
 STRATEGY=
 ONTO=
@@ -381,7 +389,7 @@ peek_next_command () {
 }
 
 do_next () {
-	rm -f "$MSG" "$AUTHOR_SCRIPT" "$DOTEST"/amend || exit
+	rm -f "$MSG" "$AUTHOR_SCRIPT" "$AMEND" || exit
 	read command sha1 rest < "$TODO"
 	case "$command" in
 	'#'*|''|noop)
@@ -409,7 +417,7 @@ do_next () {
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		make_patch $sha1
-		git rev-parse --verify HEAD > "$DOTEST"/amend
+		git rev-parse --verify HEAD > "$AMEND"
 		warn "Stopped at $sha1... $rest"
 		warn "You can amend the commit now, with"
 		warn
@@ -587,10 +595,10 @@ do
 			. "$AUTHOR_SCRIPT" ||
 				die "Cannot find the author identity"
 			amend=
-			if test -f "$DOTEST"/amend
+			if test -f "$AMEND"
 			then
 				amend=$(git rev-parse --verify HEAD)
-				test "$amend" = $(cat "$DOTEST"/amend) ||
+				test "$amend" = $(cat "$AMEND") ||
 				die "\
 You have uncommitted changes in your working tree. Please, commit them
 first and then run 'git rebase --continue' again."
