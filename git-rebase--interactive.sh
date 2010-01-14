@@ -129,8 +129,8 @@ make_patch () {
 		echo "Root commit"
 		;;
 	esac > "$DOTEST"/patch
-	test -f "$DOTEST"/message ||
-		git cat-file commit "$1" | sed "1,/^$/d" > "$DOTEST"/message
+	test -f "$MSG" ||
+		git cat-file commit "$1" | sed "1,/^$/d" > "$MSG"
 	test -f "$DOTEST"/author-script ||
 		get_author_ident_from_commit "$1" > "$DOTEST"/author-script
 }
@@ -341,7 +341,7 @@ peek_next_command () {
 }
 
 do_next () {
-	rm -f "$DOTEST"/message "$DOTEST"/author-script \
+	rm -f "$MSG" "$DOTEST"/author-script \
 		"$DOTEST"/amend || exit
 	read command sha1 rest < "$TODO"
 	case "$command" in
@@ -559,7 +559,7 @@ first and then run 'git rebase --continue' again."
 				die "Cannot rewind the HEAD"
 			fi
 			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
-			git commit --no-verify -F "$DOTEST"/message -e || {
+			git commit --no-verify -F "$MSG" -e || {
 				test -n "$amend" && git reset --soft $amend
 				die "Could not commit staged changes."
 			}
