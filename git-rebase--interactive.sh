@@ -118,6 +118,11 @@ output () {
 	esac
 }
 
+# Output the commit message for the specified commit.
+commit_message () {
+	git cat-file commit "$1" | sed "1,/^$/d"
+}
+
 run_pre_rebase_hook () {
 	if test -z "$OK_TO_SKIP_PRE_REBASE" &&
 	   test -x "$GIT_DIR/hooks/pre-rebase"
@@ -178,7 +183,7 @@ make_patch () {
 		;;
 	esac > "$DOTEST"/patch
 	test -f "$MSG" ||
-		git cat-file commit "$1" | sed "1,/^$/d" > "$MSG"
+		commit_message "$1" > "$MSG"
 	test -f "$AUTHOR_SCRIPT" ||
 		get_author_ident_from_commit "$1" > "$AUTHOR_SCRIPT"
 }
@@ -316,7 +321,7 @@ pick_one_preserving_merges () {
 			# redo merge
 			author_script=$(get_author_ident_from_commit $sha1)
 			eval "$author_script"
-			msg="$(git cat-file commit $sha1 | sed -e '1,/^$/d')"
+			msg="$(commit_message $sha1)"
 			# No point in merging the first parent, that's HEAD
 			new_parents=${new_parents# $first_parent}
 			if ! GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
@@ -361,20 +366,20 @@ make_squash_message () {
 		echo "# This is a combination of 2 commits."
 		echo "# The first commit's message is:"
 		echo
-		git cat-file commit HEAD | sed -e '1,/^$/d'
+		commit_message HEAD
 	fi
 	case $1 in
 	squash)
 		echo
 		echo "# This is the $(nth_string $COUNT) commit message:"
 		echo
-		git cat-file commit $2 | sed -e '1,/^$/d'
+		commit_message $2
 		;;
 	fixup)
 		echo
 		echo "# The $(nth_string $COUNT) commit message will be skipped:"
 		echo
-		git cat-file commit $2 | sed -e '1,/^$/d' -e 's/^/#	/'
+		commit_message $2 | sed -e 's/^/#	/'
 		;;
 	esac
 }
