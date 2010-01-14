@@ -167,7 +167,6 @@ pick_one () {
 	if test -z "$no_ff" -a "$current_sha1" = "$parent_sha1"
 	then
 		output git reset --hard $sha1
-		test "a$1" = a-n && output git reset --soft $current_sha1
 		sha1=$(git rev-parse --short $sha1)
 		output warn Fast-forward to $sha1
 	else
