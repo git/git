@@ -447,6 +447,8 @@ do_next () {
 		make_squash_message $squash_style $sha1 > "$MSG"
 		failed=f
 		author_script=$(get_author_ident_from_commit HEAD)
+		echo "$author_script" > "$AUTHOR_SCRIPT"
+		eval "$author_script"
 		output git reset --soft HEAD^
 		pick_one -n $sha1 || failed=t
 		case "$(peek_next_command)" in
@@ -465,11 +467,9 @@ do_next () {
 			rm -f "$GIT_DIR"/MERGE_MSG || exit
 			;;
 		esac
-		echo "$author_script" > "$AUTHOR_SCRIPT"
 		if test $failed = f
 		then
 			# This is like --amend, but with a different message
-			eval "$author_script"
 			GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
 			GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
 			GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
