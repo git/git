@@ -14,8 +14,9 @@ run_backend() {
 }
 
 GET() {
-	REQUEST_METHOD="GET" \
+	export REQUEST_METHOD="GET" &&
 	run_backend "/repo.git/$1" &&
+	unset REQUEST_METHOD &&
 	if ! grep "Status" act.out >act
 	then
 		printf "Status: 200 OK\r\n" >act
@@ -25,9 +26,11 @@ GET() {
 }
 
 POST() {
-	REQUEST_METHOD="POST" \
-	CONTENT_TYPE="application/x-$1-request" \
+	export REQUEST_METHOD="POST" &&
+	export CONTENT_TYPE="application/x-$1-request" &&
 	run_backend "/repo.git/$1" "$2" &&
+	unset REQUEST_METHOD &&
+	unset CONTENT_TYPE &&
 	if ! grep "Status" act.out >act
 	then
 		printf "Status: 200 OK\r\n" >act
@@ -43,13 +46,15 @@ log_div() {
 . "$TEST_DIRECTORY"/t556x_common
 
 expect_aliased() {
+	export REQUEST_METHOD="GET" &&
 	if test $1 = 0; then
-		REQUEST_METHOD=GET run_backend "$2"
+		run_backend "$2"
 	else
-		REQUEST_METHOD=GET run_backend "$2" &&
+		run_backend "$2" &&
 		echo "fatal: '$2': aliased" >exp.err &&
 		test_cmp exp.err act.err
 	fi
+	unset REQUEST_METHOD
 }
 
 test_expect_success 'http-backend blocks bad PATH_INFO' '
