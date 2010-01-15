@@ -615,8 +615,8 @@ static int env_compare(const void *a, const void *b)
 	return strcasecmp(*ea, *eb);
 }
 
-static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
-			   int prepend_cmd)
+static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
+			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
@@ -652,9 +652,9 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdInput = (HANDLE) _get_osfhandle(0);
-	si.hStdOutput = (HANDLE) _get_osfhandle(1);
-	si.hStdError = (HANDLE) _get_osfhandle(2);
+	si.hStdInput = (HANDLE) _get_osfhandle(fhin);
+	si.hStdOutput = (HANDLE) _get_osfhandle(fhout);
+	si.hStdError = (HANDLE) _get_osfhandle(fherr);
 
 	/* concatenate argv, quoting args as we go */
 	strbuf_init(&args, 0);
@@ -709,7 +709,14 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 	return (pid_t)pi.hProcess;
 }
 
-pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
+static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
+			   int prepend_cmd)
+{
+	return mingw_spawnve_fd(cmd, argv, env, prepend_cmd, 0, 1, 2);
+}
+
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
+		     int fhin, int fhout, int fherr)
 {
 	pid_t pid;
 	char **path = get_path_split();
@@ -731,13 +738,15 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
 				pid = -1;
 			}
 			else {
-				pid = mingw_spawnve(iprog, argv, env, 1);
+				pid = mingw_spawnve_fd(iprog, argv, env, 1,
+						       fhin, fhout, fherr);
 				free(iprog);
 			}
 			argv[0] = argv0;
 		}
 		else
-			pid = mingw_spawnve(prog, argv, env, 0);
+			pid = mingw_spawnve_fd(prog, argv, env, 0,
+					       fhin, fhout, fherr);
 		free(prog);
 	}
 	free_path_split(path);

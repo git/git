@@ -220,7 +220,8 @@ int mingw_fstat(int fd, struct stat *buf);
 int mingw_utime(const char *file_name, const struct utimbuf *times);
 #define utime mingw_utime
 
-pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env);
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
+		     int fhin, int fhout, int fherr);
 void mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp
 

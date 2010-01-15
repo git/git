@@ -8,12 +8,14 @@ static inline void close_pair(int fd[2])
 	close(fd[1]);
 }
 
+#ifndef WIN32
 static inline void dup_devnull(int to)
 {
 	int fd = open("/dev/null", O_RDWR);
 	dup2(fd, to);
 	close(fd);
 }
+#endif
 
 int start_command(struct child_process *cmd)
 {
@@ -135,42 +137,30 @@ fail_pipe:
 			strerror(failed_errno = errno));
 #else
 {
-	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
+	int fhin = 0, fhout = 1, fherr = 2;
 	const char **sargv = cmd->argv;
 	char **env = environ;
 
-	if (cmd->no_stdin) {
-		s0 = dup(0);
-		dup_devnull(0);
-	} else if (need_in) {
-		s0 = dup(0);
-		dup2(fdin[0], 0);
-	} else if (cmd->in) {
-		s0 = dup(0);
-		dup2(cmd->in, 0);
-	}
+	if (cmd->no_stdin)
+		fhin = open("/dev/null", O_RDWR);
+	else if (need_in)
+		fhin = dup(fdin[0]);
+	else if (cmd->in)
+		fhin = dup(cmd->in);
 
-	if (cmd->no_stderr) {
-		s2 = dup(2);
-		dup_devnull(2);
-	} else if (need_err) {
-		s2 = dup(2);
-		dup2(fderr[1], 2);
-	}
+	if (cmd->no_stderr)
+		fherr = open("/dev/null", O_RDWR);
+	else if (need_err)
+		fherr = dup(fderr[1]);
 
-	if (cmd->no_stdout) {
-		s1 = dup(1);
-		dup_devnull(1);
-	} else if (cmd->stdout_to_stderr) {
-		s1 = dup(1);
-		dup2(2, 1);
-	} else if (need_out) {
-		s1 = dup(1);
-		dup2(fdout[1], 1);
-	} else if (cmd->out > 1) {
-		s1 = dup(1);
-		dup2(cmd->out, 1);
-	}
+	if (cmd->no_stdout)
+		fhout = open("/dev/null", O_RDWR);
+	else if (cmd->stdout_to_stderr)
+		fhout = dup(fherr);
+	else if (need_out)
+		fhout = dup(fdout[1]);
+	else if (cmd->out > 1)
+		fhout = dup(cmd->out);
 
 	if (cmd->dir)
 		die("chdir in start_command() not implemented");
@@ -181,7 +171,8 @@ fail_pipe:
 		cmd->argv = prepare_git_cmd(cmd->argv);
 	}
 
-	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
+	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env,
+				  fhin, fhout, fherr);
 	failed_errno = errno;
 	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
 		error("cannot spawn %s: %s", cmd->argv[0], strerror(errno));
@@ -192,12 +183,12 @@ fail_pipe:
 		free(cmd->argv);
 
 	cmd->argv = sargv;
-	if (s0 >= 0)
-		dup2(s0, 0), close(s0);
-	if (s1 >= 0)
-		dup2(s1, 1), close(s1);
-	if (s2 >= 0)
-		dup2(s2, 2), close(s2);
+	if (fhin != 0)
+		close(fhin);
+	if (fhout != 1)
+		close(fhout);
+	if (fherr != 2)
+		close(fherr);
 }
 #endif
 
