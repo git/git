@@ -140,12 +140,20 @@ int mingw_open (const char *filename, int oflags, ...)
 	return fd;
 }
 
-static inline time_t filetime_to_time_t(const FILETIME *ft)
+/*
+ * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
+ * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
+ */
+static inline long long filetime_to_hnsec(const FILETIME *ft)
 {
 	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
-	winTime -= 116444736000000000LL; /* Windows to Unix Epoch conversion */
-	winTime /= 10000000;		 /* Nano to seconds resolution */
-	return (time_t)winTime;
+	/* Windows to Unix Epoch conversion */
+	return winTime - 116444736000000000LL;
+}
+
+static inline time_t filetime_to_time_t(const FILETIME *ft)
+{
+	return (time_t)(filetime_to_hnsec(ft) / 10000000);
 }
 
 /* We keep the do_lstat code in a separate function to avoid recursion.
@@ -281,19 +289,13 @@ int mkstemp(char *template)
 
 int gettimeofday(struct timeval *tv, void *tz)
 {
-	SYSTEMTIME st;
-	struct tm tm;
-	GetSystemTime(&st);
-	tm.tm_year = st.wYear-1900;
-	tm.tm_mon = st.wMonth-1;
-	tm.tm_mday = st.wDay;
-	tm.tm_hour = st.wHour;
-	tm.tm_min = st.wMinute;
-	tm.tm_sec = st.wSecond;
-	tv->tv_sec = tm_to_time_t(&tm);
-	if (tv->tv_sec < 0)
-		return -1;
-	tv->tv_usec = st.wMilliseconds*1000;
+	FILETIME ft;
+	long long hnsec;
+
+	GetSystemTimeAsFileTime(&ft);
+	hnsec = filetime_to_hnsec(&ft);
+	tv->tv_sec = hnsec / 10000000;
+	tv->tv_usec = (hnsec % 10000000) / 10;
 	return 0;
 }
 
