@@ -3,7 +3,7 @@
 #include <conio.h>
 #include "../strbuf.h"
 
-static int err_win_to_posix(DWORD winerr)
+int err_win_to_posix(DWORD winerr)
 {
 	int error = ENOSYS;
 	switch(winerr) {
