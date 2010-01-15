@@ -14,6 +14,7 @@
 #include "userdiff.h"
 #include "grep.h"
 #include "quote.h"
+#include "dir.h"
 
 static char const * const grep_usage[] = {
 	"git grep [options] [-e] <pattern> [<rev>...] [[--] path...]",
@@ -320,6 +321,21 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 	die("unable to grep from object of type %s", typename(obj->type));
 }
 
+static int grep_directory(struct grep_opt *opt, const char **paths)
+{
+	struct dir_struct dir;
+	int i, hit = 0;
+
+	memset(&dir, 0, sizeof(dir));
+	setup_standard_excludes(&dir);
+
+	fill_directory(&dir, paths);
+	for (i = 0; i < dir.nr; i++)
+		hit |= grep_file(opt, dir.entries[i]->name);
+	free_grep_patterns(opt);
+	return hit;
+}
+
 static int context_callback(const struct option *opt, const char *arg,
 			    int unset)
 {
@@ -418,6 +434,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_BOOLEAN(0, "cached", &cached,
 			"search in index instead of in the work tree"),
+		OPT_BOOLEAN(0, "index", &use_index,
+			"--no-index finds in contents not managed by git"),
 		OPT_GROUP(""),
 		OPT_BOOLEAN('v', "invert-match", &opt.invert,
 			"show non-matching lines"),
@@ -589,6 +607,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths = xcalloc(2, sizeof(const char *));
 		paths[0] = prefix;
 		paths[1] = NULL;
+	}
+
+	if (!use_index) {
+		if (cached)
+			die("--cached cannot be used with --no-index.");
+		if (list.nr)
+			die("--no-index cannot be used with revs.");
+		return !grep_directory(&opt, paths);
 	}
 
 	if (!list.nr) {
