@@ -15,6 +15,9 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
+LF='
+'
+
 remove_config_vars()
 {
 	# Unset all config variables used by git-difftool
@@ -219,19 +222,13 @@ test_expect_success 'difftool.<tool>.path' '
 	restore_test_defaults
 '
 
-test_expect_success 'difftool --extcmd=...' '
+test_expect_success 'difftool --extcmd=cat' '
 	diff=$(git difftool --no-prompt --extcmd=cat branch) &&
+	test "$diff" = branch"$LF"master
 
-	lines=$(echo "$diff" | wc -l) &&
-	test "$lines" -eq 2 &&
 
-	lines=$(echo "$diff" | grep master | wc -l) &&
-	test "$lines" -eq 1 &&
 
-	lines=$(echo "$diff" | grep branch | wc -l) &&
-	test "$lines" -eq 1 &&
 
-	restore_test_defaults
 '
 
 test_done
