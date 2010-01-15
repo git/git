@@ -48,11 +48,10 @@ launch_merge_tool () {
 	fi
 
 	if use_ext_cmd; then
-		$GIT_DIFFTOOL_EXTCMD "$LOCAL" "$REMOTE"
+		eval $GIT_DIFFTOOL_EXTCMD '"$LOCAL"' '"$REMOTE"'
 	else
 		run_merge_tool "$merge_tool"
 	fi
-
 }
 
 if ! use_ext_cmd; then
