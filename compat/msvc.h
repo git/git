@@ -21,30 +21,22 @@ static __inline int strcasecmp (const char *s1, const char *s2)
 }
 
 #undef ERROR
-#undef stat
-#undef _stati64
-#include "compat/mingw.h"
-#undef stat
-#define stat _stati64
-#define _stat64(x,y) mingw_lstat(x,y)
 
-/*
-   Even though _stati64 is normally just defined at _stat64
-   on Windows, we specify it here as a proper struct to avoid
-   compiler warnings about macro redefinition due to magic in
-   mingw.h. Struct taken from ReactOS (GNU GPL license).
-*/
-struct _stati64 {
-	_dev_t  st_dev;
-	_ino_t  st_ino;
-	unsigned short st_mode;
-	short   st_nlink;
-	short   st_uid;
-	short   st_gid;
-	_dev_t  st_rdev;
-	__int64 st_size;
-	time_t  st_atime;
-	time_t  st_mtime;
-	time_t  st_ctime;
-};
+/* Use mingw_lstat() instead of lstat()/stat() and mingw_fstat() instead
+ * of fstat(). We add the declaration of these functions here, suppressing
+ * the corresponding declarations in mingw.h, so that we can use the
+ * appropriate structure type (and function) names from the msvc headers.
+ */
+#define stat _stat64
+int mingw_lstat(const char *file_name, struct stat *buf);
+int mingw_fstat(int fd, struct stat *buf);
+#define fstat mingw_fstat
+#define lstat mingw_lstat
+#define _stat64(x,y) mingw_lstat(x,y)
+#define ALREADY_DECLARED_STAT_FUNCS
+
+#include "compat/mingw.h"
+
+#undef ALREADY_DECLARED_STAT_FUNCS
+
 #endif
