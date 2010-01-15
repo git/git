@@ -299,46 +299,25 @@ int gettimeofday(struct timeval *tv, void *tz)
 
 int pipe(int filedes[2])
 {
-	int fd;
-	HANDLE h[2], parent;
+	HANDLE h[2];
 
-	if (_pipe(filedes, 8192, 0) < 0)
-		return -1;
-
-	parent = GetCurrentProcess();
-
-	if (!DuplicateHandle (parent, (HANDLE)_get_osfhandle(filedes[0]),
-			parent, &h[0], 0, FALSE, DUPLICATE_SAME_ACCESS)) {
-		close(filedes[0]);
-		close(filedes[1]);
+	/* this creates non-inheritable handles */
+	if (!CreatePipe(&h[0], &h[1], NULL, 8192)) {
+		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
-	if (!DuplicateHandle (parent, (HANDLE)_get_osfhandle(filedes[1]),
-			parent, &h[1], 0, FALSE, DUPLICATE_SAME_ACCESS)) {
-		close(filedes[0]);
-		close(filedes[1]);
-		CloseHandle(h[0]);
-		return -1;
-	}
-	fd = _open_osfhandle((int)h[0], O_NOINHERIT);
-	if (fd < 0) {
-		close(filedes[0]);
-		close(filedes[1]);
+	filedes[0] = _open_osfhandle((int)h[0], O_NOINHERIT);
+	if (filedes[0] < 0) {
 		CloseHandle(h[0]);
 		CloseHandle(h[1]);
 		return -1;
 	}
-	close(filedes[0]);
-	filedes[0] = fd;
-	fd = _open_osfhandle((int)h[1], O_NOINHERIT);
-	if (fd < 0) {
+	filedes[1] = _open_osfhandle((int)h[1], O_NOINHERIT);
+	if (filedes[0] < 0) {
 		close(filedes[0]);
-		close(filedes[1]);
 		CloseHandle(h[1]);
 		return -1;
 	}
-	close(filedes[1]);
-	filedes[1] = fd;
 	return 0;
 }
 
