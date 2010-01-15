@@ -3,8 +3,6 @@
 #include <conio.h>
 #include "../strbuf.h"
 
-#include <shellapi.h>
-
 static int err_win_to_posix(DWORD winerr)
 {
 	int error = ENOSYS;
@@ -1338,8 +1336,22 @@ static const char *make_backslash_path(const char *path)
 void mingw_open_html(const char *unixpath)
 {
 	const char *htmlpath = make_backslash_path(unixpath);
+	typedef HINSTANCE (WINAPI *T)(HWND, const char *,
+			const char *, const char *, const char *, INT);
+	T ShellExecute;
+	HMODULE shell32;
+
+	shell32 = LoadLibrary("shell32.dll");
+	if (!shell32)
+		die("cannot load shell32.dll");
+	ShellExecute = (T)GetProcAddress(shell32, "ShellExecuteA");
+	if (!ShellExecute)
+		die("cannot run browser");
+
 	printf("Launching default browser to display HTML ...\n");
 	ShellExecute(NULL, "open", htmlpath, NULL, "\\", 0);
+
+	FreeLibrary(shell32);
 }
 
 int link(const char *oldpath, const char *newpath)
