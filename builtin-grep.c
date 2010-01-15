@@ -414,6 +414,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	const char **paths = NULL;
 	int i;
 	int dummy;
+	int nongit = 0, use_index = 1;
 	struct option options[] = {
 		OPT_BOOLEAN(0, "cached", &cached,
 			"search in index instead of in the work tree"),
@@ -497,6 +498,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	prefix = setup_git_directory_gently(&nongit);
+
 	/*
 	 * 'git grep -h', unlike 'git grep -h <pattern>', is a request
 	 * to show usage information and exit.
@@ -533,6 +536,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_DASHDASH |
 			     PARSE_OPT_STOP_AT_NON_OPTION |
 			     PARSE_OPT_NO_INTERNAL_HELP);
+
+	if (use_index && nongit)
+		/* die the same way as if we did it at the beginning */
+		setup_git_directory();
 
 	/* First unrecognized non-option token */
 	if (argc > 0 && !opt.pattern_list) {
