@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright (c) 2009 David Aguilar
+# Copyright (c) 2009, 2010 David Aguilar
 #
 # This is a wrapper around the GIT_EXTERNAL_DIFF-compatible
 # git-difftool--helper script.
@@ -23,8 +23,9 @@ my $DIR = abs_path(dirname($0));
 sub usage
 {
 	print << 'USAGE';
-usage: git difftool [-g|--gui] [-t|--tool=<tool>] [-y|--no-prompt]
-                    ["git diff" options]
+usage: git difftool [-t|--tool=<tool>] [-x|--extcmd=<cmd>]
+                    [-y|--no-prompt]   [-g|--gui]
+                    ['git diff' options]
 USAGE
 	exit 1;
 }
@@ -62,12 +63,18 @@ sub generate_command
 			$skip_next = 1;
 			next;
 		}
-		if ($arg =~ /^--extcmd=/) {
-			$ENV{GIT_DIFFTOOL_EXTCMD} = substr($arg, 9);
-			next;
-		}
 		if ($arg =~ /^--tool=/) {
 			$ENV{GIT_DIFF_TOOL} = substr($arg, 7);
+			next;
+		}
+		if ($arg eq '-x' || $arg eq '--extcmd') {
+			usage() if $#ARGV <= $idx;
+			$ENV{GIT_DIFFTOOL_EXTCMD} = $ARGV[$idx + 1];
+			$skip_next = 1;
+			next;
+		}
+		if ($arg =~ /^--extcmd=/) {
+			$ENV{GIT_DIFFTOOL_EXTCMD} = substr($arg, 9);
 			next;
 		}
 		if ($arg eq '-g' || $arg eq '--gui') {

@@ -225,8 +225,16 @@ test_expect_success 'difftool.<tool>.path' '
 test_expect_success 'difftool --extcmd=cat' '
 	diff=$(git difftool --no-prompt --extcmd=cat branch) &&
 	test "$diff" = branch"$LF"master
+'
 
+test_expect_success 'difftool --extcmd cat' '
+	diff=$(git difftool --no-prompt --extcmd cat branch) &&
+	test "$diff" = branch"$LF"master
+'
 
+test_expect_success 'difftool -x cat' '
+	diff=$(git difftool --no-prompt -x cat branch) &&
+	test "$diff" = branch"$LF"master
 
 
 '
