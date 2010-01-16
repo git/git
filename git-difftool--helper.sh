@@ -3,7 +3,7 @@
 # This script is typically launched by using the 'git difftool'
 # convenience command.
 #
-# Copyright (c) 2009-2010 David Aguilar
+# Copyright (c) 2009, 2010 David Aguilar
 
 TOOL_MODE=diff
 . git-mergetool--lib
