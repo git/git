@@ -27,6 +27,14 @@ interfaces on top of it called "porcelain". You may not want to use the
 plumbing directly very often, but it can be good to know what the
 plumbing does for when the porcelain isn't flushing.
 
+Back when this document was originally written, many porcelain
+commands were shell scripts. For simplicity, it still uses them as
+examples to illustrate how plumbing is fit together to form the
+porcelain commands. The source tree includes some of these scripts in
+contrib/examples/ for reference. Although these are not implemented as
+shell scripts anymore, the description of what the plumbing layer
+commands do is still valid.
+
 [NOTE]
 Deeper technical details are often marked as Notes, which you can
 skip on your first reading.
