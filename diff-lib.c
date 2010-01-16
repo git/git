@@ -10,6 +10,7 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "refs.h"
+#include "submodule.h"
 
 /*
  * diff-files
@@ -159,7 +160,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 		}
 
-		if (ce_uptodate(ce) || ce_skip_worktree(ce))
+		if ((ce_uptodate(ce) && !S_ISGITLINK(ce->ce_mode)) || ce_skip_worktree(ce))
 			continue;
 
 		/* If CE_VALID is set, don't look at workdir for file removal */
@@ -176,6 +177,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			continue;
 		}
 		changed = ce_match_stat(ce, &st, ce_option);
+		if (S_ISGITLINK(ce->ce_mode) && !changed)
+			changed = is_submodule_modified(ce->name);
 		if (!changed) {
 			ce_mark_uptodate(ce);
 			if (!DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
@@ -230,7 +233,8 @@ static int get_stat_data(struct cache_entry *ce,
 			return -1;
 		}
 		changed = ce_match_stat(ce, &st, 0);
-		if (changed) {
+		if (changed
+		    || (S_ISGITLINK(ce->ce_mode) && is_submodule_modified(ce->name))) {
 			mode = ce_mode_from_stat(ce, st.st_mode);
 			sha1 = null_sha1;
 		}
