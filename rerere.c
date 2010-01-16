@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "string-list.h"
 #include "rerere.h"
-#include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
 #include "dir.h"
 #include "resolve-undo.h"
@@ -332,7 +331,6 @@ static int merge(const char *name, const char *path)
 	int ret;
 	mmfile_t cur, base, other;
 	mmbuffer_t result = {NULL, 0};
-	xmparam_t xmp = {{XDF_NEED_MINIMAL}};
 
 	if (handle_file(path, NULL, rerere_path(name, "thisimage")) < 0)
 		return 1;
@@ -341,8 +339,7 @@ static int merge(const char *name, const char *path)
 			read_mmfile(&base, rerere_path(name, "preimage")) ||
 			read_mmfile(&other, rerere_path(name, "postimage")))
 		return 1;
-	ret = xdl_merge(&base, &cur, "", &other, "",
-			&xmp, XDL_MERGE_ZEALOUS, &result);
+	ret = ll_merge(&result, path, &base, &cur, "", &other, "", 0);
 	if (!ret) {
 		FILE *f = fopen(path, "w");
 		if (!f)
