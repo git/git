@@ -18,7 +18,8 @@ typedef int (*ll_merge_fn)(const struct ll_merge_driver *,
 			   mmfile_t *orig,
 			   mmfile_t *src1, const char *name1,
 			   mmfile_t *src2, const char *name2,
-			   int virtual_ancestor);
+			   int virtual_ancestor,
+			   int marker_size);
 
 struct ll_merge_driver {
 	const char *name;
@@ -38,7 +39,7 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 			   mmfile_t *orig,
 			   mmfile_t *src1, const char *name1,
 			   mmfile_t *src2, const char *name2,
-			   int virtual_ancestor)
+			   int virtual_ancestor, int marker_size)
 {
 	/*
 	 * The tentative merge result is "ours" for the final round,
@@ -59,7 +60,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			mmfile_t *orig,
 			mmfile_t *src1, const char *name1,
 			mmfile_t *src2, const char *name2,
-			int virtual_ancestor)
+			int virtual_ancestor, int marker_size)
 {
 	xmparam_t xmp;
 	int style = 0;
@@ -73,12 +74,14 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 				       path,
 				       orig, src1, name1,
 				       src2, name2,
-				       virtual_ancestor);
+				       virtual_ancestor, marker_size);
 	}
 
 	memset(&xmp, 0, sizeof(xmp));
 	if (git_xmerge_style >= 0)
 		style = git_xmerge_style;
+	if (marker_size > 0)
+		xmp.marker_size = marker_size;
 	return xdl_merge(orig,
 			 src1, name1,
 			 src2, name2,
@@ -92,11 +95,10 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 			  mmfile_t *orig,
 			  mmfile_t *src1, const char *name1,
 			  mmfile_t *src2, const char *name2,
-			  int virtual_ancestor)
+			  int virtual_ancestor, int marker_size)
 {
 	char *src, *dst;
 	long size;
-	const int marker_size = 7;
 	int status, saved_style;
 
 	/* We have to force the RCS "merge" style */
@@ -104,7 +106,7 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 	git_xmerge_style = 0;
 	status = ll_xdl_merge(drv_unused, result, path_unused,
 			      orig, src1, NULL, src2, NULL,
-			      virtual_ancestor);
+			      virtual_ancestor, marker_size);
 	git_xmerge_style = saved_style;
 	if (status <= 0)
 		return status;
@@ -165,14 +167,15 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 			mmfile_t *orig,
 			mmfile_t *src1, const char *name1,
 			mmfile_t *src2, const char *name2,
-			int virtual_ancestor)
+			int virtual_ancestor, int marker_size)
 {
-	char temp[3][50];
+	char temp[4][50];
 	struct strbuf cmd = STRBUF_INIT;
 	struct strbuf_expand_dict_entry dict[] = {
 		{ "O", temp[0] },
 		{ "A", temp[1] },
 		{ "B", temp[2] },
+		{ "L", temp[3] },
 		{ NULL }
 	};
 	const char *args[] = { "sh", "-c", NULL, NULL };
@@ -187,6 +190,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	create_temp(orig, temp[0]);
 	create_temp(src1, temp[1]);
 	create_temp(src2, temp[2]);
+	sprintf(temp[3], "%d", marker_size);
 
 	strbuf_expand(&cmd, fn->cmdline, strbuf_expand_dict_cb, &dict);
 
@@ -279,6 +283,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 		 *    %O - temporary file name for the merge base.
 		 *    %A - temporary file name for our version.
 		 *    %B - temporary file name for the other branches' version.
+		 *    %L - conflict marker length
 		 *
 		 * The external merge driver should write the results in the
 		 * file named by %A, and signal that it has done with zero exit
@@ -339,16 +344,13 @@ static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr
 	return &ll_merge_drv[LL_TEXT_MERGE];
 }
 
-static const char *git_path_check_merge(const char *path)
+static int git_path_check_merge(const char *path, struct git_attr_check check[2])
 {
-	static struct git_attr_check attr_merge_check;
-
-	if (!attr_merge_check.attr)
-		attr_merge_check.attr = git_attr("merge");
-
-	if (git_checkattr(path, 1, &attr_merge_check))
-		return NULL;
-	return attr_merge_check.value;
+	if (!check[0].attr) {
+		check[0].attr = git_attr("merge");
+		check[1].attr = git_attr("conflict-marker-size");
+	}
+	return git_checkattr(path, 2, check);
 }
 
 int ll_merge(mmbuffer_t *result_buf,
@@ -358,16 +360,23 @@ int ll_merge(mmbuffer_t *result_buf,
 	     mmfile_t *theirs, const char *their_label,
 	     int virtual_ancestor)
 {
-	const char *ll_driver_name;
+	static struct git_attr_check check[2];
+	const char *ll_driver_name = NULL;
+	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	const struct ll_merge_driver *driver;
 
-	ll_driver_name = git_path_check_merge(path);
+	if (!git_path_check_merge(path, check)) {
+		ll_driver_name = check[0].value;
+		if (check[1].value) {
+			marker_size = atoi(check[1].value);
+			if (marker_size <= 0)
+				marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
+		}
+	}
 	driver = find_ll_merge_driver(ll_driver_name);
-
 	if (virtual_ancestor && driver->recursive)
 		driver = find_ll_merge_driver(driver->recursive);
-	return driver->fn(driver, result_buf, path,
-			  ancestor,
-			  ours, our_label,
-			  theirs, their_label, virtual_ancestor);
+	return driver->fn(driver, result_buf, path, ancestor,
+			  ours, our_label, theirs, their_label,
+			  virtual_ancestor, marker_size);
 }
