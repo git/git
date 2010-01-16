@@ -91,6 +91,7 @@ struct transport {
 #define TRANSPORT_PUSH_VERBOSE 16
 #define TRANSPORT_PUSH_PORCELAIN 32
 #define TRANSPORT_PUSH_QUIET 64
+#define TRANSPORT_PUSH_SET_UPSTREAM 128
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
