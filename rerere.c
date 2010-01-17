@@ -98,6 +98,28 @@ static void rerere_io_putstr(const char *str, struct rerere_io *io)
 		ferr_puts(str, io->output, &io->wrerror);
 }
 
+static void rerere_io_putconflict(int ch, int size, struct rerere_io *io)
+{
+	char buf[64];
+
+	while (size) {
+		if (size < sizeof(buf) - 2) {
+			memset(buf, ch, size);
+			buf[size] = '\n';
+			buf[size + 1] = '\0';
+			size = 0;
+		} else {
+			int sz = sizeof(buf) - 1;
+			if (size <= sz)
+				sz -= (sz - size) + 1;
+			memset(buf, ch, sz);
+			buf[sz] = '\0';
+			size -= sz;
+		}
+		rerere_io_putstr(buf, io);
+	}
+}
+
 static void rerere_io_putmem(const char *mem, size_t sz, struct rerere_io *io)
 {
 	if (io->output)
@@ -115,7 +137,17 @@ static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
 	return strbuf_getwholeline(sb, io->input, '\n');
 }
 
-static int handle_path(unsigned char *sha1, struct rerere_io *io)
+static int is_cmarker(char *buf, int marker_char, int marker_size, int want_sp)
+{
+	while (marker_size--)
+		if (*buf++ != marker_char)
+			return 0;
+	if (want_sp && *buf != ' ')
+		return 0;
+	return isspace(*buf);
+}
+
+static int handle_path(unsigned char *sha1, struct rerere_io *io, int marker_size)
 {
 	git_SHA_CTX ctx;
 	int hunk_no = 0;
@@ -129,30 +161,30 @@ static int handle_path(unsigned char *sha1, struct rerere_io *io)
 		git_SHA1_Init(&ctx);
 
 	while (!io->getline(&buf, io)) {
-		if (!prefixcmp(buf.buf, "<<<<<<< ")) {
+		if (is_cmarker(buf.buf, '<', marker_size, 1)) {
 			if (hunk != RR_CONTEXT)
 				goto bad;
 			hunk = RR_SIDE_1;
-		} else if (!prefixcmp(buf.buf, "|||||||") && isspace(buf.buf[7])) {
+		} else if (is_cmarker(buf.buf, '|', marker_size, 0)) {
 			if (hunk != RR_SIDE_1)
 				goto bad;
 			hunk = RR_ORIGINAL;
-		} else if (!prefixcmp(buf.buf, "=======") && isspace(buf.buf[7])) {
+		} else if (is_cmarker(buf.buf, '=', marker_size, 0)) {
 			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
 				goto bad;
 			hunk = RR_SIDE_2;
-		} else if (!prefixcmp(buf.buf, ">>>>>>> ")) {
+		} else if (is_cmarker(buf.buf, '>', marker_size, 1)) {
 			if (hunk != RR_SIDE_2)
 				goto bad;
 			if (strbuf_cmp(&one, &two) > 0)
 				strbuf_swap(&one, &two);
 			hunk_no++;
 			hunk = RR_CONTEXT;
-			rerere_io_putstr("<<<<<<<\n", io);
+			rerere_io_putconflict('<', marker_size, io);
 			rerere_io_putmem(one.buf, one.len, io);
-			rerere_io_putstr("=======\n", io);
+			rerere_io_putconflict('=', marker_size, io);
 			rerere_io_putmem(two.buf, two.len, io);
-			rerere_io_putstr(">>>>>>>\n", io);
+			rerere_io_putconflict('>', marker_size, io);
 			if (sha1) {
 				git_SHA1_Update(&ctx, one.buf ? one.buf : "",
 					    one.len + 1);
@@ -189,6 +221,7 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 {
 	int hunk_no = 0;
 	struct rerere_io_file io;
+	int marker_size = 7;
 
 	memset(&io, 0, sizeof(io));
 	io.io.getline = rerere_file_getline;
@@ -205,7 +238,7 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 		}
 	}
 
-	hunk_no = handle_path(sha1, (struct rerere_io *)&io);
+	hunk_no = handle_path(sha1, (struct rerere_io *)&io, marker_size);
 
 	fclose(io.input);
 	if (io.io.wrerror)
@@ -255,6 +288,7 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 	struct cache_entry *ce;
 	int pos, len, i, hunk_no;
 	struct rerere_io_mem io;
+	int marker_size = 7;
 
 	/*
 	 * Reproduce the conflicted merge in-core
@@ -299,7 +333,7 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 	strbuf_init(&io.input, 0);
 	strbuf_attach(&io.input, result.ptr, result.size, result.size);
 
-	hunk_no = handle_path(sha1, (struct rerere_io *)&io);
+	hunk_no = handle_path(sha1, (struct rerere_io *)&io, marker_size);
 	strbuf_release(&io.input);
 	if (io.io.output)
 		fclose(io.io.output);
