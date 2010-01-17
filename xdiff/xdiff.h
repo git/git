@@ -110,7 +110,10 @@ int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 
 typedef struct s_xmparam {
 	xpparam_t xpp;
+	int marker_size;
 } xmparam_t;
+
+#define DEFAULT_CONFLICT_MARKER_SIZE 7
 
 int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 		mmfile_t *mf2, const char *name2,
