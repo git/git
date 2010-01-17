@@ -624,7 +624,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 				author_ident);
 		free(author_ident);
 
-		if (user_ident_explicitly_given != IDENT_ALL_GIVEN)
+		if (!user_ident_sufficiently_given())
 			fprintf(fp,
 				"%s"
 				"# Committer: %s\n",

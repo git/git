@@ -929,6 +929,7 @@ extern char git_default_name[MAX_GITNAME];
 #define IDENT_MAIL_GIVEN 02
 #define IDENT_ALL_GIVEN (IDENT_NAME_GIVEN|IDENT_MAIL_GIVEN)
 extern int user_ident_explicitly_given;
+extern int user_ident_sufficiently_given(void);
 
 extern const char *git_commit_encoding;
 extern const char *git_log_output_encoding;
