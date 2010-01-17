@@ -259,3 +259,8 @@ const char *git_committer_info(int flag)
 			 getenv("GIT_COMMITTER_DATE"),
 			 flag);
 }
+
+int user_ident_sufficiently_given(void)
+{
+	return user_ident_explicitly_given;
+}
