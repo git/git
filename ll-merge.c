@@ -344,7 +344,7 @@ static const char *git_path_check_merge(const char *path)
 	static struct git_attr_check attr_merge_check;
 
 	if (!attr_merge_check.attr)
-		attr_merge_check.attr = git_attr("merge", 5);
+		attr_merge_check.attr = git_attr("merge");
 
 	if (git_checkattr(path, 1, &attr_merge_check))
 		return NULL;

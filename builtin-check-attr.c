@@ -106,7 +106,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 		const char *name;
 		struct git_attr *a;
 		name = argv[i];
-		a = git_attr(name, strlen(name));
+		a = git_attr(name);
 		if (!a)
 			return error("%s: not a valid attribute name", name);
 		check[i].attr = a;
