@@ -1013,7 +1013,6 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 	rev.verbose_header = 1;
 	rev.show_root_diff = 1;
 	get_commit_format(format.buf, &rev);
-	strbuf_release(&format);
 	rev.always_show_header = 0;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
@@ -1036,6 +1035,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 		printf("%s\n", buf.buf);
 		strbuf_release(&buf);
 	}
+	strbuf_release(&format);
 }
 
 static int git_commit_config(const char *k, const char *v, void *cb)
