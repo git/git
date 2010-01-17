@@ -25,7 +25,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	const char *names[3] = { NULL, NULL, NULL };
 	mmfile_t mmfs[3];
 	mmbuffer_t result = {NULL, 0};
-	xpparam_t xpp = {XDF_NEED_MINIMAL};
+	xmparam_t xmp = {{XDF_NEED_MINIMAL}};
 	int ret = 0, i = 0, to_stdout = 0;
 	int merge_level = XDL_MERGE_ZEALOUS_ALNUM;
 	int merge_style = 0, quiet = 0;
@@ -68,7 +68,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	}
 
 	ret = xdl_merge(mmfs + 1, mmfs + 0, names[0], mmfs + 2, names[2],
-			&xpp, merge_level | merge_style, &result);
+			&xmp, merge_level | merge_style, &result);
 
 	for (i = 0; i < 3; i++)
 		free(mmfs[i].ptr);

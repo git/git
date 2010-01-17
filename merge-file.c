@@ -27,12 +27,12 @@ static void free_mmfile(mmfile_t *f)
 static void *three_way_filemerge(mmfile_t *base, mmfile_t *our, mmfile_t *their, unsigned long *size)
 {
 	mmbuffer_t res;
-	xpparam_t xpp;
+	xmparam_t xmp;
 	int merge_status;
 
-	memset(&xpp, 0, sizeof(xpp));
+	memset(&xmp, 0, sizeof(xmp));
 	merge_status = xdl_merge(base, our, ".our", their, ".their",
-		&xpp, XDL_MERGE_ZEALOUS, &res);
+		&xmp, XDL_MERGE_ZEALOUS, &res);
 
 	if (merge_status < 0)
 		return NULL;

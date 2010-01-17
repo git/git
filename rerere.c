@@ -332,7 +332,7 @@ static int merge(const char *name, const char *path)
 	int ret;
 	mmfile_t cur, base, other;
 	mmbuffer_t result = {NULL, 0};
-	xpparam_t xpp = {XDF_NEED_MINIMAL};
+	xmparam_t xmp = {{XDF_NEED_MINIMAL}};
 
 	if (handle_file(path, NULL, rerere_path(name, "thisimage")) < 0)
 		return 1;
@@ -342,7 +342,7 @@ static int merge(const char *name, const char *path)
 			read_mmfile(&other, rerere_path(name, "postimage")))
 		return 1;
 	ret = xdl_merge(&base, &cur, "", &other, "",
-			&xpp, XDL_MERGE_ZEALOUS, &result);
+			&xmp, XDL_MERGE_ZEALOUS, &result);
 	if (!ret) {
 		FILE *f = fopen(path, "w");
 		if (!f)

@@ -61,7 +61,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			mmfile_t *src2, const char *name2,
 			int virtual_ancestor)
 {
-	xpparam_t xpp;
+	xmparam_t xmp;
 	int style = 0;
 
 	if (buffer_is_binary(orig->ptr, orig->size) ||
@@ -76,13 +76,13 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 				       virtual_ancestor);
 	}
 
-	memset(&xpp, 0, sizeof(xpp));
+	memset(&xmp, 0, sizeof(xmp));
 	if (git_xmerge_style >= 0)
 		style = git_xmerge_style;
 	return xdl_merge(orig,
 			 src1, name1,
 			 src2, name2,
-			 &xpp, XDL_MERGE_ZEALOUS | style,
+			 &xmp, XDL_MERGE_ZEALOUS | style,
 			 result);
 }
 
