@@ -2294,7 +2294,7 @@ static void run_external_diff(const char *pgm,
 	}
 	*arg = NULL;
 	fflush(NULL);
-	retval = run_command_v_opt(spawn_arg, 0);
+	retval = run_command_v_opt(spawn_arg, RUN_USING_SHELL);
 	remove_tempfile();
 	if (retval) {
 		fprintf(stderr, "external diff died, stopping at %s.\n", name);
@@ -3818,6 +3818,7 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	*arg = NULL;
 
 	memset(&child, 0, sizeof(child));
+	child.use_shell = 1;
 	child.argv = argv;
 	child.out = -1;
 	if (start_command(&child) != 0 ||

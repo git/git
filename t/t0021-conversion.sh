@@ -4,7 +4,8 @@ test_description='blob conversion via gitattributes'
 
 . ./test-lib.sh
 
-cat <<\EOF >rot13.sh
+cat <<EOF >rot13.sh
+#!$SHELL_PATH
 tr \
   'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' \
   'nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM'
