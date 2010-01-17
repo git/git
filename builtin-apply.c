@@ -404,6 +404,9 @@ static char *squash_slash(char *name)
 {
 	int i = 0, j = 0;
 
+	if (!name)
+		return NULL;
+
 	while (name[i]) {
 		if ((name[j++] = name[i++]) == '/')
 			while (name[i] == '/')
@@ -416,7 +419,10 @@ static char *squash_slash(char *name)
 static char *find_name(const char *line, char *def, int p_value, int terminate)
 {
 	int len;
-	const char *start = line;
+	const char *start = NULL;
+
+	if (p_value == 0)
+		start = line;
 
 	if (*line == '"') {
 		struct strbuf name = STRBUF_INIT;
@@ -1199,7 +1205,8 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 				continue;
 			if (!patch->old_name && !patch->new_name) {
 				if (!patch->def_name)
-					die("git diff header lacks filename information (line %d)", linenr);
+					die("git diff header lacks filename information when removing "
+					    "%d leading pathname components (line %d)" , p_value, linenr);
 				patch->old_name = patch->new_name = patch->def_name;
 			}
 			patch->is_toplevel_relative = 1;
