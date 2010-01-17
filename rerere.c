@@ -5,6 +5,7 @@
 #include "dir.h"
 #include "resolve-undo.h"
 #include "ll-merge.h"
+#include "attr.h"
 
 /* if rerere_enabled == -1, fall back to detection of .git/rr-cache */
 static int rerere_enabled = -1;
@@ -221,7 +222,7 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 {
 	int hunk_no = 0;
 	struct rerere_io_file io;
-	int marker_size = 7;
+	int marker_size = ll_merge_marker_size(path);
 
 	memset(&io, 0, sizeof(io));
 	io.io.getline = rerere_file_getline;
@@ -288,7 +289,7 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 	struct cache_entry *ce;
 	int pos, len, i, hunk_no;
 	struct rerere_io_mem io;
-	int marker_size = 7;
+	int marker_size = ll_merge_marker_size(path);
 
 	/*
 	 * Reproduce the conflicted merge in-core

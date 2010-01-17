@@ -380,3 +380,18 @@ int ll_merge(mmbuffer_t *result_buf,
 			  ours, our_label, theirs, their_label,
 			  virtual_ancestor, marker_size);
 }
+
+int ll_merge_marker_size(const char *path)
+{
+	static struct git_attr_check check;
+	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
+
+	if (!check.attr)
+		check.attr = git_attr("conflict-marker-size");
+	if (!git_checkattr(path, 1, &check) && check.value) {
+		marker_size = atoi(check.value);
+		if (marker_size <= 0)
+			marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
+	}
+	return marker_size;
+}
