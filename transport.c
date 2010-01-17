@@ -478,7 +478,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.include_tag = data->options.followtags;
 	args.verbose = (transport->verbose > 0);
 	args.quiet = (transport->verbose < 0);
-	args.no_progress = args.quiet || (!transport->progress && !isatty(1));
+	args.no_progress = args.quiet || (!transport->progress && !isatty(2));
 	args.depth = data->options.depth;
 
 	for (i = 0; i < nr_heads; i++)
