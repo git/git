@@ -564,6 +564,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT__VERBOSE(&verbose),
 		OPT_SET_INT('t', "track",  &track, "set up tracking mode (see git-pull(1))",
 			BRANCH_TRACK_EXPLICIT),
+		OPT_SET_INT( 0, "set-upstream",  &track, "change upstream info",
+			BRANCH_TRACK_OVERRIDE),
 		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
 		OPT_SET_INT('r', NULL,     &kinds, "act on remote-tracking branches",
 			REF_REMOTE_BRANCH),

@@ -108,6 +108,7 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 		switch (track) {
 		case BRANCH_TRACK_ALWAYS:
 		case BRANCH_TRACK_EXPLICIT:
+		case BRANCH_TRACK_OVERRIDE:
 			break;
 		default:
 			return 1;
@@ -128,18 +129,25 @@ void create_branch(const char *head,
 		   const char *name, const char *start_name,
 		   int force, int reflog, enum branch_track track)
 {
-	struct ref_lock *lock;
+	struct ref_lock *lock = NULL;
 	struct commit *commit;
 	unsigned char sha1[20];
 	char *real_ref, msg[PATH_MAX + 20];
 	struct strbuf ref = STRBUF_INIT;
 	int forcing = 0;
+	int dont_change_ref = 0;
+	int explicit_tracking = 0;
+
+	if (track == BRANCH_TRACK_EXPLICIT || track == BRANCH_TRACK_OVERRIDE)
+		explicit_tracking = 1;
 
 	if (strbuf_check_branch_ref(&ref, name))
 		die("'%s' is not a valid branch name.", name);
 
 	if (resolve_ref(ref.buf, sha1, 1, NULL)) {
-		if (!force)
+		if (!force && track == BRANCH_TRACK_OVERRIDE)
+			dont_change_ref = 1;
+		else if (!force)
 			die("A branch named '%s' already exists.", name);
 		else if (!is_bare_repository() && !strcmp(head, name))
 			die("Cannot force update the current branch.");
@@ -153,12 +161,12 @@ void create_branch(const char *head,
 	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
 	case 0:
 		/* Not branching from any existing branch */
-		if (track == BRANCH_TRACK_EXPLICIT)
+		if (explicit_tracking)
 			die("Cannot setup tracking information; starting point is not a branch.");
 		break;
 	case 1:
 		/* Unique completion -- good, only if it is a real ref */
-		if (track == BRANCH_TRACK_EXPLICIT && !strcmp(real_ref, "HEAD"))
+		if (explicit_tracking && !strcmp(real_ref, "HEAD"))
 			die("Cannot setup tracking information; starting point is not a branch.");
 		break;
 	default:
@@ -170,9 +178,11 @@ void create_branch(const char *head,
 		die("Not a valid branch point: '%s'.", start_name);
 	hashcpy(sha1, commit->object.sha1);
 
-	lock = lock_any_ref_for_update(ref.buf, NULL, 0);
-	if (!lock)
-		die_errno("Failed to lock ref for update");
+	if (!dont_change_ref) {
+		lock = lock_any_ref_for_update(ref.buf, NULL, 0);
+		if (!lock)
+			die_errno("Failed to lock ref for update");
+	}
 
 	if (reflog)
 		log_all_ref_updates = 1;
@@ -180,15 +190,16 @@ void create_branch(const char *head,
 	if (forcing)
 		snprintf(msg, sizeof msg, "branch: Reset from %s",
 			 start_name);
-	else
+	else if (!dont_change_ref)
 		snprintf(msg, sizeof msg, "branch: Created from %s",
 			 start_name);
 
 	if (real_ref && track)
 		setup_tracking(name, real_ref, track);
 
-	if (write_ref_sha1(lock, sha1, msg) < 0)
-		die_errno("Failed to write ref");
+	if (!dont_change_ref)
+		if (write_ref_sha1(lock, sha1, msg) < 0)
+			die_errno("Failed to write ref");
 
 	strbuf_release(&ref);
 	free(real_ref);
