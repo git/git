@@ -68,10 +68,10 @@ do
 		1,-X)
 			usage ;;
 		*,-X)
-			xx="-X $2"
+			xx="-X $(git rev-parse --sq-quote "$2")"
 			shift ;;
 		*,*)
-			xx="$1" ;;
+			xx=$(git rev-parse --sq-quote "$1") ;;
 		esac
 		merge_args="$merge_args$xx "
 		;;
@@ -228,8 +228,15 @@ then
 fi
 
 merge_name=$(git fmt-merge-msg $log_arg <"$GIT_DIR/FETCH_HEAD") || exit
-test true = "$rebase" &&
-	exec git-rebase $diffstat $strategy_args $merge_args --onto $merge_head \
-	${oldremoteref:-$merge_head}
-exec git-merge $diffstat $no_commit $squash $no_ff $ff_only $log_arg $strategy_args $merge_args \
-	"$merge_name" HEAD $merge_head $verbosity
+case "$rebase" in
+true)
+	eval="git-rebase $diffstat $strategy_args $merge_args"
+	eval="$eval --onto $merge_head ${oldremoteref:-$merge_head}"
+	;;
+*)
+	eval="git-merge $diffstat $no_commit $squash $no_ff $ff_only"
+	eval="$eval  $log_arg $strategy_args $merge_args"
+	eval="$eval \"$merge_name\" HEAD $merge_head $verbosity"
+	;;
+esac
+eval "exec $eval"
