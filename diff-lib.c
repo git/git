@@ -73,6 +73,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		unsigned int oldmode, newmode;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
+		unsigned dirty_submodule = 0;
 
 		if (DIFF_OPT_TST(&revs->diffopt, QUICK) &&
 			DIFF_OPT_TST(&revs->diffopt, HAS_CHANGES))
@@ -173,12 +174,16 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			if (silent_on_removed)
 				continue;
 			diff_addremove(&revs->diffopt, '-', ce->ce_mode,
-				       ce->sha1, ce->name);
+				       ce->sha1, ce->name, 0);
 			continue;
 		}
 		changed = ce_match_stat(ce, &st, ce_option);
-		if (S_ISGITLINK(ce->ce_mode) && !changed)
-			changed = is_submodule_modified(ce->name);
+		if (S_ISGITLINK(ce->ce_mode)
+		    && (!changed || (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
+		    && is_submodule_modified(ce->name)) {
+			changed = 1;
+			dirty_submodule = 1;
+		}
 		if (!changed) {
 			ce_mark_uptodate(ce);
 			if (!DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
@@ -188,7 +193,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		newmode = ce_mode_from_stat(ce, st.st_mode);
 		diff_change(&revs->diffopt, oldmode, newmode,
 			    ce->sha1, (changed ? null_sha1 : ce->sha1),
-			    ce->name);
+			    ce->name, 0, dirty_submodule);
 
 	}
 	diffcore_std(&revs->diffopt);
@@ -204,16 +209,18 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 static void diff_index_show_file(struct rev_info *revs,
 				 const char *prefix,
 				 struct cache_entry *ce,
-				 const unsigned char *sha1, unsigned int mode)
+				 const unsigned char *sha1, unsigned int mode,
+				 unsigned dirty_submodule)
 {
 	diff_addremove(&revs->diffopt, prefix[0], mode,
-		       sha1, ce->name);
+		       sha1, ce->name, dirty_submodule);
 }
 
 static int get_stat_data(struct cache_entry *ce,
 			 const unsigned char **sha1p,
 			 unsigned int *modep,
-			 int cached, int match_missing)
+			 int cached, int match_missing,
+			 unsigned *dirty_submodule, int output_format)
 {
 	const unsigned char *sha1 = ce->sha1;
 	unsigned int mode = ce->ce_mode;
@@ -233,8 +240,13 @@ static int get_stat_data(struct cache_entry *ce,
 			return -1;
 		}
 		changed = ce_match_stat(ce, &st, 0);
-		if (changed
-		    || (S_ISGITLINK(ce->ce_mode) && is_submodule_modified(ce->name))) {
+		if (S_ISGITLINK(ce->ce_mode)
+		    && (!changed || (output_format & DIFF_FORMAT_PATCH))
+		    && is_submodule_modified(ce->name)) {
+			changed = 1;
+			*dirty_submodule = 1;
+		}
+		if (changed) {
 			mode = ce_mode_from_stat(ce, st.st_mode);
 			sha1 = null_sha1;
 		}
@@ -251,15 +263,17 @@ static void show_new_file(struct rev_info *revs,
 {
 	const unsigned char *sha1;
 	unsigned int mode;
+	unsigned dirty_submodule = 0;
 
 	/*
 	 * New file in the index: it might actually be different in
 	 * the working copy.
 	 */
-	if (get_stat_data(new, &sha1, &mode, cached, match_missing) < 0)
+	if (get_stat_data(new, &sha1, &mode, cached, match_missing,
+	    &dirty_submodule, revs->diffopt.output_format) < 0)
 		return;
 
-	diff_index_show_file(revs, "+", new, sha1, mode);
+	diff_index_show_file(revs, "+", new, sha1, mode, dirty_submodule);
 }
 
 static int show_modified(struct rev_info *revs,
@@ -270,11 +284,13 @@ static int show_modified(struct rev_info *revs,
 {
 	unsigned int mode, oldmode;
 	const unsigned char *sha1;
+	unsigned dirty_submodule = 0;
 
-	if (get_stat_data(new, &sha1, &mode, cached, match_missing) < 0) {
+	if (get_stat_data(new, &sha1, &mode, cached, match_missing,
+			  &dirty_submodule, revs->diffopt.output_format) < 0) {
 		if (report_missing)
 			diff_index_show_file(revs, "-", old,
-					     old->sha1, old->ce_mode);
+					     old->sha1, old->ce_mode, 0);
 		return -1;
 	}
 
@@ -309,7 +325,7 @@ static int show_modified(struct rev_info *revs,
 		return 0;
 
 	diff_change(&revs->diffopt, oldmode, mode,
-		    old->sha1, sha1, old->name);
+		    old->sha1, sha1, old->name, 0, dirty_submodule);
 	return 0;
 }
 
@@ -356,7 +372,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	 * Something removed from the tree?
 	 */
 	if (!idx) {
-		diff_index_show_file(revs, "-", tree, tree->sha1, tree->ce_mode);
+		diff_index_show_file(revs, "-", tree, tree->sha1, tree->ce_mode, 0);
 		return;
 	}
 

@@ -14,12 +14,13 @@ typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
-		 const char *fullpath);
+		 const char *fullpath,
+		 unsigned old_dirty_submodule, unsigned new_dirty_submodule);
 
 typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
-		    const char *fullpath);
+		    const char *fullpath, unsigned dirty_submodule);
 
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 		struct diff_options *options, void *data);
@@ -177,13 +178,14 @@ extern void diff_addremove(struct diff_options *,
 			   int addremove,
 			   unsigned mode,
 			   const unsigned char *sha1,
-			   const char *fullpath);
+			   const char *fullpath, unsigned dirty_submodule);
 
 extern void diff_change(struct diff_options *,
 			unsigned mode1, unsigned mode2,
 			const unsigned char *sha1,
 			const unsigned char *sha2,
-			const char *fullpath);
+			const char *fullpath,
+			unsigned dirty_submodule1, unsigned dirty_submodule2);
 
 extern void diff_unmerge(struct diff_options *,
 			 const char *path,
