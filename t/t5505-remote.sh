@@ -533,5 +533,219 @@ test_expect_success 'show empty remote' '
 	)
 '
 
-test_done
+test_expect_success 'new remote' '
+(
+	git remote add someremote foo &&
+	echo foo >expect &&
+	git config --get-all remote.someremote.url >actual &&
+	cmp expect actual
+)
+'
 
+test_expect_success 'remote set-url bar' '
+(
+	git remote set-url someremote bar &&
+	echo bar >expect &&
+	git config --get-all remote.someremote.url >actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url baz bar' '
+(
+	git remote set-url someremote baz bar &&
+	echo baz >expect &&
+	git config --get-all remote.someremote.url >actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url zot bar' '
+(
+	test_must_fail git remote set-url someremote zot bar &&
+	echo baz >expect &&
+	git config --get-all remote.someremote.url >actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --push zot baz' '
+(
+	test_must_fail git remote set-url --push someremote zot baz &&
+	echo "YYY" >expect &&
+	echo baz >>expect &&
+	test_must_fail git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --push zot' '
+(
+	git remote set-url --push someremote zot &&
+	echo zot >expect &&
+	echo "YYY" >>expect &&
+	echo baz >>expect &&
+	git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --push qux zot' '
+(
+	git remote set-url --push someremote qux zot &&
+	echo qux >expect &&
+	echo "YYY" >>expect &&
+	echo baz >>expect &&
+	git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --push foo qu+x' '
+(
+	git remote set-url --push someremote foo qu+x &&
+	echo foo >expect &&
+	echo "YYY" >>expect &&
+	echo baz >>expect &&
+	git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --push --add aaa' '
+(
+	git remote set-url --push --add someremote aaa &&
+	echo foo >expect &&
+	echo aaa >>expect &&
+	echo "YYY" >>expect &&
+	echo baz >>expect &&
+	git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --push bar aaa' '
+(
+	git remote set-url --push someremote bar aaa &&
+	echo foo >expect &&
+	echo bar >>expect &&
+	echo "YYY" >>expect &&
+	echo baz >>expect &&
+	git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --push --delete bar' '
+(
+	git remote set-url --push --delete someremote bar &&
+	echo foo >expect &&
+	echo "YYY" >>expect &&
+	echo baz >>expect &&
+	git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --push --delete foo' '
+(
+	git remote set-url --push --delete someremote foo &&
+	echo "YYY" >expect &&
+	echo baz >>expect &&
+	test_must_fail git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --add bbb' '
+(
+	git remote set-url --add someremote bbb &&
+	echo "YYY" >expect &&
+	echo baz >>expect &&
+	echo bbb >>expect &&
+	test_must_fail git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --delete .*' '
+(
+	test_must_fail git remote set-url --delete someremote .* &&
+	echo "YYY" >expect &&
+	echo baz >>expect &&
+	echo bbb >>expect &&
+	test_must_fail git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --delete bbb' '
+(
+	git remote set-url --delete someremote bbb &&
+	echo "YYY" >expect &&
+	echo baz >>expect &&
+	test_must_fail git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --delete baz' '
+(
+	test_must_fail git remote set-url --delete someremote baz &&
+	echo "YYY" >expect &&
+	echo baz >>expect &&
+	test_must_fail git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --add ccc' '
+(
+	git remote set-url --add someremote ccc &&
+	echo "YYY" >expect &&
+	echo baz >>expect &&
+	echo ccc >>expect &&
+	test_must_fail git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_expect_success 'remote set-url --delete baz' '
+(
+	git remote set-url --delete someremote baz &&
+	echo "YYY" >expect &&
+	echo ccc >>expect &&
+	test_must_fail git config --get-all remote.someremote.pushurl >actual &&
+	echo "YYY" >>actual &&
+	git config --get-all remote.someremote.url >>actual &&
+	cmp expect actual
+)
+'
+
+test_done
