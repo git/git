@@ -59,6 +59,8 @@ struct grep_expr {
 struct grep_opt {
 	struct grep_pat *pattern_list;
 	struct grep_pat **pattern_tail;
+	struct grep_pat *header_list;
+	struct grep_pat **header_tail;
 	struct grep_expr *pattern_expression;
 	const char *prefix;
 	int prefix_length;
