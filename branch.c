@@ -49,8 +49,18 @@ static int should_setup_rebase(const char *origin)
 
 void install_branch_config(int flag, const char *local, const char *origin, const char *remote)
 {
+	const char *shortname = remote + 11;
+	int remote_is_branch = !prefixcmp(remote, "refs/heads/");
 	struct strbuf key = STRBUF_INIT;
 	int rebasing = should_setup_rebase(origin);
+
+	if (remote_is_branch
+	    && !strcmp(local, shortname)
+	    && !origin) {
+		warning("Not setting branch %s as its own upstream.",
+			local);
+		return;
+	}
 
 	strbuf_addf(&key, "branch.%s.remote", local);
 	git_config_set(key.buf, origin ? origin : ".");
@@ -71,8 +81,8 @@ void install_branch_config(int flag, const char *local, const char *origin, cons
 		strbuf_addstr(&key, origin ? "remote" : "local");
 
 		/* Are we tracking a proper "branch"? */
-		if (!prefixcmp(remote, "refs/heads/")) {
-			strbuf_addf(&key, " branch %s", remote + 11);
+		if (remote_is_branch) {
+			strbuf_addf(&key, " branch %s", shortname);
 			if (origin)
 				strbuf_addf(&key, " from %s", origin);
 		}
