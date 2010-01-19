@@ -25,13 +25,17 @@ test_expect_success setup '
 		echo foo mmap bar_mmap
 		echo foo_mmap bar mmap baz
 	} >file &&
+	echo vvv >v &&
 	echo ww w >w &&
 	echo x x xx x >x &&
 	echo y yy >y &&
 	echo zzz > z &&
 	mkdir t &&
 	echo test >t/t &&
-	git add file w x y z t/t hello.c &&
+	echo vvv >t/v &&
+	mkdir t/a &&
+	echo vvv >t/a/v &&
+	git add . &&
 	test_tick &&
 	git commit -m initial
 '
