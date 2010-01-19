@@ -209,18 +209,21 @@ int mingw_getpagesize(void);
  * mingw_fstat() instead of fstat() on Windows.
  */
 #define off_t off64_t
-#define stat _stati64
 #define lseek _lseeki64
+#ifndef ALREADY_DECLARED_STAT_FUNCS
+#define stat _stati64
 int mingw_lstat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
 #define fstat mingw_fstat
 #define lstat mingw_lstat
 #define _stati64(x,y) mingw_lstat(x,y)
+#endif
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
 #define utime mingw_utime
 
-pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env);
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
+		     int fhin, int fhout, int fherr);
 void mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp
 
@@ -307,3 +310,8 @@ struct mingw_dirent
 #define readdir(x) mingw_readdir(x)
 struct dirent *mingw_readdir(DIR *dir);
 #endif // !NO_MINGW_REPLACE_READDIR
+
+/*
+ * Used by Pthread API implementation for Windows
+ */
+extern int err_win_to_posix(DWORD winerr);
