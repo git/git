@@ -217,7 +217,22 @@ test_expect_success 'rerere.autoupdate' '
 	git checkout version2 &&
 	test_must_fail git merge fifth &&
 	test 0 = $(git ls-files -u | wc -l)
+'
 
+test_expect_success 'merge --rerere-autoupdate' '
+	git config --unset rerere.autoupdate
+	git reset --hard &&
+	git checkout version2 &&
+	test_must_fail git merge --rerere-autoupdate fifth &&
+	test 0 = $(git ls-files -u | wc -l)
+'
+
+test_expect_success 'merge --no-rerere-autoupdate' '
+	git config rerere.autoupdate true
+	git reset --hard &&
+	git checkout version2 &&
+	test_must_fail git merge --no-rerere-autoupdate fifth &&
+	test 2 = $(git ls-files -u | wc -l)
 '
 
 test_done

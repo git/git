@@ -103,15 +103,24 @@ static int diff_two(const char *file1, const char *label1,
 int cmd_rerere(int argc, const char **argv, const char *prefix)
 {
 	struct string_list merge_rr = { NULL, 0, 0, 1 };
-	int i, fd;
+	int i, fd, flags = 0;
 
+	if (2 < argc) {
+		if (!strcmp(argv[1], "-h"))
+			usage(git_rerere_usage);
+		if (!strcmp(argv[1], "--rerere-autoupdate"))
+			flags = RERERE_AUTOUPDATE;
+		else if (!strcmp(argv[1], "--no-rerere-autoupdate"))
+			flags = RERERE_NOAUTOUPDATE;
+		if (flags) {
+			argc--;
+			argv++;
+		}
+	}
 	if (argc < 2)
-		return rerere();
+		return rerere(flags);
 
-	if (!strcmp(argv[1], "-h"))
-		usage(git_rerere_usage);
-
-	fd = setup_rerere(&merge_rr);
+	fd = setup_rerere(&merge_rr, flags);
 	if (fd < 0)
 		return 0;
 

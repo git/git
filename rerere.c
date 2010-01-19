@@ -367,7 +367,7 @@ static int is_rerere_enabled(void)
 	return 1;
 }
 
-int setup_rerere(struct string_list *merge_rr)
+int setup_rerere(struct string_list *merge_rr, int flags)
 {
 	int fd;
 
@@ -375,6 +375,8 @@ int setup_rerere(struct string_list *merge_rr)
 	if (!is_rerere_enabled())
 		return -1;
 
+	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
+		rerere_autoupdate = !!(flags & RERERE_AUTOUPDATE);
 	merge_rr_path = git_pathdup("MERGE_RR");
 	fd = hold_lock_file_for_update(&write_lock, merge_rr_path,
 				       LOCK_DIE_ON_ERROR);
@@ -382,12 +384,12 @@ int setup_rerere(struct string_list *merge_rr)
 	return fd;
 }
 
-int rerere(void)
+int rerere(int flags)
 {
 	struct string_list merge_rr = { NULL, 0, 0, 1 };
 	int fd;
 
-	fd = setup_rerere(&merge_rr);
+	fd = setup_rerere(&merge_rr, flags);
 	if (fd < 0)
 		return 0;
 	return do_plain_rerere(&merge_rr, fd);

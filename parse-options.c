@@ -633,3 +633,10 @@ int parse_opt_with_commit(const struct option *opt, const char *arg, int unset)
 	commit_list_insert(commit, opt->value);
 	return 0;
 }
+
+int parse_opt_tertiary(const struct option *opt, const char *arg, int unset)
+{
+	int *target = opt->value;
+	*target = unset ? 2 : 1;
+	return 0;
+}

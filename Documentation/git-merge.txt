@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
-	[-m <msg>] <remote>...
+	 [--[no-]rerere-autoupdate] [-m <msg>] <remote>...
 'git merge' <msg> HEAD <remote>...
 
 DESCRIPTION
@@ -32,6 +32,11 @@ include::merge-options.txt[]
 	case one is created). The 'git fmt-merge-msg' command can be
 	used to give a good default for automated 'git merge'
 	invocations.
+
+--rerere-autoupdate::
+--no-rerere-autoupdate::
+	Allow the rerere mechanism to update the index with the
+	result of auto-conflict resolution if possible.
 
 <remote>...::
 	Other branch heads to merge into our branch.  You need at

@@ -52,6 +52,7 @@ static struct strategy **use_strategies;
 static size_t use_strategies_nr, use_strategies_alloc;
 static const char *branch;
 static int verbosity;
+static int allow_rerere_auto;
 
 static struct strategy all_strategy[] = {
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
@@ -170,6 +171,7 @@ static struct option builtin_merge_options[] = {
 		"allow fast-forward (default)"),
 	OPT_BOOLEAN(0, "ff-only", &fast_forward_only,
 		"abort if fast-forward is not possible"),
+	OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 	OPT_CALLBACK('s', "strategy", &use_strategies, "strategy",
 		"merge strategy to use", option_parse_strategy),
 	OPT_CALLBACK('m', "message", &merge_msg, "message",
@@ -790,7 +792,7 @@ static int suggest_conflicts(void)
 		}
 	}
 	fclose(fp);
-	rerere();
+	rerere(allow_rerere_auto);
 	printf("Automatic merge failed; "
 			"fix conflicts and then commit the result.\n");
 	return 1;

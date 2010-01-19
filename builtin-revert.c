@@ -38,6 +38,7 @@ static const char * const cherry_pick_usage[] = {
 static int edit, no_replay, no_commit, mainline, signoff;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
+static int allow_rerere_auto;
 
 static const char *me;
 
@@ -57,6 +58,7 @@ static void parse_args(int argc, const char **argv)
 		OPT_BOOLEAN('r', NULL, &noop, "no-op (backward compatibility)"),
 		OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
+		OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 		OPT_END(),
 	};
 
@@ -395,7 +397,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			die ("Error wrapping up %s", defmsg);
 		fprintf(stderr, "Automatic %s failed.%s\n",
 			me, help_msg(commit->object.sha1));
-		rerere();
+		rerere(allow_rerere_auto);
 		exit(1);
 	}
 	if (commit_lock_file(&msg_file) < 0)
