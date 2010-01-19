@@ -1254,4 +1254,156 @@ test_expect_success \
 	'Q: verify note for third commit' \
 	'git cat-file blob refs/notes/foobar:$commit3 >actual && test_cmp expect actual'
 
+###
+### series R (feature and option)
+###
+
+cat >input <<EOF
+feature no-such-feature-exists
+EOF
+
+test_expect_success 'R: abort on unsupported feature' '
+	test_must_fail git fast-import <input
+'
+
+cat >input <<EOF
+feature date-format=now
+EOF
+
+test_expect_success 'R: supported feature is accepted' '
+	git fast-import <input
+'
+
+cat >input << EOF
+blob
+data 3
+hi
+feature date-format=now
+EOF
+
+test_expect_success 'R: abort on receiving feature after data command' '
+	test_must_fail git fast-import <input
+'
+
+cat >input << EOF
+feature import-marks=git.marks
+feature import-marks=git2.marks
+EOF
+
+test_expect_success 'R: only one import-marks feature allowed per stream' '
+	test_must_fail git fast-import <input
+'
+
+cat >input << EOF
+feature export-marks=git.marks
+blob
+mark :1
+data 3
+hi
+
+EOF
+
+test_expect_success \
+    'R: export-marks feature results in a marks file being created' \
+    'cat input | git fast-import &&
+    grep :1 git.marks'
+
+test_expect_success \
+    'R: export-marks options can be overriden by commandline options' \
+    'cat input | git fast-import --export-marks=other.marks &&
+    grep :1 other.marks'
+
+cat >input << EOF
+feature import-marks=marks.out
+feature export-marks=marks.new
+EOF
+
+test_expect_success \
+    'R: import to output marks works without any content' \
+    'cat input | git fast-import &&
+    test_cmp marks.out marks.new'
+
+cat >input <<EOF
+feature import-marks=nonexistant.marks
+feature export-marks=marks.new
+EOF
+
+test_expect_success \
+    'R: import marks prefers commandline marks file over the stream' \
+    'cat input | git fast-import --import-marks=marks.out &&
+    test_cmp marks.out marks.new'
+
+
+cat >input <<EOF
+feature import-marks=nonexistant.marks
+feature export-marks=combined.marks
+EOF
+
+test_expect_success 'R: multiple --import-marks= should be honoured' '
+    head -n2 marks.out > one.marks &&
+    tail -n +3 marks.out > two.marks &&
+    git fast-import --import-marks=one.marks --import-marks=two.marks <input &&
+    test_cmp marks.out combined.marks
+'
+
+cat >input <<EOF
+feature relative-marks
+feature import-marks=relative.in
+feature export-marks=relative.out
+EOF
+
+test_expect_success 'R: feature relative-marks should be honoured' '
+    mkdir -p .git/info/fast-import/ &&
+    cp marks.new .git/info/fast-import/relative.in &&
+    git fast-import <input &&
+    test_cmp marks.new .git/info/fast-import/relative.out
+'
+
+cat >input <<EOF
+feature relative-marks
+feature import-marks=relative.in
+feature no-relative-marks
+feature export-marks=non-relative.out
+EOF
+
+test_expect_success 'R: feature no-relative-marks should be honoured' '
+    git fast-import <input &&
+    test_cmp marks.new non-relative.out
+'
+
+cat >input << EOF
+option git quiet
+blob
+data 3
+hi
+
+EOF
+
+touch empty
+
+test_expect_success 'R: quiet option results in no stats being output' '
+    cat input | git fast-import 2> output &&
+    test_cmp empty output
+'
+
+cat >input <<EOF
+option git non-existing-option
+EOF
+
+test_expect_success 'R: die on unknown option' '
+    test_must_fail git fast-import <input
+'
+
+test_expect_success 'R: unknown commandline options are rejected' '\
+    test_must_fail git fast-import --non-existing-option < /dev/null
+'
+
+cat >input <<EOF
+option non-existing-vcs non-existing-option
+EOF
+
+test_expect_success 'R: ignore non-git options' '
+    git fast-import <input
+'
+
 test_done

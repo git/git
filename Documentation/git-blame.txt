@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-w] [--incremental] [-L n,m]
-            [-S <revs-file>] [-M] [-C] [-C] [--since=<date>]
+	    [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>]
 	    [<rev> | --contents <file> | --reverse <rev>] [--] <file>
 
 DESCRIPTION

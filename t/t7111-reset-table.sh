@@ -73,13 +73,13 @@ test_expect_success 'setting up branches to test with unmerged entries' '
     git checkout branch1 &&
     test_commit B1 file1 &&
     git checkout branch2 &&
-    test_commit B2 file1
+    test_commit B file1
 '
 
 while read W1 I1 H1 T opt W2 I2 H2
 do
     test_expect_success "check: $W1 $I1 $H1 $T --$opt $W2 $I2 $H2" '
-	git reset --hard B2 &&
+	git reset --hard B &&
 	test_must_fail git merge branch1 &&
 	cat file1 >X_file1 &&
 	if test "$W2" != "XXXXX"
@@ -100,14 +100,14 @@ do
 	fi
     '
 done <<\EOF
-X U C D soft   XXXXX
-X U C D mixed  X D D
-X U C D hard   D D D
-X U C D merge  D D D
-X U C C soft   XXXXX
-X U C C mixed  X C C
-X U C C hard   C C C
-X U C C merge  C C C
+X U B C soft   XXXXX
+X U B C mixed  X C C
+X U B C hard   C C C
+X U B C merge  C C C
+X U B B soft   XXXXX
+X U B B mixed  X B B
+X U B B hard   B B B
+X U B B merge  B B B
 EOF
 
 test_done

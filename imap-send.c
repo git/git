@@ -965,17 +965,13 @@ static struct store *imap_open_store(struct imap_server_conf *srvc)
 	/* open connection to IMAP server */
 
 	if (srvc->tunnel) {
-		const char *argv[4];
+		const char *argv[] = { srvc->tunnel, NULL };
 		struct child_process tunnel = {0};
 
 		imap_info("Starting tunnel '%s'... ", srvc->tunnel);
 
-		argv[0] = "sh";
-		argv[1] = "-c";
-		argv[2] = srvc->tunnel;
-		argv[3] = NULL;
-
 		tunnel.argv = argv;
+		tunnel.use_shell = 1;
 		tunnel.in = -1;
 		tunnel.out = -1;
 		if (start_command(&tunnel))

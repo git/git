@@ -68,7 +68,7 @@ static enum {
 } cleanup_mode;
 static char *cleanup_arg;
 
-static int use_editor = 1, initial_commit, in_merge;
+static int use_editor = 1, initial_commit, in_merge, include_status = 1;
 static const char *only_include_assumed;
 static struct strbuf message;
 
@@ -107,6 +107,7 @@ static struct option builtin_commit_options[] = {
 	OPT_FILENAME('t', "template", &template_file, "use specified template file"),
 	OPT_BOOLEAN('e', "edit", &edit_flag, "force edit of commit"),
 	OPT_STRING(0, "cleanup", &cleanup_arg, "default", "how to strip spaces and #comments from message"),
+	OPT_BOOLEAN(0, "status", &include_status, "include status in commit message template"),
 	/* end commit message options */
 
 	OPT_GROUP("Commit contents options"),
@@ -590,7 +591,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 	/* This checks if committer ident is explicitly given */
 	git_committer_info(0);
-	if (use_editor) {
+	if (use_editor && include_status) {
 		char *author_ident;
 		const char *committer_ident;
 
@@ -1105,6 +1106,10 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 
 	if (!strcmp(k, "commit.template"))
 		return git_config_pathname(&template_file, k, v);
+	if (!strcmp(k, "commit.status")) {
+		include_status = git_config_bool(k, v);
+		return 0;
+	}
 
 	return git_status_config(k, v, s);
 }

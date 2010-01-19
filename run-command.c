@@ -15,6 +15,50 @@ static inline void dup_devnull(int to)
 	close(fd);
 }
 
+static const char **prepare_shell_cmd(const char **argv)
+{
+	int argc, nargc = 0;
+	const char **nargv;
+
+	for (argc = 0; argv[argc]; argc++)
+		; /* just counting */
+	/* +1 for NULL, +3 for "sh -c" plus extra $0 */
+	nargv = xmalloc(sizeof(*nargv) * (argc + 1 + 3));
+
+	if (argc < 1)
+		die("BUG: shell command is empty");
+
+	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
+		nargv[nargc++] = "sh";
+		nargv[nargc++] = "-c";
+
+		if (argc < 2)
+			nargv[nargc++] = argv[0];
+		else {
+			struct strbuf arg0 = STRBUF_INIT;
+			strbuf_addf(&arg0, "%s \"$@\"", argv[0]);
+			nargv[nargc++] = strbuf_detach(&arg0, NULL);
+		}
+	}
+
+	for (argc = 0; argv[argc]; argc++)
+		nargv[nargc++] = argv[argc];
+	nargv[nargc] = NULL;
+
+	return nargv;
+}
+
+#ifndef WIN32
+static int execv_shell_cmd(const char **argv)
+{
+	const char **nargv = prepare_shell_cmd(argv);
+	trace_argv_printf(nargv, "trace: exec:");
+	execvp(nargv[0], (char **)nargv);
+	free(nargv);
+	return -1;
+}
+#endif
+
 int start_command(struct child_process *cmd)
 {
 	int need_in, need_out, need_err;
@@ -123,6 +167,8 @@ fail_pipe:
 			cmd->preexec_cb();
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
+		} else if (cmd->use_shell) {
+			execv_shell_cmd(cmd->argv);
 		} else {
 			execvp(cmd->argv[0], (char *const*) cmd->argv);
 		}
@@ -179,6 +225,8 @@ fail_pipe:
 
 	if (cmd->git_cmd) {
 		cmd->argv = prepare_git_cmd(cmd->argv);
+	} else if (cmd->use_shell) {
+		cmd->argv = prepare_shell_cmd(cmd->argv);
 	}
 
 	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
@@ -297,6 +345,7 @@ static void prepare_run_command_v_opt(struct child_process *cmd,
 	cmd->git_cmd = opt & RUN_GIT_CMD ? 1 : 0;
 	cmd->stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
 	cmd->silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
+	cmd->use_shell = opt & RUN_USING_SHELL ? 1 : 0;
 }
 
 int run_command_v_opt(const char **argv, int opt)

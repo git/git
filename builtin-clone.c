@@ -44,10 +44,13 @@ static char *option_origin = NULL;
 static char *option_branch = NULL;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbose;
+static int option_progress;
 
 static struct option builtin_clone_options[] = {
 	OPT__QUIET(&option_quiet),
 	OPT__VERBOSE(&option_verbose),
+	OPT_BOOLEAN(0, "progress", &option_progress,
+			"force progress reporting"),
 	OPT_BOOLEAN('n', "no-checkout", &option_no_checkout,
 		    "don't create a checkout"),
 	OPT_BOOLEAN(0, "bare", &option_bare, "create a bare repository"),
@@ -526,6 +529,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (option_quiet)
 			transport->verbose = -1;
 		else if (option_verbose)
+			transport->verbose = 1;
+
+		if (option_progress)
 			transport->progress = 1;
 
 		if (option_upload_pack)

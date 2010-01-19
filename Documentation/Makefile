@@ -204,7 +204,7 @@ install-pdf: pdf
 install-html: html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(DESTDIR)$(htmldir)
 
-../GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
+../GIT-VERSION-FILE: FORCE
 	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) GIT-VERSION-FILE
 
 -include ../GIT-VERSION-FILE
@@ -337,4 +337,4 @@ quick-install-man:
 quick-install-html:
 	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(HTML_REF) $(DESTDIR)$(htmldir)
 
-.PHONY: .FORCE-GIT-VERSION-FILE
+.PHONY: FORCE

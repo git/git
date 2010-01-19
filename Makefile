@@ -222,7 +222,7 @@ all::
 #   DEFAULT_EDITOR='$GIT_FALLBACK_EDITOR',
 #   DEFAULT_EDITOR='"C:\Program Files\Vim\gvim.exe" --nofork'
 
-GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
+GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
@@ -1486,20 +1486,19 @@ shell_compatibility_test: please_set_SHELL_PATH_to_a_more_modern_shell
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
 
-git.o: git.c common-cmds.h GIT-CFLAGS
-	$(QUIET_CC)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		'-DGIT_HTML_PATH="$(htmldir_SQ)"' \
-		$(ALL_CFLAGS) -o $@ -c $(filter %.c,$^)
+git.o: common-cmds.h
+git.s git.o: ALL_CFLAGS += -DGIT_VERSION='"$(GIT_VERSION)"' \
+	'-DGIT_HTML_PATH="$(htmldir_SQ)"'
 
 git$X: git.o $(BUILTIN_OBJS) $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ git.o \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
-builtin-help.o: builtin-help.c common-cmds.h GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) \
-		'-DGIT_HTML_PATH="$(htmldir_SQ)"' \
-		'-DGIT_MAN_PATH="$(mandir_SQ)"' \
-		'-DGIT_INFO_PATH="$(infodir_SQ)"' $<
+builtin-help.o: common-cmds.h
+builtin-help.s builtin-help.o: ALL_CFLAGS += \
+	'-DGIT_HTML_PATH="$(htmldir_SQ)"' \
+	'-DGIT_MAN_PATH="$(mandir_SQ)"' \
+	'-DGIT_INFO_PATH="$(infodir_SQ)"'
 
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)$(RM) $@ && \
@@ -1652,30 +1651,26 @@ git.o git.spec \
 
 %.o: %.c GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
-%.s: %.c GIT-CFLAGS
+%.s: %.c GIT-CFLAGS FORCE
 	$(QUIET_CC)$(CC) -S $(ALL_CFLAGS) $<
 %.o: %.S GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
-exec_cmd.o: exec_cmd.c GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) \
-		'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
-		'-DBINDIR="$(bindir_relative_SQ)"' \
-		'-DPREFIX="$(prefix_SQ)"' \
-		$<
+exec_cmd.s exec_cmd.o: ALL_CFLAGS += \
+	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
+	'-DBINDIR="$(bindir_relative_SQ)"' \
+	'-DPREFIX="$(prefix_SQ)"'
 
-builtin-init-db.o: builtin-init-db.c GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $<
+builtin-init-db.s builtin-init-db.o: ALL_CFLAGS += \
+	-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"'
 
-config.o: config.c GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) -DETC_GITCONFIG='"$(ETC_GITCONFIG_SQ)"' $<
+config.s config.o: ALL_CFLAGS += -DETC_GITCONFIG='"$(ETC_GITCONFIG_SQ)"'
 
-http.o: http.c GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) -DGIT_USER_AGENT='"git/$(GIT_VERSION)"' $<
+http.s http.o: ALL_CFLAGS += -DGIT_USER_AGENT='"git/$(GIT_VERSION)"'
 
 ifdef NO_EXPAT
-http-walker.o: http-walker.c http.h GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) -DNO_EXPAT $<
+http-walker.o: http.h
+http-walker.s http-walker.o: ALL_CFLAGS += -DNO_EXPAT
 endif
 
 git-%$X: %.o $(GITLIBS)
@@ -1753,7 +1748,7 @@ cscope:
 TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):\
              $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ)
 
-GIT-CFLAGS: .FORCE-GIT-CFLAGS
+GIT-CFLAGS: FORCE
 	@FLAGS='$(TRACK_CFLAGS)'; \
 	    if test x"$$FLAGS" != x"`cat GIT-CFLAGS 2>/dev/null`" ; then \
 		echo 1>&2 "    * new build flags or prefix"; \
@@ -1763,7 +1758,7 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 # We need to apply sq twice, once to protect from the shell
 # that runs GIT-BUILD-OPTIONS, and then again to protect it
 # and the first level quoting from the shell that runs "echo".
-GIT-BUILD-OPTIONS: .FORCE-GIT-BUILD-OPTIONS
+GIT-BUILD-OPTIONS: FORCE
 	@echo SHELL_PATH=\''$(subst ','\'',$(SHELL_PATH_SQ))'\' >$@
 	@echo PERL_PATH=\''$(subst ','\'',$(PERL_PATH_SQ))'\' >>$@
 	@echo TAR=\''$(subst ','\'',$(subst ','\'',$(TAR)))'\' >>$@
@@ -1775,14 +1770,12 @@ GIT-BUILD-OPTIONS: .FORCE-GIT-BUILD-OPTIONS
 ifndef NO_TCLTK
 TRACK_VARS = $(subst ','\'',-DTCLTK_PATH='$(TCLTK_PATH_SQ)')
 
-GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
+GIT-GUI-VARS: FORCE
 	@VARS='$(TRACK_VARS)'; \
 	    if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
 		echo 1>&2 "    * new Tcl/Tk interpreter location"; \
 		echo "$$VARS" >$@; \
             fi
-
-.PHONY: .FORCE-GIT-GUI-VARS
 endif
 
 ### Testing rules
@@ -2024,8 +2017,7 @@ endif
 
 .PHONY: all install clean strip
 .PHONY: shell_compatibility_test please_set_SHELL_PATH_to_a_more_modern_shell
-.PHONY: .FORCE-GIT-VERSION-FILE TAGS tags cscope .FORCE-GIT-CFLAGS
-.PHONY: .FORCE-GIT-BUILD-OPTIONS
+.PHONY: FORCE TAGS tags cscope
 
 ### Check documentation
 #

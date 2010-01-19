@@ -295,6 +295,9 @@ static unsigned long branch_count;
 static unsigned long branch_load_count;
 static int failure;
 static FILE *pack_edges;
+static unsigned int show_stats = 1;
+static int global_argc;
+static const char **global_argv;
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -317,7 +320,10 @@ static unsigned int object_entry_alloc = 5000;
 static struct object_entry_pool *blocks;
 static struct object_entry *object_table[1 << 16];
 static struct mark_set *marks;
-static const char *mark_file;
+static const char *export_marks_file;
+static const char *import_marks_file;
+static int import_marks_file_from_stream;
+static int relative_marks_paths;
 
 /* Our last blob */
 static struct last_object last_blob = { STRBUF_INIT, 0, 0, 0 };
@@ -351,6 +357,9 @@ static struct recent_command *rc_free;
 static unsigned int cmd_save = 100;
 static uintmax_t next_mark;
 static struct strbuf new_data = STRBUF_INIT;
+static int seen_data_command;
+
+static void parse_argv(void);
 
 static void write_branch_report(FILE *rpt, struct branch *b)
 {
@@ -454,8 +463,8 @@ static void write_crash_report(const char *err)
 	fputc('\n', rpt);
 	fputs("Marks\n", rpt);
 	fputs("-----\n", rpt);
-	if (mark_file)
-		fprintf(rpt, "  exported to %s\n", mark_file);
+	if (export_marks_file)
+		fprintf(rpt, "  exported to %s\n", export_marks_file);
 	else
 		dump_marks_helper(rpt, 0, marks);
 
@@ -1602,13 +1611,13 @@ static void dump_marks(void)
 	int mark_fd;
 	FILE *f;
 
-	if (!mark_file)
+	if (!export_marks_file)
 		return;
 
-	mark_fd = hold_lock_file_for_update(&mark_lock, mark_file, 0);
+	mark_fd = hold_lock_file_for_update(&mark_lock, export_marks_file, 0);
 	if (mark_fd < 0) {
 		failure |= error("Unable to write marks file %s: %s",
-			mark_file, strerror(errno));
+			export_marks_file, strerror(errno));
 		return;
 	}
 
@@ -1617,7 +1626,7 @@ static void dump_marks(void)
 		int saved_errno = errno;
 		rollback_lock_file(&mark_lock);
 		failure |= error("Unable to write marks file %s: %s",
-			mark_file, strerror(saved_errno));
+			export_marks_file, strerror(saved_errno));
 		return;
 	}
 
@@ -1633,7 +1642,7 @@ static void dump_marks(void)
 		int saved_errno = errno;
 		rollback_lock_file(&mark_lock);
 		failure |= error("Unable to write marks file %s: %s",
-			mark_file, strerror(saved_errno));
+			export_marks_file, strerror(saved_errno));
 		return;
 	}
 
@@ -1641,10 +1650,46 @@ static void dump_marks(void)
 		int saved_errno = errno;
 		rollback_lock_file(&mark_lock);
 		failure |= error("Unable to commit marks file %s: %s",
-			mark_file, strerror(saved_errno));
+			export_marks_file, strerror(saved_errno));
 		return;
 	}
 }
+
+static void read_marks(void)
+{
+	char line[512];
+	FILE *f = fopen(import_marks_file, "r");
+	if (!f)
+		die_errno("cannot read '%s'", import_marks_file);
+	while (fgets(line, sizeof(line), f)) {
+		uintmax_t mark;
+		char *end;
+		unsigned char sha1[20];
+		struct object_entry *e;
+
+		end = strchr(line, '\n');
+		if (line[0] != ':' || !end)
+			die("corrupt mark line: %s", line);
+		*end = 0;
+		mark = strtoumax(line + 1, &end, 10);
+		if (!mark || end == line + 1
+			|| *end != ' ' || get_sha1(end + 1, sha1))
+			die("corrupt mark line: %s", line);
+		e = find_object(sha1);
+		if (!e) {
+			enum object_type type = sha1_object_info(sha1, NULL);
+			if (type < 0)
+				die("object not found: %s", sha1_to_hex(sha1));
+			e = insert_object(sha1);
+			e->type = type;
+			e->pack_id = MAX_PACK_ID;
+			e->offset = 1; /* just not zero! */
+		}
+		insert_mark(mark, e);
+	}
+	fclose(f);
+}
+
 
 static int read_next_command(void)
 {
@@ -1665,6 +1710,12 @@ static int read_next_command(void)
 			stdin_eof = strbuf_getline(&command_buf, stdin, '\n');
 			if (stdin_eof)
 				return EOF;
+
+			if (!seen_data_command
+				&& prefixcmp(command_buf.buf, "feature ")
+				&& prefixcmp(command_buf.buf, "option ")) {
+				parse_argv();
+			}
 
 			rc = rc_free;
 			if (rc)
@@ -2420,39 +2471,140 @@ static void parse_progress(void)
 	skip_optional_lf();
 }
 
-static void import_marks(const char *input_file)
+static char* make_fast_import_path(const char *path)
 {
-	char line[512];
-	FILE *f = fopen(input_file, "r");
-	if (!f)
-		die_errno("cannot read '%s'", input_file);
-	while (fgets(line, sizeof(line), f)) {
-		uintmax_t mark;
-		char *end;
-		unsigned char sha1[20];
-		struct object_entry *e;
+	struct strbuf abs_path = STRBUF_INIT;
 
-		end = strchr(line, '\n');
-		if (line[0] != ':' || !end)
-			die("corrupt mark line: %s", line);
-		*end = 0;
-		mark = strtoumax(line + 1, &end, 10);
-		if (!mark || end == line + 1
-			|| *end != ' ' || get_sha1(end + 1, sha1))
-			die("corrupt mark line: %s", line);
-		e = find_object(sha1);
-		if (!e) {
-			enum object_type type = sha1_object_info(sha1, NULL);
-			if (type < 0)
-				die("object not found: %s", sha1_to_hex(sha1));
-			e = insert_object(sha1);
-			e->type = type;
-			e->pack_id = MAX_PACK_ID;
-			e->offset = 1; /* just not zero! */
-		}
-		insert_mark(mark, e);
+	if (!relative_marks_paths || is_absolute_path(path))
+		return xstrdup(path);
+	strbuf_addf(&abs_path, "%s/info/fast-import/%s", get_git_dir(), path);
+	return strbuf_detach(&abs_path, NULL);
+}
+
+static void option_import_marks(const char *marks, int from_stream)
+{
+	if (import_marks_file) {
+		if (from_stream)
+			die("Only one import-marks command allowed per stream");
+
+		/* read previous mark file */
+		if(!import_marks_file_from_stream)
+			read_marks();
 	}
-	fclose(f);
+
+	import_marks_file = make_fast_import_path(marks);
+	import_marks_file_from_stream = from_stream;
+}
+
+static void option_date_format(const char *fmt)
+{
+	if (!strcmp(fmt, "raw"))
+		whenspec = WHENSPEC_RAW;
+	else if (!strcmp(fmt, "rfc2822"))
+		whenspec = WHENSPEC_RFC2822;
+	else if (!strcmp(fmt, "now"))
+		whenspec = WHENSPEC_NOW;
+	else
+		die("unknown --date-format argument %s", fmt);
+}
+
+static void option_max_pack_size(const char *packsize)
+{
+	max_packsize = strtoumax(packsize, NULL, 0) * 1024 * 1024;
+}
+
+static void option_depth(const char *depth)
+{
+	max_depth = strtoul(depth, NULL, 0);
+	if (max_depth > MAX_DEPTH)
+		die("--depth cannot exceed %u", MAX_DEPTH);
+}
+
+static void option_active_branches(const char *branches)
+{
+	max_active_branches = strtoul(branches, NULL, 0);
+}
+
+static void option_export_marks(const char *marks)
+{
+	export_marks_file = make_fast_import_path(marks);
+}
+
+static void option_export_pack_edges(const char *edges)
+{
+	if (pack_edges)
+		fclose(pack_edges);
+	pack_edges = fopen(edges, "a");
+	if (!pack_edges)
+		die_errno("Cannot open '%s'", edges);
+}
+
+static int parse_one_option(const char *option)
+{
+	if (!prefixcmp(option, "max-pack-size=")) {
+		option_max_pack_size(option + 14);
+	} else if (!prefixcmp(option, "depth=")) {
+		option_depth(option + 6);
+	} else if (!prefixcmp(option, "active-branches=")) {
+		option_active_branches(option + 16);
+	} else if (!prefixcmp(option, "export-pack-edges=")) {
+		option_export_pack_edges(option + 18);
+	} else if (!prefixcmp(option, "quiet")) {
+		show_stats = 0;
+	} else if (!prefixcmp(option, "stats")) {
+		show_stats = 1;
+	} else {
+		return 0;
+	}
+
+	return 1;
+}
+
+static int parse_one_feature(const char *feature, int from_stream)
+{
+	if (!prefixcmp(feature, "date-format=")) {
+		option_date_format(feature + 12);
+	} else if (!prefixcmp(feature, "import-marks=")) {
+		option_import_marks(feature + 13, from_stream);
+	} else if (!prefixcmp(feature, "export-marks=")) {
+		option_export_marks(feature + 13);
+	} else if (!prefixcmp(feature, "relative-marks")) {
+		relative_marks_paths = 1;
+	} else if (!prefixcmp(feature, "no-relative-marks")) {
+		relative_marks_paths = 0;
+	} else if (!prefixcmp(feature, "force")) {
+		force_update = 1;
+	} else {
+		return 0;
+	}
+
+	return 1;
+}
+
+static void parse_feature(void)
+{
+	char *feature = command_buf.buf + 8;
+
+	if (seen_data_command)
+		die("Got feature command '%s' after data command", feature);
+
+	if (parse_one_feature(feature, 1))
+		return;
+
+	die("This version of fast-import does not support feature %s.", feature);
+}
+
+static void parse_option(void)
+{
+	char *option = command_buf.buf + 11;
+
+	if (seen_data_command)
+		die("Got option command '%s' after data command", option);
+
+	if (parse_one_option(option))
+		return;
+
+	die("This version of fast-import does not support option: %s", option);
 }
 
 static int git_pack_config(const char *k, const char *v, void *cb)
@@ -2479,9 +2631,35 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 static const char fast_import_usage[] =
 "git fast-import [--date-format=f] [--max-pack-size=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
 
+static void parse_argv(void)
+{
+	unsigned int i;
+
+	for (i = 1; i < global_argc; i++) {
+		const char *a = global_argv[i];
+
+		if (*a != '-' || !strcmp(a, "--"))
+			break;
+
+		if (parse_one_option(a + 2))
+			continue;
+
+		if (parse_one_feature(a + 2, 0))
+			continue;
+
+		die("unknown option %s", a);
+	}
+	if (i != global_argc)
+		usage(fast_import_usage);
+
+	seen_data_command = 1;
+	if (import_marks_file)
+		read_marks();
+}
+
 int main(int argc, const char **argv)
 {
-	unsigned int i, show_stats = 1;
+	unsigned int i;
 
 	git_extract_argv0_path(argv[0]);
 
@@ -2500,52 +2678,8 @@ int main(int argc, const char **argv)
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
 	marks = pool_calloc(1, sizeof(struct mark_set));
 
-	for (i = 1; i < argc; i++) {
-		const char *a = argv[i];
-
-		if (*a != '-' || !strcmp(a, "--"))
-			break;
-		else if (!prefixcmp(a, "--date-format=")) {
-			const char *fmt = a + 14;
-			if (!strcmp(fmt, "raw"))
-				whenspec = WHENSPEC_RAW;
-			else if (!strcmp(fmt, "rfc2822"))
-				whenspec = WHENSPEC_RFC2822;
-			else if (!strcmp(fmt, "now"))
-				whenspec = WHENSPEC_NOW;
-			else
-				die("unknown --date-format argument %s", fmt);
-		}
-		else if (!prefixcmp(a, "--max-pack-size="))
-			max_packsize = strtoumax(a + 16, NULL, 0) * 1024 * 1024;
-		else if (!prefixcmp(a, "--depth=")) {
-			max_depth = strtoul(a + 8, NULL, 0);
-			if (max_depth > MAX_DEPTH)
-				die("--depth cannot exceed %u", MAX_DEPTH);
-		}
-		else if (!prefixcmp(a, "--active-branches="))
-			max_active_branches = strtoul(a + 18, NULL, 0);
-		else if (!prefixcmp(a, "--import-marks="))
-			import_marks(a + 15);
-		else if (!prefixcmp(a, "--export-marks="))
-			mark_file = a + 15;
-		else if (!prefixcmp(a, "--export-pack-edges=")) {
-			if (pack_edges)
-				fclose(pack_edges);
-			pack_edges = fopen(a + 20, "a");
-			if (!pack_edges)
-				die_errno("Cannot open '%s'", a + 20);
-		} else if (!strcmp(a, "--force"))
-			force_update = 1;
-		else if (!strcmp(a, "--quiet"))
-			show_stats = 0;
-		else if (!strcmp(a, "--stats"))
-			show_stats = 1;
-		else
-			die("unknown option %s", a);
-	}
-	if (i != argc)
-		usage(fast_import_usage);
+	global_argc = argc;
+	global_argv = argv;
 
 	rc_free = pool_alloc(cmd_save * sizeof(*rc_free));
 	for (i = 0; i < (cmd_save - 1); i++)
@@ -2568,9 +2702,20 @@ int main(int argc, const char **argv)
 			parse_checkpoint();
 		else if (!prefixcmp(command_buf.buf, "progress "))
 			parse_progress();
+		else if (!prefixcmp(command_buf.buf, "feature "))
+			parse_feature();
+		else if (!prefixcmp(command_buf.buf, "option git "))
+			parse_option();
+		else if (!prefixcmp(command_buf.buf, "option "))
+			/* ignore non-git options*/;
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}
+
+	/* argv hasn't been parsed yet, do so */
+	if (!seen_data_command)
+		parse_argv();
+
 	end_packfile();
 
 	dump_branches();

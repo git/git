@@ -273,7 +273,7 @@ static void standard_options(struct transport *t)
 	char buf[16];
 	int n;
 	int v = t->verbose;
-	int no_progress = v < 0 || (!t->progress && !isatty(1));
+	int no_progress = v < 0 || (!t->progress && !isatty(2));
 
 	set_helper_option(t, "progress", !no_progress ? "true" : "false");
 

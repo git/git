@@ -74,7 +74,7 @@ struct transport {
 	int (*disconnect)(struct transport *connection);
 	char *pack_lockfile;
 	signed verbose : 3;
-	/* Force progress even if the output is not a tty */
+	/* Force progress even if stderr is not a tty */
 	unsigned progress : 1;
 	/*
 	 * If transport is at least potentially smart, this points to
