@@ -424,16 +424,6 @@ BUILT_INS += git-stage$X
 BUILT_INS += git-status$X
 BUILT_INS += git-whatchanged$X
 
-ifdef NO_CURL
-REMOTE_CURL_PRIMARY =
-REMOTE_CURL_ALIASES =
-REMOTE_CURL_NAMES =
-else
-REMOTE_CURL_PRIMARY = git-remote-http$X
-REMOTE_CURL_ALIASES = git-remote-https$X git-remote-ftp$X git-remote-ftps$X
-REMOTE_CURL_NAMES = $(REMOTE_CURL_PRIMARY) $(REMOTE_CURL_ALIASES)
-endif
-
 # what 'all' will build and 'install' will install in gitexecdir,
 # excluding programs for built-in commands
 ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
@@ -1112,6 +1102,9 @@ endif
 
 ifdef NO_CURL
 	BASIC_CFLAGS += -DNO_CURL
+	REMOTE_CURL_PRIMARY =
+	REMOTE_CURL_ALIASES =
+	REMOTE_CURL_NAMES =
 else
 	ifdef CURLDIR
 		# Try "-Wl,-rpath=$(CURLDIR)/$(lib)" in such a case.
@@ -1120,6 +1113,9 @@ else
 	else
 		CURL_LIBCURL = -lcurl
 	endif
+	REMOTE_CURL_PRIMARY = git-remote-http$X
+	REMOTE_CURL_ALIASES = git-remote-https$X git-remote-ftp$X git-remote-ftps$X
+	REMOTE_CURL_NAMES = $(REMOTE_CURL_PRIMARY) $(REMOTE_CURL_ALIASES)
 	PROGRAMS += $(REMOTE_CURL_NAMES) git-http-fetch$X
 	curl_check := $(shell (echo 070908; curl-config --vernum) | sort -r | sed -ne 2p)
 	ifeq "$(curl_check)" "070908"
