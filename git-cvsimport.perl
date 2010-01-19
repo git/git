@@ -609,9 +609,9 @@ $orig_git_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
 my %index; # holds filenames of one index per branch
 
 unless (-d $git_dir) {
-	system("git init");
+	system(qw(git init));
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
-	system("git read-tree");
+	system(qw(git read-tree));
 	die "Cannot init an empty tree: $?\n" if $?;
 
 	$last_branch = $opt_o;
@@ -993,7 +993,7 @@ while (<CVS>) {
 		}
 		commit();
 		if (($commitcount & 1023) == 0) {
-			system("git repack -a -d");
+			system(qw(git repack -a -d));
 		}
 		$state = 1;
 	} elsif ($state == 11 and /^-+$/) {
@@ -1017,7 +1017,7 @@ my $line = `git count-objects`;
 if ($line =~ /^(\d+) objects, (\d+) kilobytes$/) {
   my ($n_objects, $kb) = ($1, $2);
   1024 < $kb
-    and system("git repack -a -d");
+    and system(qw(git repack -a -d));
 }
 
 foreach my $git_index (values %index) {
@@ -1059,7 +1059,7 @@ if ($orig_branch) {
 		if ($opt_r && $opt_o ne 'HEAD');
 	system('git', 'update-ref', 'HEAD', "$orig_branch");
 	unless ($opt_i) {
-		system('git checkout -f');
+		system(qw(git checkout -f));
 		die "checkout failed: $?\n" if $?;
 	}
 }
