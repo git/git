@@ -115,7 +115,7 @@ X U B B soft   XXXXX
 X U B B mixed  X B B
 X U B B hard   B B B
 X U B B merge  B B B
-X U B B keep   X B B
+X U B B keep   XXXXX
 EOF
 
 test_done

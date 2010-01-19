@@ -224,6 +224,14 @@ static void prepend_reflog_action(const char *action, char *buf, size_t size)
 		warning("Reflog action message too long: %.*s...", 50, buf);
 }
 
+static void die_if_unmerged_cache(int reset_type)
+{
+	if (is_merge() || read_cache() < 0 || unmerged_cache())
+		die("Cannot do a %s reset in the middle of a merge.",
+		    reset_type_names[reset_type]);
+
+}
+
 int cmd_reset(int argc, const char **argv, const char *prefix)
 {
 	int i = 0, reset_type = NONE, update_ref_status = 0, quiet = 0;
@@ -329,11 +337,13 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset
 	 * the index file to the tree object we are switching to. */
-	if (reset_type == SOFT) {
-		if (is_merge() || read_cache() < 0 || unmerged_cache())
-			die("Cannot do a soft reset in the middle of a merge.");
-	} else {
-		int err = reset_index_file(sha1, reset_type, quiet);
+	if (reset_type == SOFT)
+		die_if_unmerged_cache(reset_type);
+	else {
+		int err;
+		if (reset_type == KEEP)
+			die_if_unmerged_cache(reset_type);
+		err = reset_index_file(sha1, reset_type, quiet);
 		if (reset_type == KEEP)
 			err = err || reset_index_file(sha1, MIXED, quiet);
 		if (err)

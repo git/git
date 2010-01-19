@@ -155,7 +155,8 @@ tree. If there could be conflicts between the changes in the commit we
 want to remove and the changes in the working tree we want to keep,
 the reset is disallowed. That's why it is disallowed if there are both
 changes between the working tree and HEAD, and between HEAD and the
-target.
+target. To be safe, it is also disallowed when there are unmerged
+entries.
 
 The following tables show what happens when there are unmerged
 entries:
@@ -174,7 +175,7 @@ entries:
 				--mixed  X       A     A
 				--hard   A       A     A
 				--merge  A       A     A
-				--keep   X       A     A
+				--keep  (disallowed)
 
 X means any state and U means an unmerged index.
 

@@ -237,7 +237,7 @@ test_expect_success '"reset --keep HEAD^" fails with pending merge' '
     git reset --hard third &&
     test_must_fail git merge branch1 &&
     test_must_fail git reset --keep HEAD^ 2>err.log &&
-    grep file1 err.log | grep "overwritten by merge"
+    grep "middle of a merge" err.log
 '
 
 # The next test will test the following:
@@ -258,18 +258,15 @@ test_expect_success '"reset --merge HEAD" is ok with pending merge' '
 #
 #           working index HEAD target         working index HEAD
 #           ----------------------------------------------------
-# file1:     X       U     B    B     --keep  X       B     B
-test_expect_success '"reset --keep HEAD" is ok with pending merge' '
+# file1:     X       U     B    B     --keep   (disallowed)
+test_expect_success '"reset --keep HEAD" fails with pending merge' '
     git reset --hard third &&
     test_must_fail git merge branch1 &&
-    cat file1 >orig_file1 &&
-    git reset --keep HEAD &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse third)" &&
-    test -z "$(git diff --cached)" &&
-    test_cmp file1 orig_file1
+    test_must_fail git reset --keep HEAD 2>err.log &&
+    grep "middle of a merge" err.log
 '
 
-test_expect_success '--merge with added/deleted' '
+test_expect_success '--merge is ok with added/deleted merge' '
     git reset --hard third &&
     rm -f file2 &&
     test_must_fail git merge branch3 &&
@@ -283,7 +280,7 @@ test_expect_success '--merge with added/deleted' '
     git diff --exit-code --cached
 '
 
-test_expect_success '--keep with added/deleted' '
+test_expect_success '--keep fails with added/deleted merge' '
     git reset --hard third &&
     rm -f file2 &&
     test_must_fail git merge branch3 &&
@@ -291,10 +288,8 @@ test_expect_success '--keep with added/deleted' '
     test -f file3 &&
     git diff --exit-code file3 &&
     git diff --exit-code branch3 file3 &&
-    git reset --keep HEAD &&
-    test -f file3 &&
-    ! test -f file2 &&
-    git diff --exit-code --cached
+    test_must_fail git reset --keep HEAD 2>err.log &&
+    grep "middle of a merge" err.log
 '
 
 test_done
