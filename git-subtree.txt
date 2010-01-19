@@ -258,7 +258,7 @@ And you can merge changes back in from the upstream project just
 as easily:
 
 	$ git subtree pull --prefix=gitweb \
-		git@github.com:whatever/gitweb.git gitweb-latest:master
+		git@github.com:whatever/gitweb.git master
 
 Or, using '--squash', you can actually rewind to an earlier
 version of gitweb:
