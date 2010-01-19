@@ -319,7 +319,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
 
-	if (reset_type == HARD || reset_type == MERGE)
+	if (reset_type != SOFT && reset_type != MIXED)
 		setup_work_tree();
 
 	if (reset_type == MIXED && is_bare_repository())

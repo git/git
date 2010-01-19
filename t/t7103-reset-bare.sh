@@ -11,21 +11,26 @@ test_expect_success 'setup non-bare' '
 	git commit -a -m two
 '
 
-test_expect_success 'hard reset requires a worktree' '
+test_expect_success '"hard" reset requires a worktree' '
 	(cd .git &&
 	 test_must_fail git reset --hard)
 '
 
-test_expect_success 'merge reset requires a worktree' '
+test_expect_success '"merge" reset requires a worktree' '
 	(cd .git &&
 	 test_must_fail git reset --merge)
 '
 
-test_expect_success 'mixed reset is ok' '
+test_expect_success '"keep" reset requires a worktree' '
+	(cd .git &&
+	 test_must_fail git reset --keep)
+'
+
+test_expect_success '"mixed" reset is ok' '
 	(cd .git && git reset)
 '
 
-test_expect_success 'soft reset is ok' '
+test_expect_success '"soft" reset is ok' '
 	(cd .git && git reset --soft)
 '
 
@@ -40,19 +45,23 @@ test_expect_success 'setup bare' '
 	cd bare.git
 '
 
-test_expect_success 'hard reset is not allowed in bare' '
+test_expect_success '"hard" reset is not allowed in bare' '
 	test_must_fail git reset --hard HEAD^
 '
 
-test_expect_success 'merge reset is not allowed in bare' '
+test_expect_success '"merge" reset is not allowed in bare' '
 	test_must_fail git reset --merge HEAD^
 '
 
-test_expect_success 'mixed reset is not allowed in bare' '
+test_expect_success '"keep" reset is not allowed in bare' '
+	test_must_fail git reset --keep HEAD^
+'
+
+test_expect_success '"mixed" reset is not allowed in bare' '
 	test_must_fail git reset --mixed HEAD^
 '
 
-test_expect_success 'soft reset is allowed in bare' '
+test_expect_success '"soft" reset is allowed in bare' '
 	git reset --soft HEAD^ &&
 	test "`git show --pretty=format:%s | head -n 1`" = "one"
 '
