@@ -617,7 +617,7 @@ unless (-d $git_dir) {
 	$last_branch = $opt_o;
 	$orig_branch = "";
 } else {
-	open(F, "git symbolic-ref HEAD |") or
+	open(F, "-|", qw(git symbolic-ref HEAD)) or
 		die "Cannot run git symbolic-ref: $!\n";
 	chomp ($last_branch = <F>);
 	$last_branch = basename($last_branch);
@@ -631,8 +631,8 @@ unless (-d $git_dir) {
 
 	# Get the last import timestamps
 	my $fmt = '($ref, $author) = (%(refname), %(author));';
-	open(H, "git for-each-ref --perl --format='$fmt' $remote |") or
-		die "Cannot run git for-each-ref: $!\n";
+	my @cmd = ('git', 'for-each-ref', '--perl', "--format=$fmt", $remote);
+	open(H, "-|", @cmd) or die "Cannot run git for-each-ref: $!\n";
 	while (defined(my $entry = <H>)) {
 		my ($ref, $author);
 		eval($entry) || die "cannot eval refs list: $@";
@@ -730,7 +730,7 @@ sub update_index (\@\@) {
 }
 
 sub write_tree () {
-	open(my $fh, '-|', "git write-tree")
+	open(my $fh, '-|', qw(git write-tree))
 		or die "unable to open git write-tree: $!";
 	chomp(my $tree = <$fh>);
 	is_sha1($tree)
