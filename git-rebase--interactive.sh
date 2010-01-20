@@ -35,12 +35,67 @@ autosquash         move commits that begin with squash!/fixup! under -i
 require_work_tree
 
 DOTEST="$GIT_DIR/rebase-merge"
+
+# The file containing rebase commands, comments, and empty lines.
+# This file is created by "git rebase -i" then edited by the user.  As
+# the lines are processed, they are removed from the front of this
+# file and written to the tail of $DONE.
 TODO="$DOTEST"/git-rebase-todo
+
+# The rebase command lines that have already been processed.  A line
+# is moved here when it is first handled, before any associated user
+# actions.
 DONE="$DOTEST"/done
+
+# The commit message that is planned to be used for any changes that
+# need to be committed following a user interaction.
 MSG="$DOTEST"/message
+
+# The file into which is accumulated the suggested commit message for
+# squash/fixup commands.  When the first of a series of squash/fixups
+# is seen, the file is created and the commit message from the
+# previous commit and from the first squash/fixup commit are written
+# to it.  The commit message for each subsequent squash/fixup commit
+# is appended to the file as it is processed.
+#
+# The first line of the file is of the form
+#     # This is a combination of $COUNT commits.
+# where $COUNT is the number of commits whose messages have been
+# written to the file so far (including the initial "pick" commit).
+# Each time that a commit message is processed, this line is read and
+# updated.  It is deleted just before the combined commit is made.
 SQUASH_MSG="$DOTEST"/message-squash
+
+# If the current series of squash/fixups has not yet included a squash
+# command, then this file exists and holds the commit message of the
+# original "pick" commit.  (If the series ends without a "squash"
+# command, then this can be used as the commit message of the combined
+# commit without opening the editor.)
+FIXUP_MSG="$DOTEST"/message-fixup
+
+# $REWRITTEN is the name of a directory containing files for each
+# commit that is reachable by at least one merge base of $HEAD and
+# $UPSTREAM. They are not necessarily rewritten, but their children
+# might be.  This ensures that commits on merged, but otherwise
+# unrelated side branches are left alone. (Think "X" in the man page's
+# example.)
 REWRITTEN="$DOTEST"/rewritten
+
 DROPPED="$DOTEST"/dropped
+
+# A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
+# GIT_AUTHOR_DATE that will be used for the commit that is currently
+# being rebased.
+AUTHOR_SCRIPT="$DOTEST"/author-script
+
+# When an "edit" rebase command is being processed, the SHA1 of the
+# commit to be edited is recorded in this file.  When "git rebase
+# --continue" is executed, if there are any staged changes then they
+# will be amended to the HEAD commit, but only provided the HEAD
+# commit is still the commit to be edited.  When any other rebase
+# command is processed, this file is deleted.
+AMEND="$DOTEST"/amend
+
 PRESERVE_MERGES=
 STRATEGY=
 ONTO=
@@ -70,6 +125,11 @@ output () {
 		"$@"
 		;;
 	esac
+}
+
+# Output the commit message for the specified commit.
+commit_message () {
+	git cat-file commit "$1" | sed "1,/^$/d"
 }
 
 run_pre_rebase_hook () {
@@ -131,10 +191,10 @@ make_patch () {
 		echo "Root commit"
 		;;
 	esac > "$DOTEST"/patch
-	test -f "$DOTEST"/message ||
-		git cat-file commit "$1" | sed "1,/^$/d" > "$DOTEST"/message
-	test -f "$DOTEST"/author-script ||
-		get_author_ident_from_commit "$1" > "$DOTEST"/author-script
+	test -f "$MSG" ||
+		commit_message "$1" > "$MSG"
+	test -f "$AUTHOR_SCRIPT" ||
+		get_author_ident_from_commit "$1" > "$AUTHOR_SCRIPT"
 }
 
 die_with_patch () {
@@ -152,13 +212,22 @@ has_action () {
 	sane_grep '^[^#]' "$1" >/dev/null
 }
 
+# Run command with GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
+# GIT_AUTHOR_DATE exported from the current environment.
+do_with_author () {
+	GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
+	GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
+	GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
+	"$@"
+}
+
 pick_one () {
 	no_ff=
 	case "$1" in -n) sha1=$2; no_ff=t ;; *) sha1=$1 ;; esac
 	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$REWRITTEN" &&
 		pick_one_preserving_merges "$@" && return
-	if test ! -z "$REBASE_ROOT"
+	if test -n "$REBASE_ROOT"
 	then
 		output git cherry-pick "$@"
 		return
@@ -166,11 +235,10 @@ pick_one () {
 	parent_sha1=$(git rev-parse --verify $sha1^) ||
 		die "Could not get the parent of $sha1"
 	current_sha1=$(git rev-parse --verify HEAD)
-	if test "$no_ff$current_sha1" = "$parent_sha1"; then
+	if test -z "$no_ff" -a "$current_sha1" = "$parent_sha1"
+	then
 		output git reset --hard $sha1
-		test "a$1" = a-n && output git reset --soft $current_sha1
-		sha1=$(git rev-parse --short $sha1)
-		output warn Fast-forward to $sha1
+		output warn Fast-forward to $(git rev-parse --short $sha1)
 	else
 		output git cherry-pick "$@"
 	fi
@@ -271,14 +339,11 @@ pick_one_preserving_merges () {
 			# redo merge
 			author_script=$(get_author_ident_from_commit $sha1)
 			eval "$author_script"
-			msg="$(git cat-file commit $sha1 | sed -e '1,/^$/d')"
+			msg="$(commit_message $sha1)"
 			# No point in merging the first parent, that's HEAD
 			new_parents=${new_parents# $first_parent}
-			if ! GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
-				GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
-				GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-				output git merge $STRATEGY -m "$msg" \
-					$new_parents
+			if ! do_with_author output \
+				git merge $STRATEGY -m "$msg" $new_parents
 			then
 				printf "%s\n" "$msg" > "$GIT_DIR"/MERGE_MSG
 				die_with_patch $sha1 "Error redoing merge $sha1"
@@ -302,50 +367,66 @@ nth_string () {
 	esac
 }
 
-make_squash_message () {
+update_squash_messages () {
 	if test -f "$SQUASH_MSG"; then
-		# We want to be careful about matching only the commit
-		# message comment lines generated by this function.
-		# "[snrt][tdh]" matches the nth_string endings.
-		COUNT=$(($(sed -n "s/^# Th[^0-9]*\([1-9][0-9]*\)[snrt][tdh] commit message.*:/\1/p" \
-			< "$SQUASH_MSG" | sed -ne '$p')+1))
-		echo "# This is a combination of $COUNT commits."
-		sed -e 1d -e '2,/^./{
-			/^$/d
-		}' <"$SQUASH_MSG"
+		mv "$SQUASH_MSG" "$SQUASH_MSG".bak || exit
+		COUNT=$(($(sed -n \
+			-e "1s/^# This is a combination of \(.*\) commits\./\1/p" \
+			-e "q" < "$SQUASH_MSG".bak)+1))
+		{
+			echo "# This is a combination of $COUNT commits."
+			sed -e 1d -e '2,/^./{
+				/^$/d
+			}' <"$SQUASH_MSG".bak
+		} >$SQUASH_MSG
 	else
+		commit_message HEAD > "$FIXUP_MSG" || die "Cannot write $FIXUP_MSG"
 		COUNT=2
-		echo "# This is a combination of two commits."
-		echo "# The first commit's message is:"
-		echo
-		git cat-file commit HEAD | sed -e '1,/^$/d'
+		{
+			echo "# This is a combination of 2 commits."
+			echo "# The first commit's message is:"
+			echo
+			cat "$FIXUP_MSG"
+		} >$SQUASH_MSG
 	fi
 	case $1 in
 	squash)
+		rm -f "$FIXUP_MSG"
 		echo
 		echo "# This is the $(nth_string $COUNT) commit message:"
 		echo
-		git cat-file commit $2 | sed -e '1,/^$/d'
+		commit_message $2
 		;;
 	fixup)
 		echo
 		echo "# The $(nth_string $COUNT) commit message will be skipped:"
 		echo
-		# Comment the lines of the commit message out using
-		# "#	" rather than "# " to make them less likely to
-		# confuse the sed regexp above.
-		git cat-file commit $2 | sed -e '1,/^$/d' -e 's/^/#	/'
+		commit_message $2 | sed -e 's/^/#	/'
 		;;
-	esac
+	esac >>$SQUASH_MSG
 }
 
 peek_next_command () {
 	sed -n -e "/^#/d" -e "/^$/d" -e "s/ .*//p" -e "q" < "$TODO"
 }
 
+# A squash/fixup has failed.  Prepare the long version of the squash
+# commit message, then die_with_patch.  This code path requires the
+# user to edit the combined commit message for all commits that have
+# been squashed/fixedup so far.  So also erase the old squash
+# messages, effectively causing the combined commit to be used as the
+# new basis for any further squash/fixups.  Args: sha1 rest
+die_failed_squash() {
+	mv "$SQUASH_MSG" "$MSG" || exit
+	rm -f "$FIXUP_MSG"
+	cp "$MSG" "$GIT_DIR"/MERGE_MSG || exit
+	warn
+	warn "Could not apply $1... $2"
+	die_with_patch $1 ""
+}
+
 do_next () {
-	rm -f "$DOTEST"/message "$DOTEST"/author-script \
-		"$DOTEST"/amend || exit
+	rm -f "$MSG" "$AUTHOR_SCRIPT" "$AMEND" || exit
 	read command sha1 rest < "$TODO"
 	case "$command" in
 	'#'*|''|noop)
@@ -373,7 +454,7 @@ do_next () {
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		make_patch $sha1
-		git rev-parse --verify HEAD > "$DOTEST"/amend
+		git rev-parse --verify HEAD > "$AMEND"
 		warn "Stopped at $sha1... $rest"
 		warn "You can amend the commit now, with"
 		warn
@@ -400,45 +481,34 @@ do_next () {
 			die "Cannot '$squash_style' without a previous commit"
 
 		mark_action_done
-		make_squash_message $squash_style $sha1 > "$MSG"
-		failed=f
+		update_squash_messages $squash_style $sha1
 		author_script=$(get_author_ident_from_commit HEAD)
+		echo "$author_script" > "$AUTHOR_SCRIPT"
+		eval "$author_script"
 		output git reset --soft HEAD^
-		pick_one -n $sha1 || failed=t
+		pick_one -n $sha1 || die_failed_squash $sha1 "$rest"
 		case "$(peek_next_command)" in
 		squash|s|fixup|f)
-			USE_OUTPUT=output
-			MSG_OPT=-F
-			EDIT_OR_FILE="$MSG"
-			cp "$MSG" "$SQUASH_MSG"
+			# This is an intermediate commit; its message will only be
+			# used in case of trouble.  So use the long version:
+			do_with_author output git commit --no-verify -F "$SQUASH_MSG" ||
+				die_failed_squash $sha1 "$rest"
 			;;
 		*)
-			USE_OUTPUT=
-			MSG_OPT=
-			EDIT_OR_FILE=-e
-			rm -f "$SQUASH_MSG" || exit
-			cp "$MSG" "$GIT_DIR"/SQUASH_MSG
-			rm -f "$GIT_DIR"/MERGE_MSG || exit
+			# This is the final command of this squash/fixup group
+			if test -f "$FIXUP_MSG"
+			then
+				do_with_author git commit --no-verify -F "$FIXUP_MSG" ||
+					die_failed_squash $sha1 "$rest"
+			else
+				cp "$SQUASH_MSG" "$GIT_DIR"/SQUASH_MSG || exit
+				rm -f "$GIT_DIR"/MERGE_MSG
+				do_with_author git commit --no-verify -e ||
+					die_failed_squash $sha1 "$rest"
+			fi
+			rm -f "$SQUASH_MSG" "$FIXUP_MSG"
 			;;
 		esac
-		echo "$author_script" > "$DOTEST"/author-script
-		if test $failed = f
-		then
-			# This is like --amend, but with a different message
-			eval "$author_script"
-			GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
-			GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
-			GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-			$USE_OUTPUT git commit --no-verify \
-				$MSG_OPT "$EDIT_OR_FILE" || failed=t
-		fi
-		if test $failed = t
-		then
-			cp "$MSG" "$GIT_DIR"/MERGE_MSG
-			warn
-			warn "Could not apply $sha1... $rest"
-			die_with_patch $sha1 ""
-		fi
 		;;
 	*)
 		warn "Unknown command: $command $sha1 $rest"
@@ -598,21 +668,20 @@ do
 		then
 			: Nothing to commit -- skip this
 		else
-			. "$DOTEST"/author-script ||
+			. "$AUTHOR_SCRIPT" ||
 				die "Cannot find the author identity"
 			amend=
-			if test -f "$DOTEST"/amend
+			if test -f "$AMEND"
 			then
 				amend=$(git rev-parse --verify HEAD)
-				test "$amend" = $(cat "$DOTEST"/amend) ||
+				test "$amend" = $(cat "$AMEND") ||
 				die "\
 You have uncommitted changes in your working tree. Please, commit them
 first and then run 'git rebase --continue' again."
 				git reset --soft HEAD^ ||
 				die "Cannot rewind the HEAD"
 			fi
-			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
-			git commit --no-verify -F "$DOTEST"/message -e || {
+			do_with_author git commit --no-verify -F "$MSG" -e || {
 				test -n "$amend" && git reset --soft $amend
 				die "Could not commit staged changes."
 			}
@@ -739,13 +808,6 @@ first and then run 'git rebase --continue' again."
 		test t = "$VERBOSE" && : > "$DOTEST"/verbose
 		if test t = "$PRESERVE_MERGES"
 		then
-			# $REWRITTEN contains files for each commit that is
-			# reachable by at least one merge base of $HEAD and
-			# $UPSTREAM. They are not necessarily rewritten, but
-			# their children might be.
-			# This ensures that commits on merged, but otherwise
-			# unrelated side branches are left alone. (Think "X"
-			# in the man page's example.)
 			if test -z "$REBASE_ROOT"
 			then
 				mkdir "$REWRITTEN" &&
