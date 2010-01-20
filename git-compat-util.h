@@ -178,6 +178,9 @@ extern char *gitbasename(char *);
 #ifdef __GNUC__
 #define NORETURN __attribute__((__noreturn__))
 #define NORETURN_PTR __attribute__((__noreturn__))
+#elif defined(_MSC_VER)
+#define NORETURN __declspec(noreturn)
+#define NORETURN_PTR
 #else
 #define NORETURN
 #define NORETURN_PTR
