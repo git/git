@@ -187,10 +187,6 @@ all::
 # is a simplified version of the merge sort used in glibc. This is
 # recommended if Git triggers O(n^2) behavior in your platform's qsort().
 #
-# Define NO_EXTERNAL_GREP if you don't want "git grep" to ever call
-# your external grep (e.g., if your system lacks grep, if its grep is
-# broken, or spawning external process is slower than built-in grep git has).
-#
 # Define UNRELIABLE_FSTAT if your system's fstat does not return the same
 # information on a not yet closed file that lstat would return for the same
 # file after it was closed.
@@ -795,7 +791,6 @@ ifeq ($(uname_S),SunOS)
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
 	NO_REGEX = YesPlease
-	NO_EXTERNAL_GREP = YesPlease
 	THREADED_DELTA_SEARCH = YesPlease
 	ifeq ($(uname_R),5.7)
 		NEEDS_RESOLV = YesPlease
@@ -914,7 +909,6 @@ ifeq ($(uname_S),IRIX)
 	# NO_MMAP.  If you suspect that your compiler is not affected by this
 	# issue, comment out the NO_MMAP statement.
 	NO_MMAP = YesPlease
-	NO_EXTERNAL_GREP = UnfortunatelyYes
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH = /usr/gnu/bin/bash
 	NEEDS_LIBGEN = YesPlease
@@ -934,7 +928,6 @@ ifeq ($(uname_S),IRIX64)
 	# NO_MMAP.  If you suspect that your compiler is not affected by this
 	# issue, comment out the NO_MMAP statement.
 	NO_MMAP = YesPlease
-	NO_EXTERNAL_GREP = UnfortunatelyYes
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH=/usr/gnu/bin/bash
 	NEEDS_LIBGEN = YesPlease
@@ -1348,9 +1341,6 @@ ifdef THREADED_DELTA_SEARCH
 endif
 ifdef DIR_HAS_BSD_GROUP_SEMANTICS
 	COMPAT_CFLAGS += -DDIR_HAS_BSD_GROUP_SEMANTICS
-endif
-ifdef NO_EXTERNAL_GREP
-	BASIC_CFLAGS += -DNO_EXTERNAL_GREP
 endif
 ifdef UNRELIABLE_FSTAT
 	BASIC_CFLAGS += -DUNRELIABLE_FSTAT

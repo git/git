@@ -85,7 +85,6 @@ struct grep_opt {
 	int max_depth;
 	int funcname;
 	char color_match[COLOR_MAXLEN];
-	const char *color_external;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
