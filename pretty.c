@@ -83,7 +83,7 @@ static int get_one_line(const char *msg)
 }
 
 /* High bit set, or ISO-2022-INT */
-int non_ascii(int ch)
+static int non_ascii(int ch)
 {
 	return !isascii(ch) || ch == '\033';
 }

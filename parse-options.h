@@ -173,9 +173,6 @@ struct parse_opt_ctx_t {
 	const char *prefix;
 };
 
-extern int parse_options_usage(const char * const *usagestr,
-			       const struct option *opts);
-
 extern void parse_options_start(struct parse_opt_ctx_t *ctx,
 				int argc, const char **argv, const char *prefix,
 				int flags);

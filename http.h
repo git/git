@@ -81,7 +81,6 @@ extern int start_active_slot(struct active_request_slot *slot);
 extern void run_active_slot(struct active_request_slot *slot);
 extern void finish_active_slot(struct active_request_slot *slot);
 extern void finish_all_active_slots(void);
-extern void release_active_slot(struct active_request_slot *slot);
 
 #ifdef USE_CURL_MULTI
 extern void fill_active_slots(void);
@@ -134,14 +133,6 @@ extern char *get_remote_object_url(const char *url, const char *hex,
  * If the result pointer is NULL, a HTTP HEAD request is made instead of GET.
  */
 int http_get_strbuf(const char *url, struct strbuf *result, int options);
-
-/*
- * Downloads an url and stores the result in the given file.
- *
- * If a previous interrupted download is detected (i.e. a previous temporary
- * file is still around) the download is resumed.
- */
-int http_get_file(const char *url, const char *filename, int options);
 
 /*
  * Prints an error message using error() containing url and curl_errorstr,
