@@ -103,14 +103,21 @@ OPTIONS
 --all::
 	Show all refs found in `$GIT_DIR/refs`.
 
---branches::
-	Show branch refs found in `$GIT_DIR/refs/heads`.
+--branches[=pattern]::
+	Show branch refs found in `$GIT_DIR/refs/heads`. If `pattern`
+	is given, only branches matching given shell glob are shown.
+	If pattern lacks '?', '*', or '[', '/*' at the end is impiled.
 
---tags::
-	Show tag refs found in `$GIT_DIR/refs/tags`.
+--tags[=pattern]::
+	Show tag refs found in `$GIT_DIR/refs/tags`. If `pattern`
+	is given, only tags matching given shell glob are shown.
+	If pattern lacks '?', '*', or '[', '/*' at the end is impiled.
 
---remotes::
-	Show tag refs found in `$GIT_DIR/refs/remotes`.
+--remotes[=pattern]::
+	Show tag refs found in `$GIT_DIR/refs/remotes`. If `pattern`
+	is given, only remote tracking branches matching given shell glob
+	are shown. If pattern lacks '?', '*', or '[', '/*' at the end is
+	impiled.
 
 --glob=glob-pattern::
 	Show refs matching shell glob pattern `glob-pattern`. If pattern

@@ -41,6 +41,7 @@ static int is_rev_argument(const char *arg)
 		"--all",
 		"--bisect",
 		"--dense",
+		"--branches=",
 		"--branches",
 		"--header",
 		"--max-age=",
@@ -51,9 +52,11 @@ static int is_rev_argument(const char *arg)
 		"--objects-edge",
 		"--parents",
 		"--pretty",
+		"--remotes=",
 		"--remotes",
 		"--glob=",
 		"--sparse",
+		"--tags=",
 		"--tags",
 		"--topo-order",
 		"--date-order",
@@ -570,8 +573,18 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				for_each_ref_in("refs/bisect/good", anti_reference, NULL);
 				continue;
 			}
+			if (!prefixcmp(arg, "--branches=")) {
+				for_each_glob_ref_in(show_reference, arg + 11,
+					"refs/heads/", NULL);
+				continue;
+			}
 			if (!strcmp(arg, "--branches")) {
 				for_each_branch_ref(show_reference, NULL);
+				continue;
+			}
+			if (!prefixcmp(arg, "--tags=")) {
+				for_each_glob_ref_in(show_reference, arg + 7,
+					"refs/tags/", NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--tags")) {
@@ -580,6 +593,11 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!prefixcmp(arg, "--glob=")) {
 				for_each_glob_ref(show_reference, arg + 7, NULL);
+				continue;
+			}
+			if (!prefixcmp(arg, "--remotes=")) {
+				for_each_glob_ref_in(show_reference, arg + 10,
+					"refs/remotes/", NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--remotes")) {

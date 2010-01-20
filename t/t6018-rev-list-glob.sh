@@ -32,7 +32,9 @@ test_expect_success 'setup' '
 	git checkout -b someref master &&
 	commit some &&
 	git checkout master &&
-	commit master2
+	commit master2 &&
+	git tag foo/bar master &&
+	git update-ref refs/remotes/foo/baz master
 '
 
 test_expect_success 'rev-parse --glob=refs/heads/subspace/*' '
@@ -65,6 +67,24 @@ test_expect_success 'rev-parse --glob=heads/subspace' '
 
 '
 
+test_expect_success 'rev-parse --branches=subspace/*' '
+
+	compare rev-parse "subspace/one subspace/two" "--branches=subspace/*"
+
+'
+
+test_expect_success 'rev-parse --branches=subspace/' '
+
+	compare rev-parse "subspace/one subspace/two" "--branches=subspace/"
+
+'
+
+test_expect_success 'rev-parse --branches=subspace' '
+
+	compare rev-parse "subspace/one subspace/two" "--branches=subspace"
+
+'
+
 test_expect_success 'rev-parse --glob=heads/subspace/* --glob=heads/other/*' '
 
 	compare rev-parse "subspace/one subspace/two other/three" "--glob=heads/subspace/* --glob=heads/other/*"
@@ -80,6 +100,18 @@ test_expect_success 'rev-parse --glob=heads/someref/* master' '
 test_expect_success 'rev-parse --glob=heads/*' '
 
 	compare rev-parse "master other/three someref subspace-x subspace/one subspace/two" "--glob=heads/*"
+
+'
+
+test_expect_success 'rev-parse --tags=foo' '
+
+	compare rev-parse "foo/bar" "--tags=foo"
+
+'
+
+test_expect_success 'rev-parse --remotes=foo' '
+
+	compare rev-parse "foo/baz" "--remotes=foo"
 
 '
 
@@ -113,6 +145,23 @@ test_expect_success 'rev-list --glob=heads/subspace' '
 
 '
 
+test_expect_success 'rev-list --branches=subspace/*' '
+
+	compare rev-list "subspace/one subspace/two" "--branches=subspace/*"
+
+'
+
+test_expect_success 'rev-list --branches=subspace/' '
+
+	compare rev-list "subspace/one subspace/two" "--branches=subspace/"
+
+'
+
+test_expect_success 'rev-list --branches=subspace' '
+
+	compare rev-list "subspace/one subspace/two" "--branches=subspace"
+
+'
 test_expect_success 'rev-list --glob=heads/someref/* master' '
 
 	compare rev-list "master" "--glob=heads/someref/* master"
@@ -128,6 +177,18 @@ test_expect_success 'rev-list --glob=heads/subspace/* --glob=heads/other/*' '
 test_expect_success 'rev-list --glob=heads/*' '
 
 	compare rev-list "master other/three someref subspace-x subspace/one subspace/two" "--glob=heads/*"
+
+'
+
+test_expect_success 'rev-list --tags=foo' '
+
+	compare rev-list "foo/bar" "--tags=foo"
+
+'
+
+test_expect_success 'rev-list --remotes=foo' '
+
+	compare rev-list "foo/baz" "--remotes=foo"
 
 '
 

@@ -690,15 +690,18 @@ int for_each_replace_ref(each_ref_fn fn, void *cb_data)
 	return do_for_each_ref("refs/replace/", fn, 13, 0, cb_data);
 }
 
-int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data)
+int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
+	const char *prefix, void *cb_data)
 {
 	struct strbuf real_pattern = STRBUF_INIT;
 	struct ref_filter filter;
 	const char *has_glob_specials;
 	int ret;
 
-	if (prefixcmp(pattern, "refs/"))
+	if (!prefix && prefixcmp(pattern, "refs/"))
 		strbuf_addstr(&real_pattern, "refs/");
+	else if (prefix)
+		strbuf_addstr(&real_pattern, prefix);
 	strbuf_addstr(&real_pattern, pattern);
 
 	has_glob_specials = strpbrk(pattern, "?*[");
@@ -717,6 +720,11 @@ int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data)
 
 	strbuf_release(&real_pattern);
 	return ret;
+}
+
+int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data)
+{
+	return for_each_glob_ref_in(fn, pattern, NULL, cb_data);
 }
 
 int for_each_rawref(each_ref_fn fn, void *cb_data)
