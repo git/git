@@ -1161,10 +1161,18 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->verbose_header = 1;
 	} else if (!strcmp(arg, "--pretty")) {
 		revs->verbose_header = 1;
+		revs->pretty_given = 1;
 		get_commit_format(arg+8, revs);
 	} else if (!prefixcmp(arg, "--pretty=") || !prefixcmp(arg, "--format=")) {
 		revs->verbose_header = 1;
+		revs->pretty_given = 1;
 		get_commit_format(arg+9, revs);
+	} else if (!strcmp(arg, "--show-notes")) {
+		revs->show_notes = 1;
+		revs->show_notes_given = 1;
+	} else if (!strcmp(arg, "--no-notes")) {
+		revs->show_notes = 0;
+		revs->show_notes_given = 1;
 	} else if (!strcmp(arg, "--oneline")) {
 		revs->verbose_header = 1;
 		get_commit_format("oneline", revs);
