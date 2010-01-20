@@ -175,4 +175,43 @@ test_expect_success 'negated exclude matches can override previous ones' '
 	grep "^a.1" output
 '
 
+test_expect_success 'subdirectory ignore (setup)' '
+	mkdir -p top/l1/l2 &&
+	(
+		cd top &&
+		git init &&
+		echo /.gitignore >.gitignore &&
+		echo l1 >>.gitignore &&
+		echo l2 >l1/.gitignore &&
+		>l1/l2/l1
+	)
+'
+
+test_expect_success 'subdirectory ignore (toplevel)' '
+	(
+		cd top &&
+		git ls-files -o --exclude-standard
+	) >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'subdirectory ignore (l1/l2)' '
+	(
+		cd top/l1/l2 &&
+		git ls-files -o --exclude-standard
+	) >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'subdirectory ignore (l1)' '
+	(
+		cd top/l1 &&
+		git ls-files -o --exclude-standard
+	) >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
 test_done
