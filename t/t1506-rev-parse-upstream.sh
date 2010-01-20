@@ -76,7 +76,7 @@ test_expect_success 'checkout -b new my-side@{u} forks from the same' '
 )
 '
 
-test_expect_failure 'merge my-side@{u} records the correct name' '
+test_expect_success 'merge my-side@{u} records the correct name' '
 (
 	sq="'\''" &&
 	cd clone || exit
@@ -90,7 +90,7 @@ test_expect_failure 'merge my-side@{u} records the correct name' '
 )
 '
 
-test_expect_failure 'branch -d other@{u}' '
+test_expect_success 'branch -d other@{u}' '
 	git checkout -t -b other master &&
 	git branch -d @{u} &&
 	git for-each-ref refs/heads/master >actual &&
@@ -98,7 +98,7 @@ test_expect_failure 'branch -d other@{u}' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'checkout other@{u}' '
+test_expect_success 'checkout other@{u}' '
 	git branch -f master HEAD &&
 	git checkout -t -b another master &&
 	git checkout @{u} &&
