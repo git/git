@@ -207,6 +207,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 		return 0;
 	}
 	close(i);
+	data[sz] = 0;
 	if (opt->relative && opt->prefix_length)
 		filename = quote_path_relative(filename, -1, &buf, opt->prefix);
 	i = grep_buffer(opt, filename, data, sz);
