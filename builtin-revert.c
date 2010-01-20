@@ -235,6 +235,19 @@ static struct tree *empty_tree(void)
 	return tree;
 }
 
+static NORETURN void die_dirty_index(const char *me)
+{
+	if (read_cache_unmerged()) {
+		die_resolve_conflict(me);
+	} else {
+		if (advice_commit_before_merge)
+			die("Your local changes would be overwritten by %s.\n"
+			    "Please, commit your changes or stash them to proceed.", me);
+		else
+			die("Your local changes would be overwritten by %s.\n", me);
+	}
+}
+
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
@@ -271,7 +284,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		if (get_sha1("HEAD", head))
 			die ("You do not have a valid HEAD");
 		if (index_differs_from("HEAD", 0))
-			die ("Dirty index: cannot %s", me);
+			die_dirty_index(me);
 	}
 	discard_cache();
 
