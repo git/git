@@ -66,4 +66,45 @@ test_expect_success '@{u} without specifying branch fails on a detached HEAD' '
 	test_must_fail git rev-parse @{u}
 '
 
+test_expect_success 'checkout -b new my-side@{u} forks from the same' '
+(
+	cd clone &&
+	git checkout -b new my-side@{u} &&
+	git rev-parse --symbolic-full-name my-side@{u} >expect &&
+	git rev-parse --symbolic-full-name new@{u} >actual &&
+	test_cmp expect actual
+)
+'
+
+test_expect_failure 'merge my-side@{u} records the correct name' '
+(
+	sq="'\''" &&
+	cd clone || exit
+	git checkout master || exit
+	git branch -D new ;# can fail but is ok
+	git branch -t new my-side@{u} &&
+	git merge -s ours new@{u} &&
+	git show -s --pretty=format:%s >actual &&
+	echo "Merge remote branch ${sq}origin/side${sq}" >expect &&
+	test_cmp expect actual
+)
+'
+
+test_expect_failure 'branch -d other@{u}' '
+	git checkout -t -b other master &&
+	git branch -d @{u} &&
+	git for-each-ref refs/heads/master >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'checkout other@{u}' '
+	git branch -f master HEAD &&
+	git checkout -t -b another master &&
+	git checkout @{u} &&
+	git symbolic-ref HEAD >actual &&
+	echo refs/heads/master >expect &&
+	test_cmp expect actual
+'
+
 test_done
