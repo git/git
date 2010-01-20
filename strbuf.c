@@ -220,6 +220,12 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 			break;
 		format = percent + 1;
 
+		if (*format == '%') {
+			strbuf_addch(sb, '%');
+			format++;
+			continue;
+		}
+
 		consumed = fn(sb, format, context);
 		if (consumed)
 			format += consumed;
@@ -242,6 +248,17 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
 		}
 	}
 	return 0;
+}
+
+void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
+{
+	int i, len = src->len;
+
+	for (i = 0; i < len; i++) {
+		if (src->buf[i] == '%')
+			strbuf_addch(dst, '%');
+		strbuf_addch(dst, src->buf[i]);
+	}
 }
 
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
