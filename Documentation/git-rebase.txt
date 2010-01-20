@@ -382,9 +382,12 @@ If you just want to edit the commit message for a commit, replace the
 command "pick" with the command "reword".
 
 If you want to fold two or more commits into one, replace the command
-"pick" with "squash" for the second and subsequent commit.  If the
-commits had different authors, it will attribute the squashed commit to
-the author of the first commit.
+"pick" for the second and subsequent commits with "squash" or "fixup".
+If the commits had different authors, the folded commit will be
+attributed to the author of the first commit.  The suggested commit
+message for the folded commit is the concatenation of the commit
+messages of the first commit and of those with the "squash" command,
+but omits the commit messages of commits with the "fixup" command.
 
 'git-rebase' will stop when "pick" has been replaced with "edit" or
 when a command fails due to merge errors. When you are done editing
@@ -512,8 +515,8 @@ Easy case: The changes are literally the same.::
 Hard case: The changes are not the same.::
 
 	This happens if the 'subsystem' rebase had conflicts, or used
-	`\--interactive` to omit, edit, or squash commits; or if the
-	upstream used one of `commit \--amend`, `reset`, or
+	`\--interactive` to omit, edit, squash, or fixup commits; or
+	if the upstream used one of `commit \--amend`, `reset`, or
 	`filter-branch`.
 
 
