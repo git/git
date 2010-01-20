@@ -419,6 +419,20 @@ test_expect_success 'update default (overridden, with funny whitespace)' '
 
 '
 
+test_expect_success 'update (with remotes.default defined)' '
+
+	(cd one &&
+	 for b in $(git branch -r)
+	 do
+		git branch -r -d $b || break
+	 done &&
+	 git config remotes.default "drosophila" &&
+	 git remote update &&
+	 git branch -r > output &&
+	 test_cmp expect output)
+
+'
+
 test_expect_success '"remote show" does not show symbolic refs' '
 
 	git clone one three &&

@@ -1238,13 +1238,11 @@ static int update(int argc, const char **argv)
 		fetch_argv[fetch_argc++] = "--prune";
 	if (verbose)
 		fetch_argv[fetch_argc++] = "-v";
-	if (argc < 2) {
+	fetch_argv[fetch_argc++] = "--multiple";
+	if (argc < 2)
 		fetch_argv[fetch_argc++] = "default";
-	} else {
-		fetch_argv[fetch_argc++] = "--multiple";
-		for (i = 1; i < argc; i++)
-			fetch_argv[fetch_argc++] = argv[i];
-	}
+	for (i = 1; i < argc; i++)
+		fetch_argv[fetch_argc++] = argv[i];
 
 	if (strcmp(fetch_argv[fetch_argc-1], "default") == 0) {
 		git_config(get_remote_default, &default_defined);
