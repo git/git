@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2009 David Aguilar
+# Copyright (c) 2009, 2010 David Aguilar
 #
 
 test_description='git-difftool
@@ -15,10 +15,14 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
+LF='
+'
+
 remove_config_vars()
 {
 	# Unset all config variables used by git-difftool
 	git config --unset diff.tool
+	git config --unset diff.guitool
 	git config --unset difftool.test-tool.cmd
 	git config --unset difftool.prompt
 	git config --unset merge.tool
@@ -31,11 +35,11 @@ restore_test_defaults()
 	# Restores the test defaults used by several tests
 	remove_config_vars
 	unset GIT_DIFF_TOOL
-	unset GIT_MERGE_TOOL
 	unset GIT_DIFFTOOL_PROMPT
 	unset GIT_DIFFTOOL_NO_PROMPT
 	git config diff.tool test-tool &&
 	git config difftool.test-tool.cmd 'cat $LOCAL'
+	git config difftool.bogus-tool.cmd false
 }
 
 prompt_given()
@@ -71,9 +75,20 @@ test_expect_success 'custom commands' '
 
 # Ensures that git-difftool ignores bogus --tool values
 test_expect_success 'difftool ignores bad --tool values' '
-	diff=$(git difftool --no-prompt --tool=bogus-tool branch)
+	diff=$(git difftool --no-prompt --tool=bad-tool branch)
 	test "$?" = 1 &&
 	test "$diff" = ""
+'
+
+test_expect_success 'difftool honors --gui' '
+	git config merge.tool bogus-tool &&
+	git config diff.tool bogus-tool &&
+	git config diff.guitool test-tool &&
+
+	diff=$(git difftool --no-prompt --gui branch) &&
+	test "$diff" = "branch" &&
+
+	restore_test_defaults
 '
 
 # Specify the diff tool using $GIT_DIFF_TOOL
@@ -94,15 +109,7 @@ test_expect_success 'GIT_DIFF_TOOL overrides' '
 	git config diff.tool bogus-tool &&
 	git config merge.tool bogus-tool &&
 
-	GIT_MERGE_TOOL=test-tool &&
-	export GIT_MERGE_TOOL &&
-	diff=$(git difftool --no-prompt branch) &&
-	test "$diff" = "branch" &&
-	unset GIT_MERGE_TOOL &&
-
-	GIT_MERGE_TOOL=bogus-tool &&
 	GIT_DIFF_TOOL=test-tool &&
-	export GIT_MERGE_TOOL &&
 	export GIT_DIFF_TOOL &&
 
 	diff=$(git difftool --no-prompt branch) &&
@@ -210,7 +217,39 @@ test_expect_success 'difftool.<tool>.path' '
 	diff=$(git difftool --tool=tkdiff --no-prompt branch) &&
 	git config --unset difftool.tkdiff.path &&
 	lines=$(echo "$diff" | grep file | wc -l) &&
-	test "$lines" -eq 1
+	test "$lines" -eq 1 &&
+
+	restore_test_defaults
+'
+
+test_expect_success 'difftool --extcmd=cat' '
+	diff=$(git difftool --no-prompt --extcmd=cat branch) &&
+	test "$diff" = branch"$LF"master
+'
+
+test_expect_success 'difftool --extcmd cat' '
+	diff=$(git difftool --no-prompt --extcmd cat branch) &&
+	test "$diff" = branch"$LF"master
+'
+
+test_expect_success 'difftool -x cat' '
+	diff=$(git difftool --no-prompt -x cat branch) &&
+	test "$diff" = branch"$LF"master
+'
+
+test_expect_success 'difftool --extcmd echo arg1' '
+	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"echo\ \$1\" branch)
+	test "$diff" = file
+'
+
+test_expect_success 'difftool --extcmd cat arg1' '
+	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"cat\ \$1\" branch)
+	test "$diff" = master
+'
+
+test_expect_success 'difftool --extcmd cat arg2' '
+	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"cat\ \$2\" branch)
+	test "$diff" = branch
 '
 
 test_done
