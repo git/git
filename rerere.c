@@ -3,6 +3,9 @@
 #include "rerere.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
+#include "dir.h"
+#include "resolve-undo.h"
+#include "ll-merge.h"
 
 /* if rerere_enabled == -1, fall back to detection of .git/rr-cache */
 static int rerere_enabled = -1;
@@ -83,61 +86,74 @@ static inline void ferr_puts(const char *s, FILE *fp, int *err)
 	ferr_write(s, strlen(s), fp, err);
 }
 
-static int handle_file(const char *path,
-	 unsigned char *sha1, const char *output)
+struct rerere_io {
+	int (*getline)(struct strbuf *, struct rerere_io *);
+	FILE *output;
+	int wrerror;
+	/* some more stuff */
+};
+
+static void rerere_io_putstr(const char *str, struct rerere_io *io)
+{
+	if (io->output)
+		ferr_puts(str, io->output, &io->wrerror);
+}
+
+static void rerere_io_putmem(const char *mem, size_t sz, struct rerere_io *io)
+{
+	if (io->output)
+		ferr_write(mem, sz, io->output, &io->wrerror);
+}
+
+struct rerere_io_file {
+	struct rerere_io io;
+	FILE *input;
+};
+
+static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
+{
+	struct rerere_io_file *io = (struct rerere_io_file *)io_;
+	return strbuf_getwholeline(sb, io->input, '\n');
+}
+
+static int handle_path(unsigned char *sha1, struct rerere_io *io)
 {
 	git_SHA_CTX ctx;
-	char buf[1024];
 	int hunk_no = 0;
 	enum {
 		RR_CONTEXT = 0, RR_SIDE_1, RR_SIDE_2, RR_ORIGINAL,
 	} hunk = RR_CONTEXT;
 	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
-	FILE *f = fopen(path, "r");
-	FILE *out = NULL;
-	int wrerror = 0;
-
-	if (!f)
-		return error("Could not open %s", path);
-
-	if (output) {
-		out = fopen(output, "w");
-		if (!out) {
-			fclose(f);
-			return error("Could not write %s", output);
-		}
-	}
+	struct strbuf buf = STRBUF_INIT;
 
 	if (sha1)
 		git_SHA1_Init(&ctx);
 
-	while (fgets(buf, sizeof(buf), f)) {
-		if (!prefixcmp(buf, "<<<<<<< ")) {
+	while (!io->getline(&buf, io)) {
+		if (!prefixcmp(buf.buf, "<<<<<<< ")) {
 			if (hunk != RR_CONTEXT)
 				goto bad;
 			hunk = RR_SIDE_1;
-		} else if (!prefixcmp(buf, "|||||||") && isspace(buf[7])) {
+		} else if (!prefixcmp(buf.buf, "|||||||") && isspace(buf.buf[7])) {
 			if (hunk != RR_SIDE_1)
 				goto bad;
 			hunk = RR_ORIGINAL;
-		} else if (!prefixcmp(buf, "=======") && isspace(buf[7])) {
+		} else if (!prefixcmp(buf.buf, "=======") && isspace(buf.buf[7])) {
 			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
 				goto bad;
 			hunk = RR_SIDE_2;
-		} else if (!prefixcmp(buf, ">>>>>>> ")) {
+		} else if (!prefixcmp(buf.buf, ">>>>>>> ")) {
 			if (hunk != RR_SIDE_2)
 				goto bad;
 			if (strbuf_cmp(&one, &two) > 0)
 				strbuf_swap(&one, &two);
 			hunk_no++;
 			hunk = RR_CONTEXT;
-			if (out) {
-				ferr_puts("<<<<<<<\n", out, &wrerror);
-				ferr_write(one.buf, one.len, out, &wrerror);
-				ferr_puts("=======\n", out, &wrerror);
-				ferr_write(two.buf, two.len, out, &wrerror);
-				ferr_puts(">>>>>>>\n", out, &wrerror);
-			}
+			rerere_io_putstr("<<<<<<<\n", io);
+			rerere_io_putmem(one.buf, one.len, io);
+			rerere_io_putstr("=======\n", io);
+			rerere_io_putmem(two.buf, two.len, io);
+			rerere_io_putstr(">>>>>>>\n", io);
 			if (sha1) {
 				git_SHA1_Update(&ctx, one.buf ? one.buf : "",
 					    one.len + 1);
@@ -147,13 +163,13 @@ static int handle_file(const char *path,
 			strbuf_reset(&one);
 			strbuf_reset(&two);
 		} else if (hunk == RR_SIDE_1)
-			strbuf_addstr(&one, buf);
+			strbuf_addstr(&one, buf.buf);
 		else if (hunk == RR_ORIGINAL)
 			; /* discard */
 		else if (hunk == RR_SIDE_2)
-			strbuf_addstr(&two, buf);
-		else if (out)
-			ferr_puts(buf, out, &wrerror);
+			strbuf_addstr(&two, buf.buf);
+		else
+			rerere_io_putstr(buf.buf, io);
 		continue;
 	bad:
 		hunk = 99; /* force error exit */
@@ -161,23 +177,133 @@ static int handle_file(const char *path,
 	}
 	strbuf_release(&one);
 	strbuf_release(&two);
+	strbuf_release(&buf);
 
-	fclose(f);
-	if (wrerror)
-		error("There were errors while writing %s (%s)",
-		      path, strerror(wrerror));
-	if (out && fclose(out))
-		wrerror = error("Failed to flush %s: %s",
-				path, strerror(errno));
 	if (sha1)
 		git_SHA1_Final(sha1, &ctx);
-	if (hunk != RR_CONTEXT) {
+	if (hunk != RR_CONTEXT)
+		return -1;
+	return hunk_no;
+}
+
+static int handle_file(const char *path, unsigned char *sha1, const char *output)
+{
+	int hunk_no = 0;
+	struct rerere_io_file io;
+
+	memset(&io, 0, sizeof(io));
+	io.io.getline = rerere_file_getline;
+	io.input = fopen(path, "r");
+	io.io.wrerror = 0;
+	if (!io.input)
+		return error("Could not open %s", path);
+
+	if (output) {
+		io.io.output = fopen(output, "w");
+		if (!io.io.output) {
+			fclose(io.input);
+			return error("Could not write %s", output);
+		}
+	}
+
+	hunk_no = handle_path(sha1, (struct rerere_io *)&io);
+
+	fclose(io.input);
+	if (io.io.wrerror)
+		error("There were errors while writing %s (%s)",
+		      path, strerror(io.io.wrerror));
+	if (io.io.output && fclose(io.io.output))
+		io.io.wrerror = error("Failed to flush %s: %s",
+				      path, strerror(errno));
+
+	if (hunk_no < 0) {
 		if (output)
 			unlink_or_warn(output);
 		return error("Could not parse conflict hunks in %s", path);
 	}
-	if (wrerror)
+	if (io.io.wrerror)
 		return -1;
+	return hunk_no;
+}
+
+struct rerere_io_mem {
+	struct rerere_io io;
+	struct strbuf input;
+};
+
+static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
+{
+	struct rerere_io_mem *io = (struct rerere_io_mem *)io_;
+	char *ep;
+	size_t len;
+
+	strbuf_release(sb);
+	if (!io->input.len)
+		return -1;
+	ep = strchrnul(io->input.buf, '\n');
+	if (*ep == '\n')
+		ep++;
+	len = ep - io->input.buf;
+	strbuf_add(sb, io->input.buf, len);
+	strbuf_remove(&io->input, 0, len);
+	return 0;
+}
+
+static int handle_cache(const char *path, unsigned char *sha1, const char *output)
+{
+	mmfile_t mmfile[3];
+	mmbuffer_t result = {NULL, 0};
+	struct cache_entry *ce;
+	int pos, len, i, hunk_no;
+	struct rerere_io_mem io;
+
+	/*
+	 * Reproduce the conflicted merge in-core
+	 */
+	len = strlen(path);
+	pos = cache_name_pos(path, len);
+	if (0 <= pos)
+		return -1;
+	pos = -pos - 1;
+
+	for (i = 0; i < 3; i++) {
+		enum object_type type;
+		unsigned long size;
+
+		mmfile[i].size = 0;
+		mmfile[i].ptr = NULL;
+		if (active_nr <= pos)
+			break;
+		ce = active_cache[pos++];
+		if (ce_namelen(ce) != len || memcmp(ce->name, path, len)
+		    || ce_stage(ce) != i + 1)
+			break;
+		mmfile[i].ptr = read_sha1_file(ce->sha1, &type, &size);
+		mmfile[i].size = size;
+	}
+	for (i = 0; i < 3; i++) {
+		if (!mmfile[i].ptr && !mmfile[i].size)
+			mmfile[i].ptr = xstrdup("");
+	}
+	ll_merge(&result, path, &mmfile[0],
+		 &mmfile[1], "ours",
+		 &mmfile[2], "theirs", 0);
+	for (i = 0; i < 3; i++)
+		free(mmfile[i].ptr);
+
+	memset(&io, 0, sizeof(&io));
+	io.io.getline = rerere_mem_getline;
+	if (output)
+		io.io.output = fopen(output, "w");
+	else
+		io.io.output = NULL;
+	strbuf_init(&io.input, 0);
+	strbuf_attach(&io.input, result.ptr, result.size, result.size);
+
+	hunk_no = handle_path(sha1, (struct rerere_io *)&io);
+	strbuf_release(&io.input);
+	if (io.io.output)
+		fclose(io.io.output);
 	return hunk_no;
 }
 
@@ -393,4 +519,53 @@ int rerere(int flags)
 	if (fd < 0)
 		return 0;
 	return do_plain_rerere(&merge_rr, fd);
+}
+
+static int rerere_forget_one_path(const char *path, struct string_list *rr)
+{
+	const char *filename;
+	char *hex;
+	unsigned char sha1[20];
+	int ret;
+
+	ret = handle_cache(path, sha1, NULL);
+	if (ret < 1)
+		return error("Could not parse conflict hunks in '%s'", path);
+	hex = xstrdup(sha1_to_hex(sha1));
+	filename = rerere_path(hex, "postimage");
+	if (unlink(filename))
+		return (errno == ENOENT
+			? error("no remembered resolution for %s", path)
+			: error("cannot unlink %s: %s", filename, strerror(errno)));
+
+	handle_cache(path, sha1, rerere_path(hex, "preimage"));
+	fprintf(stderr, "Updated preimage for '%s'\n", path);
+
+
+	string_list_insert(path, rr)->util = hex;
+	fprintf(stderr, "Forgot resolution for %s\n", path);
+	return 0;
+}
+
+int rerere_forget(const char **pathspec)
+{
+	int i, fd;
+	struct string_list conflict = { NULL, 0, 0, 1 };
+	struct string_list merge_rr = { NULL, 0, 0, 1 };
+
+	if (read_cache() < 0)
+		return error("Could not read index");
+
+	fd = setup_rerere(&merge_rr, RERERE_NOAUTOUPDATE);
+
+	unmerge_cache(pathspec);
+	find_conflict(&conflict);
+	for (i = 0; i < conflict.nr; i++) {
+		struct string_list_item *it = &conflict.items[i];
+		if (!match_pathspec(pathspec, it->string, strlen(it->string),
+				    0, NULL))
+			continue;
+		rerere_forget_one_path(it->string, &merge_rr);
+	}
+	return write_rr(&merge_rr, fd);
 }

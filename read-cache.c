@@ -14,6 +14,7 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "blob.h"
+#include "resolve-undo.h"
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 
@@ -28,6 +29,7 @@ static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int reall
 
 #define CACHE_EXT(s) ( (s[0]<<24)|(s[1]<<16)|(s[2]<<8)|(s[3]) )
 #define CACHE_EXT_TREE 0x54524545	/* "TREE" */
+#define CACHE_EXT_RESOLVE_UNDO 0x52455543 /* "REUN" */
 
 struct index_state the_index;
 
@@ -456,6 +458,7 @@ int remove_index_entry_at(struct index_state *istate, int pos)
 {
 	struct cache_entry *ce = istate->cache[pos];
 
+	record_resolve_undo(istate, ce);
 	remove_name_hash(ce);
 	istate->cache_changed = 1;
 	istate->cache_nr--;
@@ -1183,6 +1186,9 @@ static int read_index_extension(struct index_state *istate,
 	case CACHE_EXT_TREE:
 		istate->cache_tree = cache_tree_read(data, sz);
 		break;
+	case CACHE_EXT_RESOLVE_UNDO:
+		istate->resolve_undo = resolve_undo_read(data, sz);
+		break;
 	default:
 		if (*ext < 'A' || 'Z' < *ext)
 			return error("index uses %.4s extension, which we do not understand",
@@ -1362,6 +1368,7 @@ int is_index_unborn(struct index_state *istate)
 
 int discard_index(struct index_state *istate)
 {
+	resolve_undo_clear_index(istate);
 	istate->cache_nr = 0;
 	istate->cache_changed = 0;
 	istate->timestamp.sec = 0;
@@ -1582,6 +1589,17 @@ int write_index(struct index_state *istate, int newfd)
 
 		cache_tree_write(&sb, istate->cache_tree);
 		err = write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sb.len) < 0
+			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		strbuf_release(&sb);
+		if (err)
+			return -1;
+	}
+	if (istate->resolve_undo) {
+		struct strbuf sb = STRBUF_INIT;
+
+		resolve_undo_write(&sb, istate->resolve_undo);
+		err = write_index_ext_header(&c, newfd, CACHE_EXT_RESOLVE_UNDO,
+					     sb.len) < 0
 			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
 		strbuf_release(&sb);
 		if (err)

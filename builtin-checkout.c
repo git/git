@@ -17,6 +17,7 @@
 #include "blob.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
+#include "resolve-undo.h"
 
 static const char * const checkout_usage[] = {
 	"git checkout [options] <branch>",
@@ -234,6 +235,10 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	if (report_path_error(ps_matched, pathspec, 0))
 		return 1;
 
+	/* "checkout -m path" to recreate conflicted state */
+	if (opts->merge)
+		unmerge_cache(pathspec);
+
 	/* Any unmerged paths? */
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
@@ -370,6 +375,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 	if (read_cache_preload(NULL) < 0)
 		return error("corrupt index file");
 
+	resolve_undo_clear();
 	if (opts->force) {
 		ret = reset_tree(new->commit->tree, opts, 1);
 		if (ret)

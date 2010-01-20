@@ -120,6 +120,9 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 	if (argc < 2)
 		return rerere(flags);
 
+	if (!strcmp(argv[1], "forget"))
+		return rerere_forget(argv + 2);
+
 	fd = setup_rerere(&merge_rr, flags);
 	if (fd < 0)
 		return 0;

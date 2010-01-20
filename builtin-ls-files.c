@@ -11,6 +11,8 @@
 #include "builtin.h"
 #include "tree.h"
 #include "parse-options.h"
+#include "resolve-undo.h"
+#include "string-list.h"
 
 static int abbrev;
 static int show_deleted;
@@ -18,6 +20,7 @@ static int show_cached;
 static int show_others;
 static int show_stage;
 static int show_unmerged;
+static int show_resolve_undo;
 static int show_modified;
 static int show_killed;
 static int show_valid_bit;
@@ -38,6 +41,7 @@ static const char *tag_other = "";
 static const char *tag_killed = "";
 static const char *tag_modified = "";
 static const char *tag_skip_worktree = "";
+static const char *tag_resolve_undo = "";
 
 static void show_dir_entry(const char *tag, struct dir_entry *ent)
 {
@@ -154,6 +158,38 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 		       ce_stage(ce));
 	}
 	write_name_quoted(ce->name + offset, stdout, line_terminator);
+}
+
+static int show_one_ru(struct string_list_item *item, void *cbdata)
+{
+	int offset = prefix_offset;
+	const char *path = item->string;
+	struct resolve_undo_info *ui = item->util;
+	int i, len;
+
+	len = strlen(path);
+	if (len < prefix_len)
+		return 0; /* outside of the prefix */
+	if (!match_pathspec(pathspec, path, len, prefix_len, ps_matched))
+		return 0; /* uninterested */
+	for (i = 0; i < 3; i++) {
+		if (!ui->mode[i])
+			continue;
+		printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
+		       abbrev
+		       ? find_unique_abbrev(ui->sha1[i], abbrev)
+		       : sha1_to_hex(ui->sha1[i]),
+		       i + 1);
+		write_name_quoted(path + offset, stdout, line_terminator);
+	}
+	return 0;
+}
+
+static void show_ru_info(const char *prefix)
+{
+	if (!the_index.resolve_undo)
+		return;
+	for_each_string_list(show_one_ru, the_index.resolve_undo, NULL);
 }
 
 static void show_files(struct dir_struct *dir, const char *prefix)
@@ -458,6 +494,8 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 			DIR_HIDE_EMPTY_DIRECTORIES),
 		OPT_BOOLEAN('u', "unmerged", &show_unmerged,
 			"show unmerged files in the output"),
+		OPT_BOOLEAN(0, "resolve-undo", &show_resolve_undo,
+			    "show resolve-undo information"),
 		{ OPTION_CALLBACK, 'x', "exclude", &dir.exclude_list[EXC_CMDL], "pattern",
 			"skip files matching pattern",
 			0, option_parse_exclude },
@@ -498,6 +536,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		tag_other = "? ";
 		tag_killed = "K ";
 		tag_skip_worktree = "S ";
+		tag_resolve_undo = "U ";
 	}
 	if (show_modified || show_others || show_deleted || (dir.flags & DIR_SHOW_IGNORED) || show_killed)
 		require_work_tree = 1;
@@ -536,7 +575,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 
 	/* With no flags, we default to showing the cached files */
 	if (!(show_stage | show_deleted | show_others | show_unmerged |
-	      show_killed | show_modified))
+	      show_killed | show_modified | show_resolve_undo))
 		show_cached = 1;
 
 	if (prefix)
@@ -551,6 +590,8 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		overlay_tree_on_cache(with_tree, prefix);
 	}
 	show_files(&dir, prefix);
+	if (show_resolve_undo)
+		show_ru_info(prefix);
 
 	if (ps_matched) {
 		int bad;
