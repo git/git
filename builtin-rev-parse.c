@@ -52,6 +52,7 @@ static int is_rev_argument(const char *arg)
 		"--parents",
 		"--pretty",
 		"--remotes",
+		"--glob=",
 		"--sparse",
 		"--tags",
 		"--topo-order",
@@ -575,6 +576,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--tags")) {
 				for_each_tag_ref(show_reference, NULL);
+				continue;
+			}
+			if (!prefixcmp(arg, "--glob=")) {
+				for_each_glob_ref(show_reference, arg + 7, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--remotes")) {

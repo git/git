@@ -112,6 +112,11 @@ OPTIONS
 --remotes::
 	Show tag refs found in `$GIT_DIR/refs/remotes`.
 
+--glob=glob-pattern::
+	Show refs matching shell glob pattern `glob-pattern`. If pattern
+	specified lacks leading 'refs/', it is automatically prepended.
+	If pattern lacks '?', '*', or '[', '/*' at the end is impiled.
+
 --show-prefix::
 	When the command is invoked from a subdirectory, show the
 	path of the current directory relative to the top-level

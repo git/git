@@ -24,6 +24,7 @@ SYNOPSIS
 	     [ \--branches ]
 	     [ \--tags ]
 	     [ \--remotes ]
+	     [ \--glob=glob-pattern ]
 	     [ \--stdin ]
 	     [ \--quiet ]
 	     [ \--topo-order ]

@@ -243,6 +243,13 @@ endif::git-rev-list[]
 	Pretend as if all the refs in `$GIT_DIR/refs/remotes` are listed
 	on the command line as '<commit>'.
 
+--glob=glob-pattern::
+	Pretend as if all the refs matching shell glob `glob-pattern`
+	are listed on the command line as '<commit>'. Leading 'refs/',
+	is automatically prepended if missing. If pattern lacks '?', '*',
+	or '[', '/*' at the end is impiled.
+
+
 ifndef::git-rev-list[]
 --bisect::
 
