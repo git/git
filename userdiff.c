@@ -198,7 +198,7 @@ struct userdiff_driver *userdiff_find_by_path(const char *path)
 	struct git_attr_check check;
 
 	if (!attr)
-		attr = git_attr("diff", 4);
+		attr = git_attr("diff");
 	check.attr = attr;
 
 	if (!path)

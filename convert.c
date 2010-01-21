@@ -378,9 +378,9 @@ static void setup_convert_check(struct git_attr_check *check)
 	static struct git_attr *attr_filter;
 
 	if (!attr_crlf) {
-		attr_crlf = git_attr("crlf", 4);
-		attr_ident = git_attr("ident", 5);
-		attr_filter = git_attr("filter", 6);
+		attr_crlf = git_attr("crlf");
+		attr_ident = git_attr("ident");
+		attr_filter = git_attr("filter");
 		user_convert_tail = &user_convert;
 		git_config(read_convert_config, NULL);
 	}

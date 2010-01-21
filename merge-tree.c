@@ -54,7 +54,7 @@ static const char *explanation(struct merge_list *entry)
 	return "removed in remote";
 }
 
-extern void *merge_file(struct blob *, struct blob *, struct blob *, unsigned long *);
+extern void *merge_file(const char *, struct blob *, struct blob *, struct blob *, unsigned long *);
 
 static void *result(struct merge_list *entry, unsigned long *size)
 {
@@ -76,7 +76,7 @@ static void *result(struct merge_list *entry, unsigned long *size)
 	their = NULL;
 	if (entry)
 		their = entry->blob;
-	return merge_file(base, our, their, size);
+	return merge_file(entry->path, base, our, their, size);
 }
 
 static void *origin(struct merge_list *entry, unsigned long *size)
