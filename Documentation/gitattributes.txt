@@ -525,6 +525,23 @@ When left unspecified, the driver itself is used for both
 internal merge and the final merge.
 
 
+`conflict-marker-size`
+^^^^^^^^^^^^^^^^^^^^^^
+
+This attribute controls the length of conflict markers left in
+the work tree file during a conflicted merge.  Only setting to
+the value to a positive integer has any meaningful effect.
+
+For example, this line in `.gitattributes` can be used to tell the merge
+machinery to leave much longer (instead of the usual 7-character-long)
+conflict markers when merging the file `Documentation/git-merge.txt`
+results in a conflict.
+
+------------------------
+Documentation/git-merge.txt	conflict-marker-size=32
+------------------------
+
+
 Checking whitespace errors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
