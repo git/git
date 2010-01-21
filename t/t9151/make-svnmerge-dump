@@ -26,8 +26,9 @@ i=0
 cd foo
 mkdir trunk
 mkdir branches
-svn add trunk branches
-i=$(commit $i "Setup trunk and branches")
+mkdir tags
+svn add trunk branches tags
+i=$(commit $i "Setup trunk, branches, and tags")
 
 git cat-file blob 6683463e:Makefile > trunk/Makefile
 svn add trunk/Makefile 
@@ -153,6 +154,66 @@ i=$(commit $i "Merge left to trunk 2")
 # nothing to merge.  git-svn will not make a meaningless merge commit.
 svn merge ../branches/right --accept postpone
 i=$(commit $i "non-merge right to trunk 2")
+cd ..
+
+say "Adding subdirectory to LEFT"
+svn update
+cd branches/left
+mkdir subdir
+echo "Yeehaw" > subdir/cowboy
+svn add subdir
+i=$(commit $i "add subdirectory to left branch")
+cd ../../
+
+say "Merging LEFT to TRUNK"
+svn update
+cd trunk
+svn merge ../branches/left --accept postpone
+i=$(commit $i "merge left to trunk")
+cd ..
+
+say "Make PARTIAL branch"
+svn update
+i=$(commit $i "make partial branch")
+svn cp trunk/subdir branches/partial
+
+say "Make a commit to PARTIAL"
+svn update
+cd branches/partial
+echo "racecar" > palindromes
+svn add palindromes
+i=$(commit $i "partial update")
+cd ../../
+
+say "Merge PARTIAL to TRUNK"
+svn update
+cd trunk/subdir
+svn merge ../../branches/partial --accept postpone
+i=$(commit $i "merge partial to trunk")
+cd ../../
+
+say "Tagging trunk"
+svn update
+i=$(commit $i "tagging v1.0")
+svn cp trunk tags/v1.0
+
+say "Branching BUGFIX from v1.0"
+svn update
+i=$(commit $i "make bugfix branch from tag")
+svn cp tags/v1.0 branches/bugfix
+
+say "Make a commit to BUGFIX"
+svn update
+cd branches/bugfix/
+echo "kayak" >> subdir/palindromes
+i=$(commit $i "commit to bugfix")
+cd ../../
+
+say "Merge BUGFIX to TRUNK"
+svn update
+cd trunk
+svn merge ../branches/bugfix/ --accept postpone
+i=$(commit $i "Merge BUGFIX to TRUNK")
 cd ..
 
 cd ..
