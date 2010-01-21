@@ -214,11 +214,15 @@ static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 
 static int xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
 				 xdfenv_t *xe2, const char *name2,
+				 int favor,
 				 xdmerge_t *m, char *dest, int style)
 {
 	int size, i;
 
 	for (size = i = 0; m; m = m->next) {
+		if (favor && !m->mode)
+			m->mode = favor;
+
 		if (m->mode == 0)
 			size = fill_conflict_hunk(xe1, name1, xe2, name2,
 						  size, i, style, m, dest);
@@ -391,6 +395,7 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	int i0, i1, i2, chg0, chg1, chg2;
 	int level = flags & XDL_MERGE_LEVEL_MASK;
 	int style = flags & XDL_MERGE_STYLE_MASK;
+	int favor = XDL_MERGE_FAVOR(flags);
 
 	if (style == XDL_MERGE_DIFF3) {
 		/*
@@ -523,14 +528,14 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	/* output */
 	if (result) {
 		int size = xdl_fill_merge_buffer(xe1, name1, xe2, name2,
-			changes, NULL, style);
+			favor, changes, NULL, style);
 		result->ptr = xdl_malloc(size);
 		if (!result->ptr) {
 			xdl_cleanup_merge(changes);
 			return -1;
 		}
 		result->size = size;
-		xdl_fill_merge_buffer(xe1, name1, xe2, name2, changes,
+		xdl_fill_merge_buffer(xe1, name1, xe2, name2, favor, changes,
 				      result->ptr, style);
 	}
 	return xdl_cleanup_merge(changes);

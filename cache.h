@@ -1007,6 +1007,7 @@ extern int diff_auto_refresh_index;
 
 /* match-trees.c */
 void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
+void shift_tree_by(const unsigned char *, const unsigned char *, unsigned char *, const char *);
 
 /*
  * whitespace rules.

@@ -58,6 +58,12 @@ extern "C" {
 #define XDL_MERGE_ZEALOUS_ALNUM 3
 #define XDL_MERGE_LEVEL_MASK 0x0f
 
+/* merge favor modes */
+#define XDL_MERGE_FAVOR_OURS 1
+#define XDL_MERGE_FAVOR_THEIRS 2
+#define XDL_MERGE_FAVOR(flags) (((flags)>>4) & 3)
+#define XDL_MERGE_FLAGS(level, style, favor) ((level)|(style)|((favor)<<4))
+
 /* merge output styles */
 #define XDL_MERGE_DIFF3 0x8000
 #define XDL_MERGE_STYLE_MASK 0x8000
@@ -110,7 +116,7 @@ int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 
 int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 		mmfile_t *mf2, const char *name2,
-		xpparam_t const *xpp, int level, mmbuffer_t *result);
+		xpparam_t const *xpp, int flags, mmbuffer_t *result);
 
 #ifdef __cplusplus
 }

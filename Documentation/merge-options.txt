@@ -74,3 +74,8 @@ option can be used to override --squash.
 -v::
 --verbose::
 	Be verbose.
+
+-X <option>::
+--strategy-option=<option>::
+	Pass merge strategy specific option through to the merge
+	strategy.

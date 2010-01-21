@@ -18,7 +18,7 @@ typedef int (*ll_merge_fn)(const struct ll_merge_driver *,
 			   mmfile_t *orig,
 			   mmfile_t *src1, const char *name1,
 			   mmfile_t *src2, const char *name2,
-			   int virtual_ancestor);
+			   int flag);
 
 struct ll_merge_driver {
 	const char *name;
@@ -38,14 +38,14 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 			   mmfile_t *orig,
 			   mmfile_t *src1, const char *name1,
 			   mmfile_t *src2, const char *name2,
-			   int virtual_ancestor)
+			   int flag)
 {
 	/*
 	 * The tentative merge result is "ours" for the final round,
 	 * or common ancestor for an internal merge.  Still return
 	 * "conflicted merge" status.
 	 */
-	mmfile_t *stolen = virtual_ancestor ? orig : src1;
+	mmfile_t *stolen = (flag & 01) ? orig : src1;
 
 	result->ptr = stolen->ptr;
 	result->size = stolen->size;
@@ -59,10 +59,11 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			mmfile_t *orig,
 			mmfile_t *src1, const char *name1,
 			mmfile_t *src2, const char *name2,
-			int virtual_ancestor)
+			int flag)
 {
 	xpparam_t xpp;
 	int style = 0;
+	int favor = (flag >> 1) & 03;
 
 	if (buffer_is_binary(orig->ptr, orig->size) ||
 	    buffer_is_binary(src1->ptr, src1->size) ||
@@ -72,8 +73,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 		return ll_binary_merge(drv_unused, result,
 				       path,
 				       orig, src1, name1,
-				       src2, name2,
-				       virtual_ancestor);
+				       src2, name2, flag);
 	}
 
 	memset(&xpp, 0, sizeof(xpp));
@@ -82,7 +82,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	return xdl_merge(orig,
 			 src1, name1,
 			 src2, name2,
-			 &xpp, XDL_MERGE_ZEALOUS | style,
+			 &xpp, XDL_MERGE_FLAGS(XDL_MERGE_ZEALOUS, style, favor),
 			 result);
 }
 
@@ -92,7 +92,7 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 			  mmfile_t *orig,
 			  mmfile_t *src1, const char *name1,
 			  mmfile_t *src2, const char *name2,
-			  int virtual_ancestor)
+			  int flag)
 {
 	char *src, *dst;
 	long size;
@@ -104,7 +104,7 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 	git_xmerge_style = 0;
 	status = ll_xdl_merge(drv_unused, result, path_unused,
 			      orig, src1, NULL, src2, NULL,
-			      virtual_ancestor);
+			      flag);
 	git_xmerge_style = saved_style;
 	if (status <= 0)
 		return status;
@@ -165,7 +165,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 			mmfile_t *orig,
 			mmfile_t *src1, const char *name1,
 			mmfile_t *src2, const char *name2,
-			int virtual_ancestor)
+			int flag)
 {
 	char temp[3][50];
 	struct strbuf cmd = STRBUF_INIT;
@@ -356,10 +356,11 @@ int ll_merge(mmbuffer_t *result_buf,
 	     mmfile_t *ancestor,
 	     mmfile_t *ours, const char *our_label,
 	     mmfile_t *theirs, const char *their_label,
-	     int virtual_ancestor)
+	     int flag)
 {
 	const char *ll_driver_name;
 	const struct ll_merge_driver *driver;
+	int virtual_ancestor = flag & 01;
 
 	ll_driver_name = git_path_check_merge(path);
 	driver = find_ll_merge_driver(ll_driver_name);
@@ -369,5 +370,5 @@ int ll_merge(mmbuffer_t *result_buf,
 	return driver->fn(driver, result_buf, path,
 			  ancestor,
 			  ours, our_label,
-			  theirs, their_label, virtual_ancestor);
+			  theirs, their_label, flag);
 }
