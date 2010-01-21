@@ -245,6 +245,7 @@ struct branch
 	const char *name;
 	struct tree_entry branch_tree;
 	uintmax_t last_commit;
+	uintmax_t num_notes;
 	unsigned active : 1;
 	unsigned pack_id : PACK_ID_BITS;
 	unsigned char sha1[20];
@@ -702,6 +703,7 @@ static struct branch *new_branch(const char *name)
 	b->table_next_branch = branch_table[hc];
 	b->branch_tree.versions[0].mode = S_IFDIR;
 	b->branch_tree.versions[1].mode = S_IFDIR;
+	b->num_notes = 0;
 	b->active = 0;
 	b->pack_id = MAX_PACK_ID;
 	branch_table[hc] = b;
@@ -1911,6 +1913,109 @@ static void load_branch(struct branch *b)
 	}
 }
 
+static unsigned char convert_num_notes_to_fanout(uintmax_t num_notes)
+{
+	unsigned char fanout = 0;
+	while ((num_notes >>= 8))
+		fanout++;
+	return fanout;
+}
+
+static void construct_path_with_fanout(const char *hex_sha1,
+		unsigned char fanout, char *path)
+{
+	unsigned int i = 0, j = 0;
+	if (fanout >= 20)
+		die("Too large fanout (%u)", fanout);
+	while (fanout) {
+		path[i++] = hex_sha1[j++];
+		path[i++] = hex_sha1[j++];
+		path[i++] = '/';
+		fanout--;
+	}
+	memcpy(path + i, hex_sha1 + j, 40 - j);
+	path[i + 40 - j] = '\0';
+}
+
+static uintmax_t do_change_note_fanout(
+		struct tree_entry *orig_root, struct tree_entry *root,
+		char *hex_sha1, unsigned int hex_sha1_len,
+		char *fullpath, unsigned int fullpath_len,
+		unsigned char fanout)
+{
+	struct tree_content *t = root->tree;
+	struct tree_entry *e, leaf;
+	unsigned int i, tmp_hex_sha1_len, tmp_fullpath_len;
+	uintmax_t num_notes = 0;
+	unsigned char sha1[20];
+	char realpath[60];
+
+	for (i = 0; t && i < t->entry_count; i++) {
+		e = t->entries[i];
+		tmp_hex_sha1_len = hex_sha1_len + e->name->str_len;
+		tmp_fullpath_len = fullpath_len;
+
+		/*
+		 * We're interested in EITHER existing note entries (entries
+		 * with exactly 40 hex chars in path, not including directory
+		 * separators), OR directory entries that may contain note
+		 * entries (with < 40 hex chars in path).
+		 * Also, each path component in a note entry must be a multiple
+		 * of 2 chars.
+		 */
+		if (!e->versions[1].mode ||
+		    tmp_hex_sha1_len > 40 ||
+		    e->name->str_len % 2)
+			continue;
+
+		/* This _may_ be a note entry, or a subdir containing notes */
+		memcpy(hex_sha1 + hex_sha1_len, e->name->str_dat,
+		       e->name->str_len);
+		if (tmp_fullpath_len)
+			fullpath[tmp_fullpath_len++] = '/';
+		memcpy(fullpath + tmp_fullpath_len, e->name->str_dat,
+		       e->name->str_len);
+		tmp_fullpath_len += e->name->str_len;
+		fullpath[tmp_fullpath_len] = '\0';
+
+		if (tmp_hex_sha1_len == 40 && !get_sha1_hex(hex_sha1, sha1)) {
+			/* This is a note entry */
+			construct_path_with_fanout(hex_sha1, fanout, realpath);
+			if (!strcmp(fullpath, realpath)) {
+				/* Note entry is in correct location */
+				num_notes++;
+				continue;
+			}
+
+			/* Rename fullpath to realpath */
+			if (!tree_content_remove(orig_root, fullpath, &leaf))
+				die("Failed to remove path %s", fullpath);
+			tree_content_set(orig_root, realpath,
+				leaf.versions[1].sha1,
+				leaf.versions[1].mode,
+				leaf.tree);
+		} else if (S_ISDIR(e->versions[1].mode)) {
+			/* This is a subdir that may contain note entries */
+			if (!e->tree)
+				load_tree(e);
+			num_notes += do_change_note_fanout(orig_root, e,
+				hex_sha1, tmp_hex_sha1_len,
+				fullpath, tmp_fullpath_len, fanout);
+		}
+
+		/* The above may have reallocated the current tree_content */
+		t = root->tree;
+	}
+	return num_notes;
+}
+
+static uintmax_t change_note_fanout(struct tree_entry *root,
+		unsigned char fanout)
+{
+	char hex_sha1[40], path[60];
+	return do_change_note_fanout(root, root, hex_sha1, 0, path, 0, fanout);
+}
+
 static void file_change_m(struct branch *b)
 {
 	const char *p = command_buf.buf + 2;
@@ -2061,14 +2166,16 @@ static void file_change_cr(struct branch *b, int rename)
 		leaf.tree);
 }
 
-static void note_change_n(struct branch *b)
+static void note_change_n(struct branch *b, unsigned char old_fanout)
 {
 	const char *p = command_buf.buf + 2;
 	static struct strbuf uq = STRBUF_INIT;
 	struct object_entry *oe = oe;
 	struct branch *s;
 	unsigned char sha1[20], commit_sha1[20];
+	char path[60];
 	uint16_t inline_data = 0;
+	unsigned char new_fanout;
 
 	/* <dataref> or 'inline' */
 	if (*p == ':') {
@@ -2122,7 +2229,7 @@ static void note_change_n(struct branch *b)
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
 				typename(oe->type), command_buf.buf);
-	} else {
+	} else if (!is_null_sha1(sha1)) {
 		enum object_type type = sha1_object_info(sha1, NULL);
 		if (type < 0)
 			die("Blob not found: %s", command_buf.buf);
@@ -2131,8 +2238,17 @@ static void note_change_n(struct branch *b)
 			    typename(type), command_buf.buf);
 	}
 
-	tree_content_set(&b->branch_tree, sha1_to_hex(commit_sha1), sha1,
-		S_IFREG | 0644, NULL);
+	construct_path_with_fanout(sha1_to_hex(commit_sha1), old_fanout, path);
+	if (tree_content_remove(&b->branch_tree, path, NULL))
+		b->num_notes--;
+
+	if (is_null_sha1(sha1))
+		return; /* nothing to insert */
+
+	b->num_notes++;
+	new_fanout = convert_num_notes_to_fanout(b->num_notes);
+	construct_path_with_fanout(sha1_to_hex(commit_sha1), new_fanout, path);
+	tree_content_set(&b->branch_tree, path, sha1, S_IFREG | 0644, NULL);
 }
 
 static void file_change_deleteall(struct branch *b)
@@ -2141,6 +2257,7 @@ static void file_change_deleteall(struct branch *b)
 	hashclr(b->branch_tree.versions[0].sha1);
 	hashclr(b->branch_tree.versions[1].sha1);
 	load_tree(&b->branch_tree);
+	b->num_notes = 0;
 }
 
 static void parse_from_commit(struct branch *b, char *buf, unsigned long size)
@@ -2264,6 +2381,7 @@ static void parse_new_commit(void)
 	char *committer = NULL;
 	struct hash_list *merge_list = NULL;
 	unsigned int merge_count;
+	unsigned char prev_fanout, new_fanout;
 
 	/* Obtain the branch name from the rest of our command */
 	sp = strchr(command_buf.buf, ' ') + 1;
@@ -2294,6 +2412,8 @@ static void parse_new_commit(void)
 		load_branch(b);
 	}
 
+	prev_fanout = convert_num_notes_to_fanout(b->num_notes);
+
 	/* file_change* */
 	while (command_buf.len > 0) {
 		if (!prefixcmp(command_buf.buf, "M "))
@@ -2305,7 +2425,7 @@ static void parse_new_commit(void)
 		else if (!prefixcmp(command_buf.buf, "C "))
 			file_change_cr(b, 0);
 		else if (!prefixcmp(command_buf.buf, "N "))
-			note_change_n(b);
+			note_change_n(b, prev_fanout);
 		else if (!strcmp("deleteall", command_buf.buf))
 			file_change_deleteall(b);
 		else {
@@ -2315,6 +2435,10 @@ static void parse_new_commit(void)
 		if (read_next_command() == EOF)
 			break;
 	}
+
+	new_fanout = convert_num_notes_to_fanout(b->num_notes);
+	if (new_fanout != prev_fanout)
+		b->num_notes = change_note_fanout(&b->branch_tree, new_fanout);
 
 	/* build the tree and the commit */
 	store_tree(&b->branch_tree);
