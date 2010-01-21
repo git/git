@@ -95,7 +95,7 @@ OPTIONS
 
 CONFIGURATION
 -------------
-By default, 'git-tag' in sign-with-default mode (-s) will use your
+By default, 'git tag' in sign-with-default mode (-s) will use your
 committer identity (of the form "Your Name <your@email.address>") to
 find a key.  If you want to use a different default key, you can specify
 it in the repository configuration as follows:
@@ -131,12 +131,12 @@ and be done with it.
 
 . The insane thing.
 You really want to call the new version "X" too, 'even though'
-others have already seen the old one. So just use 'git-tag -f'
+others have already seen the old one. So just use 'git tag -f'
 again, as if you hadn't already published the old one.
 
 However, Git does *not* (and it should not) change tags behind
 users back. So if somebody already got the old tag, doing a
-'git-pull' on your tree shouldn't just make them overwrite the old
+'git pull' on your tree shouldn't just make them overwrite the old
 one.
 
 If somebody got a release tag from you, you cannot just change
@@ -190,7 +190,7 @@ private anchor point tags from the other person.
 
 You would notice "please pull" messages on the mailing list says
 repo URL and branch name alone.  This is designed to be easily
-cut&pasted to a 'git-fetch' command line:
+cut&pasted to a 'git fetch' command line:
 
 ------------
 Linus, please pull from

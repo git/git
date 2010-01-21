@@ -116,7 +116,7 @@ nor in any Push line of the corresponding remotes file---see below).
 
 --repo=<repository>::
 	This option is only relevant if no <repository> argument is
-	passed in the invocation. In this case, 'git-push' derives the
+	passed in the invocation. In this case, 'git push' derives the
 	remote name from the current branch: If it tracks a remote
 	branch, then that remote repository is pushed to. Otherwise,
 	the name "origin" is used. For this latter case, this option
@@ -137,11 +137,11 @@ git push --repo=public  #2
 +
 is that #1 always pushes to "public" whereas #2 pushes to "public"
 only if the current branch does not track a remote branch. This is
-useful if you write an alias or script around 'git-push'.
+useful if you write an alias or script around 'git push'.
 
 --thin::
 --no-thin::
-	These options are passed to 'git-send-pack'.  Thin
+	These options are passed to 'git send-pack'.  Thin
 	transfer spends extra cycles to minimize the number of
 	objects to be sent and meant to be used on slower connection.
 

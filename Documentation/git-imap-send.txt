@@ -13,7 +13,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This command uploads a mailbox generated with 'git-format-patch'
+This command uploads a mailbox generated with 'git format-patch'
 into an IMAP drafts folder.  This allows patches to be sent as
 other email is when using mail clients that cannot read mailbox
 files directly.

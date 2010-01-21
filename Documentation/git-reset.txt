@@ -39,7 +39,7 @@ OPTIONS
 --soft::
 	Does not touch the index file nor the working tree at all, but
 	requires them to be in a good order. This leaves all your changed
-	files "Changes to be committed", as 'git-status' would
+	files "Changes to be committed", as 'git status' would
 	put it.
 
 --hard::

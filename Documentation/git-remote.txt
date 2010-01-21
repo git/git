@@ -161,7 +161,7 @@ $ git checkout -b nfs linux-nfs/master
 ...
 ------------
 
-* Imitate 'git-clone' but track only selected branches
+* Imitate 'git clone' but track only selected branches
 +
 ------------
 $ mkdir project.git

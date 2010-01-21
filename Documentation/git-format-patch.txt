@@ -29,7 +29,7 @@ DESCRIPTION
 Prepare each commit with its patch in
 one file per commit, formatted to resemble UNIX mailbox format.
 The output of this command is convenient for e-mail submission or
-for use with 'git-am'.
+for use with 'git am'.
 
 There are two ways to specify which commits to operate on.
 
@@ -221,7 +221,7 @@ EXAMPLES
 --------
 
 * Extract commits between revisions R1 and R2, and apply them on top of
-the current branch using 'git-am' to cherry-pick them:
+the current branch using 'git am' to cherry-pick them:
 +
 ------------
 $ git format-patch -k --stdout R1..R2 | git am -3 -k

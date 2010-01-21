@@ -17,7 +17,7 @@ current HEAD commit, paths that have differences between the working
 tree and the index file, and paths in the working tree that are not
 tracked by git (and are not ignored by linkgit:gitignore[5]). The first
 are what you _would_ commit by running `git commit`; the second and
-third are what you _could_ commit by running 'git-add' before running
+third are what you _could_ commit by running 'git add' before running
 `git commit`.
 
 OPTIONS
