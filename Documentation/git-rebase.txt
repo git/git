@@ -312,7 +312,7 @@ which makes little sense.
 	When the commit log message begins with "squash! ..." (or
 	"fixup! ..."), and there is a commit whose title begins with
 	the same ..., automatically modify the todo list of rebase -i
-	so that the commit marked for quashing come right after the
+	so that the commit marked for squashing comes right after the
 	commit to be modified, and change the action of the moved
 	commit from `pick` to `squash` (or `fixup`).
 +
