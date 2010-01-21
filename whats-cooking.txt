@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2010, #05; Sat, 16)
-X-master-at: 561197238ef95b126b5ff16780250d492ad24233
-X-next-at: f77bc8fa3d46eb76daac398c969137b207334af2
+Subject: What's cooking in git.git (Jan 2010, #06; Wed, 20)
+X-master-at: 19c61a58cf4e989cee2f11ad856c6c18c039486f
+X-next-at: 6d766edc288b54c65222512a1eadee516d9fd616
 
-What's cooking in git.git (Jan 2010, #05; Sat, 16)
+What's cooking in git.git (Jan 2010, #06; Wed, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,106 +12,7 @@ marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
 --------------------------------------------------
-[New Topics]
-
-* dp/maint-1.6.5-fast-import-non-commit-tag (2010-01-14) 1 commit
-  (merged to 'next' on 2010-01-16 at f95ea8e)
- + fast-import: tag may point to any object type
-
-* il/push-set-upstream (2010-01-16) 1 commit
-  (merged to 'next' on 2010-01-16 at e3a7a60)
- + Add push --set-upstream
-
-* js/windows (2010-01-15) 7 commits
- - Do not use date.c:tm_to_time_t() from compat/mingw.c
- - MSVC: Windows-native implementation for subset of Pthreads API
- - MSVC: Fix an "incompatible pointer types" compiler warning
- - Windows: avoid the "dup dance" when spawning a child process
- - Windows: simplify the pipe(2) implementation
- - Windows: boost startup by avoiding a static dependency on shell32.dll
- - Windows: disable Python
-
-* nd/status-partial-refresh (2010-01-14) 1 commit
-  (merged to 'next' on 2010-01-16 at f77bc8f)
- + status: only touch path we may need to check
-
-* rr/core-tutorial (2010-01-16) 1 commit
-  (merged to 'next' on 2010-01-16 at d9dd8bd)
- + Documentation: Update git core tutorial clarifying reference to scripts
-
-* jc/conflict-mark-len-attr (2010-01-16) 3 commits
- . WIP : honor conflict-marker-lenght in rerere (does not work yet)
- . rerere: use ll_merge() instead of using xdl_merge()
- . conflict-marker-length: new attribute
- (this branch uses jc/cache-unmerge.)
-
-I am attempting to introduce a new per-path attribute to specify
-non-default conflict marker length to help rerere grok conflicts in
-Documentation/git-merge.txt, but the series is not yet in a presentable
-state yet.
-
---------------------------------------------------
-[Stalled]
-
-* ap/merge-backend-opts (2008-07-18) 6 commits
- - Document that merge strategies can now take their own options
- - Extend merge-subtree tests to test -Xsubtree=dir.
- - Make "subtree" part more orthogonal to the rest of merge-recursive.
- - Teach git-pull to pass -X<option> to git-merge
- - git merge -X<option>
- - git-merge-file --ours, --theirs
-
-"git pull" patch needs sq-then-eval fix to protect it from $IFS
-but otherwise seemed good.
-
-* js/refer-upstream (2009-09-10) 1 commit
- - Introduce <branch>@{upstream} notation
-
-This does not teach the public interface about the new syntax; callers
-that care about distinction between name vs SHA-1 might not work as well
-as they should.
-
-* jh/notes (2009-12-07) 11 commits
- - Refactor notes concatenation into a flexible interface for combining notes
- - Notes API: Allow multiple concurrent notes trees with new struct notes_tree
- - Notes API: for_each_note(): Traverse the entire notes tree with a callback
- - Notes API: get_note(): Return the note annotating the given object
- - Notes API: add_note(): Add note objects to the internal notes tree structure
- - Notes API: init_notes(): Initialize the notes tree from the given notes ref
- - Notes API: get_commit_notes() -> format_note() + remove the commit restriction
- - Minor style fixes to notes.c
-  (merged to 'next' on 2010-01-02 at ae42130)
- + Add more testcases to test fast-import of notes
- + Rename t9301 to t9350, to make room for more fast-import tests
- + fast-import: Proper notes tree manipulation
-
-http://thread.gmane.org/gmane.comp.version-control.git/134738
-
-What's the status of the fourth and later patches on this topic?  Overall
-it looked reasonable, if I recall correctly what I thought when I reviewed
-it last time, and I am tempted to merge it to 'next' soonish.  Please
-file complaints before I do so if people have objections.
-
-Hold: JH on 2010-01-05, http://article.gmane.org/gmane.comp.version-control.git/136183
-
---------------------------------------------------
-[Will merge to 'master' soon unless somebody complains]
-
-* jk/warn-author-committer-after-commit (2010-01-13) 4 commits
-  (merged to 'next' on 2010-01-16 at f22c077)
- + commit: allow suppression of implicit identity advice
- + commit: show interesting ident information in summary
- + strbuf: add strbuf_addbuf_percentquote
- + strbuf_expand: convert "%%" to "%"
-
-* tr/http-push-ref-status (2010-01-08) 6 commits
-  (merged to 'next' on 2010-01-16 at 7e872ac)
- + transport-helper.c::push_refs(): emit "no refs" error message
- + transport-helper.c::push_refs(): ignore helper-reported status if ref is not to be pushed
- + transport.c::transport_push(): make ref status affect return value
- + refactor ref status logic for pushing
- + t5541-http-push.sh: add test for unmatched, non-fast-forwarded refs
- + t5541-http-push.sh: add tests for non-fast-forward pushes
+[Graduated to "master"]
 
 * sr/gfi-options (2009-12-04) 7 commits
   (merged to 'next' on 2010-01-10 at 8b305fb)
@@ -139,8 +40,6 @@ Hold: JH on 2010-01-05, http://article.gmane.org/gmane.comp.version-control.git/
  + git-clone.txt: reword description of progress behaviour
  + check stderr with isatty() instead of stdout when deciding to show progress
 
-Perhaps needs an entry in the Release Notes, but otherwise looked Ok.
-
 * jk/run-command-use-shell (2010-01-01) 8 commits
   (merged to 'next' on 2010-01-10 at 7479e2a)
  + t4030, t4031: work around bogus MSYS bash path conversion
@@ -151,9 +50,6 @@ Perhaps needs an entry in the Release Notes, but otherwise looked Ok.
  + run-command: convert simple callsites to use_shell
  + t0021: use $SHELL_PATH for the filter script
  + run-command: add "use shell" option
-
-Shuffled the commits in the topic, following J6t's suggestion in
-http://thread.gmane.org/gmane.comp.version-control.git/136128
 
 * jn/makefile (2010-01-06) 4 commits
   (merged to 'next' on 2010-01-10 at f5a5d42)
@@ -166,37 +62,109 @@ http://thread.gmane.org/gmane.comp.version-control.git/136128
   (merged to 'next' on 2010-01-10 at df14116)
  + checkout -m path: fix recreating conflicts
 
-* bk/fix-relative-gitdir-file (2010-01-08) 2 commits
-  (merged to 'next' on 2010-01-16 at cc4ae57)
- + Handle relative paths in submodule .git files
- + Test update-index for a gitlink to a .git file
-
 * jh/commit-status (2010-01-13) 2 commits
   (merged to 'next' on 2010-01-13 at 0905d59)
  + t7502: test commit.status, --status and --no-status
  + commit: support commit.status, --status, and --no-status
 
-I have already given ample time for people to react, but ended up getting
-tired of waiting for tests to materialize and doing it myself, as I want
-to close merge window for 1.7.0-rc0 by the end of next week to have the
-final release early next month.
+* tc/test-locate-httpd (2010-01-02) 1 commit
+  (merged to 'next' on 2010-01-06 at 9d913e5)
+ + t/lib-http.sh: Restructure finding of default httpd location
+
+* js/windows (2010-01-15) 7 commits
+ + Do not use date.c:tm_to_time_t() from compat/mingw.c
+ + MSVC: Windows-native implementation for subset of Pthreads API
+ + MSVC: Fix an "incompatible pointer types" compiler warning
+ + Windows: avoid the "dup dance" when spawning a child process
+ + Windows: simplify the pipe(2) implementation
+ + Windows: boost startup by avoiding a static dependency on shell32.dll
+ + Windows: disable Python
+
+* dp/maint-1.6.5-fast-import-non-commit-tag (2010-01-14) 1 commit
+  (merged to 'next' on 2010-01-16 at f95ea8e)
+ + fast-import: tag may point to any object type
+
+* nd/include-termios-for-osol (2010-01-11) 1 commit
+  (merged to 'next' on 2010-01-16 at 3160c76)
+ + Add missing #include to support TIOCGWINSZ on Solaris
+
+* pc/uninteresting-submodule-disappear-upon-switch-branches (2010-01-11) 1 commit
+  (merged to 'next' on 2010-01-16 at b06ca1a)
+ + Remove empty directories when checking out a commit with fewer submodules
+
+* jc/rerere (2009-12-04) 1 commit
+  (merged to 'next' on 2010-01-10 at e295b7f)
+ + Teach --[no-]rerere-autoupdate option to merge, revert and friends
+
+* rr/core-tutorial (2010-01-16) 1 commit
+  (merged to 'next' on 2010-01-16 at d9dd8bd)
+ + Documentation: Update git core tutorial clarifying reference to scripts
+
+* il/push-set-upstream (2010-01-16) 1 commit
+  (merged to 'next' on 2010-01-16 at e3a7a60)
+ + Add push --set-upstream
+
+* jk/warn-author-committer-after-commit (2010-01-17) 6 commits
+  (merged to 'next' on 2010-01-17 at c2bb7fd)
+ + user_ident_sufficiently_given(): refactor the logic to be usable from elsewhere
+ + commit.c::print_summary: do not release the format string too early
+  (merged to 'next' on 2010-01-16 at f22c077)
+ + commit: allow suppression of implicit identity advice
+ + commit: show interesting ident information in summary
+ + strbuf: add strbuf_addbuf_percentquote
+ + strbuf_expand: convert "%%" to "%"
+
+* jc/ident (2010-01-17) 5 commits
+  (merged to 'next' on 2010-01-19 at 9fba1c0)
+ + ident.c: replace fprintf with fputs to suppress compiler warning
+  (merged to 'next' on 2010-01-17 at 625670d)
+ + user_ident_sufficiently_given(): refactor the logic to be usable from elsewhere
+ + ident.c: treat $EMAIL as giving user.email identity explicitly
+  (merged to 'next' on 2010-01-10 at f1f9ded)
+ + ident.c: check explicit identity for name and email separately
+ + ident.c: remove unused variables
+
+* tr/http-push-ref-status (2010-01-08) 6 commits
+  (merged to 'next' on 2010-01-16 at 7e872ac)
+ + transport-helper.c::push_refs(): emit "no refs" error message
+ + transport-helper.c::push_refs(): ignore helper-reported status if ref is not to be pushed
+ + transport.c::transport_push(): make ref status affect return value
+ + refactor ref status logic for pushing
+ + t5541-http-push.sh: add test for unmatched, non-fast-forwarded refs
+ + t5541-http-push.sh: add tests for non-fast-forward pushes
+
+* bk/fix-relative-gitdir-file (2010-01-08) 2 commits
+  (merged to 'next' on 2010-01-16 at cc4ae57)
+ + Handle relative paths in submodule .git files
+ + Test update-index for a gitlink to a .git file
 
 * sd/cd-p-show-toplevel (2010-01-12) 2 commits
   (merged to 'next' on 2010-01-16 at 57d6d31)
  + Use $(git rev-parse --show-toplevel) in cd_to_toplevel().
  + Add 'git rev-parse --show-toplevel' option.
 
-Avoid having to use "cd -P" that may not be available on some platforms'
-shells.
+* jc/symbol-static (2010-01-18) 17 commits
+  (merged to 'next' on 2010-01-18 at d063267)
+ + Replace parse_blob() with an explanatory comment
+ + symlinks.c: remove unused functions
+ + object.c: remove unused functions
+ + strbuf.c: remove unused function
+ + sha1_file.c: remove unused function
+ + mailmap.c: remove unused function
+  (merged to 'next' on 2010-01-17 at d7346b1)
+ + utf8.c: mark file-local function static
+ + submodule.c: mark file-local function static
+ + quote.c: mark file-local function static
+ + remote-curl.c: mark file-local function static
+ + read-cache.c: mark file-local functions static
+ + parse-options.c: mark file-local function static
+ + entry.c: mark file-local function static
+ + http.c: mark file-local functions static
+ + pretty.c: mark file-local function static
+ + builtin-rev-list.c: mark file-local function static
+ + bisect.c: mark file-local function static
 
-* tc/test-locate-httpd (2010-01-02) 1 commit
-  (merged to 'next' on 2010-01-06 at 9d913e5)
- + t/lib-http.sh: Restructure finding of default httpd location
-
---------------------------------------------------
-[Will merge to 'master' after a bit more cooking in 'next']
-
-* mh/rebase-fixup (2010-01-14) 21 commits
+* mh/rebase-fixup (2010-01-14) 23 commits
   (merged to 'next' on 2010-01-16 at 7ccb228)
  + rebase -i: Retain user-edited commit messages after squash/fixup conflicts
  + t3404: Set up more of the test repo in the "setup" step
@@ -257,37 +225,17 @@ shells.
  + grep: optimize built-in grep by skipping lines that do not hit
  (this branch is used by jc/grep-lookahead and jc/maint-grep-lookahead.)
 
-Optimize the "line-by-line" internal grep by skiping en masse over lines
-that cannot possibly match.
-
 * jc/maint-grep-lookahead (2010-01-12) 0 commits
  (this branch uses jc/maint-1.6.4-grep-lookahead; is used by jc/grep-lookahead.)
 
-Early conflict resolution for the above for recent git.
-
 * jc/grep-lookahead (2010-01-15) 4 commits
- - grep --no-index: allow use of "git grep" outside a git repository
- - grep: prepare to run outside of a work tree
+  (merged to 'next' on 2010-01-17 at 4a5be2d)
+ + grep --no-index: allow use of "git grep" outside a git repository
+ + grep: prepare to run outside of a work tree
   (merged to 'next' on 2010-01-13 at 20f8f4b)
  + grep: rip out pessimization to use fixmatch()
  + grep: rip out support for external grep
  (this branch uses jc/maint-1.6.4-grep-lookahead and jc/maint-grep-lookahead.)
-
-* nd/include-termios-for-osol (2010-01-11) 1 commit
-  (merged to 'next' on 2010-01-16 at 3160c76)
- + Add missing #include to support TIOCGWINSZ on Solaris
-
-* pc/uninteresting-submodule-disappear-upon-switch-branches (2010-01-11) 1 commit
-  (merged to 'next' on 2010-01-16 at b06ca1a)
- + Remove empty directories when checking out a commit with fewer submodules
-
-Instead of using unlink(2) that will never succeed, use rmdir(2) to remove
-an empty directory, knowing that this won't harm a populated directory.
-
-* jl/submodule-diff (2010-01-16) 2 commits
-  (merged to 'next' on 2010-01-16 at 0a99e3c)
- + Teach diff that modified submodule directory is dirty
- + Show submodules as modified when they contain a dirty work tree
 
 * jc/ls-files-ignored-pathspec (2010-01-08) 4 commits
   (merged to 'next' on 2010-01-16 at d36016a)
@@ -303,6 +251,90 @@ an empty directory, knowing that this won't harm a populated directory.
  + run-command: move wait_or_whine earlier
  + start_command: report child process setup errors to the parent's stderr
 
+* jc/cache-unmerge (2009-12-25) 9 commits
+  (merged to 'next' on 2010-01-13 at 2290c44)
+ + rerere forget path: forget recorded resolution
+ + rerere: refactor rerere logic to make it independent from I/O
+ + rerere: remove silly 1024-byte line limit
+ + resolve-undo: teach "update-index --unresolve" to use resolve-undo info
+ + resolve-undo: "checkout -m path" uses resolve-undo information
+ + resolve-undo: allow plumbing to clear the information
+ + resolve-undo: basic tests
+ + resolve-undo: record resolved conflicts in a new index extension section
+ + builtin-merge.c: use standard active_cache macros
+ (this branch is used by jc/conflict-marker-size.)
+
+--------------------------------------------------
+[New Topics]
+
+* jc/conflict-marker-size (2010-01-16) 8 commits
+  (merged to 'next' on 2010-01-18 at f1f6023)
+ + rerere: honor conflict-marker-size attribute
+ + rerere: prepare for customizable conflict marker length
+ + conflict-marker-size: new attribute
+ + rerere: use ll_merge() instead of using xdl_merge()
+ + merge-tree: use ll_merge() not xdl_merge()
+ + xdl_merge(): allow passing down marker_size in xmparam_t
+ + xdl_merge(): introduce xmparam_t for merge specific parameters
+ + git_attr(): fix function signature
+
+* ag/maint-apply-too-large-p (2010-01-17) 1 commit
+  (merged to 'next' on 2010-01-18 at 8bd106a)
+ + builtin-apply.c: Skip filenames without enough components
+
+* jc/grep-author-all-match-implicit (2010-01-17) 1 commit
+ - "log --author=me --grep=it" should find intersection, not union
+
+* ag/patch-header-verify (2010-01-18) 1 commit
+  (merged to 'next' on 2010-01-18 at 2cd0ddc)
+ + builtin-apply.c: fix the --- and +++ header filename consistency check
+
+* il/branch-set-upstream (2010-01-18) 2 commits
+  (merged to 'next' on 2010-01-18 at b9b0993)
+ + branch: warn and refuse to set a branch as a tracking branch of itself.
+ + Add branch --set-upstream
+
+* il/remote-updates (2010-01-18) 1 commit
+  (merged to 'next' on 2010-01-18 at 5c3e805)
+ + Add git remote set-url
+
+* bw/cvsimport (2010-01-19) 3 commits
+  (merged to 'next' on 2010-01-19 at 63f4c8d)
+ + cvsimport: standarize system() calls to external git tools
+ + cvsimport: standarize open() calls to external git tools
+ + cvsimport: modernize callouts to git subcommands
+
+* jc/checkout-merge-base (2010-01-19) 1 commit
+  (merged to 'next' on 2010-01-19 at 3665110)
+ + Fix "checkout A..." synonym for "checkout A...HEAD" on Windows
+
+* jc/maint-refresh-index-is-optional-for-status (2010-01-19) 1 commit
+ - status: don't require the repository to be writable
+
+* il/rev-glob (2010-01-20) 2 commits
+ - rev-parse --branches/--tags/--remotes=pattern
+ - rev-parse --glob
+
+This is a re-rolled "--namespace=" one.
+
+--------------------------------------------------
+[Will merge to 'master' after a bit more cooking in 'next']
+
+* nd/status-partial-refresh (2010-01-17) 2 commits
+  (merged to 'next' on 2010-01-19 at 64f0c0b)
+ + rm: only refresh entries that we may touch
+  (merged to 'next' on 2010-01-16 at f77bc8f)
+ + status: only touch path we may need to check
+
+* jl/submodule-diff (2010-01-18) 4 commits
+  (merged to 'next' on 2010-01-20 at 95cb513)
+ + Performance optimization for detection of modified submodules
+  (merged to 'next' on 2010-01-17 at 525075b)
+ + git status: Show uncommitted submodule changes too when enabled
+  (merged to 'next' on 2010-01-16 at 0a99e3c)
+ + Teach diff that modified submodule directory is dirty
+ + Show submodules as modified when they contain a dirty work tree
+
 * jc/fix-tree-walk (2009-09-14) 7 commits
   (merged to 'next' on 2010-01-13 at 1c01b87)
  + read-tree --debug-unpack
@@ -317,48 +349,56 @@ Resurrected from "Ejected" category.  This is fix for a tricky codepath
 and testing and improving before it hits 'master' is greatly appreciated.
 (I have been using this in my private build for some time).
 
-* jc/cache-unmerge (2009-12-25) 9 commits
-  (merged to 'next' on 2010-01-13 at 2290c44)
- + rerere forget path: forget recorded resolution
- + rerere: refactor rerere logic to make it independent from I/O
- + rerere: remove silly 1024-byte line limit
- + resolve-undo: teach "update-index --unresolve" to use resolve-undo info
- + resolve-undo: "checkout -m path" uses resolve-undo information
- + resolve-undo: allow plumbing to clear the information
- + resolve-undo: basic tests
- + resolve-undo: record resolved conflicts in a new index extension section
- + builtin-merge.c: use standard active_cache macros
- (this branch is used by jc/conflict-mark-len-attr.)
-
-* jc/rerere (2009-12-04) 1 commit
-  (merged to 'next' on 2010-01-10 at e295b7f)
- + Teach --[no-]rerere-autoupdate option to merge, revert and friends
+* ap/merge-backend-opts (2008-07-18) 7 commits
+  (merged to 'next' on 2010-01-18 at cb1f6b7)
+ + Document that merge strategies can now take their own options
+ + Extend merge-subtree tests to test -Xsubtree=dir.
+ + Make "subtree" part more orthogonal to the rest of merge-recursive.
+ + pull: Fix parsing of -X<option>
+ + Teach git-pull to pass -X<option> to git-merge
+ + git merge -X<option>
+ + git-merge-file --ours, --theirs
 
 --------------------------------------------------
 [Cooking]
 
-* jc/symbol-static (2010-01-11) 17 commits
- - symlinks.c: remove unused functions
- - object.c: remove unused functions
- - blob.c: remove unused function
- - strbuf.c: remove unused function
- - sha1_file.c: remove unused function
- - mailmap.c: remove unused function
- - utf8.c: mark file-local function static
- - submodule.c: mark file-local function static
- - quote.c: mark file-local function static
- - remote-curl.c: mark file-local function static
- - read-cache.c: mark file-local functions static
- - parse-options.c: mark file-local function static
- - entry.c: mark file-local function static
- - http.c: mark file-local functions static
- - pretty.c: mark file-local function static
- - builtin-rev-list.c: mark file-local function static
- - bisect.c: mark file-local function static
+* js/refer-upstream (2010-01-19) 3 commits
+  (merged to 'next' on 2010-01-20 at 5a5547a)
+ + Teach @{upstream} syntax to strbuf_branchanme()
+ + t1506: more test for @{upstream} syntax
+ + Introduce <branch>@{upstream} notation
 
-Mark file-local symbols "static", and remove unused functions.  Daniel
-suggests to leave some comment for blob.c and I agree in principle, but
-I don't think of a good description myself.
+Updated to teach the new syntax to commands like "checkout" and "merge"
+that want to behave better when they know what were given was a branch
+name, not a random SHA-1.
+
+* jh/notes (2010-01-17) 23 commits
+ - builtin-gc: Teach the new --notes option to garbage-collect notes
+ - Notes API: gc_notes(): Prune notes that belong to non-existing objects
+ - t3305: Verify that removing notes triggers automatic fanout consolidation
+ - builtin-notes: Teach -d option for deleting existing notes
+ - Teach builtin-notes to remove empty notes
+ - Teach notes code to properly preserve non-notes in the notes tree
+ - t3305: Verify that adding many notes with git-notes triggers increased fanout
+ - t3301: Verify successful annotation of non-commits
+ - Builtin-ify git-notes
+ - Refactor notes concatenation into a flexible interface for combining notes
+ - Notes API: Allow multiple concurrent notes trees with new struct notes_tree
+ - Notes API: write_notes_tree(): Store the notes tree in the database
+ - Notes API: for_each_note(): Traverse the entire notes tree with a callback
+ - Notes API: get_note(): Return the note annotating the given object
+ - Notes API: remove_note(): Remove note objects from the notes tree structure
+ - Notes API: add_note(): Add note objects to the internal notes tree structure
+ - Notes API: init_notes(): Initialize the notes tree from the given notes ref
+ - Add tests for checking correct handling of $GIT_NOTES_REF and core.notesRef
+ - Notes API: get_commit_notes() -> format_note() + remove the commit restriction
+ - Minor non-functional fixes to notes.c
+  (merged to 'next' on 2010-01-02 at ae42130)
+ + Add more testcases to test fast-import of notes
+ + Rename t9301 to t9350, to make room for more fast-import tests
+ + fast-import: Proper notes tree manipulation
+
+Updated with a re-roll.
 
 * jh/gitweb-cached (2010-01-13) 9 commits
  - gitweb: File based caching layer (from git.kernel.org)
@@ -373,15 +413,6 @@ I don't think of a good description myself.
 
 Replaced with a re-roll.  Update to t9500 is probably needed.
 
-* jc/ident (2010-01-08) 3 commits
- - ident.c: treat $EMAIL as giving user.email identity explicitly
-  (merged to 'next' on 2010-01-10 at f1f9ded)
- + ident.c: check explicit identity for name and email separately
- + ident.c: remove unused variables
-
-Opinions on the topmost one?
-
 * jc/branch-d (2009-12-29) 1 commit
   (merged to 'next' on 2010-01-10 at 61a14b7)
  + branch -d: base the "already-merged" safety on the branch it merges with
-
