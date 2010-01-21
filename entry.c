@@ -179,7 +179,7 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
  * This is like 'lstat()', except it refuses to follow symlinks
  * in the path, after skipping "skiplen".
  */
-int check_path(const char *path, int len, struct stat *st, int skiplen)
+static int check_path(const char *path, int len, struct stat *st, int skiplen)
 {
 	const char *slash = path + len;
 

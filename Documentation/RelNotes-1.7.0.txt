@@ -50,7 +50,13 @@ Updates since v1.6.6
 
 (portability)
 
+ * Some more MSVC portability patches for msysgit port.
+
+ * Minimum Pthreads emulation for msysgit port.
+
 (performance)
+
+ * More performance improvement patches for msysgit port.
 
 (usability, bells and whistles)
 
@@ -65,6 +71,11 @@ Updates since v1.6.6
 
  * HTTP transfer can use authentication scheme other than basic
    (i.e./e.g. digest).
+
+ * Switching from a version of superproject that used to have a submodule
+   to another version of superproject that no longer has it did not remove
+   the submodule directory when it should (namely, when you are not
+   interested in the submodule at all and didn't clone/checkout).
 
  * "git checkout A...B" is a way to detach HEAD at the merge base between
    A and B.
@@ -87,6 +98,10 @@ Updates since v1.6.6
  * Use of "git reset --merge" has become easier when resetting away a
    conflicted mess left in the work tree.
 
+ * "git rerere" had rerere.autoupdate configuration but there was no way
+   to countermand it from the command line; --no-rerere-autoupdate option
+   given to "merge", "revert", etc. fixes this.
+
  * "git status" learned "-s(hort)" output format.
 
 (developers)
@@ -102,6 +117,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.6-242-gf287c65
+O=v1.6.6-263-ge33fd3c
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

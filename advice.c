@@ -3,6 +3,8 @@
 int advice_push_nonfastforward = 1;
 int advice_status_hints = 1;
 int advice_commit_before_merge = 1;
+int advice_resolve_conflict = 1;
+int advice_implicit_identity = 1;
 
 static struct {
 	const char *name;
@@ -11,6 +13,8 @@ static struct {
 	{ "pushnonfastforward", &advice_push_nonfastforward },
 	{ "statushints", &advice_status_hints },
 	{ "commitbeforemerge", &advice_commit_before_merge },
+	{ "resolveconflict", &advice_resolve_conflict },
+	{ "implicitidentity", &advice_implicit_identity },
 };
 
 int git_default_advice_config(const char *var, const char *value)
@@ -26,4 +30,18 @@ int git_default_advice_config(const char *var, const char *value)
 	}
 
 	return 0;
+}
+
+void NORETURN die_resolve_conflict(const char *me)
+{
+	if (advice_resolve_conflict)
+		/*
+		 * Message used both when 'git commit' fails and when
+		 * other commands doing a merge do.
+		 */
+		die("'%s' is not possible because you have unmerged files.\n"
+		    "Please, fix them up in the work tree, and then use 'git add/rm <file>' as\n"
+		    "appropriate to mark resolution and make a commit, or use 'git commit -a'.", me);
+	else
+		die("'%s' is not possible because you have unmerged files.", me);
 }

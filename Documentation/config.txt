@@ -130,6 +130,14 @@ advice.*::
 		Advice shown when linkgit:git-merge[1] refuses to
 		merge to avoid overwritting local changes.
 		Default: true.
+	resolveConflict::
+		Advices shown by various commands when conflicts
+		prevent the operation from being performed.
+		Default: true.
+	implicitIdentity::
+		Advice on how to set your identity configuration when
+		your information is guessed from the system username and
+		domain name. Default: true.
 --
 
 core.fileMode::
@@ -655,14 +663,6 @@ color.grep::
 	When set to `always`, always highlight matches.  When `false` (or
 	`never`), never.  When set to `true` or `auto`, use color only
 	when the output is written to the terminal.  Defaults to `false`.
-
-color.grep.external::
-	The string value of this variable is passed to an external 'grep'
-	command as a command line option if match highlighting is turned
-	on.  If set to an empty string, no option is passed at all,
-	turning off coloring for external 'grep' calls; this is the default.
-	For GNU grep, set it to `--color=always` to highlight matches even
-	when a pager is used.
 
 color.grep.match::
 	Use customized color for matches.  The value of this variable

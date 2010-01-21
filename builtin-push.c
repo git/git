@@ -218,6 +218,8 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN( 0 , "thin", &thin, "use thin pack"),
 		OPT_STRING( 0 , "receive-pack", &receivepack, "receive-pack", "receive pack program"),
 		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", "receive pack program"),
+		OPT_BIT('u', "set-upstream", &flags, "set upstream for git pull/status",
+			TRANSPORT_PUSH_SET_UPSTREAM),
 		OPT_END()
 	};
 

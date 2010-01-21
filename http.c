@@ -651,7 +651,7 @@ static void closedown_active_slot(struct active_request_slot *slot)
 	slot->in_use = 0;
 }
 
-void release_active_slot(struct active_request_slot *slot)
+static void release_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
 	if (slot->curl && curl_session_count > min_curl_sessions) {
@@ -834,7 +834,13 @@ int http_get_strbuf(const char *url, struct strbuf *result, int options)
 	return http_request(url, result, HTTP_REQUEST_STRBUF, options);
 }
 
-int http_get_file(const char *url, const char *filename, int options)
+/*
+ * Downloads an url and stores the result in the given file.
+ *
+ * If a previous interrupted download is detected (i.e. a previous temporary
+ * file is still around) the download is resumed.
+ */
+static int http_get_file(const char *url, const char *filename, int options)
 {
 	int ret;
 	struct strbuf tmpfile = STRBUF_INIT;

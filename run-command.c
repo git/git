@@ -8,12 +8,14 @@ static inline void close_pair(int fd[2])
 	close(fd[1]);
 }
 
+#ifndef WIN32
 static inline void dup_devnull(int to)
 {
 	int fd = open("/dev/null", O_RDWR);
 	dup2(fd, to);
 	close(fd);
 }
+#endif
 
 static const char **prepare_shell_cmd(const char **argv)
 {
@@ -58,6 +60,78 @@ static int execv_shell_cmd(const char **argv)
 	return -1;
 }
 #endif
+
+#ifndef WIN32
+static int child_err = 2;
+static int child_notifier = -1;
+
+static void notify_parent(void)
+{
+	write(child_notifier, "", 1);
+}
+
+static NORETURN void die_child(const char *err, va_list params)
+{
+	char msg[4096];
+	int len = vsnprintf(msg, sizeof(msg), err, params);
+	if (len > sizeof(msg))
+		len = sizeof(msg);
+
+	write(child_err, "fatal: ", 7);
+	write(child_err, msg, len);
+	write(child_err, "\n", 1);
+	exit(128);
+}
+
+static inline void set_cloexec(int fd)
+{
+	int flags = fcntl(fd, F_GETFD);
+	if (flags >= 0)
+		fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+}
+#endif
+
+static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
+{
+	int status, code = -1;
+	pid_t waiting;
+	int failed_errno = 0;
+
+	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
+		;	/* nothing */
+
+	if (waiting < 0) {
+		failed_errno = errno;
+		error("waitpid for %s failed: %s", argv0, strerror(errno));
+	} else if (waiting != pid) {
+		error("waitpid is confused (%s)", argv0);
+	} else if (WIFSIGNALED(status)) {
+		code = WTERMSIG(status);
+		error("%s died of signal %d", argv0, code);
+		/*
+		 * This return value is chosen so that code & 0xff
+		 * mimics the exit code that a POSIX shell would report for
+		 * a program that died from this signal.
+		 */
+		code -= 128;
+	} else if (WIFEXITED(status)) {
+		code = WEXITSTATUS(status);
+		/*
+		 * Convert special exit code when execvp failed.
+		 */
+		if (code == 127) {
+			code = -1;
+			failed_errno = ENOENT;
+			if (!silent_exec_failure)
+				error("cannot run %s: %s", argv0,
+					strerror(ENOENT));
+		}
+	} else {
+		error("waitpid is confused (%s)", argv0);
+	}
+	errno = failed_errno;
+	return code;
+}
 
 int start_command(struct child_process *cmd)
 {
@@ -120,9 +194,30 @@ fail_pipe:
 	trace_argv_printf(cmd->argv, "trace: run_command:");
 
 #ifndef WIN32
+{
+	int notify_pipe[2];
+	if (pipe(notify_pipe))
+		notify_pipe[0] = notify_pipe[1] = -1;
+
 	fflush(NULL);
 	cmd->pid = fork();
 	if (!cmd->pid) {
+		/*
+		 * Redirect the channel to write syscall error messages to
+		 * before redirecting the process's stderr so that all die()
+		 * in subsequent call paths use the parent's stderr.
+		 */
+		if (cmd->no_stderr || need_err) {
+			child_err = dup(2);
+			set_cloexec(child_err);
+		}
+		set_die_routine(die_child);
+
+		close(notify_pipe[0]);
+		set_cloexec(notify_pipe[1]);
+		child_notifier = notify_pipe[1];
+		atexit(notify_parent);
+
 		if (cmd->no_stdin)
 			dup_devnull(0);
 		else if (need_in) {
@@ -163,8 +258,16 @@ fail_pipe:
 					unsetenv(*cmd->env);
 			}
 		}
-		if (cmd->preexec_cb)
+		if (cmd->preexec_cb) {
+			/*
+			 * We cannot predict what the pre-exec callback does.
+			 * Forgo parent notification.
+			 */
+			close(child_notifier);
+			child_notifier = -1;
+
 			cmd->preexec_cb();
+		}
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
 		} else if (cmd->use_shell) {
@@ -172,51 +275,65 @@ fail_pipe:
 		} else {
 			execvp(cmd->argv[0], (char *const*) cmd->argv);
 		}
-		trace_printf("trace: exec '%s' failed: %s\n", cmd->argv[0],
-				strerror(errno));
-		exit(127);
+		/*
+		 * Do not check for cmd->silent_exec_failure; the parent
+		 * process will check it when it sees this exit code.
+		 */
+		if (errno == ENOENT)
+			exit(127);
+		else
+			die_errno("cannot exec '%s'", cmd->argv[0]);
 	}
 	if (cmd->pid < 0)
 		error("cannot fork() for %s: %s", cmd->argv[0],
 			strerror(failed_errno = errno));
+
+	/*
+	 * Wait for child's execvp. If the execvp succeeds (or if fork()
+	 * failed), EOF is seen immediately by the parent. Otherwise, the
+	 * child process sends a single byte.
+	 * Note that use of this infrastructure is completely advisory,
+	 * therefore, we keep error checks minimal.
+	 */
+	close(notify_pipe[1]);
+	if (read(notify_pipe[0], &notify_pipe[1], 1) == 1) {
+		/*
+		 * At this point we know that fork() succeeded, but execvp()
+		 * failed. Errors have been reported to our stderr.
+		 */
+		wait_or_whine(cmd->pid, cmd->argv[0],
+			      cmd->silent_exec_failure);
+		failed_errno = errno;
+		cmd->pid = -1;
+	}
+	close(notify_pipe[0]);
+}
 #else
 {
-	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
+	int fhin = 0, fhout = 1, fherr = 2;
 	const char **sargv = cmd->argv;
 	char **env = environ;
 
-	if (cmd->no_stdin) {
-		s0 = dup(0);
-		dup_devnull(0);
-	} else if (need_in) {
-		s0 = dup(0);
-		dup2(fdin[0], 0);
-	} else if (cmd->in) {
-		s0 = dup(0);
-		dup2(cmd->in, 0);
-	}
+	if (cmd->no_stdin)
+		fhin = open("/dev/null", O_RDWR);
+	else if (need_in)
+		fhin = dup(fdin[0]);
+	else if (cmd->in)
+		fhin = dup(cmd->in);
 
-	if (cmd->no_stderr) {
-		s2 = dup(2);
-		dup_devnull(2);
-	} else if (need_err) {
-		s2 = dup(2);
-		dup2(fderr[1], 2);
-	}
+	if (cmd->no_stderr)
+		fherr = open("/dev/null", O_RDWR);
+	else if (need_err)
+		fherr = dup(fderr[1]);
 
-	if (cmd->no_stdout) {
-		s1 = dup(1);
-		dup_devnull(1);
-	} else if (cmd->stdout_to_stderr) {
-		s1 = dup(1);
-		dup2(2, 1);
-	} else if (need_out) {
-		s1 = dup(1);
-		dup2(fdout[1], 1);
-	} else if (cmd->out > 1) {
-		s1 = dup(1);
-		dup2(cmd->out, 1);
-	}
+	if (cmd->no_stdout)
+		fhout = open("/dev/null", O_RDWR);
+	else if (cmd->stdout_to_stderr)
+		fhout = dup(fherr);
+	else if (need_out)
+		fhout = dup(fdout[1]);
+	else if (cmd->out > 1)
+		fhout = dup(cmd->out);
 
 	if (cmd->dir)
 		die("chdir in start_command() not implemented");
@@ -229,7 +346,8 @@ fail_pipe:
 		cmd->argv = prepare_shell_cmd(cmd->argv);
 	}
 
-	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
+	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env,
+				  fhin, fhout, fherr);
 	failed_errno = errno;
 	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
 		error("cannot spawn %s: %s", cmd->argv[0], strerror(errno));
@@ -240,12 +358,12 @@ fail_pipe:
 		free(cmd->argv);
 
 	cmd->argv = sargv;
-	if (s0 >= 0)
-		dup2(s0, 0), close(s0);
-	if (s1 >= 0)
-		dup2(s1, 1), close(s1);
-	if (s2 >= 0)
-		dup2(s2, 2), close(s2);
+	if (fhin != 0)
+		close(fhin);
+	if (fhout != 1)
+		close(fhout);
+	if (fherr != 2)
+		close(fherr);
 }
 #endif
 
@@ -278,48 +396,6 @@ fail_pipe:
 		close(fderr[1]);
 
 	return 0;
-}
-
-static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
-{
-	int status, code = -1;
-	pid_t waiting;
-	int failed_errno = 0;
-
-	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
-		;	/* nothing */
-
-	if (waiting < 0) {
-		failed_errno = errno;
-		error("waitpid for %s failed: %s", argv0, strerror(errno));
-	} else if (waiting != pid) {
-		error("waitpid is confused (%s)", argv0);
-	} else if (WIFSIGNALED(status)) {
-		code = WTERMSIG(status);
-		error("%s died of signal %d", argv0, code);
-		/*
-		 * This return value is chosen so that code & 0xff
-		 * mimics the exit code that a POSIX shell would report for
-		 * a program that died from this signal.
-		 */
-		code -= 128;
-	} else if (WIFEXITED(status)) {
-		code = WEXITSTATUS(status);
-		/*
-		 * Convert special exit code when execvp failed.
-		 */
-		if (code == 127) {
-			code = -1;
-			failed_errno = ENOENT;
-			if (!silent_exec_failure)
-				error("cannot run %s: %s", argv0,
-					strerror(ENOENT));
-		}
-	} else {
-		error("waitpid is confused (%s)", argv0);
-	}
-	errno = failed_errno;
-	return code;
 }
 
 int finish_command(struct child_process *cmd)

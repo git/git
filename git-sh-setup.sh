@@ -120,20 +120,11 @@ is_bare_repository () {
 }
 
 cd_to_toplevel () {
-	cdup=$(git rev-parse --show-cdup)
-	if test ! -z "$cdup"
-	then
-		# The "-P" option says to follow "physical" directory
-		# structure instead of following symbolic links.  When cdup is
-		# "../", this means following the ".." entry in the current
-		# directory instead textually removing a symlink path element
-		# from the PWD shell variable.  The "-P" behavior is more
-		# consistent with the C-style chdir used by most of Git.
-		cd -P "$cdup" || {
-			echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
-			exit 1
-		}
-	fi
+	cdup=$(git rev-parse --show-toplevel) &&
+	cd "$cdup" || {
+		echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
+		exit 1
+	}
 }
 
 require_work_tree () {

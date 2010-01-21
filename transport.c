@@ -8,6 +8,7 @@
 #include "bundle.h"
 #include "dir.h"
 #include "refs.h"
+#include "branch.h"
 
 /* rsync support */
 
@@ -132,6 +133,53 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 			(*list)->next = next;
 			list = &(*list)->next;
 		}
+	}
+}
+
+static void set_upstreams(struct transport *transport, struct ref *refs,
+	int pretend)
+{
+	struct ref *ref;
+	for (ref = refs; ref; ref = ref->next) {
+		const char *localname;
+		const char *tmp;
+		const char *remotename;
+		unsigned char sha[20];
+		int flag = 0;
+		/*
+		 * Check suitability for tracking. Must be successful /
+		 * already up-to-date ref create/modify (not delete).
+		 */
+		if (ref->status != REF_STATUS_OK &&
+			ref->status != REF_STATUS_UPTODATE)
+			continue;
+		if (!ref->peer_ref)
+			continue;
+		if (!ref->new_sha1 || is_null_sha1(ref->new_sha1))
+			continue;
+
+		/* Follow symbolic refs (mainly for HEAD). */
+		localname = ref->peer_ref->name;
+		remotename = ref->name;
+		tmp = resolve_ref(localname, sha, 1, &flag);
+		if (tmp && flag & REF_ISSYMREF &&
+			!prefixcmp(tmp, "refs/heads/"))
+			localname = tmp;
+
+		/* Both source and destination must be local branches. */
+		if (!localname || prefixcmp(localname, "refs/heads/"))
+			continue;
+		if (!remotename || prefixcmp(remotename, "refs/heads/"))
+			continue;
+
+		if (!pretend)
+			install_branch_config(BRANCH_CONFIG_VERBOSE,
+				localname + 11, transport->remote->name,
+				remotename);
+		else
+			printf("Would set upstream of '%s' to '%s' of '%s'\n",
+				localname + 11, remotename + 11,
+				transport->remote->name);
 	}
 }
 
@@ -974,6 +1022,10 @@ int transport_push(struct transport *transport,
 	verify_remote_names(refspec_nr, refspec);
 
 	if (transport->push) {
+		/* Maybe FIXME. But no important transport uses this case. */
+		if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
+			die("This transport does not support using --set-upstream");
+
 		return transport->push(transport, refspec_nr, refspec, flags);
 	} else if (transport->push_refs) {
 		struct ref *remote_refs =
@@ -983,7 +1035,8 @@ int transport_push(struct transport *transport,
 		int verbose = flags & TRANSPORT_PUSH_VERBOSE;
 		int quiet = flags & TRANSPORT_PUSH_QUIET;
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
-		int ret;
+		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
+		int ret, err;
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;
@@ -995,12 +1048,22 @@ int transport_push(struct transport *transport,
 			return -1;
 		}
 
-		ret = transport->push_refs(transport, remote_refs, flags);
+		set_ref_status_for_push(remote_refs,
+			flags & TRANSPORT_PUSH_MIRROR,
+			flags & TRANSPORT_PUSH_FORCE);
 
-		if (!quiet || push_had_errors(remote_refs))
+		ret = transport->push_refs(transport, remote_refs, flags);
+		err = push_had_errors(remote_refs);
+
+		ret |= err;
+
+		if (!quiet || err)
 			print_push_status(transport->url, remote_refs,
 					verbose | porcelain, porcelain,
 					nonfastforward);
+
+		if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
+			set_upstreams(transport, remote_refs, pretend);
 
 		if (!(flags & TRANSPORT_PUSH_DRY_RUN)) {
 			struct ref *ref;

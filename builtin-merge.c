@@ -24,6 +24,7 @@
 #include "rerere.h"
 #include "help.h"
 #include "merge-recursive.h"
+#include "resolve-undo.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -52,6 +53,7 @@ static struct strategy **use_strategies;
 static size_t use_strategies_nr, use_strategies_alloc;
 static const char *branch;
 static int verbosity;
+static int allow_rerere_auto;
 
 static struct strategy all_strategy[] = {
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
@@ -170,6 +172,7 @@ static struct option builtin_merge_options[] = {
 		"allow fast-forward (default)"),
 	OPT_BOOLEAN(0, "ff-only", &fast_forward_only,
 		"abort if fast-forward is not possible"),
+	OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 	OPT_CALLBACK('s', "strategy", &use_strategies, "strategy",
 		"merge strategy to use", option_parse_strategy),
 	OPT_CALLBACK('m', "message", &merge_msg, "message",
@@ -604,6 +607,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		discard_cache();
 		if (read_cache() < 0)
 			die("failed to read the cache");
+		resolve_undo_clear();
 		return ret;
 	}
 }
@@ -618,11 +622,10 @@ static void count_diff_files(struct diff_queue_struct *q,
 
 static int count_unmerged_entries(void)
 {
-	const struct index_state *state = &the_index;
 	int i, ret = 0;
 
-	for (i = 0; i < state->cache_nr; i++)
-		if (ce_stage(state->cache[i]))
+	for (i = 0; i < active_nr; i++)
+		if (ce_stage(active_cache[i]))
 			ret++;
 
 	return ret;
@@ -790,7 +793,7 @@ static int suggest_conflicts(void)
 		}
 	}
 	fclose(fp);
-	rerere();
+	rerere(allow_rerere_auto);
 	printf("Automatic merge failed; "
 			"fix conflicts and then commit the result.\n");
 	return 1;
@@ -847,12 +850,22 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	const char *best_strategy = NULL, *wt_strategy = NULL;
 	struct commit_list **remotes = &remoteheads;
 
-	if (file_exists(git_path("MERGE_HEAD")))
-		die("You have not concluded your merge. (MERGE_HEAD exists)");
-	if (read_cache_unmerged())
-		die("You are in the middle of a conflicted merge."
-				" (index unmerged)");
+	if (read_cache_unmerged()) {
+		die_resolve_conflict("merge");
+	}
+	if (file_exists(git_path("MERGE_HEAD"))) {
+		/*
+		 * There is no unmerged entry, don't advise 'git
+		 * add/rm <file>', just 'git commit'.
+		 */
+		if (advice_resolve_conflict)
+			die("You have not concluded your merge (MERGE_HEAD exists).\n"
+			    "Please, commit your changes before you can merge.");
+		else
+			die("You have not concluded your merge (MERGE_HEAD exists).");
+	}
 
+	resolve_undo_clear();
 	/*
 	 * Check if we are _not_ on a detached HEAD, i.e. if there is a
 	 * current branch.

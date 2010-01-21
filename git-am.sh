@@ -30,6 +30,7 @@ skip            skip the current patch
 abort           restore the original branch and abort the patching operation.
 committer-date-is-author-date    lie about committer date
 ignore-date     use current timestamp for author date
+rerere-autoupdate update the index with reused conflict resolution if possible
 rebasing*       (internal use for git-rebase)"
 
 . git-sh-setup
@@ -135,7 +136,7 @@ It does not apply to blobs recorded in its index."
 	    export GIT_MERGE_VERBOSITY=0
     fi
     git-merge-recursive $orig_tree -- HEAD $his_tree || {
-	    git rerere
+	    git rerere $allow_rerere_autoupdate
 	    echo Failed to merge in the changes.
 	    exit 1
     }
@@ -293,6 +294,7 @@ resolvemsg= resume= scissors= no_inbody_headers=
 git_apply_opt=
 committer_date_is_author_date=
 ignore_date=
+allow_rerere_autoupdate=
 
 while test $# != 0
 do
@@ -340,6 +342,8 @@ do
 		committer_date_is_author_date=t ;;
 	--ignore-date)
 		ignore_date=t ;;
+	--rerere-autoupdate|--no-rerere-autoupdate)
+		allow_rerere_autoupdate="$1" ;;
 	-q|--quiet)
 		GIT_QUIET=t ;;
 	--)

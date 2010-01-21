@@ -163,7 +163,7 @@ static int git_wcwidth(ucs_char_t ch)
  * If the string was not a valid UTF-8, *start pointer is set to NULL
  * and the return value is undefined.
  */
-ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
+static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
 {
 	unsigned char *s = (unsigned char *)*start;
 	ucs_char_t ch;

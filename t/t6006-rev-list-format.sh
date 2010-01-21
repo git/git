@@ -19,6 +19,13 @@ test_cmp expect.$1 output.$1
 "
 }
 
+test_format percent %%h <<'EOF'
+commit 131a310eb913d107dd3c09a65d1651175898735d
+%h
+commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
+%h
+EOF
+
 test_format hash %H%n%h <<'EOF'
 commit 131a310eb913d107dd3c09a65d1651175898735d
 131a310eb913d107dd3c09a65d1651175898735d

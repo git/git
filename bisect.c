@@ -593,7 +593,7 @@ struct commit_list *filter_skipped(struct commit_list *list,
  * is increased by one between each call, but that should not matter
  * for this application.
  */
-int get_prn(int count) {
+static int get_prn(int count) {
 	count = count * 1103515245 + 12345;
 	return ((unsigned)(count/65536) % PRN_MODULO);
 }
@@ -956,7 +956,7 @@ int bisect_next_all(const char *prefix)
 {
 	struct rev_info revs;
 	struct commit_list *tried;
-	int reaches = 0, all = 0, nr;
+	int reaches = 0, all = 0, nr, steps;
 	const unsigned char *bisect_rev;
 	char bisect_rev_hex[41];
 
@@ -998,8 +998,10 @@ int bisect_next_all(const char *prefix)
 	}
 
 	nr = all - reaches - 1;
-	printf("Bisecting: %d revisions left to test after this "
-	       "(roughly %d steps)\n", nr, estimate_bisect_steps(all));
+	steps = estimate_bisect_steps(all);
+	printf("Bisecting: %d revision%s left to test after this "
+	       "(roughly %d step%s)\n", nr, (nr == 1 ? "" : "s"),
+	       steps, (steps == 1 ? "" : "s"));
 
 	return bisect_checkout(bisect_rev_hex);
 }

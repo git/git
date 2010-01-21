@@ -8,18 +8,6 @@ test_description='git grep various.
 
 . ./test-lib.sh
 
-test_expect_success 'Check for external grep support' '
-	case "$(git grep -h 2>&1|grep ext-grep)" in
-	*"(default)"*)
-		test_set_prereq EXTGREP
-		true;;
-	*"(ignored by this build)"*)
-		true;;
-	*)
-		false;;
-	esac
-'
-
 cat >hello.c <<EOF
 #include <stdio.h>
 int main(int argc, const char **argv)
@@ -314,8 +302,8 @@ test_expect_success 'grep -C1, hunk mark between files' '
 	test_cmp expected actual
 '
 
-test_expect_success 'grep -C1 --no-ext-grep, hunk mark between files' '
-	git grep -C1 --no-ext-grep "^[yz]" >actual &&
+test_expect_success 'grep -C1 hunk mark between files' '
+	git grep -C1 "^[yz]" >actual &&
 	test_cmp expected actual
 '
 
@@ -371,7 +359,7 @@ test_expect_success 'log grep (6)' '
 test_expect_success 'grep with CE_VALID file' '
 	git update-index --assume-unchanged t/t &&
 	rm t/t &&
-	test "$(git grep --no-ext-grep test)" = "t/t:test" &&
+	test "$(git grep test)" = "t/t:test" &&
 	git update-index --no-assume-unchanged t/t &&
 	git checkout t/t
 '
@@ -438,16 +426,56 @@ test_expect_success 'grep -Fi' '
 	test_cmp expected actual
 '
 
-test_expect_success EXTGREP 'external grep is called' '
-	GIT_TRACE=2 git grep foo >/dev/null 2>actual &&
-	grep "trace: grep:.*foo" actual >/dev/null
+test_expect_success 'outside of git repository' '
+	rm -fr non &&
+	mkdir -p non/git/sub &&
+	echo hello >non/git/file1 &&
+	echo world >non/git/sub/file2 &&
+	echo ".*o*" >non/git/.gitignore &&
+	{
+		echo file1:hello &&
+		echo sub/file2:world
+	} >non/expect.full &&
+	echo file2:world >non/expect.sub
+	(
+		GIT_CEILING_DIRECTORIES="$(pwd)/non/git" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd non/git &&
+		test_must_fail git grep o &&
+		git grep --no-index o >../actual.full &&
+		test_cmp ../expect.full ../actual.full
+		cd sub &&
+		test_must_fail git grep o &&
+		git grep --no-index o >../../actual.sub &&
+		test_cmp ../../expect.sub ../../actual.sub
+	)
 '
 
-test_expect_success EXTGREP 'no external grep when skip-worktree entries exist' '
-	git update-index --skip-worktree file &&
-	GIT_TRACE=2 git grep foo >/dev/null 2>actual &&
-	! grep "trace: grep:" actual >/dev/null &&
-	git update-index --no-skip-worktree file
+test_expect_success 'inside git repository but with --no-index' '
+	rm -fr is &&
+	mkdir -p is/git/sub &&
+	echo hello >is/git/file1 &&
+	echo world >is/git/sub/file2 &&
+	echo ".*o*" >is/git/.gitignore &&
+	{
+		echo file1:hello &&
+		echo sub/file2:world
+	} >is/expect.full &&
+	: >is/expect.empty &&
+	echo file2:world >is/expect.sub
+	(
+		cd is/git &&
+		git init &&
+		test_must_fail git grep o >../actual.full &&
+		test_cmp ../expect.empty ../actual.full &&
+		git grep --no-index o >../actual.full &&
+		test_cmp ../expect.full ../actual.full &&
+		cd sub &&
+		test_must_fail git grep o >../../actual.sub &&
+		test_cmp ../../expect.empty ../../actual.sub &&
+		git grep --no-index o >../../actual.sub &&
+		test_cmp ../../expect.sub ../../actual.sub
+	)
 '
 
 test_done

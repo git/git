@@ -29,13 +29,6 @@ void append_grep_pattern(struct grep_opt *opt, const char *pat,
 	p->next = NULL;
 }
 
-static int is_fixed(const char *s)
-{
-	while (*s && !is_regex_special(*s))
-		s++;
-	return !*s;
-}
-
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
@@ -43,7 +36,7 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
 
-	if (opt->fixed || is_fixed(p->pattern))
+	if (opt->fixed)
 		p->fixed = 1;
 	if (opt->regflags & REG_ICASE)
 		p->fixed = 0;
@@ -615,6 +608,65 @@ static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
 	}
 }
 
+static int should_lookahead(struct grep_opt *opt)
+{
+	struct grep_pat *p;
+
+	if (opt->extended)
+		return 0; /* punt for too complex stuff */
+	if (opt->invert)
+		return 0;
+	for (p = opt->pattern_list; p; p = p->next) {
+		if (p->token != GREP_PATTERN)
+			return 0; /* punt for "header only" and stuff */
+	}
+	return 1;
+}
+
+static int look_ahead(struct grep_opt *opt,
+		      unsigned long *left_p,
+		      unsigned *lno_p,
+		      char **bol_p)
+{
+	unsigned lno = *lno_p;
+	char *bol = *bol_p;
+	struct grep_pat *p;
+	char *sp, *last_bol;
+	regoff_t earliest = -1;
+
+	for (p = opt->pattern_list; p; p = p->next) {
+		int hit;
+		regmatch_t m;
+
+		if (p->fixed)
+			hit = !fixmatch(p->pattern, bol, p->ignore_case, &m);
+		else
+			hit = !regexec(&p->regexp, bol, 1, &m, 0);
+		if (!hit || m.rm_so < 0 || m.rm_eo < 0)
+			continue;
+		if (earliest < 0 || m.rm_so < earliest)
+			earliest = m.rm_so;
+	}
+
+	if (earliest < 0) {
+		*bol_p = bol + *left_p;
+		*left_p = 0;
+		return 1;
+	}
+	for (sp = bol + earliest; bol < sp && sp[-1] != '\n'; sp--)
+		; /* find the beginning of the line */
+	last_bol = sp;
+
+	for (sp = bol; sp < last_bol; sp++) {
+		if (*sp == '\n')
+			lno++;
+	}
+	*left_p -= last_bol - bol;
+	*bol_p = last_bol;
+	*lno_p = lno;
+	return 0;
+}
+
 static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 char *buf, unsigned long size, int collect_hits)
 {
@@ -624,6 +676,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	unsigned last_hit = 0;
 	int binary_match_only = 0;
 	unsigned count = 0;
+	int try_lookahead = 0;
 	enum grep_context ctx = GREP_CONTEXT_HEAD;
 	xdemitconf_t xecfg;
 
@@ -652,11 +705,26 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			opt->priv = &xecfg;
 		}
 	}
+	try_lookahead = should_lookahead(opt);
 
 	while (left) {
 		char *eol, ch;
 		int hit;
 
+		/*
+		 * look_ahead() skips quicly to the line that possibly
+		 * has the next hit; don't call it if we need to do
+		 * something more than just skipping the current line
+		 * in response to an unmatch for the current line.  E.g.
+		 * inside a post-context window, we will show the current
+		 * line as a context around the previous hit when it
+		 * doesn't hit.
+		 */
+		if (try_lookahead
+		    && !(last_hit
+			 && lno <= last_hit + opt->post_context)
+		    && look_ahead(opt, &left, &lno, &bol))
+			break;
 		eol = end_of_line(bol, &left);
 		ch = *eol;
 		*eol = 0;

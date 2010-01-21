@@ -117,7 +117,11 @@ test_expect_success \
 test_expect_success \
 	"overriding author from command line" \
 	"echo 'gak' >file && \
-	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a"
+	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a >output 2>&1"
+
+test_expect_success \
+	"commit --author output mentions author" \
+	"grep Rubber.Duck output"
 
 test_expect_success PERL \
 	"interactive add" \

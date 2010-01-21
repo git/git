@@ -253,7 +253,7 @@ static void print_var_int(const char *var, int val)
 	printf("%s=%d\n", var, val);
 }
 
-int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
+static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 {
 	int cnt, flags = info->bisect_show_flags;
 	char hex[41] = "";

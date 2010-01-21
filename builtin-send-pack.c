@@ -406,50 +406,20 @@ int send_pack(struct send_pack_args *args,
 	 */
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
-
-		if (ref->peer_ref)
-			hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
-		else if (!args->send_mirror)
+		if (!ref->peer_ref && !args->send_mirror)
 			continue;
 
-		ref->deletion = is_null_sha1(ref->new_sha1);
+		/* Check for statuses set by set_ref_status_for_push() */
+		switch (ref->status) {
+		case REF_STATUS_REJECT_NONFASTFORWARD:
+		case REF_STATUS_UPTODATE:
+			continue;
+		default:
+			; /* do nothing */
+		}
+
 		if (ref->deletion && !allow_deleting_refs) {
 			ref->status = REF_STATUS_REJECT_NODELETE;
-			continue;
-		}
-		if (!ref->deletion &&
-		    !hashcmp(ref->old_sha1, ref->new_sha1)) {
-			ref->status = REF_STATUS_UPTODATE;
-			continue;
-		}
-
-		/* This part determines what can overwrite what.
-		 * The rules are:
-		 *
-		 * (0) you can always use --force or +A:B notation to
-		 *     selectively force individual ref pairs.
-		 *
-		 * (1) if the old thing does not exist, it is OK.
-		 *
-		 * (2) if you do not have the old thing, you are not allowed
-		 *     to overwrite it; you would not know what you are losing
-		 *     otherwise.
-		 *
-		 * (3) if both new and old are commit-ish, and new is a
-		 *     descendant of old, it is OK.
-		 *
-		 * (4) regardless of all of the above, removing :B is
-		 *     always allowed.
-		 */
-
-		ref->nonfastforward =
-		    !ref->deletion &&
-		    !is_null_sha1(ref->old_sha1) &&
-		    (!has_sha1_file(ref->old_sha1)
-		      || !ref_newer(ref->new_sha1, ref->old_sha1));
-
-		if (ref->nonfastforward && !ref->force && !args->force_update) {
-			ref->status = REF_STATUS_REJECT_NONFASTFORWARD;
 			continue;
 		}
 
@@ -672,6 +642,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	/* match them up */
 	if (match_refs(local_refs, &remote_refs, nr_refspecs, refspecs, flags))
 		return -1;
+
+	set_ref_status_for_push(remote_refs, args.send_mirror,
+		args.force_update);
 
 	ret = send_pack(&args, fd, conn, remote_refs, &extra_have);
 
