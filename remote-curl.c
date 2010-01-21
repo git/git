@@ -102,7 +102,7 @@ static struct discovery* discover_refs(const char *service)
 	struct strbuf buffer = STRBUF_INIT;
 	struct discovery *last = last_discovery;
 	char *refs_url;
-	int http_ret, is_http = 0;
+	int http_ret, is_http = 0, proto_git_candidate = 1;
 
 	if (last && !strcmp(service, last->service))
 		return last;
@@ -121,6 +121,19 @@ static struct discovery* discover_refs(const char *service)
 
 	init_walker();
 	http_ret = http_get_strbuf(refs_url, &buffer, HTTP_NO_CACHE);
+
+	/* try again with "plain" url (no ? or & appended) */
+	if (http_ret != HTTP_OK) {
+		free(refs_url);
+		strbuf_reset(&buffer);
+
+		proto_git_candidate = 0;
+		strbuf_addf(&buffer, "%s/info/refs", url);
+		refs_url = strbuf_detach(&buffer, NULL);
+
+		http_ret = http_get_strbuf(refs_url, &buffer, HTTP_NO_CACHE);
+	}
+
 	switch (http_ret) {
 	case HTTP_OK:
 		break;
@@ -137,7 +150,8 @@ static struct discovery* discover_refs(const char *service)
 	last->buf_alloc = strbuf_detach(&buffer, &last->len);
 	last->buf = last->buf_alloc;
 
-	if (is_http && 5 <= last->len && last->buf[4] == '#') {
+	if (is_http && proto_git_candidate
+		&& 5 <= last->len && last->buf[4] == '#') {
 		/* smart HTTP response; validate that the service
 		 * pkt-line matches our request.
 		 */
