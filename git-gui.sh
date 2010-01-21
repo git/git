@@ -1941,7 +1941,7 @@ proc do_gitk {revs} {
 		cd [file dirname [gitdir]]
 		set env(GIT_DIR) [file tail [gitdir]]
 
-		eval exec $cmd $revs &
+		eval exec $cmd $revs "--" "--" &
 
 		if {$old_GIT_DIR eq {}} {
 			unset env(GIT_DIR)
