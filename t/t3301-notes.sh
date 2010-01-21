@@ -192,11 +192,13 @@ test_expect_success 'git format-patch --show-notes does show notes' '
 	grep spam output
 '
 
-for pretty in "" raw short medium full fuller format:%s
+for pretty in \
+	"" --pretty --pretty=raw --pretty=short --pretty=medium \
+	--pretty=full --pretty=fuller --pretty=format:%s --oneline
 do
 	case "$pretty" in
 	"") p= not= negate="" ;;
-	?*) p="--pretty=$pretty" not=" not" negate="!" ;;
+	?*) p="$pretty" not=" not" negate="!" ;;
 	esac
 	test_expect_success "git show $pretty does$not show notes" '
 		git show $p >output &&
