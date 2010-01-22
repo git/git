@@ -104,25 +104,23 @@ OPTIONS
 	Show all refs found in `$GIT_DIR/refs`.
 
 --branches[=pattern]::
-	Show branch refs found in `$GIT_DIR/refs/heads`. If `pattern`
-	is given, only branches matching given shell glob are shown.
-	If pattern lacks '?', '*', or '[', '/*' at the end is impiled.
-
 --tags[=pattern]::
-	Show tag refs found in `$GIT_DIR/refs/tags`. If `pattern`
-	is given, only tags matching given shell glob are shown.
-	If pattern lacks '?', '*', or '[', '/*' at the end is impiled.
-
 --remotes[=pattern]::
-	Show tag refs found in `$GIT_DIR/refs/remotes`. If `pattern`
-	is given, only remote tracking branches matching given shell glob
-	are shown. If pattern lacks '?', '*', or '[', '/*' at the end is
-	impiled.
+	Show all branches, tags, or remote-tracking branches,
+	respectively (i.e., refs found in `$GIT_DIR/refs/heads`,
+	`$GIT_DIR/refs/tags`, or `$GIT_DIR/refs/remotes`,
+	respectively).
++
+If a `pattern` is given, only refs matching the given shell glob are
+shown.  If the pattern does not contain a globbing character (`?`,
+`\*`, or `[`), it is turned into a prefix match by appending `/\*`.
 
---glob=glob-pattern::
-	Show refs matching shell glob pattern `glob-pattern`. If pattern
-	specified lacks leading 'refs/', it is automatically prepended.
-	If pattern lacks '?', '*', or '[', '/*' at the end is impiled.
+--glob=pattern::
+	Show all refs matching the shell glob pattern `pattern`. If
+	the pattern does not start with `refs/`, this is automatically
+	prepended.  If the pattern does not contain a globbing
+	character (`?`, `\*`, or `[`), it is turned into a prefix
+	match by appending `/\*`.
 
 --show-prefix::
 	When the command is invoked from a subdirectory, show the
