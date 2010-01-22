@@ -345,8 +345,6 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 	if (argc != 4)
 		usage(merge_tree_usage);
 
-	git_extract_argv0_path(argv[0]);
-
 	buf1 = get_tree_descriptor(t+0, argv[1]);
 	buf2 = get_tree_descriptor(t+1, argv[2]);
 	buf3 = get_tree_descriptor(t+2, argv[3]);
