@@ -568,7 +568,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 		return pack_list_insert(&altodb_packs, &l);
 }
 
-static struct pack_list * add_pack_file(char *filename)
+static struct pack_list * add_pack_file(const char *filename)
 {
 	struct packed_git *p = packed_git;
 
@@ -593,7 +593,7 @@ static void load_all(void)
 	}
 }
 
-int main(int argc, char **argv)
+int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	struct pack_list *min, *red, *pl;
@@ -601,12 +601,8 @@ int main(int argc, char **argv)
 	unsigned char *sha1;
 	char buf[42]; /* 40 byte sha1 + \n + \0 */
 
-	git_extract_argv0_path(argv[0]);
-
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(pack_redundant_usage);
-
-	setup_git_directory();
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
