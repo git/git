@@ -75,12 +75,10 @@ static void generate_id_list(void)
 
 static const char patch_id_usage[] = "git patch-id < patch";
 
-int main(int argc, char **argv)
+int cmd_patch_id(int argc, const char **argv, const char *prefix)
 {
 	if (argc != 1)
 		usage(patch_id_usage);
-
-	git_extract_argv0_path(argv[0]);
 
 	generate_id_list();
 	return 0;
