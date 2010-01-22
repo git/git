@@ -525,7 +525,8 @@ static void write_pack_file(void)
 		if (!pack_to_stdout) {
 			mode_t mode = umask(0);
 			struct stat st;
-			char *idx_tmp_name, tmpname[PATH_MAX];
+			const char *idx_tmp_name;
+			char tmpname[PATH_MAX];
 
 			umask(mode);
 			mode = 0444 & ~mode;
@@ -569,7 +570,7 @@ static void write_pack_file(void)
 			if (rename(idx_tmp_name, tmpname))
 				die_errno("unable to rename temporary index file");
 
-			free(idx_tmp_name);
+			free((void *) idx_tmp_name);
 			free(pack_tmp_name);
 			puts(sha1_to_hex(sha1));
 		}
