@@ -235,7 +235,7 @@ pick_one () {
 	parent_sha1=$(git rev-parse --verify $sha1^) ||
 		die "Could not get the parent of $sha1"
 	current_sha1=$(git rev-parse --verify HEAD)
-	if test -z "$no_ff" -a "$current_sha1" = "$parent_sha1"
+	if test -z "$no_ff" && test "$current_sha1" = "$parent_sha1"
 	then
 		output git reset --hard $sha1
 		output warn Fast-forward to $(git rev-parse --short $sha1)
