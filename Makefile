@@ -392,7 +392,6 @@ PROGRAMS += git-index-pack$X
 PROGRAMS += git-pack-redundant$X
 PROGRAMS += git-shell$X
 PROGRAMS += git-show-index$X
-PROGRAMS += git-unpack-file$X
 PROGRAMS += git-upload-pack$X
 PROGRAMS += git-http-backend$X
 
@@ -698,6 +697,7 @@ BUILTIN_OBJS += builtin-stripspace.o
 BUILTIN_OBJS += builtin-symbolic-ref.o
 BUILTIN_OBJS += builtin-tag.o
 BUILTIN_OBJS += builtin-tar-tree.o
+BUILTIN_OBJS += builtin-unpack-file.o
 BUILTIN_OBJS += builtin-unpack-objects.o
 BUILTIN_OBJS += builtin-update-index.o
 BUILTIN_OBJS += builtin-update-ref.o
