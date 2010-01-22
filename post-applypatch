@@ -1,0 +1,23 @@
+#!/bin/sh
+
+GIT_DIR=.git
+dotest="$GIT_DIR/rebase-apply"
+
+prec=4 &&
+this=$(cat 2>/dev/null "$dotest/next") &&
+msgnum=$(printf "%0${prec}d" $this) &&
+test -f "$dotest/$msgnum" &&
+message_id=$(sed -n '
+	/^Message-I[Dd]:[ 	]*\(<.*>\)[ 	]*$/{
+		s//\1/p
+		q
+	}
+	/^$/q
+' "$dotest/$msgnum") &&
+
+test -n "$message_id" &&
+head=$(git rev-parse --verify HEAD 2>/dev/null) &&
+
+echo "$head $message_id" >>"$GIT_DIR"/am.log &&
+GIT_NOTES_REF=refs/notes/amlog \
+	git notes edit -m "Message-Id: $message_id" "$head"
