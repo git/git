@@ -337,7 +337,7 @@ static void *get_tree_descriptor(struct tree_desc *desc, const char *rev)
 	return buf;
 }
 
-int main(int argc, char **argv)
+int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 {
 	struct tree_desc t[3];
 	void *buf1, *buf2, *buf3;
@@ -346,8 +346,6 @@ int main(int argc, char **argv)
 		usage(merge_tree_usage);
 
 	git_extract_argv0_path(argv[0]);
-
-	setup_git_directory();
 
 	buf1 = get_tree_descriptor(t+0, argv[1]);
 	buf2 = get_tree_descriptor(t+1, argv[2]);
