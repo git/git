@@ -397,7 +397,6 @@ PROGRAMS += git-shell$X
 PROGRAMS += git-show-index$X
 PROGRAMS += git-unpack-file$X
 PROGRAMS += git-upload-pack$X
-PROGRAMS += git-var$X
 PROGRAMS += git-http-backend$X
 
 # List built-in command $C whose implementation cmd_$C() is not in
@@ -704,6 +703,7 @@ BUILTIN_OBJS += builtin-update-index.o
 BUILTIN_OBJS += builtin-update-ref.o
 BUILTIN_OBJS += builtin-update-server-info.o
 BUILTIN_OBJS += builtin-upload-archive.o
+BUILTIN_OBJS += builtin-var.o
 BUILTIN_OBJS += builtin-verify-pack.o
 BUILTIN_OBJS += builtin-verify-tag.o
 BUILTIN_OBJS += builtin-write-tree.o
