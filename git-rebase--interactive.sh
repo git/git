@@ -215,10 +215,10 @@ has_action () {
 # Run command with GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
 # GIT_AUTHOR_DATE exported from the current environment.
 do_with_author () {
-	GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
-	GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
-	GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-	"$@"
+	(
+		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
+		"$@"
+	)
 }
 
 pick_one () {
