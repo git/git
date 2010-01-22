@@ -1037,7 +1037,7 @@ class P4Sync(Command):
 
             if includeFile:
                 filesForCommit.append(f)
-                if f['action'] not in ('delete', 'purge'):
+                if f['action'] not in ('delete', 'move/delete', 'purge'):
                     filesToRead.append(f)
                 else:
                     filesToDelete.append(f)
