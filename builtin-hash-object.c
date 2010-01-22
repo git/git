@@ -73,16 +73,13 @@ static const struct option hash_object_options[] = {
 	OPT_END()
 };
 
-int main(int argc, const char **argv)
+int cmd_hash_object(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	const char *prefix = NULL;
 	int prefix_length = -1;
 	const char *errstr = NULL;
 
 	type = blob_type;
-
-	git_extract_argv0_path(argv[0]);
 
 	argc = parse_options(argc, argv, NULL, hash_object_options,
 			     hash_object_usage, 0);
