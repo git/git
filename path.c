@@ -394,17 +394,38 @@ int set_shared_perm(const char *path, int mode)
 const char *make_relative_path(const char *abs, const char *base)
 {
 	static char buf[PATH_MAX + 1];
-	int baselen;
-	if (!base)
+	int i = 0, j = 0;
+
+	if (!base || !base[0])
 		return abs;
-	baselen = strlen(base);
-	if (prefixcmp(abs, base))
+	while (base[i]) {
+		if (is_dir_sep(base[i])) {
+			if (!is_dir_sep(abs[j]))
+				return abs;
+			while (is_dir_sep(base[i]))
+				i++;
+			while (is_dir_sep(abs[j]))
+				j++;
+			continue;
+		} else if (abs[j] != base[i]) {
+			return abs;
+		}
+		i++;
+		j++;
+	}
+	if (
+	    /* "/foo" is a prefix of "/foo" */
+	    abs[j] &&
+	    /* "/foo" is not a prefix of "/foobar" */
+	    !is_dir_sep(base[i-1]) && !is_dir_sep(abs[j])
+	   )
 		return abs;
-	if (abs[baselen] == '/')
-		baselen++;
-	else if (base[baselen - 1] != '/')
-		return abs;
-	strcpy(buf, abs + baselen);
+	while (is_dir_sep(abs[j]))
+		j++;
+	if (!abs[j])
+		strcpy(buf, ".");
+	else
+		strcpy(buf, abs + j);
 	return buf;
 }
 
