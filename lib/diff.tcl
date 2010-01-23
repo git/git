@@ -281,6 +281,15 @@ proc start_show_diff {cont_info {add_opts {}}} {
 		}
 	}
 
+	if {[string match {160000 *} [lindex $s 2]]
+	 || [string match {160000 *} [lindex $s 3]]} {
+		set is_submodule_diff 1
+
+		if {[git-version >= "1.6.6"]} {
+			lappend cmd --submodule
+		}
+	}
+
 	lappend cmd -p
 	lappend cmd --no-color
 	if {$repo_config(gui.diffcontext) >= 1} {
@@ -296,9 +305,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 		lappend cmd $path
 	}
 
-	if {[string match {160000 *} [lindex $s 2]]
-        || [string match {160000 *} [lindex $s 3]]} {
-		set is_submodule_diff 1
+	if {$is_submodule_diff && [git-version < "1.6.6"]} {
 		if {$w eq $ui_index} {
 			set cmd [list submodule summary --cached -- $path]
 		} else {
@@ -387,7 +394,9 @@ proc read_diff {fd cont_info} {
 			}
 		} elseif {$is_submodule_diff} {
 			if {$line == ""} continue
-			if {[regexp {^\* } $line]} {
+			if {[regexp {^Submodule } $line]} {
+				set tags d_@
+			} elseif {[regexp {^\* } $line]} {
 				set line [string replace $line 0 1 {Submodule }]
 				set tags d_@
 			} else {
