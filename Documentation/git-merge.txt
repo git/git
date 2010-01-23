@@ -100,52 +100,32 @@ merge commit.
 
 This behavior can be suppressed with the `--no-ff` option.
 
-HOW MERGE WORKS
----------------
-
-A merge is always between the current `HEAD` and one or more
-commits (usually a branch head or tag).
+TRUE MERGE
+----------
 
 Except in a fast-forward merge (see above), the branches to be
 merged must be tied together by a merge commit that has both of them
 as its parents.
-The rest of this section describes this "True merge" case.
 
-The chosen merge strategy merges the two commits into a single
-new source tree.
-When things merge cleanly, this is what happens:
+A merged version reconciling the changes from all branches to be
+merged is committed, and your `HEAD`, index, and working tree are
+updated to it.  It is possible to have modifications in the working
+tree as long as they do not overlap; the update will preserve them.
 
-1. The results are updated both in the index file and in your
-   working tree;
-2. Index file is written out as a tree;
-3. The tree gets committed; and
-4. The `HEAD` pointer gets advanced.
+When it is not obvious how to reconcile the changes, the following
+happens:
 
-Because of 2., we require that the original state of the index
-file matches exactly the current `HEAD` commit; otherwise we
-will write out your local changes already registered in your
-index file along with the merge result, which is not good.
-Because 1. involves only those paths differing between your
-branch and the branch you are merging
-(which is typically a fraction of the whole tree), you can
-have local modifications in your working tree as long as they do
-not overlap with what the merge updates.
-
-When there are conflicts, the following happens:
-
-1. `HEAD` stays the same.
-
-2. Cleanly merged paths are updated both in the index file and
+1. The `HEAD` pointer stays the same.
+2. The `MERGE_HEAD` ref is set to point to the other branch head.
+3. Paths that merged cleanly are updated both in the index file and
    in your working tree.
-
-3. For conflicting paths, the index file records up to three
-   versions; stage1 stores the version from the common ancestor,
-   stage2 from `HEAD`, and stage3 from the other branch (you
+4. For conflicting paths, the index file records up to three
+   versions: stage 1 stores the version from the common ancestor,
+   stage 2 from `HEAD`, and stage 3 from `MERGE_HEAD` (you
    can inspect the stages with `git ls-files -u`).  The working
    tree files contain the result of the "merge" program; i.e. 3-way
-   merge results with familiar conflict markers `<<< === >>>`.
-
-4. No other changes are done.  In particular, the local
+   merge results with familiar conflict markers `<<<` `===` `>>>`.
+5. No other changes are made.  In particular, the local
    modifications you had before you started merge will stay the
    same and the index entries for them stay as they were,
    i.e. matching `HEAD`.
