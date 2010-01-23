@@ -11,7 +11,7 @@ SYNOPSIS
 'git branch' [--color | --no-color] [-r | -a]
 	[-v [--abbrev=<length> | --no-abbrev]]
 	[(--merged | --no-merged | --contains) [<commit>]]
-'git branch' [--track | --no-track] [-l] [-f] <branchname> [<start-point>]
+'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
 'git branch' (-d | -D) [-r] <branchname>...
 
@@ -128,6 +128,12 @@ start-point is either a local or remote branch.
 --no-track::
 	Do not set up "upstream" configuration, even if the
 	branch.autosetupmerge configuration variable is true.
+
+--set-upstream::
+	If specified branch does not exist yet or if '--force' has been
+	given, acts exactly like '--track'. Otherwise sets up configuration
+	like '--track' would when creating the branch, except that where
+	branch points to is not changed.
 
 --contains <commit>::
 	Only list branches which contain the specified commit.

@@ -553,6 +553,7 @@ enum branch_track {
 	BRANCH_TRACK_REMOTE,
 	BRANCH_TRACK_ALWAYS,
 	BRANCH_TRACK_EXPLICIT,
+	BRANCH_TRACK_OVERRIDE,
 };
 
 enum rebase_setup_type {
