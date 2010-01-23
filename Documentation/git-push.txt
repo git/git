@@ -122,13 +122,6 @@ nor in any Push line of the corresponding remotes file---see below).
 	the name "origin" is used. For this latter case, this option
 	can be used to override the name "origin". In other words,
 	the difference between these two commands
-
--u::
---set-upstream::
-	For every branch that is up to date or successfully pushed, add
-	upstream (tracking) reference, used by argument-less
-	linkgit:git-pull[1] and other commands. For more information,
-	see 'branch.<name>.merge' in linkgit:git-config[1].
 +
 --------------------------
 git push public         #1
@@ -138,6 +131,13 @@ git push --repo=public  #2
 is that #1 always pushes to "public" whereas #2 pushes to "public"
 only if the current branch does not track a remote branch. This is
 useful if you write an alias or script around 'git push'.
+
+-u::
+--set-upstream::
+	For every branch that is up to date or successfully pushed, add
+	upstream (tracking) reference, used by argument-less
+	linkgit:git-pull[1] and other commands. For more information,
+	see 'branch.<name>.merge' in linkgit:git-config[1].
 
 --thin::
 --no-thin::
