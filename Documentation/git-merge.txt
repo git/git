@@ -42,8 +42,6 @@ include::merge-options.txt[]
 	You need at least one <commit>.  Specifying more than one
 	<commit> obviously means you are trying an Octopus.
 
-include::merge-strategies.txt[]
-
 
 HOW MERGE WORKS
 ---------------
@@ -239,6 +237,8 @@ You should refrain from abusing this option to sneak substantial
 changes into a merge commit.  Small fixups like bumping
 release/version name would be acceptable.
 
+
+include::merge-strategies.txt[]
 
 CONFIGURATION
 -------------
