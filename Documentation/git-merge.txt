@@ -67,21 +67,32 @@ include::merge-options.txt[]
 	<commit> obviously means you are trying an Octopus.
 
 
+PRE-MERGE CHECKS
+----------------
+
+Before applying outside changes, you should get your own work in
+good shape and committed locally, so it will not be clobbered if
+there are conflicts.  See also linkgit:git-stash[1].
+'git pull' and 'git merge' will stop without doing anything when
+local uncommitted changes overlap with files that 'git pull'/'git
+merge' may need to update.
+
+To avoid recording unrelated changes in the merge commit,
+'git pull' and 'git merge' will also abort if there are any changes
+registered in the index relative to the `HEAD` commit.  (One
+exception is when the changed index entries are in the state that
+would result from the merge already.)
+
+If all named commits are already ancestors of `HEAD`, 'git merge'
+will exit early with the message "Already up-to-date."
+
 HOW MERGE WORKS
 ---------------
 
 A merge is always between the current `HEAD` and one or more
-commits (usually, branch head or tag), and the index file must
-match the tree of `HEAD` commit (i.e. the contents of the last commit)
-when it starts out.  In other words, `git diff --cached HEAD` must
-report no changes.  (One exception is when the changed index
-entries are already in the same state that would result from
-the merge anyway.)
+commits (usually a branch head or tag).
 
-Three kinds of merge can happen:
-
-* The merged commit is already contained in `HEAD`. This is the
-  simplest case, called "Already up-to-date."
+Two kinds of merge can happen:
 
 * `HEAD` is already contained in the merged commit. This is the
   most common case especially when invoked from 'git pull':
