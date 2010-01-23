@@ -115,6 +115,7 @@ my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
 		  'use-svm-props' => sub { $icv{useSvmProps} = 1 },
 		  'use-svnsync-props' => sub { $icv{useSvnsyncProps} = 1 },
 		  'rewrite-root=s' => sub { $icv{rewriteRoot} = $_[1] },
+		  'rewrite-uuid=s' => sub { $icv{rewriteUUID} = $_[1] },
                   %remote_opts );
 my %cmt_opts = ( 'edit|e' => \$_edit,
 		'rmdir' => \$SVN::Git::Editor::_rmdir,
@@ -2207,6 +2208,10 @@ sub svnsync {
 		die "Can't have both 'useSvnsyncProps' and 'rewriteRoot' ",
 		    "options set!\n";
 	}
+	if ($self->rewrite_uuid) {
+		die "Can't have both 'useSvnsyncProps' and 'rewriteUUID' ",
+		    "options set!\n";
+	}
 
 	my $svnsync;
 	# see if we have it in our config, first:
@@ -2486,6 +2491,20 @@ sub rewrite_root {
 		}
 	}
 	$self->{-rewrite_root} = $rwr;
+}
+
+sub rewrite_uuid {
+	my ($self) = @_;
+	return $self->{-rewrite_uuid} if exists $self->{-rewrite_uuid};
+	my $k = "svn-remote.$self->{repo_id}.rewriteUUID";
+	my $rwid = eval { command_oneline(qw/config --get/, $k) };
+	if ($rwid) {
+		$rwid =~ s#/+$##;
+		if ($rwid !~ m#^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$#) {
+			die "$rwid is not a valid UUID (key: $k)\n";
+		}
+	}
+	$self->{-rewrite_uuid} = $rwid;
 }
 
 sub metadata_url {
@@ -3306,6 +3325,10 @@ sub make_log_entry {
 			die "Can't have both 'useSvmProps' and 'rewriteRoot' ",
 			    "options set!\n";
 		}
+		if ($self->rewrite_uuid) {
+			die "Can't have both 'useSvmProps' and 'rewriteUUID' ",
+			    "options set!\n";
+		}
 		my ($uuid, $r) = $headrev =~ m{^([a-f\d\-]{30,}):(\d+)$}i;
 		# we don't want "SVM: initializing mirror for junk" ...
 		return undef if $r == 0;
@@ -3336,10 +3359,10 @@ sub make_log_entry {
 	} else {
 		my $url = $self->metadata_url;
 		remove_username($url);
-		$log_entry{metadata} = "$url\@$rev " .
-		                       $self->ra->get_uuid;
-		$email ||= "$author\@" . $self->ra->get_uuid;
-		$commit_email ||= "$author\@" . $self->ra->get_uuid;
+		my $uuid = $self->rewrite_uuid || $self->ra->get_uuid;
+		$log_entry{metadata} = "$url\@$rev " . $uuid;
+		$email ||= "$author\@" . $uuid;
+		$commit_email ||= "$author\@" . $uuid;
 	}
 	$log_entry{name} = $name;
 	$log_entry{email} = $email;
@@ -3421,7 +3444,7 @@ sub rebuild {
 				'--');
 	my $metadata_url = $self->metadata_url;
 	remove_username($metadata_url);
-	my $svn_uuid = $self->ra_uuid;
+	my $svn_uuid = $self->rewrite_uuid || $self->ra_uuid;
 	my $c;
 	while (<$log>) {
 		if ( m{^commit ($::sha1)$} ) {
