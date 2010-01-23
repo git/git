@@ -45,9 +45,6 @@ include::merge-options.txt[]
 include::merge-strategies.txt[]
 
 
-If you tried a merge which resulted in complex conflicts and
-want to start over, you can recover with 'git reset'.
-
 HOW MERGE WORKS
 ---------------
 
@@ -114,6 +111,9 @@ When there are conflicts, the following happens:
    modifications you had before you started merge will stay the
    same and the index entries for them stay as they were,
    i.e. matching `HEAD`.
+
+If you tried a merge which resulted in complex conflicts and
+want to start over, you can recover with `git reset --merge`.
 
 HOW CONFLICTS ARE PRESENTED
 ---------------------------
