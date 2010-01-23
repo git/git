@@ -5,6 +5,7 @@
 #include "blob.h"
 #include "tree-walk.h"
 #include "refs.h"
+#include "remote.h"
 
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
@@ -240,7 +241,8 @@ static int ambiguous_path(const char *path, int len)
 
 /*
  * *string and *len will only be substituted, and *string returned (for
- * later free()ing) if the string passed in is of the form @{-<n>}.
+ * later free()ing) if the string passed in is a magic short-hand form
+ * to name a branch.
  */
 static char *substitute_branch_name(const char **string, int *len)
 {
@@ -323,6 +325,20 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 	return logs_found;
 }
 
+static inline int upstream_mark(const char *string, int len)
+{
+	const char *suffix[] = { "@{upstream}", "@{u}" };
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(suffix); i++) {
+		int suffix_len = strlen(suffix[i]);
+		if (suffix_len <= len
+		    && !memcmp(string, suffix[i], suffix_len))
+			return suffix_len;
+	}
+	return 0;
+}
+
 static int get_sha1_1(const char *name, int len, unsigned char *sha1);
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
@@ -340,8 +356,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (len && str[len-1] == '}') {
 		for (at = len-2; at >= 0; at--) {
 			if (str[at] == '@' && str[at+1] == '{') {
-				reflog_len = (len-1) - (at+2);
-				len = at;
+				if (!upstream_mark(str + at, len - at)) {
+					reflog_len = (len-1) - (at+2);
+					len = at;
+				}
 				break;
 			}
 		}
@@ -740,17 +758,10 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 }
 
 /*
- * This reads "@{-N}" syntax, finds the name of the Nth previous
- * branch we were on, and places the name of the branch in the given
- * buf and returns the number of characters parsed if successful.
- *
- * If the input is not of the accepted format, it returns a negative
- * number to signal an error.
- *
- * If the input was ok but there are not N branch switches in the
- * reflog, it returns 0.
+ * Parse @{-N} syntax, return the number of characters parsed
+ * if successful; otherwise signal an error with negative value.
  */
-int interpret_branch_name(const char *name, struct strbuf *buf)
+static int interpret_nth_prior_checkout(const char *name, struct strbuf *buf)
 {
 	long nth;
 	int i, retval;
@@ -834,6 +845,60 @@ int get_sha1_mb(const char *name, unsigned char *sha1)
 	}
 	free_commit_list(mbs);
 	return st;
+}
+
+/*
+ * This reads short-hand syntax that not only evaluates to a commit
+ * object name, but also can act as if the end user spelled the name
+ * of the branch from the command line.
+ *
+ * - "@{-N}" finds the name of the Nth previous branch we were on, and
+ *   places the name of the branch in the given buf and returns the
+ *   number of characters parsed if successful.
+ *
+ * - "<branch>@{upstream}" finds the name of the other ref that
+ *   <branch> is configured to merge with (missing <branch> defaults
+ *   to the current branch), and places the name of the branch in the
+ *   given buf and returns the number of characters parsed if
+ *   successful.
+ *
+ * If the input is not of the accepted format, it returns a negative
+ * number to signal an error.
+ *
+ * If the input was ok but there are not N branch switches in the
+ * reflog, it returns 0.
+ */
+int interpret_branch_name(const char *name, struct strbuf *buf)
+{
+	char *cp;
+	struct branch *upstream;
+	int namelen = strlen(name);
+	int len = interpret_nth_prior_checkout(name, buf);
+	int tmp_len;
+
+	if (!len)
+		return len; /* syntax Ok, not enough switches */
+	if (0 < len)
+		return len; /* consumed from the front */
+	cp = strchr(name, '@');
+	if (!cp)
+		return -1;
+	tmp_len = upstream_mark(cp, namelen - (cp - name));
+	if (!tmp_len)
+		return -1;
+	len = cp + tmp_len - name;
+	cp = xstrndup(name, cp - name);
+	upstream = branch_get(*cp ? cp : NULL);
+	if (!upstream
+	    || !upstream->merge
+	    || !upstream->merge[0]->dst)
+		return error("No upstream branch found for '%s'", cp);
+	free(cp);
+	cp = shorten_unambiguous_ref(upstream->merge[0]->dst, 0);
+	strbuf_reset(buf);
+	strbuf_addstr(buf, cp);
+	free(cp);
+	return len;
 }
 
 /*
