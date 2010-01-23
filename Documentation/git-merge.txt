@@ -215,15 +215,17 @@ You can work through the conflict with a number of tools:
    mergetool which will work you through the merge.
 
  * Look at the diffs.  `git diff` will show a three-way diff,
-   highlighting changes from both the HEAD and their versions.
+   highlighting changes from both the `HEAD` and `MERGE_HEAD`
+   versions.
 
- * Look at the diffs on their own. `git log --merge -p <path>`
-   will show diffs first for the HEAD version and then
-   their version.
+ * Look at the diffs from each branch. `git log --merge -p <path>`
+   will show diffs first for the `HEAD` version and then the
+   `MERGE_HEAD` version.
 
  * Look at the originals.  `git show :1:filename` shows the
-   common ancestor, `git show :2:filename` shows the HEAD
-   version and `git show :3:filename` shows their version.
+   common ancestor, `git show :2:filename` shows the `HEAD`
+   version, and `git show :3:filename` shows the `MERGE_HEAD`
+   version.
 
 
 EXAMPLES
