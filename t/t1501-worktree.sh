@@ -189,4 +189,10 @@ test_expect_success 'absolute pathspec should fail gracefully' '
 	)
 '
 
+test_expect_success 'make_relative_path handles double slashes in GIT_DIR' '
+	: > dummy_file
+	echo git --git-dir="$(pwd)//repo.git" --work-tree="$(pwd)" add dummy_file &&
+	git --git-dir="$(pwd)//repo.git" --work-tree="$(pwd)" add dummy_file
+'
+
 test_done
