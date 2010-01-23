@@ -48,15 +48,6 @@ include::merge-strategies.txt[]
 If you tried a merge which resulted in complex conflicts and
 want to start over, you can recover with 'git reset'.
 
-CONFIGURATION
--------------
-include::merge-config.txt[]
-
-branch.<name>.mergeoptions::
-	Sets default options for merging into branch <name>. The syntax and
-	supported options are the same as those of 'git merge', but option
-	values containing whitespace characters are currently not supported.
-
 HOW MERGE WORKS
 ---------------
 
@@ -248,6 +239,15 @@ You should refrain from abusing this option to sneak substantial
 changes into a merge commit.  Small fixups like bumping
 release/version name would be acceptable.
 
+
+CONFIGURATION
+-------------
+include::merge-config.txt[]
+
+branch.<name>.mergeoptions::
+	Sets default options for merging into branch <name>. The syntax and
+	supported options are the same as those of 'git merge', but option
+	values containing whitespace characters are currently not supported.
 
 SEE ALSO
 --------
