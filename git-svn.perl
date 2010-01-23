@@ -1825,8 +1825,8 @@ sub read_all_remotes {
 			my $rs = {
 			    t => $t,
 			    remote => $remote,
-			    path => Git::SVN::GlobSpec->new($local_ref),
-			    ref => Git::SVN::GlobSpec->new($remote_ref) };
+			    path => Git::SVN::GlobSpec->new($local_ref, 1),
+			    ref => Git::SVN::GlobSpec->new($remote_ref, 0) };
 			if (length($rs->{ref}->{right}) != 0) {
 				die "The '*' glob character must be the last ",
 				    "character of '$remote_ref'\n";
@@ -5233,6 +5233,7 @@ sub match_globs {
 			next if (length $g->{path}->{right} &&
 				 ($self->check_path($p, $r) !=
 				  $SVN::Node::dir));
+			next unless $p =~ /$g->{path}->{regex}/;
 			$exists->{$p} = Git::SVN->init($self->{url}, $p, undef,
 					 $g->{ref}->full_path($de), 1);
 		}
@@ -6006,29 +6007,48 @@ use strict;
 use warnings;
 
 sub new {
-	my ($class, $glob) = @_;
+	my ($class, $glob, $pattern_ok) = @_;
 	my $re = $glob;
 	$re =~ s!/+$!!g; # no need for trailing slashes
-	$re =~ m!^([^*]*)(\*(?:/\*)*)(.*)$!;
-	my $temp = $re;
-	my ($left, $right) = ($1, $3);
-	$re = $2;
-	my $depth = $re =~ tr/*/*/;
-	if ($depth != $temp =~ tr/*/*/) {
-		die "Only one set of wildcard directories " .
-			"(e.g. '*' or '*/*/*') is supported: '$glob'\n";
+	my (@left, @right, @patterns);
+	my $state = "left";
+	my $die_msg = "Only one set of wildcard directories " .
+				"(e.g. '*' or '*/*/*') is supported: '$glob'\n";
+	for my $part (split(m|/|, $glob)) {
+		if ($part =~ /\*/ && $part ne "*") {
+			die "Invalid pattern in '$glob': $part\n";
+		} elsif ($pattern_ok && $part =~ /[{}]/ &&
+			 $part !~ /^\{[^{}]+\}/) {
+			die "Invalid pattern in '$glob': $part\n";
+		}
+		if ($part eq "*") {
+			die $die_msg if $state eq "right";
+			$state = "pattern";
+			push(@patterns, "[^/]*");
+		} elsif ($pattern_ok && $part =~ /^\{(.*)\}$/) {
+			die $die_msg if $state eq "right";
+			$state = "pattern";
+			my $p = quotemeta($1);
+			$p =~ s/\\,/|/g;
+			push(@patterns, "(?:$p)");
+		} else {
+			if ($state eq "left") {
+				push(@left, $part);
+			} else {
+				push(@right, $part);
+				$state = "right";
+			}
+		}
 	}
+	my $depth = @patterns;
 	if ($depth == 0) {
-		die "One '*' is needed for glob: '$glob'\n";
+		die "One '*' is needed in glob: '$glob'\n";
 	}
-	$re =~ s!\*!\[^/\]*!g;
-	$re = quotemeta($left) . "($re)" . quotemeta($right);
-	if (length $left && !($left =~ s!/+$!!g)) {
-		die "Missing trailing '/' on left side of: '$glob' ($left)\n";
-	}
-	if (length $right && !($right =~ s!^/+!!g)) {
-		die "Missing leading '/' on right side of: '$glob' ($right)\n";
-	}
+	my $left = join('/', @left);
+	my $right = join('/', @right);
+	$re = join('/', @patterns);
+	$re = join('\/',
+		   grep(length, quotemeta($left), "($re)", quotemeta($right)));
 	my $left_re = qr/^\/\Q$left\E(\/|$)/;
 	bless { left => $left, right => $right, left_regex => $left_re,
 	        regex => qr/$re/, glob => $glob, depth => $depth }, $class;
