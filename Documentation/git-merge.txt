@@ -86,25 +86,30 @@ would result from the merge already.)
 If all named commits are already ancestors of `HEAD`, 'git merge'
 will exit early with the message "Already up-to-date."
 
+FAST-FORWARD MERGE
+------------------
+
+Often the current branch head is an ancestor of the named commit.
+This is the most common case especially when invoked from 'git
+pull': you are tracking an upstream repository, you have committed
+no local changes, and now you want to update to a newer upstream
+revision.  In this case, a new commit is not needed to store the
+combined history; instead, the `HEAD` (along with the index) is
+updated to point at the named commit, without creating an extra
+merge commit.
+
+This behavior can be suppressed with the `--no-ff` option.
+
 HOW MERGE WORKS
 ---------------
 
 A merge is always between the current `HEAD` and one or more
 commits (usually a branch head or tag).
 
-Two kinds of merge can happen:
-
-* `HEAD` is already contained in the merged commit. This is the
-  most common case especially when invoked from 'git pull':
-  you are tracking an upstream repository, have committed no local
-  changes and now you want to update to a newer upstream revision.
-  Your `HEAD` (and the index) is updated to point at the merged
-  commit, without creating an extra merge commit.  This is
-  called "Fast-forward".
-
-* Both the merged commit and `HEAD` are independent and must be
-  tied together by a merge commit that has both of them as its parents.
-  The rest of this section describes this "True merge" case.
+Except in a fast-forward merge (see above), the branches to be
+merged must be tied together by a merge commit that has both of them
+as its parents.
+The rest of this section describes this "True merge" case.
 
 The chosen merge strategy merges the two commits into a single
 new source tree.
