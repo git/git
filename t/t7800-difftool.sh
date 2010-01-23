@@ -27,6 +27,7 @@ remove_config_vars()
 	git config --unset difftool.prompt
 	git config --unset merge.tool
 	git config --unset mergetool.test-tool.cmd
+	git config --unset mergetool.prompt
 	return 0
 }
 
@@ -152,6 +153,17 @@ test_expect_success 'GIT_DIFFTOOL_PROMPT variable' '
 # Test that we don't have to pass --no-prompt when difftool.prompt is false
 test_expect_success 'difftool.prompt config variable is false' '
 	git config difftool.prompt false &&
+
+	diff=$(git difftool branch) &&
+	test "$diff" = "branch" &&
+
+	restore_test_defaults
+'
+
+# Test that we don't have to pass --no-prompt when mergetool.prompt is false
+test_expect_success 'difftool merge.prompt = false' '
+	git config --unset difftool.prompt
+	git config mergetool.prompt false &&
 
 	diff=$(git difftool branch) &&
 	test "$diff" = "branch" &&
