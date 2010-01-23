@@ -82,6 +82,14 @@ Updates since v1.6.6
    contents (e.g. git-merge documentation) have strings that resemble the
    conflict markers.
 
+ * A new syntax "<branch>@{upstream}" can be used on the command line to
+   substitute the name of the "upstream" of the branch.  Missing branch
+   defaults to the current branch, so "git fetch && git merge @{upstream}"
+   will be equivalent to "git pull".
+
+ * "git branch --set-upstream" can be used to update the (surprise!) upstream
+   i.e. where the branch is supposed to pull and merge from (or rebase onto).
+
  * "git checkout A...B" is a way to detach HEAD at the merge base between
    A and B.
 
@@ -110,6 +118,9 @@ Updates since v1.6.6
  * "git grep" learned "--no-index" option, to search inside contents that
    are not managed by git.
 
+ * "git log" and friends learned "--glob=heads/*" syntax that is a more
+   flexible way to complement "--branches/--tags/--remotes".
+
  * "git merge" learned to pass options specific to strategy-backends.  E.g.
 
     - "git merge -Xsubtree=path/to/directory" can be used to tell the subtree
@@ -135,6 +146,9 @@ Updates since v1.6.6
  * "git rebase -i" also learned --autosquash option, that is useful
    together with the new "fixup" action.
 
+ * "git remote" learned set-url subcommand, to update (surprise!) url
+   for an existing remote nickname.
+
  * "git rerere" learned "forget path" subcommand.  Together with "git
    checkout -m path" it will be useful when you recorded a wrong
    resolution.
@@ -152,6 +166,7 @@ Updates since v1.6.6
 
  * The infrastructure to build foreign SCM interface has been updated.
 
+ * Many more commands are now built-in.
 
 Fixes since v1.6.6
 ------------------
@@ -159,8 +174,18 @@ Fixes since v1.6.6
 All of the fixes in v1.6.6.X maintenance series are included in this
 release, unless otherwise noted.
 
+ * "git branch -d branch" used to refuse deleting the branch even when
+   the branch is fully merged to its upstream branch if it is not merged
+   to the current branch.  It now deletes it in such a case.
+
+ * When "git diff" is asked to compare the work tree with something,
+   it used to consider that a checked-out submodule with uncommitted
+   changes is not modified; this could cause people to forget committing
+   these changes in the submodule before committing in the superproject.
+   It now considers such a change as a modification.
+
 --
 exec >/var/tmp/1
-O=v1.6.6.1-379-gd4556c4
+O=v1.6.6.1-434-g3521c1b
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
