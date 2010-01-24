@@ -1074,6 +1074,8 @@ if {[catch {
 		set _prefix {}
 		}]
 	&& [catch {
+		# beware that from the .git dir this sets _gitdir to .
+		# and _prefix to the empty string
 		set _gitdir [git rev-parse --git-dir]
 		set _prefix [git rev-parse --show-prefix]
 	} err]} {
@@ -1082,6 +1084,14 @@ if {[catch {
 	choose_repository::pick
 	set picked 1
 }
+
+# we expand the _gitdir when it's just a single dot (i.e. when we're being
+# run from the .git dir itself) lest the routines to find the worktree
+# get confused
+if {$_gitdir eq "."} {
+	set _gitdir [pwd]
+}
+
 if {![file isdirectory $_gitdir] && [is_Cygwin]} {
 	catch {set _gitdir [exec cygpath --windows $_gitdir]}
 }
@@ -1613,6 +1623,9 @@ proc merge_state {path new_state {head_info {}} {index_info {}}} {
 	} elseif {$s0 ne {_} && [string index $state 0] eq {_}
 		&& $head_info eq {}} {
 		set head_info $index_info
+	} elseif {$s0 eq {_} && [string index $state 0] ne {_}} {
+		set index_info $head_info
+		set head_info {}
 	}
 
 	set file_states($path) [list $s0$s1 $icon \
@@ -1941,7 +1954,7 @@ proc do_gitk {revs} {
 		cd [file dirname [gitdir]]
 		set env(GIT_DIR) [file tail [gitdir]]
 
-		eval exec $cmd $revs &
+		eval exec $cmd $revs "--" "--" &
 
 		if {$old_GIT_DIR eq {}} {
 			unset env(GIT_DIR)
@@ -2543,12 +2556,14 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 	.mbar.commit add command -label [mc "Unstage From Commit"] \
-		-command do_unstage_selection
+		-command do_unstage_selection \
+		-accelerator $M1T-U
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 	.mbar.commit add command -label [mc "Revert Changes"] \
-		-command do_revert_selection
+		-command do_revert_selection \
+		-accelerator $M1T-J
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
@@ -3296,6 +3311,10 @@ unset gws
 bind $ui_comm <$M1B-Key-Return> {do_commit;break}
 bind $ui_comm <$M1B-Key-t> {do_add_selection;break}
 bind $ui_comm <$M1B-Key-T> {do_add_selection;break}
+bind $ui_comm <$M1B-Key-u> {do_unstage_selection;break}
+bind $ui_comm <$M1B-Key-U> {do_unstage_selection;break}
+bind $ui_comm <$M1B-Key-j> {do_revert_selection;break}
+bind $ui_comm <$M1B-Key-J> {do_revert_selection;break}
 bind $ui_comm <$M1B-Key-i> {do_add_all;break}
 bind $ui_comm <$M1B-Key-I> {do_add_all;break}
 bind $ui_comm <$M1B-Key-x> {tk_textCut %W;break}
