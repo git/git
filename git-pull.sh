@@ -275,7 +275,7 @@ true)
 *)
 	eval="git-merge $diffstat $no_commit $squash $no_ff $ff_only"
 	eval="$eval  $log_arg $strategy_args $merge_args"
-	eval="$eval \"$merge_name\" HEAD $merge_head $verbosity"
+	eval="$eval \"\$merge_name\" HEAD $merge_head $verbosity"
 	;;
 esac
 eval "exec $eval"
