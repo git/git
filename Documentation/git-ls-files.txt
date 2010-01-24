@@ -141,7 +141,7 @@ OPTIONS
 
 Output
 ------
-show files just outputs the filename unless '--stage' is specified in
+'git ls-files' just outputs the filenames unless '--stage' is specified in
 which case it outputs:
 
         [<tag> ]<mode> <object> <stage> <file>

@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 git log --pretty=short | 'git shortlog' [-h] [-n] [-s] [-e] [-w]
-git shortlog [-n|--numbered] [-s|--summary] [-e|--email] [-w[<width>[,<indent1>[,<indent2>]]]] [<committish>...]
+'git shortlog' [-n|--numbered] [-s|--summary] [-e|--email] [-w[<width>[,<indent1>[,<indent2>]]]] [<committish>...]
 
 DESCRIPTION
 -----------
