@@ -36,6 +36,7 @@ static int add_submodule_odb(const char *path)
 
 void show_submodule_summary(FILE *f, const char *path,
 		unsigned char one[20], unsigned char two[20],
+		unsigned dirty_submodule,
 		const char *del, const char *add, const char *reset)
 {
 	struct rev_info rev;
@@ -85,6 +86,8 @@ void show_submodule_summary(FILE *f, const char *path,
 	if (!fast_backward && !fast_forward)
 		strbuf_addch(&sb, '.');
 	strbuf_addf(&sb, "%s", find_unique_abbrev(two, DEFAULT_ABBREV));
+	if (dirty_submodule)
+		strbuf_add(&sb, "-dirty", 6);
 	if (message)
 		strbuf_addf(&sb, " %s\n", message);
 	else

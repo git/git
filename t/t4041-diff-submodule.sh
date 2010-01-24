@@ -191,6 +191,73 @@ EOF
 "
 
 commit_file sm1 &&
+test_expect_success 'submodule is up to date' "
+	git diff-index -p --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+EOF
+"
+
+test_expect_success 'submodule contains untracked content' "
+	echo new > sm1/new-file &&
+	git diff-index -p --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head6-dirty:
+EOF
+"
+
+test_expect_success 'submodule contains untracked and modifed content' "
+	echo new > sm1/foo6 &&
+	git diff-index -p --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head6-dirty:
+EOF
+"
+
+test_expect_success 'submodule contains modifed content' "
+	rm -f sm1/new-file &&
+	git diff-index -p --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head6-dirty:
+EOF
+"
+
+(cd sm1; git commit -mchange foo6 >/dev/null) &&
+head8=$(cd sm1; git rev-parse --verify HEAD | cut -c1-7) &&
+test_expect_success 'submodule is modified' "
+	git diff-index -p --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head8:
+  > change
+EOF
+"
+
+test_expect_success 'modified submodule contains untracked content' "
+	echo new > sm1/new-file &&
+	git diff-index -p --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head8-dirty:
+  > change
+EOF
+"
+
+test_expect_success 'modified submodule contains untracked and modifed content' "
+	echo modification >> sm1/foo6 &&
+	git diff-index -p --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head8-dirty:
+  > change
+EOF
+"
+
+test_expect_success 'modified submodule contains modifed content' "
+	rm -f sm1/new-file &&
+	git diff-index -p --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head8-dirty:
+  > change
+EOF
+"
+
 rm -rf sm1
 test_expect_success 'deleted submodule' "
 	git diff-index -p --submodule=log HEAD >actual &&
