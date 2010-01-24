@@ -1904,7 +1904,7 @@ set ui_index .vpane.files.index.list
 set ui_workdir .vpane.files.workdir.list
 
 set all_icons(_$ui_index)   file_plain
-set all_icons(A$ui_index)   file_fulltick
+set all_icons(A$ui_index)   file_plain
 set all_icons(M$ui_index)   file_fulltick
 set all_icons(D$ui_index)   file_removed
 set all_icons(U$ui_index)   file_merge
