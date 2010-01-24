@@ -235,6 +235,8 @@ proc _get_recentrepos {} {
 	foreach p [get_config gui.recentrepo] {
 		if {[_is_git [file join $p .git]]} {
 			lappend recent $p
+		} else {
+			_unset_recentrepo $p
 		}
 	}
 	return [lsort $recent]
@@ -243,6 +245,7 @@ proc _get_recentrepos {} {
 proc _unset_recentrepo {p} {
 	regsub -all -- {([()\[\]{}\.^$+*?\\])} $p {\\\1} p
 	git config --global --unset gui.recentrepo "^$p\$"
+	load_config 1
 }
 
 proc _append_recentrepos {path} {
@@ -261,6 +264,7 @@ proc _append_recentrepos {path} {
 
 	lappend recent $path
 	git config --global --add gui.recentrepo $path
+	load_config 1
 
 	while {[llength $recent] > 10} {
 		_unset_recentrepo [lindex $recent 0]
