@@ -236,6 +236,8 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 				 !strcmp(ce->name, active_cache[nr]->name));
 			nr--; /* compensate for loop control */
 		}
+		if (hit && opt->status_only)
+			break;
 	}
 	free_grep_patterns(opt);
 	return hit;
@@ -293,6 +295,8 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			hit |= grep_tree(opt, paths, &sub, tree_name, down);
 			free(data);
 		}
+		if (hit && opt->status_only)
+			break;
 	}
 	strbuf_release(&pathbuf);
 	return hit;
@@ -329,8 +333,11 @@ static int grep_directory(struct grep_opt *opt, const char **paths)
 	setup_standard_excludes(&dir);
 
 	fill_directory(&dir, paths);
-	for (i = 0; i < dir.nr; i++)
+	for (i = 0; i < dir.nr; i++) {
 		hit |= grep_file(opt, dir.entries[i]->name);
+		if (hit && opt->status_only)
+			break;
+	}
 	free_grep_patterns(opt);
 	return hit;
 }
@@ -505,6 +512,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, ')', NULL, &opt, NULL, "",
 		  PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_NODASH,
 		  close_callback },
+		OPT_BOOLEAN('q', "quick", &opt.status_only,
+			    "indicate hit with exit status without output"),
 		OPT_BOOLEAN(0, "all-match", &opt.all_match,
 			"show only matches from files that match all patterns"),
 		OPT_GROUP(""),
@@ -628,8 +637,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < list.nr; i++) {
 		struct object *real_obj;
 		real_obj = deref_tag(list.objects[i].item, NULL, 0);
-		if (grep_object(&opt, paths, real_obj, list.objects[i].name))
+		if (grep_object(&opt, paths, real_obj, list.objects[i].name)) {
 			hit = 1;
+			if (opt.status_only)
+				break;
+		}
 	}
 	free_grep_patterns(&opt);
 	return !hit;
