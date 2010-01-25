@@ -182,6 +182,8 @@ struct cache_entry {
 /* Only remove in work directory, not index */
 #define CE_WT_REMOVE (0x400000)
 
+#define CE_UNPACKED  (0x1000000)
+
 /*
  * Extended on-disk flags
  */

@@ -31,10 +31,11 @@ struct unpack_trees_options {
 		     skip_unmerged,
 		     initial_checkout,
 		     diff_index_cached,
+		     debug_unpack,
 		     skip_sparse_checkout,
 		     gently;
 	const char *prefix;
-	int pos;
+	int cache_bottom;
 	struct dir_struct *dir;
 	merge_fn_t fn;
 	struct unpack_trees_error_msgs msgs;

@@ -48,7 +48,7 @@ test_expect_success 'setup for merge test' '
 	git tag baseline
 '
 
-test_expect_success 'do not lose a/b-2/c/d in merge (resolve)' '
+test_expect_failure 'do not lose a/b-2/c/d in merge (resolve)' '
 	git reset --hard &&
 	git checkout baseline^0 &&
 	git merge -s resolve master &&
@@ -74,7 +74,7 @@ test_expect_success 'setup a merge where dir a/b-2 changed to symlink' '
 	git tag test2
 '
 
-test_expect_failure 'merge should not have conflicts (resolve)' '
+test_expect_success 'merge should not have conflicts (resolve)' '
 	git reset --hard &&
 	git checkout baseline^0 &&
 	git merge -s resolve test2 &&

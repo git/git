@@ -210,6 +210,7 @@ extern int diff_setup_done(struct diff_options *);
 #define DIFF_PICKAXE_REGEX	2
 
 extern void diffcore_std(struct diff_options *);
+extern void diffcore_fix_diff_index(struct diff_options *);
 
 #define COMMON_DIFF_OPTIONS_HELP \
 "\ncommon diff options:\n" \
