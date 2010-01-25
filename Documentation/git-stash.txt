@@ -20,7 +20,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Use 'git stash' when you want to record the current state of the
+Use `git stash` when you want to record the current state of the
 working directory and the index, but want to go back to a clean
 working directory.  The command saves your local modifications away
 and reverts the working directory to match the `HEAD` commit.
@@ -77,7 +77,7 @@ stash@{0}: WIP on submit: 6ebd0e2... Update git-stash documentation
 stash@{1}: On master: 9cc0589... Add git-stash
 ----------------------------------------------------------------
 +
-The command takes options applicable to the 'git-log'
+The command takes options applicable to the 'git log'
 command to control what is shown and how. See linkgit:git-log[1].
 
 show [<stash>]::
@@ -85,7 +85,7 @@ show [<stash>]::
 	Show the changes recorded in the stash as a diff between the
 	stashed state and its original parent. When no `<stash>` is given,
 	shows the latest one. By default, the command shows the diffstat, but
-	it will accept any format known to 'git-diff' (e.g., `git stash show
+	it will accept any format known to 'git diff' (e.g., `git stash show
 	-p stash@\{1}` to view the second most recent stash in patch form).
 
 pop [--index] [-q|--quiet] [<stash>]::
@@ -201,7 +201,7 @@ $ git reset --soft HEAD^
 # ... continue hacking ...
 ----------------------------------------------------------------
 +
-You can use 'git-stash' to simplify the above, like this:
+You can use 'git stash' to simplify the above, like this:
 +
 ----------------------------------------------------------------
 # ... hack hack hack ...

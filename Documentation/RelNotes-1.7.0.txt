@@ -77,8 +77,25 @@ Updates since v1.6.6
    the submodule directory when it should (namely, when you are not
    interested in the submodule at all and didn't clone/checkout).
 
+ * A new attribute conflict-marker-size can be used to change the size of
+   the conflict markers from the default 7; this is useful when tracked
+   contents (e.g. git-merge documentation) have strings that resemble the
+   conflict markers.
+
+ * A new syntax "<branch>@{upstream}" can be used on the command line to
+   substitute the name of the "upstream" of the branch.  Missing branch
+   defaults to the current branch, so "git fetch && git merge @{upstream}"
+   will be equivalent to "git pull".
+
+ * "git branch --set-upstream" can be used to update the (surprise!) upstream
+   i.e. where the branch is supposed to pull and merge from (or rebase onto).
+
  * "git checkout A...B" is a way to detach HEAD at the merge base between
    A and B.
+
+ * "git checkout -m path" to reset the work tree file back into the
+   conflicted state works even when you already ran "git add path" and
+   resolved the conflicts.
 
  * "git commit --date='<date>'" can be used to override the author date
    just like "git commit --author='<name> <email>'" can be used to
@@ -87,13 +104,54 @@ Updates since v1.6.6
  * "git commit --no-status" can be used to omit the listing of the index
    and the work tree status in the editor used to prepare the log message.
 
+ * "git commit" warns a bit more aggressively until you configure user.email,
+   whose default value almost always is not (and fundamentally cannot be)
+   what you want.
+
+ * "git difftool" has been extended to make it easier to integrate it
+   with gitk.
+
  * "git fetch --all" can now be used in place of "git remote update".
+
+ * "git grep" does not rely on external grep anymore.
+
+ * "git grep" learned "--no-index" option, to search inside contents that
+   are not managed by git.
+
+ * "git log" and friends learned "--glob=heads/*" syntax that is a more
+   flexible way to complement "--branches/--tags/--remotes".
+
+ * "git merge" learned to pass options specific to strategy-backends.  E.g.
+
+    - "git merge -Xsubtree=path/to/directory" can be used to tell the subtree
+      strategy how much to shift the trees explicitly.
+
+    - "git merge -Xtheirs" can be used to auto-merge as much as possible,
+      while discarding your own changes and taking merged version in
+      conflicted regions.
 
  * "git push" learned "git push origin --delete branch", a syntactic sugar
    for "git push origin :branch".
 
+ * "git push" learned "git push --set-upstream origin forker:forkee" that
+   lets you configure your "forker" branch to later pull from "forkee"
+   branch at "origin".
+
  * "git rebase --onto A...B" means the history is replayed on top of the
    merge base between A and B.
+
+ * "git rebase -i" learned new action "fixup", that squashes the change
+   but does not affect existing log message.
+
+ * "git rebase -i" also learned --autosquash option, that is useful
+   together with the new "fixup" action.
+
+ * "git remote" learned set-url subcommand, to update (surprise!) url
+   for an existing remote nickname.
+
+ * "git rerere" learned "forget path" subcommand.  Together with "git
+   checkout -m path" it will be useful when you recorded a wrong
+   resolution.
 
  * Use of "git reset --merge" has become easier when resetting away a
    conflicted mess left in the work tree.
@@ -108,6 +166,7 @@ Updates since v1.6.6
 
  * The infrastructure to build foreign SCM interface has been updated.
 
+ * Many more commands are now built-in.
 
 Fixes since v1.6.6
 ------------------
@@ -115,8 +174,18 @@ Fixes since v1.6.6
 All of the fixes in v1.6.6.X maintenance series are included in this
 release, unless otherwise noted.
 
+ * "git branch -d branch" used to refuse deleting the branch even when
+   the branch is fully merged to its upstream branch if it is not merged
+   to the current branch.  It now deletes it in such a case.
+
+ * When "git diff" is asked to compare the work tree with something,
+   it used to consider that a checked-out submodule with uncommitted
+   changes is not modified; this could cause people to forget committing
+   these changes in the submodule before committing in the superproject.
+   It now considers such a change as a modification.
+
 --
 exec >/var/tmp/1
-O=v1.6.6-263-ge33fd3c
+O=v1.6.6.1-434-g3521c1b
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

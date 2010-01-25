@@ -22,18 +22,15 @@ static char *create_temp_file(unsigned char *sha1)
 	return path;
 }
 
-int main(int argc, char **argv)
+int cmd_unpack_file(int argc, const char **argv, const char *prefix)
 {
 	unsigned char sha1[20];
-
-	git_extract_argv0_path(argv[0]);
 
 	if (argc != 2 || !strcmp(argv[1], "-h"))
 		usage("git unpack-file <sha1>");
 	if (get_sha1(argv[1], sha1))
 		die("Not a valid object name %s", argv[1]);
 
-	setup_git_directory();
 	git_config(git_default_config, NULL);
 
 	puts(create_temp_file(sha1));

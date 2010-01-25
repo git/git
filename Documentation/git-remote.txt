@@ -14,6 +14,9 @@ SYNOPSIS
 'git remote rename' <old> <new>
 'git remote rm' <name>
 'git remote set-head' <name> (-a | -d | <branch>)
+'git remote set-url' [--push] <name> <newurl> [<oldurl>]
+'git remote set-url --add' [--push] <name> <newurl>
+'git remote set-url --delete' [--push] <name> <url>
 'git remote' [-v | --verbose] 'show' [-n] <name>
 'git remote prune' [-n | --dry-run] <name>
 'git remote' [-v | --verbose] 'update' [-p | --prune] [group | remote]...
@@ -101,6 +104,20 @@ remote set-head origin master" will set `$GIT_DIR/refs/remotes/origin/HEAD` to
 `refs/remotes/origin/master` already exists; if not it must be fetched first.
 +
 
+'set-url'::
+
+Changes URL remote points to. Sets first URL remote points to matching
+regex <oldurl> (first URL if no <oldurl> is given) to <newurl>. If
+<oldurl> doesn't match any URL, error occurs and nothing is changed.
++
+With '--push', push URLs are manipulated instead of fetch URLs.
++
+With '--add', instead of changing some URL, new URL is added.
++
+With '--delete', instead of changing some URL, all URLs matching
+regex <url> are deleted. Trying to delete all non-push URLs is an
+error.
+
 'show'::
 
 Gives some information about the remote <name>.
@@ -161,7 +178,7 @@ $ git checkout -b nfs linux-nfs/master
 ...
 ------------
 
-* Imitate 'git-clone' but track only selected branches
+* Imitate 'git clone' but track only selected branches
 +
 ------------
 $ mkdir project.git

@@ -10,6 +10,15 @@ int prefixcmp(const char *str, const char *prefix)
 			return (unsigned char)*prefix - (unsigned char)*str;
 }
 
+int suffixcmp(const char *str, const char *suffix)
+{
+	int len = strlen(str), suflen = strlen(suffix);
+	if (len < suflen)
+		return -1;
+	else
+		return strcmp(str + len - suflen, suffix);
+}
+
 /*
  * Used as the default ->buf value, so that people can always assume
  * buf is non NULL and ->buf is NUL terminated even for a freshly

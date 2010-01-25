@@ -135,6 +135,11 @@ sub parseMakeOutput
             }
         } while($ate_next);
 
+        if ($text =~ /^test /) {
+            # options to test (eg -o) may be mistaken for linker options
+            next;
+        }
+
         if($text =~ / -c /) {
             # compilation
             handleCompileLine($text, $line);
@@ -179,9 +184,6 @@ sub parseMakeOutput
 #
 #        } elsif ($text =~ /generate-cmdlist\.sh/) {
 #            # command for generating list of commands
-#
-#        } elsif ($text =~ /^test / && $text =~ /|| rm -f /) {
-#            # commands removing executables, if they exist
 #
 #        } elsif ($text =~ /new locations or Tcl/) {
 #            # command for detecting Tcl/Tk changes
@@ -317,6 +319,7 @@ sub handleLinkLine
             push(@libs, "zlib.lib");
 	} elsif ("$part" eq "-lcrypto") {
             push(@libs, "libeay32.lib");
+        } elsif ("$part" eq "-lssl") {
             push(@libs, "ssleay32.lib");
         } elsif ($part =~ /^-/) {
             push(@lflags, $part);

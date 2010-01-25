@@ -387,19 +387,10 @@ EXTRA_PROGRAMS =
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS += $(EXTRA_PROGRAMS)
 PROGRAMS += git-fast-import$X
-PROGRAMS += git-hash-object$X
 PROGRAMS += git-imap-send$X
-PROGRAMS += git-index-pack$X
-PROGRAMS += git-merge-index$X
-PROGRAMS += git-merge-tree$X
-PROGRAMS += git-mktag$X
-PROGRAMS += git-pack-redundant$X
-PROGRAMS += git-patch-id$X
 PROGRAMS += git-shell$X
 PROGRAMS += git-show-index$X
-PROGRAMS += git-unpack-file$X
 PROGRAMS += git-upload-pack$X
-PROGRAMS += git-var$X
 PROGRAMS += git-http-backend$X
 
 # List built-in command $C whose implementation cmd_$C() is not in
@@ -559,6 +550,7 @@ LIB_OBJS += graph.o
 LIB_OBJS += grep.o
 LIB_OBJS += hash.o
 LIB_OBJS += help.o
+LIB_OBJS += hex.o
 LIB_OBJS += ident.o
 LIB_OBJS += levenshtein.o
 LIB_OBJS += list-objects.o
@@ -658,7 +650,9 @@ BUILTIN_OBJS += builtin-for-each-ref.o
 BUILTIN_OBJS += builtin-fsck.o
 BUILTIN_OBJS += builtin-gc.o
 BUILTIN_OBJS += builtin-grep.o
+BUILTIN_OBJS += builtin-hash-object.o
 BUILTIN_OBJS += builtin-help.o
+BUILTIN_OBJS += builtin-index-pack.o
 BUILTIN_OBJS += builtin-init-db.o
 BUILTIN_OBJS += builtin-log.o
 BUILTIN_OBJS += builtin-ls-files.o
@@ -669,13 +663,18 @@ BUILTIN_OBJS += builtin-mailsplit.o
 BUILTIN_OBJS += builtin-merge.o
 BUILTIN_OBJS += builtin-merge-base.o
 BUILTIN_OBJS += builtin-merge-file.o
+BUILTIN_OBJS += builtin-merge-index.o
 BUILTIN_OBJS += builtin-merge-ours.o
 BUILTIN_OBJS += builtin-merge-recursive.o
+BUILTIN_OBJS += builtin-merge-tree.o
+BUILTIN_OBJS += builtin-mktag.o
 BUILTIN_OBJS += builtin-mktree.o
 BUILTIN_OBJS += builtin-mv.o
 BUILTIN_OBJS += builtin-name-rev.o
 BUILTIN_OBJS += builtin-pack-objects.o
+BUILTIN_OBJS += builtin-pack-redundant.o
 BUILTIN_OBJS += builtin-pack-refs.o
+BUILTIN_OBJS += builtin-patch-id.o
 BUILTIN_OBJS += builtin-prune-packed.o
 BUILTIN_OBJS += builtin-prune.o
 BUILTIN_OBJS += builtin-push.o
@@ -698,11 +697,13 @@ BUILTIN_OBJS += builtin-stripspace.o
 BUILTIN_OBJS += builtin-symbolic-ref.o
 BUILTIN_OBJS += builtin-tag.o
 BUILTIN_OBJS += builtin-tar-tree.o
+BUILTIN_OBJS += builtin-unpack-file.o
 BUILTIN_OBJS += builtin-unpack-objects.o
 BUILTIN_OBJS += builtin-update-index.o
 BUILTIN_OBJS += builtin-update-ref.o
 BUILTIN_OBJS += builtin-update-server-info.o
 BUILTIN_OBJS += builtin-upload-archive.o
+BUILTIN_OBJS += builtin-var.o
 BUILTIN_OBJS += builtin-verify-pack.o
 BUILTIN_OBJS += builtin-verify-tag.o
 BUILTIN_OBJS += builtin-write-tree.o
@@ -993,6 +994,7 @@ ifeq ($(uname_S),Windows)
 	COMPAT_CFLAGS = -D__USE_MINGW_ACCESS -DNOGDI -DHAVE_STRING_H -DHAVE_ALLOCA_H -Icompat -Icompat/fnmatch -Icompat/regex -Icompat/fnmatch -Icompat/win32 -DSTRIP_EXTENSION=\".exe\"
 	BASIC_LDFLAGS = -IGNORE:4217 -IGNORE:4049 -NOLOGO -SUBSYSTEM:CONSOLE -NODEFAULTLIB:MSVCRT.lib
 	EXTLIBS = advapi32.lib shell32.lib wininet.lib ws2_32.lib
+	PTHREAD_LIBS =
 	lib =
 ifndef DEBUG
 	BASIC_CFLAGS += -GL -Os -MT
@@ -1035,11 +1037,12 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_PYTHON = YesPlease
 	BLK_SHA1 = YesPlease
 	THREADED_DELTA_SEARCH = YesPlease
-	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/fnmatch
+	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/fnmatch -Icompat/win32
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/winansi.o \
 		compat/win32/pthread.o
 	EXTLIBS += -lws2_32
+	PTHREAD_LIBS =
 	X = .exe
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	htmldir=doc/git/html/

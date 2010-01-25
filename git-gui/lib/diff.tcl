@@ -664,6 +664,7 @@ proc apply_line {x y} {
 		}
 		set i_l $next_l
 	}
+	set patch "$patch$pre_context"
 	set patch "@@ -$hln,$n +$hln,[eval expr $n $sign 1] @@\n$patch"
 
 	if {[catch {

@@ -65,7 +65,7 @@ OPTIONS
 BUGS
 ----
 Comparing blobs or trees that have been replaced with those that
-replace them will not work properly. And using 'git reset --hard' to
+replace them will not work properly. And using `git reset --hard` to
 go back to a replaced commit will move the branch to the replacement
 commit instead of the replaced commit.
 

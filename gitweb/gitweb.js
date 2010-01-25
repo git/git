@@ -779,7 +779,12 @@ function handleResponse() {
 	}
 
 	// the server returned error
-	if (xhr.readyState === 3 && xhr.status !== 200) {
+	// try ... catch block is to work around bug in IE8
+	try {
+		if (xhr.readyState === 3 && xhr.status !== 200) {
+			return;
+		}
+	} catch (e) {
 		return;
 	}
 	if (xhr.readyState === 4 && xhr.status !== 200) {

@@ -242,6 +242,14 @@ int add_excludes_from_file_to_list(const char *fname,
 		if (!check_index ||
 		    (buf = read_skip_worktree_file_from_index(fname, &size)) == NULL)
 			return -1;
+		if (size == 0) {
+			free(buf);
+			return 0;
+		}
+		if (buf[size-1] != '\n') {
+			buf = xrealloc(buf, size+1);
+			buf[size++] = '\n';
+		}
 	}
 	else {
 		size = xsize_t(st.st_size);
@@ -249,19 +257,21 @@ int add_excludes_from_file_to_list(const char *fname,
 			close(fd);
 			return 0;
 		}
-		buf = xmalloc(size);
+		buf = xmalloc(size+1);
 		if (read_in_full(fd, buf, size) != size) {
+			free(buf);
 			close(fd);
 			return -1;
 		}
+		buf[size++] = '\n';
 		close(fd);
 	}
 
 	if (buf_p)
 		*buf_p = buf;
 	entry = buf;
-	for (i = 0; i <= size; i++) {
-		if (i == size || buf[i] == '\n') {
+	for (i = 0; i < size; i++) {
+		if (buf[i] == '\n') {
 			if (entry != buf + i && entry[0] != '#') {
 				buf[i - (i && buf[i-1] == '\r')] = 0;
 				add_exclude(entry, base, baselen, which);

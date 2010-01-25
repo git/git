@@ -66,7 +66,7 @@ static void merge_all(void)
 	}
 }
 
-int main(int argc, char **argv)
+int cmd_merge_index(int argc, const char **argv, const char *prefix)
 {
 	int i, force_file = 0;
 
@@ -78,9 +78,6 @@ int main(int argc, char **argv)
 	if (argc < 3)
 		usage("git merge-index [-o] [-q] <merge-program> (-a | [--] <filename>*)");
 
-	git_extract_argv0_path(argv[0]);
-
-	setup_git_directory();
 	read_cache();
 
 	i = 1;
@@ -94,7 +91,7 @@ int main(int argc, char **argv)
 	}
 	pgm = argv[i++];
 	for (; i < argc; i++) {
-		char *arg = argv[i];
+		const char *arg = argv[i];
 		if (!force_file && *arg == '-') {
 			if (!strcmp(arg, "--")) {
 				force_file = 1;

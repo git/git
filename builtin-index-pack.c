@@ -166,7 +166,7 @@ static void use(int bytes)
 	consumed_bytes += bytes;
 }
 
-static char *open_pack_file(char *pack_name)
+static const char *open_pack_file(const char *pack_name)
 {
 	if (from_stdin) {
 		input_fd = 0;
@@ -870,17 +870,15 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 	return git_default_config(k, v, cb);
 }
 
-int main(int argc, char **argv)
+int cmd_index_pack(int argc, const char **argv, const char *prefix)
 {
 	int i, fix_thin_pack = 0;
-	char *curr_pack, *pack_name = NULL;
-	char *curr_index, *index_name = NULL;
+	const char *curr_pack, *curr_index;
+	const char *index_name = NULL, *pack_name = NULL;
 	const char *keep_name = NULL, *keep_msg = NULL;
 	char *index_name_buf = NULL, *keep_name_buf = NULL;
 	struct pack_idx_entry **idx_objects;
 	unsigned char pack_sha1[20];
-
-	git_extract_argv0_path(argv[0]);
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(index_pack_usage);
@@ -906,7 +904,7 @@ int main(int argc, char **argv)
 	}
 
 	for (i = 1; i < argc; i++) {
-		char *arg = argv[i];
+		const char *arg = argv[i];
 
 		if (*arg == '-') {
 			if (!strcmp(arg, "--stdin")) {
@@ -1039,9 +1037,9 @@ int main(int argc, char **argv)
 	free(index_name_buf);
 	free(keep_name_buf);
 	if (pack_name == NULL)
-		free(curr_pack);
+		free((void *) curr_pack);
 	if (index_name == NULL)
-		free(curr_index);
+		free((void *) curr_index);
 
 	return 0;
 }

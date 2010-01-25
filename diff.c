@@ -2029,9 +2029,14 @@ static int populate_from_stdin(struct diff_filespec *s)
 static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
 {
 	int len;
-	char *data = xmalloc(100);
+	char *data = xmalloc(100), *dirty = "";
+
+	/* Are we looking at the work tree? */
+	if (!s->sha1_valid && s->dirty_submodule)
+		dirty = "-dirty";
+
 	len = snprintf(data, 100,
-		"Subproject commit %s\n", sha1_to_hex(s->sha1));
+		       "Subproject commit %s%s\n", sha1_to_hex(s->sha1), dirty);
 	s->data = data;
 	s->size = len;
 	s->should_free = 1;
@@ -3673,6 +3678,23 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 	*q = outq;
 }
 
+static int diffnamecmp(const void *a_, const void *b_)
+{
+	const struct diff_filepair *a = *((const struct diff_filepair **)a_);
+	const struct diff_filepair *b = *((const struct diff_filepair **)b_);
+	const char *name_a, *name_b;
+
+	name_a = a->one ? a->one->path : a->two->path;
+	name_b = b->one ? b->one->path : b->two->path;
+	return strcmp(name_a, name_b);
+}
+
+void diffcore_fix_diff_index(struct diff_options *options)
+{
+	struct diff_queue_struct *q = &diff_queued_diff;
+	qsort(q->queue, q->nr, sizeof(q->queue[0]), diffnamecmp);
+}
+
 void diffcore_std(struct diff_options *options)
 {
 	if (options->skip_stat_unmatch)
@@ -3714,7 +3736,7 @@ int diff_result_code(struct diff_options *opt, int status)
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
-		    const char *concatpath)
+		    const char *concatpath, unsigned dirty_submodule)
 {
 	struct diff_filespec *one, *two;
 
@@ -3746,8 +3768,10 @@ void diff_addremove(struct diff_options *options,
 
 	if (addremove != '+')
 		fill_filespec(one, sha1, mode);
-	if (addremove != '-')
+	if (addremove != '-') {
 		fill_filespec(two, sha1, mode);
+		two->dirty_submodule = dirty_submodule;
+	}
 
 	diff_queue(&diff_queued_diff, one, two);
 	if (!DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
@@ -3758,7 +3782,8 @@ void diff_change(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
-		 const char *concatpath)
+		 const char *concatpath,
+		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
 {
 	struct diff_filespec *one, *two;
 
@@ -3771,6 +3796,8 @@ void diff_change(struct diff_options *options,
 		const unsigned char *tmp_c;
 		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
 		tmp_c = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_c;
+		tmp = old_dirty_submodule; old_dirty_submodule = new_dirty_submodule;
+			new_dirty_submodule = tmp;
 	}
 
 	if (options->prefix &&
@@ -3781,6 +3808,8 @@ void diff_change(struct diff_options *options,
 	two = alloc_filespec(concatpath);
 	fill_filespec(one, old_sha1, old_mode);
 	fill_filespec(two, new_sha1, new_mode);
+	one->dirty_submodule = old_dirty_submodule;
+	two->dirty_submodule = new_dirty_submodule;
 
 	diff_queue(&diff_queued_diff, one, two);
 	if (!DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))

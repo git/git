@@ -54,7 +54,7 @@ static const char *explanation(struct merge_list *entry)
 	return "removed in remote";
 }
 
-extern void *merge_file(struct blob *, struct blob *, struct blob *, unsigned long *);
+extern void *merge_file(const char *, struct blob *, struct blob *, struct blob *, unsigned long *);
 
 static void *result(struct merge_list *entry, unsigned long *size)
 {
@@ -76,7 +76,7 @@ static void *result(struct merge_list *entry, unsigned long *size)
 	their = NULL;
 	if (entry)
 		their = entry->blob;
-	return merge_file(base, our, their, size);
+	return merge_file(entry->path, base, our, their, size);
 }
 
 static void *origin(struct merge_list *entry, unsigned long *size)
@@ -337,17 +337,13 @@ static void *get_tree_descriptor(struct tree_desc *desc, const char *rev)
 	return buf;
 }
 
-int main(int argc, char **argv)
+int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 {
 	struct tree_desc t[3];
 	void *buf1, *buf2, *buf3;
 
 	if (argc != 4)
 		usage(merge_tree_usage);
-
-	git_extract_argv0_path(argv[0]);
-
-	setup_git_directory();
 
 	buf1 = get_tree_descriptor(t+0, argv[1]);
 	buf2 = get_tree_descriptor(t+1, argv[2]);

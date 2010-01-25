@@ -343,7 +343,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 			DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
 	setup_standard_excludes(&dir);
 
-	fill_directory(&dir, NULL);
+	fill_directory(&dir, s->pathspec);
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
 		if (!cache_name_is_other(ent->name, ent->len))
@@ -459,7 +459,7 @@ static void wt_status_print_changed(struct wt_status *s)
 	wt_status_print_trailer(s);
 }
 
-static void wt_status_print_submodule_summary(struct wt_status *s)
+static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitted)
 {
 	struct child_process sm_summary;
 	char summary_limit[64];
@@ -468,11 +468,11 @@ static void wt_status_print_submodule_summary(struct wt_status *s)
 	const char *argv[] = {
 		"submodule",
 		"summary",
-		"--cached",
+		uncommitted ? "--files" : "--cached",
 		"--for-status",
 		"--summary-limit",
 		summary_limit,
-		s->amend ? "HEAD^" : "HEAD",
+		uncommitted ? NULL : (s->amend ? "HEAD^" : "HEAD"),
 		NULL
 	};
 
@@ -580,8 +580,10 @@ void wt_status_print(struct wt_status *s)
 	wt_status_print_updated(s);
 	wt_status_print_unmerged(s);
 	wt_status_print_changed(s);
-	if (s->submodule_summary)
-		wt_status_print_submodule_summary(s);
+	if (s->submodule_summary) {
+		wt_status_print_submodule_summary(s, 0);  /* staged */
+		wt_status_print_submodule_summary(s, 1);  /* unstaged */
+	}
 	if (s->show_untracked_files)
 		wt_status_print_untracked(s);
 	else if (s->commitable)

@@ -65,6 +65,34 @@ static int exclude_per_directory_cb(const struct option *opt, const char *arg,
 	return 0;
 }
 
+static void debug_stage(const char *label, struct cache_entry *ce,
+			struct unpack_trees_options *o)
+{
+	printf("%s ", label);
+	if (!ce)
+		printf("(missing)\n");
+	else if (ce == o->df_conflict_entry)
+		printf("(conflict)\n");
+	else
+		printf("%06o #%d %s %.8s\n",
+		       ce->ce_mode, ce_stage(ce), ce->name,
+		       sha1_to_hex(ce->sha1));
+}
+
+static int debug_merge(struct cache_entry **stages, struct unpack_trees_options *o)
+{
+	int i;
+
+	printf("* %d-way merge\n", o->merge_size);
+	debug_stage("index", stages[0], o);
+	for (i = 1; i <= o->merge_size; i++) {
+		char buf[24];
+		sprintf(buf, "ent#%d", i);
+		debug_stage(buf, stages[i], o);
+	}
+	return 0;
+}
+
 static struct lock_file lock_file;
 
 int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
@@ -101,6 +129,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			    "don't check the working tree after merging", 1),
 		OPT_SET_INT(0, "no-sparse-checkout", &opts.skip_sparse_checkout,
 			    "skip applying sparse checkout filter", 1),
+		OPT_SET_INT(0, "debug-unpack", &opts.debug_unpack,
+			    "debug unpack-trees", 1),
 		OPT_END()
 	};
 
@@ -169,6 +199,9 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			opts.head_idx = 1;
 	}
 
+	if (opts.debug_unpack)
+		opts.fn = debug_merge;
+
 	cache_tree_free(&active_cache_tree);
 	for (i = 0; i < nr_trees; i++) {
 		struct tree *tree = trees[i];
@@ -177,6 +210,9 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	}
 	if (unpack_trees(nr_trees, t, &opts))
 		return 128;
+
+	if (opts.debug_unpack)
+		return 0; /* do not write the index out */
 
 	/*
 	 * When reading only one tree (either the most basic form,

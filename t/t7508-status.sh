@@ -583,7 +583,7 @@ cat >expect <<EOF
 #
 #	modified:   dir1/modified
 #
-# Modified submodules:
+# Submodule changes to be committed:
 #
 # * sm 0000000...$head (1):
 #   > Add foo
@@ -676,7 +676,7 @@ cat >expect <<EOF
 #
 #	modified:   dir1/modified
 #
-# Modified submodules:
+# Submodule changes to be committed:
 #
 # * sm 0000000...$head (1):
 #   > Add foo

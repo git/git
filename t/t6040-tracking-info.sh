@@ -89,4 +89,25 @@ test_expect_success 'status when tracking annotated tags' '
 	grep "set up to track" actual &&
 	git checkout heavytrack
 '
+
+test_expect_success 'setup tracking with branch --set-upstream on existing branch' '
+	git branch from-master master &&
+	test_must_fail git config branch.from-master.merge > actual &&
+	git branch --set-upstream from-master master &&
+	git config branch.from-master.merge > actual &&
+	grep -q "^refs/heads/master$" actual
+'
+
+test_expect_success '--set-upstream does not change branch' '
+	git branch from-master2 master &&
+	test_must_fail git config branch.from-master2.merge > actual &&
+	git rev-list from-master2 &&
+	git update-ref refs/heads/from-master2 from-master2^ &&
+	git rev-parse from-master2 >expect2 &&
+	git branch --set-upstream from-master2 master &&
+	git config branch.from-master.merge > actual &&
+	git rev-parse from-master2 >actual2 &&
+	grep -q "^refs/heads/master$" actual &&
+	cmp expect2 actual2
+'
 test_done

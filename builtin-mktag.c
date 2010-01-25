@@ -153,17 +153,13 @@ static int verify_tag(char *buffer, unsigned long size)
 
 #undef PD_FMT
 
-int main(int argc, char **argv)
+int cmd_mktag(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf buf = STRBUF_INIT;
 	unsigned char result_sha1[20];
 
 	if (argc != 1)
 		usage("git mktag < signaturefile");
-
-	git_extract_argv0_path(argv[0]);
-
-	setup_git_directory();
 
 	if (strbuf_read(&buf, 0, 4096) < 0) {
 		die_errno("could not read from stdin");

@@ -758,8 +758,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		new.name = arg;
 		if ((new.commit = lookup_commit_reference_gently(rev, 1))) {
 			setup_branch_path(&new);
-			if (resolve_ref(new.path, rev, 1, NULL))
-				new.commit = lookup_commit_reference(rev);
+
+			if ((check_ref_format(new.path) == CHECK_REF_FORMAT_OK) &&
+			    resolve_ref(new.path, rev, 1, NULL))
+				;
 			else
 				new.path = NULL;
 			parse_commit(new.commit);

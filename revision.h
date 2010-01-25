@@ -80,6 +80,9 @@ struct rev_info {
 	/* Format info */
 	unsigned int	shown_one:1,
 			show_merge:1,
+			show_notes:1,
+			show_notes_given:1,
+			pretty_given:1,
 			abbrev_commit:1,
 			use_terminator:1,
 			missing_newline:1,

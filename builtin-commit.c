@@ -1047,7 +1047,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		s.pathspec = get_pathspec(prefix, argv);
 
 	read_cache();
-	refresh_cache(REFRESH_QUIET|REFRESH_UNMERGED);
+	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, s.pathspec, NULL, NULL);
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
 	s.in_merge = in_merge;
 	wt_status_collect(&s);

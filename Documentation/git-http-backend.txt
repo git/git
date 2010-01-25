@@ -8,7 +8,7 @@ git-http-backend - Server side implementation of Git over HTTP
 SYNOPSIS
 --------
 [verse]
-'git-http-backend'
+'git http-backend'
 
 DESCRIPTION
 -----------
@@ -24,10 +24,10 @@ that hasn't explicitly been marked for export this way (unless the
 GIT_HTTP_EXPORT_ALL environmental variable is set).
 
 By default, only the `upload-pack` service is enabled, which serves
-'git-fetch-pack' and 'git-ls-remote' clients, which are invoked from
-'git-fetch', 'git-pull', and 'git-clone'.  If the client is authenticated,
-the `receive-pack` service is enabled, which serves 'git-send-pack'
-clients, which is invoked from 'git-push'.
+'git fetch-pack' and 'git ls-remote' clients, which are invoked from
+'git fetch', 'git pull', and 'git clone'.  If the client is authenticated,
+the `receive-pack` service is enabled, which serves 'git send-pack'
+clients, which is invoked from 'git push'.
 
 SERVICES
 --------
@@ -43,12 +43,12 @@ http.getanyfile::
 	by setting this configuration item to `false`.
 
 http.uploadpack::
-	This serves 'git-fetch-pack' and 'git-ls-remote' clients.
+	This serves 'git fetch-pack' and 'git ls-remote' clients.
 	It is enabled by default, but a repository can disable it
 	by setting this configuration item to `false`.
 
 http.receivepack::
-	This serves 'git-send-pack' clients, allowing push.  It is
+	This serves 'git send-pack' clients, allowing push.  It is
 	disabled by default for anonymous users, and enabled by
 	default for users authenticated by the web server.  It can be
 	disabled by setting this item to `false`, or enabled for all
@@ -56,11 +56,11 @@ http.receivepack::
 
 URL TRANSLATION
 ---------------
-To determine the location of the repository on disk, 'git-http-backend'
+To determine the location of the repository on disk, 'git http-backend'
 concatenates the environment variables PATH_INFO, which is set
 automatically by the web server, and GIT_PROJECT_ROOT, which must be set
 manually in the web server configuration.  If GIT_PROJECT_ROOT is not
-set, 'git-http-backend' reads PATH_TRANSLATED, which is also set
+set, 'git http-backend' reads PATH_TRANSLATED, which is also set
 automatically by the web server.
 
 EXAMPLES
@@ -104,7 +104,7 @@ directive around the repository, or one of its parent directories:
 ----------------------------------------------------------------
 +
 To serve gitweb at the same url, use a ScriptAliasMatch to only
-those URLs that 'git-http-backend' can handle, and forward the
+those URLs that 'git http-backend' can handle, and forward the
 rest to gitweb:
 +
 ----------------------------------------------------------------
@@ -153,7 +153,7 @@ ScriptAlias /git/ /var/www/cgi-bin/gitweb.cgi/
 
 ENVIRONMENT
 -----------
-'git-http-backend' relies upon the CGI environment variables set
+'git http-backend' relies upon the CGI environment variables set
 by the invoking web server, including:
 
 * PATH_INFO (if GIT_PROJECT_ROOT is set, otherwise PATH_TRANSLATED)

@@ -126,9 +126,6 @@ cat >expected <<\EOF
 100644 X 0	Z/NN
 EOF
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-
 check_result () {
     git ls-files --stage | sed -e 's/ '"$_x40"' / X /' >current &&
     test_cmp expected current

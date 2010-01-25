@@ -16,6 +16,9 @@ static const char * const builtin_remote_usage[] = {
 	"git remote [-v | --verbose] show [-n] <name>",
 	"git remote prune [-n | --dry-run] <name>",
 	"git remote [-v | --verbose] update [-p | --prune] [group | remote]",
+	"git remote set-url <name> <newurl> [<oldurl>]",
+	"git remote set-url --add <name> <newurl>",
+	"git remote set-url --delete <name> <url>",
 	NULL
 };
 
@@ -51,6 +54,13 @@ static const char * const builtin_remote_prune_usage[] = {
 
 static const char * const builtin_remote_update_usage[] = {
 	"git remote update [<options>] [<group> | <remote>]...",
+	NULL
+};
+
+static const char * const builtin_remote_seturl_usage[] = {
+	"git remote set-url [--push] <name> <newurl> [<oldurl>]",
+	"git remote set-url --add <name> <newurl>",
+	"git remote set-url --delete <name> <url>",
 	NULL
 };
 
@@ -1255,6 +1265,92 @@ static int update(int argc, const char **argv)
 	return run_command_v_opt(fetch_argv, RUN_GIT_CMD);
 }
 
+static int set_url(int argc, const char **argv)
+{
+	int i, push_mode = 0, add_mode = 0, delete_mode = 0;
+	int matches = 0, negative_matches = 0;
+	const char *remotename = NULL;
+	const char *newurl = NULL;
+	const char *oldurl = NULL;
+	struct remote *remote;
+	regex_t old_regex;
+	const char **urlset;
+	int urlset_nr;
+	struct strbuf name_buf = STRBUF_INIT;
+	struct option options[] = {
+		OPT_BOOLEAN('\0', "push", &push_mode,
+			    "manipulate push URLs"),
+		OPT_BOOLEAN('\0', "add", &add_mode,
+			    "add URL"),
+		OPT_BOOLEAN('\0', "delete", &delete_mode,
+			    "delete URLs"),
+		OPT_END()
+	};
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_update_usage,
+			     PARSE_OPT_KEEP_ARGV0);
+
+	if (add_mode && delete_mode)
+		die("--add --delete doesn't make sense");
+
+	if (argc < 3 || argc > 4 || ((add_mode || delete_mode) && argc != 3))
+		usage_with_options(builtin_remote_seturl_usage, options);
+
+	remotename = argv[1];
+	newurl = argv[2];
+	if (argc > 3)
+		oldurl = argv[3];
+
+	if (delete_mode)
+		oldurl = newurl;
+
+	if (!remote_is_configured(remotename))
+		die("No such remote '%s'", remotename);
+	remote = remote_get(remotename);
+
+	if (push_mode) {
+		strbuf_addf(&name_buf, "remote.%s.pushurl", remotename);
+		urlset = remote->pushurl;
+		urlset_nr = remote->pushurl_nr;
+	} else {
+		strbuf_addf(&name_buf, "remote.%s.url", remotename);
+		urlset = remote->url;
+		urlset_nr = remote->url_nr;
+	}
+
+	/* Special cases that add new entry. */
+	if ((!oldurl && !delete_mode) || add_mode) {
+		if (add_mode)
+			git_config_set_multivar(name_buf.buf, newurl,
+				"^$", 0);
+		else
+			git_config_set(name_buf.buf, newurl);
+		strbuf_release(&name_buf);
+		return 0;
+	}
+
+	/* Old URL specified. Demand that one matches. */
+	if (regcomp(&old_regex, oldurl, REG_EXTENDED))
+		die("Invalid old URL pattern: %s", oldurl);
+
+	for (i = 0; i < urlset_nr; i++)
+		if (!regexec(&old_regex, urlset[i], 0, NULL, 0))
+			matches++;
+		else
+			negative_matches++;
+	if (!delete_mode && !matches)
+		die("No such URL found: %s", oldurl);
+	if (delete_mode && !negative_matches && !push_mode)
+		die("Will not delete all non-push URLs");
+
+	regfree(&old_regex);
+
+	if (!delete_mode)
+		git_config_set_multivar(name_buf.buf, newurl, oldurl, 0);
+	else
+		git_config_set_multivar(name_buf.buf, NULL, oldurl, 1);
+	return 0;
+}
+
 static int get_one_entry(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
@@ -1334,6 +1430,8 @@ int cmd_remote(int argc, const char **argv, const char *prefix)
 		result = rm(argc, argv);
 	else if (!strcmp(argv[0], "set-head"))
 		result = set_head(argc, argv);
+	else if (!strcmp(argv[0], "set-url"))
+		result = set_url(argc, argv);
 	else if (!strcmp(argv[0], "show"))
 		result = show(argc, argv);
 	else if (!strcmp(argv[0], "prune"))

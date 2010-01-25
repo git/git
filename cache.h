@@ -182,6 +182,8 @@ struct cache_entry {
 /* Only remove in work directory, not index */
 #define CE_WT_REMOVE (0x400000)
 
+#define CE_UNPACKED  (0x1000000)
+
 /*
  * Extended on-disk flags
  */
@@ -553,6 +555,7 @@ enum branch_track {
 	BRANCH_TRACK_REMOTE,
 	BRANCH_TRACK_ALWAYS,
 	BRANCH_TRACK_EXPLICIT,
+	BRANCH_TRACK_OVERRIDE,
 };
 
 enum rebase_setup_type {
@@ -1007,6 +1010,7 @@ extern int diff_auto_refresh_index;
 
 /* match-trees.c */
 void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
+void shift_tree_by(const unsigned char *, const unsigned char *, unsigned char *, const char *);
 
 /*
  * whitespace rules.
