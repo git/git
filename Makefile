@@ -1666,12 +1666,37 @@ git.o git.spec \
 	$(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	: GIT-VERSION-FILE
 
+GIT_OBJS := $(LIB_OBJS) $(BUILTIN_OBJS) $(TEST_OBJS) \
+	git.o http.o http-walker.o remote-curl.o \
+	$(patsubst git-%$X,%.o,$(PROGRAMS))
+XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
+	xdiff/xmerge.o xdiff/xpatience.o
+
 %.o: %.c GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 %.s: %.c GIT-CFLAGS FORCE
 	$(QUIET_CC)$(CC) -S $(ALL_CFLAGS) $<
 %.o: %.S GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+
+$(GIT_OBJS): $(LIB_H)
+builtin-branch.o builtin-checkout.o builtin-clone.o builtin-reset.o branch.o transport.o: branch.h
+builtin-bundle.o bundle.o transport.o: bundle.h
+builtin-bisect--helper.o builtin-rev-list.o bisect.o: bisect.h
+builtin-clone.o builtin-fetch-pack.o transport.o: fetch-pack.h
+builtin-send-pack.o transport.o: send-pack.h
+builtin-log.o builtin-shortlog.o: shortlog.h
+builtin-prune.o builtin-reflog.o reachable.o: reachable.h
+builtin-commit.o builtin-revert.o wt-status.o: wt-status.h
+builtin-tar-tree.o archive-tar.o: tar.h
+builtin-pack-objects.o: thread-utils.h
+http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
+http.o http-walker.o http-push.o remote-curl.o: http.h
+
+
+xdiff-interface.o $(XDIFF_OBJS): \
+	xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
+	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
 
 exec_cmd.s exec_cmd.o: ALL_CFLAGS += \
 	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
@@ -1696,10 +1721,6 @@ git-imap-send$X: imap-send.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(OPENSSL_LINK) $(OPENSSL_LIBSSL)
 
-http.o http-walker.o http-push.o remote-curl.o: http.h
-
-http.o http-walker.o remote-curl.o: $(LIB_H)
-
 git-http-fetch$X: revision.o http.o http-walker.o http-fetch.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL)
@@ -1717,28 +1738,8 @@ $(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
-$(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
-$(patsubst git-%$X,%.o,$(PROGRAMS)) $(TEST_OBJS) git.o: $(LIB_H)
-builtin-branch.o builtin-checkout.o builtin-clone.o builtin-reset.o branch.o transport.o: branch.h
-builtin-bundle.o bundle.o transport.o: bundle.h
-builtin-bisect--helper.o builtin-rev-list.o bisect.o: bisect.h
-builtin-clone.o builtin-fetch-pack.o transport.o: fetch-pack.h
-builtin-send-pack.o transport.o: send-pack.h
-builtin-log.o builtin-shortlog.o: shortlog.h
-builtin-prune.o builtin-reflog.o reachable.o: reachable.h
-builtin-commit.o builtin-revert.o wt-status.o: wt-status.h
-builtin-tar-tree.o archive-tar.o: tar.h
-builtin-pack-objects.o: thread-utils.h
-http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
-
 $(LIB_FILE): $(LIB_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(LIB_OBJS)
-
-XDIFF_OBJS=xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
-	xdiff/xmerge.o xdiff/xpatience.o
-xdiff-interface.o $(XDIFF_OBJS): \
-	xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
-	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
 
 $(XDIFF_LIB): $(XDIFF_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(XDIFF_OBJS)
