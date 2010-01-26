@@ -13,45 +13,43 @@ field location     {}; # location of the remote the user has chosen
 field opt_action fetch; # action to do after registering the remote locally
 
 constructor dialog {} {
-	global repo_config
+	global repo_config use_ttk NS
 
-	make_toplevel top w
+	make_dialog top w
+	wm withdraw $top
 	wm title $top [append "[appname] ([reponame]): " [mc "Add Remote"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	label $w.header -text [mc "Add New Remote"] -font font_uibold
+	${NS}::label $w.header -text [mc "Add New Remote"] \
+		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.create -text [mc Add] \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.create -text [mc Add] \
 		-default active \
 		-command [cb _add]
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text [mc Cancel] \
+	${NS}::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.desc -text [mc "Remote Details"]
+	${NS}::labelframe $w.desc -text [mc "Remote Details"]
 
-	label $w.desc.name_l -text [mc "Name:"]
+	${NS}::label $w.desc.name_l -text [mc "Name:"]
 	set w_name $w.desc.name_t
-	entry $w_name \
-		-borderwidth 1 \
-		-relief sunken \
+	${NS}::entry $w_name \
 		-width 40 \
 		-textvariable @name \
 		-validate key \
 		-validatecommand [cb _validate_name %d %S]
 	grid $w.desc.name_l $w_name -sticky we -padx {0 5}
 
-	label $w.desc.loc_l -text [mc "Location:"]
+	${NS}::label $w.desc.loc_l -text [mc "Location:"]
 	set w_loc $w.desc.loc_t
-	entry $w_loc \
-		-borderwidth 1 \
-		-relief sunken \
+	${NS}::entry $w_loc \
 		-width 40 \
 		-textvariable @location
 	grid $w.desc.loc_l $w_loc -sticky we -padx {0 5}
@@ -59,21 +57,21 @@ constructor dialog {} {
 	grid columnconfigure $w.desc 1 -weight 1
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
-	labelframe $w.action -text [mc "Further Action"]
+	${NS}::labelframe $w.action -text [mc "Further Action"]
 
-	radiobutton $w.action.fetch \
+	${NS}::radiobutton $w.action.fetch \
 		-text [mc "Fetch Immediately"] \
 		-value fetch \
 		-variable @opt_action
 	pack $w.action.fetch -anchor nw
 
-	radiobutton $w.action.push \
+	${NS}::radiobutton $w.action.push \
 		-text [mc "Initialize Remote Repository and Push"] \
 		-value push \
 		-variable @opt_action
 	pack $w.action.push -anchor nw
 
-	radiobutton $w.action.none \
+	${NS}::radiobutton $w.action.none \
 		-text [mc "Do Nothing Else Now"] \
 		-value none \
 		-variable @opt_action
@@ -85,6 +83,7 @@ constructor dialog {} {
 	bind $w <Visibility> [cb _visible]
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [cb _add]\;break
+	wm deiconify $top
 	tkwait window $w
 }
 

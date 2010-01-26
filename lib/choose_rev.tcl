@@ -10,7 +10,7 @@ field w_list          ; # list of currently filtered specs
 field w_filter        ; # filter entry for $w_list
 
 field c_expr        {}; # current revision expression
-field filter          ; # current filter string
+field filter        ""; # current filter string
 field revtype     head; # type of revision chosen
 field cur_specs [list]; # list of specs for $revtype
 field spec_head       ; # list of all head specs
@@ -32,7 +32,7 @@ proc new_unmerged {path {title {}}} {
 }
 
 constructor _new {path unmerged_only title} {
-	global current_branch is_detached
+	global current_branch is_detached use_ttk NS
 
 	if {![info exists ::all_remotes]} {
 		load_all_remotes
@@ -41,65 +41,65 @@ constructor _new {path unmerged_only title} {
 	set w $path
 
 	if {$title ne {}} {
-		labelframe $w -text $title
+		${NS}::labelframe $w -text $title
 	} else {
-		frame $w
+		${NS}::frame $w
 	}
 	bind $w <Destroy> [cb _delete %W]
 
 	if {$is_detached} {
-		radiobutton $w.detachedhead_r \
-			-anchor w \
+		${NS}::radiobutton $w.detachedhead_r \
 			-text [mc "This Detached Checkout"] \
 			-value HEAD \
 			-variable @revtype
+		if {!$use_ttk} {$w.detachedhead_r configure -anchor w}
 		grid $w.detachedhead_r -sticky we -padx {0 5} -columnspan 2
 	}
 
-	radiobutton $w.expr_r \
+	${NS}::radiobutton $w.expr_r \
 		-text [mc "Revision Expression:"] \
 		-value expr \
 		-variable @revtype
-	entry $w.expr_t \
-		-borderwidth 1 \
-		-relief sunken \
+	${NS}::entry $w.expr_t \
 		-width 50 \
 		-textvariable @c_expr \
 		-validate key \
 		-validatecommand [cb _validate %d %S]
 	grid $w.expr_r $w.expr_t -sticky we -padx {0 5}
 
-	frame $w.types
-	radiobutton $w.types.head_r \
+	${NS}::frame $w.types
+	${NS}::radiobutton $w.types.head_r \
 		-text [mc "Local Branch"] \
 		-value head \
 		-variable @revtype
 	pack $w.types.head_r -side left
-	radiobutton $w.types.trck_r \
+	${NS}::radiobutton $w.types.trck_r \
 		-text [mc "Tracking Branch"] \
 		-value trck \
 		-variable @revtype
 	pack $w.types.trck_r -side left
-	radiobutton $w.types.tag_r \
+	${NS}::radiobutton $w.types.tag_r \
 		-text [mc "Tag"] \
 		-value tag \
 		-variable @revtype
 	pack $w.types.tag_r -side left
 	set w_filter $w.types.filter
-	entry $w_filter \
-		-borderwidth 1 \
-		-relief sunken \
+	${NS}::entry $w_filter \
 		-width 12 \
 		-textvariable @filter \
 		-validate key \
 		-validatecommand [cb _filter %P]
 	pack $w_filter -side right
-	pack [label $w.types.filter_icon \
+	pack [${NS}::label $w.types.filter_icon \
 		-image ::choose_rev::img_find \
 		] -side right
 	grid $w.types -sticky we -padx {0 5} -columnspan 2
 
-	frame $w.list
+	if {$use_ttk} {
+		ttk::frame $w.list -style SListbox.TFrame -padding 2
+	} else {
+		frame $w.list
+	}
 	set w_list $w.list.l
 	listbox $w_list \
 		-font font_diff \
@@ -109,6 +109,9 @@ constructor _new {path unmerged_only title} {
 		-exportselection false \
 		-xscrollcommand [cb _sb_set $w.list.sbx h] \
 		-yscrollcommand [cb _sb_set $w.list.sby v]
+	if {$use_ttk} {
+		$w_list configure -relief flat -highlightthickness 0 -borderwidth 0
+	}
 	pack $w_list -fill both -expand 1
 	grid $w.list -sticky nswe -padx {20 5} -columnspan 2
 	bind $w_list <Any-Motion>  [cb _show_tooltip @%x,%y]
@@ -235,11 +238,12 @@ constructor _new {path unmerged_only title} {
 }
 
 method none {text} {
+	global NS use_ttk
 	if {![winfo exists $w.none_r]} {
-		radiobutton $w.none_r \
-			-anchor w \
+		${NS}::radiobutton $w.none_r \
 			-value none \
 			-variable @revtype
+		if {!$use_ttk} {$w.none_r configure -anchor w}
 		grid $w.none_r -sticky we -padx {0 5} -columnspan 2
 	}
 	$w.none_r configure -text $text
@@ -425,6 +429,7 @@ method _delete {current} {
 }
 
 method _sb_set {sb orient first last} {
+	global NS
 	set old_focus [focus -lastfor $w]
 
 	if {$first == 0 && $last == 1} {
@@ -440,10 +445,10 @@ method _sb_set {sb orient first last} {
 
 	if {![winfo exists $sb]} {
 		if {$orient eq {h}} {
-			scrollbar $sb -orient h -command [list $w_list xview]
+			${NS}::scrollbar $sb -orient h -command [list $w_list xview]
 			pack $sb -fill x -side bottom -before $w_list
 		} else {
-			scrollbar $sb -orient v -command [list $w_list yview]
+			${NS}::scrollbar $sb -orient v -command [list $w_list yview]
 			pack $sb -fill y -side right -before $w_list
 		}
 		if {$old_focus ne {}} {

@@ -8,26 +8,28 @@ proc _delete_indexlock {} {
 }
 
 proc _close_updateindex {fd after} {
+	global use_ttk NS
 	fconfigure $fd -blocking 1
 	if {[catch {close $fd} err]} {
 		set w .indexfried
-		toplevel $w
+		Dialog $w
+		wm withdraw $w
 		wm title $w [strcat "[appname] ([reponame]): " [mc "Index Error"]]
 		wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 		set s [mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."]
 		text $w.msg -yscrollcommand [list $w.vs set] \
 			-width [string length $s] -relief flat \
 			-borderwidth 0 -highlightthickness 0 \
-			-background [$w cget -background]
+			-background [get_bg_color $w]
 		$w.msg tag configure bold -font font_uibold -justify center
-		scrollbar $w.vs -command [list $w.msg yview]
+		${NS}::scrollbar $w.vs -command [list $w.msg yview]
 		$w.msg insert end $s bold \n\n$err {}
 		$w.msg configure -state disabled
 
-		button $w.continue \
+		${NS}::button $w.continue \
 			-text [mc "Continue"] \
 			-command [list destroy $w]
-		button $w.unlock \
+		${NS}::button $w.unlock \
 			-text [mc "Unlock Index"] \
 			-command "destroy $w; _delete_indexlock"
 		grid $w.msg - $w.vs -sticky news
@@ -40,6 +42,7 @@ proc _close_updateindex {fd after} {
 			grab $w
 			focus %W
 		"
+		wm deiconify $w
 		tkwait window $w
 
 		$::main_status stop

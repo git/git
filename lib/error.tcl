@@ -71,11 +71,13 @@ proc ask_popup {msg} {
 }
 
 proc hook_failed_popup {hook msg {is_fatal 1}} {
+	global use_ttk NS
 	set w .hookfail
-	toplevel $w
+	Dialog $w
+	wm withdraw $w
 
-	frame $w.m
-	label $w.m.l1 -text "$hook hook failed:" \
+	${NS}::frame $w.m
+	${NS}::label $w.m.l1 -text "$hook hook failed:" \
 		-anchor w \
 		-justify left \
 		-font font_uibold
@@ -87,10 +89,10 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 		-width 80 -height 10 \
 		-font font_diff \
 		-yscrollcommand [list $w.m.sby set]
-	scrollbar $w.m.sby -command [list $w.m.t yview]
+	${NS}::scrollbar $w.m.sby -command [list $w.m.t yview]
 	pack $w.m.l1 -side top -fill x
 	if {$is_fatal} {
-		label $w.m.l2 \
+		${NS}::label $w.m.l2 \
 			-text [mc "You must correct the above errors before committing."] \
 			-anchor w \
 			-justify left \
@@ -104,7 +106,7 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 	$w.m.t insert 1.0 $msg
 	$w.m.t conf -state disabled
 
-	button $w.ok -text OK \
+	${NS}::button $w.ok -text OK \
 		-width 15 \
 		-command "destroy $w"
 	pack $w.ok -side bottom -anchor e -pady 10 -padx 10
@@ -112,5 +114,6 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Return> "destroy $w"
 	wm title $w [strcat "[appname] ([reponame]): " [mc "error"]]
+	wm deiconify $w
 	tkwait window $w
 }

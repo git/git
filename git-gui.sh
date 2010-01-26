@@ -677,12 +677,17 @@ if {[is_Windows]} {
 ## config defaults
 
 set cursor_ptr arrow
-font create font_diff -family Courier -size 10
 font create font_ui
-catch {
-	label .dummy
-	eval font configure font_ui [font actual [.dummy cget -font]]
-	destroy .dummy
+if {[lsearch -exact [font names] TkDefaultFont] != -1} {
+	eval [linsert [font actual TkDefaultFont] 0 font configure font_ui]
+	eval [linsert [font actual TkFixedFont] 0 font create font_diff]
+} else {
+	font create font_diff -family Courier -size 10
+	catch {
+		label .dummy
+		eval font configure font_ui [font actual [.dummy cget -font]]
+		destroy .dummy
+	}
 }
 
 font create font_uiitalic
@@ -697,6 +702,9 @@ foreach class {Button Checkbutton Entry Label
 }
 if {![is_MacOSX]} {
 	option add *Menu.font font_ui
+	option add *Entry.borderWidth 1 startupFile
+	option add *Entry.relief sunken startupFile
+	option add *RadioButton.anchor w startupFile
 }
 unset class
 
@@ -749,6 +757,18 @@ proc apply_config {} {
 		font configure ${font}bold -weight bold
 		font configure ${font}italic -slant italic
 	}
+
+	global use_ttk NS
+	set use_ttk 0
+	set NS {}
+	if {$repo_config(gui.usettk)} {
+		set use_ttk [package vsatisfies [package provide Tk] 8.5]
+		if {$use_ttk} {
+			set NS ttk
+			bind [winfo class .] <<ThemeChanged>> [list InitTheme]
+			pave_toplevel .
+		}
+	}
 }
 
 set default_config(branch.autosetupmerge) true
@@ -775,6 +795,7 @@ set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
 # TODO: this option should be added to the git-config documentation
 set default_config(gui.maxfilesdisplayed) 5000
+set default_config(gui.usettk) 1
 set font_descs {
 	{fontui   font_ui   {mc "Main Font"}}
 	{fontdiff font_diff {mc "Diff/Console Font"}}
@@ -2093,7 +2114,7 @@ proc do_quit {{rc {1}}} {
 	global ui_comm is_quitting repo_config commit_type
 	global GITGUI_BCK_exists GITGUI_BCK_i
 	global ui_comm_spell
-	global ret_code
+	global ret_code use_ttk
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -2151,8 +2172,13 @@ proc do_quit {{rc {1}}} {
 		}
 		set cfg_geometry [list]
 		lappend cfg_geometry [wm geometry .]
-		lappend cfg_geometry [lindex [.vpane sash coord 0] 0]
-		lappend cfg_geometry [lindex [.vpane.files sash coord 0] 1]
+		if {$use_ttk} {
+			lappend cfg_geometry [.vpane sashpos 0]
+			lappend cfg_geometry [.vpane.files sashpos 0]
+		} else {
+			lappend cfg_geometry [lindex [.vpane sash coord 0] 0]
+			lappend cfg_geometry [lindex [.vpane.files sash coord 0] 1]
+		}
 		if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
 			set rc_geometry {}
 		}
@@ -2919,14 +2945,13 @@ default {
 
 # -- Branch Control
 #
-frame .branch \
-	-borderwidth 1 \
-	-relief sunken
-label .branch.l1 \
+${NS}::frame .branch
+if {!$use_ttk} {.branch configure -borderwidth 1 -relief sunken}
+${NS}::label .branch.l1 \
 	-text [mc "Current Branch:"] \
 	-anchor w \
 	-justify left
-label .branch.cb \
+${NS}::label .branch.cb \
 	-textvariable current_branch \
 	-anchor w \
 	-justify left
@@ -2936,15 +2961,20 @@ pack .branch -side top -fill x
 
 # -- Main Window Layout
 #
-panedwindow .vpane -orient horizontal
-panedwindow .vpane.files -orient vertical
-.vpane add .vpane.files -sticky nsew -height 100 -width 200
+${NS}::panedwindow .vpane -orient horizontal
+${NS}::panedwindow .vpane.files -orient vertical
+if {$use_ttk} {
+	.vpane add .vpane.files
+} else {
+	.vpane add .vpane.files -sticky nsew -height 100 -width 200
+}
 pack .vpane -anchor n -side top -fill both -expand 1
 
 # -- Index File List
 #
-frame .vpane.files.index -height 100 -width 200
-label .vpane.files.index.title -text [mc "Staged Changes (Will Commit)"] \
+${NS}::frame .vpane.files.index -height 100 -width 200
+tlabel .vpane.files.index.title \
+	-text [mc "Staged Changes (Will Commit)"] \
 	-background lightgreen -foreground black
 text $ui_index -background white -foreground black \
 	-borderwidth 0 \
@@ -2954,8 +2984,8 @@ text $ui_index -background white -foreground black \
 	-xscrollcommand {.vpane.files.index.sx set} \
 	-yscrollcommand {.vpane.files.index.sy set} \
 	-state disabled
-scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
-scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
+${NS}::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
+${NS}::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
 pack .vpane.files.index.title -side top -fill x
 pack .vpane.files.index.sx -side bottom -fill x
 pack .vpane.files.index.sy -side right -fill y
@@ -2963,8 +2993,8 @@ pack $ui_index -side left -fill both -expand 1
 
 # -- Working Directory File List
 #
-frame .vpane.files.workdir -height 100 -width 200
-label .vpane.files.workdir.title -text [mc "Unstaged Changes"] \
+${NS}::frame .vpane.files.workdir -height 100 -width 200
+tlabel .vpane.files.workdir.title -text [mc "Unstaged Changes"] \
 	-background lightsalmon -foreground black
 text $ui_workdir -background white -foreground black \
 	-borderwidth 0 \
@@ -2974,15 +3004,19 @@ text $ui_workdir -background white -foreground black \
 	-xscrollcommand {.vpane.files.workdir.sx set} \
 	-yscrollcommand {.vpane.files.workdir.sy set} \
 	-state disabled
-scrollbar .vpane.files.workdir.sx -orient h -command [list $ui_workdir xview]
-scrollbar .vpane.files.workdir.sy -orient v -command [list $ui_workdir yview]
+${NS}::scrollbar .vpane.files.workdir.sx -orient h -command [list $ui_workdir xview]
+${NS}::scrollbar .vpane.files.workdir.sy -orient v -command [list $ui_workdir yview]
 pack .vpane.files.workdir.title -side top -fill x
 pack .vpane.files.workdir.sx -side bottom -fill x
 pack .vpane.files.workdir.sy -side right -fill y
 pack $ui_workdir -side left -fill both -expand 1
 
-.vpane.files add .vpane.files.workdir -sticky nsew
-.vpane.files add .vpane.files.index -sticky nsew
+.vpane.files add .vpane.files.workdir
+.vpane.files add .vpane.files.index
+if {!$use_ttk} {
+	.vpane.files paneconfigure .vpane.files.workdir -sticky news
+	.vpane.files paneconfigure .vpane.files.index -sticky news
+}
 
 foreach i [list $ui_index $ui_workdir] {
 	rmsel_tag $i
@@ -2992,68 +3026,69 @@ unset i
 
 # -- Diff and Commit Area
 #
-frame .vpane.lower -height 300 -width 400
-frame .vpane.lower.commarea
-frame .vpane.lower.diff -relief sunken -borderwidth 1
+${NS}::frame .vpane.lower -height 300 -width 400
+${NS}::frame .vpane.lower.commarea
+${NS}::frame .vpane.lower.diff -relief sunken -borderwidth 1
 pack .vpane.lower.diff -fill both -expand 1
 pack .vpane.lower.commarea -side bottom -fill x
-.vpane add .vpane.lower -sticky nsew
+.vpane add .vpane.lower
+if {!$use_ttk} {.vpane paneconfigure .vpane.lower -sticky nsew}
 
 # -- Commit Area Buttons
 #
-frame .vpane.lower.commarea.buttons
-label .vpane.lower.commarea.buttons.l -text {} \
+${NS}::frame .vpane.lower.commarea.buttons
+${NS}::label .vpane.lower.commarea.buttons.l -text {} \
 	-anchor w \
 	-justify left
 pack .vpane.lower.commarea.buttons.l -side top -fill x
 pack .vpane.lower.commarea.buttons -side left -fill y
 
-button .vpane.lower.commarea.buttons.rescan -text [mc Rescan] \
+${NS}::button .vpane.lower.commarea.buttons.rescan -text [mc Rescan] \
 	-command ui_do_rescan
 pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
-button .vpane.lower.commarea.buttons.incall -text [mc "Stage Changed"] \
+${NS}::button .vpane.lower.commarea.buttons.incall -text [mc "Stage Changed"] \
 	-command do_add_all
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.incall conf -state}
 
 if {![is_enabled nocommitmsg]} {
-	button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
+	${NS}::button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
 		-command do_signoff
 	pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 }
 
-button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
+${NS}::button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
 	-command do_commit
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
 
 if {![is_enabled nocommit]} {
-	button .vpane.lower.commarea.buttons.push -text [mc Push] \
+	${NS}::button .vpane.lower.commarea.buttons.push -text [mc Push] \
 		-command do_push_anywhere
 	pack .vpane.lower.commarea.buttons.push -side top -fill x
 }
 
 # -- Commit Message Buffer
 #
-frame .vpane.lower.commarea.buffer
-frame .vpane.lower.commarea.buffer.header
+${NS}::frame .vpane.lower.commarea.buffer
+${NS}::frame .vpane.lower.commarea.buffer.header
 set ui_comm .vpane.lower.commarea.buffer.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
 
 if {![is_enabled nocommit]} {
-	radiobutton .vpane.lower.commarea.buffer.header.new \
+	${NS}::radiobutton .vpane.lower.commarea.buffer.header.new \
 		-text [mc "New Commit"] \
 		-command do_select_commit_type \
 		-variable selected_commit_type \
 		-value new
 	lappend disable_on_lock \
 		[list .vpane.lower.commarea.buffer.header.new conf -state]
-	radiobutton .vpane.lower.commarea.buffer.header.amend \
+	${NS}::radiobutton .vpane.lower.commarea.buffer.header.amend \
 		-text [mc "Amend Last Commit"] \
 		-command do_select_commit_type \
 		-variable selected_commit_type \
@@ -3062,7 +3097,7 @@ if {![is_enabled nocommit]} {
 		[list .vpane.lower.commarea.buffer.header.amend conf -state]
 }
 
-label $ui_coml \
+${NS}::label $ui_coml \
 	-anchor w \
 	-justify left
 proc trace_commit_type {varname args} {
@@ -3094,7 +3129,7 @@ text $ui_comm -background white -foreground black \
 	-width $repo_config(gui.commitmsgwidth) -height 9 -wrap none \
 	-font font_diff \
 	-yscrollcommand {.vpane.lower.commarea.buffer.sby set}
-scrollbar .vpane.lower.commarea.buffer.sby \
+${NS}::scrollbar .vpane.lower.commarea.buffer.sby \
 	-command [list $ui_comm yview]
 pack .vpane.lower.commarea.buffer.header -side top -fill x
 pack .vpane.lower.commarea.buffer.sby -side right -fill y
@@ -3160,19 +3195,19 @@ proc trace_current_diff_path {varname args} {
 }
 trace add variable current_diff_path write trace_current_diff_path
 
-frame .vpane.lower.diff.header -background gold
-label .vpane.lower.diff.header.status \
+gold_frame .vpane.lower.diff.header
+tlabel .vpane.lower.diff.header.status \
 	-background gold \
 	-foreground black \
 	-width $max_status_desc \
 	-anchor w \
 	-justify left
-label .vpane.lower.diff.header.file \
+tlabel .vpane.lower.diff.header.file \
 	-background gold \
 	-foreground black \
 	-anchor w \
 	-justify left
-label .vpane.lower.diff.header.path \
+tlabel .vpane.lower.diff.header.path \
 	-background gold \
 	-foreground black \
 	-anchor w \
@@ -3196,7 +3231,7 @@ bind_button3 .vpane.lower.diff.header.path "tk_popup $ctxm %X %Y"
 
 # -- Diff Body
 #
-frame .vpane.lower.diff.body
+${NS}::frame .vpane.lower.diff.body
 set ui_diff .vpane.lower.diff.body.t
 text $ui_diff -background white -foreground black \
 	-borderwidth 0 \
@@ -3205,9 +3240,9 @@ text $ui_diff -background white -foreground black \
 	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
 	-state disabled
-scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
+${NS}::scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
 	-command [list $ui_diff xview]
-scrollbar .vpane.lower.diff.body.sby -orient vertical \
+${NS}::scrollbar .vpane.lower.diff.body.sby -orient vertical \
 	-command [list $ui_diff yview]
 pack .vpane.lower.diff.body.sbx -side bottom -fill x
 pack .vpane.lower.diff.body.sby -side right -fill y
@@ -3428,12 +3463,17 @@ $main_status show [mc "Initializing..."]
 catch {
 set gm $repo_config(gui.geometry)
 wm geometry . [lindex $gm 0]
-.vpane sash place 0 \
-	[lindex $gm 1] \
-	[lindex [.vpane sash coord 0] 1]
-.vpane.files sash place 0 \
-	[lindex [.vpane.files sash coord 0] 0] \
-	[lindex $gm 2]
+if {$use_ttk} {
+	.vpane sashpos 0 [lindex $gm 1]
+	.vpane.files sashpos 0 [lindex $gm 2]
+} else {
+	.vpane sash place 0 \
+		[lindex $gm 1] \
+		[lindex [.vpane sash coord 0] 1]
+	.vpane.files sash place 0 \
+		[lindex [.vpane.files sash coord 0] 0] \
+		[lindex $gm 2]
+}
 unset gm
 }
 
@@ -3701,3 +3741,9 @@ if {[is_enabled retcode]} {
 if {$picked && [is_config_true gui.autoexplore]} {
 	do_explore
 }
+
+# Local variables:
+# mode: tcl
+# indent-tabs-mode: t
+# tab-width: 4
+# End:

@@ -134,6 +134,13 @@ proc delete_this {{t {}}} {
 	if {[namespace exists $t]} {namespace delete $t}
 }
 
+proc make_dialog {t w args} {
+	upvar $t top $w pfx this this
+	global use_ttk
+	uplevel [linsert $args 0 make_toplevel $t $w]
+	pave_toplevel $pfx
+}
+
 proc make_toplevel {t w args} {
 	upvar $t top $w pfx this this
 
