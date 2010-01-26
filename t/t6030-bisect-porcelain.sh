@@ -423,7 +423,7 @@ test_expect_success 'skipped merge base when good and bad are siblings' '
 	grep "merge base must be tested" my_bisect_log.txt &&
 	grep $HASH4 my_bisect_log.txt &&
 	git bisect skip > my_bisect_log.txt 2>&1 &&
-	grep "Warning" my_bisect_log.txt &&
+	grep "warning" my_bisect_log.txt &&
 	grep $SIDE_HASH6 my_bisect_log.txt &&
 	git bisect reset
 '

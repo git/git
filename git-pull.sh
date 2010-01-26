@@ -13,11 +13,33 @@ set_reflog_action "pull $*"
 require_work_tree
 cd_to_toplevel
 
-test -z "$(git ls-files -u)" ||
-	die "You are in the middle of a conflicted merge."
+
+die_conflict () {
+    git diff-index --cached --name-status -r --ignore-submodules HEAD --
+    if [ $(git config --bool --get advice.resolveConflict || echo true) = "true" ]; then
+	die "Pull is not possible because you have unmerged files.
+Please, fix them up in the work tree, and then use 'git add/rm <file>'
+as appropriate to mark resolution, or use 'git commit -a'."
+    else
+	die "Pull is not possible because you have unmerged files."
+    fi
+}
+
+die_merge () {
+    if [ $(git config --bool --get advice.resolveConflict || echo true) = "true" ]; then
+	die "You have not concluded your merge (MERGE_HEAD exists).
+Please, commit your changes before you can merge."
+    else
+	die "You have not concluded your merge (MERGE_HEAD exists)."
+    fi
+}
+
+test -z "$(git ls-files -u)" || die_conflict
+test -f "$GIT_DIR/MERGE_HEAD" && die_merge
 
 strategy_args= diffstat= no_commit= squash= no_ff= ff_only=
 log_arg= verbosity=
+merge_args=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short=$(echo "$curr_branch" | sed "s|refs/heads/||")
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
@@ -61,6 +83,18 @@ do
 			shift ;;
 		esac
 		strategy_args="${strategy_args}-s $strategy "
+		;;
+	-X*)
+		case "$#,$1" in
+		1,-X)
+			usage ;;
+		*,-X)
+			xx="-X $(git rev-parse --sq-quote "$2")"
+			shift ;;
+		*,*)
+			xx=$(git rev-parse --sq-quote "$1") ;;
+		esac
+		merge_args="$merge_args$xx "
 		;;
 	-r|--r|--re|--reb|--reba|--rebas|--rebase)
 		rebase=true
@@ -233,8 +267,15 @@ then
 fi
 
 merge_name=$(git fmt-merge-msg $log_arg <"$GIT_DIR/FETCH_HEAD") || exit
-test true = "$rebase" &&
-	exec git-rebase $diffstat $strategy_args --onto $merge_head \
-	${oldremoteref:-$merge_head}
-exec git-merge $diffstat $no_commit $squash $no_ff $ff_only $log_arg $strategy_args \
-	"$merge_name" HEAD $merge_head $verbosity
+case "$rebase" in
+true)
+	eval="git-rebase $diffstat $strategy_args $merge_args"
+	eval="$eval --onto $merge_head ${oldremoteref:-$merge_head}"
+	;;
+*)
+	eval="git-merge $diffstat $no_commit $squash $no_ff $ff_only"
+	eval="$eval  $log_arg $strategy_args $merge_args"
+	eval="$eval \"\$merge_name\" HEAD $merge_head $verbosity"
+	;;
+esac
+eval "exec $eval"

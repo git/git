@@ -45,6 +45,7 @@ static int end_null;
 #define TYPE_BOOL (1<<0)
 #define TYPE_INT (1<<1)
 #define TYPE_BOOL_OR_INT (1<<2)
+#define TYPE_PATH (1<<3)
 
 static struct option builtin_config_options[] = {
 	OPT_GROUP("Config file location"),
@@ -69,6 +70,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "bool", &types, "value is \"true\" or \"false\"", TYPE_BOOL),
 	OPT_BIT(0, "int", &types, "value is decimal number", TYPE_INT),
 	OPT_BIT(0, "bool-or-int", &types, "value is --bool or --int", TYPE_BOOL_OR_INT),
+	OPT_BIT(0, "path", &types, "value is a path (file or directory name)", TYPE_PATH),
 	OPT_GROUP("Other"),
 	OPT_BOOLEAN('z', "null", &end_null, "terminate values with NUL byte"),
 	OPT_END(),
@@ -94,6 +96,7 @@ static int show_config(const char *key_, const char *value_, void *cb)
 {
 	char value[256];
 	const char *vptr = value;
+	int must_free_vptr = 0;
 	int dup_error = 0;
 
 	if (!use_key_regexp && strcmp(key_, key))
@@ -123,6 +126,9 @@ static int show_config(const char *key_, const char *value_, void *cb)
 			vptr = v ? "true" : "false";
 		else
 			sprintf(value, "%d", v);
+	} else if (types == TYPE_PATH) {
+		git_config_pathname(&vptr, key_, value_);
+		must_free_vptr = 1;
 	}
 	else
 		vptr = value_?value_:"";
@@ -133,6 +139,12 @@ static int show_config(const char *key_, const char *value_, void *cb)
 	}
 	else
 		printf("%s%c", vptr, term);
+	if (must_free_vptr)
+		/* If vptr must be freed, it's a pointer to a
+		 * dynamically allocated buffer, it's safe to cast to
+		 * const.
+		*/
+		free((char *)vptr);
 
 	return 0;
 }
@@ -215,7 +227,13 @@ static char *normalize_value(const char *key, const char *value)
 	if (!value)
 		return NULL;
 
-	if (types == 0)
+	if (types == 0 || types == TYPE_PATH)
+		/*
+		 * We don't do normalization for TYPE_PATH here: If
+		 * the path is like ~/foobar/, we prefer to store
+		 * "~/foobar/" in the config file, and to expand the ~
+		 * when retrieving the value.
+		 */
 		normalized = xstrdup(value);
 	else {
 		normalized = xmalloc(64);

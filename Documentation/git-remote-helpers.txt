@@ -25,7 +25,10 @@ Commands are given by the caller on the helper's standard input, one per line.
 
 'capabilities'::
 	Lists the capabilities of the helper, one per line, ending
-	with a blank line.
+	with a blank line. Each capability may be preceeded with '*'.
+	This marks them mandatory for git version using the remote
+	helper to understand (unknown mandatory capability is fatal
+	error).
 
 'list'::
 	Lists the refs, one per line, in the format "<value> <name>
@@ -79,6 +82,31 @@ style string if it contains an LF.
 +
 Supported if the helper has the "push" capability.
 
+'import' <name>::
+	Produces a fast-import stream which imports the current value
+	of the named ref. It may additionally import other refs as
+	needed to construct the history efficiently. The script writes
+	to a helper-specific private namespace. The value of the named
+	ref should be written to a location in this namespace derived
+	by applying the refspecs from the "refspec" capability to the
+	name of the ref.
++
+Supported if the helper has the "import" capability.
+
+'connect' <service>::
+	Connects to given service. Standard input and standard output
+	of helper are connected to specified service (git prefix is
+	included in service name so e.g. fetching uses 'git-upload-pack'
+	as service) on remote side. Valid replies to this command are
+	empty line (connection established), 'fallback' (no smart
+	transport support, fall back to dumb transports) and just
+	exiting with error message printed (can't connect, don't
+	bother trying to fall back). After line feed terminating the
+	positive (empty) response, the output of service starts. After
+	the connection ends, the remote helper exits.
++
+Supported if the helper has the "connect" capability.
+
 If a fatal error occurs, the program writes the error message to
 stderr and exits. The caller should expect that a suitable error
 message has been printed if the child closes the connection without
@@ -99,6 +127,22 @@ CAPABILITIES
 'push'::
 	This helper supports the 'push' command.
 
+'import'::
+	This helper supports the 'import' command.
+
+'refspec' 'spec'::
+	When using the import command, expect the source ref to have
+	been written to the destination ref. The earliest applicable
+	refspec takes precedence. For example
+	"refs/heads/*:refs/svn/origin/branches/*" means that, after an
+	"import refs/heads/name", the script has written to
+	refs/svn/origin/branches/name. If this capability is used at
+	all, it must cover all refs reported by the list command; if
+	it is not used, it is effectively "*:*"
+
+'connect'::
+	This helper supports the 'connect' command.
+
 REF LIST ATTRIBUTES
 -------------------
 
@@ -106,6 +150,10 @@ REF LIST ATTRIBUTES
 	The caller wants to use the ref list to prepare push
 	commands.  A helper might chose to acquire the ref list by
 	opening a different type of connection to the destination.
+
+'unchanged'::
+	This ref is unchanged since the last import or fetch, although
+	the helper cannot necessarily determine what value that produced.
 
 OPTIONS
 -------
@@ -137,9 +185,15 @@ OPTIONS
 	but don't actually change any repository data.	For most
 	helpers this only applies to the 'push', if supported.
 
+'option servpath <c-style-quoted-path>'::
+	Set service path (--upload-pack, --receive-pack etc.) for
+	next connect. Remote helper MAY support this option. Remote
+	helper MUST NOT rely on this option being set before
+	connect request occurs.
+
 Documentation
 -------------
-Documentation by Daniel Barkalow.
+Documentation by Daniel Barkalow and Ilari Liusvaara
 
 GIT
 ---

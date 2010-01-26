@@ -24,7 +24,7 @@ OPTIONS
 
 -e::
 --edit::
-	With this option, 'git-cherry-pick' will let you edit the commit
+	With this option, 'git cherry-pick' will let you edit the commit
 	message prior to committing.
 
 -x::

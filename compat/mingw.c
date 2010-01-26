@@ -3,9 +3,7 @@
 #include <conio.h>
 #include "../strbuf.h"
 
-#include <shellapi.h>
-
-static int err_win_to_posix(DWORD winerr)
+int err_win_to_posix(DWORD winerr)
 {
 	int error = ENOSYS;
 	switch(winerr) {
@@ -142,12 +140,20 @@ int mingw_open (const char *filename, int oflags, ...)
 	return fd;
 }
 
-static inline time_t filetime_to_time_t(const FILETIME *ft)
+/*
+ * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
+ * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
+ */
+static inline long long filetime_to_hnsec(const FILETIME *ft)
 {
 	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
-	winTime -= 116444736000000000LL; /* Windows to Unix Epoch conversion */
-	winTime /= 10000000;		 /* Nano to seconds resolution */
-	return (time_t)winTime;
+	/* Windows to Unix Epoch conversion */
+	return winTime - 116444736000000000LL;
+}
+
+static inline time_t filetime_to_time_t(const FILETIME *ft)
+{
+	return (time_t)(filetime_to_hnsec(ft) / 10000000);
 }
 
 /* We keep the do_lstat code in a separate function to avoid recursion.
@@ -283,64 +289,37 @@ int mkstemp(char *template)
 
 int gettimeofday(struct timeval *tv, void *tz)
 {
-	SYSTEMTIME st;
-	struct tm tm;
-	GetSystemTime(&st);
-	tm.tm_year = st.wYear-1900;
-	tm.tm_mon = st.wMonth-1;
-	tm.tm_mday = st.wDay;
-	tm.tm_hour = st.wHour;
-	tm.tm_min = st.wMinute;
-	tm.tm_sec = st.wSecond;
-	tv->tv_sec = tm_to_time_t(&tm);
-	if (tv->tv_sec < 0)
-		return -1;
-	tv->tv_usec = st.wMilliseconds*1000;
+	FILETIME ft;
+	long long hnsec;
+
+	GetSystemTimeAsFileTime(&ft);
+	hnsec = filetime_to_hnsec(&ft);
+	tv->tv_sec = hnsec / 10000000;
+	tv->tv_usec = (hnsec % 10000000) / 10;
 	return 0;
 }
 
 int pipe(int filedes[2])
 {
-	int fd;
-	HANDLE h[2], parent;
+	HANDLE h[2];
 
-	if (_pipe(filedes, 8192, 0) < 0)
-		return -1;
-
-	parent = GetCurrentProcess();
-
-	if (!DuplicateHandle (parent, (HANDLE)_get_osfhandle(filedes[0]),
-			parent, &h[0], 0, FALSE, DUPLICATE_SAME_ACCESS)) {
-		close(filedes[0]);
-		close(filedes[1]);
+	/* this creates non-inheritable handles */
+	if (!CreatePipe(&h[0], &h[1], NULL, 8192)) {
+		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
-	if (!DuplicateHandle (parent, (HANDLE)_get_osfhandle(filedes[1]),
-			parent, &h[1], 0, FALSE, DUPLICATE_SAME_ACCESS)) {
-		close(filedes[0]);
-		close(filedes[1]);
-		CloseHandle(h[0]);
-		return -1;
-	}
-	fd = _open_osfhandle((int)h[0], O_NOINHERIT);
-	if (fd < 0) {
-		close(filedes[0]);
-		close(filedes[1]);
+	filedes[0] = _open_osfhandle((int)h[0], O_NOINHERIT);
+	if (filedes[0] < 0) {
 		CloseHandle(h[0]);
 		CloseHandle(h[1]);
 		return -1;
 	}
-	close(filedes[0]);
-	filedes[0] = fd;
-	fd = _open_osfhandle((int)h[1], O_NOINHERIT);
-	if (fd < 0) {
+	filedes[1] = _open_osfhandle((int)h[1], O_NOINHERIT);
+	if (filedes[0] < 0) {
 		close(filedes[0]);
-		close(filedes[1]);
 		CloseHandle(h[1]);
 		return -1;
 	}
-	close(filedes[1]);
-	filedes[1] = fd;
 	return 0;
 }
 
@@ -638,8 +617,8 @@ static int env_compare(const void *a, const void *b)
 	return strcasecmp(*ea, *eb);
 }
 
-static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
-			   int prepend_cmd)
+static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
+			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
@@ -675,9 +654,9 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdInput = (HANDLE) _get_osfhandle(0);
-	si.hStdOutput = (HANDLE) _get_osfhandle(1);
-	si.hStdError = (HANDLE) _get_osfhandle(2);
+	si.hStdInput = (HANDLE) _get_osfhandle(fhin);
+	si.hStdOutput = (HANDLE) _get_osfhandle(fhout);
+	si.hStdError = (HANDLE) _get_osfhandle(fherr);
 
 	/* concatenate argv, quoting args as we go */
 	strbuf_init(&args, 0);
@@ -732,7 +711,14 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 	return (pid_t)pi.hProcess;
 }
 
-pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
+static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
+			   int prepend_cmd)
+{
+	return mingw_spawnve_fd(cmd, argv, env, prepend_cmd, 0, 1, 2);
+}
+
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
+		     int fhin, int fhout, int fherr)
 {
 	pid_t pid;
 	char **path = get_path_split();
@@ -754,13 +740,15 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
 				pid = -1;
 			}
 			else {
-				pid = mingw_spawnve(iprog, argv, env, 1);
+				pid = mingw_spawnve_fd(iprog, argv, env, 1,
+						       fhin, fhout, fherr);
 				free(iprog);
 			}
 			argv[0] = argv0;
 		}
 		else
-			pid = mingw_spawnve(prog, argv, env, 0);
+			pid = mingw_spawnve_fd(prog, argv, env, 0,
+					       fhin, fhout, fherr);
 		free(prog);
 	}
 	free_path_split(path);
@@ -1338,8 +1326,22 @@ static const char *make_backslash_path(const char *path)
 void mingw_open_html(const char *unixpath)
 {
 	const char *htmlpath = make_backslash_path(unixpath);
+	typedef HINSTANCE (WINAPI *T)(HWND, const char *,
+			const char *, const char *, const char *, INT);
+	T ShellExecute;
+	HMODULE shell32;
+
+	shell32 = LoadLibrary("shell32.dll");
+	if (!shell32)
+		die("cannot load shell32.dll");
+	ShellExecute = (T)GetProcAddress(shell32, "ShellExecuteA");
+	if (!ShellExecute)
+		die("cannot run browser");
+
 	printf("Launching default browser to display HTML ...\n");
 	ShellExecute(NULL, "open", htmlpath, NULL, "\\", 0);
+
+	FreeLibrary(shell32);
 }
 
 int link(const char *oldpath, const char *newpath)

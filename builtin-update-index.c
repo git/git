@@ -9,6 +9,7 @@
 #include "tree-walk.h"
 #include "builtin.h"
 #include "refs.h"
+#include "resolve-undo.h"
 
 /*
  * Default to not allowing changes to the list of files. The
@@ -24,8 +25,9 @@ static int info_only;
 static int force_remove;
 static int verbose;
 static int mark_valid_only;
-#define MARK_VALID 1
-#define UNMARK_VALID 2
+static int mark_skip_worktree_only;
+#define MARK_FLAG 1
+#define UNMARK_FLAG 2
 
 __attribute__((format (printf, 1, 2)))
 static void report(const char *fmt, ...)
@@ -41,19 +43,15 @@ static void report(const char *fmt, ...)
 	va_end(vp);
 }
 
-static int mark_valid(const char *path)
+static int mark_ce_flags(const char *path, int flag, int mark)
 {
 	int namelen = strlen(path);
 	int pos = cache_name_pos(path, namelen);
 	if (0 <= pos) {
-		switch (mark_valid_only) {
-		case MARK_VALID:
-			active_cache[pos]->ce_flags |= CE_VALID;
-			break;
-		case UNMARK_VALID:
-			active_cache[pos]->ce_flags &= ~CE_VALID;
-			break;
-		}
+		if (mark)
+			active_cache[pos]->ce_flags |= flag;
+		else
+			active_cache[pos]->ce_flags &= ~flag;
 		cache_tree_invalidate_path(active_cache_tree, path);
 		active_cache_changed = 1;
 		return 0;
@@ -176,28 +174,28 @@ static int process_directory(const char *path, int len, struct stat *st)
 	return error("%s: is a directory - add files inside instead", path);
 }
 
-/*
- * Process a regular file
- */
-static int process_file(const char *path, int len, struct stat *st)
-{
-	int pos = cache_name_pos(path, len);
-	struct cache_entry *ce = pos < 0 ? NULL : active_cache[pos];
-
-	if (ce && S_ISGITLINK(ce->ce_mode))
-		return error("%s is already a gitlink, not replacing", path);
-
-	return add_one_path(ce, path, len, st);
-}
-
 static int process_path(const char *path)
 {
-	int len;
+	int pos, len;
 	struct stat st;
+	struct cache_entry *ce;
 
 	len = strlen(path);
 	if (has_symlink_leading_path(path, len))
 		return error("'%s' is beyond a symbolic link", path);
+
+	pos = cache_name_pos(path, len);
+	ce = pos < 0 ? NULL : active_cache[pos];
+	if (ce && ce_skip_worktree(ce)) {
+		/*
+		 * working directory version is assumed "good"
+		 * so updating it does not make sense.
+		 * On the other hand, removing it from index should work
+		 */
+		if (allow_remove && remove_file_from_cache(path))
+			return error("%s: cannot remove from the index", path);
+		return 0;
+	}
 
 	/*
 	 * First things first: get the stat information, to decide
@@ -209,7 +207,13 @@ static int process_path(const char *path)
 	if (S_ISDIR(st.st_mode))
 		return process_directory(path, len, &st);
 
-	return process_file(path, len, &st);
+	/*
+	 * Process a regular file
+	 */
+	if (ce && S_ISGITLINK(ce->ce_mode))
+		return error("%s is already a gitlink, not replacing", path);
+
+	return add_one_path(ce, path, len, &st);
 }
 
 static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
@@ -277,7 +281,12 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 		goto free_return;
 	}
 	if (mark_valid_only) {
-		if (mark_valid(p))
+		if (mark_ce_flags(p, CE_VALID, mark_valid_only == MARK_FLAG))
+			die("Unable to mark file %s", path);
+		goto free_return;
+	}
+	if (mark_skip_worktree_only) {
+		if (mark_ce_flags(p, CE_SKIP_WORKTREE, mark_skip_worktree_only == MARK_FLAG))
 			die("Unable to mark file %s", path);
 		goto free_return;
 	}
@@ -389,7 +398,7 @@ static void read_index_info(int line_termination)
 }
 
 static const char update_index_usage[] =
-"git update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
+"git update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--skip-worktree|--no-skip-worktree] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
 
 static unsigned char head_sha1[20];
 static unsigned char merge_head_sha1[20];
@@ -432,7 +441,18 @@ static int unresolve_one(const char *path)
 
 	/* See if there is such entry in the index. */
 	pos = cache_name_pos(path, namelen);
-	if (pos < 0) {
+	if (0 <= pos) {
+		/* already merged */
+		pos = unmerge_cache_entry_at(pos);
+		if (pos < active_nr) {
+			struct cache_entry *ce = active_cache[pos];
+			if (ce_stage(ce) &&
+			    ce_namelen(ce) == namelen &&
+			    !memcmp(ce->name, path, namelen))
+				return 0;
+		}
+		/* no resolve-undo information; fall back */
+	} else {
 		/* If there isn't, either it is unmerged, or
 		 * resolved as "removed" by mistake.  We do not
 		 * want to do anything in the former case.
@@ -648,11 +668,19 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(path, "--assume-unchanged")) {
-				mark_valid_only = MARK_VALID;
+				mark_valid_only = MARK_FLAG;
 				continue;
 			}
 			if (!strcmp(path, "--no-assume-unchanged")) {
-				mark_valid_only = UNMARK_VALID;
+				mark_valid_only = UNMARK_FLAG;
+				continue;
+			}
+			if (!strcmp(path, "--no-skip-worktree")) {
+				mark_skip_worktree_only = UNMARK_FLAG;
+				continue;
+			}
+			if (!strcmp(path, "--skip-worktree")) {
+				mark_skip_worktree_only = MARK_FLAG;
 				continue;
 			}
 			if (!strcmp(path, "--info-only")) {
@@ -701,6 +729,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(path, "--verbose")) {
 				verbose = 1;
+				continue;
+			}
+			if (!strcmp(path, "--clear-resolve-undo")) {
+				resolve_undo_clear();
 				continue;
 			}
 			if (!strcmp(path, "-h") || !strcmp(path, "--help"))

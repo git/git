@@ -24,6 +24,7 @@
 #include "rerere.h"
 #include "help.h"
 #include "merge-recursive.h"
+#include "resolve-undo.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -50,8 +51,11 @@ static struct commit_list *remoteheads;
 static unsigned char head[20], stash[20];
 static struct strategy **use_strategies;
 static size_t use_strategies_nr, use_strategies_alloc;
+static const char **xopts;
+static size_t xopts_nr, xopts_alloc;
 static const char *branch;
 static int verbosity;
+static int allow_rerere_auto;
 
 static struct strategy all_strategy[] = {
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
@@ -146,6 +150,17 @@ static int option_parse_strategy(const struct option *opt,
 	return 0;
 }
 
+static int option_parse_x(const struct option *opt,
+			  const char *arg, int unset)
+{
+	if (unset)
+		return 0;
+
+	ALLOC_GROW(xopts, xopts_nr + 1, xopts_alloc);
+	xopts[xopts_nr++] = xstrdup(arg);
+	return 0;
+}
+
 static int option_parse_n(const struct option *opt,
 			  const char *arg, int unset)
 {
@@ -170,8 +185,11 @@ static struct option builtin_merge_options[] = {
 		"allow fast-forward (default)"),
 	OPT_BOOLEAN(0, "ff-only", &fast_forward_only,
 		"abort if fast-forward is not possible"),
+	OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 	OPT_CALLBACK('s', "strategy", &use_strategies, "strategy",
 		"merge strategy to use", option_parse_strategy),
+	OPT_CALLBACK('X', "strategy-option", &xopts, "option=value",
+		"option for selected merge strategy", option_parse_x),
 	OPT_CALLBACK('m', "message", &merge_msg, "message",
 		"message to be used for the merge commit (if any)",
 		option_parse_message),
@@ -534,7 +552,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 			      const char *head_arg)
 {
 	const char **args;
-	int i = 0, ret;
+	int i = 0, x = 0, ret;
 	struct commit_list *j;
 	struct strbuf buf = STRBUF_INIT;
 	int index_fd;
@@ -563,7 +581,20 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 
 		init_merge_options(&o);
 		if (!strcmp(strategy, "subtree"))
-			o.subtree_merge = 1;
+			o.subtree_shift = "";
+
+		for (x = 0; x < xopts_nr; x++) {
+			if (!strcmp(xopts[x], "ours"))
+				o.recursive_variant = MERGE_RECURSIVE_OURS;
+			else if (!strcmp(xopts[x], "theirs"))
+				o.recursive_variant = MERGE_RECURSIVE_THEIRS;
+			else if (!strcmp(xopts[x], "subtree"))
+				o.subtree_shift = "";
+			else if (!prefixcmp(xopts[x], "subtree="))
+				o.subtree_shift = xopts[x]+8;
+			else
+				die("Unknown option for merge-recursive: -X%s", xopts[x]);
+		}
 
 		o.branch1 = head_arg;
 		o.branch2 = remoteheads->item->util;
@@ -581,10 +612,16 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		rollback_lock_file(lock);
 		return clean ? 0 : 1;
 	} else {
-		args = xmalloc((4 + commit_list_count(common) +
+		args = xmalloc((4 + xopts_nr + commit_list_count(common) +
 					commit_list_count(remoteheads)) * sizeof(char *));
 		strbuf_addf(&buf, "merge-%s", strategy);
 		args[i++] = buf.buf;
+		for (x = 0; x < xopts_nr; x++) {
+			char *s = xmalloc(strlen(xopts[x])+2+1);
+			strcpy(s, "--");
+			strcpy(s+2, xopts[x]);
+			args[i++] = s;
+		}
 		for (j = common; j; j = j->next)
 			args[i++] = xstrdup(sha1_to_hex(j->item->object.sha1));
 		args[i++] = "--";
@@ -595,6 +632,8 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		ret = run_command_v_opt(args, RUN_GIT_CMD);
 		strbuf_release(&buf);
 		i = 1;
+		for (x = 0; x < xopts_nr; x++)
+			free((void *)args[i++]);
 		for (j = common; j; j = j->next)
 			free((void *)args[i++]);
 		i += 2;
@@ -604,6 +643,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		discard_cache();
 		if (read_cache() < 0)
 			die("failed to read the cache");
+		resolve_undo_clear();
 		return ret;
 	}
 }
@@ -618,11 +658,10 @@ static void count_diff_files(struct diff_queue_struct *q,
 
 static int count_unmerged_entries(void)
 {
-	const struct index_state *state = &the_index;
 	int i, ret = 0;
 
-	for (i = 0; i < state->cache_nr; i++)
-		if (ce_stage(state->cache[i]))
+	for (i = 0; i < active_nr; i++)
+		if (ce_stage(active_cache[i]))
 			ret++;
 
 	return ret;
@@ -790,7 +829,7 @@ static int suggest_conflicts(void)
 		}
 	}
 	fclose(fp);
-	rerere();
+	rerere(allow_rerere_auto);
 	printf("Automatic merge failed; "
 			"fix conflicts and then commit the result.\n");
 	return 1;
@@ -847,12 +886,22 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	const char *best_strategy = NULL, *wt_strategy = NULL;
 	struct commit_list **remotes = &remoteheads;
 
-	if (file_exists(git_path("MERGE_HEAD")))
-		die("You have not concluded your merge. (MERGE_HEAD exists)");
-	if (read_cache_unmerged())
-		die("You are in the middle of a conflicted merge."
-				" (index unmerged)");
+	if (read_cache_unmerged()) {
+		die_resolve_conflict("merge");
+	}
+	if (file_exists(git_path("MERGE_HEAD"))) {
+		/*
+		 * There is no unmerged entry, don't advise 'git
+		 * add/rm <file>', just 'git commit'.
+		 */
+		if (advice_resolve_conflict)
+			die("You have not concluded your merge (MERGE_HEAD exists).\n"
+			    "Please, commit your changes before you can merge.");
+		else
+			die("You have not concluded your merge (MERGE_HEAD exists).");
+	}
 
+	resolve_undo_clear();
 	/*
 	 * Check if we are _not_ on a detached HEAD, i.e. if there is a
 	 * current branch.

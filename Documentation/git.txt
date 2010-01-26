@@ -575,8 +575,8 @@ other
 	linkgit:git-config[1].
 
 'GIT_SSH'::
-	If this environment variable is set then 'git-fetch'
-	and 'git-push' will use this command instead
+	If this environment variable is set then 'git fetch'
+	and 'git push' will use this command instead
 	of 'ssh' when they need to connect to a remote system.
 	The '$GIT_SSH' command will be given exactly two arguments:
 	the 'username@host' (or just 'host') from the URL and the
@@ -592,8 +592,8 @@ for further details.
 
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
-	as 'git-blame' (in incremental mode), 'git-rev-list', 'git-log',
-	and 'git-whatchanged' will force a flush of the output stream
+	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
+	and 'git whatchanged' will force a flush of the output stream
 	after each commit-oriented record have been flushed.   If this
 	variable is set to "0", the output of these commands will be done
 	using completely buffered I/O.   If this environment variable is

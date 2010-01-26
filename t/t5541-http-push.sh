@@ -88,5 +88,45 @@ test_expect_success 'used receive-pack service' '
 	test_cmp exp act
 '
 
+test_expect_success 'non-fast-forward push fails' '
+	cd "$ROOT_PATH"/test_repo_clone &&
+	git checkout master &&
+	echo "changed" > path2 &&
+	git commit -a -m path2 --amend &&
+
+	HEAD=$(git rev-parse --verify HEAD) &&
+	!(git push -v origin >output 2>&1) &&
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
+	 test $HEAD != $(git rev-parse --verify HEAD))
+'
+
+test_expect_success 'non-fast-forward push show ref status' '
+	grep "^ ! \[rejected\][ ]*master -> master (non-fast-forward)$" output
+'
+
+test_expect_success 'non-fast-forward push shows help message' '
+	grep "To prevent you from losing history, non-fast-forward updates were rejected" \
+		output
+'
+
+test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper' '
+	# create a dissimilarly-named remote ref so that git is unable to match the
+	# two refs (viz. local, remote) unless an explicit refspec is provided.
+	git push origin master:retsam
+
+	echo "change changed" > path2 &&
+	git commit -a -m path2 --amend &&
+
+	# push master too; this ensures there is at least one '"'push'"' command to
+	# the remote helper and triggers interaction with the helper.
+	!(git push -v origin +master master:retsam >output 2>&1) &&
+
+	grep "^ + [a-f0-9]*\.\.\.[a-f0-9]* *master -> master (forced update)$" output &&
+	grep "^ ! \[rejected\] *master -> retsam (non-fast-forward)$" output &&
+
+	grep "To prevent you from losing history, non-fast-forward updates were rejected" \
+		output
+'
+
 stop_httpd
 test_done

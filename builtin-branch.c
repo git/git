@@ -93,9 +93,60 @@ static const char *branch_get_color(enum color_branch ix)
 	return "";
 }
 
+static int branch_merged(int kind, const char *name,
+			 struct commit *rev, struct commit *head_rev)
+{
+	/*
+	 * This checks whether the merge bases of branch and HEAD (or
+	 * the other branch this branch builds upon) contains the
+	 * branch, which means that the branch has already been merged
+	 * safely to HEAD (or the other branch).
+	 */
+	struct commit *reference_rev = NULL;
+	const char *reference_name = NULL;
+	int merged;
+
+	if (kind == REF_LOCAL_BRANCH) {
+		struct branch *branch = branch_get(name);
+		unsigned char sha1[20];
+
+		if (branch &&
+		    branch->merge &&
+		    branch->merge[0] &&
+		    branch->merge[0]->dst &&
+		    (reference_name =
+		     resolve_ref(branch->merge[0]->dst, sha1, 1, NULL)) != NULL)
+			reference_rev = lookup_commit_reference(sha1);
+	}
+	if (!reference_rev)
+		reference_rev = head_rev;
+
+	merged = in_merge_bases(rev, &reference_rev, 1);
+
+	/*
+	 * After the safety valve is fully redefined to "check with
+	 * upstream, if any, otherwise with HEAD", we should just
+	 * return the result of the in_merge_bases() above without
+	 * any of the following code, but during the transition period,
+	 * a gentle reminder is in order.
+	 */
+	if ((head_rev != reference_rev) &&
+	    in_merge_bases(rev, &head_rev, 1) != merged) {
+		if (merged)
+			warning("deleting branch '%s' that has been merged to\n"
+				"         '%s', but it is not yet merged to HEAD.",
+				name, reference_name);
+		else
+			warning("not deleting branch '%s' that is not yet merged to\n"
+				"         '%s', even though it is merged to HEAD.",
+				name, reference_name);
+	}
+	return merged;
+}
+
 static int delete_branches(int argc, const char **argv, int force, int kinds)
 {
-	struct commit *rev, *head_rev = head_rev;
+	struct commit *rev, *head_rev = NULL;
 	unsigned char sha1[20];
 	char *name = NULL;
 	const char *fmt, *remote;
@@ -148,15 +199,8 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			continue;
 		}
 
-		/* This checks whether the merge bases of branch and
-		 * HEAD contains branch -- which means that the HEAD
-		 * contains everything in both.
-		 */
-
-		if (!force &&
-		    !in_merge_bases(rev, &head_rev, 1)) {
-			error("The branch '%s' is not an ancestor of "
-			      "your current HEAD.\n"
+		if (!force && !branch_merged(kinds, bname.buf, rev, head_rev)) {
+			error("The branch '%s' is not fully merged.\n"
 			      "If you are sure you want to delete it, "
 			      "run 'git branch -D %s'.", bname.buf, bname.buf);
 			ret = 1;
@@ -564,6 +608,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT__VERBOSE(&verbose),
 		OPT_SET_INT('t', "track",  &track, "set up tracking mode (see git-pull(1))",
 			BRANCH_TRACK_EXPLICIT),
+		OPT_SET_INT( 0, "set-upstream",  &track, "change upstream info",
+			BRANCH_TRACK_OVERRIDE),
 		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
 		OPT_SET_INT('r', NULL,     &kinds, "act on remote-tracking branches",
 			REF_REMOTE_BRANCH),

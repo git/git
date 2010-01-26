@@ -593,7 +593,7 @@ struct commit_list *filter_skipped(struct commit_list *list,
  * is increased by one between each call, but that should not matter
  * for this application.
  */
-int get_prn(int count) {
+static int get_prn(int count) {
 	count = count * 1103515245 + 12345;
 	return ((unsigned)(count/65536) % PRN_MODULO);
 }
@@ -813,11 +813,11 @@ static void handle_skipped_merge_base(const unsigned char *mb)
 	char *bad_hex = sha1_to_hex(current_bad_sha1);
 	char *good_hex = join_sha1_array_hex(&good_revs, ' ');
 
-	fprintf(stderr, "Warning: the merge base between %s and [%s] "
+	warning("the merge base between %s and [%s] "
 		"must be skipped.\n"
 		"So we cannot be sure the first bad commit is "
 		"between %s and %s.\n"
-		"We continue anyway.\n",
+		"We continue anyway.",
 		bad_hex, good_hex, mb_hex, bad_hex);
 	free(good_hex);
 }

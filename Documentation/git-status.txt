@@ -8,7 +8,7 @@ git-status - Show the working tree status
 
 SYNOPSIS
 --------
-'git status' <options>...
+'git status' [<options>...] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
@@ -17,27 +17,92 @@ current HEAD commit, paths that have differences between the working
 tree and the index file, and paths in the working tree that are not
 tracked by git (and are not ignored by linkgit:gitignore[5]). The first
 are what you _would_ commit by running `git commit`; the second and
-third are what you _could_ commit by running 'git-add' before running
+third are what you _could_ commit by running 'git add' before running
 `git commit`.
 
-The command takes the same set of options as 'git-commit'; it
-shows what would be committed if the same options are given to
-'git-commit'.
+OPTIONS
+-------
 
-If there is no path that is different between the index file and
-the current HEAD commit (i.e., there is nothing to commit by running
-`git commit`), the command exits with non-zero status.
+-s::
+--short::
+	Give the output in the short-format.
+
+--porcelain::
+	Give the output in a stable, easy-to-parse format for scripts.
+	Currently this is identical to --short output, but is guaranteed
+	not to change in the future, making it safe for scripts.
+
+-u[<mode>]::
+--untracked-files[=<mode>]::
+	Show untracked files (Default: 'all').
++
+The mode parameter is optional, and is used to specify
+the handling of untracked files. The possible options are:
++
+--
+	- 'no'     - Show no untracked files
+	- 'normal' - Shows untracked files and directories
+	- 'all'    - Also shows individual files in untracked directories.
+--
++
+See linkgit:git-config[1] for configuration variable
+used to change the default for when the option is not
+specified.
+
+-z::
+	Terminate entries with NUL, instead of LF.  This implies
+	the `--porcelain` output format if no other format is given.
 
 
 OUTPUT
 ------
 The output from this command is designed to be used as a commit
 template comment, and all the output lines are prefixed with '#'.
+The default, long format, is designed to be human readable,
+verbose and descriptive.  They are subject to change in any time.
 
 The paths mentioned in the output, unlike many other git commands, are
 made relative to the current directory if you are working in a
 subdirectory (this is on purpose, to help cutting and pasting). See
 the status.relativePaths config option below.
+
+In short-format, the status of each path is shown as
+
+	XY PATH1 -> PATH2
+
+where `PATH1` is the path in the `HEAD`, and ` -> PATH2` part is
+shown only when `PATH1` corresponds to a different path in the
+index/worktree (i.e. renamed).
+
+For unmerged entries, `X` shows the status of stage #2 (i.e. ours) and `Y`
+shows the status of stage #3 (i.e. theirs).
+
+For entries that do not have conflicts, `X` shows the status of the index,
+and `Y` shows the status of the work tree.  For untracked paths, `XY` are
+`??`.
+
+    X          Y     Meaning
+    -------------------------------------------------
+              [MD]   not updated
+    M        [ MD]   updated in index
+    A        [ MD]   added to index
+    D        [ MD]   deleted from index
+    R        [ MD]   renamed in index
+    C        [ MD]   copied in index
+    [MARC]           index and work tree matches
+    [ MARC]     M    work tree changed since index
+    [ MARC]     D    deleted in work tree
+    -------------------------------------------------
+    D           D    unmerged, both deleted
+    A           U    unmerged, added by us
+    U           D    unmerged, deleted by them
+    U           A    unmerged, added by them
+    D           U    unmerged, deleted by us
+    A           A    unmerged, both added
+    U           U    unmerged, both modified
+    -------------------------------------------------
+    ?           ?    untracked
+    -------------------------------------------------
 
 
 CONFIGURATION
@@ -53,9 +118,9 @@ paths shown are relative to the repository root, not to the current
 directory.
 
 If `status.submodulesummary` is set to a non zero number or true (identical
-to -1 or an unlimited number), the submodule summary will be enabled and a
-summary of commits for modified submodules will be shown (see --summary-limit
-option of linkgit:git-submodule[1]).
+to -1 or an unlimited number), the submodule summary will be enabled for
+the long format and a summary of commits for modified submodules will be
+shown (see --summary-limit option of linkgit:git-submodule[1]).
 
 SEE ALSO
 --------
@@ -63,8 +128,7 @@ linkgit:gitignore[5]
 
 Author
 ------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>.
+Written by Junio C Hamano <gitster@pobox.com>.
 
 Documentation
 --------------

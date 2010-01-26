@@ -13,16 +13,20 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Runs 'git-fetch' with the given parameters, and calls 'git-merge'
+Runs 'git fetch' with the given parameters, and calls 'git merge'
 to merge the retrieved head(s) into the current branch.
-With `--rebase`, calls 'git-rebase' instead of 'git-merge'.
+With `--rebase`, calls 'git rebase' instead of 'git merge'.
 
 Note that you can use `.` (current directory) as the
 <repository> to pull from the local repository -- this is useful
 when merging local branches into the current branch.
 
-Also note that options meant for 'git-pull' itself and underlying
-'git-merge' must be given before the options meant for 'git-fetch'.
+Also note that options meant for 'git pull' itself and underlying
+'git merge' must be given before the options meant for 'git fetch'.
+
+*Warning*: Running 'git pull' (actually, the underlying 'git merge')
+with uncommitted changes is discouraged: while possible, it leaves you
+in a state that is hard to back out of in the case of a conflict.
 
 OPTIONS
 -------
@@ -148,7 +152,7 @@ $ git merge origin/next
 
 
 If you tried a pull which resulted in a complex conflicts and
-would want to start over, you can recover with 'git-reset'.
+would want to start over, you can recover with 'git reset'.
 
 
 SEE ALSO

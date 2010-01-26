@@ -25,19 +25,30 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 	struct commit *result;
 
 	init_merge_options(&o);
-	if (argv[0]) {
-		int namelen = strlen(argv[0]);
-		if (8 < namelen &&
-		    !strcmp(argv[0] + namelen - 8, "-subtree"))
-			o.subtree_merge = 1;
-	}
+	if (argv[0] && !suffixcmp(argv[0], "-subtree"))
+		o.subtree_shift = "";
 
 	if (argc < 4)
 		usagef("%s <base>... -- <head> <remote> ...", argv[0]);
 
 	for (i = 1; i < argc; ++i) {
-		if (!strcmp(argv[i], "--"))
-			break;
+		const char *arg = argv[i];
+
+		if (!prefixcmp(arg, "--")) {
+			if (!arg[2])
+				break;
+			if (!strcmp(arg+2, "ours"))
+				o.recursive_variant = MERGE_RECURSIVE_OURS;
+			else if (!strcmp(arg+2, "theirs"))
+				o.recursive_variant = MERGE_RECURSIVE_THEIRS;
+			else if (!strcmp(arg+2, "subtree"))
+				o.subtree_shift = "";
+			else if (!prefixcmp(arg+2, "subtree="))
+				o.subtree_shift = arg + 10;
+			else
+				die("Unknown option %s", arg);
+			continue;
+		}
 		if (bases_count < ARRAY_SIZE(bases)-1) {
 			unsigned char *sha = xmalloc(20);
 			if (get_sha1(argv[i], sha))

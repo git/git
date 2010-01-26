@@ -519,6 +519,13 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 	return ref;
 }
 
+/* The argument to filter_refs */
+struct ref_filter {
+	const char *pattern;
+	each_ref_fn *fn;
+	void *cb_data;
+};
+
 int read_ref(const char *ref, unsigned char *sha1)
 {
 	if (resolve_ref(ref, sha1, 1, NULL))
@@ -543,6 +550,15 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 	}
 	current_ref = entry;
 	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+}
+
+static int filter_refs(const char *ref, const unsigned char *sha, int flags,
+	void *data)
+{
+	struct ref_filter *filter = (struct ref_filter *)data;
+	if (fnmatch(filter->pattern, ref, 0))
+		return 0;
+	return filter->fn(ref, sha, flags, filter->cb_data);
 }
 
 int peel_ref(const char *ref, unsigned char *sha1)
@@ -672,6 +688,43 @@ int for_each_remote_ref(each_ref_fn fn, void *cb_data)
 int for_each_replace_ref(each_ref_fn fn, void *cb_data)
 {
 	return do_for_each_ref("refs/replace/", fn, 13, 0, cb_data);
+}
+
+int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
+	const char *prefix, void *cb_data)
+{
+	struct strbuf real_pattern = STRBUF_INIT;
+	struct ref_filter filter;
+	const char *has_glob_specials;
+	int ret;
+
+	if (!prefix && prefixcmp(pattern, "refs/"))
+		strbuf_addstr(&real_pattern, "refs/");
+	else if (prefix)
+		strbuf_addstr(&real_pattern, prefix);
+	strbuf_addstr(&real_pattern, pattern);
+
+	has_glob_specials = strpbrk(pattern, "?*[");
+	if (!has_glob_specials) {
+		/* Append impiled '/' '*' if not present. */
+		if (real_pattern.buf[real_pattern.len - 1] != '/')
+			strbuf_addch(&real_pattern, '/');
+		/* No need to check for '*', there is none. */
+		strbuf_addch(&real_pattern, '*');
+	}
+
+	filter.pattern = real_pattern.buf;
+	filter.fn = fn;
+	filter.cb_data = cb_data;
+	ret = for_each_ref(filter_refs, &filter);
+
+	strbuf_release(&real_pattern);
+	return ret;
+}
+
+int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data)
+{
+	return for_each_glob_ref_in(fn, pattern, NULL, cb_data);
 }
 
 int for_each_rawref(each_ref_fn fn, void *cb_data)

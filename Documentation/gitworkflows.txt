@@ -360,7 +360,7 @@ There are three main tools that can be used for this:
 
 * linkgit:git-pull[1] that does fetch and merge in one go.
 
-Note the last point.  Do 'not' use 'git-pull' unless you actually want
+Note the last point.  Do 'not' use 'git pull' unless you actually want
 to merge the remote branch.
 
 Getting changes out is easy:
@@ -397,7 +397,7 @@ Please pull from
     <url> <branch>
 -------------------------------------
 
-In that case, 'git-pull' can do the fetch and merge in one go, as
+In that case, 'git pull' can do the fetch and merge in one go, as
 follows.
 
 .Push/pull: Merging remote topics
@@ -449,7 +449,7 @@ problem.
 
 If you receive such a patch series (as maintainer, or perhaps as a
 reader of the mailing list it was sent to), save the mails to files,
-create a new topic branch and use 'git-am' to import the commits:
+create a new topic branch and use 'git am' to import the commits:
 
 .format-patch/am: Importing patches
 [caption="Recipe: "]

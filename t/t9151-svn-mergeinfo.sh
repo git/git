@@ -33,7 +33,7 @@ test_expect_success 'svn non-merge merge commits did not become git merge commit
 	[ -z "$bad_non_merges" ]
 	'
 
-test_expect_success 'everything got merged in the end' '
+test_expect_failure 'everything got merged in the end' '
 	unmerged=$(git rev-list --all --not master)
 	[ -z "$unmerged" ]
 	'

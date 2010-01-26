@@ -732,7 +732,7 @@ class P4Submit(Command):
             if os.environ.has_key("P4EDITOR"):
                 editor = os.environ.get("P4EDITOR")
             else:
-                editor = read_pipe("git var GIT_EDITOR")
+                editor = read_pipe("git var GIT_EDITOR").strip()
             system(editor + " " + fileName)
 
             response = "y"

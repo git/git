@@ -42,6 +42,7 @@ struct diff_filespec {
 #define DIFF_FILE_VALID(spec) (((spec)->mode) != 0)
 	unsigned should_free : 1; /* data should be free()'ed */
 	unsigned should_munmap : 1; /* data should be munmap()'ed */
+	unsigned dirty_submodule : 1;  /* For submodules: its work tree is dirty */
 
 	struct userdiff_driver *driver;
 	/* data should be considered "binary"; -1 means "don't know yet" */

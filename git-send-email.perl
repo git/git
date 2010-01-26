@@ -71,7 +71,7 @@ git send-email [options] <file | directory | rev-list options >
     --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, all.
     --[no-]signed-off-by-cc        * Send to Signed-off-by: addresses. Default on.
     --[no-]suppress-from           * Send to self. Default off.
-    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default on.
+    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default off.
     --[no-]thread                  * Use In-Reply-To: field. Default on.
 
   Administering:
@@ -221,10 +221,10 @@ sub chain_reply_to {
 	if (defined $chain_reply_to &&
 	    $chain_reply_to eq $not_set_by_user) {
 		print STDERR
-		    "In git 1.7.0, the default will be changed to --no-chain-reply-to\n" .
+		    "In git 1.7.0, the default has changed to --no-chain-reply-to\n" .
 		    "Set sendemail.chainreplyto configuration variable to true if\n" .
 		    "you want to keep --chain-reply-to as your default.\n";
-		$chain_reply_to = 1;
+		$chain_reply_to = 0;
 	}
 	return $chain_reply_to;
 }

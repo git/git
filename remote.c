@@ -53,6 +53,11 @@ static struct rewrites rewrites_push;
 #define BUF_SIZE (2048)
 static char buffer[BUF_SIZE];
 
+static int valid_remote(const struct remote *remote)
+{
+	return (!!remote->url) || (!!remote->foreign_vcs);
+}
+
 static const char *alias_url(const char *url, struct rewrites *r)
 {
 	int i, j;
@@ -441,6 +446,8 @@ static int handle_config(const char *key, const char *value, void *cb)
 	} else if (!strcmp(subkey, ".proxy")) {
 		return git_config_string((const char **)&remote->http_proxy,
 					 key, value);
+	} else if (!strcmp(subkey, ".vcs")) {
+		return git_config_string(&remote->foreign_vcs, key, value);
 	}
 	return 0;
 }
@@ -668,6 +675,16 @@ static struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
 	return parse_refspec_internal(nr_refspec, refspec, 0, 0);
 }
 
+void free_refspec(int nr_refspec, struct refspec *refspec)
+{
+	int i;
+	for (i = 0; i < nr_refspec; i++) {
+		free(refspec[i].src);
+		free(refspec[i].dst);
+	}
+	free(refspec);
+}
+
 static int valid_remote_nick(const char *name)
 {
 	if (!name[0] || is_dot_or_dotdot(name))
@@ -690,14 +707,14 @@ struct remote *remote_get(const char *name)
 
 	ret = make_remote(name, 0);
 	if (valid_remote_nick(name)) {
-		if (!ret->url)
+		if (!valid_remote(ret))
 			read_remotes_file(ret);
-		if (!ret->url)
+		if (!valid_remote(ret))
 			read_branches_file(ret);
 	}
-	if (name_given && !ret->url)
+	if (name_given && !valid_remote(ret))
 		add_url_alias(ret, name);
-	if (!ret->url)
+	if (!valid_remote(ret))
 		return NULL;
 	ret->fetch = parse_fetch_refspec(ret->fetch_refspec_nr, ret->fetch_refspec);
 	ret->push = parse_push_refspec(ret->push_refspec_nr, ret->push_refspec);
@@ -808,6 +825,23 @@ static int match_name_with_pattern(const char *key, const char *name,
 		       vstar + 1);
 	}
 	return ret;
+}
+
+char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
+		     const char *name)
+{
+	int i;
+	char *ret = NULL;
+	for (i = 0; i < nr_refspec; i++) {
+		struct refspec *refspec = refspecs + i;
+		if (refspec->pattern) {
+			if (match_name_with_pattern(refspec->src, name,
+						    refspec->dst, &ret))
+				return ret;
+		} else if (!strcmp(refspec->src, name))
+			return strdup(refspec->dst);
+	}
+	return NULL;
 }
 
 int remote_find_tracking(struct remote *remote, struct refspec *refspec)
@@ -1211,6 +1245,56 @@ int match_refs(struct ref *src, struct ref **dst,
 	if (errs)
 		return -1;
 	return 0;
+}
+
+void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
+	int force_update)
+{
+	struct ref *ref;
+
+	for (ref = remote_refs; ref; ref = ref->next) {
+		if (ref->peer_ref)
+			hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
+		else if (!send_mirror)
+			continue;
+
+		ref->deletion = is_null_sha1(ref->new_sha1);
+		if (!ref->deletion &&
+			!hashcmp(ref->old_sha1, ref->new_sha1)) {
+			ref->status = REF_STATUS_UPTODATE;
+			continue;
+		}
+
+		/* This part determines what can overwrite what.
+		 * The rules are:
+		 *
+		 * (0) you can always use --force or +A:B notation to
+		 *     selectively force individual ref pairs.
+		 *
+		 * (1) if the old thing does not exist, it is OK.
+		 *
+		 * (2) if you do not have the old thing, you are not allowed
+		 *     to overwrite it; you would not know what you are losing
+		 *     otherwise.
+		 *
+		 * (3) if both new and old are commit-ish, and new is a
+		 *     descendant of old, it is OK.
+		 *
+		 * (4) regardless of all of the above, removing :B is
+		 *     always allowed.
+		 */
+
+		ref->nonfastforward =
+			!ref->deletion &&
+			!is_null_sha1(ref->old_sha1) &&
+			(!has_sha1_file(ref->old_sha1)
+			  || !ref_newer(ref->new_sha1, ref->old_sha1));
+
+		if (ref->nonfastforward && !ref->force && !force_update) {
+			ref->status = REF_STATUS_REJECT_NONFASTFORWARD;
+			continue;
+		}
+	}
 }
 
 struct branch *branch_get(const char *name)

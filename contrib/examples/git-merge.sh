@@ -31,10 +31,11 @@ LF='
 '
 
 all_strategies='recur recursive octopus resolve stupid ours subtree'
+all_strategies="$all_strategies recursive-ours recursive-theirs"
 default_twohead_strategies='recursive'
 default_octopus_strategies='octopus'
 no_fast_forward_strategies='subtree ours'
-no_trivial_strategies='recursive recur subtree ours'
+no_trivial_strategies='recursive recur subtree ours recursive-ours recursive-theirs'
 use_strategies=
 
 allow_fast_forward=t

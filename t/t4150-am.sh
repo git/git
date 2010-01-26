@@ -83,6 +83,12 @@ test_expect_success setup '
 		echo "X-Fake-Field: Line Three" &&
 		git format-patch --stdout first | sed -e "1d"
 	} > patch1.eml &&
+	{
+		echo "X-Fake-Field: Line One" &&
+		echo "X-Fake-Field: Line Two" &&
+		echo "X-Fake-Field: Line Three" &&
+		git format-patch --stdout first | sed -e "1d"
+	} | append_cr >patch1-crlf.eml &&
 	sed -n -e "3,\$p" msg >file &&
 	git add file &&
 	test_tick &&
@@ -117,6 +123,15 @@ test_expect_success 'am applies patch correctly' '
 test_expect_success 'am applies patch e-mail not in a mbox' '
 	git checkout first &&
 	git am patch1.eml &&
+	! test -d .git/rebase-apply &&
+	test -z "$(git diff second)" &&
+	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
+	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+'
+
+test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
+	git checkout first &&
+	git am patch1-crlf.eml &&
 	! test -d .git/rebase-apply &&
 	test -z "$(git diff second)" &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&

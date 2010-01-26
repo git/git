@@ -27,8 +27,6 @@ struct rev_list_info {
 	const char *header_prefix;
 };
 
-extern int show_bisect_vars(struct rev_list_info *info, int reaches, int all);
-
 extern int bisect_next_all(const char *prefix);
 
 extern int estimate_bisect_steps(int all);

@@ -24,10 +24,13 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 	result[count] = NULL;
 	for (i = 0; i < count; i++) {
 		int length = strlen(result[i]);
-		if (length > 0 && is_dir_sep(result[i][length - 1]))
-			result[i] = xmemdupz(result[i], length - 1);
-		if (base_name)
-			result[i] = basename((char *)result[i]);
+		int to_copy = length;
+		while (to_copy > 0 && is_dir_sep(result[i][to_copy - 1]))
+			to_copy--;
+		if (to_copy != length || base_name) {
+			char *it = xmemdupz(result[i], to_copy);
+			result[i] = base_name ? strdup(basename(it)) : it;
+		}
 	}
 	return get_pathspec(prefix, result);
 }
@@ -169,9 +172,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				 * check both source and destination
 				 */
 				if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
-					fprintf(stderr, "Warning: %s;"
-							" will overwrite!\n",
-							bad);
+					warning("%s; will overwrite!", bad);
 					bad = NULL;
 				} else
 					bad = "Cannot overwrite";

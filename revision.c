@@ -268,7 +268,7 @@ static int tree_difference = REV_TREE_SAME;
 static void file_add_remove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
-		    const char *fullpath)
+		    const char *fullpath, unsigned dirty_submodule)
 {
 	int diff = addremove == '+' ? REV_TREE_NEW : REV_TREE_OLD;
 
@@ -281,7 +281,8 @@ static void file_change(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
-		 const char *fullpath)
+		 const char *fullpath,
+		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
 {
 	tree_difference = REV_TREE_DIFFERENT;
 	DIFF_OPT_SET(options, HAS_CHANGES);
@@ -699,12 +700,18 @@ static int handle_one_ref(const char *path, const unsigned char *sha1, int flag,
 	return 0;
 }
 
+static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
+	unsigned flags)
+{
+	cb->all_revs = revs;
+	cb->all_flags = flags;
+}
+
 static void handle_refs(struct rev_info *revs, unsigned flags,
 		int (*for_each)(each_ref_fn, void *))
 {
 	struct all_refs_cb cb;
-	cb.all_revs = revs;
-	cb.all_flags = flags;
+	init_all_refs_cb(&cb, revs, flags);
 	for_each(handle_one_ref, &cb);
 }
 
@@ -791,7 +798,7 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->ignore_merges = 1;
 	revs->simplify_history = 1;
 	DIFF_OPT_SET(&revs->pruning, RECURSIVE);
-	DIFF_OPT_SET(&revs->pruning, QUIET);
+	DIFF_OPT_SET(&revs->pruning, QUICK);
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
 	revs->lifo = 1;
@@ -1161,13 +1168,22 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->verbose_header = 1;
 	} else if (!strcmp(arg, "--pretty")) {
 		revs->verbose_header = 1;
+		revs->pretty_given = 1;
 		get_commit_format(arg+8, revs);
 	} else if (!prefixcmp(arg, "--pretty=") || !prefixcmp(arg, "--format=")) {
 		revs->verbose_header = 1;
+		revs->pretty_given = 1;
 		get_commit_format(arg+9, revs);
+	} else if (!strcmp(arg, "--show-notes")) {
+		revs->show_notes = 1;
+		revs->show_notes_given = 1;
+	} else if (!strcmp(arg, "--no-notes")) {
+		revs->show_notes = 0;
+		revs->show_notes_given = 1;
 	} else if (!strcmp(arg, "--oneline")) {
 		revs->verbose_header = 1;
 		get_commit_format("oneline", revs);
+		revs->pretty_given = 1;
 		revs->abbrev_commit = 1;
 	} else if (!strcmp(arg, "--graph")) {
 		revs->topo_order = 1;
@@ -1350,6 +1366,30 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--remotes")) {
 				handle_refs(revs, flags, for_each_remote_ref);
+				continue;
+			}
+			if (!prefixcmp(arg, "--glob=")) {
+				struct all_refs_cb cb;
+				init_all_refs_cb(&cb, revs, flags);
+				for_each_glob_ref(handle_one_ref, arg + 7, &cb);
+				continue;
+			}
+			if (!prefixcmp(arg, "--branches=")) {
+				struct all_refs_cb cb;
+				init_all_refs_cb(&cb, revs, flags);
+				for_each_glob_ref_in(handle_one_ref, arg + 11, "refs/heads/", &cb);
+				continue;
+			}
+			if (!prefixcmp(arg, "--tags=")) {
+				struct all_refs_cb cb;
+				init_all_refs_cb(&cb, revs, flags);
+				for_each_glob_ref_in(handle_one_ref, arg + 7, "refs/tags/", &cb);
+				continue;
+			}
+			if (!prefixcmp(arg, "--remotes=")) {
+				struct all_refs_cb cb;
+				init_all_refs_cb(&cb, revs, flags);
+				for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
 				continue;
 			}
 			if (!strcmp(arg, "--reflog")) {

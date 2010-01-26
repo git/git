@@ -48,7 +48,7 @@ test_expect_success 'file is considered binary by plumbing' '
 
 test_expect_success 'setup textconv filters' '
 	echo file diff=foo >.gitattributes &&
-	git config diff.foo.textconv "$PWD"/hexdump &&
+	git config diff.foo.textconv "\"$(pwd)\""/hexdump &&
 	git config diff.fail.textconv false
 '
 

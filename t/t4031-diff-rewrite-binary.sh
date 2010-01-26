@@ -54,7 +54,7 @@ chmod +x dump
 
 test_expect_success 'setup textconv' '
 	echo file diff=foo >.gitattributes &&
-	git config diff.foo.textconv "$PWD"/dump
+	git config diff.foo.textconv "\"$(pwd)\""/dump
 '
 
 test_expect_success 'rewrite diff respects textconv' '

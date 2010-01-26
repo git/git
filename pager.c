@@ -28,7 +28,7 @@ static void pager_preexec(void)
 }
 #endif
 
-static const char *pager_argv[] = { "sh", "-c", NULL, NULL };
+static const char *pager_argv[] = { NULL, NULL };
 static struct child_process pager_process;
 
 static void wait_for_pager(void)
@@ -81,7 +81,8 @@ void setup_pager(void)
 	spawned_pager = 1; /* means we are emitting to terminal */
 
 	/* spawn the pager */
-	pager_argv[2] = pager;
+	pager_argv[0] = pager;
+	pager_process.use_shell = 1;
 	pager_process.argv = pager_argv;
 	pager_process.in = -1;
 	if (!getenv("LESS")) {

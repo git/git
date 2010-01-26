@@ -9,8 +9,6 @@
 #include "builtin.h"
 #include "utf8.h"
 
-#define BLOCKING (1ul << 14)
-
 /*
  * FIXME! Share the code with "write-tree.c"
  */

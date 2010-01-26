@@ -60,7 +60,7 @@ reference name expressions (see linkgit:git-rev-parse[1]):
 . A colon `:` is used as in `srcref:dstref` to mean "use srcref\'s
   value and store it in dstref" in fetch and push operations.
   It may also be used to select a specific object such as with
-  'git-cat-file': "git cat-file blob v1.3.3:refs.c".
+  'git cat-file': "git cat-file blob v1.3.3:refs.c".
 
 . at-open-brace `@{` is used as a notation to access a reflog entry.
 

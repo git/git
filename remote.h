@@ -11,6 +11,8 @@ struct remote {
 	const char *name;
 	int origin;
 
+	const char *foreign_vcs;
+
 	const char **url;
 	int url_nr;
 	int url_alloc;
@@ -89,8 +91,15 @@ void ref_remove_duplicates(struct ref *ref_map);
 int valid_fetch_refspec(const char *refspec);
 struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
 
+void free_refspec(int nr_refspec, struct refspec *refspec);
+
+char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
+		     const char *name);
+
 int match_refs(struct ref *src, struct ref **dst,
 	       int nr_refspec, const char **refspec, int all);
+void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
+	int force_update);
 
 /*
  * Given a list of the remote refs and the specification of things to

@@ -72,15 +72,13 @@ static int show_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-int main(int argc, char **argv)
+int cmd_var(int argc, const char **argv, const char *prefix)
 {
 	const char *val;
 	int nongit;
 	if (argc != 2) {
 		usage(var_usage);
 	}
-
-	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory_gently(&nongit);
 	val = NULL;

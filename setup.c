@@ -77,6 +77,18 @@ int check_filename(const char *prefix, const char *arg)
 	die_errno("failed to stat '%s'", arg);
 }
 
+static void NORETURN die_verify_filename(const char *prefix, const char *arg)
+{
+	unsigned char sha1[20];
+	unsigned mode;
+	/* try a detailed diagnostic ... */
+	get_sha1_with_mode_1(arg, sha1, &mode, 0, prefix);
+	/* ... or fall back the most general message. */
+	die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
+	    "Use '--' to separate paths from revisions", arg);
+
+}
+
 /*
  * Verify a filename that we got as an argument for a pathspec
  * entry. Note that a filename that begins with "-" never verifies
@@ -90,8 +102,7 @@ void verify_filename(const char *prefix, const char *arg)
 		die("bad flag '%s' used after filename", arg);
 	if (check_filename(prefix, arg))
 		return;
-	die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
-	    "Use '--' to separate paths from revisions", arg);
+	die_verify_filename(prefix, arg);
 }
 
 /*
@@ -252,6 +263,8 @@ static int check_repository_format_gently(int *nongit_ok)
 const char *read_gitfile_gently(const char *path)
 {
 	char *buf;
+	char *dir;
+	const char *slash;
 	struct stat st;
 	int fd;
 	size_t len;
@@ -276,9 +289,23 @@ const char *read_gitfile_gently(const char *path)
 	if (len < 9)
 		die("No path in gitfile: %s", path);
 	buf[len] = '\0';
-	if (!is_git_directory(buf + 8))
-		die("Not a git repository: %s", buf + 8);
-	path = make_absolute_path(buf + 8);
+	dir = buf + 8;
+
+	if (!is_absolute_path(dir) && (slash = strrchr(path, '/'))) {
+		size_t pathlen = slash+1 - path;
+		size_t dirlen = pathlen + len - 8;
+		dir = xmalloc(dirlen + 1);
+		strncpy(dir, path, pathlen);
+		strncpy(dir + pathlen, buf + 8, len - 8);
+		dir[dirlen] = '\0';
+		free(buf);
+		buf = dir;
+	}
+
+	if (!is_git_directory(dir))
+		die("Not a git repository: %s", dir);
+	path = make_absolute_path(dir);
+
 	free(buf);
 	return path;
 }

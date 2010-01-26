@@ -140,7 +140,7 @@ static int delete_tag(const char *name, const char *ref,
 {
 	if (delete_ref(ref, sha1, 0))
 		return 1;
-	printf("Deleted tag '%s'\n", name);
+	printf("Deleted tag '%s' (was %s)\n", name, find_unique_abbrev(sha1, DEFAULT_ABBREV));
 	return 0;
 }
 
@@ -479,6 +479,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die("%s: cannot lock the ref", ref);
 	if (write_ref_sha1(lock, object, NULL) < 0)
 		die("%s: cannot update the ref", ref);
+	if (force && hashcmp(prev, object))
+		printf("Updated tag '%s' (was %s)\n", tag, find_unique_abbrev(prev, DEFAULT_ABBREV));
 
 	strbuf_release(&buf);
 	return 0;

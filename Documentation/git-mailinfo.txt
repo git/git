@@ -16,7 +16,7 @@ DESCRIPTION
 Reads a single e-mail message from the standard input, and
 writes the commit log message in <msg> file, and the patches in
 <patch> file.  The author name, e-mail and e-mail subject are
-written out to the standard output to be used by 'git-am'
+written out to the standard output to be used by 'git am'
 to create a commit.  It is usually not necessary to use this
 command directly.  See linkgit:git-am[1] instead.
 
@@ -30,7 +30,7 @@ OPTIONS
 	whitespaces, (3) '[' up to ']', typically '[PATCH]', and
 	then prepends "[PATCH] ".  This flag forbids this
 	munging, and is most useful when used to read back
-	'git-format-patch -k' output.
+	'git format-patch -k' output.
 
 -b::
 	When -k is not in effect, all leading strings bracketed with '['

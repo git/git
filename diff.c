@@ -194,6 +194,7 @@ struct emit_callback {
 	struct diff_words_data *diff_words;
 	int *found_changesp;
 	FILE *file;
+	struct strbuf *header;
 };
 
 static int count_lines(const char *data, int size)
@@ -797,6 +798,11 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	const char *plain = diff_get_color(ecbdata->color_diff, DIFF_PLAIN);
 	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
 
+	if (ecbdata->header) {
+		fprintf(ecbdata->file, "%s", ecbdata->header->buf);
+		strbuf_reset(ecbdata->header);
+		ecbdata->header = NULL;
+	}
 	*(ecbdata->found_changesp) = 1;
 
 	if (ecbdata->label_path[0]) {
@@ -1601,6 +1607,7 @@ static void builtin_diff(const char *name_a,
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 	const char *a_prefix, *b_prefix;
 	const char *textconv_one = NULL, *textconv_two = NULL;
+	struct strbuf header = STRBUF_INIT;
 
 	if (DIFF_OPT_TST(o, SUBMODULE_LOG) &&
 			(!one->mode || S_ISGITLINK(one->mode)) &&
@@ -1635,25 +1642,26 @@ static void builtin_diff(const char *name_a,
 	b_two = quote_two(b_prefix, name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
-	fprintf(o->file, "%sdiff --git %s %s%s\n", set, a_one, b_two, reset);
+	strbuf_addf(&header, "%sdiff --git %s %s%s\n", set, a_one, b_two, reset);
 	if (lbl[0][0] == '/') {
 		/* /dev/null */
-		fprintf(o->file, "%snew file mode %06o%s\n", set, two->mode, reset);
+		strbuf_addf(&header, "%snew file mode %06o%s\n", set, two->mode, reset);
 		if (xfrm_msg && xfrm_msg[0])
-			fprintf(o->file, "%s%s%s\n", set, xfrm_msg, reset);
+			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
 	}
 	else if (lbl[1][0] == '/') {
-		fprintf(o->file, "%sdeleted file mode %06o%s\n", set, one->mode, reset);
+		strbuf_addf(&header, "%sdeleted file mode %06o%s\n", set, one->mode, reset);
 		if (xfrm_msg && xfrm_msg[0])
-			fprintf(o->file, "%s%s%s\n", set, xfrm_msg, reset);
+			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
 	}
 	else {
 		if (one->mode != two->mode) {
-			fprintf(o->file, "%sold mode %06o%s\n", set, one->mode, reset);
-			fprintf(o->file, "%snew mode %06o%s\n", set, two->mode, reset);
+			strbuf_addf(&header, "%sold mode %06o%s\n", set, one->mode, reset);
+			strbuf_addf(&header, "%snew mode %06o%s\n", set, two->mode, reset);
 		}
 		if (xfrm_msg && xfrm_msg[0])
-			fprintf(o->file, "%s%s%s\n", set, xfrm_msg, reset);
+			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
+
 		/*
 		 * we do not run diff between different kind
 		 * of objects.
@@ -1663,6 +1671,8 @@ static void builtin_diff(const char *name_a,
 		if (complete_rewrite &&
 		    (textconv_one || !diff_filespec_is_binary(one)) &&
 		    (textconv_two || !diff_filespec_is_binary(two))) {
+			fprintf(o->file, "%s", header.buf);
+			strbuf_reset(&header);
 			emit_rewrite_diff(name_a, name_b, one, two,
 						textconv_one, textconv_two, o);
 			o->found_changes = 1;
@@ -1680,6 +1690,8 @@ static void builtin_diff(const char *name_a,
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
 			goto free_ab_and_return;
+		fprintf(o->file, "%s", header.buf);
+		strbuf_reset(&header);
 		if (DIFF_OPT_TST(o, BINARY))
 			emit_binary_diff(o->file, &mf1, &mf2);
 		else
@@ -1695,6 +1707,11 @@ static void builtin_diff(const char *name_a,
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
 		const struct userdiff_funcname *pe;
+
+		if (!DIFF_XDL_TST(o, WHITESPACE_FLAGS)) {
+			fprintf(o->file, "%s", header.buf);
+			strbuf_reset(&header);
+		}
 
 		if (textconv_one) {
 			size_t size;
@@ -1725,6 +1742,7 @@ static void builtin_diff(const char *name_a,
 		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
 			check_blank_at_eof(&mf1, &mf2, &ecbdata);
 		ecbdata.file = o->file;
+		ecbdata.header = header.len ? &header : NULL;
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
@@ -1769,6 +1787,7 @@ static void builtin_diff(const char *name_a,
 	}
 
  free_ab_and_return:
+	strbuf_release(&header);
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
 	free(a_one);
@@ -1978,7 +1997,7 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	 * If ce is marked as "assume unchanged", there is no
 	 * guarantee that work tree matches what we are looking for.
 	 */
-	if (ce->ce_flags & CE_VALID)
+	if ((ce->ce_flags & CE_VALID) || ce_skip_worktree(ce))
 		return 0;
 
 	/*
@@ -2010,9 +2029,14 @@ static int populate_from_stdin(struct diff_filespec *s)
 static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
 {
 	int len;
-	char *data = xmalloc(100);
+	char *data = xmalloc(100), *dirty = "";
+
+	/* Are we looking at the work tree? */
+	if (!s->sha1_valid && s->dirty_submodule)
+		dirty = "-dirty";
+
 	len = snprintf(data, 100,
-		"Subproject commit %s\n", sha1_to_hex(s->sha1));
+		       "Subproject commit %s%s\n", sha1_to_hex(s->sha1), dirty);
 	s->data = data;
 	s->size = len;
 	s->should_free = 1;
@@ -2275,7 +2299,7 @@ static void run_external_diff(const char *pgm,
 	}
 	*arg = NULL;
 	fflush(NULL);
-	retval = run_command_v_opt(spawn_arg, 0);
+	retval = run_command_v_opt(spawn_arg, RUN_USING_SHELL);
 	remove_tempfile();
 	if (retval) {
 		fprintf(stderr, "external diff died, stopping at %s.\n", name);
@@ -2551,6 +2575,20 @@ int diff_setup_done(struct diff_options *options)
 	if (count > 1)
 		die("--name-only, --name-status, --check and -s are mutually exclusive");
 
+	/*
+	 * Most of the time we can say "there are changes"
+	 * only by checking if there are changed paths, but
+	 * --ignore-whitespace* options force us to look
+	 * inside contents.
+	 */
+
+	if (DIFF_XDL_TST(options, IGNORE_WHITESPACE) ||
+	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_CHANGE) ||
+	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_AT_EOL))
+		DIFF_OPT_SET(options, DIFF_FROM_CONTENTS);
+	else
+		DIFF_OPT_CLR(options, DIFF_FROM_CONTENTS);
+
 	if (DIFF_OPT_TST(options, FIND_COPIES_HARDER))
 		options->detect_rename = DIFF_DETECT_COPY;
 
@@ -2611,7 +2649,7 @@ int diff_setup_done(struct diff_options *options)
 	 * to have found.  It does not make sense not to return with
 	 * exit code in such a case either.
 	 */
-	if (DIFF_OPT_TST(options, QUIET)) {
+	if (DIFF_OPT_TST(options, QUICK)) {
 		options->output_format = DIFF_FORMAT_NO_OUTPUT;
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	}
@@ -2802,7 +2840,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--exit-code"))
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	else if (!strcmp(arg, "--quiet"))
-		DIFF_OPT_SET(options, QUIET);
+		DIFF_OPT_SET(options, QUICK);
 	else if (!strcmp(arg, "--ext-diff"))
 		DIFF_OPT_SET(options, ALLOW_EXTERNAL);
 	else if (!strcmp(arg, "--no-ext-diff"))
@@ -3509,6 +3547,18 @@ free_queue:
 	q->nr = q->alloc = 0;
 	if (options->close_file)
 		fclose(options->file);
+
+	/*
+	 * Report the content-level differences with HAS_CHANGES;
+	 * diff_addremove/diff_change does not set the bit when
+	 * DIFF_FROM_CONTENTS is in effect (e.g. with -w).
+	 */
+	if (DIFF_OPT_TST(options, DIFF_FROM_CONTENTS)) {
+		if (options->found_changes)
+			DIFF_OPT_SET(options, HAS_CHANGES);
+		else
+			DIFF_OPT_CLR(options, HAS_CHANGES);
+	}
 }
 
 static void diffcore_apply_filter(const char *filter)
@@ -3628,6 +3678,23 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 	*q = outq;
 }
 
+static int diffnamecmp(const void *a_, const void *b_)
+{
+	const struct diff_filepair *a = *((const struct diff_filepair **)a_);
+	const struct diff_filepair *b = *((const struct diff_filepair **)b_);
+	const char *name_a, *name_b;
+
+	name_a = a->one ? a->one->path : a->two->path;
+	name_b = b->one ? b->one->path : b->two->path;
+	return strcmp(name_a, name_b);
+}
+
+void diffcore_fix_diff_index(struct diff_options *options)
+{
+	struct diff_queue_struct *q = &diff_queued_diff;
+	qsort(q->queue, q->nr, sizeof(q->queue[0]), diffnamecmp);
+}
+
 void diffcore_std(struct diff_options *options)
 {
 	if (options->skip_stat_unmatch)
@@ -3645,7 +3712,7 @@ void diffcore_std(struct diff_options *options)
 	diff_resolve_rename_copy();
 	diffcore_apply_filter(options->filter);
 
-	if (diff_queued_diff.nr)
+	if (diff_queued_diff.nr && !DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
 		DIFF_OPT_SET(options, HAS_CHANGES);
 	else
 		DIFF_OPT_CLR(options, HAS_CHANGES);
@@ -3669,7 +3736,7 @@ int diff_result_code(struct diff_options *opt, int status)
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
-		    const char *concatpath)
+		    const char *concatpath, unsigned dirty_submodule)
 {
 	struct diff_filespec *one, *two;
 
@@ -3701,18 +3768,22 @@ void diff_addremove(struct diff_options *options,
 
 	if (addremove != '+')
 		fill_filespec(one, sha1, mode);
-	if (addremove != '-')
+	if (addremove != '-') {
 		fill_filespec(two, sha1, mode);
+		two->dirty_submodule = dirty_submodule;
+	}
 
 	diff_queue(&diff_queued_diff, one, two);
-	DIFF_OPT_SET(options, HAS_CHANGES);
+	if (!DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
+		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 void diff_change(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
-		 const char *concatpath)
+		 const char *concatpath,
+		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
 {
 	struct diff_filespec *one, *two;
 
@@ -3725,6 +3796,8 @@ void diff_change(struct diff_options *options,
 		const unsigned char *tmp_c;
 		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
 		tmp_c = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_c;
+		tmp = old_dirty_submodule; old_dirty_submodule = new_dirty_submodule;
+			new_dirty_submodule = tmp;
 	}
 
 	if (options->prefix &&
@@ -3735,9 +3808,12 @@ void diff_change(struct diff_options *options,
 	two = alloc_filespec(concatpath);
 	fill_filespec(one, old_sha1, old_mode);
 	fill_filespec(two, new_sha1, new_mode);
+	one->dirty_submodule = old_dirty_submodule;
+	two->dirty_submodule = new_dirty_submodule;
 
 	diff_queue(&diff_queued_diff, one, two);
-	DIFF_OPT_SET(options, HAS_CHANGES);
+	if (!DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
+		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 void diff_unmerge(struct diff_options *options,
@@ -3771,6 +3847,7 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	*arg = NULL;
 
 	memset(&child, 0, sizeof(child));
+	child.use_shell = 1;
 	child.argv = argv;
 	child.out = -1;
 	if (start_command(&child) != 0 ||

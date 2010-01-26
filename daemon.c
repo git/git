@@ -147,7 +147,6 @@ static char *path_ok(char *directory)
 			{ "IP", ip_address },
 			{ "P", tcp_port },
 			{ "D", directory },
-			{ "%", "%" },
 			{ NULL }
 		};
 
@@ -562,6 +561,24 @@ static int execute(struct sockaddr *addr)
 	return -1;
 }
 
+static int addrcmp(const struct sockaddr_storage *s1,
+    const struct sockaddr_storage *s2)
+{
+	if (s1->ss_family != s2->ss_family)
+		return s1->ss_family - s2->ss_family;
+	if (s1->ss_family == AF_INET)
+		return memcmp(&((struct sockaddr_in *)s1)->sin_addr,
+		    &((struct sockaddr_in *)s2)->sin_addr,
+		    sizeof(struct in_addr));
+#ifndef NO_IPV6
+	if (s1->ss_family == AF_INET6)
+		return memcmp(&((struct sockaddr_in6 *)s1)->sin6_addr,
+		    &((struct sockaddr_in6 *)s2)->sin6_addr,
+		    sizeof(struct in6_addr));
+#endif
+	return 0;
+}
+
 static int max_connections = 32;
 
 static unsigned int live_children;
@@ -576,17 +593,12 @@ static void add_child(pid_t pid, struct sockaddr *addr, int addrlen)
 {
 	struct child *newborn, **cradle;
 
-	/*
-	 * This must be xcalloc() -- we'll compare the whole sockaddr_storage
-	 * but individual address may be shorter.
-	 */
 	newborn = xcalloc(1, sizeof(*newborn));
 	live_children++;
 	newborn->pid = pid;
 	memcpy(&newborn->address, addr, addrlen);
 	for (cradle = &firstborn; *cradle; cradle = &(*cradle)->next)
-		if (!memcmp(&(*cradle)->address, &newborn->address,
-			    sizeof(newborn->address)))
+		if (!addrcmp(&(*cradle)->address, &newborn->address))
 			break;
 	newborn->next = *cradle;
 	*cradle = newborn;
@@ -619,8 +631,7 @@ static void kill_some_child(void)
 		return;
 
 	for (; (next = blanket->next); blanket = next)
-		if (!memcmp(&blanket->address, &next->address,
-			    sizeof(next->address))) {
+		if (!addrcmp(&blanket->address, &next->address)) {
 			kill(blanket->pid, SIGTERM);
 			break;
 		}

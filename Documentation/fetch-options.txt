@@ -19,7 +19,7 @@ endif::git-pull[]
 
 -f::
 --force::
-	When 'git-fetch' is used with `<rbranch>:<lbranch>`
+	When 'git fetch' is used with `<rbranch>:<lbranch>`
 	refspec, it refuses to update the local branch
 	`<lbranch>` unless the remote branch `<rbranch>` it
 	fetches is a descendant of `<lbranch>`.  This option
@@ -61,16 +61,16 @@ endif::git-pull[]
 
 -u::
 --update-head-ok::
-	By default 'git-fetch' refuses to update the head which
+	By default 'git fetch' refuses to update the head which
 	corresponds to the current branch.  This flag disables the
-	check.  This is purely for the internal use for 'git-pull'
-	to communicate with 'git-fetch', and unless you are
+	check.  This is purely for the internal use for 'git pull'
+	to communicate with 'git fetch', and unless you are
 	implementing your own Porcelain you are not supposed to
 	use it.
 
 --upload-pack <upload-pack>::
 	When given, and the repository to fetch from is handled
-	by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
+	by 'git fetch-pack', '--exec=<upload-pack>' is passed to
 	the command to specify non-default path for the command
 	run on the other end.
 

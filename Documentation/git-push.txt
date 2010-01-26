@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git push' [--all | --mirror | --tags] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
-	   [--repo=<repository>] [-f | --force] [-v | --verbose]
+	   [--repo=<repository>] [-f | --force] [-v | --verbose] [-u | --set-upstream]
 	   [<repository> <refspec>...]
 
 DESCRIPTION
@@ -91,6 +91,10 @@ nor in any Push line of the corresponding remotes file---see below).
 	will be tab-separated and sent to stdout instead of stderr.  The full
 	symbolic names of the refs will be given.
 
+--delete::
+	All listed refs are deleted from the remote repository. This is
+	the same as prefixing all refs with a colon.
+
 --tags::
 	All refs under `$GIT_DIR/refs/tags` are pushed, in
 	addition to refspecs explicitly listed on the command
@@ -112,7 +116,7 @@ nor in any Push line of the corresponding remotes file---see below).
 
 --repo=<repository>::
 	This option is only relevant if no <repository> argument is
-	passed in the invocation. In this case, 'git-push' derives the
+	passed in the invocation. In this case, 'git push' derives the
 	remote name from the current branch: If it tracks a remote
 	branch, then that remote repository is pushed to. Otherwise,
 	the name "origin" is used. For this latter case, this option
@@ -126,11 +130,18 @@ git push --repo=public  #2
 +
 is that #1 always pushes to "public" whereas #2 pushes to "public"
 only if the current branch does not track a remote branch. This is
-useful if you write an alias or script around 'git-push'.
+useful if you write an alias or script around 'git push'.
+
+-u::
+--set-upstream::
+	For every branch that is up to date or successfully pushed, add
+	upstream (tracking) reference, used by argument-less
+	linkgit:git-pull[1] and other commands. For more information,
+	see 'branch.<name>.merge' in linkgit:git-config[1].
 
 --thin::
 --no-thin::
-	These options are passed to 'git-send-pack'.  Thin
+	These options are passed to 'git send-pack'.  Thin
 	transfer spends extra cycles to minimize the number of
 	objects to be sent and meant to be used on slower connection.
 

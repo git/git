@@ -613,8 +613,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 			NULL
 		};
 		conn->env = env;
-		*arg++ = "sh";
-		*arg++ = "-c";
+		conn->use_shell = 1;
 	}
 	*arg++ = cmd.buf;
 	*arg = NULL;

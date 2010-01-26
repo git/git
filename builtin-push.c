@@ -15,6 +15,7 @@ static const char * const push_usage[] = {
 };
 
 static int thin;
+static int deleterefs;
 static const char *receivepack;
 
 static const char **refspec;
@@ -39,11 +40,24 @@ static void set_refspecs(const char **refs, int nr)
 			if (nr <= ++i)
 				die("tag shorthand without <tag>");
 			len = strlen(refs[i]) + 11;
-			tag = xmalloc(len);
-			strcpy(tag, "refs/tags/");
+			if (deleterefs) {
+				tag = xmalloc(len+1);
+				strcpy(tag, ":refs/tags/");
+			} else {
+				tag = xmalloc(len);
+				strcpy(tag, "refs/tags/");
+			}
 			strcat(tag, refs[i]);
 			ref = tag;
-		}
+		} else if (deleterefs && !strchr(ref, ':')) {
+			char *delref;
+			int len = strlen(ref)+1;
+			delref = xmalloc(len);
+			strcpy(delref, ":");
+			strcat(delref, ref);
+			ref = delref;
+		} else if (deleterefs)
+			die("--delete only accepts plain target ref names");
 		add_refspec(ref);
 	}
 }
@@ -85,6 +99,37 @@ static void setup_default_push_refspecs(void)
 		    "push.default is \"nothing\".");
 		break;
 	}
+}
+
+static int push_with_options(struct transport *transport, int flags)
+{
+	int err;
+	int nonfastforward;
+	if (receivepack)
+		transport_set_option(transport,
+				     TRANS_OPT_RECEIVEPACK, receivepack);
+	if (thin)
+		transport_set_option(transport, TRANS_OPT_THIN, "yes");
+
+	if (flags & TRANSPORT_PUSH_VERBOSE)
+		fprintf(stderr, "Pushing to %s\n", transport->url);
+	err = transport_push(transport, refspec_nr, refspec, flags,
+			     &nonfastforward);
+	if (err != 0)
+		error("failed to push some refs to '%s'", transport->url);
+
+	err |= transport_disconnect(transport);
+
+	if (!err)
+		return 0;
+
+	if (nonfastforward && advice_push_nonfastforward) {
+		printf("To prevent you from losing history, non-fast-forward updates were rejected\n"
+		       "Merge the remote changes before pushing again.  See the 'Note about\n"
+		       "fast-forwards' section of 'git push --help' for details.\n");
+	}
+
+	return 1;
 }
 
 static int do_push(const char *repo, int flags)
@@ -135,33 +180,19 @@ static int do_push(const char *repo, int flags)
 		url = remote->url;
 		url_nr = remote->url_nr;
 	}
-	for (i = 0; i < url_nr; i++) {
-		struct transport *transport =
-			transport_get(remote, url[i]);
-		int err;
-		int nonfastforward;
-		if (receivepack)
-			transport_set_option(transport,
-					     TRANS_OPT_RECEIVEPACK, receivepack);
-		if (thin)
-			transport_set_option(transport, TRANS_OPT_THIN, "yes");
-
-		if (flags & TRANSPORT_PUSH_VERBOSE)
-			fprintf(stderr, "Pushing to %s\n", url[i]);
-		err = transport_push(transport, refspec_nr, refspec, flags,
-				     &nonfastforward);
-		err |= transport_disconnect(transport);
-
-		if (!err)
-			continue;
-
-		error("failed to push some refs to '%s'", url[i]);
-		if (nonfastforward && advice_push_nonfastforward) {
-			printf("To prevent you from losing history, non-fast-forward updates were rejected\n"
-			       "Merge the remote changes before pushing again.  See the 'non-fast-forward'\n"
-			       "section of 'git push --help' for details.\n");
+	if (url_nr) {
+		for (i = 0; i < url_nr; i++) {
+			struct transport *transport =
+				transport_get(remote, url[i]);
+			if (push_with_options(transport, flags))
+				errs++;
 		}
-		errs++;
+	} else {
+		struct transport *transport =
+			transport_get(remote, NULL);
+
+		if (push_with_options(transport, flags))
+			errs++;
 	}
 	return !!errs;
 }
@@ -179,6 +210,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT( 0 , "all", &flags, "push all refs", TRANSPORT_PUSH_ALL),
 		OPT_BIT( 0 , "mirror", &flags, "mirror all refs",
 			    (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE)),
+		OPT_BOOLEAN( 0, "delete", &deleterefs, "delete refs"),
 		OPT_BOOLEAN( 0 , "tags", &tags, "push tags (can't be used with --all or --mirror)"),
 		OPT_BIT('n' , "dry-run", &flags, "dry run", TRANSPORT_PUSH_DRY_RUN),
 		OPT_BIT( 0,  "porcelain", &flags, "machine-readable output", TRANSPORT_PUSH_PORCELAIN),
@@ -186,11 +218,18 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN( 0 , "thin", &thin, "use thin pack"),
 		OPT_STRING( 0 , "receive-pack", &receivepack, "receive-pack", "receive pack program"),
 		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", "receive pack program"),
+		OPT_BIT('u', "set-upstream", &flags, "set upstream for git pull/status",
+			TRANSPORT_PUSH_SET_UPSTREAM),
 		OPT_END()
 	};
 
 	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
+
+	if (deleterefs && (tags || (flags & (TRANSPORT_PUSH_ALL | TRANSPORT_PUSH_MIRROR))))
+		die("--delete is incompatible with --all, --mirror and --tags");
+	if (deleterefs && argc < 2)
+		die("--delete doesn't make sense without any refs");
 
 	if (tags)
 		add_refspec("refs/tags/*");

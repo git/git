@@ -2,6 +2,7 @@
 /GIT-CFLAGS
 /GIT-GUI-VARS
 /GIT-VERSION-FILE
+/bin-wrappers/
 /git
 /git-add
 /git-add--interactive
@@ -107,6 +108,10 @@
 /git-relink
 /git-remote
 /git-remote-curl
+/git-remote-http
+/git-remote-https
+/git-remote-ftp
+/git-remote-ftps
 /git-repack
 /git-replace
 /git-repo-config
@@ -157,9 +162,11 @@
 /test-delta
 /test-dump-cache-tree
 /test-genrandom
+/test-index-version
 /test-match-trees
 /test-parse-options
 /test-path-utils
+/test-run-command
 /test-sha1
 /test-sigchain
 /common-cmds.h

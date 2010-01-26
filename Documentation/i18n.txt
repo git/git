@@ -21,7 +21,7 @@ project find it more convenient to use legacy encodings, git
 does not forbid it.  However, there are a few things to keep in
 mind.
 
-. 'git-commit' and 'git-commit-tree' issues
+. 'git commit' and 'git commit-tree' issues
   a warning if the commit log message given to it does not look
   like a valid UTF-8 string, unless you explicitly say your
   project uses a legacy encoding.  The way to say this is to
@@ -37,7 +37,7 @@ of `i18n.commitencoding` in its `encoding` header.  This is to
 help other people who look at them later.  Lack of this header
 implies that the commit log message is encoded in UTF-8.
 
-. 'git-log', 'git-show', 'git-blame' and friends look at the
+. 'git log', 'git show', 'git blame' and friends look at the
   `encoding` header of a commit object, and try to re-code the
   log message into UTF-8 unless otherwise specified.  You can
   specify the desired output encoding with

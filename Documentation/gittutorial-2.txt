@@ -260,7 +260,7 @@ index a042389..513feba 100644
 +hello world, again
 ------------------------------------------------
 
-So 'git-diff' is comparing against something other than the head.
+So 'git diff' is comparing against something other than the head.
 The thing that it's comparing against is actually the index file,
 which is stored in .git/index in a binary format, but whose contents
 we can examine with ls-files:
@@ -275,9 +275,9 @@ hello world!
 hello world, again
 ------------------------------------------------
 
-So what our 'git-add' did was store a new blob and then put
+So what our 'git add' did was store a new blob and then put
 a reference to it in the index file.  If we modify the file again,
-we'll see that the new modifications are reflected in the 'git-diff'
+we'll see that the new modifications are reflected in the 'git diff'
 output:
 
 ------------------------------------------------
@@ -292,7 +292,7 @@ index 513feba..ba3da7b 100644
 +again?
 ------------------------------------------------
 
-With the right arguments, 'git-diff' can also show us the difference
+With the right arguments, 'git diff' can also show us the difference
 between the working directory and the last commit, or between the
 index and the last commit:
 
@@ -316,7 +316,7 @@ index a042389..513feba 100644
 +hello world, again
 ------------------------------------------------
 
-At any time, we can create a new commit using 'git-commit' (without
+At any time, we can create a new commit using 'git commit' (without
 the "-a" option), and verify that the state committed only includes the
 changes stored in the index file, not the additional change that is
 still only in our working tree:
@@ -334,11 +334,11 @@ index 513feba..ba3da7b 100644
 +again?
 ------------------------------------------------
 
-So by default 'git-commit' uses the index to create the commit, not
+So by default 'git commit' uses the index to create the commit, not
 the working tree; the "-a" option to commit tells it to first update
 the index with all changes in the working tree.
 
-Finally, it's worth looking at the effect of 'git-add' on the index
+Finally, it's worth looking at the effect of 'git add' on the index
 file:
 
 ------------------------------------------------
@@ -346,7 +346,7 @@ $ echo "goodbye, world" >closing.txt
 $ git add closing.txt
 ------------------------------------------------
 
-The effect of the 'git-add' was to add one entry to the index file:
+The effect of the 'git add' was to add one entry to the index file:
 
 ------------------------------------------------
 $ git ls-files --stage

@@ -58,6 +58,9 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		usage(builtin_log_usage);
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 
+	if (!rev->show_notes_given && !rev->pretty_given)
+		rev->show_notes = 1;
+
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
 	if (DIFF_OPT_TST(&rev->diffopt, FOLLOW_RENAMES)) {
@@ -567,7 +570,7 @@ static int reopen_stdout(struct commit *commit, struct rev_info *rev)
 
 	get_patch_filename(commit, rev->nr, fmt_patch_suffix, &filename);
 
-	if (!DIFF_OPT_TST(&rev->diffopt, QUIET))
+	if (!DIFF_OPT_TST(&rev->diffopt, QUICK))
 		fprintf(realstdout, "%s\n", filename.buf + outdir_offset);
 
 	if (freopen(filename.buf, "w", stdout) == NULL)

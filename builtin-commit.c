@@ -24,6 +24,7 @@
 #include "string-list.h"
 #include "rerere.h"
 #include "unpack-trees.h"
+#include "quote.h"
 
 static const char * const builtin_commit_usage[] = {
 	"git commit [options] [--] <filepattern>...",
@@ -35,7 +36,20 @@ static const char * const builtin_status_usage[] = {
 	NULL
 };
 
-static unsigned char head_sha1[20], merge_head_sha1[20];
+static const char implicit_ident_advice[] =
+"Your name and email address were configured automatically based\n"
+"on your username and hostname. Please check that they are accurate.\n"
+"You can suppress this message by setting them explicitly:\n"
+"\n"
+"    git config --global user.name Your Name\n"
+"    git config --global user.email you@example.com\n"
+"\n"
+"If the identity used for this commit is wrong, you can fix it with:\n"
+"\n"
+"    git commit --amend --author='Your Name <you@example.com>'\n";
+
+static unsigned char head_sha1[20];
+
 static char *use_message_buffer;
 static const char commit_editmsg[] = "COMMIT_EDITMSG";
 static struct lock_file index_lock; /* real index */
@@ -52,7 +66,7 @@ static char *edit_message, *use_message;
 static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
-static char *untracked_files_arg;
+static char *untracked_files_arg, *force_date;
 /*
  * The default commit message cleanup mode will remove the lines
  * beginning with # (shell comments) and leading and trailing
@@ -67,9 +81,16 @@ static enum {
 } cleanup_mode;
 static char *cleanup_arg;
 
-static int use_editor = 1, initial_commit, in_merge;
+static int use_editor = 1, initial_commit, in_merge, include_status = 1;
 static const char *only_include_assumed;
 static struct strbuf message;
+
+static int null_termination;
+static enum {
+	STATUS_FORMAT_LONG,
+	STATUS_FORMAT_SHORT,
+	STATUS_FORMAT_PORCELAIN,
+} status_format = STATUS_FORMAT_LONG;
 
 static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 {
@@ -90,6 +111,7 @@ static struct option builtin_commit_options[] = {
 	OPT_GROUP("Commit message options"),
 	OPT_FILENAME('F', "file", &logfile, "read log from file"),
 	OPT_STRING(0, "author", &force_author, "AUTHOR", "override author for commit"),
+	OPT_STRING(0, "date", &force_date, "DATE", "override date for commit"),
 	OPT_CALLBACK('m', "message", &message, "MESSAGE", "specify commit message", opt_parse_m),
 	OPT_STRING('c', "reedit-message", &edit_message, "COMMIT", "reuse and edit message from specified commit"),
 	OPT_STRING('C', "reuse-message", &use_message, "COMMIT", "reuse message from specified commit"),
@@ -98,6 +120,7 @@ static struct option builtin_commit_options[] = {
 	OPT_FILENAME('t', "template", &template_file, "use specified template file"),
 	OPT_BOOLEAN('e', "edit", &edit_flag, "force edit of commit"),
 	OPT_STRING(0, "cleanup", &cleanup_arg, "default", "how to strip spaces and #comments from message"),
+	OPT_BOOLEAN(0, "status", &include_status, "include status in commit message template"),
 	/* end commit message options */
 
 	OPT_GROUP("Commit contents options"),
@@ -107,6 +130,12 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN('o', "only", &only, "commit only specified files"),
 	OPT_BOOLEAN('n', "no-verify", &no_verify, "bypass pre-commit hook"),
 	OPT_BOOLEAN(0, "dry-run", &dry_run, "show what would be committed"),
+	OPT_SET_INT(0, "short", &status_format, "show status concisely",
+		    STATUS_FORMAT_SHORT),
+	OPT_SET_INT(0, "porcelain", &status_format,
+		    "show porcelain output format", STATUS_FORMAT_PORCELAIN),
+	OPT_BOOLEAN('z', "null", &null_termination,
+		    "terminate entries with NUL"),
 	OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
 	{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, "mode", "show untracked files, optional modes: all, normal, no. (Default: all)", PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 	OPT_BOOLEAN(0, "allow-empty", &allow_empty, "ok to record an empty change"),
@@ -168,11 +197,15 @@ static int list_paths(struct string_list *list, const char *with_tree,
 
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
+		struct string_list_item *item;
+
 		if (ce->ce_flags & CE_UPDATE)
 			continue;
 		if (!match_pathspec(pattern, ce->name, ce_namelen(ce), 0, m))
 			continue;
-		string_list_insert(ce->name, list);
+		item = string_list_insert(ce->name, list);
+		if (ce_skip_worktree(ce))
+			item->util = item; /* better a valid pointer than a fake one */
 	}
 
 	return report_path_error(m, pattern, prefix ? strlen(prefix) : 0);
@@ -184,6 +217,10 @@ static void add_remove_files(struct string_list *list)
 	for (i = 0; i < list->nr; i++) {
 		struct stat st;
 		struct string_list_item *p = &(list->items[i]);
+
+		/* p->util is skip-worktree */
+		if (p->util)
+			continue;
 
 		if (!lstat(p->string, &st)) {
 			if (add_to_cache(p->string, &st, 0))
@@ -219,6 +256,16 @@ static void create_base_index(void)
 	init_tree_desc(&t, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts))
 		exit(128); /* We've already reported the error, finish dying */
+}
+
+static void refresh_cache_or_die(int refresh_flags)
+{
+	/*
+	 * refresh_flags contains REFRESH_QUIET, so the only errors
+	 * are for unmerged entries.
+	 */
+	if (refresh_cache(refresh_flags | REFRESH_IN_PORCELAIN))
+		die_resolve_conflict("commit");
 }
 
 static char *prepare_index(int argc, const char **argv, const char *prefix, int is_status)
@@ -260,7 +307,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	if (all || (also && pathspec && *pathspec)) {
 		int fd = hold_locked_index(&index_lock, 1);
 		add_files_to_cache(also ? prefix : NULL, pathspec, 0);
-		refresh_cache(refresh_flags);
+		refresh_cache_or_die(refresh_flags);
 		if (write_cache(fd, active_cache, active_nr) ||
 		    close_lock_file(&index_lock))
 			die("unable to write new_index file");
@@ -278,13 +325,11 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	 * We still need to refresh the index here.
 	 */
 	if (!pathspec || !*pathspec) {
-		fd = hold_locked_index(&index_lock, !is_status);
-		refresh_cache(refresh_flags);
-		if (0 <= fd) {
-			if (write_cache(fd, active_cache, active_nr) ||
-			    commit_locked_index(&index_lock))
-				die("unable to write new_index file");
-		}
+		fd = hold_locked_index(&index_lock, 1);
+		refresh_cache_or_die(refresh_flags);
+		if (write_cache(fd, active_cache, active_nr) ||
+		    commit_locked_index(&index_lock))
+			die("unable to write new_index file");
 		commit_style = COMMIT_AS_IS;
 		return get_index_file();
 	}
@@ -310,7 +355,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	 */
 	commit_style = COMMIT_PARTIAL;
 
-	if (file_exists(git_path("MERGE_HEAD")))
+	if (in_merge)
 		die("cannot do a partial commit during a merge.");
 
 	memset(&partial, 0, sizeof(partial));
@@ -351,6 +396,8 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 static int run_status(FILE *fp, const char *index_file, const char *prefix, int nowarn,
 		      struct wt_status *s)
 {
+	unsigned char sha1[20];
+
 	if (s->relative_paths)
 		s->prefix = prefix;
 
@@ -362,8 +409,21 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 	s->index_file = index_file;
 	s->fp = fp;
 	s->nowarn = nowarn;
+	s->is_initial = get_sha1(s->reference, sha1) ? 1 : 0;
 
-	wt_status_print(s);
+	wt_status_collect(s);
+
+	switch (status_format) {
+	case STATUS_FORMAT_SHORT:
+		wt_shortstatus_print(s, null_termination);
+		break;
+	case STATUS_FORMAT_PORCELAIN:
+		wt_porcelain_print(s, null_termination);
+		break;
+	case STATUS_FORMAT_LONG:
+		wt_status_print(s);
+		break;
+	}
 
 	return s->commitable;
 }
@@ -413,6 +473,9 @@ static void determine_author_info(void)
 		name = xstrndup(force_author, lb - force_author);
 		email = xstrndup(lb + 2, rb - (lb + 2));
 	}
+
+	if (force_date)
+		date = force_date;
 
 	author_name = name;
 	author_email = email;
@@ -551,7 +614,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 	/* This checks if committer ident is explicitly given */
 	git_committer_info(0);
-	if (use_editor) {
+	if (use_editor && include_status) {
 		char *author_ident;
 		const char *committer_ident;
 
@@ -593,7 +656,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 				author_ident);
 		free(author_ident);
 
-		if (!user_ident_explicitly_given)
+		if (!user_ident_sufficiently_given())
 			fprintf(fp,
 				"%s"
 				"# Committer: %s\n",
@@ -739,6 +802,21 @@ static const char *find_author_by_nickname(const char *name)
 	die("No existing author found with '%s'", name);
 }
 
+
+static void handle_untracked_files_arg(struct wt_status *s)
+{
+	if (!untracked_files_arg)
+		; /* default already initialized */
+	else if (!strcmp(untracked_files_arg, "no"))
+		s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
+	else if (!strcmp(untracked_files_arg, "normal"))
+		s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
+	else if (!strcmp(untracked_files_arg, "all"))
+		s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
+	else
+		die("Invalid untracked files mode '%s'", untracked_files_arg);
+}
+
 static int parse_and_validate_options(int argc, const char *argv[],
 				      const char * const usage[],
 				      const char *prefix,
@@ -764,9 +842,6 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	if (get_sha1("HEAD", head_sha1))
 		initial_commit = 1;
-
-	if (!get_sha1("MERGE_HEAD", merge_head_sha1))
-		in_merge = 1;
 
 	/* Sanity check options */
 	if (amend && initial_commit)
@@ -847,21 +922,17 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	else
 		die("Invalid cleanup mode %s", cleanup_arg);
 
-	if (!untracked_files_arg)
-		; /* default already initialized */
-	else if (!strcmp(untracked_files_arg, "no"))
-		s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
-	else if (!strcmp(untracked_files_arg, "normal"))
-		s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
-	else if (!strcmp(untracked_files_arg, "all"))
-		s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
-	else
-		die("Invalid untracked files mode '%s'", untracked_files_arg);
+	handle_untracked_files_arg(s);
 
 	if (all && argc > 0)
 		die("Paths with -a does not make sense.");
 	else if (interactive && argc > 0)
 		die("Paths with --interactive does not make sense.");
+
+	if (null_termination && status_format == STATUS_FORMAT_LONG)
+		status_format = STATUS_FORMAT_PORCELAIN;
+	if (status_format != STATUS_FORMAT_LONG)
+		dry_run = 1;
 
 	return argc;
 }
@@ -944,32 +1015,100 @@ static int git_status_config(const char *k, const char *v, void *cb)
 int cmd_status(int argc, const char **argv, const char *prefix)
 {
 	struct wt_status s;
+	unsigned char sha1[20];
+	static struct option builtin_status_options[] = {
+		OPT__VERBOSE(&verbose),
+		OPT_SET_INT('s', "short", &status_format,
+			    "show status concisely", STATUS_FORMAT_SHORT),
+		OPT_SET_INT(0, "porcelain", &status_format,
+			    "show porcelain output format",
+			    STATUS_FORMAT_PORCELAIN),
+		OPT_BOOLEAN('z', "null", &null_termination,
+			    "terminate entries with NUL"),
+		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
+		  "mode",
+		  "show untracked files, optional modes: all, normal, no. (Default: all)",
+		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
+		OPT_END(),
+	};
+
+	if (null_termination && status_format == STATUS_FORMAT_LONG)
+		status_format = STATUS_FORMAT_PORCELAIN;
 
 	wt_status_prepare(&s);
 	git_config(git_status_config, &s);
+	in_merge = file_exists(git_path("MERGE_HEAD"));
+	argc = parse_options(argc, argv, prefix,
+			     builtin_status_options,
+			     builtin_status_usage, 0);
+	handle_untracked_files_arg(&s);
+
+	if (*argv)
+		s.pathspec = get_pathspec(prefix, argv);
+
+	read_cache();
+	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, s.pathspec, NULL, NULL);
+	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
+	s.in_merge = in_merge;
+	wt_status_collect(&s);
+
+	if (s.relative_paths)
+		s.prefix = prefix;
 	if (s.use_color == -1)
 		s.use_color = git_use_color_default;
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
 
-	argc = parse_and_validate_options(argc, argv, builtin_status_usage,
-					  prefix, &s);
-	return dry_run_commit(argc, argv, prefix, &s);
+	switch (status_format) {
+	case STATUS_FORMAT_SHORT:
+		wt_shortstatus_print(&s, null_termination);
+		break;
+	case STATUS_FORMAT_PORCELAIN:
+		wt_porcelain_print(&s, null_termination);
+		break;
+	case STATUS_FORMAT_LONG:
+		s.verbose = verbose;
+		wt_status_print(&s);
+		break;
+	}
+	return 0;
 }
 
 static void print_summary(const char *prefix, const unsigned char *sha1)
 {
 	struct rev_info rev;
 	struct commit *commit;
-	static const char *format = "format:%h] %s";
+	struct strbuf format = STRBUF_INIT;
 	unsigned char junk_sha1[20];
 	const char *head = resolve_ref("HEAD", junk_sha1, 0, NULL);
+	struct pretty_print_context pctx = {0};
+	struct strbuf author_ident = STRBUF_INIT;
+	struct strbuf committer_ident = STRBUF_INIT;
 
 	commit = lookup_commit(sha1);
 	if (!commit)
 		die("couldn't look up newly created commit");
 	if (!commit || parse_commit(commit))
 		die("could not parse newly created commit");
+
+	strbuf_addstr(&format, "format:%h] %s");
+
+	format_commit_message(commit, "%an <%ae>", &author_ident, &pctx);
+	format_commit_message(commit, "%cn <%ce>", &committer_ident, &pctx);
+	if (strbuf_cmp(&author_ident, &committer_ident)) {
+		strbuf_addstr(&format, "\n Author: ");
+		strbuf_addbuf_percentquote(&format, &author_ident);
+	}
+	if (!user_ident_sufficiently_given()) {
+		strbuf_addstr(&format, "\n Committer: ");
+		strbuf_addbuf_percentquote(&format, &committer_ident);
+		if (advice_implicit_identity) {
+			strbuf_addch(&format, '\n');
+			strbuf_addstr(&format, implicit_ident_advice);
+		}
+	}
+	strbuf_release(&author_ident);
+	strbuf_release(&committer_ident);
 
 	init_revisions(&rev, prefix);
 	setup_revisions(0, NULL, &rev, NULL);
@@ -981,7 +1120,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 
 	rev.verbose_header = 1;
 	rev.show_root_diff = 1;
-	get_commit_format(format, &rev);
+	get_commit_format(format.buf, &rev);
 	rev.always_show_header = 0;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 100;
@@ -1000,10 +1139,11 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 		struct pretty_print_context ctx = {0};
 		struct strbuf buf = STRBUF_INIT;
 		ctx.date_mode = DATE_NORMAL;
-		format_commit_message(commit, format + 7, &buf, &ctx);
+		format_commit_message(commit, format.buf + 7, &buf, &ctx);
 		printf("%s\n", buf.buf);
 		strbuf_release(&buf);
 	}
+	strbuf_release(&format);
 }
 
 static int git_commit_config(const char *k, const char *v, void *cb)
@@ -1012,6 +1152,10 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 
 	if (!strcmp(k, "commit.template"))
 		return git_config_pathname(&template_file, k, v);
+	if (!strcmp(k, "commit.status")) {
+		include_status = git_config_bool(k, v);
+		return 0;
+	}
 
 	return git_status_config(k, v, s);
 }
@@ -1030,10 +1174,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	wt_status_prepare(&s);
 	git_config(git_commit_config, &s);
+	in_merge = file_exists(git_path("MERGE_HEAD"));
+	s.in_merge = in_merge;
 
 	if (s.use_color == -1)
 		s.use_color = git_use_color_default;
-
 	argc = parse_and_validate_options(argc, argv, builtin_commit_usage,
 					  prefix, &s);
 	if (dry_run) {
@@ -1156,7 +1301,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		     "new_index file. Check that disk is not full or quota is\n"
 		     "not exceeded, and then \"git reset HEAD\" to recover.");
 
-	rerere();
+	rerere(0);
 	run_hook(get_index_file(), "post-commit", NULL);
 	if (!quiet)
 		print_summary(prefix, commit_sha1);

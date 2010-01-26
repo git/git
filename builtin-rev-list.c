@@ -253,7 +253,7 @@ static void print_var_int(const char *var, int val)
 	printf("%s=%d\n", var, val);
 }
 
-int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
+static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 {
 	int cnt, flags = info->bisect_show_flags;
 	char hex[41] = "";
@@ -322,7 +322,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (revs.bisect)
 		bisect_list = 1;
 
-	quiet = DIFF_OPT_TST(&revs.diffopt, QUIET);
+	quiet = DIFF_OPT_TST(&revs.diffopt, QUICK);
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
 

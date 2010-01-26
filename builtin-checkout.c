@@ -17,6 +17,7 @@
 #include "blob.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
+#include "resolve-undo.h"
 
 static const char * const checkout_usage[] = {
 	"git checkout [options] <branch>",
@@ -167,7 +168,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	fill_mm(active_cache[pos+2]->sha1, &theirs);
 
 	status = ll_merge(&result_buf, path, &ancestor,
-			  &ours, "ours", &theirs, "theirs", 1);
+			  &ours, "ours", &theirs, "theirs", 0);
 	free(ancestor.ptr);
 	free(ours.ptr);
 	free(theirs.ptr);
@@ -233,6 +234,10 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 
 	if (report_path_error(ps_matched, pathspec, 0))
 		return 1;
+
+	/* "checkout -m path" to recreate conflicted state */
+	if (opts->merge)
+		unmerge_cache(pathspec);
 
 	/* Any unmerged paths? */
 	for (pos = 0; pos < active_nr; pos++) {
@@ -370,6 +375,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 	if (read_cache_preload(NULL) < 0)
 		return error("corrupt index file");
 
+	resolve_undo_clear();
 	if (opts->force) {
 		ret = reset_tree(new->commit->tree, opts, 1);
 		if (ret)
@@ -696,7 +702,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	 * case 3: git checkout <something> [<paths>]
 	 *
 	 *   With no paths, if <something> is a commit, that is to
-	 *   switch to the branch or detach HEAD at it.
+	 *   switch to the branch or detach HEAD at it.  As a special case,
+	 *   if <something> is A...B (missing A or B means HEAD but you can
+	 *   omit at most one side), and if there is a unique merge base
+	 *   between A and B, A...B names that merge base.
 	 *
 	 *   With no paths, if <something> is _not_ a commit, no -t nor -b
 	 *   was given, and there is a tracking branch whose name is
@@ -722,7 +731,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "-"))
 			arg = "@{-1}";
 
-		if (get_sha1(arg, rev)) {
+		if (get_sha1_mb(arg, rev)) {
 			if (has_dash_dash)          /* case (1) */
 				die("invalid reference: %s", arg);
 			if (!patch_mode &&
@@ -749,8 +758,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		new.name = arg;
 		if ((new.commit = lookup_commit_reference_gently(rev, 1))) {
 			setup_branch_path(&new);
-			if (resolve_ref(new.path, rev, 1, NULL))
-				new.commit = lookup_commit_reference(rev);
+
+			if ((check_ref_format(new.path) == CHECK_REF_FORMAT_OK) &&
+			    resolve_ref(new.path, rev, 1, NULL))
+				;
 			else
 				new.path = NULL;
 			parse_commit(new.commit);

@@ -117,7 +117,11 @@ test_expect_success \
 test_expect_success \
 	"overriding author from command line" \
 	"echo 'gak' >file && \
-	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a"
+	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a >output 2>&1"
+
+test_expect_success \
+	"commit --author output mentions author" \
+	"grep Rubber.Duck output"
 
 test_expect_success PERL \
 	"interactive add" \
@@ -206,6 +210,21 @@ test_expect_success 'amend commit to fix author' '
 		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
 		expected &&
 	git commit --amend --author="$author" &&
+	git cat-file -p HEAD > current &&
+	test_cmp expected current
+
+'
+
+test_expect_success 'amend commit to fix date' '
+
+	test_tick &&
+	newtick=$GIT_AUTHOR_DATE &&
+	git reset --hard &&
+	git cat-file -p HEAD |
+	sed -e "s/author.*/author $author $newtick/" \
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
+		expected &&
+	git commit --amend --date="$newtick" &&
 	git cat-file -p HEAD > current &&
 	test_cmp expected current
 

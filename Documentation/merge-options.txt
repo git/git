@@ -59,8 +59,8 @@ option can be used to override --squash.
 	Use the given merge strategy; can be supplied more than
 	once to specify them in the order they should be tried.
 	If there is no `-s` option, a built-in list of strategies
-	is used instead ('git-merge-recursive' when merging a single
-	head, 'git-merge-octopus' otherwise).
+	is used instead ('git merge-recursive' when merging a single
+	head, 'git merge-octopus' otherwise).
 
 --summary::
 --no-summary::
@@ -74,3 +74,8 @@ option can be used to override --squash.
 -v::
 --verbose::
 	Be verbose.
+
+-X <option>::
+--strategy-option=<option>::
+	Pass merge strategy specific option through to the merge
+	strategy.

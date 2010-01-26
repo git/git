@@ -74,6 +74,12 @@ case $(echo $GIT_TRACE |tr "[A-Z]" "[a-z]") in
 		;;
 esac
 
+# Convenience
+#
+# A regexp to match 5 and 40 hexdigits
+_x05='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x05$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
+
 # Each test should start with something like this, after copyright notices:
 #
 # test_description='Description of this test...
@@ -105,6 +111,8 @@ do
 		verbose=t; shift ;;
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t; shift ;;
+	--with-dashes)
+		with_dashes=t; shift ;;
 	--no-color)
 		color=; shift ;;
 	--no-python)
@@ -209,6 +217,33 @@ test_set_editor () {
 	export FAKE_EDITOR
 	EDITOR='"$FAKE_EDITOR"'
 	export EDITOR
+}
+
+test_decode_color () {
+	sed	-e 's/.\[1m/<WHITE>/g' \
+		-e 's/.\[31m/<RED>/g' \
+		-e 's/.\[32m/<GREEN>/g' \
+		-e 's/.\[33m/<YELLOW>/g' \
+		-e 's/.\[34m/<BLUE>/g' \
+		-e 's/.\[35m/<MAGENTA>/g' \
+		-e 's/.\[36m/<CYAN>/g' \
+		-e 's/.\[m/<RESET>/g'
+}
+
+q_to_nul () {
+	perl -pe 'y/Q/\000/'
+}
+
+q_to_cr () {
+	tr Q '\015'
+}
+
+append_cr () {
+	sed -e 's/$/Q/' | tr Q '\015'
+}
+
+remove_cr () {
+	tr '\015' Q | sed -e 's/Q$//'
 }
 
 test_tick () {
@@ -551,19 +586,8 @@ test_done () {
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
 TEST_DIRECTORY=$(pwd)
-if test -z "$valgrind"
+if test -n "$valgrind"
 then
-	if test -z "$GIT_TEST_INSTALLED"
-	then
-		PATH=$TEST_DIRECTORY/..:$PATH
-		GIT_EXEC_PATH=$TEST_DIRECTORY/..
-	else
-		GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
-		error "Cannot run git from $GIT_TEST_INSTALLED."
-		PATH=$GIT_TEST_INSTALLED:$TEST_DIRECTORY/..:$PATH
-		GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
-	fi
-else
 	make_symlink () {
 		test -h "$2" &&
 		test "$1" = "$(readlink "$2")" || {
@@ -625,6 +649,24 @@ else
 	PATH=$GIT_VALGRIND/bin:$PATH
 	GIT_EXEC_PATH=$GIT_VALGRIND/bin
 	export GIT_VALGRIND
+elif test -n "$GIT_TEST_INSTALLED" ; then
+	GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
+	error "Cannot run git from $GIT_TEST_INSTALLED."
+	PATH=$GIT_TEST_INSTALLED:$TEST_DIRECTORY/..:$PATH
+	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
+else # normal case, use ../bin-wrappers only unless $with_dashes:
+	git_bin_dir="$TEST_DIRECTORY/../bin-wrappers"
+	if ! test -x "$git_bin_dir/git" ; then
+		if test -z "$with_dashes" ; then
+			say "$git_bin_dir/git is not executable; using GIT_EXEC_PATH"
+		fi
+		with_dashes=t
+	fi
+	PATH="$git_bin_dir:$PATH"
+	GIT_EXEC_PATH=$TEST_DIRECTORY/..
+	if test -n "$with_dashes" ; then
+		PATH="$TEST_DIRECTORY/..:$PATH"
+	fi
 fi
 GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 unset GIT_CONFIG
@@ -632,19 +674,28 @@ GIT_CONFIG_NOSYSTEM=1
 GIT_CONFIG_NOGLOBAL=1
 export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_CONFIG_NOGLOBAL
 
+. ../GIT-BUILD-OPTIONS
+
 GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
 export GITPERLLIB
 test -d ../templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
+if test -z "$GIT_TEST_INSTALLED" && test -z "$NO_PYTHON"
+then
+	GITPYTHONLIB="$(pwd)/../git_remote_helpers/build/lib"
+	export GITPYTHONLIB
+	test -d ../git_remote_helpers/build || {
+		error "You haven't built git_remote_helpers yet, have you?"
+	}
+fi
+
 if ! test -x ../test-chmtime; then
 	echo >&2 'You need to build test-chmtime:'
 	echo >&2 'Run "make test-chmtime" in the source (toplevel) directory'
 	exit 1
 fi
-
-. ../GIT-BUILD-OPTIONS
 
 # Test repository
 test="trash directory.$(basename "$0" .sh)"
@@ -729,6 +780,7 @@ case $(uname -s) in
 esac
 
 test -z "$NO_PERL" && test_set_prereq PERL
+test -z "$NO_PYTHON" && test_set_prereq PYTHON
 
 # test whether the filesystem supports symbolic links
 ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS

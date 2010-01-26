@@ -14,14 +14,7 @@
 #include "userdiff.h"
 #include "grep.h"
 #include "quote.h"
-
-#ifndef NO_EXTERNAL_GREP
-#ifdef __unix__
-#define NO_EXTERNAL_GREP 0
-#else
-#define NO_EXTERNAL_GREP 1
-#endif
-#endif
+#include "dir.h"
 
 static char const * const grep_usage[] = {
 	"git grep [options] [-e] <pattern> [<rev>...] [[--] path...]",
@@ -42,8 +35,6 @@ static int grep_config(const char *var, const char *value, void *cb)
 		opt->color = git_config_colorbool(var, value, -1);
 		return 0;
 	}
-	if (!strcmp(var, "color.grep.external"))
-		return git_config_string(&(opt->color_external), var, value);
 	if (!strcmp(var, "color.grep.match")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -214,291 +205,11 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	return i;
 }
 
-#if !NO_EXTERNAL_GREP
-static int exec_grep(int argc, const char **argv)
-{
-	pid_t pid;
-	int status;
-
-	argv[argc] = NULL;
-	pid = fork();
-	if (pid < 0)
-		return pid;
-	if (!pid) {
-		execvp("grep", (char **) argv);
-		exit(255);
-	}
-	while (waitpid(pid, &status, 0) < 0) {
-		if (errno == EINTR)
-			continue;
-		return -1;
-	}
-	if (WIFEXITED(status)) {
-		if (!WEXITSTATUS(status))
-			return 1;
-		return 0;
-	}
-	return -1;
-}
-
-#define MAXARGS 1000
-#define ARGBUF 4096
-#define push_arg(a) do { \
-	if (nr < MAXARGS) argv[nr++] = (a); \
-	else die("maximum number of args exceeded"); \
-	} while (0)
-
-/*
- * If you send a singleton filename to grep, it does not give
- * the name of the file.  GNU grep has "-H" but we would want
- * that behaviour in a portable way.
- *
- * So we keep two pathnames in argv buffer unsent to grep in
- * the main loop if we need to do more than one grep.
- */
-static int flush_grep(struct grep_opt *opt,
-		      int argc, int arg0, const char **argv, int *kept)
-{
-	int status;
-	int count = argc - arg0;
-	const char *kept_0 = NULL;
-
-	if (count <= 2) {
-		/*
-		 * Because we keep at least 2 paths in the call from
-		 * the main loop (i.e. kept != NULL), and MAXARGS is
-		 * far greater than 2, this usually is a call to
-		 * conclude the grep.  However, the user could attempt
-		 * to overflow the argv buffer by giving too many
-		 * options to leave very small number of real
-		 * arguments even for the call in the main loop.
-		 */
-		if (kept)
-			die("insanely many options to grep");
-
-		/*
-		 * If we have two or more paths, we do not have to do
-		 * anything special, but we need to push /dev/null to
-		 * get "-H" behaviour of GNU grep portably but when we
-		 * are not doing "-l" nor "-L" nor "-c".
-		 */
-		if (count == 1 &&
-		    !opt->name_only &&
-		    !opt->unmatch_name_only &&
-		    !opt->count) {
-			argv[argc++] = "/dev/null";
-			argv[argc] = NULL;
-		}
-	}
-
-	else if (kept) {
-		/*
-		 * Called because we found many paths and haven't finished
-		 * iterating over the cache yet.  We keep two paths
-		 * for the concluding call.  argv[argc-2] and argv[argc-1]
-		 * has the last two paths, so save the first one away,
-		 * replace it with NULL while sending the list to grep,
-		 * and recover them after we are done.
-		 */
-		*kept = 2;
-		kept_0 = argv[argc-2];
-		argv[argc-2] = NULL;
-		argc -= 2;
-	}
-
-	if (opt->pre_context || opt->post_context) {
-		/*
-		 * grep handles hunk marks between files, but we need to
-		 * do that ourselves between multiple calls.
-		 */
-		if (opt->show_hunk_mark)
-			write_or_die(1, "--\n", 3);
-		else
-			opt->show_hunk_mark = 1;
-	}
-
-	status = exec_grep(argc, argv);
-
-	if (kept_0) {
-		/*
-		 * Then recover them.  Now the last arg is beyond the
-		 * terminating NULL which is at argc, and the second
-		 * from the last is what we saved away in kept_0
-		 */
-		argv[arg0++] = kept_0;
-		argv[arg0] = argv[argc+1];
-	}
-	return status;
-}
-
-static void grep_add_color(struct strbuf *sb, const char *escape_seq)
-{
-	size_t orig_len = sb->len;
-
-	while (*escape_seq) {
-		if (*escape_seq == 'm')
-			strbuf_addch(sb, ';');
-		else if (*escape_seq != '\033' && *escape_seq  != '[')
-			strbuf_addch(sb, *escape_seq);
-		escape_seq++;
-	}
-	if (sb->len > orig_len && sb->buf[sb->len - 1] == ';')
-		strbuf_setlen(sb, sb->len - 1);
-}
-
-static int external_grep(struct grep_opt *opt, const char **paths, int cached)
-{
-	int i, nr, argc, hit, len, status;
-	const char *argv[MAXARGS+1];
-	char randarg[ARGBUF];
-	char *argptr = randarg;
-	struct grep_pat *p;
-
-	if (opt->extended || (opt->relative && opt->prefix_length))
-		return -1;
-	len = nr = 0;
-	push_arg("grep");
-	if (opt->fixed)
-		push_arg("-F");
-	if (opt->linenum)
-		push_arg("-n");
-	if (!opt->pathname)
-		push_arg("-h");
-	if (opt->regflags & REG_EXTENDED)
-		push_arg("-E");
-	if (opt->ignore_case)
-		push_arg("-i");
-	if (opt->binary == GREP_BINARY_NOMATCH)
-		push_arg("-I");
-	if (opt->word_regexp)
-		push_arg("-w");
-	if (opt->name_only)
-		push_arg("-l");
-	if (opt->unmatch_name_only)
-		push_arg("-L");
-	if (opt->null_following_name)
-		/* in GNU grep git's "-z" translates to "-Z" */
-		push_arg("-Z");
-	if (opt->count)
-		push_arg("-c");
-	if (opt->post_context || opt->pre_context) {
-		if (opt->post_context != opt->pre_context) {
-			if (opt->pre_context) {
-				push_arg("-B");
-				len += snprintf(argptr, sizeof(randarg)-len,
-						"%u", opt->pre_context) + 1;
-				if (sizeof(randarg) <= len)
-					die("maximum length of args exceeded");
-				push_arg(argptr);
-				argptr += len;
-			}
-			if (opt->post_context) {
-				push_arg("-A");
-				len += snprintf(argptr, sizeof(randarg)-len,
-						"%u", opt->post_context) + 1;
-				if (sizeof(randarg) <= len)
-					die("maximum length of args exceeded");
-				push_arg(argptr);
-				argptr += len;
-			}
-		}
-		else {
-			push_arg("-C");
-			len += snprintf(argptr, sizeof(randarg)-len,
-					"%u", opt->post_context) + 1;
-			if (sizeof(randarg) <= len)
-				die("maximum length of args exceeded");
-			push_arg(argptr);
-			argptr += len;
-		}
-	}
-	for (p = opt->pattern_list; p; p = p->next) {
-		push_arg("-e");
-		push_arg(p->pattern);
-	}
-	if (opt->color) {
-		struct strbuf sb = STRBUF_INIT;
-
-		grep_add_color(&sb, opt->color_match);
-		setenv("GREP_COLOR", sb.buf, 1);
-
-		strbuf_reset(&sb);
-		strbuf_addstr(&sb, "mt=");
-		grep_add_color(&sb, opt->color_match);
-		strbuf_addstr(&sb, ":sl=:cx=:fn=:ln=:bn=:se=");
-		setenv("GREP_COLORS", sb.buf, 1);
-
-		strbuf_release(&sb);
-
-		if (opt->color_external && strlen(opt->color_external) > 0)
-			push_arg(opt->color_external);
-	} else {
-		unsetenv("GREP_COLOR");
-		unsetenv("GREP_COLORS");
-	}
-	unsetenv("GREP_OPTIONS");
-
-	hit = 0;
-	argc = nr;
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		char *name;
-		int kept;
-		if (!S_ISREG(ce->ce_mode))
-			continue;
-		if (!pathspec_matches(paths, ce->name, opt->max_depth))
-			continue;
-		name = ce->name;
-		if (name[0] == '-') {
-			int len = ce_namelen(ce);
-			name = xmalloc(len + 3);
-			memcpy(name, "./", 2);
-			memcpy(name + 2, ce->name, len + 1);
-		}
-		argv[argc++] = name;
-		if (MAXARGS <= argc) {
-			status = flush_grep(opt, argc, nr, argv, &kept);
-			if (0 < status)
-				hit = 1;
-			argc = nr + kept;
-		}
-		if (ce_stage(ce)) {
-			do {
-				i++;
-			} while (i < active_nr &&
-				 !strcmp(ce->name, active_cache[i]->name));
-			i--; /* compensate for loop control */
-		}
-	}
-	if (argc > nr) {
-		status = flush_grep(opt, argc, nr, argv, NULL);
-		if (0 < status)
-			hit = 1;
-	}
-	return hit;
-}
-#endif
-
-static int grep_cache(struct grep_opt *opt, const char **paths, int cached,
-		      int external_grep_allowed)
+static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 {
 	int hit = 0;
 	int nr;
 	read_cache();
-
-#if !NO_EXTERNAL_GREP
-	/*
-	 * Use the external "grep" command for the case where
-	 * we grep through the checked-out files. It tends to
-	 * be a lot more optimized
-	 */
-	if (!cached && external_grep_allowed) {
-		hit = external_grep(opt, paths, cached);
-		if (hit >= 0)
-			return hit;
-		hit = 0;
-	}
-#endif
 
 	for (nr = 0; nr < active_nr; nr++) {
 		struct cache_entry *ce = active_cache[nr];
@@ -511,7 +222,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached,
 		 * are identical, even if worktree file has been modified, so use
 		 * cache version instead
 		 */
-		if (cached || (ce->ce_flags & CE_VALID)) {
+		if (cached || (ce->ce_flags & CE_VALID) || ce_skip_worktree(ce)) {
 			if (ce_stage(ce))
 				continue;
 			hit |= grep_sha1(opt, ce->sha1, ce->name, 0);
@@ -609,6 +320,21 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 	die("unable to grep from object of type %s", typename(obj->type));
 }
 
+static int grep_directory(struct grep_opt *opt, const char **paths)
+{
+	struct dir_struct dir;
+	int i, hit = 0;
+
+	memset(&dir, 0, sizeof(dir));
+	setup_standard_excludes(&dir);
+
+	fill_directory(&dir, paths);
+	for (i = 0; i < dir.nr; i++)
+		hit |= grep_file(opt, dir.entries[i]->name);
+	free_grep_patterns(opt);
+	return hit;
+}
+
 static int context_callback(const struct option *opt, const char *arg,
 			    int unset)
 {
@@ -696,16 +422,19 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 {
 	int hit = 0;
 	int cached = 0;
-	int external_grep_allowed = 1;
 	int seen_dashdash = 0;
+	int external_grep_allowed__ignored;
 	struct grep_opt opt;
 	struct object_array list = { 0, 0, NULL };
 	const char **paths = NULL;
 	int i;
 	int dummy;
+	int nongit = 0, use_index = 1;
 	struct option options[] = {
 		OPT_BOOLEAN(0, "cached", &cached,
 			"search in index instead of in the work tree"),
+		OPT_BOOLEAN(0, "index", &use_index,
+			"--no-index finds in contents not managed by git"),
 		OPT_GROUP(""),
 		OPT_BOOLEAN('v', "invert-match", &opt.invert,
 			"show non-matching lines"),
@@ -779,17 +508,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "all-match", &opt.all_match,
 			"show only matches from files that match all patterns"),
 		OPT_GROUP(""),
-#if NO_EXTERNAL_GREP
-		OPT_BOOLEAN(0, "ext-grep", &external_grep_allowed,
-			"allow calling of grep(1) (ignored by this build)"),
-#else
-		OPT_BOOLEAN(0, "ext-grep", &external_grep_allowed,
-			"allow calling of grep(1) (default)"),
-#endif
+		OPT_BOOLEAN(0, "ext-grep", &external_grep_allowed__ignored,
+			    "allow calling of grep(1) (ignored by this build)"),
 		{ OPTION_CALLBACK, 0, "help-all", &options, NULL, "show usage",
 		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, help_callback },
 		OPT_END()
 	};
+
+	prefix = setup_git_directory_gently(&nongit);
 
 	/*
 	 * 'git grep -h', unlike 'git grep -h <pattern>', is a request
@@ -828,6 +554,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION |
 			     PARSE_OPT_NO_INTERNAL_HELP);
 
+	if (use_index && nongit)
+		/* die the same way as if we did it at the beginning */
+		setup_git_directory();
+
 	/* First unrecognized non-option token */
 	if (argc > 0 && !opt.pattern_list) {
 		append_grep_pattern(&opt, argv[0], "command line", 0,
@@ -836,8 +566,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		argc--;
 	}
 
-	if ((opt.color && !opt.color_external) || opt.funcname)
-		external_grep_allowed = 0;
 	if (!opt.pattern_list)
 		die("no pattern given.");
 	if (!opt.fixed && opt.ignore_case)
@@ -880,10 +608,18 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths[1] = NULL;
 	}
 
+	if (!use_index) {
+		if (cached)
+			die("--cached cannot be used with --no-index.");
+		if (list.nr)
+			die("--no-index cannot be used with revs.");
+		return !grep_directory(&opt, paths);
+	}
+
 	if (!list.nr) {
 		if (!cached)
 			setup_work_tree();
-		return !grep_cache(&opt, paths, cached, external_grep_allowed);
+		return !grep_cache(&opt, paths, cached);
 	}
 
 	if (cached)

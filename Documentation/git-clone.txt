@@ -96,13 +96,19 @@ objects from the source repository into a pack in the cloned repository.
 
 --quiet::
 -q::
-	Operate quietly.  This flag is also passed to the `rsync'
+	Operate quietly.  Progress is not reported to the standard
+	error stream. This flag is also passed to the `rsync'
 	command when given.
 
 --verbose::
 -v::
-	Display the progress bar, even in case the standard output is not
-	a terminal.
+	Run verbosely.
+
+--progress::
+	Progress status is reported on the standard error stream
+	by default when it is attached to a terminal, unless -q
+	is specified. This flag forces progress status even if the
+	standard error stream is not directed to a terminal.
 
 --no-checkout::
 -n::
