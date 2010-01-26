@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2010, #08; Sun, 24)
-X-master-at: b2c2e4c22c6a4fe151f02380d247cf3d9a9d5d1e
-X-next-at: ab82714c66789f07812b3c1c723004a10b67a882
+Subject: What's cooking in git.git (Jan 2010, #09; Mon, 25)
+X-master-at: e3f67d30b20e49d8fc3eefe819808cba7998b060
+X-next-at: fbe713d5bd6c280a0b5838c6fffb700008ae456e
 
-What's cooking in git.git (Jan 2010, #08; Sun, 24)
+What's cooking in git.git (Jan 2010, #09; Mon, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,25 +11,45 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
---------------------------------------------------
-[Graduated to "master"]
+We are already past -rc0; I think jl/diff-submodule-ignore should be part
+of 1.7.0-rc1, and I heard that early parts of jh/gitweb-cached are ready,
+but perhaps needs the final round of clean-up.  I am not confident if we
+can fix any potential fallouts before 1.7.0 if we merged other topics.
 
-* jc/fix-tree-walk (2009-09-14) 7 commits
-  (merged to 'next' on 2010-01-13 at 1c01b87)
- + read-tree --debug-unpack
- + unpack-trees.c: look ahead in the index
- + unpack-trees.c: prepare for looking ahead in the index
- + Aggressive three-way merge: fix D/F case
- + traverse_trees(): handle D/F conflict case sanely
- + more D/F conflict tests
- + tests: move convenience regexp to match object names to test-lib.sh
+So while I expect some minor merges to 'master' yet to come but otherwise
+this should be pretty much "it" from feature-set perspective.
 
-This is fix for a tricky codepath; I've been using this personally during
-the whole cycle up to point, so hopefully it finally have nailed all the
-corner cases?  Knock wood...
+Oh, gitk and git-gui may have further pull-requests before -rc1.
 
 --------------------------------------------------
 [New Topics]
+
+* fk/threaded-grep (2010-01-25) 1 commit
+ - Threaded grep
+ (this branch uses jc/grep-q.)
+
+400% performance gain on a 4-core box ;-)
+
+* jc/grep-q (2010-01-25) 1 commit
+ - grep: expose "status-only" feature via -q
+ (this branch is used by fk/threaded-grep.)
+
+* jl/diff-submodule-ignore (2010-01-24) 2 commits
+  (merged to 'next' on 2010-01-25 at fbe713d)
+ + Teach diff --submodule that modified submodule directory is dirty
+ + git diff: Don't test submodule dirtiness with --ignore-submodules
+ (this branch uses jc/ce-uptodate.)
+
+--------------------------------------------------
+[Cooking]
+
+* jc/ce-uptodate (2010-01-24) 1 commit
+  (merged to 'next' on 2010-01-25 at fbe713d)
+ + Make ce_uptodate() trustworthy again
+ (this branch is used by jl/diff-submodule-ignore.)
+
+I think this and Jens Lehmann's follow-up patch to avoid calling
+is_submodule_modified() are needed before 1.7.0
 
 * cc/reset-keep (2010-01-19) 5 commits
  - reset: disallow using --keep when there are unmerged entries
@@ -43,15 +63,6 @@ to users as a great new feature without confusing them unnecessarily, but
 perhaps queuing it to pu to give it wider visibility may help somebody
 coming up with a better way to defend the feature and introduce it to
 users without confusing them than Christan nor I managed to.
-
-* jc/ce-uptodate (2010-01-24) 1 commit
- - Make ce_uptodate() trustworthy again
-
-I think this and Jens Lehmann's follow-up patch to avoid calling
-is_submodule_modified() are needed before 1.7.0
-
---------------------------------------------------
-[Cooking]
 
 * jh/notes (2010-01-17) 20 commits
  - builtin-gc: Teach the new --notes option to garbage-collect notes
