@@ -512,7 +512,6 @@ LIB_H += tree-walk.h
 LIB_H += unpack-trees.h
 LIB_H += userdiff.h
 LIB_H += utf8.h
-LIB_H += wt-status.h
 LIB_H += xdiff-interface.h
 LIB_H += xdiff/xdiff.h
 
@@ -1664,7 +1663,7 @@ builtin-clone.o builtin-fetch-pack.o transport.o: fetch-pack.h
 builtin-send-pack.o transport.o: send-pack.h
 builtin-log.o builtin-shortlog.o: shortlog.h
 builtin-prune.o builtin-reflog.o reachable.o: reachable.h
-builtin-revert.o wt-status.o: wt-status.h
+builtin-commit.o builtin-revert.o wt-status.o: wt-status.h
 builtin-tar-tree.o archive-tar.o: tar.h
 builtin-pack-objects.o: thread-utils.h
 http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
