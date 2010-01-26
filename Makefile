@@ -447,6 +447,7 @@ LIB_H += blob.h
 LIB_H += builtin.h
 LIB_H += cache.h
 LIB_H += cache-tree.h
+LIB_H += color.h
 LIB_H += commit.h
 LIB_H += compat/bswap.h
 LIB_H += compat/cygwin.h
@@ -457,6 +458,7 @@ LIB_H += delta.h
 LIB_H += diffcore.h
 LIB_H += diff.h
 LIB_H += dir.h
+LIB_H += exec_cmd.h
 LIB_H += fsck.h
 LIB_H += git-compat-util.h
 LIB_H += graph.h
@@ -499,6 +501,8 @@ LIB_H += unpack-trees.h
 LIB_H += userdiff.h
 LIB_H += utf8.h
 LIB_H += wt-status.h
+LIB_H += xdiff-interface.h
+LIB_H += xdiff/xdiff.h
 
 LIB_OBJS += abspath.o
 LIB_OBJS += advice.o
@@ -1281,10 +1285,12 @@ endif
 ifdef BLK_SHA1
 	SHA1_HEADER = "block-sha1/sha1.h"
 	LIB_OBJS += block-sha1/sha1.o
+	LIB_H += block-sha1/sha1.h
 else
 ifdef PPC_SHA1
 	SHA1_HEADER = "ppc/sha1.h"
 	LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
+	LIB_H += ppc/sha1.h
 else
 	SHA1_HEADER = <openssl/sha.h>
 	EXTLIBS += $(LIB_4_CRYPTO)
@@ -1620,9 +1626,9 @@ git-imap-send$X: imap-send.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(OPENSSL_LINK) $(OPENSSL_LIBSSL)
 
-http.o http-walker.o http-push.o: http.h
+http.o http-walker.o http-push.o remote-curl.o: http.h
 
-http.o http-walker.o: $(LIB_H)
+http.o http-walker.o remote-curl.o: $(LIB_H)
 
 git-http-fetch$X: revision.o http.o http-walker.o http-fetch.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
@@ -1637,14 +1643,25 @@ git-remote-curl$X: remote-curl.o http.o http-walker.o $(GITLIBS)
 
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)) git.o: $(LIB_H) $(wildcard */*.h)
+builtin-branch.o builtin-checkout.o builtin-clone.o builtin-reset.o branch.o: branch.h
+builtin-bundle.o bundle.o transport.o: bundle.h
+builtin-bisect--helper.o builtin-rev-list.o bisect.o: bisect.h
+builtin-clone.o builtin-fetch-pack.o transport.o: fetch-pack.h
+builtin-send-pack.o transport.o: send-pack.h
+builtin-log.o builtin-shortlog.o: shortlog.h
+builtin-prune.o builtin-reflog.o reachable.o: reachable.h
 builtin-revert.o wt-status.o: wt-status.h
+builtin-tar-tree.o archive-tar.o: tar.h
+builtin-pack-objects.o: thread-utils.h
+http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
 
 $(LIB_FILE): $(LIB_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(LIB_OBJS)
 
 XDIFF_OBJS=xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 	xdiff/xmerge.o xdiff/xpatience.o
-$(XDIFF_OBJS): xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
+xdiff-interface.o $(XDIFF_OBJS): \
+	xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
 	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
 
 $(XDIFF_LIB): $(XDIFF_OBJS)
