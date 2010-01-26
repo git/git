@@ -223,11 +223,15 @@ eval $(sed -ne '/^Subject: /{
 }' Meta/whats-cooking.txt)
 if test "$monthname $year" = "$lastmon $lastyear"
 then
+	while case "$lastissue" in 0?*) ;; *) break ;; esac
+	do
+		lastissue=${lastissue#0}
+	done
 	if test "$incremental" = no
 	then
 		issue=$(( $lastissue + 1 ))
 	else
-		issue=$(( lastissue + 0 ))
+		issue=$(( $lastissue + 0 ))
 	fi
 else
 	issue=1
