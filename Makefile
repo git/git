@@ -402,6 +402,18 @@ PROGRAMS += git-upload-pack$X
 PROGRAMS += git-var$X
 PROGRAMS += git-http-backend$X
 
+TEST_PROGRAMS += test-chmtime$X
+TEST_PROGRAMS += test-ctype$X
+TEST_PROGRAMS += test-date$X
+TEST_PROGRAMS += test-delta$X
+TEST_PROGRAMS += test-dump-cache-tree$X
+TEST_PROGRAMS += test-genrandom$X
+TEST_PROGRAMS += test-match-trees$X
+TEST_PROGRAMS += test-parse-options$X
+TEST_PROGRAMS += test-path-utils$X
+TEST_PROGRAMS += test-sha1$X
+TEST_PROGRAMS += test-sigchain$X
+
 # List built-in command $C whose implementation cmd_$C() is not in
 # builtin-$C.o but is linked in as part of some other command.
 BUILT_INS += $(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
@@ -694,6 +706,8 @@ BUILTIN_OBJS += builtin-upload-archive.o
 BUILTIN_OBJS += builtin-verify-pack.o
 BUILTIN_OBJS += builtin-verify-tag.o
 BUILTIN_OBJS += builtin-write-tree.o
+
+TEST_OBJS := $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 EXTLIBS =
@@ -1642,7 +1656,7 @@ git-remote-curl$X: remote-curl.o http.o http-walker.o $(GITLIBS)
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
-$(patsubst git-%$X,%.o,$(PROGRAMS)) git.o: $(LIB_H) $(wildcard */*.h)
+$(patsubst git-%$X,%.o,$(PROGRAMS)) $(TEST_OBJS) git.o: $(LIB_H) $(wildcard */*.h)
 builtin-branch.o builtin-checkout.o builtin-clone.o builtin-reset.o branch.o: branch.h
 builtin-bundle.o bundle.o transport.o: bundle.h
 builtin-bisect--helper.o builtin-rev-list.o bisect.o: bisect.h
@@ -1732,18 +1746,6 @@ endif
 
 ### Testing rules
 
-TEST_PROGRAMS += test-chmtime$X
-TEST_PROGRAMS += test-ctype$X
-TEST_PROGRAMS += test-date$X
-TEST_PROGRAMS += test-delta$X
-TEST_PROGRAMS += test-dump-cache-tree$X
-TEST_PROGRAMS += test-genrandom$X
-TEST_PROGRAMS += test-match-trees$X
-TEST_PROGRAMS += test-parse-options$X
-TEST_PROGRAMS += test-path-utils$X
-TEST_PROGRAMS += test-sha1$X
-TEST_PROGRAMS += test-sigchain$X
-
 all:: $(TEST_PROGRAMS)
 
 # GNU make supports exporting all variables by "export" without parameters.
@@ -1763,9 +1765,7 @@ test-delta$X: diff-delta.o patch-delta.o
 
 test-parse-options$X: parse-options.o
 
-test-parse-options.o: parse-options.h
-
-.PRECIOUS: $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
+.PRECIOUS: $(TEST_OBJS)
 
 test-%$X: test-%.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
