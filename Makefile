@@ -1671,14 +1671,19 @@ GIT_OBJS := $(LIB_OBJS) $(BUILTIN_OBJS) $(TEST_OBJS) \
 	$(patsubst git-%$X,%.o,$(PROGRAMS))
 XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 	xdiff/xmerge.o xdiff/xpatience.o
+OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS)
+
+ASM_SRC := $(wildcard $(OBJECTS:o=S))
+ASM_OBJ := $(ASM_SRC:S=o)
+C_OBJ := $(filter-out $(ASM_OBJ),$(OBJECTS))
 
 .SUFFIXES:
 
-%.o: %.c GIT-CFLAGS
+$(C_OBJ): %.o: %.c GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 %.s: %.c GIT-CFLAGS FORCE
 	$(QUIET_CC)$(CC) -S $(ALL_CFLAGS) $<
-%.o: %.S GIT-CFLAGS
+$(ASM_OBJ): %.o: %.S GIT-CFLAGS
 	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
 $(GIT_OBJS): $(LIB_H)
