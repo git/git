@@ -1232,7 +1232,7 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size, const unsigned char *sha1)
 {
 	int bytes = strlen(buffer) + 1;
-	unsigned char *buf = xmalloc(1+size);
+	unsigned char *buf = xmallocz(size);
 	unsigned long n;
 	int status = Z_OK;
 
@@ -1260,7 +1260,6 @@ static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size
 		while (status == Z_OK)
 			status = git_inflate(stream, Z_FINISH);
 	}
-	buf[size] = 0;
 	if (status == Z_STREAM_END && !stream->avail_in) {
 		git_inflate_end(stream);
 		return buf;
