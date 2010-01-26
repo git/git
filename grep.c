@@ -640,8 +640,15 @@ static int look_ahead(struct grep_opt *opt,
 
 		if (p->fixed)
 			hit = !fixmatch(p->pattern, bol, p->ignore_case, &m);
-		else
+		else {
+#ifdef REG_STARTEND
+			m.rm_so = 0;
+			m.rm_eo = *left_p;
+			hit = !regexec(&p->regexp, bol, 1, &m, REG_STARTEND);
+#else
 			hit = !regexec(&p->regexp, bol, 1, &m, 0);
+#endif
+		}
 		if (!hit || m.rm_so < 0 || m.rm_eo < 0)
 			continue;
 		if (earliest < 0 || m.rm_so < earliest)
