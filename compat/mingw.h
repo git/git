@@ -112,14 +112,6 @@ static inline int fcntl(int fd, int cmd, long arg)
  * simple adaptors
  */
 
-static inline int mingw_unlink(const char *pathname)
-{
-	/* read-only files cannot be removed */
-	chmod(pathname, 0666);
-	return unlink(pathname);
-}
-#define unlink mingw_unlink
-
 static inline pid_t waitpid(pid_t pid, int *status, unsigned options)
 {
 	if (options == 0)
@@ -174,6 +166,9 @@ int readlink(const char *path, char *buf, size_t bufsiz);
 
 int mingw_mkdir(const char *path, int mode);
 #define mkdir mingw_mkdir
+
+int mingw_unlink(const char *pathname);
+#define unlink mingw_unlink
 
 int mingw_open (const char *filename, int oflags, ...);
 #define open mingw_open
