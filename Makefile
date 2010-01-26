@@ -1719,7 +1719,7 @@ $(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o $(GITLIBS)
 
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)) $(TEST_OBJS) git.o: $(LIB_H)
-builtin-branch.o builtin-checkout.o builtin-clone.o builtin-reset.o branch.o: branch.h
+builtin-branch.o builtin-checkout.o builtin-clone.o builtin-reset.o branch.o transport.o: branch.h
 builtin-bundle.o bundle.o transport.o: bundle.h
 builtin-bisect--helper.o builtin-rev-list.o bisect.o: bisect.h
 builtin-clone.o builtin-fetch-pack.o transport.o: fetch-pack.h
