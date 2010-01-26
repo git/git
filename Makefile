@@ -221,6 +221,9 @@ all::
 # Define COMPUTE_HEADER_DEPENDENCIES if your compiler supports the -MMD option
 # and you want to avoid rebuilding objects when an unrelated header file
 # changes.
+#
+# Define CHECK_HEADER_DEPENDENCIES to check for problems in the hard-coded
+# dependency rules.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1088,6 +1091,14 @@ endif
 -include config.mak.autogen
 -include config.mak
 
+ifdef CHECK_HEADER_DEPENDENCIES
+USE_COMPUTED_HEADER_DEPENDENCIES =
+endif
+
+ifdef COMPUTE_HEADER_DEPENDENCIES
+USE_COMPUTED_HEADER_DEPENDENCIES = YesPlease
+endif
+
 ifdef SANE_TOOL_PATH
 SANE_TOOL_PATH_SQ = $(subst ','\'',$(SANE_TOOL_PATH))
 BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|git_broken_path_fix $(SANE_TOOL_PATH_SQ)|'
@@ -1681,9 +1692,7 @@ XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 	xdiff/xmerge.o xdiff/xpatience.o
 OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS)
 
-ASM_SRC := $(wildcard $(OBJECTS:o=S))
-ASM_OBJ := $(ASM_SRC:S=o)
-C_OBJ := $(filter-out $(ASM_OBJ),$(OBJECTS))
+dep_files := $(foreach f,$(OBJECTS),$(dir $f)deps/$(notdir $f).d)
 
 ifdef COMPUTE_HEADER_DEPENDENCIES
 dep_dirs := $(addsuffix deps,$(sort $(dir $(OBJECTS))))
@@ -1691,33 +1700,89 @@ $(dep_dirs):
 	mkdir -p $@
 
 missing_dep_dirs := $(filter-out $(wildcard $(dep_dirs)),$(dep_dirs))
-else
+dep_file = $(dir $@)deps/$(notdir $@).d
+dep_args = -MF $(dep_file) -MMD -MP
+ifdef CHECK_HEADER_DEPENDENCIES
+$(error cannot compute header dependencies outside a normal build. \
+Please unset CHECK_HEADER_DEPENDENCIES and try again)
+endif
+endif
+
+ifndef COMPUTE_HEADER_DEPENDENCIES
+ifndef CHECK_HEADER_DEPENDENCIES
 dep_dirs =
 missing_dep_dirs =
+dep_args =
 endif
+endif
+
+ifdef CHECK_HEADER_DEPENDENCIES
+ifndef PRINT_HEADER_DEPENDENCIES
+missing_deps = $(filter-out $(notdir $^), \
+	$(notdir $(shell $(MAKE) -s $@ \
+		CHECK_HEADER_DEPENDENCIES=YesPlease \
+		USE_COMPUTED_HEADER_DEPENDENCIES=YesPlease \
+		PRINT_HEADER_DEPENDENCIES=YesPlease)))
+endif
+endif
+
+ASM_SRC := $(wildcard $(OBJECTS:o=S))
+ASM_OBJ := $(ASM_SRC:S=o)
+C_OBJ := $(filter-out $(ASM_OBJ),$(OBJECTS))
 
 .SUFFIXES:
 
-$(C_OBJ): %.o: %.c GIT-CFLAGS $(missing_dep_dirs)
-	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $<
-%.s: %.c GIT-CFLAGS FORCE
-	$(QUIET_CC)$(CC) -S $(ALL_CFLAGS) $<
-$(ASM_OBJ): %.o: %.S GIT-CFLAGS $(missing_dep_dirs)
-	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $<
+ifdef PRINT_HEADER_DEPENDENCIES
+$(C_OBJ): %.o: %.c FORCE
+	echo $^
+$(ASM_OBJ): %.o: %.S FORCE
+	echo $^
 
-ifdef COMPUTE_HEADER_DEPENDENCIES
-# Take advantage of gcc's on-the-fly dependency generation
-# See <http://gcc.gnu.org/gcc-3.0/features.html>.
-dep_files := $(wildcard $(foreach f,$(OBJECTS),$(dir f)deps/$(notdir $f).d))
-ifneq ($(dep_files),)
-include $(dep_files)
+ifndef CHECK_HEADER_DEPENDENCIES
+$(error cannot print header dependencies during a normal build. \
+Please set CHECK_HEADER_DEPENDENCIES and try again)
+endif
 endif
 
-dep_file = $(dir $@)deps/$(notdir $@).d
-dep_args = -MF $(dep_file) -MMD -MP
-else
-dep_args =
+ifndef PRINT_HEADER_DEPENDENCIES
+ifdef CHECK_HEADER_DEPENDENCIES
+$(C_OBJ): %.o: %.c $(dep_files) FORCE
+	@set -e; echo CHECK $@; \
+	missing_deps="$(missing_deps)"; \
+	if test "$$missing_deps"; \
+	then \
+		echo missing dependencies: $$missing_deps; \
+		false; \
+	fi
+$(ASM_OBJ): %.o: %.S $(dep_files) FORCE
+	@set -e; echo CHECK $@; \
+	missing_deps="$(missing_deps)"; \
+	if test "$$missing_deps"; \
+	then \
+		echo missing dependencies: $$missing_deps; \
+		false; \
+	fi
+endif
+endif
 
+ifndef CHECK_HEADER_DEPENDENCIES
+$(C_OBJ): %.o: %.c GIT-CFLAGS $(missing_dep_dirs)
+	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $<
+$(ASM_OBJ): %.o: %.S GIT-CFLAGS $(missing_dep_dirs)
+	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $<
+endif
+
+%.s: %.c GIT-CFLAGS FORCE
+	$(QUIET_CC)$(CC) -S $(ALL_CFLAGS) $<
+
+ifdef USE_COMPUTED_HEADER_DEPENDENCIES
+# Take advantage of gcc's on-the-fly dependency generation
+# See <http://gcc.gnu.org/gcc-3.0/features.html>.
+dep_files_present := $(wildcard $(dep_files))
+ifneq ($(dep_files_present),)
+include $(dep_files_present)
+endif
+else
 # Dependencies on header files, for platforms that do not support
 # the gcc -MMD option.
 #
