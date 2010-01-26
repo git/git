@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2010, #07; Fri, 22)
-X-master-at: aba7dea83bfba411dee0271491d6199d2dca61d9
-X-next-at: 7703121a442f8cf559a50f3a47b313dd77b8e185
+Subject: What's cooking in git.git (Jan 2010, #08; Sun, 24)
+X-master-at: b2c2e4c22c6a4fe151f02380d247cf3d9a9d5d1e
+X-next-at: ab82714c66789f07812b3c1c723004a10b67a882
 
-What's cooking in git.git (Jan 2010, #07; Fri, 22)
+What's cooking in git.git (Jan 2010, #08; Sun, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -13,108 +13,6 @@ still holding onto them.
 
 --------------------------------------------------
 [Graduated to "master"]
-
-* jc/conflict-marker-size (2010-01-16) 8 commits
-  (merged to 'next' on 2010-01-18 at f1f6023)
- + rerere: honor conflict-marker-size attribute
- + rerere: prepare for customizable conflict marker length
- + conflict-marker-size: new attribute
- + rerere: use ll_merge() instead of using xdl_merge()
- + merge-tree: use ll_merge() not xdl_merge()
- + xdl_merge(): allow passing down marker_size in xmparam_t
- + xdl_merge(): introduce xmparam_t for merge specific parameters
- + git_attr(): fix function signature
-
-* ag/maint-apply-too-large-p (2010-01-17) 1 commit
-  (merged to 'next' on 2010-01-18 at 8bd106a)
- + builtin-apply.c: Skip filenames without enough components
-
-* ag/patch-header-verify (2010-01-18) 1 commit
-  (merged to 'next' on 2010-01-18 at 2cd0ddc)
- + builtin-apply.c: fix the --- and +++ header filename consistency check
-
-* bw/cvsimport (2010-01-19) 3 commits
-  (merged to 'next' on 2010-01-19 at 63f4c8d)
- + cvsimport: standarize system() calls to external git tools
- + cvsimport: standarize open() calls to external git tools
- + cvsimport: modernize callouts to git subcommands
-
-* jc/checkout-merge-base (2010-01-19) 1 commit
-  (merged to 'next' on 2010-01-19 at 3665110)
- + Fix "checkout A..." synonym for "checkout A...HEAD" on Windows
-
-* jc/maint-refresh-index-is-optional-for-status (2010-01-19) 1 commit
- + status: don't require the repository to be writable
-
-* nd/status-partial-refresh (2010-01-17) 2 commits
-  (merged to 'next' on 2010-01-19 at 64f0c0b)
- + rm: only refresh entries that we may touch
-  (merged to 'next' on 2010-01-16 at f77bc8f)
- + status: only touch path we may need to check
-
-* ap/merge-backend-opts (2008-07-18) 7 commits
-  (merged to 'next' on 2010-01-18 at cb1f6b7)
- + Document that merge strategies can now take their own options
- + Extend merge-subtree tests to test -Xsubtree=dir.
- + Make "subtree" part more orthogonal to the rest of merge-recursive.
- + pull: Fix parsing of -X<option>
- + Teach git-pull to pass -X<option> to git-merge
- + git merge -X<option>
- + git-merge-file --ours, --theirs
-
-* jc/maint-limit-note-output (2010-01-21) 2 commits
-  (merged to 'next' on 2010-01-21 at bcb80b9)
- + Fix "log --oneline" not to show notes
-  (merged to 'next' on 2010-01-20 at 526bfcc)
- + Fix "log" family not to be too agressive about showing notes
-
-* nd/ls-files-sparse-fix (2010-01-20) 1 commit
-  (merged to 'next' on 2010-01-20 at 0f61dbc)
- + Fix memory corruption when .gitignore does not end by \n
-
-* il/branch-set-upstream (2010-01-18) 2 commits
-  (merged to 'next' on 2010-01-18 at b9b0993)
- + branch: warn and refuse to set a branch as a tracking branch of itself.
- + Add branch --set-upstream
-
-* il/remote-updates (2010-01-18) 1 commit
-  (merged to 'next' on 2010-01-18 at 5c3e805)
- + Add git remote set-url
-
-* il/rev-glob (2010-01-22) 3 commits
-  (merged to 'next' on 2010-01-21 at 453a21c)
- + Documentation: improve description of --glob=pattern and friends
-  (merged to 'next' on 2010-01-20 at 928ba0a)
- + rev-parse --branches/--tags/--remotes=pattern
- + rev-parse --glob
-
-This is a re-rolled "--namespace=" one.
-
-* jl/submodule-diff (2010-01-18) 4 commits
-  (merged to 'next' on 2010-01-20 at 95cb513)
- + Performance optimization for detection of modified submodules
-  (merged to 'next' on 2010-01-17 at 525075b)
- + git status: Show uncommitted submodule changes too when enabled
-  (merged to 'next' on 2010-01-16 at 0a99e3c)
- + Teach diff that modified submodule directory is dirty
- + Show submodules as modified when they contain a dirty work tree
-
-* js/refer-upstream (2010-01-19) 3 commits
-  (merged to 'next' on 2010-01-20 at 5a5547a)
- + Teach @{upstream} syntax to strbuf_branchanme()
- + t1506: more test for @{upstream} syntax
- + Introduce <branch>@{upstream} notation
-
-Updated to teach the new syntax to commands like "checkout" and "merge"
-that want to behave better when they know what were given was a branch
-name, not a random SHA-1.
-
-* jc/branch-d (2009-12-29) 1 commit
-  (merged to 'next' on 2010-01-10 at 61a14b7)
- + branch -d: base the "already-merged" safety on the branch it merges with
-
---------------------------------------------------
-[Will merge to 'master' after a bit more cooking in 'next']
 
 * jc/fix-tree-walk (2009-09-14) 7 commits
   (merged to 'next' on 2010-01-13 at 1c01b87)
@@ -126,37 +24,59 @@ name, not a random SHA-1.
  + more D/F conflict tests
  + tests: move convenience regexp to match object names to test-lib.sh
 
-Resurrected from "Ejected" category.  This is fix for a tricky codepath
-and testing and improving before it hits 'master' is greatly appreciated.
-(I have been using this in my private build for some time).
+This is fix for a tricky codepath; I've been using this personally during
+the whole cycle up to point, so hopefully it finally have nailed all the
+corner cases?  Knock wood...
+
+--------------------------------------------------
+[New Topics]
+
+* cc/reset-keep (2010-01-19) 5 commits
+ - reset: disallow using --keep when there are unmerged entries
+ - reset: disallow "reset --keep" outside a work tree
+ - Documentation: reset: describe new "--keep" option
+ - reset: add test cases for "--keep" option
+ - reset: add option "--keep" to "git reset"
+
+I do not think I'd ever use this, and I am not convinced I can sell this
+to users as a great new feature without confusing them unnecessarily, but
+perhaps queuing it to pu to give it wider visibility may help somebody
+coming up with a better way to defend the feature and introduce it to
+users without confusing them than Christan nor I managed to.
+
+* jc/ce-uptodate (2010-01-24) 1 commit
+ - Make ce_uptodate() trustworthy again
+
+I think this and Jens Lehmann's follow-up patch to avoid calling
+is_submodule_modified() are needed before 1.7.0
 
 --------------------------------------------------
 [Cooking]
 
 * jh/notes (2010-01-17) 20 commits
- . builtin-gc: Teach the new --notes option to garbage-collect notes
- . Notes API: gc_notes(): Prune notes that belong to non-existing objects
- . t3305: Verify that removing notes triggers automatic fanout consolidation
- . builtin-notes: Teach -d option for deleting existing notes
- . Teach builtin-notes to remove empty notes
- . Teach notes code to properly preserve non-notes in the notes tree
- . t3305: Verify that adding many notes with git-notes triggers increased fanout
- . t3301: Verify successful annotation of non-commits
- . Builtin-ify git-notes
- . Refactor notes concatenation into a flexible interface for combining notes
- . Notes API: Allow multiple concurrent notes trees with new struct notes_tree
- . Notes API: write_notes_tree(): Store the notes tree in the database
- . Notes API: for_each_note(): Traverse the entire notes tree with a callback
- . Notes API: get_note(): Return the note annotating the given object
- . Notes API: remove_note(): Remove note objects from the notes tree structure
- . Notes API: add_note(): Add note objects to the internal notes tree structure
- . Notes API: init_notes(): Initialize the notes tree from the given notes ref
- . Add tests for checking correct handling of $GIT_NOTES_REF and core.notesRef
- . Notes API: get_commit_notes() -> format_note() + remove the commit restriction
- . Minor non-functional fixes to notes.c
+ - builtin-gc: Teach the new --notes option to garbage-collect notes
+ - Notes API: gc_notes(): Prune notes that belong to non-existing objects
+ - t3305: Verify that removing notes triggers automatic fanout consolidation
+ - builtin-notes: Teach -d option for deleting existing notes
+ - Teach builtin-notes to remove empty notes
+ - Teach notes code to properly preserve non-notes in the notes tree
+ - t3305: Verify that adding many notes with git-notes triggers increased fanout
+ - t3301: Verify successful annotation of non-commits
+ - Builtin-ify git-notes
+ - Refactor notes concatenation into a flexible interface for combining notes
+ - Notes API: Allow multiple concurrent notes trees with new struct notes_tree
+ - Notes API: write_notes_tree(): Store the notes tree in the database
+ - Notes API: for_each_note(): Traverse the entire notes tree with a callback
+ - Notes API: get_note(): Return the note annotating the given object
+ - Notes API: remove_note(): Remove note objects from the notes tree structure
+ - Notes API: add_note(): Add note objects to the internal notes tree structure
+ - Notes API: init_notes(): Initialize the notes tree from the given notes ref
+ - Add tests for checking correct handling of $GIT_NOTES_REF and core.notesRef
+ - Notes API: get_commit_notes() -> format_note() + remove the commit restriction
+ - Minor non-functional fixes to notes.c
 
-Tentatively ejected, as its tests conflict with tests in a higher priority
-fix.
+The changes to test vector this series makes to t3301 breaks tests that
+are in 'master', so 'pu' doesn't pass it.
 
 * jh/gitweb-cached (2010-01-13) 9 commits
  - gitweb: File based caching layer (from git.kernel.org)
@@ -169,7 +89,9 @@ fix.
  - gitweb: change die_error to take "extra" argument for extended die information
  - gitweb: Load checking
 
-Replaced with a re-roll.  Update to t9500 is probably needed.
+I know there is a series to split the later ones into smaller chunks that
+are being discussed on the list, but they don't appear here.  I'd prefer
+to pick the series up after all the dust from the discussion settles.
 
 * jc/grep-author-all-match-implicit (2010-01-17) 1 commit
  - "log --author=me --grep=it" should find intersection, not union
