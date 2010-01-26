@@ -37,11 +37,11 @@ test_expect_success setup '
 	# patch-2 is the same as patch-1 but is based
 	# on a version that already has whitespace fixed,
 	# and does not introduce whitespace breakages.
-	sed -e "s/ $//" patch-1 >patch-2 &&
+	sed -e "s/ \$//" patch-1 >patch-2 &&
 
 	# If all whitespace breakages are fixed the contents
 	# should look like file-fixed
-	sed -e "s/ $//" file-1 >file-fixed
+	sed -e "s/ \$//" file-1 >file-fixed
 
 '
 

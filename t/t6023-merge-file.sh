@@ -146,8 +146,8 @@ test_expect_success 'binary files cannot be merged' '
 	grep "Cannot merge binary files" merge.err
 '
 
-sed -e "s/deerit.$/deerit;/" -e "s/me;$/me./" < new5.txt > new6.txt
-sed -e "s/deerit.$/deerit,/" -e "s/me;$/me,/" < new5.txt > new7.txt
+sed -e "s/deerit.\$/deerit;/" -e "s/me;\$/me./" < new5.txt > new6.txt
+sed -e "s/deerit.\$/deerit,/" -e "s/me;\$/me,/" < new5.txt > new7.txt
 
 test_expect_success 'MERGE_ZEALOUS simplifies non-conflicts' '
 

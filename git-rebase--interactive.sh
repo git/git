@@ -407,7 +407,7 @@ update_squash_messages () {
 }
 
 peek_next_command () {
-	sed -n -e "/^#/d" -e "/^$/d" -e "s/ .*//p" -e "q" < "$TODO"
+	sed -n -e "/^#/d" -e '/^$/d' -e "s/ .*//p" -e "q" < "$TODO"
 }
 
 # A squash/fixup has failed.  Prepare the long version of the squash
