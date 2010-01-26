@@ -341,6 +341,7 @@ COMPAT_CFLAGS =
 COMPAT_OBJS =
 LIB_H =
 LIB_OBJS =
+PROGRAM_OBJS =
 PROGRAMS =
 SCRIPT_PERL =
 SCRIPT_PYTHON =
@@ -390,12 +391,15 @@ EXTRA_PROGRAMS =
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS += $(EXTRA_PROGRAMS)
-PROGRAMS += git-fast-import$X
-PROGRAMS += git-imap-send$X
-PROGRAMS += git-shell$X
-PROGRAMS += git-show-index$X
-PROGRAMS += git-upload-pack$X
-PROGRAMS += git-http-backend$X
+
+PROGRAM_OBJS += fast-import.o
+PROGRAM_OBJS += imap-send.o
+PROGRAM_OBJS += shell.o
+PROGRAM_OBJS += show-index.o
+PROGRAM_OBJS += upload-pack.o
+PROGRAM_OBJS += http-backend.o
+
+PROGRAMS += $(patsubst %.o,git-%$X,$(PROGRAM_OBJS))
 
 TEST_PROGRAMS_NEED_X += test-chmtime
 TEST_PROGRAMS_NEED_X += test-ctype
@@ -1139,11 +1143,12 @@ else
 	REMOTE_CURL_PRIMARY = git-remote-http$X
 	REMOTE_CURL_ALIASES = git-remote-https$X git-remote-ftp$X git-remote-ftps$X
 	REMOTE_CURL_NAMES = $(REMOTE_CURL_PRIMARY) $(REMOTE_CURL_ALIASES)
-	PROGRAMS += $(REMOTE_CURL_NAMES) git-http-fetch$X
+	PROGRAM_OBJS += http-fetch.o
+	PROGRAMS += $(REMOTE_CURL_NAMES)
 	curl_check := $(shell (echo 070908; curl-config --vernum) | sort -r | sed -ne 2p)
 	ifeq "$(curl_check)" "070908"
 		ifndef NO_EXPAT
-			PROGRAMS += git-http-push$X
+			PROGRAM_OBJS += http-push.o
 		endif
 	endif
 	ifndef NO_EXPAT
@@ -1163,7 +1168,7 @@ endif
 EXTLIBS += -lz
 
 ifndef NO_POSIX_ONLY_PROGRAMS
-	PROGRAMS += git-daemon$X
+	PROGRAM_OBJS += daemon.o
 endif
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
@@ -1670,9 +1675,8 @@ git.o git.spec \
 	$(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	: GIT-VERSION-FILE
 
-GIT_OBJS := $(LIB_OBJS) $(BUILTIN_OBJS) $(TEST_OBJS) \
-	git.o http.o http-walker.o remote-curl.o \
-	$(patsubst git-%$X,%.o,$(PROGRAMS))
+GIT_OBJS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
+	git.o http.o http-walker.o remote-curl.o
 XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 	xdiff/xmerge.o xdiff/xpatience.o
 OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS)
