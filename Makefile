@@ -217,6 +217,10 @@ all::
 #   DEFAULT_EDITOR='~/bin/vi',
 #   DEFAULT_EDITOR='$GIT_FALLBACK_EDITOR',
 #   DEFAULT_EDITOR='"C:\Program Files\Vim\gvim.exe" --nofork'
+#
+# Define COMPUTE_HEADER_DEPENDENCIES if your compiler supports the -MMD option
+# and you want to avoid rebuilding objects when an unrelated header file
+# changes.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1677,14 +1681,48 @@ ASM_SRC := $(wildcard $(OBJECTS:o=S))
 ASM_OBJ := $(ASM_SRC:S=o)
 C_OBJ := $(filter-out $(ASM_OBJ),$(OBJECTS))
 
+ifdef COMPUTE_HEADER_DEPENDENCIES
+dep_dirs := $(addsuffix deps,$(sort $(dir $(OBJECTS))))
+$(dep_dirs):
+	mkdir -p $@
+
+missing_dep_dirs := $(filter-out $(wildcard $(dep_dirs)),$(dep_dirs))
+else
+dep_dirs =
+missing_dep_dirs =
+endif
+
 .SUFFIXES:
 
-$(C_OBJ): %.o: %.c GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+$(C_OBJ): %.o: %.c GIT-CFLAGS $(missing_dep_dirs)
+	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $<
 %.s: %.c GIT-CFLAGS FORCE
 	$(QUIET_CC)$(CC) -S $(ALL_CFLAGS) $<
-$(ASM_OBJ): %.o: %.S GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+$(ASM_OBJ): %.o: %.S GIT-CFLAGS $(missing_dep_dirs)
+	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $<
+
+ifdef COMPUTE_HEADER_DEPENDENCIES
+# Take advantage of gcc's on-the-fly dependency generation
+# See <http://gcc.gnu.org/gcc-3.0/features.html>.
+dep_files := $(wildcard $(foreach f,$(OBJECTS),$(dir f)deps/$(notdir $f).d))
+ifneq ($(dep_files),)
+include $(dep_files)
+endif
+
+dep_file = $(dir $@)deps/$(notdir $@).d
+dep_args = -MF $(dep_file) -MMD -MP
+else
+dep_args =
+
+# Dependencies on header files, for platforms that do not support
+# the gcc -MMD option.
+#
+# Dependencies on automatically generated headers such as common-cmds.h
+# should _not_ be included here, since they are necessary even when
+# building an object for the first time.
+#
+# XXX. Please check occasionally that these include all dependencies
+# gcc detects!
 
 $(GIT_OBJS): $(LIB_H)
 builtin-branch.o builtin-checkout.o builtin-clone.o builtin-reset.o branch.o transport.o: branch.h
@@ -1700,10 +1738,10 @@ builtin-pack-objects.o: thread-utils.h
 http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
 http.o http-walker.o http-push.o remote-curl.o: http.h
 
-
 xdiff-interface.o $(XDIFF_OBJS): \
 	xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
 	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
+endif
 
 exec_cmd.s exec_cmd.o: ALL_CFLAGS += \
 	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
@@ -2011,6 +2049,7 @@ clean:
 	$(RM) $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS)
 	$(RM) -r bin-wrappers
+	$(RM) -r $(dep_dirs)
 	$(RM) *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags cscope*
 	$(RM) -r autom4te.cache
 	$(RM) config.log config.mak.autogen config.mak.append config.status config.cache
