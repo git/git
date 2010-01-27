@@ -696,6 +696,11 @@ static unsigned long update_tm(struct tm *tm, struct tm *now, unsigned long sec)
 	return n;
 }
 
+static void date_now(struct tm *tm, struct tm *now, int *num)
+{
+	update_tm(tm, now, 0);
+}
+
 static void date_yesterday(struct tm *tm, struct tm *now, int *num)
 {
 	update_tm(tm, now, 24*60*60);
@@ -770,6 +775,7 @@ static const struct special {
 	{ "PM", date_pm },
 	{ "AM", date_am },
 	{ "never", date_never },
+	{ "now", date_now },
 	{ NULL }
 };
 
@@ -790,7 +796,7 @@ static const struct typelen {
 	{ NULL }
 };
 
-static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm *now, int *num)
+static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm *now, int *num, int *touched)
 {
 	const struct typelen *tl;
 	const struct special *s;
@@ -804,6 +810,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 		int match = match_string(date, month_names[i]);
 		if (match >= 3) {
 			tm->tm_mon = i;
+			*touched = 1;
 			return end;
 		}
 	}
@@ -812,6 +819,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 		int len = strlen(s->name);
 		if (match_string(date, s->name) == len) {
 			s->fn(tm, now, num);
+			*touched = 1;
 			return end;
 		}
 	}
@@ -821,11 +829,14 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 			int len = strlen(number_name[i]);
 			if (match_string(date, number_name[i]) == len) {
 				*num = i;
+				*touched = 1;
 				return end;
 			}
 		}
-		if (match_string(date, "last") == 4)
+		if (match_string(date, "last") == 4) {
 			*num = 1;
+			*touched = 1;
+		}
 		return end;
 	}
 
@@ -835,6 +846,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 		if (match_string(date, tl->type) >= len-1) {
 			update_tm(tm, now, tl->length * *num);
 			*num = 0;
+			*touched = 1;
 			return end;
 		}
 		tl++;
@@ -852,6 +864,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 			diff += 7*n;
 
 			update_tm(tm, now, diff * 24 * 60 * 60);
+			*touched = 1;
 			return end;
 		}
 	}
@@ -866,6 +879,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 			tm->tm_year--;
 		}
 		tm->tm_mon = n;
+		*touched = 1;
 		return end;
 	}
 
@@ -873,6 +887,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 		update_tm(tm, now, 0); /* fill in date fields if needed */
 		tm->tm_year -= *num;
 		*num = 0;
+		*touched = 1;
 		return end;
 	}
 
@@ -929,9 +944,12 @@ static void pending_number(struct tm *tm, int *num)
 	}
 }
 
-static unsigned long approxidate_str(const char *date, const struct timeval *tv)
+static unsigned long approxidate_str(const char *date,
+				     const struct timeval *tv,
+				     int *error_ret)
 {
 	int number = 0;
+	int touched = 0;
 	struct tm tm, now;
 	time_t time_sec;
 
@@ -951,33 +969,42 @@ static unsigned long approxidate_str(const char *date, const struct timeval *tv)
 		if (isdigit(c)) {
 			pending_number(&tm, &number);
 			date = approxidate_digit(date-1, &tm, &number);
+			touched = 1;
 			continue;
 		}
 		if (isalpha(c))
-			date = approxidate_alpha(date-1, &tm, &now, &number);
+			date = approxidate_alpha(date-1, &tm, &now, &number, &touched);
 	}
 	pending_number(&tm, &number);
+	if (!touched)
+		*error_ret = 1;
 	return update_tm(&tm, &now, 0);
 }
 
 unsigned long approxidate_relative(const char *date, const struct timeval *tv)
 {
 	char buffer[50];
+	int errors = 0;
 
 	if (parse_date(date, buffer, sizeof(buffer)) > 0)
 		return strtoul(buffer, NULL, 0);
 
-	return approxidate_str(date, tv);
+	return approxidate_str(date, tv, &errors);
 }
 
-unsigned long approxidate(const char *date)
+unsigned long approxidate_careful(const char *date, int *error_ret)
 {
 	struct timeval tv;
 	char buffer[50];
+	int dummy = 0;
+	if (!error_ret)
+		error_ret = &dummy;
 
-	if (parse_date(date, buffer, sizeof(buffer)) > 0)
+	if (parse_date(date, buffer, sizeof(buffer)) > 0) {
+		*error_ret = 0;
 		return strtoul(buffer, NULL, 0);
+	}
 
 	gettimeofday(&tv, NULL);
-	return approxidate_str(date, &tv);
+	return approxidate_str(date, &tv, error_ret);
 }
