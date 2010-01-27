@@ -612,7 +612,8 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	if (alias && !ce_stage(alias) && !ie_match_stat(istate, alias, st, ce_option)) {
 		/* Nothing changed, really */
 		free(ce);
-		ce_mark_uptodate(alias);
+		if (!S_ISGITLINK(alias->ce_mode))
+			ce_mark_uptodate(alias);
 		alias->ce_flags |= CE_ADDED;
 		return 0;
 	}
@@ -1050,7 +1051,8 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 			 * because CE_UPTODATE flag is in-core only;
 			 * we are not going to write this change out.
 			 */
-			ce_mark_uptodate(ce);
+			if (!S_ISGITLINK(ce->ce_mode))
+				ce_mark_uptodate(ce);
 			return ce;
 		}
 	}

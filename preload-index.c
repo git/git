@@ -47,6 +47,8 @@ static void *preload_thread(void *_data)
 
 		if (ce_stage(ce))
 			continue;
+		if (S_ISGITLINK(ce->ce_mode))
+			continue;
 		if (ce_uptodate(ce))
 			continue;
 		if (!ce_path_match(ce, p->pathspec))
