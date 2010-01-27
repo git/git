@@ -26,8 +26,8 @@ test_expect_success '@{now} shows current' '
 	check_at @{now} two
 '
 
-test_expect_success '@{30.years.ago} shows old' '
-	check_at @{30.years.ago} one
+test_expect_success '@{2001-09-17} (before the first commit) shows old' '
+	check_at @{2001-09-17} one
 '
 
 test_expect_success 'silly approxidates work' '
