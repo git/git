@@ -358,7 +358,7 @@ int cmd_config(int argc, const char **argv, const char *unused_prefix)
 		if (!is_absolute_path(given_config_file) && prefix)
 			config_exclusive_filename = prefix_filename(prefix,
 								    strlen(prefix),
-								    argv[2]);
+								    given_config_file);
 		else
 			config_exclusive_filename = given_config_file;
 	}
