@@ -107,4 +107,33 @@ test_expect_success 'checkout other@{u}' '
 	test_cmp expect actual
 '
 
+cat >expect <<EOF
+commit 8f489d01d0cc65c3b0f09504ec50b5ed02a70bd5
+Reflog: master@{0} (C O Mitter <committer@example.com>)
+Reflog message: branch: Created from HEAD
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:15:13 2005 -0700
+
+    3
+EOF
+test_expect_success 'log -g other@{u}' '
+	git log -1 -g other@{u} >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<EOF
+commit 8f489d01d0cc65c3b0f09504ec50b5ed02a70bd5
+Reflog: master@{Thu Apr 7 15:17:13 2005 -0700} (C O Mitter <committer@example.com>)
+Reflog message: branch: Created from HEAD
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:15:13 2005 -0700
+
+    3
+EOF
+
+test_expect_success 'log -g other@{u}@{now}' '
+	git log -1 -g other@{u}@{now} >actual &&
+	test_cmp expect actual
+'
+
 test_done

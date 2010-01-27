@@ -134,10 +134,20 @@ static void add_pending_object_with_mode(struct rev_info *revs, struct object *o
 {
 	if (revs->no_walk && (obj->flags & UNINTERESTING))
 		revs->no_walk = 0;
-	if (revs->reflog_info && obj->type == OBJ_COMMIT &&
-			add_reflog_for_walk(revs->reflog_info,
-				(struct commit *)obj, name))
-		return;
+	if (revs->reflog_info && obj->type == OBJ_COMMIT) {
+		struct strbuf buf = STRBUF_INIT;
+		int len = interpret_branch_name(name, &buf);
+		int st;
+
+		if (0 < len && name[len] && buf.len)
+			strbuf_addstr(&buf, name + len);
+		st = add_reflog_for_walk(revs->reflog_info,
+					 (struct commit *)obj,
+					 buf.buf[0] ? buf.buf: name);
+		strbuf_release(&buf);
+		if (st)
+			return;
+	}
 	add_object_array_with_mode(obj, name, &revs->pending, mode);
 }
 
