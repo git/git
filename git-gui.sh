@@ -2059,7 +2059,7 @@ proc do_git_gui {} {
 	# -- Always start git gui through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set exe [_which git]
+	set exe [list [_which git]]
 	if {$exe eq {}} {
 		error_popup [mc "Couldn't find git gui in PATH"]
 	} else {
