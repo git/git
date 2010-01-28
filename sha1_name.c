@@ -881,8 +881,28 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 
 	if (!len)
 		return len; /* syntax Ok, not enough switches */
-	if (0 < len)
-		return len; /* consumed from the front */
+	if (0 < len && len == namelen)
+		return len; /* consumed all */
+	else if (0 < len) {
+		/* we have extra data, which might need further processing */
+		struct strbuf tmp = STRBUF_INIT;
+		int used = buf->len;
+		int ret;
+
+		strbuf_add(buf, name + len, namelen - len);
+		ret = interpret_branch_name(buf->buf, &tmp);
+		/* that data was not interpreted, remove our cruft */
+		if (ret < 0) {
+			strbuf_setlen(buf, used);
+			return len;
+		}
+		strbuf_reset(buf);
+		strbuf_addbuf(buf, &tmp);
+		strbuf_release(&tmp);
+		/* tweak for size of {-N} versus expanded ref name */
+		return ret - used + len;
+	}
+
 	cp = strchr(name, '@');
 	if (!cp)
 		return -1;

@@ -43,8 +43,8 @@ check "@{-1}" old-two
 check "@{-1}@{1}" old-one
 check "@{u}" upstream-two
 check "@{u}@{1}" upstream-one
-fail check "@{-1}@{u}" master-two
-fail check "@{-1}@{u}@{1}" master-one
+check "@{-1}@{u}" master-two
+check "@{-1}@{u}@{1}" master-one
 fail nonsense "@{u}@{-1}"
 nonsense "@{1}@{u}"
 
