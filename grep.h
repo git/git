@@ -91,6 +91,9 @@ struct grep_opt {
 	unsigned last_shown;
 	int show_hunk_mark;
 	void *priv;
+
+	void (*output)(struct grep_opt *opt, const void *data, size_t size);
+	void *output_priv;
 };
 
 extern void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
@@ -98,5 +101,8 @@ extern void append_header_grep_pattern(struct grep_opt *, enum grep_header_field
 extern void compile_grep_patterns(struct grep_opt *opt);
 extern void free_grep_patterns(struct grep_opt *opt);
 extern int grep_buffer(struct grep_opt *opt, const char *name, char *buf, unsigned long size);
+
+extern struct grep_opt *grep_opt_dup(const struct grep_opt *opt);
+extern int grep_threads_ok(const struct grep_opt *opt);
 
 #endif
