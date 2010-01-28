@@ -399,6 +399,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		unsigned long co_time;
 		int co_tz, co_cnt;
 
+		/* a @{-N} placed anywhere except the start is an error */
+		if (str[at+2] == '-')
+			return -1;
+
 		/* Is it asking for N-th entry, or approxidate? */
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
 			char ch = str[at+2+i];

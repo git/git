@@ -45,7 +45,7 @@ check "@{u}" upstream-two
 check "@{u}@{1}" upstream-one
 check "@{-1}@{u}" master-two
 check "@{-1}@{u}@{1}" master-one
-fail nonsense "@{u}@{-1}"
+nonsense "@{u}@{-1}"
 nonsense "@{1}@{u}"
 
 test_done
