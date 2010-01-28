@@ -16,7 +16,7 @@ SYNOPSIS
 	   [-F | --fixed-strings] [-n]
 	   [-l | --files-with-matches] [-L | --files-without-match]
 	   [-z | --null]
-	   [-c | --count] [--all-match]
+	   [-c | --count] [--all-match] [-q | --quiet]
 	   [--max-depth <depth>]
 	   [--color | --no-color]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
@@ -157,6 +157,11 @@ OPTIONS
 	When giving multiple pattern expressions combined with `--or`,
 	this flag is specified to limit the match to files that
 	have lines to match all of them.
+
+-q::
+--quiet::
+	Do not output matched lines; instead, exit with status 0 when
+	there is a match and with non-zero status when there isn't.
 
 `<tree>...`::
 	Search blobs in the trees for specified patterns.
