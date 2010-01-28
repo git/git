@@ -10,21 +10,24 @@ field opt_fetch     1; # refetch tracking branch if used?
 field opt_detach    0; # force a detached head case?
 
 constructor dialog {} {
-	make_toplevel top w
+	global use_ttk NS
+	make_dialog top w
+	wm withdraw $w
 	wm title $top [append "[appname] ([reponame]): " [mc "Checkout Branch"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	label $w.header -text [mc "Checkout Branch"] -font font_uibold
+	${NS}::label $w.header -text [mc "Checkout Branch"] \
+		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.create -text [mc Checkout] \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.create -text [mc Checkout] \
 		-default active \
 		-command [cb _checkout]
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text [mc Cancel] \
+	${NS}::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
@@ -33,14 +36,14 @@ constructor dialog {} {
 	$w_rev bind_listbox <Double-Button-1> [cb _checkout]
 	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 
-	labelframe $w.options -text [mc Options]
+	${NS}::labelframe $w.options -text [mc Options]
 
-	checkbutton $w.options.fetch \
+	${NS}::checkbutton $w.options.fetch \
 		-text [mc "Fetch Tracking Branch"] \
 		-variable @opt_fetch
 	pack $w.options.fetch -anchor nw
 
-	checkbutton $w.options.detach \
+	${NS}::checkbutton $w.options.detach \
 		-text [mc "Detach From Local Branch"] \
 		-variable @opt_detach
 	pack $w.options.detach -anchor nw
@@ -50,6 +53,7 @@ constructor dialog {} {
 	bind $w <Visibility> [cb _visible]
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [cb _checkout]\;break
+	wm deiconify $w
 	tkwait window $w
 }
 
