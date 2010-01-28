@@ -31,7 +31,7 @@ test_expect_success '@{2001-09-17} (before the first commit) shows old' '
 '
 
 test_expect_success 'silly approxidates work' '
-	check_at @{3.hot.dogs.and.30.years.ago} one
+	check_at @{3.hot.dogs.on.2001-09-17} one
 '
 
 test_expect_success 'notice misspelled upstream' '
