@@ -48,7 +48,7 @@ test_expect_success 'setup for merge test' '
 	git tag baseline
 '
 
-test_expect_failure 'do not lose a/b-2/c/d in merge (resolve)' '
+test_expect_success 'do not lose a/b-2/c/d in merge (resolve)' '
 	git reset --hard &&
 	git checkout baseline^0 &&
 	git merge -s resolve master &&
