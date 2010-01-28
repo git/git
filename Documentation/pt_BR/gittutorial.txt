@@ -1,15 +1,15 @@
 gittutorial(7)
 ==============
 
-NAME
+NOME
 ----
 gittutorial - Um tutorial de introdução ao git (para versão 1.5.1 ou mais nova)
 
-SYNOPSIS
+SINOPSE
 --------
 git *
 
-DESCRIPTION
+DESCRIÇÃO
 -----------
 
 Este tutorial explica como importar um novo projeto para o git,
@@ -64,11 +64,11 @@ Git irá responder
 Initialized empty Git repository in .git/
 ------------------------------------------------
 
-Você agora iniciou seu diretório de trabalho--você deve ter notado um
-novo diretório criado, com o nome de ".git".
+Agora que você iniciou seu diretório de trabalho, você deve ter notado que um
+novo diretório foi criado com o nome de ".git".
 
 A seguir, diga ao git para gravar um instantâneo do conteúdo de todos os
-arquivos sob o diretório corrente (note o '.'), com 'git-add':
+arquivos sob o diretório atual (note o '.'), com 'git-add':
 
 ------------------------------------------------
 $ git add .
@@ -126,8 +126,8 @@ mudanças com:
 $ git commit
 ------------------------------------------------
 
-Isto irá novamente te pedir por uma mensagem descrevendo a mudança, e,
-então, gravar a nova versão do projeto.
+Ao executar esse comando, ele irá te pedir uma mensagem descrevendo a mudança,
+e, então, irá gravar a nova versão do projeto.
 
 Alternativamente, ao invés de executar 'git-add' antes, você pode usar
 
@@ -143,7 +143,7 @@ idéia começar a mensagem com uma simples e curta (menos de 50
 caracteres) linha sumarizando a mudança, seguida de uma linha em branco
 e, então, uma descrição mais detalhada. Ferramentas que transformam
 commits em email, por exemplo, usam a primeira linha no campo de
-cabeçalho Subject: e o resto no corpo.
+cabeçalho "Subject:" e o resto no corpo.
 
 Git rastreia conteúdo, não arquivos
 ----------------------------
@@ -155,7 +155,7 @@ usado tanto para arquivos novos e arquivos recentemente modificados, e
 em ambos os casos, ele tira o instantâneo dos arquivos dados e armazena
 o conteúdo no índice, pronto para inclusão do próximo commit.
 
-Visualizando história do projeto
+Visualizando a história do projeto
 -----------------------
 
 Em qualquer ponto você pode visualizar a história das suas mudanças
@@ -165,7 +165,7 @@ usando
 $ git log
 ------------------------------------------------
 
-Se você também quer ver a diferença completa a cada passo, use
+Se você também quiser ver a diferença completa a cada passo, use
 
 ------------------------------------------------
 $ git log -p

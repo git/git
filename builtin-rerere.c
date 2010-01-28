@@ -48,6 +48,8 @@ static void garbage_collect(struct string_list *rr)
 
 	git_config(git_rerere_gc_config, NULL);
 	dir = opendir(git_path("rr-cache"));
+	if (!dir)
+		die_errno("unable to open rr-cache directory");
 	while ((e = readdir(dir))) {
 		if (is_dot_or_dotdot(e->d_name))
 			continue;
@@ -101,12 +103,29 @@ static int diff_two(const char *file1, const char *label1,
 int cmd_rerere(int argc, const char **argv, const char *prefix)
 {
 	struct string_list merge_rr = { NULL, 0, 0, 1 };
-	int i, fd;
+	int i, fd, flags = 0;
 
+	if (2 < argc) {
+		if (!strcmp(argv[1], "-h"))
+			usage(git_rerere_usage);
+		if (!strcmp(argv[1], "--rerere-autoupdate"))
+			flags = RERERE_AUTOUPDATE;
+		else if (!strcmp(argv[1], "--no-rerere-autoupdate"))
+			flags = RERERE_NOAUTOUPDATE;
+		if (flags) {
+			argc--;
+			argv++;
+		}
+	}
 	if (argc < 2)
-		return rerere();
+		return rerere(flags);
 
-	fd = setup_rerere(&merge_rr);
+	if (!strcmp(argv[1], "forget")) {
+		const char **pathspec = get_pathspec(prefix, argv + 2);
+		return rerere_forget(pathspec);
+	}
+
+	fd = setup_rerere(&merge_rr, flags);
 	if (fd < 0)
 		return 0;
 

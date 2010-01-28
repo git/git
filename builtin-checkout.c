@@ -17,6 +17,7 @@
 #include "blob.h"
 #include "xdiff-interface.h"
 #include "ll-merge.h"
+#include "resolve-undo.h"
 
 static const char * const checkout_usage[] = {
 	"git checkout [options] <branch>",
@@ -167,7 +168,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	fill_mm(active_cache[pos+2]->sha1, &theirs);
 
 	status = ll_merge(&result_buf, path, &ancestor,
-			  &ours, "ours", &theirs, "theirs", 1);
+			  &ours, "ours", &theirs, "theirs", 0);
 	free(ancestor.ptr);
 	free(ours.ptr);
 	free(theirs.ptr);
@@ -233,6 +234,10 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 
 	if (report_path_error(ps_matched, pathspec, 0))
 		return 1;
+
+	/* "checkout -m path" to recreate conflicted state */
+	if (opts->merge)
+		unmerge_cache(pathspec);
 
 	/* Any unmerged paths? */
 	for (pos = 0; pos < active_nr; pos++) {
@@ -302,8 +307,9 @@ static void show_local_changes(struct object *head)
 static void describe_detached_head(char *msg, struct commit *commit)
 {
 	struct strbuf sb = STRBUF_INIT;
+	struct pretty_print_context ctx = {0};
 	parse_commit(commit);
-	pretty_print_commit(CMIT_FMT_ONELINE, commit, &sb, 0, NULL, NULL, 0, 0);
+	pretty_print_commit(CMIT_FMT_ONELINE, commit, &sb, &ctx);
 	fprintf(stderr, "%s %s... %s\n", msg,
 		find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV), sb.buf);
 	strbuf_release(&sb);
@@ -369,6 +375,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 	if (read_cache_preload(NULL) < 0)
 		return error("corrupt index file");
 
+	resolve_undo_clear();
 	if (opts->force) {
 		ret = reset_tree(new->commit->tree, opts, 1);
 		if (ret)
@@ -396,7 +403,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.initial_checkout = is_cache_unborn();
 		topts.update = 1;
 		topts.merge = 1;
-		topts.gently = opts->merge;
+		topts.gently = opts->merge && old->commit;
 		topts.verbose_update = !opts->quiet;
 		topts.fn = twoway_merge;
 		topts.dir = xcalloc(1, sizeof(*topts.dir));
@@ -421,7 +428,13 @@ static int merge_working_tree(struct checkout_opts *opts,
 			struct merge_options o;
 			if (!opts->merge)
 				return 1;
-			parse_commit(old->commit);
+
+			/*
+			 * Without old->commit, the below is the same as
+			 * the two-tree unpack we already tried and failed.
+			 */
+			if (!old->commit)
+				return 1;
 
 			/* Do more real merge */
 
@@ -572,6 +585,40 @@ static int interactive_checkout(const char *revision, const char **pathspec,
 	return run_add_interactive(revision, "--patch=checkout", pathspec);
 }
 
+struct tracking_name_data {
+	const char *name;
+	char *remote;
+	int unique;
+};
+
+static int check_tracking_name(const char *refname, const unsigned char *sha1,
+			       int flags, void *cb_data)
+{
+	struct tracking_name_data *cb = cb_data;
+	const char *slash;
+
+	if (prefixcmp(refname, "refs/remotes/"))
+		return 0;
+	slash = strchr(refname + 13, '/');
+	if (!slash || strcmp(slash + 1, cb->name))
+		return 0;
+	if (cb->remote) {
+		cb->unique = 0;
+		return 0;
+	}
+	cb->remote = xstrdup(refname);
+	return 0;
+}
+
+static const char *unique_tracking_name(const char *name)
+{
+	struct tracking_name_data cb_data = { name, NULL, 1 };
+	for_each_ref(check_tracking_name, &cb_data);
+	if (cb_data.unique)
+		return cb_data.remote;
+	free(cb_data.remote);
+	return NULL;
+}
 
 int cmd_checkout(int argc, const char **argv, const char *prefix)
 {
@@ -582,6 +629,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	struct tree *source_tree = NULL;
 	char *conflict_style = NULL;
 	int patch_mode = 0;
+	int dwim_new_local_branch = 1;
 	struct option options[] = {
 		OPT__QUIET(&opts.quiet),
 		OPT_STRING('b', NULL, &opts.new_branch, "new branch", "branch"),
@@ -597,6 +645,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "conflict", &conflict_style, "style",
 			   "conflict style (merge or diff3)"),
 		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
+		{ OPTION_BOOLEAN, 0, "guess", &dwim_new_local_branch, NULL,
+		  "second guess 'git checkout no-such-branch'",
+		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 		OPT_END(),
 	};
 	int has_dash_dash;
@@ -630,8 +681,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		opts.new_branch = argv0 + 1;
 	}
 
-	if (opts.track == BRANCH_TRACK_UNSPECIFIED)
-		opts.track = git_branch_track;
 	if (conflict_style) {
 		opts.merge = 1; /* implied */
 		git_xmerge_config("merge.conflictstyle", conflict_style, NULL);
@@ -653,7 +702,15 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	 * case 3: git checkout <something> [<paths>]
 	 *
 	 *   With no paths, if <something> is a commit, that is to
-	 *   switch to the branch or detach HEAD at it.
+	 *   switch to the branch or detach HEAD at it.  As a special case,
+	 *   if <something> is A...B (missing A or B means HEAD but you can
+	 *   omit at most one side), and if there is a unique merge base
+	 *   between A and B, A...B names that merge base.
+	 *
+	 *   With no paths, if <something> is _not_ a commit, no -t nor -b
+	 *   was given, and there is a tracking branch whose name is
+	 *   <something> in one and only one remote, then this is a short-hand
+	 *   to fork local <something> from that remote tracking branch.
 	 *
 	 *   Otherwise <something> shall not be ambiguous.
 	 *   - If it's *only* a reference, treat it like case (1).
@@ -674,10 +731,24 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "-"))
 			arg = "@{-1}";
 
-		if (get_sha1(arg, rev)) {
+		if (get_sha1_mb(arg, rev)) {
 			if (has_dash_dash)          /* case (1) */
 				die("invalid reference: %s", arg);
-			goto no_reference;          /* case (3 -> 2) */
+			if (!patch_mode &&
+			    dwim_new_local_branch &&
+			    opts.track == BRANCH_TRACK_UNSPECIFIED &&
+			    !opts.new_branch &&
+			    !check_filename(NULL, arg) &&
+			    argc == 1) {
+				const char *remote = unique_tracking_name(arg);
+				if (!remote || get_sha1(remote, rev))
+					goto no_reference;
+				opts.new_branch = arg;
+				arg = remote;
+				/* DWIMmed to create local branch */
+			}
+			else
+				goto no_reference;
 		}
 
 		/* we can't end up being in (2) anymore, eat the argument */
@@ -687,8 +758,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		new.name = arg;
 		if ((new.commit = lookup_commit_reference_gently(rev, 1))) {
 			setup_branch_path(&new);
-			if (resolve_ref(new.path, rev, 1, NULL))
-				new.commit = lookup_commit_reference(rev);
+
+			if ((check_ref_format(new.path) == CHECK_REF_FORMAT_OK) &&
+			    resolve_ref(new.path, rev, 1, NULL))
+				;
 			else
 				new.path = NULL;
 			parse_commit(new.commit);
@@ -715,6 +788,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	}
 
 no_reference:
+
+	if (opts.track == BRANCH_TRACK_UNSPECIFIED)
+		opts.track = git_branch_track;
+
 	if (argc) {
 		const char **pathspec = get_pathspec(prefix, argv);
 

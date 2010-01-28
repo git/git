@@ -1,11 +1,19 @@
 #include "http.h"
 #include "pack.h"
 #include "exec_cmd.h"
+#include "sideband.h"
 
 int data_received;
 int active_requests;
 int http_is_verbose;
+size_t http_post_buffer = 16 * LARGE_PACKET_MAX;
 
+#if LIBCURL_VERSION_NUM >= 0x070a06
+#define LIBCURL_CAN_HANDLE_AUTH_ANY
+#endif
+
+static int min_curl_sessions = 1;
+static int curl_session_count;
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
 static CURLM *curlm;
@@ -98,8 +106,6 @@ size_t fwrite_null(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf)
 	return eltsize * nmemb;
 }
 
-static void finish_active_slot(struct active_request_slot *slot);
-
 #ifdef USE_CURL_MULTI
 static void process_curl_messages(void)
 {
@@ -162,6 +168,14 @@ static int http_options(const char *var, const char *value, void *cb)
 			ssl_cert_password_required = 1;
 		return 0;
 	}
+	if (!strcmp("http.minsessions", var)) {
+		min_curl_sessions = git_config_int(var, value);
+#ifndef USE_CURL_MULTI
+		if (min_curl_sessions > 1)
+			min_curl_sessions = 1;
+#endif
+		return 0;
+	}
 #ifdef USE_CURL_MULTI
 	if (!strcmp("http.maxrequests", var)) {
 		max_requests = git_config_int(var, value);
@@ -183,6 +197,13 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp("http.proxy", var))
 		return git_config_string(&curl_http_proxy, var, value);
+
+	if (!strcmp("http.postbuffer", var)) {
+		http_post_buffer = git_config_int(var, value);
+		if (http_post_buffer < LARGE_PACKET_MAX)
+			http_post_buffer = LARGE_PACKET_MAX;
+		return 0;
+	}
 
 	/* Fall back on the default ones */
 	return git_default_config(var, value, cb);
@@ -232,6 +253,9 @@ static CURL *get_curl_handle(void)
 
 #if LIBCURL_VERSION_NUM >= 0x070907
 	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+#endif
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+	curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 #endif
 
 	init_curl_http_auth(result);
@@ -375,6 +399,7 @@ void http_init(struct remote *remote)
 	if (curl_ssl_verify == -1)
 		curl_ssl_verify = 1;
 
+	curl_session_count = 0;
 #ifdef USE_CURL_MULTI
 	if (max_requests < 1)
 		max_requests = DEFAULT_MAX_REQUESTS;
@@ -483,6 +508,7 @@ struct active_request_slot *get_active_slot(void)
 #else
 		slot->curl = curl_easy_duphandle(curl_default);
 #endif
+		curl_session_count++;
 	}
 
 	active_requests++;
@@ -561,9 +587,11 @@ void fill_active_slots(void)
 	}
 
 	while (slot != NULL) {
-		if (!slot->in_use && slot->curl != NULL) {
+		if (!slot->in_use && slot->curl != NULL
+			&& curl_session_count > min_curl_sessions) {
 			curl_easy_cleanup(slot->curl);
 			slot->curl = NULL;
+			curl_session_count--;
 		}
 		slot = slot->next;
 	}
@@ -633,22 +661,23 @@ static void closedown_active_slot(struct active_request_slot *slot)
 	slot->in_use = 0;
 }
 
-void release_active_slot(struct active_request_slot *slot)
+static void release_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
-	if (slot->curl) {
+	if (slot->curl && curl_session_count > min_curl_sessions) {
 #ifdef USE_CURL_MULTI
 		curl_multi_remove_handle(curlm, slot->curl);
 #endif
 		curl_easy_cleanup(slot->curl);
 		slot->curl = NULL;
+		curl_session_count--;
 	}
 #ifdef USE_CURL_MULTI
 	fill_active_slots();
 #endif
 }
 
-static void finish_active_slot(struct active_request_slot *slot)
+void finish_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
 	curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
@@ -815,7 +844,13 @@ int http_get_strbuf(const char *url, struct strbuf *result, int options)
 	return http_request(url, result, HTTP_REQUEST_STRBUF, options);
 }
 
-int http_get_file(const char *url, const char *filename, int options)
+/*
+ * Downloads an url and stores the result in the given file.
+ *
+ * If a previous interrupted download is detected (i.e. a previous temporary
+ * file is still around) the download is resumed.
+ */
+static int http_get_file(const char *url, const char *filename, int options)
 {
 	int ret;
 	struct strbuf tmpfile = STRBUF_INIT;
@@ -1247,7 +1282,7 @@ int finish_http_object_request(struct http_object_request *freq)
 	process_http_object_request(freq);
 
 	if (freq->http_code == 416) {
-		fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
+		warning("requested range invalid; we may already have all the data.");
 	} else if (freq->curl_result != CURLE_OK) {
 		if (stat(freq->tmpfile, &st) == 0)
 			if (st.st_size == 0)

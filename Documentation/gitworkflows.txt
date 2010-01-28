@@ -209,6 +209,121 @@ chance to see if their in-progress work will be compatible.  `git.git`
 has such an official throw-away integration branch called 'pu'.
 
 
+Branch management for a release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Assuming you are using the merge approach discussed above, when you
+are releasing your project you will need to do some additional branch
+management work.
+
+A feature release is created from the 'master' branch, since 'master'
+tracks the commits that should go into the next feature release.
+
+The 'master' branch is supposed to be a superset of 'maint'. If this
+condition does not hold, then 'maint' contains some commits that
+are not included on 'master'. The fixes represented by those commits
+will therefore not be included in your feature release.
+
+To verify that 'master' is indeed a superset of 'maint', use git log:
+
+.Verify 'master' is a superset of 'maint'
+[caption="Recipe: "]
+=====================================
+`git log master..maint`
+=====================================
+
+This command should not list any commits.  Otherwise, check out
+'master' and merge 'maint' into it.
+
+Now you can proceed with the creation of the feature release. Apply a
+tag to the tip of 'master' indicating the release version:
+
+.Release tagging
+[caption="Recipe: "]
+=====================================
+`git tag -s -m "GIT X.Y.Z" vX.Y.Z master`
+=====================================
+
+You need to push the new tag to a public git server (see
+"DISTRIBUTED WORKFLOWS" below). This makes the tag available to
+others tracking your project. The push could also trigger a
+post-update hook to perform release-related items such as building
+release tarballs and preformatted documentation pages.
+
+Similarly, for a maintenance release, 'maint' is tracking the commits
+to be released. Therefore, in the steps above simply tag and push
+'maint' rather than 'master'.
+
+
+Maintenance branch management after a feature release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After a feature release, you need to manage your maintenance branches.
+
+First, if you wish to continue to release maintenance fixes for the
+feature release made before the recent one, then you must create
+another branch to track commits for that previous release.
+
+To do this, the current maintenance branch is copied to another branch
+named with the previous release version number (e.g. maint-X.Y.(Z-1)
+where X.Y.Z is the current release).
+
+.Copy maint
+[caption="Recipe: "]
+=====================================
+`git branch maint-X.Y.(Z-1) maint`
+=====================================
+
+The 'maint' branch should now be fast-forwarded to the newly released
+code so that maintenance fixes can be tracked for the current release:
+
+.Update maint to new release
+[caption="Recipe: "]
+=====================================
+* `git checkout maint`
+* `git merge --ff-only master`
+=====================================
+
+If the merge fails because it is not a fast-forward, then it is
+possible some fixes on 'maint' were missed in the feature release.
+This will not happen if the content of the branches was verified as
+described in the previous section.
+
+
+Branch management for next and pu after a feature release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After a feature release, the integration branch 'next' may optionally be
+rewound and rebuilt from the tip of 'master' using the surviving
+topics on 'next':
+
+.Rewind and rebuild next
+[caption="Recipe: "]
+=====================================
+* `git checkout next`
+* `git reset --hard master`
+* `git merge ai/topic_in_next1`
+* `git merge ai/topic_in_next2`
+* ...
+=====================================
+
+The advantage of doing this is that the history of 'next' will be
+clean. For example, some topics merged into 'next' may have initially
+looked promising, but were later found to be undesirable or premature.
+In such a case, the topic is reverted out of 'next' but the fact
+remains in the history that it was once merged and reverted. By
+recreating 'next', you give another incarnation of such topics a clean
+slate to retry, and a feature release is a good point in history to do
+so.
+
+If you do this, then you should make a public announcement indicating
+that 'next' was rewound and rebuilt.
+
+The same rewind and rebuild process may be followed for 'pu'. A public
+announcement is not necessary since 'pu' is a throw-away branch, as
+described above.
+
+
 DISTRIBUTED WORKFLOWS
 ---------------------
 
@@ -245,7 +360,7 @@ There are three main tools that can be used for this:
 
 * linkgit:git-pull[1] that does fetch and merge in one go.
 
-Note the last point.  Do 'not' use 'git-pull' unless you actually want
+Note the last point.  Do 'not' use 'git pull' unless you actually want
 to merge the remote branch.
 
 Getting changes out is easy:
@@ -282,7 +397,7 @@ Please pull from
     <url> <branch>
 -------------------------------------
 
-In that case, 'git-pull' can do the fetch and merge in one go, as
+In that case, 'git pull' can do the fetch and merge in one go, as
 follows.
 
 .Push/pull: Merging remote topics
@@ -334,7 +449,7 @@ problem.
 
 If you receive such a patch series (as maintainer, or perhaps as a
 reader of the mailing list it was sent to), save the mails to files,
-create a new topic branch and use 'git-am' to import the commits:
+create a new topic branch and use 'git am' to import the commits:
 
 .format-patch/am: Importing patches
 [caption="Recipe: "]

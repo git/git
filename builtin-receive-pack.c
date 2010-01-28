@@ -28,6 +28,8 @@ static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
 static int report_status;
 static int prefer_ofs_delta = 1;
+static int auto_update_server_info;
+static int auto_gc = 1;
 static const char *head_name;
 static char *capabilities_to_send;
 
@@ -85,6 +87,16 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 	if (strcmp(var, "repack.usedeltabaseoffset") == 0) {
 		prefer_ofs_delta = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.updateserverinfo") == 0) {
+		auto_update_server_info = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.autogc") == 0) {
+		auto_gc = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -192,59 +204,47 @@ static int is_ref_checked_out(const char *ref)
 	return !strcmp(head_name, ref);
 }
 
-static char *warn_unconfigured_deny_msg[] = {
-	"Updating the currently checked out branch may cause confusion,",
-	"as the index and work tree do not reflect changes that are in HEAD.",
-	"As a result, you may see the changes you just pushed into it",
-	"reverted when you run 'git diff' over there, and you may want",
-	"to run 'git reset --hard' before starting to work to recover.",
+static char *refuse_unconfigured_deny_msg[] = {
+	"By default, updating the current branch in a non-bare repository",
+	"is denied, because it will make the index and work tree inconsistent",
+	"with what you pushed, and will require 'git reset --hard' to match",
+	"the work tree to HEAD.",
 	"",
 	"You can set 'receive.denyCurrentBranch' configuration variable to",
-	"'refuse' in the remote repository to forbid pushing into its",
-	"current branch."
+	"'ignore' or 'warn' in the remote repository to allow pushing into",
+	"its current branch; however, this is not recommended unless you",
+	"arranged to update its work tree to match what you pushed in some",
+	"other way.",
 	"",
-	"To allow pushing into the current branch, you can set it to 'ignore';",
-	"but this is not recommended unless you arranged to update its work",
-	"tree to match what you pushed in some other way.",
-	"",
-	"To squelch this message, you can set it to 'warn'.",
-	"",
-	"Note that the default will change in a future version of git",
-	"to refuse updating the current branch unless you have the",
-	"configuration variable set to either 'ignore' or 'warn'."
+	"To squelch this message and still keep the default behaviour, set",
+	"'receive.denyCurrentBranch' configuration variable to 'refuse'."
 };
 
-static void warn_unconfigured_deny(void)
+static void refuse_unconfigured_deny(void)
 {
 	int i;
-	for (i = 0; i < ARRAY_SIZE(warn_unconfigured_deny_msg); i++)
-		warning("%s", warn_unconfigured_deny_msg[i]);
+	for (i = 0; i < ARRAY_SIZE(refuse_unconfigured_deny_msg); i++)
+		error("%s", refuse_unconfigured_deny_msg[i]);
 }
 
-static char *warn_unconfigured_deny_delete_current_msg[] = {
-	"Deleting the current branch can cause confusion by making the next",
-	"'git clone' not check out any file.",
+static char *refuse_unconfigured_deny_delete_current_msg[] = {
+	"By default, deleting the current branch is denied, because the next",
+	"'git clone' won't result in any file checked out, causing confusion.",
 	"",
 	"You can set 'receive.denyDeleteCurrent' configuration variable to",
-	"'refuse' in the remote repository to disallow deleting the current",
-	"branch.",
+	"'warn' or 'ignore' in the remote repository to allow deleting the",
+	"current branch, with or without a warning message.",
 	"",
-	"You can set it to 'ignore' to allow such a delete without a warning.",
-	"",
-	"To make this warning message less loud, you can set it to 'warn'.",
-	"",
-	"Note that the default will change in a future version of git",
-	"to refuse deleting the current branch unless you have the",
-	"configuration variable set to either 'ignore' or 'warn'."
+	"To squelch this message, you can set it to 'refuse'."
 };
 
-static void warn_unconfigured_deny_delete_current(void)
+static void refuse_unconfigured_deny_delete_current(void)
 {
 	int i;
 	for (i = 0;
-	     i < ARRAY_SIZE(warn_unconfigured_deny_delete_current_msg);
+	     i < ARRAY_SIZE(refuse_unconfigured_deny_delete_current_msg);
 	     i++)
-		warning("%s", warn_unconfigured_deny_delete_current_msg[i]);
+		error("%s", refuse_unconfigured_deny_delete_current_msg[i]);
 }
 
 static const char *update(struct command *cmd)
@@ -264,14 +264,14 @@ static const char *update(struct command *cmd)
 		switch (deny_current_branch) {
 		case DENY_IGNORE:
 			break;
-		case DENY_UNCONFIGURED:
 		case DENY_WARN:
 			warning("updating the current branch");
-			if (deny_current_branch == DENY_UNCONFIGURED)
-				warn_unconfigured_deny();
 			break;
 		case DENY_REFUSE:
+		case DENY_UNCONFIGURED:
 			error("refusing to update checked out branch: %s", name);
+			if (deny_current_branch == DENY_UNCONFIGURED)
+				refuse_unconfigured_deny();
 			return "branch is currently checked out";
 		}
 	}
@@ -293,12 +293,12 @@ static const char *update(struct command *cmd)
 			case DENY_IGNORE:
 				break;
 			case DENY_WARN:
-			case DENY_UNCONFIGURED:
-				if (deny_delete_current == DENY_UNCONFIGURED)
-					warn_unconfigured_deny_delete_current();
 				warning("deleting the current branch");
 				break;
 			case DENY_REFUSE:
+			case DENY_UNCONFIGURED:
+				if (deny_delete_current == DENY_UNCONFIGURED)
+					refuse_unconfigured_deny_delete_current();
 				error("refusing to delete the current branch: %s", name);
 				return "deletion of the current branch prohibited";
 			}
@@ -329,9 +329,9 @@ static const char *update(struct command *cmd)
 				break;
 		free_commit_list(bases);
 		if (!ent) {
-			error("denying non-fast forward %s"
+			error("denying non-fast-forward %s"
 			      " (you should pull first)", name);
-			return "non-fast forward";
+			return "non-fast-forward";
 		}
 	}
 	if (run_update_hook(cmd)) {
@@ -615,6 +615,8 @@ static void add_alternate_refs(void)
 
 int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 {
+	int advertise_refs = 0;
+	int stateless_rpc = 0;
 	int i;
 	char *dir = NULL;
 
@@ -623,7 +625,15 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		const char *arg = *argv++;
 
 		if (*arg == '-') {
-			/* Do flag handling here */
+			if (!strcmp(arg, "--advertise-refs")) {
+				advertise_refs = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--stateless-rpc")) {
+				stateless_rpc = 1;
+				continue;
+			}
+
 			usage(receive_pack_usage);
 		}
 		if (dir)
@@ -652,12 +662,16 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		" report-status delete-refs ofs-delta " :
 		" report-status delete-refs ";
 
-	add_alternate_refs();
-	write_head_info();
-	clear_extra_refs();
+	if (advertise_refs || !stateless_rpc) {
+		add_alternate_refs();
+		write_head_info();
+		clear_extra_refs();
 
-	/* EOF */
-	packet_flush(1);
+		/* EOF */
+		packet_flush(1);
+	}
+	if (advertise_refs)
+		return 0;
 
 	read_head_info();
 	if (commands) {
@@ -672,6 +686,14 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			report(unpack_status);
 		run_receive_hook(post_receive_hook);
 		run_update_post_hook(commands);
+		if (auto_gc) {
+			const char *argv_gc_auto[] = {
+				"gc", "--auto", "--quiet", NULL,
+			};
+			run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
+		}
+		if (auto_update_server_info)
+			update_server_info(0);
 	}
 	return 0;
 }

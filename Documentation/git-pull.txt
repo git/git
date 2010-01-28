@@ -13,19 +13,27 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Runs 'git-fetch' with the given parameters, and calls 'git-merge'
+Runs 'git fetch' with the given parameters, and calls 'git merge'
 to merge the retrieved head(s) into the current branch.
-With `--rebase`, calls 'git-rebase' instead of 'git-merge'.
+With `--rebase`, calls 'git rebase' instead of 'git merge'.
 
 Note that you can use `.` (current directory) as the
 <repository> to pull from the local repository -- this is useful
 when merging local branches into the current branch.
 
-Also note that options meant for 'git-pull' itself and underlying
-'git-merge' must be given before the options meant for 'git-fetch'.
+Also note that options meant for 'git pull' itself and underlying
+'git merge' must be given before the options meant for 'git fetch'.
+
+*Warning*: Running 'git pull' (actually, the underlying 'git merge')
+with uncommitted changes is discouraged: while possible, it leaves you
+in a state that is hard to back out of in the case of a conflict.
 
 OPTIONS
 -------
+
+Options related to merging
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 include::merge-options.txt[]
 
 :git-pull: 1
@@ -46,6 +54,9 @@ unless you have read linkgit:git-rebase[1] carefully.
 
 --no-rebase::
 	Override earlier --rebase.
+
+Options related to fetching
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 include::fetch-options.txt[]
 
@@ -131,58 +142,17 @@ $ git pull origin next
 ------------------------------------------------
 +
 This leaves a copy of `next` temporarily in FETCH_HEAD, but
-does not update any remote-tracking branches.
-
-* Bundle local branch `fixes` and `enhancements` on top of
-  the current branch, making an Octopus merge:
+does not update any remote-tracking branches. Using remote-tracking
+branches, the same can be done by invoking fetch and merge:
 +
 ------------------------------------------------
-$ git pull . fixes enhancements
+$ git fetch origin
+$ git merge origin/next
 ------------------------------------------------
-+
-This `git pull .` syntax is equivalent to `git merge`.
-
-* Merge local branch `obsolete` into the current branch, using `ours`
-  merge strategy:
-+
-------------------------------------------------
-$ git pull -s ours . obsolete
-------------------------------------------------
-
-* Merge local branch `maint` into the current branch, but do not make
-  a commit automatically:
-+
-------------------------------------------------
-$ git pull --no-commit . maint
-------------------------------------------------
-+
-This can be used when you want to include further changes to the
-merge, or want to write your own merge commit message.
-+
-You should refrain from abusing this option to sneak substantial
-changes into a merge commit.  Small fixups like bumping
-release/version name would be acceptable.
-
-* Command line pull of multiple branches from one repository:
-+
-------------------------------------------------
-$ git checkout master
-$ git fetch origin +pu:pu maint:tmp
-$ git pull . tmp
-------------------------------------------------
-+
-This updates (or creates, as necessary) branches `pu` and `tmp` in
-the local repository by fetching from the branches (respectively)
-`pu` and `maint` from the remote repository.
-+
-The `pu` branch will be updated even if it is does not fast-forward;
-the others will not be.
-+
-The final command then merges the newly fetched `tmp` into master.
 
 
 If you tried a pull which resulted in a complex conflicts and
-would want to start over, you can recover with 'git-reset'.
+would want to start over, you can recover with 'git reset'.
 
 
 SEE ALSO

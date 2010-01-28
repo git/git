@@ -37,7 +37,7 @@ OPTIONS
 
 -k::
 --keep::
-	Pass `-k` flag to 'git-mailinfo' (see linkgit:git-mailinfo[1]).
+	Pass `-k` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 
 -c::
 --scissors::
@@ -53,7 +53,7 @@ OPTIONS
 
 -u::
 --utf8::
-	Pass `-u` flag to 'git-mailinfo' (see linkgit:git-mailinfo[1]).
+	Pass `-u` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 	The proposed commit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
 	`i18n.commitencoding` can be used to specify project's
@@ -63,7 +63,7 @@ This was optional in prior versions of git, but now it is the
 default.   You can use `--no-utf8` to override this.
 
 --no-utf8::
-	Pass `-n` flag to 'git-mailinfo' (see
+	Pass `-n` flag to 'git mailinfo' (see
 	linkgit:git-mailinfo[1]).
 
 -3::
@@ -81,7 +81,7 @@ default.   You can use `--no-utf8` to override this.
 -p<n>::
 --directory=<dir>::
 --reject::
-	These flags are passed to the 'git-apply' (see linkgit:git-apply[1])
+	These flags are passed to the 'git apply' (see linkgit:git-apply[1])
 	program that applies
 	the patch.
 
@@ -121,7 +121,7 @@ default.   You can use `--no-utf8` to override this.
 	to the screen before exiting.  This overrides the
 	standard message informing you to use `--resolved`
 	or `--skip` to handle the failure.  This is solely
-	for internal use between 'git-rebase' and 'git-am'.
+	for internal use between 'git rebase' and 'git am'.
 
 --abort::
 	Restore the original branch and abort the patching operation.

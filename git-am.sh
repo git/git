@@ -30,6 +30,7 @@ skip            skip the current patch
 abort           restore the original branch and abort the patching operation.
 committer-date-is-author-date    lie about committer date
 ignore-date     use current timestamp for author date
+rerere-autoupdate update the index with reused conflict resolution if possible
 rebasing*       (internal use for git-rebase)"
 
 . git-sh-setup
@@ -135,7 +136,7 @@ It does not apply to blobs recorded in its index."
 	    export GIT_MERGE_VERBOSITY=0
     fi
     git-merge-recursive $orig_tree -- HEAD $his_tree || {
-	    git rerere
+	    git rerere $allow_rerere_autoupdate
 	    echo Failed to merge in the changes.
 	    exit 1
     }
@@ -205,7 +206,7 @@ check_patch_format () {
 			# and see if it looks like that they all begin with the
 			# header field names...
 			sed -n -e '/^$/q' -e '/^[ 	]/d' -e p "$1" |
-			LC_ALL=C egrep -v '^[!-9;-~]+:' >/dev/null ||
+			sane_egrep -v '^[!-9;-~]+:' >/dev/null ||
 			patch_format=mbox
 		fi
 	} < "$1" || clean_abort
@@ -289,10 +290,11 @@ split_patches () {
 prec=4
 dotest="$GIT_DIR/rebase-apply"
 sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
-resolvemsg= resume= scissors=
+resolvemsg= resume= scissors= no_inbody_headers=
 git_apply_opt=
 committer_date_is_author_date=
 ignore_date=
+allow_rerere_autoupdate=
 
 while test $# != 0
 do
@@ -322,7 +324,7 @@ do
 	--abort)
 		abort=t ;;
 	--rebasing)
-		rebasing=t threeway=t keep=t scissors=f ;;
+		rebasing=t threeway=t keep=t scissors=f no_inbody_headers=t ;;
 	-d|--dotest)
 		die "-d option is no longer supported.  Do not use."
 		;;
@@ -340,6 +342,8 @@ do
 		committer_date_is_author_date=t ;;
 	--ignore-date)
 		ignore_date=t ;;
+	--rerere-autoupdate|--no-rerere-autoupdate)
+		allow_rerere_autoupdate="$1" ;;
 	-q|--quiet)
 		GIT_QUIET=t ;;
 	--)
@@ -448,6 +452,7 @@ else
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
 	echo "$scissors" >"$dotest/scissors"
+	echo "$no_inbody_headers" >"$dotest/no_inbody_headers"
 	echo "$GIT_QUIET" >"$dotest/quiet"
 	echo 1 >"$dotest/next"
 	if test -n "$rebasing"
@@ -495,6 +500,12 @@ t)
 f)
 	scissors=--no-scissors ;;
 esac
+if test "$(cat "$dotest/no_inbody_headers")" = t
+then
+	no_inbody_headers=--no-inbody-headers
+else
+	no_inbody_headers=
+fi
 if test "$(cat "$dotest/quiet")" = t
 then
 	GIT_QUIET=t
@@ -549,12 +560,12 @@ do
 	# by the user, or the user can tell us to do so by --resolved flag.
 	case "$resume" in
 	'')
-		git mailinfo $keep $scissors $utf8 "$dotest/msg" "$dotest/patch" \
+		git mailinfo $keep $no_inbody_headers $scissors $utf8 "$dotest/msg" "$dotest/patch" \
 			<"$dotest/$msgnum" >"$dotest/info" ||
 			stop_here $this
 
 		# skip pine's internal folder data
-		grep '^Author: Mail System Internal Data$' \
+		sane_grep '^Author: Mail System Internal Data$' \
 			<"$dotest"/info >/dev/null &&
 			go_next && continue
 
@@ -570,11 +581,12 @@ do
 			git cat-file commit "$commit" |
 			sed -e '1,/^$/d' >"$dotest/msg-clean"
 		else
-			SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
-			case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
-
-			(printf '%s\n\n' "$SUBJECT"; cat "$dotest/msg") |
-				git stripspace > "$dotest/msg-clean"
+			{
+				sed -n '/^Subject/ s/Subject: //p' "$dotest/info"
+				echo
+				cat "$dotest/msg"
+			} |
+			git stripspace > "$dotest/msg-clean"
 		fi
 		;;
 	esac
@@ -649,7 +661,10 @@ do
 		[eE]*) git_editor "$dotest/final-commit"
 		       action=again ;;
 		[vV]*) action=again
-		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;
+		       : ${GIT_PAGER=$(git var GIT_PAGER)}
+		       : ${LESS=-FRSX}
+		       export LESS
+		       $GIT_PAGER "$dotest/patch" ;;
 		*)     action=again ;;
 		esac
 	    done

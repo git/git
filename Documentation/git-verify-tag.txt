@@ -11,7 +11,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Validates the gpg signature created by 'git-tag'.
+Validates the gpg signature created by 'git tag'.
 
 OPTIONS
 -------

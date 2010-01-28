@@ -3,6 +3,9 @@
 #include "cache.h"
 #include "commit.h"
 
+static int parse_options_usage(const char * const *usagestr,
+			       const struct option *opts);
+
 #define OPT_SHORT 1
 #define OPT_UNSET 2
 
@@ -560,8 +563,8 @@ void usage_msg_opt(const char *msg,
 	usage_with_options(usagestr, options);
 }
 
-int parse_options_usage(const char * const *usagestr,
-			const struct option *opts)
+static int parse_options_usage(const char * const *usagestr,
+			       const struct option *opts)
 {
 	return usage_with_options_internal(usagestr, opts, 0);
 }
@@ -631,5 +634,12 @@ int parse_opt_with_commit(const struct option *opt, const char *arg, int unset)
 	if (!commit)
 		return error("no such commit %s", arg);
 	commit_list_insert(commit, opt->value);
+	return 0;
+}
+
+int parse_opt_tertiary(const struct option *opt, const char *arg, int unset)
+{
+	int *target = opt->value;
+	*target = unset ? 2 : 1;
 	return 0;
 }

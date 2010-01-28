@@ -41,6 +41,7 @@ static int is_rev_argument(const char *arg)
 		"--all",
 		"--bisect",
 		"--dense",
+		"--branches=",
 		"--branches",
 		"--header",
 		"--max-age=",
@@ -51,8 +52,11 @@ static int is_rev_argument(const char *arg)
 		"--objects-edge",
 		"--parents",
 		"--pretty",
+		"--remotes=",
 		"--remotes",
+		"--glob=",
 		"--sparse",
+		"--tags=",
 		"--tags",
 		"--topo-order",
 		"--date-order",
@@ -177,6 +181,12 @@ static int show_default(void)
 static int show_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	show_rev(NORMAL, sha1, refname);
+	return 0;
+}
+
+static int anti_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+{
+	show_rev(REVERSED, sha1, refname);
 	return 0;
 }
 
@@ -426,6 +436,13 @@ static void die_no_single_rev(int quiet)
 		die("Needed a single revision");
 }
 
+static const char builtin_rev_parse_usage[] =
+"git rev-parse --parseopt [options] -- [<args>...]\n"
+"   or: git rev-parse --sq-quote [<arg>...]\n"
+"   or: git rev-parse [options] [<arg>...]\n"
+"\n"
+"Run \"git rev-parse --parseopt -h\" for more information on the first usage.";
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
@@ -437,6 +454,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 
 	if (argc > 1 && !strcmp("--sq-quote", argv[1]))
 		return cmd_sq_quote(argc - 2, argv + 2);
+
+	if (argc > 1 && !strcmp("-h", argv[1]))
+		usage(builtin_rev_parse_usage);
 
 	prefix = setup_git_directory();
 	git_config(git_default_config, NULL);
@@ -548,16 +568,46 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				for_each_ref(show_reference, NULL);
 				continue;
 			}
+			if (!strcmp(arg, "--bisect")) {
+				for_each_ref_in("refs/bisect/bad", show_reference, NULL);
+				for_each_ref_in("refs/bisect/good", anti_reference, NULL);
+				continue;
+			}
+			if (!prefixcmp(arg, "--branches=")) {
+				for_each_glob_ref_in(show_reference, arg + 11,
+					"refs/heads/", NULL);
+				continue;
+			}
 			if (!strcmp(arg, "--branches")) {
 				for_each_branch_ref(show_reference, NULL);
+				continue;
+			}
+			if (!prefixcmp(arg, "--tags=")) {
+				for_each_glob_ref_in(show_reference, arg + 7,
+					"refs/tags/", NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--tags")) {
 				for_each_tag_ref(show_reference, NULL);
 				continue;
 			}
+			if (!prefixcmp(arg, "--glob=")) {
+				for_each_glob_ref(show_reference, arg + 7, NULL);
+				continue;
+			}
+			if (!prefixcmp(arg, "--remotes=")) {
+				for_each_glob_ref_in(show_reference, arg + 10,
+					"refs/remotes/", NULL);
+				continue;
+			}
 			if (!strcmp(arg, "--remotes")) {
 				for_each_remote_ref(show_reference, NULL);
+				continue;
+			}
+			if (!strcmp(arg, "--show-toplevel")) {
+				const char *work_tree = get_git_work_tree();
+				if (work_tree)
+					puts(work_tree);
 				continue;
 			}
 			if (!strcmp(arg, "--show-prefix")) {

@@ -10,15 +10,21 @@ SYNOPSIS
 --------
 'git fetch' <options> <repository> <refspec>...
 
+'git fetch' <options> <group>
+
+'git fetch' --multiple <options> [<repository> | <group>]...
+
+'git fetch' --all <options>
+
 
 DESCRIPTION
 -----------
-Fetches named heads or tags from another repository, along with
-the objects necessary to complete them.
+Fetches named heads or tags from one or more other repositories,
+along with the objects necessary to complete them.
 
 The ref names and their object names of fetched refs are stored
 in `.git/FETCH_HEAD`.  This information is left for a later merge
-operation done by 'git-merge'.
+operation done by 'git merge'.
 
 When <refspec> stores the fetched result in tracking branches,
 the tags that point at these branches are automatically
@@ -28,6 +34,10 @@ pointed by remote tags that it does not yet have, then fetch
 those missing tags.  If the other end has tags that point at
 branches you are not interested in, you will not get them.
 
+'git fetch' can fetch from either a single named repository, or
+or from several repositories at once if <group> is given and
+there is a remotes.<group> entry in the configuration file.
+(See linkgit:git-config[1]).
 
 OPTIONS
 -------
@@ -36,6 +46,35 @@ include::fetch-options.txt[]
 include::pull-fetch-param.txt[]
 
 include::urls-remotes.txt[]
+
+
+EXAMPLES
+--------
+
+* Update the remote-tracking branches:
++
+------------------------------------------------
+$ git fetch origin
+------------------------------------------------
++
+The above command copies all branches from the remote refs/heads/
+namespace and stores them to the local refs/remotes/origin/ namespace,
+unless the branch.<name>.fetch option is used to specify a non-default
+refspec.
+
+* Using refspecs explicitly:
++
+------------------------------------------------
+$ git fetch origin +pu:pu maint:tmp
+------------------------------------------------
++
+This updates (or creates, as necessary) branches `pu` and `tmp` in
+the local repository by fetching from the branches (respectively)
+`pu` and `maint` from the remote repository.
++
+The `pu` branch will be updated even if it is does not fast-forward,
+because it is prefixed with a plus sign; `tmp` will not be.
+
 
 SEE ALSO
 --------

@@ -2760,7 +2760,7 @@ void re_set_registers(struct re_pattern_buffer *bufp,
     {
       bufp->regs_allocated = REGS_UNALLOCATED;
       regs->num_regs = 0;
-      regs->start = regs->end = (regoff_t) 0;
+      regs->start = regs->end = (regoff_t *) 0;
     }
 }
 

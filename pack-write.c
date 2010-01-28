@@ -17,8 +17,8 @@ static int sha1_compare(const void *_a, const void *_b)
  * the SHA1 hash of sorted object names. The objects array passed in
  * will be sorted by SHA1 on exit.
  */
-char *write_idx_file(char *index_name, struct pack_idx_entry **objects,
-		     int nr_objects, unsigned char *sha1)
+const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects,
+			   int nr_objects, unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;

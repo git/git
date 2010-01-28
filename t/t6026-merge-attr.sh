@@ -70,6 +70,18 @@ test_expect_success 'check merge result in working tree' '
 
 '
 
+test_expect_success 'retry the merge with longer context' '
+	echo text conflict-marker-size=32 >>.gitattributes &&
+	git checkout -m text &&
+	sed -ne "/^\([<=>]\)\1\1\1*/{
+		s/ .*$//
+		p
+	}" >actual text &&
+	grep ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" actual &&
+	grep "================================" actual &&
+	grep "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" actual
+'
+
 cat >./custom-merge <<\EOF
 #!/bin/sh
 

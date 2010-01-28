@@ -123,6 +123,10 @@ The placeholders are:
 - '%s': subject
 - '%f': sanitized subject line, suitable for a filename
 - '%b': body
+- '%N': commit notes
+- '%gD': reflog selector, e.g., `refs/stash@\{1\}`
+- '%gd': shortened reflog selector, e.g., `stash@\{1\}`
+- '%gs': reflog subject
 - '%Cred': switch color to red
 - '%Cgreen': switch color to green
 - '%Cblue': switch color to blue
@@ -130,7 +134,24 @@ The placeholders are:
 - '%C(...)': color specification, as described in color.branch.* config option
 - '%m': left, right or boundary mark
 - '%n': newline
+- '%%': a raw '%'
 - '%x00': print a byte from a hex code
+- '%w([<w>[,<i1>[,<i2>]]])': switch line wrapping, like the -w option of
+  linkgit:git-shortlog[1].
+
+NOTE: Some placeholders may depend on other options given to the
+revision traversal engine. For example, the `%g*` reflog options will
+insert an empty string unless we are traversing reflog entries (e.g., by
+`git log -g`). The `%d` placeholder will use the "short" decoration
+format if `--decorate` was not already provided on the command line.
+
+If you add a `{plus}` (plus sign) after '%' of a placeholder, a line-feed
+is inserted immediately before the expansion if and only if the
+placeholder expands to a non-empty string.
+
+If you add a `-` (minus sign) after '%' of a placeholder, line-feeds that
+immediately precede the expansion are deleted if and only if the
+placeholder expands to an empty string.
 
 * 'tformat:'
 +

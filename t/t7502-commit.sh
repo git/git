@@ -258,4 +258,122 @@ test_expect_success 'Hand committing of a redundant merge removes dups' '
 
 '
 
+test_expect_success 'A single-liner subject with a token plus colon is not a footer' '
+
+	git reset --hard &&
+	git commit -s -m "hello: kitty" --allow-empty &&
+	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
+	test $(wc -l <actual) = 3
+
+'
+
+cat >.git/FAKE_EDITOR <<EOF
+#!$SHELL_PATH
+mv "\$1" "\$1.orig"
+(
+	echo message
+	cat "\$1.orig"
+) >"\$1"
+EOF
+
+echo '## Custom template' >template
+
+clear_config () {
+	(
+		git config --unset-all "$1"
+		case $? in
+		0|5)	exit 0 ;;
+		*)	exit 1 ;;
+		esac
+	)
+}
+
+try_commit () {
+	git reset --hard &&
+	echo >>negative &&
+	GIT_EDITOR=.git/FAKE_EDITOR git commit -a $* $use_template &&
+	case "$use_template" in
+	'')
+		! grep "^## Custom template" .git/COMMIT_EDITMSG ;;
+	*)
+		grep "^## Custom template" .git/COMMIT_EDITMSG ;;
+	esac
+}
+
+try_commit_status_combo () {
+
+	test_expect_success 'commit' '
+		clear_config commit.status &&
+		try_commit "" &&
+		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+	test_expect_success 'commit' '
+		clear_config commit.status &&
+		try_commit "" &&
+		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+	test_expect_success 'commit --status' '
+		clear_config commit.status &&
+		try_commit --status &&
+		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+	test_expect_success 'commit --no-status' '
+		clear_config commit.status &&
+		try_commit --no-status
+		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+	test_expect_success 'commit with commit.status = yes' '
+		clear_config commit.status &&
+		git config commit.status yes &&
+		try_commit "" &&
+		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+	test_expect_success 'commit with commit.status = no' '
+		clear_config commit.status &&
+		git config commit.status no &&
+		try_commit "" &&
+		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+	test_expect_success 'commit --status with commit.status = yes' '
+		clear_config commit.status &&
+		git config commit.status yes &&
+		try_commit --status &&
+		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+	test_expect_success 'commit --no-status with commit.status = yes' '
+		clear_config commit.status &&
+		git config commit.status yes &&
+		try_commit --no-status &&
+		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+	test_expect_success 'commit --status with commit.status = no' '
+		clear_config commit.status &&
+		git config commit.status no &&
+		try_commit --status &&
+		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+	test_expect_success 'commit --no-status with commit.status = no' '
+		clear_config commit.status &&
+		git config commit.status no &&
+		try_commit --no-status &&
+		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+	'
+
+}
+
+try_commit_status_combo
+
+use_template="-t template"
+
+try_commit_status_combo
+
 test_done

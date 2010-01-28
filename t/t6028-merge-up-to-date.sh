@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='merge fast forward and up to date'
+test_description='merge fast-forward and up to date'
 
 . ./test-lib.sh
 

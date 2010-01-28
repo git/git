@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-w] [--incremental] [-L n,m]
-            [-S <revs-file>] [-M] [-C] [-C] [--since=<date>]
+	    [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>]
 	    [<rev> | --contents <file> | --reverse <rev>] [--] <file>
 
 DESCRIPTION
@@ -21,7 +21,7 @@ last modified the line. Optionally, start annotating from the given revision.
 The command can also limit the range of lines annotated.
 
 The report does not tell you anything about lines which have been deleted or
-replaced; you need to use a tool such as 'git-diff' or the "pickaxe"
+replaced; you need to use a tool such as 'git diff' or the "pickaxe"
 interface briefly mentioned in the following paragraph.
 
 Apart from supporting file annotation, git also supports searching the
@@ -49,7 +49,7 @@ include::blame-options.txt[]
 	file (see `-M`).  The first number listed is the score.
 	This is the number of alphanumeric characters detected
 	as having been moved between or within files.  This must be above
-	a certain threshold for 'git-blame' to consider those lines
+	a certain threshold for 'git blame' to consider those lines
 	of code to have been moved.
 
 -f::
@@ -100,7 +100,7 @@ header elements later.
 SPECIFYING RANGES
 -----------------
 
-Unlike 'git-blame' and 'git-annotate' in older versions of git, the extent
+Unlike 'git blame' and 'git annotate' in older versions of git, the extent
 of the annotation can be limited to both line ranges and revision
 ranges.  When you are interested in finding the origin for
 lines 40-60 for file `foo`, you can use the `-L` option like so
@@ -118,7 +118,7 @@ which limits the annotation to the body of the `hello` subroutine.
 
 When you are not interested in changes older than version
 v2.6.18, or changes older than 3 weeks, you can use revision
-range specifiers  similar to 'git-rev-list':
+range specifiers  similar to 'git rev-list':
 
 	git blame v2.6.18.. -- foo
 	git blame --since=3.weeks -- foo

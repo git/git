@@ -23,13 +23,14 @@ static struct man_viewer_info_list {
 } *man_viewer_info_list;
 
 enum help_format {
+	HELP_FORMAT_NONE,
 	HELP_FORMAT_MAN,
 	HELP_FORMAT_INFO,
 	HELP_FORMAT_WEB,
 };
 
 static int show_all = 0;
-static enum help_format help_format = HELP_FORMAT_MAN;
+static enum help_format help_format = HELP_FORMAT_NONE;
 static struct option builtin_help_options[] = {
 	OPT_BOOLEAN('a', "all", &show_all, "print all available commands"),
 	OPT_SET_INT('m', "man", &help_format, "show man page", HELP_FORMAT_MAN),
@@ -372,6 +373,7 @@ static void show_info_page(const char *git_cmd)
 	const char *page = cmd_to_page(git_cmd);
 	setenv("INFOPATH", system_path(GIT_INFO_PATH), 1);
 	execlp("info", "info", "gitman", page, NULL);
+	die("no info viewer handled the request");
 }
 
 static void get_html_page_path(struct strbuf *page_path, const char *page)
@@ -414,13 +416,12 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 {
 	int nongit;
 	const char *alias;
+	enum help_format parsed_help_format;
 	load_command_list("git-", &main_cmds, &other_cmds);
-
-	setup_git_directory_gently(&nongit);
-	git_config(git_help_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_help_options,
 			builtin_help_usage, 0);
+	parsed_help_format = help_format;
 
 	if (show_all) {
 		printf("usage: %s\n\n", git_usage_string);
@@ -436,6 +437,12 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 
+	setup_git_directory_gently(&nongit);
+	git_config(git_help_config, NULL);
+
+	if (parsed_help_format != HELP_FORMAT_NONE)
+		help_format = parsed_help_format;
+
 	alias = alias_lookup(argv[0]);
 	if (alias && !is_git_command(argv[0])) {
 		printf("`git %s' is aliased to `%s'\n", argv[0], alias);
@@ -443,6 +450,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	}
 
 	switch (help_format) {
+	case HELP_FORMAT_NONE:
 	case HELP_FORMAT_MAN:
 		show_man_page(argv[0]);
 		break;

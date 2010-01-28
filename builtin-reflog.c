@@ -698,6 +698,9 @@ static const char reflog_usage[] =
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
+	if (argc > 1 && !strcmp(argv[1], "-h"))
+		usage(reflog_usage);
+
 	/* With no command, we default to showing it. */
 	if (argc < 2 || *argv[1] == '-')
 		return cmd_log_reflog(argc, argv, prefix);

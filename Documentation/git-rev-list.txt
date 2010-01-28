@@ -9,7 +9,7 @@ git-rev-list - Lists commit objects in reverse chronological order
 SYNOPSIS
 --------
 [verse]
-'git-rev-list' [ \--max-count=number ]
+'git rev-list' [ \--max-count=number ]
 	     [ \--skip=number ]
 	     [ \--max-age=timestamp ]
 	     [ \--min-age=timestamp ]
@@ -21,9 +21,10 @@ SYNOPSIS
 	     [ \--full-history ]
 	     [ \--not ]
 	     [ \--all ]
-	     [ \--branches ]
-	     [ \--tags ]
-	     [ \--remotes ]
+	     [ \--branches[=pattern] ]
+	     [ \--tags[=pattern] ]
+	     [ \--remotes[=pattern] ]
+	     [ \--glob=glob-pattern ]
 	     [ \--stdin ]
 	     [ \--quiet ]
 	     [ \--topo-order ]
@@ -93,8 +94,8 @@ between the two operands.  The following two commands are equivalent:
 'rev-list' is a very essential git command, since it
 provides the ability to build and traverse commit ancestry graphs. For
 this reason, it has a lot of different options that enables it to be
-used by commands as different as 'git-bisect' and
-'git-repack'.
+used by commands as different as 'git bisect' and
+'git repack'.
 
 OPTIONS
 -------

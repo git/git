@@ -86,7 +86,7 @@ chmod 755 editor
 
 test_expect_success \
 	"amend commit" \
-	"VISUAL=./editor git commit --amend"
+	"EDITOR=./editor git commit --amend"
 
 test_expect_success \
 	"passing -m and -F" \
@@ -107,7 +107,7 @@ chmod 755 editor
 test_expect_success \
 	"editing message from other commit" \
 	"echo 'hula hula' >file && \
-	 VISUAL=./editor git commit -c HEAD^ -a"
+	 EDITOR=./editor git commit -c HEAD^ -a"
 
 test_expect_success \
 	"message from stdin" \
@@ -117,7 +117,11 @@ test_expect_success \
 test_expect_success \
 	"overriding author from command line" \
 	"echo 'gak' >file && \
-	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a"
+	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a >output 2>&1"
+
+test_expect_success \
+	"commit --author output mentions author" \
+	"grep Rubber.Duck output"
 
 test_expect_success PERL \
 	"interactive add" \
@@ -141,10 +145,10 @@ EOF
 test_expect_success \
 	'editor not invoked if -F is given' '
 	 echo "moo" >file &&
-	 VISUAL=./editor git commit -a -F msg &&
+	 EDITOR=./editor git commit -a -F msg &&
 	 git show -s --pretty=format:"%s" | grep -q good &&
 	 echo "quack" >file &&
-	 echo "Another good message." | VISUAL=./editor git commit -a -F - &&
+	 echo "Another good message." | EDITOR=./editor git commit -a -F - &&
 	 git show -s --pretty=format:"%s" | grep -q good
 	 '
 # We could just check the head sha1, but checking each commit makes it
@@ -211,6 +215,21 @@ test_expect_success 'amend commit to fix author' '
 
 '
 
+test_expect_success 'amend commit to fix date' '
+
+	test_tick &&
+	newtick=$GIT_AUTHOR_DATE &&
+	git reset --hard &&
+	git cat-file -p HEAD |
+	sed -e "s/author.*/author $author $newtick/" \
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
+		expected &&
+	git commit --amend --date="$newtick" &&
+	git cat-file -p HEAD > current &&
+	test_cmp expected current
+
+'
+
 test_expect_success 'sign off (1)' '
 
 	echo 1 >positive &&
@@ -245,6 +264,47 @@ $existing" &&
 	) >expected &&
 	test_cmp expected actual
 
+'
+
+test_expect_success 'signoff gap' '
+
+	echo 3 >positive &&
+	git add positive &&
+	alt="Alt-RFC-822-Header: Value" &&
+	git commit -s -m "welcome
+
+$alt" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo welcome
+		echo
+		echo $alt
+		git var GIT_COMMITTER_IDENT |
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+	) >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'signoff gap 2' '
+
+	echo 4 >positive &&
+	git add positive &&
+	alt="fixed: 34" &&
+	git commit -s -m "welcome
+
+We have now
+$alt" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo welcome
+		echo
+		echo We have now
+		echo $alt
+		echo
+		git var GIT_COMMITTER_IDENT |
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+	) >expected &&
+	test_cmp expected actual
 '
 
 test_expect_success 'multiple -m' '

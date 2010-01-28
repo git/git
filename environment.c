@@ -49,8 +49,10 @@ enum push_default_type push_default = PUSH_DEFAULT_MATCHING;
 #define OBJECT_CREATION_MODE OBJECT_CREATION_USES_HARDLINKS
 #endif
 enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
+char *notes_ref_name;
 int grafts_replace_parents = 1;
 enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+int core_apply_sparse_checkout;
 
 /* Parallel index stat data preload? */
 int core_preload_index = 0;
@@ -84,6 +86,8 @@ static void setup_git_env(void)
 	git_graft_file = getenv(GRAFT_ENVIRONMENT);
 	if (!git_graft_file)
 		git_graft_file = git_pathdup("info/grafts");
+	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
+		read_replace_refs = 0;
 }
 
 int is_bare_repository(void)

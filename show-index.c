@@ -1,6 +1,9 @@
 #include "cache.h"
 #include "pack.h"
 
+static const char show_index_usage[] =
+"git show-index < <packed archive index>";
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -8,6 +11,8 @@ int main(int argc, char **argv)
 	unsigned int version;
 	static unsigned int top_index[256];
 
+	if (argc != 1)
+		usage(show_index_usage);
 	if (fread(top_index, 2 * 4, 1, stdin) != 1)
 		die("unable to read header");
 	if (top_index[0] == htonl(PACK_IDX_SIGNATURE)) {
@@ -43,7 +48,7 @@ int main(int argc, char **argv)
 			unsigned char sha1[20];
 			uint32_t crc;
 			uint32_t off;
-		} *entries = xmalloc(nr * sizeof(entries[0]));
+		} *entries = malloc(nr * sizeof(entries[0]));
 		for (i = 0; i < nr; i++)
 			if (fread(entries[i].sha1, 20, 1, stdin) != 1)
 				die("unable to read sha1 %u/%u", i, nr);

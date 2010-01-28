@@ -12,15 +12,28 @@ fi
 
 HTTPD_PARA=""
 
+for DEFAULT_HTTPD_PATH in '/usr/sbin/httpd' '/usr/sbin/apache2'
+do
+	if test -x "$DEFAULT_HTTPD_PATH"
+	then
+		break
+	fi
+done
+
+for DEFAULT_HTTPD_MODULE_PATH in '/usr/libexec/apache2' \
+				 '/usr/lib/apache2/modules' \
+				 '/usr/lib64/httpd/modules' \
+				 '/usr/lib/httpd/modules'
+do
+	if test -d "$DEFAULT_HTTPD_MODULE_PATH"
+	then
+		break
+	fi
+done
+
 case $(uname) in
 	Darwin)
-		DEFAULT_HTTPD_PATH='/usr/sbin/httpd'
-		DEFAULT_HTTPD_MODULE_PATH='/usr/libexec/apache2'
 		HTTPD_PARA="$HTTPD_PARA -DDarwin"
-	;;
-	*)
-		DEFAULT_HTTPD_PATH='/usr/sbin/apache2'
-		DEFAULT_HTTPD_MODULE_PATH='/usr/lib/apache2/modules'
 	;;
 esac
 
@@ -47,6 +60,11 @@ then
 		if ! test $HTTPD_VERSION -ge 2
 		then
 			say "skipping test, at least Apache version 2 is required"
+			test_done
+		fi
+		if ! test -d "$DEFAULT_HTTPD_MODULE_PATH"
+		then
+			say "Apache module directory not found.  Skipping tests."
 			test_done
 		fi
 

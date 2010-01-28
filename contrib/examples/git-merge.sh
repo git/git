@@ -14,7 +14,7 @@ summary              (synonym to --stat)
 log                  add list of one-line log to merge commit message
 squash               create a single commit instead of doing a merge
 commit               perform a commit if the merge succeeds (default)
-ff                   allow fast forward (default)
+ff                   allow fast-forward (default)
 s,strategy=          merge strategy to use
 m,message=           message to be used for the merge commit (if any)
 "
@@ -31,10 +31,11 @@ LF='
 '
 
 all_strategies='recur recursive octopus resolve stupid ours subtree'
+all_strategies="$all_strategies recursive-ours recursive-theirs"
 default_twohead_strategies='recursive'
 default_octopus_strategies='octopus'
 no_fast_forward_strategies='subtree ours'
-no_trivial_strategies='recursive recur subtree ours'
+no_trivial_strategies='recursive recur subtree ours recursive-ours recursive-theirs'
 use_strategies=
 
 allow_fast_forward=t
@@ -353,7 +354,7 @@ t,1,"$head",*)
 	# Again the most common case of merging one remote.
 	echo "Updating $(git rev-parse --short $head)..$(git rev-parse --short $1)"
 	git update-index --refresh 2>/dev/null
-	msg="Fast forward"
+	msg="Fast-forward"
 	if test -n "$have_message"
 	then
 		msg="$msg (no commit created; -m option ignored)"
@@ -365,11 +366,11 @@ t,1,"$head",*)
 	exit 0
 	;;
 ?,1,?*"$LF"?*,*)
-	# We are not doing octopus and not fast forward.  Need a
+	# We are not doing octopus and not fast-forward.  Need a
 	# real merge.
 	;;
 ?,1,*,)
-	# We are not doing octopus, not fast forward, and have only
+	# We are not doing octopus, not fast-forward, and have only
 	# one common.
 	git update-index --refresh 2>/dev/null
 	case "$allow_trivial_merge" in

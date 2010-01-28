@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Usually you would want to use 'git-fetch', which is a
+Usually you would want to use 'git fetch', which is a
 higher level wrapper of this command, instead.
 
 Invokes 'git-upload-pack' on a possibly remote repository
@@ -33,12 +33,12 @@ OPTIONS
 
 -q::
 --quiet::
-	Pass '-q' flag to 'git-unpack-objects'; this makes the
+	Pass '-q' flag to 'git unpack-objects'; this makes the
 	cloning process less verbose.
 
 -k::
 --keep::
-	Do not invoke 'git-unpack-objects' on received data, but
+	Do not invoke 'git unpack-objects' on received data, but
 	create a single packfile out of it instead, and store it
 	in the object database. If provided twice then the pack is
 	locked against repacking.

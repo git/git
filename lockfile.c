@@ -164,9 +164,10 @@ static char *unable_to_lock_message(const char *path, int err)
 		    "If no other git process is currently running, this probably means a\n"
 		    "git process crashed in this repository earlier. Make sure no other git\n"
 		    "process is running and remove the file manually to continue.",
-		    path, strerror(err));
+			    make_nonrelative_path(path), strerror(err));
 	} else
-		strbuf_addf(&buf, "Unable to create '%s.lock': %s", path, strerror(err));
+		strbuf_addf(&buf, "Unable to create '%s.lock': %s",
+			    make_nonrelative_path(path), strerror(err));
 	return strbuf_detach(&buf, NULL);
 }
 

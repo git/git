@@ -3,6 +3,7 @@
  * Fredrik Kuivinen.
  * The thieves were Alex Riesen and Johannes Schindelin, in June/July 2006
  */
+#include "advice.h"
 #include "cache.h"
 #include "cache-tree.h"
 #include "commit.h"
@@ -20,15 +21,17 @@
 #include "merge-recursive.h"
 #include "dir.h"
 
-static struct tree *shift_tree_object(struct tree *one, struct tree *two)
+static struct tree *shift_tree_object(struct tree *one, struct tree *two,
+				      const char *subtree_shift)
 {
 	unsigned char shifted[20];
 
-	/*
-	 * NEEDSWORK: this limits the recursion depth to hardcoded
-	 * value '2' to avoid excessive overhead.
-	 */
-	shift_tree(one->object.sha1, two->object.sha1, shifted, 2);
+	if (!*subtree_shift) {
+		shift_tree(one->object.sha1, two->object.sha1, shifted, 0);
+	} else {
+		shift_tree_by(one->object.sha1, two->object.sha1, shifted,
+			      subtree_shift);
+	}
 	if (!hashcmp(two->object.sha1, shifted))
 		return two;
 	return lookup_tree(shifted);
@@ -86,6 +89,7 @@ static void flush_output(struct merge_options *o)
 	}
 }
 
+__attribute__((format (printf, 3, 4)))
 static void output(struct merge_options *o, int v, const char *fmt, ...)
 {
 	int len;
@@ -170,18 +174,6 @@ static int git_merge_trees(int index_only,
 	int rc;
 	struct tree_desc t[3];
 	struct unpack_trees_options opts;
-	static const struct unpack_trees_error_msgs msgs = {
-		/* would_overwrite */
-		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
-		/* not_uptodate_file */
-		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
-		/* not_uptodate_dir */
-		"Updating '%s' would lose untracked files in it.  Aborting.",
-		/* would_lose_untracked */
-		"Untracked working tree file '%s' would be %s by merge.  Aborting",
-		/* bind_overlap -- will not happen here */
-		NULL,
-	};
 
 	memset(&opts, 0, sizeof(opts));
 	if (index_only)
@@ -193,7 +185,7 @@ static int git_merge_trees(int index_only,
 	opts.fn = threeway_merge;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
-	opts.msgs = msgs;
+	opts.msgs = get_porcelain_error_msgs();
 
 	init_tree_desc_from_tree(t+0, common);
 	init_tree_desc_from_tree(t+1, head);
@@ -210,13 +202,14 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 
 	if (unmerged_cache()) {
 		int i;
-		output(o, 0, "There are unmerged index entries:");
+		fprintf(stderr, "BUG: There are unmerged index entries:\n");
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			if (ce_stage(ce))
-				output(o, 0, "%d %.*s", ce_stage(ce), ce_namelen(ce), ce->name);
+				fprintf(stderr, "BUG: %d %.*s", ce_stage(ce),
+					(int)ce_namelen(ce), ce->name);
 		}
-		return NULL;
+		die("Bug in merge-recursive.c");
 	}
 
 	if (!active_cache_tree)
@@ -634,6 +627,23 @@ static int merge_3way(struct merge_options *o,
 	mmfile_t orig, src1, src2;
 	char *name1, *name2;
 	int merge_status;
+	int favor;
+
+	if (o->call_depth)
+		favor = 0;
+	else {
+		switch (o->recursive_variant) {
+		case MERGE_RECURSIVE_OURS:
+			favor = XDL_MERGE_FAVOR_OURS;
+			break;
+		case MERGE_RECURSIVE_THEIRS:
+			favor = XDL_MERGE_FAVOR_THEIRS;
+			break;
+		default:
+			favor = 0;
+			break;
+		}
+	}
 
 	if (strcmp(a->path, b->path)) {
 		name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
@@ -649,7 +659,7 @@ static int merge_3way(struct merge_options *o,
 
 	merge_status = ll_merge(result_buf, a->path, &orig,
 				&src1, name1, &src2, name2,
-				o->call_depth);
+				(!!o->call_depth) | (favor << 1));
 
 	free(name1);
 	free(name2);
@@ -1180,6 +1190,28 @@ static int process_entry(struct merge_options *o,
 	return clean_merge;
 }
 
+struct unpack_trees_error_msgs get_porcelain_error_msgs(void)
+{
+	struct unpack_trees_error_msgs msgs = {
+		/* would_overwrite */
+		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
+		/* not_uptodate_file */
+		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
+		/* not_uptodate_dir */
+		"Updating '%s' would lose untracked files in it.  Aborting.",
+		/* would_lose_untracked */
+		"Untracked working tree file '%s' would be %s by merge.  Aborting",
+		/* bind_overlap -- will not happen here */
+		NULL,
+	};
+	if (advice_commit_before_merge) {
+		msgs.would_overwrite = msgs.not_uptodate_file =
+			"Your local changes to '%s' would be overwritten by merge.  Aborting.\n"
+			"Please, commit your changes or stash them before you can merge.";
+	}
+	return msgs;
+}
+
 int merge_trees(struct merge_options *o,
 		struct tree *head,
 		struct tree *merge,
@@ -1188,9 +1220,9 @@ int merge_trees(struct merge_options *o,
 {
 	int code, clean;
 
-	if (o->subtree_merge) {
-		merge = shift_tree_object(head, merge);
-		common = shift_tree_object(head, common);
+	if (o->subtree_shift) {
+		merge = shift_tree_object(head, merge, o->subtree_shift);
+		common = shift_tree_object(head, common, o->subtree_shift);
 	}
 
 	if (sha_eq(common->object.sha1, merge->object.sha1)) {

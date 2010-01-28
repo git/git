@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git push' [--all | --mirror | --tags] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
-	   [--repo=<repository>] [-f | --force] [-v | --verbose]
+	   [--repo=<repository>] [-f | --force] [-v | --verbose] [-u | --set-upstream]
 	   [<repository> <refspec>...]
 
 DESCRIPTION
@@ -50,9 +50,9 @@ updated.
 +
 The object referenced by <src> is used to update the <dst> reference
 on the remote side, but by default this is only allowed if the
-update can fast forward <dst>.  By having the optional leading `{plus}`,
+update can fast-forward <dst>.  By having the optional leading `{plus}`,
 you can tell git to update the <dst> ref even when the update is not a
-fast forward.  This does *not* attempt to merge <src> into <dst>.  See
+fast-forward.  This does *not* attempt to merge <src> into <dst>.  See
 EXAMPLES below for details.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
@@ -60,7 +60,7 @@ EXAMPLES below for details.
 Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
 +
-The special refspec `:` (or `{plus}:` to allow non-fast forward updates)
+The special refspec `:` (or `{plus}:` to allow non-fast-forward updates)
 directs git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.  This is the default operation mode
@@ -91,6 +91,10 @@ nor in any Push line of the corresponding remotes file---see below).
 	will be tab-separated and sent to stdout instead of stderr.  The full
 	symbolic names of the refs will be given.
 
+--delete::
+	All listed refs are deleted from the remote repository. This is
+	the same as prefixing all refs with a colon.
+
 --tags::
 	All refs under `$GIT_DIR/refs/tags` are pushed, in
 	addition to refspecs explicitly listed on the command
@@ -112,7 +116,7 @@ nor in any Push line of the corresponding remotes file---see below).
 
 --repo=<repository>::
 	This option is only relevant if no <repository> argument is
-	passed in the invocation. In this case, 'git-push' derives the
+	passed in the invocation. In this case, 'git push' derives the
 	remote name from the current branch: If it tracks a remote
 	branch, then that remote repository is pushed to. Otherwise,
 	the name "origin" is used. For this latter case, this option
@@ -126,17 +130,29 @@ git push --repo=public  #2
 +
 is that #1 always pushes to "public" whereas #2 pushes to "public"
 only if the current branch does not track a remote branch. This is
-useful if you write an alias or script around 'git-push'.
+useful if you write an alias or script around 'git push'.
+
+-u::
+--set-upstream::
+	For every branch that is up to date or successfully pushed, add
+	upstream (tracking) reference, used by argument-less
+	linkgit:git-pull[1] and other commands. For more information,
+	see 'branch.<name>.merge' in linkgit:git-config[1].
 
 --thin::
 --no-thin::
-	These options are passed to 'git-send-pack'.  Thin
+	These options are passed to 'git send-pack'.  Thin
 	transfer spends extra cycles to minimize the number of
 	objects to be sent and meant to be used on slower connection.
 
 -v::
 --verbose::
 	Run verbosely.
+
+-q::
+--quiet::
+	Suppress all output, including the listing of updated refs,
+	unless an error occurs.
 
 include::urls-remotes.txt[]
 
@@ -171,10 +187,10 @@ summary::
 	For a successfully pushed ref, the summary shows the old and new
 	values of the ref in a form suitable for using as an argument to
 	`git log` (this is `<old>..<new>` in most cases, and
-	`<old>...<new>` for forced non-fast forward updates). For a
+	`<old>...<new>` for forced non-fast-forward updates). For a
 	failed update, more details are given for the failure.
 	The string `rejected` indicates that git did not try to send the
-	ref at all (typically because it is not a fast forward). The
+	ref at all (typically because it is not a fast-forward). The
 	string `remote rejected` indicates that the remote end refused
 	the update; this rejection is typically caused by a hook on the
 	remote side. The string `remote failure` indicates that the
@@ -342,9 +358,9 @@ git push origin :experimental::
 
 git push origin {plus}dev:master::
 	Update the origin repository's master branch with the dev branch,
-	allowing non-fast forward updates.  *This can leave unreferenced
+	allowing non-fast-forward updates.  *This can leave unreferenced
 	commits dangling in the origin repository.*  Consider the
-	following situation, where a fast forward is not possible:
+	following situation, where a fast-forward is not possible:
 +
 ----
 	    o---o---o---A---B  origin/master

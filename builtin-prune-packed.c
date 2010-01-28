@@ -71,7 +71,7 @@ void prune_packed_objects(int opts)
 
 int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 {
-	int opts = VERBOSE;
+	int opts = isatty(2) ? VERBOSE : 0;
 	const struct option prune_packed_options[] = {
 		OPT_BIT('n', "dry-run", &opts, "dry run", DRY_RUN),
 		OPT_NEGBIT('q', "quiet", &opts, "be quiet", VERBOSE),

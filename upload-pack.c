@@ -39,6 +39,8 @@ static unsigned int timeout;
  */
 static int use_sideband;
 static int debug_fd;
+static int advertise_refs;
+static int stateless_rpc;
 
 static void reset_timeout(void)
 {
@@ -146,66 +148,8 @@ static int do_rev_list(int fd, void *create_full_pack)
 	return 0;
 }
 
-static int feed_msg_to_hook(int fd, const char *fmt, ...)
-{
-	int cnt;
-	char buf[1024];
-	va_list params;
-
-	va_start(params, fmt);
-	cnt = vsprintf(buf, fmt, params);
-	va_end(params);
-	return write_in_full(fd, buf, cnt) != cnt;
-}
-
-static int feed_obj_to_hook(const char *label, struct object_array *oa, int i, int fd)
-{
-	return feed_msg_to_hook(fd, "%s %s\n", label,
-				sha1_to_hex(oa->objects[i].item->sha1));
-}
-
-static int run_post_upload_pack_hook(size_t total, struct timeval *tv)
-{
-	const char *argv[2];
-	struct child_process proc;
-	int err, i;
-
-	argv[0] = "hooks/post-upload-pack";
-	argv[1] = NULL;
-
-	if (access(argv[0], X_OK) < 0)
-		return 0;
-
-	memset(&proc, 0, sizeof(proc));
-	proc.argv = argv;
-	proc.in = -1;
-	proc.stdout_to_stderr = 1;
-	err = start_command(&proc);
-	if (err)
-		return err;
-	for (i = 0; !err && i < want_obj.nr; i++)
-		err |= feed_obj_to_hook("want", &want_obj, i, proc.in);
-	for (i = 0; !err && i < have_obj.nr; i++)
-		err |= feed_obj_to_hook("have", &have_obj, i, proc.in);
-	if (!err)
-		err |= feed_msg_to_hook(proc.in, "time %ld.%06ld\n",
-					(long)tv->tv_sec, (long)tv->tv_usec);
-	if (!err)
-		err |= feed_msg_to_hook(proc.in, "size %ld\n", (long)total);
-	if (!err)
-		err |= feed_msg_to_hook(proc.in, "kind %s\n",
-					(nr_our_refs == want_obj.nr && !have_obj.nr)
-					? "clone" : "fetch");
-	if (close(proc.in))
-		err = 1;
-	if (finish_command(&proc))
-		err = 1;
-	return err;
-}
-
 static void create_pack_file(void)
 {
-	struct timeval start_tv, tv;
 	struct async rev_list;
 	struct child_process pack_objects;
 	int create_full_pack = (nr_our_refs == want_obj.nr && !have_obj.nr);
@@ -213,12 +157,10 @@ static void create_pack_file(void)
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
 	int buffered = -1;
-	ssize_t sz, total_sz;
+	ssize_t sz;
 	const char *argv[10];
 	int arg = 0;
 
-	gettimeofday(&start_tv, NULL);
-	total_sz = 0;
 	if (shallow_nr) {
 		rev_list.proc = do_rev_list;
 		rev_list.data = 0;
@@ -308,6 +250,23 @@ static void create_pack_file(void)
 			}
 			continue;
 		}
+		if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
+			/* Status ready; we ship that in the side-band
+			 * or dump to the standard error.
+			 */
+			sz = xread(pack_objects.err, progress,
+				  sizeof(progress));
+			if (0 < sz)
+				send_client_data(2, progress, sz);
+			else if (sz == 0) {
+				close(pack_objects.err);
+				pack_objects.err = -1;
+			}
+			else
+				goto fail;
+			/* give priority to status messages */
+			continue;
+		}
 		if (0 <= pu && (pfd[pu].revents & (POLLIN|POLLHUP))) {
 			/* Data ready; we keep the last byte to ourselves
 			 * in case we detect broken rev-list, so that we
@@ -327,7 +286,7 @@ static void create_pack_file(void)
 			sz = xread(pack_objects.out, cp,
 				  sizeof(data) - outsz);
 			if (0 < sz)
-				total_sz += sz;
+				;
 			else if (sz == 0) {
 				close(pack_objects.out);
 				pack_objects.out = -1;
@@ -343,21 +302,6 @@ static void create_pack_file(void)
 				buffered = -1;
 			sz = send_client_data(1, data, sz);
 			if (sz < 0)
-				goto fail;
-		}
-		if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
-			/* Status ready; we ship that in the side-band
-			 * or dump to the standard error.
-			 */
-			sz = xread(pack_objects.err, progress,
-				  sizeof(progress));
-			if (0 < sz)
-				send_client_data(2, progress, sz);
-			else if (sz == 0) {
-				close(pack_objects.err);
-				pack_objects.err = -1;
-			}
-			else
 				goto fail;
 		}
 	}
@@ -379,16 +323,6 @@ static void create_pack_file(void)
 	}
 	if (use_sideband)
 		packet_flush(1);
-
-	gettimeofday(&tv, NULL);
-	tv.tv_sec -= start_tv.tv_sec;
-	if (tv.tv_usec < start_tv.tv_usec) {
-		tv.tv_sec--;
-		tv.tv_usec += 1000000;
-	}
-	tv.tv_usec -= start_tv.tv_usec;
-	if (run_post_upload_pack_hook(total_sz, &tv))
-		warning("post-upload-hook failed");
 	return;
 
  fail:
@@ -498,7 +432,7 @@ static int get_common_commits(void)
 {
 	static char line[1000];
 	unsigned char sha1[20];
-	char hex[41], last_hex[41];
+	char last_hex[41];
 
 	save_commit_buffer = 0;
 
@@ -509,25 +443,30 @@ static int get_common_commits(void)
 		if (!len) {
 			if (have_obj.nr == 0 || multi_ack)
 				packet_write(1, "NAK\n");
+			if (stateless_rpc)
+				exit(0);
 			continue;
 		}
 		strip(line, len);
 		if (!prefixcmp(line, "have ")) {
 			switch (got_sha1(line+5, sha1)) {
 			case -1: /* they have what we do not */
-				if (multi_ack && ok_to_give_up())
-					packet_write(1, "ACK %s continue\n",
-						     sha1_to_hex(sha1));
+				if (multi_ack && ok_to_give_up()) {
+					const char *hex = sha1_to_hex(sha1);
+					if (multi_ack == 2)
+						packet_write(1, "ACK %s ready\n", hex);
+					else
+						packet_write(1, "ACK %s continue\n", hex);
+				}
 				break;
 			default:
-				memcpy(hex, sha1_to_hex(sha1), 41);
-				if (multi_ack) {
-					const char *msg = "ACK %s continue\n";
-					packet_write(1, msg, hex);
-					memcpy(last_hex, hex, 41);
-				}
+				memcpy(last_hex, sha1_to_hex(sha1), 41);
+				if (multi_ack == 2)
+					packet_write(1, "ACK %s common\n", last_hex);
+				else if (multi_ack)
+					packet_write(1, "ACK %s continue\n", last_hex);
 				else if (have_obj.nr == 1)
-					packet_write(1, "ACK %s\n", hex);
+					packet_write(1, "ACK %s\n", last_hex);
 				break;
 			}
 			continue;
@@ -587,7 +526,9 @@ static void receive_needs(void)
 		    get_sha1_hex(line+5, sha1_buf))
 			die("git upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
-		if (strstr(line+45, "multi_ack"))
+		if (strstr(line+45, "multi_ack_detailed"))
+			multi_ack = 2;
+		else if (strstr(line+45, "multi_ack"))
 			multi_ack = 1;
 		if (strstr(line+45, "thin-pack"))
 			use_thin_pack = 1;
@@ -681,7 +622,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow no-progress"
-		" include-tag";
+		" include-tag multi_ack_detailed";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
@@ -705,12 +646,32 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	return 0;
 }
 
+static int mark_our_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+{
+	struct object *o = parse_object(sha1);
+	if (!o)
+		die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
+	if (!(o->flags & OUR_REF)) {
+		o->flags |= OUR_REF;
+		nr_our_refs++;
+	}
+	return 0;
+}
+
 static void upload_pack(void)
 {
-	reset_timeout();
-	head_ref(send_ref, NULL);
-	for_each_ref(send_ref, NULL);
-	packet_flush(1);
+	if (advertise_refs || !stateless_rpc) {
+		reset_timeout();
+		head_ref(send_ref, NULL);
+		for_each_ref(send_ref, NULL);
+		packet_flush(1);
+	} else {
+		head_ref(mark_our_ref, NULL);
+		for_each_ref(mark_our_ref, NULL);
+	}
+	if (advertise_refs)
+		return;
+
 	receive_needs();
 	if (want_obj.nr) {
 		get_common_commits();
@@ -732,6 +693,14 @@ int main(int argc, char **argv)
 
 		if (arg[0] != '-')
 			break;
+		if (!strcmp(arg, "--advertise-refs")) {
+			advertise_refs = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--stateless-rpc")) {
+			stateless_rpc = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--strict")) {
 			strict = 1;
 			continue;

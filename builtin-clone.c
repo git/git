@@ -44,14 +44,19 @@ static char *option_origin = NULL;
 static char *option_branch = NULL;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbose;
+static int option_progress;
 
 static struct option builtin_clone_options[] = {
 	OPT__QUIET(&option_quiet),
 	OPT__VERBOSE(&option_verbose),
+	OPT_BOOLEAN(0, "progress", &option_progress,
+			"force progress reporting"),
 	OPT_BOOLEAN('n', "no-checkout", &option_no_checkout,
 		    "don't create a checkout"),
 	OPT_BOOLEAN(0, "bare", &option_bare, "create a bare repository"),
-	OPT_BOOLEAN(0, "naked", &option_bare, "create a bare repository"),
+	{ OPTION_BOOLEAN, 0, "naked", &option_bare, NULL,
+		"create a bare repository",
+		PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 	OPT_BOOLEAN(0, "mirror", &option_mirror,
 		    "create a mirror repository (implies bare)"),
 	OPT_BOOLEAN('l', "local", &option_local,
@@ -61,7 +66,7 @@ static struct option builtin_clone_options[] = {
 	OPT_BOOLEAN('s', "shared", &option_shared,
 		    "setup as shared repository"),
 	OPT_BOOLEAN(0, "recursive", &option_recursive,
-		    "setup as shared repository"),
+		    "initialize submodules in the clone"),
 	OPT_STRING(0, "template", &option_template, "path",
 		   "path the template repository"),
 	OPT_STRING(0, "reference", &option_reference, "repo",
@@ -360,9 +365,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	const char *repo_name, *repo, *work_tree, *git_dir;
 	char *path, *dir;
 	int dest_exists;
-	const struct ref *refs, *remote_head, *mapped_refs;
+	const struct ref *refs, *remote_head;
 	const struct ref *remote_head_points_at;
 	const struct ref *our_head_points_at;
+	struct ref *mapped_refs;
 	struct strbuf key = STRBUF_INIT, value = STRBUF_INIT;
 	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
@@ -377,8 +383,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, builtin_clone_options,
 			     builtin_clone_usage, 0);
 
+	if (argc > 2)
+		usage_msg_opt("Too many arguments.",
+			builtin_clone_usage, builtin_clone_options);
+
 	if (argc == 0)
-		die("You must specify a repository to clone.");
+		usage_msg_opt("You must specify a repository to clone.",
+			builtin_clone_usage, builtin_clone_options);
 
 	if (option_mirror)
 		option_bare = 1;
@@ -518,6 +529,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (option_quiet)
 			transport->verbose = -1;
 		else if (option_verbose)
+			transport->verbose = 1;
+
+		if (option_progress)
 			transport->progress = 1;
 
 		if (option_upload_pack)

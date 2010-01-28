@@ -217,27 +217,6 @@ struct object_list *object_list_insert(struct object *item,
         return new_list;
 }
 
-void object_list_append(struct object *item,
-			struct object_list **list_p)
-{
-	while (*list_p) {
-		list_p = &((*list_p)->next);
-	}
-	*list_p = xmalloc(sizeof(struct object_list));
-	(*list_p)->next = NULL;
-	(*list_p)->item = item;
-}
-
-unsigned object_list_length(struct object_list *list)
-{
-	unsigned ret = 0;
-	while (list) {
-		list = list->next;
-		ret++;
-	}
-	return ret;
-}
-
 int object_list_contains(struct object_list *list, struct object *obj)
 {
 	while (list) {

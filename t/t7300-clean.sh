@@ -22,6 +22,25 @@ test_expect_success 'setup' '
 
 '
 
+test_expect_success 'git clean with skip-worktree .gitignore' '
+	git update-index --skip-worktree .gitignore &&
+	rm .gitignore &&
+	mkdir -p build docs &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	git clean &&
+	test -f Makefile &&
+	test -f README &&
+	test -f src/part1.c &&
+	test -f src/part2.c &&
+	test ! -f a.out &&
+	test ! -f src/part3.c &&
+	test -f docs/manual.txt &&
+	test -f obj.o &&
+	test -f build/lib.so &&
+	git update-index --no-skip-worktree .gitignore &&
+	git checkout .gitignore
+'
+
 test_expect_success 'git clean' '
 
 	mkdir -p build docs &&

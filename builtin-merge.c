@@ -24,6 +24,7 @@
 #include "rerere.h"
 #include "help.h"
 #include "merge-recursive.h"
+#include "resolve-undo.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -43,14 +44,18 @@ static const char * const builtin_merge_usage[] = {
 
 static int show_diffstat = 1, option_log, squash;
 static int option_commit = 1, allow_fast_forward = 1;
+static int fast_forward_only;
 static int allow_trivial = 1, have_message;
 static struct strbuf merge_msg;
 static struct commit_list *remoteheads;
 static unsigned char head[20], stash[20];
 static struct strategy **use_strategies;
 static size_t use_strategies_nr, use_strategies_alloc;
+static const char **xopts;
+static size_t xopts_nr, xopts_alloc;
 static const char *branch;
 static int verbosity;
+static int allow_rerere_auto;
 
 static struct strategy all_strategy[] = {
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
@@ -70,7 +75,7 @@ static int option_parse_message(const struct option *opt,
 	if (unset)
 		strbuf_setlen(buf, 0);
 	else if (arg) {
-		strbuf_addf(buf, "%s\n\n", arg);
+		strbuf_addf(buf, "%s%s", buf->len ? "\n\n" : "", arg);
 		have_message = 1;
 	} else
 		return error("switch `m' requires a value");
@@ -106,8 +111,8 @@ static struct strategy *get_strategy(const char *name)
 					found = 1;
 			if (!found)
 				add_cmdname(&not_strategies, ent->name, ent->len);
-			exclude_cmds(&main_cmds, &not_strategies);
 		}
+		exclude_cmds(&main_cmds, &not_strategies);
 	}
 	if (!is_in_cmdlist(&main_cmds, name) && !is_in_cmdlist(&other_cmds, name)) {
 		fprintf(stderr, "Could not find merge strategy '%s'.\n", name);
@@ -145,6 +150,17 @@ static int option_parse_strategy(const struct option *opt,
 	return 0;
 }
 
+static int option_parse_x(const struct option *opt,
+			  const char *arg, int unset)
+{
+	if (unset)
+		return 0;
+
+	ALLOC_GROW(xopts, xopts_nr + 1, xopts_alloc);
+	xopts[xopts_nr++] = xstrdup(arg);
+	return 0;
+}
+
 static int option_parse_n(const struct option *opt,
 			  const char *arg, int unset)
 {
@@ -166,9 +182,14 @@ static struct option builtin_merge_options[] = {
 	OPT_BOOLEAN(0, "commit", &option_commit,
 		"perform a commit if the merge succeeds (default)"),
 	OPT_BOOLEAN(0, "ff", &allow_fast_forward,
-		"allow fast forward (default)"),
+		"allow fast-forward (default)"),
+	OPT_BOOLEAN(0, "ff-only", &fast_forward_only,
+		"abort if fast-forward is not possible"),
+	OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 	OPT_CALLBACK('s', "strategy", &use_strategies, "strategy",
 		"merge strategy to use", option_parse_strategy),
+	OPT_CALLBACK('X', "strategy-option", &xopts, "option=value",
+		"option for selected merge strategy", option_parse_x),
 	OPT_CALLBACK('m', "message", &merge_msg, "message",
 		"message to be used for the merge commit (if any)",
 		option_parse_message),
@@ -264,6 +285,7 @@ static void squash_message(void)
 	struct strbuf out = STRBUF_INIT;
 	struct commit_list *j;
 	int fd;
+	struct pretty_print_context ctx = {0};
 
 	printf("Squash commit -- not updating HEAD\n");
 	fd = open(git_path("SQUASH_MSG"), O_WRONLY | O_CREAT, 0666);
@@ -285,13 +307,15 @@ static void squash_message(void)
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
 
+	ctx.abbrev = rev.abbrev;
+	ctx.date_mode = rev.date_mode;
+
 	strbuf_addstr(&out, "Squashed commit of the following:\n");
 	while ((commit = get_revision(&rev)) != NULL) {
 		strbuf_addch(&out, '\n');
 		strbuf_addf(&out, "commit %s\n",
 			sha1_to_hex(commit->object.sha1));
-		pretty_print_commit(rev.commit_format, commit, &out, rev.abbrev,
-			NULL, NULL, rev.date_mode, 0);
+		pretty_print_commit(rev.commit_format, commit, &out, &ctx);
 	}
 	if (write(fd, out.buf, out.len) < 0)
 		die_errno("Writing SQUASH_MSG");
@@ -528,7 +552,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 			      const char *head_arg)
 {
 	const char **args;
-	int i = 0, ret;
+	int i = 0, x = 0, ret;
 	struct commit_list *j;
 	struct strbuf buf = STRBUF_INIT;
 	int index_fd;
@@ -557,7 +581,20 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 
 		init_merge_options(&o);
 		if (!strcmp(strategy, "subtree"))
-			o.subtree_merge = 1;
+			o.subtree_shift = "";
+
+		for (x = 0; x < xopts_nr; x++) {
+			if (!strcmp(xopts[x], "ours"))
+				o.recursive_variant = MERGE_RECURSIVE_OURS;
+			else if (!strcmp(xopts[x], "theirs"))
+				o.recursive_variant = MERGE_RECURSIVE_THEIRS;
+			else if (!strcmp(xopts[x], "subtree"))
+				o.subtree_shift = "";
+			else if (!prefixcmp(xopts[x], "subtree="))
+				o.subtree_shift = xopts[x]+8;
+			else
+				die("Unknown option for merge-recursive: -X%s", xopts[x]);
+		}
 
 		o.branch1 = head_arg;
 		o.branch2 = remoteheads->item->util;
@@ -575,10 +612,16 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		rollback_lock_file(lock);
 		return clean ? 0 : 1;
 	} else {
-		args = xmalloc((4 + commit_list_count(common) +
+		args = xmalloc((4 + xopts_nr + commit_list_count(common) +
 					commit_list_count(remoteheads)) * sizeof(char *));
 		strbuf_addf(&buf, "merge-%s", strategy);
 		args[i++] = buf.buf;
+		for (x = 0; x < xopts_nr; x++) {
+			char *s = xmalloc(strlen(xopts[x])+2+1);
+			strcpy(s, "--");
+			strcpy(s+2, xopts[x]);
+			args[i++] = s;
+		}
 		for (j = common; j; j = j->next)
 			args[i++] = xstrdup(sha1_to_hex(j->item->object.sha1));
 		args[i++] = "--";
@@ -589,6 +632,8 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		ret = run_command_v_opt(args, RUN_GIT_CMD);
 		strbuf_release(&buf);
 		i = 1;
+		for (x = 0; x < xopts_nr; x++)
+			free((void *)args[i++]);
 		for (j = common; j; j = j->next)
 			free((void *)args[i++]);
 		i += 2;
@@ -598,6 +643,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		discard_cache();
 		if (read_cache() < 0)
 			die("failed to read the cache");
+		resolve_undo_clear();
 		return ret;
 	}
 }
@@ -612,11 +658,10 @@ static void count_diff_files(struct diff_queue_struct *q,
 
 static int count_unmerged_entries(void)
 {
-	const struct index_state *state = &the_index;
 	int i, ret = 0;
 
-	for (i = 0; i < state->cache_nr; i++)
-		if (ce_stage(state->cache[i]))
+	for (i = 0; i < active_nr; i++)
+		if (ce_stage(active_cache[i]))
 			ret++;
 
 	return ret;
@@ -650,6 +695,7 @@ static int checkout_fast_forward(unsigned char *head, unsigned char *remote)
 	opts.verbose_update = 1;
 	opts.merge = 1;
 	opts.fn = twoway_merge;
+	opts.msgs = get_porcelain_error_msgs();
 
 	trees[nr_trees] = parse_tree_indirect(head);
 	if (!trees[nr_trees++])
@@ -783,7 +829,7 @@ static int suggest_conflicts(void)
 		}
 	}
 	fclose(fp);
-	rerere();
+	rerere(allow_rerere_auto);
 	printf("Automatic merge failed; "
 			"fix conflicts and then commit the result.\n");
 	return 1;
@@ -792,7 +838,7 @@ static int suggest_conflicts(void)
 static struct commit *is_old_style_invocation(int argc, const char **argv)
 {
 	struct commit *second_token = NULL;
-	if (argc > 1) {
+	if (argc > 2) {
 		unsigned char second_sha1[20];
 
 		if (get_sha1(argv[1], second_sha1))
@@ -840,13 +886,22 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	const char *best_strategy = NULL, *wt_strategy = NULL;
 	struct commit_list **remotes = &remoteheads;
 
-	setup_work_tree();
-	if (file_exists(git_path("MERGE_HEAD")))
-		die("You have not concluded your merge. (MERGE_HEAD exists)");
-	if (read_cache_unmerged())
-		die("You are in the middle of a conflicted merge."
-				" (index unmerged)");
+	if (read_cache_unmerged()) {
+		die_resolve_conflict("merge");
+	}
+	if (file_exists(git_path("MERGE_HEAD"))) {
+		/*
+		 * There is no unmerged entry, don't advise 'git
+		 * add/rm <file>', just 'git commit'.
+		 */
+		if (advice_resolve_conflict)
+			die("You have not concluded your merge (MERGE_HEAD exists).\n"
+			    "Please, commit your changes before you can merge.");
+		else
+			die("You have not concluded your merge (MERGE_HEAD exists).");
+	}
 
+	resolve_undo_clear();
 	/*
 	 * Check if we are _not_ on a detached HEAD, i.e. if there is a
 	 * current branch.
@@ -873,6 +928,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			die("You cannot combine --squash with --no-ff.");
 		option_commit = 0;
 	}
+
+	if (!allow_fast_forward && fast_forward_only)
+		die("You cannot combine --no-ff with --ff-only.");
 
 	if (!argc)
 		usage_with_options(builtin_merge_usage,
@@ -928,11 +986,13 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * codepath so we discard the error in this
 		 * loop.
 		 */
-		for (i = 0; i < argc; i++)
-			merge_name(argv[i], &msg);
-		fmt_merge_msg(option_log, &msg, &merge_msg);
-		if (merge_msg.len)
-			strbuf_setlen(&merge_msg, merge_msg.len-1);
+		if (!have_message) {
+			for (i = 0; i < argc; i++)
+				merge_name(argv[i], &msg);
+			fmt_merge_msg(option_log, &msg, &merge_msg);
+			if (merge_msg.len)
+				strbuf_setlen(&merge_msg, merge_msg.len-1);
+		}
 	}
 
 	if (head_invalid || !argc)
@@ -1013,7 +1073,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 				hex,
 				find_unique_abbrev(remoteheads->item->object.sha1,
 				DEFAULT_ABBREV));
-		strbuf_addstr(&msg, "Fast forward");
+		strbuf_addstr(&msg, "Fast-forward");
 		if (have_message)
 			strbuf_addstr(&msg,
 				" (no commit created; -m option ignored)");
@@ -1031,16 +1091,16 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	} else if (!remoteheads->next && common->next)
 		;
 		/*
-		 * We are not doing octopus and not fast forward.  Need
+		 * We are not doing octopus and not fast-forward.  Need
 		 * a real merge.
 		 */
 	else if (!remoteheads->next && !common->next && option_commit) {
 		/*
-		 * We are not doing octopus, not fast forward, and have
+		 * We are not doing octopus, not fast-forward, and have
 		 * only one common.
 		 */
 		refresh_cache(REFRESH_QUIET);
-		if (allow_trivial) {
+		if (allow_trivial && !fast_forward_only) {
 			/* See if it is really trivial. */
 			git_committer_info(IDENT_ERROR_ON_NO_NAME);
 			printf("Trying really trivial in-index merge...\n");
@@ -1078,6 +1138,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			return 0;
 		}
 	}
+
+	if (fast_forward_only)
+		die("Not possible to fast-forward, aborting.");
 
 	/* We are going to make a new commit. */
 	git_committer_info(IDENT_ERROR_ON_NO_NAME);

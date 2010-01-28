@@ -88,7 +88,7 @@ $ find . -name '*.h' -print0 | xargs -0 git checkout-index -f --
 which will force all existing `*.h` files to be replaced with their
 cached copies. If an empty command line implied "all", then this would
 force-refresh everything in the index, which was not the point.  But
-since 'git-checkout-index' accepts --stdin it would be faster to use:
+since 'git checkout-index' accepts --stdin it would be faster to use:
 
 ----------------
 $ find . -name '*.h' -print0 | git checkout-index -f -z --stdin
@@ -102,7 +102,7 @@ Using `--` is probably a good policy in scripts.
 Using --temp or --stage=all
 ---------------------------
 When `--temp` is used (or implied by `--stage=all`)
-'git-checkout-index' will create a temporary file for each index
+'git checkout-index' will create a temporary file for each index
 entry being checked out.  The index will not be updated with stat
 information.  These options can be useful if the caller needs all
 stages of all unmerged entries so that the unmerged files can be
@@ -147,9 +147,9 @@ To update and refresh only the files already checked out::
 $ git checkout-index -n -f -a && git update-index --ignore-missing --refresh
 ----------------
 
-Using 'git-checkout-index' to "export an entire tree"::
+Using 'git checkout-index' to "export an entire tree"::
 	The prefix ability basically makes it trivial to use
-	'git-checkout-index' as an "export as tree" function.
+	'git checkout-index' as an "export as tree" function.
 	Just read the desired tree into the index, and do:
 +
 ----------------
