@@ -130,7 +130,7 @@ proc unmerged_files {files} {
 }
 
 proc parseviewargs {n arglist} {
-    global vdatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs
+    global vdatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs env
 
     set vdatemode($n) 0
     set vmergeonly($n) 0
@@ -209,6 +209,9 @@ proc parseviewargs {n arglist} {
 		set vmergeonly($n) 1
 		# git rev-parse doesn't understand --merge
 		lappend revargs --gitk-symmetric-diff-marker MERGE_HEAD...HEAD
+	    }
+	    "--no-replace-objects" {
+		set env(GIT_NO_REPLACE_OBJECTS) "1"
 	    }
 	    "-*" {
 		# Other flag arguments including -<n>
@@ -2085,7 +2088,7 @@ proc makewindow {} {
     set sha1entry .tf.bar.sha1
     set entries $sha1entry
     set sha1but .tf.bar.sha1label
-    button $sha1but -text [mc "SHA1 ID: "] -state disabled -relief flat \
+    button $sha1but -text "[mc "SHA1 ID:"] " -state disabled -relief flat \
 	-command gotocommit -width 8
     $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .tf.bar.sha1label -side left
@@ -7686,8 +7689,10 @@ proc getblobdiffline {bdf ids} {
 	    makediffhdr $fname $ids
 	    $ctext insert end "\n$line\n" filesep
 	} elseif {![string compare -length 3 "  >" $line]} {
+	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" dresult
 	} elseif {![string compare -length 3 "  <" $line]} {
+	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" d0
 	} elseif {$diffinhdr} {
 	    if {![string compare -length 12 "rename from " $line]} {
@@ -8698,6 +8703,11 @@ proc mktag {} {
     ${NS}::label $top.tlab -text [mc "Tag name:"]
     ${NS}::entry $top.tag -width 60
     grid $top.tlab $top.tag -sticky w
+    ${NS}::label $top.op -text [mc "Tag message is optional"]
+    grid $top.op -columnspan 2 -sticky we
+    ${NS}::label $top.mlab -text [mc "Tag message:"]
+    ${NS}::entry $top.msg -width 60
+    grid $top.mlab $top.msg -sticky w
     ${NS}::frame $top.buts
     ${NS}::button $top.buts.gen -text [mc "Create"] -command mktaggo
     ${NS}::button $top.buts.can -text [mc "Cancel"] -command mktagcan
@@ -8715,6 +8725,7 @@ proc domktag {} {
 
     set id [$mktagtop.sha1 get]
     set tag [$mktagtop.tag get]
+    set msg [$mktagtop.msg get]
     if {$tag == {}} {
 	error_popup [mc "No tag name specified"] $mktagtop
 	return 0
@@ -8724,7 +8735,11 @@ proc domktag {} {
 	return 0
     }
     if {[catch {
-	exec git tag $tag $id
+	if {$msg != {}} {
+	    exec git tag -a -m $msg $tag $id
+	} else {
+	    exec git tag $tag $id
+	}
     } err]} {
 	error_popup "[mc "Error creating tag:"] $err" $mktagtop
 	return 0
@@ -10480,7 +10495,7 @@ proc showtag {tag isnew} {
     set linknum 0
     if {![info exists tagcontents($tag)]} {
 	catch {
-	    set tagcontents($tag) [exec git cat-file tag $tagobjid($tag)]
+           set tagcontents($tag) [exec git cat-file tag $tag]
 	}
     }
     if {[info exists tagcontents($tag)]} {
