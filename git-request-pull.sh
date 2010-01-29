@@ -65,11 +65,11 @@ if [ -z "$branch" ]; then
 	status=1
 fi
 
-echo "The following changes since commit $baserev:"
-git shortlog --max-count=1 $baserev | sed -e 's/^\(.\)/  \1/'
+git show -s --format='The following changes since commit %H:
 
-echo "are available in the git repository at:"
-echo
+  %s (%ci)
+
+are available in the git repository at:' $baserev
 echo "  $url $branch"
 echo
 
