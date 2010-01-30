@@ -86,7 +86,7 @@ continue_merge () {
 		fi
 	fi
 	test -z "$GIT_QUIET" &&
-	git log --format=%s -1 "$cmt"
+	GIT_PAGER='' git log --format=%s -1 "$cmt"
 
 	prev_head=`git rev-parse HEAD^0`
 	# save the resulting commit so we can read-tree on it later
