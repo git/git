@@ -3392,6 +3392,7 @@ sub git_footer_html {
 sub die_error {
 	my $status = shift || 500;
 	my $error = shift || "Internal server error";
+	my $extra = shift;
 
 	my %http_responses = (
 		400 => '400 Bad Request',
@@ -3406,8 +3407,13 @@ sub die_error {
 <br /><br />
 $status - $error
 <br />
-</div>
 EOF
+	if (defined $extra) {
+		print "<hr />\n" .
+		      "$extra\n";
+	}
+	print "</div>\n";
+
 	git_footer_html();
 	exit;
 }
