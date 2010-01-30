@@ -3509,14 +3509,21 @@ sub git_print_header_div {
 }
 
 sub print_local_time {
+	print format_local_time(@_);
+}
+
+sub format_local_time {
+	my $localtime = '';
 	my %date = @_;
 	if ($date{'hour_local'} < 6) {
-		printf(" (<span class=\"atnight\">%02d:%02d</span> %s)",
+		$localtime .= sprintf(" (<span class=\"atnight\">%02d:%02d</span> %s)",
 			$date{'hour_local'}, $date{'minute_local'}, $date{'tz_local'});
 	} else {
-		printf(" (%02d:%02d %s)",
+		$localtime .= sprintf(" (%02d:%02d %s)",
 			$date{'hour_local'}, $date{'minute_local'}, $date{'tz_local'});
 	}
+
+	return $localtime;
 }
 
 # Outputs the author name and date in long form
