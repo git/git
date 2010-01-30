@@ -4347,17 +4347,24 @@ sub fill_project_list_info {
 # print 'sort by' <th> element, generating 'sort by $name' replay link
 # if that order is not selected
 sub print_sort_th {
+	print format_sort_th(@_);
+}
+
+sub format_sort_th {
 	my ($name, $order, $header) = @_;
+	my $sort_th = "";
 	$header ||= ucfirst($name);
 
 	if ($order eq $name) {
-		print "<th>$header</th>\n";
+		$sort_th .= "<th>$header</th>\n";
 	} else {
-		print "<th>" .
-		      $cgi->a({-href => href(-replay=>1, order=>$name),
-		               -class => "header"}, $header) .
-		      "</th>\n";
+		$sort_th .= "<th>" .
+		            $cgi->a({-href => href(-replay=>1, order=>$name),
+		                     -class => "header"}, $header) .
+		            "</th>\n";
 	}
+
+	return $sort_th;
 }
 
 sub git_project_list_body {
