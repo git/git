@@ -48,6 +48,10 @@ Updates since v1.6.6
    mismatch between fast-import and the frontends that produce the input
    stream.
 
+ * "git svn" support of subversion "merge tickets" and miscellaneous fixes.
+
+ * "gitk" updates.
+
 (portability)
 
  * Some more MSVC portability patches for msysgit port.
@@ -113,10 +117,13 @@ Updates since v1.6.6
 
  * "git fetch --all" can now be used in place of "git remote update".
 
- * "git grep" does not rely on external grep anymore.
+ * "git grep" does not rely on external grep anymore.  It can use more than
+   one threads to accelerate the operation.
 
  * "git grep" learned "--no-index" option, to search inside contents that
    are not managed by git.
+
+ * "git grep" learned "--quiet" option.
 
  * "git log" and friends learned "--glob=heads/*" syntax that is a more
    flexible way to complement "--branches/--tags/--remotes".
@@ -178,6 +185,11 @@ release, unless otherwise noted.
    the branch is fully merged to its upstream branch if it is not merged
    to the current branch.  It now deletes it in such a case.
 
+ * "git config -f <relative path>" run from a subdirectory misbehaved.
+   65807ee (builtin-config: Fix crash when using "-f <relative path>"
+   from non-root dir, 2010-01-26) may be merged to older maintenance
+   branches.
+
  * When "git diff" is asked to compare the work tree with something,
    it used to consider that a checked-out submodule with uncommitted
    changes is not modified; this could cause people to forget committing
@@ -186,6 +198,7 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.6.1-434-g3521c1b
+O=v1.7.0-rc0-48-gdace5dd
+O=v1.7.0-rc0-67-gb10b918
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
