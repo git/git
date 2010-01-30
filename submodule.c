@@ -126,7 +126,7 @@ int is_submodule_modified(const char *path)
 		"--porcelain",
 		NULL,
 	};
-	char *env[3];
+	char *env[4];
 	struct strbuf buf = STRBUF_INIT;
 
 	strbuf_addf(&buf, "%s/.git/", path);
@@ -142,7 +142,9 @@ int is_submodule_modified(const char *path)
 	env[0] = strbuf_detach(&buf, NULL);
 	strbuf_addf(&buf, "GIT_DIR=%s/.git", path);
 	env[1] = strbuf_detach(&buf, NULL);
-	env[2] = NULL;
+	strbuf_addf(&buf, "GIT_INDEX_FILE");
+	env[2] = strbuf_detach(&buf, NULL);
+	env[3] = NULL;
 
 	memset(&cp, 0, sizeof(cp));
 	cp.argv = argv;
@@ -161,6 +163,7 @@ int is_submodule_modified(const char *path)
 
 	free(env[0]);
 	free(env[1]);
+	free(env[2]);
 	strbuf_release(&buf);
 	return len != 0;
 }
