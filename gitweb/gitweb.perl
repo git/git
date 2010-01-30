@@ -3254,7 +3254,7 @@ EOF
 	print "</head>\n" .
 	      "<body>\n";
 
-	if (-f $site_header) {
+	if (defined $site_header && -f $site_header) {
 		insert_file($site_header);
 	}
 
@@ -3355,7 +3355,7 @@ sub git_footer_html {
 		print "</div>\n"; # class="page_footer"
 	}
 
-	if (-f $site_footer) {
+	if (defined $site_footer && -f $site_footer) {
 		insert_file($site_footer);
 	}
 
@@ -4781,7 +4781,7 @@ sub git_project_list {
 	}
 
 	git_header_html();
-	if (-f $home_text) {
+	if (defined $home_text && -f $home_text) {
 		print "<div class=\"index_include\">\n";
 		insert_file($home_text);
 		print "</div>\n";
