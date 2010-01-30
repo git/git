@@ -205,6 +205,8 @@ static void *run(void *arg)
 
 		work_done(w);
 	}
+	free_grep_patterns(arg);
+	free(arg);
 
 	return (void*) (intptr_t) hit;
 }
