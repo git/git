@@ -17,7 +17,7 @@
 #include "progress.h"
 #include "refs.h"
 
-#ifdef THREADED_DELTA_SEARCH
+#ifndef NO_PTHREADS
 #include "thread-utils.h"
 #include <pthread.h>
 #endif
@@ -1255,7 +1255,7 @@ static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
 	return 0;
 }
 
-#ifdef THREADED_DELTA_SEARCH
+#ifndef NO_PTHREADS
 
 static pthread_mutex_t read_mutex;
 #define read_lock()		pthread_mutex_lock(&read_mutex)
@@ -1380,7 +1380,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	/*
 	 * Handle memory allocation outside of the cache
 	 * accounting lock.  Compiler will optimize the strangeness
-	 * away when THREADED_DELTA_SEARCH is not defined.
+	 * away when NO_PTHREADS is defined.
 	 */
 	free(trg_entry->delta_data);
 	cache_lock();
@@ -1567,7 +1567,7 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 	free(array);
 }
 
-#ifdef THREADED_DELTA_SEARCH
+#ifndef NO_PTHREADS
 
 /*
  * The main thread waits on the condition that (at least) one of the workers
@@ -1899,7 +1899,7 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		if (delta_search_threads < 0)
 			die("invalid number of threads specified (%d)",
 			    delta_search_threads);
-#ifndef THREADED_DELTA_SEARCH
+#ifdef NO_PTHREADS
 		if (delta_search_threads != 1)
 			warning("no threads support, ignoring %s", k);
 #endif
@@ -2227,7 +2227,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			delta_search_threads = strtoul(arg+10, &end, 0);
 			if (!arg[10] || *end || delta_search_threads < 0)
 				usage(pack_usage);
-#ifndef THREADED_DELTA_SEARCH
+#ifdef NO_PTHREADS
 			if (delta_search_threads != 1)
 				warning("no threads support, "
 					"ignoring %s", arg);
