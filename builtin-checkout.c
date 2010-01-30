@@ -488,6 +488,20 @@ static void report_tracking(struct branch_info *new)
 	strbuf_release(&sb);
 }
 
+static void detach_advice(const char *old_path, const char *new_name)
+{
+	const char fmt[] =
+	"Note: checking out '%s'.\n\n"
+	"You are in 'detached HEAD' state. You can look around, make experimental\n"
+	"changes and commit them, and you can discard any commits you make in this\n"
+	"state without impacting any branches by performing another checkout.\n\n"
+	"If you want to create a new branch to retain commits you create, you may\n"
+	"do so (now or later) by using -b with the checkout command again. Example:\n\n"
+	"  git checkout -b new_branch_name\n\n";
+
+	fprintf(stderr, fmt, new_name);
+}
+
 static void update_refs_for_switch(struct checkout_opts *opts,
 				   struct branch_info *old,
 				   struct branch_info *new)
@@ -522,8 +536,8 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 		update_ref(msg.buf, "HEAD", new->commit->object.sha1, NULL,
 			   REF_NODEREF, DIE_ON_ERR);
 		if (!opts->quiet) {
-			if (old->path)
-				fprintf(stderr, "Note: moving to '%s' which isn't a local branch\nIf you want to create a new branch from this checkout, you may do so\n(now or later) by using -b with the checkout command again. Example:\n  git checkout -b <new_branch_name>\n", new->name);
+			if (old->path && advice_detached_head)
+				detach_advice(old->path, new->name);
 			describe_detached_head("HEAD is now at", new->commit);
 		}
 	}
