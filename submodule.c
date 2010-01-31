@@ -10,17 +10,19 @@ static int add_submodule_odb(const char *path)
 {
 	struct strbuf objects_directory = STRBUF_INIT;
 	struct alternate_object_database *alt_odb;
+	int ret = 0;
 
 	strbuf_addf(&objects_directory, "%s/.git/objects/", path);
-	if (!is_directory(objects_directory.buf))
-		return -1;
-
+	if (!is_directory(objects_directory.buf)) {
+		ret = -1;
+		goto done;
+	}
 	/* avoid adding it twice */
 	for (alt_odb = alt_odb_list; alt_odb; alt_odb = alt_odb->next)
 		if (alt_odb->name - alt_odb->base == objects_directory.len &&
 				!strncmp(alt_odb->base, objects_directory.buf,
 					objects_directory.len))
-			return 0;
+			goto done;
 
 	alt_odb = xmalloc(objects_directory.len + 42 + sizeof(*alt_odb));
 	alt_odb->next = alt_odb_list;
@@ -31,7 +33,9 @@ static int add_submodule_odb(const char *path)
 	alt_odb->name[41] = '\0';
 	alt_odb_list = alt_odb;
 	prepare_alt_odb();
-	return 0;
+done:
+	strbuf_release(&objects_directory);
+	return ret;
 }
 
 void show_submodule_summary(FILE *f, const char *path,
