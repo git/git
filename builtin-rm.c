@@ -8,9 +8,12 @@
 #include "dir.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
+#include "parse-options.h"
 
-static const char builtin_rm_usage[] =
-"git-rm [-f] [-n] [-r] [--cached] [--] <file>...";
+static const char * const builtin_rm_usage[] = {
+	"git rm [options] [--] <file>...",
+	NULL
+};
 
 static struct {
 	int nr, alloc;
@@ -26,29 +29,10 @@ static void add_list(const char *name)
 	list.name[list.nr++] = name;
 }
 
-static int remove_file(const char *name)
+static int check_local_mod(unsigned char *head, int index_only)
 {
-	int ret;
-	char *slash;
-
-	ret = unlink(name);
-	if (ret && errno == ENOENT)
-		/* The user has removed it from the filesystem by hand */
-		ret = errno = 0;
-
-	if (!ret && (slash = strrchr(name, '/'))) {
-		char *n = xstrdup(name);
-		do {
-			n[slash - name] = 0;
-			name = n;
-		} while (!rmdir(name) && (slash = strrchr(name, '/')));
-	}
-	return ret;
-}
-
-static int check_local_mod(unsigned char *head)
-{
-	/* items in list are already sorted in the cache order,
+	/*
+	 * Items in list are already sorted in the cache order,
 	 * so we could do this a lot more efficiently by using
 	 * tree_desc based traversal if we wanted to, but I am
 	 * lazy, and who cares if removal of files is a tad
@@ -65,6 +49,8 @@ static int check_local_mod(unsigned char *head)
 		const char *name = list.name[i];
 		unsigned char sha1[20];
 		unsigned mode;
+		int local_changes = 0;
+		int staged_changes = 0;
 
 		pos = cache_name_pos(name, strlen(name));
 		if (pos < 0)
@@ -73,8 +59,7 @@ static int check_local_mod(unsigned char *head)
 
 		if (lstat(ce->name, &st) < 0) {
 			if (errno != ENOENT)
-				fprintf(stderr, "warning: '%s': %s",
-					ce->name, strerror(errno));
+				warning("'%s': %s", ce->name, strerror(errno));
 			/* It already vanished from the working tree */
 			continue;
 		}
@@ -86,59 +71,107 @@ static int check_local_mod(unsigned char *head)
 			 */
 			continue;
 		}
+
+		/*
+		 * "rm" of a path that has changes need to be treated
+		 * carefully not to allow losing local changes
+		 * accidentally.  A local change could be (1) file in
+		 * work tree is different since the index; and/or (2)
+		 * the user staged a content that is different from
+		 * the current commit in the index.
+		 *
+		 * In such a case, you would need to --force the
+		 * removal.  However, "rm --cached" (remove only from
+		 * the index) is safe if the index matches the file in
+		 * the work tree or the HEAD commit, as it means that
+		 * the content being removed is available elsewhere.
+		 */
+
+		/*
+		 * Is the index different from the file in the work tree?
+		 */
 		if (ce_match_stat(ce, &st, 0))
-			errs = error("'%s' has local modifications "
-				     "(hint: try -f)", ce->name);
+			local_changes = 1;
+
+		/*
+		 * Is the index different from the HEAD commit?  By
+		 * definition, before the very initial commit,
+		 * anything staged in the index is treated by the same
+		 * way as changed from the HEAD.
+		 */
 		if (no_head
 		     || get_tree_entry(head, name, sha1, &mode)
 		     || ce->ce_mode != create_ce_mode(mode)
 		     || hashcmp(ce->sha1, sha1))
-			errs = error("'%s' has changes staged in the index "
-				     "(hint: try -f)", name);
+			staged_changes = 1;
+
+		/*
+		 * If the index does not match the file in the work
+		 * tree and if it does not match the HEAD commit
+		 * either, (1) "git rm" without --cached definitely
+		 * will lose information; (2) "git rm --cached" will
+		 * lose information unless it is about removing an
+		 * "intent to add" entry.
+		 */
+		if (local_changes && staged_changes) {
+			if (!index_only || !(ce->ce_flags & CE_INTENT_TO_ADD))
+				errs = error("'%s' has staged content different "
+					     "from both the file and the HEAD\n"
+					     "(use -f to force removal)", name);
+		}
+		else if (!index_only) {
+			if (staged_changes)
+				errs = error("'%s' has changes staged in the index\n"
+					     "(use --cached to keep the file, "
+					     "or -f to force removal)", name);
+			if (local_changes)
+				errs = error("'%s' has local modifications\n"
+					     "(use --cached to keep the file, "
+					     "or -f to force removal)", name);
+		}
 	}
 	return errs;
 }
 
 static struct lock_file lock_file;
 
+static int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
+static int ignore_unmatch = 0;
+
+static struct option builtin_rm_options[] = {
+	OPT__DRY_RUN(&show_only),
+	OPT__QUIET(&quiet),
+	OPT_BOOLEAN( 0 , "cached",         &index_only, "only remove from the index"),
+	OPT_BOOLEAN('f', "force",          &force,      "override the up-to-date check"),
+	OPT_BOOLEAN('r', NULL,             &recursive,  "allow recursive removal"),
+	OPT_BOOLEAN( 0 , "ignore-unmatch", &ignore_unmatch,
+				"exit with a zero status even if nothing matched"),
+	OPT_END(),
+};
+
 int cmd_rm(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
-	int show_only = 0, force = 0, index_only = 0, recursive = 0;
 	const char **pathspec;
 	char *seen;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
+
+	argc = parse_options(argc, argv, prefix, builtin_rm_options,
+			     builtin_rm_usage, 0);
+	if (!argc)
+		usage_with_options(builtin_rm_usage, builtin_rm_options);
+
+	if (!index_only)
+		setup_work_tree();
 
 	newfd = hold_locked_index(&lock_file, 1);
 
 	if (read_cache() < 0)
 		die("index file corrupt");
+	refresh_cache(REFRESH_QUIET);
 
-	for (i = 1 ; i < argc ; i++) {
-		const char *arg = argv[i];
-
-		if (*arg != '-')
-			break;
-		else if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-		else if (!strcmp(arg, "-n"))
-			show_only = 1;
-		else if (!strcmp(arg, "--cached"))
-			index_only = 1;
-		else if (!strcmp(arg, "-f"))
-			force = 1;
-		else if (!strcmp(arg, "-r"))
-			recursive = 1;
-		else
-			usage(builtin_rm_usage);
-	}
-	if (argc <= i)
-		usage(builtin_rm_usage);
-
-	pathspec = get_pathspec(prefix, argv + i);
+	pathspec = get_pathspec(prefix, argv);
 	seen = NULL;
 	for (i = 0; pathspec[i] ; i++)
 		/* nothing */;
@@ -153,14 +186,24 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 	if (pathspec) {
 		const char *match;
+		int seen_any = 0;
 		for (i = 0; (match = pathspec[i]) != NULL ; i++) {
-			if (!seen[i])
-				die("pathspec '%s' did not match any files",
-				    match);
+			if (!seen[i]) {
+				if (!ignore_unmatch) {
+					die("pathspec '%s' did not match any files",
+					    match);
+				}
+			}
+			else {
+				seen_any = 1;
+			}
 			if (!recursive && seen[i] == MATCHED_RECURSIVELY)
 				die("not removing '%s' recursively without -r",
 				    *match ? match : ".");
 		}
+
+		if (! seen_any)
+			exit(0);
 	}
 
 	/*
@@ -168,7 +211,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 * must match; but the file can already been removed, since
 	 * this sequence is a natural "novice" way:
 	 *
-	 *	rm F; git fm F
+	 *	rm F; git rm F
 	 *
 	 * Further, if HEAD commit exists, "diff-index --cached" must
 	 * report no changes unless forced.
@@ -177,7 +220,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		unsigned char sha1[20];
 		if (get_sha1("HEAD", sha1))
 			hashclr(sha1);
-		if (check_local_mod(sha1))
+		if (check_local_mod(sha1, index_only))
 			exit(1);
 	}
 
@@ -187,11 +230,11 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 */
 	for (i = 0; i < list.nr; i++) {
 		const char *path = list.name[i];
-		printf("rm '%s'\n", path);
+		if (!quiet)
+			printf("rm '%s'\n", path);
 
 		if (remove_file_from_cache(path))
-			die("git-rm: unable to remove %s", path);
-		cache_tree_invalidate_path(active_cache_tree, path);
+			die("git rm: unable to remove %s", path);
 	}
 
 	if (show_only)
@@ -209,18 +252,18 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		int removed = 0;
 		for (i = 0; i < list.nr; i++) {
 			const char *path = list.name[i];
-			if (!remove_file(path)) {
+			if (!remove_path(path)) {
 				removed = 1;
 				continue;
 			}
 			if (!removed)
-				die("git-rm: %s: %s", path, strerror(errno));
+				die_errno("git rm: '%s'", path);
 		}
 	}
 
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    close(newfd) || commit_locked_index(&lock_file))
+		    commit_locked_index(&lock_file))
 			die("Unable to write new index file");
 	}
 

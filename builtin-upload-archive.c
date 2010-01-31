@@ -8,35 +8,34 @@
 #include "sideband.h"
 
 static const char upload_archive_usage[] =
-	"git-upload-archive <repo>";
+	"git upload-archive <repo>";
 
 static const char deadchild[] =
-"git-upload-archive: archiver died with error";
+"git upload-archive: archiver died with error";
 
 static const char lostchild[] =
-"git-upload-archive: archiver process was lost";
+"git upload-archive: archiver process was lost";
 
+#define MAX_ARGS (64)
 
 static int run_upload_archive(int argc, const char **argv, const char *prefix)
 {
-	struct archiver ar;
 	const char *sent_argv[MAX_ARGS];
 	const char *arg_cmd = "argument ";
 	char *p, buf[4096];
-	int treeish_idx;
 	int sent_argc;
 	int len;
 
 	if (argc != 2)
 		usage(upload_archive_usage);
 
-	if (strlen(argv[1]) > sizeof(buf))
+	if (strlen(argv[1]) + 1 > sizeof(buf))
 		die("insanely long repository name");
 
 	strcpy(buf, argv[1]); /* enter-repo smudges its argument */
 
 	if (!enter_repo(buf, 0))
-		die("not a git archive");
+		die("'%s' does not appear to be a git repository", buf);
 
 	/* put received options in sent_argv[] */
 	sent_argc = 1;
@@ -47,7 +46,7 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 		if (len == 0)
 			break;	/* got a flush */
 		if (sent_argc > MAX_ARGS - 2)
-			die("Too many options (>29)");
+			die("Too many options (>%d)", MAX_ARGS - 2);
 
 		if (p[len-1] == '\n') {
 			p[--len] = 0;
@@ -65,12 +64,7 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 	sent_argv[sent_argc] = NULL;
 
 	/* parse all options sent by the client */
-	treeish_idx = parse_archive_args(sent_argc, sent_argv, &ar);
-
-	parse_treeish_arg(sent_argv + treeish_idx, &ar.args, prefix);
-	parse_pathspec_arg(sent_argv + treeish_idx + 1, &ar.args);
-
-	return ar.write_archive(&ar.args);
+	return write_archive(sent_argc, sent_argv, prefix, 0);
 }
 
 static void error_clnt(const char *fmt, ...)
@@ -86,16 +80,17 @@ static void error_clnt(const char *fmt, ...)
 	die("sent error to the client: %s", buf);
 }
 
-static void process_input(int child_fd, int band)
+static ssize_t process_input(int child_fd, int band)
 {
 	char buf[16384];
 	ssize_t sz = read(child_fd, buf, sizeof(buf));
 	if (sz < 0) {
 		if (errno != EAGAIN && errno != EINTR)
 			error_clnt("read error: %s\n", strerror(errno));
-		return;
+		return sz;
 	}
 	send_sideband(1, band, buf, sz, LARGE_PACKET_MAX);
+	return sz;
 }
 
 int cmd_upload_archive(int argc, const char **argv, const char *prefix)
@@ -137,6 +132,7 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 
 	while (1) {
 		struct pollfd pfd[2];
+		ssize_t processed[2] = { 0, 0 };
 		int status;
 
 		pfd[0].fd = fd1[0];
@@ -153,12 +149,12 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 		}
 		if (pfd[0].revents & POLLIN)
 			/* Data stream ready */
-			process_input(pfd[0].fd, 1);
+			processed[0] = process_input(pfd[0].fd, 1);
 		if (pfd[1].revents & POLLIN)
 			/* Status stream ready */
-			process_input(pfd[1].fd, 2);
+			processed[1] = process_input(pfd[1].fd, 2);
 		/* Always finish to read data when available */
-		if ((pfd[0].revents | pfd[1].revents) & POLLIN)
+		if (processed[0] || processed[1])
 			continue;
 
 		if (waitpid(writer, &status, 0) < 0)

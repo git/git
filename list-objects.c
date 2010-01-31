@@ -10,7 +10,7 @@
 
 static void process_blob(struct rev_info *revs,
 			 struct blob *blob,
-			 struct object_array *p,
+			 show_object_fn show,
 			 struct name_path *path,
 			 const char *name)
 {
@@ -18,16 +18,48 @@ static void process_blob(struct rev_info *revs,
 
 	if (!revs->blob_objects)
 		return;
+	if (!obj)
+		die("bad blob object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	obj->flags |= SEEN;
-	name = xstrdup(name);
-	add_object(obj, p, path, name);
+	show(obj, path, name);
+}
+
+/*
+ * Processing a gitlink entry currently does nothing, since
+ * we do not recurse into the subproject.
+ *
+ * We *could* eventually add a flag that actually does that,
+ * which would involve:
+ *  - is the subproject actually checked out?
+ *  - if so, see if the subproject has already been added
+ *    to the alternates list, and add it if not.
+ *  - process the commit (or tag) the gitlink points to
+ *    recursively.
+ *
+ * However, it's unclear whether there is really ever any
+ * reason to see superprojects and subprojects as such a
+ * "unified" object pool (potentially resulting in a totally
+ * humongous pack - avoiding which was the whole point of
+ * having gitlinks in the first place!).
+ *
+ * So for now, there is just a note that we *could* follow
+ * the link, and how to do it. Whether it necessarily makes
+ * any sense what-so-ever to ever do that is another issue.
+ */
+static void process_gitlink(struct rev_info *revs,
+			    const unsigned char *sha1,
+			    show_object_fn show,
+			    struct name_path *path,
+			    const char *name)
+{
+	/* Nothing to do */
 }
 
 static void process_tree(struct rev_info *revs,
 			 struct tree *tree,
-			 struct object_array *p,
+			 show_object_fn show,
 			 struct name_path *path,
 			 const char *name)
 {
@@ -38,13 +70,14 @@ static void process_tree(struct rev_info *revs,
 
 	if (!revs->tree_objects)
 		return;
+	if (!obj)
+		die("bad tree object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	if (parse_tree(tree) < 0)
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
-	name = xstrdup(name);
-	add_object(obj, p, path, name);
+	show(obj, path, name);
 	me.up = path;
 	me.elem = name;
 	me.elem_len = strlen(name);
@@ -55,11 +88,14 @@ static void process_tree(struct rev_info *revs,
 		if (S_ISDIR(entry.mode))
 			process_tree(revs,
 				     lookup_tree(entry.sha1),
-				     p, &me, entry.path);
+				     show, &me, entry.path);
+		else if (S_ISGITLINK(entry.mode))
+			process_gitlink(revs, entry.sha1,
+					show, &me, entry.path);
 		else
 			process_blob(revs,
 				     lookup_blob(entry.sha1),
-				     p, &me, entry.path);
+				     show, &me, entry.path);
 	}
 	free(tree->buffer);
 	tree->buffer = NULL;
@@ -98,17 +134,22 @@ void mark_edges_uninteresting(struct commit_list *list,
 	}
 }
 
+static void add_pending_tree(struct rev_info *revs, struct tree *tree)
+{
+	add_pending_object(revs, &tree->object, "");
+}
+
 void traverse_commit_list(struct rev_info *revs,
-			  void (*show_commit)(struct commit *),
-			  void (*show_object)(struct object_array_entry *))
+			  show_commit_fn show_commit,
+			  show_object_fn show_object,
+			  void *data)
 {
 	int i;
 	struct commit *commit;
-	struct object_array objects = { 0, 0, NULL };
 
 	while ((commit = get_revision(revs)) != NULL) {
-		process_tree(revs, commit->tree, &objects, NULL, "");
-		show_commit(commit);
+		add_pending_tree(revs, commit->tree);
+		show_commit(commit, data);
 	}
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *pending = revs->pending.objects + i;
@@ -118,22 +159,26 @@ void traverse_commit_list(struct rev_info *revs,
 			continue;
 		if (obj->type == OBJ_TAG) {
 			obj->flags |= SEEN;
-			add_object_array(obj, name, &objects);
+			show_object(obj, NULL, name);
 			continue;
 		}
 		if (obj->type == OBJ_TREE) {
-			process_tree(revs, (struct tree *)obj, &objects,
+			process_tree(revs, (struct tree *)obj, show_object,
 				     NULL, name);
 			continue;
 		}
 		if (obj->type == OBJ_BLOB) {
-			process_blob(revs, (struct blob *)obj, &objects,
+			process_blob(revs, (struct blob *)obj, show_object,
 				     NULL, name);
 			continue;
 		}
 		die("unknown pending object %s (%s)",
 		    sha1_to_hex(obj->sha1), name);
 	}
-	for (i = 0; i < objects.nr; i++)
-		show_object(&objects.objects[i]);
+	if (revs->pending.nr) {
+		free(revs->pending.objects);
+		revs->pending.nr = 0;
+		revs->pending.alloc = 0;
+		revs->pending.objects = NULL;
+	}
 }

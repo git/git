@@ -9,7 +9,7 @@ SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
 no_prune=:
-while case $# in 0) break ;; esac
+while test $# != 0
 do
 	case "$1" in
 	--prune)
@@ -30,8 +30,8 @@ notbare|"")
 esac
 
 test "true" != "$pack_refs" ||
-git-pack-refs --prune &&
-git-reflog expire --all &&
+git pack-refs --prune &&
+git reflog expire --all &&
 git-repack -a -d -l &&
-$no_prune git-prune &&
-git-rerere gc || exit
+$no_prune git prune &&
+git rerere gc || exit

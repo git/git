@@ -7,7 +7,13 @@ test_description='Test diff of symlinks.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
+
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+fi
 
 cat > expected << EOF
 diff --git a/frotz b/frotz
@@ -23,17 +29,17 @@ EOF
 test_expect_success \
     'diff new symlink' \
     'ln -s xyzzy frotz &&
-    git-update-index &&
-    tree=$(git-write-tree) &&
-    git-update-index --add frotz &&
-    GIT_DIFF_OPTS=--unified=0 git-diff-index -M -p $tree > current &&
+    git update-index &&
+    tree=$(git write-tree) &&
+    git update-index --add frotz &&
+    GIT_DIFF_OPTS=--unified=0 git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 
 test_expect_success \
     'diff unchanged symlink' \
-    'tree=$(git-write-tree) &&
-    git-update-index frotz &&
-    test -z "$(git-diff-index --name-only $tree)"'
+    'tree=$(git write-tree) &&
+    git update-index frotz &&
+    test -z "$(git diff-index --name-only $tree)"'
 
 cat > expected << EOF
 diff --git a/frotz b/frotz
@@ -49,7 +55,7 @@ EOF
 test_expect_success \
     'diff removed symlink' \
     'rm frotz &&
-    git-diff-index -M -p $tree > current &&
+    git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 
 cat > expected << EOF
@@ -60,7 +66,7 @@ test_expect_success \
     'diff identical, but newly created symlink' \
     'sleep 3 &&
     ln -s xyzzy frotz &&
-    git-diff-index -M -p $tree > current &&
+    git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 
 cat > expected << EOF
@@ -79,7 +85,14 @@ test_expect_success \
     'diff different symlink' \
     'rm frotz &&
     ln -s yxyyz frotz &&
-    git-diff-index -M -p $tree > current &&
+    git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 
+test_expect_success \
+    'diff symlinks with non-existing targets' \
+    'ln -s narf pinky &&
+    ln -s take\ over brain &&
+    test_must_fail git diff --no-index pinky brain > output 2> output.err &&
+    grep narf output &&
+    ! grep error output.err'
 test_done

@@ -10,9 +10,9 @@ test_description='Binary diff and apply
 
 test_expect_success 'prepare repository' \
 	'echo AIT >a && echo BIT >b && echo CIT >c && echo DIT >d &&
-	 git-update-index --add a b c d &&
+	 git update-index --add a b c d &&
 	 echo git >a &&
-	 cat ../test4012.png >b &&
+	 cat "$TEST_DIRECTORY"/test4012.png >b &&
 	 echo git >c &&
 	 cat b b >d'
 
@@ -24,18 +24,18 @@ cat > expected <<\EOF
  4 files changed, 2 insertions(+), 2 deletions(-)
 EOF
 test_expect_success 'diff without --binary' \
-	'git-diff | git-apply --stat --summary >current &&
-	 cmp current expected'
+	'git diff | git apply --stat --summary >current &&
+	 test_cmp expected current'
 
 test_expect_success 'diff with --binary' \
-	'git-diff --binary | git-apply --stat --summary >current &&
-	 cmp current expected'
+	'git diff --binary | git apply --stat --summary >current &&
+	 test_cmp expected current'
 
 # apply needs to be able to skip the binary material correctly
 # in order to report the line number of a corrupt patch.
 test_expect_success 'apply detecting corrupt patch correctly' \
-	'git-diff | sed -e 's/-CIT/xCIT/' >broken &&
-	 if git-apply --stat --summary broken 2>detected
+	'git diff | sed -e 's/-CIT/xCIT/' >broken &&
+	 if git apply --stat --summary broken 2>detected
 	 then
 		echo unhappy - should have detected an error
 		(exit 1)
@@ -48,8 +48,8 @@ test_expect_success 'apply detecting corrupt patch correctly' \
 	 test "$detected" = xCIT'
 
 test_expect_success 'apply detecting corrupt patch correctly' \
-	'git-diff --binary | sed -e 's/-CIT/xCIT/' >broken &&
-	 if git-apply --stat --summary broken 2>detected
+	'git diff --binary | sed -e 's/-CIT/xCIT/' >broken &&
+	 if git apply --stat --summary broken 2>detected
 	 then
 		echo unhappy - should have detected an error
 		(exit 1)
@@ -61,20 +61,41 @@ test_expect_success 'apply detecting corrupt patch correctly' \
 	 detected=`sed -ne "${detected}p" broken` &&
 	 test "$detected" = xCIT'
 
-test_expect_success 'initial commit' 'git-commit -a -m initial'
+test_expect_success 'initial commit' 'git commit -a -m initial'
 
 # Try removal (b), modification (d), and creation (e).
 test_expect_success 'diff-index with --binary' \
 	'echo AIT >a && mv b e && echo CIT >c && cat e >d &&
-	 git-update-index --add --remove a b c d e &&
-	 tree0=`git-write-tree` &&
-	 git-diff --cached --binary >current &&
-	 git-apply --stat --summary current'
+	 git update-index --add --remove a b c d e &&
+	 tree0=`git write-tree` &&
+	 git diff --cached --binary >current &&
+	 git apply --stat --summary current'
 
 test_expect_success 'apply binary patch' \
-	'git-reset --hard &&
-	 git-apply --binary --index <current &&
-	 tree1=`git-write-tree` &&
+	'git reset --hard &&
+	 git apply --binary --index <current &&
+	 tree1=`git write-tree` &&
 	 test "$tree1" = "$tree0"'
+
+q_to_nul() {
+	perl -pe 'y/Q/\000/'
+}
+
+nul_to_q() {
+	perl -pe 'y/\000/Q/'
+}
+
+test_expect_success 'diff --no-index with binary creation' '
+	echo Q | q_to_nul >binary &&
+	(: hide error code from diff, which just indicates differences
+	 git diff --binary --no-index /dev/null binary >current ||
+	 true
+	) &&
+	rm binary &&
+	git apply --binary <current &&
+	echo Q >expected &&
+	nul_to_q <binary >actual &&
+	test_cmp expected actual
+'
 
 test_done

@@ -8,7 +8,7 @@ git-upload-pack - Send objects packed back to git-fetch-pack
 
 SYNOPSIS
 --------
-'git-upload-pack' [--strict] [--timeout=<n>] <directory>
+'git upload-pack' [--strict] [--timeout=<n>] <directory>
 
 DESCRIPTION
 -----------
@@ -24,10 +24,10 @@ repository.  For push operations, see 'git-send-pack'.
 OPTIONS
 -------
 
-\--strict::
+--strict::
 	Do not try <directory>/.git/ if <directory> is no git directory.
 
-\--timeout=<n>::
+--timeout=<n>::
 	Interrupt transfer after <n> seconds of inactivity.
 
 <directory>::
@@ -43,4 +43,4 @@ Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

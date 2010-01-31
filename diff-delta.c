@@ -1,21 +1,14 @@
 /*
  * diff-delta.c: generate a delta between two buffers
  *
- *  Many parts of this file have been lifted from LibXDiff version 0.10.
- *  http://www.xmailserver.org/xdiff-lib.html
+ * This code was greatly inspired by parts of LibXDiff from Davide Libenzi
+ * http://www.xmailserver.org/xdiff-lib.html
  *
- *  LibXDiff was written by Davide Libenzi <davidel@xmailserver.org>
- *  Copyright (C) 2003	Davide Libenzi
+ * Rewritten for GIT by Nicolas Pitre <nico@cam.org>, (C) 2005-2007
  *
- *  Many mods for GIT usage by Nicolas Pitre <nico@cam.org>, (C) 2005.
- *
- *  This file is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
- *
- *  Use of this within git automatically means that the LGPL
- *  licensing gets turned into GPLv2 within this project.
+ * This code is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
  */
 
 #include "git-compat-util.h"
@@ -122,10 +115,15 @@ static const unsigned int U[256] = {
 struct index_entry {
 	const unsigned char *ptr;
 	unsigned int val;
-	struct index_entry *next;
+};
+
+struct unpacked_index_entry {
+	struct index_entry entry;
+	struct unpacked_index_entry *next;
 };
 
 struct delta_index {
+	unsigned long memsize;
 	const void *src_buf;
 	unsigned long src_size;
 	unsigned int hash_mask;
@@ -137,7 +135,8 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	unsigned int i, hsize, hmask, entries, prev_val, *hash_count;
 	const unsigned char *data, *buffer = buf;
 	struct delta_index *index;
-	struct index_entry *entry, **hash;
+	struct unpacked_index_entry *entry, **hash;
+	struct index_entry *packed_entry, **packed_hash;
 	void *mem;
 	unsigned long memsize;
 
@@ -154,27 +153,21 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	hmask = hsize - 1;
 
 	/* allocate lookup index */
-	memsize = sizeof(*index) +
-		  sizeof(*hash) * hsize +
+	memsize = sizeof(*hash) * hsize +
 		  sizeof(*entry) * entries;
 	mem = malloc(memsize);
 	if (!mem)
 		return NULL;
-	index = mem;
-	mem = index + 1;
 	hash = mem;
 	mem = hash + hsize;
 	entry = mem;
 
-	index->src_buf = buf;
-	index->src_size = bufsize;
-	index->hash_mask = hmask;
 	memset(hash, 0, hsize * sizeof(*hash));
 
 	/* allocate an array to count hash entries */
 	hash_count = calloc(hsize, sizeof(*hash_count));
 	if (!hash_count) {
-		free(index);
+		free(hash);
 		return NULL;
 	}
 
@@ -188,12 +181,13 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 			val = ((val << 8) | data[i]) ^ T[val >> RABIN_SHIFT];
 		if (val == prev_val) {
 			/* keep the lowest of consecutive identical blocks */
-			entry[-1].ptr = data + RABIN_WINDOW;
+			entry[-1].entry.ptr = data + RABIN_WINDOW;
+			--entries;
 		} else {
 			prev_val = val;
 			i = val & hmask;
-			entry->ptr = data + RABIN_WINDOW;
-			entry->val = val;
+			entry->entry.ptr = data + RABIN_WINDOW;
+			entry->entry.val = val;
 			entry->next = hash[i];
 			hash[i] = entry++;
 			hash_count[i]++;
@@ -213,19 +207,83 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	 * the reference buffer.
 	 */
 	for (i = 0; i < hsize; i++) {
-		if (hash_count[i] < HASH_LIMIT)
+		int acc;
+
+		if (hash_count[i] <= HASH_LIMIT)
 			continue;
+
+		/* We leave exactly HASH_LIMIT entries in the bucket */
+		entries -= hash_count[i] - HASH_LIMIT;
+
 		entry = hash[i];
+		acc = 0;
+
+		/*
+		 * Assume that this loop is gone through exactly
+		 * HASH_LIMIT times and is entered and left with
+		 * acc==0.  So the first statement in the loop
+		 * contributes (hash_count[i]-HASH_LIMIT)*HASH_LIMIT
+		 * to the accumulator, and the inner loop consequently
+		 * is run (hash_count[i]-HASH_LIMIT) times, removing
+		 * one element from the list each time.  Since acc
+		 * balances out to 0 at the final run, the inner loop
+		 * body can't be left with entry==NULL.  So we indeed
+		 * encounter entry==NULL in the outer loop only.
+		 */
 		do {
-			struct index_entry *keep = entry;
-			int skip = hash_count[i] / HASH_LIMIT / 2;
-			do {
-				entry = entry->next;
-			} while(--skip && entry);
-			keep->next = entry;
-		} while(entry);
+			acc += hash_count[i] - HASH_LIMIT;
+			if (acc > 0) {
+				struct unpacked_index_entry *keep = entry;
+				do {
+					entry = entry->next;
+					acc -= HASH_LIMIT;
+				} while (acc > 0);
+				keep->next = entry->next;
+			}
+			entry = entry->next;
+		} while (entry);
 	}
 	free(hash_count);
+
+	/*
+	 * Now create the packed index in array form
+	 * rather than linked lists.
+	 */
+	memsize = sizeof(*index)
+		+ sizeof(*packed_hash) * (hsize+1)
+		+ sizeof(*packed_entry) * entries;
+	mem = malloc(memsize);
+	if (!mem) {
+		free(hash);
+		return NULL;
+	}
+
+	index = mem;
+	index->memsize = memsize;
+	index->src_buf = buf;
+	index->src_size = bufsize;
+	index->hash_mask = hmask;
+
+	mem = index->hash;
+	packed_hash = mem;
+	mem = packed_hash + (hsize+1);
+	packed_entry = mem;
+
+	for (i = 0; i < hsize; i++) {
+		/*
+		 * Coalesce all entries belonging to one linked list
+		 * into consecutive array entries.
+		 */
+		packed_hash[i] = packed_entry;
+		for (entry = hash[i]; entry; entry = entry->next)
+			*packed_entry++ = entry->entry;
+	}
+
+	/* Sentinel value to indicate the length of the last hash bucket */
+	packed_hash[hsize] = packed_entry;
+
+	assert(packed_entry - (struct index_entry *)mem == entries);
+	free(hash);
 
 	return index;
 }
@@ -233,6 +291,14 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 void free_delta_index(struct delta_index *index)
 {
 	free(index);
+}
+
+unsigned long sizeof_delta_index(struct delta_index *index)
+{
+	if (index)
+		return index->memsize;
+	else
+		return 0;
 }
 
 /*
@@ -246,7 +312,7 @@ create_delta(const struct delta_index *index,
 	     const void *trg_buf, unsigned long trg_size,
 	     unsigned long *delta_size, unsigned long max_size)
 {
-	unsigned int i, outpos, outsize, val;
+	unsigned int i, outpos, outsize, moff, msize, val;
 	int inscnt;
 	const unsigned char *ref_data, *ref_top, *data, *top;
 	unsigned char *out;
@@ -291,30 +357,33 @@ create_delta(const struct delta_index *index,
 	}
 	inscnt = i;
 
+	moff = 0;
+	msize = 0;
 	while (data < top) {
-		unsigned int moff = 0, msize = 0;
-		struct index_entry *entry;
-		val ^= U[data[-RABIN_WINDOW]];
-		val = ((val << 8) | *data) ^ T[val >> RABIN_SHIFT];
-		i = val & index->hash_mask;
-		for (entry = index->hash[i]; entry; entry = entry->next) {
-			const unsigned char *ref = entry->ptr;
-			const unsigned char *src = data;
-			unsigned int ref_size = ref_top - ref;
-			if (entry->val != val)
-				continue;
-			if (ref_size > top - src)
-				ref_size = top - src;
-			if (ref_size > 0x10000)
-				ref_size = 0x10000;
-			if (ref_size <= msize)
-				break;
-			while (ref_size-- && *src++ == *ref)
-				ref++;
-			if (msize < ref - entry->ptr) {
-				/* this is our best match so far */
-				msize = ref - entry->ptr;
-				moff = entry->ptr - ref_data;
+		if (msize < 4096) {
+			struct index_entry *entry;
+			val ^= U[data[-RABIN_WINDOW]];
+			val = ((val << 8) | *data) ^ T[val >> RABIN_SHIFT];
+			i = val & index->hash_mask;
+			for (entry = index->hash[i]; entry < index->hash[i+1]; entry++) {
+				const unsigned char *ref = entry->ptr;
+				const unsigned char *src = data;
+				unsigned int ref_size = ref_top - ref;
+				if (entry->val != val)
+					continue;
+				if (ref_size > top - src)
+					ref_size = top - src;
+				if (ref_size <= msize)
+					break;
+				while (ref_size-- && *src++ == *ref)
+					ref++;
+				if (msize < ref - entry->ptr) {
+					/* this is our best match so far */
+					msize = ref - entry->ptr;
+					moff = entry->ptr - ref_data;
+					if (msize >= 4096) /* good enough */
+						break;
+				}
 			}
 		}
 
@@ -327,27 +396,13 @@ create_delta(const struct delta_index *index,
 				out[outpos - inscnt - 1] = inscnt;
 				inscnt = 0;
 			}
+			msize = 0;
 		} else {
+			unsigned int left;
 			unsigned char *op;
-
-			if (msize >= RABIN_WINDOW) {
-				const unsigned char *sk;
-				sk = data + msize - RABIN_WINDOW;
-				val = 0;
-				for (i = 0; i < RABIN_WINDOW; i++)
-					val = ((val << 8) | *sk++) ^ T[val >> RABIN_SHIFT];
-			} else {
-				const unsigned char *sk = data + 1;
-				for (i = 1; i < msize; i++) {
-					val ^= U[sk[-RABIN_WINDOW]];
-					val = ((val << 8) | *sk++) ^ T[val >> RABIN_SHIFT];
-				}
-			}
 
 			if (inscnt) {
 				while (moff && ref_data[moff-1] == data[-1]) {
-					if (msize == 0x10000)
-						break;
 					/* we can match one byte back */
 					msize++;
 					moff--;
@@ -363,23 +418,40 @@ create_delta(const struct delta_index *index,
 				inscnt = 0;
 			}
 
-			data += msize;
+			/* A copy op is currently limited to 64KB (pack v2) */
+			left = (msize < 0x10000) ? 0 : (msize - 0x10000);
+			msize -= left;
+
 			op = out + outpos++;
 			i = 0x80;
 
-			if (moff & 0xff) { out[outpos++] = moff; i |= 0x01; }
-			moff >>= 8;
-			if (moff & 0xff) { out[outpos++] = moff; i |= 0x02; }
-			moff >>= 8;
-			if (moff & 0xff) { out[outpos++] = moff; i |= 0x04; }
-			moff >>= 8;
-			if (moff & 0xff) { out[outpos++] = moff; i |= 0x08; }
+			if (moff & 0x000000ff)
+				out[outpos++] = moff >> 0,  i |= 0x01;
+			if (moff & 0x0000ff00)
+				out[outpos++] = moff >> 8,  i |= 0x02;
+			if (moff & 0x00ff0000)
+				out[outpos++] = moff >> 16, i |= 0x04;
+			if (moff & 0xff000000)
+				out[outpos++] = moff >> 24, i |= 0x08;
 
-			if (msize & 0xff) { out[outpos++] = msize; i |= 0x10; }
-			msize >>= 8;
-			if (msize & 0xff) { out[outpos++] = msize; i |= 0x20; }
+			if (msize & 0x00ff)
+				out[outpos++] = msize >> 0, i |= 0x10;
+			if (msize & 0xff00)
+				out[outpos++] = msize >> 8, i |= 0x20;
 
 			*op = i;
+
+			data += msize;
+			moff += msize;
+			msize = left;
+
+			if (msize < 4096) {
+				int j;
+				val = 0;
+				for (j = -RABIN_WINDOW; j < 0; j++)
+					val = ((val << 8) | data[j])
+					      ^ T[val >> RABIN_SHIFT];
+			}
 		}
 
 		if (outpos >= outsize - MAX_OP_SIZE) {
@@ -389,7 +461,7 @@ create_delta(const struct delta_index *index,
 				outsize = max_size + MAX_OP_SIZE + 1;
 			if (max_size && outpos > max_size)
 				break;
-			out = xrealloc(out, outsize);
+			out = realloc(out, outsize);
 			if (!out) {
 				free(tmp);
 				return NULL;

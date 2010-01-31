@@ -1,0 +1,12 @@
+GIT v1.5.5.3 Release Notes
+==========================
+
+Fixes since v1.5.5.2
+--------------------
+
+ * "git send-email --compose" did not notice that non-ascii contents
+   needed some MIME magic.
+
+ * "git fast-export" did not export octopus merges correctly.
+
+Also comes with various documentation updates.

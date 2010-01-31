@@ -8,8 +8,10 @@ git-show-ref - List references in a local repository
 SYNOPSIS
 --------
 [verse]
-'git-show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
-	     [-s|--hash] [--abbrev] [--tags] [--heads] [--] <pattern>...
+'git show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
+	     [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags]
+	     [--heads] [--] <pattern>...
+'git show-ref' --exclude-existing[=<pattern>] < ref-list
 
 DESCRIPTION
 -----------
@@ -19,30 +21,37 @@ commit IDs. Results can be filtered using a pattern and tags can be
 dereferenced into object IDs. Additionally, it can be used to test whether a
 particular ref exists.
 
+The --exclude-existing form is a filter that does the inverse, it shows the
+refs from stdin that don't exist in the local repository.
+
 Use of this utility is encouraged in favor of directly accessing files under
-in the `.git` directory.
+the `.git` directory.
 
 OPTIONS
 -------
 
--h, --head::
+-h::
+--head::
 
 	Show the HEAD reference.
 
---tags, --heads::
+--tags::
+--heads::
 
 	Limit to only "refs/heads" and "refs/tags", respectively.  These
 	options are not mutually exclusive; when given both, references stored
 	in "refs/heads" and "refs/tags" are displayed.
 
--d, --dereference::
+-d::
+--dereference::
 
 	Dereference tags into object IDs as well. They will be shown with "^{}"
 	appended.
 
--s, --hash::
+-s::
+--hash[=<n>]::
 
-	Only show the SHA1 hash, not the reference name. When also using
+	Only show the SHA1 hash, not the reference name. When combined with
 	--dereference the dereferenced tag will still be shown after the SHA1.
 
 --verify::
@@ -51,17 +60,30 @@ OPTIONS
 	Aside from returning an error code of 1, it will also print an error
 	message if '--quiet' was not specified.
 
---abbrev, --abbrev=len::
+--abbrev[=<n>]::
 
 	Abbreviate the object name.  When using `--hash`, you do
-	not have to say `--hash --abbrev`; `--hash=len` would do.
+	not have to say `--hash --abbrev`; `--hash=n` would do.
 
--q, --quiet::
+-q::
+--quiet::
 
 	Do not print any results to stdout. When combined with '--verify' this
 	can be used to silently check if a reference exists.
 
-<pattern>::
+--exclude-existing[=<pattern>]::
+
+	Make 'git-show-ref' act as a filter that reads refs from stdin of the
+	form "^(?:<anything>\s)?<refname>(?:\^\{\})?$" and performs the
+	following actions on each:
+	(1) strip "^{}" at the end of line if any;
+	(2) ignore if pattern is provided and does not head-match refname;
+	(3) warn if refname is not a well-formed refname and skip;
+	(4) ignore if refname is a ref that exists in the local repository;
+	(5) otherwise output the line.
+
+
+<pattern>...::
 
 	Show references matching one or more patterns.
 
@@ -114,14 +136,14 @@ When using the '--verify' flag, the command requires an exact path:
 
 will only match the exact branch called "master".
 
-If nothing matches, gitlink:git-show-ref[1] will return an error code of 1,
+If nothing matches, 'git-show-ref' will return an error code of 1,
 and in the case of verification, it will show an error message.
 
 For scripting, you can ask it to be quiet with the "--quiet" flag, which
 allows you to do things like
 
 -----------------------------------------------------------------------------
-	git-show-ref --quiet --verify -- "refs/heads/$headname" ||
+	git show-ref --quiet --verify -- "refs/heads/$headname" ||
 		echo "$headname is not a valid branch"
 -----------------------------------------------------------------------------
 
@@ -144,7 +166,7 @@ to get a listing of all tags together with what they dereference.
 
 SEE ALSO
 --------
-gitlink:git-ls-remote[1], gitlink:git-peek-remote[1]
+linkgit:git-ls-remote[1]
 
 AUTHORS
 -------
@@ -153,4 +175,4 @@ Man page by Jonas Fonseca <fonseca@diku.dk>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

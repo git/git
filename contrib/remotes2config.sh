@@ -11,11 +11,11 @@ if [ -d "$GIT_DIR"/remotes ]; then
 	{
 		cd "$GIT_DIR"/remotes
 		ls | while read f; do
-			name=$(printf "$f" | tr -c "A-Za-z0-9" ".")
+			name=$(printf "$f" | tr -c "A-Za-z0-9-" ".")
 			sed -n \
-			-e "s/^URL: \(.*\)$/remote.$name.url \1 ./p" \
-			-e "s/^Pull: \(.*\)$/remote.$name.fetch \1 ^$ /p" \
-			-e "s/^Push: \(.*\)$/remote.$name.push \1 ^$ /p" \
+			-e "s/^URL:[ 	]*\(.*\)$/remote.$name.url \1 ./p" \
+			-e "s/^Pull:[ 	]*\(.*\)$/remote.$name.fetch \1 ^$ /p" \
+			-e "s/^Push:[ 	]*\(.*\)$/remote.$name.push \1 ^$ /p" \
 			< "$f"
 		done
 		echo done
@@ -26,10 +26,8 @@ if [ -d "$GIT_DIR"/remotes ]; then
 				mv "$GIT_DIR"/remotes "$GIT_DIR"/remotes.old
 			fi ;;
 		*)
-			echo "git-config $key "$value" $regex"
-			git-config $key "$value" $regex || error=1 ;;
+			echo "git config $key "$value" $regex"
+			git config $key "$value" $regex || error=1 ;;
 		esac
 	done
 fi
-
-

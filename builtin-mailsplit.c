@@ -6,9 +6,10 @@
  */
 #include "cache.h"
 #include "builtin.h"
+#include "string-list.h"
 
 static const char git_mailsplit_usage[] =
-"git-mailsplit [-d<prec>] [-f<n>] [-b] -o<directory> <mbox>...";
+"git mailsplit [-d<prec>] [-f<n>] [-b] -o<directory> [<mbox>|<Maildir>...]";
 
 static int is_from_line(const char *line, int len)
 {
@@ -44,6 +45,24 @@ static int is_from_line(const char *line, int len)
 /* Could be as small as 64, enough to hold a Unix "From " line. */
 static char buf[4096];
 
+/* We cannot use fgets() because our lines can contain NULs */
+int read_line_with_nul(char *buf, int size, FILE *in)
+{
+	int len = 0, c;
+
+	for (;;) {
+		c = getc(in);
+		if (c == EOF)
+			break;
+		buf[len++] = c;
+		if (c == '\n' || len + 1 >= size)
+			break;
+	}
+	buf[len] = '\0';
+
+	return len;
+}
+
 /* Called with the first line (potentially partial)
  * already in buf[] -- normally that should begin with
  * the Unix "From " line.  Write it into the specified
@@ -62,26 +81,26 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 
 	fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
 	if (fd < 0)
-		die("cannot open output file %s", name);
+		die_errno("cannot open output file '%s'", name);
 	output = fdopen(fd, "w");
 
 	/* Copy it out, while searching for a line that begins with
 	 * "From " and having something that looks like a date format.
 	 */
 	for (;;) {
-		int is_partial = (buf[len-1] != '\n');
+		int is_partial = len && buf[len-1] != '\n';
 
-		if (fputs(buf, output) == EOF)
-			die("cannot write output");
+		if (fwrite(buf, 1, len, output) != len)
+			die_errno("cannot write output");
 
-		if (fgets(buf, sizeof(buf), mbox) == NULL) {
+		len = read_line_with_nul(buf, sizeof(buf), mbox);
+		if (len == 0) {
 			if (feof(mbox)) {
 				status = 1;
 				break;
 			}
-			die("cannot read mbox");
+			die_errno("cannot read mbox");
 		}
-		len = strlen(buf);
 		if (!is_partial && !is_bare && is_from_line(buf, len))
 			break; /* done with one message */
 	}
@@ -96,44 +115,119 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	exit(1);
 }
 
-int split_mbox(const char **mbox, const char *dir, int allow_bare, int nr_prec, int skip)
+static int populate_maildir_list(struct string_list *list, const char *path)
 {
-	char *name = xmalloc(strlen(dir) + 2 + 3 * sizeof(skip));
+	DIR *dir;
+	struct dirent *dent;
+	char name[PATH_MAX];
+	char *subs[] = { "cur", "new", NULL };
+	char **sub;
+
+	for (sub = subs; *sub; ++sub) {
+		snprintf(name, sizeof(name), "%s/%s", path, *sub);
+		if ((dir = opendir(name)) == NULL) {
+			if (errno == ENOENT)
+				continue;
+			error("cannot opendir %s (%s)", name, strerror(errno));
+			return -1;
+		}
+
+		while ((dent = readdir(dir)) != NULL) {
+			if (dent->d_name[0] == '.')
+				continue;
+			snprintf(name, sizeof(name), "%s/%s", *sub, dent->d_name);
+			string_list_insert(name, list);
+		}
+
+		closedir(dir);
+	}
+
+	return 0;
+}
+
+static int split_maildir(const char *maildir, const char *dir,
+	int nr_prec, int skip)
+{
+	char file[PATH_MAX];
+	char name[PATH_MAX];
 	int ret = -1;
+	int i;
+	struct string_list list = {NULL, 0, 0, 1};
 
-	while (*mbox) {
-		const char *file = *mbox++;
-		FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
-		int file_done = 0;
+	if (populate_maildir_list(&list, maildir) < 0)
+		goto out;
 
-		if ( !f ) {
-			error("cannot open mbox %s", file);
+	for (i = 0; i < list.nr; i++) {
+		FILE *f;
+		snprintf(file, sizeof(file), "%s/%s", maildir, list.items[i].string);
+		f = fopen(file, "r");
+		if (!f) {
+			error("cannot open mail %s (%s)", file, strerror(errno));
 			goto out;
 		}
 
 		if (fgets(buf, sizeof(buf), f) == NULL) {
-			if (f == stdin)
-				break; /* empty stdin is OK */
-			error("cannot read mbox %s", file);
+			error("cannot read mail %s (%s)", file, strerror(errno));
 			goto out;
 		}
 
-		while (!file_done) {
-			sprintf(name, "%s/%0*d", dir, nr_prec, ++skip);
-			file_done = split_one(f, name, allow_bare);
-		}
+		sprintf(name, "%s/%0*d", dir, nr_prec, ++skip);
+		split_one(f, name, 1);
 
-		if (f != stdin)
-			fclose(f);
+		fclose(f);
 	}
+
 	ret = skip;
 out:
-	free(name);
+	string_list_clear(&list, 1);
 	return ret;
 }
+
+static int split_mbox(const char *file, const char *dir, int allow_bare,
+		      int nr_prec, int skip)
+{
+	char name[PATH_MAX];
+	int ret = -1;
+	int peek;
+
+	FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
+	int file_done = 0;
+
+	if (!f) {
+		error("cannot open mbox %s", file);
+		goto out;
+	}
+
+	do {
+		peek = fgetc(f);
+	} while (isspace(peek));
+	ungetc(peek, f);
+
+	if (fgets(buf, sizeof(buf), f) == NULL) {
+		/* empty stdin is OK */
+		if (f != stdin) {
+			error("cannot read mbox %s", file);
+			goto out;
+		}
+		file_done = 1;
+	}
+
+	while (!file_done) {
+		sprintf(name, "%s/%0*d", dir, nr_prec, ++skip);
+		file_done = split_one(f, name, allow_bare);
+	}
+
+	if (f != stdin)
+		fclose(f);
+
+	ret = skip;
+out:
+	return ret;
+}
+
 int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 {
-	int nr = 0, nr_prec = 4, ret;
+	int nr = 0, nr_prec = 4, num = 0;
 	int allow_bare = 0;
 	const char *dir = NULL;
 	const char **argp;
@@ -186,9 +280,41 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 			argp = stdin_only;
 	}
 
-	ret = split_mbox(argp, dir, allow_bare, nr_prec, nr);
-	if (ret != -1)
-		printf("%d\n", ret);
+	while (*argp) {
+		const char *arg = *argp++;
+		struct stat argstat;
+		int ret = 0;
 
-	return ret == -1;
+		if (arg[0] == '-' && arg[1] == 0) {
+			ret = split_mbox(arg, dir, allow_bare, nr_prec, nr);
+			if (ret < 0) {
+				error("cannot split patches from stdin");
+				return 1;
+			}
+			num += (ret - nr);
+			nr = ret;
+			continue;
+		}
+
+		if (stat(arg, &argstat) == -1) {
+			error("cannot stat %s (%s)", arg, strerror(errno));
+			return 1;
+		}
+
+		if (S_ISDIR(argstat.st_mode))
+			ret = split_maildir(arg, dir, nr_prec, nr);
+		else
+			ret = split_mbox(arg, dir, allow_bare, nr_prec, nr);
+
+		if (ret < 0) {
+			error("cannot split patches from %s", arg);
+			return 1;
+		}
+		num += (ret - nr);
+		nr = ret;
+	}
+
+	printf("%d\n", num);
+
+	return 0;
 }

@@ -6,13 +6,14 @@ endif
 
 INSTALL ?= install
 TAR ?= tar
+RM ?= rm -f
 prefix ?= $(HOME)
-template_dir ?= $(prefix)/share/git-core/templates/
+template_instdir ?= $(prefix)/share/git-core/templates
 # DESTDIR=
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
-template_dir_SQ = $(subst ','\'',$(template_dir))
+template_instdir_SQ = $(subst ','\'',$(template_instdir))
 
 all: boilerplates.made custom
 
@@ -22,7 +23,7 @@ all: boilerplates.made custom
 
 bpsrc = $(filter-out %~,$(wildcard *--*))
 boilerplates.made : $(bpsrc)
-	$(QUIET)ls *--* 2>/dev/null | \
+	$(QUIET)umask 022 && ls *--* 2>/dev/null | \
 	while read boilerplate; \
 	do \
 		case "$$boilerplate" in *~) continue ;; esac && \
@@ -30,9 +31,11 @@ boilerplates.made : $(bpsrc)
 		dir=`expr "$$dst" : '\(.*\)/'` && \
 		mkdir -p blt/$$dir && \
 		case "$$boilerplate" in \
-		*--) ;; \
-		*) cp $$boilerplate blt/$$dst ;; \
-		esac || exit; \
+		*--) continue;; \
+		esac && \
+		cp $$boilerplate blt/$$dst && \
+		if test -x "blt/$$dst"; then rx=rx; else rx=r; fi && \
+		chmod a+$$rx "blt/$$dst" || exit; \
 	done && \
 	date >$@
 
@@ -42,9 +45,9 @@ custom:
 	$(QUIET): no custom templates yet
 
 clean:
-	rm -rf blt boilerplates.made
+	$(RM) -r blt boilerplates.made
 
 install: all
-	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(template_dir_SQ)'
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_instdir_SQ)'
 	(cd blt && $(TAR) cf - .) | \
-	(cd '$(DESTDIR_SQ)$(template_dir_SQ)' && $(TAR) xf -)
+	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && umask 022 && $(TAR) xfo -)

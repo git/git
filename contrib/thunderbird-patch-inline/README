@@ -1,0 +1,20 @@
+appp.sh is a script that is supposed to be used together with ExternalEditor
+for Mozilla Thunderbird. It will let you include patches inline in e-mails
+in an easy way.
+
+Usage:
+- Generate the patch with git format-patch.
+- Start writing a new e-mail in Thunderbird.
+- Press the external editor button (or Ctrl-E) to run appp.sh
+- Select the previously generated patch file.
+- Finish editing the e-mail.
+
+Any text that is entered into the message editor before appp.sh is called
+will be moved to the section between the --- and the diffstat.
+
+All S-O-B:s and Cc:s in the patch will be added to the CC list.
+
+To set it up, just install External Editor and tell it to use appp.sh as the
+editor.
+
+Zenity is a required dependency.

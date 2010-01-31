@@ -24,6 +24,13 @@ create_delta_index(const void *buf, unsigned long bufsize);
 extern void free_delta_index(struct delta_index *index);
 
 /*
+ * sizeof_delta_index: returns memory usage of delta index
+ *
+ * Given pointer must be what create_delta_index() returned, or NULL.
+ */
+extern unsigned long sizeof_delta_index(struct delta_index *index);
+
+/*
  * create_delta: create a delta from given index for the given buffer
  *
  * This function may be called multiple times with different buffers using
@@ -83,12 +90,11 @@ static inline unsigned long get_delta_hdr_size(const unsigned char **datap,
 					       const unsigned char *top)
 {
 	const unsigned char *data = *datap;
-	unsigned char cmd;
-	unsigned long size = 0;
+	unsigned long cmd, size = 0;
 	int i = 0;
 	do {
 		cmd = *data++;
-		size |= (cmd & ~0x80) << i;
+		size |= (cmd & 0x7f) << i;
 		i += 7;
 	} while (cmd & 0x80 && data < top);
 	*datap = data;

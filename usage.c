@@ -7,9 +7,9 @@
 
 static void report(const char *prefix, const char *err, va_list params)
 {
-	fputs(prefix, stderr);
-	vfprintf(stderr, err, params);
-	fputs("\n", stderr);
+	char msg[1024];
+	vsnprintf(msg, sizeof(msg), err, params);
+	fprintf(stderr, "%s%s\n", prefix, msg);
 }
 
 static NORETURN void usage_builtin(const char *err)
@@ -41,26 +41,10 @@ static void (*die_routine)(const char *err, va_list params) NORETURN = die_built
 static void (*error_routine)(const char *err, va_list params) = error_builtin;
 static void (*warn_routine)(const char *err, va_list params) = warn_builtin;
 
-void set_usage_routine(void (*routine)(const char *err) NORETURN)
-{
-	usage_routine = routine;
-}
-
 void set_die_routine(void (*routine)(const char *err, va_list params) NORETURN)
 {
 	die_routine = routine;
 }
-
-void set_error_routine(void (*routine)(const char *err, va_list params))
-{
-	error_routine = routine;
-}
-
-void set_warn_routine(void (*routine)(const char *warn, va_list params))
-{
-	warn_routine = routine;
-}
-
 
 void usage(const char *err)
 {
@@ -73,6 +57,34 @@ void die(const char *err, ...)
 
 	va_start(params, err);
 	die_routine(err, params);
+	va_end(params);
+}
+
+void die_errno(const char *fmt, ...)
+{
+	va_list params;
+	char fmt_with_err[1024];
+	char str_error[256], *err;
+	int i, j;
+
+	err = strerror(errno);
+	for (i = j = 0; err[i] && j < sizeof(str_error) - 1; ) {
+		if ((str_error[j++] = err[i++]) != '%')
+			continue;
+		if (j < sizeof(str_error) - 1) {
+			str_error[j++] = '%';
+		} else {
+			/* No room to double the '%', so we overwrite it with
+			 * '\0' below */
+			j--;
+			break;
+		}
+	}
+	str_error[j] = 0;
+	snprintf(fmt_with_err, sizeof(fmt_with_err), "%s: %s", fmt, str_error);
+
+	va_start(params, fmt);
+	die_routine(fmt_with_err, params);
 	va_end(params);
 }
 

@@ -9,7 +9,7 @@ diff --git a/Makefile b/Makefile
 -	git-deltafy-script
 +	git-deltafy-script git-fetch-script
  
- PROG=   git-update-cache git-diff-files git-init-db git-write-tree \
+ PROG=   git-update-index git-diff-files git-init-db git-write-tree \
  	git-read-tree git-commit-tree git-cat-file git-fsck-cache \
 diff --git a/git-pull-script b/git-fetch-script
 similarity index 87%

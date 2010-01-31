@@ -1,0 +1,34 @@
+allocation growing API
+======================
+
+Dynamically growing an array using realloc() is error prone and boring.
+
+Define your array with:
+
+* a pointer (`ary`) that points at the array, initialized to `NULL`;
+
+* an integer variable (`alloc`) that keeps track of how big the current
+  allocation is, initialized to `0`;
+
+* another integer variable (`nr`) to keep track of how many elements the
+  array currently has, initialized to `0`.
+
+Then before adding `n`th element to the array, call `ALLOC_GROW(ary, n,
+alloc)`.  This ensures that the array can hold at least `n` elements by
+calling `realloc(3)` and adjusting `alloc` variable.
+
+------------
+sometype *ary;
+size_t nr;
+size_t alloc
+
+for (i = 0; i < nr; i++)
+	if (we like ary[i] already)
+		return;
+
+/* we did not like any existing one, so add one */
+ALLOC_GROW(ary, nr + 1, alloc);
+ary[nr++] = value you like;
+------------
+
+You are responsible for updating the `nr` variable.

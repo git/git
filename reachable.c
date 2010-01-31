@@ -15,10 +15,20 @@ static void process_blob(struct blob *blob,
 {
 	struct object *obj = &blob->object;
 
+	if (!blob)
+		die("bad blob object");
 	if (obj->flags & SEEN)
 		return;
 	obj->flags |= SEEN;
 	/* Nothing to do, really .. The blob lookup was the important part */
+}
+
+static void process_gitlink(const unsigned char *sha1,
+			    struct object_array *p,
+			    struct name_path *path,
+			    const char *name)
+{
+	/* I don't think we want to recurse into this, really. */
 }
 
 static void process_tree(struct tree *tree,
@@ -31,12 +41,13 @@ static void process_tree(struct tree *tree,
 	struct name_entry entry;
 	struct name_path me;
 
+	if (!tree)
+		die("bad tree object");
 	if (obj->flags & SEEN)
 		return;
 	obj->flags |= SEEN;
 	if (parse_tree(tree) < 0)
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
-	name = xstrdup(name);
 	add_object(obj, p, path, name);
 	me.up = path;
 	me.elem = name;
@@ -47,6 +58,8 @@ static void process_tree(struct tree *tree,
 	while (tree_entry(&desc, &entry)) {
 		if (S_ISDIR(entry.mode))
 			process_tree(lookup_tree(entry.sha1), p, &me, entry.path);
+		else if (S_ISGITLINK(entry.mode))
+			process_gitlink(entry.sha1, p, &me, entry.path);
 		else
 			process_blob(lookup_blob(entry.sha1), p, &me, entry.path);
 	}
@@ -69,7 +82,8 @@ static void process_tag(struct tag *tag, struct object_array *p, const char *nam
 
 	if (parse_tag(tag) < 0)
 		die("bad tag object %s", sha1_to_hex(obj->sha1));
-	add_object(tag->tagged, p, NULL, name);
+	if (tag->tagged)
+		add_object(tag->tagged, p, NULL, name);
 }
 
 static void walk_commit_list(struct rev_info *revs)
@@ -140,7 +154,8 @@ static int add_one_reflog(const char *path, const unsigned char *sha1, int flag,
 static void add_one_tree(const unsigned char *sha1, struct rev_info *revs)
 {
 	struct tree *tree = lookup_tree(sha1);
-	add_pending_object(revs, &tree->object, "");
+	if (tree)
+		add_pending_object(revs, &tree->object, "");
 }
 
 static void add_cache_tree(struct cache_tree *it, struct rev_info *revs)
@@ -159,6 +174,16 @@ static void add_cache_refs(struct rev_info *revs)
 
 	read_cache();
 	for (i = 0; i < active_nr; i++) {
+		/*
+		 * The index can contain blobs and GITLINKs, GITLINKs are hashes
+		 * that don't actually point to objects in the repository, it's
+		 * almost guaranteed that they are NOT blobs, so we don't call
+		 * lookup_blob() on them, to avoid populating the hash table
+		 * with invalid information
+		 */
+		if (S_ISGITLINK(active_cache[i]->ce_mode))
+			continue;
+
 		lookup_blob(active_cache[i]->sha1);
 		/*
 		 * We could add the blobs to the pending list, but quite
@@ -195,6 +220,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog)
 	 * Set up the revision walk - this will move all commits
 	 * from the pending list to the commit walking list.
 	 */
-	prepare_revision_walk(revs);
+	if (prepare_revision_walk(revs))
+		die("revision walk setup failed");
 	walk_commit_list(revs);
 }

@@ -1,6 +1,6 @@
 body {
 	font-family: sans-serif;
-	font-size: 12px;
+	font-size: small;
 	border: solid #d9d8d1;
 	border-width: 1px;
 	margin: 10px;
@@ -28,10 +28,14 @@ img.logo {
 	border-width: 0px;
 }
 
+img.avatar {
+	vertical-align: middle;
+}
+
 div.page_header {
 	height: 25px;
 	padding: 8px;
-	font-size: 18px;
+	font-size: 150%;
 	font-weight: bold;
 	background-color: #d9d8d1;
 }
@@ -85,6 +89,10 @@ div.title, a.title {
 	color: #000000;
 }
 
+div.readme {
+	padding: 8px;
+}
+
 a.title:hover {
 	background-color: #d9d8d1;
 }
@@ -113,7 +121,7 @@ span.signoff {
 
 div.log_link {
 	padding: 0px 8px;
-	font-size: 10px;
+	font-size: 70%;
 	font-family: sans-serif;
 	font-style: normal;
 	position: relative;
@@ -128,11 +136,14 @@ div.list_head {
 	font-style: italic;
 }
 
+.author_date, .author {
+	font-style: italic;
+}
+
 div.author_date {
 	padding: 8px;
 	border: solid #d9d8d1;
 	border-width: 0px 0px 1px 0px;
-	font-style: italic;
 }
 
 a.list {
@@ -170,15 +181,33 @@ a.text:hover {
 
 table {
 	padding: 8px 4px;
-}
-
-table.project_list {
 	border-spacing: 0;
 }
 
 table.diff_tree {
-	border-spacing: 0;
 	font-family: monospace;
+}
+
+table.combined.diff_tree th {
+	text-align: center;
+}
+
+table.combined.diff_tree td {
+	padding-right: 24px;
+}
+
+table.combined.diff_tree th.link,
+table.combined.diff_tree td.link {
+	padding: 0px 2px;
+}
+
+table.combined.diff_tree td.nochange a {
+	color: #6666ff;
+}
+
+table.combined.diff_tree td.nochange a:hover,
+table.combined.diff_tree td.nochange a:visited {
+	color: #d06666;
 }
 
 table.blame {
@@ -187,13 +216,13 @@ table.blame {
 
 table.blame td {
 	padding: 0px 5px;
-	font-size: 12px;
+	font-size: 100%;
 	vertical-align: top;
 }
 
 th {
 	padding: 2px 5px;
-	font-size: 12px;
+	font-size: 100%;
 	text-align: left;
 }
 
@@ -215,14 +244,14 @@ tr.dark:hover {
 
 td {
 	padding: 2px 5px;
-	font-size: 12px;
+	font-size: 100%;
 	vertical-align: top;
 }
 
 td.link, td.selflink {
 	padding: 2px 5px;
 	font-family: sans-serif;
-	font-size: 10px;
+	font-size: 70%;
 }
 
 td.selflink {
@@ -257,6 +286,12 @@ table.diff_tree span.file_status.mode_chnge {
 
 table.diff_tree span.file_status.copied {
   color: #70a070;
+}
+
+/* noage: "No commits" */
+table.project_list td.noage {
+	color: #808080;
+	font-style: italic;
 }
 
 /* age2: 60*60*24*2 <= age */
@@ -387,6 +422,10 @@ div.diff.incomplete {
 	color: #cccccc;
 }
 
+div.diff.nodifferences {
+	font-weight: bold;
+	color: #600000;
+}
 
 div.index_include {
 	border: solid #d9d8d1;
@@ -395,12 +434,16 @@ div.index_include {
 }
 
 div.search {
-	font-size: 12px;
+	font-size: 100%;
 	font-weight: normal;
 	margin: 4px 8px;
-	position: absolute;
+	float: right;
 	top: 56px;
 	right: 12px
+}
+
+p.projsearch {
+	text-align: center;
 }
 
 td.linenr {
@@ -423,7 +466,7 @@ a.rss_logo {
 	background-color: #ff6600;
 	font-weight: bold;
 	font-family: sans-serif;
-	font-size: 10px;
+	font-size: 70%;
 	text-align: center;
 	text-decoration: none;
 }
@@ -432,13 +475,34 @@ a.rss_logo:hover {
 	background-color: #ee5500;
 }
 
+a.rss_logo.generic {
+	background-color: #ff8800;
+}
+
+a.rss_logo.generic:hover {
+	background-color: #ee7700;
+}
+
 span.refs span {
 	padding: 0px 4px;
-	font-size: 10px;
+	font-size: 70%;
 	font-weight: normal;
 	border: 1px solid;
 	background-color: #ffaaff;
 	border-color: #ffccff #ff00ee #ff00ee #ffccff;
+}
+
+span.refs span a {
+	text-decoration: none;
+	color: inherit;
+}
+
+span.refs span a:hover {
+	text-decoration: underline;
+}
+
+span.refs span.indirect {
+	font-style: italic;
 }
 
 span.refs span.ref {
@@ -462,4 +526,8 @@ span.atnight {
 
 span.match {
 	color: #e00000;
+}
+
+div.binary {
+	font-style: italic;
 }

@@ -25,33 +25,6 @@
 #include "cache.h"
 #include "quote.h"
 
-/* Stolen from "imap-send.c". */
-int nfvasprintf(char **strp, const char *fmt, va_list ap)
-{
-	int len;
-	char tmp[1024];
-
-	if ((len = vsnprintf(tmp, sizeof(tmp), fmt, ap)) < 0 ||
-	    !(*strp = xmalloc(len + 1)))
-		die("Fatal: Out of memory\n");
-	if (len >= (int)sizeof(tmp))
-		vsprintf(*strp, fmt, ap);
-	else
-		memcpy(*strp, tmp, len + 1);
-	return len;
-}
-
-int nfasprintf(char **str, const char *fmt, ...)
-{
-	int rc;
-	va_list args;
-
-	va_start(args, fmt);
-	rc = nfvasprintf(str, fmt, args);
-	va_end(args);
-	return rc;
-}
-
 /* Get a trace file descriptor from GIT_TRACE env variable. */
 static int get_trace_fd(int *need_close)
 {
@@ -64,7 +37,7 @@ static int get_trace_fd(int *need_close)
 		return STDERR_FILENO;
 	if (strlen(trace) == 1 && isdigit(*trace))
 		return atoi(trace);
-	if (*trace == '/') {
+	if (is_absolute_path(trace)) {
 		int fd = open(trace, O_WRONLY | O_APPEND | O_CREAT, 0666);
 		if (fd == -1) {
 			fprintf(stderr,
@@ -77,7 +50,7 @@ static int get_trace_fd(int *need_close)
 		return fd;
 	}
 
-	fprintf(stderr, "What does '%s' for GIT_TRACE means ?\n", trace);
+	fprintf(stderr, "What does '%s' for GIT_TRACE mean?\n", trace);
 	fprintf(stderr, "If you want to trace into a file, "
 		"then please set GIT_TRACE to an absolute pathname "
 		"(starting with /).\n");
@@ -89,63 +62,65 @@ static int get_trace_fd(int *need_close)
 static const char err_msg[] = "Could not trace into fd given by "
 	"GIT_TRACE environment variable";
 
-void trace_printf(const char *format, ...)
+void trace_printf(const char *fmt, ...)
 {
-	char *trace_str;
-	va_list rest;
-	int need_close = 0;
-	int fd = get_trace_fd(&need_close);
+	struct strbuf buf;
+	va_list ap;
+	int fd, len, need_close = 0;
 
+	fd = get_trace_fd(&need_close);
 	if (!fd)
 		return;
 
-	va_start(rest, format);
-	nfvasprintf(&trace_str, format, rest);
-	va_end(rest);
+	strbuf_init(&buf, 64);
+	va_start(ap, fmt);
+	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
+	va_end(ap);
+	if (len >= strbuf_avail(&buf)) {
+		strbuf_grow(&buf, len - strbuf_avail(&buf) + 128);
+		va_start(ap, fmt);
+		len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
+		va_end(ap);
+		if (len >= strbuf_avail(&buf))
+			die("broken vsnprintf");
+	}
+	strbuf_setlen(&buf, len);
 
-	write_or_whine_pipe(fd, trace_str, strlen(trace_str), err_msg);
-
-	free(trace_str);
+	write_or_whine_pipe(fd, buf.buf, buf.len, err_msg);
+	strbuf_release(&buf);
 
 	if (need_close)
 		close(fd);
 }
 
-void trace_argv_printf(const char **argv, int count, const char *format, ...)
+void trace_argv_printf(const char **argv, const char *fmt, ...)
 {
-	char *argv_str, *format_str, *trace_str;
-	size_t argv_len, format_len, trace_len;
-	va_list rest;
-	int need_close = 0;
-	int fd = get_trace_fd(&need_close);
+	struct strbuf buf;
+	va_list ap;
+	int fd, len, need_close = 0;
 
+	fd = get_trace_fd(&need_close);
 	if (!fd)
 		return;
 
-	/* Get the argv string. */
-	argv_str = sq_quote_argv(argv, count);
-	argv_len = strlen(argv_str);
+	strbuf_init(&buf, 64);
+	va_start(ap, fmt);
+	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
+	va_end(ap);
+	if (len >= strbuf_avail(&buf)) {
+		strbuf_grow(&buf, len - strbuf_avail(&buf) + 128);
+		va_start(ap, fmt);
+		len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
+		va_end(ap);
+		if (len >= strbuf_avail(&buf))
+			die("broken vsnprintf");
+	}
+	strbuf_setlen(&buf, len);
 
-	/* Get the formated string. */
-	va_start(rest, format);
-	nfvasprintf(&format_str, format, rest);
-	va_end(rest);
-
-	/* Allocate buffer for trace string. */
-	format_len = strlen(format_str);
-	trace_len = argv_len + format_len + 1; /* + 1 for \n */
-	trace_str = xmalloc(trace_len + 1);
-
-	/* Copy everything into the trace string. */
-	strncpy(trace_str, format_str, format_len);
-	strncpy(trace_str + format_len, argv_str, argv_len);
-	strcpy(trace_str + trace_len - 1, "\n");
-
-	write_or_whine_pipe(fd, trace_str, trace_len, err_msg);
-
-	free(argv_str);
-	free(format_str);
-	free(trace_str);
+	sq_quote_argv(&buf, argv, 0);
+	strbuf_addch(&buf, '\n');
+	write_or_whine_pipe(fd, buf.buf, buf.len, err_msg);
+	strbuf_release(&buf);
 
 	if (need_close)
 		close(fd);

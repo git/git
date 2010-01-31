@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-apply handling copy/rename patch.
+test_description='git apply handling copy/rename patch.
 
 '
 . ./test-lib.sh
@@ -26,21 +26,23 @@ echo 'This is foo' >foo
 chmod +x foo
 
 test_expect_success setup \
-    'git-update-index --add foo'
+    'git update-index --add foo'
 
 test_expect_success apply \
-    'git-apply --index --stat --summary --apply test-patch'
+    'git apply --index --stat --summary --apply test-patch'
 
-if [ "$(git config --get core.filemode)" = false ]
+if test "$(git config --bool core.filemode)" = false
 then
 	say 'filemode disabled on the filesystem'
 else
-	test_expect_success validate \
-	    'test -f bar && ls -l bar | grep "^-..x......"'
+	test_set_prereq FILEMODE
 fi
 
+test_expect_success FILEMODE validate \
+	    'test -f bar && ls -l bar | grep "^-..x......"'
+
 test_expect_success 'apply reverse' \
-    'git-apply -R --index --stat --summary --apply test-patch &&
+    'git apply -R --index --stat --summary --apply test-patch &&
      test "$(cat foo)" = "This is foo"'
 
 cat >test-patch <<\EOF
@@ -56,7 +58,7 @@ copy to bar
 EOF
 
 test_expect_success 'apply copy' \
-    'git-apply --index --stat --summary --apply test-patch &&
+    'git apply --index --stat --summary --apply test-patch &&
      test "$(cat bar)" = "This is bar" -a "$(cat foo)" = "This is foo"'
 
 test_done

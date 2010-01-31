@@ -1,0 +1,10 @@
+GIT v1.5.3.1 Release Notes
+==========================
+
+Fixes since v1.5.3
+------------------
+
+This is solely to fix the generated RPM's dependencies.  We used
+to have git-p4 package but we do not anymore.  As suggested on
+the mailing list, this release makes git-core "Obsolete" git-p4,
+so that yum update would not complain.

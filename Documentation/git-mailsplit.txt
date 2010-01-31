@@ -7,12 +7,15 @@ git-mailsplit - Simple UNIX mbox splitter program
 
 SYNOPSIS
 --------
-'git-mailsplit' [-b] [-f<nn>] [-d<prec>] -o<directory> [--] [<mbox>...]
+'git mailsplit' [-b] [-f<nn>] [-d<prec>] -o<directory> [--] [<mbox>|<Maildir>...]
 
 DESCRIPTION
 -----------
-Splits a mbox file into a list of files: "0001" "0002" ..  in the specified
-directory so you can process them further from there.
+Splits a mbox file or a Maildir into a list of files: "0001" "0002" ..  in the
+specified directory so you can process them further from there.
+
+IMPORTANT: Maildir splitting relies upon filenames being sorted to output
+patches in the correct order.
 
 OPTIONS
 -------
@@ -20,7 +23,11 @@ OPTIONS
 	Mbox file to split.  If not given, the mbox is read from
 	the standard input.
 
-<directory>::
+<Maildir>::
+	Root of the Maildir to split. This directory should contain the cur, tmp
+	and new subdirectories.
+
+-o<directory>::
 	Directory in which to place the individual messages.
 
 -b::
@@ -39,7 +46,7 @@ OPTIONS
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
-and Junio C Hamano <junkio@cox.net>
+and Junio C Hamano <gitster@pobox.com>
 
 
 Documentation
@@ -48,5 +55,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

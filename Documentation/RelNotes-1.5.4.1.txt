@@ -1,0 +1,17 @@
+GIT v1.5.4.1 Release Notes
+==========================
+
+Fixes since v1.5.4
+------------------
+
+ * "git-commit -C $tag" used to work but rewrite in C done in
+   1.5.4 broke it.
+
+ * An entry in the .gitattributes file that names a pattern in a
+   subdirectory of the directory it is in did not match
+   correctly (e.g. pattern "b/*.c" in "a/.gitattributes" should
+   match "a/b/foo.c" but it didn't).
+
+ * Customized color specification was parsed incorrectly when
+   numeric color values are used.  This was fixed in 1.5.4.1.
+

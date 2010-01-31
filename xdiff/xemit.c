@@ -27,7 +27,6 @@
 
 static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec);
 static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *ecb);
-static xdchange_t *xdl_get_hunk(xdchange_t *xscr, xdemitconf_t const *xecfg);
 
 
 
@@ -58,18 +57,36 @@ static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *
  * Starting at the passed change atom, find the latest change atom to be included
  * inside the differential hunk according to the specified configuration.
  */
-static xdchange_t *xdl_get_hunk(xdchange_t *xscr, xdemitconf_t const *xecfg) {
+xdchange_t *xdl_get_hunk(xdchange_t *xscr, xdemitconf_t const *xecfg) {
 	xdchange_t *xch, *xchp;
+	long max_common = 2 * xecfg->ctxlen + xecfg->interhunkctxlen;
 
 	for (xchp = xscr, xch = xscr->next; xch; xchp = xch, xch = xch->next)
-		if (xch->i1 - (xchp->i1 + xchp->chg1) > 2 * xecfg->ctxlen)
+		if (xch->i1 - (xchp->i1 + xchp->chg1) > max_common)
 			break;
 
 	return xchp;
 }
 
 
-static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll) {
+static long def_ff(const char *rec, long len, char *buf, long sz, void *priv)
+{
+	if (len > 0 &&
+			(isalpha((unsigned char)*rec) || /* identifier? */
+			 *rec == '_' ||	/* also identifier? */
+			 *rec == '$')) { /* identifiers from VMS and other esoterico */
+		if (len > sz)
+			len = sz;
+		while (0 < len && isspace((unsigned char)rec[len - 1]))
+			len--;
+		memcpy(buf, rec, len);
+		return len;
+	}
+	return -1;
+}
+
+static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll,
+		find_func_t ff, void *ff_priv) {
 
 	/*
 	 * Be quite stupid about this for now.  Find a line in the old file
@@ -80,27 +97,17 @@ static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll) {
 	const char *rec;
 	long len;
 
-	*ll = 0;
 	while (i-- > 0) {
 		len = xdl_get_rec(xf, i, &rec);
-		if (len > 0 &&
-		    (isalpha((unsigned char)*rec) || /* identifier? */
-		     *rec == '_' ||	/* also identifier? */
-		     *rec == '$')) {	/* mysterious GNU diff's invention */
-			if (len > sz)
-				len = sz;
-			while (0 < len && isspace((unsigned char)rec[len - 1]))
-				len--;
-			memcpy(buf, rec, len);
-			*ll = len;
+		if ((*ll = ff(rec, len, buf, sz, ff_priv)) >= 0)
 			return;
-		}
 	}
+	*ll = 0;
 }
 
 
-int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
-		    xdemitconf_t const *xecfg) {
+static int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
+                           xdemitconf_t const *xecfg) {
 	xdfile_t *xdf = &xe->xdf1;
 	const char *rchg = xdf->rchg;
 	long ix;
@@ -120,11 +127,12 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	xdchange_t *xch, *xche;
 	char funcbuf[80];
 	long funclen = 0;
+	find_func_t ff = xecfg->find_func ?  xecfg->find_func : def_ff;
 
 	if (xecfg->flags & XDL_EMIT_COMMON)
 		return xdl_emit_common(xe, xscr, ecb, xecfg);
 
-	for (xch = xche = xscr; xch; xch = xche->next) {
+	for (xch = xscr; xch; xch = xche->next) {
 		xche = xdl_get_hunk(xch, xecfg);
 
 		s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);
@@ -143,7 +151,8 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 
 		if (xecfg->flags & XDL_EMIT_FUNCNAMES) {
 			xdl_find_func(&xe->xdf1, s1, funcbuf,
-				      sizeof(funcbuf), &funclen);
+				      sizeof(funcbuf), &funclen,
+				      ff, xecfg->find_func_priv);
 		}
 		if (xdl_emit_hunk_hdr(s1 + 1, e1 - s1, s2 + 1, e2 - s2,
 				      funcbuf, funclen, ecb) < 0)
@@ -194,4 +203,3 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 
 	return 0;
 }
-

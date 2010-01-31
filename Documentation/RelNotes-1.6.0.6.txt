@@ -1,0 +1,33 @@
+GIT v1.6.0.6 Release Notes
+==========================
+
+Fixes since 1.6.0.5
+-------------------
+
+ * "git fsck" had a deep recursion that wasted stack space.
+
+ * "git fast-export" and "git fast-import" choked on an old style
+   annotated tag that lack the tagger information.
+
+ * "git mergetool -- file" did not correctly skip "--" marker that
+   signals the end of options list.
+
+ * "git show $tag" segfaulted when an annotated $tag pointed at a
+   nonexistent object.
+
+ * "git show 2>error" when the standard output is automatically redirected
+   to the pager redirected the standard error to the pager as well; there
+   was no need to.
+
+ * "git send-email" did not correctly handle list of addresses when
+   they had quoted comma (e.g. "Lastname, Givenname" <mail@addre.ss>).
+
+ * Logic to discover branch ancestry in "git svn" was unreliable when
+   the process to fetch history was interrupted.
+
+ * Removed support for an obsolete gitweb request URI, whose
+   implementation ran "git diff" Porcelain, instead of using plumbing,
+   which would have run an external diff command specified in the
+   repository configuration as the gitweb user.
+
+Also contains numerous documentation typofixes.

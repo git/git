@@ -1,0 +1,48 @@
+GIT v1.5.3.6 Release Notes
+==========================
+
+Fixes since v1.5.3.5
+--------------------
+
+ * git-cvsexportcommit handles root commits better.
+
+ * git-svn dcommit used to clobber when sending a series of
+   patches.
+
+ * git-svn dcommit failed after attempting to rebase when
+   started with a dirty index; now it stops upfront.
+
+ * git-grep sometimes refused to work when your index was
+   unmerged.
+
+ * "git-grep -A1 -B2" acted as if it was told to run "git -A1 -B21".
+
+ * git-hash-object did not honor configuration variables, such as
+   core.compression.
+
+ * git-index-pack choked on a huge pack on 32-bit machines, even when
+   large file offsets are supported.
+
+ * atom feeds from git-web said "10" for the month of November.
+
+ * a memory leak in commit walker was plugged.
+
+ * When git-send-email inserted the original author's From:
+   address in body, it did not mark the message with
+   Content-type: as needed.
+
+ * git-revert and git-cherry-pick incorrectly refused to start
+   when the work tree was dirty.
+
+ * git-clean did not honor core.excludesfile configuration.
+
+ * git-add mishandled ".gitignore" files when applying them to
+   subdirectories.
+
+ * While importing a too branchy history, git-fastimport did not
+   honor delta depth limit properly.
+
+ * Support for zlib implementations that lack ZLIB_VERNUM and definition
+   of deflateBound() has been added.
+
+ * Quite a lot of documentation clarifications.

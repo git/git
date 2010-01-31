@@ -45,7 +45,7 @@ esac
 # MRT is the current "merge result tree"
 
 MRC=$head MSG= PARENT="-p $head"
-MRT=$(git-write-tree)
+MRT=$(git write-tree)
 CNT=1 ;# counting our head
 NON_FF_MERGE=0
 OCTOPUS_FAILURE=0
@@ -61,7 +61,7 @@ do
 		exit 2
 	esac
 
-	common=$(git-merge-base --all $MRC $SHA1) ||
+	common=$(git merge-base --all $SHA1 $MRC) ||
 		die "Unable to find common commit with $SHA1"
 
 	case "$LF$common$LF" in
@@ -82,32 +82,25 @@ do
 		# We still need to count this as part of the parent set.
 
 		echo "Fast forwarding to: $SHA1"
-		git-read-tree -u -m $head $SHA1 || exit
-		MRC=$SHA1 MRT=$(git-write-tree)
+		git read-tree -u -m $head $SHA1 || exit
+		MRC=$SHA1 MRT=$(git write-tree)
 		continue
 	fi
 
 	NON_FF_MERGE=1
 
 	echo "Trying simple merge with $SHA1"
-	git-read-tree -u -m --aggressive  $common $MRT $SHA1 || exit 2
-	next=$(git-write-tree 2>/dev/null)
+	git read-tree -u -m --aggressive  $common $MRT $SHA1 || exit 2
+	next=$(git write-tree 2>/dev/null)
 	if test $? -ne 0
 	then
 		echo "Simple merge did not work, trying automatic merge."
 		git-merge-index -o git-merge-one-file -a ||
 		OCTOPUS_FAILURE=1
-		next=$(git-write-tree 2>/dev/null)
+		next=$(git write-tree 2>/dev/null)
 	fi
 
-	# We have merged the other branch successfully.  Ideally
-	# we could implement OR'ed heads in merge-base, and keep
-	# a list of commits we have merged so far in MRC to feed
-	# them to merge-base, but we approximate it by keep using
-	# the current MRC.  We used to update it to $common, which
-	# was incorrectly doing AND'ed merge-base here, which was
-	# unneeded.
-
+	MRC="$MRC $SHA1"
 	MRT=$next
 done
 

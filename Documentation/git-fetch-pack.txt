@@ -8,14 +8,14 @@ git-fetch-pack - Receive missing objects from another repository
 
 SYNOPSIS
 --------
-'git-fetch-pack' [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]
+'git fetch-pack' [--all] [--quiet|-q] [--keep|-k] [--thin] [--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]
 
 DESCRIPTION
 -----------
-Usually you would want to use gitlink:git-fetch[1] which is a
-higher level wrapper of this command instead.
+Usually you would want to use 'git-fetch', which is a
+higher level wrapper of this command, instead.
 
-Invokes 'git-upload-pack' on a potentially remote repository,
+Invokes 'git-upload-pack' on a possibly remote repository
 and asks it to send objects missing from this repository, to
 update the named heads.  The list of commits available locally
 is found out by scanning local $GIT_DIR/refs/ and sent to
@@ -28,24 +28,32 @@ have a common ancestor commit.
 
 OPTIONS
 -------
-\--all::
+--all::
 	Fetch all remote refs.
 
-\--quiet, \-q::
+-q::
+--quiet::
 	Pass '-q' flag to 'git-unpack-objects'; this makes the
 	cloning process less verbose.
 
-\--keep, \-k::
+-k::
+--keep::
 	Do not invoke 'git-unpack-objects' on received data, but
 	create a single packfile out of it instead, and store it
 	in the object database. If provided twice then the pack is
 	locked against repacking.
 
-\--thin::
+--thin::
 	Spend extra cycles to minimize the number of objects to be sent.
 	Use it on slower connection.
 
-\--upload-pack=<git-upload-pack>::
+--include-tag::
+	If the remote side supports it, annotated tags objects will
+	be downloaded on the same connection as the other objects if
+	the object the tag references is downloaded.  The caller must
+	otherwise determine the tags this option made available.
+
+--upload-pack=<git-upload-pack>::
 	Use this to specify the path to 'git-upload-pack' on the
 	remote side, if is not found on your $PATH.
 	Installations of sshd ignores the user's environment
@@ -57,16 +65,16 @@ OPTIONS
 	shells by having a lean .bashrc file (they set most of
 	the things up in .bash_profile).
 
-\--exec=<git-upload-pack>::
+--exec=<git-upload-pack>::
 	Same as \--upload-pack=<git-upload-pack>.
 
-\--depth=<n>::
+--depth=<n>::
 	Limit fetching to ancestor-chains not longer than n.
 
-\--no-progress::
+--no-progress::
 	Do not show the progress.
 
-\-v::
+-v::
 	Run verbosely.
 
 <host>::
@@ -93,4 +101,4 @@ Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

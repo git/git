@@ -20,7 +20,7 @@ test_expect_success 'prepare repository' \
 7
 8
 9" > file &&
-git add file && 
+git add file &&
 git commit -m "Initial commit" file &&
 git branch A &&
 git branch B &&
@@ -88,5 +88,9 @@ cat > file-expect <<EOF
 EOF
 
 test_expect_success 'Criss-cross merge result' 'cmp file file-expect'
+
+test_expect_success 'Criss-cross merge fails (-s resolve)' \
+'git reset --hard A^ &&
+test_must_fail git merge -s resolve -m "final merge" B'
 
 test_done

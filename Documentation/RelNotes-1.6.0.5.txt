@@ -1,0 +1,56 @@
+GIT v1.6.0.5 Release Notes
+==========================
+
+Fixes since v1.6.0.4
+--------------------
+
+* "git checkout" used to crash when your HEAD was pointing at a deleted
+  branch.
+
+* "git checkout" from an un-checked-out state did not allow switching out
+  of the current branch.
+
+* "git diff" always allowed GIT_EXTERNAL_DIFF and --no-ext-diff was no-op for
+  the command.
+
+* Giving 3 or more tree-ish to "git diff" is supposed to show the combined
+  diff from second and subsequent trees to the first one, but the order was
+  screwed up.
+
+* "git fast-export" did not export all tags.
+
+* "git ls-files --with-tree=<tree>" did not work with options other
+  than -c, most notably with -m.
+
+* "git pack-objects" did not make its best effort to honor --max-pack-size
+  option when a single first object already busted the given limit and
+  placed many objects in a single pack.
+
+* "git-p4" fast import frontend was too eager to trigger its keyword expansion
+  logic, even on a keyword-looking string that does not have closing '$' on the
+  same line.
+
+* "git push $there" when the remote $there is defined in $GIT_DIR/branches/$there
+  behaves more like what cg-push from Cogito used to work.
+
+* when giving up resolving a conflicted merge, "git reset --hard" failed
+  to remove new paths from the working tree.
+
+* "git tag" did not complain when given mutually incompatible set of options.
+
+* The message constructed in the internal editor was discarded when "git
+  tag -s" failed to sign the message, which was often caused by the user
+  not configuring GPG correctly.
+
+* "make check" cannot be run without sparse; people may have meant to say
+  "make test" instead, so suggest that.
+
+* Internal diff machinery had a corner case performance bug that choked on
+  a large file with many repeated contents.
+
+* "git repack" used to grab objects out of packs marked with .keep
+  into a new pack.
+
+* Many unsafe call to sprintf() style varargs functions are corrected.
+
+* Also contains quite a few documentation updates.

@@ -6,12 +6,8 @@ const char *blob_type = "blob";
 struct blob *lookup_blob(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
-	if (!obj) {
-		struct blob *ret = alloc_blob_node();
-		created_object(sha1, &ret->object);
-		ret->object.type = OBJ_BLOB;
-		return ret;
-	}
+	if (!obj)
+		return create_object(sha1, OBJ_BLOB, alloc_blob_node());
 	if (!obj->type)
 		obj->type = OBJ_BLOB;
 	if (obj->type != OBJ_BLOB) {

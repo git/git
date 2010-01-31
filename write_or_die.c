@@ -1,41 +1,55 @@
 #include "cache.h"
 
-int read_in_full(int fd, void *buf, size_t count)
+/*
+ * Some cases use stdio, but want to flush after the write
+ * to get error handling (and to get better interactive
+ * behaviour - not buffering excessively).
+ *
+ * Of course, if the flush happened within the write itself,
+ * we've already lost the error code, and cannot report it any
+ * more. So we just ignore that case instead (and hope we get
+ * the right error code on the flush).
+ *
+ * If the file handle is stdout, and stdout is a file, then skip the
+ * flush entirely since it's not needed.
+ */
+void maybe_flush_or_die(FILE *f, const char *desc)
 {
-	char *p = buf;
-	ssize_t total = 0;
+	static int skip_stdout_flush = -1;
+	struct stat st;
+	char *cp;
 
-	while (count > 0) {
-		ssize_t loaded = xread(fd, p, count);
-		if (loaded <= 0)
-			return total ? total : loaded;
-		count -= loaded;
-		p += loaded;
-		total += loaded;
+	if (f == stdout) {
+		if (skip_stdout_flush < 0) {
+			cp = getenv("GIT_FLUSH");
+			if (cp)
+				skip_stdout_flush = (atoi(cp) == 0);
+			else if ((fstat(fileno(stdout), &st) == 0) &&
+				 S_ISREG(st.st_mode))
+				skip_stdout_flush = 1;
+			else
+				skip_stdout_flush = 0;
+		}
+		if (skip_stdout_flush && !ferror(f))
+			return;
 	}
-
-	return total;
+	if (fflush(f)) {
+		/*
+		 * On Windows, EPIPE is returned only by the first write()
+		 * after the reading end has closed its handle; subsequent
+		 * write()s return EINVAL.
+		 */
+		if (errno == EPIPE || errno == EINVAL)
+			exit(0);
+		die_errno("write failure on '%s'", desc);
+	}
 }
 
-int write_in_full(int fd, const void *buf, size_t count)
+void fsync_or_die(int fd, const char *msg)
 {
-	const char *p = buf;
-	ssize_t total = 0;
-
-	while (count > 0) {
-		ssize_t written = xwrite(fd, p, count);
-		if (written < 0)
-			return -1;
-		if (!written) {
-			errno = ENOSPC;
-			return -1;
-		}
-		count -= written;
-		p += written;
-		total += written;
+	if (fsync(fd) < 0) {
+		die_errno("fsync error on '%s'", msg);
 	}
-
-	return total;
 }
 
 void write_or_die(int fd, const void *buf, size_t count)
@@ -43,7 +57,7 @@ void write_or_die(int fd, const void *buf, size_t count)
 	if (write_in_full(fd, buf, count) < 0) {
 		if (errno == EPIPE)
 			exit(0);
-		die("write error (%s)", strerror(errno));
+		die_errno("write error");
 	}
 }
 

@@ -34,6 +34,10 @@ struct pack_header {
  */
 #define PACK_IDX_SIGNATURE 0xff744f63	/* "\377tOc" */
 
+/* These may be overridden by command-line parameters */
+extern uint32_t pack_idx_default_version;
+extern uint32_t pack_idx_off32_limit;
+
 /*
  * Packed object index header
  */
@@ -42,8 +46,20 @@ struct pack_idx_header {
 	uint32_t idx_version;
 };
 
+/*
+ * Common part of object structure used for write_idx_file
+ */
+struct pack_idx_entry {
+	unsigned char sha1[20];
+	uint32_t crc32;
+	off_t offset;
+};
 
-extern int verify_pack(struct packed_git *, int);
+extern char *write_idx_file(char *index_name, struct pack_idx_entry **objects, int nr_objects, unsigned char *sha1);
+extern int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
+extern int verify_pack(struct packed_git *);
+extern void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
+extern char *index_pack_lockfile(int fd);
 
 #define PH_ERROR_EOF		(-1)
 #define PH_ERROR_PACK_SIGNATURE	(-2)

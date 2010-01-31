@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "blob.h"
 #include "tree.h"
+#include "commit.h"
 #include "quote.h"
 #include "builtin.h"
 
@@ -14,6 +15,7 @@ static int line_termination = '\n';
 #define LS_TREE_ONLY 2
 #define LS_SHOW_TREES 4
 #define LS_NAME_ONLY 8
+#define LS_SHOW_SIZE 16
 static int abbrev;
 static int ls_options;
 static const char **pathspec;
@@ -21,7 +23,7 @@ static int chomp_prefix;
 static const char *ls_tree_prefix;
 
 static const char ls_tree_usage[] =
-	"git-ls-tree [-d] [-r] [-t] [-z] [--name-only] [--name-status] [--full-name] [--abbrev[=<n>]] <tree-ish> [path...]";
+	"git ls-tree [-d] [-r] [-t] [-l] [-z] [--name-only] [--name-status] [--full-name] [--full-tree] [--abbrev[=<n>]] <tree-ish> [path...]";
 
 static int show_recursive(const char *base, int baselen, const char *pathname)
 {
@@ -54,12 +56,23 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 }
 
 static int show_tree(const unsigned char *sha1, const char *base, int baselen,
-		     const char *pathname, unsigned mode, int stage)
+		const char *pathname, unsigned mode, int stage, void *context)
 {
 	int retval = 0;
 	const char *type = blob_type;
 
-	if (S_ISDIR(mode)) {
+	if (S_ISGITLINK(mode)) {
+		/*
+		 * Maybe we want to have some recursive version here?
+		 *
+		 * Something similar to this incomplete example:
+		 *
+		if (show_subprojects(base, baselen, pathname))
+			retval = READ_TREE_RECURSIVE;
+		 *
+		 */
+		type = commit_type;
+	} else if (S_ISDIR(mode)) {
 		if (show_recursive(base, baselen, pathname)) {
 			retval = READ_TREE_RECURSIVE;
 			if (!(ls_options & LS_SHOW_TREES))
@@ -74,14 +87,29 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 	    (baselen < chomp_prefix || memcmp(ls_tree_prefix, base, chomp_prefix)))
 		return 0;
 
-	if (!(ls_options & LS_NAME_ONLY))
-		printf("%06o %s %s\t", mode, type,
-				abbrev ? find_unique_abbrev(sha1,abbrev)
-					: sha1_to_hex(sha1));
-	write_name_quoted(base + chomp_prefix, baselen - chomp_prefix,
-			  pathname,
-			  line_termination, stdout);
-	putchar(line_termination);
+	if (!(ls_options & LS_NAME_ONLY)) {
+		if (ls_options & LS_SHOW_SIZE) {
+			char size_text[24];
+			if (!strcmp(type, blob_type)) {
+				unsigned long size;
+				if (sha1_object_info(sha1, &size) == OBJ_BAD)
+					strcpy(size_text, "BAD");
+				else
+					snprintf(size_text, sizeof(size_text),
+						 "%lu", size);
+			} else
+				strcpy(size_text, "-");
+			printf("%06o %s %s %7s\t", mode, type,
+			       abbrev ? find_unique_abbrev(sha1, abbrev)
+				      : sha1_to_hex(sha1),
+			       size_text);
+		} else
+			printf("%06o %s %s\t", mode, type,
+			       abbrev ? find_unique_abbrev(sha1, abbrev)
+			              : sha1_to_hex(sha1));
+	}
+	write_name_quotedpfx(base + chomp_prefix, baselen - chomp_prefix,
+			  pathname, stdout, line_termination);
 	return retval;
 }
 
@@ -90,7 +118,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	unsigned char sha1[20];
 	struct tree *tree;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	ls_tree_prefix = prefix;
 	if (prefix && *prefix)
 		chomp_prefix = strlen(prefix);
@@ -108,13 +136,25 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 		case 't':
 			ls_options |= LS_SHOW_TREES;
 			break;
+		case 'l':
+			ls_options |= LS_SHOW_SIZE;
+			break;
 		case '-':
 			if (!strcmp(argv[1]+2, "name-only") ||
 			    !strcmp(argv[1]+2, "name-status")) {
 				ls_options |= LS_NAME_ONLY;
 				break;
 			}
+			if (!strcmp(argv[1]+2, "long")) {
+				ls_options |= LS_SHOW_SIZE;
+				break;
+			}
 			if (!strcmp(argv[1]+2, "full-name")) {
+				chomp_prefix = 0;
+				break;
+			}
+			if (!strcmp(argv[1]+2, "full-tree")) {
+				ls_tree_prefix = prefix = NULL;
 				chomp_prefix = 0;
 				break;
 			}
@@ -150,7 +190,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		die("not a tree object");
-	read_tree_recursive(tree, "", 0, 0, pathspec, show_tree);
+	read_tree_recursive(tree, "", 0, 0, pathspec, show_tree, NULL);
 
 	return 0;
 }

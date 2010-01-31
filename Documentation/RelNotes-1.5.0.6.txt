@@ -19,4 +19,3 @@ Fixes since v1.5.0.5
   - user-manual has better cross references.
 
   - gitweb installation/deployment procedure is now documented.
-

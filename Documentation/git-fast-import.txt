@@ -8,14 +8,14 @@ git-fast-import - Backend for fast Git data importers
 
 SYNOPSIS
 --------
-frontend | 'git-fast-import' [options]
+frontend | 'git fast-import' [options]
 
 DESCRIPTION
 -----------
 This program is usually not what the end user wants to run directly.
 Most end users want to use one of the existing frontend programs,
 which parses a specific type of foreign source and feeds the contents
-stored there to git-fast-import.
+stored there to 'git-fast-import'.
 
 fast-import reads a mixed command/data stream from standard input and
 writes one or more packfiles directly into the current repository.
@@ -24,7 +24,7 @@ updated branch and tag refs, fully updating the current repository
 with the newly imported data.
 
 The fast-import backend itself can import into an empty repository (one that
-has already been initialized by gitlink:git-init[1]) or incrementally
+has already been initialized by 'git-init') or incrementally
 update an existing populated repository.  Whether or not incremental
 imports are supported from a particular foreign source depends on
 the frontend program in use.
@@ -82,11 +82,11 @@ OPTIONS
 	This information may be useful after importing projects
 	whose total object set exceeds the 4 GiB packfile limit,
 	as these commits can be used as edge points during calls
-	to gitlink:git-pack-objects[1].
+	to 'git-pack-objects'.
 
 --quiet::
 	Disable all non-fatal output, making fast-import silent when it
-	is successful.	This option disables the output shown by
+	is successful.  This option disables the output shown by
 	\--stats.
 
 --stats::
@@ -124,9 +124,9 @@ an ideal situation, given that most conversion tools are throw-away
 
 Parallel Operation
 ------------------
-Like `git-push` or `git-fetch`, imports handled by fast-import are safe to
+Like 'git-push' or 'git-fetch', imports handled by fast-import are safe to
 run alongside parallel `git repack -a -d` or `git gc` invocations,
-or any other Git operation (including `git prune`, as loose objects
+or any other Git operation (including 'git-prune', as loose objects
 are never used by fast-import).
 
 fast-import does not lock the branch or tag refs it is actively importing.
@@ -176,6 +176,15 @@ results, such as branch names or file names with leading or trailing
 spaces in their name, or early termination of fast-import when it encounters
 unexpected input.
 
+Stream Comments
+~~~~~~~~~~~~~~~
+To aid in debugging frontends fast-import ignores any line that
+begins with `#` (ASCII pound/hash) up to and including the line
+ending `LF`.  A comment line may contain any sequence of bytes
+that does not contain an LF and therefore may be used to include
+any detailed debugging information that might be specific to the
+frontend and useful when inspecting a fast-import data stream.
+
 Date Formats
 ~~~~~~~~~~~~
 The following date formats are supported.  A frontend should select
@@ -211,7 +220,7 @@ variation in formatting will cause fast-import to reject the value.
 +
 An example value is ``Tue Feb 6 11:22:18 2007 -0500''.  The Git
 parser is accurate, but a little on the lenient side.  It is the
-same parser used by gitlink:git-am[1] when applying patches
+same parser used by 'git-am' when applying patches
 received from email.
 +
 Some malformed strings may be accepted as valid dates.  In some of
@@ -232,7 +241,7 @@ been well tested in the wild.
 +
 Frontends should prefer the `raw` format if the source material
 already uses UNIX-epoch format, can be coaxed to give dates in that
-format, or its format is easiliy convertible to it, as there is no
+format, or its format is easily convertible to it, as there is no
 ambiguity in parsing.
 
 `now`::
@@ -247,7 +256,7 @@ timezone.
 This particular format is supplied as its short to implement and
 may be useful to a process that wants to create a new commit
 right now, without needing to use a working directory or
-gitlink:git-update-index[1].
+'git-update-index'.
 +
 If separate `author` and `committer` commands are used in a `commit`
 the timestamps may not match, as the system clock will be polled
@@ -289,6 +298,11 @@ and control the current import process.  More detailed discussion
 	This command is optional and is not needed to perform
 	an import.
 
+`progress`::
+	Causes fast-import to echo the entire line to its own
+	standard output.  This command is optional and is not needed
+	to perform an import.
+
 `commit`
 ~~~~~~~~
 Create or update a branch with a new commit, recording one logical
@@ -302,8 +316,8 @@ change to the project.
 	data
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
-	(filemodify | filedelete | filedeleteall)*
-	LF
+	(filemodify | filedelete | filecopy | filerename | filedeleteall)*
+	LF?
 ....
 
 where `<ref>` is the name of the branch to make the commit on.
@@ -325,12 +339,16 @@ commit message use a 0 length data.  Commit messages are free-form
 and are not interpreted by Git.  Currently they must be encoded in
 UTF-8, as fast-import does not permit other encodings to be specified.
 
-Zero or more `filemodify`, `filedelete` and `filedeleteall` commands
+Zero or more `filemodify`, `filedelete`, `filecopy`, `filerename`
+and `filedeleteall` commands
 may be included to update the contents of the branch prior to
 creating the commit.  These commands may be supplied in any order.
-However it is recommended that a `filedeleteall` command preceed
-all `filemodify` commands in the same commit, as `filedeleteall`
+However it is recommended that a `filedeleteall` command precede
+all `filemodify`, `filecopy` and `filerename` commands in the same
+commit, as `filedeleteall`
 wipes the branch clean (see below).
+
+The `LF` after the command is optional (it used to be required).
 
 `author`
 ^^^^^^^^
@@ -367,6 +385,9 @@ new commit.
 Omitting the `from` command in the first commit of a new branch
 will cause fast-import to create that commit with no ancestor. This
 tends to be desired only for the initial commit of a project.
+If the frontend creates all files from scratch when making a new
+branch, a `merge` command may be used instead of `from` to start
+the commit with an empty tree.
 Omitting the `from` command on existing branches is usually desired,
 as the current commit on that branch is automatically assumed to
 be the first ancestor of the new commit.
@@ -384,7 +405,7 @@ Here `<committish>` is any of the following:
 +
 The reason fast-import uses `:` to denote a mark reference is this character
 is not legal in a Git branch name.  The leading `:` makes it easy
-to distingush between the mark 42 (`:42`) and the branch 42 (`42`
+to distinguish between the mark 42 (`:42`) and the branch 42 (`42`
 or `refs/heads/42`), or an abbreviated SHA-1 which happened to
 consist only of base-10 digits.
 +
@@ -393,7 +414,7 @@ Marks must be declared (via `mark`) before they can be used.
 * A complete 40 byte or abbreviated commit SHA-1 in hex.
 
 * Any valid Git SHA-1 expression that resolves to a commit.  See
-  ``SPECIFYING REVISIONS'' in gitlink:git-rev-parse[1] for details.
+  ``SPECIFYING REVISIONS'' in linkgit:git-rev-parse[1] for details.
 
 The special case of restarting an incremental import from the
 current branch value should be written as:
@@ -409,13 +430,15 @@ existing value of the branch.
 
 `merge`
 ^^^^^^^
-Includes one additional ancestor commit, and makes the current
-commit a merge commit.  An unlimited number of `merge` commands per
+Includes one additional ancestor commit.  If the `from` command is
+omitted when creating a new branch, the first `merge` commit will be
+the first ancestor of the current commit, and the branch will start
+out with no files.  An unlimited number of `merge` commands per
 commit are permitted by fast-import, thereby establishing an n-way merge.
 However Git's other tools never create commits with more than 15
 additional ancestors (forming a 16-way merge).  For this reason
 it is suggested that frontends do not use more than 15 `merge`
-commands per commit.
+commands per commit; 16, if starting a new, empty branch.
 
 Here `<committish>` is any of the commit specification expressions
 also accepted by `from` (see above).
@@ -458,6 +481,9 @@ in octal.  Git only supports the following modes:
   what you want.
 * `100755` or `755`: A normal, but executable, file.
 * `120000`: A symlink, the content of the file will be the link target.
+* `160000`: A gitlink, SHA-1 of the object refers to a commit in
+  another repository. Git links can only be specified by SHA or through
+  a commit mark. They are used to implement submodules.
 
 In both formats `<path>` is the complete path of the file to be added
 (if not already existing) or modified (if already existing).
@@ -469,7 +495,7 @@ start with double quote (`"`).
 If an `LF` or double quote must be encoded into `<path>` shell-style
 quoting should be used, e.g. `"path/with\n and \" in it"`.
 
-The value of `<path>` must be in canoncial form. That is it must not:
+The value of `<path>` must be in canonical form. That is it must not:
 
 * contain an empty directory component (e.g. `foo//bar` is invalid),
 * end with a directory separator (e.g. `foo/` is invalid),
@@ -481,8 +507,9 @@ It is recommended that `<path>` always be encoded using UTF-8.
 
 `filedelete`
 ^^^^^^^^^^^^
-Included in a `commit` command to remove a file from the branch.
-If the file removal makes its directory empty, the directory will
+Included in a `commit` command to remove a file or recursively
+delete an entire directory from the branch.  If the file or directory
+removal makes its parent directory empty, the parent directory will
 be automatically removed too.  This cascades up the tree until the
 first non-empty directory or the root is reached.
 
@@ -490,8 +517,59 @@ first non-empty directory or the root is reached.
 	'D' SP <path> LF
 ....
 
-here `<path>` is the complete path of the file to be removed.
+here `<path>` is the complete path of the file or subdirectory to
+be removed from the branch.
 See `filemodify` above for a detailed description of `<path>`.
+
+`filecopy`
+^^^^^^^^^^^^
+Recursively copies an existing file or subdirectory to a different
+location within the branch.  The existing file or directory must
+exist.  If the destination exists it will be completely replaced
+by the content copied from the source.
+
+....
+	'C' SP <path> SP <path> LF
+....
+
+here the first `<path>` is the source location and the second
+`<path>` is the destination.  See `filemodify` above for a detailed
+description of what `<path>` may look like.  To use a source path
+that contains SP the path must be quoted.
+
+A `filecopy` command takes effect immediately.  Once the source
+location has been copied to the destination any future commands
+applied to the source location will not impact the destination of
+the copy.
+
+`filerename`
+^^^^^^^^^^^^
+Renames an existing file or subdirectory to a different location
+within the branch.  The existing file or directory must exist. If
+the destination exists it will be replaced by the source directory.
+
+....
+	'R' SP <path> SP <path> LF
+....
+
+here the first `<path>` is the source location and the second
+`<path>` is the destination.  See `filemodify` above for a detailed
+description of what `<path>` may look like.  To use a source path
+that contains SP the path must be quoted.
+
+A `filerename` command takes effect immediately.  Once the source
+location has been renamed to the destination any future commands
+applied to the source location will create new files there and not
+impact the destination of the rename.
+
+Note that a `filerename` is the same as a `filecopy` followed by a
+`filedelete` of the source location.  There is a slight performance
+advantage to using `filerename`, but the advantage is so small
+that it is never worth trying to convert a delete/add pair in
+source material into a rename for fast-import.  This `filerename`
+command is provided just to simplify frontends that already have
+rename information and don't want bother with decomposing it into a
+`filecopy` followed by a `filedelete`.
 
 `filedeleteall`
 ^^^^^^^^^^^^^^^
@@ -548,7 +626,6 @@ lightweight (non-annotated) tags see the `reset` command below.
 	'from' SP <committish> LF
 	'tagger' SP <name> SP LT <email> GT SP <when> LF
 	data
-	LF
 ....
 
 where `<name>` is the name of the tag to create.
@@ -580,7 +657,7 @@ recommended, as the frontend does not (easily) have access to the
 complete set of bytes which normally goes into such a signature.
 If signing is required, create lightweight tags from within fast-import with
 `reset`, then create the annotated versions of those tags offline
-with the standard gitlink:git-tag[1] process.
+with the standard 'git-tag' process.
 
 `reset`
 ~~~~~~~
@@ -592,11 +669,13 @@ branch from an existing commit without creating a new commit.
 ....
 	'reset' SP <ref> LF
 	('from' SP <committish> LF)?
-	LF
+	LF?
 ....
 
 For a detailed description of `<ref>` and `<committish>` see above
 under `commit` and `from`.
+
+The `LF` after the command is optional (it used to be required).
 
 The `reset` command can also be used to create lightweight
 (non-annotated) tags.  For example:
@@ -636,29 +715,40 @@ intended for production-quality conversions should always use the
 exact byte count format, as it is more robust and performs better.
 The delimited format is intended primarily for testing fast-import.
 
+Comment lines appearing within the `<raw>` part of `data` commands
+are always taken to be part of the body of the data and are therefore
+never ignored by fast-import.  This makes it safe to import any
+file/message content whose lines might start with `#`.
+
 Exact byte count format::
 	The frontend must specify the number of bytes of data.
 +
 ....
 	'data' SP <count> LF
-	<raw> LF
+	<raw> LF?
 ....
 +
 where `<count>` is the exact number of bytes appearing within
 `<raw>`.  The value of `<count>` is expressed as an ASCII decimal
 integer.  The `LF` on either side of `<raw>` is not
 included in `<count>` and will not be included in the imported data.
++
+The `LF` after `<raw>` is optional (it used to be required) but
+recommended.  Always including it makes debugging a fast-import
+stream easier as the next command always starts in column 0
+of the next line, even if `<raw>` did not end with an `LF`.
 
 Delimited format::
 	A delimiter string is used to mark the end of the data.
 	fast-import will compute the length by searching for the delimiter.
-	This format is primarly useful for testing and is not
+	This format is primarily useful for testing and is not
 	recommended for real data.
 +
 ....
 	'data' SP '<<' <delim> LF
 	<raw> LF
 	<delim> LF
+	LF?
 ....
 +
 where `<delim>` is the chosen delimiter string.  The string `<delim>`
@@ -667,6 +757,8 @@ fast-import will think the data ends earlier than it really does.  The `LF`
 immediately trailing `<raw>` is part of `<raw>`.  This is one of
 the limitations of the delimited format, it is impossible to supply
 a data chunk which does not have an LF as its last byte.
++
+The `LF` after `<delim> LF` is optional (it used to be required).
 
 `checkpoint`
 ~~~~~~~~~~~~
@@ -675,7 +767,7 @@ save out all current branch refs, tags and marks.
 
 ....
 	'checkpoint' LF
-	LF
+	LF?
 ....
 
 Note that fast-import automatically switches packfiles when the current
@@ -694,6 +786,119 @@ process access to a branch.  However given that a 30 GiB Subversion
 repository can be loaded into Git through fast-import in about 3 hours,
 explicit checkpointing may not be necessary.
 
+The `LF` after the command is optional (it used to be required).
+
+`progress`
+~~~~~~~~~~
+Causes fast-import to print the entire `progress` line unmodified to
+its standard output channel (file descriptor 1) when the command is
+processed from the input stream.  The command otherwise has no impact
+on the current import, or on any of fast-import's internal state.
+
+....
+	'progress' SP <any> LF
+	LF?
+....
+
+The `<any>` part of the command may contain any sequence of bytes
+that does not contain `LF`.  The `LF` after the command is optional.
+Callers may wish to process the output through a tool such as sed to
+remove the leading part of the line, for example:
+
+====
+	frontend | git fast-import | sed 's/^progress //'
+====
+
+Placing a `progress` command immediately after a `checkpoint` will
+inform the reader when the `checkpoint` has been completed and it
+can safely access the refs that fast-import updated.
+
+Crash Reports
+-------------
+If fast-import is supplied invalid input it will terminate with a
+non-zero exit status and create a crash report in the top level of
+the Git repository it was importing into.  Crash reports contain
+a snapshot of the internal fast-import state as well as the most
+recent commands that lead up to the crash.
+
+All recent commands (including stream comments, file changes and
+progress commands) are shown in the command history within the crash
+report, but raw file data and commit messages are excluded from the
+crash report.  This exclusion saves space within the report file
+and reduces the amount of buffering that fast-import must perform
+during execution.
+
+After writing a crash report fast-import will close the current
+packfile and export the marks table.  This allows the frontend
+developer to inspect the repository state and resume the import from
+the point where it crashed.  The modified branches and tags are not
+updated during a crash, as the import did not complete successfully.
+Branch and tag information can be found in the crash report and
+must be applied manually if the update is needed.
+
+An example crash:
+
+====
+	$ cat >in <<END_OF_INPUT
+	# my very first test commit
+	commit refs/heads/master
+	committer Shawn O. Pearce <spearce> 19283 -0400
+	# who is that guy anyway?
+	data <<EOF
+	this is my commit
+	EOF
+	M 644 inline .gitignore
+	data <<EOF
+	.gitignore
+	EOF
+	M 777 inline bob
+	END_OF_INPUT
+
+	$ git fast-import <in
+	fatal: Corrupt mode: M 777 inline bob
+	fast-import: dumping crash report to .git/fast_import_crash_8434
+
+	$ cat .git/fast_import_crash_8434
+	fast-import crash report:
+	    fast-import process: 8434
+	    parent process     : 1391
+	    at Sat Sep 1 00:58:12 2007
+
+	fatal: Corrupt mode: M 777 inline bob
+
+	Most Recent Commands Before Crash
+	---------------------------------
+	  # my very first test commit
+	  commit refs/heads/master
+	  committer Shawn O. Pearce <spearce> 19283 -0400
+	  # who is that guy anyway?
+	  data <<EOF
+	  M 644 inline .gitignore
+	  data <<EOF
+	* M 777 inline bob
+
+	Active Branch LRU
+	-----------------
+	    active_branches = 1 cur, 5 max
+
+	  pos  clock name
+	  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	   1)      0 refs/heads/master
+
+	Inactive Branches
+	-----------------
+	refs/heads/master:
+	  status      : active loaded dirty
+	  tip commit  : 0000000000000000000000000000000000000000
+	  old tree    : 0000000000000000000000000000000000000000
+	  cur tree    : 0000000000000000000000000000000000000000
+	  commit clock: 0
+	  last pack   :
+
+
+	-------------------
+	END OF CRASH REPORT
+====
 
 Tips and Tricks
 ---------------
@@ -753,7 +958,7 @@ is not `refs/heads/TAG_FIXUP`).
 
 When committing fixups, consider using `merge` to connect the
 commit(s) which are supplying file revisions to the fixup branch.
-Doing so will allow tools such as gitlink:git-blame[1] to track
+Doing so will allow tools such as 'git-blame' to track
 through the real commit history and properly annotate the source
 files.
 
@@ -763,7 +968,7 @@ to remove the dummy branch.
 Import Now, Repack Later
 ~~~~~~~~~~~~~~~~~~~~~~~~
 As soon as fast-import completes the Git repository is completely valid
-and ready for use.  Typicallly this takes only a very short time,
+and ready for use.  Typically this takes only a very short time,
 even for considerably large projects (100,000+ commits).
 
 However repacking the repository is necessary to improve data
@@ -782,10 +987,19 @@ Repacking Historical Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are repacking very old imported data (e.g. older than the
 last year), consider expending some extra CPU time and supplying
-\--window=50 (or higher) when you run gitlink:git-repack[1].
+\--window=50 (or higher) when you run 'git-repack'.
 This will take longer, but will also produce a smaller packfile.
 You only need to expend the effort once, and everyone using your
 project will benefit from the smaller repository.
+
+Include Some Progress Messages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Every once in a while have your frontend emit a `progress` message
+to fast-import.  The contents of the messages are entirely free-form,
+so one suggestion would be to output the current month and year
+each time the current commit date moves into the next month.
+Your users will feel better knowing how much of the data stream
+has been processed.
 
 
 Packfile Optimization
@@ -823,8 +1037,8 @@ Memory Utilization
 ------------------
 There are a number of factors which affect how much memory fast-import
 requires to perform an import.  Like critical sections of core
-Git, fast-import uses its own memory allocators to ammortize any overheads
-associated with malloc.  In practice fast-import tends to ammoritize any
+Git, fast-import uses its own memory allocators to amortize any overheads
+associated with malloc.  In practice fast-import tends to amortize any
 malloc overheads to 0, due to its use of large block allocations.
 
 per object
@@ -881,7 +1095,7 @@ per active tree
 ~~~~~~~~~~~~~~~
 Trees (aka directories) use just 12 bytes of memory on top of the
 memory required for their entries (see ``per active file'' below).
-The cost of a tree is virtually 0, as its overhead ammortizes out
+The cost of a tree is virtually 0, as its overhead amortizes out
 over the individual file entries.
 
 per active file entry
@@ -908,5 +1122,4 @@ Documentation by Shawn O. Pearce <spearce@spearce.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

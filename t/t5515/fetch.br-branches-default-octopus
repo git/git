@@ -1,5 +1,7 @@
 # br-branches-default-octopus
-754b754407bf032e9a2f9d5a9ad05ca79a6b228f		branch 'master' of ../
+754b754407bf032e9a2f9d5a9ad05ca79a6b228f	not-for-merge	branch 'master' of ../
+8e32a6d901327a23ef831511badce7bf3bf46689		branch 'one' of ../
+6134ee8f857693b96ff1cc98d3e2fd62b199e5a8		branch 'two' of ../
 754b754407bf032e9a2f9d5a9ad05ca79a6b228f	not-for-merge	tag 'tag-master' of ../
 8e32a6d901327a23ef831511badce7bf3bf46689	not-for-merge	tag 'tag-one' of ../
 22feea448b023a2d864ef94b013735af34d238ba	not-for-merge	tag 'tag-one-tree' of ../

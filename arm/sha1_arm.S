@@ -10,7 +10,7 @@
  */
 
 	.text
-	.globl	sha_transform
+	.globl	arm_sha_transform
 
 /*
  * void sha_transform(uint32_t *hash, const unsigned char *data, uint32_t *W);
@@ -18,12 +18,12 @@
  * note: the "data" pointer may be unaligned.
  */
 
-sha_transform:
+arm_sha_transform:
 
 	stmfd	sp!, {r4 - r8, lr}
 
 	@ for (i = 0; i < 16; i++)
-	@         W[i] = ntohl(((uint32_t *)data)[i]); */
+	@         W[i] = ntohl(((uint32_t *)data)[i]);
 
 #ifdef __ARMEB__
 	mov	r4, r0
@@ -181,4 +181,3 @@ sha_transform:
 
 .L_sha_K:
 	.word	0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6
-

@@ -1,14 +1,21 @@
+#include "builtin.h"
 #include "cache.h"
 #include "refs.h"
 #include "object.h"
 #include "tag.h"
-#include "path-list.h"
+#include "string-list.h"
+#include "parse-options.h"
 
-static const char show_ref_usage[] = "git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--dereference] [-s|--hash[=<length>]] [--abbrev[=<length>]] [--tags] [--heads] [--] [pattern*] < ref-list";
+static const char * const show_ref_usage[] = {
+	"git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--dereference] [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] ",
+	"git show-ref --exclude-existing[=pattern] < ref-list",
+	NULL
+};
 
-static int deref_tags = 0, show_head = 0, tags_only = 0, heads_only = 0,
-	found_match = 0, verify = 0, quiet = 0, hash_only = 0, abbrev = 0;
+static int deref_tags, show_head, tags_only, heads_only, found_match, verify,
+	   quiet, hash_only, abbrev, exclude_arg;
 static const char **pattern;
+static const char *exclude_existing_arg;
 
 static void show_one(const char *refname, const unsigned char *sha1)
 {
@@ -61,7 +68,7 @@ match:
 	 * ref points at a nonexistent object.
 	 */
 	if (!has_sha1_file(sha1))
-		die("git-show-ref: bad ref %s (%s)", refname,
+		die("git show-ref: bad ref %s (%s)", refname,
 		    sha1_to_hex(sha1));
 
 	if (quiet)
@@ -81,10 +88,13 @@ match:
 	else {
 		obj = parse_object(sha1);
 		if (!obj)
-			die("git-show-ref: bad ref %s (%s)", refname,
+			die("git show-ref: bad ref %s (%s)", refname,
 			    sha1_to_hex(sha1));
 		if (obj->type == OBJ_TAG) {
 			obj = deref_tag(obj, refname, 0);
+			if (!obj)
+				die("git show-ref: bad tag at ref %s (%s)", refname,
+				    sha1_to_hex(sha1));
 			hex = find_unique_abbrev(obj->sha1, abbrev);
 			printf("%s %s^{}\n", hex, refname);
 		}
@@ -94,8 +104,8 @@ match:
 
 static int add_existing(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
 {
-	struct path_list *list = (struct path_list *)cbdata;
-	path_list_insert(refname, list);
+	struct string_list *list = (struct string_list *)cbdata;
+	string_list_insert(refname, list);
 	return 0;
 }
 
@@ -110,7 +120,7 @@ static int add_existing(const char *refname, const unsigned char *sha1, int flag
  */
 static int exclude_existing(const char *match)
 {
-	static struct path_list existing_refs = { NULL, 0, 0, 0 };
+	static struct string_list existing_refs = { NULL, 0, 0, 0 };
 	char buf[1024];
 	int matchlen = match ? strlen(match) : 0;
 
@@ -136,89 +146,70 @@ static int exclude_existing(const char *match)
 				continue;
 		}
 		if (check_ref_format(ref)) {
-			fprintf(stderr, "warning: ref '%s' ignored\n", ref);
+			warning("ref '%s' ignored", ref);
 			continue;
 		}
-		if (!path_list_has_path(&existing_refs, ref)) {
+		if (!string_list_has_string(&existing_refs, ref)) {
 			printf("%s\n", buf);
 		}
 	}
 	return 0;
 }
 
+static int hash_callback(const struct option *opt, const char *arg, int unset)
+{
+	hash_only = 1;
+	/* Use full length SHA1 if no argument */
+	if (!arg)
+		return 0;
+	return parse_opt_abbrev_cb(opt, arg, unset);
+}
+
+static int exclude_existing_callback(const struct option *opt, const char *arg,
+				     int unset)
+{
+	exclude_arg = 1;
+	*(const char **)opt->value = arg;
+	return 0;
+}
+
+static int help_callback(const struct option *opt, const char *arg, int unset)
+{
+	return -1;
+}
+
+static const struct option show_ref_options[] = {
+	OPT_BOOLEAN(0, "tags", &tags_only, "only show tags (can be combined with heads)"),
+	OPT_BOOLEAN(0, "heads", &heads_only, "only show heads (can be combined with tags)"),
+	OPT_BOOLEAN(0, "verify", &verify, "stricter reference checking, "
+		    "requires exact ref path"),
+	OPT_BOOLEAN('h', "head", &show_head, "show the HEAD reference"),
+	OPT_BOOLEAN('d', "dereference", &deref_tags,
+		    "dereference tags into object IDs"),
+	{ OPTION_CALLBACK, 's', "hash", &abbrev, "n",
+	  "only show SHA1 hash using <n> digits",
+	  PARSE_OPT_OPTARG, &hash_callback },
+	OPT__ABBREV(&abbrev),
+	OPT__QUIET(&quiet),
+	{ OPTION_CALLBACK, 0, "exclude-existing", &exclude_existing_arg,
+	  "pattern", "show refs from stdin that aren't in local repository",
+	  PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback },
+	{ OPTION_CALLBACK, 0, "help-all", NULL, NULL, "show usage",
+	  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, help_callback },
+	OPT_END()
+};
+
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
-	int i;
+	argc = parse_options(argc, argv, prefix, show_ref_options,
+			     show_ref_usage, PARSE_OPT_NO_INTERNAL_HELP);
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (*arg != '-') {
-			pattern = argv + i;
-			break;
-		}
-		if (!strcmp(arg, "--")) {
-			pattern = argv + i + 1;
-			if (!*pattern)
-				pattern = NULL;
-			break;
-		}
-		if (!strcmp(arg, "-q") || !strcmp(arg, "--quiet")) {
-			quiet = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-h") || !strcmp(arg, "--head")) {
-			show_head = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-d") || !strcmp(arg, "--dereference")) {
-			deref_tags = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-s") || !strcmp(arg, "--hash")) {
-			hash_only = 1;
-			continue;
-		}
-		if (!prefixcmp(arg, "--hash=") ||
-		    (!prefixcmp(arg, "--abbrev") &&
-		     (arg[8] == '=' || arg[8] == '\0'))) {
-			if (arg[2] != 'h' && !arg[8])
-				/* --abbrev only */
-				abbrev = DEFAULT_ABBREV;
-			else {
-				/* --hash= or --abbrev= */
-				char *end;
-				if (arg[2] == 'h') {
-					hash_only = 1;
-					arg += 7;
-				}
-				else
-					arg += 9;
-				abbrev = strtoul(arg, &end, 10);
-				if (*end || abbrev > 40)
-					usage(show_ref_usage);
-				if (abbrev < MINIMUM_ABBREV)
-					abbrev = MINIMUM_ABBREV;
-			}
-			continue;
-		}
-		if (!strcmp(arg, "--verify")) {
-			verify = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--tags")) {
-			tags_only = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--heads")) {
-			heads_only = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--exclude-existing"))
-			return exclude_existing(NULL);
-		if (!prefixcmp(arg, "--exclude-existing="))
-			return exclude_existing(arg + 19);
-		usage(show_ref_usage);
-	}
+	if (exclude_arg)
+		return exclude_existing(exclude_existing_arg);
+
+	pattern = argv;
+	if (!*pattern)
+		pattern = NULL;
 
 	if (verify) {
 		if (!pattern)

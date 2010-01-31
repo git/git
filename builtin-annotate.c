@@ -22,4 +22,3 @@ int cmd_annotate(int argc, const char **argv, const char *prefix)
 
 	return cmd_blame(argc + 1, nargv, prefix);
 }
-

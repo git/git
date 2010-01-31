@@ -37,7 +37,7 @@ static void prep_base85(void)
 	}
 }
 
-int decode_85(char *dst, char *buffer, int len)
+int decode_85(char *dst, const char *buffer, int len)
 {
 	prep_base85();
 
@@ -66,7 +66,7 @@ int decode_85(char *dst, char *buffer, int len)
 		 */
 		if (0x03030303 < acc ||
 		    0xffffffff - de < (acc *= 85))
-			error("invalid base85 sequence %.5s", buffer-5);
+			return error("invalid base85 sequence %.5s", buffer-5);
 		acc += de;
 		say1(" %08x", acc);
 
@@ -82,7 +82,7 @@ int decode_85(char *dst, char *buffer, int len)
 	return 0;
 }
 
-void encode_85(char *buf, unsigned char *data, int bytes)
+void encode_85(char *buf, const unsigned char *data, int bytes)
 {
 	prep_base85();
 
@@ -91,7 +91,7 @@ void encode_85(char *buf, unsigned char *data, int bytes)
 		unsigned acc = 0;
 		int cnt;
 		for (cnt = 24; cnt >= 0; cnt -= 8) {
-			int ch = *data++;
+			unsigned ch = *data++;
 			acc |= ch << cnt;
 			if (--bytes == 0)
 				break;

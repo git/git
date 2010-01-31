@@ -17,6 +17,7 @@ test_expect_success setup '
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
 	mkdir dir &&
+	mkdir dir2 &&
 	for i in 1 2 3; do echo $i; done >file0 &&
 	for i in A B; do echo $i; done >dir/sub &&
 	cat file0 >file2 &&
@@ -73,6 +74,10 @@ test_expect_success setup '
 	for i in 1 2; do echo $i; done >>dir/sub &&
 	git update-index file0 dir/sub &&
 
+	mkdir dir3 &&
+	cp dir/sub dir3/sub &&
+	test-chmtime +1 dir3/sub &&
+
 	git config log.showroot false &&
 	git commit --amend &&
 	git show-branch
@@ -96,9 +101,8 @@ do
 	'' | '#'*) continue ;;
 	esac
 	test=`echo "$cmd" | sed -e 's|[/ ][/ ]*|_|g'`
-	cnt=`expr $test_count + 1`
-	pfx=`printf "%04d" $cnt`
-	expect="../t4013/diff.$test"
+	pfx=`printf "%04d" $test_count`
+	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
 	test_expect_success "git $cmd" '
@@ -111,7 +115,7 @@ do
 		} >"$actual" &&
 		if test -f "$expect"
 		then
-			git diff "$expect" "$actual" &&
+			test_cmp "$expect" "$actual" &&
 			rm -f "$actual"
 		else
 			# this is to help developing new tests.
@@ -202,6 +206,10 @@ log --root -c --patch-with-stat --summary master
 log --root --cc --patch-with-stat --summary master
 log -SF master
 log -SF -p master
+log --decorate --all
+
+rev-list --parents HEAD
+rev-list --children HEAD
 
 whatchanged master
 whatchanged -p master
@@ -235,12 +243,20 @@ show --patch-with-stat --summary side
 format-patch --stdout initial..side
 format-patch --stdout initial..master^
 format-patch --stdout initial..master
+format-patch --stdout --no-numbered initial..master
+format-patch --stdout --numbered initial..master
 format-patch --attach --stdout initial..side
+format-patch --attach --stdout --suffix=.diff initial..side
 format-patch --attach --stdout initial..master^
 format-patch --attach --stdout initial..master
 format-patch --inline --stdout initial..side
 format-patch --inline --stdout initial..master^
+format-patch --inline --stdout --numbered-files initial..master
 format-patch --inline --stdout initial..master
+format-patch --inline --stdout --subject-prefix=TESTCASE initial..master
+config format.subjectprefix DIFFERENT_PREFIX
+format-patch --inline --stdout initial..master^^
+format-patch --stdout --cover-letter -n initial..master^
 
 diff --abbrev initial..side
 diff -r initial..side
@@ -251,6 +267,12 @@ diff --patch-with-stat initial..side
 diff --patch-with-raw initial..side
 diff --patch-with-stat -r initial..side
 diff --patch-with-raw -r initial..side
+diff --name-status dir2 dir
+diff --no-index --name-status dir2 dir
+diff --no-index --name-status -- dir2 dir
+diff --no-index dir dir3
+diff master master^ side
+diff --dirstat master~1 master~2
 EOF
 
 test_done

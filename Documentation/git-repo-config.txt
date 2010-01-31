@@ -8,11 +8,11 @@ git-repo-config - Get and set repository or global options
 
 SYNOPSIS
 --------
-'git-repo-config' ...
+'git repo-config' ...
 
 
 DESCRIPTION
 -----------
 
-This is a synonym for gitlink:git-config[1].  Please refer to the
+This is a synonym for linkgit:git-config[1].  Please refer to the
 documentation of that command.

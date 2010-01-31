@@ -7,11 +7,12 @@
 */
 
 #include "cache.h"
+#include "exec_cmd.h"
 
 #define BLKSIZE 512
 
 static const char pack_redundant_usage[] =
-"git-pack-redundant [ --verbose ] [ --alt-odb ] < --all | <.pack filename> ...>";
+"git pack-redundant [ --verbose ] [ --alt-odb ] < --all | <.pack filename> ...>";
 
 static int load_all_packs, verbose, alt_odb;
 
@@ -81,7 +82,7 @@ static struct llist * llist_copy(struct llist *list)
 {
 	struct llist *ret;
 	struct llist_item *new, *old, *prev;
-	
+
 	llist_init(&ret);
 
 	if ((ret->size = list->size) == 0)
@@ -100,7 +101,7 @@ static struct llist * llist_copy(struct llist *list)
 	}
 	new->next = NULL;
 	ret->back = new;
-	
+
 	return ret;
 }
 
@@ -247,16 +248,19 @@ static struct pack_list * pack_list_difference(const struct pack_list *A,
 
 static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 {
-	int p1_off, p2_off;
+	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
 
-	p1_off = p2_off = 256 * 4 + 4;
 	p1_base = p1->pack->index_data;
 	p2_base = p2->pack->index_data;
+	p1_base += 256 * 4 + ((p1->pack->index_version < 2) ? 4 : 8);
+	p2_base += 256 * 4 + ((p2->pack->index_version < 2) ? 4 : 8);
+	p1_step = (p1->pack->index_version < 2) ? 24 : 20;
+	p2_step = (p2->pack->index_version < 2) ? 24 : 20;
 
-	while (p1_off <= p1->pack->index_size - 3 * 20 &&
-	       p2_off <= p2->pack->index_size - 3 * 20)
+	while (p1_off < p1->pack->num_objects * p1_step &&
+	       p2_off < p2->pack->num_objects * p2_step)
 	{
 		int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
 		/* cmp ~ p1 - p2 */
@@ -265,14 +269,14 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 					p1_base + p1_off, p1_hint);
 			p2_hint = llist_sorted_remove(p2->unique_objects,
 					p1_base + p1_off, p2_hint);
-			p1_off+=24;
-			p2_off+=24;
+			p1_off += p1_step;
+			p2_off += p2_step;
 			continue;
 		}
 		if (cmp < 0) { /* p1 has the object, p2 doesn't */
-			p1_off+=24;
+			p1_off += p1_step;
 		} else { /* p2 has the object, p1 doesn't */
-			p2_off+=24;
+			p2_off += p2_step;
 		}
 	}
 }
@@ -352,28 +356,31 @@ static int is_superset(struct pack_list *pl, struct llist *list)
 static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 {
 	size_t ret = 0;
-	int p1_off, p2_off;
+	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 
-	p1_off = p2_off = 256 * 4 + 4;
 	p1_base = p1->index_data;
 	p2_base = p2->index_data;
+	p1_base += 256 * 4 + ((p1->index_version < 2) ? 4 : 8);
+	p2_base += 256 * 4 + ((p2->index_version < 2) ? 4 : 8);
+	p1_step = (p1->index_version < 2) ? 24 : 20;
+	p2_step = (p2->index_version < 2) ? 24 : 20;
 
-	while (p1_off <= p1->index_size - 3 * 20 &&
-	       p2_off <= p2->index_size - 3 * 20)
+	while (p1_off < p1->num_objects * p1_step &&
+	       p2_off < p2->num_objects * p2_step)
 	{
 		int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
 		/* cmp ~ p1 - p2 */
 		if (cmp == 0) {
 			ret++;
-			p1_off+=24;
-			p2_off+=24;
+			p1_off += p1_step;
+			p2_off += p2_step;
 			continue;
 		}
 		if (cmp < 0) { /* p1 has the object, p2 doesn't */
-			p1_off+=24;
+			p1_off += p1_step;
 		} else { /* p2 has the object, p1 doesn't */
-			p2_off+=24;
+			p2_off += p2_step;
 		}
 	}
 	return ret;
@@ -457,7 +464,7 @@ static void minimize(struct pack_list **min)
 		pll_free(perm_all);
 	}
 	if (perm_ok == NULL)
-		die("Internal error: No complete sets found!\n");
+		die("Internal error: No complete sets found!");
 
 	/* find the permutation with the smallest size */
 	perm = perm_ok;
@@ -535,7 +542,7 @@ static void scan_alt_odb_packs(void)
 static struct pack_list * add_pack(struct packed_git *p)
 {
 	struct pack_list l;
-	size_t off;
+	unsigned long off = 0, step;
 	const unsigned char *base;
 
 	if (!p->pack_local && !(alt_odb || verbose))
@@ -544,11 +551,15 @@ static struct pack_list * add_pack(struct packed_git *p)
 	l.pack = p;
 	llist_init(&l.all_objects);
 
-	off = 256 * 4 + 4;
+	if (open_pack_index(p))
+		return NULL;
+
 	base = p->index_data;
-	while (off <= p->index_size - 3 * 20) {
+	base += 256 * 4 + ((p->index_version < 2) ? 4 : 8);
+	step = (p->index_version < 2) ? 24 : 20;
+	while (off < p->num_objects * step) {
 		llist_insert_back(l.all_objects, base + off);
-		off += 24;
+		off += step;
 	}
 	/* this list will be pruned in cmp_two_packs later */
 	l.unique_objects = llist_copy(l.all_objects);
@@ -563,14 +574,14 @@ static struct pack_list * add_pack_file(char *filename)
 	struct packed_git *p = packed_git;
 
 	if (strlen(filename) < 40)
-		die("Bad pack filename: %s\n", filename);
+		die("Bad pack filename: %s", filename);
 
 	while (p) {
 		if (strstr(p->pack_name, filename))
 			return add_pack(p);
 		p = p->next;
 	}
-	die("Filename %s not found in packed_git\n", filename);
+	die("Filename %s not found in packed_git", filename);
 }
 
 static void load_all(void)
@@ -590,6 +601,8 @@ int main(int argc, char **argv)
 	struct llist *ignore;
 	unsigned char *sha1;
 	char buf[42]; /* 40 byte sha1 + \n + \0 */
+
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 
@@ -626,7 +639,7 @@ int main(int argc, char **argv)
 			add_pack_file(*(argv + i++));
 
 	if (local_packs == NULL)
-		die("Zero packs found!\n");
+		die("Zero packs found!");
 
 	load_all_objects();
 

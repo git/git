@@ -1,0 +1,100 @@
+git-check-attr(1)
+=================
+
+NAME
+----
+git-check-attr - Display gitattributes information
+
+
+SYNOPSIS
+--------
+[verse]
+'git check-attr' attr... [--] pathname...
+'git check-attr' --stdin [-z] attr... < <list-of-paths>
+
+DESCRIPTION
+-----------
+For every pathname, this command will list if each attribute is 'unspecified',
+'set', or 'unset' as a gitattribute on that pathname.
+
+OPTIONS
+-------
+--stdin::
+	Read file names from stdin instead of from the command-line.
+
+-z::
+	Only meaningful with `--stdin`; paths are separated with a
+	NUL character instead of a linefeed character.
+
+\--::
+	Interpret all preceding arguments as attributes and all following
+	arguments as path names. If not supplied, only the first argument will
+	be treated as an attribute.
+
+OUTPUT
+------
+
+The output is of the form:
+<path> COLON SP <attribute> COLON SP <info> LF
+
+<path> is the path of a file being queried, <attribute> is an attribute
+being queried and <info> can be either:
+
+'unspecified';; when the attribute is not defined for the path.
+'unset';;	when the attribute is defined as false.
+'set';;		when the attribute is defined as true.
+<value>;;	when a value has been assigned to the attribute.
+
+EXAMPLES
+--------
+
+In the examples, the following '.gitattributes' file is used:
+---------------
+*.java diff=java -crlf myAttr
+NoMyAttr.java !myAttr
+README caveat=unspecified
+---------------
+
+* Listing a single attribute:
+---------------
+$ git check-attr diff org/example/MyClass.java
+org/example/MyClass.java: diff: java
+---------------
+
+* Listing multiple attributes for a file:
+---------------
+$ git check-attr crlf diff myAttr -- org/example/MyClass.java
+org/example/MyClass.java: crlf: unset
+org/example/MyClass.java: diff: java
+org/example/MyClass.java: myAttr: set
+---------------
+
+* Listing an attribute for multiple files:
+---------------
+$ git check-attr myAttr -- org/example/MyClass.java org/example/NoMyAttr.java
+org/example/MyClass.java: myAttr: set
+org/example/NoMyAttr.java: myAttr: unspecified
+---------------
+
+* Not all values are equally unambiguous:
+---------------
+$ git check-attr caveat README
+README: caveat: unspecified
+---------------
+
+SEE ALSO
+--------
+linkgit:gitattributes[5].
+
+
+Author
+------
+Written by Junio C Hamano <gitster@pobox.com>
+
+Documentation
+--------------
+Documentation by James Bowes.
+
+GIT
+---
+Part of the linkgit:git[1] suite

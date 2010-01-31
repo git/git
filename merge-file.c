@@ -61,7 +61,9 @@ static int generate_common_file(mmfile_t *res, mmfile_t *f1, mmfile_t *f2)
 	xdemitconf_t xecfg;
 	xdemitcb_t ecb;
 
+	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = XDF_NEED_MINIMAL;
+	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
 	xecfg.flags = XDL_EMIT_COMMON;
 	ecb.outf = common_outf;
@@ -70,7 +72,7 @@ static int generate_common_file(mmfile_t *res, mmfile_t *f1, mmfile_t *f2)
 	res->size = 0;
 
 	ecb.priv = res;
-	return xdl_diff(f1, f2, &xpp, &xecfg, &ecb);
+	return xdi_diff(f1, f2, &xpp, &xecfg, &ecb);
 }
 
 void *merge_file(struct blob *base, struct blob *our, struct blob *their, unsigned long *size)

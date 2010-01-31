@@ -1,0 +1,192 @@
+SVN-fs-dump-format-version: 2
+
+UUID: eecae021-8f16-48da-969d-79beb8ae6ea5
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2009-02-22T00:50:56.292890Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 106
+Content-length: 106
+
+K 7
+svn:log
+V 4
+init
+K 10
+svn:author
+V 8
+john.doe
+K 8
+svn:date
+V 27
+2009-02-22T00:50:57.192384Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 0
+Text-content-md5: d41d8cd98f00b204e9800998ecf8427e
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 105
+Content-length: 105
+
+K 7
+svn:log
+V 3
+1.0
+K 10
+svn:author
+V 8
+john.doe
+K 8
+svn:date
+V 27
+2009-02-22T00:50:58.124724Z
+PROPS-END
+
+Node-path: tags/1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: trunk
+
+
+Revision-number: 3
+Prop-content-length: 111
+Content-length: 111
+
+K 7
+svn:log
+V 9
+1.0.1-bad
+K 10
+svn:author
+V 8
+john.doe
+K 8
+svn:date
+V 27
+2009-02-22T00:50:58.151727Z
+PROPS-END
+
+Node-path: tags/1.0.1
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: tags/1.0
+
+
+Revision-number: 4
+Prop-content-length: 111
+Content-length: 111
+
+K 7
+svn:log
+V 9
+Wrong tag
+K 10
+svn:author
+V 8
+john.doe
+K 8
+svn:date
+V 27
+2009-02-22T00:50:58.167427Z
+PROPS-END
+
+Node-path: tags/1.0.1
+Node-action: delete
+
+
+Revision-number: 5
+Prop-content-length: 113
+Content-length: 113
+
+K 7
+svn:log
+V 10
+1.0-branch
+K 10
+svn:author
+V 8
+john.doe
+K 8
+svn:date
+V 27
+2009-02-22T00:50:58.184498Z
+PROPS-END
+
+Node-path: branches/1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: tags/1.0
+
+
+Revision-number: 6
+Prop-content-length: 113
+Content-length: 113
+
+K 7
+svn:log
+V 10
+1.0.1-good
+K 10
+svn:author
+V 8
+john.doe
+K 8
+svn:date
+V 27
+2009-02-22T00:50:58.200695Z
+PROPS-END
+
+Node-path: tags/1.0.1
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: branches/1.0
+
+

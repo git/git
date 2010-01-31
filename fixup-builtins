@@ -1,0 +1,16 @@
+#!/bin/sh
+while [ "$1" ]
+do
+	if [ "$1" != "git-sh-setup" -a "$1" != "git-parse-remote" -a "$1" != "git-svn" ]; then
+		old="$1"
+		new=$(echo "$1" | sed 's/git-/git /')
+		echo "Converting '$old' to '$new'"
+		sed -i "s/\\<$old\\>/$new/g" $(git ls-files '*.sh')
+	fi
+	shift
+done
+
+sed -i 's/git merge-one-file/git-merge-one-file/g
+s/git rebase-todo/git-rebase-todo/g' $(git ls-files '*.sh')
+git update-index --refresh >& /dev/null
+exit 0

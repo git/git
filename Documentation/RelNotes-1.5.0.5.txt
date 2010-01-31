@@ -24,5 +24,3 @@ Fixes since v1.5.0.3
 * Documentation updates
 
 * User manual updates
-
-

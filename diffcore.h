@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#ifndef _DIFFCORE_H_
-#define _DIFFCORE_H_
+#ifndef DIFFCORE_H
+#define DIFFCORE_H
 
 /* This header file is internal between diff.c and its diff transformers
  * (e.g. diffcore-rename, diffcore-pickaxe).  Never include this header
@@ -22,13 +22,18 @@
 
 #define MINIMUM_BREAK_SIZE     400 /* do not break a file smaller than this */
 
+struct userdiff_driver;
+
 struct diff_filespec {
 	unsigned char sha1[20];
 	char *path;
 	void *data;
 	void *cnt_data;
+	const char *funcname_pattern_ident;
 	unsigned long size;
+	int count;               /* Reference count */
 	int xfrm_flags;		 /* for use by the xfrm */
+	int rename_used;         /* Count of rename users */
 	unsigned short mode;	 /* file mode */
 	unsigned sha1_valid : 1; /* if true, use sha1 and trust mode;
 				  * if false, use the name and read from
@@ -37,21 +42,27 @@ struct diff_filespec {
 #define DIFF_FILE_VALID(spec) (((spec)->mode) != 0)
 	unsigned should_free : 1; /* data should be free()'ed */
 	unsigned should_munmap : 1; /* data should be munmap()'ed */
+
+	struct userdiff_driver *driver;
+	/* data should be considered "binary"; -1 means "don't know yet" */
+	int is_binary;
 };
 
 extern struct diff_filespec *alloc_filespec(const char *);
+extern void free_filespec(struct diff_filespec *);
 extern void fill_filespec(struct diff_filespec *, const unsigned char *,
 			  unsigned short);
 
 extern int diff_populate_filespec(struct diff_filespec *, int);
 extern void diff_free_filespec_data(struct diff_filespec *);
+extern void diff_free_filespec_blob(struct diff_filespec *);
+extern int diff_filespec_is_binary(struct diff_filespec *);
 
 struct diff_filepair {
 	struct diff_filespec *one;
 	struct diff_filespec *two;
 	unsigned short int score;
-	char status; /* M C R N D U (see Documentation/diff-format.txt) */
-	unsigned source_stays : 1; /* all of R/C are copies */
+	char status; /* M C R A D U etc. (see Documentation/diff-format.txt or DIFF_STATUS_* in diff.h) */
 	unsigned broken_pair : 1;
 	unsigned renamed_pair : 1;
 	unsigned is_unmerged : 1;
@@ -85,7 +96,6 @@ extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
 					struct diff_filespec *);
 extern void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 
-extern void diffcore_pathspec(const char **pathspec);
 extern void diffcore_break(int);
 extern void diffcore_rename(struct diff_options *);
 extern void diffcore_merge_broken(void);
@@ -103,8 +113,8 @@ void diff_debug_queue(const char *, struct diff_queue_struct *);
 #define diff_debug_queue(a,b) do {} while(0)
 #endif
 
-extern int diffcore_count_changes(void *src, unsigned long src_size,
-				  void *dst, unsigned long dst_size,
+extern int diffcore_count_changes(struct diff_filespec *src,
+				  struct diff_filespec *dst,
 				  void **src_count_p,
 				  void **dst_count_p,
 				  unsigned long delta_limit,

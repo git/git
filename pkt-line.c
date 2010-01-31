@@ -5,7 +5,7 @@
  * Write a packetized stream, where each line is preceded by
  * its length (including the header) as a 4-byte hex number.
  * A length of 'zero' means end of stream (and a length of 1-3
- * would be an error). 
+ * would be an error).
  *
  * This is all pretty stupid, but we use this packetized line
  * format to make a streaming format possible without ever
@@ -28,7 +28,7 @@ ssize_t safe_write(int fd, const void *buf, ssize_t n)
 		}
 		if (!ret)
 			die("write error (disk full?)");
-		die("write error (%s)", strerror(errno));
+		die_errno("write error");
 	}
 	return nn;
 }
@@ -65,16 +65,11 @@ void packet_write(int fd, const char *fmt, ...)
 
 static void safe_read(int fd, void *buffer, unsigned size)
 {
-	int n = 0;
-
-	while (n < size) {
-		int ret = xread(fd, (char *) buffer + n, size - n);
-		if (ret < 0)
-			die("read error (%s)", strerror(errno));
-		if (!ret)
-			die("The remote end hung up unexpectedly");
-		n += ret;
-	}
+	ssize_t ret = read_in_full(fd, buffer, size);
+	if (ret < 0)
+		die_errno("read error");
+	else if (ret < size)
+		die("The remote end hung up unexpectedly");
 }
 
 int packet_read_line(int fd, char *buffer, unsigned size)

@@ -65,4 +65,3 @@ typedef struct s_xdfenv {
 
 
 #endif /* #if !defined(XTYPES_H) */
-

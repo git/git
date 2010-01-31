@@ -1,0 +1,21 @@
+in-core index API
+=================
+
+Talk about <read-cache.c> and <cache-tree.c>, things like:
+
+* cache -> the_index macros
+* read_index()
+* write_index()
+* ie_match_stat() and ie_modified(); how they are different and when to
+  use which.
+* index_name_pos()
+* remove_index_entry_at()
+* remove_file_from_index()
+* add_file_to_index()
+* add_index_entry()
+* refresh_index()
+* discard_index()
+* cache_tree_invalidate_path()
+* cache_tree_update()
+
+(JC, Linus)

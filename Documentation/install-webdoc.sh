@@ -2,9 +2,16 @@
 
 T="$1"
 
-for h in *.html *.txt howto/*.txt howto/*.html RelNotes-*.txt *.css
+for h in \
+	*.txt *.html \
+	howto/*.txt howto/*.html \
+	technical/*.txt technical/*.html \
+	RelNotes-*.txt *.css
 do
-	if test -f "$T/$h" &&
+	if test ! -f "$h"
+	then
+		: did not match
+	elif test -f "$T/$h" &&
 	   diff -u -I'Last updated [0-9][0-9]-[A-Z][a-z][a-z]-' "$T/$h" "$h"
 	then
 		:; # up to date
@@ -16,7 +23,10 @@ do
 	fi
 done
 strip_leading=`echo "$T/" | sed -e 's|.|.|g'`
-for th in "$T"/*.html "$T"/*.txt "$T"/howto/*.txt "$T"/howto/*.html
+for th in \
+	"$T"/*.html "$T"/*.txt \
+	"$T"/howto/*.txt "$T"/howto/*.html \
+	"$T"/technical/*.txt "$T"/technical/*.html
 do
 	h=`expr "$th" : "$strip_leading"'\(.*\)'`
 	case "$h" in

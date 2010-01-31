@@ -1,0 +1,40 @@
+GIT v1.5.6.2 Release Notes
+==========================
+
+Futureproof
+-----------
+
+ * "git-shell" accepts requests without a dash between "git" and
+   subcommand name (e.g. "git upload-pack") which the newer client will
+   start to make sometime in the future.
+
+Fixes since v1.5.6.1
+--------------------
+
+* "git clone" from a remote that is named with url.insteadOf setting in
+  $HOME/.gitconfig did not work well.
+
+* "git describe --long --tags" segfaulted when the described revision was
+  tagged with a lightweight tag.
+
+* "git diff --check" did not report the result via its exit status
+  reliably.
+
+* When remote side used to have branch 'foo' and git-fetch finds that now
+  it has branch 'foo/bar', it refuses to lose the existing remote tracking
+  branch and its reflog.  The error message has been improved to suggest
+  pruning the remote if the user wants to proceed and get the latest set
+  of branches from the remote, including such 'foo/bar'.
+
+* "git reset file" should mean the same thing as "git reset HEAD file",
+  but we required disambiguating -- even when "file" is not ambiguous.
+
+* "git show" segfaulted when an annotated tag that points at another
+  annotated tag was given to it.
+
+* Optimization for a large import via "git-svn" introduced in v1.5.6 had a
+  serious memory and temporary file leak, which made it unusable for
+  moderately large import.
+
+* "git-svn" mangled remote nickname used in the configuration file
+  unnecessarily.

@@ -1,0 +1,29 @@
+GIT v1.5.6.5 Release Notes
+==========================
+
+Fixes since v1.5.6.4
+--------------------
+
+* "git cvsimport" used to spit out "UNKNOWN LINE..." diagnostics to stdout.
+
+* "git commit -F filename" and "git tag -F filename" run from subdirectories
+  did not read the right file.
+
+* "git init --template=" with blank "template" parameter linked files
+  under root directories to .git, which was a total nonsense.  Instead, it
+  means "I do not want to use anything from the template directory".
+
+* "git diff-tree" and other diff plumbing ignored diff.renamelimit configuration
+  variable when the user explicitly asked for rename detection.
+
+* "git name-rev --name-only" did not work when "--stdin" option was in effect.
+
+* "git show-branch" mishandled its 8th branch.
+
+* Addition of "git update-index --ignore-submodules" that happened during
+  1.5.6 cycle broke "git update-index --ignore-missing".
+
+* "git send-email" did not parse charset from an existing Content-type:
+  header properly.
+
+Contains other various documentation fixes.

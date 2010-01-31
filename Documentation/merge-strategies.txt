@@ -3,15 +3,15 @@ MERGE STRATEGIES
 
 resolve::
 	This can only resolve two heads (i.e. the current branch
-	and another branch you pulled from) using 3-way merge
+	and another branch you pulled from) using a 3-way merge
 	algorithm.  It tries to carefully detect criss-cross
 	merge ambiguities and is considered generally safe and
 	fast.
 
 recursive::
-	This can only resolve two heads using 3-way merge
-	algorithm.  When there are more than one common
-	ancestors that can be used for 3-way merge, it creates a
+	This can only resolve two heads using a 3-way merge
+	algorithm.  When there is more than one common
+	ancestor that can be used for 3-way merge, it creates a
 	merged tree of the common ancestors and uses that as
 	the reference tree for the 3-way merge.  This has been
 	reported to result in fewer merge conflicts without
@@ -22,14 +22,21 @@ recursive::
 	pulling or merging one branch.
 
 octopus::
-	This resolves more than two-head case, but refuses to do
-	complex merge that needs manual resolution.  It is
+	This resolves cases with more than two heads, but refuses to do
+	a complex merge that needs manual resolution.  It is
 	primarily meant to be used for bundling topic branch
 	heads together.  This is the default merge strategy when
-	pulling or merging more than one branches.
+	pulling or merging more than one branch.
 
 ours::
 	This resolves any number of heads, but the result of the
 	merge is always the current branch head.  It is meant to
 	be used to supersede old development history of side
 	branches.
+
+subtree::
+	This is a modified recursive strategy. When merging trees A and
+	B, if B corresponds to a subtree of A, B is first adjusted to
+	match the tree structure of A, instead of reading the trees at
+	the same level. This adjustment is also done to the common
+	ancestor tree.

@@ -25,7 +25,7 @@ static int add_info_ref(const char *path, const unsigned char *sha1, int flag, v
 
 static int update_info_refs(int force)
 {
-	char *path0 = xstrdup(git_path("info/refs"));
+	char *path0 = git_pathdup("info/refs");
 	int len = strlen(path0);
 	char *path1 = xmalloc(len + 2);
 
@@ -35,9 +35,10 @@ static int update_info_refs(int force)
 	safe_create_leading_directories(path0);
 	info_ref_fp = fopen(path1, "w");
 	if (!info_ref_fp)
-		return error("unable to update %s", path0);
+		return error("unable to update %s", path1);
 	for_each_ref(add_info_ref, NULL);
 	fclose(info_ref_fp);
+	adjust_shared_perm(path1);
 	rename(path1, path0);
 	free(path0);
 	free(path1);
@@ -100,7 +101,7 @@ static int read_pack_info_file(const char *infofile)
 
 	while (fgets(line, sizeof(line), fp)) {
 		int len = strlen(line);
-		if (line[len-1] == '\n')
+		if (len && line[len-1] == '\n')
 			line[--len] = 0;
 
 		if (!len)
@@ -131,8 +132,8 @@ static int read_pack_info_file(const char *infofile)
 
 static int compare_info(const void *a_, const void *b_)
 {
-	struct pack_info * const* a = a_;
-	struct pack_info * const* b = b_;
+	struct pack_info *const *a = a_;
+	struct pack_info *const *b = b_;
 
 	if (0 <= (*a)->old_num && 0 <= (*b)->old_num)
 		/* Keep the order in the original */
@@ -227,6 +228,7 @@ static int update_info_packs(int force)
 		return error("cannot open %s", name);
 	write_pack_info_file(fp);
 	fclose(fp);
+	adjust_shared_perm(name);
 	rename(name, infofile);
 	return 0;
 }
@@ -244,7 +246,7 @@ int update_server_info(int force)
 	errs = errs | update_info_packs(force);
 
 	/* remove leftover rev-cache file if there is any */
-	unlink(git_path("info/rev-cache"));
+	unlink_or_warn(git_path("info/rev-cache"));
 
 	return errs;
 }

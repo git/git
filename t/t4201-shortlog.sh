@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Johannes E. Schindelin
 #
 
-test_description='git-shortlog
+test_description='git shortlog
 '
 
 . ./test-lib.sh
@@ -15,19 +15,19 @@ commit=$( (echo "Test"; echo) | git commit-tree $tree )
 git update-ref HEAD $commit
 
 echo 2 > a1
-git commit -m "This is a very, very long first line for the commit message to see if it is wrapped correctly" a1
+git commit --quiet -m "This is a very, very long first line for the commit message to see if it is wrapped correctly" a1
 
 # test if the wrapping is still valid when replacing all i's by treble clefs.
 echo 3 > a1
-git commit -m "$(echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" | sed "s/i/1234/g" | tr 1234 '\360\235\204\236')" a1
+git commit --quiet -m "$(echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" | sed "s/i/1234/g" | tr 1234 '\360\235\204\236')" a1
 
 # now fsck up the utf8
-git repo-config i18n.commitencoding non-utf-8
+git config i18n.commitencoding non-utf-8
 echo 4 > a1
-git commit -m "$(echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" | sed "s/i/1234/g" | tr 1234 '\370\235\204\236')" a1
+git commit --quiet -m "$(echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" | sed "s/i/1234/g" | tr 1234 '\370\235\204\236')" a1
 
 echo 5 > a1
-git commit -m "a								12	34	56	78" a1
+git commit --quiet -m "a								12	34	56	78" a1
 
 git shortlog -w HEAD > out
 
@@ -45,6 +45,11 @@ A U Thor (5):
 
 EOF
 
-test_expect_success 'shortlog wrapping' 'diff -u expect out'
+test_expect_success 'shortlog wrapping' 'test_cmp expect out'
+
+git log HEAD > log
+GIT_DIR=non-existing git shortlog -w < log > out
+
+test_expect_success 'shortlog from non-git directory' 'test_cmp expect out'
 
 test_done

@@ -1,0 +1,28 @@
+git-convert-objects(1)
+======================
+
+NAME
+----
+git-convert-objects - Converts old-style git repository
+
+
+SYNOPSIS
+--------
+'git-convert-objects'
+
+DESCRIPTION
+-----------
+Converts old-style git repository to the latest format
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the gitlink:git[7] suite

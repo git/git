@@ -28,7 +28,7 @@ echo B > a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:02" git commit -m B a1 &&
 
 git checkout -b D A &&
-git-rev-parse B > .git/MERGE_HEAD &&
+git rev-parse B > .git/MERGE_HEAD &&
 echo D > a1 &&
 git update-index a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:03" git commit -m D &&
@@ -42,43 +42,81 @@ echo C > a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:05" git commit -m C a1 &&
 
 git checkout -b E C &&
-git-rev-parse B > .git/MERGE_HEAD &&
+git rev-parse B > .git/MERGE_HEAD &&
 echo E > a1 &&
 git update-index a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:06" git commit -m E &&
 
 git checkout -b G E &&
-git-rev-parse A > .git/MERGE_HEAD &&
+git rev-parse A > .git/MERGE_HEAD &&
 echo G > a1 &&
 git update-index a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:07" git commit -m G &&
 
 git checkout -b F D &&
-git-rev-parse C > .git/MERGE_HEAD &&
+git rev-parse C > .git/MERGE_HEAD &&
 echo F > a1 &&
 git update-index a1 &&
 GIT_AUTHOR_DATE="2006-12-12 23:00:08" git commit -m F
 '
 
-test_expect_failure "combined merge conflicts" "git merge -m final G"
+test_expect_success "combined merge conflicts" "
+	test_must_fail git merge -m final G
+"
 
 cat > expect << EOF
-<<<<<<< HEAD:a1
+<<<<<<< HEAD
 F
 =======
 G
->>>>>>> G:a1
+>>>>>>> G
 EOF
 
-test_expect_success "result contains a conflict" "git diff expect a1"
+test_expect_success "result contains a conflict" "test_cmp expect a1"
 
 git ls-files --stage > out
 cat > expect << EOF
-100644 da056ce14a2241509897fa68bb2b3b6e6194ef9e 1	a1
+100644 439cc46de773d8a83c77799b7cc9191c128bfcff 1	a1
 100644 cf84443e49e1b366fac938711ddf4be2d4d1d9e9 2	a1
 100644 fd7923529855d0b274795ae3349c5e0438333979 3	a1
 EOF
 
-test_expect_success "virtual trees were processed" "git diff expect out"
+test_expect_success "virtual trees were processed" "test_cmp expect out"
+
+test_expect_success 'refuse to merge binary files' '
+	git reset --hard &&
+	printf "\0" > binary-file &&
+	git add binary-file &&
+	git commit -m binary &&
+	git checkout G &&
+	printf "\0\0" > binary-file &&
+	git add binary-file &&
+	git commit -m binary2 &&
+	test_must_fail git merge F > merge.out 2> merge.err &&
+	grep "Cannot merge binary files: binary-file (HEAD vs. F)" merge.err
+'
+
+test_expect_success 'mark rename/delete as unmerged' '
+
+	git reset --hard &&
+	git checkout -b delete &&
+	git rm a1 &&
+	test_tick &&
+	git commit -m delete &&
+	git checkout -b rename HEAD^ &&
+	git mv a1 a2
+	test_tick &&
+	git commit -m rename &&
+	test_must_fail git merge delete &&
+	test 1 = $(git ls-files --unmerged | wc -l) &&
+	git rev-parse --verify :2:a2 &&
+	test_must_fail git rev-parse --verify :3:a2 &&
+	git checkout -f delete &&
+	test_must_fail git merge rename &&
+	test 1 = $(git ls-files --unmerged | wc -l) &&
+	test_must_fail git rev-parse --verify :2:a2 &&
+	git rev-parse --verify :3:a2
+
+'
 
 test_done
