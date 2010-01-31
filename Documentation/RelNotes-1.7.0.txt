@@ -182,6 +182,9 @@ Updates since v1.6.6
 
  * Many more commands are now built-in.
 
+ * THREADED_DELTA_SEARCH is no more.  If you build with threads, delta
+   compression will always take advantage of it.
+
 Fixes since v1.6.6
 ------------------
 
