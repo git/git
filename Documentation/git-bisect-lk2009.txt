@@ -799,7 +799,7 @@ fixed in the "main" branch by commit "F"?
 The result of such a bisection would be that we would find that H is
 the first bad commit, when in fact it's B. So that would be wrong!
 
-And yes it's can happen in practice that people working on one branch
+And yes it can happen in practice that people working on one branch
 are not aware that people working on another branch fixed a bug! It
 could also happen that F fixed more than one bug or that it is a
 revert of some big development effort that was not ready to be

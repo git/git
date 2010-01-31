@@ -60,7 +60,7 @@ doesn't, as in the following diagram:
 If the client wants x,y and starts out by saying have F,S, the server
 doesn't know what F,S is.  Eventually the client says "have d" and
 the server sends "ACK d continue" to let the client know to stop
-walking down that line (so don't send c-b-a), but its not done yet,
+walking down that line (so don't send c-b-a), but it's not done yet,
 it needs a base for x. The client keeps going with S-R-Q, until a
 gets reached, at which point the server has a clear base and it all
 ends.
@@ -181,7 +181,7 @@ delete-refs
 -----------
 
 If the server sends back the 'delete-refs' capability, it means that
-it is capable of accepting an zero-id value as the target
+it is capable of accepting a zero-id value as the target
 value of a reference update.  It is not sent back by the client, it
 simply informs the client that it can be sent zero-id values
 to delete references.

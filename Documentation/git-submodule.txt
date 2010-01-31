@@ -218,7 +218,7 @@ OPTIONS
 	This option is only valid for the update command.
 	Rebase the current branch onto the commit recorded in the
 	superproject. If this option is given, the submodule's HEAD will not
-	be detached. If a a merge failure prevents this process, you will have
+	be detached. If a merge failure prevents this process, you will have
 	to resolve these failures with linkgit:git-rebase[1].
 	If the key `submodule.$name.update` is set to `rebase`, this option is
 	implicit.

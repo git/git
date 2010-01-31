@@ -33,7 +33,7 @@ OPTIONS
 --stop-at-non-option::
 	Only meaningful in `--parseopt` mode.  Lets the option parser stop at
 	the first non-option argument.  This can be used to parse sub-commands
-	that take options themself.
+	that take options themselves.
 
 --sq-quote::
 	Use 'git rev-parse' in shell quoting mode (see SQ-QUOTE
