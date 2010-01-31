@@ -1693,9 +1693,9 @@ XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS)
 
 dep_files := $(foreach f,$(OBJECTS),$(dir $f).depend/$(notdir $f).d)
+dep_dirs := $(addsuffix .depend,$(sort $(dir $(OBJECTS))))
 
 ifdef COMPUTE_HEADER_DEPENDENCIES
-dep_dirs := $(addsuffix .depend,$(sort $(dir $(OBJECTS))))
 $(dep_dirs):
 	mkdir -p $@
 
