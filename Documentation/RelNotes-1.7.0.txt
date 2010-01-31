@@ -25,7 +25,7 @@ Notes on behaviour change
    configured that variable.
 
  * "git status" is not "git commit --dry-run" anymore.  This change does
-   not affect you if you run the command without pathspec.
+   not affect you if you run the command without argument.
 
  * "git diff" traditionally treated various "ignore whitespace" options
    only as a way to filter the patch output.  "git diff --exit-code -b"
@@ -208,7 +208,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.7.0-rc0-48-gdace5dd
-O=v1.7.0-rc0-67-gb10b918
+O=v1.7.0-rc1-6-g2ee8c5b
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
