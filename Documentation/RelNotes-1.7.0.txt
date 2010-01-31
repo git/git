@@ -38,6 +38,13 @@ Notes on behaviour change
    whitespaces is reported with zero exit status when run with
    --exit-code, and there is no "diff --git" header for such a change.
 
+ * external diff and textconv helpers are now executed using the shell.
+   This makes them consistent with other programs executed by git, and
+   allows you to pass command-line parameters to the helpers. Any helper
+   paths containing spaces or other metacharacters now need to be
+   shell-quoted.  The affected helpers are GIT_EXTERNAL_DIFF in the
+   environment, and diff.*.command and diff.*.textconv in the config
+   file.
 
 Updates since v1.6.6
 --------------------
