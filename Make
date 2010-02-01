@@ -58,7 +58,9 @@ case `uname` in
 OpenBSD)
 	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
 	GIT_SKIP_TESTS="t9200 t9502 $GIT_SKIP_TESTS"; export GIT_SKIP_TESTS
-	NO_PEDANTIC=CannotDo Wall=
+	SHELL_PATH=/usr/local/bin/bash; export SHELL_PATH
+	NO_PEDANTIC=CannotDo NO_JOBS=CannotDo
+	Wall=
 	;;
 FreeBSD)
 	OLD_ICONV=YesPlease; export OLD_ICONV
@@ -90,7 +92,10 @@ do
 		# O="$O -fwrapv -fno-strict-overflow"
 		;;
 	-j*)
-		jobs=$1
+		case "$NO_JOBS" in
+		?*)	jobs= ;;
+		'')	jobs=$1 ;;
+		esac
 		;;
 	-loose | --loose)
 		Wall=
