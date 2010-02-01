@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2010, #09; Mon, 25)
-X-master-at: e3f67d30b20e49d8fc3eefe819808cba7998b060
-X-next-at: fbe713d5bd6c280a0b5838c6fffb700008ae456e
+Subject: What's cooking in git.git (Jan 2010, #10; Sun, 31)
+X-master-at: c0da5db1e692c2bc74e5cdba67baf8762ac304b4
+X-next-at: 0b0b75cec288f9895f99607456ed06b21da0e2a9
 
-What's cooking in git.git (Jan 2010, #09; Mon, 25)
+What's cooking in git.git (Jan 2010, #10; Sun, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,28 +11,11 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-We are already past -rc0; I think jl/diff-submodule-ignore should be part
-of 1.7.0-rc1, and I heard that early parts of jh/gitweb-cached are ready,
-but perhaps needs the final round of clean-up.  I am not confident if we
-can fix any potential fallouts before 1.7.0 if we merged other topics.
-
-So while I expect some minor merges to 'master' yet to come but otherwise
-this should be pretty much "it" from feature-set perspective.
-
-Oh, gitk and git-gui may have further pull-requests before -rc1.
+We are passed 1.7.0-rc1; please test "master" branch to avoid giving
+regressions to end users.  Thanks.
 
 --------------------------------------------------
-[New Topics]
-
-* fk/threaded-grep (2010-01-25) 1 commit
- - Threaded grep
- (this branch uses jc/grep-q.)
-
-400% performance gain on a 4-core box ;-)
-
-* jc/grep-q (2010-01-25) 1 commit
- - grep: expose "status-only" feature via -q
- (this branch is used by fk/threaded-grep.)
+[Graduated to "master"]
 
 * jl/diff-submodule-ignore (2010-01-24) 2 commits
   (merged to 'next' on 2010-01-25 at fbe713d)
@@ -40,16 +23,100 @@ Oh, gitk and git-gui may have further pull-requests before -rc1.
  + git diff: Don't test submodule dirtiness with --ignore-submodules
  (this branch uses jc/ce-uptodate.)
 
---------------------------------------------------
-[Cooking]
-
 * jc/ce-uptodate (2010-01-24) 1 commit
   (merged to 'next' on 2010-01-25 at fbe713d)
  + Make ce_uptodate() trustworthy again
  (this branch is used by jl/diff-submodule-ignore.)
 
-I think this and Jens Lehmann's follow-up patch to avoid calling
-is_submodule_modified() are needed before 1.7.0
+* gp/maint-cvsserver (2010-01-26) 1 commit
+ + git-cvsserver: allow regex metacharacters in CVSROOT
+
+* fk/threaded-grep (2010-01-25) 1 commit
+  (merged to 'next' on 2010-01-26 at 687b2a6)
+ + Threaded grep
+ (this branch uses jc/grep-q.)
+
+400% performance gain on a 4-core box ;-)
+
+* jc/grep-q (2010-01-25) 1 commit
+  (merged to 'next' on 2010-01-26 at 687b2a6)
+ + grep: expose "status-only" feature via -q
+ (this branch is used by fk/threaded-grep.)
+
+--------------------------------------------------
+[New Topics]
+
+* jn/maint-makedepend (2010-01-26) 5 commits
+ - Makefile: drop dependency on $(wildcard */*.h)
+ - Makefile: clean up http-walker.o dependency rules
+ - Makefile: remove wt-status.h from LIB_H
+ - Makefile: make sure test helpers are rebuilt when headers change
+ - Makefile: add missing header file dependencies
+ (this branch is used by jn/makedepend and jn/master-makedepend.)
+
+These look sensible clean-up that could go to maint.
+
+* jn/master-makedepend (2010-01-26) 0 commits
+ (this branch uses jn/maint-makedepend; is used by jn/makedepend.)
+
+This is to help merging the clean-up to "master".
+
+* jn/makedepend (2010-01-31) 9 commits
+ - Makefile: always remove .depend directories on 'make clean'
+ - Makefile: tuck away generated makefile fragments in .depend
+ - Teach Makefile to check header dependencies
+ - Makefile: list standalone program object files in PROGRAM_OBJS
+ - Makefile: lazily compute header dependencies
+ - Makefile: list generated object files in OBJECTS
+ - Makefile: disable default implicit rules
+ - Makefile: rearrange dependency rules
+ - Makefile: transport.o depends on branch.h now
+ (this branch uses jn/maint-makedepend and jn/master-makedepend.)
+
+And this is to build on top.
+
+* ms/filter-branch-submodule (2010-01-28) 2 commits
+  (merged to 'next' on 2010-01-28 at 226cbf8)
+ + filter-branch: Add tests for submodules in tree-filter
+ + filter-branch: Fix to allow replacing submodules with another content
+
+* jc/checkout-detached (2010-01-29) 1 commit
+ - Reword "detached HEAD" notification
+
+* jc/maint-fix-test-perm (2010-01-30) 2 commits
+ - lib-patch-mode.sh: Fix permission
+ - t6000lib: Fix permission
+
+* jh/gitweb-caching (2010-01-30) 8 commits
+ - gitweb: Add an option to force version match
+ - gitweb: Add optional extra parameter to die_error, for extended explanation
+ - gitweb: add a "string" variant of print_sort_th
+ - gitweb: add a "string" variant of print_local_time
+ - gitweb: Check that $site_header etc. are defined before using them
+ - gitweb: Makefile improvements
+ - gitweb: Load checking
+ - gitweb: Make running t9501 test with '--debug' reliable and usable
+
+* jn/makefile-script-lib (2010-01-31) 1 commit
+ - Do not install shell libraries executable
+
+* mv/request-pull-modernize (2010-01-29) 1 commit
+ - request-pull: avoid mentioning that the start point is a single commit
+
+* sp/maint-fast-import-large-blob (2010-01-29) 1 commit
+ - fast-import: Stream very large blobs directly to pack
+ (this branch is used by sp/fast-import-large-blob.)
+
+Importing a large blob via fast-import may bust the pack size limit (or
+2GB filesize limit found on some filesystems).
+
+* sp/fast-import-large-blob (2010-01-29) 0 commits
+ (this branch uses sp/maint-fast-import-large-blob.)
+
+And this is to help merging the topic to newer codebase.
+
+--------------------------------------------------
+[Cooking]
 
 * cc/reset-keep (2010-01-19) 5 commits
  - reset: disallow using --keep when there are unmerged entries
@@ -64,11 +131,14 @@ perhaps queuing it to pu to give it wider visibility may help somebody
 coming up with a better way to defend the feature and introduce it to
 users without confusing them than Christan nor I managed to.
 
-* jh/notes (2010-01-17) 20 commits
- - builtin-gc: Teach the new --notes option to garbage-collect notes
- - Notes API: gc_notes(): Prune notes that belong to non-existing objects
+* jh/notes (2010-01-27) 23 commits
+ - builtin-notes: Add "add" subcommand for appending to note objects
+ - builtin-notes: Add "list" subcommand for listing note objects
+ - Documentation: Generalize git-notes docs to 'objects' instead of 'commits'
+ - builtin-notes: Add "prune" subcommand for removing notes for missing objects
+ - Notes API: prune_notes(): Prune notes that belong to non-existing objects
  - t3305: Verify that removing notes triggers automatic fanout consolidation
- - builtin-notes: Teach -d option for deleting existing notes
+ - builtin-notes: Add "remove" subcommand for removing existing notes
  - Teach builtin-notes to remove empty notes
  - Teach notes code to properly preserve non-notes in the notes tree
  - t3305: Verify that adding many notes with git-notes triggers increased fanout
@@ -84,25 +154,7 @@ users without confusing them than Christan nor I managed to.
  - Notes API: init_notes(): Initialize the notes tree from the given notes ref
  - Add tests for checking correct handling of $GIT_NOTES_REF and core.notesRef
  - Notes API: get_commit_notes() -> format_note() + remove the commit restriction
- - Minor non-functional fixes to notes.c
-
-The changes to test vector this series makes to t3301 breaks tests that
-are in 'master', so 'pu' doesn't pass it.
-
-* jh/gitweb-cached (2010-01-13) 9 commits
- - gitweb: File based caching layer (from git.kernel.org)
- - gitweb: Convert output to using indirect file handle
- - gitweb: cleanup error message produced by undefined $site_header
- - gitweb: add a get function to compliment print_sort_th
- - gitweb: add a get function to compliment print_local_time
- - gitweb: Makefile improvements
- - gitweb: Add option to force version match
- - gitweb: change die_error to take "extra" argument for extended die information
- - gitweb: Load checking
-
-I know there is a series to split the later ones into smaller chunks that
-are being discussed on the list, but they don't appear here.  I'd prefer
-to pick the series up after all the dust from the discussion settles.
+ - Cosmetic fixes to notes.c
 
 * jc/grep-author-all-match-implicit (2010-01-17) 1 commit
  - "log --author=me --grep=it" should find intersection, not union
