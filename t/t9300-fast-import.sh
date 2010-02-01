@@ -1254,4 +1254,50 @@ test_expect_success \
 	'Q: verify note for third commit' \
 	'git cat-file blob refs/notes/foobar:$commit3 >actual && test_cmp expect actual'
 
+##
+## R: very large blobs
+##
+blobsize=$((2*1024*1024 + 53))
+test-genrandom bar $blobsize >expect
+cat >input <<INPUT_END
+commit refs/heads/big-file
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+R - big file
+COMMIT
+
+M 644 inline big1
+data $blobsize
+INPUT_END
+cat expect >>input
+cat >>input <<INPUT_END
+M 644 inline big2
+data $blobsize
+INPUT_END
+cat expect >>input
+echo >>input
+
+test_expect_success \
+	'R: blob bigger than threshold' \
+	'test_create_repo R &&
+	 git --git-dir=R/.git fast-import --big-file-threshold=1 <input'
+test_expect_success \
+	'R: verify created pack' \
+	': >verify &&
+	 for p in R/.git/objects/pack/*.pack;
+	 do
+	   git verify-pack -v $p >>verify || exit;
+	 done'
+test_expect_success \
+	'R: verify written objects' \
+	'git --git-dir=R/.git cat-file blob big-file:big1 >actual &&
+	 test_cmp expect actual &&
+	 a=$(git --git-dir=R/.git rev-parse big-file:big1) &&
+	 b=$(git --git-dir=R/.git rev-parse big-file:big2) &&
+	 test $a = $b'
+test_expect_success \
+	'R: blob appears only once' \
+	'n=$(grep $a verify | wc -l) &&
+	 test 1 = $n'
+
 test_done
