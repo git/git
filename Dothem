@@ -148,18 +148,13 @@ do
 
 		save=$(git rev-parse HEAD) &&
 
-		{
-			test "z$with_dash" != 'zy' ||
-			Meta/Make $M ${test+"$test"} -- $jobs SHELL_PATH=/bin/dash $dotest
-		} &&
-
-		Meta/Make $M ${test+"$test"} -- $jobs $dotest &&
+		Meta/Make $M ${test+"$test"} $jobs -- ${with_dash:+SHELL_PATH=/bin/dash} $dotest &&
 
 		{
 			test -n "$nodoc" ||
 			if test "$save" = "$(git rev-parse HEAD)"
 			then
-				Meta/Make $M -- $jobs doc &&
+				Meta/Make $M $jobs -- doc &&
 				Meta/Make $M -- install-man install-html
 			else
 				echo >&2 "Head moved--not installing docs"
@@ -177,6 +172,6 @@ do
 		} || exit $?
 
 		git reset --hard
-	) || break;
+	) </dev/null || exit $?
 
 done
