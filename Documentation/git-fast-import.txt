@@ -50,6 +50,12 @@ OPTIONS
 	importers may wish to lower this, such as to ensure the
 	resulting packfiles fit on CDs.
 
+--big-file-threshold=<n>::
+	Maximum size of a blob that fast-import will attempt to
+	create a delta for, expressed in bytes.  The default is 512m
+	(512 MiB).  Some importers may wish to lower this on systems
+	with constrained memory.
+
 --depth=<n>::
 	Maximum delta depth, for blob and tree deltification.
 	Default is 10.

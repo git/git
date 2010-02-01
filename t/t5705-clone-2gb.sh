@@ -31,7 +31,7 @@ test_expect_success 'setup' '
 	 echo "data 5" &&
 	 echo ">2gb" &&
 	 cat commit) |
-	git fast-import &&
+	git fast-import --big-file-threshold=2 &&
 	test ! -f exit-status
 
 '
