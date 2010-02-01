@@ -200,11 +200,13 @@ release, unless otherwise noted.
    from non-root dir, 2010-01-26) may be merged to older maintenance
    branches.
 
- * When "git diff" is asked to compare the work tree with something,
-   it used to consider that a checked-out submodule with uncommitted
-   changes is not modified; this could cause people to forget committing
-   these changes in the submodule before committing in the superproject.
-   It now considers such a change as a modification.
+ * When using "git status" or asking "git diff" to compare the work tree
+   with something, they used to consider that a checked-out submodule with
+   uncommitted changes is not modified; this could cause people to forget
+   committing these changes in the submodule before committing in the
+   superproject. They now consider such a change as a modification and
+   "git diff" will append a "-dirty" to the work tree side when generating
+   patch output or when used with the --submodule option.
 
 --
 exec >/var/tmp/1
