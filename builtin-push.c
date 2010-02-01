@@ -52,7 +52,7 @@ static void set_refspecs(const char **refs, int nr)
 		} else if (deleterefs && !strchr(ref, ':')) {
 			char *delref;
 			int len = strlen(ref)+1;
-			delref = xmalloc(len);
+			delref = xmalloc(len+1);
 			strcpy(delref, ":");
 			strcat(delref, ref);
 			ref = delref;

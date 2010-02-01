@@ -134,10 +134,6 @@ test_expect_success 'rebase -q is quiet' '
      test ! -s output.out
 '
 
-q_to_cr () {
-	tr Q '\015'
-}
-
 test_expect_success 'Rebase a commit that sprinkles CRs in' '
 	(
 		echo "One"

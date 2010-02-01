@@ -762,7 +762,8 @@ const char *show_date_relative(unsigned long time, int tz,
 			       size_t timebuf_size);
 int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
-unsigned long approxidate(const char *);
+#define approxidate(s) approxidate_careful((s), NULL)
+unsigned long approxidate_careful(const char *, int *);
 unsigned long approxidate_relative(const char *date, const struct timeval *now);
 enum date_mode parse_date_format(const char *format);
 

@@ -230,6 +230,22 @@ test_decode_color () {
 		-e 's/.\[m/<RESET>/g'
 }
 
+q_to_nul () {
+	perl -pe 'y/Q/\000/'
+}
+
+q_to_cr () {
+	tr Q '\015'
+}
+
+append_cr () {
+	sed -e 's/$/Q/' | tr Q '\015'
+}
+
+remove_cr () {
+	tr '\015' Q | sed -e 's/Q$//'
+}
+
 test_tick () {
 	if test -z "${test_tick+set}"
 	then

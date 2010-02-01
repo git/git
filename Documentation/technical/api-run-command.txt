@@ -51,7 +51,7 @@ The functions above do the following:
   ENOENT; a diagnostic is printed only if .silent_exec_failure is 0.
 
 . Otherwise, the program is run. If it terminates regularly, its exit
-  code is returned. No diagnistic is printed, even if the exit code is
+  code is returned. No diagnostic is printed, even if the exit code is
   non-zero.
 
 . If the program terminated due to a signal, then the return value is the

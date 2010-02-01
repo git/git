@@ -25,7 +25,7 @@ Notes on behaviour change
    configured that variable.
 
  * "git status" is not "git commit --dry-run" anymore.  This change does
-   not affect you if you run the command without pathspec.
+   not affect you if you run the command without argument.
 
  * "git diff" traditionally treated various "ignore whitespace" options
    only as a way to filter the patch output.  "git diff --exit-code -b"
@@ -38,6 +38,13 @@ Notes on behaviour change
    whitespaces is reported with zero exit status when run with
    --exit-code, and there is no "diff --git" header for such a change.
 
+ * external diff and textconv helpers are now executed using the shell.
+   This makes them consistent with other programs executed by git, and
+   allows you to pass command-line parameters to the helpers. Any helper
+   paths containing spaces or other metacharacters now need to be
+   shell-quoted.  The affected helpers are GIT_EXTERNAL_DIFF in the
+   environment, and diff.*.command and diff.*.textconv in the config
+   file.
 
 Updates since v1.6.6
 --------------------
@@ -47,6 +54,10 @@ Updates since v1.6.6
  * "git fast-import" updates; adds "option" and "feature" to detect the
    mismatch between fast-import and the frontends that produce the input
    stream.
+
+ * "git svn" support of subversion "merge tickets" and miscellaneous fixes.
+
+ * "gitk" updates.
 
 (portability)
 
@@ -113,10 +124,13 @@ Updates since v1.6.6
 
  * "git fetch --all" can now be used in place of "git remote update".
 
- * "git grep" does not rely on external grep anymore.
+ * "git grep" does not rely on external grep anymore.  It can use more than
+   one threads to accelerate the operation.
 
  * "git grep" learned "--no-index" option, to search inside contents that
    are not managed by git.
+
+ * "git grep" learned "--quiet" option.
 
  * "git log" and friends learned "--glob=heads/*" syntax that is a more
    flexible way to complement "--branches/--tags/--remotes".
@@ -168,6 +182,9 @@ Updates since v1.6.6
 
  * Many more commands are now built-in.
 
+ * THREADED_DELTA_SEARCH is no more.  If you build with threads, delta
+   compression will always take advantage of it.
+
 Fixes since v1.6.6
 ------------------
 
@@ -178,6 +195,11 @@ release, unless otherwise noted.
    the branch is fully merged to its upstream branch if it is not merged
    to the current branch.  It now deletes it in such a case.
 
+ * "git config -f <relative path>" run from a subdirectory misbehaved.
+   65807ee (builtin-config: Fix crash when using "-f <relative path>"
+   from non-root dir, 2010-01-26) may be merged to older maintenance
+   branches.
+
  * When "git diff" is asked to compare the work tree with something,
    it used to consider that a checked-out submodule with uncommitted
    changes is not modified; this could cause people to forget committing
@@ -186,6 +208,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.6.6.1-434-g3521c1b
+O=v1.7.0-rc1-6-g2ee8c5b
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint

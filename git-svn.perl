@@ -26,6 +26,7 @@ if (! exists $ENV{SVN_SSH}) {
 		$ENV{SVN_SSH} = $ENV{GIT_SSH};
 		if ($^O eq 'msys') {
 			$ENV{SVN_SSH} =~ s/\\/\\\\/g;
+			$ENV{SVN_SSH} =~ s/(.*)/"$1"/;
 		}
 	}
 }

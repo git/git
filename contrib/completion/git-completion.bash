@@ -568,6 +568,7 @@ __git_list_porcelain_commands ()
 		read-tree)        : plumbing;;
 		receive-pack)     : plumbing;;
 		reflog)           : plumbing;;
+		remote-*)         : transport;;
 		repo-config)      : deprecated;;
 		rerere)           : plumbing;;
 		rev-list)         : plumbing;;
@@ -1304,6 +1305,24 @@ _git_mv ()
 _git_name_rev ()
 {
 	__gitcomp "--tags --all --stdin"
+}
+
+_git_notes ()
+{
+	local subcommands="edit show"
+	if [ -z "$(__git_find_on_cmdline "$subcommands")" ]; then
+		__gitcomp "$subcommands"
+		return
+	fi
+
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	-m|-F)
+		COMPREPLY=()
+		;;
+	*)
+		__gitcomp "$(__git_refs)"
+		;;
+	esac
 }
 
 _git_pull ()
@@ -2218,6 +2237,7 @@ _git ()
 	merge-base)  _git_merge_base ;;
 	mv)          _git_mv ;;
 	name-rev)    _git_name_rev ;;
+	notes)       _git_notes ;;
 	pull)        _git_pull ;;
 	push)        _git_push ;;
 	rebase)      _git_rebase ;;

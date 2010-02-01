@@ -348,6 +348,7 @@ extern void release_pack_memory(size_t, int);
 
 extern char *xstrdup(const char *str);
 extern void *xmalloc(size_t size);
+extern void *xmallocz(size_t size);
 extern void *xmemdupz(const void *data, size_t len);
 extern char *xstrndup(const char *str, size_t len);
 extern void *xrealloc(void *ptr, size_t size);

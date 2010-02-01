@@ -76,7 +76,7 @@ test_expect_success 'check combined output (1)' '
 	verify_helper sidewithone
 '
 
-test_expect_failure 'check combined output (2)' '
+test_expect_success 'check combined output (2)' '
 	git show sidesansone -- >sidesansone &&
 	verify_helper sidesansone
 '

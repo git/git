@@ -325,7 +325,7 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 	for (i = 0; i < 3; i++)
 		free(mmfile[i].ptr);
 
-	memset(&io, 0, sizeof(&io));
+	memset(&io, 0, sizeof(io));
 	io.io.getline = rerere_mem_getline;
 	if (output)
 		io.io.output = fopen(output, "w");

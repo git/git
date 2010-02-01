@@ -186,8 +186,8 @@ test_expect_success 'Prompting works' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches \
 		2>errors &&
-		grep "^From: Example <from@example.com>$" msgtxt1 &&
-		grep "^To: to@example.com$" msgtxt1
+		grep "^From: Example <from@example.com>\$" msgtxt1 &&
+		grep "^To: to@example.com\$" msgtxt1
 '
 
 test_expect_success 'cccmd works' '
@@ -236,7 +236,7 @@ test_expect_success 'Author From: in message body' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches &&
-	sed "1,/^$/d" < msgtxt1 > msgbody1
+	sed "1,/^\$/d" < msgtxt1 > msgbody1
 	grep "From: A <author@example.com>" msgbody1
 '
 
@@ -247,7 +247,7 @@ test_expect_success 'Author From: not in message body' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches &&
-	sed "1,/^$/d" < msgtxt1 > msgbody1
+	sed "1,/^\$/d" < msgtxt1 > msgbody1
 	! grep "From: A <author@example.com>" msgbody1
 '
 
