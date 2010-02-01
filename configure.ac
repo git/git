@@ -288,7 +288,7 @@ GIT_ARG_SET_PATH(shell)
 GIT_ARG_SET_PATH(perl)
 #
 # Define PYTHON_PATH to provide path to Python.
-GIT_ARG_SET_PATH(python)
+GIT_ARG_SET_PATH(python, allow-without)
 #
 # Define ZLIB_PATH to provide path to zlib.
 GIT_ARG_SET_PATH(zlib)
