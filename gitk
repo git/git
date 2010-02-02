@@ -2383,6 +2383,8 @@ proc makewindow {} {
     }
     bindall <$::BM> "canvscan mark %W %x %y"
     bindall <B$::BM-Motion> "canvscan dragto %W %x %y"
+    bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
+    bind . <$M1B-Key-w> doquit
     bindkey <Home> selfirstline
     bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
@@ -2814,6 +2816,7 @@ proc keys {} {
 [mc "Gitk key bindings:"]
 
 [mc "<%s-Q>		Quit" $M1T]
+[mc "<%s-W>		Close window" $M1T]
 [mc "<Home>		Move to first commit"]
 [mc "<End>		Move to last commit"]
 [mc "<Up>, p, i	Move up one commit"]
