@@ -16,7 +16,8 @@ git subtree split --prefix=<prefix> <commit...>
 h,help        show the help
 q             quiet
 d             show debug messages
-prefix=       the name of the subdir to split out
+P,prefix=     the name of the subdir to split out
+m,message=    use the given message as the commit message for the merge commit
  options for 'split'
 annotate=     add a prefix to commit message of new commits
 b,branch=     create a new branch from the split subtree
@@ -40,6 +41,7 @@ rejoin=
 ignore_joins=
 annotate=
 squash=
+message=
 
 debug()
 {
@@ -76,7 +78,8 @@ while [ $# -gt 0 ]; do
 		--annotate) annotate="$1"; shift ;;
 		--no-annotate) annotate= ;;
 		-b) branch="$1"; shift ;;
-		--prefix) prefix="$1"; shift ;;
+		-P) prefix="$1"; shift ;;
+		-m) message="$1"; shift ;;
 		--no-prefix) prefix= ;;
 		--onto) onto="$1"; shift ;;
 		--no-onto) onto= ;;
@@ -152,6 +155,20 @@ cache_set()
 rev_exists()
 {
 	if git rev-parse "$1" >/dev/null 2>&1; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+rev_is_descendant_of_branch()
+{
+	newrev="$1"
+	branch="$2"
+	branch_hash=$(git rev-parse $branch)
+	match=$(git rev-list -1 $branch_hash ^$newrev)
+
+	if [ -z "$match" ]; then
 		return 0
 	else
 		return 1
@@ -266,8 +283,13 @@ add_msg()
 	dir="$1"
 	latest_old="$2"
 	latest_new="$3"
+	if [ -n "$message" ]; then
+		commit_message="$message"
+	else
+		commit_message="Add '$dir/' from commit '$latest_new'"
+	fi
 	cat <<-EOF
-		Add '$dir/' from commit '$latest_new'
+		$commit_message
 		
 		git-subtree-dir: $dir
 		git-subtree-mainline: $latest_old
@@ -275,13 +297,27 @@ add_msg()
 	EOF
 }
 
+add_squashed_msg()
+{
+	if [ -n "$message" ]; then
+		echo "$message"
+	else
+		echo "Merge commit '$1' as '$2'"
+	fi
+}
+
 rejoin_msg()
 {
 	dir="$1"
 	latest_old="$2"
 	latest_new="$3"
+	if [ -n "$message" ]; then
+		commit_message="$message"
+	else
+		commit_message="Split '$dir/' into commit '$latest_new'"
+	fi
 	cat <<-EOF
-		Split '$dir/' into commit '$latest_new'
+		$commit_message
 		
 		git-subtree-dir: $dir
 		git-subtree-mainline: $latest_old
@@ -441,7 +477,7 @@ cmd_add()
 	
 	if [ -n "$squash" ]; then
 		rev=$(new_squash_commit "" "" "$rev") || exit $?
-		commit=$(echo "Merge commit '$rev' as '$dir'" |
+		commit=$(add_squashed_msg "$rev" "$dir" |
 			 git commit-tree $tree $headp -p "$rev") || exit $?
 	else
 		commit=$(add_msg "$dir" "$headrev" "$rev" |
@@ -454,10 +490,6 @@ cmd_add()
 
 cmd_split()
 {
-	if [ -n "$branch" ] && rev_exists "refs/heads/$branch"; then
-		die "Branch '$branch' already exists."
-	fi
-
 	debug "Splitting $dir..."
 	cache_setup || exit $?
 	
@@ -488,7 +520,8 @@ cmd_split()
 	eval "$grl" |
 	while read rev parents; do
 		revcount=$(($revcount + 1))
-		say -n "$revcount/$revmax ($createcount)"
+		say -n "$revcount/$revmax ($createcount)
+"
 		debug "Processing commit: $rev"
 		exists=$(cache_get $rev)
 		if [ -n "$exists" ]; then
@@ -505,7 +538,10 @@ cmd_split()
 		
 		# ugly.  is there no better way to tell if this is a subtree
 		# vs. a mainline commit?  Does it matter?
-		[ -z $tree ] && continue
+		if [ -z $tree ]; then
+			cache_set $rev $rev
+			continue
+		fi
 
 		newrev=$(copy_or_skip "$rev" "$tree" "$newparents") || exit $?
 		debug "  newrev is: $newrev"
@@ -526,9 +562,16 @@ cmd_split()
 			$latest_new >&2 || exit $?
 	fi
 	if [ -n "$branch" ]; then
-		git update-ref -m 'subtree split' "refs/heads/$branch" \
-			$latest_new "" || exit $?
-		say "Created branch '$branch'"
+		if rev_exists "refs/heads/$branch"; then
+			if ! rev_is_descendant_of_branch $latest_new $branch; then
+				die "Branch '$branch' is not an ancestor of commit '$latest_new'."
+			fi
+			action='Updated'
+		else
+			action='Created'
+		fi
+		git update-ref -m 'subtree split' "refs/heads/$branch" $latest_new || exit $?
+		say "$action branch '$branch'"
 	fi
 	echo $latest_new
 	exit 0
@@ -561,7 +604,7 @@ cmd_merge()
 		rev="$new"
 	fi
 	
-	git merge -s subtree $rev
+	git merge -s subtree --message="$message" $rev
 }
 
 cmd_pull()

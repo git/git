@@ -53,6 +53,16 @@ multiline()
 	done
 }
 
+undo()
+{
+	git reset --hard HEAD~
+}
+
+last_commit_message()
+{
+	git log --format=%s -1
+}
+
 rm -rf mainline subproj
 mkdir mainline subproj
 
@@ -82,7 +92,24 @@ git branch subdir
 
 git fetch ../subproj sub1
 git branch sub1 FETCH_HEAD
+
+# check if --message works for add
+git subtree add --prefix=subdir --message="Added subproject" sub1
+check_equal "$(last_commit_message)" "Added subproject"
+undo
+
+# check if --message works as -m and --prefix as -P
+git subtree add -P subdir -m "Added subproject using git subtree" sub1
+check_equal "$(last_commit_message)" "Added subproject using git subtree"
+undo
+
+# check if --message works with squash too
+git subtree add -P subdir -m "Added subproject with squash" --squash sub1
+check_equal "$(last_commit_message)" "Added subproject with squash"
+undo
+
 git subtree add --prefix=subdir/ FETCH_HEAD
+check_equal "$(last_commit_message)" "Add 'subdir/' from commit '$(git rev-parse sub1)'"
 
 # this shouldn't actually do anything, since FETCH_HEAD is already a parent
 git merge -m 'merge -s -ours' -s ours FETCH_HEAD
@@ -98,13 +125,44 @@ git commit -m 'main-sub7'
 
 git fetch ../subproj sub2
 git branch sub2 FETCH_HEAD
+
+# check if --message works for merge
+git subtree merge --prefix=subdir -m "Merged changes from subproject" sub2
+check_equal "$(last_commit_message)" "Merged changes from subproject"
+undo
+
+# check if --message for merge works with squash too
+git subtree merge --prefix subdir -m "Merged changes from subproject using squash" --squash sub2
+check_equal "$(last_commit_message)" "Merged changes from subproject using squash"
+undo
+
 git subtree merge --prefix=subdir FETCH_HEAD
 git branch pre-split
+check_equal "$(last_commit_message)" "Merge commit '$(git rev-parse sub2)' into mainline"
 
-spl1=$(git subtree split --annotate='*' \
-		--prefix subdir --onto FETCH_HEAD --rejoin)
+# check if --message works for split+rejoin
+spl1=$(git subtree split --annotate='*' --prefix subdir --onto FETCH_HEAD --message "Split & rejoin" --rejoin)
 echo "spl1={$spl1}"
 git branch spl1 "$spl1"
+check_equal "$(last_commit_message)" "Split & rejoin"
+undo
+
+# check split with --branch
+git subtree split --annotate='*' --prefix subdir --onto FETCH_HEAD --branch splitbr1
+check_equal "$(git rev-parse splitbr1)" "$spl1"
+
+# check split with --branch for an existing branch
+git branch splitbr2 sub1
+git subtree split --annotate='*' --prefix subdir --onto FETCH_HEAD --branch splitbr2
+check_equal "$(git rev-parse splitbr2)" "$spl1"
+
+# check split with --branch for an incompatible branch
+result=$(git subtree split --prefix subdir --onto FETCH_HEAD --branch subdir || echo "caught error")
+check_equal "$result" "caught error"
+
+
+git subtree split --annotate='*' --prefix subdir --onto FETCH_HEAD --rejoin
+check_equal "$(last_commit_message)" "Split 'subdir/' into commit '$spl1'"
 
 create subdir/main-sub8
 git commit -m 'main-sub8'
@@ -169,6 +227,50 @@ check_equal "$(git log --pretty=format:'%s' HEAD^2 | grep -i split)" ""
 # make sure no 'git subtree' tagged commits make it into subproj. (They're
 # meaningless to subproj since one side of the merge refers to the mainline)
 check_equal "$(git log --pretty=format:'%s%n%b' HEAD^2 | grep 'git-subtree.*:')" ""
+
+
+# check if split can find proper base without --onto
+# prepare second pair of repositories
+mkdir test2
+cd test2
+
+mkdir main
+cd main
+git init
+create main1
+git commit -m "main1"
+
+cd ..
+mkdir sub
+cd sub
+git init
+create sub2
+git commit -m "sub2"
+
+cd ../main
+git fetch ../sub master
+git branch sub2 FETCH_HEAD
+git subtree add --prefix subdir sub2
+
+cd ../sub
+create sub3
+git commit -m "sub3"
+
+cd ../main
+git fetch ../sub master
+git branch sub3 FETCH_HEAD
+git subtree merge --prefix subdir sub3
+
+create subdir/main-sub4
+git commit -m "main-sub4"
+git subtree split --prefix subdir --branch mainsub4
+
+# at this point, the new commit's parent should be sub3
+# if it's not, something went wrong (the "newparent" of "master~" commit should have been sub3,
+# but it wasn't, because it's cache was not set to itself)
+check_equal "$(git log --format=%P -1 mainsub4)" "$(git rev-parse sub3)"
+
+
 
 # make sure no patch changes more than one file.  The original set of commits
 # changed only one file each.  A multi-file change would imply that we pruned
