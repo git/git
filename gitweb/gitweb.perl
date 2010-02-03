@@ -1330,7 +1330,6 @@ sub chop_str {
 		$str =~ m/^(.*?)($begre)$/;
 		my ($lead, $body) = ($1, $2);
 		if (length($lead) > 4) {
-			$body =~ s/^[^;]*;// if ($lead =~ m/&[^;]*$/);
 			$lead = " ...";
 		}
 		return "$lead$body";
@@ -1341,8 +1340,6 @@ sub chop_str {
 		$str =~ m/^(.*?)($begre)$/;
 		my ($mid, $right) = ($1, $2);
 		if (length($mid) > 5) {
-			$left  =~ s/&[^;]*$//;
-			$right =~ s/^[^;]*;// if ($mid =~ m/&[^;]*$/);
 			$mid = " ... ";
 		}
 		return "$left$mid$right";
@@ -1352,7 +1349,6 @@ sub chop_str {
 		my $body = $1;
 		my $tail = $2;
 		if (length($tail) > 4) {
-			$body =~ s/&[^;]*$//;
 			$tail = "... ";
 		}
 		return "$body$tail";
