@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2010, #10; Sun, 31)
-X-master-at: c0da5db1e692c2bc74e5cdba67baf8762ac304b4
-X-next-at: 0b0b75cec288f9895f99607456ed06b21da0e2a9
+Subject: What's cooking in git.git (Feb 2010, #01; Wed, 03)
+X-master-at: 07cf0f2407709e3764ea989696b513ec32613504
+X-next-at: 9253ab096ff0b88d2d690152c03d9e2491d5c40c
 
-What's cooking in git.git (Jan 2010, #10; Sun, 31)
+What's cooking in git.git (Feb 2010, #01; Wed, 03)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -17,34 +17,37 @@ regressions to end users.  Thanks.
 --------------------------------------------------
 [Graduated to "master"]
 
-* jl/diff-submodule-ignore (2010-01-24) 2 commits
-  (merged to 'next' on 2010-01-25 at fbe713d)
- + Teach diff --submodule that modified submodule directory is dirty
- + git diff: Don't test submodule dirtiness with --ignore-submodules
- (this branch uses jc/ce-uptodate.)
+* bw/no-python-autoconf (2010-01-31) 2 commits
+  (merged to 'next' on 2010-02-01 at 7c70402)
+ + configure: Allow --without-python
+ + configure: Allow GIT_ARG_SET_PATH to handle --without-PROGRAM
 
-* jc/ce-uptodate (2010-01-24) 1 commit
-  (merged to 'next' on 2010-01-25 at fbe713d)
- + Make ce_uptodate() trustworthy again
- (this branch is used by jl/diff-submodule-ignore.)
+* ms/filter-branch-submodule (2010-01-28) 2 commits
+  (merged to 'next' on 2010-01-28 at 226cbf8)
+ + filter-branch: Add tests for submodules in tree-filter
+ + filter-branch: Fix to allow replacing submodules with another content
 
-* gp/maint-cvsserver (2010-01-26) 1 commit
- + git-cvsserver: allow regex metacharacters in CVSROOT
+* sp/maint-fast-import-large-blob (2010-02-01) 1 commit
+  (merged to 'next' on 2010-02-01 at 04d206f)
+ + fast-import: Stream very large blobs directly to pack
+ (this branch is used by sp/fast-import-large-blob.)
 
-* fk/threaded-grep (2010-01-25) 1 commit
-  (merged to 'next' on 2010-01-26 at 687b2a6)
- + Threaded grep
- (this branch uses jc/grep-q.)
+Importing a large blob via fast-import may bust the pack size limit (or
+2GB filesize limit found on some filesystems).
 
-400% performance gain on a 4-core box ;-)
+* sp/fast-import-large-blob (2010-02-01) 0 commits
+ (this branch uses sp/maint-fast-import-large-blob.)
 
-* jc/grep-q (2010-01-25) 1 commit
-  (merged to 'next' on 2010-01-26 at 687b2a6)
- + grep: expose "status-only" feature via -q
- (this branch is used by fk/threaded-grep.)
+And this is to help merging the topic to newer codebase.
 
 --------------------------------------------------
 [New Topics]
+
+* jc/typo (2010-02-03) 1 commit
+ - Typofixes outside documentation area
+
+--------------------------------------------------
+[Cooking]
 
 * jn/maint-makedepend (2010-01-26) 5 commits
  - Makefile: drop dependency on $(wildcard */*.h)
@@ -54,7 +57,7 @@ regressions to end users.  Thanks.
  - Makefile: add missing header file dependencies
  (this branch is used by jn/makedepend and jn/master-makedepend.)
 
-These look sensible clean-up that could go to maint.
+These look sensible clean-up that could go to maint later.
 
 * jn/master-makedepend (2010-01-26) 0 commits
  (this branch uses jn/maint-makedepend; is used by jn/makedepend.)
@@ -73,12 +76,10 @@ This is to help merging the clean-up to "master".
  - Makefile: transport.o depends on branch.h now
  (this branch uses jn/maint-makedepend and jn/master-makedepend.)
 
-And this is to build on top.
-
-* ms/filter-branch-submodule (2010-01-28) 2 commits
-  (merged to 'next' on 2010-01-28 at 226cbf8)
- + filter-branch: Add tests for submodules in tree-filter
- + filter-branch: Fix to allow replacing submodules with another content
+And this is to build on top.  I don't want to touch build infrastructure
+during the pre-release freeze too much to avoid the last minute hassles
+that is only discovered when I try to cut RPMs; hence this will stay out
+of 'master' until 1.7.0 ships.
 
 * jc/checkout-detached (2010-01-29) 1 commit
  - Reword "detached HEAD" notification
@@ -87,36 +88,14 @@ And this is to build on top.
  - lib-patch-mode.sh: Fix permission
  - t6000lib: Fix permission
 
-* jh/gitweb-caching (2010-01-30) 8 commits
+* jh/gitweb-caching (2010-01-30) 1 commit
  - gitweb: Add an option to force version match
- - gitweb: Add optional extra parameter to die_error, for extended explanation
- - gitweb: add a "string" variant of print_sort_th
- - gitweb: add a "string" variant of print_local_time
- - gitweb: Check that $site_header etc. are defined before using them
- - gitweb: Makefile improvements
- - gitweb: Load checking
- - gitweb: Make running t9501 test with '--debug' reliable and usable
 
 * jn/makefile-script-lib (2010-01-31) 1 commit
  - Do not install shell libraries executable
 
 * mv/request-pull-modernize (2010-01-29) 1 commit
  - request-pull: avoid mentioning that the start point is a single commit
-
-* sp/maint-fast-import-large-blob (2010-01-29) 1 commit
- - fast-import: Stream very large blobs directly to pack
- (this branch is used by sp/fast-import-large-blob.)
-
-Importing a large blob via fast-import may bust the pack size limit (or
-2GB filesize limit found on some filesystems).
-
-* sp/fast-import-large-blob (2010-01-29) 0 commits
- (this branch uses sp/maint-fast-import-large-blob.)
-
-And this is to help merging the topic to newer codebase.
-
---------------------------------------------------
-[Cooking]
 
 * cc/reset-keep (2010-01-19) 5 commits
  - reset: disallow using --keep when there are unmerged entries
