@@ -2764,11 +2764,6 @@ static void option_date_format(const char *fmt)
 		die("unknown --date-format argument %s", fmt);
 }
 
-static void option_max_pack_size(const char *packsize)
-{
-	max_packsize = strtoumax(packsize, NULL, 0) * 1024 * 1024;
-}
-
 static void option_depth(const char *depth)
 {
 	max_depth = strtoul(depth, NULL, 0);
@@ -2798,7 +2793,17 @@ static void option_export_pack_edges(const char *edges)
 static int parse_one_option(const char *option)
 {
 	if (!prefixcmp(option, "max-pack-size=")) {
-		option_max_pack_size(option + 14);
+		unsigned long v;
+		if (!git_parse_ulong(option + 14, &v))
+			return 0;
+		if (v < 8192) {
+			warning("max-pack-size is now in bytes, assuming --max-pack-size=%lum", v);
+			v *= 1024 * 1024;
+		} else if (v < 1024 * 1024) {
+			warning("minimum max-pack-size is 1 MiB");
+			v = 1024 * 1024;
+		}
+		max_packsize = v;
 	} else if (!prefixcmp(option, "big-file-threshold=")) {
 		unsigned long v;
 		if (!git_parse_ulong(option + 19, &v))

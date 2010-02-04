@@ -44,8 +44,8 @@ OPTIONS
 	not contain the old commit).
 
 --max-pack-size=<n>::
-	Maximum size of each output packfile, expressed in MiB.
-	The default is 4096 (4 GiB) as that is the maximum allowed
+	Maximum size of each output packfile.
+	The default is 4 GiB as that is the maximum allowed
 	packfile size (due to file format limitations). Some
 	importers may wish to lower this, such as to ensure the
 	resulting packfiles fit on CDs.

@@ -46,10 +46,10 @@ Notes on behaviour change
    environment, and diff.*.command and diff.*.textconv in the config
    file.
 
- * The --max-pack-size argument to 'git repack' and 'git pack-objects' was
-   assuming the provided size to be expressed in MiB, unlike the
-   corresponding config variable and other similar options accepting a size
-   value.  It is now expecting a size expressed in bytes, with a possible
+ * The --max-pack-size argument to 'git repack', 'git pack-objects', and
+   'git fast-import' was assuming the provided size to be expressed in MiB,
+   unlike the corresponding config variable and other similar options accepting
+   a size value.  It is now expecting a size expressed in bytes, with a possible
    unit suffix of 'k', 'm', or 'g'.
 
 Updates since v1.6.6
