@@ -2006,7 +2006,7 @@ static int find_pos(struct image *img,
 		return -1;
 
 	/*
-	 * If match_begining or match_end is specified, there is no
+	 * If match_beginning or match_end is specified, there is no
 	 * point starting from a wrong line that will never match and
 	 * wander around and wait for a match at the specified end.
 	 */

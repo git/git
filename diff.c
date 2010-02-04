@@ -3642,7 +3642,7 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 		struct diff_filepair *p = q->queue[i];
 
 		/*
-		 * 1. Entries that come from stat info dirtyness
+		 * 1. Entries that come from stat info dirtiness
 		 *    always have both sides (iow, not create/delete),
 		 *    one side of the object name is unknown, with
 		 *    the same mode and size.  Keep the ones that
