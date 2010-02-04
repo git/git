@@ -246,7 +246,7 @@ static unsigned long write_object(struct sha1file *f,
 
 	type = entry->type;
 
-	/* write limit if limited packsize and not first object */
+	/* apply size limit if limited packsize and not first object */
 	if (!pack_size_limit || !nr_written)
 		limit = 0;
 	else if (pack_size_limit <= write_offset)
@@ -443,11 +443,15 @@ static int write_one(struct sha1file *f,
 
 	/* offset is non zero if object is written already. */
 	if (e->idx.offset || e->preferred_base)
-		return 1;
+		return -1;
 
-	/* if we are deltified, write out base object first. */
-	if (e->delta && !write_one(f, e->delta, offset))
-		return 0;
+	/*
+	 * If we are deltified, attempt to write out base object first.
+	 * If that fails due to the pack size limit then the current
+	 * object might still possibly fit undeltified within that limit.
+	 */
+	if (e->delta)
+	       write_one(f, e->delta, offset);
 
 	e->idx.offset = *offset;
 	size = write_object(f, e, *offset);
@@ -501,11 +505,9 @@ static void write_pack_file(void)
 		sha1write(f, &hdr, sizeof(hdr));
 		offset = sizeof(hdr);
 		nr_written = 0;
-		for (; i < nr_objects; i++) {
-			if (!write_one(f, objects + i, &offset))
-				break;
-			display_progress(progress_state, written);
-		}
+		for (i = 0; i < nr_objects; i++)
+			if (write_one(f, objects + i, &offset) == 1)
+				display_progress(progress_state, written);
 
 		/*
 		 * Did we write the wrong # entries in the header?
@@ -580,26 +582,13 @@ static void write_pack_file(void)
 			written_list[j]->offset = (off_t)-1;
 		}
 		nr_remaining -= nr_written;
-	} while (nr_remaining && i < nr_objects);
+	} while (nr_remaining);
 
 	free(written_list);
 	stop_progress(&progress_state);
 	if (written != nr_result)
 		die("wrote %"PRIu32" objects while expecting %"PRIu32,
 			written, nr_result);
-	/*
-	 * We have scanned through [0 ... i).  Since we have written
-	 * the correct number of objects,  the remaining [i ... nr_objects)
-	 * items must be either already written (due to out-of-order delta base)
-	 * or a preferred base.  Count those which are neither and complain if any.
-	 */
-	for (j = 0; i < nr_objects; i++) {
-		struct object_entry *e = objects + i;
-		j += !e->idx.offset && !e->preferred_base;
-	}
-	if (j)
-		die("wrote %"PRIu32" objects as expected but %"PRIu32
-			" unwritten", written, j);
 }
 
 static int locate_object_entry_hash(const unsigned char *sha1)
