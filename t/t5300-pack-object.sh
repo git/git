@@ -16,7 +16,9 @@ test_expect_success \
      perl -e "print \"a\" x 4096;" > a &&
      perl -e "print \"b\" x 4096;" > b &&
      perl -e "print \"c\" x 4096;" > c &&
-     git update-index --add a b c &&
+     test-genrandom "seed a" 2097152 > a_big &&
+     test-genrandom "seed b" 2097152 > b_big &&
+     git update-index --add a a_big b b_big c &&
      cat c >d && echo foo >>d && git update-index --add d &&
      tree=`git write-tree` &&
      commit=`git commit-tree $tree </dev/null` && {
@@ -375,19 +377,19 @@ test_expect_success 'index-pack with --strict' '
 '
 
 test_expect_success 'honor pack.packSizeLimit' '
-	git config pack.packSizeLimit 200 &&
+	git config pack.packSizeLimit 3m &&
 	packname_10=$(git pack-objects test-10 <obj-list) &&
-	test 3 = $(ls test-10-*.pack | wc -l)
+	test 2 = $(ls test-10-*.pack | wc -l)
 '
 
 test_expect_success 'verify resulting packs' '
 	git verify-pack test-10-*.pack
 '
 
-test_expect_success 'tolerate absurdly small packsizelimit' '
-	git config pack.packSizeLimit 2 &&
+test_expect_success 'tolerate packsizelimit smaller than biggest object' '
+	git config pack.packSizeLimit 1 &&
 	packname_11=$(git pack-objects test-11 <obj-list) &&
-	test $(wc -l <obj-list) = $(ls test-11-*.pack | wc -l)
+	test 3 = $(ls test-11-*.pack | wc -l)
 '
 
 test_expect_success 'verify resulting packs' '

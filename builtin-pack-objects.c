@@ -77,7 +77,7 @@ static int allow_ofs_delta;
 static const char *base_name;
 static int progress = 1;
 static int window = 10;
-static uint32_t pack_size_limit, pack_size_limit_cfg;
+static unsigned long pack_size_limit, pack_size_limit_cfg;
 static int depth = 50;
 static int delta_search_threads;
 static int pack_to_stdout;
@@ -2192,10 +2192,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!prefixcmp(arg, "--max-pack-size=")) {
-			char *end;
 			pack_size_limit_cfg = 0;
-			pack_size_limit = strtoul(arg+16, &end, 0) * 1024 * 1024;
-			if (!arg[16] || *end)
+			if (!git_parse_ulong(arg+16, &pack_size_limit))
 				usage(pack_usage);
 			continue;
 		}
@@ -2335,9 +2333,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (!pack_to_stdout && !pack_size_limit)
 		pack_size_limit = pack_size_limit_cfg;
-
 	if (pack_to_stdout && pack_size_limit)
 		die("--max-pack-size cannot be used to build a pack for transfer.");
+	if (pack_size_limit && pack_size_limit < 1024*1024) {
+		warning("minimum pack size limit is 1 MiB");
+		pack_size_limit = 1024*1024;
+	}
 
 	if (!pack_to_stdout && thin)
 		die("--thin cannot be used to build an indexable pack.");
