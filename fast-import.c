@@ -2800,7 +2800,10 @@ static int parse_one_option(const char *option)
 	if (!prefixcmp(option, "max-pack-size=")) {
 		option_max_pack_size(option + 14);
 	} else if (!prefixcmp(option, "big-file-threshold=")) {
-		big_file_threshold = strtoumax(option + 19, NULL, 0) * 1024 * 1024;
+		unsigned long v;
+		if (!git_parse_ulong(option + 19, &v))
+			return 0;
+		big_file_threshold = v;
 	} else if (!prefixcmp(option, "depth=")) {
 		option_depth(option + 6);
 	} else if (!prefixcmp(option, "active-branches=")) {
