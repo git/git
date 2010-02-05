@@ -1094,7 +1094,7 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 	if (fmt == CMIT_FMT_EMAIL && sb->len <= beginning_of_body)
 		strbuf_addch(sb, '\n');
 
-	if (fmt != CMIT_FMT_ONELINE)
+	if (context->show_notes)
 		get_commit_notes(commit, sb, encoding,
 				 NOTES_SHOW_HEADER | NOTES_INDENT);
 

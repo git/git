@@ -284,6 +284,7 @@ void show_log(struct rev_info *opt)
 	struct pretty_print_context ctx = {0};
 
 	opt->loginfo = NULL;
+	ctx.show_notes = opt->show_notes;
 	if (!opt->verbose_header) {
 		graph_show_commit(opt->graph);
 

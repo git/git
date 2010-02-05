@@ -70,6 +70,7 @@ struct pretty_print_context
 	const char *after_subject;
 	enum date_mode date_mode;
 	int need_8bit_cte;
+	int show_notes;
 	struct reflog_walk_info *reflog_info;
 };
 
