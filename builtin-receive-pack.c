@@ -139,11 +139,25 @@ static struct command *commands;
 static const char pre_receive_hook[] = "hooks/pre-receive";
 static const char post_receive_hook[] = "hooks/post-receive";
 
+static int copy_to_sideband(int in, int out, void *arg)
+{
+	char data[128];
+	while (1) {
+		ssize_t sz = xread(in, data, sizeof(data));
+		if (sz <= 0)
+			break;
+		send_sideband(1, 2, data, sz, use_sideband);
+	}
+	close(in);
+	return 0;
+}
+
 static int run_receive_hook(const char *hook_name)
 {
 	static char buf[sizeof(commands->old_sha1) * 2 + PATH_MAX + 4];
 	struct command *cmd;
 	struct child_process proc;
+	struct async muxer;
 	const char *argv[2];
 	int have_input = 0, code;
 
@@ -163,9 +177,23 @@ static int run_receive_hook(const char *hook_name)
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;
 
+	if (use_sideband) {
+		memset(&muxer, 0, sizeof(muxer));
+		muxer.proc = copy_to_sideband;
+		muxer.in = -1;
+		code = start_async(&muxer);
+		if (code)
+			return code;
+		proc.err = muxer.in;
+	}
+
 	code = start_command(&proc);
-	if (code)
+	if (code) {
+		if (use_sideband)
+			finish_async(&muxer);
 		return code;
+	}
+
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (!cmd->error_string) {
 			size_t n = snprintf(buf, sizeof(buf), "%s %s %s\n",
@@ -177,6 +205,8 @@ static int run_receive_hook(const char *hook_name)
 		}
 	}
 	close(proc.in);
+	if (use_sideband)
+		finish_async(&muxer);
 	return finish_command(&proc);
 }
 
@@ -184,6 +214,8 @@ static int run_update_hook(struct command *cmd)
 {
 	static const char update_hook[] = "hooks/update";
 	const char *argv[5];
+	struct child_process proc;
+	int code;
 
 	if (access(update_hook, X_OK) < 0)
 		return 0;
@@ -194,8 +226,18 @@ static int run_update_hook(struct command *cmd)
 	argv[3] = sha1_to_hex(cmd->new_sha1);
 	argv[4] = NULL;
 
-	return run_command_v_opt(argv, RUN_COMMAND_NO_STDIN |
-					RUN_COMMAND_STDOUT_TO_STDERR);
+	memset(&proc, 0, sizeof(proc));
+	proc.no_stdin = 1;
+	proc.stdout_to_stderr = 1;
+	proc.err = use_sideband ? -1 : 0;
+	proc.argv = argv;
+
+	code = start_command(&proc);
+	if (code)
+		return code;
+	if (use_sideband)
+		copy_to_sideband(proc.err, -1, NULL);
+	return finish_command(&proc);
 }
 
 static int is_ref_checked_out(const char *ref)
@@ -384,8 +426,9 @@ static char update_post_hook[] = "hooks/post-update";
 static void run_update_post_hook(struct command *cmd)
 {
 	struct command *cmd_p;
-	int argc, status;
+	int argc;
 	const char **argv;
+	struct child_process proc;
 
 	for (argc = 0, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
 		if (cmd_p->error_string)
@@ -407,8 +450,18 @@ static void run_update_post_hook(struct command *cmd)
 		argc++;
 	}
 	argv[argc] = NULL;
-	status = run_command_v_opt(argv, RUN_COMMAND_NO_STDIN
-			| RUN_COMMAND_STDOUT_TO_STDERR);
+
+	memset(&proc, 0, sizeof(proc));
+	proc.no_stdin = 1;
+	proc.stdout_to_stderr = 1;
+	proc.err = use_sideband ? -1 : 0;
+	proc.argv = argv;
+
+	if (!start_command(&proc)) {
+		if (use_sideband)
+			copy_to_sideband(proc.err, -1, NULL);
+		finish_command(&proc);
+	}
 }
 
 static void execute_commands(const char *unpacker_error)

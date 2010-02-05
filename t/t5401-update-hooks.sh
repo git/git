@@ -118,19 +118,19 @@ test_expect_success 'send-pack produced no output' '
 '
 
 cat <<EOF >expect
-STDOUT pre-receive
-STDERR pre-receive
-STDOUT update refs/heads/master
-STDERR update refs/heads/master
-STDOUT update refs/heads/tofail
-STDERR update refs/heads/tofail
-STDOUT post-receive
-STDERR post-receive
-STDOUT post-update
-STDERR post-update
+remote: STDOUT pre-receive
+remote: STDERR pre-receive
+remote: STDOUT update refs/heads/master
+remote: STDERR update refs/heads/master
+remote: STDOUT update refs/heads/tofail
+remote: STDERR update refs/heads/tofail
+remote: STDOUT post-receive
+remote: STDERR post-receive
+remote: STDOUT post-update
+remote: STDERR post-update
 EOF
 test_expect_success 'send-pack stderr contains hook messages' '
-	grep ^STD send.err >actual &&
+	grep ^remote: send.err | sed "s/ *\$//" >actual &&
 	test_cmp - actual <expect
 '
 
