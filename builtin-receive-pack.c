@@ -2,6 +2,7 @@
 #include "pack.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include "sideband.h"
 #include "run-command.h"
 #include "exec_cmd.h"
 #include "commit.h"
@@ -27,6 +28,7 @@ static int receive_unpack_limit = -1;
 static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
 static int report_status;
+static int use_sideband;
 static int prefer_ofs_delta = 1;
 static int auto_update_server_info;
 static int auto_gc = 1;
@@ -110,7 +112,7 @@ static int show_ref(const char *path, const unsigned char *sha1, int flag, void 
 	else
 		packet_write(1, "%s %s%c%s%s\n",
 			     sha1_to_hex(sha1), path, 0,
-			     " report-status delete-refs",
+			     " report-status delete-refs side-band-64k",
 			     prefer_ofs_delta ? " ofs-delta" : "");
 	sent_capabilities = 1;
 	return 0;
@@ -466,6 +468,8 @@ static void read_head_info(void)
 		if (reflen + 82 < len) {
 			if (strstr(refname + reflen + 1, "report-status"))
 				report_status = 1;
+			if (strstr(refname + reflen + 1, "side-band-64k"))
+				use_sideband = LARGE_PACKET_MAX;
 		}
 		cmd = xmalloc(sizeof(struct command) + len - 80);
 		hashcpy(cmd->old_sha1, old_sha1);
@@ -565,17 +569,25 @@ static const char *unpack(void)
 static void report(const char *unpack_status)
 {
 	struct command *cmd;
-	packet_write(1, "unpack %s\n",
-		     unpack_status ? unpack_status : "ok");
+	struct strbuf buf = STRBUF_INIT;
+
+	packet_buf_write(&buf, "unpack %s\n",
+			 unpack_status ? unpack_status : "ok");
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (!cmd->error_string)
-			packet_write(1, "ok %s\n",
-				     cmd->ref_name);
+			packet_buf_write(&buf, "ok %s\n",
+					 cmd->ref_name);
 		else
-			packet_write(1, "ng %s %s\n",
-				     cmd->ref_name, cmd->error_string);
+			packet_buf_write(&buf, "ng %s %s\n",
+					 cmd->ref_name, cmd->error_string);
 	}
-	packet_flush(1);
+	packet_buf_flush(&buf);
+
+	if (use_sideband)
+		send_sideband(1, 1, buf.buf, buf.len, use_sideband);
+	else
+		safe_write(1, buf.buf, buf.len);
+	strbuf_release(&buf);
 }
 
 static int delete_only(struct command *cmd)
@@ -705,5 +717,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		if (auto_update_server_info)
 			update_server_info(0);
 	}
+	if (use_sideband)
+		packet_flush(1);
 	return 0;
 }
