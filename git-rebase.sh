@@ -85,10 +85,8 @@ continue_merge () {
 			printf "Already applied: %0${prec}d " $msgnum
 		fi
 	fi
-	if test -z "$GIT_QUIET"
-	then
-		git rev-list --pretty=oneline -1 "$cmt" | sed -e 's/^[^ ]* //'
-	fi
+	test -z "$GIT_QUIET" &&
+	GIT_PAGER='' git log --format=%s -1 "$cmt"
 
 	prev_head=`git rev-parse HEAD^0`
 	# save the resulting commit so we can read-tree on it later

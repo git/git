@@ -320,7 +320,7 @@ EOF
 	else
 		# plain-old CGI
 		resolve_full_httpd
-		list_mods=$(echo "$full_httpd" | sed "s/-f$/-l/")
+		list_mods=$(echo "$full_httpd" | sed 's/-f$/-l/')
 		$list_mods | sane_grep 'mod_cgi\.c' >/dev/null 2>&1 || \
 		if test -f "$module_path/mod_cgi.so"
 		then

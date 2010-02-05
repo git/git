@@ -166,6 +166,7 @@
 /test-match-trees
 /test-parse-options
 /test-path-utils
+/test-run-command
 /test-sha1
 /test-sigchain
 /common-cmds.h

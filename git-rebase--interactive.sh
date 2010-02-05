@@ -378,7 +378,7 @@ update_squash_messages () {
 			sed -e 1d -e '2,/^./{
 				/^$/d
 			}' <"$SQUASH_MSG".bak
-		} >$SQUASH_MSG
+		} >"$SQUASH_MSG"
 	else
 		commit_message HEAD > "$FIXUP_MSG" || die "Cannot write $FIXUP_MSG"
 		COUNT=2
@@ -387,7 +387,7 @@ update_squash_messages () {
 			echo "# The first commit's message is:"
 			echo
 			cat "$FIXUP_MSG"
-		} >$SQUASH_MSG
+		} >"$SQUASH_MSG"
 	fi
 	case $1 in
 	squash)
@@ -403,11 +403,11 @@ update_squash_messages () {
 		echo
 		commit_message $2 | sed -e 's/^/#	/'
 		;;
-	esac >>$SQUASH_MSG
+	esac >>"$SQUASH_MSG"
 }
 
 peek_next_command () {
-	sed -n -e "/^#/d" -e "/^$/d" -e "s/ .*//p" -e "q" < "$TODO"
+	sed -n -e "/^#/d" -e '/^$/d' -e "s/ .*//p" -e "q" < "$TODO"
 }
 
 # A squash/fixup has failed.  Prepare the long version of the squash

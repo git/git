@@ -255,7 +255,7 @@ EOF
 
 test_expect_success 'log --graph with merge' '
 	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *$//" >actual &&
+		sed "s/ *\$//" >actual &&
 	test_cmp expect actual
 '
 
@@ -315,7 +315,7 @@ EOF
 test_expect_success 'log --graph with full output' '
 	git log --graph --date-order --pretty=short |
 		git name-rev --name-only --stdin |
-		sed "s/Merge:.*/Merge: A B/;s/ *$//" >actual &&
+		sed "s/Merge:.*/Merge: A B/;s/ *\$//" >actual &&
 	test_cmp expect actual
 '
 
@@ -383,7 +383,7 @@ EOF
 
 test_expect_success 'log --graph with merge' '
 	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *$//" >actual &&
+		sed "s/ *\$//" >actual &&
 	test_cmp expect actual
 '
 

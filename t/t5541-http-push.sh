@@ -105,10 +105,8 @@ test_expect_success 'non-fast-forward push show ref status' '
 '
 
 test_expect_success 'non-fast-forward push shows help message' '
-	grep \
-"To prevent you from losing history, non-fast-forward updates were rejected
-Merge the remote changes before pushing again.  See the '"'non-fast-forward'"'
-section of '"'git push --help'"' for details." output
+	grep "To prevent you from losing history, non-fast-forward updates were rejected" \
+		output
 '
 
 test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper' '
@@ -126,10 +124,8 @@ test_expect_success 'push fails for non-fast-forward refs unmatched by remote he
 	grep "^ + [a-f0-9]*\.\.\.[a-f0-9]* *master -> master (forced update)$" output &&
 	grep "^ ! \[rejected\] *master -> retsam (non-fast-forward)$" output &&
 
-	grep \
-"To prevent you from losing history, non-fast-forward updates were rejected
-Merge the remote changes before pushing again.  See the '"'non-fast-forward'"'
-section of '"'git push --help'"' for details." output
+	grep "To prevent you from losing history, non-fast-forward updates were rejected" \
+		output
 '
 
 stop_httpd

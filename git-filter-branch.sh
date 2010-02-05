@@ -462,11 +462,11 @@ if [ "$filter_tag_name" ]; then
 						"$new_sha1" "$new_ref"
 				git cat-file tag "$ref" |
 				sed -n \
-				    -e "1,/^$/{
+				    -e '1,/^$/{
 					  /^object /d
 					  /^type /d
 					  /^tag /d
-					}" \
+					}' \
 				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
 				    -e 'p' ) |
 				git mktag) ||

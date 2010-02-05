@@ -399,6 +399,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		unsigned long co_time;
 		int co_tz, co_cnt;
 
+		/* a @{-N} placed anywhere except the start is an error */
+		if (str[at+2] == '-')
+			return -1;
+
 		/* Is it asking for N-th entry, or approxidate? */
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
 			char ch = str[at+2+i];
@@ -413,9 +417,12 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		} else if (0 <= nth)
 			at_time = 0;
 		else {
+			int errors = 0;
 			char *tmp = xstrndup(str + at + 2, reflog_len);
-			at_time = approxidate(tmp);
+			at_time = approxidate_careful(tmp, &errors);
 			free(tmp);
+			if (errors)
+				return -1;
 		}
 		if (read_ref_at(real_ref, at_time, nth, sha1, NULL,
 				&co_time, &co_tz, &co_cnt)) {
@@ -878,8 +885,28 @@ int interpret_branch_name(const char *name, struct strbuf *buf)
 
 	if (!len)
 		return len; /* syntax Ok, not enough switches */
-	if (0 < len)
-		return len; /* consumed from the front */
+	if (0 < len && len == namelen)
+		return len; /* consumed all */
+	else if (0 < len) {
+		/* we have extra data, which might need further processing */
+		struct strbuf tmp = STRBUF_INIT;
+		int used = buf->len;
+		int ret;
+
+		strbuf_add(buf, name + len, namelen - len);
+		ret = interpret_branch_name(buf->buf, &tmp);
+		/* that data was not interpreted, remove our cruft */
+		if (ret < 0) {
+			strbuf_setlen(buf, used);
+			return len;
+		}
+		strbuf_reset(buf);
+		strbuf_addbuf(buf, &tmp);
+		strbuf_release(&tmp);
+		/* tweak for size of {-N} versus expanded ref name */
+		return ret - used + len;
+	}
+
 	cp = strchr(name, '@');
 	if (!cp)
 		return -1;

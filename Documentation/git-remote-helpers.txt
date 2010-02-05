@@ -25,7 +25,7 @@ Commands are given by the caller on the helper's standard input, one per line.
 
 'capabilities'::
 	Lists the capabilities of the helper, one per line, ending
-	with a blank line. Each capability may be preceeded with '*'.
+	with a blank line. Each capability may be preceded with '*'.
 	This marks them mandatory for git version using the remote
 	helper to understand (unknown mandatory capability is fatal
 	error).

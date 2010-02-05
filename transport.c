@@ -912,19 +912,18 @@ static int external_specification_len(const char *url)
 
 struct transport *transport_get(struct remote *remote, const char *url)
 {
+	const char *helper;
 	struct transport *ret = xcalloc(1, sizeof(*ret));
 
 	if (!remote)
 		die("No remote provided to transport_get()");
 
 	ret->remote = remote;
+	helper = remote->foreign_vcs;
 
-	if (!url && remote && remote->url)
+	if (!url && remote->url)
 		url = remote->url[0];
 	ret->url = url;
-
-	/* In case previous URL had helper forced, reset it. */
-	remote->foreign_vcs = NULL;
 
 	/* maybe it is a foreign URL? */
 	if (url) {
@@ -933,11 +932,11 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		while (isalnum(*p))
 			p++;
 		if (!prefixcmp(p, "::"))
-			remote->foreign_vcs = xstrndup(url, p - url);
+			helper = xstrndup(url, p - url);
 	}
 
-	if (remote && remote->foreign_vcs) {
-		transport_helper_init(ret, remote->foreign_vcs);
+	if (helper) {
+		transport_helper_init(ret, helper);
 	} else if (!prefixcmp(url, "rsync:")) {
 		ret->get_refs_list = get_refs_via_rsync;
 		ret->fetch = fetch_objs_via_rsync;

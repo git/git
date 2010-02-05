@@ -762,10 +762,9 @@ AC_SUBST(NO_MKSTEMPS)
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
-# Define NO_PTHREADS if we do not have pthreads
+# Define NO_PTHREADS if we do not have pthreads.
 #
-# Define PTHREAD_LIBS to the linker flag used for Pthread support and define
-# THREADED_DELTA_SEARCH if Pthreads are available.
+# Define PTHREAD_LIBS to the linker flag used for Pthread support.
 AC_DEFUN([PTHREADTEST_SRC], [
 #include <pthread.h>
 
@@ -782,7 +781,6 @@ dnl   [[pthread_mutex_t test_mutex;]]
 dnl )])
 
 NO_PTHREADS=UnfortunatelyYes
-THREADED_DELTA_SEARCH=
 PTHREAD_LIBS=
 
 if test -n "$USER_NOPTHREAD"; then
@@ -798,7 +796,6 @@ elif test -z "$PTHREAD_CFLAGS"; then
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
 		PTHREAD_LIBS="$opt"
-		THREADED_DELTA_SEARCH=YesPlease
 		break
 	],
 	[AC_MSG_RESULT([no])])
@@ -812,7 +809,6 @@ else
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
 		PTHREAD_LIBS="$PTHREAD_CFLAGS"
-		THREADED_DELTA_SEARCH=YesPlease
 	],
 	[AC_MSG_RESULT([no])])
 
@@ -823,7 +819,6 @@ CFLAGS="$old_CFLAGS"
 
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(NO_PTHREADS)
-AC_SUBST(THREADED_DELTA_SEARCH)
 
 ## Output files
 AC_CONFIG_FILES(["${config_file}":"${config_in}":"${config_append}"])

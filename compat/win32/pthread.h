@@ -32,17 +32,18 @@
  * See also: http://www.cse.wustl.edu/~schmidt/win32-cv-1.html
  */
 typedef struct {
-	volatile LONG waiters;
+	LONG waiters;
+	int was_broadcast;
+	CRITICAL_SECTION waiters_lock;
 	HANDLE sema;
+	HANDLE continue_broadcast;
 } pthread_cond_t;
 
 extern int pthread_cond_init(pthread_cond_t *cond, const void *unused);
-
 extern int pthread_cond_destroy(pthread_cond_t *cond);
-
 extern int pthread_cond_wait(pthread_cond_t *cond, CRITICAL_SECTION *mutex);
-
 extern int pthread_cond_signal(pthread_cond_t *cond);
+extern int pthread_cond_broadcast(pthread_cond_t *cond);
 
 /*
  * Simple thread creation implementation using pthread API

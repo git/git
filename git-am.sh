@@ -205,7 +205,8 @@ check_patch_format () {
 			# discarding the indented remainder of folded lines,
 			# and see if it looks like that they all begin with the
 			# header field names...
-			sed -n -e '/^$/q' -e '/^[ 	]/d' -e p "$1" |
+			tr -d '\015' <"$1" |
+			sed -n -e '/^$/q' -e '/^[ 	]/d' -e p |
 			sane_egrep -v '^[!-9;-~]+:' >/dev/null ||
 			patch_format=mbox
 		fi

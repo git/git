@@ -291,6 +291,14 @@ y:y yy
 z:zzz
 EOF
 
+test_expect_success 'grep -q, silently report matches' '
+	>empty &&
+	git grep -q mmap >actual &&
+	test_cmp empty actual &&
+	test_must_fail git grep -q qfwfq >actual &&
+	test_cmp empty actual
+'
+
 # Create 1024 file names that sort between "y" and "z" to make sure
 # the two files are handled by different calls to an external grep.
 # This depends on MAXARGS in builtin-grep.c being 1024 or less.

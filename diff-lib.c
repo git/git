@@ -161,7 +161,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 		}
 
-		if ((ce_uptodate(ce) && !S_ISGITLINK(ce->ce_mode)) || ce_skip_worktree(ce))
+		if (ce_uptodate(ce) || ce_skip_worktree(ce))
 			continue;
 
 		/* If CE_VALID is set, don't look at workdir for file removal */
@@ -179,6 +179,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		}
 		changed = ce_match_stat(ce, &st, ce_option);
 		if (S_ISGITLINK(ce->ce_mode)
+		    && !DIFF_OPT_TST(&revs->diffopt, IGNORE_SUBMODULES)
 		    && (!changed || (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		    && is_submodule_modified(ce->name)) {
 			changed = 1;
@@ -220,7 +221,7 @@ static int get_stat_data(struct cache_entry *ce,
 			 const unsigned char **sha1p,
 			 unsigned int *modep,
 			 int cached, int match_missing,
-			 unsigned *dirty_submodule, int output_format)
+			 unsigned *dirty_submodule, struct diff_options *diffopt)
 {
 	const unsigned char *sha1 = ce->sha1;
 	unsigned int mode = ce->ce_mode;
@@ -241,7 +242,8 @@ static int get_stat_data(struct cache_entry *ce,
 		}
 		changed = ce_match_stat(ce, &st, 0);
 		if (S_ISGITLINK(ce->ce_mode)
-		    && (!changed || (output_format & DIFF_FORMAT_PATCH))
+		    && !DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES)
+		    && (!changed || (diffopt->output_format & DIFF_FORMAT_PATCH))
 		    && is_submodule_modified(ce->name)) {
 			changed = 1;
 			*dirty_submodule = 1;
@@ -270,7 +272,7 @@ static void show_new_file(struct rev_info *revs,
 	 * the working copy.
 	 */
 	if (get_stat_data(new, &sha1, &mode, cached, match_missing,
-	    &dirty_submodule, revs->diffopt.output_format) < 0)
+	    &dirty_submodule, &revs->diffopt) < 0)
 		return;
 
 	diff_index_show_file(revs, "+", new, sha1, mode, dirty_submodule);
@@ -287,7 +289,7 @@ static int show_modified(struct rev_info *revs,
 	unsigned dirty_submodule = 0;
 
 	if (get_stat_data(new, &sha1, &mode, cached, match_missing,
-			  &dirty_submodule, revs->diffopt.output_format) < 0) {
+			  &dirty_submodule, &revs->diffopt) < 0) {
 		if (report_missing)
 			diff_index_show_file(revs, "-", old,
 					     old->sha1, old->ce_mode, 0);

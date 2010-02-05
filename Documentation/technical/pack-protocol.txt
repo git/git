@@ -149,7 +149,7 @@ advertisement list at all, but other refs may still appear.
 The stream MUST include capability declarations behind a NUL on the
 first ref. The peeled value of a ref (that is "ref^{}") MUST be
 immediately after the ref itself, if presented. A conforming server
-MUST peel the ref if its an annotated tag.
+MUST peel the ref if it's an annotated tag.
 
 ----
   advertised-refs  =  (no-refs / list-of-refs)
@@ -261,7 +261,7 @@ Without either multi_ack or multi_ack_detailed:
 
  * upload-pack sends "NAK" on a flush-pkt if no common object
    has been found yet.  If one has been found, and thus an ACK
-   was already sent, its silent on the flush-pkt.
+   was already sent, it's silent on the flush-pkt.
 
 After the client has gotten enough ACK responses that it can determine
 that the server has enough information to send an efficient packfile
@@ -271,9 +271,9 @@ as common with the server, or the --date-order queue is empty), or the
 client determines that it wants to give up (in the canonical implementation,
 this is determined when the client sends 256 'have' lines without getting
 any of them ACKed by the server - meaning there is nothing in common and
-the server should just send all it's objects), then the client will send
+the server should just send all of its objects), then the client will send
 a 'done' command.  The 'done' command signals to the server that the client
-is ready to receive it's packfile data.
+is ready to receive its packfile data.
 
 However, the 256 limit *only* turns on in the canonical client
 implementation if we have received at least one "ACK %s continue"
@@ -286,7 +286,7 @@ ACK after 'done' if there is at least one common base and multi_ack or
 multi_ack_detailed is enabled. The server always sends NAK after 'done'
 if there is no common base found.
 
-Then the server will start sending it's packfile data.
+Then the server will start sending its packfile data.
 
 ----
   server-response = *ack_multi ack / nak
