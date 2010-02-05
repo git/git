@@ -31,7 +31,7 @@ static int prefer_ofs_delta = 1;
 static int auto_update_server_info;
 static int auto_gc = 1;
 static const char *head_name;
-static char *capabilities_to_send;
+static int sent_capabilities;
 
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
@@ -105,19 +105,21 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
-	if (!capabilities_to_send)
+	if (sent_capabilities)
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
 	else
-		packet_write(1, "%s %s%c%s\n",
-			     sha1_to_hex(sha1), path, 0, capabilities_to_send);
-	capabilities_to_send = NULL;
+		packet_write(1, "%s %s%c%s%s\n",
+			     sha1_to_hex(sha1), path, 0,
+			     " report-status delete-refs",
+			     prefer_ofs_delta ? " ofs-delta" : "");
+	sent_capabilities = 1;
 	return 0;
 }
 
 static void write_head_info(void)
 {
 	for_each_ref(show_ref, NULL);
-	if (capabilities_to_send)
+	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1, 0, NULL);
 
 }
@@ -669,10 +671,6 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		unpack_limit = transfer_unpack_limit;
 	else if (0 <= receive_unpack_limit)
 		unpack_limit = receive_unpack_limit;
-
-	capabilities_to_send = (prefer_ofs_delta) ?
-		" report-status delete-refs ofs-delta " :
-		" report-status delete-refs ";
 
 	if (advertise_refs || !stateless_rpc) {
 		add_alternate_refs();
