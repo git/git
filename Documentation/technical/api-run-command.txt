@@ -135,7 +135,7 @@ stderr as follows:
 
 	.in: The FD must be readable; it becomes child's stdin.
 	.out: The FD must be writable; it becomes child's stdout.
-	.err > 0 is not supported.
+	.err: The FD must be writable; it becomes child's stderr.
 
   The specified FD is closed by start_command(), even if it fails to
   run the sub-process!

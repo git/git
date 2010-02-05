@@ -94,6 +94,9 @@ fail_pipe:
 		else if (need_err) {
 			dup2(fderr[1], 2);
 			close_pair(fderr);
+		} else if (cmd->err > 1) {
+			dup2(cmd->err, 2);
+			close(cmd->err);
 		}
 
 		if (cmd->no_stdout)
@@ -156,6 +159,9 @@ fail_pipe:
 	} else if (need_err) {
 		s2 = dup(2);
 		dup2(fderr[1], 2);
+	} else if (cmd->err > 2) {
+		s2 = dup(2);
+		dup2(cmd->err, 2);
 	}
 
 	if (cmd->no_stdout) {
@@ -228,6 +234,8 @@ fail_pipe:
 
 	if (need_err)
 		close(fderr[1]);
+	else if (cmd->err)
+		close(cmd->err);
 
 	return 0;
 }

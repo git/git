@@ -18,7 +18,7 @@ struct child_process {
 	 * - Specify > 0 to set a channel to a particular FD as follows:
 	 *     .in: a readable FD, becomes child's stdin
 	 *     .out: a writable FD, becomes child's stdout/stderr
-	 *     .err > 0 not supported
+	 *     .err: a writable FD, becomes child's stderr
 	 *   The specified FD is closed by start_command(), even in case
 	 *   of errors!
 	 */
