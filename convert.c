@@ -241,7 +241,7 @@ struct filter_params {
 	const char *cmd;
 };
 
-static int filter_buffer(int fd, void *data)
+static int filter_buffer(int in, int out, void *data)
 {
 	/*
 	 * Spawn cmd and feed the buffer contents through its stdin.
@@ -254,7 +254,7 @@ static int filter_buffer(int fd, void *data)
 	memset(&child_process, 0, sizeof(child_process));
 	child_process.argv = argv;
 	child_process.in = -1;
-	child_process.out = fd;
+	child_process.out = out;
 
 	if (start_command(&child_process))
 		return error("cannot fork to run external filter %s", params->cmd);
@@ -291,6 +291,7 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	memset(&async, 0, sizeof(async));
 	async.proc = filter_buffer;
 	async.data = &params;
+	async.out = -1;
 	params.src = src;
 	params.size = len;
 	params.cmd = cmd;
