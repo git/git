@@ -133,9 +133,6 @@ Updates since v1.6.6
  * "git grep" does not rely on external grep anymore.  It can use more than
    one threads to accelerate the operation.
 
- * "git grep" learned "--no-index" option, to search inside contents that
-   are not managed by git.
-
  * "git grep" learned "--quiet" option.
 
  * "git log" and friends learned "--glob=heads/*" syntax that is a more

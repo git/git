@@ -14,7 +14,6 @@
 #include "userdiff.h"
 #include "grep.h"
 #include "quote.h"
-#include "dir.h"
 
 #ifndef NO_PTHREADS
 #include "thread-utils.h"
@@ -646,24 +645,6 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 	die("unable to grep from object of type %s", typename(obj->type));
 }
 
-static int grep_directory(struct grep_opt *opt, const char **paths)
-{
-	struct dir_struct dir;
-	int i, hit = 0;
-
-	memset(&dir, 0, sizeof(dir));
-	setup_standard_excludes(&dir);
-
-	fill_directory(&dir, paths);
-	for (i = 0; i < dir.nr; i++) {
-		hit |= grep_file(opt, dir.entries[i]->name);
-		if (hit && opt->status_only)
-			break;
-	}
-	free_grep_patterns(opt);
-	return hit;
-}
-
 static int context_callback(const struct option *opt, const char *arg,
 			    int unset)
 {
@@ -758,12 +739,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	const char **paths = NULL;
 	int i;
 	int dummy;
-	int nongit = 0, use_index = 1;
 	struct option options[] = {
 		OPT_BOOLEAN(0, "cached", &cached,
 			"search in index instead of in the work tree"),
-		OPT_BOOLEAN(0, "index", &use_index,
-			"--no-index finds in contents not managed by git"),
 		OPT_GROUP(""),
 		OPT_BOOLEAN('v', "invert-match", &opt.invert,
 			"show non-matching lines"),
@@ -846,8 +824,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	prefix = setup_git_directory_gently(&nongit);
-
 	/*
 	 * 'git grep -h', unlike 'git grep -h <pattern>', is a request
 	 * to show usage information and exit.
@@ -884,10 +860,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_DASHDASH |
 			     PARSE_OPT_STOP_AT_NON_OPTION |
 			     PARSE_OPT_NO_INTERNAL_HELP);
-
-	if (use_index && nongit)
-		/* die the same way as if we did it at the beginning */
-		setup_git_directory();
 
 	/* First unrecognized non-option token */
 	if (argc > 0 && !opt.pattern_list) {
@@ -948,18 +920,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths = xcalloc(2, sizeof(const char *));
 		paths[0] = prefix;
 		paths[1] = NULL;
-	}
-
-	if (!use_index) {
-		int hit;
-		if (cached)
-			die("--cached cannot be used with --no-index.");
-		if (list.nr)
-			die("--no-index cannot be used with revs.");
-		hit = grep_directory(&opt, paths);
-		if (use_threads)
-			hit |= wait_all();
-		return !hit;
 	}
 
 	if (!list.nr) {
