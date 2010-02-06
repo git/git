@@ -105,6 +105,11 @@ esac
 if [ -z "$prefix" ]; then
 	die "You must provide the --prefix option."
 fi
+
+if [ "$command" = "split" -a """"! -e "$prefix" ]; then
+	die "$prefix does not exist."
+fi
+
 dir="$(dirname "$prefix/.")"
 
 if [ "$command" != "pull" ]; then

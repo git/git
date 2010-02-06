@@ -140,6 +140,14 @@ git subtree merge --prefix=subdir FETCH_HEAD
 git branch pre-split
 check_equal "$(last_commit_message)" "Merge commit '$(git rev-parse sub2)' into mainline"
 
+# Check that prefix argument is required for split (exits with warning and exit status = 1)
+! result=$(git subtree split 2>&1)
+check_equal "You must provide the --prefix option." "$result"
+
+# Check that the <prefix> exists for a split.
+! result=$(git subtree split --prefix=non-existent-directory 2>&1)
+check_equal "non-existent-directory does not exist." "$result"
+
 # check if --message works for split+rejoin
 spl1=$(git subtree split --annotate='*' --prefix subdir --onto FETCH_HEAD --message "Split & rejoin" --rejoin)
 echo "spl1={$spl1}"
