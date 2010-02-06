@@ -115,19 +115,12 @@ test_debug 'cat gitweb.output'
 # ----------------------------------------------------------------------
 # load checking
 
-if test -e /proc/loadavg
-then
-	test_set_prereq PROC_LOADAVG
-else
-	say 'skipping load tests (no /proc/loadavg found)'
-fi
-
 # always hit the load limit
 cat >>gitweb_config.perl <<\EOF
-our $maxload = 0;
+our $maxload = -1;
 EOF
 
-test_expect_success PROC_LOADAVG 'load checking: load too high (default action)' '
+test_expect_success 'load checking: load too high (default action)' '
 	gitweb_run "p=.git" &&
 	grep "Status: 503 Service Unavailable" gitweb.headers &&
 	grep "503 - The load average on the server is too high" gitweb.body
