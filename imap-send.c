@@ -1399,10 +1399,15 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 	if (strncmp(key, imap_key, sizeof imap_key - 1))
 		return 0;
 
-	if (!val)
-		return config_error_nonbool(key);
-
 	key += sizeof imap_key - 1;
+
+	/* check booleans first, and barf on others */
+	if (!strcmp("sslverify", key))
+		server.ssl_verify = git_config_bool(key, val);
+	else if (!strcmp("preformattedhtml", key))
+		server.use_html = git_config_bool(key, val);
+	else if (!val)
+		return config_error_nonbool(key);
 
 	if (!strcmp("folder", key)) {
 		imap_folder = xstrdup(val);
@@ -1424,10 +1429,6 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 		server.port = git_config_int(key, val);
 	else if (!strcmp("tunnel", key))
 		server.tunnel = xstrdup(val);
-	else if (!strcmp("sslverify", key))
-		server.ssl_verify = git_config_bool(key, val);
-	else if (!strcmp("preformattedHTML", key))
-		server.use_html = git_config_bool(key, val);
 	return 0;
 }
 
