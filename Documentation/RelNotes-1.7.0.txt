@@ -65,6 +65,8 @@ Updates since v1.6.6
 
  * "gitk" updates.
 
+ * "gitweb" updates (code clean-up, load checking etc.)
+
 (portability)
 
  * Some more MSVC portability patches for msysgit port.
@@ -203,6 +205,9 @@ release, unless otherwise noted.
    from non-root dir, 2010-01-26) may be merged to older maintenance
    branches.
 
+ * "git fast-import" did not correctly handle large blobs that may
+   bust the pack size limit.
+
  * When using "git status" or asking "git diff" to compare the work tree
    with something, they used to consider that a checked-out submodule with
    uncommitted changes is not modified; this could cause people to forget
@@ -213,6 +218,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.7.0-rc1-6-g2ee8c5b
+O=v1.7.0-rc1-42-g3bd8de5
 echo O=$(git describe master)
 git shortlog --no-merges $O..master ^maint
