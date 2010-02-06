@@ -1386,6 +1386,7 @@ _git_rebase ()
 			--preserve-merges --stat --no-stat
 			--committer-date-is-author-date --ignore-date
 			--ignore-whitespace --whitespace=
+			--autosquash
 			"
 
 		return
