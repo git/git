@@ -603,7 +603,11 @@ cmd_merge()
 		rev="$new"
 	fi
 	
-	git merge -s subtree --message="$message" $rev
+	if [ -n "$message" ]; then
+		git merge -s subtree --message="$message" $rev
+	else
+		git merge -s subtree $rev
+	fi
 }
 
 cmd_pull()
