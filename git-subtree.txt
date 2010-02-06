@@ -223,8 +223,8 @@ OPTIONS FOR split
 	subproject's history to be part of your project anyway.
 
 
-EXAMPLES
---------
+EXAMPLE 1
+---------
 Let's use the repository for the git source code as an example. 
 First, get your own copy of the git.git repository:
 
@@ -283,6 +283,23 @@ And you can split it out and look at your changes versus
 the standard gitweb:
 
 	git log gitweb-latest..$(git subtree split --prefix=gitweb)
+
+EXAMPLE 2
+---------
+Suppose you have a source directory with many files and
+subdirectories, and you want to extract the lib directory to its own
+git project. Here's a short way to do it:
+
+First, make the new repository wherever you want:
+       <go to the new location>
+       git init --bare
+
+Back in your original directory:
+       git subtree split --prefix=lib --annotate="(split)" -b split
+
+Then push the new branch onto the new empty repository:
+        git push <new-repo> split:master
+
 
 
 AUTHOR
