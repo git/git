@@ -590,7 +590,6 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 		if (hit && opt->status_only)
 			break;
 	}
-	free_grep_patterns(opt);
 	return hit;
 }
 
@@ -1016,28 +1015,24 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!list.nr) {
-		int hit;
 		if (!cached)
 			setup_work_tree();
 
 		hit = grep_cache(&opt, paths, cached);
-		if (use_threads)
-			hit |= wait_all();
-		return !hit;
 	}
-
-	if (cached)
+	else if (cached)
 		die("both --cached and trees are given.");
-
-	for (i = 0; i < list.nr; i++) {
-		struct object *real_obj;
-		real_obj = deref_tag(list.objects[i].item, NULL, 0);
-		if (grep_object(&opt, paths, real_obj, list.objects[i].name)) {
-			hit = 1;
-			if (opt.status_only)
-				break;
+	else
+		for (i = 0; i < list.nr; i++) {
+			struct object *real_obj;
+			real_obj = deref_tag(list.objects[i].item, NULL, 0);
+			if (grep_object(&opt, paths, real_obj,
+						list.objects[i].name)) {
+				hit = 1;
+				if (opt.status_only)
+					break;
+			}
 		}
-	}
 
 	if (use_threads)
 		hit |= wait_all();
