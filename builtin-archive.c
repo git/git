@@ -67,7 +67,7 @@ static const char *format_from_name(const char *filename)
 		return NULL;
 	ext++;
 	if (!strcasecmp(ext, "zip"))
-		return "zip";
+		return "--format=zip";
 	return NULL;
 }
 
@@ -81,7 +81,7 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 	const char *exec = "git-upload-archive";
 	const char *output = NULL;
 	const char *remote = NULL;
-	const char *format = NULL;
+	const char *format_option = NULL;
 	struct option local_opts[] = {
 		OPT_STRING('o', "output", &output, "file",
 			"write the archive to this file"),
@@ -89,33 +89,31 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 			"retrieve the archive from remote repository <repo>"),
 		OPT_STRING(0, "exec", &exec, "cmd",
 			"path to the remote git-upload-archive command"),
-		OPT_STRING(0, "format", &format, "fmt", "archive format"),
 		OPT_END()
 	};
-	char fmt_opt[32];
 
 	argc = parse_options(argc, argv, prefix, local_opts, NULL,
 			     PARSE_OPT_KEEP_ALL);
 
 	if (output) {
 		create_output_file(output);
-		if (!format)
-			format = format_from_name(output);
+		format_option = format_from_name(output);
 	}
 
-	if (format) {
-		sprintf(fmt_opt, "--format=%s", format);
-		/*
-		 * We have enough room in argv[] to muck it in place,
-		 * because either --format and/or --output must have
-		 * been given on the original command line if we get
-		 * to this point, and parse_options() must have eaten
-		 * it, i.e. we can add back one element to the array.
-		 * But argv[] may contain "--"; we should make it the
-		 * first option.
-		 */
+	/*
+	 * We have enough room in argv[] to muck it in place, because
+	 * --output must have been given on the original command line
+	 * if we get to this point, and parse_options() must have eaten
+	 * it, i.e. we can add back one element to the array.
+	 *
+	 * We add a fake --format option at the beginning, with the
+	 * format inferred from our output filename.  This way explicit
+	 * --format options can override it, and the fake option is
+	 * inserted before any "--" that might have been given.
+	 */
+	if (format_option) {
 		memmove(argv + 2, argv + 1, sizeof(*argv) * argc);
-		argv[1] = fmt_opt;
+		argv[1] = format_option;
 		argv[++argc] = NULL;
 	}
 
