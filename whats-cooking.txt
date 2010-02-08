@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2010, #01; Wed, 03)
-X-master-at: 07cf0f2407709e3764ea989696b513ec32613504
-X-next-at: 9253ab096ff0b88d2d690152c03d9e2491d5c40c
+Subject: What's cooking in git.git (Feb 2010, #02; Sun, 07)
+X-master-at: 8051a030617cf7d083568cca223bdaa15052c33f
+X-next-at: 2ac040d3d8b263430781e605b7b87a06cbc1e0f0
 
-What's cooking in git.git (Feb 2010, #01; Wed, 03)
+What's cooking in git.git (Feb 2010, #02; Sun, 07)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,40 +11,50 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-We are passed 1.7.0-rc1; please test "master" branch to avoid giving
-regressions to end users.  Thanks.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* bw/no-python-autoconf (2010-01-31) 2 commits
-  (merged to 'next' on 2010-02-01 at 7c70402)
- + configure: Allow --without-python
- + configure: Allow GIT_ARG_SET_PATH to handle --without-PROGRAM
-
-* ms/filter-branch-submodule (2010-01-28) 2 commits
-  (merged to 'next' on 2010-01-28 at 226cbf8)
- + filter-branch: Add tests for submodules in tree-filter
- + filter-branch: Fix to allow replacing submodules with another content
-
-* sp/maint-fast-import-large-blob (2010-02-01) 1 commit
-  (merged to 'next' on 2010-02-01 at 04d206f)
- + fast-import: Stream very large blobs directly to pack
- (this branch is used by sp/fast-import-large-blob.)
-
-Importing a large blob via fast-import may bust the pack size limit (or
-2GB filesize limit found on some filesystems).
-
-* sp/fast-import-large-blob (2010-02-01) 0 commits
- (this branch uses sp/maint-fast-import-large-blob.)
-
-And this is to help merging the topic to newer codebase.
+There shouldn't be anything exciting to see here right now.  Please test
+"master" branch to avoid giving regressions to end users; we are at
+1.7.0-rc2 and I am hoping that we can release the 1.7.0 on the 10th.
 
 --------------------------------------------------
 [New Topics]
 
+* sp/maint-push-sideband (2010-02-05) 6 commits
+ - receive-pack: Send hook output over side band #2
+ - receive-pack: Wrap status reports inside side-band-64k
+ - receive-pack: Refactor how capabilities are shown to the client
+ - send-pack: demultiplex a sideband stream with status data
+ - run-command: support custom fd-set in async
+ - run-command: Allow stderr to be a caller supplied pipe
+ (this branch is used by sp/push-sideband.)
+
+Based on 1.6.5 maintenance track
+
+* sp/push-sideband (2010-02-05) 0 commits
+ (this branch uses sp/maint-push-sideband.)
+
+And my conflict resolution in #ifdef WINDOWS codepath (meaning: untested,
+please check).
+
+* ac/cvsimport-revision-mapping (2010-02-06) 1 commit
+ - cvsimport: new -R option: generate .git/cvs-revisions mapping
+
+* jc/maint-1.6.3-imap-send-bool-config-fix (2010-02-06) 1 commit
+ - imap-send: fix longstanding configuration parser bug
+
+* js/rebase-origin-x (2010-02-05) 1 commit
+ - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
+
+* rs/git-dir-cleanup (2010-02-06) 2 commits
+  (merged to 'next' on 2010-02-06 at ef8ab9b)
+ + Resurrect "git grep --no-index"
+ + setenv(GIT_DIR) clean-up
+
 * jc/typo (2010-02-03) 1 commit
  - Typofixes outside documentation area
+
+* jk/grep-double-dash (2010-02-06) 1 commit
+  (merged to 'next' on 2010-02-07 at 2ac040d)
+ + accept "git grep -- pattern"
 
 --------------------------------------------------
 [Cooking]
@@ -103,12 +113,6 @@ of 'master' until 1.7.0 ships.
  - Documentation: reset: describe new "--keep" option
  - reset: add test cases for "--keep" option
  - reset: add option "--keep" to "git reset"
-
-I do not think I'd ever use this, and I am not convinced I can sell this
-to users as a great new feature without confusing them unnecessarily, but
-perhaps queuing it to pu to give it wider visibility may help somebody
-coming up with a better way to defend the feature and introduce it to
-users without confusing them than Christan nor I managed to.
 
 * jh/notes (2010-01-27) 23 commits
  - builtin-notes: Add "add" subcommand for appending to note objects
