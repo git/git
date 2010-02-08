@@ -445,13 +445,9 @@ static int write_one(struct sha1file *f,
 	if (e->idx.offset || e->preferred_base)
 		return -1;
 
-	/*
-	 * If we are deltified, attempt to write out base object first.
-	 * If that fails due to the pack size limit then the current
-	 * object might still possibly fit undeltified within that limit.
-	 */
-	if (e->delta)
-	       write_one(f, e->delta, offset);
+	/* if we are deltified, write out base object first. */
+	if (e->delta && !write_one(f, e->delta, offset))
+		return 0;
 
 	e->idx.offset = *offset;
 	size = write_object(f, e, *offset);
@@ -505,9 +501,11 @@ static void write_pack_file(void)
 		sha1write(f, &hdr, sizeof(hdr));
 		offset = sizeof(hdr);
 		nr_written = 0;
-		for (i = 0; i < nr_objects; i++)
-			if (write_one(f, objects + i, &offset) == 1)
-				display_progress(progress_state, written);
+		for (; i < nr_objects; i++) {
+			if (!write_one(f, objects + i, &offset))
+				break;
+			display_progress(progress_state, written);
+		}
 
 		/*
 		 * Did we write the wrong # entries in the header?
@@ -582,7 +580,7 @@ static void write_pack_file(void)
 			written_list[j]->offset = (off_t)-1;
 		}
 		nr_remaining -= nr_written;
-	} while (nr_remaining);
+	} while (nr_remaining && i < nr_objects);
 
 	free(written_list);
 	stop_progress(&progress_state);

@@ -389,7 +389,7 @@ test_expect_success 'verify resulting packs' '
 test_expect_success 'tolerate packsizelimit smaller than biggest object' '
 	git config pack.packSizeLimit 1 &&
 	packname_11=$(git pack-objects test-11 <obj-list) &&
-	test 3 = $(ls test-11-*.pack | wc -l)
+	test 5 = $(ls test-11-*.pack | wc -l)
 '
 
 test_expect_success 'verify resulting packs' '
