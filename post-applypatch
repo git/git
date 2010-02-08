@@ -7,12 +7,32 @@ prec=4 &&
 this=$(cat 2>/dev/null "$dotest/next") &&
 msgnum=$(printf "%0${prec}d" $this) &&
 test -f "$dotest/$msgnum" &&
-message_id=$(sed -n '
-	/^Message-I[Dd]:[ 	]*\(<.*>\)[ 	]*$/{
-		s//\1/p
+message_id=$(sed -ne '
+	/^[ 	]/{
+		# Append continuation line
+		H
+		x
+		s/\n//
+		x
+		n
+	}
+	# Hold this new line, and look at what is in the hold space
+	x
+	# Is it the Message-ID line?  If so, spit out and finish.
+	/^[Mm][Ee][Ss][Ss][Aa][Gg][Ee]-[Ii][Dd]:[ 	]*/{
+		s///p
 		q
 	}
-	/^$/q
+	# Otherwise, check if this new line is empty
+	x
+	# Is it?  Then we are done with the header
+	/^$/b end
+	# Otherwise we need to hold onto this header line
+	x
+	# And start the next cycle
+	b
+: end
+	q
 ' "$dotest/$msgnum") &&
 
 test -n "$message_id" &&
