@@ -21,6 +21,19 @@ check()
 	fi
 }
 
+check_not()
+{
+	echo
+	echo "check: NOT " "$@"
+	if "$@"; then
+		echo FAILED
+		exit 1
+	else
+		echo ok
+		return 0
+	fi
+}
+
 check_equal()
 {
 	echo
@@ -94,6 +107,8 @@ git fetch ../subproj sub1
 git branch sub1 FETCH_HEAD
 
 # check if --message works for add
+check_not git subtree merge --prefix=subdir sub1
+check_not git subtree pull --prefix=subdir ../subproj sub1
 git subtree add --prefix=subdir --message="Added subproject" sub1
 check_equal "$(last_commit_message)" "Added subproject"
 undo

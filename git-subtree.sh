@@ -106,9 +106,12 @@ if [ -z "$prefix" ]; then
 	die "You must provide the --prefix option."
 fi
 
-if [ "$command" = "split" -a """"! -e "$prefix" ]; then
-	die "$prefix does not exist."
-fi
+case "$command" in
+	add) [ -e "$prefix" ] && 
+		die "prefix '$prefix' already exists." ;;
+	*)   [ -e "$prefix" ] || 
+		die "'$prefix' does not exist; use 'git subtree add'" ;;
+esac
 
 dir="$(dirname "$prefix/.")"
 
