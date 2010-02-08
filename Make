@@ -86,7 +86,9 @@ do
 		case "$NO_PEDANTIC" in
 		?*)	;;
 		'')
-			O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast" ;;
+			O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast"
+			O="$O -Wpointer-arith"
+			;;
 		esac
 		# -Wvla
 		# O="$O -fwrapv -fno-strict-overflow"
