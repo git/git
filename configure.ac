@@ -23,21 +23,32 @@ AC_DEFUN([GIT_CONF_APPEND_LINE],
 # GIT_ARG_SET_PATH(PROGRAM)
 # -------------------------
 # Provide --with-PROGRAM=PATH option to set PATH to PROGRAM
+# Optional second argument allows setting NO_PROGRAM=YesPlease if
+# --without-PROGRAM version used.
 AC_DEFUN([GIT_ARG_SET_PATH],
 [AC_ARG_WITH([$1],
  [AS_HELP_STRING([--with-$1=PATH],
                  [provide PATH to $1])],
- [GIT_CONF_APPEND_PATH($1)],[])
+ [GIT_CONF_APPEND_PATH($1,$2)],[])
 ])# GIT_ARG_SET_PATH
 #
 # GIT_CONF_APPEND_PATH(PROGRAM)
 # ------------------------------
 # Parse --with-PROGRAM=PATH option to set PROGRAM_PATH=PATH
 # Used by GIT_ARG_SET_PATH(PROGRAM)
+# Optional second argument allows setting NO_PROGRAM=YesPlease if
+# --without-PROGRAM is used.
 AC_DEFUN([GIT_CONF_APPEND_PATH],
 [PROGRAM=m4_toupper($1); \
 if test "$withval" = "no"; then \
-	AC_MSG_ERROR([You cannot use git without $1]); \
+	if test -n "$2"; then \
+		m4_toupper($1)_PATH=$withval; \
+		AC_MSG_NOTICE([Disabling use of ${PROGRAM}]); \
+		GIT_CONF_APPEND_LINE(NO_${PROGRAM}=YesPlease); \
+		GIT_CONF_APPEND_LINE(${PROGRAM}_PATH=); \
+	else \
+		AC_MSG_ERROR([You cannot use git without $1]); \
+	fi; \
 else \
 	if test "$withval" = "yes"; then \
 		AC_MSG_WARN([You should provide path for --with-$1=PATH]); \
@@ -277,7 +288,7 @@ GIT_ARG_SET_PATH(shell)
 GIT_ARG_SET_PATH(perl)
 #
 # Define PYTHON_PATH to provide path to Python.
-GIT_ARG_SET_PATH(python)
+GIT_ARG_SET_PATH(python, allow-without)
 #
 # Define ZLIB_PATH to provide path to zlib.
 GIT_ARG_SET_PATH(zlib)

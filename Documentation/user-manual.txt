@@ -3640,6 +3640,26 @@ Did you forget to 'git add'?
 Unable to checkout '261dfac35cb99d380eb966e102c1197139f7fa24' in submodule path 'a'
 -------------------------------------------------
 
+In older git versions it could be easily forgotten to commit new or modified
+files in a submodule, which silently leads to similar problems as not pushing
+the submodule changes. Starting with git 1.7.0 both "git status" and "git diff"
+in the superproject show submodules as modified when they contain new or
+modified files to protect against accidentally committing such a state. "git
+diff" will also add a "-dirty" to the work tree side when generating patch
+output or used with the --submodule option:
+
+-------------------------------------------------
+$ git diff
+diff --git a/sub b/sub
+--- a/sub
++++ b/sub
+@@ -1 +1 @@
+-Subproject commit 3f356705649b5d566d97ff843cf193359229a453
++Subproject commit 3f356705649b5d566d97ff843cf193359229a453-dirty
+$ git diff --submodule
+Submodule sub 3f35670..3f35670-dirty:
+-------------------------------------------------
+
 You also should not rewind branches in a submodule beyond commits that were
 ever recorded in any superproject.
 

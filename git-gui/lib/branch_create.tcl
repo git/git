@@ -16,48 +16,48 @@ field opt_fetch     1; # refetch tracking branch if used?
 field reset_ok      0; # did the user agree to reset?
 
 constructor dialog {} {
-	global repo_config
+	global repo_config use_ttk NS
 
-	make_toplevel top w
+	make_dialog top w
+	wm withdraw $w
 	wm title $top [append "[appname] ([reponame]): " [mc "Create Branch"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	label $w.header -text [mc "Create New Branch"] -font font_uibold
+	${NS}::label $w.header -text [mc "Create New Branch"] \
+		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.create -text [mc Create] \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.create -text [mc Create] \
 		-default active \
 		-command [cb _create]
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text [mc Cancel] \
+	${NS}::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.desc -text [mc "Branch Name"]
-	radiobutton $w.desc.name_r \
-		-anchor w \
+	${NS}::labelframe $w.desc -text [mc "Branch Name"]
+	${NS}::radiobutton $w.desc.name_r \
 		-text [mc "Name:"] \
 		-value user \
 		-variable @name_type
+	if {!$use_ttk} {$w.desc.name_r configure -anchor w}
 	set w_name $w.desc.name_t
-	entry $w_name \
-		-borderwidth 1 \
-		-relief sunken \
+	${NS}::entry $w_name \
 		-width 40 \
 		-textvariable @name \
 		-validate key \
 		-validatecommand [cb _validate %d %S]
 	grid $w.desc.name_r $w_name -sticky we -padx {0 5}
 
-	radiobutton $w.desc.match_r \
-		-anchor w \
+	${NS}::radiobutton $w.desc.match_r \
 		-text [mc "Match Tracking Branch Name"] \
 		-value match \
 		-variable @name_type
+	if {!$use_ttk} {$w.desc.match_r configure -anchor w}
 	grid $w.desc.match_r -sticky we -padx {0 5} -columnspan 2
 
 	grid columnconfigure $w.desc 1 -weight 1
@@ -66,34 +66,34 @@ constructor dialog {} {
 	set w_rev [::choose_rev::new $w.rev [mc "Starting Revision"]]
 	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 
-	labelframe $w.options -text [mc Options]
+	${NS}::labelframe $w.options -text [mc Options]
 
-	frame $w.options.merge
-	label $w.options.merge.l -text [mc "Update Existing Branch:"]
+	${NS}::frame $w.options.merge
+	${NS}::label $w.options.merge.l -text [mc "Update Existing Branch:"]
 	pack $w.options.merge.l -side left
-	radiobutton $w.options.merge.no \
+	${NS}::radiobutton $w.options.merge.no \
 		-text [mc No] \
 		-value none \
 		-variable @opt_merge
 	pack $w.options.merge.no -side left
-	radiobutton $w.options.merge.ff \
+	${NS}::radiobutton $w.options.merge.ff \
 		-text [mc "Fast Forward Only"] \
 		-value ff \
 		-variable @opt_merge
 	pack $w.options.merge.ff -side left
-	radiobutton $w.options.merge.reset \
+	${NS}::radiobutton $w.options.merge.reset \
 		-text [mc Reset] \
 		-value reset \
 		-variable @opt_merge
 	pack $w.options.merge.reset -side left
 	pack $w.options.merge -anchor nw
 
-	checkbutton $w.options.fetch \
+	${NS}::checkbutton $w.options.fetch \
 		-text [mc "Fetch Tracking Branch"] \
 		-variable @opt_fetch
 	pack $w.options.fetch -anchor nw
 
-	checkbutton $w.options.checkout \
+	${NS}::checkbutton $w.options.checkout \
 		-text [mc "Checkout After Creation"] \
 		-variable @opt_checkout
 	pack $w.options.checkout -anchor nw
@@ -109,6 +109,7 @@ constructor dialog {} {
 	bind $w <Visibility> [cb _visible]
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [cb _create]\;break
+	wm deiconify $w
 	tkwait window $w
 }
 

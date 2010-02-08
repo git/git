@@ -213,7 +213,7 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		int ch;
 
 		len = next_quote_pos(p, maxlen);
-		if (len == maxlen || !p[len])
+		if (len == maxlen || (maxlen < 0 && !p[len]))
 			break;
 
 		if (!no_dq && p == name)
@@ -223,6 +223,8 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		EMIT('\\');
 		p += len;
 		ch = (unsigned char)*p++;
+		if (maxlen >= 0)
+			maxlen -= len + 1;
 		if (sq_lookup[ch] >= ' ') {
 			EMIT(sq_lookup[ch]);
 		} else {

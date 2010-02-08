@@ -306,4 +306,43 @@ test_expect_success '--remap-to-ancestor with filename filters' '
 	test $orig_invariant = $(git rev-parse invariant)
 '
 
+test_expect_success 'setup submodule' '
+	rm -fr ?* .git &&
+	git init &&
+	test_commit file &&
+	mkdir submod &&
+	submodurl="$PWD/submod" &&
+	( cd submod &&
+	  git init &&
+	  test_commit file-in-submod ) &&
+	git submodule add "$submodurl" &&
+	git commit -m "added submodule" &&
+	test_commit add-file &&
+	( cd submod && test_commit add-in-submodule ) &&
+	git add submod &&
+	git commit -m "changed submodule" &&
+	git branch original HEAD
+'
+
+orig_head=`git show-ref --hash --head HEAD`
+
+test_expect_success 'rewrite submodule with another content' '
+	git filter-branch --tree-filter "test -d submod && {
+					 rm -rf submod &&
+					 git rm -rf --quiet submod &&
+					 mkdir submod &&
+					 : > submod/file
+					 } || :" HEAD &&
+	test $orig_head != `git show-ref --hash --head HEAD`
+'
+
+test_expect_success 'replace submodule revision' '
+	git reset --hard original &&
+	git filter-branch -f --tree-filter \
+	    "if git ls-files --error-unmatch -- submod > /dev/null 2>&1
+	     then git update-index --cacheinfo 160000 0123456789012345678901234567890123456789 submod
+	     fi" HEAD &&
+	test $orig_head != `git show-ref --hash --head HEAD`
+'
+
 test_done

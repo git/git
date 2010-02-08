@@ -1656,6 +1656,7 @@ use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
 use IPC::Open3;
 use Memoize;  # core since 5.8.0, Jul 2002
+use Memoize::Storable;
 
 my ($_gc_nr, $_gc_period);
 
@@ -3116,10 +3117,39 @@ sub has_no_changes {
 		command_oneline("rev-parse", "$commit~1^{tree}"));
 }
 
-BEGIN {
-	memoize 'lookup_svn_merge';
-	memoize 'check_cherry_pick';
-	memoize 'has_no_changes';
+# The GIT_DIR environment variable is not always set until after the command
+# line arguments are processed, so we can't memoize in a BEGIN block.
+{
+	my $memoized = 0;
+
+	sub memoize_svn_mergeinfo_functions {
+		return if $memoized;
+		$memoized = 1;
+
+		my $cache_path = "$ENV{GIT_DIR}/svn/.caches/";
+		mkpath([$cache_path]) unless -d $cache_path;
+
+		tie my %lookup_svn_merge_cache => 'Memoize::Storable',
+		    "$cache_path/lookup_svn_merge.db", 'nstore';
+		memoize 'lookup_svn_merge',
+			SCALAR_CACHE => 'FAULT',
+			LIST_CACHE => ['HASH' => \%lookup_svn_merge_cache],
+		;
+
+		tie my %check_cherry_pick_cache => 'Memoize::Storable',
+		    "$cache_path/check_cherry_pick.db", 'nstore';
+		memoize 'check_cherry_pick',
+			SCALAR_CACHE => 'FAULT',
+			LIST_CACHE => ['HASH' => \%check_cherry_pick_cache],
+		;
+
+		tie my %has_no_changes_cache => 'Memoize::Storable',
+		    "$cache_path/has_no_changes.db", 'nstore';
+		memoize 'has_no_changes',
+			SCALAR_CACHE => ['HASH' => \%has_no_changes_cache],
+			LIST_CACHE => 'FAULT',
+		;
+	}
 }
 
 sub parents_exclude {
@@ -3162,6 +3192,8 @@ sub parents_exclude {
 sub find_extra_svn_parents {
 	my ($self, $ed, $mergeinfo, $parents) = @_;
 	# aha!  svk:merge property changed...
+
+	memoize_svn_mergeinfo_functions();
 
 	# We first search for merged tips which are not in our
 	# history.  Then, we figure out which git revisions are in

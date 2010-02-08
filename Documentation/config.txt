@@ -417,6 +417,20 @@ You probably do not need to adjust this value.
 +
 Common unit suffixes of 'k', 'm', or 'g' are supported.
 
+core.bigFileThreshold::
+	Files larger than this size are stored deflated, without
+	attempting delta compression.  Storing large files without
+	delta compression avoids excessive memory usage, at the
+	slight expense of increased disk usage.
++
+Default is 512 MiB on all platforms.  This should be reasonable
+for most projects as source code and other text files can still
+be delta compressed, but larger binary media files won't be.
++
+Common unit suffixes of 'k', 'm', or 'g' are supported.
++
+Currently only linkgit:git-fast-import[1] honors this setting.
+
 core.excludesfile::
 	In addition to '.gitignore' (per-directory) and
 	'.git/info/exclude', git looks into this file for patterns
@@ -1354,10 +1368,13 @@ you can use linkgit:git-index-pack[1] on the *.pack file to regenerate
 the `{asterisk}.idx` file.
 
 pack.packSizeLimit::
-	The default maximum size of a pack.  This setting only affects
-	packing to a file, i.e. the git:// protocol is unaffected.  It
-	can be overridden by the `\--max-pack-size` option of
-	linkgit:git-repack[1].
+	The maximum size of a pack.  This setting only affects
+	packing to a file when repacking, i.e. the git:// protocol
+	is unaffected.  It can be overridden by the `\--max-pack-size`
+	option of linkgit:git-repack[1]. The minimum size allowed is
+	limited to 1 MiB. The default is unlimited.
+	Common unit suffixes of 'k', 'm', or 'g' are
+	supported.
 
 pager.<cmd>::
 	Allows turning on or off pagination of the output of a

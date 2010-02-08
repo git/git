@@ -105,8 +105,9 @@ base-name::
 	`--window-memory=0` makes memory usage unlimited, which is the
 	default.
 
---max-pack-size=<n>::
-	Maximum size of each output packfile, expressed in MiB.
+--max-pack-size=[N]::
+	Maximum size of each output pack file. The size can be suffixed with
+	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
 	If specified,  multiple packfiles may be created.
 	The default is unlimited, unless the config variable
 	`pack.packSizeLimit` is set.
