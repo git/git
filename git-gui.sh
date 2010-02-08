@@ -416,6 +416,9 @@ proc _lappend_nice {cmd_var} {
 
 	if {![info exists _nice]} {
 		set _nice [_which nice]
+		if {[catch {exec $_nice git version}]} {
+			set _nice {}
+		}
 	}
 	if {$_nice ne {}} {
 		lappend cmd $_nice
