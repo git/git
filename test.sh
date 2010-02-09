@@ -161,7 +161,8 @@ check_equal "You must provide the --prefix option." "$result"
 
 # Check that the <prefix> exists for a split.
 ! result=$(git subtree split --prefix=non-existent-directory 2>&1)
-check_equal "non-existent-directory does not exist." "$result"
+check_equal "'non-existent-directory' does not exist; use 'git subtree add'" \
+  "$result"
 
 # check if --message works for split+rejoin
 spl1=$(git subtree split --annotate='*' --prefix subdir --onto FETCH_HEAD --message "Split & rejoin" --rejoin)
