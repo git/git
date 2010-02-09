@@ -2432,7 +2432,7 @@ parse_done:
 	if (top < 1)
 		top = lno;
 	bottom--;
-	if (lno < top)
+	if (lno < top || lno < bottom)
 		die("file %s has only %lu lines", path, lno);
 
 	ent = xcalloc(1, sizeof(*ent));
