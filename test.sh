@@ -73,7 +73,7 @@ undo()
 
 last_commit_message()
 {
-	git log --format=%s -1
+	git log --pretty=format:%s -1
 }
 
 rm -rf mainline subproj
@@ -292,7 +292,7 @@ git subtree split --prefix subdir --branch mainsub4
 # at this point, the new commit's parent should be sub3
 # if it's not, something went wrong (the "newparent" of "master~" commit should have been sub3,
 # but it wasn't, because it's cache was not set to itself)
-check_equal "$(git log --format=%P -1 mainsub4)" "$(git rev-parse sub3)"
+check_equal "$(git log --pretty=format:%P -1 mainsub4)" "$(git rev-parse sub3)"
 
 
 
