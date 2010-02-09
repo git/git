@@ -255,4 +255,9 @@ test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
 	git add track-this
 '
 
+test_expect_success '"add non-existent" should fail' '
+	test_must_fail git add non-existent &&
+	! (git ls-files | grep "non-existent")
+'
+
 test_done
