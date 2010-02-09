@@ -41,7 +41,19 @@ static void fill_pathspec_matches(const char **pathspec, char *seen, int specs)
 	}
 }
 
-static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
+static char *find_used_pathspec(const char **pathspec)
+{
+	char *seen;
+	int i;
+
+	for (i = 0; pathspec[i];  i++)
+		; /* just counting */
+	seen = xcalloc(i, 1);
+	fill_pathspec_matches(pathspec, seen, i);
+	return seen;
+}
+
+static char *prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
 	char *seen;
 	int i, specs;
@@ -61,13 +73,7 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 	}
 	dir->nr = dst - dir->entries;
 	fill_pathspec_matches(pathspec, seen, specs);
-
-	for (i = 0; i < specs; i++) {
-		if (!seen[i] && pathspec[i][0] && !file_exists(pathspec[i]))
-			die("pathspec '%s' did not match any files",
-					pathspec[i]);
-	}
-        free(seen);
+	return seen;
 }
 
 static void treat_gitlinks(const char **pathspec)
@@ -283,6 +289,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int flags;
 	int add_new_files;
 	int require_pathspec;
+	char *seen = NULL;
 
 	git_config(add_config, NULL);
 
@@ -342,12 +349,25 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		/* This picks up the paths that are not tracked */
 		baselen = fill_directory(&dir, pathspec);
 		if (pathspec)
-			prune_directory(&dir, pathspec, baselen);
+			seen = prune_directory(&dir, pathspec, baselen);
 	}
 
 	if (refresh_only) {
 		refresh(verbose, pathspec);
 		goto finish;
+	}
+
+	if (pathspec) {
+		int i;
+		if (!seen)
+			seen = find_used_pathspec(pathspec);
+		for (i = 0; pathspec[i]; i++) {
+			if (!seen[i] && pathspec[i][0]
+			    && !file_exists(pathspec[i]))
+				die("pathspec '%s' did not match any files",
+				    pathspec[i]);
+		}
+		free(seen);
 	}
 
 	exit_status |= add_files_to_cache(prefix, pathspec, flags);
