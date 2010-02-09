@@ -243,9 +243,9 @@ Now we add the vendor library with
 You can omit the --squash flag, but doing so will increase the number
 of commits that are incldued in your local repository.
 
-We now have  ~/git-extensions/git-subtree directory with the git-subtree
-subdirectory containing code from the master branch of
-git://github.com/apenwarr/git-subtree.git
+We now have a ~/git-extensions/git-subtree directory containing code
+from the master branch of git://github.com/apenwarr/git-subtree.git
+in our git-extensions repository.
 
 EXAMPLE 2
 ---------
