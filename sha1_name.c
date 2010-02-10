@@ -395,9 +395,12 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		} else if (0 <= nth)
 			at_time = 0;
 		else {
+			int errors = 0;
 			char *tmp = xstrndup(str + at + 2, reflog_len);
-			at_time = approxidate(tmp);
+			at_time = approxidate_careful(tmp, &errors);
 			free(tmp);
+			if (errors)
+				return -1;
 		}
 		if (read_ref_at(real_ref, at_time, nth, sha1, NULL,
 				&co_time, &co_tz, &co_cnt)) {
