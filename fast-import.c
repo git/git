@@ -280,6 +280,7 @@ struct recent_command
 /* Configured limits on output */
 static unsigned long max_depth = 10;
 static off_t max_packsize = (1LL << 32) - 1;
+static uintmax_t big_file_threshold = 512 * 1024 * 1024;
 static int force_update;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
@@ -1003,7 +1004,7 @@ static void cycle_packfile(void)
 
 static size_t encode_header(
 	enum object_type type,
-	size_t size,
+	uintmax_t size,
 	unsigned char *hdr)
 {
 	int n = 1;
@@ -1157,6 +1158,118 @@ static int store_object(
 		last->depth = e->depth;
 	}
 	return 0;
+}
+
+static void truncate_pack(off_t to)
+{
+	if (ftruncate(pack_data->pack_fd, to)
+	 || lseek(pack_data->pack_fd, to, SEEK_SET) != to)
+		die_errno("cannot truncate pack to skip duplicate");
+	pack_size = to;
+}
+
+static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
+{
+	size_t in_sz = 64 * 1024, out_sz = 64 * 1024;
+	unsigned char *in_buf = xmalloc(in_sz);
+	unsigned char *out_buf = xmalloc(out_sz);
+	struct object_entry *e;
+	unsigned char sha1[20];
+	unsigned long hdrlen;
+	off_t offset;
+	git_SHA_CTX c;
+	z_stream s;
+	int status = Z_OK;
+
+	/* Determine if we should auto-checkpoint. */
+	if ((pack_size + 60 + len) > max_packsize
+		|| (pack_size + 60 + len) < pack_size)
+		cycle_packfile();
+
+	offset = pack_size;
+
+	hdrlen = snprintf((char *)out_buf, out_sz, "blob %" PRIuMAX, len) + 1;
+	if (out_sz <= hdrlen)
+		die("impossibly large object header");
+
+	git_SHA1_Init(&c);
+	git_SHA1_Update(&c, out_buf, hdrlen);
+
+	memset(&s, 0, sizeof(s));
+	deflateInit(&s, pack_compression_level);
+
+	hdrlen = encode_header(OBJ_BLOB, len, out_buf);
+	if (out_sz <= hdrlen)
+		die("impossibly large object header");
+
+	s.next_out = out_buf + hdrlen;
+	s.avail_out = out_sz - hdrlen;
+
+	while (status != Z_STREAM_END) {
+		if (0 < len && !s.avail_in) {
+			size_t cnt = in_sz < len ? in_sz : (size_t)len;
+			size_t n = fread(in_buf, 1, cnt, stdin);
+			if (!n && feof(stdin))
+				die("EOF in data (%" PRIuMAX " bytes remaining)", len);
+
+			git_SHA1_Update(&c, in_buf, n);
+			s.next_in = in_buf;
+			s.avail_in = n;
+			len -= n;
+		}
+
+		status = deflate(&s, len ? 0 : Z_FINISH);
+
+		if (!s.avail_out || status == Z_STREAM_END) {
+			size_t n = s.next_out - out_buf;
+			write_or_die(pack_data->pack_fd, out_buf, n);
+			pack_size += n;
+			s.next_out = out_buf;
+			s.avail_out = out_sz;
+		}
+
+		switch (status) {
+		case Z_OK:
+		case Z_BUF_ERROR:
+		case Z_STREAM_END:
+			continue;
+		default:
+			die("unexpected deflate failure: %d", status);
+		}
+	}
+	deflateEnd(&s);
+	git_SHA1_Final(sha1, &c);
+
+	if (sha1out)
+		hashcpy(sha1out, sha1);
+
+	e = insert_object(sha1);
+
+	if (mark)
+		insert_mark(mark, e);
+
+	if (e->offset) {
+		duplicate_count_by_type[OBJ_BLOB]++;
+		truncate_pack(offset);
+
+	} else if (find_sha1_pack(sha1, packed_git)) {
+		e->type = OBJ_BLOB;
+		e->pack_id = MAX_PACK_ID;
+		e->offset = 1; /* just not zero! */
+		duplicate_count_by_type[OBJ_BLOB]++;
+		truncate_pack(offset);
+
+	} else {
+		e->depth = 0;
+		e->type = OBJ_BLOB;
+		e->pack_id = pack_id;
+		e->offset = offset;
+		object_count++;
+		object_count_by_type[OBJ_BLOB]++;
+	}
+
+	free(in_buf);
+	free(out_buf);
 }
 
 /* All calls must be guarded by find_object() or find_mark() to
@@ -1704,7 +1817,7 @@ static void parse_mark(void)
 		next_mark = 0;
 }
 
-static void parse_data(struct strbuf *sb)
+static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 {
 	strbuf_reset(sb);
 
@@ -1728,9 +1841,15 @@ static void parse_data(struct strbuf *sb)
 		free(term);
 	}
 	else {
-		size_t n = 0, length;
+		uintmax_t len = strtoumax(command_buf.buf + 5, NULL, 10);
+		size_t n = 0, length = (size_t)len;
 
-		length = strtoul(command_buf.buf + 5, NULL, 10);
+		if (limit && limit < len) {
+			*len_res = len;
+			return 0;
+		}
+		if (length < len)
+			die("data is too large to use in this context");
 
 		while (n < length) {
 			size_t s = strbuf_fread(sb, length - n, stdin);
@@ -1742,6 +1861,7 @@ static void parse_data(struct strbuf *sb)
 	}
 
 	skip_optional_lf();
+	return 1;
 }
 
 static int validate_raw_date(const char *src, char *result, int maxlen)
@@ -1806,14 +1926,32 @@ static char *parse_ident(const char *buf)
 	return ident;
 }
 
-static void parse_new_blob(void)
+static void parse_and_store_blob(
+	struct last_object *last,
+	unsigned char *sha1out,
+	uintmax_t mark)
 {
 	static struct strbuf buf = STRBUF_INIT;
+	uintmax_t len;
 
+	if (parse_data(&buf, big_file_threshold, &len))
+		store_object(OBJ_BLOB, &buf, last, sha1out, mark);
+	else {
+		if (last) {
+			strbuf_release(&last->data);
+			last->offset = 0;
+			last->depth = 0;
+		}
+		stream_blob(len, sha1out, mark);
+		skip_optional_lf();
+	}
+}
+
+static void parse_new_blob(void)
+{
 	read_next_command();
 	parse_mark();
-	parse_data(&buf);
-	store_object(OBJ_BLOB, &buf, &last_blob, NULL, next_mark);
+	parse_and_store_blob(&last_blob, NULL, next_mark);
 }
 
 static void unload_one_branch(void)
@@ -1924,15 +2062,12 @@ static void file_change_m(struct branch *b)
 		 * another repository.
 		 */
 	} else if (inline_data) {
-		static struct strbuf buf = STRBUF_INIT;
-
 		if (p != uq.buf) {
 			strbuf_addstr(&uq, p);
 			p = uq.buf;
 		}
 		read_next_command();
-		parse_data(&buf);
-		store_object(OBJ_BLOB, &buf, &last_blob, sha1, 0);
+		parse_and_store_blob(&last_blob, sha1, 0);
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
@@ -2058,15 +2193,12 @@ static void note_change_n(struct branch *b)
 		die("Invalid ref name or SHA1 expression: %s", p);
 
 	if (inline_data) {
-		static struct strbuf buf = STRBUF_INIT;
-
 		if (p != uq.buf) {
 			strbuf_addstr(&uq, p);
 			p = uq.buf;
 		}
 		read_next_command();
-		parse_data(&buf);
-		store_object(OBJ_BLOB, &buf, &last_blob, sha1, 0);
+		parse_and_store_blob(&last_blob, sha1, 0);
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
@@ -2232,7 +2364,7 @@ static void parse_new_commit(void)
 	}
 	if (!committer)
 		die("Expected committer but didn't get one");
-	parse_data(&msg);
+	parse_data(&msg, 0, NULL);
 	read_next_command();
 	parse_from(b);
 	merge_list = parse_merge(&merge_count);
@@ -2353,7 +2485,7 @@ static void parse_new_tag(void)
 		tagger = NULL;
 
 	/* tag payload/message */
-	parse_data(&msg);
+	parse_data(&msg, 0, NULL);
 
 	/* build the tag object */
 	strbuf_reset(&new_data);
@@ -2473,11 +2605,15 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		pack_compression_seen = 1;
 		return 0;
 	}
+	if (!strcmp(k, "core.bigfilethreshold")) {
+		long n = git_config_int(k, v);
+		big_file_threshold = 0 < n ? n : 0;
+	}
 	return git_default_config(k, v, cb);
 }
 
 static const char fast_import_usage[] =
-"git fast-import [--date-format=f] [--max-pack-size=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
+"git fast-import [--date-format=f] [--max-pack-size=n] [--big-file-threshold=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
 
 int main(int argc, const char **argv)
 {
@@ -2518,7 +2654,12 @@ int main(int argc, const char **argv)
 		}
 		else if (!prefixcmp(a, "--max-pack-size="))
 			max_packsize = strtoumax(a + 16, NULL, 0) * 1024 * 1024;
-		else if (!prefixcmp(a, "--depth=")) {
+		else if (!prefixcmp(a, "--big-file-threshold=")) {
+			unsigned long v;
+			if (!git_parse_ulong(a + 21, &v))
+				usage(fast_import_usage);
+			big_file_threshold = v;
+		} else if (!prefixcmp(a, "--depth=")) {
 			max_depth = strtoul(a + 8, NULL, 0);
 			if (max_depth > MAX_DEPTH)
 				die("--depth cannot exceed %u", MAX_DEPTH);
