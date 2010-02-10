@@ -63,7 +63,7 @@ Updates since v1.6.6
 
  * "git svn" support of subversion "merge tickets" and miscellaneous fixes.
 
- * "gitk" updates.
+ * "gitk" and "git gui" translation updates.
 
  * "gitweb" updates (code clean-up, load checking etc.)
 
@@ -200,14 +200,6 @@ release, unless otherwise noted.
    the branch is fully merged to its upstream branch if it is not merged
    to the current branch.  It now deletes it in such a case.
 
- * "git config -f <relative path>" run from a subdirectory misbehaved.
-   65807ee (builtin-config: Fix crash when using "-f <relative path>"
-   from non-root dir, 2010-01-26) may be merged to older maintenance
-   branches.
-
- * "git fast-import" did not correctly handle large blobs that may
-   bust the pack size limit.
-
  * When using "git status" or asking "git diff" to compare the work tree
    with something, they used to consider that a checked-out submodule with
    uncommitted changes is not modified; this could cause people to forget
@@ -215,9 +207,3 @@ release, unless otherwise noted.
    superproject. They now consider such a change as a modification and
    "git diff" will append a "-dirty" to the work tree side when generating
    patch output or when used with the --submodule option.
-
---
-exec >/var/tmp/1
-O=v1.7.0-rc1-42-g3bd8de5
-echo O=$(git describe master)
-git shortlog --no-merges $O..master ^maint
