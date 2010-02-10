@@ -388,7 +388,7 @@ sub req_Directory
     $state->{localdir} = $data;
     $state->{repository} = $repository;
     $state->{path} = $repository;
-    $state->{path} =~ s/^$state->{CVSROOT}\///;
+    $state->{path} =~ s/^\Q$state->{CVSROOT}\E\///;
     $state->{module} = $1 if ($state->{path} =~ s/^(.*?)(\/|$)//);
     $state->{path} .= "/" if ( $state->{path} =~ /\S/ );
 
