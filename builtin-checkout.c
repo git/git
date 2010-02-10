@@ -167,7 +167,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	fill_mm(active_cache[pos+2]->sha1, &theirs);
 
 	status = ll_merge(&result_buf, path, &ancestor,
-			  &ours, "ours", &theirs, "theirs", 1);
+			  &ours, "ours", &theirs, "theirs", 0);
 	free(ancestor.ptr);
 	free(ours.ptr);
 	free(theirs.ptr);

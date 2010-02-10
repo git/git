@@ -542,4 +542,61 @@ test_expect_success 'switch out of non-branch' '
 	! grep "^Previous HEAD" error.log
 '
 
+(
+ echo "#!$SHELL_PATH"
+ cat <<\EOF
+O=$1 A=$2 B=$3
+cat "$A" >.tmp
+exec >"$A"
+echo '<<<<<<< filfre-theirs'
+cat "$B"
+echo '||||||| filfre-common'
+cat "$O"
+echo '======='
+cat ".tmp"
+echo '>>>>>>> filfre-ours'
+rm -f .tmp
+exit 1
+EOF
+) >filfre.sh
+chmod +x filfre.sh
+
+test_expect_success 'custom merge driver with checkout -m' '
+	git reset --hard &&
+
+	git config merge.filfre.driver "./filfre.sh %O %A %B" &&
+	git config merge.filfre.name "Feel-free merge driver" &&
+	git config merge.filfre.recursive binary &&
+	echo "arm merge=filfre" >.gitattributes &&
+
+	git checkout -b left &&
+	echo neutral >arm &&
+	git add arm .gitattributes &&
+	test_tick &&
+	git commit -m neutral &&
+	git branch right &&
+
+	echo left >arm &&
+	test_tick &&
+	git commit -a -m left &&
+	git checkout right &&
+
+	echo right >arm &&
+	test_tick &&
+	git commit -a -m right &&
+
+	test_must_fail git merge left &&
+	(
+		for t in filfre-common left right
+		do
+			grep $t arm || exit 1
+		done
+		exit 0
+	) &&
+
+	mv arm expect &&
+	git checkout -m arm &&
+	test_cmp expect arm
+'
+
 test_done
