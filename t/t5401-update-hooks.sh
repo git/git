@@ -124,6 +124,7 @@ remote: STDOUT update refs/heads/master
 remote: STDERR update refs/heads/master
 remote: STDOUT update refs/heads/tofail
 remote: STDERR update refs/heads/tofail
+remote: error: hook declined to update refs/heads/tofail
 remote: STDOUT post-receive
 remote: STDERR post-receive
 remote: STDOUT post-update
@@ -131,7 +132,7 @@ remote: STDERR post-update
 EOF
 test_expect_success 'send-pack stderr contains hook messages' '
 	grep ^remote: send.err | sed "s/ *\$//" >actual &&
-	test_cmp - actual <expect
+	test_cmp expect actual
 '
 
 test_done

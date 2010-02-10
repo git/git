@@ -139,6 +139,42 @@ static struct command *commands;
 static const char pre_receive_hook[] = "hooks/pre-receive";
 static const char post_receive_hook[] = "hooks/post-receive";
 
+static void rp_error(const char *err, ...) __attribute__((format (printf, 1, 2)));
+static void rp_warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
+
+static void report_message(const char *prefix, const char *err, va_list params)
+{
+	int sz = strlen(prefix);
+	char msg[4096];
+
+	strncpy(msg, prefix, sz);
+	sz += vsnprintf(msg + sz, sizeof(msg) - sz, err, params);
+	if (sz > (sizeof(msg) - 1))
+		sz = sizeof(msg) - 1;
+	msg[sz++] = '\n';
+
+	if (use_sideband)
+		send_sideband(1, 2, msg, sz, use_sideband);
+	else
+		xwrite(2, msg, sz);
+}
+
+static void rp_warning(const char *err, ...)
+{
+	va_list params;
+	va_start(params, err);
+	report_message("warning: ", err, params);
+	va_end(params);
+}
+
+static void rp_error(const char *err, ...)
+{
+	va_list params;
+	va_start(params, err);
+	report_message("error: ", err, params);
+	va_end(params);
+}
+
 static int copy_to_sideband(int in, int out, void *arg)
 {
 	char data[128];
@@ -276,7 +312,7 @@ static void warn_unconfigured_deny(void)
 {
 	int i;
 	for (i = 0; i < ARRAY_SIZE(warn_unconfigured_deny_msg); i++)
-		warning("%s", warn_unconfigured_deny_msg[i]);
+		rp_warning("%s", warn_unconfigured_deny_msg[i]);
 }
 
 static char *warn_unconfigured_deny_delete_current_msg[] = {
@@ -302,7 +338,7 @@ static void warn_unconfigured_deny_delete_current(void)
 	for (i = 0;
 	     i < ARRAY_SIZE(warn_unconfigured_deny_delete_current_msg);
 	     i++)
-		warning("%s", warn_unconfigured_deny_delete_current_msg[i]);
+		rp_warning("%s", warn_unconfigured_deny_delete_current_msg[i]);
 }
 
 static const char *update(struct command *cmd)
@@ -314,7 +350,7 @@ static const char *update(struct command *cmd)
 
 	/* only refs/... are allowed */
 	if (prefixcmp(name, "refs/") || check_ref_format(name + 5)) {
-		error("refusing to create funny ref '%s' remotely", name);
+		rp_error("refusing to create funny ref '%s' remotely", name);
 		return "funny refname";
 	}
 
@@ -324,12 +360,12 @@ static const char *update(struct command *cmd)
 			break;
 		case DENY_UNCONFIGURED:
 		case DENY_WARN:
-			warning("updating the current branch");
+			rp_warning("updating the current branch");
 			if (deny_current_branch == DENY_UNCONFIGURED)
 				warn_unconfigured_deny();
 			break;
 		case DENY_REFUSE:
-			error("refusing to update checked out branch: %s", name);
+			rp_error("refusing to update checked out branch: %s", name);
 			return "branch is currently checked out";
 		}
 	}
@@ -342,7 +378,7 @@ static const char *update(struct command *cmd)
 
 	if (!is_null_sha1(old_sha1) && is_null_sha1(new_sha1)) {
 		if (deny_deletes && !prefixcmp(name, "refs/heads/")) {
-			error("denying ref deletion for %s", name);
+			rp_error("denying ref deletion for %s", name);
 			return "deletion prohibited";
 		}
 
@@ -354,10 +390,10 @@ static const char *update(struct command *cmd)
 			case DENY_UNCONFIGURED:
 				if (deny_delete_current == DENY_UNCONFIGURED)
 					warn_unconfigured_deny_delete_current();
-				warning("deleting the current branch");
+				rp_warning("deleting the current branch");
 				break;
 			case DENY_REFUSE:
-				error("refusing to delete the current branch: %s", name);
+				rp_error("refusing to delete the current branch: %s", name);
 				return "deletion of the current branch prohibited";
 			}
 		}
@@ -387,23 +423,23 @@ static const char *update(struct command *cmd)
 				break;
 		free_commit_list(bases);
 		if (!ent) {
-			error("denying non-fast-forward %s"
-			      " (you should pull first)", name);
+			rp_error("denying non-fast-forward %s"
+				 " (you should pull first)", name);
 			return "non-fast-forward";
 		}
 	}
 	if (run_update_hook(cmd)) {
-		error("hook declined to update %s", name);
+		rp_error("hook declined to update %s", name);
 		return "hook declined";
 	}
 
 	if (is_null_sha1(new_sha1)) {
 		if (!parse_object(old_sha1)) {
-			warning ("Allowing deletion of corrupt ref.");
+			rp_warning("Allowing deletion of corrupt ref.");
 			old_sha1 = NULL;
 		}
 		if (delete_ref(name, old_sha1, 0)) {
-			error("failed to delete %s", name);
+			rp_error("failed to delete %s", name);
 			return "failed to delete";
 		}
 		return NULL; /* good */
@@ -411,7 +447,7 @@ static const char *update(struct command *cmd)
 	else {
 		lock = lock_any_ref_for_update(name, old_sha1, 0);
 		if (!lock) {
-			error("failed to lock %s", name);
+			rp_error("failed to lock %s", name);
 			return "failed to lock";
 		}
 		if (write_ref_sha1(lock, new_sha1, "push")) {
