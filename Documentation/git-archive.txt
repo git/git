@@ -112,6 +112,14 @@ export-subst::
 	expand several placeholders when adding this file to an archive.
 	See linkgit:gitattributes[5] for details.
 
+Note that attributes are by default taken from the `.gitattributes` files
+in the tree that is being archived.  If you want to tweak the way the
+output is generated after the fact (e.g. you committed without adding an
+appropriate export-ignore in its `.gitattributes`), adjust the checked out
+`.gitattributes` file as necessary and use `--work-tree-attributes`
+option.  Alternatively you can keep necessary attributes that should apply
+while archiving any tree in your `$GIT_DIR/info/attributes` file.
+
 EXAMPLES
 --------
 git archive --format=tar --prefix=junk/ HEAD | (cd /var/tmp/ && tar xf -)::
