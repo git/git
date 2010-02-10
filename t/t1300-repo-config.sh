@@ -398,6 +398,17 @@ test_expect_success 'alternative GIT_CONFIG' 'cmp output expect'
 test_expect_success 'alternative GIT_CONFIG (--file)' \
 	'git config --file other-config -l > output && cmp output expect'
 
+test_expect_success 'refer config from subdirectory' '
+	mkdir x &&
+	(
+		cd x &&
+		echo strasse >expect
+		git config --get --file ../other-config ein.bahn >actual &&
+		test_cmp expect actual
+	)
+
+'
+
 GIT_CONFIG=other-config git config anwohner.park ausweis
 
 cat > expect << EOF
