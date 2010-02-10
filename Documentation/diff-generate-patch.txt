@@ -56,7 +56,8 @@ combined diff format
 
 "git-diff-tree", "git-diff-files" and "git-diff" can take '-c' or
 '--cc' option to produce 'combined diff'.  For showing a merge commit
-with "git log -p", this is the default format.
+with "git log -p", this is the default format; you can force showing
+full diff with the '-m' option.
 A 'combined diff' format looks like this:
 
 ------------

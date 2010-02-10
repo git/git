@@ -118,6 +118,15 @@ git log master --not --remotes=*/master::
 	Shows all commits that are in local master but not in any remote
 	repository master branches.
 
+git log -p -m --first-parent::
+
+	Shows the history including change diffs, but only from the
+	"main branch" perspective, skipping commits that come from merged
+	branches, and showing full diffs of changes introduced by the merges.
+	This makes sense only when following a strict policy of merging all
+	topic branches when staying on a single integration branch.
+
+
 Discussion
 ----------
 
