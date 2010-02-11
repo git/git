@@ -200,23 +200,23 @@ static void set_author_ident_env(const char *message)
 
 static char *help_msg(const unsigned char *sha1)
 {
-	static char helpbuf[1024];
+	struct strbuf helpbuf = STRBUF_INIT;
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
 
 	if (msg)
 		return msg;
 
-	strcpy(helpbuf, "  After resolving the conflicts,\n"
+	strbuf_addstr(&helpbuf, "  After resolving the conflicts,\n"
 		"mark the corrected paths with 'git add <paths>' or 'git rm <paths>'\n"
 		"and commit the result.");
 
 	if (action == CHERRY_PICK) {
-		sprintf(helpbuf + strlen(helpbuf),
+		strbuf_addf(&helpbuf,
 			"  When committing, use the option '-c %s'\n"
 			"to retain authorship and message.",
 			find_unique_abbrev(sha1, DEFAULT_ABBREV));
 	}
-	return helpbuf;
+	return strbuf_detach(&helpbuf, NULL);
 }
 
 static struct tree *empty_tree(void)
