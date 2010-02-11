@@ -38,6 +38,7 @@ static const char * const cherry_pick_usage[] = {
 static int edit, no_replay, no_commit, mainline, signoff;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
+static const char *commit_name;
 static int allow_rerere_auto;
 
 static const char *me;
@@ -49,7 +50,6 @@ static void parse_args(int argc, const char **argv)
 	const char * const * usage_str =
 		action == REVERT ?  revert_usage : cherry_pick_usage;
 	unsigned char sha1[20];
-	const char *arg;
 	int noop;
 	struct option options[] = {
 		OPT_BOOLEAN('n', "no-commit", &no_commit, "don't automatically commit"),
@@ -64,10 +64,10 @@ static void parse_args(int argc, const char **argv)
 
 	if (parse_options(argc, argv, NULL, options, usage_str, 0) != 1)
 		usage_with_options(usage_str, options);
-	arg = argv[0];
 
-	if (get_sha1(arg, sha1))
-		die ("Cannot find '%s'", arg);
+	commit_name = argv[0];
+	if (get_sha1(commit_name, sha1))
+		die ("Cannot find '%s'", commit_name);
 	commit = lookup_commit_reference(sha1);
 	if (!commit)
 		exit(1);
@@ -198,7 +198,7 @@ static void set_author_ident_env(const char *message)
 			sha1_to_hex(commit->object.sha1));
 }
 
-static char *help_msg(const unsigned char *sha1)
+static char *help_msg(const char *name)
 {
 	struct strbuf helpbuf = STRBUF_INIT;
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
@@ -214,7 +214,7 @@ static char *help_msg(const unsigned char *sha1)
 		strbuf_addf(&helpbuf,
 			"  When committing, use the option '-c %s'\n"
 			"to retain authorship and message.",
-			find_unique_abbrev(sha1, DEFAULT_ABBREV));
+			name);
 	}
 	return strbuf_detach(&helpbuf, NULL);
 }
@@ -403,7 +403,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		if (commit_lock_file(&msg_file) < 0)
 			die ("Error wrapping up %s", defmsg);
 		fprintf(stderr, "Automatic %s failed.%s\n",
-			me, help_msg(commit->object.sha1));
+			me, help_msg(commit_name));
 		rerere(allow_rerere_auto);
 		exit(1);
 	}
