@@ -213,13 +213,13 @@ static char *help_msg(const unsigned char *sha1)
 		return msg;
 
 	strcpy(helpbuf, "  After resolving the conflicts,\n"
-	       "mark the corrected paths with 'git add <paths>' "
-	       "or 'git rm <paths>' and commit the result.");
+		"mark the corrected paths with 'git add <paths>' or 'git rm <paths>'\n"
+		"and commit the result.");
 
 	if (action == CHERRY_PICK) {
 		sprintf(helpbuf + strlen(helpbuf),
-			"\nWhen commiting, use the option "
-			"'-c %s' to retain authorship and message.",
+			"  When committing, use the option '-c %s'\n"
+			"to retain authorship and message.",
 			find_unique_abbrev(sha1, DEFAULT_ABBREV));
 	}
 	return helpbuf;
