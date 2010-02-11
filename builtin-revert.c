@@ -68,15 +68,9 @@ static void parse_args(int argc, const char **argv)
 
 	if (get_sha1(arg, sha1))
 		die ("Cannot find '%s'", arg);
-	commit = (struct commit *)parse_object(sha1);
+	commit = lookup_commit_reference(sha1);
 	if (!commit)
-		die ("Could not find %s", sha1_to_hex(sha1));
-	if (commit->object.type == OBJ_TAG) {
-		commit = (struct commit *)
-			deref_tag((struct object *)commit, arg, strlen(arg));
-	}
-	if (commit->object.type != OBJ_COMMIT)
-		die ("'%s' does not point to a commit", arg);
+		exit(1);
 }
 
 static char *get_oneline(const char *message)
