@@ -208,14 +208,16 @@ static char *help_msg(const char *name)
 
 	strbuf_addstr(&helpbuf, "  After resolving the conflicts,\n"
 		"mark the corrected paths with 'git add <paths>' or 'git rm <paths>'\n"
-		"and commit the result.");
+		"and commit the result");
 
 	if (action == CHERRY_PICK) {
-		strbuf_addf(&helpbuf,
-			"  When committing, use the option '-c %s'\n"
-			"to retain authorship and message.",
+		strbuf_addf(&helpbuf, " with: \n"
+			"\n"
+			"        git commit -c %s\n",
 			name);
 	}
+	else
+		strbuf_addch(&helpbuf, '.');
 	return strbuf_detach(&helpbuf, NULL);
 }
 
