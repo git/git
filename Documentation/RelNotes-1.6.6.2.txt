@@ -1,7 +1,7 @@
 Git v1.6.6.2 Release Notes
 ==========================
 
-Fixes since v1.6.6.2
+Fixes since v1.6.6.1
 --------------------
 
  * recursive merge didn't correctly diagnose its own programming errors,
