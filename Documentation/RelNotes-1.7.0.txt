@@ -106,6 +106,8 @@ Updates since v1.6.6
    defaults to the current branch, so "git fetch && git merge @{upstream}"
    will be equivalent to "git pull".
 
+ * "git am --resolved" has a synonym "git am --continue".
+
  * "git branch --set-upstream" can be used to update the (surprise!) upstream,
    i.e. where the branch is supposed to pull and merge from (or rebase onto).
 
@@ -199,6 +201,9 @@ release, unless otherwise noted.
  * "git branch -d branch" used to refuse deleting the branch even when
    the branch is fully merged to its upstream branch if it is not merged
    to the current branch.  It now deletes it in such a case.
+
+ * "fiter-branch" command incorrectly said --prune-empty and --filter-commit
+   were incompatible; the latter should be read as --commit-filter.
 
  * When using "git status" or asking "git diff" to compare the work tree
    with something, they used to consider that a checked-out submodule with
