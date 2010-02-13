@@ -465,4 +465,120 @@ test_expect_success 'Allow notes on non-commits (trees, blobs, tags)' '
 	test_cmp expect actual
 '
 
+cat > expect << EOF
+commit 2ede89468182a62d0bde2583c736089bcf7d7e92
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:19:13 2005 -0700
+
+    7th
+
+Notes:
+    other note
+EOF
+
+test_expect_success 'create note from other note with "git notes add -C"' '
+	: > a7 &&
+	git add a7 &&
+	test_tick &&
+	git commit -m 7th &&
+	git notes add -C $(git notes list HEAD^) &&
+	git log -1 > actual &&
+	test_cmp expect actual &&
+	test "$(git notes list HEAD)" = "$(git notes list HEAD^)"
+'
+
+test_expect_success 'create note from non-existing note with "git notes add -C" fails' '
+	: > a8 &&
+	git add a8 &&
+	test_tick &&
+	git commit -m 8th &&
+	test_must_fail git notes add -C deadbeef &&
+	test_must_fail git notes list HEAD
+'
+
+cat > expect << EOF
+commit 016e982bad97eacdbda0fcbd7ce5b0ba87c81f1b
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:21:13 2005 -0700
+
+    9th
+
+Notes:
+    yet another note
+EOF
+
+test_expect_success 'create note from other note with "git notes add -c"' '
+	: > a9 &&
+	git add a9 &&
+	test_tick &&
+	git commit -m 9th &&
+	MSG="yet another note" git notes add -c $(git notes list HEAD^^) &&
+	git log -1 > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'create note from non-existing note with "git notes add -c" fails' '
+	: > a10 &&
+	git add a10 &&
+	test_tick &&
+	git commit -m 10th &&
+	test_must_fail MSG="yet another note" git notes add -c deadbeef &&
+	test_must_fail git notes list HEAD
+'
+
+cat > expect << EOF
+commit 016e982bad97eacdbda0fcbd7ce5b0ba87c81f1b
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:21:13 2005 -0700
+
+    9th
+
+Notes:
+    yet another note
+$whitespace
+    yet another note
+EOF
+
+test_expect_success 'append to note from other note with "git notes append -C"' '
+	git notes append -C $(git notes list HEAD^) HEAD^ &&
+	git log -1 HEAD^ > actual &&
+	test_cmp expect actual
+'
+
+cat > expect << EOF
+commit ffed603236bfa3891c49644257a83598afe8ae5a
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:22:13 2005 -0700
+
+    10th
+
+Notes:
+    other note
+EOF
+
+test_expect_success 'create note from other note with "git notes append -c"' '
+	MSG="other note" git notes append -c $(git notes list HEAD^) &&
+	git log -1 > actual &&
+	test_cmp expect actual
+'
+
+cat > expect << EOF
+commit ffed603236bfa3891c49644257a83598afe8ae5a
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:22:13 2005 -0700
+
+    10th
+
+Notes:
+    other note
+$whitespace
+    yet another note
+EOF
+
+test_expect_success 'append to note from other note with "git notes append -c"' '
+	MSG="yet another note" git notes append -c $(git notes list HEAD) &&
+	git log -1 > actual &&
+	test_cmp expect actual
+'
+
 test_done

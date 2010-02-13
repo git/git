@@ -9,8 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git notes' [list [<object>]]
-'git notes' add [-f] [-F <file> | -m <msg>] [<object>]
-'git notes' append [-F <file> | -m <msg>] [<object>]
+'git notes' add [-f] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+'git notes' append [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' edit [<object>]
 'git notes' show [<object>]
 'git notes' remove [<object>]
@@ -84,6 +84,14 @@ OPTIONS
 	Take the note message from the given file.  Use '-' to
 	read the note message from the standard input.
 
+-C <object>::
+--reuse-message=<object>::
+	Reuse the note message from the given note object.
+
+-c <object>::
+--reedit-message=<object>::
+	Like '-C', but with '-c' the editor is invoked, so that
+	the user can further edit the note message.
 
 Author
 ------

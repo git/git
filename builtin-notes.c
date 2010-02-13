@@ -19,8 +19,8 @@
 
 static const char * const git_notes_usage[] = {
 	"git notes [list [<object>]]",
-	"git notes add [-f] [-m <msg> | -F <file>] [<object>]",
-	"git notes append [-m <msg> | -F <file>] [<object>]",
+	"git notes add [-f] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]",
+	"git notes append [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]",
 	"git notes edit [<object>]",
 	"git notes show [<object>]",
 	"git notes remove [<object>]",
@@ -36,6 +36,7 @@ static const char note_template[] =
 
 struct msg_arg {
 	int given;
+	int use_editor;
 	struct strbuf buf;
 };
 
@@ -104,7 +105,7 @@ static void create_note(const unsigned char *object, struct msg_arg *msg,
 {
 	char *path = NULL;
 
-	if (!msg->given) {
+	if (msg->use_editor || !msg->given) {
 		int fd;
 
 		/* write the template message before editing: */
@@ -113,13 +114,16 @@ static void create_note(const unsigned char *object, struct msg_arg *msg,
 		if (fd < 0)
 			die_errno("could not create file '%s'", path);
 
-		if (prev && !append_only)
+		if (msg->given)
+			write_or_die(fd, msg->buf.buf, msg->buf.len);
+		else if (prev && !append_only)
 			write_note_data(fd, prev);
 		write_or_die(fd, note_template, strlen(note_template));
 
 		write_commented_object(fd, object);
 
 		close(fd);
+		strbuf_reset(&(msg->buf));
 
 		if (launch_editor(path, &(msg->buf), NULL)) {
 			die("Please supply the note contents using either -m" \
@@ -199,6 +203,40 @@ static int parse_file_arg(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
+{
+	struct msg_arg *msg = opt->value;
+	char *buf;
+	unsigned char object[20];
+	enum object_type type;
+	unsigned long len;
+
+	if (!arg)
+		return -1;
+
+	if (msg->buf.len)
+		strbuf_addstr(&(msg->buf), "\n");
+
+	if (get_sha1(arg, object))
+		die("Failed to resolve '%s' as a valid ref.", arg);
+	if (!(buf = read_sha1_file(object, &type, &len)) || !len) {
+		free(buf);
+		die("Failed to read object '%s'.", arg);;
+	}
+	strbuf_add(&(msg->buf), buf, len);
+	free(buf);
+
+	msg->given = 1;
+	return 0;
+}
+
+static int parse_reedit_arg(const struct option *opt, const char *arg, int unset)
+{
+	struct msg_arg *msg = opt->value;
+	msg->use_editor = 1;
+	return parse_reuse_arg(opt, arg, unset);
+}
+
 int commit_notes(struct notes_tree *t, const char *msg)
 {
 	struct commit_list *parent;
@@ -250,13 +288,17 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	int list = 0, add = 0, append = 0, edit = 0, show = 0, remove = 0,
 	    prune = 0, force = 0;
 	int given_object;
-	struct msg_arg msg = { 0, STRBUF_INIT };
+	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
 		OPT_GROUP("Notes options"),
 		OPT_CALLBACK('m', "message", &msg, "MSG",
 			     "note contents as a string", parse_msg_arg),
 		OPT_CALLBACK('F', "file", &msg, "FILE",
 			     "note contents in a file", parse_file_arg),
+		OPT_CALLBACK('c', "reedit-message", &msg, "OBJECT",
+			   "reuse and edit specified note object", parse_reedit_arg),
+		OPT_CALLBACK('C', "reuse-message", &msg, "OBJECT",
+			   "reuse specified note object", parse_reuse_arg),
 		OPT_BOOLEAN('f', "force", &force, "replace existing notes"),
 		OPT_END()
 	};
@@ -286,16 +328,16 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_notes_usage, options);
 
 	if (msg.given && !(add || append || edit)) {
-		error("cannot use -m/-F options with %s subcommand.", argv[0]);
+		error("cannot use -m/-F/-c/-C options with %s subcommand.",
+		      argv[0]);
 		usage_with_options(git_notes_usage, options);
 	}
 
 	if (msg.given && edit) {
-		fprintf(stderr, "The -m and -F options has been deprecated for"
-			" the 'edit' subcommand.\n"
-			"Please use 'git notes add -f -m/-F' instead.\n");
+		fprintf(stderr, "The -m/-F/-c/-C options have been deprecated "
+			"for the 'edit' subcommand.\n"
+			"Please use 'git notes add -f -m/-F/-c/-C' instead.\n");
 	}
-
 
 	if (force && !add) {
 		error("cannot use -f option with %s subcommand.", argv[0]);
@@ -359,6 +401,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 
 	if (remove) {
 		msg.given = 1;
+		msg.use_editor = 0;
 		strbuf_reset(&(msg.buf));
 	}
 
