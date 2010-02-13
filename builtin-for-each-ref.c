@@ -133,6 +133,8 @@ static int parse_atom(const char *atom, const char *ep)
 				  (sizeof(*used_atom_type) * used_atom_cnt));
 	used_atom[at] = xmemdupz(atom, ep - atom);
 	used_atom_type[at] = valid_atom[i].cmp_type;
+	if (*atom == '*')
+		need_tagged = 1;
 	return at;
 }
 
@@ -943,13 +945,6 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	for_each_rawref(grab_single_ref, &cbdata);
 	refs = cbdata.grab_array;
 	num_refs = cbdata.grab_cnt;
-
-	for (i = 0; i < used_atom_cnt; i++) {
-		if (used_atom[i][0] == '*') {
-			need_tagged = 1;
-			break;
-		}
-	}
 
 	sort_refs(sort, refs, num_refs);
 
