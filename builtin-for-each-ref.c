@@ -71,6 +71,7 @@ static struct {
 	{ "contents" },
 	{ "upstream" },
 	{ "symref" },
+	{ "flag" },
 };
 
 /*
@@ -558,6 +559,13 @@ static void grab_values(struct atom_value *val, int deref, struct object *obj, v
 	}
 }
 
+static inline char *copy_advance(char *dst, const char *src)
+{
+	while (*src)
+		*dst++ = *src++;
+	return dst;
+}
+
 /*
  * Parse the object referred by ref, and grab needed value.
  */
@@ -609,6 +617,20 @@ static void populate_value(struct refinfo *ref)
 			    !branch->merge[0]->dst)
 				continue;
 			refname = branch->merge[0]->dst;
+		}
+		else if (!strcmp(name, "flag")) {
+			char buf[256], *cp = buf;
+			if (ref->flag & REF_ISSYMREF)
+				cp = copy_advance(cp, ",symref");
+			if (ref->flag & REF_ISPACKED)
+				cp = copy_advance(cp, ",packed");
+			if (cp == buf)
+				v->s = "";
+			else {
+				*cp = '\0';
+				v->s = xstrdup(buf + 1);
+			}
+			continue;
 		}
 		else
 			continue;
