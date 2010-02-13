@@ -21,11 +21,23 @@
  */
 void init_notes(const char *notes_ref, int flags);
 
-/* Add the given note object to the internal notes tree structure */
+/*
+ * Add the given note object to the internal notes tree structure
+ *
+ * IMPORTANT: The changes made by add_note() to the internal notes tree structure
+ * are not persistent until a subsequent call to write_notes_tree() returns
+ * zero.
+ */
 void add_note(const unsigned char *object_sha1,
 		const unsigned char *note_sha1);
 
-/* Remove the given note object from the internal notes tree structure */
+/*
+ * Remove the given note object from the internal notes tree structure
+ *
+ * IMPORTANT: The changes made by remove_note() to the internal notes tree
+ * structure are not persistent until a subsequent call to write_notes_tree()
+ * returns zero.
+ */
 void remove_note(const unsigned char *object_sha1);
 
 /*
@@ -82,7 +94,27 @@ typedef int each_note_fn(const unsigned char *object_sha1,
 		void *cb_data);
 int for_each_note(int flags, each_note_fn fn, void *cb_data);
 
-/* Free (and de-initialize) the internal notes tree structure */
+/*
+ * Write the internal notes tree structure to the object database
+ *
+ * Creates a new tree object encapsulating the current state of the
+ * internal notes tree, and stores its SHA1 into the 'result' argument.
+ *
+ * Returns zero on success, non-zero on failure.
+ *
+ * IMPORTANT: Changes made to the internal notes tree structure are not
+ * persistent until this function has returned zero. Please also remember
+ * to create a corresponding commit object, and update the appropriate
+ * notes ref.
+ */
+int write_notes_tree(unsigned char *result);
+
+/*
+ * Free (and de-initialize) the internal notes tree structure
+ *
+ * IMPORTANT: Changes made to the notes tree since the last, successful
+ * call to write_notes_tree() will be lost.
+ */
 void free_notes(void);
 
 /* Flags controlling how notes are formatted */

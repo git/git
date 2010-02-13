@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "notes.h"
+#include "tree.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "tree-walk.h"
@@ -540,6 +541,126 @@ redo:
 	return 0;
 }
 
+struct tree_write_stack {
+	struct tree_write_stack *next;
+	struct strbuf buf;
+	char path[2]; /* path to subtree in next, if any */
+};
+
+static inline int matches_tree_write_stack(struct tree_write_stack *tws,
+		const char *full_path)
+{
+	return  full_path[0] == tws->path[0] &&
+		full_path[1] == tws->path[1] &&
+		full_path[2] == '/';
+}
+
+static void write_tree_entry(struct strbuf *buf, unsigned int mode,
+		const char *path, unsigned int path_len, const
+		unsigned char *sha1)
+{
+		strbuf_addf(buf, "%06o %.*s%c", mode, path_len, path, '\0');
+		strbuf_add(buf, sha1, 20);
+}
+
+static void tree_write_stack_init_subtree(struct tree_write_stack *tws,
+		const char *path)
+{
+	struct tree_write_stack *n;
+	assert(!tws->next);
+	assert(tws->path[0] == '\0' && tws->path[1] == '\0');
+	n = (struct tree_write_stack *)
+		xmalloc(sizeof(struct tree_write_stack));
+	n->next = NULL;
+	strbuf_init(&n->buf, 256 * (32 + 40)); /* assume 256 entries per tree */
+	n->path[0] = n->path[1] = '\0';
+	tws->next = n;
+	tws->path[0] = path[0];
+	tws->path[1] = path[1];
+}
+
+static int tree_write_stack_finish_subtree(struct tree_write_stack *tws)
+{
+	int ret;
+	struct tree_write_stack *n = tws->next;
+	unsigned char s[20];
+	if (n) {
+		ret = tree_write_stack_finish_subtree(n);
+		if (ret)
+			return ret;
+		ret = write_sha1_file(n->buf.buf, n->buf.len, tree_type, s);
+		if (ret)
+			return ret;
+		strbuf_release(&n->buf);
+		free(n);
+		tws->next = NULL;
+		write_tree_entry(&tws->buf, 040000, tws->path, 2, s);
+		tws->path[0] = tws->path[1] = '\0';
+	}
+	return 0;
+}
+
+static int write_each_note_helper(struct tree_write_stack *tws,
+		const char *path, unsigned int mode,
+		const unsigned char *sha1)
+{
+	size_t path_len = strlen(path);
+	unsigned int n = 0;
+	int ret;
+
+	/* Determine common part of tree write stack */
+	while (tws && 3 * n < path_len &&
+	       matches_tree_write_stack(tws, path + 3 * n)) {
+		n++;
+		tws = tws->next;
+	}
+
+	/* tws point to last matching tree_write_stack entry */
+	ret = tree_write_stack_finish_subtree(tws);
+	if (ret)
+		return ret;
+
+	/* Start subtrees needed to satisfy path */
+	while (3 * n + 2 < path_len && path[3 * n + 2] == '/') {
+		tree_write_stack_init_subtree(tws, path + 3 * n);
+		n++;
+		tws = tws->next;
+	}
+
+	/* There should be no more directory components in the given path */
+	assert(memchr(path + 3 * n, '/', path_len - (3 * n)) == NULL);
+
+	/* Finally add given entry to the current tree object */
+	write_tree_entry(&tws->buf, mode, path + 3 * n, path_len - (3 * n),
+			 sha1);
+
+	return 0;
+}
+
+struct write_each_note_data {
+	struct tree_write_stack *root;
+};
+
+static int write_each_note(const unsigned char *object_sha1,
+		const unsigned char *note_sha1, char *note_path,
+		void *cb_data)
+{
+	struct write_each_note_data *d =
+		(struct write_each_note_data *) cb_data;
+	size_t note_path_len = strlen(note_path);
+	unsigned int mode = 0100644;
+
+	if (note_path[note_path_len - 1] == '/') {
+		/* subtree entry */
+		note_path_len--;
+		note_path[note_path_len] = '\0';
+		mode = 040000;
+	}
+	assert(note_path_len <= 40 + 19);
+
+	return write_each_note_helper(d->root, note_path, mode, note_sha1);
+}
+
 void init_notes(const char *notes_ref, int flags)
 {
 	unsigned char sha1[20], object_sha1[20];
@@ -602,6 +723,30 @@ int for_each_note(int flags, each_note_fn fn, void *cb_data)
 {
 	assert(initialized);
 	return for_each_note_helper(&root_node, 0, 0, flags, fn, cb_data);
+}
+
+int write_notes_tree(unsigned char *result)
+{
+	struct tree_write_stack root;
+	struct write_each_note_data cb_data;
+	int ret;
+
+	assert(initialized);
+
+	/* Prepare for traversal of current notes tree */
+	root.next = NULL; /* last forward entry in list is grounded */
+	strbuf_init(&root.buf, 256 * (32 + 40)); /* assume 256 entries */
+	root.path[0] = root.path[1] = '\0';
+	cb_data.root = &root;
+
+	/* Write tree objects representing current notes tree */
+	ret = for_each_note(FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
+				FOR_EACH_NOTE_YIELD_SUBTREES,
+			write_each_note, &cb_data) ||
+		tree_write_stack_finish_subtree(&root) ||
+		write_sha1_file(root.buf.buf, root.buf.len, tree_type, result);
+	strbuf_release(&root.buf);
+	return ret;
 }
 
 void free_notes(void)
