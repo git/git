@@ -206,4 +206,52 @@ do
 	'
 done
 
+test_expect_success 'create other note on a different notes ref (setup)' '
+	: > a5 &&
+	git add a5 &&
+	test_tick &&
+	git commit -m 5th &&
+	GIT_NOTES_REF="refs/notes/other" git notes edit -m "other note"
+'
+
+cat > expect-other << EOF
+commit bd1753200303d0a0344be813e504253b3d98e74d
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:17:13 2005 -0700
+
+    5th
+
+Notes:
+    other note
+EOF
+
+cat > expect-not-other << EOF
+commit bd1753200303d0a0344be813e504253b3d98e74d
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:17:13 2005 -0700
+
+    5th
+EOF
+
+test_expect_success 'Do not show note on other ref by default' '
+	git log -1 > output &&
+	test_cmp expect-not-other output
+'
+
+test_expect_success 'Do show note when ref is given in GIT_NOTES_REF' '
+	GIT_NOTES_REF="refs/notes/other" git log -1 > output &&
+	test_cmp expect-other output
+'
+
+test_expect_success 'Do show note when ref is given in core.notesRef config' '
+	git config core.notesRef "refs/notes/other" &&
+	git log -1 > output &&
+	test_cmp expect-other output
+'
+
+test_expect_success 'Do not show note when core.notesRef is overridden' '
+	GIT_NOTES_REF="refs/notes/wrong" git log -1 > output &&
+	test_cmp expect-not-other output
+'
+
 test_done
