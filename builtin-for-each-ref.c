@@ -33,6 +33,8 @@ struct ref_sort {
 struct refinfo {
 	char *refname;
 	unsigned char objectname[20];
+	int flag;
+	const char *symref;
 	struct atom_value *value;
 };
 
@@ -68,6 +70,7 @@ static struct {
 	{ "body" },
 	{ "contents" },
 	{ "upstream" },
+	{ "symref" },
 };
 
 /*
@@ -82,7 +85,7 @@ static struct {
  */
 static const char **used_atom;
 static cmp_type *used_atom_type;
-static int used_atom_cnt, sort_atom_limit, need_tagged;
+static int used_atom_cnt, sort_atom_limit, need_tagged, need_symref;
 
 /*
  * Used to parse format string and sort specifiers
@@ -135,6 +138,8 @@ static int parse_atom(const char *atom, const char *ep)
 	used_atom_type[at] = valid_atom[i].cmp_type;
 	if (*atom == '*')
 		need_tagged = 1;
+	if (!strcmp(used_atom[at], "symref"))
+		need_symref = 1;
 	return at;
 }
 
@@ -566,6 +571,16 @@ static void populate_value(struct refinfo *ref)
 
 	ref->value = xcalloc(sizeof(struct atom_value), used_atom_cnt);
 
+	if (need_symref && (ref->flag & REF_ISSYMREF) && !ref->symref) {
+		unsigned char unused1[20];
+		const char *symref;
+		symref = resolve_ref(ref->refname, unused1, 1, NULL);
+		if (symref)
+			ref->symref = xstrdup(symref);
+		else
+			ref->symref = "";
+	}
+
 	/* Fill in specials first */
 	for (i = 0; i < used_atom_cnt; i++) {
 		const char *name = used_atom[i];
@@ -581,6 +596,8 @@ static void populate_value(struct refinfo *ref)
 
 		if (!prefixcmp(name, "refname"))
 			refname = ref->refname;
+		else if (!prefixcmp(name, "symref"))
+			refname = ref->symref ? ref->symref : "";
 		else if (!prefixcmp(name, "upstream")) {
 			struct branch *branch;
 			/* only local branches may have an upstream */
@@ -726,6 +743,7 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 	ref = xcalloc(1, sizeof(*ref));
 	ref->refname = xstrdup(refname);
 	hashcpy(ref->objectname, sha1);
+	ref->flag = flag;
 
 	cnt = cb->grab_cnt;
 	cb->grab_array = xrealloc(cb->grab_array,
