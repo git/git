@@ -265,6 +265,33 @@ test_expect_success 'verify non-creation of note with -m ""' '
 	! git notes show
 '
 
+test_expect_success 'remove note with "git notes remove" (setup)' '
+	git notes remove HEAD^
+'
+
+cat > expect-rm-remove << EOF
+commit bd1753200303d0a0344be813e504253b3d98e74d
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:17:13 2005 -0700
+
+    5th
+
+commit 15023535574ded8b1a89052b32673f84cf9582b8
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:16:13 2005 -0700
+
+    4th
+EOF
+
+printf "\n" >> expect-rm-remove
+cat expect-multiline >> expect-rm-remove
+
+test_expect_success 'verify note removal with "git notes remove"' '
+	git log -4 > output &&
+	test_cmp expect-rm-remove output &&
+	! git notes show HEAD^
+'
+
 test_expect_success 'create other note on a different notes ref (setup)' '
 	: > a6 &&
 	git add a6 &&

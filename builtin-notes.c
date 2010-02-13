@@ -20,6 +20,7 @@
 static const char * const git_notes_usage[] = {
 	"git notes edit [-m <msg> | -F <file>] [<object>]",
 	"git notes show [<object>]",
+	"git notes remove [<object>]",
 	NULL
 };
 
@@ -197,9 +198,10 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	struct notes_tree *t;
 	unsigned char object[20], new_note[20];
 	const unsigned char *note;
-	const char *object_ref, *logmsg;
+	const char *object_ref;
+	char logmsg[100];
 
-	int edit = 0, show = 0;
+	int edit = 0, show = 0, remove = 0;
 	const char *msgfile = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct option options[] = {
@@ -218,9 +220,21 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		edit = 1;
 	else if (argc && !strcmp(argv[0], "show"))
 		show = 1;
+	else if (argc && !strcmp(argv[0], "remove"))
+		remove = 1;
 
-	if (edit + show != 1)
+	if (edit + show + remove != 1)
 		usage_with_options(git_notes_usage, options);
+
+	if ((msg.given || msgfile) && !edit) {
+		error("cannot use -m/-F options with %s subcommand.", argv[0]);
+		usage_with_options(git_notes_usage, options);
+	}
+
+	if (msg.given && msgfile) {
+		error("mixing -m and -F options is not allowed.");
+		usage_with_options(git_notes_usage, options);
+	}
 
 	object_ref = argc == 2 ? argv[1] : "HEAD";
 	if (argc > 2) {
@@ -236,7 +250,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 
 	if (prefixcmp(t->ref, "refs/notes/"))
 		die("Refusing to %s notes in %s (outside of refs/notes/)",
-		    edit ? "edit" : "show", t->ref);
+		    argv[0], t->ref);
 
 	note = get_note(t, object);
 
@@ -250,35 +264,28 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		return execv_git_cmd(show_args);
 	}
 
-	/* edit command */
+	/* edit/remove command */
 
-	if (msg.given || msgfile) {
-		if (msg.given && msgfile) {
-			error("mixing -m and -F options is not allowed.");
-			usage_with_options(git_notes_usage, options);
-		}
-		if (msg.given)
-			strbuf_addbuf(&buf, &(msg.buf));
-		else {
-			if (!strcmp(msgfile, "-")) {
-				if (strbuf_read(&buf, 0, 1024) < 0)
-					die_errno("cannot read '%s'", msgfile);
-			} else {
-				if (strbuf_read_file(&buf, msgfile, 1024) < 0)
-					die_errno("could not open or read '%s'",
-						msgfile);
-			}
-		}
+	if (remove)
+		strbuf_reset(&buf);
+	else if (msg.given)
+		strbuf_addbuf(&buf, &(msg.buf));
+	else if (msgfile) {
+		if (!strcmp(msgfile, "-")) {
+			if (strbuf_read(&buf, 0, 1024) < 0)
+				die_errno("cannot read '%s'", msgfile);
+		} else if (strbuf_read_file(&buf, msgfile, 1024) < 0)
+			die_errno("could not open or read '%s'", msgfile);
 	}
 
-	create_note(object, &buf, msg.given || msgfile, note, new_note);
-	if (is_null_sha1(new_note)) {
+	create_note(object, &buf, msg.given || msgfile || remove, note,
+		    new_note);
+	if (is_null_sha1(new_note))
 		remove_note(t, object);
-		logmsg = "Note removed by 'git notes edit'";
-	} else {
+	else
 		add_note(t, object, new_note, combine_notes_overwrite);
-		logmsg = "Note added by 'git notes edit'";
-	}
+	snprintf(logmsg, sizeof(logmsg), "Note %s by 'git notes %s'",
+		 is_null_sha1(new_note) ? "removed" : "added", argv[0]);
 	commit_notes(t, logmsg);
 
 	free_notes(t);

@@ -8,14 +8,14 @@ git-notes - Add/inspect commit notes
 SYNOPSIS
 --------
 [verse]
-'git notes' (edit [-F <file> | -m <msg>] | show) [commit]
+'git notes' (edit [-F <file> | -m <msg>] | show | remove) [commit]
 
 DESCRIPTION
 -----------
-This command allows you to add notes to commit messages, without
-changing the commit.  To discern these notes from the message stored
-in the commit object, the notes are indented like the message, after
-an unindented line saying "Notes:".
+This command allows you to add/remove notes to/from commit messages,
+without changing the commit.  To discern these notes from the message
+stored in the commit object, the notes are indented like the message,
+after an unindented line saying "Notes:".
 
 To disable commit notes, you have to set the config variable
 core.notesRef to the empty string.  Alternatively, you can set it
@@ -31,6 +31,11 @@ edit::
 
 show::
 	Show the notes for a given commit (defaults to HEAD).
+
+remove::
+	Remove the notes for a given commit (defaults to HEAD).
+	This is equivalent to specifying an empty note message to
+	the `edit` subcommand.
 
 
 OPTIONS
