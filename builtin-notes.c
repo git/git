@@ -18,6 +18,7 @@
 #include "parse-options.h"
 
 static const char * const git_notes_usage[] = {
+	"git notes [list [<object>]]",
 	"git notes edit [-m <msg> | -F <file>] [<object>]",
 	"git notes show [<object>]",
 	"git notes remove [<object>]",
@@ -30,6 +31,14 @@ static const char note_template[] =
 	"#\n"
 	"# Write/edit the notes for the following object:\n"
 	"#\n";
+
+static int list_each_note(const unsigned char *object_sha1,
+		const unsigned char *note_sha1, char *note_path,
+		void *cb_data)
+{
+	printf("%s %s\n", sha1_to_hex(note_sha1), sha1_to_hex(object_sha1));
+	return 0;
+}
 
 static void write_note_data(int fd, const unsigned char *sha1)
 {
@@ -202,7 +211,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	const char *object_ref;
 	char logmsg[100];
 
-	int edit = 0, show = 0, remove = 0, prune = 0;
+	int list = 0, edit = 0, show = 0, remove = 0, prune = 0;
+	int given_object;
 	const char *msgfile = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct option options[] = {
@@ -217,7 +227,9 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, git_notes_usage, 0);
 
-	if (argc && !strcmp(argv[0], "edit"))
+	if (argc && !strcmp(argv[0], "list"))
+		list = 1;
+	else if (argc && !strcmp(argv[0], "edit"))
 		edit = 1;
 	else if (argc && !strcmp(argv[0], "show"))
 		show = 1;
@@ -225,8 +237,10 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		remove = 1;
 	else if (argc && !strcmp(argv[0], "prune"))
 		prune = 1;
+	else if (!argc)
+		list = 1; /* Default to 'list' if no other subcommand given */
 
-	if (edit + show + remove + prune != 1)
+	if (list + edit + show + remove + prune != 1)
 		usage_with_options(git_notes_usage, options);
 
 	if ((msg.given || msgfile) && !edit) {
@@ -239,7 +253,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_notes_usage, options);
 	}
 
-	object_ref = argc == 2 ? argv[1] : "HEAD";
+	given_object = argc == 2;
+	object_ref = given_object ? argv[1] : "HEAD";
 	if (argc > 2 || (prune && argc > 1)) {
 		error("too many parameters");
 		usage_with_options(git_notes_usage, options);
@@ -257,9 +272,21 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 
 	note = get_note(t, object);
 
+	/* list command */
+
+	if (list) {
+		if (given_object) {
+			if (note) {
+				puts(sha1_to_hex(note));
+				return 0;
+			}
+		} else
+			return for_each_note(t, 0, list_each_note, NULL);
+	}
+
 	/* show command */
 
-	if (show && !note) {
+	if ((list || show) && !note) {
 		error("No note found for object %s.", sha1_to_hex(object));
 		return 1;
 	} else if (show) {

@@ -8,7 +8,12 @@ git-notes - Add/inspect object notes
 SYNOPSIS
 --------
 [verse]
-'git notes' (edit [-F <file> | -m <msg>] | show | remove | prune) [object]
+'git notes' [list [<object>]]
+'git notes' edit [-F <file> | -m <msg>] [<object>]
+'git notes' show [<object>]
+'git notes' remove [<object>]
+'git notes' prune
+
 
 DESCRIPTION
 -----------
@@ -29,6 +34,12 @@ by the environment variable "GIT_NOTES_REF".
 
 SUBCOMMANDS
 -----------
+
+list::
+	List the notes object for a given object. If no object is
+	given, show a list of all note objects and the objects they
+	annotate (in the format "<note object> <annotated object>").
+	This is the default subcommand if no subcommand is given.
 
 edit::
 	Edit the notes for a given object (defaults to HEAD).

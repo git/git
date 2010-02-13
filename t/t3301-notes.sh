@@ -292,6 +292,38 @@ test_expect_success 'verify note removal with "git notes remove"' '
 	! git notes show HEAD^
 '
 
+cat > expect << EOF
+c18dc024e14f08d18d14eea0d747ff692d66d6a3 1584215f1d29c65e99c6c6848626553fdd07fd75
+c9c6af7f78bc47490dbf3e822cf2f3c24d4b9061 268048bfb8a1fb38e703baceb8ab235421bf80c5
+EOF
+
+test_expect_success 'list notes with "git notes list"' '
+	git notes list > output &&
+	test_cmp expect output
+'
+
+test_expect_success 'list notes with "git notes"' '
+	git notes > output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+c18dc024e14f08d18d14eea0d747ff692d66d6a3
+EOF
+
+test_expect_success 'list specific note with "git notes list <object>"' '
+	git notes list HEAD^^ > output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+EOF
+
+test_expect_success 'listing non-existing notes fails' '
+	test_must_fail git notes list HEAD > output &&
+	test_cmp expect output
+'
+
 test_expect_success 'create other note on a different notes ref (setup)' '
 	: > a6 &&
 	git add a6 &&
