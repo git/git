@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2010, #02; Sun, 07)
-X-master-at: 8051a030617cf7d083568cca223bdaa15052c33f
-X-next-at: 2ac040d3d8b263430781e605b7b87a06cbc1e0f0
+Subject: What's cooking in git.git (Feb 2010, #03; Fri, 12)
+X-master-at: e923eaeb901ff056421b9007adcbbce271caa7b6
+X-next-at: 57c9972634e181f6aad83258a8e7d61f0b99b6ce
 
-What's cooking in git.git (Feb 2010, #02; Sun, 07)
+What's cooking in git.git (Feb 2010, #03; Fri, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,14 +11,62 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-There shouldn't be anything exciting to see here right now.  Please test
-"master" branch to avoid giving regressions to end users; we are at
-1.7.0-rc2 and I am hoping that we can release the 1.7.0 on the 10th.
+Now 1.7.0 is out, we will take a short pause and watch breakage reports
+for a few days, and then start merging down new topics.
 
 --------------------------------------------------
 [New Topics]
 
-* sp/maint-push-sideband (2010-02-05) 6 commits
+* ld/push-porcelain (2010-02-09) 4 commits
+ - git-push: fix an error message so it goes to stderr
+ - git-push: make git push --dry-run --porcelain exit with status 0 even if updates will be rejected
+ - git-push: send "To <remoteurl>" messages to the standard output in --porcelain mode
+ - git-push: squelch advice message if in --porcelain mode
+
+After some discussion this needs further simplification?
+
+* cp/add-u-pathspec (2010-02-09) 2 commits
+ - test for add with non-existent pathspec
+ - git add -u: die on unmatched pathspec
+
+* hm/maint-imap-send-crlf (2010-02-12) 1 commit
+ - git-imap-send: Convert LF to CRLF before storing patch to draft box
+
+Cram-MD5 from the same author seemed to need another round before landing
+here, but this one seemed to be ready for 'pu'.
+
+* jk/cherry-pick-reword (2010-02-11) 5 commits
+  (merged to 'next' on 2010-02-11 at d0eace1)
+ + cherry-pick: prettify the advice message
+ + cherry-pick: show commit name instead of sha1
+ + cherry-pick: format help message as strbuf
+ + cherry-pick: refactor commit parsing code
+ + cherry-pick: rewrap advice message
+
+* nd/root-git (2010-02-11) 5 commits
+ - Add test for using Git at root directory
+ - Support working directory located at root
+ - Add is_root_path()
+ - init-db, rev-parse --git-dir: do not append redundant slash
+ - make_absolute_path(): Do not append redundant slash
+
+The middle one needs replacement, as pointed by Hannes.
+
+* pb/log-first-parent-p-m (2010-02-10) 1 commit
+ - git log -p -m: document -m and honor --first-parent
+
+Needs tests but otherwise looked fine.  We might want to teach "-m trumps
+implicit --cc" to "git show", but that is a totally separate topic.
+
+--------------------------------------------------
+[Cooking]
+
+Many of these have been parked in 'pu' during the pre-release freeze.
+They will start migrating to 'next' shortly.
+
+* sp/maint-push-sideband (2010-02-10) 8 commits
+ - receive-pack: Send internal errors over side-band #2
+ - t5401: Use a bare repository for the remote peer
  - receive-pack: Send hook output over side band #2
  - receive-pack: Wrap status reports inside side-band-64k
  - receive-pack: Refactor how capabilities are shown to the client
@@ -27,13 +75,12 @@ There shouldn't be anything exciting to see here right now.  Please test
  - run-command: Allow stderr to be a caller supplied pipe
  (this branch is used by sp/push-sideband.)
 
-Based on 1.6.5 maintenance track
+Based on 1.6.5 maintenance track.
 
-* sp/push-sideband (2010-02-05) 0 commits
+* sp/push-sideband (2010-02-10) 0 commits
  (this branch uses sp/maint-push-sideband.)
 
-And my conflict resolution in #ifdef WINDOWS codepath (meaning: untested,
-please check).
+And my conflict resolution in #ifdef WINDOWS codepath.
 
 * ac/cvsimport-revision-mapping (2010-02-06) 1 commit
  - cvsimport: new -R option: generate .git/cvs-revisions mapping
@@ -44,7 +91,9 @@ please check).
 * js/rebase-origin-x (2010-02-05) 1 commit
  - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
 
-* rs/git-dir-cleanup (2010-02-06) 2 commits
+* rs/git-dir-cleanup (2010-02-11) 3 commits
+  (merged to 'next' on 2010-02-11 at fa4f83c)
+ + Untouch RelNotes 1.7.0: grep --no-index will not be in the release
   (merged to 'next' on 2010-02-06 at ef8ab9b)
  + Resurrect "git grep --no-index"
  + setenv(GIT_DIR) clean-up
@@ -55,9 +104,6 @@ please check).
 * jk/grep-double-dash (2010-02-06) 1 commit
   (merged to 'next' on 2010-02-07 at 2ac040d)
  + accept "git grep -- pattern"
-
---------------------------------------------------
-[Cooking]
 
 * jn/maint-makedepend (2010-01-26) 5 commits
  - Makefile: drop dependency on $(wildcard */*.h)
