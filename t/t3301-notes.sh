@@ -282,4 +282,21 @@ test_expect_success 'Do not show note when core.notesRef is overridden' '
 	test_cmp expect-not-other output
 '
 
+test_expect_success 'Allow notes on non-commits (trees, blobs, tags)' '
+	echo "Note on a tree" > expect
+	git notes edit -m "Note on a tree" HEAD: &&
+	git notes show HEAD: > actual &&
+	test_cmp expect actual &&
+	echo "Note on a blob" > expect
+	filename=$(git ls-tree --name-only HEAD | head -n1) &&
+	git notes edit -m "Note on a blob" HEAD:$filename &&
+	git notes show HEAD:$filename > actual &&
+	test_cmp expect actual &&
+	echo "Note on a tag" > expect
+	git tag -a -m "This is an annotated tag" foobar HEAD^ &&
+	git notes edit -m "Note on a tag" foobar &&
+	git notes show foobar > actual &&
+	test_cmp expect actual
+'
+
 test_done
