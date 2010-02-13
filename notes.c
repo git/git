@@ -413,6 +413,133 @@ static void load_subtree(struct leaf_node *subtree, struct int_node *node,
 	free(buf);
 }
 
+/*
+ * Determine optimal on-disk fanout for this part of the notes tree
+ *
+ * Given a (sub)tree and the level in the internal tree structure, determine
+ * whether or not the given existing fanout should be expanded for this
+ * (sub)tree.
+ *
+ * Values of the 'fanout' variable:
+ * - 0: No fanout (all notes are stored directly in the root notes tree)
+ * - 1: 2/38 fanout
+ * - 2: 2/2/36 fanout
+ * - 3: 2/2/2/34 fanout
+ * etc.
+ */
+static unsigned char determine_fanout(struct int_node *tree, unsigned char n,
+		unsigned char fanout)
+{
+	/*
+	 * The following is a simple heuristic that works well in practice:
+	 * For each even-numbered 16-tree level (remember that each on-disk
+	 * fanout level corresponds to _two_ 16-tree levels), peek at all 16
+	 * entries at that tree level. If all of them are either int_nodes or
+	 * subtree entries, then there are likely plenty of notes below this
+	 * level, so we return an incremented fanout.
+	 */
+	unsigned int i;
+	if ((n % 2) || (n > 2 * fanout))
+		return fanout;
+	for (i = 0; i < 16; i++) {
+		switch (GET_PTR_TYPE(tree->a[i])) {
+		case PTR_TYPE_SUBTREE:
+		case PTR_TYPE_INTERNAL:
+			continue;
+		default:
+			return fanout;
+		}
+	}
+	return fanout + 1;
+}
+
+static void construct_path_with_fanout(const unsigned char *sha1,
+		unsigned char fanout, char *path)
+{
+	unsigned int i = 0, j = 0;
+	const char *hex_sha1 = sha1_to_hex(sha1);
+	assert(fanout < 20);
+	while (fanout) {
+		path[i++] = hex_sha1[j++];
+		path[i++] = hex_sha1[j++];
+		path[i++] = '/';
+		fanout--;
+	}
+	strcpy(path + i, hex_sha1 + j);
+}
+
+static int for_each_note_helper(struct int_node *tree, unsigned char n,
+		unsigned char fanout, int flags, each_note_fn fn,
+		void *cb_data)
+{
+	unsigned int i;
+	void *p;
+	int ret = 0;
+	struct leaf_node *l;
+	static char path[40 + 19 + 1];  /* hex SHA1 + 19 * '/' + NUL */
+
+	fanout = determine_fanout(tree, n, fanout);
+	for (i = 0; i < 16; i++) {
+redo:
+		p = tree->a[i];
+		switch (GET_PTR_TYPE(p)) {
+		case PTR_TYPE_INTERNAL:
+			/* recurse into int_node */
+			ret = for_each_note_helper(CLR_PTR_TYPE(p), n + 1,
+				fanout, flags, fn, cb_data);
+			break;
+		case PTR_TYPE_SUBTREE:
+			l = (struct leaf_node *) CLR_PTR_TYPE(p);
+			/*
+			 * Subtree entries in the note tree represent parts of
+			 * the note tree that have not yet been explored. There
+			 * is a direct relationship between subtree entries at
+			 * level 'n' in the tree, and the 'fanout' variable:
+			 * Subtree entries at level 'n <= 2 * fanout' should be
+			 * preserved, since they correspond exactly to a fanout
+			 * directory in the on-disk structure. However, subtree
+			 * entries at level 'n > 2 * fanout' should NOT be
+			 * preserved, but rather consolidated into the above
+			 * notes tree level. We achieve this by unconditionally
+			 * unpacking subtree entries that exist below the
+			 * threshold level at 'n = 2 * fanout'.
+			 */
+			if (n <= 2 * fanout &&
+			    flags & FOR_EACH_NOTE_YIELD_SUBTREES) {
+				/* invoke callback with subtree */
+				unsigned int path_len =
+					l->key_sha1[19] * 2 + fanout;
+				assert(path_len < 40 + 19);
+				construct_path_with_fanout(l->key_sha1, fanout,
+							   path);
+				/* Create trailing slash, if needed */
+				if (path[path_len - 1] != '/')
+					path[path_len++] = '/';
+				path[path_len] = '\0';
+				ret = fn(l->key_sha1, l->val_sha1, path,
+					 cb_data);
+			}
+			if (n > fanout * 2 ||
+			    !(flags & FOR_EACH_NOTE_DONT_UNPACK_SUBTREES)) {
+				/* unpack subtree and resume traversal */
+				tree->a[i] = NULL;
+				load_subtree(l, tree, n);
+				free(l);
+				goto redo;
+			}
+			break;
+		case PTR_TYPE_NOTE:
+			l = (struct leaf_node *) CLR_PTR_TYPE(p);
+			construct_path_with_fanout(l->key_sha1, fanout, path);
+			ret = fn(l->key_sha1, l->val_sha1, path, cb_data);
+			break;
+		}
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
+
 void init_notes(const char *notes_ref, int flags)
 {
 	unsigned char sha1[20], object_sha1[20];
@@ -469,6 +596,12 @@ const unsigned char *get_note(const unsigned char *object_sha1)
 	assert(initialized);
 	found = note_tree_find(&root_node, 0, object_sha1);
 	return found ? found->val_sha1 : NULL;
+}
+
+int for_each_note(int flags, each_note_fn fn, void *cb_data)
+{
+	assert(initialized);
+	return for_each_note_helper(&root_node, 0, 0, flags, fn, cb_data);
 }
 
 void free_notes(void)
