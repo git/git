@@ -28,6 +28,13 @@ void add_note(const unsigned char *object_sha1,
 /* Remove the given note object from the internal notes tree structure */
 void remove_note(const unsigned char *object_sha1);
 
+/*
+ * Get the note object SHA1 containing the note data for the given object
+ *
+ * Return NULL if the given object has no notes.
+ */
+const unsigned char *get_note(const unsigned char *object_sha1);
+
 /* Free (and de-initialize) the internal notes tree structure */
 void free_notes(void);
 
