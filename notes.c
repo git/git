@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "notes.h"
+#include "blob.h"
 #include "tree.h"
 #include "utf8.h"
 #include "strbuf.h"
@@ -127,55 +128,12 @@ static struct leaf_node *note_tree_find(struct int_node *tree, unsigned char n,
 	return NULL;
 }
 
-/* Create a new blob object by concatenating the two given blob objects */
-static int concatenate_notes(unsigned char *cur_sha1,
-		const unsigned char *new_sha1)
-{
-	char *cur_msg, *new_msg, *buf;
-	unsigned long cur_len, new_len, buf_len;
-	enum object_type cur_type, new_type;
-	int ret;
-
-	/* read in both note blob objects */
-	new_msg = read_sha1_file(new_sha1, &new_type, &new_len);
-	if (!new_msg || !new_len || new_type != OBJ_BLOB) {
-		free(new_msg);
-		return 0;
-	}
-	cur_msg = read_sha1_file(cur_sha1, &cur_type, &cur_len);
-	if (!cur_msg || !cur_len || cur_type != OBJ_BLOB) {
-		free(cur_msg);
-		free(new_msg);
-		hashcpy(cur_sha1, new_sha1);
-		return 0;
-	}
-
-	/* we will separate the notes by a newline anyway */
-	if (cur_msg[cur_len - 1] == '\n')
-		cur_len--;
-
-	/* concatenate cur_msg and new_msg into buf */
-	buf_len = cur_len + 1 + new_len;
-	buf = (char *) xmalloc(buf_len);
-	memcpy(buf, cur_msg, cur_len);
-	buf[cur_len] = '\n';
-	memcpy(buf + cur_len + 1, new_msg, new_len);
-
-	free(cur_msg);
-	free(new_msg);
-
-	/* create a new blob object from buf */
-	ret = write_sha1_file(buf, buf_len, "blob", cur_sha1);
-	free(buf);
-	return ret;
-}
-
 /*
  * To insert a leaf_node:
  * Search to the tree location appropriate for the given leaf_node's key:
  * - If location is unused (NULL), store the tweaked pointer directly there
  * - If location holds a note entry that matches the note-to-be-inserted, then
- *   concatenate the two notes.
+ *   combine the two notes (by calling the given combine_notes function).
  * - If location holds a note entry that matches the subtree-to-be-inserted,
  *   then unpack the subtree-to-be-inserted into the location.
  * - If location holds a matching subtree entry, unpack the subtree at that
@@ -184,7 +142,8 @@ static int concatenate_notes(unsigned char *cur_sha1,
  *   node-to-be-inserted, and store the new int_node into the location.
  */
 static void note_tree_insert(struct int_node *tree, unsigned char n,
-		struct leaf_node *entry, unsigned char type)
+		struct leaf_node *entry, unsigned char type,
+		combine_notes_fn combine_notes)
 {
 	struct int_node *new_node;
 	struct leaf_node *l;
@@ -205,12 +164,11 @@ static void note_tree_insert(struct int_node *tree, unsigned char n,
 				if (!hashcmp(l->val_sha1, entry->val_sha1))
 					return;
 
-				if (concatenate_notes(l->val_sha1,
-						entry->val_sha1))
-					die("failed to concatenate note %s "
-					    "into note %s for object %s",
-					    sha1_to_hex(entry->val_sha1),
+				if (combine_notes(l->val_sha1, entry->val_sha1))
+					die("failed to combine notes %s and %s"
+					    " for object %s",
 					    sha1_to_hex(l->val_sha1),
+					    sha1_to_hex(entry->val_sha1),
 					    sha1_to_hex(l->key_sha1));
 				free(entry);
 				return;
@@ -233,7 +191,7 @@ static void note_tree_insert(struct int_node *tree, unsigned char n,
 			*p = NULL;
 			load_subtree(l, tree, n);
 			free(l);
-			note_tree_insert(tree, n, entry, type);
+			note_tree_insert(tree, n, entry, type, combine_notes);
 			return;
 		}
 		break;
@@ -243,9 +201,9 @@ static void note_tree_insert(struct int_node *tree, unsigned char n,
 	assert(GET_PTR_TYPE(*p) == PTR_TYPE_NOTE ||
 	       GET_PTR_TYPE(*p) == PTR_TYPE_SUBTREE);
 	new_node = (struct int_node *) xcalloc(sizeof(struct int_node), 1);
-	note_tree_insert(new_node, n + 1, l, GET_PTR_TYPE(*p));
+	note_tree_insert(new_node, n + 1, l, GET_PTR_TYPE(*p), combine_notes);
 	*p = SET_PTR_TYPE(new_node, PTR_TYPE_INTERNAL);
-	note_tree_insert(new_node, n + 1, entry, type);
+	note_tree_insert(new_node, n + 1, entry, type, combine_notes);
 }
 
 /*
@@ -406,7 +364,8 @@ static void load_subtree(struct leaf_node *subtree, struct int_node *node,
 				l->key_sha1[19] = (unsigned char) len;
 				type = PTR_TYPE_SUBTREE;
 			}
-			note_tree_insert(node, n, l, type);
+			note_tree_insert(node, n, l, type,
+					 combine_notes_concatenate);
 		}
 	}
 	free(buf);
@@ -659,7 +618,64 @@ static int write_each_note(const unsigned char *object_sha1,
 	return write_each_note_helper(d->root, note_path, mode, note_sha1);
 }
 
-void init_notes(struct notes_tree *t, const char *notes_ref, int flags)
+int combine_notes_concatenate(unsigned char *cur_sha1,
+		const unsigned char *new_sha1)
+{
+	char *cur_msg = NULL, *new_msg = NULL, *buf;
+	unsigned long cur_len, new_len, buf_len;
+	enum object_type cur_type, new_type;
+	int ret;
+
+	/* read in both note blob objects */
+	if (!is_null_sha1(new_sha1))
+		new_msg = read_sha1_file(new_sha1, &new_type, &new_len);
+	if (!new_msg || !new_len || new_type != OBJ_BLOB) {
+		free(new_msg);
+		return 0;
+	}
+	if (!is_null_sha1(cur_sha1))
+		cur_msg = read_sha1_file(cur_sha1, &cur_type, &cur_len);
+	if (!cur_msg || !cur_len || cur_type != OBJ_BLOB) {
+		free(cur_msg);
+		free(new_msg);
+		hashcpy(cur_sha1, new_sha1);
+		return 0;
+	}
+
+	/* we will separate the notes by a newline anyway */
+	if (cur_msg[cur_len - 1] == '\n')
+		cur_len--;
+
+	/* concatenate cur_msg and new_msg into buf */
+	buf_len = cur_len + 1 + new_len;
+	buf = (char *) xmalloc(buf_len);
+	memcpy(buf, cur_msg, cur_len);
+	buf[cur_len] = '\n';
+	memcpy(buf + cur_len + 1, new_msg, new_len);
+	free(cur_msg);
+	free(new_msg);
+
+	/* create a new blob object from buf */
+	ret = write_sha1_file(buf, buf_len, blob_type, cur_sha1);
+	free(buf);
+	return ret;
+}
+
+int combine_notes_overwrite(unsigned char *cur_sha1,
+		const unsigned char *new_sha1)
+{
+	hashcpy(cur_sha1, new_sha1);
+	return 0;
+}
+
+int combine_notes_ignore(unsigned char *cur_sha1,
+		const unsigned char *new_sha1)
+{
+	return 0;
+}
+
+void init_notes(struct notes_tree *t, const char *notes_ref,
+		combine_notes_fn combine_notes, int flags)
 {
 	unsigned char sha1[20], object_sha1[20];
 	unsigned mode;
@@ -676,8 +692,12 @@ void init_notes(struct notes_tree *t, const char *notes_ref, int flags)
 	if (!notes_ref)
 		notes_ref = GIT_NOTES_DEFAULT_REF;
 
+	if (!combine_notes)
+		combine_notes = combine_notes_concatenate;
+
 	t->root = (struct int_node *) xcalloc(sizeof(struct int_node), 1);
 	t->ref = notes_ref ? xstrdup(notes_ref) : NULL;
+	t->combine_notes = combine_notes;
 	t->initialized = 1;
 
 	if (flags & NOTES_INIT_EMPTY || !notes_ref ||
@@ -693,17 +713,19 @@ void init_notes(struct notes_tree *t, const char *notes_ref, int flags)
 }
 
 void add_note(struct notes_tree *t, const unsigned char *object_sha1,
-		const unsigned char *note_sha1)
+		const unsigned char *note_sha1, combine_notes_fn combine_notes)
 {
 	struct leaf_node *l;
 
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
+	if (!combine_notes)
+		combine_notes = t->combine_notes;
 	l = (struct leaf_node *) xmalloc(sizeof(struct leaf_node));
 	hashcpy(l->key_sha1, object_sha1);
 	hashcpy(l->val_sha1, note_sha1);
-	note_tree_insert(t->root, 0, l, PTR_TYPE_NOTE);
+	note_tree_insert(t->root, 0, l, PTR_TYPE_NOTE, combine_notes);
 }
 
 void remove_note(struct notes_tree *t, const unsigned char *object_sha1)
@@ -788,7 +810,7 @@ void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 	if (!t)
 		t = &default_notes_tree;
 	if (!t->initialized)
-		init_notes(t, NULL, 0);
+		init_notes(t, NULL, NULL, 0);
 
 	sha1 = get_note(t, object_sha1);
 	if (!sha1)

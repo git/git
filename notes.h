@@ -2,6 +2,30 @@
 #define NOTES_H
 
 /*
+ * Function type for combining two notes annotating the same object.
+ *
+ * When adding a new note annotating the same object as an existing note, it is
+ * up to the caller to decide how to combine the two notes. The decision is
+ * made by passing in a function of the following form. The function accepts
+ * two SHA1s -- of the existing note and the new note, respectively. The
+ * function then combines the notes in whatever way it sees fit, and writes the
+ * resulting SHA1 into the first SHA1 argument (cur_sha1). A non-zero return
+ * value indicates failure.
+ *
+ * The two given SHA1s must both be non-NULL and different from each other.
+ *
+ * The default combine_notes function (you get this when passing NULL) is
+ * combine_notes_concatenate(), which appends the contents of the new note to
+ * the contents of the existing note.
+ */
+typedef int combine_notes_fn(unsigned char *cur_sha1, const unsigned char *new_sha1);
+
+/* Common notes combinators */
+int combine_notes_concatenate(unsigned char *cur_sha1, const unsigned char *new_sha1);
+int combine_notes_overwrite(unsigned char *cur_sha1, const unsigned char *new_sha1);
+int combine_notes_ignore(unsigned char *cur_sha1, const unsigned char *new_sha1);
+
+/*
  * Notes tree object
  *
  * Encapsulates the internal notes tree structure associated with a notes ref.
@@ -13,6 +37,7 @@
 extern struct notes_tree {
 	struct int_node *root;
 	char *ref;
+	combine_notes_fn *combine_notes;
 	int initialized;
 } default_notes_tree;
 
@@ -36,10 +61,15 @@ extern struct notes_tree {
  *
  * If you pass t == NULL, the default internal notes_tree will be initialized.
  *
+ * The combine_notes function that is passed becomes the default combine_notes
+ * function for the given notes_tree. If NULL is passed, the default
+ * combine_notes function is combine_notes_concatenate().
+ *
  * Precondition: The notes_tree structure is zeroed (this can be achieved with
  * memset(t, 0, sizeof(struct notes_tree)))
  */
-void init_notes(struct notes_tree *t, const char *notes_ref, int flags);
+void init_notes(struct notes_tree *t, const char *notes_ref,
+		combine_notes_fn combine_notes, int flags);
 
 /*
  * Add the given note object to the given notes_tree structure
@@ -49,7 +79,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref, int flags);
  * zero.
  */
 void add_note(struct notes_tree *t, const unsigned char *object_sha1,
-		const unsigned char *note_sha1);
+		const unsigned char *note_sha1, combine_notes_fn combine_notes);
 
 /*
  * Remove the given note object from the given notes_tree structure
