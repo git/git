@@ -3,37 +3,41 @@ git-notes(1)
 
 NAME
 ----
-git-notes - Add/inspect commit notes
+git-notes - Add/inspect object notes
 
 SYNOPSIS
 --------
 [verse]
-'git notes' (edit [-F <file> | -m <msg>] | show | remove | prune) [commit]
+'git notes' (edit [-F <file> | -m <msg>] | show | remove | prune) [object]
 
 DESCRIPTION
 -----------
-This command allows you to add/remove notes to/from commit messages,
-without changing the commit.  To discern these notes from the message
-stored in the commit object, the notes are indented like the message,
-after an unindented line saying "Notes:".
+This command allows you to add/remove notes to/from objects, without
+changing the objects themselves.
 
-To disable commit notes, you have to set the config variable
-core.notesRef to the empty string.  Alternatively, you can set it
-to a different ref, something like "refs/notes/bugzilla".  This setting
-can be overridden by the environment variable "GIT_NOTES_REF".
+A typical use of notes is to extend a commit message without having
+to change the commit itself. Such commit notes can be shown by `git log`
+along with the original commit message. To discern these notes from the
+message stored in the commit object, the notes are indented like the
+message, after an unindented line saying "Notes:".
+
+To disable notes, you have to set the config variable core.notesRef to
+the empty string.  Alternatively, you can set it to a different ref,
+something like "refs/notes/bugzilla".  This setting can be overridden
+by the environment variable "GIT_NOTES_REF".
 
 
 SUBCOMMANDS
 -----------
 
 edit::
-	Edit the notes for a given commit (defaults to HEAD).
+	Edit the notes for a given object (defaults to HEAD).
 
 show::
-	Show the notes for a given commit (defaults to HEAD).
+	Show the notes for a given object (defaults to HEAD).
 
 remove::
-	Remove the notes for a given commit (defaults to HEAD).
+	Remove the notes for a given object (defaults to HEAD).
 	This is equivalent to specifying an empty note message to
 	the `edit` subcommand.
 
@@ -54,11 +58,12 @@ OPTIONS
 
 Author
 ------
-Written by Johannes Schindelin <johannes.schindelin@gmx.de>
+Written by Johannes Schindelin <johannes.schindelin@gmx.de> and
+Johan Herland <johan@herland.net>
 
 Documentation
 -------------
-Documentation by Johannes Schindelin
+Documentation by Johannes Schindelin and Johan Herland
 
 GIT
 ---
