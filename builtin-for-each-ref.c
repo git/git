@@ -143,7 +143,8 @@ static const char *find_next(const char *cp)
 {
 	while (*cp) {
 		if (*cp == '%') {
-			/* %( is the start of an atom;
+			/*
+			 * %( is the start of an atom;
 			 * %% is a quoted per-cent.
 			 */
 			if (cp[1] == '(')
@@ -420,7 +421,8 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 			grab_date(wholine, v, name);
 	}
 
-	/* For a tag or a commit object, if "creator" or "creatordate" is
+	/*
+	 * For a tag or a commit object, if "creator" or "creatordate" is
 	 * requested, do something special.
 	 */
 	if (strcmp(who, "tagger") && strcmp(who, "committer"))
@@ -502,7 +504,8 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct obj
 	}
 }
 
-/* We want to have empty print-string for field requests
+/*
+ * We want to have empty print-string for field requests
  * that do not apply (e.g. "authordate" for a tag object)
  */
 static void fill_missing_values(struct atom_value *val)
@@ -633,18 +636,21 @@ static void populate_value(struct refinfo *ref)
 	if (!eaten)
 		free(buf);
 
-	/* If there is no atom that wants to know about tagged
+	/*
+	 * If there is no atom that wants to know about tagged
 	 * object, we are done.
 	 */
 	if (!need_tagged || (obj->type != OBJ_TAG))
 		return;
 
-	/* If it is a tag object, see if we use a value that derefs
+	/*
+	 * If it is a tag object, see if we use a value that derefs
 	 * the object, and if we do grab the object it refers to.
 	 */
 	tagged = ((struct tag *)obj)->tagged->sha1;
 
-	/* NEEDSWORK: This derefs tag only once, which
+	/*
+	 * NEEDSWORK: This derefs tag only once, which
 	 * is good to deal with chains of trust, but
 	 * is not consistent with what deref_tag() does
 	 * which peels the onion to the core.
@@ -681,9 +687,8 @@ struct grab_ref_cbdata {
 };
 
 /*
- * A call-back given to for_each_ref().  It is unfortunate that we
- * need to use global variables to pass extra information to this
- * function.
+ * A call-back given to for_each_ref().  Filter refs and keep them for
+ * later object processing.
  */
 static int grab_single_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
@@ -711,7 +716,8 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 			return 0;
 	}
 
-	/* We do not open the object yet; sort may only need refname
+	/*
+	 * We do not open the object yet; sort may only need refname
 	 * to do its job and the resulting list may yet to be pruned
 	 * by maxcount logic.
 	 */
