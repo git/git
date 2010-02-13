@@ -284,8 +284,29 @@ test_expect_success 'verify non-creation of note with -m ""' '
 	! git notes show
 '
 
+cat > expect-combine_m_and_F << EOF
+foo
+
+xyzzy
+
+bar
+
+zyxxy
+
+baz
+EOF
+
+test_expect_success 'create note with combination of -m and -F' '
+	echo "xyzzy" > note_a &&
+	echo "zyxxy" > note_b &&
+	git notes add -m "foo" -F note_a -m "bar" -F note_b -m "baz" &&
+	git notes show > output &&
+	test_cmp expect-combine_m_and_F output
+'
+
 test_expect_success 'remove note with "git notes remove" (setup)' '
-	git notes remove HEAD^
+	git notes remove HEAD^ &&
+	git notes remove
 '
 
 cat > expect-rm-remove << EOF
