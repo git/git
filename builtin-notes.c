@@ -113,7 +113,7 @@ static void create_note(const unsigned char *object,
 
 	stripspace(buf, 1);
 
-	if (!skip_editor && !buf->len) {
+	if (!buf->len) {
 		fprintf(stderr, "Removing note for object %s\n",
 			sha1_to_hex(object));
 		hashclr(result);
@@ -197,7 +197,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	struct notes_tree *t;
 	unsigned char object[20], new_note[20];
 	const unsigned char *note;
-	const char *object_ref;
+	const char *object_ref, *logmsg;
+
 	int edit = 0, show = 0;
 	const char *msgfile = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
@@ -271,8 +272,14 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	}
 
 	create_note(object, &buf, msg.given || msgfile, note, new_note);
-	add_note(t, object, new_note, combine_notes_overwrite);
-	commit_notes(t, "Note added by 'git notes edit'");
+	if (is_null_sha1(new_note)) {
+		remove_note(t, object);
+		logmsg = "Note removed by 'git notes edit'";
+	} else {
+		add_note(t, object, new_note, combine_notes_overwrite);
+		logmsg = "Note added by 'git notes edit'";
+	}
+	commit_notes(t, logmsg);
 
 	free_notes(t);
 	strbuf_release(&buf);
