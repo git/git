@@ -2,6 +2,21 @@
 #define NOTES_H
 
 /*
+ * Notes tree object
+ *
+ * Encapsulates the internal notes tree structure associated with a notes ref.
+ * Whenever a struct notes_tree pointer is required below, you may pass NULL in
+ * order to use the default/internal notes tree. E.g. you only need to pass a
+ * non-NULL value if you need to refer to several different notes trees
+ * simultaneously.
+ */
+extern struct notes_tree {
+	struct int_node *root;
+	char *ref;
+	int initialized;
+} default_notes_tree;
+
+/*
  * Flags controlling behaviour of notes tree initialization
  *
  * Default behaviour is to initialize the notes tree from the tree object
@@ -10,48 +25,54 @@
 #define NOTES_INIT_EMPTY 1
 
 /*
- * Initialize internal notes tree structure with the notes tree at the given
+ * Initialize the given notes_tree with the notes tree structure at the given
  * ref. If given ref is NULL, the value of the $GIT_NOTES_REF environment
  * variable is used, and if that is missing, the default notes ref is used
  * ("refs/notes/commits").
  *
- * If you need to re-intialize the internal notes tree structure (e.g. loading
- * from a different notes ref), please first de-initialize the current notes
- * tree by calling free_notes().
+ * If you need to re-intialize a notes_tree structure (e.g. when switching from
+ * one notes ref to another), you must first de-initialize the notes_tree
+ * structure by calling free_notes(struct notes_tree *).
+ *
+ * If you pass t == NULL, the default internal notes_tree will be initialized.
+ *
+ * Precondition: The notes_tree structure is zeroed (this can be achieved with
+ * memset(t, 0, sizeof(struct notes_tree)))
  */
-void init_notes(const char *notes_ref, int flags);
+void init_notes(struct notes_tree *t, const char *notes_ref, int flags);
 
 /*
- * Add the given note object to the internal notes tree structure
+ * Add the given note object to the given notes_tree structure
  *
- * IMPORTANT: The changes made by add_note() to the internal notes tree structure
+ * IMPORTANT: The changes made by add_note() to the given notes_tree structure
  * are not persistent until a subsequent call to write_notes_tree() returns
  * zero.
  */
-void add_note(const unsigned char *object_sha1,
+void add_note(struct notes_tree *t, const unsigned char *object_sha1,
 		const unsigned char *note_sha1);
 
 /*
- * Remove the given note object from the internal notes tree structure
+ * Remove the given note object from the given notes_tree structure
  *
- * IMPORTANT: The changes made by remove_note() to the internal notes tree
+ * IMPORTANT: The changes made by remove_note() to the given notes_tree
  * structure are not persistent until a subsequent call to write_notes_tree()
  * returns zero.
  */
-void remove_note(const unsigned char *object_sha1);
+void remove_note(struct notes_tree *t, const unsigned char *object_sha1);
 
 /*
  * Get the note object SHA1 containing the note data for the given object
  *
  * Return NULL if the given object has no notes.
  */
-const unsigned char *get_note(const unsigned char *object_sha1);
+const unsigned char *get_note(struct notes_tree *t,
+		const unsigned char *object_sha1);
 
 /*
  * Flags controlling behaviour of for_each_note()
  *
  * Default behaviour of for_each_note() is to traverse every single note object
- * in the notes tree, unpacking subtree entries along the way.
+ * in the given notes tree, unpacking subtree entries along the way.
  * The following flags can be used to alter the default behaviour:
  *
  * - DONT_UNPACK_SUBTREES causes for_each_note() NOT to unpack and recurse into
@@ -75,7 +96,7 @@ const unsigned char *get_note(const unsigned char *object_sha1);
 #define FOR_EACH_NOTE_YIELD_SUBTREES 2
 
 /*
- * Invoke the specified callback function for each note
+ * Invoke the specified callback function for each note in the given notes_tree
  *
  * If the callback returns nonzero, the note walk is aborted, and the return
  * value from the callback is returned from for_each_note(). Hence, a zero
@@ -92,30 +113,30 @@ const unsigned char *get_note(const unsigned char *object_sha1);
 typedef int each_note_fn(const unsigned char *object_sha1,
 		const unsigned char *note_sha1, char *note_path,
 		void *cb_data);
-int for_each_note(int flags, each_note_fn fn, void *cb_data);
+int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
+		void *cb_data);
 
 /*
- * Write the internal notes tree structure to the object database
+ * Write the given notes_tree structure to the object database
  *
- * Creates a new tree object encapsulating the current state of the
- * internal notes tree, and stores its SHA1 into the 'result' argument.
+ * Creates a new tree object encapsulating the current state of the given
+ * notes_tree, and stores its SHA1 into the 'result' argument.
  *
  * Returns zero on success, non-zero on failure.
  *
- * IMPORTANT: Changes made to the internal notes tree structure are not
- * persistent until this function has returned zero. Please also remember
- * to create a corresponding commit object, and update the appropriate
- * notes ref.
+ * IMPORTANT: Changes made to the given notes_tree are not persistent until
+ * this function has returned zero. Please also remember to create a
+ * corresponding commit object, and update the appropriate notes ref.
  */
-int write_notes_tree(unsigned char *result);
+int write_notes_tree(struct notes_tree *t, unsigned char *result);
 
 /*
- * Free (and de-initialize) the internal notes tree structure
+ * Free (and de-initialize) the given notes_tree structure
  *
- * IMPORTANT: Changes made to the notes tree since the last, successful
+ * IMPORTANT: Changes made to the given notes_tree since the last, successful
  * call to write_notes_tree() will be lost.
  */
-void free_notes(void);
+void free_notes(struct notes_tree *t);
 
 /* Flags controlling how notes are formatted */
 #define NOTES_SHOW_HEADER 1
@@ -124,12 +145,14 @@ void free_notes(void);
 /*
  * Fill the given strbuf with the notes associated with the given object.
  *
- * If the internal notes structure is not initialized, it will be auto-
+ * If the given notes_tree structure is not initialized, it will be auto-
  * initialized to the default value (see documentation for init_notes() above).
+ * If the given notes_tree is NULL, the internal/default notes_tree will be
+ * used instead.
  *
  * 'flags' is a bitwise combination of the above formatting flags.
  */
-void format_note(const unsigned char *object_sha1, struct strbuf *sb,
-		const char *output_encoding, int flags);
+void format_note(struct notes_tree *t, const unsigned char *object_sha1,
+		struct strbuf *sb, const char *output_encoding, int flags);
 
 #endif
