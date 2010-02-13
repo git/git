@@ -343,6 +343,42 @@ test_expect_success 'listing non-existing notes fails' '
 	test_cmp expect output
 '
 
+cat > expect << EOF
+Initial set of notes
+
+More notes appended with git notes append
+EOF
+
+test_expect_success 'append to existing note with "git notes append"' '
+	git notes add -m "Initial set of notes" &&
+	git notes append -m "More notes appended with git notes append" &&
+	git notes show > output &&
+	test_cmp expect output
+'
+
+test_expect_success 'appending empty string does not change existing note' '
+	git notes append -m "" &&
+	git notes show > output &&
+	test_cmp expect output
+'
+
+test_expect_success 'git notes append == add when there is no existing note' '
+	git notes remove HEAD &&
+	test_must_fail git notes list HEAD &&
+	git notes append -m "Initial set of notes
+
+More notes appended with git notes append" &&
+	git notes show > output &&
+	test_cmp expect output
+'
+
+test_expect_success 'appending empty string to non-existing note does not create note' '
+	git notes remove HEAD &&
+	test_must_fail git notes list HEAD &&
+	git notes append -m "" &&
+	test_must_fail git notes list HEAD
+'
+
 test_expect_success 'create other note on a different notes ref (setup)' '
 	: > a6 &&
 	git add a6 &&

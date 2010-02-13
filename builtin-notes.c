@@ -20,6 +20,7 @@
 static const char * const git_notes_usage[] = {
 	"git notes [list [<object>]]",
 	"git notes add [-f] [-m <msg> | -F <file>] [<object>]",
+	"git notes append [-m <msg> | -F <file>] [<object>]",
 	"git notes edit [-m <msg> | -F <file>] [<object>]",
 	"git notes show [<object>]",
 	"git notes remove [<object>]",
@@ -94,7 +95,7 @@ static void write_commented_object(int fd, const unsigned char *object)
 
 static void create_note(const unsigned char *object,
 			struct strbuf *buf,
-			int skip_editor,
+			int skip_editor, int append_only,
 			const unsigned char *prev,
 			unsigned char *result)
 {
@@ -109,7 +110,7 @@ static void create_note(const unsigned char *object,
 		if (fd < 0)
 			die_errno("could not create file '%s'", path);
 
-		if (prev)
+		if (prev && !append_only)
 			write_note_data(fd, prev);
 		write_or_die(fd, note_template, strlen(note_template));
 
@@ -124,6 +125,20 @@ static void create_note(const unsigned char *object,
 	}
 
 	stripspace(buf, 1);
+
+	if (prev && append_only) {
+		/* Append buf to previous note contents */
+		unsigned long size;
+		enum object_type type;
+		char *prev_buf = read_sha1_file(prev, &type, &size);
+
+		strbuf_grow(buf, size + 1);
+		if (buf->len && prev_buf && size)
+			strbuf_insert(buf, 0, "\n", 1);
+		if (prev_buf && size)
+			strbuf_insert(buf, 0, prev_buf, size);
+		free(prev_buf);
+	}
 
 	if (!buf->len) {
 		fprintf(stderr, "Removing note for object %s\n",
@@ -212,8 +227,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	const char *object_ref;
 	char logmsg[100];
 
-	int list = 0, add = 0, edit = 0, show = 0, remove = 0, prune = 0,
-	    force = 0;
+	int list = 0, add = 0, append = 0, edit = 0, show = 0, remove = 0,
+	    prune = 0, force = 0;
 	int given_object;
 	const char *msgfile = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
@@ -234,6 +249,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		list = 1;
 	else if (argc && !strcmp(argv[0], "add"))
 		add = 1;
+	else if (argc && !strcmp(argv[0], "append"))
+		append = 1;
 	else if (argc && !strcmp(argv[0], "edit"))
 		edit = 1;
 	else if (argc && !strcmp(argv[0], "show"))
@@ -245,10 +262,10 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	else if (!argc)
 		list = 1; /* Default to 'list' if no other subcommand given */
 
-	if (list + add + edit + show + remove + prune != 1)
+	if (list + add + append + edit + show + remove + prune != 1)
 		usage_with_options(git_notes_usage, options);
 
-	if ((msg.given || msgfile) && !(add || edit)) {
+	if ((msg.given || msgfile) && !(add || append || edit)) {
 		error("cannot use -m/-F options with %s subcommand.", argv[0]);
 		usage_with_options(git_notes_usage, options);
 	}
@@ -304,7 +321,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		return execv_git_cmd(show_args);
 	}
 
-	/* add/edit/remove/prune command */
+	/* add/append/edit/remove/prune command */
 
 	if (add && note) {
 		if (force)
@@ -334,8 +351,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		hashclr(new_note);
 		prune_notes(t);
 	} else {
-		create_note(object, &buf, msg.given || msgfile || remove, note,
-			    new_note);
+		create_note(object, &buf, msg.given || msgfile || remove,
+			    append, note, new_note);
 		if (is_null_sha1(new_note))
 			remove_note(t, object);
 		else
