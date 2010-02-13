@@ -749,6 +749,29 @@ static int write_each_note(const unsigned char *object_sha1,
 		write_each_note_helper(d->root, note_path, mode, note_sha1);
 }
 
+struct note_delete_list {
+	struct note_delete_list *next;
+	const unsigned char *sha1;
+};
+
+static int prune_notes_helper(const unsigned char *object_sha1,
+		const unsigned char *note_sha1, char *note_path,
+		void *cb_data)
+{
+	struct note_delete_list **l = (struct note_delete_list **) cb_data;
+	struct note_delete_list *n;
+
+	if (has_sha1_file(object_sha1))
+		return 0; /* nothing to do for this note */
+
+	/* failed to find object => prune this note */
+	n = (struct note_delete_list *) xmalloc(sizeof(*n));
+	n->next = *l;
+	n->sha1 = object_sha1;
+	*l = n;
+	return 0;
+}
+
 int combine_notes_concatenate(unsigned char *cur_sha1,
 		const unsigned char *new_sha1)
 {
@@ -920,6 +943,22 @@ int write_notes_tree(struct notes_tree *t, unsigned char *result)
 		write_sha1_file(root.buf.buf, root.buf.len, tree_type, result);
 	strbuf_release(&root.buf);
 	return ret;
+}
+
+void prune_notes(struct notes_tree *t)
+{
+	struct note_delete_list *l = NULL;
+
+	if (!t)
+		t = &default_notes_tree;
+	assert(t->initialized);
+
+	for_each_note(t, 0, prune_notes_helper, &l);
+
+	while (l) {
+		remove_note(t, l->sha1);
+		l = l->next;
+	}
 }
 
 void free_notes(struct notes_tree *t)
