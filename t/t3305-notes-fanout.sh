@@ -14,7 +14,7 @@ test_expect_success 'creating many notes with git-notes' '
 		echo "file for commit #$i" > file &&
 		git add file &&
 		git commit -q -m "commit #$i" &&
-		git notes edit -m "note #$i" || return 1
+		git notes add -m "note #$i" || return 1
 	done
 '
 

@@ -11,7 +11,7 @@ SYNOPSIS
 'git notes' [list [<object>]]
 'git notes' add [-f] [-F <file> | -m <msg>] [<object>]
 'git notes' append [-F <file> | -m <msg>] [<object>]
-'git notes' edit [-F <file> | -m <msg>] [<object>]
+'git notes' edit [<object>]
 'git notes' show [<object>]
 'git notes' remove [<object>]
 'git notes' prune

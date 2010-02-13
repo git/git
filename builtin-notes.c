@@ -21,7 +21,7 @@ static const char * const git_notes_usage[] = {
 	"git notes [list [<object>]]",
 	"git notes add [-f] [-m <msg> | -F <file>] [<object>]",
 	"git notes append [-m <msg> | -F <file>] [<object>]",
-	"git notes edit [-m <msg> | -F <file>] [<object>]",
+	"git notes edit [<object>]",
 	"git notes show [<object>]",
 	"git notes remove [<object>]",
 	"git notes prune",
@@ -233,7 +233,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	const char *msgfile = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct option options[] = {
-		OPT_GROUP("Notes edit options"),
+		OPT_GROUP("Notes options"),
 		OPT_CALLBACK('m', "message", &msg, "msg",
 			     "note contents as a string", parse_msg_arg),
 		OPT_FILENAME('F', "file", &msgfile, "note contents in a file"),
@@ -268,6 +268,12 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	if ((msg.given || msgfile) && !(add || append || edit)) {
 		error("cannot use -m/-F options with %s subcommand.", argv[0]);
 		usage_with_options(git_notes_usage, options);
+	}
+
+	if ((msg.given || msgfile) && edit) {
+		fprintf(stderr, "The -m and -F options has been deprecated for"
+			" the 'edit' subcommand.\n"
+			"Please use 'git notes add -f -m/-F' instead.\n");
 	}
 
 	if (msg.given && msgfile) {

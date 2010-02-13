@@ -188,7 +188,7 @@ test_expect_success "verify contents of non-notes" '
 test_expect_success "git-notes preserves non-notes" '
 
 	test_tick &&
-	git notes edit -m "foo bar"
+	git notes add -f -m "foo bar"
 '
 
 test_expect_success "verify contents of non-notes after git-notes" '

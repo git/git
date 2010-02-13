@@ -10,17 +10,17 @@ test_expect_success 'setup: create a few commits with notes' '
 	git add file1 &&
 	test_tick &&
 	git commit -m 1st &&
-	git notes edit -m "Note #1" &&
+	git notes add -m "Note #1" &&
 	: > file2 &&
 	git add file2 &&
 	test_tick &&
 	git commit -m 2nd &&
-	git notes edit -m "Note #2" &&
+	git notes add -m "Note #2" &&
 	: > file3 &&
 	git add file3 &&
 	test_tick &&
 	git commit -m 3rd &&
-	git notes edit -m "Note #3"
+	git notes add -m "Note #3"
 '
 
 cat > expect <<END_OF_LOG
