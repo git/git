@@ -404,9 +404,9 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				inside_work_tree = 0;
 			if (offset != len) {
 				cwd[offset] = '\0';
-				setenv(GIT_DIR_ENVIRONMENT, cwd, 1);
+				set_git_dir(cwd);
 			} else
-				setenv(GIT_DIR_ENVIRONMENT, ".", 1);
+				set_git_dir(".");
 			check_repository_format_gently(nongit_ok);
 			return NULL;
 		}
