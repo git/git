@@ -1,0 +1,11 @@
+Git v1.7.0.1 Release Notes
+==========================
+
+Fixes since v1.7.0
+------------------
+
+--
+exec >/var/tmp/1
+echo O=$(git describe)
+O=v1.7.0
+git shortlog $O..
