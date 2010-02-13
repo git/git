@@ -2,7 +2,16 @@
 HOW TO INSTALL git-subtree
 ==========================
 
-Copy the file 'git-subtree.sh' to /usr/local/bin/git-subtree.
+You simply need to copy the file 'git-subtree.sh' to where
+the rest of the git scripts are stored. 
+
+From the Git bash window just run:
+
+install.sh 
+
+Or if you have the full Cygwin installed, you can use make:
+
+make install
 
 That will make a 'git subtree' (note: space instead of dash) command
 available.  See the file git-subtree.txt for more.

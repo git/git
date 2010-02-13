@@ -9,10 +9,12 @@ git-subtree - add, merge, and split subprojects stored in subtrees
 SYNOPSIS
 --------
 [verse]
-'git subtree' add   --prefix=<prefix> <commit>
-'git subtree' merge --prefix=<prefix> <commit>
+'git subtree' add   --prefix=<prefix> <repository> <refspec...>
 'git subtree' pull  --prefix=<prefix> <repository> <refspec...>
-'git subtree' split --prefix=<prefix> <commit...>
+'git subtree' push  --prefix=<prefix> <repository> <refspec...>
+'git subtree' add   --prefix=<prefix> <refspec>
+'git subtree' merge --prefix=<prefix> <refspec>
+'git subtree' split --prefix=<prefix> <refspec...>
          
 
 DESCRIPTION
@@ -60,11 +62,11 @@ COMMANDS
 --------
 add::
 	Create the <prefix> subtree by importing its contents
-	from the given commit.  A new commit is created
-	automatically, joining the imported project's history
-	with your own.  With '--squash', imports only a single
-	commit from the subproject, rather than its entire
-	history.
+	from the given <refspec> or <repository> and remote <refspec>.
+	A new commit is created	automatically, joining the imported
+	project's history with your own.  With '--squash', imports
+	only a single commit from the subproject, rather than its
+	entire history.
 
 merge::
 	Merge recent changes up to <commit> into the <prefix>
@@ -84,6 +86,12 @@ pull::
 	Exactly like 'merge', but parallels 'git pull' in that
 	it fetches the given commit from the specified remote
 	repository.
+	
+push::
+	Does a 'split' (see above) using the <prefix> supplied
+	and then does a 'git push' to push the result to the 
+	repository and refspec. This can be used to push your
+	subtree to different branches of the remote repository.
 
 split::
 	Extract a new, synthetic project history from the

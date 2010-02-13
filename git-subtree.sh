@@ -11,6 +11,7 @@ OPTS_SPEC="\
 git subtree add   --prefix=<prefix> <commit>
 git subtree merge --prefix=<prefix> <commit>
 git subtree pull  --prefix=<prefix> <repository> <refspec...>
+git subtree push  --prefix=<prefix> <repository> <refspec...>
 git subtree split --prefix=<prefix> <commit...>
 --
 h,help        show the help
@@ -24,7 +25,7 @@ b,branch=     create a new branch from the split subtree
 ignore-joins  ignore prior --rejoin commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
- options for 'add', 'merge', and 'pull'
+ options for 'add', 'merge', 'pull' and 'push'
 squash        merge subtree changes as a single commit
 "
 eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
@@ -98,7 +99,7 @@ command="$1"
 shift
 case "$command" in
 	add|merge|pull) default= ;;
-	split) default="--default HEAD" ;;
+	split|push) default="--default HEAD" ;;
 	*) die "Unknown command '$command'" ;;
 esac
 
@@ -115,7 +116,7 @@ esac
 
 dir="$(dirname "$prefix/.")"
 
-if [ "$command" != "pull" ]; then
+if [ "$command" != "pull" -a "$command" != "add" -a "$command" != "push" ]; then
 	revs=$(git rev-parse $default --revs-only "$@") || exit $?
 	dirs="$(git rev-parse --no-revs --no-flags "$@")" || exit $?
 	if [ -n "$dirs" ]; then
@@ -450,10 +451,10 @@ copy_or_skip()
 
 ensure_clean()
 {
-	if ! git diff-index HEAD --exit-code --quiet; then
+	if ! git diff-index HEAD --exit-code --quiet 2>&1; then
 		die "Working tree has modifications.  Cannot add."
 	fi
-	if ! git diff-index --cached HEAD --exit-code --quiet; then
+	if ! git diff-index --cached HEAD --exit-code --quiet 2>&1; then
 		die "Index has modifications.  Cannot add."
 	fi
 }
@@ -463,12 +464,34 @@ cmd_add()
 	if [ -e "$dir" ]; then
 		die "'$dir' already exists.  Cannot add."
 	fi
+
 	ensure_clean
 	
-	set -- $revs
-	if [ $# -ne 1 ]; then
-		die "You must provide exactly one revision.  Got: '$revs'"
+	if [ $# -eq 1 ]; then
+		"cmd_add_commit" "$@"
+	elif [ $# -eq 2 ]; then
+		"cmd_add_repository" "$@"
+	else
+	    say "error: parameters were '$@'"
+	    die "Provide either a refspec or a repository and refspec."
 	fi
+}
+
+cmd_add_repository()
+{
+	echo "git fetch" "$@"
+	repository=$1
+	refspec=$2
+	git fetch "$@" || exit $?
+	revs=FETCH_HEAD
+	set -- $revs
+	cmd_add_commit "$@"
+}
+
+cmd_add_commit()
+{
+	revs=$(git rev-parse $default --revs-only "$@") || exit $?
+	set -- $revs
 	rev="$1"
 	
 	debug "Adding $dir as '$rev'..."
@@ -586,6 +609,7 @@ cmd_split()
 
 cmd_merge()
 {
+	revs=$(git rev-parse $default --revs-only "$@") || exit $?
 	ensure_clean
 	
 	set -- $revs
@@ -623,7 +647,23 @@ cmd_pull()
 	ensure_clean
 	git fetch "$@" || exit $?
 	revs=FETCH_HEAD
-	cmd_merge
+	set -- $revs
+	cmd_merge "$@"
+}
+
+cmd_push()
+{
+	if [ $# -ne 2 ]; then
+	    die "You must provide <repository> <refspec>"
+	fi
+	if [ -e "$dir" ]; then
+	    repository=$1
+	    refspec=$2
+	    echo "git push using: " $repository $refspec
+	    git push $repository $(git subtree split --prefix=$prefix):refs/heads/$refspec
+	else
+	    die "'$dir' must already exist. Try 'git subtree add'."
+	fi
 }
 
 "cmd_$command" "$@"
