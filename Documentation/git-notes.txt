@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git notes' [list [<object>]]
+'git notes' add [-f] [-F <file> | -m <msg>] [<object>]
 'git notes' edit [-F <file> | -m <msg>] [<object>]
 'git notes' show [<object>]
 'git notes' remove [<object>]
@@ -41,6 +42,11 @@ list::
 	annotate (in the format "<note object> <annotated object>").
 	This is the default subcommand if no subcommand is given.
 
+add::
+	Add notes for a given object (defaults to HEAD). Abort if the
+	object already has notes, abort. (use `-f` to overwrite an
+	existing note).
+
 edit::
 	Edit the notes for a given object (defaults to HEAD).
 
@@ -57,6 +63,11 @@ prune::
 
 OPTIONS
 -------
+-f::
+--force::
+	When adding notes to an object that already has notes,
+	overwrite the existing notes (instead of aborting).
+
 -m <msg>::
 --message=<msg>::
 	Use the given note message (instead of prompting).

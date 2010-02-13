@@ -16,7 +16,7 @@ GIT_EDITOR=./fake_editor.sh
 export GIT_EDITOR
 
 test_expect_success 'cannot annotate non-existing HEAD' '
-	(MSG=3 && export MSG && test_must_fail git notes edit)
+	(MSG=3 && export MSG && test_must_fail git notes add)
 '
 
 test_expect_success setup '
@@ -32,18 +32,18 @@ test_expect_success setup '
 
 test_expect_success 'need valid notes ref' '
 	(MSG=1 GIT_NOTES_REF=/ && export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes edit) &&
+	 test_must_fail git notes add) &&
 	(MSG=2 GIT_NOTES_REF=/ && export MSG GIT_NOTES_REF &&
 	 test_must_fail git notes show)
 '
 
-test_expect_success 'refusing to edit in refs/heads/' '
+test_expect_success 'refusing to add notes in refs/heads/' '
 	(MSG=1 GIT_NOTES_REF=refs/heads/bogus &&
 	 export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes edit)
+	 test_must_fail git notes add)
 '
 
-test_expect_success 'refusing to edit in refs/remotes/' '
+test_expect_success 'refusing to edit notes in refs/remotes/' '
 	(MSG=1 GIT_NOTES_REF=refs/remotes/bogus &&
 	 export MSG GIT_NOTES_REF &&
 	 test_must_fail git notes edit)
@@ -56,16 +56,34 @@ test_expect_success 'handle empty notes gracefully' '
 
 test_expect_success 'create notes' '
 	git config core.notesRef refs/notes/commits &&
-	MSG=b0 git notes edit &&
+	MSG=b4 git notes add &&
 	test ! -f .git/NOTES_EDITMSG &&
 	test 1 = $(git ls-tree refs/notes/commits | wc -l) &&
-	test b0 = $(git notes show) &&
+	test b4 = $(git notes show) &&
 	git show HEAD^ &&
 	test_must_fail git notes show HEAD^
 '
 
 test_expect_success 'edit existing notes' '
-	MSG=b1 git notes edit &&
+	MSG=b3 git notes edit &&
+	test ! -f .git/NOTES_EDITMSG &&
+	test 1 = $(git ls-tree refs/notes/commits | wc -l) &&
+	test b3 = $(git notes show) &&
+	git show HEAD^ &&
+	test_must_fail git notes show HEAD^
+'
+
+test_expect_success 'cannot add note where one exists' '
+	! MSG=b2 git notes add &&
+	test ! -f .git/NOTES_EDITMSG &&
+	test 1 = $(git ls-tree refs/notes/commits | wc -l) &&
+	test b3 = $(git notes show) &&
+	git show HEAD^ &&
+	test_must_fail git notes show HEAD^
+'
+
+test_expect_success 'can overwrite existing note with "git notes add -f"' '
+	MSG=b1 git notes add -f &&
 	test ! -f .git/NOTES_EDITMSG &&
 	test 1 = $(git ls-tree refs/notes/commits | wc -l) &&
 	test b1 = $(git notes show) &&
@@ -89,6 +107,7 @@ test_expect_success 'show notes' '
 	git log -1 > output &&
 	test_cmp expect output
 '
+
 test_expect_success 'create multi-line notes (setup)' '
 	: > a3 &&
 	git add a3 &&
@@ -96,7 +115,7 @@ test_expect_success 'create multi-line notes (setup)' '
 	git commit -m 3rd &&
 	MSG="b3
 c3c3c3c3
-d3d3d3" git notes edit
+d3d3d3" git notes add
 '
 
 cat > expect-multiline << EOF
@@ -125,7 +144,7 @@ test_expect_success 'create -F notes (setup)' '
 	test_tick &&
 	git commit -m 4th &&
 	echo "xyzzy" > note5 &&
-	git notes edit -F note5
+	git notes add -F note5
 '
 
 cat > expect-F << EOF
@@ -205,7 +224,7 @@ test_expect_success 'create -m notes (setup)' '
 	git add a5 &&
 	test_tick &&
 	git commit -m 5th &&
-	git notes edit -m spam -m "foo
+	git notes add -m spam -m "foo
 bar
 baz"
 '
@@ -234,8 +253,8 @@ test_expect_success 'show -m notes' '
 	test_cmp expect-m output
 '
 
-test_expect_success 'remove note with -F /dev/null (setup)' '
-	git notes edit -F /dev/null
+test_expect_success 'remove note with add -f -F /dev/null (setup)' '
+	git notes add -f -F /dev/null
 '
 
 cat > expect-rm-F << EOF
@@ -256,7 +275,7 @@ test_expect_success 'verify note removal with -F /dev/null' '
 '
 
 test_expect_success 'do not create empty note with -m "" (setup)' '
-	git notes edit -m ""
+	git notes add -m ""
 '
 
 test_expect_success 'verify non-creation of note with -m ""' '
@@ -329,7 +348,7 @@ test_expect_success 'create other note on a different notes ref (setup)' '
 	git add a6 &&
 	test_tick &&
 	git commit -m 6th &&
-	GIT_NOTES_REF="refs/notes/other" git notes edit -m "other note"
+	GIT_NOTES_REF="refs/notes/other" git notes add -m "other note"
 '
 
 cat > expect-other << EOF
@@ -374,17 +393,17 @@ test_expect_success 'Do not show note when core.notesRef is overridden' '
 
 test_expect_success 'Allow notes on non-commits (trees, blobs, tags)' '
 	echo "Note on a tree" > expect
-	git notes edit -m "Note on a tree" HEAD: &&
+	git notes add -m "Note on a tree" HEAD: &&
 	git notes show HEAD: > actual &&
 	test_cmp expect actual &&
 	echo "Note on a blob" > expect
 	filename=$(git ls-tree --name-only HEAD | head -n1) &&
-	git notes edit -m "Note on a blob" HEAD:$filename &&
+	git notes add -m "Note on a blob" HEAD:$filename &&
 	git notes show HEAD:$filename > actual &&
 	test_cmp expect actual &&
 	echo "Note on a tag" > expect
 	git tag -a -m "This is an annotated tag" foobar HEAD^ &&
-	git notes edit -m "Note on a tag" foobar &&
+	git notes add -m "Note on a tag" foobar &&
 	git notes show foobar > actual &&
 	test_cmp expect actual
 '

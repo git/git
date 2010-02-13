@@ -19,6 +19,7 @@
 
 static const char * const git_notes_usage[] = {
 	"git notes [list [<object>]]",
+	"git notes add [-f] [-m <msg> | -F <file>] [<object>]",
 	"git notes edit [-m <msg> | -F <file>] [<object>]",
 	"git notes show [<object>]",
 	"git notes remove [<object>]",
@@ -211,7 +212,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	const char *object_ref;
 	char logmsg[100];
 
-	int list = 0, edit = 0, show = 0, remove = 0, prune = 0;
+	int list = 0, add = 0, edit = 0, show = 0, remove = 0, prune = 0,
+	    force = 0;
 	int given_object;
 	const char *msgfile = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
@@ -220,6 +222,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK('m', "message", &msg, "msg",
 			     "note contents as a string", parse_msg_arg),
 		OPT_FILENAME('F', "file", &msgfile, "note contents in a file"),
+		OPT_BOOLEAN('f', "force", &force, "replace existing notes"),
 		OPT_END()
 	};
 
@@ -229,6 +232,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 
 	if (argc && !strcmp(argv[0], "list"))
 		list = 1;
+	else if (argc && !strcmp(argv[0], "add"))
+		add = 1;
 	else if (argc && !strcmp(argv[0], "edit"))
 		edit = 1;
 	else if (argc && !strcmp(argv[0], "show"))
@@ -240,16 +245,21 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	else if (!argc)
 		list = 1; /* Default to 'list' if no other subcommand given */
 
-	if (list + edit + show + remove + prune != 1)
+	if (list + add + edit + show + remove + prune != 1)
 		usage_with_options(git_notes_usage, options);
 
-	if ((msg.given || msgfile) && !edit) {
+	if ((msg.given || msgfile) && !(add || edit)) {
 		error("cannot use -m/-F options with %s subcommand.", argv[0]);
 		usage_with_options(git_notes_usage, options);
 	}
 
 	if (msg.given && msgfile) {
 		error("mixing -m and -F options is not allowed.");
+		usage_with_options(git_notes_usage, options);
+	}
+
+	if (force && !add) {
+		error("cannot use -f option with %s subcommand.", argv[0]);
 		usage_with_options(git_notes_usage, options);
 	}
 
@@ -294,7 +304,19 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		return execv_git_cmd(show_args);
 	}
 
-	/* edit/remove/prune command */
+	/* add/edit/remove/prune command */
+
+	if (add && note) {
+		if (force)
+			fprintf(stderr, "Overwriting existing notes for object %s\n",
+				sha1_to_hex(object));
+		else {
+			error("Cannot add notes. Found existing notes for object %s. "
+			      "Use '-f' to overwrite existing notes",
+			      sha1_to_hex(object));
+			return 1;
+		}
+	}
 
 	if (remove)
 		strbuf_reset(&buf);
