@@ -20,6 +20,7 @@
 static const char * const git_notes_usage[] = {
 	"git notes [list [<object>]]",
 	"git notes add [-f] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]",
+	"git notes copy [-f] <from-object> <to-object>",
 	"git notes append [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]",
 	"git notes edit [<object>]",
 	"git notes show [<object>]",
@@ -280,13 +281,13 @@ int commit_notes(struct notes_tree *t, const char *msg)
 int cmd_notes(int argc, const char **argv, const char *prefix)
 {
 	struct notes_tree *t;
-	unsigned char object[20], new_note[20];
+	unsigned char object[20], from_obj[20], new_note[20];
 	const unsigned char *note;
 	const char *object_ref;
 	char logmsg[100];
 
-	int list = 0, add = 0, append = 0, edit = 0, show = 0, remove = 0,
-	    prune = 0, force = 0;
+	int list = 0, add = 0, copy = 0, append = 0, edit = 0, show = 0,
+	    remove = 0, prune = 0, force = 0;
 	int given_object = 0, i = 1, retval = 0;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
@@ -311,6 +312,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		list = 1;
 	else if (argc && !strcmp(argv[0], "add"))
 		add = 1;
+	else if (argc && !strcmp(argv[0], "copy"))
+		copy = 1;
 	else if (argc && !strcmp(argv[0], "append"))
 		append = 1;
 	else if (argc && !strcmp(argv[0], "edit"))
@@ -326,7 +329,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		i = 0;
 	}
 
-	if (list + add + append + edit + show + remove + prune != 1)
+	if (list + add + copy + append + edit + show + remove + prune != 1)
 		usage_with_options(git_notes_usage, options);
 
 	if (msg.given && !(add || append || edit)) {
@@ -341,9 +344,20 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 			"Please use 'git notes add -f -m/-F/-c/-C' instead.\n");
 	}
 
-	if (force && !add) {
+	if (force && !(add || copy)) {
 		error("cannot use -f option with %s subcommand.", argv[0]);
 		usage_with_options(git_notes_usage, options);
+	}
+
+	if (copy) {
+		const char *from_ref;
+		if (argc < 3) {
+			error("too few parameters");
+			usage_with_options(git_notes_usage, options);
+		}
+		from_ref = argv[i++];
+		if (get_sha1(from_ref, from_obj))
+			die("Failed to resolve '%s' as a valid ref.", from_ref);
 	}
 
 	given_object = argc > i;
@@ -394,11 +408,11 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 
 	/* add/append/edit/remove/prune command */
 
-	if (add && note) {
+	if ((add || copy) && note) {
 		if (!force) {
-			error("Cannot add notes. Found existing notes for object"
+			error("Cannot %s notes. Found existing notes for object"
 			      " %s. Use '-f' to overwrite existing notes",
-			      sha1_to_hex(object));
+			      argv[0], sha1_to_hex(object));
 			retval = 1;
 			goto end;
 		}
@@ -416,6 +430,15 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		hashclr(new_note);
 		prune_notes(t);
 		goto commit;
+	} else if (copy) {
+		const unsigned char *from_note = get_note(t, from_obj);
+		if (!from_note) {
+			error("Missing notes on source object %s. Cannot copy.",
+			      sha1_to_hex(from_obj));
+			retval = 1;
+			goto end;
+		}
+		hashcpy(new_note, from_note);
 	} else
 		create_note(object, &msg, append, note, new_note);
 

@@ -581,4 +581,67 @@ test_expect_success 'append to note from other note with "git notes append -c"' 
 	test_cmp expect actual
 '
 
+cat > expect << EOF
+commit 6352c5e33dbcab725fe0579be16aa2ba8eb369be
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:23:13 2005 -0700
+
+    11th
+
+Notes:
+    other note
+$whitespace
+    yet another note
+EOF
+
+test_expect_success 'copy note with "git notes copy"' '
+	: > a11 &&
+	git add a11 &&
+	test_tick &&
+	git commit -m 11th &&
+	git notes copy HEAD^ HEAD &&
+	git log -1 > actual &&
+	test_cmp expect actual &&
+	test "$(git notes list HEAD)" = "$(git notes list HEAD^)"
+'
+
+test_expect_success 'prevent overwrite with "git notes copy"' '
+	test_must_fail git notes copy HEAD~2 HEAD &&
+	git log -1 > actual &&
+	test_cmp expect actual &&
+	test "$(git notes list HEAD)" = "$(git notes list HEAD^)"
+'
+
+cat > expect << EOF
+commit 6352c5e33dbcab725fe0579be16aa2ba8eb369be
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:23:13 2005 -0700
+
+    11th
+
+Notes:
+    yet another note
+$whitespace
+    yet another note
+EOF
+
+test_expect_success 'allow overwrite with "git notes copy -f"' '
+	git notes copy -f HEAD~2 HEAD &&
+	git log -1 > actual &&
+	test_cmp expect actual &&
+	test "$(git notes list HEAD)" = "$(git notes list HEAD~2)"
+'
+
+test_expect_success 'cannot copy note from object without notes' '
+	: > a12 &&
+	git add a12 &&
+	test_tick &&
+	git commit -m 12th &&
+	: > a13 &&
+	git add a13 &&
+	test_tick &&
+	git commit -m 13th &&
+	test_must_fail git notes copy HEAD^ HEAD
+'
+
 test_done
