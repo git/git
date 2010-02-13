@@ -12,8 +12,8 @@ echo "$MSG" > "$1"
 echo "$MSG" >& 2
 EOF
 chmod a+x fake_editor.sh
-VISUAL=./fake_editor.sh
-export VISUAL
+GIT_EDITOR=./fake_editor.sh
+export GIT_EDITOR
 
 test_expect_success 'cannot annotate non-existing HEAD' '
 	(MSG=3 && export MSG && test_must_fail git notes edit)
@@ -56,8 +56,17 @@ test_expect_success 'handle empty notes gracefully' '
 
 test_expect_success 'create notes' '
 	git config core.notesRef refs/notes/commits &&
+	MSG=b0 git notes edit &&
+	test ! -f .git/NOTES_EDITMSG &&
+	test 1 = $(git ls-tree refs/notes/commits | wc -l) &&
+	test b0 = $(git notes show) &&
+	git show HEAD^ &&
+	test_must_fail git notes show HEAD^
+'
+
+test_expect_success 'edit existing notes' '
 	MSG=b1 git notes edit &&
-	test ! -f .git/new-notes &&
+	test ! -f .git/NOTES_EDITMSG &&
 	test 1 = $(git ls-tree refs/notes/commits | wc -l) &&
 	test b1 = $(git notes show) &&
 	git show HEAD^ &&
@@ -110,19 +119,16 @@ test_expect_success 'show multi-line notes' '
 	git log -2 > output &&
 	test_cmp expect-multiline output
 '
-test_expect_success 'create -m and -F notes (setup)' '
+test_expect_success 'create -F notes (setup)' '
 	: > a4 &&
 	git add a4 &&
 	test_tick &&
 	git commit -m 4th &&
 	echo "xyzzy" > note5 &&
-	git notes edit -m spam -F note5 -m "foo
-bar
-baz"
+	git notes edit -F note5
 '
 
-whitespace="    "
-cat > expect-m-and-F << EOF
+cat > expect-F << EOF
 commit 15023535574ded8b1a89052b32673f84cf9582b8
 Author: A U Thor <author@example.com>
 Date:   Thu Apr 7 15:16:13 2005 -0700
@@ -130,21 +136,15 @@ Date:   Thu Apr 7 15:16:13 2005 -0700
     4th
 
 Notes:
-    spam
-$whitespace
     xyzzy
-$whitespace
-    foo
-    bar
-    baz
 EOF
 
-printf "\n" >> expect-m-and-F
-cat expect-multiline >> expect-m-and-F
+printf "\n" >> expect-F
+cat expect-multiline >> expect-F
 
-test_expect_success 'show -m and -F notes' '
+test_expect_success 'show -F notes' '
 	git log -3 > output &&
-	test_cmp expect-m-and-F output
+	test_cmp expect-F output
 '
 
 cat >expect << EOF
@@ -164,13 +164,7 @@ test_expect_success 'git log --pretty=raw does not show notes' '
 cat >>expect <<EOF
 
 Notes:
-    spam
-$whitespace
     xyzzy
-$whitespace
-    foo
-    bar
-    baz
 EOF
 test_expect_success 'git log --show-notes' '
 	git log -1 --pretty=raw --show-notes >output &&
@@ -179,17 +173,17 @@ test_expect_success 'git log --show-notes' '
 
 test_expect_success 'git log --no-notes' '
 	git log -1 --no-notes >output &&
-	! grep spam output
+	! grep xyzzy output
 '
 
 test_expect_success 'git format-patch does not show notes' '
 	git format-patch -1 --stdout >output &&
-	! grep spam output
+	! grep xyzzy output
 '
 
 test_expect_success 'git format-patch --show-notes does show notes' '
 	git format-patch --show-notes -1 --stdout >output &&
-	grep spam output
+	grep xyzzy output
 '
 
 for pretty in \
@@ -202,19 +196,22 @@ do
 	esac
 	test_expect_success "git show $pretty does$not show notes" '
 		git show $p >output &&
-		eval "$negate grep spam output"
+		eval "$negate grep xyzzy output"
 	'
 done
 
-test_expect_success 'create other note on a different notes ref (setup)' '
+test_expect_success 'create -m notes (setup)' '
 	: > a5 &&
 	git add a5 &&
 	test_tick &&
 	git commit -m 5th &&
-	GIT_NOTES_REF="refs/notes/other" git notes edit -m "other note"
+	git notes edit -m spam -m "foo
+bar
+baz"
 '
 
-cat > expect-other << EOF
+whitespace="    "
+cat > expect-m << EOF
 commit bd1753200303d0a0344be813e504253b3d98e74d
 Author: A U Thor <author@example.com>
 Date:   Thu Apr 7 15:17:13 2005 -0700
@@ -222,15 +219,46 @@ Date:   Thu Apr 7 15:17:13 2005 -0700
     5th
 
 Notes:
+    spam
+$whitespace
+    foo
+    bar
+    baz
+EOF
+
+printf "\n" >> expect-m
+cat expect-F >> expect-m
+
+test_expect_success 'show -m notes' '
+	git log -4 > output &&
+	test_cmp expect-m output
+'
+
+test_expect_success 'create other note on a different notes ref (setup)' '
+	: > a6 &&
+	git add a6 &&
+	test_tick &&
+	git commit -m 6th &&
+	GIT_NOTES_REF="refs/notes/other" git notes edit -m "other note"
+'
+
+cat > expect-other << EOF
+commit 387a89921c73d7ed72cd94d179c1c7048ca47756
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:18:13 2005 -0700
+
+    6th
+
+Notes:
     other note
 EOF
 
 cat > expect-not-other << EOF
-commit bd1753200303d0a0344be813e504253b3d98e74d
+commit 387a89921c73d7ed72cd94d179c1c7048ca47756
 Author: A U Thor <author@example.com>
-Date:   Thu Apr 7 15:17:13 2005 -0700
+Date:   Thu Apr 7 15:18:13 2005 -0700
 
-    5th
+    6th
 EOF
 
 test_expect_success 'Do not show note on other ref by default' '

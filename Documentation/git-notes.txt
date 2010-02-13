@@ -37,14 +37,12 @@ OPTIONS
 -------
 -m <msg>::
 	Use the given note message (instead of prompting).
-	If multiple `-m` (or `-F`) options are given, their
-	values are concatenated as separate paragraphs.
+	If multiple `-m` options are given, their values
+	are concatenated as separate paragraphs.
 
 -F <file>::
 	Take the note message from the given file.  Use '-' to
 	read the note message from the standard input.
-	If multiple `-F` (or `-m`) options are given, their
-	values are concatenated as separate paragraphs.
 
 
 Author
