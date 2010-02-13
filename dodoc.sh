@@ -77,6 +77,15 @@ MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
 BLK_SHA1=YesPlease
 GNU_ROFF=YesPlease'
 
+case "$NID" in
+?*-?*) ;;
+?*)
+	make clean &&
+	rm -fr doc-html-inst doc-man-inst &&
+	mkdir doc-html-inst doc-man-inst || exit
+	;;
+esac
+
 make >./:html.log 2>&1 \
 	-C Documentation -j 2 $dd \
 	WEBDOC_DEST="$DOCREPO/doc-html-inst" install-webdoc || exit
