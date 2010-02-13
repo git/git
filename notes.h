@@ -36,6 +36,7 @@ int combine_notes_ignore(unsigned char *cur_sha1, const unsigned char *new_sha1)
  */
 extern struct notes_tree {
 	struct int_node *root;
+	struct non_note *first_non_note, *prev_non_note;
 	char *ref;
 	combine_notes_fn *combine_notes;
 	int initialized;

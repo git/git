@@ -37,6 +37,21 @@ struct leaf_node {
 	unsigned char val_sha1[20];
 };
 
+/*
+ * A notes tree may contain entries that are not notes, and that do not follow
+ * the naming conventions of notes. There are typically none/few of these, but
+ * we still need to keep track of them. Keep a simple linked list sorted alpha-
+ * betically on the non-note path. The list is populated when parsing tree
+ * objects in load_subtree(), and the non-notes are correctly written back into
+ * the tree objects produced by write_notes_tree().
+ */
+struct non_note {
+	struct non_note *next; /* grounded (last->next == NULL) */
+	char *path;
+	unsigned int mode;
+	unsigned char sha1[20];
+};
+
 #define PTR_TYPE_NULL     0
 #define PTR_TYPE_INTERNAL 1
 #define PTR_TYPE_NOTE     2
@@ -53,8 +68,8 @@ struct leaf_node {
 
 struct notes_tree default_notes_tree;
 
-static void load_subtree(struct leaf_node *subtree, struct int_node *node,
-		unsigned int n);
+static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
+		struct int_node *node, unsigned int n);
 
 /*
  * Search the tree until the appropriate location for the given key is found:
@@ -71,7 +86,7 @@ static void load_subtree(struct leaf_node *subtree, struct int_node *node,
  *      - an unused leaf node (NULL)
  *      In any case, set *tree and *n, and return pointer to the tree location.
  */
-static void **note_tree_search(struct int_node **tree,
+static void **note_tree_search(struct notes_tree *t, struct int_node **tree,
 		unsigned char *n, const unsigned char *key_sha1)
 {
 	struct leaf_node *l;
@@ -83,9 +98,9 @@ static void **note_tree_search(struct int_node **tree,
 		if (!SUBTREE_SHA1_PREFIXCMP(key_sha1, l->key_sha1)) {
 			/* unpack tree and resume search */
 			(*tree)->a[0] = NULL;
-			load_subtree(l, *tree, *n);
+			load_subtree(t, l, *tree, *n);
 			free(l);
-			return note_tree_search(tree, n, key_sha1);
+			return note_tree_search(t, tree, n, key_sha1);
 		}
 	}
 
@@ -95,15 +110,15 @@ static void **note_tree_search(struct int_node **tree,
 	case PTR_TYPE_INTERNAL:
 		*tree = CLR_PTR_TYPE(p);
 		(*n)++;
-		return note_tree_search(tree, n, key_sha1);
+		return note_tree_search(t, tree, n, key_sha1);
 	case PTR_TYPE_SUBTREE:
 		l = (struct leaf_node *) CLR_PTR_TYPE(p);
 		if (!SUBTREE_SHA1_PREFIXCMP(key_sha1, l->key_sha1)) {
 			/* unpack tree and resume search */
 			(*tree)->a[i] = NULL;
-			load_subtree(l, *tree, *n);
+			load_subtree(t, l, *tree, *n);
 			free(l);
-			return note_tree_search(tree, n, key_sha1);
+			return note_tree_search(t, tree, n, key_sha1);
 		}
 		/* fall through */
 	default:
@@ -116,10 +131,11 @@ static void **note_tree_search(struct int_node **tree,
  * Search to the tree location appropriate for the given key:
  * If a note entry with matching key, return the note entry, else return NULL.
  */
-static struct leaf_node *note_tree_find(struct int_node *tree, unsigned char n,
+static struct leaf_node *note_tree_find(struct notes_tree *t,
+		struct int_node *tree, unsigned char n,
 		const unsigned char *key_sha1)
 {
-	void **p = note_tree_search(&tree, &n, key_sha1);
+	void **p = note_tree_search(t, &tree, &n, key_sha1);
 	if (GET_PTR_TYPE(*p) == PTR_TYPE_NOTE) {
 		struct leaf_node *l = (struct leaf_node *) CLR_PTR_TYPE(*p);
 		if (!hashcmp(key_sha1, l->key_sha1))
@@ -141,13 +157,13 @@ static struct leaf_node *note_tree_find(struct int_node *tree, unsigned char n,
  * - Else, create a new int_node, holding both the node-at-location and the
  *   node-to-be-inserted, and store the new int_node into the location.
  */
-static void note_tree_insert(struct int_node *tree, unsigned char n,
-		struct leaf_node *entry, unsigned char type,
+static void note_tree_insert(struct notes_tree *t, struct int_node *tree,
+		unsigned char n, struct leaf_node *entry, unsigned char type,
 		combine_notes_fn combine_notes)
 {
 	struct int_node *new_node;
 	struct leaf_node *l;
-	void **p = note_tree_search(&tree, &n, entry->key_sha1);
+	void **p = note_tree_search(t, &tree, &n, entry->key_sha1);
 
 	assert(GET_PTR_TYPE(entry) == 0); /* no type bits set */
 	l = (struct leaf_node *) CLR_PTR_TYPE(*p);
@@ -178,7 +194,7 @@ static void note_tree_insert(struct int_node *tree, unsigned char n,
 			if (!SUBTREE_SHA1_PREFIXCMP(l->key_sha1,
 						    entry->key_sha1)) {
 				/* unpack 'entry' */
-				load_subtree(entry, tree, n);
+				load_subtree(t, entry, tree, n);
 				free(entry);
 				return;
 			}
@@ -189,9 +205,10 @@ static void note_tree_insert(struct int_node *tree, unsigned char n,
 		if (!SUBTREE_SHA1_PREFIXCMP(entry->key_sha1, l->key_sha1)) {
 			/* unpack 'l' and restart insert */
 			*p = NULL;
-			load_subtree(l, tree, n);
+			load_subtree(t, l, tree, n);
 			free(l);
-			note_tree_insert(tree, n, entry, type, combine_notes);
+			note_tree_insert(t, tree, n, entry, type,
+					 combine_notes);
 			return;
 		}
 		break;
@@ -201,9 +218,10 @@ static void note_tree_insert(struct int_node *tree, unsigned char n,
 	assert(GET_PTR_TYPE(*p) == PTR_TYPE_NOTE ||
 	       GET_PTR_TYPE(*p) == PTR_TYPE_SUBTREE);
 	new_node = (struct int_node *) xcalloc(sizeof(struct int_node), 1);
-	note_tree_insert(new_node, n + 1, l, GET_PTR_TYPE(*p), combine_notes);
+	note_tree_insert(t, new_node, n + 1, l, GET_PTR_TYPE(*p),
+			 combine_notes);
 	*p = SET_PTR_TYPE(new_node, PTR_TYPE_INTERNAL);
-	note_tree_insert(new_node, n + 1, entry, type, combine_notes);
+	note_tree_insert(t, new_node, n + 1, entry, type, combine_notes);
 }
 
 /*
@@ -249,7 +267,7 @@ static void note_tree_remove(struct notes_tree *t, struct int_node *tree,
 	struct leaf_node *l;
 	struct int_node *parent_stack[20];
 	unsigned char i, j;
-	void **p = note_tree_search(&tree, &n, entry->key_sha1);
+	void **p = note_tree_search(t, &tree, &n, entry->key_sha1);
 
 	assert(GET_PTR_TYPE(entry) == 0); /* no type bits set */
 	if (GET_PTR_TYPE(*p) != PTR_TYPE_NOTE)
@@ -324,14 +342,67 @@ static int get_sha1_hex_segment(const char *hex, unsigned int hex_len,
 	return len;
 }
 
-static void load_subtree(struct leaf_node *subtree, struct int_node *node,
-		unsigned int n)
+static int non_note_cmp(const struct non_note *a, const struct non_note *b)
+{
+	return strcmp(a->path, b->path);
+}
+
+static void add_non_note(struct notes_tree *t, const char *path,
+		unsigned int mode, const unsigned char *sha1)
+{
+	struct non_note *p = t->prev_non_note, *n;
+	n = (struct non_note *) xmalloc(sizeof(struct non_note));
+	n->next = NULL;
+	n->path = xstrdup(path);
+	n->mode = mode;
+	hashcpy(n->sha1, sha1);
+	t->prev_non_note = n;
+
+	if (!t->first_non_note) {
+		t->first_non_note = n;
+		return;
+	}
+
+	if (non_note_cmp(p, n) < 0)
+		; /* do nothing  */
+	else if (non_note_cmp(t->first_non_note, n) <= 0)
+		p = t->first_non_note;
+	else {
+		/* n sorts before t->first_non_note */
+		n->next = t->first_non_note;
+		t->first_non_note = n;
+		return;
+	}
+
+	/* n sorts equal or after p */
+	while (p->next && non_note_cmp(p->next, n) <= 0)
+		p = p->next;
+
+	if (non_note_cmp(p, n) == 0) { /* n ~= p; overwrite p with n */
+		assert(strcmp(p->path, n->path) == 0);
+		p->mode = n->mode;
+		hashcpy(p->sha1, n->sha1);
+		free(n);
+		t->prev_non_note = p;
+		return;
+	}
+
+	/* n sorts between p and p->next */
+	n->next = p->next;
+	p->next = n;
+}
+
+static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
+		struct int_node *node, unsigned int n)
 {
 	unsigned char object_sha1[20];
 	unsigned int prefix_len;
 	void *buf;
 	struct tree_desc desc;
 	struct name_entry entry;
+	int len, path_len;
+	unsigned char type;
+	struct leaf_node *l;
 
 	buf = fill_tree_descriptor(&desc, subtree->val_sha1);
 	if (!buf)
@@ -342,30 +413,67 @@ static void load_subtree(struct leaf_node *subtree, struct int_node *node,
 	assert(prefix_len * 2 >= n);
 	memcpy(object_sha1, subtree->key_sha1, prefix_len);
 	while (tree_entry(&desc, &entry)) {
-		int len = get_sha1_hex_segment(entry.path, strlen(entry.path),
+		path_len = strlen(entry.path);
+		len = get_sha1_hex_segment(entry.path, path_len,
 				object_sha1 + prefix_len, 20 - prefix_len);
 		if (len < 0)
-			continue; /* entry.path is not a SHA1 sum. Skip */
+			goto handle_non_note; /* entry.path is not a SHA1 */
 		len += prefix_len;
 
 		/*
 		 * If object SHA1 is complete (len == 20), assume note object
-		 * If object SHA1 is incomplete (len < 20), assume note subtree
+		 * If object SHA1 is incomplete (len < 20), and current
+		 * component consists of 2 hex chars, assume note subtree
 		 */
 		if (len <= 20) {
-			unsigned char type = PTR_TYPE_NOTE;
-			struct leaf_node *l = (struct leaf_node *)
+			type = PTR_TYPE_NOTE;
+			l = (struct leaf_node *)
 				xcalloc(sizeof(struct leaf_node), 1);
 			hashcpy(l->key_sha1, object_sha1);
 			hashcpy(l->val_sha1, entry.sha1);
 			if (len < 20) {
-				if (!S_ISDIR(entry.mode))
-					continue; /* entry cannot be subtree */
+				if (!S_ISDIR(entry.mode) || path_len != 2)
+					goto handle_non_note; /* not subtree */
 				l->key_sha1[19] = (unsigned char) len;
 				type = PTR_TYPE_SUBTREE;
 			}
-			note_tree_insert(node, n, l, type,
+			note_tree_insert(t, node, n, l, type,
 					 combine_notes_concatenate);
+		}
+		continue;
+
+handle_non_note:
+		/*
+		 * Determine full path for this non-note entry:
+		 * The filename is already found in entry.path, but the
+		 * directory part of the path must be deduced from the subtree
+		 * containing this entry. We assume here that the overall notes
+		 * tree follows a strict byte-based progressive fanout
+		 * structure (i.e. using 2/38, 2/2/36, etc. fanouts, and not
+		 * e.g. 4/36 fanout). This means that if a non-note is found at
+		 * path "dead/beef", the following code will register it as
+		 * being found on "de/ad/beef".
+		 * On the other hand, if you use such non-obvious non-note
+		 * paths in the middle of a notes tree, you deserve what's
+		 * coming to you ;). Note that for non-notes that are not
+		 * SHA1-like at the top level, there will be no problems.
+		 *
+		 * To conclude, it is strongly advised to make sure non-notes
+		 * have at least one non-hex character in the top-level path
+		 * component.
+		 */
+		{
+			char non_note_path[PATH_MAX];
+			char *p = non_note_path;
+			const char *q = sha1_to_hex(subtree->key_sha1);
+			int i;
+			for (i = 0; i < prefix_len; i++) {
+				*p++ = *q++;
+				*p++ = *q++;
+				*p++ = '/';
+			}
+			strcpy(p, entry.path);
+			add_non_note(t, non_note_path, entry.mode, entry.sha1);
 		}
 	}
 	free(buf);
@@ -426,9 +534,9 @@ static void construct_path_with_fanout(const unsigned char *sha1,
 	strcpy(path + i, hex_sha1 + j);
 }
 
-static int for_each_note_helper(struct int_node *tree, unsigned char n,
-		unsigned char fanout, int flags, each_note_fn fn,
-		void *cb_data)
+static int for_each_note_helper(struct notes_tree *t, struct int_node *tree,
+		unsigned char n, unsigned char fanout, int flags,
+		each_note_fn fn, void *cb_data)
 {
 	unsigned int i;
 	void *p;
@@ -443,7 +551,7 @@ redo:
 		switch (GET_PTR_TYPE(p)) {
 		case PTR_TYPE_INTERNAL:
 			/* recurse into int_node */
-			ret = for_each_note_helper(CLR_PTR_TYPE(p), n + 1,
+			ret = for_each_note_helper(t, CLR_PTR_TYPE(p), n + 1,
 				fanout, flags, fn, cb_data);
 			break;
 		case PTR_TYPE_SUBTREE:
@@ -481,7 +589,7 @@ redo:
 			    !(flags & FOR_EACH_NOTE_DONT_UNPACK_SUBTREES)) {
 				/* unpack subtree and resume traversal */
 				tree->a[i] = NULL;
-				load_subtree(l, tree, n);
+				load_subtree(t, l, tree, n);
 				free(l);
 				goto redo;
 			}
@@ -596,7 +704,28 @@ static int write_each_note_helper(struct tree_write_stack *tws,
 
 struct write_each_note_data {
 	struct tree_write_stack *root;
+	struct non_note *next_non_note;
 };
+
+static int write_each_non_note_until(const char *note_path,
+		struct write_each_note_data *d)
+{
+	struct non_note *n = d->next_non_note;
+	int cmp, ret;
+	while (n && (!note_path || (cmp = strcmp(n->path, note_path)) <= 0)) {
+		if (note_path && cmp == 0)
+			; /* do nothing, prefer note to non-note */
+		else {
+			ret = write_each_note_helper(d->root, n->path, n->mode,
+						     n->sha1);
+			if (ret)
+				return ret;
+		}
+		n = n->next;
+	}
+	d->next_non_note = n;
+	return 0;
+}
 
 static int write_each_note(const unsigned char *object_sha1,
 		const unsigned char *note_sha1, char *note_path,
@@ -615,7 +744,9 @@ static int write_each_note(const unsigned char *object_sha1,
 	}
 	assert(note_path_len <= 40 + 19);
 
-	return write_each_note_helper(d->root, note_path, mode, note_sha1);
+	/* Weave non-note entries into note entries */
+	return  write_each_non_note_until(note_path, d) ||
+		write_each_note_helper(d->root, note_path, mode, note_sha1);
 }
 
 int combine_notes_concatenate(unsigned char *cur_sha1,
@@ -696,6 +827,8 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 		combine_notes = combine_notes_concatenate;
 
 	t->root = (struct int_node *) xcalloc(sizeof(struct int_node), 1);
+	t->first_non_note = NULL;
+	t->prev_non_note = NULL;
 	t->ref = notes_ref ? xstrdup(notes_ref) : NULL;
 	t->combine_notes = combine_notes;
 	t->initialized = 1;
@@ -709,7 +842,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 
 	hashclr(root_tree.key_sha1);
 	hashcpy(root_tree.val_sha1, sha1);
-	load_subtree(&root_tree, t->root, 0);
+	load_subtree(t, &root_tree, t->root, 0);
 }
 
 void add_note(struct notes_tree *t, const unsigned char *object_sha1,
@@ -725,7 +858,7 @@ void add_note(struct notes_tree *t, const unsigned char *object_sha1,
 	l = (struct leaf_node *) xmalloc(sizeof(struct leaf_node));
 	hashcpy(l->key_sha1, object_sha1);
 	hashcpy(l->val_sha1, note_sha1);
-	note_tree_insert(t->root, 0, l, PTR_TYPE_NOTE, combine_notes);
+	note_tree_insert(t, t->root, 0, l, PTR_TYPE_NOTE, combine_notes);
 }
 
 void remove_note(struct notes_tree *t, const unsigned char *object_sha1)
@@ -748,7 +881,7 @@ const unsigned char *get_note(struct notes_tree *t,
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
-	found = note_tree_find(t->root, 0, object_sha1);
+	found = note_tree_find(t, t->root, 0, object_sha1);
 	return found ? found->val_sha1 : NULL;
 }
 
@@ -758,7 +891,7 @@ int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
-	return for_each_note_helper(t->root, 0, 0, flags, fn, cb_data);
+	return for_each_note_helper(t, t->root, 0, 0, flags, fn, cb_data);
 }
 
 int write_notes_tree(struct notes_tree *t, unsigned char *result)
@@ -776,11 +909,13 @@ int write_notes_tree(struct notes_tree *t, unsigned char *result)
 	strbuf_init(&root.buf, 256 * (32 + 40)); /* assume 256 entries */
 	root.path[0] = root.path[1] = '\0';
 	cb_data.root = &root;
+	cb_data.next_non_note = t->first_non_note;
 
 	/* Write tree objects representing current notes tree */
 	ret = for_each_note(t, FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
 				FOR_EACH_NOTE_YIELD_SUBTREES,
 			write_each_note, &cb_data) ||
+		write_each_non_note_until(NULL, &cb_data) ||
 		tree_write_stack_finish_subtree(&root) ||
 		write_sha1_file(root.buf.buf, root.buf.len, tree_type, result);
 	strbuf_release(&root.buf);
@@ -794,6 +929,12 @@ void free_notes(struct notes_tree *t)
 	if (t->root)
 		note_tree_free(t->root);
 	free(t->root);
+	while (t->first_non_note) {
+		t->prev_non_note = t->first_non_note->next;
+		free(t->first_non_note->path);
+		free(t->first_non_note);
+		t->first_non_note = t->prev_non_note;
+	}
 	free(t->ref);
 	memset(t, 0, sizeof(struct notes_tree));
 }
