@@ -176,12 +176,17 @@ If --porcelain is used, then each line of the output is of the form:
  <flag> \t <from>:<to> \t <summary> (<reason>)
 -------------------------------
 
+The status of up-to-date refs is shown only if --porcelain or --verbose
+option is used.
+
 flag::
-	A single character indicating the status of the ref. This is
-	blank for a successfully pushed ref, `!` for a ref that was
-	rejected or failed to push, and '=' for a ref that was up to
-	date and did not need pushing (note that the status of up to
-	date refs is shown only when `git push` is running verbosely).
+	A single character indicating the status of the ref:
+(space);; for a successfully pushed fast-forward;
+`{plus}`;; for a successful forced update;
+`-`;; for a successfully deleted ref;
+`*`;; for a successfully pushed new ref;
+`!`;; for a ref that was rejected or failed to push; and
+`=`;; for a ref that was up to date and did not need pushing.
 
 summary::
 	For a successfully pushed ref, the summary shows the old and new

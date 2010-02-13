@@ -25,7 +25,8 @@ p=              pass it through git-apply
 patch-format=   format the patch(es) are in
 reject          pass it through git-apply
 resolvemsg=     override error message when patch failure occurs
-r,resolved      to be used after a patch failure
+continue        continue applying patches after resolving a conflict
+r,resolved      synonyms for --continue
 skip            skip the current patch
 abort           restore the original branch and abort the patching operation.
 committer-date-is-author-date    lie about committer date
@@ -318,7 +319,7 @@ do
 		scissors=t ;;
 	--no-scissors)
 		scissors=f ;;
-	-r|--resolved)
+	-r|--resolved|--continue)
 		resolved=t ;;
 	--skip)
 		skip=t ;;

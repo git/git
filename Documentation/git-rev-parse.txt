@@ -244,7 +244,7 @@ when you run 'git merge'.
 * The special construct '@\{-<n>\}' means the <n>th branch checked out
   before the current one.
 
-* The suffix '@{upstream}' to a ref (short form 'ref@{u}') refers to
+* The suffix '@\{upstream\}' to a ref (short form 'ref@\{u\}') refers to
   the branch the ref is set to build on top of.  Missing ref defaults
   to the current branch.
 
