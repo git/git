@@ -287,7 +287,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 
 	int list = 0, add = 0, append = 0, edit = 0, show = 0, remove = 0,
 	    prune = 0, force = 0;
-	int given_object;
+	int given_object = 0, i = 1, retval = 0;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
 		OPT_GROUP("Notes options"),
@@ -321,8 +321,10 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		remove = 1;
 	else if (argc && !strcmp(argv[0], "prune"))
 		prune = 1;
-	else if (!argc)
+	else if (!argc) {
 		list = 1; /* Default to 'list' if no other subcommand given */
+		i = 0;
+	}
 
 	if (list + add + append + edit + show + remove + prune != 1)
 		usage_with_options(git_notes_usage, options);
@@ -344,9 +346,10 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_notes_usage, options);
 	}
 
-	given_object = argc == 2;
-	object_ref = given_object ? argv[1] : "HEAD";
-	if (argc > 2 || (prune && argc > 1)) {
+	given_object = argc > i;
+	object_ref = given_object ? argv[i++] : "HEAD";
+
+	if (argc > i || (prune && given_object)) {
 		error("too many parameters");
 		usage_with_options(git_notes_usage, options);
 	}
@@ -369,34 +372,38 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		if (given_object) {
 			if (note) {
 				puts(sha1_to_hex(note));
-				return 0;
+				goto end;
 			}
-		} else
-			return for_each_note(t, 0, list_each_note, NULL);
+		} else {
+			retval = for_each_note(t, 0, list_each_note, NULL);
+			goto end;
+		}
 	}
 
 	/* show command */
 
 	if ((list || show) && !note) {
 		error("No note found for object %s.", sha1_to_hex(object));
-		return 1;
+		retval = 1;
+		goto end;
 	} else if (show) {
 		const char *show_args[3] = {"show", sha1_to_hex(note), NULL};
-		return execv_git_cmd(show_args);
+		retval = execv_git_cmd(show_args);
+		goto end;
 	}
 
 	/* add/append/edit/remove/prune command */
 
 	if (add && note) {
-		if (force)
-			fprintf(stderr, "Overwriting existing notes for object %s\n",
-				sha1_to_hex(object));
-		else {
-			error("Cannot add notes. Found existing notes for object %s. "
-			      "Use '-f' to overwrite existing notes",
+		if (!force) {
+			error("Cannot add notes. Found existing notes for object"
+			      " %s. Use '-f' to overwrite existing notes",
 			      sha1_to_hex(object));
-			return 1;
+			retval = 1;
+			goto end;
 		}
+		fprintf(stderr, "Overwriting existing notes for object %s\n",
+			sha1_to_hex(object));
 	}
 
 	if (remove) {
@@ -408,18 +415,22 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	if (prune) {
 		hashclr(new_note);
 		prune_notes(t);
-	} else {
+		goto commit;
+	} else
 		create_note(object, &msg, append, note, new_note);
-		if (is_null_sha1(new_note))
-			remove_note(t, object);
-		else
-			add_note(t, object, new_note, combine_notes_overwrite);
-	}
-	snprintf(logmsg, sizeof(logmsg), "Note %s by 'git notes %s'",
+
+	if (is_null_sha1(new_note))
+		remove_note(t, object);
+	else
+		add_note(t, object, new_note, combine_notes_overwrite);
+
+commit:
+	snprintf(logmsg, sizeof(logmsg), "Notes %s by 'git notes %s'",
 		 is_null_sha1(new_note) ? "removed" : "added", argv[0]);
 	commit_notes(t, logmsg);
 
+end:
 	free_notes(t);
 	strbuf_release(&(msg.buf));
-	return 0;
+	return retval;
 }
