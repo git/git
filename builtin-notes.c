@@ -217,9 +217,9 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct option options[] = {
 		OPT_GROUP("Notes edit options"),
-		OPT_CALLBACK('m', NULL, &msg, "msg",
+		OPT_CALLBACK('m', "message", &msg, "msg",
 			     "note contents as a string", parse_msg_arg),
-		OPT_FILENAME('F', NULL, &msgfile, "note contents in a file"),
+		OPT_FILENAME('F', "file", &msgfile, "note contents in a file"),
 		OPT_END()
 	};
 

@@ -58,11 +58,13 @@ prune::
 OPTIONS
 -------
 -m <msg>::
+--message=<msg>::
 	Use the given note message (instead of prompting).
 	If multiple `-m` options are given, their values
 	are concatenated as separate paragraphs.
 
 -F <file>::
+--file=<file>::
 	Take the note message from the given file.  Use '-' to
 	read the note message from the standard input.
 
