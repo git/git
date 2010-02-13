@@ -21,6 +21,7 @@ static const char * const git_notes_usage[] = {
 	"git notes edit [-m <msg> | -F <file>] [<object>]",
 	"git notes show [<object>]",
 	"git notes remove [<object>]",
+	"git notes prune",
 	NULL
 };
 
@@ -201,7 +202,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	const char *object_ref;
 	char logmsg[100];
 
-	int edit = 0, show = 0, remove = 0;
+	int edit = 0, show = 0, remove = 0, prune = 0;
 	const char *msgfile = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct option options[] = {
@@ -222,8 +223,10 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		show = 1;
 	else if (argc && !strcmp(argv[0], "remove"))
 		remove = 1;
+	else if (argc && !strcmp(argv[0], "prune"))
+		prune = 1;
 
-	if (edit + show + remove != 1)
+	if (edit + show + remove + prune != 1)
 		usage_with_options(git_notes_usage, options);
 
 	if ((msg.given || msgfile) && !edit) {
@@ -237,7 +240,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	}
 
 	object_ref = argc == 2 ? argv[1] : "HEAD";
-	if (argc > 2) {
+	if (argc > 2 || (prune && argc > 1)) {
 		error("too many parameters");
 		usage_with_options(git_notes_usage, options);
 	}
@@ -264,7 +267,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		return execv_git_cmd(show_args);
 	}
 
-	/* edit/remove command */
+	/* edit/remove/prune command */
 
 	if (remove)
 		strbuf_reset(&buf);
@@ -278,12 +281,17 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 			die_errno("could not open or read '%s'", msgfile);
 	}
 
-	create_note(object, &buf, msg.given || msgfile || remove, note,
-		    new_note);
-	if (is_null_sha1(new_note))
-		remove_note(t, object);
-	else
-		add_note(t, object, new_note, combine_notes_overwrite);
+	if (prune) {
+		hashclr(new_note);
+		prune_notes(t);
+	} else {
+		create_note(object, &buf, msg.given || msgfile || remove, note,
+			    new_note);
+		if (is_null_sha1(new_note))
+			remove_note(t, object);
+		else
+			add_note(t, object, new_note, combine_notes_overwrite);
+	}
 	snprintf(logmsg, sizeof(logmsg), "Note %s by 'git notes %s'",
 		 is_null_sha1(new_note) ? "removed" : "added", argv[0]);
 	commit_notes(t, logmsg);
