@@ -6,7 +6,7 @@
 #include "cache.h"
 #include "exec_cmd.h"
 
-static const char var_usage[] = "git var [-l | <variable>]";
+static const char var_usage[] = "git var (-l | <variable>)";
 
 static const char *editor(int flag)
 {
