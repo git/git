@@ -331,11 +331,14 @@ int init_db(const char *template_dir, unsigned int flags)
 		git_config_set("receive.denyNonFastforwards", "true");
 	}
 
-	if (!(flags & INIT_DB_QUIET))
-		printf("%s%s Git repository in %s/\n",
+	if (!(flags & INIT_DB_QUIET)) {
+		const char *git_dir = get_git_dir();
+		int len = strlen(git_dir);
+		printf("%s%s Git repository in %s%s\n",
 		       reinit ? "Reinitialized existing" : "Initialized empty",
 		       shared_repository ? " shared" : "",
-		       get_git_dir());
+		       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
+	}
 
 	return 0;
 }
