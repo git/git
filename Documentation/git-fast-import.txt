@@ -44,11 +44,17 @@ OPTIONS
 	not contain the old commit).
 
 --max-pack-size=<n>::
-	Maximum size of each output packfile, expressed in MiB.
-	The default is 4096 (4 GiB) as that is the maximum allowed
+	Maximum size of each output packfile.
+	The default is 4 GiB as that is the maximum allowed
 	packfile size (due to file format limitations). Some
 	importers may wish to lower this, such as to ensure the
 	resulting packfiles fit on CDs.
+
+--big-file-threshold=<n>::
+	Maximum size of a blob that fast-import will attempt to
+	create a delta for, expressed in bytes.  The default is 512m
+	(512 MiB).  Some importers may wish to lower this on systems
+	with constrained memory.
 
 --depth=<n>::
 	Maximum delta depth, for blob and tree deltification.

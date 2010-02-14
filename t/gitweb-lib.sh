@@ -25,6 +25,7 @@ our \$favicon = 'file:///$TEST_DIRECTORY/../gitweb/git-favicon.png';
 our \$projects_list = '';
 our \$export_ok = '';
 our \$strict_export = '';
+our \$maxload = undef;
 
 EOF
 

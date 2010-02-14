@@ -33,8 +33,8 @@ OPTIONS
 
 -f::
 --force::
-	If the git configuration specifies clean.requireForce as true,
-	'git clean' will refuse to run unless given -f or -n.
+	If the git configuration variable clean.requireForce is not set
+	to false, 'git clean' will refuse to run unless given -f or -n.
 
 -n::
 --dry-run::

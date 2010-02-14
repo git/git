@@ -53,7 +53,7 @@ void resolve_undo_write(struct strbuf *sb, struct string_list *resolve_undo)
 	for_each_string_list(write_one, resolve_undo, sb);
 }
 
-struct string_list *resolve_undo_read(void *data, unsigned long size)
+struct string_list *resolve_undo_read(const char *data, unsigned long size)
 {
 	struct string_list *resolve_undo;
 	size_t len;
@@ -93,7 +93,7 @@ struct string_list *resolve_undo_read(void *data, unsigned long size)
 				continue;
 			if (size < 20)
 				goto error;
-			hashcpy(ui->sha1[i], data);
+			hashcpy(ui->sha1[i], (const unsigned char *)data);
 			size -= 20;
 			data += 20;
 		}

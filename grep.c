@@ -57,11 +57,8 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
+	p->fixed = opt->fixed;
 
-	if (opt->fixed)
-		p->fixed = 1;
-	if (opt->regflags & REG_ICASE)
-		p->fixed = 0;
 	if (p->fixed)
 		return;
 

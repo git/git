@@ -33,7 +33,6 @@ test_expect_success \
     grep "403 - Snapshot format not allowed" gitweb.output &&
     gitweb_run "p=.git;a=snapshot;h=HEAD;sf=zip" &&
     grep "403 - Unsupported snapshot format" gitweb.output'
-test_debug 'cat gitweb.output'
 
 
 cat >>gitweb_config.perl <<\EOF
@@ -50,7 +49,6 @@ test_expect_success \
     grep "403 - Snapshot format not allowed" gitweb.output &&
     gitweb_run "p=.git;a=snapshot;h=HEAD;sf=zip" &&
     grep "Status: 200 OK" gitweb.output'
-test_debug 'cat gitweb.output'
 
 
 cat >>gitweb_config.perl <<\EOF
@@ -72,7 +70,7 @@ test_expect_success \
     'snapshots: tgz explicitly enabled' \
     'gitweb_run "p=.git;a=snapshot;h=HEAD;sf=tgz" &&
     grep "Status: 200 OK" gitweb.output'
-test_debug 'cat gitweb.output'
+test_debug 'cat gitweb.headers'
 
 
 # ----------------------------------------------------------------------
@@ -82,7 +80,7 @@ test_expect_success 'snapshots: good tree-ish id' '
 	gitweb_run "p=.git;a=snapshot;h=master;sf=tgz" &&
 	grep "Status: 200 OK" gitweb.output
 '
-test_debug 'cat gitweb.output'
+test_debug 'cat gitweb.headers'
 
 test_expect_success 'snapshots: bad tree-ish id' '
 	gitweb_run "p=.git;a=snapshot;h=frizzumFrazzum;sf=tgz" &&
@@ -105,13 +103,35 @@ test_expect_success 'snapshots: good object id' '
 	gitweb_run "p=.git;a=snapshot;h=$ID;sf=tgz" &&
 	grep "Status: 200 OK" gitweb.output
 '
-test_debug 'cat gitweb.output'
+test_debug 'cat gitweb.headers'
 
 test_expect_success 'snapshots: bad object id' '
 	gitweb_run "p=.git;a=snapshot;h=abcdef01234;sf=tgz" &&
 	grep "404 - Object does not exist" gitweb.output
 '
 test_debug 'cat gitweb.output'
+
+
+# ----------------------------------------------------------------------
+# load checking
+
+# always hit the load limit
+cat >>gitweb_config.perl <<\EOF
+our $maxload = -1;
+EOF
+
+test_expect_success 'load checking: load too high (default action)' '
+	gitweb_run "p=.git" &&
+	grep "Status: 503 Service Unavailable" gitweb.headers &&
+	grep "503 - The load average on the server is too high" gitweb.body
+'
+test_debug 'cat gitweb.log' # just in case
+test_debug 'cat gitweb.headers'
+
+# turn off load checking
+cat >>gitweb_config.perl <<\EOF
+our $maxload = undef;
+EOF
 
 
 test_done
