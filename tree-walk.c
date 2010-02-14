@@ -250,6 +250,7 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 
 	if (name[0] == '\0') {
 		hashcpy(sha1, root);
+		free(tree);
 		return 0;
 	}
 
