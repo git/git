@@ -701,7 +701,7 @@ cat >expect <<\EOF
 	trailingtilde = foo~
 EOF
 
-test_expect_success 'set --path' '
+test_expect_success NONMINGW 'set --path' '
 	git config --path path.home "~/" &&
 	git config --path path.normal "/dev/null" &&
 	git config --path path.trailingtilde "foo~" &&
@@ -713,14 +713,14 @@ $HOME/
 foo~
 EOF
 
-test_expect_success 'get --path' '
+test_expect_success NONMINGW 'get --path' '
 	git config --get --path path.home > result &&
 	git config --get --path path.normal >> result &&
 	git config --get --path path.trailingtilde >> result &&
 	test_cmp expect result
 '
 
-rm .git/config
+test_have_prereq NONMINGW && rm .git/config
 
 git config quote.leading " test"
 git config quote.ending "test "
