@@ -956,6 +956,7 @@ case $(uname -s) in
 	test_set_prereq POSIXPERM
 	test_set_prereq BSLASHPSPEC
 	test_set_prereq EXECKEEPSPID
+	test_set_prereq NONMINGW
 	;;
 esac
 
