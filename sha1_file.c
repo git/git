@@ -83,13 +83,6 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
-static inline int offset_1st_component(const char *path)
-{
-	if (has_dos_drive_prefix(path))
-		return 2 + (path[2] == '/');
-	return *path == '/';
-}
-
 int safe_create_leading_directories(char *path)
 {
 	char *pos = path + offset_1st_component(path);
