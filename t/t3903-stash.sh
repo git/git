@@ -194,6 +194,15 @@ test_expect_success 'pop -q is quiet' '
 	test ! -s output.out
 '
 
+test_expect_success 'pop -q --index works and is quiet' '
+	echo foo > file &&
+	git add file &&
+	git stash save --quiet &&
+	git stash pop -q --index > output.out 2>&1 &&
+	test foo = "$(git show :file)" &&
+	test ! -s output.out
+'
+
 test_expect_success 'drop -q is quiet' '
 	git stash &&
 	git stash drop -q > output.out 2>&1 &&
