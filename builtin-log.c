@@ -504,6 +504,13 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "format.suffix"))
 		return git_config_string(&fmt_patch_suffix, var, value);
+	if (!strcmp(var, "format.to")) {
+		if (!value)
+			return config_error_nonbool(var);
+		ALLOC_GROW(extra_to, extra_to_nr + 1, extra_to_alloc);
+		extra_to[extra_to_nr++] = xstrdup(value);
+		return 0;
+	}
 	if (!strcmp(var, "format.cc")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -875,6 +882,13 @@ static int header_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int to_callback(const struct option *opt, const char *arg, int unset)
+{
+	ALLOC_GROW(extra_to, extra_to_nr + 1, extra_to_alloc);
+	extra_to[extra_to_nr++] = xstrdup(arg);
+	return 0;
+}
+
 static int cc_callback(const struct option *opt, const char *arg, int unset)
 {
 	ALLOC_GROW(extra_cc, extra_cc_nr + 1, extra_cc_alloc);
@@ -939,6 +953,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 0, "add-header", NULL, "header",
 			    "add email header", PARSE_OPT_NONEG,
 			    header_callback },
+		{ OPTION_CALLBACK, 0, "to", NULL, "email", "add To: header",
+			    PARSE_OPT_NONEG, to_callback },
 		{ OPTION_CALLBACK, 0, "cc", NULL, "email", "add Cc: header",
 			    PARSE_OPT_NONEG, cc_callback },
 		OPT_STRING(0, "in-reply-to", &in_reply_to, "message-id",

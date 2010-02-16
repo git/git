@@ -18,7 +18,7 @@ SYNOPSIS
 		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
 		   [--ignore-if-in-upstream]
 		   [--subject-prefix=Subject-Prefix]
-		   [--cc=<email>]
+		   [--to=<email>] [--cc=<email>]
 		   [--cover-letter]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
@@ -162,6 +162,10 @@ will want to ensure that threading is disabled for `git send-email`.
 	allows for useful naming of a patch series, and can be
 	combined with the `--numbered` option.
 
+--to=<email>::
+	Add a `To:` header to the email headers. This is in addition
+	to any configured headers, and may be used multiple times.
+
 --cc=<email>::
 	Add a `Cc:` header to the email headers. This is in addition
 	to any configured headers, and may be used multiple times.
@@ -202,8 +206,8 @@ CONFIGURATION
 -------------
 You can specify extra mail header lines to be added to each message,
 defaults for the subject prefix and file suffix, number patches when
-outputting more than one patch, add "Cc:" headers, configure attachments,
-and sign off patches with configuration variables.
+outputting more than one patch, add "To" or "Cc:" headers, configure
+attachments, and sign off patches with configuration variables.
 
 ------------
 [format]
@@ -211,6 +215,7 @@ and sign off patches with configuration variables.
 	subjectprefix = CHANGE
 	suffix = .txt
 	numbered = auto
+	to = <email>
 	cc = <email>
 	attach [ = mime-boundary-string ]
 	signoff = true

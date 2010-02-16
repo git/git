@@ -143,6 +143,20 @@ test_expect_success 'configuration headers and command line headers' '
 	grep "^ *S. E. Cipient <scipient@example.com>\$" patch7
 '
 
+test_expect_success 'command line To: header' '
+
+	git config --unset-all format.headers &&
+	git format-patch --to="R. E. Cipient <rcipient@example.com>" --stdout master..side | sed -e "/^\$/q" >patch8 &&
+	grep "^To: R. E. Cipient <rcipient@example.com>\$" patch8
+'
+
+test_expect_success 'configuration To: header' '
+
+	git config format.to "R. E. Cipient <rcipient@example.com>" &&
+	git format-patch --stdout master..side | sed -e "/^\$/q" >patch9 &&
+	grep "^To: R. E. Cipient <rcipient@example.com>\$" patch9
+'
+
 test_expect_success 'multiple files' '
 
 	rm -rf patches/ &&
