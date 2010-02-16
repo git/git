@@ -24,6 +24,7 @@
 static const char *default_date_mode = NULL;
 
 static int default_show_root = 1;
+static int decoration_style = 0;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
@@ -35,7 +36,6 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
 	int i;
-	int decoration_style = 0;
 
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
@@ -252,6 +252,13 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return git_config_string(&fmt_patch_subject_prefix, var, value);
 	if (!strcmp(var, "log.date"))
 		return git_config_string(&default_date_mode, var, value);
+	if (!strcmp(var, "log.decorate")) {
+		if (!strcmp(value, "full"))
+			decoration_style = DECORATE_FULL_REFS;
+		else if (!strcmp(value, "short"))
+			decoration_style = DECORATE_SHORT_REFS;
+		return 0;
+	}
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;
