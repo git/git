@@ -967,9 +967,8 @@ class P4Sync(Command):
         elif file["type"] == "symlink":
             mode = "120000"
             # p4 print on a symlink contains "target\n", so strip it off
-            last = contents.pop()
-            last = last[:-1]
-            contents.append(last)
+            data = ''.join(contents)
+            contents = [data[:-1]]
 
         if self.isWindows and file["type"].endswith("text"):
             mangled = []
