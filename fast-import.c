@@ -980,29 +980,6 @@ static void cycle_packfile(void)
 	start_packfile();
 }
 
-static size_t encode_header(
-	enum object_type type,
-	uintmax_t size,
-	unsigned char *hdr)
-{
-	int n = 1;
-	unsigned char c;
-
-	if (type < OBJ_COMMIT || type > OBJ_REF_DELTA)
-		die("bad type %d", type);
-
-	c = (type << 4) | (size & 15);
-	size >>= 4;
-	while (size) {
-		*hdr++ = c | 0x80;
-		c = size & 0x7f;
-		size >>= 7;
-		n++;
-	}
-	*hdr = c;
-	return n;
-}
-
 static int store_object(
 	enum object_type type,
 	struct strbuf *dat,
@@ -1103,7 +1080,7 @@ static int store_object(
 		delta_count_by_type[type]++;
 		e->depth = last->depth + 1;
 
-		hdrlen = encode_header(OBJ_OFS_DELTA, deltalen, hdr);
+		hdrlen = encode_in_pack_object_header(OBJ_OFS_DELTA, deltalen, hdr);
 		sha1write(pack_file, hdr, hdrlen);
 		pack_size += hdrlen;
 
@@ -1114,7 +1091,7 @@ static int store_object(
 		pack_size += sizeof(hdr) - pos;
 	} else {
 		e->depth = 0;
-		hdrlen = encode_header(type, dat->len, hdr);
+		hdrlen = encode_in_pack_object_header(type, dat->len, hdr);
 		sha1write(pack_file, hdr, hdrlen);
 		pack_size += hdrlen;
 	}
@@ -1188,7 +1165,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 	memset(&s, 0, sizeof(s));
 	deflateInit(&s, pack_compression_level);
 
-	hdrlen = encode_header(OBJ_BLOB, len, out_buf);
+	hdrlen = encode_in_pack_object_header(OBJ_BLOB, len, out_buf);
 	if (out_sz <= hdrlen)
 		die("impossibly large object header");
 
