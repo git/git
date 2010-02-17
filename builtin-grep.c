@@ -409,15 +409,25 @@ static int pathspec_matches(const char **paths, const char *name, int max_depth)
 	return 0;
 }
 
+static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
+{
+	void *data;
+
+	if (use_threads) {
+		read_sha1_lock();
+		data = read_sha1_file(sha1, type, size);
+		read_sha1_unlock();
+	} else {
+		data = read_sha1_file(sha1, type, size);
+	}
+	return data;
+}
+
 static void *load_sha1(const unsigned char *sha1, unsigned long *size,
 		       const char *name)
 {
 	enum object_type type;
-	char *data;
-
-	read_sha1_lock();
-	data = read_sha1_file(sha1, &type, size);
-	read_sha1_unlock();
+	void *data = lock_and_read_sha1_file(sha1, &type, size);
 
 	if (!data)
 		error("'%s': unable to read %s", name, sha1_to_hex(sha1));
@@ -606,10 +616,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			void *data;
 			unsigned long size;
 
-			read_sha1_lock();
-			data = read_sha1_file(entry.sha1, &type, &size);
-			read_sha1_unlock();
-
+			data = lock_and_read_sha1_file(entry.sha1, &type, &size);
 			if (!data)
 				die("unable to read tree (%s)",
 				    sha1_to_hex(entry.sha1));
