@@ -117,12 +117,14 @@ any of those replacements occurred.
 	option and lists the commits in that commit range like the 'summary'
 	option of linkgit:git-submodule[1] does.
 
---color::
+--color[=<when>]::
 	Show colored diff.
+	The value must be always (the default), never, or auto.
 
 --no-color::
 	Turn off colored diff, even when the configuration file
 	gives the default to color output.
+	Same as `--color=never`.
 
 --color-words[=<regex>]::
 	Show colored word diff, i.e., color words which have changed.

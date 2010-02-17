@@ -138,6 +138,9 @@ int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 			goto auto_color;
 	}
 
+	if (!var)
+		return -1;
+
 	/* Missing or explicit false to turn off colorization */
 	if (!git_config_bool(var, value))
 		return 0;

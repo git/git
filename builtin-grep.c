@@ -782,7 +782,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			"print NUL after filenames"),
 		OPT_BOOLEAN('c', "count", &opt.count,
 			"show the number of matches instead of matching lines"),
-		OPT_SET_INT(0, "color", &opt.color, "highlight matches", 1),
+		OPT__COLOR(&opt.color, "highlight matches"),
 		OPT_GROUP(""),
 		OPT_CALLBACK('C', NULL, &opt, "n",
 			"show <n> context lines before and after matches",

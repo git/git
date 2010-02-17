@@ -135,6 +135,10 @@ struct option {
 	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, (f) }
 #define OPT_FILENAME(s, l, v, h)    { OPTION_FILENAME, (s), (l), (v), \
 				       "FILE", (h) }
+#define OPT_COLOR_FLAG(s, l, v, h) \
+	{ OPTION_CALLBACK, (s), (l), (v), "when", (h), PARSE_OPT_OPTARG, \
+		parse_opt_color_flag_cb, (intptr_t)"always" }
+
 
 /* parse_options() will filter out the processed options and leave the
  * non-option arguments in argv[].
@@ -187,6 +191,7 @@ extern int parse_options_end(struct parse_opt_ctx_t *ctx);
 /*----- some often used options -----*/
 extern int parse_opt_abbrev_cb(const struct option *, const char *, int);
 extern int parse_opt_approxidate_cb(const struct option *, const char *, int);
+extern int parse_opt_color_flag_cb(const struct option *, const char *, int);
 extern int parse_opt_verbosity_cb(const struct option *, const char *, int);
 extern int parse_opt_with_commit(const struct option *, const char *, int);
 extern int parse_opt_tertiary(const struct option *, const char *, int);
@@ -203,5 +208,7 @@ extern int parse_opt_tertiary(const struct option *, const char *, int);
 	{ OPTION_CALLBACK, 0, "abbrev", (var), "n", \
 	  "use <n> digits to display SHA-1s", \
 	  PARSE_OPT_OPTARG, &parse_opt_abbrev_cb, 0 }
+#define OPT__COLOR(var, h) \
+	OPT_COLOR_FLAG(0, "color", (var), (h))
 
 #endif
