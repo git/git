@@ -2876,6 +2876,17 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		pack_compression_seen = 1;
 		return 0;
 	}
+	if (!strcmp(k, "pack.indexversion")) {
+		pack_idx_default_version = git_config_int(k, v);
+		if (pack_idx_default_version > 2)
+			die("bad pack.indexversion=%"PRIu32,
+			    pack_idx_default_version);
+		return 0;
+	}
+	if (!strcmp(k, "pack.packsizelimit")) {
+		max_packsize = git_config_ulong(k, v);
+		return 0;
+	}
 	if (!strcmp(k, "core.bigfilethreshold")) {
 		long n = git_config_int(k, v);
 		big_file_threshold = 0 < n ? n : 0;
