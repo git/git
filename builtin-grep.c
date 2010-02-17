@@ -220,6 +220,12 @@ static void start_threads(struct grep_opt *opt)
 {
 	int i;
 
+	pthread_mutex_init(&grep_mutex, NULL);
+	pthread_mutex_init(&read_sha1_mutex, NULL);
+	pthread_cond_init(&cond_add, NULL);
+	pthread_cond_init(&cond_write, NULL);
+	pthread_cond_init(&cond_result, NULL);
+
 	for (i = 0; i < ARRAY_SIZE(todo); i++) {
 		strbuf_init(&todo[i].out, 0);
 	}
@@ -873,12 +879,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 #ifndef NO_PTHREADS
 	if (online_cpus() == 1 || !grep_threads_ok(&opt))
 		use_threads = 0;
-
-	pthread_mutex_init(&grep_mutex, NULL);
-	pthread_mutex_init(&read_sha1_mutex, NULL);
-	pthread_cond_init(&cond_add, NULL);
-	pthread_cond_init(&cond_write, NULL);
-	pthread_cond_init(&cond_result, NULL);
 
 	if (use_threads)
 		start_threads(&opt);
