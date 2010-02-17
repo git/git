@@ -1143,6 +1143,7 @@ sub validate_refname {
 # in utf-8 thanks to "binmode STDOUT, ':utf8'" at beginning
 sub to_utf8 {
 	my $str = shift;
+	return undef unless defined $str;
 	if (utf8::valid($str)) {
 		utf8::decode($str);
 		return $str;
@@ -1155,6 +1156,7 @@ sub to_utf8 {
 # correct, but quoted slashes look too horrible in bookmarks
 sub esc_param {
 	my $str = shift;
+	return undef unless defined $str;
 	$str =~ s/([^A-Za-z0-9\-_.~()\/:@ ]+)/CGI::escape($1)/eg;
 	$str =~ s/ /\+/g;
 	return $str;
@@ -1163,6 +1165,7 @@ sub esc_param {
 # quote unsafe chars in whole URL, so some charactrs cannot be quoted
 sub esc_url {
 	my $str = shift;
+	return undef unless defined $str;
 	$str =~ s/([^A-Za-z0-9\-_.~();\/;?:@&=])/sprintf("%%%02X", ord($1))/eg;
 	$str =~ s/\+/%2B/g;
 	$str =~ s/ /\+/g;
@@ -1173,6 +1176,8 @@ sub esc_url {
 sub esc_html {
 	my $str = shift;
 	my %opts = @_;
+
+	return undef unless defined $str;
 
 	$str = to_utf8($str);
 	$str = $cgi->escapeHTML($str);
@@ -1187,6 +1192,8 @@ sub esc_html {
 sub esc_path {
 	my $str = shift;
 	my %opts = @_;
+
+	return undef unless defined $str;
 
 	$str = to_utf8($str);
 	$str = $cgi->escapeHTML($str);
@@ -3372,7 +3379,7 @@ sub git_footer_html {
 	      "</html>";
 }
 
-# die_error(<http_status_code>, <error_message>)
+# die_error(<http_status_code>, <error_message>[, <detailed_html_description>])
 # Example: die_error(404, 'Hash not found')
 # By convention, use the following status codes (as defined in RFC 2616):
 # 400: Invalid or missing CGI parameters, or
@@ -3387,7 +3394,7 @@ sub git_footer_html {
 #      or down for maintenance).  Generally, this is a temporary state.
 sub die_error {
 	my $status = shift || 500;
-	my $error = shift || "Internal server error";
+	my $error = esc_html(shift) || "Internal Server Error";
 	my $extra = shift;
 
 	my %http_responses = (
