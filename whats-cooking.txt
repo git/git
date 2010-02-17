@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2010, #03; Fri, 12)
-X-master-at: e923eaeb901ff056421b9007adcbbce271caa7b6
-X-next-at: 57c9972634e181f6aad83258a8e7d61f0b99b6ce
+Subject: What's cooking in git.git (Feb 2010, #04; Wed, 17)
+X-master-at: 1df48766137f2040e2e992d7d278d5aca26406cf
+X-next-at: 3b7be804f698c39d8f538d9996786b41c08b7181
 
-What's cooking in git.git (Feb 2010, #03; Fri, 12)
+What's cooking in git.git (Feb 2010, #04; Wed, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,29 +11,8 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-Now 1.7.0 is out, we will take a short pause and watch breakage reports
-for a few days, and then start merging down new topics.
-
 --------------------------------------------------
-[New Topics]
-
-* ld/push-porcelain (2010-02-09) 4 commits
- - git-push: fix an error message so it goes to stderr
- - git-push: make git push --dry-run --porcelain exit with status 0 even if updates will be rejected
- - git-push: send "To <remoteurl>" messages to the standard output in --porcelain mode
- - git-push: squelch advice message if in --porcelain mode
-
-After some discussion this needs further simplification?
-
-* cp/add-u-pathspec (2010-02-09) 2 commits
- - test for add with non-existent pathspec
- - git add -u: die on unmatched pathspec
-
-* hm/maint-imap-send-crlf (2010-02-12) 1 commit
- - git-imap-send: Convert LF to CRLF before storing patch to draft box
-
-Cram-MD5 from the same author seemed to need another round before landing
-here, but this one seemed to be ready for 'pu'.
+[Graduated to "master"]
 
 * jk/cherry-pick-reword (2010-02-11) 5 commits
   (merged to 'next' on 2010-02-11 at d0eace1)
@@ -43,54 +22,6 @@ here, but this one seemed to be ready for 'pu'.
  + cherry-pick: refactor commit parsing code
  + cherry-pick: rewrap advice message
 
-* nd/root-git (2010-02-11) 5 commits
- - Add test for using Git at root directory
- - Support working directory located at root
- - Add is_root_path()
- - init-db, rev-parse --git-dir: do not append redundant slash
- - make_absolute_path(): Do not append redundant slash
-
-The middle one needs replacement, as pointed by Hannes.
-
-* pb/log-first-parent-p-m (2010-02-10) 1 commit
- - git log -p -m: document -m and honor --first-parent
-
-Needs tests but otherwise looked fine.  We might want to teach "-m trumps
-implicit --cc" to "git show", but that is a totally separate topic.
-
---------------------------------------------------
-[Cooking]
-
-Many of these have been parked in 'pu' during the pre-release freeze.
-They will start migrating to 'next' shortly.
-
-* sp/maint-push-sideband (2010-02-10) 8 commits
- - receive-pack: Send internal errors over side-band #2
- - t5401: Use a bare repository for the remote peer
- - receive-pack: Send hook output over side band #2
- - receive-pack: Wrap status reports inside side-band-64k
- - receive-pack: Refactor how capabilities are shown to the client
- - send-pack: demultiplex a sideband stream with status data
- - run-command: support custom fd-set in async
- - run-command: Allow stderr to be a caller supplied pipe
- (this branch is used by sp/push-sideband.)
-
-Based on 1.6.5 maintenance track.
-
-* sp/push-sideband (2010-02-10) 0 commits
- (this branch uses sp/maint-push-sideband.)
-
-And my conflict resolution in #ifdef WINDOWS codepath.
-
-* ac/cvsimport-revision-mapping (2010-02-06) 1 commit
- - cvsimport: new -R option: generate .git/cvs-revisions mapping
-
-* jc/maint-1.6.3-imap-send-bool-config-fix (2010-02-06) 1 commit
- - imap-send: fix longstanding configuration parser bug
-
-* js/rebase-origin-x (2010-02-05) 1 commit
- - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
-
 * rs/git-dir-cleanup (2010-02-11) 3 commits
   (merged to 'next' on 2010-02-11 at fa4f83c)
  + Untouch RelNotes 1.7.0: grep --no-index will not be in the release
@@ -98,12 +29,207 @@ And my conflict resolution in #ifdef WINDOWS codepath.
  + Resurrect "git grep --no-index"
  + setenv(GIT_DIR) clean-up
 
-* jc/typo (2010-02-03) 1 commit
- - Typofixes outside documentation area
-
 * jk/grep-double-dash (2010-02-06) 1 commit
   (merged to 'next' on 2010-02-07 at 2ac040d)
  + accept "git grep -- pattern"
+
+* jc/typo (2010-02-03) 1 commit
+ + Typofixes outside documentation area
+
+--------------------------------------------------
+[New Topics]
+
+* dp/maint-1.6.3-hash-sans-mmap (2010-02-14) 1 commit
+ - don't use mmap() to hash files
+
+This was more of an RFC in that slurping a potentially huge file into
+memory without using mmap() was conceptually wrong. I suspect somebody
+is cooking a patch to hash and compress a large blob in chunks straight
+into a packfile as a replacement ;-).
+
+* jc/for-each-ref (2010-02-13) 4 commits
+ - for-each-ref --format='%(flag)'
+ - for-each-ref --format='%(symref) %(symref:short)'
+ - builtin-for-each-ref.c: check if we need to peel onion while parsing the format
+ - builtin-for-each-ref.c: comment fixes
+
+Should be Ok for 'next'.
+
+* jn/gitweb-config-error-die (2010-02-14) 1 commit
+ - gitweb: Die if there are parsing errors in config file
+
+Should be Ok for 'next'.
+
+* jn/maint-fix-pager (2010-02-14) 6 commits
+ - tests: Add tests for automatic use of pager
+ - am: Fix launching of pager
+ - git svn: Fix launching of pager
+ - git.1: Clarify the behavior of the --paginate option
+ - Make 'git var GIT_PAGER' always print the configured pager
+ - Fix 'git var' usage synopsis
+
+Should be Ok for 'next'.
+
+* ml/color-when (2010-02-16) 1 commit
+ - Add an optional argument for --color options
+
+* hm/imap-send-cram-md5 (2010-02-15) 1 commit
+ - imap-send: support CRAM-MD5 authentication
+
+A potential clean-up sent as a counter-proposal; waiting for response.
+
+* jh/maint-submodule-status-in-void (2010-02-16) 1 commit
+ - submodule summary: Don't barf when invoked in an empty repo
+
+Looked Ok for 'next' but I lost track somewhat...
+
+* ld/maint-diff-quiet-w (2010-02-16) 1 commit
+ - git diff --quiet -w: check and report the status
+
+Needs tests but otherwise looked Ok.
+
+* ml/maint-grep-doc (2010-02-15) 1 commit
+  (merged to 'next' on 2010-02-16 at 4059a38)
+ + grep documentation: clarify what files match
+
+Soon to graduate to 'master'.
+
+* tc/maint-transport-ls-remote-with-void (2010-02-16) 1 commit
+  (merged to 'next' on 2010-02-16 at e6ef1a8)
+ + transport: add got_remote_refs flag
+
+Soon to graduate to 'master'.
+
+* bg/apply-blank-at-eof (2010-02-17) 3 commits
+ - t3417: Add test cases for "rebase --whitespace=fix"
+ - t4124: Add additional tests of --whitespace=fix
+ - apply: Allow blank context lines to match beyond EOF
+
+RFC.
+
+* gf/maint-sh-setup-nongit-ok (2010-02-16) 1 commit
+ - require_work_tree broken with NONGIT_OK
+
+Looked sensible and ready for 'next'.
+
+* ml/send-pack-transport-refactor (2010-02-16) 1 commit
+ - Refactoring: remove duplicated code from builtin-send-pack.c and transport.c
+
+Probably ready for 'next'.
+
+* np/fast-import-idx-v2 (2010-02-17) 6 commits
+ - fast-import: use the diff_delta() max_delta_size argument
+ - fast-import: honor pack.indexversion and pack.packsizelimit config vars
+ - fast-import: make default pack size unlimited
+ - fast-import: use write_idx_file() instead of custom code
+ - fast-import: use sha1write() for pack data
+ - fast-import: start using struct pack_idx_entry
+
+* sd/format-patch-to (2010-02-17) 1 commit
+ - Add 'git format-patch --to=' option and 'format.to' configuration variable.
+
+Shouldn't be too hard to add tests to t4014; other than that looked ready
+for 'next'.
+
+* sd/init-template (2010-02-17) 2 commits
+ - Add a "TEMPLATE DIRECTORY" section to git-init[1].
+ - Add `init.templatedir` configuration variable.
+
+Shouldn't be too hard to add tests to t0001; other than that looked ready
+for 'next'.
+
+* sd/log-decorate (2010-02-17) 3 commits
+ - log.decorate: usability fixes
+ - Add `log.decorate' configuration variable.
+ - git_config_maybe_bool()
+
+Probably ready for 'next', except that people need to be warned about
+having to update their scripts to explicitly pass --no-decorate to keep
+them working.
+
+* jc/maint-status-preload (2010-02-17) 1 commit
+ - status: preload index to optimize lstat(2) calls
+
+--------------------------------------------------
+[Cooking]
+
+* ld/push-porcelain (2010-02-09) 4 commits
+ - git-push: fix an error message so it goes to stderr
+ - git-push: make git push --dry-run --porcelain exit with status 0 even if updates will be rejected
+ - git-push: send "To <remoteurl>" messages to the standard output in --porcelain mode
+ - git-push: squelch advice message if in --porcelain mode
+
+After some discussion this needs further simplification?  May need to move
+to Stalled.
+
+* cp/add-u-pathspec (2010-02-09) 2 commits
+ - test for add with non-existent pathspec
+ - git add -u: die on unmatched pathspec
+
+I am a bit torn on this one.  Traditionally we never complained on
+unmatched pathspec when talking about tracked files.  If we were to go
+this route, I think we should probably enhance the "run_diff_files" and
+friends in such a way that they mark matched pathspecs, in a way similar
+to match_pathspec() in dir.c does, and report unmatched ones based on
+that result, instead of adding an extra pass to scan the index.  The same
+goes for pathspec_matches() in builtin-grep.c
+
+Incidentally, I've proposed "pathspec unification" as possible GSoC'10
+project---with luck, we might finally see a progress on this front ;-)
+
+* hm/maint-imap-send-crlf (2010-02-12) 1 commit
+  (merged to 'next' on 2010-02-17 at c6162cb)
+ + git-imap-send: Convert LF to CRLF before storing patch to draft box
+
+Soon to graduate to 'master'.
+
+* nd/root-git (2010-02-14) 5 commits
+ - Add test for using Git at root of file system
+ - Support working directory located at root
+ - Move offset_1st_component() to path.c
+ - init-db, rev-parse --git-dir: do not append redundant slash
+ - make_absolute_path(): Do not append redundant slash
+
+How does this interact with the much larger series to rework the set-up
+codepath?
+
+* pb/log-first-parent-p-m (2010-02-10) 1 commit
+  (merged to 'next' on 2010-02-17 at 2f8e5ae)
+ + git log -p -m: document -m and honor --first-parent
+
+Needs tests but otherwise looked fine.  We might want to teach "-m trumps
+implicit --cc" to "git show", but that is a totally separate topic.
+
+* sp/maint-push-sideband (2010-02-10) 8 commits
+  (merged to 'next' on 2010-02-16 at 6f19e5b)
+ + receive-pack: Send internal errors over side-band #2
+ + t5401: Use a bare repository for the remote peer
+ + receive-pack: Send hook output over side band #2
+ + receive-pack: Wrap status reports inside side-band-64k
+ + receive-pack: Refactor how capabilities are shown to the client
+ + send-pack: demultiplex a sideband stream with status data
+ + run-command: support custom fd-set in async
+ + run-command: Allow stderr to be a caller supplied pipe
+ (this branch is used by sp/push-sideband.)
+
+Based on 1.6.5 maintenance track.
+
+* sp/push-sideband (2010-02-10) 0 commits
+ (this branch uses sp/maint-push-sideband.)
+
+This also is in 'next' now.
+
+* ac/cvsimport-revision-mapping (2010-02-06) 1 commit
+  (merged to 'next' on 2010-02-17 at 6756446)
+ + cvsimport: new -R option: generate .git/cvs-revisions mapping
+
+Any comments from CVSimport users?
+
+* js/rebase-origin-x (2010-02-05) 1 commit
+ - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
+
+I retract my objection against the idea of -x; needs polishing before
+moving forward.
 
 * jn/maint-makedepend (2010-01-26) 5 commits
  - Makefile: drop dependency on $(wildcard */*.h)
@@ -112,8 +238,6 @@ And my conflict resolution in #ifdef WINDOWS codepath.
  - Makefile: make sure test helpers are rebuilt when headers change
  - Makefile: add missing header file dependencies
  (this branch is used by jn/makedepend and jn/master-makedepend.)
-
-These look sensible clean-up that could go to maint later.
 
 * jn/master-makedepend (2010-01-26) 0 commits
  (this branch uses jn/maint-makedepend; is used by jn/makedepend.)
@@ -132,36 +256,45 @@ This is to help merging the clean-up to "master".
  - Makefile: transport.o depends on branch.h now
  (this branch uses jn/maint-makedepend and jn/master-makedepend.)
 
-And this is to build on top.  I don't want to touch build infrastructure
-during the pre-release freeze too much to avoid the last minute hassles
-that is only discovered when I try to cut RPMs; hence this will stay out
-of 'master' until 1.7.0 ships.
+And this is to build on top.
+Looked ok for 'next'.
 
 * jc/checkout-detached (2010-01-29) 1 commit
- - Reword "detached HEAD" notification
+  (merged to 'next' on 2010-02-17 at 7e03edc)
+ + Reword "detached HEAD" notification
 
 * jc/maint-fix-test-perm (2010-01-30) 2 commits
- - lib-patch-mode.sh: Fix permission
- - t6000lib: Fix permission
+  (merged to 'next' on 2010-02-16 at 9d2e037)
+ + lib-patch-mode.sh: Fix permission
+ + t6000lib: Fix permission
 
 * jh/gitweb-caching (2010-01-30) 1 commit
  - gitweb: Add an option to force version match
 
+The controversial one.  Will probably drop this.  RFC v3 of gitweb caching
+series needs to be queued but hasn't happened yet.
+
 * jn/makefile-script-lib (2010-01-31) 1 commit
- - Do not install shell libraries executable
+  (merged to 'next' on 2010-02-16 at f5334f5)
+ + Do not install shell libraries executable
+
+Soon to graduate to 'master'.
 
 * mv/request-pull-modernize (2010-01-29) 1 commit
- - request-pull: avoid mentioning that the start point is a single commit
+  (merged to 'next' on 2010-02-16 at be03aad)
+ + request-pull: avoid mentioning that the start point is a single commit
 
-* cc/reset-keep (2010-01-19) 5 commits
- - reset: disallow using --keep when there are unmerged entries
- - reset: disallow "reset --keep" outside a work tree
- - Documentation: reset: describe new "--keep" option
- - reset: add test cases for "--keep" option
- - reset: add option "--keep" to "git reset"
+Soon to graduate to 'master'.
 
-* jh/notes (2010-01-27) 23 commits
- - builtin-notes: Add "add" subcommand for appending to note objects
+* jh/notes (2010-02-13) 30 commits
+ - builtin-notes: Add "copy" subcommand for copying notes between objects
+ - builtin-notes: Misc. refactoring of argc and exit value handling
+ - builtin-notes: Add -c/-C options for reusing notes
+ - builtin-notes: Refactor handling of -F option to allow combining -m and -F
+ - builtin-notes: Deprecate the -m/-F options for "git notes edit"
+ - builtin-notes: Add "append" subcommand for appending to note objects
+ - builtin-notes: Add "add" subcommand for adding notes to objects
+ - builtin-notes: Add --message/--file aliases for -m/-F options
  - builtin-notes: Add "list" subcommand for listing note objects
  - Documentation: Generalize git-notes docs to 'objects' instead of 'commits'
  - builtin-notes: Add "prune" subcommand for removing notes for missing objects
@@ -183,7 +316,17 @@ of 'master' until 1.7.0 ships.
  - Notes API: init_notes(): Initialize the notes tree from the given notes ref
  - Add tests for checking correct handling of $GIT_NOTES_REF and core.notesRef
  - Notes API: get_commit_notes() -> format_note() + remove the commit restriction
- - Cosmetic fixes to notes.c
+ - Minor cosmetic fixes to notes.c
+
+Looked Ok for 'next'; comments?
+
+* cc/reset-keep (2010-01-19) 5 commits
+ - reset: disallow using --keep when there are unmerged entries
+ - reset: disallow "reset --keep" outside a work tree
+ - Documentation: reset: describe new "--keep" option
+ - reset: add test cases for "--keep" option
+ - reset: add option "--keep" to "git reset"
 
 * jc/grep-author-all-match-implicit (2010-01-17) 1 commit
- - "log --author=me --grep=it" should find intersection, not union
+  (merged to 'next' on 2010-02-17 at 3b7be80)
+ + "log --author=me --grep=it" should find intersection, not union
