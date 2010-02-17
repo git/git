@@ -38,6 +38,7 @@ static const char * const cherry_pick_usage[] = {
 static int edit, no_replay, no_commit, mainline, signoff;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
+static const char *commit_name;
 static int allow_rerere_auto;
 
 static const char *me;
@@ -49,7 +50,6 @@ static void parse_args(int argc, const char **argv)
 	const char * const * usage_str =
 		action == REVERT ?  revert_usage : cherry_pick_usage;
 	unsigned char sha1[20];
-	const char *arg;
 	int noop;
 	struct option options[] = {
 		OPT_BOOLEAN('n', "no-commit", &no_commit, "don't automatically commit"),
@@ -64,19 +64,13 @@ static void parse_args(int argc, const char **argv)
 
 	if (parse_options(argc, argv, NULL, options, usage_str, 0) != 1)
 		usage_with_options(usage_str, options);
-	arg = argv[0];
 
-	if (get_sha1(arg, sha1))
-		die ("Cannot find '%s'", arg);
-	commit = (struct commit *)parse_object(sha1);
+	commit_name = argv[0];
+	if (get_sha1(commit_name, sha1))
+		die ("Cannot find '%s'", commit_name);
+	commit = lookup_commit_reference(sha1);
 	if (!commit)
-		die ("Could not find %s", sha1_to_hex(sha1));
-	if (commit->object.type == OBJ_TAG) {
-		commit = (struct commit *)
-			deref_tag((struct object *)commit, arg, strlen(arg));
-	}
-	if (commit->object.type != OBJ_COMMIT)
-		die ("'%s' does not point to a commit", arg);
+		exit(1);
 }
 
 static char *get_oneline(const char *message)
@@ -204,25 +198,27 @@ static void set_author_ident_env(const char *message)
 			sha1_to_hex(commit->object.sha1));
 }
 
-static char *help_msg(const unsigned char *sha1)
+static char *help_msg(const char *name)
 {
-	static char helpbuf[1024];
+	struct strbuf helpbuf = STRBUF_INIT;
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
 
 	if (msg)
 		return msg;
 
-	strcpy(helpbuf, "  After resolving the conflicts,\n"
-	       "mark the corrected paths with 'git add <paths>' "
-	       "or 'git rm <paths>' and commit the result.");
+	strbuf_addstr(&helpbuf, "  After resolving the conflicts,\n"
+		"mark the corrected paths with 'git add <paths>' or 'git rm <paths>'\n"
+		"and commit the result");
 
 	if (action == CHERRY_PICK) {
-		sprintf(helpbuf + strlen(helpbuf),
-			"\nWhen commiting, use the option "
-			"'-c %s' to retain authorship and message.",
-			find_unique_abbrev(sha1, DEFAULT_ABBREV));
+		strbuf_addf(&helpbuf, " with: \n"
+			"\n"
+			"        git commit -c %s\n",
+			name);
 	}
-	return helpbuf;
+	else
+		strbuf_addch(&helpbuf, '.');
+	return strbuf_detach(&helpbuf, NULL);
 }
 
 static struct tree *empty_tree(void)
@@ -409,7 +405,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		if (commit_lock_file(&msg_file) < 0)
 			die ("Error wrapping up %s", defmsg);
 		fprintf(stderr, "Automatic %s failed.%s\n",
-			me, help_msg(commit->object.sha1));
+			me, help_msg(commit_name));
 		rerere(allow_rerere_auto);
 		exit(1);
 	}
