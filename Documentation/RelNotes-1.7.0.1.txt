@@ -27,5 +27,5 @@ Fixes since v1.7.0
 --
 exec >/var/tmp/1
 echo O=$(git describe)
-O=v1.7.0-11-g354d9f8
+O=v1.7.0-22-gc69f921
 git shortlog $O..
