@@ -20,7 +20,7 @@ then
 	do
 		case " $exists " in
 		*" $a "*)
-			echo "Test number $a already taken"
+			echo >&2 "Test number $a already taken"
 			bad=1
 			;;
 		esac
