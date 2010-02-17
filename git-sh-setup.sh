@@ -59,7 +59,7 @@ cd_to_toplevel () {
 }
 
 require_work_tree () {
-	test $(git rev-parse --is-inside-work-tree) = true ||
+	test "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = true ||
 	die "fatal: $0 cannot be used without a working tree."
 }
 
