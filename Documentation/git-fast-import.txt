@@ -45,10 +45,7 @@ OPTIONS
 
 --max-pack-size=<n>::
 	Maximum size of each output packfile.
-	The default is 4 GiB as that is the maximum allowed
-	packfile size (due to file format limitations). Some
-	importers may wish to lower this, such as to ensure the
-	resulting packfiles fit on CDs.
+	The default is unlimited.
 
 --big-file-threshold=<n>::
 	Maximum size of a blob that fast-import will attempt to
