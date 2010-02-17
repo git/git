@@ -1041,14 +1041,10 @@ static int store_object(
 		return 1;
 	}
 
-	if (last && last->data.buf && last->depth < max_depth) {
+	if (last && last->data.buf && last->depth < max_depth && dat->len > 20) {
 		delta = diff_delta(last->data.buf, last->data.len,
 			dat->buf, dat->len,
-			&deltalen, 0);
-		if (delta && deltalen >= dat->len) {
-			free(delta);
-			delta = NULL;
-		}
+			&deltalen, dat->len - 20);
 	} else
 		delta = NULL;
 
