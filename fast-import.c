@@ -191,7 +191,7 @@ struct mark_set
 struct last_object
 {
 	struct strbuf data;
-	uint32_t offset;
+	off_t offset;
 	unsigned int depth;
 	unsigned no_swap : 1;
 };
@@ -279,7 +279,7 @@ struct recent_command
 
 /* Configured limits on output */
 static unsigned long max_depth = 10;
-static off_t max_packsize = (1LL << 32) - 1;
+static off_t max_packsize;
 static uintmax_t big_file_threshold = 512 * 1024 * 1024;
 static int force_update;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
@@ -315,7 +315,7 @@ static unsigned int pack_id;
 static struct sha1file *pack_file;
 static struct packed_git *pack_data;
 static struct packed_git **all_packs;
-static unsigned long pack_size;
+static off_t pack_size;
 
 /* Table of objects we've written. */
 static unsigned int object_entry_alloc = 5000;
@@ -1068,7 +1068,7 @@ static int store_object(
 	deflateEnd(&s);
 
 	/* Determine if we should auto-checkpoint. */
-	if ((pack_size + 60 + s.total_out) > max_packsize
+	if ((max_packsize && (pack_size + 60 + s.total_out) > max_packsize)
 		|| (pack_size + 60 + s.total_out) < pack_size) {
 
 		/* This new object needs to *not* have the current pack_id. */
@@ -1101,7 +1101,7 @@ static int store_object(
 	crc32_begin(pack_file);
 
 	if (delta) {
-		unsigned long ofs = e->idx.offset - last->offset;
+		off_t ofs = e->idx.offset - last->offset;
 		unsigned pos = sizeof(hdr) - 1;
 
 		delta_count_by_type[type]++;
@@ -1170,7 +1170,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 	int status = Z_OK;
 
 	/* Determine if we should auto-checkpoint. */
-	if ((pack_size + 60 + len) > max_packsize
+	if ((max_packsize && (pack_size + 60 + len) > max_packsize)
 		|| (pack_size + 60 + len) < pack_size)
 		cycle_packfile();
 
