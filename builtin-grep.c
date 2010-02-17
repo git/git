@@ -868,6 +868,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	opt.relative = 1;
 	opt.pathname = 1;
 	opt.pattern_tail = &opt.pattern_list;
+	opt.header_tail = &opt.header_list;
 	opt.regflags = REG_NEWLINE;
 	opt.max_depth = -1;
 
