@@ -24,13 +24,30 @@
 static const char *default_date_mode = NULL;
 
 static int default_show_root = 1;
-static int decoration_style = 0;
+static int decoration_style;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
 static const char * const builtin_log_usage =
 	"git log [<options>] [<since>..<until>] [[--] <path>...]\n"
 	"   or: git show [options] <object>...";
+
+static int parse_decoration_style(const char *var, const char *value)
+{
+	switch (git_config_maybe_bool(var, value)) {
+	case 1:
+		return DECORATE_SHORT_REFS;
+	case 0:
+		return 0;
+	default:
+		break;
+	}
+	if (!strcmp(value, "full"))
+		return DECORATE_FULL_REFS;
+	else if (!strcmp(value, "short"))
+		return DECORATE_SHORT_REFS;
+	return -1;
+}
 
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
@@ -74,12 +91,11 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 			decoration_style = DECORATE_SHORT_REFS;
 		} else if (!prefixcmp(arg, "--decorate=")) {
 			const char *v = skip_prefix(arg, "--decorate=");
-			if (!strcmp(v, "full"))
-				decoration_style = DECORATE_FULL_REFS;
-			else if (!strcmp(v, "short"))
-				decoration_style = DECORATE_SHORT_REFS;
-			else
+			decoration_style = parse_decoration_style(arg, v);
+			if (decoration_style < 0)
 				die("invalid --decorate option: %s", arg);
+		} else if (!strcmp(arg, "--no-decorate")) {
+			decoration_style = 0;
 		} else if (!strcmp(arg, "--source")) {
 			rev->show_source = 1;
 		} else if (!strcmp(arg, "-h")) {
@@ -253,10 +269,9 @@ static int git_log_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "log.date"))
 		return git_config_string(&default_date_mode, var, value);
 	if (!strcmp(var, "log.decorate")) {
-		if (!strcmp(value, "full"))
-			decoration_style = DECORATE_FULL_REFS;
-		else if (!strcmp(value, "short"))
-			decoration_style = DECORATE_SHORT_REFS;
+		decoration_style = parse_decoration_style(var, value);
+		if (decoration_style < 0)
+			decoration_style = 0; /* maybe warn? */
 		return 0;
 	}
 	if (!strcmp(var, "log.showroot")) {
