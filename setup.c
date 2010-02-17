@@ -206,7 +206,7 @@ int is_inside_work_tree(void)
 }
 
 /*
- * set_work_tree() is only ever called if you set GIT_DIR explicitely.
+ * set_work_tree() is only ever called if you set GIT_DIR explicitly.
  * The old behaviour (which we retain here) is to set the work tree root
  * to the cwd, unless overridden by the config, the command line, or
  * GIT_WORK_TREE.
