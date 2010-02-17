@@ -434,4 +434,37 @@ test_expect_success 'grep -Fi' '
 	test_cmp expected actual
 '
 
+test_expect_success 'setup double-dash tests' '
+cat >double-dash <<EOF &&
+--
+->
+other
+EOF
+git add double-dash
+'
+
+cat >expected <<EOF
+double-dash:->
+EOF
+test_expect_success 'grep -- pattern' '
+	git grep -- "->" >actual &&
+	test_cmp expected actual
+'
+test_expect_success 'grep -- pattern -- pathspec' '
+	git grep -- "->" -- double-dash >actual &&
+	test_cmp expected actual
+'
+test_expect_success 'grep -e pattern -- path' '
+	git grep -e "->" -- double-dash >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+double-dash:--
+EOF
+test_expect_success 'grep -e -- -- path' '
+	git grep -e -- -- double-dash >actual &&
+	test_cmp expected actual
+'
+
 test_done
