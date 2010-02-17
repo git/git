@@ -567,7 +567,7 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 			return config_error_nonbool(var);
 		/*
 		 * default_arg is now passed to parse_options(), so we need to
-		 * mimick the real argv a bit better.
+		 * mimic the real argv a bit better.
 		 */
 		if (!default_num) {
 			default_alloc = 20;

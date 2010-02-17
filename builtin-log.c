@@ -1089,7 +1089,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	/*
 	 * We cannot move this anywhere earlier because we do want to
-	 * know if --root was given explicitly from the comand line.
+	 * know if --root was given explicitly from the command line.
 	 */
 	rev.show_root_diff = 1;
 

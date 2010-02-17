@@ -106,7 +106,7 @@ static void prune_object_dir(const char *path)
 /*
  * Write errors (particularly out of space) can result in
  * failed temporary packs (and more rarely indexes and other
- * files begining with "tmp_") accumulating in the object
+ * files beginning with "tmp_") accumulating in the object
  * and the pack directories.
  */
 static void remove_temporary_files(const char *path)

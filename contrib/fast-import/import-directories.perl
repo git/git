@@ -344,7 +344,7 @@ sub parsekeyvaluepair
 
 Key and value strings may be enclosed in quotes, in which case
 whitespace inside the quotes is preserved. Additionally, an equal
-sign may be included in the key by preceeding it with a backslash.
+sign may be included in the key by preceding it with a backslash.
 For example:
 
  "key1 "=value1
