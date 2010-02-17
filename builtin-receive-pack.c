@@ -2,6 +2,7 @@
 #include "pack.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include "sideband.h"
 #include "run-command.h"
 #include "exec_cmd.h"
 #include "commit.h"
@@ -27,11 +28,12 @@ static int receive_unpack_limit = -1;
 static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
 static int report_status;
+static int use_sideband;
 static int prefer_ofs_delta = 1;
 static int auto_update_server_info;
 static int auto_gc = 1;
 static const char *head_name;
-static char *capabilities_to_send;
+static int sent_capabilities;
 
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
@@ -105,19 +107,21 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
-	if (!capabilities_to_send)
+	if (sent_capabilities)
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
 	else
-		packet_write(1, "%s %s%c%s\n",
-			     sha1_to_hex(sha1), path, 0, capabilities_to_send);
-	capabilities_to_send = NULL;
+		packet_write(1, "%s %s%c%s%s\n",
+			     sha1_to_hex(sha1), path, 0,
+			     " report-status delete-refs side-band-64k",
+			     prefer_ofs_delta ? " ofs-delta" : "");
+	sent_capabilities = 1;
 	return 0;
 }
 
 static void write_head_info(void)
 {
 	for_each_ref(show_ref, NULL);
-	if (capabilities_to_send)
+	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1, 0, NULL);
 
 }
@@ -135,11 +139,61 @@ static struct command *commands;
 static const char pre_receive_hook[] = "hooks/pre-receive";
 static const char post_receive_hook[] = "hooks/post-receive";
 
+static void rp_error(const char *err, ...) __attribute__((format (printf, 1, 2)));
+static void rp_warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
+
+static void report_message(const char *prefix, const char *err, va_list params)
+{
+	int sz = strlen(prefix);
+	char msg[4096];
+
+	strncpy(msg, prefix, sz);
+	sz += vsnprintf(msg + sz, sizeof(msg) - sz, err, params);
+	if (sz > (sizeof(msg) - 1))
+		sz = sizeof(msg) - 1;
+	msg[sz++] = '\n';
+
+	if (use_sideband)
+		send_sideband(1, 2, msg, sz, use_sideband);
+	else
+		xwrite(2, msg, sz);
+}
+
+static void rp_warning(const char *err, ...)
+{
+	va_list params;
+	va_start(params, err);
+	report_message("warning: ", err, params);
+	va_end(params);
+}
+
+static void rp_error(const char *err, ...)
+{
+	va_list params;
+	va_start(params, err);
+	report_message("error: ", err, params);
+	va_end(params);
+}
+
+static int copy_to_sideband(int in, int out, void *arg)
+{
+	char data[128];
+	while (1) {
+		ssize_t sz = xread(in, data, sizeof(data));
+		if (sz <= 0)
+			break;
+		send_sideband(1, 2, data, sz, use_sideband);
+	}
+	close(in);
+	return 0;
+}
+
 static int run_receive_hook(const char *hook_name)
 {
 	static char buf[sizeof(commands->old_sha1) * 2 + PATH_MAX + 4];
 	struct command *cmd;
 	struct child_process proc;
+	struct async muxer;
 	const char *argv[2];
 	int have_input = 0, code;
 
@@ -159,9 +213,23 @@ static int run_receive_hook(const char *hook_name)
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;
 
+	if (use_sideband) {
+		memset(&muxer, 0, sizeof(muxer));
+		muxer.proc = copy_to_sideband;
+		muxer.in = -1;
+		code = start_async(&muxer);
+		if (code)
+			return code;
+		proc.err = muxer.in;
+	}
+
 	code = start_command(&proc);
-	if (code)
+	if (code) {
+		if (use_sideband)
+			finish_async(&muxer);
 		return code;
+	}
+
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (!cmd->error_string) {
 			size_t n = snprintf(buf, sizeof(buf), "%s %s %s\n",
@@ -173,6 +241,8 @@ static int run_receive_hook(const char *hook_name)
 		}
 	}
 	close(proc.in);
+	if (use_sideband)
+		finish_async(&muxer);
 	return finish_command(&proc);
 }
 
@@ -180,6 +250,8 @@ static int run_update_hook(struct command *cmd)
 {
 	static const char update_hook[] = "hooks/update";
 	const char *argv[5];
+	struct child_process proc;
+	int code;
 
 	if (access(update_hook, X_OK) < 0)
 		return 0;
@@ -190,8 +262,18 @@ static int run_update_hook(struct command *cmd)
 	argv[3] = sha1_to_hex(cmd->new_sha1);
 	argv[4] = NULL;
 
-	return run_command_v_opt(argv, RUN_COMMAND_NO_STDIN |
-					RUN_COMMAND_STDOUT_TO_STDERR);
+	memset(&proc, 0, sizeof(proc));
+	proc.no_stdin = 1;
+	proc.stdout_to_stderr = 1;
+	proc.err = use_sideband ? -1 : 0;
+	proc.argv = argv;
+
+	code = start_command(&proc);
+	if (code)
+		return code;
+	if (use_sideband)
+		copy_to_sideband(proc.err, -1, NULL);
+	return finish_command(&proc);
 }
 
 static int is_ref_checked_out(const char *ref)
@@ -224,7 +306,7 @@ static void refuse_unconfigured_deny(void)
 {
 	int i;
 	for (i = 0; i < ARRAY_SIZE(refuse_unconfigured_deny_msg); i++)
-		error("%s", refuse_unconfigured_deny_msg[i]);
+		rp_error("%s", refuse_unconfigured_deny_msg[i]);
 }
 
 static char *refuse_unconfigured_deny_delete_current_msg[] = {
@@ -244,7 +326,7 @@ static void refuse_unconfigured_deny_delete_current(void)
 	for (i = 0;
 	     i < ARRAY_SIZE(refuse_unconfigured_deny_delete_current_msg);
 	     i++)
-		error("%s", refuse_unconfigured_deny_delete_current_msg[i]);
+		rp_error("%s", refuse_unconfigured_deny_delete_current_msg[i]);
 }
 
 static const char *update(struct command *cmd)
@@ -256,7 +338,7 @@ static const char *update(struct command *cmd)
 
 	/* only refs/... are allowed */
 	if (prefixcmp(name, "refs/") || check_ref_format(name + 5)) {
-		error("refusing to create funny ref '%s' remotely", name);
+		rp_error("refusing to create funny ref '%s' remotely", name);
 		return "funny refname";
 	}
 
@@ -265,11 +347,11 @@ static const char *update(struct command *cmd)
 		case DENY_IGNORE:
 			break;
 		case DENY_WARN:
-			warning("updating the current branch");
+			rp_warning("updating the current branch");
 			break;
 		case DENY_REFUSE:
 		case DENY_UNCONFIGURED:
-			error("refusing to update checked out branch: %s", name);
+			rp_error("refusing to update checked out branch: %s", name);
 			if (deny_current_branch == DENY_UNCONFIGURED)
 				refuse_unconfigured_deny();
 			return "branch is currently checked out";
@@ -284,7 +366,7 @@ static const char *update(struct command *cmd)
 
 	if (!is_null_sha1(old_sha1) && is_null_sha1(new_sha1)) {
 		if (deny_deletes && !prefixcmp(name, "refs/heads/")) {
-			error("denying ref deletion for %s", name);
+			rp_error("denying ref deletion for %s", name);
 			return "deletion prohibited";
 		}
 
@@ -293,13 +375,13 @@ static const char *update(struct command *cmd)
 			case DENY_IGNORE:
 				break;
 			case DENY_WARN:
-				warning("deleting the current branch");
+				rp_warning("deleting the current branch");
 				break;
 			case DENY_REFUSE:
 			case DENY_UNCONFIGURED:
 				if (deny_delete_current == DENY_UNCONFIGURED)
 					refuse_unconfigured_deny_delete_current();
-				error("refusing to delete the current branch: %s", name);
+				rp_error("refusing to delete the current branch: %s", name);
 				return "deletion of the current branch prohibited";
 			}
 		}
@@ -329,23 +411,23 @@ static const char *update(struct command *cmd)
 				break;
 		free_commit_list(bases);
 		if (!ent) {
-			error("denying non-fast-forward %s"
-			      " (you should pull first)", name);
+			rp_error("denying non-fast-forward %s"
+				 " (you should pull first)", name);
 			return "non-fast-forward";
 		}
 	}
 	if (run_update_hook(cmd)) {
-		error("hook declined to update %s", name);
+		rp_error("hook declined to update %s", name);
 		return "hook declined";
 	}
 
 	if (is_null_sha1(new_sha1)) {
 		if (!parse_object(old_sha1)) {
-			warning ("Allowing deletion of corrupt ref.");
+			rp_warning("Allowing deletion of corrupt ref.");
 			old_sha1 = NULL;
 		}
 		if (delete_ref(name, old_sha1, 0)) {
-			error("failed to delete %s", name);
+			rp_error("failed to delete %s", name);
 			return "failed to delete";
 		}
 		return NULL; /* good */
@@ -353,7 +435,7 @@ static const char *update(struct command *cmd)
 	else {
 		lock = lock_any_ref_for_update(name, old_sha1, 0);
 		if (!lock) {
-			error("failed to lock %s", name);
+			rp_error("failed to lock %s", name);
 			return "failed to lock";
 		}
 		if (write_ref_sha1(lock, new_sha1, "push")) {
@@ -368,8 +450,9 @@ static char update_post_hook[] = "hooks/post-update";
 static void run_update_post_hook(struct command *cmd)
 {
 	struct command *cmd_p;
-	int argc, status;
+	int argc;
 	const char **argv;
+	struct child_process proc;
 
 	for (argc = 0, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
 		if (cmd_p->error_string)
@@ -391,8 +474,18 @@ static void run_update_post_hook(struct command *cmd)
 		argc++;
 	}
 	argv[argc] = NULL;
-	status = run_command_v_opt(argv, RUN_COMMAND_NO_STDIN
-			| RUN_COMMAND_STDOUT_TO_STDERR);
+
+	memset(&proc, 0, sizeof(proc));
+	proc.no_stdin = 1;
+	proc.stdout_to_stderr = 1;
+	proc.err = use_sideband ? -1 : 0;
+	proc.argv = argv;
+
+	if (!start_command(&proc)) {
+		if (use_sideband)
+			copy_to_sideband(proc.err, -1, NULL);
+		finish_command(&proc);
+	}
 }
 
 static void execute_commands(const char *unpacker_error)
@@ -452,6 +545,8 @@ static void read_head_info(void)
 		if (reflen + 82 < len) {
 			if (strstr(refname + reflen + 1, "report-status"))
 				report_status = 1;
+			if (strstr(refname + reflen + 1, "side-band-64k"))
+				use_sideband = LARGE_PACKET_MAX;
 		}
 		cmd = xmalloc(sizeof(struct command) + len - 80);
 		hashcpy(cmd->old_sha1, old_sha1);
@@ -551,17 +646,25 @@ static const char *unpack(void)
 static void report(const char *unpack_status)
 {
 	struct command *cmd;
-	packet_write(1, "unpack %s\n",
-		     unpack_status ? unpack_status : "ok");
+	struct strbuf buf = STRBUF_INIT;
+
+	packet_buf_write(&buf, "unpack %s\n",
+			 unpack_status ? unpack_status : "ok");
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (!cmd->error_string)
-			packet_write(1, "ok %s\n",
-				     cmd->ref_name);
+			packet_buf_write(&buf, "ok %s\n",
+					 cmd->ref_name);
 		else
-			packet_write(1, "ng %s %s\n",
-				     cmd->ref_name, cmd->error_string);
+			packet_buf_write(&buf, "ng %s %s\n",
+					 cmd->ref_name, cmd->error_string);
 	}
-	packet_flush(1);
+	packet_buf_flush(&buf);
+
+	if (use_sideband)
+		send_sideband(1, 1, buf.buf, buf.len, use_sideband);
+	else
+		safe_write(1, buf.buf, buf.len);
+	strbuf_release(&buf);
 }
 
 static int delete_only(struct command *cmd)
@@ -658,10 +761,6 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	else if (0 <= receive_unpack_limit)
 		unpack_limit = receive_unpack_limit;
 
-	capabilities_to_send = (prefer_ofs_delta) ?
-		" report-status delete-refs ofs-delta " :
-		" report-status delete-refs ";
-
 	if (advertise_refs || !stateless_rpc) {
 		add_alternate_refs();
 		write_head_info();
@@ -695,5 +794,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		if (auto_update_server_info)
 			update_server_info(0);
 	}
+	if (use_sideband)
+		packet_flush(1);
 	return 0;
 }

@@ -105,12 +105,12 @@ static void show_edge(struct commit *commit)
 	fprintf(pack_pipe, "-%s\n", sha1_to_hex(commit->object.sha1));
 }
 
-static int do_rev_list(int fd, void *create_full_pack)
+static int do_rev_list(int in, int out, void *create_full_pack)
 {
 	int i;
 	struct rev_info revs;
 
-	pack_pipe = xfdopen(fd, "w");
+	pack_pipe = xfdopen(out, "w");
 	init_revisions(&revs, NULL);
 	revs.tag_objects = 1;
 	revs.tree_objects = 1;
@@ -162,8 +162,9 @@ static void create_pack_file(void)
 	int arg = 0;
 
 	if (shallow_nr) {
+		memset(&rev_list, 0, sizeof(rev_list));
 		rev_list.proc = do_rev_list;
-		rev_list.data = 0;
+		rev_list.out = -1;
 		if (start_async(&rev_list))
 			die("git upload-pack: unable to fork git-rev-list");
 		argv[arg++] = "pack-objects";
