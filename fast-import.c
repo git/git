@@ -312,6 +312,7 @@ static struct atom_str **atom_table;
 
 /* The .pack file being generated */
 static unsigned int pack_id;
+static struct sha1file *pack_file;
 static struct packed_git *pack_data;
 static struct packed_git **all_packs;
 static unsigned long pack_size;
@@ -838,11 +839,12 @@ static void start_packfile(void)
 	p = xcalloc(1, sizeof(*p) + strlen(tmpfile) + 2);
 	strcpy(p->pack_name, tmpfile);
 	p->pack_fd = pack_fd;
+	pack_file = sha1fd(pack_fd, p->pack_name);
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(2);
 	hdr.hdr_entries = 0;
-	write_or_die(p->pack_fd, &hdr, sizeof(hdr));
+	sha1write(pack_file, &hdr, sizeof(hdr));
 
 	pack_data = p;
 	pack_size = sizeof(hdr);
@@ -956,15 +958,17 @@ static void end_packfile(void)
 
 	clear_delta_base_cache();
 	if (object_count) {
+		unsigned char cur_pack_sha1[20];
 		char *idx_name;
 		int i;
 		struct branch *b;
 		struct tag *t;
 
 		close_pack_windows(pack_data);
+		sha1close(pack_file, cur_pack_sha1, 0);
 		fixup_pack_header_footer(pack_data->pack_fd, pack_data->sha1,
 				    pack_data->pack_name, object_count,
-				    NULL, 0);
+				    cur_pack_sha1, pack_size);
 		close(pack_data->pack_fd);
 		idx_name = keep_pack(create_index());
 
@@ -1138,22 +1142,22 @@ static int store_object(
 		e->depth = last->depth + 1;
 
 		hdrlen = encode_header(OBJ_OFS_DELTA, deltalen, hdr);
-		write_or_die(pack_data->pack_fd, hdr, hdrlen);
+		sha1write(pack_file, hdr, hdrlen);
 		pack_size += hdrlen;
 
 		hdr[pos] = ofs & 127;
 		while (ofs >>= 7)
 			hdr[--pos] = 128 | (--ofs & 127);
-		write_or_die(pack_data->pack_fd, hdr + pos, sizeof(hdr) - pos);
+		sha1write(pack_file, hdr + pos, sizeof(hdr) - pos);
 		pack_size += sizeof(hdr) - pos;
 	} else {
 		e->depth = 0;
 		hdrlen = encode_header(type, dat->len, hdr);
-		write_or_die(pack_data->pack_fd, hdr, hdrlen);
+		sha1write(pack_file, hdr, hdrlen);
 		pack_size += hdrlen;
 	}
 
-	write_or_die(pack_data->pack_fd, out, s.total_out);
+	sha1write(pack_file, out, s.total_out);
 	pack_size += s.total_out;
 
 	free(out);
@@ -1170,12 +1174,17 @@ static int store_object(
 	return 0;
 }
 
-static void truncate_pack(off_t to)
+static void truncate_pack(off_t to, git_SHA_CTX *ctx)
 {
 	if (ftruncate(pack_data->pack_fd, to)
 	 || lseek(pack_data->pack_fd, to, SEEK_SET) != to)
 		die_errno("cannot truncate pack to skip duplicate");
 	pack_size = to;
+
+	/* yes this is a layering violation */
+	pack_file->total = to;
+	pack_file->offset = 0;
+	pack_file->ctx = *ctx;
 }
 
 static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
@@ -1188,6 +1197,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 	unsigned long hdrlen;
 	off_t offset;
 	git_SHA_CTX c;
+	git_SHA_CTX pack_file_ctx;
 	z_stream s;
 	int status = Z_OK;
 
@@ -1197,6 +1207,10 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 		cycle_packfile();
 
 	offset = pack_size;
+
+	/* preserve the pack_file SHA1 ctx in case we have to truncate later */
+	sha1flush(pack_file);
+	pack_file_ctx = pack_file->ctx;
 
 	hdrlen = snprintf((char *)out_buf, out_sz, "blob %" PRIuMAX, len) + 1;
 	if (out_sz <= hdrlen)
@@ -1232,7 +1246,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 
 		if (!s.avail_out || status == Z_STREAM_END) {
 			size_t n = s.next_out - out_buf;
-			write_or_die(pack_data->pack_fd, out_buf, n);
+			sha1write(pack_file, out_buf, n);
 			pack_size += n;
 			s.next_out = out_buf;
 			s.avail_out = out_sz;
@@ -1260,14 +1274,14 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 
 	if (e->idx.offset) {
 		duplicate_count_by_type[OBJ_BLOB]++;
-		truncate_pack(offset);
+		truncate_pack(offset, &pack_file_ctx);
 
 	} else if (find_sha1_pack(sha1, packed_git)) {
 		e->type = OBJ_BLOB;
 		e->pack_id = MAX_PACK_ID;
 		e->idx.offset = 1; /* just not zero! */
 		duplicate_count_by_type[OBJ_BLOB]++;
-		truncate_pack(offset);
+		truncate_pack(offset, &pack_file_ctx);
 
 	} else {
 		e->depth = 0;
@@ -1316,6 +1330,7 @@ static void *gfi_unpack_entry(
 		 * the newly written data.
 		 */
 		close_pack_windows(p);
+		sha1flush(pack_file);
 
 		/* We have to offer 20 bytes additional on the end of
 		 * the packfile as the core unpacker code assumes the
