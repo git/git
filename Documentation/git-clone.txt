@@ -29,7 +29,7 @@ arguments will in addition merge the remote master branch into the
 current master branch, if any.
 
 This default configuration is achieved by creating references to
-the remote branch heads under `$GIT_DIR/refs/remotes/origin` and
+the remote branch heads under `refs/remotes/origin` and
 by initializing `remote.origin.url` and `remote.origin.fetch`
 configuration variables.
 
