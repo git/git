@@ -48,8 +48,8 @@ OPTIONS
 	Run verbosely.
 
 --thin::
-	Spend extra cycles to minimize the number of objects to be sent.
-	Use it on slower connection.
+	Send a "thin" pack, which records objects in deltified form based
+	on objects not included in the pack to reduce network traffic.
 
 <host>::
 	A remote host to house the repository.  When this
