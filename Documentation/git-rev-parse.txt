@@ -101,15 +101,14 @@ OPTIONS
 	abbreviation mode.
 
 --all::
-	Show all refs found in `$GIT_DIR/refs`.
+	Show all refs found in `refs/`.
 
 --branches[=pattern]::
 --tags[=pattern]::
 --remotes[=pattern]::
 	Show all branches, tags, or remote-tracking branches,
-	respectively (i.e., refs found in `$GIT_DIR/refs/heads`,
-	`$GIT_DIR/refs/tags`, or `$GIT_DIR/refs/remotes`,
-	respectively).
+	respectively (i.e., refs found in `refs/heads`,
+	`refs/tags`, or `refs/remotes`, respectively).
 +
 If a `pattern` is given, only refs matching the given shell glob are
 shown.  If the pattern does not contain a globbing character (`?`,
@@ -189,7 +188,7 @@ blobs contained in a commit.
   `g`, and an abbreviated object name.
 
 * A symbolic ref name.  E.g. 'master' typically means the commit
-  object referenced by $GIT_DIR/refs/heads/master.  If you
+  object referenced by refs/heads/master.  If you
   happen to have both heads/master and tags/master, you can
   explicitly say 'heads/master' to tell git which one you mean.
   When ambiguous, a `<name>` is disambiguated by taking the
@@ -198,15 +197,15 @@ blobs contained in a commit.
   . if `$GIT_DIR/<name>` exists, that is what you mean (this is usually
     useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD` and `MERGE_HEAD`);
 
-  . otherwise, `$GIT_DIR/refs/<name>` if exists;
+  . otherwise, `refs/<name>` if exists;
 
-  . otherwise, `$GIT_DIR/refs/tags/<name>` if exists;
+  . otherwise, `refs/tags/<name>` if exists;
 
-  . otherwise, `$GIT_DIR/refs/heads/<name>` if exists;
+  . otherwise, `refs/heads/<name>` if exists;
 
-  . otherwise, `$GIT_DIR/refs/remotes/<name>` if exists;
+  . otherwise, `refs/remotes/<name>` if exists;
 
-  . otherwise, `$GIT_DIR/refs/remotes/<name>/HEAD` if exists.
+  . otherwise, `refs/remotes/<name>/HEAD` if exists.
 +
 HEAD names the commit your changes in the working tree is based on.
 FETCH_HEAD records the branch you fetched from a remote repository
@@ -217,6 +216,9 @@ you can change the tip of the branch back to the state before you ran
 them easily.
 MERGE_HEAD records the commit(s) you are merging into your branch
 when you run 'git merge'.
++
+Note that any of the `refs/*` cases above may come either from
+the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
 
 * A ref followed by the suffix '@' with a date specification
   enclosed in a brace
