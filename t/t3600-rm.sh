@@ -271,4 +271,12 @@ test_expect_success 'choking "git rm" should not let it die with cruft' '
 	test "$status" != 0
 '
 
+test_expect_success 'rm removes subdirectories recursively' '
+	mkdir -p dir/subdir/subsubdir &&
+	echo content >dir/subdir/subsubdir/file &&
+	git add dir/subdir/subsubdir/file &&
+	git rm -f dir/subdir/subsubdir/file &&
+	! test -d dir
+'
+
 test_done
