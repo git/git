@@ -119,14 +119,13 @@ base-name::
 	standard input.
 
 --incremental::
-	This flag causes an object already in a pack ignored
+	This flag causes an object already in a pack to be ignored
 	even if it appears in the standard input.
 
 --local::
-	This flag is similar to `--incremental`; instead of
-	ignoring all packed objects, it only ignores objects
-	that are packed and/or not in the local object store
-	(i.e. borrowed from an alternate).
+	This flag causes an object that is borrowed from an alternate
+	object store to be ignored even if it appears in the standard
+	input.
 
 --non-empty::
         Only create a packed archive if it would contain at
