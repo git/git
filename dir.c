@@ -1044,7 +1044,7 @@ int remove_path(const char *name)
 		slash = dirs + (slash - name);
 		do {
 			*slash = '\0';
-		} while (rmdir(dirs) && (slash = strrchr(dirs, '/')));
+		} while (rmdir(dirs) == 0 && (slash = strrchr(dirs, '/')));
 		free(dirs);
 	}
 	return 0;
