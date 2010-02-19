@@ -405,11 +405,6 @@ new_line:
 	}
 }
 
-int print_wrapped_text(const char *text, int indent, int indent2, int width)
-{
-	return strbuf_add_wrapped_text(NULL, text, indent, indent2, width);
-}
-
 int is_encoding_utf8(const char *name)
 {
 	if (!name)
