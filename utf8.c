@@ -288,14 +288,11 @@ static inline void strbuf_write(struct strbuf *sb, const char *buf, int len)
 		fwrite(buf, len, 1, stdout);
 }
 
-static void print_spaces(struct strbuf *buf, int count)
+static void strbuf_addchars(struct strbuf *sb, int c, size_t n)
 {
-	static const char s[] = "                    ";
-	while (count >= sizeof(s)) {
-		strbuf_write(buf, s, sizeof(s) - 1);
-		count -= sizeof(s) - 1;
-	}
-	strbuf_write(buf, s, count);
+	strbuf_grow(sb, n);
+	memset(sb->buf + sb->len, c, n);
+	strbuf_setlen(sb, sb->len + n);
 }
 
 static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
@@ -307,7 +304,7 @@ static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
 		const char *eol = strchrnul(text, '\n');
 		if (*eol == '\n')
 			eol++;
-		print_spaces(buf, indent);
+		strbuf_addchars(buf, ' ', indent);
 		strbuf_write(buf, text, eol - text);
 		text = eol;
 		indent = indent2;
@@ -366,7 +363,7 @@ int strbuf_add_wrapped_text(struct strbuf *buf,
 				if (space)
 					start = space;
 				else
-					print_spaces(buf, indent);
+					strbuf_addchars(buf, ' ', indent);
 				strbuf_write(buf, start, text - start);
 				if (!c)
 					return w;
