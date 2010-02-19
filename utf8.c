@@ -324,16 +324,21 @@ static size_t display_mode_esc_sequence_len(const char *s)
  * consumed (and no extra indent is necessary for the first line).
  */
 int strbuf_add_wrapped_text(struct strbuf *buf,
-		const char *text, int indent, int indent2, int width)
+		const char *text, int indent1, int indent2, int width)
 {
-	int w = indent, assume_utf8 = is_utf8(text);
-	const char *bol = text, *space = NULL;
+	int indent, w, assume_utf8 = 1;
+	const char *bol, *space, *start = text;
+	size_t orig_len = buf->len;
 
 	if (width <= 0) {
-		strbuf_add_indented_text(buf, text, indent, indent2);
+		strbuf_add_indented_text(buf, text, indent1, indent2);
 		return 1;
 	}
 
+retry:
+	bol = text;
+	w = indent = indent1;
+	space = NULL;
 	if (indent < 0) {
 		w = -indent;
 		space = text;
@@ -385,9 +390,15 @@ new_line:
 			}
 			continue;
 		}
-		if (assume_utf8)
+		if (assume_utf8) {
 			w += utf8_width(&text, NULL);
-		else {
+			if (!text) {
+				assume_utf8 = 0;
+				text = start;
+				strbuf_setlen(buf, orig_len);
+				goto retry;
+			}
+		} else {
 			w++;
 			text++;
 		}
