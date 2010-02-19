@@ -44,8 +44,8 @@ OPTIONS
 	locked against repacking.
 
 --thin::
-	Spend extra cycles to minimize the number of objects to be sent.
-	Use it on slower connection.
+	Fetch a "thin" pack, which records objects in deltified form based
+	on objects not included in the pack to reduce network traffic.
 
 --include-tag::
 	If the remote side supports it, annotated tags objects will

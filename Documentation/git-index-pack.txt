@@ -46,14 +46,10 @@ OPTIONS
 	'git repack'.
 
 --fix-thin::
-	It is possible for 'git pack-objects' to build
-	"thin" pack, which records objects in deltified form based on
-	objects not included in the pack to reduce network traffic.
-	Those objects are expected to be present on the receiving end
-	and they must be included in the pack for that pack to be self
-	contained and indexable. Without this option any attempt to
-	index a thin pack will fail. This option only makes sense in
-	conjunction with --stdin.
+	Fix a "thin" pack produced by `git pack-objects --thin` (see
+	linkgit:git-pack-objects[1] for details) by adding the
+	excluded objects the deltified objects are based on to the
+	pack. This option only makes sense in conjunction with --stdin.
 
 --keep::
 	Before moving the index into its final destination
