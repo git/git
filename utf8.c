@@ -280,14 +280,6 @@ int is_utf8(const char *text)
 	return 1;
 }
 
-static inline void strbuf_write(struct strbuf *sb, const char *buf, int len)
-{
-	if (sb)
-		strbuf_insert(sb, sb->len, buf, len);
-	else
-		fwrite(buf, len, 1, stdout);
-}
-
 static void strbuf_addchars(struct strbuf *sb, int c, size_t n)
 {
 	strbuf_grow(sb, n);
@@ -305,7 +297,7 @@ static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
 		if (*eol == '\n')
 			eol++;
 		strbuf_addchars(buf, ' ', indent);
-		strbuf_write(buf, text, eol - text);
+		strbuf_add(buf, text, eol - text);
 		text = eol;
 		indent = indent2;
 	}
@@ -364,7 +356,7 @@ int strbuf_add_wrapped_text(struct strbuf *buf,
 					start = space;
 				else
 					strbuf_addchars(buf, ' ', indent);
-				strbuf_write(buf, start, text - start);
+				strbuf_add(buf, start, text - start);
 				if (!c)
 					return w;
 				space = text;
@@ -373,20 +365,20 @@ int strbuf_add_wrapped_text(struct strbuf *buf,
 				else if (c == '\n') {
 					space++;
 					if (*space == '\n') {
-						strbuf_write(buf, "\n", 1);
+						strbuf_addch(buf, '\n');
 						goto new_line;
 					}
 					else if (!isalnum(*space))
 						goto new_line;
 					else
-						strbuf_write(buf, " ", 1);
+						strbuf_addch(buf, ' ');
 				}
 				w++;
 				text++;
 			}
 			else {
 new_line:
-				strbuf_write(buf, "\n", 1);
+				strbuf_addch(buf, '\n');
 				text = bol = space + isspace(*space);
 				space = NULL;
 				w = indent = indent2;
