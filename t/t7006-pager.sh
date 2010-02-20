@@ -5,18 +5,31 @@ test_description='Test automatic use of a pager.'
 . ./test-lib.sh
 
 rm -f stdout_is_tty
-test_expect_success 'is stdout a terminal?' '
+test_expect_success 'set up terminal for tests' '
 	if test -t 1
 	then
 		: > stdout_is_tty
+	elif
+		test_have_prereq PERL &&
+		"$PERL_PATH" "$TEST_DIRECTORY"/t7006/test-terminal.perl \
+			sh -c "test -t 1"
+	then
+		: > test_terminal_works
 	fi
 '
 
 if test -e stdout_is_tty
 then
+	test_terminal() { "$@"; }
+	test_set_prereq TTY
+elif test -e test_terminal_works
+then
+	test_terminal() {
+		"$PERL_PATH" "$TEST_DIRECTORY"/t7006/test-terminal.perl "$@"
+	}
 	test_set_prereq TTY
 else
-	say stdout is not a terminal, so skipping some tests.
+	say no usable terminal, so skipping some tests
 fi
 
 unset GIT_PAGER GIT_PAGER_IN_USE
@@ -30,13 +43,13 @@ test_expect_success 'setup' '
 
 rm -f paginated.out
 test_expect_success TTY 'some commands use a pager' '
-	git log &&
+	test_terminal git log &&
 	test -e paginated.out
 '
 
 rm -f paginated.out
 test_expect_success TTY 'some commands do not use a pager' '
-	git rev-list HEAD &&
+	test_terminal git rev-list HEAD &&
 	! test -e paginated.out
 '
 
@@ -54,7 +67,7 @@ test_expect_success 'no pager when stdout is a regular file' '
 
 rm -f paginated.out
 test_expect_success TTY 'git --paginate rev-list uses a pager' '
-	git --paginate rev-list HEAD  &&
+	test_terminal git --paginate rev-list HEAD &&
 	test -e paginated.out
 '
 
@@ -66,7 +79,7 @@ test_expect_success 'no pager even with --paginate when stdout is a pipe' '
 
 rm -f paginated.out
 test_expect_success TTY 'no pager with --no-pager' '
-	git --no-pager log &&
+	test_terminal git --no-pager log &&
 	! test -e paginated.out
 '
 
@@ -95,7 +108,7 @@ test_expect_success 'no color when stdout is a regular file' '
 rm -f paginated.out
 git config color.ui auto
 test_expect_success TTY 'color when writing to a pager' '
-	TERM=vt100 git log &&
+	TERM=vt100 test_terminal git log &&
 	colorful paginated.out
 '
 
@@ -127,7 +140,7 @@ test_expect_success SIMPLEPAGER 'default pager is used by default' '
 	: > default_pager_used
 	EOF
 	chmod +x $less &&
-	PATH=.:$PATH git log &&
+	PATH=.:$PATH test_terminal git log &&
 	test -e default_pager_used
 '
 
@@ -137,7 +150,7 @@ rm -f PAGER_used
 test_expect_success TTY 'PAGER overrides default pager' '
 	PAGER=": > PAGER_used" &&
 	export PAGER &&
-	git log &&
+	test_terminal git log &&
 	test -e PAGER_used
 '
 
@@ -147,7 +160,7 @@ test_expect_success TTY 'core.pager overrides PAGER' '
 	PAGER=: &&
 	export PAGER &&
 	git config core.pager ": > core.pager_used" &&
-	git log &&
+	test_terminal git log &&
 	test -e core.pager_used
 '
 
@@ -156,7 +169,7 @@ test_expect_success TTY 'GIT_PAGER overrides core.pager' '
 	git config core.pager : &&
 	GIT_PAGER=": > GIT_PAGER_used" &&
 	export GIT_PAGER &&
-	git log &&
+	test_terminal git log &&
 	test -e GIT_PAGER_used
 '
 
