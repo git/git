@@ -779,8 +779,7 @@ static int handle_commit_msg(struct strbuf *line)
 		return 0;
 
 	if (still_looking) {
-		strbuf_ltrim(line);
-		if (!line->len)
+		if (!line->len || (line->len == 1 && line->buf[0] == '\n'))
 			return 0;
 	}
 
