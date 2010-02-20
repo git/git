@@ -39,6 +39,7 @@ method _oneline_pack {} {
 }
 
 constructor two_line {path} {
+	global NS
 	set w $path
 	set w_l $w.l
 	set w_c $w.c
