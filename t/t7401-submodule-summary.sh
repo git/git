@@ -227,4 +227,11 @@ test_expect_success 'fail when using --files together with --cached' "
     test_must_fail git submodule summary --files --cached
 "
 
+test_expect_success 'should not fail in an empty repo' "
+    git init xyzzy &&
+    cd xyzzy &&
+    git submodule summary >output 2>&1 &&
+    test_cmp output /dev/null
+"
+
 test_done

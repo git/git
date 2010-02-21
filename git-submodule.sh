@@ -553,12 +553,15 @@ cmd_summary() {
 
 	test $summary_limit = 0 && return
 
-	if rev=$(git rev-parse -q --verify "$1^0")
+	if rev=$(git rev-parse -q --verify --default HEAD ${1+"$1"})
 	then
 		head=$rev
 		shift
+	elif test -z "$1" -o "$1" = "HEAD"
+	then
+		return
 	else
-		head=HEAD
+		head="HEAD"
 	fi
 
 	if [ -n "$files" ]
