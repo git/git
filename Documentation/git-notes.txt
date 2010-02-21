@@ -3,57 +3,112 @@ git-notes(1)
 
 NAME
 ----
-git-notes - Add/inspect commit notes
+git-notes - Add/inspect object notes
 
 SYNOPSIS
 --------
 [verse]
-'git notes' (edit [-F <file> | -m <msg>] | show) [commit]
+'git notes' [list [<object>]]
+'git notes' add [-f] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+'git notes' copy [-f] <from-object> <to-object>
+'git notes' append [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+'git notes' edit [<object>]
+'git notes' show [<object>]
+'git notes' remove [<object>]
+'git notes' prune
+
 
 DESCRIPTION
 -----------
-This command allows you to add notes to commit messages, without
-changing the commit.  To discern these notes from the message stored
-in the commit object, the notes are indented like the message, after
-an unindented line saying "Notes:".
+This command allows you to add/remove notes to/from objects, without
+changing the objects themselves.
 
-To disable commit notes, you have to set the config variable
-core.notesRef to the empty string.  Alternatively, you can set it
-to a different ref, something like "refs/notes/bugzilla".  This setting
-can be overridden by the environment variable "GIT_NOTES_REF".
+A typical use of notes is to extend a commit message without having
+to change the commit itself. Such commit notes can be shown by `git log`
+along with the original commit message. To discern these notes from the
+message stored in the commit object, the notes are indented like the
+message, after an unindented line saying "Notes:".
+
+To disable notes, you have to set the config variable core.notesRef to
+the empty string.  Alternatively, you can set it to a different ref,
+something like "refs/notes/bugzilla".  This setting can be overridden
+by the environment variable "GIT_NOTES_REF".
 
 
 SUBCOMMANDS
 -----------
 
+list::
+	List the notes object for a given object. If no object is
+	given, show a list of all note objects and the objects they
+	annotate (in the format "<note object> <annotated object>").
+	This is the default subcommand if no subcommand is given.
+
+add::
+	Add notes for a given object (defaults to HEAD). Abort if the
+	object already has notes, abort. (use `-f` to overwrite an
+	existing note).
+
+copy::
+	Copy the notes for the first object onto the second object.
+	Abort if the second object already has notes, or if the first
+	objects has none. (use -f to overwrite existing notes to the
+	second object). This subcommand is equivalent to:
+	`git notes add [-f] -C $(git notes list <from-object>) <to-object>`
+
+append::
+	Append to the notes of an existing object (defaults to HEAD).
+	Creates a new notes object if needed.
+
 edit::
-	Edit the notes for a given commit (defaults to HEAD).
+	Edit the notes for a given object (defaults to HEAD).
 
 show::
-	Show the notes for a given commit (defaults to HEAD).
+	Show the notes for a given object (defaults to HEAD).
 
+remove::
+	Remove the notes for a given object (defaults to HEAD).
+	This is equivalent to specifying an empty note message to
+	the `edit` subcommand.
+
+prune::
+	Remove all notes for non-existing/unreachable objects.
 
 OPTIONS
 -------
+-f::
+--force::
+	When adding notes to an object that already has notes,
+	overwrite the existing notes (instead of aborting).
+
 -m <msg>::
+--message=<msg>::
 	Use the given note message (instead of prompting).
-	If multiple `-m` (or `-F`) options are given, their
-	values are concatenated as separate paragraphs.
+	If multiple `-m` options are given, their values
+	are concatenated as separate paragraphs.
 
 -F <file>::
+--file=<file>::
 	Take the note message from the given file.  Use '-' to
 	read the note message from the standard input.
-	If multiple `-F` (or `-m`) options are given, their
-	values are concatenated as separate paragraphs.
 
+-C <object>::
+--reuse-message=<object>::
+	Reuse the note message from the given note object.
+
+-c <object>::
+--reedit-message=<object>::
+	Like '-C', but with '-c' the editor is invoked, so that
+	the user can further edit the note message.
 
 Author
 ------
-Written by Johannes Schindelin <johannes.schindelin@gmx.de>
+Written by Johannes Schindelin <johannes.schindelin@gmx.de> and
+Johan Herland <johan@herland.net>
 
 Documentation
 -------------
-Documentation by Johannes Schindelin
+Documentation by Johannes Schindelin and Johan Herland
 
 GIT
 ---

@@ -5,6 +5,7 @@
 #include "strbuf.h"
 #include "cache.h"
 #include "commit.h"
+#include "notes.h"
 
 extern const char git_version_string[];
 extern const char git_usage_string[];
@@ -18,6 +19,7 @@ extern int fmt_merge_msg(int merge_summary, struct strbuf *in,
 extern int commit_tree(const char *msg, unsigned char *tree,
 		struct commit_list *parents, unsigned char *ret,
 		const char *author);
+extern int commit_notes(struct notes_tree *t, const char *msg);
 extern int check_pager_config(const char *cmd);
 
 extern int cmd_add(int argc, const char **argv, const char *prefix);
@@ -78,6 +80,7 @@ extern int cmd_mktag(int argc, const char **argv, const char *prefix);
 extern int cmd_mktree(int argc, const char **argv, const char *prefix);
 extern int cmd_mv(int argc, const char **argv, const char *prefix);
 extern int cmd_name_rev(int argc, const char **argv, const char *prefix);
+extern int cmd_notes(int argc, const char **argv, const char *prefix);
 extern int cmd_pack_objects(int argc, const char **argv, const char *prefix);
 extern int cmd_pack_redundant(int argc, const char **argv, const char *prefix);
 extern int cmd_patch_id(int argc, const char **argv, const char *prefix);
