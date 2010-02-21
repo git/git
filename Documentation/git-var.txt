@@ -8,7 +8,7 @@ git-var - Show a git logical variable
 
 SYNOPSIS
 --------
-'git var' [ -l | <variable> ]
+'git var' ( -l | <variable> )
 
 DESCRIPTION
 -----------
