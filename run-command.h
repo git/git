@@ -18,7 +18,7 @@ struct child_process {
 	 * - Specify > 0 to set a channel to a particular FD as follows:
 	 *     .in: a readable FD, becomes child's stdin
 	 *     .out: a writable FD, becomes child's stdout/stderr
-	 *     .err > 0 not supported
+	 *     .err: a writable FD, becomes child's stderr
 	 *   The specified FD is closed by start_command(), even in case
 	 *   of errors!
 	 */
@@ -66,17 +66,20 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
  */
 struct async {
 	/*
-	 * proc writes to fd and closes it;
+	 * proc reads from in; closes it before return
+	 * proc writes to out; closes it before return
 	 * returns 0 on success, non-zero on failure
 	 */
-	int (*proc)(int fd, void *data);
+	int (*proc)(int in, int out, void *data);
 	void *data;
+	int in;		/* caller writes here and closes it */
 	int out;	/* caller reads from here and closes it */
 #ifndef WIN32
 	pid_t pid;
 #else
 	HANDLE tid;
-	int fd_for_proc;
+	int proc_in;
+	int proc_out;
 #endif
 };
 
