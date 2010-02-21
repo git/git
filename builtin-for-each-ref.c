@@ -33,6 +33,8 @@ struct ref_sort {
 struct refinfo {
 	char *refname;
 	unsigned char objectname[20];
+	int flag;
+	const char *symref;
 	struct atom_value *value;
 };
 
@@ -68,6 +70,8 @@ static struct {
 	{ "body" },
 	{ "contents" },
 	{ "upstream" },
+	{ "symref" },
+	{ "flag" },
 };
 
 /*
@@ -82,7 +86,7 @@ static struct {
  */
 static const char **used_atom;
 static cmp_type *used_atom_type;
-static int used_atom_cnt, sort_atom_limit, need_tagged;
+static int used_atom_cnt, sort_atom_limit, need_tagged, need_symref;
 
 /*
  * Used to parse format string and sort specifiers
@@ -133,6 +137,10 @@ static int parse_atom(const char *atom, const char *ep)
 				  (sizeof(*used_atom_type) * used_atom_cnt));
 	used_atom[at] = xmemdupz(atom, ep - atom);
 	used_atom_type[at] = valid_atom[i].cmp_type;
+	if (*atom == '*')
+		need_tagged = 1;
+	if (!strcmp(used_atom[at], "symref"))
+		need_symref = 1;
 	return at;
 }
 
@@ -143,7 +151,8 @@ static const char *find_next(const char *cp)
 {
 	while (*cp) {
 		if (*cp == '%') {
-			/* %( is the start of an atom;
+			/*
+			 * %( is the start of an atom;
 			 * %% is a quoted per-cent.
 			 */
 			if (cp[1] == '(')
@@ -420,7 +429,8 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 			grab_date(wholine, v, name);
 	}
 
-	/* For a tag or a commit object, if "creator" or "creatordate" is
+	/*
+	 * For a tag or a commit object, if "creator" or "creatordate" is
 	 * requested, do something special.
 	 */
 	if (strcmp(who, "tagger") && strcmp(who, "committer"))
@@ -502,7 +512,8 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct obj
 	}
 }
 
-/* We want to have empty print-string for field requests
+/*
+ * We want to have empty print-string for field requests
  * that do not apply (e.g. "authordate" for a tag object)
  */
 static void fill_missing_values(struct atom_value *val)
@@ -548,6 +559,13 @@ static void grab_values(struct atom_value *val, int deref, struct object *obj, v
 	}
 }
 
+static inline char *copy_advance(char *dst, const char *src)
+{
+	while (*src)
+		*dst++ = *src++;
+	return dst;
+}
+
 /*
  * Parse the object referred by ref, and grab needed value.
  */
@@ -560,6 +578,16 @@ static void populate_value(struct refinfo *ref)
 	const unsigned char *tagged;
 
 	ref->value = xcalloc(sizeof(struct atom_value), used_atom_cnt);
+
+	if (need_symref && (ref->flag & REF_ISSYMREF) && !ref->symref) {
+		unsigned char unused1[20];
+		const char *symref;
+		symref = resolve_ref(ref->refname, unused1, 1, NULL);
+		if (symref)
+			ref->symref = xstrdup(symref);
+		else
+			ref->symref = "";
+	}
 
 	/* Fill in specials first */
 	for (i = 0; i < used_atom_cnt; i++) {
@@ -576,6 +604,8 @@ static void populate_value(struct refinfo *ref)
 
 		if (!prefixcmp(name, "refname"))
 			refname = ref->refname;
+		else if (!prefixcmp(name, "symref"))
+			refname = ref->symref ? ref->symref : "";
 		else if (!prefixcmp(name, "upstream")) {
 			struct branch *branch;
 			/* only local branches may have an upstream */
@@ -587,6 +617,20 @@ static void populate_value(struct refinfo *ref)
 			    !branch->merge[0]->dst)
 				continue;
 			refname = branch->merge[0]->dst;
+		}
+		else if (!strcmp(name, "flag")) {
+			char buf[256], *cp = buf;
+			if (ref->flag & REF_ISSYMREF)
+				cp = copy_advance(cp, ",symref");
+			if (ref->flag & REF_ISPACKED)
+				cp = copy_advance(cp, ",packed");
+			if (cp == buf)
+				v->s = "";
+			else {
+				*cp = '\0';
+				v->s = xstrdup(buf + 1);
+			}
+			continue;
 		}
 		else
 			continue;
@@ -633,18 +677,21 @@ static void populate_value(struct refinfo *ref)
 	if (!eaten)
 		free(buf);
 
-	/* If there is no atom that wants to know about tagged
+	/*
+	 * If there is no atom that wants to know about tagged
 	 * object, we are done.
 	 */
 	if (!need_tagged || (obj->type != OBJ_TAG))
 		return;
 
-	/* If it is a tag object, see if we use a value that derefs
+	/*
+	 * If it is a tag object, see if we use a value that derefs
 	 * the object, and if we do grab the object it refers to.
 	 */
 	tagged = ((struct tag *)obj)->tagged->sha1;
 
-	/* NEEDSWORK: This derefs tag only once, which
+	/*
+	 * NEEDSWORK: This derefs tag only once, which
 	 * is good to deal with chains of trust, but
 	 * is not consistent with what deref_tag() does
 	 * which peels the onion to the core.
@@ -681,9 +728,8 @@ struct grab_ref_cbdata {
 };
 
 /*
- * A call-back given to for_each_ref().  It is unfortunate that we
- * need to use global variables to pass extra information to this
- * function.
+ * A call-back given to for_each_ref().  Filter refs and keep them for
+ * later object processing.
  */
 static int grab_single_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
@@ -711,13 +757,15 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 			return 0;
 	}
 
-	/* We do not open the object yet; sort may only need refname
+	/*
+	 * We do not open the object yet; sort may only need refname
 	 * to do its job and the resulting list may yet to be pruned
 	 * by maxcount logic.
 	 */
 	ref = xcalloc(1, sizeof(*ref));
 	ref->refname = xstrdup(refname);
 	hashcpy(ref->objectname, sha1);
+	ref->flag = flag;
 
 	cnt = cb->grab_cnt;
 	cb->grab_array = xrealloc(cb->grab_array,
@@ -937,13 +985,6 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	for_each_rawref(grab_single_ref, &cbdata);
 	refs = cbdata.grab_array;
 	num_refs = cbdata.grab_cnt;
-
-	for (i = 0; i < used_atom_cnt; i++) {
-		if (used_atom[i][0] == '*') {
-			need_tagged = 1;
-			break;
-		}
-	}
 
 	sort_refs(sort, refs, num_refs);
 
