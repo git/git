@@ -6,7 +6,7 @@
 #include "parse-options.h"
 
 static const char* show_branch_usage[] = {
-    "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [<rev> | <glob>]...",
+    "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [<rev> | <glob>]...",
     "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]",
     NULL
 };
@@ -661,7 +661,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			    "show remote-tracking and local branches"),
 		OPT_BOOLEAN('r', "remotes", &all_remotes,
 			    "show remote-tracking branches"),
-		OPT_BOOLEAN(0, "color", &showbranch_use_color,
+		OPT__COLOR(&showbranch_use_color,
 			    "color '*!+-' corresponding to the branch"),
 		{ OPTION_INTEGER, 0, "more", &extra, "n",
 			    "show <n> more commits after the common ancestor",

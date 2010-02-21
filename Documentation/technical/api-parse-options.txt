@@ -115,6 +115,9 @@ There are some macros to easily define options:
 `OPT__ABBREV(&int_var)`::
 	Add `\--abbrev[=<n>]`.
 
+`OPT__COLOR(&int_var, description)`::
+	Add `\--color[=<when>]` and `--no-color`.
+
 `OPT__DRY_RUN(&int_var)`::
 	Add `-n, \--dry-run`.
 
@@ -182,6 +185,15 @@ There are some macros to easily define options:
 	option definition.  It cannot be negated and it takes no
 	arguments.  Short options that happen to be digits take
 	precedence over it.
+
+`OPT_COLOR_FLAG(short, long, &int_var, description)`::
+	Introduce an option that takes an optional argument that can
+	have one of three values: "always", "never", or "auto".  If the
+	argument is not given, it defaults to "always".  The `--no-` form
+	works like `--long=never`; it cannot take an argument.  If
+	"always", set `int_var` to 1; if "never", set `int_var` to 0; if
+	"auto", set `int_var` to 1 if stdout is a tty or a pager,
+	0 otherwise.
 
 
 The last element of the array must be `OPT_END()`.
