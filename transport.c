@@ -573,7 +573,7 @@ static int push_had_errors(struct ref *ref)
 	return 0;
 }
 
-static int refs_pushed(struct ref *ref)
+int transport_refs_pushed(struct ref *ref)
 {
 	for (; ref; ref = ref->next) {
 		switch(ref->status) {
@@ -587,7 +587,7 @@ static int refs_pushed(struct ref *ref)
 	return 0;
 }
 
-static void update_tracking_ref(struct remote *remote, struct ref *ref, int verbose)
+void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose)
 {
 	struct refspec rs;
 
@@ -609,8 +609,6 @@ static void update_tracking_ref(struct remote *remote, struct ref *ref, int verb
 	}
 }
 
-#define SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
-
 static void print_ref_status(char flag, const char *summary, struct ref *to, struct ref *from, const char *msg, int porcelain)
 {
 	if (porcelain) {
@@ -623,7 +621,7 @@ static void print_ref_status(char flag, const char *summary, struct ref *to, str
 		else
 			fprintf(stdout, "%s\n", summary);
 	} else {
-		fprintf(stderr, " %c %-*s ", flag, SUMMARY_WIDTH, summary);
+		fprintf(stderr, " %c %-*s ", flag, TRANSPORT_SUMMARY_WIDTH, summary);
 		if (from)
 			fprintf(stderr, "%s -> %s", prettify_refname(from->name), prettify_refname(to->name));
 		else
@@ -711,8 +709,8 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count, i
 	return 1;
 }
 
-static void print_push_status(const char *dest, struct ref *refs,
-			      int verbose, int porcelain, int * nonfastforward)
+void transport_print_push_status(const char *dest, struct ref *refs,
+				  int verbose, int porcelain, int *nonfastforward)
 {
 	struct ref *ref;
 	int n = 0;
@@ -738,7 +736,7 @@ static void print_push_status(const char *dest, struct ref *refs,
 	}
 }
 
-static void verify_remote_names(int nr_heads, const char **heads)
+void transport_verify_remote_names(int nr_heads, const char **heads)
 {
 	int i;
 
@@ -1019,7 +1017,7 @@ int transport_push(struct transport *transport,
 		   int *nonfastforward)
 {
 	*nonfastforward = 0;
-	verify_remote_names(refspec_nr, refspec);
+	transport_verify_remote_names(refspec_nr, refspec);
 
 	if (transport->push) {
 		/* Maybe FIXME. But no important transport uses this case. */
@@ -1058,7 +1056,7 @@ int transport_push(struct transport *transport,
 		ret |= err;
 
 		if (!quiet || err)
-			print_push_status(transport->url, remote_refs,
+			transport_print_push_status(transport->url, remote_refs,
 					verbose | porcelain, porcelain,
 					nonfastforward);
 
@@ -1068,10 +1066,10 @@ int transport_push(struct transport *transport,
 		if (!(flags & TRANSPORT_PUSH_DRY_RUN)) {
 			struct ref *ref;
 			for (ref = remote_refs; ref; ref = ref->next)
-				update_tracking_ref(transport->remote, ref, verbose);
+				transport_update_tracking_ref(transport->remote, ref, verbose);
 		}
 
-		if (!quiet && !ret && !refs_pushed(remote_refs))
+		if (!quiet && !ret && !transport_refs_pushed(remote_refs))
 			fprintf(stderr, "Everything up-to-date\n");
 		return ret;
 	}
