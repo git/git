@@ -1116,6 +1116,9 @@ citool {
 if {![info exists env(SSH_ASKPASS)]} {
 	set env(SSH_ASKPASS) [file join [git --exec-path] git-gui--askpass]
 }
+if {![info exists env(GIT_ASK_YESNO)]} {
+	set env(GIT_ASK_YESNO) [file join [git --exec-path] git-gui--askyesno]
+}
 
 ######################################################################
 ##
