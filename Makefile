@@ -214,6 +214,13 @@ all::
 #   DEFAULT_EDITOR='~/bin/vi',
 #   DEFAULT_EDITOR='$GIT_FALLBACK_EDITOR',
 #   DEFAULT_EDITOR='"C:\Program Files\Vim\gvim.exe" --nofork'
+#
+# Define COMPUTE_HEADER_DEPENDENCIES if your compiler supports the -MMD option
+# and you want to avoid rebuilding objects when an unrelated header file
+# changes.
+#
+# Define CHECK_HEADER_DEPENDENCIES to check for problems in the hard-coded
+# dependency rules.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -311,12 +318,13 @@ COMPAT_CFLAGS =
 COMPAT_OBJS =
 LIB_H =
 LIB_OBJS =
+PROGRAM_OBJS =
 PROGRAMS =
 SCRIPT_PERL =
 SCRIPT_PYTHON =
 SCRIPT_SH =
 SCRIPT_LIB =
-TEST_PROGRAMS =
+TEST_PROGRAMS_NEED_X =
 
 SCRIPT_SH += git-am.sh
 SCRIPT_SH += git-bisect.sh
@@ -361,12 +369,31 @@ EXTRA_PROGRAMS =
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS += $(EXTRA_PROGRAMS)
-PROGRAMS += git-fast-import$X
-PROGRAMS += git-imap-send$X
-PROGRAMS += git-shell$X
-PROGRAMS += git-show-index$X
-PROGRAMS += git-upload-pack$X
-PROGRAMS += git-http-backend$X
+
+PROGRAM_OBJS += fast-import.o
+PROGRAM_OBJS += imap-send.o
+PROGRAM_OBJS += shell.o
+PROGRAM_OBJS += show-index.o
+PROGRAM_OBJS += upload-pack.o
+PROGRAM_OBJS += http-backend.o
+
+PROGRAMS += $(patsubst %.o,git-%$X,$(PROGRAM_OBJS))
+
+TEST_PROGRAMS_NEED_X += test-chmtime
+TEST_PROGRAMS_NEED_X += test-ctype
+TEST_PROGRAMS_NEED_X += test-date
+TEST_PROGRAMS_NEED_X += test-delta
+TEST_PROGRAMS_NEED_X += test-dump-cache-tree
+TEST_PROGRAMS_NEED_X += test-genrandom
+TEST_PROGRAMS_NEED_X += test-match-trees
+TEST_PROGRAMS_NEED_X += test-parse-options
+TEST_PROGRAMS_NEED_X += test-path-utils
+TEST_PROGRAMS_NEED_X += test-run-command
+TEST_PROGRAMS_NEED_X += test-sha1
+TEST_PROGRAMS_NEED_X += test-sigchain
+TEST_PROGRAMS_NEED_X += test-index-version
+
+TEST_PROGRAMS := $(patsubst %,%$X,$(TEST_PROGRAMS_NEED_X))
 
 # List built-in command $C whose implementation cmd_$C() is not in
 # builtin-$C.o but is linked in as part of some other command.
@@ -426,6 +453,7 @@ LIB_H += blob.h
 LIB_H += builtin.h
 LIB_H += cache.h
 LIB_H += cache-tree.h
+LIB_H += color.h
 LIB_H += commit.h
 LIB_H += compat/bswap.h
 LIB_H += compat/cygwin.h
@@ -437,6 +465,7 @@ LIB_H += delta.h
 LIB_H += diffcore.h
 LIB_H += diff.h
 LIB_H += dir.h
+LIB_H += exec_cmd.h
 LIB_H += fsck.h
 LIB_H += git-compat-util.h
 LIB_H += graph.h
@@ -479,7 +508,8 @@ LIB_H += tree-walk.h
 LIB_H += unpack-trees.h
 LIB_H += userdiff.h
 LIB_H += utf8.h
-LIB_H += wt-status.h
+LIB_H += xdiff-interface.h
+LIB_H += xdiff/xdiff.h
 
 LIB_OBJS += abspath.o
 LIB_OBJS += advice.o
@@ -683,6 +713,8 @@ BUILTIN_OBJS += builtin-var.o
 BUILTIN_OBJS += builtin-verify-pack.o
 BUILTIN_OBJS += builtin-verify-tag.o
 BUILTIN_OBJS += builtin-write-tree.o
+
+TEST_OBJS := $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 EXTLIBS =
@@ -1022,6 +1054,14 @@ endif
 -include config.mak.autogen
 -include config.mak
 
+ifdef CHECK_HEADER_DEPENDENCIES
+USE_COMPUTED_HEADER_DEPENDENCIES =
+endif
+
+ifdef COMPUTE_HEADER_DEPENDENCIES
+USE_COMPUTED_HEADER_DEPENDENCIES = YesPlease
+endif
+
 ifdef SANE_TOOL_PATH
 SANE_TOOL_PATH_SQ = $(subst ','\'',$(SANE_TOOL_PATH))
 BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|git_broken_path_fix $(SANE_TOOL_PATH_SQ)|'
@@ -1077,11 +1117,12 @@ else
 	REMOTE_CURL_PRIMARY = git-remote-http$X
 	REMOTE_CURL_ALIASES = git-remote-https$X git-remote-ftp$X git-remote-ftps$X
 	REMOTE_CURL_NAMES = $(REMOTE_CURL_PRIMARY) $(REMOTE_CURL_ALIASES)
-	PROGRAMS += $(REMOTE_CURL_NAMES) git-http-fetch$X
+	PROGRAM_OBJS += http-fetch.o
+	PROGRAMS += $(REMOTE_CURL_NAMES)
 	curl_check := $(shell (echo 070908; curl-config --vernum) | sort -r | sed -ne 2p)
 	ifeq "$(curl_check)" "070908"
 		ifndef NO_EXPAT
-			PROGRAMS += git-http-push$X
+			PROGRAM_OBJS += http-push.o
 		endif
 	endif
 	ifndef NO_EXPAT
@@ -1101,7 +1142,7 @@ endif
 EXTLIBS += -lz
 
 ifndef NO_POSIX_ONLY_PROGRAMS
-	PROGRAMS += git-daemon$X
+	PROGRAM_OBJS += daemon.o
 endif
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
@@ -1268,10 +1309,12 @@ endif
 ifdef BLK_SHA1
 	SHA1_HEADER = "block-sha1/sha1.h"
 	LIB_OBJS += block-sha1/sha1.o
+	LIB_H += block-sha1/sha1.h
 else
 ifdef PPC_SHA1
 	SHA1_HEADER = "ppc/sha1.h"
 	LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
+	LIB_H += ppc/sha1.h
 else
 	SHA1_HEADER = <openssl/sha.h>
 	EXTLIBS += $(LIB_4_CRYPTO)
@@ -1592,12 +1635,132 @@ git.o git.spec \
 	$(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	: GIT-VERSION-FILE
 
-%.o: %.c GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+GIT_OBJS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
+	git.o http.o http-walker.o remote-curl.o
+XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
+	xdiff/xmerge.o xdiff/xpatience.o
+OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS)
+
+dep_files := $(foreach f,$(OBJECTS),$(dir $f).depend/$(notdir $f).d)
+dep_dirs := $(addsuffix .depend,$(sort $(dir $(OBJECTS))))
+
+ifdef COMPUTE_HEADER_DEPENDENCIES
+$(dep_dirs):
+	mkdir -p $@
+
+missing_dep_dirs := $(filter-out $(wildcard $(dep_dirs)),$(dep_dirs))
+dep_file = $(dir $@).depend/$(notdir $@).d
+dep_args = -MF $(dep_file) -MMD -MP
+ifdef CHECK_HEADER_DEPENDENCIES
+$(error cannot compute header dependencies outside a normal build. \
+Please unset CHECK_HEADER_DEPENDENCIES and try again)
+endif
+endif
+
+ifndef COMPUTE_HEADER_DEPENDENCIES
+ifndef CHECK_HEADER_DEPENDENCIES
+dep_dirs =
+missing_dep_dirs =
+dep_args =
+endif
+endif
+
+ifdef CHECK_HEADER_DEPENDENCIES
+ifndef PRINT_HEADER_DEPENDENCIES
+missing_deps = $(filter-out $(notdir $^), \
+	$(notdir $(shell $(MAKE) -s $@ \
+		CHECK_HEADER_DEPENDENCIES=YesPlease \
+		USE_COMPUTED_HEADER_DEPENDENCIES=YesPlease \
+		PRINT_HEADER_DEPENDENCIES=YesPlease)))
+endif
+endif
+
+ASM_SRC := $(wildcard $(OBJECTS:o=S))
+ASM_OBJ := $(ASM_SRC:S=o)
+C_OBJ := $(filter-out $(ASM_OBJ),$(OBJECTS))
+
+.SUFFIXES:
+
+ifdef PRINT_HEADER_DEPENDENCIES
+$(C_OBJ): %.o: %.c FORCE
+	echo $^
+$(ASM_OBJ): %.o: %.S FORCE
+	echo $^
+
+ifndef CHECK_HEADER_DEPENDENCIES
+$(error cannot print header dependencies during a normal build. \
+Please set CHECK_HEADER_DEPENDENCIES and try again)
+endif
+endif
+
+ifndef PRINT_HEADER_DEPENDENCIES
+ifdef CHECK_HEADER_DEPENDENCIES
+$(C_OBJ): %.o: %.c $(dep_files) FORCE
+	@set -e; echo CHECK $@; \
+	missing_deps="$(missing_deps)"; \
+	if test "$$missing_deps"; \
+	then \
+		echo missing dependencies: $$missing_deps; \
+		false; \
+	fi
+$(ASM_OBJ): %.o: %.S $(dep_files) FORCE
+	@set -e; echo CHECK $@; \
+	missing_deps="$(missing_deps)"; \
+	if test "$$missing_deps"; \
+	then \
+		echo missing dependencies: $$missing_deps; \
+		false; \
+	fi
+endif
+endif
+
+ifndef CHECK_HEADER_DEPENDENCIES
+$(C_OBJ): %.o: %.c GIT-CFLAGS $(missing_dep_dirs)
+	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $<
+$(ASM_OBJ): %.o: %.S GIT-CFLAGS $(missing_dep_dirs)
+	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $<
+endif
+
 %.s: %.c GIT-CFLAGS FORCE
 	$(QUIET_CC)$(CC) -S $(ALL_CFLAGS) $<
-%.o: %.S GIT-CFLAGS
-	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+
+ifdef USE_COMPUTED_HEADER_DEPENDENCIES
+# Take advantage of gcc's on-the-fly dependency generation
+# See <http://gcc.gnu.org/gcc-3.0/features.html>.
+dep_files_present := $(wildcard $(dep_files))
+ifneq ($(dep_files_present),)
+include $(dep_files_present)
+endif
+else
+# Dependencies on header files, for platforms that do not support
+# the gcc -MMD option.
+#
+# Dependencies on automatically generated headers such as common-cmds.h
+# should _not_ be included here, since they are necessary even when
+# building an object for the first time.
+#
+# XXX. Please check occasionally that these include all dependencies
+# gcc detects!
+
+$(GIT_OBJS): $(LIB_H)
+builtin-branch.o builtin-checkout.o builtin-clone.o builtin-reset.o branch.o transport.o: branch.h
+builtin-bundle.o bundle.o transport.o: bundle.h
+builtin-bisect--helper.o builtin-rev-list.o bisect.o: bisect.h
+builtin-clone.o builtin-fetch-pack.o transport.o: fetch-pack.h
+builtin-grep.o: thread-utils.h
+builtin-send-pack.o transport.o: send-pack.h
+builtin-log.o builtin-shortlog.o: shortlog.h
+builtin-prune.o builtin-reflog.o reachable.o: reachable.h
+builtin-commit.o builtin-revert.o wt-status.o: wt-status.h
+builtin-tar-tree.o archive-tar.o: tar.h
+builtin-pack-objects.o: thread-utils.h
+http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
+http.o http-walker.o http-push.o remote-curl.o: http.h
+
+xdiff-interface.o $(XDIFF_OBJS): \
+	xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
+	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
+endif
 
 exec_cmd.s exec_cmd.o: ALL_CFLAGS += \
 	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
@@ -1612,7 +1775,6 @@ config.s config.o: ALL_CFLAGS += -DETC_GITCONFIG='"$(ETC_GITCONFIG_SQ)"'
 http.s http.o: ALL_CFLAGS += -DGIT_USER_AGENT='"git/$(GIT_VERSION)"'
 
 ifdef NO_EXPAT
-http-walker.o: http.h
 http-walker.s http-walker.o: ALL_CFLAGS += -DNO_EXPAT
 endif
 
@@ -1622,10 +1784,6 @@ git-%$X: %.o $(GITLIBS)
 git-imap-send$X: imap-send.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(OPENSSL_LINK) $(OPENSSL_LIBSSL)
-
-http.o http-walker.o http-push.o: http.h
-
-http.o http-walker.o: $(LIB_H)
 
 git-http-fetch$X: revision.o http.o http-walker.o http-fetch.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
@@ -1644,17 +1802,8 @@ $(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
-$(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
-$(patsubst git-%$X,%.o,$(PROGRAMS)) git.o: $(LIB_H) $(wildcard */*.h)
-builtin-revert.o wt-status.o: wt-status.h
-
 $(LIB_FILE): $(LIB_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(LIB_OBJS)
-
-XDIFF_OBJS=xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
-	xdiff/xmerge.o xdiff/xpatience.o
-$(XDIFF_OBJS): xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
-	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
 
 $(XDIFF_LIB): $(XDIFF_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(XDIFF_OBJS)
@@ -1721,24 +1870,6 @@ GIT-GUI-VARS: FORCE
             fi
 endif
 
-### Testing rules
-
-TEST_PROGRAMS_NEED_X += test-chmtime
-TEST_PROGRAMS_NEED_X += test-ctype
-TEST_PROGRAMS_NEED_X += test-date
-TEST_PROGRAMS_NEED_X += test-delta
-TEST_PROGRAMS_NEED_X += test-dump-cache-tree
-TEST_PROGRAMS_NEED_X += test-genrandom
-TEST_PROGRAMS_NEED_X += test-match-trees
-TEST_PROGRAMS_NEED_X += test-parse-options
-TEST_PROGRAMS_NEED_X += test-path-utils
-TEST_PROGRAMS_NEED_X += test-run-command
-TEST_PROGRAMS_NEED_X += test-sha1
-TEST_PROGRAMS_NEED_X += test-sigchain
-TEST_PROGRAMS_NEED_X += test-index-version
-
-TEST_PROGRAMS = $(patsubst %,%$X,$(TEST_PROGRAMS_NEED_X))
-
 test_bindir_programs := $(patsubst %,bin-wrappers/%,$(BINDIR_PROGRAMS_NEED_X) $(BINDIR_PROGRAMS_NO_X) $(TEST_PROGRAMS_NEED_X))
 
 all:: $(TEST_PROGRAMS) $(test_bindir_programs)
@@ -1756,6 +1887,8 @@ bin-wrappers/%: wrap-for-bin.sh
 
 export NO_SVN_TESTS
 
+### Testing rules
+
 test: all
 	$(MAKE) -C t/ all
 
@@ -1767,9 +1900,7 @@ test-delta$X: diff-delta.o patch-delta.o
 
 test-parse-options$X: parse-options.o
 
-test-parse-options.o: parse-options.h
-
-.PRECIOUS: $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
+.PRECIOUS: $(TEST_OBJS)
 
 test-%$X: test-%.o $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
@@ -1938,6 +2069,7 @@ clean:
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS)
 	$(RM) -r bin-wrappers
+	$(RM) -r $(dep_dirs)
 	$(RM) *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags cscope*
 	$(RM) -r autom4te.cache
 	$(RM) config.log config.mak.autogen config.mak.append config.status config.cache
