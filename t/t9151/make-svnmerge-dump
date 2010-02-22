@@ -174,8 +174,8 @@ cd ..
 
 say "Make PARTIAL branch"
 svn update
-i=$(commit $i "make partial branch")
 svn cp trunk/subdir branches/partial
+i=$(commit $i "make partial branch")
 
 say "Make a commit to PARTIAL"
 svn update
@@ -194,13 +194,13 @@ cd ../../
 
 say "Tagging trunk"
 svn update
-i=$(commit $i "tagging v1.0")
 svn cp trunk tags/v1.0
+i=$(commit $i "tagging v1.0")
 
 say "Branching BUGFIX from v1.0"
 svn update
-i=$(commit $i "make bugfix branch from tag")
 svn cp tags/v1.0 branches/bugfix
+i=$(commit $i "make bugfix branch from tag")
 
 say "Make a commit to BUGFIX"
 svn update

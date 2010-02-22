@@ -1713,13 +1713,13 @@ Node-copyfrom-path: branches/left/subdir
 
 
 Revision-number: 27
-Prop-content-length: 118
-Content-length: 118
+Prop-content-length: 123
+Content-length: 123
 
 K 7
 svn:log
-V 20
-(r28) partial update
+V 25
+(r27) make partial branch
 K 10
 svn:author
 V 3
@@ -1737,6 +1737,24 @@ Node-copyfrom-rev: 26
 Node-copyfrom-path: trunk/subdir
 
 
+Revision-number: 28
+Prop-content-length: 118
+Content-length: 118
+
+K 7
+svn:log
+V 20
+(r28) partial update
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-01-19T04:14:54.000000Z
+PROPS-END
+
 Node-path: branches/partial/palindromes
 Node-kind: file
 Node-action: add
@@ -1750,7 +1768,7 @@ PROPS-END
 racecar
 
 
-Revision-number: 28
+Revision-number: 29
 Prop-content-length: 126
 Content-length: 126
 
@@ -1771,15 +1789,15 @@ PROPS-END
 Node-path: trunk/subdir
 Node-kind: dir
 Node-action: change
-Prop-content-length: 142
-Content-length: 142
+Prop-content-length: 145
+Content-length: 145
 
 K 13
 svn:mergeinfo
-V 106
+V 109
 /branches/left/subdir:2-25
 /branches/left-sub/subdir:4-19
-/branches/partial:27
+/branches/partial:27-28
 /branches/right/subdir:2-22
 PROPS-END
 
@@ -1787,13 +1805,38 @@ PROPS-END
 Node-path: trunk/subdir/palindromes
 Node-kind: file
 Node-action: add
-Node-copyfrom-rev: 27
+Node-copyfrom-rev: 28
 Node-copyfrom-path: branches/partial/palindromes
 Text-copy-source-md5: 5d1c2024fb5efc4eef812856df1b080c
 Text-copy-source-sha1: 5f8509ddd14c91a52864dd1447344e706f9bbc69
 
 
-Revision-number: 29
+Revision-number: 30
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 18
+(r30) tagging v1.0
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-01-19T04:15:00.039761Z
+PROPS-END
+
+Node-path: tags/v1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 29
+Node-copyfrom-path: trunk
+
+
+Revision-number: 31
 Prop-content-length: 131
 Content-length: 131
 
@@ -1808,17 +1851,17 @@ adm
 K 8
 svn:date
 V 27
-2010-01-19T04:15:00.039761Z
+2010-01-19T04:15:01.000000Z
 PROPS-END
 
-Node-path: tags/v1.0
+Node-path: branches/bugfix
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 28
-Node-copyfrom-path: trunk
+Node-copyfrom-rev: 30
+Node-copyfrom-path: tags/v1.0
 
 
-Revision-number: 30
+Revision-number: 32
 Prop-content-length: 120
 Content-length: 120
 
@@ -1833,15 +1876,8 @@ adm
 K 8
 svn:date
 V 27
-2010-01-19T04:15:03.043218Z
+2010-01-19T04:15:02.000000Z
 PROPS-END
-
-Node-path: branches/bugfix
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 29
-Node-copyfrom-path: tags/v1.0
-
 
 Node-path: branches/bugfix/subdir/palindromes
 Node-kind: file
@@ -1855,7 +1891,7 @@ racecar
 kayak
 
 
-Revision-number: 31
+Revision-number: 33
 Prop-content-length: 125
 Content-length: 125
 
@@ -1876,35 +1912,35 @@ PROPS-END
 Node-path: trunk
 Node-kind: dir
 Node-action: change
-Prop-content-length: 133
-Content-length: 133
+Prop-content-length: 137
+Content-length: 137
 
 K 13
 svn:mergeinfo
-V 98
-/branches/bugfix:30
+V 101
+/branches/bugfix:31-32
 /branches/left:2-25
 /branches/left-sub:4-19
 /branches/right:2-22
-/tags/v1.0:29
+/tags/v1.0:30
 PROPS-END
 
 
 Node-path: trunk/subdir
 Node-kind: dir
 Node-action: change
-Prop-content-length: 190
-Content-length: 190
+Prop-content-length: 196
+Content-length: 196
 
 K 13
 svn:mergeinfo
-V 154
-/branches/bugfix/subdir:30
+V 160
+/branches/bugfix/subdir:31-32
 /branches/left/subdir:2-25
 /branches/left-sub/subdir:4-19
-/branches/partial:27
+/branches/partial:27-28
 /branches/right/subdir:2-22
-/tags/v1.0/subdir:29
+/tags/v1.0/subdir:30
 PROPS-END
 
 
