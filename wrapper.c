@@ -277,10 +277,14 @@ int git_inflate(z_streamp strm, int flush)
 int odb_mkstemp(char *template, size_t limit, const char *pattern)
 {
 	int fd;
-
+	/*
+	 * we let the umask do its job, don't try to be more
+	 * restrictive except to remove write permission.
+	 */
+	int mode = 0444;
 	snprintf(template, limit, "%s/%s",
 		 get_object_directory(), pattern);
-	fd = mkstemp(template);
+	fd = git_mkstemp_mode(template, mode);
 	if (0 <= fd)
 		return fd;
 
@@ -289,7 +293,7 @@ int odb_mkstemp(char *template, size_t limit, const char *pattern)
 	snprintf(template, limit, "%s/%s",
 		 get_object_directory(), pattern);
 	safe_create_leading_directories(template);
-	return xmkstemp(template);
+	return xmkstemp_mode(template, mode);
 }
 
 int odb_pack_keep(char *name, size_t namesz, unsigned char *sha1)

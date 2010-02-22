@@ -59,7 +59,7 @@ test_expect_failure 'Objects creation does not break ACLs with restrictive umask
 	check_perms_and_acl .git/objects/e6/9de29bb2d1d6434b8b29ae775ad8c2e48c5391
 '
 
-test_expect_failure 'git gc does not break ACLs with restrictive umask' '
+test_expect_success 'git gc does not break ACLs with restrictive umask' '
 	git gc &&
 	check_perms_and_acl .git/objects/pack/*.pack
 '
