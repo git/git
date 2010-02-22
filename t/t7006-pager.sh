@@ -137,7 +137,7 @@ rm -f default_pager_used
 test_expect_success SIMPLEPAGER 'default pager is used by default' '
 	cat > $less <<-EOF &&
 	#!$SHELL_PATH
-	: > default_pager_used
+	wc > default_pager_used
 	EOF
 	chmod +x $less &&
 	PATH=.:$PATH test_terminal git log &&
@@ -148,7 +148,7 @@ unset GIT_PAGER
 git config --unset core.pager
 rm -f PAGER_used
 test_expect_success TTY 'PAGER overrides default pager' '
-	PAGER=": > PAGER_used" &&
+	PAGER="wc > PAGER_used" &&
 	export PAGER &&
 	test_terminal git log &&
 	test -e PAGER_used
@@ -157,17 +157,17 @@ test_expect_success TTY 'PAGER overrides default pager' '
 unset GIT_PAGER
 rm -f core.pager_used
 test_expect_success TTY 'core.pager overrides PAGER' '
-	PAGER=: &&
+	PAGER=wc &&
 	export PAGER &&
-	git config core.pager ": > core.pager_used" &&
+	git config core.pager "wc > core.pager_used" &&
 	test_terminal git log &&
 	test -e core.pager_used
 '
 
 rm -f GIT_PAGER_used
 test_expect_success TTY 'GIT_PAGER overrides core.pager' '
-	git config core.pager : &&
-	GIT_PAGER=": > GIT_PAGER_used" &&
+	git config core.pager wc &&
+	GIT_PAGER="wc > GIT_PAGER_used" &&
 	export GIT_PAGER &&
 	test_terminal git log &&
 	test -e GIT_PAGER_used
