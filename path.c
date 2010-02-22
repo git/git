@@ -222,7 +222,6 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 	}
 	/* We return the null string if we can't find a unique file name.  */
 	pattern[0] = '\0';
-	errno = EINVAL;
 	return -1;
 }
 
