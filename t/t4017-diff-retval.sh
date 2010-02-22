@@ -5,12 +5,27 @@ test_description='Return value of diffs'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
+	echo "1 " >a &&
+	git add . &&
+	git commit -m zeroth &&
 	echo 1 >a &&
 	git add . &&
 	git commit -m first &&
 	echo 2 >b &&
 	git add . &&
 	git commit -a -m second
+'
+
+test_expect_success 'git diff --quiet -w  HEAD^^ HEAD^' '
+	git diff --quiet -w HEAD^^ HEAD^
+'
+
+test_expect_success 'git diff --quiet HEAD^^ HEAD^' '
+	test_must_fail git diff --quiet HEAD^^ HEAD^
+'
+
+test_expect_success 'git diff --quiet -w  HEAD^ HEAD' '
+	test_must_fail git diff --quiet -w HEAD^ HEAD
 '
 
 test_expect_success 'git diff-tree HEAD^ HEAD' '
