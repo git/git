@@ -33,7 +33,7 @@ test_expect_success 'svn non-merge merge commits did not become git merge commit
 	[ -z "$bad_non_merges" ]
 	'
 
-test_expect_failure 'commit made to merged branch is reachable from the merge' '
+test_expect_success 'commit made to merged branch is reachable from the merge' '
 	before_commit=$(git rev-list --all --grep="trunk commit before merging trunk to b2")
 	merge_commit=$(git rev-list --all --grep="Merge trunk to b2")
 	not_reachable=$(git rev-list -1 $before_commit --not $merge_commit)

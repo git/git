@@ -3273,7 +3273,7 @@ sub find_extra_svn_parents {
 					"$new_parents[$i]..$new_parents[$j]",
 				       );
 				if ( !$revs ) {
-					undef($new_parents[$i]);
+					undef($new_parents[$j]);
 				}
 			}
 		}
