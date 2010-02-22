@@ -128,24 +128,6 @@ static int checkout_stage(int stage, struct cache_entry *ce, int pos,
 		     (stage == 2) ? "our" : "their");
 }
 
-/* NEEDSWORK: share with merge-recursive */
-static void fill_mm(const unsigned char *sha1, mmfile_t *mm)
-{
-	unsigned long size;
-	enum object_type type;
-
-	if (!hashcmp(sha1, null_sha1)) {
-		mm->ptr = xstrdup("");
-		mm->size = 0;
-		return;
-	}
-
-	mm->ptr = read_sha1_file(sha1, &type, &size);
-	if (!mm->ptr || type != OBJ_BLOB)
-		die("unable to read blob object %s", sha1_to_hex(sha1));
-	mm->size = size;
-}
-
 static int checkout_merged(int pos, struct checkout *state)
 {
 	struct cache_entry *ce = active_cache[pos];
@@ -163,9 +145,9 @@ static int checkout_merged(int pos, struct checkout *state)
 	    ce_stage(active_cache[pos+2]) != 3)
 		return error("path '%s' does not have all 3 versions", path);
 
-	fill_mm(active_cache[pos]->sha1, &ancestor);
-	fill_mm(active_cache[pos+1]->sha1, &ours);
-	fill_mm(active_cache[pos+2]->sha1, &theirs);
+	read_mmblob(&ancestor, active_cache[pos]->sha1);
+	read_mmblob(&ours, active_cache[pos+1]->sha1);
+	read_mmblob(&theirs, active_cache[pos+2]->sha1);
 
 	status = ll_merge(&result_buf, path, &ancestor,
 			  &ours, "ours", &theirs, "theirs", 0);
