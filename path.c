@@ -162,7 +162,7 @@ int git_mkstemps(char *path, size_t len, const char *template, int suffix_len)
 #undef TMP_MAX
 #define TMP_MAX 16384
 
-int gitmkstemps(char *pattern, int suffix_len)
+int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 {
 	static const char letters[] =
 		"abcdefghijklmnopqrstuvwxyz"
@@ -204,7 +204,7 @@ int gitmkstemps(char *pattern, int suffix_len)
 		template[4] = letters[v % num_letters]; v /= num_letters;
 		template[5] = letters[v % num_letters]; v /= num_letters;
 
-		fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, 0600);
+		fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
 		if (fd > 0)
 			return fd;
 		/*
@@ -224,6 +224,17 @@ int gitmkstemps(char *pattern, int suffix_len)
 	pattern[0] = '\0';
 	errno = EINVAL;
 	return -1;
+}
+
+int git_mkstemp_mode(char *pattern, int mode)
+{
+	/* mkstemp is just mkstemps with no suffix */
+	return git_mkstemps_mode(pattern, 0, mode);
+}
+
+int gitmkstemps(char *pattern, int suffix_len)
+{
+	return git_mkstemps_mode(pattern, suffix_len, 0600);
 }
 
 int validate_headref(const char *path)
