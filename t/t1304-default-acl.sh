@@ -54,7 +54,7 @@ test_expect_success 'Setup test repo' '
 	git commit -m "init"
 '
 
-test_expect_failure 'Objects creation does not break ACLs with restrictive umask' '
+test_expect_success 'Objects creation does not break ACLs with restrictive umask' '
 	# SHA1 for empty blob
 	check_perms_and_acl .git/objects/e6/9de29bb2d1d6434b8b29ae775ad8c2e48c5391
 '
