@@ -1200,7 +1200,6 @@ ifdef NO_MKDTEMP
 endif
 ifdef NO_MKSTEMPS
 	COMPAT_CFLAGS += -DNO_MKSTEMPS
-	COMPAT_OBJS += compat/mkstemps.o
 endif
 ifdef NO_UNSETENV
 	COMPAT_CFLAGS += -DNO_UNSETENV
