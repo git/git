@@ -699,12 +699,18 @@ static int handle_one_ref(const char *path, const unsigned char *sha1, int flag,
 	return 0;
 }
 
+static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
+	unsigned flags)
+{
+	cb->all_revs = revs;
+	cb->all_flags = flags;
+}
+
 static void handle_refs(struct rev_info *revs, unsigned flags,
 		int (*for_each)(each_ref_fn, void *))
 {
 	struct all_refs_cb cb;
-	cb.all_revs = revs;
-	cb.all_flags = flags;
+	init_all_refs_cb(&cb, revs, flags);
 	for_each(handle_one_ref, &cb);
 }
 
@@ -1359,6 +1365,30 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--remotes")) {
 				handle_refs(revs, flags, for_each_remote_ref);
+				continue;
+			}
+			if (!prefixcmp(arg, "--glob=")) {
+				struct all_refs_cb cb;
+				init_all_refs_cb(&cb, revs, flags);
+				for_each_glob_ref(handle_one_ref, arg + 7, &cb);
+				continue;
+			}
+			if (!prefixcmp(arg, "--branches=")) {
+				struct all_refs_cb cb;
+				init_all_refs_cb(&cb, revs, flags);
+				for_each_glob_ref_in(handle_one_ref, arg + 11, "refs/heads/", &cb);
+				continue;
+			}
+			if (!prefixcmp(arg, "--tags=")) {
+				struct all_refs_cb cb;
+				init_all_refs_cb(&cb, revs, flags);
+				for_each_glob_ref_in(handle_one_ref, arg + 7, "refs/tags/", &cb);
+				continue;
+			}
+			if (!prefixcmp(arg, "--remotes=")) {
+				struct all_refs_cb cb;
+				init_all_refs_cb(&cb, revs, flags);
+				for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
 				continue;
 			}
 			if (!strcmp(arg, "--reflog")) {
