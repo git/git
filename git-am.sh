@@ -773,6 +773,5 @@ do
 	go_next
 done
 
-git gc --auto
-
 rm -fr "$dotest"
+git gc --auto
