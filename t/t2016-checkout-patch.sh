@@ -66,6 +66,14 @@ test_expect_success 'git checkout -p HEAD^' '
 	verify_state dir/foo parent parent
 '
 
+test_expect_success 'git checkout -p handles deletion' '
+	set_state dir/foo work index &&
+	rm dir/foo &&
+	(echo n; echo y) | git checkout -p &&
+	verify_saved_state bar &&
+	verify_state dir/foo index index
+'
+
 # The idea in the rest is that bar sorts first, so we always say 'y'
 # first and if the path limiter fails it'll apply to bar instead of
 # dir/foo.  There's always an extra 'n' to reject edits to dir/foo in
