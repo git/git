@@ -626,6 +626,10 @@ __git_aliased_command ()
 		config --get "alias.$1")
 	for word in $cmdline; do
 		case "$word" in
+		\!gitk|gitk)
+			echo "gitk"
+			return
+			;;
 		\!*)	: shell command alias ;;
 		-*)	: option ;;
 		*=*)	: setting env ;;
@@ -1085,6 +1089,11 @@ _git_gc ()
 		;;
 	esac
 	COMPREPLY=()
+}
+
+_git_gitk ()
+{
+	_gitk
 }
 
 _git_grep ()
