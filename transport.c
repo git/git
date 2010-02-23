@@ -872,6 +872,21 @@ static int is_file(const char *url)
 	return S_ISREG(buf.st_mode);
 }
 
+static int isurlschemechar(int first_flag, int ch)
+{
+	/*
+	 * The set of valid URL schemes, as per STD66 (RFC3986) is
+	 * '[A-Za-z][A-Za-z0-9+.-]*'. But use sightly looser check
+	 * of '[A-Za-z0-9][A-Za-z0-9+.-]*' because earlier version
+	 * of check used '[A-Za-z0-9]+' so not to break any remote
+	 * helpers.
+	 */
+	int alphanumeric, special;
+	alphanumeric = ch > 0 && isalnum(ch);
+	special = ch == '+' || ch == '-' || ch == '.';
+	return alphanumeric || (!first_flag && special);
+}
+
 static int is_url(const char *url)
 {
 	const char *url2, *first_slash;
@@ -896,7 +911,7 @@ static int is_url(const char *url)
 	 */
 	url2 = url;
 	while (url2 < first_slash - 1) {
-		if (!isalnum((unsigned char)*url2))
+		if (!isurlschemechar(url2 == url, (unsigned char)*url2))
 			return 0;
 		url2++;
 	}
@@ -929,7 +944,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	if (url) {
 		const char *p = url;
 
-		while (isalnum(*p))
+		while (isurlschemechar(p == url, *p))
 			p++;
 		if (!prefixcmp(p, "::"))
 			helper = xstrndup(url, p - url);
