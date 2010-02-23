@@ -2216,11 +2216,14 @@ _git ()
 		return
 	fi
 
-	local expansion=$(__git_aliased_command "$command")
-	[ "$expansion" ] && command="$expansion"
-
 	local completion_func="_git_${command//-/_}"
-	declare -F $completion_func >/dev/null && $completion_func
+	declare -F $completion_func >/dev/null && $completion_func && return
+
+	local expansion=$(__git_aliased_command "$command")
+	if [ -n "$expansion" ]; then
+		completion_func="_git_${expansion//-/_}"
+		declare -F $completion_func >/dev/null && $completion_func
+	fi
 }
 
 _gitk ()
