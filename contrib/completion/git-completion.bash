@@ -1439,6 +1439,11 @@ _git_send_email ()
 	COMPREPLY=()
 }
 
+_git_stage ()
+{
+	_git_add
+}
+
 __git_config_get_set_variables ()
 {
 	local prevword word config_file= c=$COMP_CWORD
@@ -2170,6 +2175,11 @@ _git_tag ()
 	esac
 }
 
+_git_whatchanged ()
+{
+	_git_log
+}
+
 _git ()
 {
 	local i c=1 command __git_dir
@@ -2209,61 +2219,8 @@ _git ()
 	local expansion=$(__git_aliased_command "$command")
 	[ "$expansion" ] && command="$expansion"
 
-	case "$command" in
-	am)          _git_am ;;
-	add)         _git_add ;;
-	apply)       _git_apply ;;
-	archive)     _git_archive ;;
-	bisect)      _git_bisect ;;
-	bundle)      _git_bundle ;;
-	branch)      _git_branch ;;
-	checkout)    _git_checkout ;;
-	cherry)      _git_cherry ;;
-	cherry-pick) _git_cherry_pick ;;
-	clean)       _git_clean ;;
-	clone)       _git_clone ;;
-	commit)      _git_commit ;;
-	config)      _git_config ;;
-	describe)    _git_describe ;;
-	diff)        _git_diff ;;
-	difftool)    _git_difftool ;;
-	fetch)       _git_fetch ;;
-	format-patch) _git_format_patch ;;
-	fsck)        _git_fsck ;;
-	gc)          _git_gc ;;
-	grep)        _git_grep ;;
-	help)        _git_help ;;
-	init)        _git_init ;;
-	log)         _git_log ;;
-	ls-files)    _git_ls_files ;;
-	ls-remote)   _git_ls_remote ;;
-	ls-tree)     _git_ls_tree ;;
-	merge)       _git_merge;;
-	mergetool)   _git_mergetool;;
-	merge-base)  _git_merge_base ;;
-	mv)          _git_mv ;;
-	name-rev)    _git_name_rev ;;
-	notes)       _git_notes ;;
-	pull)        _git_pull ;;
-	push)        _git_push ;;
-	rebase)      _git_rebase ;;
-	remote)      _git_remote ;;
-	replace)     _git_replace ;;
-	reset)       _git_reset ;;
-	revert)      _git_revert ;;
-	rm)          _git_rm ;;
-	send-email)  _git_send_email ;;
-	shortlog)    _git_shortlog ;;
-	show)        _git_show ;;
-	show-branch) _git_show_branch ;;
-	stash)       _git_stash ;;
-	stage)       _git_add ;;
-	submodule)   _git_submodule ;;
-	svn)         _git_svn ;;
-	tag)         _git_tag ;;
-	whatchanged) _git_log ;;
-	*)           COMPREPLY=() ;;
-	esac
+	local completion_func="_git_${command//-/_}"
+	declare -F $completion_func >/dev/null && $completion_func
 }
 
 _gitk ()
