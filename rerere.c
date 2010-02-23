@@ -364,7 +364,7 @@ static int find_conflict(struct string_list *conflict)
 static int merge(const char *name, const char *path)
 {
 	int ret;
-	mmfile_t cur, base, other;
+	mmfile_t cur = {NULL, 0}, base = {NULL, 0}, other = {NULL, 0};
 	mmbuffer_t result = {NULL, 0};
 
 	if (handle_file(path, NULL, rerere_path(name, "thisimage")) < 0)
@@ -372,8 +372,10 @@ static int merge(const char *name, const char *path)
 
 	if (read_mmfile(&cur, rerere_path(name, "thisimage")) ||
 			read_mmfile(&base, rerere_path(name, "preimage")) ||
-			read_mmfile(&other, rerere_path(name, "postimage")))
-		return 1;
+			read_mmfile(&other, rerere_path(name, "postimage"))) {
+		ret = 1;
+		goto out;
+	}
 	ret = ll_merge(&result, path, &base, &cur, "", &other, "", 0);
 	if (!ret) {
 		FILE *f = fopen(path, "w");
@@ -387,6 +389,7 @@ static int merge(const char *name, const char *path)
 				     strerror(errno));
 	}
 
+out:
 	free(cur.ptr);
 	free(base.ptr);
 	free(other.ptr);
