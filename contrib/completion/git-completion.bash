@@ -625,10 +625,15 @@ __git_aliased_command ()
 	local word cmdline=$(git --git-dir="$(__gitdir)" \
 		config --get "alias.$1")
 	for word in $cmdline; do
-		if [ "${word##-*}" ]; then
-			echo $word
+		case "$word" in
+		\!*)	: shell command alias ;;
+		-*)	: option ;;
+		*=*)	: setting env ;;
+		git)	: git itself ;;
+		*)
+			echo "$word"
 			return
-		fi
+		esac
 	done
 }
 
