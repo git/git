@@ -11,6 +11,7 @@ test_expect_success 'load svn dump' "
 	svnadmin load -q '$rawsvnrepo' \
 	  < '$TEST_DIRECTORY/t9151/svn-mergeinfo.dump' &&
 	git svn init --minimize-url -R svnmerge \
+	  --rewrite-root=http://svn.example.org \
 	  -T trunk -b branches '$svnrepo' &&
 	git svn fetch --all
 	"
