@@ -36,11 +36,13 @@ $ENV{TZ} = 'UTC';
 $| = 1; # unbuffer STDOUT
 
 sub fatal (@) { print STDERR "@_\n"; exit 1 }
-require SVN::Core; # use()-ing this causes segfaults for me... *shrug*
-require SVN::Ra;
-require SVN::Delta;
-if ($SVN::Core::VERSION lt '1.1.0') {
-	fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)";
+sub _req_svn {
+	require SVN::Core; # use()-ing this causes segfaults for me... *shrug*
+	require SVN::Ra;
+	require SVN::Delta;
+	if ($SVN::Core::VERSION lt '1.1.0') {
+		fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)";
+	}
 }
 my $can_compress = eval { require Compress::Zlib; 1};
 push @Git::SVN::Ra::ISA, 'SVN::Ra';
@@ -729,6 +731,8 @@ sub cmd_branch {
 	if ($dst =~ /^https:/ && $src =~ /^http:/) {
 		$src=~s/^http:/https:/;
 	}
+
+	::_req_svn();
 
 	my $ctx = SVN::Client->new(
 		auth    => Git::SVN::Ra::_auth_providers(),
@@ -4858,6 +4862,8 @@ sub new {
 	my ($class, $url) = @_;
 	$url =~ s!/+$!!;
 	return $RA if ($RA && $RA->{url} eq $url);
+
+	::_req_svn();
 
 	SVN::_Core::svn_config_ensure($config_dir, undef);
 	my ($baton, $callbacks) = SVN::Core::auth_open_helper(_auth_providers);
