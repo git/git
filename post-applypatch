@@ -40,4 +40,4 @@ head=$(git rev-parse --verify HEAD 2>/dev/null) &&
 
 echo "$head $message_id" >>"$GIT_DIR"/am.log &&
 GIT_NOTES_REF=refs/notes/amlog \
-	git notes edit -m "Message-Id: $message_id" "$head"
+	git notes add -f -m "Message-Id: $message_id" "$head"
