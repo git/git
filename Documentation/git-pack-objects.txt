@@ -120,12 +120,12 @@ base-name::
 
 --incremental::
 	This flag causes an object already in a pack to be ignored
-	even if it appears in the standard input.
+	even if it would have otherwise been packed.
 
 --local::
 	This flag causes an object that is borrowed from an alternate
-	object store to be ignored even if it appears in the standard
-	input.
+	object store to be ignored even if it would have otherwise been
+	packed.
 
 --non-empty::
         Only create a packed archive if it would contain at
