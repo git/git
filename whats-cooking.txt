@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2010, #05; Sun, 21)
-X-master-at: 241b9254e1c8ff071d8054f8b6fbe1883b389d69
-X-next-at: d52c051f421da80f7dc5fed68a7046d70d06d008
+Subject: What's cooking in git.git (Feb 2010, #06; Tue, 23)
+X-master-at: 0901d5a2ef80996cf64c8afeaec765e1bc09f795
+X-next-at: ac4ec8fb00b9defe6763ade89af32f420a97b5ed
 
-What's cooking in git.git (Feb 2010, #05; Sun, 21)
+What's cooking in git.git (Feb 2010, #06; Tue, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,138 +12,94 @@ marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* np/fast-import-idx-v2 (2010-02-17) 6 commits
- + fast-import: use the diff_delta() max_delta_size argument
- + fast-import: honor pack.indexversion and pack.packsizelimit config vars
- + fast-import: make default pack size unlimited
- + fast-import: use write_idx_file() instead of custom code
- + fast-import: use sha1write() for pack data
- + fast-import: start using struct pack_idx_entry
-
-* ml/maint-grep-doc (2010-02-15) 1 commit
-  (merged to 'next' on 2010-02-16 at 4059a38)
- + grep documentation: clarify what files match
-
-* tc/maint-transport-ls-remote-with-void (2010-02-16) 1 commit
-  (merged to 'next' on 2010-02-16 at e6ef1a8)
- + transport: add got_remote_refs flag
-
-* hm/maint-imap-send-crlf (2010-02-12) 1 commit
-  (merged to 'next' on 2010-02-17 at c6162cb)
- + git-imap-send: Convert LF to CRLF before storing patch to draft box
-
-* sp/maint-push-sideband (2010-02-10) 8 commits
-  (merged to 'next' on 2010-02-16 at 6f19e5b)
- + receive-pack: Send internal errors over side-band #2
- + t5401: Use a bare repository for the remote peer
- + receive-pack: Send hook output over side band #2
- + receive-pack: Wrap status reports inside side-band-64k
- + receive-pack: Refactor how capabilities are shown to the client
- + send-pack: demultiplex a sideband stream with status data
- + run-command: support custom fd-set in async
- + run-command: Allow stderr to be a caller supplied pipe
- (this branch is used by sp/push-sideband.)
-
-Based on 1.6.5 maintenance track, later to be merged to 1.6.X maintenance
-series if needed.
-
-* sp/push-sideband (2010-02-10) 0 commits
- (this branch uses sp/maint-push-sideband.)
-
-* jc/checkout-detached (2010-01-29) 1 commit
-  (merged to 'next' on 2010-02-17 at 7e03edc)
- + Reword "detached HEAD" notification
-
-* jc/maint-fix-test-perm (2010-01-30) 2 commits
-  (merged to 'next' on 2010-02-16 at 9d2e037)
- + lib-patch-mode.sh: Fix permission
- + t6000lib: Fix permission
-
-* jn/makefile-script-lib (2010-01-31) 1 commit
-  (merged to 'next' on 2010-02-16 at f5334f5)
- + Do not install shell libraries executable
-
-* mv/request-pull-modernize (2010-01-29) 1 commit
-  (merged to 'next' on 2010-02-16 at be03aad)
- + request-pull: avoid mentioning that the start point is a single commit
-
---------------------------------------------------
 [New Topics]
 
-* dp/read-not-mmap-small-loose-object (2010-02-21) 1 commit
- - hash-object: don't use mmap() for small files
+* gb/submodule-env (2010-02-23) 2 commits
+ - submodules: ensure clean environment when operating in a submodule
+ - shell setup: clear_local_git_env() function
 
-I treaked the cut-off based on my reading of Dmitry's numbers.
+This is a round before the round with hardcoded list on the C side.  I
+think the idea of the new one is basically sound, but I do not think it
+should create a new source file nor call it cache.c which obviously this
+thing is not (environment.c might be a better home for it).
 
-* np/compress-loose-object-memsave (2010-02-20) 1 commit
- . sha1_file: don't malloc the whole compressed result when writing out objects
+* jl/maint-submodule-clear-env (2010-02-23) 1 commit
+ - is_submodule_modified(): clear environment properly
 
-* jc/maint-add-paranoid (2010-02-19) 2 commits
- - paranoid: avoid unnecessary re-hashing
- - Teach "git add" and friends to be paranoid
+I'd prefer to rebuild this on top of rerolled gb/submodule-env before
+moving it forward.
 
-This conflicts rather badly with more logical change by Nicolas in the
-other thread; perhaps we should drop this "paranoia" for now.
+* il/loosen-remote-helper-names (2010-02-23) 1 commit
+ - Allow '+', '-' and '.' in remote helper names
 
-* jc/maint-fix-mailinfo-strip (2010-02-19) 1 commit
- - mailinfo: do not strip leading spaces even for a header line
+Judging from the discussion, the conclusion seemed to be that Dscho was
+needlessly worried about using '+' in pathnames on DOS, and the patch is
+Ok.  There also was a discussion on how to sanely deal with the need to
+have duplicated binaries with the current set-up, only to handle
+essentially the same svn+ssh:// and ssh+svn:// protocols; I however think
+that is pretty much orthogonal to the issue of what letters can be used in
+names.
 
-Linus noticed that an indented first line in the log message body loses
-its indentation.  Lukas sent a lot more intrusive patch to keep the
-removal of leading spaces for header lines while avoiding this issue, but
-I think removing the leading blanks is wrong in either the message or
-in-body header.
+* jk/maint-add--interactive-delete (2010-02-22) 1 commit
+ - add-interactive: fix bogus diff header line ordering
 
-* ne/pack-local-doc (2010-02-18) 1 commit
- - Documentation: pack-objects: Clarify --local's semantics.
+Looked Ok for 'next'.
 
-Comments from pack experts?
+* js/runtime-prefix-trace-not-warn (2010-02-23) 1 commit
+ - Print RUNTIME_PREFIX warning only when GIT_TRACE is set
 
-* ml/connect-refactor (2010-02-17) 1 commit
- - connect.c: move duplicated code to a new function 'get_host_and_port'
+Looked Ok for 'next'.
 
-* ml/encode-header-refactor (2010-02-16) 1 commit
- - refactor duplicated encode_header in pack-objects and fast-import
+* lt/deepen-builtin-source (2010-02-22) 1 commit
+ - Move 'builtin-*' into a 'builtin/' subdirectory
 
-* ml/fill-mm-refactor (2010-02-16) 1 commit
- - refactor duplicated fill_mm() in checkout and merge-recursive
+This is a painful one to keep out of 'master' for a long time, as any
+topic with new builtin commands will need evil merges to adjust to it.
 
-These three should be safe for 'next' but I postponed them because they
-were distractions compared to other topics I wanted to proccess first.
+* tc/http-cleanup (2010-02-21) 7 commits
+ - remote-curl: init walker only when needed
+ - remote-curl: use http_fetch_ref() instead of walker wrapper
+ - http: init and cleanup separately from http-walker
+ - http-walker: cleanup more thoroughly
+ - http-push: remove useless condition
+ - t554[01]-http-push: refactor, add non-ff tests
+ - t5541-http-push: check that ref is unchanged for non-ff test
 
-* mm/mkstemps-mode-for-packfiles (2010-02-20) 6 commits
- - Use git_mkstemp_mode instead of plain mkstemp to create object files
- - git_mkstemps_mode: do not overwrite errno
- - Use git_mkstemp_mode and xmkstemp_mode in odb_mkstemp, not chmod later.
- - git_mkstemp_mode, xmkstemp_mode: variants of gitmkstemps with mode argument.
- - Move gitmkstemps to path.c
- - Add a testcase for ACL with restrictive umask.
+Didn't look; there was some discussion that may result in a reroll.
 
-The test does not seem to pass for me.
+* tr/notes-display (2010-02-23) 11 commits
+ - notes: add shorthand --ref to override GIT_NOTES_REF
+ - commit --amend: copy notes to the new commit
+ - rebase: support automatic notes copying
+ - notes: implement helpers needed for note copying during rewrite
+ - notes: implement 'git notes copy --stdin'
+ - rebase -i: invoke post-rewrite hook
+ - rebase: invoke post-rewrite hook
+ - commit --amend: invoke post-rewrite hook
+ - Documentation: document post-rewrite hook
+ - Support showing notes from more than one notes tree
+ - test-lib: unset GIT_NOTES_REF to stop it from influencing tests
+ (this branch uses jh/notes.)
 
-* rs/optim-text-wrap (2010-02-19) 4 commits
-  (merged to 'next' on 2010-02-21 at 70ef189)
- + utf8.c: speculatively assume utf-8 in strbuf_add_wrapped_text()
- + utf8.c: remove strbuf_write()
- + utf8.c: remove print_spaces()
- + utf8.c: remove print_wrapped_text()
+Didn't look too carefully except for the second one.
 
-* tr/maint-cherry-pick-list (2010-02-20) 1 commit
-  (merged to 'next' on 2010-02-21 at 65fded0)
- + cherry_pick_list: quit early if one side is empty
+* ts/svn-mergeinfo (2010-02-22) 3 commits
+ - git-svn: Fix discarding of extra parents from svn:mergeinfo
+ - t9151: Add two new svn:mergeinfo test cases
+ - t9151: Fix a few commits in the SVN dump
 
-* tc/transport-verbosity (2010-02-18) 9 commits
- - transport: update flags to be in running order
- - pull: learn --progress
- - fetch: learn --progress
- - push: learn --progress
- - transport->progress: use flag authoritatively
- - clone: support multiple levels of verbosity
- - push: support multiple levels of verbosity
- - fetch: refactor verbosity option handling into transport.[ch]
- - Documentation/git-push.txt: put --quiet before --verbose
+I won't pick up git-svn patches myself without Acks from Eric and/or Sam;
+there are here only so that they won't be forgotten.
+
+* cw/test-lib-relicense (2010-02-22) 1 commit
+ . test-lib.sh: Add explicit license detail, with change from GPLv2 to GPLv2+.
+
+I think a reasonable way forward would be to collect Acks from everybody
+who appears on "git blame" or "git shortlog" output.  How do people feel
+about relicensing the whole (except for the obviously borrowed bits, such
+as xdiff/) under GPLv2 _or later_?  I am not a big fan of GPLv3 and do not
+see a compelling reason to switch to v3 for the sake of v3 license per-se,
+but helping others that want to use our code might tip the balance.
 
 --------------------------------------------------
 [Stalled]
@@ -155,11 +111,6 @@ The test does not seem to pass for me.
  - git-push: squelch advice message if in --porcelain mode
 
 This needs further simplification, judging from the previous discussion?
-
-* ld/maint-diff-quiet-w (2010-02-16) 1 commit
- - git diff --quiet -w: check and report the status
-
-Needs tests but otherwise looked Ok.
 
 * sd/format-patch-to (2010-02-17) 1 commit
  - Add 'git format-patch --to=' option and 'format.to' configuration variable.
@@ -181,7 +132,8 @@ for 'next'.
 
 Probably ready for 'next', except that people need to be warned about
 having to update their scripts to explicitly pass --no-decorate to keep
-them working.
+them working.  A good idea to disable this when --pretty was given, just
+like notes are disabled by default, was floated.
 
 * pb/log-first-parent-p-m (2010-02-10) 1 commit
   (merged to 'next' on 2010-02-17 at 2f8e5ae)
@@ -189,6 +141,11 @@ them working.
 
 Needs tests but otherwise looked fine.  We might want to teach "-m trumps
 implicit --cc" to "git show", but that is a totally separate topic.
+
+I actually care about this "log -p --first-parent" very much, but if Pasky
+is counting on that and procrastinating until I write the tests myself, he
+is in for a dissapointment.  I don't have that much free time these days.
+Help is appreciated.
 
 * js/rebase-origin-x (2010-02-05) 1 commit
  - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
@@ -199,20 +156,100 @@ moving forward.
 --------------------------------------------------
 [Cooking]
 
+* dp/read-not-mmap-small-loose-object (2010-02-21) 1 commit
+  (merged to 'next' on 2010-02-21 at fa39a9a)
+ + hash-object: don't use mmap() for small files
+
+Will merge to 'master' after a few more days of cooking.
+
+* np/compress-loose-object-memsave (2010-02-21) 2 commits
+  (merged to 'next' on 2010-02-21 at 1e558d6)
+ + sha1_file: be paranoid when creating loose objects
+ + sha1_file: don't malloc the whole compressed result when writing out objects
+
+Will merge to 'master' after a few more days of cooking.
+
+* jc/maint-fix-mailinfo-strip (2010-02-19) 1 commit
+ - mailinfo: do not strip leading spaces even for a header line
+
+Ready for 'next', I think.
+
+* ne/pack-local-doc (2010-02-18) 1 commit
+ - Documentation: pack-objects: Clarify --local's semantics.
+
+Comments from pack experts?
+
+* ml/connect-refactor (2010-02-17) 1 commit
+  (merged to 'next' on 2010-02-21 at 7361651)
+ + connect.c: move duplicated code to a new function 'get_host_and_port'
+
+* ml/encode-header-refactor (2010-02-23) 2 commits
+  (merged to 'next' on 2010-02-23 at ac4ec8f)
+ + move encode_in_pack_object_header() to a better place
+  (merged to 'next' on 2010-02-21 at efe648b)
+ + refactor duplicated encode_header in pack-objects and fast-import
+
+* ml/fill-mm-refactor (2010-02-16) 1 commit
+  (merged to 'next' on 2010-02-21 at 2fc5570)
+ + refactor duplicated fill_mm() in checkout and merge-recursive
+
+* ml/send-pack-transport-refactor (2010-02-16) 1 commit
+  (merged to 'next' on 2010-02-21 at db276f4)
+ + refactor duplicated code in builtin-send-pack.c and transport.c
+
+Will merge to 'master' soonish.
+
+* mm/mkstemps-mode-for-packfiles (2010-02-22) 6 commits
+ - Use git_mkstemp_mode instead of plain mkstemp to create object files
+ - git_mkstemps_mode: don't set errno to EINVAL on exit.
+ - Use git_mkstemp_mode and xmkstemp_mode in odb_mkstemp, not chmod later.
+ - git_mkstemp_mode, xmkstemp_mode: variants of gitmkstemps with mode argument.
+ - Move gitmkstemps to path.c
+ - Add a testcase for ACL with restrictive umask.
+
+Looked Ok for 'next'.
+
+* rs/optim-text-wrap (2010-02-19) 4 commits
+  (merged to 'next' on 2010-02-21 at 70ef189)
+ + utf8.c: speculatively assume utf-8 in strbuf_add_wrapped_text()
+ + utf8.c: remove strbuf_write()
+ + utf8.c: remove print_spaces()
+ + utf8.c: remove print_wrapped_text()
+
+Will merge to 'master' soonish.
+
+* tr/maint-cherry-pick-list (2010-02-20) 1 commit
+  (merged to 'next' on 2010-02-21 at 65fded0)
+ + cherry_pick_list: quit early if one side is empty
+
+Will merge to 'master' soonish, and backmerge to 'maint'.
+
+* tc/transport-verbosity (2010-02-18) 9 commits
+ - transport: update flags to be in running order
+ - pull: learn --progress
+ - fetch: learn --progress
+ - push: learn --progress
+ - transport->progress: use flag authoritatively
+ - clone: support multiple levels of verbosity
+ - push: support multiple levels of verbosity
+ - fetch: refactor verbosity option handling into transport.[ch]
+ - Documentation/git-push.txt: put --quiet before --verbose
+
+Didn't look very carefully.  Comments from transport people are very much
+appreciated before moving this forward.
+
+* ld/maint-diff-quiet-w (2010-02-21) 2 commits
+  (merged to 'next' on 2010-02-21 at 4701142)
+ + git-diff: add a test for git diff --quiet -w
+ + git diff --quiet -w: check and report the status
+
+Will merge to 'master' after a few more days of cooking.
+
 * cp/add-u-pathspec (2010-02-09) 2 commits
  - test for add with non-existent pathspec
  - git add -u: die on unmatched pathspec
 
-I am a bit torn on this one.  Traditionally we never complained on
-unmatched pathspec when talking about tracked files.  If we were to go
-this route, I think we should probably enhance the "run_diff_files" and
-friends in such a way that they mark matched pathspecs, in a way similar
-to match_pathspec() in dir.c does, and report unmatched ones based on
-that result, instead of adding an extra pass to scan the index.  The same
-goes for pathspec_matches() in builtin-grep.c
-
-Incidentally, I've proposed "pathspec unification" as possible GSoC'10
-project---with luck, we might finally see a progress on this front ;-)
+Will merge to 'next'.
 
 * jc/for-each-ref (2010-02-13) 4 commits
   (merged to 'next' on 2010-02-21 at c9a6c2f)
@@ -221,11 +258,17 @@ project---with luck, we might finally see a progress on this front ;-)
  + builtin-for-each-ref.c: check if we need to peel onion while parsing the format
  + builtin-for-each-ref.c: comment fixes
 
+Will merge to 'master' soonish.
+
 * jn/gitweb-config-error-die (2010-02-14) 1 commit
   (merged to 'next' on 2010-02-21 at e3ecd65)
  + gitweb: Die if there are parsing errors in config file
 
-* jn/maint-fix-pager (2010-02-20) 7 commits
+Will merge to 'master' soonish.
+
+* jn/maint-fix-pager (2010-02-22) 8 commits
+  (merged to 'next' on 2010-02-23 at 575e0e4)
+ + tests: Fix race condition in t7006-pager
   (merged to 'next' on 2010-02-21 at 640e10c)
  + t7006-pager: if stdout is not a terminal, make a new one
  + tests: Add tests for automatic use of pager
@@ -235,18 +278,25 @@ project---with luck, we might finally see a progress on this front ;-)
  + Make 'git var GIT_PAGER' always print the configured pager
  + Fix 'git var' usage synopsis
 
+Will merge to 'master' after a few more days of cooking.
+
 * ml/color-when (2010-02-16) 1 commit
   (merged to 'next' on 2010-02-21 at d52c051)
  + Add an optional argument for --color options
 
-* hm/imap-send-cram-md5 (2010-02-15) 1 commit
- - imap-send: support CRAM-MD5 authentication
+Will merge to 'master' soonish.
 
-A potential clean-up sent as a counter-proposal; waiting for response.
+* hm/imap-send-cram-md5 (2010-02-15) 1 commit
+  (merged to 'next' on 2010-02-21 at de8f650)
+ + imap-send: support CRAM-MD5 authentication
+
+Will merge to 'master' after a few more days of cooking.
 
 * jh/maint-submodule-status-in-void (2010-02-16) 1 commit
   (merged to 'next' on 2010-02-21 at 2e605c3)
  + submodule summary: Don't barf when invoked in an empty repo
+
+Will merge to 'master' after a few more days of cooking.
 
 * bg/apply-blank-at-eof (2010-02-17) 3 commits
  - t3417: Add test cases for "rebase --whitespace=fix"
@@ -259,12 +309,13 @@ RFC.
   (merged to 'next' on 2010-02-21 at aca55e6)
  + require_work_tree broken with NONGIT_OK
 
-* ml/send-pack-transport-refactor (2010-02-16) 1 commit
-  (merged to 'next' on 2010-02-21 at db276f4)
- + refactor duplicated code in builtin-send-pack.c and transport.c
+Will merge to 'master' soonish, and backmerge to 'maint'.
 
 * jc/maint-status-preload (2010-02-17) 1 commit
- - status: preload index to optimize lstat(2) calls
+  (merged to 'next' on 2010-02-21 at d79e163)
+ + status: preload index to optimize lstat(2) calls
+
+Will merge to 'master' soonish, and backmerge to 'maint'.
 
 * nd/root-git (2010-02-14) 5 commits
  - Add test for using Git at root of file system
@@ -272,6 +323,8 @@ RFC.
  - Move offset_1st_component() to path.c
  - init-db, rev-parse --git-dir: do not append redundant slash
  - make_absolute_path(): Do not append redundant slash
+
+Will merge to 'next' unless I hear objections.
 
 * ac/cvsimport-revision-mapping (2010-02-06) 1 commit
   (merged to 'next' on 2010-02-17 at 6756446)
@@ -307,6 +360,8 @@ This is to help merging the clean-up to "master".
  + Makefile: transport.o depends on branch.h now
  (this branch uses jn/maint-makedepend and jn/master-makedepend.)
 
+Will merge to 'master' after a few more days of cooking.
+
 * jh/notes (2010-02-13) 30 commits
   (merged to 'next' on 2010-02-21 at 75fc451)
  + builtin-notes: Add "copy" subcommand for copying notes between objects
@@ -339,10 +394,15 @@ This is to help merging the clean-up to "master".
  + Add tests for checking correct handling of $GIT_NOTES_REF and core.notesRef
  + Notes API: get_commit_notes() -> format_note() + remove the commit restriction
  + Minor cosmetic fixes to notes.c
+ (this branch is used by tr/notes-display.)
+
+Will merge to 'master' after a few more days of cooking.
 
 * jc/grep-author-all-match-implicit (2010-01-17) 1 commit
   (merged to 'next' on 2010-02-17 at 3b7be80)
  + "log --author=me --grep=it" should find intersection, not union
+
+Will merge to 'master' after a few more days of cooking.
 
 * jh/gitweb-caching (2010-01-30) 1 commit
  - gitweb: Add an option to force version match
