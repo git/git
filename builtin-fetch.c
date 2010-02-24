@@ -823,10 +823,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 		die("Where do you want to fetch from today?");
 
 	transport = transport_get(remote, NULL);
-	if (verbosity >= 2)
-		transport->verbose = verbosity <= 3 ? verbosity : 3;
-	if (verbosity < 0)
-		transport->verbose = -1;
+	transport_set_verbosity(transport, verbosity);
 	if (upload_pack)
 		set_option(TRANS_OPT_UPLOADPACK, upload_pack);
 	if (keep)

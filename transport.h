@@ -122,6 +122,7 @@ struct transport *transport_get(struct remote *, const char *);
  **/
 int transport_set_option(struct transport *transport, const char *name,
 			 const char *value);
+void transport_set_verbosity(struct transport *transport, int verbosity);
 
 int transport_push(struct transport *connection,
 		   int refspec_nr, const char **refspec, int flags,
