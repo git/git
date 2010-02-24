@@ -788,8 +788,8 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
 	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
 	args.use_thin_pack = data->options.thin;
-	args.verbose = !!(flags & TRANSPORT_PUSH_VERBOSE);
-	args.quiet = !!(flags & TRANSPORT_PUSH_QUIET);
+	args.verbose = (transport->verbose > 0);
+	args.quiet = (transport->verbose < 0);
 	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
 
 	ret = send_pack(&args, data->fd, data->conn, remote_refs,
@@ -1039,8 +1039,8 @@ int transport_push(struct transport *transport,
 			transport->get_refs_list(transport, 1);
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;
-		int verbose = flags & TRANSPORT_PUSH_VERBOSE;
-		int quiet = flags & TRANSPORT_PUSH_QUIET;
+		int verbose = (transport->verbose > 0);
+		int quiet = (transport->verbose < 0);
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int ret, err;

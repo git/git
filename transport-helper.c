@@ -576,7 +576,6 @@ static int push_refs(struct transport *transport,
 	if (buf.len == 0)
 		return 0;
 
-	transport->verbose = flags & TRANSPORT_PUSH_VERBOSE ? 1 : 0;
 	standard_options(transport);
 
 	if (flags & TRANSPORT_PUSH_DRY_RUN) {
