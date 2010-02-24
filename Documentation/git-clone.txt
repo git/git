@@ -102,7 +102,8 @@ objects from the source repository into a pack in the cloned repository.
 
 --verbose::
 -v::
-	Run verbosely.
+	Run verbosely. Does not affect the reporting of progress status
+	to the standard error stream.
 
 --progress::
 	Progress status is reported on the standard error stream
