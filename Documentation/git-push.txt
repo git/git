@@ -145,14 +145,14 @@ useful if you write an alias or script around 'git push'.
 	transfer spends extra cycles to minimize the number of
 	objects to be sent and meant to be used on slower connection.
 
--v::
---verbose::
-	Run verbosely.
-
 -q::
 --quiet::
 	Suppress all output, including the listing of updated refs,
 	unless an error occurs.
+
+-v::
+--verbose::
+	Run verbosely.
 
 include::urls-remotes.txt[]
 
