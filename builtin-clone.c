@@ -37,18 +37,17 @@ static const char * const builtin_clone_usage[] = {
 	NULL
 };
 
-static int option_quiet, option_no_checkout, option_bare, option_mirror;
+static int option_no_checkout, option_bare, option_mirror;
 static int option_local, option_no_hardlinks, option_shared, option_recursive;
 static char *option_template, *option_reference, *option_depth;
 static char *option_origin = NULL;
 static char *option_branch = NULL;
 static char *option_upload_pack = "git-upload-pack";
-static int option_verbose;
+static int option_verbosity;
 static int option_progress;
 
 static struct option builtin_clone_options[] = {
-	OPT__QUIET(&option_quiet),
-	OPT__VERBOSE(&option_verbose),
+	OPT__VERBOSITY(&option_verbosity),
 	OPT_BOOLEAN(0, "progress", &option_progress,
 			"force progress reporting"),
 	OPT_BOOLEAN('n', "no-checkout", &option_no_checkout,
@@ -462,7 +461,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		die("could not create leading directories of '%s'", git_dir);
 	set_git_dir(make_absolute_path(git_dir));
 
-	init_db(option_template, option_quiet ? INIT_DB_QUIET : 0);
+	init_db(option_template, (option_verbosity < 0) ? INIT_DB_QUIET : 0);
 
 	/*
 	 * At this point, the config exists, so we do not need the
@@ -526,10 +525,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			transport_set_option(transport, TRANS_OPT_DEPTH,
 					     option_depth);
 
-		if (option_quiet)
-			transport->verbose = -1;
-		else if (option_verbose)
-			transport->verbose = 1;
+		transport_set_verbosity(transport, option_verbosity);
 
 		if (option_progress)
 			transport->progress = 1;
@@ -641,7 +637,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		opts.update = 1;
 		opts.merge = 1;
 		opts.fn = oneway_merge;
-		opts.verbose_update = !option_quiet;
+		opts.verbose_update = (option_verbosity > 0);
 		opts.src_index = &the_index;
 		opts.dst_index = &the_index;
 
