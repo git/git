@@ -1,10 +1,17 @@
 #!/bin/sh
 
-accept_rerere=t generate=no
+accept_rerere=t generate=no update= diff=
 while case "$#,$1" in 0,*) break;; *,-*) ;; esac
 do
 	case "$1" in
 	-n)	accept_rerere= ;;
+	-d)	update=${2?"diff with what?"}
+		diff=yes
+		generate=yes
+		shift ;;
+	-u)	update=${2?"update what?"}
+		generate=yes
+		shift ;;
 	*)	generate=yes
 		break ;;
 	esac
@@ -34,9 +41,16 @@ no)
 	do
 		case "$eh" in
 		"")
+			save=$(git rev-parse --verify HEAD)
+
 			echo >&2 "* $branch"
 			git merge "$branch" || accept_rerere || exit
-			if git show-ref -q --verify "refs/merge-fix/$branch"
+
+			this=$(git rev-parse --verify HEAD)
+			if test "$this" = "$save"
+			then
+				:
+			elif git show-ref -q --verify "refs/merge-fix/$branch"
 			then
 				git cherry-pick --no-commit "refs/merge-fix/$branch" &&
 				EDITOR=: git commit --amend -a
@@ -50,6 +64,14 @@ no)
 	done
 	exit
 esac
+
+if test -n "$update" && test $# = 0
+then
+	set x $(sed -n -e '2s/^# //p' <"$update") &&
+	shift
+fi
+
+# Generation (or updating)
 
 x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 x40="$x40$x40$x40$x40$x40$x40$x40$x40"
@@ -84,29 +106,56 @@ show_pick () {
 	merged="$(git rev-parse --verify "$commit") pick $msg" 
 }
 
-echo '#!/bin/sh'
-echo "$0 <<\\EOF"
+generate () {
+	PROGRAM=$1
+	shift
+	echo '#!/bin/sh'
+	echo "# $1"
+	echo "$PROGRAM" '"$@" <<\EOF'
+	git log --pretty=oneline --first-parent "$1" |
+	{
+		series=
+		while read commit msg
+		do
+			if other=$(git rev-parse -q --verify "$commit^2")
+			then
+				show_merge
+			else
+				show_pick
+			fi
 
-git log --pretty=oneline --first-parent "$1" |
-{
-	series=
-	while read commit msg
-	do
-		if other=$(git rev-parse -q --verify "$commit^2")
-		then
-			show_merge
-		else
-			show_pick
-		fi
-
-		if test -z "$series"
-		then
-			series="$merged"
-		else
-			series="$merged$LF$series"
-		fi
-	done
-	echo "$series"
+			if test -z "$series"
+			then
+				series="$merged"
+			else
+				series="$merged$LF$series"
+			fi
+		done
+		echo "$series"
+	}
+	echo EOF
 }
 
-echo EOF
+if test -z "$update"
+then
+	generate "$0" "$@"
+elif test -z "$diff"
+then
+	generate "$0" "$@" | diff -u "$update" -
+	if test $? = 0
+	then
+		echo >&2 "No changes."
+	else
+		echo >&2 -n "Update [Y/n]? "
+		read yesno
+		case "$yesno" in
+		[Yy]*)
+			generate "$0" "$@" |
+			sed -e 's/ :rebased?.*//' >"$update" ;;
+		*)
+			echo >&2 "No update then." ;;
+		esac
+	fi
+else
+	generate "$0" "$@" | diff -u "$update" -
+fi
