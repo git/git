@@ -33,7 +33,9 @@ OPTIONS
 
 -q::
 --quiet::
-	Pass --quiet to git-fetch and git-merge.
+	This is passed to both underlying git-fetch to squelch reporting of
+	during transfer, and underlying git-merge to squelch output during
+	merging.
 
 -v::
 --verbose::
