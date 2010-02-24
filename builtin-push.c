@@ -107,7 +107,7 @@ static int push_with_options(struct transport *transport, int flags)
 	int err;
 	int nonfastforward;
 
-	transport_set_verbosity(transport, verbosity);
+	transport_set_verbosity(transport, verbosity, 0);
 
 	if (receivepack)
 		transport_set_option(transport,

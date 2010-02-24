@@ -525,10 +525,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			transport_set_option(transport, TRANS_OPT_DEPTH,
 					     option_depth);
 
-		transport_set_verbosity(transport, option_verbosity);
-
-		if (option_progress)
-			transport->progress = 1;
+		transport_set_verbosity(transport, option_verbosity, option_progress);
 
 		if (option_upload_pack)
 			transport_set_option(transport, TRANS_OPT_UPLOADPACK,

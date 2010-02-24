@@ -279,9 +279,8 @@ static void standard_options(struct transport *t)
 	char buf[16];
 	int n;
 	int v = t->verbose;
-	int no_progress = v < 0 || (!t->progress && !isatty(2));
 
-	set_helper_option(t, "progress", !no_progress ? "true" : "false");
+	set_helper_option(t, "progress", t->progress ? "true" : "false");
 
 	n = snprintf(buf, sizeof(buf), "%d", v + 1);
 	if (n >= sizeof(buf))

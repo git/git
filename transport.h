@@ -74,7 +74,12 @@ struct transport {
 	int (*disconnect)(struct transport *connection);
 	char *pack_lockfile;
 	signed verbose : 3;
-	/* Force progress even if stderr is not a tty */
+	/**
+	 * Transports should not set this directly, and should use this
+	 * value without having to check isatty(2), -q/--quiet
+	 * (transport->verbose < 0), etc. - checking has already been done
+	 * in transport_set_verbosity().
+	 **/
 	unsigned progress : 1;
 	/*
 	 * If transport is at least potentially smart, this points to
@@ -120,7 +125,8 @@ struct transport *transport_get(struct remote *, const char *);
  **/
 int transport_set_option(struct transport *transport, const char *name,
 			 const char *value);
-void transport_set_verbosity(struct transport *transport, int verbosity);
+void transport_set_verbosity(struct transport *transport, int verbosity,
+	int force_progress);
 
 int transport_push(struct transport *connection,
 		   int refspec_nr, const char **refspec, int flags,
