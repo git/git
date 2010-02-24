@@ -72,4 +72,22 @@ test_expect_success 'git pull --force' '
 	)
 '
 
+test_expect_success 'git pull --all' '
+	mkdir clonedmulti &&
+	(cd clonedmulti && git init &&
+	cat >>.git/config <<-\EOF &&
+	[remote "one"]
+		url = ../parent
+		fetch = refs/heads/*:refs/remotes/one/*
+	[remote "two"]
+		url = ../parent
+		fetch = refs/heads/*:refs/remotes/two/*
+	[branch "master"]
+		remote = one
+		merge = refs/heads/master
+	EOF
+	git pull --all
+	)
+'
+
 test_done

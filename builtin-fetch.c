@@ -651,6 +651,17 @@ static void check_not_current_branch(struct ref *ref_map)
 			    "of non-bare repository", current_branch->refname);
 }
 
+static int truncate_fetch_head(void)
+{
+	char *filename = git_path("FETCH_HEAD");
+	FILE *fp = fopen(filename, "w");
+
+	if (!fp)
+		return error("cannot open %s: %s\n", filename, strerror(errno));
+	fclose(fp);
+	return 0;
+}
+
 static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
@@ -672,11 +683,9 @@ static int do_fetch(struct transport *transport,
 
 	/* if not appending, truncate FETCH_HEAD */
 	if (!append && !dry_run) {
-		char *filename = git_path("FETCH_HEAD");
-		FILE *fp = fopen(filename, "w");
-		if (!fp)
-			return error("cannot open %s: %s\n", filename, strerror(errno));
-		fclose(fp);
+		int errcode = truncate_fetch_head();
+		if (errcode)
+			return errcode;
 	}
 
 	ref_map = get_ref_map(transport, refs, ref_count, tags, &autotags);
@@ -784,8 +793,8 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 static int fetch_multiple(struct string_list *list)
 {
 	int i, result = 0;
-	const char *argv[10] = { "fetch" };
-	int argc = 1;
+	const char *argv[11] = { "fetch", "--append" };
+	int argc = 2;
 
 	if (dry_run)
 		argv[argc++] = "--dry-run";
@@ -803,6 +812,12 @@ static int fetch_multiple(struct string_list *list)
 		argv[argc++] = "-v";
 	else if (verbosity < 0)
 		argv[argc++] = "-q";
+
+	if (!append && !dry_run) {
+		int errcode = truncate_fetch_head();
+		if (errcode)
+			return errcode;
+	}
 
 	for (i = 0; i < list->nr; i++) {
 		const char *name = list->items[i].string;
