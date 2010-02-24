@@ -67,6 +67,7 @@ option can be used to override --squash.
 	Synonyms to --stat and --no-stat; these are deprecated and will be
 	removed in the future.
 
+ifndef::git-pull[]
 -q::
 --quiet::
 	Operate quietly.
@@ -74,6 +75,7 @@ option can be used to override --squash.
 -v::
 --verbose::
 	Be verbose.
+endif::git-pull[]
 
 -X <option>::
 --strategy-option=<option>::

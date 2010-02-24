@@ -31,6 +31,14 @@ in a state that is hard to back out of in the case of a conflict.
 OPTIONS
 -------
 
+-q::
+--quiet::
+	Pass --quiet to git-fetch and git-merge.
+
+-v::
+--verbose::
+	Pass --verbose to git-fetch and git-merge.
+
 Options related to merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
