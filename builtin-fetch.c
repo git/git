@@ -784,13 +784,19 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 static int fetch_multiple(struct string_list *list)
 {
 	int i, result = 0;
-	const char *argv[] = { "fetch", NULL, NULL, NULL, NULL, NULL, NULL };
+	const char *argv[10] = { "fetch" };
 	int argc = 1;
 
 	if (dry_run)
 		argv[argc++] = "--dry-run";
 	if (prune)
 		argv[argc++] = "--prune";
+	if (update_head_ok)
+		argv[argc++] = "--update-head-ok";
+	if (force)
+		argv[argc++] = "--force";
+	if (keep)
+		argv[argc++] = "--keep";
 	if (verbosity >= 2)
 		argv[argc++] = "-v";
 	if (verbosity >= 1)
@@ -801,6 +807,7 @@ static int fetch_multiple(struct string_list *list)
 	for (i = 0; i < list->nr; i++) {
 		const char *name = list->items[i].string;
 		argv[argc] = name;
+		argv[argc + 1] = NULL;
 		if (verbosity >= 0)
 			printf("Fetching %s\n", name);
 		if (run_command_v_opt(argv, RUN_GIT_CMD)) {

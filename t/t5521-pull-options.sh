@@ -51,4 +51,25 @@ test_expect_success 'git pull -q -v' '
 	test -s err)
 '
 
+test_expect_success 'git pull --force' '
+	mkdir clonedoldstyle &&
+	(cd clonedoldstyle && git init &&
+	cat >>.git/config <<-\EOF &&
+	[remote "one"]
+		url = ../parent
+		fetch = refs/heads/master:refs/heads/mirror
+	[remote "two"]
+		url = ../parent
+		fetch = refs/heads/master:refs/heads/origin
+	[branch "master"]
+		remote = two
+		merge = refs/heads/master
+	EOF
+	git pull two &&
+	test_commit A &&
+	git branch -f origin &&
+	git pull --all --force
+	)
+'
+
 test_done
