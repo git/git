@@ -22,12 +22,12 @@ SYNOPSIS
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-f <file>] [-e] <pattern>
 	   [--and|--or|--not|(|)|-e <pattern>...] [<tree>...]
-	   [--] [<path>...]
+	   [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
-Look for specified patterns in the working tree files, blobs
-registered in the index file, or given tree objects.
+Look for specified patterns in the tracked files in the work tree, blobs
+registered in the index file, or blobs in given tree objects.
 
 
 OPTIONS
@@ -49,7 +49,7 @@ OPTIONS
 	Don't match the pattern in binary files.
 
 --max-depth <depth>::
-	For each pathspec given on command line, descend at most <depth>
+	For each <pathspec> given on command line, descend at most <depth>
 	levels of directories. A negative value means no limit.
 
 -w::
@@ -168,11 +168,18 @@ OPTIONS
 
 \--::
 	Signals the end of options; the rest of the parameters
-	are <path> limiters.
+	are <pathspec> limiters.
 
+<pathspec>...::
+	If given, limit the search to paths matching at least one pattern.
+	Both leading paths match and glob(7) patterns are supported.
 
 Example
 -------
+
+git grep 'time_t' -- '*.[ch]'::
+	Looks for `time_t` in all tracked .c and .h files in the working
+	directory and its subdirectories.
 
 git grep -e \'#define\' --and \( -e MAX_PATH -e PATH_MAX \)::
 	Looks for a line that has `#define` and either `MAX_PATH` or
