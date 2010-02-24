@@ -41,7 +41,7 @@ static const char implicit_ident_advice[] =
 "on your username and hostname. Please check that they are accurate.\n"
 "You can suppress this message by setting them explicitly:\n"
 "\n"
-"    git config --global user.name Your Name\n"
+"    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
 "If the identity used for this commit is wrong, you can fix it with:\n"
