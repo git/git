@@ -93,8 +93,8 @@ struct transport {
 #define TRANSPORT_PUSH_FORCE 2
 #define TRANSPORT_PUSH_DRY_RUN 4
 #define TRANSPORT_PUSH_MIRROR 8
-#define TRANSPORT_PUSH_PORCELAIN 32
-#define TRANSPORT_PUSH_SET_UPSTREAM 128
+#define TRANSPORT_PUSH_PORCELAIN 16
+#define TRANSPORT_PUSH_SET_UPSTREAM 32
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
