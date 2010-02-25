@@ -171,12 +171,9 @@ static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
 {
 	struct msg_arg *msg = opt->value;
 
-	if (!arg)
-		return -1;
-
 	strbuf_grow(&(msg->buf), strlen(arg) + 2);
 	if (msg->buf.len)
-		strbuf_addstr(&(msg->buf), "\n");
+		strbuf_addch(&(msg->buf), '\n');
 	strbuf_addstr(&(msg->buf), arg);
 	stripspace(&(msg->buf), 0);
 
@@ -188,11 +185,8 @@ static int parse_file_arg(const struct option *opt, const char *arg, int unset)
 {
 	struct msg_arg *msg = opt->value;
 
-	if (!arg)
-		return -1;
-
 	if (msg->buf.len)
-		strbuf_addstr(&(msg->buf), "\n");
+		strbuf_addch(&(msg->buf), '\n');
 	if (!strcmp(arg, "-")) {
 		if (strbuf_read(&(msg->buf), 0, 1024) < 0)
 			die_errno("cannot read '%s'", arg);
@@ -212,11 +206,8 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 	enum object_type type;
 	unsigned long len;
 
-	if (!arg)
-		return -1;
-
 	if (msg->buf.len)
-		strbuf_addstr(&(msg->buf), "\n");
+		strbuf_addch(&(msg->buf), '\n');
 
 	if (get_sha1(arg, object))
 		die("Failed to resolve '%s' as a valid ref.", arg);
@@ -291,15 +282,20 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	int given_object = 0, i = 1, retval = 0;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
-		OPT_GROUP("Notes options"),
-		OPT_CALLBACK('m', "message", &msg, "MSG",
-			     "note contents as a string", parse_msg_arg),
-		OPT_CALLBACK('F', "file", &msg, "FILE",
-			     "note contents in a file", parse_file_arg),
-		OPT_CALLBACK('c', "reedit-message", &msg, "OBJECT",
-			   "reuse and edit specified note object", parse_reedit_arg),
-		OPT_CALLBACK('C', "reuse-message", &msg, "OBJECT",
-			   "reuse specified note object", parse_reuse_arg),
+		OPT_GROUP("Notes contents options"),
+		{ OPTION_CALLBACK, 'm', "message", &msg, "MSG",
+			"note contents as a string", PARSE_OPT_NONEG,
+			parse_msg_arg},
+		{ OPTION_CALLBACK, 'F', "file", &msg, "FILE",
+			"note contents in a file", PARSE_OPT_NONEG,
+			parse_file_arg},
+		{ OPTION_CALLBACK, 'c', "reedit-message", &msg, "OBJECT",
+			"reuse and edit specified note object", PARSE_OPT_NONEG,
+			parse_reedit_arg},
+		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, "OBJECT",
+			"reuse specified note object", PARSE_OPT_NONEG,
+			parse_reuse_arg},
+		OPT_GROUP("Other options"),
 		OPT_BOOLEAN('f', "force", &force, "replace existing notes"),
 		OPT_END()
 	};
