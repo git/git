@@ -2104,7 +2104,7 @@ proc do_explore {} {
 		# freedesktop.org-conforming system is our best shot
 		set explorer "xdg-open"
 	}
-	eval exec $explorer $_gitworktree &
+	eval exec $explorer [list [file nativename $_gitworktree]] &
 }
 
 set is_quitting 0
