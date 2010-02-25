@@ -115,8 +115,8 @@ base-name::
 
 --honor-pack-keep::
 	This flag causes an object already in a local pack that
-	has a .keep file to be ignored, even if it appears in the
-	standard input.
+	has a .keep file to be ignored, even if it it would have
+	otherwise been packed.
 
 --incremental::
 	This flag causes an object already in a pack to be ignored
