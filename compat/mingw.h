@@ -170,6 +170,9 @@ int mingw_mkdir(const char *path, int mode);
 int mingw_unlink(const char *pathname);
 #define unlink mingw_unlink
 
+int mingw_rmdir(const char *path);
+#define rmdir mingw_rmdir
+
 int mingw_open (const char *filename, int oflags, ...);
 #define open mingw_open
 
