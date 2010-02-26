@@ -21,7 +21,7 @@ SYNOPSIS
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-f <file>] [-e] <pattern>
 	   [--and|--or|--not|(|)|-e <pattern>...]
-	   [--cached | <tree>...]
+	   [--cached | --no-index | <tree>...]
 	   [--] [<pathspec>...]
 
 DESCRIPTION
@@ -33,8 +33,11 @@ registered in the index file, or blobs in given tree objects.
 OPTIONS
 -------
 --cached::
-	Instead of searching in the working tree files, check
-	the blobs registered in the index file.
+	Instead of searching tracked files in the working tree, search
+	blobs registered in the index file.
+
+--no-index::
+	Search files in the current directory, not just those tracked by git.
 
 -a::
 --text::
@@ -164,7 +167,8 @@ OPTIONS
 	there is a match and with non-zero status when there isn't.
 
 <tree>...::
-	Search blobs in the trees for specified patterns.
+	Instead of searching tracked files in the working tree, search
+	blobs in the given trees.
 
 \--::
 	Signals the end of options; the rest of the parameters
