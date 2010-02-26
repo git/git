@@ -98,8 +98,8 @@ OPTIONS
 --files-without-match::
 	Instead of showing every matched line, show only the
 	names of files that contain (or do not contain) matches.
-	For better compatibility with 'git diff', --name-only is a
-	synonym for --files-with-matches.
+	For better compatibility with 'git diff', `--name-only` is a
+	synonym for `--files-with-matches`.
 
 -z::
 --null::
@@ -125,7 +125,7 @@ OPTIONS
 	matches.
 
 -<num>::
-	A shortcut for specifying -C<num>.
+	A shortcut for specifying `-C<num>`.
 
 -p::
 --show-function::
@@ -140,7 +140,7 @@ OPTIONS
 
 -e::
 	The next parameter is the pattern. This option has to be
-	used for patterns starting with - and should be used in
+	used for patterns starting with `-` and should be used in
 	scripts passing user input to grep.  Multiple patterns are
 	combined by 'or'.
 
@@ -163,7 +163,7 @@ OPTIONS
 	Do not output matched lines; instead, exit with status 0 when
 	there is a match and with non-zero status when there isn't.
 
-`<tree>...`::
+<tree>...::
 	Search blobs in the trees for specified patterns.
 
 \--::
