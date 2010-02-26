@@ -68,7 +68,7 @@ static void setup_push_tracking(void)
 	struct branch *branch = branch_get(NULL);
 	if (!branch)
 		die("You are not currently on a branch.");
-	if (!branch->merge_nr)
+	if (!branch->merge_nr || !branch->merge)
 		die("The current branch %s is not tracking anything.",
 		    branch->name);
 	if (branch->merge_nr != 1)
