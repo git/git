@@ -174,8 +174,8 @@ OPTIONS
 	If given, limit the search to paths matching at least one pattern.
 	Both leading paths match and glob(7) patterns are supported.
 
-Example
--------
+Examples
+--------
 
 git grep 'time_t' -- '*.[ch]'::
 	Looks for `time_t` in all tracked .c and .h files in the working
