@@ -140,6 +140,22 @@ int mingw_open (const char *filename, int oflags, ...)
 	return fd;
 }
 
+#undef fopen
+FILE *mingw_fopen (const char *filename, const char *otype)
+{
+	if (!strcmp(filename, "/dev/null"))
+		filename = "nul";
+	return fopen(filename, otype);
+}
+
+#undef freopen
+FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
+{
+	if (filename && !strcmp(filename, "/dev/null"))
+		filename = "nul";
+	return freopen(filename, otype, stream);
+}
+
 /*
  * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
  * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.

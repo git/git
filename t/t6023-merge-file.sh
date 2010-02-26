@@ -64,6 +64,10 @@ cp new1.txt test.txt
 test_expect_success "merge without conflict" \
 	"git merge-file test.txt orig.txt new2.txt"
 
+cp new1.txt test.txt
+test_expect_success "merge without conflict (--quiet)" \
+	"git merge-file --quiet test.txt orig.txt new2.txt"
+
 cp new1.txt test2.txt
 test_expect_success "merge without conflict (missing LF at EOF)" \
 	"git merge-file test2.txt orig.txt new2.txt"

@@ -341,6 +341,13 @@ test_expect_success 'fetch into the current branch with --update-head-ok' '
 
 '
 
+test_expect_success 'fetch --dry-run' '
+
+	rm -f .git/FETCH_HEAD &&
+	git fetch --dry-run . &&
+	! test -f .git/FETCH_HEAD
+'
+
 test_expect_success "should be able to fetch with duplicate refspecs" '
         mkdir dups &&
         cd dups &&

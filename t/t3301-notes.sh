@@ -8,6 +8,7 @@ test_description='Test commit notes'
 . ./test-lib.sh
 
 cat > fake_editor.sh << \EOF
+#!/bin/sh
 echo "$MSG" > "$1"
 echo "$MSG" >& 2
 EOF
