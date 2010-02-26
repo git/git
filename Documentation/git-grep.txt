@@ -9,8 +9,7 @@ git-grep - Print lines matching a pattern
 SYNOPSIS
 --------
 [verse]
-'git grep' [--cached]
-	   [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
+'git grep' [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
 	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp]
 	   [-F | --fixed-strings] [-n]
@@ -21,7 +20,8 @@ SYNOPSIS
 	   [--color | --no-color]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-f <file>] [-e] <pattern>
-	   [--and|--or|--not|(|)|-e <pattern>...] [<tree>...]
+	   [--and|--or|--not|(|)|-e <pattern>...]
+	   [--cached | <tree>...]
 	   [--] [<pathspec>...]
 
 DESCRIPTION
