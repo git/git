@@ -18,14 +18,15 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 	if (normalize_path_copy(sanitized, sanitized))
 		goto error_out;
 	if (is_absolute_path(orig)) {
-		size_t len, total;
+		size_t root_len, len, total;
 		const char *work_tree = get_git_work_tree();
 		if (!work_tree)
 			goto error_out;
 		len = strlen(work_tree);
+		root_len = offset_1st_component(work_tree);
 		total = strlen(sanitized) + 1;
 		if (strncmp(sanitized, work_tree, len) ||
-		    (sanitized[len] != '\0' && sanitized[len] != '/')) {
+		    (len > root_len && sanitized[len] != '\0' && sanitized[len] != '/')) {
 		error_out:
 			die("'%s' is outside repository", orig);
 		}
@@ -321,7 +322,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	static char cwd[PATH_MAX+1];
 	const char *gitdirenv;
 	const char *gitfile_dir;
-	int len, offset, ceil_offset;
+	int len, offset, ceil_offset, root_len;
 
 	/*
 	 * Let's assume that we are in a git repository.
@@ -403,7 +404,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			if (!work_tree_env)
 				inside_work_tree = 0;
 			if (offset != len) {
-				cwd[offset] = '\0';
+				root_len = offset_1st_component(cwd);
+				cwd[offset > root_len ? offset : root_len] = '\0';
 				set_git_dir(cwd);
 			} else
 				set_git_dir(".");
@@ -427,7 +429,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	inside_git_dir = 0;
 	if (!work_tree_env)
 		inside_work_tree = 1;
-	git_work_tree_cfg = xstrndup(cwd, offset);
+	root_len = offset_1st_component(cwd);
+	git_work_tree_cfg = xstrndup(cwd, offset > root_len ? offset : root_len);
 	if (check_repository_format_gently(nongit_ok))
 		return NULL;
 	if (offset == len)

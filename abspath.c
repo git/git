@@ -54,8 +54,9 @@ const char *make_absolute_path(const char *path)
 			if (len + strlen(last_elem) + 2 > PATH_MAX)
 				die ("Too long path name: '%s/%s'",
 						buf, last_elem);
-			buf[len] = '/';
-			strcpy(buf + len + 1, last_elem);
+			if (len && buf[len-1] != '/')
+				buf[len++] = '/';
+			strcpy(buf + len, last_elem);
 			free(last_elem);
 			last_elem = NULL;
 		}
