@@ -170,8 +170,6 @@ static void copy_templates(const char *template_dir)
 
 static int git_init_db_config(const char *k, const char *v, void *cb)
 {
-	if (!v)
-		return config_error_nonbool(k);
 	if (!strcmp(k, "init.templatedir"))
 		return git_config_pathname(&init_db_template_dir, k, v);
 
