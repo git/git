@@ -16,6 +16,7 @@ s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
 k,keep          pass -k flag to git-mailinfo
 keep-cr         pass --keep-cr flag to git-mailsplit for mbox format
+no-keep-cr      do not pass --keep-cr flag to git-mailsplit independent of am.keepcr
 c,scissors      strip everything before a scissors line
 whitespace=     pass it through git-apply
 ignore-space-change pass it through git-apply
@@ -218,7 +219,7 @@ check_patch_format () {
 split_patches () {
 	case "$patch_format" in
 	mbox)
-		if test -n "$rebasing$keepcr"
+		if test -n "$rebasing" || test t = "$keepcr"
 		then
 		    keep_cr=--keep-cr
 		else
@@ -299,6 +300,11 @@ committer_date_is_author_date=
 ignore_date=
 allow_rerere_autoupdate=
 
+if test "$(git config --bool --get am.keepcr)" = true
+then
+    keepcr=t
+fi
+
 while test $# != 0
 do
 	case "$1" in
@@ -351,6 +357,8 @@ do
 		GIT_QUIET=t ;;
 	--keep-cr)
 		keepcr=t ;;
+	--no-keep-cr)
+		keepcr=f ;;
 	--)
 		shift; break ;;
 	*)
@@ -500,10 +508,12 @@ if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
 fi
-if test "$(cat "$dotest/keepcr")" = t
-then
-	keepcr=--keep-cr
-fi
+case "$(cat "$dotest/keepcr")" in
+t)
+	keepcr=--keep-cr ;;
+f)
+	keepcr=--no-keep-cr ;;
+esac
 case "$(cat "$dotest/scissors")" in
 t)
 	scissors=--scissors ;;
