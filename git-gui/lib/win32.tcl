@@ -18,9 +18,9 @@ proc win32_create_lnk {lnk_path lnk_exec lnk_dir} {
 	eval [list exec wscript.exe \
 		/E:jscript \
 		/nologo \
-		[file join $oguilib win32_shortcut.js] \
+		[file nativename [file join $oguilib win32_shortcut.js]] \
 		$lnk_path \
-		[file join $oguilib git-gui.ico] \
+		[file nativename [file join $oguilib git-gui.ico]] \
 		$lnk_dir \
 		$lnk_exec] $lnk_args
 }
