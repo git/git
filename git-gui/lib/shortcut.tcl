@@ -16,7 +16,7 @@ proc do_windows_shortcut {} {
 					[info nameofexecutable] \
 					[file normalize $::argv0] \
 					] \
-					[file normalize [$_gitworktree]]
+					[file normalize $_gitworktree]
 			} err]} {
 			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 		}
@@ -57,7 +57,7 @@ proc do_cygwin_shortcut {} {
 					$sh -c \
 					"CHERE_INVOKING=1 source /etc/profile;[sq $me] &" \
 					] \
-					[file normalize [$_gitworktree]]
+					[file normalize $_gitworktree]
 			} err]} {
 			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 		}
