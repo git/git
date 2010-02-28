@@ -738,8 +738,6 @@ BUILTIN_OBJS += builtin-verify-pack.o
 BUILTIN_OBJS += builtin-verify-tag.o
 BUILTIN_OBJS += builtin-write-tree.o
 
-TEST_OBJS := $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
-
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 EXTLIBS =
 
@@ -1686,6 +1684,7 @@ git.o git.spec \
 	$(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	: GIT-VERSION-FILE
 
+TEST_OBJS := $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
 GIT_OBJS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
 	git.o http.o http-walker.o remote-curl.o
 XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
