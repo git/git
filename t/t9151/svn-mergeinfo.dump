@@ -1633,13 +1633,13 @@ PROPS-END
 
 
 Revision-number: 25
-Prop-content-length: 135
-Content-length: 135
+Prop-content-length: 129
+Content-length: 129
 
 K 7
 svn:log
-V 37
-(r25) add subdirectory to left branch
+V 31
+(r25) make b1 branch from trunk
 K 10
 svn:author
 V 3
@@ -1647,7 +1647,421 @@ adm
 K 8
 svn:date
 V 27
-2010-01-19T04:14:46.052649Z
+2010-02-22T06:18:56.084589Z
+PROPS-END
+
+Node-path: branches/b1
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 24
+Node-copyfrom-path: trunk
+
+
+Revision-number: 26
+Prop-content-length: 129
+Content-length: 129
+
+K 7
+svn:log
+V 31
+(r26) make b2 branch from trunk
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:18:59.076940Z
+PROPS-END
+
+Node-path: branches/b2
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 25
+Node-copyfrom-path: trunk
+
+
+Revision-number: 27
+Prop-content-length: 115
+Content-length: 115
+
+K 7
+svn:log
+V 17
+(r27) b2 update 1
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:01.095762Z
+PROPS-END
+
+Node-path: branches/b2/b2file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 3
+Text-content-md5: 5edbdd57cba621eb3c6e601bf563b4dc
+Text-content-sha1: 9d4b38049776bd0a2074d67cad23f8eaed35a3b3
+Content-length: 13
+
+PROPS-END
+b2
+
+
+Revision-number: 28
+Prop-content-length: 115
+Content-length: 115
+
+K 7
+svn:log
+V 17
+(r28) b1 update 1
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:03.097465Z
+PROPS-END
+
+Node-path: branches/b1/b1file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 3
+Text-content-md5: 08778dfd9ac4f603231896aba7aad523
+Text-content-sha1: b551771aa4ad5b14123fc3bd98d89db2bc0edd4f
+Content-length: 13
+
+PROPS-END
+b1
+
+
+Revision-number: 29
+Prop-content-length: 121
+Content-length: 121
+
+K 7
+svn:log
+V 23
+(r29) Merge b1 to trunk
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:06.073175Z
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 118
+Content-length: 118
+
+K 13
+svn:mergeinfo
+V 83
+/branches/b1:25-28
+/branches/left:2-22
+/branches/left-sub:4-19
+/branches/right:2-22
+PROPS-END
+
+
+Node-path: trunk/b1file
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 28
+Node-copyfrom-path: branches/b1/b1file
+Text-copy-source-md5: 08778dfd9ac4f603231896aba7aad523
+Text-copy-source-sha1: b551771aa4ad5b14123fc3bd98d89db2bc0edd4f
+
+
+Revision-number: 30
+Prop-content-length: 143
+Content-length: 143
+
+K 7
+svn:log
+V 45
+(r30) trunk commit before merging trunk to b2
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:08.096353Z
+PROPS-END
+
+Node-path: trunk/trunkfile
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 6
+Text-content-md5: edf45fe5c98c5367733b39bbb2bb20d9
+Text-content-sha1: 7361d1685e5c86dfc523620cfaf598f196f86239
+Content-length: 16
+
+PROPS-END
+trunk
+
+
+Revision-number: 31
+Prop-content-length: 121
+Content-length: 121
+
+K 7
+svn:log
+V 23
+(r31) Merge trunk to b2
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:11.081541Z
+PROPS-END
+
+Node-path: branches/b2
+Node-kind: dir
+Node-action: change
+Prop-content-length: 131
+Content-length: 131
+
+K 13
+svn:mergeinfo
+V 96
+/branches/b1:25-28
+/branches/left:2-22
+/branches/left-sub:4-19
+/branches/right:2-22
+/trunk:26-30
+PROPS-END
+
+
+Node-path: branches/b2/b1file
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 30
+Node-copyfrom-path: trunk/b1file
+Text-copy-source-md5: 08778dfd9ac4f603231896aba7aad523
+Text-copy-source-sha1: b551771aa4ad5b14123fc3bd98d89db2bc0edd4f
+
+
+Node-path: branches/b2/trunkfile
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 30
+Node-copyfrom-path: trunk/trunkfile
+Text-copy-source-md5: edf45fe5c98c5367733b39bbb2bb20d9
+Text-copy-source-sha1: 7361d1685e5c86dfc523620cfaf598f196f86239
+
+
+Revision-number: 32
+Prop-content-length: 121
+Content-length: 121
+
+K 7
+svn:log
+V 23
+(r32) Merge b2 to trunk
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:14.117939Z
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 138
+Content-length: 138
+
+K 13
+svn:mergeinfo
+V 102
+/branches/b1:25-28
+/branches/b2:26-31
+/branches/left:2-22
+/branches/left-sub:4-19
+/branches/right:2-22
+PROPS-END
+
+
+Node-path: trunk/b2file
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 31
+Node-copyfrom-path: branches/b2/b2file
+Text-copy-source-md5: 5edbdd57cba621eb3c6e601bf563b4dc
+Text-copy-source-sha1: 9d4b38049776bd0a2074d67cad23f8eaed35a3b3
+
+
+Revision-number: 33
+Prop-content-length: 145
+Content-length: 145
+
+K 7
+svn:log
+V 47
+(r33) make f1 branch from trunk with a new file
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:17.105832Z
+PROPS-END
+
+Node-path: branches/f1
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 32
+Node-copyfrom-path: trunk
+
+
+Node-path: branches/f1/f1file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 3
+Text-content-md5: 2b1abc6b6c5c0018851f9f8e6475563b
+Text-content-sha1: aece6dfba588900e00d95601d22b4408d49580af
+Content-length: 13
+
+PROPS-END
+f1
+
+
+Revision-number: 34
+Prop-content-length: 145
+Content-length: 145
+
+K 7
+svn:log
+V 47
+(r34) make f2 branch from trunk with a new file
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:20.110057Z
+PROPS-END
+
+Node-path: branches/f2
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 33
+Node-copyfrom-path: trunk
+
+
+Node-path: branches/f2/f2file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 3
+Text-content-md5: 575c5638d60271457e54ab7d07309502
+Text-content-sha1: 1c49a440c352f3473efa9512255033b94dc7def0
+Content-length: 13
+
+PROPS-END
+f2
+
+
+Revision-number: 35
+Prop-content-length: 128
+Content-length: 128
+
+K 7
+svn:log
+V 30
+(r35) Merge f1 and f2 to trunk
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:24.081490Z
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: change
+Prop-content-length: 173
+Content-length: 173
+
+K 13
+svn:mergeinfo
+V 137
+/branches/b1:25-28
+/branches/b2:26-31
+/branches/f1:33-34
+/branches/f2:34
+/branches/left:2-22
+/branches/left-sub:4-19
+/branches/right:2-22
+PROPS-END
+
+
+Node-path: trunk/f1file
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 34
+Node-copyfrom-path: branches/f1/f1file
+Text-copy-source-md5: 2b1abc6b6c5c0018851f9f8e6475563b
+Text-copy-source-sha1: aece6dfba588900e00d95601d22b4408d49580af
+
+
+Node-path: trunk/f2file
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 34
+Node-copyfrom-path: branches/f2/f2file
+Text-copy-source-md5: 575c5638d60271457e54ab7d07309502
+Text-copy-source-sha1: 1c49a440c352f3473efa9512255033b94dc7def0
+
+
+Revision-number: 36
+Prop-content-length: 135
+Content-length: 135
+
+K 7
+svn:log
+V 37
+(r36) add subdirectory to left branch
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:26.113516Z
 PROPS-END
 
 Node-path: branches/left/subdir
@@ -1672,14 +2086,14 @@ PROPS-END
 Yeehaw
 
 
-Revision-number: 26
+Revision-number: 37
 Prop-content-length: 123
 Content-length: 123
 
 K 7
 svn:log
 V 25
-(r26) merge left to trunk
+(r37) merge left to trunk
 K 10
 svn:author
 V 3
@@ -1687,19 +2101,23 @@ adm
 K 8
 svn:date
 V 27
-2010-01-19T04:14:49.040783Z
+2010-02-22T06:19:29.073699Z
 PROPS-END
 
 Node-path: trunk
 Node-kind: dir
 Node-action: change
-Prop-content-length: 99
-Content-length: 99
+Prop-content-length: 173
+Content-length: 173
 
 K 13
 svn:mergeinfo
-V 64
-/branches/left:2-25
+V 137
+/branches/b1:25-28
+/branches/b2:26-31
+/branches/f1:33-34
+/branches/f2:34
+/branches/left:2-36
 /branches/left-sub:4-19
 /branches/right:2-22
 PROPS-END
@@ -1708,18 +2126,18 @@ PROPS-END
 Node-path: trunk/subdir
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 25
+Node-copyfrom-rev: 36
 Node-copyfrom-path: branches/left/subdir
 
 
-Revision-number: 27
-Prop-content-length: 118
-Content-length: 118
+Revision-number: 38
+Prop-content-length: 123
+Content-length: 123
 
 K 7
 svn:log
-V 20
-(r28) partial update
+V 25
+(r38) make partial branch
 K 10
 svn:author
 V 3
@@ -1727,15 +2145,33 @@ adm
 K 8
 svn:date
 V 27
-2010-01-19T04:14:53.049037Z
+2010-02-22T06:19:32.072243Z
 PROPS-END
 
 Node-path: branches/partial
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 26
+Node-copyfrom-rev: 37
 Node-copyfrom-path: trunk/subdir
 
+
+Revision-number: 39
+Prop-content-length: 118
+Content-length: 118
+
+K 7
+svn:log
+V 20
+(r39) partial update
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:34.097961Z
+PROPS-END
 
 Node-path: branches/partial/palindromes
 Node-kind: file
@@ -1750,14 +2186,14 @@ PROPS-END
 racecar
 
 
-Revision-number: 28
+Revision-number: 40
 Prop-content-length: 126
 Content-length: 126
 
 K 7
 svn:log
 V 28
-(r29) merge partial to trunk
+(r40) merge partial to trunk
 K 10
 svn:author
 V 3
@@ -1765,21 +2201,25 @@ adm
 K 8
 svn:date
 V 27
-2010-01-19T04:14:56.041526Z
+2010-02-22T06:19:37.080211Z
 PROPS-END
 
 Node-path: trunk/subdir
 Node-kind: dir
 Node-action: change
-Prop-content-length: 142
-Content-length: 142
+Prop-content-length: 246
+Content-length: 246
 
 K 13
 svn:mergeinfo
-V 106
-/branches/left/subdir:2-25
+V 210
+/branches/b1/subdir:25-28
+/branches/b2/subdir:26-31
+/branches/f1/subdir:33-34
+/branches/f2/subdir:34
+/branches/left/subdir:2-36
 /branches/left-sub/subdir:4-19
-/branches/partial:27
+/branches/partial:38-39
 /branches/right/subdir:2-22
 PROPS-END
 
@@ -1787,20 +2227,45 @@ PROPS-END
 Node-path: trunk/subdir/palindromes
 Node-kind: file
 Node-action: add
-Node-copyfrom-rev: 27
+Node-copyfrom-rev: 39
 Node-copyfrom-path: branches/partial/palindromes
 Text-copy-source-md5: 5d1c2024fb5efc4eef812856df1b080c
 Text-copy-source-sha1: 5f8509ddd14c91a52864dd1447344e706f9bbc69
 
 
-Revision-number: 29
+Revision-number: 41
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 18
+(r41) tagging v1.0
+K 10
+svn:author
+V 3
+adm
+K 8
+svn:date
+V 27
+2010-02-22T06:19:40.083460Z
+PROPS-END
+
+Node-path: tags/v1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 40
+Node-copyfrom-path: trunk
+
+
+Revision-number: 42
 Prop-content-length: 131
 Content-length: 131
 
 K 7
 svn:log
 V 33
-(r31) make bugfix branch from tag
+(r42) make bugfix branch from tag
 K 10
 svn:author
 V 3
@@ -1808,24 +2273,24 @@ adm
 K 8
 svn:date
 V 27
-2010-01-19T04:15:00.039761Z
+2010-02-22T06:19:43.118075Z
 PROPS-END
 
-Node-path: tags/v1.0
+Node-path: branches/bugfix
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 28
-Node-copyfrom-path: trunk
+Node-copyfrom-rev: 41
+Node-copyfrom-path: tags/v1.0
 
 
-Revision-number: 30
+Revision-number: 43
 Prop-content-length: 120
 Content-length: 120
 
 K 7
 svn:log
 V 22
-(r32) commit to bugfix
+(r43) commit to bugfix
 K 10
 svn:author
 V 3
@@ -1833,15 +2298,8 @@ adm
 K 8
 svn:date
 V 27
-2010-01-19T04:15:03.043218Z
+2010-02-22T06:19:45.079536Z
 PROPS-END
-
-Node-path: branches/bugfix
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 29
-Node-copyfrom-path: tags/v1.0
-
 
 Node-path: branches/bugfix/subdir/palindromes
 Node-kind: file
@@ -1855,14 +2313,14 @@ racecar
 kayak
 
 
-Revision-number: 31
+Revision-number: 44
 Prop-content-length: 125
 Content-length: 125
 
 K 7
 svn:log
 V 27
-(r33) Merge BUGFIX to TRUNK
+(r44) Merge BUGFIX to TRUNK
 K 10
 svn:author
 V 3
@@ -1870,41 +2328,49 @@ adm
 K 8
 svn:date
 V 27
-2010-01-19T04:15:06.043723Z
+2010-02-22T06:19:48.078914Z
 PROPS-END
 
 Node-path: trunk
 Node-kind: dir
 Node-action: change
-Prop-content-length: 133
-Content-length: 133
+Prop-content-length: 210
+Content-length: 210
 
 K 13
 svn:mergeinfo
-V 98
-/branches/bugfix:30
-/branches/left:2-25
+V 174
+/branches/b1:25-28
+/branches/b2:26-31
+/branches/bugfix:42-43
+/branches/f1:33-34
+/branches/f2:34
+/branches/left:2-36
 /branches/left-sub:4-19
 /branches/right:2-22
-/tags/v1.0:29
+/tags/v1.0:41
 PROPS-END
 
 
 Node-path: trunk/subdir
 Node-kind: dir
 Node-action: change
-Prop-content-length: 190
-Content-length: 190
+Prop-content-length: 297
+Content-length: 297
 
 K 13
 svn:mergeinfo
-V 154
-/branches/bugfix/subdir:30
-/branches/left/subdir:2-25
+V 261
+/branches/b1/subdir:25-28
+/branches/b2/subdir:26-31
+/branches/bugfix/subdir:42-43
+/branches/f1/subdir:33-34
+/branches/f2/subdir:34
+/branches/left/subdir:2-36
 /branches/left-sub/subdir:4-19
-/branches/partial:27
+/branches/partial:38-39
 /branches/right/subdir:2-22
-/tags/v1.0/subdir:29
+/tags/v1.0/subdir:41
 PROPS-END
 
 
