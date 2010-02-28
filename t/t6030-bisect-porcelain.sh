@@ -567,6 +567,11 @@ test_expect_success 'skipping away from skipped commit' '
 	test "$para3" = "$PARA_HASH3"
 '
 
+test_expect_success 'erroring out when using bad path parameters' '
+	test_must_fail git bisect start $PARA_HASH7 $HASH1 -- foobar 2> error.txt &&
+	grep "bad path parameters" error.txt
+'
+
 #
 #
 test_done
