@@ -685,9 +685,7 @@ color.grep::
 
 color.grep.match::
 	Use customized color for matches.  The value of this variable
-	may be specified as in color.branch.<slot>.  It is passed using
-	the environment variables 'GREP_COLOR' and 'GREP_COLORS' when
-	calling an external 'grep'.
+	may be specified as in color.branch.<slot>.
 
 color.interactive::
 	When set to `always`, always use colors for interactive prompts
