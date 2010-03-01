@@ -28,6 +28,7 @@ typedef struct s_xdmerge {
 	 * 0 = conflict,
 	 * 1 = no conflict, take first,
 	 * 2 = no conflict, take second.
+	 * 3 = no conflict, take both.
 	 */
 	int mode;
 	/*
@@ -230,14 +231,19 @@ static int xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
 			size = fill_conflict_hunk(xe1, name1, xe2, name2,
 						  size, i, style, m, dest,
 						  marker_size);
-		else if (m->mode == 1)
-			size += xdl_recs_copy(xe1, i, m->i1 + m->chg1 - i, 0,
+		else if (m->mode & 3) {
+			/* Before conflicting part */
+			size += xdl_recs_copy(xe1, i, m->i1 - i, 0,
 					      dest ? dest + size : NULL);
-		else if (m->mode == 2)
-			size += xdl_recs_copy(xe2, m->i2 - m->i1 + i,
-					      m->i1 + m->chg2 - i, 0,
-					      dest ? dest + size : NULL);
-		else
+			/* Postimage from side #1 */
+			if (m->mode & 1)
+				size += xdl_recs_copy(xe1, m->i1, m->chg1, 1,
+						      dest ? dest + size : NULL);
+			/* Postimage from side #2 */
+			if (m->mode & 2)
+				size += xdl_recs_copy(xe2, m->i2, m->chg2, 1,
+						      dest ? dest + size : NULL);
+		} else
 			continue;
 		i = m->i1 + m->chg1;
 	}

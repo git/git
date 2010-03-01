@@ -61,6 +61,7 @@ extern "C" {
 /* merge favor modes */
 #define XDL_MERGE_FAVOR_OURS 1
 #define XDL_MERGE_FAVOR_THEIRS 2
+#define XDL_MERGE_FAVOR_UNION 3
 #define XDL_MERGE_FAVOR(flags) (((flags)>>4) & 3)
 #define XDL_MERGE_FLAGS(level, style, favor) ((level)|(style)|((favor)<<4))
 
