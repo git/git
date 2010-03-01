@@ -63,8 +63,6 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			int flag, int marker_size)
 {
 	xmparam_t xmp;
-	int style = 0;
-	int favor = (flag >> 1) & 03;
 
 	if (buffer_is_binary(orig->ptr, orig->size) ||
 	    buffer_is_binary(src1->ptr, src1->size) ||
@@ -79,15 +77,13 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	}
 
 	memset(&xmp, 0, sizeof(xmp));
+	xmp.level = XDL_MERGE_ZEALOUS;
+	xmp.favor= (flag >> 1) & 03;
 	if (git_xmerge_style >= 0)
-		style = git_xmerge_style;
+		xmp.style = git_xmerge_style;
 	if (marker_size > 0)
 		xmp.marker_size = marker_size;
-	return xdl_merge(orig,
-			 src1, name1,
-			 src2, name2,
-			 &xmp, XDL_MERGE_FLAGS(XDL_MERGE_ZEALOUS, style, favor),
-			 result);
+	return xdl_merge(orig, src1, name1, src2, name2, &xmp, result);
 }
 
 static int ll_union_merge(const struct ll_merge_driver *drv_unused,
