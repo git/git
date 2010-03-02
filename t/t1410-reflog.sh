@@ -214,4 +214,45 @@ test_expect_success 'delete' '
 
 '
 
+test_expect_success 'rewind2' '
+
+	test_tick && git reset --hard HEAD~2 &&
+	loglen=$(wc -l <.git/logs/refs/heads/master) &&
+	test $loglen = 4
+
+'
+
+test_expect_success '--expire=never' '
+
+	git reflog expire --verbose \
+		--expire=never \
+		--expire-unreachable=never \
+		--all &&
+	loglen=$(wc -l <.git/logs/refs/heads/master) &&
+	test $loglen = 4
+
+'
+
+test_expect_success 'gc.reflogexpire=never' '
+
+	git config gc.reflogexpire never &&
+	git config gc.reflogexpireunreachable never &&
+	git reflog expire --verbose --all &&
+	loglen=$(wc -l <.git/logs/refs/heads/master) &&
+	test $loglen = 4
+'
+
+test_expect_success 'gc.reflogexpire=false' '
+
+	git config gc.reflogexpire false &&
+	git config gc.reflogexpireunreachable false &&
+	git reflog expire --verbose --all &&
+	loglen=$(wc -l <.git/logs/refs/heads/master) &&
+	test $loglen = 4 &&
+
+	git config --unset gc.reflogexpire &&
+	git config --unset gc.reflogexpireunreachable
+
+'
+
 test_done

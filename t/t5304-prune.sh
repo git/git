@@ -148,6 +148,38 @@ test_expect_success 'gc --prune=<date>' '
 
 '
 
+test_expect_success 'gc --prune=never' '
+
+	add_blob &&
+	git gc --prune=never &&
+	test -f $BLOB_FILE &&
+	git gc --prune=now &&
+	test ! -f $BLOB_FILE
+
+'
+
+test_expect_success 'gc respects gc.pruneExpire=never' '
+
+	git config gc.pruneExpire never &&
+	add_blob &&
+	git gc &&
+	test -f $BLOB_FILE &&
+	git config gc.pruneExpire now &&
+	git gc &&
+	test ! -f $BLOB_FILE
+
+'
+
+test_expect_success 'prune --expire=never' '
+
+	add_blob &&
+	git prune --expire=never &&
+	test -f $BLOB_FILE &&
+	git prune &&
+	test ! -f $BLOB_FILE
+
+'
+
 test_expect_success 'gc: prune old objects after local clone' '
 	add_blob &&
 	test-chmtime =-$((2*$week+1)) $BLOB_FILE &&
