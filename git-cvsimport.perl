@@ -29,7 +29,7 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,@opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r);
+our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,@opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r, $opt_R);
 my (%conv_author_name, %conv_author_email);
 
 sub usage(;$) {
@@ -40,7 +40,7 @@ Usage: git cvsimport     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
        [-p opts-for-cvsps] [-P file] [-C GIT_repository] [-z fuzz] [-i] [-k]
        [-u] [-s subst] [-a] [-m] [-M regex] [-S regex] [-L commitlimit]
-       [-r remote] [CVS_module]
+       [-r remote] [-R] [CVS_module]
 END
 	exit(1);
 }
@@ -110,7 +110,7 @@ sub read_repo_config {
 	}
 }
 
-my $opts = "haivmkuo:d:p:r:C:z:s:M:P:A:S:L:";
+my $opts = "haivmkuo:d:p:r:C:z:s:M:P:A:S:L:R";
 read_repo_config($opts);
 Getopt::Long::Configure( 'no_ignore_case', 'bundling' );
 
@@ -659,6 +659,11 @@ if ($opt_A) {
 	write_author_info("$git_dir/cvs-authors");
 }
 
+# open .git/cvs-revisions, if requested
+open my $revision_map, '>>', "$git_dir/cvs-revisions"
+    or die "Can't open $git_dir/cvs-revisions for appending: $!\n"
+	if defined $opt_R;
+
 
 #
 # run cvsps into a file unless we are getting
@@ -742,7 +747,7 @@ sub write_tree () {
 }
 
 my ($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
-my (@old,@new,@skipped,%ignorebranch);
+my (@old,@new,@skipped,%ignorebranch,@commit_revisions);
 
 # commits that cvsps cannot place anywhere...
 $ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
@@ -824,6 +829,11 @@ sub commit {
 
 	system('git' , 'update-ref', "$remote/$branch", $cid) == 0
 		or die "Cannot write branch $branch for update: $!\n";
+
+	if ($revision_map) {
+		print $revision_map "@$_ $cid\n" for @commit_revisions;
+	}
+	@commit_revisions = ();
 
 	if ($tag) {
 	        my ($xtag) = $tag;
@@ -959,6 +969,7 @@ while (<CVS>) {
 		    push(@skipped, $fn);
 		    next;
 		}
+		push @commit_revisions, [$fn, $rev];
 		print "Fetching $fn   v $rev\n" if $opt_v;
 		my ($tmpname, $size) = $cvs->file($fn,$rev);
 		if ($size == -1) {
@@ -981,7 +992,9 @@ while (<CVS>) {
 		unlink($tmpname);
 	} elsif ($state == 9 and /^\s+(.+?):\d+(?:\.\d+)+->(\d+(?:\.\d+)+)\(DEAD\)\s*$/) {
 		my $fn = $1;
+		my $rev = $2;
 		$fn =~ s#^/+##;
+		push @commit_revisions, [$fn, $rev];
 		push(@old,$fn);
 		print "Delete $fn\n" if $opt_v;
 	} elsif ($state == 9 and /^\s*$/) {
