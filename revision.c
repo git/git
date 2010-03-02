@@ -547,6 +547,9 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 			right_count++;
 	}
 
+	if (!left_count || !right_count)
+		return;
+
 	left_first = left_count < right_count;
 	init_patch_ids(&ids);
 	if (revs->diffopt.nr_paths) {
