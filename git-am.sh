@@ -15,6 +15,8 @@ q,quiet         be quiet
 s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
 k,keep          pass -k flag to git-mailinfo
+keep-cr         pass --keep-cr flag to git-mailsplit for mbox format
+no-keep-cr      do not pass --keep-cr flag to git-mailsplit independent of am.keepcr
 c,scissors      strip everything before a scissors line
 whitespace=     pass it through git-apply
 ignore-space-change pass it through git-apply
@@ -217,12 +219,12 @@ check_patch_format () {
 split_patches () {
 	case "$patch_format" in
 	mbox)
-		case "$rebasing" in
-		'')
-			keep_cr= ;;
-		?*)
-			keep_cr=--keep-cr ;;
-		esac
+		if test -n "$rebasing" || test t = "$keepcr"
+		then
+		    keep_cr=--keep-cr
+		else
+		    keep_cr=
+		fi
 		git mailsplit -d"$prec" -o"$dotest" -b $keep_cr -- "$@" > "$dotest/last" ||
 		clean_abort
 		;;
@@ -291,12 +293,17 @@ split_patches () {
 
 prec=4
 dotest="$GIT_DIR/rebase-apply"
-sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
+sign= utf8=t keep= keepcr= skip= interactive= resolved= rebasing= abort=
 resolvemsg= resume= scissors= no_inbody_headers=
 git_apply_opt=
 committer_date_is_author_date=
 ignore_date=
 allow_rerere_autoupdate=
+
+if test "$(git config --bool --get am.keepcr)" = true
+then
+    keepcr=t
+fi
 
 while test $# != 0
 do
@@ -348,6 +355,10 @@ do
 		allow_rerere_autoupdate="$1" ;;
 	-q|--quiet)
 		GIT_QUIET=t ;;
+	--keep-cr)
+		keepcr=t ;;
+	--no-keep-cr)
+		keepcr=f ;;
 	--)
 		shift; break ;;
 	*)
@@ -453,6 +464,7 @@ else
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
+	echo "$keepcr" >"$dotest/keepcr"
 	echo "$scissors" >"$dotest/scissors"
 	echo "$no_inbody_headers" >"$dotest/no_inbody_headers"
 	echo "$GIT_QUIET" >"$dotest/quiet"
@@ -496,6 +508,12 @@ if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
 fi
+case "$(cat "$dotest/keepcr")" in
+t)
+	keepcr=--keep-cr ;;
+f)
+	keepcr=--no-keep-cr ;;
+esac
 case "$(cat "$dotest/scissors")" in
 t)
 	scissors=--scissors ;;

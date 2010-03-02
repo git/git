@@ -7,7 +7,7 @@ git-mailsplit - Simple UNIX mbox splitter program
 
 SYNOPSIS
 --------
-'git mailsplit' [-b] [-f<nn>] [-d<prec>] -o<directory> [--] [<mbox>|<Maildir>...]
+'git mailsplit' [-b] [-f<nn>] [-d<prec>] [--keep-cr] -o<directory> [--] [<mbox>|<Maildir>...]
 
 DESCRIPTION
 -----------
@@ -42,6 +42,9 @@ OPTIONS
 -f<nn>::
 	Skip the first <nn> numbers, for example if -f3 is specified,
 	start the numbering with 0004.
+
+--keep-cr::
+	Do not remove `\r` from lines ending with `\r\n`.
 
 Author
 ------
