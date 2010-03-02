@@ -454,7 +454,11 @@ sub gitweb_get_feature {
 		$feature{$name}{'sub'},
 		$feature{$name}{'override'},
 		@{$feature{$name}{'default'}});
-	if (!$override) { return @defaults; }
+	# project specific override is possible only if we have project
+	our $git_dir; # global variable, declared later
+	if (!$override || !defined $git_dir) {
+		return @defaults;
+	}
 	if (!defined $sub) {
 		warn "feature $name is not overridable";
 		return @defaults;
@@ -2211,6 +2215,9 @@ sub config_to_multi {
 
 sub git_get_project_config {
 	my ($key, $type) = @_;
+
+	# do we have project
+	return unless (defined $project && defined $git_dir);
 
 	# key sanity check
 	return unless ($key);

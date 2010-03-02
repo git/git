@@ -591,12 +591,20 @@ test_debug 'cat gitweb.log'
 # ----------------------------------------------------------------------
 # gitweb config and repo config
 
-cat >>gitweb_config.perl <<EOF
+cat >>gitweb_config.perl <<\EOF
 
-\$feature{'blame'}{'override'} = 1;
-\$feature{'snapshot'}{'override'} = 1;
-\$feature{'avatar'}{'override'} = 1;
+# turn on override for each overridable feature
+foreach my $key (keys %feature) {
+	if ($feature{$key}{'sub'}) {
+		$feature{$key}{'override'} = 1;
+	}
+}
 EOF
+
+test_expect_success \
+	'config override: projects list (implicit)' \
+	'gitweb_run'
+test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'config override: tree view, features not overridden in repo config' \
