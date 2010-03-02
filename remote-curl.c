@@ -249,9 +249,8 @@ static struct ref *parse_info_refs(struct discovery *heads)
 		i++;
 	}
 
-	init_walker();
 	ref = alloc_ref("HEAD");
-	if (!walker->fetch_ref(walker, ref) &&
+	if (!http_fetch_ref(url, ref) &&
 	    !resolve_remote_symref(ref, refs)) {
 		ref->next = refs;
 		refs = ref;
