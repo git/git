@@ -98,6 +98,7 @@ struct transport {
 #define TRANSPORT_PUSH_PORCELAIN 32
 #define TRANSPORT_PUSH_QUIET 64
 #define TRANSPORT_PUSH_SET_UPSTREAM 128
+#define TRANSPORT_SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
@@ -147,5 +148,15 @@ int transport_connect(struct transport *transport, const char *name,
 
 /* Transport methods defined outside transport.c */
 int transport_helper_init(struct transport *transport, const char *name);
+
+/* common methods used by transport.c and builtin-send-pack.c */
+void transport_verify_remote_names(int nr_heads, const char **heads);
+
+void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose);
+
+int transport_refs_pushed(struct ref *ref);
+
+void transport_print_push_status(const char *dest, struct ref *refs,
+		  int verbose, int porcelain, int *nonfastforward);
 
 #endif
