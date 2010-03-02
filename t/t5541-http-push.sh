@@ -89,15 +89,17 @@ test_expect_success 'used receive-pack service' '
 '
 
 test_expect_success 'non-fast-forward push fails' '
+	cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
+	HEAD=$(git rev-parse --verify HEAD) &&
+
 	cd "$ROOT_PATH"/test_repo_clone &&
 	git checkout master &&
 	echo "changed" > path2 &&
 	git commit -a -m path2 --amend &&
 
-	HEAD=$(git rev-parse --verify HEAD) &&
 	!(git push -v origin >output 2>&1) &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
-	 test $HEAD != $(git rev-parse --verify HEAD))
+	 test $HEAD = $(git rev-parse --verify HEAD))
 '
 
 test_expect_success 'non-fast-forward push show ref status' '
