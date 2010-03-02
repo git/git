@@ -10,7 +10,6 @@
 
 static struct remote *remote;
 static const char *url;
-static struct walker *walker;
 
 struct options {
 	int verbosity;
@@ -21,12 +20,6 @@ struct options {
 		thin : 1;
 };
 static struct options options;
-
-static void init_walker(void)
-{
-	if (!walker)
-		walker = get_http_walker(url);
-}
 
 static int set_option(const char *name, const char *value)
 {
@@ -119,7 +112,6 @@ static struct discovery* discover_refs(const char *service)
 	}
 	refs_url = strbuf_detach(&buffer, NULL);
 
-	init_walker();
 	http_ret = http_get_strbuf(refs_url, &buffer, HTTP_NO_CACHE);
 
 	/* try again with "plain" url (no ? or & appended) */
@@ -500,7 +492,6 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 	struct child_process client;
 	int err = 0;
 
-	init_walker();
 	memset(&client, 0, sizeof(client));
 	client.in = -1;
 	client.out = -1;
@@ -552,6 +543,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 
 static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 {
+	struct walker *walker;
 	char **targets = xmalloc(nr_heads * sizeof(char*));
 	int ret, i;
 
@@ -560,13 +552,14 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 	for (i = 0; i < nr_heads; i++)
 		targets[i] = xstrdup(sha1_to_hex(to_fetch[i]->old_sha1));
 
-	init_walker();
+	walker = get_http_walker(url);
 	walker->get_all = 1;
 	walker->get_tree = 1;
 	walker->get_history = 1;
 	walker->get_verbosely = options.verbosity >= 3;
 	walker->get_recover = 0;
 	ret = walker_fetch(walker, nr_heads, targets, NULL, NULL);
+	walker_free(walker);
 
 	for (i = 0; i < nr_heads; i++)
 		free(targets[i]);
