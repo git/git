@@ -599,23 +599,6 @@ struct merge_file_info
 		 merge:1;
 };
 
-static void fill_mm(const unsigned char *sha1, mmfile_t *mm)
-{
-	unsigned long size;
-	enum object_type type;
-
-	if (!hashcmp(sha1, null_sha1)) {
-		mm->ptr = xstrdup("");
-		mm->size = 0;
-		return;
-	}
-
-	mm->ptr = read_sha1_file(sha1, &type, &size);
-	if (!mm->ptr || type != OBJ_BLOB)
-		die("unable to read blob object %s", sha1_to_hex(sha1));
-	mm->size = size;
-}
-
 static int merge_3way(struct merge_options *o,
 		      mmbuffer_t *result_buf,
 		      struct diff_filespec *one,
@@ -653,9 +636,9 @@ static int merge_3way(struct merge_options *o,
 		name2 = xstrdup(mkpath("%s", branch2));
 	}
 
-	fill_mm(one->sha1, &orig);
-	fill_mm(a->sha1, &src1);
-	fill_mm(b->sha1, &src2);
+	read_mmblob(&orig, one->sha1);
+	read_mmblob(&src1, a->sha1);
+	read_mmblob(&src2, b->sha1);
 
 	merge_status = ll_merge(result_buf, a->path, &orig,
 				&src1, name1, &src2, name2,
