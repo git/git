@@ -20,6 +20,7 @@
 
 static int init_is_bare_repository = 0;
 static int init_shared_repository = -1;
+static const char *init_db_template_dir;
 
 static void safe_create_dir(const char *dir, int share)
 {
@@ -121,6 +122,8 @@ static void copy_templates(const char *template_dir)
 	if (!template_dir)
 		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
 	if (!template_dir)
+		template_dir = init_db_template_dir;
+	if (!template_dir)
 		template_dir = system_path(DEFAULT_GIT_TEMPLATE_DIR);
 	if (!template_dir[0])
 		return;
@@ -165,6 +168,14 @@ static void copy_templates(const char *template_dir)
 	closedir(dir);
 }
 
+static int git_init_db_config(const char *k, const char *v, void *cb)
+{
+	if (!strcmp(k, "init.templatedir"))
+		return git_config_pathname(&init_db_template_dir, k, v);
+
+	return 0;
+}
+
 static int create_default_files(const char *template_path)
 {
 	const char *git_dir = get_git_dir();
@@ -189,6 +200,9 @@ static int create_default_files(const char *template_path)
 	safe_create_dir(git_path("refs"), 1);
 	safe_create_dir(git_path("refs/heads"), 1);
 	safe_create_dir(git_path("refs/tags"), 1);
+
+	/* Just look for `init.templatedir` */
+	git_config(git_init_db_config, NULL);
 
 	/* First copy the templates -- we might have the default
 	 * config file there, in which case we would want to read

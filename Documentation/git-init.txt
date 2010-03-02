@@ -28,14 +28,8 @@ current working directory.
 
 --template=<template_directory>::
 
-Provide the directory from which templates will be used.  The default template
-directory is `/usr/share/git-core/templates`.
-
-When specified, `<template_directory>` is used as the source of the template
-files rather than the default.  The template files include some directory
-structure, some suggested "exclude patterns", and copies of non-executing
-"hook" files.  The suggested patterns and hook files are all modifiable and
-extensible.
+Specify the directory from which templates will be used.  (See the "TEMPLATE
+DIRECTORY" section below.)
 
 --shared[={false|true|umask|group|all|world|everybody|0xxx}]::
 
@@ -106,6 +100,25 @@ of the repository, such as installing the default hooks and
 setting the configuration variables.  The old name is retained
 for backward compatibility reasons.
 
+TEMPLATE DIRECTORY
+------------------
+
+The template directory contains files and directories that will be copied to
+the `$GIT_DIR` after it is created.
+
+The template directory used will (in order):
+
+ - The argument given with the `--template` option.
+
+ - The contents of the `$GIT_TEMPLATE_DIR` environment variable.
+
+ - The `init.templatedir` configuration variable.
+
+ - The default template directory: `/usr/share/git-core/templates`.
+
+The default template directory includes some directory structure, some
+suggested "exclude patterns", and copies of sample "hook" files.
+The suggested patterns and hook files are all modifiable and extensible.
 
 EXAMPLES
 --------

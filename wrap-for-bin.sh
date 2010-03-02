@@ -7,7 +7,8 @@
 # @@BUILD_DIR@@ and @@PROG@@.
 
 GIT_EXEC_PATH='@@BUILD_DIR@@'
-GIT_TEMPLATE_DIR='@@BUILD_DIR@@/templates/blt'
+test -z "$NO_SET_GIT_TEMPLATE_DIR" &&
+	GIT_TEMPLATE_DIR='@@BUILD_DIR@@/templates/blt'
 GITPERLLIB='@@BUILD_DIR@@/perl/blib/lib'
 PATH='@@BUILD_DIR@@/bin-wrappers:'"$PATH"
 export GIT_EXEC_PATH GIT_TEMPLATE_DIR GITPERLLIB PATH
