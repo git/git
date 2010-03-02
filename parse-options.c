@@ -2,6 +2,7 @@
 #include "parse-options.h"
 #include "cache.h"
 #include "commit.h"
+#include "color.h"
 
 static int parse_options_usage(const char * const *usagestr,
 			       const struct option *opts);
@@ -596,6 +597,21 @@ int parse_opt_approxidate_cb(const struct option *opt, const char *arg,
 			     int unset)
 {
 	*(unsigned long *)(opt->value) = approxidate(arg);
+	return 0;
+}
+
+int parse_opt_color_flag_cb(const struct option *opt, const char *arg,
+			    int unset)
+{
+	int value;
+
+	if (!arg)
+		arg = unset ? "never" : (const char *)opt->defval;
+	value = git_config_colorbool(NULL, arg, -1);
+	if (value < 0)
+		return opterror(opt,
+			"expects \"always\", \"auto\", or \"never\"", 0);
+	*(int *)opt->value = value;
 	return 0;
 }
 

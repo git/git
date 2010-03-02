@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git show-branch' [-a|--all] [-r|--remotes] [--topo-order | --date-order]
-		[--current] [--color | --no-color] [--sparse]
+		[--current] [--color[=<when>] | --no-color] [--sparse]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics]
 		[<rev> | <glob>]...
@@ -117,13 +117,15 @@ OPTIONS
 	When no explicit <ref> parameter is given, it defaults to the
 	current branch (or `HEAD` if it is detached).
 
---color::
+--color[=<when>]::
 	Color the status sign (one of these: `*` `!` `+` `-`) of each commit
 	corresponding to the branch it's in.
+	The value must be always (the default), never, or auto.
 
 --no-color::
 	Turn off colored output, even when the configuration file gives the
 	default to color output.
+	Same as `--color=never`.
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.

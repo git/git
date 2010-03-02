@@ -18,7 +18,7 @@ SYNOPSIS
 	   [-z | --null]
 	   [-c | --count] [--all-match] [-q | --quiet]
 	   [--max-depth <depth>]
-	   [--color | --no-color]
+	   [--color[=<when>] | --no-color]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-f <file>] [-e] <pattern>
 	   [--and|--or|--not|(|)|-e <pattern>...] [<tree>...]
@@ -111,12 +111,14 @@ OPTIONS
 	Instead of showing every matched line, show the number of
 	lines that match.
 
---color::
+--color[=<when>]::
 	Show colored matches.
+	The value must be always (the default), never, or auto.
 
 --no-color::
 	Turn off match highlighting, even when the configuration file
 	gives the default to color output.
+	Same as `--color=never`.
 
 -[ABC] <context>::
 	Show `context` trailing (`A` -- after), or leading (`B`
