@@ -1,3 +1,5 @@
+: included from t2016 and others
+
 . ./test-lib.sh
 
 if ! test_have_prereq PERL; then
