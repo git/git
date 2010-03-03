@@ -65,10 +65,6 @@ test_expect_success "Can't use --path with --stdin-paths" '
 	echo example | test_must_fail git hash-object --stdin-paths --path=foo
 '
 
-test_expect_success "Can't use --stdin-paths with --no-filters" '
-	echo example | test_must_fail git hash-object --stdin-paths --no-filters
-'
-
 test_expect_success "Can't use --path with --no-filters" '
 	test_must_fail git hash-object --no-filters --path=foo
 '
@@ -137,6 +133,20 @@ test_expect_success 'check that --no-filters option works' '
 	nofilters_file1=$(git hash-object --no-filters file1) &&
 	test "$file0_sha" = "$nofilters_file1" &&
 	nofilters_file1=$(cat file1 | git hash-object --stdin) &&
+	test "$file0_sha" = "$nofilters_file1" &&
+	git config --unset core.autocrlf
+'
+
+test_expect_success 'check that --no-filters option works with --stdin-paths' '
+	echo fooQ | tr Q "\\015" >file0 &&
+	cp file0 file1 &&
+	echo "file0 -crlf" >.gitattributes &&
+	echo "file1 crlf" >>.gitattributes &&
+	git config core.autocrlf true &&
+	file0_sha=$(git hash-object file0) &&
+	file1_sha=$(git hash-object file1) &&
+	test "$file0_sha" != "$file1_sha" &&
+	nofilters_file1=$(echo "file1" | git hash-object --stdin-paths --no-filters) &&
 	test "$file0_sha" = "$nofilters_file1" &&
 	git config --unset core.autocrlf
 '

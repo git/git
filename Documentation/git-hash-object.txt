@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git hash-object' [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>...
-'git hash-object' [-t <type>] [-w] --stdin-paths < <list-of-paths>
+'git hash-object' [-t <type>] [-w] --stdin-paths [--no-filters] < <list-of-paths>
 
 DESCRIPTION
 -----------
