@@ -556,7 +556,7 @@ cmd_summary() {
 	if rev=$(git rev-parse -q --verify --default HEAD ${1+"$1"})
 	then
 		head=$rev
-		shift
+		test $# = 0 || shift
 	elif test -z "$1" -o "$1" = "HEAD"
 	then
 		return
