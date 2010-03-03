@@ -1,0 +1,22 @@
+Git v1.7.0.2 Release Notes
+==========================
+
+Fixes since v1.7.0.1
+--------------------
+
+ * "git fast-import" didn't work with a large input, as it lacked support
+   for producing the pack index in v2 format.
+
+ * "git imap-send" didn't use CRLF line endings over the imap protocol
+   when storing its payload to the draft box, violating RFC 3501.
+
+ * Error messages generated on the receiving end did not come back to "git
+   push".
+
+And other minor fixes and documentation updates.
+
+---
+exec >/var/tmp/1
+O=v1.7.0.1-28-gb46946a
+echo O=$(git describe maint)
+git shortlog --no-merges $O..maint
