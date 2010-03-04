@@ -44,7 +44,7 @@ OPTIONS
 	Remove everything in body before a scissors line (see
 	linkgit:git-mailinfo[1]).
 
----no-scissors::
+--no-scissors::
 	Ignore scissors lines (see linkgit:git-mailinfo[1]).
 
 -q::
