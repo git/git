@@ -351,6 +351,7 @@ information.
 }
 
 sub version {
+	::_req_svn();
 	print "git-svn version $VERSION (svn $SVN::Core::VERSION)\n";
 	exit 0;
 }
