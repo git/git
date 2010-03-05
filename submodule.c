@@ -5,6 +5,7 @@
 #include "commit.h"
 #include "revision.h"
 #include "run-command.h"
+#include "diffcore.h"
 
 static int add_submodule_odb(const char *path)
 {
@@ -85,13 +86,21 @@ void show_submodule_summary(FILE *f, const char *path,
 			message = "(revision walker failed)";
 	}
 
+	if (dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
+		fprintf(f, "Submodule %s contains untracked content\n", path);
+	if (dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
+		fprintf(f, "Submodule %s contains modified content\n", path);
+
+	if (!hashcmp(one, two)) {
+		strbuf_release(&sb);
+		return;
+	}
+
 	strbuf_addf(&sb, "Submodule %s %s..", path,
 			find_unique_abbrev(one, DEFAULT_ABBREV));
 	if (!fast_backward && !fast_forward)
 		strbuf_addch(&sb, '.');
 	strbuf_addf(&sb, "%s", find_unique_abbrev(two, DEFAULT_ABBREV));
-	if (dirty_submodule)
-		strbuf_add(&sb, "-dirty", 6);
 	if (message)
 		strbuf_addf(&sb, " %s\n", message);
 	else
@@ -121,9 +130,10 @@ void show_submodule_summary(FILE *f, const char *path,
 	strbuf_release(&sb);
 }
 
-int is_submodule_modified(const char *path)
+unsigned is_submodule_modified(const char *path)
 {
-	int len, i;
+	int i;
+	ssize_t len;
 	struct child_process cp;
 	const char *argv[] = {
 		"status",
@@ -132,6 +142,8 @@ int is_submodule_modified(const char *path)
 	};
 	const char *env[LOCAL_REPO_ENV_SIZE + 3];
 	struct strbuf buf = STRBUF_INIT;
+	unsigned dirty_submodule = 0;
+	const char *line, *next_line;
 
 	for (i = 0; i < LOCAL_REPO_ENV_SIZE; i++)
 		env[i] = local_repo_env[i];
@@ -161,6 +173,24 @@ int is_submodule_modified(const char *path)
 		die("Could not run git status --porcelain");
 
 	len = strbuf_read(&buf, cp.out, 1024);
+	line = buf.buf;
+	while (len > 2) {
+		if ((line[0] == '?') && (line[1] == '?')) {
+			dirty_submodule |= DIRTY_SUBMODULE_UNTRACKED;
+			if (dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
+				break;
+		} else {
+			dirty_submodule |= DIRTY_SUBMODULE_MODIFIED;
+			if (dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
+				break;
+		}
+		next_line = strchr(line, '\n');
+		if (!next_line)
+			break;
+		next_line++;
+		len -= (next_line - line);
+		line = next_line;
+	}
 	close(cp.out);
 
 	if (finish_command(&cp))
@@ -169,5 +199,5 @@ int is_submodule_modified(const char *path)
 	for (i = LOCAL_REPO_ENV_SIZE; env[i]; i++)
 		free((char *)env[i]);
 	strbuf_release(&buf);
-	return len != 0;
+	return dirty_submodule;
 }
