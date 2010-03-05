@@ -83,16 +83,20 @@ Patterns have the following format:
 
  - If the pattern does not contain a slash '/', git treats it as
    a shell glob pattern and checks for a match against the
-   pathname without leading directories.
+   pathname relative to the location of the `.gitignore` file
+   (relative to the toplevel of the work tree if not from a
+   `.gitignore` file).
 
  - Otherwise, git treats the pattern as a shell glob suitable
    for consumption by fnmatch(3) with the FNM_PATHNAME flag:
    wildcards in the pattern will not match a / in the pathname.
    For example, "Documentation/\*.html" matches
-   "Documentation/git.html" but not
-   "Documentation/ppc/ppc.html".  A leading slash matches the
-   beginning of the pathname; for example, "/*.c" matches
-   "cat-file.c" but not "mozilla-sha1/sha1.c".
+   "Documentation/git.html" but not "Documentation/ppc/ppc.html"
+   or "tools/perf/Documentation/perf.html".
+
+ - A leading slash matches the beginning of the pathname.
+   For example, "/*.c" matches "cat-file.c" but not
+   "mozilla-sha1/sha1.c".
 
 An example:
 
