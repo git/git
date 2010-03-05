@@ -151,6 +151,7 @@ save_stash () {
 			;;
 		-*)
 			echo "error: unknown option for 'stash save': $1"
+			echo "       To provide a message, use git stash save -- '$1'"
 			usage
 			;;
 		*)
