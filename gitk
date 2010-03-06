@@ -3851,6 +3851,7 @@ set known_view_options {
     {cmd       t50= +  {}               {mc "Command to generate more commits to include:"}}
     }
 
+# Convert $newviewopts($n, ...) into args for git log.
 proc encode_view_opts {n} {
     global known_view_options newviewopts
 
@@ -3884,6 +3885,7 @@ proc encode_view_opts {n} {
     return [concat $rargs [shellsplit $newviewopts($n,args)]]
 }
 
+# Fill $newviewopts($n, ...) based on args for git log.
 proc decode_view_opts {n view_args} {
     global known_view_options newviewopts
 
