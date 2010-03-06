@@ -1905,20 +1905,15 @@ static int match_fragment(struct image *img,
 		}
 
 		/*
-		 * Ok, the preimage matches with whitespace fuzz. Update it and
-		 * the common postimage lines to use the same whitespace as the
-		 * target. imgoff now holds the true length of the target that
-		 * matches the preimage, and we need to update the line lengths
-		 * of the preimage to match the target ones.
+		 * Ok, the preimage matches with whitespace fuzz.
+		 *
+		 * imgoff now holds the true length of the target that
+		 * matches the preimage.  Update the preimage and
+		 * the common postimage context lines to use the same
+		 * whitespace as the target.
 		 */
 		fixed_buf = xmalloc(imgoff);
 		memcpy(fixed_buf, img->buf + try, imgoff);
-		for (i = 0; i < preimage->nr; i++)
-			preimage->line[i].len = img->line[try_lno+i].len;
-
-		/*
-		 * Update the preimage buffer and the postimage context lines.
-		 */
 		update_pre_post_images(preimage, postimage,
 				fixed_buf, imgoff, postlen);
 		return 1;
