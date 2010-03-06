@@ -3811,10 +3811,10 @@ proc newview {ishighlight} {
 	raise $top
 	return
     }
+    decode_view_opts $nextviewnum $revtreeargs
     set newviewname($nextviewnum) "[mc "View"] $nextviewnum"
     set newviewopts($nextviewnum,perm) 0
     set newviewopts($nextviewnum,cmd)  $viewargscmd($curview)
-    decode_view_opts $nextviewnum $revtreeargs
     vieweditor $top $nextviewnum [mc "Gitk view definition"]
 }
 
@@ -3968,10 +3968,10 @@ proc editview {} {
 	raise $top
 	return
     }
+    decode_view_opts $curview $viewargs($curview)
     set newviewname($curview)      $viewname($curview)
     set newviewopts($curview,perm) $viewperm($curview)
     set newviewopts($curview,cmd)  $viewargscmd($curview)
-    decode_view_opts $curview $viewargs($curview)
     vieweditor $top $curview "[mc "Gitk: edit view"] $viewname($curview)"
 }
 
