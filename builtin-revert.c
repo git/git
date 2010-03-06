@@ -36,7 +36,7 @@ static const char * const cherry_pick_usage[] = {
 	NULL
 };
 
-static int edit, no_replay, no_commit, mainline, signoff, allow_ff;
+static int edit, no_replay, no_commit, mainline, signoff, allow_ff, no_ff;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
 static const char *commit_name;
@@ -63,11 +63,13 @@ static void parse_args(int argc, const char **argv)
 		OPT_END(),
 		OPT_END(),
 		OPT_END(),
+		OPT_END(),
 	};
 
 	if (action == CHERRY_PICK) {
 		struct option cp_extra[] = {
 			OPT_BOOLEAN(0, "ff", &allow_ff, "allow fast-forward"),
+			OPT_BOOLEAN(0, "no-ff", &no_ff, "disallow fast forward"),
 			OPT_END(),
 		};
 		if (parse_options_concat(options, ARRAY_SIZE(options), cp_extra))
@@ -297,6 +299,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			die("cherry-pick --ff cannot be used with -x");
 		if (edit)
 			die("cherry-pick --ff cannot be used with --edit");
+		if (no_ff)
+			die("cherry-pick --ff cannot be used with --no-ff");
 	}
 
 	if (read_cache() < 0)
