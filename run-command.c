@@ -82,6 +82,7 @@ static NORETURN void die_child(const char *err, va_list params)
 	write(child_err, "\n", 1);
 	exit(128);
 }
+#endif
 
 static inline void set_cloexec(int fd)
 {
@@ -89,7 +90,6 @@ static inline void set_cloexec(int fd)
 	if (flags >= 0)
 		fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
 }
-#endif
 
 static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
 {
@@ -447,11 +447,12 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 	return run_command(&cmd);
 }
 
-#ifdef WIN32
-static unsigned __stdcall run_thread(void *data)
+#ifdef ASYNC_AS_THREAD
+static void *run_thread(void *data)
 {
 	struct async *async = data;
-	return async->proc(async->proc_in, async->proc_out, async->data);
+	intptr_t ret = async->proc(async->proc_in, async->proc_out, async->data);
+	return (void *)ret;
 }
 #endif
 
@@ -497,7 +498,7 @@ int start_async(struct async *async)
 	else
 		proc_out = -1;
 
-#ifndef WIN32
+#ifndef ASYNC_AS_THREAD
 	/* Flush stdio before fork() to avoid cloning buffers */
 	fflush(NULL);
 
@@ -524,12 +525,18 @@ int start_async(struct async *async)
 	else if (async->out)
 		close(async->out);
 #else
+	if (proc_in >= 0)
+		set_cloexec(proc_in);
+	if (proc_out >= 0)
+		set_cloexec(proc_out);
 	async->proc_in = proc_in;
 	async->proc_out = proc_out;
-	async->tid = (HANDLE) _beginthreadex(NULL, 0, run_thread, async, 0, NULL);
-	if (!async->tid) {
-		error("cannot create thread: %s", strerror(errno));
-		goto error;
+	{
+		int err = pthread_create(&async->tid, NULL, run_thread, async);
+		if (err) {
+			error("cannot create thread: %s", strerror(err));
+			goto error;
+		}
 	}
 #endif
 	return 0;
@@ -549,17 +556,15 @@ error:
 
 int finish_async(struct async *async)
 {
-#ifndef WIN32
-	int ret = wait_or_whine(async->pid, "child process", 0);
+#ifndef ASYNC_AS_THREAD
+	return wait_or_whine(async->pid, "child process", 0);
 #else
-	DWORD ret = 0;
-	if (WaitForSingleObject(async->tid, INFINITE) != WAIT_OBJECT_0)
-		ret = error("waiting for thread failed: %lu", GetLastError());
-	else if (!GetExitCodeThread(async->tid, &ret))
-		ret = error("cannot get thread exit code: %lu", GetLastError());
-	CloseHandle(async->tid);
+	void *ret = (void *)(intptr_t)(-1);
+
+	if (pthread_join(async->tid, &ret))
+		error("pthread_join failed");
+	return (int)(intptr_t)ret;
 #endif
-	return ret;
 }
 
 int run_hook(const char *index_file, const char *name, ...)
