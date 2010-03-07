@@ -148,6 +148,12 @@ shown.  If the pattern does not contain a globbing character (`?`,
 --is-bare-repository::
 	When the repository is bare print "true", otherwise "false".
 
+--local-env-vars::
+	List the GIT_* environment variables that are local to the
+	repository (e.g. GIT_DIR or GIT_WORK_TREE, but not GIT_EDITOR).
+	Only the names of the variables are listed, not their value,
+	even if they are set.
+
 --short::
 --short=number::
 	Instead of outputting the full SHA1 values of object names try to
