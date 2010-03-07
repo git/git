@@ -7,7 +7,7 @@ git-cherry-pick - Apply the change introduced by an existing commit
 
 SYNOPSIS
 --------
-'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] <commit>
+'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] [--[no-]ff] <commit>
 
 DESCRIPTION
 -----------
@@ -70,6 +70,14 @@ effect to your index in a row.
 --signoff::
 	Add Signed-off-by line at the end of the commit message.
 
+--ff::
+	If the current HEAD is the same as the parent of the
+	cherry-pick'ed commit, then a fast forward to this commit will
+	be performed.
+
+--no-ff::
+	Does nothing right now, but in the future this may disallow
+	fast forward if it becomes the default behavior.
 
 Author
 ------

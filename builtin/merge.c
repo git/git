@@ -667,7 +667,7 @@ static int count_unmerged_entries(void)
 	return ret;
 }
 
-static int checkout_fast_forward(unsigned char *head, unsigned char *remote)
+int checkout_fast_forward(const unsigned char *head, const unsigned char *remote)
 {
 	struct tree *trees[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
