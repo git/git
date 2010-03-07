@@ -38,9 +38,3 @@ Fixes since v1.7.0.1
    file.
 
 And other minor fixes and documentation updates.
-
----
-exec >/var/tmp/1
-O=v1.7.0.1-64-g7d18122
-echo O=$(git describe maint)
-git shortlog --no-merges $O..maint
