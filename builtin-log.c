@@ -869,19 +869,31 @@ static int inline_callback(const struct option *opt, const char *arg, int unset)
 
 static int header_callback(const struct option *opt, const char *arg, int unset)
 {
-	add_header(arg);
+	if (unset) {
+		string_list_clear(&extra_hdr, 0);
+		string_list_clear(&extra_to, 0);
+		string_list_clear(&extra_cc, 0);
+	} else {
+	    add_header(arg);
+	}
 	return 0;
 }
 
 static int to_callback(const struct option *opt, const char *arg, int unset)
 {
-	string_list_append(arg, &extra_to);
+	if (unset)
+		string_list_clear(&extra_to, 0);
+	else
+		string_list_append(arg, &extra_to);
 	return 0;
 }
 
 static int cc_callback(const struct option *opt, const char *arg, int unset)
 {
-	string_list_append(arg, &extra_cc);
+	if (unset)
+		string_list_clear(&extra_cc, 0);
+	else
+		string_list_append(arg, &extra_cc);
 	return 0;
 }
 
@@ -940,12 +952,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		  PARSE_OPT_NONEG | PARSE_OPT_NOARG },
 		OPT_GROUP("Messaging"),
 		{ OPTION_CALLBACK, 0, "add-header", NULL, "header",
-			    "add email header", PARSE_OPT_NONEG,
-			    header_callback },
+			    "add email header", 0, header_callback },
 		{ OPTION_CALLBACK, 0, "to", NULL, "email", "add To: header",
-			    PARSE_OPT_NONEG, to_callback },
+			    0, to_callback },
 		{ OPTION_CALLBACK, 0, "cc", NULL, "email", "add Cc: header",
-			    PARSE_OPT_NONEG, cc_callback },
+			    0, cc_callback },
 		OPT_STRING(0, "in-reply-to", &in_reply_to, "message-id",
 			    "make first mail a reply to <message-id>"),
 		{ OPTION_CALLBACK, 0, "attach", &rev, "boundary",
