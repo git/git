@@ -2281,9 +2281,10 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 			      void *buf, unsigned long len, time_t mtime)
 {
 	int fd, ret;
-	size_t size;
-	unsigned char *compressed;
+	unsigned char compressed[4096];
 	z_stream stream;
+	git_SHA_CTX c;
+	unsigned char parano_sha1[20];
 	char *filename;
 	static char tmpfile[PATH_MAX];
 
@@ -2301,36 +2302,40 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
 	deflateInit(&stream, zlib_compression_level);
-	size = 8 + deflateBound(&stream, len+hdrlen);
-	compressed = xmalloc(size);
-
-	/* Compress it */
 	stream.next_out = compressed;
-	stream.avail_out = size;
+	stream.avail_out = sizeof(compressed);
+	git_SHA1_Init(&c);
 
 	/* First header.. */
 	stream.next_in = (unsigned char *)hdr;
 	stream.avail_in = hdrlen;
 	while (deflate(&stream, 0) == Z_OK)
 		/* nothing */;
+	git_SHA1_Update(&c, hdr, hdrlen);
 
 	/* Then the data itself.. */
 	stream.next_in = buf;
 	stream.avail_in = len;
-	ret = deflate(&stream, Z_FINISH);
+	do {
+		unsigned char *in0 = stream.next_in;
+		ret = deflate(&stream, Z_FINISH);
+		git_SHA1_Update(&c, in0, stream.next_in - in0);
+		if (write_buffer(fd, compressed, stream.next_out - compressed) < 0)
+			die("unable to write sha1 file");
+		stream.next_out = compressed;
+		stream.avail_out = sizeof(compressed);
+	} while (ret == Z_OK);
+
 	if (ret != Z_STREAM_END)
 		die("unable to deflate new object %s (%d)", sha1_to_hex(sha1), ret);
-
 	ret = deflateEnd(&stream);
 	if (ret != Z_OK)
 		die("deflateEnd on object %s failed (%d)", sha1_to_hex(sha1), ret);
+	git_SHA1_Final(parano_sha1, &c);
+	if (hashcmp(sha1, parano_sha1) != 0)
+		die("confused by unstable object source data for %s", sha1_to_hex(sha1));
 
-	size = stream.total_out;
-
-	if (write_buffer(fd, compressed, size) < 0)
-		die("unable to write sha1 file");
 	close_sha1_file(fd);
-	free(compressed);
 
 	if (mtime) {
 		struct utimbuf utb;
@@ -2434,6 +2439,8 @@ static int index_mem(unsigned char *sha1, void *buf, size_t size,
 	return ret;
 }
 
+#define SMALL_FILE_SIZE (32*1024)
+
 int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	     enum object_type type, const char *path)
 {
@@ -2448,6 +2455,14 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 		else
 			ret = -1;
 		strbuf_release(&sbuf);
+	} else if (size <= SMALL_FILE_SIZE) {
+		char *buf = xmalloc(size);
+		if (size == read_in_full(fd, buf, size))
+			ret = index_mem(sha1, buf, size, write_object, type,
+					path);
+		else
+			ret = error("short read %s", strerror(errno));
+		free(buf);
 	} else if (size) {
 		void *buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 		ret = index_mem(sha1, buf, size, write_object, type, path);

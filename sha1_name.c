@@ -280,8 +280,7 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 				*ref = xstrdup(r);
 			if (!warn_ambiguous_refs)
 				break;
-		} else if ((flag & REF_ISSYMREF) &&
-			   (len != 4 || strcmp(str, "HEAD")))
+		} else if ((flag & REF_ISSYMREF) && strcmp(fullref, "HEAD"))
 			warning("ignoring dangling symref %s.", fullref);
 	}
 	free(last_branch);
@@ -993,13 +992,15 @@ static void diagnose_invalid_index_path(int stage,
 	pos = cache_name_pos(filename, namelen);
 	if (pos < 0)
 		pos = -pos - 1;
-	ce = active_cache[pos];
-	if (ce_namelen(ce) == namelen &&
-	    !memcmp(ce->name, filename, namelen))
-		die("Path '%s' is in the index, but not at stage %d.\n"
-		    "Did you mean ':%d:%s'?",
-		    filename, stage,
-		    ce_stage(ce), filename);
+	if (pos < active_nr) {
+		ce = active_cache[pos];
+		if (ce_namelen(ce) == namelen &&
+		    !memcmp(ce->name, filename, namelen))
+			die("Path '%s' is in the index, but not at stage %d.\n"
+			    "Did you mean ':%d:%s'?",
+			    filename, stage,
+			    ce_stage(ce), filename);
+	}
 
 	/* Confusion between relative and absolute filenames? */
 	fullnamelen = namelen + strlen(prefix);
@@ -1009,13 +1010,15 @@ static void diagnose_invalid_index_path(int stage,
 	pos = cache_name_pos(fullname, fullnamelen);
 	if (pos < 0)
 		pos = -pos - 1;
-	ce = active_cache[pos];
-	if (ce_namelen(ce) == fullnamelen &&
-	    !memcmp(ce->name, fullname, fullnamelen))
-		die("Path '%s' is in the index, but not '%s'.\n"
-		    "Did you mean ':%d:%s'?",
-		    fullname, filename,
-		    ce_stage(ce), fullname);
+	if (pos < active_nr) {
+		ce = active_cache[pos];
+		if (ce_namelen(ce) == fullnamelen &&
+		    !memcmp(ce->name, fullname, fullnamelen))
+			die("Path '%s' is in the index, but not '%s'.\n"
+			    "Did you mean ':%d:%s'?",
+			    fullname, filename,
+			    ce_stage(ce), fullname);
+	}
 
 	if (!lstat(filename, &st))
 		die("Path '%s' exists on disk, but not in the index.", filename);

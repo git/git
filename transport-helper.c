@@ -171,7 +171,7 @@ static struct child_process *get_helper(struct transport *transport)
 		} else if (!strcmp(capname, "connect")) {
 			data->connect = 1;
 		} else if (mandatory) {
-			die("Unknown madatory capability %s. This remote "
+			die("Unknown mandatory capability %s. This remote "
 			    "helper probably needs newer version of Git.\n",
 			    capname);
 		}

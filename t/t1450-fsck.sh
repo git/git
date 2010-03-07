@@ -66,12 +66,12 @@ tagger T A Gger <tagger@example.com> 1234567890 -0000
 This is an invalid tag.
 EOF
 
-test_expect_failure 'tag pointing to nonexistent' '
-	tag=$(git hash-object -w --stdin < invalid-tag) &&
+test_expect_success 'tag pointing to nonexistent' '
+	tag=$(git hash-object -t tag -w --stdin < invalid-tag) &&
 	echo $tag > .git/refs/tags/invalid &&
-	git fsck --tags 2>out &&
+	test_must_fail git fsck --tags >out &&
 	cat out &&
-	grep "could not load tagged object" out &&
+	grep "broken link" out &&
 	rm .git/refs/tags/invalid
 '
 
@@ -84,12 +84,12 @@ tagger T A Gger <tagger@example.com> 1234567890 -0000
 This is an invalid tag.
 EOF
 
-test_expect_failure 'tag pointing to something else than its type' '
-	tag=$(git hash-object -w --stdin < wrong-tag) &&
+test_expect_success 'tag pointing to something else than its type' '
+	tag=$(git hash-object -t tag -w --stdin < wrong-tag) &&
 	echo $tag > .git/refs/tags/wrong &&
-	git fsck --tags 2>out &&
+	test_must_fail git fsck --tags 2>out &&
 	cat out &&
-	grep "some sane error message" out &&
+	grep "error in tag.*broken links" out &&
 	rm .git/refs/tags/wrong
 '
 

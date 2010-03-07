@@ -918,6 +918,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	if (!remote)
 		die("No remote provided to transport_get()");
 
+	ret->got_remote_refs = 0;
 	ret->remote = remote;
 	helper = remote->foreign_vcs;
 
@@ -1079,8 +1080,10 @@ int transport_push(struct transport *transport,
 
 const struct ref *transport_get_remote_refs(struct transport *transport)
 {
-	if (!transport->remote_refs)
+	if (!transport->got_remote_refs) {
 		transport->remote_refs = transport->get_refs_list(transport, 0);
+		transport->got_remote_refs = 1;
+	}
 
 	return transport->remote_refs;
 }

@@ -706,7 +706,7 @@ int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
 
 	has_glob_specials = strpbrk(pattern, "?*[");
 	if (!has_glob_specials) {
-		/* Append impiled '/' '*' if not present. */
+		/* Append implied '/' '*' if not present. */
 		if (real_pattern.buf[real_pattern.len - 1] != '/')
 			strbuf_addch(&real_pattern, '/');
 		/* No need to check for '*', there is none. */

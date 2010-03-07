@@ -5459,7 +5459,12 @@ sub git_svn_log_cmd {
 
 # adapted from pager.c
 sub config_pager {
-	chomp(my $pager = command_oneline(qw(var GIT_PAGER)));
+	if (! -t *STDOUT) {
+		$ENV{GIT_PAGER_IN_USE} = 'false';
+		$pager = undef;
+		return;
+	}
+	chomp($pager = command_oneline(qw(var GIT_PAGER)));
 	if ($pager eq 'cat') {
 		$pager = undef;
 	}
@@ -5467,7 +5472,7 @@ sub config_pager {
 }
 
 sub run_pager {
-	return unless -t *STDOUT && defined $pager;
+	return unless defined $pager;
 	pipe my ($rfd, $wfd) or return;
 	defined(my $pid = fork) or ::fatal "Can't fork: $!";
 	if (!$pid) {

@@ -504,7 +504,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 
 	/*
 	 * Don't do destructive transforms with git:// as that
-	 * protocol code does '[]' dewrapping of its own.
+	 * protocol code does '[]' unwrapping of its own.
 	 */
 	if (host[0] == '[') {
 		end = strchr(host + 1, ']');

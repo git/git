@@ -408,7 +408,7 @@ static int pathspec_matches(const char **paths, const char *name, int max_depth)
 	return 0;
 }
 
-static void *read_sha1_file_locked(const unsigned char *sha1, enum object_type *type, unsigned long *size)
+static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
 {
 	void *data;
 
@@ -426,7 +426,7 @@ static void *load_sha1(const unsigned char *sha1, unsigned long *size,
 		       const char *name)
 {
 	enum object_type type;
-	void *data = read_sha1_file_locked(sha1, &type, size);
+	void *data = lock_and_read_sha1_file(sha1, &type, size);
 
 	if (!data)
 		error("'%s': unable to read %s", name, sha1_to_hex(sha1));
@@ -615,7 +615,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			void *data;
 			unsigned long size;
 
-			data = read_sha1_file_locked(entry.sha1, &type, &size);
+			data = lock_and_read_sha1_file(entry.sha1, &type, &size);
 			if (!data)
 				die("unable to read tree (%s)",
 				    sha1_to_hex(entry.sha1));
@@ -867,6 +867,16 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_DASHDASH |
 			     PARSE_OPT_STOP_AT_NON_OPTION |
 			     PARSE_OPT_NO_INTERNAL_HELP);
+
+	/*
+	 * skip a -- separator; we know it cannot be
+	 * separating revisions from pathnames if
+	 * we haven't even had any patterns yet
+	 */
+	if (argc > 0 && !opt.pattern_list && !strcmp(argv[0], "--")) {
+		argv++;
+		argc--;
+	}
 
 	/* First unrecognized non-option token */
 	if (argc > 0 && !opt.pattern_list) {

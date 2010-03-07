@@ -151,6 +151,7 @@ save_stash () {
 			;;
 		-*)
 			echo "error: unknown option for 'stash save': $1"
+			echo "       To provide a message, use git stash save -- '$1'"
 			usage
 			;;
 		*)
@@ -221,6 +222,7 @@ show_stash () {
 }
 
 apply_stash () {
+	applied_stash=
 	unstash_index=
 
 	while test $# != 0
@@ -242,6 +244,9 @@ apply_stash () {
 	if test $# = 0
 	then
 		have_stash || die 'Nothing to apply'
+		applied_stash="$ref_stash@{0}"
+	else
+		applied_stash="$*"
 	fi
 
 	# stash records the work tree, and is a merge between the
@@ -415,8 +420,7 @@ pop)
 	shift
 	if apply_stash "$@"
 	then
-		test -z "$unstash_index" || shift
-		drop_stash "$@"
+		drop_stash "$applied_stash"
 	fi
 	;;
 branch)

@@ -312,12 +312,16 @@ If you want to have one URL for both gitweb and your http://
 repositories, you can configure apache like this:
 
 <VirtualHost *:80>
-    ServerName git.example.org
-    DocumentRoot /pub/git
-    SetEnv	GITWEB_CONFIG	/etc/gitweb.conf
+    ServerName		git.example.org
+    DocumentRoot	/pub/git
+    SetEnv			GITWEB_CONFIG	/etc/gitweb.conf
+
+    # turning on mod rewrite
     RewriteEngine on
+
     # make the front page an internal rewrite to the gitweb script
     RewriteRule ^/$  /cgi-bin/gitweb.cgi
+
     # make access for "dumb clients" work
     RewriteRule ^/(.*\.git/(?!/?(HEAD|info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
 </VirtualHost>
@@ -341,6 +345,63 @@ something like the following in your gitweb.conf (or gitweb_config.perl) file:
   @stylesheets = ("/some/absolute/path/gitweb.css");
   $my_uri = "/";
   $home_link = "/";
+
+
+Webserver configuration with multiple projects' root
+----------------------------------------------------
+
+If you want to use gitweb with several project roots you can edit your apache
+virtual host and gitweb.conf configuration files like this :
+
+virtual host configuration :
+
+<VirtualHost *:80>
+    ServerName			git.example.org
+    DocumentRoot		/pub/git
+    SetEnv				GITWEB_CONFIG	/etc/gitweb.conf
+
+    # turning on mod rewrite
+    RewriteEngine on
+
+    # make the front page an internal rewrite to the gitweb script
+    RewriteRule ^/$ 		/cgi-bin/gitweb.cgi [QSA,L,PT]
+
+    # look for a public_git folder in unix users' home
+    # http://git.example.org/~<user>/
+    RewriteRule ^/\~([^\/]+)(/|/gitweb.cgi)?$	/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/home/$1/public_git/,L,PT]
+
+    # http://git.example.org/+<user>/
+    #RewriteRule ^/\+([^\/]+)(/|/gitweb.cgi)?$	/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/home/$1/public_git/,L,PT]
+
+    # http://git.example.org/user/<user>/
+    #RewriteRule ^/user/([^\/]+)/(gitweb.cgi)?$	/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/home/$1/public_git/,L,PT]
+
+    # defined list of project roots
+    RewriteRule ^/scm(/|/gitweb.cgi)?$		/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/pub/scm/,L,PT]
+    RewriteRule ^/var(/|/gitweb.cgi)?$		/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/var/git/,L,PT]
+
+    # make access for "dumb clients" work
+    RewriteRule ^/(.*\.git/(?!/?(HEAD|info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
+</VirtualHost>
+
+gitweb.conf configuration :
+
+$projectroot = $ENV{'GITWEB_PROJECTROOT'} || "/pub/git";
+
+These configurations enable two things. First, each unix user (<user>) of the
+server will be able to browse through gitweb git repositories found in
+~/public_git/ with the following url : http://git.example.org/~<user>/
+
+If you do not want this feature on your server just remove the second rewrite rule.
+
+If you already use mod_userdir in your virtual host or you don't want to use
+the '~' as first character just comment or remove the second rewrite rule and
+uncomment one of the following according to what you want.
+
+Second, repositories found in /pub/scm/ and /var/git/ will be accesible
+through http://git.example.org/scm/ and http://git.example.org/var/.
+You can add as many project roots as you want by adding rewrite rules like the
+third and the fourth.
 
 
 PATH_INFO usage

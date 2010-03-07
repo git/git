@@ -219,9 +219,10 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 			    "exit with zero when there's no error", 'e'),
 		OPT_SET_INT('p', NULL, &opt, "pretty-print object's content", 'p'),
 		OPT_SET_INT(0, "batch", &batch,
-			    "show info and content of objects feeded on stdin", BATCH),
+			    "show info and content of objects fed from the standard input",
+			    BATCH),
 		OPT_SET_INT(0, "batch-check", &batch,
-			    "show info about objects feeded on stdin",
+			    "show info about objects fed from the standard input",
 			    BATCH_CHECK),
 		OPT_END()
 	};

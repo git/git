@@ -21,26 +21,27 @@ DESCRIPTION
 Reads list of objects from the standard input, and writes a packed
 archive with specified base-name, or to the standard output.
 
-A packed archive is an efficient way to transfer set of objects
-between two repositories, and also is an archival format which
-is efficient to access.  The packed archive format (.pack) is
-designed to be self contained so that it can be unpacked without
-any further information, but for fast, random access to the objects
-in the pack, a pack index file (.idx) will be generated.
+A packed archive is an efficient way to transfer a set of objects
+between two repositories as well as an access efficient archival
+format.  In a packed archive, an object is either stored as a
+compressed whole or as a difference from some other object.
+The latter is often called a delta.
 
-Placing both in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
+The packed archive format (.pack) is designed to be self-contained
+so that it can be unpacked without any further information. Therefore,
+each object that a delta depends upon must be present within the pack.
+
+A pack index file (.idx) is generated for fast, random access to the
+objects in the pack. Placing both the index file (.idx) and the packed
+archive (.pack) in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
 any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
-enables git to read from such an archive.
+enables git to read from the pack archive.
 
 The 'git unpack-objects' command can read the packed archive and
 expand the objects contained in the pack into "one-file
 one-object" format; this is typically done by the smart-pull
 commands when a pack is created on-the-fly for efficient network
 transport by their peers.
-
-In a packed archive, an object is either stored as a compressed
-whole, or as a difference from some other object.  The latter is
-often called a delta.
 
 
 OPTIONS
@@ -73,7 +74,7 @@ base-name::
 --all::
 	This implies `--revs`.  In addition to the list of
 	revision arguments read from the standard input, pretend
-	as if all refs under `$GIT_DIR/refs` are specified to be
+	as if all refs under `refs/` are specified to be
 	included.
 
 --include-tag::
@@ -178,6 +179,16 @@ base-name::
 	and defaults to -1,  the zlib default,  if neither is set.
 	Add --no-reuse-object if you want to force a uniform compression
 	level on all data no matter the source.
+
+--thin::
+	Create a "thin" pack by omitting the common objects between a
+	sender and a receiver in order to reduce network transfer. This
+	option only makes sense in conjunction with --stdout.
++
+Note: A thin pack violates the packed archive format by omitting
+required objects and is thus unusable by git without making it
+self-contained. Use `git index-pack --fix-thin`
+(see linkgit:git-index-pack[1]) to restore the self-contained property.
 
 --delta-base-offset::
 	A packed archive can express base object of a delta as

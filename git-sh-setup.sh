@@ -107,6 +107,19 @@ git_editor() {
 	eval "$GIT_EDITOR" '"$@"'
 }
 
+git_pager() {
+	if test -t 1
+	then
+		GIT_PAGER=$(git var GIT_PAGER)
+	else
+		GIT_PAGER=cat
+	fi
+	: ${LESS=-FRSX}
+	export LESS
+
+	eval "$GIT_PAGER" '"$@"'
+}
+
 sane_grep () {
 	GREP_OPTIONS= LC_ALL=C grep "$@"
 }
@@ -128,7 +141,7 @@ cd_to_toplevel () {
 }
 
 require_work_tree () {
-	test $(git rev-parse --is-inside-work-tree) = true ||
+	test "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = true ||
 	die "fatal: $0 cannot be used without a working tree."
 }
 

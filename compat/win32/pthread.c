@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2009 Andrzej K. Haczewski <ahaczewski@gmail.com>
  *
- * DISCLAMER: The implementation is Git-specific, it is subset of original
+ * DISCLAIMER: The implementation is Git-specific, it is subset of original
  * Pthreads API, without lots of other features that Git doesn't use.
  * Git also makes sure that the passed arguments are valid, so there's
  * no need for double-checking.

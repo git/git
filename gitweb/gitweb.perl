@@ -454,7 +454,11 @@ sub gitweb_get_feature {
 		$feature{$name}{'sub'},
 		$feature{$name}{'override'},
 		@{$feature{$name}{'default'}});
-	if (!$override) { return @defaults; }
+	# project specific override is possible only if we have project
+	our $git_dir; # global variable, declared later
+	if (!$override || !defined $git_dir) {
+		return @defaults;
+	}
 	if (!defined $sub) {
 		warn "feature $name is not overridable";
 		return @defaults;
@@ -550,11 +554,14 @@ sub filter_snapshot_fmts {
 }
 
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
+our $GITWEB_CONFIG_SYSTEM = $ENV{'GITWEB_CONFIG_SYSTEM'} || "++GITWEB_CONFIG_SYSTEM++";
+# die if there are errors parsing config file
 if (-e $GITWEB_CONFIG) {
 	do $GITWEB_CONFIG;
-} else {
-	our $GITWEB_CONFIG_SYSTEM = $ENV{'GITWEB_CONFIG_SYSTEM'} || "++GITWEB_CONFIG_SYSTEM++";
-	do $GITWEB_CONFIG_SYSTEM if -e $GITWEB_CONFIG_SYSTEM;
+	die $@ if $@;
+} elsif (-e $GITWEB_CONFIG_SYSTEM) {
+	do $GITWEB_CONFIG_SYSTEM;
+	die $@ if $@;
 }
 
 # Get loadavg of system, to compare against $maxload.
@@ -2201,6 +2208,9 @@ sub config_to_multi {
 
 sub git_get_project_config {
 	my ($key, $type) = @_;
+
+	# do we have project
+	return unless (defined $project && defined $git_dir);
 
 	# key sanity check
 	return unless ($key);

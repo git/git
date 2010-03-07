@@ -304,9 +304,19 @@ parse_done:
 	return 0;
 }
 
+static void add_wrapped_shortlog_msg(struct strbuf *sb, const char *s,
+				     const struct shortlog *log)
+{
+	int col = strbuf_add_wrapped_text(sb, s, log->in1, log->in2, log->wrap);
+	if (col != log->wrap)
+		strbuf_addch(sb, '\n');
+}
+
 void shortlog_output(struct shortlog *log)
 {
 	int i, j;
+	struct strbuf sb = STRBUF_INIT;
+
 	if (log->sort_by_number)
 		qsort(log->list.items, log->list.nr, sizeof(struct string_list_item),
 			compare_by_number);
@@ -321,9 +331,9 @@ void shortlog_output(struct shortlog *log)
 				const char *msg = onelines->items[j].string;
 
 				if (log->wrap_lines) {
-					int col = print_wrapped_text(msg, log->in1, log->in2, log->wrap);
-					if (col != log->wrap)
-						putchar('\n');
+					strbuf_reset(&sb);
+					add_wrapped_shortlog_msg(&sb, msg, log);
+					fwrite(sb.buf, sb.len, 1, stdout);
 				}
 				else
 					printf("      %s\n", msg);
@@ -337,6 +347,7 @@ void shortlog_output(struct shortlog *log)
 		log->list.items[i].util = NULL;
 	}
 
+	strbuf_release(&sb);
 	log->list.strdup_strings = 1;
 	string_list_clear(&log->list, 1);
 	clear_mailmap(&log->mailmap);

@@ -65,6 +65,8 @@ GIT_TEST_CMP=${GIT_TEST_CMP:-diff -u}
 # CDPATH into the environment
 unset CDPATH
 
+unset GREP_OPTIONS
+
 case $(echo $GIT_TRACE |tr "[A-Z]" "[a-z]") in
 	1|2|true)
 		echo "* warning: Some tests will not work if GIT_TRACE" \

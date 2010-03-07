@@ -184,13 +184,13 @@ static struct discovery* discover_refs(const char *service)
 	return last;
 }
 
-static int write_discovery(int fd, void *data)
+static int write_discovery(int in, int out, void *data)
 {
 	struct discovery *heads = data;
 	int err = 0;
-	if (write_in_full(fd, heads->buf, heads->len) != heads->len)
+	if (write_in_full(out, heads->buf, heads->len) != heads->len)
 		err = 1;
-	close(fd);
+	close(out);
 	return err;
 }
 
@@ -202,6 +202,7 @@ static struct ref *parse_git_refs(struct discovery *heads)
 	memset(&async, 0, sizeof(async));
 	async.proc = write_discovery;
 	async.data = heads;
+	async.out = -1;
 
 	if (start_async(&async))
 		die("cannot start thread to parse advertised refs");

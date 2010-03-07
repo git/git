@@ -407,7 +407,7 @@ static void parse_host_and_port(char *hostport, char **host,
 
 		end = strchr(hostport, ']');
 		if (!end)
-			die("Invalid reqeuest ('[' without ']')");
+			die("Invalid request ('[' without ']')");
 		*end = '\0';
 		*host = hostport + 1;
 		if (!end[1])
