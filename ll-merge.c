@@ -63,8 +63,6 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			int flag, int marker_size)
 {
 	xmparam_t xmp;
-	int style = 0;
-	int favor = (flag >> 1) & 03;
 
 	if (buffer_is_binary(orig->ptr, orig->size) ||
 	    buffer_is_binary(src1->ptr, src1->size) ||
@@ -79,15 +77,13 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	}
 
 	memset(&xmp, 0, sizeof(xmp));
+	xmp.level = XDL_MERGE_ZEALOUS;
+	xmp.favor= (flag >> 1) & 03;
 	if (git_xmerge_style >= 0)
-		style = git_xmerge_style;
+		xmp.style = git_xmerge_style;
 	if (marker_size > 0)
 		xmp.marker_size = marker_size;
-	return xdl_merge(orig,
-			 src1, name1,
-			 src2, name2,
-			 &xmp, XDL_MERGE_FLAGS(XDL_MERGE_ZEALOUS, style, favor),
-			 result);
+	return xdl_merge(orig, src1, name1, src2, name2, &xmp, result);
 }
 
 static int ll_union_merge(const struct ll_merge_driver *drv_unused,
@@ -98,44 +94,11 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 			  mmfile_t *src2, const char *name2,
 			  int flag, int marker_size)
 {
-	char *src, *dst;
-	long size;
-	int status, saved_style;
-
-	/* We have to force the RCS "merge" style */
-	saved_style = git_xmerge_style;
-	git_xmerge_style = 0;
-	status = ll_xdl_merge(drv_unused, result, path_unused,
-			      orig, src1, NULL, src2, NULL,
-			      flag, marker_size);
-	git_xmerge_style = saved_style;
-	if (status <= 0)
-		return status;
-	size = result->size;
-	src = dst = result->ptr;
-	while (size) {
-		char ch;
-		if ((marker_size < size) &&
-		    (*src == '<' || *src == '=' || *src == '>')) {
-			int i;
-			ch = *src;
-			for (i = 0; i < marker_size; i++)
-				if (src[i] != ch)
-					goto not_a_marker;
-			if (src[marker_size] != '\n')
-				goto not_a_marker;
-			src += marker_size + 1;
-			size -= marker_size + 1;
-			continue;
-		}
-	not_a_marker:
-		do {
-			ch = *src++;
-			*dst++ = ch;
-			size--;
-		} while (ch != '\n' && size);
-	}
-	result->size = dst - result->ptr;
+	/* Use union favor */
+	flag = (flag & 1) | (XDL_MERGE_FAVOR_UNION << 1);
+	return ll_xdl_merge(drv_unused, result, path_unused,
+			    orig, src1, NULL, src2, NULL,
+			    flag, marker_size);
 	return 0;
 }
 

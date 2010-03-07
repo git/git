@@ -28,6 +28,7 @@ typedef struct s_xdmerge {
 	 * 0 = conflict,
 	 * 1 = no conflict, take first,
 	 * 2 = no conflict, take second.
+	 * 3 = no conflict, take both.
 	 */
 	int mode;
 	/*
@@ -230,14 +231,19 @@ static int xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
 			size = fill_conflict_hunk(xe1, name1, xe2, name2,
 						  size, i, style, m, dest,
 						  marker_size);
-		else if (m->mode == 1)
-			size += xdl_recs_copy(xe1, i, m->i1 + m->chg1 - i, 0,
+		else if (m->mode & 3) {
+			/* Before conflicting part */
+			size += xdl_recs_copy(xe1, i, m->i1 - i, 0,
 					      dest ? dest + size : NULL);
-		else if (m->mode == 2)
-			size += xdl_recs_copy(xe2, m->i2 - m->i1 + i,
-					      m->i1 + m->chg2 - i, 0,
-					      dest ? dest + size : NULL);
-		else
+			/* Postimage from side #1 */
+			if (m->mode & 1)
+				size += xdl_recs_copy(xe1, m->i1, m->chg1, 1,
+						      dest ? dest + size : NULL);
+			/* Postimage from side #2 */
+			if (m->mode & 2)
+				size += xdl_recs_copy(xe2, m->i2, m->chg2, 1,
+						      dest ? dest + size : NULL);
+		} else
 			continue;
 		i = m->i1 + m->chg1;
 	}
@@ -394,13 +400,13 @@ static int xdl_simplify_non_conflicts(xdfenv_t *xe1, xdmerge_t *m,
  */
 static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 		xdfenv_t *xe2, xdchange_t *xscr2, const char *name2,
-		int flags, xmparam_t const *xmp, mmbuffer_t *result) {
+		xmparam_t const *xmp, mmbuffer_t *result) {
 	xdmerge_t *changes, *c;
 	xpparam_t const *xpp = &xmp->xpp;
 	int i0, i1, i2, chg0, chg1, chg2;
-	int level = flags & XDL_MERGE_LEVEL_MASK;
-	int style = flags & XDL_MERGE_STYLE_MASK;
-	int favor = XDL_MERGE_FAVOR(flags);
+	int level = xmp->level;
+	int style = xmp->style;
+	int favor = xmp->favor;
 
 	if (style == XDL_MERGE_DIFF3) {
 		/*
@@ -550,7 +556,7 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 
 int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 		mmfile_t *mf2, const char *name2,
-		xmparam_t const *xmp, int flags, mmbuffer_t *result) {
+		xmparam_t const *xmp, mmbuffer_t *result) {
 	xdchange_t *xscr1, *xscr2;
 	xdfenv_t xe1, xe2;
 	int status;
@@ -587,7 +593,7 @@ int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 	} else {
 		status = xdl_do_merge(&xe1, xscr1, name1,
 				      &xe2, xscr2, name2,
-				      flags, xmp, result);
+				      xmp, result);
 	}
 	xdl_free_script(xscr1);
 	xdl_free_script(xscr2);
