@@ -28,6 +28,8 @@ test_expect_success 'setup a submodule tree' '
 	git commit -m upstream
 	git clone . super &&
 	git clone super submodule &&
+	git clone super rebasing &&
+	git clone super merging &&
 	(cd super &&
 	 git submodule add ../submodule submodule &&
 	 test_tick &&
@@ -45,6 +47,16 @@ test_expect_success 'setup a submodule tree' '
 	 ) &&
 	 git add submodule &&
 	 git commit -m "submodule update"
+	) &&
+	(cd super &&
+	 git submodule add ../rebasing rebasing &&
+	 test_tick &&
+	 git commit -m "rebasing"
+	) &&
+	(cd super &&
+	 git submodule add ../merging merging &&
+	 test_tick &&
+	 git commit -m "rebasing"
 	)
 '
 
@@ -177,21 +189,17 @@ test_expect_success 'submodule update - checkout in .git/config' '
 
 test_expect_success 'submodule init picks up rebase' '
 	(cd super &&
-	 git config submodule.rebasing.url git://non-existing/git &&
-	 git config submodule.rebasing.path does-not-matter &&
-	 git config submodule.rebasing.update rebase &&
+	 git config -f .gitmodules submodule.rebasing.update rebase &&
 	 git submodule init rebasing &&
-	 test "rebase" = $(git config submodule.rebasing.update)
+	 test "rebase" = "$(git config submodule.rebasing.update)"
 	)
 '
 
 test_expect_success 'submodule init picks up merge' '
 	(cd super &&
-	 git config submodule.merging.url git://non-existing/git &&
-	 git config submodule.merging.path does-not-matter &&
-	 git config submodule.merging.update merge &&
+	 git config -f .gitmodules submodule.merging.update merge &&
 	 git submodule init merging &&
-	 test "merge" = $(git config submodule.merging.update)
+	 test "merge" = "$(git config submodule.merging.update)"
 	)
 '
 

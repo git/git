@@ -33,6 +33,8 @@ static void hash_object(const char *path, const char *type, int write_object,
 	hash_fd(fd, type, write_object, vpath);
 }
 
+static int no_filters;
+
 static void hash_stdin_paths(const char *type, int write_objects)
 {
 	struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;
@@ -44,7 +46,8 @@ static void hash_stdin_paths(const char *type, int write_objects)
 				die("line is badly quoted");
 			strbuf_swap(&buf, &nbuf);
 		}
-		hash_object(buf.buf, type, write_objects, buf.buf);
+		hash_object(buf.buf, type, write_objects,
+		    no_filters ? NULL : buf.buf);
 	}
 	strbuf_release(&buf);
 	strbuf_release(&nbuf);
@@ -60,7 +63,6 @@ static const char *type;
 static int write_object;
 static int hashstdin;
 static int stdin_paths;
-static int no_filters;
 static const char *vpath;
 
 static const struct option hash_object_options[] = {
@@ -100,8 +102,6 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 			errstr = "Can't specify files with --stdin-paths";
 		else if (vpath)
 			errstr = "Can't use --stdin-paths with --path";
-		else if (no_filters)
-			errstr = "Can't use --stdin-paths with --no-filters";
 	}
 	else {
 		if (hashstdin > 1)
