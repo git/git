@@ -543,16 +543,29 @@ static int fetch_ref(struct walker *walker, struct ref *ref)
 
 static void cleanup(struct walker *walker)
 {
-	http_cleanup();
+	struct walker_data *data = walker->data;
+	struct alt_base *alt, *alt_next;
+
+	if (data) {
+		alt = data->alt;
+		while (alt) {
+			alt_next = alt->next;
+
+			free(alt->base);
+			free(alt);
+
+			alt = alt_next;
+		}
+		free(data);
+		walker->data = NULL;
+	}
 }
 
-struct walker *get_http_walker(const char *url, struct remote *remote)
+struct walker *get_http_walker(const char *url)
 {
 	char *s;
 	struct walker_data *data = xmalloc(sizeof(struct walker_data));
 	struct walker *walker = xmalloc(sizeof(struct walker));
-
-	http_init(remote);
 
 	data->alt = xmalloc(sizeof(*data->alt));
 	data->alt->base = xmalloc(strlen(url) + 1);

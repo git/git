@@ -10,7 +10,6 @@
 
 static struct remote *remote;
 static const char *url;
-static struct walker *walker;
 
 struct options {
 	int verbosity;
@@ -21,12 +20,6 @@ struct options {
 		thin : 1;
 };
 static struct options options;
-
-static void init_walker(void)
-{
-	if (!walker)
-		walker = get_http_walker(url, remote);
-}
 
 static int set_option(const char *name, const char *value)
 {
@@ -119,7 +112,6 @@ static struct discovery* discover_refs(const char *service)
 	}
 	refs_url = strbuf_detach(&buffer, NULL);
 
-	init_walker();
 	http_ret = http_get_strbuf(refs_url, &buffer, HTTP_NO_CACHE);
 
 	/* try again with "plain" url (no ? or & appended) */
@@ -250,9 +242,8 @@ static struct ref *parse_info_refs(struct discovery *heads)
 		i++;
 	}
 
-	init_walker();
 	ref = alloc_ref("HEAD");
-	if (!walker->fetch_ref(walker, ref) &&
+	if (!http_fetch_ref(url, ref) &&
 	    !resolve_remote_symref(ref, refs)) {
 		ref->next = refs;
 		refs = ref;
@@ -502,7 +493,6 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 	struct child_process client;
 	int err = 0;
 
-	init_walker();
 	memset(&client, 0, sizeof(client));
 	client.in = -1;
 	client.out = -1;
@@ -554,6 +544,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 
 static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 {
+	struct walker *walker;
 	char **targets = xmalloc(nr_heads * sizeof(char*));
 	int ret, i;
 
@@ -562,13 +553,14 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 	for (i = 0; i < nr_heads; i++)
 		targets[i] = xstrdup(sha1_to_hex(to_fetch[i]->old_sha1));
 
-	init_walker();
+	walker = get_http_walker(url);
 	walker->get_all = 1;
 	walker->get_tree = 1;
 	walker->get_history = 1;
 	walker->get_verbosely = options.verbosity >= 3;
 	walker->get_recover = 0;
 	ret = walker_fetch(walker, nr_heads, targets, NULL, NULL);
+	walker_free(walker);
 
 	for (i = 0; i < nr_heads; i++)
 		free(targets[i]);
@@ -811,6 +803,8 @@ int main(int argc, const char **argv)
 		url = remote->url[0];
 	}
 
+	http_init(remote);
+
 	do {
 		if (strbuf_getline(&buf, stdin, '\n') == EOF)
 			break;
@@ -856,5 +850,8 @@ int main(int argc, const char **argv)
 		}
 		strbuf_reset(&buf);
 	} while (1);
+
+	http_cleanup();
+
 	return 0;
 }
