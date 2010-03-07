@@ -688,12 +688,18 @@ color.grep.<slot>::
 	part of the line to use the specified color, and is one of
 +
 --
+`context`;;
+	non-matching text in context lines (when using `-A`, `-B`, or `-C`)
 `filename`;;
 	filename prefix (when not using `-h`)
+`function`;;
+	function name lines (when using `-p`)
 `linenumber`;;
 	line number prefix (when using `-n`)
 `match`;;
 	matching text
+`selected`;;
+	non-matching text in selected lines
 `separator`;;
 	separators between fields on a line (`:`, `-`, and `=`)
 	and between hunks (`--`)
