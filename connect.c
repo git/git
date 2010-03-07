@@ -612,3 +612,40 @@ int finish_connect(struct child_process *conn)
 	free(conn);
 	return code;
 }
+
+char *git_getpass(const char *prompt)
+{
+	char *askpass;
+	struct child_process pass;
+	const char *args[3];
+	static struct strbuf buffer = STRBUF_INIT;
+
+	askpass = getenv("GIT_ASKPASS");
+
+	if (!askpass || !(*askpass))
+		return getpass(prompt);
+
+	args[0] = askpass;
+	args[1]	= prompt;
+	args[2] = NULL;
+
+	memset(&pass, 0, sizeof(pass));
+	pass.argv = args;
+	pass.out = -1;
+
+	if (start_command(&pass))
+		exit(1);
+
+	strbuf_reset(&buffer);
+	if (strbuf_read(&buffer, pass.out, 20) < 0)
+		die("failed to read password from %s\n", askpass);
+
+	close(pass.out);
+
+	if (finish_command(&pass))
+		exit(1);
+
+	strbuf_setlen(&buffer, strcspn(buffer.buf, "\r\n"));
+
+	return buffer.buf;
+}
