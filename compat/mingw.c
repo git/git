@@ -225,7 +225,7 @@ FILE *mingw_fopen (const char *filename, const char *mode)
 	    basename((char*)filename)[0] == '.')
 		hide = access(filename, F_OK);
 
-	file = fopen(filename, mode);
+	file = fopen(strcmp(filename, "/dev/null") ? filename : "NUL", mode);
 	/*
 	 * In Windows a file or dir starting with a dot is not
 	 * automatically hidden. So lets mark it as hidden when
