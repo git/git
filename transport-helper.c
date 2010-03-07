@@ -279,9 +279,8 @@ static void standard_options(struct transport *t)
 	char buf[16];
 	int n;
 	int v = t->verbose;
-	int no_progress = v < 0 || (!t->progress && !isatty(2));
 
-	set_helper_option(t, "progress", !no_progress ? "true" : "false");
+	set_helper_option(t, "progress", t->progress ? "true" : "false");
 
 	n = snprintf(buf, sizeof(buf), "%d", v + 1);
 	if (n >= sizeof(buf))
@@ -576,7 +575,6 @@ static int push_refs(struct transport *transport,
 	if (buf.len == 0)
 		return 0;
 
-	transport->verbose = flags & TRANSPORT_PUSH_VERBOSE ? 1 : 0;
 	standard_options(transport);
 
 	if (flags & TRANSPORT_PUSH_DRY_RUN) {

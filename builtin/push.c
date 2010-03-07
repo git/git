@@ -17,6 +17,8 @@ static const char * const push_usage[] = {
 static int thin;
 static int deleterefs;
 static const char *receivepack;
+static int verbosity;
+static int progress;
 
 static const char **refspec;
 static int refspec_nr;
@@ -105,13 +107,16 @@ static int push_with_options(struct transport *transport, int flags)
 {
 	int err;
 	int nonfastforward;
+
+	transport_set_verbosity(transport, verbosity, progress);
+
 	if (receivepack)
 		transport_set_option(transport,
 				     TRANS_OPT_RECEIVEPACK, receivepack);
 	if (thin)
 		transport_set_option(transport, TRANS_OPT_THIN, "yes");
 
-	if (flags & TRANSPORT_PUSH_VERBOSE)
+	if (verbosity > 0)
 		fprintf(stderr, "Pushing to %s\n", transport->url);
 	err = transport_push(transport, refspec_nr, refspec, flags,
 			     &nonfastforward);
@@ -204,8 +209,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	int rc;
 	const char *repo = NULL;	/* default repository */
 	struct option options[] = {
-		OPT_BIT('q', "quiet", &flags, "be quiet", TRANSPORT_PUSH_QUIET),
-		OPT_BIT('v', "verbose", &flags, "be verbose", TRANSPORT_PUSH_VERBOSE),
+		OPT__VERBOSITY(&verbosity),
 		OPT_STRING( 0 , "repo", &repo, "repository", "repository"),
 		OPT_BIT( 0 , "all", &flags, "push all refs", TRANSPORT_PUSH_ALL),
 		OPT_BIT( 0 , "mirror", &flags, "mirror all refs",
@@ -220,6 +224,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", "receive pack program"),
 		OPT_BIT('u', "set-upstream", &flags, "set upstream for git pull/status",
 			TRANSPORT_PUSH_SET_UPSTREAM),
+		OPT_BOOLEAN(0, "progress", &progress, "force progress reporting"),
 		OPT_END()
 	};
 
