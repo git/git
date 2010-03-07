@@ -871,7 +871,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	opt.regflags = REG_NEWLINE;
 	opt.max_depth = -1;
 
-	strcpy(opt.color_match, GIT_COLOR_RED GIT_COLOR_BOLD);
+	strcpy(opt.color_match, GIT_COLOR_BOLD_RED);
 	opt.color = -1;
 	git_config(grep_config, &opt);
 	if (opt.color == -1)
