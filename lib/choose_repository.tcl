@@ -100,12 +100,17 @@ constructor pick {} {
 	$opts insert end [mc "Clone Existing Repository"] link_clone
 	$opts insert end "\n"
 	if {$m_repo ne {}} {
+		if {[tk windowingsystem] eq "win32"} {
+			set key L
+		} else {
+			set key C
+		}
 		$m_repo add command \
 			-command [cb _next clone] \
-			-accelerator $M1T-C \
+			-accelerator $M1T-$key \
 			-label [mc "Clone..."]
-		bind $top <$M1B-c> [cb _next clone]
-		bind $top <$M1B-C> [cb _next clone]
+		bind $top <$M1B-[string tolower $key]> [cb _next clone]
+		bind $top <$M1B-[string toupper $key]> [cb _next clone]
 	}
 
 	$opts tag conf link_open -foreground blue -underline 1
