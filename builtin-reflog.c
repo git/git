@@ -530,16 +530,14 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	int i, status, do_all;
 	int explicit_expiry = 0;
 
+	default_reflog_expire_unreachable = now - 30 * 24 * 3600;
+	default_reflog_expire = now - 90 * 24 * 3600;
 	git_config(reflog_expire_config, NULL);
 
 	save_commit_buffer = 0;
 	do_all = status = 0;
 	memset(&cb, 0, sizeof(cb));
 
-	if (!default_reflog_expire_unreachable)
-		default_reflog_expire_unreachable = now - 30 * 24 * 3600;
-	if (!default_reflog_expire)
-		default_reflog_expire = now - 90 * 24 * 3600;
 	cb.expire_total = default_reflog_expire;
 	cb.expire_unreachable = default_reflog_expire_unreachable;
 
