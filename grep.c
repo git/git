@@ -11,8 +11,8 @@ void append_header_grep_pattern(struct grep_opt *opt, enum grep_header_field fie
 	p->no = 0;
 	p->token = GREP_PATTERN_HEAD;
 	p->field = field;
-	*opt->pattern_tail = p;
-	opt->pattern_tail = &p->next;
+	*opt->header_tail = p;
+	opt->header_tail = &p->next;
 	p->next = NULL;
 }
 
@@ -184,9 +184,26 @@ static struct grep_expr *compile_pattern_expr(struct grep_pat **list)
 void compile_grep_patterns(struct grep_opt *opt)
 {
 	struct grep_pat *p;
+	struct grep_expr *header_expr = NULL;
 
-	if (opt->all_match)
-		opt->extended = 1;
+	if (opt->header_list) {
+		p = opt->header_list;
+		header_expr = compile_pattern_expr(&p);
+		if (p)
+			die("incomplete pattern expression: %s", p->pattern);
+		for (p = opt->header_list; p; p = p->next) {
+			switch (p->token) {
+			case GREP_PATTERN: /* atom */
+			case GREP_PATTERN_HEAD:
+			case GREP_PATTERN_BODY:
+				compile_regexp(p, opt);
+				break;
+			default:
+				opt->extended = 1;
+				break;
+			}
+		}
+	}
 
 	for (p = opt->pattern_list; p; p = p->next) {
 		switch (p->token) {
@@ -201,7 +218,9 @@ void compile_grep_patterns(struct grep_opt *opt)
 		}
 	}
 
-	if (!opt->extended)
+	if (opt->all_match || header_expr)
+		opt->extended = 1;
+	else if (!opt->extended)
 		return;
 
 	/* Then bundle them up in an expression.
@@ -212,6 +231,21 @@ void compile_grep_patterns(struct grep_opt *opt)
 		opt->pattern_expression = compile_pattern_expr(&p);
 	if (p)
 		die("incomplete pattern expression: %s", p->pattern);
+
+	if (!header_expr)
+		return;
+
+	if (opt->pattern_expression) {
+		struct grep_expr *z;
+		z = xcalloc(1, sizeof(*z));
+		z->node = GREP_NODE_OR;
+		z->u.binary.left = opt->pattern_expression;
+		z->u.binary.right = header_expr;
+		opt->pattern_expression = z;
+	} else {
+		opt->pattern_expression = header_expr;
+	}
+	opt->all_match = 1;
 }
 
 static void free_pattern_expr(struct grep_expr *x)

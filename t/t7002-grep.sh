@@ -353,7 +353,7 @@ test_expect_success 'log grep (4)' '
 '
 
 test_expect_success 'log grep (5)' '
-	git log --author=Thor -F --grep=Thu --pretty=tformat:%s >actual &&
+	git log --author=Thor -F --pretty=tformat:%s >actual &&
 	( echo third ; echo initial ) >expect &&
 	test_cmp expect actual
 '
@@ -361,6 +361,14 @@ test_expect_success 'log grep (5)' '
 test_expect_success 'log grep (6)' '
 	git log --author=-0700  --pretty=tformat:%s >actual &&
 	>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --grep --author implicitly uses all-match' '
+	# grep matches initial and second but not third
+	# author matches only initial and third
+	git log --author="A U Thor" --grep=s --grep=l --format=%s >actual &&
+	echo initial >expect &&
 	test_cmp expect actual
 '
 
