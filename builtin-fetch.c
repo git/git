@@ -651,6 +651,17 @@ static void check_not_current_branch(struct ref *ref_map)
 			    "of non-bare repository", current_branch->refname);
 }
 
+static int truncate_fetch_head(void)
+{
+	char *filename = git_path("FETCH_HEAD");
+	FILE *fp = fopen(filename, "w");
+
+	if (!fp)
+		return error("cannot open %s: %s\n", filename, strerror(errno));
+	fclose(fp);
+	return 0;
+}
+
 static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
@@ -672,11 +683,9 @@ static int do_fetch(struct transport *transport,
 
 	/* if not appending, truncate FETCH_HEAD */
 	if (!append && !dry_run) {
-		char *filename = git_path("FETCH_HEAD");
-		FILE *fp = fopen(filename, "w");
-		if (!fp)
-			return error("cannot open %s: %s\n", filename, strerror(errno));
-		fclose(fp);
+		int errcode = truncate_fetch_head();
+		if (errcode)
+			return errcode;
 	}
 
 	ref_map = get_ref_map(transport, refs, ref_count, tags, &autotags);
@@ -784,13 +793,19 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 static int fetch_multiple(struct string_list *list)
 {
 	int i, result = 0;
-	const char *argv[] = { "fetch", NULL, NULL, NULL, NULL, NULL, NULL };
-	int argc = 1;
+	const char *argv[11] = { "fetch", "--append" };
+	int argc = 2;
 
 	if (dry_run)
 		argv[argc++] = "--dry-run";
 	if (prune)
 		argv[argc++] = "--prune";
+	if (update_head_ok)
+		argv[argc++] = "--update-head-ok";
+	if (force)
+		argv[argc++] = "--force";
+	if (keep)
+		argv[argc++] = "--keep";
 	if (verbosity >= 2)
 		argv[argc++] = "-v";
 	if (verbosity >= 1)
@@ -798,9 +813,16 @@ static int fetch_multiple(struct string_list *list)
 	else if (verbosity < 0)
 		argv[argc++] = "-q";
 
+	if (!append && !dry_run) {
+		int errcode = truncate_fetch_head();
+		if (errcode)
+			return errcode;
+	}
+
 	for (i = 0; i < list->nr; i++) {
 		const char *name = list->items[i].string;
 		argv[argc] = name;
+		argv[argc + 1] = NULL;
 		if (verbosity >= 0)
 			printf("Fetching %s\n", name);
 		if (run_command_v_opt(argv, RUN_GIT_CMD)) {
