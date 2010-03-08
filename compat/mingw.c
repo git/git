@@ -5,6 +5,7 @@
 #include <shellapi.h>
 #include "../strbuf.h"
 #include "../cache.h"
+#include "../run-command.h"
 
 unsigned int _CRT_fmode = _O_BINARY;
 static const int delay[] = { 0, 1, 10, 20, 40 };
@@ -158,6 +159,54 @@ int mingw_mkdir(const char *path, int mode)
 	return ret;
 }
 
+static int ask_user_yes_no(const char *format, ...)
+{
+	char answer[5];
+	char question[4096];
+	const char *retry_hook[] = { NULL, NULL, NULL };
+	va_list args;
+
+	if ((retry_hook[0] = getenv("GIT_ASK_YESNO"))) {
+
+		va_start(args, format);
+		vsnprintf(question, sizeof(question), format, args);
+		va_end(args);
+
+		retry_hook[1] = question;
+		return !run_command_v_opt(retry_hook, 0);
+	}
+
+	if (!isatty(_fileno(stdin)))
+		return 0;
+
+	while (1) {
+		va_start(args, format);
+		vfprintf(stderr, format, args);
+		va_end(args);
+		fprintf(stderr, " (y/n)? ");
+
+		if (fgets(answer, sizeof(answer), stdin)) {
+			/* remove the newline */
+			if (answer[strlen(answer)-2] == '\r')
+				answer[strlen(answer)-2] = '\0';
+			if (answer[strlen(answer)-1] == '\n')
+				answer[strlen(answer)-1] = '\0';
+		} else
+			return 0;
+
+		if (answer[0] == 'y' && strlen(answer) == 1)
+			return 1;
+		if (!strncasecmp(answer, "yes", sizeof(answer)))
+			return 1;
+		if (answer[0] == 'n' && strlen(answer) == 1)
+			return 0;
+		if (!strncasecmp(answer, "no", sizeof(answer)))
+			return 0;
+		fprintf(stderr, "I did not understand your answer: '%s'\n",
+				answer);
+	}
+}
+
 #undef unlink
 int mingw_unlink(const char *pathname)
 {
@@ -178,6 +227,35 @@ int mingw_unlink(const char *pathname)
 		Sleep(delay[tries]);
 		tries++;
 	}
+	while (ret == -1 && errno == EACCES &&
+	       ask_user_yes_no("Unlink of file '%s' failed. "
+			"Should I try again?", pathname))
+	       ret = unlink(pathname);
+	return ret;
+}
+
+#undef rmdir
+int mingw_rmdir(const char *pathname)
+{
+    int ret, tries = 0;
+
+	while ((ret = rmdir(pathname)) == -1 && tries < ARRAY_SIZE(delay)) {
+		if (errno != EACCES)
+			break;
+		/*
+		 * We assume that some other process had the source or
+		 * destination file open at the wrong moment and retry.
+		 * In order to give the other process a higher chance to
+		 * complete its operation, we give up our time slice now.
+		 * If we have to retry again, we do sleep a bit.
+		 */
+		Sleep(delay[tries]);
+		tries++;
+	}
+	while (ret == -1 && errno == EACCES &&
+	       ask_user_yes_no("Deletion of directory '%s' failed. "
+			"Should I try again?", pathname))
+	       ret = rmdir(pathname);
 	return ret;
 }
 
@@ -1277,6 +1355,11 @@ repeat:
 		tries++;
 		goto repeat;
 	}
+	if (gle == ERROR_ACCESS_DENIED &&
+	       ask_user_yes_no("Rename from '%s' to '%s' failed. "
+		       "Should I try again?", pold, pnew))
+		goto repeat;
+
 	errno = EACCES;
 	return -1;
 }
