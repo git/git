@@ -957,6 +957,28 @@ sub coalesce_overlapping_hunks {
 	return @out;
 }
 
+sub reassemble_patch {
+	my $head = shift;
+	my @patch;
+
+	# Include everything in the header except the beginning of the diff.
+	push @patch, (grep { !/^[-+]{3}/ } @$head);
+
+	# Then include any headers from the hunk lines, which must
+	# come before any actual hunk.
+	while (@_ && $_[0] !~ /^@/) {
+		push @patch, shift;
+	}
+
+	# Then begin the diff.
+	push @patch, grep { /^[-+]{3}/ } @$head;
+
+	# And then the actual hunks.
+	push @patch, @_;
+
+	return @patch;
+}
+
 sub color_diff {
 	return map {
 		colored((/^@/  ? $fraginfo_color :
@@ -1453,7 +1475,7 @@ sub patch_update_file {
 
 	if (@result) {
 		my $fh;
-		my @patch = (@{$head->{TEXT}}, @result);
+		my @patch = reassemble_patch($head->{TEXT}, @result);
 		my $apply_routine = $patch_mode_flavour{APPLY};
 		&$apply_routine(@patch);
 		refresh();
