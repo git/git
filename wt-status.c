@@ -78,7 +78,8 @@ static void wt_status_print_cached_header(struct wt_status *s)
 }
 
 static void wt_status_print_dirty_header(struct wt_status *s,
-					 int has_deleted)
+					 int has_deleted,
+					 int has_dirty_submodules)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 
@@ -90,6 +91,8 @@ static void wt_status_print_dirty_header(struct wt_status *s,
 	else
 		color_fprintf_ln(s->fp, c, "#   (use \"git add/rm <file>...\" to update what will be committed)");
 	color_fprintf_ln(s->fp, c, "#   (use \"git checkout -- <file>...\" to discard changes in working directory)");
+	if (has_dirty_submodules)
+		color_fprintf_ln(s->fp, c, "#   (commit or discard the untracked or modified content in submodules)");
 	color_fprintf_ln(s->fp, c, "#");
 }
 
@@ -144,6 +147,7 @@ static void wt_status_print_change_data(struct wt_status *s,
 	char *two_name;
 	const char *one, *two;
 	struct strbuf onebuf = STRBUF_INIT, twobuf = STRBUF_INIT;
+	struct strbuf extra = STRBUF_INIT;
 
 	one_name = two_name = it->string;
 	switch (change_type) {
@@ -153,6 +157,17 @@ static void wt_status_print_change_data(struct wt_status *s,
 			one_name = d->head_path;
 		break;
 	case WT_STATUS_CHANGED:
+		if (d->new_submodule_commits || d->dirty_submodule) {
+			strbuf_addstr(&extra, " (");
+			if (d->new_submodule_commits)
+				strbuf_addf(&extra, "new commits, ");
+			if (d->dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
+				strbuf_addf(&extra, "modified content, ");
+			if (d->dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
+				strbuf_addf(&extra, "untracked content, ");
+			strbuf_setlen(&extra, extra.len - 2);
+			strbuf_addch(&extra, ')');
+		}
 		status = d->worktree_status;
 		break;
 	}
@@ -189,6 +204,10 @@ static void wt_status_print_change_data(struct wt_status *s,
 	default:
 		die("bug: unhandled diff status %c", status);
 	}
+	if (extra.len) {
+		color_fprintf(s->fp, color(WT_STATUS_HEADER, s), "%s", extra.buf);
+		strbuf_release(&extra);
+	}
 	fprintf(s->fp, "\n");
 	strbuf_release(&onebuf);
 	strbuf_release(&twobuf);
@@ -218,6 +237,9 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 		}
 		if (!d->worktree_status)
 			d->worktree_status = p->status;
+		d->dirty_submodule = p->two->dirty_submodule;
+		if (S_ISGITLINK(p->two->mode))
+			d->new_submodule_commits = !!hashcmp(p->one->sha1, p->two->sha1);
 	}
 }
 
@@ -281,6 +303,7 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 	init_revisions(&rev, NULL);
 	setup_revisions(0, NULL, &rev, NULL);
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
+	DIFF_OPT_SET(&rev.diffopt, DIRTY_SUBMODULES);
 	rev.diffopt.format_callback = wt_status_collect_changed_cb;
 	rev.diffopt.format_callback_data = s;
 	rev.prune_data = s->pathspec;
@@ -418,10 +441,13 @@ static void wt_status_print_updated(struct wt_status *s)
  *  0 : no change
  *  1 : some change but no delete
  */
-static int wt_status_check_worktree_changes(struct wt_status *s)
+static int wt_status_check_worktree_changes(struct wt_status *s,
+					     int *dirty_submodules)
 {
 	int i;
 	int changes = 0;
+
+	*dirty_submodules = 0;
 
 	for (i = 0; i < s->change.nr; i++) {
 		struct wt_status_change_data *d;
@@ -429,22 +455,25 @@ static int wt_status_check_worktree_changes(struct wt_status *s)
 		if (!d->worktree_status ||
 		    d->worktree_status == DIFF_STATUS_UNMERGED)
 			continue;
-		changes = 1;
+		if (!changes)
+			changes = 1;
+		if (d->dirty_submodule)
+			*dirty_submodules = 1;
 		if (d->worktree_status == DIFF_STATUS_DELETED)
-			return -1;
+			changes = -1;
 	}
 	return changes;
 }
 
 static void wt_status_print_changed(struct wt_status *s)
 {
-	int i;
-	int worktree_changes = wt_status_check_worktree_changes(s);
+	int i, dirty_submodules;
+	int worktree_changes = wt_status_check_worktree_changes(s, &dirty_submodules);
 
 	if (!worktree_changes)
 		return;
 
-	wt_status_print_dirty_header(s, worktree_changes < 0);
+	wt_status_print_dirty_header(s, worktree_changes < 0, dirty_submodules);
 
 	for (i = 0; i < s->change.nr; i++) {
 		struct wt_status_change_data *d;
