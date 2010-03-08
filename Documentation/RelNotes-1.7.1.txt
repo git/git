@@ -1,11 +1,29 @@
-Git v1.7.1 Release Notes
-========================
+Git v1.7.1 Release Notes (draft)
+================================
 
 Updates since v1.7.0
 --------------------
 
+ * "git cvsimport" learned -R option to leave revision mapping between
+   CVS revisions and resulting git commits.
+
+ * "git for-each-ref" learned %(symref), %(symref:short) and %(flag)
+   tokens.
+
  * "git grep" learned "--no-index" option, to search inside contents that
    are not managed by git.
+
+ * "git grep" learned --color=auto/always/never.
+
+ * "git hash-object --stdin-paths" can take "--no-filters" option now.
+
+ * "git request-pull" identifies the commit the request is relative to in
+   a more readable way.
+
+ * "git svn" should work better when interacting with repositories
+   with CRLF line endings.
+
+ * "git imap-send" learned to support CRAM-MD5 authentication.
 
 Fixes since v1.7.0
 ------------------
@@ -16,5 +34,5 @@ release, unless otherwise noted.
 ---
 exec >/var/tmp/1
 echo O=$(git describe)
-O=v1.7.0-36-gfaa3b47
+O=v1.7.0.2-181-gc6830a3
 git shortlog --no-merges ^maint $O..
