@@ -138,6 +138,11 @@ advice.*::
 		Advice on how to set your identity configuration when
 		your information is guessed from the system username and
 		domain name. Default: true.
+
+	detachedHead::
+		Advice shown when you used linkgit::git-checkout[1] to
+		move to the detach HEAD state, to instruct how to create
+		a local branch after the fact.  Default: true.
 --
 
 core.fileMode::
