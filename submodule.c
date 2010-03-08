@@ -123,15 +123,18 @@ void show_submodule_summary(FILE *f, const char *path,
 
 int is_submodule_modified(const char *path)
 {
-	int len;
+	int len, i;
 	struct child_process cp;
 	const char *argv[] = {
 		"status",
 		"--porcelain",
 		NULL,
 	};
-	char *env[4];
+	const char *env[LOCAL_REPO_ENV_SIZE + 3];
 	struct strbuf buf = STRBUF_INIT;
+
+	for (i = 0; i < LOCAL_REPO_ENV_SIZE; i++)
+		env[i] = local_repo_env[i];
 
 	strbuf_addf(&buf, "%s/.git/", path);
 	if (!is_directory(buf.buf)) {
@@ -143,16 +146,14 @@ int is_submodule_modified(const char *path)
 	strbuf_reset(&buf);
 
 	strbuf_addf(&buf, "GIT_WORK_TREE=%s", path);
-	env[0] = strbuf_detach(&buf, NULL);
+	env[i++] = strbuf_detach(&buf, NULL);
 	strbuf_addf(&buf, "GIT_DIR=%s/.git", path);
-	env[1] = strbuf_detach(&buf, NULL);
-	strbuf_addf(&buf, "GIT_INDEX_FILE");
-	env[2] = strbuf_detach(&buf, NULL);
-	env[3] = NULL;
+	env[i++] = strbuf_detach(&buf, NULL);
+	env[i] = NULL;
 
 	memset(&cp, 0, sizeof(cp));
 	cp.argv = argv;
-	cp.env = (const char *const *)env;
+	cp.env = env;
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
 	cp.out = -1;
@@ -165,9 +166,8 @@ int is_submodule_modified(const char *path)
 	if (finish_command(&cp))
 		die("git status --porcelain failed");
 
-	free(env[0]);
-	free(env[1]);
-	free(env[2]);
+	for (i = LOCAL_REPO_ENV_SIZE; env[i]; i++)
+		free((char *)env[i]);
 	strbuf_release(&buf);
 	return len != 0;
 }
