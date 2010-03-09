@@ -149,6 +149,30 @@ static char *prune_directory(struct dir_struct *dir, const char **pathspec, int 
 	}
 	dir->nr = dst - dir->entries;
 	fill_pathspec_matches(pathspec, seen, specs);
+
+	for (i = 0; i < specs; i++) {
+		const char *match;
+		if (seen[i])
+			continue;
+		match = pathspec[i];
+		if (!match[0])
+			continue;
+
+		/* Existing file?  We must have ignored it */
+		if (file_exists(match)) {
+			int len = strlen(match);
+			int i;
+			for (i = 0; i < dir->ignored_nr; i++)
+				if (dir->ignored[i]->len == len &&
+				    !memcmp(dir->ignored[i]->name, match, len))
+					break;
+			if (dir->ignored_nr <= i)
+				dir_add_ignored(dir, match, strlen(match));
+			continue;
+		}
+		die("pathspec '%s' did not match any files", match);
+	}
+
 	return seen;
 }
 

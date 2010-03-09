@@ -100,4 +100,6 @@ extern int remove_dir_recursively(struct strbuf *path, int flag);
 /* tries to remove the path with empty directories along it, ignores ENOENT */
 extern int remove_path(const char *path);
 
+extern void dir_add_ignored(struct dir_struct *, const char *, int);
+
 #endif
