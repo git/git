@@ -1328,7 +1328,7 @@ static void append_prune_data(const char ***prune_data, const char **av)
  * Returns the number of arguments left that weren't recognized
  * (which are also moved to the head of the argument list)
  */
-int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def)
+int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
 {
 	int i, flags, left, seen_dashdash, read_from_stdin;
 	const char **prune_data = NULL;
@@ -1462,7 +1462,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		revs->prune_data = get_pathspec(revs->prefix, prune_data);
 
 	if (revs->def == NULL)
-		revs->def = def;
+		revs->def = opt ? opt->def : NULL;
 	if (revs->show_merge)
 		prepare_show_merge(revs);
 	if (revs->def && !revs->pending.nr) {
