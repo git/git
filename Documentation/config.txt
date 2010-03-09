@@ -690,9 +690,29 @@ color.grep::
 	`never`), never.  When set to `true` or `auto`, use color only
 	when the output is written to the terminal.  Defaults to `false`.
 
-color.grep.match::
-	Use customized color for matches.  The value of this variable
-	may be specified as in color.branch.<slot>.
+color.grep.<slot>::
+	Use customized color for grep colorization.  `<slot>` specifies which
+	part of the line to use the specified color, and is one of
++
+--
+`context`;;
+	non-matching text in context lines (when using `-A`, `-B`, or `-C`)
+`filename`;;
+	filename prefix (when not using `-h`)
+`function`;;
+	function name lines (when using `-p`)
+`linenumber`;;
+	line number prefix (when using `-n`)
+`match`;;
+	matching text
+`selected`;;
+	non-matching text in selected lines
+`separator`;;
+	separators between fields on a line (`:`, `-`, and `=`)
+	and between hunks (`--`)
+--
++
+The values of these variables may be specified as in color.branch.<slot>.
 
 color.interactive::
 	When set to `always`, always use colors for interactive prompts
