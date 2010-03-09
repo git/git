@@ -231,8 +231,9 @@ The function pointer in .proc has the following signature:
 
 
 There are serious restrictions on what the asynchronous function can do
-because this facility is implemented by a pipe to a forked process on
-UNIX, but by a thread in the same address space on Windows:
+because this facility is implemented by a thread in the same address
+space on most platforms (when pthreads is available), but by a pipe to
+a forked process otherwise:
 
 . It cannot change the program's state (global variables, environment,
   etc.) in a way that the caller notices; in other words, .in and .out

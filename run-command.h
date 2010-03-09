@@ -1,7 +1,7 @@
 #ifndef RUN_COMMAND_H
 #define RUN_COMMAND_H
 
-#ifdef ASYNC_AS_THREAD
+#ifndef NO_PTHREADS
 #include <pthread.h>
 #endif
 
@@ -78,7 +78,7 @@ struct async {
 	void *data;
 	int in;		/* caller writes here and closes it */
 	int out;	/* caller reads from here and closes it */
-#ifndef ASYNC_AS_THREAD
+#ifdef NO_PTHREADS
 	pid_t pid;
 #else
 	pthread_t tid;
