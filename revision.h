@@ -139,6 +139,7 @@ extern volatile show_early_output_fn_t show_early_output;
 
 struct setup_revision_opt {
 	const char *def;
+	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
 };
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);

@@ -327,6 +327,12 @@ static int show_tree_object(const unsigned char *sha1,
 	return 0;
 }
 
+static void show_rev_tweak_rev(struct rev_info *rev, struct setup_revision_opt *opt)
+{
+	if (!rev->diffopt.output_format)
+		rev->diffopt.output_format = DIFF_FORMAT_PATCH;
+}
+
 int cmd_show(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
@@ -348,6 +354,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	rev.no_walk = 1;
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
+	opt.tweak = show_rev_tweak_rev;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
 
 	count = rev.pending.nr;

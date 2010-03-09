@@ -238,6 +238,7 @@ show initial
 show --root initial
 show side
 show master
+show -c master
 show --stat side
 show --stat --summary side
 show --patch-with-stat side
