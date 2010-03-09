@@ -180,7 +180,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		changed = ce_match_stat(ce, &st, ce_option);
 		if (S_ISGITLINK(ce->ce_mode)
 		    && !DIFF_OPT_TST(&revs->diffopt, IGNORE_SUBMODULES)
-		    && (!changed || (revs->diffopt.output_format & DIFF_FORMAT_PATCH))) {
+		    && (!changed || (revs->diffopt.output_format & DIFF_FORMAT_PATCH)
+			|| DIFF_OPT_TST(&revs->diffopt, DIRTY_SUBMODULES))) {
 			dirty_submodule = is_submodule_modified(ce->name);
 			if (dirty_submodule)
 				changed = 1;
@@ -243,7 +244,8 @@ static int get_stat_data(struct cache_entry *ce,
 		changed = ce_match_stat(ce, &st, 0);
 		if (S_ISGITLINK(ce->ce_mode)
 		    && !DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES)
-		    && (!changed || (diffopt->output_format & DIFF_FORMAT_PATCH))) {
+		    && (!changed || (diffopt->output_format & DIFF_FORMAT_PATCH)
+			|| DIFF_OPT_TST(diffopt, DIRTY_SUBMODULES))) {
 			*dirty_submodule = is_submodule_modified(ce->name);
 			if (*dirty_submodule)
 				changed = 1;
