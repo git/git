@@ -204,6 +204,9 @@ log --root --patch-with-stat --summary master
 log --root -c --patch-with-stat --summary master
 # improved by Timo's patch
 log --root --cc --patch-with-stat --summary master
+log -p --first-parent master
+log -m -p --first-parent master
+log -m -p master
 log -SF master
 log -SF -p master
 log --decorate --all
