@@ -852,4 +852,70 @@ test_expect_success 'no warning with sendemail.chainreplyto = true' '
 	! grep "no-chain-reply-to" errors
 '
 
+test_expect_success 'sendemail.to works' '
+	git config --replace-all sendemail.to "Somebody <somebody@ex.com>" &&
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		$patches $patches >stdout &&
+	grep "To: Somebody <somebody@ex.com>" stdout
+'
+
+test_expect_success '--no-to overrides sendemail.to' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--no-to \
+		--to=nobody@example.com \
+		$patches $patches >stdout &&
+	grep "To: nobody@example.com" stdout &&
+	! grep "To: Somebody <somebody@ex.com>" stdout
+'
+
+test_expect_success 'sendemail.cc works' '
+	git config --replace-all sendemail.cc "Somebody <somebody@ex.com>" &&
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		$patches $patches >stdout &&
+	grep "Cc: Somebody <somebody@ex.com>" stdout
+'
+
+test_expect_success '--no-cc overrides sendemail.cc' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--no-cc \
+		--cc=bodies@example.com \
+		--to=nobody@example.com \
+		$patches $patches >stdout &&
+	grep "Cc: bodies@example.com" stdout &&
+	! grep "Cc: Somebody <somebody@ex.com>" stdout
+'
+
+test_expect_success 'sendemail.bcc works' '
+	git config --replace-all sendemail.bcc "Other <other@ex.com>" &&
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server relay.example.com \
+		$patches $patches >stdout &&
+	grep "RCPT TO:<other@ex.com>" stdout
+'
+
+test_expect_success '--no-bcc overrides sendemail.bcc' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--no-bcc \
+		--bcc=bodies@example.com \
+		--to=nobody@example.com \
+		--smtp-server relay.example.com \
+		$patches $patches >stdout &&
+	grep "RCPT TO:<bodies@example.com>" stdout &&
+	! grep "RCPT TO:<other@ex.com>" stdout
+'
+
 test_done
