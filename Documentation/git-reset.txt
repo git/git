@@ -53,9 +53,12 @@ OPTIONS
 	and the current commit in the working tree.
 
 --keep::
-	Resets the index to match the tree recorded by the named commit,
-	but keep changes in the working tree. Aborts if the reset would
-	change files that are already modified in the working tree.
+	Reset the index to the given commit, keeping local changes in
+	the working tree since the current commit, while updating
+	working tree files without local changes to what appears in
+	the given commit.  If a file that is different between the
+	current commit and the given commit has local changes, reset
+	is aborted.
 
 -p::
 --patch::
