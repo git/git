@@ -215,4 +215,41 @@ test_expect_success '"diff3 -m" style output (2)' '
 	test_cmp expect actual
 '
 
+cat >expect <<\EOF
+Dominus regit me,
+<<<<<<<<<< new8.txt
+et nihil mihi deerit;
+
+
+
+
+In loco pascuae ibi me collocavit;
+super aquam refectionis educavit me.
+||||||||||
+et nihil mihi deerit.
+In loco pascuae ibi me collocavit,
+super aquam refectionis educavit me;
+==========
+et nihil mihi deerit,
+
+
+
+
+In loco pascuae ibi me collocavit --
+super aquam refectionis educavit me,
+>>>>>>>>>> new9.txt
+animam meam convertit,
+deduxit me super semitas jusitiae,
+propter nomen suum.
+Nam et si ambulavero in medio umbrae mortis,
+non timebo mala, quoniam TU mecum es:
+virga tua et baculus tuus ipsa me consolata sunt.
+EOF
+
+test_expect_success 'marker size' '
+	test_must_fail git merge-file -p --marker-size=10 \
+		new8.txt new5.txt new9.txt >actual &&
+	test_cmp expect actual
+'
+
 test_done
