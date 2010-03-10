@@ -167,6 +167,25 @@ test_expect_success 'init with --template (blank)' '
 	! test -f template-blank/.git/info/exclude
 '
 
+test_expect_success 'init with init.templatedir set' '
+	mkdir templatedir-source &&
+	echo Content >templatedir-source/file &&
+	(
+		HOME="`pwd`" &&
+		export HOME &&
+		test_config="${HOME}/.gitconfig" &&
+		git config -f "$test_config"  init.templatedir "${HOME}/templatedir-source" &&
+		mkdir templatedir-set &&
+		cd templatedir-set &&
+		unset GIT_CONFIG_NOGLOBAL &&
+		unset GIT_TEMPLATE_DIR &&
+		NO_SET_GIT_TEMPLATE_DIR=t &&
+		export NO_SET_GIT_TEMPLATE_DIR &&
+		git init
+	) &&
+	test_cmp templatedir-source/file templatedir-set/.git/file
+'
+
 test_expect_success 'init --bare/--shared overrides system/global config' '
 	(
 		HOME="`pwd`" &&

@@ -149,8 +149,7 @@ objects from the source repository into a pack in the cloned repository.
 
 --template=<template_directory>::
 	Specify the directory from which templates will be used;
-	if unset the templates are taken from the installation
-	defined default, typically `/usr/share/git-core/templates`.
+	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
