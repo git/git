@@ -555,6 +555,13 @@ it will be treated as a shell command.  For example, defining
 executed from the top-level directory of a repository, which may
 not necessarily be the current directory.
 
+am.keepcr::
+	If true, git-am will call git-mailsplit for patches in mbox format
+	with parameter '--keep-cr'. In this case git-mailsplit will
+	not remove `\r` from lines ending with `\r\n`. Can be overrriden
+	by giving '--no-keep-cr' from the command line.
+	See linkgit:git-am[1], linkgit:git-mailsplit[1].
+
 apply.ignorewhitespace::
 	When set to 'change', tells 'git apply' to ignore changes in
 	whitespace, in the same way as the '--ignore-space-change'
