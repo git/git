@@ -308,7 +308,7 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 # Those must not be GNU-specific; they are shared with perl/ which may
 # be built by a different compiler. (Note that this is an artifact now
 # but it still might be nice to keep that distinction.)
-BASIC_CFLAGS =
+BASIC_CFLAGS = -I.
 BASIC_LDFLAGS =
 
 # Guard against environment variables
@@ -397,8 +397,8 @@ TEST_PROGRAMS_NEED_X += test-index-version
 TEST_PROGRAMS = $(patsubst %,%$X,$(TEST_PROGRAMS_NEED_X))
 
 # List built-in command $C whose implementation cmd_$C() is not in
-# builtin-$C.o but is linked in as part of some other command.
-BUILT_INS += $(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
+# builtin/$C.o but is linked in as part of some other command.
+BUILT_INS += $(patsubst builtin/%.o,git-%$X,$(BUILTIN_OBJS))
 
 BUILT_INS += git-cherry$X
 BUILT_INS += git-cherry-pick$X
@@ -624,95 +624,95 @@ LIB_OBJS += ws.o
 LIB_OBJS += wt-status.o
 LIB_OBJS += xdiff-interface.o
 
-BUILTIN_OBJS += builtin-add.o
-BUILTIN_OBJS += builtin-annotate.o
-BUILTIN_OBJS += builtin-apply.o
-BUILTIN_OBJS += builtin-archive.o
-BUILTIN_OBJS += builtin-bisect--helper.o
-BUILTIN_OBJS += builtin-blame.o
-BUILTIN_OBJS += builtin-branch.o
-BUILTIN_OBJS += builtin-bundle.o
-BUILTIN_OBJS += builtin-cat-file.o
-BUILTIN_OBJS += builtin-check-attr.o
-BUILTIN_OBJS += builtin-check-ref-format.o
-BUILTIN_OBJS += builtin-checkout-index.o
-BUILTIN_OBJS += builtin-checkout.o
-BUILTIN_OBJS += builtin-clean.o
-BUILTIN_OBJS += builtin-clone.o
-BUILTIN_OBJS += builtin-commit-tree.o
-BUILTIN_OBJS += builtin-commit.o
-BUILTIN_OBJS += builtin-config.o
-BUILTIN_OBJS += builtin-count-objects.o
-BUILTIN_OBJS += builtin-describe.o
-BUILTIN_OBJS += builtin-diff-files.o
-BUILTIN_OBJS += builtin-diff-index.o
-BUILTIN_OBJS += builtin-diff-tree.o
-BUILTIN_OBJS += builtin-diff.o
-BUILTIN_OBJS += builtin-fast-export.o
-BUILTIN_OBJS += builtin-fetch-pack.o
-BUILTIN_OBJS += builtin-fetch.o
-BUILTIN_OBJS += builtin-fmt-merge-msg.o
-BUILTIN_OBJS += builtin-for-each-ref.o
-BUILTIN_OBJS += builtin-fsck.o
-BUILTIN_OBJS += builtin-gc.o
-BUILTIN_OBJS += builtin-grep.o
-BUILTIN_OBJS += builtin-hash-object.o
-BUILTIN_OBJS += builtin-help.o
-BUILTIN_OBJS += builtin-index-pack.o
-BUILTIN_OBJS += builtin-init-db.o
-BUILTIN_OBJS += builtin-log.o
-BUILTIN_OBJS += builtin-ls-files.o
-BUILTIN_OBJS += builtin-ls-remote.o
-BUILTIN_OBJS += builtin-ls-tree.o
-BUILTIN_OBJS += builtin-mailinfo.o
-BUILTIN_OBJS += builtin-mailsplit.o
-BUILTIN_OBJS += builtin-merge.o
-BUILTIN_OBJS += builtin-merge-base.o
-BUILTIN_OBJS += builtin-merge-file.o
-BUILTIN_OBJS += builtin-merge-index.o
-BUILTIN_OBJS += builtin-merge-ours.o
-BUILTIN_OBJS += builtin-merge-recursive.o
-BUILTIN_OBJS += builtin-merge-tree.o
-BUILTIN_OBJS += builtin-mktag.o
-BUILTIN_OBJS += builtin-mktree.o
-BUILTIN_OBJS += builtin-mv.o
-BUILTIN_OBJS += builtin-name-rev.o
-BUILTIN_OBJS += builtin-pack-objects.o
-BUILTIN_OBJS += builtin-pack-redundant.o
-BUILTIN_OBJS += builtin-pack-refs.o
-BUILTIN_OBJS += builtin-patch-id.o
-BUILTIN_OBJS += builtin-prune-packed.o
-BUILTIN_OBJS += builtin-prune.o
-BUILTIN_OBJS += builtin-push.o
-BUILTIN_OBJS += builtin-read-tree.o
-BUILTIN_OBJS += builtin-receive-pack.o
-BUILTIN_OBJS += builtin-reflog.o
-BUILTIN_OBJS += builtin-remote.o
-BUILTIN_OBJS += builtin-replace.o
-BUILTIN_OBJS += builtin-rerere.o
-BUILTIN_OBJS += builtin-reset.o
-BUILTIN_OBJS += builtin-rev-list.o
-BUILTIN_OBJS += builtin-rev-parse.o
-BUILTIN_OBJS += builtin-revert.o
-BUILTIN_OBJS += builtin-rm.o
-BUILTIN_OBJS += builtin-send-pack.o
-BUILTIN_OBJS += builtin-shortlog.o
-BUILTIN_OBJS += builtin-show-branch.o
-BUILTIN_OBJS += builtin-show-ref.o
-BUILTIN_OBJS += builtin-stripspace.o
-BUILTIN_OBJS += builtin-symbolic-ref.o
-BUILTIN_OBJS += builtin-tag.o
-BUILTIN_OBJS += builtin-tar-tree.o
-BUILTIN_OBJS += builtin-unpack-file.o
-BUILTIN_OBJS += builtin-unpack-objects.o
-BUILTIN_OBJS += builtin-update-index.o
-BUILTIN_OBJS += builtin-update-ref.o
-BUILTIN_OBJS += builtin-update-server-info.o
-BUILTIN_OBJS += builtin-upload-archive.o
-BUILTIN_OBJS += builtin-var.o
-BUILTIN_OBJS += builtin-verify-pack.o
-BUILTIN_OBJS += builtin-verify-tag.o
-BUILTIN_OBJS += builtin-write-tree.o
+BUILTIN_OBJS += builtin/add.o
+BUILTIN_OBJS += builtin/annotate.o
+BUILTIN_OBJS += builtin/apply.o
+BUILTIN_OBJS += builtin/archive.o
+BUILTIN_OBJS += builtin/bisect--helper.o
+BUILTIN_OBJS += builtin/blame.o
+BUILTIN_OBJS += builtin/branch.o
+BUILTIN_OBJS += builtin/bundle.o
+BUILTIN_OBJS += builtin/cat-file.o
+BUILTIN_OBJS += builtin/check-attr.o
+BUILTIN_OBJS += builtin/check-ref-format.o
+BUILTIN_OBJS += builtin/checkout-index.o
+BUILTIN_OBJS += builtin/checkout.o
+BUILTIN_OBJS += builtin/clean.o
+BUILTIN_OBJS += builtin/clone.o
+BUILTIN_OBJS += builtin/commit-tree.o
+BUILTIN_OBJS += builtin/commit.o
+BUILTIN_OBJS += builtin/config.o
+BUILTIN_OBJS += builtin/count-objects.o
+BUILTIN_OBJS += builtin/describe.o
+BUILTIN_OBJS += builtin/diff-files.o
+BUILTIN_OBJS += builtin/diff-index.o
+BUILTIN_OBJS += builtin/diff-tree.o
+BUILTIN_OBJS += builtin/diff.o
+BUILTIN_OBJS += builtin/fast-export.o
+BUILTIN_OBJS += builtin/fetch-pack.o
+BUILTIN_OBJS += builtin/fetch.o
+BUILTIN_OBJS += builtin/fmt-merge-msg.o
+BUILTIN_OBJS += builtin/for-each-ref.o
+BUILTIN_OBJS += builtin/fsck.o
+BUILTIN_OBJS += builtin/gc.o
+BUILTIN_OBJS += builtin/grep.o
+BUILTIN_OBJS += builtin/hash-object.o
+BUILTIN_OBJS += builtin/help.o
+BUILTIN_OBJS += builtin/index-pack.o
+BUILTIN_OBJS += builtin/init-db.o
+BUILTIN_OBJS += builtin/log.o
+BUILTIN_OBJS += builtin/ls-files.o
+BUILTIN_OBJS += builtin/ls-remote.o
+BUILTIN_OBJS += builtin/ls-tree.o
+BUILTIN_OBJS += builtin/mailinfo.o
+BUILTIN_OBJS += builtin/mailsplit.o
+BUILTIN_OBJS += builtin/merge.o
+BUILTIN_OBJS += builtin/merge-base.o
+BUILTIN_OBJS += builtin/merge-file.o
+BUILTIN_OBJS += builtin/merge-index.o
+BUILTIN_OBJS += builtin/merge-ours.o
+BUILTIN_OBJS += builtin/merge-recursive.o
+BUILTIN_OBJS += builtin/merge-tree.o
+BUILTIN_OBJS += builtin/mktag.o
+BUILTIN_OBJS += builtin/mktree.o
+BUILTIN_OBJS += builtin/mv.o
+BUILTIN_OBJS += builtin/name-rev.o
+BUILTIN_OBJS += builtin/pack-objects.o
+BUILTIN_OBJS += builtin/pack-redundant.o
+BUILTIN_OBJS += builtin/pack-refs.o
+BUILTIN_OBJS += builtin/patch-id.o
+BUILTIN_OBJS += builtin/prune-packed.o
+BUILTIN_OBJS += builtin/prune.o
+BUILTIN_OBJS += builtin/push.o
+BUILTIN_OBJS += builtin/read-tree.o
+BUILTIN_OBJS += builtin/receive-pack.o
+BUILTIN_OBJS += builtin/reflog.o
+BUILTIN_OBJS += builtin/remote.o
+BUILTIN_OBJS += builtin/replace.o
+BUILTIN_OBJS += builtin/rerere.o
+BUILTIN_OBJS += builtin/reset.o
+BUILTIN_OBJS += builtin/rev-list.o
+BUILTIN_OBJS += builtin/rev-parse.o
+BUILTIN_OBJS += builtin/revert.o
+BUILTIN_OBJS += builtin/rm.o
+BUILTIN_OBJS += builtin/send-pack.o
+BUILTIN_OBJS += builtin/shortlog.o
+BUILTIN_OBJS += builtin/show-branch.o
+BUILTIN_OBJS += builtin/show-ref.o
+BUILTIN_OBJS += builtin/stripspace.o
+BUILTIN_OBJS += builtin/symbolic-ref.o
+BUILTIN_OBJS += builtin/tag.o
+BUILTIN_OBJS += builtin/tar-tree.o
+BUILTIN_OBJS += builtin/unpack-file.o
+BUILTIN_OBJS += builtin/unpack-objects.o
+BUILTIN_OBJS += builtin/update-index.o
+BUILTIN_OBJS += builtin/update-ref.o
+BUILTIN_OBJS += builtin/update-server-info.o
+BUILTIN_OBJS += builtin/upload-archive.o
+BUILTIN_OBJS += builtin/var.o
+BUILTIN_OBJS += builtin/verify-pack.o
+BUILTIN_OBJS += builtin/verify-tag.o
+BUILTIN_OBJS += builtin/write-tree.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 EXTLIBS =
@@ -1487,8 +1487,8 @@ git$X: git.o $(BUILTIN_OBJS) $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ git.o \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
-builtin-help.o: common-cmds.h
-builtin-help.s builtin-help.o: ALL_CFLAGS += \
+builtin/help.o: common-cmds.h
+builtin/help.s builtin/help.o: ALL_CFLAGS += \
 	'-DGIT_HTML_PATH="$(htmldir_SQ)"' \
 	'-DGIT_MAN_PATH="$(mandir_SQ)"' \
 	'-DGIT_INFO_PATH="$(infodir_SQ)"'
@@ -1741,17 +1741,17 @@ else
 # gcc detects!
 
 $(GIT_OBJS): $(LIB_H)
-builtin-branch.o builtin-checkout.o builtin-clone.o builtin-reset.o branch.o transport.o: branch.h
-builtin-bundle.o bundle.o transport.o: bundle.h
-builtin-bisect--helper.o builtin-rev-list.o bisect.o: bisect.h
-builtin-clone.o builtin-fetch-pack.o transport.o: fetch-pack.h
-builtin-grep.o: thread-utils.h
-builtin-send-pack.o transport.o: send-pack.h
-builtin-log.o builtin-shortlog.o: shortlog.h
-builtin-prune.o builtin-reflog.o reachable.o: reachable.h
-builtin-commit.o builtin-revert.o wt-status.o: wt-status.h
-builtin-tar-tree.o archive-tar.o: tar.h
-builtin-pack-objects.o: thread-utils.h
+builtin/branch.o builtin/checkout.o builtin/clone.o builtin/reset.o branch.o transport.o: branch.h
+builtin/bundle.o bundle.o transport.o: bundle.h
+builtin/bisect--helper.o builtin/rev-list.o bisect.o: bisect.h
+builtin/clone.o builtin/fetch-pack.o transport.o: fetch-pack.h
+builtin/grep.o: thread-utils.h
+builtin/send-pack.o transport.o: send-pack.h
+builtin/log.o builtin/shortlog.o: shortlog.h
+builtin/prune.o builtin/reflog.o reachable.o: reachable.h
+builtin/commit.o builtin/revert.o wt-status.o: wt-status.h
+builtin/tar-tree.o archive-tar.o: tar.h
+builtin/pack-objects.o: thread-utils.h
 http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
 http.o http-walker.o http-push.o remote-curl.o: http.h
 
@@ -1765,7 +1765,7 @@ exec_cmd.s exec_cmd.o: ALL_CFLAGS += \
 	'-DBINDIR="$(bindir_relative_SQ)"' \
 	'-DPREFIX="$(prefix_SQ)"'
 
-builtin-init-db.s builtin-init-db.o: ALL_CFLAGS += \
+builtin/init-db.s builtin/init-db.o: ALL_CFLAGS += \
 	-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"'
 
 config.s config.o: ALL_CFLAGS += -DETC_GITCONFIG='"$(ETC_GITCONFIG_SQ)"'
@@ -2063,7 +2063,7 @@ distclean: clean
 
 clean:
 	$(RM) *.o block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o xdiff/*.o \
-		$(LIB_FILE) $(XDIFF_LIB)
+		builtin/*.o $(LIB_FILE) $(XDIFF_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS)
 	$(RM) -r bin-wrappers
