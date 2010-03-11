@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2010, #02; Sun, 07)
-X-master-at: b7e7f6fb0005f861ca8aed80473a9809d646c403
-X-next-at: daec67978caa3f4d202ebee1e75c4bbb27fdc4ee
+Subject: What's cooking in git.git (Mar 2010, #03; Wed, 10)
+X-master-at: 90a2bf9ca155c8e0e43d9e30197d9562dd02ea96
+X-next-at: fb6b9c061dfbae34a3ab97d98b4150d138dd15ef
 
-What's cooking in git.git (Mar 2010, #02; Sun, 07)
+What's cooking in git.git (Mar 2010, #03; Wed, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -16,129 +16,68 @@ Let's start quieting things down on 'next' front.
 --------------------------------------------------
 [Graduated to "master"]
 
-* mw/maint-gcc-warns-unused-write (2010-01-30) 1 commit
-  (merged to 'next' on 2010-03-04 at 17716c0)
- + run-command.c: fix build warnings on Ubuntu
+* sh/am-keep-cr (2010-02-27) 4 commits
+  (merged to 'next' on 2010-03-02 at ffe3c5e)
+ + git-am: Add tests for `--keep-cr`, `--no-keep-cr` and `am.keepcr`
+ + git-am: Add am.keepcr and --no-keep-cr to override it
+ + git-am: Add command line parameter `--keep-cr` passing it to git-mailsplit
+ + documentation: 'git-mailsplit --keep-cr' is not hidden anymore
 
-Ready for 'master'.
+* sd/init-template (2010-03-02) 5 commits
+  (merged to 'next' on 2010-03-02 at 2d87e3f)
+ + wrap-for-bin: do not export an empty GIT_TEMPLATE_DIR
+ + t/t0001-init.sh: add test for 'init with init.templatedir set'
+ + init: having keywords without value is not a global error.
+ + Add a "TEMPLATE DIRECTORY" section to git-init[1].
+ + Add `init.templatedir` configuration variable.
 
-* gb/maint-submodule-env (2010-02-25) 5 commits
-  (merged to 'next' on 2010-02-25 at 8c22d03)
- + is_submodule_modified(): clear environment properly
- + submodules: ensure clean environment when operating in a submodule
- + shell setup: clear_local_git_env() function
- + rev-parse: --local-env-vars option
- + Refactor list of of repo-local env vars
- (this branch is used by jl/submodule-diff-dirtiness.)
+* lt/deepen-builtin-source (2010-02-22) 1 commit
+  (merged to 'next' on 2010-02-25 at 320aa74)
+ + Move 'builtin-*' into a 'builtin/' subdirectory
+ (this branch is used by nd/setup.)
 
-Ready for 'master'.
-
-* jc/fetch-param (2010-02-24) 3 commits
-  (merged to 'next' on 2010-02-25 at e95e252)
- + fetch --all/--multiple: keep all the fetched branch information
- + builtin-fetch --all/--multi: propagate options correctly
- + t5521: fix and modernize
-
-Ready for 'master'.
-
-* jk/maint-push-tracking-wo-remote (2010-02-24) 1 commit
-  (merged to 'next' on 2010-02-25 at da946ba)
- + push: fix segfault for odd config
-
-Ready for 'master'.
-
-* mb/shortlog-nongit-stdin (2010-02-24) 1 commit
-  (merged to 'next' on 2010-02-25 at d17bb74)
- + shortlog: warn the user when there is no input
-
-Ready for 'master'.
-
-* fn/maint-mkdtemp-compat (2010-02-25) 1 commit
-  (merged to 'next' on 2010-02-25 at 2899a47)
- + Fix gitmkdtemp: correct test for mktemp() return value
-
-Ready for 'master'.
-
-* ml/maint-grep-doc (2010-02-25) 4 commits
-  (merged to 'next' on 2010-03-02 at a75dfe0)
- + grep docs: document --no-index option
-  (merged to 'next' on 2010-02-25 at ec1faf8)
- + grep docs: --cached and <tree>... are incompatible
- + grep docs: use AsciiDoc literals consistently
- + grep docs: pluralize "Example" section
-
-Ready for 'master'.
-
-* as/maint-expire (2010-02-26) 2 commits
-  (merged to 'next' on 2010-03-02 at 4015ae4)
- + reflog: honor gc.reflogexpire=never
- + prune: honor --expire=never
-
-Ready for 'master'.
-
-* il/loosen-remote-helper-names (2010-02-23) 1 commit
-  (merged to 'next' on 2010-02-25 at 5c22a39)
- + Allow '+', '-' and '.' in remote helper names
-
-Ready for 'master'.
-
-* jk/maint-add--interactive-delete (2010-02-22) 1 commit
-  (merged to 'next' on 2010-02-24 at 908cef8)
- + add-interactive: fix bogus diff header line ordering
-
-Probably ready for 'master'.
-
-* js/runtime-prefix-trace-not-warn (2010-02-23) 1 commit
-  (merged to 'next' on 2010-02-24 at 8d9d305)
- + Print RUNTIME_PREFIX warning only when GIT_TRACE is set
-
-Ready for 'master'.
-
-* jc/maint-fix-mailinfo-strip (2010-02-19) 1 commit
-  (merged to 'next' on 2010-02-24 at 621fa3d)
- + mailinfo: do not strip leading spaces even for a header line
-
-Ready for 'master'.
-
-* ne/pack-local-doc (2010-02-24) 3 commits
-  (merged to 'next' on 2010-02-25 at 75cfba5)
- + pack-objects documentation: Fix --honor-pack-keep as well.
- + pack-objects documentation: reword "objects that appear in the standard input"
- + Documentation: pack-objects: Clarify --local's semantics.
-
-Ready for 'master'.
-
-* mm/mkstemps-mode-for-packfiles (2010-02-22) 6 commits
-  (merged to 'next' on 2010-02-24 at 31b5903)
- + Use git_mkstemp_mode instead of plain mkstemp to create object files
- + git_mkstemps_mode: don't set errno to EINVAL on exit.
- + Use git_mkstemp_mode and xmkstemp_mode in odb_mkstemp, not chmod later.
- + git_mkstemp_mode, xmkstemp_mode: variants of gitmkstemps with mode argument.
- + Move gitmkstemps to path.c
- + Add a testcase for ACL with restrictive umask.
-
-Ready for 'master'.
-
-* nd/root-git (2010-02-14) 5 commits
-  (merged to 'next' on 2010-02-25 at bff4955)
- + Add test for using Git at root of file system
- + Support working directory located at root
- + Move offset_1st_component() to path.c
- + init-db, rev-parse --git-dir: do not append redundant slash
- + make_absolute_path(): Do not append redundant slash
-
-Probably ready for 'master'.
+* cp/add-u-pathspec (2010-02-09) 2 commits
+  (merged to 'next' on 2010-02-24 at 2f3f2bc)
+ + test for add with non-existent pathspec
+ + git add -u: die on unmatched pathspec
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
 
-* jl/submodule-diff-dirtiness (2010-03-05) 2 commits
- - git status: Show detailed dirty status of submodules in long format
+* js/rebase-origin-x (2010-02-05) 1 commit
+ - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
+
+I retract my objection against the idea of -x; needs polishing before
+moving forward.
+
+* sd/log-decorate (2010-02-17) 3 commits
+  (merged to 'next' on 2010-03-08 at 58a6fba)
+ + log.decorate: usability fixes
+ + Add `log.decorate' configuration variable.
+ + git_config_maybe_bool()
+
+Needs squelching the configuration setting when "--pretty=raw" is given,
+at least, or possibly when any "--pretty" is explicitly given.
+
+--------------------------------------------------
+[Cooking]
+
+* pb/log-first-parent-p-m (2010-03-09) 5 commits
+ - show --first-parent/-m: do not default to --cc
+ - show -c: show patch text
+ - revision: introduce setup_revision_opt
+ - t4013: add tests for log -p -m --first-parent
+  (merged to 'next' on 2010-02-17 at 2f8e5ae)
+ + git log -p -m: document -m and honor --first-parent
+
+I said 'We might want to teach "-m trumps implicit --cc" to "git show"',
+and that is what I did near the tip.  Comments?
+
+* jl/submodule-diff-dirtiness (2010-03-08) 2 commits
+  (merged to 'next' on 2010-03-08 at 33f7a57)
+ + git status: Show detailed dirty status of submodules in long format
   (merged to 'next' on 2010-03-04 at 58b2645)
  + git diff --submodule: Show detailed dirty status of submodules
-
-The tip one may want to use flag bits from places different from "format",
-but otherwise I found the basic idea reasonably sound.
 
 * cc/cherry-pick-ff (2010-03-06) 7 commits
   (merged to 'next' on 2010-03-07 at 5589b26)
@@ -150,7 +89,8 @@ but otherwise I found the basic idea reasonably sound.
  + builtin/merge: make checkout_fast_forward() non static
  + parse-options: add parse_options_concat() to concat options
 
-* js/async-thread (2010-03-06) 6 commits
+* js/async-thread (2010-03-09) 7 commits
+ - Enable threaded async procedures whenever pthreads is available
  - Dying in an async procedure should only exit the thread, not the process.
  - Reimplement async procedures using pthreads
  - Windows: more pthreads functions
@@ -158,11 +98,14 @@ but otherwise I found the basic idea reasonably sound.
  - Make report() from usage.c public as vreportf() and use it.
  - Modernize t5530-upload-pack-error.
 
-Perhaps later we would want to enable async-by-thread on all threading
-capable platforms, if only to make sure we use the same code on major
-platforms to reduce chances of platform specific bugs.
+The last one is probably unsafe for 'next' until somebody goes and vets
+the callees that are invoked via this interface (any possible breakages
+are already inflicted on Windows people, though).
 
-* nd/setup (2010-03-07) 18 commits
+* nd/setup (2010-03-08) 21 commits
+ - index-pack: use RUN_SETUP_GENTLY
+ - index-pack: trust the prefix returned by setup_git_directory_gently()
+ - worktree setup: calculate prefix even if no worktree is found
  - merge-file: use RUN_SETUP_GENTLY
  - var: use RUN_SETUP_GENTLY
  - ls-remote: use RUN_SETUP_GENTLY
@@ -181,48 +124,17 @@ platforms to reduce chances of platform specific bugs.
  - config: use RUN_SETUP_GENTLY
  - builtin: Support RUN_SETUP_GENTLY to set up repository early if found
  - builtin: introduce startup_info struct
- (this branch uses lt/deepen-builtin-source.)
 
---------------------------------------------------
-[Stalled]
-
-* sd/log-decorate (2010-02-17) 3 commits
- - log.decorate: usability fixes
- - Add `log.decorate' configuration variable.
- - git_config_maybe_bool()
-
-Probably ready for 'next', except that people need to be warned about
-having to update their scripts to explicitly pass --no-decorate to keep
-them working.  A good idea to disable this when --pretty was given, just
-like notes are disabled by default, was floated.
-
-* pb/log-first-parent-p-m (2010-02-10) 1 commit
-  (merged to 'next' on 2010-02-17 at 2f8e5ae)
- + git log -p -m: document -m and honor --first-parent
-
-Needs tests but otherwise looked fine.  We might want to teach "-m trumps
-implicit --cc" to "git show", but that is a totally separate topic.
-
-I actually care about this "log -p --first-parent" very much, but if Pasky
-is counting on that and procrastinating until I write the tests myself, he
-is in for a disappointment.  I don't have that much free time these days.
-Help is appreciated.
-
-* js/rebase-origin-x (2010-02-05) 1 commit
- - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
-
-I retract my objection against the idea of -x; needs polishing before
-moving forward.
-
---------------------------------------------------
-[Cooking]
-
-* sd/format-patch-to (2010-02-17) 1 commit
+* sd/format-patch-to (2010-03-07) 4 commits
+  (merged to 'next' on 2010-03-08 at 739b8cd)
+ + send-email: add --no-cc, --no-to, and --no-bcc
+ + format-patch: add --no-cc, --no-to, and --no-add-headers
+ + format-patch: use a string_list for headers
   (merged to 'next' on 2010-03-07 at ef7a18d)
  + Add 'git format-patch --to=' option and 'format.to' configuration variable.
 
-Squashed tests by Stephen in; it seems we will have updates to add --no-{cc,to,...}
-to both format-patch and send-email but that is more or less independent clean-up.
+Squashed tests by Stephen in.
+I think this is ready for 'master'.  Comments?
 
 * bg/apply-fix-blank-at-eof (2010-03-06) 5 commits
   (merged to 'next' on 2010-03-07 at daec679)
@@ -233,10 +145,11 @@ to both format-patch and send-email but that is more or less independent clean-u
  + apply: Don't unnecessarily update line lengths in the preimage
 
 * sg/bash-completion (2010-02-23) 4 commits
- - bash: completion for gitk aliases
- - bash: support user-supplied completion scripts for aliases
- - bash: support user-supplied completion scripts for user's git commands
- - bash: improve aliased command recognition
+  (merged to 'next' on 2010-03-08 at bc59860)
+ + bash: completion for gitk aliases
+ + bash: support user-supplied completion scripts for aliases
+ + bash: support user-supplied completion scripts for user's git commands
+ + bash: improve aliased command recognition
 
 Perhaps rename _git_frotz -> _git_complete_frotz?  I dunno.
 
@@ -246,49 +159,42 @@ Perhaps rename _git_frotz -> _git_complete_frotz?  I dunno.
  + git-svn: Support retrieving passwords with GIT_ASKPASS
 
 * jc/color-attrs (2010-02-27) 1 commit
- - color: allow multiple attributes
-
-As the output we generate is bounded, there is no need for checking
-overflows as long as we count the maximum correctly.
+  (merged to 'next' on 2010-03-08 at ba02883)
+ + color: allow multiple attributes
 
 * jc/maint-add-ignored-dir (2010-02-28) 3 commits
- - builtin-add: fix exclude handling
- - tests for "git add ignored-dir/file" without -f
- - t0050: mark non-working test as such
+  (merged to 'next' on 2010-03-08 at a51762e)
+ + builtin-add: fix exclude handling
+ + tests for "git add ignored-dir/file" without -f
+ + t0050: mark non-working test as such
 
-Not quite happy, but will merge to 'next' anyway.
+Jeff came up with a simpler fix than the one at the tip, and we may want
+to replace it with his, and possibly teach globbing to the logic later.
 
 * ml/color-grep (2010-03-07) 3 commits
- - grep: Colorize selected, context, and function lines
- - grep: Colorize filename, line number, and separator
- - Add GIT_COLOR_BOLD_* and GIT_COLOR_BG_*
-
-Perhaps unoptimize the "reset" bit?  Other than that looked Ok.
+  (merged to 'next' on 2010-03-08 at 24d1eb4)
+ + grep: Colorize selected, context, and function lines
+ + grep: Colorize filename, line number, and separator
+ + Add GIT_COLOR_BOLD_* and GIT_COLOR_BG_*
 
 * sb/notes-parse-opt (2010-02-27) 1 commit
  - notes: rework subcommands and parse options
  (this branch uses early parts of jh/notes and tr/notes-display.)
 
-* sh/am-keep-cr (2010-02-27) 4 commits
-  (merged to 'next' on 2010-03-02 at ffe3c5e)
- + git-am: Add tests for `--keep-cr`, `--no-keep-cr` and `am.keepcr`
- + git-am: Add am.keepcr and --no-keep-cr to override it
- + git-am: Add command line parameter `--keep-cr` passing it to git-mailsplit
- + documentation: 'git-mailsplit --keep-cr' is not hidden anymore
-
 * bw/union-merge-refactor (2010-03-01) 4 commits
- - merge-file: add option to select union merge favor
- - merge-file: add option to specify the marker size
+  (merged to 'next' on 2010-03-10 at b917078)
+ + merge-file: add option to select union merge favor
+ + merge-file: add option to specify the marker size
   (merged to 'next' on 2010-03-07 at 9d1eff6)
  + refactor merge flags into xmparam_t
  + make union merge an xdl merge favor
 
-* mg/test-svn-info (2010-03-03) 2 commits
- - t9119-git-svn-info.sh: test with svn 1.6.* as well
- - git-svn: req_svn when needed
+* jh/maint-submodule-status-in-void (2010-03-09) 2 commits
+ - git submodule summary: Handle HEAD as argument when on an unborn branch
+  (merged to 'next' on 2010-03-08 at 0697bf4)
+ + submodule summary: do not fail before the first commit
 
-* jh/maint-submodule-status-in-void (2010-03-03) 1 commit
- - submodule summary: do not fail before the first commit
+There are still more fix-ups comming?
 
 * ld/push-porcelain (2010-02-26) 4 commits
   (merged to 'next' on 2010-03-02 at d15bb1e)
@@ -297,21 +203,7 @@ Perhaps unoptimize the "reset" bit?  Other than that looked Ok.
  + git-push: send "To <remoteurl>" messages to the standard output in --porcelain mode
  + git-push: fix an advice message so it goes to stderr
 
-* sd/init-template (2010-03-02) 5 commits
-  (merged to 'next' on 2010-03-02 at 2d87e3f)
- + wrap-for-bin: do not export an empty GIT_TEMPLATE_DIR
- + t/t0001-init.sh: add test for 'init with init.templatedir set'
- + init: having keywords without value is not a global error.
- + Add a "TEMPLATE DIRECTORY" section to git-init[1].
- + Add `init.templatedir` configuration variable.
-
-* lt/deepen-builtin-source (2010-02-22) 1 commit
-  (merged to 'next' on 2010-02-25 at 320aa74)
- + Move 'builtin-*' into a 'builtin/' subdirectory
- (this branch is used by nd/setup.)
-
-This is a painful one to keep out of 'master' for a long time, as any
-topic with new builtin commands will need evil merges to adjust to it.
+I think this is ready for 'master'.  Comments?
 
 * tc/http-cleanup (2010-03-02) 7 commits
   (merged to 'next' on 2010-03-07 at e92db25)
@@ -323,7 +215,11 @@ topic with new builtin commands will need evil merges to adjust to it.
  + t554[01]-http-push: refactor, add non-ff tests
  + t5541-http-push: check that ref is unchanged for non-ff test
 
-* tr/notes-display (2010-02-23) 11 commits
+I think this is ready for 'master'.  Comments?
+
+* tr/notes-display (2010-03-10) 13 commits
+ - git-notes(1): add a section about the meaning of history
+ - notes: track whether notes_trees were changed at all
  - notes: add shorthand --ref to override GIT_NOTES_REF
  - commit --amend: copy notes to the new commit
  - rebase: support automatic notes copying
@@ -337,13 +233,13 @@ topic with new builtin commands will need evil merges to adjust to it.
  - test-lib: unset GIT_NOTES_REF to stop it from influencing tests
  (this branch uses early parts of jh/notes; is used by sb/notes-parse-opt.)
 
-Re-roll planned.
+Re-rolled.  I think this is ready for 'next'.  Comments?
 
 * cw/test-lib-relicense (2010-02-22) 1 commit
  . test-lib.sh: Add explicit license detail, with change from GPLv2 to GPLv2+.
 
 Ack-collection stopped at the last three names.  I am hoping Carl can take
-it from there without my keeping an eye on it?
+it from there without my keeping an eye on it.
 
 * tc/transport-verbosity (2010-02-24) 10 commits
   (merged to 'next' on 2010-03-07 at 898d6dd)
@@ -358,12 +254,7 @@ it from there without my keeping an eye on it?
  + Documentation/git-pull: put verbosity options before merge/fetch ones
  + Documentation/git-clone: mention progress in -v
 
-* cp/add-u-pathspec (2010-02-09) 2 commits
-  (merged to 'next' on 2010-02-24 at 2f3f2bc)
- + test for add with non-existent pathspec
- + git add -u: die on unmatched pathspec
-
-Not quite happy, but will merge to 'master' shortly anyway.
+I think this is ready for 'master'.  Comments?
 
 * jh/notes (2010-03-04) 33 commits
   (merged to 'next' on 2010-03-04 at 3bb921f)
@@ -406,10 +297,14 @@ Not quite happy, but will merge to 'master' shortly anyway.
 
 Ready for 'master'.
 
-* cc/reset-keep (2010-01-19) 5 commits
+* cc/reset-keep (2010-03-09) 6 commits
+  (merged to 'next' on 2010-03-08 at 015ef4b)
+ + Documentation: improve description of "git reset --keep"
   (merged to 'next' on 2010-03-07 at 5237d8e)
  + reset: disallow using --keep when there are unmerged entries
  + reset: disallow "reset --keep" outside a work tree
  + Documentation: reset: describe new "--keep" option
  + reset: add test cases for "--keep" option
  + reset: add option "--keep" to "git reset"
+
+I think this is ready for 'master'.  Comments?
