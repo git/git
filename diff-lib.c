@@ -72,8 +72,6 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 	    && !DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES)
 	    && (!changed || DIFF_OPT_TST(diffopt, DIRTY_SUBMODULES))) {
 		*dirty_submodule = is_submodule_modified(ce->name);
-		if (*dirty_submodule)
-			changed = 1;
 	}
 	return changed;
 }
@@ -202,7 +200,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		}
 		changed = match_stat_with_submodule(&revs->diffopt, ce, &st,
 						    ce_option, &dirty_submodule);
-		if (!changed) {
+		if (!changed && !dirty_submodule) {
 			ce_mark_uptodate(ce);
 			if (!DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 				continue;
@@ -333,7 +331,7 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	oldmode = old->ce_mode;
-	if (mode == oldmode && !hashcmp(sha1, old->sha1) &&
+	if (mode == oldmode && !hashcmp(sha1, old->sha1) && !dirty_submodule &&
 	    !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 		return 0;
 
