@@ -27,12 +27,13 @@ A typical use of notes is to extend a commit message without having
 to change the commit itself. Such commit notes can be shown by `git log`
 along with the original commit message. To discern these notes from the
 message stored in the commit object, the notes are indented like the
-message, after an unindented line saying "Notes:".
+message, after an unindented line saying "Notes (<refname>):" (or
+"Notes:" for the default setting).
 
-To disable notes, you have to set the config variable core.notesRef to
-the empty string.  Alternatively, you can set it to a different ref,
-something like "refs/notes/bugzilla".  This setting can be overridden
-by the environment variable "GIT_NOTES_REF".
+This command always manipulates the notes specified in "core.notesRef"
+(see linkgit:git-config[1]), which can be overridden by GIT_NOTES_REF.
+To change which notes are shown by 'git-log', see the
+"notes.displayRef" configuration.
 
 
 SUBCOMMANDS
