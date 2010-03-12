@@ -40,6 +40,7 @@ extern struct notes_tree {
 	char *ref;
 	combine_notes_fn *combine_notes;
 	int initialized;
+	int dirty;
 } default_notes_tree;
 
 /*

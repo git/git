@@ -933,6 +933,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	t->ref = notes_ref ? xstrdup(notes_ref) : NULL;
 	t->combine_notes = combine_notes;
 	t->initialized = 1;
+	t->dirty = 0;
 
 	if (flags & NOTES_INIT_EMPTY || !notes_ref ||
 	    read_ref(notes_ref, object_sha1))
@@ -1011,6 +1012,7 @@ void add_note(struct notes_tree *t, const unsigned char *object_sha1,
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
+	t->dirty = 1;
 	if (!combine_notes)
 		combine_notes = t->combine_notes;
 	l = (struct leaf_node *) xmalloc(sizeof(struct leaf_node));
@@ -1026,6 +1028,7 @@ void remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
+	t->dirty = 1;
 	hashcpy(l.key_sha1, object_sha1);
 	hashclr(l.val_sha1);
 	return note_tree_remove(t, t->root, 0, &l);
