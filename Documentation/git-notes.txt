@@ -116,6 +116,11 @@ OPTIONS
 	Like '-C', but with '-c' the editor is invoked, so that
 	the user can further edit the note message.
 
+--ref <ref>::
+	Manipulate the notes tree in <ref>.  This overrides both
+	GIT_NOTES_REF and the "core.notesRef" configuration.  The ref
+	is taken to be in `refs/notes/` if it is not qualified.
+
 Author
 ------
 Written by Johannes Schindelin <johannes.schindelin@gmx.de> and
