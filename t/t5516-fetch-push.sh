@@ -672,7 +672,7 @@ test_expect_success 'push --porcelain' '
 		test "z$r" = "z$the_commit" &&
 		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
 	) &&
-	diff -q .git/foo .git/bar
+	test_cmp .git/foo .git/bar
 '
 
 test_expect_success 'push --porcelain bad url' '
@@ -692,7 +692,7 @@ test_expect_success 'push --porcelain rejected' '
 	echo >>.git/foo "!	refs/heads/master:refs/heads/master	[remote rejected] (branch is currently checked out)" &&
 
 	test_must_fail git push >.git/bar --porcelain  testrepo refs/heads/master:refs/heads/master &&
-	diff -q .git/foo .git/bar
+	test_cmp .git/foo .git/bar
 '
 
 test_expect_success 'push --porcelain --dry-run rejected' '
@@ -707,7 +707,7 @@ test_expect_success 'push --porcelain --dry-run rejected' '
 	echo >>.git/foo "Done" &&
 
 	test_must_fail git push >.git/bar --porcelain  --dry-run testrepo refs/heads/master^:refs/heads/master &&
-	diff -q .git/foo .git/bar
+	test_cmp .git/foo .git/bar
 '
 
 test_done
