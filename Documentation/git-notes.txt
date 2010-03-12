@@ -121,6 +121,20 @@ OPTIONS
 	GIT_NOTES_REF and the "core.notesRef" configuration.  The ref
 	is taken to be in `refs/notes/` if it is not qualified.
 
+
+NOTES
+-----
+
+Every notes change creates a new commit at the specified notes ref.
+You can therefore inspect the history of the notes by invoking, e.g.,
+`git log -p notes/commits`.
+
+Currently the commit message only records which operation triggered
+the update, and the commit authorship is determined according to the
+usual rules (see linkgit:git-commit[1]).  These details may change in
+the future.
+
+
 Author
 ------
 Written by Johannes Schindelin <johannes.schindelin@gmx.de> and
