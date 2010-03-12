@@ -35,6 +35,10 @@ This command always manipulates the notes specified in "core.notesRef"
 To change which notes are shown by 'git-log', see the
 "notes.displayRef" configuration.
 
+See the description of "notes.rewrite.<command>" in
+linkgit:git-config[1] for a way of carrying your notes across commands
+that rewrite commits.
+
 
 SUBCOMMANDS
 -----------
