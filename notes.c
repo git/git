@@ -1185,3 +1185,21 @@ void format_display_notes(const unsigned char *object_sha1,
 		format_note(display_notes_trees[i], object_sha1, sb,
 			    output_encoding, flags);
 }
+
+int copy_note(struct notes_tree *t,
+	      const unsigned char *from_obj, const unsigned char *to_obj,
+	      int force, combine_notes_fn combine_fn)
+{
+	const unsigned char *note = get_note(t, from_obj);
+	const unsigned char *existing_note = get_note(t, to_obj);
+
+	if (!force && existing_note)
+		return 1;
+
+	if (note)
+		add_note(t, to_obj, note, combine_fn);
+	else if (existing_note)
+		add_note(t, to_obj, null_sha1, combine_fn);
+
+	return 0;
+}

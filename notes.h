@@ -100,6 +100,15 @@ const unsigned char *get_note(struct notes_tree *t,
 		const unsigned char *object_sha1);
 
 /*
+ * Copy a note from one object to another in the given notes_tree.
+ *
+ * Fails if the to_obj already has a note unless 'force' is true.
+ */
+int copy_note(struct notes_tree *t,
+	      const unsigned char *from_obj, const unsigned char *to_obj,
+	      int force, combine_notes_fn combine_fn);
+
+/*
  * Flags controlling behaviour of for_each_note()
  *
  * Default behaviour of for_each_note() is to traverse every single note object

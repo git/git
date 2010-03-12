@@ -776,4 +776,38 @@ test_expect_success 'cannot copy note from object without notes' '
 	test_must_fail git notes copy HEAD^ HEAD
 '
 
+cat > expect << EOF
+commit e5d4fb5698d564ab8c73551538ecaf2b0c666185
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:25:13 2005 -0700
+
+    13th
+
+Notes (other):
+    yet another note
+$whitespace
+    yet another note
+
+commit 7038787dfe22a14c3867ce816dbba39845359719
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:24:13 2005 -0700
+
+    12th
+
+Notes (other):
+    other note
+$whitespace
+    yet another note
+EOF
+
+test_expect_success 'git notes copy --stdin' '
+	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^); \
+	echo $(git rev-parse HEAD~2) $(git rev-parse HEAD)) |
+	git notes copy --stdin &&
+	git log -2 > output &&
+	test_cmp expect output &&
+	test "$(git notes list HEAD)" = "$(git notes list HEAD~2)" &&
+	test "$(git notes list HEAD^)" = "$(git notes list HEAD~3)"
+'
+
 test_done
