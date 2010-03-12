@@ -104,10 +104,8 @@ static void add_merge_config(struct ref **head,
 		 * there is no entry in the resulting FETCH_HEAD marked
 		 * for merging.
 		 */
+		memset(&refspec, 0, sizeof(refspec));
 		refspec.src = branch->merge[i]->src;
-		refspec.dst = NULL;
-		refspec.pattern = 0;
-		refspec.force = 0;
 		get_fetch_map(remote_refs, &refspec, tail, 1);
 		for (rm = *old_tail; rm; rm = rm->next)
 			rm->merge = 1;
