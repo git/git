@@ -11610,3 +11610,9 @@ if {[tk windowingsystem] eq "win32"} {
 }
 
 getcommits {}
+
+# Local variables:
+# mode: tcl
+# indent-tabs-mode: t
+# tab-width: 8
+# End:
