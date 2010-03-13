@@ -1574,7 +1574,7 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs,
 {
 	const char *logfile;
 	FILE *logfp;
-	char buf[1024];
+	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
 
 	logfile = git_path("logs/%s", ref);
@@ -1587,24 +1587,24 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs,
 		if (fstat(fileno(logfp), &statbuf) ||
 		    statbuf.st_size < ofs ||
 		    fseek(logfp, -ofs, SEEK_END) ||
-		    fgets(buf, sizeof(buf), logfp)) {
+		    strbuf_getwholeline(&sb, logfp, '\n')) {
 			fclose(logfp);
+			strbuf_release(&sb);
 			return -1;
 		}
 	}
 
-	while (fgets(buf, sizeof(buf), logfp)) {
+	while (!strbuf_getwholeline(&sb, logfp, '\n')) {
 		unsigned char osha1[20], nsha1[20];
 		char *email_end, *message;
 		unsigned long timestamp;
-		int len, tz;
+		int tz;
 
 		/* old SP new SP name <email> SP time TAB msg LF */
-		len = strlen(buf);
-		if (len < 83 || buf[len-1] != '\n' ||
-		    get_sha1_hex(buf, osha1) || buf[40] != ' ' ||
-		    get_sha1_hex(buf + 41, nsha1) || buf[81] != ' ' ||
-		    !(email_end = strchr(buf + 82, '>')) ||
+		if (sb.len < 83 || sb.buf[sb.len - 1] != '\n' ||
+		    get_sha1_hex(sb.buf, osha1) || sb.buf[40] != ' ' ||
+		    get_sha1_hex(sb.buf + 41, nsha1) || sb.buf[81] != ' ' ||
+		    !(email_end = strchr(sb.buf + 82, '>')) ||
 		    email_end[1] != ' ' ||
 		    !(timestamp = strtoul(email_end + 2, &message, 10)) ||
 		    !message || message[0] != ' ' ||
@@ -1618,11 +1618,13 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs,
 			message += 6;
 		else
 			message += 7;
-		ret = fn(osha1, nsha1, buf+82, timestamp, tz, message, cb_data);
+		ret = fn(osha1, nsha1, sb.buf + 82, timestamp, tz, message,
+			 cb_data);
 		if (ret)
 			break;
 	}
 	fclose(logfp);
+	strbuf_release(&sb);
 	return ret;
 }
 
