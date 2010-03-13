@@ -71,7 +71,7 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 	if (S_ISGITLINK(ce->ce_mode)
 	    && !DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES)
 	    && (!changed || DIFF_OPT_TST(diffopt, DIRTY_SUBMODULES))) {
-		*dirty_submodule = is_submodule_modified(ce->name);
+		*dirty_submodule = is_submodule_modified(ce->name, DIFF_OPT_TST(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES));
 	}
 	return changed;
 }
