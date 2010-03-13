@@ -11,7 +11,15 @@ test_expect_success setup '
 	echo B B B B B >two &&
 	echo C C C C C >tres &&
 	echo ABC >mouse &&
-	git add one two tres mouse &&
+	for i in 1 2 3 4 5 6 7 8 9
+	do
+		echo $i
+	done >nine_lines &&
+	for i in 1 2 3 4 5 6 7 8 9 a
+	do
+		echo $i
+	done >ten_lines &&
+	git add one two tres mouse nine_lines ten_lines &&
 	test_tick &&
 	GIT_AUTHOR_NAME=Initial git commit -m Initial &&
 
@@ -165,6 +173,16 @@ test_expect_success 'blame -L with invalid start' '
 test_expect_success 'blame -L with invalid end' '
 	test_must_fail git blame -L1,5 tres 2>errors &&
 	grep "has only 2 lines" errors
+'
+
+test_expect_success 'indent of line numbers, nine lines' '
+	git blame nine_lines >actual &&
+	test $(grep -c "  " actual) = 0
+'
+
+test_expect_success 'indent of line numbers, ten lines' '
+	git blame ten_lines >actual &&
+	test $(grep -c "  " actual) = 9
 '
 
 test_done
