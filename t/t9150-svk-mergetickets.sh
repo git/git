@@ -11,6 +11,7 @@ test_expect_success 'load svk depot' "
 	svnadmin load -q '$rawsvnrepo' \
 	  < '$TEST_DIRECTORY/t9150/svk-merge.dump' &&
 	git svn init --minimize-url -R svkmerge \
+	  --rewrite-root=http://svn.example.org \
 	  -T trunk -b branches '$svnrepo' &&
 	git svn fetch --all
 	"
