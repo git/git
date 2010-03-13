@@ -226,7 +226,7 @@ test_expect_success 'gitcvs.ext.enabled = true' \
   'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled true &&
    GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false &&
    GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1 &&
-   diff -q cvswork cvswork2'
+   test_cmp cvswork cvswork2'
 
 rm -fr cvswork2
 test_expect_success 'gitcvs.ext.enabled = false' \
@@ -247,7 +247,7 @@ test_expect_success 'gitcvs.dbname' \
   'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled true &&
    GIT_DIR="$SERVERDIR" git config gitcvs.dbname %Ggitcvs.%a.%m.sqlite &&
    GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1 &&
-   diff -q cvswork cvswork2 &&
+   test_cmp cvswork cvswork2 &&
    test -f "$SERVERDIR/gitcvs.ext.master.sqlite" &&
    cmp "$SERVERDIR/gitcvs.master.sqlite" "$SERVERDIR/gitcvs.ext.master.sqlite"'
 
@@ -257,7 +257,7 @@ test_expect_success 'gitcvs.ext.dbname' \
    GIT_DIR="$SERVERDIR" git config gitcvs.ext.dbname %Ggitcvs1.%a.%m.sqlite &&
    GIT_DIR="$SERVERDIR" git config gitcvs.dbname %Ggitcvs2.%a.%m.sqlite &&
    GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1 &&
-   diff -q cvswork cvswork2 &&
+   test_cmp cvswork cvswork2 &&
    test -f "$SERVERDIR/gitcvs1.ext.master.sqlite" &&
    test ! -f "$SERVERDIR/gitcvs2.ext.master.sqlite" &&
    cmp "$SERVERDIR/gitcvs.master.sqlite" "$SERVERDIR/gitcvs1.ext.master.sqlite"'
@@ -282,7 +282,7 @@ test_expect_success 'cvs update (create new file)' \
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.1/" &&
-   diff -q testfile1 ../testfile1'
+   test_cmp testfile1 ../testfile1'
 
 cd "$WORKDIR"
 test_expect_success 'cvs update (update existing file)' \
@@ -293,7 +293,7 @@ test_expect_success 'cvs update (update existing file)' \
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.2/" &&
-   diff -q testfile1 ../testfile1'
+   test_cmp testfile1 ../testfile1'
 
 cd "$WORKDIR"
 #TODO: cvsserver doesn't support update w/o -d
@@ -322,7 +322,7 @@ test_expect_success 'cvs update (subdirectories)' \
    (for dir in A A/B A/B/C A/D E; do
       filename="file_in_$(echo $dir|sed -e "s#/# #g")" &&
       if test "$(echo $(grep -v ^D $dir/CVS/Entries|cut -d/ -f2,3,5))" = "$filename/1.1/" &&
-           diff -q "$dir/$filename" "../$dir/$filename"; then
+	test_cmp "$dir/$filename" "../$dir/$filename"; then
         :
       else
         echo >failure
@@ -349,7 +349,7 @@ test_expect_success 'cvs update (re-add deleted file)' \
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.4/" &&
-   diff -q testfile1 ../testfile1'
+   test_cmp testfile1 ../testfile1'
 
 cd "$WORKDIR"
 test_expect_success 'cvs update (merge)' \
@@ -366,7 +366,7 @@ test_expect_success 'cvs update (merge)' \
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
    test "$(echo $(grep merge CVS/Entries|cut -d/ -f2,3,5))" = "merge/1.1/" &&
-   diff -q merge ../merge &&
+   test_cmp merge ../merge &&
    ( echo Line 0; cat merge ) >merge.tmp &&
    mv merge.tmp merge &&
    cd "$WORKDIR" &&
@@ -377,7 +377,7 @@ test_expect_success 'cvs update (merge)' \
    cd cvswork &&
    sleep 1 && touch merge &&
    GIT_CONFIG="$git_config" cvs -Q update &&
-   diff -q merge ../expected'
+   test_cmp merge ../expected'
 
 cd "$WORKDIR"
 
@@ -402,13 +402,13 @@ test_expect_success 'cvs update (conflict merge)' \
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
-   diff -q merge ../expected.C'
+   test_cmp merge ../expected.C'
 
 cd "$WORKDIR"
 test_expect_success 'cvs update (-C)' \
   'cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update -C &&
-   diff -q merge ../merge'
+   test_cmp merge ../merge'
 
 cd "$WORKDIR"
 test_expect_success 'cvs update (merge no-op)' \
@@ -420,7 +420,7 @@ test_expect_success 'cvs update (merge no-op)' \
     cd cvswork &&
     sleep 1 && touch merge &&
     GIT_CONFIG="$git_config" cvs -Q update &&
-    diff -q merge ../merge'
+    test_cmp merge ../merge'
 
 cd "$WORKDIR"
 test_expect_success 'cvs update (-p)' '
