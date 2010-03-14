@@ -2998,7 +2998,7 @@ sub find_extra_svk_parents {
 	for my $ticket ( @tickets ) {
 		my ($uuid, $path, $rev) = split /:/, $ticket;
 		if ( $uuid eq $self->ra_uuid ) {
-			my $url = $self->rewrite_root || $self->{url};
+			my $url = $self->{url};
 			my $repos_root = $url;
 			my $branch_from = $path;
 			$branch_from =~ s{^/}{};
@@ -3206,7 +3206,7 @@ sub find_extra_svn_parents {
 	# are now marked as merge, we can add the tip as a parent.
 	my @merges = split "\n", $mergeinfo;
 	my @merge_tips;
-	my $url = $self->rewrite_root || $self->{url};
+	my $url = $self->{url};
 	my $uuid = $self->ra_uuid;
 	my %ranges;
 	for my $merge ( @merges ) {

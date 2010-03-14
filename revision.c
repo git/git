@@ -1334,7 +1334,7 @@ static void append_prune_data(const char ***prune_data, const char **av)
  */
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def)
 {
-	int i, flags, left, seen_dashdash, read_from_stdin;
+	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0;
 	const char **prune_data = NULL;
 
 	/* First, search for "--" */
@@ -1460,6 +1460,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			append_prune_data(&prune_data, argv + i);
 			break;
 		}
+		else
+			got_rev_arg = 1;
 	}
 
 	if (prune_data)
@@ -1469,7 +1471,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		revs->def = def;
 	if (revs->show_merge)
 		prepare_show_merge(revs);
-	if (revs->def && !revs->pending.nr) {
+	if (revs->def && !revs->pending.nr && !got_rev_arg) {
 		unsigned char sha1[20];
 		struct object *object;
 		unsigned mode;
