@@ -64,6 +64,7 @@ git send-email [options] <file | directory | rev-list options >
     --smtp-pass             <str>  * Password for SMTP-AUTH; not necessary.
     --smtp-encryption       <str>  * tls or ssl; anything else disables.
     --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
+    --smtp-debug            <0|1>  * Disable, enable Net::SMTP debug.
 
   Automating:
     --identity              <str>  * Use the sendemail.<id> options.
@@ -187,6 +188,8 @@ my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
 my ($validate, $confirm);
 my (@suppress_cc);
 
+my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
+
 my $not_set_by_user = "true but not set by the user";
 
 my %config_bool_settings = (
@@ -270,6 +273,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-pass:s" => \$smtp_authpass,
 		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
 		    "smtp-encryption=s" => \$smtp_encryption,
+		    "smtp-debug:i" => \$debug_net_smtp,
 		    "identity=s" => \$identity,
 		    "annotate" => \$annotate,
 		    "compose" => \$compose,
@@ -938,7 +942,8 @@ X-Mailer: git-send-email $gitversion
 			require Net::SMTP;
 			$smtp ||= Net::SMTP->new((defined $smtp_server_port)
 						 ? "$smtp_server:$smtp_server_port"
-						 : $smtp_server);
+						 : $smtp_server,
+						 Debug => $debug_net_smtp);
 			if ($smtp_encryption eq 'tls' && $smtp) {
 				require Net::SMTP::SSL;
 				$smtp->command('STARTTLS');
@@ -957,7 +962,7 @@ X-Mailer: git-send-email $gitversion
 		}
 
 		if (!$smtp) {
-			die "Unable to initialize SMTP properly. Check config. ",
+			die "Unable to initialize SMTP properly. Check config and use --smtp-debug. ",
 			    "VALUES: server=$smtp_server ",
 			    "encryption=$smtp_encryption ",
 			    defined $smtp_server_port ? "port=$smtp_server_port" : "";
