@@ -957,7 +957,10 @@ X-Mailer: git-send-email $gitversion
 		}
 
 		if (!$smtp) {
-			die "Unable to initialize SMTP properly.  Is there something wrong with your config?";
+			die "Unable to initialize SMTP properly. Check config. ",
+			    "VALUES: server=$smtp_server ",
+			    "encryption=$smtp_encryption ",
+			    defined $smtp_server_port ? "port=$smtp_server_port" : "";
 		}
 
 		if (defined $smtp_authuser) {
