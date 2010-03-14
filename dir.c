@@ -453,10 +453,13 @@ static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathna
 	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
-void dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
+static struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
 {
+	if (!cache_name_is_other(pathname, len))
+		return NULL;
+
 	ALLOC_GROW(dir->ignored, dir->ignored_nr+1, dir->ignored_alloc);
-	dir->ignored[dir->ignored_nr++] = dir_entry_new(pathname, len);
+	return dir->ignored[dir->ignored_nr++] = dir_entry_new(pathname, len);
 }
 
 enum exist_status {
@@ -675,8 +678,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 {
 	int exclude = excluded(dir, path, &dtype);
 	if (exclude && (dir->flags & DIR_COLLECT_IGNORED)
-	    && in_pathspec(path, *len, simplify)
-	    && cache_name_is_other(path, *len))
+	    && in_pathspec(path, *len, simplify))
 		dir_add_ignored(dir, path, *len);
 
 	/*

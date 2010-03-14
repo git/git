@@ -108,17 +108,13 @@ $test_case 'merge (case change)' '
 
 '
 
-
-
-test_expect_failure 'add (with different case)' '
+$test_case 'add (with different case)' '
 
 	git reset --hard initial &&
 	rm camelcase &&
 	echo 1 >CamelCase &&
 	git add CamelCase &&
-	camel=$(git ls-files | grep -i camelcase) &&
-	test $(echo "$camel" | wc -l) = 1 &&
-	test "z$(git cat-file blob :$camel)" = z1
+	test $(git ls-files | grep -i camelcase | wc -l) = 1
 
 '
 
