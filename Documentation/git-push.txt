@@ -146,14 +146,21 @@ useful if you write an alias or script around 'git push'.
 	receiver share many of the same objects in common. The default is
 	\--thin.
 
+-q::
+--quiet::
+	Suppress all output, including the listing of updated refs,
+	unless an error occurs. Progress is not reported to the standard
+	error stream.
+
 -v::
 --verbose::
 	Run verbosely.
 
--q::
---quiet::
-	Suppress all output, including the listing of updated refs,
-	unless an error occurs.
+--progress::
+	Progress status is reported on the standard error stream
+	by default when it is attached to a terminal, unless -q
+	is specified. This flag forces progress status even if the
+	standard error stream is not directed to a terminal.
 
 include::urls-remotes.txt[]
 

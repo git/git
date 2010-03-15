@@ -31,6 +31,16 @@ in a state that is hard to back out of in the case of a conflict.
 OPTIONS
 -------
 
+-q::
+--quiet::
+	This is passed to both underlying git-fetch to squelch reporting of
+	during transfer, and underlying git-merge to squelch output during
+	merging.
+
+-v::
+--verbose::
+	Pass --verbose to git-fetch and git-merge.
+
 Options related to merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

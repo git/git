@@ -526,7 +526,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.include_tag = data->options.followtags;
 	args.verbose = (transport->verbose > 0);
 	args.quiet = (transport->verbose < 0);
-	args.no_progress = args.quiet || (!transport->progress && !isatty(2));
+	args.no_progress = !transport->progress;
 	args.depth = data->options.depth;
 
 	for (i = 0; i < nr_heads; i++)
@@ -786,8 +786,8 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
 	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
 	args.use_thin_pack = data->options.thin;
-	args.verbose = !!(flags & TRANSPORT_PUSH_VERBOSE);
-	args.quiet = !!(flags & TRANSPORT_PUSH_QUIET);
+	args.verbose = (transport->verbose > 0);
+	args.quiet = (transport->verbose < 0);
 	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
 	args.porcelain = !!(flags & TRANSPORT_PUSH_PORCELAIN);
 
@@ -929,6 +929,8 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	const char *helper;
 	struct transport *ret = xcalloc(1, sizeof(*ret));
 
+	ret->progress = isatty(2);
+
 	if (!remote)
 		die("No remote provided to transport_get()");
 
@@ -1028,6 +1030,25 @@ int transport_set_option(struct transport *transport,
 	return 1;
 }
 
+void transport_set_verbosity(struct transport *transport, int verbosity,
+	int force_progress)
+{
+	if (verbosity >= 2)
+		transport->verbose = verbosity <= 3 ? verbosity : 3;
+	if (verbosity < 0)
+		transport->verbose = -1;
+
+	/**
+	 * Rules used to determine whether to report progress (processing aborts
+	 * when a rule is satisfied):
+	 *
+	 *   1. Report progress, if force_progress is 1 (ie. --progress).
+	 *   2. Don't report progress, if verbosity < 0 (ie. -q/--quiet ).
+	 *   3. Report progress if isatty(2) is 1.
+	 **/
+	transport->progress = force_progress || (verbosity >= 0 && isatty(2));
+}
+
 int transport_push(struct transport *transport,
 		   int refspec_nr, const char **refspec, int flags,
 		   int *nonfastforward)
@@ -1046,8 +1067,8 @@ int transport_push(struct transport *transport,
 			transport->get_refs_list(transport, 1);
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;
-		int verbose = flags & TRANSPORT_PUSH_VERBOSE;
-		int quiet = flags & TRANSPORT_PUSH_QUIET;
+		int verbose = (transport->verbose > 0);
+		int quiet = (transport->verbose < 0);
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
