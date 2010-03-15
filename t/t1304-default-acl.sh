@@ -20,21 +20,8 @@ if ! setfacl -m u:root:rwx .; then
     test_done
 fi
 
-modebits () {
-	ls -l "$1" | sed -e 's|^\(..........\).*|\1|'
-}
-
 check_perms_and_acl () {
-	actual=$(modebits "$1") &&
-	case "$actual" in
-	-r--r-----*)
-		: happy
-		;;
-	*)
-		echo "Got permission '$actual', expected '-r--r-----'"
-		false
-		;;
-	esac &&
+	test -r "$1" &&
 	getfacl "$1" > actual &&
 	grep -q "user:root:rwx" actual &&
 	grep -q "user:${LOGNAME}:rwx" actual &&
