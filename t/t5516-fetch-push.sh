@@ -660,4 +660,54 @@ test_expect_success 'push with branches containing #' '
 	git checkout master
 '
 
+test_expect_success 'push --porcelain' '
+	mk_empty &&
+	echo >.git/foo  "To testrepo" &&
+	echo >>.git/foo "*	refs/heads/master:refs/remotes/origin/master	[new branch]"  &&
+	echo >>.git/foo "Done" &&
+	git push >.git/bar --porcelain  testrepo refs/heads/master:refs/remotes/origin/master &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	) &&
+	test_cmp .git/foo .git/bar
+'
+
+test_expect_success 'push --porcelain bad url' '
+	mk_empty &&
+	test_must_fail git push >.git/bar --porcelain asdfasdfasd refs/heads/master:refs/remotes/origin/master &&
+	test_must_fail grep -q Done .git/bar
+'
+
+test_expect_success 'push --porcelain rejected' '
+	mk_empty &&
+	git push testrepo refs/heads/master:refs/remotes/origin/master &&
+	(cd testrepo &&
+		git reset --hard origin/master^
+		git config receive.denyCurrentBranch true) &&
+
+	echo >.git/foo  "To testrepo"  &&
+	echo >>.git/foo "!	refs/heads/master:refs/heads/master	[remote rejected] (branch is currently checked out)" &&
+
+	test_must_fail git push >.git/bar --porcelain  testrepo refs/heads/master:refs/heads/master &&
+	test_cmp .git/foo .git/bar
+'
+
+test_expect_success 'push --porcelain --dry-run rejected' '
+	mk_empty &&
+	git push testrepo refs/heads/master:refs/remotes/origin/master &&
+	(cd testrepo &&
+		git reset --hard origin/master
+		git config receive.denyCurrentBranch true) &&
+
+	echo >.git/foo  "To testrepo"  &&
+	echo >>.git/foo "!	refs/heads/master^:refs/heads/master	[rejected] (non-fast-forward)" &&
+	echo >>.git/foo "Done" &&
+
+	test_must_fail git push >.git/bar --porcelain  --dry-run testrepo refs/heads/master^:refs/heads/master &&
+	test_cmp .git/foo .git/bar
+'
+
 test_done
