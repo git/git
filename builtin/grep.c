@@ -96,6 +96,9 @@ static pthread_cond_t cond_write;
 /* Signalled when we are finished with everything. */
 static pthread_cond_t cond_result;
 
+static int print_hunk_marks_between_files;
+static int printed_something;
+
 static void add_work(enum work_type type, char *name, void *id)
 {
 	grep_lock();
@@ -159,7 +162,12 @@ static void work_done(struct work_item *w)
 	for(; todo[todo_done].done && todo_done != todo_start;
 	    todo_done = (todo_done+1) % ARRAY_SIZE(todo)) {
 		w = &todo[todo_done];
-		write_or_die(1, w->out.buf, w->out.len);
+		if (w->out.len) {
+			if (print_hunk_marks_between_files && printed_something)
+				write_or_die(1, "--\n", 3);
+			write_or_die(1, w->out.buf, w->out.len);
+			printed_something = 1;
+		}
 		free(w->name);
 		free(w->identifier);
 	}
@@ -926,8 +934,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (online_cpus() == 1 || !grep_threads_ok(&opt))
 		use_threads = 0;
 
-	if (use_threads)
+	if (use_threads) {
+		if (opt.pre_context || opt.post_context)
+			print_hunk_marks_between_files = 1;
 		start_threads(&opt);
+	}
 #else
 	use_threads = 0;
 #endif

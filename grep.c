@@ -551,8 +551,6 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 		if (opt->last_shown == 0) {
 			if (opt->show_hunk_mark)
 				opt->output(opt, "--\n", 3);
-			else
-				opt->show_hunk_mark = 1;
 		} else if (lno > opt->last_shown + 1)
 			opt->output(opt, "--\n", 3);
 	}
@@ -750,14 +748,6 @@ int grep_threads_ok(const struct grep_opt *opt)
 	    !opt->name_only)
 		return 0;
 
-	/* If we are showing hunk marks, we should not do it for the
-	 * first match. The synchronization problem we get for this
-	 * constraint is not yet solved, so we disable threading in
-	 * this case.
-	 */
-	if (opt->pre_context || opt->post_context)
-		return 0;
-
 	return 1;
 }
 
@@ -779,10 +769,13 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	enum grep_context ctx = GREP_CONTEXT_HEAD;
 	xdemitconf_t xecfg;
 
-	opt->last_shown = 0;
-
 	if (!opt->output)
 		opt->output = std_output;
+
+	if (opt->last_shown && (opt->pre_context || opt->post_context) &&
+	    opt->output == std_output)
+		opt->show_hunk_mark = 1;
+	opt->last_shown = 0;
 
 	if (buffer_is_binary(buf, size)) {
 		switch (opt->binary) {
