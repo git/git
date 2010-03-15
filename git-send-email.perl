@@ -47,9 +47,9 @@ git send-email [options] <file | directory | rev-list options >
 
   Composing:
     --from                  <str>  * Email From:
-    --to                    <str>  * Email To:
-    --cc                    <str>  * Email Cc:
-    --bcc                   <str>  * Email Bcc:
+    --[no-]to               <str>  * Email To:
+    --[no-]cc               <str>  * Email Cc:
+    --[no-]bcc              <str>  * Email Bcc:
     --subject               <str>  * Email "Subject:"
     --in-reply-to           <str>  * Email "In-Reply-To:"
     --annotate                     * Review each patch that will be sent in an editor.
@@ -135,7 +135,7 @@ sub unique_email_list(@);
 sub cleanup_compose_files();
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,@initial_cc,@bcclist,@xh,
+my (@to,$no_to,@cc,$no_cc,@initial_cc,@bcclist,$no_bcc,@xh,
 	$initial_reply_to,$initial_subject,@files,
 	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
 
@@ -261,8 +261,11 @@ my $rc = GetOptions("sender|from=s" => \$sender,
                     "in-reply-to=s" => \$initial_reply_to,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@to,
+		    "no-to" => \$no_to,
 		    "cc=s" => \@initial_cc,
+		    "no-cc" => \$no_cc,
 		    "bcc=s" => \@bcclist,
+		    "no-bcc" => \$no_bcc,
 		    "chain-reply-to!" => \$chain_reply_to,
 		    "smtp-server=s" => \$smtp_server,
 		    "smtp-server-port=s" => \$smtp_server_port,
@@ -305,6 +308,9 @@ sub read_config {
 
 	foreach my $setting (keys %config_settings) {
 		my $target = $config_settings{$setting};
+		next if $setting eq "to" and defined $no_to;
+		next if $setting eq "cc" and defined $no_cc;
+		next if $setting eq "bcc" and defined $no_bcc;
 		if (ref($target) eq "ARRAY") {
 			unless (@$target) {
 				my @values = Git::config(@repo, "$prefix.$setting");
