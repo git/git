@@ -46,8 +46,8 @@ dirs_to_set="./ .git/ .git/objects/ .git/objects/pack/"
 
 test_expect_success 'Setup test repo' '
 	setfacl -m u:root:rwx          $dirs_to_set &&
-	setfacl -d -m u:"$LOGNAME":rwx $dirs_to_set &&
-	setfacl -d -m u:root:rwx       $dirs_to_set &&
+	setfacl -m d:u:"$LOGNAME":rwx  $dirs_to_set &&
+	setfacl -m d:u:root:rwx        $dirs_to_set &&
 
 	touch file.txt &&
 	git add file.txt &&
