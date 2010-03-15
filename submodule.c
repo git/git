@@ -130,7 +130,7 @@ void show_submodule_summary(FILE *f, const char *path,
 	strbuf_release(&sb);
 }
 
-unsigned is_submodule_modified(const char *path)
+unsigned is_submodule_modified(const char *path, int ignore_untracked)
 {
 	int i;
 	ssize_t len;
@@ -138,6 +138,7 @@ unsigned is_submodule_modified(const char *path)
 	const char *argv[] = {
 		"status",
 		"--porcelain",
+		NULL,
 		NULL,
 	};
 	const char *env[LOCAL_REPO_ENV_SIZE + 3];
@@ -163,6 +164,9 @@ unsigned is_submodule_modified(const char *path)
 	env[i++] = strbuf_detach(&buf, NULL);
 	env[i] = NULL;
 
+	if (ignore_untracked)
+		argv[2] = "-uno";
+
 	memset(&cp, 0, sizeof(cp));
 	cp.argv = argv;
 	cp.env = env;
@@ -181,7 +185,8 @@ unsigned is_submodule_modified(const char *path)
 				break;
 		} else {
 			dirty_submodule |= DIRTY_SUBMODULE_MODIFIED;
-			if (dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
+			if (ignore_untracked ||
+			    (dirty_submodule & DIRTY_SUBMODULE_UNTRACKED))
 				break;
 		}
 		next_line = strchr(line, '\n');
