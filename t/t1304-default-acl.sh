@@ -33,6 +33,7 @@ dirs_to_set="./ .git/ .git/objects/ .git/objects/pack/"
 
 test_expect_success 'Setup test repo' '
 	setfacl -m d:u::rwx,d:g::---,d:o:---,d:m:rwx $dirs_to_set &&
+	setfacl -m m:rwx               $dirs_to_set &&
 	setfacl -m u:root:rwx          $dirs_to_set &&
 	setfacl -m d:u:"$LOGNAME":rwx  $dirs_to_set &&
 	setfacl -m d:u:root:rwx        $dirs_to_set &&
