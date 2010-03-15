@@ -25,7 +25,7 @@ check_perms_and_acl () {
 	getfacl "$1" > actual &&
 	grep -q "user:root:rwx" actual &&
 	grep -q "user:${LOGNAME}:rwx" actual &&
-	grep -q "mask::r--" actual &&
+	egrep "mask::?r--" actual > /dev/null 2>&1 &&
 	grep -q "group::---" actual || false
 }
 
