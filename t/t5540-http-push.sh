@@ -137,6 +137,9 @@ test_expect_success 'PUT and MOVE sends object to URLs with SHA-1 hash suffix' '
 
 '
 
+test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
+	"$ROOT_PATH"/test_repo_clone master
+
 stop_httpd
 
 test_done
