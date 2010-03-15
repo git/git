@@ -387,9 +387,10 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				fputc(url[i], fp);
 		fputc('\n', fp);
 
-		if (ref)
+		if (ref) {
 			rc |= update_local_ref(ref, what, note);
-		else
+			free(ref);
+		} else
 			sprintf(note, "* %-*s %-*s -> FETCH_HEAD",
 				SUMMARY_WIDTH, *kind ? kind : "branch",
 				 REFCOL_WIDTH, *what ? what : "HEAD");
