@@ -204,6 +204,9 @@ log --root --patch-with-stat --summary master
 log --root -c --patch-with-stat --summary master
 # improved by Timo's patch
 log --root --cc --patch-with-stat --summary master
+log -p --first-parent master
+log -m -p --first-parent master
+log -m -p master
 log -SF master
 log -SF -p master
 log --decorate --all
@@ -235,6 +238,9 @@ show initial
 show --root initial
 show side
 show master
+show -c master
+show -m master
+show --first-parent master
 show --stat side
 show --stat --summary side
 show --patch-with-stat side

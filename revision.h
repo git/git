@@ -142,8 +142,13 @@ struct rev_info {
 typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
 extern volatile show_early_output_fn_t show_early_output;
 
+struct setup_revision_opt {
+	const char *def;
+	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
+};
+
 extern void init_revisions(struct rev_info *revs, const char *prefix);
-extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
+extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *);
 extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 				 const struct option *options,
 				 const char * const usagestr[]);

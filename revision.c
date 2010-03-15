@@ -1353,7 +1353,7 @@ static void append_prune_data(const char ***prune_data, const char **av)
  * Returns the number of arguments left that weren't recognized
  * (which are also moved to the head of the argument list)
  */
-int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def)
+int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
 {
 	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0;
 	const char **prune_data = NULL;
@@ -1489,7 +1489,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		revs->prune_data = get_pathspec(revs->prefix, prune_data);
 
 	if (revs->def == NULL)
-		revs->def = def;
+		revs->def = opt ? opt->def : NULL;
+	if (opt && opt->tweak)
+		opt->tweak(revs, opt);
 	if (revs->show_merge)
 		prepare_show_merge(revs);
 	if (revs->def && !revs->pending.nr && !got_rev_arg) {
@@ -1523,11 +1525,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		if (!revs->full_diff)
 			diff_tree_setup_paths(revs->prune_data, &revs->diffopt);
 	}
-	if (revs->combine_merges) {
+	if (revs->combine_merges)
 		revs->ignore_merges = 0;
-		if (revs->dense_combined_merges && !revs->diffopt.output_format)
-			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
-	}
 	revs->diffopt.abbrev = revs->abbrev;
 	if (diff_setup_done(&revs->diffopt) < 0)
 		die("diff_setup_done failed");

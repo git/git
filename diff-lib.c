@@ -519,9 +519,12 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 int index_differs_from(const char *def, int diff_flags)
 {
 	struct rev_info rev;
+	struct setup_revision_opt opt;
 
 	init_revisions(&rev, NULL);
-	setup_revisions(0, NULL, &rev, def);
+	memset(&opt, 0, sizeof(opt));
+	opt.def = def;
+	setup_revisions(0, NULL, &rev, &opt);
 	DIFF_OPT_SET(&rev.diffopt, QUICK);
 	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
 	rev.diffopt.flags |= diff_flags;

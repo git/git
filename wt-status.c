@@ -315,10 +315,13 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 static void wt_status_collect_changes_index(struct wt_status *s)
 {
 	struct rev_info rev;
+	struct setup_revision_opt opt;
 
 	init_revisions(&rev, NULL);
-	setup_revisions(0, NULL, &rev,
-		s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference);
+	memset(&opt, 0, sizeof(opt));
+	opt.def = s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference;
+	setup_revisions(0, NULL, &rev, &opt);
+
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_collect_updated_cb;
 	rev.diffopt.format_callback_data = s;
@@ -543,11 +546,15 @@ static void wt_status_print_untracked(struct wt_status *s)
 static void wt_status_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
+	struct setup_revision_opt opt;
 
 	init_revisions(&rev, NULL);
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
-	setup_revisions(0, NULL, &rev,
-		s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference);
+
+	memset(&opt, 0, sizeof(opt));
+	opt.def = s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference;
+	setup_revisions(0, NULL, &rev, &opt);
+
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.file = s->fp;

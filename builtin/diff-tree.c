@@ -92,12 +92,23 @@ static const char diff_tree_usage[] =
 "  --root        include the initial commit as diff against /dev/null\n"
 COMMON_DIFF_OPTIONS_HELP;
 
+static void diff_tree_tweak_rev(struct rev_info *rev, struct setup_revision_opt *opt)
+{
+	if (!rev->diffopt.output_format) {
+		if (rev->dense_combined_merges)
+			rev->diffopt.output_format = DIFF_FORMAT_PATCH;
+		else
+			rev->diffopt.output_format = DIFF_FORMAT_RAW;
+	}
+}
+
 int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 {
 	int nr_sha1;
 	char line[1000];
 	struct object *tree1, *tree2;
 	static struct rev_info *opt = &log_tree_opt;
+	struct setup_revision_opt s_r_opt;
 	int read_stdin = 0;
 
 	init_revisions(opt, prefix);
@@ -105,7 +116,9 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	opt->abbrev = 0;
 	opt->diff = 1;
 	opt->disable_stdin = 1;
-	argc = setup_revisions(argc, argv, opt, NULL);
+	memset(&s_r_opt, 0, sizeof(s_r_opt));
+	s_r_opt.tweak = diff_tree_tweak_rev;
+	argc = setup_revisions(argc, argv, opt, &s_r_opt);
 
 	while (--argc > 0) {
 		const char *arg = *++argv;
@@ -116,9 +129,6 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		}
 		usage(diff_tree_usage);
 	}
-
-	if (!opt->diffopt.output_format)
-		opt->diffopt.output_format = DIFF_FORMAT_RAW;
 
 	/*
 	 * NOTE! We expect "a ^b" to be equal to "a..b", so we
