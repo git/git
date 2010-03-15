@@ -164,23 +164,23 @@ Here are the "carry forward" rules:
 
         I (index)           H        M        Result
        -------------------------------------------------------
-      0 nothing             nothing  nothing  (does not happen)
-      1 nothing             nothing  exists   use M
-      2 nothing             exists   nothing  remove path from index
-      3 nothing             exists   exists,  use M if "initial checkout"
+     0  nothing             nothing  nothing  (does not happen)
+     1  nothing             nothing  exists   use M
+     2  nothing             exists   nothing  remove path from index
+     3  nothing             exists   exists,  use M if "initial checkout"
 				     H == M   keep index otherwise
 				     exists   fail
 				     H != M
 
         clean I==H  I==M
        ------------------
-      4 yes   N/A   N/A     nothing  nothing  keep index
-      5 no    N/A   N/A     nothing  nothing  keep index
+     4  yes   N/A   N/A     nothing  nothing  keep index
+     5  no    N/A   N/A     nothing  nothing  keep index
 
-      6 yes   N/A   yes     nothing  exists   keep index
-      7 no    N/A   yes     nothing  exists   keep index
-      8 yes   N/A   no      nothing  exists   fail
-      9 no    N/A   no      nothing  exists   fail
+     6  yes   N/A   yes     nothing  exists   keep index
+     7  no    N/A   yes     nothing  exists   keep index
+     8  yes   N/A   no      nothing  exists   fail
+     9  no    N/A   no      nothing  exists   fail
 
      10 yes   yes   N/A     exists   nothing  remove path from index
      11 no    yes   N/A     exists   nothing  fail
