@@ -250,7 +250,9 @@ __git_refs ()
 			refs="${cur%/*}"
 			;;
 		*)
-			if [ -e "$dir/HEAD" ]; then echo HEAD; fi
+			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
+				if [ -e "$dir/$i" ]; then echo $i; fi
+			done
 			format="refname:short"
 			refs="refs/tags refs/heads refs/remotes"
 			;;
