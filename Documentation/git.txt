@@ -530,6 +530,12 @@ git so take care if using Cogito etc.
 	a GIT_DIR set on the command line or in the environment.
 	(Useful for excluding slow-loading network directories.)
 
+'GIT_ONE_FILESYSTEM'::
+	If set to a true value ("true" or a non-zero integer), stop at
+	filesystem boundaries when looking for a repository directory.
+	Like 'GIT_CEILING_DIRECTORIES', it will not affect an explicit
+	respository directory set via 'GIT_DIR' or on the command line.
+
 git Commits
 ~~~~~~~~~~~
 'GIT_AUTHOR_NAME'::
