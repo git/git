@@ -235,10 +235,11 @@ int mingw_getpagesize(void);
 #ifndef ALREADY_DECLARED_STAT_FUNCS
 #define stat _stati64
 int mingw_lstat(const char *file_name, struct stat *buf);
+int mingw_stat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
 #define fstat mingw_fstat
 #define lstat mingw_lstat
-#define _stati64(x,y) mingw_lstat(x,y)
+#define _stati64(x,y) mingw_stat(x,y)
 #endif
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
