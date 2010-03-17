@@ -334,8 +334,11 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
  * We keep the do_lstat code in a separate function to avoid recursion.
  * When a path ends with a slash, the stat will fail with ENOENT. In
  * this case, we strip the trailing slashes and stat again.
+ *
+ * If follow is true then act like stat() and report on the link
+ * target. Otherwise report on the link itself.
  */
-static int do_lstat(const char *file_name, struct stat *buf)
+static int do_lstat(int follow, const char *file_name, struct stat *buf)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
 
@@ -357,11 +360,16 @@ static int do_lstat(const char *file_name, struct stat *buf)
 			if (handle != INVALID_HANDLE_VALUE) {
 				if ((findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
 						(findbuf.dwReserved0 == IO_REPARSE_TAG_SYMLINK)) {
-					char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
-					buf->st_mode = S_IREAD | S_IFLNK;
+					if (follow) {
+						char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+						buf->st_size = readlink(file_name, buffer, MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+						buf->st_mode = S_IFREG;
+					} else {
+						buf->st_mode = S_IFLNK;
+					}
+					buf->st_mode |= S_IREAD;
 					if (!(findbuf.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
 						buf->st_mode |= S_IWRITE;
-					buf->st_size = readlink(file_name, buffer, MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
 				}
 				FindClose(handle);
 			}
@@ -378,12 +386,12 @@ static int do_lstat(const char *file_name, struct stat *buf)
  * complete. Note that Git stat()s are redirected to mingw_lstat()
  * too, since Windows doesn't really handle symlinks that well.
  */
-int mingw_lstat(const char *file_name, struct stat *buf)
+static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 {
 	int namelen;
 	static char alt_name[PATH_MAX];
 
-	if (!do_lstat(file_name, buf))
+	if (!do_lstat(follow, file_name, buf))
 		return 0;
 
 	/*
@@ -403,7 +411,16 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 
 	memcpy(alt_name, file_name, namelen);
 	alt_name[namelen] = 0;
-	return do_lstat(alt_name, buf);
+	return do_lstat(follow, alt_name, buf);
+}
+
+int mingw_lstat(const char *file_name, struct stat *buf)
+{
+	return do_stat_internal(0, file_name, buf);
+}
+int mingw_stat(const char *file_name, struct stat *buf)
+{
+	return do_stat_internal(1, file_name, buf);
 }
 
 #undef fstat
