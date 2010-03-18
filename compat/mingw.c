@@ -291,7 +291,8 @@ static int make_hidden(const char *path)
 
 void mingw_mark_as_git_dir(const char *dir)
 {
-	if (hide_dotfiles != HIDE_DOTFILES_FALSE && make_hidden(dir))
+	if (hide_dotfiles != HIDE_DOTFILES_FALSE && !is_bare_repository() &&
+	    make_hidden(dir))
 		warning("Failed to make '%s' hidden", dir);
 	git_config_set("core.hideDotFiles",
 		hide_dotfiles == HIDE_DOTFILES_FALSE ? "false" :
