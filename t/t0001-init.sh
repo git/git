@@ -371,4 +371,32 @@ test_expect_success 'init prefers command line to GIT_DIR' '
 	! test -d otherdir/refs
 '
 
+# Tests for the hidden file attribute on windows
+is_hidden () {
+	test "1" -eq "$(echo puts [file attributes $1 -hidden]|tclsh)"
+}
+
+test_expect_success MINGW 'plain hidden' '
+	rm -rf newdir &&
+	(
+		unset GIT_DIR GIT_WORK_TREE
+		mkdir newdir &&
+		cd newdir &&
+		git init &&
+		is_hidden .git
+	) &&
+	check_config newdir/.git false unset
+'
+
+test_expect_success MINGW 'plain bare not hidden' '
+	rm -rf newdir
+	(
+		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG
+		mkdir newdir &&
+		cd newdir &&
+		git --bare init
+	) &&
+	! is_hidden newdir
+'
+
 test_done
