@@ -41,7 +41,7 @@ strategy_args= diffstat= no_commit= squash= no_ff= ff_only=
 log_arg= verbosity=
 merge_args=
 curr_branch=$(git symbolic-ref -q HEAD)
-curr_branch_short=$(echo "$curr_branch" | sed "s|refs/heads/||")
+curr_branch_short="${curr_branch#refs/heads/}"
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
 while :
 do
