@@ -802,7 +802,7 @@ class P4Submit(Command):
         self.oldWorkingDirectory = os.getcwd()
 
         chdir(self.clientPath)
-        print "Syncronizing p4 checkout..."
+        print "Synchronizing p4 checkout..."
         p4_system("sync ...")
 
         self.check()
