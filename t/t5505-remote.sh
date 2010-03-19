@@ -121,7 +121,7 @@ Note: Non-remote branches were not removed; to delete them, use:
   git branch -d master
 EOF
 	} &&
-	git tag footag
+	git tag footag &&
 	git config --add remote.oops.fetch "+refs/*:refs/*" &&
 	git remote rm oops 2>actual1 &&
 	git branch foobranch &&
