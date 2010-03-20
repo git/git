@@ -317,6 +317,12 @@ SCRIPT_PYTHON =
 SCRIPT_SH =
 TEST_PROGRAMS =
 
+# Having this variable in your environment would break pipelines because
+# you cause "cd" to echo its destination to stdout.  It can also take
+# scripts to unexpected places.  If you like CDPATH, define it for your
+# interactive shell sessions without exporting it.
+unexport CDPATH
+
 SCRIPT_SH += git-am.sh
 SCRIPT_SH += git-bisect.sh
 SCRIPT_SH += git-difftool--helper.sh
