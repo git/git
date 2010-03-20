@@ -4,21 +4,50 @@ Git v1.7.1 Release Notes (draft)
 Updates since v1.7.0
 --------------------
 
+ * Some commands (e.g. svn and http interfaces) that interactively ask
+   password can be told to use an external program given via GIT_ASKPASS.
+
+ * Color values given to "color.<cmd>.<slot>" configuration can now have
+   more than one attributes (e.g. "bold ul").
+
+ * "git apply --whitespace=fix" didn't work well when an early patch in
+   a patch series adds trailing blank lines and a later one depended on
+   such a block of blank lines at the end.
+
+ * "git am" learned "--keep-cr" option to handle inputs that are
+   mixture of changes to files with and without CRLF line endings.
+
  * "git cvsimport" learned -R option to leave revision mapping between
    CVS revisions and resulting git commits.
 
  * "git for-each-ref" learned %(symref), %(symref:short) and %(flag)
    tokens.
 
+ * "git hash-object --stdin-paths" can take "--no-filters" option now.
+
+ * "git init" can be told to look at init.templatedir configuration
+   variable (obviously that has to come from either /etc/gitconfig or
+   $HOME/.gitconfig).
+
  * "git grep" learned "--no-index" option, to search inside contents that
    are not managed by git.
 
  * "git grep" learned --color=auto/always/never.
 
- * "git hash-object --stdin-paths" can take "--no-filters" option now.
+ * "git grep" learned to paint filename and line-number in colors.
+
+ * "git merge-file" learned to use custom conflict marker size and also use
+   the "union merge" behaviour.
+
+ * "git notes" command has been rewritten in C and learned quite a
+   many commands.
 
  * "git request-pull" identifies the commit the request is relative to in
    a more readable way.
+
+ * "git reset" learned "--keep" option that lets you discard commits
+   near the tip while preserving your local changes in a way similar
+   to how "git checkout branch" does.
 
  * "git svn" should work better when interacting with repositories
    with CRLF line endings.
@@ -31,8 +60,11 @@ Fixes since v1.7.0
 All of the fixes in v1.7.0.X maintenance series are included in this
 release, unless otherwise noted.
 
+ * "git add frotz/nitfol" did not complain when the entire frotz/ directory
+   was ignored.
+
 ---
 exec >/var/tmp/1
 echo O=$(git describe)
-O=v1.7.0.2-181-gc6830a3
+O=v1.7.0.2-322-g4e7d08a
 git shortlog --no-merges ^maint $O..

@@ -9,12 +9,18 @@ Fixes since v1.7.0.2
 
  * "git add -i" didn't handle a deleted path very well.
 
+ * "git blame" padded line numbers with one extra SP when the total number
+   of lines was one less than multiple of ten due to an off-by-one error.
+
  * "git fetch --all/--multi" used to discard information for remotes that
    are fetched earlier.
 
  * "git log --author=me --grep=it" tried to find commits that have "it"
    or are written by "me", instead of the ones that have "it" _and_ are
    written by "me".
+
+ * "git log -g branch" misbehaved when there was no entries in the reflog
+   for the named branch.
 
  * "git mailinfo" (hence "git am") incorrectly removed initial indent from
    paragraphs.
@@ -30,5 +36,5 @@ And other minor fixes and documentation updates.
 --
 exec >/var/tmp/1
 echo O=$(git describe)
-O=v1.7.0.2-53-g6eb3adf
+O=v1.7.0.2-69-g730b020
 git shortlog --no-merges $O..

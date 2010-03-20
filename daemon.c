@@ -420,7 +420,7 @@ static void parse_host_and_port(char *hostport, char **host,
 		*host = hostport;
 		*port = strrchr(hostport, ':');
 		if (*port) {
-			*port = '\0';
+			**port = '\0';
 			++*port;
 		}
 	}

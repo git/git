@@ -1031,7 +1031,7 @@ void remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 	t->dirty = 1;
 	hashcpy(l.key_sha1, object_sha1);
 	hashclr(l.val_sha1);
-	return note_tree_remove(t, t->root, 0, &l);
+	note_tree_remove(t, t->root, 0, &l);
 }
 
 const unsigned char *get_note(struct notes_tree *t,

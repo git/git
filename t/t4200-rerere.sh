@@ -8,40 +8,42 @@ test_description='git rerere
 
 . ./test-lib.sh
 
-cat > a1 << EOF
-Some title
-==========
-Whether 'tis nobler in the mind to suffer
-The slings and arrows of outrageous fortune,
-Or to take arms against a sea of troubles,
-And by opposing end them? To die: to sleep;
-No more; and by a sleep to say we end
-The heart-ache and the thousand natural shocks
-That flesh is heir to, 'tis a consummation
-Devoutly to be wish'd.
-EOF
+test_expect_success 'setup' "
+	cat > a1 <<- EOF &&
+	Some title
+	==========
+	Whether 'tis nobler in the mind to suffer
+	The slings and arrows of outrageous fortune,
+	Or to take arms against a sea of troubles,
+	And by opposing end them? To die: to sleep;
+	No more; and by a sleep to say we end
+	The heart-ache and the thousand natural shocks
+	That flesh is heir to, 'tis a consummation
+	Devoutly to be wish'd.
+	EOF
 
-git add a1
-git commit -q -a -m initial
+	git add a1 &&
+	git commit -q -a -m initial &&
 
-git checkout -b first
-cat >> a1 << EOF
-Some title
-==========
-To die, to sleep;
-To sleep: perchance to dream: ay, there's the rub;
-For in that sleep of death what dreams may come
-When we have shuffled off this mortal coil,
-Must give us pause: there's the respect
-That makes calamity of so long life;
-EOF
-git commit -q -a -m first
+	git checkout -b first &&
+	cat >> a1 <<- EOF &&
+	Some title
+	==========
+	To die, to sleep;
+	To sleep: perchance to dream: ay, there's the rub;
+	For in that sleep of death what dreams may come
+	When we have shuffled off this mortal coil,
+	Must give us pause: there's the respect
+	That makes calamity of so long life;
+	EOF
+	git commit -q -a -m first &&
 
-git checkout -b second master
-git show first:a1 |
-sed -e 's/To die, t/To die! T/' -e 's/Some title/Some Title/' > a1
-echo "* END *" >>a1
-git commit -q -a -m second
+	git checkout -b second master &&
+	git show first:a1 |
+	sed -e 's/To die, t/To die! T/' -e 's/Some title/Some Title/' > a1 &&
+	echo '* END *' >>a1 &&
+	git commit -q -a -m second
+"
 
 test_expect_success 'nothing recorded without rerere' '
 	(rm -rf .git/rr-cache; git config rerere.enabled false) &&
