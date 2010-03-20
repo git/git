@@ -390,7 +390,6 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 					if (follow) {
 						char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
 						buf->st_size = readlink(file_name, buffer, MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
-						buf->st_mode = S_IFREG;
 					} else {
 						buf->st_mode = S_IFLNK;
 					}
