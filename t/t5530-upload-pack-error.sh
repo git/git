@@ -32,9 +32,9 @@ test_expect_success 'fsck fails' '
 
 test_expect_success 'upload-pack fails due to error in pack-objects packing' '
 
-	! echo "0032want $(git rev-parse HEAD)
-00000009done
-0000" | git upload-pack . > /dev/null 2> output.err &&
+	printf "0032want %s\n00000009done\n0000" \
+		$(git rev-parse HEAD) >input &&
+	test_must_fail git upload-pack . <input >/dev/null 2>output.err &&
 	grep "unable to read" output.err &&
 	grep "pack-objects died" output.err
 '
@@ -51,9 +51,9 @@ test_expect_success 'fsck fails' '
 '
 test_expect_success 'upload-pack fails due to error in rev-list' '
 
-	! echo "0032want $(git rev-parse HEAD)
-0034shallow $(git rev-parse HEAD^)00000009done
-0000" | git upload-pack . > /dev/null 2> output.err &&
+	printf "0032want %s\n0034shallow %s00000009done\n0000" \
+		$(git rev-parse HEAD) $(git rev-parse HEAD^) >input &&
+	test_must_fail git upload-pack . <input >/dev/null 2>output.err &&
 	# pack-objects survived
 	grep "Total.*, reused" output.err &&
 	# but there was an error, which must have been in rev-list
@@ -62,9 +62,9 @@ test_expect_success 'upload-pack fails due to error in rev-list' '
 
 test_expect_success 'upload-pack fails due to error in pack-objects enumeration' '
 
-	! echo "0032want $(git rev-parse HEAD)
-00000009done
-0000" | git upload-pack . > /dev/null 2> output.err &&
+	printf "0032want %s\n00000009done\n0000" \
+		$(git rev-parse HEAD) >input &&
+	test_must_fail git upload-pack . <input >/dev/null 2>output.err &&
 	grep "bad tree object" output.err &&
 	grep "pack-objects died" output.err
 '
