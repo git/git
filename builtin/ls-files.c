@@ -153,8 +153,7 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 		printf("%s%06o %s %d\t",
 		       tag,
 		       ce->ce_mode,
-		       abbrev ? find_unique_abbrev(ce->sha1,abbrev)
-				: sha1_to_hex(ce->sha1),
+		       find_unique_abbrev(ce->sha1,abbrev),
 		       ce_stage(ce));
 	}
 	write_name_quoted(ce->name + offset, stdout, line_terminator);
@@ -176,9 +175,7 @@ static int show_one_ru(struct string_list_item *item, void *cbdata)
 		if (!ui->mode[i])
 			continue;
 		printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
-		       abbrev
-		       ? find_unique_abbrev(ui->sha1[i], abbrev)
-		       : sha1_to_hex(ui->sha1[i]),
+		       find_unique_abbrev(ui->sha1[i], abbrev),
 		       i + 1);
 		write_name_quoted(path + offset, stdout, line_terminator);
 	}
