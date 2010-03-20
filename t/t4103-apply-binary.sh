@@ -20,23 +20,25 @@ EOF
 cat file1 >file2
 cat file1 >file4
 
-git update-index --add --remove file1 file2 file4
-git commit -m 'Initial Version' 2>/dev/null
+test_expect_success 'setup' "
+	git update-index --add --remove file1 file2 file4 &&
+	git commit -m 'Initial Version' 2>/dev/null &&
 
-git checkout -b binary
-perl -pe 'y/x/\000/' <file1 >file3
-cat file3 >file4
-git add file2
-perl -pe 'y/\000/v/' <file3 >file1
-rm -f file2
-git update-index --add --remove file1 file2 file3 file4
-git commit -m 'Second Version'
+	git checkout -b binary &&
+	perl -pe 'y/x/\000/' <file1 >file3 &&
+	cat file3 >file4 &&
+	git add file2 &&
+	perl -pe 'y/\000/v/' <file3 >file1 &&
+	rm -f file2 &&
+	git update-index --add --remove file1 file2 file3 file4 &&
+	git commit -m 'Second Version' &&
 
-git diff-tree -p master binary >B.diff
-git diff-tree -p -C master binary >C.diff
+	git diff-tree -p master binary >B.diff &&
+	git diff-tree -p -C master binary >C.diff &&
 
-git diff-tree -p --binary master binary >BF.diff
-git diff-tree -p --binary -C master binary >CF.diff
+	git diff-tree -p --binary master binary >BF.diff &&
+	git diff-tree -p --binary -C master binary >CF.diff
+"
 
 test_expect_success 'stat binary diff -- should not fail.' \
 	'git checkout master

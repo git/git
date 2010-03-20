@@ -15,9 +15,10 @@ code and message.'
 # ----------------------------------------------------------------------
 # snapshot settings
 
-test_commit \
-	'SnapshotTests' \
-	'i can has snapshot?'
+test_expect_success 'setup' "
+	test_commit 'SnapshotTests' 'i can has snapshot?'
+"
+
 
 cat >>gitweb_config.perl <<\EOF
 $feature{'snapshot'}{'override'} = 0;
