@@ -35,14 +35,6 @@ test_expect_success 'cherry-pick not using --ff does not fast forwards' '
 	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify second)"
 '
 
-test_expect_success 'cherry-pick using --no-ff does not fast forwards' '
-	git checkout master &&
-	git reset --hard first &&
-	test_tick &&
-	git cherry-pick --no-ff second &&
-	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify second)"
-'
-
 #
 # We setup the following graph:
 #
