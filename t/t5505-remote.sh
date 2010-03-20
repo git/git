@@ -662,7 +662,7 @@ test_expect_success 'remote set-url --add bbb' '
 '
 
 test_expect_success 'remote set-url --delete .*' '
-	test_must_fail git remote set-url --delete someremote .* &&
+	test_must_fail git remote set-url --delete someremote .\* &&
 	echo "YYY" >expect &&
 	echo baz >>expect &&
 	echo bbb >>expect &&
