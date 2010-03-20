@@ -30,7 +30,18 @@
 #define GIT_COLOR_BLUE		"\033[34m"
 #define GIT_COLOR_MAGENTA	"\033[35m"
 #define GIT_COLOR_CYAN		"\033[36m"
+#define GIT_COLOR_BOLD_RED	"\033[1;31m"
+#define GIT_COLOR_BOLD_GREEN	"\033[1;32m"
+#define GIT_COLOR_BOLD_YELLOW	"\033[1;33m"
+#define GIT_COLOR_BOLD_BLUE	"\033[1;34m"
+#define GIT_COLOR_BOLD_MAGENTA	"\033[1;35m"
+#define GIT_COLOR_BOLD_CYAN	"\033[1;36m"
 #define GIT_COLOR_BG_RED	"\033[41m"
+#define GIT_COLOR_BG_GREEN	"\033[42m"
+#define GIT_COLOR_BG_YELLOW	"\033[43m"
+#define GIT_COLOR_BG_BLUE	"\033[44m"
+#define GIT_COLOR_BG_MAGENTA	"\033[45m"
+#define GIT_COLOR_BG_CYAN	"\033[46m"
 
 /*
  * This variable stores the value of color.ui

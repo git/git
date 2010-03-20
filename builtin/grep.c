@@ -289,6 +289,7 @@ static int wait_all(void)
 static int grep_config(const char *var, const char *value, void *cb)
 {
 	struct grep_opt *opt = cb;
+	char *color = NULL;
 
 	switch (userdiff_config(var, value)) {
 	case 0: break;
@@ -296,17 +297,30 @@ static int grep_config(const char *var, const char *value, void *cb)
 	default: return 0;
 	}
 
-	if (!strcmp(var, "color.grep")) {
+	if (!strcmp(var, "color.grep"))
 		opt->color = git_config_colorbool(var, value, -1);
-		return 0;
-	}
-	if (!strcmp(var, "color.grep.match")) {
+	else if (!strcmp(var, "color.grep.context"))
+		color = opt->color_context;
+	else if (!strcmp(var, "color.grep.filename"))
+		color = opt->color_filename;
+	else if (!strcmp(var, "color.grep.function"))
+		color = opt->color_function;
+	else if (!strcmp(var, "color.grep.linenumber"))
+		color = opt->color_lineno;
+	else if (!strcmp(var, "color.grep.match"))
+		color = opt->color_match;
+	else if (!strcmp(var, "color.grep.selected"))
+		color = opt->color_selected;
+	else if (!strcmp(var, "color.grep.separator"))
+		color = opt->color_sep;
+	else
+		return git_color_default_config(var, value, cb);
+	if (color) {
 		if (!value)
 			return config_error_nonbool(var);
-		color_parse(value, var, opt->color_match);
-		return 0;
+		color_parse(value, var, color);
 	}
-	return git_color_default_config(var, value, cb);
+	return 0;
 }
 
 /*
@@ -872,7 +886,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	opt.regflags = REG_NEWLINE;
 	opt.max_depth = -1;
 
-	strcpy(opt.color_match, GIT_COLOR_RED GIT_COLOR_BOLD);
+	strcpy(opt.color_context, "");
+	strcpy(opt.color_filename, "");
+	strcpy(opt.color_function, "");
+	strcpy(opt.color_lineno, "");
+	strcpy(opt.color_match, GIT_COLOR_BOLD_RED);
+	strcpy(opt.color_selected, "");
+	strcpy(opt.color_sep, GIT_COLOR_CYAN);
 	opt.color = -1;
 	git_config(grep_config, &opt);
 	if (opt.color == -1)
