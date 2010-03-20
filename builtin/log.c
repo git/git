@@ -1264,8 +1264,11 @@ static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
 	return -1;
 }
 
-static const char cherry_usage[] =
-"git cherry [-v] [<upstream> [<head> [<limit>]]]";
+static const char * const cherry_usage[] = {
+	"git cherry [-v] [<upstream> [<head> [<limit>]]]",
+	NULL
+};
+
 int cmd_cherry(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -1276,26 +1279,25 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 	const char *upstream;
 	const char *head = "HEAD";
 	const char *limit = NULL;
-	int verbose = 0;
+	int verbose = 0, abbrev = 0;
 
-	if (argc > 1 && !strcmp(argv[1], "-v")) {
-		verbose = 1;
-		argc--;
-		argv++;
-	}
+	struct option options[] = {
+		OPT__ABBREV(&abbrev),
+		OPT__VERBOSE(&verbose),
+		OPT_END()
+	};
 
-	if (argc > 1 && !strcmp(argv[1], "-h"))
-		usage(cherry_usage);
+	argc = parse_options(argc, argv, prefix, options, cherry_usage, 0);
 
 	switch (argc) {
-	case 4:
-		limit = argv[3];
-		/* FALLTHROUGH */
 	case 3:
-		head = argv[2];
+		limit = argv[2];
 		/* FALLTHROUGH */
 	case 2:
-		upstream = argv[1];
+		head = argv[1];
+		/* FALLTHROUGH */
+	case 1:
+		upstream = argv[0];
 		break;
 	default:
 		current_branch = branch_get(NULL);
@@ -1305,7 +1307,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 			fprintf(stderr, "Could not find a tracked"
 					" remote branch, please"
 					" specify <upstream> manually.\n");
-			usage(cherry_usage);
+			usage_with_options(cherry_usage, options);
 		}
 
 		upstream = current_branch->merge[0]->dst;
@@ -1358,12 +1360,13 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 			pretty_print_commit(CMIT_FMT_ONELINE, commit,
 					    &buf, &ctx);
 			printf("%c %s %s\n", sign,
-			       sha1_to_hex(commit->object.sha1), buf.buf);
+			       find_unique_abbrev(commit->object.sha1, abbrev),
+			       buf.buf);
 			strbuf_release(&buf);
 		}
 		else {
 			printf("%c %s\n", sign,
-			       sha1_to_hex(commit->object.sha1));
+			       find_unique_abbrev(commit->object.sha1, abbrev));
 		}
 
 		list = list->next;
