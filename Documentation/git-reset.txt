@@ -8,7 +8,7 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [verse]
-'git reset' [--mixed | --soft | --hard | --merge] [-q] [<commit>]
+'git reset' [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]
 'git reset' [-q] [<commit>] [--] <paths>...
 'git reset' --patch [<commit>] [--] [<paths>...]
 
@@ -52,6 +52,14 @@ OPTIONS
 	and updates the files that are different between the named commit
 	and the current commit in the working tree.
 
+--keep::
+	Reset the index to the given commit, keeping local changes in
+	the working tree since the current commit, while updating
+	working tree files without local changes to what appears in
+	the given commit.  If a file that is different between the
+	current commit and the given commit has local changes, reset
+	is aborted.
+
 -p::
 --patch::
 	Interactively select hunks in the difference between the index
@@ -93,6 +101,7 @@ in the index and in state D in HEAD.
 				--mixed  A       D     D
 				--hard   D       D     D
 				--merge (disallowed)
+				--keep  (disallowed)
 
       working index HEAD target         working index HEAD
       ----------------------------------------------------
@@ -100,6 +109,7 @@ in the index and in state D in HEAD.
 				--mixed  A       C     C
 				--hard   C       C     C
 				--merge (disallowed)
+				--keep   A       C     C
 
       working index HEAD target         working index HEAD
       ----------------------------------------------------
@@ -107,6 +117,7 @@ in the index and in state D in HEAD.
 				--mixed  B       D     D
 				--hard   D       D     D
 				--merge  D       D     D
+				--keep  (disallowed)
 
       working index HEAD target         working index HEAD
       ----------------------------------------------------
@@ -114,6 +125,7 @@ in the index and in state D in HEAD.
 				--mixed  B       C     C
 				--hard   C       C     C
 				--merge  C       C     C
+				--keep   B       C     C
 
       working index HEAD target         working index HEAD
       ----------------------------------------------------
@@ -121,6 +133,7 @@ in the index and in state D in HEAD.
 				--mixed  B       D     D
 				--hard   D       D     D
 				--merge (disallowed)
+				--keep  (disallowed)
 
       working index HEAD target         working index HEAD
       ----------------------------------------------------
@@ -128,6 +141,7 @@ in the index and in state D in HEAD.
 				--mixed  B       C     C
 				--hard   C       C     C
 				--merge  B       C     C
+				--keep   B       C     C
 
 "reset --merge" is meant to be used when resetting out of a conflicted
 merge. Any mergy operation guarantees that the work tree file that is
@@ -138,6 +152,15 @@ between the index and the work tree, then it means that we are not
 resetting out from a state that a mergy operation left after failing
 with a conflict. That is why we disallow --merge option in this case.
 
+"reset --keep" is meant to be used when removing some of the last
+commits in the current branch while keeping changes in the working
+tree. If there could be conflicts between the changes in the commit we
+want to remove and the changes in the working tree we want to keep,
+the reset is disallowed. That's why it is disallowed if there are both
+changes between the working tree and HEAD, and between HEAD and the
+target. To be safe, it is also disallowed when there are unmerged
+entries.
+
 The following tables show what happens when there are unmerged
 entries:
 
@@ -147,6 +170,7 @@ entries:
 				--mixed  X       B     B
 				--hard   B       B     B
 				--merge  B       B     B
+				--keep  (disallowed)
 
       working index HEAD target         working index HEAD
       ----------------------------------------------------
@@ -154,6 +178,7 @@ entries:
 				--mixed  X       A     A
 				--hard   A       A     A
 				--merge  A       A     A
+				--keep  (disallowed)
 
 X means any state and U means an unmerged index.
 
@@ -324,6 +349,32 @@ $ git add frotz.c                           <3>
     directory.
 <2> This commits all other changes in the index.
 <3> Adds the file to the index again.
+
+Keep changes in working tree while discarding some previous commits::
++
+Suppose you are working on something and you commit it, and then you
+continue working a bit more, but now you think that what you have in
+your working tree should be in another branch that has nothing to do
+with what you commited previously. You can start a new branch and
+reset it while keeping the changes in your work tree.
++
+------------
+$ git tag start
+$ git checkout -b branch1
+$ edit
+$ git commit ...                            <1>
+$ edit
+$ git checkout -b branch2                   <2>
+$ git reset --keep start                    <3>
+------------
++
+<1> This commits your first edits in branch1.
+<2> In the ideal world, you could have realized that the earlier
+    commit did not belong to the new topic when you created and switched
+    to branch2 (i.e. "git checkout -b branch2 start"), but nobody is
+    perfect.
+<3> But you can use "reset --keep" to remove the unwanted commit after
+    you switched to "branch2".
 
 Author
 ------
