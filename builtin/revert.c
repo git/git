@@ -281,7 +281,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
 	struct commit *base, *next, *parent;
-	const char *next_label;
+	const char *base_label, *next_label;
 	int i, index_fd, clean;
 	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 
@@ -368,6 +368,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 
 	if (action == REVERT) {
 		base = commit;
+		base_label = msg.label;
 		next = parent;
 		next_label = msg.parent_label;
 		add_to_msg("Revert \"");
@@ -382,6 +383,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		add_to_msg(".\n");
 	} else {
 		base = parent;
+		base_label = msg.parent_label;
 		next = commit;
 		next_label = msg.label;
 		set_author_ident_env(msg.message);
@@ -395,6 +397,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 
 	read_cache();
 	init_merge_options(&o);
+	o.ancestor = base ? base_label : "(empty tree)";
 	o.branch1 = "HEAD";
 	o.branch2 = next ? next_label : "(empty tree)";
 

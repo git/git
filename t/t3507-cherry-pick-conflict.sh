@@ -112,7 +112,7 @@ test_expect_success 'diff3 -m style' '
 	cat <<-EOF > expected &&
 	<<<<<<< HEAD
 	a
-	|||||||
+	||||||| parent of objid picked
 	b
 	=======
 	c
@@ -179,7 +179,7 @@ test_expect_success 'revert conflict, diff3 -m style' '
 	cat <<-EOF > expected &&
 	<<<<<<< HEAD
 	a
-	|||||||
+	||||||| objid picked
 	c
 	=======
 	b
