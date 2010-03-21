@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/env python
 
 """ hg-to-git.py - A Mercurial to GIT converter
 
