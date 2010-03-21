@@ -538,7 +538,7 @@ test_expect_success 'checkout with --merge, in diff3 -m style' '
 	(
 		echo "<<<<<<< ours"
 		echo ourside
-		echo "|||||||"
+		echo "||||||| base"
 		echo original
 		echo "======="
 		echo theirside
@@ -582,7 +582,7 @@ test_expect_success 'checkout --conflict=diff3' '
 	(
 		echo "<<<<<<< ours"
 		echo ourside
-		echo "|||||||"
+		echo "||||||| base"
 		echo original
 		echo "======="
 		echo theirside
