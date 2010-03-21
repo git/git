@@ -319,7 +319,7 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 		if (!mmfile[i].ptr && !mmfile[i].size)
 			mmfile[i].ptr = xstrdup("");
 	}
-	ll_merge(&result, path, &mmfile[0],
+	ll_merge(&result, path, &mmfile[0], NULL,
 		 &mmfile[1], "ours",
 		 &mmfile[2], "theirs", 0);
 	for (i = 0; i < 3; i++)
@@ -376,7 +376,7 @@ static int merge(const char *name, const char *path)
 		ret = 1;
 		goto out;
 	}
-	ret = ll_merge(&result, path, &base, &cur, "", &other, "", 0);
+	ret = ll_merge(&result, path, &base, NULL, &cur, "", &other, "", 0);
 	if (!ret) {
 		FILE *f = fopen(path, "w");
 		if (!f)

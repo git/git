@@ -181,7 +181,7 @@ et nihil mihi deerit;
 
 In loco pascuae ibi me collocavit;
 super aquam refectionis educavit me.
-|||||||
+||||||| new5.txt
 et nihil mihi deerit.
 In loco pascuae ibi me collocavit,
 super aquam refectionis educavit me;
@@ -225,7 +225,7 @@ et nihil mihi deerit;
 
 In loco pascuae ibi me collocavit;
 super aquam refectionis educavit me.
-||||||||||
+|||||||||| new5.txt
 et nihil mihi deerit.
 In loco pascuae ibi me collocavit,
 super aquam refectionis educavit me;

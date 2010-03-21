@@ -608,7 +608,7 @@ static int merge_3way(struct merge_options *o,
 		      const char *branch2)
 {
 	mmfile_t orig, src1, src2;
-	char *name1, *name2;
+	char *base_name, *name1, *name2;
 	int merge_status;
 	int favor;
 
@@ -628,10 +628,15 @@ static int merge_3way(struct merge_options *o,
 		}
 	}
 
-	if (strcmp(a->path, b->path)) {
+	if (strcmp(a->path, b->path) ||
+	    (o->ancestor != NULL && strcmp(a->path, one->path) != 0)) {
+		base_name = o->ancestor == NULL ? NULL :
+			xstrdup(mkpath("%s:%s", o->ancestor, one->path));
 		name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
 		name2 = xstrdup(mkpath("%s:%s", branch2, b->path));
 	} else {
+		base_name = o->ancestor == NULL ? NULL :
+			xstrdup(mkpath("%s", o->ancestor));
 		name1 = xstrdup(mkpath("%s", branch1));
 		name2 = xstrdup(mkpath("%s", branch2));
 	}
@@ -640,7 +645,7 @@ static int merge_3way(struct merge_options *o,
 	read_mmblob(&src1, a->sha1);
 	read_mmblob(&src2, b->sha1);
 
-	merge_status = ll_merge(result_buf, a->path, &orig,
+	merge_status = ll_merge(result_buf, a->path, &orig, base_name,
 				&src1, name1, &src2, name2,
 				(!!o->call_depth) | (favor << 1));
 
@@ -1342,6 +1347,7 @@ int merge_recursive(struct merge_options *o,
 	if (!o->call_depth)
 		read_cache();
 
+	o->ancestor = "merged common ancestors";
 	clean = merge_trees(o, h1->tree, h2->tree, merged_common_ancestors->tree,
 			    &mrtree);
 

@@ -77,8 +77,10 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 					argv[i]);
 	}
 
-	ret = xdl_merge(mmfs + 1, mmfs + 0, names[0], mmfs + 2, names[2],
-			&xmp, &result);
+	xmp.ancestor = names[1];
+	xmp.file1 = names[0];
+	xmp.file2 = names[2];
+	ret = xdl_merge(mmfs + 1, mmfs + 0, mmfs + 2, &xmp, &result);
 
 	for (i = 0; i < 3; i++)
 		free(mmfs[i].ptr);
