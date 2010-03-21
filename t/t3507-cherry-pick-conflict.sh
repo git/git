@@ -138,7 +138,7 @@ test_expect_success 'revert also handles conflicts sanely' '
 	a
 	=======
 	b
-	>>>>>>> objid picked
+	>>>>>>> parent of objid picked
 	EOF
 	{
 		git checkout picked -- foo &&
@@ -183,7 +183,7 @@ test_expect_success 'revert conflict, diff3 -m style' '
 	c
 	=======
 	b
-	>>>>>>> objid picked
+	>>>>>>> parent of objid picked
 	EOF
 
 	git update-index --refresh &&
