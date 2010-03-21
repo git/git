@@ -209,7 +209,7 @@ test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
 	a
 	c
 	e
-	|||||||
+	||||||| master
 	a
 	b
 	c

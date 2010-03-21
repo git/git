@@ -439,6 +439,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 			ret = reset_tree(new->commit->tree, opts, 1);
 			if (ret)
 				return ret;
+			o.ancestor = old->name;
 			o.branch1 = new->name;
 			o.branch2 = "local";
 			merge_trees(&o, new->commit->tree, work,
