@@ -117,6 +117,7 @@ typedef struct s_xmparam {
 	int level;
 	int favor;
 	int style;
+	const char *ancestor;	/* label for orig */
 } xmparam_t;
 
 #define DEFAULT_CONFLICT_MARKER_SIZE 7
