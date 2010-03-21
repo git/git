@@ -30,7 +30,7 @@ static void *three_way_filemerge(const char *path, mmfile_t *base, mmfile_t *our
 	int merge_status;
 	mmbuffer_t res;
 
-	merge_status = ll_merge(&res, path, base,
+	merge_status = ll_merge(&res, path, base, NULL,
 				our, ".our", their, ".their", 0);
 	if (merge_status < 0)
 		return NULL;

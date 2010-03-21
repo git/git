@@ -640,7 +640,7 @@ static int merge_3way(struct merge_options *o,
 	read_mmblob(&src1, a->sha1);
 	read_mmblob(&src2, b->sha1);
 
-	merge_status = ll_merge(result_buf, a->path, &orig,
+	merge_status = ll_merge(result_buf, a->path, &orig, NULL,
 				&src1, name1, &src2, name2,
 				(!!o->call_depth) | (favor << 1));
 
