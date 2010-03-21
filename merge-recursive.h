@@ -4,6 +4,7 @@
 #include "string-list.h"
 
 struct merge_options {
+	const char *ancestor;
 	const char *branch1;
 	const char *branch2;
 	enum {
