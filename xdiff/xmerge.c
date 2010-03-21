@@ -407,12 +407,15 @@ static int xdl_simplify_non_conflicts(xdfenv_t *xe1, xdmerge_t *m,
  *
  * returns < 0 on error, == 0 for no conflicts, else number of conflicts
  */
-static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
-		xdfenv_t *xe2, xdchange_t *xscr2, const char *name2,
-		xmparam_t const *xmp, mmbuffer_t *result) {
+static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1,
+		xdfenv_t *xe2, xdchange_t *xscr2,
+		xmparam_t const *xmp, mmbuffer_t *result)
+{
 	xdmerge_t *changes, *c;
 	xpparam_t const *xpp = &xmp->xpp;
 	const char *const ancestor_name = xmp->ancestor;
+	const char *const name1 = xmp->file1;
+	const char *const name2 = xmp->file2;
 	int i0, i1, i2, chg0, chg1, chg2;
 	int level = xmp->level;
 	int style = xmp->style;
@@ -566,9 +569,9 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 	return xdl_cleanup_merge(changes);
 }
 
-int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
-		mmfile_t *mf2, const char *name2,
-		xmparam_t const *xmp, mmbuffer_t *result) {
+int xdl_merge(mmfile_t *orig, mmfile_t *mf1, mmfile_t *mf2,
+		xmparam_t const *xmp, mmbuffer_t *result)
+{
 	xdchange_t *xscr1, *xscr2;
 	xdfenv_t xe1, xe2;
 	int status;
@@ -603,8 +606,8 @@ int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 		memcpy(result->ptr, mf1->ptr, mf1->size);
 		result->size = mf1->size;
 	} else {
-		status = xdl_do_merge(&xe1, xscr1, name1,
-				      &xe2, xscr2, name2,
+		status = xdl_do_merge(&xe1, xscr1,
+				      &xe2, xscr2,
 				      xmp, result);
 	}
 	xdl_free_script(xscr1);

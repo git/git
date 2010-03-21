@@ -83,7 +83,9 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 		xmp.style = git_xmerge_style;
 	if (marker_size > 0)
 		xmp.marker_size = marker_size;
-	return xdl_merge(orig, src1, name1, src2, name2, &xmp, result);
+	xmp.file1 = name1;
+	xmp.file2 = name2;
+	return xdl_merge(orig, src1, src2, &xmp, result);
 }
 
 static int ll_union_merge(const struct ll_merge_driver *drv_unused,
