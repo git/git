@@ -1306,8 +1306,14 @@ static int count_messages(struct msg_data *msg)
 
 	while (1) {
 		if (!prefixcmp(p, "From ")) {
+			p = strstr(p+5, "\nFrom: ");
+			if (!p) break;
+			p = strstr(p+7, "\nDate: ");
+			if (!p) break;
+			p = strstr(p+7, "\nSubject: ");
+			if (!p) break;
+			p += 10;
 			count++;
-			p += 5;
 		}
 		p = strstr(p+5, "\nFrom ");
 		if (!p)
