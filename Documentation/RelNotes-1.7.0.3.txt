@@ -1,5 +1,5 @@
-Git v1.7.0.3 Release Notes (draft)
-==================================
+Git v1.7.0.3 Release Notes
+==========================
 
 Fixes since v1.7.0.2
 --------------------
@@ -32,9 +32,3 @@ Fixes since v1.7.0.2
    matching branch.<name>.remote.
 
 And other minor fixes and documentation updates.
-
---
-exec >/var/tmp/1
-echo O=$(git describe)
-O=v1.7.0.2-69-g730b020
-git shortlog --no-merges $O..
