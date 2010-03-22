@@ -162,9 +162,12 @@ my $compose_filename;
 
 # Handle interactive edition of files.
 my $multiedit;
-my $editor = Git::command_oneline('var', 'GIT_EDITOR');
+my $editor;
 
 sub do_edit {
+	if (!defined($editor)) {
+		$editor = Git::command_oneline('var', 'GIT_EDITOR');
+	}
 	if (defined($multiedit) && !$multiedit) {
 		map {
 			system('sh', '-c', $editor.' "$@"', $editor, $_);
