@@ -187,7 +187,7 @@ include::urls.txt[]
 Examples
 --------
 
-Clone from upstream::
+* Clone from upstream:
 +
 ------------
 $ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
@@ -196,7 +196,7 @@ $ make
 ------------
 
 
-Make a local clone that borrows from the current directory, without checking things out::
+* Make a local clone that borrows from the current directory, without checking things out:
 +
 ------------
 $ git clone -l -s -n . ../copy
@@ -205,7 +205,7 @@ $ git show-branch
 ------------
 
 
-Clone from upstream while borrowing from an existing local directory::
+* Clone from upstream while borrowing from an existing local directory:
 +
 ------------
 $ git clone --reference my2.6 \
@@ -215,14 +215,14 @@ $ cd my2.7
 ------------
 
 
-Create a bare repository to publish your changes to the public::
+* Create a bare repository to publish your changes to the public:
 +
 ------------
 $ git clone --bare -l /home/proj/.git /pub/scm/proj.git
 ------------
 
 
-Create a repository on the kernel.org machine that borrows from Linus::
+* Create a repository on the kernel.org machine that borrows from Linus:
 +
 ------------
 $ git clone --bare -l -s /pub/scm/.../torvalds/linux-2.6.git \
