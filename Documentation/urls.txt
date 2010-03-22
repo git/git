@@ -4,7 +4,6 @@ GIT URLS[[URLS]]
 One of the following notations can be used
 to name the remote repository:
 
-===============================================================
 - rsync://host.xz/path/to/repo.git/
 - http://host.xz{startsb}:port{endsb}/path/to/repo.git/
 - https://host.xz{startsb}:port{endsb}/path/to/repo.git/
@@ -14,7 +13,6 @@ to name the remote repository:
 - ssh://{startsb}user@{endsb}host.xz/path/to/repo.git/
 - ssh://{startsb}user@{endsb}host.xz/~user/path/to/repo.git/
 - ssh://{startsb}user@{endsb}host.xz/~/path/to/repo.git
-===============================================================
 
 SSH is the default transport protocol over the network.  You can
 optionally specify which user to log-in as, and an alternate,
@@ -23,18 +21,14 @@ username expansion, as does the native git protocol, but
 only the former supports port specification. The following
 three are identical to the last three above, respectively:
 
-===============================================================
 - {startsb}user@{endsb}host.xz:/path/to/repo.git/
 - {startsb}user@{endsb}host.xz:~user/path/to/repo.git/
 - {startsb}user@{endsb}host.xz:path/to/repo.git
-===============================================================
 
 To sync with a local directory, you can use:
 
-===============================================================
 - /path/to/repo.git/
 - file:///path/to/repo.git/
-===============================================================
 
 ifndef::git-clone[]
 They are mostly equivalent, except when cloning.  See

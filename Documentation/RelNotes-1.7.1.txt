@@ -66,5 +66,5 @@ release, unless otherwise noted.
 ---
 exec >/var/tmp/1
 echo O=$(git describe)
-O=v1.7.0.2-322-g4e7d08a
+O=v1.7.0.2-323-g0d0925c
 git shortlog --no-merges ^maint $O..
