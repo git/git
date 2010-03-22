@@ -54,6 +54,5 @@ then
 fi
 } <<\EOF
 linux-kernel@vger.kernel.org	Linux Kernel
-info@lwn.net			LWN.NET
 ask@perl.org			Perl5-porters at perl
 EOF
