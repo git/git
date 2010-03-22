@@ -313,7 +313,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 	init_revisions(&revs, prefix);
-	revs.abbrev = 0;
+	revs.abbrev = DEFAULT_ABBREV;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
 	argc = setup_revisions(argc, argv, &revs, NULL);
 
