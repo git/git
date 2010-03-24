@@ -62,6 +62,14 @@ test_expect_success setup '
 	test_tick &&
 	git commit -a -m "Right #5" &&
 
+	git checkout -b long &&
+	i=0 &&
+	while test $i -lt 30
+	do
+		test_commit $i one &&
+		i=$(($i+1))
+	done &&
+
 	git show-branch
 '
 
@@ -251,6 +259,113 @@ test_expect_success 'merge-msg with nothing to merge' '
 	) &&
 
 	test_cmp /dev/null actual
+'
+
+cat >expected <<\EOF
+Merge tag 'tag-r3'
+
+* tag 'tag-r3':
+  Right #3
+  Common #2
+  Common #1
+EOF
+
+test_expect_success 'merge-msg tag' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	git checkout master &&
+	test_tick &&
+	git fetch . tag tag-r3 &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+Merge tags 'tag-r3' and 'tag-l5'
+
+* tag 'tag-r3':
+  Right #3
+  Common #2
+  Common #1
+
+* tag 'tag-l5':
+  Left #5
+  Left #4
+  Left #3
+  Common #2
+  Common #1
+EOF
+
+test_expect_success 'merge-msg two tags' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	git checkout master &&
+	test_tick &&
+	git fetch . tag tag-r3 tag tag-l5 &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+Merge branch 'left', tag 'tag-r3'
+
+* tag 'tag-r3':
+  Right #3
+  Common #2
+  Common #1
+
+* left:
+  Left #5
+  Left #4
+  Left #3
+  Common #2
+  Common #1
+EOF
+
+test_expect_success 'merge-msg tag and branch' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	git checkout master &&
+	test_tick &&
+	git fetch . tag tag-r3 left &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+Merge branch 'long'
+
+* long: (35 commits)
+EOF
+
+test_expect_success 'merge-msg lots of commits' '
+
+	git checkout master &&
+	test_tick &&
+	git fetch . long &&
+
+	i=29 &&
+	while test $i -gt 9
+	do
+		echo "  $i" &&
+		i=$(($i-1))
+	done >>expected &&
+	echo "  ..." >>expected
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
 '
 
 test_done
