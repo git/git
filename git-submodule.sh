@@ -559,7 +559,9 @@ cmd_summary() {
 		test $# = 0 || shift
 	elif test -z "$1" -o "$1" = "HEAD"
 	then
-		return
+		# before the first commit: compare with an empty tree
+		head=$(git hash-object -w -t tree --stdin </dev/null)
+		test -z "$1" || shift
 	else
 		head="HEAD"
 	fi
