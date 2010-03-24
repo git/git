@@ -281,6 +281,9 @@ int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
 			die ("Error in line %d: %.*s", i, len, p);
 	}
 
+	if (!srcs.nr)
+		return 0;
+
 	strbuf_addstr(out, "Merge ");
 	for (i = 0; i < srcs.nr; i++) {
 		struct src_data *src_data = srcs.payload[i];

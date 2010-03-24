@@ -21,6 +21,8 @@ test_expect_success setup '
 	setdate &&
 	git commit -m "Initial" &&
 
+	git clone . remote &&
+
 	echo uno >one &&
 	echo dos >two &&
 	git add two &&
@@ -238,6 +240,23 @@ test_expect_success 'merge-msg -F in subdirectory' '
 		git fmt-merge-msg -F FETCH_HEAD >../actual
 	) &&
 	test_cmp expected actual
+'
+
+test_expect_success 'merge-msg with nothing to merge' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	(
+		cd remote &&
+		git checkout -b unrelated &&
+		setdate &&
+		git fetch origin &&
+		git fmt-merge-msg <.git/FETCH_HEAD >../actual
+	) &&
+
+	test_cmp /dev/null actual
 '
 
 test_done
