@@ -261,4 +261,174 @@ test_expect_success 'blank but not empty at EOF' '
 	grep "new blank line at EOF" error
 '
 
+test_expect_success 'applying beyond EOF requires one non-blank context line' '
+	{ echo; echo; echo; echo; } >one &&
+	git add one &&
+	{ echo b; } >>one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	{ echo a; echo; } >one &&
+	cp one expect &&
+	test_must_fail git apply --whitespace=fix patch &&
+	test_cmp one expect &&
+	test_must_fail git apply --ignore-space-change --whitespace=fix patch &&
+	test_cmp one expect
+'
+
+test_expect_success 'tons of blanks at EOF should not apply' '
+	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16; do
+		echo; echo; echo; echo;
+	done >one &&
+	git add one &&
+	echo a >>one &&
+	git diff -- one >patch &&
+
+	>one &&
+	test_must_fail git apply --whitespace=fix patch &&
+	test_must_fail git apply --ignore-space-change --whitespace=fix patch
+'
+
+test_expect_success 'missing blank line at end with --whitespace=fix' '
+	echo a >one &&
+	echo >>one &&
+	git add one &&
+	echo b >>one &&
+	cp one expect &&
+	git diff -- one >patch &&
+	echo a >one &&
+	cp one saved-one &&
+	test_must_fail git apply patch &&
+	git apply --whitespace=fix patch &&
+	test_cmp one expect &&
+	mv saved-one one &&
+	git apply --ignore-space-change --whitespace=fix patch &&
+	test_cmp one expect
+'
+
+test_expect_success 'two missing blank lines at end with --whitespace=fix' '
+	{ echo a; echo; echo b; echo c; } >one &&
+	cp one no-blank-lines &&
+	{ echo; echo; } >>one &&
+	git add one &&
+	echo d >>one &&
+	cp one expect &&
+	echo >>one &&
+	git diff -- one >patch &&
+	cp no-blank-lines one &&
+	test_must_fail git apply patch &&
+	git apply --whitespace=fix patch &&
+	test_cmp one expect &&
+	mv no-blank-lines one &&
+	test_must_fail git apply patch &&
+	git apply --ignore-space-change --whitespace=fix patch &&
+	test_cmp one expect
+'
+
+test_expect_success 'shrink file with tons of missing blanks at end of file' '
+	{ echo a; echo b; echo c; } >one &&
+	cp one no-blank-lines &&
+	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16; do
+		echo; echo; echo; echo;
+	done >>one &&
+	git add one &&
+	echo a >one &&
+	cp one expect &&
+	git diff -- one >patch &&
+	cp no-blank-lines one &&
+	test_must_fail git apply patch &&
+	git apply --whitespace=fix patch &&
+	test_cmp one expect &&
+	mv no-blank-lines one &&
+	git apply --ignore-space-change --whitespace=fix patch &&
+	test_cmp one expect
+'
+
+test_expect_success 'missing blanks at EOF must only match blank lines' '
+	{ echo a; echo b; } >one &&
+	git add one &&
+	{ echo c; echo d; } >>one &&
+	git diff -- one >patch &&
+
+	echo a >one &&
+	test_must_fail git apply patch
+	test_must_fail git apply --whitespace=fix patch &&
+	test_must_fail git apply --ignore-space-change --whitespace=fix patch
+'
+
+sed -e's/Z//' >one <<EOF
+a
+b
+c
+		      Z
+EOF
+
+test_expect_success 'missing blank line should match context line with spaces' '
+	git add one &&
+	echo d >>one &&
+	git diff -- one >patch &&
+	{ echo a; echo b; echo c; } >one &&
+	cp one expect &&
+	{ echo; echo d; } >>expect &&
+	git add one &&
+
+	git apply --whitespace=fix patch &&
+	test_cmp one expect
+'
+
+sed -e's/Z//' >one <<EOF
+a
+b
+c
+		      Z
+EOF
+
+test_expect_success 'same, but with the --ignore-space-option' '
+	git add one &&
+	echo d >>one &&
+	cp one expect &&
+	git diff -- one >patch &&
+	{ echo a; echo b; echo c; } >one &&
+	git add one &&
+
+	git checkout-index -f one &&
+	git apply --ignore-space-change --whitespace=fix patch &&
+	test_cmp one expect
+'
+
+test_expect_success 'same, but with CR-LF line endings && cr-at-eol set' '
+	git config core.whitespace cr-at-eol &&
+	printf "a\r\n" >one &&
+	printf "b\r\n" >>one &&
+	printf "c\r\n" >>one &&
+	cp one save-one &&
+	printf "                 \r\n" >>one
+	git add one &&
+	printf "d\r\n" >>one &&
+	cp one expect &&
+	git diff -- one >patch &&
+	mv save-one one &&
+
+	git apply --ignore-space-change --whitespace=fix patch &&
+	test_cmp one expect
+'
+
+test_expect_success 'same, but with CR-LF line endings && cr-at-eol unset' '
+	git config --unset core.whitespace &&
+	printf "a\r\n" >one &&
+	printf "b\r\n" >>one &&
+	printf "c\r\n" >>one &&
+	cp one save-one &&
+	printf "                 \r\n" >>one
+	git add one &&
+	cp one expect &&
+	printf "d\r\n" >>one &&
+	git diff -- one >patch &&
+	mv save-one one &&
+	echo d >>expect &&
+
+	git apply --ignore-space-change --whitespace=fix patch &&
+	test_cmp one expect
+'
+
 test_done
