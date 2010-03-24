@@ -6,6 +6,7 @@
 
 /* ISSYMREF=01 and ISPACKED=02 are public interfaces */
 #define REF_KNOWS_PEELED 04
+#define REF_BROKEN 010
 
 struct ref_list {
 	struct ref_list *next;
@@ -275,8 +276,10 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 				list = get_ref_dir(ref, list);
 				continue;
 			}
-			if (!resolve_ref(ref, sha1, 1, &flag))
+			if (!resolve_ref(ref, sha1, 1, &flag)) {
 				hashclr(sha1);
+				flag |= REF_BROKEN;
+			}
 			list = add_ref(ref, sha1, flag, list, NULL);
 		}
 		free(ref);
@@ -539,10 +542,10 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 {
 	if (strncmp(base, entry->name, trim))
 		return 0;
-	/* Is this a "negative ref" that represents a deleted ref? */
-	if (is_null_sha1(entry->sha1))
-		return 0;
+
 	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
+		if (entry->flag & REF_BROKEN)
+			return 0; /* ignore dangling symref */
 		if (!has_sha1_file(entry->sha1)) {
 			error("%s does not point to a valid object!", entry->name);
 			return 0;
