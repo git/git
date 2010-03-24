@@ -514,6 +514,16 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 			return 0;
 		else if (opt->combine_merges)
 			return do_diff_combined(opt, commit);
+		else if (opt->first_parent_only) {
+			/*
+			 * Generate merge log entry only for the first
+			 * parent, showing summary diff of the others
+			 * we merged _in_.
+			 */
+			diff_tree_sha1(parents->item->object.sha1, sha1, "", &opt->diffopt);
+			log_tree_diff_flush(opt);
+			return !opt->loginfo;
+		}
 
 		/* If we show individual diffs, show the parent info */
 		log->parent = parents->item;

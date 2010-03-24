@@ -32,7 +32,7 @@ static const char * const builtin_log_usage =
 	"   or: git show [options] <object>...";
 
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
-		      struct rev_info *rev)
+			 struct rev_info *rev, struct setup_revision_opt *opt)
 {
 	int i;
 	int decoration_style = 0;
@@ -56,7 +56,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	 */
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(builtin_log_usage);
-	argc = setup_revisions(argc, argv, rev, "HEAD");
+	argc = setup_revisions(argc, argv, rev, opt);
 
 	if (!rev->show_notes_given && !rev->pretty_given)
 		rev->show_notes = 1;
@@ -262,6 +262,7 @@ static int git_log_config(const char *var, const char *value, void *cb)
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
+	struct setup_revision_opt opt;
 
 	git_config(git_log_config, NULL);
 
@@ -271,7 +272,9 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.simplify_history = 0;
-	cmd_log_init(argc, argv, prefix, &rev);
+	memset(&opt, 0, sizeof(opt));
+	opt.def = "HEAD";
+	cmd_log_init(argc, argv, prefix, &rev, &opt);
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
 	return cmd_log_walk(&rev);
@@ -324,10 +327,26 @@ static int show_tree_object(const unsigned char *sha1,
 	return 0;
 }
 
+static void show_rev_tweak_rev(struct rev_info *rev, struct setup_revision_opt *opt)
+{
+	if (rev->ignore_merges) {
+		/* There was no "-m" on the command line */
+		rev->ignore_merges = 0;
+		if (!rev->first_parent_only && !rev->combine_merges) {
+			/* No "--first-parent", "-c", nor "--cc" */
+			rev->combine_merges = 1;
+			rev->dense_combined_merges = 1;
+		}
+	}
+	if (!rev->diffopt.output_format)
+		rev->diffopt.output_format = DIFF_FORMAT_PATCH;
+}
+
 int cmd_show(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 	struct object_array_entry *objects;
+	struct setup_revision_opt opt;
 	int i, count, ret = 0;
 
 	git_config(git_log_config, NULL);
@@ -337,12 +356,12 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
-	rev.combine_merges = 1;
-	rev.dense_combined_merges = 1;
 	rev.always_show_header = 1;
-	rev.ignore_merges = 0;
 	rev.no_walk = 1;
-	cmd_log_init(argc, argv, prefix, &rev);
+	memset(&opt, 0, sizeof(opt));
+	opt.def = "HEAD";
+	opt.tweak = show_rev_tweak_rev;
+	cmd_log_init(argc, argv, prefix, &rev, &opt);
 
 	count = rev.pending.nr;
 	objects = rev.pending.objects;
@@ -405,6 +424,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
+	struct setup_revision_opt opt;
 
 	git_config(git_log_config, NULL);
 
@@ -415,7 +435,9 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	init_reflog_walk(&rev.reflog_info);
 	rev.abbrev_commit = 1;
 	rev.verbose_header = 1;
-	cmd_log_init(argc, argv, prefix, &rev);
+	memset(&opt, 0, sizeof(opt));
+	opt.def = "HEAD";
+	cmd_log_init(argc, argv, prefix, &rev, &opt);
 
 	/*
 	 * This means that we override whatever commit format the user gave
@@ -438,6 +460,7 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 int cmd_log(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
+	struct setup_revision_opt opt;
 
 	git_config(git_log_config, NULL);
 
@@ -446,7 +469,9 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 
 	init_revisions(&rev, prefix);
 	rev.always_show_header = 1;
-	cmd_log_init(argc, argv, prefix, &rev);
+	memset(&opt, 0, sizeof(opt));
+	opt.def = "HEAD";
+	cmd_log_init(argc, argv, prefix, &rev, &opt);
 	return cmd_log_walk(&rev);
 }
 
@@ -902,6 +927,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct commit *commit;
 	struct commit **list = NULL;
 	struct rev_info rev;
+	struct setup_revision_opt s_r_opt;
 	int nr = 0, total, i;
 	int use_stdout = 0;
 	int start_number = -1;
@@ -983,8 +1009,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.combine_merges = 0;
 	rev.ignore_merges = 1;
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
-
 	rev.subject_prefix = fmt_patch_subject_prefix;
+	memset(&s_r_opt, 0, sizeof(s_r_opt));
+	s_r_opt.def = "HEAD";
 
 	if (default_attach) {
 		rev.mime_boundary = default_attach;
@@ -1056,7 +1083,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (keep_subject && subject_prefix)
 		die ("--subject-prefix and -k are mutually exclusive.");
 
-	argc = setup_revisions(argc, argv, &rev, "HEAD");
+	argc = setup_revisions(argc, argv, &rev, &s_r_opt);
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
 

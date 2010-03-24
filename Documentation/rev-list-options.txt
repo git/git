@@ -108,8 +108,8 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 
 -c::
 
-	This flag changes the way a merge commit is displayed.  It shows
-	the differences from each of the parents to the merge result
+	With this option, diff output for a merge commit
+	shows the differences from each of the parents to the merge result
 	simultaneously instead of showing pairwise diff between a parent
 	and the result one at a time. Furthermore, it lists only files
 	which were modified from all parents.
@@ -120,6 +120,15 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 	patch output by omitting uninteresting hunks whose contents in
 	the parents have only two variants and the merge result picks
 	one of them without modification.
+
+-m::
+
+	This flag makes the merge commits show the full diff like
+	regular commits; for each merge parent, a separate log entry
+	and diff is generated. An exception is that only diff against
+	the first parent is shown when '--first-parent' option is given;
+	in that case, the output represents the changes the merge
+	brought _into_ the then-current branch.
 
 -r::
 
