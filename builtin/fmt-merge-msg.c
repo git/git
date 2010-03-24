@@ -185,6 +185,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	struct object *branch;
 	struct list subjects = { NULL, NULL, 0, 0 };
 	int flags = UNINTERESTING | TREESAME | SEEN | SHOWN | ADDED;
+	struct strbuf sb = STRBUF_INIT;
 
 	branch = deref_tag(parse_object(sha1), sha1_to_hex(sha1), 40);
 	if (!branch || branch->type != OBJ_COMMIT)
@@ -198,7 +199,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	if (prepare_revision_walk(rev))
 		die("revision walk setup failed");
 	while ((commit = get_revision(rev)) != NULL) {
-		char *oneline, *bol, *eol;
+		struct pretty_print_context ctx = {0};
 
 		/* ignore merges */
 		if (commit->parents && commit->parents->next)
@@ -208,30 +209,16 @@ static void shortlog(const char *name, unsigned char *sha1,
 		if (subjects.nr > limit)
 			continue;
 
-		bol = strstr(commit->buffer, "\n\n");
-		if (bol) {
-			unsigned char c;
-			do {
-				c = *++bol;
-			} while (isspace(c));
-			if (!c)
-				bol = NULL;
-		}
+		format_commit_message(commit, "%s", &sb, &ctx);
+		strbuf_ltrim(&sb);
 
-		if (!bol) {
+		if (!sb.len)
 			append_to_list(&subjects, xstrdup(sha1_to_hex(
 							commit->object.sha1)),
 					NULL);
-			continue;
-		}
-
-		eol = strchr(bol, '\n');
-		if (eol) {
-			oneline = xmemdupz(bol, eol - bol);
-		} else {
-			oneline = xstrdup(bol);
-		}
-		append_to_list(&subjects, oneline, NULL);
+		else
+			append_to_list(&subjects, strbuf_detach(&sb, NULL),
+					NULL);
 	}
 
 	if (count > limit)
