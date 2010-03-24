@@ -301,7 +301,9 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	const char *inpath = NULL;
 	struct option options[] = {
 		OPT_BOOLEAN(0, "log",     &merge_summary, "populate log with the shortlog"),
-		OPT_BOOLEAN(0, "summary", &merge_summary, "alias for --log"),
+		{ OPTION_BOOLEAN, 0, "summary", &merge_summary, NULL,
+		  "alias for --log (deprecated)",
+		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 		OPT_FILENAME('F', "file", &inpath, "file to read from"),
 		OPT_END()
 	};
