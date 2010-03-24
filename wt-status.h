@@ -25,6 +25,8 @@ struct wt_status_change_data {
 	int index_status;
 	int stagemask;
 	char *head_path;
+	unsigned dirty_submodule       : 2;
+	unsigned new_submodule_commits : 1;
 };
 
 struct wt_status {

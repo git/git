@@ -55,6 +55,27 @@ static int check_removed(const struct cache_entry *ce, struct stat *st)
 	return 0;
 }
 
+/*
+ * Has a file changed or has a submodule new commits or a dirty work tree?
+ *
+ * Return 1 when changes are detected, 0 otherwise. If the DIRTY_SUBMODULES
+ * option is set, the caller does not only want to know if a submodule is
+ * modified at all but wants to know all the conditions that are met (new
+ * commits, untracked content and/or modified content).
+ */
+static int match_stat_with_submodule(struct diff_options *diffopt,
+				      struct cache_entry *ce, struct stat *st,
+				      unsigned ce_option, unsigned *dirty_submodule)
+{
+	int changed = ce_match_stat(ce, st, ce_option);
+	if (S_ISGITLINK(ce->ce_mode)
+	    && !DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES)
+	    && (!changed || DIFF_OPT_TST(diffopt, DIRTY_SUBMODULES))) {
+		*dirty_submodule = is_submodule_modified(ce->name, DIFF_OPT_TST(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES));
+	}
+	return changed;
+}
+
 int run_diff_files(struct rev_info *revs, unsigned int option)
 {
 	int entries, i;
@@ -177,15 +198,9 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				       ce->sha1, ce->name, 0);
 			continue;
 		}
-		changed = ce_match_stat(ce, &st, ce_option);
-		if (S_ISGITLINK(ce->ce_mode)
-		    && !DIFF_OPT_TST(&revs->diffopt, IGNORE_SUBMODULES)
-		    && (!changed || (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
-		    && is_submodule_modified(ce->name)) {
-			changed = 1;
-			dirty_submodule = 1;
-		}
-		if (!changed) {
+		changed = match_stat_with_submodule(&revs->diffopt, ce, &st,
+						    ce_option, &dirty_submodule);
+		if (!changed && !dirty_submodule) {
 			ce_mark_uptodate(ce);
 			if (!DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 				continue;
@@ -240,14 +255,8 @@ static int get_stat_data(struct cache_entry *ce,
 			}
 			return -1;
 		}
-		changed = ce_match_stat(ce, &st, 0);
-		if (S_ISGITLINK(ce->ce_mode)
-		    && !DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES)
-		    && (!changed || (diffopt->output_format & DIFF_FORMAT_PATCH))
-		    && is_submodule_modified(ce->name)) {
-			changed = 1;
-			*dirty_submodule = 1;
-		}
+		changed = match_stat_with_submodule(diffopt, ce, &st,
+						    0, dirty_submodule);
 		if (changed) {
 			mode = ce_mode_from_stat(ce, st.st_mode);
 			sha1 = null_sha1;
@@ -322,7 +331,7 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	oldmode = old->ce_mode;
-	if (mode == oldmode && !hashcmp(sha1, old->sha1) &&
+	if (mode == oldmode && !hashcmp(sha1, old->sha1) && !dirty_submodule &&
 	    !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 		return 0;
 
