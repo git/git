@@ -7,18 +7,10 @@ test_description='fmt-merge-msg test'
 
 . ./test-lib.sh
 
-datestamp=1151939923
-setdate () {
-	GIT_COMMITTER_DATE="$datestamp +0200"
-	GIT_AUTHOR_DATE="$datestamp +0200"
-	datestamp=`expr "$datestamp" + 1`
-	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
-}
-
 test_expect_success setup '
 	echo one >one &&
 	git add one &&
-	setdate &&
+	test_tick &&
 	git commit -m "Initial" &&
 
 	git clone . remote &&
@@ -26,46 +18,48 @@ test_expect_success setup '
 	echo uno >one &&
 	echo dos >two &&
 	git add two &&
-	setdate &&
+	test_tick &&
 	git commit -a -m "Second" &&
 
 	git checkout -b left &&
 
-	echo $datestamp >one &&
-	setdate &&
+	echo "c1" >one &&
+	test_tick &&
 	git commit -a -m "Common #1" &&
 
-	echo $datestamp >one &&
-	setdate &&
+	echo "c2" >one &&
+	test_tick &&
 	git commit -a -m "Common #2" &&
 
 	git branch right &&
 
-	echo $datestamp >two &&
-	setdate &&
+	echo "l3" >two &&
+	test_tick &&
 	git commit -a -m "Left #3" &&
 
-	echo $datestamp >two &&
-	setdate &&
+	echo "l4" >two &&
+	test_tick &&
 	git commit -a -m "Left #4" &&
 
-	echo $datestamp >two &&
-	setdate &&
+	echo "l5" >two &&
+	test_tick &&
 	git commit -a -m "Left #5" &&
+	git tag tag-l5 &&
 
 	git checkout right &&
 
-	echo $datestamp >three &&
+	echo "r3" >three &&
 	git add three &&
-	setdate &&
+	test_tick &&
 	git commit -a -m "Right #3" &&
+	git tag tag-r3 &&
 
-	echo $datestamp >three &&
-	setdate &&
+	echo "r4" >three &&
+	test_tick &&
 	git commit -a -m "Right #4" &&
 
-	echo $datestamp >three &&
-	setdate &&
+	echo "r5" >three &&
+	test_tick &&
 	git commit -a -m "Right #5" &&
 
 	git show-branch
@@ -115,7 +109,7 @@ test_expect_success 'merge-msg test #3-1' '
 	git config merge.log true &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -129,7 +123,7 @@ test_expect_success 'merge-msg test #3-2' '
 	git config merge.summary true &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -161,7 +155,7 @@ test_expect_success 'merge-msg test #4-1' '
 	git config merge.log true &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -175,7 +169,7 @@ test_expect_success 'merge-msg test #4-2' '
 	git config merge.summary true &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -189,7 +183,7 @@ test_expect_success 'merge-msg test #5-1' '
 	git config merge.log yes &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -203,7 +197,7 @@ test_expect_success 'merge-msg test #5-2' '
 	git config merge.summary yes &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -217,7 +211,7 @@ test_expect_success 'merge-msg -F' '
 	git config merge.summary yes &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg -F .git/FETCH_HEAD >actual &&
@@ -231,7 +225,7 @@ test_expect_success 'merge-msg -F in subdirectory' '
 	git config merge.summary yes &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 	mkdir sub &&
 	cp .git/FETCH_HEAD sub/FETCH_HEAD &&
@@ -251,7 +245,7 @@ test_expect_success 'merge-msg with nothing to merge' '
 	(
 		cd remote &&
 		git checkout -b unrelated &&
-		setdate &&
+		test_tick &&
 		git fetch origin &&
 		git fmt-merge-msg <.git/FETCH_HEAD >../actual
 	) &&
