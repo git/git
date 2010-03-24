@@ -47,7 +47,7 @@ void color_parse_mem(const char *value, int value_len, const char *var,
 {
 	const char *ptr = value;
 	int len = value_len;
-	int attr = -1;
+	unsigned int attr = 0;
 	int fg = -2;
 	int bg = -2;
 
@@ -56,7 +56,7 @@ void color_parse_mem(const char *value, int value_len, const char *var,
 		return;
 	}
 
-	/* [fg [bg]] [attr] */
+	/* [fg [bg]] [attr]... */
 	while (len > 0) {
 		const char *word = ptr;
 		int val, wordlen = 0;
@@ -85,19 +85,27 @@ void color_parse_mem(const char *value, int value_len, const char *var,
 			goto bad;
 		}
 		val = parse_attr(word, wordlen);
-		if (val < 0 || attr != -1)
+		if (0 <= val)
+			attr |= (1 << val);
+		else
 			goto bad;
-		attr = val;
 	}
 
-	if (attr >= 0 || fg >= 0 || bg >= 0) {
+	if (attr || fg >= 0 || bg >= 0) {
 		int sep = 0;
+		int i;
 
 		*dst++ = '\033';
 		*dst++ = '[';
-		if (attr >= 0) {
-			*dst++ = '0' + attr;
-			sep++;
+
+		for (i = 0; attr; i++) {
+			unsigned bit = (1 << i);
+			if (!(attr & bit))
+				continue;
+			attr &= ~bit;
+			if (sep++)
+				*dst++ = ';';
+			*dst++ = '0' + i;
 		}
 		if (fg >= 0) {
 			if (sep++)
