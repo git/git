@@ -38,5 +38,6 @@ struct string_list_item *string_list_lookup(const char *string, struct string_li
 struct string_list_item *string_list_append(const char *string, struct string_list *list);
 void sort_string_list(struct string_list *list);
 int unsorted_string_list_has_string(struct string_list *list, const char *string);
-
+struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
+						     const char *string);
 #endif /* STRING_LIST_H */
