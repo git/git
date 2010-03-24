@@ -16,6 +16,7 @@
 #include "exec_cmd.h"
 #include "run-command.h"
 #include "parse-options.h"
+#include "string-list.h"
 
 static const char * const git_notes_usage[] = {
 	"git notes [list [<object>]]",
@@ -239,6 +240,8 @@ int commit_notes(struct notes_tree *t, const char *msg)
 		t = &default_notes_tree;
 	if (!t->initialized || !t->ref || !*t->ref)
 		die("Cannot commit uninitialized/unreferenced notes tree");
+	if (!t->dirty)
+		return 0; /* don't have to commit an unchanged tree */
 
 	/* Prepare commit message and reflog message */
 	strbuf_addstr(&buf, "notes: "); /* commit message starts at index 7 */
@@ -269,6 +272,161 @@ int commit_notes(struct notes_tree *t, const char *msg)
 	return 0;
 }
 
+
+combine_notes_fn *parse_combine_notes_fn(const char *v)
+{
+	if (!strcasecmp(v, "overwrite"))
+		return combine_notes_overwrite;
+	else if (!strcasecmp(v, "ignore"))
+		return combine_notes_ignore;
+	else if (!strcasecmp(v, "concatenate"))
+		return combine_notes_concatenate;
+	else
+		return NULL;
+}
+
+static int notes_rewrite_config(const char *k, const char *v, void *cb)
+{
+	struct notes_rewrite_cfg *c = cb;
+	if (!prefixcmp(k, "notes.rewrite.") && !strcmp(k+14, c->cmd)) {
+		c->enabled = git_config_bool(k, v);
+		return 0;
+	} else if (!c->mode_from_env && !strcmp(k, "notes.rewritemode")) {
+		if (!v)
+			config_error_nonbool(k);
+		c->combine = parse_combine_notes_fn(v);
+		if (!c->combine) {
+			error("Bad notes.rewriteMode value: '%s'", v);
+			return 1;
+		}
+		return 0;
+	} else if (!c->refs_from_env && !strcmp(k, "notes.rewriteref")) {
+		/* note that a refs/ prefix is implied in the
+		 * underlying for_each_glob_ref */
+		if (!prefixcmp(v, "refs/notes/"))
+			string_list_add_refs_by_glob(c->refs, v);
+		else
+			warning("Refusing to rewrite notes in %s"
+				" (outside of refs/notes/)", v);
+		return 0;
+	}
+
+	return 0;
+}
+
+
+struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
+{
+	struct notes_rewrite_cfg *c = xmalloc(sizeof(struct notes_rewrite_cfg));
+	const char *rewrite_mode_env = getenv(GIT_NOTES_REWRITE_MODE_ENVIRONMENT);
+	const char *rewrite_refs_env = getenv(GIT_NOTES_REWRITE_REF_ENVIRONMENT);
+	c->cmd = cmd;
+	c->enabled = 1;
+	c->combine = combine_notes_concatenate;
+	c->refs = xcalloc(1, sizeof(struct string_list));
+	c->refs->strdup_strings = 1;
+	c->refs_from_env = 0;
+	c->mode_from_env = 0;
+	if (rewrite_mode_env) {
+		c->mode_from_env = 1;
+		c->combine = parse_combine_notes_fn(rewrite_mode_env);
+		if (!c->combine)
+			error("Bad " GIT_NOTES_REWRITE_MODE_ENVIRONMENT
+			      " value: '%s'", rewrite_mode_env);
+	}
+	if (rewrite_refs_env) {
+		c->refs_from_env = 1;
+		string_list_add_refs_from_colon_sep(c->refs, rewrite_refs_env);
+	}
+	git_config(notes_rewrite_config, c);
+	if (!c->enabled || !c->refs->nr) {
+		string_list_clear(c->refs, 0);
+		free(c->refs);
+		free(c);
+		return NULL;
+	}
+	c->trees = load_notes_trees(c->refs);
+	string_list_clear(c->refs, 0);
+	free(c->refs);
+	return c;
+}
+
+int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
+			  const unsigned char *from_obj, const unsigned char *to_obj)
+{
+	int ret = 0;
+	int i;
+	for (i = 0; c->trees[i]; i++)
+		ret = copy_note(c->trees[i], from_obj, to_obj, 1, c->combine) || ret;
+	return ret;
+}
+
+void finish_copy_notes_for_rewrite(struct notes_rewrite_cfg *c)
+{
+	int i;
+	for (i = 0; c->trees[i]; i++) {
+		commit_notes(c->trees[i], "Notes added by 'git notes copy'");
+		free_notes(c->trees[i]);
+	}
+	free(c->trees);
+	free(c);
+}
+
+int notes_copy_from_stdin(int force, const char *rewrite_cmd)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct notes_rewrite_cfg *c = NULL;
+	struct notes_tree *t;
+	int ret = 0;
+
+	if (rewrite_cmd) {
+		c = init_copy_notes_for_rewrite(rewrite_cmd);
+		if (!c)
+			return 0;
+	} else {
+		init_notes(NULL, NULL, NULL, 0);
+		t = &default_notes_tree;
+	}
+
+	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
+		unsigned char from_obj[20], to_obj[20];
+		struct strbuf **split;
+		int err;
+
+		split = strbuf_split(&buf, ' ');
+		if (!split[0] || !split[1])
+			die("Malformed input line: '%s'.", buf.buf);
+		strbuf_rtrim(split[0]);
+		strbuf_rtrim(split[1]);
+		if (get_sha1(split[0]->buf, from_obj))
+			die("Failed to resolve '%s' as a valid ref.", split[0]->buf);
+		if (get_sha1(split[1]->buf, to_obj))
+			die("Failed to resolve '%s' as a valid ref.", split[1]->buf);
+
+		if (rewrite_cmd)
+			err = copy_note_for_rewrite(c, from_obj, to_obj);
+		else
+			err = copy_note(t, from_obj, to_obj, force,
+					combine_notes_overwrite);
+
+		if (err) {
+			error("Failed to copy notes from '%s' to '%s'",
+			      split[0]->buf, split[1]->buf);
+			ret = 1;
+		}
+
+		strbuf_list_free(split);
+	}
+
+	if (!rewrite_cmd) {
+		commit_notes(t, "Notes added by 'git notes copy'");
+		free_notes(t);
+	} else {
+		finish_copy_notes_for_rewrite(c);
+	}
+	return ret;
+}
+
 int cmd_notes(int argc, const char **argv, const char *prefix)
 {
 	struct notes_tree *t;
@@ -278,9 +436,11 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	char logmsg[100];
 
 	int list = 0, add = 0, copy = 0, append = 0, edit = 0, show = 0,
-	    remove = 0, prune = 0, force = 0;
+	    remove = 0, prune = 0, force = 0, from_stdin = 0;
 	int given_object = 0, i = 1, retval = 0;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
+	const char *rewrite_cmd = NULL;
+	const char *override_notes_ref = NULL;
 	struct option options[] = {
 		OPT_GROUP("Notes contents options"),
 		{ OPTION_CALLBACK, 'm', "message", &msg, "MSG",
@@ -297,12 +457,30 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 			parse_reuse_arg},
 		OPT_GROUP("Other options"),
 		OPT_BOOLEAN('f', "force", &force, "replace existing notes"),
+		OPT_BOOLEAN(0, "stdin", &from_stdin, "read objects from stdin"),
+		OPT_STRING(0, "ref", &override_notes_ref, "notes_ref",
+			   "use notes from <notes_ref>"),
+		OPT_STRING(0, "for-rewrite", &rewrite_cmd, "command",
+			   "load rewriting config for <command> (implies --stdin)"),
 		OPT_END()
 	};
 
 	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_notes_usage, 0);
+
+	if (override_notes_ref) {
+		struct strbuf sb = STRBUF_INIT;
+		if (!prefixcmp(override_notes_ref, "refs/notes/"))
+			/* we're happy */;
+		else if (!prefixcmp(override_notes_ref, "notes/"))
+			strbuf_addstr(&sb, "refs/");
+		else
+			strbuf_addstr(&sb, "refs/notes/");
+		strbuf_addstr(&sb, override_notes_ref);
+		setenv("GIT_NOTES_REF", sb.buf, 1);
+		strbuf_release(&sb);
+	}
 
 	if (argc && !strcmp(argv[0], "list"))
 		list = 1;
@@ -345,8 +523,25 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_notes_usage, options);
 	}
 
+	if (!copy && rewrite_cmd) {
+		error("cannot use --for-rewrite with %s subcommand.", argv[0]);
+		usage_with_options(git_notes_usage, options);
+	}
+	if (!copy && from_stdin) {
+		error("cannot use --stdin with %s subcommand.", argv[0]);
+		usage_with_options(git_notes_usage, options);
+	}
+
 	if (copy) {
 		const char *from_ref;
+		if (from_stdin || rewrite_cmd) {
+			if (argc > 1) {
+				error("too many parameters");
+				usage_with_options(git_notes_usage, options);
+			} else {
+				return notes_copy_from_stdin(force, rewrite_cmd);
+			}
+		}
 		if (argc < 3) {
 			error("too few parameters");
 			usage_with_options(git_notes_usage, options);

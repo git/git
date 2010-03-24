@@ -60,6 +60,8 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 
 	if (!rev->show_notes_given && !rev->pretty_given)
 		rev->show_notes = 1;
+	if (rev->show_notes)
+		init_display_notes(&rev->notes_opt);
 
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
@@ -1104,6 +1106,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (!DIFF_OPT_TST(&rev.diffopt, TEXT) && !no_binary_diff)
 		DIFF_OPT_SET(&rev.diffopt, BINARY);
+
+	if (rev.show_notes)
+		init_display_notes(&rev.notes_opt);
 
 	if (!use_stdout)
 		output_directory = set_outdir(prefix, output_directory);

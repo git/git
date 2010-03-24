@@ -5,6 +5,8 @@
 #include "utf8.h"
 #include "strbuf.h"
 #include "tree-walk.h"
+#include "string-list.h"
+#include "refs.h"
 
 /*
  * Use a non-balancing simple 16-tree structure with struct int_node as
@@ -67,6 +69,9 @@ struct non_note {
 	(memcmp(key_sha1, subtree_sha1, subtree_sha1[19]))
 
 struct notes_tree default_notes_tree;
+
+static struct string_list display_notes_refs;
+static struct notes_tree **display_notes_trees;
 
 static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 		struct int_node *node, unsigned int n);
@@ -828,6 +833,83 @@ int combine_notes_ignore(unsigned char *cur_sha1,
 	return 0;
 }
 
+static int string_list_add_one_ref(const char *path, const unsigned char *sha1,
+				   int flag, void *cb)
+{
+	struct string_list *refs = cb;
+	if (!unsorted_string_list_has_string(refs, path))
+		string_list_append(path, refs);
+	return 0;
+}
+
+void string_list_add_refs_by_glob(struct string_list *list, const char *glob)
+{
+	if (has_glob_specials(glob)) {
+		for_each_glob_ref(string_list_add_one_ref, glob, list);
+	} else {
+		unsigned char sha1[20];
+		if (get_sha1(glob, sha1))
+			warning("notes ref %s is invalid", glob);
+		if (!unsorted_string_list_has_string(list, glob))
+			string_list_append(glob, list);
+	}
+}
+
+void string_list_add_refs_from_colon_sep(struct string_list *list,
+					 const char *globs)
+{
+	struct strbuf globbuf = STRBUF_INIT;
+	struct strbuf **split;
+	int i;
+
+	strbuf_addstr(&globbuf, globs);
+	split = strbuf_split(&globbuf, ':');
+
+	for (i = 0; split[i]; i++) {
+		if (!split[i]->len)
+			continue;
+		if (split[i]->buf[split[i]->len-1] == ':')
+			strbuf_setlen(split[i], split[i]->len-1);
+		string_list_add_refs_by_glob(list, split[i]->buf);
+	}
+
+	strbuf_list_free(split);
+	strbuf_release(&globbuf);
+}
+
+static int string_list_add_refs_from_list(struct string_list_item *item,
+					  void *cb)
+{
+	struct string_list *list = cb;
+	string_list_add_refs_by_glob(list, item->string);
+	return 0;
+}
+
+static int notes_display_config(const char *k, const char *v, void *cb)
+{
+	int *load_refs = cb;
+
+	if (*load_refs && !strcmp(k, "notes.displayref")) {
+		if (!v)
+			config_error_nonbool(k);
+		string_list_add_refs_by_glob(&display_notes_refs, v);
+	}
+
+	return 0;
+}
+
+static const char *default_notes_ref(void)
+{
+	const char *notes_ref = NULL;
+	if (!notes_ref)
+		notes_ref = getenv(GIT_NOTES_REF_ENVIRONMENT);
+	if (!notes_ref)
+		notes_ref = notes_ref_name; /* value of core.notesRef config */
+	if (!notes_ref)
+		notes_ref = GIT_NOTES_DEFAULT_REF;
+	return notes_ref;
+}
+
 void init_notes(struct notes_tree *t, const char *notes_ref,
 		combine_notes_fn combine_notes, int flags)
 {
@@ -840,11 +922,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	assert(!t->initialized);
 
 	if (!notes_ref)
-		notes_ref = getenv(GIT_NOTES_REF_ENVIRONMENT);
-	if (!notes_ref)
-		notes_ref = notes_ref_name; /* value of core.notesRef config */
-	if (!notes_ref)
-		notes_ref = GIT_NOTES_DEFAULT_REF;
+		notes_ref = default_notes_ref();
 
 	if (!combine_notes)
 		combine_notes = combine_notes_concatenate;
@@ -855,6 +933,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	t->ref = notes_ref ? xstrdup(notes_ref) : NULL;
 	t->combine_notes = combine_notes;
 	t->initialized = 1;
+	t->dirty = 0;
 
 	if (flags & NOTES_INIT_EMPTY || !notes_ref ||
 	    read_ref(notes_ref, object_sha1))
@@ -868,6 +947,63 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	load_subtree(t, &root_tree, t->root, 0);
 }
 
+struct load_notes_cb_data {
+	int counter;
+	struct notes_tree **trees;
+};
+
+static int load_one_display_note_ref(struct string_list_item *item,
+				     void *cb_data)
+{
+	struct load_notes_cb_data *c = cb_data;
+	struct notes_tree *t = xcalloc(1, sizeof(struct notes_tree));
+	init_notes(t, item->string, combine_notes_ignore, 0);
+	c->trees[c->counter++] = t;
+	return 0;
+}
+
+struct notes_tree **load_notes_trees(struct string_list *refs)
+{
+	struct notes_tree **trees;
+	struct load_notes_cb_data cb_data;
+	trees = xmalloc((refs->nr+1) * sizeof(struct notes_tree *));
+	cb_data.counter = 0;
+	cb_data.trees = trees;
+	for_each_string_list(load_one_display_note_ref, refs, &cb_data);
+	trees[cb_data.counter] = NULL;
+	return trees;
+}
+
+void init_display_notes(struct display_notes_opt *opt)
+{
+	char *display_ref_env;
+	int load_config_refs = 0;
+	display_notes_refs.strdup_strings = 1;
+
+	assert(!display_notes_trees);
+
+	if (!opt || !opt->suppress_default_notes) {
+		string_list_append(default_notes_ref(), &display_notes_refs);
+		display_ref_env = getenv(GIT_NOTES_DISPLAY_REF_ENVIRONMENT);
+		if (display_ref_env) {
+			string_list_add_refs_from_colon_sep(&display_notes_refs,
+							    display_ref_env);
+			load_config_refs = 0;
+		} else
+			load_config_refs = 1;
+	}
+
+	git_config(notes_display_config, &load_config_refs);
+
+	if (opt && opt->extra_notes_refs)
+		for_each_string_list(string_list_add_refs_from_list,
+				     opt->extra_notes_refs,
+				     &display_notes_refs);
+
+	display_notes_trees = load_notes_trees(&display_notes_refs);
+	string_list_clear(&display_notes_refs, 0);
+}
+
 void add_note(struct notes_tree *t, const unsigned char *object_sha1,
 		const unsigned char *note_sha1, combine_notes_fn combine_notes)
 {
@@ -876,6 +1012,7 @@ void add_note(struct notes_tree *t, const unsigned char *object_sha1,
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
+	t->dirty = 1;
 	if (!combine_notes)
 		combine_notes = t->combine_notes;
 	l = (struct leaf_node *) xmalloc(sizeof(struct leaf_node));
@@ -891,6 +1028,7 @@ void remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
+	t->dirty = 1;
 	hashcpy(l.key_sha1, object_sha1);
 	hashclr(l.val_sha1);
 	note_tree_remove(t, t->root, 0, &l);
@@ -1016,8 +1154,18 @@ void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 	if (msglen && msg[msglen - 1] == '\n')
 		msglen--;
 
-	if (flags & NOTES_SHOW_HEADER)
-		strbuf_addstr(sb, "\nNotes:\n");
+	if (flags & NOTES_SHOW_HEADER) {
+		const char *ref = t->ref;
+		if (!ref || !strcmp(ref, GIT_NOTES_DEFAULT_REF)) {
+			strbuf_addstr(sb, "\nNotes:\n");
+		} else {
+			if (!prefixcmp(ref, "refs/"))
+				ref += 5;
+			if (!prefixcmp(ref, "notes/"))
+				ref += 6;
+			strbuf_addf(sb, "\nNotes (%s):\n", ref);
+		}
+	}
 
 	for (msg_p = msg; msg_p < msg + msglen; msg_p += linelen + 1) {
 		linelen = strchrnul(msg_p, '\n') - msg_p;
@@ -1029,4 +1177,32 @@ void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 	}
 
 	free(msg);
+}
+
+void format_display_notes(const unsigned char *object_sha1,
+			  struct strbuf *sb, const char *output_encoding, int flags)
+{
+	int i;
+	assert(display_notes_trees);
+	for (i = 0; display_notes_trees[i]; i++)
+		format_note(display_notes_trees[i], object_sha1, sb,
+			    output_encoding, flags);
+}
+
+int copy_note(struct notes_tree *t,
+	      const unsigned char *from_obj, const unsigned char *to_obj,
+	      int force, combine_notes_fn combine_fn)
+{
+	const unsigned char *note = get_note(t, from_obj);
+	const unsigned char *existing_note = get_note(t, to_obj);
+
+	if (!force && existing_note)
+		return 1;
+
+	if (note)
+		add_note(t, to_obj, note, combine_fn);
+	else if (existing_note)
+		add_note(t, to_obj, null_sha1, combine_fn);
+
+	return 0;
 }

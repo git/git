@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git notes' [list [<object>]]
 'git notes' add [-f] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
-'git notes' copy [-f] <from-object> <to-object>
+'git notes' copy [-f] ( --stdin | <from-object> <to-object> )
 'git notes' append [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' edit [<object>]
 'git notes' show [<object>]
@@ -27,12 +27,17 @@ A typical use of notes is to extend a commit message without having
 to change the commit itself. Such commit notes can be shown by `git log`
 along with the original commit message. To discern these notes from the
 message stored in the commit object, the notes are indented like the
-message, after an unindented line saying "Notes:".
+message, after an unindented line saying "Notes (<refname>):" (or
+"Notes:" for the default setting).
 
-To disable notes, you have to set the config variable core.notesRef to
-the empty string.  Alternatively, you can set it to a different ref,
-something like "refs/notes/bugzilla".  This setting can be overridden
-by the environment variable "GIT_NOTES_REF".
+This command always manipulates the notes specified in "core.notesRef"
+(see linkgit:git-config[1]), which can be overridden by GIT_NOTES_REF.
+To change which notes are shown by 'git-log', see the
+"notes.displayRef" configuration.
+
+See the description of "notes.rewrite.<command>" in
+linkgit:git-config[1] for a way of carrying your notes across commands
+that rewrite commits.
 
 
 SUBCOMMANDS
@@ -55,6 +60,16 @@ copy::
 	object has none (use -f to overwrite existing notes to the
 	second object). This subcommand is equivalent to:
 	`git notes add [-f] -C $(git notes list <from-object>) <to-object>`
++
+In `\--stdin` mode, take lines in the format
++
+----------
+<from-object> SP <to-object> [ SP <rest> ] LF
+----------
++
+on standard input, and copy the notes from each <from-object> to its
+corresponding <to-object>.  (The optional `<rest>` is ignored so that
+the command can read the input given to the `post-rewrite` hook.)
 
 append::
 	Append to the notes of an existing object (defaults to HEAD).
@@ -100,6 +115,25 @@ OPTIONS
 --reedit-message=<object>::
 	Like '-C', but with '-c' the editor is invoked, so that
 	the user can further edit the note message.
+
+--ref <ref>::
+	Manipulate the notes tree in <ref>.  This overrides both
+	GIT_NOTES_REF and the "core.notesRef" configuration.  The ref
+	is taken to be in `refs/notes/` if it is not qualified.
+
+
+NOTES
+-----
+
+Every notes change creates a new commit at the specified notes ref.
+You can therefore inspect the history of the notes by invoking, e.g.,
+`git log -p notes/commits`.
+
+Currently the commit message only records which operation triggered
+the update, and the commit authorship is determined according to the
+usual rules (see linkgit:git-commit[1]).  These details may change in
+the future.
+
 
 Author
 ------

@@ -66,6 +66,7 @@ static char *edit_message, *use_message;
 static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
+static int no_post_rewrite;
 static char *untracked_files_arg, *force_date;
 /*
  * The default commit message cleanup mode will remove the lines
@@ -137,6 +138,7 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN('z', "null", &null_termination,
 		    "terminate entries with NUL"),
 	OPT_BOOLEAN(0, "amend", &amend, "amend previous commit"),
+	OPT_BOOLEAN(0, "no-post-rewrite", &no_post_rewrite, "bypass post-rewrite hook"),
 	{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, "mode", "show untracked files, optional modes: all, normal, no. (Default: all)", PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 	OPT_BOOLEAN(0, "allow-empty", &allow_empty, "ok to record an empty change"),
 	/* end commit contents options */
@@ -1160,6 +1162,40 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 	return git_status_config(k, v, s);
 }
 
+static const char post_rewrite_hook[] = "hooks/post-rewrite";
+
+static int run_rewrite_hook(const unsigned char *oldsha1,
+			    const unsigned char *newsha1)
+{
+	/* oldsha1 SP newsha1 LF NUL */
+	static char buf[2*40 + 3];
+	struct child_process proc;
+	const char *argv[3];
+	int code;
+	size_t n;
+
+	if (access(git_path(post_rewrite_hook), X_OK) < 0)
+		return 0;
+
+	argv[0] = git_path(post_rewrite_hook);
+	argv[1] = "amend";
+	argv[2] = NULL;
+
+	memset(&proc, 0, sizeof(proc));
+	proc.argv = argv;
+	proc.in = -1;
+	proc.stdout_to_stderr = 1;
+
+	code = start_command(&proc);
+	if (code)
+		return code;
+	n = snprintf(buf, sizeof(buf), "%s %s\n",
+		     sha1_to_hex(oldsha1), sha1_to_hex(newsha1));
+	write_in_full(proc.in, buf, n);
+	close(proc.in);
+	return finish_command(&proc);
+}
+
 int cmd_commit(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf sb = STRBUF_INIT;
@@ -1303,6 +1339,15 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	rerere(0);
 	run_hook(get_index_file(), "post-commit", NULL);
+	if (amend && !no_post_rewrite) {
+		struct notes_rewrite_cfg *cfg;
+		cfg = init_copy_notes_for_rewrite("amend");
+		if (cfg) {
+			copy_note_for_rewrite(cfg, head_sha1, commit_sha1);
+			finish_copy_notes_for_rewrite(cfg);
+		}
+		run_rewrite_hook(head_sha1, commit_sha1);
+	}
 	if (!quiet)
 		print_summary(prefix, commit_sha1);
 

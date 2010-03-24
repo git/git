@@ -416,7 +416,7 @@ Date:   Thu Apr 7 15:18:13 2005 -0700
 
     6th
 
-Notes:
+Notes (other):
     other note
 EOF
 
@@ -449,7 +449,139 @@ test_expect_success 'Do not show note when core.notesRef is overridden' '
 	test_cmp expect-not-other output
 '
 
+cat > expect-both << EOF
+commit 387a89921c73d7ed72cd94d179c1c7048ca47756
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:18:13 2005 -0700
+
+    6th
+
+Notes:
+    order test
+
+Notes (other):
+    other note
+
+commit bd1753200303d0a0344be813e504253b3d98e74d
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:17:13 2005 -0700
+
+    5th
+
+Notes:
+    replacement for deleted note
+EOF
+
+test_expect_success 'Show all notes when notes.displayRef=refs/notes/*' '
+	GIT_NOTES_REF=refs/notes/commits git notes add \
+		-m"replacement for deleted note" HEAD^ &&
+	GIT_NOTES_REF=refs/notes/commits git notes add -m"order test" &&
+	git config --unset core.notesRef &&
+	git config notes.displayRef "refs/notes/*" &&
+	git log -2 > output &&
+	test_cmp expect-both output
+'
+
+test_expect_success 'core.notesRef is implicitly in notes.displayRef' '
+	git config core.notesRef refs/notes/commits &&
+	git config notes.displayRef refs/notes/other &&
+	git log -2 > output &&
+	test_cmp expect-both output
+'
+
+test_expect_success 'notes.displayRef can be given more than once' '
+	git config --unset core.notesRef &&
+	git config notes.displayRef refs/notes/commits &&
+	git config --add notes.displayRef refs/notes/other &&
+	git log -2 > output &&
+	test_cmp expect-both output
+'
+
+cat > expect-both-reversed << EOF
+commit 387a89921c73d7ed72cd94d179c1c7048ca47756
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:18:13 2005 -0700
+
+    6th
+
+Notes (other):
+    other note
+
+Notes:
+    order test
+EOF
+
+test_expect_success 'notes.displayRef respects order' '
+	git config core.notesRef refs/notes/other &&
+	git config --unset-all notes.displayRef &&
+	git config notes.displayRef refs/notes/commits &&
+	git log -1 > output &&
+	test_cmp expect-both-reversed output
+'
+
+test_expect_success 'GIT_NOTES_DISPLAY_REF works' '
+	git config --unset-all core.notesRef &&
+	git config --unset-all notes.displayRef &&
+	GIT_NOTES_DISPLAY_REF=refs/notes/commits:refs/notes/other \
+		git log -2 > output &&
+	test_cmp expect-both output
+'
+
+cat > expect-none << EOF
+commit 387a89921c73d7ed72cd94d179c1c7048ca47756
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:18:13 2005 -0700
+
+    6th
+
+commit bd1753200303d0a0344be813e504253b3d98e74d
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:17:13 2005 -0700
+
+    5th
+EOF
+
+test_expect_success 'GIT_NOTES_DISPLAY_REF overrides config' '
+	git config notes.displayRef "refs/notes/*" &&
+	GIT_NOTES_REF= GIT_NOTES_DISPLAY_REF= git log -2 > output &&
+	test_cmp expect-none output
+'
+
+test_expect_success '--show-notes=* adds to GIT_NOTES_DISPLAY_REF' '
+	GIT_NOTES_REF= GIT_NOTES_DISPLAY_REF= git log --show-notes=* -2 > output &&
+	test_cmp expect-both output
+'
+
+cat > expect-commits << EOF
+commit 387a89921c73d7ed72cd94d179c1c7048ca47756
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:18:13 2005 -0700
+
+    6th
+
+Notes:
+    order test
+EOF
+
+test_expect_success '--no-standard-notes' '
+	git log --no-standard-notes --show-notes=commits -1 > output &&
+	test_cmp expect-commits output
+'
+
+test_expect_success '--standard-notes' '
+	git log --no-standard-notes --show-notes=commits \
+		--standard-notes -2 > output &&
+	test_cmp expect-both output
+'
+
+test_expect_success '--show-notes=ref accumulates' '
+	git log --show-notes=other --show-notes=commits \
+		 --no-standard-notes -1 > output &&
+	test_cmp expect-both-reversed output
+'
+
 test_expect_success 'Allow notes on non-commits (trees, blobs, tags)' '
+	git config core.notesRef refs/notes/other &&
 	echo "Note on a tree" > expect
 	git notes add -m "Note on a tree" HEAD: &&
 	git notes show HEAD: > actual &&
@@ -473,7 +605,7 @@ Date:   Thu Apr 7 15:19:13 2005 -0700
 
     7th
 
-Notes:
+Notes (other):
     other note
 EOF
 
@@ -504,7 +636,7 @@ Date:   Thu Apr 7 15:21:13 2005 -0700
 
     9th
 
-Notes:
+Notes (other):
     yet another note
 EOF
 
@@ -534,7 +666,7 @@ Date:   Thu Apr 7 15:21:13 2005 -0700
 
     9th
 
-Notes:
+Notes (other):
     yet another note
 $whitespace
     yet another note
@@ -553,7 +685,7 @@ Date:   Thu Apr 7 15:22:13 2005 -0700
 
     10th
 
-Notes:
+Notes (other):
     other note
 EOF
 
@@ -570,7 +702,7 @@ Date:   Thu Apr 7 15:22:13 2005 -0700
 
     10th
 
-Notes:
+Notes (other):
     other note
 $whitespace
     yet another note
@@ -589,7 +721,7 @@ Date:   Thu Apr 7 15:23:13 2005 -0700
 
     11th
 
-Notes:
+Notes (other):
     other note
 $whitespace
     yet another note
@@ -620,7 +752,7 @@ Date:   Thu Apr 7 15:23:13 2005 -0700
 
     11th
 
-Notes:
+Notes (other):
     yet another note
 $whitespace
     yet another note
@@ -645,4 +777,233 @@ test_expect_success 'cannot copy note from object without notes' '
 	test_must_fail git notes copy HEAD^ HEAD
 '
 
+cat > expect << EOF
+commit e5d4fb5698d564ab8c73551538ecaf2b0c666185
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:25:13 2005 -0700
+
+    13th
+
+Notes (other):
+    yet another note
+$whitespace
+    yet another note
+
+commit 7038787dfe22a14c3867ce816dbba39845359719
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:24:13 2005 -0700
+
+    12th
+
+Notes (other):
+    other note
+$whitespace
+    yet another note
+EOF
+
+test_expect_success 'git notes copy --stdin' '
+	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^); \
+	echo $(git rev-parse HEAD~2) $(git rev-parse HEAD)) |
+	git notes copy --stdin &&
+	git log -2 > output &&
+	test_cmp expect output &&
+	test "$(git notes list HEAD)" = "$(git notes list HEAD~2)" &&
+	test "$(git notes list HEAD^)" = "$(git notes list HEAD~3)"
+'
+
+cat > expect << EOF
+commit 37a0d4cba38afef96ba54a3ea567e6dac575700b
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:27:13 2005 -0700
+
+    15th
+
+commit be28d8b4d9951ad940d229ee3b0b9ee3b1ec273d
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:26:13 2005 -0700
+
+    14th
+EOF
+
+test_expect_success 'git notes copy --for-rewrite (unconfigured)' '
+	test_commit 14th &&
+	test_commit 15th &&
+	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^); \
+	echo $(git rev-parse HEAD~2) $(git rev-parse HEAD)) |
+	git notes copy --for-rewrite=foo &&
+	git log -2 > output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+commit 37a0d4cba38afef96ba54a3ea567e6dac575700b
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:27:13 2005 -0700
+
+    15th
+
+Notes (other):
+    yet another note
+$whitespace
+    yet another note
+
+commit be28d8b4d9951ad940d229ee3b0b9ee3b1ec273d
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:26:13 2005 -0700
+
+    14th
+
+Notes (other):
+    other note
+$whitespace
+    yet another note
+EOF
+
+test_expect_success 'git notes copy --for-rewrite (enabled)' '
+	git config notes.rewriteMode overwrite &&
+	git config notes.rewriteRef "refs/notes/*" &&
+	(echo $(git rev-parse HEAD~3) $(git rev-parse HEAD^); \
+	echo $(git rev-parse HEAD~2) $(git rev-parse HEAD)) |
+	git notes copy --for-rewrite=foo &&
+	git log -2 > output &&
+	test_cmp expect output
+'
+
+test_expect_success 'git notes copy --for-rewrite (disabled)' '
+	git config notes.rewrite.bar false &&
+	echo $(git rev-parse HEAD~3) $(git rev-parse HEAD) |
+	git notes copy --for-rewrite=bar &&
+	git log -2 > output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+commit 37a0d4cba38afef96ba54a3ea567e6dac575700b
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:27:13 2005 -0700
+
+    15th
+
+Notes (other):
+    a fresh note
+EOF
+
+test_expect_success 'git notes copy --for-rewrite (overwrite)' '
+	git notes add -f -m"a fresh note" HEAD^ &&
+	echo $(git rev-parse HEAD^) $(git rev-parse HEAD) |
+	git notes copy --for-rewrite=foo &&
+	git log -1 > output &&
+	test_cmp expect output
+'
+
+test_expect_success 'git notes copy --for-rewrite (ignore)' '
+	git config notes.rewriteMode ignore &&
+	echo $(git rev-parse HEAD^) $(git rev-parse HEAD) |
+	git notes copy --for-rewrite=foo &&
+	git log -1 > output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+commit 37a0d4cba38afef96ba54a3ea567e6dac575700b
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:27:13 2005 -0700
+
+    15th
+
+Notes (other):
+    a fresh note
+    another fresh note
+EOF
+
+test_expect_success 'git notes copy --for-rewrite (append)' '
+	git notes add -f -m"another fresh note" HEAD^ &&
+	git config notes.rewriteMode concatenate &&
+	echo $(git rev-parse HEAD^) $(git rev-parse HEAD) |
+	git notes copy --for-rewrite=foo &&
+	git log -1 > output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+commit 37a0d4cba38afef96ba54a3ea567e6dac575700b
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:27:13 2005 -0700
+
+    15th
+
+Notes (other):
+    a fresh note
+    another fresh note
+    append 1
+    append 2
+EOF
+
+test_expect_success 'git notes copy --for-rewrite (append two to one)' '
+	git notes add -f -m"append 1" HEAD^ &&
+	git notes add -f -m"append 2" HEAD^^ &&
+	(echo $(git rev-parse HEAD^) $(git rev-parse HEAD);
+	echo $(git rev-parse HEAD^^) $(git rev-parse HEAD)) |
+	git notes copy --for-rewrite=foo &&
+	git log -1 > output &&
+	test_cmp expect output
+'
+
+test_expect_success 'git notes copy --for-rewrite (append empty)' '
+	git notes remove HEAD^ &&
+	echo $(git rev-parse HEAD^) $(git rev-parse HEAD) |
+	git notes copy --for-rewrite=foo &&
+	git log -1 > output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+commit 37a0d4cba38afef96ba54a3ea567e6dac575700b
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:27:13 2005 -0700
+
+    15th
+
+Notes (other):
+    replacement note 1
+EOF
+
+test_expect_success 'GIT_NOTES_REWRITE_MODE works' '
+	git notes add -f -m"replacement note 1" HEAD^ &&
+	echo $(git rev-parse HEAD^) $(git rev-parse HEAD) |
+	GIT_NOTES_REWRITE_MODE=overwrite git notes copy --for-rewrite=foo &&
+	git log -1 > output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+commit 37a0d4cba38afef96ba54a3ea567e6dac575700b
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:27:13 2005 -0700
+
+    15th
+
+Notes (other):
+    replacement note 2
+EOF
+
+test_expect_success 'GIT_NOTES_REWRITE_REF works' '
+	git config notes.rewriteMode overwrite &&
+	git notes add -f -m"replacement note 2" HEAD^ &&
+	git config --unset-all notes.rewriteRef &&
+	echo $(git rev-parse HEAD^) $(git rev-parse HEAD) |
+	GIT_NOTES_REWRITE_REF=refs/notes/commits:refs/notes/other \
+		git notes copy --for-rewrite=foo &&
+	git log -1 > output &&
+	test_cmp expect output
+'
+
+test_expect_success 'GIT_NOTES_REWRITE_REF overrides config' '
+	git config notes.rewriteRef refs/notes/other &&
+	git notes add -f -m"replacement note 3" HEAD^ &&
+	echo $(git rev-parse HEAD^) $(git rev-parse HEAD) |
+	GIT_NOTES_REWRITE_REF= git notes copy --for-rewrite=foo &&
+	git log -1 > output &&
+	test_cmp expect output
+'
 test_done

@@ -40,6 +40,7 @@ extern struct notes_tree {
 	char *ref;
 	combine_notes_fn *combine_notes;
 	int initialized;
+	int dirty;
 } default_notes_tree;
 
 /*
@@ -98,6 +99,15 @@ void remove_note(struct notes_tree *t, const unsigned char *object_sha1);
  */
 const unsigned char *get_note(struct notes_tree *t,
 		const unsigned char *object_sha1);
+
+/*
+ * Copy a note from one object to another in the given notes_tree.
+ *
+ * Fails if the to_obj already has a note unless 'force' is true.
+ */
+int copy_note(struct notes_tree *t,
+	      const unsigned char *from_obj, const unsigned char *to_obj,
+	      int force, combine_notes_fn combine_fn);
 
 /*
  * Flags controlling behaviour of for_each_note()
@@ -197,5 +207,60 @@ void free_notes(struct notes_tree *t);
  */
 void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 		struct strbuf *sb, const char *output_encoding, int flags);
+
+
+struct string_list;
+
+struct display_notes_opt {
+	int suppress_default_notes:1;
+	struct string_list *extra_notes_refs;
+};
+
+/*
+ * Load the notes machinery for displaying several notes trees.
+ *
+ * If 'opt' is not NULL, then it specifies additional settings for the
+ * displaying:
+ *
+ * - suppress_default_notes indicates that the notes from
+ *   core.notesRef and notes.displayRef should not be loaded.
+ *
+ * - extra_notes_refs may contain a list of globs (in the same style
+ *   as notes.displayRef) where notes should be loaded from.
+ */
+void init_display_notes(struct display_notes_opt *opt);
+
+/*
+ * Append notes for the given 'object_sha1' from all trees set up by
+ * init_display_notes() to 'sb'.  The 'flags' are a bitwise
+ * combination of
+ *
+ * - NOTES_SHOW_HEADER: add a 'Notes (refname):' header
+ *
+ * - NOTES_INDENT: indent the notes by 4 places
+ *
+ * You *must* call init_display_notes() before using this function.
+ */
+void format_display_notes(const unsigned char *object_sha1,
+			  struct strbuf *sb, const char *output_encoding, int flags);
+
+/*
+ * Load the notes tree from each ref listed in 'refs'.  The output is
+ * an array of notes_tree*, terminated by a NULL.
+ */
+struct notes_tree **load_notes_trees(struct string_list *refs);
+
+/*
+ * Add all refs that match 'glob' to the 'list'.
+ */
+void string_list_add_refs_by_glob(struct string_list *list, const char *glob);
+
+/*
+ * Add all refs from a colon-separated glob list 'globs' to the end of
+ * 'list'.  Empty components are ignored.  This helper is used to
+ * parse GIT_NOTES_DISPLAY_REF style environment variables.
+ */
+void string_list_add_refs_from_colon_sep(struct string_list *list,
+					 const char *globs);
 
 #endif
