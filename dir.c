@@ -594,11 +594,27 @@ static int simplify_away(const char *path, int pathlen, const struct path_simpli
 	return 0;
 }
 
-static int in_pathspec(const char *path, int len, const struct path_simplify *simplify)
+/*
+ * This function tells us whether an excluded path matches a
+ * list of "interesting" pathspecs. That is, whether a path matched
+ * by any of the pathspecs could possibly be ignored by excluding
+ * the specified path. This can happen if:
+ *
+ *   1. the path is mentioned explicitly in the pathspec
+ *
+ *   2. the path is a directory prefix of some element in the
+ *      pathspec
+ */
+static int exclude_matches_pathspec(const char *path, int len,
+		const struct path_simplify *simplify)
 {
 	if (simplify) {
 		for (; simplify->path; simplify++) {
 			if (len == simplify->len
+			    && !memcmp(path, simplify->path, len))
+				return 1;
+			if (len < simplify->len
+			    && simplify->path[len] == '/'
 			    && !memcmp(path, simplify->path, len))
 				return 1;
 		}
@@ -678,7 +694,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 {
 	int exclude = excluded(dir, path, &dtype);
 	if (exclude && (dir->flags & DIR_COLLECT_IGNORED)
-	    && in_pathspec(path, *len, simplify))
+	    && exclude_matches_pathspec(path, *len, simplify))
 		dir_add_ignored(dir, path, *len);
 
 	/*
