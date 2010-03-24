@@ -346,6 +346,8 @@ static inline char *gitstrchrnul(const char *s, int c)
 
 extern void release_pack_memory(size_t, int);
 
+extern void set_try_to_free_routine(void (*routine)(size_t));
+
 extern char *xstrdup(const char *str);
 extern void *xmalloc(size_t size);
 extern void *xmallocz(size_t size);
