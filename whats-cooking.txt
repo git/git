@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2010, #05; Sat, 20)
-X-master-at: 0d0925c5e25fad8079739be36d88faa21fc1f588
-X-next-at: fdfcd14527c8a7f606aebfcd9dcd99e6cbf7cea5
+Subject: What's cooking in git.git (Mar 2010, #06; Wed, 24)
+X-master-at: 5e4f61474202122f376b16181b760f390623bf4e
+X-next-at: 82eebc138fb5ed99525fe1c2d3062e9256495a05
 
-What's cooking in git.git (Mar 2010, #05; Sat, 20)
+What's cooking in git.git (Mar 2010, #06; Wed, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,101 +11,114 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
+The tip of 'pu' is broken right now; it does not pass t7006.
+
 --------------------------------------------------
 [Graduated to "master"]
 
-* jk/maint-add-ignored-dir (2010-02-28) 3 commits
-  (merged to 'next' on 2010-03-13 at df91e32)
- + tests for "git add ignored-dir/file" without -f
- + dir: fix COLLECT_IGNORED on excluded prefixes
- + t0050: mark non-working test as such
+* jh/maint-submodule-status-in-void (2010-03-09) 2 commits
+  (merged to 'next' on 2010-03-15 at 49af9de)
+ + git submodule summary: Handle HEAD as argument when on an unborn branch
+  (merged to 'next' on 2010-03-08 at 0697bf4)
+ + submodule summary: do not fail before the first commit
 
-This replaced jc/maint-add-ignored-dir.  Will need to merge to maint
-later.
+* jc/maint-refs-dangling (2010-03-15) 1 commit
+  (merged to 'next' on 2010-03-16 at 376027b)
+ + refs: ref entry with NULL sha1 is can be a dangling symref
 
-* bg/apply-fix-blank-at-eof (2010-03-06) 5 commits
-  (merged to 'next' on 2010-03-07 at daec679)
- + t3417: Add test cases for "rebase --whitespace=fix"
- + t4124: Add additional tests of --whitespace=fix
- + apply: Allow blank context lines to match beyond EOF
- + apply: Remove the quick rejection test
- + apply: Don't unnecessarily update line lengths in the preimage
+* pb/log-first-parent-p-m (2010-03-09) 5 commits
+  (merged to 'next' on 2010-03-15 at 0ae494e)
+ + show --first-parent/-m: do not default to --cc
+ + show -c: show patch text
+ + revision: introduce setup_revision_opt
+ + t4013: add tests for log -p -m --first-parent
+  (merged to 'next' on 2010-02-17 at 2f8e5ae)
+ + git log -p -m: document -m and honor --first-parent
 
-* fl/askpass (2010-03-04) 2 commits
-  (merged to 'next' on 2010-03-07 at 5ab370a)
- + git-core: Support retrieving passwords with GIT_ASKPASS
- + git-svn: Support retrieving passwords with GIT_ASKPASS
+Ready for 'master'.
 
-* jc/color-attrs (2010-02-27) 1 commit
-  (merged to 'next' on 2010-03-08 at ba02883)
- + color: allow multiple attributes
+* jl/submodule-diff-dirtiness (2010-03-13) 5 commits
+  (merged to 'next' on 2010-03-15 at 9601fd9)
+ + git status: ignoring untracked files must apply to submodules too
+  (merged to 'next' on 2010-03-13 at f9bfd8a)
+ + git status: Fix false positive "new commits" output for dirty submodules
+ + Refactor dirty submodule detection in diff-lib.c
+  (merged to 'next' on 2010-03-08 at 33f7a57)
+ + git status: Show detailed dirty status of submodules in long format
+  (merged to 'next' on 2010-03-04 at 58b2645)
+ + git diff --submodule: Show detailed dirty status of submodules
 
-* ml/color-grep (2010-03-07) 3 commits
-  (merged to 'next' on 2010-03-08 at 24d1eb4)
- + grep: Colorize selected, context, and function lines
- + grep: Colorize filename, line number, and separator
- + Add GIT_COLOR_BOLD_* and GIT_COLOR_BG_*
+Ready for 'master'.
 
-* bw/union-merge-refactor (2010-03-01) 4 commits
-  (merged to 'next' on 2010-03-10 at b917078)
- + merge-file: add option to select union merge favor
- + merge-file: add option to specify the marker size
-  (merged to 'next' on 2010-03-07 at 9d1eff6)
- + refactor merge flags into xmparam_t
- + make union merge an xdl merge favor
-
-* cc/reset-keep (2010-03-09) 6 commits
-  (merged to 'next' on 2010-03-08 at 015ef4b)
- + Documentation: improve description of "git reset --keep"
-  (merged to 'next' on 2010-03-07 at 5237d8e)
- + reset: disallow using --keep when there are unmerged entries
- + reset: disallow "reset --keep" outside a work tree
- + Documentation: reset: describe new "--keep" option
- + reset: add test cases for "--keep" option
- + reset: add option "--keep" to "git reset"
+* tr/notes-display (2010-03-12) 13 commits
+  (merged to 'next' on 2010-03-15 at 3329361)
+ + git-notes(1): add a section about the meaning of history
+ + notes: track whether notes_trees were changed at all
+ + notes: add shorthand --ref to override GIT_NOTES_REF
+ + commit --amend: copy notes to the new commit
+ + rebase: support automatic notes copying
+ + notes: implement helpers needed for note copying during rewrite
+ + notes: implement 'git notes copy --stdin'
+ + rebase -i: invoke post-rewrite hook
+ + rebase: invoke post-rewrite hook
+ + commit --amend: invoke post-rewrite hook
+ + Documentation: document post-rewrite hook
+ + Support showing notes from more than one notes tree
+ + test-lib: unset GIT_NOTES_REF to stop it from influencing tests
+ (this branch is used by sb/notes-parse-opt.)
 
 --------------------------------------------------
 [New Topics]
 
-* ar/config-from-command-line (2010-03-19) 1 commit
- - Allow passing of configuration parameters in the command line
+* bw/git-completion-rpmspec (2010-03-20) 1 commit
+ - Add a git-completion rpm subpackage to the spec
 
-* bc/t5505-fix (2010-03-19) 3 commits
- - t/t5505-remote.sh: escape * to prevent interpretation by shell as glob
- - t5505: add missing &&
- - t5505: remove unnecessary subshell invocations
+Shipping bash-completion as part of RPM package; since Todd Zullinger who
+packages git for Fedora joined the thread, I am hoping that I can defer
+the direction of the final version to the discussion between Todd and Ben.
 
-Looked reasonable.  Soon in 'next'.
-
-* bw/template-tool-buildconfig (2010-03-20) 2 commits
- - Modernize git calling conventions in hook templates
- - Make templates honour SHELL_PATH and PERL_PATH
+* ef/maint-empty-commit-log (2010-03-21) 1 commit
+ - rev-list: fix --pretty=oneline with empty message
 
 Looked reasonable.  Soon in 'next'.
 
-* mb/rebase-i-no-ff (2010-03-16) 1 commit
- - Teach --no-ff option to 'rebase -i'.
+* em/checkout-orphan (2010-03-21) 1 commit
+ - git checkout: create unparented branch by --orphan
 
-Looked reasonable.  Soon in 'next'.
+Looked reasonable, except that we might want to come up with a way to
+allow people with core.logallrefupdates set to false to still override it
+with "-l" when switching to this new branch.  Or we may not care.  I dunno.
 
-* jn/merge-diff3-label (2010-03-17) 13 commits
- . cherry-pick, revert: add a label for ancestor
- . revert: clarify label on conflict hunks
- . compat: add mempcpy()
- . tests: document cherry-pick behavior in face of conflicts
- . checkout -m --conflict=diff3: add a label for ancestor
- . tests: document format of conflicts from checkout -m
- . merge_trees(): add ancestor label parameter for diff3-style output
- . merge_file(): add comment explaining behavior wrt conflict style
- . checkout --conflict=diff3: add a label for ancestor
- . ll_merge(): add ancestor label parameter for diff3-style output
- . merge-file --diff3: add a label for ancestor
- . xdl_merge(): move file1 and file2 labels to xmparam structure
- . xdl_merge(): add optional ancestor label to diff3-style output
+Soon in 'next'.
 
-This somewhat conflicts with bw/union-merge-refactor that in 'master'; I
-could resolve the conflicts myself, but I'd rather not.  Jonathan, could
-you rebase the series?
+* mg/mailmap-update (2010-03-19) 1 commit
+ - .mailmap: Entries for Alex Bennée, Deskin Miller, Vitaly "_Vi" Shukela
+
+Soon in 'next'.
+
+* mg/maint-send-email-lazy-editor (2010-03-22) 1 commit
+ - [reword?] send-email: lazily assign editor variable
+
+* mg/use-default-abbrev-length-in-rev-list (2010-03-22) 1 commit
+ - rev-list: use default abbrev length when abbrev-commit is in effect
+
+* np/malloc-threading (2010-03-24) 1 commit
+ - Make xmalloc and xrealloc thread-safe
+
+* rb/maint-python-path (2010-03-21) 1 commit
+ - Correct references to /usr/bin/python which does not exist on FreeBSD
+
+Soon in 'next'.
+
+* rr/imap-send-unconfuse-from-line (2010-03-22) 1 commit
+ - imap-send: Remove limitation on message body
+
+Soon in 'next'.
+
+* sp/maint-http-backend-die-triggers-die-recursively (2010-03-22) 1 commit
+ - http-backend: Don't infinite loop during die()
+
+Soon in 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -143,6 +156,44 @@ at least, or possibly when any "--pretty" is explicitly given.
 --------------------------------------------------
 [Cooking]
 
+* ar/config-from-command-line (2010-03-19) 1 commit
+ - Allow passing of configuration parameters in the command line
+
+* bc/t5505-fix (2010-03-19) 3 commits
+ - t/t5505-remote.sh: escape * to prevent interpretation by shell as glob
+ - t5505: add missing &&
+ - t5505: remove unnecessary subshell invocations
+
+Looked reasonable.  Soon in 'next'.
+
+* bw/template-tool-buildconfig (2010-03-20) 2 commits
+ - Modernize git calling conventions in hook templates
+ - Make templates honour SHELL_PATH and PERL_PATH
+
+Looked reasonable.  Soon in 'next'.
+
+* mb/rebase-i-no-ff (2010-03-24) 1 commit
+ - Teach rebase the --no-ff option.
+
+Looked reasonable.  Soon in 'next'.
+
+* jn/merge-diff3-label (2010-03-20) 14 commits
+  (merged to 'next' on 2010-03-20 at 26f1805)
+ + merge-recursive: add a label for ancestor
+ + cherry-pick, revert: add a label for ancestor
+ + revert: clarify label on conflict hunks
+ + compat: add mempcpy()
+ + checkout -m --conflict=diff3: add a label for ancestor
+ + merge_trees(): add ancestor label parameter for diff3-style output
+ + merge_file(): add comment explaining behavior wrt conflict style
+ + checkout --conflict=diff3: add a label for ancestor
+ + ll_merge(): add ancestor label parameter for diff3-style output
+ + merge-file --diff3: add a label for ancestor
+ + xdl_merge(): move file1 and file2 labels to xmparam structure
+ + xdl_merge(): add optional ancestor label to diff3-style output
+ + tests: document cherry-pick behavior in face of conflicts
+ + tests: document format of conflicts from checkout -m
+
 * do/rebase-i-arbitrary (2010-03-14) 1 commit
  - rebase--interactive: don't require what's rebased to be a branch
 
@@ -174,7 +225,8 @@ Looked reasonable.  Soon in 'next'.
 
 Looked reasonable.  Soon in 'next'.
 
-* ef/cherry-abbrev (2010-03-15) 1 commit
+* ef/cherry-abbrev (2010-03-20) 2 commits
+ - ls: remove redundant logic
  - cherry: support --abbrev option
 
 Looked reasonable.  Soon in 'next'.
@@ -184,43 +236,14 @@ Looked reasonable.  Soon in 'next'.
 
 Looked reasonable.  Soon in 'next'.
 
-* jc/maint-refs-dangling (2010-03-15) 1 commit
-  (merged to 'next' on 2010-03-16 at 376027b)
- + refs: ref entry with NULL sha1 is can be a dangling symref
-
-Looked reasonable.  Soon in 'next'.
-
 * rs/threaded-grep-context (2010-03-15) 1 commit
  - grep: enable threading for context line printing
 
 Looked reasonable.  Soon in 'next'.
 
-* pb/log-first-parent-p-m (2010-03-09) 5 commits
-  (merged to 'next' on 2010-03-15 at 0ae494e)
- + show --first-parent/-m: do not default to --cc
- + show -c: show patch text
- + revision: introduce setup_revision_opt
- + t4013: add tests for log -p -m --first-parent
-  (merged to 'next' on 2010-02-17 at 2f8e5ae)
- + git log -p -m: document -m and honor --first-parent
-
-Ready for 'master'.
-
-* jl/submodule-diff-dirtiness (2010-03-13) 5 commits
-  (merged to 'next' on 2010-03-15 at 9601fd9)
- + git status: ignoring untracked files must apply to submodules too
-  (merged to 'next' on 2010-03-13 at f9bfd8a)
- + git status: Fix false positive "new commits" output for dirty submodules
- + Refactor dirty submodule detection in diff-lib.c
-  (merged to 'next' on 2010-03-08 at 33f7a57)
- + git status: Show detailed dirty status of submodules in long format
-  (merged to 'next' on 2010-03-04 at 58b2645)
- + git diff --submodule: Show detailed dirty status of submodules
-
-Ready for 'master'.
-
-* cc/cherry-pick-ff (2010-03-06) 6 commits
-  (merged to 'next' on 2010-03-20 at fdfcd14)
+* cc/cherry-pick-ff (2010-03-20) 7 commits
+  (merged to 'next' on 2010-03-20 at a1ae16b)
+ + revert: fix tiny memory leak in cherry-pick --ff
  + rebase -i: use new --ff cherry-pick option
   (merged to 'next' on 2010-03-07 at 5589b26)
  + Documentation: describe new cherry-pick --ff option
@@ -243,7 +266,26 @@ Ready for 'master'.
 
 The tip one will be soon in 'next', but one step at a time.
 
-* nd/setup (2010-03-08) 21 commits
+* nd/setup (2010-03-21) 40 commits
+ - Guard unallowed access to repository when it's not set up
+ - alias: keep repository found while collecting aliases as long as possible
+ - Allow to undo setup_git_directory_gently() gracefully (and fix alias code)
+ - builtins: check for startup_info->help, print and exit early
+ - builtins: utilize startup_info->help where possible
+ - run_builtin(): save "-h" detection result for later use
+ - config: do not read .git/config if there is no repository
+ - apply: do not check sha1 when repository has not been found
+ - Do not read .git/info/attributes if there is no repository
+ - Do not read .git/info/exclude if there is no repository
+ - git_config(): do not read .git/config if there is no repository
+ - init/clone: turn on startup->have_repository properly
+ - worktree setup: restore original state when things go wrong
+ - Use git_config_early() instead of git_config() during repo setup
+ - Add git_config_early()
+ - worktree setup: call set_git_dir explicitly
+ - rev-parse --git-dir: print relative gitdir correctly
+ - enter_repo(): initialize other variables as setup_git_directory_gently() does
+ - Move enter_repo() to setup.c
  - index-pack: use RUN_SETUP_GENTLY
  - index-pack: trust the prefix returned by setup_git_directory_gently()
  - worktree setup: calculate prefix even if no worktree is found
@@ -266,29 +308,8 @@ The tip one will be soon in 'next', but one step at a time.
  - builtin: Support RUN_SETUP_GENTLY to set up repository early if found
  - builtin: introduce startup_info struct
 
+This seems to break t7006 when merged to 'pu'.
+
 * sb/notes-parse-opt (2010-02-27) 1 commit
- - notes: rework subcommands and parse options
- (this branch uses tr/notes-display.)
-
-* jh/maint-submodule-status-in-void (2010-03-09) 2 commits
-  (merged to 'next' on 2010-03-15 at 49af9de)
- + git submodule summary: Handle HEAD as argument when on an unborn branch
-  (merged to 'next' on 2010-03-08 at 0697bf4)
- + submodule summary: do not fail before the first commit
-
-* tr/notes-display (2010-03-12) 13 commits
-  (merged to 'next' on 2010-03-15 at 3329361)
- + git-notes(1): add a section about the meaning of history
- + notes: track whether notes_trees were changed at all
- + notes: add shorthand --ref to override GIT_NOTES_REF
- + commit --amend: copy notes to the new commit
- + rebase: support automatic notes copying
- + notes: implement helpers needed for note copying during rewrite
- + notes: implement 'git notes copy --stdin'
- + rebase -i: invoke post-rewrite hook
- + rebase: invoke post-rewrite hook
- + commit --amend: invoke post-rewrite hook
- + Documentation: document post-rewrite hook
- + Support showing notes from more than one notes tree
- + test-lib: unset GIT_NOTES_REF to stop it from influencing tests
- (this branch is used by sb/notes-parse-opt.)
+  (merged to 'next' on 2010-03-24 at 82eebc1)
+ + notes: rework subcommands and parse options
