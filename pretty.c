@@ -797,6 +797,10 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 	case 'e':	/* encoding */
 		strbuf_add(sb, msg + c->encoding.off, c->encoding.len);
 		return 1;
+	case 'B':	/* raw body */
+		/* message_off is always left at the initial newline */
+		strbuf_addstr(sb, msg + c->message_off + 1);
+		return 1;
 	}
 
 	/* Now we need to parse the commit message. */
