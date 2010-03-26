@@ -127,6 +127,9 @@ find $RPM_BUILD_ROOT -type f -name perllocal.pod -exec rm -f {} ';'
 rm -rf $RPM_BUILD_ROOT%{_mandir}
 %endif
 
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d
+install -m 644 -T contrib/completion/git-completion.bash $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d/git
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -136,6 +139,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc README COPYING Documentation/*.txt
 %{!?_without_docs: %doc Documentation/*.html Documentation/howto}
 %{!?_without_docs: %doc Documentation/technical}
+%{_sysconfdir}/bash_completion.d
 
 %files svn
 %defattr(-,root,root)
@@ -192,6 +196,9 @@ rm -rf $RPM_BUILD_ROOT
 # No files for you!
 
 %changelog
+* Fri Mar 26 2010 Ian Ward Comfort <icomfort@stanford.edu>
+- Ship bash completion support from contrib/ in the core package.
+
 * Sun Jan 31 2010 Junio C Hamano <gitster@pobox.com>
 - Do not use %define inside %{!?...} construct.
 
