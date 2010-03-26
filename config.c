@@ -7,6 +7,7 @@
  */
 #include "cache.h"
 #include "exec_cmd.h"
+#include "strbuf.h"
 
 #define MAXNAME (256)
 
@@ -21,8 +22,8 @@ const char *config_exclusive_filename = NULL;
 struct config_item
 {
 	struct config_item *next;
+	char *name;
 	char *value;
-	char name[1 /* NUL */];
 };
 static struct config_item *config_parameters;
 static struct config_item **config_parameters_tail = &config_parameters;
@@ -32,43 +33,29 @@ static void lowercase(char *p)
 	for (; *p; p++)
 		*p = tolower(*p);
 }
-static char *skip_space(const char *p)
-{
-	for (; *p; p++)
-		if (!isspace(*p))
-			break;
-	return (char *)p;
-}
-static char *trailing_space(const char *begin, const char *p)
-{
-	while (p-- > begin)
-		if (!isspace(*p))
-			break;
-	return (char *)p + 1;
-}
 
 int git_config_parse_parameter(const char *text)
 {
 	struct config_item *ct;
-	const char *name;
-	const char *val;
-	name = skip_space(text);
-	text = val = strchr(name, '=');
-	if (!text)
-		text = name + strlen(name);
-	text = trailing_space(name, text);
-	if (text <= name)
+	struct strbuf tmp = STRBUF_INIT;
+	struct strbuf **pair;
+	strbuf_addstr(&tmp, text);
+	pair = strbuf_split(&tmp, '=');
+	if (pair[0]->len && pair[0]->buf[pair[0]->len - 1] == '=')
+		strbuf_setlen(pair[0], pair[0]->len - 1);
+	strbuf_trim(pair[0]);
+	if (!pair[0]->len) {
+		strbuf_list_free(pair);
 		return -1;
-	ct = xcalloc(1, sizeof(struct config_item) + (text - name));
-	memcpy(ct->name, name, text - name);
-	lowercase(ct->name);
-	if (!val)
-		ct->value = NULL;
-	else {
-		val = skip_space(++val /* skip "=" */);
-		text = trailing_space(val, val + strlen(val));
-		ct->value = xstrndup(val, text - val);
 	}
+	ct = xcalloc(1, sizeof(struct config_item));
+	ct->name = strbuf_detach(pair[0], NULL);
+	if (pair[1]) {
+		strbuf_trim(pair[1]);
+		ct->value = strbuf_detach(pair[1], NULL);
+	}
+	strbuf_list_free(pair);
+	lowercase(ct->name);
 	*config_parameters_tail = ct;
 	config_parameters_tail = &ct->next;
 	return 0;
