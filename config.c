@@ -18,6 +18,62 @@ static int zlib_compression_seen;
 
 const char *config_exclusive_filename = NULL;
 
+struct config_item
+{
+	struct config_item *next;
+	char *value;
+	char name[1 /* NUL */];
+};
+static struct config_item *config_parameters;
+static struct config_item **config_parameters_tail = &config_parameters;
+
+static void lowercase(char *p)
+{
+	for (; *p; p++)
+		*p = tolower(*p);
+}
+static char *skip_space(const char *p)
+{
+	for (; *p; p++)
+		if (!isspace(*p))
+			break;
+	return (char *)p;
+}
+static char *trailing_space(const char *begin, const char *p)
+{
+	while (p-- > begin)
+		if (!isspace(*p))
+			break;
+	return (char *)p + 1;
+}
+
+int git_config_parse_parameter(const char *text)
+{
+	struct config_item *ct;
+	const char *name;
+	const char *val;
+	name = skip_space(text);
+	text = val = strchr(name, '=');
+	if (!text)
+		text = name + strlen(name);
+	text = trailing_space(name, text);
+	if (text <= name)
+		return -1;
+	ct = xcalloc(1, sizeof(struct config_item) + (text - name));
+	memcpy(ct->name, name, text - name);
+	lowercase(ct->name);
+	if (!val)
+		ct->value = NULL;
+	else {
+		val = skip_space(++val /* skip "=" */);
+		text = trailing_space(val, val + strlen(val));
+		ct->value = xstrndup(val, text - val);
+	}
+	*config_parameters_tail = ct;
+	config_parameters_tail = &ct->next;
+	return 0;
+}
+
 static int get_next_char(void)
 {
 	int c;
@@ -699,6 +755,15 @@ int git_config_global(void)
 	return !git_env_bool("GIT_CONFIG_NOGLOBAL", 0);
 }
 
+int git_config_from_parameters(config_fn_t fn, void *data)
+{
+	const struct config_item *ct;
+	for (ct = config_parameters; ct; ct = ct->next)
+		if (fn(ct->name, ct->value, data) < 0)
+			return -1;
+	return 0;
+}
+
 int git_config(config_fn_t fn, void *data)
 {
 	int ret = 0, found = 0;
@@ -730,6 +795,12 @@ int git_config(config_fn_t fn, void *data)
 		found += 1;
 	}
 	free(repo_config);
+
+	if (config_parameters) {
+		ret += git_config_from_parameters(fn, data);
+		found += 1;
+	}
+
 	if (found == 0)
 		return -1;
 	return ret;
