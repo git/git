@@ -78,11 +78,13 @@ sub generate_command
 			next;
 		}
 		if ($arg eq '-g' || $arg eq '--gui') {
-			my $tool = Git::command_oneline('config',
-			                                'diff.guitool');
-			if (length($tool)) {
-				$ENV{GIT_DIFF_TOOL} = $tool;
-			}
+			eval {
+				my $tool = Git::command_oneline('config',
+				                                'diff.guitool');
+				if (length($tool)) {
+					$ENV{GIT_DIFF_TOOL} = $tool;
+				}
+			};
 			next;
 		}
 		if ($arg eq '-y' || $arg eq '--no-prompt') {
