@@ -2209,8 +2209,7 @@ sub config_to_multi {
 sub git_get_project_config {
 	my ($key, $type) = @_;
 
-	# do we have project
-	return unless (defined $project && defined $git_dir);
+	return unless defined $git_dir;
 
 	# key sanity check
 	return unless ($key);
