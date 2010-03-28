@@ -3,7 +3,7 @@ git-remote-helpers(1)
 
 NAME
 ----
-git-remote-helpers - Helper programs for interoperation with remote git
+git-remote-helpers - Helper programs to interact with remote repositories
 
 SYNOPSIS
 --------
@@ -12,11 +12,32 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-These programs are normally not used directly by end users, but are
-invoked by various git programs that interact with remote repositories
-when the repository they would operate on will be accessed using
-transport code not linked into the main git binary. Various particular
-helper programs will behave as documented here.
+Remote helper programs are normally not used directly by end users,
+but they are invoked by git when it needs to interact with remote
+repositories git does not support natively.  A given helper will
+implement a subset of the capabilities documented here. When git
+needs to interact with a repository using a remote helper, it spawns
+the helper as an independent process, sends commands to the helper's
+standard input, and expects results from the helper's standard
+output. Because a remote helper runs as an independent process from
+git, there is no need to re-link git to add a new helper, nor any
+need to link the helper with the implementation of git.
+
+Every helper must support the "capabilities" command, which git will
+use to determine what other commands the helper will accept.  Other
+commands generally concern facilities like discovering and updating
+remote refs, transporting objects between the object database and
+the remote repository, and updating the local object store.
+
+Helpers supporting the 'fetch' capability can discover refs from the
+remote repository and transfer objects reachable from those refs to
+the local object store. Helpers supporting the 'push' capability can
+transfer local objects to the remote repository and update remote refs.
+
+Git comes with a "curl" family of remote helpers, that handle various
+transport protocols, such as 'git-remote-http', 'git-remote-https',
+'git-remote-ftp' and 'git-remote-ftps'. They implement the capabilities
+'fetch', 'option', and 'push'.
 
 COMMANDS
 --------
