@@ -484,7 +484,7 @@ do_next () {
 		mark_action_done
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
-		echo "$1" > "$DOTEST"/stopped-sha
+		echo "$sha1" > "$DOTEST"/stopped-sha
 		make_patch $sha1
 		git rev-parse --verify HEAD > "$AMEND"
 		warn "Stopped at $sha1... $rest"
@@ -732,8 +732,9 @@ first and then run 'git rebase --continue' again."
 				test -n "$amend" && git reset --soft $amend
 				die "Could not commit staged changes."
 			}
-			record_in_rewritten "$(cat "$DOTEST"/stopped-sha)"
 		fi
+
+		record_in_rewritten "$(cat "$DOTEST"/stopped-sha)"
 
 		require_clean_work_tree
 		do_rest
