@@ -470,9 +470,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	 */
 	unsetenv(CONFIG_ENVIRONMENT);
 
-	if (option_reference)
-		setup_reference(git_dir);
-
 	git_config(git_default_config, NULL);
 
 	if (option_bare) {
@@ -504,6 +501,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&key);
 	}
 
+	if (option_reference)
+		setup_reference(git_dir);
+
 	fetch_pattern = value.buf;
 	refspec = parse_fetch_refspec(1, &fetch_pattern);
 
@@ -513,7 +513,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		refs = clone_local(path, git_dir);
 		mapped_refs = wanted_peer_refs(refs, refspec);
 	} else {
-		struct remote *remote = remote_get(argv[0]);
+		struct remote *remote = remote_get(option_origin);
 		transport = transport_get(remote, remote->url[0]);
 
 		if (!transport->get_refs_list || !transport->fetch)
