@@ -7,18 +7,13 @@ Updates since v1.7.0
  * Some commands (e.g. svn and http interfaces) that interactively ask
    password can be told to use an external program given via GIT_ASKPASS.
 
- * Color values given to "color.<cmd>.<slot>" configuration can now have
-   more than one attributes (e.g. "bold ul").
-
- * "git apply --whitespace=fix" didn't work well when an early patch in
-   a patch series adds trailing blank lines and a later one depended on
-   such a block of blank lines at the end.
-
  * "git am" learned "--keep-cr" option to handle inputs that are
    mixture of changes to files with and without CRLF line endings.
 
  * "git cvsimport" learned -R option to leave revision mapping between
    CVS revisions and resulting git commits.
+
+ * "git diff --submodule" notices and descries dirty submodules.
 
  * "git for-each-ref" learned %(symref), %(symref:short) and %(flag)
    tokens.
@@ -36,11 +31,15 @@ Updates since v1.7.0
 
  * "git grep" learned to paint filename and line-number in colors.
 
+ * "git log -p --first-parent -m" shows one-parent diff for merge
+   commits, instead of showing combined diff.
+
  * "git merge-file" learned to use custom conflict marker size and also use
    the "union merge" behaviour.
 
  * "git notes" command has been rewritten in C and learned quite a
-   many commands.
+   many commands and features to help you carry notes forward across
+   rebases and amends.
 
  * "git request-pull" identifies the commit the request is relative to in
    a more readable way.
@@ -48,6 +47,8 @@ Updates since v1.7.0
  * "git reset" learned "--keep" option that lets you discard commits
    near the tip while preserving your local changes in a way similar
    to how "git checkout branch" does.
+
+ * "git status" notices and descries dirty submodules.
 
  * "git svn" should work better when interacting with repositories
    with CRLF line endings.
@@ -66,5 +67,5 @@ release, unless otherwise noted.
 ---
 exec >/var/tmp/1
 echo O=$(git describe)
-O=v1.7.0.2-323-g0d0925c
+O=v1.7.0.3-310-g99f5b08
 git shortlog --no-merges ^maint $O..
