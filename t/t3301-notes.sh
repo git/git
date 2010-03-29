@@ -69,7 +69,7 @@ cat >expect <<EOF
 d423f8c refs/notes/commits@{0}: notes: Notes added by 'git notes add'
 EOF
 
-test_expect_failure 'create reflog entry' '
+test_expect_success 'create reflog entry' '
 	git reflog show refs/notes/commits >output &&
 	test_cmp expect output
 '
