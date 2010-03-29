@@ -180,4 +180,20 @@ EOF
 	verify_hook_input
 '
 
+test_expect_success 'git rebase -i (double edit)' '
+	git reset --hard D &&
+	clear_hook_input &&
+	FAKE_LINES="edit 1 edit 2" git rebase -i B &&
+	git rebase --continue &&
+	echo something > foo &&
+	git add foo &&
+	git rebase --continue &&
+	echo rebase >expected.args &&
+	cat >expected.data <<EOF &&
+$(git rev-parse C) $(git rev-parse HEAD^)
+$(git rev-parse D) $(git rev-parse HEAD)
+EOF
+	verify_hook_input
+'
+
 test_done
