@@ -495,11 +495,11 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			git_config_set(key.buf, "true");
 			strbuf_reset(&key);
 		}
-
-		strbuf_addf(&key, "remote.%s.url", option_origin);
-		git_config_set(key.buf, repo);
-		strbuf_reset(&key);
 	}
+
+	strbuf_addf(&key, "remote.%s.url", option_origin);
+	git_config_set(key.buf, repo);
+	strbuf_reset(&key);
 
 	if (option_reference)
 		setup_reference(git_dir);
