@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # An example hook script to prepare the commit log message.
-# Called by git-commit with the name of the file that has the
+# Called by "git commit" with the name of the file that has the
 # commit message, followed by the description of the commit
 # message's source.  The hook's purpose is to edit the commit
 # message file.  If the hook fails with a non-zero status,
@@ -22,10 +22,10 @@
 
 case "$2,$3" in
   merge,)
-    perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
+    @PERL_PATH@ -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "$1" ;;
 
 # ,|template,)
-#   perl -i.bak -pe '
+#   @PERL_PATH@ -i.bak -pe '
 #      print "\n" . `git diff --cached --name-status -r`
 #	 if /^#/ && $first++ == 0' "$1" ;;
 
