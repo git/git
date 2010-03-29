@@ -92,6 +92,15 @@ test_expect_success 'difftool honors --gui' '
 	restore_test_defaults
 '
 
+test_expect_success 'difftool --gui works without configured diff.guitool' '
+	git config diff.tool test-tool &&
+
+	diff=$(git difftool --no-prompt --gui branch) &&
+	test "$diff" = "branch" &&
+
+	restore_test_defaults
+'
+
 # Specify the diff tool using $GIT_DIFF_TOOL
 test_expect_success 'GIT_DIFF_TOOL variable' '
 	git config --unset diff.tool
