@@ -209,4 +209,13 @@ test_expect_success '%gd shortens ref name' '
 	test_cmp expect.gd-short actual.gd-short
 '
 
+test_expect_success 'oneline with empty message' '
+	git commit -m "dummy" --allow-empty &&
+	git commit -m "dummy" --allow-empty &&
+	git filter-branch --msg-filter "sed -e s/dummy//" HEAD^^.. &&
+	git rev-list --oneline HEAD > /tmp/test.txt &&
+	test $(git rev-list --oneline HEAD | wc -l) -eq 5 &&
+	test $(git rev-list --oneline --graph HEAD | wc -l) -eq 5
+'
+
 test_done
