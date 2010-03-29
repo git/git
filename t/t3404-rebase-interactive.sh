@@ -22,12 +22,18 @@ set_fake_editor
 # | \
 # |   F - G - H                (branch1)
 # |     \
-#  \      I                    (branch2)
-#   \
-#     J - K - L - M            (no-conflict-branch)
+# |\      I                    (branch2)
+# | \
+# |   J - K - L - M            (no-conflict-branch)
+#  \
+#    N - O - P                 (no-ff-branch)
 #
 # where A, B, D and G all touch file1, and one, two, three, four all
 # touch file "conflict".
+#
+# WARNING: Modifications to the initial repository can change the SHA ID used
+# in the expect2 file for the 'stop on conflicting pick' test.
+
 
 test_expect_success 'setup' '
 	test_commit A file1 &&
@@ -48,6 +54,11 @@ test_expect_success 'setup' '
 	done &&
 	git checkout -b no-conflict-branch A &&
 	for n in J K L M
+	do
+		test_commit $n file$n
+	done &&
+	git checkout -b no-ff-branch A &&
+	for n in N O P
 	do
 		test_commit $n file$n
 	done
@@ -113,7 +124,7 @@ cat > expect2 << EOF
 D
 =======
 G
->>>>>>> 51047de... G
+>>>>>>> 5d18e54... G
 EOF
 
 test_expect_success 'stop on conflicting pick' '
@@ -584,6 +595,23 @@ test_expect_success 'rebase while detaching HEAD' '
 	FAKE_LINES="2 1" git rebase -i HEAD~2 HEAD^0 &&
 	test $grandparent = $(git rev-parse HEAD~2) &&
 	test_must_fail git symbolic-ref HEAD
+'
+
+test_tick # Ensure that the rebased commits get a different timestamp.
+test_expect_success 'always cherry-pick with --no-ff' '
+	git checkout no-ff-branch &&
+	git tag original-no-ff-branch &&
+	git rebase -i --no-ff A &&
+	touch empty &&
+	for p in 0 1 2
+	do
+		test ! $(git rev-parse HEAD~$p) = $(git rev-parse original-no-ff-branch~$p) &&
+		git diff HEAD~$p original-no-ff-branch~$p > out &&
+		test_cmp empty out
+	done &&
+	test $(git rev-parse HEAD~3) = $(git rev-parse original-no-ff-branch~3) &&
+	git diff HEAD~3 original-no-ff-branch~3 > out &&
+	test_cmp empty out
 '
 
 test_done
