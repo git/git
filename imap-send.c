@@ -1226,9 +1226,6 @@ static struct store *imap_open_store(struct imap_server_conf *srvc)
 			fprintf(stderr, "Skipping account %s@%s, server forbids LOGIN\n", srvc->user, srvc->host);
 			goto bail;
 		}
-		if (!imap->buf.sock.ssl)
-			imap_warn("*** IMAP Warning *** Password is being "
-				  "sent in the clear\n");
 
 		if (srvc->auth_method) {
 			struct imap_cmd_cb cb;
@@ -1253,6 +1250,9 @@ static struct store *imap_open_store(struct imap_server_conf *srvc)
 				goto bail;
 			}
 		} else {
+			if (!imap->buf.sock.ssl)
+				imap_warn("*** IMAP Warning *** Password is being "
+					  "sent in the clear\n");
 			if (imap_exec(ctx, NULL, "LOGIN \"%s\" \"%s\"", srvc->user, srvc->pass) != RESP_OK) {
 				fprintf(stderr, "IMAP error: LOGIN failed\n");
 				goto bail;
