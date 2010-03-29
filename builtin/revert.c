@@ -13,6 +13,7 @@
 #include "revision.h"
 #include "rerere.h"
 #include "merge-recursive.h"
+#include "refs.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -35,7 +36,7 @@ static const char * const cherry_pick_usage[] = {
 	NULL
 };
 
-static int edit, no_replay, no_commit, mainline, signoff;
+static int edit, no_replay, no_commit, mainline, signoff, allow_ff;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
 static const char *commit_name;
@@ -60,7 +61,18 @@ static void parse_args(int argc, const char **argv)
 		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
 		OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 		OPT_END(),
+		OPT_END(),
+		OPT_END(),
 	};
+
+	if (action == CHERRY_PICK) {
+		struct option cp_extra[] = {
+			OPT_BOOLEAN(0, "ff", &allow_ff, "allow fast-forward"),
+			OPT_END(),
+		};
+		if (parse_options_concat(options, ARRAY_SIZE(options), cp_extra))
+			die("program error");
+	}
 
 	if (parse_options(argc, argv, NULL, options, usage_str, 0) != 1)
 		usage_with_options(usage_str, options);
@@ -244,6 +256,17 @@ static NORETURN void die_dirty_index(const char *me)
 	}
 }
 
+static int fast_forward_to(const unsigned char *to, const unsigned char *from)
+{
+	struct ref_lock *ref_lock;
+
+	read_cache();
+	if (checkout_fast_forward(from, to))
+		exit(1); /* the callee should have complained already */
+	ref_lock = lock_any_ref_for_update("HEAD", from, 0);
+	return write_ref_sha1(ref_lock, to, "cherry-pick");
+}
+
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
@@ -251,7 +274,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	int i, index_fd, clean;
 	char *oneline, *reencoded_message = NULL;
 	const char *message, *encoding;
-	char *defmsg = git_pathdup("MERGE_MSG");
+	char *defmsg = NULL;
 	struct merge_options o;
 	struct tree *result, *next_tree, *base_tree, *head_tree;
 	static struct lock_file index_lock;
@@ -264,6 +287,17 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	/* this is copied from the shell script, but it's never triggered... */
 	if (action == REVERT && !no_replay)
 		die("revert is incompatible with replay");
+
+	if (allow_ff) {
+		if (signoff)
+			die("cherry-pick --ff cannot be used with --signoff");
+		if (no_commit)
+			die("cherry-pick --ff cannot be used with --no-commit");
+		if (no_replay)
+			die("cherry-pick --ff cannot be used with -x");
+		if (edit)
+			die("cherry-pick --ff cannot be used with --edit");
+	}
 
 	if (read_cache() < 0)
 		die("git %s: failed to read the index", me);
@@ -283,8 +317,6 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			die_dirty_index(me);
 	}
 	discard_cache();
-
-	index_fd = hold_locked_index(&index_lock, 1);
 
 	if (!commit->parents) {
 		if (action == REVERT)
@@ -314,6 +346,9 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	else
 		parent = commit->parents->item;
 
+	if (allow_ff && !hashcmp(parent->object.sha1, head))
+		return fast_forward_to(commit->object.sha1, head);
+
 	if (!(message = commit->buffer))
 		die ("Cannot get commit message for %s",
 				sha1_to_hex(commit->object.sha1));
@@ -329,6 +364,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	 * reverse of it if we are revert.
 	 */
 
+	defmsg = git_pathdup("MERGE_MSG");
 	msg_fd = hold_lock_file_for_update(&msg_file, defmsg,
 					   LOCK_DIE_ON_ERROR);
 
@@ -342,6 +378,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		message = reencoded_message;
 
 	oneline = get_oneline(message);
+
+	index_fd = hold_locked_index(&index_lock, 1);
 
 	if (action == REVERT) {
 		char *oneline_body = strchr(oneline, ' ');
