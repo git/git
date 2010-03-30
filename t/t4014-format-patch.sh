@@ -557,4 +557,8 @@ test_expect_success 'format-patch -- <path>' '
 	! grep "Use .--" error
 '
 
+test_expect_success 'format-patch --ignore-if-in-upstream HEAD' '
+	git format-patch --ignore-if-in-upstream HEAD
+'
+
 test_done

@@ -1106,8 +1106,15 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			return 0;
 	}
 
-	if (ignore_if_in_upstream)
+	if (ignore_if_in_upstream) {
+		/* Don't say anything if head and upstream are the same. */
+		if (rev.pending.nr == 2) {
+			struct object_array_entry *o = rev.pending.objects;
+			if (hashcmp(o[0].item->sha1, o[1].item->sha1) == 0)
+				return 0;
+		}
 		get_patch_ids(&rev, &ids, prefix);
+	}
 
 	if (!use_stdout)
 		realstdout = xfdopen(xdup(1), "w");
