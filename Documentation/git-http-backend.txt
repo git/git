@@ -35,7 +35,7 @@ These services can be enabled/disabled using the per-repository
 configuration file:
 
 http.getanyfile::
-	This serves older Git clients which are unable to use the
+	This serves Git clients older than version 1.6.6 that are unable to use the
 	upload pack service.  When enabled, clients are able to read
 	any file within the repository, including objects that are
 	no longer reachable from a branch but are still present.
