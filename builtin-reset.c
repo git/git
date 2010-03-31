@@ -23,7 +23,8 @@
 
 static const char * const git_reset_usage[] = {
 	"git reset [--mixed | --soft | --hard | --merge] [-q] [<commit>]",
-	"git reset [--mixed] <commit> [--] <paths>...",
+	"git reset [-q] <commit> [--] <paths>...",
+	"git reset --patch [<commit>] [--] [<paths>...]",
 	NULL
 };
 
