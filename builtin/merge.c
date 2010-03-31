@@ -548,8 +548,8 @@ static void write_tree_trivial(unsigned char *sha1)
 		die("git write-tree failed to write a tree");
 }
 
-static int try_merge_command(const char *strategy, struct commit_list *common,
-			     const char *head_arg, struct commit_list *remotes)
+int try_merge_command(const char *strategy, struct commit_list *common,
+		      const char *head_arg, struct commit_list *remotes)
 {
 	const char **args;
 	int i = 0, x = 0, ret;
