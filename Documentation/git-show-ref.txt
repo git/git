@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git show-ref' [-q|--quiet] [--verify] [--head] [-d|--dereference]
 	     [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags]
-	     [--heads] [--] <pattern>...
+	     [--heads] [--] [<pattern>...]
 'git show-ref' --exclude-existing[=<pattern>] < ref-list
 
 DESCRIPTION

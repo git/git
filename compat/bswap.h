@@ -17,6 +17,8 @@ static inline uint32_t default_swab32(uint32_t val)
 		((val & 0x000000ff) << 24));
 }
 
+#undef bswap32
+
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
 #define bswap32(x) ({ \
