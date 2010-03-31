@@ -42,6 +42,7 @@ static const char *commit_name;
 static int allow_rerere_auto;
 
 static const char *me;
+static const char *strategy;
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
@@ -61,6 +62,7 @@ static void parse_args(int argc, const char **argv)
 		OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
 		OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
+		OPT_STRING(0, "strategy", &strategy, "strategy", "merge strategy"),
 		OPT_END(),
 	};
 
@@ -444,8 +446,27 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		}
 	}
 
-	do_recursive_merge(base, next, base_label, next_label,
-			   head, &msgbuf, defmsg);
+	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT)
+		do_recursive_merge(base, next, base_label, next_label,
+				   head, &msgbuf, defmsg);
+	else {
+		int res;
+		struct commit_list *common = NULL;
+		struct commit_list *remotes = NULL;
+		write_message(&msgbuf, defmsg);
+		commit_list_insert(base, &common);
+		commit_list_insert(next, &remotes);
+		res = try_merge_command(strategy, common,
+					sha1_to_hex(head), remotes);
+		free_commit_list(common);
+		free_commit_list(remotes);
+		if (res) {
+			fprintf(stderr, "Automatic %s with strategy %s failed.%s\n",
+				me, strategy, help_msg(commit_name));
+			rerere(allow_rerere_auto);
+			exit(1);
+		}
+	}
 
 	/*
 	 *
