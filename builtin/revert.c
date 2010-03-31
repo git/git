@@ -157,28 +157,17 @@ static char *get_encoding(const char *message)
 	return NULL;
 }
 
-static struct lock_file msg_file;
-static int msg_fd;
-
-static void add_to_msg(const char *string)
-{
-	int len = strlen(string);
-	if (write_in_full(msg_fd, string, len) < 0)
-		die_errno ("Could not write to MERGE_MSG");
-}
-
-static void add_message_to_msg(const char *message)
+static void add_message_to_msg(struct strbuf *msgbuf, const char *message)
 {
 	const char *p = message;
 	while (*p && (*p != '\n' || p[1] != '\n'))
 		p++;
 
 	if (!*p)
-		add_to_msg(sha1_to_hex(commit->object.sha1));
+		strbuf_addstr(msgbuf, sha1_to_hex(commit->object.sha1));
 
 	p += 2;
-	add_to_msg(p);
-	return;
+	strbuf_addstr(msgbuf, p);
 }
 
 static void set_author_ident_env(const char *message)
@@ -254,6 +243,19 @@ static char *help_msg(const char *name)
 	return strbuf_detach(&helpbuf, NULL);
 }
 
+static void write_message(struct strbuf *msgbuf, const char *filename)
+{
+	static struct lock_file msg_file;
+
+	int msg_fd = hold_lock_file_for_update(&msg_file, filename,
+					       LOCK_DIE_ON_ERROR);
+	if (write_in_full(msg_fd, msgbuf->buf, msgbuf->len) < 0)
+		die_errno("Could not write to %s.", filename);
+	strbuf_release(msgbuf);
+	if (commit_lock_file(&msg_file) < 0)
+		die("Error wrapping up %s", filename);
+}
+
 static struct tree *empty_tree(void)
 {
 	struct tree *tree = xcalloc(1, sizeof(struct tree));
@@ -289,6 +291,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	struct merge_options o;
 	struct tree *result, *next_tree, *base_tree, *head_tree;
 	static struct lock_file index_lock;
+	struct strbuf msgbuf = STRBUF_INIT;
 
 	git_config(git_default_config, NULL);
 	me = action == REVERT ? "revert" : "cherry-pick";
@@ -363,35 +366,32 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	 * reverse of it if we are revert.
 	 */
 
-	msg_fd = hold_lock_file_for_update(&msg_file, defmsg,
-					   LOCK_DIE_ON_ERROR);
-
 	if (action == REVERT) {
 		base = commit;
 		base_label = msg.label;
 		next = parent;
 		next_label = msg.parent_label;
-		add_to_msg("Revert \"");
-		add_to_msg(msg.subject);
-		add_to_msg("\"\n\nThis reverts commit ");
-		add_to_msg(sha1_to_hex(commit->object.sha1));
+		strbuf_addstr(&msgbuf, "Revert \"");
+		strbuf_addstr(&msgbuf, msg.subject);
+		strbuf_addstr(&msgbuf, "\"\n\nThis reverts commit ");
+		strbuf_addstr(&msgbuf, sha1_to_hex(commit->object.sha1));
 
 		if (commit->parents->next) {
-			add_to_msg(", reversing\nchanges made to ");
-			add_to_msg(sha1_to_hex(parent->object.sha1));
+			strbuf_addstr(&msgbuf, ", reversing\nchanges made to ");
+			strbuf_addstr(&msgbuf, sha1_to_hex(parent->object.sha1));
 		}
-		add_to_msg(".\n");
+		strbuf_addstr(&msgbuf, ".\n");
 	} else {
 		base = parent;
 		base_label = msg.parent_label;
 		next = commit;
 		next_label = msg.label;
 		set_author_ident_env(msg.message);
-		add_message_to_msg(msg.message);
+		add_message_to_msg(&msgbuf, msg.message);
 		if (no_replay) {
-			add_to_msg("(cherry picked from commit ");
-			add_to_msg(sha1_to_hex(commit->object.sha1));
-			add_to_msg(")\n");
+			strbuf_addstr(&msgbuf, "(cherry picked from commit ");
+			strbuf_addstr(&msgbuf, sha1_to_hex(commit->object.sha1));
+			strbuf_addstr(&msgbuf, ")\n");
 		}
 	}
 
@@ -416,27 +416,25 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	rollback_lock_file(&index_lock);
 
 	if (!clean) {
-		add_to_msg("\nConflicts:\n\n");
+		strbuf_addstr(&msgbuf, "\nConflicts:\n\n");
 		for (i = 0; i < active_nr;) {
 			struct cache_entry *ce = active_cache[i++];
 			if (ce_stage(ce)) {
-				add_to_msg("\t");
-				add_to_msg(ce->name);
-				add_to_msg("\n");
+				strbuf_addch(&msgbuf, '\t');
+				strbuf_addstr(&msgbuf, ce->name);
+				strbuf_addch(&msgbuf, '\n');
 				while (i < active_nr && !strcmp(ce->name,
 						active_cache[i]->name))
 					i++;
 			}
 		}
-		if (commit_lock_file(&msg_file) < 0)
-			die ("Error wrapping up %s", defmsg);
+		write_message(&msgbuf, defmsg);
 		fprintf(stderr, "Automatic %s failed.%s\n",
 			me, help_msg(commit_name));
 		rerere(allow_rerere_auto);
 		exit(1);
 	}
-	if (commit_lock_file(&msg_file) < 0)
-		die ("Error wrapping up %s", defmsg);
+	write_message(&msgbuf, defmsg);
 	fprintf(stderr, "Finished one %s.\n", me);
 
 	/*
