@@ -507,15 +507,15 @@ test_expect_success 'remote prune to cause a dangling symref' '
 	(
 		cd seven &&
 		git remote prune origin
-	) 2>err &&
+	) >err 2>&1 &&
 	grep "has become dangling" err &&
 
-	: And the dangling symref will not cause other annoying errors
+	: And the dangling symref will not cause other annoying errors &&
 	(
 		cd seven &&
 		git branch -a
 	) 2>err &&
-	! grep "points nowhere" err
+	! grep "points nowhere" err &&
 	(
 		cd seven &&
 		test_must_fail git branch nomore origin
