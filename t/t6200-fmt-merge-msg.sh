@@ -7,64 +7,68 @@ test_description='fmt-merge-msg test'
 
 . ./test-lib.sh
 
-datestamp=1151939923
-setdate () {
-	GIT_COMMITTER_DATE="$datestamp +0200"
-	GIT_AUTHOR_DATE="$datestamp +0200"
-	datestamp=`expr "$datestamp" + 1`
-	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
-}
-
 test_expect_success setup '
 	echo one >one &&
 	git add one &&
-	setdate &&
+	test_tick &&
 	git commit -m "Initial" &&
+
+	git clone . remote &&
 
 	echo uno >one &&
 	echo dos >two &&
 	git add two &&
-	setdate &&
+	test_tick &&
 	git commit -a -m "Second" &&
 
 	git checkout -b left &&
 
-	echo $datestamp >one &&
-	setdate &&
+	echo "c1" >one &&
+	test_tick &&
 	git commit -a -m "Common #1" &&
 
-	echo $datestamp >one &&
-	setdate &&
+	echo "c2" >one &&
+	test_tick &&
 	git commit -a -m "Common #2" &&
 
 	git branch right &&
 
-	echo $datestamp >two &&
-	setdate &&
+	echo "l3" >two &&
+	test_tick &&
 	git commit -a -m "Left #3" &&
 
-	echo $datestamp >two &&
-	setdate &&
+	echo "l4" >two &&
+	test_tick &&
 	git commit -a -m "Left #4" &&
 
-	echo $datestamp >two &&
-	setdate &&
+	echo "l5" >two &&
+	test_tick &&
 	git commit -a -m "Left #5" &&
+	git tag tag-l5 &&
 
 	git checkout right &&
 
-	echo $datestamp >three &&
+	echo "r3" >three &&
 	git add three &&
-	setdate &&
+	test_tick &&
 	git commit -a -m "Right #3" &&
+	git tag tag-r3 &&
 
-	echo $datestamp >three &&
-	setdate &&
+	echo "r4" >three &&
+	test_tick &&
 	git commit -a -m "Right #4" &&
 
-	echo $datestamp >three &&
-	setdate &&
+	echo "r5" >three &&
+	test_tick &&
 	git commit -a -m "Right #5" &&
+
+	git checkout -b long &&
+	i=0 &&
+	while test $i -lt 30
+	do
+		test_commit $i one &&
+		i=$(($i+1))
+	done &&
 
 	git show-branch
 '
@@ -113,7 +117,7 @@ test_expect_success 'merge-msg test #3-1' '
 	git config merge.log true &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -127,7 +131,7 @@ test_expect_success 'merge-msg test #3-2' '
 	git config merge.summary true &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -159,7 +163,7 @@ test_expect_success 'merge-msg test #4-1' '
 	git config merge.log true &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -173,7 +177,7 @@ test_expect_success 'merge-msg test #4-2' '
 	git config merge.summary true &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -187,7 +191,7 @@ test_expect_success 'merge-msg test #5-1' '
 	git config merge.log yes &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -201,7 +205,7 @@ test_expect_success 'merge-msg test #5-2' '
 	git config merge.summary yes &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
@@ -215,7 +219,7 @@ test_expect_success 'merge-msg -F' '
 	git config merge.summary yes &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 
 	git fmt-merge-msg -F .git/FETCH_HEAD >actual &&
@@ -229,7 +233,7 @@ test_expect_success 'merge-msg -F in subdirectory' '
 	git config merge.summary yes &&
 
 	git checkout master &&
-	setdate &&
+	test_tick &&
 	git fetch . left right &&
 	mkdir sub &&
 	cp .git/FETCH_HEAD sub/FETCH_HEAD &&
@@ -237,6 +241,130 @@ test_expect_success 'merge-msg -F in subdirectory' '
 		cd sub &&
 		git fmt-merge-msg -F FETCH_HEAD >../actual
 	) &&
+	test_cmp expected actual
+'
+
+test_expect_success 'merge-msg with nothing to merge' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	(
+		cd remote &&
+		git checkout -b unrelated &&
+		test_tick &&
+		git fetch origin &&
+		git fmt-merge-msg <.git/FETCH_HEAD >../actual
+	) &&
+
+	test_cmp /dev/null actual
+'
+
+cat >expected <<\EOF
+Merge tag 'tag-r3'
+
+* tag 'tag-r3':
+  Right #3
+  Common #2
+  Common #1
+EOF
+
+test_expect_success 'merge-msg tag' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	git checkout master &&
+	test_tick &&
+	git fetch . tag tag-r3 &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+Merge tags 'tag-r3' and 'tag-l5'
+
+* tag 'tag-r3':
+  Right #3
+  Common #2
+  Common #1
+
+* tag 'tag-l5':
+  Left #5
+  Left #4
+  Left #3
+  Common #2
+  Common #1
+EOF
+
+test_expect_success 'merge-msg two tags' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	git checkout master &&
+	test_tick &&
+	git fetch . tag tag-r3 tag tag-l5 &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+Merge branch 'left', tag 'tag-r3'
+
+* tag 'tag-r3':
+  Right #3
+  Common #2
+  Common #1
+
+* left:
+  Left #5
+  Left #4
+  Left #3
+  Common #2
+  Common #1
+EOF
+
+test_expect_success 'merge-msg tag and branch' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	git checkout master &&
+	test_tick &&
+	git fetch . tag tag-r3 left &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+Merge branch 'long'
+
+* long: (35 commits)
+EOF
+
+test_expect_success 'merge-msg lots of commits' '
+
+	git checkout master &&
+	test_tick &&
+	git fetch . long &&
+
+	i=29 &&
+	while test $i -gt 9
+	do
+		echo "  $i" &&
+		i=$(($i-1))
+	done >>expected &&
+	echo "  ..." >>expected
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	test_cmp expected actual
 '
 
