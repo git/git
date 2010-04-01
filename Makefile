@@ -34,7 +34,7 @@ all::
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 #
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
-# d_type in struct dirent (latest Cygwin -- will be fixed soonish).
+# d_type in struct dirent (Cygwin 1.5, fixed in Cygwin 1.7).
 #
 # Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
 # do not support the 'size specifiers' introduced by C99, namely ll, hh,
@@ -109,7 +109,7 @@ all::
 # Define NO_PTHREADS if you do not have or do not want to use Pthreads.
 #
 # Define NO_PREAD if you have a problem with pread() system call (e.g.
-# cygwin.dll before v1.5.22).
+# cygwin1.dll before v1.5.22).
 #
 # Define NO_FAST_WORKING_DIRECTORY if accessing objects in pack files is
 # generally faster on your platform than accessing the working directory.
@@ -831,22 +831,24 @@ ifeq ($(uname_S),SunOS)
 	BASIC_CFLAGS += -D__EXTENSIONS__ -D__sun__ -DHAVE_ALLOCA_H
 endif
 ifeq ($(uname_O),Cygwin)
-	NO_D_TYPE_IN_DIRENT = YesPlease
-	NO_D_INO_IN_DIRENT = YesPlease
-	NO_STRCASESTR = YesPlease
-	NO_MEMMEM = YesPlease
-	NO_MKSTEMPS = YesPlease
-	NO_SYMLINK_HEAD = YesPlease
+	ifneq ($(wordlist 1, 2, $(subst ., ,$(uname_R))),1 7)
+		NO_D_TYPE_IN_DIRENT = YesPlease
+		NO_D_INO_IN_DIRENT = YesPlease
+		NO_STRCASESTR = YesPlease
+		NO_MEMMEM = YesPlease
+		NO_MKSTEMPS = YesPlease
+		NO_SYMLINK_HEAD = YesPlease
+		NO_IPV6 = YesPlease
+		OLD_ICONV = UnfortunatelyYes
+	endif
 	NEEDS_LIBICONV = YesPlease
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
 	NO_TRUSTABLE_FILEMODE = UnfortunatelyYes
-	OLD_ICONV = UnfortunatelyYes
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
 	# There are conflicting reports about this.
 	# On some boxes NO_MMAP is needed, and not so elsewhere.
 	# Try commenting this out if you suspect MMAP is more efficient
 	NO_MMAP = YesPlease
-	NO_IPV6 = YesPlease
 	X = .exe
 	COMPAT_OBJS += compat/cygwin.o
 	UNRELIABLE_FSTAT = UnfortunatelyYes
