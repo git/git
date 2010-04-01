@@ -1617,9 +1617,8 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)): % : %.py
 	    -e '}' \
 	    -e 's|^import sys.*|&; \\\
 	           import os; \\\
-	           sys.path[0] = os.environ.has_key("GITPYTHONLIB") and \\\
-	                         os.environ["GITPYTHONLIB"] or \\\
-	                         "@@INSTLIBDIR@@"|' \
+	           sys.path.insert(0, os.getenv("GITPYTHONLIB",\
+	                                        "@@INSTLIBDIR@@"));|' \
 	    -e 's|@@INSTLIBDIR@@|'"$$INSTLIBDIR"'|g' \
 	    $@.py >$@+ && \
 	chmod +x $@+ && \
