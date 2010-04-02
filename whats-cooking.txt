@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2010, #07; Sun, 28)
-X-master-at: faf752693abd0a891a9a47a2d398353cc59ee93a
-X-next-at: 133563ba0a1cd78841512283a1069b49bf69373e
+Subject: What's cooking in git.git (Apr 2010, #01; Fri, 02)
+X-master-at: a50dec22f2800fd073aa6ca1d112f25b4f667a56
+X-next-at: 85b6122874e41c12f0cd6ae4744fb1b856d4a0ad
 
-What's cooking in git.git (Mar 2010, #07; Sun, 28)
+What's cooking in git.git (Apr 2010, #01; Fri, 02)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,42 +11,123 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-As it has been about 6 weeks since the previous feature release, I'd want
-to start making noises about feature freeze for 1.7.1 in a few days.  I
-expect that the changes still under discussion will be ready by the time
-the post 1.7.1 cycle begins, and we will hopefully have a cycle for 1.7.2
-that is shorter than usual to include them.
+Topics not in 'next' will have to wait until post 1.7.1 cycle.  I expect
+that the changes still under discussion will be ready by the time the post
+1.7.1 cycle begins, and we will hopefully have a cycle for 1.7.2 that is
+shorter than usual to include them.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* sb/notes-parse-opt (2010-02-27) 1 commit
+  (merged to 'next' on 2010-03-24 at 82eebc1)
+ + notes: rework subcommands and parse options
+
+* cc/cherry-pick-ff (2010-03-20) 7 commits
+  (merged to 'next' on 2010-03-20 at a1ae16b)
+ + revert: fix tiny memory leak in cherry-pick --ff
+ + rebase -i: use new --ff cherry-pick option
+  (merged to 'next' on 2010-03-07 at 5589b26)
+ + Documentation: describe new cherry-pick --ff option
+ + cherry-pick: add tests for new --ff option
+ + revert: add --ff option to allow fast forward when cherry-picking
+ + builtin/merge: make checkout_fast_forward() non static
+ + parse-options: add parse_options_concat() to concat options
 
 --------------------------------------------------
 [New Topics]
 
-* da/maint-python-startup (2010-03-27) 1 commit
- - Makefile: Remove usage of deprecated Python "has_key" method
+* cw/ws-indent-with-tab (2010-04-01) 2 commits
+ - whitespace: we cannot "catch all errors known to git" anymore
+ - Add tab-in-indent whitespace error class
 
-Another thing that this fixes is not described in the log message.
+Not quite ready until "apply --whitespace=fix" gets a matching change.
 
-* jc/conflict-marker-size (2010-03-24) 1 commit
- - diff --check: honor conflict-marker-size attribute
+* ic/bash-completion-rpm (2010-03-26) 1 commit
+ - RPM spec: include bash completion support
 
-* ld/discovery-limit-to-fs (2010-03-17) 3 commits
- - Add support for GIT_ONE_FILESYSTEM
- - truncate cwd string before printing error message
- - config.c: remove static keyword from git_env_bool()
+This is needed in 'master' by -rc1 at the latest.  Soon in 'next'.
 
-* sb/fmt-merge-msg (2010-03-24) 7 commits
- - fmt-merge-msg: hide summary option
- - fmt-merge-msg: remove custom string_list implementation
- - string-list: add unsorted_string_list_lookup()
- - fmt-merge-msg: use pretty.c routines
- - t6200: test fmt-merge-msg more
- - t6200: modernize with test_tick
- - fmt-merge-msg: be quiet if nothing to merge
+* js/grep-open (2010-03-26) 2 commits
+ - grep -O: allow optional argument specifying the pager (or editor)
+ - grep: Add the option '--open-files-in-pager'
 
-* pc/remove-warn (2010-03-26) 4 commits
- . Remove a redundant errno test in a usage of remove_path
- . Introduce remove_or_warn function
- . Implement the rmdir_or_warn function
- . Generalise the unlink_or_warn function
+Probably needs to support --no-index mode as well.
+
+* mg/notes-reflog (2010-03-29) 2 commits
+ - refs.c: Write reflogs for notes just like for branch heads
+ - t3301-notes: Test the creation of reflog entries
+
+Implementation is trivially correct; I am unsure if "notes" tree wants
+reflog in the first place, though.  Please convince me and I'll move it
+to 'next' soon, aiming for -rc0 or -rc1 at the latest.
+
+* rr/remote-helper-doc (2010-03-28) 2 commits
+ - Documentation/remote-helpers: Fix some typos
+ - Documentation/remote-helpers: Rewrite description
+
+Although I lost track of this series with too rapid succession of
+updates, intermixed with some documentation updates in the related
+areas, my impression is that area experts haven't Acked them yet.
+
+* sr/remote-helper-export (2010-03-29) 7 commits
+ - remote-helpers: add tests for testgit helper
+ - remote-helpers: add testgit helper
+ - remote-helpers: add support for an export command
+ - remote-helpers: allow requesing the path to the .git directory
+ - fast-import: always create marks_file directories
+ - clone: also configure url for bare clones
+ - clone: pass the remote name to remote_get
+
+May merge to 'next', but I would prefer waiting til 1.7.2 to have
+this with a confidence than fast-tracking it.
+
+* cc/revert-strategy (2010-03-31) 5 commits
+ - revert: add "--strategy" option to choose merge strategy
+ - merge: make function try_merge_command non static
+ - merge: refactor code that calls "git merge-STRATEGY"
+ - revert: refactor merge recursive code into its own function
+ - revert: use strbuf to refactor the code that writes the merge message
+ (this branch uses jn/merge-diff3-label.)
+
+May merge to 'next' soon, but this is more about debugging and we are not
+in a great hurry.
+
+* mr/gitweb-jsmin (2010-04-01) 6 commits
+ - gitweb: update INSTALL to use shorter make target
+ - gitweb: add documentation to INSTALL regarding gitweb.js
+ - instaweb: add minification awareness
+ - Gitweb: add autoconfigure support for minifiers
+ - Gitweb: add support for minifying gitweb.css
+ - Gitweb: add ignore and clean rules for minified files
+
+Soon in 'next' when minor rewording replacement patches come; otherwise
+felt solid.
+
+* sc/http-late-auth (2010-04-01) 1 commit
+ - Prompt for a username when an HTTP request 401s
+
+May merge to 'next', but I would prefer waiting til 1.7.2 to have
+this with a confidence than fast-tracking it.
+
+* hg/convert (2010-03-29) 5 commits
+ . convert: Added core.refilteronadd feature.
+ . convert: Inhibit contraction of foreign $Id$ during stats.
+ . convert: Use the enum constant SAFE_CRLF_FALSE.
+ . convert: Keep foreign $Id$ on checkout.
+ . convert: Safer handling of $Id$ contraction.
+
+* jk/cached-textconv (2010-04-01) 7 commits
+ - diff: avoid useless filespec population
+ - diff: cache textconv output
+ - textconv: refactor calls to run_textconv
+ - introduce notes-cache interface
+ - make commit_tree a library function
+ - fix textconv leak in emit_rewrite_diff
+ - fix const-correctness of write_sha1_file
+
+May merge to 'next', but I would prefer waiting til 1.7.2 to have
+this with a confidence than fast-tracking it.
 
 --------------------------------------------------
 [Stalled]
@@ -81,86 +162,146 @@ Perhaps rename _git_frotz -> _git_complete_frotz?  I dunno.
 Needs squelching the configuration setting when "--pretty=raw" is given,
 at least, or possibly when any "--pretty" is explicitly given.
 
---------------------------------------------------
-[Cooking]
-
 * np/malloc-threading (2010-03-24) 1 commit
  - Make xmalloc and xrealloc thread-safe
 
 Still has locking issues?
 
-* bw/git-completion-rpmspec (2010-03-20) 1 commit
- - Add a git-completion rpm subpackage to the spec
+* js/async-thread (2010-03-09) 7 commits
+ - Enable threaded async procedures whenever pthreads is available
+  (merged to 'next' on 2010-03-20 at 9939243)
+ + Dying in an async procedure should only exit the thread, not the process.
+ + Reimplement async procedures using pthreads
+ + Windows: more pthreads functions
+ + Fix signature of fcntl() compatibility dummy
+ + Make report() from usage.c public as vreportf() and use it.
+ + Modernize t5530-upload-pack-error.
 
-Shipping bash-completion as part of RPM package; since Todd Zullinger who
-packages git for Fedora joined the thread, I am hoping that I can defer
-the direction of the final version to the discussion between Todd and Ben.
+Waiting for resolution of locking issues in malloc-threading.
+
+--------------------------------------------------
+[Cooking]
+
+* da/maint-python-startup (2010-03-27) 1 commit
+  (merged to 'next' on 2010-04-01 at ca6897a)
+ + Makefile: Remove usage of deprecated Python "has_key" method
+
+Hopefully will merge to 'master' by -rc0.
+
+* jc/conflict-marker-size (2010-03-24) 1 commit
+  (merged to 'next' on 2010-04-01 at 164b1f4)
+ + diff --check: honor conflict-marker-size attribute
+
+Hopefully will merge to 'master' by -rc0.
+
+* ld/discovery-limit-to-fs (2010-03-17) 3 commits
+ - Add support for GIT_ONE_FILESYSTEM
+ - truncate cwd string before printing error message
+ - config.c: remove static keyword from git_env_bool()
+
+Linus made a good point of making this a default, and Erick Mattos
+confirmed that it won't be a problem even on Windows.
+
+Will move to 'next' after such a "default on" change, keep it there until
+1.7.1 ships, warn about it in the release notes as an upcoming backward
+incompatibility, and then move to 'master' after 1.7.1.
+
+* sb/fmt-merge-msg (2010-03-24) 7 commits
+  (merged to 'next' on 2010-04-01 at 5fcbec5)
+ + fmt-merge-msg: hide summary option
+ + fmt-merge-msg: remove custom string_list implementation
+ + string-list: add unsorted_string_list_lookup()
+ + fmt-merge-msg: use pretty.c routines
+ + t6200: test fmt-merge-msg more
+ + t6200: modernize with test_tick
+ + fmt-merge-msg: be quiet if nothing to merge
+
+Hopefully will merge to 'master' by -rc0.
+
+* pc/remove-warn (2010-03-26) 4 commits
+ - Remove a redundant errno test in a usage of remove_path
+ - Introduce remove_or_warn function
+ - Implement the rmdir_or_warn function
+ - Generalise the unlink_or_warn function
+
+I cherry-picked only obviously sensible bits.  Soon in 'next'.
 
 * ef/maint-empty-commit-log (2010-03-21) 1 commit
- - rev-list: fix --pretty=oneline with empty message
+  (merged to 'next' on 2010-03-28 at aa103e5)
+ + rev-list: fix --pretty=oneline with empty message
 
-Looked reasonable.  Soon in 'next'.
+Hopefully will merge to 'master' by -rc0.
 
 * em/checkout-orphan (2010-03-21) 1 commit
- - git checkout: create unparented branch by --orphan
+  (merged to 'next' on 2010-03-28 at 86b6a4f)
+ + git checkout: create unparented branch by --orphan
 
-Looked reasonable, except that we might want to come up with a way to
-allow people with core.logallrefupdates set to false to still override it
-with "-l" when switching to this new branch.  Or we may not care.  I dunno.
-
-Soon in 'next'.
+Perhaps needs a bit of documentation updates, describing the "going open
+source" scenario.
 
 * mg/mailmap-update (2010-03-19) 1 commit
- - .mailmap: Entries for Alex Bennée, Deskin Miller, Vitaly "_Vi" Shukela
+  (merged to 'next' on 2010-03-28 at 8ac3436)
+ + .mailmap: Entries for Alex Bennée, Deskin Miller, Vitaly "_Vi" Shukela
 
-Soon in 'next'.
+Soon in 'master'.
 
 * mg/maint-send-email-lazy-editor (2010-03-22) 1 commit
- - send-email: lazily assign editor variable
+  (merged to 'next' on 2010-03-28 at 7e8e58e)
+ + send-email: lazily assign editor variable
 
-Soon in 'next'.
+Soon in 'master'.
 
 * mg/use-default-abbrev-length-in-rev-list (2010-03-22) 1 commit
- - rev-list: use default abbrev length when abbrev-commit is in effect
+  (merged to 'next' on 2010-03-28 at d3e9f04)
+ + rev-list: use default abbrev length when abbrev-commit is in effect
 
-Soon in 'next'.
+Soon in 'master'.
 
 * rb/maint-python-path (2010-03-21) 1 commit
- - Correct references to /usr/bin/python which does not exist on FreeBSD
+  (merged to 'next' on 2010-03-28 at 58ba409)
+ + Correct references to /usr/bin/python which does not exist on FreeBSD
 
-Soon in 'next'.
+Soon in 'master'.
 
 * rr/imap-send-unconfuse-from-line (2010-03-22) 1 commit
- - imap-send: Remove limitation on message body
+  (merged to 'next' on 2010-03-28 at fbedd77)
+ + imap-send: Remove limitation on message body
 
-Soon in 'next'.
+Soon in 'master'.
 
 * sp/maint-http-backend-die-triggers-die-recursively (2010-03-22) 1 commit
- - http-backend: Don't infinite loop during die()
+  (merged to 'next' on 2010-03-28 at bf02879)
+ + http-backend: Don't infinite loop during die()
 
-Soon in 'next'.
+Soon in 'master'.
 
 * ar/config-from-command-line (2010-03-26) 2 commits
  - Use strbufs instead of open-coded string manipulation
  - Allow passing of configuration parameters in the command line
 
-* bc/t5505-fix (2010-03-19) 3 commits
- - t/t5505-remote.sh: escape * to prevent interpretation by shell as glob
- - t5505: add missing &&
- - t5505: remove unnecessary subshell invocations
+May merge to 'next', but I would prefer waiting til 1.7.2 to have
+this with a confidence than fast-tracking it.
 
-Looked reasonable.  Soon in 'next'.
+* bc/t5505-fix (2010-03-19) 3 commits
+  (merged to 'next' on 2010-03-28 at 1b097af)
+ + t/t5505-remote.sh: escape * to prevent interpretation by shell as glob
+ + t5505: add missing &&
+ + t5505: remove unnecessary subshell invocations
+
+Soon in 'master'.
 
 * bw/template-tool-buildconfig (2010-03-20) 2 commits
- - Modernize git calling conventions in hook templates
- - Make templates honour SHELL_PATH and PERL_PATH
+  (merged to 'next' on 2010-03-28 at 1e6fd8d)
+ + Modernize git calling conventions in hook templates
+ + Make templates honour SHELL_PATH and PERL_PATH
 
-Looked reasonable.  Soon in 'next'.
+Soon in 'master'.
 
 * mb/rebase-i-no-ff (2010-03-24) 1 commit
- - Teach rebase the --no-ff option.
+  (merged to 'next' on 2010-03-28 at b2c54cb)
+ + Teach rebase the --no-ff option.
 
-Looked reasonable.  Soon in 'next'.
+Soon in 'master'.
 
 * jn/merge-diff3-label (2010-03-20) 14 commits
   (merged to 'next' on 2010-03-20 at 26f1805)
@@ -178,84 +319,64 @@ Looked reasonable.  Soon in 'next'.
  + xdl_merge(): add optional ancestor label to diff3-style output
  + tests: document cherry-pick behavior in face of conflicts
  + tests: document format of conflicts from checkout -m
+ (this branch is used by cc/revert-strategy.)
+
+Soon in 'master'.
 
 * do/rebase-i-arbitrary (2010-03-14) 1 commit
- - rebase--interactive: don't require what's rebased to be a branch
+  (merged to 'next' on 2010-03-28 at 5ba9970)
+ + rebase--interactive: don't require what's rebased to be a branch
 
-Looked reasonable.  Soon in 'next'.
+Soon in 'master'.
 
 * ja/send-email-ehlo (2010-03-14) 3 commits
- - git-send-email.perl - try to give real name of the calling host to HELO/EHLO
- - git-send-email.perl: add option --smtp-debug
- - git-send-email.perl: improve error message in send_message()
+  (merged to 'next' on 2010-03-28 at 00964a8)
+ + git-send-email.perl - try to give real name of the calling host to HELO/EHLO
+ + git-send-email.perl: add option --smtp-debug
+ + git-send-email.perl: improve error message in send_message()
 
-Looked reasonable.  Soon in 'next'.
+Soon in 'master'.
 
 * ak/everyday-git (2009-10-21) 1 commit
- - everyday: fsck and gc are not everyday operations
+  (merged to 'next' on 2010-03-28 at ae67548)
+ + everyday: fsck and gc are not everyday operations
 
-Looked reasonable.  Soon in 'next'.
+Soon in 'master'.
 
 * bc/acl-test (2010-03-15) 5 commits
- - t/t1304: make a second colon optional in the mask ACL check
- - t/t1304: set the ACL effective rights mask
- - t/t1304: use 'test -r' to test readability rather than looking at mode bits
- - t/t1304: set the Default ACL base entries
- - t/t1304: avoid -d option to setfacl
+  (merged to 'next' on 2010-03-28 at b40fa09)
+ + t/t1304: make a second colon optional in the mask ACL check
+ + t/t1304: set the ACL effective rights mask
+ + t/t1304: use 'test -r' to test readability rather than looking at mode bits
+ + t/t1304: set the Default ACL base entries
+ + t/t1304: avoid -d option to setfacl
 
-Looked reasonable.  Soon in 'next'.
+Soon in 'master'.
 
 * bc/maint-daemon-sans-ss-family (2010-03-15) 1 commit
- - daemon.c: avoid accessing ss_family member of struct sockaddr_storage
+  (merged to 'next' on 2010-03-28 at 305ad0b)
+ + daemon.c: avoid accessing ss_family member of struct sockaddr_storage
 
-Looked reasonable.  Soon in 'next'.
+Soon in 'master'.
 
 * ef/cherry-abbrev (2010-03-20) 2 commits
- - ls: remove redundant logic
- - cherry: support --abbrev option
+  (merged to 'next' on 2010-03-28 at eb3825c)
+ + ls: remove redundant logic
+ + cherry: support --abbrev option
 
-Looked reasonable.  Soon in 'next'.
-
-* sb/notes-parse-opt (2010-02-27) 1 commit
-  (merged to 'next' on 2010-03-24 at 82eebc1)
- + notes: rework subcommands and parse options
-
-Ready for 'master'.
+Soon in 'master'.
 
 * gh/maint-stash-show-error-message (2010-03-16) 1 commit
- - Improve error messages from 'git stash show'
+  (merged to 'next' on 2010-03-28 at 61a5643)
+ + Improve error messages from 'git stash show'
 
-Looked reasonable.  Soon in 'next'.
+Soon in 'master'.
 
 * rs/threaded-grep-context (2010-03-15) 1 commit
- - grep: enable threading for context line printing
+  (merged to 'next' on 2010-03-28 at 1934af1)
+ + grep: enable threading for context line printing
 
-Looked reasonable.  Soon in 'next'.
-
-* cc/cherry-pick-ff (2010-03-20) 7 commits
-  (merged to 'next' on 2010-03-20 at a1ae16b)
- + revert: fix tiny memory leak in cherry-pick --ff
- + rebase -i: use new --ff cherry-pick option
-  (merged to 'next' on 2010-03-07 at 5589b26)
- + Documentation: describe new cherry-pick --ff option
- + cherry-pick: add tests for new --ff option
- + revert: add --ff option to allow fast forward when cherry-picking
- + builtin/merge: make checkout_fast_forward() non static
- + parse-options: add parse_options_concat() to concat options
-
-Ready for 'master'.
-
-* js/async-thread (2010-03-09) 7 commits
- - Enable threaded async procedures whenever pthreads is available
-  (merged to 'next' on 2010-03-20 at 9939243)
- + Dying in an async procedure should only exit the thread, not the process.
- + Reimplement async procedures using pthreads
- + Windows: more pthreads functions
- + Fix signature of fcntl() compatibility dummy
- + Make report() from usage.c public as vreportf() and use it.
- + Modernize t5530-upload-pack-error.
-
-The tip one will be soon in 'next', but one step at a time.
+Soon in 'master'.
 
 * nd/setup (2010-03-25) 43 commits
  - builtins: do not commit pager choice early
