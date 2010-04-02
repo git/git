@@ -2271,7 +2271,7 @@ static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
 }
 
 static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
-			      void *buf, unsigned long len, time_t mtime)
+			      const void *buf, unsigned long len, time_t mtime)
 {
 	int fd, ret;
 	unsigned char compressed[4096];
@@ -2307,7 +2307,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	git_SHA1_Update(&c, hdr, hdrlen);
 
 	/* Then the data itself.. */
-	stream.next_in = buf;
+	stream.next_in = (void *)buf;
 	stream.avail_in = len;
 	do {
 		unsigned char *in0 = stream.next_in;
@@ -2342,7 +2342,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	return move_temp_to_file(tmpfile, filename);
 }
 
-int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
+int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	unsigned char sha1[20];
 	char hdr[32];
