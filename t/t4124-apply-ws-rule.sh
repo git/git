@@ -11,21 +11,22 @@ prepare_test_file () {
 	#   	!  trailing-space
 	#   	@  space-before-tab
 	#   	#  indent-with-non-tab
+	#   	%  tab-in-indent
 	sed -e "s/_/ /g" -e "s/>/	/" <<-\EOF
 		An_SP in an ordinary line>and a HT.
-		>A HT.
-		_>A SP and a HT (@).
-		_>_A SP, a HT and a SP (@).
+		>A HT (%).
+		_>A SP and a HT (@%).
+		_>_A SP, a HT and a SP (@%).
 		_______Seven SP.
 		________Eight SP (#).
-		_______>Seven SP and a HT (@).
-		________>Eight SP and a HT (@#).
-		_______>_Seven SP, a HT and a SP (@).
-		________>_Eight SP, a HT and a SP (@#).
+		_______>Seven SP and a HT (@%).
+		________>Eight SP and a HT (@#%).
+		_______>_Seven SP, a HT and a SP (@%).
+		________>_Eight SP, a HT and a SP (@#%).
 		_______________Fifteen SP (#).
-		_______________>Fifteen SP and a HT (@#).
+		_______________>Fifteen SP and a HT (@#%).
 		________________Sixteen SP (#).
-		________________>Sixteen SP and a HT (@#).
+		________________>Sixteen SP and a HT (@#%).
 		_____a__Five SP, a non WS, two SP.
 		A line with a (!) trailing SP_
 		A line with a (!) trailing HT>
@@ -39,7 +40,6 @@ apply_patch () {
 }
 
 test_fix () {
-
 	# fix should not barf
 	apply_patch --whitespace=fix || return 1
 
@@ -130,20 +130,25 @@ do
 		for i in - ''
 		do
 			case "$i" in '') ti='#' ;; *) ti= ;; esac
-			rule=${t}trailing,${s}space,${i}indent
+			for h in - ''
+			do
+				[ -z "$h$i" ] && continue
+				case "$h" in '') th='%' ;; *) th= ;; esac
+				rule=${t}trailing,${s}space,${i}indent,${h}tab
 
-			rm -f .gitattributes
-			test_expect_success "rule=$rule" '
-				git config core.whitespace "$rule" &&
-				test_fix "$tt$ts$ti"
-			'
+				rm -f .gitattributes
+				test_expect_success "rule=$rule" '
+					git config core.whitespace "$rule" &&
+					test_fix "$tt$ts$ti$th"
+				'
 
-			test_expect_success "rule=$rule (attributes)" '
-				git config --unset core.whitespace &&
-				echo "target whitespace=$rule" >.gitattributes &&
-				test_fix "$tt$ts$ti"
-			'
+				test_expect_success "rule=$rule (attributes)" '
+					git config --unset core.whitespace &&
+					echo "target whitespace=$rule" >.gitattributes &&
+					test_fix "$tt$ts$ti$th"
+				'
 
+			done
 		done
 	done
 done
