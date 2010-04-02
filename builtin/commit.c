@@ -322,8 +322,8 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	 *
 	 * (1) return the name of the real index file.
 	 *
-	 * The caller should run hooks on the real index, and run
-	 * hooks on the real index, and create commit from the_index.
+	 * The caller should run hooks on the real index,
+	 * and create commit from the_index.
 	 * We still need to refresh the index here.
 	 */
 	if (!pathspec || !*pathspec) {
