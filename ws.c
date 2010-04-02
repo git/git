@@ -360,6 +360,20 @@ void ws_fix_copy(struct strbuf *dst, const char *src, int len, unsigned ws_rule,
 		len -= last;
 		src += last;
 		fixed = 1;
+	} else if ((ws_rule & WS_TAB_IN_INDENT) && last_tab_in_indent >= 0) {
+		/* Expand tabs into spaces */
+		int last = last_tab_in_indent + 1;
+		for (i = 0; i < last; i++) {
+			if (src[i] == '\t')
+				do {
+					strbuf_addch(dst, ' ');
+				} while (dst->len % 8);
+			else
+				strbuf_addch(dst, src[i]);
+		}
+		len -= last;
+		src += last;
+		fixed = 1;
 	}
 
 	strbuf_add(dst, src, len);
