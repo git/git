@@ -10,7 +10,8 @@
 static struct whitespace_rule {
 	const char *rule_name;
 	unsigned rule_bits;
-	unsigned loosens_error;
+	unsigned loosens_error:1,
+		exclude_default:1;
 } whitespace_rule_names[] = {
 	{ "trailing-space", WS_TRAILING_SPACE, 0 },
 	{ "space-before-tab", WS_SPACE_BEFORE_TAB, 0 },
@@ -82,7 +83,8 @@ unsigned whitespace_rule(const char *pathname)
 			unsigned all_rule = 0;
 			int i;
 			for (i = 0; i < ARRAY_SIZE(whitespace_rule_names); i++)
-				if (!whitespace_rule_names[i].loosens_error)
+				if (!whitespace_rule_names[i].loosens_error &&
+				    !whitespace_rule_names[i].exclude_default)
 					all_rule |= whitespace_rule_names[i].rule_bits;
 			return all_rule;
 		} else if (ATTR_FALSE(value)) {
