@@ -271,8 +271,8 @@ int ws_blank_line(const char *line, int len, unsigned ws_rule)
 	return 1;
 }
 
-/* Copy the line to the buffer while fixing whitespaces */
-int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *error_count)
+/* Copy the line onto the end of the strbuf while fixing whitespaces */
+void ws_fix_copy(struct strbuf *dst, const char *src, int len, unsigned ws_rule, int *error_count)
 {
 	/*
 	 * len is number of bytes to be copied from src, starting
@@ -286,7 +286,6 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 	int last_tab_in_indent = -1;
 	int last_space_in_indent = -1;
 	int need_fix_leading_space = 0;
-	char *buf;
 
 	/*
 	 * Strip trailing whitespace
@@ -326,7 +325,6 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 			break;
 	}
 
-	buf = dst;
 	if (need_fix_leading_space) {
 		/* Process indent ourselves */
 		int consecutive_spaces = 0;
@@ -348,28 +346,27 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 			char ch = src[i];
 			if (ch != ' ') {
 				consecutive_spaces = 0;
-				*dst++ = ch;
+				strbuf_addch(dst, ch);
 			} else {
 				consecutive_spaces++;
 				if (consecutive_spaces == 8) {
-					*dst++ = '\t';
+					strbuf_addch(dst, '\t');
 					consecutive_spaces = 0;
 				}
 			}
 		}
 		while (0 < consecutive_spaces--)
-			*dst++ = ' ';
+			strbuf_addch(dst, ' ');
 		len -= last;
 		src += last;
 		fixed = 1;
 	}
 
-	memcpy(dst, src, len);
+	strbuf_add(dst, src, len);
 	if (add_cr_to_tail)
-		dst[len++] = '\r';
+		strbuf_addch(dst, '\r');
 	if (add_nl_to_tail)
-		dst[len++] = '\n';
+		strbuf_addch(dst, '\n');
 	if (fixed && error_count)
 		(*error_count)++;
-	return dst + len - buf;
 }
