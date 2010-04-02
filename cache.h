@@ -1040,6 +1040,7 @@ void shift_tree_by(const unsigned char *, const unsigned char *, unsigned char *
 #define WS_INDENT_WITH_NON_TAB	04
 #define WS_CR_AT_EOL           010
 #define WS_BLANK_AT_EOF        020
+#define WS_TAB_IN_INDENT       040
 #define WS_TRAILING_SPACE      (WS_BLANK_AT_EOL|WS_BLANK_AT_EOF)
 #define WS_DEFAULT_RULE (WS_TRAILING_SPACE|WS_SPACE_BEFORE_TAB)
 extern unsigned whitespace_rule_cfg;

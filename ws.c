@@ -19,6 +19,7 @@ static struct whitespace_rule {
 	{ "cr-at-eol", WS_CR_AT_EOL, 1 },
 	{ "blank-at-eol", WS_BLANK_AT_EOL, 0 },
 	{ "blank-at-eof", WS_BLANK_AT_EOF, 0 },
+	{ "tab-in-indent", WS_TAB_IN_INDENT, 0, 1 },
 };
 
 unsigned parse_whitespace_rule(const char *string)
@@ -57,6 +58,9 @@ unsigned parse_whitespace_rule(const char *string)
 		}
 		string = ep;
 	}
+
+	if (rule & WS_TAB_IN_INDENT && rule & WS_INDENT_WITH_NON_TAB)
+		die("cannot enforce both tab-in-indent and indent-with-non-tab");
 	return rule;
 }
 
@@ -127,6 +131,11 @@ char *whitespace_error_string(unsigned ws)
 			strbuf_addstr(&err, ", ");
 		strbuf_addstr(&err, "indent with spaces");
 	}
+	if (ws & WS_TAB_IN_INDENT) {
+		if (err.len)
+			strbuf_addstr(&err, ", ");
+		strbuf_addstr(&err, "tab in indent");
+	}
 	return strbuf_detach(&err, NULL);
 }
 
@@ -165,7 +174,7 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 		}
 	}
 
-	/* Check for space before tab in initial indent. */
+	/* Check indentation */
 	for (i = 0; i < len; i++) {
 		if (line[i] == ' ')
 			continue;
@@ -177,11 +186,19 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 				fputs(ws, stream);
 				fwrite(line + written, i - written, 1, stream);
 				fputs(reset, stream);
+				fwrite(line + i, 1, 1, stream);
 			}
-		} else if (stream)
-			fwrite(line + written, i - written, 1, stream);
-		if (stream)
-			fwrite(line + i, 1, 1, stream);
+		} else if (ws_rule & WS_TAB_IN_INDENT) {
+			result |= WS_TAB_IN_INDENT;
+			if (stream) {
+				fwrite(line + written, i - written, 1, stream);
+				fputs(ws, stream);
+				fwrite(line + i, 1, 1, stream);
+				fputs(reset, stream);
+			}
+		} else if (stream) {
+			fwrite(line + written, i - written + 1, 1, stream);
+		}
 		written = i + 1;
 	}
 
