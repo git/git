@@ -43,7 +43,7 @@ static char diff_colors[][COLOR_MAXLEN] = {
 };
 
 static void diff_filespec_load_driver(struct diff_filespec *one);
-static size_t fill_textconv(const char *cmd,
+static size_t fill_textconv(struct userdiff_driver *driver,
 			    struct diff_filespec *df, char **outbuf);
 
 static int parse_diff_color_slot(const char *var, int ofs)
@@ -466,8 +466,8 @@ static void emit_rewrite_diff(const char *name_a,
 			      const char *name_b,
 			      struct diff_filespec *one,
 			      struct diff_filespec *two,
-			      const char *textconv_one,
-			      const char *textconv_two,
+			      struct userdiff_driver *textconv_one,
+			      struct userdiff_driver *textconv_two,
 			      struct diff_options *o)
 {
 	int lc_a, lc_b;
@@ -1569,14 +1569,26 @@ void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const
 		options->b_prefix = b;
 }
 
-static const char *get_textconv(struct diff_filespec *one)
+static struct userdiff_driver *get_textconv(struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one))
 		return NULL;
 	if (!S_ISREG(one->mode))
 		return NULL;
 	diff_filespec_load_driver(one);
-	return one->driver->textconv;
+	if (!one->driver->textconv)
+		return NULL;
+
+	if (one->driver->textconv_want_cache && !one->driver->textconv_cache) {
+		struct notes_cache *c = xmalloc(sizeof(*c));
+		struct strbuf name = STRBUF_INIT;
+
+		strbuf_addf(&name, "textconv/%s", one->driver->name);
+		notes_cache_init(c, name.buf, one->driver->textconv);
+		one->driver->textconv_cache = c;
+	}
+
+	return one->driver;
 }
 
 static void builtin_diff(const char *name_a,
@@ -1593,7 +1605,8 @@ static void builtin_diff(const char *name_a,
 	const char *set = diff_get_color_opt(o, DIFF_METAINFO);
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 	const char *a_prefix, *b_prefix;
-	const char *textconv_one = NULL, *textconv_two = NULL;
+	struct userdiff_driver *textconv_one = NULL;
+	struct userdiff_driver *textconv_two = NULL;
 	struct strbuf header = STRBUF_INIT;
 
 	if (DIFF_OPT_TST(o, SUBMODULE_LOG) &&
@@ -3888,13 +3901,13 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	return strbuf_detach(&buf, outsize);
 }
 
-static size_t fill_textconv(const char *cmd,
+static size_t fill_textconv(struct userdiff_driver *driver,
 			    struct diff_filespec *df,
 			    char **outbuf)
 {
 	size_t size;
 
-	if (!cmd) {
+	if (!driver || !driver->textconv) {
 		if (!DIFF_FILE_VALID(df)) {
 			*outbuf = "";
 			return 0;
@@ -3905,8 +3918,29 @@ static size_t fill_textconv(const char *cmd,
 		return df->size;
 	}
 
-	*outbuf = run_textconv(cmd, df, &size);
+	if (driver->textconv_cache) {
+		*outbuf = notes_cache_get(driver->textconv_cache, df->sha1,
+					  &size);
+		if (*outbuf)
+			return size;
+	}
+
+	*outbuf = run_textconv(driver->textconv, df, &size);
 	if (!*outbuf)
 		die("unable to read files to diff");
+
+	if (driver->textconv_cache) {
+		/* ignore errors, as we might be in a readonly repository */
+		notes_cache_put(driver->textconv_cache, df->sha1, *outbuf,
+				size);
+		/*
+		 * we could save up changes and flush them all at the end,
+		 * but we would need an extra call after all diffing is done.
+		 * Since generating a cache entry is the slow path anyway,
+		 * this extra overhead probably isn't a big deal.
+		 */
+		notes_cache_write(driver->textconv_cache);
+	}
+
 	return size;
 }

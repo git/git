@@ -414,6 +414,26 @@ because it quickly conveys the changes you have made), you
 should generate it separately and send it as a comment _in
 addition to_ the usual binary diff that you might send.
 
+Because text conversion can be slow, especially when doing a
+large number of them with `git log -p`, git provides a mechanism
+to cache the output and use it in future diffs.  To enable
+caching, set the "cachetextconv" variable in your diff driver's
+config. For example:
+
+------------------------
+[diff "jpg"]
+	textconv = exif
+	cachetextconv = true
+------------------------
+
+This will cache the result of running "exif" on each blob
+indefinitely. If you change the textconv config variable for a
+diff driver, git will automatically invalidate the cache entries
+and re-run the textconv filter. If you want to invalidate the
+cache manually (e.g., because your version of "exif" was updated
+and now produces better output), you can remove the cache
+manually with `git update-ref -d refs/notes/textconv/jpg` (where
+"jpg" is the name of the diff driver, as in the example above).
 
 Performing a three-way merge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
