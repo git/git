@@ -1,0 +1,12 @@
+These are hook scripts for the CIA notification service at <http://cia.vc/>
+
+They are maintained by Eric S. Raymond <esr@thyrsus.com>.  There is an
+upstream resource page for them at <http://www.catb.org/esr/ciabot/>,
+but they are unlikely to change rapidly.
+
+You probably want the Python version; it's faster, more capable, and
+better documented.  The shell version is maintained only as a fallback
+for use on hosting sites that don't permit Python hook scripts.
+
+You will find installation instructions for each script in its comment
+header.
