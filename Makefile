@@ -1561,9 +1561,15 @@ gitweb:
 
 ifdef JSMIN
 GITWEB_PROGRAMS += gitweb/gitweb.min.js
+GITWEB_JS = gitweb/gitweb.min.js
+else
+GITWEB_JS = gitweb/gitweb.js
 endif
 ifdef CSSMIN
 GITWEB_PROGRAMS += gitweb/gitweb.min.css
+GITWEB_CSS = gitweb/gitweb.min.css
+else
+GITWEB_CSS = gitweb/gitweb.css
 endif
 OTHER_PROGRAMS +=  gitweb/gitweb.cgi  $(GITWEB_PROGRAMS)
 gitweb/gitweb.cgi: gitweb/gitweb.perl $(GITWEB_PROGRAMS)
@@ -1586,11 +1592,13 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css gitweb/gitweb.
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
 	    -e '/@@GITWEB_CGI@@/r gitweb/gitweb.cgi' \
 	    -e '/@@GITWEB_CGI@@/d' \
-	    -e '/@@GITWEB_CSS@@/r gitweb/gitweb.css' \
+	    -e '/@@GITWEB_CSS@@/r $(GITWEB_CSS)' \
 	    -e '/@@GITWEB_CSS@@/d' \
-	    -e '/@@GITWEB_JS@@/r gitweb/gitweb.js' \
+	    -e '/@@GITWEB_JS@@/r $(GITWEB_JS)' \
 	    -e '/@@GITWEB_JS@@/d' \
 	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
+            -e 's|@@GITWEB_CSS_NAME@@|$(GITWEB_CSS)|' \
+            -e 's|@@GITWEB_JS_NAME@@|$(GITWEB_JS)|' \
 	    $@.sh > $@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
