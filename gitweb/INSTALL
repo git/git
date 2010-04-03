@@ -66,6 +66,11 @@ file for gitweb (in gitweb/README).
   build configuration variables. By default gitweb tries to find them
   in the same directory as gitweb.cgi script.
 
+- You can optionally generate a minified version of gitweb.css by defining
+  the CSSMIN build configuration variable. By default the non-minified
+  version of gitweb.css will be used. NOTE: if you enable this option,
+  substitute gitweb.min.css for all uses of gitweb.css in the help files.
+
 Build example
 ~~~~~~~~~~~~~
 
