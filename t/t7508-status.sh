@@ -703,4 +703,19 @@ test_expect_success 'commit --dry-run submodule summary (--amend)' '
 	test_cmp expect output
 '
 
+test_expect_success POSIXPERM 'status succeeds in a read-only repository' '
+	(
+		chmod a-w .git &&
+		# make dir1/tracked stat-dirty
+		>dir1/tracked1 && mv -f dir1/tracked1 dir1/tracked &&
+		git status -s >output &&
+		! grep dir1/tracked output &&
+		# make sure "status" succeeded without writing index out
+		git diff-files | grep dir1/tracked
+	)
+	status=$?
+	chmod 775 .git
+	(exit $status)
+'
+
 test_done
