@@ -823,8 +823,6 @@ first and then run 'git rebase --continue' again."
 
 		if test ! -z "$1"
 		then
-			output git show-ref --verify --quiet "refs/heads/$1" ||
-				die "Invalid branchname: $1"
 			output git checkout "$1" ||
 				die "Could not checkout $1"
 		fi

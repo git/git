@@ -577,4 +577,13 @@ test_expect_success 'rebase -i can copy notes over a fixup' '
 	test_cmp expect output
 '
 
+test_expect_success 'rebase while detaching HEAD' '
+	git symbolic-ref HEAD &&
+	grandparent=$(git rev-parse HEAD~2) &&
+	test_tick &&
+	FAKE_LINES="2 1" git rebase -i HEAD~2 HEAD^0 &&
+	test $grandparent = $(git rev-parse HEAD~2) &&
+	test_must_fail git symbolic-ref HEAD
+'
+
 test_done
