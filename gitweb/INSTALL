@@ -2,12 +2,11 @@ GIT web Interface (gitweb) Installation
 =======================================
 
 First you have to generate gitweb.cgi from gitweb.perl using
-"make gitweb/gitweb.cgi", then copy appropriate files (gitweb.cgi,
-gitweb.js, gitweb.css, git-logo.png and git-favicon.png) to their
-destination. For example if git was (or is) installed with /usr prefix,
-you can do
+"make gitweb", then copy appropriate files (gitweb.cgi, gitweb.js,
+gitweb.css, git-logo.png and git-favicon.png) to their destination.
+For example if git was (or is) installed with /usr prefix, you can do
 
-	$ make prefix=/usr gitweb/gitweb.cgi  ;# as yourself
+	$ make prefix=/usr gitweb             ;# as yourself
 	# cp gitweb/git* /var/www/cgi-bin/    ;# as root
 
 Alternatively you can use autoconf generated ./configure script to
@@ -16,7 +15,7 @@ instead
 
 	$ make configure                     ;# as yourself
 	$ ./configure --prefix=/usr          ;# as yourself
-	$ make gitweb/gitweb.cgi             ;# as yourself
+	$ make gitweb                        ;# as yourself
 	# cp gitweb/git* /var/www/cgi-bin/   ;# as root
 
 The above example assumes that your web server is configured to run
@@ -32,8 +31,7 @@ file for gitweb (in gitweb/README).
 
 - There are many configuration variables which affect building of
   gitweb.cgi; see "default configuration for gitweb" section in main
-  (top dir) Makefile, and instructions for building gitweb/gitweb.cgi
-  target.
+  (top dir) Makefile, and instructions for building gitweb target.
 
   One of the most important is where to find the git wrapper binary. Gitweb
   tries to find the git wrapper at $(bindir)/git, so you have to set $bindir
@@ -86,7 +84,7 @@ Build example
 	     GITWEB_LOGO="/gitweb/git-logo.png" \
 	     GITWEB_FAVICON="/gitweb/git-favicon.png" \
 	     bindir=/usr/local/bin \
-	     gitweb/gitweb.cgi
+	     gitweb
 
 	cp -fv ~/git/gitweb/gitweb.{cgi,js,css} \
 	       ~/git/gitweb/git-{favicon,logo}.png \
