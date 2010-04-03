@@ -831,7 +831,7 @@ ifeq ($(uname_S),SunOS)
 	BASIC_CFLAGS += -D__EXTENSIONS__ -D__sun__ -DHAVE_ALLOCA_H
 endif
 ifeq ($(uname_O),Cygwin)
-	ifneq ($(wordlist 1, 2, $(subst ., ,$(uname_R))),1 7)
+	ifeq ($(shell expr "$(uname_R)" : '1\.[1-6]\.'),4)
 		NO_D_TYPE_IN_DIRENT = YesPlease
 		NO_D_INO_IN_DIRENT = YesPlease
 		NO_STRCASESTR = YesPlease
