@@ -103,13 +103,11 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 			} else
 				strcpy(size_text, "-");
 			printf("%06o %s %s %7s\t", mode, type,
-			       abbrev ? find_unique_abbrev(sha1, abbrev)
-				      : sha1_to_hex(sha1),
+			       find_unique_abbrev(sha1, abbrev),
 			       size_text);
 		} else
 			printf("%06o %s %s\t", mode, type,
-			       abbrev ? find_unique_abbrev(sha1, abbrev)
-			              : sha1_to_hex(sha1));
+			       find_unique_abbrev(sha1, abbrev));
 	}
 	write_name_quotedpfx(base + chomp_prefix, baselen - chomp_prefix,
 			  pathname, stdout, line_termination);
