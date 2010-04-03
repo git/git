@@ -282,10 +282,6 @@ lib = lib
 # DESTDIR=
 pathsep = :
 
-# JavaScript/CSS minifier invocation that can function as filter
-JSMIN =
-CSSMIN =
-
 export prefix bindir sharedir sysconfdir
 
 CC = gcc
