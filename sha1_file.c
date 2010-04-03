@@ -2271,7 +2271,7 @@ static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
 }
 
 static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
-			      void *buf, unsigned long len, time_t mtime)
+			      const void *buf, unsigned long len, time_t mtime)
 {
 	int fd, ret;
 	unsigned char compressed[4096];
@@ -2307,7 +2307,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	git_SHA1_Update(&c, hdr, hdrlen);
 
 	/* Then the data itself.. */
-	stream.next_in = buf;
+	stream.next_in = (void *)buf;
 	stream.avail_in = len;
 	do {
 		unsigned char *in0 = stream.next_in;
@@ -2342,7 +2342,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	return move_temp_to_file(tmpfile, filename);
 }
 
-int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
+int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	unsigned char sha1[20];
 	char hdr[32];
@@ -2515,4 +2515,14 @@ int read_pack_header(int fd, struct pack_header *header)
 		/* "protocol error (pack version unsupported)" */
 		return PH_ERROR_PROTOCOL;
 	return 0;
+}
+
+void assert_sha1_type(const unsigned char *sha1, enum object_type expect)
+{
+	enum object_type type = sha1_object_info(sha1, NULL);
+	if (type < 0)
+		die("%s is not a valid object", sha1_to_hex(sha1));
+	if (type != expect)
+		die("%s is not a valid '%s' object", sha1_to_hex(sha1),
+		    typename(expect));
 }
