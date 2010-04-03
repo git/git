@@ -46,6 +46,8 @@ static const char *me;
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
+static char *get_encoding(const char *message);
+
 static void parse_args(int argc, const char **argv)
 {
 	const char * const * usage_str =
@@ -85,33 +87,64 @@ static void parse_args(int argc, const char **argv)
 		exit(1);
 }
 
-static char *get_oneline(const char *message)
+struct commit_message {
+	char *parent_label;
+	const char *label;
+	const char *subject;
+	char *reencoded_message;
+	const char *message;
+};
+
+static int get_message(const char *raw_message, struct commit_message *out)
 {
-	char *result;
-	const char *p = message, *abbrev, *eol;
+	const char *encoding;
+	const char *p, *abbrev, *eol;
+	char *q;
 	int abbrev_len, oneline_len;
 
-	if (!p)
-		die ("Could not read commit message of %s",
-				sha1_to_hex(commit->object.sha1));
+	if (!raw_message)
+		return -1;
+	encoding = get_encoding(raw_message);
+	if (!encoding)
+		encoding = "UTF-8";
+	if (!git_commit_encoding)
+		git_commit_encoding = "UTF-8";
+	if ((out->reencoded_message = reencode_string(raw_message,
+					git_commit_encoding, encoding)))
+		out->message = out->reencoded_message;
+
+	abbrev = find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV);
+	abbrev_len = strlen(abbrev);
+
+	/* Find beginning and end of commit subject. */
+	p = out->message;
 	while (*p && (*p != '\n' || p[1] != '\n'))
 		p++;
-
 	if (*p) {
 		p += 2;
 		for (eol = p + 1; *eol && *eol != '\n'; eol++)
 			; /* do nothing */
 	} else
 		eol = p;
-	abbrev = find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV);
-	abbrev_len = strlen(abbrev);
 	oneline_len = eol - p;
-	result = xmalloc(abbrev_len + 5 + oneline_len);
-	memcpy(result, abbrev, abbrev_len);
-	memcpy(result + abbrev_len, "... ", 4);
-	memcpy(result + abbrev_len + 4, p, oneline_len);
-	result[abbrev_len + 4 + oneline_len] = '\0';
-	return result;
+
+	out->parent_label = xmalloc(strlen("parent of ") + abbrev_len +
+			      strlen("... ") + oneline_len + 1);
+	q = out->parent_label;
+	q = mempcpy(q, "parent of ", strlen("parent of "));
+	out->label = q;
+	q = mempcpy(q, abbrev, abbrev_len);
+	q = mempcpy(q, "... ", strlen("... "));
+	out->subject = q;
+	q = mempcpy(q, p, oneline_len);
+	*q = '\0';
+	return 0;
+}
+
+static void free_message(struct commit_message *msg)
+{
+	free(msg->parent_label);
+	free(msg->reencoded_message);
 }
 
 static char *get_encoding(const char *message)
@@ -271,9 +304,9 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
 	struct commit *base, *next, *parent;
+	const char *base_label, *next_label;
 	int i, index_fd, clean;
-	char *oneline, *reencoded_message = NULL;
-	const char *message, *encoding;
+	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
 	struct merge_options o;
 	struct tree *result, *next_tree, *base_tree, *head_tree;
@@ -349,13 +382,13 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	if (allow_ff && !hashcmp(parent->object.sha1, head))
 		return fast_forward_to(commit->object.sha1, head);
 
-	if (!(message = commit->buffer))
-		die ("Cannot get commit message for %s",
-				sha1_to_hex(commit->object.sha1));
-
 	if (parent && parse_commit(parent) < 0)
 		die("%s: cannot parse parent commit %s",
 		    me, sha1_to_hex(parent->object.sha1));
+
+	if (get_message(commit->buffer, &msg) != 0)
+		die("Cannot get commit message for %s",
+				sha1_to_hex(commit->object.sha1));
 
 	/*
 	 * "commit" is an existing commit.  We would want to apply
@@ -368,26 +401,15 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	msg_fd = hold_lock_file_for_update(&msg_file, defmsg,
 					   LOCK_DIE_ON_ERROR);
 
-	encoding = get_encoding(message);
-	if (!encoding)
-		encoding = "UTF-8";
-	if (!git_commit_encoding)
-		git_commit_encoding = "UTF-8";
-	if ((reencoded_message = reencode_string(message,
-					git_commit_encoding, encoding)))
-		message = reencoded_message;
-
-	oneline = get_oneline(message);
-
 	index_fd = hold_locked_index(&index_lock, 1);
 
 	if (action == REVERT) {
-		char *oneline_body = strchr(oneline, ' ');
-
 		base = commit;
+		base_label = msg.label;
 		next = parent;
+		next_label = msg.parent_label;
 		add_to_msg("Revert \"");
-		add_to_msg(oneline_body + 1);
+		add_to_msg(msg.subject);
 		add_to_msg("\"\n\nThis reverts commit ");
 		add_to_msg(sha1_to_hex(commit->object.sha1));
 
@@ -398,9 +420,11 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		add_to_msg(".\n");
 	} else {
 		base = parent;
+		base_label = msg.parent_label;
 		next = commit;
-		set_author_ident_env(message);
-		add_message_to_msg(message);
+		next_label = msg.label;
+		set_author_ident_env(msg.message);
+		add_message_to_msg(msg.message);
 		if (no_replay) {
 			add_to_msg("(cherry picked from commit ");
 			add_to_msg(sha1_to_hex(commit->object.sha1));
@@ -410,8 +434,9 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 
 	read_cache();
 	init_merge_options(&o);
+	o.ancestor = base ? base_label : "(empty tree)";
 	o.branch1 = "HEAD";
-	o.branch2 = oneline;
+	o.branch2 = next ? next_label : "(empty tree)";
 
 	head_tree = parse_tree_indirect(head);
 	next_tree = next ? next->tree : empty_tree();
@@ -475,7 +500,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		args[i] = NULL;
 		return execv_git_cmd(args);
 	}
-	free(reencoded_message);
+	free_message(&msg);
 	free(defmsg);
 
 	return 0;

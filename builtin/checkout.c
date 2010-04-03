@@ -149,7 +149,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	read_mmblob(&ours, active_cache[pos+1]->sha1);
 	read_mmblob(&theirs, active_cache[pos+2]->sha1);
 
-	status = ll_merge(&result_buf, path, &ancestor,
+	status = ll_merge(&result_buf, path, &ancestor, "base",
 			  &ours, "ours", &theirs, "theirs", 0);
 	free(ancestor.ptr);
 	free(ours.ptr);
@@ -439,6 +439,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 			ret = reset_tree(new->commit->tree, opts, 1);
 			if (ret)
 				return ret;
+			o.ancestor = old->name;
 			o.branch1 = new->name;
 			o.branch2 = "local";
 			merge_trees(&o, new->commit->tree, work,

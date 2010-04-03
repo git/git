@@ -332,6 +332,7 @@ extern int git_vsnprintf(char *str, size_t maxsize,
 #ifdef __GLIBC_PREREQ
 #if __GLIBC_PREREQ(2, 1)
 #define HAVE_STRCHRNUL
+#define HAVE_MEMPCPY
 #endif
 #endif
 
@@ -342,6 +343,14 @@ static inline char *gitstrchrnul(const char *s, int c)
 	while (*s && *s != c)
 		s++;
 	return (char *)s;
+}
+#endif
+
+#ifndef HAVE_MEMPCPY
+#define mempcpy gitmempcpy
+static inline void *gitmempcpy(void *dest, const void *src, size_t n)
+{
+	return (char *)memcpy(dest, src, n) + n;
 }
 #endif
 

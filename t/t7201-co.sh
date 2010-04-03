@@ -11,10 +11,12 @@ Test switching across them.
   ! [master] Initial A one, A two
    * [renamer] Renamer R one->uno, M two
     ! [side] Side M one, D two, A three
-  ---
-    + [side] Side M one, D two, A three
-   *  [renamer] Renamer R one->uno, M two
-  +*+ [master] Initial A one, A two
+     ! [simple] Simple D one, M two
+  ----
+     + [simple] Simple D one, M two
+    +  [side] Side M one, D two, A three
+   *   [renamer] Renamer R one->uno, M two
+  +*++ [master] Initial A one, A two
 
 '
 
@@ -51,6 +53,11 @@ test_expect_success setup '
 	rm -f two &&
 	git update-index --add --remove one two three &&
 	git commit -m "Side M one, D two, A three" &&
+
+	git checkout -b simple master &&
+	rm -f one &&
+	fill a c e > two &&
+	git commit -a -m "Simple D one, M two" &&
 
 	git checkout master
 '
@@ -164,6 +171,56 @@ test_expect_success 'checkout -m with merge conflict' '
 	test_cmp current expect &&
 	git diff --cached two >current &&
 	! test -s current
+'
+
+test_expect_success 'format of merge conflict from checkout -m' '
+
+	git checkout -f master && git clean -f &&
+
+	fill b d > two &&
+	git checkout -m simple &&
+
+	git ls-files >current &&
+	fill same two two two >expect &&
+	test_cmp current expect &&
+
+	cat <<-EOF >expect &&
+	<<<<<<< simple
+	a
+	c
+	e
+	=======
+	b
+	d
+	>>>>>>> local
+	EOF
+	test_cmp two expect
+'
+
+test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
+
+	git checkout -f master && git reset --hard && git clean -f &&
+
+	fill b d > two &&
+	git checkout --merge --conflict=diff3 simple &&
+
+	cat <<-EOF >expect &&
+	<<<<<<< simple
+	a
+	c
+	e
+	||||||| master
+	a
+	b
+	c
+	d
+	e
+	=======
+	b
+	d
+	>>>>>>> local
+	EOF
+	test_cmp two expect
 '
 
 test_expect_success 'checkout to detach HEAD (with advice declined)' '
@@ -481,7 +538,7 @@ test_expect_success 'checkout with --merge, in diff3 -m style' '
 	(
 		echo "<<<<<<< ours"
 		echo ourside
-		echo "|||||||"
+		echo "||||||| base"
 		echo original
 		echo "======="
 		echo theirside
@@ -525,7 +582,7 @@ test_expect_success 'checkout --conflict=diff3' '
 	(
 		echo "<<<<<<< ours"
 		echo ourside
-		echo "|||||||"
+		echo "||||||| base"
 		echo original
 		echo "======="
 		echo theirside
