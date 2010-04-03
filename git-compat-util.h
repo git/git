@@ -479,5 +479,14 @@ void git_qsort(void *base, size_t nmemb, size_t size,
  * Always returns the return value of unlink(2).
  */
 int unlink_or_warn(const char *path);
+/*
+ * Likewise for rmdir(2).
+ */
+int rmdir_or_warn(const char *path);
+/*
+ * Calls the correct function out of {unlink,rmdir}_or_warn based on
+ * the supplied file mode.
+ */
+int remove_or_warn(unsigned int mode, const char *path);
 
 #endif

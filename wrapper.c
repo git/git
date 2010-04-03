@@ -311,18 +311,30 @@ int odb_pack_keep(char *name, size_t namesz, unsigned char *sha1)
 	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
 }
 
-int unlink_or_warn(const char *file)
+static int warn_if_unremovable(const char *op, const char *file, int rc)
 {
-	int rc = unlink(file);
-
 	if (rc < 0) {
 		int err = errno;
 		if (ENOENT != err) {
-			warning("unable to unlink %s: %s",
-				file, strerror(errno));
+			warning("unable to %s %s: %s",
+				op, file, strerror(errno));
 			errno = err;
 		}
 	}
 	return rc;
 }
 
+int unlink_or_warn(const char *file)
+{
+	return warn_if_unremovable("unlink", file, unlink(file));
+}
+
+int rmdir_or_warn(const char *file)
+{
+	return warn_if_unremovable("rmdir", file, rmdir(file));
+}
+
+int remove_or_warn(unsigned int mode, const char *file)
+{
+	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
+}
