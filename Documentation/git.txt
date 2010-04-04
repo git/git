@@ -531,10 +531,14 @@ git so take care if using Cogito etc.
 	(Useful for excluding slow-loading network directories.)
 
 'GIT_ONE_FILESYSTEM'::
-	If set to a true value ("true" or a non-zero integer), stop at
-	filesystem boundaries when looking for a repository directory.
-	Like 'GIT_CEILING_DIRECTORIES', it will not affect an explicit
-	respository directory set via 'GIT_DIR' or on the command line.
+	When run in a directory that does not have ".git" repository
+	directory, git tries to find such a directory in the parent
+	directories to find the top of the working tree, but by default it
+	does not cross filesystem boundaries.  This environment variable
+	can be set to false value ("false" or zero) to tell git not to
+	stop at filesystem boundaries.  Like 'GIT_CEILING_DIRECTORIES',
+	this will not affect an explicit respository directory set via
+	'GIT_DIR' or on the command line.
 
 git Commits
 ~~~~~~~~~~~

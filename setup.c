@@ -323,7 +323,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	const char *gitdirenv;
 	const char *gitfile_dir;
 	int len, offset, ceil_offset, root_len;
-	int current_device = 0, one_filesystem = 0;
+	int current_device = 0, one_filesystem = 1;
 	struct stat buf;
 
 	/*
@@ -444,7 +444,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				}
 				cwd[offset] = '\0';
 				die("Not a git repository (or any parent up to mount parent %s)\n"
-					"Stopping at filesystem boundary since GIT_ONE_FILESYSTEM is set.", cwd);
+				"Stopping at filesystem boundary since GIT_ONE_FILESYSTEM is true.", cwd);
 			}
 		}
 		if (chdir("..")) {
