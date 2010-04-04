@@ -392,7 +392,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 *   etc.
 	 */
 	offset = len = strlen(cwd);
-	one_filesystem = git_env_bool("GIT_ONE_FILESYSTEM", 0);
+	one_filesystem = !git_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0);
 	if (one_filesystem) {
 		if (stat(".", &buf))
 			die_errno("failed to stat '.'");
@@ -444,7 +444,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				}
 				cwd[offset] = '\0';
 				die("Not a git repository (or any parent up to mount parent %s)\n"
-				"Stopping at filesystem boundary since GIT_ONE_FILESYSTEM is true.", cwd);
+				"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).", cwd);
 			}
 		}
 		if (chdir("..")) {
