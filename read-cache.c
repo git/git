@@ -1550,6 +1550,8 @@ int write_index(struct index_state *istate, int newfd)
 	struct cache_entry **cache = istate->cache;
 	int entries = istate->cache_nr;
 	struct stat st;
+	int first_valid_ent = -1;
+	int more_than_one_dev;
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
@@ -1572,6 +1574,7 @@ int write_index(struct index_state *istate, int newfd)
 	if (ce_write(&c, newfd, &hdr, sizeof(hdr)) < 0)
 		return -1;
 
+	more_than_one_dev = 0;
 	for (i = 0; i < entries; i++) {
 		struct cache_entry *ce = cache[i];
 		if (ce->ce_flags & CE_REMOVE)
@@ -1580,7 +1583,18 @@ int write_index(struct index_state *istate, int newfd)
 			ce_smudge_racily_clean_entry(ce);
 		if (ce_write_entry(&c, newfd, ce) < 0)
 			return -1;
+		if (ce_uptodate(ce)) {
+			if (first_valid_ent < 0)
+				first_valid_ent = i;
+			else if (ce->ce_dev != cache[first_valid_ent]->ce_dev)
+				more_than_one_dev = 1;
+		}
 	}
+
+	if (more_than_one_dev &&
+	    !git_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0))
+		warning("working tree spans across filesystems but "
+			"GIT_DISCOVERY_ACROSS_FILESYSTEM is not set.");
 
 	/* Write extension data here */
 	if (istate->cache_tree) {
