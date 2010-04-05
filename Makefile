@@ -922,7 +922,6 @@ ifeq ($(uname_S),IRIX)
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH = /usr/gnu/bin/bash
 	NEEDS_LIBGEN = YesPlease
-	NEEDS_LIBICONV = YesPlease
 endif
 ifeq ($(uname_S),IRIX64)
 	NO_SETENV=YesPlease
@@ -941,7 +940,6 @@ ifeq ($(uname_S),IRIX64)
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH=/usr/gnu/bin/bash
 	NEEDS_LIBGEN = YesPlease
-	NEEDS_LIBICONV = YesPlease
 endif
 ifeq ($(uname_S),HP-UX)
 	NO_IPV6=YesPlease
