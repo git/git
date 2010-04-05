@@ -746,7 +746,8 @@ static int is_scissors_line(const struct strbuf *line)
 			continue;
 		}
 		if (i + 1 < len &&
-		    (!memcmp(buf + i, ">8", 2) || !memcmp(buf + i, "8<", 2))) {
+		    (!memcmp(buf + i, ">8", 2) || !memcmp(buf + i, "8<", 2) ||
+		     !memcmp(buf + i, ">%", 2) || !memcmp(buf + i, "%<", 2))) {
 			in_perforation = 1;
 			perforation += 2;
 			scissors += 2;
