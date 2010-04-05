@@ -391,18 +391,20 @@ EOFGITWEB
 gitweb_css () {
 	cat > "$1" <<\EOFGITWEB
 @@GITWEB_CSS@@
+
 EOFGITWEB
 }
 
 gitweb_js () {
 	cat > "$1" <<\EOFGITWEB
 @@GITWEB_JS@@
+
 EOFGITWEB
 }
 
 gitweb_cgi "$GIT_DIR/gitweb/gitweb.cgi"
-gitweb_css "$GIT_DIR/gitweb/gitweb.css"
-gitweb_js  "$GIT_DIR/gitweb/gitweb.js"
+gitweb_css "$GIT_DIR/@@GITWEB_CSS_NAME@@"
+gitweb_js  "$GIT_DIR/@@GITWEB_JS_NAME@@"
 
 case "$httpd" in
 *lighttpd*)
