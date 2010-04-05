@@ -496,6 +496,16 @@ test_expect_success 'dry-run of partial commit excluding new file in index' '
 	test_cmp expect output
 '
 
+cat >expect <<EOF
+:100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0000000000000000000000000000000000000000 M	dir1/modified
+EOF
+test_expect_success 'status refreshes the index' '
+	touch dir2/added &&
+	git status &&
+	git diff-files >output &&
+	test_cmp expect output
+'
+
 test_expect_success 'setup status submodule summary' '
 	test_create_repo sm && (
 		cd sm &&
@@ -691,6 +701,21 @@ test_expect_success 'commit --dry-run submodule summary (--amend)' '
 	git config status.submodulesummary 10 &&
 	git commit --dry-run --amend >output &&
 	test_cmp expect output
+'
+
+test_expect_success POSIXPERM 'status succeeds in a read-only repository' '
+	(
+		chmod a-w .git &&
+		# make dir1/tracked stat-dirty
+		>dir1/tracked1 && mv -f dir1/tracked1 dir1/tracked &&
+		git status -s >output &&
+		! grep dir1/tracked output &&
+		# make sure "status" succeeded without writing index out
+		git diff-files | grep dir1/tracked
+	)
+	status=$?
+	chmod 775 .git
+	(exit $status)
 '
 
 test_done
