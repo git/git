@@ -1854,6 +1854,8 @@ static int match_fragment(struct image *img,
 {
 	int i;
 	char *fixed_buf, *buf, *orig, *target;
+	struct strbuf fixed;
+	size_t fixed_len;
 	int preimage_limit;
 
 	if (preimage->nr + try_lno <= img->nr) {
@@ -1977,12 +1979,12 @@ static int match_fragment(struct image *img,
 		 * use the whitespace from the preimage.
 		 */
 		extra_chars = preimage_end - preimage_eof;
-		fixed_buf = xmalloc(imgoff + extra_chars);
-		memcpy(fixed_buf, img->buf + try, imgoff);
-		memcpy(fixed_buf + imgoff, preimage_eof, extra_chars);
-		imgoff += extra_chars;
+		strbuf_init(&fixed, imgoff + extra_chars);
+		strbuf_add(&fixed, img->buf + try, imgoff);
+		strbuf_add(&fixed, preimage_eof, extra_chars);
+		fixed_buf = strbuf_detach(&fixed, &fixed_len);
 		update_pre_post_images(preimage, postimage,
-				fixed_buf, imgoff, postlen);
+				fixed_buf, fixed_len, postlen);
 		return 1;
 	}
 
@@ -1999,27 +2001,22 @@ static int match_fragment(struct image *img,
 	 * but in this loop we will only handle the part of the
 	 * preimage that falls within the file.
 	 */
-	fixed_buf = xmalloc(preimage->len + 1);
-	buf = fixed_buf;
+	strbuf_init(&fixed, preimage->len + 1);
 	orig = preimage->buf;
 	target = img->buf + try;
 	for (i = 0; i < preimage_limit; i++) {
-		size_t fixlen; /* length after fixing the preimage */
 		size_t oldlen = preimage->line[i].len;
 		size_t tgtlen = img->line[try_lno + i].len;
-		size_t tgtfixlen; /* length after fixing the target line */
-		char tgtfixbuf[1024], *tgtfix;
+		size_t fixstart = fixed.len;
+		struct strbuf tgtfix;
 		int match;
 
 		/* Try fixing the line in the preimage */
-		fixlen = ws_fix_copy(buf, orig, oldlen, ws_rule, NULL);
+		ws_fix_copy(&fixed, orig, oldlen, ws_rule, NULL);
 
 		/* Try fixing the line in the target */
-		if (sizeof(tgtfixbuf) > tgtlen)
-			tgtfix = tgtfixbuf;
-		else
-			tgtfix = xmalloc(tgtlen);
-		tgtfixlen = ws_fix_copy(tgtfix, target, tgtlen, ws_rule, NULL);
+		strbuf_init(&tgtfix, tgtlen);
+		ws_fix_copy(&tgtfix, target, tgtlen, ws_rule, NULL);
 
 		/*
 		 * If they match, either the preimage was based on
@@ -2031,15 +2028,15 @@ static int match_fragment(struct image *img,
 		 * so we might as well take the fix together with their
 		 * real change.
 		 */
-		match = (tgtfixlen == fixlen && !memcmp(tgtfix, buf, fixlen));
+		match = (tgtfix.len == fixed.len - fixstart &&
+			 !memcmp(tgtfix.buf, fixed.buf + fixstart,
+					     fixed.len - fixstart));
 
-		if (tgtfix != tgtfixbuf)
-			free(tgtfix);
+		strbuf_release(&tgtfix);
 		if (!match)
 			goto unmatch_exit;
 
 		orig += oldlen;
-		buf += fixlen;
 		target += tgtlen;
 	}
 
@@ -2051,19 +2048,18 @@ static int match_fragment(struct image *img,
 	 * false).
 	 */
 	for ( ; i < preimage->nr; i++) {
-		size_t fixlen; /* length after fixing the preimage */
+		size_t fixstart = fixed.len; /* start of the fixed preimage */
 		size_t oldlen = preimage->line[i].len;
 		int j;
 
 		/* Try fixing the line in the preimage */
-		fixlen = ws_fix_copy(buf, orig, oldlen, ws_rule, NULL);
+		ws_fix_copy(&fixed, orig, oldlen, ws_rule, NULL);
 
-		for (j = 0; j < fixlen; j++)
-			if (!isspace(buf[j]))
+		for (j = fixstart; j < fixed.len; j++)
+			if (!isspace(fixed.buf[j]))
 				goto unmatch_exit;
 
 		orig += oldlen;
-		buf += fixlen;
 	}
 
 	/*
@@ -2071,12 +2067,13 @@ static int match_fragment(struct image *img,
 	 * has whitespace breakages unfixed, and fixing them makes the
 	 * hunk match.  Update the context lines in the postimage.
 	 */
+	fixed_buf = strbuf_detach(&fixed, &fixed_len);
 	update_pre_post_images(preimage, postimage,
-			       fixed_buf, buf - fixed_buf, 0);
+			       fixed_buf, fixed_len, 0);
 	return 1;
 
  unmatch_exit:
-	free(fixed_buf);
+	strbuf_release(&fixed);
 	return 0;
 }
 
@@ -2244,7 +2241,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	int match_beginning, match_end;
 	const char *patch = frag->patch;
 	int size = frag->size;
-	char *old, *new, *oldlines, *newlines;
+	char *old, *oldlines;
+	struct strbuf newlines;
 	int new_blank_lines_at_end = 0;
 	unsigned long leading, trailing;
 	int pos, applied_pos;
@@ -2254,16 +2252,16 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	memset(&preimage, 0, sizeof(preimage));
 	memset(&postimage, 0, sizeof(postimage));
 	oldlines = xmalloc(size);
-	newlines = xmalloc(size);
+	strbuf_init(&newlines, size);
 
 	old = oldlines;
-	new = newlines;
 	while (size > 0) {
 		char first;
 		int len = linelen(patch, size);
-		int plen, added;
+		int plen;
 		int added_blank_line = 0;
 		int is_blank_context = 0;
+		size_t start;
 
 		if (!len)
 			break;
@@ -2293,7 +2291,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				/* ... followed by '\No newline'; nothing */
 				break;
 			*old++ = '\n';
-			*new++ = '\n';
+			strbuf_addch(&newlines, '\n');
 			add_line_info(&preimage, "\n", 1, LINE_COMMON);
 			add_line_info(&postimage, "\n", 1, LINE_COMMON);
 			is_blank_context = 1;
@@ -2315,18 +2313,17 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 			if (first == '+' && no_add)
 				break;
 
+			start = newlines.len;
 			if (first != '+' ||
 			    !whitespace_error ||
 			    ws_error_action != correct_ws_error) {
-				memcpy(new, patch + 1, plen);
-				added = plen;
+				strbuf_add(&newlines, patch + 1, plen);
 			}
 			else {
-				added = ws_fix_copy(new, patch + 1, plen, ws_rule, &applied_after_fixing_ws);
+				ws_fix_copy(&newlines, patch + 1, plen, ws_rule, &applied_after_fixing_ws);
 			}
-			add_line_info(&postimage, new, added,
+			add_line_info(&postimage, newlines.buf + start, newlines.len - start,
 				      (first == '+' ? 0 : LINE_COMMON));
-			new += added;
 			if (first == '+' &&
 			    (ws_rule & WS_BLANK_AT_EOF) &&
 			    ws_blank_line(patch + 1, plen, ws_rule))
@@ -2351,9 +2348,9 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	}
 	if (inaccurate_eof &&
 	    old > oldlines && old[-1] == '\n' &&
-	    new > newlines && new[-1] == '\n') {
+	    newlines.len > 0 && newlines.buf[newlines.len - 1] == '\n') {
 		old--;
-		new--;
+		strbuf_setlen(&newlines, newlines.len - 1);
 	}
 
 	leading = frag->leading;
@@ -2385,8 +2382,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	pos = frag->newpos ? (frag->newpos - 1) : 0;
 	preimage.buf = oldlines;
 	preimage.len = old - oldlines;
-	postimage.buf = newlines;
-	postimage.len = new - newlines;
+	postimage.buf = newlines.buf;
+	postimage.len = newlines.len;
 	preimage.line = preimage.line_allocated;
 	postimage.line = postimage.line_allocated;
 
@@ -2462,7 +2459,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	}
 
 	free(oldlines);
-	free(newlines);
+	strbuf_release(&newlines);
 	free(preimage.line_allocated);
 	free(postimage.line_allocated);
 

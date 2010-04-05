@@ -10,7 +10,8 @@
 static struct whitespace_rule {
 	const char *rule_name;
 	unsigned rule_bits;
-	unsigned loosens_error;
+	unsigned loosens_error:1,
+		exclude_default:1;
 } whitespace_rule_names[] = {
 	{ "trailing-space", WS_TRAILING_SPACE, 0 },
 	{ "space-before-tab", WS_SPACE_BEFORE_TAB, 0 },
@@ -18,6 +19,7 @@ static struct whitespace_rule {
 	{ "cr-at-eol", WS_CR_AT_EOL, 1 },
 	{ "blank-at-eol", WS_BLANK_AT_EOL, 0 },
 	{ "blank-at-eof", WS_BLANK_AT_EOF, 0 },
+	{ "tab-in-indent", WS_TAB_IN_INDENT, 0, 1 },
 };
 
 unsigned parse_whitespace_rule(const char *string)
@@ -56,6 +58,9 @@ unsigned parse_whitespace_rule(const char *string)
 		}
 		string = ep;
 	}
+
+	if (rule & WS_TAB_IN_INDENT && rule & WS_INDENT_WITH_NON_TAB)
+		die("cannot enforce both tab-in-indent and indent-with-non-tab");
 	return rule;
 }
 
@@ -82,7 +87,8 @@ unsigned whitespace_rule(const char *pathname)
 			unsigned all_rule = 0;
 			int i;
 			for (i = 0; i < ARRAY_SIZE(whitespace_rule_names); i++)
-				if (!whitespace_rule_names[i].loosens_error)
+				if (!whitespace_rule_names[i].loosens_error &&
+				    !whitespace_rule_names[i].exclude_default)
 					all_rule |= whitespace_rule_names[i].rule_bits;
 			return all_rule;
 		} else if (ATTR_FALSE(value)) {
@@ -125,6 +131,11 @@ char *whitespace_error_string(unsigned ws)
 			strbuf_addstr(&err, ", ");
 		strbuf_addstr(&err, "indent with spaces");
 	}
+	if (ws & WS_TAB_IN_INDENT) {
+		if (err.len)
+			strbuf_addstr(&err, ", ");
+		strbuf_addstr(&err, "tab in indent");
+	}
 	return strbuf_detach(&err, NULL);
 }
 
@@ -163,7 +174,7 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 		}
 	}
 
-	/* Check for space before tab in initial indent. */
+	/* Check indentation */
 	for (i = 0; i < len; i++) {
 		if (line[i] == ' ')
 			continue;
@@ -175,11 +186,19 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 				fputs(ws, stream);
 				fwrite(line + written, i - written, 1, stream);
 				fputs(reset, stream);
+				fwrite(line + i, 1, 1, stream);
 			}
-		} else if (stream)
-			fwrite(line + written, i - written, 1, stream);
-		if (stream)
-			fwrite(line + i, 1, 1, stream);
+		} else if (ws_rule & WS_TAB_IN_INDENT) {
+			result |= WS_TAB_IN_INDENT;
+			if (stream) {
+				fwrite(line + written, i - written, 1, stream);
+				fputs(ws, stream);
+				fwrite(line + i, 1, 1, stream);
+				fputs(reset, stream);
+			}
+		} else if (stream) {
+			fwrite(line + written, i - written + 1, 1, stream);
+		}
 		written = i + 1;
 	}
 
@@ -252,8 +271,8 @@ int ws_blank_line(const char *line, int len, unsigned ws_rule)
 	return 1;
 }
 
-/* Copy the line to the buffer while fixing whitespaces */
-int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *error_count)
+/* Copy the line onto the end of the strbuf while fixing whitespaces */
+void ws_fix_copy(struct strbuf *dst, const char *src, int len, unsigned ws_rule, int *error_count)
 {
 	/*
 	 * len is number of bytes to be copied from src, starting
@@ -267,7 +286,6 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 	int last_tab_in_indent = -1;
 	int last_space_in_indent = -1;
 	int need_fix_leading_space = 0;
-	char *buf;
 
 	/*
 	 * Strip trailing whitespace
@@ -307,7 +325,6 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 			break;
 	}
 
-	buf = dst;
 	if (need_fix_leading_space) {
 		/* Process indent ourselves */
 		int consecutive_spaces = 0;
@@ -329,28 +346,41 @@ int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *erro
 			char ch = src[i];
 			if (ch != ' ') {
 				consecutive_spaces = 0;
-				*dst++ = ch;
+				strbuf_addch(dst, ch);
 			} else {
 				consecutive_spaces++;
 				if (consecutive_spaces == 8) {
-					*dst++ = '\t';
+					strbuf_addch(dst, '\t');
 					consecutive_spaces = 0;
 				}
 			}
 		}
 		while (0 < consecutive_spaces--)
-			*dst++ = ' ';
+			strbuf_addch(dst, ' ');
+		len -= last;
+		src += last;
+		fixed = 1;
+	} else if ((ws_rule & WS_TAB_IN_INDENT) && last_tab_in_indent >= 0) {
+		/* Expand tabs into spaces */
+		int last = last_tab_in_indent + 1;
+		for (i = 0; i < last; i++) {
+			if (src[i] == '\t')
+				do {
+					strbuf_addch(dst, ' ');
+				} while (dst->len % 8);
+			else
+				strbuf_addch(dst, src[i]);
+		}
 		len -= last;
 		src += last;
 		fixed = 1;
 	}
 
-	memcpy(dst, src, len);
+	strbuf_add(dst, src, len);
 	if (add_cr_to_tail)
-		dst[len++] = '\r';
+		strbuf_addch(dst, '\r');
 	if (add_nl_to_tail)
-		dst[len++] = '\n';
+		strbuf_addch(dst, '\n');
 	if (fixed && error_count)
 		(*error_count)++;
-	return dst + len - buf;
 }
