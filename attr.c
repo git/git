@@ -605,7 +605,9 @@ static int fill_one(const char *what, struct match_attr *a, int rem)
 		const char *v = a->state[i].setto;
 
 		if (*n == ATTR__UNKNOWN) {
-			debug_set(what, a->u.pattern, attr, v);
+			debug_set(what,
+				  a->is_macro ? a->u.attr->name : a->u.pattern,
+				  attr, v);
 			*n = v;
 			rem--;
 		}
