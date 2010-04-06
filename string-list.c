@@ -168,12 +168,19 @@ void sort_string_list(struct string_list *list)
 	qsort(list->items, list->nr, sizeof(*list->items), cmp_items);
 }
 
-int unsorted_string_list_has_string(struct string_list *list, const char *string)
+struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
+						     const char *string)
 {
 	int i;
 	for (i = 0; i < list->nr; i++)
 		if (!strcmp(string, list->items[i].string))
-			return 1;
-	return 0;
+			return list->items + i;
+	return NULL;
+}
+
+int unsorted_string_list_has_string(struct string_list *list,
+				    const char *string)
+{
+	return unsorted_string_list_lookup(list, string) != NULL;
 }
 

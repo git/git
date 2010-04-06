@@ -4,6 +4,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "tag.h"
+#include "string-list.h"
 
 static const char * const fmt_merge_msg_usage[] = {
 	"git fmt-merge-msg [--log|--no-log] [--file <file>]",
@@ -24,58 +25,21 @@ static int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 	return 0;
 }
 
-struct list {
-	char **list;
-	void **payload;
-	unsigned nr, alloc;
-};
-
-static void append_to_list(struct list *list, char *value, void *payload)
-{
-	if (list->nr == list->alloc) {
-		list->alloc += 32;
-		list->list = xrealloc(list->list, sizeof(char *) * list->alloc);
-		list->payload = xrealloc(list->payload,
-				sizeof(char *) * list->alloc);
-	}
-	list->payload[list->nr] = payload;
-	list->list[list->nr++] = value;
-}
-
-static int find_in_list(struct list *list, char *value)
-{
-	int i;
-
-	for (i = 0; i < list->nr; i++)
-		if (!strcmp(list->list[i], value))
-			return i;
-
-	return -1;
-}
-
-static void free_list(struct list *list)
-{
-	int i;
-
-	if (list->alloc == 0)
-		return;
-
-	for (i = 0; i < list->nr; i++) {
-		free(list->list[i]);
-		free(list->payload[i]);
-	}
-	free(list->list);
-	free(list->payload);
-	list->nr = list->alloc = 0;
-}
-
 struct src_data {
-	struct list branch, tag, r_branch, generic;
+	struct string_list branch, tag, r_branch, generic;
 	int head_status;
 };
 
-static struct list srcs = { NULL, NULL, 0, 0};
-static struct list origins = { NULL, NULL, 0, 0};
+void init_src_data(struct src_data *data)
+{
+	data->branch.strdup_strings = 1;
+	data->tag.strdup_strings = 1;
+	data->r_branch.strdup_strings = 1;
+	data->generic.strdup_strings = 1;
+}
+
+static struct string_list srcs = { NULL, 0, 0, 1 };
+static struct string_list origins = { NULL, 0, 0, 1 };
 
 static int handle_line(char *line)
 {
@@ -83,6 +47,7 @@ static int handle_line(char *line)
 	unsigned char *sha1;
 	char *src, *origin;
 	struct src_data *src_data;
+	struct string_list_item *item;
 	int pulling_head = 0;
 
 	if (len < 43 || line[40] != '\t')
@@ -115,64 +80,62 @@ static int handle_line(char *line)
 		pulling_head = 1;
 	}
 
-	i = find_in_list(&srcs, src);
-	if (i < 0) {
-		i = srcs.nr;
-		append_to_list(&srcs, xstrdup(src),
-				xcalloc(1, sizeof(struct src_data)));
+	item = unsorted_string_list_lookup(&srcs, src);
+	if (!item) {
+		item = string_list_append(src, &srcs);
+		item->util = xcalloc(1, sizeof(struct src_data));
+		init_src_data(item->util);
 	}
-	src_data = srcs.payload[i];
+	src_data = item->util;
 
 	if (pulling_head) {
-		origin = xstrdup(src);
+		origin = src;
 		src_data->head_status |= 1;
 	} else if (!prefixcmp(line, "branch ")) {
-		origin = xstrdup(line + 7);
-		append_to_list(&src_data->branch, origin, NULL);
+		origin = line + 7;
+		string_list_append(origin, &src_data->branch);
 		src_data->head_status |= 2;
 	} else if (!prefixcmp(line, "tag ")) {
 		origin = line;
-		append_to_list(&src_data->tag, xstrdup(origin + 4), NULL);
+		string_list_append(origin + 4, &src_data->tag);
 		src_data->head_status |= 2;
 	} else if (!prefixcmp(line, "remote branch ")) {
-		origin = xstrdup(line + 14);
-		append_to_list(&src_data->r_branch, origin, NULL);
+		origin = line + 14;
+		string_list_append(origin, &src_data->r_branch);
 		src_data->head_status |= 2;
 	} else {
-		origin = xstrdup(src);
-		append_to_list(&src_data->generic, xstrdup(line), NULL);
+		origin = src;
+		string_list_append(line, &src_data->generic);
 		src_data->head_status |= 2;
 	}
 
 	if (!strcmp(".", src) || !strcmp(src, origin)) {
 		int len = strlen(origin);
-		if (origin[0] == '\'' && origin[len - 1] == '\'') {
+		if (origin[0] == '\'' && origin[len - 1] == '\'')
 			origin = xmemdupz(origin + 1, len - 2);
-		} else {
-			origin = xstrdup(origin);
-		}
 	} else {
 		char *new_origin = xmalloc(strlen(origin) + strlen(src) + 5);
 		sprintf(new_origin, "%s of %s", origin, src);
 		origin = new_origin;
 	}
-	append_to_list(&origins, origin, sha1);
+	string_list_append(origin, &origins)->util = sha1;
 	return 0;
 }
 
 static void print_joined(const char *singular, const char *plural,
-		struct list *list, struct strbuf *out)
+		struct string_list *list, struct strbuf *out)
 {
 	if (list->nr == 0)
 		return;
 	if (list->nr == 1) {
-		strbuf_addf(out, "%s%s", singular, list->list[0]);
+		strbuf_addf(out, "%s%s", singular, list->items[0].string);
 	} else {
 		int i;
 		strbuf_addstr(out, plural);
 		for (i = 0; i < list->nr - 1; i++)
-			strbuf_addf(out, "%s%s", i > 0 ? ", " : "", list->list[i]);
-		strbuf_addf(out, " and %s", list->list[list->nr - 1]);
+			strbuf_addf(out, "%s%s", i > 0 ? ", " : "",
+				    list->items[i].string);
+		strbuf_addf(out, " and %s", list->items[list->nr - 1].string);
 	}
 }
 
@@ -183,8 +146,9 @@ static void shortlog(const char *name, unsigned char *sha1,
 	int i, count = 0;
 	struct commit *commit;
 	struct object *branch;
-	struct list subjects = { NULL, NULL, 0, 0 };
+	struct string_list subjects = { NULL, 0, 0, 1 };
 	int flags = UNINTERESTING | TREESAME | SEEN | SHOWN | ADDED;
+	struct strbuf sb = STRBUF_INIT;
 
 	branch = deref_tag(parse_object(sha1), sha1_to_hex(sha1), 40);
 	if (!branch || branch->type != OBJ_COMMIT)
@@ -198,7 +162,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	if (prepare_revision_walk(rev))
 		die("revision walk setup failed");
 	while ((commit = get_revision(rev)) != NULL) {
-		char *oneline, *bol, *eol;
+		struct pretty_print_context ctx = {0};
 
 		/* ignore merges */
 		if (commit->parents && commit->parents->next)
@@ -208,30 +172,14 @@ static void shortlog(const char *name, unsigned char *sha1,
 		if (subjects.nr > limit)
 			continue;
 
-		bol = strstr(commit->buffer, "\n\n");
-		if (bol) {
-			unsigned char c;
-			do {
-				c = *++bol;
-			} while (isspace(c));
-			if (!c)
-				bol = NULL;
-		}
+		format_commit_message(commit, "%s", &sb, &ctx);
+		strbuf_ltrim(&sb);
 
-		if (!bol) {
-			append_to_list(&subjects, xstrdup(sha1_to_hex(
-							commit->object.sha1)),
-					NULL);
-			continue;
-		}
-
-		eol = strchr(bol, '\n');
-		if (eol) {
-			oneline = xmemdupz(bol, eol - bol);
-		} else {
-			oneline = xstrdup(bol);
-		}
-		append_to_list(&subjects, oneline, NULL);
+		if (!sb.len)
+			string_list_append(sha1_to_hex(commit->object.sha1),
+					   &subjects);
+		else
+			string_list_append(strbuf_detach(&sb, NULL), &subjects);
 	}
 
 	if (count > limit)
@@ -243,7 +191,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 		if (i >= limit)
 			strbuf_addf(out, "  ...\n");
 		else
-			strbuf_addf(out, "  %s\n", subjects.list[i]);
+			strbuf_addf(out, "  %s\n", subjects.items[i].string);
 
 	clear_commit_marks((struct commit *)branch, flags);
 	clear_commit_marks(head, flags);
@@ -251,7 +199,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	rev->commits = NULL;
 	rev->pending.nr = 0;
 
-	free_list(&subjects);
+	string_list_clear(&subjects, 0);
 }
 
 int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
@@ -281,16 +229,19 @@ int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
 			die ("Error in line %d: %.*s", i, len, p);
 	}
 
+	if (!srcs.nr)
+		return 0;
+
 	strbuf_addstr(out, "Merge ");
 	for (i = 0; i < srcs.nr; i++) {
-		struct src_data *src_data = srcs.payload[i];
+		struct src_data *src_data = srcs.items[i].util;
 		const char *subsep = "";
 
 		strbuf_addstr(out, sep);
 		sep = "; ";
 
 		if (src_data->head_status == 1) {
-			strbuf_addstr(out, srcs.list[i]);
+			strbuf_addstr(out, srcs.items[i].string);
 			continue;
 		}
 		if (src_data->head_status == 3) {
@@ -319,8 +270,8 @@ int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
 			print_joined("commit ", "commits ", &src_data->generic,
 					out);
 		}
-		if (strcmp(".", srcs.list[i]))
-			strbuf_addf(out, " of %s", srcs.list[i]);
+		if (strcmp(".", srcs.items[i].string))
+			strbuf_addf(out, " of %s", srcs.items[i].string);
 	}
 
 	if (!strcmp("master", current_branch))
@@ -339,7 +290,7 @@ int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
 		rev.limited = 1;
 
 		for (i = 0; i < origins.nr; i++)
-			shortlog(origins.list[i], origins.payload[i],
+			shortlog(origins.items[i].string, origins.items[i].util,
 					head, &rev, limit, out);
 	}
 	return 0;
@@ -350,7 +301,9 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	const char *inpath = NULL;
 	struct option options[] = {
 		OPT_BOOLEAN(0, "log",     &merge_summary, "populate log with the shortlog"),
-		OPT_BOOLEAN(0, "summary", &merge_summary, "alias for --log"),
+		{ OPTION_BOOLEAN, 0, "summary", &merge_summary, NULL,
+		  "alias for --log (deprecated)",
+		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 		OPT_FILENAME('F', "file", &inpath, "file to read from"),
 		OPT_END()
 	};

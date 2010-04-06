@@ -104,8 +104,12 @@ write `string_list_insert(...)->util = ...;`.
 `unsorted_string_list_has_string`::
 
 	It's like `string_list_has_string()` but for unsorted lists.
+
+`unsorted_string_list_lookup`::
+
+	It's like `string_list_lookup()` but for unsorted lists.
 +
-This function needs to look through all items, as opposed to its
+The above two functions need to look through all items, as opposed to their
 counterpart for sorted lists, which performs a binary search.
 
 Data structures
