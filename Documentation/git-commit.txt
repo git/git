@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend] [--dry-run]
 	   [(-c | -C) <commit>] [-F <file> | -m <msg>] [--reset-author]
-	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
+	   [--allow-empty] [--allow-empty-message] [--no-verify] [-e] [--author=<author>]
 	   [--date=<date>] [--cleanup=<mode>] [--status | --no-status] [--]
 	   [[-i | -o ]<file>...]
 
@@ -130,6 +130,12 @@ OPTIONS
 	sole parent commit is a mistake, and the command prevents you
 	from making such a commit.  This option bypasses the safety, and
 	is primarily for use by foreign scm interface scripts.
+
+--allow-empty-message::
+       Like --allow-empty this command is primarily for use by foreign
+       scm interface scripts. It allows you to create a commit with an
+       empty commit message without using plumbing commands like
+       linkgit:git-commit-tree[1].
 
 --cleanup=<mode>::
 	This option sets how the commit message is cleaned up.
