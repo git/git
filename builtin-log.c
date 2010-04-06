@@ -53,6 +53,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
 	int i;
+	int decoration_given = 0;
 
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
@@ -89,11 +90,13 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--decorate")) {
 			decoration_style = DECORATE_SHORT_REFS;
+			decoration_given = 1;
 		} else if (!prefixcmp(arg, "--decorate=")) {
 			const char *v = skip_prefix(arg, "--decorate=");
 			decoration_style = parse_decoration_style(arg, v);
 			if (decoration_style < 0)
 				die("invalid --decorate option: %s", arg);
+			decoration_given = 1;
 		} else if (!strcmp(arg, "--no-decorate")) {
 			decoration_style = 0;
 		} else if (!strcmp(arg, "--source")) {
@@ -103,6 +106,14 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		} else
 			die("unrecognized argument: %s", arg);
 	}
+
+	/*
+	 * defeat log.decorate configuration interacting with --pretty
+	 * from the command line.
+	 */
+	if (!decoration_given && rev->pretty_given)
+		decoration_style = 0;
+
 	if (decoration_style) {
 		rev->show_decorations = 1;
 		load_ref_decorations(decoration_style);
