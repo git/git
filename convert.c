@@ -425,6 +425,8 @@ static int count_ident(const char *cp, unsigned long size)
 				cnt++;
 				break;
 			}
+			if (ch == '\n')
+				break;
 		}
 	}
 	return cnt;
@@ -455,6 +457,11 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 			dollar = memchr(src + 3, '$', len - 3);
 			if (!dollar)
 				break;
+			if (memchr(src + 3, '\n', dollar - src - 3)) {
+				/* Line break before the next dollar. */
+				continue;
+			}
+
 			memcpy(dst, "Id$", 3);
 			dst += 3;
 			len -= dollar + 1 - src;
@@ -512,6 +519,11 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 			if (!dollar) {
 				/* incomplete keyword, no more '$', so just quit the loop */
 				break;
+			}
+
+			if (memchr(src + 3, '\n', dollar - src - 3)) {
+				/* Line break before the next dollar. */
+				continue;
 			}
 
 			len -= dollar + 1 - src;
