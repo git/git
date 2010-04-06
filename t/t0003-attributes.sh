@@ -22,6 +22,8 @@ test_expect_success 'setup' '
 	(
 		echo "f	test=f"
 		echo "a/i test=a/i"
+		echo "onoff test -test"
+		echo "offon -test test"
 	) >.gitattributes &&
 	(
 		echo "g test=a/g" &&
@@ -44,6 +46,8 @@ test_expect_success 'attribute test' '
 	attr_check b/g unspecified &&
 	attr_check a/b/h a/b/h &&
 	attr_check a/b/d/g "a/b/d/*"
+	attr_check onoff unset
+	attr_check offon set
 
 '
 
@@ -58,6 +62,8 @@ a/b/g: test: a/b/g
 b/g: test: unspecified
 a/b/h: test: a/b/h
 a/b/d/g: test: a/b/d/*
+onoff: test: unset
+offon: test: set
 EOF
 
 	sed -e "s/:.*//" < expect | git check-attr --stdin test > actual &&
