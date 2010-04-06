@@ -477,7 +477,7 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
                              struct strbuf *buf, int ident)
 {
 	unsigned char sha1[20];
-	char *to_free = NULL, *dollar;
+	char *to_free = NULL, *dollar, *spc;
 	int cnt;
 
 	if (!ident)
@@ -513,7 +513,10 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 		} else if (src[2] == ':') {
 			/*
 			 * It's possible that an expanded Id has crept its way into the
-			 * repository, we cope with that by stripping the expansion out
+			 * repository, we cope with that by stripping the expansion out.
+			 * This is probably not a good idea, since it will cause changes
+			 * on checkout, which won't go away by stash, but let's keep it
+			 * for git-style ids.
 			 */
 			dollar = memchr(src + 3, '$', len - 3);
 			if (!dollar) {
@@ -523,6 +526,15 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 
 			if (memchr(src + 3, '\n', dollar - src - 3)) {
 				/* Line break before the next dollar. */
+				continue;
+			}
+
+			spc = memchr(src + 4, ' ', dollar - src - 4);
+			if (spc && spc < dollar-1) {
+				/* There are spaces in unexpected places.
+				 * This is probably an id from some other
+				 * versioning system. Keep it for now.
+				 */
 				continue;
 			}
 

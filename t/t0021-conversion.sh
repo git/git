@@ -78,7 +78,7 @@ test_expect_success expanded_in_repo '
 		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
 		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
 		echo "\$Id: NoTerminatingSymbol"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: Foreign Commit With Spaces \$"
 		echo "\$Id: NoTerminatingSymbolAtEOF"
 	} > expected-output &&
 
