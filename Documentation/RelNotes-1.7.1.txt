@@ -4,8 +4,16 @@ Git v1.7.1 Release Notes (draft)
 Updates since v1.7.0
 --------------------
 
+ * Eric Raymond is the maintainer of updated CIAbot scripts, in contrib/.
+
  * Some commands (e.g. svn and http interfaces) that interactively ask
    password can be told to use an external program given via GIT_ASKPASS.
+
+ * Conflict markers that lead the common ancestor in diff3-style output
+   now has a label, which hopefully would help third-party tools that
+   expect one.
+
+ * Comes with an updated bash-completion script.
 
  * "git am" learned "--keep-cr" option to handle inputs that are
    mixture of changes to files with and without CRLF line endings.
@@ -64,8 +72,14 @@ release, unless otherwise noted.
  * "git add frotz/nitfol" did not complain when the entire frotz/ directory
    was ignored.
 
+ * "git rev-list --pretty=oneline" didn't terminate a record with LF for
+   commits without any message.
+
+ * "git rev-list --abbrev-commit" defaulted to 40-byte abbreviations, unlike
+   newer tools in the git toolset.
+
 ---
 exec >/var/tmp/1
 echo O=$(git describe)
-O=v1.7.0.3-310-g99f5b08
+O=v1.7.0.4-382-gb807c52
 git shortlog --no-merges ^maint $O..
