@@ -14,6 +14,7 @@ SYNOPSIS
 	   [-E | --extended-regexp] [-G | --basic-regexp]
 	   [-F | --fixed-strings] [-n]
 	   [-l | --files-with-matches] [-L | --files-without-match]
+	   [(-O | --open-files-in-pager) [<pager>]]
 	   [-z | --null]
 	   [-c | --count] [--all-match] [-q | --quiet]
 	   [--max-depth <depth>]
@@ -103,6 +104,13 @@ OPTIONS
 	names of files that contain (or do not contain) matches.
 	For better compatibility with 'git diff', `--name-only` is a
 	synonym for `--files-with-matches`.
+
+-O [<pager>]::
+--open-files-in-pager [<pager>]::
+	Open the matching files in the pager (not the output of 'grep').
+	If the pager happens to be "less" or "vi", and the user
+	specified only one pattern, the first file is positioned at
+	the first match automatically.
 
 -z::
 --null::
