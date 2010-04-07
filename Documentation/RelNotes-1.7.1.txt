@@ -7,21 +7,22 @@ Updates since v1.7.0
  * Eric Raymond is the maintainer of updated CIAbot scripts, in contrib/.
 
  * Some commands (e.g. svn and http interfaces) that interactively ask
-   password can be told to use an external program given via GIT_ASKPASS.
+   for a password can be told to use an external program given via
+   GIT_ASKPASS.
 
  * Conflict markers that lead the common ancestor in diff3-style output
-   now has a label, which hopefully would help third-party tools that
+   now have a label, which hopefully would help third-party tools that
    expect one.
 
  * Comes with an updated bash-completion script.
 
  * "git am" learned "--keep-cr" option to handle inputs that are
-   mixture of changes to files with and without CRLF line endings.
+   a mixture of changes to files with and without CRLF line endings.
 
  * "git cvsimport" learned -R option to leave revision mapping between
    CVS revisions and resulting git commits.
 
- * "git diff --submodule" notices and descries dirty submodules.
+ * "git diff --submodule" notices and describes dirty submodules.
 
  * "git for-each-ref" learned %(symref), %(symref:short) and %(flag)
    tokens.
@@ -42,12 +43,11 @@ Updates since v1.7.0
  * "git log -p --first-parent -m" shows one-parent diff for merge
    commits, instead of showing combined diff.
 
- * "git merge-file" learned to use custom conflict marker size and also use
-   the "union merge" behaviour.
+ * "git merge-file" learned to use custom conflict marker size and also
+   to use the "union merge" behaviour.
 
- * "git notes" command has been rewritten in C and learned quite a
-   many commands and features to help you carry notes forward across
-   rebases and amends.
+ * "git notes" command has been rewritten in C and learned many commands
+   and features to help you carry notes forward across rebases and amends.
 
  * "git request-pull" identifies the commit the request is relative to in
    a more readable way.
@@ -56,7 +56,7 @@ Updates since v1.7.0
    near the tip while preserving your local changes in a way similar
    to how "git checkout branch" does.
 
- * "git status" notices and descries dirty submodules.
+ * "git status" notices and describes dirty submodules.
 
  * "git svn" should work better when interacting with repositories
    with CRLF line endings.
