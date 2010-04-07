@@ -444,7 +444,7 @@ else
 				first=
 			}
 			case "$arg" in
-			/*)
+			/*|?:*)
 				set "$@" "$arg" ;;
 			*)
 				set "$@" "$prefix$arg" ;;
