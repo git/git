@@ -17,17 +17,19 @@ test_expect_success \
     'prepare repository with topic branch, and check cherry finds the 2 patches from there' \
     'echo First > A &&
      git update-index --add A &&
+     test_tick &&
      git commit -m "Add A." &&
 
      git checkout -b my-topic-branch &&
 
      echo Second > B &&
      git update-index --add B &&
+     test_tick &&
      git commit -m "Add B." &&
 
-     sleep 2 &&
      echo AnotherSecond > C &&
      git update-index --add C &&
+     test_tick &&
      git commit -m "Add C." &&
 
      git checkout -f master &&
@@ -35,6 +37,7 @@ test_expect_success \
 
      echo Third >> A &&
      git update-index A &&
+     test_tick &&
      git commit -m "Modify A." &&
 
      expr "$(echo $(git cherry master my-topic-branch) )" : "+ [^ ]* + .*"

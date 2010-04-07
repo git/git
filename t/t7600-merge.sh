@@ -554,8 +554,7 @@ test_debug 'gitk --all'
 
 test_expect_success 'refresh the index before merging' '
 	git reset --hard c1 &&
-	sleep 1 &&
-	touch file &&
+	cp file file.n && mv -f file.n file &&
 	git merge c3
 '
 
