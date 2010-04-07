@@ -176,6 +176,10 @@ test_expect_success 'test "foreach --quiet --recursive"' '
 		cd clone2 &&
 		git submodule foreach -q --recursive "echo \$name-\$path" > ../actual
 	) &&
+	if test_have_prereq MINGW
+	then
+		dos2unix actual
+	fi &&
 	test_cmp expect actual
 '
 
@@ -223,6 +227,10 @@ test_expect_success 'test "status --recursive"' '
 		cd clone3 &&
 		git submodule status --recursive > ../actual
 	) &&
+	if test_have_prereq MINGW
+	then
+		dos2unix actual
+	fi &&
 	test_cmp expect actual
 '
 
