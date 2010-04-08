@@ -60,7 +60,7 @@ do
 			echo ${HC}file:5:foo_mmap bar mmap baz
 		} >expected &&
 		git grep -n -w -e mmap $H >actual &&
-		diff expected actual
+		test_cmp expected actual
 	'
 
 	test_expect_success "grep -w $L (w)" '
@@ -74,7 +74,7 @@ do
 			echo ${HC}x:1:x x xx x
 		} >expected &&
 		git grep -n -w -e "x xx* x" $H >actual &&
-		diff expected actual
+		test_cmp expected actual
 	'
 
 	test_expect_success "grep -w $L (y-1)" '
@@ -82,7 +82,7 @@ do
 			echo ${HC}y:1:y yy
 		} >expected &&
 		git grep -n -w -e "^y" $H >actual &&
-		diff expected actual
+		test_cmp expected actual
 	'
 
 	test_expect_success "grep -w $L (y-2)" '
@@ -93,7 +93,7 @@ do
 			cat actual
 			false
 		else
-			diff expected actual
+			test_cmp expected actual
 		fi
 	'
 
@@ -105,14 +105,14 @@ do
 			cat actual
 			false
 		else
-			diff expected actual
+			test_cmp expected actual
 		fi
 	'
 
 	test_expect_success "grep $L (t-1)" '
 		echo "${HC}t/t:1:test" >expected &&
 		git grep -n -e test $H >actual &&
-		diff expected actual
+		test_cmp expected actual
 	'
 
 	test_expect_success "grep $L (t-2)" '
@@ -121,7 +121,7 @@ do
 			cd t &&
 			git grep -n -e test $H
 		) >actual &&
-		diff expected actual
+		test_cmp expected actual
 	'
 
 	test_expect_success "grep $L (t-3)" '
@@ -130,7 +130,7 @@ do
 			cd t &&
 			git grep --full-name -n -e test $H
 		) >actual &&
-		diff expected actual
+		test_cmp expected actual
 	'
 
 	test_expect_success "grep -c $L (no /dev/null)" '
