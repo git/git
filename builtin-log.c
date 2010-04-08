@@ -108,10 +108,11 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	}
 
 	/*
-	 * defeat log.decorate configuration interacting with --pretty
+	 * defeat log.decorate configuration interacting with --pretty=raw
 	 * from the command line.
 	 */
-	if (!decoration_given && rev->pretty_given)
+	if (!decoration_given && rev->pretty_given
+	    && rev->commit_format == CMIT_FMT_RAW)
 		decoration_style = 0;
 
 	if (decoration_style) {
