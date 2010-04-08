@@ -38,7 +38,7 @@ cat >exp <<EOF
 GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
 POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
 EOF
-test_expect_failure 'no empty path components' '
+test_expect_success 'no empty path components' '
 	# In the URL, add a trailing slash, and see if git appends yet another
 	# slash.
 	cd "$ROOT_PATH" &&
