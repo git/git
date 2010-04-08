@@ -34,8 +34,34 @@ test_expect_success 'setup remote repository' '
 	mv test_repo.git "$HTTPD_DOCUMENT_ROOT_PATH"
 '
 
-test_expect_success 'clone remote repository' '
+cat >exp <<EOF
+GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
+POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
+EOF
+test_expect_failure 'no empty path components' '
+	# In the URL, add a trailing slash, and see if git appends yet another
+	# slash.
 	cd "$ROOT_PATH" &&
+	git clone $HTTPD_URL/smart/test_repo.git/ test_repo_clone &&
+
+	sed -e "
+		s/^.* \"//
+		s/\"//
+		s/ [1-9][0-9]*\$//
+		s/^GET /GET  /
+	" >act <"$HTTPD_ROOT_PATH"/access.log &&
+
+	# Clear the log, so that it does not affect the "used receive-pack
+	# service" test which reads the log too.
+	#
+	# We do this before the actual comparison to ensure the log is cleared.
+	echo > "$HTTPD_ROOT_PATH"/access.log &&
+
+	test_cmp exp act
+'
+
+test_expect_success 'clone remote repository' '
+	rm -rf test_repo_clone &&
 	git clone $HTTPD_URL/smart/test_repo.git test_repo_clone
 '
 
@@ -68,6 +94,7 @@ test_expect_success 'create and delete remote branch' '
 '
 
 cat >exp <<EOF
+
 GET  /smart/test_repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
 POST /smart/test_repo.git/git-upload-pack HTTP/1.1 200
 GET  /smart/test_repo.git/info/refs?service=git-receive-pack HTTP/1.1 200
