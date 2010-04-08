@@ -18,8 +18,8 @@
 #include "refs.h"
 
 #ifndef NO_PTHREADS
-#include "thread-utils.h"
 #include <pthread.h>
+#include "thread-utils.h"
 #endif
 
 static const char pack_usage[] =
@@ -1586,7 +1586,7 @@ static pthread_cond_t progress_cond;
  */
 static void init_threaded_search(void)
 {
-	pthread_mutex_init(&read_mutex, NULL);
+	init_recursive_mutex(&read_mutex);
 	pthread_mutex_init(&cache_mutex, NULL);
 	pthread_mutex_init(&progress_mutex, NULL);
 	pthread_cond_init(&progress_cond, NULL);

@@ -16,8 +16,8 @@
 #include "quote.h"
 
 #ifndef NO_PTHREADS
-#include "thread-utils.h"
 #include <pthread.h>
+#include "thread-utils.h"
 #endif
 
 static char const * const grep_usage[] = {
