@@ -57,7 +57,7 @@ create_stash () {
 	# state of the base commit
 	if b_commit=$(git rev-parse --verify HEAD)
 	then
-		head=$(git log --no-color --abbrev-commit --pretty=oneline -n 1 HEAD --)
+		head=$(git rev-list --oneline -n 1 HEAD --)
 	else
 		die "You do not have the initial commit yet"
 	fi
