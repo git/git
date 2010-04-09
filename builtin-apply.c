@@ -2824,11 +2824,8 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		if (stat_ret < 0) {
 			struct checkout costate;
 			/* checkout */
+			memset(&costate, 0, sizeof(costate));
 			costate.base_dir = "";
-			costate.base_dir_len = 0;
-			costate.force = 0;
-			costate.quiet = 0;
-			costate.not_new = 0;
 			costate.refresh_cache = 1;
 			if (checkout_entry(*ce, &costate, NULL) ||
 			    lstat(old_name, st))
