@@ -1606,14 +1606,8 @@ $(patsubst %.py,%,$(SCRIPT_PYTHON)): % : %.py
 	INSTLIBDIR=`MAKEFLAGS= $(MAKE) -C git_remote_helpers -s \
 		--no-print-directory prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' \
 		instlibdir` && \
-	sed -e '1{' \
-	    -e '	s|#!.*python|#!$(PYTHON_PATH_SQ)|' \
-	    -e '}' \
-	    -e 's|^import sys.*|&; \\\
-	           import os; \\\
-	           sys.path[0] = os.environ.has_key("GITPYTHONLIB") and \\\
-	                         os.environ["GITPYTHONLIB"] or \\\
-	                         "@@INSTLIBDIR@@"|' \
+	sed -e '1s|#!.*python|#!$(PYTHON_PATH_SQ)|' \
+	    -e 's|\(os\.getenv("GITPYTHONLIB"\)[^)]*)|\1,"@@INSTLIBDIR@@")|' \
 	    -e 's|@@INSTLIBDIR@@|'"$$INSTLIBDIR"'|g' \
 	    $@.py >$@+ && \
 	chmod +x $@+ && \

@@ -2,6 +2,8 @@
 
 import hashlib
 import sys
+import os
+sys.path.insert(0, os.getenv("GITPYTHONLIB","."))
 
 from git_remote_helpers.util import die, debug, warn
 from git_remote_helpers.git.repo import GitRepo
