@@ -7509,7 +7509,7 @@ proc getblobdiffs {ids} {
     global ignorespace
     global limitdiffs vfilelimit curview
     global diffencoding targetline diffnparents
-    global git_version
+    global git_version currdiffsubmod
 
     set textconv {}
     if {[package vcompare $git_version "1.6.1"] >= 0} {
@@ -7536,6 +7536,7 @@ proc getblobdiffs {ids} {
     set diffencoding [get_path_encoding {}]
     fconfigure $bdf -blocking 0 -encoding binary -eofchar {}
     set blobdifffd($ids) $bdf
+    set currdiffsubmod ""
     filerun $bdf [list getblobdiffline $bdf $diffids]
 }
 
@@ -7606,7 +7607,7 @@ proc getblobdiffline {bdf ids} {
     global diffnexthead diffnextnote difffilestart
     global ctext_file_names ctext_file_lines
     global diffinhdr treediffs mergemax diffnparents
-    global diffencoding jump_to_here targetline diffline
+    global diffencoding jump_to_here targetline diffline currdiffsubmod
 
     set nr 0
     $ctext conf -state normal
@@ -7687,19 +7688,30 @@ proc getblobdiffline {bdf ids} {
 
 	} elseif {![string compare -length 10 "Submodule " $line]} {
 	    # start of a new submodule
-	    if {[string compare [$ctext get "end - 4c" end] "\n \n\n"]} {
+	    if {[regexp -indices "\[0-9a-f\]+\\.\\." $line nameend]} {
+		set fname [string range $line 10 [expr [lindex $nameend 0] - 2]]
+	    } else {
+		set fname [string range $line 10 [expr [string first "contains " $line] - 2]]
+	    }
+	    if {$currdiffsubmod != $fname} {
 		$ctext insert end "\n";     # Add newline after commit message
 	    }
 	    set curdiffstart [$ctext index "end - 1c"]
 	    lappend ctext_file_names ""
-	    set fname [string range $line 10 [expr [string last " " $line] - 1]]
-	    lappend ctext_file_lines $fname
-	    makediffhdr $fname $ids
-	    $ctext insert end "\n$line\n" filesep
+	    if {$currdiffsubmod != $fname} {
+		lappend ctext_file_lines $fname
+		makediffhdr $fname $ids
+		set currdiffsubmod $fname
+		$ctext insert end "\n$line\n" filesep
+	    } else {
+		$ctext insert end "$line\n" filesep
+	    }
 	} elseif {![string compare -length 3 "  >" $line]} {
+	    set $currdiffsubmod ""
 	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" dresult
 	} elseif {![string compare -length 3 "  <" $line]} {
+	    set $currdiffsubmod ""
 	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" d0
 	} elseif {$diffinhdr} {
@@ -8535,7 +8547,7 @@ proc do_cmp_commits {a b} {
 }
 
 proc diffcommits {a b} {
-    global diffcontext diffids blobdifffd diffinhdr
+    global diffcontext diffids blobdifffd diffinhdr currdiffsubmod
 
     set tmpdir [gitknewtmpdir]
     set fna [file join $tmpdir "commit-[string range $a 0 7]"]
@@ -8556,6 +8568,7 @@ proc diffcommits {a b} {
     set diffids [list commits $a $b]
     set blobdifffd($diffids) $fd
     set diffinhdr 0
+    set currdiffsubmod ""
     filerun $fd [list getblobdiffline $fd $diffids]
 }
 
