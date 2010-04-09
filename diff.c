@@ -551,6 +551,10 @@ static void emit_rewrite_diff(const char *name_a,
 		emit_rewrite_lines(&ecbdata, '-', data_one, size_one);
 	if (lc_b)
 		emit_rewrite_lines(&ecbdata, '+', data_two, size_two);
+	if (textconv_one)
+		free((char *)data_one);
+	if (textconv_two)
+		free((char *)data_two);
 }
 
 struct diff_words_buffer {
