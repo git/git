@@ -97,13 +97,15 @@ static void wt_status_print_dirty_header(struct wt_status *s,
 	color_fprintf_ln(s->fp, c, "#");
 }
 
-static void wt_status_print_untracked_header(struct wt_status *s)
+static void wt_status_print_other_header(struct wt_status *s,
+					 const char *what,
+					 const char *how)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
-	color_fprintf_ln(s->fp, c, "# Untracked files:");
+	color_fprintf_ln(s->fp, c, "# %s files:", what);
 	if (!advice_status_hints)
 		return;
-	color_fprintf_ln(s->fp, c, "#   (use \"git add <file>...\" to include in what will be committed)");
+	color_fprintf_ln(s->fp, c, "#   (use \"git %s <file>...\" to include in what will be committed)", how);
 	color_fprintf_ln(s->fp, c, "#");
 }
 
@@ -541,7 +543,10 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 	run_command(&sm_summary);
 }
 
-static void wt_status_print_untracked(struct wt_status *s)
+static void wt_status_print_other(struct wt_status *s,
+				  struct string_list *l,
+				  const char *what,
+				  const char *how)
 {
 	int i;
 	struct strbuf buf = STRBUF_INIT;
@@ -549,10 +554,11 @@ static void wt_status_print_untracked(struct wt_status *s)
 	if (!s->untracked.nr)
 		return;
 
-	wt_status_print_untracked_header(s);
-	for (i = 0; i < s->untracked.nr; i++) {
+	wt_status_print_other_header(s, what, how);
+
+	for (i = 0; i < l->nr; i++) {
 		struct string_list_item *it;
-		it = &(s->untracked.items[i]);
+		it = &(l->items[i]);
 		color_fprintf(s->fp, color(WT_STATUS_HEADER, s), "#\t");
 		color_fprintf_ln(s->fp, color(WT_STATUS_UNTRACKED, s), "%s",
 				 quote_path(it->string, strlen(it->string),
@@ -641,7 +647,7 @@ void wt_status_print(struct wt_status *s)
 		wt_status_print_submodule_summary(s, 1);  /* unstaged */
 	}
 	if (s->show_untracked_files)
-		wt_status_print_untracked(s);
+		wt_status_print_other(s, &s->untracked, "Untracked", "add");
 	else if (s->commitable)
 		 fprintf(s->fp, "# Untracked files not listed (use -u option to show untracked files)\n");
 
