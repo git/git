@@ -42,6 +42,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->index_file = get_index_file();
 	s->change.strdup_strings = 1;
 	s->untracked.strdup_strings = 1;
+	s->ignored.strdup_strings = 1;
 }
 
 static void wt_status_print_unmerged_header(struct wt_status *s)
@@ -380,6 +381,21 @@ static void wt_status_collect_untracked(struct wt_status *s)
 			continue;
 		string_list_insert(ent->name, &s->untracked);
 		free(ent);
+	}
+
+	if (s->show_ignored_files) {
+		dir.nr = 0;
+		dir.flags = DIR_SHOW_IGNORED | DIR_SHOW_OTHER_DIRECTORIES;
+		fill_directory(&dir, s->pathspec);
+		for (i = 0; i < dir.nr; i++) {
+			struct dir_entry *ent = dir.entries[i];
+			if (!cache_name_is_other(ent->name, ent->len))
+				continue;
+			if (!match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
+				continue;
+			string_list_insert(ent->name, &s->ignored);
+			free(ent);
+		}
 	}
 
 	free(dir.entries);
