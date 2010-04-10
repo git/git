@@ -49,63 +49,136 @@ test_expect_success 'setup - add an example entry to .gitmodules' '
 	git config submodule.example.url git://example.com/init.git
 '
 
-test_expect_success 'Prepare submodule add testing' '
-	submodurl=$(pwd)
-	(
-		mkdir addtest &&
-		cd addtest &&
-		git init
-	)
+test_expect_success 'setup - repository to add submodules to' '
+	git init addtest
 '
 
+# The 'submodule add' tests need some repository to add as a submodule.
+# The trash directory is a good one as any.
+submodurl=$TRASH_DIRECTORY
+
+listbranches() {
+	git for-each-ref --format='%(refname)' 'refs/heads/*'
+}
+
+inspect() {
+	dir=$1 &&
+	dotdot="${2:-..}" &&
+
+	(
+		cd "$dir" &&
+		listbranches >"$dotdot/heads" &&
+		{ git symbolic-ref HEAD || :; } >"$dotdot/head" &&
+		git update-index --refresh &&
+		git diff-files --exit-code &&
+		git clean -n -d -x >"$dotdot/untracked"
+	)
+}
+
 test_expect_success 'submodule add' '
+	echo "refs/heads/master" >expect &&
+	>empty &&
+
 	(
 		cd addtest &&
 		git submodule add "$submodurl" submod &&
 		git submodule init
-	)
+	) &&
+
+	rm -f heads head untracked &&
+	inspect addtest/submod ../.. &&
+	test_cmp expect heads &&
+	test_cmp expect head &&
+	test_cmp empty untracked
 '
 
 test_expect_success 'submodule add --branch' '
+	echo "refs/heads/initial" >expect-head &&
+	cat <<-\EOF >expect-heads &&
+	refs/heads/initial
+	refs/heads/master
+	EOF
+	>empty &&
+
 	(
 		cd addtest &&
 		git submodule add -b initial "$submodurl" submod-branch &&
-		git submodule init &&
-		cd submod-branch &&
-		git branch | grep initial
-	)
+		git submodule init
+	) &&
+
+	rm -f heads head untracked &&
+	inspect addtest/submod-branch ../.. &&
+	test_cmp expect-heads heads &&
+	test_cmp expect-head head &&
+	test_cmp empty untracked
 '
 
 test_expect_success 'submodule add with ./ in path' '
+	echo "refs/heads/master" >expect &&
+	>empty &&
+
 	(
 		cd addtest &&
 		git submodule add "$submodurl" ././dotsubmod/./frotz/./ &&
 		git submodule init
-	)
+	) &&
+
+	rm -f heads head untracked &&
+	inspect addtest/dotsubmod/frotz ../../.. &&
+	test_cmp expect heads &&
+	test_cmp expect head &&
+	test_cmp empty untracked
 '
 
 test_expect_success 'submodule add with // in path' '
+	echo "refs/heads/master" >expect &&
+	>empty &&
+
 	(
 		cd addtest &&
 		git submodule add "$submodurl" slashslashsubmod///frotz// &&
 		git submodule init
-	)
+	) &&
+
+	rm -f heads head untracked &&
+	inspect addtest/slashslashsubmod/frotz ../../.. &&
+	test_cmp expect heads &&
+	test_cmp expect head &&
+	test_cmp empty untracked
 '
 
 test_expect_success 'submodule add with /.. in path' '
+	echo "refs/heads/master" >expect &&
+	>empty &&
+
 	(
 		cd addtest &&
 		git submodule add "$submodurl" dotdotsubmod/../realsubmod/frotz/.. &&
 		git submodule init
-	)
+	) &&
+
+	rm -f heads head untracked &&
+	inspect addtest/realsubmod ../.. &&
+	test_cmp expect heads &&
+	test_cmp expect head &&
+	test_cmp empty untracked
 '
 
 test_expect_success 'submodule add with ./, /.. and // in path' '
+	echo "refs/heads/master" >expect &&
+	>empty &&
+
 	(
 		cd addtest &&
 		git submodule add "$submodurl" dot/dotslashsubmod/./../..////realsubmod2/a/b/c/d/../../../../frotz//.. &&
 		git submodule init
-	)
+	) &&
+
+	rm -f heads head untracked &&
+	inspect addtest/realsubmod2 ../.. &&
+	test_cmp expect heads &&
+	test_cmp expect head &&
+	test_cmp empty untracked
 '
 
 test_expect_success 'status should fail for unmapped paths' '
