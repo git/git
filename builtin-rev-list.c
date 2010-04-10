@@ -133,9 +133,12 @@ static void show_commit(struct commit *commit, void *data)
 				 */
 				if (graph_show_remainder(revs->graph))
 					putchar('\n');
+				if (revs->commit_format == CMIT_FMT_ONELINE)
+					putchar('\n');
 			}
 		} else {
-			if (buf.len)
+			if (revs->commit_format != CMIT_FMT_USERFORMAT ||
+			    buf.len)
 				printf("%s%c", buf.buf, info->hdr_termination);
 		}
 		strbuf_release(&buf);
