@@ -11,40 +11,42 @@ subcommands of git submodule.
 
 . ./test-lib.sh
 
-#
-# Test setup:
-#  -create a repository in directory init
-#  -add a couple of files
-#  -add directory init to 'superproject', this creates a DIRLINK entry
-#  -add a couple of regular files to enable testing of submodule filtering
-#  -mv init subrepo
-#  -add an entry to .gitmodules for submodule 'example'
-#
-test_expect_success 'Prepare submodule testing' '
-	: > t &&
+test_expect_success 'setup - initial commit' '
+	>t &&
 	git add t &&
 	git commit -m "initial commit" &&
-	git branch initial HEAD &&
+	git branch initial
+'
+
+test_expect_success 'setup - repository in init subdirectory' '
 	mkdir init &&
-	cd init &&
-	git init &&
-	echo a >a &&
-	git add a &&
-	git commit -m "submodule commit 1" &&
-	git tag -a -m "rev-1" rev-1 &&
-	rev1=$(git rev-parse HEAD) &&
-	if test -z "$rev1"
-	then
-		echo "[OOPS] submodule git rev-parse returned nothing"
-		false
-	fi &&
-	cd .. &&
+	(
+		cd init &&
+		git init &&
+		echo a >a &&
+		git add a &&
+		git commit -m "submodule commit 1" &&
+		git tag -a -m "rev-1" rev-1
+	)
+	rev1=$(cd init && git rev-parse HEAD) &&
+	printf "rev1: %s\n" "$rev1" &&
+	test -n "$rev1"
+'
+
+test_expect_success 'setup - commit with gitlink' '
 	echo a >a &&
 	echo z >z &&
 	git add a init z &&
-	git commit -m "super commit 1" &&
-	mv init .subrepo &&
-	GIT_CONFIG=.gitmodules git config submodule.example.url git://example.com/init.git
+	git commit -m "super commit 1"
+'
+
+test_expect_success 'setup - hide init subdirectory' '
+	mv init .subrepo
+'
+
+test_expect_success 'setup - add an example entry to .gitmodules' '
+	GIT_CONFIG=.gitmodules \
+	git config submodule.example.url git://example.com/init.git
 '
 
 test_expect_success 'Prepare submodule add testing' '
