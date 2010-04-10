@@ -179,6 +179,9 @@ FILE *mingw_fopen (const char *filename, const char *otype);
 FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream);
 #define freopen mingw_freopen
 
+int mingw_close(int fileHandle);
+#define close mingw_close
+
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
