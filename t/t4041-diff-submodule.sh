@@ -329,4 +329,19 @@ index 0000000..$head7
 EOF
 "
 
+test_expect_success 'setup .git file for sm2' '
+	(cd sm2 &&
+	 REAL="$(pwd)/../.real" &&
+	 mv .git "$REAL"
+	 echo "gitdir: $REAL" >.git)
+'
+
+test_expect_success 'diff --submodule with .git file' '
+	git diff --submodule HEAD^ >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6...0000000 (submodule deleted)
+Submodule sm2 0000000...$head7 (new submodule)
+EOF
+'
+
 test_done

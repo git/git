@@ -12,8 +12,15 @@ static int add_submodule_odb(const char *path)
 	struct strbuf objects_directory = STRBUF_INIT;
 	struct alternate_object_database *alt_odb;
 	int ret = 0;
+	const char *git_dir;
 
-	strbuf_addf(&objects_directory, "%s/.git/objects/", path);
+	strbuf_addf(&objects_directory, "%s/.git", path);
+	git_dir = read_gitfile_gently(objects_directory.buf);
+	if (git_dir) {
+		strbuf_reset(&objects_directory);
+		strbuf_addstr(&objects_directory, git_dir);
+	}
+	strbuf_addstr(&objects_directory, "/objects/");
 	if (!is_directory(objects_directory.buf)) {
 		ret = -1;
 		goto done;
@@ -132,7 +139,6 @@ void show_submodule_summary(FILE *f, const char *path,
 
 unsigned is_submodule_modified(const char *path, int ignore_untracked)
 {
-	int i;
 	ssize_t len;
 	struct child_process cp;
 	const char *argv[] = {
@@ -141,16 +147,16 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 		NULL,
 		NULL,
 	};
-	const char *env[LOCAL_REPO_ENV_SIZE + 3];
 	struct strbuf buf = STRBUF_INIT;
 	unsigned dirty_submodule = 0;
 	const char *line, *next_line;
+	const char *git_dir;
 
-	for (i = 0; i < LOCAL_REPO_ENV_SIZE; i++)
-		env[i] = local_repo_env[i];
-
-	strbuf_addf(&buf, "%s/.git/", path);
-	if (!is_directory(buf.buf)) {
+	strbuf_addf(&buf, "%s/.git", path);
+	git_dir = read_gitfile_gently(buf.buf);
+	if (!git_dir)
+		git_dir = buf.buf;
+	if (!is_directory(git_dir)) {
 		strbuf_release(&buf);
 		/* The submodule is not checked out, so it is not modified */
 		return 0;
@@ -158,21 +164,16 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	}
 	strbuf_reset(&buf);
 
-	strbuf_addf(&buf, "GIT_WORK_TREE=%s", path);
-	env[i++] = strbuf_detach(&buf, NULL);
-	strbuf_addf(&buf, "GIT_DIR=%s/.git", path);
-	env[i++] = strbuf_detach(&buf, NULL);
-	env[i] = NULL;
-
 	if (ignore_untracked)
 		argv[2] = "-uno";
 
 	memset(&cp, 0, sizeof(cp));
 	cp.argv = argv;
-	cp.env = env;
+	cp.env = local_repo_env;
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
 	cp.out = -1;
+	cp.dir = path;
 	if (start_command(&cp))
 		die("Could not run git status --porcelain");
 
@@ -201,8 +202,6 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	if (finish_command(&cp))
 		die("git status --porcelain failed");
 
-	for (i = LOCAL_REPO_ENV_SIZE; env[i]; i++)
-		free((char *)env[i]);
 	strbuf_release(&buf);
 	return dirty_submodule;
 }
