@@ -123,7 +123,8 @@ Sending
 	Specifies the Fully Qualified Domain Name (FQDN) used in the
 	HELO/EHLO command to the SMTP server.  Some servers require the
 	FQDN to match your IP address.  If not set, git send-email attempts
-	to determine your FQDN automatically.
+	to determine your FQDN automatically.  Default is the value of
+	'sendemail.smtpdomain'.
 
 --smtp-pass[=<password>]::
 	Password for SMTP-AUTH. The argument is optional: If no

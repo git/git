@@ -132,8 +132,6 @@ my $have_email_valid = eval { require Email::Valid; 1 };
 my $have_mail_address = eval { require Mail::Address; 1 };
 my $smtp;
 my $auth;
-my $mail_domain_default = "localhost.localdomain";
-my $mail_domain;
 
 sub unique_email_list(@);
 sub cleanup_compose_files();
@@ -187,7 +185,7 @@ sub do_edit {
 # Variables with corresponding config settings
 my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc, $cc_cmd);
 my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_encryption);
-my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
+my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts, $smtp_domain);
 my ($validate, $confirm);
 my (@suppress_cc);
 
@@ -209,6 +207,7 @@ my %config_settings = (
     "smtpserverport" => \$smtp_server_port,
     "smtpuser" => \$smtp_authuser,
     "smtppass" => \$smtp_authpass,
+	"smtpdomain" => \$smtp_domain,
     "to" => \@to,
     "cc" => \@initial_cc,
     "cccmd" => \$cc_cmd,
@@ -277,7 +276,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
 		    "smtp-encryption=s" => \$smtp_encryption,
 		    "smtp-debug:i" => \$debug_net_smtp,
-		    "smtp-domain:s" => \$mail_domain,
+		    "smtp-domain:s" => \$smtp_domain,
 		    "identity=s" => \$identity,
 		    "annotate" => \$annotate,
 		    "compose" => \$compose,
@@ -889,7 +888,7 @@ sub maildomain_mta {
 }
 
 sub maildomain {
-	return maildomain_net() || maildomain_mta() || $mail_domain_default;
+	return maildomain_net() || maildomain_mta() || 'localhost.localdomain';
 }
 
 # Returns 1 if the message was sent, and 0 otherwise.
@@ -993,18 +992,18 @@ X-Mailer: git-send-email $gitversion
 		if ($smtp_encryption eq 'ssl') {
 			$smtp_server_port ||= 465; # ssmtp
 			require Net::SMTP::SSL;
-			$mail_domain ||= maildomain();
+			$smtp_domain ||= maildomain();
 			$smtp ||= Net::SMTP::SSL->new($smtp_server,
-						      Hello => $mail_domain,
+						      Hello => $smtp_domain,
 						      Port => $smtp_server_port);
 		}
 		else {
 			require Net::SMTP;
-			$mail_domain ||= maildomain();
+			$smtp_domain ||= maildomain();
 			$smtp ||= Net::SMTP->new((defined $smtp_server_port)
 						 ? "$smtp_server:$smtp_server_port"
 						 : $smtp_server,
-						 Hello => $mail_domain,
+						 Hello => $smtp_domain,
 						 Debug => $debug_net_smtp);
 			if ($smtp_encryption eq 'tls' && $smtp) {
 				require Net::SMTP::SSL;
@@ -1027,7 +1026,7 @@ X-Mailer: git-send-email $gitversion
 			die "Unable to initialize SMTP properly. Check config and use --smtp-debug. ",
 			    "VALUES: server=$smtp_server ",
 			    "encryption=$smtp_encryption ",
-			    "maildomain=$mail_domain",
+			    "hello=$smtp_domain",
 			    defined $smtp_server_port ? "port=$smtp_server_port" : "";
 		}
 
