@@ -8,13 +8,13 @@ git-fetch - Download objects and refs from another repository
 
 SYNOPSIS
 --------
-'git fetch' <options> <repository> <refspec>...
+'git fetch' [<options>] [<repository> [<refspec>...]]
 
-'git fetch' <options> <group>
+'git fetch' [<options>] <group>
 
-'git fetch' --multiple <options> [<repository> | <group>]...
+'git fetch' --multiple [<options>] [<repository> | <group>]...
 
-'git fetch' --all <options>
+'git fetch' --all [<options>]
 
 
 DESCRIPTION

@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git push' [--all | --mirror | --tags] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
 	   [--repo=<repository>] [-f | --force] [-v | --verbose] [-u | --set-upstream]
-	   [<repository> <refspec>...]
+	   [<repository> [<refspec>...]]
 
 DESCRIPTION
 -----------

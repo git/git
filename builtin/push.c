@@ -10,7 +10,7 @@
 #include "parse-options.h"
 
 static const char * const push_usage[] = {
-	"git push [<options>] [<repository> <refspec>...]",
+	"git push [<options>] [<repository> [<refspec>...]]",
 	NULL,
 };
 
