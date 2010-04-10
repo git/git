@@ -852,13 +852,17 @@ sub sanitize_address {
 # This maildomain*() code is based on ideas in Perl library Test::Reporter
 # /usr/share/perl5/Test/Reporter/Mail/Util.pm ==> sub _maildomain ()
 
+sub valid_fqdn {
+	my $domain = shift;
+	return !($^O eq 'darwin' && $domain =~ /\.local$/) && $domain =~ /\./;
+}
+
 sub maildomain_net {
 	my $maildomain;
 
 	if (eval { require Net::Domain; 1 }) {
 		my $domain = Net::Domain::domainname();
-		$maildomain = $domain
-			unless $^O eq 'darwin' && $domain =~ /\.local$/;
+		$maildomain = $domain if valid_fqdn($domain);
 	}
 
 	return $maildomain;
@@ -874,8 +878,7 @@ sub maildomain_mta {
 				my $domain = $smtp->domain;
 				$smtp->quit;
 
-				$maildomain = $domain
-					unless $^O eq 'darwin' && $domain =~ /\.local$/;
+				$maildomain = $domain if valid_fqdn($domain);
 
 				last if $maildomain;
 			}
