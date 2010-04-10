@@ -14,6 +14,7 @@
 #include "userdiff.h"
 #include "sigchain.h"
 #include "submodule.h"
+#include "ll-merge.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -1370,37 +1371,32 @@ static void free_diffstat_info(struct diffstat_t *diffstat)
 struct checkdiff_t {
 	const char *filename;
 	int lineno;
+	int conflict_marker_size;
 	struct diff_options *o;
 	unsigned ws_rule;
 	unsigned status;
 };
 
-static int is_conflict_marker(const char *line, unsigned long len)
+static int is_conflict_marker(const char *line, int marker_size, unsigned long len)
 {
 	char firstchar;
 	int cnt;
 
-	if (len < 8)
+	if (len < marker_size + 1)
 		return 0;
 	firstchar = line[0];
 	switch (firstchar) {
-	case '=': case '>': case '<':
+	case '=': case '>': case '<': case '|':
 		break;
 	default:
 		return 0;
 	}
-	for (cnt = 1; cnt < 7; cnt++)
+	for (cnt = 1; cnt < marker_size; cnt++)
 		if (line[cnt] != firstchar)
 			return 0;
-	/* line[0] thru line[6] are same as firstchar */
-	if (firstchar == '=') {
-		/* divider between ours and theirs? */
-		if (len != 8 || line[7] != '\n')
-			return 0;
-	} else if (len < 8 || !isspace(line[7])) {
-		/* not divider before ours nor after theirs */
+	/* line[1] thru line[marker_size-1] are same as firstchar */
+	if (len < marker_size + 1 || !isspace(line[marker_size]))
 		return 0;
-	}
 	return 1;
 }
 
@@ -1408,6 +1404,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 {
 	struct checkdiff_t *data = priv;
 	int color_diff = DIFF_OPT_TST(data->o, COLOR_DIFF);
+	int marker_size = data->conflict_marker_size;
 	const char *ws = diff_get_color(color_diff, DIFF_WHITESPACE);
 	const char *reset = diff_get_color(color_diff, DIFF_RESET);
 	const char *set = diff_get_color(color_diff, DIFF_FILE_NEW);
@@ -1416,7 +1413,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		unsigned bad;
 		data->lineno++;
-		if (is_conflict_marker(line + 1, len - 1)) {
+		if (is_conflict_marker(line + 1, marker_size, len - 1)) {
 			data->status |= 1;
 			fprintf(data->o->file,
 				"%s:%d: leftover conflict marker\n",
@@ -1860,6 +1857,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.lineno = 0;
 	data.o = o;
 	data.ws_rule = whitespace_rule(attr_path);
+	data.conflict_marker_size = ll_merge_marker_size(attr_path);
 
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
