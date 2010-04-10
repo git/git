@@ -83,6 +83,7 @@ static enum {
 static char *cleanup_arg;
 
 static int use_editor = 1, initial_commit, in_merge, include_status = 1;
+static int show_ignored_in_status;
 static const char *only_include_assumed;
 static struct strbuf message;
 
@@ -1031,6 +1032,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		  "mode",
 		  "show untracked files, optional modes: all, normal, no. (Default: all)",
 		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
+		OPT_BOOLEAN(0, "ignored", &show_ignored_in_status,
+			    "show ignored files"),
 		OPT_END(),
 	};
 
@@ -1044,7 +1047,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 			     builtin_status_options,
 			     builtin_status_usage, 0);
 	handle_untracked_files_arg(&s);
-
+	if (show_ignored_in_status)
+		s.show_ignored_files = 1;
 	if (*argv)
 		s.pathspec = get_pathspec(prefix, argv);
 

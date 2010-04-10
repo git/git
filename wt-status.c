@@ -646,9 +646,11 @@ void wt_status_print(struct wt_status *s)
 		wt_status_print_submodule_summary(s, 0);  /* staged */
 		wt_status_print_submodule_summary(s, 1);  /* unstaged */
 	}
-	if (s->show_untracked_files)
+	if (s->show_untracked_files) {
 		wt_status_print_other(s, &s->untracked, "Untracked", "add");
-	else if (s->commitable)
+		if (s->show_ignored_files)
+			wt_status_print_other(s, &s->ignored, "Ignored", "add -f");
+	} else if (s->commitable)
 		 fprintf(s->fp, "# Untracked files not listed (use -u option to show untracked files)\n");
 
 	if (s->verbose)
@@ -730,16 +732,16 @@ static void wt_shortstatus_status(int null_termination, struct string_list_item 
 	}
 }
 
-static void wt_shortstatus_untracked(int null_termination, struct string_list_item *it,
-			    struct wt_status *s)
+static void wt_shortstatus_other(int null_termination, struct string_list_item *it,
+				 struct wt_status *s, const char *sign)
 {
 	if (null_termination) {
-		fprintf(stdout, "?? %s%c", it->string, 0);
+		fprintf(stdout, "%s %s%c", sign, it->string, 0);
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
 		one = quote_path(it->string, -1, &onebuf, s->prefix);
-		color_fprintf(s->fp, color(WT_STATUS_UNTRACKED, s), "??");
+		color_fprintf(s->fp, color(WT_STATUS_UNTRACKED, s), sign);
 		printf(" %s\n", one);
 		strbuf_release(&onebuf);
 	}
@@ -763,7 +765,13 @@ void wt_shortstatus_print(struct wt_status *s, int null_termination)
 		struct string_list_item *it;
 
 		it = &(s->untracked.items[i]);
-		wt_shortstatus_untracked(null_termination, it, s);
+		wt_shortstatus_other(null_termination, it, s, "??");
+	}
+	for (i = 0; i < s->ignored.nr; i++) {
+		struct string_list_item *it;
+
+		it = &(s->ignored.items[i]);
+		wt_shortstatus_other(null_termination, it, s, "!!");
 	}
 }
 
