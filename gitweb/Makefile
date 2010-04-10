@@ -6,13 +6,13 @@ all::
 # Define JSMIN to point to JavaScript minifier that functions as
 # a filter to have gitweb.js minified.
 #
+# Define CSSMIN to point to a CSS minifier in order to generate a minified
+# version of gitweb.css
+#
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
 RM ?= rm -f
-
-# JavaScript minifier invocation that can function as filter
-JSMIN ?=
 
 # default configuration for gitweb
 GITWEB_CONFIG = gitweb_config.perl
@@ -29,11 +29,7 @@ GITWEB_HOMETEXT = indextext.html
 GITWEB_CSS = gitweb.css
 GITWEB_LOGO = git-logo.png
 GITWEB_FAVICON = git-favicon.png
-ifdef JSMIN
-GITWEB_JS = gitweb.min.js
-else
 GITWEB_JS = gitweb.js
-endif
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 
@@ -84,13 +80,16 @@ endif
 
 all:: gitweb.cgi
 
+FILES = gitweb.cgi
 ifdef JSMIN
-FILES=gitweb.cgi gitweb.min.js
-gitweb.cgi: gitweb.perl gitweb.min.js
-else # !JSMIN
-FILES=gitweb.cgi
-gitweb.cgi: gitweb.perl
-endif # JSMIN
+FILES += gitweb.min.js
+GITWEB_JS = gitweb.min.js
+endif
+ifdef CSSMIN
+FILES += gitweb.min.css
+GITWEB_CSS = gitweb.min.css
+endif
+gitweb.cgi: gitweb.perl $(GITWEB_JS) $(GITWEB_CSS)
 
 gitweb.cgi:
 	$(QUIET_GEN)$(RM) $@ $@+ && \
@@ -122,6 +121,11 @@ ifdef JSMIN
 gitweb.min.js: gitweb.js
 	$(QUIET_GEN)$(JSMIN) <$< >$@
 endif # JSMIN
+
+ifdef CSSMIN
+gitweb.min.css: gitweb.css
+	$(QUIET_GEN)$(CSSMIN) <$ >$@
+endif
 
 clean:
 	$(RM) $(FILES)

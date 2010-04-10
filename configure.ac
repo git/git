@@ -179,6 +179,26 @@ fi],
    AC_MSG_NOTICE([Will try -pthread then -lpthread to enable POSIX Threads.])
 ])
 
+# Define option to enable JavaScript minification
+AC_ARG_ENABLE([jsmin],
+[AS_HELP_STRING([--enable-jsmin=PATH],
+  [PATH is the name of a JavaScript minifier or the absolute path to one.])],
+[
+  JSMIN=$enableval;
+  AC_MSG_NOTICE([Setting JSMIN to '$JSMIN' to enable JavaScript minifying])
+  GIT_CONF_APPEND_LINE(JSMIN=$enableval);
+])
+
+# Define option to enable CSS minification
+AC_ARG_ENABLE([cssmin],
+[AS_HELP_STRING([--enable-cssmin=PATH],
+  [PATH is the name of a CSS minifier or the absolute path to one.])],
+[
+  CSSMIN=$enableval;
+  AC_MSG_NOTICE([Setting CSSMIN to '$CSSMIN' to enable CSS minifying])
+  GIT_CONF_APPEND_LINE(CSSMIN=$enableval);
+])
+
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
 AC_MSG_NOTICE([CHECKS for site configuration])
