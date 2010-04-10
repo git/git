@@ -63,6 +63,9 @@ Updates since v1.7.0
 
  * "git imap-send" learned to support CRAM-MD5 authentication.
 
+ * "gitweb" installation procedure can use "minified" js/css files
+   better.
+
 Fixes since v1.7.0
 ------------------
 
@@ -81,5 +84,5 @@ release, unless otherwise noted.
 ---
 exec >/var/tmp/1
 echo O=$(git describe)
-O=v1.7.0.4-382-gb807c52
+O=v1.7.1-rc0-36-gb92cbb6
 git shortlog --no-merges ^maint $O..
