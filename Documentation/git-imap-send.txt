@@ -16,7 +16,9 @@ DESCRIPTION
 This command uploads a mailbox generated with 'git format-patch'
 into an IMAP drafts folder.  This allows patches to be sent as
 other email is when using mail clients that cannot read mailbox
-files directly.
+files directly. The command also works with any general mailbox
+in which emails have the fields "From", "Date", and "Subject" in
+that order.
 
 Typical usage is something like:
 
@@ -117,12 +119,6 @@ flames ridiculing you if you don't check this.
 Thunderbird in particular is known to be problematic.  Thunderbird
 users may wish to visit this web page for more information:
   http://kb.mozillazine.org/Plain_text_e-mail_-_Thunderbird#Completely_plain_email
-
-
-BUGS
-----
-Doesn't handle lines starting with "From " in the message body.
-
 
 Author
 ------
