@@ -752,8 +752,7 @@ sub extract_valid_address {
 # We'll setup a template for the message id, using the "from" address:
 
 my ($message_id_stamp, $message_id_serial);
-sub make_message_id
-{
+sub make_message_id {
 	my $uniq;
 	if (!defined $message_id_stamp) {
 		$message_id_stamp = sprintf("%s-%s", time, $$);
@@ -808,8 +807,7 @@ sub is_rfc2047_quoted {
 }
 
 # use the simplest quoting being able to handle the recipient
-sub sanitize_address
-{
+sub sanitize_address {
 	my ($recipient) = @_;
 	my ($recipient_name, $recipient_addr) = ($recipient =~ /^(.*?)\s*(<.*)/);
 
@@ -854,8 +852,7 @@ sub sanitize_address
 # This maildomain*() code is based on ideas in Perl library Test::Reporter
 # /usr/share/perl5/Test/Reporter/Mail/Util.pm ==> sub _maildomain ()
 
-sub maildomain_net
-{
+sub maildomain_net {
 	my $maildomain;
 
 	if (eval { require Net::Domain; 1 }) {
@@ -867,8 +864,7 @@ sub maildomain_net
 	return $maildomain;
 }
 
-sub maildomain_mta
-{
+sub maildomain_mta {
 	my $maildomain;
 
 	if (eval { require Net::SMTP; 1 }) {
@@ -889,8 +885,7 @@ sub maildomain_mta
 	return $maildomain;
 }
 
-sub maildomain
-{
+sub maildomain {
 	return maildomain_net() || maildomain_mta() || $mail_domain_default;
 }
 
@@ -898,8 +893,7 @@ sub maildomain
 # In actuality, the whole program dies when there
 # is an error sending a message.
 
-sub send_message
-{
+sub send_message {
 	my @recipients = unique_email_list(@to);
 	@cc = (grep { my $cc = extract_valid_address($_);
 		      not grep { $cc eq $_ } @recipients
