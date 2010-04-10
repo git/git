@@ -378,7 +378,6 @@ static void wt_status_collect_untracked(struct wt_status *s)
 			continue;
 		if (!match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
 			continue;
-		s->workdir_untracked = 1;
 		string_list_insert(ent->name, &s->untracked);
 	}
 }
