@@ -379,7 +379,10 @@ static void wt_status_collect_untracked(struct wt_status *s)
 		if (!match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
 			continue;
 		string_list_insert(ent->name, &s->untracked);
+		free(ent);
 	}
+
+	free(dir.entries);
 }
 
 void wt_status_collect(struct wt_status *s)
