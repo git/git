@@ -198,7 +198,7 @@ void create_branch(const char *head,
 		log_all_ref_updates = 1;
 
 	if (forcing)
-		snprintf(msg, sizeof msg, "branch: Reset from %s",
+		snprintf(msg, sizeof msg, "branch: Reset to %s",
 			 start_name);
 	else if (!dont_change_ref)
 		snprintf(msg, sizeof msg, "branch: Created from %s",
