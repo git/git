@@ -520,11 +520,9 @@ Gmail
 GMail does not appear to have any way to turn off line wrapping in the web
 interface, so this will mangle any emails that you send.  You can however
 use any IMAP email client to connect to the google imap server, and forward
-the emails through that.  Just make sure to disable line wrapping in that
-email client.  Alternatively, use "git send-email" instead.
+the emails through that.
 
-Submitting properly formatted patches via Gmail is simple now that
-IMAP support is available. First, edit your ~/.gitconfig to specify your
+To submit using the IMAP interface, first, edit your ~/.gitconfig to specify your
 account settings:
 
 [imap]
@@ -538,14 +536,29 @@ account settings:
 You might need to instead use: folder = "[Google Mail]/Drafts" if you get an error
 that the "Folder doesn't exist".
 
-Next, ensure that your Gmail settings are correct. In "Settings" the
-"Use Unicode (UTF-8) encoding for outgoing messages" should be checked.
+Once your commits are ready to be sent to the mailing list, run the
+following command to send the patch emails to your Gmail Drafts
+folder.
 
-Once your commits are ready to send to the mailing list, run the following
-command to send the patch emails to your Gmail Drafts folder.
+  $ git format-patch --cover-letter -M --stdout origin/master | git imap-send
 
-	$ git format-patch -M --stdout origin/master | git imap-send
+Just make sure to disable line wrapping in the email client (GMail web
+interface will line wrap no matter what, so you need to use a real
+IMAP client).
 
-Go to your Gmail account, open the Drafts folder, find the patch email, fill
-in the To: and CC: fields and send away!
+Alternatively, you can use "git send-email" and send your patches
+through the GMail SMTP server.  edit ~/.gitconfig to specify your
+account settings:
 
+[sendemail]
+	smtpencryption = tls
+	smtpserver = smtp.gmail.com
+	smtpuser = user@gmail.com
+	smtppass = p4ssw0rd
+	smtpserverport = 587
+
+Once your commits are ready to be sent to the mailing list, run the
+following commands:
+
+  $ git format-patch --cover-letter -M origin/master -o outgoing/
+  $ git send-email outgoing/*
