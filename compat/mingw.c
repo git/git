@@ -650,6 +650,7 @@ static int env_compare(const void *a, const void *b)
 }
 
 static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
+			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
 	STARTUPINFO si;
@@ -729,7 +730,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 
 	memset(&pi, 0, sizeof(pi));
 	ret = CreateProcess(cmd, args.buf, NULL, NULL, TRUE, flags,
-		env ? envblk.buf : NULL, NULL, &si, &pi);
+		env ? envblk.buf : NULL, dir, &si, &pi);
 
 	if (env)
 		strbuf_release(&envblk);
@@ -746,10 +747,11 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 			   int prepend_cmd)
 {
-	return mingw_spawnve_fd(cmd, argv, env, prepend_cmd, 0, 1, 2);
+	return mingw_spawnve_fd(cmd, argv, env, NULL, prepend_cmd, 0, 1, 2);
 }
 
 pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
+		     const char *dir,
 		     int fhin, int fhout, int fherr)
 {
 	pid_t pid;
@@ -772,14 +774,14 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
 				pid = -1;
 			}
 			else {
-				pid = mingw_spawnve_fd(iprog, argv, env, 1,
+				pid = mingw_spawnve_fd(iprog, argv, env, dir, 1,
 						       fhin, fhout, fherr);
 				free(iprog);
 			}
 			argv[0] = argv0;
 		}
 		else
-			pid = mingw_spawnve_fd(prog, argv, env, 0,
+			pid = mingw_spawnve_fd(prog, argv, env, dir, 0,
 					       fhin, fhout, fherr);
 		free(prog);
 	}
