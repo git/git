@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2010, #03; Wed, 07)
-X-master-at: 02125bcc41aed022ddcb5955935726e50d89b60e
-X-next-at: 8b27e1648dab6f72ab9c25c9887380e679b5421d
+Subject: What's cooking in git.git (Apr 2010, #04; Sat, 10)
+X-master-at: b9aa901856cee7ad16737343f6a372bb37871258
+X-next-at: e1730fbcd4659526c1ef8e8c851b5d6cab4a82c1
 
-What's cooking in git.git (Apr 2010, #03; Wed, 07)
+What's cooking in git.git (Apr 2010, #04; Sat, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,106 +11,77 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
+We are at 1.7.1-rc1; please test 'master', report & fix regressions.
+Hopefully we can do another rc during the next week and release the final
+one next weekend.
+
 --------------------------------------------------
 [Graduated to "master"]
 
-* sg/bash-completion (2010-02-23) 4 commits
-  (merged to 'next' on 2010-03-08 at bc59860)
- + bash: completion for gitk aliases
- + bash: support user-supplied completion scripts for aliases
- + bash: support user-supplied completion scripts for user's git commands
- + bash: improve aliased command recognition
-
-Nobody seems to care about "_git_frotz" that may potentially crash with
-whatever random things the end users is doing in their environment, and
-renaming them to "_git_complete_frotz" to avoid that.  So let's not worry
-about that.
-
-* ic/bash-completion-rpm (2010-03-26) 1 commit
-  (merged to 'next' on 2010-04-02 at 0358304)
- + RPM spec: include bash completion support
-
-* da/maint-python-startup (2010-03-27) 1 commit
-  (merged to 'next' on 2010-04-01 at ca6897a)
- + Makefile: Remove usage of deprecated Python "has_key" method
-
-* jc/conflict-marker-size (2010-03-24) 1 commit
-  (merged to 'next' on 2010-04-01 at 164b1f4)
- + diff --check: honor conflict-marker-size attribute
-
-* sb/fmt-merge-msg (2010-03-24) 7 commits
-  (merged to 'next' on 2010-04-01 at 5fcbec5)
- + fmt-merge-msg: hide summary option
- + fmt-merge-msg: remove custom string_list implementation
- + string-list: add unsorted_string_list_lookup()
- + fmt-merge-msg: use pretty.c routines
- + t6200: test fmt-merge-msg more
- + t6200: modernize with test_tick
- + fmt-merge-msg: be quiet if nothing to merge
- (this branch is used by jp/hold-sring-list-sanity.)
-
-* ef/maint-empty-commit-log (2010-03-21) 1 commit
-  (merged to 'next' on 2010-03-28 at aa103e5)
- + rev-list: fix --pretty=oneline with empty message
-
-* jn/mailinfo-scissors (2010-04-03) 1 commit
-  (merged to 'next' on 2010-04-05 at 366435a)
- + Teach mailinfo %< as an alternative scissors mark
-
-* mg/notes-reflog (2010-03-29) 2 commits
-  (merged to 'next' on 2010-04-06 at 1b8066f)
- + refs.c: Write reflogs for notes just like for branch heads
- + t3301-notes: Test the creation of reflog entries
+* mr/gitweb-jsmin (2010-04-02) 6 commits
+  (merged to 'next' on 2010-04-05 at 5ad036c)
+ + gitweb: update INSTALL to use shorter make target
+ + gitweb: add documentation to INSTALL regarding gitweb.js
+ + instaweb: add minification awareness
+ + Gitweb: add autoconfigure support for minifiers
+ + Gitweb: add support for minifying gitweb.css
+ + Gitweb: add ignore and clean rules for minified files
 
 --------------------------------------------------
 [New Topics]
 
-* eb/unpretty-b-format (2010-03-24) 1 commit
-  (merged to 'next' on 2010-04-07 at 7f5c112)
- + Add `%B' in format strings for raw commit body in `git log' and friends
+* bg/apply-blank-trailing-context (2010-04-08) 1 commit
+ - apply: Allow blank *trailing* context lines to match beyond EOF
 
-* ne/rev-cache (2010-04-05) 7 commits
- - graft awareness
- - object name support
- - integration into revision walker
- - administrative api and tools
- - support for non-commit objects
- - basic api and porcelain
- - man page and technical docs
+Looked Ok; soon in 'next'
 
-For some reason this was extremely hard to read, partly because it had too
-many distracting style violations and too many long lines.  I'll start
-reading it later in the week when I find time to comment.
+* bg/send-email-smtpdomain (2010-04-10) 4 commits
+ - send-email: Cleanup smtp-domain and add config
+ - Document send-email --smtp-domain
+ - send-email: Don't use FQDNs without a '.'
+ - send-email: Cleanup { style
 
-* jp/hold-sring-list-sanity (2010-04-06) 6 commits
- . string_list: Fix argument order for string_list_append
- . string_list: Fix argument order for string_list_lookup
- . string_list: Fix argument order for string_list_insert_at_index
- . string_list: Fix argument order for string_list_insert
- . string_list: Fix argument order for for_each_string_list
- . string_list: Fix argument order for print_string_list
- (this branch uses js/grep-open and sr/remote-helper-export.)
+Looked Ok; soon in 'next'
 
-Building this on top of slushy codebase is not a very promising endeavor.
-Good thing to do, but bad timing.
+* rc/ls-remote-default (2010-04-09) 1 commit
+ - ls-remote: fall-back to default remotes when no remote specified
 
-* ab/commit-empty-message (2010-04-06) 1 commit
-  (merged to 'next' on 2010-04-07 at 701e863)
- + Add option to git-commit to allow empty log messages
+Looked Ok; soon in 'next'
 
-* jc/test-sleepless (2010-04-06) 1 commit
-  (merged to 'next' on 2010-04-07 at 8ccf40a)
- + war on "sleep" in tests
+* rc/maint-curl-helper (2010-04-08) 3 commits
+ - remote-curl: ensure that URLs have a trailing slash
+ - http: make end_url_with_slash() public
+ - t5541-http-push: add test for URLs with trailing slash
 
-* jc/maint-reflog-expire-unreachable (2010-04-07) 2 commits
- - reflog --expire-unreachable: a side note
- - reflog --expire-unreachable: avoid merge-base computation
+Looked Ok; soon in 'next'
 
-* jc/doc-submit-gmail (2010-04-07) 1 commit
- - SubmittingPatches: update GMail section
+* jc/status-show-ignored (2010-04-10) 5 commits
+ - status: --ignored option shows ignored files
+ - wt-status: rename and restructure status-print-untracked
+ - wt-status: collect ignored files
+ - wt-status: plug memory leak while collecting untracked files
+ - wt-status: remove unused workdir_untracked member
 
-* tc/maint-curl-helper (2010-04-08) 1 commit
- - remote-curl: avoid double-slashes in HTTP requests
+This is merely an illustration patch.  I am negative about conflating the
+JSON output to the mix at this point.  If we are going to add JSON option
+to everywhere we would generate "machine readable" output with the -z
+and/or --porcelain options, that is fine, but let's stabilize "status"
+with the existing --porcelain/-z option first.
+
+* hg/maint-attr-fix (2010-04-06) 3 commits
+ - attr: Expand macros immediately when encountered.
+ - attr: Allow multiple changes to an attribute on the same line.
+ - attr: Fixed debug output for macro expansion.
+
+* jc/am-3-show-corrupted-patch (2010-04-09) 1 commit
+ . wip
+
+* jc/maint-no-reflog-expire-unreach-for-head (2010-04-09) 1 commit
+ . WIP: no reflog expireunreachable for HEAD
+ (this branch uses jc/maint-reflog-expire-unreachable.)
+
+* sp/maint-describe-tiebreak-with-tagger-date (2010-04-10) 1 commit
+ - describe: Break annotated tag ties by tagger date
 
 --------------------------------------------------
 [Stalled]
@@ -132,15 +103,60 @@ Probably needs to support --no-index mode as well.
  - gitk: add the equivalent of diff --color-words
  - diff: add --word-diff option that generalizes --color-words
 
+* jp/hold-sring-list-sanity (2010-04-06) 6 commits
+ . string_list: Fix argument order for string_list_append
+ . string_list: Fix argument order for string_list_lookup
+ . string_list: Fix argument order for string_list_insert_at_index
+ . string_list: Fix argument order for string_list_insert
+ . string_list: Fix argument order for for_each_string_list
+ . string_list: Fix argument order for print_string_list
+ (this branch uses js/grep-open and early parts of sr/remote-helper-export.)
+
+Building this on top of slushy codebase is not a very promising endeavor.
+Good thing to do, but bad timing.
+
 --------------------------------------------------
 [Cooking]
 
-* np/malloc-threading (2010-04-07) 2 commits
- - Make xmalloc and xrealloc thread-safe (addendum)
- - Make xmalloc and xrealloc thread-safe
+* ne/rev-cache (2010-04-05) 7 commits
+ - graft awareness
+ - object name support
+ - integration into revision walker
+ - administrative api and tools
+ - support for non-commit objects
+ - basic api and porcelain
+ - man page and technical docs
 
-Updated with Freku's "init_recursive_mutex()".  The fix should eventually
-go to 'maint' and 'master'.
+For some reason this was extremely hard to read, partly because it had too
+many distracting style violations and too many long lines.
+
+* eb/unpretty-b-format (2010-03-24) 1 commit
+  (merged to 'next' on 2010-04-07 at 7f5c112)
+ + Add `%B' in format strings for raw commit body in `git log' and friends
+
+* ab/commit-empty-message (2010-04-06) 1 commit
+  (merged to 'next' on 2010-04-07 at 701e863)
+ + Add option to git-commit to allow empty log messages
+
+* jc/test-sleepless (2010-04-06) 1 commit
+  (merged to 'next' on 2010-04-07 at 8ccf40a)
+ + war on "sleep" in tests
+
+* jc/maint-reflog-expire-unreachable (2010-04-07) 1 commit
+ - reflog --expire-unreachable: avoid merge-base computation
+ (this branch is used by jc/maint-no-reflog-expire-unreach-for-head.)
+
+* jc/doc-submit-gmail (2010-04-07) 1 commit
+  (merged to 'next' on 2010-04-10 at cd4e8cf)
+ + SubmittingPatches: update GMail section
+
+* np/malloc-threading (2010-04-08) 2 commits
+  (merged to 'next' on 2010-04-10 at e1730fb)
+ + Thread-safe xmalloc and xrealloc needs a recursive mutex
+ + Make xmalloc and xrealloc thread-safe
+
+The fix should eventually go to 'maint' and 'master'.  This queues the one
+from J6t for Windows compatibility.
 
 * js/async-thread (2010-03-09) 7 commits
  - Enable threaded async procedures whenever pthreads is available
@@ -154,16 +170,16 @@ go to 'maint' and 'master'.
 
 Been waiting for resolution of locking issues in malloc-threading.
 
-* sd/log-decorate (2010-04-06) 4 commits
+* sd/log-decorate (2010-04-08) 6 commits
+  (merged to 'next' on 2010-04-08 at 68fee56)
+ + log.decorate: only ignore it under "log --pretty=raw"
+ + script with rev-list instead of log
   (merged to 'next' on 2010-04-06 at 992c9ad)
  + log --pretty/--oneline: ignore log.decorate
   (merged to 'next' on 2010-03-08 at 58a6fba)
  + log.decorate: usability fixes
  + Add `log.decorate' configuration variable.
  + git_config_maybe_bool()
-
-I did the tip one myself.  An extra set or two of eyeballs would be
-appreciated.
 
 * mh/status-optionally-refresh (2010-04-03) 3 commits
   (merged to 'next' on 2010-04-05 at 0e64aac)
@@ -185,7 +201,11 @@ appreciated.
  - Documentation/urls: Rewrite to accomodate <transport>::<address>
  - Documentation/remote-helpers: Rewrite description
 
-* sr/remote-helper-export (2010-03-29) 7 commits
+I'd like acks or rewrites from transport people on this topic.
+
+* sr/remote-helper-export (2010-04-09) 8 commits
+  (merged to 'next' on 2010-04-09 at 94f6e3d)
+ + Makefile: Simplify handling of python scripts
   (merged to 'next' on 2010-04-07 at 5651307)
  + remote-helpers: add tests for testgit helper
  + remote-helpers: add testgit helper
@@ -194,7 +214,7 @@ appreciated.
  + fast-import: always create marks_file directories
  + clone: also configure url for bare clones
  + clone: pass the remote name to remote_get
- (this branch is used by jp/hold-sring-list-sanity.)
+ (this branch shares commits with jp/hold-sring-list-sanity.)
 
 * cc/revert-strategy (2010-03-31) 5 commits
   (merged to 'next' on 2010-04-05 at 50909c1)
@@ -206,28 +226,20 @@ appreciated.
 
 This is more about debugging and we are not in a great hurry.
 
-* mr/gitweb-jsmin (2010-04-02) 6 commits
-  (merged to 'next' on 2010-04-05 at 5ad036c)
- + gitweb: update INSTALL to use shorter make target
- + gitweb: add documentation to INSTALL regarding gitweb.js
- + instaweb: add minification awareness
- + Gitweb: add autoconfigure support for minifiers
- + Gitweb: add support for minifying gitweb.css
- + Gitweb: add ignore and clean rules for minified files
-
 * sc/http-late-auth (2010-04-01) 1 commit
   (merged to 'next' on 2010-04-02 at c991acf)
  + Prompt for a username when an HTTP request 401s
 
-* jk/cached-textconv (2010-04-01) 7 commits
+* jk/cached-textconv (2010-04-01) 5 commits
   (merged to 'next' on 2010-04-02 at a023e3c)
  + diff: avoid useless filespec population
  + diff: cache textconv output
  + textconv: refactor calls to run_textconv
  + introduce notes-cache interface
  + make commit_tree a library function
- + fix textconv leak in emit_rewrite_diff
- + fix const-correctness of write_sha1_file
+
+The small leak fixes in the beginning of the series has been merged to
+'master' after a minor fixup.
 
 * ld/discovery-limit-to-fs (2010-04-04) 6 commits
  - write-index: check and warn when worktree crosses a filesystem boundary
