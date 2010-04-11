@@ -18,10 +18,16 @@
  */
 #define pthread_mutex_t CRITICAL_SECTION
 
-#define pthread_mutex_init(a,b) InitializeCriticalSection((a))
+#define pthread_mutex_init(a,b) (InitializeCriticalSection((a)), 0)
 #define pthread_mutex_destroy(a) DeleteCriticalSection((a))
 #define pthread_mutex_lock EnterCriticalSection
 #define pthread_mutex_unlock LeaveCriticalSection
+
+typedef int pthread_mutexattr_t;
+#define pthread_mutexattr_init(a) (*(a) = 0)
+#define pthread_mutexattr_destroy(a) do {} while (0)
+#define pthread_mutexattr_settype(a, t) 0
+#define PTHREAD_MUTEX_RECURSIVE 0
 
 /*
  * Implement simple condition variable for Windows threads, based on ACE
