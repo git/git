@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+$SIG{'PIPE'} = 'IGNORE';
+
 my ($old, $new);
 
 if (@ARGV == 7) {
