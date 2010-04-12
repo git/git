@@ -669,25 +669,25 @@ static void parse_pack_objects(unsigned char *sha1)
 static int write_compressed(struct sha1file *f, void *in, unsigned int size)
 {
 	z_stream stream;
-	unsigned long maxsize;
-	void *out;
+	int status;
+	unsigned char outbuf[4096];
 
 	memset(&stream, 0, sizeof(stream));
 	deflateInit(&stream, zlib_compression_level);
-	maxsize = deflateBound(&stream, size);
-	out = xmalloc(maxsize);
-
-	/* Compress it */
 	stream.next_in = in;
 	stream.avail_in = size;
-	stream.next_out = out;
-	stream.avail_out = maxsize;
-	while (deflate(&stream, Z_FINISH) == Z_OK);
-	deflateEnd(&stream);
 
+	do {
+		stream.next_out = outbuf;
+		stream.avail_out = sizeof(outbuf);
+		status = deflate(&stream, Z_FINISH);
+		sha1write(f, outbuf, sizeof(outbuf) - stream.avail_out);
+	} while (status == Z_OK);
+
+	if (status != Z_STREAM_END)
+		die("unable to deflate appended object (%d)", status);
 	size = stream.total_out;
-	sha1write(f, out, size);
-	free(out);
+	deflateEnd(&stream);
 	return size;
 }
 
