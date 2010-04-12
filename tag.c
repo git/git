@@ -44,9 +44,9 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 	char type[20];
 	const char *start = data;
 
-        if (item->object.parsed)
-                return 0;
-        item->object.parsed = 1;
+	if (item->object.parsed)
+		return 0;
+	item->object.parsed = 1;
 
 	if (size < 64)
 		return -1;
