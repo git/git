@@ -36,6 +36,23 @@ struct tag *lookup_tag(const unsigned char *sha1)
         return (struct tag *) obj;
 }
 
+static unsigned long parse_tag_date(const char *buf, const char *tail)
+{
+	const char *dateptr;
+
+	while (buf < tail && *buf++ != '>')
+		/* nada */;
+	if (buf >= tail)
+		return 0;
+	dateptr = buf;
+	while (buf < tail && *buf++ != '\n')
+		/* nada */;
+	if (buf >= tail)
+		return 0;
+	/* dateptr < buf && buf[-1] == '\n', so strtoul will stop at buf-1 */
+	return strtoul(dateptr, NULL, 10);
+}
+
 int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 {
 	unsigned char sha1[20];
@@ -85,6 +102,11 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 		return -1;
 	item->tag = xmemdupz(bufptr, nl - bufptr);
 	bufptr = nl + 1;
+
+	if (!prefixcmp(bufptr, "tagger "))
+		item->date = parse_tag_date(bufptr, tail);
+	else
+		item->date = 0;
 
 	return 0;
 }
