@@ -1,0 +1,548 @@
+#!/usr/bin/perl -w
+# Maintain "what's cooking" messages
+
+use strict;
+
+sub phrase_these {
+	my (@u) = @_;
+	my @d = ();
+	for (my $i = 0; $i < @u; $i++) {
+		push @d, $u[$i];
+		if ($i == @u - 2) {
+			push @d, " and ";
+		} elsif ($i < @u - 2) {
+			push @d, ", ";
+		}
+	}
+	return join('', @d);
+}
+
+sub describe_relation {
+	my ($topic_info) = @_;
+	my @desc;
+
+	if (exists $topic_info->{'used'}) {
+		push @desc, ("is used by " .
+			     phrase_these(@{$topic_info->{'used'}}));
+	}
+
+	if (exists $topic_info->{'uses'}) {
+		push @desc, ("uses " .
+			     phrase_these(@{$topic_info->{'uses'}}));
+	}
+
+	if (exists $topic_info->{'shares'}) {
+		push @desc, ("shares commits with " .
+			     phrase_these(@{$topic_info->{'shares'}}));
+	}
+
+	if (!@desc) {
+		return "";
+	}
+
+	return "(this branch " . join("; ", @desc) . ".)";
+}
+
+sub forks_from {
+	my ($topic, $fork, $forkee, @overlap) = @_;
+	my %ovl = map { $_ => 1 } (@overlap, @{$topic->{$forkee}{'log'}});
+
+	push @{$topic->{$fork}{'uses'}}, $forkee;
+	push @{$topic->{$forkee}{'used'}}, $fork;
+	@{$topic->{$fork}{'log'}} = (grep { !exists $ovl{$_} }
+				     @{$topic->{$fork}{'log'}});
+}
+
+sub topic_relation {
+	my ($topic, $one, $two) = @_;
+
+	my $fh;
+	open($fh, '-|',
+	     qw(git log --abbrev=7), "--format=%m %h",
+	     "$one...$two", "^master")
+	    or die "$!: open log --left-right";
+	my (@left, @right);
+	while (<$fh>) {
+		my ($sign, $sha1) = /^(.) (.*)/;
+		if ($sign eq '<') {
+			push @left, $sha1;
+		} elsif ($sign eq '>') {
+			push @right, $sha1;
+		}
+	}
+	close($fh) or die "$!: close log --left-right";
+
+	if (!@left) {
+		if (@right) {
+			forks_from($topic, $two, $one);
+		}
+	} elsif (!@right) {
+		forks_from($topic, $one, $two);
+	} else {
+		if (@left < @right) {
+			forks_from($topic, $two, $one, @left);
+		} elsif (@right < @left) {
+			forks_from($topic, $one, $two, @right);
+		} else {
+			push @{$topic->{$one}{'shares'}}, $two;
+			push @{$topic->{$two}{'shares'}}, $one;
+		}
+	}
+}
+
+sub get_commit {
+	my (@base) = qw(master next pu);
+	my $fh;
+	open($fh, '-|',
+	     qw(git for-each-ref),
+	     "--format=%(refname:short) %(authordate:iso8601)",
+	     "refs/heads/??/*")
+	    or die "$!: open for-each-ref";
+	my @topic;
+	my %topic;
+
+	while (<$fh>) {
+		chomp;
+		my ($branch, $date) = /^(\S+) (.*)$/;
+		push @topic, $branch;
+		$date =~ s/ .*//;
+		$topic{$branch} = +{
+			log => [],
+			tipdate => $date,
+		};
+	}
+	close($fh) or die "$!: close for-each-ref";
+
+	my %base = map { $_ => undef } @base;
+	my %commit;
+	my $show_branch_batch = 20;
+
+	while (@topic) {
+		my @t = (@base, splice(@topic, 0, $show_branch_batch));
+		my $header_delim = '-' x scalar(@t);
+		my $contain_pat = '.' x scalar(@t);
+		open($fh, '-|', qw(git show-branch --sparse --sha1-name),
+		     map { "refs/heads/$_" } @t)
+		    or die "$!: open show-branch";
+		while (<$fh>) {
+			chomp;
+			if ($header_delim) {
+				if (/^$header_delim$/) {
+					$header_delim = undef;
+				}
+				next;
+			}
+			my ($contain, $sha1, $log) =
+			    ($_ =~ /^($contain_pat) \[([0-9a-f]+)\] (.*)$/);
+
+			for (my $i = 0; $i < @t; $i++) {
+				my $branch = $t[$i];
+				my $sign = substr($contain, $i, 1);
+				next if ($sign eq ' ');
+				next if (substr($contain, 0, 1) ne ' ');
+
+				if (!exists $commit{$sha1}) {
+					$commit{$sha1} = +{
+						branch => {},
+						log => $log,
+					};
+				}
+				my $co = $commit{$sha1};
+				$co->{'branch'}{$branch} = 1;
+				next if (exists $base{$branch});
+				push @{$topic{$branch}{'log'}}, $sha1;
+			}
+		}
+		close($fh) or die "$!: close show-branch";
+	}
+
+	my %shared;
+	for my $sha1 (keys %commit) {
+		my $sign;
+		my $co = $commit{$sha1};
+		if (exists $co->{'branch'}{'next'}) {
+			$sign = '+';
+		} elsif (exists $co->{'branch'}{'pu'}) {
+			$sign = '-';
+		} else {
+			$sign = '.';
+		}
+		$co->{'log'} = $sign . ' ' . $co->{'log'};
+		my @t = (sort grep { !exists $base{$_} }
+			 keys %{$co->{'branch'}});
+		next if (@t < 2);
+		my $t = "@t";
+		$shared{$t} = 1;
+	}
+
+	for my $combo (keys %shared) {
+		my @combo = split(' ', $combo);
+		for (my $i = 0; $i < @combo - 1; $i++) {
+			for (my $j = $i + 1; $j < @combo; $j++) {
+				topic_relation(\%topic, $combo[$i], $combo[$j]);
+			}
+		}
+	}
+
+	open($fh, '-|',
+	     qw(git log --first-parent --abbrev=7),
+	     "--format=%ci %h %p :%s", "master..next")
+	    or die "$!: open log master..next";
+	while (<$fh>) {
+		my ($date, $commit, $parent, $tips);
+		unless (($date, $commit, $parent, $tips) =
+			/^([-0-9]+) ..:..:.. .\d{4} (\S+) (\S+) ([^:]*):/) {
+			die "Oops: $_";
+		}
+		for my $tip (split(' ', $tips)) {
+			my $co = $commit{$tip};
+			$co->{'merged'} = " (merged to 'next' on $date at $commit)";
+		}
+	}
+	close($fh) or die "$!: close log master..next";
+
+	for my $branch (keys %topic) {
+		my @log = ();
+		my $n = scalar(@{$topic{$branch}{'log'}});
+		if (!$n) {
+			delete $topic{$branch};
+			next;
+		} elsif ($n == 1) {
+			$n = "1 commit";
+		} else {
+			$n = "$n commits";
+		}
+		my $d = $topic{$branch}{'tipdate'};
+		my $head = "* $branch ($d) $n\n";
+		my @desc;
+		for (@{$topic{$branch}{'log'}}) {
+			my $co = $commit{$_};
+			if (exists $co->{'merged'}) {
+				push @desc, $co->{'merged'};
+			}
+			push @desc, $commit{$_}->{'log'};
+		}
+		my $list = join("\n", map { " " . $_ } @desc);
+		my $relation = describe_relation($topic{$branch});
+		$topic{$branch}{'desc'} = $head . $list;
+		if ($relation) {
+			$topic{$branch}{'desc'} .= "\n $relation";
+		}
+	}
+
+	return \%topic;
+}
+
+sub blurb_text {
+	my ($mon, $year, $issue, $dow, $date,
+	    $master_at, $next_at, $text) = @_;
+
+	my $now_string = localtime;
+	my ($current_dow, $current_mon, $current_date, $current_year) =
+	    ($now_string =~ /^(\w+) (\w+) (\d+) [\d:]+ (\d+)$/);
+
+	$mon ||= $current_mon;
+	$year ||= $current_year;
+	$issue ||= "01";
+	$dow ||= $current_dow;
+	$date ||= $current_date;
+	$master_at ||= '0' x 40;
+	$next_at ||= '0' x 40;
+	$text ||= <<'EOF';
+Here are the topics that have been cooking.  Commits prefixed with '-' are
+only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
+marked with '.' do not appear in any of the integration branches, but I am
+still holding onto them.
+EOF
+
+	$text = <<EOF;
+To: git\@vger.kernel.org
+Subject: What's cooking in git.git ($mon $year, #$issue; $dow, $date)
+X-master-at: $master_at
+X-next-at: $next_at
+
+What's cooking in git.git ($mon $year, #$issue; $dow, $date)
+--------------------------------------------------
+
+$text
+EOF
+	$text =~ s/\n+\Z/\n/;
+	return $text;
+}
+
+my $blurb_match = <<'EOF';
+To: .*
+Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
+X-master-at: ([0-9a-f]{40})
+X-next-at: ([0-9a-f]{40})
+
+What's cooking in \S+ \(\1 \2, #\3; \4, \5\)
+-{30,}
+\n*
+EOF
+
+my $blurb = "b..l..u..r..b";
+sub read_previous {
+	my ($fn) = @_;
+	my $fh;
+ 	my $section = undef;
+	my $serial = 1;
+	my $branch = $blurb;
+	my $last_empty = undef;
+	my (@section, %section, @branch, %branch, %description, @leader);
+	my $in_unedited_olde = 0;
+
+	if (!-r $fn) {
+		return +{
+			'section_list' => [],
+			'section_data' => {},
+			'topic_description' => {
+				$blurb => {
+					desc => undef,
+					text => blurb_text(),
+				},
+			},
+		};
+	}
+
+	open ($fh, '<', $fn) or die "$!: open $fn";
+	while (<$fh>) {
+		chomp;
+		if ($in_unedited_olde) {
+			if (/^>>$/) {
+				$in_unedited_olde = 0;
+				$_ = " | $_";
+			}
+		} elsif (/^<<$/) {
+			$in_unedited_olde = 1;
+		}
+
+		if ($in_unedited_olde) {
+			$_ = " | $_";
+		}
+
+		if (defined $section && /^-{20,}$/) {
+			$_ = "";
+		}
+		if (/^$/) {
+			$last_empty = 1;
+			next;
+		}
+		if (/^\[(.*)\]\s*$/) {
+			$section = $1;
+			$branch = undef;
+			if (!exists $section{$section}) {
+				push @section, $section;
+				$section{$section} = [];
+			}
+			next;
+		}
+		if (defined $section && /^\* (\S+) /) {
+			$branch = $1;
+			$last_empty = 0;
+			if (!exists $branch{$branch}) {
+				push @branch, [$branch, $section];
+				$branch{$branch} = 1;
+			}
+			push @{$section{$section}}, $branch;
+		}
+		if (defined $branch) {
+			my $was_last_empty = $last_empty;
+			$last_empty = 0;
+			if (!exists $description{$branch}) {
+				$description{$branch} = [];
+			}
+			if ($was_last_empty) {
+				push @{$description{$branch}}, "";
+			}
+			push @{$description{$branch}}, $_;
+		}
+	}
+	close($fh);
+
+	for my $branch (keys %description) {
+		my $ary = $description{$branch};
+		if ($branch eq $blurb) {
+			while (@{$ary} && $ary->[-1] =~ /^-{30,}$/) {
+				pop @{$ary};
+			}
+			$description{$branch} = +{
+				desc => undef,
+				text => join("\n", @{$ary}),
+			};
+		} else {
+			my @desc = ();
+			while (@{$ary}) {
+				my $elem = shift @{$ary};
+				last if ($elem eq '');
+				push @desc, $elem;
+			}
+			$description{$branch} = +{
+				desc => join("\n", @desc),
+				text => join("\n", @{$ary}),
+			};
+		}
+	}
+
+	return +{
+		section_list => \@section,
+		section_data => \%section,
+		topic_description => \%description,
+	};
+}
+
+sub write_cooking {
+	my ($fn, $cooking) = @_;
+	my $fh;
+
+	open($fh, '>', $fn) or die "$!: open $fn";
+	print $fh $cooking->{'topic_description'}{$blurb}{'text'};
+
+	for my $section_name (@{$cooking->{'section_list'}}) {
+		my $topic_list = $cooking->{'section_data'}{$section_name};
+		next if (!@{$topic_list});
+
+		print $fh "\n";
+		print $fh '-' x 50, "\n";
+		print $fh "[$section_name]\n";
+		for my $topic (@{$topic_list}) {
+			my $d = $cooking->{'topic_description'}{$topic};
+
+			print $fh "\n", $d->{'desc'}, "\n";
+			if ($d->{'text'}) {
+				print $fh "\n", $d->{'text'}, "\n";
+			}
+		}
+	}
+	close($fh);
+}
+
+my $graduated = 'Graduated to "master"';
+my $new_topics = 'New Topics';
+my $old_new_topics = 'Old New Topics';
+
+sub update_issue {
+	my ($cooking) = @_;
+	my ($fh, $master_at, $next_at, $incremental);
+
+	open($fh, '-|',
+	     qw(git for-each-ref),
+	     "--format=%(refname:short) %(objectname)",
+	     "refs/heads/master",
+	     "refs/heads/next") or die "$!: open for-each-ref";
+	while (<$fh>) {
+		my ($branch, $at) = /^(\S+) (\S+)$/;
+		if ($branch eq 'master') { $master_at = $at; }
+		if ($branch eq 'next') { $next_at = $at; }
+	}
+	close($fh) or die "$!: close for-each-ref";
+
+	$incremental = ((-r "Meta/whats-cooking.txt") &&
+			system("cd Meta && " .
+			       "git diff --quiet --no-ext-diff HEAD -- " .
+			       "whats-cooking.txt"));
+
+	my $now_string = localtime;
+	my ($current_dow, $current_mon, $current_date, $current_year) =
+	    ($now_string =~ /^(\w+) (\w+) (\d+) [\d:]+ (\d+)$/);
+
+	my $btext = $cooking->{'topic_description'}{$blurb}{'text'};
+	if ($btext !~ s/\A$blurb_match//) {
+		die "match pattern broken?";
+	}
+	my ($mon, $year, $issue, $dow, $date) = ($1, $2, $3, $4, $5);
+
+	if ($current_mon ne $mon || $current_year ne $year) {
+		$issue = "01";
+	} elsif (!$incremental) {
+		$issue =~ s/^0*//;
+		$issue = sprintf "%02d", ($issue + 1);
+	}
+	$mon = $current_mon;
+	$year = $current_year;
+	$dow = $current_dow;
+	$date = $current_date;
+
+	$cooking->{'topic_description'}{$blurb}{'text'} =
+	    blurb_text($mon, $year, $issue, $dow, $date,
+		       $master_at, $next_at, $btext);
+
+	if (!$incremental) {
+		my $sd = $cooking->{'section_data'};
+		my $sl = $cooking->{'section_list'};
+		for (my $i = 0; $i < @{$sl}; $i++) {
+			if ($sl->[$i] eq $new_topics) {
+				$sl->[$i] = $old_new_topics;
+				unshift @{$sl}, $new_topics;
+				last;
+			}
+		}
+		$sd->{$old_new_topics} = $sd->{$new_topics};
+		$sd->{$new_topics} = [];
+	}
+}
+
+sub merge_cooking {
+	my ($cooking, $current) = @_;
+	my $td = $cooking->{'topic_description'};
+	my $sd = $cooking->{'section_data'};
+	my $sl = $cooking->{'section_list'};
+	my (@new_topic, @gone_topic);
+
+	if (!exists $sd->{$new_topics}) {
+		$sd->{$new_topics} = [];
+		unshift @{$sl}, $new_topics;
+	}
+
+	if (!exists $sd->{$graduated}) {
+		$sd->{$graduated} = [];
+		unshift @{$sl}, $graduated;
+	}
+
+	update_issue($cooking);
+
+	for my $topic (sort keys %{$current}) {
+		if (!exists $td->{$topic}) {
+			push @new_topic, $topic;
+			next;
+		}
+		my $n = $current->{$topic}{'desc'};
+		my $o = $td->{$topic}{'desc'};
+		if ($n ne $o) {
+			$td->{$topic}{'desc'} = $n . "\n<<\n" . $o ."\n>>";
+		}
+	}
+
+	for my $topic (sort keys %{$td}) {
+		next if ($topic eq $blurb);
+		if (!exists $current->{$topic}) {
+			push @gone_topic, $topic;
+		}
+	}
+
+	for (@new_topic) {
+		push @{$sd->{$new_topics}}, $_;
+		$td->{$_}{'desc'} = $current->{$_}{'desc'};
+	}
+
+	if (@gone_topic) {
+		for my $topic (@gone_topic) {
+			for my $section (@{$sl}) {
+				@{$sd->{$section}} = (grep { $_ ne $topic }
+						      @{$sd->{$section}});
+			}
+		}
+		for (@gone_topic) {
+			push @{$sd->{$graduated}}, $_;
+		}
+	}
+
+}
+
+################################################################
+# Main
+
+my $topic = get_commit();
+my $cooking = read_previous('Meta/whats-cooking.txt');
+merge_cooking($cooking, $topic);
+write_cooking('Meta/whats-cooking.txt', $cooking);
