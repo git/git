@@ -7,6 +7,12 @@ test_description='Test remote-helper import and export commands'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PYTHON
+then
+	say 'skipping git remote-testgit tests: requires Python support'
+	test_done
+fi
+
 test_expect_success 'setup repository' '
 	git init --bare server/.git &&
 	git clone server public &&
