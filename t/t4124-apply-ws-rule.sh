@@ -330,6 +330,18 @@ test_expect_success 'two missing blank lines at end with --whitespace=fix' '
 	test_cmp one expect
 '
 
+test_expect_success 'missing blank line at end, insert before end, --whitespace=fix' '
+	{ echo a; echo; } >one &&
+	git add one &&
+	{ echo b; echo a; echo; } >one &&
+	cp one expect &&
+	git diff -- one >patch &&
+	echo a >one &&
+	test_must_fail git apply patch &&
+	git apply --whitespace=fix patch &&
+	test_cmp one expect
+'
+
 test_expect_success 'shrink file with tons of missing blanks at end of file' '
 	{ echo a; echo b; echo c; } >one &&
 	cp one no-blank-lines &&
