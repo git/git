@@ -914,7 +914,7 @@ format.signoff::
 gc.aggressiveWindow::
 	The window size parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
-	to 10.
+	to 250.
 
 gc.auto::
 	When there are approximately more than this many loose

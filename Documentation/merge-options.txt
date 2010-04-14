@@ -62,6 +62,11 @@ option can be used to override --squash.
 	is used instead ('git merge-recursive' when merging a single
 	head, 'git merge-octopus' otherwise).
 
+-X <option>::
+--strategy-option=<option>::
+	Pass merge strategy specific option through to the merge
+	strategy.
+
 --summary::
 --no-summary::
 	Synonyms to --stat and --no-stat; these are deprecated and will be
@@ -76,8 +81,3 @@ ifndef::git-pull[]
 --verbose::
 	Be verbose.
 endif::git-pull[]
-
--X <option>::
---strategy-option=<option>::
-	Pass merge strategy specific option through to the merge
-	strategy.
