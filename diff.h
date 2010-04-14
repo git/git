@@ -54,7 +54,7 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_FIND_COPIES_HARDER  (1 <<  6)
 #define DIFF_OPT_FOLLOW_RENAMES      (1 <<  7)
 #define DIFF_OPT_COLOR_DIFF          (1 <<  8)
-#define DIFF_OPT_COLOR_DIFF_WORDS    (1 <<  9)
+/* (1 <<  9) unused */
 #define DIFF_OPT_HAS_CHANGES         (1 << 10)
 #define DIFF_OPT_QUICK               (1 << 11)
 #define DIFF_OPT_NO_INDEX            (1 << 12)
@@ -78,6 +78,13 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_XDL_TST(opts, flag)    ((opts)->xdl_opts & XDF_##flag)
 #define DIFF_XDL_SET(opts, flag)    ((opts)->xdl_opts |= XDF_##flag)
 #define DIFF_XDL_CLR(opts, flag)    ((opts)->xdl_opts &= ~XDF_##flag)
+
+enum diff_words_type {
+	DIFF_WORDS_NONE = 0,
+	DIFF_WORDS_PORCELAIN,
+	DIFF_WORDS_PLAIN,
+	DIFF_WORDS_COLOR
+};
 
 struct diff_options {
 	const char *filter;
@@ -108,6 +115,7 @@ struct diff_options {
 	int stat_width;
 	int stat_name_width;
 	const char *word_regex;
+	enum diff_words_type word_diff;
 
 	/* this is set by diffcore for DIFF_FORMAT_PATCH */
 	int found_changes;

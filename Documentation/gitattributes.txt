@@ -360,7 +360,7 @@ patterns are available:
 Customizing word diff
 ^^^^^^^^^^^^^^^^^^^^^
 
-You can customize the rules that `git diff --color-words` uses to
+You can customize the rules that `git diff --word-diff` uses to
 split words in a line, by specifying an appropriate regular expression
 in the "diff.*.wordRegex" configuration variable.  For example, in TeX
 a backslash followed by a sequence of letters forms a command, but
