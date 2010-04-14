@@ -9,7 +9,8 @@ git-merge - Join two or more development histories together
 SYNOPSIS
 --------
 [verse]
-'git merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
+'git merge' [-n] [--stat] [--no-commit] [--squash]
+	[-s <strategy>] [-X <strategy-option>]
 	[--[no-]rerere-autoupdate] [-m <msg>] <commit>...
 'git merge' <msg> HEAD <commit>...
 
