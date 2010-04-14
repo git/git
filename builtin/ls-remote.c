@@ -4,7 +4,8 @@
 #include "remote.h"
 
 static const char ls_remote_usage[] =
-"git ls-remote [--heads] [--tags]  [-u <exec> | --upload-pack <exec>] <repository> <refs>...";
+"git ls-remote [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]\n"
+"                     [<repository> [<refs>...]]";
 
 /*
  * Is there one among the list of patterns that match the tail part
@@ -73,9 +74,6 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
-	if (!dest)
-		usage(ls_remote_usage);
-
 	if (argv[i]) {
 		int j;
 		pattern = xcalloc(sizeof(const char *), argc - i + 1);
@@ -87,6 +85,11 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		}
 	}
 	remote = remote_get(dest);
+	if (!remote) {
+		if (dest)
+			die("bad repository '%s'", dest);
+		die("No remote configured to list refs from.");
+	}
 	if (!remote->url_nr)
 		die("remote %s has no configured URL", dest);
 	transport = transport_get(remote, NULL);
