@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2010, #04; Sat, 10)
-X-master-at: b9aa901856cee7ad16737343f6a372bb37871258
-X-next-at: e1730fbcd4659526c1ef8e8c851b5d6cab4a82c1
+Subject: What's cooking in git.git (Apr 2010, #05; Wed, 14)
+X-master-at: a6018bbdca918c4f0a35badcfd826077d07502ca
+X-next-at: a27c7d7b75b13718e58a78570f8ddcaf1a512d13
 
-What's cooking in git.git (Apr 2010, #04; Sat, 10)
+What's cooking in git.git (Apr 2010, #05; Wed, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -18,42 +18,121 @@ one next weekend.
 --------------------------------------------------
 [Graduated to "master"]
 
-* mr/gitweb-jsmin (2010-04-02) 6 commits
-  (merged to 'next' on 2010-04-05 at 5ad036c)
- + gitweb: update INSTALL to use shorter make target
- + gitweb: add documentation to INSTALL regarding gitweb.js
- + instaweb: add minification awareness
- + Gitweb: add autoconfigure support for minifiers
- + Gitweb: add support for minifying gitweb.css
- + Gitweb: add ignore and clean rules for minified files
+* jc/doc-submit-gmail (2010-04-07) 1 commit
+  (merged to 'next' on 2010-04-10 at cd4e8cf)
+ + SubmittingPatches: update GMail section
 
 --------------------------------------------------
 [New Topics]
 
-* bg/apply-blank-trailing-context (2010-04-08) 1 commit
- - apply: Allow blank *trailing* context lines to match beyond EOF
+* hg/id-munging (2010-04-06) 2 commits
+ - convert: Keep foreign $Id$ on checkout.
+ - convert: Safer handling of $Id$ contraction.
 
-Looked Ok; soon in 'next'
+* jn/submodule-basic-test (2010-04-10) 3 commits
+ - t7400: clarify submodule update tests
+ - t7400: clarify 'submodule add' tests
+ - t7400: split setup into multiple tests
+
+* np/index-pack-memsave (2010-04-12) 3 commits
+ - index-pack: smarter memory usage when appending objects
+ - index-pack: rationalize unpack_entry_data()
+ - index-pack: smarter memory usage when resolving deltas
+
+* jg/auto-initialize-notes-with-percent-n-in-format (2010-04-13) 1 commit
+ - pretty: Initialize notes if %N is used
+
+* jc/am-3-show-corrupted-patch (2010-04-09) 1 commit
+ - am -3: recover the diagnostic messages for corrupt patches
+
+* jc/maint-no-reflog-expire-unreach-for-head (2010-04-09) 3 commits
+ - reflog: ignore expire-unreachable for "HEAD" reflog
+ - more war on "sleep" in tests
+ - Document gc.<pattern>.reflogexpire variables
+ (this branch uses jc/maint-reflog-expire-unreachable.)
+
+* cw/maint-exec-defpath (2010-04-13) 1 commit
+ - exec_cmd.c: replace hard-coded path list with one from <paths.h>
+
+--------------------------------------------------
+[Stalled]
+
+* rr/remote-helper-doc (2010-04-07) 3 commits
+ - Documentation/remote-helpers: Add invocation section
+ - Documentation/urls: Rewrite to accomodate <transport>::<address>
+ - Documentation/remote-helpers: Rewrite description
+
+I'd like acks or rewrites from transport people on this topic.
+
+* js/rebase-origin-x (2010-02-05) 1 commit
+ - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
+
+I retract my objection against the idea of -x; needs polishing before
+moving forward.
+
+* js/grep-open (2010-03-26) 2 commits
+ - grep -O: allow optional argument specifying the pager (or editor)
+ - grep: Add the option '--open-files-in-pager'
+ (this branch is used by jp/hold-string-list-sanity.)
+
+Probably needs to support --no-index mode as well.
+
+* jp/hold-string-list-sanity (2010-04-06) 9 commits
+ . string_list: Fix argument order for string_list_append
+ . Merge branch 'sr/remote-helper-export' into HEAD
+ . Merge branch 'js/grep-open' into HEAD
+ . Merge branch 'sb/fmt-merge-msg' into HEAD
+ . string_list: Fix argument order for string_list_lookup
+ . string_list: Fix argument order for string_list_insert_at_index
+ . string_list: Fix argument order for string_list_insert
+ . string_list: Fix argument order for for_each_string_list
+ . string_list: Fix argument order for print_string_list
+ (this branch uses js/grep-open and sr/remote-helper-export.)
+
+Building this on top of slushy codebase is not a very promising endeavor.
+Good thing to do, but bad timing.
+
+--------------------------------------------------
+[Cooking]
+
+* tr/word-diff (2010-04-14) 1 commit
+ - diff: add --word-diff option that generalizes --color-words
+
+There are gitk patches that go with this series.
+
+* sp/maint-describe-tiebreak-with-tagger-date (2010-04-12) 5 commits
+ - describe: Break annotated tag ties by tagger date
+ - tag.c: Parse tagger date (if present)
+ - tag.c: Refactor parse_tag_buffer to be saner to program
+ - tag.h: Remove unused signature field
+ - tag.c: Correct indentation
+
+* bg/apply-blank-trailing-context (2010-04-08) 1 commit
+  (merged to 'next' on 2010-04-14 at a393c0b)
+ + apply: Allow blank *trailing* context lines to match beyond EOF
 
 * bg/send-email-smtpdomain (2010-04-10) 4 commits
- - send-email: Cleanup smtp-domain and add config
- - Document send-email --smtp-domain
- - send-email: Don't use FQDNs without a '.'
- - send-email: Cleanup { style
-
-Looked Ok; soon in 'next'
+  (merged to 'next' on 2010-04-14 at 88fff99)
+ + send-email: Cleanup smtp-domain and add config
+ + Document send-email --smtp-domain
+ + send-email: Don't use FQDNs without a '.'
+ + send-email: Cleanup { style
 
 * rc/ls-remote-default (2010-04-09) 1 commit
- - ls-remote: fall-back to default remotes when no remote specified
-
-Looked Ok; soon in 'next'
+  (merged to 'next' on 2010-04-14 at d5081bd)
+ + ls-remote: fall-back to default remotes when no remote specified
 
 * rc/maint-curl-helper (2010-04-08) 3 commits
- - remote-curl: ensure that URLs have a trailing slash
- - http: make end_url_with_slash() public
- - t5541-http-push: add test for URLs with trailing slash
+  (merged to 'next' on 2010-04-14 at 2eb9177)
+ + remote-curl: ensure that URLs have a trailing slash
+ + http: make end_url_with_slash() public
+ + t5541-http-push: add test for URLs with trailing slash
 
-Looked Ok; soon in 'next'
+* hg/maint-attr-fix (2010-04-06) 3 commits
+  (merged to 'next' on 2010-04-14 at a27c7d7)
+ + attr: Expand macros immediately when encountered.
+ + attr: Allow multiple changes to an attribute on the same line.
+ + attr: Fixed debug output for macro expansion.
 
 * jc/status-show-ignored (2010-04-10) 5 commits
  - status: --ignored option shows ignored files
@@ -67,68 +146,6 @@ JSON output to the mix at this point.  If we are going to add JSON option
 to everywhere we would generate "machine readable" output with the -z
 and/or --porcelain options, that is fine, but let's stabilize "status"
 with the existing --porcelain/-z option first.
-
-* hg/maint-attr-fix (2010-04-06) 3 commits
- - attr: Expand macros immediately when encountered.
- - attr: Allow multiple changes to an attribute on the same line.
- - attr: Fixed debug output for macro expansion.
-
-* jc/am-3-show-corrupted-patch (2010-04-09) 1 commit
- . wip
-
-* jc/maint-no-reflog-expire-unreach-for-head (2010-04-09) 1 commit
- . WIP: no reflog expireunreachable for HEAD
- (this branch uses jc/maint-reflog-expire-unreachable.)
-
-* sp/maint-describe-tiebreak-with-tagger-date (2010-04-10) 1 commit
- - describe: Break annotated tag ties by tagger date
-
---------------------------------------------------
-[Stalled]
-
-* js/rebase-origin-x (2010-02-05) 1 commit
- - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
-
-I retract my objection against the idea of -x; needs polishing before
-moving forward.
-
-* js/grep-open (2010-03-26) 2 commits
- - grep -O: allow optional argument specifying the pager (or editor)
- - grep: Add the option '--open-files-in-pager'
- (this branch is used by jp/hold-sring-list-sanity.)
-
-Probably needs to support --no-index mode as well.
-
-* tr/word-diff (2010-04-04) 2 commits
- - gitk: add the equivalent of diff --color-words
- - diff: add --word-diff option that generalizes --color-words
-
-* jp/hold-sring-list-sanity (2010-04-06) 6 commits
- . string_list: Fix argument order for string_list_append
- . string_list: Fix argument order for string_list_lookup
- . string_list: Fix argument order for string_list_insert_at_index
- . string_list: Fix argument order for string_list_insert
- . string_list: Fix argument order for for_each_string_list
- . string_list: Fix argument order for print_string_list
- (this branch uses js/grep-open and early parts of sr/remote-helper-export.)
-
-Building this on top of slushy codebase is not a very promising endeavor.
-Good thing to do, but bad timing.
-
---------------------------------------------------
-[Cooking]
-
-* ne/rev-cache (2010-04-05) 7 commits
- - graft awareness
- - object name support
- - integration into revision walker
- - administrative api and tools
- - support for non-commit objects
- - basic api and porcelain
- - man page and technical docs
-
-For some reason this was extremely hard to read, partly because it had too
-many distracting style violations and too many long lines.
 
 * eb/unpretty-b-format (2010-03-24) 1 commit
   (merged to 'next' on 2010-04-07 at 7f5c112)
@@ -145,10 +162,6 @@ many distracting style violations and too many long lines.
 * jc/maint-reflog-expire-unreachable (2010-04-07) 1 commit
  - reflog --expire-unreachable: avoid merge-base computation
  (this branch is used by jc/maint-no-reflog-expire-unreach-for-head.)
-
-* jc/doc-submit-gmail (2010-04-07) 1 commit
-  (merged to 'next' on 2010-04-10 at cd4e8cf)
- + SubmittingPatches: update GMail section
 
 * np/malloc-threading (2010-04-08) 2 commits
   (merged to 'next' on 2010-04-10 at e1730fb)
@@ -196,14 +209,9 @@ Been waiting for resolution of locking issues in malloc-threading.
  + whitespace: add tab-in-indent error class
  + whitespace: we cannot "catch all errors known to git" anymore
 
-* rr/remote-helper-doc (2010-04-07) 3 commits
- - Documentation/remote-helpers: Add invocation section
- - Documentation/urls: Rewrite to accomodate <transport>::<address>
- - Documentation/remote-helpers: Rewrite description
-
-I'd like acks or rewrites from transport people on this topic.
-
-* sr/remote-helper-export (2010-04-09) 8 commits
+* sr/remote-helper-export (2010-04-12) 9 commits
+  (merged to 'next' on 2010-04-12 at cefbb2f)
+ + t5800: testgit helper requires Python support
   (merged to 'next' on 2010-04-09 at 94f6e3d)
  + Makefile: Simplify handling of python scripts
   (merged to 'next' on 2010-04-07 at 5651307)
@@ -214,7 +222,7 @@ I'd like acks or rewrites from transport people on this topic.
  + fast-import: always create marks_file directories
  + clone: also configure url for bare clones
  + clone: pass the remote name to remote_get
- (this branch shares commits with jp/hold-sring-list-sanity.)
+ (this branch is used by jp/hold-string-list-sanity.)
 
 * cc/revert-strategy (2010-03-31) 5 commits
   (merged to 'next' on 2010-04-05 at 50909c1)
@@ -274,50 +282,73 @@ source" scenario.
  + Use strbufs instead of open-coded string manipulation
  + Allow passing of configuration parameters in the command line
 
-* nd/setup (2010-04-05) 43 commits
- - builtins: do not commit pager choice early
- - builtins: setup repository before print unknown command error
- - t0001: Add test cases for "git init" with aliases
- - Guard unallowed access to repository when it's not set up
- - alias: keep repository found while collecting aliases as long as possible
- - Allow to undo setup_git_directory_gently() gracefully (and fix alias code)
- - builtins: check for startup_info->help, print and exit early
- - builtins: utilize startup_info->help where possible
- - run_builtin(): save "-h" detection result for later use
- - config: do not read .git/config if there is no repository
- - apply: do not check sha1 if there is no repository
- - Do not read .git/info/attributes if there is no repository
- - Do not read .git/info/exclude if there is no repository
- - git_config(): do not read .git/config if there is no repository
- - init/clone: turn on startup->have_repository properly
- - worktree setup: restore original state when things go wrong
- - Use git_config_early() instead of git_config() during repo setup
- - Add git_config_early()
- - worktree setup: call set_git_dir explicitly
- - rev-parse --git-dir: print relative gitdir correctly
- - enter_repo(): initialize other variables as setup_git_directory_gently() does
- - Move enter_repo() to setup.c
- - index-pack: use RUN_SETUP_GENTLY
- - index-pack: trust the prefix returned by setup_git_directory_gently()
- - worktree setup: calculate prefix even if no worktree is found
- - merge-file: use RUN_SETUP_GENTLY
- - var: use RUN_SETUP_GENTLY
- - ls-remote: use RUN_SETUP_GENTLY
- - help: take note why this command is not applicable for RUN_SETUP_GENTLY
- - diff: use RUN_SETUP_GENTLY
- - bundle: use RUN_SETUP_GENTLY
- - apply: use RUN_SETUP_GENTLY
- - verify-pack: use RUN_SETUP_GENTLY
- - check-ref-format: use RUN_SETUP_GENTLY
- - mailinfo: use RUN_SETUP_GENTLY
- - archive: use RUN_SETUP_GENTLY
- - builtin: USE_PAGER should not be used without RUN_SETUP*
- - grep: use RUN_SETUP_GENTLY
- - shortlog: use RUN_SETUP_GENTLY
- - hash-object: use RUN_SETUP_GENTLY
- - config: use RUN_SETUP_GENTLY
- - builtin: Support RUN_SETUP_GENTLY to set up repository early if found
- - builtin: introduce startup_info struct
+--------------------------------------------------
+[Ejected from 'pu']
 
-Rerolled.  I need to look at this series during the feature freeze so that
-we can decide to (or not to) include it in 'next' early in post 1.7.1 cycle.
+* ne/rev-cache (2010-04-05) 7 commits
+ . graft awareness
+ . object name support
+ . integration into revision walker
+ . administrative api and tools
+ . support for non-commit objects
+ . basic api and porcelain
+ . man page and technical docs
+
+For some reason this was extremely hard to read, partly because it had too
+many distracting style violations and too many long lines.
+
+This duplicates quite a similar traversal logic and hijacks the control
+from sideways in a very core part of the revision walker, making it a
+maintenance nightmare.  After I noticed that it still writes/reads
+structures with bitfields directly on-disk, which I pointed out number of
+times is a no-no during the initial review, I decided to eject this round
+for now.
+
+* nd/setup (2010-04-05) 43 commits
+ . builtins: do not commit pager choice early
+ . builtins: setup repository before print unknown command error
+ . t0001: Add test cases for "git init" with aliases
+ . Guard unallowed access to repository when it's not set up
+ . alias: keep repository found while collecting aliases as long as possible
+ . Allow to undo setup_git_directory_gently() gracefully (and fix alias code)
+ . builtins: check for startup_info->help, print and exit early
+ . builtins: utilize startup_info->help where possible
+ . run_builtin(): save "-h" detection result for later use
+ . config: do not read .git/config if there is no repository
+ . apply: do not check sha1 if there is no repository
+ . Do not read .git/info/attributes if there is no repository
+ . Do not read .git/info/exclude if there is no repository
+ . git_config(): do not read .git/config if there is no repository
+ . init/clone: turn on startup->have_repository properly
+ . worktree setup: restore original state when things go wrong
+ . Use git_config_early() instead of git_config() during repo setup
+ . Add git_config_early()
+ . worktree setup: call set_git_dir explicitly
+ . rev-parse --git-dir: print relative gitdir correctly
+ . enter_repo(): initialize other variables as setup_git_directory_gently() does
+ . Move enter_repo() to setup.c
+ . index-pack: use RUN_SETUP_GENTLY
+ . index-pack: trust the prefix returned by setup_git_directory_gently()
+ . worktree setup: calculate prefix even if no worktree is found
+ . merge-file: use RUN_SETUP_GENTLY
+ . var: use RUN_SETUP_GENTLY
+ . ls-remote: use RUN_SETUP_GENTLY
+ . help: take note why this command is not applicable for RUN_SETUP_GENTLY
+ . diff: use RUN_SETUP_GENTLY
+ . bundle: use RUN_SETUP_GENTLY
+ . apply: use RUN_SETUP_GENTLY
+ . verify-pack: use RUN_SETUP_GENTLY
+ . check-ref-format: use RUN_SETUP_GENTLY
+ . mailinfo: use RUN_SETUP_GENTLY
+ . archive: use RUN_SETUP_GENTLY
+ . builtin: USE_PAGER should not be used without RUN_SETUP*
+ . grep: use RUN_SETUP_GENTLY
+ . shortlog: use RUN_SETUP_GENTLY
+ . hash-object: use RUN_SETUP_GENTLY
+ . config: use RUN_SETUP_GENTLY
+ . builtin: Support RUN_SETUP_GENTLY to set up repository early if found
+ . builtin: introduce startup_info struct
+
+Jonathan Nieder is disecting this series into more easily digestible
+chunks; in the meantime I'll get out of the way not to step on the toes of
+his effort.
