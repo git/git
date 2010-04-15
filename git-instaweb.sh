@@ -212,7 +212,7 @@ server.errorlog = "$fqgitdir/gitweb/error.log"
 # variable above and uncomment this
 #accesslog.filename = "$fqgitdir/gitweb/access.log"
 
-setenv.add-environment = ( "PATH" => "/usr/local/bin:/usr/bin:/bin" )
+setenv.add-environment = ( "PATH" => env.PATH )
 
 cgi.assign = ( ".cgi" => "" )
 
@@ -361,7 +361,7 @@ error_log	$fqgitdir/gitweb/error.log
 access_log	$fqgitdir/gitweb/access.log
 
 #cgi setup
-cgi_env		PATH=/usr/local/bin:/usr/bin:/bin,GIT_DIR=$GIT_DIR,GIT_EXEC_PATH=$GIT_EXEC_PATH
+cgi_env		PATH=$PATH,GIT_DIR=$GIT_DIR,GIT_EXEC_PATH=$GIT_EXEC_PATH
 cgi_interp	$PERL
 cgi_ext		cgi,pl
 
