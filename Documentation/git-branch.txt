@@ -63,7 +63,9 @@ way to clean up all obsolete remote-tracking branches.
 OPTIONS
 -------
 -d::
-	Delete a branch. The branch must be fully merged in HEAD.
+	Delete a branch. The branch must be fully merged in its
+	upstream branch, or in `HEAD` if no upstream was set with
+	`--track` or `--set-upstream`.
 
 -D::
 	Delete a branch irrespective of its merged status.
