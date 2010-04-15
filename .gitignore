@@ -178,7 +178,7 @@
 *.exe
 *.[aos]
 *.py[co]
-*.o.d
+.depend/
 *+
 /config.mak
 /autom4te.cache
