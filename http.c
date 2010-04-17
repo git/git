@@ -1002,8 +1002,9 @@ int finish_http_pack_request(struct http_pack_request *preq)
 {
 	int ret;
 	struct packed_git **lst;
+	struct packed_git *p = preq->target;
 
-	preq->target->pack_size = ftell(preq->packfile);
+	p->pack_size = ftell(preq->packfile);
 
 	if (preq->packfile != NULL) {
 		fclose(preq->packfile);
@@ -1011,18 +1012,17 @@ int finish_http_pack_request(struct http_pack_request *preq)
 		preq->slot->local = NULL;
 	}
 
-	ret = move_temp_to_file(preq->tmpfile, preq->filename);
-	if (ret)
-		return ret;
-
 	lst = preq->lst;
-	while (*lst != preq->target)
+	while (*lst != p)
 		lst = &((*lst)->next);
 	*lst = (*lst)->next;
 
-	if (verify_pack(preq->target))
+	ret = move_temp_to_file(preq->tmpfile, preq->filename);
+	if (ret)
+		return ret;
+	if (verify_pack(p))
 		return -1;
-	install_packed_git(preq->target);
+	install_packed_git(p);
 
 	return 0;
 }
