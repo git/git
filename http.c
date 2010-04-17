@@ -1082,7 +1082,6 @@ struct http_pack_request *new_http_pack_request(
 	return preq;
 
 abort:
-	free(filename);
 	free(preq->url);
 	free(preq);
 	return NULL;
