@@ -152,7 +152,6 @@ struct http_pack_request
 	struct packed_git *target;
 	struct packed_git **lst;
 	FILE *packfile;
-	char filename[PATH_MAX];
 	char tmpfile[PATH_MAX];
 	struct curl_slist *range_header;
 	struct active_request_slot *slot;
@@ -167,7 +166,6 @@ extern void release_http_pack_request(struct http_pack_request *preq);
 struct http_object_request
 {
 	char *url;
-	char filename[PATH_MAX];
 	char tmpfile[PATH_MAX];
 	int localfile;
 	CURLcode curl_result;

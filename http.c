@@ -1014,7 +1014,7 @@ int finish_http_pack_request(struct http_pack_request *preq)
 		lst = &((*lst)->next);
 	*lst = (*lst)->next;
 
-	ret = move_temp_to_file(preq->tmpfile, preq->filename);
+	ret = move_temp_to_file(preq->tmpfile, sha1_pack_name(p->sha1));
 	if (ret)
 		return ret;
 	if (verify_pack(p))
@@ -1043,7 +1043,6 @@ struct http_pack_request *new_http_pack_request(
 	preq->url = strbuf_detach(&buf, NULL);
 
 	filename = sha1_pack_name(target->sha1);
-	snprintf(preq->filename, sizeof(preq->filename), "%s", filename);
 	snprintf(preq->tmpfile, sizeof(preq->tmpfile), "%s.temp", filename);
 	preq->packfile = fopen(preq->tmpfile, "a");
 	if (!preq->packfile) {
@@ -1133,7 +1132,6 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	freq->localfile = -1;
 
 	filename = sha1_file_name(sha1);
-	snprintf(freq->filename, sizeof(freq->filename), "%s", filename);
 	snprintf(freq->tmpfile, sizeof(freq->tmpfile),
 		 "%s.temp", filename);
 
@@ -1162,8 +1160,8 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	}
 
 	if (freq->localfile < 0) {
-		error("Couldn't create temporary file %s for %s: %s",
-		      freq->tmpfile, freq->filename, strerror(errno));
+		error("Couldn't create temporary file %s: %s",
+		      freq->tmpfile, strerror(errno));
 		goto abort;
 	}
 
@@ -1210,8 +1208,8 @@ struct http_object_request *new_http_object_request(const char *base_url,
 			prev_posn = 0;
 			lseek(freq->localfile, 0, SEEK_SET);
 			if (ftruncate(freq->localfile, 0) < 0) {
-				error("Couldn't truncate temporary file %s for %s: %s",
-					  freq->tmpfile, freq->filename, strerror(errno));
+				error("Couldn't truncate temporary file %s: %s",
+					  freq->tmpfile, strerror(errno));
 				goto abort;
 			}
 		}
@@ -1287,7 +1285,7 @@ int finish_http_object_request(struct http_object_request *freq)
 		return -1;
 	}
 	freq->rename =
-		move_temp_to_file(freq->tmpfile, freq->filename);
+		move_temp_to_file(freq->tmpfile, sha1_file_name(freq->sha1));
 
 	return freq->rename;
 }
