@@ -213,7 +213,7 @@ test_expect_success 'oneline with empty message' '
 	git commit -m "dummy" --allow-empty &&
 	git commit -m "dummy" --allow-empty &&
 	git filter-branch --msg-filter "sed -e s/dummy//" HEAD^^.. &&
-	git rev-list --oneline HEAD > /tmp/test.txt &&
+	git rev-list --oneline HEAD >test.txt &&
 	test $(git rev-list --oneline HEAD | wc -l) -eq 5 &&
 	test $(git rev-list --oneline --graph HEAD | wc -l) -eq 5
 '
