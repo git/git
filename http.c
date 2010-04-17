@@ -1005,12 +1005,9 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	struct packed_git *p = preq->target;
 
 	p->pack_size = ftell(preq->packfile);
-
-	if (preq->packfile != NULL) {
-		fclose(preq->packfile);
-		preq->packfile = NULL;
-		preq->slot->local = NULL;
-	}
+	fclose(preq->packfile);
+	preq->packfile = NULL;
+	preq->slot->local = NULL;
 
 	lst = preq->lst;
 	while (*lst != p)
