@@ -45,9 +45,8 @@ INVOCATION
 Remote helper programs are invoked with one or (optionally) two
 arguments. The first argument specifies a remote repository as in git;
 it is either the name of a configured remote or a URL. The second
-argument specifies a URL of the form '<transport>://<address>' or
-'<transport>::<address>', where '<address>' may be an arbitrary
-string.
+argument specifies a URL; it is usually of the form
+'<transport>://<address>', but any arbitrary string is possible.
 
 When git encounters a URL of the form '<transport>://<address>', where
 '<transport>' is a protocol that it cannot handle natively, it
