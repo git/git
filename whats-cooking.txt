@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2010, #05; Wed, 14)
-X-master-at: a6018bbdca918c4f0a35badcfd826077d07502ca
-X-next-at: a27c7d7b75b13718e58a78570f8ddcaf1a512d13
+Subject: What's cooking in git.git (Apr 2010, #06; Sat, 17)
+X-master-at: f3bd6ab7ea7b35ca5f26f106eb00a00f257716d7
+X-next-at: 22727aa2c81752284a340d8f7b0dd7df7aecf06f
 
-What's cooking in git.git (Apr 2010, #05; Wed, 14)
+What's cooking in git.git (Apr 2010, #06; Sat, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,9 +11,37 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-We are at 1.7.1-rc1; please test 'master', report & fix regressions.
-Hopefully we can do another rc during the next week and release the final
-one next weekend.
+I'll soon be tagging 1.7.1-rc2; please test 'master', report & fix
+regressions.
+
+--------------------------------------------------
+[New Topics]
+
+* jk/maint-diffstat-overflow (2010-04-17) 1 commit
+ - diff: use large integers for diffstat calculations
+
+* jn/t7006-fixup (2010-04-14) 1 commit
+ - t7006: guard cleanup with test_expect_success
+
+* js/maint-receive-pack-symref-alias (2010-04-15) 2 commits
+ - receive-pack: ignore duplicated commands which can occur with symrefs
+ - receive-pack: Switch global variable 'commands' to a parameter
+
+* sp/maint-dumb-http-pack-reidx (2010-04-17) 11 commits
+ - http-fetch: Use temporary files for pack-*.idx until verified
+ - http-fetch: Use index-pack rather than verify-pack to check packs
+ - Allow parse_pack_index on temporary files
+ - Extract verify_pack_index for reuse from verify_pack
+ - Introduce close_pack_index to permit replacement
+ - http.c: Remove unnecessary strdup of sha1_to_hex result
+ - http.c: Don't store destination name in request structures
+ - http.c: Drop useless != NULL test in finish_http_pack_request
+ - http.c: Tiny refactoring of finish_http_pack_request
+ - t5550-http-fetch: Use subshell for repository operations
+ - http.c: Remove bad free of static block
+
+* wp/doc-filter-direction (2010-04-17) 1 commit
+ - documentation: clarify direction of core.autocrlf
 
 --------------------------------------------------
 [Graduated to "master"]
@@ -21,38 +49,6 @@ one next weekend.
 * jc/doc-submit-gmail (2010-04-07) 1 commit
   (merged to 'next' on 2010-04-10 at cd4e8cf)
  + SubmittingPatches: update GMail section
-
---------------------------------------------------
-[New Topics]
-
-* hg/id-munging (2010-04-06) 2 commits
- - convert: Keep foreign $Id$ on checkout.
- - convert: Safer handling of $Id$ contraction.
-
-* jn/submodule-basic-test (2010-04-10) 3 commits
- - t7400: clarify submodule update tests
- - t7400: clarify 'submodule add' tests
- - t7400: split setup into multiple tests
-
-* np/index-pack-memsave (2010-04-12) 3 commits
- - index-pack: smarter memory usage when appending objects
- - index-pack: rationalize unpack_entry_data()
- - index-pack: smarter memory usage when resolving deltas
-
-* jg/auto-initialize-notes-with-percent-n-in-format (2010-04-13) 1 commit
- - pretty: Initialize notes if %N is used
-
-* jc/am-3-show-corrupted-patch (2010-04-09) 1 commit
- - am -3: recover the diagnostic messages for corrupt patches
-
-* jc/maint-no-reflog-expire-unreach-for-head (2010-04-09) 3 commits
- - reflog: ignore expire-unreachable for "HEAD" reflog
- - more war on "sleep" in tests
- - Document gc.<pattern>.reflogexpire variables
- (this branch uses jc/maint-reflog-expire-unreachable.)
-
-* cw/maint-exec-defpath (2010-04-13) 1 commit
- - exec_cmd.c: replace hard-coded path list with one from <paths.h>
 
 --------------------------------------------------
 [Stalled]
@@ -94,6 +90,40 @@ Good thing to do, but bad timing.
 
 --------------------------------------------------
 [Cooking]
+
+* hg/id-munging (2010-04-06) 2 commits
+ - convert: Keep foreign $Id$ on checkout.
+ - convert: Safer handling of $Id$ contraction.
+
+* jn/submodule-basic-test (2010-04-10) 3 commits
+ - t7400: clarify submodule update tests
+ - t7400: clarify 'submodule add' tests
+ - t7400: split setup into multiple tests
+
+* np/index-pack-memsave (2010-04-12) 3 commits
+ - index-pack: smarter memory usage when appending objects
+ - index-pack: rationalize unpack_entry_data()
+ - index-pack: smarter memory usage when resolving deltas
+
+* jg/auto-initialize-notes-with-percent-n-in-format (2010-04-13) 1 commit
+ - pretty: Initialize notes if %N is used
+
+* jc/am-3-show-corrupted-patch (2010-04-09) 1 commit
+ - am -3: recover the diagnostic messages for corrupt patches
+
+* jc/maint-no-reflog-expire-unreach-for-head (2010-04-09) 3 commits
+ - reflog --expire-unreachable: special case entries in "HEAD" reflog
+ - more war on "sleep" in tests
+ - Document gc.<pattern>.reflogexpire variables
+ (this branch uses jc/maint-reflog-expire-unreachable.)
+
+Rerolled; instead of ignoring the configuration like the previous round
+did, this one prunes stale entries that are unreachable from any ref from
+the reflog of HEAD.
+
+* cw/maint-exec-defpath (2010-04-15) 2 commits
+ - autoconf: Check if <paths.h> exists and set HAVE_PATHS_H
+ - exec_cmd.c: replace hard-coded path list with one from <paths.h>
 
 * tr/word-diff (2010-04-14) 1 commit
  - diff: add --word-diff option that generalizes --color-words
@@ -281,74 +311,3 @@ source" scenario.
   (merged to 'next' on 2010-04-07 at e50fd3a)
  + Use strbufs instead of open-coded string manipulation
  + Allow passing of configuration parameters in the command line
-
---------------------------------------------------
-[Ejected from 'pu']
-
-* ne/rev-cache (2010-04-05) 7 commits
- . graft awareness
- . object name support
- . integration into revision walker
- . administrative api and tools
- . support for non-commit objects
- . basic api and porcelain
- . man page and technical docs
-
-For some reason this was extremely hard to read, partly because it had too
-many distracting style violations and too many long lines.
-
-This duplicates quite a similar traversal logic and hijacks the control
-from sideways in a very core part of the revision walker, making it a
-maintenance nightmare.  After I noticed that it still writes/reads
-structures with bitfields directly on-disk, which I pointed out number of
-times is a no-no during the initial review, I decided to eject this round
-for now.
-
-* nd/setup (2010-04-05) 43 commits
- . builtins: do not commit pager choice early
- . builtins: setup repository before print unknown command error
- . t0001: Add test cases for "git init" with aliases
- . Guard unallowed access to repository when it's not set up
- . alias: keep repository found while collecting aliases as long as possible
- . Allow to undo setup_git_directory_gently() gracefully (and fix alias code)
- . builtins: check for startup_info->help, print and exit early
- . builtins: utilize startup_info->help where possible
- . run_builtin(): save "-h" detection result for later use
- . config: do not read .git/config if there is no repository
- . apply: do not check sha1 if there is no repository
- . Do not read .git/info/attributes if there is no repository
- . Do not read .git/info/exclude if there is no repository
- . git_config(): do not read .git/config if there is no repository
- . init/clone: turn on startup->have_repository properly
- . worktree setup: restore original state when things go wrong
- . Use git_config_early() instead of git_config() during repo setup
- . Add git_config_early()
- . worktree setup: call set_git_dir explicitly
- . rev-parse --git-dir: print relative gitdir correctly
- . enter_repo(): initialize other variables as setup_git_directory_gently() does
- . Move enter_repo() to setup.c
- . index-pack: use RUN_SETUP_GENTLY
- . index-pack: trust the prefix returned by setup_git_directory_gently()
- . worktree setup: calculate prefix even if no worktree is found
- . merge-file: use RUN_SETUP_GENTLY
- . var: use RUN_SETUP_GENTLY
- . ls-remote: use RUN_SETUP_GENTLY
- . help: take note why this command is not applicable for RUN_SETUP_GENTLY
- . diff: use RUN_SETUP_GENTLY
- . bundle: use RUN_SETUP_GENTLY
- . apply: use RUN_SETUP_GENTLY
- . verify-pack: use RUN_SETUP_GENTLY
- . check-ref-format: use RUN_SETUP_GENTLY
- . mailinfo: use RUN_SETUP_GENTLY
- . archive: use RUN_SETUP_GENTLY
- . builtin: USE_PAGER should not be used without RUN_SETUP*
- . grep: use RUN_SETUP_GENTLY
- . shortlog: use RUN_SETUP_GENTLY
- . hash-object: use RUN_SETUP_GENTLY
- . config: use RUN_SETUP_GENTLY
- . builtin: Support RUN_SETUP_GENTLY to set up repository early if found
- . builtin: introduce startup_info struct
-
-Jonathan Nieder is disecting this series into more easily digestible
-chunks; in the meantime I'll get out of the way not to step on the toes of
-his effort.
