@@ -53,6 +53,34 @@ But the patch submission requirements are a lot more relaxed
 here on the technical/contents front, because the core GIT is
 thousand times smaller ;-).  So here is only the relevant bits.
 
+(0) Decide what to base your work on.
+
+In general, always base your work on the oldest branch that your
+change is relevant to.
+
+ - A bugfix should be based on 'maint' in general. If the bug is not
+   present in 'maint', base it on 'master'. For a bug that's not yet
+   in 'master', find the topic that introduces the regression, and
+   base your work on the tip of the topic.
+
+ - A new feature should be based on 'master' in general. If the new
+   feature depends on a topic that is in 'pu', but not in 'master',
+   base your work on the tip of that topic.
+
+ - Corrections and enhancements to a topic not yet in 'master' should
+   be based on the tip of that topic. If the topic has not been merged
+   to 'next', it's alright to add a note to squash minor corrections
+   into the series.
+
+ - In the exceptional case that a new feature depends on several topics
+   not in 'master', start working on 'next' or 'pu' privately and send
+   out patches for discussion. Before the final merge, you may have to
+   wait until some of the dependent topics graduate to 'master', and
+   rebase your work.
+
+To find the tip of a topic branch, run "git log --first-parent
+master..pu" and look for the merge commit. The second parent of this
+commit is the tip of the topic branch.
 
 (1) Make separate commits for logically separate changes.
 
@@ -170,17 +198,16 @@ patch, format it as "multipart/signed", not a text/plain message
 that starts with '-----BEGIN PGP SIGNED MESSAGE-----'.  That is
 not a text/plain, it's something else.
 
-Note that your maintainer does not necessarily read everything
-on the git mailing list.  If your patch is for discussion first,
-send it "To:" the mailing list, and optionally "cc:" him.  If it
-is trivially correct or after the list reached a consensus, send
-it "To:" the maintainer and optionally "cc:" the list for
-inclusion.
-
-Also note that your maintainer does not actively involve himself in
-maintaining what are in contrib/ hierarchy.  When you send fixes and
-enhancements to them, do not forget to "cc: " the person who primarily
-worked on that hierarchy in contrib/.
+Unless your patch is a very trivial and an obviously correct one,
+first send it with "To:" set to the mailing list, with "cc:" listing
+people who are involved in the area you are touching (the output from
+"git blame $path" and "git shortlog --no-merges $path" would help to
+identify them), to solicit comments and reviews.  After the list
+reached a consensus that it is a good idea to apply the patch, re-send
+it with "To:" set to the maintainer and optionally "cc:" the list for
+inclusion.  Do not forget to add trailers such as "Acked-by:",
+"Reviewed-by:" and "Tested-by:" after your "Signed-off-by:" line as
+necessary.
 
 
 (4) Sign your work
