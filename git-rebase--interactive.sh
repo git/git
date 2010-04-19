@@ -565,6 +565,7 @@ do_next () {
 			git diff-tree --stat $(cat "$DOTEST"/head)..HEAD
 	} &&
 	{
+		test -s "$REWRITTEN_LIST" &&
 		git notes copy --for-rewrite=rebase < "$REWRITTEN_LIST" ||
 		true # we don't care if this copying failed
 	} &&

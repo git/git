@@ -198,11 +198,11 @@ core.quotepath::
 
 core.autocrlf::
 	If true, makes git convert `CRLF` at the end of lines in text files to
-	`LF` when reading from the filesystem, and convert in reverse when
-	writing to the filesystem.  The variable can be set to
+	`LF` when reading from the work tree, and convert in reverse when
+	writing to the work tree.  The variable can be set to
 	'input', in which case the conversion happens only while
-	reading from the filesystem but files are written out with
-	`LF` at the end of lines.  A file is considered
+	reading from the work tree but files are written out to the work
+	tree with `LF` at the end of lines.  A file is considered
 	"text" (i.e. be subjected to the autocrlf mechanism) based on
 	the file's `crlf` attribute, or if `crlf` is unspecified,
 	based on the file's contents.  See linkgit:gitattributes[5].
