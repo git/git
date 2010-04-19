@@ -134,8 +134,6 @@ struct command {
 	char ref_name[FLEX_ARRAY]; /* more */
 };
 
-static struct command *commands;
-
 static const char pre_receive_hook[] = "hooks/pre-receive";
 static const char post_receive_hook[] = "hooks/post-receive";
 
@@ -188,7 +186,7 @@ static int copy_to_sideband(int in, int out, void *arg)
 	return 0;
 }
 
-static int run_receive_hook(const char *hook_name)
+static int run_receive_hook(struct command *commands, const char *hook_name)
 {
 	static char buf[sizeof(commands->old_sha1) * 2 + PATH_MAX + 4];
 	struct command *cmd;
@@ -447,15 +445,15 @@ static const char *update(struct command *cmd)
 
 static char update_post_hook[] = "hooks/post-update";
 
-static void run_update_post_hook(struct command *cmd)
+static void run_update_post_hook(struct command *commands)
 {
-	struct command *cmd_p;
+	struct command *cmd;
 	int argc;
 	const char **argv;
 	struct child_process proc;
 
-	for (argc = 0, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
-		if (cmd_p->error_string)
+	for (argc = 0, cmd = commands; cmd; cmd = cmd->next) {
+		if (cmd->error_string)
 			continue;
 		argc++;
 	}
@@ -464,12 +462,12 @@ static void run_update_post_hook(struct command *cmd)
 	argv = xmalloc(sizeof(*argv) * (2 + argc));
 	argv[0] = update_post_hook;
 
-	for (argc = 1, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
+	for (argc = 1, cmd = commands; cmd; cmd = cmd->next) {
 		char *p;
-		if (cmd_p->error_string)
+		if (cmd->error_string)
 			continue;
-		p = xmalloc(strlen(cmd_p->ref_name) + 1);
-		strcpy(p, cmd_p->ref_name);
+		p = xmalloc(strlen(cmd->ref_name) + 1);
+		strcpy(p, cmd->ref_name);
 		argv[argc] = p;
 		argc++;
 	}
@@ -488,37 +486,32 @@ static void run_update_post_hook(struct command *cmd)
 	}
 }
 
-static void execute_commands(const char *unpacker_error)
+static void execute_commands(struct command *commands, const char *unpacker_error)
 {
-	struct command *cmd = commands;
+	struct command *cmd;
 	unsigned char sha1[20];
 
 	if (unpacker_error) {
-		while (cmd) {
+		for (cmd = commands; cmd; cmd = cmd->next)
 			cmd->error_string = "n/a (unpacker error)";
-			cmd = cmd->next;
-		}
 		return;
 	}
 
-	if (run_receive_hook(pre_receive_hook)) {
-		while (cmd) {
+	if (run_receive_hook(commands, pre_receive_hook)) {
+		for (cmd = commands; cmd; cmd = cmd->next)
 			cmd->error_string = "pre-receive hook declined";
-			cmd = cmd->next;
-		}
 		return;
 	}
 
 	head_name = resolve_ref("HEAD", sha1, 0, NULL);
 
-	while (cmd) {
+	for (cmd = commands; cmd; cmd = cmd->next)
 		cmd->error_string = update(cmd);
-		cmd = cmd->next;
-	}
 }
 
-static void read_head_info(void)
+static struct command *read_head_info(void)
 {
+	struct command *commands = NULL;
 	struct command **p = &commands;
 	for (;;) {
 		static char line[1000];
@@ -557,6 +550,7 @@ static void read_head_info(void)
 		*p = cmd;
 		p = &cmd->next;
 	}
+	return commands;
 }
 
 static const char *parse_pack_header(struct pack_header *hdr)
@@ -643,7 +637,7 @@ static const char *unpack(void)
 	}
 }
 
-static void report(const char *unpack_status)
+static void report(struct command *commands, const char *unpack_status)
 {
 	struct command *cmd;
 	struct strbuf buf = STRBUF_INIT;
@@ -667,12 +661,12 @@ static void report(const char *unpack_status)
 	strbuf_release(&buf);
 }
 
-static int delete_only(struct command *cmd)
+static int delete_only(struct command *commands)
 {
-	while (cmd) {
+	struct command *cmd;
+	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (!is_null_sha1(cmd->new_sha1))
 			return 0;
-		cmd = cmd->next;
 	}
 	return 1;
 }
@@ -722,6 +716,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	int stateless_rpc = 0;
 	int i;
 	char *dir = NULL;
+	struct command *commands;
 
 	argv++;
 	for (i = 1; i < argc; i++) {
@@ -772,18 +767,17 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	if (advertise_refs)
 		return 0;
 
-	read_head_info();
-	if (commands) {
+	if ((commands = read_head_info()) != NULL) {
 		const char *unpack_status = NULL;
 
 		if (!delete_only(commands))
 			unpack_status = unpack();
-		execute_commands(unpack_status);
+		execute_commands(commands, unpack_status);
 		if (pack_lockfile)
 			unlink_or_warn(pack_lockfile);
 		if (report_status)
-			report(unpack_status);
-		run_receive_hook(post_receive_hook);
+			report(commands, unpack_status);
+		run_receive_hook(commands, post_receive_hook);
 		run_update_post_hook(commands);
 		if (auto_gc) {
 			const char *argv_gc_auto[] = {
