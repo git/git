@@ -28,16 +28,12 @@ static int remove_space(char *line)
 	return dst - line;
 }
 
-static void generate_id_list(void)
+int get_one_patchid(unsigned char *next_sha1, git_SHA_CTX *ctx)
 {
-	static unsigned char sha1[20];
 	static char line[1000];
-	git_SHA_CTX ctx;
-	int patchlen = 0;
+	int patchlen = 0, found_next = 0;
 
-	git_SHA1_Init(&ctx);
 	while (fgets(line, sizeof(line), stdin) != NULL) {
-		unsigned char n[20];
 		char *p = line;
 		int len;
 
@@ -46,11 +42,9 @@ static void generate_id_list(void)
 		else if (!memcmp(line, "commit ", 7))
 			p += 7;
 
-		if (!get_sha1_hex(p, n)) {
-			flush_current_id(patchlen, sha1, &ctx);
-			hashcpy(sha1, n);
-			patchlen = 0;
-			continue;
+		if (!get_sha1_hex(p, next_sha1)) {
+			found_next = 1;
+			break;
 		}
 
 		/* Ignore commit comments */
@@ -68,9 +62,28 @@ static void generate_id_list(void)
 		/* Compute the sha without whitespace */
 		len = remove_space(line);
 		patchlen += len;
-		git_SHA1_Update(&ctx, line, len);
+		git_SHA1_Update(ctx, line, len);
 	}
-	flush_current_id(patchlen, sha1, &ctx);
+
+	if (!found_next)
+		hashclr(next_sha1);
+
+	return patchlen;
+}
+
+static void generate_id_list(void)
+{
+	unsigned char sha1[20], n[20];
+	git_SHA_CTX ctx;
+	int patchlen;
+
+	git_SHA1_Init(&ctx);
+	hashclr(sha1);
+	while (!feof(stdin)) {
+		patchlen = get_one_patchid(n, &ctx);
+		flush_current_id(patchlen, sha1, &ctx);
+		hashcpy(sha1, n);
+	}
 }
 
 static const char patch_id_usage[] = "git patch-id < patch";
