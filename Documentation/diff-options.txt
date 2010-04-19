@@ -94,8 +94,8 @@ Also, when `--raw` or `--numstat` has been given, do not munge
 pathnames and use NULs as output field terminators.
 endif::git-log[]
 ifndef::git-log[]
-	When `--raw` or `--numstat` has been given, do not munge
-	pathnames and use NULs as output field terminators.
+	When `--raw`, `--numstat`, `--name-only` or `--name-status` has been
+	given, do not munge pathnames and use NULs as output field terminators.
 endif::git-log[]
 +
 Without this option, each pathname output will have TAB, LF, double quotes,
