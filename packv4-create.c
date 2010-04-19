@@ -1,5 +1,5 @@
 /*
- * packv4-create.c: management of dictionary tables used in pack v4
+ * packv4-create.c: creation of dictionary tables and objects used in pack v4
  *
  * (C) Nicolas Pitre <nico@fluxnic.net>
  *
@@ -80,11 +80,11 @@ static void rehash_entries(struct dict_table *t)
 	}
 }
 
-int dict_add_entry(struct dict_table *t, int val, const char *str)
+int dict_add_entry(struct dict_table *t, int val, const char *str, int str_len)
 {
-	int i, val_len = 2, str_len = strlen(str) + 1;
+	int i, val_len = 2;
 
-	if (t->cur_offset + val_len + str_len > t->size) {
+	if (t->cur_offset + val_len + str_len + 1 > t->size) {
 		t->size = (t->size + val_len + str_len + 1024) * 3 / 2;
 		t->data = xrealloc(t->data, t->size);
 	}
@@ -92,6 +92,7 @@ int dict_add_entry(struct dict_table *t, int val, const char *str)
 	t->data[t->cur_offset] = val >> 8;
 	t->data[t->cur_offset + 1] = val;
 	memcpy(t->data + t->cur_offset + val_len, str, str_len);
+	t->data[t->cur_offset + val_len + str_len] = 0;
 
 	i = (t->nb_entries) ?
 		locate_entry(t, t->data + t->cur_offset, val_len + str_len) : -1;
@@ -107,7 +108,7 @@ int dict_add_entry(struct dict_table *t, int val, const char *str)
 	t->entry[t->nb_entries].offset = t->cur_offset;
 	t->entry[t->nb_entries].size = val_len + str_len;
 	t->entry[t->nb_entries].hits = 1;
-	t->cur_offset += val_len + str_len;
+	t->cur_offset += val_len + str_len + 1;
 	t->nb_entries++;
 
 	if (t->hash_size * 3 <= t->nb_entries * 4)
@@ -135,7 +136,72 @@ static void sort_dict_entries_by_hits(struct dict_table *t)
 	rehash_entries(t);
 }
 
+static struct dict_table *commit_ident_table;
 static struct dict_table *tree_path_table;
+
+/*
+ * Parse the author/committer line from a canonical commit object.
+ * The 'from' argument points right after the "author " or "committer "
+ * string.  The time zone is parsed and stored in *tz_val.  The returned
+ * pointer is right after the end of the email address which is also just
+ * before the time value, or NULL if a parsing error is encountered.
+ */
+static char *get_nameend_and_tz(char *from, int *tz_val)
+{
+	char *end, *tz;
+
+	tz = strchr(from, '\n');
+	/* let's assume the smallest possible string to be "x <x> 0 +0000\n" */
+	if (!tz || tz - from < 13)
+		return NULL;
+	tz -= 4;
+	end = tz - 4;
+	while (end - from > 5 && *end != ' ')
+		end--;
+	if (end[-1] != '>' || end[0] != ' ' || tz[-2] != ' ')
+		return NULL;
+	*tz_val = (tz[0] - '0') * 1000 +
+		  (tz[1] - '0') * 100 +
+		  (tz[2] - '0') * 10 +
+		  (tz[3] - '0');
+	switch (tz[-1]) {
+	default:	return NULL;
+	case '+':	break;
+	case '-':	*tz_val = -*tz_val;
+	}
+	return end;
+}
+
+static int add_commit_dict_entries(void *buf, unsigned long size)
+{
+	char *name, *end = NULL;
+	int tz_val;
+
+	if (!commit_ident_table)
+		commit_ident_table = create_dict_table();
+
+	/* parse and add author info */
+	name = strstr(buf, "\nauthor ");
+	if (name) {
+		name += 8;
+		end = get_nameend_and_tz(name, &tz_val);
+	}
+	if (!name || !end)
+		return -1;
+	dict_add_entry(commit_ident_table, tz_val, name, end - name);
+
+	/* parse and add committer info */
+	name = strstr(end, "\ncommitter ");
+	if (name) {
+	       name += 11;
+	       end = get_nameend_and_tz(name, &tz_val);
+	}
+	if (!name || !end)
+		return -1;
+	dict_add_entry(commit_ident_table, tz_val, name, end - name);
+
+	return 0;
+}
 
 static int add_tree_dict_entries(void *buf, unsigned long size)
 {
@@ -146,13 +212,16 @@ static int add_tree_dict_entries(void *buf, unsigned long size)
 		tree_path_table = create_dict_table();
 
 	init_tree_desc(&desc, buf, size);
-	while (tree_entry(&desc, &name_entry))
+	while (tree_entry(&desc, &name_entry)) {
+		int pathlen = tree_entry_len(&name_entry);
 		dict_add_entry(tree_path_table, name_entry.mode,
-			       name_entry.path);
+				name_entry.path, pathlen);
+	}
+
 	return 0;
 }
 
-void dict_dump(struct dict_table *t)
+void dump_dict_table(struct dict_table *t)
 {
 	int i;
 
@@ -167,6 +236,12 @@ void dict_dump(struct dict_table *t)
 			t->entry[i].hits, val, uval,
 			t->data + t->entry[i].offset + 2);
 	}
+}
+
+static void dict_dump(void)
+{
+	dump_dict_table(commit_ident_table);
+	dump_dict_table(tree_path_table);
 }
 
 struct idx_entry
@@ -205,6 +280,7 @@ static int create_pack_dictionaries(struct packed_git *p)
 		enum object_type type;
 		unsigned long size;
 		struct object_info oi = {};
+		int (*add_dict_entries)(void *, unsigned long);
 
 		oi.typep = &type;
 		oi.sizep = &size;
@@ -213,7 +289,11 @@ static int create_pack_dictionaries(struct packed_git *p)
 			    sha1_to_hex(objects[i].sha1), p->pack_name);
 
 		switch (type) {
+		case OBJ_COMMIT:
+			add_dict_entries = add_commit_dict_entries;
+			break;
 		case OBJ_TREE:
+			add_dict_entries = add_tree_dict_entries;
 			break;
 		default:
 			continue;
@@ -225,7 +305,7 @@ static int create_pack_dictionaries(struct packed_git *p)
 		if (check_sha1_signature(objects[i].sha1, data, size, typename(type)))
 			die("packed %s from %s is corrupt",
 			    sha1_to_hex(objects[i].sha1), p->pack_name);
-		if (add_tree_dict_entries(data, size) < 0)
+		if (add_dict_entries(data, size) < 0)
 			die("can't process %s object %s",
 				typename(type), sha1_to_hex(objects[i].sha1));
 		free(data);
@@ -285,6 +365,6 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	process_one_pack(argv[1]);
-	dict_dump(tree_path_table);
+	dict_dump();
 	return 0;
 }
