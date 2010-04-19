@@ -28,10 +28,40 @@ static int remove_space(char *line)
 	return dst - line;
 }
 
+static int scan_hunk_header(const char *p, int *p_before, int *p_after)
+{
+	static const char digits[] = "0123456789";
+	const char *q, *r;
+	int n;
+
+	q = p + 4;
+	n = strspn(q, digits);
+	if (q[n] == ',') {
+		q += n + 1;
+		n = strspn(q, digits);
+	}
+	if (n == 0 || q[n] != ' ' || q[n+1] != '+')
+		return 0;
+
+	r = q + n + 2;
+	n = strspn(r, digits);
+	if (r[n] == ',') {
+		r += n + 1;
+		n = strspn(r, digits);
+	}
+	if (n == 0)
+		return 0;
+
+	*p_before = atoi(q);
+	*p_after = atoi(r);
+	return 1;
+}
+
 int get_one_patchid(unsigned char *next_sha1, git_SHA_CTX *ctx)
 {
 	static char line[1000];
 	int patchlen = 0, found_next = 0;
+	int before = -1, after = -1;
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		char *p = line;
@@ -41,6 +71,8 @@ int get_one_patchid(unsigned char *next_sha1, git_SHA_CTX *ctx)
 			p += 10;
 		else if (!memcmp(line, "commit ", 7))
 			p += 7;
+		else if (!memcmp(line, "From ", 5))
+			p += 5;
 
 		if (!get_sha1_hex(p, next_sha1)) {
 			found_next = 1;
@@ -51,13 +83,37 @@ int get_one_patchid(unsigned char *next_sha1, git_SHA_CTX *ctx)
 		if (!patchlen && memcmp(line, "diff ", 5))
 			continue;
 
-		/* Ignore git-diff index header */
-		if (!memcmp(line, "index ", 6))
-			continue;
+		/* Parsing diff header?  */
+		if (before == -1) {
+			if (!memcmp(line, "index ", 6))
+				continue;
+			else if (!memcmp(line, "--- ", 4))
+				before = after = 1;
+			else if (!isalpha(line[0]))
+				break;
+		}
 
-		/* Ignore line numbers when computing the SHA1 of the patch */
-		if (!memcmp(line, "@@ -", 4))
-			continue;
+		/* Looking for a valid hunk header?  */
+		if (before == 0 && after == 0) {
+			if (!memcmp(line, "@@ -", 4)) {
+				/* Parse next hunk, but ignore line numbers.  */
+				scan_hunk_header(line, &before, &after);
+				continue;
+			}
+
+			/* Split at the end of the patch.  */
+			if (memcmp(line, "diff ", 5))
+				break;
+
+			/* Else we're parsing another header.  */
+			before = after = -1;
+		}
+
+		/* If we get here, we're inside a hunk.  */
+		if (line[0] == '-' || line[0] == ' ')
+			before--;
+		if (line[0] == '+' || line[0] == ' ')
+			after--;
 
 		/* Compute the sha without whitespace */
 		len = remove_space(line);
