@@ -1077,7 +1077,6 @@ int finish_http_pack_request(struct http_pack_request *preq)
 struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url)
 {
-	char *filename;
 	long prev_posn = 0;
 	char range[RANGE_HEADER_SIZE];
 	struct strbuf buf = STRBUF_INIT;
@@ -1092,8 +1091,8 @@ struct http_pack_request *new_http_pack_request(
 		sha1_to_hex(target->sha1));
 	preq->url = strbuf_detach(&buf, NULL);
 
-	filename = sha1_pack_name(target->sha1);
-	snprintf(preq->tmpfile, sizeof(preq->tmpfile), "%s.temp", filename);
+	snprintf(preq->tmpfile, sizeof(preq->tmpfile), "%s.temp",
+		sha1_pack_name(target->sha1));
 	preq->packfile = fopen(preq->tmpfile, "a");
 	if (!preq->packfile) {
 		error("Unable to open local file %s for pack",
