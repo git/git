@@ -6,6 +6,8 @@ Updates since v1.7.0
 
  * Eric Raymond is the maintainer of updated CIAbot scripts, in contrib/.
 
+ * gitk updates.
+
  * Some commands (e.g. svn and http interfaces) that interactively ask
    for a password can be told to use an external program given via
    GIT_ASKPASS.
@@ -66,6 +68,8 @@ Updates since v1.7.0
  * "gitweb" installation procedure can use "minified" js/css files
    better.
 
+ * Various documentation updates.
+
 Fixes since v1.7.0
 ------------------
 
@@ -74,6 +78,9 @@ release, unless otherwise noted.
 
  * "git add frotz/nitfol" did not complain when the entire frotz/ directory
    was ignored.
+
+ * "git diff --stat" used "int" to count the size of differences,
+   which could result in overflowing.
 
  * "git rev-list --pretty=oneline" didn't terminate a record with LF for
    commits without any message.
@@ -84,5 +91,5 @@ release, unless otherwise noted.
 ---
 exec >/var/tmp/1
 echo O=$(git describe)
-O=v1.7.1-rc0-36-gb92cbb6
+O=v1.7.1-rc1-49-g407a963
 git shortlog --no-merges ^maint $O..
