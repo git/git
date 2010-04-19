@@ -14,11 +14,12 @@
 
 struct data_entry {
 	unsigned offset;
+	unsigned size;
 	unsigned hits;
 };
 
 struct dict_table {
-	char *data;
+	unsigned char *data;
 	unsigned cur_offset;
 	unsigned size;
 	struct data_entry *entry;
@@ -41,18 +42,19 @@ void destroy_dict_table(struct dict_table *t)
 	free(t);
 }
 
-static int locate_entry(struct dict_table *t, const char *str)
+static int locate_entry(struct dict_table *t, const void *data, int size)
 {
-	int i = 0;
-	const unsigned char *s = (const unsigned char *) str;
+	int i = 0, len = size;
+	const unsigned char *p = data;
 
-	while (*s)
-		i = i * 111 + *s++;
+	while (len--)
+		i = i * 111 + *p++;
 	i = (unsigned)i % t->hash_size;
 
 	while (t->hash[i]) {
 		unsigned n = t->hash[i] - 1;
-		if (!strcmp(str, t->data + t->entry[n].offset))
+		if (t->entry[n].size == size &&
+		    memcmp(t->data + t->entry[n].offset, data, size) == 0)
 			return n;
 		if (++i >= t->hash_size)
 			i = 0;
@@ -71,23 +73,28 @@ static void rehash_entries(struct dict_table *t)
 	memset(t->hash, 0, t->hash_size * sizeof(*t->hash));
 
 	for (n = 0; n < t->nb_entries; n++) {
-		int i = locate_entry(t, t->data + t->entry[n].offset);
+		int i = locate_entry(t, t->data + t->entry[n].offset,
+					t->entry[n].size);
 		if (i < 0)
 			t->hash[-1 - i] = n + 1;
 	}
 }
 
-int dict_add_entry(struct dict_table *t, const char *str)
+int dict_add_entry(struct dict_table *t, int val, const char *str)
 {
-	int i, len = strlen(str) + 1;
+	int i, val_len = 2, str_len = strlen(str) + 1;
 
-	if (t->cur_offset + len >= t->size) {
-		t->size = (t->size + len + 1024) * 3 / 2;
+	if (t->cur_offset + val_len + str_len > t->size) {
+		t->size = (t->size + val_len + str_len + 1024) * 3 / 2;
 		t->data = xrealloc(t->data, t->size);
 	}
-	memcpy(t->data + t->cur_offset, str, len);
 
-	i = (t->nb_entries) ? locate_entry(t, t->data + t->cur_offset) : -1;
+	t->data[t->cur_offset] = val >> 8;
+	t->data[t->cur_offset + 1] = val;
+	memcpy(t->data + t->cur_offset + val_len, str, str_len);
+
+	i = (t->nb_entries) ?
+		locate_entry(t, t->data + t->cur_offset, val_len + str_len) : -1;
 	if (i >= 0) {
 		t->entry[i].hits++;
 		return i;
@@ -98,8 +105,9 @@ int dict_add_entry(struct dict_table *t, const char *str)
 		t->entry = xrealloc(t->entry, t->max_entries * sizeof(*t->entry));
 	}
 	t->entry[t->nb_entries].offset = t->cur_offset;
+	t->entry[t->nb_entries].size = val_len + str_len;
 	t->entry[t->nb_entries].hits = 1;
-	t->cur_offset += len + 1;
+	t->cur_offset += val_len + str_len;
 	t->nb_entries++;
 
 	if (t->hash_size * 3 <= t->nb_entries * 4)
@@ -139,7 +147,8 @@ static int add_tree_dict_entries(void *buf, unsigned long size)
 
 	init_tree_desc(&desc, buf, size);
 	while (tree_entry(&desc, &name_entry))
-		dict_add_entry(tree_path_table, name_entry.path);
+		dict_add_entry(tree_path_table, name_entry.mode,
+			       name_entry.path);
 	return 0;
 }
 
@@ -148,10 +157,16 @@ void dict_dump(struct dict_table *t)
 	int i;
 
 	sort_dict_entries_by_hits(t);
-	for (i = 0; i < t->nb_entries; i++)
-		printf("%d\t%s\n",
-			t->entry[i].hits,
-			t->data + t->entry[i].offset);
+	for (i = 0; i < t->nb_entries; i++) {
+		int16_t val;
+		uint16_t uval;
+		val = t->data[t->entry[i].offset] << 8;
+		val |= t->data[t->entry[i].offset + 1];
+		uval = val;
+		printf("%d\t%d\t%o\t%s\n",
+			t->entry[i].hits, val, uval,
+			t->data + t->entry[i].offset + 2);
+	}
 }
 
 struct idx_entry
@@ -170,6 +185,7 @@ static int sort_by_offset(const void *e1, const void *e2)
 		return 1;
 	return 0;
 }
+
 static int create_pack_dictionaries(struct packed_git *p)
 {
 	uint32_t nr_objects, i;
