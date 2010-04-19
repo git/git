@@ -104,9 +104,15 @@ static int fetch_remote(const char *name)
 	return 0;
 }
 
+enum {
+	TAGS_UNSET = 0,
+	TAGS_DEFAULT = 1,
+	TAGS_SET = 2
+};
+
 static int add(int argc, const char **argv)
 {
-	int fetch = 0, mirror = 0;
+	int fetch = 0, mirror = 0, fetch_tags = TAGS_DEFAULT;
 	struct string_list track = { NULL, 0, 0 };
 	const char *master = NULL;
 	struct remote *remote;
@@ -116,6 +122,11 @@ static int add(int argc, const char **argv)
 
 	struct option options[] = {
 		OPT_BOOLEAN('f', "fetch", &fetch, "fetch the remote branches"),
+		OPT_SET_INT(0, "tags", &fetch_tags,
+			    "import all tags and associated objects when fetching",
+			    TAGS_SET),
+		OPT_SET_INT(0, NULL, &fetch_tags,
+			    "or do not fetch any tag at all (--no-tags)", TAGS_UNSET),
 		OPT_CALLBACK('t', "track", &track, "branch",
 			"branch(es) to track", opt_parse_track),
 		OPT_STRING('m', "master", &master, "branch", "master branch"),
@@ -169,6 +180,14 @@ static int add(int argc, const char **argv)
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.mirror", name);
 		if (git_config_set(buf.buf, "true"))
+			return 1;
+	}
+
+	if (fetch_tags != TAGS_DEFAULT) {
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "remote.%s.tagopt", name);
+		if (git_config_set(buf.buf,
+			fetch_tags == TAGS_SET ? "--tags" : "--no-tags"))
 			return 1;
 	}
 

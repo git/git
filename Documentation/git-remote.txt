@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git remote' [-v | --verbose]
-'git remote add' [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>
+'git remote add' [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--mirror] <name> <url>
 'git remote rename' <old> <new>
 'git remote rm' <name>
 'git remote set-head' <name> (-a | -d | <branch>)
@@ -50,6 +50,12 @@ update remote-tracking branches <name>/<branch>.
 +
 With `-f` option, `git fetch <name>` is run immediately after
 the remote information is set up.
++
+With `--tags` option, `git fetch <name>` imports every tag from the
+remote repository.
++
+With `--no-tags` option, `git fetch <name>` does not import tags from
+the remote repository.
 +
 With `-t <branch>` option, instead of the default glob
 refspec for the remote to track all branches under
