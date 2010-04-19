@@ -953,7 +953,7 @@ struct diffstat_t {
 		unsigned is_unmerged:1;
 		unsigned is_binary:1;
 		unsigned is_renamed:1;
-		unsigned int added, deleted;
+		uintmax_t added, deleted;
 	} **files;
 };
 
@@ -1045,7 +1045,7 @@ static void fill_print_name(struct diffstat_file *file)
 static void show_stats(struct diffstat_t *data, struct diff_options *options)
 {
 	int i, len, add, del, adds = 0, dels = 0;
-	int max_change = 0, max_len = 0;
+	uintmax_t max_change = 0, max_len = 0;
 	int total_files = data->nr;
 	int width, name_width;
 	const char *reset, *set, *add_c, *del_c;
@@ -1074,7 +1074,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
-		int change = file->added + file->deleted;
+		uintmax_t change = file->added + file->deleted;
 		fill_print_name(file);
 		len = strlen(file->print_name);
 		if (max_len < len)
@@ -1102,8 +1102,8 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	for (i = 0; i < data->nr; i++) {
 		const char *prefix = "";
 		char *name = data->files[i]->print_name;
-		int added = data->files[i]->added;
-		int deleted = data->files[i]->deleted;
+		uintmax_t added = data->files[i]->added;
+		uintmax_t deleted = data->files[i]->deleted;
 		int name_len;
 
 		/*
@@ -1124,9 +1124,11 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		if (data->files[i]->is_binary) {
 			show_name(options->file, prefix, name, len);
 			fprintf(options->file, "  Bin ");
-			fprintf(options->file, "%s%d%s", del_c, deleted, reset);
+			fprintf(options->file, "%s%"PRIuMAX"%s",
+				del_c, deleted, reset);
 			fprintf(options->file, " -> ");
-			fprintf(options->file, "%s%d%s", add_c, added, reset);
+			fprintf(options->file, "%s%"PRIuMAX"%s",
+				add_c, added, reset);
 			fprintf(options->file, " bytes");
 			fprintf(options->file, "\n");
 			continue;
@@ -1155,7 +1157,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			del = scale_linear(del, width, max_change);
 		}
 		show_name(options->file, prefix, name, len);
-		fprintf(options->file, "%5d%s", added + deleted,
+		fprintf(options->file, "%5"PRIuMAX"%s", added + deleted,
 				added + deleted ? " " : "");
 		show_graph(options->file, '+', add, add_c, reset);
 		show_graph(options->file, '-', del, del_c, reset);
@@ -1205,7 +1207,8 @@ static void show_numstat(struct diffstat_t *data, struct diff_options *options)
 			fprintf(options->file, "-\t-\t");
 		else
 			fprintf(options->file,
-				"%d\t%d\t", file->added, file->deleted);
+				"%"PRIuMAX"\t%"PRIuMAX"\t",
+				file->added, file->deleted);
 		if (options->line_termination) {
 			fill_print_name(file);
 			if (!file->is_renamed)
