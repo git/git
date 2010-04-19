@@ -136,11 +136,11 @@ test_expect_success 'git-clean, dirty case' '
 	test_cmp expected result
 '
 
-test_expect_failure 'git-apply adds file' false
-test_expect_failure 'git-apply updates file' false
-test_expect_failure 'git-apply removes file' false
-test_expect_failure 'git-mv to skip-worktree' false
-test_expect_failure 'git-mv from skip-worktree' false
-test_expect_failure 'git-checkout' false
+#TODO test_expect_failure 'git-apply adds file' false
+#TODO test_expect_failure 'git-apply updates file' false
+#TODO test_expect_failure 'git-apply removes file' false
+#TODO test_expect_failure 'git-mv to skip-worktree' false
+#TODO test_expect_failure 'git-mv from skip-worktree' false
+#TODO test_expect_failure 'git-checkout' false
 
 test_done
