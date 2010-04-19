@@ -775,10 +775,13 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 		}
 		return 0;	/* unknown %g placeholder */
 	case 'N':
-		format_display_notes(commit->object.sha1, sb,
-			    git_log_output_encoding ? git_log_output_encoding
-						    : git_commit_encoding, 0);
-		return 1;
+		if (c->pretty_ctx->show_notes) {
+			format_display_notes(commit->object.sha1, sb,
+				    git_log_output_encoding ? git_log_output_encoding
+							    : git_commit_encoding, 0);
+			return 1;
+		}
+		return 0;
 	}
 
 	/* For the rest we have to parse the commit header. */
@@ -853,6 +856,35 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 		strbuf_insert(sb, orig_len, "\n", 1);
 	}
 	return consumed + 1;
+}
+
+static size_t userformat_want_item(struct strbuf *sb, const char *placeholder,
+				   void *context)
+{
+	struct userformat_want *w = context;
+
+	if (*placeholder == '+' || *placeholder == '-')
+		placeholder++;
+
+	switch (*placeholder) {
+	case 'N':
+		w->notes = 1;
+		break;
+	}
+	return 0;
+}
+
+void userformat_find_requirements(const char *fmt, struct userformat_want *w)
+{
+	struct strbuf dummy = STRBUF_INIT;
+
+	if (!fmt) {
+		if (!user_format)
+			return;
+		fmt = user_format;
+	}
+	strbuf_expand(&dummy, user_format, userformat_want_item, w);
+	strbuf_release(&dummy);
 }
 
 void format_commit_message(const struct commit *commit,
