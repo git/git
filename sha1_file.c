@@ -845,9 +845,8 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 	return p;
 }
 
-struct packed_git *parse_pack_index(unsigned char *sha1)
+struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path)
 {
-	const char *idx_path = sha1_pack_index_name(sha1);
 	const char *path = sha1_pack_name(sha1);
 	struct packed_git *p = alloc_packed_git(strlen(path) + 1);
 

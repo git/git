@@ -932,7 +932,7 @@ static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	if (fetch_pack_index(sha1, base_url))
 		return -1;
 
-	new_pack = parse_pack_index(sha1);
+	new_pack = parse_pack_index(sha1, sha1_pack_index_name(sha1));
 	if (!new_pack)
 		return -1; /* parse_pack_index() already issued error message */
 	new_pack->next = *packs_head;
