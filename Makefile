@@ -993,7 +993,6 @@ ifeq ($(uname_S),Windows)
 	NO_CURL = YesPlease
 	NO_PYTHON = YesPlease
 	BLK_SHA1 = YesPlease
-	ASYNC_AS_THREAD = YesPlease
 
 	CC = compat/vcbuild/scripts/clink.pl
 	AR = compat/vcbuild/scripts/lib.pl
@@ -1045,7 +1044,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_REGEX = YesPlease
 	NO_PYTHON = YesPlease
 	BLK_SHA1 = YesPlease
-	ASYNC_AS_THREAD = YesPlease
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/fnmatch -Icompat/win32
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/winansi.o \
@@ -1357,9 +1355,6 @@ ifdef NO_PTHREADS
 else
 	EXTLIBS += $(PTHREAD_LIBS)
 	LIB_OBJS += thread-utils.o
-ifdef ASYNC_AS_THREAD
-	BASIC_CFLAGS += -DASYNC_AS_THREAD
-endif
 endif
 
 ifdef DIR_HAS_BSD_GROUP_SEMANTICS
