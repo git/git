@@ -64,13 +64,13 @@ check_push_result () {
 
 test_expect_success setup '
 
-	: >path1 &&
+	>path1 &&
 	git add path1 &&
 	test_tick &&
 	git commit -a -m repo &&
 	the_first_commit=$(git show-ref -s --verify refs/heads/master) &&
 
-	: >path2 &&
+	>path2 &&
 	git add path2 &&
 	test_tick &&
 	git commit -a -m second &&
@@ -483,8 +483,10 @@ git config --remove-section remote.there
 test_expect_success 'push with dry-run' '
 
 	mk_test heads/master &&
-	(cd testrepo &&
-	 old_commit=$(git show-ref -s --verify refs/heads/master)) &&
+	(
+		cd testrepo &&
+		old_commit=$(git show-ref -s --verify refs/heads/master)
+	) &&
 	git push --dry-run testrepo &&
 	check_push_result $old_commit heads/master
 '
@@ -493,10 +495,13 @@ test_expect_success 'push updates local refs' '
 
 	mk_test heads/master &&
 	mk_child child &&
-	(cd child &&
+	(
+		cd child &&
 		git pull .. master &&
 		git push &&
-	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
+		test $(git rev-parse master) = \
+			$(git rev-parse remotes/origin/master)
+	)
 
 '
 
@@ -506,10 +511,13 @@ test_expect_success 'push updates up-to-date local refs' '
 	mk_child child1 &&
 	mk_child child2 &&
 	(cd child1 && git pull .. master && git push) &&
-	(cd child2 &&
+	(
+		cd child2 &&
 		git pull ../child1 master &&
 		git push &&
-	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
+		test $(git rev-parse master) = \
+			$(git rev-parse remotes/origin/master)
+	)
 
 '
 
@@ -517,9 +525,11 @@ test_expect_success 'push preserves up-to-date packed refs' '
 
 	mk_test heads/master &&
 	mk_child child &&
-	(cd child &&
+	(
+		cd child &&
 		git push &&
-	! test -f .git/refs/remotes/origin/master)
+		! test -f .git/refs/remotes/origin/master
+	)
 
 '
 
@@ -530,11 +540,13 @@ test_expect_success 'push does not update local refs on failure' '
 	mkdir testrepo/.git/hooks &&
 	echo exit 1 >testrepo/.git/hooks/pre-receive &&
 	chmod +x testrepo/.git/hooks/pre-receive &&
-	(cd child &&
+	(
+		cd child &&
 		git pull .. master
 		test_must_fail git push &&
 		test $(git rev-parse master) != \
-			$(git rev-parse remotes/origin/master))
+			$(git rev-parse remotes/origin/master)
+	)
 
 '
 
@@ -575,34 +587,41 @@ test_expect_success 'push --delete refuses src:dest refspecs' '
 
 test_expect_success 'warn on push to HEAD of non-bare repository' '
 	mk_test heads/master
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		git checkout master &&
-		git config receive.denyCurrentBranch warn) &&
+		git config receive.denyCurrentBranch warn
+	) &&
 	git push testrepo master 2>stderr &&
 	grep "warning: updating the current branch" stderr
 '
 
 test_expect_success 'deny push to HEAD of non-bare repository' '
 	mk_test heads/master
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		git checkout master &&
-		git config receive.denyCurrentBranch true) &&
+		git config receive.denyCurrentBranch true
+	) &&
 	test_must_fail git push testrepo master
 '
 
 test_expect_success 'allow push to HEAD of bare repository (bare)' '
 	mk_test heads/master
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		git checkout master &&
 		git config receive.denyCurrentBranch true &&
-		git config core.bare true) &&
+		git config core.bare true
+	) &&
 	git push testrepo master 2>stderr &&
 	! grep "warning: updating the current branch" stderr
 '
 
 test_expect_success 'allow push to HEAD of non-bare repository (config)' '
 	mk_test heads/master
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		git checkout master &&
 		git config receive.denyCurrentBranch false
 	) &&
@@ -615,7 +634,8 @@ test_expect_success 'fetch with branches' '
 	git branch second $the_first_commit &&
 	git checkout second &&
 	echo ".." > testrepo/.git/branches/branch1 &&
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		git fetch branch1 &&
 		r=$(git show-ref -s --verify refs/heads/branch1) &&
 		test "z$r" = "z$the_commit" &&
@@ -627,7 +647,8 @@ test_expect_success 'fetch with branches' '
 test_expect_success 'fetch with branches containing #' '
 	mk_empty &&
 	echo "..#second" > testrepo/.git/branches/branch2 &&
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		git fetch branch2 &&
 		r=$(git show-ref -s --verify refs/heads/branch2) &&
 		test "z$r" = "z$the_first_commit" &&
@@ -641,7 +662,8 @@ test_expect_success 'push with branches' '
 	git checkout second &&
 	echo "testrepo" > .git/branches/branch1 &&
 	git push branch1 &&
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		r=$(git show-ref -s --verify refs/heads/master) &&
 		test "z$r" = "z$the_first_commit" &&
 		test 1 = $(git for-each-ref refs/heads | wc -l)
@@ -652,12 +674,62 @@ test_expect_success 'push with branches containing #' '
 	mk_empty &&
 	echo "testrepo#branch3" > .git/branches/branch2 &&
 	git push branch2 &&
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		r=$(git show-ref -s --verify refs/heads/branch3) &&
 		test "z$r" = "z$the_first_commit" &&
 		test 1 = $(git for-each-ref refs/heads | wc -l)
 	) &&
 	git checkout master
+'
+
+test_expect_success 'push into aliased refs (consistent)' '
+	mk_test heads/master &&
+	mk_child child1 &&
+	mk_child child2 &&
+	(
+		cd child1 &&
+		git branch foo &&
+		git symbolic-ref refs/heads/bar refs/heads/foo
+		git config receive.denyCurrentBranch false
+	) &&
+	(
+		cd child2 &&
+		>path2 &&
+		git add path2 &&
+		test_tick &&
+		git commit -a -m child2 &&
+		git branch foo &&
+		git branch bar &&
+		git push ../child1 foo bar
+	)
+'
+
+test_expect_success 'push into aliased refs (inconsistent)' '
+	mk_test heads/master &&
+	mk_child child1 &&
+	mk_child child2 &&
+	(
+		cd child1 &&
+		git branch foo &&
+		git symbolic-ref refs/heads/bar refs/heads/foo
+		git config receive.denyCurrentBranch false
+	) &&
+	(
+		cd child2 &&
+		>path2 &&
+		git add path2 &&
+		test_tick &&
+		git commit -a -m child2 &&
+		git branch foo &&
+		>path3 &&
+		git add path3 &&
+		test_tick &&
+		git commit -a -m child2 &&
+		git branch bar &&
+		test_must_fail git push ../child1 foo bar 2>stderr &&
+		grep "refusing inconsistent update" stderr
+	)
 '
 
 test_expect_success 'push --porcelain' '
