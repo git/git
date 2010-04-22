@@ -55,6 +55,93 @@ test_expect_success 'word diff with runs of whitespace' '
 
 '
 
+test_expect_success '--word-diff=color' '
+
+	word_diff --word-diff=color
+
+'
+
+test_expect_success '--color --word-diff=color' '
+
+	word_diff --color --word-diff=color
+
+'
+
+sed 's/#.*$//' > expect <<EOF
+diff --git a/pre b/post
+index 330b04f..5ed8eff 100644
+--- a/pre
++++ b/post
+@@ -1,3 +1,7 @@
+-h(4)
++h(4),hh[44]
+~
+ # significant space
+~
+ a = b + c
+~
+~
++aa = a
+~
+~
++aeff = aeff * ( aaa )
+~
+EOF
+
+test_expect_success '--word-diff=porcelain' '
+
+	word_diff --word-diff=porcelain
+
+'
+
+cat > expect <<EOF
+diff --git a/pre b/post
+index 330b04f..5ed8eff 100644
+--- a/pre
++++ b/post
+@@ -1,3 +1,7 @@
+[-h(4)-]{+h(4),hh[44]+}
+
+a = b + c
+
+{+aa = a+}
+
+{+aeff = aeff * ( aaa )+}
+EOF
+
+test_expect_success '--word-diff=plain' '
+
+	word_diff --word-diff=plain
+
+'
+
+test_expect_success '--word-diff=plain --no-color' '
+
+	word_diff --word-diff=plain --no-color
+
+'
+
+cat > expect <<EOF
+<WHITE>diff --git a/pre b/post<RESET>
+<WHITE>index 330b04f..5ed8eff 100644<RESET>
+<WHITE>--- a/pre<RESET>
+<WHITE>+++ b/post<RESET>
+<CYAN>@@ -1,3 +1,7 @@<RESET>
+<RED>[-h(4)-]<RESET><GREEN>{+h(4),hh[44]+}<RESET>
+
+a = b + c<RESET>
+
+<GREEN>{+aa = a+}<RESET>
+
+<GREEN>{+aeff = aeff * ( aaa )+}<RESET>
+EOF
+
+test_expect_success '--word-diff=plain --color' '
+
+	word_diff --word-diff=plain --color
+
+'
+
 cat > expect <<\EOF
 <WHITE>diff --git a/pre b/post<RESET>
 <WHITE>index 330b04f..5ed8eff 100644<RESET>
@@ -143,6 +230,25 @@ test_expect_success 'command-line overrides config' '
 	word_diff --color-words="[a-z]+"
 '
 
+cat > expect <<\EOF
+<WHITE>diff --git a/pre b/post<RESET>
+<WHITE>index 330b04f..5ed8eff 100644<RESET>
+<WHITE>--- a/pre<RESET>
+<WHITE>+++ b/post<RESET>
+<CYAN>@@ -1,3 +1,7 @@<RESET>
+h(4),<GREEN>{+hh+}<RESET>[44]
+
+a = b + c<RESET>
+
+<GREEN>{+aa = a+}<RESET>
+
+<GREEN>{+aeff = aeff * ( aaa+}<RESET> )
+EOF
+
+test_expect_success 'command-line overrides config: --word-diff-regex' '
+	word_diff --color --word-diff-regex="[a-z]+"
+'
+
 cp expect.non-whitespace-is-word expect
 
 test_expect_success '.gitattributes override config' '
@@ -206,6 +312,22 @@ EOF
 test_expect_success 'test when words are only removed at the end' '
 
 	word_diff --color-words=.
+
+'
+
+cat > expect <<\EOF
+diff --git a/pre b/post
+index 289cb9d..2d06f37 100644
+--- a/pre
++++ b/post
+@@ -1 +1 @@
+-(:
++(
+EOF
+
+test_expect_success '--word-diff=none' '
+
+	word_diff --word-diff=plain --word-diff=none
 
 '
 
