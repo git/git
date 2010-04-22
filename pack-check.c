@@ -133,14 +133,13 @@ static int verify_packfile(struct packed_git *p,
 	return err;
 }
 
-int verify_pack(struct packed_git *p)
+int verify_pack_index(struct packed_git *p)
 {
 	off_t index_size;
 	const unsigned char *index_base;
 	git_SHA_CTX ctx;
 	unsigned char sha1[20];
 	int err = 0;
-	struct pack_window *w_curs = NULL;
 
 	if (open_pack_index(p))
 		return error("packfile %s index not opened", p->pack_name);
@@ -154,8 +153,18 @@ int verify_pack(struct packed_git *p)
 	if (hashcmp(sha1, index_base + index_size - 20))
 		err = error("Packfile index for %s SHA1 mismatch",
 			    p->pack_name);
+	return err;
+}
 
-	/* Verify pack file */
+int verify_pack(struct packed_git *p)
+{
+	int err = 0;
+	struct pack_window *w_curs = NULL;
+
+	err |= verify_pack_index(p);
+	if (!p->index_data)
+		return -1;
+
 	err |= verify_packfile(p, &w_curs);
 	unuse_pack(&w_curs);
 
