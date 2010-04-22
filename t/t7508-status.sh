@@ -151,7 +151,7 @@ cat >expect <<EOF
 # Changed but not updated:
 #	modified:   dir1/modified
 #
-# Untracked files not listed (use -u option to show untracked files)
+# Untracked files not listed
 EOF
 git config advice.statusHints false
 test_expect_success 'status -uno (advice.statusHints false)' '
