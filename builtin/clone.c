@@ -302,6 +302,8 @@ static const struct ref *clone_local(const char *src_repo,
 	transport = transport_get(remote, src_repo);
 	ret = transport_get_remote_refs(transport);
 	transport_disconnect(transport);
+	if (0 <= option_verbosity)
+		printf("done.\n");
 	return ret;
 }
 
@@ -461,7 +463,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		die("could not create leading directories of '%s'", git_dir);
 	set_git_dir(make_absolute_path(git_dir));
 
-	init_db(option_template, (option_verbosity < 0) ? INIT_DB_QUIET : 0);
+	if (0 <= option_verbosity)
+		printf("Cloning into %s...\n", get_git_dir());
+	init_db(option_template, INIT_DB_QUIET);
 
 	/*
 	 * At this point, the config exists, so we do not need the
