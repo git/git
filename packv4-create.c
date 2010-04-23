@@ -406,6 +406,72 @@ bad:
 	return NULL;
 }
 
+/*
+ * This converts a canonical tree object buffer into its
+ * tightly packed representation using the already populated
+ * and sorted tree_path_table dictionary.  The parsing is
+ * strict so to ensure the canonical version may always be
+ * regenerated and produce the same hash.
+ */
+void *pv4_encode_tree(void *_buffer, unsigned long *sizep)
+{
+	unsigned long size = *sizep;
+	unsigned char *in, *out, *end, *buffer = _buffer;
+	struct tree_desc desc;
+	struct name_entry name_entry;
+	int nb_entries;
+
+	if (!size)
+		return NULL;
+
+	/*
+	 * We can't make sure the result will always be smaller than the
+	 * input. The smallest possible entry is "0 x\0<40 byte SHA1>"
+	 * or 44 bytes.  The output entry may have a realistic path index
+	 * encoding using up to 3 bytes, and a non indexable SHA1 meaning
+	 * 41 bytes.  And the output data already has the nb_entries
+	 * headers.  In practice the output size will be significantly
+	 * smaller but for now let's make it simple.
+	 */
+	in = buffer;
+	out = xmalloc(size + 48);
+	end = out + size + 48;
+	buffer = out;
+
+	/* let's count how many entries there are */
+	init_tree_desc(&desc, in, size);
+	nb_entries = 0;
+	while (tree_entry(&desc, &name_entry))
+		nb_entries++;
+	out += encode_varint(nb_entries, out);
+
+	init_tree_desc(&desc, in, size);
+	while (tree_entry(&desc, &name_entry)) {
+		int pathlen, index;
+
+		if (end - out < 48) {
+			unsigned long sofar = out - buffer;
+			buffer = xrealloc(buffer, (sofar + 48)*2);
+			end = buffer + (sofar + 48)*2;
+			out = buffer + sofar;
+		}
+
+		pathlen = tree_entry_len(&name_entry);
+		index = dict_add_entry(tree_path_table, name_entry.mode,
+				       name_entry.path, pathlen);
+		if (index < 0) {
+			error("missing tree dict entry");
+			free(buffer);
+			return NULL;
+		}
+		out += encode_varint(index, out);
+		out += encode_sha1ref(name_entry.sha1, out);
+	}
+
+	*sizep = out - buffer;
+	return buffer;
+}
+
 static struct pack_idx_entry *get_packed_object_list(struct packed_git *p)
 {
 	unsigned i, nr_objects = p->num_objects;
