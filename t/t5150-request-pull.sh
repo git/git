@@ -69,8 +69,7 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 	#!/bin/sed -nf
 	/ in the git repository at:$/! d
 	n
-	/^$/! q
-	n
+	/^$/ n
 	s/^[ 	]*\(.*\) \([^ ]*\)/please pull\
 	\1\
 	\2/p
@@ -81,7 +80,9 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 	#!/bin/sed -nf
 	s/$_x40/OBJECT_NAME/g
 	s/A U Thor/AUTHOR/g
+	s/[-0-9]\{10\} [:0-9]\{8\} [-+][0-9]\{4\}/DATE/g
 	s/        [^ ].*/        SUBJECT/g
+	s/  [^ ].* (DATE)/  SUBJECT (DATE)/g
 	s/$downstream_url_for_sed/URL/g
 	s/for-upstream/BRANCH/g
 	s/mnemonic.txt/FILENAME/g
@@ -188,11 +189,10 @@ test_expect_success 'pull request format' '
 	git init --bare downstream.git &&
 	cat <<-\EOT >expect &&
 	The following changes since commit OBJECT_NAME:
-	  AUTHOR (1):
-	        SUBJECT
+
+	  SUBJECT (DATE)
 
 	are available in the git repository at:
-
 	  URL BRANCH
 
 	SHORTLOG
