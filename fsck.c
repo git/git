@@ -222,12 +222,47 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 	return retval;
 }
 
+static int fsck_ident(char **ident, struct object *obj, fsck_error error_func)
+{
+	if (**ident == '<' || **ident == '\n')
+		return error_func(obj, FSCK_ERROR, "invalid author/committer line - missing space before email");
+	*ident += strcspn(*ident, "<\n");
+	if ((*ident)[-1] != ' ')
+		return error_func(obj, FSCK_ERROR, "invalid author/committer line - missing space before email");
+	if (**ident != '<')
+		return error_func(obj, FSCK_ERROR, "invalid author/committer line - missing email");
+	(*ident)++;
+	*ident += strcspn(*ident, "<>\n");
+	if (**ident != '>')
+		return error_func(obj, FSCK_ERROR, "invalid author/committer line - bad email");
+	(*ident)++;
+	if (**ident != ' ')
+		return error_func(obj, FSCK_ERROR, "invalid author/committer line - missing space before date");
+	(*ident)++;
+	if (**ident == '0' && (*ident)[1] != ' ')
+		return error_func(obj, FSCK_ERROR, "invalid author/committer line - zero-padded date");
+	*ident += strspn(*ident, "0123456789");
+	if (**ident != ' ')
+		return error_func(obj, FSCK_ERROR, "invalid author/committer line - bad date");
+	(*ident)++;
+	if ((**ident != '+' && **ident != '-') ||
+	    !isdigit((*ident)[1]) ||
+	    !isdigit((*ident)[2]) ||
+	    !isdigit((*ident)[3]) ||
+	    !isdigit((*ident)[4]) ||
+	    ((*ident)[5] != '\n'))
+		return error_func(obj, FSCK_ERROR, "invalid author/committer line - bad time zone");
+	(*ident) += 6;
+	return 0;
+}
+
 static int fsck_commit(struct commit *commit, fsck_error error_func)
 {
 	char *buffer = commit->buffer;
 	unsigned char tree_sha1[20], sha1[20];
 	struct commit_graft *graft;
 	int parents = 0;
+	int err;
 
 	if (commit->date == ULONG_MAX)
 		return error_func(&commit->object, FSCK_ERROR, "invalid author/committer line");
@@ -266,6 +301,18 @@ static int fsck_commit(struct commit *commit, fsck_error error_func)
 	}
 	if (memcmp(buffer, "author ", 7))
 		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'author' line");
+	buffer += 7;
+	err = fsck_ident(&buffer, &commit->object, error_func);
+	if (err)
+		return err;
+	if (memcmp(buffer, "committer ", strlen("committer ")))
+		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'committer' line");
+	buffer += strlen("committer ");
+	err = fsck_ident(&buffer, &commit->object, error_func);
+	if (err)
+		return err;
+	if (*buffer != '\n')
+		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected blank line");
 	if (!commit->tree)
 		return error_func(&commit->object, FSCK_ERROR, "could not load commit's tree %s", sha1_to_hex(tree_sha1));
 
