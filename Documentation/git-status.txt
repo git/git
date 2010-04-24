@@ -72,21 +72,37 @@ In short-format, the status of each path is shown as
 
 where `PATH1` is the path in the `HEAD`, and ` -> PATH2` part is
 shown only when `PATH1` corresponds to a different path in the
-index/worktree (i.e. renamed).
+index/worktree (i.e. the file is renamed). The 'XY' is a two-letter
+status code.
 
-For unmerged entries, `X` shows the status of stage #2 (i.e. ours) and `Y`
-shows the status of stage #3 (i.e. theirs).
+The fields (including the `->`) are separated from each other by a
+single space. If a filename contains whitespace or other nonprintable
+characters, that field will be quoted in the manner of a C string
+literal: surrounded by ASCII double quote (34) characters, and with
+interior special characters backslash-escaped.
 
-For entries that do not have conflicts, `X` shows the status of the index,
-and `Y` shows the status of the work tree.  For untracked paths, `XY` are
-`??`.
+For paths with merge conflicts, `X` and 'Y' show the modification
+states of each side of the merge. For paths that do not have merge
+conflicts, `X` shows the status of the index, and `Y` shows the status
+of the work tree.  For untracked paths, `XY` are `??`.  Other status
+codes can be interpreted as follows:
+
+* ' ' = unmodified
+* 'M' = modified
+* 'A' = added
+* 'D' = deleted
+* 'R' = renamed
+* 'C' = copied
+* 'U' = updated but unmerged
+
+Ignored files are not listed.
 
     X          Y     Meaning
     -------------------------------------------------
               [MD]   not updated
     M        [ MD]   updated in index
     A        [ MD]   added to index
-    D        [ MD]   deleted from index
+    D         [ M]   deleted from index
     R        [ MD]   renamed in index
     C        [ MD]   copied in index
     [MARC]           index and work tree matches
@@ -104,6 +120,15 @@ and `Y` shows the status of the work tree.  For untracked paths, `XY` are
     ?           ?    untracked
     -------------------------------------------------
 
+There is an alternate -z format recommended for machine parsing.  In
+that format, the status field is the same, but some other things
+change.  First, the '->' is omitted from rename entries and the field
+order is reversed (e.g 'from -> to' becomes 'to from'). Second, a NUL
+(ASCII 0) follows each filename, replacing space as a field separator
+and the terminating newline (but a space still separates the status
+field from the first filename).  Third, filenames containing special
+characters are not specially formatted; no quoting or
+backslash-escaping is performed.
 
 CONFIGURATION
 -------------

@@ -1,5 +1,5 @@
-Git v1.7.1 Release Notes (draft)
-================================
+Git v1.7.1 Release Notes
+========================
 
 Updates since v1.7.0
 --------------------
@@ -87,9 +87,3 @@ release, unless otherwise noted.
 
  * "git rev-list --abbrev-commit" defaulted to 40-byte abbreviations, unlike
    newer tools in the git toolset.
-
----
-exec >/var/tmp/1
-echo O=$(git describe)
-O=v1.7.1-rc1-49-g407a963
-git shortlog --no-merges ^maint $O..
