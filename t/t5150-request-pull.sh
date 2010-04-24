@@ -211,4 +211,18 @@ test_expect_success 'pull request format' '
 
 '
 
+test_expect_success 'request-pull ignores OPTIONS_KEEPDASHDASH poison' '
+
+	(
+		cd local &&
+		OPTIONS_KEEPDASHDASH=Yes &&
+		export OPTIONS_KEEPDASHDASH &&
+		git checkout initial &&
+		git merge --ff-only master &&
+		git push origin master:for-upstream &&
+		git request-pull -- initial "$downstream_url" >../request
+	)
+
+'
+
 test_done

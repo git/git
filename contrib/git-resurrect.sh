@@ -9,6 +9,7 @@ other/Merge <other> into <name> (respectively) commit subjects, which
 is rather slow but allows you to resurrect other people's topic
 branches."
 
+OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
 git resurrect $USAGE
 --
