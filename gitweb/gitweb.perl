@@ -972,7 +972,8 @@ if ($action !~ m/^(?:opml|project_list|project_index)$/ &&
 	die_error(400, "Project needed");
 }
 $actions{$action}->();
-exit;
+DONE_GITWEB:
+1;
 
 ## ======================================================================
 ## action links
@@ -3432,7 +3433,7 @@ EOF
 	print "</div>\n";
 
 	git_footer_html();
-	exit;
+	goto DONE_GITWEB;
 }
 
 ## ----------------------------------------------------------------------
