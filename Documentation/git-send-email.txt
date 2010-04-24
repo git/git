@@ -300,6 +300,21 @@ sendemail.confirm::
 	in the previous section for the meaning of these values.
 
 
+Use gmail as the smtp server
+----------------------------
+
+Add the following section to the config file:
+
+	[sendemail]
+		smtpencryption = tls
+		smtpserver = smtp.gmail.com
+		smtpuser = yourname@gmail.com
+		smtpserverport = 587
+
+Note: the following perl modules are required
+      Net::SMTP::SSL, MIME::Base64 and Authen::SASL
+
+
 Author
 ------
 Written by Ryan Anderson <ryan@michonline.com>
