@@ -3179,24 +3179,30 @@ sub blob_contenttype {
 ## ======================================================================
 ## functions printing HTML: header, footer, error page
 
+sub get_page_title {
+	my $title = to_utf8($site_name);
+
+	return $title unless (defined $project);
+	$title .= " - " . to_utf8($project);
+
+	return $title unless (defined $action);
+	$title .= "/$action"; # $action is US-ASCII (7bit ASCII)
+
+	return $title unless (defined $file_name);
+	$title .= " - " . esc_path($file_name);
+	if ($action eq "tree" && $file_name !~ m|/$|) {
+		$title .= "/";
+	}
+
+	return $title;
+}
+
 sub git_header_html {
 	my $status = shift || "200 OK";
 	my $expires = shift;
 	my %opts = @_;
 
-	my $title = "$site_name";
-	if (defined $project) {
-		$title .= " - " . to_utf8($project);
-		if (defined $action) {
-			$title .= "/$action";
-			if (defined $file_name) {
-				$title .= " - " . esc_path($file_name);
-				if ($action eq "tree" && $file_name !~ m|/$|) {
-					$title .= "/";
-				}
-			}
-		}
-	}
+	my $title = get_page_title();
 	my $content_type;
 	# require explicit support from the UA if we are to send the page as
 	# 'application/xhtml+xml', otherwise send it as plain old 'text/html'.
