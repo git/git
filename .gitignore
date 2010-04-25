@@ -155,6 +155,7 @@
 /git-write-tree
 /git-core-*/?*
 /gitk-git/gitk-wish
+/gitweb/GITWEB-BUILD-OPTIONS
 /gitweb/gitweb.cgi
 /gitweb/gitweb.min.*
 /test-chmtime
