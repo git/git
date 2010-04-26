@@ -175,7 +175,7 @@ static int ask_user_yes_no(const char *format, ...)
 		return !run_command_v_opt(retry_hook, 0);
 	}
 
-	if (!isatty(_fileno(stdin)))
+	if (!isatty(_fileno(stdin)) || !isatty(_fileno(stderr)))
 		return 0;
 
 	while (1) {
