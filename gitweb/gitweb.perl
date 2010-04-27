@@ -227,6 +227,36 @@ our %avatar_size = (
 # Leave it undefined (or set to 'undef') to turn off load checking.
 our $maxload = 300;
 
+# syntax highlighting
+our %highlight_type = (
+	# match by basename
+	'SConstruct' => 'py',
+	'Program' => 'py',
+	'Library' => 'py',
+	'Makefile' => 'make',
+	# match by extension
+	'\.py$' => 'py', # Python
+	'\.c$' => 'c',
+	'\.h$' => 'c',
+	'\.cpp$' => 'cpp',
+	'\.cxx$' => 'cpp',
+	'\.rb$' => 'ruby',
+	'\.java$' => 'java',
+	'\.css$' => 'css',
+	'\.php3?$' => 'php',
+	'\.sh$' => 'sh', # Bash / shell script
+	'\.pl$' => 'pl', # Perl
+	'\.js$' => 'js', # JavaScript
+	'\.tex$' => 'tex', # TeX and LaTeX
+	'\.bib$' => 'bib', # BibTeX
+	'\.x?html$' => 'xml',
+	'\.xml$' => 'xml',
+	'\.awk$' => 'awk',
+	'\.bat$' => 'bat', # DOS Batch script
+	'\.ini$' => 'ini',
+	'\.spec$' => 'spec', # RPM Spec
+);
+
 # You define site-wide feature defaults here; override them with
 # $GITWEB_CONFIG as necessary.
 our %feature = (
@@ -443,6 +473,19 @@ our %feature = (
 	# JavaScript to run (like 'blame_incremental').  Not enabled by
 	# default.  Project specific override is currently not supported.
 	'javascript-actions' => {
+		'override' => 0,
+		'default' => [0]},
+
+	# Syntax highlighting support. This is based on Daniel Svensson's
+	# and Sham Chukoury's work in gitweb-xmms2.git.
+	# It requires the 'highlight' program, and therefore is disabled
+	# by default.
+
+	# To enable system wide have in $GITWEB_CONFIG
+	# $feature{'highlight'}{'default'} = [1];
+
+	'highlight' => {
+		'sub' => sub { feature_bool('highlight', @_) },
 		'override' => 0,
 		'default' => [0]},
 );
@@ -5346,12 +5389,32 @@ sub git_blob {
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(500, "Couldn't cat $file_name, $hash");
 	my $mimetype = blob_mimetype($fd, $file_name);
+	# use 'blob_plain' (aka 'raw') view for files that cannot be displayed
 	if ($mimetype !~ m!^(?:text/|image/(?:gif|png|jpeg)$)! && -B $fd) {
 		close $fd;
 		return git_blob_plain($mimetype);
 	}
 	# we can have blame only for text/* mimetype
 	$have_blame &&= ($mimetype =~ m!^text/!);
+
+	my $have_highlight = gitweb_check_feature('highlight');
+	my $syntax;
+	if ($have_highlight && defined($file_name)) {
+		my $basename = basename($file_name, '.in');
+		foreach my $regexp (keys %highlight_type) {
+			if ($basename =~ /$regexp/) {
+				$syntax = $highlight_type{$regexp};
+				last;
+			}
+		}
+
+		if ($syntax) {
+			close $fd;
+			open $fd, quote_command(git_cmd(), "cat-file", "blob", $hash)." | ".
+			          "highlight --xhtml --fragment -t 8 --syntax $syntax |"
+				or die_error(500, "Couldn't open file or run syntax highlighter");
+		}
+	}
 
 	git_header_html(undef, $expires);
 	my $formats_nav = '';
@@ -5404,7 +5467,7 @@ sub git_blob {
 			$line = untabify($line);
 			printf "<div class=\"pre\"><a id=\"l%i\" href=\"" . href(-replay => 1)
 				. "#l%i\" class=\"linenr\">%4i</a> %s</div>\n",
-			       $nr, $nr, $nr, esc_html($line, -nbsp=>1);
+			       $nr, $nr, $nr, $syntax ? $line : esc_html($line, -nbsp=>1);
 		}
 	}
 	close $fd
