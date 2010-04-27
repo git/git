@@ -227,36 +227,6 @@ our %avatar_size = (
 # Leave it undefined (or set to 'undef') to turn off load checking.
 our $maxload = 300;
 
-# syntax highlighting
-our %highlight_type = (
-	# match by basename
-	'SConstruct' => 'py',
-	'Program' => 'py',
-	'Library' => 'py',
-	'Makefile' => 'make',
-	# match by extension
-	'\.py$' => 'py', # Python
-	'\.c$' => 'c',
-	'\.h$' => 'c',
-	'\.cpp$' => 'cpp',
-	'\.cxx$' => 'cpp',
-	'\.rb$' => 'ruby',
-	'\.java$' => 'java',
-	'\.css$' => 'css',
-	'\.php3?$' => 'php',
-	'\.sh$' => 'sh', # Bash / shell script
-	'\.pl$' => 'pl', # Perl
-	'\.js$' => 'js', # JavaScript
-	'\.tex$' => 'tex', # TeX and LaTeX
-	'\.bib$' => 'bib', # BibTeX
-	'\.x?html$' => 'xml',
-	'\.xml$' => 'xml',
-	'\.awk$' => 'awk',
-	'\.bat$' => 'bat', # DOS Batch script
-	'\.ini$' => 'ini',
-	'\.spec$' => 'spec', # RPM Spec
-);
-
 # You define site-wide feature defaults here; override them with
 # $GITWEB_CONFIG as necessary.
 our %feature = (
@@ -478,8 +448,8 @@ our %feature = (
 
 	# Syntax highlighting support. This is based on Daniel Svensson's
 	# and Sham Chukoury's work in gitweb-xmms2.git.
-	# It requires the 'highlight' program, and therefore is disabled
-	# by default.
+	# It requires the 'highlight' program present in $PATH,
+	# and therefore is disabled by default.
 
 	# To enable system wide have in $GITWEB_CONFIG
 	# $feature{'highlight'}{'default'} = [1];
@@ -3198,6 +3168,61 @@ sub blob_contenttype {
 	return $type;
 }
 
+# guess file syntax for syntax highlighting; return undef if no highlighting
+# the name of syntax can (in the future) depend on syntax highlighter used
+sub guess_file_syntax {
+	my ($highlight, $mimetype, $file_name) = @_;
+	return undef unless ($highlight && defined $file_name);
+
+	# configuration for 'highlight' (http://www.andre-simon.de/)
+	# match by basename
+	my %highlight_basename = (
+		#'Program' => 'py',
+		#'Library' => 'py',
+		'SConstruct' => 'py', # SCons equivalent of Makefile
+		'Makefile' => 'make',
+	);
+	# match by extension
+	my %highlight_ext = (
+		# main extensions, defining name of syntax;
+		# see files in /usr/share/highlight/langDefs/ directory
+		map { $_ => $_ }
+			qw(py c cpp rb java css php sh pl js tex bib xml awk bat ini spec tcl),
+		# alternate extensions, see /etc/highlight/filetypes.conf
+		'h' => 'c',
+		map { $_ => 'cpp' } qw(cxx c++ cc),
+		map { $_ => 'php' } qw(php3 php4),
+		map { $_ => 'pl'  } qw(perl pm), # perhaps also 'cgi'
+		'mak' => 'make',
+		map { $_ => 'xml' } qw(xhtml html htm),
+	);
+
+	my $basename = basename($file_name, '.in');
+	return $highlight_basename{$basename}
+		if exists $highlight_basename{$basename};
+
+	$basename =~ /\.([^.]*)$/;
+	my $ext = $1 or return undef;
+	return $highlight_ext{$ext}
+		if exists $highlight_ext{$ext};
+
+	return undef;
+}
+
+# run highlighter and return FD of its output,
+# or return original FD if no highlighting
+sub run_highlighter {
+	my ($fd, $highlight, $syntax) = @_;
+	return $fd unless ($highlight && defined $syntax);
+
+	close $fd
+		or die_error(404, "Reading blob failed");
+	open $fd, quote_command(git_cmd(), "cat-file", "blob", $hash)." | ".
+	          "highlight --xhtml --fragment --syntax $syntax |"
+		or die_error(500, "Couldn't open file or run syntax highlighter");
+	return $fd;
+}
+
 ## ======================================================================
 ## functions printing HTML: header, footer, error page
 
@@ -5397,24 +5422,10 @@ sub git_blob {
 	# we can have blame only for text/* mimetype
 	$have_blame &&= ($mimetype =~ m!^text/!);
 
-	my $have_highlight = gitweb_check_feature('highlight');
-	my $syntax;
-	if ($have_highlight && defined($file_name)) {
-		my $basename = basename($file_name, '.in');
-		foreach my $regexp (keys %highlight_type) {
-			if ($basename =~ /$regexp/) {
-				$syntax = $highlight_type{$regexp};
-				last;
-			}
-		}
-
-		if ($syntax) {
-			close $fd;
-			open $fd, quote_command(git_cmd(), "cat-file", "blob", $hash)." | ".
-			          "highlight --xhtml --fragment -t 8 --syntax $syntax |"
-				or die_error(500, "Couldn't open file or run syntax highlighter");
-		}
-	}
+	my $highlight = gitweb_check_feature('highlight');
+	my $syntax = guess_file_syntax($highlight, $mimetype, $file_name);
+	$fd = run_highlighter($fd, $highlight, $syntax)
+		if $syntax;
 
 	git_header_html(undef, $expires);
 	my $formats_nav = '';
@@ -5465,9 +5476,8 @@ sub git_blob {
 			chomp $line;
 			$nr++;
 			$line = untabify($line);
-			printf "<div class=\"pre\"><a id=\"l%i\" href=\"" . href(-replay => 1)
-				. "#l%i\" class=\"linenr\">%4i</a> %s</div>\n",
-			       $nr, $nr, $nr, $syntax ? $line : esc_html($line, -nbsp=>1);
+			printf qq!<div class="pre"><a id="l%i" href="%s#l%i" class="linenr">%4i</a> %s</div>\n!,
+			       $nr, href(-replay => 1), $nr, $nr, $syntax ? $line : esc_html($line, -nbsp=>1);
 		}
 	}
 	close $fd
