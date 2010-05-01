@@ -6,10 +6,8 @@ First you have to generate gitweb.cgi from gitweb.perl using
 gitweb.css, git-logo.png and git-favicon.png) to their destination.
 For example if git was (or is) installed with /usr prefix, you can do
 
-	$ make prefix=/usr gitweb             ;# as yourself
-	# cp gitweb/*.cgi gitweb/*.css \
-	     gitweb/*.js  gitweb/*.png \
-	     /var/www/cgi-bin/                ;# as root
+	$ make prefix=/usr gitweb                            ;# as yourself
+	# make gitwebdir=/var/www/cgi-bin install-gitweb     ;# as root
 
 Alternatively you can use autoconf generated ./configure script to
 set up path to git binaries (via config.mak.autogen), so you can write
@@ -18,9 +16,8 @@ instead
 	$ make configure                     ;# as yourself
 	$ ./configure --prefix=/usr          ;# as yourself
 	$ make gitweb                        ;# as yourself
-	# cp gitweb/*.cgi gitweb/*.css \
-	     gitweb/*.js  gitweb/*.png \
-	     /var/www/cgi-bin/               ;# as root
+	# make gitwebdir=/var/www/cgi-bin \
+	       install-gitweb                ;# as root
 
 The above example assumes that your web server is configured to run
 [executable] files in /var/www/cgi-bin/ as server scripts (as CGI

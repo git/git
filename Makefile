@@ -2004,6 +2004,9 @@ endif
 	  done; } && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
+install-gitweb:
+	$(MAKE) -C gitweb install
+
 install-doc:
 	$(MAKE) -C Documentation install
 
