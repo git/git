@@ -444,7 +444,7 @@ sub update_issue {
 
 	my $now_string = localtime;
 	my ($current_dow, $current_mon, $current_date, $current_year) =
-	    ($now_string =~ /^(\w+) (\w+) (\d+) [\d:]+ (\d+)$/);
+	    ($now_string =~ /^(\w+) (\w+) +(\d+) [\d:]+ (\d+)$/);
 
 	my $btext = $cooking->{'topic_description'}{$blurb}{'text'};
 	if ($btext !~ s/\A$blurb_match//) {
