@@ -18,7 +18,9 @@ static struct cmt_fmt_map {
 	int is_alias;
 	const char *user_format;
 } *commit_formats;
+static size_t builtin_formats_len;
 static size_t commit_formats_len;
+static size_t commit_formats_alloc;
 static struct cmt_fmt_map *find_commit_format(const char *sought);
 
 static void save_user_format(struct rev_info *rev, const char *cp, int is_tformat)
@@ -28,6 +30,51 @@ static void save_user_format(struct rev_info *rev, const char *cp, int is_tforma
 	if (is_tformat)
 		rev->use_terminator = 1;
 	rev->commit_format = CMIT_FMT_USERFORMAT;
+}
+
+static int git_pretty_formats_config(const char *var, const char *value, void *cb)
+{
+	struct cmt_fmt_map *commit_format = NULL;
+	const char *name;
+	const char *fmt;
+	int i;
+
+	if (prefixcmp(var, "pretty."))
+		return 0;
+
+	name = var + strlen("pretty.");
+	for (i = 0; i < builtin_formats_len; i++) {
+		if (!strcmp(commit_formats[i].name, name))
+			return 0;
+	}
+
+	for (i = builtin_formats_len; i < commit_formats_len; i++) {
+		if (!strcmp(commit_formats[i].name, name)) {
+			commit_format = &commit_formats[i];
+			break;
+		}
+	}
+
+	if (!commit_format) {
+		ALLOC_GROW(commit_formats, commit_formats_len+1,
+			   commit_formats_alloc);
+		commit_format = &commit_formats[commit_formats_len];
+		commit_formats_len++;
+	}
+
+	commit_format->name = xstrdup(name);
+	commit_format->format = CMIT_FMT_USERFORMAT;
+	git_config_string(&fmt, var, value);
+	if (!prefixcmp(fmt, "format:") || !prefixcmp(fmt, "tformat:")) {
+		commit_format->is_tformat = fmt[0] == 't';
+		fmt = strchr(fmt, ':') + 1;
+	} else if (strchr(fmt, '%'))
+		commit_format->is_tformat = 1;
+	else
+		commit_format->is_alias = 1;
+	commit_format->user_format = fmt;
+
+	return 0;
 }
 
 static void setup_commit_formats(void)
@@ -42,10 +89,12 @@ static void setup_commit_formats(void)
 		{ "oneline",	CMIT_FMT_ONELINE,	1 }
 	};
 	commit_formats_len = ARRAY_SIZE(builtin_formats);
-	commit_formats = xmalloc(commit_formats_len *
-				 sizeof(*builtin_formats));
+	builtin_formats_len = commit_formats_len;
+	ALLOC_GROW(commit_formats, commit_formats_len, commit_formats_alloc);
 	memcpy(commit_formats, builtin_formats,
 	       sizeof(*builtin_formats)*ARRAY_SIZE(builtin_formats));
+
+	git_config(git_pretty_formats_config, NULL);
 }
 
 static struct cmt_fmt_map *find_commit_format_recursive(const char *sought,
@@ -116,6 +165,10 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 
 	rev->commit_format = commit_format->format;
 	rev->use_terminator = commit_format->is_tformat;
+	if (commit_format->format == CMIT_FMT_USERFORMAT) {
+		save_user_format(rev, commit_format->user_format,
+				 commit_format->is_tformat);
+	}
 }
 
 /*
