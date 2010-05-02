@@ -39,7 +39,7 @@ static int show_root;
 static int reverse;
 static int blank_boundary;
 static int incremental;
-static int xdl_opts = XDF_NEED_MINIMAL;
+static int xdl_opts;
 
 static enum date_mode blame_date_mode = DATE_ISO8601;
 static size_t blame_date_width;
