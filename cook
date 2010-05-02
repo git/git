@@ -4,7 +4,7 @@
 use strict;
 
 sub phrase_these {
-	my (@u) = @_;
+	my (@u) = sort @_;
 	my @d = ();
 	for (my $i = 0; $i < @u; $i++) {
 		push @d, $u[$i];
