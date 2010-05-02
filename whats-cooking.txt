@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2010, #06; Sat, 17)
-X-master-at: f3bd6ab7ea7b35ca5f26f106eb00a00f257716d7
-X-next-at: 22727aa2c81752284a340d8f7b0dd7df7aecf06f
+Subject: What's cooking in git.git (May 2010, #01; Sun, 2)
+X-master-at: ddb27a5a6b5ed74c70d56c96592b32eed415d72b
+X-next-at: 6845abd811ce929d456af10c5b4ba79640e19438
 
-What's cooking in git.git (Apr 2010, #06; Sat, 17)
+What's cooking in git.git (May 2010, #01; Sun, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,37 +11,88 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-I'll soon be tagging 1.7.1-rc2; please test 'master', report & fix
-regressions.
+The latest release 1.7.1 has been out for a week and I will soon rewind
+'next' and switch 'maint' for 1.7.1.X series.  It appears that no grave
+regression has been reported, which is a good sign.
 
 --------------------------------------------------
 [New Topics]
 
-* jk/maint-diffstat-overflow (2010-04-17) 1 commit
- - diff: use large integers for diffstat calculations
+* cb/maint-stash-orphaned-file (2010-04-18) 2 commits
+  (merged to 'next' on 2010-04-22 at f9de16c)
+ + stash tests: stash can lose data in a file removed from the index
+ + stash: Don't overwrite files that have gone from the index
 
-* jn/t7006-fixup (2010-04-14) 1 commit
- - t7006: guard cleanup with test_expect_success
+* jn/maint-bundle (2010-04-19) 2 commits
+  (merged to 'next' on 2010-04-22 at b2668a6)
+ + fix "bundle --stdin" segfault
+ + t5704 (bundle): add tests for bundle --stdin
 
-* js/maint-receive-pack-symref-alias (2010-04-15) 2 commits
- - receive-pack: ignore duplicated commands which can occur with symrefs
- - receive-pack: Switch global variable 'commands' to a parameter
+* pb/patch-id-plus (2010-04-19) 2 commits
+  (merged to 'next' on 2010-04-22 at 5177f8b)
+ + patch-id: Add support for mbox format
+ + patch-id: extract parsing one diff out of generate_id_list
 
-* sp/maint-dumb-http-pack-reidx (2010-04-17) 11 commits
- - http-fetch: Use temporary files for pack-*.idx until verified
- - http-fetch: Use index-pack rather than verify-pack to check packs
- - Allow parse_pack_index on temporary files
- - Extract verify_pack_index for reuse from verify_pack
- - Introduce close_pack_index to permit replacement
- - http.c: Remove unnecessary strdup of sha1_to_hex result
- - http.c: Don't store destination name in request structures
- - http.c: Drop useless != NULL test in finish_http_pack_request
- - http.c: Tiny refactoring of finish_http_pack_request
- - t5550-http-fetch: Use subshell for repository operations
- - http.c: Remove bad free of static block
+* rr/doc-submitting (2010-04-19) 1 commit
+  (merged to 'next' on 2010-04-22 at b557474)
+ + SubmittingPatches: Add new section about what to base work on
 
-* wp/doc-filter-direction (2010-04-17) 1 commit
- - documentation: clarify direction of core.autocrlf
+* st/remote-tags-no-tags (2010-04-20) 2 commits
+ - remote add: add a --[no-]tags option
+ - Honor "tagopt = --tags" configuration option
+
+* jc/rev-list-ancestry-path (2010-04-20) 1 commit
+ - revision: --ancestry-path
+
+Just an illustration patch.  merge simplification logic used when
+pathspecs are in effect interacts with this rather badly.
+
+* cb/assume-unchanged-fix (2010-05-01) 2 commits
+ - Documentation: git-add does not update files marked "assume unchanged"
+ - do not overwrite files marked "assume unchanged"
+
+* jn/fsck-ident (2010-04-24) 1 commit
+ - fsck: check ident lines in commit objects
+
+* jn/gitweb-caching-prep (2010-04-24) 5 commits
+ - gitweb: Move generating page title to separate subroutine
+ - gitweb: Add custom error handler using die_error
+ - gitweb: Use nonlocal jump instead of 'exit' in die_error
+ - gitweb: href(..., -path_info => 0|1)
+ - Export more test-related variables when running external tests
+
+* jn/gitweb-install (2010-05-01) 2 commits
+ - gitweb: Create install target for gitweb in Makefile
+ - gitweb: Improve installation instructions in gitweb/INSTALL
+
+* jn/gitweb-our-squelch (2010-04-30) 1 commit
+ - gitweb: Silence 'Variable VAR may be unavailable' warnings
+
+* jn/maint-request-pull (2010-04-24) 2 commits
+ - request-pull: protect against OPTIONS_KEEPDASHDASH from environment
+ - tests for request-pull
+ (this branch is used by jn/request-pull.)
+
+* jn/request-pull (2010-04-24) 2 commits
+ - adapt request-pull tests for new pull request format
+ - Merge branch 'jn/maint-request-pull' into jn/request-pull
+ (this branch uses jn/maint-request-pull.)
+
+* jn/shortlog (2010-04-26) 4 commits
+ . pretty: Respect --abbrev option
+ . shortlog: Document and test --format option
+ . t4201 (shortlog): Test output format with multiple authors
+ . t4201 (shortlog): guard setup with test_expect_success
+
+This seems to cause intermittent test failure for me especially when run
+under "make -j4".
+
+* wp/pretty-enhancement (2010-04-30) 5 commits
+ - pretty: add aliases for pretty formats
+ - pretty: add infrastructure to allow format aliases
+ - pretty: make it easier to add new formats
+ - pretty: make %H/%h/etc respect --abbrev[-commit]
+ - pretty: add conditional %C?colorname placeholders
 
 --------------------------------------------------
 [Graduated to "master"]
@@ -50,15 +101,24 @@ regressions.
   (merged to 'next' on 2010-04-10 at cd4e8cf)
  + SubmittingPatches: update GMail section
 
---------------------------------------------------
-[Stalled]
+* jg/auto-initialize-notes-with-percent-n-in-format (2010-04-13) 1 commit
+ + pretty: Initialize notes if %N is used
+
+* jk/maint-diffstat-overflow (2010-04-17) 1 commit
+ + diff: use large integers for diffstat calculations
 
 * rr/remote-helper-doc (2010-04-07) 3 commits
- - Documentation/remote-helpers: Add invocation section
- - Documentation/urls: Rewrite to accomodate <transport>::<address>
- - Documentation/remote-helpers: Rewrite description
+ + Documentation/remote-helpers: Add invocation section
+ + Documentation/urls: Rewrite to accomodate <transport>::<address>
+ + Documentation/remote-helpers: Rewrite description
 
-I'd like acks or rewrites from transport people on this topic.
+* wp/doc-filter-direction (2010-04-17) 1 commit
+ + documentation: clarify direction of core.autocrlf
+
+These were pushed out as part of 1.7.1
+
+--------------------------------------------------
+[Stalled]
 
 * js/rebase-origin-x (2010-02-05) 1 commit
  - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
@@ -66,7 +126,8 @@ I'd like acks or rewrites from transport people on this topic.
 I retract my objection against the idea of -x; needs polishing before
 moving forward.
 
-* js/grep-open (2010-03-26) 2 commits
+* js/grep-open (2010-05-01) 3 commits
+ - grep: do not ignore return value from chdir()
  - grep -O: allow optional argument specifying the pager (or editor)
  - grep: Add the option '--open-files-in-pager'
  (this branch is used by jp/hold-string-list-sanity.)
@@ -86,35 +147,61 @@ Probably needs to support --no-index mode as well.
  (this branch uses js/grep-open and sr/remote-helper-export.)
 
 Building this on top of slushy codebase is not a very promising endeavor.
-Good thing to do, but bad timing.
+Good thing to do, but it came at a bad time.
 
 --------------------------------------------------
 [Cooking]
+
+* jn/t7006-fixup (2010-04-14) 1 commit
+  (merged to 'next' on 2010-04-22 at 358ea26)
+ + t7006: guard cleanup with test_expect_success
+
+* js/maint-receive-pack-symref-alias (2010-04-19) 3 commits
+  (merged to 'next' on 2010-04-22 at 5d1338f)
+ + t5516-fetch-push.sh: style cleanup
+ + receive-pack: detect aliased updates which can occur with symrefs
+ + receive-pack: switch global variable 'commands' to a parameter
+
+* sp/maint-dumb-http-pack-reidx (2010-04-19) 12 commits
+  (merged to 'next' on 2010-04-22 at c94f19e)
+ + http.c::new_http_pack_request: do away with the temp variable filename
+ + http-fetch: Use temporary files for pack-*.idx until verified
+ + http-fetch: Use index-pack rather than verify-pack to check packs
+ + Allow parse_pack_index on temporary files
+ + Extract verify_pack_index for reuse from verify_pack
+ + Introduce close_pack_index to permit replacement
+ + http.c: Remove unnecessary strdup of sha1_to_hex result
+ + http.c: Don't store destination name in request structures
+ + http.c: Drop useless != NULL test in finish_http_pack_request
+ + http.c: Tiny refactoring of finish_http_pack_request
+ + t5550-http-fetch: Use subshell for repository operations
+ + http.c: Remove bad free of static block
 
 * hg/id-munging (2010-04-06) 2 commits
  - convert: Keep foreign $Id$ on checkout.
  - convert: Safer handling of $Id$ contraction.
 
 * jn/submodule-basic-test (2010-04-10) 3 commits
- - t7400: clarify submodule update tests
- - t7400: clarify 'submodule add' tests
- - t7400: split setup into multiple tests
+  (merged to 'next' on 2010-04-22 at 6d22343)
+ + t7400: clarify submodule update tests
+ + t7400: clarify 'submodule add' tests
+ + t7400: split setup into multiple tests
 
 * np/index-pack-memsave (2010-04-12) 3 commits
- - index-pack: smarter memory usage when appending objects
- - index-pack: rationalize unpack_entry_data()
- - index-pack: smarter memory usage when resolving deltas
-
-* jg/auto-initialize-notes-with-percent-n-in-format (2010-04-13) 1 commit
- - pretty: Initialize notes if %N is used
+  (merged to 'next' on 2010-04-22 at 4135456)
+ + index-pack: smarter memory usage when appending objects
+ + index-pack: rationalize unpack_entry_data()
+ + index-pack: smarter memory usage when resolving deltas
 
 * jc/am-3-show-corrupted-patch (2010-04-09) 1 commit
- - am -3: recover the diagnostic messages for corrupt patches
+  (merged to 'next' on 2010-04-22 at 49959c8)
+ + am -3: recover the diagnostic messages for corrupt patches
 
 * jc/maint-no-reflog-expire-unreach-for-head (2010-04-09) 3 commits
- - reflog --expire-unreachable: special case entries in "HEAD" reflog
- - more war on "sleep" in tests
- - Document gc.<pattern>.reflogexpire variables
+  (merged to 'next' on 2010-04-22 at bf9c927)
+ + reflog --expire-unreachable: special case entries in "HEAD" reflog
+ + more war on "sleep" in tests
+ + Document gc.<pattern>.reflogexpire variables
  (this branch uses jc/maint-reflog-expire-unreachable.)
 
 Rerolled; instead of ignoring the configuration like the previous round
@@ -122,20 +209,23 @@ did, this one prunes stale entries that are unreachable from any ref from
 the reflog of HEAD.
 
 * cw/maint-exec-defpath (2010-04-15) 2 commits
- - autoconf: Check if <paths.h> exists and set HAVE_PATHS_H
- - exec_cmd.c: replace hard-coded path list with one from <paths.h>
+  (merged to 'next' on 2010-04-22 at e990e5b)
+ + autoconf: Check if <paths.h> exists and set HAVE_PATHS_H
+ + exec_cmd.c: replace hard-coded path list with one from <paths.h>
 
 * tr/word-diff (2010-04-14) 1 commit
- - diff: add --word-diff option that generalizes --color-words
+  (merged to 'next' on 2010-04-22 at a10062e)
+ + diff: add --word-diff option that generalizes --color-words
 
 There are gitk patches that go with this series.
 
 * sp/maint-describe-tiebreak-with-tagger-date (2010-04-12) 5 commits
- - describe: Break annotated tag ties by tagger date
- - tag.c: Parse tagger date (if present)
- - tag.c: Refactor parse_tag_buffer to be saner to program
- - tag.h: Remove unused signature field
- - tag.c: Correct indentation
+  (merged to 'next' on 2010-04-22 at f712ae9)
+ + describe: Break annotated tag ties by tagger date
+ + tag.c: Parse tagger date (if present)
+ + tag.c: Refactor parse_tag_buffer to be saner to program
+ + tag.h: Remove unused signature field
+ + tag.c: Correct indentation
 
 * bg/apply-blank-trailing-context (2010-04-08) 1 commit
   (merged to 'next' on 2010-04-14 at a393c0b)
@@ -164,18 +254,18 @@ There are gitk patches that go with this series.
  + attr: Allow multiple changes to an attribute on the same line.
  + attr: Fixed debug output for macro expansion.
 
-* jc/status-show-ignored (2010-04-10) 5 commits
- - status: --ignored option shows ignored files
- - wt-status: rename and restructure status-print-untracked
- - wt-status: collect ignored files
- - wt-status: plug memory leak while collecting untracked files
- - wt-status: remove unused workdir_untracked member
+* jc/status-show-ignored (2010-05-01) 6 commits
+  (merged to 'next' on 2010-05-01 at 6845abd)
+ + wt-status: fix 'fprintf' compilation warning
+  (merged to 'next' on 2010-04-22 at c6abe03)
+ + status: --ignored option shows ignored files
+ + wt-status: rename and restructure status-print-untracked
+ + wt-status: collect ignored files
+ + wt-status: plug memory leak while collecting untracked files
+ + wt-status: remove unused workdir_untracked member
 
-This is merely an illustration patch.  I am negative about conflating the
-JSON output to the mix at this point.  If we are going to add JSON option
-to everywhere we would generate "machine readable" output with the -z
-and/or --porcelain options, that is fine, but let's stabilize "status"
-with the existing --porcelain/-z option first.
+I am negative about conflating the JSON output to the mix at this point.
+Let's stabilize "status" with the existing --porcelain/-z option first.
 
 * eb/unpretty-b-format (2010-03-24) 1 commit
   (merged to 'next' on 2010-04-07 at 7f5c112)
@@ -190,7 +280,8 @@ with the existing --porcelain/-z option first.
  + war on "sleep" in tests
 
 * jc/maint-reflog-expire-unreachable (2010-04-07) 1 commit
- - reflog --expire-unreachable: avoid merge-base computation
+  (merged to 'next' on 2010-04-22 at 2a46172)
+ + reflog --expire-unreachable: avoid merge-base computation
  (this branch is used by jc/maint-no-reflog-expire-unreach-for-head.)
 
 * np/malloc-threading (2010-04-08) 2 commits
@@ -202,7 +293,8 @@ The fix should eventually go to 'maint' and 'master'.  This queues the one
 from J6t for Windows compatibility.
 
 * js/async-thread (2010-03-09) 7 commits
- - Enable threaded async procedures whenever pthreads is available
+  (merged to 'next' on 2010-04-22 at ee8874e)
+ + Enable threaded async procedures whenever pthreads is available
   (merged to 'next' on 2010-03-20 at 9939243)
  + Dying in an async procedure should only exit the thread, not the process.
  + Reimplement async procedures using pthreads
@@ -211,7 +303,9 @@ from J6t for Windows compatibility.
  + Make report() from usage.c public as vreportf() and use it.
  + Modernize t5530-upload-pack-error.
 
-Been waiting for resolution of locking issues in malloc-threading.
+As the malloc-threading topic has been cooking for a while, the tip one
+may not be so bad to unleash to 'next' users, especially because we are in
+the pre-release feature freeze.
 
 * sd/log-decorate (2010-04-08) 6 commits
   (merged to 'next' on 2010-04-08 at 68fee56)
