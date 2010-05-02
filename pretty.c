@@ -11,6 +11,13 @@
 #include "reflog-walk.h"
 
 static char *user_format;
+static struct cmt_fmt_map {
+	const char *name;
+	enum cmit_fmt format;
+	int is_tformat;
+} *commit_formats;
+static size_t commit_formats_len;
+static struct cmt_fmt_map *find_commit_format(const char *sought);
 
 static void save_user_format(struct rev_info *rev, const char *cp, int is_tformat)
 {
@@ -21,22 +28,51 @@ static void save_user_format(struct rev_info *rev, const char *cp, int is_tforma
 	rev->commit_format = CMIT_FMT_USERFORMAT;
 }
 
+static void setup_commit_formats(void)
+{
+	struct cmt_fmt_map builtin_formats[] = {
+		{ "raw",	CMIT_FMT_RAW,		0 },
+		{ "medium",	CMIT_FMT_MEDIUM,	0 },
+		{ "short",	CMIT_FMT_SHORT,		0 },
+		{ "email",	CMIT_FMT_EMAIL,		0 },
+		{ "fuller",	CMIT_FMT_FULLER,	0 },
+		{ "full",	CMIT_FMT_FULL,		0 },
+		{ "oneline",	CMIT_FMT_ONELINE,	1 }
+	};
+	commit_formats_len = ARRAY_SIZE(builtin_formats);
+	commit_formats = xmalloc(commit_formats_len *
+				 sizeof(*builtin_formats));
+	memcpy(commit_formats, builtin_formats,
+	       sizeof(*builtin_formats)*ARRAY_SIZE(builtin_formats));
+}
+
+static struct cmt_fmt_map *find_commit_format(const char *sought)
+{
+	struct cmt_fmt_map *found = NULL;
+	size_t found_match_len = 0;
+	int i;
+
+	if (!commit_formats)
+		setup_commit_formats();
+
+	for (i = 0; i < commit_formats_len; i++) {
+		size_t match_len;
+
+		if (prefixcmp(commit_formats[i].name, sought))
+			continue;
+
+		match_len = strlen(commit_formats[i].name);
+		if (found == NULL || found_match_len > match_len) {
+			found = &commit_formats[i];
+			found_match_len = match_len;
+		}
+	}
+	return found;
+}
+
 void get_commit_format(const char *arg, struct rev_info *rev)
 {
-	int i;
-	static struct cmt_fmt_map {
-		const char *n;
-		size_t cmp_len;
-		enum cmit_fmt v;
-	} cmt_fmts[] = {
-		{ "raw",	1,	CMIT_FMT_RAW },
-		{ "medium",	1,	CMIT_FMT_MEDIUM },
-		{ "short",	1,	CMIT_FMT_SHORT },
-		{ "email",	1,	CMIT_FMT_EMAIL },
-		{ "full",	5,	CMIT_FMT_FULL },
-		{ "fuller",	5,	CMIT_FMT_FULLER },
-		{ "oneline",	1,	CMIT_FMT_ONELINE },
-	};
+	struct cmt_fmt_map *commit_format;
 
 	rev->use_terminator = 0;
 	if (!arg || !*arg) {
@@ -47,21 +83,18 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 		save_user_format(rev, strchr(arg, ':') + 1, arg[0] == 't');
 		return;
 	}
-	for (i = 0; i < ARRAY_SIZE(cmt_fmts); i++) {
-		if (!strncmp(arg, cmt_fmts[i].n, cmt_fmts[i].cmp_len) &&
-		    !strncmp(arg, cmt_fmts[i].n, strlen(arg))) {
-			if (cmt_fmts[i].v == CMIT_FMT_ONELINE)
-				rev->use_terminator = 1;
-			rev->commit_format = cmt_fmts[i].v;
-			return;
-		}
-	}
+
 	if (strchr(arg, '%')) {
 		save_user_format(rev, arg, 1);
 		return;
 	}
 
-	die("invalid --pretty format: %s", arg);
+	commit_format = find_commit_format(arg);
+	if (!commit_format)
+		die("invalid --pretty format: %s", arg);
+
+	rev->commit_format = commit_format->format;
+	rev->use_terminator = commit_format->is_tformat;
 }
 
 /*
