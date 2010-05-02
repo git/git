@@ -366,8 +366,9 @@ test_debug () {
 }
 
 test_run_ () {
+	test_cleanup='eval_ret=$?'
 	eval >&3 2>&4 "$1"
-	eval_ret="$?"
+	eval >&3 2>&4 "$test_cleanup"
 	return 0
 }
 
@@ -543,6 +544,31 @@ test_must_fail () {
 
 test_cmp() {
 	$GIT_TEST_CMP "$@"
+}
+
+# This function can be used to schedule some commands to be run
+# unconditionally at the end of the test to restore sanity:
+#
+#	test_expect_success 'test core.capslock' '
+#		git config core.capslock true &&
+#		test_when_finished "git config --unset core.capslock" &&
+#		hello world
+#	'
+#
+# That would be roughly equivalent to
+#
+#	test_expect_success 'test core.capslock' '
+#		git config core.capslock true &&
+#		hello world
+#		git config --unset core.capslock
+#	'
+#
+# except that the greeting and config --unset must both succeed for
+# the test to pass.
+
+test_when_finished () {
+	test_cleanup="eval_ret=\$?; { $*
+		} && (exit \"\$eval_ret\"); $test_cleanup"
 }
 
 # Most tests can use the created repository, but some may need to create more.
