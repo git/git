@@ -12,6 +12,7 @@
 #include "object.h"
 #include "tree-walk.h"
 #include "pack.h"
+#include "varint.h"
 
 struct data_entry {
 	unsigned offset;
@@ -243,6 +244,34 @@ static void dict_dump(void)
 {
 	dump_dict_table(commit_ident_table);
 	dump_dict_table(tree_path_table);
+}
+
+/*
+ * Encode an object SHA1 reference with either an object index into the
+ * pack SHA1 table incremented by 1, or the literal SHA1 value prefixed
+ * with a zero byte if the needed SHA1 is not available in the table.
+ */
+static struct pack_idx_entry *all_objs;
+static unsigned all_objs_nr;
+static int encode_sha1ref(const unsigned char *sha1, unsigned char *buf)
+{
+	unsigned lo = 0, hi = all_objs_nr;
+
+	do {
+		unsigned mi = (lo + hi) / 2;
+		int cmp = hashcmp(all_objs[mi].sha1, sha1);
+
+		if (cmp == 0)
+			return encode_varint(mi + 1, buf);
+		if (cmp > 0)
+			hi = mi;
+		else
+			lo = mi+1;
+	} while (lo < hi);
+
+	*buf++ = 0;
+	hashcpy(buf, sha1);
+	return 1 + 20;
 }
 
 static struct pack_idx_entry *get_packed_object_list(struct packed_git *p)
