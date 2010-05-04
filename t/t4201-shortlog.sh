@@ -8,30 +8,38 @@ test_description='git shortlog
 
 . ./test-lib.sh
 
-echo 1 > a1
-git add a1
-tree=$(git write-tree)
-commit=$( (echo "Test"; echo) | git commit-tree $tree )
-git update-ref HEAD $commit
+test_expect_success 'setup' '
+	echo 1 >a1 &&
+	git add a1 &&
+	tree=$(git write-tree) &&
+	commit=$(printf "%s\n" "Test" "" | git commit-tree "$tree") &&
+	git update-ref HEAD "$commit" &&
 
-echo 2 > a1
-git commit --quiet -m "This is a very, very long first line for the commit message to see if it is wrapped correctly" a1
+	echo 2 >a1 &&
+	git commit --quiet -m "This is a very, very long first line for the commit message to see if it is wrapped correctly" a1 &&
 
-# test if the wrapping is still valid when replacing all i's by treble clefs.
-echo 3 > a1
-git commit --quiet -m "$(echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" | sed "s/i/1234/g" | tr 1234 '\360\235\204\236')" a1
+	# test if the wrapping is still valid
+	# when replacing all is by treble clefs.
+	echo 3 >a1 &&
+	git commit --quiet -m "$(
+		echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" |
+		sed "s/i/1234/g" |
+		tr 1234 "\360\235\204\236")" a1 &&
 
-# now fsck up the utf8
-git config i18n.commitencoding non-utf-8
-echo 4 > a1
-git commit --quiet -m "$(echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" | sed "s/i/1234/g" | tr 1234 '\370\235\204\236')" a1
+	# now fsck up the utf8
+	git config i18n.commitencoding non-utf-8 &&
+	echo 4 >a1 &&
+	git commit --quiet -m "$(
+		echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" |
+		sed "s/i/1234/g" |
+		tr 1234 "\370\235\204\236")" a1 &&
 
-echo 5 > a1
-git commit --quiet -m "a								12	34	56	78" a1
+	echo 5 >a1 &&
+	git commit --quiet -m "a								12	34	56	78" a1
+'
 
-git shortlog -w HEAD > out
-
-cat > expect << EOF
+test_expect_success 'shortlog wrapping' '
+	cat >expect <<\EOF &&
 A U Thor (5):
       Test
       This is a very, very long first line for the commit message to see if
@@ -44,13 +52,15 @@ A U Thor (5):
          56	78
 
 EOF
+	git shortlog -w HEAD >out &&
+	test_cmp expect out
+'
 
-test_expect_success 'shortlog wrapping' 'test_cmp expect out'
-
-git log HEAD > log
-GIT_DIR=non-existing git shortlog -w < log > out
-
-test_expect_success 'shortlog from non-git directory' 'test_cmp expect out'
+test_expect_success 'shortlog from non-git directory' '
+	git log HEAD >log &&
+	GIT_DIR=non-existing git shortlog -w <log >out &&
+	test_cmp expect out
+'
 
 iconvfromutf8toiso88591() {
 	printf "%s" "$*" | iconv -f UTF-8 -t ISO8859-1
