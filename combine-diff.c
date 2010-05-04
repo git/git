@@ -211,7 +211,6 @@ static void combine_diff(const unsigned char *parent, unsigned int mode,
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
 	mmfile_t parent_file;
-	xdemitcb_t ecb;
 	struct combine_diff_state state;
 	unsigned long sz;
 
@@ -231,7 +230,7 @@ static void combine_diff(const unsigned char *parent, unsigned int mode,
 	state.n = n;
 
 	xdi_diff_outf(&parent_file, result_file, consume_line, &state,
-		      &xpp, &xecfg, &ecb);
+		      &xpp, &xecfg);
 	free(parent_file.ptr);
 
 	/* Assign line numbers for this parent.
