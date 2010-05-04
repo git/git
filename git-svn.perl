@@ -1185,6 +1185,7 @@ sub cmd_reset {
 		    "history\n";
 	}
 	my ($r, $c) = $gs->find_rev_before($target, not $_fetch_parent);
+	die "Cannot find SVN revision $target\n" unless defined($c);
 	$gs->rev_map_set($r, $c, 'reset', $uuid);
 	print "r$r = $c ($gs->{ref_id})\n";
 }
@@ -3605,6 +3606,7 @@ sub mkfile {
 
 sub rev_map_set {
 	my ($self, $rev, $commit, $update_ref, $uuid) = @_;
+	defined $commit or die "missing arg3\n";
 	length $commit == 40 or die "arg3 must be a full SHA1 hexsum\n";
 	my $db = $self->map_path($uuid);
 	my $db_lock = "$db.lock";
