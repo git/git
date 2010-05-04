@@ -36,6 +36,10 @@ test_expect_success 'setup' '
 
 	echo 5 >a1 &&
 	git commit --quiet -m "a								12	34	56	78" a1
+
+	echo 6 >a1 &&
+	git commit --quiet -m "Commit by someone else" \
+		--author="Someone else <not!me>" a1
 '
 
 test_expect_success 'shortlog wrapping' '
@@ -50,6 +54,9 @@ A U Thor (5):
          message to see ø„žf ø„žt ø„žs wrapped correctly
       a								12	34
          56	78
+
+Someone else (1):
+      Commit by someone else
 
 EOF
 	git shortlog -w HEAD >out &&
