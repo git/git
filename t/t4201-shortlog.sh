@@ -39,7 +39,58 @@ test_expect_success 'setup' '
 
 	echo 6 >a1 &&
 	git commit --quiet -m "Commit by someone else" \
-		--author="Someone else <not!me>" a1
+		--author="Someone else <not!me>" a1 &&
+
+	cat >expect.template <<-\EOF
+	A U Thor (5):
+	      SUBJECT
+	      SUBJECT
+	      SUBJECT
+	      SUBJECT
+	      SUBJECT
+
+	Someone else (1):
+	      SUBJECT
+
+	EOF
+'
+
+fuzz() {
+	file=$1 &&
+	sed "
+			s/$_x40/OBJECT_NAME/g
+			s/$_x05/OBJID/g
+			s/^ \{6\}[CTa].*/      SUBJECT/g
+			s/^ \{8\}[^ ].*/        CONTINUATION/g
+		" <"$file" >"$file.fuzzy" &&
+	sed "/CONTINUATION/ d" <"$file.fuzzy"
+}
+
+test_expect_success 'default output format' '
+	git shortlog HEAD >log &&
+	fuzz log >log.predictable &&
+	test_cmp expect.template log.predictable
+'
+
+test_expect_success 'pretty format' '
+	sed s/SUBJECT/OBJECT_NAME/ expect.template >expect &&
+	git shortlog --format="%H" HEAD >log &&
+	fuzz log >log.predictable &&
+	test_cmp expect log.predictable
+'
+
+test_expect_failure '--abbrev' '
+	sed s/SUBJECT/OBJID/ expect.template >expect &&
+	git shortlog --format="%h" --abbrev=5 HEAD >log &&
+	fuzz log >log.predictable &&
+	test_cmp expect log.predictable
+'
+
+test_expect_success 'output from user-defined format is re-wrapped' '
+	sed "s/SUBJECT/two lines/" expect.template >expect &&
+	git shortlog --format="two%nlines" HEAD >log &&
+	fuzz log >log.predictable &&
+	test_cmp expect log.predictable
 '
 
 test_expect_success 'shortlog wrapping' '
