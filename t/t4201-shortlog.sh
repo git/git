@@ -79,7 +79,7 @@ test_expect_success 'pretty format' '
 	test_cmp expect log.predictable
 '
 
-test_expect_failure '--abbrev' '
+test_expect_success '--abbrev' '
 	sed s/SUBJECT/OBJID/ expect.template >expect &&
 	git shortlog --format="%h" --abbrev=5 HEAD >log &&
 	fuzz log >log.predictable &&
