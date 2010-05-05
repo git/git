@@ -89,7 +89,7 @@ static inline int getuid()
 { return 1; }
 static inline struct passwd *getpwnam(const char *name)
 { return NULL; }
-static inline int fcntl(int fd, int cmd, long arg)
+static inline int fcntl(int fd, int cmd, ...)
 {
 	if (cmd == F_GETFD || cmd == F_SETFD)
 		return 0;

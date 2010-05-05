@@ -1,6 +1,10 @@
 #ifndef RUN_COMMAND_H
 #define RUN_COMMAND_H
 
+#ifdef ASYNC_AS_THREAD
+#include <pthread.h>
+#endif
+
 struct child_process {
 	const char **argv;
 	pid_t pid;
@@ -74,10 +78,10 @@ struct async {
 	void *data;
 	int in;		/* caller writes here and closes it */
 	int out;	/* caller reads from here and closes it */
-#ifndef WIN32
+#ifndef ASYNC_AS_THREAD
 	pid_t pid;
 #else
-	HANDLE tid;
+	pthread_t tid;
 	int proc_in;
 	int proc_out;
 #endif
