@@ -18,8 +18,8 @@
 #include "refs.h"
 
 #ifndef NO_PTHREADS
-#include "thread-utils.h"
 #include <pthread.h>
+#include "thread-utils.h"
 #endif
 
 static const char pack_usage[] =
@@ -1522,6 +1522,13 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 
 #ifndef NO_PTHREADS
 
+static void try_to_free_from_threads(size_t size)
+{
+	read_lock();
+	release_pack_memory(size, -1);
+	read_unlock();
+}
+
 /*
  * The main thread waits on the condition that (at least) one of the workers
  * has stopped working (which is indicated in the .working member of
@@ -1552,14 +1559,16 @@ static pthread_cond_t progress_cond;
  */
 static void init_threaded_search(void)
 {
-	pthread_mutex_init(&read_mutex, NULL);
+	init_recursive_mutex(&read_mutex);
 	pthread_mutex_init(&cache_mutex, NULL);
 	pthread_mutex_init(&progress_mutex, NULL);
 	pthread_cond_init(&progress_cond, NULL);
+	set_try_to_free_routine(try_to_free_from_threads);
 }
 
 static void cleanup_threaded_search(void)
 {
+	set_try_to_free_routine(NULL);
 	pthread_cond_destroy(&progress_cond);
 	pthread_mutex_destroy(&read_mutex);
 	pthread_mutex_destroy(&cache_mutex);

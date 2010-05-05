@@ -3,11 +3,23 @@
  */
 #include "cache.h"
 
+static void try_to_free_builtin(size_t size)
+{
+	release_pack_memory(size, -1);
+}
+
+static void (*try_to_free_routine)(size_t size) = try_to_free_builtin;
+
+void set_try_to_free_routine(void (*routine)(size_t))
+{
+	try_to_free_routine = (routine) ? routine : try_to_free_builtin;
+}
+
 char *xstrdup(const char *str)
 {
 	char *ret = strdup(str);
 	if (!ret) {
-		release_pack_memory(strlen(str) + 1, -1);
+		try_to_free_routine(strlen(str) + 1);
 		ret = strdup(str);
 		if (!ret)
 			die("Out of memory, strdup failed");
@@ -21,7 +33,7 @@ void *xmalloc(size_t size)
 	if (!ret && !size)
 		ret = malloc(1);
 	if (!ret) {
-		release_pack_memory(size, -1);
+		try_to_free_routine(size);
 		ret = malloc(size);
 		if (!ret && !size)
 			ret = malloc(1);
@@ -67,7 +79,7 @@ void *xrealloc(void *ptr, size_t size)
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
 	if (!ret) {
-		release_pack_memory(size, -1);
+		try_to_free_routine(size);
 		ret = realloc(ptr, size);
 		if (!ret && !size)
 			ret = realloc(ptr, 1);
@@ -83,7 +95,7 @@ void *xcalloc(size_t nmemb, size_t size)
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
 	if (!ret) {
-		release_pack_memory(nmemb * size, -1);
+		try_to_free_routine(nmemb * size);
 		ret = calloc(nmemb, size);
 		if (!ret && (!nmemb || !size))
 			ret = calloc(1, 1);
