@@ -164,6 +164,13 @@ extern char *gitbasename(char *);
 #define PATH_SEP ':'
 #endif
 
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#endif
+#ifndef _PATH_DEFPATH
+#define _PATH_DEFPATH "/usr/local/bin:/usr/bin:/bin"
+#endif
+
 #ifndef STRIP_EXTENSION
 #define STRIP_EXTENSION ""
 #endif

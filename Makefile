@@ -31,6 +31,9 @@ all::
 # Define EXPATDIR=/foo/bar if your expat header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
 #
+# Define HAVE_PATHS_H if you have paths.h and want to use the default PATH
+# it specifies.
+#
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 #
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
@@ -739,10 +742,12 @@ EXTLIBS =
 ifeq ($(uname_S),Linux)
 	NO_STRLCPY = YesPlease
 	NO_MKSTEMPS = YesPlease
+	HAVE_PATHS_H = YesPlease
 endif
 ifeq ($(uname_S),GNU/kFreeBSD)
 	NO_STRLCPY = YesPlease
 	NO_MKSTEMPS = YesPlease
+	HAVE_PATHS_H = YesPlease
 endif
 ifeq ($(uname_S),UnixWare)
 	CC = cc
@@ -871,6 +876,7 @@ ifeq ($(uname_S),FreeBSD)
 		NO_STRTOUMAX = YesPlease
 	endif
 	PYTHON_PATH = /usr/local/bin/python
+	HAVE_PATHS_H = YesPlease
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
@@ -879,6 +885,7 @@ ifeq ($(uname_S),OpenBSD)
 	NEEDS_LIBICONV = YesPlease
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
+	HAVE_PATHS_H = YesPlease
 endif
 ifeq ($(uname_S),NetBSD)
 	ifeq ($(shell expr "$(uname_R)" : '[01]\.'),2)
@@ -888,6 +895,7 @@ ifeq ($(uname_S),NetBSD)
 	BASIC_LDFLAGS += -L/usr/pkg/lib $(CC_LD_DYNPATH)/usr/pkg/lib
 	USE_ST_TIMESPEC = YesPlease
 	NO_MKSTEMPS = YesPlease
+	HAVE_PATHS_H = YesPlease
 endif
 ifeq ($(uname_S),AIX)
 	NO_STRCASESTR=YesPlease
@@ -908,6 +916,7 @@ ifeq ($(uname_S),GNU)
 	# GNU/Hurd
 	NO_STRLCPY=YesPlease
 	NO_MKSTEMPS = YesPlease
+	HAVE_PATHS_H = YesPlease
 endif
 ifeq ($(uname_S),IRIX)
 	NO_SETENV = YesPlease
@@ -1360,6 +1369,10 @@ else
 ifdef ASYNC_AS_THREAD
 	BASIC_CFLAGS += -DASYNC_AS_THREAD
 endif
+endif
+
+ifdef HAVE_PATHS_H
+	BASIC_CFLAGS += -DHAVE_PATHS_H
 endif
 
 ifdef DIR_HAS_BSD_GROUP_SEMANTICS
