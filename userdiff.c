@@ -1,3 +1,4 @@
+#include "cache.h"
 #include "userdiff.h"
 #include "cache.h"
 #include "attr.h"
@@ -167,6 +168,12 @@ static int parse_tristate(int *b, const char *k, const char *v)
 	return 1;
 }
 
+static int parse_bool(int *b, const char *k, const char *v)
+{
+	*b = git_config_bool(k, v);
+	return 1;
+}
+
 int userdiff_config(const char *k, const char *v)
 {
 	struct userdiff_driver *drv;
@@ -181,6 +188,8 @@ int userdiff_config(const char *k, const char *v)
 		return parse_string(&drv->external, k, v);
 	if ((drv = parse_driver(k, v, "textconv")))
 		return parse_string(&drv->textconv, k, v);
+	if ((drv = parse_driver(k, v, "cachetextconv")))
+		return parse_bool(&drv->textconv_want_cache, k, v);
 	if ((drv = parse_driver(k, v, "wordregex")))
 		return parse_string(&drv->word_regex, k, v);
 

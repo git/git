@@ -718,6 +718,8 @@ extern int has_loose_object_nonlocal(const unsigned char *sha1);
 
 extern int has_pack_index(const unsigned char *sha1);
 
+extern void assert_sha1_type(const unsigned char *sha1, enum object_type expect);
+
 extern const signed char hexval_table[256];
 static inline unsigned int hexval(unsigned char c)
 {
