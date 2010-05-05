@@ -54,4 +54,7 @@ int merge_recursive_generic(struct merge_options *o,
 void init_merge_options(struct merge_options *o);
 struct tree *write_tree_from_memory(struct merge_options *o);
 
+/* builtin/merge.c */
+int try_merge_command(const char *strategy, struct commit_list *common, const char *head_arg, struct commit_list *remotes);
+
 #endif
