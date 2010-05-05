@@ -323,6 +323,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	const char *gitdirenv;
 	const char *gitfile_dir;
 	int len, offset, ceil_offset, root_len;
+	int current_device = 0, one_filesystem = 1;
+	struct stat buf;
 
 	/*
 	 * Let's assume that we are in a git repository.
@@ -390,6 +392,12 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 *   etc.
 	 */
 	offset = len = strlen(cwd);
+	one_filesystem = !git_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0);
+	if (one_filesystem) {
+		if (stat(".", &buf))
+			die_errno("failed to stat '.'");
+		current_device = buf.st_dev;
+	}
 	for (;;) {
 		gitfile_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
 		if (gitfile_dir) {
@@ -422,8 +430,27 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			}
 			die("Not a git repository (or any of the parent directories): %s", DEFAULT_GIT_DIR_ENVIRONMENT);
 		}
-		if (chdir(".."))
+		if (one_filesystem) {
+			if (stat("..", &buf)) {
+				cwd[offset] = '\0';
+				die_errno("failed to stat '%s/..'", cwd);
+			}
+			if (buf.st_dev != current_device) {
+				if (nongit_ok) {
+					if (chdir(cwd))
+						die_errno("Cannot come back to cwd");
+					*nongit_ok = 1;
+					return NULL;
+				}
+				cwd[offset] = '\0';
+				die("Not a git repository (or any parent up to mount parent %s)\n"
+				"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).", cwd);
+			}
+		}
+		if (chdir("..")) {
+			cwd[offset] = '\0';
 			die_errno("Cannot change to '%s/..'", cwd);
+		}
 	}
 
 	inside_git_dir = 0;

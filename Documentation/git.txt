@@ -538,6 +538,16 @@ git so take care if using Cogito etc.
 	a GIT_DIR set on the command line or in the environment.
 	(Useful for excluding slow-loading network directories.)
 
+'GIT_DISCOVERY_ACROSS_FILESYSTEM'::
+	When run in a directory that does not have ".git" repository
+	directory, git tries to find such a directory in the parent
+	directories to find the top of the working tree, but by default it
+	does not cross filesystem boundaries.  This environment variable
+	can be set to true to tell git not to stop at filesystem
+	boundaries.  Like 'GIT_CEILING_DIRECTORIES', this will not affect
+	an explicit repository directory set via 'GIT_DIR' or on the
+	command line.
+
 git Commits
 ~~~~~~~~~~~
 'GIT_AUTHOR_NAME'::
