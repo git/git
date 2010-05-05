@@ -352,6 +352,48 @@ test_expect_success 'check tabs and spaces as indentation (indent-with-non-tab: 
 
 '
 
+test_expect_success 'check tabs as indentation (tab-in-indent: off)' '
+
+	git config core.whitespace "-tab-in-indent" &&
+	echo "	foo ();" > x &&
+	git diff --check
+
+'
+
+test_expect_success 'check tabs as indentation (tab-in-indent: on)' '
+
+	git config core.whitespace "tab-in-indent" &&
+	echo "	foo ();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check tabs and spaces as indentation (tab-in-indent: on)' '
+
+	git config core.whitespace "tab-in-indent" &&
+	echo "	                foo ();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check tab-in-indent and indent-with-non-tab conflict' '
+
+	git config core.whitespace "tab-in-indent,indent-with-non-tab" &&
+	echo "foo ();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check tab-in-indent excluded from wildcard whitespace attribute' '
+
+	git config --unset core.whitespace &&
+	echo "x whitespace" > .gitattributes &&
+	echo "	  foo ();" > x &&
+	git diff --check &&
+	rm -f .gitattributes
+
+'
+
 test_expect_success 'line numbers in --check output are correct' '
 
 	echo "" > x &&
