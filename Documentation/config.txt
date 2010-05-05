@@ -1359,10 +1359,6 @@ notes.rewrite.<command>::
 	automatically copies your notes from the original to the
 	rewritten commit.  Defaults to `true`, but see
 	"notes.rewriteRef" below.
-+
-This setting can be overridden with the `GIT_NOTES_REWRITE_REF`
-environment variable, which must be a colon separated list of refs or
-globs.
 
 notes.rewriteMode::
 	When copying notes during a rewrite (see the
@@ -1382,6 +1378,10 @@ notes.rewriteRef::
 +
 Does not have a default value; you must configure this variable to
 enable note rewriting.
++
+This setting can be overridden with the `GIT_NOTES_REWRITE_REF`
+environment variable, which must be a colon separated list of refs or
+globs.
 
 pack.window::
 	The size of the window used by linkgit:git-pack-objects[1] when no
