@@ -36,43 +36,50 @@ struct tag *lookup_tag(const unsigned char *sha1)
         return (struct tag *) obj;
 }
 
+static unsigned long parse_tag_date(const char *buf, const char *tail)
+{
+	const char *dateptr;
+
+	while (buf < tail && *buf++ != '>')
+		/* nada */;
+	if (buf >= tail)
+		return 0;
+	dateptr = buf;
+	while (buf < tail && *buf++ != '\n')
+		/* nada */;
+	if (buf >= tail)
+		return 0;
+	/* dateptr < buf && buf[-1] == '\n', so strtoul will stop at buf-1 */
+	return strtoul(dateptr, NULL, 10);
+}
+
 int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 {
-	int typelen, taglen;
 	unsigned char sha1[20];
-	const char *type_line, *tag_line, *sig_line;
 	char type[20];
-	const char *start = data;
+	const char *bufptr = data;
+	const char *tail = bufptr + size;
+	const char *nl;
 
-        if (item->object.parsed)
-                return 0;
-        item->object.parsed = 1;
+	if (item->object.parsed)
+		return 0;
+	item->object.parsed = 1;
 
 	if (size < 64)
 		return -1;
-	if (memcmp("object ", data, 7) || get_sha1_hex((char *) data + 7, sha1))
+	if (memcmp("object ", bufptr, 7) || get_sha1_hex(bufptr + 7, sha1) || bufptr[47] != '\n')
 		return -1;
+	bufptr += 48; /* "object " + sha1 + "\n" */
 
-	type_line = (char *) data + 48;
-	if (memcmp("\ntype ", type_line-1, 6))
+	if (prefixcmp(bufptr, "type "))
 		return -1;
-
-	tag_line = memchr(type_line, '\n', size - (type_line - start));
-	if (!tag_line || memcmp("tag ", ++tag_line, 4))
+	bufptr += 5;
+	nl = memchr(bufptr, '\n', tail - bufptr);
+	if (!nl || sizeof(type) <= (nl - bufptr))
 		return -1;
-
-	sig_line = memchr(tag_line, '\n', size - (tag_line - start));
-	if (!sig_line)
-		return -1;
-	sig_line++;
-
-	typelen = tag_line - type_line - strlen("type \n");
-	if (typelen >= 20)
-		return -1;
-	memcpy(type, type_line + 5, typelen);
-	type[typelen] = '\0';
-	taglen = sig_line - tag_line - strlen("tag \n");
-	item->tag = xmemdupz(tag_line + 4, taglen);
+	strncpy(type, bufptr, nl - bufptr);
+	type[nl - bufptr] = '\0';
+	bufptr = nl + 1;
 
 	if (!strcmp(type, blob_type)) {
 		item->tagged = &lookup_blob(sha1)->object;
@@ -86,6 +93,20 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 		error("Unknown type %s", type);
 		item->tagged = NULL;
 	}
+
+	if (prefixcmp(bufptr, "tag "))
+		return -1;
+	bufptr += 4;
+	nl = memchr(bufptr, '\n', tail - bufptr);
+	if (!nl)
+		return -1;
+	item->tag = xmemdupz(bufptr, nl - bufptr);
+	bufptr = nl + 1;
+
+	if (!prefixcmp(bufptr, "tagger "))
+		item->date = parse_tag_date(bufptr, tail);
+	else
+		item->date = 0;
 
 	return 0;
 }
