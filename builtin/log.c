@@ -24,6 +24,7 @@
 static const char *default_date_mode = NULL;
 
 static int default_show_root = 1;
+static int decoration_style;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
@@ -31,11 +32,28 @@ static const char * const builtin_log_usage =
 	"git log [<options>] [<since>..<until>] [[--] <path>...]\n"
 	"   or: git show [options] <object>...";
 
+static int parse_decoration_style(const char *var, const char *value)
+{
+	switch (git_config_maybe_bool(var, value)) {
+	case 1:
+		return DECORATE_SHORT_REFS;
+	case 0:
+		return 0;
+	default:
+		break;
+	}
+	if (!strcmp(value, "full"))
+		return DECORATE_FULL_REFS;
+	else if (!strcmp(value, "short"))
+		return DECORATE_SHORT_REFS;
+	return -1;
+}
+
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
 			 struct rev_info *rev, struct setup_revision_opt *opt)
 {
 	int i;
-	int decoration_style = 0;
+	int decoration_given = 0;
 	struct userformat_want w;
 
 	rev->abbrev = DEFAULT_ABBREV;
@@ -78,14 +96,15 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--decorate")) {
 			decoration_style = DECORATE_SHORT_REFS;
+			decoration_given = 1;
 		} else if (!prefixcmp(arg, "--decorate=")) {
 			const char *v = skip_prefix(arg, "--decorate=");
-			if (!strcmp(v, "full"))
-				decoration_style = DECORATE_FULL_REFS;
-			else if (!strcmp(v, "short"))
-				decoration_style = DECORATE_SHORT_REFS;
-			else
+			decoration_style = parse_decoration_style(arg, v);
+			if (decoration_style < 0)
 				die("invalid --decorate option: %s", arg);
+			decoration_given = 1;
+		} else if (!strcmp(arg, "--no-decorate")) {
+			decoration_style = 0;
 		} else if (!strcmp(arg, "--source")) {
 			rev->show_source = 1;
 		} else if (!strcmp(arg, "-h")) {
@@ -93,6 +112,15 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		} else
 			die("unrecognized argument: %s", arg);
 	}
+
+	/*
+	 * defeat log.decorate configuration interacting with --pretty=raw
+	 * from the command line.
+	 */
+	if (!decoration_given && rev->pretty_given
+	    && rev->commit_format == CMIT_FMT_RAW)
+		decoration_style = 0;
+
 	if (decoration_style) {
 		rev->show_decorations = 1;
 		load_ref_decorations(decoration_style);
@@ -258,6 +286,12 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return git_config_string(&fmt_patch_subject_prefix, var, value);
 	if (!strcmp(var, "log.date"))
 		return git_config_string(&default_date_mode, var, value);
+	if (!strcmp(var, "log.decorate")) {
+		decoration_style = parse_decoration_style(var, value);
+		if (decoration_style < 0)
+			decoration_style = 0; /* maybe warn? */
+		return 0;
+	}
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;
