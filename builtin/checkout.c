@@ -33,6 +33,7 @@ struct checkout_opts {
 	int writeout_error;
 
 	const char *new_branch;
+	const char *new_orphan_branch;
 	int new_branch_log;
 	enum branch_track track;
 };
@@ -492,8 +493,9 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 	struct strbuf msg = STRBUF_INIT;
 	const char *old_desc;
 	if (opts->new_branch) {
-		create_branch(old->name, opts->new_branch, new->name, 0,
-			      opts->new_branch_log, opts->track);
+		if (!opts->new_orphan_branch)
+			create_branch(old->name, opts->new_branch, new->name, 0,
+				      opts->new_branch_log, opts->track);
 		new->name = opts->new_branch;
 		setup_branch_path(new);
 	}
@@ -633,6 +635,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, "log for new branch"),
 		OPT_SET_INT('t', "track",  &opts.track, "track",
 			BRANCH_TRACK_EXPLICIT),
+		OPT_STRING(0, "orphan", &opts.new_orphan_branch, "new branch", "new unparented branch"),
 		OPT_SET_INT('2', "ours", &opts.writeout_stage, "stage",
 			    2),
 		OPT_SET_INT('3', "theirs", &opts.writeout_stage, "stage",
@@ -676,6 +679,14 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		if (!argv0 || !argv0[1])
 			die ("Missing branch name; try -b");
 		opts.new_branch = argv0 + 1;
+	}
+
+	if (opts.new_orphan_branch) {
+		if (opts.new_branch)
+			die("--orphan and -b are mutually exclusive");
+		if (opts.track > 0 || opts.new_branch_log)
+			die("--orphan cannot be used with -t or -l");
+		opts.new_branch = opts.new_orphan_branch;
 	}
 
 	if (conflict_style) {
