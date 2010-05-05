@@ -740,7 +740,7 @@ do
 		;;
 	esac
 
-	if test $apply_status = 1 && test "$threeway" = t
+	if test $apply_status != 0 && test "$threeway" = t
 	then
 		if (fall_back_3way)
 		then
