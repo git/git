@@ -1,6 +1,7 @@
 #include "http.h"
 #include "pack.h"
 #include "sideband.h"
+#include "run-command.h"
 
 int data_received;
 int active_requests;
@@ -914,47 +915,67 @@ int http_fetch_ref(const char *base, struct ref *ref)
 }
 
 /* Helpers for fetching packs */
-static int fetch_pack_index(unsigned char *sha1, const char *base_url)
+static char *fetch_pack_index(unsigned char *sha1, const char *base_url)
 {
-	int ret = 0;
-	char *hex = xstrdup(sha1_to_hex(sha1));
-	char *filename;
-	char *url = NULL;
+	char *url, *tmp;
 	struct strbuf buf = STRBUF_INIT;
 
-	if (has_pack_index(sha1)) {
-		ret = 0;
-		goto cleanup;
-	}
-
 	if (http_is_verbose)
-		fprintf(stderr, "Getting index for pack %s\n", hex);
+		fprintf(stderr, "Getting index for pack %s\n", sha1_to_hex(sha1));
 
 	end_url_with_slash(&buf, base_url);
-	strbuf_addf(&buf, "objects/pack/pack-%s.idx", hex);
+	strbuf_addf(&buf, "objects/pack/pack-%s.idx", sha1_to_hex(sha1));
 	url = strbuf_detach(&buf, NULL);
 
-	filename = sha1_pack_index_name(sha1);
-	if (http_get_file(url, filename, 0) != HTTP_OK)
-		ret = error("Unable to get pack index %s\n", url);
+	strbuf_addf(&buf, "%s.temp", sha1_pack_index_name(sha1));
+	tmp = strbuf_detach(&buf, NULL);
 
-cleanup:
-	free(hex);
+	if (http_get_file(url, tmp, 0) != HTTP_OK) {
+		error("Unable to get pack index %s\n", url);
+		free(tmp);
+		tmp = NULL;
+	}
+
 	free(url);
-	return ret;
+	return tmp;
 }
 
 static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	unsigned char *sha1, const char *base_url)
 {
 	struct packed_git *new_pack;
+	char *tmp_idx = NULL;
+	int ret;
 
-	if (fetch_pack_index(sha1, base_url))
+	if (has_pack_index(sha1)) {
+		new_pack = parse_pack_index(sha1, NULL);
+		if (!new_pack)
+			return -1; /* parse_pack_index() already issued error message */
+		goto add_pack;
+	}
+
+	tmp_idx = fetch_pack_index(sha1, base_url);
+	if (!tmp_idx)
 		return -1;
 
-	new_pack = parse_pack_index(sha1);
-	if (!new_pack)
+	new_pack = parse_pack_index(sha1, tmp_idx);
+	if (!new_pack) {
+		unlink(tmp_idx);
+		free(tmp_idx);
+
 		return -1; /* parse_pack_index() already issued error message */
+	}
+
+	ret = verify_pack_index(new_pack);
+	if (!ret) {
+		close_pack_index(new_pack);
+		ret = move_temp_to_file(tmp_idx, sha1_pack_index_name(sha1));
+	}
+	free(tmp_idx);
+	if (ret)
+		return -1;
+
+add_pack:
 	new_pack->next = *packs_head;
 	*packs_head = new_pack;
 	return 0;
@@ -1018,37 +1039,62 @@ void release_http_pack_request(struct http_pack_request *preq)
 
 int finish_http_pack_request(struct http_pack_request *preq)
 {
-	int ret;
 	struct packed_git **lst;
+	struct packed_git *p = preq->target;
+	char *tmp_idx;
+	struct child_process ip;
+	const char *ip_argv[8];
 
-	preq->target->pack_size = ftell(preq->packfile);
+	close_pack_index(p);
 
-	if (preq->packfile != NULL) {
-		fclose(preq->packfile);
-		preq->packfile = NULL;
-		preq->slot->local = NULL;
-	}
-
-	ret = move_temp_to_file(preq->tmpfile, preq->filename);
-	if (ret)
-		return ret;
+	fclose(preq->packfile);
+	preq->packfile = NULL;
+	preq->slot->local = NULL;
 
 	lst = preq->lst;
-	while (*lst != preq->target)
+	while (*lst != p)
 		lst = &((*lst)->next);
 	*lst = (*lst)->next;
 
-	if (verify_pack(preq->target))
-		return -1;
-	install_packed_git(preq->target);
+	tmp_idx = xstrdup(preq->tmpfile);
+	strcpy(tmp_idx + strlen(tmp_idx) - strlen(".pack.temp"),
+	       ".idx.temp");
 
+	ip_argv[0] = "index-pack";
+	ip_argv[1] = "-o";
+	ip_argv[2] = tmp_idx;
+	ip_argv[3] = preq->tmpfile;
+	ip_argv[4] = NULL;
+
+	memset(&ip, 0, sizeof(ip));
+	ip.argv = ip_argv;
+	ip.git_cmd = 1;
+	ip.no_stdin = 1;
+	ip.no_stdout = 1;
+
+	if (run_command(&ip)) {
+		unlink(preq->tmpfile);
+		unlink(tmp_idx);
+		free(tmp_idx);
+		return -1;
+	}
+
+	unlink(sha1_pack_index_name(p->sha1));
+
+	if (move_temp_to_file(preq->tmpfile, sha1_pack_name(p->sha1))
+	 || move_temp_to_file(tmp_idx, sha1_pack_index_name(p->sha1))) {
+		free(tmp_idx);
+		return -1;
+	}
+
+	install_packed_git(p);
+	free(tmp_idx);
 	return 0;
 }
 
 struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url)
 {
-	char *filename;
 	long prev_posn = 0;
 	char range[RANGE_HEADER_SIZE];
 	struct strbuf buf = STRBUF_INIT;
@@ -1063,9 +1109,8 @@ struct http_pack_request *new_http_pack_request(
 		sha1_to_hex(target->sha1));
 	preq->url = strbuf_detach(&buf, NULL);
 
-	filename = sha1_pack_name(target->sha1);
-	snprintf(preq->filename, sizeof(preq->filename), "%s", filename);
-	snprintf(preq->tmpfile, sizeof(preq->tmpfile), "%s.temp", filename);
+	snprintf(preq->tmpfile, sizeof(preq->tmpfile), "%s.temp",
+		sha1_pack_name(target->sha1));
 	preq->packfile = fopen(preq->tmpfile, "a");
 	if (!preq->packfile) {
 		error("Unable to open local file %s for pack",
@@ -1100,7 +1145,6 @@ struct http_pack_request *new_http_pack_request(
 	return preq;
 
 abort:
-	free(filename);
 	free(preq->url);
 	free(preq);
 	return NULL;
@@ -1155,7 +1199,6 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	freq->localfile = -1;
 
 	filename = sha1_file_name(sha1);
-	snprintf(freq->filename, sizeof(freq->filename), "%s", filename);
 	snprintf(freq->tmpfile, sizeof(freq->tmpfile),
 		 "%s.temp", filename);
 
@@ -1184,8 +1227,8 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	}
 
 	if (freq->localfile < 0) {
-		error("Couldn't create temporary file %s for %s: %s",
-		      freq->tmpfile, freq->filename, strerror(errno));
+		error("Couldn't create temporary file %s: %s",
+		      freq->tmpfile, strerror(errno));
 		goto abort;
 	}
 
@@ -1232,8 +1275,8 @@ struct http_object_request *new_http_object_request(const char *base_url,
 			prev_posn = 0;
 			lseek(freq->localfile, 0, SEEK_SET);
 			if (ftruncate(freq->localfile, 0) < 0) {
-				error("Couldn't truncate temporary file %s for %s: %s",
-					  freq->tmpfile, freq->filename, strerror(errno));
+				error("Couldn't truncate temporary file %s: %s",
+					  freq->tmpfile, strerror(errno));
 				goto abort;
 			}
 		}
@@ -1309,7 +1352,7 @@ int finish_http_object_request(struct http_object_request *freq)
 		return -1;
 	}
 	freq->rename =
-		move_temp_to_file(freq->tmpfile, freq->filename);
+		move_temp_to_file(freq->tmpfile, sha1_file_name(freq->sha1));
 
 	return freq->rename;
 }
