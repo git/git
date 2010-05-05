@@ -2705,6 +2705,7 @@ static void option_import_marks(const char *marks, int from_stream)
 	}
 
 	import_marks_file = make_fast_import_path(marks);
+	safe_create_leading_directories_const(import_marks_file);
 	import_marks_file_from_stream = from_stream;
 }
 
@@ -2735,6 +2736,7 @@ static void option_active_branches(const char *branches)
 static void option_export_marks(const char *marks)
 {
 	export_marks_file = make_fast_import_path(marks);
+	safe_create_leading_directories_const(export_marks_file);
 }
 
 static void option_export_pack_edges(const char *edges)

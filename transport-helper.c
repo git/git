@@ -7,6 +7,7 @@
 #include "revision.h"
 #include "quote.h"
 #include "remote.h"
+#include "string-list.h"
 
 static int debug;
 
@@ -17,6 +18,7 @@ struct helper_data
 	FILE *out;
 	unsigned fetch : 1,
 		import : 1,
+		export : 1,
 		option : 1,
 		push : 1,
 		connect : 1,
@@ -163,6 +165,8 @@ static struct child_process *get_helper(struct transport *transport)
 			data->push = 1;
 		else if (!strcmp(capname, "import"))
 			data->import = 1;
+		else if (!strcmp(capname, "export"))
+			data->export = 1;
 		else if (!data->refspecs && !prefixcmp(capname, "refspec ")) {
 			ALLOC_GROW(refspecs,
 				   refspec_nr + 1,
@@ -170,6 +174,11 @@ static struct child_process *get_helper(struct transport *transport)
 			refspecs[refspec_nr++] = strdup(buf.buf + strlen("refspec "));
 		} else if (!strcmp(capname, "connect")) {
 			data->connect = 1;
+		} else if (!strcmp(buf.buf, "gitdir")) {
+			struct strbuf gitdir = STRBUF_INIT;
+			strbuf_addf(&gitdir, "gitdir %s\n", get_git_dir());
+			sendline(data, &gitdir);
+			strbuf_release(&gitdir);
 		} else if (mandatory) {
 			die("Unknown mandatory capability %s. This remote "
 			    "helper probably needs newer version of Git.\n",
@@ -351,6 +360,33 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 	return start_command(fastimport);
 }
 
+static int get_exporter(struct transport *transport,
+			struct child_process *fastexport,
+			const char *export_marks,
+			const char *import_marks,
+			struct string_list *revlist_args)
+{
+	struct child_process *helper = get_helper(transport);
+	int argc = 0, i;
+	memset(fastexport, 0, sizeof(*fastexport));
+
+	/* we need to duplicate helper->in because we want to use it after
+	 * fastexport is done with it. */
+	fastexport->out = dup(helper->in);
+	fastexport->argv = xcalloc(4 + revlist_args->nr, sizeof(*fastexport->argv));
+	fastexport->argv[argc++] = "fast-export";
+	if (export_marks)
+		fastexport->argv[argc++] = export_marks;
+	if (import_marks)
+		fastexport->argv[argc++] = import_marks;
+
+	for (i = 0; i < revlist_args->nr; i++)
+		fastexport->argv[argc++] = revlist_args->items[i].string;
+
+	fastexport->git_cmd = 1;
+	return start_command(fastexport);
+}
+
 static int fetch_with_import(struct transport *transport,
 			     int nr_heads, struct ref **to_fetch)
 {
@@ -518,7 +554,7 @@ static int fetch(struct transport *transport,
 	return -1;
 }
 
-static int push_refs(struct transport *transport,
+static int push_refs_with_push(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
 	int force_all = flags & TRANSPORT_PUSH_FORCE;
@@ -527,17 +563,6 @@ static int push_refs(struct transport *transport,
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process *helper;
 	struct ref *ref;
-
-	if (process_connect(transport, 1)) {
-		do_take_over(transport);
-		return transport->push_refs(transport, remote_refs, flags);
-	}
-
-	if (!remote_refs) {
-		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
-			"Perhaps you should specify a branch such as 'master'.\n");
-		return 0;
-	}
 
 	helper = get_helper(transport);
 	if (!data->push)
@@ -656,6 +681,94 @@ static int push_refs(struct transport *transport,
 	strbuf_release(&buf);
 	return 0;
 }
+
+static int push_refs_with_export(struct transport *transport,
+		struct ref *remote_refs, int flags)
+{
+	struct ref *ref;
+	struct child_process *helper, exporter;
+	struct helper_data *data = transport->data;
+	char *export_marks = NULL, *import_marks = NULL;
+	struct string_list revlist_args = { NULL, 0, 0 };
+	struct strbuf buf = STRBUF_INIT;
+
+	helper = get_helper(transport);
+
+	write_constant(helper->in, "export\n");
+
+	recvline(data, &buf);
+	if (debug)
+		fprintf(stderr, "Debug: Got export_marks '%s'\n", buf.buf);
+	if (buf.len) {
+		struct strbuf arg = STRBUF_INIT;
+		strbuf_addstr(&arg, "--export-marks=");
+		strbuf_addbuf(&arg, &buf);
+		export_marks = strbuf_detach(&arg, NULL);
+	}
+
+	recvline(data, &buf);
+	if (debug)
+		fprintf(stderr, "Debug: Got import_marks '%s'\n", buf.buf);
+	if (buf.len) {
+		struct strbuf arg = STRBUF_INIT;
+		strbuf_addstr(&arg, "--import-marks=");
+		strbuf_addbuf(&arg, &buf);
+		import_marks = strbuf_detach(&arg, NULL);
+	}
+
+	strbuf_reset(&buf);
+
+	for (ref = remote_refs; ref; ref = ref->next) {
+		char *private;
+		unsigned char sha1[20];
+
+		if (!data->refspecs)
+			continue;
+		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
+		if (private && !get_sha1(private, sha1)) {
+			strbuf_addf(&buf, "^%s", private);
+			string_list_append(strbuf_detach(&buf, NULL), &revlist_args);
+		}
+
+		string_list_append(ref->name, &revlist_args);
+
+	}
+
+	if (get_exporter(transport, &exporter,
+			 export_marks, import_marks, &revlist_args))
+		die("Couldn't run fast-export");
+
+	data->no_disconnect_req = 1;
+	finish_command(&exporter);
+	disconnect_helper(transport);
+	return 0;
+}
+
+static int push_refs(struct transport *transport,
+		struct ref *remote_refs, int flags)
+{
+	struct helper_data *data = transport->data;
+
+	if (process_connect(transport, 1)) {
+		do_take_over(transport);
+		return transport->push_refs(transport, remote_refs, flags);
+	}
+
+	if (!remote_refs) {
+		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
+			"Perhaps you should specify a branch such as 'master'.\n");
+		return 0;
+	}
+
+	if (data->push)
+		return push_refs_with_push(transport, remote_refs, flags);
+
+	if (data->export)
+		return push_refs_with_export(transport, remote_refs, flags);
+
+	return -1;
+}
+
 
 static int has_attribute(const char *attrs, const char *attr) {
 	int len;

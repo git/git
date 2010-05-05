@@ -112,6 +112,7 @@
 /git-remote-https
 /git-remote-ftp
 /git-remote-ftps
+/git-remote-testgit
 /git-repack
 /git-replace
 /git-repo-config
