@@ -2087,6 +2087,14 @@ sub refname {
 	# .. becomes %2E%2E
 	$refname =~ s{\.\.}{%2E%2E}g;
 
+	# trailing dots and .lock are not allowed
+	# .$ becomes %2E and .lock becomes %2Elock
+	$refname =~ s{\.(?=$|lock$)}{%2E};
+
+	# the sequence @{ is used to access the reflog
+	# @{ becomes %40{
+	$refname =~ s{\@\{}{%40\{}g;
+
 	return $refname;
 }
 
