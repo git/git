@@ -366,8 +366,9 @@ test_debug () {
 }
 
 test_run_ () {
-	test_cleanup='eval_ret=$?'
+	test_cleanup=:
 	eval >&3 2>&4 "$1"
+	eval_ret=$?
 	eval >&3 2>&4 "$test_cleanup"
 	return 0
 }
@@ -567,8 +568,8 @@ test_cmp() {
 # the test to pass.
 
 test_when_finished () {
-	test_cleanup="eval_ret=\$?; { $*
-		} && (exit \"\$eval_ret\"); $test_cleanup"
+	test_cleanup="{ $*
+		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_cleanup"
 }
 
 # Most tests can use the created repository, but some may need to create more.
