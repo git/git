@@ -999,7 +999,7 @@ sub dispatch {
 	$actions{$action}->();
 }
 
-sub run {
+sub run_request {
 	our $t0 = [Time::HiRes::gettimeofday()]
 		if defined $t0;
 
@@ -1019,11 +1019,61 @@ sub run {
 	configure_gitweb_features();
 
 	dispatch();
+}
+
+our $is_last_request = sub { 1 };
+our ($pre_dispatch_hook, $post_dispatch_hook, $pre_listen_hook);
+our $CGI = 'CGI';
+our $cgi;
+sub evaluate_argv {
+	return unless (@ARGV);
+
+	require Getopt::Long;
+	Getopt::Long::GetOptions(
+		'fastcgi|fcgi|f' => sub {
+			require CGI::Fast;
+			our $CGI = 'CGI::Fast';
+
+			my $request_number = 0;
+			# let each child service 100 requests
+			our $is_last_request = sub { ++$request_number > 100 };
+		},
+		'nproc|n=i' => sub {
+			my ($arg, $val) = @_;
+			return unless eval { require FCGI::ProcManager; 1; };
+			my $proc_manager = FCGI::ProcManager->new({
+				n_processes => $val,
+			});
+			our $pre_listen_hook    = sub { $proc_manager->pm_manage()        };
+			our $pre_dispatch_hook  = sub { $proc_manager->pm_pre_dispatch()  };
+			our $post_dispatch_hook = sub { $proc_manager->pm_post_dispatch() };
+		},
+	);
+}
+
+sub run {
+	evaluate_argv();
+
+	$pre_listen_hook->()
+		if $pre_listen_hook;
+
+ REQUEST:
+	while ($cgi = $CGI->new()) {
+		$pre_dispatch_hook->()
+			if $pre_dispatch_hook;
+
+		run_request();
+
+		$pre_dispatch_hook->()
+			if $post_dispatch_hook;
+
+		last REQUEST if ($is_last_request->());
+	}
 
  DONE_GITWEB:
 	1;
 }
-our $cgi = CGI->new();
+
 run();
 
 ## ======================================================================
