@@ -243,7 +243,7 @@ where <name> is the name of the SVN repository as specified by the -R option to
 
 --username;;
 	Specify the SVN username to perform the commit as.  This option overrides
-	configuration property 'username'.
+	the 'username' configuration property.
 
 --commit-url;;
 	Use the specified URL to connect to the destination Subversion
