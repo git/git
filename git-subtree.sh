@@ -634,11 +634,20 @@ cmd_merge()
 		debug "New squash commit: $new"
 		rev="$new"
 	fi
-	
-	if [ -n "$message" ]; then
-		git merge -s subtree --message="$message" $rev
+
+	version=$(git version)
+	if [ "$version" \< "git version 1.7" ]; then
+		if [ -n "$message" ]; then
+			git merge -s subtree --message="$message" $rev
+		else
+			git merge -s subtree $rev
+		fi
 	else
-		git merge -s subtree $rev
+		if [ -n "$message" ]; then
+			git merge -Xsubtree="$prefix" --message="$message" $rev
+		else
+			git merge -Xsubtree="$prefix" $rev
+		fi
 	fi
 }
 
