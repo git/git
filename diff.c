@@ -3737,6 +3737,12 @@ void diffcore_fix_diff_index(struct diff_options *options)
 
 void diffcore_std(struct diff_options *options)
 {
+	/* We never run this function more than one time, because the
+	 * rename/copy detection logic can only run once.
+	 */
+	if (diff_queued_diff.run)
+		return;
+
 	if (options->skip_stat_unmatch)
 		diffcore_skip_stat_unmatch(options);
 	if (options->break_opt != -1)
@@ -3756,6 +3762,8 @@ void diffcore_std(struct diff_options *options)
 		DIFF_OPT_SET(options, HAS_CHANGES);
 	else
 		DIFF_OPT_CLR(options, HAS_CHANGES);
+
+	diff_queued_diff.run = 1;
 }
 
 int diff_result_code(struct diff_options *opt, int status)
