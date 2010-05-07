@@ -2540,6 +2540,7 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 void diff_setup(struct diff_options *options)
 {
 	memset(options, 0, sizeof(*options));
+	memset(&diff_queued_diff, 0, sizeof(diff_queued_diff));
 
 	options->file = stdout;
 
@@ -3457,8 +3458,7 @@ int diff_flush_patch_id(struct diff_options *options, unsigned char *sha1)
 		diff_free_filepair(q->queue[i]);
 
 	free(q->queue);
-	q->queue = NULL;
-	q->nr = q->alloc = 0;
+	DIFF_QUEUE_CLEAR(q);
 
 	return result;
 }
@@ -3586,8 +3586,7 @@ void diff_flush(struct diff_options *options)
 		diff_free_filepair(q->queue[i]);
 free_queue:
 	free(q->queue);
-	q->queue = NULL;
-	q->nr = q->alloc = 0;
+	DIFF_QUEUE_CLEAR(q);
 	if (options->close_file)
 		fclose(options->file);
 
@@ -3609,8 +3608,7 @@ static void diffcore_apply_filter(const char *filter)
 	int i;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
-	outq.queue = NULL;
-	outq.nr = outq.alloc = 0;
+	DIFF_QUEUE_CLEAR(&outq);
 
 	if (!filter)
 		return;
@@ -3678,8 +3676,7 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 	int i;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
-	outq.queue = NULL;
-	outq.nr = outq.alloc = 0;
+	DIFF_QUEUE_CLEAR(&outq);
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
