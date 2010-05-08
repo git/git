@@ -4000,7 +4000,6 @@ use vars qw/@ISA/;
 use strict;
 use warnings;
 use Carp qw/croak/;
-use File::Temp qw/tempfile/;
 use IO::File qw//;
 use vars qw/$_ignore_regex/;
 
