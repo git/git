@@ -2098,7 +2098,7 @@ clean:
 	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
 ifndef NO_PERL
-	$(RM) gitweb/gitweb.cgi gitweb/gitweb.min.*
+	$(MAKE) -C gitweb clean
 	$(MAKE) -C perl clean
 endif
 ifndef NO_PYTHON
