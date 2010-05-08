@@ -73,6 +73,27 @@ then
 	exit 1
 fi
 
+clean=no
+test_expect_success 'tests clean up after themselves' '
+    test_when_finished clean=yes
+'
+
+cleaner=no
+test_expect_code 1 'tests clean up even after a failure' '
+    test_when_finished cleaner=yes &&
+    (exit 1)
+'
+
+if test $clean$cleaner != yesyes
+then
+	say "bug in test framework: cleanup commands do not work reliably"
+	exit 1
+fi
+
+test_expect_code 2 'failure to clean up causes the test to fail' '
+    test_when_finished "(exit 2)"
+'
+
 ################################################################
 # Basics of the basics
 
