@@ -59,6 +59,7 @@ static int git_pretty_formats_config(const char *var, const char *value, void *c
 		ALLOC_GROW(commit_formats, commit_formats_len+1,
 			   commit_formats_alloc);
 		commit_format = &commit_formats[commit_formats_len];
+		memset(commit_format, 0, sizeof(*commit_format));
 		commit_formats_len++;
 	}
 
