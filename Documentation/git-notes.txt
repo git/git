@@ -183,6 +183,65 @@ with 'git log', so if you use such notes, you'll probably need to write
 some special-purpose tools to do something useful with them.
 
 
+CONFIGURATION
+-------------
+
+core.notesRef::
+	When showing commit messages, also show notes which are stored in
+	the given ref.  The ref must be fully qualified.  If the given
+	ref does not exist, it is not an error but means that no
+	notes should be printed.
++
+This setting defaults to "refs/notes/commits", and it can be overridden by
+the 'GIT_NOTES_REF' environment variable.  See linkgit:git-notes[1].
+
+notes.displayRef::
+	The (fully qualified) refname from which to show notes when
+	showing commit messages.  The value of this variable can be set
+	to a glob, in which case notes from all matching refs will be
+	shown.  You may also specify this configuration variable
+	several times.  A warning will be issued for refs that do not
+	exist, but a glob that does not match any refs is silently
+	ignored.
++
+This setting can be overridden with the `GIT_NOTES_DISPLAY_REF`
+environment variable, which must be a colon separated list of refs or
+globs.
++
+The effective value of "core.notesRef" (possibly overridden by
+GIT_NOTES_REF) is also implicitly added to the list of refs to be
+displayed.
+
+notes.rewrite.<command>::
+	When rewriting commits with <command> (currently `amend` or
+	`rebase`) and this variable is set to `true`, git
+	automatically copies your notes from the original to the
+	rewritten commit.  Defaults to `true`, but see
+	"notes.rewriteRef" below.
+
+notes.rewriteMode::
+	When copying notes during a rewrite (see the
+	"notes.rewrite.<command>" option), determines what to do if
+	the target commit already has a note.  Must be one of
+	`overwrite`, `concatenate`, or `ignore`.  Defaults to
+	`concatenate`.
++
+This setting can be overridden with the `GIT_NOTES_REWRITE_MODE`
+environment variable.
+
+notes.rewriteRef::
+	When copying notes during a rewrite, specifies the (fully
+	qualified) ref whose notes should be copied.  The ref may be a
+	glob, in which case notes in all matching refs will be copied.
+	You may also specify this configuration several times.
++
+Does not have a default value; you must configure this variable to
+enable note rewriting.
++
+This setting can be overridden with the `GIT_NOTES_REWRITE_REF`
+environment variable, which must be a colon separated list of refs or
+globs.
+
 Author
 ------
 Written by Johannes Schindelin <johannes.schindelin@gmx.de> and
