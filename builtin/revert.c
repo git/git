@@ -43,6 +43,7 @@ static const char *commit_name;
 static int allow_rerere_auto;
 
 static const char *me;
+static const char *strategy;
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
@@ -62,6 +63,7 @@ static void parse_args(int argc, const char **argv)
 		OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
 		OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
+		OPT_STRING(0, "strategy", &strategy, "strategy", "merge strategy"),
 		OPT_END(),
 		OPT_END(),
 		OPT_END(),
@@ -174,28 +176,17 @@ static char *get_encoding(const char *message)
 	return NULL;
 }
 
-static struct lock_file msg_file;
-static int msg_fd;
-
-static void add_to_msg(const char *string)
-{
-	int len = strlen(string);
-	if (write_in_full(msg_fd, string, len) < 0)
-		die_errno ("Could not write to MERGE_MSG");
-}
-
-static void add_message_to_msg(const char *message)
+static void add_message_to_msg(struct strbuf *msgbuf, const char *message)
 {
 	const char *p = message;
 	while (*p && (*p != '\n' || p[1] != '\n'))
 		p++;
 
 	if (!*p)
-		add_to_msg(sha1_to_hex(commit->object.sha1));
+		strbuf_addstr(msgbuf, sha1_to_hex(commit->object.sha1));
 
 	p += 2;
-	add_to_msg(p);
-	return;
+	strbuf_addstr(msgbuf, p);
 }
 
 static void set_author_ident_env(const char *message)
@@ -271,6 +262,19 @@ static char *help_msg(const char *name)
 	return strbuf_detach(&helpbuf, NULL);
 }
 
+static void write_message(struct strbuf *msgbuf, const char *filename)
+{
+	static struct lock_file msg_file;
+
+	int msg_fd = hold_lock_file_for_update(&msg_file, filename,
+					       LOCK_DIE_ON_ERROR);
+	if (write_in_full(msg_fd, msgbuf->buf, msgbuf->len) < 0)
+		die_errno("Could not write to %s.", filename);
+	strbuf_release(msgbuf);
+	if (commit_lock_file(&msg_file) < 0)
+		die("Error wrapping up %s", filename);
+}
+
 static struct tree *empty_tree(void)
 {
 	struct tree *tree = xcalloc(1, sizeof(struct tree));
@@ -305,17 +309,70 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from)
 	return write_ref_sha1(ref_lock, to, "cherry-pick");
 }
 
+static void do_recursive_merge(struct commit *base, struct commit *next,
+			       const char *base_label, const char *next_label,
+			       unsigned char *head, struct strbuf *msgbuf,
+			       char *defmsg)
+{
+	struct merge_options o;
+	struct tree *result, *next_tree, *base_tree, *head_tree;
+	int clean, index_fd;
+	static struct lock_file index_lock;
+
+	index_fd = hold_locked_index(&index_lock, 1);
+
+	read_cache();
+	init_merge_options(&o);
+	o.ancestor = base ? base_label : "(empty tree)";
+	o.branch1 = "HEAD";
+	o.branch2 = next ? next_label : "(empty tree)";
+
+	head_tree = parse_tree_indirect(head);
+	next_tree = next ? next->tree : empty_tree();
+	base_tree = base ? base->tree : empty_tree();
+
+	clean = merge_trees(&o,
+			    head_tree,
+			    next_tree, base_tree, &result);
+
+	if (active_cache_changed &&
+	    (write_cache(index_fd, active_cache, active_nr) ||
+	     commit_locked_index(&index_lock)))
+		die("%s: Unable to write new index file", me);
+	rollback_lock_file(&index_lock);
+
+	if (!clean) {
+		int i;
+		strbuf_addstr(msgbuf, "\nConflicts:\n\n");
+		for (i = 0; i < active_nr;) {
+			struct cache_entry *ce = active_cache[i++];
+			if (ce_stage(ce)) {
+				strbuf_addch(msgbuf, '\t');
+				strbuf_addstr(msgbuf, ce->name);
+				strbuf_addch(msgbuf, '\n');
+				while (i < active_nr && !strcmp(ce->name,
+						active_cache[i]->name))
+					i++;
+			}
+		}
+		write_message(msgbuf, defmsg);
+		fprintf(stderr, "Automatic %s failed.%s\n",
+			me, help_msg(commit_name));
+		rerere(allow_rerere_auto);
+		exit(1);
+	}
+	write_message(msgbuf, defmsg);
+	fprintf(stderr, "Finished one %s.\n", me);
+}
+
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
 	struct commit *base, *next, *parent;
 	const char *base_label, *next_label;
-	int i, index_fd, clean;
 	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
-	struct merge_options o;
-	struct tree *result, *next_tree, *base_tree, *head_tree;
-	static struct lock_file index_lock;
+	struct strbuf msgbuf = STRBUF_INIT;
 
 	git_config(git_default_config, NULL);
 	me = action == REVERT ? "revert" : "cherry-pick";
@@ -403,83 +460,57 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	 */
 
 	defmsg = git_pathdup("MERGE_MSG");
-	msg_fd = hold_lock_file_for_update(&msg_file, defmsg,
-					   LOCK_DIE_ON_ERROR);
-
-	index_fd = hold_locked_index(&index_lock, 1);
 
 	if (action == REVERT) {
 		base = commit;
 		base_label = msg.label;
 		next = parent;
 		next_label = msg.parent_label;
-		add_to_msg("Revert \"");
-		add_to_msg(msg.subject);
-		add_to_msg("\"\n\nThis reverts commit ");
-		add_to_msg(sha1_to_hex(commit->object.sha1));
+		strbuf_addstr(&msgbuf, "Revert \"");
+		strbuf_addstr(&msgbuf, msg.subject);
+		strbuf_addstr(&msgbuf, "\"\n\nThis reverts commit ");
+		strbuf_addstr(&msgbuf, sha1_to_hex(commit->object.sha1));
 
 		if (commit->parents->next) {
-			add_to_msg(", reversing\nchanges made to ");
-			add_to_msg(sha1_to_hex(parent->object.sha1));
+			strbuf_addstr(&msgbuf, ", reversing\nchanges made to ");
+			strbuf_addstr(&msgbuf, sha1_to_hex(parent->object.sha1));
 		}
-		add_to_msg(".\n");
+		strbuf_addstr(&msgbuf, ".\n");
 	} else {
 		base = parent;
 		base_label = msg.parent_label;
 		next = commit;
 		next_label = msg.label;
 		set_author_ident_env(msg.message);
-		add_message_to_msg(msg.message);
+		add_message_to_msg(&msgbuf, msg.message);
 		if (no_replay) {
-			add_to_msg("(cherry picked from commit ");
-			add_to_msg(sha1_to_hex(commit->object.sha1));
-			add_to_msg(")\n");
+			strbuf_addstr(&msgbuf, "(cherry picked from commit ");
+			strbuf_addstr(&msgbuf, sha1_to_hex(commit->object.sha1));
+			strbuf_addstr(&msgbuf, ")\n");
 		}
 	}
 
-	read_cache();
-	init_merge_options(&o);
-	o.ancestor = base ? base_label : "(empty tree)";
-	o.branch1 = "HEAD";
-	o.branch2 = next ? next_label : "(empty tree)";
-
-	head_tree = parse_tree_indirect(head);
-	next_tree = next ? next->tree : empty_tree();
-	base_tree = base ? base->tree : empty_tree();
-
-	clean = merge_trees(&o,
-			    head_tree,
-			    next_tree, base_tree, &result);
-
-	if (active_cache_changed &&
-	    (write_cache(index_fd, active_cache, active_nr) ||
-	     commit_locked_index(&index_lock)))
-		die("%s: Unable to write new index file", me);
-	rollback_lock_file(&index_lock);
-
-	if (!clean) {
-		add_to_msg("\nConflicts:\n\n");
-		for (i = 0; i < active_nr;) {
-			struct cache_entry *ce = active_cache[i++];
-			if (ce_stage(ce)) {
-				add_to_msg("\t");
-				add_to_msg(ce->name);
-				add_to_msg("\n");
-				while (i < active_nr && !strcmp(ce->name,
-						active_cache[i]->name))
-					i++;
-			}
+	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT)
+		do_recursive_merge(base, next, base_label, next_label,
+				   head, &msgbuf, defmsg);
+	else {
+		int res;
+		struct commit_list *common = NULL;
+		struct commit_list *remotes = NULL;
+		write_message(&msgbuf, defmsg);
+		commit_list_insert(base, &common);
+		commit_list_insert(next, &remotes);
+		res = try_merge_command(strategy, common,
+					sha1_to_hex(head), remotes);
+		free_commit_list(common);
+		free_commit_list(remotes);
+		if (res) {
+			fprintf(stderr, "Automatic %s with strategy %s failed.%s\n",
+				me, strategy, help_msg(commit_name));
+			rerere(allow_rerere_auto);
+			exit(1);
 		}
-		if (commit_lock_file(&msg_file) < 0)
-			die ("Error wrapping up %s", defmsg);
-		fprintf(stderr, "Automatic %s failed.%s\n",
-			me, help_msg(commit_name));
-		rerere(allow_rerere_auto);
-		exit(1);
 	}
-	if (commit_lock_file(&msg_file) < 0)
-		die ("Error wrapping up %s", defmsg);
-	fprintf(stderr, "Finished one %s.\n", me);
 
 	/*
 	 *
