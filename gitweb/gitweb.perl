@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use CGI qw(:standard :escapeHTML -nosticky);
 use CGI::Util qw(unescape);
-use CGI::Carp qw(fatalsToBrowser);
+use CGI::Carp qw(fatalsToBrowser set_message);
 use Encode;
 use Fcntl ':mode';
 use File::Find qw();
@@ -952,6 +952,21 @@ if ($git_avatar eq 'gravatar') {
 	$git_avatar = '';
 }
 
+# custom error handler: 'die <message>' is Internal Server Error
+sub handle_errors_html {
+	my $msg = shift; # it is already HTML escaped
+
+	# to avoid infinite loop where error occurs in die_error,
+	# change handler to default handler, disabling handle_errors_html
+	set_message("Error occured when inside die_error:\n$msg");
+
+	# you cannot jump out of die_error when called as error handler;
+	# the subroutine set via CGI::Carp::set_message is called _after_
+	# HTTP headers are already written, so it cannot write them itself
+	die_error(undef, undef, $msg, -error_handler => 1, -no_http_header => 1);
+}
+set_message(\&handle_errors_html);
+
 # dispatch
 if (!defined $action) {
 	if (defined $hash) {
@@ -972,11 +987,16 @@ if ($action !~ m/^(?:opml|project_list|project_index)$/ &&
 	die_error(400, "Project needed");
 }
 $actions{$action}->();
-exit;
+DONE_GITWEB:
+1;
 
 ## ======================================================================
 ## action links
 
+# possible values of extra options
+# -full => 0|1      - use absolute/full URL ($my_uri/$my_url as base)
+# -replay => 1      - start from a current view (replay with modifications)
+# -path_info => 0|1 - don't use/use path_info URL (if possible)
 sub href {
 	my %params = @_;
 	# default is to use -absolute url() i.e. $my_uri
@@ -993,7 +1013,8 @@ sub href {
 	}
 
 	my $use_pathinfo = gitweb_check_feature('pathinfo');
-	if ($use_pathinfo and defined $params{'project'}) {
+	if (defined $params{'project'} &&
+	    (exists $params{-path_info} ? $params{-path_info} : $use_pathinfo)) {
 		# try to put as many parameters as possible in PATH_INFO:
 		#   - project name
 		#   - action
@@ -3158,23 +3179,30 @@ sub blob_contenttype {
 ## ======================================================================
 ## functions printing HTML: header, footer, error page
 
+sub get_page_title {
+	my $title = to_utf8($site_name);
+
+	return $title unless (defined $project);
+	$title .= " - " . to_utf8($project);
+
+	return $title unless (defined $action);
+	$title .= "/$action"; # $action is US-ASCII (7bit ASCII)
+
+	return $title unless (defined $file_name);
+	$title .= " - " . esc_path($file_name);
+	if ($action eq "tree" && $file_name !~ m|/$|) {
+		$title .= "/";
+	}
+
+	return $title;
+}
+
 sub git_header_html {
 	my $status = shift || "200 OK";
 	my $expires = shift;
+	my %opts = @_;
 
-	my $title = "$site_name";
-	if (defined $project) {
-		$title .= " - " . to_utf8($project);
-		if (defined $action) {
-			$title .= "/$action";
-			if (defined $file_name) {
-				$title .= " - " . esc_path($file_name);
-				if ($action eq "tree" && $file_name !~ m|/$|) {
-					$title .= "/";
-				}
-			}
-		}
-	}
+	my $title = get_page_title();
 	my $content_type;
 	# require explicit support from the UA if we are to send the page as
 	# 'application/xhtml+xml', otherwise send it as plain old 'text/html'.
@@ -3188,7 +3216,8 @@ sub git_header_html {
 		$content_type = 'text/html';
 	}
 	print $cgi->header(-type=>$content_type, -charset => 'utf-8',
-	                   -status=> $status, -expires => $expires);
+	                   -status=> $status, -expires => $expires)
+		unless ($opts{'-no_http_headers'});
 	my $mod_perl_version = $ENV{'MOD_PERL'} ? " $ENV{'MOD_PERL'}" : '';
 	print <<EOF;
 <?xml version="1.0" encoding="utf-8"?>
@@ -3405,6 +3434,7 @@ sub die_error {
 	my $status = shift || 500;
 	my $error = esc_html(shift) || "Internal Server Error";
 	my $extra = shift;
+	my %opts = @_;
 
 	my %http_responses = (
 		400 => '400 Bad Request',
@@ -3413,7 +3443,7 @@ sub die_error {
 		500 => '500 Internal Server Error',
 		503 => '503 Service Unavailable',
 	);
-	git_header_html($http_responses{$status});
+	git_header_html($http_responses{$status}, undef, %opts);
 	print <<EOF;
 <div class="page_body">
 <br /><br />
@@ -3427,7 +3457,8 @@ EOF
 	print "</div>\n";
 
 	git_footer_html();
-	exit;
+	goto DONE_GITWEB
+		unless ($opts{'-error_handler'});
 }
 
 ## ----------------------------------------------------------------------
