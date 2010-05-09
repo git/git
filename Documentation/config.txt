@@ -1481,6 +1481,16 @@ pager.<cmd>::
 	it takes precedence over this option.  To disable pagination for
 	all commands, set `core.pager` or `GIT_PAGER` to `cat`.
 
+pretty.<name>::
+	Alias for a --pretty= format string, as specified in
+	linkgit:git-log[1]. Any aliases defined here can be used just
+	as the built-in pretty formats could. For example,
+	running `git config pretty.changelog "format:{asterisk} %H %s"`
+	would cause the invocation `git log --pretty=changelog`
+	to be equivalent to running `git log "--pretty=format:{asterisk} %H %s"`.
+	Note that an alias with the same name as a built-in format
+	will be silently ignored.
+
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches
 	at once.
