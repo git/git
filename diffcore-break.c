@@ -162,8 +162,7 @@ void diffcore_break(int break_score)
 	if (!merge_score)
 		merge_score = DEFAULT_MERGE_SCORE;
 
-	outq.nr = outq.alloc = 0;
-	outq.queue = NULL;
+	DIFF_QUEUE_CLEAR(&outq);
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
@@ -256,8 +255,7 @@ void diffcore_merge_broken(void)
 	struct diff_queue_struct outq;
 	int i, j;
 
-	outq.nr = outq.alloc = 0;
-	outq.queue = NULL;
+	DIFF_QUEUE_CLEAR(&outq);
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];

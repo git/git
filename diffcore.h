@@ -91,7 +91,14 @@ struct diff_queue_struct {
 	struct diff_filepair **queue;
 	int alloc;
 	int nr;
+	int run;
 };
+#define DIFF_QUEUE_CLEAR(q) \
+	do { \
+		(q)->queue = NULL; \
+		(q)->nr = (q)->alloc = 0; \
+		(q)->run = 0; \
+	} while(0);
 
 extern struct diff_queue_struct diff_queued_diff;
 extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
