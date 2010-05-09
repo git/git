@@ -3,7 +3,7 @@ git-notes(1)
 
 NAME
 ----
-git-notes - Add/inspect object notes
+git-notes - Add or inspect object notes
 
 SYNOPSIS
 --------
@@ -20,17 +20,17 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This command allows you to add/remove notes to/from objects, without
-changing the objects themselves.
+Adds, removes, or reads notes attached to objects, without touching
+the objects themselves.
 
 By default, notes are saved to and read from `refs/notes/commits`, but
 this default can be overridden.  See the OPTIONS, CONFIGURATION, and
 ENVIRONMENT sections below.  If this ref does not exist, it will be
 quietly created when it is first needed to store a note.
 
-A typical use of notes is to extend a commit message without having
-to change the commit itself. Such commit notes can be shown by `git log`
-along with the original commit message. To discern these notes from the
+A typical use of notes is to supplement a commit message without
+changing the commit itself. Notes can be shown by 'git log' along with
+the original commit message. To distinguish these notes from the
 message stored in the commit object, the notes are indented like the
 message, after an unindented line saying "Notes (<refname>):" (or
 "Notes:" for `refs/notes/commits`).
