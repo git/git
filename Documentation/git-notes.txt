@@ -28,7 +28,7 @@ to change the commit itself. Such commit notes can be shown by `git log`
 along with the original commit message. To discern these notes from the
 message stored in the commit object, the notes are indented like the
 message, after an unindented line saying "Notes (<refname>):" (or
-"Notes:" for the default setting).
+"Notes:" for `refs/notes/commits`).
 
 This command always manipulates the notes specified in "core.notesRef"
 (see linkgit:git-config[1]), which can be overridden by GIT_NOTES_REF.
@@ -122,17 +122,29 @@ OPTIONS
 	is taken to be in `refs/notes/` if it is not qualified.
 
 
-NOTES
------
+DISCUSSION
+----------
+
+Commit notes are blobs containing extra information about an object
+(usually information to supplement a commit's message).  These blobs
+are taken from notes refs.  A notes ref is usually a branch which
+contains "files" whose paths are the object names for the objects
+they describe, with some directory separators included for performance
+reasons footnote:[Permitted pathnames have the form
+'ab'`/`'cd'`/`'ef'`/`'...'`/`'abcdef...': a sequence of directory
+names of two hexadecimal digits each followed by a filename with the
+rest of the object ID.].
 
 Every notes change creates a new commit at the specified notes ref.
 You can therefore inspect the history of the notes by invoking, e.g.,
-`git log -p notes/commits`.
+`git log -p notes/commits`.  Currently the commit message only records
+which operation triggered the update, and the commit authorship is
+determined according to the usual rules (see linkgit:git-commit[1]).
+These details may change in the future.
 
-Currently the commit message only records which operation triggered
-the update, and the commit authorship is determined according to the
-usual rules (see linkgit:git-commit[1]).  These details may change in
-the future.
+It is also permitted for a notes ref to point directly to a tree
+object, in which case the history of the notes can be read with
+`git log -p -g <refname>`.
 
 
 Author
