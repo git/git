@@ -193,4 +193,26 @@ test_expect_success 'commit -F overrides -t' '
 	commit_msg_is "-F log"
 '
 
+test_expect_success 'Commit without message is allowed with --allow-empty-message' '
+	echo "more content" >>foo &&
+	git add foo &&
+	>empty &&
+	git commit --allow-empty-message <empty &&
+	commit_msg_is ""
+'
+
+test_expect_success 'Commit without message is no-no without --allow-empty-message' '
+	echo "more content" >>foo &&
+	git add foo &&
+	>empty &&
+	test_must_fail git commit <empty
+'
+
+test_expect_success 'Commit a message with --allow-empty-message' '
+	echo "even more content" >>foo &&
+	git add foo &&
+	git commit --allow-empty-message -m"hello there" &&
+	commit_msg_is "hello there"
+'
+
 test_done
