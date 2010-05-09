@@ -1,0 +1,40 @@
+Git v1.7.2 Release Notes (draft)
+================================
+
+Updates since v1.7.1
+--------------------
+
+ * After "git apply --whitespace=fix" removed trailing blank lines in an
+   patch in a patch series, it failed to apply later patches that depend
+   on the presense of such blank lines.
+
+ * The output from the textconv filter used by "git diff" can be cached to
+   speed up their reuse.
+
+ * "git send-email" learned --smtp-domain option to specify the domainname
+   used in the EHLO/HELO exchange.
+
+ * "git revert" learned --strategy option to specify the merge strategy.
+
+ * The whitespace rules used in "git apply --whitespace" and "git diff"
+   gained a new member in the family (tab-in-indent) to help projects with
+   policy to indent only with spaces.
+
+ * Authentication over http transport can now be made lazily, in that the
+   request can first go to a URL without username, get a 401 response and
+   then the client will ask for the username to use.
+
+
+Fixes since v1.7.1
+------------------
+
+ * In 1.7.1, "git status" stopped refreshing the index by mistake.
+
+All of the fixes in v1.7.1.X maintenance series are included in this
+release, unless otherwise noted.
+
+--
+exec >/var/tmp/1
+O=v1.7.1-77-gb751157
+echo O=$(git describe master)
+git shortlog --no-merges master ^maint ^$O
