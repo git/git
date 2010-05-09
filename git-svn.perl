@@ -1185,6 +1185,7 @@ sub cmd_reset {
 		    "history\n";
 	}
 	my ($r, $c) = $gs->find_rev_before($target, not $_fetch_parent);
+	die "Cannot find SVN revision $target\n" unless defined($c);
 	$gs->rev_map_set($r, $c, 'reset', $uuid);
 	print "r$r = $c ($gs->{ref_id})\n";
 }
@@ -2085,6 +2086,14 @@ sub refname {
 	# It cannot have two consecutive dots .. anywhere
 	# .. becomes %2E%2E
 	$refname =~ s{\.\.}{%2E%2E}g;
+
+	# trailing dots and .lock are not allowed
+	# .$ becomes %2E and .lock becomes %2Elock
+	$refname =~ s{\.(?=$|lock$)}{%2E};
+
+	# the sequence @{ is used to access the reflog
+	# @{ becomes %40{
+	$refname =~ s{\@\{}{%40\{}g;
 
 	return $refname;
 }
@@ -3605,6 +3614,7 @@ sub mkfile {
 
 sub rev_map_set {
 	my ($self, $rev, $commit, $update_ref, $uuid) = @_;
+	defined $commit or die "missing arg3\n";
 	length $commit == 40 or die "arg3 must be a full SHA1 hexsum\n";
 	my $db = $self->map_path($uuid);
 	my $db_lock = "$db.lock";
@@ -3998,7 +4008,6 @@ use vars qw/@ISA/;
 use strict;
 use warnings;
 use Carp qw/croak/;
-use File::Temp qw/tempfile/;
 use IO::File qw//;
 use vars qw/$_ignore_regex/;
 
