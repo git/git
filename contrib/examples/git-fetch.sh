@@ -127,10 +127,12 @@ then
 	orig_head=$(git rev-parse --verify HEAD 2>/dev/null)
 fi
 
-# Allow --notags from remote.$1.tagopt
+# Allow --tags/--notags from remote.$1.tagopt
 case "$tags$no_tags" in
 '')
 	case "$(git config --get "remote.$1.tagopt")" in
+	--tags)
+		tags=t ;;
 	--no-tags)
 		no_tags=t ;;
 	esac
