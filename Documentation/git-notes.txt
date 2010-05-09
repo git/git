@@ -35,8 +35,8 @@ message stored in the commit object, the notes are indented like the
 message, after an unindented line saying "Notes (<refname>):" (or
 "Notes:" for `refs/notes/commits`).
 
-To change which notes are shown by 'git-log', see the
-"notes.displayRef" configuration.
+To change which notes are shown by 'git log', see the
+"notes.displayRef" configuration in linkgit:git-log[1].
 
 See the description of "notes.rewrite.<command>" in
 linkgit:git-config[1] for a way of carrying your notes across commands
@@ -196,21 +196,13 @@ core.notesRef::
 	command line.
 
 notes.displayRef::
-	The (fully qualified) refname from which to show notes when
-	showing commit messages.  The value of this variable can be set
-	to a glob, in which case notes from all matching refs will be
-	shown.  You may also specify this configuration variable
-	several times.  A warning will be issued for refs that do not
-	exist, but a glob that does not match any refs is silently
-	ignored.
-+
-This setting can be overridden with the `GIT_NOTES_DISPLAY_REF`
-environment variable, which must be a colon separated list of refs or
-globs.
-+
-The effective value of "core.notesRef" (possibly overridden by
-GIT_NOTES_REF) is also implicitly added to the list of refs to be
-displayed.
+	Which ref (or refs, if a glob or specified more than once), in
+	addition to the default set by `core.notesRef` or
+	'GIT_NOTES_REF', to read notes from when showing commit
+	messages with the 'git log' family of commands.
+	This setting can be overridden on the command line or by the
+	'GIT_NOTES_DISPLAY_REF' environment variable.
+	See linkgit:git-log[1].
 
 notes.rewrite.<command>::
 	When rewriting commits with <command> (currently `amend` or
@@ -249,6 +241,16 @@ ENVIRONMENT
 'GIT_NOTES_REF'::
 	Which ref to manipulate notes from, instead of `refs/notes/commits`.
 	This overrides the `core.notesRef` setting.
+
+'GIT_NOTES_DISPLAY_REF'::
+	Colon-delimited list of refs or globs indicating which refs,
+	in addition to the default from `core.notesRef` or
+	'GIT_NOTES_REF', to read notes from when showing commit
+	messages.
+	This overrides the `notes.displayRef` setting.
++
+A warning will be issued for refs that do not exist, but a glob that
+does not match any refs is silently ignored.
 
 
 Author
