@@ -101,15 +101,20 @@ OPTIONS
 	Use the given note message (instead of prompting).
 	If multiple `-m` options are given, their values
 	are concatenated as separate paragraphs.
+	Lines starting with `#` and empty lines other than a
+	single line between paragraphs will be stripped out.
 
 -F <file>::
 --file=<file>::
 	Take the note message from the given file.  Use '-' to
 	read the note message from the standard input.
+	Lines starting with `#` and empty lines other than a
+	single line between paragraphs will be stripped out.
 
 -C <object>::
 --reuse-message=<object>::
-	Reuse the note message from the given note object.
+	Take the note message from the given blob object (for
+	example, another note).
 
 -c <object>::
 --reedit-message=<object>::
@@ -145,6 +150,37 @@ These details may change in the future.
 It is also permitted for a notes ref to point directly to a tree
 object, in which case the history of the notes can be read with
 `git log -p -g <refname>`.
+
+
+EXAMPLES
+--------
+
+You can use notes to add annotations with information that was not
+available at the time a commit was written.
+
+------------
+$ git notes add -m 'Tested-by: Johannes Sixt <j6t@kdbg.org>' 72a144e2
+$ git show -s 72a144e
+[...]
+    Signed-off-by: Junio C Hamano <gitster@pobox.com>
+
+Notes:
+    Tested-by: Johannes Sixt <j6t@kdbg.org>
+------------
+
+In principle, a note is a regular Git blob, and any kind of
+(non-)format is accepted.  You can binary-safely create notes from
+arbitrary files using 'git hash-object':
+
+------------
+$ cc *.c
+$ blob=$(git hash-object -w a.out)
+$ git notes --ref=built add -C "$blob" HEAD
+------------
+
+Of course, it doesn't make much sense to display non-text-format notes
+with 'git log', so if you use such notes, you'll probably need to write
+some special-purpose tools to do something useful with them.
 
 
 Author
