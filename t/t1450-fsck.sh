@@ -57,6 +57,34 @@ test_expect_success 'branch pointing to non-commit' '
 	git update-ref -d refs/heads/invalid
 '
 
+new=nothing
+test_expect_success 'email without @ is okay' '
+	git cat-file commit HEAD >basis &&
+	sed "s/@/AT/" basis >okay &&
+	new=$(git hash-object -t commit -w --stdin <okay) &&
+	echo "$new" &&
+	git update-ref refs/heads/bogus "$new" &&
+	git fsck 2>out &&
+	cat out &&
+	! grep "error in commit $new" out
+'
+git update-ref -d refs/heads/bogus
+rm -f ".git/objects/$new"
+
+new=nothing
+test_expect_success 'email with embedded > is not okay' '
+	git cat-file commit HEAD >basis &&
+	sed "s/@[a-z]/&>/" basis >bad-email &&
+	new=$(git hash-object -t commit -w --stdin <bad-email) &&
+	echo "$new" &&
+	git update-ref refs/heads/bogus "$new" &&
+	git fsck 2>out &&
+	cat out &&
+	grep "error in commit $new" out
+'
+git update-ref -d refs/heads/bogus
+rm -f ".git/objects/$new"
+
 cat > invalid-tag <<EOF
 object ffffffffffffffffffffffffffffffffffffffff
 type commit
