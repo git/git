@@ -2441,6 +2441,9 @@ sub git_get_projects_list {
 			follow_skip => 2, # ignore duplicates
 			dangling_symlinks => 0, # ignore dangling symlinks, silently
 			wanted => sub {
+				# global variables
+				our $project_maxdepth;
+				our $projectroot;
 				# skip project-list toplevel, if we get it.
 				return if (m!^[/.]$!);
 				# only directories can be git repositories
