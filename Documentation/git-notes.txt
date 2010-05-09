@@ -23,6 +23,11 @@ DESCRIPTION
 This command allows you to add/remove notes to/from objects, without
 changing the objects themselves.
 
+By default, notes are saved to and read from `refs/notes/commits`, but
+this default can be overridden.  See the OPTIONS, CONFIGURATION, and
+ENVIRONMENT sections below.  If this ref does not exist, it will be
+quietly created when it is first needed to store a note.
+
 A typical use of notes is to extend a commit message without having
 to change the commit itself. Such commit notes can be shown by `git log`
 along with the original commit message. To discern these notes from the
@@ -30,8 +35,6 @@ message stored in the commit object, the notes are indented like the
 message, after an unindented line saying "Notes (<refname>):" (or
 "Notes:" for `refs/notes/commits`).
 
-This command always manipulates the notes specified in "core.notesRef"
-(see linkgit:git-config[1]), which can be overridden by GIT_NOTES_REF.
 To change which notes are shown by 'git-log', see the
 "notes.displayRef" configuration.
 
@@ -122,8 +125,8 @@ OPTIONS
 	the user can further edit the note message.
 
 --ref <ref>::
-	Manipulate the notes tree in <ref>.  This overrides both
-	GIT_NOTES_REF and the "core.notesRef" configuration.  The ref
+	Manipulate the notes tree in <ref>.  This overrides
+	'GIT_NOTES_REF' and the "core.notesRef" configuration.  The ref
 	is taken to be in `refs/notes/` if it is not qualified.
 
 
@@ -187,13 +190,10 @@ CONFIGURATION
 -------------
 
 core.notesRef::
-	When showing commit messages, also show notes which are stored in
-	the given ref.  The ref must be fully qualified.  If the given
-	ref does not exist, it is not an error but means that no
-	notes should be printed.
-+
-This setting defaults to "refs/notes/commits", and it can be overridden by
-the 'GIT_NOTES_REF' environment variable.  See linkgit:git-notes[1].
+	Notes ref to read and manipulate instead of
+	`refs/notes/commits`.  Must be an unabbreviated ref name.
+	This setting can be overridden through the environment and
+	command line.
 
 notes.displayRef::
 	The (fully qualified) refname from which to show notes when
@@ -241,6 +241,15 @@ enable note rewriting.
 This setting can be overridden with the `GIT_NOTES_REWRITE_REF`
 environment variable, which must be a colon separated list of refs or
 globs.
+
+
+ENVIRONMENT
+-----------
+
+'GIT_NOTES_REF'::
+	Which ref to manipulate notes from, instead of `refs/notes/commits`.
+	This overrides the `core.notesRef` setting.
+
 
 Author
 ------
