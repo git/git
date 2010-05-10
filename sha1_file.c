@@ -640,6 +640,32 @@ void free_pack_by_name(const char *pack_name)
 	}
 }
 
+static struct packed_git *last_found = (void *)1;
+void free_all_pack()
+{
+	struct packed_git *p, **pp = &packed_git;
+	last_found = (void *)1;
+
+	while (*pp) {
+		p = *pp;
+		if (p != 0) {
+			clear_delta_base_cache();
+			close_pack_windows(p);
+			if (p->pack_fd != -1)
+				close(p->pack_fd);
+			if (p->index_data)
+				munmap((void *)p->index_data, p->index_size);
+			free(p->bad_object_sha1);
+			*pp = p->next;
+			free(p);
+			return;
+		}
+		pp = &p->next;
+	}
+
+
+}
+
 /*
  * Do not call this directly as this leaks p->pack_fd on error return;
  * call open_packed_git() instead.
@@ -986,6 +1012,7 @@ void prepare_packed_git(void)
 
 void reprepare_packed_git(void)
 {
+	last_found = (void*)1;
 	discard_revindex();
 	prepare_packed_git_run_once = 0;
 	prepare_packed_git();
@@ -1859,7 +1886,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 
 static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 {
-	static struct packed_git *last_found = (void *)1;
+	
 	struct packed_git *p;
 	off_t offset;
 
