@@ -463,7 +463,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		static char git_dir[PATH_MAX+1];
 
 		setenv(GIT_DIR_ENVIRONMENT,
-			getcwd(git_dir, sizeof(git_dir)), 0);
+			getcwd(git_dir, sizeof(git_dir)), argc > 0);
 	}
 
 	if (init_shared_repository != -1)
