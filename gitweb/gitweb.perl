@@ -6117,8 +6117,8 @@ sub git_commitdiff {
 			}
 			push @commit_spec, '--root', $hash;
 		}
-		open $fd, "-|", git_cmd(), "format-patch", '--encoding=utf8',
-			'--stdout', @commit_spec
+		open $fd, "-|", git_cmd(), "format-patch", @diff_opts,
+			'--encoding=utf8', '--stdout', @commit_spec
 			or die_error(500, "Open git-format-patch failed");
 	} else {
 		die_error(400, "Unknown commitdiff format");
