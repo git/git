@@ -981,7 +981,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		/*
 		 * All the rest are the commits being merged;
 		 * prepare the standard merge summary message to
-		 * be appended to the given message.  If remote
+		 * used as the merge message.  If remote
 		 * is invalid we will die later in the common
 		 * codepath so we discard the error in this
 		 * loop.
