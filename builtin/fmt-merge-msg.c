@@ -202,7 +202,8 @@ static void shortlog(const char *name, unsigned char *sha1,
 	string_list_clear(&subjects, 0);
 }
 
-int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
+static int do_fmt_merge_msg(int merge_summary, struct strbuf *in,
+	struct strbuf *out) {
 	int limit = 20, i = 0, pos = 0;
 	char *sep = "";
 	unsigned char head_sha1[20];
@@ -294,6 +295,10 @@ int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
 					head, &rev, limit, out);
 	}
 	return 0;
+}
+
+int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
+	return do_fmt_merge_msg(merge_summary, in, out);
 }
 
 int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
