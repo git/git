@@ -255,8 +255,8 @@ static void do_fmt_merge_msg_title(struct strbuf *out,
 		strbuf_addf(out, " into %s\n", current_branch);
 }
 
-static int do_fmt_merge_msg(int merge_summary, struct strbuf *in,
-	struct strbuf *out) {
+static int do_fmt_merge_msg(int merge_title, int merge_summary,
+	struct strbuf *in, struct strbuf *out) {
 	int limit = 20, i = 0, pos = 0;
 	unsigned char head_sha1[20];
 	const char *current_branch;
@@ -285,7 +285,8 @@ static int do_fmt_merge_msg(int merge_summary, struct strbuf *in,
 	if (!srcs.nr)
 		return 0;
 
-	do_fmt_merge_msg_title(out, current_branch);
+	if (merge_title)
+		do_fmt_merge_msg_title(out, current_branch);
 
 	if (merge_summary) {
 		struct commit *head;
@@ -305,7 +306,11 @@ static int do_fmt_merge_msg(int merge_summary, struct strbuf *in,
 }
 
 int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
-	return do_fmt_merge_msg(merge_summary, in, out);
+	return do_fmt_merge_msg(1, merge_summary, in, out);
+}
+
+int fmt_merge_msg_shortlog(struct strbuf *in, struct strbuf *out) {
+	return do_fmt_merge_msg(0, 1, in, out);
 }
 
 int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
