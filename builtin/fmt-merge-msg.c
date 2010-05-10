@@ -298,6 +298,9 @@ static int do_fmt_merge_msg(int merge_title, int merge_summary,
 		rev.ignore_merges = 1;
 		rev.limited = 1;
 
+		if (suffixcmp(out->buf, "\n"))
+			strbuf_addch(out, '\n');
+
 		for (i = 0; i < origins.nr; i++)
 			shortlog(origins.items[i].string, origins.items[i].util,
 					head, &rev, limit, out);

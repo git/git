@@ -40,7 +40,7 @@ test_expect_success 'merge c2 with a custom message' '
 	test_cmp exp.subject actual
 '
 
-test_expect_failure 'merge --log appends to custom message' '
+test_expect_success 'merge --log appends to custom message' '
 	git reset --hard c1 &&
 	git merge --log -m "$(cat exp.subject)" c2 &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&

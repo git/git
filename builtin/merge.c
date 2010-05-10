@@ -981,18 +981,22 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		/*
 		 * All the rest are the commits being merged;
 		 * prepare the standard merge summary message to
-		 * used as the merge message.  If remote
+		 * be appended to the given message.  If remote
 		 * is invalid we will die later in the common
 		 * codepath so we discard the error in this
 		 * loop.
 		 */
-		if (!have_message) {
-			for (i = 0; i < argc; i++)
-				merge_name(argv[i], &merge_names);
+		for (i = 0; i < argc; i++)
+			merge_name(argv[i], &merge_names);
+
+		if (have_message && option_log)
+			fmt_merge_msg_shortlog(&merge_names, &merge_msg);
+		else if (!have_message)
 			fmt_merge_msg(option_log, &merge_names, &merge_msg);
-			if (merge_msg.len)
-				strbuf_setlen(&merge_msg, merge_msg.len-1);
-		}
+
+
+		if (!(have_message && !option_log) && merge_msg.len)
+			strbuf_setlen(&merge_msg, merge_msg.len-1);
 	}
 
 	if (head_invalid || !argc)
