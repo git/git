@@ -8,6 +8,11 @@ Testing merge when using a custom message for the merge commit.'
 
 create_merge_msgs() {
 	echo >exp.subject "custom message"
+
+	cp exp.subject exp.log &&
+	echo >>exp.log "" &&
+	echo >>exp.log "* commit 'c2':" &&
+	echo >>exp.log "  c2"
 }
 
 test_expect_success 'setup' '
@@ -33,6 +38,13 @@ test_expect_success 'merge c2 with a custom message' '
 	git merge -m "$(cat exp.subject)" c2 &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
 	test_cmp exp.subject actual
+'
+
+test_expect_failure 'merge --log appends to custom message' '
+	git reset --hard c1 &&
+	git merge --log -m "$(cat exp.subject)" c2 &&
+	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
+	test_cmp exp.log actual
 '
 
 test_done
