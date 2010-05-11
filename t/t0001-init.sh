@@ -310,4 +310,18 @@ test_expect_success POSIXPERM 'init notices EPERM' '
 	)
 '
 
+test_expect_success 'init creates a new bare directory with global --bare' '
+	rm -rf newdir &&
+	git --bare init newdir &&
+	test -d newdir/refs
+'
+
+test_expect_success 'init prefers command line to GIT_DIR' '
+	rm -rf newdir &&
+	mkdir otherdir &&
+	GIT_DIR=otherdir git --bare init newdir &&
+	test -d newdir/refs &&
+	! test -d otherdir/refs
+'
+
 test_done
