@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2010, #03; Sun, 9)
-X-master-at: 212f0ba357cde43d1cf66692f73a2f662d13ac55
-X-next-at: 07419c952633f427ce186bf4c2b9a49592c9d3d3
+Subject: What's cooking in git.git (May 2010, #04; Wed, 12)
+X-master-at: 0e4607c09d72ada4942ea49298dba83ec4145892
+X-next-at: 7d1e8fef7ffce7fe8e9fa8fae99aaa15468fb6d3
 
-What's cooking in git.git (May 2010, #03; Sun, 9)
+What's cooking in git.git (May 2010, #04; Wed, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,163 +11,34 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-Tonight's 'master' merges many topics that has been cooking for a few
-weeks in 'next' as the first batch of 1.7.2 cycle.  I will be moving some
-topics in 'pu' to 'next' as the next step tomorrow.  I'm in the middle of
-moving and I expect that I won't be back up to speed until later this
-month.
+I'll be packing my primary machine tomorrow morning, and hopefully I can
+resume my git activity early next week.  This will be the last pushout
+until then.
 
 --------------------------------------------------
 [New Topics]
 
-* jn/gitweb-fastcgi (2010-05-07) 5 commits
- - gitweb: Add support for FastCGI, using CGI::Fast
- - gitweb: Put all per-connection code in run() subroutine
- - gitweb: Use nonlocal jump instead of 'exit' in die_error
- - gitweb: href(..., -path_info => 0|1)
- - Export more test-related variables when running external tests
- (this branch shares commits with jn/gitweb-caching-prep.)
+* bw/diff-metainfo-color (2010-05-04) 1 commit
+ - [sign-off?] diff: fix coloring of extended diff headers
 
-* jn/make-header-dependency (2010-05-08) 2 commits
- - Makefile: let header dependency checker override COMPUTE_HEADER_DEPENDENCIES
- - Makefile: fix header dependency checker to allow NO_CURL builds
+* ph/clone-message-reword (2010-05-09) 1 commit
+ - clone: reword messages to match the end-user perception
 
-* js/try-to-free-stackable (2010-05-08) 2 commits
- - Do not call release_pack_memory in malloc wrappers when GIT_TRACE is used
- - Have set_try_to_free_routine return the previous routine
- (this branch uses np/malloc-threading.)
+* rc/ls-remote-default (2010-05-12) 1 commit
+ - ls-remote: print URL when no repo is specified
 
-Should be Ok for 'next'.
+* fg/autocrlf (2010-05-12) 1 commit
+ - autocrlf: Make it work also for un-normalized repositories
 
---------------------------------------------------
-[Graduated to "master"]
-
-* ab/commit-empty-message (2010-04-06) 1 commit
-  (merged to 'next' on 2010-05-04 at 54c2e47)
- + Add option to git-commit to allow empty log messages
-
-(has been in 'next' since 2010-04-07)
-
-* bg/apply-blank-trailing-context (2010-04-08) 1 commit
-  (merged to 'next' on 2010-05-04 at 31f3482)
- + apply: Allow blank *trailing* context lines to match beyond EOF
-
-(has been in 'next' since 2010-04-14)
-
-* bg/send-email-smtpdomain (2010-04-10) 4 commits
-  (merged to 'next' on 2010-05-04 at 2afbe2c)
- + send-email: Cleanup smtp-domain and add config
- + Document send-email --smtp-domain
- + send-email: Don't use FQDNs without a '.'
- + send-email: Cleanup { style
-
-(has been in 'next' since 2010-04-14)
-
-* cc/revert-strategy (2010-03-31) 5 commits
-  (merged to 'next' on 2010-05-04 at 6d44a83)
- + revert: add "--strategy" option to choose merge strategy
- + merge: make function try_merge_command non static
- + merge: refactor code that calls "git merge-STRATEGY"
- + revert: refactor merge recursive code into its own function
- + revert: use strbuf to refactor the code that writes the merge message
-
-(has been in 'next' since 2010-04-05)
-
-* cw/ws-indent-with-tab (2010-04-03) 6 commits
-  (merged to 'next' on 2010-05-04 at 1d7aca4)
- + whitespace: tests for git-apply --whitespace=fix with tab-in-indent
- + whitespace: add tab-in-indent support for --whitespace=fix
- + whitespace: replumb ws_fix_copy to take a strbuf *dst instead of char *dst
- + whitespace: tests for git-diff --check with tab-in-indent error class
- + whitespace: add tab-in-indent error class
- + whitespace: we cannot "catch all errors known to git" anymore
-
-(has been in 'next' since 2010-04-05)
-
-* eb/unpretty-b-format (2010-03-24) 1 commit
-  (merged to 'next' on 2010-05-04 at a466ed8)
- + Add `%B' in format strings for raw commit body in `git log' and friends
-
-(has been in 'next' since 2010-04-07)
-
-* hg/maint-attr-fix (2010-04-06) 3 commits
-  (merged to 'next' on 2010-05-04 at 8b98845)
- + attr: Expand macros immediately when encountered.
- + attr: Allow multiple changes to an attribute on the same line.
- + attr: Fixed debug output for macro expansion.
-
-(has been in 'next' since 2010-04-14)
-
-* jc/maint-reflog-expire-unreachable (2010-04-07) 1 commit
-  (merged to 'next' on 2010-05-04 at 4efe837)
- + reflog --expire-unreachable: avoid merge-base computation
- (this branch is used by jc/maint-no-reflog-expire-unreach-for-head.)
-
-(has been in 'next' since 2010-04-22)
-
-* jc/test-sleepless (2010-04-06) 1 commit
-  (merged to 'next' on 2010-05-04 at 9ff84b0)
- + war on "sleep" in tests
-
-(has been in 'next' since 2010-04-07)
-
-* jk/cached-textconv (2010-04-01) 5 commits
-  (merged to 'next' on 2010-05-04 at e4b72a0)
- + diff: avoid useless filespec population
- + diff: cache textconv output
- + textconv: refactor calls to run_textconv
- + introduce notes-cache interface
- + make commit_tree a library function
-
-(has been in 'next' since 2010-04-02)
-
-* mh/status-optionally-refresh (2010-04-03) 3 commits
-  (merged to 'next' on 2010-05-04 at be164f0)
- + t7508: add a test for "git status" in a read-only repository
- + git status: refresh the index if possible
- + t7508: add test for "git status" refreshing the index
-
-(has been in 'next' since 2010-04-05)
-
-* pc/remove-warn (2010-03-26) 4 commits
-  (merged to 'next' on 2010-05-04 at c79c1e6)
- + Remove a redundant errno test in a usage of remove_path
- + Introduce remove_or_warn function
- + Implement the rmdir_or_warn function
- + Generalise the unlink_or_warn function
-
-(has been in 'next' since 2010-04-02)
-
-* rc/ls-remote-default (2010-04-09) 1 commit
-  (merged to 'next' on 2010-05-04 at 2af33e1)
- + ls-remote: fall-back to default remotes when no remote specified
-
-(has been in 'next' since 2010-04-14)
-
-* rc/maint-curl-helper (2010-04-08) 3 commits
-  (merged to 'next' on 2010-05-04 at c32988d)
- + remote-curl: ensure that URLs have a trailing slash
- + http: make end_url_with_slash() public
- + t5541-http-push: add test for URLs with trailing slash
-
-(has been in 'next' since 2010-04-14)
-
-* sc/http-late-auth (2010-04-01) 1 commit
-  (merged to 'next' on 2010-05-04 at 23ae2e8)
- + Prompt for a username when an HTTP request 401s
-
-(has been in 'next' since 2010-04-02)
-
-* sd/log-decorate (2010-04-08) 6 commits
-  (merged to 'next' on 2010-05-04 at 6e54ae9)
- + log.decorate: only ignore it under "log --pretty=raw"
- + script with rev-list instead of log
- + log --pretty/--oneline: ignore log.decorate
- + log.decorate: usability fixes
- + Add `log.decorate' configuration variable.
- + git_config_maybe_bool()
-
-(has been in 'next' since 2010-04-08)
+* tc/merge-m-log (2010-05-11) 8 commits
+ - merge: --log appends shortlog to message if specified
+ - fmt-merge-msg: add function to append shortlog only
+ - fmt-merge-msg: refactor merge title formatting
+ - fmt-merge-msg: minor refactor of fmt_merge_msg()
+ - merge: rename variable
+ - merge: update comment
+ - t7604-merge-custom-message: show that --log doesn't append to -m
+ - t7604-merge-custom-message: shift expected output creation
 
 --------------------------------------------------
 [Stalled]
@@ -210,19 +81,36 @@ Good thing to do, but it came at a bad time.
 --------------------------------------------------
 [Cooking]
 
+* jn/gitweb-fastcgi (2010-05-07) 5 commits
+ - gitweb: Add support for FastCGI, using CGI::Fast
+ - gitweb: Put all per-connection code in run() subroutine
+ + gitweb: Use nonlocal jump instead of 'exit' in die_error
+ + gitweb: href(..., -path_info => 0|1)
+ + Export more test-related variables when running external tests
+ (this branch shares commits with jn/gitweb-caching-prep.)
+
+* jn/make-header-dependency (2010-05-08) 2 commits
+ - Makefile: let header dependency checker override COMPUTE_HEADER_DEPENDENCIES
+ - Makefile: fix header dependency checker to allow NO_CURL builds
+
+* js/try-to-free-stackable (2010-05-08) 2 commits
+ - Do not call release_pack_memory in malloc wrappers when GIT_TRACE is used
+ - Have set_try_to_free_routine return the previous routine
+ (this branch uses np/malloc-threading.)
+
+Should be Ok for 'next'.
+
 * jn/gitweb-syntax-highlight (2010-04-27) 2 commits
  - gitweb: Refactor syntax highlighting support
  - gitweb: Syntax highlighting support
 
 * jn/maint-amend-missing-name (2010-05-02) 1 commit
- - commit --amend: cope with missing display name
-
-Should be Ok for 'next'.
+  (merged to 'next' on 2010-05-09 at 9023332)
+ + commit --amend: cope with missing display name
 
 * rs/diff-no-minimal (2010-05-02) 1 commit
- - git diff too slow for a file
-
-Should be Ok for 'next'.
+  (merged to 'next' on 2010-05-09 at 6c74aa0)
+ + git diff too slow for a file
 
 * ab/test-cleanup (2010-05-07) 2 commits
  - Turn setup code in t2007-checkout-symlink.sh into a test
@@ -231,20 +119,16 @@ Should be Ok for 'next'.
 Should be Ok for 'next'.
 
 * by/blame-doc-m-c (2010-05-06) 1 commit
- - blame-options.txt: Add default value for `-M/-C` options.
+  (merged to 'next' on 2010-05-09 at c975ad5)
+ + blame-options.txt: Add default value for `-M/-C` options.
 
-* by/log-follow (2010-05-06) 3 commits
- - Make git log --follow find copies among unmodified files.
- - Make diffcore_std only can run once before a diff_flush
- - Add a macro DIFF_QUEUE_CLEAR.
-
-Should be Ok for 'next'.
-
-* eb/crlf (2010-05-08) 4 commits
- - Add per-repository eol normalization
- - Pass eol conv mode as an argument instead of using global auto_crlf
- - Add tests for per-repository eol normalization
- - Add "core.eolStyle" variable to control end-of-line conversion
+* by/log-follow (2010-05-10) 4 commits
+  (merged to 'next' on 2010-05-10 at f4ce9f8)
+ + tests: rename duplicate t4205
+  (merged to 'next' on 2010-05-09 at d97e924)
+ + Make git log --follow find copies among unmodified files.
+ + Make diffcore_std only can run once before a diff_flush
+ + Add a macro DIFF_QUEUE_CLEAR.
 
 * jn/notes-doc (2010-05-08) 8 commits
  - Documentation/notes: nitpicks
@@ -257,10 +141,9 @@ Should be Ok for 'next'.
  - Documentation/notes: document format of notes trees
 
 * mg/advice-statushints (2010-04-22) 2 commits
- - wt-status: take advice.statusHints seriously
- - t7508: test advice.statusHints
-
-Should be Ok for 'next'.
+  (merged to 'next' on 2010-05-09 at 4642509)
+ + wt-status: take advice.statusHints seriously
+ + t7508: test advice.statusHints
 
 * cb/maint-stash-orphaned-file (2010-04-18) 2 commits
   (merged to 'next' on 2010-05-04 at 38488ba)
@@ -290,73 +173,67 @@ Should be Ok for 'next'.
 (has been in 'next' since 2010-04-22)
 
 * st/remote-tags-no-tags (2010-04-20) 2 commits
- - remote add: add a --[no-]tags option
- - Honor "tagopt = --tags" configuration option
-
-Should be Ok for 'next'.
+  (merged to 'next' on 2010-05-09 at fa9e04e)
+ + remote add: add a --[no-]tags option
+ + Honor "tagopt = --tags" configuration option
 
 * cb/assume-unchanged-fix (2010-05-01) 2 commits
  - Documentation: git-add does not update files marked "assume unchanged"
  - do not overwrite files marked "assume unchanged"
 
 * jn/fsck-ident (2010-04-24) 1 commit
- - fsck: check ident lines in commit objects
+  (merged to 'next' on 2010-05-09 at 0d36355)
+ + fsck: check ident lines in commit objects
 
 There also was a companion patch to fast-import to deal with foreign SCM
 interface that may not have human-readable author identifier.
 
-Should be Ok for 'next'.
-
 * jn/gitweb-caching-prep (2010-04-24) 5 commits
- - gitweb: Move generating page title to separate subroutine
- - gitweb: Add custom error handler using die_error
- - gitweb: Use nonlocal jump instead of 'exit' in die_error
- - gitweb: href(..., -path_info => 0|1)
- - Export more test-related variables when running external tests
+  (merged to 'next' on 2010-05-09 at ceb4dad)
+ + gitweb: Move generating page title to separate subroutine
+ + gitweb: Add custom error handler using die_error
+ + gitweb: Use nonlocal jump instead of 'exit' in die_error
+ + gitweb: href(..., -path_info => 0|1)
+ + Export more test-related variables when running external tests
  (this branch shares commits with jn/gitweb-fastcgi.)
 
-Should be Ok for 'next'.
-
 * jn/gitweb-install (2010-05-01) 2 commits
- - gitweb: Create install target for gitweb in Makefile
- - gitweb: Improve installation instructions in gitweb/INSTALL
-
-Should be Ok for 'next'.
+  (merged to 'next' on 2010-05-09 at 9ea6cad)
+ + gitweb: Create install target for gitweb in Makefile
+ + gitweb: Improve installation instructions in gitweb/INSTALL
 
 * jn/gitweb-our-squelch (2010-04-30) 1 commit
- - gitweb: Silence 'Variable VAR may be unavailable' warnings
-
-Should be Ok for 'next'.
+  (merged to 'next' on 2010-05-09 at 060726a)
+ + gitweb: Silence 'Variable VAR may be unavailable' warnings
 
 * jn/maint-request-pull (2010-05-07) 3 commits
- - t5150: protect backslash with backslash in shell
- - request-pull: protect against OPTIONS_KEEPDASHDASH from environment
- - tests for request-pull
+ + t5150: protect backslash with backslash in shell
+ + request-pull: protect against OPTIONS_KEEPDASHDASH from environment
+ + tests for request-pull
  (this branch is used by jn/request-pull.)
 
-* jn/request-pull (2010-04-24) 2 commits
- - adapt request-pull tests for new pull request format
- - Merge branch 'jn/maint-request-pull' into jn/request-pull
+* jn/request-pull (2010-05-10) 3 commits
+  (merged to 'next' on 2010-05-10 at fcae760)
+ + tests: chmod +x t5150
+  (merged to 'next' on 2010-05-09 at 05aadd6)
+ + adapt request-pull tests for new pull request format
+ + Merge branch 'jn/maint-request-pull' into jn/request-pull
  (this branch uses jn/maint-request-pull.)
 
-Should be Ok for 'next'.
-
 * jn/shortlog (2010-05-03) 5 commits
- - pretty: Respect --abbrev option
- - shortlog: Document and test --format option
- - t4201 (shortlog): Test output format with multiple authors
- - t4201 (shortlog): guard setup with test_expect_success
- - Documentation/shortlog: scripted users should not rely on implicit HEAD
-
-Should be Ok for 'next'.
+  (merged to 'next' on 2010-05-09 at efd1311)
+ + pretty: Respect --abbrev option
+ + shortlog: Document and test --format option
+ + t4201 (shortlog): Test output format with multiple authors
+ + t4201 (shortlog): guard setup with test_expect_success
+ + Documentation/shortlog: scripted users should not rely on implicit HEAD
 
 * wp/pretty-enhancement (2010-05-08) 4 commits
- - pretty: initialize new cmt_fmt_map to 0
- - pretty: add aliases for pretty formats
- - pretty: add infrastructure for commit format aliases
- - pretty: make it easier to add new formats
-
-Should be Ok for 'next'.
+  (merged to 'next' on 2010-05-09 at eeaa4dc)
+ + pretty: initialize new cmt_fmt_map to 0
+ + pretty: add aliases for pretty formats
+ + pretty: add infrastructure for commit format aliases
+ + pretty: make it easier to add new formats
 
 * jn/t7006-fixup (2010-04-14) 1 commit
   (merged to 'next' on 2010-05-04 at 490ab5d)
@@ -526,3 +403,14 @@ source" scenario.
  + Allow passing of configuration parameters in the command line
 
 (has been in 'next' since 2010-04-07)
+
+----------------------------------------------------------------
+[Dropped]
+
+* eb/crlf (2010-05-08) 4 commits
+ . Add per-repository eol normalization
+ . Pass eol conv mode as an argument instead of using global auto_crlf
+ . Add tests for per-repository eol normalization
+ . Add "core.eolStyle" variable to control end-of-line conversion
+
+Perhaps will be rerolled after discussion settles.
