@@ -86,6 +86,7 @@ objectsize::
 
 objectname::
 	The object name (aka SHA-1).
+	For a non-ambiguous abbreviation of the object name append `:short`.
 
 upstream::
 	The name of a local ref which can be considered ``upstream''
