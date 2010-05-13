@@ -2701,7 +2701,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	const char *arg = av[0];
 
 	/* Output format options */
-	if (!strcmp(arg, "-p") || !strcmp(arg, "-u"))
+	if (!strcmp(arg, "-p") || !strcmp(arg, "-u") || !strcmp(arg, "--patch"))
 		options->output_format |= DIFF_FORMAT_PATCH;
 	else if (opt_arg(arg, 'U', "unified", &options->context))
 		options->output_format |= DIFF_FORMAT_PATCH;

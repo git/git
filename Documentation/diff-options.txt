@@ -21,6 +21,7 @@ endif::git-format-patch[]
 ifndef::git-format-patch[]
 -p::
 -u::
+--patch::
 	Generate patch (see section on generating patches).
 	{git-diff? This is the default.}
 endif::git-format-patch[]
