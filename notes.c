@@ -1083,7 +1083,7 @@ int write_notes_tree(struct notes_tree *t, unsigned char *result)
 	return ret;
 }
 
-void prune_notes(struct notes_tree *t)
+void prune_notes(struct notes_tree *t, int flags)
 {
 	struct note_delete_list *l = NULL;
 
@@ -1094,7 +1094,10 @@ void prune_notes(struct notes_tree *t)
 	for_each_note(t, 0, prune_notes_helper, &l);
 
 	while (l) {
-		remove_note(t, l->sha1);
+		if (flags & NOTES_PRUNE_VERBOSE)
+			printf("%s\n", sha1_to_hex(l->sha1));
+		if (!(flags & NOTES_PRUNE_DRYRUN))
+			remove_note(t, l->sha1);
 		l = l->next;
 	}
 }
