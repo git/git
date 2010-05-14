@@ -740,6 +740,13 @@ EXTLIBS =
 # because maintaining the nesting to match is a pain.  If
 # we had "elif" things would have been much nicer...
 
+ifeq ($(uname_S),OSF1)
+	# Need this for u_short definitions et al
+	BASIC_CFLAGS += -D_OSF_SOURCE
+	SOCKLEN_T = int
+	NO_STRTOULL = YesPlease
+	NO_NSEC = YesPlease
+endif
 ifeq ($(uname_S),Linux)
 	NO_STRLCPY = YesPlease
 	NO_MKSTEMPS = YesPlease
