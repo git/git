@@ -545,11 +545,33 @@ AC_SUBST(NEEDS_SOCKET)
 test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 
 #
-# Define NEEDS_RESOLV if linking with -lnsl and/or -lsocket is not enough.
-# Notably on Solaris 7 inet_ntop and inet_pton additionally reside there.
-AC_CHECK_LIB([c], [inet_ntop],
-[NEEDS_RESOLV=],
-[NEEDS_RESOLV=YesPlease])
+# The next few tests will define NEEDS_RESOLV if linking with
+# libresolv provides some of the functions we would normally get
+# from libc.
+NEEDS_RESOLV=
+AC_SUBST(NEEDS_RESOLV)
+#
+# Define NO_INET_NTOP if linking with -lresolv is not enough.
+# Solaris 2.7 in particular hos inet_ntop in -lresolv.
+NO_INET_NTOP=
+AC_SUBST(NO_INET_NTOP)
+AC_CHECK_FUNC([inet_ntop],
+	[],
+    [AC_CHECK_LIB([resolv], [inet_ntop],
+	    [NEEDS_RESOLV=YesPlease],
+	[NO_INET_NTOP=YesPlease])
+])
+#
+# Define NO_INET_PTON if linking with -lresolv is not enough.
+# Solaris 2.7 in particular hos inet_pton in -lresolv.
+NO_INET_PTON=
+AC_SUBST(NO_INET_PTON)
+AC_CHECK_FUNC([inet_pton],
+	[],
+    [AC_CHECK_LIB([resolv], [inet_pton],
+	    [NEEDS_RESOLV=YesPlease],
+	[NO_INET_PTON=YesPlease])
+])
 #
 # Define NO_HSTRERROR if linking with -lresolv is not enough.
 # Solaris 2.6 in particular has no hstrerror, even in -lresolv.
@@ -561,8 +583,9 @@ AC_CHECK_FUNC([hstrerror],
 	[NO_HSTRERROR=YesPlease])
 ])
 AC_SUBST(NO_HSTRERROR)
-
-AC_SUBST(NEEDS_RESOLV)
+#
+# If any of the above tests determined that -lresolv is needed at
+# build-time, also set it here for remaining configure-time checks.
 test -n "$NEEDS_RESOLV" && LIBS="$LIBS -lresolv"
 
 AC_CHECK_LIB([c], [basename],
