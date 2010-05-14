@@ -11,6 +11,9 @@ all::
 # Define SOCKLEN_T to a suitable type (such as 'size_t') if your
 # system headers do not define a socklen_t type.
 #
+# Define INLINE to a suitable substitute (such as '__inline' or '') if git
+# fails to compile with errors about undefined inline functions or similar.
+#
 # Define SNPRINTF_RETURNS_BOGUS if your are on a system which snprintf()
 # or vsnprintf() return -1 instead of number of characters which would
 # have been written to the final string if enough space had been available.
@@ -1088,6 +1091,10 @@ BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|git_broken_path_fix $(SANE_TOOL_P
 PATH := $(SANE_TOOL_PATH):${PATH}
 else
 BROKEN_PATH_FIX = '/^\# @@BROKEN_PATH_FIX@@$$/d'
+endif
+
+ifneq (,$(INLINE))
+	BASIC_CFLAGS += -Dinline=$(INLINE)
 endif
 
 ifneq (,$(SOCKLEN_T))
