@@ -971,6 +971,7 @@ ifeq ($(uname_S),IRIX64)
 	NEEDS_LIBGEN = YesPlease
 endif
 ifeq ($(uname_S),HP-UX)
+	INLINE = __inline
 	NO_IPV6=YesPlease
 	NO_SETENV=YesPlease
 	NO_STRCASESTR=YesPlease
@@ -982,6 +983,11 @@ ifeq ($(uname_S),HP-UX)
 	NO_HSTRERROR = YesPlease
 	NO_SYS_SELECT_H = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
+	NO_NSEC = YesPlease
+	ifeq ($(uname_R),B.11.00)
+		NO_INET_NTOP = YesPlease
+		NO_INET_PTON = YesPlease
+	endif
 	GIT_TEST_CMP = cmp
 endif
 ifeq ($(uname_S),Windows)
