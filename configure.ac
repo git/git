@@ -802,7 +802,11 @@ AC_DEFUN([PTHREADTEST_SRC], [
 int main(void)
 {
 	pthread_mutex_t test_mutex;
-	return (0);
+	int retcode = 0;
+	retcode |= pthread_mutex_init(&test_mutex,(void *)0);
+	retcode |= pthread_mutex_lock(&test_mutex);
+	retcode |= pthread_mutex_unlock(&test_mutex);
+	return retcode;
 }
 ])
 
@@ -819,7 +823,8 @@ if test -n "$USER_NOPTHREAD"; then
 # handle these separately since PTHREAD_CFLAGS could be '-lpthreads
 # -D_REENTRANT' or some such.
 elif test -z "$PTHREAD_CFLAGS"; then
-  for opt in -pthread -lpthread; do
+  threads_found=no
+  for opt in -mt -pthread -lpthread; do
      old_CFLAGS="$CFLAGS"
      CFLAGS="$opt $CFLAGS"
      AC_MSG_CHECKING([Checking for POSIX Threads with '$opt'])
@@ -827,11 +832,18 @@ elif test -z "$PTHREAD_CFLAGS"; then
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
 		PTHREAD_LIBS="$opt"
+		PTHREAD_CFLAGS="$opt"
+		threads_found=yes
 		break
 	],
 	[AC_MSG_RESULT([no])])
       CFLAGS="$old_CFLAGS"
   done
+  if test $threads_found != yes; then
+    AC_CHECK_LIB([pthread], [pthread_create],
+	[PTHREAD_LIBS="-lpthread"],
+	[NO_PTHREADS=UnfortunatelyYes])
+  fi
 else
   old_CFLAGS="$CFLAGS"
   CFLAGS="$PTHREAD_CFLAGS $CFLAGS"
@@ -848,6 +860,7 @@ fi
 
 CFLAGS="$old_CFLAGS"
 
+AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(NO_PTHREADS)
 

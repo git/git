@@ -294,6 +294,7 @@ RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
 PTHREAD_LIBS = -lpthread
+PTHREAD_CFLAGS =
 
 export TCL_PATH TCLTK_PATH
 
@@ -898,6 +899,8 @@ ifeq ($(uname_S),AIX)
 	BASIC_CFLAGS += -D_LARGE_FILES
 	ifeq ($(shell expr "$(uname_V)" : '[1234]'),1)
 		NO_PTHREADS = YesPlease
+	else
+		PTHREAD_LIBS = -lpthread
 	endif
 endif
 ifeq ($(uname_S),GNU)
@@ -1349,6 +1352,7 @@ endif
 ifdef NO_PTHREADS
 	BASIC_CFLAGS += -DNO_PTHREADS
 else
+	BASIC_CFLAGS += $(PTHREAD_CFLAGS)
 	EXTLIBS += $(PTHREAD_LIBS)
 	LIB_OBJS += thread-utils.o
 endif
