@@ -8,6 +8,9 @@ all::
 # Define SANE_TOOL_PATH to a colon-separated list of paths to prepend
 # to PATH if your tools in /usr/bin are broken.
 #
+# Define SOCKLEN_T to a suitable type (such as 'size_t') if your
+# system headers do not define a socklen_t type.
+#
 # Define SNPRINTF_RETURNS_BOGUS if your are on a system which snprintf()
 # or vsnprintf() return -1 instead of number of characters which would
 # have been written to the final string if enough space had been available.
@@ -1085,6 +1088,10 @@ BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|git_broken_path_fix $(SANE_TOOL_P
 PATH := $(SANE_TOOL_PATH):${PATH}
 else
 BROKEN_PATH_FIX = '/^\# @@BROKEN_PATH_FIX@@$$/d'
+endif
+
+ifneq (,$(SOCKLEN_T))
+	BASIC_CFLAGS += -Dsocklen_t=$(SOCKLEN_T)
 endif
 
 ifeq ($(uname_S),Darwin)
