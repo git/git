@@ -162,6 +162,13 @@ test_expect_success 'rev-list --branches=subspace' '
 	compare rev-list "subspace/one subspace/two" "--branches=subspace"
 
 '
+
+test_expect_success 'rev-list --branches' '
+
+	compare rev-list "master subspace-x someref other/three subspace/one subspace/two" "--branches"
+
+'
+
 test_expect_success 'rev-list --glob=heads/someref/* master' '
 
 	compare rev-list "master" "--glob=heads/someref/* master"
@@ -183,6 +190,12 @@ test_expect_success 'rev-list --glob=heads/*' '
 test_expect_success 'rev-list --tags=foo' '
 
 	compare rev-list "foo/bar" "--tags=foo"
+
+'
+
+test_expect_success 'rev-list --tags' '
+
+	compare rev-list "foo/bar" "--tags"
 
 '
 
