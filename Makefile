@@ -988,6 +988,14 @@ ifeq ($(uname_S),HP-UX)
 		NO_INET_NTOP = YesPlease
 		NO_INET_PTON = YesPlease
 	endif
+	ifeq ($(uname_R),B.10.20)
+		# Override HP-UX 11.x setting:
+		INLINE =
+		SOCKLEN_T = size_t
+		NO_PREAD = YesPlease
+		NO_INET_NTOP = YesPlease
+		NO_INET_PTON = YesPlease
+	endif
 	GIT_TEST_CMP = cmp
 endif
 ifeq ($(uname_S),Windows)
