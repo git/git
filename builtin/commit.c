@@ -717,7 +717,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 	if (use_editor) {
 		char index[PATH_MAX];
-		const char *env[2] = { index, NULL };
+		const char *env[2] = { NULL };
+		env[0] =  index;
 		snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
 		if (launch_editor(git_path(commit_editmsg), NULL, env)) {
 			fprintf(stderr,

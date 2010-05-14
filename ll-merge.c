@@ -139,16 +139,16 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 {
 	char temp[4][50];
 	struct strbuf cmd = STRBUF_INIT;
-	struct strbuf_expand_dict_entry dict[] = {
-		{ "O", temp[0] },
-		{ "A", temp[1] },
-		{ "B", temp[2] },
-		{ "L", temp[3] },
-		{ NULL }
-	};
+	struct strbuf_expand_dict_entry dict[5];
 	const char *args[] = { NULL, NULL };
 	int status, fd, i;
 	struct stat st;
+
+	dict[0].placeholder = "O"; dict[0].value = temp[0];
+	dict[1].placeholder = "A"; dict[1].value = temp[1];
+	dict[2].placeholder = "B"; dict[2].value = temp[2];
+	dict[3].placeholder = "L"; dict[3].value = temp[3];
+	dict[4].placeholder = NULL; dict[4].value = NULL;
 
 	if (fn->cmdline == NULL)
 		die("custom merge driver %s lacks command line.", fn->name);

@@ -609,7 +609,8 @@ static int check_tracking_name(const char *refname, const unsigned char *sha1,
 
 static const char *unique_tracking_name(const char *name)
 {
-	struct tracking_name_data cb_data = { name, NULL, 1 };
+	struct tracking_name_data cb_data = { NULL, NULL, 1 };
+	cb_data.name = name;
 	for_each_ref(check_tracking_name, &cb_data);
 	if (cb_data.unique)
 		return cb_data.remote;

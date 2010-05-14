@@ -705,10 +705,13 @@ static int rm(int argc, const char **argv)
 	struct known_remotes known_remotes = { NULL, NULL };
 	struct string_list branches = { NULL, 0, 0, 1 };
 	struct string_list skipped = { NULL, 0, 0, 1 };
-	struct branches_for_remote cb_data = {
-		NULL, &branches, &skipped, &known_remotes
-	};
+	struct branches_for_remote cb_data;
 	int i, result;
+
+	memset(&cb_data, 0, sizeof(cb_data));
+	cb_data.branches = &branches;
+	cb_data.skipped = &skipped;
+	cb_data.keep = &known_remotes;
 
 	if (argc != 2)
 		usage_with_options(builtin_remote_rm_usage, options);
