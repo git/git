@@ -912,6 +912,9 @@ ifeq ($(uname_S),AIX)
 	else
 		PTHREAD_LIBS = -lpthread
 	endif
+	ifeq ($(shell expr "$(uname_V).$(uname_R)" : '5\.1'),3)
+		INLINE=''
+	endif
 	GIT_TEST_CMP = cmp
 endif
 ifeq ($(uname_S),GNU)
