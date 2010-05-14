@@ -3,6 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
+-include ../config.mak.autogen
 -include ../config.mak
 
 #GIT_TEST_OPTS=--verbose --debug
