@@ -34,7 +34,9 @@ test_expect_success 'setup' '
 	git checkout master &&
 	commit master2 &&
 	git tag foo/bar master &&
-	git update-ref refs/remotes/foo/baz master
+	commit master3 &&
+	git update-ref refs/remotes/foo/baz master &&
+	commit master4
 '
 
 test_expect_success 'rev-parse --glob=refs/heads/subspace/*' '
