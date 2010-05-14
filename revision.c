@@ -1781,7 +1781,7 @@ int prepare_revision_walk(struct rev_info *revs)
 enum rewrite_result {
 	rewrite_one_ok,
 	rewrite_one_noparents,
-	rewrite_one_error,
+	rewrite_one_error
 };
 
 static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp)

@@ -10,7 +10,7 @@ struct merge_options {
 	enum {
 		MERGE_RECURSIVE_NORMAL = 0,
 		MERGE_RECURSIVE_OURS,
-		MERGE_RECURSIVE_THEIRS,
+		MERGE_RECURSIVE_THEIRS
 	} recursive_variant;
 	const char *subtree_shift;
 	unsigned buffer_output : 1;

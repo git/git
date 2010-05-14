@@ -26,7 +26,7 @@ enum help_format {
 	HELP_FORMAT_NONE,
 	HELP_FORMAT_MAN,
 	HELP_FORMAT_INFO,
-	HELP_FORMAT_WEB,
+	HELP_FORMAT_WEB
 };
 
 static int show_all = 0;

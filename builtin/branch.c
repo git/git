@@ -43,13 +43,13 @@ enum color_branch {
 	BRANCH_COLOR_PLAIN = 1,
 	BRANCH_COLOR_REMOTE = 2,
 	BRANCH_COLOR_LOCAL = 3,
-	BRANCH_COLOR_CURRENT = 4,
+	BRANCH_COLOR_CURRENT = 4
 };
 
 static enum merge_filter {
 	NO_FILTER = 0,
 	SHOW_NOT_MERGED,
-	SHOW_MERGED,
+	SHOW_MERGED
 } merge_filter;
 static unsigned char merge_filter_ref[20];
 

@@ -230,7 +230,7 @@ enum CAPABILITY {
 	LITERALPLUS,
 	NAMESPACE,
 	STARTTLS,
-	AUTH_CRAM_MD5,
+	AUTH_CRAM_MD5
 };
 
 static const char *cap_list[] = {

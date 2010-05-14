@@ -56,7 +56,7 @@ static enum ws_error_action {
 	nowarn_ws_error,
 	warn_on_ws_error,
 	die_on_ws_error,
-	correct_ws_error,
+	correct_ws_error
 } ws_error_action = warn_on_ws_error;
 static int whitespace_error;
 static int squelch_whitespace_errors = 5;
@@ -64,7 +64,7 @@ static int applied_after_fixing_ws;
 
 static enum ws_ignore {
 	ignore_ws_none,
-	ignore_ws_change,
+	ignore_ws_change
 } ws_ignore_action = ignore_ws_none;
 
 

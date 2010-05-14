@@ -10,7 +10,7 @@ enum {
 	A = GIT_ALPHA,
 	D = GIT_DIGIT,
 	G = GIT_GLOB_SPECIAL,	/* *, ?, [, \\ */
-	R = GIT_REGEX_SPECIAL,	/* $, (, ), +, ., ^, {, | */
+	R = GIT_REGEX_SPECIAL	/* $, (, ), +, ., ^, {, | */
 };
 
 unsigned char sane_ctype[256] = {
