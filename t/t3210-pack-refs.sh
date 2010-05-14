@@ -28,7 +28,7 @@ test_expect_success \
      SHA1=`cat .git/refs/heads/a` &&
      echo "$SHA1 refs/heads/a" >expect &&
      git show-ref a >result &&
-     diff expect result'
+     test_cmp expect result'
 
 test_expect_success \
     'see if a branch still exists when packed' \
@@ -37,7 +37,7 @@ test_expect_success \
      rm -f .git/refs/heads/b &&
      echo "$SHA1 refs/heads/b" >expect &&
      git show-ref b >result &&
-     diff expect result'
+     test_cmp expect result'
 
 test_expect_success 'git branch c/d should barf if branch c exists' '
      git branch c &&
@@ -52,7 +52,7 @@ test_expect_success \
      git pack-refs --all --prune &&
      echo "$SHA1 refs/heads/e" >expect &&
      git show-ref e >result &&
-     diff expect result'
+     test_cmp expect result'
 
 test_expect_success 'see if git pack-refs --prune remove ref files' '
      git branch f &&
@@ -109,7 +109,7 @@ test_expect_success 'pack, prune and repack' '
 	git show-ref >all-of-them &&
 	git pack-refs &&
 	git show-ref >again &&
-	diff all-of-them again
+	test_cmp all-of-them again
 '
 
 test_done

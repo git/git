@@ -84,7 +84,7 @@ check () {
 		git rev-list --parents --pretty=raw $arg |
 		sed -n -e 's/^commit //p' >test.actual
 	fi
-	diff test.expect test.actual
+	test_cmp test.expect test.actual
 }
 
 for type in basic parents parents-raw

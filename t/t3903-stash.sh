@@ -81,7 +81,7 @@ test_expect_success 'drop top stash' '
 	git stash &&
 	git stash drop &&
 	git stash list > stashlist2 &&
-	diff stashlist1 stashlist2 &&
+	test_cmp stashlist1 stashlist2 &&
 	git stash apply &&
 	test 3 = $(cat file) &&
 	test 1 = $(git show :file) &&

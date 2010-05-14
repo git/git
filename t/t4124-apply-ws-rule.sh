@@ -44,7 +44,7 @@ test_fix () {
 	apply_patch --whitespace=fix || return 1
 
 	# find touched lines
-	diff file target | sed -n -e "s/^> //p" >fixed
+	$DIFF file target | sed -n -e "s/^> //p" >fixed
 
 	# the changed lines are all expeced to change
 	fixed_cnt=$(wc -l <fixed)
@@ -85,14 +85,14 @@ test_expect_success setup '
 test_expect_success 'whitespace=nowarn, default rule' '
 
 	apply_patch --whitespace=nowarn &&
-	diff file target
+	test_cmp file target
 
 '
 
 test_expect_success 'whitespace=warn, default rule' '
 
 	apply_patch --whitespace=warn &&
-	diff file target
+	test_cmp file target
 
 '
 
@@ -108,7 +108,7 @@ test_expect_success 'whitespace=error-all, no rule' '
 
 	git config core.whitespace -trailing,-space-before,-indent &&
 	apply_patch --whitespace=error-all &&
-	diff file target
+	test_cmp file target
 
 '
 
@@ -117,7 +117,7 @@ test_expect_success 'whitespace=error-all, no rule (attribute)' '
 	git config --unset core.whitespace &&
 	echo "target -whitespace" >.gitattributes &&
 	apply_patch --whitespace=error-all &&
-	diff file target
+	test_cmp file target
 
 '
 

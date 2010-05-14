@@ -48,7 +48,7 @@ test_expect_success 'that reference gets used' \
 'cd C &&
 echo "0 objects, 0 kilobytes" > expected &&
 git count-objects > current &&
-diff expected current'
+test_cmp expected current'
 
 cd "$base_dir"
 
@@ -75,7 +75,7 @@ cd "$base_dir"
 test_expect_success 'that reference gets used' \
 'cd D && echo "0 objects, 0 kilobytes" > expected &&
 git count-objects > current &&
-diff expected current'
+test_cmp expected current'
 
 cd "$base_dir"
 
@@ -100,7 +100,7 @@ test_expect_success 'that alternate to origin gets used' \
 'cd C &&
 echo "2 objects" > expected &&
 git count-objects | cut -d, -f1 > current &&
-diff expected current'
+test_cmp expected current'
 
 cd "$base_dir"
 
@@ -116,7 +116,7 @@ test_expect_success 'check objects expected to exist locally' \
 'cd D &&
 echo "5 objects" > expected &&
 git count-objects | cut -d, -f1 > current &&
-diff expected current'
+test_cmp expected current'
 
 cd "$base_dir"
 

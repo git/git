@@ -26,7 +26,7 @@ cd "$D"
 test_expect_success 'checking the results' '
 	test -f file &&
 	test -f cloned/file &&
-	diff file cloned/file
+	test_cmp file cloned/file
 '
 
 test_expect_success 'pulling into void using master:master' '

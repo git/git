@@ -6,9 +6,13 @@
 -include ../config.mak
 
 #GIT_TEST_OPTS=--verbose --debug
+GIT_TEST_CMP ?= $(DIFF)
 SHELL_PATH ?= $(SHELL)
 TAR ?= $(TAR)
 RM ?= rm -f
+
+# Make sure test-lib.sh uses make's value of GIT_TEST_CMP
+export GIT_TEST_CMP
 
 # Shell quote;
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
