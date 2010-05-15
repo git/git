@@ -194,16 +194,19 @@ if ($state->{method} eq 'pserver') {
             print "I HATE YOU\n";
             exit 1;
         }
-	my $auth_ok;
-	open PASSWD, "<$cfg->{gitcvs}->{authdb}" or die $!;
-	while(<PASSWD>) {
-	    if (m{^\Q$user\E:(.*)}) {
-		if (crypt($user, $1) eq $1) {
-		    $auth_ok = 1;
-		}
-	    };
-	}
-	unless ($auth_ok) {
+
+        my $auth_ok;
+        open my $passwd, "<", $cfg->{gitcvs}->{authdb} or die $!;
+        while (<$passwd>) {
+            if (m{^\Q$user\E:(.*)}) {
+                if (crypt($user, $1) eq $1) {
+                    $auth_ok = 1;
+                }
+            };
+        }
+        close $passwd;
+
+        unless ($auth_ok) {
             print "I HATE YOU\n";
             exit 1;
         }
