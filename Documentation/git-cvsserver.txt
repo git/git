@@ -72,9 +72,6 @@ plugin. Most functionality works fine with both of these clients.
 LIMITATIONS
 -----------
 
-Currently cvsserver works over SSH connections for read/write clients, and
-over pserver for anonymous CVS access.
-
 CVS clients cannot tag, branch or perform GIT merges.
 
 'git-cvsserver' maps GIT branches to CVS modules. This is very different
@@ -84,7 +81,7 @@ one or more directories.
 INSTALLATION
 ------------
 
-1. If you are going to offer anonymous CVS access via pserver, add a line in
+1. If you are going to offer CVS access via pserver, add a line in
    /etc/inetd.conf like
 +
 --
@@ -100,6 +97,22 @@ looks like
 ------
    cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 
+------
+
+Only anonymous access is provided by pserve by default. To commit you
+will have to create pserver accounts, simply add a [gitcvs.users]
+section to the repositories you want to access, for example:
+
+------
+
+   [gitcvs.users]
+	someuser = somepassword
+	otheruser = otherpassword
+
+------
+Then provide your password via the pserver method, for example:
+------
+   cvs -d:pserver:someuser:somepassword <at> server/path/repo.git co <HEAD_name>
 ------
 No special setup is needed for SSH access, other than having GIT tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
