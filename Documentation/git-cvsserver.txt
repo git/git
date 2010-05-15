@@ -121,6 +121,11 @@ You can use the 'htpasswd' facility that comes with Apache to make these
 files, but Apache's MD5 crypt method differs from the one used by most C
 library's crypt() function, so don't use the -m option.
 
+Alternatively you can produce the password with perl's crypt() operator:
+-----
+   perl -e 'my ($user, $pass) = @ARGV; printf "%s:%s\n", $user, crypt($user, $pass)' $USER password
+-----
+
 Then provide your password via the pserver method, for example:
 ------
    cvs -d:pserver:someuser:somepassword <at> server/path/repo.git co <HEAD_name>
