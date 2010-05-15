@@ -189,24 +189,25 @@ if ($state->{method} eq 'pserver') {
 
     unless ($user eq 'anonymous') {
         # Trying to authenticate a user
-        if (not exists $cfg->{gitcvs}->{users}) {
-            print "E the repo config file needs a [gitcvs.users] section with user/password key-value pairs\n";
+        if (not exists $cfg->{gitcvs}->{authdb}) {
+            print "E the repo config file needs a [gitcvs.authdb] section with a filename\n";
             print "I HATE YOU\n";
             exit 1;
-        } elsif (exists $cfg->{gitcvs}->{users} and not exists $cfg->{gitcvs}->{users}->{$user}) {
-            #print "E the repo config file has a [gitcvs.users] section but the user $user is not defined in it\n";
-            print "I HATE YOU\n";
-            exit 1;
-        } else {
-            my $descrambled_password = descramble($password);
-            my $cleartext_password = $cfg->{gitcvs}->{users}->{$user};
-            if ($descrambled_password ne $cleartext_password) {
-                #print "E The password supplied for user $user was incorrect\n";
-                print "I HATE YOU\n";
-                exit 1;
-            }
-            # else fall through to LOVE
         }
+	my $auth_ok;
+	open PASSWD, "<$cfg->{gitcvs}->{authdb}" or die $!;
+	while(<PASSWD>) {
+	    if (m{^\Q$user\E:(.*)}) {
+		if (crypt($user, $1) eq $1) {
+		    $auth_ok = 1;
+		}
+	    };
+	}
+	unless ($auth_ok) {
+            print "I HATE YOU\n";
+            exit 1;
+        }
+        # else fall through to LOVE
     }
 
     # For checking whether the user is anonymous on commit
@@ -337,7 +338,7 @@ sub req_Root
     }
     foreach my $line ( @gitvars )
     {
-        next unless ( $line =~ /^(gitcvs)\.(?:(ext|pserver|users)\.)?([\w-]+)=(.*)$/ );
+        next unless ( $line =~ /^(gitcvs)\.(?:(ext|pserver)\.)?([\w-]+)=(.*)$/ );
         unless ($2) {
             $cfg->{$1}{$3} = $4;
         } else {

@@ -100,16 +100,27 @@ looks like
 ------
 
 Only anonymous access is provided by pserve by default. To commit you
-will have to create pserver accounts, simply add a [gitcvs.users]
-section to the repositories you want to access, for example:
+will have to create pserver accounts, simply add a gitcvs.authdb
+setting in the config file of the repositories you want the cvsserver
+to allow writes to, for example:
 
 ------
 
-   [gitcvs.users]
-	someuser = somepassword
-	otheruser = otherpassword
+   [gitcvs]
+	authdb = /etc/cvsserver/passwd
 
 ------
+The format of these files is username followed by the crypted password,
+for example:
+
+------
+   myuser:$1Oyx5r9mdGZ2
+   myuser:$1$BA)@$vbnMJMDym7tA32AamXrm./
+------
+You can use the 'htpasswd' facility that comes with Apache to make these
+files, but Apache's MD5 crypt method differs from the one used by most C
+library's crypt() function, so don't use the -m option.
+
 Then provide your password via the pserver method, for example:
 ------
    cvs -d:pserver:someuser:somepassword <at> server/path/repo.git co <HEAD_name>
