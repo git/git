@@ -187,19 +187,37 @@ if ($state->{method} eq 'pserver') {
     $line = <STDIN>; chomp $line;
     my $password = $line;
 
-    unless ($user eq 'anonymous') {
+    if ($user eq 'anonymous') {
+        # "A" will be 1 byte, use length instead in case the
+        # encryption method ever changes (yeah, right!)
+        if (length($password) > 1 ) {
+            print "E Don't supply a password for the `anonymous' user\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        # Fall through to LOVE
+    } else {
         # Trying to authenticate a user
         if (not exists $cfg->{gitcvs}->{authdb}) {
-            print "E the repo config file needs a [gitcvs.authdb] section with a filename\n";
+            print "E the repo config file needs a [gitcvs] section with an 'authdb' parameter set to the filename of the authentication database\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        my $authdb = $cfg->{gitcvs}->{authdb};
+
+        unless (-e $authdb) {
+            print "E The authentication database specified in [gitcvs.authdb] does not exist\n";
             print "I HATE YOU\n";
             exit 1;
         }
 
         my $auth_ok;
-        open my $passwd, "<", $cfg->{gitcvs}->{authdb} or die $!;
+        open my $passwd, "<", $authdb or die $!;
         while (<$passwd>) {
             if (m{^\Q$user\E:(.*)}) {
-                if (crypt($user, $1) eq $1) {
+                if (crypt($user, descramble($password)) eq $1) {
                     $auth_ok = 1;
                 }
             };
@@ -210,7 +228,8 @@ if ($state->{method} eq 'pserver') {
             print "I HATE YOU\n";
             exit 1;
         }
-        # else fall through to LOVE
+
+        # Fall through to LOVE
     }
 
     # For checking whether the user is anonymous on commit
