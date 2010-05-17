@@ -7,7 +7,7 @@ test_description='our own option parser'
 
 . ./test-lib.sh
 
-cat > expect.err << EOF
+cat > expect << EOF
 usage: test-parse-options <options>
 
     -b, --boolean         get a boolean
@@ -46,9 +46,11 @@ EOF
 
 test_expect_success 'test help' '
 	test_must_fail test-parse-options -h > output 2> output.err &&
-	test ! -s output &&
-	test_cmp expect.err output.err
+	test ! -s output.err &&
+	test_cmp expect output
 '
+
+mv expect expect.err
 
 cat > expect << EOF
 boolean: 2
