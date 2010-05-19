@@ -199,7 +199,7 @@ core.autocrlf::
 	reading from the filesystem but files are written out with
 	`LF` at the end of lines.  A file is considered
 	"text" (i.e. be subjected to the autocrlf mechanism) based on
-	the file's `crlf` attribute, or if `crlf` is unspecified,
+	the file's `text` attribute, or if `text` is unspecified,
 	based on the file's contents.  See linkgit:gitattributes[5].
 
 core.safecrlf::
@@ -943,13 +943,15 @@ gitcvs.logfile::
 	various stuff. See linkgit:git-cvsserver[1].
 
 gitcvs.usecrlfattr::
-	If true, the server will look up the `crlf` attribute for
-	files to determine the '-k' modes to use. If `crlf` is set,
-	the '-k' mode will be left blank, so cvs clients will
-	treat it as text. If `crlf` is explicitly unset, the file
+	If true, the server will look up the end-of-line conversion
+	attributes for files to determine the '-k' modes to use. If
+	the attributes force git to treat a file as text,
+	the '-k' mode will be left blank so cvs clients will
+	treat it as text. If they suppress text conversion, the file
 	will be set with '-kb' mode, which suppresses any newline munging
-	the client might otherwise do. If `crlf` is not specified,
-	then 'gitcvs.allbinary' is used. See linkgit:gitattributes[5].
+	the client might otherwise do. If the attributes do not allow
+	the file type to be determined, then 'gitcvs.allbinary' is
+	used. See linkgit:gitattributes[5].
 
 gitcvs.allbinary::
 	This is used if 'gitcvs.usecrlfattr' does not resolve

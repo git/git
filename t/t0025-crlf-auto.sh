@@ -41,8 +41,21 @@ test_expect_success 'default settings cause no changes' '
 
 test_expect_success 'crlf=true causes a CRLF file to be normalized' '
 
+	# Backwards compatibility check
 	rm -f .gitattributes tmp one two three &&
 	echo "two crlf" > .gitattributes &&
+	git read-tree --reset -u HEAD &&
+
+	# Note, "normalized" means that git will normalize it if added
+	has_cr two &&
+	twodiff=`git diff two` &&
+	test -n "$twodiff"
+'
+
+test_expect_success 'text=true causes a CRLF file to be normalized' '
+
+	rm -f .gitattributes tmp one two three &&
+	echo "two text" > .gitattributes &&
 	git read-tree --reset -u HEAD &&
 
 	# Note, "normalized" means that git will normalize it if added
@@ -101,11 +114,11 @@ test_expect_success 'autocrlf=true does not normalize CRLF files' '
 	test -z "$onediff" -a -z "$twodiff" -a -z "$threediff"
 '
 
-test_expect_success 'crlf=auto, autocrlf=true _does_ normalize CRLF files' '
+test_expect_success 'text=auto, autocrlf=true _does_ normalize CRLF files' '
 
 	rm -f .gitattributes tmp one two three &&
 	git config core.autocrlf true &&
-	echo "* crlf=auto" > .gitattributes &&
+	echo "* text=auto" > .gitattributes &&
 	git read-tree --reset -u HEAD &&
 
 	has_cr one &&
@@ -116,11 +129,11 @@ test_expect_success 'crlf=auto, autocrlf=true _does_ normalize CRLF files' '
 	test -z "$onediff" -a -n "$twodiff" -a -z "$threediff"
 '
 
-test_expect_success 'crlf=auto, autocrlf=true does not normalize binary files' '
+test_expect_success 'text=auto, autocrlf=true does not normalize binary files' '
 
 	rm -f .gitattributes tmp one two three &&
 	git config core.autocrlf true &&
-	echo "* crlf=auto" > .gitattributes &&
+	echo "* text=auto" > .gitattributes &&
 	git read-tree --reset -u HEAD &&
 
 	! has_cr three &&

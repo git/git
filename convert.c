@@ -439,12 +439,14 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 
 static void setup_convert_check(struct git_attr_check *check)
 {
+	static struct git_attr *attr_text;
 	static struct git_attr *attr_crlf;
 	static struct git_attr *attr_eol;
 	static struct git_attr *attr_ident;
 	static struct git_attr *attr_filter;
 
-	if (!attr_crlf) {
+	if (!attr_text) {
+		attr_text = git_attr("text");
 		attr_crlf = git_attr("crlf");
 		attr_eol = git_attr("eol");
 		attr_ident = git_attr("ident");
@@ -456,6 +458,7 @@ static void setup_convert_check(struct git_attr_check *check)
 	check[1].attr = attr_ident;
 	check[2].attr = attr_filter;
 	check[3].attr = attr_eol;
+	check[4].attr = attr_text;
 }
 
 static int count_ident(const char *cp, unsigned long size)
@@ -651,20 +654,20 @@ static int git_path_check_ident(const char *path, struct git_attr_check *check)
 	return !!ATTR_TRUE(value);
 }
 
-enum action determine_action(enum action crlf_attr, enum eol eol_attr) {
-	if (crlf_attr == CRLF_BINARY)
+enum action determine_action(enum action text_attr, enum eol eol_attr) {
+	if (text_attr == CRLF_BINARY)
 		return CRLF_BINARY;
 	if (eol_attr == EOL_LF)
 		return CRLF_INPUT;
 	if (eol_attr == EOL_CRLF)
 		return CRLF_CRLF;
-	return crlf_attr;
+	return text_attr;
 }
 
 int convert_to_git(const char *path, const char *src, size_t len,
                    struct strbuf *dst, enum safe_crlf checksafe)
 {
-	struct git_attr_check check[4];
+	struct git_attr_check check[5];
 	enum action action = CRLF_GUESS;
 	enum eol eol = EOL_UNSET;
 	int ident = 0, ret = 0;
@@ -673,7 +676,9 @@ int convert_to_git(const char *path, const char *src, size_t len,
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
 		struct convert_driver *drv;
-		action = git_path_check_crlf(path, check + 0);
+		action = git_path_check_crlf(path, check + 4);
+		if (action == CRLF_GUESS)
+			action = git_path_check_crlf(path, check + 0);
 		ident = git_path_check_ident(path, check + 1);
 		drv = git_path_check_convert(path, check + 2);
 		eol = git_path_check_eol(path, check + 3);
@@ -697,7 +702,7 @@ int convert_to_git(const char *path, const char *src, size_t len,
 
 int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst)
 {
-	struct git_attr_check check[4];
+	struct git_attr_check check[5];
 	enum action action = CRLF_GUESS;
 	enum eol eol = EOL_UNSET;
 	int ident = 0, ret = 0;
@@ -706,7 +711,9 @@ int convert_to_working_tree(const char *path, const char *src, size_t len, struc
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
 		struct convert_driver *drv;
-		action = git_path_check_crlf(path, check + 0);
+		action = git_path_check_crlf(path, check + 4);
+		if (action == CRLF_GUESS)
+			action = git_path_check_crlf(path, check + 0);
 		ident = git_path_check_ident(path, check + 1);
 		drv = git_path_check_convert(path, check + 2);
 		eol = git_path_check_eol(path, check + 3);

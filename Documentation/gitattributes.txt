@@ -92,7 +92,7 @@ such as 'git checkout' and 'git merge' run.  They also affect how
 git stores the contents you prepare in the working tree in the
 repository upon 'git add' and 'git commit'.
 
-`crlf`
+`text`
 ^^^^^^
 
 This attribute enables and controls end-of-line normalization.  When a
@@ -103,28 +103,28 @@ directory, use the `eol` attribute for a single file and the
 
 Set::
 
-	Setting the `crlf` attribute on a path enables end-of-line
+	Setting the `text` attribute on a path enables end-of-line
 	normalization and marks the path as a text file.  End-of-line
 	conversion takes place without guessing the content type.
 
 Unset::
 
-	Unsetting the `crlf` attribute on a path tells git not to
+	Unsetting the `text` attribute on a path tells git not to
 	attempt any end-of-line conversion upon checkin or checkout.
 
 Set to string value "auto"::
 
-	When `crlf` is set to "auto", the path is marked for automatic
+	When `text` is set to "auto", the path is marked for automatic
 	end-of-line normalization.  If git decides that the content is
 	text, its line endings are normalized to LF on checkin.
 
 Unspecified::
 
-	If the `crlf` attribute is unspecified, git uses the `eol`
+	If the `text` attribute is unspecified, git uses the `eol`
 	attribute and the `core.autocrlf` configuration variable to
 	determine if the file should be converted.
 
-Any other value causes git to act as if `crlf` has been left
+Any other value causes git to act as if `text` has been left
 unspecified.
 
 `eol`
@@ -132,20 +132,31 @@ unspecified.
 
 This attribute sets a specific line-ending style to be used in the
 working directory.  It enables end-of-line normalization without any
-content checks, similar to setting the `crlf` attribute.
+content checks, similar to setting the `text` attribute.
 
 Set to string value "crlf"::
 
 	This setting forces git to normalize line endings on checkin
 	and convert them to CRLF when the file is checked out,
-	regardless of `crlf` and `core.autocrlf`.
+	regardless of `text` and `core.autocrlf`.
 
 Set to string value "lf"::
 
 	This setting forces git to normalize line endings to LF on
 	checkin and prevents conversion to CRLF when the file is
-	checked out, regardless of `crlf` and `core.autocrlf`.
-	`crlf=input` is a backwards compatibility alias for `eol=lf`.
+	checked out, regardless of `text` and `core.autocrlf`.
+
+Backwards compatibility with `crlf` attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For backwards compatibility, the `crlf` attribute is interpreted as
+follows:
+
+------------------------
+crlf		text
+-crlf		-text
+crlf=input	eol=lf
+------------------------
 
 End-of-line conversion
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -160,10 +171,10 @@ the working directory, and prevent .jpg files from being normalized
 regardless of their content.
 
 ------------------------
-*.txt		crlf
+*.txt		text
 *.vcproj	eol=crlf
 *.sh		eol=lf
-*.jpg		-crlf
+*.jpg		-text
 ------------------------
 
 Other source code management systems normalize all text files in their
@@ -188,24 +199,24 @@ files without conversion to CRLF in the working directory.
 
 If you want to interoperate with a source code management system that
 enforces end-of-line normalization, or you simply want all text files
-in your repository to be normalized, you should instead set the `crlf`
+in your repository to be normalized, you should instead set the `text`
 attribute to "auto" for _all_ files.
 
 ------------------------
-*	crlf=auto
+*	text=auto
 ------------------------
 
 This ensures that all files that git considers to be text will have
 normalized (LF) line endings in the repository.
 
-NOTE: When `crlf=auto` normalization is enabled in an existing
+NOTE: When `text=auto` normalization is enabled in an existing
 repository, any text files containing CRLFs should be normalized.  If
 they are not they will be normalized the next time someone tries to
 change them, causing unfortunate misattribution.  From a clean working
 directory:
 
 -------------------------------------------------
-$ echo "* crlf=auto" >>.gitattributes
+$ echo "* text=auto" >>.gitattributes
 $ rm .git/index     # Remove the index to force git to
 $ git reset         # re-scan the working directory
 $ git status        # Show files that will be normalized
@@ -215,17 +226,17 @@ $ git commit -m "Introduce end-of-line normalization"
 -------------------------------------------------
 
 If any files that should not be normalized show up in 'git status',
-unset their `crlf` attribute before running 'git add -u'.
+unset their `text` attribute before running 'git add -u'.
 
 ------------------------
-manual.pdf	-crlf
+manual.pdf	-text
 ------------------------
 
 Conversely, text files that git does not detect can have normalization
 enabled manually.
 
 ------------------------
-weirdchars.txt	crlf
+weirdchars.txt	text
 ------------------------
 
 If `core.safecrlf` is set to "true" or "warn", git verifies if
@@ -311,11 +322,11 @@ Interaction between checkin/checkout attributes
 In the check-in codepath, the worktree file is first converted
 with `filter` driver (if specified and corresponding driver
 defined), then the result is processed with `ident` (if
-specified), and then finally with `crlf` (again, if specified
+specified), and then finally with `text` (again, if specified
 and applicable).
 
 In the check-out codepath, the blob content is first converted
-with `crlf`, and then `ident` and fed to `filter`.
+with `text`, and then `ident` and fed to `filter`.
 
 
 Generating diff text
@@ -718,7 +729,7 @@ You do not want any end-of-line conversions applied to, nor textual diffs
 produced for, any binary file you track.  You would need to specify e.g.
 
 ------------
-*.jpg -crlf -diff
+*.jpg -text -diff
 ------------
 
 but that may become cumbersome, when you have many attributes.  Using
@@ -731,7 +742,7 @@ the same time.  The system knows a built-in attribute macro, `binary`:
 
 which is equivalent to the above.  Note that the attribute macros can only
 be "Set" (see the above example that sets "binary" macro as if it were an
-ordinary attribute --- setting it in turn unsets "crlf" and "diff").
+ordinary attribute --- setting it in turn unsets "text" and "diff").
 
 
 DEFINING ATTRIBUTE MACROS
@@ -742,7 +753,7 @@ at the toplevel (i.e. not in any subdirectory).  The built-in attribute
 macro "binary" is equivalent to:
 
 ------------
-[attr]binary -diff -crlf
+[attr]binary -diff -text
 ------------
 
 
