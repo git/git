@@ -295,6 +295,7 @@ link:howto/revert-a-faulty-merge.txt[revert-a-faulty-merge How-To] for details).
 --ignore-date::
 	These flags are passed to 'git am' to easily change the dates
 	of the rebased commits (see linkgit:git-am[1]).
+	Incompatible with the --interactive option.
 
 -i::
 --interactive::
