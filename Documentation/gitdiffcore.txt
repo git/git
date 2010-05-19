@@ -227,8 +227,8 @@ changes that touch a specified string, and is controlled by the
 commands.
 
 When diffcore-pickaxe is in use, it checks if there are
-filepairs whose "original" side has the specified string and
-whose "result" side does not.  Such a filepair represents "the
+filepairs whose "result" side has the specified string and
+whose "origin" side does not.  Such a filepair represents "the
 string appeared in this changeset".  It also checks for the
 opposite case that loses the specified string.
 

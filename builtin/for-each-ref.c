@@ -227,6 +227,9 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 			strcpy(s, sha1_to_hex(obj->sha1));
 			v->s = s;
 		}
+		else if (!strcmp(name, "objectname:short")) {
+			v->s = find_unique_abbrev(obj->sha1, DEFAULT_ABBREV);
+		}
 	}
 }
 
