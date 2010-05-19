@@ -8,13 +8,23 @@
  * This should use the pathname to decide on whether it wants to do some
  * more interesting conversions (automatic gzip/unzip, general format
  * conversions etc etc), but by default it just does automatic CRLF<->LF
- * translation when the "auto_crlf" option is set.
+ * translation when the "crlf" attribute or "auto_crlf" option is set.
  */
 
-#define CRLF_GUESS	(-1)
-#define CRLF_BINARY	0
-#define CRLF_TEXT	1
-#define CRLF_INPUT	2
+enum action {
+	CRLF_GUESS = -1,
+	CRLF_BINARY = 0,
+	CRLF_TEXT,
+	CRLF_INPUT,
+	CRLF_CRLF,
+	CRLF_AUTO,
+};
+
+enum eol {
+	EOL_UNSET,
+	EOL_LF,
+	EOL_CRLF,
+};
 
 struct text_stat {
 	/* NUL, CR, LF and CRLF counts */
@@ -89,13 +99,14 @@ static int is_binary(unsigned long size, struct text_stat *stats)
 	return 0;
 }
 
-static void check_safe_crlf(const char *path, int action,
+static void check_safe_crlf(const char *path, enum action action,
                             struct text_stat *stats, enum safe_crlf checksafe)
 {
 	if (!checksafe)
 		return;
 
-	if (action == CRLF_INPUT || auto_crlf <= 0) {
+	if (action == CRLF_INPUT ||
+	    (action == CRLF_GUESS && auto_crlf == AUTO_CRLF_INPUT)) {
 		/*
 		 * CRLFs would not be restored by checkout:
 		 * check if we'd remove CRLFs
@@ -106,7 +117,8 @@ static void check_safe_crlf(const char *path, int action,
 			else /* i.e. SAFE_CRLF_FAIL */
 				die("CRLF would be replaced by LF in %s.", path);
 		}
-	} else if (auto_crlf > 0) {
+	} else if (action == CRLF_CRLF ||
+		   (action == CRLF_GUESS && auto_crlf == AUTO_CRLF_TRUE)) {
 		/*
 		 * CRLFs would be added by checkout:
 		 * check if we have "naked" LFs
@@ -158,17 +170,18 @@ static int has_cr_in_index(const char *path)
 }
 
 static int crlf_to_git(const char *path, const char *src, size_t len,
-                       struct strbuf *buf, int action, enum safe_crlf checksafe)
+		       struct strbuf *buf, enum action action, enum safe_crlf checksafe)
 {
 	struct text_stat stats;
 	char *dst;
 
-	if ((action == CRLF_BINARY) || !auto_crlf || !len)
+	if (action == CRLF_BINARY ||
+	    (action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE) || !len)
 		return 0;
 
 	gather_stats(src, len, &stats);
 
-	if (action == CRLF_GUESS) {
+	if (action == CRLF_AUTO || action == CRLF_GUESS) {
 		/*
 		 * We're currently not going to even try to convert stuff
 		 * that has bare CR characters. Does anybody do that crazy
@@ -183,12 +196,14 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		if (is_binary(len, &stats))
 			return 0;
 
-		/*
-		 * If the file in the index has any CR in it, do not convert.
-		 * This is the new safer autocrlf handling.
-		 */
-		if (has_cr_in_index(path))
-			return 0;
+		if (action == CRLF_GUESS) {
+			/*
+			 * If the file in the index has any CR in it, do not convert.
+			 * This is the new safer autocrlf handling.
+			 */
+			if (has_cr_in_index(path))
+				return 0;
+		}
 	}
 
 	check_safe_crlf(path, action, &stats, checksafe);
@@ -201,7 +216,7 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	if (strbuf_avail(buf) + buf->len < len)
 		strbuf_grow(buf, len - buf->len);
 	dst = buf->buf;
-	if (action == CRLF_GUESS) {
+	if (action == CRLF_AUTO || action == CRLF_GUESS) {
 		/*
 		 * If we guessed, we already know we rejected a file with
 		 * lone CR, and we can strip a CR without looking at what
@@ -224,13 +239,13 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 }
 
 static int crlf_to_worktree(const char *path, const char *src, size_t len,
-                            struct strbuf *buf, int action)
+			    struct strbuf *buf, enum action action)
 {
 	char *to_free = NULL;
 	struct text_stat stats;
 
 	if ((action == CRLF_BINARY) || (action == CRLF_INPUT) ||
-	    auto_crlf <= 0)
+	    (action != CRLF_CRLF && auto_crlf != AUTO_CRLF_TRUE))
 		return 0;
 
 	if (!len)
@@ -246,11 +261,13 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 	if (stats.lf == stats.crlf)
 		return 0;
 
-	if (action == CRLF_GUESS) {
-		/* If we have any CR or CRLF line endings, we do not touch it */
-		/* This is the new safer autocrlf-handling */
-		if (stats.cr > 0 || stats.crlf > 0)
-			return 0;
+	if (action == CRLF_AUTO || action == CRLF_GUESS) {
+		if (action == CRLF_GUESS) {
+			/* If we have any CR or CRLF line endings, we do not touch it */
+			/* This is the new safer autocrlf-handling */
+			if (stats.cr > 0 || stats.crlf > 0)
+				return 0;
+		}
 
 		/* If we have any bare CR characters, we're not going to touch it */
 		if (stats.cr != stats.crlf)
@@ -423,11 +440,13 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 static void setup_convert_check(struct git_attr_check *check)
 {
 	static struct git_attr *attr_crlf;
+	static struct git_attr *attr_eol;
 	static struct git_attr *attr_ident;
 	static struct git_attr *attr_filter;
 
 	if (!attr_crlf) {
 		attr_crlf = git_attr("crlf");
+		attr_eol = git_attr("eol");
 		attr_ident = git_attr("ident");
 		attr_filter = git_attr("filter");
 		user_convert_tail = &user_convert;
@@ -436,6 +455,7 @@ static void setup_convert_check(struct git_attr_check *check)
 	check[0].attr = attr_crlf;
 	check[1].attr = attr_ident;
 	check[2].attr = attr_filter;
+	check[3].attr = attr_eol;
 }
 
 static int count_ident(const char *cp, unsigned long size)
@@ -592,7 +612,22 @@ static int git_path_check_crlf(const char *path, struct git_attr_check *check)
 		;
 	else if (!strcmp(value, "input"))
 		return CRLF_INPUT;
+	else if (!strcmp(value, "auto"))
+		return CRLF_AUTO;
 	return CRLF_GUESS;
+}
+
+static int git_path_check_eol(const char *path, struct git_attr_check *check)
+{
+	const char *value = check->value;
+
+	if (ATTR_UNSET(value))
+		;
+	else if (!strcmp(value, "lf"))
+		return EOL_LF;
+	else if (!strcmp(value, "crlf"))
+		return EOL_CRLF;
+	return EOL_UNSET;
 }
 
 static struct convert_driver *git_path_check_convert(const char *path,
@@ -616,20 +651,32 @@ static int git_path_check_ident(const char *path, struct git_attr_check *check)
 	return !!ATTR_TRUE(value);
 }
 
+enum action determine_action(enum action crlf_attr, enum eol eol_attr) {
+	if (crlf_attr == CRLF_BINARY)
+		return CRLF_BINARY;
+	if (eol_attr == EOL_LF)
+		return CRLF_INPUT;
+	if (eol_attr == EOL_CRLF)
+		return CRLF_CRLF;
+	return crlf_attr;
+}
+
 int convert_to_git(const char *path, const char *src, size_t len,
                    struct strbuf *dst, enum safe_crlf checksafe)
 {
-	struct git_attr_check check[3];
-	int crlf = CRLF_GUESS;
+	struct git_attr_check check[4];
+	enum action action = CRLF_GUESS;
+	enum eol eol = EOL_UNSET;
 	int ident = 0, ret = 0;
 	const char *filter = NULL;
 
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
 		struct convert_driver *drv;
-		crlf = git_path_check_crlf(path, check + 0);
+		action = git_path_check_crlf(path, check + 0);
 		ident = git_path_check_ident(path, check + 1);
 		drv = git_path_check_convert(path, check + 2);
+		eol = git_path_check_eol(path, check + 3);
 		if (drv && drv->clean)
 			filter = drv->clean;
 	}
@@ -639,7 +686,8 @@ int convert_to_git(const char *path, const char *src, size_t len,
 		src = dst->buf;
 		len = dst->len;
 	}
-	ret |= crlf_to_git(path, src, len, dst, crlf, checksafe);
+	action = determine_action(action, eol);
+	ret |= crlf_to_git(path, src, len, dst, action, checksafe);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -649,17 +697,19 @@ int convert_to_git(const char *path, const char *src, size_t len,
 
 int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst)
 {
-	struct git_attr_check check[3];
-	int crlf = CRLF_GUESS;
+	struct git_attr_check check[4];
+	enum action action = CRLF_GUESS;
+	enum eol eol = EOL_UNSET;
 	int ident = 0, ret = 0;
 	const char *filter = NULL;
 
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
 		struct convert_driver *drv;
-		crlf = git_path_check_crlf(path, check + 0);
+		action = git_path_check_crlf(path, check + 0);
 		ident = git_path_check_ident(path, check + 1);
 		drv = git_path_check_convert(path, check + 2);
+		eol = git_path_check_eol(path, check + 3);
 		if (drv && drv->smudge)
 			filter = drv->smudge;
 	}
@@ -669,7 +719,8 @@ int convert_to_working_tree(const char *path, const char *src, size_t len, struc
 		src = dst->buf;
 		len = dst->len;
 	}
-	ret |= crlf_to_worktree(path, src, len, dst, crlf);
+	action = determine_action(action, eol);
+	ret |= crlf_to_worktree(path, src, len, dst, action);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;

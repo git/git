@@ -39,7 +39,7 @@ test_expect_success 'default settings cause no changes' '
 	test -z "$onediff" -a -z "$twodiff" -a -z "$threediff"
 '
 
-test_expect_failure 'crlf=true causes a CRLF file to be normalized' '
+test_expect_success 'crlf=true causes a CRLF file to be normalized' '
 
 	rm -f .gitattributes tmp one two three &&
 	echo "two crlf" > .gitattributes &&
@@ -51,7 +51,7 @@ test_expect_failure 'crlf=true causes a CRLF file to be normalized' '
 	test -n "$twodiff"
 '
 
-test_expect_failure 'eol=crlf gives a normalized file CRLFs with autocrlf=false' '
+test_expect_success 'eol=crlf gives a normalized file CRLFs with autocrlf=false' '
 
 	rm -f .gitattributes tmp one two three &&
 	git config core.autocrlf false &&
@@ -63,7 +63,7 @@ test_expect_failure 'eol=crlf gives a normalized file CRLFs with autocrlf=false'
 	test -z "$onediff"
 '
 
-test_expect_failure 'eol=crlf gives a normalized file CRLFs with autocrlf=input' '
+test_expect_success 'eol=crlf gives a normalized file CRLFs with autocrlf=input' '
 
 	rm -f .gitattributes tmp one two three &&
 	git config core.autocrlf input &&
@@ -75,7 +75,7 @@ test_expect_failure 'eol=crlf gives a normalized file CRLFs with autocrlf=input'
 	test -z "$onediff"
 '
 
-test_expect_failure 'eol=lf gives a normalized file LFs with autocrlf=true' '
+test_expect_success 'eol=lf gives a normalized file LFs with autocrlf=true' '
 
 	rm -f .gitattributes tmp one two three &&
 	git config core.autocrlf true &&
@@ -101,7 +101,7 @@ test_expect_success 'autocrlf=true does not normalize CRLF files' '
 	test -z "$onediff" -a -z "$twodiff" -a -z "$threediff"
 '
 
-test_expect_failure 'crlf=auto, autocrlf=true _does_ normalize CRLF files' '
+test_expect_success 'crlf=auto, autocrlf=true _does_ normalize CRLF files' '
 
 	rm -f .gitattributes tmp one two three &&
 	git config core.autocrlf true &&
@@ -128,7 +128,7 @@ test_expect_success 'crlf=auto, autocrlf=true does not normalize binary files' '
 	test -z "$threediff"
 '
 
-test_expect_failure 'eol=crlf _does_ normalize binary files' '
+test_expect_success 'eol=crlf _does_ normalize binary files' '
 
 	rm -f .gitattributes tmp one two three &&
 	echo "three eol=crlf" > .gitattributes &&

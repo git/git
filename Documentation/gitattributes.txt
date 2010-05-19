@@ -95,50 +95,138 @@ repository upon 'git add' and 'git commit'.
 `crlf`
 ^^^^^^
 
-This attribute controls the line-ending convention.
+This attribute enables and controls end-of-line normalization.  When a
+text file is normalized, its line endings are converted to LF in the
+repository.  To control what line ending style is used in the working
+directory, use the `eol` attribute for a single file and the
+`core.autocrlf` configuration variable for all text files.
 
 Set::
 
-	Setting the `crlf` attribute on a path is meant to mark
-	the path as a "text" file.  'core.autocrlf' conversion
-	takes place without guessing the content type by
-	inspection.
+	Setting the `crlf` attribute on a path enables end-of-line
+	normalization and marks the path as a text file.  End-of-line
+	conversion takes place without guessing the content type.
 
 Unset::
 
 	Unsetting the `crlf` attribute on a path tells git not to
 	attempt any end-of-line conversion upon checkin or checkout.
 
+Set to string value "auto"::
+
+	When `crlf` is set to "auto", the path is marked for automatic
+	end-of-line normalization.  If git decides that the content is
+	text, its line endings are normalized to LF on checkin.
+
 Unspecified::
 
-	Unspecified `crlf` attribute tells git to apply the
-	`core.autocrlf` conversion when the file content looks
-	like text.
+	If the `crlf` attribute is unspecified, git uses the `eol`
+	attribute and the `core.autocrlf` configuration variable to
+	determine if the file should be converted.
 
-Set to string value "input"::
+Any other value causes git to act as if `crlf` has been left
+unspecified.
 
-	This is similar to setting the attribute to `true`, but
-	also forces git to act as if `core.autocrlf` is set to
-	`input` for the path.
+`eol`
+^^^^^
 
-Any other value set to `crlf` attribute is ignored and git acts
-as if the attribute is left unspecified.
+This attribute sets a specific line-ending style to be used in the
+working directory.  It enables end-of-line normalization without any
+content checks, similar to setting the `crlf` attribute.
 
+Set to string value "crlf"::
 
-The `core.autocrlf` conversion
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	This setting forces git to normalize line endings on checkin
+	and convert them to CRLF when the file is checked out,
+	regardless of `crlf` and `core.autocrlf`.
 
-If the configuration variable `core.autocrlf` is false, no
-conversion is done.
+Set to string value "lf"::
 
-When `core.autocrlf` is true, it means that the platform wants
-CRLF line endings for files in the working tree, and you want to
-convert them back to the normal LF line endings when checking
-in to the repository.
+	This setting forces git to normalize line endings to LF on
+	checkin and prevents conversion to CRLF when the file is
+	checked out, regardless of `crlf` and `core.autocrlf`.
+	`crlf=input` is a backwards compatibility alias for `eol=lf`.
 
-When `core.autocrlf` is set to "input", line endings are
-converted to LF upon checkin, but there is no conversion done
-upon checkout.
+End-of-line conversion
+^^^^^^^^^^^^^^^^^^^^^^
+
+While git normally leaves file contents alone, it can be configured to
+normalize line endings to LF in the repository and, optionally, to
+convert them to CRLF when files are checked out.
+
+Here is an example that will make git normalize .txt, .vcproj and .sh
+files, ensure that .vcproj files have CRLF and .sh files have LF in
+the working directory, and prevent .jpg files from being normalized
+regardless of their content.
+
+------------------------
+*.txt		crlf
+*.vcproj	eol=crlf
+*.sh		eol=lf
+*.jpg		-crlf
+------------------------
+
+Other source code management systems normalize all text files in their
+repositories, and there are two ways to enable similar automatic
+normalization in git.
+
+If you simply want to have CRLF line endings in your working directory
+regardless of the repository you are working with, you can set the
+config variable "core.autocrlf" without changing any attributes.
+
+------------------------
+[core]
+	autocrlf = true
+------------------------
+
+This does not force normalization of all text files, but does ensure
+that text files that you introduce to the repository have their line
+endings normalized to LF when they are added, and that files that are
+already normalized in the repository stay normalized.  You can also
+set `autocrlf` to "input" to have automatic normalization of new text
+files without conversion to CRLF in the working directory.
+
+If you want to interoperate with a source code management system that
+enforces end-of-line normalization, or you simply want all text files
+in your repository to be normalized, you should instead set the `crlf`
+attribute to "auto" for _all_ files.
+
+------------------------
+*	crlf=auto
+------------------------
+
+This ensures that all files that git considers to be text will have
+normalized (LF) line endings in the repository.
+
+NOTE: When `crlf=auto` normalization is enabled in an existing
+repository, any text files containing CRLFs should be normalized.  If
+they are not they will be normalized the next time someone tries to
+change them, causing unfortunate misattribution.  From a clean working
+directory:
+
+-------------------------------------------------
+$ echo "* crlf=auto" >>.gitattributes
+$ rm .git/index     # Remove the index to force git to
+$ git reset         # re-scan the working directory
+$ git status        # Show files that will be normalized
+$ git add -u
+$ git add .gitattributes
+$ git commit -m "Introduce end-of-line normalization"
+-------------------------------------------------
+
+If any files that should not be normalized show up in 'git status',
+unset their `crlf` attribute before running 'git add -u'.
+
+------------------------
+manual.pdf	-crlf
+------------------------
+
+Conversely, text files that git does not detect can have normalization
+enabled manually.
+
+------------------------
+weirdchars.txt	crlf
+------------------------
 
 If `core.safecrlf` is set to "true" or "warn", git verifies if
 the conversion is reversible for the current setting of
