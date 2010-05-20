@@ -23,6 +23,13 @@
 # possible for the email to be from someone other than the person doing the
 # push.
 #
+# To help with debugging and use on pre-v1.5.1 git servers, this script will
+# also obey the interface of hooks/update, taking its arguments on the
+# command line.  Unfortunately, hooks/update is called once for each ref.
+# To avoid firing one email per ref, this script just prints its output to
+# the screen when used in this mode.  The output can then be redirected if
+# wanted.
+#
 # Config
 # ------
 # hooks.mailinglist
