@@ -253,6 +253,7 @@ find_existing_splits()
 				if [ -n "$main" -a -n "$sub" ]; then
 					debug "  Prior: $main -> $sub"
 					cache_set $main $sub
+					cache_set $sub $sub
 					try_remove_previous "$main"
 					try_remove_previous "$sub"
 				fi
@@ -569,7 +570,9 @@ cmd_split()
 		# ugly.  is there no better way to tell if this is a subtree
 		# vs. a mainline commit?  Does it matter?
 		if [ -z $tree ]; then
-			cache_set $rev $rev
+			if [ -n "$newparents" ]; then
+				cache_set $rev $rev
+			fi
 			continue
 		fi
 

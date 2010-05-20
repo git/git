@@ -294,6 +294,15 @@ git subtree split --prefix subdir --branch mainsub4
 # but it wasn't, because it's cache was not set to itself)
 check_equal "$(git log --pretty=format:%P -1 mainsub4)" "$(git rev-parse sub3)"
 
+mkdir subdir2
+create subdir2/main-sub5
+git commit -m "main-sub5"
+git subtree split --prefix subdir2 --branch mainsub5
+
+# also test that we still can split out an entirely new subtree
+# if the parent of the first commit in the tree isn't empty,
+# then the new subtree has accidently been attached to something
+check_equal "$(git log --pretty=format:%P -1 mainsub5)" ""
 
 
 # make sure no patch changes more than one file.  The original set of commits
