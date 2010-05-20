@@ -12,7 +12,7 @@ test_expect_success 'setup' '
 
 	git config pack.compression 0 &&
 	git config pack.depth 0 &&
-	blobsize=$((20*1024*1024)) &&
+	blobsize=$((100*1024*1024)) &&
 	blobcount=$((2*1024*1024*1024/$blobsize+1)) &&
 	i=1 &&
 	(while test $i -le $blobcount
@@ -36,9 +36,15 @@ test_expect_success 'setup' '
 
 '
 
-test_expect_success 'clone' '
+test_expect_success 'clone - bare' '
 
-	git clone --bare --no-hardlinks . clone
+	git clone --bare --no-hardlinks . clone-bare
+
+'
+
+test_expect_success 'clone - with worktree, file:// protocol' '
+
+	git clone file://. clone-wt
 
 '
 
