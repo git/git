@@ -266,26 +266,23 @@ static void unlink_base_data(struct base_data *c)
 
 static void *unpack_entry_data(unsigned long offset, unsigned long size)
 {
+	int status;
 	z_stream stream;
 	void *buf = xmalloc(size);
 
 	memset(&stream, 0, sizeof(stream));
+	git_inflate_init(&stream);
 	stream.next_out = buf;
 	stream.avail_out = size;
-	stream.next_in = fill(1);
-	stream.avail_in = input_len;
-	git_inflate_init(&stream);
 
-	for (;;) {
-		int ret = git_inflate(&stream, 0);
-		use(input_len - stream.avail_in);
-		if (stream.total_out == size && ret == Z_STREAM_END)
-			break;
-		if (ret != Z_OK)
-			bad_object(offset, "inflate returned %d", ret);
+	do {
 		stream.next_in = fill(1);
 		stream.avail_in = input_len;
-	}
+		status = git_inflate(&stream, 0);
+		use(input_len - stream.avail_in);
+	} while (status == Z_OK);
+	if (stream.total_out != size || status != Z_STREAM_END)
+		bad_object(offset, "inflate returned %d", status);
 	git_inflate_end(&stream);
 	return buf;
 }
@@ -359,34 +356,38 @@ static void *get_data_from_pack(struct object_entry *obj)
 {
 	off_t from = obj[0].idx.offset + obj[0].hdr_size;
 	unsigned long len = obj[1].idx.offset - from;
-	unsigned long rdy = 0;
-	unsigned char *src, *data;
+	unsigned char *data, *inbuf;
 	z_stream stream;
-	int st;
+	int status;
 
-	src = xmalloc(len);
-	data = src;
+	data = xmalloc(obj->size);
+	inbuf = xmalloc((len < 64*1024) ? len : 64*1024);
+
+	memset(&stream, 0, sizeof(stream));
+	git_inflate_init(&stream);
+	stream.next_out = data;
+	stream.avail_out = obj->size;
+
 	do {
-		ssize_t n = pread(pack_fd, data + rdy, len - rdy, from + rdy);
+		ssize_t n = (len < 64*1024) ? len : 64*1024;
+		n = pread(pack_fd, inbuf, n, from);
 		if (n < 0)
 			die_errno("cannot pread pack file");
 		if (!n)
-			die("premature end of pack file, %lu bytes missing",
-			    len - rdy);
-		rdy += n;
-	} while (rdy < len);
-	data = xmalloc(obj->size);
-	memset(&stream, 0, sizeof(stream));
-	stream.next_out = data;
-	stream.avail_out = obj->size;
-	stream.next_in = src;
-	stream.avail_in = len;
-	git_inflate_init(&stream);
-	while ((st = git_inflate(&stream, Z_FINISH)) == Z_OK);
-	git_inflate_end(&stream);
-	if (st != Z_STREAM_END || stream.total_out != obj->size)
+			die("premature end of pack file, %lu bytes missing", len);
+		from += n;
+		len -= n;
+		stream.next_in = inbuf;
+		stream.avail_in = n;
+		status = git_inflate(&stream, 0);
+	} while (len && status == Z_OK && !stream.avail_in);
+
+	/* This has been inflated OK when first encountered, so... */
+	if (status != Z_STREAM_END || stream.total_out != obj->size)
 		die("serious inflate inconsistency");
-	free(src);
+
+	git_inflate_end(&stream);
+	free(inbuf);
 	return data;
 }
 
@@ -668,25 +669,25 @@ static void parse_pack_objects(unsigned char *sha1)
 static int write_compressed(struct sha1file *f, void *in, unsigned int size)
 {
 	z_stream stream;
-	unsigned long maxsize;
-	void *out;
+	int status;
+	unsigned char outbuf[4096];
 
 	memset(&stream, 0, sizeof(stream));
 	deflateInit(&stream, zlib_compression_level);
-	maxsize = deflateBound(&stream, size);
-	out = xmalloc(maxsize);
-
-	/* Compress it */
 	stream.next_in = in;
 	stream.avail_in = size;
-	stream.next_out = out;
-	stream.avail_out = maxsize;
-	while (deflate(&stream, Z_FINISH) == Z_OK);
-	deflateEnd(&stream);
 
+	do {
+		stream.next_out = outbuf;
+		stream.avail_out = sizeof(outbuf);
+		status = deflate(&stream, Z_FINISH);
+		sha1write(f, outbuf, sizeof(outbuf) - stream.avail_out);
+	} while (status == Z_OK);
+
+	if (status != Z_STREAM_END)
+		die("unable to deflate appended object (%d)", status);
 	size = stream.total_out;
-	sha1write(f, out, size);
-	free(out);
+	deflateEnd(&stream);
 	return size;
 }
 
