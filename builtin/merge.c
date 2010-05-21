@@ -982,7 +982,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		reset_hard(remote_head->sha1, 0);
 		return 0;
 	} else {
-		struct strbuf msg = STRBUF_INIT;
+		struct strbuf merge_names = STRBUF_INIT;
 
 		/* We are invoked directly as the first-class UI. */
 		head_arg = "HEAD";
@@ -995,13 +995,17 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * codepath so we discard the error in this
 		 * loop.
 		 */
-		if (!have_message) {
-			for (i = 0; i < argc; i++)
-				merge_name(argv[i], &msg);
-			fmt_merge_msg(option_log, &msg, &merge_msg);
-			if (merge_msg.len)
-				strbuf_setlen(&merge_msg, merge_msg.len-1);
-		}
+		for (i = 0; i < argc; i++)
+			merge_name(argv[i], &merge_names);
+
+		if (have_message && option_log)
+			fmt_merge_msg_shortlog(&merge_names, &merge_msg);
+		else if (!have_message)
+			fmt_merge_msg(option_log, &merge_names, &merge_msg);
+
+
+		if (!(have_message && !option_log) && merge_msg.len)
+			strbuf_setlen(&merge_msg, merge_msg.len-1);
 	}
 
 	if (head_invalid || !argc)

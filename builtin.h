@@ -16,6 +16,7 @@ extern const char *help_unknown_cmd(const char *cmd);
 extern void prune_packed_objects(int);
 extern int fmt_merge_msg(int merge_summary, struct strbuf *in,
 	struct strbuf *out);
+extern int fmt_merge_msg_shortlog(struct strbuf *in, struct strbuf *out);
 extern int commit_notes(struct notes_tree *t, const char *msg);
 
 struct notes_rewrite_cfg {
