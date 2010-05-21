@@ -383,6 +383,8 @@ fail_pipe:
 			close(cmd->out);
 		if (need_err)
 			close_pair(fderr);
+		else if (cmd->err)
+			close(cmd->err);
 		errno = failed_errno;
 		return -1;
 	}

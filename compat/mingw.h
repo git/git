@@ -170,6 +170,9 @@ int link(const char *oldpath, const char *newpath);
 int mingw_open (const char *filename, int oflags, ...);
 #define open mingw_open
 
+ssize_t mingw_write(int fd, const void *buf, size_t count);
+#define write mingw_write
+
 FILE *mingw_fopen (const char *filename, const char *otype);
 #define fopen mingw_fopen
 
