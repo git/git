@@ -86,7 +86,7 @@ create_stash () {
 			GIT_INDEX_FILE="$TMP-index" &&
 			export GIT_INDEX_FILE &&
 			git read-tree -m $i_tree &&
-			git add -u &&
+			git diff --name-only -z HEAD | git update-index -z --add --remove --stdin &&
 			git write-tree &&
 			rm -f "$TMP-index"
 		) ) ||
