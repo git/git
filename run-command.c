@@ -449,7 +449,7 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 	return run_command(&cmd);
 }
 
-#ifdef ASYNC_AS_THREAD
+#ifndef NO_PTHREADS
 static pthread_t main_thread;
 static int main_thread_set;
 static pthread_key_t async_key;
@@ -457,10 +457,10 @@ static pthread_key_t async_key;
 static void *run_thread(void *data)
 {
 	struct async *async = data;
+	intptr_t ret;
 
 	pthread_setspecific(async_key, async);
-
-	intptr_t ret = async->proc(async->proc_in, async->proc_out, async->data);
+	ret = async->proc(async->proc_in, async->proc_out, async->data);
 	return (void *)ret;
 }
 
@@ -523,7 +523,7 @@ int start_async(struct async *async)
 	else
 		proc_out = -1;
 
-#ifndef ASYNC_AS_THREAD
+#ifdef NO_PTHREADS
 	/* Flush stdio before fork() to avoid cloning buffers */
 	fflush(NULL);
 
@@ -592,7 +592,7 @@ error:
 
 int finish_async(struct async *async)
 {
-#ifndef ASYNC_AS_THREAD
+#ifdef NO_PTHREADS
 	return wait_or_whine(async->pid, "child process", 0);
 #else
 	void *ret = (void *)(intptr_t)(-1);
