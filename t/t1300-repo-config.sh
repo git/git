@@ -824,4 +824,12 @@ test_expect_success 'check split_cmdline return' "
 	test_must_fail git merge master
 	"
 
+test_expect_success 'git -c "key=value" support' '
+	test "z$(git -c name=value config name)" = zvalue &&
+	test "z$(git -c core.name=value config core.name)" = zvalue &&
+	test "z$(git -c CamelCase=value config camelcase)" = zvalue &&
+	test "z$(git -c flag config --bool flag)" = ztrue &&
+	test_must_fail git -c core.name=value config name
+'
+
 test_done

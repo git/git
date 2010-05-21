@@ -197,7 +197,11 @@ static int get_value(const char *key_, const char *regex_)
 		git_config_from_file(show_config, system_wide, NULL);
 	if (do_all && global)
 		git_config_from_file(show_config, global, NULL);
-	git_config_from_file(show_config, local, NULL);
+	if (do_all)
+		git_config_from_file(show_config, local, NULL);
+	git_config_from_parameters(show_config, NULL);
+	if (!do_all && !seen)
+		git_config_from_file(show_config, local, NULL);
 	if (!do_all && !seen && global)
 		git_config_from_file(show_config, global, NULL);
 	if (!do_all && !seen && system_wide)

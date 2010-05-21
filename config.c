@@ -7,6 +7,7 @@
  */
 #include "cache.h"
 #include "exec_cmd.h"
+#include "strbuf.h"
 
 #define MAXNAME (256)
 
@@ -17,6 +18,48 @@ static int config_file_eof;
 static int zlib_compression_seen;
 
 const char *config_exclusive_filename = NULL;
+
+struct config_item
+{
+	struct config_item *next;
+	char *name;
+	char *value;
+};
+static struct config_item *config_parameters;
+static struct config_item **config_parameters_tail = &config_parameters;
+
+static void lowercase(char *p)
+{
+	for (; *p; p++)
+		*p = tolower(*p);
+}
+
+int git_config_parse_parameter(const char *text)
+{
+	struct config_item *ct;
+	struct strbuf tmp = STRBUF_INIT;
+	struct strbuf **pair;
+	strbuf_addstr(&tmp, text);
+	pair = strbuf_split(&tmp, '=');
+	if (pair[0]->len && pair[0]->buf[pair[0]->len - 1] == '=')
+		strbuf_setlen(pair[0], pair[0]->len - 1);
+	strbuf_trim(pair[0]);
+	if (!pair[0]->len) {
+		strbuf_list_free(pair);
+		return -1;
+	}
+	ct = xcalloc(1, sizeof(struct config_item));
+	ct->name = strbuf_detach(pair[0], NULL);
+	if (pair[1]) {
+		strbuf_trim(pair[1]);
+		ct->value = strbuf_detach(pair[1], NULL);
+	}
+	strbuf_list_free(pair);
+	lowercase(ct->name);
+	*config_parameters_tail = ct;
+	config_parameters_tail = &ct->next;
+	return 0;
+}
 
 static int get_next_char(void)
 {
@@ -712,6 +755,15 @@ int git_config_global(void)
 	return !git_env_bool("GIT_CONFIG_NOGLOBAL", 0);
 }
 
+int git_config_from_parameters(config_fn_t fn, void *data)
+{
+	const struct config_item *ct;
+	for (ct = config_parameters; ct; ct = ct->next)
+		if (fn(ct->name, ct->value, data) < 0)
+			return -1;
+	return 0;
+}
+
 int git_config(config_fn_t fn, void *data)
 {
 	int ret = 0, found = 0;
@@ -743,6 +795,12 @@ int git_config(config_fn_t fn, void *data)
 		found += 1;
 	}
 	free(repo_config);
+
+	if (config_parameters) {
+		ret += git_config_from_parameters(fn, data);
+		found += 1;
+	}
+
 	if (found == 0)
 		return -1;
 	return ret;
