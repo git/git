@@ -271,6 +271,8 @@ cmd_foreach()
 		shift
 	done
 
+	toplevel=$(pwd)
+
 	module_list |
 	while read mode sha1 stage path
 	do
