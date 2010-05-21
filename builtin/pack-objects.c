@@ -1529,6 +1529,8 @@ static void try_to_free_from_threads(size_t size)
 	read_unlock();
 }
 
+try_to_free_t old_try_to_free_routine;
+
 /*
  * The main thread waits on the condition that (at least) one of the workers
  * has stopped working (which is indicated in the .working member of
@@ -1563,12 +1565,12 @@ static void init_threaded_search(void)
 	pthread_mutex_init(&cache_mutex, NULL);
 	pthread_mutex_init(&progress_mutex, NULL);
 	pthread_cond_init(&progress_cond, NULL);
-	set_try_to_free_routine(try_to_free_from_threads);
+	old_try_to_free_routine = set_try_to_free_routine(try_to_free_from_threads);
 }
 
 static void cleanup_threaded_search(void)
 {
-	set_try_to_free_routine(NULL);
+	set_try_to_free_routine(old_try_to_free_routine);
 	pthread_cond_destroy(&progress_cond);
 	pthread_mutex_destroy(&read_mutex);
 	pthread_mutex_destroy(&cache_mutex);
