@@ -530,6 +530,22 @@ test_must_fail () {
 	test $? -gt 0 -a $? -le 129 -o $? -gt 192
 }
 
+# Similar to test_must_fail, but tolerates success, too.  This is
+# meant to be used in contexts like:
+#
+#	test_expect_success 'some command works without configuration' '
+#		test_might_fail git config --unset all.configuration &&
+#		do something
+#	'
+#
+# Writing "git config --unset all.configuration || :" would be wrong,
+# because we want to notice if it fails due to segv.
+
+test_might_fail () {
+	"$@"
+	test $? -ge 0 -a $? -le 129 -o $? -gt 192
+}
+
 # test_cmp is a helper function to compare actual and expected output.
 # You can use it like:
 #
