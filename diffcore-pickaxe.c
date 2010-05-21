@@ -55,8 +55,7 @@ void diffcore_pickaxe(const char *needle, int opts)
 	int i, has_changes;
 	regex_t regex, *regexp = NULL;
 	struct diff_queue_struct outq;
-	outq.queue = NULL;
-	outq.nr = outq.alloc = 0;
+	DIFF_QUEUE_CLEAR(&outq);
 
 	if (opts & DIFF_PICKAXE_REGEX) {
 		int err;
