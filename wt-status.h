@@ -41,18 +41,19 @@ struct wt_status {
 	int use_color;
 	int relative_paths;
 	int submodule_summary;
+	int show_ignored_files;
 	enum untracked_status_type show_untracked_files;
 	char color_palette[WT_STATUS_UNMERGED+1][COLOR_MAXLEN];
 
 	/* These are computed during processing of the individual sections */
 	int commitable;
 	int workdir_dirty;
-	int workdir_untracked;
 	const char *index_file;
 	FILE *fp;
 	const char *prefix;
 	struct string_list change;
 	struct string_list untracked;
+	struct string_list ignored;
 };
 
 void wt_status_prepare(struct wt_status *s);
