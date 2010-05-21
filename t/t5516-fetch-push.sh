@@ -528,7 +528,7 @@ test_expect_success 'push does not update local refs on failure' '
 	mk_test heads/master &&
 	mk_child child &&
 	mkdir testrepo/.git/hooks &&
-	echo exit 1 >testrepo/.git/hooks/pre-receive &&
+	echo "#!/no/frobnication/today" >testrepo/.git/hooks/pre-receive &&
 	chmod +x testrepo/.git/hooks/pre-receive &&
 	(cd child &&
 		git pull .. master
