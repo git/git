@@ -6,8 +6,8 @@ First you have to generate gitweb.cgi from gitweb.perl using
 gitweb.css, git-logo.png and git-favicon.png) to their destination.
 For example if git was (or is) installed with /usr prefix, you can do
 
-	$ make prefix=/usr gitweb             ;# as yourself
-	# cp gitweb/git* /var/www/cgi-bin/    ;# as root
+	$ make prefix=/usr gitweb                            ;# as yourself
+	# make gitwebdir=/var/www/cgi-bin install-gitweb     ;# as root
 
 Alternatively you can use autoconf generated ./configure script to
 set up path to git binaries (via config.mak.autogen), so you can write
@@ -16,7 +16,8 @@ instead
 	$ make configure                     ;# as yourself
 	$ ./configure --prefix=/usr          ;# as yourself
 	$ make gitweb                        ;# as yourself
-	# cp gitweb/git* /var/www/cgi-bin/   ;# as root
+	# make gitwebdir=/var/www/cgi-bin \
+	       install-gitweb                ;# as root
 
 The above example assumes that your web server is configured to run
 [executable] files in /var/www/cgi-bin/ as server scripts (as CGI
@@ -74,9 +75,10 @@ file for gitweb (in gitweb/README).
 Build example
 ~~~~~~~~~~~~~
 
-- To install gitweb to /var/www/cgi-bin/gitweb/ when git wrapper
-  is installed at /usr/local/bin/git and the repositories (projects)
-  we want to display are under /home/local/scm, you can do
+- To install gitweb to /var/www/cgi-bin/gitweb/, when git wrapper
+  is installed at /usr/local/bin/git, the repositories (projects)
+  we want to display are under /home/local/scm, and you do not use
+  minifiers, you can do
 
 	make GITWEB_PROJECTROOT="/home/local/scm" \
 	     GITWEB_JS="/gitweb/gitweb.js" \
@@ -86,8 +88,8 @@ Build example
 	     bindir=/usr/local/bin \
 	     gitweb
 
-	cp -fv ~/git/gitweb/gitweb.{cgi,js,css} \
-	       ~/git/gitweb/git-{favicon,logo}.png \
+	cp -fv gitweb/gitweb.{cgi,js,css} \
+	       gitweb/git-{favicon,logo}.png \
 	     /var/www/cgi-bin/gitweb/
 
 
