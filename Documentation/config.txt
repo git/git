@@ -946,13 +946,19 @@ gc.pruneexpire::
 	unreachable objects immediately.
 
 gc.reflogexpire::
+gc.<pattern>.reflogexpire::
 	'git reflog expire' removes reflog entries older than
-	this time; defaults to 90 days.
+	this time; defaults to 90 days.  With "<pattern>" (e.g.
+	"refs/stash") in the middle the setting applies only to
+	the refs that match the <pattern>.
 
 gc.reflogexpireunreachable::
+gc.<ref>.reflogexpireunreachable::
 	'git reflog expire' removes reflog entries older than
 	this time and are not reachable from the current tip;
-	defaults to 30 days.
+	defaults to 30 days.  With "<pattern>" (e.g. "refs/stash")
+	in the middle, the setting applies only to the refs that
+	match the <pattern>.
 
 gc.rerereresolved::
 	Records of conflicted merge you resolved earlier are
