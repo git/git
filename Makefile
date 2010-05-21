@@ -1075,6 +1075,7 @@ endif
 -include config.mak
 
 ifdef CHECK_HEADER_DEPENDENCIES
+COMPUTE_HEADER_DEPENDENCIES =
 USE_COMPUTED_HEADER_DEPENDENCIES =
 endif
 
@@ -1667,7 +1668,10 @@ git.o git.spec \
 
 TEST_OBJS := $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
 GIT_OBJS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
-	git.o http.o http-walker.o remote-curl.o
+	git.o
+ifndef NO_CURL
+	GIT_OBJS += http.o http-walker.o remote-curl.o
+endif
 XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 	xdiff/xmerge.o xdiff/xpatience.o
 OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS)
