@@ -3,7 +3,7 @@ git-notes(1)
 
 NAME
 ----
-git-notes - Add/inspect object notes
+git-notes - Add or inspect object notes
 
 SYNOPSIS
 --------
@@ -20,24 +20,26 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This command allows you to add/remove notes to/from objects, without
-changing the objects themselves.
+Adds, removes, or reads notes attached to objects, without touching
+the objects themselves.
 
-A typical use of notes is to extend a commit message without having
-to change the commit itself. Such commit notes can be shown by `git log`
-along with the original commit message. To discern these notes from the
+By default, notes are saved to and read from `refs/notes/commits`, but
+this default can be overridden.  See the OPTIONS, CONFIGURATION, and
+ENVIRONMENT sections below.  If this ref does not exist, it will be
+quietly created when it is first needed to store a note.
+
+A typical use of notes is to supplement a commit message without
+changing the commit itself. Notes can be shown by 'git log' along with
+the original commit message. To distinguish these notes from the
 message stored in the commit object, the notes are indented like the
 message, after an unindented line saying "Notes (<refname>):" (or
-"Notes:" for the default setting).
+"Notes:" for `refs/notes/commits`).
 
-This command always manipulates the notes specified in "core.notesRef"
-(see linkgit:git-config[1]), which can be overridden by GIT_NOTES_REF.
-To change which notes are shown by 'git-log', see the
-"notes.displayRef" configuration.
+To change which notes are shown by 'git log', see the
+"notes.displayRef" configuration in linkgit:git-log[1].
 
-See the description of "notes.rewrite.<command>" in
-linkgit:git-config[1] for a way of carrying your notes across commands
-that rewrite commits.
+See the "notes.rewrite.<command>" configuration for a way to carry
+notes across commands that rewrite commits.
 
 
 SUBCOMMANDS
@@ -101,15 +103,20 @@ OPTIONS
 	Use the given note message (instead of prompting).
 	If multiple `-m` options are given, their values
 	are concatenated as separate paragraphs.
+	Lines starting with `#` and empty lines other than a
+	single line between paragraphs will be stripped out.
 
 -F <file>::
 --file=<file>::
 	Take the note message from the given file.  Use '-' to
 	read the note message from the standard input.
+	Lines starting with `#` and empty lines other than a
+	single line between paragraphs will be stripped out.
 
 -C <object>::
 --reuse-message=<object>::
-	Reuse the note message from the given note object.
+	Take the note message from the given blob object (for
+	example, another note).
 
 -c <object>::
 --reedit-message=<object>::
@@ -117,22 +124,144 @@ OPTIONS
 	the user can further edit the note message.
 
 --ref <ref>::
-	Manipulate the notes tree in <ref>.  This overrides both
-	GIT_NOTES_REF and the "core.notesRef" configuration.  The ref
+	Manipulate the notes tree in <ref>.  This overrides
+	'GIT_NOTES_REF' and the "core.notesRef" configuration.  The ref
 	is taken to be in `refs/notes/` if it is not qualified.
 
 
-NOTES
------
+DISCUSSION
+----------
+
+Commit notes are blobs containing extra information about an object
+(usually information to supplement a commit's message).  These blobs
+are taken from notes refs.  A notes ref is usually a branch which
+contains "files" whose paths are the object names for the objects
+they describe, with some directory separators included for performance
+reasons footnote:[Permitted pathnames have the form
+'ab'`/`'cd'`/`'ef'`/`'...'`/`'abcdef...': a sequence of directory
+names of two hexadecimal digits each followed by a filename with the
+rest of the object ID.].
 
 Every notes change creates a new commit at the specified notes ref.
 You can therefore inspect the history of the notes by invoking, e.g.,
-`git log -p notes/commits`.
+`git log -p notes/commits`.  Currently the commit message only records
+which operation triggered the update, and the commit authorship is
+determined according to the usual rules (see linkgit:git-commit[1]).
+These details may change in the future.
 
-Currently the commit message only records which operation triggered
-the update, and the commit authorship is determined according to the
-usual rules (see linkgit:git-commit[1]).  These details may change in
-the future.
+It is also permitted for a notes ref to point directly to a tree
+object, in which case the history of the notes can be read with
+`git log -p -g <refname>`.
+
+
+EXAMPLES
+--------
+
+You can use notes to add annotations with information that was not
+available at the time a commit was written.
+
+------------
+$ git notes add -m 'Tested-by: Johannes Sixt <j6t@kdbg.org>' 72a144e2
+$ git show -s 72a144e
+[...]
+    Signed-off-by: Junio C Hamano <gitster@pobox.com>
+
+Notes:
+    Tested-by: Johannes Sixt <j6t@kdbg.org>
+------------
+
+In principle, a note is a regular Git blob, and any kind of
+(non-)format is accepted.  You can binary-safely create notes from
+arbitrary files using 'git hash-object':
+
+------------
+$ cc *.c
+$ blob=$(git hash-object -w a.out)
+$ git notes --ref=built add -C "$blob" HEAD
+------------
+
+Of course, it doesn't make much sense to display non-text-format notes
+with 'git log', so if you use such notes, you'll probably need to write
+some special-purpose tools to do something useful with them.
+
+
+CONFIGURATION
+-------------
+
+core.notesRef::
+	Notes ref to read and manipulate instead of
+	`refs/notes/commits`.  Must be an unabbreviated ref name.
+	This setting can be overridden through the environment and
+	command line.
+
+notes.displayRef::
+	Which ref (or refs, if a glob or specified more than once), in
+	addition to the default set by `core.notesRef` or
+	'GIT_NOTES_REF', to read notes from when showing commit
+	messages with the 'git log' family of commands.
+	This setting can be overridden on the command line or by the
+	'GIT_NOTES_DISPLAY_REF' environment variable.
+	See linkgit:git-log[1].
+
+notes.rewrite.<command>::
+	When rewriting commits with <command> (currently `amend` or
+	`rebase`), if this variable is `false`, git will not copy
+	notes from the original to the rewritten commit.  Defaults to
+	`true`.  See also "`notes.rewriteRef`" below.
++
+This setting can be overridden by the 'GIT_NOTES_REWRITE_REF'
+environment variable.
+
+notes.rewriteMode::
+	When copying notes during a rewrite, what to do if the target
+	commit already has a note.  Must be one of `overwrite`,
+	`concatenate`, and `ignore`.  Defaults to `concatenate`.
++
+This setting can be overridden with the `GIT_NOTES_REWRITE_MODE`
+environment variable.
+
+notes.rewriteRef::
+	When copying notes during a rewrite, specifies the (fully
+	qualified) ref whose notes should be copied.  May be a glob,
+	in which case notes in all matching refs will be copied.  You
+	may also specify this configuration several times.
++
+Does not have a default value; you must configure this variable to
+enable note rewriting.
++
+Can be overridden with the 'GIT_NOTES_REWRITE_REF' environment variable.
+
+
+ENVIRONMENT
+-----------
+
+'GIT_NOTES_REF'::
+	Which ref to manipulate notes from, instead of `refs/notes/commits`.
+	This overrides the `core.notesRef` setting.
+
+'GIT_NOTES_DISPLAY_REF'::
+	Colon-delimited list of refs or globs indicating which refs,
+	in addition to the default from `core.notesRef` or
+	'GIT_NOTES_REF', to read notes from when showing commit
+	messages.
+	This overrides the `notes.displayRef` setting.
++
+A warning will be issued for refs that do not exist, but a glob that
+does not match any refs is silently ignored.
+
+'GIT_NOTES_REWRITE_MODE'::
+	When copying notes during a rewrite, what to do if the target
+	commit already has a note.
+	Must be one of `overwrite`, `concatenate`, and `ignore`.
+	This overrides the `core.rewriteMode` setting.
+
+'GIT_NOTES_REWRITE_REF'::
+	When rewriting commits, which notes to copy from the original
+	to the rewritten commit.  Must be a colon-delimited list of
+	refs or globs.
++
+If not set in the environment, the list of notes to copy depends
+on the `notes.rewrite.<command>` and `notes.rewriteRef` settings.
 
 
 Author
