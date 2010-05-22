@@ -7,6 +7,7 @@ void append_header_grep_pattern(struct grep_opt *opt, enum grep_header_field fie
 {
 	struct grep_pat *p = xcalloc(1, sizeof(*p));
 	p->pattern = pat;
+	p->patternlen = strlen(pat);
 	p->origin = "header";
 	p->no = 0;
 	p->token = GREP_PATTERN_HEAD;
@@ -19,8 +20,15 @@ void append_header_grep_pattern(struct grep_opt *opt, enum grep_header_field fie
 void append_grep_pattern(struct grep_opt *opt, const char *pat,
 			 const char *origin, int no, enum grep_pat_token t)
 {
+	append_grep_pat(opt, pat, strlen(pat), origin, no, t);
+}
+
+void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen,
+		     const char *origin, int no, enum grep_pat_token t)
+{
 	struct grep_pat *p = xcalloc(1, sizeof(*p));
 	p->pattern = pat;
+	p->patternlen = patlen;
 	p->origin = origin;
 	p->no = no;
 	p->token = t;
@@ -44,8 +52,8 @@ struct grep_opt *grep_opt_dup(const struct grep_opt *opt)
 			append_header_grep_pattern(ret, pat->field,
 						   pat->pattern);
 		else
-			append_grep_pattern(ret, pat->pattern, pat->origin,
-					    pat->no, pat->token);
+			append_grep_pat(ret, pat->pattern, pat->patternlen,
+					pat->origin, pat->no, pat->token);
 	}
 
 	return ret;
@@ -329,21 +337,21 @@ static void show_name(struct grep_opt *opt, const char *name)
 	opt->output(opt, opt->null_following_name ? "\0" : "\n", 1);
 }
 
-static int fixmatch(const char *pattern, char *line, char *eol,
-		    int ignore_case, regmatch_t *match)
+static int fixmatch(struct grep_pat *p, char *line, char *eol,
+		    regmatch_t *match)
 {
 	char *hit;
 
-	if (ignore_case) {
+	if (p->ignore_case) {
 		char *s = line;
 		do {
-			hit = strcasestr(s, pattern);
+			hit = strcasestr(s, p->pattern);
 			if (hit)
 				break;
 			s += strlen(s) + 1;
 		} while (s < eol);
 	} else
-		hit = memmem(line, eol - line, pattern, strlen(pattern));
+		hit = memmem(line, eol - line, p->pattern, p->patternlen);
 
 	if (!hit) {
 		match->rm_so = match->rm_eo = -1;
@@ -351,7 +359,7 @@ static int fixmatch(const char *pattern, char *line, char *eol,
 	}
 	else {
 		match->rm_so = hit - line;
-		match->rm_eo = match->rm_so + strlen(pattern);
+		match->rm_eo = match->rm_so + p->patternlen;
 		return 0;
 	}
 }
@@ -417,7 +425,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 
  again:
 	if (p->fixed)
-		hit = !fixmatch(p->pattern, bol, eol, p->ignore_case, pmatch);
+		hit = !fixmatch(p, bol, eol, pmatch);
 	else
 		hit = !regmatch(&p->regexp, bol, eol, pmatch, eflags);
 
@@ -743,10 +751,9 @@ static int look_ahead(struct grep_opt *opt,
 		int hit;
 		regmatch_t m;
 
-		if (p->fixed) {
-			hit = !fixmatch(p->pattern, bol, bol + *left_p,
-					p->ignore_case, &m);
-		} else
+		if (p->fixed)
+			hit = !fixmatch(p, bol, bol + *left_p, &m);
+		else
 			hit = !regmatch(&p->regexp, bol, bol + *left_p, &m, 0);
 		if (!hit || m.rm_so < 0 || m.rm_eo < 0)
 			continue;

@@ -69,4 +69,34 @@ test_expect_failure 'git grep .fi a' '
 	git grep .fi a
 '
 
+test_expect_success 'git grep -F y<NUL>f a' "
+	printf 'y\000f' >f &&
+	git grep -f f -F a
+"
+
+test_expect_success 'git grep -F y<NUL>x a' "
+	printf 'y\000x' >f &&
+	test_must_fail git grep -f f -F a
+"
+
+test_expect_success 'git grep -Fi Y<NUL>f a' "
+	printf 'Y\000f' >f &&
+	git grep -f f -Fi a
+"
+
+test_expect_failure 'git grep -Fi Y<NUL>x a' "
+	printf 'Y\000x' >f &&
+	test_must_fail git grep -f f -Fi a
+"
+
+test_expect_success 'git grep y<NUL>f a' "
+	printf 'y\000f' >f &&
+	git grep -f f a
+"
+
+test_expect_failure 'git grep y<NUL>x a' "
+	printf 'y\000x' >f &&
+	test_must_fail git grep -f f a
+"
+
 test_done
