@@ -33,6 +33,12 @@ test_expect_success 'git grep -c ina a' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git grep -l ina a' '
+	echo a >expect &&
+	git grep -l ina a >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git grep -L bar a' '
 	echo a >expect &&
 	git grep -L bar a >actual &&
