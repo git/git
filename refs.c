@@ -1258,52 +1258,67 @@ static int copy_msg(char *buf, const char *msg)
 	return cp - buf;
 }
 
+int log_ref_setup(const char *ref_name, char **log_file)
+{
+	int logfd, oflags = O_APPEND | O_WRONLY;
+	char logfile[PATH_MAX];
+
+	git_snpath(logfile, sizeof(logfile), "logs/%s", ref_name);
+	*log_file = logfile;
+	if (log_all_ref_updates &&
+	    (!prefixcmp(ref_name, "refs/heads/") ||
+	     !prefixcmp(ref_name, "refs/remotes/") ||
+	     !prefixcmp(ref_name, "refs/notes/") ||
+	     !strcmp(ref_name, "HEAD"))) {
+		if (safe_create_leading_directories(*log_file) < 0)
+			return error("unable to create directory for %s",
+				     *log_file);
+		oflags |= O_CREAT;
+	}
+
+	logfd = open(*log_file, oflags, 0666);
+	if (logfd < 0) {
+		if (!(oflags & O_CREAT) && errno == ENOENT)
+			return 0;
+
+		if ((oflags & O_CREAT) && errno == EISDIR) {
+			if (remove_empty_directories(*log_file)) {
+				return error("There are still logs under '%s'",
+					     *log_file);
+			}
+			logfd = open(*log_file, oflags, 0666);
+		}
+
+		if (logfd < 0)
+			return error("Unable to append to %s: %s",
+				     *log_file, strerror(errno));
+	}
+
+	adjust_shared_perm(*log_file);
+	close(logfd);
+	return 0;
+}
+
 static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 			 const unsigned char *new_sha1, const char *msg)
 {
-	int logfd, written, oflags = O_APPEND | O_WRONLY;
+	int logfd, result, written, oflags = O_APPEND | O_WRONLY;
 	unsigned maxlen, len;
 	int msglen;
-	char log_file[PATH_MAX];
+	char *log_file;
 	char *logrec;
 	const char *committer;
 
 	if (log_all_ref_updates < 0)
 		log_all_ref_updates = !is_bare_repository();
 
-	git_snpath(log_file, sizeof(log_file), "logs/%s", ref_name);
+	result = log_ref_setup(ref_name, &log_file);
+	if (result)
+		return result;
 
-	if (log_all_ref_updates &&
-	    (!prefixcmp(ref_name, "refs/heads/") ||
-	     !prefixcmp(ref_name, "refs/remotes/") ||
-	     !prefixcmp(ref_name, "refs/notes/") ||
-	     !strcmp(ref_name, "HEAD"))) {
-		if (safe_create_leading_directories(log_file) < 0)
-			return error("unable to create directory for %s",
-				     log_file);
-		oflags |= O_CREAT;
-	}
-
-	logfd = open(log_file, oflags, 0666);
-	if (logfd < 0) {
-		if (!(oflags & O_CREAT) && errno == ENOENT)
-			return 0;
-
-		if ((oflags & O_CREAT) && errno == EISDIR) {
-			if (remove_empty_directories(log_file)) {
-				return error("There are still logs under '%s'",
-					     log_file);
-			}
-			logfd = open(log_file, oflags, 0666);
-		}
-
-		if (logfd < 0)
-			return error("Unable to append to %s: %s",
-				     log_file, strerror(errno));
-	}
-
-	adjust_shared_perm(log_file);
-
+	logfd = open(log_file, oflags);
+	if (logfd < 0)
+		return 0;
 	msglen = msg ? strlen(msg) : 0;
 	committer = git_committer_info(0);
 	maxlen = strlen(committer) + msglen + 100;
