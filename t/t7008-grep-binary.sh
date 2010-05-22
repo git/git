@@ -55,4 +55,8 @@ test_expect_success 'git grep -F ile a' '
 	git grep -F ile a
 '
 
+test_expect_success 'git grep -Fi iLE a' '
+	git grep -Fi iLE a
+'
+
 test_done

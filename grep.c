@@ -334,9 +334,15 @@ static int fixmatch(const char *pattern, char *line, char *eol,
 {
 	char *hit;
 
-	if (ignore_case)
-		hit = strcasestr(line, pattern);
-	else
+	if (ignore_case) {
+		char *s = line;
+		do {
+			hit = strcasestr(s, pattern);
+			if (hit)
+				break;
+			s += strlen(s) + 1;
+		} while (s < eol);
+	} else
 		hit = memmem(line, eol - line, pattern, strlen(pattern));
 
 	if (!hit) {
