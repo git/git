@@ -329,14 +329,15 @@ static void show_name(struct grep_opt *opt, const char *name)
 	opt->output(opt, opt->null_following_name ? "\0" : "\n", 1);
 }
 
-
-static int fixmatch(const char *pattern, char *line, int ignore_case, regmatch_t *match)
+static int fixmatch(const char *pattern, char *line, char *eol,
+		    int ignore_case, regmatch_t *match)
 {
 	char *hit;
+
 	if (ignore_case)
 		hit = strcasestr(line, pattern);
 	else
-		hit = strstr(line, pattern);
+		hit = memmem(line, eol - line, pattern, strlen(pattern));
 
 	if (!hit) {
 		match->rm_so = match->rm_eo = -1;
@@ -399,7 +400,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 
  again:
 	if (p->fixed)
-		hit = !fixmatch(p->pattern, bol, p->ignore_case, pmatch);
+		hit = !fixmatch(p->pattern, bol, eol, p->ignore_case, pmatch);
 	else
 		hit = !regexec(&p->regexp, bol, 1, pmatch, eflags);
 
@@ -725,9 +726,10 @@ static int look_ahead(struct grep_opt *opt,
 		int hit;
 		regmatch_t m;
 
-		if (p->fixed)
-			hit = !fixmatch(p->pattern, bol, p->ignore_case, &m);
-		else {
+		if (p->fixed) {
+			hit = !fixmatch(p->pattern, bol, bol + *left_p,
+					p->ignore_case, &m);
+		} else {
 #ifdef REG_STARTEND
 			m.rm_so = 0;
 			m.rm_eo = *left_p;

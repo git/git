@@ -51,4 +51,8 @@ test_expect_success 'git grep -q ina a' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git grep -F ile a' '
+	git grep -F ile a
+'
+
 test_done
