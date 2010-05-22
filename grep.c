@@ -356,6 +356,17 @@ static int fixmatch(const char *pattern, char *line, char *eol,
 	}
 }
 
+static int regmatch(const regex_t *preg, char *line, char *eol,
+		    regmatch_t *match, int eflags)
+{
+#ifdef REG_STARTEND
+	match->rm_so = 0;
+	match->rm_eo = eol - line;
+	eflags |= REG_STARTEND;
+#endif
+	return regexec(preg, line, 1, match, eflags);
+}
+
 static int strip_timestamp(char *bol, char **eol_p)
 {
 	char *eol = *eol_p;
@@ -408,7 +419,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 	if (p->fixed)
 		hit = !fixmatch(p->pattern, bol, eol, p->ignore_case, pmatch);
 	else
-		hit = !regexec(&p->regexp, bol, 1, pmatch, eflags);
+		hit = !regmatch(&p->regexp, bol, eol, pmatch, eflags);
 
 	if (hit && p->word_regexp) {
 		if ((pmatch[0].rm_so < 0) ||
@@ -735,15 +746,8 @@ static int look_ahead(struct grep_opt *opt,
 		if (p->fixed) {
 			hit = !fixmatch(p->pattern, bol, bol + *left_p,
 					p->ignore_case, &m);
-		} else {
-#ifdef REG_STARTEND
-			m.rm_so = 0;
-			m.rm_eo = *left_p;
-			hit = !regexec(&p->regexp, bol, 1, &m, REG_STARTEND);
-#else
-			hit = !regexec(&p->regexp, bol, 1, &m, 0);
-#endif
-		}
+		} else
+			hit = !regmatch(&p->regexp, bol, bol + *left_p, &m, 0);
 		if (!hit || m.rm_so < 0 || m.rm_eo < 0)
 			continue;
 		if (earliest < 0 || m.rm_so < earliest)
