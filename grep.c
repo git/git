@@ -873,6 +873,8 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			count++;
 			if (opt->status_only)
 				return 1;
+			if (opt->count)
+				goto next_line;
 			if (binary_match_only) {
 				opt->output(opt, "Binary file ", 12);
 				output_color(opt, name, strlen(name),
@@ -886,16 +888,12 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			}
 			/* Hit at this line.  If we haven't shown the
 			 * pre-context lines, we would need to show them.
-			 * When asked to do "count", this still show
-			 * the context which is nonsense, but the user
-			 * deserves to get that ;-).
 			 */
 			if (opt->pre_context)
 				show_pre_context(opt, name, buf, bol, lno);
 			else if (opt->funcname)
 				show_funcname_line(opt, name, buf, bol, lno);
-			if (!opt->count)
-				show_line(opt, bol, eol, name, lno, ':');
+			show_line(opt, bol, eol, name, lno, ':');
 			last_hit = lno;
 		}
 		else if (last_hit &&
@@ -939,6 +937,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		output_sep(opt, ':');
 		snprintf(buf, sizeof(buf), "%u\n", count);
 		opt->output(opt, buf, strlen(buf));
+		return 1;
 	}
 	return !!last_hit;
 }
