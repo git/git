@@ -958,9 +958,14 @@ char *get_relative_cwd(char *buffer, int size, const char *dir)
 	}
 	if (*dir)
 		return NULL;
-	if (*cwd == '/')
+	switch (*cwd) {
+	case '\0':
+		return cwd;
+	case '/':
 		return cwd + 1;
-	return cwd;
+	default:
+		return NULL;
+	}
 }
 
 int is_inside_dir(const char *dir)
