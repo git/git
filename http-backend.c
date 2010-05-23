@@ -6,6 +6,7 @@
 #include "exec_cmd.h"
 #include "run-command.h"
 #include "string-list.h"
+#include "url.h"
 
 static const char content_type[] = "Content-Type";
 static const char content_length[] = "Content-Length";
@@ -25,60 +26,6 @@ static struct rpc_service rpc_service[] = {
 	{ "receive-pack", "receivepack", -1 },
 };
 
-static int decode_char(const char *q)
-{
-	int i;
-	unsigned char val = 0;
-	for (i = 0; i < 2; i++) {
-		unsigned char c = *q++;
-		val <<= 4;
-		if (c >= '0' && c <= '9')
-			val += c - '0';
-		else if (c >= 'a' && c <= 'f')
-			val += c - 'a' + 10;
-		else if (c >= 'A' && c <= 'F')
-			val += c - 'A' + 10;
-		else
-			return -1;
-	}
-	return val;
-}
-
-static char *decode_parameter(const char **query, int is_name)
-{
-	const char *q = *query;
-	struct strbuf out;
-
-	strbuf_init(&out, 16);
-	do {
-		unsigned char c = *q;
-
-		if (!c)
-			break;
-		if (c == '&' || (is_name && c == '=')) {
-			q++;
-			break;
-		}
-
-		if (c == '%') {
-			int val = decode_char(q + 1);
-			if (0 <= val) {
-				strbuf_addch(&out, val);
-				q += 3;
-				continue;
-			}
-		}
-
-		if (c == '+')
-			strbuf_addch(&out, ' ');
-		else
-			strbuf_addch(&out, c);
-		q++;
-	} while (1);
-	*query = q;
-	return strbuf_detach(&out, NULL);
-}
-
 static struct string_list *get_parameters(void)
 {
 	if (!query_params) {
@@ -86,8 +33,8 @@ static struct string_list *get_parameters(void)
 
 		query_params = xcalloc(1, sizeof(*query_params));
 		while (query && *query) {
-			char *name = decode_parameter(&query, 1);
-			char *value = decode_parameter(&query, 0);
+			char *name = url_decode_parameter_name(&query);
+			char *value = url_decode_parameter_value(&query);
 			struct string_list_item *i;
 
 			i = string_list_lookup(name, query_params);

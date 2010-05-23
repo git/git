@@ -9,6 +9,7 @@
 #include "dir.h"
 #include "refs.h"
 #include "branch.h"
+#include "url.h"
 
 /* rsync support */
 
@@ -871,54 +872,6 @@ static int is_file(const char *url)
 	return S_ISREG(buf.st_mode);
 }
 
-static int isurlschemechar(int first_flag, int ch)
-{
-	/*
-	 * The set of valid URL schemes, as per STD66 (RFC3986) is
-	 * '[A-Za-z][A-Za-z0-9+.-]*'. But use sightly looser check
-	 * of '[A-Za-z0-9][A-Za-z0-9+.-]*' because earlier version
-	 * of check used '[A-Za-z0-9]+' so not to break any remote
-	 * helpers.
-	 */
-	int alphanumeric, special;
-	alphanumeric = ch > 0 && isalnum(ch);
-	special = ch == '+' || ch == '-' || ch == '.';
-	return alphanumeric || (!first_flag && special);
-}
-
-static int is_url(const char *url)
-{
-	const char *url2, *first_slash;
-
-	if (!url)
-		return 0;
-	url2 = url;
-	first_slash = strchr(url, '/');
-
-	/* Input with no slash at all or slash first can't be URL. */
-	if (!first_slash || first_slash == url)
-		return 0;
-	/* Character before must be : and next must be /. */
-	if (first_slash[-1] != ':' || first_slash[1] != '/')
-		return 0;
-	/* There must be something before the :// */
-	if (first_slash == url + 1)
-		return 0;
-	/*
-	 * Check all characters up to first slash - 1. Only alphanum
-	 * is allowed.
-	 */
-	url2 = url;
-	while (url2 < first_slash - 1) {
-		if (!isurlschemechar(url2 == url, (unsigned char)*url2))
-			return 0;
-		url2++;
-	}
-
-	/* Valid enough. */
-	return 1;
-}
-
 static int external_specification_len(const char *url)
 {
 	return strchr(url, ':') - url;
@@ -946,7 +899,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	if (url) {
 		const char *p = url;
 
-		while (isurlschemechar(p == url, *p))
+		while (is_urlschemechar(p == url, *p))
 			p++;
 		if (!prefixcmp(p, "::"))
 			helper = xstrndup(url, p - url);
