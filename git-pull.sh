@@ -43,6 +43,7 @@ merge_args=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short="${curr_branch#refs/heads/}"
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
+dry_run=
 while :
 do
 	case "$1" in
@@ -103,6 +104,9 @@ do
 		;;
 	--no-r|--no-re|--no-reb|--no-reba|--no-rebas|--no-rebase)
 		rebase=false
+		;;
+	--d|--dr|--dry|--dry-|--dry-r|--dry-ru|--dry-run)
+		dry_run=--dry-run
 		;;
 	-h|--h|--he|--hel|--help)
 		usage
@@ -216,7 +220,8 @@ test true = "$rebase" && {
 	done
 }
 orig_head=$(git rev-parse -q --verify HEAD)
-git fetch $verbosity $progress --update-head-ok "$@" || exit 1
+git fetch $verbosity $progress $dry_run --update-head-ok "$@" || exit 1
+test -z "$dry_run" || exit 0
 
 curr_head=$(git rev-parse -q --verify HEAD)
 if test -n "$orig_head" && test "$curr_head" != "$orig_head"
