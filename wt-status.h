@@ -12,6 +12,8 @@ enum color_wt_status {
 	WT_STATUS_UNTRACKED,
 	WT_STATUS_NOBRANCH,
 	WT_STATUS_UNMERGED,
+	WT_STATUS_LOCAL_BRANCH,
+	WT_STATUS_REMOTE_BRANCH,
 };
 
 enum untracked_status_type {
@@ -43,7 +45,7 @@ struct wt_status {
 	int submodule_summary;
 	int show_ignored_files;
 	enum untracked_status_type show_untracked_files;
-	char color_palette[WT_STATUS_UNMERGED+1][COLOR_MAXLEN];
+	char color_palette[WT_STATUS_REMOTE_BRANCH+1][COLOR_MAXLEN];
 
 	/* These are computed during processing of the individual sections */
 	int commitable;
@@ -60,7 +62,7 @@ void wt_status_prepare(struct wt_status *s);
 void wt_status_print(struct wt_status *s);
 void wt_status_collect(struct wt_status *s);
 
-void wt_shortstatus_print(struct wt_status *s, int null_termination);
+void wt_shortstatus_print(struct wt_status *s, int null_termination, int show_branch);
 void wt_porcelain_print(struct wt_status *s, int null_termination);
 
 #endif /* STATUS_H */
