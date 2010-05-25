@@ -313,7 +313,8 @@ static void show_one_commit(struct commit *commit, int no_name)
 		}
 		else
 			printf("[%s] ",
-			       find_unique_abbrev(commit->object.sha1, 7));
+			       find_unique_abbrev(commit->object.sha1,
+						  DEFAULT_ABBREV));
 	}
 	puts(pretty_str);
 	strbuf_release(&pretty);

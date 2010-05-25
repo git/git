@@ -35,7 +35,7 @@ test_expect_success 'partial' '
 
 '
 
-test_expect_success 'partial modification in a subdirecotry' '
+test_expect_success 'partial modification in a subdirectory' '
 
 	test_tick &&
 	git commit -m "partial commit to subdirectory" not &&
