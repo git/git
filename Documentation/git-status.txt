@@ -27,6 +27,10 @@ OPTIONS
 --short::
 	Give the output in the short-format.
 
+-b::
+--branch::
+	Show the branch and tracking info even in short-format.
+
 --porcelain::
 	Give the output in a stable, easy-to-parse format for scripts.
 	Currently this is identical to --short output, but is guaranteed
@@ -120,6 +124,10 @@ Ignored files are not listed.
     ?           ?    untracked
     -------------------------------------------------
 
+If -b is used the short-format status is preceded by a line
+
+## branchname tracking info
+
 There is an alternate -z format recommended for machine parsing.  In
 that format, the status field is the same, but some other things
 change.  First, the '->' is omitted from rename entries and the field
@@ -128,7 +136,7 @@ order is reversed (e.g 'from -> to' becomes 'to from'). Second, a NUL
 and the terminating newline (but a space still separates the status
 field from the first filename).  Third, filenames containing special
 characters are not specially formatted; no quoting or
-backslash-escaping is performed.
+backslash-escaping is performed. Fourth, there is no branch line.
 
 CONFIGURATION
 -------------
