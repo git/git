@@ -81,11 +81,11 @@ LF='
 
 show_merge () {
 	case "$msg" in
-	"Merge branch '"*"'"*" into "*)
+	"Merge branch '"*"'"*)
 		branch=$(expr "$msg" : "Merge branch '\(.*\)'")
 		merge_hier=heads/
 		;;
-	"Merge remote branch '"*"'"*" into "*)
+	"Merge remote branch '"*"'"*)
 		branch=$(expr "$msg" : "Merge remote branch '\(.*\)'")
 		merge_hier=
 		;;
