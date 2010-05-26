@@ -1596,6 +1596,7 @@ static void builtin_diff(const char *name_a,
 			 struct diff_filespec *one,
 			 struct diff_filespec *two,
 			 const char *xfrm_msg,
+			 int must_show_header,
 			 struct diff_options *o,
 			 int complete_rewrite)
 {
@@ -1647,16 +1648,19 @@ static void builtin_diff(const char *name_a,
 		strbuf_addf(&header, "%snew file mode %06o%s\n", set, two->mode, reset);
 		if (xfrm_msg && xfrm_msg[0])
 			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
+		must_show_header = 1;
 	}
 	else if (lbl[1][0] == '/') {
 		strbuf_addf(&header, "%sdeleted file mode %06o%s\n", set, one->mode, reset);
 		if (xfrm_msg && xfrm_msg[0])
 			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
+		must_show_header = 1;
 	}
 	else {
 		if (one->mode != two->mode) {
 			strbuf_addf(&header, "%sold mode %06o%s\n", set, one->mode, reset);
 			strbuf_addf(&header, "%snew mode %06o%s\n", set, two->mode, reset);
+			must_show_header = 1;
 		}
 		if (xfrm_msg && xfrm_msg[0])
 			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
@@ -1687,8 +1691,11 @@ static void builtin_diff(const char *name_a,
 	      (diff_filespec_is_binary(two) && !textconv_two) )) {
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
-		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
+		    !memcmp(mf1.ptr, mf2.ptr, mf1.size)) {
+			if (must_show_header)
+				fprintf(o->file, "%s", header.buf);
 			goto free_ab_and_return;
+		}
 		fprintf(o->file, "%s", header.buf);
 		strbuf_reset(&header);
 		if (DIFF_OPT_TST(o, BINARY))
@@ -1706,7 +1713,7 @@ static void builtin_diff(const char *name_a,
 		struct emit_callback ecbdata;
 		const struct userdiff_funcname *pe;
 
-		if (!DIFF_XDL_TST(o, WHITESPACE_FLAGS)) {
+		if (!DIFF_XDL_TST(o, WHITESPACE_FLAGS) || must_show_header) {
 			fprintf(o->file, "%s", header.buf);
 			strbuf_reset(&header);
 		}
@@ -2315,8 +2322,10 @@ static void fill_metainfo(struct strbuf *msg,
 			  struct diff_filespec *one,
 			  struct diff_filespec *two,
 			  struct diff_options *o,
-			  struct diff_filepair *p)
+			  struct diff_filepair *p,
+			  int *must_show_header)
 {
+	*must_show_header = 1;
 	strbuf_init(msg, PATH_MAX * 2 + 300);
 	switch (p->status) {
 	case DIFF_STATUS_COPIED:
@@ -2344,7 +2353,7 @@ static void fill_metainfo(struct strbuf *msg,
 		/* fallthru */
 	default:
 		/* nothing */
-		;
+		*must_show_header = 0;
 	}
 	if (one && two && hashcmp(one->sha1, two->sha1)) {
 		int abbrev = DIFF_OPT_TST(o, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
@@ -2378,9 +2387,10 @@ static void run_diff_cmd(const char *pgm,
 {
 	const char *xfrm_msg = NULL;
 	int complete_rewrite = (p->status == DIFF_STATUS_MODIFIED) && p->score;
+	int must_show_header = 0;
 
 	if (msg) {
-		fill_metainfo(msg, name, other, one, two, o, p);
+		fill_metainfo(msg, name, other, one, two, o, p, &must_show_header);
 		xfrm_msg = msg->len ? msg->buf : NULL;
 	}
 
@@ -2399,7 +2409,8 @@ static void run_diff_cmd(const char *pgm,
 	}
 	if (one && two)
 		builtin_diff(name, other ? other : name,
-			     one, two, xfrm_msg, o, complete_rewrite);
+			     one, two, xfrm_msg, must_show_header,
+			     o, complete_rewrite);
 	else
 		fprintf(o->file, "* Unmerged path %s\n", name);
 }
