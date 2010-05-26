@@ -311,8 +311,6 @@ static int fsck_commit(struct commit *commit, fsck_error error_func)
 	err = fsck_ident(&buffer, &commit->object, error_func);
 	if (err)
 		return err;
-	if (*buffer != '\n')
-		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected blank line");
 	if (!commit->tree)
 		return error_func(&commit->object, FSCK_ERROR, "could not load commit's tree %s", sha1_to_hex(tree_sha1));
 
