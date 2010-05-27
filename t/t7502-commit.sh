@@ -4,7 +4,50 @@ test_description='git commit porcelain-ish'
 
 . ./test-lib.sh
 
+# Arguments: [<prefix] [<commit message>]
+check_summary_oneline() {
+	test_tick &&
+	git commit -m "$2" | head -1 > act &&
+
+	# branch name
+	SUMMARY_PREFIX="$(git name-rev --name-only HEAD)" &&
+
+	# append the "special" prefix, like "root-commit", "detached HEAD"
+	if test -n "$1"
+	then
+		SUMMARY_PREFIX="$SUMMARY_PREFIX ($1)"
+	fi
+
+	# abbrev SHA-1
+	SUMMARY_POSTFIX="$(git log -1 --pretty='format:%h')"
+	echo "[$SUMMARY_PREFIX $SUMMARY_POSTFIX] $2" >exp &&
+
+	test_cmp exp act
+}
+
+test_expect_success 'output summary format' '
+
+	echo new >file1 &&
+	git add file1 &&
+	check_summary_oneline "root-commit" "initial" &&
+
+	echo change >>file1 &&
+	git add file1 &&
+	check_summary_oneline "" "a change"
+'
+
+output_tests_cleanup() {
+	# this is needed for "do not fire editor in the presence of conflicts"
+	git checkout master &&
+
+	# this is needed for the "partial removal" test to pass
+	git rm file1 &&
+	git commit -m "cleanup"
+}
+
 test_expect_success 'the basics' '
+
+	output_tests_cleanup &&
 
 	echo doing partial >"commit is" &&
 	mkdir not &&
