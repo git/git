@@ -4,10 +4,10 @@ test_description='git commit porcelain-ish'
 
 . ./test-lib.sh
 
-# Arguments: [<prefix] [<commit message>]
+# Arguments: [<prefix] [<commit message>] [<commit options>]
 check_summary_oneline() {
 	test_tick &&
-	git commit -m "$2" | head -1 > act &&
+	git commit ${3+"$3"} -m "$2" | head -1 > act &&
 
 	# branch name
 	SUMMARY_PREFIX="$(git name-rev --name-only HEAD)" &&
@@ -34,6 +34,31 @@ test_expect_success 'output summary format' '
 	echo change >>file1 &&
 	git add file1 &&
 	check_summary_oneline "" "a change"
+'
+
+test_expect_failure 'output summary format for commit with an empty diff' '
+
+	check_summary_oneline "" "empty" "--allow-empty"
+'
+
+test_expect_failure 'output summary format for merges' '
+
+	git checkout -b recursive-base &&
+	test_commit base file1 &&
+
+	git checkout -b recursive-a recursive-base &&
+	test_commit commit-a file1 &&
+
+	git checkout -b recursive-b recursive-base &&
+	test_commit commit-b file1 &&
+
+	# conflict
+	git checkout recursive-a &&
+	test_must_fail git merge recursive-b &&
+	# resolve the conflict
+	echo commit-a > file1 &&
+	git add file1 &&
+	check_summary_oneline "" "Merge"
 '
 
 output_tests_cleanup() {
