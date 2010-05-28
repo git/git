@@ -206,11 +206,11 @@ server.port = $port
 server.modules = ( "mod_setenv", "mod_cgi" )
 server.indexfiles = ( "gitweb.cgi" )
 server.pid-file = "$fqgitdir/pid"
-server.errorlog = "$fqgitdir/gitweb/error.log"
+server.errorlog = "$fqgitdir/gitweb/$httpd_only/error.log"
 
 # to enable, add "mod_access", "mod_accesslog" to server.modules
 # variable above and uncomment this
-#accesslog.filename = "$fqgitdir/gitweb/access.log"
+#accesslog.filename = "$fqgitdir/gitweb/$httpd_only/access.log"
 
 setenv.add-environment = ( "PATH" => env.PATH )
 
@@ -277,7 +277,6 @@ EOF
 
 apache2_conf () {
 	test -z "$module_path" && module_path=/usr/lib/apache2/modules
-	mkdir -p "$GIT_DIR/gitweb/logs"
 	bind=
 	test x"$local" = xtrue && bind='127.0.0.1:'
 	echo 'text/css css' > "$fqgitdir/mime.types"
@@ -285,6 +284,8 @@ apache2_conf () {
 ServerName "git-instaweb"
 ServerRoot "$fqgitdir/gitweb"
 DocumentRoot "$fqgitdir/gitweb"
+ErrorLog "$fqgitdir/gitweb/$httpd_only/error.log"
+CustomLog "$fqgitdir/gitweb/$httpd_only/access.log" combined
 PidFile "$fqgitdir/pid"
 Listen $bind$port
 EOF
@@ -357,8 +358,8 @@ root		$fqgitdir/gitweb
 ports		$port
 index_files	gitweb.cgi
 #ssl_cert	$fqgitdir/gitweb/ssl_cert.pem
-error_log	$fqgitdir/gitweb/error.log
-access_log	$fqgitdir/gitweb/access.log
+error_log	$fqgitdir/gitweb/$httpd_only/error.log
+access_log	$fqgitdir/gitweb/$httpd_only/access.log
 
 #cgi setup
 cgi_env		PATH=$PATH,GIT_DIR=$GIT_DIR,GIT_EXEC_PATH=$GIT_EXEC_PATH
@@ -405,6 +406,9 @@ EOFGITWEB
 gitweb_cgi "$GIT_DIR/gitweb/gitweb.cgi"
 gitweb_css "$GIT_DIR/@@GITWEB_CSS_NAME@@"
 gitweb_js  "$GIT_DIR/@@GITWEB_JS_NAME@@"
+
+resolve_full_httpd
+mkdir -p "$fqgitdir/gitweb/$httpd_only"
 
 case "$httpd" in
 *lighttpd*)
