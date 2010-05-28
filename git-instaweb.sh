@@ -117,6 +117,19 @@ stop_httpd () {
 	rm -f "$fqgitdir/pid"
 }
 
+httpd_is_ready () {
+	"$PERL" -MIO::Socket::INET -e "
+local \$| = 1; # turn on autoflush
+exit if (IO::Socket::INET->new('127.0.0.1:$port'));
+print 'Waiting for \'$httpd\' to start ..';
+do {
+	print '.';
+	sleep(1);
+} until (IO::Socket::INET->new('127.0.0.1:$port'));
+print qq! (done)\n!;
+"
+}
+
 while test $# != 0
 do
 	case "$1" in
@@ -414,7 +427,7 @@ start_httpd
 url=http://127.0.0.1:$port
 
 if test -n "$browser"; then
-	git web--browse -b "$browser" $url || echo $url
+	httpd_is_ready && git web--browse -b "$browser" $url || echo $url
 else
-	git web--browse -c "instaweb.browser" $url || echo $url
+	httpd_is_ready && git web--browse -c "instaweb.browser" $url || echo $url
 fi
