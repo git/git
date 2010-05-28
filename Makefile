@@ -272,6 +272,7 @@ mandir = share/man
 infodir = share/info
 gitexecdir = libexec/git-core
 sharedir = $(prefix)/share
+gitwebdir = $(sharedir)/gitweb
 template_dir = share/git-core/templates
 htmldir = share/doc/git-doc
 ifeq ($(prefix),/usr)
