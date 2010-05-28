@@ -114,6 +114,7 @@ EOF
 
 stop_httpd () {
 	test -f "$fqgitdir/pid" && kill $(cat "$fqgitdir/pid")
+	rm -f "$fqgitdir/pid"
 }
 
 while test $# != 0
