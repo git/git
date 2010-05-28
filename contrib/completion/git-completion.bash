@@ -797,6 +797,7 @@ _git_branch ()
 		__gitcomp "
 			--color --no-color --verbose --abbrev= --no-abbrev
 			--track --no-track --contains --merged --no-merged
+			--set-upstream
 			"
 		;;
 	*)
