@@ -30,6 +30,7 @@ test_rev_parse() {
 
 EMPTY_TREE=$(git write-tree)
 mkdir -p work/sub/dir || exit 1
+mkdir -p work2 || exit 1
 mv .git repo.git || exit 1
 
 say "core.worktree = relative path"
@@ -54,7 +55,9 @@ GIT_DIR=$(pwd)/repo.git
 GIT_CONFIG=$GIT_DIR/config
 git config core.worktree "$(pwd)/work"
 test_rev_parse 'outside'      false false false
-cd work || exit 1
+cd work2
+test_rev_parse 'outside2'     false false false
+cd ../work || exit 1
 test_rev_parse 'inside'       false false true ''
 cd sub/dir || exit 1
 test_rev_parse 'subdirectory' false false true sub/dir/
@@ -67,7 +70,9 @@ git config core.worktree non-existent
 GIT_WORK_TREE=work
 export GIT_WORK_TREE
 test_rev_parse 'outside'      false false false
-cd work || exit 1
+cd work2
+test_rev_parse 'outside'      false false false
+cd ../work || exit 1
 GIT_WORK_TREE=.
 test_rev_parse 'inside'       false false true ''
 cd sub/dir || exit 1
@@ -76,6 +81,7 @@ test_rev_parse 'subdirectory' false false true sub/dir/
 cd ../../.. || exit 1
 
 mv work repo.git/work
+mv work2 repo.git/work2
 
 say "GIT_WORK_TREE=absolute path, work tree below git dir"
 GIT_DIR=$(pwd)/repo.git
@@ -86,6 +92,8 @@ cd repo.git || exit 1
 test_rev_parse 'in repo.git'              false true  false
 cd objects || exit 1
 test_rev_parse 'in repo.git/objects'      false true  false
+cd ../work2 || exit 1
+test_rev_parse 'in repo.git/work2'      false true  false
 cd ../work || exit 1
 test_rev_parse 'in repo.git/work'         false true true ''
 cd sub/dir || exit 1
