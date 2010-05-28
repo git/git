@@ -50,6 +50,12 @@ resolve_full_httpd () {
 			httpd="$httpd -f"
 		fi
 		;;
+	*plackup*)
+		# server is started by running via generated gitweb.psgi in $fqgitdir/gitweb
+		full_httpd="$fqgitdir/gitweb/gitweb.psgi"
+		httpd_only="${httpd%% *}" # cut on first space
+		return
+		;;
 	esac
 
 	httpd_only="$(echo $httpd | cut -f1 -d' ')"
@@ -87,8 +93,8 @@ start_httpd () {
 
 	# don't quote $full_httpd, there can be arguments to it (-f)
 	case "$httpd" in
-	*mongoose*)
-		#The mongoose server doesn't have a daemon mode so we'll have to fork it
+	*mongoose*|*plackup*)
+		#These servers don't have a daemon mode so we'll have to fork it
 		$full_httpd "$fqgitdir/gitweb/httpd.conf" &
 		#Save the pid before doing anything else (we'll print it later)
 		pid=$!
@@ -390,6 +396,152 @@ mime_types	.gz=application/x-gzip,.tar.gz=application/x-tgz,.tgz=application/x-t
 EOF
 }
 
+plackup_conf () {
+	# generate a standalone 'plackup' server script in $fqgitdir/gitweb
+	# with embedded configuration; it does not use "$conf" file
+	cat > "$fqgitdir/gitweb/gitweb.psgi" <<EOF
+#!$PERL
+
+# gitweb - simple web interface to track changes in git repositories
+#          PSGI wrapper and server starter (see http://plackperl.org)
+
+use strict;
+
+use IO::Handle;
+use Plack::MIME;
+use Plack::Builder;
+use Plack::App::WrapCGI;
+use CGI::Emulate::PSGI 0.07; # minimum version required to work with gitweb
+
+# mimetype mapping (from lighttpd_conf)
+Plack::MIME->add_type(
+	".pdf"          =>      "application/pdf",
+	".sig"          =>      "application/pgp-signature",
+	".spl"          =>      "application/futuresplash",
+	".class"        =>      "application/octet-stream",
+	".ps"           =>      "application/postscript",
+	".torrent"      =>      "application/x-bittorrent",
+	".dvi"          =>      "application/x-dvi",
+	".gz"           =>      "application/x-gzip",
+	".pac"          =>      "application/x-ns-proxy-autoconfig",
+	".swf"          =>      "application/x-shockwave-flash",
+	".tar.gz"       =>      "application/x-tgz",
+	".tgz"          =>      "application/x-tgz",
+	".tar"          =>      "application/x-tar",
+	".zip"          =>      "application/zip",
+	".mp3"          =>      "audio/mpeg",
+	".m3u"          =>      "audio/x-mpegurl",
+	".wma"          =>      "audio/x-ms-wma",
+	".wax"          =>      "audio/x-ms-wax",
+	".ogg"          =>      "application/ogg",
+	".wav"          =>      "audio/x-wav",
+	".gif"          =>      "image/gif",
+	".jpg"          =>      "image/jpeg",
+	".jpeg"         =>      "image/jpeg",
+	".png"          =>      "image/png",
+	".xbm"          =>      "image/x-xbitmap",
+	".xpm"          =>      "image/x-xpixmap",
+	".xwd"          =>      "image/x-xwindowdump",
+	".css"          =>      "text/css",
+	".html"         =>      "text/html",
+	".htm"          =>      "text/html",
+	".js"           =>      "text/javascript",
+	".asc"          =>      "text/plain",
+	".c"            =>      "text/plain",
+	".cpp"          =>      "text/plain",
+	".log"          =>      "text/plain",
+	".conf"         =>      "text/plain",
+	".text"         =>      "text/plain",
+	".txt"          =>      "text/plain",
+	".dtd"          =>      "text/xml",
+	".xml"          =>      "text/xml",
+	".mpeg"         =>      "video/mpeg",
+	".mpg"          =>      "video/mpeg",
+	".mov"          =>      "video/quicktime",
+	".qt"           =>      "video/quicktime",
+	".avi"          =>      "video/x-msvideo",
+	".asf"          =>      "video/x-ms-asf",
+	".asx"          =>      "video/x-ms-asf",
+	".wmv"          =>      "video/x-ms-wmv",
+	".bz2"          =>      "application/x-bzip",
+	".tbz"          =>      "application/x-bzip-compressed-tar",
+	".tar.bz2"      =>      "application/x-bzip-compressed-tar",
+	""              =>      "text/plain"
+);
+
+my \$app = builder {
+	# to be able to override \$SIG{__WARN__} to log build time warnings
+	use CGI::Carp; # it sets \$SIG{__WARN__} itself
+
+	my \$logdir = "$fqgitdir/gitweb/$httpd_only";
+	open my \$access_log_fh, '>>', "\$logdir/access.log"
+		or die "Couldn't open access log '\$logdir/access.log': \$!";
+	open my \$error_log_fh,  '>>', "\$logdir/error.log"
+		or die "Couldn't open error log '\$logdir/error.log': \$!";
+
+	\$access_log_fh->autoflush(1);
+	\$error_log_fh->autoflush(1);
+
+	# redirect build time warnings to error.log
+	\$SIG{'__WARN__'} = sub {
+		my \$msg = shift;
+		# timestamp warning like in CGI::Carp::warn
+		my \$stamp = CGI::Carp::stamp();
+		\$msg =~ s/^/\$stamp/gm;
+		print \$error_log_fh \$msg;
+	};
+
+	# write errors to error.log, access to access.log
+	enable 'AccessLog',
+		format => "combined",
+		logger => sub { print \$access_log_fh @_; };
+	enable sub {
+		my \$app = shift;
+		sub {
+			my \$env = shift;
+			\$env->{'psgi.errors'} = \$error_log_fh;
+			\$app->(\$env);
+		}
+	};
+	# gitweb currently doesn't work with $SIG{CHLD} set to 'IGNORE',
+	# because it uses 'close $fd or die...' on piped filehandle $fh
+	# (which causes the parent process to wait for child to finish).
+	enable_if { \$SIG{'CHLD'} eq 'IGNORE' } sub {
+		my \$app = shift;
+		sub {
+			my \$env = shift;
+			local \$SIG{'CHLD'} = 'DEFAULT';
+			local \$SIG{'CLD'}  = 'DEFAULT';
+			\$app->(\$env);
+		}
+	};
+	# serve static files, i.e. stylesheet, images, script
+	enable 'Static',
+		path => sub { m!\.(js|css|png)\$! && s!^/gitweb/!! },
+		root => "$root/",
+		encoding => 'utf-8'; # encoding for 'text/plain' files
+	# convert CGI application to PSGI app
+	Plack::App::WrapCGI->new(script => "$root/gitweb.cgi")->to_app;
+};
+
+# make it runnable as standalone app,
+# like it would be run via 'plackup' utility
+if (__FILE__ eq \$0) {
+	require Plack::Runner;
+
+	my \$runner = Plack::Runner->new();
+	\$runner->parse_options(qw(--env deployment --port $port),
+			       "$local" ? qw(--host 127.0.0.1) : ());
+	\$runner->run(\$app);
+}
+__END__
+EOF
+
+	chmod a+x "$fqgitdir/gitweb/gitweb.psgi"
+	# configuration is embedded in server script file, gitweb.psgi
+	rm -f "$conf"
+}
+
 gitweb_conf() {
 	cat > "$fqgitdir/gitweb/gitweb_config.perl" <<EOF
 #!/usr/bin/perl
@@ -416,6 +568,9 @@ webrick)
 	;;
 *mongoose*)
 	mongoose_conf
+	;;
+*plackup*)
+	plackup_conf
 	;;
 *)
 	echo "Unknown httpd specified: $httpd"
