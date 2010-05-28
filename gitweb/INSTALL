@@ -2,9 +2,10 @@ GIT web Interface (gitweb) Installation
 =======================================
 
 First you have to generate gitweb.cgi from gitweb.perl using
-"make gitweb", then copy appropriate files (gitweb.cgi, gitweb.js,
-gitweb.css, git-logo.png and git-favicon.png) to their destination.
-For example if git was (or is) installed with /usr prefix, you can do
+"make gitweb", then "make install-gitweb" appropriate files
+(gitweb.cgi, gitweb.js, gitweb.css, git-logo.png and git-favicon.png)
+to their destination. For example if git was (or is) installed with
+/usr prefix and gitwebdir is /var/www/cgi-bin, you can do
 
 	$ make prefix=/usr gitweb                            ;# as yourself
 	# make gitwebdir=/var/www/cgi-bin install-gitweb     ;# as root
@@ -81,16 +82,14 @@ Build example
   minifiers, you can do
 
 	make GITWEB_PROJECTROOT="/home/local/scm" \
-	     GITWEB_JS="/gitweb/gitweb.js" \
-	     GITWEB_CSS="/gitweb/gitweb.css" \
-	     GITWEB_LOGO="/gitweb/git-logo.png" \
-	     GITWEB_FAVICON="/gitweb/git-favicon.png" \
+	     GITWEB_JS="gitweb/static/gitweb.js" \
+	     GITWEB_CSS="gitweb/static/gitweb.css" \
+	     GITWEB_LOGO="gitweb/static/git-logo.png" \
+	     GITWEB_FAVICON="gitweb/static/git-favicon.png" \
 	     bindir=/usr/local/bin \
 	     gitweb
 
-	cp -fv gitweb/gitweb.{cgi,js,css} \
-	       gitweb/git-{favicon,logo}.png \
-	     /var/www/cgi-bin/gitweb/
+	make gitwebdir=/var/www/cgi-bin/gitweb install-gitweb
 
 
 Gitweb config file
