@@ -31,7 +31,7 @@ valid_custom_tool()
 
 valid_tool() {
 	case "$1" in
-		firefox | iceweasel | konqueror | w3m | links | lynx | dillo | open | start)
+		firefox | iceweasel | chrome | chromium | konqueror | w3m | links | lynx | dillo | open | start)
 			;; # happy
 		*)
 			valid_custom_tool "$1" || return 1
@@ -103,7 +103,7 @@ fi
 
 if test -z "$browser" ; then
     if test -n "$DISPLAY"; then
-	browser_candidates="firefox iceweasel konqueror w3m links lynx dillo"
+	browser_candidates="firefox iceweasel chrome chromium konqueror w3m links lynx dillo"
 	if test "$KDE_FULL_SESSION" = "true"; then
 	    browser_candidates="konqueror $browser_candidates"
 	fi
@@ -145,6 +145,11 @@ case "$browser" in
 	NEWTAB='-new-tab'
 	test "$vers" -lt 2 && NEWTAB=''
 	"$browser_path" $NEWTAB "$@" &
+	;;
+    chrome|chromium)
+	# Actual command for chromium is chromium-browser.
+	# No need to specify newTab. It's default in chromium
+	eval "$browser_path" "$@" &
 	;;
     konqueror)
 	case "$(basename "$browser_path")" in
