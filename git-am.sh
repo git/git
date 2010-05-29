@@ -559,7 +559,8 @@ case "$resolved" in
 	'')
 		files=$(git ls-files) ;;
 	?*)
-		files=$(git diff-index --cached --name-only HEAD --) ;;
+		files=$(git diff-index --ignore-submodules --cached \
+			--name-only HEAD --) ;;
 	esac || exit
 	if test "$files"
 	then
@@ -731,7 +732,8 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."
 		case "$resolved$interactive" in
 		tt)
 			# This is used only for interactive view option.
-			git diff-index -p --cached HEAD -- >"$dotest/patch"
+			git diff-index --ignore-submodules -p --cached \
+				HEAD -- >"$dotest/patch"
 			;;
 		esac
 	esac
@@ -807,7 +809,7 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."
 		# trust what the user has in the index file and the
 		# working tree.
 		resolved=
-		git diff-index --quiet --cached HEAD -- && {
+		git diff-index --ignore-submodules --quiet --cached HEAD -- && {
 			gettextln "No changes - did you forget to use 'git add'?
 If there is nothing left to stage, chances are that something else
 already introduced the same changes; you might want to skip this patch."
@@ -831,7 +833,8 @@ did you forget to use 'git add'?"
 		then
 		    # Applying the patch to an earlier tree and merging the
 		    # result may have produced the same tree as ours.
-		    git diff-index --quiet --cached HEAD -- && {
+		    git diff-index --ignore-submodules --quiet --cached \
+				HEAD -- && {
 			say "$(gettext "No changes -- Patch already applied.")"
 			go_next
 			continue
