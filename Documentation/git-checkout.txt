@@ -15,26 +15,32 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+Retrieves files from the index or specified tree and writes them
+to the working tree.
 
-When <paths> are not given, this command switches branches by
-updating the index, working tree, and HEAD to reflect the specified
-branch.
+'git checkout' [-b <new branch>] [<branch>]::
 
+	When <paths> are not given, this command switches branches by
+	updating the index, working tree, and HEAD to reflect the
+	specified branch.
++
 If `-b` is given, a new branch is created and checked out, as if
 linkgit:git-branch[1] were called; in this case you can
 use the --track or --no-track options, which will be passed to `git
 branch`.  As a convenience, --track without `-b` implies branch
 creation; see the description of --track below.
 
-When <paths> or --patch are given, this command does *not* switch
-branches.  It updates the named paths in the working tree from
-the index file, or from a named <tree-ish> (most often a commit).  In
-this case, the `-b` and `--track` options are meaningless and giving
-either of them results in an error. The <tree-ish> argument can be
-used to specify a specific tree-ish (i.e. commit, tag or tree)
-to update the index for the given paths before updating the
-working tree.
+'git checkout' [--patch] [<tree-ish>] [--] [<pathspec>...]::
 
+	When <paths> or --patch are given, this command does *not* switch
+	branches.  It updates the named paths in the working tree from
+	the index file, or from a named <tree-ish> (most often a commit).  In
+	this case, the `-b` and `--track` options are meaningless and giving
+	either of them results in an error. The <tree-ish> argument can be
+	used to specify a specific tree-ish (i.e. commit, tag or tree)
+	to update the index for the given paths before updating the
+	working tree.
++
 The index may contain unmerged entries after a failed merge.  By
 default, if you try to check out such an entry from the index, the
 checkout operation will fail and nothing will be checked out.
