@@ -2419,9 +2419,9 @@ static void fill_metainfo(struct strbuf *msg,
 			    (!fill_mmfile(&mf, two) && diff_filespec_is_binary(two)))
 				abbrev = 40;
 		}
-		strbuf_addf(msg, "index %.*s..%.*s",
-			    abbrev, sha1_to_hex(one->sha1),
-			    abbrev, sha1_to_hex(two->sha1));
+		strbuf_addf(msg, "index %s..",
+			    find_unique_abbrev(one->sha1, abbrev));
+		strbuf_addstr(msg, find_unique_abbrev(two->sha1, abbrev));
 		if (one->mode == two->mode)
 			strbuf_addf(msg, " %06o", one->mode);
 		strbuf_addch(msg, '\n');
