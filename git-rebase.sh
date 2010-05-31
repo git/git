@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='[--interactive | -i] [-v] [--force-rebase | -f] [--no-ff] [--onto <newbase>] [<upstream>|--root] [<branch>] [--quiet | -q]'
+USAGE='[--interactive | -i] [-v] [--force-rebase | -f] [--no-ff] [--onto <newbase>] (<upstream>|--root) [<branch>] [--quiet | -q]'
 LONG_USAGE='git-rebase replaces <branch> with a new branch of the
 same name.  When the --onto option is provided the new branch starts
 out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
@@ -198,14 +198,6 @@ test -f "$GIT_DIR"/rebase-apply/applying &&
 
 is_interactive "$@" && exec git-rebase--interactive "$@"
 
-if test $# -eq 0
-then
-	test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply || usage
-	test -d "$dotest" -o -f "$GIT_DIR"/rebase-apply/rebasing &&
-		die 'A rebase is in progress, try --continue, --skip or --abort.'
-	die "No arguments given and $GIT_DIR/rebase-apply already exists."
-fi
-
 while test $# != 0
 do
 	case "$1" in
@@ -369,6 +361,13 @@ do
 	shift
 done
 test $# -gt 2 && usage
+
+if test $# -eq 0 && test -z "$rebase_root"
+then
+	test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply || usage
+	test -d "$dotest" -o -f "$GIT_DIR"/rebase-apply/rebasing &&
+		die 'A rebase is in progress, try --continue, --skip or --abort.'
+fi
 
 # Make sure we do not have $GIT_DIR/rebase-apply
 if test -z "$do_merge"

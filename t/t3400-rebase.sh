@@ -126,9 +126,20 @@ test_expect_success 'Show verbose error when HEAD could not be detached' '
      test_must_fail git rebase topic 2> output.err > output.out &&
      grep "Untracked working tree file .B. would be overwritten" output.err
 '
+rm -f B
+
+test_expect_success 'dump usage when upstream arg is missing' '
+     git checkout -b usage topic &&
+     test_must_fail git rebase 2>error1 &&
+     grep "[Uu]sage" error1 &&
+     test_must_fail git rebase --abort 2>error2 &&
+     grep "No rebase in progress" error2 &&
+     test_must_fail git rebase --onto master 2>error3 &&
+     grep "[Uu]sage" error3 &&
+     ! grep "can.t shift" error3
+'
 
 test_expect_success 'rebase -q is quiet' '
-     rm B &&
      git checkout -b quiet topic &&
      git rebase -q master > output.out 2>&1 &&
      test ! -s output.out
