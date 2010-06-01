@@ -169,7 +169,7 @@ static int get_value(const char *key_, const char *regex_)
 
 	local = config_exclusive_filename;
 	if (!local) {
-		const char *home = getenv("HOME");
+		const char *home = get_home_directory();
 		local = repo_config = git_pathdup("config");
 		if (home)
 			global = xstrdup(mkpath("%s/.gitconfig", home));
@@ -377,7 +377,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 
 	if (use_global_config) {
-		char *home = getenv("HOME");
+		char *home = get_home_directory();
 		if (home) {
 			char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
 			config_exclusive_filename = user_config;
