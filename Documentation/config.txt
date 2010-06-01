@@ -1681,6 +1681,13 @@ If this variable is not specified, it defaults to 'normal'.
 This variable can be overridden with the -u|--untracked-files option
 of linkgit:git-status[1] and linkgit:git-commit[1].
 
+status.submodulesummary::
+	Defaults to false.
+	If this is set to a non zero number or true (identical to -1 or an
+	unlimited number), the submodule summary will be enabled and a
+	summary of commits for modified submodules will be shown (see
+	--summary-limit option of linkgit:git-submodule[1]).
+
 tar.umask::
 	This variable can be used to restrict the permission bits of
 	tar archive entries.  The default is 0002, which turns off the
