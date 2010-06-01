@@ -352,3 +352,6 @@ static int mingw_main(c,v)
  * Used by Pthread API implementation for Windows
  */
 extern int err_win_to_posix(DWORD winerr);
+
+extern const char *get_windows_home_directory();
+#define get_home_directory() get_windows_home_directory()
