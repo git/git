@@ -63,7 +63,16 @@ export GIT_MERGE_VERBOSITY
 export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 export EDITOR
-GIT_TEST_CMP=${GIT_TEST_CMP:-diff -u}
+
+if test -z "$GIT_TEST_CMP"
+then
+	if test -n "$GIT_TEST_CMP_USE_COPIED_CONTEXT"
+	then
+		GIT_TEST_CMP="$DIFF -c"
+	else
+		GIT_TEST_CMP="$DIFF -u"
+	fi
+fi
 
 # Protect ourselves from common misconfiguration to export
 # CDPATH into the environment

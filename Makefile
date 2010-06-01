@@ -1374,6 +1374,10 @@ ifdef USE_NED_ALLOCATOR
        COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
 endif
 
+ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
+	export GIT_TEST_CMP_USE_COPIED_CONTEXT
+endif
+
 ifeq ($(TCLTK_PATH),)
 NO_TCLTK=NoThanks
 endif
