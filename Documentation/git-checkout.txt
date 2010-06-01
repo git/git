@@ -15,39 +15,41 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Retrieves files from the index or specified tree and writes them
-to the working tree.
+Updates files in the working tree to match the version in the index
+or the specified tree.  If no paths are given, 'git checkout' will
+also update `HEAD` to set the specified branch as the current
+branch.
 
-'git checkout' [-b <new branch>] [<branch>]::
+'git checkout' [<branch>]::
+'git checkout' -b <new branch> [<start point>]::
 
-	When <paths> are not given, this command switches branches by
-	updating the index, working tree, and HEAD to reflect the
-	specified branch.
+	This form switches branches by updating the index, working
+	tree, and HEAD to reflect the specified branch.
 +
-If `-b` is given, a new branch is created and checked out, as if
-linkgit:git-branch[1] were called; in this case you can
-use the --track or --no-track options, which will be passed to `git
-branch`.  As a convenience, --track without `-b` implies branch
-creation; see the description of --track below.
+If `-b` is given, a new branch is created as if linkgit:git-branch[1]
+were called and then checked out; in this case you can
+use the `--track` or `--no-track` options, which will be passed to
+'git branch'.  As a convenience, `--track` without `-b` implies branch
+creation; see the description of `--track` below.
 
-'git checkout' [--patch] [<tree-ish>] [--] [<pathspec>...]::
+'git checkout' [--patch] [<tree-ish>] [--] <pathspec>...::
 
-	When <paths> or --patch are given, this command does *not* switch
+	When <paths> or `--patch` are given, 'git checkout' *not* switch
 	branches.  It updates the named paths in the working tree from
-	the index file, or from a named <tree-ish> (most often a commit).  In
+	the index file or from a named <tree-ish> (most often a commit).  In
 	this case, the `-b` and `--track` options are meaningless and giving
 	either of them results in an error. The <tree-ish> argument can be
 	used to specify a specific tree-ish (i.e. commit, tag or tree)
 	to update the index for the given paths before updating the
 	working tree.
 +
-The index may contain unmerged entries after a failed merge.  By
-default, if you try to check out such an entry from the index, the
+The index may contain unmerged entries because of a previous failed merge.
+By default, if you try to check out such an entry from the index, the
 checkout operation will fail and nothing will be checked out.
-Using -f will ignore these unmerged entries.  The contents from a
+Using `-f` will ignore these unmerged entries.  The contents from a
 specific side of the merge can be checked out of the index by
-using --ours or --theirs.  With -m, changes made to the working tree
-file can be discarded to recreate the original conflicted merge result.
+using `--ours` or `--theirs`.  With `-m`, changes made to the working tree
+file can be discarded to re-create the original conflicted merge result.
 
 OPTIONS
 -------
