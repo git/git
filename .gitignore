@@ -159,6 +159,7 @@
 /gitweb/GITWEB-BUILD-OPTIONS
 /gitweb/gitweb.cgi
 /gitweb/gitweb.min.*
+/gitweb/GITWEB-BUILD-OPTIONS
 /test-chmtime
 /test-ctype
 /test-date
