@@ -654,4 +654,8 @@ struct passwd *xgetpwuid_self(void);
 #define mark_as_git_dir(x) /* noop */
 #endif
 
+#ifndef get_home_directory
+#define get_home_directory() getenv("HOME")
+#endif
+
 #endif
