@@ -286,7 +286,7 @@ lib = lib
 # DESTDIR=
 pathsep = :
 
-export prefix bindir sharedir sysconfdir
+export prefix bindir sharedir sysconfdir gitwebdir
 
 CC = gcc
 AR = ar
@@ -1978,7 +1978,7 @@ install: all
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 ifndef NO_PERL
 	$(MAKE) -C perl prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' install
-	$(MAKE) -C gitweb gitwebdir=$(gitwebdir_SQ) install
+	$(MAKE) -C gitweb install
 endif
 ifndef NO_PYTHON
 	$(MAKE) -C git_remote_helpers prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' install
