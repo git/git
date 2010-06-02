@@ -67,7 +67,7 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 
 	cat <<-\EOT >read-request.sed &&
 	#!/bin/sed -nf
-	/ in the git repository at:$/! d
+	/ in the git repository at:$/!d
 	n
 	/^$/ n
 	s/^[ 	]*\(.*\) \([^ ]*\)/please pull\
@@ -102,7 +102,7 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 	/^        [a-zA-Z]/ n
 	/^[a-zA-Z]* ([0-9]*):\$/ n
 	/^\$/ N
-	/^\n[a-zA-Z]* ([0-9]*):\$/! {
+	/^\n[a-zA-Z]* ([0-9]*):\$/!{
 		a\\
 	SHORTLOG
 		D
