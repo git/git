@@ -693,7 +693,13 @@ do
 	else
 	    action=yes
 	fi
-	FIRSTLINE=$(sed 1q "$dotest/final-commit")
+
+	if test -f "$dotest/final-commit"
+	then
+		FIRSTLINE=$(sed 1q "$dotest/final-commit")
+	else
+		FIRSTLINE=""
+	fi
 
 	if test $action = skip
 	then
