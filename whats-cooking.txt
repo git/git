@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2010, #05; Tue, 25)
-X-master-at: d0b16c8f878bef5c1268e033a3d1f427498c7008
-X-next-at: b26ba11a604b521da594b71d7e3fbc51f26e24fa
+Subject: What's cooking in git.git (Jun 2010, #01; Wed, 2)
+X-master-at: bdc4204119d2847ea8f1ae5e44614be859951822
+X-next-at: c7bbdb20f017cfc4f70c5cad0067b0a3e6650153
 
-What's cooking in git.git (May 2010, #05; Tue, 25)
+What's cooking in git.git (Jun 2010, #01; Wed, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -20,283 +20,164 @@ development machine has been unpacked but I still haven't managed to get
 back to speed yet.
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ar/config-from-command-line (2010-03-26) 2 commits
-  (merged to 'next' on 2010-05-04 at 2962717)
- + Use strbufs instead of open-coded string manipulation
- + Allow passing of configuration parameters in the command line
-
-* by/blame-doc-m-c (2010-05-06) 1 commit
-  (merged to 'next' on 2010-05-09 at c975ad5)
- + blame-options.txt: Add default value for `-M/-C` options.
-
-* by/log-follow (2010-05-10) 4 commits
-  (merged to 'next' on 2010-05-10 at f4ce9f8)
- + tests: rename duplicate t4205
-  (merged to 'next' on 2010-05-09 at d97e924)
- + Make git log --follow find copies among unmodified files.
- + Make diffcore_std only can run once before a diff_flush
- + Add a macro DIFF_QUEUE_CLEAR.
-
-* cb/maint-stash-orphaned-file (2010-04-18) 2 commits
-  (merged to 'next' on 2010-05-04 at 38488ba)
- + stash tests: stash can lose data in a file removed from the index
- + stash: Don't overwrite files that have gone from the index
-
-* cw/maint-exec-defpath (2010-04-15) 2 commits
-  (merged to 'next' on 2010-05-04 at 8d1591f)
- + autoconf: Check if <paths.h> exists and set HAVE_PATHS_H
- + exec_cmd.c: replace hard-coded path list with one from <paths.h>
-
-* jc/am-3-show-corrupted-patch (2010-04-09) 1 commit
-  (merged to 'next' on 2010-05-04 at 951f0e6)
- + am -3: recover the diagnostic messages for corrupt patches
-
-* jc/maint-no-reflog-expire-unreach-for-head (2010-04-09) 3 commits
-  (merged to 'next' on 2010-05-04 at d23a180)
- + reflog --expire-unreachable: special case entries in "HEAD" reflog
- + more war on "sleep" in tests
- + Document gc.<pattern>.reflogexpire variables
-
-* jc/status-show-ignored (2010-05-01) 6 commits
-  (merged to 'next' on 2010-05-04 at 8b32120)
- + wt-status: fix 'fprintf' compilation warning
- + status: --ignored option shows ignored files
- + wt-status: rename and restructure status-print-untracked
- + wt-status: collect ignored files
- + wt-status: plug memory leak while collecting untracked files
- + wt-status: remove unused workdir_untracked member
-
-I am negative about conflating the JSON output to the mix at this point.
-Let's stabilize "status" with the existing --porcelain/-z option first.
-
-* jn/fsck-ident (2010-04-24) 1 commit
-  (merged to 'next' on 2010-05-09 at 0d36355)
- + fsck: check ident lines in commit objects
-
-There also was a companion patch to fast-import to deal with foreign SCM
-interface that may not have human-readable author identifier.
-
-* jn/gitweb-caching-prep (2010-04-24) 5 commits
-  (merged to 'next' on 2010-05-09 at ceb4dad)
- + gitweb: Move generating page title to separate subroutine
- + gitweb: Add custom error handler using die_error
- + gitweb: Use nonlocal jump instead of 'exit' in die_error
- + gitweb: href(..., -path_info => 0|1)
- + Export more test-related variables when running external tests
- (this branch shares commits with jn/gitweb-fastcgi.)
-
-* jn/gitweb-install (2010-05-01) 2 commits
-  (merged to 'next' on 2010-05-09 at 9ea6cad)
- + gitweb: Create install target for gitweb in Makefile
- + gitweb: Improve installation instructions in gitweb/INSTALL
-
-* jn/gitweb-our-squelch (2010-04-30) 1 commit
-  (merged to 'next' on 2010-05-09 at 060726a)
- + gitweb: Silence 'Variable VAR may be unavailable' warnings
-
-* jn/maint-bundle (2010-04-19) 2 commits
-  (merged to 'next' on 2010-05-04 at f2086f5)
- + fix "bundle --stdin" segfault
- + t5704 (bundle): add tests for bundle --stdin
-
-* jn/maint-request-pull (2010-05-07) 3 commits
- + t5150: protect backslash with backslash in shell
- + request-pull: protect against OPTIONS_KEEPDASHDASH from environment
- + tests for request-pull
- (this branch is used by jn/request-pull.)
-
-* jn/request-pull (2010-05-10) 3 commits
-  (merged to 'next' on 2010-05-10 at fcae760)
- + tests: chmod +x t5150
-  (merged to 'next' on 2010-05-09 at 05aadd6)
- + adapt request-pull tests for new pull request format
- + Merge branch 'jn/maint-request-pull' into jn/request-pull
- (this branch uses jn/maint-request-pull.)
-
-* jn/shortlog (2010-05-03) 5 commits
-  (merged to 'next' on 2010-05-09 at efd1311)
- + pretty: Respect --abbrev option
- + shortlog: Document and test --format option
- + t4201 (shortlog): Test output format with multiple authors
- + t4201 (shortlog): guard setup with test_expect_success
- + Documentation/shortlog: scripted users should not rely on implicit HEAD
-
-* jn/submodule-basic-test (2010-04-10) 3 commits
-  (merged to 'next' on 2010-05-04 at 0bec27a)
- + t7400: clarify submodule update tests
- + t7400: clarify 'submodule add' tests
- + t7400: split setup into multiple tests
-
-* jn/t7006-fixup (2010-04-14) 1 commit
-  (merged to 'next' on 2010-05-04 at 490ab5d)
- + t7006: guard cleanup with test_expect_success
-
-* js/maint-receive-pack-symref-alias (2010-04-19) 3 commits
-  (merged to 'next' on 2010-05-04 at 259f4f1)
- + t5516-fetch-push.sh: style cleanup
- + receive-pack: detect aliased updates which can occur with symrefs
- + receive-pack: switch global variable 'commands' to a parameter
-
-* mg/advice-statushints (2010-04-22) 2 commits
-  (merged to 'next' on 2010-05-09 at 4642509)
- + wt-status: take advice.statusHints seriously
- + t7508: test advice.statusHints
-
-* np/index-pack-memsave (2010-04-12) 3 commits
-  (merged to 'next' on 2010-05-04 at 366b014)
- + index-pack: smarter memory usage when appending objects
- + index-pack: rationalize unpack_entry_data()
- + index-pack: smarter memory usage when resolving deltas
-
-* np/malloc-threading (2010-04-08) 2 commits
-  (merged to 'next' on 2010-05-04 at 1b0567f)
- + Thread-safe xmalloc and xrealloc needs a recursive mutex
- + Make xmalloc and xrealloc thread-safe
- (this branch is used by js/try-to-free-stackable.)
-
-This fix should eventually go to 'maint' and 'master'.
-
-* pb/patch-id-plus (2010-04-19) 2 commits
-  (merged to 'next' on 2010-05-04 at 59881b8)
- + patch-id: Add support for mbox format
- + patch-id: extract parsing one diff out of generate_id_list
-
-* rr/doc-submitting (2010-04-19) 1 commit
-  (merged to 'next' on 2010-05-04 at 5f040bd)
- + SubmittingPatches: Add new section about what to base work on
-
-* sp/maint-describe-tiebreak-with-tagger-date (2010-04-12) 5 commits
-  (merged to 'next' on 2010-05-04 at af2d605)
- + describe: Break annotated tag ties by tagger date
- + tag.c: Parse tagger date (if present)
- + tag.c: Refactor parse_tag_buffer to be saner to program
- + tag.h: Remove unused signature field
- + tag.c: Correct indentation
-
-* sp/maint-dumb-http-pack-reidx (2010-04-19) 12 commits
-  (merged to 'next' on 2010-05-04 at 166443a)
- + http.c::new_http_pack_request: do away with the temp variable filename
- + http-fetch: Use temporary files for pack-*.idx until verified
- + http-fetch: Use index-pack rather than verify-pack to check packs
- + Allow parse_pack_index on temporary files
- + Extract verify_pack_index for reuse from verify_pack
- + Introduce close_pack_index to permit replacement
- + http.c: Remove unnecessary strdup of sha1_to_hex result
- + http.c: Don't store destination name in request structures
- + http.c: Drop useless != NULL test in finish_http_pack_request
- + http.c: Tiny refactoring of finish_http_pack_request
- + t5550-http-fetch: Use subshell for repository operations
- + http.c: Remove bad free of static block
-
-* sr/remote-helper-export (2010-04-12) 9 commits
-  (merged to 'next' on 2010-05-04 at 519ab16)
- + t5800: testgit helper requires Python support
- + Makefile: Simplify handling of python scripts
- + remote-helpers: add tests for testgit helper
- + remote-helpers: add testgit helper
- + remote-helpers: add support for an export command
- + remote-helpers: allow requesing the path to the .git directory
- + fast-import: always create marks_file directories
- + clone: also configure url for bare clones
- + clone: pass the remote name to remote_get
- (this branch is used by jp/hold-string-list-sanity.)
-
-* st/remote-tags-no-tags (2010-04-20) 2 commits
-  (merged to 'next' on 2010-05-09 at fa9e04e)
- + remote add: add a --[no-]tags option
- + Honor "tagopt = --tags" configuration option
-
-* tr/word-diff (2010-04-14) 1 commit
-  (merged to 'next' on 2010-05-04 at d191b25)
- + diff: add --word-diff option that generalizes --color-words
-
-There are gitk patches that go with this series.
-
---------------------------------------------------
 [New Topics]
 
-* em/checkout-orphan (2010-05-21) 5 commits
- - [sign-off?] bash completion: add --orphan to 'git checkout'
- - [sign-off?] t3200: test -l with core.logAllRefUpdates options
- - [sign-off?] checkout --orphan: respect -l option always
- - [sign-off?] refs: split log_ref_write logic into log_ref_setup
- - [sign-off?] Documentation: alter checkout --orphan description
+* bs/userdiff-php (2010-05-23) 1 commit
+ - diff: Support visibility modifiers in the PHP hunk header regexp
 
-* ec/diff-noprefix-config (2010-05-02) 1 commit
- - diff: add configuration option for disabling diff prefixes.
+Will merge to 'next'.
 
-* jk/diff-m-doc (2010-05-08) 1 commit
- - docs: clarify meaning of -M for git-log
+* cc/maint-diff-CC-binary (2010-06-02) 2 commits
+ - fixup
+ - diff: fix "git show -C -C" output when renaming a binary file
 
-* mc/maint-zoneparse (2010-05-17) 1 commit
- - Add "Z" as an alias for the timezone "UTC"
+The fix-up should probably be squashed in, as the original "fix" was
+barking up a wrong tree.
 
-* mg/notes-dry-run (2010-05-14) 1 commit
- - notes: dry-run and verbose options for prune
+* jn/gitweb-plackup (2010-05-28) 3 commits
+ - git-instaweb: Add support for running gitweb via 'plackup'
+ - git-instaweb: Wait for server to start before running web browser
+ - git-instaweb: Remove pidfile after stopping web server
+ (this branch uses ps/gitweb-soc.)
 
-* mg/rev-parse-lrbranches-locals (2010-05-14) 1 commit
- - revlist: Introduce --lrbranches and --locals revision specifiers
- (this branch uses mg/rev-parse-option-sifter-deprecation.)
+Will merge to 'next'.
 
-* mg/rev-parse-option-sifter-deprecation (2010-05-14) 3 commits
- - t6018: make sure all tested symbolic names are different revs
- - t6018: add tests for rev-list's --branches and --tags
- - rev-parse: deprecate use as an option sifter
- (this branch is used by mg/rev-parse-lrbranches-locals.)
+* mg/status-b (2010-05-25) 2 commits
+ - Documentation+t5708: document and test status -s -b
+ - Show branch information in short output of git status
 
-* ab/cvsserver (2010-05-15) 6 commits
- - git-cvsserver: test for pserver authentication support
- - git-cvsserver: document making a password without htpasswd
- - git-cvsserver: Improved error handling for pserver
- - git-cvsserver: indent & clean up authdb code
- - git-cvsserver: use a password file cvsserver pserver
- - git-cvsserver: authentication support for pserver
+There are a few style violations that snuck in, but otherwise looked
+sensible.
 
-* eb/core-eol (2010-05-19) 4 commits
- - Add "core.eol" config variable
- - Rename the "crlf" attribute "text"
- - Add per-repository eol normalization
- - Add tests for per-repository eol normalization
- (this branch uses fg/autocrlf.)
+* ps/gitweb-soc (2010-05-28) 4 commits
+ - git-instaweb: Configure it to work with new gitweb structure
+ - git-instaweb: Put httpd logs in a "$httpd_only" subdirectory
+ - gitweb: Set default destination directory for installing gitweb in Makefile
+ - gitweb: Move static files into seperate subdirectory
+ (this branch is used by jn/gitweb-plackup.)
 
-* jn/remote-set-branches (2010-05-19) 1 commit
- - Add git remote set-branches
+Will merge to 'next'.
 
-* js/maint-windows (2009-07-20) 2 commits
-  (merged to 'next' on 2010-05-21 at 16abe03)
- + Recent MinGW has a C99 implementation of snprintf functions
- + mingw: use _commit to implement fsync
+* tc/commit-abbrev-fix (2010-05-27) 3 commits
+ - commit::print_summary(): set rev_info.always_show_header to 1
+ - t7502-commit: add summary output tests for empty and merge commits
+ - t7502-commit: add tests for summary output
 
-* rs/grep-binary (2010-05-22) 8 commits
- - grep: support NUL chars in search strings for -F
- - grep: use REG_STARTEND for all matching if available
- - grep: continue case insensitive fixed string search after NUL chars
- - grep: use memmem() for fixed string search
- - grep: --name-only over binary
- - grep: --count over binary
- - grep: grep: refactor handling of binary mode options
- - grep: add test script for binary file handling
+Will merge to 'next'.  I am not quite happy about the "impossible to
+trigger" die message, though.  It is a good defensive programming to catch
+breakages caused by future changes that may invalidate the assumption this
+patch makes, but then the message should be worded as such to state that
+assumption, I think.
 
-* ab/submodule-foreach-toplevel (2010-05-21) 1 commit
- - git-submodule foreach: Add $toplevel variable
+* ab/maint-perl-use-instlibdir (2010-05-30) 1 commit
+ - Makefile: remove redundant munging of @@INSTLIBDIR@@
 
-* cb/ls-files-cdup (2010-05-22) 1 commit
- - ls-files: allow relative pathspec
+Will merge to 'next'.
 
-* jk/maint-pull-dry-run-noop (2010-05-25) 1 commit
- - pull: do nothing on --dry-run
+* by/diff-graph (2010-05-29) 6 commits
+ - Make --color-words work well with --graph
+ - graph.c: register a callback for graph output
+ - Emit a whole line in one go
+ - diff.c: Output the text graph padding before each diff line
+ - Output the graph columns at the end of the commit message
+ - Add a prefix output callback to diff output
 
-* jk/maint-sha1-file-name-fix (2010-05-22) 1 commit
- - remove over-eager caching in sha1_file_name
+Will merge to 'next'.
 
-* jk/url-decode (2010-05-23) 2 commits
- - decode file:// and ssh:// URLs
- - make url-related functions reusable
+* cc/cherry-pick-series (2010-06-02) 8 commits
+ - Documentation/revert: describe passing more than one commit
+ - Documentation/cherry-pick: describe passing more than one commit
+ - revert: add tests to check cherry-picking many commits
+ - revert: allow cherry-picking more than one commit
+ - revert: change help_msg() to take no argument
+ - revert: refactor code into a do_pick_commit() function
+ - revert: use run_command_v_opt() instead of execv_git_cmd()
+ - revert: cleanup code for -x option
+
+* gs/usage-to-stdout (2010-05-17) 1 commit
+ - print the usage string on stdout instead of stderr
+
+Will merge to 'next'.
+
+* gv/portable (2010-05-14) 18 commits
+ - Makefile: Tru64 portability fix
+ - Makefile: HP-UX 10.20 portability fixes
+ - Makefile: HPUX11 portability fixes
+ - Makefile: SunOS 5.6 portability fix
+ - inline declaration does not work on AIX
+ - Allow disabling "inline"
+ - Some platforms lack socklen_t type
+ - Make NO_{INET_NTOP,INET_PTON} configured independently
+ - Makefile: some platforms do not have hstrerror anywhere
+ - git-compat-util.h: some platforms with mmap() lack MAP_FAILED definition
+ - test_cmp: do not use "diff -u" on platforms that lack one
+ - fixup: do not unconditionally disable "diff -u"
+ - tests: use "test_cmp", not "diff", when verifying the result
+ - Do not use "diff" found on PATH while building and installing
+ - enums: omit trailing comma for portability
+ - Makefile: -lpthread may still be necessary when libc has only pthread stubs
+ - Rewrite dynamic structure initializations to runtime assignment
+ - Makefile: pass CPPFLAGS through to fllow customization
+
+Will merge to 'next'.
+
+* jh/diff-index-line-abbrev (2010-05-30) 1 commit
+ - diff.c: Ensure "index $from..$to" line contains unambiguous SHA1s
+
+Will merge to 'next'.
+
+* jk/am-skip-hint (2010-05-30) 1 commit
+ - git-am: suggest what to do with superfluous patches
+
+Will merge to 'next'.
+
+* jn/checkout-doc (2010-05-30) 1 commit
+ - Documentation/checkout: clarify description
+
+Will merge to 'next'.
+
+* jn/fsck-ident (2010-05-26) 1 commit
+ - fsck: fix bogus commit header check
+
+Will merge to 'next'.
+
+* jn/maint-doc-ignore (2010-03-05) 1 commit
+ - gitignore.5: Clarify matching rules
+
+Will merge to 'next'.
+
+* jn/rebase-cmdline-fix (2010-05-31) 1 commit
+ - rebase: improve error message when upstream argument is missing
+
+Will merge to 'next'.
+
+* ps/gitweb--browse-chrome (2010-05-30) 1 commit
+ - git-web--browse: Add support for google chrome and chromium
+
+Will merge to 'next'.
+
+* bc/portable (2010-06-01) 5 commits
+ - t/aggregate-results: accomodate systems with small max argument list length
+ - t/t7006: ignore return status of shell's unset builtin
+ - t/t5150: remove space from sed script
+ - git-request-pull.sh: remove -e switch to shell interpreter which breaks ksh
+ - t/t5800: skip if python version is older than 2.5
+
+* jn/show-num-walks (2010-06-01) 1 commit
+ - DWIM 'git show -5' to 'git show --do-walk -5'
+
+* rr/am-help (2010-06-02) 3 commits
+ - git am: Remove stray error message from sed
+ - git am: Display some help text when patch is empty
+ - git am: Set cmdline globally
+
+Will merge to 'next'.
+
+* jc/t9129-any-utf8 (2010-06-02) 1 commit
+ - t9129: fix UTF-8 locale detection
 
 --------------------------------------------------
-[Stalled]
+[Stalled -- would discard unless there are some movements soon]
 
 * jc/rev-list-ancestry-path (2010-04-20) 1 commit
  - revision: --ancestry-path
@@ -318,23 +199,125 @@ moving forward.
 
 Probably needs to support --no-index mode as well.
 
-* jp/hold-string-list-sanity (2010-04-06) 9 commits
- . string_list: Fix argument order for string_list_append
- . Merge branch 'sr/remote-helper-export' into HEAD
- . Merge branch 'js/grep-open' into HEAD
- . Merge branch 'sb/fmt-merge-msg' into HEAD
- . string_list: Fix argument order for string_list_lookup
- . string_list: Fix argument order for string_list_insert_at_index
- . string_list: Fix argument order for string_list_insert
- . string_list: Fix argument order for for_each_string_list
- . string_list: Fix argument order for print_string_list
- (this branch uses js/grep-open.)
-
-Building this on top of slushy codebase is not a very promising endeavor.
-Good thing to do, but it came at a bad time.
-
 --------------------------------------------------
 [Cooking]
+
+* em/checkout-orphan (2010-05-21) 5 commits
+ - bash completion: add --orphan to 'git checkout'
+ - t3200: test -l with core.logAllRefUpdates options
+ - checkout --orphan: respect -l option always
+ - refs: split log_ref_write logic into log_ref_setup
+ - Documentation: alter checkout --orphan description
+
+In <4BFE2461.5080501@drmicha.warpmail.net>, Michael J Gruber raised a
+valid request for a better explanation of superfluous files left behind
+and then are cleaned.  Other than that I think this is a sane thing to
+do.
+
+* ec/diff-noprefix-config (2010-05-02) 1 commit
+ - diff: add configuration option for disabling diff prefixes.
+
+Will merge to 'next'.
+
+* jk/diff-m-doc (2010-05-08) 1 commit
+ - docs: clarify meaning of -M for git-log
+
+Will merge to 'next'.
+
+* mc/maint-zoneparse (2010-05-17) 1 commit
+ - Add "Z" as an alias for the timezone "UTC"
+
+Will merge to 'next'.
+
+* mg/notes-dry-run (2010-05-14) 1 commit
+ - notes: dry-run and verbose options for prune
+
+Will merge to 'next'.
+
+* mg/rev-parse-lrbranches-locals (2010-05-14) 1 commit
+ - revlist: Introduce --lrbranches and --locals revision specifiers
+ (this branch uses mg/rev-parse-option-sifter-deprecation.)
+
+Hmmm...
+
+* mg/rev-parse-option-sifter-deprecation (2010-05-14) 3 commits
+ - t6018: make sure all tested symbolic names are different revs
+ - t6018: add tests for rev-list's --branches and --tags
+ - rev-parse: deprecate use as an option sifter
+ (this branch is used by mg/rev-parse-lrbranches-locals.)
+
+Some people might interpret "Deprecate" too strongly; the intent is that
+we shouldn't keep piling parsing of new rev-list options to it and
+discourage the use of "option sifter" in new programs.
+
+* ab/cvsserver (2010-05-15) 6 commits
+ - git-cvsserver: test for pserver authentication support
+ - git-cvsserver: document making a password without htpasswd
+ - git-cvsserver: Improved error handling for pserver
+ - git-cvsserver: indent & clean up authdb code
+ - git-cvsserver: use a password file cvsserver pserver
+ - git-cvsserver: authentication support for pserver
+
+Will merge to 'next'.
+
+* eb/core-eol (2010-05-19) 4 commits
+ - Add "core.eol" config variable
+ - Rename the "crlf" attribute "text"
+ - Add per-repository eol normalization
+ - Add tests for per-repository eol normalization
+ (this branch uses fg/autocrlf.)
+
+Will merge to 'next'.
+
+* jn/remote-set-branches (2010-05-19) 1 commit
+ - Add git remote set-branches
+
+Will merge to 'next'.
+
+* js/maint-windows (2009-07-20) 2 commits
+  (merged to 'next' on 2010-05-21 at 16abe03)
+ + Recent MinGW has a C99 implementation of snprintf functions
+ + mingw: use _commit to implement fsync
+
+Will merge to 'next'.
+
+* rs/grep-binary (2010-05-22) 8 commits
+ - grep: support NUL chars in search strings for -F
+ - grep: use REG_STARTEND for all matching if available
+ - grep: continue case insensitive fixed string search after NUL chars
+ - grep: use memmem() for fixed string search
+ - grep: --name-only over binary
+ - grep: --count over binary
+ - grep: grep: refactor handling of binary mode options
+ - grep: add test script for binary file handling
+
+Will merge to 'next'.
+
+* ab/submodule-foreach-toplevel (2010-05-21) 1 commit
+ - git-submodule foreach: Add $toplevel variable
+
+Will merge to 'next'.
+
+* cb/ls-files-cdup (2010-05-26) 1 commit
+ - ls-files: allow relative pathspec
+
+Doesn't write_name() quote twice when prefix_offset is non-zero?
+
+* jk/maint-pull-dry-run-noop (2010-05-25) 1 commit
+ - pull: do nothing on --dry-run
+
+Will merge to 'next'.
+
+* jk/maint-sha1-file-name-fix (2010-05-22) 1 commit
+ - remove over-eager caching in sha1_file_name
+
+Will merge to 'next'.
+
+* jk/url-decode (2010-05-23) 2 commits
+ - decode file:// and ssh:// URLs
+ - make url-related functions reusable
+
+Will merge to 'next'.
 
 * bw/diff-metainfo-color (2010-05-04) 1 commit
   (merged to 'next' on 2010-05-21 at 3aa552e)
@@ -346,6 +329,8 @@ Good thing to do, but it came at a bad time.
 
 * rc/ls-remote-default (2010-05-12) 1 commit
  - ls-remote: print URL when no repo is specified
+
+Will merge to 'next'.
 
 * fg/autocrlf (2010-05-12) 1 commit
   (merged to 'next' on 2010-05-21 at 5f43b66)
@@ -381,6 +366,8 @@ Good thing to do, but it came at a bad time.
 * jn/gitweb-syntax-highlight (2010-04-27) 2 commits
  - gitweb: Refactor syntax highlighting support
  - gitweb: Syntax highlighting support
+
+Will merge to 'next'.
 
 * jn/maint-amend-missing-name (2010-05-02) 1 commit
   (merged to 'next' on 2010-05-09 at 9023332)
@@ -422,6 +409,8 @@ Good thing to do, but it came at a bad time.
  - convert: Keep foreign $Id$ on checkout.
  - convert: Safer handling of $Id$ contraction.
 
+Will merge to 'next'.
+
 * js/async-thread (2010-03-09) 7 commits
   (merged to 'next' on 2010-05-21 at 9d31940)
  + Enable threaded async procedures whenever pthreads is available
@@ -438,4 +427,23 @@ Good thing to do, but it came at a bad time.
 * ld/discovery-limit-to-fs (2010-04-04) 1 commit
  - write-index: check and warn when worktree crosses a filesystem boundary
 
-This one is a bit iffy.
+There might have been some valid objections to this but I cannot recall.
+Will merge to 'next' unless I hear something within a few days.
+
+--------------------------------------------------
+[Discarded, perhaps can be rerolled]
+
+* jp/hold-string-list-sanity (2010-04-06) 9 commits
+ . string_list: Fix argument order for string_list_append
+ . Merge branch 'sr/remote-helper-export' into HEAD
+ . Merge branch 'js/grep-open' into HEAD
+ . Merge branch 'sb/fmt-merge-msg' into HEAD
+ . string_list: Fix argument order for string_list_lookup
+ . string_list: Fix argument order for string_list_insert_at_index
+ . string_list: Fix argument order for string_list_insert
+ . string_list: Fix argument order for for_each_string_list
+ . string_list: Fix argument order for print_string_list
+ (this branch uses js/grep-open.)
+
+Building this on top of slushy codebase is not a very promising endeavor.
+Good thing to do, but it came at a bad time.
