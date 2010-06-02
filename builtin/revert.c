@@ -508,6 +508,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		}
 	}
 
+	free_message(&msg);
+
 	/*
 	 *
 	 * If we are cherry-pick, and if the merge did not result in
@@ -520,7 +522,9 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	if (!no_commit) {
 		/* 6 is max possible length of our args array including NULL */
 		const char *args[6];
+		int res;
 		int i = 0;
+
 		args[i++] = "commit";
 		args[i++] = "-n";
 		if (signoff)
@@ -530,9 +534,12 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			args[i++] = defmsg;
 		}
 		args[i] = NULL;
-		return execv_git_cmd(args);
+		res = run_command_v_opt(args, RUN_GIT_CMD);
+		free(defmsg);
+
+		return res;
 	}
-	free_message(&msg);
+
 	free(defmsg);
 
 	return 0;
