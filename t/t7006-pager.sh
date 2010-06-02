@@ -40,7 +40,7 @@ else
 fi
 
 test_expect_success 'setup' '
-	unset GIT_PAGER GIT_PAGER_IN_USE &&
+	unset GIT_PAGER GIT_PAGER_IN_USE;
 	test_might_fail git config --unset core.pager &&
 
 	PAGER="cat >paginated.out" &&
@@ -159,7 +159,7 @@ test_expect_success 'color when writing to a file intended for a pager' '
 '
 
 test_expect_success 'determine default pager' '
-	unset PAGER GIT_PAGER &&
+	unset PAGER GIT_PAGER;
 	test_might_fail git config --unset core.pager ||
 	cleanup_fail &&
 
@@ -173,7 +173,7 @@ then
 fi
 
 test_expect_success SIMPLEPAGER 'default pager is used by default' '
-	unset PAGER GIT_PAGER &&
+	unset PAGER GIT_PAGER;
 	test_might_fail git config --unset core.pager &&
 	rm -f default_pager_used ||
 	cleanup_fail &&
@@ -192,7 +192,7 @@ test_expect_success SIMPLEPAGER 'default pager is used by default' '
 '
 
 test_expect_success TTY 'PAGER overrides default pager' '
-	unset GIT_PAGER &&
+	unset GIT_PAGER;
 	test_might_fail git config --unset core.pager &&
 	rm -f PAGER_used ||
 	cleanup_fail &&
@@ -204,7 +204,7 @@ test_expect_success TTY 'PAGER overrides default pager' '
 '
 
 test_expect_success TTY 'core.pager overrides PAGER' '
-	unset GIT_PAGER &&
+	unset GIT_PAGER;
 	rm -f core.pager_used ||
 	cleanup_fail &&
 
