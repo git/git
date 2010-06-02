@@ -592,6 +592,8 @@ do
 
 		test -s "$dotest/patch" || {
 			echo "Patch is empty.  Was it split wrong?"
+			echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
+			echo "To restore the original branch and stop patching run \"$cmdline --abort\"."
 			stop_here $this
 		}
 		rm -f "$dotest/original-commit"
