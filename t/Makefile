@@ -35,7 +35,9 @@ aggregate-results-and-cleanup: $(T)
 	$(MAKE) clean
 
 aggregate-results:
-	'$(SHELL_PATH_SQ)' ./aggregate-results.sh test-results/t*-*
+	for f in test-results/t*-*; do \
+		echo "$$f"; \
+	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
 
 # we can test NO_OPTIMIZE_COMMITS independently of LC_ALL
 full-svn-test:
