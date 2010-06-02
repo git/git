@@ -58,7 +58,6 @@ static void parse_args(int argc, const char **argv)
 	struct option options[] = {
 		OPT_BOOLEAN('n', "no-commit", &no_commit, "don't automatically commit"),
 		OPT_BOOLEAN('e', "edit", &edit, "edit the commit message"),
-		OPT_BOOLEAN('x', NULL, &no_replay, "append commit name when cherry-picking"),
 		OPT_BOOLEAN('r', NULL, &noop, "no-op (backward compatibility)"),
 		OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
@@ -71,6 +70,7 @@ static void parse_args(int argc, const char **argv)
 
 	if (action == CHERRY_PICK) {
 		struct option cp_extra[] = {
+			OPT_BOOLEAN('x', NULL, &no_replay, "append commit name"),
 			OPT_BOOLEAN(0, "ff", &allow_ff, "allow fast-forward"),
 			OPT_END(),
 		};
@@ -379,10 +379,6 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	setenv(GIT_REFLOG_ACTION, me, 0);
 	parse_args(argc, argv);
 
-	/* this is copied from the shell script, but it's never triggered... */
-	if (action == REVERT && !no_replay)
-		die("revert is incompatible with replay");
-
 	if (allow_ff) {
 		if (signoff)
 			die("cherry-pick --ff cannot be used with --signoff");
@@ -546,14 +542,12 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 {
 	if (isatty(0))
 		edit = 1;
-	no_replay = 1;
 	action = REVERT;
 	return revert_or_cherry_pick(argc, argv);
 }
 
 int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
 {
-	no_replay = 0;
 	action = CHERRY_PICK;
 	return revert_or_cherry_pick(argc, argv);
 }
