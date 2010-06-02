@@ -239,7 +239,7 @@ static void set_author_ident_env(const char *message)
 			sha1_to_hex(commit->object.sha1));
 }
 
-static char *help_msg(const char *name)
+static char *help_msg(void)
 {
 	struct strbuf helpbuf = STRBUF_INIT;
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
@@ -255,7 +255,7 @@ static char *help_msg(const char *name)
 		strbuf_addf(&helpbuf, " with: \n"
 			"\n"
 			"        git commit -c %s\n",
-			name);
+			    sha1_to_hex(commit->object.sha1));
 	}
 	else
 		strbuf_addch(&helpbuf, '.');
@@ -357,7 +357,7 @@ static void do_recursive_merge(struct commit *base, struct commit *next,
 		}
 		write_message(msgbuf, defmsg);
 		fprintf(stderr, "Automatic %s failed.%s\n",
-			me, help_msg(commit_name));
+			me, help_msg());
 		rerere(allow_rerere_auto);
 		exit(1);
 	}
@@ -484,7 +484,7 @@ static int do_pick_commit(void)
 		free_commit_list(remotes);
 		if (res) {
 			fprintf(stderr, "Automatic %s with strategy %s failed.%s\n",
-				me, strategy, help_msg(commit_name));
+				me, strategy, help_msg());
 			rerere(allow_rerere_auto);
 			exit(1);
 		}
