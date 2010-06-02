@@ -39,7 +39,8 @@ static const char * const cherry_pick_usage[] = {
 static int edit, no_replay, no_commit, mainline, signoff, allow_ff;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
-static const char *commit_name;
+static int commit_argc;
+static const char **commit_argv;
 static int allow_rerere_auto;
 
 static const char *me;
@@ -53,7 +54,6 @@ static void parse_args(int argc, const char **argv)
 {
 	const char * const * usage_str =
 		action == REVERT ?  revert_usage : cherry_pick_usage;
-	unsigned char sha1[20];
 	int noop;
 	struct option options[] = {
 		OPT_BOOLEAN('n', "no-commit", &no_commit, "don't automatically commit"),
@@ -78,15 +78,11 @@ static void parse_args(int argc, const char **argv)
 			die("program error");
 	}
 
-	if (parse_options(argc, argv, NULL, options, usage_str, 0) != 1)
+	commit_argc = parse_options(argc, argv, NULL, options, usage_str, 0);
+	if (commit_argc < 1)
 		usage_with_options(usage_str, options);
 
-	commit_name = argv[0];
-	if (get_sha1(commit_name, sha1))
-		die ("Cannot find '%s'", commit_name);
-	commit = lookup_commit_reference(sha1);
-	if (!commit)
-		exit(1);
+	commit_argv = argv;
 }
 
 struct commit_message {
@@ -527,8 +523,35 @@ static int do_pick_commit(void)
 	return 0;
 }
 
+static void prepare_revs(struct rev_info *revs)
+{
+	int argc = 0;
+	int i;
+	const char **argv = xmalloc((commit_argc + 4) * sizeof(*argv));
+
+	argv[argc++] = NULL;
+	argv[argc++] = "--no-walk";
+	if (action != REVERT)
+		argv[argc++] = "--reverse";
+	for (i = 0; i < commit_argc; i++)
+		argv[argc++] = commit_argv[i];
+	argv[argc++] = NULL;
+
+	init_revisions(revs, NULL);
+	setup_revisions(argc - 1, argv, revs, NULL);
+	if (prepare_revision_walk(revs))
+		die("revision walk setup failed");
+
+	if (!revs->commits)
+		die("empty commit set passed");
+
+	free(argv);
+}
+
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
+	struct rev_info revs;
+
 	git_config(git_default_config, NULL);
 	me = action == REVERT ? "revert" : "cherry-pick";
 	setenv(GIT_REFLOG_ACTION, me, 0);
@@ -548,7 +571,15 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	if (read_cache() < 0)
 		die("git %s: failed to read the index", me);
 
-	return do_pick_commit();
+	prepare_revs(&revs);
+
+	while ((commit = get_revision(&revs))) {
+		int res = do_pick_commit();
+		if (res)
+			return res;
+	}
+
+	return 0;
 }
 
 int cmd_revert(int argc, const char **argv, const char *prefix)
