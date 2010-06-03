@@ -792,6 +792,8 @@ diff.mnemonicprefix::
 	standard "a/" and "b/" depending on what is being compared.  When
 	this configuration is in effect, reverse diff output also swaps
 	the order of the prefixes:
+diff.noprefix::
+	If set, 'git diff' does not show any source or destination prefix.
 `git diff`;;
 	compares the (i)ndex and the (w)ork tree;
 `git diff HEAD`;;
