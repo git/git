@@ -72,9 +72,6 @@ plugin. Most functionality works fine with both of these clients.
 LIMITATIONS
 -----------
 
-Currently cvsserver works over SSH connections for read/write clients, and
-over pserver for anonymous CVS access.
-
 CVS clients cannot tag, branch or perform GIT merges.
 
 'git-cvsserver' maps GIT branches to CVS modules. This is very different
@@ -84,7 +81,7 @@ one or more directories.
 INSTALLATION
 ------------
 
-1. If you are going to offer anonymous CVS access via pserver, add a line in
+1. If you are going to offer CVS access via pserver, add a line in
    /etc/inetd.conf like
 +
 --
@@ -100,6 +97,38 @@ looks like
 ------
    cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 
+------
+
+Only anonymous access is provided by pserve by default. To commit you
+will have to create pserver accounts, simply add a gitcvs.authdb
+setting in the config file of the repositories you want the cvsserver
+to allow writes to, for example:
+
+------
+
+   [gitcvs]
+	authdb = /etc/cvsserver/passwd
+
+------
+The format of these files is username followed by the crypted password,
+for example:
+
+------
+   myuser:$1Oyx5r9mdGZ2
+   myuser:$1$BA)@$vbnMJMDym7tA32AamXrm./
+------
+You can use the 'htpasswd' facility that comes with Apache to make these
+files, but Apache's MD5 crypt method differs from the one used by most C
+library's crypt() function, so don't use the -m option.
+
+Alternatively you can produce the password with perl's crypt() operator:
+-----
+   perl -e 'my ($user, $pass) = @ARGV; printf "%s:%s\n", $user, crypt($user, $pass)' $USER password
+-----
+
+Then provide your password via the pserver method, for example:
+------
+   cvs -d:pserver:someuser:somepassword <at> server/path/repo.git co <HEAD_name>
 ------
 No special setup is needed for SSH access, other than having GIT tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
