@@ -65,17 +65,21 @@ test_expect_success expanded_in_repo '
 		echo "\$Id:NoSpaceAtFront \$"
 		echo "\$Id:NoSpaceAtEitherEnd\$"
 		echo "\$Id: NoTerminatingSymbol"
+		echo "\$Id: Foreign Commit With Spaces \$"
+		echo "\$Id: NoTerminatingSymbolAtEOF"
 	} > expanded-keywords &&
 
 	{
 		echo "File with expanded keywords"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
 		echo "\$Id: NoTerminatingSymbol"
+		echo "\$Id: Foreign Commit With Spaces \$"
+		echo "\$Id: NoTerminatingSymbolAtEOF"
 	} > expected-output &&
 
 	git add expanded-keywords &&
