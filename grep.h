@@ -29,6 +29,7 @@ struct grep_pat {
 	int no;
 	enum grep_pat_token token;
 	const char *pattern;
+	size_t patternlen;
 	enum grep_header_field field;
 	regex_t regexp;
 	unsigned fixed:1;
@@ -104,6 +105,7 @@ struct grep_opt {
 	void *output_priv;
 };
 
+extern void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen, const char *origin, int no, enum grep_pat_token t);
 extern void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
 extern void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
 extern void compile_grep_patterns(struct grep_opt *opt);
