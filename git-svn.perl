@@ -2836,8 +2836,9 @@ sub mkemptydirs {
 	foreach my $d (sort keys %empty_dirs) {
 		$d = uri_decode($d);
 		$d =~ s/$strip//;
+		next unless length($d);
 		next if -d $d;
-		if (-e _) {
+		if (-e $d) {
 			warn "$d exists but is not a directory\n";
 		} else {
 			print "creating empty directory: $d\n";
