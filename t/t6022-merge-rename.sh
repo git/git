@@ -280,7 +280,7 @@ test_expect_success 'updated working tree file should prevent the merge' '
 		echo "BAD: should have complained"
 		return 1
 	}
-	diff M M.saved || {
+	test_cmp M M.saved || {
 		echo "BAD: should have left M intact"
 		return 1
 	}
@@ -301,7 +301,7 @@ test_expect_success 'updated working tree file should prevent the merge' '
 		echo "BAD: should have complained"
 		return 1
 	}
-	diff M M.saved || {
+	test_cmp M M.saved || {
 		echo "BAD: should have left M intact"
 		return 1
 	}

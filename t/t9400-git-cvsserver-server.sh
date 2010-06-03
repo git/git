@@ -435,7 +435,7 @@ test_expect_success 'cvs update (-p)' '
     rm -f failures &&
     for i in merge no-lf empty really-empty; do
         GIT_CONFIG="$git_config" cvs update -p "$i" >$i.out
-        diff $i.out ../$i >>failures 2>&1
+	test_cmp $i.out ../$i >>failures 2>&1
     done &&
     test -z "$(cat failures)"
 '

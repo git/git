@@ -267,7 +267,7 @@ struct hash_list
 typedef enum {
 	WHENSPEC_RAW = 1,
 	WHENSPEC_RFC2822,
-	WHENSPEC_NOW,
+	WHENSPEC_NOW
 } whenspec_type;
 
 struct recent_command

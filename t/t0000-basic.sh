@@ -301,7 +301,7 @@ $expectfilter >expected <<\EOF
 EOF
 test_expect_success \
     'validate git diff-files output for a know cache/work tree state.' \
-    'git diff-files >current && diff >/dev/null -b current expected'
+    'git diff-files >current && test_cmp current expected >/dev/null'
 
 test_expect_success \
     'git update-index --refresh should succeed.' \

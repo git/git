@@ -118,7 +118,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 
 		/* custom pretty-print here */
 		if (type == OBJ_TREE) {
-			const char *ls_args[3] = {"ls-tree", obj_name, NULL};
+			const char *ls_args[3] = { NULL };
+			ls_args[0] =  "ls-tree";
+			ls_args[1] =  obj_name;
 			return cmd_ls_tree(2, ls_args, NULL);
 		}
 

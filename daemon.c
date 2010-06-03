@@ -141,15 +141,14 @@ static char *path_ok(char *directory)
 	}
 	else if (interpolated_path && saw_extended_args) {
 		struct strbuf expanded_path = STRBUF_INIT;
-		struct strbuf_expand_dict_entry dict[] = {
-			{ "H", hostname },
-			{ "CH", canon_hostname },
-			{ "IP", ip_address },
-			{ "P", tcp_port },
-			{ "D", directory },
-			{ NULL }
-		};
+		struct strbuf_expand_dict_entry dict[6];
 
+		dict[0].placeholder = "H"; dict[0].value = hostname;
+		dict[1].placeholder = "CH"; dict[1].value = canon_hostname;
+		dict[2].placeholder = "IP"; dict[2].value = ip_address;
+		dict[3].placeholder = "P"; dict[3].value = tcp_port;
+		dict[4].placeholder = "D"; dict[4].value = directory;
+		dict[5].placeholder = NULL; dict[5].value = NULL;
 		if (*dir != '/') {
 			/* Allow only absolute */
 			logerror("'%s': Non-absolute path denied (interpolated-path active)", dir);
@@ -343,7 +342,9 @@ static int upload_pack(void)
 {
 	/* Timeout as string */
 	char timeout_buf[64];
-	const char *argv[] = { "upload-pack", "--strict", timeout_buf, ".", NULL };
+	const char *argv[] = { "upload-pack", "--strict", NULL, ".", NULL };
+
+	argv[2] = timeout_buf;
 
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
 	return run_service_command(argv);

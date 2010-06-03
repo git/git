@@ -91,7 +91,7 @@ check_output()
 	shift 1
 	if eval "$*" | entag > $_name.actual
 	then
-		diff $_name.expected $_name.actual
+		test_cmp $_name.expected $_name.actual
 	else
 		return 1;
 	fi

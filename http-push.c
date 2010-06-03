@@ -105,7 +105,7 @@ enum transfer_state {
 	RUN_PUT,
 	RUN_MOVE,
 	ABORTED,
-	COMPLETE,
+	COMPLETE
 };
 
 struct transfer_request

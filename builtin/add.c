@@ -261,11 +261,13 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 {
 	char *file = xstrdup(git_path("ADD_EDIT.patch"));
 	const char *apply_argv[] = { "apply", "--recount", "--cached",
-		file, NULL };
+		NULL, NULL };
 	struct child_process child;
 	struct rev_info rev;
 	int out;
 	struct stat st;
+
+	apply_argv[3] = file;
 
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 

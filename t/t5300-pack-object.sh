@@ -147,7 +147,7 @@ test_expect_success \
 	    git cat-file $t $object || return 1
 	 done <obj-list
     } >current &&
-    diff expect current'
+    test_cmp expect current'
 
 test_expect_success \
     'use packed deltified (REF_DELTA) objects' \
@@ -162,7 +162,7 @@ test_expect_success \
 	    git cat-file $t $object || return 1
 	 done <obj-list
     } >current &&
-    diff expect current'
+    test_cmp expect current'
 
 test_expect_success \
     'use packed deltified (OFS_DELTA) objects' \
@@ -177,7 +177,7 @@ test_expect_success \
 	    git cat-file $t $object || return 1
 	 done <obj-list
     } >current &&
-    diff expect current'
+    test_cmp expect current'
 
 unset GIT_OBJECT_DIRECTORY
 

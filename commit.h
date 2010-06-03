@@ -60,7 +60,7 @@ enum cmit_fmt {
 	CMIT_FMT_EMAIL,
 	CMIT_FMT_USERFORMAT,
 
-	CMIT_FMT_UNSPECIFIED,
+	CMIT_FMT_UNSPECIFIED
 };
 
 struct pretty_print_context

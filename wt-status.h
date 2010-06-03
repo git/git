@@ -11,7 +11,7 @@ enum color_wt_status {
 	WT_STATUS_CHANGED,
 	WT_STATUS_UNTRACKED,
 	WT_STATUS_NOBRANCH,
-	WT_STATUS_UNMERGED,
+	WT_STATUS_UNMERGED
 };
 
 enum untracked_status_type {
