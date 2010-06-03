@@ -384,6 +384,14 @@ Default mode::
 	merges from the resulting history, as there are no selected
 	commits contributing to this merge.
 
+--ancestry-path::
+
+	When given a range of commits to display (e.g. 'commit1..commit2'
+	or 'commit2 {caret}commit1'), only display commits that exist
+	directly on the ancestry chain between the 'commit1' and
+	'commit2', i.e. commits that are both descendants of 'commit1',
+	and ancestors of 'commit2'.
+
 A more detailed explanation follows.
 
 Suppose you specified `foo` as the <paths>.  We shall call commits
@@ -511,8 +519,6 @@ Note that without '\--full-history', this still simplifies merges: if
 one of the parents is TREESAME, we follow only that one, so the other
 sides of the merge are never walked.
 
-Finally, there is a fourth simplification mode available:
-
 --simplify-merges::
 
 	First, build a history graph in the same way that
@@ -553,6 +559,46 @@ Note the major differences in `N` and `P` over '\--full-history':
 * `P`'s parent list similarly had `I` removed.  `P` was then
   removed completely, because it had one parent and is TREESAME.
 --
+
+Finally, there is a fifth simplification mode available:
+
+--ancestry-path::
+
+	Limit the displayed commits to those directly on the ancestry
+	chain between the "from" and "to" commits in the given commit
+	range. I.e. only display commits that are ancestor of the "to"
+	commit, and descendants of the "from" commit.
++
+As an example use case, consider the following commit history:
++
+-----------------------------------------------------------------------
+	    D---E-------F
+	   /     \       \
+	  B---C---G---H---I---J
+	 /                     \
+	A-------K---------------L--M
+-----------------------------------------------------------------------
++
+A regular 'D..M' computes the set of commits that are ancestors of `M`,
+but excludes the ones that are ancestors of `D`. This is useful to see
+what happened to the history leading to `M` since `D`, in the sense
+that "what does `M` have that did not exist in `D`". The result in this
+example would be all the commits, except `A` and `B` (and `D` itself,
+of course).
++
+When we want to find out what commits in `M` are contaminated with the
+bug introduced by `D` and need fixing, however, we might want to view
+only the subset of 'D..M' that are actually descendants of `D`, i.e.
+excluding `C` and `K`. This is exactly what the '\--ancestry-path'
+option does. Applied to the 'D..M' range, it results in:
++
+-----------------------------------------------------------------------
+		E-------F
+		 \       \
+		  G---H---I---J
+			       \
+				L--M
+-----------------------------------------------------------------------
 
 The '\--simplify-by-decoration' option allows you to view only the
 big picture of the topology of the history, by omitting commits
