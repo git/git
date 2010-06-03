@@ -14,6 +14,7 @@ SYNOPSIS
 'git remote rename' <old> <new>
 'git remote rm' <name>
 'git remote set-head' <name> (-a | -d | <branch>)
+'git remote set-branches' <name> [--add] <branch>...
 'git remote set-url' [--push] <name> <newurl> [<oldurl>]
 'git remote set-url --add' [--push] <name> <newurl>
 'git remote set-url --delete' [--push] <name> <url>
@@ -109,6 +110,18 @@ remote set-head origin master" will set `$GIT_DIR/refs/remotes/origin/HEAD` to
 `refs/remotes/origin/master`. This will only work if
 `refs/remotes/origin/master` already exists; if not it must be fetched first.
 +
+
+'set-branches'::
+
+Changes the list of branches tracked by the named remote.
+This can be used to track a subset of the available remote branches
+after the initial setup for a remote.
++
+The named branches will be interpreted as if specified with the
+`-t` option on the 'git remote add' command line.
++
+With `--add`, instead of replacing the list of currently tracked
+branches, adds to that list.
 
 'set-url'::
 
