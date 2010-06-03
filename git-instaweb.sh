@@ -24,6 +24,7 @@ restart        restart the web server
 fqgitdir="$GIT_DIR"
 local="$(git config --bool --get instaweb.local)"
 httpd="$(git config --get instaweb.httpd)"
+root="$(git config --get instaweb.gitwebdir)"
 port=$(git config --get instaweb.port)
 module_path="$(git config --get instaweb.modulepath)"
 
@@ -33,6 +34,9 @@ conf="$GIT_DIR/gitweb/httpd.conf"
 
 # if installed, it doesn't need further configuration (module_path)
 test -z "$httpd" && httpd='lighttpd -f'
+
+# Default is @@GITWEBDIR@@
+test -z "$root" && root='@@GITWEBDIR@@'
 
 # any untaken local port will do...
 test -z "$port" && port=1234
@@ -57,7 +61,7 @@ resolve_full_httpd () {
 		# these days and those are not in most users $PATHs
 		# in addition, we may have generated a server script
 		# in $fqgitdir/gitweb.
-		for i in /usr/local/sbin /usr/sbin "$fqgitdir/gitweb"
+		for i in /usr/local/sbin /usr/sbin "$root" "$fqgitdir/gitweb"
 		do
 			if test -x "$i/$httpd_only"
 			then
@@ -159,8 +163,8 @@ done
 mkdir -p "$GIT_DIR/gitweb/tmp"
 GIT_EXEC_PATH="$(git --exec-path)"
 GIT_DIR="$fqgitdir"
-export GIT_EXEC_PATH GIT_DIR
-
+GITWEB_CONFIG="$fqgitdir/gitweb/gitweb_config.perl"
+export GIT_EXEC_PATH GIT_DIR GITWEB_CONFIG
 
 webrick_conf () {
 	# generate a standalone server script in $fqgitdir/gitweb.
@@ -192,7 +196,7 @@ EOF
 
 	cat >"$conf" <<EOF
 :Port: $port
-:DocumentRoot: "$fqgitdir/gitweb"
+:DocumentRoot: "$root"
 :DirectoryIndex: ["gitweb.cgi"]
 :PidFile: "$fqgitdir/pid"
 EOF
@@ -201,18 +205,18 @@ EOF
 
 lighttpd_conf () {
 	cat > "$conf" <<EOF
-server.document-root = "$fqgitdir/gitweb"
+server.document-root = "$root"
 server.port = $port
 server.modules = ( "mod_setenv", "mod_cgi" )
 server.indexfiles = ( "gitweb.cgi" )
 server.pid-file = "$fqgitdir/pid"
-server.errorlog = "$fqgitdir/gitweb/error.log"
+server.errorlog = "$fqgitdir/gitweb/$httpd_only/error.log"
 
 # to enable, add "mod_access", "mod_accesslog" to server.modules
 # variable above and uncomment this
-#accesslog.filename = "$fqgitdir/gitweb/access.log"
+#accesslog.filename = "$fqgitdir/gitweb/$httpd_only/access.log"
 
-setenv.add-environment = ( "PATH" => env.PATH )
+setenv.add-environment = ( "PATH" => env.PATH, "GITWEB_CONFIG" => env.GITWEB_CONFIG )
 
 cgi.assign = ( ".cgi" => "" )
 
@@ -277,14 +281,15 @@ EOF
 
 apache2_conf () {
 	test -z "$module_path" && module_path=/usr/lib/apache2/modules
-	mkdir -p "$GIT_DIR/gitweb/logs"
 	bind=
 	test x"$local" = xtrue && bind='127.0.0.1:'
 	echo 'text/css css' > "$fqgitdir/mime.types"
 	cat > "$conf" <<EOF
 ServerName "git-instaweb"
-ServerRoot "$fqgitdir/gitweb"
-DocumentRoot "$fqgitdir/gitweb"
+ServerRoot "$root"
+DocumentRoot "$root"
+ErrorLog "$fqgitdir/gitweb/$httpd_only/error.log"
+CustomLog "$fqgitdir/gitweb/$httpd_only/access.log" combined
 PidFile "$fqgitdir/pid"
 Listen $bind$port
 EOF
@@ -303,13 +308,14 @@ EOF
 	# check to see if Dennis Stosberg's mod_perl compatibility patch
 	# (<20060621130708.Gcbc6e5c@leonov.stosberg.net>) has been applied
 	if test -f "$module_path/mod_perl.so" &&
-	   sane_grep 'MOD_PERL' "$GIT_DIR/gitweb/gitweb.cgi" >/dev/null
+	   sane_grep 'MOD_PERL' "$root/gitweb.cgi" >/dev/null
 	then
 		# favor mod_perl if available
 		cat >> "$conf" <<EOF
 LoadModule perl_module $module_path/mod_perl.so
 PerlPassEnv GIT_DIR
 PerlPassEnv GIT_EXEC_DIR
+PerlPassEnv GITWEB_CONFIG
 <Location /gitweb.cgi>
 	SetHandler perl-script
 	PerlResponseHandler ModPerl::Registry
@@ -353,15 +359,15 @@ mongoose_conf() {
 # For detailed description of every option, visit
 # http://code.google.com/p/mongoose/wiki/MongooseManual
 
-root		$fqgitdir/gitweb
+root		$root
 ports		$port
 index_files	gitweb.cgi
 #ssl_cert	$fqgitdir/gitweb/ssl_cert.pem
-error_log	$fqgitdir/gitweb/error.log
-access_log	$fqgitdir/gitweb/access.log
+error_log	$fqgitdir/gitweb/$httpd_only/error.log
+access_log	$fqgitdir/gitweb/$httpd_only/access.log
 
 #cgi setup
-cgi_env		PATH=$PATH,GIT_DIR=$GIT_DIR,GIT_EXEC_PATH=$GIT_EXEC_PATH
+cgi_env		PATH=$PATH,GIT_DIR=$GIT_DIR,GIT_EXEC_PATH=$GIT_EXEC_PATH,GITWEB_CONFIG=$GITWEB_CONFIG
 cgi_interp	$PERL
 cgi_ext		cgi,pl
 
@@ -370,41 +376,19 @@ mime_types	.gz=application/x-gzip,.tar.gz=application/x-tgz,.tgz=application/x-t
 EOF
 }
 
-
-script='
-s#^(my|our) \$projectroot =.*#$1 \$projectroot = "'$(dirname "$fqgitdir")'";#;
-s#(my|our) \$gitbin =.*#$1 \$gitbin = "'$GIT_EXEC_PATH'";#;
-s#(my|our) \$projects_list =.*#$1 \$projects_list = \$projectroot;#;
-s#(my|our) \$git_temp =.*#$1 \$git_temp = "'$fqgitdir/gitweb/tmp'";#;'
-
-gitweb_cgi () {
-	cat > "$1.tmp" <<\EOFGITWEB
-@@GITWEB_CGI@@
-EOFGITWEB
-	# Use the configured full path to perl to match the generated
-	# scripts' 'hashpling' line
-	"$PERL" -p -e "$script" "$1.tmp"  > "$1"
-	chmod +x "$1"
-	rm -f "$1.tmp"
+gitweb_conf() {
+	cat > "$fqgitdir/gitweb/gitweb_config.perl" <<EOF
+#!/usr/bin/perl
+our \$projectroot = "$(dirname "$fqgitdir")";
+our \$git_temp = "$fqgitdir/gitweb/tmp";
+our \$projects_list = \$projectroot;
+EOF
 }
 
-gitweb_css () {
-	cat > "$1" <<\EOFGITWEB
-@@GITWEB_CSS@@
+gitweb_conf
 
-EOFGITWEB
-}
-
-gitweb_js () {
-	cat > "$1" <<\EOFGITWEB
-@@GITWEB_JS@@
-
-EOFGITWEB
-}
-
-gitweb_cgi "$GIT_DIR/gitweb/gitweb.cgi"
-gitweb_css "$GIT_DIR/@@GITWEB_CSS_NAME@@"
-gitweb_js  "$GIT_DIR/@@GITWEB_JS_NAME@@"
+resolve_full_httpd
+mkdir -p "$fqgitdir/gitweb/$httpd_only"
 
 case "$httpd" in
 *lighttpd*)
