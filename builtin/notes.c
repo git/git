@@ -26,7 +26,7 @@ static const char * const git_notes_usage[] = {
 	"git notes [--ref <notes_ref>] edit [<object>]",
 	"git notes [--ref <notes_ref>] show [<object>]",
 	"git notes [--ref <notes_ref>] remove [<object>]",
-	"git notes [--ref <notes_ref>] prune",
+	"git notes [--ref <notes_ref>] prune [-n | -v]",
 	NULL
 };
 
@@ -67,7 +67,7 @@ static const char * const git_notes_remove_usage[] = {
 };
 
 static const char * const git_notes_prune_usage[] = {
-	"git notes prune",
+	"git notes prune [<options>]",
 	NULL
 };
 
@@ -792,7 +792,10 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 static int prune(int argc, const char **argv, const char *prefix)
 {
 	struct notes_tree *t;
+	int show_only = 0, verbose = 0;
 	struct option options[] = {
+		OPT_BOOLEAN('n', NULL, &show_only, "do not remove, show only"),
+		OPT_BOOLEAN('v', NULL, &verbose, "report pruned notes"),
 		OPT_END()
 	};
 
@@ -806,8 +809,10 @@ static int prune(int argc, const char **argv, const char *prefix)
 
 	t = init_notes_check("prune");
 
-	prune_notes(t);
-	commit_notes(t, "Notes removed by 'git notes prune'");
+	prune_notes(t, (verbose ? NOTES_PRUNE_VERBOSE : 0) |
+		(show_only ? NOTES_PRUNE_VERBOSE|NOTES_PRUNE_DRYRUN : 0) );
+	if (!show_only)
+		commit_notes(t, "Notes removed by 'git notes prune'");
 	free_notes(t);
 	return 0;
 }

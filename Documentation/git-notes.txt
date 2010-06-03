@@ -15,7 +15,7 @@ SYNOPSIS
 'git notes' edit [<object>]
 'git notes' show [<object>]
 'git notes' remove [<object>]
-'git notes' prune
+'git notes' prune [-n | -v]
 
 
 DESCRIPTION
@@ -127,6 +127,13 @@ OPTIONS
 	Manipulate the notes tree in <ref>.  This overrides
 	'GIT_NOTES_REF' and the "core.notesRef" configuration.  The ref
 	is taken to be in `refs/notes/` if it is not qualified.
+
+-n::
+	Do not remove anything; just report the object names whose notes
+	would be removed.
+
+-v::
+	Report all object names whose notes are removed.
 
 
 DISCUSSION
