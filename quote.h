@@ -54,9 +54,12 @@ extern void quote_two_c_style(struct strbuf *, const char *, const char *, int);
 extern void write_name_quoted(const char *name, FILE *, int terminator);
 extern void write_name_quotedpfx(const char *pfx, size_t pfxlen,
                                  const char *name, FILE *, int terminator);
+extern void write_name_quoted_relative(const char *name, size_t len,
+		const char *prefix, size_t prefix_len,
+		FILE *fp, int terminator);
 
 /* quote path as relative to the given prefix */
-char *quote_path_relative(const char *in, int len,
+extern char *quote_path_relative(const char *in, int len,
 			  struct strbuf *out, const char *prefix);
 
 /* quoting as a string literal for other languages */
