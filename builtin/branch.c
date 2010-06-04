@@ -301,7 +301,7 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 		commit = lookup_commit_reference_gently(sha1, 1);
 		if (!commit) {
 			cb->ret = error("branch '%s' does not point at a commit", refname);
-			return cb->ret;
+			return 0;
 		}
 
 		/* Filter with with_commit if specified */
@@ -538,6 +538,9 @@ static int print_ref_list(int kinds, int detached, int verbose, int abbrev, stru
 	}
 
 	free_ref_list(&ref_list);
+
+	if (cb.ret)
+		error("some refs could not be read");
 
 	return cb.ret;
 }
