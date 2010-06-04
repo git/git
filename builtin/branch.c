@@ -257,9 +257,15 @@ static char *resolve_symref(const char *src, const char *prefix)
 	return xstrdup(dst);
 }
 
+struct append_ref_cb {
+	struct ref_list *ref_list;
+	int ret;
+};
+
 static int append_ref(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
 {
-	struct ref_list *ref_list = (struct ref_list*)(cb_data);
+	struct append_ref_cb *cb = (struct append_ref_cb *)(cb_data);
+	struct ref_list *ref_list = cb->ref_list;
 	struct ref_item *newitem;
 	struct commit *commit;
 	int kind, i;
@@ -293,8 +299,10 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	commit = NULL;
 	if (ref_list->verbose || ref_list->with_commit || merge_filter != NO_FILTER) {
 		commit = lookup_commit_reference_gently(sha1, 1);
-		if (!commit)
-			return error("branch '%s' does not point at a commit", refname);
+		if (!commit) {
+			cb->ret = error("branch '%s' does not point at a commit", refname);
+			return cb->ret;
+		}
 
 		/* Filter with with_commit if specified */
 		if (!is_descendant_of(commit, ref_list->with_commit))
@@ -484,9 +492,10 @@ static void show_detached(struct ref_list *ref_list)
 	}
 }
 
-static void print_ref_list(int kinds, int detached, int verbose, int abbrev, struct commit_list *with_commit)
+static int print_ref_list(int kinds, int detached, int verbose, int abbrev, struct commit_list *with_commit)
 {
 	int i;
+	struct append_ref_cb cb;
 	struct ref_list ref_list;
 
 	memset(&ref_list, 0, sizeof(ref_list));
@@ -496,7 +505,9 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 	ref_list.with_commit = with_commit;
 	if (merge_filter != NO_FILTER)
 		init_revisions(&ref_list.revs, NULL);
-	for_each_rawref(append_ref, &ref_list);
+	cb.ref_list = &ref_list;
+	cb.ret = 0;
+	for_each_rawref(append_ref, &cb);
 	if (merge_filter != NO_FILTER) {
 		struct commit *filter;
 		filter = lookup_commit_reference_gently(merge_filter_ref, 0);
@@ -527,6 +538,8 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev, str
 	}
 
 	free_ref_list(&ref_list);
+
+	return cb.ret;
 }
 
 static void rename_branch(const char *oldname, const char *newname, int force)
@@ -679,7 +692,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (delete)
 		return delete_branches(argc, argv, delete > 1, kinds);
 	else if (argc == 0)
-		print_ref_list(kinds, detached, verbose, abbrev, with_commit);
+		return print_ref_list(kinds, detached, verbose, abbrev, with_commit);
 	else if (rename && (argc == 1))
 		rename_branch(head, argv[0], rename > 1);
 	else if (rename && (argc == 2))
