@@ -1025,19 +1025,24 @@ our $is_last_request = sub { 1 };
 our ($pre_dispatch_hook, $post_dispatch_hook, $pre_listen_hook);
 our $CGI = 'CGI';
 our $cgi;
+sub configure_as_fcgi {
+	require CGI::Fast;
+	our $CGI = 'CGI::Fast';
+
+	my $request_number = 0;
+	# let each child service 100 requests
+	our $is_last_request = sub { ++$request_number > 100 };
+}
 sub evaluate_argv {
+	my $script_name = $ENV{'SCRIPT_NAME'} || $ENV{'SCRIPT_FILENAME'} || __FILE__;
+	configure_as_fcgi()
+		if $script_name =~ /\.fcgi$/;
+
 	return unless (@ARGV);
 
 	require Getopt::Long;
 	Getopt::Long::GetOptions(
-		'fastcgi|fcgi|f' => sub {
-			require CGI::Fast;
-			our $CGI = 'CGI::Fast';
-
-			my $request_number = 0;
-			# let each child service 100 requests
-			our $is_last_request = sub { ++$request_number > 100 };
-		},
+		'fastcgi|fcgi|f' => \&configure_as_fcgi,
 		'nproc|n=i' => sub {
 			my ($arg, $val) = @_;
 			return unless eval { require FCGI::ProcManager; 1; };
