@@ -95,10 +95,11 @@ OPTIONS
 	read the message from the standard input.
 
 --author=<author>::
-	Override the author name used in the commit.  You can use the
-	standard `A U Thor <author@example.com>` format.  Otherwise,
-	an existing commit that matches the given string and its author
-	name is used.
+	Override the commit author. Specify an explicit author using the
+	standard `A U Thor <author@example.com>` format. Otherwise <author>
+	is assumed to be a pattern and is used to search for an existing
+	commit by that author (i.e. rev-list --all -i --author=<author>);
+	the commit author is then copied from the first such commit found.
 
 --date=<date>::
 	Override the author date used in the commit.
