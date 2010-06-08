@@ -107,9 +107,28 @@ A  dir2/added
 ?? untracked
 EOF
 
-test_expect_success 'status -s (2)' '
+test_expect_success 'status -s' '
 
 	git status -s >output &&
+	test_cmp expect output
+
+'
+
+cat >expect <<\EOF
+## master
+ M dir1/modified
+A  dir2/added
+?? dir1/untracked
+?? dir2/modified
+?? dir2/untracked
+?? expect
+?? output
+?? untracked
+EOF
+
+test_expect_success 'status -s -b' '
+
+	git status -s -b >output &&
 	test_cmp expect output
 
 '
@@ -437,6 +456,25 @@ test_expect_success 'status -s with color.status' '
 '
 
 cat >expect <<\EOF
+## <GREEN>master<RESET>
+ <RED>M<RESET> dir1/modified
+<GREEN>A<RESET>  dir2/added
+<BLUE>??<RESET> dir1/untracked
+<BLUE>??<RESET> dir2/modified
+<BLUE>??<RESET> dir2/untracked
+<BLUE>??<RESET> expect
+<BLUE>??<RESET> output
+<BLUE>??<RESET> untracked
+EOF
+
+test_expect_success 'status -s -b with color.status' '
+
+	git status -s -b | test_decode_color >output &&
+	test_cmp expect output
+
+'
+
+cat >expect <<\EOF
  M dir1/modified
 A  dir2/added
 ?? dir1/untracked
@@ -468,6 +506,13 @@ test_expect_success 'status --porcelain ignores color.status' '
 # recover unconditionally from color tests
 git config --unset color.status
 git config --unset color.ui
+
+test_expect_success 'status --porcelain ignores -b' '
+
+	git status --porcelain -b >output &&
+	test_cmp expect output
+
+'
 
 cat >expect <<\EOF
 # On branch master
