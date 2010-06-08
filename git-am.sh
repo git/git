@@ -52,6 +52,16 @@ else
 	HAS_HEAD=
 fi
 
+cmdline="git am"
+if test '' != "$interactive"
+then
+	cmdline="$cmdline -i"
+fi
+if test '' != "$threeway"
+then
+	cmdline="$cmdline -3"
+fi
+
 sq () {
 	git rev-parse --sq-quote "$@"
 }
@@ -65,15 +75,6 @@ stop_here_user_resolve () {
     if [ -n "$resolvemsg" ]; then
 	    printf '%s\n' "$resolvemsg"
 	    stop_here $1
-    fi
-    cmdline="git am"
-    if test '' != "$interactive"
-    then
-        cmdline="$cmdline -i"
-    fi
-    if test '' != "$threeway"
-    then
-        cmdline="$cmdline -3"
     fi
     echo "When you have resolved this problem run \"$cmdline --resolved\"."
     echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
@@ -591,6 +592,8 @@ do
 
 		test -s "$dotest/patch" || {
 			echo "Patch is empty.  Was it split wrong?"
+			echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
+			echo "To restore the original branch and stop patching run \"$cmdline --abort\"."
 			stop_here $this
 		}
 		rm -f "$dotest/original-commit"
@@ -690,7 +693,13 @@ do
 	else
 	    action=yes
 	fi
-	FIRSTLINE=$(sed 1q "$dotest/final-commit")
+
+	if test -f "$dotest/final-commit"
+	then
+		FIRSTLINE=$(sed 1q "$dotest/final-commit")
+	else
+		FIRSTLINE=""
+	fi
 
 	if test $action = skip
 	then
