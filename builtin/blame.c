@@ -1589,7 +1589,7 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 	strcpy(hex, sha1_to_hex(suspect->commit->object.sha1));
 	printf("%s%c%d %d %d\n",
 	       hex,
-	       ent->guilty ? ' ' : '*', // purely for debugging
+	       ent->guilty ? ' ' : '*', /* purely for debugging */
 	       ent->s_lno + 1,
 	       ent->lno + 1,
 	       ent->num_lines);

@@ -478,7 +478,7 @@ static void read_config(void)
 	unsigned char sha1[20];
 	const char *head_ref;
 	int flag;
-	if (default_remote_name) // did this already
+	if (default_remote_name) /* did this already */
 		return;
 	default_remote_name = xstrdup("origin");
 	current_branch = NULL;
