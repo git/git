@@ -1183,18 +1183,223 @@ sub cmd_show_ignore {
 	});
 }
 
+# Parse old and new svn:externals
+sub svn_externals_parse_line {
+	my ($line) = @_;
+
+	unless (defined $line) {
+		croak("No 'line' parameter passed");
+	}
+
+	chomp $line;
+	if ($line eq '' || $line =~ m{^\s+$} || $line =~ m{^\s*#}) {
+		return undef;
+	}
+
+	# Trim and remove unnecessary whitespace
+	$line =~ s/^\s+//;
+	$line =~ s/\s+$//;
+	$line =~ s/\s\s/ /g;
+
+	my ($dir, $rev, $url);
+	my @parts = split(/\s+/, $line);
+
+	if ($line =~ m{^
+						# Revision, optional
+						(-r\s*\d+)?\s*
+						# Absolute or relative URL
+						((\w+://|\.\./|\^/|//|/)[^\s]+)\s+
+						# Directory
+						([^\s]+)
+				 $}gxms) {
+		# New format
+		$rev = $1;
+		if (defined $rev) {
+			$url = $2;
+			$dir = $4;
+		}
+		else {
+			$url = $2;
+			$dir = $4;
+		}
+		if (! defined $rev) {
+			if ($url =~ s{\@(\d+)$}{}) {
+				$rev = $1;
+			}
+		}
+	}
+	elsif ($line =~ m{^
+						# Directory
+						([^\s]+)\s*
+						# Revision, optional
+						(-r\s*\d+)?\s+
+						# URL
+						(\w+://[^\s]+)
+					$}gxms) {
+		# Old format
+		$dir = $1;
+		$rev = $2;
+		$url = $3;
+	}
+	else {
+		confess("Unable to parse externals line '$line'");
+	}
+
+	if (defined $rev) {
+		if ($rev =~ m{^-r\s*(\d+)$}) {
+			$rev = "$1";
+		}
+	}
+
+	return {
+		dir => $dir,
+		rev => $rev,
+		url => $url
+	};
+}
+
+# Convert relative urls to absolute URLs according to svn:externals format
+# see http://subversion.apache.org/docs/release-notes/1.5.html#externals
+sub svn_externals_relative_to_absolute {
+	my ($arg_ref) = @_;
+
+	unless (defined $arg_ref && ref $arg_ref eq 'HASH') {
+		croak("No parameters passed or not a hash reference");
+	}
+
+	# Get external URL
+	my $external = $arg_ref->{external};
+	unless (defined $external && ref $external eq 'HASH') {
+		croak("Required 'external' parameter not passed or not a hash reference");
+	}
+	my $external_url = $external->{url};
+	unless (defined $external_url && $external_url ne '') {
+		croak("Externals did not contain a 'url' parameter");
+	}
+
+	# Get URL of directory with externals, add trailing / to indicate that it's a directory
+	my $dir_url = $arg_ref->{dir_url};
+	unless (defined $dir_url) {
+		$dir_url = $external->{dir_url};
+	}
+	unless (defined $dir_url && $dir_url ne '') {
+		croak("Required 'dir_url' parameter not passed");
+	}
+	if ($dir_url !~ m{/$}) {
+	   $dir_url .= '/';
+	}
+	$dir_url = URI->new($dir_url);
+
+	# Get repository root URL, also add trailing /
+	my $root_url = $arg_ref->{root_url};
+	unless (defined $root_url) {
+		$root_url = $external->{root_url};
+	}
+	unless (defined $root_url && $root_url ne '') {
+		croak("Required 'root_url' parameter not passed");
+	}
+	if ($root_url !~ m{/$}) {
+	   $root_url .= '/';
+	}
+	$root_url = URI->new($root_url);
+
+
+	# Absolutize
+	if ($external_url =~ m{^\.\./}) {
+		# Relative to directory with the externals definition
+		$external_url = URI->new_abs($external_url, $dir_url);
+	}
+	elsif ($external_url =~ s{^\^/}{}) {
+		# Repository root relative external
+		$external_url = URI->new_abs($external_url, $root_url);
+	}
+	elsif ($external_url =~ m{^//}) {
+		# Relative to scheme
+		$external_url = URI->new($root_url->scheme().':'.$external_url);
+	}
+	elsif ($external_url =~ m{^/[^/]}) {
+		# Relative to server root
+		my $path = $external_url;
+		$external_url = $root_url->clone();
+		$external_url->path($path);
+	}
+	else {
+		# Absolute URL
+		$external_url = URI->new($external_url)
+	}
+
+	my $result = {
+		%{$external},
+		abs_url => $external_url->as_string(),
+	};
+	unless (defined $result->{dir_url}) {
+		$result->{dir_url} = $dir_url;
+	}
+	unless (defined $result->{root_url}) {
+		$result->{root_url} = $root_url;
+	}
+
+	return $result;
+}
+
+sub svn_repository_get_full_url {
+	my $path = canonicalize_path(defined($_[0]) ? $_[0] : ".");
+	my $fullpath = canonicalize_path($cmd_dir_prefix . $path);
+	if (exists $_[1]) {
+		die "Too many arguments specified\n";
+	}
+
+	my ($file_type, $diff_status) = find_file_type_and_diff_status($path);
+
+	if (!$file_type && !$diff_status) {
+		print STDERR "svn: '$path' is not under version control\n";
+		exit 1;
+	}
+
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	unless ($gs) {
+		die "Unable to determine upstream SVN information from ",
+		    "working tree history\n";
+	}
+
+	# canonicalize_path() will return "" to make libsvn 1.5.x happy,
+	$path = "." if $path eq "";
+
+	my $full_url = $url . ($fullpath eq "" ? "" : "/$fullpath");
+
+	return escape_url($full_url);
+}
+
 sub cmd_show_externals {
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
 	$gs ||= Git::SVN->new;
 	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
+
+	my $svn_repository_root;
+
+	eval {
+		my $repos_root = $gs->repos_root;
+		Git::SVN::remove_username($repos_root);
+		$svn_repository_root = escape_url($repos_root);
+	};
+
 	$gs->prop_walk($gs->{path}, $r, sub {
 		my ($gs, $path, $props) = @_;
 		print STDOUT "\n# $path\n";
 		my $s = $props->{'svn:externals'} or return;
-		$s =~ s/[\r\n]+/\n/g;
-		chomp $s;
-		$s =~ s#^#$path#gm;
-		print STDOUT "$s\n";
+
+		foreach my $external (split "\n", $s) {
+			chomp $external;
+			next unless $external;
+
+			my $ext = svn_externals_parse_line($external);
+			my $result = svn_externals_relative_to_absolute({
+				external => $ext,
+				root_url => $svn_repository_root,
+				dir_url => svn_repository_get_full_url("."),
+			});
+			print STDOUT "$path$result->{'dir'} $result->{'abs_url'}\n";
+		}
 	});
 }
 
@@ -6673,6 +6878,8 @@ sub DESTROY {
 package Git::SVN::GlobSpec;
 use strict;
 use warnings;
+
+use URI;
 
 sub new {
 	my ($class, $glob, $pattern_ok) = @_;
