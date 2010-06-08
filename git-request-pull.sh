@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 # Copyright 2005, Ryan Anderson <ryan@michonline.com>
 #
 # This file is licensed under the GPL v2, or a later version
@@ -70,10 +70,10 @@ git show -s --format='The following changes since commit %H:
 
   %s (%ci)
 
-are available in the git repository at:' $baserev
-echo "  $url $branch"
-echo
+are available in the git repository at:' $baserev &&
+echo "  $url $branch" &&
+echo &&
 
-git shortlog ^$baserev $headrev
-git diff -M --stat --summary $patch $merge_base..$headrev
+git shortlog ^$baserev $headrev &&
+git diff -M --stat --summary $patch $merge_base..$headrev || exit
 exit $status
