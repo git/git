@@ -552,10 +552,10 @@ static void grab_values(struct atom_value *val, int deref, struct object *obj, v
 		grab_person("committer", val, deref, obj, buf, sz);
 		break;
 	case OBJ_TREE:
-		// grab_tree_values(val, deref, obj, buf, sz);
+		/* grab_tree_values(val, deref, obj, buf, sz); */
 		break;
 	case OBJ_BLOB:
-		// grab_blob_values(val, deref, obj, buf, sz);
+		/* grab_blob_values(val, deref, obj, buf, sz); */
 		break;
 	default:
 		die("Eh?  Object of type %d?", obj->type);
