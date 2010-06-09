@@ -730,11 +730,22 @@ static inline unsigned int hexval(unsigned char c)
 #define MINIMUM_ABBREV 4
 #define DEFAULT_ABBREV 7
 
+struct object_context {
+	unsigned char tree[20];
+	char path[PATH_MAX];
+	unsigned mode;
+};
+
 extern int get_sha1(const char *str, unsigned char *sha1);
 extern int get_sha1_with_mode_1(const char *str, unsigned char *sha1, unsigned *mode, int gently, const char *prefix);
 static inline int get_sha1_with_mode(const char *str, unsigned char *sha1, unsigned *mode)
 {
 	return get_sha1_with_mode_1(str, sha1, mode, 1, NULL);
+}
+extern int get_sha1_with_context_1(const char *name, unsigned char *sha1, struct object_context *orc, int gently, const char *prefix);
+static inline int get_sha1_with_context(const char *str, unsigned char *sha1, struct object_context *orc)
+{
+	return get_sha1_with_context_1(str, sha1, orc, 1, NULL);
 }
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
