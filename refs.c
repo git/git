@@ -1258,43 +1258,41 @@ static int copy_msg(char *buf, const char *msg)
 	return cp - buf;
 }
 
-int log_ref_setup(const char *ref_name, char **log_file)
+int log_ref_setup(const char *ref_name, char *logfile, int bufsize)
 {
 	int logfd, oflags = O_APPEND | O_WRONLY;
-	char logfile[PATH_MAX];
 
-	git_snpath(logfile, sizeof(logfile), "logs/%s", ref_name);
-	*log_file = logfile;
+	git_snpath(logfile, bufsize, "logs/%s", ref_name);
 	if (log_all_ref_updates &&
 	    (!prefixcmp(ref_name, "refs/heads/") ||
 	     !prefixcmp(ref_name, "refs/remotes/") ||
 	     !prefixcmp(ref_name, "refs/notes/") ||
 	     !strcmp(ref_name, "HEAD"))) {
-		if (safe_create_leading_directories(*log_file) < 0)
+		if (safe_create_leading_directories(logfile) < 0)
 			return error("unable to create directory for %s",
-				     *log_file);
+				     logfile);
 		oflags |= O_CREAT;
 	}
 
-	logfd = open(*log_file, oflags, 0666);
+	logfd = open(logfile, oflags, 0666);
 	if (logfd < 0) {
 		if (!(oflags & O_CREAT) && errno == ENOENT)
 			return 0;
 
 		if ((oflags & O_CREAT) && errno == EISDIR) {
-			if (remove_empty_directories(*log_file)) {
+			if (remove_empty_directories(logfile)) {
 				return error("There are still logs under '%s'",
-					     *log_file);
+					     logfile);
 			}
-			logfd = open(*log_file, oflags, 0666);
+			logfd = open(logfile, oflags, 0666);
 		}
 
 		if (logfd < 0)
 			return error("Unable to append to %s: %s",
-				     *log_file, strerror(errno));
+				     logfile, strerror(errno));
 	}
 
-	adjust_shared_perm(*log_file);
+	adjust_shared_perm(logfile);
 	close(logfd);
 	return 0;
 }
@@ -1305,14 +1303,14 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 	int logfd, result, written, oflags = O_APPEND | O_WRONLY;
 	unsigned maxlen, len;
 	int msglen;
-	char *log_file;
+	char log_file[PATH_MAX];
 	char *logrec;
 	const char *committer;
 
 	if (log_all_ref_updates < 0)
 		log_all_ref_updates = !is_bare_repository();
 
-	result = log_ref_setup(ref_name, &log_file);
+	result = log_ref_setup(ref_name, log_file, sizeof(log_file));
 	if (result)
 		return result;
 
