@@ -886,6 +886,7 @@ ifeq ($(uname_S),NetBSD)
 	NO_MKSTEMPS = YesPlease
 endif
 ifeq ($(uname_S),AIX)
+	DEFAULT_PAGER = more
 	NO_STRCASESTR=YesPlease
 	NO_MEMMEM = YesPlease
 	NO_MKDTEMP = YesPlease
