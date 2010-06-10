@@ -48,4 +48,6 @@ class GitExporter(object):
 
         args = ["sed", "s_refs/heads/_" + self.repo.prefix + "_g"]
 
-        subprocess.check_call(args, stdin=p1.stdout)
+        child = subprocess.Popen(args, stdin=p1.stdout)
+        if child.wait() != 0:
+            raise CalledProcessError
