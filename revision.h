@@ -57,6 +57,7 @@ struct rev_info {
 			limited:1,
 			unpacked:1,
 			boundary:2,
+			count:1,
 			left_right:1,
 			rewrite_parents:1,
 			print_parents:1,
@@ -131,6 +132,10 @@ struct rev_info {
 
 	/* notes-specific options: which refs to show */
 	struct display_notes_opt notes_opt;
+
+	/* commit counts */
+	int count_left;
+	int count_right;
 };
 
 #define REV_TREE_SAME		0
