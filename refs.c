@@ -1265,7 +1265,7 @@ static int copy_msg(char *buf, const char *msg)
 int log_ref_setup(const char *ref_name, char **log_file)
 {
 	int logfd, oflags = O_APPEND | O_WRONLY;
-	char logfile[PATH_MAX];
+	static char logfile[PATH_MAX];
 
 	git_snpath(logfile, sizeof(logfile), "logs/%s", ref_name);
 	*log_file = logfile;
