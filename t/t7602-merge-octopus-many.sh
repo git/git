@@ -65,7 +65,8 @@ EOF
 
 test_expect_success 'merge output uses pretty names' '
 	git reset --hard c1 &&
-	git merge c2 c3 c4 >actual &&
+	git merge c2 c3 c4 >actual.raw &&
+	tr -d "\r" < actual.raw > actual &&
 	test_cmp actual expected
 '
 
@@ -79,7 +80,8 @@ Merge made by the 'octopus' strategy.
 EOF
 
 test_expect_success 'merge up-to-date output uses pretty names' '
-	git merge c4 c5 >actual &&
+	git merge c4 c5 >actual.raw &&
+	tr -d "\r" < actual.raw > actual &&
 	test_cmp actual expected
 '
 
@@ -96,7 +98,8 @@ EOF
 
 test_expect_success 'merge fast-forward output uses pretty names' '
 	git reset --hard c0 &&
-	git merge c1 c2 >actual &&
+	git merge c1 c2 >actual.raw &&
+	tr -d "\r" < actual.raw > actual &&
 	test_cmp actual expected
 '
 
