@@ -61,6 +61,11 @@ do
 	esac
 
 	eval pretty_name=\${GITHEAD_$SHA1:-$SHA1}
+	if test "$SHA1" = "$pretty_name"
+	then
+		SHA1_UP="$(echo "$SHA1" | tr a-z A-Z)"
+		eval pretty_name=\${GITHEAD_$SHA1_UP:-$pretty_name}
+	fi
 	common=$(git merge-base --all $SHA1 $MRC) ||
 		die "Unable to find common commit with $pretty_name"
 
