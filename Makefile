@@ -1944,6 +1944,12 @@ GIT-BUILD-OPTIONS: FORCE
 	@echo NO_CURL=\''$(subst ','\'',$(subst ','\'',$(NO_CURL)))'\' >>$@
 	@echo NO_PERL=\''$(subst ','\'',$(subst ','\'',$(NO_PERL)))'\' >>$@
 	@echo NO_PYTHON=\''$(subst ','\'',$(subst ','\'',$(NO_PYTHON)))'\' >>$@
+ifdef GIT_TEST_CMP
+	@echo GIT_TEST_CMP=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_CMP)))'\' >>$@
+endif
+ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
+	@echo GIT_TEST_CMP_USE_COPIED_CONTEXT=YesPlease >>$@
+endif
 
 ### Detect Tck/Tk interpreter path changes
 ifndef NO_TCLTK
