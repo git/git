@@ -36,12 +36,12 @@ test_expect_success 'output summary format' '
 	check_summary_oneline "" "a change"
 '
 
-test_expect_failure 'output summary format for commit with an empty diff' '
+test_expect_success 'output summary format for commit with an empty diff' '
 
 	check_summary_oneline "" "empty" "--allow-empty"
 '
 
-test_expect_failure 'output summary format for merges' '
+test_expect_success 'output summary format for merges' '
 
 	git checkout -b recursive-base &&
 	test_commit base file1 &&
