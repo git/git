@@ -37,6 +37,7 @@ enum parse_opt_option_flags {
 	PARSE_OPT_NODASH = 32,
 	PARSE_OPT_LITERAL_ARGHELP = 64,
 	PARSE_OPT_NEGHELP = 128,
+	PARSE_OPT_SHELL_EVAL = 256
 };
 
 struct option;

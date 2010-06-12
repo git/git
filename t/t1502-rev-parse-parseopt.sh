@@ -3,7 +3,8 @@
 test_description='test git rev-parse --parseopt'
 . ./test-lib.sh
 
-cat > expect <<EOF
+cat > expect <<\END_EXPECT
+cat <<\EOF
 usage: some-command [options] <args>...
 
     some-command does foo and bar!
@@ -19,6 +20,7 @@ Extras
     --extra1              line above used to cause a segfault but no longer does
 
 EOF
+END_EXPECT
 
 cat > optionspec << EOF
 some-command [options] <args>...

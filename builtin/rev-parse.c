@@ -408,7 +408,8 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	memset(opts + onb, 0, sizeof(opts[onb]));
 	argc = parse_options(argc, argv, prefix, opts, usage,
 			keep_dashdash ? PARSE_OPT_KEEP_DASHDASH : 0 |
-			stop_at_non_option ? PARSE_OPT_STOP_AT_NON_OPTION : 0);
+			stop_at_non_option ? PARSE_OPT_STOP_AT_NON_OPTION : 0 |
+			PARSE_OPT_SHELL_EVAL);
 
 	strbuf_addf(&parsed, " --");
 	sq_quote_argv(&parsed, argv, 0);
