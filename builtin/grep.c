@@ -675,6 +675,25 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 	die("unable to grep from object of type %s", typename(obj->type));
 }
 
+static int grep_objects(struct grep_opt *opt, const char **paths,
+			const struct object_array *list)
+{
+	unsigned int i;
+	int hit = 0;
+	const unsigned int nr = list->nr;
+
+	for (i = 0; i < nr; i++) {
+		struct object *real_obj;
+		real_obj = deref_tag(list->objects[i].item, NULL, 0);
+		if (grep_object(opt, paths, real_obj, list->objects[i].name)) {
+			hit = 1;
+			if (opt->status_only)
+				break;
+		}
+	}
+	return hit;
+}
+
 static int grep_directory(struct grep_opt *opt, const char **paths)
 {
 	struct dir_struct dir;
@@ -1024,16 +1043,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (cached)
 		die("both --cached and trees are given.");
-
-	for (i = 0; i < list.nr; i++) {
-		struct object *real_obj;
-		real_obj = deref_tag(list.objects[i].item, NULL, 0);
-		if (grep_object(&opt, paths, real_obj, list.objects[i].name)) {
-			hit = 1;
-			if (opt.status_only)
-				break;
-		}
-	}
+	hit = grep_objects(&opt, paths, &list);
 
 	if (use_threads)
 		hit |= wait_all();
