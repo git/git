@@ -590,7 +590,6 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 		if (hit && opt->status_only)
 			break;
 	}
-	free_grep_patterns(opt);
 	return hit;
 }
 
@@ -708,7 +707,6 @@ static int grep_directory(struct grep_opt *opt, const char **paths)
 		if (hit && opt->status_only)
 			break;
 	}
-	free_grep_patterns(opt);
 	return hit;
 }
 
@@ -1019,31 +1017,21 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!use_index) {
-		int hit;
 		if (cached)
 			die("--cached cannot be used with --no-index.");
 		if (list.nr)
 			die("--no-index cannot be used with revs.");
 		hit = grep_directory(&opt, paths);
-		if (use_threads)
-			hit |= wait_all();
-		return !hit;
-	}
-
-	if (!list.nr) {
-		int hit;
+	} else if (!list.nr) {
 		if (!cached)
 			setup_work_tree();
 
 		hit = grep_cache(&opt, paths, cached);
-		if (use_threads)
-			hit |= wait_all();
-		return !hit;
+	} else {
+		if (cached)
+			die("both --cached and trees are given.");
+		hit = grep_objects(&opt, paths, &list);
 	}
-
-	if (cached)
-		die("both --cached and trees are given.");
-	hit = grep_objects(&opt, paths, &list);
 
 	if (use_threads)
 		hit |= wait_all();
