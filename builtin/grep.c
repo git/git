@@ -724,11 +724,15 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 	if (!patterns)
 		die_errno("cannot open '%s'", arg);
 	while (strbuf_getline(&sb, patterns, '\n') == 0) {
+		char *s;
+		size_t len;
+
 		/* ignore empty line like grep does */
 		if (sb.len == 0)
 			continue;
-		append_grep_pattern(grep_opt, strbuf_detach(&sb, NULL), arg,
-				    ++lno, GREP_PATTERN);
+
+		s = strbuf_detach(&sb, &len);
+		append_grep_pat(grep_opt, s, len, arg, ++lno, GREP_PATTERN);
 	}
 	fclose(patterns);
 	strbuf_release(&sb);

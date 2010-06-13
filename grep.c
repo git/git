@@ -7,6 +7,7 @@ void append_header_grep_pattern(struct grep_opt *opt, enum grep_header_field fie
 {
 	struct grep_pat *p = xcalloc(1, sizeof(*p));
 	p->pattern = pat;
+	p->patternlen = strlen(pat);
 	p->origin = "header";
 	p->no = 0;
 	p->token = GREP_PATTERN_HEAD;
@@ -19,8 +20,15 @@ void append_header_grep_pattern(struct grep_opt *opt, enum grep_header_field fie
 void append_grep_pattern(struct grep_opt *opt, const char *pat,
 			 const char *origin, int no, enum grep_pat_token t)
 {
+	append_grep_pat(opt, pat, strlen(pat), origin, no, t);
+}
+
+void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen,
+		     const char *origin, int no, enum grep_pat_token t)
+{
 	struct grep_pat *p = xcalloc(1, sizeof(*p));
 	p->pattern = pat;
+	p->patternlen = patlen;
 	p->origin = origin;
 	p->no = no;
 	p->token = t;
@@ -44,8 +52,8 @@ struct grep_opt *grep_opt_dup(const struct grep_opt *opt)
 			append_header_grep_pattern(ret, pat->field,
 						   pat->pattern);
 		else
-			append_grep_pattern(ret, pat->pattern, pat->origin,
-					    pat->no, pat->token);
+			append_grep_pat(ret, pat->pattern, pat->patternlen,
+					pat->origin, pat->no, pat->token);
 	}
 
 	return ret;
@@ -329,14 +337,21 @@ static void show_name(struct grep_opt *opt, const char *name)
 	opt->output(opt, opt->null_following_name ? "\0" : "\n", 1);
 }
 
-
-static int fixmatch(const char *pattern, char *line, int ignore_case, regmatch_t *match)
+static int fixmatch(struct grep_pat *p, char *line, char *eol,
+		    regmatch_t *match)
 {
 	char *hit;
-	if (ignore_case)
-		hit = strcasestr(line, pattern);
-	else
-		hit = strstr(line, pattern);
+
+	if (p->ignore_case) {
+		char *s = line;
+		do {
+			hit = strcasestr(s, p->pattern);
+			if (hit)
+				break;
+			s += strlen(s) + 1;
+		} while (s < eol);
+	} else
+		hit = memmem(line, eol - line, p->pattern, p->patternlen);
 
 	if (!hit) {
 		match->rm_so = match->rm_eo = -1;
@@ -344,9 +359,20 @@ static int fixmatch(const char *pattern, char *line, int ignore_case, regmatch_t
 	}
 	else {
 		match->rm_so = hit - line;
-		match->rm_eo = match->rm_so + strlen(pattern);
+		match->rm_eo = match->rm_so + p->patternlen;
 		return 0;
 	}
+}
+
+static int regmatch(const regex_t *preg, char *line, char *eol,
+		    regmatch_t *match, int eflags)
+{
+#ifdef REG_STARTEND
+	match->rm_so = 0;
+	match->rm_eo = eol - line;
+	eflags |= REG_STARTEND;
+#endif
+	return regexec(preg, line, 1, match, eflags);
 }
 
 static int strip_timestamp(char *bol, char **eol_p)
@@ -399,9 +425,9 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 
  again:
 	if (p->fixed)
-		hit = !fixmatch(p->pattern, bol, p->ignore_case, pmatch);
+		hit = !fixmatch(p, bol, eol, pmatch);
 	else
-		hit = !regexec(&p->regexp, bol, 1, pmatch, eflags);
+		hit = !regmatch(&p->regexp, bol, eol, pmatch, eflags);
 
 	if (hit && p->word_regexp) {
 		if ((pmatch[0].rm_so < 0) ||
@@ -726,16 +752,9 @@ static int look_ahead(struct grep_opt *opt,
 		regmatch_t m;
 
 		if (p->fixed)
-			hit = !fixmatch(p->pattern, bol, p->ignore_case, &m);
-		else {
-#ifdef REG_STARTEND
-			m.rm_so = 0;
-			m.rm_eo = *left_p;
-			hit = !regexec(&p->regexp, bol, 1, &m, REG_STARTEND);
-#else
-			hit = !regexec(&p->regexp, bol, 1, &m, 0);
-#endif
-		}
+			hit = !fixmatch(p, bol, bol + *left_p, &m);
+		else
+			hit = !regmatch(&p->regexp, bol, bol + *left_p, &m, 0);
 		if (!hit || m.rm_so < 0 || m.rm_eo < 0)
 			continue;
 		if (earliest < 0 || m.rm_so < earliest)
@@ -800,17 +819,19 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		opt->show_hunk_mark = 1;
 	opt->last_shown = 0;
 
-	if (buffer_is_binary(buf, size)) {
-		switch (opt->binary) {
-		case GREP_BINARY_DEFAULT:
+	switch (opt->binary) {
+	case GREP_BINARY_DEFAULT:
+		if (buffer_is_binary(buf, size))
 			binary_match_only = 1;
-			break;
-		case GREP_BINARY_NOMATCH:
+		break;
+	case GREP_BINARY_NOMATCH:
+		if (buffer_is_binary(buf, size))
 			return 0; /* Assume unmatch */
-			break;
-		default:
-			break;
-		}
+		break;
+	case GREP_BINARY_TEXT:
+		break;
+	default:
+		die("bug: unknown binary handling mode");
 	}
 
 	memset(&xecfg, 0, sizeof(xecfg));
@@ -871,6 +892,12 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			count++;
 			if (opt->status_only)
 				return 1;
+			if (opt->name_only) {
+				show_name(opt, name);
+				return 1;
+			}
+			if (opt->count)
+				goto next_line;
 			if (binary_match_only) {
 				opt->output(opt, "Binary file ", 12);
 				output_color(opt, name, strlen(name),
@@ -878,22 +905,14 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 				opt->output(opt, " matches\n", 9);
 				return 1;
 			}
-			if (opt->name_only) {
-				show_name(opt, name);
-				return 1;
-			}
 			/* Hit at this line.  If we haven't shown the
 			 * pre-context lines, we would need to show them.
-			 * When asked to do "count", this still show
-			 * the context which is nonsense, but the user
-			 * deserves to get that ;-).
 			 */
 			if (opt->pre_context)
 				show_pre_context(opt, name, buf, bol, lno);
 			else if (opt->funcname)
 				show_funcname_line(opt, name, buf, bol, lno);
-			if (!opt->count)
-				show_line(opt, bol, eol, name, lno, ':');
+			show_line(opt, bol, eol, name, lno, ':');
 			last_hit = lno;
 		}
 		else if (last_hit &&
@@ -937,6 +956,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		output_sep(opt, ':');
 		snprintf(buf, sizeof(buf), "%u\n", count);
 		opt->output(opt, buf, strlen(buf));
+		return 1;
 	}
 	return !!last_hit;
 }
