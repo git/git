@@ -520,18 +520,12 @@ check that makes sure that existing object files will not get overwritten.
 
 core.notesRef::
 	When showing commit messages, also show notes which are stored in
-	the given ref.  This ref is expected to contain files named
-	after the full SHA-1 of the commit they annotate.  The ref
-	must be fully qualified.
+	the given ref.  The ref must be fully qualified.  If the given
+	ref does not exist, it is not an error but means that no
+	notes should be printed.
 +
-If such a file exists in the given ref, the referenced blob is read, and
-appended to the commit message, separated by a "Notes (<refname>):"
-line (shortened to "Notes:" in the case of "refs/notes/commits").  If the
-given ref itself does not exist, it is not an error, but means that no
-notes should be printed.
-+
-This setting defaults to "refs/notes/commits", and can be overridden by
-the `GIT_NOTES_REF` environment variable.
+This setting defaults to "refs/notes/commits", and it can be overridden by
+the 'GIT_NOTES_REF' environment variable.  See linkgit:git-notes[1].
 
 core.sparseCheckout::
 	Enable "sparse checkout" feature. See section "Sparse checkout" in
