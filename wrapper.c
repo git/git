@@ -10,9 +10,11 @@ static void try_to_free_builtin(size_t size)
 
 static void (*try_to_free_routine)(size_t size) = try_to_free_builtin;
 
-void set_try_to_free_routine(void (*routine)(size_t))
+try_to_free_t set_try_to_free_routine(try_to_free_t routine)
 {
-	try_to_free_routine = (routine) ? routine : try_to_free_builtin;
+	try_to_free_t old = try_to_free_routine;
+	try_to_free_routine = routine;
+	return old;
 }
 
 char *xstrdup(const char *str)
