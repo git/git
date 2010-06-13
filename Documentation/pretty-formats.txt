@@ -11,7 +11,12 @@ have limited your view of history: for example, if you are
 only interested in changes related to a certain directory or
 file.
 
-Here are some additional details for each format:
+There are several built-in formats, and you can define
+additional formats by setting a pretty.<name>
+config option to either another format name, or a
+'format:' string, as described below (see
+linkgit:git-config[1]). Here are the details of the
+built-in formats:
 
 * 'oneline'
 
