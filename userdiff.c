@@ -45,7 +45,9 @@ PATTERNS("pascal",
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
 	 "|<>|<=|>=|:=|\\.\\."
 	 "|[^[:space:]]|[\x80-\xff]+"),
-PATTERNS("php", "^[\t ]*((function|class).*)",
+PATTERNS("php",
+	 "^[\t ]*(((public|protected|private|static)[\t ]+)*function.*)$\n"
+	 "^[\t ]*(class.*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
