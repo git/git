@@ -13,6 +13,7 @@ p,port=        the port to bind to
 d,httpd=       the command to launch
 b,browser=     the browser to launch
 m,module-path= the module path (only needed for apache2)
+reuse-config    reuse previous gitweb_config.perl from GIT_DIR
  Action
 stop           stop the web server
 start          start the web server
@@ -27,6 +28,7 @@ httpd="$(git config --get instaweb.httpd)"
 root="$(git config --get instaweb.gitwebdir)"
 port=$(git config --get instaweb.port)
 module_path="$(git config --get instaweb.modulepath)"
+no_reuse=true
 
 conf="$GIT_DIR/gitweb/httpd.conf"
 
@@ -170,6 +172,10 @@ do
 	-m|--module-path)
 		shift
 		module_path="$1"
+		;;
+	--reuse-config)
+		shift
+		no_reuse=false
 		;;
 	--)
 		;;
@@ -551,7 +557,7 @@ our \$projects_list = \$projectroot;
 EOF
 }
 
-gitweb_conf
+test "$no_reuse" = true || test ! -e "$GITWEB_CONFIG" && gitweb_conf
 
 resolve_full_httpd
 mkdir -p "$fqgitdir/gitweb/$httpd_only"

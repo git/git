@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git instaweb' [--local] [--httpd=<httpd>] [--port=<port>]
-               [--browser=<browser>]
+	       [--browser=<browser>] [--reuse-config]
 'git instaweb' [--start] [--stop] [--restart]
 
 DESCRIPTION
@@ -48,6 +48,9 @@ OPTIONS
 	script along with the URL of the gitweb instance. See
 	linkgit:git-web--browse[1] for more information about this. If
 	the script fails, the URL will be printed to stdout.
+
+--reuse-config::
+	The previous gitweb_config.perl will not be overwritten.
 
 --start::
 	Start the httpd instance and exit.  This does not generate
