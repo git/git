@@ -80,7 +80,7 @@ static inline int fork(void)
 static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
 static inline int fsync(int fd)
-{ return 0; }
+{ return _commit(fd); }
 static inline int getppid(void)
 { return 1; }
 static inline void sync(void)
