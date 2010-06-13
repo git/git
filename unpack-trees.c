@@ -854,7 +854,7 @@ static int verify_uptodate_1(struct cache_entry *ce,
 {
 	struct stat st;
 
-	if (o->index_only || (!ce_skip_worktree(ce) && (o->reset || ce_uptodate(ce))))
+	if (o->index_only || (!((ce->ce_flags & CE_VALID) || ce_skip_worktree(ce)) && (o->reset || ce_uptodate(ce))))
 		return 0;
 
 	if (!lstat(ce->name, &st)) {
