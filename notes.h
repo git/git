@@ -171,6 +171,9 @@ int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
  */
 int write_notes_tree(struct notes_tree *t, unsigned char *result);
 
+/* Flags controlling the operation of prune */
+#define NOTES_PRUNE_VERBOSE 1
+#define NOTES_PRUNE_DRYRUN 2
 /*
  * Remove all notes annotating non-existing objects from the given notes tree
  *
@@ -181,7 +184,7 @@ int write_notes_tree(struct notes_tree *t, unsigned char *result);
  * structure are not persistent until a subsequent call to write_notes_tree()
  * returns zero.
  */
-void prune_notes(struct notes_tree *t);
+void prune_notes(struct notes_tree *t, int flags);
 
 /*
  * Free (and de-initialize) the given notes_tree structure
