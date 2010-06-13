@@ -210,7 +210,14 @@ endif::git-format-patch[]
 	Break complete rewrite changes into pairs of delete and create.
 
 -M::
+ifndef::git-log[]
 	Detect renames.
+endif::git-log[]
+ifdef::git-log[]
+	If generating diffs, detect and report renames for each commit.
+	For following files across renames while traversing history, see
+	`--follow`.
+endif::git-log[]
 
 -C::
 	Detect copies as well as renames.  See also `--find-copies-harder`.
