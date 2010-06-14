@@ -92,4 +92,14 @@ test_expect_failure 'cherry-pick -3 fourth works' '
 	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify fourth)"
 '
 
+test_expect_success 'cherry-pick --stdin works' '
+	git checkout -f master &&
+	git reset --hard first &&
+	test_tick &&
+	git rev-list --reverse first..fourth | git cherry-pick --stdin &&
+	git diff --quiet other &&
+	git diff --quiet HEAD other &&
+	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify fourth)"
+'
+
 test_done
