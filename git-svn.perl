@@ -963,6 +963,7 @@ sub cmd_multi_init {
 	}
 	do_git_init_db();
 	if (defined $_trunk) {
+		$_trunk =~ s#^/+##;
 		my $trunk_ref = 'refs/remotes/' . $_prefix . 'trunk';
 		# try both old-style and new-style lookups:
 		my $gs_trunk = eval { Git::SVN->new($trunk_ref) };
@@ -2054,6 +2055,9 @@ sub new {
 		         "\":$ref_id\$\" in config\n";
 		($self->{path}, undef) = split(/\s*:\s*/, $fetch);
 	}
+	$self->{path} =~ s{/+}{/}g;
+	$self->{path} =~ s{\A/}{};
+	$self->{path} =~ s{/\z}{};
 	$self->{url} = command_oneline('config', '--get',
 	                               "svn-remote.$repo_id.url") or
                   die "Failed to read \"svn-remote.$repo_id.url\" in config\n";
