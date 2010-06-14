@@ -41,6 +41,24 @@ test_expect_success setup '
 	git tag rename2
 '
 
+test_expect_success 'cherry-pick --nonsense' '
+
+	pos=$(git rev-parse HEAD) &&
+	git diff --exit-code HEAD &&
+	test_must_fail git cherry-pick --nonsense 2>msg &&
+	git diff --exit-code HEAD "$pos" &&
+	grep '[Uu]sage:' msg
+'
+
+test_expect_success 'revert --nonsense' '
+
+	pos=$(git rev-parse HEAD) &&
+	git diff --exit-code HEAD &&
+	test_must_fail git revert --nonsense 2>msg &&
+	git diff --exit-code HEAD "$pos" &&
+	grep '[Uu]sage:' msg
+'
+
 test_expect_success 'cherry-pick after renaming branch' '
 
 	git checkout rename2 &&
