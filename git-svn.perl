@@ -2055,6 +2055,9 @@ sub new {
 		         "\":$ref_id\$\" in config\n";
 		($self->{path}, undef) = split(/\s*:\s*/, $fetch);
 	}
+	$self->{path} =~ s{/+}{/}g;
+	$self->{path} =~ s{\A/}{};
+	$self->{path} =~ s{/\z}{};
 	$self->{url} = command_oneline('config', '--get',
 	                               "svn-remote.$repo_id.url") or
                   die "Failed to read \"svn-remote.$repo_id.url\" in config\n";
