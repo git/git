@@ -29,7 +29,9 @@ class NonLocalGit(object):
         os.makedirs(path)
         args = ["git", "clone", "--bare", "--quiet", self.repo.gitpath, path]
 
-        subprocess.check_call(args)
+        child = subprocess.Popen(args)
+        if child.wait() != 0:
+            raise CalledProcessError
 
         return path
 
@@ -43,10 +45,14 @@ class NonLocalGit(object):
             die("could not find repo at %s", path)
 
         args = ["git", "--git-dir=" + path, "fetch", "--quiet", self.repo.gitpath]
-        subprocess.check_call(args)
+        child = subprocess.Popen(args)
+        if child.wait() != 0:
+            raise CalledProcessError
 
         args = ["git", "--git-dir=" + path, "update-ref", "refs/heads/master", "FETCH_HEAD"]
-        subprocess.check_call(args)
+        child = subprocess.Popen(args)
+        if child.wait() != 0:
+            raise CalledProcessError
 
     def push(self, base):
         """Pushes from the non-local repo to base.
@@ -58,4 +64,6 @@ class NonLocalGit(object):
             die("could not find repo at %s", path)
 
         args = ["git", "--git-dir=" + path, "push", "--quiet", self.repo.gitpath]
-        subprocess.check_call(args)
+        child = subprocess.Popen(args)
+        if child.wait() != 0:
+            raise CalledProcessError

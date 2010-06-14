@@ -9,13 +9,13 @@ test_description='Test remote-helper import and export commands'
 
 if test_have_prereq PYTHON && "$PYTHON_PATH" -c '
 import sys
-if sys.hexversion < 0x02050000:
+if sys.hexversion < 0x02040000:
     sys.exit(1)
 '
 then
 	:
 else
-	say 'skipping git remote-testgit tests: requires Python 2.5 or newer'
+	say 'skipping git remote-testgit tests: requires Python 2.4 or newer'
 	test_done
 fi
 

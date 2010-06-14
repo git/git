@@ -19,7 +19,10 @@ def is_remote(url):
 
     prefixes = ["http", "file", "git"]
 
-    return any(url.startswith(i) for i in prefixes)
+    for prefix in prefixes:
+        if url.startswith(prefix):
+            return True
+    return False
 
 class GitRepo(object):
     """Repo object representing a repo.
@@ -50,7 +53,9 @@ class GitRepo(object):
         path = ".cached_revs"
         ofile = open(path, "w")
 
-        subprocess.check_call(args, stdout=ofile)
+        child = subprocess.Popen(args, stdout=ofile)
+        if child.wait() != 0:
+            raise CalledProcessError
         output = open(path).readlines()
         self.revmap = dict(sanitize(i) for i in output)
         if "HEAD" in self.revmap:
