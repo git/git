@@ -942,6 +942,7 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 		NO_MAGIC,
 		ADD_LF_BEFORE_NON_EMPTY,
 		DEL_LF_BEFORE_EMPTY,
+		ADD_SP_BEFORE_NON_EMPTY,
 	} magic = NO_MAGIC;
 
 	switch (placeholder[0]) {
@@ -950,6 +951,9 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 		break;
 	case '+':
 		magic = ADD_LF_BEFORE_NON_EMPTY;
+		break;
+	case ' ':
+		magic = ADD_SP_BEFORE_NON_EMPTY;
 		break;
 	default:
 		break;
@@ -965,8 +969,11 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	if ((orig_len == sb->len) && magic == DEL_LF_BEFORE_EMPTY) {
 		while (sb->len && sb->buf[sb->len - 1] == '\n')
 			strbuf_setlen(sb, sb->len - 1);
-	} else if ((orig_len != sb->len) && magic == ADD_LF_BEFORE_NON_EMPTY) {
-		strbuf_insert(sb, orig_len, "\n", 1);
+	} else if (orig_len != sb->len) {
+		if (magic == ADD_LF_BEFORE_NON_EMPTY)
+			strbuf_insert(sb, orig_len, "\n", 1);
+		else if (magic == ADD_SP_BEFORE_NON_EMPTY)
+			strbuf_insert(sb, orig_len, " ", 1);
 	}
 	return consumed + 1;
 }
@@ -976,7 +983,7 @@ static size_t userformat_want_item(struct strbuf *sb, const char *placeholder,
 {
 	struct userformat_want *w = context;
 
-	if (*placeholder == '+' || *placeholder == '-')
+	if (*placeholder == '+' || *placeholder == '-' || *placeholder == ' ')
 		placeholder++;
 
 	switch (*placeholder) {
