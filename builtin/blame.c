@@ -91,10 +91,10 @@ struct origin {
  * if the textconv driver exists.
  * Return 1 if the conversion succeeds, 0 otherwise.
  */
-static int textconv_object(const char *path,
-			   const unsigned char *sha1,
-			   char **buf,
-			   unsigned long *buf_size)
+int textconv_object(const char *path,
+		    const unsigned char *sha1,
+		    char **buf,
+		    unsigned long *buf_size)
 {
 	struct diff_filespec *df;
 	struct userdiff_driver *textconv;
