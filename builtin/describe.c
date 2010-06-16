@@ -35,7 +35,8 @@ static const char *diff_index_args[] = {
 
 struct commit_name {
 	struct tag *tag;
-	int prio; /* annotated tag = 2, tag = 1, head = 0 */
+	unsigned prio:2; /* annotated tag = 2, tag = 1, head = 0 */
+	unsigned name_checked:1;
 	unsigned char sha1[20];
 	char path[FLEX_ARRAY]; /* more */
 };
@@ -43,18 +44,53 @@ static const char *prio_names[] = {
 	"head", "lightweight", "annotated",
 };
 
+static int replace_name(struct commit_name *e,
+			       int prio,
+			       const unsigned char *sha1,
+			       struct tag **tag)
+{
+	if (!e || e->prio < prio)
+		return 1;
+
+	if (e->prio == 2 && prio == 2) {
+		/* Multiple annotated tags point to the same commit.
+		 * Select one to keep based upon their tagger date.
+		 */
+		struct tag *t;
+
+		if (!e->tag) {
+			t = lookup_tag(e->sha1);
+			if (!t || parse_tag(t))
+				return 1;
+			e->tag = t;
+		}
+
+		t = lookup_tag(sha1);
+		if (!t || parse_tag(t))
+			return 0;
+		*tag = t;
+
+		if (e->tag->date < t->date)
+			return 1;
+	}
+
+	return 0;
+}
+
 static void add_to_known_names(const char *path,
 			       struct commit *commit,
 			       int prio,
 			       const unsigned char *sha1)
 {
 	struct commit_name *e = commit->util;
-	if (!e || e->prio < prio) {
+	struct tag *tag = NULL;
+	if (replace_name(e, prio, sha1, &tag)) {
 		size_t len = strlen(path)+1;
 		free(e);
 		e = xmalloc(sizeof(struct commit_name) + len);
-		e->tag = NULL;
+		e->tag = tag;
 		e->prio = prio;
+		e->name_checked = 0;
 		hashcpy(e->sha1, sha1);
 		memcpy(e->path, path, len);
 		commit->util = e;
@@ -165,10 +201,15 @@ static void display_name(struct commit_name *n)
 {
 	if (n->prio == 2 && !n->tag) {
 		n->tag = lookup_tag(n->sha1);
-		if (!n->tag || parse_tag(n->tag) || !n->tag->tag)
+		if (!n->tag || parse_tag(n->tag))
 			die("annotated tag %s not available", n->path);
+	}
+	if (n->tag && !n->name_checked) {
+		if (!n->tag->tag)
+			die("annotated tag %s has no embedded name", n->path);
 		if (strcmp(n->tag->tag, all ? n->path + 5 : n->path))
 			warning("tag '%s' is really '%s' here", n->tag->tag, n->path);
+		n->name_checked = 1;
 	}
 
 	if (n->tag)

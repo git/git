@@ -8,7 +8,7 @@ test_description='test describe
  o----o----o----o----o----.    /
        \        A    c        /
         .------------o---o---o
-                     D   e
+                   D,R   e
 '
 . ./test-lib.sh
 
@@ -68,6 +68,8 @@ test_expect_success setup '
 	echo D >another && git add another && git commit -m D &&
 	test_tick &&
 	git tag -a -m D D &&
+	test_tick &&
+	git tag -a -m R R &&
 
 	test_tick &&
 	echo DD >another && git commit -a -m another &&
@@ -89,10 +91,10 @@ test_expect_success setup '
 
 check_describe A-* HEAD
 check_describe A-* HEAD^
-check_describe D-* HEAD^^
+check_describe R-* HEAD^^
 check_describe A-* HEAD^^2
 check_describe B HEAD^^2^
-check_describe D-* HEAD^^^
+check_describe R-* HEAD^^^
 
 check_describe c-* --tags HEAD
 check_describe c-* --tags HEAD^
