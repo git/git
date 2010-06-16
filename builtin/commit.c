@@ -1017,6 +1017,7 @@ static int git_status_config(const char *k, const char *v, void *cb)
 int cmd_status(int argc, const char **argv, const char *prefix)
 {
 	struct wt_status s;
+	int fd;
 	unsigned char sha1[20];
 	static struct option builtin_status_options[] = {
 		OPT__VERBOSE(&verbose),
@@ -1050,6 +1051,14 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	read_cache_preload(s.pathspec);
 	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, s.pathspec, NULL, NULL);
+
+	fd = hold_locked_index(&index_lock, 0);
+	if (0 <= fd) {
+		if (!write_cache(fd, active_cache, active_nr))
+			commit_locked_index(&index_lock);
+		rollback_lock_file(&index_lock);
+	}
+
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
 	s.in_merge = in_merge;
 	wt_status_collect(&s);
