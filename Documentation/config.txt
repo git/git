@@ -880,6 +880,12 @@ format.subjectprefix::
 	The default for format-patch is to output files with the '[PATCH]'
 	subject prefix. Use this variable to change that prefix.
 
+format.signature::
+	The default for format-patch is to output a signature containing
+	the git version number. Use this variable to change that default.
+	Set this variable to the empty string ("") to suppress
+	signature generation.
+
 format.suffix::
 	The default for format-patch is to output files with the suffix
 	`.patch`. Use this variable to change that suffix (make sure to
