@@ -1,0 +1,46 @@
+Git v1.7.1.1 Release Notes (draft)
+==================================
+
+Fixes since v1.7.1
+------------------
+
+ * Authentication over http transport can now be made lazily, in that the
+   request can first go to a URL without username, get a 401 response and
+   then the client will ask for the username to use.
+
+ * We used to mistakenly think "../work" is a subdirectory of the current
+   directory when we are in "../work-xyz".
+
+ * The attribute mechanism now allows an entry that uses an attribute
+   macro that set/unset one attribute, immediately followed by an
+   overriding setting; this makes attribute macros much easier to use.
+
+ * "git am -3" did not show diagnosis when the patch in the message was corrupt.
+
+ * "git bundle --stdin" segfaulted.
+
+ * "git describe" did not tie-break tags that point at the same commit
+   correctly; newer ones are preferred by paying attention to the
+   tagger date now.
+
+ * "git fetch" over HTTP verifies the downloaded packfiles more robustly.
+
+ * The memory usage by "git index-pack" (run during "git fetch" and "git
+   push") got leaner.
+
+ * "GIT_DIR=foo.git git init --bare bar.git" created foo.git instead of bar.git.
+
+ * "git log --abbrev=$num --format='%h' ignored --abbrev=$num.
+
+ * "git send-email" lacked a way to specify the domainname used in the
+   EHLO/HELO exchange, causing rejected connection from picky servers.
+   It learned --smtp-domain option to solve this issue.
+
+ * "git stash" incorrectly lost paths in the working tree that were
+   previously removed from the index.
+
+ * "git status" stopped refreshing the index by mistake in 1.7.1.
+
+ * "git status" showed excess "hints" even when advice.statusHints is set to false.
+
+And other minor fixes and documentation updates.
