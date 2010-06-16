@@ -228,4 +228,154 @@ test_expect_success 'stash --invalid-option' '
 	test bar,bar2 = $(cat file),$(cat file2)
 '
 
+test_expect_success 'stash an added file' '
+	git reset --hard &&
+	echo new >file3 &&
+	git add file3 &&
+	git stash save "added file" &&
+	! test -r file3 &&
+	git stash apply &&
+	test new = "$(cat file3)"
+'
+
+test_expect_success 'stash rm then recreate' '
+	git reset --hard &&
+	git rm file &&
+	echo bar7 >file &&
+	git stash save "rm then recreate" &&
+	test bar = "$(cat file)" &&
+	git stash apply &&
+	test bar7 = "$(cat file)"
+'
+
+test_expect_success 'stash rm and ignore' '
+	git reset --hard &&
+	git rm file &&
+	echo file >.gitignore &&
+	git stash save "rm and ignore" &&
+	test bar = "$(cat file)" &&
+	test file = "$(cat .gitignore)"
+	git stash apply &&
+	! test -r file &&
+	test file = "$(cat .gitignore)"
+'
+
+test_expect_success 'stash rm and ignore (stage .gitignore)' '
+	git reset --hard &&
+	git rm file &&
+	echo file >.gitignore &&
+	git add .gitignore &&
+	git stash save "rm and ignore (stage .gitignore)" &&
+	test bar = "$(cat file)" &&
+	! test -r .gitignore
+	git stash apply &&
+	! test -r file &&
+	test file = "$(cat .gitignore)"
+'
+
+test_expect_success SYMLINKS 'stash file to symlink' '
+	git reset --hard &&
+	rm file &&
+	ln -s file2 file &&
+	git stash save "file to symlink" &&
+	test -f file &&
+	test bar = "$(cat file)" &&
+	git stash apply &&
+	case "$(ls -l file)" in *" file -> file2") :;; *) false;; esac
+'
+
+test_expect_success SYMLINKS 'stash file to symlink (stage rm)' '
+	git reset --hard &&
+	git rm file &&
+	ln -s file2 file &&
+	git stash save "file to symlink (stage rm)" &&
+	test -f file &&
+	test bar = "$(cat file)" &&
+	git stash apply &&
+	case "$(ls -l file)" in *" file -> file2") :;; *) false;; esac
+'
+
+test_expect_success SYMLINKS 'stash file to symlink (full stage)' '
+	git reset --hard &&
+	rm file &&
+	ln -s file2 file &&
+	git add file &&
+	git stash save "file to symlink (full stage)" &&
+	test -f file &&
+	test bar = "$(cat file)" &&
+	git stash apply &&
+	case "$(ls -l file)" in *" file -> file2") :;; *) false;; esac
+'
+
+# This test creates a commit with a symlink used for the following tests
+
+test_expect_success SYMLINKS 'stash symlink to file' '
+	git reset --hard &&
+	ln -s file filelink &&
+	git add filelink &&
+	git commit -m "Add symlink" &&
+	rm filelink &&
+	cp file filelink &&
+	git stash save "symlink to file" &&
+	test -h filelink &&
+	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac &&
+	git stash apply &&
+	! test -h filelink &&
+	test bar = "$(cat file)"
+'
+
+test_expect_success SYMLINKS 'stash symlink to file (stage rm)' '
+	git reset --hard &&
+	git rm filelink &&
+	cp file filelink &&
+	git stash save "symlink to file (stage rm)" &&
+	test -h filelink &&
+	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac &&
+	git stash apply &&
+	! test -h filelink &&
+	test bar = "$(cat file)"
+'
+
+test_expect_success SYMLINKS 'stash symlink to file (full stage)' '
+	git reset --hard &&
+	rm filelink &&
+	cp file filelink &&
+	git add filelink &&
+	git stash save "symlink to file (full stage)" &&
+	test -h filelink &&
+	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac &&
+	git stash apply &&
+	! test -h filelink &&
+	test bar = "$(cat file)"
+'
+
+test_expect_failure 'stash directory to file' '
+	git reset --hard &&
+	mkdir dir &&
+	echo foo >dir/file &&
+	git add dir/file &&
+	git commit -m "Add file in dir" &&
+	rm -fr dir &&
+	echo bar >dir &&
+	git stash save "directory to file" &&
+	test -d dir &&
+	test foo = "$(cat dir/file)" &&
+	test_must_fail git stash apply &&
+	test bar = "$(cat dir)" &&
+	git reset --soft HEAD^
+'
+
+test_expect_failure 'stash file to directory' '
+	git reset --hard &&
+	rm file &&
+	mkdir file &&
+	echo foo >file/file &&
+	git stash save "file to directory" &&
+	test -f file &&
+	test bar = "$(cat file)" &&
+	git stash apply &&
+	test -f file/file &&
+	test foo = "$(cat file/file)"
+'
+
 test_done
