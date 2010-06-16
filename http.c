@@ -720,7 +720,7 @@ static inline int hex(int v)
 		return 'A' + v - 10;
 }
 
-static void end_url_with_slash(struct strbuf *buf, const char *url)
+void end_url_with_slash(struct strbuf *buf, const char *url)
 {
 	strbuf_addstr(buf, url);
 	if (buf->len && buf->buf[buf->len - 1] != '/')
