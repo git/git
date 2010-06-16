@@ -599,6 +599,14 @@ void unuse_pack(struct pack_window **w_cursor)
 	}
 }
 
+void close_pack_index(struct packed_git *p)
+{
+	if (p->index_data) {
+		munmap((void *)p->index_data, p->index_size);
+		p->index_data = NULL;
+	}
+}
+
 /*
  * This is used by git-repack in case a newly created pack happens to
  * contain the same set of objects as an existing one.  In that case
@@ -620,8 +628,7 @@ void free_pack_by_name(const char *pack_name)
 			close_pack_windows(p);
 			if (p->pack_fd != -1)
 				close(p->pack_fd);
-			if (p->index_data)
-				munmap((void *)p->index_data, p->index_size);
+			close_pack_index(p);
 			free(p->bad_object_sha1);
 			*pp = p->next;
 			free(p);
@@ -831,9 +838,8 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 	return p;
 }
 
-struct packed_git *parse_pack_index(unsigned char *sha1)
+struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path)
 {
-	const char *idx_path = sha1_pack_index_name(sha1);
 	const char *path = sha1_pack_name(sha1);
 	struct packed_git *p = alloc_packed_git(strlen(path) + 1);
 
