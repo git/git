@@ -252,10 +252,10 @@ void add_object_array_with_mode(struct object *obj, const char *name, struct obj
 
 void object_array_remove_duplicates(struct object_array *array)
 {
-	int ref, src, dst;
+	unsigned int ref, src, dst;
 	struct object_array_entry *objects = array->objects;
 
-	for (ref = 0; ref < array->nr - 1; ref++) {
+	for (ref = 0; ref + 1 < array->nr; ref++) {
 		for (src = ref + 1, dst = src;
 		     src < array->nr;
 		     src++) {
