@@ -127,6 +127,8 @@ extern void end_url_with_slash(struct strbuf *buf, const char *url);
 #define HTTP_MISSING_TARGET	1
 #define HTTP_ERROR		2
 #define HTTP_START_FAILED	3
+#define HTTP_REAUTH	4
+#define HTTP_NOAUTH	5
 
 /*
  * Requests an url and stores the result in a strbuf.
