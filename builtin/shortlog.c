@@ -162,7 +162,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 		    sha1_to_hex(commit->object.sha1));
 	if (log->user_format) {
 		struct pretty_print_context ctx = {0};
-		ctx.abbrev = DEFAULT_ABBREV;
+		ctx.abbrev = log->abbrev;
 		ctx.subject = "";
 		ctx.after_subject = "";
 		ctx.date_mode = DATE_NORMAL;
@@ -290,6 +290,7 @@ parse_done:
 	}
 
 	log.user_format = rev.commit_format == CMIT_FMT_USERFORMAT;
+	log.abbrev = rev.abbrev;
 
 	/* assume HEAD if from a tty */
 	if (!nongit && !rev.pending.nr && isatty(0))
