@@ -724,6 +724,12 @@ AC_CHECK_HEADER([libgen.h],
 [NO_LIBGEN_H=YesPlease])
 AC_SUBST(NO_LIBGEN_H)
 #
+# Define HAVE_PATHS_H if you have paths.h.
+AC_CHECK_HEADER([paths.h],
+[HAVE_PATHS_H=YesPlease],
+[HAVE_PATHS_H=])
+AC_SUBST(HAVE_PATHS_H)
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 GIT_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=],
