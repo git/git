@@ -4,7 +4,75 @@ test_description='git commit porcelain-ish'
 
 . ./test-lib.sh
 
+# Arguments: [<prefix] [<commit message>] [<commit options>]
+check_summary_oneline() {
+	test_tick &&
+	git commit ${3+"$3"} -m "$2" | head -1 > act &&
+
+	# branch name
+	SUMMARY_PREFIX="$(git name-rev --name-only HEAD)" &&
+
+	# append the "special" prefix, like "root-commit", "detached HEAD"
+	if test -n "$1"
+	then
+		SUMMARY_PREFIX="$SUMMARY_PREFIX ($1)"
+	fi
+
+	# abbrev SHA-1
+	SUMMARY_POSTFIX="$(git log -1 --pretty='format:%h')"
+	echo "[$SUMMARY_PREFIX $SUMMARY_POSTFIX] $2" >exp &&
+
+	test_cmp exp act
+}
+
+test_expect_success 'output summary format' '
+
+	echo new >file1 &&
+	git add file1 &&
+	check_summary_oneline "root-commit" "initial" &&
+
+	echo change >>file1 &&
+	git add file1 &&
+	check_summary_oneline "" "a change"
+'
+
+test_expect_success 'output summary format for commit with an empty diff' '
+
+	check_summary_oneline "" "empty" "--allow-empty"
+'
+
+test_expect_success 'output summary format for merges' '
+
+	git checkout -b recursive-base &&
+	test_commit base file1 &&
+
+	git checkout -b recursive-a recursive-base &&
+	test_commit commit-a file1 &&
+
+	git checkout -b recursive-b recursive-base &&
+	test_commit commit-b file1 &&
+
+	# conflict
+	git checkout recursive-a &&
+	test_must_fail git merge recursive-b &&
+	# resolve the conflict
+	echo commit-a > file1 &&
+	git add file1 &&
+	check_summary_oneline "" "Merge"
+'
+
+output_tests_cleanup() {
+	# this is needed for "do not fire editor in the presence of conflicts"
+	git checkout master &&
+
+	# this is needed for the "partial removal" test to pass
+	git rm file1 &&
+	git commit -m "cleanup"
+}
+
 test_expect_success 'the basics' '
+
+	output_tests_cleanup &&
 
 	echo doing partial >"commit is" &&
 	mkdir not &&
