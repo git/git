@@ -2415,14 +2415,19 @@ sub kopts_from_path
     if ( defined ( $cfg->{gitcvs}{usecrlfattr} ) and
          $cfg->{gitcvs}{usecrlfattr} =~ /\s*(1|true|yes)\s*$/i )
     {
-        my ($val) = check_attr( "crlf", $path );
-        if ( $val eq "set" )
+        my ($val) = check_attr( "text", $path );
+        if ( $val eq "unspecified" )
         {
-            return "";
+            $val = check_attr( "crlf", $path );
         }
-        elsif ( $val eq "unset" )
+        if ( $val eq "unset" )
         {
             return "-kb"
+        }
+        elsif ( check_attr( "eol", $path ) ne "unspecified" ||
+                $val eq "set" || $val eq "input" )
+        {
+            return "";
         }
         else
         {

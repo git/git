@@ -369,16 +369,13 @@ By default the server leaves the '-k' mode blank for all files,
 which causes the cvs client to treat them as a text files, subject
 to crlf conversion on some platforms.
 
-You can make the server use `crlf` attributes to set the '-k' modes
-for files by setting the `gitcvs.usecrlfattr` config variable.
-In this case, if `crlf` is explicitly unset ('-crlf'), then the
-server will set '-kb' mode for binary files. If `crlf` is set,
-then the '-k' mode will explicitly be left blank.  See
-also linkgit:gitattributes[5] for more information about the `crlf`
-attribute.
+You can make the server use the end-of-line conversion attributes to
+set the '-k' modes for files by setting the `gitcvs.usecrlfattr`
+config variable.  See linkgit:gitattributes[5] for more information
+about end-of-line conversion.
 
 Alternatively, if `gitcvs.usecrlfattr` config is not enabled
-or if the `crlf` attribute is unspecified for a filename, then
+or the attributes do not allow automatic detection for a filename, then
 the server uses the `gitcvs.allbinary` config for the default setting.
 If `gitcvs.allbinary` is set, then file not otherwise
 specified will default to '-kb' mode. Otherwise the '-k' mode

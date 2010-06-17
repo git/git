@@ -547,7 +547,6 @@ extern int core_compression_seen;
 extern size_t packed_git_window_size;
 extern size_t packed_git_limit;
 extern size_t delta_base_cache_limit;
-extern int auto_crlf;
 extern int read_replace_refs;
 extern int fsync_object_files;
 extern int core_preload_index;
@@ -560,6 +559,27 @@ enum safe_crlf {
 };
 
 extern enum safe_crlf safe_crlf;
+
+enum auto_crlf {
+	AUTO_CRLF_FALSE = 0,
+	AUTO_CRLF_TRUE = 1,
+	AUTO_CRLF_INPUT = -1,
+};
+
+extern enum auto_crlf auto_crlf;
+
+enum eol {
+	EOL_UNSET,
+	EOL_CRLF,
+	EOL_LF,
+#ifdef NATIVE_CRLF
+	EOL_NATIVE = EOL_CRLF
+#else
+	EOL_NATIVE = EOL_LF
+#endif
+};
+
+extern enum eol eol;
 
 enum branch_track {
 	BRANCH_TRACK_UNSPECIFIED = -1,
