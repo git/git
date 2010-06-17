@@ -54,6 +54,7 @@ git send-email [options] <file | directory | rev-list options >
     --in-reply-to           <str>  * Email "In-Reply-To:"
     --annotate                     * Review each patch that will be sent in an editor.
     --compose                      * Open an editor for introduction.
+    --8bit-encoding         <str>  * Encoding to assume 8bit mails if undeclared
 
   Sending:
     --envelope-sender       <str>  * Email envelope sender.
@@ -193,6 +194,7 @@ my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_encryption);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
 my ($validate, $confirm);
 my (@suppress_cc);
+my ($auto_8bit_encoding);
 
 my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
 
@@ -223,6 +225,7 @@ my %config_settings = (
     "multiedit" => \$multiedit,
     "confirm"   => \$confirm,
     "from" => \$sender,
+    "assume8bitencoding" => \$auto_8bit_encoding,
 );
 
 # Help users prepare for 1.7.0
@@ -298,6 +301,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "thread!" => \$thread,
 		    "validate!" => \$validate,
 		    "format-patch!" => \$format_patch,
+		    "8bit-encoding=s" => \$auto_8bit_encoding,
 	 );
 
 unless ($rc) {
@@ -668,6 +672,35 @@ sub ask {
 		}
 	}
 	return undef;
+}
+
+my %broken_encoding;
+
+sub file_declares_8bit_cte($) {
+	my $fn = shift;
+	open (my $fh, '<', $fn);
+	while (my $line = <$fh>) {
+		last if ($line =~ /^$/);
+		return 1 if ($line =~ /^Content-Transfer-Encoding: .*8bit.*$/);
+	}
+	close $fh;
+	return 0;
+}
+
+foreach my $f (@files) {
+	next unless (body_or_subject_has_nonascii($f)
+		     && !file_declares_8bit_cte($f));
+	$broken_encoding{$f} = 1;
+}
+
+if (!defined $auto_8bit_encoding && scalar %broken_encoding) {
+	print "The following files are 8bit, but do not declare " .
+		"a Content-Transfer-Encoding.\n";
+	foreach my $f (sort keys %broken_encoding) {
+		print "    $f\n";
+	}
+	$auto_8bit_encoding = ask("Which 8bit encoding should I declare [UTF-8]? ",
+				  default => "UTF-8");
 }
 
 my $prompting = 0;
@@ -1225,6 +1258,18 @@ foreach my $t (@files) {
 			or die "(cc-cmd) failed to close pipe to '$cc_cmd'";
 	}
 
+	if ($broken_encoding{$t} && !$has_content_type) {
+		$has_content_type = 1;
+		push @xh, "MIME-Version: 1.0",
+			"Content-Type: text/plain; charset=$auto_8bit_encoding",
+			"Content-Transfer-Encoding: 8bit";
+		$body_encoding = $auto_8bit_encoding;
+	}
+
+	if ($broken_encoding{$t} && !is_rfc2047_quoted($subject)) {
+		$subject = quote_rfc2047($subject, $auto_8bit_encoding);
+	}
+
 	if (defined $author and $author ne $sender) {
 		$message = "From: $author\n\n$message";
 		if (defined $author_encoding) {
@@ -1237,6 +1282,7 @@ foreach my $t (@files) {
 				}
 			}
 			else {
+				$has_content_type = 1;
 				push @xh,
 				  'MIME-Version: 1.0',
 				  "Content-Type: text/plain; charset=$author_encoding",
@@ -1309,6 +1355,20 @@ sub file_has_nonascii {
 	my $fn = shift;
 	open(my $fh, '<', $fn)
 		or die "unable to open $fn: $!\n";
+	while (my $line = <$fh>) {
+		return 1 if $line =~ /[^[:ascii:]]/;
+	}
+	return 0;
+}
+
+sub body_or_subject_has_nonascii {
+	my $fn = shift;
+	open(my $fh, '<', $fn)
+		or die "unable to open $fn: $!\n";
+	while (my $line = <$fh>) {
+		last if $line =~ /^$/;
+		return 1 if $line =~ /^Subject.*[^[:ascii:]]/;
+	}
 	while (my $line = <$fh>) {
 		return 1 if $line =~ /[^[:ascii:]]/;
 	}
