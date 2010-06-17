@@ -974,8 +974,9 @@ EOF
 
 		test -d "$REWRITTEN" || test -n "$NEVER_FF" || skip_unnecessary_picks
 
+		output git checkout $ONTO || die_abort "could not detach HEAD"
 		git update-ref ORIG_HEAD $HEAD
-		output git checkout $ONTO && do_rest
+		do_rest
 		;;
 	esac
 	shift
