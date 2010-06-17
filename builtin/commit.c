@@ -48,6 +48,11 @@ static const char implicit_ident_advice[] =
 "\n"
 "    git commit --amend --author='Your Name <you@example.com>'\n";
 
+static const char empty_amend_advice[] =
+"You asked to amend the most recent commit, but doing so would make\n"
+"it empty. You can repeat your command with --allow-empty, or you can\n"
+"remove the commit entirely with \"git reset HEAD^\".\n";
+
 static unsigned char head_sha1[20];
 
 static char *use_message_buffer;
@@ -708,6 +713,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	if (!commitable && !in_merge && !allow_empty &&
 	    !(amend && is_a_merge(head_sha1))) {
 		run_status(stdout, index_file, prefix, 0, s);
+		if (amend)
+			fputs(empty_amend_advice, stderr);
 		return 0;
 	}
 
