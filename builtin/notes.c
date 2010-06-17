@@ -416,7 +416,7 @@ int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct notes_rewrite_cfg *c = NULL;
-	struct notes_tree *t;
+	struct notes_tree *t = NULL;
 	int ret = 0;
 
 	if (rewrite_cmd) {

@@ -8,10 +8,6 @@ Updates since v1.7.1
    gained a new member in the family (tab-in-indent) to help projects with
    policy to indent only with spaces.
 
- * Authentication over http transport can now be made lazily, in that the
-   request can first go to a URL without username, get a 401 response and
-   then the client will ask for the username to use.
-
  * When working from a subdirectory, by default, git does not look for its
    metadirectory ".git" across filesystems, primarily to help people who
    have invocations of git in their custom PS1 prompts, as being outside
@@ -37,9 +33,6 @@ Updates since v1.7.1
  * "git cvsserver" can be told to use pserver; its password file can be
    stored outside the repository.
 
- * "git describe" tie-breaks tags that point at the same commit better by
-   paying attention to the tagger date (newer ones are preferred).
-
  * The output from the textconv filter used by "git diff" can be cached to
    speed up their reuse.
 
@@ -54,16 +47,11 @@ Updates since v1.7.1
    been enhanced for visibility modifiers (public, protected, etc.) to
    better support PHP5.
 
- * "git fetch" over HTTP verifies the downloaded packfiles more robustly.
-
  * "git for-each-ref" learned "%(objectname:short)" that gives the object
    name abbreviated.
 
  * Various options to "git grep" (e.g. --count, --name-only) work better
    with binary files.
-
- * The memory usage by "git index-pack" (run during "git fetch" and "git
-   push") got leaner.
 
  * "git log --follow <path>" follows across copies (it used to only follow
    renames).  This may make the processing more expensive.
@@ -75,9 +63,6 @@ Updates since v1.7.1
    signature line in the format-patch output.
 
  * "git revert" learned --strategy option to specify the merge strategy.
-
- * "git send-email" learned --smtp-domain option to specify the domainname
-   used in the EHLO/HELO exchange.
 
  * "git status [-s] --ignored" can be used to list ignored paths.
 
@@ -93,19 +78,13 @@ release, unless otherwise noted.
 
  * We didn't recognize timezone "Z" as a synonym for "UTC" (75b37e70).
 
- * In 1.7.1, "git status" stopped refreshing the index by mistake
-   (e251a7b3^2).
-
- * We used to mistakenly think "../work" is a subdirectory of the current
-   directory when we are in "../work-xyz" (490544b).
-
  * "git checkout" and "git rebase" overwrote paths that are marked "assume
    unchanged" (aecda37c).
 
  * "git clone/fetch/pull" issued an incorrect error message when a ref and
    a symref that points to the ref were updated at the same time.  This
    obviously would update them to the same value, and should not result in
-   an error condition (da3efdb).
+   an error condition (7223dcaf).
 
  * "git clone" did not configure remote.origin.url correctly for bare
    clones (df61c889).
@@ -120,9 +99,6 @@ release, unless otherwise noted.
 
  * "git reset --hard" started from a wrong directory and a working tree in
    a nonstandard location is in use got confused (560fb6a1).
-
- * "git stash" incorrectly lost paths in the working tree that were
-   previously removed from the index (7aa5d43).
 
 --
 exec >/var/tmp/1
