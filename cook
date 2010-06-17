@@ -470,15 +470,31 @@ sub update_issue {
 	if (!$incremental) {
 		my $sd = $cooking->{'section_data'};
 		my $sl = $cooking->{'section_list'};
-		for (my $i = 0; $i < @{$sl}; $i++) {
+		# Rename "New" to "Old New" and insert "New".
+		# Move "New" to "Old New"
+		my $i;
+		my $doneso;
+		for ($i = 0; $i < @{$sl}; $i++) {
 			if ($sl->[$i] eq $new_topics) {
 				$sl->[$i] = $old_new_topics;
 				unshift @{$sl}, $new_topics;
+				$doneso = 1;
 				last;
 			}
 		}
-		$sd->{$old_new_topics} = $sd->{$new_topics};
+		if ($doneso) {
+			$sd->{$old_new_topics} = $sd->{$new_topics};
+		}
 		$sd->{$new_topics} = [];
+
+		# Drop "Graduated"
+		for ($i = 0; $i < @{$sl}; $i++) {
+			last if ($sl->[$i] eq $graduated)
+		}
+		if ($i < @{$sl}) {
+			splice(@{$sl}, $i, 1);
+			$sd->{$graduated} = [];
+		}
 	}
 }
 
