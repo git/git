@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2010, #01; Wed, 2)
-X-master-at: bdc4204119d2847ea8f1ae5e44614be859951822
-X-next-at: c7bbdb20f017cfc4f70c5cad0067b0a3e6650153
+Subject: What's cooking in git.git (Jun 2010, #02; Wed, 16)
+X-master-at: d0b8d79510cd9c45a4c6bc08a37c6348f8293e8a
+X-next-at: b2df7f8c29b2dd50cec1b3a7b83887ad946e4685
 
-What's cooking in git.git (Jun 2010, #01; Wed, 2)
+What's cooking in git.git (Jun 2010, #02; Wed, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,78 +11,309 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-Many topics that have been cooking since 1.7.1 pre-release freeze period
-are now in master; maybe it is a good time to start freezing feature
-branches for 1.7.2---I think I said I'll keep this cycle shorter, no?
+--------------------------------------------------
+[Graduated to "master"]
 
-Btw, fwiw, I recently took a position with Google.  The primary
-development machine has been unpacked but I still haven't managed to get
-back to speed yet.
+* ab/cvsserver (2010-05-15) 6 commits
+  (merged to 'next' on 2010-06-03 at 9f66c99)
+ + git-cvsserver: test for pserver authentication support
+ + git-cvsserver: document making a password without htpasswd
+ + git-cvsserver: Improved error handling for pserver
+ + git-cvsserver: indent & clean up authdb code
+ + git-cvsserver: use a password file cvsserver pserver
+ + git-cvsserver: authentication support for pserver
+
+* ab/submodule-foreach-toplevel (2010-05-21) 1 commit
+  (merged to 'next' on 2010-06-03 at fff7253)
+ + git-submodule foreach: Add $toplevel variable
+
+* ab/test-cleanup (2010-05-07) 2 commits
+  (merged to 'next' on 2010-05-21 at a3cbd67)
+ + Turn setup code in t2007-checkout-symlink.sh into a test
+ + Move t6000lib.sh to lib-*
+
+* bs/userdiff-php (2010-05-23) 1 commit
+  (merged to 'next' on 2010-06-03 at f1bc101)
+ + diff: Support visibility modifiers in the PHP hunk header regexp
+
+* bw/diff-metainfo-color (2010-05-04) 1 commit
+  (merged to 'next' on 2010-05-21 at 3aa552e)
+ + diff: fix coloring of extended diff headers
+
+* cb/assume-unchanged-fix (2010-05-01) 2 commits
+  (merged to 'next' on 2010-05-21 at bab2342)
+ + Documentation: git-add does not update files marked "assume unchanged"
+ + do not overwrite files marked "assume unchanged"
+
+* jk/diff-m-doc (2010-05-08) 1 commit
+  (merged to 'next' on 2010-06-03 at 4a86bbd)
+ + docs: clarify meaning of -M for git-log
+
+* jk/maint-pull-dry-run-noop (2010-05-25) 1 commit
+  (merged to 'next' on 2010-06-03 at 45236e3)
+ + pull: do nothing on --dry-run
+
+* jk/maint-sha1-file-name-fix (2010-05-22) 1 commit
+  (merged to 'next' on 2010-06-03 at f7dd263)
+ + remove over-eager caching in sha1_file_name
+
+* jn/fsck-ident (2010-05-26) 1 commit
+  (merged to 'next' on 2010-06-03 at 5fc3811)
+ + fsck: fix bogus commit header check
+
+* jn/gitweb-syntax-highlight (2010-04-27) 2 commits
+  (merged to 'next' on 2010-06-03 at 1685303)
+ + gitweb: Refactor syntax highlighting support
+ + gitweb: Syntax highlighting support
+
+* jn/maint-amend-missing-name (2010-05-02) 1 commit
+  (merged to 'next' on 2010-05-09 at 9023332)
+ + commit --amend: cope with missing display name
+
+* jn/maint-doc-ignore (2010-03-05) 1 commit
+  (merged to 'next' on 2010-06-03 at 01b4f6a)
+ + gitignore.5: Clarify matching rules
+
+* jn/make-header-dependency (2010-05-08) 2 commits
+  (merged to 'next' on 2010-05-21 at d4ed230)
+ + Makefile: let header dependency checker override COMPUTE_HEADER_DEPENDENCIES
+ + Makefile: fix header dependency checker to allow NO_CURL builds
+
+* jn/notes-doc (2010-05-08) 8 commits
+  (merged to 'next' on 2010-05-21 at 1c28059)
+ + Documentation/notes: nitpicks
+ + Documentation/notes: clean up description of rewriting configuration
+ + Documentation/notes: simplify treatment of default display refs
+ + Documentation/log: add a CONFIGURATION section
+ + Documentation/notes: simplify treatment of default notes ref
+ + Documentation/notes: add configuration section
+ + Documentation/notes: describe content of notes blobs
+ + Documentation/notes: document format of notes trees
+
+* js/maint-windows (2009-07-20) 2 commits
+  (merged to 'next' on 2010-05-21 at 16abe03)
+ + Recent MinGW has a C99 implementation of snprintf functions
+ + mingw: use _commit to implement fsync
+
+* js/try-to-free-stackable (2010-05-08) 2 commits
+  (merged to 'next' on 2010-05-21 at 4c1afcb)
+ + Do not call release_pack_memory in malloc wrappers when GIT_TRACE is used
+ + Have set_try_to_free_routine return the previous routine
+
+* mc/maint-zoneparse (2010-05-17) 1 commit
+  (merged to 'next' on 2010-06-03 at 2b6cc2e)
+ + Add "Z" as an alias for the timezone "UTC"
+
+* mg/notes-dry-run (2010-05-14) 1 commit
+  (merged to 'next' on 2010-06-03 at eddf5f6)
+ + notes: dry-run and verbose options for prune
+
+* rs/diff-no-minimal (2010-05-02) 1 commit
+  (merged to 'next' on 2010-05-09 at 6c74aa0)
+ + git diff too slow for a file
+
+* rs/grep-binary (2010-05-22) 8 commits
+  (merged to 'next' on 2010-06-03 at 6ec4dfc)
+ + grep: support NUL chars in search strings for -F
+ + grep: use REG_STARTEND for all matching if available
+ + grep: continue case insensitive fixed string search after NUL chars
+ + grep: use memmem() for fixed string search
+ + grep: --name-only over binary
+ + grep: --count over binary
+ + grep: grep: refactor handling of binary mode options
+ + grep: add test script for binary file handling
+
+* wp/pretty-enhancement (2010-05-08) 4 commits
+  (merged to 'next' on 2010-05-09 at eeaa4dc)
+ + pretty: initialize new cmt_fmt_map to 0
+ + pretty: add aliases for pretty formats
+ + pretty: add infrastructure for commit format aliases
+ + pretty: make it easier to add new formats
 
 --------------------------------------------------
 [New Topics]
 
-* bs/userdiff-php (2010-05-23) 1 commit
- - diff: Support visibility modifiers in the PHP hunk header regexp
+* ab/blame-textconv (2010-06-07) 3 commits
+ - t/t8006: test textconv support for blame
+ - textconv: support for blame
+ - textconv: make the API public
+ (this branch is used by cp/textconv-cat-file.)
 
-Will merge to 'next'.
+* ab/i18n (2010-06-15) 3 commits
+ . Add initial C, Shell and Perl gettext translations
+ . fixup! Add infrastructure
+ . Add infrastructure for translating Git with gettext
 
-* cc/maint-diff-CC-binary (2010-06-02) 2 commits
- - fixup
- - diff: fix "git show -C -C" output when renaming a binary file
+* ab/tap (2010-06-09) 4 commits
+ - We use TAP so the Perl test can run without scaffolding
+ - Skip tests in a way that makes sense under TAP
+ - Merge branch 'jc/t9129-any-utf8' into ab/tap
+ - Make test-lib.sh emit valid TAP format
+ (this branch uses jc/t9129-any-utf8.)
 
-The fix-up should probably be squashed in, as the original "fix" was
-barking up a wrong tree.
+* bd/maint-unpack-trees-parawalk-fix (2010-06-10) 1 commit
+ - unpack-trees: Make index lookahead less pessimal
+
+* ic/maint-rebase-i-abort (2010-06-08) 1 commit
+ - rebase -i: Abort cleanly if new base cannot be checked out
+
+* jk/maint-advice-empty-amend (2010-06-06) 1 commit
+ - commit: give advice on empty amend
+
+* jl/maint-diff-ignore-submodules (2010-06-08) 2 commits
+ - Add optional parameters to the diff option "--ignore-submodules"
+ - git diff: rename test that had a conflicting name
+
+* jn/document-rebase-i-p-limitation (2010-05-31) 1 commit
+ - rebase -i -p: document shortcomings
+
+* jn/grep-open (2010-06-12) 4 commits
+ - grep -O: allow optional argument specifying the pager (or editor)
+ - grep: Add the option '--open-files-in-pager'
+ - Unify code paths of threaded greps
+ - grep: refactor grep_objects loop into its own function
+
+* rr/parse-date-refactor (2010-06-03) 1 commit
+ - Refactor parse_date for approxidate functions
+
+* rr/svn-export (2010-06-10) 7 commits
+ - Add LICENSE
+ - Add SVN dump parser
+ - Add infrastructure to write revisions in fast-export format
+ - Add stream helper library
+ - Add library for string-specific memory pool
+ - Add cpp macro implementation of treaps
+ - Add memory pool library
+
+* sm/branch-broken-ref (2010-06-04) 2 commits
+ - branch: don't fail listing branches if one of the commits wasn't found
+ - branch: exit status now reflects if branch listing finds an error
+
+* tr/receive-pack-aliased-update-fix (2010-06-10) 1 commit
+  (merged to 'next' on 2010-06-14 at d3a3097)
+ + check_aliased_update: strcpy() instead of strcat() to copy
+ (this branch is used by js/maint-receive-pack-symref-alias.)
+
+* cc/maint-commit-reflog-msg (2010-06-12) 1 commit
+ - commit: use value of GIT_REFLOG_ACTION env variable as reflog message
+
+* tr/rev-list-count (2010-06-12) 2 commits
+ - bash completion: Support "divergence from upstream" warnings in __git_ps1
+ - rev-list: introduce --count option
+
+* tr/send-email-8bit (2010-06-12) 1 commit
+ - send-email: ask about and declare 8bit mails
+
+* cp/textconv-cat-file (2010-06-09) 4 commits
+ - [DONTMERGE] git gui: use textconv filter for diff and blame
+ - t/t8007: test textconv support for cat-file
+ - textconv: support for cat_file
+ - sha1_name: add get_sha1_with_context()
+ (this branch uses ab/blame-textconv.)
+
+* jn/gitweb-return-or-exit-cleanup (2010-06-13) 1 commit
+ - gitweb: Return or exit after done serving request
+
+* pb/maint-perl-errmsg-no-dir (2010-06-14) 1 commit
+ - Git.pm: better error message
+
+* zl/mailinfo-recode-patch (2010-06-14) 2 commits
+ - add --recode-patch option to git-am
+ - add --recode-patch option to git-mailinfo
+
+* cc/cherry-pick-stdin (2010-06-14) 3 commits
+ - revert: do not rebuild argv on heap
+ - revert: accept arbitrary rev-list options
+ - t3508 (cherry-pick): futureproof against unmerged files
+ (this branch uses cc/cherry-pick-series.)
+
+* eb/double-convert-before-merge (2010-06-16) 1 commit
+ - ll-merge: Normalize files before merging
+
+* jc/maint-simpler-common-prefix (2010-06-16) 1 commit
+ - common_prefix: simplify and fix scanning for prefixes
+
+* js/maint-am-rebase-invalid-author (2010-06-16) 1 commit
+ - am: use get_author_ident_from_commit instead of mailinfo when rebasing
+
+* js/maint-receive-pack-symref-alias (2010-06-16) 1 commit
+ . Merge branch 'tr/receive-pack-aliased-update-fix' into js/maint-receive-pack-symref-alias
+ (this branch uses tr/receive-pack-aliased-update-fix.)
+
+* lt/extended-sha1-match-commit-with-regexp (2010-04-23) 1 commit
+ - Make :/ accept a regex rather than a fixed pattern
+
+* mg/pretty-magic-space (2010-06-14) 1 commit
+ - pretty: Introduce ' ' modifier to add space if non-empty
+
+* sb/format-patch-signature (2010-06-15) 2 commits
+ - completion: Add --signature and format.signature
+ - format-patch: Add a signature option (--signature)
+
+--------------------------------------------------
+[Stalled -- would discard unless there are some movements soon]
+
+* js/rebase-origin-x (2010-02-05) 1 commit
+ - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
+
+I retract my objection against the idea of -x; needs polishing before
+moving forward.
+
+--------------------------------------------------
+[Cooking]
+
+* jc/rev-list-ancestry-path (2010-06-04) 5 commits
+ - revision: Turn off history simplification in --ancestry-path mode
+ - revision: Fix typo in --ancestry-path error message
+ - Documentation/rev-list-options.txt: Explain --ancestry-path
+ - Documentation/rev-list-options.txt: Fix missing line in example history graph
+ - revision: --ancestry-path
+
+* cc/maint-diff-CC-binary (2010-05-26) 1 commit
+  (merged to 'next' on 2010-06-07 at 1a8bbbb)
+ + diff: fix "git show -C -C" output when renaming a binary file
 
 * jn/gitweb-plackup (2010-05-28) 3 commits
- - git-instaweb: Add support for running gitweb via 'plackup'
- - git-instaweb: Wait for server to start before running web browser
- - git-instaweb: Remove pidfile after stopping web server
+  (merged to 'next' on 2010-06-03 at c54f1bf)
+ + git-instaweb: Add support for running gitweb via 'plackup'
+ + git-instaweb: Wait for server to start before running web browser
+ + git-instaweb: Remove pidfile after stopping web server
  (this branch uses ps/gitweb-soc.)
 
-Will merge to 'next'.
-
 * mg/status-b (2010-05-25) 2 commits
- - Documentation+t5708: document and test status -s -b
- - Show branch information in short output of git status
+  (merged to 'next' on 2010-06-07 at d1e3f9e)
+ + Documentation+t5708: document and test status -s -b
+ + Show branch information in short output of git status
 
-There are a few style violations that snuck in, but otherwise looked
-sensible.
-
-* ps/gitweb-soc (2010-05-28) 4 commits
- - git-instaweb: Configure it to work with new gitweb structure
- - git-instaweb: Put httpd logs in a "$httpd_only" subdirectory
- - gitweb: Set default destination directory for installing gitweb in Makefile
- - gitweb: Move static files into seperate subdirectory
+* ps/gitweb-soc (2010-06-02) 6 commits
+  (merged to 'next' on 2010-06-13 at 92245ae)
+ + git-instaweb: Add option to reuse previous config file
+ + Makefile: Use $(sharedir)/gitweb for target 'install-gitweb'
+  (merged to 'next' on 2010-06-03 at 5db4adf)
+ + git-instaweb: Configure it to work with new gitweb structure
+ + git-instaweb: Put httpd logs in a "$httpd_only" subdirectory
+ + gitweb: Set default destination directory for installing gitweb in Makefile
+ + gitweb: Move static files into seperate subdirectory
  (this branch is used by jn/gitweb-plackup.)
 
-Will merge to 'next'.
-
-* tc/commit-abbrev-fix (2010-05-27) 3 commits
- - commit::print_summary(): set rev_info.always_show_header to 1
- - t7502-commit: add summary output tests for empty and merge commits
- - t7502-commit: add tests for summary output
-
-Will merge to 'next'.  I am not quite happy about the "impossible to
-trigger" die message, though.  It is a good defensive programming to catch
-breakages caused by future changes that may invalidate the assumption this
-patch makes, but then the message should be worded as such to state that
-assumption, I think.
+* tc/commit-abbrev-fix (2010-06-12) 3 commits
+  (merged to 'next' on 2010-06-16 at b2df7f8)
+ + commit::print_summary(): don't use format_commit_message()
+ + t7502-commit: add summary output tests for empty and merge commits
+ + t7502-commit: add tests for summary output
 
 * ab/maint-perl-use-instlibdir (2010-05-30) 1 commit
- - Makefile: remove redundant munging of @@INSTLIBDIR@@
-
-Will merge to 'next'.
+  (merged to 'next' on 2010-06-07 at 83cf3b8)
+ + Makefile: remove redundant munging of @@INSTLIBDIR@@
 
 * by/diff-graph (2010-05-29) 6 commits
- - Make --color-words work well with --graph
- - graph.c: register a callback for graph output
- - Emit a whole line in one go
- - diff.c: Output the text graph padding before each diff line
- - Output the graph columns at the end of the commit message
- - Add a prefix output callback to diff output
-
-Will merge to 'next'.
+  (merged to 'next' on 2010-06-07 at 8771aae)
+ + Make --color-words work well with --graph
+ + graph.c: register a callback for graph output
+ + Emit a whole line in one go
+ + diff.c: Output the text graph padding before each diff line
+ + Output the graph columns at the end of the commit message
+ + Add a prefix output callback to diff output
 
 * cc/cherry-pick-series (2010-06-02) 8 commits
  - Documentation/revert: describe passing more than one commit
@@ -93,121 +324,95 @@ Will merge to 'next'.
  - revert: refactor code into a do_pick_commit() function
  - revert: use run_command_v_opt() instead of execv_git_cmd()
  - revert: cleanup code for -x option
+ (this branch is used by cc/cherry-pick-stdin.)
 
-* gs/usage-to-stdout (2010-05-17) 1 commit
- - print the usage string on stdout instead of stderr
+* gs/usage-to-stdout (2010-06-12) 2 commits
+  (merged to 'next' on 2010-06-13 at e83c00f)
+ + parseopt: wrap rev-parse --parseopt usage for eval consumption
+  (merged to 'next' on 2010-06-03 at c81c783)
+ + print the usage string on stdout instead of stderr
 
-Will merge to 'next'.
-
-* gv/portable (2010-05-14) 18 commits
- - Makefile: Tru64 portability fix
- - Makefile: HP-UX 10.20 portability fixes
- - Makefile: HPUX11 portability fixes
- - Makefile: SunOS 5.6 portability fix
- - inline declaration does not work on AIX
- - Allow disabling "inline"
- - Some platforms lack socklen_t type
- - Make NO_{INET_NTOP,INET_PTON} configured independently
- - Makefile: some platforms do not have hstrerror anywhere
- - git-compat-util.h: some platforms with mmap() lack MAP_FAILED definition
- - test_cmp: do not use "diff -u" on platforms that lack one
- - fixup: do not unconditionally disable "diff -u"
- - tests: use "test_cmp", not "diff", when verifying the result
- - Do not use "diff" found on PATH while building and installing
- - enums: omit trailing comma for portability
- - Makefile: -lpthread may still be necessary when libc has only pthread stubs
- - Rewrite dynamic structure initializations to runtime assignment
- - Makefile: pass CPPFLAGS through to fllow customization
-
-Will merge to 'next'.
+* gv/portable (2010-06-11) 20 commits
+  (merged to 'next' on 2010-06-13 at 1add99c)
+ + test-lib: use DIFF definition from GIT-BUILD-OPTIONS
+  (merged to 'next' on 2010-06-07 at 1796035)
+ + build: propagate $DIFF to scripts
+  (merged to 'next' on 2010-06-03 at 41ae9cb)
+ + Makefile: Tru64 portability fix
+ + Makefile: HP-UX 10.20 portability fixes
+ + Makefile: HPUX11 portability fixes
+ + Makefile: SunOS 5.6 portability fix
+ + inline declaration does not work on AIX
+ + Allow disabling "inline"
+ + Some platforms lack socklen_t type
+ + Make NO_{INET_NTOP,INET_PTON} configured independently
+ + Makefile: some platforms do not have hstrerror anywhere
+ + git-compat-util.h: some platforms with mmap() lack MAP_FAILED definition
+ + test_cmp: do not use "diff -u" on platforms that lack one
+ + fixup: do not unconditionally disable "diff -u"
+ + tests: use "test_cmp", not "diff", when verifying the result
+ + Do not use "diff" found on PATH while building and installing
+ + enums: omit trailing comma for portability
+ + Makefile: -lpthread may still be necessary when libc has only pthread stubs
+ + Rewrite dynamic structure initializations to runtime assignment
+ + Makefile: pass CPPFLAGS through to fllow customization
 
 * jh/diff-index-line-abbrev (2010-05-30) 1 commit
- - diff.c: Ensure "index $from..$to" line contains unambiguous SHA1s
-
-Will merge to 'next'.
+  (merged to 'next' on 2010-06-07 at 194e9a9)
+ + diff.c: Ensure "index $from..$to" line contains unambiguous SHA1s
 
 * jk/am-skip-hint (2010-05-30) 1 commit
- - git-am: suggest what to do with superfluous patches
+  (merged to 'next' on 2010-06-07 at f49577f)
+ + git-am: suggest what to do with superfluous patches
 
-Will merge to 'next'.
-
-* jn/checkout-doc (2010-05-30) 1 commit
- - Documentation/checkout: clarify description
-
-Will merge to 'next'.
-
-* jn/fsck-ident (2010-05-26) 1 commit
- - fsck: fix bogus commit header check
-
-Will merge to 'next'.
-
-* jn/maint-doc-ignore (2010-03-05) 1 commit
- - gitignore.5: Clarify matching rules
-
-Will merge to 'next'.
+* jn/checkout-doc (2010-06-01) 2 commits
+  (merged to 'next' on 2010-06-13 at d01c620)
+ + Documentation/checkout: clarify description
+  (merged to 'next' on 2010-06-07 at 93cc6a9)
+ + Documentation/checkout: clarify description
 
 * jn/rebase-cmdline-fix (2010-05-31) 1 commit
- - rebase: improve error message when upstream argument is missing
-
-Will merge to 'next'.
+  (merged to 'next' on 2010-06-07 at 5e6cffe)
+ + rebase: improve error message when upstream argument is missing
 
 * ps/gitweb--browse-chrome (2010-05-30) 1 commit
- - git-web--browse: Add support for google chrome and chromium
+  (merged to 'next' on 2010-06-07 at a0fef35)
+ + git-web--browse: Add support for google chrome and chromium
 
-Will merge to 'next'.
-
-* bc/portable (2010-06-01) 5 commits
- - t/aggregate-results: accomodate systems with small max argument list length
- - t/t7006: ignore return status of shell's unset builtin
- - t/t5150: remove space from sed script
- - git-request-pull.sh: remove -e switch to shell interpreter which breaks ksh
- - t/t5800: skip if python version is older than 2.5
+* bc/portable (2010-06-09) 7 commits
+  (merged to 'next' on 2010-06-13 at a423055)
+ + Remove python 2.5'isms
+ + Makefile: add PYTHON_PATH to GIT-BUILD-OPTIONS
+  (merged to 'next' on 2010-06-07 at 27a57c9)
+ + t/aggregate-results: accomodate systems with small max argument list length
+ + t/t7006: ignore return status of shell's unset builtin
+ + t/t5150: remove space from sed script
+ + git-request-pull.sh: remove -e switch to shell interpreter which breaks ksh
+ + t/t5800: skip if python version is older than 2.5
 
 * jn/show-num-walks (2010-06-01) 1 commit
  - DWIM 'git show -5' to 'git show --do-walk -5'
 
 * rr/am-help (2010-06-02) 3 commits
- - git am: Remove stray error message from sed
- - git am: Display some help text when patch is empty
- - git am: Set cmdline globally
-
-Will merge to 'next'.
+  (merged to 'next' on 2010-06-07 at 12383bc)
+ + git am: Remove stray error message from sed
+ + git am: Display some help text when patch is empty
+ + git am: Set cmdline globally
 
 * jc/t9129-any-utf8 (2010-06-02) 1 commit
- - t9129: fix UTF-8 locale detection
+  (merged to 'next' on 2010-06-07 at 6f53da4)
+ + t9129: fix UTF-8 locale detection
+ (this branch is used by ab/tap.)
 
---------------------------------------------------
-[Stalled -- would discard unless there are some movements soon]
-
-* jc/rev-list-ancestry-path (2010-04-20) 1 commit
- - revision: --ancestry-path
-
-Just an illustration patch.  merge simplification logic used when
-pathspecs are in effect interacts with this rather badly.
-
-* js/rebase-origin-x (2010-02-05) 1 commit
- - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
-
-I retract my objection against the idea of -x; needs polishing before
-moving forward.
-
-* js/grep-open (2010-05-01) 3 commits
- - grep: do not ignore return value from chdir()
- - grep -O: allow optional argument specifying the pager (or editor)
- - grep: Add the option '--open-files-in-pager'
- (this branch is used by jp/hold-string-list-sanity.)
-
-Probably needs to support --no-index mode as well.
-
---------------------------------------------------
-[Cooking]
-
-* em/checkout-orphan (2010-05-21) 5 commits
- - bash completion: add --orphan to 'git checkout'
- - t3200: test -l with core.logAllRefUpdates options
- - checkout --orphan: respect -l option always
- - refs: split log_ref_write logic into log_ref_setup
- - Documentation: alter checkout --orphan description
+* em/checkout-orphan (2010-06-10) 6 commits
+  (merged to 'next' on 2010-06-12 at 2f531d5)
+ + log_ref_setup: don't return stack-allocated array
+  (merged to 'next' on 2010-06-07 at 23b4607)
+ + bash completion: add --orphan to 'git checkout'
+ + t3200: test -l with core.logAllRefUpdates options
+ + checkout --orphan: respect -l option always
+ + refs: split log_ref_write logic into log_ref_setup
+ + Documentation: alter checkout --orphan description
 
 In <4BFE2461.5080501@drmicha.warpmail.net>, Michael J Gruber raised a
 valid request for a better explanation of superfluous files left behind
@@ -215,30 +420,12 @@ and then are cleaned.  Other than that I think this is a sane thing to
 do.
 
 * ec/diff-noprefix-config (2010-05-02) 1 commit
- - diff: add configuration option for disabling diff prefixes.
-
-Will merge to 'next'.
-
-* jk/diff-m-doc (2010-05-08) 1 commit
- - docs: clarify meaning of -M for git-log
-
-Will merge to 'next'.
-
-* mc/maint-zoneparse (2010-05-17) 1 commit
- - Add "Z" as an alias for the timezone "UTC"
-
-Will merge to 'next'.
-
-* mg/notes-dry-run (2010-05-14) 1 commit
- - notes: dry-run and verbose options for prune
-
-Will merge to 'next'.
+  (merged to 'next' on 2010-06-03 at 75fefba)
+ + diff: add configuration option for disabling diff prefixes.
 
 * mg/rev-parse-lrbranches-locals (2010-05-14) 1 commit
  - revlist: Introduce --lrbranches and --locals revision specifiers
  (this branch uses mg/rev-parse-option-sifter-deprecation.)
-
-Hmmm...
 
 * mg/rev-parse-option-sifter-deprecation (2010-05-14) 3 commits
  - t6018: make sure all tested symbolic names are different revs
@@ -250,87 +437,34 @@ Some people might interpret "Deprecate" too strongly; the intent is that
 we shouldn't keep piling parsing of new rev-list options to it and
 discourage the use of "option sifter" in new programs.
 
-* ab/cvsserver (2010-05-15) 6 commits
- - git-cvsserver: test for pserver authentication support
- - git-cvsserver: document making a password without htpasswd
- - git-cvsserver: Improved error handling for pserver
- - git-cvsserver: indent & clean up authdb code
- - git-cvsserver: use a password file cvsserver pserver
- - git-cvsserver: authentication support for pserver
-
-Will merge to 'next'.
-
-* eb/core-eol (2010-05-19) 4 commits
+* eb/core-eol (2010-06-04) 4 commits
  - Add "core.eol" config variable
  - Rename the "crlf" attribute "text"
  - Add per-repository eol normalization
  - Add tests for per-repository eol normalization
  (this branch uses fg/autocrlf.)
 
-Will merge to 'next'.
-
 * jn/remote-set-branches (2010-05-19) 1 commit
- - Add git remote set-branches
+  (merged to 'next' on 2010-06-03 at 54a1755)
+ + Add git remote set-branches
 
-Will merge to 'next'.
-
-* js/maint-windows (2009-07-20) 2 commits
-  (merged to 'next' on 2010-05-21 at 16abe03)
- + Recent MinGW has a C99 implementation of snprintf functions
- + mingw: use _commit to implement fsync
-
-Will merge to 'next'.
-
-* rs/grep-binary (2010-05-22) 8 commits
- - grep: support NUL chars in search strings for -F
- - grep: use REG_STARTEND for all matching if available
- - grep: continue case insensitive fixed string search after NUL chars
- - grep: use memmem() for fixed string search
- - grep: --name-only over binary
- - grep: --count over binary
- - grep: grep: refactor handling of binary mode options
- - grep: add test script for binary file handling
-
-Will merge to 'next'.
-
-* ab/submodule-foreach-toplevel (2010-05-21) 1 commit
- - git-submodule foreach: Add $toplevel variable
-
-Will merge to 'next'.
-
-* cb/ls-files-cdup (2010-05-26) 1 commit
- - ls-files: allow relative pathspec
-
-Doesn't write_name() quote twice when prefix_offset is non-zero?
-
-* jk/maint-pull-dry-run-noop (2010-05-25) 1 commit
- - pull: do nothing on --dry-run
-
-Will merge to 'next'.
-
-* jk/maint-sha1-file-name-fix (2010-05-22) 1 commit
- - remove over-eager caching in sha1_file_name
-
-Will merge to 'next'.
+* cb/ls-files-cdup (2010-06-03) 2 commits
+  (merged to 'next' on 2010-06-07 at 89277b8)
+ + ls-files: allow relative pathspec
+ + quote.c: separate quoting and relative path generation
 
 * jk/url-decode (2010-05-23) 2 commits
- - decode file:// and ssh:// URLs
- - make url-related functions reusable
-
-Will merge to 'next'.
-
-* bw/diff-metainfo-color (2010-05-04) 1 commit
-  (merged to 'next' on 2010-05-21 at 3aa552e)
- + diff: fix coloring of extended diff headers
+  (merged to 'next' on 2010-06-03 at 0d8a51e)
+ + decode file:// and ssh:// URLs
+ + make url-related functions reusable
 
 * ph/clone-message-reword (2010-05-09) 1 commit
   (merged to 'next' on 2010-05-21 at 1785bd0)
  + clone: reword messages to match the end-user perception
 
 * rc/ls-remote-default (2010-05-12) 1 commit
- - ls-remote: print URL when no repo is specified
-
-Will merge to 'next'.
+  (merged to 'next' on 2010-06-03 at 8d505fb)
+ + ls-remote: print URL when no repo is specified
 
 * fg/autocrlf (2010-05-12) 1 commit
   (merged to 'next' on 2010-05-21 at 5f43b66)
@@ -348,70 +482,21 @@ Will merge to 'next'.
  + t7604-merge-custom-message: show that --log doesn't append to -m
  + t7604-merge-custom-message: shift expected output creation
 
-* jn/gitweb-fastcgi (2010-05-07) 2 commits
+* jn/gitweb-fastcgi (2010-06-05) 3 commits
+  (merged to 'next' on 2010-06-13 at 6d1fdd6)
+ + gitweb: Run in FastCGI mode if gitweb script has .fcgi extension
   (merged to 'next' on 2010-05-21 at cb1724f)
  + gitweb: Add support for FastCGI, using CGI::Fast
  + gitweb: Put all per-connection code in run() subroutine
 
-* jn/make-header-dependency (2010-05-08) 2 commits
-  (merged to 'next' on 2010-05-21 at d4ed230)
- + Makefile: let header dependency checker override COMPUTE_HEADER_DEPENDENCIES
- + Makefile: fix header dependency checker to allow NO_CURL builds
-
-* js/try-to-free-stackable (2010-05-08) 2 commits
-  (merged to 'next' on 2010-05-21 at 4c1afcb)
- + Do not call release_pack_memory in malloc wrappers when GIT_TRACE is used
- + Have set_try_to_free_routine return the previous routine
-
-* jn/gitweb-syntax-highlight (2010-04-27) 2 commits
- - gitweb: Refactor syntax highlighting support
- - gitweb: Syntax highlighting support
-
-Will merge to 'next'.
-
-* jn/maint-amend-missing-name (2010-05-02) 1 commit
-  (merged to 'next' on 2010-05-09 at 9023332)
- + commit --amend: cope with missing display name
-
-* rs/diff-no-minimal (2010-05-02) 1 commit
-  (merged to 'next' on 2010-05-09 at 6c74aa0)
- + git diff too slow for a file
-
-* ab/test-cleanup (2010-05-07) 2 commits
-  (merged to 'next' on 2010-05-21 at a3cbd67)
- + Turn setup code in t2007-checkout-symlink.sh into a test
- + Move t6000lib.sh to lib-*
-
-* jn/notes-doc (2010-05-08) 8 commits
-  (merged to 'next' on 2010-05-21 at 1c28059)
- + Documentation/notes: nitpicks
- + Documentation/notes: clean up description of rewriting configuration
- + Documentation/notes: simplify treatment of default display refs
- + Documentation/log: add a CONFIGURATION section
- + Documentation/notes: simplify treatment of default notes ref
- + Documentation/notes: add configuration section
- + Documentation/notes: describe content of notes blobs
- + Documentation/notes: document format of notes trees
-
-* cb/assume-unchanged-fix (2010-05-01) 2 commits
-  (merged to 'next' on 2010-05-21 at bab2342)
- + Documentation: git-add does not update files marked "assume unchanged"
- + do not overwrite files marked "assume unchanged"
-
-* wp/pretty-enhancement (2010-05-08) 4 commits
-  (merged to 'next' on 2010-05-09 at eeaa4dc)
- + pretty: initialize new cmt_fmt_map to 0
- + pretty: add aliases for pretty formats
- + pretty: add infrastructure for commit format aliases
- + pretty: make it easier to add new formats
-
 * hg/id-munging (2010-04-06) 2 commits
- - convert: Keep foreign $Id$ on checkout.
- - convert: Safer handling of $Id$ contraction.
+  (merged to 'next' on 2010-06-03 at b045725)
+ + convert: Keep foreign $Id$ on checkout.
+ + convert: Safer handling of $Id$ contraction.
 
-Will merge to 'next'.
-
-* js/async-thread (2010-03-09) 7 commits
+* js/async-thread (2010-06-11) 8 commits
+  (merged to 'next' on 2010-06-13 at bf7457c)
+ + fast-import: die_nicely() back to vsnprintf (reverts part of ebaa79f)
   (merged to 'next' on 2010-05-21 at 9d31940)
  + Enable threaded async procedures whenever pthreads is available
   (merged to 'next' on 2010-05-04 at 2644e74)
@@ -422,28 +507,15 @@ Will merge to 'next'.
  + Make report() from usage.c public as vreportf() and use it.
  + Modernize t5530-upload-pack-error.
 
-(all except for the tip has been in 'next' since 2010-03-20).
-
-* ld/discovery-limit-to-fs (2010-04-04) 1 commit
- - write-index: check and warn when worktree crosses a filesystem boundary
-
-There might have been some valid objections to this but I cannot recall.
-Will merge to 'next' unless I hear something within a few days.
-
 --------------------------------------------------
-[Discarded, perhaps can be rerolled]
+[Discarded]
 
-* jp/hold-string-list-sanity (2010-04-06) 9 commits
- . string_list: Fix argument order for string_list_append
- . Merge branch 'sr/remote-helper-export' into HEAD
- . Merge branch 'js/grep-open' into HEAD
- . Merge branch 'sb/fmt-merge-msg' into HEAD
- . string_list: Fix argument order for string_list_lookup
- . string_list: Fix argument order for string_list_insert_at_index
- . string_list: Fix argument order for string_list_insert
- . string_list: Fix argument order for for_each_string_list
- . string_list: Fix argument order for print_string_list
- (this branch uses js/grep-open.)
+* ld/discovery-limit-to-fs (2010-06-12) 2 commits
+  (merged to 'next' on 2010-06-11 at 9c3410c)
+ + Revert "write-index: check and warn when worktree crosses a filesystem
+  boundary"
+  (merged to 'next' on 2010-06-07 at 9780e62)
+ + write-index: check and warn when worktree crosses a filesystem
+  boundary
 
-Building this on top of slushy codebase is not a very promising endeavor.
-Good thing to do, but it came at a bad time.
+These are "let's try this" followed by "oops, let's not".
