@@ -172,7 +172,7 @@ sub repository {
 	}
 
 	if (defined $opts{Directory}) {
-		-d $opts{Directory} or throw Error::Simple("Directory not found: $!");
+		-d $opts{Directory} or throw Error::Simple("Directory not found: $opts{Directory} $!");
 
 		my $search = Git->repository(WorkingCopy => $opts{Directory});
 		my $dir;
@@ -545,7 +545,7 @@ sub wc_chdir {
 		or throw Error::Simple("bare repository");
 
 	-d $self->wc_path().'/'.$subdir
-		or throw Error::Simple("subdir not found: $!");
+		or throw Error::Simple("subdir not found: $subdir $!");
 	# Of course we will not "hold" the subdirectory so anyone
 	# can delete it now and we will never know. But at least we tried.
 
