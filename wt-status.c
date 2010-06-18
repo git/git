@@ -9,6 +9,7 @@
 #include "quote.h"
 #include "run-command.h"
 #include "remote.h"
+#include "refs.h"
 
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
@@ -17,6 +18,8 @@ static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RED,    /* WT_STATUS_UNTRACKED */
 	GIT_COLOR_RED,    /* WT_STATUS_NOBRANCH */
 	GIT_COLOR_RED,    /* WT_STATUS_UNMERGED */
+	GIT_COLOR_GREEN,  /* WT_STATUS_LOCAL_BRANCH */
+	GIT_COLOR_RED,    /* WT_STATUS_REMOTE_BRANCH */
 };
 
 static const char *color(int slot, struct wt_status *s)
@@ -756,9 +759,69 @@ static void wt_shortstatus_other(int null_termination, struct string_list_item *
 	}
 }
 
-void wt_shortstatus_print(struct wt_status *s, int null_termination)
+static void wt_shortstatus_print_tracking(struct wt_status *s)
+{
+	struct branch *branch;
+	const char *header_color = color(WT_STATUS_HEADER, s);
+	const char *branch_color_local = color(WT_STATUS_LOCAL_BRANCH, s);
+	const char *branch_color_remote = color(WT_STATUS_REMOTE_BRANCH, s);
+
+	const char *base;
+	const char *branch_name;
+	int num_ours, num_theirs;
+
+	color_fprintf(s->fp, color(WT_STATUS_HEADER, s), "## ");
+
+	if (!s->branch)
+		return;
+	branch_name = s->branch;
+
+	if (!prefixcmp(branch_name, "refs/heads/"))
+		branch_name += 11;
+	else if (!strcmp(branch_name, "HEAD")) {
+		branch_name = "HEAD (no branch)";
+		branch_color_local = color(WT_STATUS_NOBRANCH, s);
+	}
+
+	branch = branch_get(s->branch + 11);
+	if (s->is_initial)
+		color_fprintf(s->fp, header_color, "Initial commit on ");
+	if (!stat_tracking_info(branch, &num_ours, &num_theirs)) {
+		color_fprintf_ln(s->fp, branch_color_local,
+			"%s", branch_name);
+		return;
+	}
+
+	base = branch->merge[0]->dst;
+	base = shorten_unambiguous_ref(base, 0);
+	color_fprintf(s->fp, branch_color_local, "%s", branch_name);
+	color_fprintf(s->fp, header_color, "...");
+	color_fprintf(s->fp, branch_color_remote, "%s", base);
+
+	color_fprintf(s->fp, header_color, " [");
+	if (!num_ours) {
+		color_fprintf(s->fp, header_color, "behind ");
+		color_fprintf(s->fp, branch_color_remote, "%d", num_theirs);
+	} else if (!num_theirs) {
+		color_fprintf(s->fp, header_color, "ahead ");
+		color_fprintf(s->fp, branch_color_local, "%d", num_ours);
+	} else {
+		color_fprintf(s->fp, header_color, "ahead ");
+		color_fprintf(s->fp, branch_color_local, "%d", num_ours);
+		color_fprintf(s->fp, header_color, ", behind ");
+		color_fprintf(s->fp, branch_color_remote, "%d", num_theirs);
+	}
+
+	color_fprintf_ln(s->fp, header_color, "]");
+}
+
+void wt_shortstatus_print(struct wt_status *s, int null_termination, int show_branch)
 {
 	int i;
+
+	if (show_branch)
+		wt_shortstatus_print_tracking(s);
+
 	for (i = 0; i < s->change.nr; i++) {
 		struct wt_status_change_data *d;
 		struct string_list_item *it;
@@ -789,5 +852,5 @@ void wt_porcelain_print(struct wt_status *s, int null_termination)
 	s->use_color = 0;
 	s->relative_paths = 0;
 	s->prefix = NULL;
-	wt_shortstatus_print(s, null_termination);
+	wt_shortstatus_print(s, null_termination, 0);
 }
