@@ -597,6 +597,94 @@ test_expect_success 'show empty remote' '
 	)
 '
 
+test_expect_success 'remote set-branches requires a remote' '
+	test_must_fail git remote set-branches &&
+	test_must_fail git remote set-branches --add
+'
+
+test_expect_success 'remote set-branches' '
+	echo "+refs/heads/*:refs/remotes/scratch/*" >expect.initial &&
+	sort <<-\EOF >expect.add &&
+	+refs/heads/*:refs/remotes/scratch/*
+	+refs/heads/other:refs/remotes/scratch/other
+	EOF
+	sort <<-\EOF >expect.replace &&
+	+refs/heads/maint:refs/remotes/scratch/maint
+	+refs/heads/master:refs/remotes/scratch/master
+	+refs/heads/next:refs/remotes/scratch/next
+	EOF
+	sort <<-\EOF >expect.add-two &&
+	+refs/heads/maint:refs/remotes/scratch/maint
+	+refs/heads/master:refs/remotes/scratch/master
+	+refs/heads/next:refs/remotes/scratch/next
+	+refs/heads/pu:refs/remotes/scratch/pu
+	+refs/heads/t/topic:refs/remotes/scratch/t/topic
+	EOF
+	sort <<-\EOF >expect.setup-ffonly &&
+	refs/heads/master:refs/remotes/scratch/master
+	+refs/heads/next:refs/remotes/scratch/next
+	EOF
+	sort <<-\EOF >expect.respect-ffonly &&
+	refs/heads/master:refs/remotes/scratch/master
+	+refs/heads/next:refs/remotes/scratch/next
+	+refs/heads/pu:refs/remotes/scratch/pu
+	EOF
+
+	git clone .git/ setbranches &&
+	(
+		cd setbranches &&
+		git remote rename origin scratch &&
+		git config --get-all remote.scratch.fetch >config-result &&
+		sort <config-result >../actual.initial &&
+
+		git remote set-branches scratch --add other &&
+		git config --get-all remote.scratch.fetch >config-result &&
+		sort <config-result >../actual.add &&
+
+		git remote set-branches scratch maint master next &&
+		git config --get-all remote.scratch.fetch >config-result &&
+		sort <config-result >../actual.replace &&
+
+		git remote set-branches --add scratch pu t/topic &&
+		git config --get-all remote.scratch.fetch >config-result &&
+		sort <config-result >../actual.add-two &&
+
+		git config --unset-all remote.scratch.fetch &&
+		git config remote.scratch.fetch \
+			refs/heads/master:refs/remotes/scratch/master &&
+		git config --add remote.scratch.fetch \
+			+refs/heads/next:refs/remotes/scratch/next &&
+		git config --get-all remote.scratch.fetch >config-result &&
+		sort <config-result >../actual.setup-ffonly &&
+
+		git remote set-branches --add scratch pu &&
+		git config --get-all remote.scratch.fetch >config-result &&
+		sort <config-result >../actual.respect-ffonly
+	) &&
+	test_cmp expect.initial actual.initial &&
+	test_cmp expect.add actual.add &&
+	test_cmp expect.replace actual.replace &&
+	test_cmp expect.add-two actual.add-two &&
+	test_cmp expect.setup-ffonly actual.setup-ffonly &&
+	test_cmp expect.respect-ffonly actual.respect-ffonly
+'
+
+test_expect_success 'remote set-branches with --mirror' '
+	echo "+refs/*:refs/*" >expect.initial &&
+	echo "+refs/heads/master:refs/heads/master" >expect.replace &&
+	git clone --mirror .git/ setbranches-mirror &&
+	(
+		cd setbranches-mirror &&
+		git remote rename origin scratch &&
+		git config --get-all remote.scratch.fetch >../actual.initial &&
+
+		git remote set-branches scratch heads/master &&
+		git config --get-all remote.scratch.fetch >../actual.replace
+	) &&
+	test_cmp expect.initial actual.initial &&
+	test_cmp expect.replace actual.replace
+'
+
 test_expect_success 'new remote' '
 	git remote add someremote foo &&
 	echo foo >expect &&
