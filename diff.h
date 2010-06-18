@@ -9,6 +9,7 @@
 struct rev_info;
 struct diff_options;
 struct diff_queue_struct;
+struct strbuf;
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
@@ -24,6 +25,8 @@ typedef void (*add_remove_fn_t)(struct diff_options *options,
 
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 		struct diff_options *options, void *data);
+
+typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data);
 
 #define DIFF_FORMAT_RAW		0x0001
 #define DIFF_FORMAT_DIFFSTAT	0x0002
@@ -130,6 +133,8 @@ struct diff_options {
 	add_remove_fn_t add_remove;
 	diff_format_fn_t format_callback;
 	void *format_callback_data;
+	diff_prefix_fn_t output_prefix;
+	void *output_prefix_data;
 };
 
 enum color_diff {
