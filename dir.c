@@ -31,22 +31,22 @@ static int common_prefix(const char **pathspec)
 	if (!slash)
 		return 0;
 
+	/*
+	 * The first 'prefix' characters of 'path' are common leading
+	 * path components among the pathspecs we have seen so far,
+	 * including the trailing slash.
+	 */
 	prefix = slash - path + 1;
 	while ((next = *++pathspec) != NULL) {
-		int len = strlen(next);
-		if (len >= prefix && !memcmp(path, next, prefix))
+		int len, last_matching_slash = -1;
+		for (len = 0; len < prefix && next[len] == path[len]; len++)
+			if (next[len] == '/')
+				last_matching_slash = len;
+		if (len == prefix)
 			continue;
-		len = prefix - 1;
-		for (;;) {
-			if (!len)
-				return 0;
-			if (next[--len] != '/')
-				continue;
-			if (memcmp(path, next, len+1))
-				continue;
-			prefix = len + 1;
-			break;
-		}
+		if (last_matching_slash < 0)
+			return 0;
+		prefix = last_matching_slash + 1;
 	}
 	return prefix;
 }
