@@ -1109,6 +1109,15 @@ sub run {
 
 run();
 
+if (defined caller) {
+	# wrapped in a subroutine processing requests,
+	# e.g. mod_perl with ModPerl::Registry, or PSGI with Plack::App::WrapCGI
+	return;
+} else {
+	# pure CGI script, serving single request
+	exit;
+}
+
 ## ======================================================================
 ## action links
 
