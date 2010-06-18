@@ -5,7 +5,7 @@
 
 static const char ls_remote_usage[] =
 "git ls-remote [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]\n"
-"                     [<repository> [<refs>...]]";
+"                     [-q|--quiet] [<repository> [<refs>...]]";
 
 /*
  * Is there one among the list of patterns that match the tail part
@@ -34,6 +34,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	const char *dest = NULL;
 	int nongit;
 	unsigned flags = 0;
+	int quiet = 0;
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
 
@@ -65,6 +66,10 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp("--refs", arg)) {
 				flags |= REF_NORMAL;
+				continue;
+			}
+			if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
+				quiet = 1;
 				continue;
 			}
 			usage(ls_remote_usage);
@@ -99,6 +104,9 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	ref = transport_get_remote_refs(transport);
 	if (transport_disconnect(transport))
 		return 1;
+
+	if (!dest && !quiet)
+		fprintf(stderr, "From %s\n", *remote->url);
 	for ( ; ref; ref = ref->next) {
 		if (!check_ref_type(ref, flags))
 			continue;
