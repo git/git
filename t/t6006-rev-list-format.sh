@@ -200,6 +200,16 @@ test_expect_success 'add LF before non-empty (2)' '
 	grep "^$" actual
 '
 
+test_expect_success 'add SP before non-empty (1)' '
+	git show -s --pretty=format:"%s% bThanks" HEAD^^ >actual &&
+	test $(wc -w <actual) = 2
+'
+
+test_expect_success 'add SP before non-empty (2)' '
+	git show -s --pretty=format:"%s% sThanks" HEAD^^ >actual &&
+	test $(wc -w <actual) = 4
+'
+
 test_expect_success '--abbrev' '
 	echo SHORT SHORT SHORT >expect2 &&
 	echo LONG LONG LONG >expect3 &&

@@ -159,6 +159,10 @@ If you add a `-` (minus sign) after '%' of a placeholder, line-feeds that
 immediately precede the expansion are deleted if and only if the
 placeholder expands to an empty string.
 
+If you add a ` ` (space) after '%' of a placeholder, a space
+is inserted immediately before the expansion if and only if the
+placeholder expands to a non-empty string.
+
 * 'tformat:'
 +
 The 'tformat:' format works exactly like 'format:', except that it
