@@ -30,6 +30,7 @@ static const char *diff_word_regex_cfg;
 static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
+static int diff_no_prefix;
 
 static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -99,6 +100,10 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "diff.mnemonicprefix")) {
 		diff_mnemonic_prefix = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "diff.noprefix")) {
+		diff_no_prefix = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.external"))
@@ -2625,7 +2630,9 @@ void diff_setup(struct diff_options *options)
 		DIFF_OPT_SET(options, COLOR_DIFF);
 	options->detect_rename = diff_detect_rename_default;
 
-	if (!diff_mnemonic_prefix) {
+	if (diff_no_prefix) {
+		options->a_prefix = options->b_prefix = "";
+	} else if (!diff_mnemonic_prefix) {
 		options->a_prefix = "a/";
 		options->b_prefix = "b/";
 	}
