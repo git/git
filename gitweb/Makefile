@@ -91,7 +91,7 @@ ifdef CSSMIN
 GITWEB_CSS = gitweb.min.css
 all:: gitweb.min.css
 gitweb.min.css: gitweb.css GITWEB-BUILD-OPTIONS
-	$(QUIET_GEN)$(CSSMIN) <$ >$@
+	$(QUIET_GEN)$(CSSMIN) <$< >$@
 endif
 
 GITWEB_REPLACE = \
