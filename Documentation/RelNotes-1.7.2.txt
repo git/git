@@ -23,6 +23,9 @@ Updates since v1.7.1
    patch in a patch series, it failed to apply later patches that depend
    on the presense of such blank lines.
 
+ * The message from "git am -3" has been improved when conflict
+   resolution ended up making the patch a no-op.
+
  * "git checkout --orphan newbranch" is similar to "-b newbranch" but
    prepares to create a root commit that is not connected to any existing
    commit.
@@ -47,14 +50,21 @@ Updates since v1.7.1
    been enhanced for visibility modifiers (public, protected, etc.) to
    better support PHP5.
 
+ * "diff.noprefix" configuration variable can be used to implicitly
+   ask for "diff --no-prefix" behaviour.
+
  * "git for-each-ref" learned "%(objectname:short)" that gives the object
    name abbreviated.
 
  * Various options to "git grep" (e.g. --count, --name-only) work better
    with binary files.
 
+ * "git help -w" learned "chrome" and "chromium" browsers.
+
  * "git log --follow <path>" follows across copies (it used to only follow
    renames).  This may make the processing more expensive.
+
+ * "git ls-files ../out/side/cwd" works now.
 
  * "git notes prune" learned "-n" (dry-run) and "-v" options, similar to
    what "git prune" has.
@@ -62,12 +72,16 @@ Updates since v1.7.1
  * "git patch-id" can be fed a mbox without getting confused by the
    signature line in the format-patch output.
 
+ * "git remote" learned "set-branches" subcommand.
+
  * "git revert" learned --strategy option to specify the merge strategy.
 
  * "git status [-s] --ignored" can be used to list ignored paths.
 
+ * "git status -s -b" shows the current branch in the output.
+
  * Various "gitweb" enhancements and clean-ups, including syntax
-   highlighting.
+   highlighting, "plackup" support for instaweb, etc.
 
 
 Fixes since v1.7.1
@@ -77,6 +91,9 @@ All of the fixes in v1.7.1.X maintenance series are included in this
 release, unless otherwise noted.
 
  * We didn't recognize timezone "Z" as a synonym for "UTC" (75b37e70).
+
+ * We didn't URL decode "file:///path/to/repo" correctly when path/to/repo
+   had percent-encoded characters (638794c, 9d2e942).
 
  * "git checkout" and "git rebase" overwrote paths that are marked "assume
    unchanged" (aecda37c).
@@ -93,6 +110,15 @@ release, unless otherwise noted.
    minimize the output, but this often was spending too many extra cycles
    for very little gain (582aa00).
 
+ * "git diff --graph" works better with "--color-words" and other options
+   (81fa024..4297c0a).
+
+ * "git diff" could show ambiguous abbreviation of blob object names on
+   its "index" line (3e5a188).
+
+ * "git merge --log" used to replace the custom message given by "-m" with
+   the shortlog, instead of appending to it (tc/merge-m-log).
+
  * "git pull" accepted "--dry-run", gave it to underlying "git fetch" but
    ignored the option itself, resulting in a bogus attempt to merge
    unrelated commit (29609e68).
@@ -100,8 +126,11 @@ release, unless otherwise noted.
  * "git reset --hard" started from a wrong directory and a working tree in
    a nonstandard location is in use got confused (560fb6a1).
 
+ * "git show -C -C" and other corner cases lost diff metainfo output
+   in 1.7.0 (296c6bb).
+
 --
 exec >/var/tmp/1
-O=v1.7.1-336-g0925c02
-echo O=$(git describe master)
-git shortlog --no-merges master ^maint ^$O
+O=v1.7.1-423-gae391ec
+echo O=$(git describe HEAD)
+git shortlog --no-merges HEAD ^maint ^$O
