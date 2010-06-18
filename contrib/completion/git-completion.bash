@@ -1052,7 +1052,7 @@ _git_format_patch ()
 			--numbered --start-number
 			--numbered-files
 			--keep-subject
-			--signoff
+			--signoff --signature --no-signature
 			--in-reply-to= --cc=
 			--full-index --binary
 			--not --all
@@ -1726,6 +1726,7 @@ _git_config ()
 		format.headers
 		format.numbered
 		format.pretty
+		format.signature
 		format.signoff
 		format.subjectprefix
 		format.suffix
