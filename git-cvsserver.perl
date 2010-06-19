@@ -2658,7 +2658,10 @@ sub descramble
 
     # This should never happen, the same password format (A) has been
     # used by CVS since the beginning of time
-    die "invalid password format $1" unless substr($str, 0, 1) eq 'A';
+    {
+        my $fmt = substr($str, 0, 1);
+        die "invalid password format `$fmt'" unless $fmt eq 'A';
+    }
 
     my @str = unpack "C*", substr($str, 1);
     my $ret = join '', map { chr $SHIFTS[$_] } @str;
