@@ -10,29 +10,50 @@
 
 struct decoration name_decoration = { "object names" };
 
-static void add_name_decoration(const char *prefix, const char *name, struct object *obj)
+enum decoration_type {
+	DECORATION_NONE = 0,
+	DECORATION_REF_LOCAL,
+	DECORATION_REF_REMOTE,
+	DECORATION_REF_TAG,
+	DECORATION_REF_STASH,
+	DECORATION_REF_HEAD,
+};
+
+static void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
 {
-	int plen = strlen(prefix);
 	int nlen = strlen(name);
-	struct name_decoration *res = xmalloc(sizeof(struct name_decoration) + plen + nlen);
-	memcpy(res->name, prefix, plen);
-	memcpy(res->name + plen, name, nlen + 1);
+	struct name_decoration *res = xmalloc(sizeof(struct name_decoration) + nlen);
+	memcpy(res->name, name, nlen + 1);
+	res->type = type;
 	res->next = add_decoration(&name_decoration, obj, res);
 }
 
 static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct object *obj = parse_object(sha1);
+	enum decoration_type type = DECORATION_NONE;
 	if (!obj)
 		return 0;
+
+	if (!prefixcmp(refname, "refs/heads"))
+		type = DECORATION_REF_LOCAL;
+	else if (!prefixcmp(refname, "refs/remotes"))
+		type = DECORATION_REF_REMOTE;
+	else if (!prefixcmp(refname, "refs/tags"))
+		type = DECORATION_REF_TAG;
+	else if (!prefixcmp(refname, "refs/stash"))
+		type = DECORATION_REF_STASH;
+	else if (!prefixcmp(refname, "HEAD"))
+		type = DECORATION_REF_HEAD;
+
 	if (!cb_data || *(int *)cb_data == DECORATE_SHORT_REFS)
 		refname = prettify_refname(refname);
-	add_name_decoration("", refname, obj);
+	add_name_decoration(type, refname, obj);
 	while (obj->type == OBJ_TAG) {
 		obj = ((struct tag *)obj)->tagged;
 		if (!obj)
 			break;
-		add_name_decoration("tag: ", refname, obj);
+		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;
 }
@@ -70,7 +91,10 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 		return;
 	prefix = " (";
 	while (decoration) {
-		printf("%s%s", prefix, decoration->name);
+		printf("%s", prefix);
+		if (decoration->type == DECORATION_REF_TAG)
+			printf("tag: ");
+		printf("%s", decoration->name);
 		prefix = ", ";
 		decoration = decoration->next;
 	}
