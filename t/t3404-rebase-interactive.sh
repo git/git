@@ -146,6 +146,16 @@ test_expect_success 'abort' '
 	! test -d .git/rebase-merge
 '
 
+test_expect_success 'abort with error when new base cannot be checked out' '
+	git rm --cached file1 &&
+	git commit -m "remove file in base" &&
+	test_must_fail git rebase -i master > output 2>&1 &&
+	grep "Untracked working tree file .file1. would be overwritten" \
+		output &&
+	! test -d .git/rebase-merge &&
+	git reset --hard HEAD^
+'
+
 test_expect_success 'retain authorship' '
 	echo A > file7 &&
 	git add file7 &&
