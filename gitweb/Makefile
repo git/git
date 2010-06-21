@@ -103,7 +103,7 @@ GITWEB_FILES += static/gitweb.min.css
 GITWEB_CSS = static/gitweb.min.css
 all:: static/gitweb.min.css
 static/gitweb.min.css: static/gitweb.css GITWEB-BUILD-OPTIONS
-	$(QUIET_GEN)$(CSSMIN) <$ >$@
+	$(QUIET_GEN)$(CSSMIN) <$< >$@
 else
 GITWEB_FILES += static/gitweb.css
 endif
