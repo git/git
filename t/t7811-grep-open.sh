@@ -84,10 +84,11 @@ test_expect_success 'git grep -O --no-index' '
 '
 
 test_expect_success 'setup: fake "less"' '
-	cat >less <<-\EOF
+	cat >less <<-\EOF &&
 	#!/bin/sh
 	printf "%s\n" "$@" >actual
 	EOF
+	chmod +x less
 '
 
 test_expect_success 'git grep -O jumps to line in less' '
