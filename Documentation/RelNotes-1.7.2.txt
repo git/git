@@ -19,10 +19,6 @@ Updates since v1.7.1
  * "git" wrapper learned "-c name=value" option to override configuration
    variable from the command line.
 
- * After "git apply --whitespace=fix" removed trailing blank lines in an
-   patch in a patch series, it failed to apply later patches that depend
-   on the presense of such blank lines.
-
  * The message from "git am -3" has been improved when conflict
    resolution ended up making the patch a no-op.
 
@@ -38,10 +34,6 @@ Updates since v1.7.1
 
  * The output from the textconv filter used by "git diff" can be cached to
    speed up their reuse.
-
- * "git diff --color" did not paint extended diff headers per line
-   (i.e. the coloring escape sequence didn't end at the end of line),
-   which confused "less -R".
 
  * "git diff --word-diff=<mode>" extends the existing "--color-words"
    option, making it more useful in color-challenged environments.
@@ -90,13 +82,8 @@ Fixes since v1.7.1
 All of the fixes in v1.7.1.X maintenance series are included in this
 release, unless otherwise noted.
 
- * We didn't recognize timezone "Z" as a synonym for "UTC" (75b37e70).
-
  * We didn't URL decode "file:///path/to/repo" correctly when path/to/repo
    had percent-encoded characters (638794c, 9d2e942).
-
- * "git checkout" and "git rebase" overwrote paths that are marked "assume
-   unchanged" (aecda37c).
 
  * "git clone/fetch/pull" issued an incorrect error message when a ref and
    a symref that points to the ref were updated at the same time.  This
@@ -106,10 +93,6 @@ release, unless otherwise noted.
  * "git clone" did not configure remote.origin.url correctly for bare
    clones (df61c889).
 
- * "git diff" used to tell underlying xdiff machinery to work very hard to
-   minimize the output, but this often was spending too many extra cycles
-   for very little gain (582aa00).
-
  * "git diff --graph" works better with "--color-words" and other options
    (81fa024..4297c0a).
 
@@ -118,10 +101,6 @@ release, unless otherwise noted.
 
  * "git merge --log" used to replace the custom message given by "-m" with
    the shortlog, instead of appending to it (tc/merge-m-log).
-
- * "git pull" accepted "--dry-run", gave it to underlying "git fetch" but
-   ignored the option itself, resulting in a bogus attempt to merge
-   unrelated commit (29609e68).
 
  * "git reset --hard" started from a wrong directory and a working tree in
    a nonstandard location is in use got confused (560fb6a1).
