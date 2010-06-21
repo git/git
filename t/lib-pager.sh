@@ -9,7 +9,7 @@ test_expect_success 'determine default pager' '
 	test -n "$less"
 '
 
-if expr "$less" : '^[a-z][a-z]*$' >/dev/null
+if expr "$less" : '[a-z][a-z]*$' >/dev/null
 then
 	test_set_prereq SIMPLEPAGER
 fi
