@@ -465,7 +465,7 @@ static struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pat
 enum exist_status {
 	index_nonexistent = 0,
 	index_directory,
-	index_gitdir,
+	index_gitdir
 };
 
 /*
@@ -533,7 +533,7 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
 enum directory_treatment {
 	show_directory,
 	ignore_directory,
-	recurse_into_directory,
+	recurse_into_directory
 };
 
 static enum directory_treatment treat_directory(struct dir_struct *dir,
@@ -684,7 +684,7 @@ static int get_dtype(struct dirent *de, const char *path, int len)
 enum path_treatment {
 	path_ignored,
 	path_handled,
-	path_recurse,
+	path_recurse
 };
 
 static enum path_treatment treat_one_path(struct dir_struct *dir,

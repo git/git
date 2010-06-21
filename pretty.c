@@ -941,7 +941,7 @@ static size_t format_commit_item(struct strbuf *sb, const char *placeholder,
 	enum {
 		NO_MAGIC,
 		ADD_LF_BEFORE_NON_EMPTY,
-		DEL_LF_BEFORE_EMPTY,
+		DEL_LF_BEFORE_EMPTY
 	} magic = NO_MAGIC;
 
 	switch (placeholder[0]) {

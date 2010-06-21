@@ -135,7 +135,7 @@ cmp_diff_files_output () {
     # filesystem.
     sed <"$2" >.test-tmp \
 	-e '/^:000000 /d;s/'$x40'\( [MCRNDU][0-9]*\)	/'$z40'\1	/' &&
-    diff "$1" .test-tmp
+    test_cmp "$1" .test-tmp
 }
 
 test_expect_success \

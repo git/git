@@ -8,6 +8,12 @@ all::
 # Define SANE_TOOL_PATH to a colon-separated list of paths to prepend
 # to PATH if your tools in /usr/bin are broken.
 #
+# Define SOCKLEN_T to a suitable type (such as 'size_t') if your
+# system headers do not define a socklen_t type.
+#
+# Define INLINE to a suitable substitute (such as '__inline' or '') if git
+# fails to compile with errors about undefined inline functions or similar.
+#
 # Define SNPRINTF_RETURNS_BOGUS if your are on a system which snprintf()
 # or vsnprintf() return -1 instead of number of characters which would
 # have been written to the final string if enough space had been available.
@@ -249,7 +255,7 @@ endif
 
 CFLAGS = -g -O2 -Wall
 LDFLAGS =
-ALL_CFLAGS = $(CFLAGS)
+ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
 STRIP ?= strip
 
@@ -286,11 +292,12 @@ lib = lib
 # DESTDIR=
 pathsep = :
 
-export prefix bindir sharedir sysconfdir
+export prefix bindir sharedir sysconfdir gitwebdir
 
 CC = gcc
 AR = ar
 RM = rm -f
+DIFF = diff
 TAR = tar
 FIND = find
 INSTALL = install
@@ -298,6 +305,7 @@ RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
 PTHREAD_LIBS = -lpthread
+PTHREAD_CFLAGS =
 
 export TCL_PATH TCLTK_PATH
 
@@ -741,6 +749,13 @@ EXTLIBS =
 # because maintaining the nesting to match is a pain.  If
 # we had "elif" things would have been much nicer...
 
+ifeq ($(uname_S),OSF1)
+	# Need this for u_short definitions et al
+	BASIC_CFLAGS += -D_OSF_SOURCE
+	SOCKLEN_T = int
+	NO_STRTOULL = YesPlease
+	NO_NSEC = YesPlease
+endif
 ifeq ($(uname_S),Linux)
 	NO_STRLCPY = YesPlease
 	NO_MKSTEMPS = YesPlease
@@ -815,6 +830,18 @@ ifeq ($(uname_S),SunOS)
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
 	NO_REGEX = YesPlease
+	ifeq ($(uname_R),5.6)
+		SOCKLEN_T = int
+		NO_HSTRERROR = YesPlease
+		NO_IPV6 = YesPlease
+		NO_SOCKADDR_STORAGE = YesPlease
+		NO_UNSETENV = YesPlease
+		NO_SETENV = YesPlease
+		NO_STRLCPY = YesPlease
+		NO_C99_FORMAT = YesPlease
+		NO_STRTOUMAX = YesPlease
+		GIT_TEST_CMP = cmp
+	endif
 	ifeq ($(uname_R),5.7)
 		NEEDS_RESOLV = YesPlease
 		NO_IPV6 = YesPlease
@@ -824,18 +851,21 @@ ifeq ($(uname_S),SunOS)
 		NO_STRLCPY = YesPlease
 		NO_C99_FORMAT = YesPlease
 		NO_STRTOUMAX = YesPlease
+		GIT_TEST_CMP = cmp
 	endif
 	ifeq ($(uname_R),5.8)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_C99_FORMAT = YesPlease
 		NO_STRTOUMAX = YesPlease
+		GIT_TEST_CMP = cmp
 	endif
 	ifeq ($(uname_R),5.9)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_C99_FORMAT = YesPlease
 		NO_STRTOUMAX = YesPlease
+		GIT_TEST_CMP = cmp
 	endif
 	INSTALL = /usr/ucb/install
 	TAR = gtar
@@ -913,7 +943,13 @@ ifeq ($(uname_S),AIX)
 	BASIC_CFLAGS += -D_LARGE_FILES
 	ifeq ($(shell expr "$(uname_V)" : '[1234]'),1)
 		NO_PTHREADS = YesPlease
+	else
+		PTHREAD_LIBS = -lpthread
 	endif
+	ifeq ($(shell expr "$(uname_V).$(uname_R)" : '5\.1'),3)
+		INLINE=''
+	endif
+	GIT_TEST_CMP = cmp
 endif
 ifeq ($(uname_S),GNU)
 	# GNU/Hurd
@@ -958,6 +994,7 @@ ifeq ($(uname_S),IRIX64)
 	NEEDS_LIBGEN = YesPlease
 endif
 ifeq ($(uname_S),HP-UX)
+	INLINE = __inline
 	NO_IPV6=YesPlease
 	NO_SETENV=YesPlease
 	NO_STRCASESTR=YesPlease
@@ -969,6 +1006,20 @@ ifeq ($(uname_S),HP-UX)
 	NO_HSTRERROR = YesPlease
 	NO_SYS_SELECT_H = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
+	NO_NSEC = YesPlease
+	ifeq ($(uname_R),B.11.00)
+		NO_INET_NTOP = YesPlease
+		NO_INET_PTON = YesPlease
+	endif
+	ifeq ($(uname_R),B.10.20)
+		# Override HP-UX 11.x setting:
+		INLINE =
+		SOCKLEN_T = size_t
+		NO_PREAD = YesPlease
+		NO_INET_NTOP = YesPlease
+		NO_INET_PTON = YesPlease
+	endif
+	GIT_TEST_CMP = cmp
 endif
 ifeq ($(uname_S),Windows)
 	GIT_VERSION := $(GIT_VERSION).MSVC
@@ -1092,6 +1143,14 @@ BROKEN_PATH_FIX = 's|^\# @@BROKEN_PATH_FIX@@$$|git_broken_path_fix $(SANE_TOOL_P
 PATH := $(SANE_TOOL_PATH):${PATH}
 else
 BROKEN_PATH_FIX = '/^\# @@BROKEN_PATH_FIX@@$$/d'
+endif
+
+ifneq (,$(INLINE))
+	BASIC_CFLAGS += -Dinline=$(INLINE)
+endif
+
+ifneq (,$(SOCKLEN_T))
+	BASIC_CFLAGS += -Dsocklen_t=$(SOCKLEN_T)
 endif
 
 ifeq ($(uname_S),Darwin)
@@ -1365,6 +1424,7 @@ endif
 ifdef NO_PTHREADS
 	BASIC_CFLAGS += -DNO_PTHREADS
 else
+	BASIC_CFLAGS += $(PTHREAD_CFLAGS)
 	EXTLIBS += $(PTHREAD_LIBS)
 	LIB_OBJS += thread-utils.o
 endif
@@ -1387,6 +1447,10 @@ endif
 ifdef USE_NED_ALLOCATOR
        COMPAT_CFLAGS += -DUSE_NED_ALLOCATOR -DOVERRIDE_STRDUP -DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR -Icompat/nedmalloc
        COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
+endif
+
+ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
+	export GIT_TEST_CMP_USE_COPIED_CONTEXT
 endif
 
 ifeq ($(TCLTK_PATH),)
@@ -1451,6 +1515,7 @@ SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
+DIFF_SQ = $(subst ','\'',$(DIFF))
 
 LIBS = $(GITLIBS) $(EXTLIBS)
 
@@ -1477,7 +1542,7 @@ endif
 ALL_CFLAGS += $(BASIC_CFLAGS)
 ALL_LDFLAGS += $(BASIC_LDFLAGS)
 
-export TAR INSTALL DESTDIR SHELL_PATH
+export DIFF TAR INSTALL DESTDIR SHELL_PATH
 
 
 ### Build rules
@@ -1539,6 +1604,7 @@ define cmd_munge_script
 $(RM) $@ $@+ && \
 sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
     -e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
+    -e 's|@@DIFF@@|$(DIFF_SQ)|' \
     -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
     -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
     -e $(BROKEN_PATH_FIX) \
@@ -1884,11 +1950,18 @@ GIT-CFLAGS: FORCE
 GIT-BUILD-OPTIONS: FORCE
 	@echo SHELL_PATH=\''$(subst ','\'',$(SHELL_PATH_SQ))'\' >$@
 	@echo PERL_PATH=\''$(subst ','\'',$(PERL_PATH_SQ))'\' >>$@
+	@echo DIFF=\''$(subst ','\'',$(subst ','\'',$(DIFF)))'\' >>$@
 	@echo PYTHON_PATH=\''$(subst ','\'',$(PYTHON_PATH_SQ))'\' >>$@
 	@echo TAR=\''$(subst ','\'',$(subst ','\'',$(TAR)))'\' >>$@
 	@echo NO_CURL=\''$(subst ','\'',$(subst ','\'',$(NO_CURL)))'\' >>$@
 	@echo NO_PERL=\''$(subst ','\'',$(subst ','\'',$(NO_PERL)))'\' >>$@
 	@echo NO_PYTHON=\''$(subst ','\'',$(subst ','\'',$(NO_PYTHON)))'\' >>$@
+ifdef GIT_TEST_CMP
+	@echo GIT_TEST_CMP=\''$(subst ','\'',$(subst ','\'',$(GIT_TEST_CMP)))'\' >>$@
+endif
+ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
+	@echo GIT_TEST_CMP_USE_COPIED_CONTEXT=YesPlease >>$@
+endif
 
 ### Detect Tck/Tk interpreter path changes
 ifndef NO_TCLTK
@@ -1983,7 +2056,7 @@ install: all
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 ifndef NO_PERL
 	$(MAKE) -C perl prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' install
-	$(MAKE) -C gitweb gitwebdir=$(gitwebdir_SQ) install
+	$(MAKE) -C gitweb install
 endif
 ifndef NO_PYTHON
 	$(MAKE) -C git_remote_helpers prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' install

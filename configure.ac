@@ -327,6 +327,12 @@ GIT_PARSE_WITH(tcltk))
 AC_MSG_NOTICE([CHECKS for programs])
 #
 AC_PROG_CC([cc gcc])
+AC_C_INLINE
+case $ac_cv_c_inline in
+  inline | yes | no)	;;
+  *)			AC_SUBST([INLINE], [$ac_cv_c_inline]) ;;
+esac
+
 # which switch to pass runtime path to dynamic libraries to the linker
 AC_CACHE_CHECK([if linker supports -R], git_cv_ld_dashr, [
    SAVE_LDFLAGS="${LDFLAGS}"
@@ -362,6 +368,7 @@ fi
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOLS(AR, [gar ar], :)
 AC_CHECK_PROGS(TAR, [gtar tar])
+AC_CHECK_PROGS(DIFF, [gnudiff gdiff diff])
 # TCLTK_PATH will be set to some value if we want Tcl/Tk
 # or will be empty otherwise.
 if test -z "$NO_TCLTK"; then
@@ -544,13 +551,47 @@ AC_SUBST(NEEDS_SOCKET)
 test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 
 #
-# Define NEEDS_RESOLV if linking with -lnsl and/or -lsocket is not enough.
-# Notably on Solaris hstrerror resides in libresolv and on Solaris 7
-# inet_ntop and inet_pton additionally reside there.
-AC_CHECK_LIB([c], [hstrerror],
-[NEEDS_RESOLV=],
-[NEEDS_RESOLV=YesPlease])
+# The next few tests will define NEEDS_RESOLV if linking with
+# libresolv provides some of the functions we would normally get
+# from libc.
+NEEDS_RESOLV=
 AC_SUBST(NEEDS_RESOLV)
+#
+# Define NO_INET_NTOP if linking with -lresolv is not enough.
+# Solaris 2.7 in particular hos inet_ntop in -lresolv.
+NO_INET_NTOP=
+AC_SUBST(NO_INET_NTOP)
+AC_CHECK_FUNC([inet_ntop],
+	[],
+    [AC_CHECK_LIB([resolv], [inet_ntop],
+	    [NEEDS_RESOLV=YesPlease],
+	[NO_INET_NTOP=YesPlease])
+])
+#
+# Define NO_INET_PTON if linking with -lresolv is not enough.
+# Solaris 2.7 in particular hos inet_pton in -lresolv.
+NO_INET_PTON=
+AC_SUBST(NO_INET_PTON)
+AC_CHECK_FUNC([inet_pton],
+	[],
+    [AC_CHECK_LIB([resolv], [inet_pton],
+	    [NEEDS_RESOLV=YesPlease],
+	[NO_INET_PTON=YesPlease])
+])
+#
+# Define NO_HSTRERROR if linking with -lresolv is not enough.
+# Solaris 2.6 in particular has no hstrerror, even in -lresolv.
+NO_HSTRERROR=
+AC_CHECK_FUNC([hstrerror],
+	[],
+    [AC_CHECK_LIB([resolv], [hstrerror],
+	    [NEEDS_RESOLV=YesPlease],
+	[NO_HSTRERROR=YesPlease])
+])
+AC_SUBST(NO_HSTRERROR)
+#
+# If any of the above tests determined that -lresolv is needed at
+# build-time, also set it here for remaining configure-time checks.
 test -n "$NEEDS_RESOLV" && LIBS="$LIBS -lresolv"
 
 AC_CHECK_LIB([c], [basename],
@@ -598,6 +639,12 @@ AC_SUBST(OLD_ICONV)
 ## Checks for typedefs, structures, and compiler characteristics.
 AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
 #
+TYPE_SOCKLEN_T
+case $ac_cv_type_socklen_t in
+  yes)	;;
+  *)  	AC_SUBST([SOCKLEN_T], [$git_cv_socklen_t_equiv]) ;;
+esac
+
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 AC_CHECK_MEMBER(struct dirent.d_ino,
 [NO_D_INO_IN_DIRENT=],
@@ -808,7 +855,11 @@ AC_DEFUN([PTHREADTEST_SRC], [
 int main(void)
 {
 	pthread_mutex_t test_mutex;
-	return (0);
+	int retcode = 0;
+	retcode |= pthread_mutex_init(&test_mutex,(void *)0);
+	retcode |= pthread_mutex_lock(&test_mutex);
+	retcode |= pthread_mutex_unlock(&test_mutex);
+	return retcode;
 }
 ])
 
@@ -825,7 +876,8 @@ if test -n "$USER_NOPTHREAD"; then
 # handle these separately since PTHREAD_CFLAGS could be '-lpthreads
 # -D_REENTRANT' or some such.
 elif test -z "$PTHREAD_CFLAGS"; then
-  for opt in -pthread -lpthread; do
+  threads_found=no
+  for opt in -mt -pthread -lpthread; do
      old_CFLAGS="$CFLAGS"
      CFLAGS="$opt $CFLAGS"
      AC_MSG_CHECKING([Checking for POSIX Threads with '$opt'])
@@ -833,11 +885,18 @@ elif test -z "$PTHREAD_CFLAGS"; then
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
 		PTHREAD_LIBS="$opt"
+		PTHREAD_CFLAGS="$opt"
+		threads_found=yes
 		break
 	],
 	[AC_MSG_RESULT([no])])
       CFLAGS="$old_CFLAGS"
   done
+  if test $threads_found != yes; then
+    AC_CHECK_LIB([pthread], [pthread_create],
+	[PTHREAD_LIBS="-lpthread"],
+	[NO_PTHREADS=UnfortunatelyYes])
+  fi
 else
   old_CFLAGS="$CFLAGS"
   CFLAGS="$PTHREAD_CFLAGS $CFLAGS"
@@ -854,6 +913,7 @@ fi
 
 CFLAGS="$old_CFLAGS"
 
+AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(NO_PTHREADS)
 

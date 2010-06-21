@@ -71,7 +71,7 @@ test_expect_success "fetch test for-merge" '
 		echo "$one_in_two	"
 	} >expected &&
 	cut -f -2 .git/FETCH_HEAD >actual &&
-	diff expected actual'
+	test_cmp expected actual'
 
 test_expect_success 'fetch tags when there is no tags' '
 

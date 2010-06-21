@@ -521,17 +521,18 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 	struct child_process sm_summary;
 	char summary_limit[64];
 	char index[PATH_MAX];
-	const char *env[] = { index, NULL };
-	const char *argv[] = {
-		"submodule",
-		"summary",
-		uncommitted ? "--files" : "--cached",
-		"--for-status",
-		"--summary-limit",
-		summary_limit,
-		uncommitted ? NULL : (s->amend ? "HEAD^" : "HEAD"),
-		NULL
-	};
+	const char *env[] = { NULL, NULL };
+	const char *argv[8];
+
+	env[0] =	index;
+	argv[0] =	"submodule";
+	argv[1] =	"summary";
+	argv[2] =	uncommitted ? "--files" : "--cached";
+	argv[3] =	"--for-status";
+	argv[4] =	"--summary-limit";
+	argv[5] =	summary_limit;
+	argv[6] =	uncommitted ? NULL : (s->amend ? "HEAD^" : "HEAD");
+	argv[7] =	NULL;
 
 	sprintf(summary_limit, "%d", s->submodule_summary);
 	snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", s->index_file);

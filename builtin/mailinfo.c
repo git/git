@@ -17,10 +17,10 @@ static struct strbuf name = STRBUF_INIT;
 static struct strbuf email = STRBUF_INIT;
 
 static enum  {
-	TE_DONTCARE, TE_QP, TE_BASE64,
+	TE_DONTCARE, TE_QP, TE_BASE64
 } transfer_encoding;
 static enum  {
-	TYPE_TEXT, TYPE_OTHER,
+	TYPE_TEXT, TYPE_OTHER
 } message_type;
 
 static struct strbuf charset = STRBUF_INIT;

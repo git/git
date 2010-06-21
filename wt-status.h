@@ -13,7 +13,7 @@ enum color_wt_status {
 	WT_STATUS_NOBRANCH,
 	WT_STATUS_UNMERGED,
 	WT_STATUS_LOCAL_BRANCH,
-	WT_STATUS_REMOTE_BRANCH,
+	WT_STATUS_REMOTE_BRANCH
 };
 
 enum untracked_status_type {

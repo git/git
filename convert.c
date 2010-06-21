@@ -249,7 +249,9 @@ static int filter_buffer(int in, int out, void *data)
 	struct child_process child_process;
 	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
-	const char *argv[] = { params->cmd, NULL };
+	const char *argv[] = { NULL, NULL };
+
+	argv[0] = params->cmd;
 
 	memset(&child_process, 0, sizeof(child_process));
 	child_process.argv = argv;

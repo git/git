@@ -733,10 +733,11 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 {
 	int last_in_target;
 	mmfile_t file_p, file_o;
-	struct blame_chunk_cb_data d = { sb, target, parent, 0, 0 };
+	struct blame_chunk_cb_data d;
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
-
+	memset(&d, 0, sizeof(d));
+	d.sb = sb; d.target = target; d.parent = parent;
 	last_in_target = find_last_in_target(sb, target);
 	if (last_in_target < 0)
 		return 1; /* nothing remains for this target */
@@ -875,10 +876,11 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	const char *cp;
 	int cnt;
 	mmfile_t file_o;
-	struct handle_split_cb_data d = { sb, ent, parent, split, 0, 0 };
+	struct handle_split_cb_data d;
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
-
+	memset(&d, 0, sizeof(d));
+	d.sb = sb; d.ent = ent; d.parent = parent; d.split = split;
 	/*
 	 * Prepare mmfile that contains only the lines in ent.
 	 */

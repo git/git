@@ -224,7 +224,6 @@ static inline const char *skip_prefix(const char *str, const char *prefix)
 #define PROT_READ 1
 #define PROT_WRITE 2
 #define MAP_PRIVATE 1
-#define MAP_FAILED ((void*)-1)
 #endif
 
 #define mmap git_mmap
@@ -252,6 +251,10 @@ extern int git_munmap(void *start, size_t length);
 		: 32 * 1024 * 1024)
 
 #endif /* NO_MMAP */
+
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void *)-1)
+#endif
 
 #ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
 #define on_disk_bytes(st) ((st).st_size)

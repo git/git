@@ -574,9 +574,10 @@ static void find_non_local_tags(struct transport *transport,
 {
 	struct string_list existing_refs = { NULL, 0, 0, 0 };
 	struct string_list remote_refs = { NULL, 0, 0, 0 };
-	struct tag_data data = {head, tail};
+	struct tag_data data;
 	const struct ref *ref;
 	struct string_list_item *item = NULL;
+	data.head = head; data.tail = tail;
 
 	for_each_ref(add_existing, &existing_refs);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
@@ -778,7 +779,8 @@ static int get_remote_group(const char *key, const char *value, void *priv)
 static int add_remote_or_group(const char *name, struct string_list *list)
 {
 	int prev_nr = list->nr;
-	struct remote_group_data g = { name, list };
+	struct remote_group_data g;
+	g.name = name; g.list = list;
 
 	git_config(get_remote_group, &g);
 	if (list->nr == prev_nr) {

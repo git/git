@@ -279,8 +279,10 @@ static void add_same_unmerged(struct cache_entry *ce,
 static int unpack_index_entry(struct cache_entry *ce,
 			      struct unpack_trees_options *o)
 {
-	struct cache_entry *src[5] = { ce, NULL, };
+	struct cache_entry *src[5] = { NULL };
 	int ret;
+
+	src[0] = ce;
 
 	mark_ce_used(ce, o);
 	if (ce_stage(ce)) {

@@ -132,7 +132,7 @@ int path_match(const char *path, int nr, char **match)
 enum protocol {
 	PROTO_LOCAL = 1,
 	PROTO_SSH,
-	PROTO_GIT,
+	PROTO_GIT
 };
 
 static enum protocol get_protocol(const char *name)
