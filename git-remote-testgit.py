@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
-import hashlib
+# hashlib is only available in python >= 2.5
+try:
+    import hashlib
+    _digest = hashlib.sha1
+except ImportError:
+    import sha
+    _digest = sha.new
 import sys
 import os
 sys.path.insert(0, os.getenv("GITPYTHONLIB","."))
@@ -19,7 +25,7 @@ def get_repo(alias, url):
     repo.get_revs()
     repo.get_head()
 
-    hasher = hashlib.sha1()
+    hasher = _digest()
     hasher.update(repo.path)
     repo.hash = hasher.hexdigest()
 
@@ -133,7 +139,10 @@ def do_export(repo, args):
 
     path = os.path.join(dirname, 'testgit.marks')
     print path
-    print path if os.path.exists(path) else ""
+    if os.path.exists(path):
+        print path
+    else:
+        print ""
     sys.stdout.flush()
 
     update_local_repo(repo)
