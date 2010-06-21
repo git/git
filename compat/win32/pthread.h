@@ -58,6 +58,7 @@ typedef struct {
 	HANDLE handle;
 	void *(*start_routine)(void*);
 	void *arg;
+	DWORD tid;
 } pthread_t;
 
 extern int pthread_create(pthread_t *thread, const void *unused,
@@ -70,5 +71,29 @@ extern int pthread_create(pthread_t *thread, const void *unused,
 #define pthread_join(a, b) win32_pthread_join(&(a), (b))
 
 extern int win32_pthread_join(pthread_t *thread, void **value_ptr);
+
+#define pthread_equal(t1, t2) ((t1).tid == (t2).tid)
+extern pthread_t pthread_self(void);
+
+static inline int pthread_exit(void *ret)
+{
+	ExitThread((DWORD)ret);
+}
+
+typedef DWORD pthread_key_t;
+static inline int pthread_key_create(pthread_key_t *keyp, void (*destructor)(void *value))
+{
+	return (*keyp = TlsAlloc()) == TLS_OUT_OF_INDEXES ? EAGAIN : 0;
+}
+
+static inline int pthread_setspecific(pthread_key_t key, const void *value)
+{
+	return TlsSetValue(key, (void *)value) ? 0 : EINVAL;
+}
+
+static inline void *pthread_getspecific(pthread_key_t key)
+{
+	return TlsGetValue(key);
+}
 
 #endif /* PTHREAD_H */
