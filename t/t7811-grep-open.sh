@@ -109,11 +109,6 @@ test_expect_success 'git grep -O jumps to line in less' '
 
 test_expect_success 'modified file' '
 	rm -f actual &&
-	cat >less <<-\EOF &&
-	#!/bin/sh
-	printf "%s\n" "$@" >actual
-	EOF
-	chmod +x $less &&
 	cat >expect <<-\EOF &&
 	+/*enum grep_pat_token
 	grep.h
