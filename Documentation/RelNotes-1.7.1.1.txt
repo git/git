@@ -15,13 +15,30 @@ Fixes since v1.7.1
    macro that set/unset one attribute, immediately followed by an
    overriding setting; this makes attribute macros much easier to use.
 
+ * We didn't recognize timezone "Z" as a synonym for "UTC" (75b37e70).
+
  * "git am -3" did not show diagnosis when the patch in the message was corrupt.
 
+ * After "git apply --whitespace=fix" removed trailing blank lines in an
+   patch in a patch series, it failed to apply later patches that depend
+   on the presense of such blank lines.
+
  * "git bundle --stdin" segfaulted.
+
+ * "git checkout" and "git rebase" overwrote paths that are marked "assume
+   unchanged".
 
  * "git describe" did not tie-break tags that point at the same commit
    correctly; newer ones are preferred by paying attention to the
    tagger date now.
+
+ * "git diff" used to tell underlying xdiff machinery to work very hard to
+   minimize the output, but this often was spending too many extra cycles
+   for very little gain.
+
+ * "git diff --color" did not paint extended diff headers per line
+   (i.e. the coloring escape sequence didn't end at the end of line),
+   which confused "less -R".
 
  * "git fetch" over HTTP verifies the downloaded packfiles more robustly.
 
@@ -31,6 +48,10 @@ Fixes since v1.7.1
  * "GIT_DIR=foo.git git init --bare bar.git" created foo.git instead of bar.git.
 
  * "git log --abbrev=$num --format='%h' ignored --abbrev=$num.
+
+ * "git pull" accepted "--dry-run", gave it to underlying "git fetch" but
+   ignored the option itself, resulting in a bogus attempt to merge
+   unrelated commit.
 
  * "git send-email" lacked a way to specify the domainname used in the
    EHLO/HELO exchange, causing rejected connection from picky servers.
