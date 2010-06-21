@@ -517,7 +517,9 @@ static int git_default_core_config(const char *var, const char *value)
 
 	if (!strcmp(var, "core.autocrlf")) {
 		if (value && !strcasecmp(value, "input")) {
-			auto_crlf = -1;
+			if (eol == EOL_CRLF)
+				return error("core.autocrlf=input conflicts with core.eol=crlf");
+			auto_crlf = AUTO_CRLF_INPUT;
 			return 0;
 		}
 		auto_crlf = git_config_bool(var, value);
@@ -530,6 +532,20 @@ static int git_default_core_config(const char *var, const char *value)
 			return 0;
 		}
 		safe_crlf = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.eol")) {
+		if (value && !strcasecmp(value, "lf"))
+			eol = EOL_LF;
+		else if (value && !strcasecmp(value, "crlf"))
+			eol = EOL_CRLF;
+		else if (value && !strcasecmp(value, "native"))
+			eol = EOL_NATIVE;
+		else
+			eol = EOL_UNSET;
+		if (eol == EOL_CRLF && auto_crlf == AUTO_CRLF_INPUT)
+			return error("core.autocrlf=input conflicts with core.eol=crlf");
 		return 0;
 	}
 

@@ -196,20 +196,17 @@ core.quotepath::
 	quoted without `-z` regardless of the setting of this
 	variable.
 
-core.autocrlf::
-	If true, makes git convert `CRLF` at the end of lines in text files to
-	`LF` when reading from the work tree, and convert in reverse when
-	writing to the work tree.  The variable can be set to
-	'input', in which case the conversion happens only while
-	reading from the work tree but files are written out to the work
-	tree with `LF` at the end of lines.  A file is considered
-	"text" (i.e. be subjected to the autocrlf mechanism) based on
-	the file's `crlf` attribute, or if `crlf` is unspecified,
-	based on the file's contents.  See linkgit:gitattributes[5].
+core.eol::
+	Sets the line ending type to use in the working directory for
+	files that have the `text` property set.  Alternatives are
+	'lf', 'crlf' and 'native', which uses the platform's native
+	line ending.  The default value is `native`.  See
+	linkgit:gitattributes[5] for more information on end-of-line
+	conversion.
 
 core.safecrlf::
-	If true, makes git check if converting `CRLF` as controlled by
-	`core.autocrlf` is reversible.  Git will verify if a command
+	If true, makes git check if converting `CRLF` is reversible when
+	end-of-line conversion is active.  Git will verify if a command
 	modifies a file in the work tree either directly or indirectly.
 	For example, committing a file followed by checking out the
 	same file should yield the original file in the work tree.  If
@@ -219,7 +216,7 @@ core.safecrlf::
 	irreversible conversion but continue the operation.
 +
 CRLF conversion bears a slight chance of corrupting data.
-autocrlf=true will convert CRLF to LF during commit and LF to
+When it is enabled, git will convert CRLF to LF during commit and LF to
 CRLF during checkout.  A file that contains a mixture of LF and
 CRLF before the commit cannot be recreated by git.  For text
 files this is the right thing to do: it corrects line endings
@@ -243,14 +240,24 @@ converting CRLFs corrupts data.
 +
 Note, this safety check does not mean that a checkout will generate a
 file identical to the original file for a different setting of
-`core.autocrlf`, but only for the current one.  For example, a text
-file with `LF` would be accepted with `core.autocrlf=input` and could
-later be checked out with `core.autocrlf=true`, in which case the
+`core.eol` and `core.autocrlf`, but only for the current one.  For
+example, a text file with `LF` would be accepted with `core.eol=lf`
+and could later be checked out with `core.eol=crlf`, in which case the
 resulting file would contain `CRLF`, although the original file
 contained `LF`.  However, in both work trees the line endings would be
 consistent, that is either all `LF` or all `CRLF`, but never mixed.  A
 file with mixed line endings would be reported by the `core.safecrlf`
 mechanism.
+
+core.autocrlf::
+	Setting this variable to "true" is almost the same as setting
+	the `text` attribute to "auto" on all files except that text
+	files are not guaranteed to be normalized: files that contain
+	`CRLF` in the repository will not be touched.  Use this
+	setting if you want to have `CRLF` line endings in your
+	working directory even though the repository does not have
+	normalized line endings.  This variable can be set to 'input',
+	in which case no output conversion is performed.
 
 core.symlinks::
 	If false, symbolic links are checked out as small plain files that
@@ -979,13 +986,15 @@ gitcvs.logfile::
 	various stuff. See linkgit:git-cvsserver[1].
 
 gitcvs.usecrlfattr::
-	If true, the server will look up the `crlf` attribute for
-	files to determine the '-k' modes to use. If `crlf` is set,
-	the '-k' mode will be left blank, so cvs clients will
-	treat it as text. If `crlf` is explicitly unset, the file
+	If true, the server will look up the end-of-line conversion
+	attributes for files to determine the '-k' modes to use. If
+	the attributes force git to treat a file as text,
+	the '-k' mode will be left blank so cvs clients will
+	treat it as text. If they suppress text conversion, the file
 	will be set with '-kb' mode, which suppresses any newline munging
-	the client might otherwise do. If `crlf` is not specified,
-	then 'gitcvs.allbinary' is used. See linkgit:gitattributes[5].
+	the client might otherwise do. If the attributes do not allow
+	the file type to be determined, then 'gitcvs.allbinary' is
+	used. See linkgit:gitattributes[5].
 
 gitcvs.allbinary::
 	This is used if 'gitcvs.usecrlfattr' does not resolve
