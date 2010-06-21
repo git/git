@@ -13,7 +13,7 @@ test_expect_success 'determine default editor' '
 
 '
 
-if ! expr "$vi" : '^[a-z]*$' >/dev/null
+if ! expr "$vi" : '[a-z]*$' >/dev/null
 then
 	vi=
 fi
