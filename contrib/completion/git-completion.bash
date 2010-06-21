@@ -842,7 +842,7 @@ _git_checkout ()
 	--*)
 		__gitcomp "
 			--quiet --ours --theirs --track --no-track --merge
-			--conflict= --patch
+			--conflict= --orphan --patch
 			"
 		;;
 	*)

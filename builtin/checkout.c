@@ -493,7 +493,24 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 	struct strbuf msg = STRBUF_INIT;
 	const char *old_desc;
 	if (opts->new_branch) {
-		if (!opts->new_orphan_branch)
+		if (opts->new_orphan_branch) {
+			if (opts->new_branch_log && !log_all_ref_updates) {
+				int temp;
+				char log_file[PATH_MAX];
+				char *ref_name = mkpath("refs/heads/%s", opts->new_orphan_branch);
+
+				temp = log_all_ref_updates;
+				log_all_ref_updates = 1;
+				if (log_ref_setup(ref_name, log_file, sizeof(log_file))) {
+					fprintf(stderr, "Can not do reflog for '%s'\n",
+					    opts->new_orphan_branch);
+					log_all_ref_updates = temp;
+					return;
+				}
+				log_all_ref_updates = temp;
+			}
+		}
+		else
 			create_branch(old->name, opts->new_branch, new->name, 0,
 				      opts->new_branch_log, opts->track);
 		new->name = opts->new_branch;
@@ -516,6 +533,14 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 				fprintf(stderr, "Switched to%s branch '%s'\n",
 					opts->new_branch ? " a new" : "",
 					new->name);
+		}
+		if (old->path && old->name) {
+			char log_file[PATH_MAX], ref_file[PATH_MAX];
+
+			git_snpath(log_file, sizeof(log_file), "logs/%s", old->path);
+			git_snpath(ref_file, sizeof(ref_file), "%s", old->path);
+			if (!file_exists(ref_file) && file_exists(log_file))
+				remove_path(log_file);
 		}
 	} else if (strcmp(new->name, "HEAD")) {
 		update_ref(msg.buf, "HEAD", new->commit->object.sha1, NULL,
@@ -684,8 +709,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	if (opts.new_orphan_branch) {
 		if (opts.new_branch)
 			die("--orphan and -b are mutually exclusive");
-		if (opts.track > 0 || opts.new_branch_log)
-			die("--orphan cannot be used with -t or -l");
+		if (opts.track > 0)
+			die("--orphan cannot be used with -t");
 		opts.new_branch = opts.new_orphan_branch;
 	}
 
