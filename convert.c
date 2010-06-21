@@ -120,6 +120,43 @@ static void check_safe_crlf(const char *path, int action,
 	}
 }
 
+static int has_cr_in_index(const char *path)
+{
+	int pos, len;
+	unsigned long sz;
+	enum object_type type;
+	void *data;
+	int has_cr;
+	struct index_state *istate = &the_index;
+
+	len = strlen(path);
+	pos = index_name_pos(istate, path, len);
+	if (pos < 0) {
+		/*
+		 * We might be in the middle of a merge, in which
+		 * case we would read stage #2 (ours).
+		 */
+		int i;
+		for (i = -pos - 1;
+		     (pos < 0 && i < istate->cache_nr &&
+		      !strcmp(istate->cache[i]->name, path));
+		     i++)
+			if (ce_stage(istate->cache[i]) == 2)
+				pos = i;
+	}
+	if (pos < 0)
+		return 0;
+	data = read_sha1_file(istate->cache[pos]->sha1, &type, &sz);
+	if (!data || type != OBJ_BLOB) {
+		free(data);
+		return 0;
+	}
+
+	has_cr = memchr(data, '\r', sz) != NULL;
+	free(data);
+	return has_cr;
+}
+
 static int crlf_to_git(const char *path, const char *src, size_t len,
                        struct strbuf *buf, int action, enum safe_crlf checksafe)
 {
@@ -144,6 +181,13 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		 * And add some heuristics for binary vs text, of course...
 		 */
 		if (is_binary(len, &stats))
+			return 0;
+
+		/*
+		 * If the file in the index has any CR in it, do not convert.
+		 * This is the new safer autocrlf handling.
+		 */
+		if (has_cr_in_index(path))
 			return 0;
 	}
 
@@ -203,6 +247,11 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 		return 0;
 
 	if (action == CRLF_GUESS) {
+		/* If we have any CR or CRLF line endings, we do not touch it */
+		/* This is the new safer autocrlf-handling */
+		if (stats.cr > 0 || stats.crlf > 0)
+			return 0;
+
 		/* If we have any bare CR characters, we're not going to touch it */
 		if (stats.cr != stats.crlf)
 			return 0;
