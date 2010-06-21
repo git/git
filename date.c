@@ -229,6 +229,7 @@ static const struct {
 
 	{ "GMT",    0, 0, },	/* Greenwich Mean */
 	{ "UTC",    0, 0, },	/* Universal (Coordinated) */
+	{ "Z",      0, 0, },    /* Zulu, alias for UTC */
 
 	{ "WET",    0, 0, },	/* Western European */
 	{ "BST",    0, 1, },	/* British Summer */
@@ -305,7 +306,7 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 
 	for (i = 0; i < ARRAY_SIZE(timezone_names); i++) {
 		int match = match_string(date, timezone_names[i].name);
-		if (match >= 3) {
+		if (match >= 3 || match == strlen(timezone_names[i].name)) {
 			int off = timezone_names[i].offset;
 
 			/* This is bogus, but we like summer */
