@@ -2620,7 +2620,6 @@ static void fill_metainfo(struct strbuf *msg,
 		}
 		/* fallthru */
 	default:
-		/* nothing */
 		*must_show_header = 0;
 	}
 	if (one && two && hashcmp(one->sha1, two->sha1)) {

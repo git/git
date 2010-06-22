@@ -110,7 +110,7 @@ test_expect_success TTY 'no pager with --no-pager' '
 # for the first color; the text "commit" comes later.
 colorful() {
 	read firstline <$1
-	! expr "$firstline" : "^[a-zA-Z]" >/dev/null
+	! expr "$firstline" : "[a-zA-Z]" >/dev/null
 }
 
 test_expect_success 'tests can detect color' '
