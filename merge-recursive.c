@@ -409,7 +409,7 @@ static int remove_file(struct merge_options *o, int clean,
 			return -1;
 	}
 	if (update_working_directory) {
-		if (remove_path(path) && errno != ENOENT)
+		if (remove_path(path))
 			return -1;
 	}
 	return 0;
