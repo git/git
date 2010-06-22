@@ -39,7 +39,8 @@ static const char * const cherry_pick_usage[] = {
 static int edit, no_replay, no_commit, mainline, signoff, allow_ff;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
-static const char *commit_name;
+static int commit_argc;
+static const char **commit_argv;
 static int allow_rerere_auto;
 
 static const char *me;
@@ -53,12 +54,10 @@ static void parse_args(int argc, const char **argv)
 {
 	const char * const * usage_str =
 		action == REVERT ?  revert_usage : cherry_pick_usage;
-	unsigned char sha1[20];
 	int noop;
 	struct option options[] = {
 		OPT_BOOLEAN('n', "no-commit", &no_commit, "don't automatically commit"),
 		OPT_BOOLEAN('e', "edit", &edit, "edit the commit message"),
-		OPT_BOOLEAN('x', NULL, &no_replay, "append commit name when cherry-picking"),
 		OPT_BOOLEAN('r', NULL, &noop, "no-op (backward compatibility)"),
 		OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
@@ -71,6 +70,7 @@ static void parse_args(int argc, const char **argv)
 
 	if (action == CHERRY_PICK) {
 		struct option cp_extra[] = {
+			OPT_BOOLEAN('x', NULL, &no_replay, "append commit name"),
 			OPT_BOOLEAN(0, "ff", &allow_ff, "allow fast-forward"),
 			OPT_END(),
 		};
@@ -78,15 +78,11 @@ static void parse_args(int argc, const char **argv)
 			die("program error");
 	}
 
-	if (parse_options(argc, argv, NULL, options, usage_str, 0) != 1)
+	commit_argc = parse_options(argc, argv, NULL, options, usage_str, 0);
+	if (commit_argc < 1)
 		usage_with_options(usage_str, options);
 
-	commit_name = argv[0];
-	if (get_sha1(commit_name, sha1))
-		die ("Cannot find '%s'", commit_name);
-	commit = lookup_commit_reference(sha1);
-	if (!commit)
-		exit(1);
+	commit_argv = argv;
 }
 
 struct commit_message {
@@ -239,7 +235,7 @@ static void set_author_ident_env(const char *message)
 			sha1_to_hex(commit->object.sha1));
 }
 
-static char *help_msg(const char *name)
+static char *help_msg(void)
 {
 	struct strbuf helpbuf = STRBUF_INIT;
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
@@ -255,7 +251,7 @@ static char *help_msg(const char *name)
 		strbuf_addf(&helpbuf, " with: \n"
 			"\n"
 			"        git commit -c %s\n",
-			name);
+			    sha1_to_hex(commit->object.sha1));
 	}
 	else
 		strbuf_addch(&helpbuf, '.');
@@ -357,7 +353,7 @@ static void do_recursive_merge(struct commit *base, struct commit *next,
 		}
 		write_message(msgbuf, defmsg);
 		fprintf(stderr, "Automatic %s failed.%s\n",
-			me, help_msg(commit_name));
+			me, help_msg());
 		rerere(allow_rerere_auto);
 		exit(1);
 	}
@@ -365,7 +361,7 @@ static void do_recursive_merge(struct commit *base, struct commit *next,
 	fprintf(stderr, "Finished one %s.\n", me);
 }
 
-static int revert_or_cherry_pick(int argc, const char **argv)
+static int do_pick_commit(void)
 {
 	unsigned char head[20];
 	struct commit *base, *next, *parent;
@@ -374,28 +370,6 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
 
-	git_config(git_default_config, NULL);
-	me = action == REVERT ? "revert" : "cherry-pick";
-	setenv(GIT_REFLOG_ACTION, me, 0);
-	parse_args(argc, argv);
-
-	/* this is copied from the shell script, but it's never triggered... */
-	if (action == REVERT && !no_replay)
-		die("revert is incompatible with replay");
-
-	if (allow_ff) {
-		if (signoff)
-			die("cherry-pick --ff cannot be used with --signoff");
-		if (no_commit)
-			die("cherry-pick --ff cannot be used with --no-commit");
-		if (no_replay)
-			die("cherry-pick --ff cannot be used with -x");
-		if (edit)
-			die("cherry-pick --ff cannot be used with --edit");
-	}
-
-	if (read_cache() < 0)
-		die("git %s: failed to read the index", me);
 	if (no_commit) {
 		/*
 		 * We do not intend to commit immediately.  We just want to
@@ -506,11 +480,13 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		free_commit_list(remotes);
 		if (res) {
 			fprintf(stderr, "Automatic %s with strategy %s failed.%s\n",
-				me, strategy, help_msg(commit_name));
+				me, strategy, help_msg());
 			rerere(allow_rerere_auto);
 			exit(1);
 		}
 	}
+
+	free_message(&msg);
 
 	/*
 	 *
@@ -524,7 +500,9 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	if (!no_commit) {
 		/* 6 is max possible length of our args array including NULL */
 		const char *args[6];
+		int res;
 		int i = 0;
+
 		args[i++] = "commit";
 		args[i++] = "-n";
 		if (signoff)
@@ -534,10 +512,72 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			args[i++] = defmsg;
 		}
 		args[i] = NULL;
-		return execv_git_cmd(args);
+		res = run_command_v_opt(args, RUN_GIT_CMD);
+		free(defmsg);
+
+		return res;
 	}
-	free_message(&msg);
+
 	free(defmsg);
+
+	return 0;
+}
+
+static void prepare_revs(struct rev_info *revs)
+{
+	int argc = 0;
+	int i;
+	const char **argv = xmalloc((commit_argc + 4) * sizeof(*argv));
+
+	argv[argc++] = NULL;
+	argv[argc++] = "--no-walk";
+	if (action != REVERT)
+		argv[argc++] = "--reverse";
+	for (i = 0; i < commit_argc; i++)
+		argv[argc++] = commit_argv[i];
+	argv[argc++] = NULL;
+
+	init_revisions(revs, NULL);
+	setup_revisions(argc - 1, argv, revs, NULL);
+	if (prepare_revision_walk(revs))
+		die("revision walk setup failed");
+
+	if (!revs->commits)
+		die("empty commit set passed");
+
+	free(argv);
+}
+
+static int revert_or_cherry_pick(int argc, const char **argv)
+{
+	struct rev_info revs;
+
+	git_config(git_default_config, NULL);
+	me = action == REVERT ? "revert" : "cherry-pick";
+	setenv(GIT_REFLOG_ACTION, me, 0);
+	parse_args(argc, argv);
+
+	if (allow_ff) {
+		if (signoff)
+			die("cherry-pick --ff cannot be used with --signoff");
+		if (no_commit)
+			die("cherry-pick --ff cannot be used with --no-commit");
+		if (no_replay)
+			die("cherry-pick --ff cannot be used with -x");
+		if (edit)
+			die("cherry-pick --ff cannot be used with --edit");
+	}
+
+	if (read_cache() < 0)
+		die("git %s: failed to read the index", me);
+
+	prepare_revs(&revs);
+
+	while ((commit = get_revision(&revs))) {
+		int res = do_pick_commit();
+		if (res)
+			return res;
+	}
 
 	return 0;
 }
@@ -546,14 +586,12 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 {
 	if (isatty(0))
 		edit = 1;
-	no_replay = 1;
 	action = REVERT;
 	return revert_or_cherry_pick(argc, argv);
 }
 
 int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
 {
-	no_replay = 0;
 	action = CHERRY_PICK;
 	return revert_or_cherry_pick(argc, argv);
 }
