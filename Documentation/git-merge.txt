@@ -58,7 +58,12 @@ include::merge-options.txt[]
 
 -m <msg>::
 	Set the commit message to be used for the merge commit (in
-	case one is created). The 'git fmt-merge-msg' command can be
+	case one is created).
+
+	If `--log` is specified, a shortlog of the commits being merged
+	will be appended to the specified message.
+
+	The 'git fmt-merge-msg' command can be
 	used to give a good default for automated 'git merge'
 	invocations.
 
