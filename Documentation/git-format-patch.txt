@@ -13,6 +13,7 @@ SYNOPSIS
 		   [--no-thread | --thread[=<style>]]
 		   [(--attach|--inline)[=<boundary>] | --no-attach]
 		   [-s | --signoff]
+		   [--signature=<signature> | --no-signature]
 		   [-n | --numbered | -N | --no-numbered]
 		   [--start-number <n>] [--numbered-files]
 		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
@@ -179,6 +180,12 @@ will want to ensure that threading is disabled for `git send-email`.
 	In addition to the patches, generate a cover letter file
 	containing the shortlog and the overall diffstat.  You can
 	fill in a description in the file before sending it out.
+
+--[no]-signature=<signature>::
+	Add a signature to each message produced. Per RFC 3676 the signature
+	is separated from the body by a line with '-- ' on it. If the
+	signature option is omitted the signature defaults to the git version
+	number.
 
 --suffix=.<sfx>::
 	Instead of using `.patch` as the suffix for generated
