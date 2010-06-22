@@ -1252,13 +1252,16 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	/* Determine parents */
+	reflog_msg = getenv("GIT_REFLOG_ACTION");
 	if (initial_commit) {
-		reflog_msg = "commit (initial)";
+		if (!reflog_msg)
+			reflog_msg = "commit (initial)";
 	} else if (amend) {
 		struct commit_list *c;
 		struct commit *commit;
 
-		reflog_msg = "commit (amend)";
+		if (!reflog_msg)
+			reflog_msg = "commit (amend)";
 		commit = lookup_commit(head_sha1);
 		if (!commit || parse_commit(commit))
 			die("could not parse HEAD commit");
@@ -1269,7 +1272,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		struct strbuf m = STRBUF_INIT;
 		FILE *fp;
 
-		reflog_msg = "commit (merge)";
+		if (!reflog_msg)
+			reflog_msg = "commit (merge)";
 		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
 		fp = fopen(git_path("MERGE_HEAD"), "r");
 		if (fp == NULL)
@@ -1292,7 +1296,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		if (allow_fast_forward)
 			parents = reduce_heads(parents);
 	} else {
-		reflog_msg = "commit";
+		if (!reflog_msg)
+			reflog_msg = "commit";
 		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
 	}
 
