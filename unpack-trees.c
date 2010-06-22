@@ -522,9 +522,17 @@ static int find_cache_pos(struct traverse_info *info,
 		const char *ce_name, *ce_slash;
 		int cmp, ce_len;
 
-		if (!ce_in_traverse_path(ce, info))
+		if (ce->ce_flags & CE_UNPACKED) {
+			/*
+			 * cache_bottom entry is already unpacked, so
+			 * we can never match it; don't check it
+			 * again.
+			 */
+			if (pos == o->cache_bottom)
+				++o->cache_bottom;
 			continue;
-		if (ce->ce_flags & CE_UNPACKED)
+		}
+		if (!ce_in_traverse_path(ce, info))
 			continue;
 		ce_name = ce->name + pfxlen;
 		ce_slash = strchr(ce_name, '/');
