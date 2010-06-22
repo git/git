@@ -455,15 +455,21 @@ static void determine_author_info(void)
 		if (!a)
 			die("invalid commit: %s", use_message);
 
-		lb = strstr(a + 8, " <");
-		rb = strstr(a + 8, "> ");
-		eol = strchr(a + 8, '\n');
-		if (!lb || !rb || !eol)
+		lb = strchrnul(a + strlen("\nauthor "), '<');
+		rb = strchrnul(lb, '>');
+		eol = strchrnul(rb, '\n');
+		if (!*lb || !*rb || !*eol)
 			die("invalid commit: %s", use_message);
 
-		name = xstrndup(a + 8, lb - (a + 8));
-		email = xstrndup(lb + 2, rb - (lb + 2));
-		date = xstrndup(rb + 2, eol - (rb + 2));
+		if (lb == a + strlen("\nauthor "))
+			/* \nauthor <foo@example.com> */
+			name = xcalloc(1, 1);
+		else
+			name = xmemdupz(a + strlen("\nauthor "),
+					(lb - strlen(" ") -
+					 (a + strlen("\nauthor "))));
+		email = xmemdupz(lb + strlen("<"), rb - (lb + strlen("<")));
+		date = xmemdupz(rb + strlen("> "), eol - (rb + strlen("> ")));
 	}
 
 	if (force_author) {
