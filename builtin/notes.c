@@ -313,7 +313,7 @@ int commit_notes(struct notes_tree *t, const char *msg)
 	return 0;
 }
 
-combine_notes_fn *parse_combine_notes_fn(const char *v)
+combine_notes_fn parse_combine_notes_fn(const char *v)
 {
 	if (!strcasecmp(v, "overwrite"))
 		return combine_notes_overwrite;

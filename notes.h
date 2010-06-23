@@ -18,7 +18,7 @@
  * combine_notes_concatenate(), which appends the contents of the new note to
  * the contents of the existing note.
  */
-typedef int combine_notes_fn(unsigned char *cur_sha1, const unsigned char *new_sha1);
+typedef int (*combine_notes_fn)(unsigned char *cur_sha1, const unsigned char *new_sha1);
 
 /* Common notes combinators */
 int combine_notes_concatenate(unsigned char *cur_sha1, const unsigned char *new_sha1);
@@ -38,7 +38,7 @@ extern struct notes_tree {
 	struct int_node *root;
 	struct non_note *first_non_note, *prev_non_note;
 	char *ref;
-	combine_notes_fn *combine_notes;
+	combine_notes_fn combine_notes;
 	int initialized;
 	int dirty;
 } default_notes_tree;
