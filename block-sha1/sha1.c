@@ -236,13 +236,13 @@ void blk_SHA1_Init(blk_SHA_CTX *ctx)
 
 void blk_SHA1_Update(blk_SHA_CTX *ctx, const void *data, unsigned long len)
 {
-	int lenW = ctx->size & 63;
+	unsigned int lenW = ctx->size & 63;
 
 	ctx->size += len;
 
 	/* Read the data into W and process blocks as they get full */
 	if (lenW) {
-		int left = 64 - lenW;
+		unsigned int left = 64 - lenW;
 		if (len < left)
 			left = len;
 		memcpy(lenW + (char *)ctx->W, data, left);
@@ -269,8 +269,8 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 	int i;
 
 	/* Pad with a binary 1 (ie 0x80), then zeroes, then length */
-	padlen[0] = htonl(ctx->size >> 29);
-	padlen[1] = htonl(ctx->size << 3);
+	padlen[0] = htonl((uint32_t)(ctx->size >> 29));
+	padlen[1] = htonl((uint32_t)(ctx->size << 3));
 
 	i = ctx->size & 63;
 	blk_SHA1_Update(ctx, pad, 1+ (63 & (55 - i)));
