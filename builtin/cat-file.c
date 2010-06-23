@@ -9,6 +9,8 @@
 #include "tree.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "diff.h"
+#include "userdiff.h"
 
 #define BATCH 1
 #define BATCH_CHECK 2
@@ -84,10 +86,11 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 {
 	unsigned char sha1[20];
 	enum object_type type;
-	void *buf;
+	char *buf;
 	unsigned long size;
+	struct object_context obj_context;
 
-	if (get_sha1(obj_name, sha1))
+	if (get_sha1_with_context(obj_name, sha1, &obj_context))
 		die("Not a valid object name %s", obj_name);
 
 	buf = NULL;
@@ -134,6 +137,17 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 
 		/* otherwise just spit out the data */
 		break;
+
+	case 'c':
+		if (!obj_context.path[0])
+			die("git cat-file --textconv %s: <object> must be <sha1:path>",
+			    obj_name);
+
+		if (!textconv_object(obj_context.path, sha1, &buf, &size))
+			die("git cat-file --textconv: unable to run textconv on %s",
+			    obj_name);
+		break;
+
 	case 0:
 		buf = read_object_with_reference(sha1, exp_type, &size, NULL);
 		break;
@@ -203,10 +217,24 @@ static int batch_objects(int print_contents)
 }
 
 static const char * const cat_file_usage[] = {
-	"git cat-file (-t|-s|-e|-p|<type>) <object>",
+	"git cat-file (-t|-s|-e|-p|<type>|--textconv) <object>",
 	"git cat-file (--batch|--batch-check) < <list_of_objects>",
 	NULL
 };
+
+static int git_cat_file_config(const char *var, const char *value, void *cb)
+{
+	switch (userdiff_config(var, value)) {
+	case 0:
+		break;
+	case -1:
+		return -1;
+	default:
+		return 0;
+	}
+
+	return git_default_config(var, value, cb);
+}
 
 int cmd_cat_file(int argc, const char **argv, const char *prefix)
 {
@@ -220,6 +248,8 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT('e', NULL, &opt,
 			    "exit with zero when there's no error", 'e'),
 		OPT_SET_INT('p', NULL, &opt, "pretty-print object's content", 'p'),
+		OPT_SET_INT(0, "textconv", &opt,
+			    "for blob objects, run textconv on object's content", 'c'),
 		OPT_SET_INT(0, "batch", &batch,
 			    "show info and content of objects fed from the standard input",
 			    BATCH),
@@ -229,7 +259,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	git_config(git_cat_file_config, NULL);
 
 	if (argc != 3 && argc != 2)
 		usage_with_options(cat_file_usage, options);
