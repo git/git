@@ -67,12 +67,10 @@ static int url_decode_char(const char *q)
 	return val;
 }
 
-static char *url_decode_internal(const char **query, const char *stop_at)
+static char *url_decode_internal(const char **query, const char *stop_at, struct strbuf *out)
 {
 	const char *q = *query;
-	struct strbuf out;
 
-	strbuf_init(&out, 16);
 	do {
 		unsigned char c = *q;
 
@@ -86,33 +84,43 @@ static char *url_decode_internal(const char **query, const char *stop_at)
 		if (c == '%') {
 			int val = url_decode_char(q + 1);
 			if (0 <= val) {
-				strbuf_addch(&out, val);
+				strbuf_addch(out, val);
 				q += 3;
 				continue;
 			}
 		}
 
 		if (c == '+')
-			strbuf_addch(&out, ' ');
+			strbuf_addch(out, ' ');
 		else
-			strbuf_addch(&out, c);
+			strbuf_addch(out, c);
 		q++;
 	} while (1);
 	*query = q;
-	return strbuf_detach(&out, NULL);
+	return strbuf_detach(out, NULL);
 }
 
 char *url_decode(const char *url)
 {
-	return url_decode_internal(&url, NULL);
+	struct strbuf out = STRBUF_INIT;
+	const char *slash = strchr(url, '/');
+
+	/* Skip protocol part if present */
+	if (slash && url < slash) {
+		strbuf_add(&out, url, slash - url);
+		url = slash;
+	}
+	return url_decode_internal(&url, NULL, &out);
 }
 
 char *url_decode_parameter_name(const char **query)
 {
-	return url_decode_internal(query, "&=");
+	struct strbuf out = STRBUF_INIT;
+	return url_decode_internal(query, "&=", &out);
 }
 
 char *url_decode_parameter_value(const char **query)
 {
-	return url_decode_internal(query, "&");
+	struct strbuf out = STRBUF_INIT;
+	return url_decode_internal(query, "&", &out);
 }
