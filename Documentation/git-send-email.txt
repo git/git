@@ -101,6 +101,15 @@ See the CONFIGURATION section for 'sendemail.multiedit'.
 +
 The --to option must be repeated for each user you want on the to list.
 
+--8bit-encoding=<encoding>::
+	When encountering a non-ASCII message or subject that does not
+	declare its encoding, add headers/quoting to indicate it is
+	encoded in <encoding>.  Default is the value of the
+	'sendemail.assume8bitEncoding'; if that is unspecified, this
+	will be prompted for if any non-ASCII files are encountered.
++
+Note that no attempts whatsoever are made to validate the encoding.
+
 
 Sending
 ~~~~~~~
