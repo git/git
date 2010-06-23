@@ -1162,18 +1162,22 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 
 	if (!prefixcmp(arg, "--max-count=")) {
 		revs->max_count = atoi(arg + 12);
+		revs->no_walk = 0;
 	} else if (!prefixcmp(arg, "--skip=")) {
 		revs->skip_count = atoi(arg + 7);
 	} else if ((*arg == '-') && isdigit(arg[1])) {
 	/* accept -<digit>, like traditional "head" */
 		revs->max_count = atoi(arg + 1);
+		revs->no_walk = 0;
 	} else if (!strcmp(arg, "-n")) {
 		if (argc <= 1)
 			return error("-n requires an argument");
 		revs->max_count = atoi(argv[1]);
+		revs->no_walk = 0;
 		return 2;
 	} else if (!prefixcmp(arg, "-n")) {
 		revs->max_count = atoi(arg + 2);
+		revs->no_walk = 0;
 	} else if (!prefixcmp(arg, "--max-age=")) {
 		revs->max_age = atoi(arg + 10);
 	} else if (!prefixcmp(arg, "--since=")) {
