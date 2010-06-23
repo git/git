@@ -90,6 +90,21 @@ sub topic_relation {
 	}
 }
 
+=head1
+Inspect the current set of topics
+
+Returns a hash:
+
+    $topic = {
+        $branchname => {
+            'tipdate' => date of the tip commit,
+	    'desc' => description string,
+	    'log' => [ $commit,... ],
+        },
+    }
+
+=cut
+
 sub get_commit {
 	my (@base) = qw(master next pu);
 	my $fh;
@@ -486,16 +501,9 @@ sub update_issue {
 			$sd->{$old_new_topics} = $sd->{$new_topics};
 		}
 		$sd->{$new_topics} = [];
-
-		# Drop "Graduated"
-		for ($i = 0; $i < @{$sl}; $i++) {
-			last if ($sl->[$i] eq $graduated)
-		}
-		if ($i < @{$sl}) {
-			splice(@{$sl}, $i, 1);
-			$sd->{$graduated} = [];
-		}
 	}
+
+	return $incremental;
 }
 
 sub merge_cooking {
@@ -505,6 +513,7 @@ sub merge_cooking {
 	my $sl = $cooking->{'section_list'};
 	my (@new_topic, @gone_topic);
 
+	# Make sure "New Topics" and "Graduated" exists
 	if (!exists $sd->{$new_topics}) {
 		$sd->{$new_topics} = [];
 		unshift @{$sl}, $new_topics;
@@ -515,7 +524,7 @@ sub merge_cooking {
 		unshift @{$sl}, $graduated;
 	}
 
-	update_issue($cooking);
+	my $incremental = update_issue($cooking);
 
 	for my $topic (sort keys %{$current}) {
 		if (!exists $td->{$topic}) {
@@ -531,6 +540,8 @@ sub merge_cooking {
 
 	for my $topic (sort keys %{$td}) {
 		next if ($topic eq $blurb);
+		next if (!$incremental &&
+			 grep { $topic eq $_ } @{$sd->{$graduated}});
 		if (!exists $current->{$topic}) {
 			push @gone_topic, $topic;
 		}
@@ -541,18 +552,24 @@ sub merge_cooking {
 		$td->{$_}{'desc'} = $current->{$_}{'desc'};
 	}
 
+	if (!$incremental) {
+		$sd->{$graduated} = [];
+	}
+
 	if (@gone_topic) {
 		for my $topic (@gone_topic) {
 			for my $section (@{$sl}) {
+				my $pre = scalar(@{$sd->{$section}});
 				@{$sd->{$section}} = (grep { $_ ne $topic }
 						      @{$sd->{$section}});
+				my $post = scalar(@{$sd->{$section}});
+				next if ($pre == $post);
 			}
 		}
 		for (@gone_topic) {
 			push @{$sd->{$graduated}}, $_;
 		}
 	}
-
 }
 
 ################################################################
