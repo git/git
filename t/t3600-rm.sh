@@ -39,7 +39,7 @@ if test -f test-file
 then
 	test_set_prereq RO_DIR
 else
-	say 'skipping removal failure test (perhaps running as root?)'
+	skip_all='skipping removal failure test (perhaps running as root?)'
 fi
 chmod 775 .
 rm -f test-file

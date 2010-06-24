@@ -14,7 +14,7 @@ P2='pathname with SP'
 P3='pathname
 with LF'
 : 2>/dev/null >"$P1" && test -f "$P1" && rm -f "$P1" || {
-	say 'Your filesystem does not allow tabs in filenames, test skipped.'
+	skip_all='Your filesystem does not allow tabs in filenames, test skipped.'
 	test_done
 }
 

@@ -23,7 +23,7 @@ if test -n "$a_utf8_locale"
 then
 	test_set_prereq UTF8
 else
-	say "UTF-8 locale not available, some tests are skipped"
+	say "# UTF-8 locale not available, some tests are skipped"
 fi
 
 compare_svn_head_with () {

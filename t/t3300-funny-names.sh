@@ -26,7 +26,7 @@ echo 'Foo Bar Baz' >"$p2"
 
 test -f "$p1" && cmp "$p0" "$p1" || {
 	# since FAT/NTFS does not allow tabs in filenames, skip this test
-	say 'Your filesystem does not allow tabs in filenames, test skipped.'
+	skip_all='Your filesystem does not allow tabs in filenames, test skipped.'
 	test_done
 }
 

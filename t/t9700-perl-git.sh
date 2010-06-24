@@ -7,12 +7,12 @@ test_description='perl interface (Git.pm)'
 . ./test-lib.sh
 
 if ! test_have_prereq PERL; then
-	say 'skipping perl interface tests, perl not available'
+	skip_all='skipping perl interface tests, perl not available'
 	test_done
 fi
 
 "$PERL_PATH" -MTest::More -e 0 2>/dev/null || {
-	say "Perl Test::More unavailable, skipping test"
+	skip_all="Perl Test::More unavailable, skipping test"
 	test_done
 }
 

@@ -4,7 +4,7 @@ test_description='git cvsimport basic tests'
 . ./lib-cvs.sh
 
 if ! test_have_prereq PERL; then
-	say 'skipping git cvsimport tests, perl not available'
+	skip_all='skipping git cvsimport tests, perl not available'
 	test_done
 fi
 

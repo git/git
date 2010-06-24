@@ -36,7 +36,7 @@ then
 	}
 	test_set_prereq TTY
 else
-	say no usable terminal, so skipping some tests
+	say "# no usable terminal, so skipping some tests"
 fi
 
 test_expect_success 'setup' '

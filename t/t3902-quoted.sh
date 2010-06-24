@@ -17,7 +17,7 @@ DQ='"'
 echo foo 2>/dev/null > "Name and an${HT}HT"
 test -f "Name and an${HT}HT" || {
 	# since FAT/NTFS does not allow tabs in filenames, skip this test
-	say 'Your filesystem does not allow tabs in filenames, test skipped.'
+	skip_all='Your filesystem does not allow tabs in filenames, test skipped.'
 	test_done
 }
 

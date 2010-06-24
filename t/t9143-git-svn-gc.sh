@@ -43,7 +43,7 @@ then
 		 gunzip .git/svn/refs/remotes/git-svn/unhandled.log.gz
 		'
 else
-	say "Perl Compress::Zlib unavailable, skipping gunzip test"
+	say "# Perl Compress::Zlib unavailable, skipping gunzip test"
 fi
 
 test_expect_success 'git svn gc does not change unhandled.log files' '
