@@ -257,6 +257,7 @@ find_existing_splits()
 				if [ -n "$main" -a -n "$sub" ]; then
 					debug "  Prior: $main -> $sub"
 					cache_set $main $sub
+					cache_set $sub $sub
 					try_remove_previous "$main"
 					try_remove_previous "$sub"
 				fi
@@ -573,7 +574,9 @@ cmd_split()
 		# ugly.  is there no better way to tell if this is a subtree
 		# vs. a mainline commit?  Does it matter?
 		if [ -z $tree ]; then
-			cache_set $rev $rev
+			if [ -n "$newparents" ]; then
+				cache_set $rev $rev
+			fi
 			continue
 		fi
 
@@ -638,11 +641,20 @@ cmd_merge()
 		debug "New squash commit: $new"
 		rev="$new"
 	fi
-	
-	if [ -n "$message" ]; then
-		git merge -s subtree --message="$message" $rev
+
+	version=$(git version)
+	if [ "$version" \< "git version 1.7" ]; then
+		if [ -n "$message" ]; then
+			git merge -s subtree --message="$message" $rev
+		else
+			git merge -s subtree $rev
+		fi
 	else
-		git merge -s subtree $rev
+		if [ -n "$message" ]; then
+			git merge -Xsubtree="$prefix" --message="$message" $rev
+		else
+			git merge -Xsubtree="$prefix" $rev
+		fi
 	fi
 }
 
