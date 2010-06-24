@@ -30,10 +30,8 @@ squash        merge subtree changes as a single commit
 "
 eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
 
-OPATH=$PATH
-PATH=$(git --exec-path):$PATH
+PATH=$PATH:$(git --exec-path)
 . git-sh-setup
-PATH=$OPATH  # apparently needed for some versions of msysgit
 
 require_work_tree
 
