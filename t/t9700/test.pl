@@ -7,6 +7,13 @@ use strict;
 
 use Test::More qw(no_plan);
 
+BEGIN {
+	# t9700-perl-git.sh kicks off our testing, so we have to go from
+	# there.
+	$Test::Builder::Test->{Curr_Test} = 1;
+	$Test::Builder::Test->{No_Ending} = 1;
+}
+
 use Cwd;
 use File::Basename;
 
@@ -105,3 +112,7 @@ my $last_commit = $r2->command_oneline(qw(rev-parse --verify HEAD));
 like($last_commit, qr/^[0-9a-fA-F]{40}$/, 'rev-parse returned hash');
 my $dir_commit = $r2->command_oneline('log', '-n1', '--pretty=format:%H', '.');
 isnt($last_commit, $dir_commit, 'log . does not show last commit');
+
+printf "1..%d\n", $Test::Builder::Test->{Curr_Test};
+
+exit($Test::Builder::Test->{Is_Passing} ? 0 : 1);

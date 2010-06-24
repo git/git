@@ -46,6 +46,9 @@ test_expect_success \
      git config --add test.int 2k
      '
 
+# The external test will outputs its own plan
+test_external_has_tap=1
+
 test_external_without_stderr \
     'Perl API' \
     "$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl
