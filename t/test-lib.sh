@@ -371,6 +371,9 @@ test_run_ () {
 	eval >&3 2>&4 "$1"
 	eval_ret=$?
 	eval >&3 2>&4 "$test_cleanup"
+	if test "$verbose" = "t" && test -n "$HARNESS_ACTIVE"; then
+		echo ""
+	fi
 	return 0
 }
 
