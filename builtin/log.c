@@ -296,6 +296,9 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		default_show_root = git_config_bool(var, value);
 		return 0;
 	}
+	if (!prefixcmp(var, "color.decorate."))
+		return parse_decorate_color_config(var, 15, value);
+
 	return git_diff_ui_config(var, value, cb);
 }
 

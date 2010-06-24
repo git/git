@@ -683,6 +683,11 @@ color.diff.<slot>::
 	(highlighting whitespace errors). The values of these variables may be
 	specified as in color.branch.<slot>.
 
+color.decorate.<slot>::
+	Use customized color for 'git log --decorate' output.  `<slot>` is one
+	of `branch`, `remoteBranch`, `tag`, `stash` or `HEAD` for local
+	branches, remote tracking branches, tags, stash and HEAD, respectively.
+
 color.grep::
 	When set to `always`, always highlight matches.  When `false` (or
 	`never`), never.  When set to `true` or `auto`, use color only

@@ -36,6 +36,42 @@ static const char *decorate_get_color(int decorate_use_color, enum decoration_ty
 	return "";
 }
 
+static int parse_decorate_color_slot(const char *slot)
+{
+	/*
+	 * We're comparing with 'ignore-case' on
+	 * (because config.c sets them all tolower),
+	 * but let's match the letters in the literal
+	 * string values here with how they are
+	 * documented in Documentation/config.txt, for
+	 * consistency.
+	 *
+	 * We love being consistent, don't we?
+	 */
+	if (!strcasecmp(slot, "branch"))
+		return DECORATION_REF_LOCAL;
+	if (!strcasecmp(slot, "remoteBranch"))
+		return DECORATION_REF_REMOTE;
+	if (!strcasecmp(slot, "tag"))
+		return DECORATION_REF_TAG;
+	if (!strcasecmp(slot, "stash"))
+		return DECORATION_REF_STASH;
+	if (!strcasecmp(slot, "HEAD"))
+		return DECORATION_REF_HEAD;
+	return -1;
+}
+
+int parse_decorate_color_config(const char *var, const int ofs, const char *value)
+{
+	int slot = parse_decorate_color_slot(var + ofs);
+	if (slot < 0)
+		return 0;
+	if (!value)
+		return config_error_nonbool(var);
+	color_parse(value, var, decoration_colors[slot]);
+	return 0;
+}
+
 /*
  * log-tree.c uses DIFF_OPT_TST for determining whether to use color
  * for showing the commit sha1, use the same check for --decorate
