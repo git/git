@@ -103,12 +103,12 @@ static char *url_decode_internal(const char **query, const char *stop_at, struct
 char *url_decode(const char *url)
 {
 	struct strbuf out = STRBUF_INIT;
-	const char *slash = strchr(url, '/');
+	const char *colon = strchr(url, ':');
 
 	/* Skip protocol part if present */
-	if (slash && url < slash) {
-		strbuf_add(&out, url, slash - url);
-		url = slash;
+	if (colon && url < colon) {
+		strbuf_add(&out, url, colon - url);
+		url = colon;
 	}
 	return url_decode_internal(&url, NULL, &out);
 }
