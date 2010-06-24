@@ -18,25 +18,48 @@ The easiest way to run tests is to say "make".  This runs all
 the tests.
 
     *** t0000-basic.sh ***
-    *   ok 1: .git/objects should be empty after git-init in an empty repo.
-    *   ok 2: .git/objects should have 256 subdirectories.
-    *   ok 3: git-update-index without --add should fail adding.
+    ok 1 - .git/objects should be empty after git init in an empty repo.
+    ok 2 - .git/objects should have 3 subdirectories.
+    ok 3 - success is reported like this
     ...
-    *   ok 23: no diff after checkout and git-update-index --refresh.
-    * passed all 23 test(s)
-    *** t0100-environment-names.sh ***
-    *   ok 1: using old names should issue warnings.
-    *   ok 2: using old names but having new names should not issue warnings.
-    ...
+    ok 43 - very long name in the index handled sanely
+    # fixed 1 known breakage(s)
+    # still have 1 known breakage(s)
+    # passed all remaining 42 test(s)
+    1..43
+    *** t0001-init.sh ***
+    ok 1 - plain
+    ok 2 - plain with GIT_WORK_TREE
+    ok 3 - plain bare
 
-Or you can run each test individually from command line, like
-this:
+Since the tests all output TAP (see http://testanything.org) they can
+be run with any TAP harness. Here's an example of paralell testing
+powered by a recent version of prove(1):
 
-    $ sh ./t3001-ls-files-killed.sh
-    *   ok 1: git-update-index --add to add various paths.
-    *   ok 2: git-ls-files -k to show killed files.
-    *   ok 3: validate git-ls-files -k output.
-    * passed all 3 test(s)
+    $ prove --timer --jobs 15 ./t[0-9]*.sh
+    [19:17:33] ./t0005-signals.sh ................................... ok       36 ms
+    [19:17:33] ./t0022-crlf-rename.sh ............................... ok       69 ms
+    [19:17:33] ./t0024-crlf-archive.sh .............................. ok      154 ms
+    [19:17:33] ./t0004-unwritable.sh ................................ ok      289 ms
+    [19:17:33] ./t0002-gitfile.sh ................................... ok      480 ms
+    ===(     102;0  25/?  6/?  5/?  16/?  1/?  4/?  2/?  1/?  3/?  1... )===
+
+prove and other harnesses come with a lot of useful options. The
+--state option in particular is very useful:
+
+    # Repeat until no more failures
+    $ prove -j 15 --state=failed,save ./t[0-9]*.sh
+
+You can also run each test individually from command line, like this:
+
+    $ sh ./t3010-ls-files-killed-modified.sh
+    ok 1 - git update-index --add to add various paths.
+    ok 2 - git ls-files -k to show killed files.
+    ok 3 - validate git ls-files -k output.
+    ok 4 - git ls-files -m to show modified files.
+    ok 5 - validate git ls-files -m output.
+    # passed all 5 test(s)
+    1..5
 
 You can pass --verbose (or -v), --debug (or -d), and --immediate
 (or -i) command line argument to the test, or by setting GIT_TEST_OPTS
