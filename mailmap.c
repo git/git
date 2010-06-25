@@ -92,7 +92,7 @@ static void add_mapping(struct string_list *map,
 			mi->name = xstrdup(new_name);
 		if (new_email)
 			mi->email = xstrdup(new_email);
-		string_list_insert(old_name, &me->namemap)->util = mi;
+		string_list_insert(&me->namemap, old_name)->util = mi;
 	}
 
 	debug_mm("mailmap:  '%s' <%s> -> '%s' <%s>\n",

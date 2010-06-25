@@ -528,7 +528,7 @@ static int add_existing(const char *refname, const unsigned char *sha1,
 			int flag, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
-	struct string_list_item *item = string_list_insert(refname, list);
+	struct string_list_item *item = string_list_insert(list, refname);
 	item->util = (void *)sha1;
 	return 0;
 }
@@ -616,7 +616,7 @@ static void find_non_local_tags(struct transport *transport,
 		    string_list_has_string(&existing_refs, ref->name))
 			continue;
 
-		item = string_list_insert(ref->name, &remote_refs);
+		item = string_list_insert(&remote_refs, ref->name);
 		item->util = (void *)ref->old_sha1;
 	}
 	string_list_clear(&existing_refs, 0);

@@ -251,7 +251,7 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 		} else
 			return 0;
 
-		item = string_list_insert(name, &branch_list);
+		item = string_list_insert(&branch_list, name);
 
 		if (!item->util)
 			item->util = xcalloc(sizeof(struct branch_info), 1);
@@ -870,7 +870,7 @@ static int add_remote_to_show_info(struct string_list_item *item, void *cb_data)
 	int n = strlen(item->string);
 	if (n > info->width)
 		info->width = n;
-	string_list_insert(item->string, info->list);
+	string_list_insert(info->list, item->string);
 	return 0;
 }
 
@@ -917,7 +917,7 @@ static int add_local_to_show_info(struct string_list_item *branch_item, void *cb
 	if (branch_info->rebase)
 		show_info->any_rebase = 1;
 
-	item = string_list_insert(branch_item->string, show_info->list);
+	item = string_list_insert(show_info->list, branch_item->string);
 	item->util = branch_info;
 
 	return 0;

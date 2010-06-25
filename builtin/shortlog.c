@@ -84,7 +84,7 @@ static void insert_one_record(struct shortlog *log,
 		snprintf(namebuf + len, room, " <%.*s>", maillen, emailbuf);
 	}
 
-	item = string_list_insert(namebuf, &log->list);
+	item = string_list_insert(&log->list, namebuf);
 	if (item->util == NULL)
 		item->util = xcalloc(1, sizeof(struct string_list));
 

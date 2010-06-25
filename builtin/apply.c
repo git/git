@@ -2664,7 +2664,7 @@ static void add_to_fn_table(struct patch *patch)
 	 * file creations and copies
 	 */
 	if (patch->new_name != NULL) {
-		item = string_list_insert(patch->new_name, &fn_table);
+		item = string_list_insert(&fn_table, patch->new_name);
 		item->util = patch;
 	}
 
@@ -2673,7 +2673,7 @@ static void add_to_fn_table(struct patch *patch)
 	 * later chunks shouldn't patch old names
 	 */
 	if ((patch->new_name == NULL) || (patch->is_rename)) {
-		item = string_list_insert(patch->old_name, &fn_table);
+		item = string_list_insert(&fn_table, patch->old_name);
 		item->util = PATH_WAS_DELETED;
 	}
 }
@@ -2686,7 +2686,7 @@ static void prepare_fn_table(struct patch *patch)
 	while (patch) {
 		if ((patch->new_name == NULL) || (patch->is_rename)) {
 			struct string_list_item *item;
-			item = string_list_insert(patch->old_name, &fn_table);
+			item = string_list_insert(&fn_table, patch->old_name);
 			item->util = PATH_TO_BE_DELETED;
 		}
 		patch = patch->next;

@@ -92,7 +92,7 @@ static struct string_list *get_parameters(void)
 
 			i = string_list_lookup(name, query_params);
 			if (!i)
-				i = string_list_insert(name, query_params);
+				i = string_list_insert(query_params, name);
 			else
 				free(i->util);
 			i->util = value;

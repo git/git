@@ -778,7 +778,7 @@ void ref_remove_duplicates(struct ref *ref_map)
 			continue;
 		}
 
-		item = string_list_insert(ref_map->peer_ref->name, &refs);
+		item = string_list_insert(&refs, ref_map->peer_ref->name);
 		item->util = ref_map;
 	}
 	string_list_clear(&refs, 0);

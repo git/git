@@ -190,7 +190,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 		}
 		if (!reflogs || reflogs->nr == 0)
 			return -1;
-		string_list_insert(branch, &info->complete_reflogs)->util
+		string_list_insert(&info->complete_reflogs, branch)->util
 			= reflogs;
 	}
 
