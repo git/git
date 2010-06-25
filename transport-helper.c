@@ -727,10 +727,10 @@ static int push_refs_with_export(struct transport *transport,
 		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
 		if (private && !get_sha1(private, sha1)) {
 			strbuf_addf(&buf, "^%s", private);
-			string_list_append(strbuf_detach(&buf, NULL), &revlist_args);
+			string_list_append(&revlist_args, strbuf_detach(&buf, NULL));
 		}
 
-		string_list_append(ref->name, &revlist_args);
+		string_list_append(&revlist_args, ref->name);
 
 	}
 

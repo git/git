@@ -564,7 +564,7 @@ static void append_path(struct grep_opt *opt, const void *data, size_t len)
 
 	if (len == 1 && *(const char *)data == '\0')
 		return;
-	string_list_append(xstrndup(data, len), path_list);
+	string_list_append(path_list, xstrndup(data, len));
 }
 
 static void run_pager(struct grep_opt *opt, const char *prefix)
@@ -1001,7 +1001,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		opt.null_following_name = 1;
 		opt.output_priv = &path_list;
 		opt.output = append_path;
-		string_list_append(show_in_pager, &path_list);
+		string_list_append(&path_list, show_in_pager);
 		use_threads = 0;
 	}
 
@@ -1076,7 +1076,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			strbuf_addf(&buf, "+/%s%s",
 					strcmp("less", pager) ? "" : "*",
 					opt.pattern_list->pattern);
-			string_list_append(buf.buf, &path_list);
+			string_list_append(&path_list, buf.buf);
 			strbuf_detach(&buf, NULL);
 		}
 	}

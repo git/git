@@ -180,7 +180,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		} else if (string_list_has_string(&src_for_dst, dst))
 			bad = "multiple sources for the same target";
 		else
-			string_list_insert(dst, &src_for_dst);
+			string_list_insert(&src_for_dst, dst);
 
 		if (bad) {
 			if (ignore_errors) {

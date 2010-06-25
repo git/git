@@ -26,7 +26,7 @@ static int read_directory(const char *path, struct string_list *list)
 
 	while ((e = readdir(dir)))
 		if (strcmp(".", e->d_name) && strcmp("..", e->d_name))
-			string_list_insert(e->d_name, list);
+			string_list_insert(list, e->d_name);
 
 	closedir(dir);
 	return 0;
