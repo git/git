@@ -12,7 +12,7 @@ struct string_list
 	unsigned int strdup_strings:1;
 };
 
-void print_string_list(const char *text, const struct string_list *p);
+void print_string_list(const struct string_list *p, const char *text);
 void string_list_clear(struct string_list *list, int free_util);
 
 /* Use this function to call a custom clear function on each util pointer */

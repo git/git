@@ -139,7 +139,7 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
 }
 
 
-void print_string_list(const char *text, const struct string_list *p)
+void print_string_list(const struct string_list *p, const char *text)
 {
 	int i;
 	if ( text )
