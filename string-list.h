@@ -22,8 +22,8 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
 
 /* Use this function to iterate over each item */
 typedef int (*string_list_each_func_t)(struct string_list_item *, void *);
-int for_each_string_list(string_list_each_func_t,
-			 struct string_list *list, void *cb_data);
+int for_each_string_list(struct string_list *list,
+			 string_list_each_func_t, void *cb_data);
 
 /* Use these functions only on sorted lists: */
 int string_list_has_string(const struct string_list *list, const char *string);

@@ -50,7 +50,7 @@ static int write_one(struct string_list_item *item, void *cbdata)
 
 void resolve_undo_write(struct strbuf *sb, struct string_list *resolve_undo)
 {
-	for_each_string_list(write_one, resolve_undo, sb);
+   for_each_string_list(resolve_undo, write_one, sb);
 }
 
 struct string_list *resolve_undo_read(const char *data, unsigned long size)

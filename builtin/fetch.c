@@ -633,7 +633,7 @@ static void find_non_local_tags(struct transport *transport,
 	 * For all the tags in the remote_refs string list, call
 	 * add_to_tail to add them to the list of refs to be fetched
 	 */
-	for_each_string_list(add_to_tail, &remote_refs, &data);
+	for_each_string_list(&remote_refs, add_to_tail, &data);
 
 	string_list_clear(&remote_refs, 0);
 }

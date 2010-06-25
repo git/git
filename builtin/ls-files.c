@@ -186,7 +186,7 @@ static void show_ru_info(const char *prefix)
 {
 	if (!the_index.resolve_undo)
 		return;
-	for_each_string_list(show_one_ru, the_index.resolve_undo, NULL);
+	for_each_string_list(the_index.resolve_undo, show_one_ru, NULL);
 }
 
 static void show_files(struct dir_struct *dir, const char *prefix)

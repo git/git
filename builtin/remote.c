@@ -1081,24 +1081,24 @@ static int show(int argc, const char **argv)
 
 		/* remote branch info */
 		info.width = 0;
-		for_each_string_list(add_remote_to_show_info, &states.new, &info);
-		for_each_string_list(add_remote_to_show_info, &states.tracked, &info);
-		for_each_string_list(add_remote_to_show_info, &states.stale, &info);
+		for_each_string_list(&states.new, add_remote_to_show_info, &info);
+		for_each_string_list(&states.tracked, add_remote_to_show_info, &info);
+		for_each_string_list(&states.stale, add_remote_to_show_info, &info);
 		if (info.list->nr)
 			printf("  Remote branch%s:%s\n",
 			       info.list->nr > 1 ? "es" : "",
 				no_query ? " (status not queried)" : "");
-		for_each_string_list(show_remote_info_item, info.list, &info);
+		for_each_string_list(info.list, show_remote_info_item, &info);
 		string_list_clear(info.list, 0);
 
 		/* git pull info */
 		info.width = 0;
 		info.any_rebase = 0;
-		for_each_string_list(add_local_to_show_info, &branch_list, &info);
+		for_each_string_list(&branch_list, add_local_to_show_info, &info);
 		if (info.list->nr)
 			printf("  Local branch%s configured for 'git pull':\n",
 			       info.list->nr > 1 ? "es" : "");
-		for_each_string_list(show_local_info_item, info.list, &info);
+		for_each_string_list(info.list, show_local_info_item, &info);
 		string_list_clear(info.list, 0);
 
 		/* git push info */
@@ -1106,14 +1106,14 @@ static int show(int argc, const char **argv)
 			printf("  Local refs will be mirrored by 'git push'\n");
 
 		info.width = info.width2 = 0;
-		for_each_string_list(add_push_to_show_info, &states.push, &info);
+		for_each_string_list(&states.push, add_push_to_show_info, &info);
 		qsort(info.list->items, info.list->nr,
 			sizeof(*info.list->items), cmp_string_with_push);
 		if (info.list->nr)
 			printf("  Local ref%s configured for 'git push'%s:\n",
 				info.list->nr > 1 ? "s" : "",
 				no_query ? " (status not queried)" : "");
-		for_each_string_list(show_push_info_item, info.list, &info);
+		for_each_string_list(info.list, show_push_info_item, &info);
 		string_list_clear(info.list, 0);
 
 		free_remote_ref_states(&states);

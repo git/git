@@ -969,7 +969,7 @@ struct notes_tree **load_notes_trees(struct string_list *refs)
 	trees = xmalloc((refs->nr+1) * sizeof(struct notes_tree *));
 	cb_data.counter = 0;
 	cb_data.trees = trees;
-	for_each_string_list(load_one_display_note_ref, refs, &cb_data);
+	for_each_string_list(refs, load_one_display_note_ref, &cb_data);
 	trees[cb_data.counter] = NULL;
 	return trees;
 }
@@ -996,8 +996,8 @@ void init_display_notes(struct display_notes_opt *opt)
 	git_config(notes_display_config, &load_config_refs);
 
 	if (opt && opt->extra_notes_refs)
-		for_each_string_list(string_list_add_refs_from_list,
-				     opt->extra_notes_refs,
+		for_each_string_list(opt->extra_notes_refs,
+				     string_list_add_refs_from_list,
 				     &display_notes_refs);
 
 	display_notes_trees = load_notes_trees(&display_notes_refs);
