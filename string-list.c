@@ -53,11 +53,11 @@ static int add_entry(int insert_at, struct string_list *list, const char *string
 
 struct string_list_item *string_list_insert(struct string_list *list, const char *string)
 {
-	return string_list_insert_at_index(-1, string, list);
+	return string_list_insert_at_index(list, -1, string);
 }
 
-struct string_list_item *string_list_insert_at_index(int insert_at,
-						     const char *string, struct string_list *list)
+struct string_list_item *string_list_insert_at_index(struct string_list *list,
+						     int insert_at, const char *string)
 {
 	int index = add_entry(insert_at, list, string);
 

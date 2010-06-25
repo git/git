@@ -69,7 +69,7 @@ static void add_mapping(struct string_list *map,
 		index = -1 - index;
 	} else {
 		/* create mailmap entry */
-		struct string_list_item *item = string_list_insert_at_index(index, old_email, map);
+		struct string_list_item *item = string_list_insert_at_index(map, index, old_email);
 		item->util = xmalloc(sizeof(struct mailmap_entry));
 		memset(item->util, 0, sizeof(struct mailmap_entry));
 		((struct mailmap_entry *)item->util)->namemap.strdup_strings = 1;
