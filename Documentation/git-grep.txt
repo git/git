@@ -183,7 +183,7 @@ OPTIONS
 Examples
 --------
 
-git grep 'time_t' -- '*.[ch]'::
+git grep 'time_t' \-- '*.[ch]'::
 	Looks for `time_t` in all tracked .c and .h files in the working
 	directory and its subdirectories.
 
