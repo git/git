@@ -148,7 +148,7 @@ void print_string_list(const struct string_list *p, const char *text)
 		printf("%s:%p\n", p->items[i].string, p->items[i].util);
 }
 
-struct string_list_item *string_list_append(const char *string, struct string_list *list)
+struct string_list_item *string_list_append(struct string_list *list, const char *string)
 {
 	ALLOC_GROW(list->items, list->nr + 1, list->alloc);
 	list->items[list->nr].string =

@@ -35,7 +35,7 @@ struct string_list_item *string_list_insert_at_index(struct string_list *list,
 struct string_list_item *string_list_lookup(struct string_list *list, const char *string);
 
 /* Use these functions only on unsorted lists: */
-struct string_list_item *string_list_append(const char *string, struct string_list *list);
+struct string_list_item *string_list_append(struct string_list *list, const char *string);
 void sort_string_list(struct string_list *list);
 int unsorted_string_list_has_string(struct string_list *list, const char *string);
 struct string_list_item *unsorted_string_list_lookup(struct string_list *list,

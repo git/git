@@ -87,7 +87,7 @@ static int opt_parse_track(const struct option *opt, const char *arg, int not)
 	if (not)
 		string_list_clear(list, 0);
 	else
-		string_list_append(arg, list);
+		string_list_append(list, arg);
 	return 0;
 }
 
@@ -160,7 +160,7 @@ static int add(int argc, const char **argv)
 	strbuf_addf(&buf, "remote.%s.fetch", name);
 
 	if (track.nr == 0)
-		string_list_append("*", &track);
+		string_list_append(&track, "*");
 	for (i = 0; i < track.nr; i++) {
 		struct string_list_item *item = track.items + i;
 
@@ -266,11 +266,11 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 			while (space) {
 				char *merge;
 				merge = xstrndup(value, space - value);
-				string_list_append(merge, &info->merge);
+				string_list_append(&info->merge, merge);
 				value = abbrev_branch(space + 1);
 				space = strchr(value, ' ');
 			}
-			string_list_append(xstrdup(value), &info->merge);
+			string_list_append(&info->merge, xstrdup(value));
 		} else
 			info->rebase = git_config_bool(orig_key, value);
 	}
@@ -307,14 +307,14 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	for (ref = fetch_map; ref; ref = ref->next) {
 		unsigned char sha1[20];
 		if (!ref->peer_ref || read_ref(ref->peer_ref->name, sha1))
-			string_list_append(abbrev_branch(ref->name), &states->new);
+			string_list_append(&states->new, abbrev_branch(ref->name));
 		else
-			string_list_append(abbrev_branch(ref->name), &states->tracked);
+			string_list_append(&states->tracked, abbrev_branch(ref->name));
 	}
 	stale_refs = get_stale_heads(states->remote, fetch_map);
 	for (ref = stale_refs; ref; ref = ref->next) {
 		struct string_list_item *item =
-			string_list_append(abbrev_branch(ref->name), &states->stale);
+			string_list_append(&states->stale, abbrev_branch(ref->name));
 		item->util = xstrdup(ref->name);
 	}
 	free_refs(stale_refs);
@@ -363,8 +363,8 @@ static int get_push_ref_states(const struct ref *remote_refs,
 			continue;
 		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
 
-		item = string_list_append(abbrev_branch(ref->peer_ref->name),
-					  &states->push);
+		item = string_list_append(&states->push,
+					  abbrev_branch(ref->peer_ref->name));
 		item->util = xcalloc(sizeof(struct push_info), 1);
 		info = item->util;
 		info->forced = ref->force;
@@ -399,7 +399,7 @@ static int get_push_ref_states_noquery(struct ref_states *states)
 
 	states->push.strdup_strings = 1;
 	if (!remote->push_refspec_nr) {
-		item = string_list_append("(matching)", &states->push);
+		item = string_list_append(&states->push, "(matching)");
 		info = item->util = xcalloc(sizeof(struct push_info), 1);
 		info->status = PUSH_STATUS_NOTQUERIED;
 		info->dest = xstrdup(item->string);
@@ -407,11 +407,11 @@ static int get_push_ref_states_noquery(struct ref_states *states)
 	for (i = 0; i < remote->push_refspec_nr; i++) {
 		struct refspec *spec = remote->push + i;
 		if (spec->matching)
-			item = string_list_append("(matching)", &states->push);
+			item = string_list_append(&states->push, "(matching)");
 		else if (strlen(spec->src))
-			item = string_list_append(spec->src, &states->push);
+			item = string_list_append(&states->push, spec->src);
 		else
-			item = string_list_append("(delete)", &states->push);
+			item = string_list_append(&states->push, "(delete)");
 
 		info = item->util = xcalloc(sizeof(struct push_info), 1);
 		info->forced = spec->force;
@@ -435,7 +435,7 @@ static int get_head_names(const struct ref *remote_refs, struct ref_states *stat
 	matches = guess_remote_head(find_ref_by_name(remote_refs, "HEAD"),
 				    fetch_map, 1);
 	for (ref = matches; ref; ref = ref->next)
-		string_list_append(abbrev_branch(ref->name), &states->heads);
+		string_list_append(&states->heads, abbrev_branch(ref->name));
 
 	free_refs(fetch_map);
 	free_refs(matches);
@@ -499,8 +499,8 @@ static int add_branch_for_removal(const char *refname,
 	if (prefixcmp(refname, "refs/remotes")) {
 		/* advise user how to delete local branches */
 		if (!prefixcmp(refname, "refs/heads/"))
-			string_list_append(abbrev_branch(refname),
-					   branches->skipped);
+			string_list_append(branches->skipped,
+					   abbrev_branch(refname));
 		/* silently skip over other non-remote refs */
 		return 0;
 	}
@@ -509,7 +509,7 @@ static int add_branch_for_removal(const char *refname,
 	if (flags & REF_ISSYMREF)
 		return unlink(git_path("%s", refname));
 
-	item = string_list_append(refname, branches->branches);
+	item = string_list_append(branches->branches, refname);
 	item->util = xmalloc(20);
 	hashcpy(item->util, sha1);
 
@@ -534,7 +534,7 @@ static int read_remote_branches(const char *refname,
 
 	strbuf_addf(&buf, "refs/remotes/%s", rename->old);
 	if (!prefixcmp(refname, buf.buf)) {
-		item = string_list_append(xstrdup(refname), rename->remote_branches);
+		item = string_list_append(rename->remote_branches, xstrdup(refname));
 		symref = resolve_ref(refname, orig_sha1, 1, &flag);
 		if (flag & REF_ISSYMREF)
 			item->util = xstrdup(symref);
@@ -817,7 +817,7 @@ static int append_ref_to_tracked_list(const char *refname,
 	memset(&refspec, 0, sizeof(refspec));
 	refspec.dst = (char *)refname;
 	if (!remote_find_tracking(states->remote, &refspec))
-		string_list_append(abbrev_branch(refspec.src), &states->tracked);
+		string_list_append(&states->tracked, abbrev_branch(refspec.src));
 
 	return 0;
 }
@@ -965,7 +965,7 @@ static int add_push_to_show_info(struct string_list_item *push_item, void *cb_da
 		show_info->width = n;
 	if ((n = strlen(push_info->dest)) > show_info->width2)
 		show_info->width2 = n;
-	item = string_list_append(push_item->string, show_info->list);
+	item = string_list_append(show_info->list, push_item->string);
 	item->util = push_item->util;
 	return 0;
 }
@@ -1379,10 +1379,10 @@ static int get_one_entry(struct remote *remote, void *priv)
 
 	if (remote->url_nr > 0) {
 		strbuf_addf(&url_buf, "%s (fetch)", remote->url[0]);
-		string_list_append(remote->name, list)->util =
+		string_list_append(list, remote->name)->util =
 				strbuf_detach(&url_buf, NULL);
 	} else
-		string_list_append(remote->name, list)->util = NULL;
+		string_list_append(list, remote->name)->util = NULL;
 	if (remote->pushurl_nr) {
 		url = remote->pushurl;
 		url_nr = remote->pushurl_nr;
@@ -1393,7 +1393,7 @@ static int get_one_entry(struct remote *remote, void *priv)
 	for (i = 0; i < url_nr; i++)
 	{
 		strbuf_addf(&url_buf, "%s (push)", url[i]);
-		string_list_append(remote->name, list)->util =
+		string_list_append(list, remote->name)->util =
 				strbuf_detach(&url_buf, NULL);
 	}
 

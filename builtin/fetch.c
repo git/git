@@ -745,7 +745,7 @@ static int get_one_remote_for_fetch(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
 	if (!remote->skip_default_update)
-		string_list_append(remote->name, list);
+		string_list_append(list, remote->name);
 	return 0;
 }
 
@@ -764,8 +764,8 @@ static int get_remote_group(const char *key, const char *value, void *priv)
 		int space = strcspn(value, " \t\n");
 		while (*value) {
 			if (space > 1) {
-				string_list_append(xstrndup(value, space),
-						   g->list);
+				string_list_append(g->list,
+						   xstrndup(value, space));
 			}
 			value += space + (value[space] != '\0');
 			space = strcspn(value, " \t\n");
@@ -786,7 +786,7 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 		if (!remote_is_configured(name))
 			return 0;
 		remote = remote_get(name);
-		string_list_append(remote->name, list);
+		string_list_append(list, remote->name);
 	}
 	return 1;
 }

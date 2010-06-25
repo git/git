@@ -535,13 +535,13 @@ static void add_header(const char *value)
 		len--;
 
 	if (!strncasecmp(value, "to: ", 4)) {
-		item = string_list_append(value + 4, &extra_to);
+		item = string_list_append(&extra_to, value + 4);
 		len -= 4;
 	} else if (!strncasecmp(value, "cc: ", 4)) {
-		item = string_list_append(value + 4, &extra_cc);
+		item = string_list_append(&extra_cc, value + 4);
 		len -= 4;
 	} else {
-		item = string_list_append(value, &extra_hdr);
+		item = string_list_append(&extra_hdr, value);
 	}
 
 	item->string[len] = '\0';
@@ -565,13 +565,13 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "format.to")) {
 		if (!value)
 			return config_error_nonbool(var);
-		string_list_append(value, &extra_to);
+		string_list_append(&extra_to, value);
 		return 0;
 	}
 	if (!strcmp(var, "format.cc")) {
 		if (!value)
 			return config_error_nonbool(var);
-		string_list_append(value, &extra_cc);
+		string_list_append(&extra_cc, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
@@ -949,7 +949,7 @@ static int to_callback(const struct option *opt, const char *arg, int unset)
 	if (unset)
 		string_list_clear(&extra_to, 0);
 	else
-		string_list_append(arg, &extra_to);
+		string_list_append(&extra_to, arg);
 	return 0;
 }
 
@@ -958,7 +958,7 @@ static int cc_callback(const struct option *opt, const char *arg, int unset)
 	if (unset)
 		string_list_clear(&extra_cc, 0);
 	else
-		string_list_append(arg, &extra_cc);
+		string_list_append(&extra_cc, arg);
 	return 0;
 }
 
@@ -1239,7 +1239,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		rev.ref_message_ids = xcalloc(1, sizeof(struct string_list));
 	if (in_reply_to) {
 		const char *msgid = clean_message_id(in_reply_to);
-		string_list_append(msgid, rev.ref_message_ids);
+		string_list_append(rev.ref_message_ids, msgid);
 	}
 	rev.numbered_files = numbered_files;
 	rev.patch_suffix = fmt_patch_suffix;
@@ -1286,8 +1286,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				    && (!cover_letter || rev.nr > 1))
 					free(rev.message_id);
 				else
-					string_list_append(rev.message_id,
-							   rev.ref_message_ids);
+					string_list_append(rev.ref_message_ids,
+							   rev.message_id);
 			}
 			gen_message_id(&rev, sha1_to_hex(commit->object.sha1));
 		}

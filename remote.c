@@ -1711,7 +1711,7 @@ struct ref *get_stale_heads(struct remote *remote, struct ref *fetch_map)
 	info.ref_names = &ref_names;
 	info.stale_refs_tail = &stale_refs;
 	for (ref = fetch_map; ref; ref = ref->next)
-		string_list_append(ref->name, &ref_names);
+		string_list_append(&ref_names, ref->name);
 	sort_string_list(&ref_names);
 	for_each_ref(get_stale_heads_cb, &info);
 	string_list_clear(&ref_names, 0);

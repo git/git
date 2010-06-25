@@ -115,7 +115,7 @@ static void insert_one_record(struct shortlog *log,
 		}
 	}
 
-	string_list_append(buffer, item->util);
+	string_list_append(item->util, buffer);
 }
 
 static void read_from_stdin(struct shortlog *log)
