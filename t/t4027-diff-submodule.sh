@@ -105,15 +105,15 @@ test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match)'
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
 	git diff --ignore-submodules HEAD >actual2 &&
-	echo -n "" | test_cmp - actual2 &&
+	! test -s actual2 &&
 	git diff --ignore-submodules=untracked HEAD >actual3 &&
 	sed -e "1,/^@@/d" actual3 >actual3.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual3.body &&
 	git diff --ignore-submodules=dirty HEAD >actual4 &&
-	echo -n "" | test_cmp - actual4
+	! test -s actual4
 '
-test_done
+
 test_expect_success 'git diff HEAD with dirty submodule (index, refs match)' '
 	(
 		cd sub &&
@@ -139,11 +139,11 @@ test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match)'
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
 	git diff --ignore-submodules=all HEAD >actual2 &&
-	echo -n "" | test_cmp - actual2 &&
+	! test -s actual2 &&
 	git diff --ignore-submodules=untracked HEAD >actual3 &&
-	echo -n "" | test_cmp - actual3 &&
+	! test -s actual3 &&
 	git diff --ignore-submodules=dirty HEAD >actual4 &&
-	echo -n "" | test_cmp - actual4
+	! test -s actual4
 '
 
 test_expect_success 'git diff (empty submodule dir)' '
