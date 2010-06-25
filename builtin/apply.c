@@ -2628,7 +2628,7 @@ static struct patch *in_fn_table(const char *name)
 	if (name == NULL)
 		return NULL;
 
-	item = string_list_lookup(name, &fn_table);
+	item = string_list_lookup(&fn_table, name);
 	if (item != NULL)
 		return (struct patch *)item->util;
 

@@ -32,7 +32,7 @@ int string_list_find_insert_index(const struct string_list *list, const char *st
 struct string_list_item *string_list_insert(struct string_list *list, const char *string);
 struct string_list_item *string_list_insert_at_index(struct string_list *list,
 						     int insert_at, const char *string);
-struct string_list_item *string_list_lookup(const char *string, struct string_list *list);
+struct string_list_item *string_list_lookup(struct string_list *list, const char *string);
 
 /* Use these functions only on unsorted lists: */
 struct string_list_item *string_list_append(const char *string, struct string_list *list);

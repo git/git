@@ -294,7 +294,7 @@ static struct string_list *get_unmerged(void)
 		if (!ce_stage(ce))
 			continue;
 
-		item = string_list_lookup(ce->name, unmerged);
+		item = string_list_lookup(unmerged, ce->name);
 		if (!item) {
 			item = string_list_insert(unmerged, ce->name);
 			item->util = xcalloc(1, sizeof(struct stage_data));
@@ -356,14 +356,14 @@ static struct string_list *get_renames(struct merge_options *o,
 		re = xmalloc(sizeof(*re));
 		re->processed = 0;
 		re->pair = pair;
-		item = string_list_lookup(re->pair->one->path, entries);
+		item = string_list_lookup(entries, re->pair->one->path);
 		if (!item)
 			re->src_entry = insert_stage_data(re->pair->one->path,
 					o_tree, a_tree, b_tree, entries);
 		else
 			re->src_entry = item->util;
 
-		item = string_list_lookup(re->pair->two->path, entries);
+		item = string_list_lookup(entries, re->pair->two->path);
 		if (!item)
 			re->dst_entry = insert_stage_data(re->pair->two->path,
 					o_tree, a_tree, b_tree, entries);
@@ -988,7 +988,7 @@ static int process_renames(struct merge_options *o,
 					output(o, 1, "Adding as %s instead", new_path);
 					update_file(o, 0, dst_other.sha1, dst_other.mode, new_path);
 				}
-			} else if ((item = string_list_lookup(ren1_dst, renames2Dst))) {
+			} else if ((item = string_list_lookup(renames2Dst, ren1_dst))) {
 				ren2 = item->util;
 				clean_merge = 0;
 				ren2->processed = 1;

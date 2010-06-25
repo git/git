@@ -214,13 +214,13 @@ int map_user(struct string_list *map,
 	mailbuf[i] = 0;
 
 	debug_mm("map_user: map '%s' <%s>\n", name, mailbuf);
-	item = string_list_lookup(mailbuf, map);
+	item = string_list_lookup(map, mailbuf);
 	if (item != NULL) {
 		me = (struct mailmap_entry *)item->util;
 		if (me->namemap.nr) {
 			/* The item has multiple items, so we'll look up on name too */
 			/* If the name is not found, we choose the simple entry      */
-			struct string_list_item *subitem = string_list_lookup(name, &me->namemap);
+			struct string_list_item *subitem = string_list_lookup(&me->namemap, name);
 			if (subitem)
 				item = subitem;
 		}

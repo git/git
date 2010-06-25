@@ -695,8 +695,8 @@ static int do_fetch(struct transport *transport,
 
 	for (rm = ref_map; rm; rm = rm->next) {
 		if (rm->peer_ref) {
-			peer_item = string_list_lookup(rm->peer_ref->name,
-						       &existing_refs);
+			peer_item = string_list_lookup(&existing_refs,
+						       rm->peer_ref->name);
 			if (peer_item)
 				hashcpy(rm->peer_ref->old_sha1,
 					peer_item->util);

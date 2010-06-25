@@ -763,7 +763,7 @@ void ref_remove_duplicates(struct ref *ref_map)
 		if (!ref_map->peer_ref)
 			continue;
 
-		item = string_list_lookup(ref_map->peer_ref->name, &refs);
+		item = string_list_lookup(&refs, ref_map->peer_ref->name);
 		if (item) {
 			if (strcmp(((struct ref *)item->util)->name,
 				   ref_map->name))

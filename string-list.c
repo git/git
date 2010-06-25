@@ -84,7 +84,7 @@ int string_list_find_insert_index(const struct string_list *list, const char *st
 	return index;
 }
 
-struct string_list_item *string_list_lookup(const char *string, struct string_list *list)
+struct string_list_item *string_list_lookup(struct string_list *list, const char *string)
 {
 	int exact_match, i = get_entry_index(list, string, &exact_match);
 	if (!exact_match)

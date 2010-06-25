@@ -135,7 +135,7 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 			pos++;
 		return pos - 1; /* return the last entry processed */
 	}
-	item = string_list_lookup(ce->name, istate->resolve_undo);
+	item = string_list_lookup(istate->resolve_undo, ce->name);
 	if (!item)
 		return pos;
 	ru = item->util;

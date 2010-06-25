@@ -501,7 +501,7 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 	if (!(flag & REF_ISSYMREF))
 		return;
 
-	if ((item = string_list_lookup(dst_name, list)) == NULL)
+	if ((item = string_list_lookup(list, dst_name)) == NULL)
 		return;
 
 	cmd->skip_update = 1;
