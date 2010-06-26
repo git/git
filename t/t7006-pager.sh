@@ -259,6 +259,28 @@ test_core_pager_overrides() {
 	"
 }
 
+test_core_pager_subdir() {
+	parse_args "$@"
+
+	$test_expectation TTY "$cmd - core.pager from subdirectory" "
+		unset GIT_PAGER;
+		rm -f core.pager_used &&
+		rm -fr sub ||
+		cleanup_fail &&
+
+		PAGER=wc &&
+		stampname=\$(pwd)/core.pager_used &&
+		export PAGER stampname &&
+		git config core.pager 'wc >\"\$stampname\"' &&
+		mkdir sub &&
+		(
+			cd sub &&
+			$full_command
+		) &&
+		test -e core.pager_used
+	"
+}
+
 test_GIT_PAGER_overrides() {
 	parse_args "$@"
 
@@ -277,21 +299,25 @@ test_GIT_PAGER_overrides() {
 test_default_pager        expect_success 'git log'
 test_PAGER_overrides      expect_success 'git log'
 test_core_pager_overrides expect_success 'git log'
+test_core_pager_subdir    expect_success 'git log'
 test_GIT_PAGER_overrides  expect_success 'git log'
 
 test_default_pager        expect_success 'git -p log'
 test_PAGER_overrides      expect_success 'git -p log'
 test_core_pager_overrides expect_success 'git -p log'
+test_core_pager_subdir    expect_failure 'git -p log'
 test_GIT_PAGER_overrides  expect_success 'git -p log'
 
 test_default_pager        expect_success test_must_fail 'git -p'
 test_PAGER_overrides      expect_success test_must_fail 'git -p'
 test_core_pager_overrides expect_success test_must_fail 'git -p'
+test_core_pager_subdir    expect_failure test_must_fail 'git -p'
 test_GIT_PAGER_overrides  expect_success test_must_fail 'git -p'
 
 test_default_pager        expect_success test_must_fail 'git -p nonsense'
 test_PAGER_overrides      expect_success test_must_fail 'git -p nonsense'
 test_core_pager_overrides expect_success test_must_fail 'git -p nonsense'
+test_core_pager_subdir    expect_failure test_must_fail 'git -p nonsense'
 test_GIT_PAGER_overrides  expect_success test_must_fail 'git -p nonsense'
 
 test_done
