@@ -172,58 +172,94 @@ then
 	test_set_prereq SIMPLEPAGER
 fi
 
-test_expect_success SIMPLEPAGER 'default pager is used by default' '
+# Use this helper to make it easy for the caller of your
+# terminal-using function to specify whether it should fail.
+# If you write
+#
+#	your_test() {
+#		parse_args "$@"
+#
+#		$test_expectation "$cmd - behaves well" "
+#			...
+#			$full_command &&
+#			...
+#		"
+#	}
+#
+# then your test can be used like this:
+#
+#	your_test expect_(success|failure) [test_must_fail] 'git foo'
+#
+parse_args() {
+	test_expectation="test_$1"
+	shift
+	if test "$1" = test_must_fail
+	then
+		full_command="test_must_fail test_terminal "
+		shift
+	else
+		full_command="test_terminal "
+	fi
+	cmd=$1
+	full_command="$full_command $1"
+}
+
+parse_args expect_success 'git log'
+$test_expectation SIMPLEPAGER "$cmd - default pager is used by default" "
 	unset PAGER GIT_PAGER;
 	test_might_fail git config --unset core.pager &&
 	rm -f default_pager_used ||
 	cleanup_fail &&
 
-	cat >$less <<-\EOF &&
+	cat >\$less <<-\EOF &&
 	#!/bin/sh
 	wc >default_pager_used
 	EOF
-	chmod +x $less &&
+	chmod +x \$less &&
 	(
-		PATH=.:$PATH &&
+		PATH=.:\$PATH &&
 		export PATH &&
-		test_terminal git log
+		$full_command
 	) &&
 	test -e default_pager_used
-'
+"
 
-test_expect_success TTY 'PAGER overrides default pager' '
+parse_args expect_success 'git log'
+$test_expectation TTY "$cmd - PAGER overrides default pager" "
 	unset GIT_PAGER;
 	test_might_fail git config --unset core.pager &&
 	rm -f PAGER_used ||
 	cleanup_fail &&
 
-	PAGER="wc >PAGER_used" &&
+	PAGER='wc >PAGER_used' &&
 	export PAGER &&
-	test_terminal git log &&
+	$full_command &&
 	test -e PAGER_used
-'
+"
 
-test_expect_success TTY 'core.pager overrides PAGER' '
+parse_args expect_success 'git log'
+$test_expectation TTY "$cmd - core.pager overrides PAGER" "
 	unset GIT_PAGER;
 	rm -f core.pager_used ||
 	cleanup_fail &&
 
 	PAGER=wc &&
 	export PAGER &&
-	git config core.pager "wc >core.pager_used" &&
-	test_terminal git log &&
+	git config core.pager 'wc >core.pager_used' &&
+	$full_command &&
 	test -e core.pager_used
-'
+"
 
-test_expect_success TTY 'GIT_PAGER overrides core.pager' '
+parse_args expect_success 'git log'
+$test_expectation TTY "$cmd - GIT_PAGER overrides core.pager" "
 	rm -f GIT_PAGER_used ||
 	cleanup_fail &&
 
 	git config core.pager wc &&
-	GIT_PAGER="wc >GIT_PAGER_used" &&
+	GIT_PAGER='wc >GIT_PAGER_used' &&
 	export GIT_PAGER &&
-	test_terminal git log &&
+	$full_command &&
 	test -e GIT_PAGER_used
-'
+"
 
 test_done
