@@ -204,62 +204,94 @@ parse_args() {
 	full_command="$full_command $1"
 }
 
-parse_args expect_success 'git log'
-$test_expectation SIMPLEPAGER "$cmd - default pager is used by default" "
-	unset PAGER GIT_PAGER;
-	test_might_fail git config --unset core.pager &&
-	rm -f default_pager_used ||
-	cleanup_fail &&
+test_default_pager() {
+	parse_args "$@"
 
-	cat >\$less <<-\EOF &&
-	#!/bin/sh
-	wc >default_pager_used
-	EOF
-	chmod +x \$less &&
-	(
-		PATH=.:\$PATH &&
-		export PATH &&
-		$full_command
-	) &&
-	test -e default_pager_used
-"
+	$test_expectation SIMPLEPAGER "$cmd - default pager is used by default" "
+		unset PAGER GIT_PAGER;
+		test_might_fail git config --unset core.pager &&
+		rm -f default_pager_used ||
+		cleanup_fail &&
 
-parse_args expect_success 'git log'
-$test_expectation TTY "$cmd - PAGER overrides default pager" "
-	unset GIT_PAGER;
-	test_might_fail git config --unset core.pager &&
-	rm -f PAGER_used ||
-	cleanup_fail &&
+		cat >\$less <<-\EOF &&
+		#!/bin/sh
+		wc >default_pager_used
+		EOF
+		chmod +x \$less &&
+		(
+			PATH=.:\$PATH &&
+			export PATH &&
+			$full_command
+		) &&
+		test -e default_pager_used
+	"
+}
 
-	PAGER='wc >PAGER_used' &&
-	export PAGER &&
-	$full_command &&
-	test -e PAGER_used
-"
+test_PAGER_overrides() {
+	parse_args "$@"
 
-parse_args expect_success 'git log'
-$test_expectation TTY "$cmd - core.pager overrides PAGER" "
-	unset GIT_PAGER;
-	rm -f core.pager_used ||
-	cleanup_fail &&
+	$test_expectation TTY "$cmd - PAGER overrides default pager" "
+		unset GIT_PAGER;
+		test_might_fail git config --unset core.pager &&
+		rm -f PAGER_used ||
+		cleanup_fail &&
 
-	PAGER=wc &&
-	export PAGER &&
-	git config core.pager 'wc >core.pager_used' &&
-	$full_command &&
-	test -e core.pager_used
-"
+		PAGER='wc >PAGER_used' &&
+		export PAGER &&
+		$full_command &&
+		test -e PAGER_used
+	"
+}
 
-parse_args expect_success 'git log'
-$test_expectation TTY "$cmd - GIT_PAGER overrides core.pager" "
-	rm -f GIT_PAGER_used ||
-	cleanup_fail &&
+test_core_pager_overrides() {
+	parse_args "$@"
 
-	git config core.pager wc &&
-	GIT_PAGER='wc >GIT_PAGER_used' &&
-	export GIT_PAGER &&
-	$full_command &&
-	test -e GIT_PAGER_used
-"
+	$test_expectation TTY "$cmd - core.pager overrides PAGER" "
+		unset GIT_PAGER;
+		rm -f core.pager_used ||
+		cleanup_fail &&
+
+		PAGER=wc &&
+		export PAGER &&
+		git config core.pager 'wc >core.pager_used' &&
+		$full_command &&
+		test -e core.pager_used
+	"
+}
+
+test_GIT_PAGER_overrides() {
+	parse_args "$@"
+
+	$test_expectation TTY "$cmd - GIT_PAGER overrides core.pager" "
+		rm -f GIT_PAGER_used ||
+		cleanup_fail &&
+
+		git config core.pager wc &&
+		GIT_PAGER='wc >GIT_PAGER_used' &&
+		export GIT_PAGER &&
+		$full_command &&
+		test -e GIT_PAGER_used
+	"
+}
+
+test_default_pager        expect_success 'git log'
+test_PAGER_overrides      expect_success 'git log'
+test_core_pager_overrides expect_success 'git log'
+test_GIT_PAGER_overrides  expect_success 'git log'
+
+test_default_pager        expect_success 'git -p log'
+test_PAGER_overrides      expect_success 'git -p log'
+test_core_pager_overrides expect_success 'git -p log'
+test_GIT_PAGER_overrides  expect_success 'git -p log'
+
+test_default_pager        expect_success test_must_fail 'git -p'
+test_PAGER_overrides      expect_success test_must_fail 'git -p'
+test_core_pager_overrides expect_success test_must_fail 'git -p'
+test_GIT_PAGER_overrides  expect_success test_must_fail 'git -p'
+
+test_default_pager        expect_success test_must_fail 'git -p nonsense'
+test_PAGER_overrides      expect_success test_must_fail 'git -p nonsense'
+test_core_pager_overrides expect_success test_must_fail 'git -p nonsense'
+test_GIT_PAGER_overrides  expect_success test_must_fail 'git -p nonsense'
 
 test_done
