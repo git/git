@@ -244,9 +244,21 @@ test_PAGER_overrides() {
 }
 
 test_core_pager_overrides() {
+	if_local_config=
+	used_if_wanted='overrides PAGER'
+	test_core_pager "$@"
+}
+
+test_local_config_ignored() {
+	if_local_config='! '
+	used_if_wanted='is not used'
+	test_core_pager "$@"
+}
+
+test_core_pager() {
 	parse_args "$@"
 
-	$test_expectation TTY "$cmd - core.pager overrides PAGER" "
+	$test_expectation TTY "$cmd - repository-local core.pager setting $used_if_wanted" "
 		unset GIT_PAGER;
 		rm -f core.pager_used ||
 		cleanup_fail &&
@@ -255,14 +267,26 @@ test_core_pager_overrides() {
 		export PAGER &&
 		git config core.pager 'wc >core.pager_used' &&
 		$full_command &&
-		test -e core.pager_used
+		${if_local_config}test -e core.pager_used
 	"
 }
 
 test_core_pager_subdir() {
+	if_local_config=
+	used_if_wanted='overrides PAGER'
+	test_pager_subdir_helper "$@"
+}
+
+test_no_local_config_subdir() {
+	if_local_config='! '
+	used_if_wanted='is not used'
+	test_pager_subdir_helper "$@"
+}
+
+test_pager_subdir_helper() {
 	parse_args "$@"
 
-	$test_expectation TTY "$cmd - core.pager from subdirectory" "
+	$test_expectation TTY "$cmd - core.pager $used_if_wanted from subdirectory" "
 		unset GIT_PAGER;
 		rm -f core.pager_used &&
 		rm -fr sub ||
@@ -277,7 +301,7 @@ test_core_pager_subdir() {
 			cd sub &&
 			$full_command
 		) &&
-		test -e core.pager_used
+		${if_local_config}test -e core.pager_used
 	"
 }
 
@@ -296,6 +320,20 @@ test_GIT_PAGER_overrides() {
 	"
 }
 
+test_doesnt_paginate() {
+	parse_args "$@"
+
+	$test_expectation TTY "no pager for '$cmd'" "
+		rm -f GIT_PAGER_used ||
+		cleanup_fail &&
+
+		GIT_PAGER='wc >GIT_PAGER_used' &&
+		export GIT_PAGER &&
+		$full_command &&
+		! test -e GIT_PAGER_used
+	"
+}
+
 test_default_pager        expect_success 'git log'
 test_PAGER_overrides      expect_success 'git log'
 test_core_pager_overrides expect_success 'git log'
@@ -305,19 +343,15 @@ test_GIT_PAGER_overrides  expect_success 'git log'
 test_default_pager        expect_success 'git -p log'
 test_PAGER_overrides      expect_success 'git -p log'
 test_core_pager_overrides expect_success 'git -p log'
-test_core_pager_subdir    expect_failure 'git -p log'
+test_core_pager_subdir    expect_success 'git -p log'
 test_GIT_PAGER_overrides  expect_success 'git -p log'
 
 test_default_pager        expect_success test_must_fail 'git -p'
 test_PAGER_overrides      expect_success test_must_fail 'git -p'
-test_core_pager_overrides expect_success test_must_fail 'git -p'
-test_core_pager_subdir    expect_failure test_must_fail 'git -p'
+test_local_config_ignored expect_failure test_must_fail 'git -p'
+test_no_local_config_subdir expect_success test_must_fail 'git -p'
 test_GIT_PAGER_overrides  expect_success test_must_fail 'git -p'
 
-test_default_pager        expect_success test_must_fail 'git -p nonsense'
-test_PAGER_overrides      expect_success test_must_fail 'git -p nonsense'
-test_core_pager_overrides expect_success test_must_fail 'git -p nonsense'
-test_core_pager_subdir    expect_failure test_must_fail 'git -p nonsense'
-test_GIT_PAGER_overrides  expect_success test_must_fail 'git -p nonsense'
+test_doesnt_paginate      expect_success test_must_fail 'git -p nonsense'
 
 test_done
