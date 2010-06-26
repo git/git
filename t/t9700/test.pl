@@ -10,8 +10,8 @@ use Test::More qw(no_plan);
 BEGIN {
 	# t9700-perl-git.sh kicks off our testing, so we have to go from
 	# there.
-	$Test::Builder::Test->{Curr_Test} = 1;
-	$Test::Builder::Test->{No_Ending} = 1;
+	Test::More->builder->{Curr_Test} = 1;
+	Test::More->builder->{No_Ending} = 1;
 }
 
 use Cwd;
@@ -113,6 +113,7 @@ like($last_commit, qr/^[0-9a-fA-F]{40}$/, 'rev-parse returned hash');
 my $dir_commit = $r2->command_oneline('log', '-n1', '--pretty=format:%H', '.');
 isnt($last_commit, $dir_commit, 'log . does not show last commit');
 
-printf "1..%d\n", $Test::Builder::Test->{Curr_Test};
+printf "1..%d\n", Test::More->builder->{Curr_Test};
 
-exit($Test::Builder::Test->{Is_Passing} ? 0 : 1);
+my $is_passing = eval { Test::More->is_passing };
+exit($is_passing ? 0 : 1) unless $@ =~ /Can't locate object method/;
