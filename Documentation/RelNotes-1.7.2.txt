@@ -37,6 +37,9 @@ Updates since v1.7.1
  * The message from "git am -3" has been improved when conflict
    resolution ended up making the patch a no-op.
 
+ * "git blame" applies the textconv filter to the contents it works
+   on, when available.
+
  * "git checkout --orphan newbranch" is similar to "-b newbranch" but
    prepares to create a root commit that is not connected to any existing
    commit.
@@ -95,6 +98,10 @@ Updates since v1.7.1
    the result to the commits that are on the ancestry chain between A and
    B (i.e. commits that are not descendants of A are excluded).
 
+ * "git show -5" is equivalent to "git show --do-walk 5"; this is similar
+   to the update to make "git show master..next" walk the history,
+   introduced in 1.6.4.
+
  * "git status [-s] --ignored" can be used to list ignored paths.
 
  * "git status -s -b" shows the current branch in the output.
@@ -134,11 +141,14 @@ release, unless otherwise noted.
  * "git diff" could show ambiguous abbreviation of blob object names on
    its "index" line (3e5a188).
 
+ * "git rebase" did not faithfully reproduce a malformed author ident, that
+   is often seen in a repository converted from foreign SCMs (43c23251).
+
  * "git reset --hard" started from a wrong directory and a working tree in
    a nonstandard location is in use got confused (560fb6a1).
 
 --
 exec >/var/tmp/1
-O=v1.7.1-568-g2c177a1
+O=v1.7.1-592-gcf4403a
 echo O=$(git describe HEAD)
 git shortlog --no-merges HEAD ^maint ^$O
