@@ -291,7 +291,9 @@ the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
 
 * A suffix ':' followed by a path; this names the blob or tree
   at the given path in the tree-ish object named by the part
-  before the colon.
+  before the colon. ":path" (with an empty part before the colon)
+  is a special case of the syntax described next: content
+  recorded in the index at the given path.
 
 * A colon, optionally followed by a stage number (0 to 3) and a
   colon, followed by a path; this names a blob object in the
