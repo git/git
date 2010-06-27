@@ -235,7 +235,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 		struct wt_status_change_data *d;
 
 		p = q->queue[i];
-		it = string_list_insert(p->one->path, &s->change);
+		it = string_list_insert(&s->change, p->one->path);
 		d = it->util;
 		if (!d) {
 			d = xcalloc(1, sizeof(*d));
@@ -282,7 +282,7 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 		struct wt_status_change_data *d;
 
 		p = q->queue[i];
-		it = string_list_insert(p->two->path, &s->change);
+		it = string_list_insert(&s->change, p->two->path);
 		d = it->util;
 		if (!d) {
 			d = xcalloc(1, sizeof(*d));
@@ -349,7 +349,7 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 
 		if (!ce_path_match(ce, s->pathspec))
 			continue;
-		it = string_list_insert(ce->name, &s->change);
+		it = string_list_insert(&s->change, ce->name);
 		d = it->util;
 		if (!d) {
 			d = xcalloc(1, sizeof(*d));
@@ -384,7 +384,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 			continue;
 		if (!match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
 			continue;
-		string_list_insert(ent->name, &s->untracked);
+		string_list_insert(&s->untracked, ent->name);
 		free(ent);
 	}
 
@@ -398,7 +398,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 				continue;
 			if (!match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
 				continue;
-			string_list_insert(ent->name, &s->ignored);
+			string_list_insert(&s->ignored, ent->name);
 			free(ent);
 		}
 	}

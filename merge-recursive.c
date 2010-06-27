@@ -238,9 +238,9 @@ static int save_files_dirs(const unsigned char *sha1,
 	newpath[baselen + len] = '\0';
 
 	if (S_ISDIR(mode))
-		string_list_insert(newpath, &o->current_directory_set);
+		string_list_insert(&o->current_directory_set, newpath);
 	else
-		string_list_insert(newpath, &o->current_file_set);
+		string_list_insert(&o->current_file_set, newpath);
 	free(newpath);
 
 	return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
@@ -271,7 +271,7 @@ static struct stage_data *insert_stage_data(const char *path,
 			e->stages[2].sha, &e->stages[2].mode);
 	get_tree_entry(b->object.sha1, path,
 			e->stages[3].sha, &e->stages[3].mode);
-	item = string_list_insert(path, entries);
+	item = string_list_insert(entries, path);
 	item->util = e;
 	return e;
 }
@@ -294,9 +294,9 @@ static struct string_list *get_unmerged(void)
 		if (!ce_stage(ce))
 			continue;
 
-		item = string_list_lookup(ce->name, unmerged);
+		item = string_list_lookup(unmerged, ce->name);
 		if (!item) {
-			item = string_list_insert(ce->name, unmerged);
+			item = string_list_insert(unmerged, ce->name);
 			item->util = xcalloc(1, sizeof(struct stage_data));
 		}
 		e = item->util;
@@ -356,20 +356,20 @@ static struct string_list *get_renames(struct merge_options *o,
 		re = xmalloc(sizeof(*re));
 		re->processed = 0;
 		re->pair = pair;
-		item = string_list_lookup(re->pair->one->path, entries);
+		item = string_list_lookup(entries, re->pair->one->path);
 		if (!item)
 			re->src_entry = insert_stage_data(re->pair->one->path,
 					o_tree, a_tree, b_tree, entries);
 		else
 			re->src_entry = item->util;
 
-		item = string_list_lookup(re->pair->two->path, entries);
+		item = string_list_lookup(entries, re->pair->two->path);
 		if (!item)
 			re->dst_entry = insert_stage_data(re->pair->two->path,
 					o_tree, a_tree, b_tree, entries);
 		else
 			re->dst_entry = item->util;
-		item = string_list_insert(pair->one->path, renames);
+		item = string_list_insert(renames, pair->one->path);
 		item->util = re;
 	}
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -432,7 +432,7 @@ static char *unique_path(struct merge_options *o, const char *path, const char *
 	       lstat(newpath, &st) == 0)
 		sprintf(p, "_%d", suffix++);
 
-	string_list_insert(newpath, &o->current_file_set);
+	string_list_insert(&o->current_file_set, newpath);
 	return newpath;
 }
 
@@ -811,12 +811,12 @@ static int process_renames(struct merge_options *o,
 
 	for (i = 0; i < a_renames->nr; i++) {
 		sre = a_renames->items[i].util;
-		string_list_insert(sre->pair->two->path, &a_by_dst)->util
+		string_list_insert(&a_by_dst, sre->pair->two->path)->util
 			= sre->dst_entry;
 	}
 	for (i = 0; i < b_renames->nr; i++) {
 		sre = b_renames->items[i].util;
-		string_list_insert(sre->pair->two->path, &b_by_dst)->util
+		string_list_insert(&b_by_dst, sre->pair->two->path)->util
 			= sre->dst_entry;
 	}
 
@@ -988,7 +988,7 @@ static int process_renames(struct merge_options *o,
 					output(o, 1, "Adding as %s instead", new_path);
 					update_file(o, 0, dst_other.sha1, dst_other.mode, new_path);
 				}
-			} else if ((item = string_list_lookup(ren1_dst, renames2Dst))) {
+			} else if ((item = string_list_lookup(renames2Dst, ren1_dst))) {
 				ren2 = item->util;
 				clean_merge = 0;
 				ren2->processed = 1;

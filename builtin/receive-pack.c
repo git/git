@@ -501,7 +501,7 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 	if (!(flag & REF_ISSYMREF))
 		return;
 
-	if ((item = string_list_lookup(dst_name, list)) == NULL)
+	if ((item = string_list_lookup(list, dst_name)) == NULL)
 		return;
 
 	cmd->skip_update = 1;
@@ -534,7 +534,7 @@ static void check_aliased_updates(struct command *commands)
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		struct string_list_item *item =
-			string_list_append(cmd->ref_name, &ref_list);
+			string_list_append(&ref_list, cmd->ref_name);
 		item->util = (void *)cmd;
 	}
 	sort_string_list(&ref_list);

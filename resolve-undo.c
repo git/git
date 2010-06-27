@@ -20,7 +20,7 @@ void record_resolve_undo(struct index_state *istate, struct cache_entry *ce)
 		istate->resolve_undo = resolve_undo;
 	}
 	resolve_undo = istate->resolve_undo;
-	lost = string_list_insert(ce->name, resolve_undo);
+	lost = string_list_insert(resolve_undo, ce->name);
 	if (!lost->util)
 		lost->util = xcalloc(1, sizeof(*ui));
 	ui = lost->util;
@@ -50,7 +50,7 @@ static int write_one(struct string_list_item *item, void *cbdata)
 
 void resolve_undo_write(struct strbuf *sb, struct string_list *resolve_undo)
 {
-	for_each_string_list(write_one, resolve_undo, sb);
+   for_each_string_list(resolve_undo, write_one, sb);
 }
 
 struct string_list *resolve_undo_read(const char *data, unsigned long size)
@@ -70,7 +70,7 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size)
 		len = strlen(data) + 1;
 		if (size <= len)
 			goto error;
-		lost = string_list_insert(data, resolve_undo);
+		lost = string_list_insert(resolve_undo, data);
 		if (!lost->util)
 			lost->util = xcalloc(1, sizeof(*ui));
 		ui = lost->util;
@@ -135,7 +135,7 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 			pos++;
 		return pos - 1; /* return the last entry processed */
 	}
-	item = string_list_lookup(ce->name, istate->resolve_undo);
+	item = string_list_lookup(istate->resolve_undo, ce->name);
 	if (!item)
 		return pos;
 	ru = item->util;

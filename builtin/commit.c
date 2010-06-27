@@ -219,7 +219,7 @@ static int list_paths(struct string_list *list, const char *with_tree,
 			continue;
 		if (!match_pathspec(pattern, ce->name, ce_namelen(ce), 0, m))
 			continue;
-		item = string_list_insert(ce->name, list);
+		item = string_list_insert(list, ce->name);
 		if (ce_skip_worktree(ce))
 			item->util = item; /* better a valid pointer than a fake one */
 	}

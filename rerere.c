@@ -46,7 +46,7 @@ static void read_rr(struct string_list *rr)
 			; /* do nothing */
 		if (i == sizeof(buf))
 			die("filename too long");
-		string_list_insert(buf, rr)->util = name;
+		string_list_insert(rr, buf)->util = name;
 	}
 	fclose(in);
 }
@@ -354,7 +354,7 @@ static int find_conflict(struct string_list *conflict)
 		    ce_same_name(e2, e3) &&
 		    S_ISREG(e2->ce_mode) &&
 		    S_ISREG(e3->ce_mode)) {
-			string_list_insert((const char *)e2->name, conflict);
+			string_list_insert(conflict, (const char *)e2->name);
 			i++; /* skip over both #2 and #3 */
 		}
 	}
@@ -449,7 +449,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 			if (ret < 1)
 				continue;
 			hex = xstrdup(sha1_to_hex(sha1));
-			string_list_insert(path, rr)->util = hex;
+			string_list_insert(rr, path)->util = hex;
 			if (mkdir(git_path("rr-cache/%s", hex), 0755))
 				continue;
 			handle_file(path, NULL, rerere_path(hex, "preimage"));
@@ -471,7 +471,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		if (has_rerere_resolution(name)) {
 			if (!merge(name, path)) {
 				if (rerere_autoupdate)
-					string_list_insert(path, &update);
+					string_list_insert(&update, path);
 				fprintf(stderr,
 					"%s '%s' using previous resolution.\n",
 					rerere_autoupdate
@@ -577,7 +577,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	fprintf(stderr, "Updated preimage for '%s'\n", path);
 
 
-	string_list_insert(path, rr)->util = hex;
+	string_list_insert(rr, path)->util = hex;
 	fprintf(stderr, "Forgot resolution for %s\n", path);
 	return 0;
 }

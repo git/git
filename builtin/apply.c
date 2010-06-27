@@ -2628,7 +2628,7 @@ static struct patch *in_fn_table(const char *name)
 	if (name == NULL)
 		return NULL;
 
-	item = string_list_lookup(name, &fn_table);
+	item = string_list_lookup(&fn_table, name);
 	if (item != NULL)
 		return (struct patch *)item->util;
 
@@ -2664,7 +2664,7 @@ static void add_to_fn_table(struct patch *patch)
 	 * file creations and copies
 	 */
 	if (patch->new_name != NULL) {
-		item = string_list_insert(patch->new_name, &fn_table);
+		item = string_list_insert(&fn_table, patch->new_name);
 		item->util = patch;
 	}
 
@@ -2673,7 +2673,7 @@ static void add_to_fn_table(struct patch *patch)
 	 * later chunks shouldn't patch old names
 	 */
 	if ((patch->new_name == NULL) || (patch->is_rename)) {
-		item = string_list_insert(patch->old_name, &fn_table);
+		item = string_list_insert(&fn_table, patch->old_name);
 		item->util = PATH_WAS_DELETED;
 	}
 }
@@ -2686,7 +2686,7 @@ static void prepare_fn_table(struct patch *patch)
 	while (patch) {
 		if ((patch->new_name == NULL) || (patch->is_rename)) {
 			struct string_list_item *item;
-			item = string_list_insert(patch->old_name, &fn_table);
+			item = string_list_insert(&fn_table, patch->old_name);
 			item->util = PATH_TO_BE_DELETED;
 		}
 		patch = patch->next;
@@ -3394,7 +3394,7 @@ static void add_name_limit(const char *name, int exclude)
 {
 	struct string_list_item *it;
 
-	it = string_list_append(name, &limit_by_name);
+	it = string_list_append(&limit_by_name, name);
 	it->util = exclude ? NULL : (void *) 1;
 }
 
