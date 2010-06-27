@@ -113,6 +113,13 @@ git cherry-pick --ff ..next::
 	are in next but not HEAD to the current branch, creating a new
 	commit for each new change.
 
+git rev-list --reverse master \-- README | git cherry-pick -n --stdin::
+
+	Apply the changes introduced by all commits on the master
+	branch that touched README to the working tree and index,
+	so the result can be inspected and made into a single new
+	commit if suitable.
+
 Author
 ------
 Written by Junio C Hamano <gitster@pobox.com>
