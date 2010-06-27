@@ -8,7 +8,7 @@ test_description='git checkout to switch between branches with symlink<->dir'
 
 if ! test_have_prereq SYMLINKS
 then
-	say "symbolic links not supported - skipping tests"
+	skip_all="symbolic links not supported - skipping tests"
 	test_done
 fi
 

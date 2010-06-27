@@ -8,7 +8,7 @@ test_description='Test commit notes index (expensive!)'
 . ./test-lib.sh
 
 test -z "$GIT_NOTES_TIMING_TESTS" && {
-	say Skipping timing tests
+	skip_all="Skipping timing tests"
 	test_done
 	exit
 }

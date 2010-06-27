@@ -13,7 +13,7 @@ case $v in
 1.[456].*)
 	;;
 *)
-	say "skipping svn-info test (SVN version: $v not supported)"
+	skip_all="skipping svn-info test (SVN version: $v not supported)"
 	test_done
 	;;
 esac

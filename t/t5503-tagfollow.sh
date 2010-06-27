@@ -6,7 +6,7 @@ test_description='test automatic tag following'
 
 case $(uname -s) in
 *MINGW*)
-	say "GIT_DEBUG_SEND_PACK not supported - skipping tests"
+	skip_all="GIT_DEBUG_SEND_PACK not supported - skipping tests"
 	test_done
 esac
 

@@ -26,7 +26,7 @@ test_expect_success \
 	 chmod 755 xfoo1 &&
 	 git add xfoo1 &&
 	 case "`git ls-files --stage xfoo1`" in
-	 100644" "*xfoo1) echo ok;;
+	 100644" "*xfoo1) echo pass;;
 	 *) echo fail; git ls-files --stage xfoo1; (exit 1);;
 	 esac'
 
@@ -35,7 +35,7 @@ test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by sym
 	ln -s foo xfoo1 &&
 	git add xfoo1 &&
 	case "`git ls-files --stage xfoo1`" in
-	120000" "*xfoo1) echo ok;;
+	120000" "*xfoo1) echo pass;;
 	*) echo fail; git ls-files --stage xfoo1; (exit 1);;
 	esac
 '
@@ -47,7 +47,7 @@ test_expect_success \
 	 chmod 755 xfoo2 &&
 	 git update-index --add xfoo2 &&
 	 case "`git ls-files --stage xfoo2`" in
-	 100644" "*xfoo2) echo ok;;
+	 100644" "*xfoo2) echo pass;;
 	 *) echo fail; git ls-files --stage xfoo2; (exit 1);;
 	 esac'
 
@@ -56,7 +56,7 @@ test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by sym
 	ln -s foo xfoo2 &&
 	git update-index --add xfoo2 &&
 	case "`git ls-files --stage xfoo2`" in
-	120000" "*xfoo2) echo ok;;
+	120000" "*xfoo2) echo pass;;
 	*) echo fail; git ls-files --stage xfoo2; (exit 1);;
 	esac
 '
@@ -67,7 +67,7 @@ test_expect_success SYMLINKS \
 	 ln -s xfoo2 xfoo3 &&
 	 git update-index --add xfoo3 &&
 	 case "`git ls-files --stage xfoo3`" in
-	 120000" "*xfoo3) echo ok;;
+	 120000" "*xfoo3) echo pass;;
 	 *) echo fail; git ls-files --stage xfoo3; (exit 1);;
 	 esac'
 
@@ -172,7 +172,7 @@ test_expect_success 'git add --refresh' '
 	test -z "`git diff-index HEAD -- foo`" &&
 	git read-tree HEAD &&
 	case "`git diff-index HEAD -- foo`" in
-	:100644" "*"M	foo") echo ok;;
+	:100644" "*"M	foo") echo pass;;
 	*) echo fail; (exit 1);;
 	esac &&
 	git add --refresh -- foo &&

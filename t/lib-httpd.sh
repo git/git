@@ -5,8 +5,7 @@
 
 if test -z "$GIT_TEST_HTTPD"
 then
-	say "skipping test, network testing disabled by default"
-	say "(define GIT_TEST_HTTPD to enable)"
+	skip_all="Network testing disabled (define GIT_TEST_HTTPD to enable)"
 	test_done
 fi
 

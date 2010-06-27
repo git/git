@@ -583,7 +583,7 @@ test_expect_success \
 # subsequent tests require gpg; check if it is available
 gpg --version >/dev/null 2>/dev/null
 if [ $? -eq 127 ]; then
-	say "gpg not found - skipping tag signing and verification tests"
+	say "# gpg not found - skipping tag signing and verification tests"
 else
 	# As said here: http://www.gnupg.org/documentation/faqs.html#q6.19
 	# the gpg version 1.0.6 didn't parse trust packets correctly, so for

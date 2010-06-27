@@ -99,17 +99,17 @@ test_foobar_foobar() {
 }
 
 if ! test_have_prereq POSIXPERM || ! [ -w / ]; then
-	say "Dangerous test skipped. Read this test if you want to execute it"
+	skip_all="Dangerous test skipped. Read this test if you want to execute it"
 	test_done
 fi
 
 if [ "$IKNOWWHATIAMDOING" != "YES" ]; then
-	say "You must set env var IKNOWWHATIAMDOING=YES in order to run this test"
+	skip_all="You must set env var IKNOWWHATIAMDOING=YES in order to run this test"
 	test_done
 fi
 
 if [ "$UID" = 0 ]; then
-	say "No you can't run this with root"
+	skip_all="No you can't run this with root"
 	test_done
 fi
 

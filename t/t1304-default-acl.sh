@@ -15,9 +15,12 @@ umask 077
 # is a good candidate: exists on all unices, and it has permission
 # anyway, so we don't create a security hole running the testsuite.
 
-if ! setfacl -m u:root:rwx .; then
-    say "Skipping ACL tests: unable to use setfacl"
-    test_done
+setfacl_out="$(setfacl -m u:root:rwx . 2>&1)"
+setfacl_ret=$?
+
+if [ $setfacl_ret != 0 ]; then
+	skip_all="Skipping ACL tests: unable to use setfacl (output: '$setfacl_out'; return code: '$setfacl_ret')"
+	test_done
 fi
 
 check_perms_and_acl () {

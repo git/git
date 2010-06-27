@@ -74,7 +74,7 @@ if msg=$(git verify-pack -v "test-3-${pack3}.pack" 2>&1) ||
 then
 	test_set_prereq OFF64_T
 else
-	say "skipping tests concerning 64-bit offsets"
+	say "# skipping tests concerning 64-bit offsets"
 fi
 
 test_expect_success OFF64_T \

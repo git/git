@@ -4,7 +4,7 @@ test_description='git send-email'
 . ./test-lib.sh
 
 if ! test_have_prereq PERL; then
-	say 'skipping git send-email tests, perl not available'
+	skip_all='skipping git send-email tests, perl not available'
 	test_done
 fi
 
@@ -58,7 +58,7 @@ test_no_confirm () {
 # Exit immediately to prevent hang if a no-confirm test fails
 check_no_confirm () {
 	test -f no_confirm_okay || {
-		say 'No confirm test failed; skipping remaining tests to prevent hanging'
+		skip_all='confirm test failed; skipping remaining tests to prevent hanging'
 		test_done
 	}
 }

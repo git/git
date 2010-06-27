@@ -4,7 +4,7 @@ test_description='Test cloning a repository larger than 2 gigabyte'
 . ./test-lib.sh
 
 test -z "$GIT_TEST_CLONE_2GB" &&
-say "Skipping expensive 2GB clone test; enable it with GIT_TEST_CLONE_2GB=t" &&
+skip_all="Skipping expensive 2GB clone test; enable it with GIT_TEST_CLONE_2GB=t" &&
 test_done &&
 exit
 
