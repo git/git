@@ -10,6 +10,8 @@ struct rev_info;
 struct diff_options;
 struct diff_queue_struct;
 struct strbuf;
+struct diff_filespec;
+struct userdiff_driver;
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
@@ -74,6 +76,7 @@ typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data)
 #define DIFF_OPT_SUBMODULE_LOG       (1 << 23)
 #define DIFF_OPT_DIRTY_SUBMODULES    (1 << 24)
 #define DIFF_OPT_IGNORE_UNTRACKED_IN_SUBMODULES (1 << 25)
+#define DIFF_OPT_IGNORE_DIRTY_SUBMODULES (1 << 26)
 
 #define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
 #define DIFF_OPT_SET(opts, flag)    ((opts)->flags |= DIFF_OPT_##flag)
@@ -291,5 +294,11 @@ extern int diff_result_code(struct diff_options *, int);
 extern void diff_no_index(struct rev_info *, int, const char **, int, const char *);
 
 extern int index_differs_from(const char *def, int diff_flags);
+
+extern size_t fill_textconv(struct userdiff_driver *driver,
+			    struct diff_filespec *df,
+			    char **outbuf);
+
+extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
 
 #endif /* DIFF_H */

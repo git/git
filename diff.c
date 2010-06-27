@@ -44,10 +44,6 @@ static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL,	/* FUNCINFO */
 };
 
-static void diff_filespec_load_driver(struct diff_filespec *one);
-static size_t fill_textconv(struct userdiff_driver *driver,
-			    struct diff_filespec *df, char **outbuf);
-
 static int parse_diff_color_slot(const char *var, int ofs)
 {
 	if (!strcasecmp(var+ofs, "plain"))
@@ -1810,7 +1806,7 @@ void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const
 		options->b_prefix = b;
 }
 
-static struct userdiff_driver *get_textconv(struct diff_filespec *one)
+struct userdiff_driver *get_textconv(struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one))
 		return NULL;
@@ -4243,9 +4239,9 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	return strbuf_detach(&buf, outsize);
 }
 
-static size_t fill_textconv(struct userdiff_driver *driver,
-			    struct diff_filespec *df,
-			    char **outbuf)
+size_t fill_textconv(struct userdiff_driver *driver,
+		     struct diff_filespec *df,
+		     char **outbuf)
 {
 	size_t size;
 
