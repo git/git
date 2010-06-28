@@ -918,4 +918,81 @@ test_expect_success '--no-bcc overrides sendemail.bcc' '
 	! grep "RCPT TO:<other@ex.com>" stdout
 '
 
+cat >email-using-8bit <<EOF
+From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
+Message-Id: <bogus-message-id@example.com>
+From: author@example.com
+Date: Sat, 12 Jun 2010 15:53:58 +0200
+Subject: subject goes here
+
+Dieser deutsche Text enthält einen Umlaut!
+EOF
+
+cat >content-type-decl <<EOF
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+EOF
+
+test_expect_success 'asks about and fixes 8bit encodings' '
+	clean_fake_sendmail &&
+	echo |
+	git send-email --from=author@example.com --to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			email-using-8bit >stdout &&
+	grep "do not declare a Content-Transfer-Encoding" stdout &&
+	grep email-using-8bit stdout &&
+	grep "Which 8bit encoding" stdout &&
+	grep "Content\\|MIME" msgtxt1 >actual &&
+	test_cmp actual content-type-decl
+'
+
+test_expect_success 'sendemail.8bitEncoding works' '
+	clean_fake_sendmail &&
+	git config sendemail.assume8bitEncoding UTF-8 &&
+	echo bogus |
+	git send-email --from=author@example.com --to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			email-using-8bit >stdout &&
+	grep "Content\\|MIME" msgtxt1 >actual &&
+	test_cmp actual content-type-decl
+'
+
+test_expect_success '--8bit-encoding overrides sendemail.8bitEncoding' '
+	clean_fake_sendmail &&
+	git config sendemail.assume8bitEncoding "bogus too" &&
+	echo bogus |
+	git send-email --from=author@example.com --to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			--8bit-encoding=UTF-8 \
+			email-using-8bit >stdout &&
+	grep "Content\\|MIME" msgtxt1 >actual &&
+	test_cmp actual content-type-decl
+'
+
+cat >email-using-8bit <<EOF
+From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
+Message-Id: <bogus-message-id@example.com>
+From: author@example.com
+Date: Sat, 12 Jun 2010 15:53:58 +0200
+Subject: Dieser Betreff enthält auch einen Umlaut!
+
+Nothing to see here.
+EOF
+
+cat >expected <<EOF
+Subject: =?UTF-8?q?Dieser=20Betreff=20enth=C3=A4lt=20auch=20einen=20Umlaut!?=
+EOF
+
+test_expect_success '--8bit-encoding also treats subject' '
+	clean_fake_sendmail &&
+	echo bogus |
+	git send-email --from=author@example.com --to=nobody@example.com \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			--8bit-encoding=UTF-8 \
+			email-using-8bit >stdout &&
+	grep "Subject" msgtxt1 >actual &&
+	test_cmp expected actual
+'
+
 test_done
