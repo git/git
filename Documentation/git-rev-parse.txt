@@ -256,7 +256,7 @@ the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
   the branch the ref is set to build on top of.  Missing ref defaults
   to the current branch.
 
-* A suffix '{caret}' to a revision parameter means the first parent of
+* A suffix '{caret}' to a revision parameter (e.g. 'HEAD{caret}') means the first parent of
   that commit object.  '{caret}<n>' means the <n>th parent (i.e.
   'rev{caret}'
   is equivalent to 'rev{caret}1').  As a special rule,
@@ -282,23 +282,24 @@ the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
   and dereference the tag recursively until a non-tag object is
   found.
 
-* A colon, followed by a slash, followed by a text: this names
+* A colon, followed by a slash, followed by a text (e.g. `:/fix nasty bug`): this names
   a commit whose commit message starts with the specified text.
   This name returns the youngest matching commit which is
   reachable from any ref.  If the commit message starts with a
   '!', you have to repeat that;  the special sequence ':/!',
   followed by something else than '!' is reserved for now.
 
-* A suffix ':' followed by a path; this names the blob or tree
+* A suffix ':' followed by a path (e.g. `HEAD:README`); this names the blob or tree
   at the given path in the tree-ish object named by the part
-  before the colon. ":path" (with an empty part before the colon)
+  before the colon.
+  ':path' (with an empty part before the colon, e.g. `:README`)
   is a special case of the syntax described next: content
   recorded in the index at the given path.
 
 * A colon, optionally followed by a stage number (0 to 3) and a
-  colon, followed by a path; this names a blob object in the
-  index at the given path.  Missing stage number (and the colon
-  that follows it) names a stage 0 entry. During a merge, stage
+  colon, followed by a path (e.g. `:0:README`); this names a blob object in the
+  index at the given path. Missing stage number (and the colon
+  that follows it, e.g. `:README`) names a stage 0 entry. During a merge, stage
   1 is the common ancestor, stage 2 is the target branch's version
   (typically the current branch), and stage 3 is the version from
   the branch being merged.
