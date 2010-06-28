@@ -593,7 +593,7 @@ do
 			echo "Patch is empty.  Was it split wrong?"
 			stop_here $this
 		}
-		rm -f "$dotest/original-commit"
+		rm -f "$dotest/original-commit" "$dotest/author-script"
 		if test -f "$dotest/rebasing" &&
 			commit=$(sed -e 's/^From \([0-9a-f]*\) .*/\1/' \
 				-e q "$dotest/$msgnum") &&
@@ -602,6 +602,7 @@ do
 			git cat-file commit "$commit" |
 			sed -e '1,/^$/d' >"$dotest/msg-clean"
 			echo "$commit" > "$dotest/original-commit"
+			get_author_ident_from_commit "$commit" > "$dotest/author-script"
 		else
 			{
 				sed -n '/^Subject/ s/Subject: //p' "$dotest/info"
@@ -613,9 +614,14 @@ do
 		;;
 	esac
 
-	GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$dotest/info")"
-	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$dotest/info")"
-	GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$dotest/info")"
+	if test -f "$dotest/author-script"
+	then
+		eval $(cat "$dotest/author-script")
+	else
+		GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$dotest/info")"
+		GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$dotest/info")"
+		GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$dotest/info")"
+	fi
 
 	if test -z "$GIT_AUTHOR_EMAIL"
 	then
