@@ -17,6 +17,13 @@ Fixes since v1.7.1
 
  * We didn't recognize timezone "Z" as a synonym for "UTC" (75b37e70).
 
+ * In 1.7.0, read-tree and user commands that use the mechanism such as
+   checkout and merge were fixed to handle switching between branches one
+   of which has a file while the other has a directory at the same path
+   correctly even when there are some "confusing" pathnames in them.  But
+   the algorithm used for this fix was suboptimal and had a terrible
+   performance degradation especially in larger trees.
+
  * "git am -3" did not show diagnosis when the patch in the message was corrupt.
 
  * After "git apply --whitespace=fix" removed trailing blank lines in an
@@ -57,9 +64,14 @@ Fixes since v1.7.1
  * "git merge --log" used to replace the custom message given by "-m" with
    the shortlog, instead of appending to it.
 
+ * "git notes copy" without any other argument segfaulted.
+
  * "git pull" accepted "--dry-run", gave it to underlying "git fetch" but
    ignored the option itself, resulting in a bogus attempt to merge
    unrelated commit.
+
+ * "git rebase" did not faithfully reproduce a malformed author ident, that
+   is often seen in a repository converted from foreign SCMs.
 
  * "git reset --hard" started from a wrong directory and a working tree in
    a nonstandard location is in use got confused.
@@ -67,6 +79,9 @@ Fixes since v1.7.1
  * "git send-email" lacked a way to specify the domainname used in the
    EHLO/HELO exchange, causing rejected connection from picky servers.
    It learned --smtp-domain option to solve this issue.
+
+ * "git send-email" did not declare a content-transfer-encoding and
+   content-type even when its payload needs to be sent in 8-bit.
 
  * "git show -C -C" and other corner cases lost diff metainfo output
    in 1.7.0.
@@ -83,6 +98,6 @@ And other minor fixes and documentation updates.
 
 --
 exec >/var/tmp/1
-O=v1.7.1-195-gb2ebbd8
+O=v1.7.1-211-g54fcb21
 echo O=$(git describe HEAD)
 git shortlog --no-merges HEAD ^$O
