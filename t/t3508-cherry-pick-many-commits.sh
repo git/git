@@ -82,7 +82,7 @@ test_expect_success 'revert fourth fourth~1 fourth~2 works' '
 	git diff --quiet HEAD first
 '
 
-test_expect_failure 'cherry-pick -3 fourth works' '
+test_expect_success 'cherry-pick -3 fourth works' '
 	git checkout -f master &&
 	git reset --hard first &&
 	test_tick &&

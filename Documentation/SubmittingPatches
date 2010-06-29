@@ -547,7 +547,7 @@ Gmail
 
 GMail does not appear to have any way to turn off line wrapping in the web
 interface, so this will mangle any emails that you send.  You can however
-use "git send e-mail" and send your patches through the GMail SMTP server, or
+use "git send-email" and send your patches through the GMail SMTP server, or
 use any IMAP email client to connect to the google IMAP server and forward
 the emails through that.
 
