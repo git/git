@@ -1,5 +1,5 @@
-Git v1.7.1.1 Release Notes (draft)
-==================================
+Git v1.7.1.1 Release Notes
+==========================
 
 Fixes since v1.7.1
 ------------------
@@ -28,7 +28,7 @@ Fixes since v1.7.1
 
  * After "git apply --whitespace=fix" removed trailing blank lines in an
    patch in a patch series, it failed to apply later patches that depend
-   on the presense of such blank lines.
+   on the presence of such blank lines.
 
  * "git bundle --stdin" segfaulted.
 
@@ -94,10 +94,3 @@ Fixes since v1.7.1
  * "git status" showed excess "hints" even when advice.statusHints is set to false.
 
 And other minor fixes and documentation updates.
-
-
---
-exec >/var/tmp/1
-O=v1.7.1-211-g54fcb21
-echo O=$(git describe HEAD)
-git shortlog --no-merges HEAD ^$O
