@@ -45,6 +45,7 @@ struct wt_status {
 	int submodule_summary;
 	int show_ignored_files;
 	enum untracked_status_type show_untracked_files;
+	const char *ignore_submodule_arg;
 	char color_palette[WT_STATUS_REMOTE_BRANCH+1][COLOR_MAXLEN];
 
 	/* These are computed during processing of the individual sections */

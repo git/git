@@ -72,7 +72,7 @@ static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
 static int no_post_rewrite, allow_empty_message;
-static char *untracked_files_arg, *force_date;
+static char *untracked_files_arg, *force_date, *ignore_submodule_arg;
 /*
  * The default commit message cleanup mode will remove the lines
  * beginning with # (shell comments) and leading and trailing
@@ -1059,6 +1059,9 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 		OPT_BOOLEAN(0, "ignored", &show_ignored_in_status,
 			    "show ignored files"),
+		{ OPTION_STRING, 0, "ignore-submodules", &ignore_submodule_arg, "when",
+		  "ignore changes to submodules, optional when: all, dirty, untracked. (Default: all)",
+		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 		OPT_END(),
 	};
 
@@ -1089,6 +1092,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
 	s.in_merge = in_merge;
+	s.ignore_submodule_arg = ignore_submodule_arg;
 	wt_status_collect(&s);
 
 	if (s.relative_paths)
@@ -1107,6 +1111,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		break;
 	case STATUS_FORMAT_LONG:
 		s.verbose = verbose;
+		s.ignore_submodule_arg = ignore_submodule_arg;
 		wt_status_print(&s);
 		break;
 	}
