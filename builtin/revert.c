@@ -50,10 +50,14 @@ static const char *strategy;
 
 static char *get_encoding(const char *message);
 
+static const char * const *revert_or_cherry_pick_usage(void)
+{
+	return action == REVERT ? revert_usage : cherry_pick_usage;
+}
+
 static void parse_args(int argc, const char **argv)
 {
-	const char * const * usage_str =
-		action == REVERT ?  revert_usage : cherry_pick_usage;
+	const char * const * usage_str = revert_or_cherry_pick_usage();
 	int noop;
 	struct option options[] = {
 		OPT_BOOLEAN('n', "no-commit", &no_commit, "don't automatically commit"),
@@ -79,8 +83,9 @@ static void parse_args(int argc, const char **argv)
 	}
 
 	commit_argc = parse_options(argc, argv, NULL, options, usage_str,
+				    PARSE_OPT_KEEP_ARGV0 |
 				    PARSE_OPT_KEEP_UNKNOWN);
-	if (commit_argc < 1)
+	if (commit_argc < 2)
 		usage_with_options(usage_str, options);
 
 	commit_argv = argv;
@@ -526,27 +531,22 @@ static int do_pick_commit(void)
 
 static void prepare_revs(struct rev_info *revs)
 {
-	int argc = 0;
-	int i;
-	const char **argv = xmalloc((commit_argc + 4) * sizeof(*argv));
-
-	argv[argc++] = NULL;
-	argv[argc++] = "--no-walk";
-	if (action != REVERT)
-		argv[argc++] = "--reverse";
-	for (i = 0; i < commit_argc; i++)
-		argv[argc++] = commit_argv[i];
-	argv[argc++] = NULL;
+	int argc;
 
 	init_revisions(revs, NULL);
-	setup_revisions(argc - 1, argv, revs, NULL);
+	revs->no_walk = 1;
+	if (action != REVERT)
+		revs->reverse = 1;
+
+	argc = setup_revisions(commit_argc, commit_argv, revs, NULL);
+	if (argc > 1)
+		usage(*revert_or_cherry_pick_usage());
+
 	if (prepare_revision_walk(revs))
 		die("revision walk setup failed");
 
 	if (!revs->commits)
 		die("empty commit set passed");
-
-	free(argv);
 }
 
 static int revert_or_cherry_pick(int argc, const char **argv)
