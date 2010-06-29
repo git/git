@@ -70,6 +70,7 @@
  */
 
 #if defined(__i386__) || defined(__x86_64__) || \
+    defined(_M_IX86) || defined(_M_X64) || \
     defined(__ppc__) || defined(__ppc64__) || \
     defined(__powerpc__) || defined(__powerpc64__) || \
     defined(__s390__) || defined(__s390x__)
