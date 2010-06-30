@@ -44,9 +44,9 @@ Updates since v1.7.1
    prepares to create a root commit that is not connected to any existing
    commit.
 
- * "git cherry-pick" learned to pick a range of commits (e.g. "cherry-pick
-   A..B"); this does not have nicer sequencing control "rebase [-i]" has,
-   though.
+ * "git cherry-pick" learned to pick a range of commits
+   (e.g. "cherry-pick A..B" and "cherry-pick --stdin"); this does not
+   have nicer sequencing control "rebase [-i]" has, though.
 
  * "git cvsserver" can be told to use pserver; its password file can be
    stored outside the repository.
@@ -74,7 +74,11 @@ Updates since v1.7.1
  * Various options to "git grep" (e.g. --count, --name-only) work better
    with binary files.
 
+ * "git grep" learned "-Ovi" to open the files with hits in yoru editor.
+
  * "git help -w" learned "chrome" and "chromium" browsers.
+
+ * "git log --decorate" shows commit decorations in various colours.
 
  * "git log --follow <path>" follows across copies (it used to only follow
    renames).  This may make the processing more expensive.
@@ -105,6 +109,8 @@ Updates since v1.7.1
  * "git status [-s] --ignored" can be used to list ignored paths.
 
  * "git status -s -b" shows the current branch in the output.
+
+ * "git status" learned "--ignore-submodules" option.
 
  * Various "gitweb" enhancements and clean-ups, including syntax
    highlighting, "plackup" support for instaweb, .fcgi suffix to run
@@ -149,6 +155,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.7.1-592-gcf4403a
+O=v1.7.2-rc0-60-g2927a50
 echo O=$(git describe HEAD)
 git shortlog --no-merges HEAD ^maint ^$O
