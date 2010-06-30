@@ -37,9 +37,9 @@ static struct string_list *get_parameters(void)
 			char *value = url_decode_parameter_value(&query);
 			struct string_list_item *i;
 
-			i = string_list_lookup(name, query_params);
+			i = string_list_lookup(query_params, name);
 			if (!i)
-				i = string_list_insert(name, query_params);
+				i = string_list_insert(query_params, name);
 			else
 				free(i->util);
 			i->util = value;
@@ -51,7 +51,7 @@ static struct string_list *get_parameters(void)
 static const char *get_parameter(const char *name)
 {
 	struct string_list_item *i;
-	i = string_list_lookup(name, get_parameters());
+	i = string_list_lookup(get_parameters(), name);
 	return i ? i->util : NULL;
 }
 

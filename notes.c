@@ -838,7 +838,7 @@ static int string_list_add_one_ref(const char *path, const unsigned char *sha1,
 {
 	struct string_list *refs = cb;
 	if (!unsorted_string_list_has_string(refs, path))
-		string_list_append(path, refs);
+		string_list_append(refs, path);
 	return 0;
 }
 
@@ -851,7 +851,7 @@ void string_list_add_refs_by_glob(struct string_list *list, const char *glob)
 		if (get_sha1(glob, sha1))
 			warning("notes ref %s is invalid", glob);
 		if (!unsorted_string_list_has_string(list, glob))
-			string_list_append(glob, list);
+			string_list_append(list, glob);
 	}
 }
 
@@ -969,7 +969,7 @@ struct notes_tree **load_notes_trees(struct string_list *refs)
 	trees = xmalloc((refs->nr+1) * sizeof(struct notes_tree *));
 	cb_data.counter = 0;
 	cb_data.trees = trees;
-	for_each_string_list(load_one_display_note_ref, refs, &cb_data);
+	for_each_string_list(refs, load_one_display_note_ref, &cb_data);
 	trees[cb_data.counter] = NULL;
 	return trees;
 }
@@ -983,7 +983,7 @@ void init_display_notes(struct display_notes_opt *opt)
 	assert(!display_notes_trees);
 
 	if (!opt || !opt->suppress_default_notes) {
-		string_list_append(default_notes_ref(), &display_notes_refs);
+		string_list_append(&display_notes_refs, default_notes_ref());
 		display_ref_env = getenv(GIT_NOTES_DISPLAY_REF_ENVIRONMENT);
 		if (display_ref_env) {
 			string_list_add_refs_from_colon_sep(&display_notes_refs,
@@ -996,8 +996,8 @@ void init_display_notes(struct display_notes_opt *opt)
 	git_config(notes_display_config, &load_config_refs);
 
 	if (opt && opt->extra_notes_refs)
-		for_each_string_list(string_list_add_refs_from_list,
-				     opt->extra_notes_refs,
+		for_each_string_list(opt->extra_notes_refs,
+				     string_list_add_refs_from_list,
 				     &display_notes_refs);
 
 	display_notes_trees = load_notes_trees(&display_notes_refs);

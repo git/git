@@ -38,8 +38,8 @@ struct string_list list;
 int i;
 
 memset(&list, 0, sizeof(struct string_list));
-string_list_append("foo", &list);
-string_list_append("bar", &list);
+string_list_append(&list, "foo");
+string_list_append(&list, "bar");
 for (i = 0; i < list.nr; i++)
 	printf("%s\n", list.items[i].string)
 ----

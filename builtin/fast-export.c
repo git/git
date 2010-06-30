@@ -438,7 +438,7 @@ static void get_tags_and_duplicates(struct object_array *pending,
 			/* handle nested tags */
 			while (tag && tag->object.type == OBJ_TAG) {
 				parse_object(tag->object.sha1);
-				string_list_append(full_name, extra_refs)->util = tag;
+				string_list_append(extra_refs, full_name)->util = tag;
 				tag = (struct tag *)tag->tagged;
 			}
 			if (!tag)
@@ -464,7 +464,7 @@ static void get_tags_and_duplicates(struct object_array *pending,
 		}
 		if (commit->util)
 			/* more than one name for the same object */
-			string_list_append(full_name, extra_refs)->util = commit;
+			string_list_append(extra_refs, full_name)->util = commit;
 		else
 			commit->util = full_name;
 	}

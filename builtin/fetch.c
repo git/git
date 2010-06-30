@@ -528,7 +528,7 @@ static int add_existing(const char *refname, const unsigned char *sha1,
 			int flag, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
-	struct string_list_item *item = string_list_insert(refname, list);
+	struct string_list_item *item = string_list_insert(list, refname);
 	item->util = (void *)sha1;
 	return 0;
 }
@@ -617,7 +617,7 @@ static void find_non_local_tags(struct transport *transport,
 		    string_list_has_string(&existing_refs, ref->name))
 			continue;
 
-		item = string_list_insert(ref->name, &remote_refs);
+		item = string_list_insert(&remote_refs, ref->name);
 		item->util = (void *)ref->old_sha1;
 	}
 	string_list_clear(&existing_refs, 0);
@@ -634,7 +634,7 @@ static void find_non_local_tags(struct transport *transport,
 	 * For all the tags in the remote_refs string list, call
 	 * add_to_tail to add them to the list of refs to be fetched
 	 */
-	for_each_string_list(add_to_tail, &remote_refs, &data);
+	for_each_string_list(&remote_refs, add_to_tail, &data);
 
 	string_list_clear(&remote_refs, 0);
 }
@@ -696,8 +696,8 @@ static int do_fetch(struct transport *transport,
 
 	for (rm = ref_map; rm; rm = rm->next) {
 		if (rm->peer_ref) {
-			peer_item = string_list_lookup(rm->peer_ref->name,
-						       &existing_refs);
+			peer_item = string_list_lookup(&existing_refs,
+						       rm->peer_ref->name);
 			if (peer_item)
 				hashcpy(rm->peer_ref->old_sha1,
 					peer_item->util);
@@ -746,7 +746,7 @@ static int get_one_remote_for_fetch(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
 	if (!remote->skip_default_update)
-		string_list_append(remote->name, list);
+		string_list_append(list, remote->name);
 	return 0;
 }
 
@@ -765,8 +765,8 @@ static int get_remote_group(const char *key, const char *value, void *priv)
 		int space = strcspn(value, " \t\n");
 		while (*value) {
 			if (space > 1) {
-				string_list_append(xstrndup(value, space),
-						   g->list);
+				string_list_append(g->list,
+						   xstrndup(value, space));
 			}
 			value += space + (value[space] != '\0');
 			space = strcspn(value, " \t\n");
@@ -788,7 +788,7 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 		if (!remote_is_configured(name))
 			return 0;
 		remote = remote_get(name);
-		string_list_append(remote->name, list);
+		string_list_append(list, remote->name);
 	}
 	return 1;
 }
