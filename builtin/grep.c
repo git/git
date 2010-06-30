@@ -11,6 +11,8 @@
 #include "tree-walk.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "string-list.h"
+#include "run-command.h"
 #include "userdiff.h"
 #include "grep.h"
 #include "quote.h"
@@ -556,6 +558,33 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	}
 }
 
+static void append_path(struct grep_opt *opt, const void *data, size_t len)
+{
+	struct string_list *path_list = opt->output_priv;
+
+	if (len == 1 && *(const char *)data == '\0')
+		return;
+	string_list_append(path_list, xstrndup(data, len));
+}
+
+static void run_pager(struct grep_opt *opt, const char *prefix)
+{
+	struct string_list *path_list = opt->output_priv;
+	const char **argv = xmalloc(sizeof(const char *) * (path_list->nr + 1));
+	int i, status;
+
+	for (i = 0; i < path_list->nr; i++)
+		argv[i] = path_list->items[i].string;
+	argv[path_list->nr] = NULL;
+
+	if (prefix && chdir(prefix))
+		die("Failed to chdir: %s", prefix);
+	status = run_command_v_opt(argv, RUN_USING_SHELL);
+	if (status)
+		exit(status);
+	free(argv);
+}
+
 static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 {
 	int hit = 0;
@@ -590,7 +619,6 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 		if (hit && opt->status_only)
 			break;
 	}
-	free_grep_patterns(opt);
 	return hit;
 }
 
@@ -675,6 +703,25 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 	die("unable to grep from object of type %s", typename(obj->type));
 }
 
+static int grep_objects(struct grep_opt *opt, const char **paths,
+			const struct object_array *list)
+{
+	unsigned int i;
+	int hit = 0;
+	const unsigned int nr = list->nr;
+
+	for (i = 0; i < nr; i++) {
+		struct object *real_obj;
+		real_obj = deref_tag(list->objects[i].item, NULL, 0);
+		if (grep_object(opt, paths, real_obj, list->objects[i].name)) {
+			hit = 1;
+			if (opt->status_only)
+				break;
+		}
+	}
+	return hit;
+}
+
 static int grep_directory(struct grep_opt *opt, const char **paths)
 {
 	struct dir_struct dir;
@@ -689,7 +736,6 @@ static int grep_directory(struct grep_opt *opt, const char **paths)
 		if (hit && opt->status_only)
 			break;
 	}
-	free_grep_patterns(opt);
 	return hit;
 }
 
@@ -786,9 +832,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	int cached = 0;
 	int seen_dashdash = 0;
 	int external_grep_allowed__ignored;
+	const char *show_in_pager = NULL, *default_pager = "dummy";
 	struct grep_opt opt;
 	struct object_array list = { 0, 0, NULL };
 	const char **paths = NULL;
+	struct string_list path_list = { NULL, 0, 0, 0 };
 	int i;
 	int dummy;
 	int nongit = 0, use_index = 1;
@@ -872,6 +920,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN(0, "all-match", &opt.all_match,
 			"show only matches from files that match all patterns"),
 		OPT_GROUP(""),
+		{ OPTION_STRING, 'O', "open-files-in-pager", &show_in_pager,
+			"pager", "show matching files in the pager",
+			PARSE_OPT_OPTARG, NULL, (intptr_t)default_pager },
 		OPT_BOOLEAN(0, "ext-grep", &external_grep_allowed__ignored,
 			    "allow calling of grep(1) (ignored by this build)"),
 		{ OPTION_CALLBACK, 0, "help-all", &options, NULL, "show usage",
@@ -947,6 +998,17 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		argc--;
 	}
 
+	if (show_in_pager == default_pager)
+		show_in_pager = git_pager(1);
+	if (show_in_pager) {
+		opt.name_only = 1;
+		opt.null_following_name = 1;
+		opt.output_priv = &path_list;
+		opt.output = append_path;
+		string_list_append(&path_list, show_in_pager);
+		use_threads = 0;
+	}
+
 	if (!opt.pattern_list)
 		die("no pattern given.");
 	if (!opt.fixed && opt.ignore_case)
@@ -1003,44 +1065,51 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths[1] = NULL;
 	}
 
+	if (show_in_pager && (cached || list.nr))
+		die("--open-files-in-pager only works on the worktree");
+
+	if (show_in_pager && opt.pattern_list && !opt.pattern_list->next) {
+		const char *pager = path_list.items[0].string;
+		int len = strlen(pager);
+
+		if (len > 4 && is_dir_sep(pager[len - 5]))
+			pager += len - 4;
+
+		if (!strcmp("less", pager) || !strcmp("vi", pager)) {
+			struct strbuf buf = STRBUF_INIT;
+			strbuf_addf(&buf, "+/%s%s",
+					strcmp("less", pager) ? "" : "*",
+					opt.pattern_list->pattern);
+			string_list_append(&path_list, buf.buf);
+			strbuf_detach(&buf, NULL);
+		}
+	}
+
+	if (!show_in_pager)
+		setup_pager();
+
+
 	if (!use_index) {
-		int hit;
 		if (cached)
 			die("--cached cannot be used with --no-index.");
 		if (list.nr)
 			die("--no-index cannot be used with revs.");
 		hit = grep_directory(&opt, paths);
-		if (use_threads)
-			hit |= wait_all();
-		return !hit;
-	}
-
-	if (!list.nr) {
-		int hit;
+	} else if (!list.nr) {
 		if (!cached)
 			setup_work_tree();
 
 		hit = grep_cache(&opt, paths, cached);
-		if (use_threads)
-			hit |= wait_all();
-		return !hit;
-	}
-
-	if (cached)
-		die("both --cached and trees are given.");
-
-	for (i = 0; i < list.nr; i++) {
-		struct object *real_obj;
-		real_obj = deref_tag(list.objects[i].item, NULL, 0);
-		if (grep_object(&opt, paths, real_obj, list.objects[i].name)) {
-			hit = 1;
-			if (opt.status_only)
-				break;
-		}
+	} else {
+		if (cached)
+			die("both --cached and trees are given.");
+		hit = grep_objects(&opt, paths, &list);
 	}
 
 	if (use_threads)
 		hit |= wait_all();
+	if (hit && show_in_pager)
+		run_pager(&opt, prefix);
 	free_grep_patterns(&opt);
 	return !hit;
 }
