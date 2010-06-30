@@ -314,7 +314,7 @@ PidFile "$fqgitdir/pid"
 Listen $bind$port
 EOF
 
-	for mod in mime dir log_config; do
+	for mod in mime dir env log_config; do
 		if test -e $module_path/mod_${mod}.so; then
 			echo "LoadModule ${mod}_module " \
 			     "$module_path/mod_${mod}.so" >> "$conf"
@@ -334,7 +334,7 @@ EOF
 		cat >> "$conf" <<EOF
 LoadModule perl_module $module_path/mod_perl.so
 PerlPassEnv GIT_DIR
-PerlPassEnv GIT_EXEC_DIR
+PerlPassEnv GIT_EXEC_PATH
 PerlPassEnv GITWEB_CONFIG
 <Location /gitweb.cgi>
 	SetHandler perl-script
@@ -364,6 +364,9 @@ EOF
 			echo "ScriptSock logs/gitweb.sock" >> "$conf"
 		fi
 		cat >> "$conf" <<EOF
+PassEnv GIT_DIR
+PassEnv GIT_EXEC_PATH
+PassEnv GITWEB_CONFIG
 AddHandler cgi-script .cgi
 <Location /gitweb.cgi>
 	Options +ExecCGI
