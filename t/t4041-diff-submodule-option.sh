@@ -205,6 +205,21 @@ Submodule sm1 contains untracked content
 EOF
 "
 
+test_expect_success 'submodule contains untracked content (untracked ignored)' "
+	git diff-index -p --ignore-submodules=untracked --submodule=log HEAD >actual &&
+	! test -s actual
+"
+
+test_expect_success 'submodule contains untracked content (dirty ignored)' "
+	git diff-index -p --ignore-submodules=dirty --submodule=log HEAD >actual &&
+	! test -s actual
+"
+
+test_expect_success 'submodule contains untracked content (all ignored)' "
+	git diff-index -p --ignore-submodules=all --submodule=log HEAD >actual &&
+	! test -s actual
+"
+
 test_expect_success 'submodule contains untracked and modifed content' "
 	echo new > sm1/foo6 &&
 	git diff-index -p --submodule=log HEAD >actual &&
@@ -212,6 +227,26 @@ test_expect_success 'submodule contains untracked and modifed content' "
 Submodule sm1 contains untracked content
 Submodule sm1 contains modified content
 EOF
+"
+
+test_expect_success 'submodule contains untracked and modifed content (untracked ignored)' "
+	echo new > sm1/foo6 &&
+	git diff-index -p --ignore-submodules=untracked --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 contains modified content
+EOF
+"
+
+test_expect_success 'submodule contains untracked and modifed content (dirty ignored)' "
+	echo new > sm1/foo6 &&
+	git diff-index -p --ignore-submodules=dirty --submodule=log HEAD >actual &&
+	! test -s actual
+"
+
+test_expect_success 'submodule contains untracked and modifed content (all ignored)' "
+	echo new > sm1/foo6 &&
+	git diff-index -p --ignore-submodules --submodule=log HEAD >actual &&
+	! test -s actual
 "
 
 test_expect_success 'submodule contains modifed content' "
@@ -242,6 +277,27 @@ Submodule sm1 $head6..$head8:
 EOF
 "
 
+test_expect_success 'modified submodule contains untracked content (untracked ignored)' "
+	git diff-index -p --ignore-submodules=untracked --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head8:
+  > change
+EOF
+"
+
+test_expect_success 'modified submodule contains untracked content (dirty ignored)' "
+	git diff-index -p --ignore-submodules=dirty --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head8:
+  > change
+EOF
+"
+
+test_expect_success 'modified submodule contains untracked content (all ignored)' "
+	git diff-index -p --ignore-submodules=all --submodule=log HEAD >actual &&
+	! test -s actual
+"
+
 test_expect_success 'modified submodule contains untracked and modifed content' "
 	echo modification >> sm1/foo6 &&
 	git diff-index -p --submodule=log HEAD >actual &&
@@ -251,6 +307,31 @@ Submodule sm1 contains modified content
 Submodule sm1 $head6..$head8:
   > change
 EOF
+"
+
+test_expect_success 'modified submodule contains untracked and modifed content (untracked ignored)' "
+	echo modification >> sm1/foo6 &&
+	git diff-index -p --ignore-submodules=untracked --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 contains modified content
+Submodule sm1 $head6..$head8:
+  > change
+EOF
+"
+
+test_expect_success 'modified submodule contains untracked and modifed content (dirty ignored)' "
+	echo modification >> sm1/foo6 &&
+	git diff-index -p --ignore-submodules=dirty --submodule=log HEAD >actual &&
+	diff actual - <<-EOF
+Submodule sm1 $head6..$head8:
+  > change
+EOF
+"
+
+test_expect_success 'modified submodule contains untracked and modifed content (all ignored)' "
+	echo modification >> sm1/foo6 &&
+	git diff-index -p --ignore-submodules --submodule=log HEAD >actual &&
+	! test -s actual
 "
 
 test_expect_success 'modified submodule contains modifed content' "
