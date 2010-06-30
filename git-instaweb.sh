@@ -43,7 +43,8 @@ test -z "$port" && port=1234
 
 resolve_full_httpd () {
 	case "$httpd" in
-	*apache2*|*lighttpd*)
+	*apache2*|*lighttpd*|*httpd*)
+		# yes, *httpd* covers *lighttpd* above, but it is there for clarity
 		# ensure that the apache2/lighttpd command ends with "-f"
 		if ! echo "$httpd" | sane_grep -- '-f *$' >/dev/null 2>&1
 		then
@@ -300,7 +301,13 @@ EOF
 }
 
 apache2_conf () {
-	test -z "$module_path" && module_path=/usr/lib/apache2/modules
+	if test -z "$module_path"
+	then
+		test -d "/usr/lib/httpd/modules" &&
+			module_path="/usr/lib/httpd/modules"
+		test -d "/usr/lib/apache2/modules" &&
+			module_path="/usr/lib/apache2/modules"
+	fi
 	bind=
 	test x"$local" = xtrue && bind='127.0.0.1:'
 	echo 'text/css css' > "$fqgitdir/mime.types"
@@ -314,8 +321,10 @@ PidFile "$fqgitdir/pid"
 Listen $bind$port
 EOF
 
-	for mod in mime dir env log_config; do
-		if test -e $module_path/mod_${mod}.so; then
+	for mod in mime dir env log_config
+	do
+		if test -e $module_path/mod_${mod}.so
+		then
 			echo "LoadModule ${mod}_module " \
 			     "$module_path/mod_${mod}.so" >> "$conf"
 		fi
@@ -563,7 +572,7 @@ case "$httpd" in
 *lighttpd*)
 	lighttpd_conf
 	;;
-*apache2*)
+*apache2*|*httpd*)
 	apache2_conf
 	;;
 webrick)
