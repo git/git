@@ -314,7 +314,7 @@ PidFile "$fqgitdir/pid"
 Listen $bind$port
 EOF
 
-	for mod in mime dir; do
+	for mod in mime dir log_config; do
 		if test -e $module_path/mod_${mod}.so; then
 			echo "LoadModule ${mod}_module " \
 			     "$module_path/mod_${mod}.so" >> "$conf"
