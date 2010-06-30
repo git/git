@@ -50,6 +50,15 @@ static void show_commit(struct commit *commit, void *data)
 
 	graph_show_commit(revs->graph);
 
+	if (revs->count) {
+		if (commit->object.flags & SYMMETRIC_LEFT)
+			revs->count_left++;
+		else
+			revs->count_right++;
+		finish_commit(commit, data);
+		return;
+	}
+
 	if (info->show_timestamp)
 		printf("%lu ", commit->date);
 	if (info->header_prefix)
@@ -399,6 +408,13 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			     quiet ? finish_commit : show_commit,
 			     quiet ? finish_object : show_object,
 			     &info);
+
+	if (revs.count) {
+		if (revs.left_right)
+			printf("%d\t%d\n", revs.count_left, revs.count_right);
+		else
+			printf("%d\n", revs.count_left + revs.count_right);
+	}
 
 	return 0;
 }
