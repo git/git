@@ -127,6 +127,13 @@ If you are expecting some objects to be collected and they aren't, check
 all of those locations and decide whether it makes sense in your case to
 remove those references.
 
+HOOKS
+-----
+
+The 'git gc --auto' command will run the 'pre-auto-gc' hook.  See
+linkgit:githooks[5] for more information.
+
+
 SEE ALSO
 --------
 linkgit:git-prune[1]
