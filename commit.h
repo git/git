@@ -28,6 +28,7 @@ extern const char *commit_type;
 extern struct decoration name_decoration;
 struct name_decoration {
 	struct name_decoration *next;
+	int type;
 	char name[1];
 };
 

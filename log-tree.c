@@ -7,32 +7,113 @@
 #include "reflog-walk.h"
 #include "refs.h"
 #include "string-list.h"
+#include "color.h"
 
 struct decoration name_decoration = { "object names" };
 
-static void add_name_decoration(const char *prefix, const char *name, struct object *obj)
+enum decoration_type {
+	DECORATION_NONE = 0,
+	DECORATION_REF_LOCAL,
+	DECORATION_REF_REMOTE,
+	DECORATION_REF_TAG,
+	DECORATION_REF_STASH,
+	DECORATION_REF_HEAD,
+};
+
+static char decoration_colors[][COLOR_MAXLEN] = {
+	GIT_COLOR_RESET,
+	GIT_COLOR_BOLD_GREEN,	/* REF_LOCAL */
+	GIT_COLOR_BOLD_RED,	/* REF_REMOTE */
+	GIT_COLOR_BOLD_YELLOW,	/* REF_TAG */
+	GIT_COLOR_BOLD_MAGENTA,	/* REF_STASH */
+	GIT_COLOR_BOLD_CYAN,	/* REF_HEAD */
+};
+
+static const char *decorate_get_color(int decorate_use_color, enum decoration_type ix)
 {
-	int plen = strlen(prefix);
+	if (decorate_use_color)
+		return decoration_colors[ix];
+	return "";
+}
+
+static int parse_decorate_color_slot(const char *slot)
+{
+	/*
+	 * We're comparing with 'ignore-case' on
+	 * (because config.c sets them all tolower),
+	 * but let's match the letters in the literal
+	 * string values here with how they are
+	 * documented in Documentation/config.txt, for
+	 * consistency.
+	 *
+	 * We love being consistent, don't we?
+	 */
+	if (!strcasecmp(slot, "branch"))
+		return DECORATION_REF_LOCAL;
+	if (!strcasecmp(slot, "remoteBranch"))
+		return DECORATION_REF_REMOTE;
+	if (!strcasecmp(slot, "tag"))
+		return DECORATION_REF_TAG;
+	if (!strcasecmp(slot, "stash"))
+		return DECORATION_REF_STASH;
+	if (!strcasecmp(slot, "HEAD"))
+		return DECORATION_REF_HEAD;
+	return -1;
+}
+
+int parse_decorate_color_config(const char *var, const int ofs, const char *value)
+{
+	int slot = parse_decorate_color_slot(var + ofs);
+	if (slot < 0)
+		return 0;
+	if (!value)
+		return config_error_nonbool(var);
+	color_parse(value, var, decoration_colors[slot]);
+	return 0;
+}
+
+/*
+ * log-tree.c uses DIFF_OPT_TST for determining whether to use color
+ * for showing the commit sha1, use the same check for --decorate
+ */
+#define decorate_get_color_opt(o, ix) \
+	decorate_get_color(DIFF_OPT_TST((o), COLOR_DIFF), ix)
+
+static void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
+{
 	int nlen = strlen(name);
-	struct name_decoration *res = xmalloc(sizeof(struct name_decoration) + plen + nlen);
-	memcpy(res->name, prefix, plen);
-	memcpy(res->name + plen, name, nlen + 1);
+	struct name_decoration *res = xmalloc(sizeof(struct name_decoration) + nlen);
+	memcpy(res->name, name, nlen + 1);
+	res->type = type;
 	res->next = add_decoration(&name_decoration, obj, res);
 }
 
 static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct object *obj = parse_object(sha1);
+	enum decoration_type type = DECORATION_NONE;
 	if (!obj)
 		return 0;
+
+	if (!prefixcmp(refname, "refs/heads"))
+		type = DECORATION_REF_LOCAL;
+	else if (!prefixcmp(refname, "refs/remotes"))
+		type = DECORATION_REF_REMOTE;
+	else if (!prefixcmp(refname, "refs/tags"))
+		type = DECORATION_REF_TAG;
+	else if (!prefixcmp(refname, "refs/stash"))
+		type = DECORATION_REF_STASH;
+	else if (!prefixcmp(refname, "HEAD"))
+		type = DECORATION_REF_HEAD;
+
 	if (!cb_data || *(int *)cb_data == DECORATE_SHORT_REFS)
 		refname = prettify_refname(refname);
-	add_name_decoration("", refname, obj);
+	add_name_decoration(type, refname, obj);
 	while (obj->type == OBJ_TAG) {
 		obj = ((struct tag *)obj)->tagged;
 		if (!obj)
 			break;
-		add_name_decoration("tag: ", refname, obj);
+		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;
 }
@@ -60,6 +141,10 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 {
 	const char *prefix;
 	struct name_decoration *decoration;
+	const char *color_commit =
+		diff_get_color_opt(&opt->diffopt, DIFF_COMMIT);
+	const char *color_reset =
+		decorate_get_color_opt(&opt->diffopt, DECORATION_NONE);
 
 	if (opt->show_source && commit->util)
 		printf("\t%s", (char *) commit->util);
@@ -70,7 +155,14 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 		return;
 	prefix = " (";
 	while (decoration) {
-		printf("%s%s", prefix, decoration->name);
+		printf("%s", prefix);
+		fputs(decorate_get_color_opt(&opt->diffopt, decoration->type),
+		      stdout);
+		if (decoration->type == DECORATION_REF_TAG)
+			fputs("tag: ", stdout);
+		printf("%s", decoration->name);
+		fputs(color_reset, stdout);
+		fputs(color_commit, stdout);
 		prefix = ", ";
 		decoration = decoration->next;
 	}
