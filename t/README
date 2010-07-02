@@ -330,6 +330,33 @@ library for your script to use.
 	    test_done
 	fi
 
+ - test_external [<prereq>] <message> <external> <script>
+
+   Execute a <script> with an <external> interpreter (like perl). This
+   was added for tests like t9700-perl-git.sh which do most of their
+   work in an external test script.
+
+	test_external \
+	    'GitwebCache::*FileCache*' \
+	    "$PERL_PATH" "$TEST_DIRECTORY"/t9503/test_cache_interface.pl
+
+   If the test is outputting its own TAP you should set the
+   test_external_has_tap variable somewhere before calling the first
+   test_external* function. See t9700-perl-git.sh for an example.
+
+	# The external test will outputs its own plan
+	test_external_has_tap=1
+
+ - test_external_without_stderr [<prereq>] <message> <external> <script>
+
+   Like test_external but fail if there's any output on stderr,
+   instead of checking the exit code.
+
+	test_external_without_stderr \
+	    'Perl API' \
+	    "$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl
+
+
 Tips for Writing Tests
 ----------------------
 
