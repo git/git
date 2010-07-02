@@ -277,6 +277,13 @@ library for your script to use.
    Like test_expect_success this function can optionally use a three
    argument invocation with a prerequisite as the first argument.
 
+ - test_expect_code [<prereq>] <code> <message> <script>
+
+   Analogous to test_expect_success, but pass the test if it exits
+   with a given exit <code>
+
+ test_expect_code 1 'Merge with d/f conflicts' 'git merge "merge msg" B master'
+
  - test_debug <script>
 
    This takes a single argument, <script>, and evaluates it only
