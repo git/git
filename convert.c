@@ -741,7 +741,9 @@ int convert_to_git(const char *path, const char *src, size_t len,
 	return ret | ident_to_git(path, src, len, dst, ident);
 }
 
-int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst)
+static int convert_to_working_tree_internal(const char *path, const char *src,
+					    size_t len, struct strbuf *dst,
+					    int normalizing)
 {
 	struct git_attr_check check[5];
 	enum action action = CRLF_GUESS;
@@ -767,18 +769,29 @@ int convert_to_working_tree(const char *path, const char *src, size_t len, struc
 		src = dst->buf;
 		len = dst->len;
 	}
-	action = determine_action(action, eol_attr);
-	ret |= crlf_to_worktree(path, src, len, dst, action);
-	if (ret) {
-		src = dst->buf;
-		len = dst->len;
+	/*
+	 * CRLF conversion can be skipped if normalizing, unless there
+	 * is a smudge filter.  The filter might expect CRLFs.
+	 */
+	if (filter || !normalizing) {
+		action = determine_action(action, eol_attr);
+		ret |= crlf_to_worktree(path, src, len, dst, action);
+		if (ret) {
+			src = dst->buf;
+			len = dst->len;
+		}
 	}
 	return ret | apply_filter(path, src, len, dst, filter);
 }
 
+int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst)
+{
+	return convert_to_working_tree_internal(path, src, len, dst, 0);
+}
+
 int renormalize_buffer(const char *path, const char *src, size_t len, struct strbuf *dst)
 {
-	int ret = convert_to_working_tree(path, src, len, dst);
+	int ret = convert_to_working_tree_internal(path, src, len, dst, 1);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
