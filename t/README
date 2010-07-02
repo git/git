@@ -221,9 +221,10 @@ This test harness library does the following things:
  - If the script is invoked with command line argument --help
    (or -h), it shows the test_description and exits.
 
- - Creates an empty test directory with an empty .git/objects
-   database and chdir(2) into it.  This directory is 't/trash directory'
-   if you must know, but I do not think you care.
+ - Creates an empty test directory with an empty .git/objects database
+   and chdir(2) into it.  This directory is 't/trash
+   directory.$test_name_without_dotsh', with t/ subject to change by
+   the --root option documented above.
 
  - Defines standard test helper functions for your scripts to
    use.  These functions are designed to make all scripts behave
