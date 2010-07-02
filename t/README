@@ -33,7 +33,7 @@ the tests.
     ok 3 - plain bare
 
 Since the tests all output TAP (see http://testanything.org) they can
-be run with any TAP harness. Here's an example of paralell testing
+be run with any TAP harness. Here's an example of parallel testing
 powered by a recent version of prove(1):
 
     $ prove --timer --jobs 15 ./t[0-9]*.sh
