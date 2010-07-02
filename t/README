@@ -231,6 +231,18 @@ This test harness library does the following things:
    consistently when command line arguments --verbose (or -v),
    --debug (or -d), and --immediate (or -i) is given.
 
+Skipping tests
+--------------
+
+If you need to skip all the remaining tests you should set skip_all
+and immediately call test_done. The string you give to skip_all will
+be used as an explanation for why the test was skipped. for instance:
+
+	if ! test_have_prereq PERL
+	then
+	    skip_all='skipping perl interface tests, perl not available'
+	    test_done
+	fi
 
 End with test_done
 ------------------
