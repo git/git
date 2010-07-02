@@ -93,7 +93,8 @@ static int is_binary(unsigned long size, struct text_stat *stats)
 	return 0;
 }
 
-static enum eol determine_output_conversion(enum action action) {
+static enum eol determine_output_conversion(enum action action)
+{
 	switch (action) {
 	case CRLF_BINARY:
 		return EOL_UNSET;
@@ -693,7 +694,8 @@ static int git_path_check_ident(const char *path, struct git_attr_check *check)
 	return !!ATTR_TRUE(value);
 }
 
-enum action determine_action(enum action text_attr, enum eol eol_attr) {
+static enum action determine_action(enum action text_attr, enum eol eol_attr)
+{
 	if (text_attr == CRLF_BINARY)
 		return CRLF_BINARY;
 	if (eol_attr == EOL_LF)
@@ -772,4 +774,14 @@ int convert_to_working_tree(const char *path, const char *src, size_t len, struc
 		len = dst->len;
 	}
 	return ret | apply_filter(path, src, len, dst, filter);
+}
+
+int renormalize_buffer(const char *path, const char *src, size_t len, struct strbuf *dst)
+{
+	int ret = convert_to_working_tree(path, src, len, dst);
+	if (ret) {
+		src = dst->buf;
+		len = dst->len;
+	}
+	return ret | convert_to_git(path, src, len, dst, 0);
 }
