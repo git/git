@@ -246,9 +246,9 @@ Test harness library
 There are a handful helper functions defined in the test harness
 library for your script to use.
 
- - test_expect_success <message> <script>
+ - test_expect_success [<prereq>] <message> <script>
 
-   This takes two strings as parameter, and evaluates the
+   Usually takes two strings as parameter, and evaluates the
    <script>.  If it yields success, test is considered
    successful.  <message> should state what it is testing.
 
@@ -258,7 +258,14 @@ library for your script to use.
 	    'git-write-tree should be able to write an empty tree.' \
 	    'tree=$(git-write-tree)'
 
- - test_expect_failure <message> <script>
+   If you supply three parameters the first will be taken to be a
+   prerequisite, see the test_set_prereq and test_have_prereq
+   documentation below:
+
+	test_expect_success TTY 'git --paginate rev-list uses a pager' \
+	    ' ... '
+
+ - test_expect_failure [<prereq>] <message> <script>
 
    This is NOT the opposite of test_expect_success, but is used
    to mark a test that demonstrates a known breakage.  Unlike
@@ -266,6 +273,9 @@ library for your script to use.
    success and "FAIL" on failure, this will say "FIXED" on
    success and "still broken" on failure.  Failures from these
    tests won't cause -i (immediate) to stop.
+
+   Like test_expect_success this function can optionally use a three
+   argument invocation with a prerequisite as the first argument.
 
  - test_debug <script>
 
@@ -298,6 +308,27 @@ library for your script to use.
 
    Merges the given rev using the given message.  Like test_commit,
    creates a tag and calls test_tick before committing.
+
+ - test_set_prereq SOME_PREREQ
+
+   Set a test prerequisite to be used later with test_have_prereq. The
+   test-lib will set some prerequisites for you, e.g. PERL and PYTHON
+   which are derived from ./GIT-BUILD-OPTIONS (grep test_set_prereq
+   test-lib.sh for more). Others you can set yourself and use later
+   with either test_have_prereq directly, or the three argument
+   invocation of test_expect_success and test_expect_failure.
+
+ - test_have_prereq SOME PREREQ
+
+   Check if we have a prerequisite previously set with
+   test_set_prereq. The most common use of this directly is to skip
+   all the tests if we don't have some essential prerequisite:
+
+	if ! test_have_prereq PERL
+	then
+	    skip_all='skipping perl interface tests, perl not available'
+	    test_done
+	fi
 
 Tips for Writing Tests
 ----------------------
