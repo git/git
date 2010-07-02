@@ -2004,19 +2004,19 @@ endif
 		test -z "$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
 		ln "$$bindir/git$X" "$$execdir/git$X" 2>/dev/null || \
 		cp "$$bindir/git$X" "$$execdir/git$X"; } ; } && \
-	{ for p in $(BUILT_INS); do \
+	for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
 		ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
 		ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
 		cp "$$execdir/git$X" "$$execdir/$$p" || exit; \
-	  done; } && \
+	done && \
 	{ test x"$(REMOTE_CURL_ALIASES)" = x || \
-		{ for p in $(REMOTE_CURL_ALIASES); do \
+		for p in $(REMOTE_CURL_ALIASES); do \
 		$(RM) "$$execdir/$$p" && \
 		ln "$$execdir/git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
 		ln -s "git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
 		cp "$$execdir/git-remote-http$X" "$$execdir/$$p" || exit; \
-	  done; } ; } && \
+	done; } && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
 install-doc:
