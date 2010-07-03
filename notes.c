@@ -877,14 +877,6 @@ void string_list_add_refs_from_colon_sep(struct string_list *list,
 	strbuf_release(&globbuf);
 }
 
-static int string_list_add_refs_from_list(struct string_list_item *item,
-					  void *cb)
-{
-	struct string_list *list = cb;
-	string_list_add_refs_by_glob(list, item->string);
-	return 0;
-}
-
 static int notes_display_config(const char *k, const char *v, void *cb)
 {
 	int *load_refs = cb;
@@ -947,30 +939,18 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	load_subtree(t, &root_tree, t->root, 0);
 }
 
-struct load_notes_cb_data {
-	int counter;
-	struct notes_tree **trees;
-};
-
-static int load_one_display_note_ref(struct string_list_item *item,
-				     void *cb_data)
-{
-	struct load_notes_cb_data *c = cb_data;
-	struct notes_tree *t = xcalloc(1, sizeof(struct notes_tree));
-	init_notes(t, item->string, combine_notes_ignore, 0);
-	c->trees[c->counter++] = t;
-	return 0;
-}
-
 struct notes_tree **load_notes_trees(struct string_list *refs)
 {
+	struct string_list_item *item;
+	int counter = 0;
 	struct notes_tree **trees;
-	struct load_notes_cb_data cb_data;
 	trees = xmalloc((refs->nr+1) * sizeof(struct notes_tree *));
-	cb_data.counter = 0;
-	cb_data.trees = trees;
-	for_each_string_list(refs, load_one_display_note_ref, &cb_data);
-	trees[cb_data.counter] = NULL;
+	for_each_string_list_item(item, refs) {
+		struct notes_tree *t = xcalloc(1, sizeof(struct notes_tree));
+		init_notes(t, item->string, combine_notes_ignore, 0);
+		trees[counter++] = t;
+	}
+	trees[counter] = NULL;
 	return trees;
 }
 
@@ -995,10 +975,12 @@ void init_display_notes(struct display_notes_opt *opt)
 
 	git_config(notes_display_config, &load_config_refs);
 
-	if (opt && opt->extra_notes_refs)
-		for_each_string_list(opt->extra_notes_refs,
-				     string_list_add_refs_from_list,
-				     &display_notes_refs);
+	if (opt && opt->extra_notes_refs) {
+		struct string_list_item *item;
+		for_each_string_list_item(item, opt->extra_notes_refs)
+			string_list_add_refs_by_glob(&display_notes_refs,
+						     item->string);
+	}
 
 	display_notes_trees = load_notes_trees(&display_notes_refs);
 	string_list_clear(&display_notes_refs, 0);
