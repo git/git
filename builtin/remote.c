@@ -134,7 +134,7 @@ static int add_branch(const char *key, const char *branchname,
 static int add(int argc, const char **argv)
 {
 	int fetch = 0, mirror = 0, fetch_tags = TAGS_DEFAULT;
-	struct string_list track = { NULL, 0, 0 };
+	struct string_list track = STRING_LIST_INIT_NODUP;
 	const char *master = NULL;
 	struct remote *remote;
 	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT;
@@ -596,7 +596,7 @@ static int mv(int argc, const char **argv)
 	};
 	struct remote *oldremote, *newremote;
 	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT, buf3 = STRBUF_INIT;
-	struct string_list remote_branches = { NULL, 0, 0, 0 };
+	struct string_list remote_branches = STRING_LIST_INIT_NODUP;
 	struct rename_info rename;
 	int i;
 
@@ -734,8 +734,8 @@ static int rm(int argc, const char **argv)
 	struct remote *remote;
 	struct strbuf buf = STRBUF_INIT;
 	struct known_remotes known_remotes = { NULL, NULL };
-	struct string_list branches = { NULL, 0, 0, 1 };
-	struct string_list skipped = { NULL, 0, 0, 1 };
+	struct string_list branches = STRING_LIST_INIT_DUP;
+	struct string_list skipped = STRING_LIST_INIT_DUP;
 	struct branches_for_remote cb_data;
 	int i, result;
 
@@ -1044,7 +1044,7 @@ static int show(int argc, const char **argv)
 		OPT_END()
 	};
 	struct ref_states states;
-	struct string_list info_list = { NULL, 0, 0, 0 };
+	struct string_list info_list = STRING_LIST_INIT_NODUP;
 	struct show_info info;
 
 	argc = parse_options(argc, argv, NULL, options, builtin_remote_show_usage,
@@ -1483,7 +1483,7 @@ static int get_one_entry(struct remote *remote, void *priv)
 
 static int show_all(void)
 {
-	struct string_list list = { NULL, 0, 0 };
+	struct string_list list = STRING_LIST_INIT_NODUP;
 	int result;
 
 	list.strdup_strings = 1;

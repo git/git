@@ -836,7 +836,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	struct grep_opt opt;
 	struct object_array list = { 0, 0, NULL };
 	const char **paths = NULL;
-	struct string_list path_list = { NULL, 0, 0, 0 };
+	struct string_list path_list = STRING_LIST_INIT_NODUP;
 	int i;
 	int dummy;
 	int nongit = 0, use_index = 1;
