@@ -69,7 +69,7 @@ frequently used options.
 	the form "'<from>'..'<to>'" to show all revisions between '<from>' and
 	back to '<to>'. Note, more advanced revision selection can be applied.
 	For a more complete list of ways to spell object names, see
-	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
+	linkgit:gitrevisions[1].
 
 <path>...::
 

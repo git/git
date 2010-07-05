@@ -34,8 +34,7 @@ include::diff-options.txt[]
 	either <since> or <until> is omitted, it defaults to
 	`HEAD`, i.e. the tip of the current branch.
 	For a more complete list of ways to spell <since>
-	and <until>, see "SPECIFYING REVISIONS" section in
-	linkgit:git-rev-parse[1].
+	and <until>, see linkgit:gitrevisions[1].
 
 --no-decorate::
 --decorate[=short|full|no]::
