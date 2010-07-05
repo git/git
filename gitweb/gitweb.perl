@@ -1027,17 +1027,17 @@ sub dispatch {
 	$actions{$action}->();
 }
 
-sub run_request {
+sub reset_timer {
 	our $t0 = [Time::HiRes::gettimeofday()]
 		if defined $t0;
+	our $number_of_git_cmds = 0;
+}
+
+sub run_request {
+	reset_timer();
 
 	evaluate_uri();
-	evaluate_gitweb_config();
-	evaluate_git_version();
 	check_loadavg();
-
-	# $projectroot and $projects_list might be set in gitweb config file
-	$projects_list ||= $projectroot;
 
 	evaluate_query_params();
 	evaluate_path_info();
@@ -1086,6 +1086,11 @@ sub evaluate_argv {
 
 sub run {
 	evaluate_argv();
+	evaluate_gitweb_config();
+	evaluate_git_version();
+
+	# $projectroot and $projects_list might be set in gitweb config file
+	$projects_list ||= $projectroot;
 
 	$pre_listen_hook->()
 		if $pre_listen_hook;

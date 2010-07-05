@@ -635,7 +635,7 @@ int parse_date_toffset(const char *date, unsigned long *timestamp, int *offset)
 	/* mktime uses local timezone */
 	*timestamp = tm_to_time_t(&tm);
 	if (*offset == -1)
-		*offset = (*timestamp - mktime(&tm)) / 60;
+		*offset = ((time_t)*timestamp - mktime(&tm)) / 60;
 
 	if (*timestamp == -1)
 		return -1;

@@ -4,10 +4,13 @@ Git v1.7.2 Release Notes (draft)
 Updates since v1.7.1
 --------------------
 
- * core.eol configuration and eol attribute are the new way to control
-   the end of line conventions for files in the working tree;
-   core.autocrlf overrides it, keeping the traditional behaviour by
-   default.
+ * core.eol configuration and text/eol attributes are the new way to control
+   the end of line conventions for files in the working tree.
+
+ * core.autocrlf has been made safer - it will now only handle line
+   endings for new files and files that are LF-only in the
+   repository. To normalize content that has been checked in with
+   CRLF, use the new eol/text attributes.
 
  * The whitespace rules used in "git apply --whitespace" and "git diff"
    gained a new member in the family (tab-in-indent) to help projects with
@@ -45,8 +48,12 @@ Updates since v1.7.1
    commit.
 
  * "git cherry-pick" learned to pick a range of commits
-   (e.g. "cherry-pick A..B" and "cherry-pick --stdin"); this does not
-   have nicer sequencing control "rebase [-i]" has, though.
+   (e.g. "cherry-pick A..B" and "cherry-pick --stdin"), so did "git
+   revert"; these do not support the nicer sequencing control "rebase
+   [-i]" has, though.
+
+ * "git cherry-pick" and "git revert" learned --strategy option to specify
+   the merge strategy to be used when performing three-way merges.
 
  * "git cvsserver" can be told to use pserver; its password file can be
    stored outside the repository.
@@ -74,7 +81,7 @@ Updates since v1.7.1
  * Various options to "git grep" (e.g. --count, --name-only) work better
    with binary files.
 
- * "git grep" learned "-Ovi" to open the files with hits in yoru editor.
+ * "git grep" learned "-Ovi" to open the files with hits in your editor.
 
  * "git help -w" learned "chrome" and "chromium" browsers.
 
@@ -95,8 +102,6 @@ Updates since v1.7.1
    signature line in the format-patch output.
 
  * "git remote" learned "set-branches" subcommand.
-
- * "git revert" learned --strategy option to specify the merge strategy.
 
  * "git rev-list A..B" learned --ancestry-path option to further limit
    the result to the commits that are on the ancestry chain between A and
@@ -146,9 +151,6 @@ release, unless otherwise noted.
 
  * "git diff" could show ambiguous abbreviation of blob object names on
    its "index" line (3e5a188).
-
- * "git rebase" did not faithfully reproduce a malformed author ident, that
-   is often seen in a repository converted from foreign SCMs (43c23251).
 
  * "git reset --hard" started from a wrong directory and a working tree in
    a nonstandard location is in use got confused (560fb6a1).
