@@ -7,7 +7,7 @@ git-rerere - Reuse recorded resolution of conflicted merges
 
 SYNOPSIS
 --------
-'git rerere' ['clear'|'diff'|'status'|'gc']
+'git rerere' ['clear'|'forget' [<pathspec>]|'diff'|'status'|'gc']
 
 DESCRIPTION
 -----------
@@ -39,6 +39,11 @@ its working state.
 This resets the metadata used by rerere if a merge resolution is to be
 aborted.  Calling 'git am [--skip|--abort]' or 'git rebase [--skip|--abort]'
 will automatically invoke this command.
+
+'forget' <pathspec>::
+
+This resets the conflict resolutions which rerere has recorded for the current
+conflict in <pathspec>.  The <pathspec> is optional.
 
 'diff'::
 

@@ -28,8 +28,8 @@ check_show 31449600 '12 months ago'
 
 check_parse() {
 	echo "$1 -> $2" >expect
-	test_expect_${3:-success} "parse date ($1)" "
-	test-date parse '$1' >actual &&
+	test_expect_${4:-success} "parse date ($1${3:+ TZ=$3})" "
+	TZ=${3:-$TZ} test-date parse '$1' >actual &&
 	test_cmp expect actual
 	"
 }
@@ -38,6 +38,7 @@ check_parse 2008 bad
 check_parse 2008-02 bad
 check_parse 2008-02-14 bad
 check_parse '2008-02-14 20:30:45' '2008-02-14 20:30:45 +0000'
+check_parse '2008-02-14 20:30:45 -0500' '2008-02-14 20:30:45 -0500'
 
 check_approxidate() {
 	echo "$1 -> $2 +0000" >expect
