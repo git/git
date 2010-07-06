@@ -2010,13 +2010,13 @@ endif
 		ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
 		cp "$$execdir/git$X" "$$execdir/$$p" || exit; \
 	done && \
-	{ test x"$(REMOTE_CURL_ALIASES)" = x || \
-		for p in $(REMOTE_CURL_ALIASES); do \
+	remote_curl_aliases="$(REMOTE_CURL_ALIASES)" && \
+	for p in $$remote_curl_aliases; do \
 		$(RM) "$$execdir/$$p" && \
 		ln "$$execdir/git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
 		ln -s "git-remote-http$X" "$$execdir/$$p" 2>/dev/null || \
 		cp "$$execdir/git-remote-http$X" "$$execdir/$$p" || exit; \
-	done; } && \
+	done && \
 	./check_bindir "z$$bindir" "z$$execdir" "$$bindir/git-add$X"
 
 install-doc:
