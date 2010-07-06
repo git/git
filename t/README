@@ -448,6 +448,37 @@ library for your script to use.
 	    'Perl API' \
 	    "$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl
 
+ - test_must_fail <git-command>
+
+   Run a git command and ensure it fails in a controlled way.  Use
+   this instead of "! <git-command>" to fail when git commands
+   segfault.
+
+ - test_might_fail <git-command>
+
+   Similar to test_must_fail, but tolerate success, too.  Use this
+   instead of "<git-command> || :" to catch failures due to segv.
+
+ - test_cmp <expected> <actual>
+
+   Check whether the content of the <actual> file matches the
+   <expected> file.  This behaves like "cmp" but produces more
+   helpful output when the test is run with "-v" option.
+
+ - test_when_finished <script>
+
+   Prepend <script> to a list of commands to run to clean up
+   at the end of the current test.  If some clean-up command
+   fails, the test will not pass.
+
+   Example:
+
+	test_expect_success 'branch pointing to non-commit' '
+		git rev-parse HEAD^{tree} >.git/refs/heads/invalid &&
+		test_when_finished "git update-ref -d refs/heads/invalid" &&
+		...
+	'
+
 
 Tips for Writing Tests
 ----------------------
