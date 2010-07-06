@@ -263,10 +263,10 @@ pick_one_preserving_merges () {
 	then
 		if test "$fast_forward" = t
 		then
-			cat "$DOTEST"/current-commit | while read current_commit
+			while read current_commit
 			do
 				git rev-parse HEAD > "$REWRITTEN"/$current_commit
-			done
+			done <"$DOTEST"/current-commit
 			rm "$DOTEST"/current-commit ||
 			die "Cannot write current commit's replacement sha1"
 		fi
@@ -440,9 +440,9 @@ record_in_rewritten() {
 	echo "$oldsha1" >> "$REWRITTEN_PENDING"
 
 	case "$(peek_next_command)" in
-	    squash|s|fixup|f)
+	squash|s|fixup|f)
 		;;
-	    *)
+	*)
 		flush_rewritten_pending
 		;;
 	esac
@@ -890,7 +890,8 @@ first and then run 'git rebase --continue' again."
 		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
 			--abbrev=7 --reverse --left-right --topo-order \
 			$REVISIONS | \
-			sed -n "s/^>//p" | while read shortsha1 rest
+			sed -n "s/^>//p" |
+		while read shortsha1 rest
 		do
 			if test t != "$PRESERVE_MERGES"
 			then
