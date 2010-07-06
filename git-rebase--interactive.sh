@@ -450,7 +450,7 @@ record_in_rewritten() {
 
 do_next () {
 	rm -f "$MSG" "$AUTHOR_SCRIPT" "$AMEND" || exit
-	read command sha1 rest < "$TODO"
+	read -r command sha1 rest < "$TODO"
 	case "$command" in
 	'#'*|''|noop)
 		mark_action_done
@@ -591,7 +591,7 @@ do_rest () {
 # skip picking commits whose parents are unchanged
 skip_unnecessary_picks () {
 	fd=3
-	while read command sha1 rest
+	while read -r command sha1 rest
 	do
 		# fd=3 means we skip the command
 		case "$fd,$command,$(git rev-parse --verify --quiet $sha1^)" in
@@ -644,13 +644,13 @@ rearrange_squash () {
 	test -s "$1.sq" || return
 
 	used=
-	while read pick sha1 message
+	while read -r pick sha1 message
 	do
 		case " $used" in
 		*" $sha1 "*) continue ;;
 		esac
 		echo "$pick $sha1 $message"
-		while read squash action msg
+		while read -r squash action msg
 		do
 			case "$message" in
 			"$msg"*)
@@ -891,7 +891,7 @@ first and then run 'git rebase --continue' again."
 			--abbrev=7 --reverse --left-right --topo-order \
 			$REVISIONS | \
 			sed -n "s/^>//p" |
-		while read shortsha1 rest
+		while read -r shortsha1 rest
 		do
 			if test t != "$PRESERVE_MERGES"
 			then

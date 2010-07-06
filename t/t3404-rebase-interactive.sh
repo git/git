@@ -630,4 +630,22 @@ test_expect_success 'always cherry-pick with --no-ff' '
 	test_cmp empty out
 '
 
+test_expect_success 'set up commits with funny messages' '
+	git checkout -b funny A &&
+	echo >>file1 &&
+	test_tick &&
+	git commit -a -m "end with slash\\" &&
+	echo >>file1 &&
+	test_tick &&
+	git commit -a -m "another commit"
+'
+
+test_expect_success 'rebase-i history with funny messages' '
+	git rev-list A..funny >expect &&
+	test_tick &&
+	FAKE_LINES="1 2" git rebase -i A &&
+	git rev-list A.. >actual &&
+	test_cmp expect actual
+'
+
 test_done
