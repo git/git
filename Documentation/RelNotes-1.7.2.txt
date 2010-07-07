@@ -121,6 +121,8 @@ Updates since v1.7.1
    highlighting, "plackup" support for instaweb, .fcgi suffix to run
    it as FastCGI script, etc.
 
+ * The test harness has been updated to produce TAP-friendly output.
+
 
 Fixes since v1.7.1
 ------------------
@@ -129,22 +131,10 @@ All of the fixes in v1.7.1.X maintenance series are included in this
 release, unless otherwise noted.
 
  * We didn't URL decode "file:///path/to/repo" correctly when path/to/repo
-   had percent-encoded characters (638794c, 9d2e942).
-
- * "git commit" did not honor GIT_REFLOG_ACTION environment variable, resulting
-   reflog messages for cherry-pick and revert actions to be recorded as "commit".
-
- * "git clone/fetch/pull" issued an incorrect error message when a ref and
-   a symref that points to the ref were updated at the same time.  This
-   obviously would update them to the same value, and should not result in
-   an error condition (0e71bc3).
+   had percent-encoded characters (638794c, 9d2e942, ce83eda, 3c73a1d).
 
  * "git clone" did not configure remote.origin.url correctly for bare
    clones (df61c889).
-
- * "git diff" inside a tree with many pathnames that have certain
-   characters has become very slow in 1.7.0 by mistake (will merge
-   e53e6b443 to 'maint').
 
  * "git diff --graph" works better with "--color-words" and other options
    (81fa024..4297c0a).
@@ -157,6 +147,6 @@ release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.7.2-rc0-60-g2927a50
+O=v1.7.2-rc1-37-g2a16315
 echo O=$(git describe HEAD)
 git shortlog --no-merges HEAD ^maint ^$O
