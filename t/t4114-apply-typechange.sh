@@ -11,7 +11,7 @@ test_description='git apply should not get confused with type changes.
 
 if ! test_have_prereq SYMLINKS
 then
-	say 'Symbolic links not supported, skipping tests.'
+	skip_all='Symbolic links not supported, skipping tests.'
 	test_done
 fi
 

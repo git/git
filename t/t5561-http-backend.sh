@@ -4,7 +4,7 @@ test_description='test git-http-backend'
 . ./test-lib.sh
 
 if test -n "$NO_CURL"; then
-	say 'skipping test, git built without http support'
+	skip_all='skipping test, git built without http support'
 	test_done
 fi
 

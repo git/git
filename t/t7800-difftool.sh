@@ -11,7 +11,7 @@ Testing basic diff tool invocation
 . ./test-lib.sh
 
 if ! test_have_prereq PERL; then
-	say 'skipping difftool tests, perl not available'
+	skip_all='skipping difftool tests, perl not available'
 	test_done
 fi
 

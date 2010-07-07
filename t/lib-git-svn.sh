@@ -5,11 +5,11 @@ git_svn_id=git""-svn-id
 
 if test -n "$NO_SVN_TESTS"
 then
-	say 'skipping git svn tests, NO_SVN_TESTS defined'
+	skip_all='skipping git svn tests, NO_SVN_TESTS defined'
 	test_done
 fi
 if ! test_have_prereq PERL; then
-	say 'skipping git svn tests, perl not available'
+	skip_all='skipping git svn tests, perl not available'
 	test_done
 fi
 
