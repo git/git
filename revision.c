@@ -820,12 +820,12 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 	cb->all_flags = flags;
 }
 
-static void handle_refs(struct rev_info *revs, unsigned flags,
-		int (*for_each)(each_ref_fn, void *))
+static void handle_refs(const char *submodule, struct rev_info *revs, unsigned flags,
+		int (*for_each)(const char *, each_ref_fn, void *))
 {
 	struct all_refs_cb cb;
 	init_all_refs_cb(&cb, revs, flags);
-	for_each(handle_one_ref, &cb);
+	for_each(submodule, handle_one_ref, &cb);
 }
 
 static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
@@ -1417,14 +1417,14 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 	ctx->argc -= n;
 }
 
-static int for_each_bad_bisect_ref(each_ref_fn fn, void *cb_data)
+static int for_each_bad_bisect_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 {
-	return for_each_ref_in("refs/bisect/bad", fn, cb_data);
+	return for_each_ref_in_submodule(submodule, "refs/bisect/bad", fn, cb_data);
 }
 
-static int for_each_good_bisect_ref(each_ref_fn fn, void *cb_data)
+static int for_each_good_bisect_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 {
-	return for_each_ref_in("refs/bisect/good", fn, cb_data);
+	return for_each_ref_in_submodule(submodule, "refs/bisect/good", fn, cb_data);
 }
 
 static void append_prune_data(const char ***prune_data, const char **av)
@@ -1466,6 +1466,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 {
 	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0;
 	const char **prune_data = NULL;
+	const char *submodule = NULL;
+
+	if (opt)
+		submodule = opt->submodule;
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
@@ -1490,26 +1494,26 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			int opts;
 
 			if (!strcmp(arg, "--all")) {
-				handle_refs(revs, flags, for_each_ref);
-				handle_refs(revs, flags, head_ref);
+				handle_refs(submodule, revs, flags, for_each_ref_submodule);
+				handle_refs(submodule, revs, flags, head_ref_submodule);
 				continue;
 			}
 			if (!strcmp(arg, "--branches")) {
-				handle_refs(revs, flags, for_each_branch_ref);
+				handle_refs(submodule, revs, flags, for_each_branch_ref_submodule);
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				handle_refs(revs, flags, for_each_bad_bisect_ref);
-				handle_refs(revs, flags ^ UNINTERESTING, for_each_good_bisect_ref);
+				handle_refs(submodule, revs, flags, for_each_bad_bisect_ref);
+				handle_refs(submodule, revs, flags ^ UNINTERESTING, for_each_good_bisect_ref);
 				revs->bisect = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--tags")) {
-				handle_refs(revs, flags, for_each_tag_ref);
+				handle_refs(submodule, revs, flags, for_each_tag_ref_submodule);
 				continue;
 			}
 			if (!strcmp(arg, "--remotes")) {
-				handle_refs(revs, flags, for_each_remote_ref);
+				handle_refs(submodule, revs, flags, for_each_remote_ref_submodule);
 				continue;
 			}
 			if (!prefixcmp(arg, "--glob=")) {
