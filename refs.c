@@ -1086,6 +1086,15 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 	return ret;
 }
 
+/*
+ * People using contrib's git-new-workdir have .git/logs/refs ->
+ * /some/other/path/.git/logs/refs, and that may live on another device.
+ *
+ * IOW, to avoid cross device rename errors, the temporary renamed log must
+ * live into logs/refs.
+ */
+#define TMP_RENAMED_LOG  "logs/refs/.tmp-renamed-log"
+
 int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 {
 	static const char renamed_ref[] = "RENAMED-REF";
@@ -1119,8 +1128,8 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	if (write_ref_sha1(lock, orig_sha1, logmsg))
 		return error("unable to save current sha1 in %s", renamed_ref);
 
-	if (log && rename(git_path("logs/%s", oldref), git_path("tmp-renamed-log")))
-		return error("unable to move logfile logs/%s to tmp-renamed-log: %s",
+	if (log && rename(git_path("logs/%s", oldref), git_path(TMP_RENAMED_LOG)))
+		return error("unable to move logfile logs/%s to "TMP_RENAMED_LOG": %s",
 			oldref, strerror(errno));
 
 	if (delete_ref(oldref, orig_sha1, REF_NODEREF)) {
@@ -1146,7 +1155,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	}
 
  retry:
-	if (log && rename(git_path("tmp-renamed-log"), git_path("logs/%s", newref))) {
+	if (log && rename(git_path(TMP_RENAMED_LOG), git_path("logs/%s", newref))) {
 		if (errno==EISDIR || errno==ENOTDIR) {
 			/*
 			 * rename(a, b) when b is an existing
@@ -1159,7 +1168,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 			}
 			goto retry;
 		} else {
-			error("unable to move logfile tmp-renamed-log to logs/%s: %s",
+			error("unable to move logfile "TMP_RENAMED_LOG" to logs/%s: %s",
 				newref, strerror(errno));
 			goto rollback;
 		}
@@ -1199,8 +1208,8 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 		error("unable to restore logfile %s from %s: %s",
 			oldref, newref, strerror(errno));
 	if (!logmoved && log &&
-	    rename(git_path("tmp-renamed-log"), git_path("logs/%s", oldref)))
-		error("unable to restore logfile %s from tmp-renamed-log: %s",
+	    rename(git_path(TMP_RENAMED_LOG), git_path("logs/%s", oldref)))
+		error("unable to restore logfile %s from "TMP_RENAMED_LOG": %s",
 			oldref, strerror(errno));
 
 	return 1;
