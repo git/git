@@ -20,12 +20,12 @@ static void parse_dates(char **argv, struct timeval *now)
 {
 	for (; *argv; argv++) {
 		char result[100];
-		time_t t;
+		unsigned long t;
 		int tz;
 
 		result[0] = 0;
 		parse_date(*argv, result, sizeof(result));
-		if (sscanf(result, "%ld %d", &t, &tz) == 2)
+		if (sscanf(result, "%lu %d", &t, &tz) == 2)
 			printf("%s -> %s\n",
 			       *argv, show_date(t, tz, DATE_ISO8601));
 		else

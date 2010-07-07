@@ -45,7 +45,7 @@ test_expect_success setup '
 	 git commit -m sub-b) &&
 	git add sub &&
 	test_tick &&
-	git commit -m b
+	git commit -m b &&
 
 	git checkout -b c a &&
 	git merge -s ours b &&
