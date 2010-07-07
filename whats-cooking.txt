@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2010, #05; Sun, 27)
-X-master-at: 492b10766f499b60bdc867c253f36d274ac51538
-X-next-at: 3336145a668a798c0dd3f7363f53ae788d35dcc9
+Subject: What's cooking in git.git (Jul 2010, #01; Wed, 7)
+X-master-at: 9918285fb10d81af9021dae99c5f4de88ded497c
+X-next-at: d2de19aa28e5ced283c67ce145b26a327a88acd4
 
-What's cooking in git.git (Jun 2010, #05; Sun, 27)
+What's cooking in git.git (Jul 2010, #01; Wed, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,64 +11,57 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-I'd like to have most of the topics still cooking in 'next' in upcoming 1.7.2
-while I don't think any of the ones out of 'next' is ready; that makes
-today the perfect time to tag 1.7.2-rc0 ;-)
-
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/blame-textconv (2010-06-07) 3 commits
-  (merged to 'next' on 2010-06-23 at a7da5af)
- + t/t8006: test textconv support for blame
- + textconv: support for blame
- + textconv: make the API public
- (this branch is used by cp/textconv-cat-file.)
+* ab/tap (2010-06-28) 7 commits
+  (merged to 'next' on 2010-06-29 at c73dc30)
+ + t/t9700/test.pl: don't access private object members, use public access methods
+  (merged to 'next' on 2010-06-27 at a761d14)
+ + t9700: Use Test::More->builder, not $Test::Builder::Test
+ + tests: Say "pass" rather than "ok" on empty lines for TAP
+ + tests: Skip tests in a way that makes sense under TAP
+ + test-lib: output a newline before "ok" under a TAP harness
+ + test-lib: Make the test_external_* functions TAP-aware
+ + test-lib: Adjust output to be valid TAP format
 
-* cp/textconv-cat-file (2010-06-09) 5 commits
- + git-cat-file.txt: Document --textconv
-  (merged to 'next' on 2010-06-23 at eb6f216)
- + t/t8007: test textconv support for cat-file
- + textconv: support for cat_file
- + sha1_name: add get_sha1_with_context()
+* ar/decorate-color (2010-06-29) 5 commits
+  (merged to 'next' on 2010-06-30 at 2d72999)
+ + Add test for correct coloring of git log --decoration
+ + Allow customizable commit decorations colors
+ + log --decorate: Colorize commit decorations
+ + log-tree.c: Use struct name_decoration's type for classifying decoration
+ + commit.h: add 'type' to struct name_decoration
 
-* jn/show-num-walks (2010-06-01) 1 commit
-  (merged to 'next' on 2010-06-23 at e61649c)
- + DWIM 'git show -5' to 'git show --do-walk -5'
+* as/maint-completion-set-u-fix (2010-06-17) 1 commit
+  (merged to 'next' on 2010-06-27 at 24ce8c2)
+ + bash-completion: Fix __git_ps1 to work with "set -u"
 
-* js/maint-am-rebase-invalid-author (2010-06-16) 1 commit
-  (merged to 'next' on 2010-06-23 at b345ad5)
- + am: use get_author_ident_from_commit instead of mailinfo when rebasing
-
-* pb/maint-perl-errmsg-no-dir (2010-06-18) 1 commit
-  (merged to 'next' on 2010-06-23 at 990ea67)
- + Git.pm: better error message
-
-* tr/send-email-8bit (2010-06-17) 1 commit
-  (merged to 'next' on 2010-06-23 at be75199)
- + send-email: ask about and declare 8bit mails
-
---------------------------------------------------
-[New Topics]
+* cc/cherry-pick-stdin (2010-06-14) 4 commits
+  (merged to 'next' on 2010-06-29 at ee7a28a)
+ + revert: do not rebuild argv on heap
+ + Merge commit 'v1.7.2-rc0~6^2' into cc/cherry-pick-stdin
+  (merged to 'next' on 2010-06-27 at 3af0bba)
+ + revert: accept arbitrary rev-list options
+ + t3508 (cherry-pick): futureproof against unmerged files
 
 * jk/url-decode (2010-06-24) 1 commit
- - url_decode: URL scheme ends with a colon and does not require a slash
+  (merged to 'next' on 2010-06-28 at 5144a8f)
+ + url_decode: URL scheme ends with a colon and does not require a slash
+
+* jl/maint-diff-ignore-submodules (2010-06-25) 3 commits
+  (merged to 'next' on 2010-06-25 at d75dbf1)
+ + t4027,4041: Use test -s to test for an empty file
+  (merged to 'next' on 2010-06-23 at 057acb7)
+ + Add optional parameters to the diff option "--ignore-submodules"
+ + git diff: rename test that had a conflicting name
 
 * jl/maint-submodule-ignore-dirty-submodules (2010-06-25) 1 commit
- - git submodule: ignore dirty submodules for summary and status
- (this branch is used by jl/status-ignore-submodules and jl/status-ignore-submodules; uses jl/maint-diff-ignore-submodules.)
+ + git submodule: ignore dirty submodules for summary and status
 
 * jl/status-ignore-submodules (2010-06-25) 1 commit
- - Add the option "--ignore-submodules" to "git status"
- (this branch uses jl/maint-diff-ignore-submodules, jl/maint-submodule-ignore-dirty-submodules and jl/maint-submodule-ignore-dirty-submodules.)
-
-These two looked sane; will merge to 'next' shortly.
-
-* mg/doc-rev-parse-treepath-syntax (2010-06-27) 1 commit
- - git-rev-parse.txt: Document ":path" specifier
-
-Swapping the two bullets in the existing documentation without anything
-else may be a simpler and easier-to-read alternative.
+  (merged to 'next' on 2010-06-28 at bd9ae9e)
+ + Add the option "--ignore-submodules" to "git status"
 
 * jp/string-list-api-cleanup (2010-06-26) 6 commits
   (merged to 'next' on 2010-06-27 at b1e8b97)
@@ -78,17 +71,115 @@ else may be a simpler and easier-to-read alternative.
  + string_list: Fix argument order for string_list_insert
  + string_list: Fix argument order for for_each_string_list
  + string_list: Fix argument order for print_string_list
- (this branch is used by jn/grep-open.)
+
+* mg/doc-rev-parse-treepath-syntax (2010-06-28) 2 commits
+  (merged to 'next' on 2010-06-30 at be16ac8)
+ + git-rev-parse.txt: Add more examples for caret and colon
+ + git-rev-parse.txt: Document ":path" specifier
 
 * mg/rev-parse-tests (2010-05-14) 2 commits
   (merged to 'next' on 2010-06-27 at 3336145)
  + t6018: make sure all tested symbolic names are different revs
  + t6018: add tests for rev-list's --branches and --tags
 
-Resurrects the tests from discarded mg/rev-parse-option-sifter-deprecation.
+* tr/rev-list-count (2010-06-17) 2 commits
+  (merged to 'next' on 2010-06-27 at 0525b63)
+ + bash completion: Support "divergence from upstream" messages in __git_ps1
+ + rev-list: introduce --count option
+
+--------------------------------------------------
+[New Topics]
+
+* jn/paginate-fix (2010-06-26) 4 commits
+ - git --paginate: do not commit pager choice too early
+ - tests: local config file should be honored from subdirs of toplevel
+ - t7006: test pager configuration for several git commands
+ - t7006 (pager): introduce helper for parameterized tests
+
+* ar/string-list-foreach (2010-07-03) 2 commits
+ - Convert the users of for_each_string_list to for_each_string_list_item macro
+ - Add a for_each_string_list_item macro
+ (this branch is used by tf/string-list-init.)
+
+* il/rfc-remote-fd-ext (2010-06-28) 2 commits
+ - New remote helper: git-remote-ext
+ - New remote helper git-remote-fd
+
+* ab/submodule-add-f (2010-07-05) 1 commit
+ - git submodule: add submodules with git add -f <path>
+
+* bc/maint-makefile-fixes (2010-07-06) 2 commits
+ - Makefile: work around ksh's failure to handle missing list argument to for loop
+ - Makefile: remove some unnecessary curly braces
+
+* gp/pack-refs-remove-empty-dirs (2010-07-06) 1 commit
+ - pack-refs: remove newly empty directories
+
+* hv/submodule-find-ff-merge (2010-07-07) 3 commits
+ - Implement automatic fast-forward merge for submodules
+ - setup_revisions(): Allow walking history in a submodule
+ - Teach ref iteration module about submodules
+
+* jc/rebase-i-commit-msg-fix (2010-07-05) 2 commits
+ - rebase-i: do not get fooled by a log message ending with backslash
+ - rebase-i: style fix
+
+* jk/maint-status-keep-index-timestamp (2010-07-06) 1 commit
+ - do not write out index when status does not have to
+
+* jk/tag-contains (2010-07-05) 4 commits
+ - Why is "git tag --contains" so slow?
+ - default core.clockskew variable to one day
+ - limit "contains" traversals based on commit timestamp
+ - tag: speed up --contains calculation
+
+* jn/fast-import-subtree (2010-06-30) 1 commit
+ - Teach fast-import to import subtrees named by tree id
+
+* mg/revision-doc (2010-07-05) 3 commits
+ - Documentation: link to gitrevisions rather than git-rev-parse
+ - Documentation: gitrevisions
+ - Documentation: split off rev doc into include file
+
+* sg/rerere-gc-old-still-used (2010-07-01) 2 commits
+ . rerere: fix overeager gc
+ . mingw_utime(): handle NULL times parameter
+
+* tf/string-list-init (2010-07-04) 1 commit
+ - string_list: Add STRING_LIST_INIT macro and make use of it.
+ (this branch uses ar/string-list-foreach.)
+
+* en/d-f-conflict-fix (2010-07-07) 9 commits
+ - Merge branch 'jc/d-f-conflict-fix-fixup' into en/d-f-conflict-fix
+ - fast-import: Improve robustness when D->F changes provided in wrong order
+ - Fixup (5)
+ - fast-export: Fix output order of D/F changes
+ - Fixup (4)
+ - merge_recursive: Fix renames across paths below D/F conflicts
+ - Fixup (3)
+ - merge-recursive: Fix D/F conflicts
+ - Add a rename + D/F conflict testcase
+ (this branch uses jc/d-f-conflict-fix-fixup.)
+
+* jc/d-f-conflict-fix-fixup (2010-07-07) 4 commits
+ - Fixup (2)
+ - Add a rename + D/F conflict testcase
+ - Fixup (1)
+ - Add additional testcases for D/F conflicts
+ (this branch is used by en/d-f-conflict-fix.)
 
 --------------------------------------------------
 [Stalled -- would discard unless there are some movements soon]
+
+* ps/gitweb-soc (2010-06-02) 2 commits
+  (merged to 'next' on 2010-06-13 at 92245ae)
+ + git-instaweb: Add option to reuse previous config file
+ + Makefile: Use $(sharedir)/gitweb for target 'install-gitweb'
+
+If we are going to have a configuration variable to control this, I
+strongly suspect that --reuse-config should be renamed so that the
+variable can be named more sanely and in line with whatever option
+that replaces it.
 
 * js/rebase-origin-x (2010-02-05) 1 commit
  - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
@@ -100,7 +191,7 @@ moving forward.
  - add --recode-patch option to git-am
  - add --recode-patch option to git-mailinfo
 
-Perhaps another round is coming?
+I recall there was another round of re-roll planned for this one.
 
 * rr/svn-export (2010-06-10) 7 commits
  - Add LICENSE
@@ -113,102 +204,21 @@ Perhaps another round is coming?
 
 I recall there was another round of re-roll planned for this one.
 
-* ab/i18n (2010-06-15) 3 commits
- . Add initial C, Shell and Perl gettext translations
- . fixup! Add infrastructure
- . Add infrastructure for translating Git with gettext
-
-The parts that touch other topics in flight probably need to be split into
-separate patches; otherwise it is unmanageable.
-
 --------------------------------------------------
 [Cooking]
 
-* ps/gitweb-soc (2010-06-02) 2 commits
-  (merged to 'next' on 2010-06-13 at 92245ae)
- + git-instaweb: Add option to reuse previous config file
- + Makefile: Use $(sharedir)/gitweb for target 'install-gitweb'
+* jn/grep-open (2010-07-02) 1 commit
+ - grep -O: Do not pass color sequences as filenames to pager
 
-If we are going to have a configuration variable to control this, I
-strongly suspect that --reuse-config should be renamed so that the
-variable can be named more sanely and in line with whatever option
-that replaces it.
-
-* ab/tap (2010-06-26) 6 commits
-  (merged to 'next' on 2010-06-27 at a761d14)
- + t9700: Use Test::More->builder, not $Test::Builder::Test
- + tests: Say "pass" rather than "ok" on empty lines for TAP
- + tests: Skip tests in a way that makes sense under TAP
- + test-lib: output a newline before "ok" under a TAP harness
- + test-lib: Make the test_external_* functions TAP-aware
- + test-lib: Adjust output to be valid TAP format
-
-Updated with a newer round with support for older Test::More before 0.94
-version.
-
-* ar/decorate-color (2010-06-24) 4 commits
- - Allow customizable commit decorations colors
- - log --decorate: Colorize commit decorations
- - log-tree.c: Use struct name_decoration's type for classifying decoration
- - commit.h: add 'type' to struct name_decoration
-
-Tests, perhaps?  Otherwise looked sane.
+* ab/i18n (2010-06-23) 1 commit
+ - Add infrastructure for translating Git with gettext
 
 * tc/checkout-B (2010-06-24) 3 commits
  - builtin/checkout: learn -B
  - builtin/checkout: reword hint for -b
  - add tests for checkout -b
 
-* as/maint-completion-set-u-fix (2010-06-17) 1 commit
-  (merged to 'next' on 2010-06-27 at 24ce8c2)
- + bash-completion: Fix __git_ps1 to work with "set -u"
-
-* tr/rev-list-count (2010-06-17) 2 commits
-  (merged to 'next' on 2010-06-27 at 0525b63)
- + bash completion: Support "divergence from upstream" messages in __git_ps1
- + rev-list: introduce --count option
-
-* jl/maint-diff-ignore-submodules (2010-06-25) 3 commits
-  (merged to 'next' on 2010-06-25 at d75dbf1)
- + t4027,4041: Use test -s to test for an empty file
-  (merged to 'next' on 2010-06-23 at 057acb7)
- + Add optional parameters to the diff option "--ignore-submodules"
- + git diff: rename test that had a conflicting name
- (this branch is used by jl/maint-submodule-ignore-dirty-submodules and jl/status-ignore-submodules.)
-
-* jn/grep-open (2010-06-26) 8 commits
-  (merged to 'next' on 2010-06-27 at 84c0976)
- + Merge branch 'jp/string-list-api-cleanup' into jn/grep-open
-  (merged to 'next' on 2010-06-22 at 8edca58)
- + t/t7811-grep-open.sh: remove broken/redundant creation of fake "less" script
- + t/t7811-grep-open.sh: ensure fake "less" is made executable
- + t/lib-pager.sh: remove unnecessary '^' from 'expr' regular expression
-  (merged to 'next' on 2010-06-18 at cf96ea8)
- + grep -O: allow optional argument specifying the pager (or editor)
- + grep: Add the option '--open-files-in-pager'
- + Unify code paths of threaded greps
- + grep: refactor grep_objects loop into its own function
- (this branch uses jp/string-list-api-cleanup.)
-
-* eb/double-convert-before-merge (2010-06-16) 1 commit
- - ll-merge: Normalize files before merging
-
-* cc/cherry-pick-stdin (2010-06-14) 2 commits
-  (merged to 'next' on 2010-06-27 at 3af0bba)
- + revert: accept arbitrary rev-list options
- + t3508 (cherry-pick): futureproof against unmerged files
-
---------------------------------------------------
-[Discarded]
-
-* mg/rev-parse-lrbranches-locals (2010-05-14) 1 commit
- . revlist: Introduce --lrbranches and --locals revision specifiers
- (this branch uses mg/rev-parse-option-sifter-deprecation.)
-
-* mg/rev-parse-option-sifter-deprecation (2010-05-14) 3 commits
- . t6018: make sure all tested symbolic names are different revs
- . t6018: add tests for rev-list's --branches and --tags
- . rev-parse: deprecate use as an option sifter
-
-The tests are resurrected in a separate branch, though.
-
+* eb/double-convert-before-merge (2010-07-02) 3 commits
+ - Don't expand CRLFs when normalizing text during merge
+ - Try normalizing files to avoid delete/modify conflicts when merging
+ - Avoid conflicts when merging branches with mixed normalization
