@@ -28,7 +28,7 @@ test_expect_success 'setup svnrepo' '
 	svn_cmd cp -m "trailing .lock" "$svnrepo/pr ject/trunk" \
 			"$svnrepo/pr ject/branches/trailing_dotlock.lock" &&
 	svn_cmd cp -m "reflog" "$svnrepo/pr ject/trunk" \
-			"$svnrepo/pr ject/branches/not-a@{0}reflog" &&
+			"$svnrepo/pr ject/branches/not-a%40{0}reflog" &&
 	start_httpd
 	'
 
