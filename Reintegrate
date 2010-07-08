@@ -112,6 +112,10 @@ generate () {
 	shift
 	echo '#!/bin/sh'
 	echo "# $1"
+	echo 'case "$#,$1" in'
+	echo '1,-u|1,-d)'
+	echo "	exec $PROGRAM" '"$1" "$0"'
+	echo 'esac'
 	echo "$PROGRAM" '"$@" <<\EOF'
 	git log --pretty=oneline --first-parent "$1" |
 	{
