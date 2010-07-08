@@ -34,42 +34,46 @@ test_expect_success 'setup svnrepo' '
 
 test_expect_success 'test clone with funky branch names' '
 	git svn clone -s "$svnrepo/pr ject" project &&
-	cd project &&
+	(
+		cd project &&
 		git rev-parse "refs/remotes/fun%20plugin" &&
 		git rev-parse "refs/remotes/more%20fun%20plugin!" &&
 		git rev-parse "refs/remotes/$scary_ref" &&
 		git rev-parse "refs/remotes/%2Eleading_dot" &&
 		git rev-parse "refs/remotes/trailing_dot%2E" &&
 		git rev-parse "refs/remotes/trailing_dotlock%2Elock" &&
-		git rev-parse "refs/remotes/not-a%40{0}reflog" &&
-	cd ..
+		git rev-parse "refs/remotes/not-a%40{0}reflog"
+	)
 	'
 
 test_expect_success 'test dcommit to funky branch' "
-	cd project &&
-	git reset --hard 'refs/remotes/more%20fun%20plugin!' &&
-	echo hello >> foo &&
-	git commit -m 'hello' -- foo &&
-	git svn dcommit &&
-	cd ..
+	(
+		cd project &&
+		git reset --hard 'refs/remotes/more%20fun%20plugin!' &&
+		echo hello >> foo &&
+		git commit -m 'hello' -- foo &&
+		git svn dcommit
+	)
 	"
 
 test_expect_success 'test dcommit to scary branch' '
-	cd project &&
-	git reset --hard "refs/remotes/$scary_ref" &&
-	echo urls are scary >> foo &&
-	git commit -m "eep" -- foo &&
-	git svn dcommit &&
-	cd ..
+	(
+		cd project &&
+		git reset --hard "refs/remotes/$scary_ref" &&
+		echo urls are scary >> foo &&
+		git commit -m "eep" -- foo &&
+		git svn dcommit
+	)
 	'
 
 test_expect_success 'test dcommit to trailing_dotlock branch' '
-	cd project &&
-	git reset --hard "refs/remotes/trailing_dotlock%2Elock" &&
-	echo who names branches like this anyway? >> foo &&
-	git commit -m "bar" -- foo &&
-	git svn dcommit &&
-	cd ..
+	(
+		cd project &&
+		git reset --hard "refs/remotes/trailing_dotlock%2Elock" &&
+		echo who names branches like this anyway? >> foo &&
+		git commit -m "bar" -- foo &&
+		git svn dcommit
+	)
 	'
 
 stop_httpd
