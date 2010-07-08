@@ -113,7 +113,7 @@ done
 
 if ! echo 'echo space > "$1"' > "e space.sh"
 then
-	say "Skipping; FS does not support spaces in filenames"
+	skip_all="Skipping; FS does not support spaces in filenames"
 	test_done
 fi
 

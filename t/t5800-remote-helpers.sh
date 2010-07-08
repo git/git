@@ -15,7 +15,7 @@ if sys.hexversion < 0x02040000:
 then
 	:
 else
-	say 'skipping git remote-testgit tests: requires Python 2.4 or newer'
+	skip_all='skipping git remote-testgit tests: requires Python 2.4 or newer'
 	test_done
 fi
 

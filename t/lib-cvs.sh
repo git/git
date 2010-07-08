@@ -9,7 +9,7 @@ export HOME
 
 if ! type cvs >/dev/null 2>&1
 then
-	say 'skipping cvsimport tests, cvs not found'
+	skip_all='skipping cvsimport tests, cvs not found'
 	test_done
 fi
 
@@ -21,11 +21,11 @@ case "$cvsps_version" in
 2.1 | 2.2*)
 	;;
 '')
-	say 'skipping cvsimport tests, cvsps not found'
+	skip_all='skipping cvsimport tests, cvsps not found'
 	test_done
 	;;
 *)
-	say 'skipping cvsimport tests, unsupported cvsps version'
+	skip_all='skipping cvsimport tests, unsupported cvsps version'
 	test_done
 	;;
 esac
