@@ -1,6 +1,12 @@
 #!/bin/sh
 
 git push repo "$@" &&
-git push github "$@" &&
 git push sfjp "$@" &&
-git push sf.net "$@"
+git push sf.net "$@" &&
+
+case "$#" in
+0)
+	git push github "$@" ;;
+*)
+	echo "No push to github" ;;
+esac
