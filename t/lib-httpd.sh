@@ -45,7 +45,7 @@ HTTPD_DOCUMENT_ROOT_PATH=$HTTPD_ROOT_PATH/www
 
 if ! test -x "$LIB_HTTPD_PATH"
 then
-	say "skipping test, no web server found at '$LIB_HTTPD_PATH'"
+	skip_all="skipping test, no web server found at '$LIB_HTTPD_PATH'"
 	test_done
 fi
 
@@ -58,12 +58,12 @@ then
 	then
 		if ! test $HTTPD_VERSION -ge 2
 		then
-			say "skipping test, at least Apache version 2 is required"
+			skip_all="skipping test, at least Apache version 2 is required"
 			test_done
 		fi
 		if ! test -d "$DEFAULT_HTTPD_MODULE_PATH"
 		then
-			say "Apache module directory not found.  Skipping tests."
+			skip_all="Apache module directory not found.  Skipping tests."
 			test_done
 		fi
 
@@ -118,7 +118,7 @@ start_httpd() {
 		>&3 2>&4
 	if test $? -ne 0
 	then
-		say "skipping test, web server setup failed"
+		skip_all="skipping test, web server setup failed"
 		trap 'die' EXIT
 		test_done
 	fi

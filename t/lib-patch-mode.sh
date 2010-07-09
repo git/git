@@ -3,7 +3,7 @@
 . ./test-lib.sh
 
 if ! test_have_prereq PERL; then
-	say 'skipping --patch tests, perl not available'
+	skip_all='skipping --patch tests, perl not available'
 	test_done
 fi
 

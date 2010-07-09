@@ -21,7 +21,7 @@ PERL=${PERL:-perl}
 svn >/dev/null 2>&1
 if test $? -ne 1
 then
-    say 'skipping git svn tests, svn not found'
+    skip_all='skipping git svn tests, svn not found'
     test_done
 fi
 
@@ -40,13 +40,12 @@ x=$?
 if test $x -ne 0
 then
 	if test $x -eq 42; then
-		err='Perl SVN libraries must be >= 1.1.0'
+		skip_all='Perl SVN libraries must be >= 1.1.0'
 	elif test $x -eq 41; then
-		err='svnadmin failed to create fsfs repository'
+		skip_all='svnadmin failed to create fsfs repository'
 	else
-		err='Perl SVN libraries not found or unusable, skipping test'
+		skip_all='Perl SVN libraries not found or unusable'
 	fi
-	say "$err"
 	test_done
 fi
 
@@ -159,7 +158,7 @@ EOF
 require_svnserve () {
     if test -z "$SVNSERVE_PORT"
     then
-        say 'skipping svnserve test. (set $SVNSERVE_PORT to enable)'
+	skip_all='skipping svnserve test. (set $SVNSERVE_PORT to enable)'
         test_done
     fi
 }
