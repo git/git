@@ -77,6 +77,7 @@ static void logreport(int priority, const char *err, va_list params)
 	}
 }
 
+__attribute__((format (printf, 1, 2)))
 static void logerror(const char *err, ...)
 {
 	va_list params;
@@ -85,6 +86,7 @@ static void logerror(const char *err, ...)
 	va_end(params);
 }
 
+__attribute__((format (printf, 1, 2)))
 static void loginfo(const char *err, ...)
 {
 	va_list params;
@@ -101,53 +103,6 @@ static void NORETURN daemon_die(const char *err, va_list params)
 	exit(1);
 }
 
-static int avoid_alias(char *p)
-{
-	int sl, ndot;
-
-	/*
-	 * This resurrects the belts and suspenders paranoia check by HPA
-	 * done in <435560F7.4080006@zytor.com> thread, now enter_repo()
-	 * does not do getcwd() based path canonicalizations.
-	 *
-	 * sl becomes true immediately after seeing '/' and continues to
-	 * be true as long as dots continue after that without intervening
-	 * non-dot character.
-	 */
-	if (!p || (*p != '/' && *p != '~'))
-		return -1;
-	sl = 1; ndot = 0;
-	p++;
-
-	while (1) {
-		char ch = *p++;
-		if (sl) {
-			if (ch == '.')
-				ndot++;
-			else if (ch == '/') {
-				if (ndot < 3)
-					/* reject //, /./ and /../ */
-					return -1;
-				ndot = 0;
-			}
-			else if (ch == 0) {
-				if (0 < ndot && ndot < 3)
-					/* reject /.$ and /..$ */
-					return -1;
-				return 0;
-			}
-			else
-				sl = ndot = 0;
-		}
-		else if (ch == 0)
-			return 0;
-		else if (ch == '/') {
-			sl = 1;
-			ndot = 0;
-		}
-	}
-}
-
 static char *path_ok(char *directory)
 {
 	static char rpath[PATH_MAX];
@@ -157,7 +112,7 @@ static char *path_ok(char *directory)
 
 	dir = directory;
 
-	if (avoid_alias(dir)) {
+	if (daemon_avoid_alias(dir)) {
 		logerror("'%s': aliased", dir);
 		return NULL;
 	}
@@ -186,16 +141,14 @@ static char *path_ok(char *directory)
 	}
 	else if (interpolated_path && saw_extended_args) {
 		struct strbuf expanded_path = STRBUF_INIT;
-		struct strbuf_expand_dict_entry dict[] = {
-			{ "H", hostname },
-			{ "CH", canon_hostname },
-			{ "IP", ip_address },
-			{ "P", tcp_port },
-			{ "D", directory },
-			{ "%", "%" },
-			{ NULL }
-		};
+		struct strbuf_expand_dict_entry dict[6];
 
+		dict[0].placeholder = "H"; dict[0].value = hostname;
+		dict[1].placeholder = "CH"; dict[1].value = canon_hostname;
+		dict[2].placeholder = "IP"; dict[2].value = ip_address;
+		dict[3].placeholder = "P"; dict[3].value = tcp_port;
+		dict[4].placeholder = "D"; dict[4].value = directory;
+		dict[5].placeholder = NULL; dict[5].value = NULL;
 		if (*dir != '/') {
 			/* Allow only absolute */
 			logerror("'%s': Non-absolute path denied (interpolated-path active)", dir);
@@ -389,7 +342,9 @@ static int upload_pack(void)
 {
 	/* Timeout as string */
 	char timeout_buf[64];
-	const char *argv[] = { "upload-pack", "--strict", timeout_buf, ".", NULL };
+	const char *argv[] = { "upload-pack", "--strict", NULL, ".", NULL };
+
+	argv[2] = timeout_buf;
 
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
 	return run_service_command(argv);
@@ -445,6 +400,33 @@ static char *xstrdup_tolower(const char *str)
 	return dup;
 }
 
+static void parse_host_and_port(char *hostport, char **host,
+	char **port)
+{
+	if (*hostport == '[') {
+		char *end;
+
+		end = strchr(hostport, ']');
+		if (!end)
+			die("Invalid request ('[' without ']')");
+		*end = '\0';
+		*host = hostport + 1;
+		if (!end[1])
+			*port = NULL;
+		else if (end[1] == ':')
+			*port = end + 2;
+		else
+			die("Garbage after end of host part");
+	} else {
+		*host = hostport;
+		*port = strrchr(hostport, ':');
+		if (*port) {
+			**port = '\0';
+			++*port;
+		}
+	}
+}
+
 /*
  * Read the host as supplied by the client connection.
  */
@@ -461,11 +443,10 @@ static void parse_host_arg(char *extra_args, int buflen)
 			vallen = strlen(val) + 1;
 			if (*val) {
 				/* Split <host>:<port> at colon. */
-				char *host = val;
-				char *port = strrchr(host, ':');
+				char *host;
+				char *port;
+				parse_host_and_port(val, &host, &port);
 				if (port) {
-					*port = 0;
-					port++;
 					free(tcp_port);
 					tcp_port = xstrdup(port);
 				}
@@ -607,6 +588,27 @@ static int execute(struct sockaddr *addr)
 	return -1;
 }
 
+static int addrcmp(const struct sockaddr_storage *s1,
+    const struct sockaddr_storage *s2)
+{
+	const struct sockaddr *sa1 = (const struct sockaddr*) s1;
+	const struct sockaddr *sa2 = (const struct sockaddr*) s2;
+
+	if (sa1->sa_family != sa2->sa_family)
+		return sa1->sa_family - sa2->sa_family;
+	if (sa1->sa_family == AF_INET)
+		return memcmp(&((struct sockaddr_in *)s1)->sin_addr,
+		    &((struct sockaddr_in *)s2)->sin_addr,
+		    sizeof(struct in_addr));
+#ifndef NO_IPV6
+	if (sa1->sa_family == AF_INET6)
+		return memcmp(&((struct sockaddr_in6 *)s1)->sin6_addr,
+		    &((struct sockaddr_in6 *)s2)->sin6_addr,
+		    sizeof(struct in6_addr));
+#endif
+	return 0;
+}
+
 static int max_connections = 32;
 
 static unsigned int live_children;
@@ -621,17 +623,12 @@ static void add_child(pid_t pid, struct sockaddr *addr, int addrlen)
 {
 	struct child *newborn, **cradle;
 
-	/*
-	 * This must be xcalloc() -- we'll compare the whole sockaddr_storage
-	 * but individual address may be shorter.
-	 */
 	newborn = xcalloc(1, sizeof(*newborn));
 	live_children++;
 	newborn->pid = pid;
 	memcpy(&newborn->address, addr, addrlen);
 	for (cradle = &firstborn; *cradle; cradle = &(*cradle)->next)
-		if (!memcmp(&(*cradle)->address, &newborn->address,
-			    sizeof(newborn->address)))
+		if (!addrcmp(&(*cradle)->address, &newborn->address))
 			break;
 	newborn->next = *cradle;
 	*cradle = newborn;
@@ -664,8 +661,7 @@ static void kill_some_child(void)
 		return;
 
 	for (; (next = blanket->next); blanket = next)
-		if (!memcmp(&blanket->address, &next->address,
-			    sizeof(next->address))) {
+		if (!addrcmp(&blanket->address, &next->address)) {
 			kill(blanket->pid, SIGTERM);
 			break;
 		}

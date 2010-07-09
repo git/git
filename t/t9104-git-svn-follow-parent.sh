@@ -172,11 +172,11 @@ test_expect_success "follow-parent is atomic" '
 	git update-ref refs/remotes/flunk@18 refs/remotes/stunk~2 &&
 	git update-ref -d refs/remotes/stunk &&
 	git config --unset svn-remote.svn.fetch stunk &&
-	mkdir -p "$GIT_DIR"/svn/flunk@18 &&
-	rev_map=$(cd "$GIT_DIR"/svn/stunk && ls .rev_map*) &&
-	dd if="$GIT_DIR"/svn/stunk/$rev_map \
-	   of="$GIT_DIR"/svn/flunk@18/$rev_map bs=24 count=1 &&
-	rm -rf "$GIT_DIR"/svn/stunk &&
+	mkdir -p "$GIT_DIR"/svn/refs/remotes/flunk@18 &&
+	rev_map=$(cd "$GIT_DIR"/svn/refs/remotes/stunk && ls .rev_map*) &&
+	dd if="$GIT_DIR"/svn/refs/remotes/stunk/$rev_map \
+	   of="$GIT_DIR"/svn/refs/remotes/flunk@18/$rev_map bs=24 count=1 &&
+	rm -rf "$GIT_DIR"/svn/refs/remotes/stunk &&
 	git svn init --minimize-url -i flunk "$svnrepo"/flunk &&
 	git svn fetch -i flunk &&
 	git svn init --minimize-url -i stunk "$svnrepo"/stunk &&

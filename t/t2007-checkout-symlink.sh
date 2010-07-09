@@ -8,7 +8,7 @@ test_description='git checkout to switch between branches with symlink<->dir'
 
 if ! test_have_prereq SYMLINKS
 then
-	say "symbolic links not supported - skipping tests"
+	skip_all="symbolic links not supported - skipping tests"
 	test_done
 fi
 
@@ -44,8 +44,10 @@ test_expect_success 'switch from symlink to dir' '
 
 '
 
-rm -fr frotz xyzzy nitfol &&
-git checkout -f master || exit
+test_expect_success 'Remove temporary directories & switch to master' '
+	rm -fr frotz xyzzy nitfol &&
+	git checkout -f master
+'
 
 test_expect_success 'switch from dir to symlink' '
 

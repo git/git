@@ -1,7 +1,7 @@
 /*
  * This program can either change modification time of the given
  * file(s) or just print it. The program does not change atime nor
- * ctime (their values are explicitely preserved).
+ * ctime (their values are explicitly preserved).
  *
  * The mtime can be changed to an absolute value:
  *

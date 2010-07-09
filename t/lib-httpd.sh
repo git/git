@@ -5,22 +5,34 @@
 
 if test -z "$GIT_TEST_HTTPD"
 then
-	say "skipping test, network testing disabled by default"
-	say "(define GIT_TEST_HTTPD to enable)"
+	skip_all="Network testing disabled (define GIT_TEST_HTTPD to enable)"
 	test_done
 fi
 
 HTTPD_PARA=""
 
+for DEFAULT_HTTPD_PATH in '/usr/sbin/httpd' '/usr/sbin/apache2'
+do
+	if test -x "$DEFAULT_HTTPD_PATH"
+	then
+		break
+	fi
+done
+
+for DEFAULT_HTTPD_MODULE_PATH in '/usr/libexec/apache2' \
+				 '/usr/lib/apache2/modules' \
+				 '/usr/lib64/httpd/modules' \
+				 '/usr/lib/httpd/modules'
+do
+	if test -d "$DEFAULT_HTTPD_MODULE_PATH"
+	then
+		break
+	fi
+done
+
 case $(uname) in
 	Darwin)
-		DEFAULT_HTTPD_PATH='/usr/sbin/httpd'
-		DEFAULT_HTTPD_MODULE_PATH='/usr/libexec/apache2'
 		HTTPD_PARA="$HTTPD_PARA -DDarwin"
-	;;
-	*)
-		DEFAULT_HTTPD_PATH='/usr/sbin/apache2'
-		DEFAULT_HTTPD_MODULE_PATH='/usr/lib/apache2/modules'
 	;;
 esac
 
@@ -47,6 +59,11 @@ then
 		if ! test $HTTPD_VERSION -ge 2
 		then
 			say "skipping test, at least Apache version 2 is required"
+			test_done
+		fi
+		if ! test -d "$DEFAULT_HTTPD_MODULE_PATH"
+		then
+			say "Apache module directory not found.  Skipping tests."
 			test_done
 		fi
 
@@ -112,4 +129,33 @@ stop_httpd() {
 
 	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
 		-f "$TEST_PATH/apache.conf" $HTTPD_PARA -k stop
+}
+
+test_http_push_nonff() {
+	REMOTE_REPO=$1
+	LOCAL_REPO=$2
+	BRANCH=$3
+
+	test_expect_success 'non-fast-forward push fails' '
+		cd "$REMOTE_REPO" &&
+		HEAD=$(git rev-parse --verify HEAD) &&
+
+		cd "$LOCAL_REPO" &&
+		git checkout $BRANCH &&
+		echo "changed" > path2 &&
+		git commit -a -m path2 --amend &&
+
+		!(git push -v origin >output 2>&1) &&
+		(cd "$REMOTE_REPO" &&
+		 test $HEAD = $(git rev-parse --verify HEAD))
+	'
+
+	test_expect_success 'non-fast-forward push show ref status' '
+		grep "^ ! \[rejected\][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" output
+	'
+
+	test_expect_success 'non-fast-forward push shows help message' '
+		grep "To prevent you from losing history, non-fast-forward updates were rejected" \
+			output
+	'
 }

@@ -56,11 +56,14 @@ extern "C" {
 #define XDL_MERGE_EAGER 1
 #define XDL_MERGE_ZEALOUS 2
 #define XDL_MERGE_ZEALOUS_ALNUM 3
-#define XDL_MERGE_LEVEL_MASK 0x0f
+
+/* merge favor modes */
+#define XDL_MERGE_FAVOR_OURS 1
+#define XDL_MERGE_FAVOR_THEIRS 2
+#define XDL_MERGE_FAVOR_UNION 3
 
 /* merge output styles */
-#define XDL_MERGE_DIFF3 0x8000
-#define XDL_MERGE_STYLE_MASK 0x8000
+#define XDL_MERGE_DIFF3 1
 
 typedef struct s_mmfile {
 	char *ptr;
@@ -108,9 +111,21 @@ long xdl_mmfile_size(mmfile_t *mmf);
 int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	     xdemitconf_t const *xecfg, xdemitcb_t *ecb);
 
-int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
-		mmfile_t *mf2, const char *name2,
-		xpparam_t const *xpp, int level, mmbuffer_t *result);
+typedef struct s_xmparam {
+	xpparam_t xpp;
+	int marker_size;
+	int level;
+	int favor;
+	int style;
+	const char *ancestor;	/* label for orig */
+	const char *file1;	/* label for mf1 */
+	const char *file2;	/* label for mf2 */
+} xmparam_t;
+
+#define DEFAULT_CONFLICT_MARKER_SIZE 7
+
+int xdl_merge(mmfile_t *orig, mmfile_t *mf1, mmfile_t *mf2,
+		xmparam_t const *xmp, mmbuffer_t *result);
 
 #ifdef __cplusplus
 }

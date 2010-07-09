@@ -12,13 +12,13 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Usually you would want to use 'git-fetch', which is a
+Usually you would want to use 'git fetch', which is a
 higher level wrapper of this command, instead.
 
 Invokes 'git-upload-pack' on a possibly remote repository
 and asks it to send objects missing from this repository, to
 update the named heads.  The list of commits available locally
-is found out by scanning local $GIT_DIR/refs/ and sent to
+is found out by scanning the local refs/ hierarchy and sent to
 'git-upload-pack' running on the other end.
 
 This command degenerates to download everything to complete the
@@ -33,19 +33,19 @@ OPTIONS
 
 -q::
 --quiet::
-	Pass '-q' flag to 'git-unpack-objects'; this makes the
+	Pass '-q' flag to 'git unpack-objects'; this makes the
 	cloning process less verbose.
 
 -k::
 --keep::
-	Do not invoke 'git-unpack-objects' on received data, but
+	Do not invoke 'git unpack-objects' on received data, but
 	create a single packfile out of it instead, and store it
 	in the object database. If provided twice then the pack is
 	locked against repacking.
 
 --thin::
-	Spend extra cycles to minimize the number of objects to be sent.
-	Use it on slower connection.
+	Fetch a "thin" pack, which records objects in deltified form based
+	on objects not included in the pack to reduce network traffic.
 
 --include-tag::
 	If the remote side supports it, annotated tags objects will

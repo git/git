@@ -32,7 +32,7 @@ test_expect_success setup '
 	done &&
 	git update-ref HEAD "$commit" &&
 	git clone ./. victim &&
-	( cd victim && git log ) &&
+	( cd victim && git config receive.denyCurrentBranch warn && git log ) &&
 	git update-ref HEAD "$zero" &&
 	parent=$zero &&
 	i=0 &&
@@ -129,6 +129,7 @@ rewound_push_setup() {
 	    cd parent &&
 	    git init &&
 	    echo one >file && git add file && git commit -m one &&
+	    git config receive.denyCurrentBranch warn &&
 	    echo two >file && git commit -a -m two
 	) &&
 	git clone parent child &&
@@ -190,16 +191,11 @@ test_expect_success 'pushing wildcard refspecs respects forcing' '
 	test "$parent_head" = "$child_head"
 '
 
-test_expect_success 'warn pushing to delete current branch' '
+test_expect_success 'deny pushing to delete current branch' '
 	rewound_push_setup &&
 	(
 	    cd child &&
-	    git send-pack ../parent :refs/heads/master 2>errs
-	) &&
-	grep "warning: to refuse deleting" child/errs &&
-	(
-		cd parent &&
-		test_must_fail git rev-parse --verify master
+	    test_must_fail git send-pack ../parent :refs/heads/master 2>errs
 	)
 '
 

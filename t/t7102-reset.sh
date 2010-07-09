@@ -419,7 +419,8 @@ test_expect_success 'resetting an unmodified path is a no-op' '
 '
 
 cat > expect << EOF
-file2: locally modified
+Unstaged changes after reset:
+M	file2
 EOF
 
 test_expect_success '--mixed refreshes the index' '

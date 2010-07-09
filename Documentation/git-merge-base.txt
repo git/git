@@ -8,12 +8,12 @@ git-merge-base - Find as good common ancestors as possible for a merge
 
 SYNOPSIS
 --------
-'git merge-base' [--all] <commit> <commit>...
+'git merge-base' [-a|--all] <commit> <commit>...
 
 DESCRIPTION
 -----------
 
-'git-merge-base' finds best common ancestor(s) between two commits to use
+'git merge-base' finds best common ancestor(s) between two commits to use
 in a three-way merge.  One common ancestor is 'better' than another common
 ancestor if the latter is an ancestor of the former.  A common ancestor
 that does not have any better common ancestor is a 'best common
@@ -27,8 +27,13 @@ commits on the command line.  As the most common special case, specifying only
 two commits on the command line means computing the merge base between
 the given two commits.
 
+As a consequence, the 'merge base' is not necessarily contained in each of the
+commit arguments if more than two commits are specified. This is different
+from linkgit:git-show-branch[1] when used with the `--merge-base` option.
+
 OPTIONS
 -------
+-a::
 --all::
 	Output all merge bases for the commits, instead of just one.
 

@@ -7,9 +7,11 @@
 
 int ll_merge(mmbuffer_t *result_buf,
 	     const char *path,
-	     mmfile_t *ancestor,
+	     mmfile_t *ancestor, const char *ancestor_label,
 	     mmfile_t *ours, const char *our_label,
 	     mmfile_t *theirs, const char *their_label,
-	     int virtual_ancestor);
+	     int flag);
+
+int ll_merge_marker_size(const char *path);
 
 #endif

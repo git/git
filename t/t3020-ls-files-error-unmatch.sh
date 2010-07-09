@@ -11,9 +11,11 @@ line.
 '
 . ./test-lib.sh
 
-touch foo bar
-git update-index --add foo bar
-git commit -m "add foo bar"
+test_expect_success 'setup' '
+	touch foo bar &&
+	git update-index --add foo bar &&
+	git commit -m "add foo bar"
+'
 
 test_expect_success \
     'git ls-files --error-unmatch should fail with unmatched path.' \

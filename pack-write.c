@@ -17,8 +17,8 @@ static int sha1_compare(const void *_a, const void *_b)
  * the SHA1 hash of sorted object names. The objects array passed in
  * will be sorted by SHA1 on exit.
  */
-char *write_idx_file(char *index_name, struct pack_idx_entry **objects,
-		     int nr_objects, unsigned char *sha1)
+const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects,
+			   int nr_objects, unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;
@@ -252,4 +252,31 @@ char *index_pack_lockfile(int ip_out)
 		return xstrdup(path);
 	}
 	return NULL;
+}
+
+/*
+ * The per-object header is a pretty dense thing, which is
+ *  - first byte: low four bits are "size", then three bits of "type",
+ *    and the high bit is "size continues".
+ *  - each byte afterwards: low seven bits are size continuation,
+ *    with the high bit being "size continues"
+ */
+int encode_in_pack_object_header(enum object_type type, uintmax_t size, unsigned char *hdr)
+{
+	int n = 1;
+	unsigned char c;
+
+	if (type < OBJ_COMMIT || type > OBJ_REF_DELTA)
+		die("bad type %d", type);
+
+	c = (type << 4) | (size & 15);
+	size >>= 4;
+	while (size) {
+		*hdr++ = c | 0x80;
+		c = size & 0x7f;
+		size >>= 7;
+		n++;
+	}
+	*hdr = c;
+	return n;
 }

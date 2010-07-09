@@ -2,7 +2,6 @@
  * Copyright 2008 Peter Harris <git@peter.is-a-geek.org>
  */
 
-#include <windows.h>
 #include "../git-compat-util.h"
 
 /*

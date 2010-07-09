@@ -18,9 +18,7 @@ depending on the subcommand:
 [verse]
 'git reflog expire' [--dry-run] [--stale-fix] [--verbose]
 	[--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...
-+
 'git reflog delete' ref@\{specifier\}...
-+
 'git reflog' ['show'] [log-options] [<ref>]
 
 Reflog is a mechanism to record when the tip of branches are
@@ -60,7 +58,7 @@ OPTIONS
 	refs.
 +
 This computation involves traversing all the reachable objects, i.e. it
-has the same cost as 'git-prune'.  Fortunately, once this is run, we
+has the same cost as 'git prune'.  Fortunately, once this is run, we
 should not have to ever worry about missing objects, because the current
 prune and pack-objects know about reflogs and protect objects referred by
 them.

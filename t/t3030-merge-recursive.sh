@@ -22,6 +22,7 @@ test_expect_success 'setup 1' '
 	git branch df-2 &&
 	git branch df-3 &&
 	git branch remove &&
+	git branch submod &&
 
 	echo hello >>a &&
 	cp a d/e &&
@@ -236,6 +237,17 @@ test_expect_success 'setup 6' '
 	test_cmp expected actual
 '
 
+test_expect_success 'setup 7' '
+
+	git checkout submod &&
+	git rm d/e &&
+	test_tick &&
+	git commit -m "remove d/e" &&
+	git update-index --add --cacheinfo 160000 $c1 d &&
+	test_tick &&
+	git commit -m "make d/ a submodule"
+'
+
 test_expect_success 'merge-recursive simple' '
 
 	rm -fr [abcd] &&
@@ -276,11 +288,13 @@ test_expect_success 'fail if the index has unresolved entries' '
 
 	test_must_fail git merge "$c5" &&
 	test_must_fail git merge "$c5" 2> out &&
+	grep "not possible because you have unmerged files" out &&
+	git add -u &&
+	test_must_fail git merge "$c5" 2> out &&
 	grep "You have not concluded your merge" out &&
 	rm -f .git/MERGE_HEAD &&
 	test_must_fail git merge "$c5" 2> out &&
-	grep "You are in the middle of a conflicted merge" out
-
+	grep "Your local changes to .* would be overwritten by merge." out
 '
 
 test_expect_success 'merge-recursive remove conflict' '
@@ -547,6 +561,23 @@ test_expect_success 'merge removes empty directories' '
 	git checkout master &&
 	git merge -s recursive rm &&
 	test_must_fail test -d d
+'
+
+test_expect_failure 'merge-recursive simple w/submodule' '
+
+	git checkout submod &&
+	git merge remove
+'
+
+test_expect_failure 'merge-recursive simple w/submodule result' '
+
+	git ls-files -s >actual &&
+	(
+		echo "100644 $o5 0	a"
+		echo "100644 $o0 0	c"
+		echo "160000 $c1 0	d"
+	) >expected &&
+	test_cmp expected actual
 '
 
 test_done

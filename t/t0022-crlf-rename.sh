@@ -12,7 +12,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m Initial &&
 
-	sed -e "s/\$//" "$TEST_DIRECTORY"/t0022-crlf-rename.sh >elpmas &&
+	append_cr <"$TEST_DIRECTORY"/t0022-crlf-rename.sh >elpmas &&
 	git add elpmas &&
 	rm -f sample &&
 

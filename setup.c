@@ -18,11 +18,15 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 	if (normalize_path_copy(sanitized, sanitized))
 		goto error_out;
 	if (is_absolute_path(orig)) {
+		size_t root_len, len, total;
 		const char *work_tree = get_git_work_tree();
-		size_t len = strlen(work_tree);
-		size_t total = strlen(sanitized) + 1;
+		if (!work_tree)
+			goto error_out;
+		len = strlen(work_tree);
+		root_len = offset_1st_component(work_tree);
+		total = strlen(sanitized) + 1;
 		if (strncmp(sanitized, work_tree, len) ||
-		    (sanitized[len] != '\0' && sanitized[len] != '/')) {
+		    (len > root_len && sanitized[len] != '\0' && sanitized[len] != '/')) {
 		error_out:
 			die("'%s' is outside repository", orig);
 		}
@@ -41,7 +45,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 {
 	static char path[PATH_MAX];
-#ifndef __MINGW32__
+#ifndef WIN32
 	if (!pfx || !*pfx || is_absolute_path(arg))
 		return arg;
 	memcpy(path, pfx, pfx_len);
@@ -61,6 +65,31 @@ const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 	return path;
 }
 
+int check_filename(const char *prefix, const char *arg)
+{
+	const char *name;
+	struct stat st;
+
+	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
+	if (!lstat(name, &st))
+		return 1; /* file exists */
+	if (errno == ENOENT || errno == ENOTDIR)
+		return 0; /* file does not exist */
+	die_errno("failed to stat '%s'", arg);
+}
+
+static void NORETURN die_verify_filename(const char *prefix, const char *arg)
+{
+	unsigned char sha1[20];
+	unsigned mode;
+	/* try a detailed diagnostic ... */
+	get_sha1_with_mode_1(arg, sha1, &mode, 0, prefix);
+	/* ... or fall back the most general message. */
+	die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
+	    "Use '--' to separate paths from revisions", arg);
+
+}
+
 /*
  * Verify a filename that we got as an argument for a pathspec
  * entry. Note that a filename that begins with "-" never verifies
@@ -70,18 +99,11 @@ const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
  */
 void verify_filename(const char *prefix, const char *arg)
 {
-	const char *name;
-	struct stat st;
-
 	if (*arg == '-')
 		die("bad flag '%s' used after filename", arg);
-	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
-	if (!lstat(name, &st))
+	if (check_filename(prefix, arg))
 		return;
-	if (errno == ENOENT)
-		die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
-		    "Use '--' to separate paths from revisions", arg);
-	die_errno("failed to stat '%s'", arg);
+	die_verify_filename(prefix, arg);
 }
 
 /*
@@ -91,19 +113,14 @@ void verify_filename(const char *prefix, const char *arg)
  */
 void verify_non_filename(const char *prefix, const char *arg)
 {
-	const char *name;
-	struct stat st;
-
 	if (!is_inside_work_tree() || is_inside_git_dir())
 		return;
 	if (*arg == '-')
 		return; /* flag */
-	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
-	if (!lstat(name, &st))
-		die("ambiguous argument '%s': both revision and filename\n"
-		    "Use '--' to separate filenames from revisions", arg);
-	if (errno != ENOENT && errno != ENOTDIR)
-		die_errno("failed to stat '%s'", arg);
+	if (!check_filename(prefix, arg))
+		return;
+	die("ambiguous argument '%s': both revision and filename\n"
+	    "Use '--' to separate filenames from revisions", arg);
 }
 
 const char **get_pathspec(const char *prefix, const char **pathspec)
@@ -190,7 +207,7 @@ int is_inside_work_tree(void)
 }
 
 /*
- * set_work_tree() is only ever called if you set GIT_DIR explicitely.
+ * set_work_tree() is only ever called if you set GIT_DIR explicitly.
  * The old behaviour (which we retain here) is to set the work tree root
  * to the cwd, unless overridden by the config, the command line, or
  * GIT_WORK_TREE.
@@ -247,6 +264,8 @@ static int check_repository_format_gently(int *nongit_ok)
 const char *read_gitfile_gently(const char *path)
 {
 	char *buf;
+	char *dir;
+	const char *slash;
 	struct stat st;
 	int fd;
 	size_t len;
@@ -271,9 +290,23 @@ const char *read_gitfile_gently(const char *path)
 	if (len < 9)
 		die("No path in gitfile: %s", path);
 	buf[len] = '\0';
-	if (!is_git_directory(buf + 8))
-		die("Not a git repository: %s", buf + 8);
-	path = make_absolute_path(buf + 8);
+	dir = buf + 8;
+
+	if (!is_absolute_path(dir) && (slash = strrchr(path, '/'))) {
+		size_t pathlen = slash+1 - path;
+		size_t dirlen = pathlen + len - 8;
+		dir = xmalloc(dirlen + 1);
+		strncpy(dir, path, pathlen);
+		strncpy(dir + pathlen, buf + 8, len - 8);
+		dir[dirlen] = '\0';
+		free(buf);
+		buf = dir;
+	}
+
+	if (!is_git_directory(dir))
+		die("Not a git repository: %s", dir);
+	path = make_absolute_path(dir);
+
 	free(buf);
 	return path;
 }
@@ -289,7 +322,9 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	static char cwd[PATH_MAX+1];
 	const char *gitdirenv;
 	const char *gitfile_dir;
-	int len, offset, ceil_offset;
+	int len, offset, ceil_offset, root_len;
+	int current_device = 0, one_filesystem = 1;
+	struct stat buf;
 
 	/*
 	 * Let's assume that we are in a git repository.
@@ -357,6 +392,12 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 *   etc.
 	 */
 	offset = len = strlen(cwd);
+	one_filesystem = !git_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0);
+	if (one_filesystem) {
+		if (stat(".", &buf))
+			die_errno("failed to stat '.'");
+		current_device = buf.st_dev;
+	}
 	for (;;) {
 		gitfile_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
 		if (gitfile_dir) {
@@ -371,10 +412,11 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			if (!work_tree_env)
 				inside_work_tree = 0;
 			if (offset != len) {
-				cwd[offset] = '\0';
-				setenv(GIT_DIR_ENVIRONMENT, cwd, 1);
+				root_len = offset_1st_component(cwd);
+				cwd[offset > root_len ? offset : root_len] = '\0';
+				set_git_dir(cwd);
 			} else
-				setenv(GIT_DIR_ENVIRONMENT, ".", 1);
+				set_git_dir(".");
 			check_repository_format_gently(nongit_ok);
 			return NULL;
 		}
@@ -388,14 +430,34 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			}
 			die("Not a git repository (or any of the parent directories): %s", DEFAULT_GIT_DIR_ENVIRONMENT);
 		}
-		if (chdir(".."))
+		if (one_filesystem) {
+			if (stat("..", &buf)) {
+				cwd[offset] = '\0';
+				die_errno("failed to stat '%s/..'", cwd);
+			}
+			if (buf.st_dev != current_device) {
+				if (nongit_ok) {
+					if (chdir(cwd))
+						die_errno("Cannot come back to cwd");
+					*nongit_ok = 1;
+					return NULL;
+				}
+				cwd[offset] = '\0';
+				die("Not a git repository (or any parent up to mount parent %s)\n"
+				"Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).", cwd);
+			}
+		}
+		if (chdir("..")) {
+			cwd[offset] = '\0';
 			die_errno("Cannot change to '%s/..'", cwd);
+		}
 	}
 
 	inside_git_dir = 0;
 	if (!work_tree_env)
 		inside_work_tree = 1;
-	git_work_tree_cfg = xstrndup(cwd, offset);
+	root_len = offset_1st_component(cwd);
+	git_work_tree_cfg = xstrndup(cwd, offset > root_len ? offset : root_len);
 	if (check_repository_format_gently(nongit_ok))
 		return NULL;
 	if (offset == len)
@@ -484,6 +546,12 @@ int check_repository_format(void)
 	return check_repository_format_gently(NULL);
 }
 
+/*
+ * Returns the "prefix", a path to the current working directory
+ * relative to the work tree root, or NULL, if the current working
+ * directory is not a strict subdirectory of the work tree root. The
+ * prefix always ends with a '/' character.
+ */
 const char *setup_git_directory(void)
 {
 	const char *retval = setup_git_directory_gently(NULL);

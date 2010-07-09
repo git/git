@@ -166,7 +166,7 @@ test_expect_success 'diff --cached' '
 	git update-index --assume-unchanged file &&
 	echo second >file &&
 	git diff --cached >actual &&
-	test_cmp ../t4020/diff.NUL actual
+	test_cmp "$TEST_DIRECTORY"/t4020/diff.NUL actual
 '
 
 test_done

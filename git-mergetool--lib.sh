@@ -1,3 +1,4 @@
+#!/bin/sh
 # git-mergetool--lib is a library for common merge tool functions
 diff_mode() {
 	test "$TOOL_MODE" = diff
@@ -46,7 +47,7 @@ check_unchanged () {
 valid_tool () {
 	case "$1" in
 	kdiff3 | tkdiff | xxdiff | meld | opendiff | \
-	emerge | vimdiff | gvimdiff | ecmerge | diffuse | araxis)
+	emerge | vimdiff | gvimdiff | ecmerge | diffuse | araxis | p4merge)
 		;; # happy
 	tortoisemerge)
 		if ! merge_mode; then
@@ -126,6 +127,19 @@ run_merge_tool () {
 					-o "$MERGED" "$LOCAL" "$REMOTE"
 			fi
 			status=$?
+		else
+			"$merge_tool_path" "$LOCAL" "$REMOTE"
+		fi
+		;;
+	p4merge)
+		if merge_mode; then
+		    touch "$BACKUP"
+			if $base_present; then
+				"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
+			else
+				"$merge_tool_path" "$LOCAL" "$LOCAL" "$REMOTE" "$MERGED"
+			fi
+			check_unchanged
 		else
 			"$merge_tool_path" "$LOCAL" "$REMOTE"
 		fi
@@ -323,17 +337,16 @@ guess_merge_tool () {
 		else
 			tools="opendiff kdiff3 tkdiff xxdiff meld $tools"
 		fi
-		tools="$tools gvimdiff diffuse ecmerge araxis"
+		tools="$tools gvimdiff diffuse ecmerge p4merge araxis"
 	fi
-	if echo "${VISUAL:-$EDITOR}" | grep emacs > /dev/null 2>&1; then
-		# $EDITOR is emacs so add emerge as a candidate
-		tools="$tools emerge vimdiff"
-	elif echo "${VISUAL:-$EDITOR}" | grep vim > /dev/null 2>&1; then
-		# $EDITOR is vim so add vimdiff as a candidate
+	case "${VISUAL:-$EDITOR}" in
+	*vim*)
 		tools="$tools vimdiff emerge"
-	else
+		;;
+	*)
 		tools="$tools emerge vimdiff"
-	fi
+		;;
+	esac
 	echo >&2 "merge tool candidates: $tools"
 
 	# Loop over each candidate and stop when a valid merge tool is found.

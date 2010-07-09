@@ -295,6 +295,15 @@ test_expect_success 'Check short upstream format' '
 	test_cmp expected actual
 '
 
+cat >expected <<EOF
+67a36f1
+EOF
+
+test_expect_success 'Check short objectname format' '
+	git for-each-ref --format="%(objectname:short)" refs/heads >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'Check for invalid refname format' '
 	test_must_fail git for-each-ref --format="%(refname:INVALID)"
 '

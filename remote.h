@@ -11,6 +11,8 @@ struct remote {
 	const char *name;
 	int origin;
 
+	const char *foreign_vcs;
+
 	const char **url;
 	int url_nr;
 	int url_alloc;
@@ -89,8 +91,15 @@ void ref_remove_duplicates(struct ref *ref_map);
 int valid_fetch_refspec(const char *refspec);
 struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
 
+void free_refspec(int nr_refspec, struct refspec *refspec);
+
+char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
+		     const char *name);
+
 int match_refs(struct ref *src, struct ref **dst,
 	       int nr_refspec, const char **refspec, int all);
+void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
+	int force_update);
 
 /*
  * Given a list of the remote refs and the specification of things to
@@ -136,7 +145,7 @@ int branch_merge_matches(struct branch *, int n, const char *);
 enum match_refs_flags {
 	MATCH_REFS_NONE		= 0,
 	MATCH_REFS_ALL 		= (1 << 0),
-	MATCH_REFS_MIRROR	= (1 << 1),
+	MATCH_REFS_MIRROR	= (1 << 1)
 };
 
 /* Reporting of tracking info */
@@ -153,5 +162,8 @@ struct ref *get_local_heads(void);
 struct ref *guess_remote_head(const struct ref *head,
 			      const struct ref *refs,
 			      int all);
+
+/* Return refs which no longer exist on remote */
+struct ref *get_stale_heads(struct remote *remote, struct ref *fetch_map);
 
 #endif

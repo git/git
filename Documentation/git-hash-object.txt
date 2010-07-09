@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git hash-object' [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>...
-'git hash-object' [-t <type>] [-w] --stdin-paths < <list-of-paths>
+'git hash-object' [-t <type>] [-w] --stdin-paths [--no-filters] < <list-of-paths>
 
 DESCRIPTION
 -----------
@@ -18,7 +18,7 @@ Computes the object ID value for an object with specified type
 with the contents of the named file (which can be outside of the
 work tree), and optionally writes the resulting object into the
 object database.  Reports its object ID to its standard output.
-This is used by 'git-cvsimport' to update the index
+This is used by 'git cvsimport' to update the index
 without modifying files in the work tree.  When <type> is not
 specified, it defaults to "blob".
 

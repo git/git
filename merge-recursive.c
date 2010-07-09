@@ -3,6 +3,7 @@
  * Fredrik Kuivinen.
  * The thieves were Alex Riesen and Johannes Schindelin, in June/July 2006
  */
+#include "advice.h"
 #include "cache.h"
 #include "cache-tree.h"
 #include "commit.h"
@@ -20,15 +21,17 @@
 #include "merge-recursive.h"
 #include "dir.h"
 
-static struct tree *shift_tree_object(struct tree *one, struct tree *two)
+static struct tree *shift_tree_object(struct tree *one, struct tree *two,
+				      const char *subtree_shift)
 {
 	unsigned char shifted[20];
 
-	/*
-	 * NEEDSWORK: this limits the recursion depth to hardcoded
-	 * value '2' to avoid excessive overhead.
-	 */
-	shift_tree(one->object.sha1, two->object.sha1, shifted, 2);
+	if (!*subtree_shift) {
+		shift_tree(one->object.sha1, two->object.sha1, shifted, 0);
+	} else {
+		shift_tree_by(one->object.sha1, two->object.sha1, shifted,
+			      subtree_shift);
+	}
 	if (!hashcmp(two->object.sha1, shifted))
 		return two;
 	return lookup_tree(shifted);
@@ -86,6 +89,7 @@ static void flush_output(struct merge_options *o)
 	}
 }
 
+__attribute__((format (printf, 3, 4)))
 static void output(struct merge_options *o, int v, const char *fmt, ...)
 {
 	int len;
@@ -181,6 +185,7 @@ static int git_merge_trees(int index_only,
 	opts.fn = threeway_merge;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
+	opts.msgs = get_porcelain_error_msgs();
 
 	init_tree_desc_from_tree(t+0, common);
 	init_tree_desc_from_tree(t+1, head);
@@ -197,13 +202,14 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 
 	if (unmerged_cache()) {
 		int i;
-		output(o, 0, "There are unmerged index entries:");
+		fprintf(stderr, "BUG: There are unmerged index entries:\n");
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			if (ce_stage(ce))
-				output(o, 0, "%d %.*s", ce_stage(ce), ce_namelen(ce), ce->name);
+				fprintf(stderr, "BUG: %d %.*s", ce_stage(ce),
+					(int)ce_namelen(ce), ce->name);
 		}
-		return NULL;
+		die("Bug in merge-recursive.c");
 	}
 
 	if (!active_cache_tree)
@@ -232,9 +238,9 @@ static int save_files_dirs(const unsigned char *sha1,
 	newpath[baselen + len] = '\0';
 
 	if (S_ISDIR(mode))
-		string_list_insert(newpath, &o->current_directory_set);
+		string_list_insert(&o->current_directory_set, newpath);
 	else
-		string_list_insert(newpath, &o->current_file_set);
+		string_list_insert(&o->current_file_set, newpath);
 	free(newpath);
 
 	return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
@@ -265,7 +271,7 @@ static struct stage_data *insert_stage_data(const char *path,
 			e->stages[2].sha, &e->stages[2].mode);
 	get_tree_entry(b->object.sha1, path,
 			e->stages[3].sha, &e->stages[3].mode);
-	item = string_list_insert(path, entries);
+	item = string_list_insert(entries, path);
 	item->util = e;
 	return e;
 }
@@ -288,9 +294,9 @@ static struct string_list *get_unmerged(void)
 		if (!ce_stage(ce))
 			continue;
 
-		item = string_list_lookup(ce->name, unmerged);
+		item = string_list_lookup(unmerged, ce->name);
 		if (!item) {
-			item = string_list_insert(ce->name, unmerged);
+			item = string_list_insert(unmerged, ce->name);
 			item->util = xcalloc(1, sizeof(struct stage_data));
 		}
 		e = item->util;
@@ -350,20 +356,20 @@ static struct string_list *get_renames(struct merge_options *o,
 		re = xmalloc(sizeof(*re));
 		re->processed = 0;
 		re->pair = pair;
-		item = string_list_lookup(re->pair->one->path, entries);
+		item = string_list_lookup(entries, re->pair->one->path);
 		if (!item)
 			re->src_entry = insert_stage_data(re->pair->one->path,
 					o_tree, a_tree, b_tree, entries);
 		else
 			re->src_entry = item->util;
 
-		item = string_list_lookup(re->pair->two->path, entries);
+		item = string_list_lookup(entries, re->pair->two->path);
 		if (!item)
 			re->dst_entry = insert_stage_data(re->pair->two->path,
 					o_tree, a_tree, b_tree, entries);
 		else
 			re->dst_entry = item->util;
-		item = string_list_insert(pair->one->path, renames);
+		item = string_list_insert(renames, pair->one->path);
 		item->util = re;
 	}
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -403,7 +409,7 @@ static int remove_file(struct merge_options *o, int clean,
 			return -1;
 	}
 	if (update_working_directory) {
-		if (remove_path(path) && errno != ENOENT)
+		if (remove_path(path))
 			return -1;
 	}
 	return 0;
@@ -426,7 +432,7 @@ static char *unique_path(struct merge_options *o, const char *path, const char *
 	       lstat(newpath, &st) == 0)
 		sprintf(p, "_%d", suffix++);
 
-	string_list_insert(newpath, &o->current_file_set);
+	string_list_insert(&o->current_file_set, newpath);
 	return newpath;
 }
 
@@ -593,23 +599,6 @@ struct merge_file_info
 		 merge:1;
 };
 
-static void fill_mm(const unsigned char *sha1, mmfile_t *mm)
-{
-	unsigned long size;
-	enum object_type type;
-
-	if (!hashcmp(sha1, null_sha1)) {
-		mm->ptr = xstrdup("");
-		mm->size = 0;
-		return;
-	}
-
-	mm->ptr = read_sha1_file(sha1, &type, &size);
-	if (!mm->ptr || type != OBJ_BLOB)
-		die("unable to read blob object %s", sha1_to_hex(sha1));
-	mm->size = size;
-}
-
 static int merge_3way(struct merge_options *o,
 		      mmbuffer_t *result_buf,
 		      struct diff_filespec *one,
@@ -619,24 +608,46 @@ static int merge_3way(struct merge_options *o,
 		      const char *branch2)
 {
 	mmfile_t orig, src1, src2;
-	char *name1, *name2;
+	char *base_name, *name1, *name2;
 	int merge_status;
+	int favor;
 
-	if (strcmp(a->path, b->path)) {
+	if (o->call_depth)
+		favor = 0;
+	else {
+		switch (o->recursive_variant) {
+		case MERGE_RECURSIVE_OURS:
+			favor = XDL_MERGE_FAVOR_OURS;
+			break;
+		case MERGE_RECURSIVE_THEIRS:
+			favor = XDL_MERGE_FAVOR_THEIRS;
+			break;
+		default:
+			favor = 0;
+			break;
+		}
+	}
+
+	if (strcmp(a->path, b->path) ||
+	    (o->ancestor != NULL && strcmp(a->path, one->path) != 0)) {
+		base_name = o->ancestor == NULL ? NULL :
+			xstrdup(mkpath("%s:%s", o->ancestor, one->path));
 		name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
 		name2 = xstrdup(mkpath("%s:%s", branch2, b->path));
 	} else {
+		base_name = o->ancestor == NULL ? NULL :
+			xstrdup(mkpath("%s", o->ancestor));
 		name1 = xstrdup(mkpath("%s", branch1));
 		name2 = xstrdup(mkpath("%s", branch2));
 	}
 
-	fill_mm(one->sha1, &orig);
-	fill_mm(a->sha1, &src1);
-	fill_mm(b->sha1, &src2);
+	read_mmblob(&orig, one->sha1);
+	read_mmblob(&src1, a->sha1);
+	read_mmblob(&src2, b->sha1);
 
-	merge_status = ll_merge(result_buf, a->path, &orig,
+	merge_status = ll_merge(result_buf, a->path, &orig, base_name,
 				&src1, name1, &src2, name2,
-				o->call_depth);
+				(!!o->call_depth) | (favor << 1));
 
 	free(name1);
 	free(name2);
@@ -800,12 +811,12 @@ static int process_renames(struct merge_options *o,
 
 	for (i = 0; i < a_renames->nr; i++) {
 		sre = a_renames->items[i].util;
-		string_list_insert(sre->pair->two->path, &a_by_dst)->util
+		string_list_insert(&a_by_dst, sre->pair->two->path)->util
 			= sre->dst_entry;
 	}
 	for (i = 0; i < b_renames->nr; i++) {
 		sre = b_renames->items[i].util;
-		string_list_insert(sre->pair->two->path, &b_by_dst)->util
+		string_list_insert(&b_by_dst, sre->pair->two->path)->util
 			= sre->dst_entry;
 	}
 
@@ -977,7 +988,7 @@ static int process_renames(struct merge_options *o,
 					output(o, 1, "Adding as %s instead", new_path);
 					update_file(o, 0, dst_other.sha1, dst_other.mode, new_path);
 				}
-			} else if ((item = string_list_lookup(ren1_dst, renames2Dst))) {
+			} else if ((item = string_list_lookup(renames2Dst, ren1_dst))) {
 				ren2 = item->util;
 				clean_merge = 0;
 				ren2->processed = 1;
@@ -1167,6 +1178,28 @@ static int process_entry(struct merge_options *o,
 	return clean_merge;
 }
 
+struct unpack_trees_error_msgs get_porcelain_error_msgs(void)
+{
+	struct unpack_trees_error_msgs msgs = {
+		/* would_overwrite */
+		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
+		/* not_uptodate_file */
+		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
+		/* not_uptodate_dir */
+		"Updating '%s' would lose untracked files in it.  Aborting.",
+		/* would_lose_untracked */
+		"Untracked working tree file '%s' would be %s by merge.  Aborting",
+		/* bind_overlap -- will not happen here */
+		NULL,
+	};
+	if (advice_commit_before_merge) {
+		msgs.would_overwrite = msgs.not_uptodate_file =
+			"Your local changes to '%s' would be overwritten by merge.  Aborting.\n"
+			"Please, commit your changes or stash them before you can merge.";
+	}
+	return msgs;
+}
+
 int merge_trees(struct merge_options *o,
 		struct tree *head,
 		struct tree *merge,
@@ -1175,9 +1208,9 @@ int merge_trees(struct merge_options *o,
 {
 	int code, clean;
 
-	if (o->subtree_merge) {
-		merge = shift_tree_object(head, merge);
-		common = shift_tree_object(head, common);
+	if (o->subtree_shift) {
+		merge = shift_tree_object(head, merge, o->subtree_shift);
+		common = shift_tree_object(head, common, o->subtree_shift);
 	}
 
 	if (sha_eq(common->object.sha1, merge->object.sha1)) {
@@ -1188,10 +1221,14 @@ int merge_trees(struct merge_options *o,
 
 	code = git_merge_trees(o->call_depth, common, head, merge);
 
-	if (code != 0)
-		die("merging of trees %s and %s failed",
-		    sha1_to_hex(head->object.sha1),
-		    sha1_to_hex(merge->object.sha1));
+	if (code != 0) {
+		if (show(o, 4) || o->call_depth)
+			die("merging of trees %s and %s failed",
+			    sha1_to_hex(head->object.sha1),
+			    sha1_to_hex(merge->object.sha1));
+		else
+			exit(128);
+	}
 
 	if (unmerged_cache()) {
 		struct string_list *entries, *re_head, *re_merge;
@@ -1310,6 +1347,7 @@ int merge_recursive(struct merge_options *o,
 	if (!o->call_depth)
 		read_cache();
 
+	o->ancestor = "merged common ancestors";
 	clean = merge_trees(o, h1->tree, h2->tree, merged_common_ancestors->tree,
 			    &mrtree);
 

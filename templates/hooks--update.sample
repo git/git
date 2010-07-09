@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # An example hook script to blocks unannotated tags from entering.
-# Called by git-receive-pack with arguments: refname sha1-old sha1-new
+# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
 #
 # To enable this hook, rename this file to "update".
 #
@@ -64,7 +64,7 @@ zero="0000000000000000000000000000000000000000"
 if [ "$newrev" = "$zero" ]; then
 	newrev_type=delete
 else
-	newrev_type=$(git-cat-file -t $newrev)
+	newrev_type=$(git cat-file -t $newrev)
 fi
 
 case "$refname","$newrev_type" in

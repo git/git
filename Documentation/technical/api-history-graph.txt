@@ -11,9 +11,6 @@ Core functions:
 
 * `graph_init()` creates a new `struct git_graph`
 
-* `graph_release()` destroys a `struct git_graph`, and frees the memory
-  associated with it.
-
 * `graph_update()` moves the graph to a new commit.
 
 * `graph_next_line()` outputs the next line of the graph into a strbuf.  It
@@ -134,8 +131,6 @@ while ((commit = get_revision(opts)) != NULL) {
 			putchar(opts->diffopt.line_termination);
 	}
 }
-
-graph_release(graph);
 ------------
 
 Sample output

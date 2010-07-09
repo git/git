@@ -42,6 +42,9 @@ struct diff_filespec {
 #define DIFF_FILE_VALID(spec) (((spec)->mode) != 0)
 	unsigned should_free : 1; /* data should be free()'ed */
 	unsigned should_munmap : 1; /* data should be munmap()'ed */
+	unsigned dirty_submodule : 2;  /* For submodules: its work tree is dirty */
+#define DIRTY_SUBMODULE_UNTRACKED 1
+#define DIRTY_SUBMODULE_MODIFIED  2
 
 	struct userdiff_driver *driver;
 	/* data should be considered "binary"; -1 means "don't know yet" */
@@ -88,7 +91,14 @@ struct diff_queue_struct {
 	struct diff_filepair **queue;
 	int alloc;
 	int nr;
+	int run;
 };
+#define DIFF_QUEUE_CLEAR(q) \
+	do { \
+		(q)->queue = NULL; \
+		(q)->nr = (q)->alloc = 0; \
+		(q)->run = 0; \
+	} while(0);
 
 extern struct diff_queue_struct diff_queued_diff;
 extern struct diff_filepair *diff_queue(struct diff_queue_struct *,

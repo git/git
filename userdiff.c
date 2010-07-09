@@ -1,3 +1,4 @@
+#include "cache.h"
 #include "userdiff.h"
 #include "cache.h"
 #include "attr.h"
@@ -44,7 +45,9 @@ PATTERNS("pascal",
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
 	 "|<>|<=|>=|:=|\\.\\."
 	 "|[^[:space:]]|[\x80-\xff]+"),
-PATTERNS("php", "^[\t ]*((function|class).*)",
+PATTERNS("php",
+	 "^[\t ]*(((public|protected|private|static)[\t ]+)*function.*)$\n"
+	 "^[\t ]*(class.*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
@@ -167,6 +170,12 @@ static int parse_tristate(int *b, const char *k, const char *v)
 	return 1;
 }
 
+static int parse_bool(int *b, const char *k, const char *v)
+{
+	*b = git_config_bool(k, v);
+	return 1;
+}
+
 int userdiff_config(const char *k, const char *v)
 {
 	struct userdiff_driver *drv;
@@ -181,6 +190,8 @@ int userdiff_config(const char *k, const char *v)
 		return parse_string(&drv->external, k, v);
 	if ((drv = parse_driver(k, v, "textconv")))
 		return parse_string(&drv->textconv, k, v);
+	if ((drv = parse_driver(k, v, "cachetextconv")))
+		return parse_bool(&drv->textconv_want_cache, k, v);
 	if ((drv = parse_driver(k, v, "wordregex")))
 		return parse_string(&drv->word_regex, k, v);
 
@@ -198,7 +209,7 @@ struct userdiff_driver *userdiff_find_by_path(const char *path)
 	struct git_attr_check check;
 
 	if (!attr)
-		attr = git_attr("diff", 4);
+		attr = git_attr("diff");
 	check.attr = attr;
 
 	if (!path)

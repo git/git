@@ -55,17 +55,22 @@
 # else
 # define _XOPEN_SOURCE 500
 # endif
-#elif !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__USLC__) && !defined(_M_UNIX) && !defined(sgi)
+#elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__USLC__) && \
+      !defined(_M_UNIX) && !defined(__sgi) && !defined(__DragonFly__)
 #define _XOPEN_SOURCE 600 /* glibc2 and AIX 5.3L need 500, OpenBSD needs 600 for S_ISLNK() */
-#ifndef __sun__
 #define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
-#endif
 #endif
 #define _ALL_SOURCE 1
 #define _GNU_SOURCE 1
 #define _BSD_SOURCE 1
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
+
+#ifdef WIN32 /* Both MinGW and MSVC */
+#define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
+#include <winsock2.h>
+#include <windows.h>
+#endif
 
 #include <unistd.h>
 #include <stdio.h>
@@ -92,6 +97,7 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 #ifndef NO_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -115,6 +121,9 @@
 /* pull in Windows compatibility stuff */
 #include "compat/mingw.h"
 #endif	/* __MINGW32__ */
+#ifdef _MSC_VER
+#include "compat/msvc.h"
+#endif
 
 #ifndef NO_LIBGEN_H
 #include <libgen.h>
@@ -155,6 +164,13 @@ extern char *gitbasename(char *);
 #define PATH_SEP ':'
 #endif
 
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#endif
+#ifndef _PATH_DEFPATH
+#define _PATH_DEFPATH "/usr/local/bin:/usr/bin:/bin"
+#endif
+
 #ifndef STRIP_EXTENSION
 #define STRIP_EXTENSION ""
 #endif
@@ -169,24 +185,33 @@ extern char *gitbasename(char *);
 
 #ifdef __GNUC__
 #define NORETURN __attribute__((__noreturn__))
+#define NORETURN_PTR __attribute__((__noreturn__))
+#elif defined(_MSC_VER)
+#define NORETURN __declspec(noreturn)
+#define NORETURN_PTR
 #else
 #define NORETURN
+#define NORETURN_PTR
 #ifndef __attribute__
 #define __attribute__(x)
 #endif
 #endif
 
+#include "compat/bswap.h"
+
 /* General helper functions */
-extern void usage(const char *err) NORETURN;
-extern void die(const char *err, ...) NORETURN __attribute__((format (printf, 1, 2)));
-extern void die_errno(const char *err, ...) NORETURN __attribute__((format (printf, 1, 2)));
+extern void vreportf(const char *prefix, const char *err, va_list params);
+extern NORETURN void usage(const char *err);
+extern NORETURN void usagef(const char *err, ...) __attribute__((format (printf, 1, 2)));
+extern NORETURN void die(const char *err, ...) __attribute__((format (printf, 1, 2)));
+extern NORETURN void die_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
 extern int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
 
-extern void set_die_routine(void (*routine)(const char *err, va_list params) NORETURN);
+extern void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params));
 
 extern int prefixcmp(const char *str, const char *prefix);
-extern time_t tm_to_time_t(const struct tm *tm);
+extern int suffixcmp(const char *str, const char *suffix);
 
 static inline const char *skip_prefix(const char *str, const char *prefix)
 {
@@ -200,7 +225,6 @@ static inline const char *skip_prefix(const char *str, const char *prefix)
 #define PROT_READ 1
 #define PROT_WRITE 2
 #define MAP_PRIVATE 1
-#define MAP_FAILED ((void*)-1)
 #endif
 
 #define mmap git_mmap
@@ -228,6 +252,10 @@ extern int git_munmap(void *start, size_t length);
 		: 32 * 1024 * 1024)
 
 #endif /* NO_MMAP */
+
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void *)-1)
+#endif
 
 #ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
 #define on_disk_bytes(st) ((st).st_size)
@@ -315,6 +343,7 @@ extern int git_vsnprintf(char *str, size_t maxsize,
 #ifdef __GLIBC_PREREQ
 #if __GLIBC_PREREQ(2, 1)
 #define HAVE_STRCHRNUL
+#define HAVE_MEMPCPY
 #endif
 #endif
 
@@ -328,10 +357,22 @@ static inline char *gitstrchrnul(const char *s, int c)
 }
 #endif
 
+#ifndef HAVE_MEMPCPY
+#define mempcpy gitmempcpy
+static inline void *gitmempcpy(void *dest, const void *src, size_t n)
+{
+	return (char *)memcpy(dest, src, n) + n;
+}
+#endif
+
 extern void release_pack_memory(size_t, int);
+
+typedef void (*try_to_free_t)(size_t);
+extern try_to_free_t set_try_to_free_routine(try_to_free_t);
 
 extern char *xstrdup(const char *str);
 extern void *xmalloc(size_t size);
+extern void *xmallocz(size_t size);
 extern void *xmemdupz(const void *data, size_t len);
 extern char *xstrndup(const char *str, size_t len);
 extern void *xrealloc(void *ptr, size_t size);
@@ -452,5 +493,14 @@ void git_qsort(void *base, size_t nmemb, size_t size,
  * Always returns the return value of unlink(2).
  */
 int unlink_or_warn(const char *path);
+/*
+ * Likewise for rmdir(2).
+ */
+int rmdir_or_warn(const char *path);
+/*
+ * Calls the correct function out of {unlink,rmdir}_or_warn based on
+ * the supplied file mode.
+ */
+int remove_or_warn(unsigned int mode, const char *path);
 
 #endif

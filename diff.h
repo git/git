@@ -9,20 +9,26 @@
 struct rev_info;
 struct diff_options;
 struct diff_queue_struct;
+struct strbuf;
+struct diff_filespec;
+struct userdiff_driver;
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
-		 const char *fullpath);
+		 const char *fullpath,
+		 unsigned old_dirty_submodule, unsigned new_dirty_submodule);
 
 typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
-		    const char *fullpath);
+		    const char *fullpath, unsigned dirty_submodule);
 
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 		struct diff_options *options, void *data);
+
+typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data);
 
 #define DIFF_FORMAT_RAW		0x0001
 #define DIFF_FORMAT_DIFFSTAT	0x0002
@@ -53,9 +59,9 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_FIND_COPIES_HARDER  (1 <<  6)
 #define DIFF_OPT_FOLLOW_RENAMES      (1 <<  7)
 #define DIFF_OPT_COLOR_DIFF          (1 <<  8)
-#define DIFF_OPT_COLOR_DIFF_WORDS    (1 <<  9)
+/* (1 <<  9) unused */
 #define DIFF_OPT_HAS_CHANGES         (1 << 10)
-#define DIFF_OPT_QUIET               (1 << 11)
+#define DIFF_OPT_QUICK               (1 << 11)
 #define DIFF_OPT_NO_INDEX            (1 << 12)
 #define DIFF_OPT_ALLOW_EXTERNAL      (1 << 13)
 #define DIFF_OPT_EXIT_WITH_STATUS    (1 << 14)
@@ -66,12 +72,25 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_DIRSTAT_CUMULATIVE  (1 << 19)
 #define DIFF_OPT_DIRSTAT_BY_FILE     (1 << 20)
 #define DIFF_OPT_ALLOW_TEXTCONV      (1 << 21)
+#define DIFF_OPT_DIFF_FROM_CONTENTS  (1 << 22)
+#define DIFF_OPT_SUBMODULE_LOG       (1 << 23)
+#define DIFF_OPT_DIRTY_SUBMODULES    (1 << 24)
+#define DIFF_OPT_IGNORE_UNTRACKED_IN_SUBMODULES (1 << 25)
+#define DIFF_OPT_IGNORE_DIRTY_SUBMODULES (1 << 26)
+
 #define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
 #define DIFF_OPT_SET(opts, flag)    ((opts)->flags |= DIFF_OPT_##flag)
 #define DIFF_OPT_CLR(opts, flag)    ((opts)->flags &= ~DIFF_OPT_##flag)
 #define DIFF_XDL_TST(opts, flag)    ((opts)->xdl_opts & XDF_##flag)
 #define DIFF_XDL_SET(opts, flag)    ((opts)->xdl_opts |= XDF_##flag)
 #define DIFF_XDL_CLR(opts, flag)    ((opts)->xdl_opts &= ~XDF_##flag)
+
+enum diff_words_type {
+	DIFF_WORDS_NONE = 0,
+	DIFF_WORDS_PORCELAIN,
+	DIFF_WORDS_PLAIN,
+	DIFF_WORDS_COLOR
+};
 
 struct diff_options {
 	const char *filter;
@@ -102,6 +121,7 @@ struct diff_options {
 	int stat_width;
 	int stat_name_width;
 	const char *word_regex;
+	enum diff_words_type word_diff;
 
 	/* this is set by diffcore for DIFF_FORMAT_PATCH */
 	int found_changes;
@@ -116,6 +136,8 @@ struct diff_options {
 	add_remove_fn_t add_remove;
 	diff_format_fn_t format_callback;
 	void *format_callback_data;
+	diff_prefix_fn_t output_prefix;
+	void *output_prefix_data;
 };
 
 enum color_diff {
@@ -127,6 +149,7 @@ enum color_diff {
 	DIFF_FILE_NEW = 5,
 	DIFF_COMMIT = 6,
 	DIFF_WHITESPACE = 7,
+	DIFF_FUNCINFO = 8
 };
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
 #define diff_get_color_opt(o, ix) \
@@ -173,13 +196,14 @@ extern void diff_addremove(struct diff_options *,
 			   int addremove,
 			   unsigned mode,
 			   const unsigned char *sha1,
-			   const char *fullpath);
+			   const char *fullpath, unsigned dirty_submodule);
 
 extern void diff_change(struct diff_options *,
 			unsigned mode1, unsigned mode2,
 			const unsigned char *sha1,
 			const unsigned char *sha2,
-			const char *fullpath);
+			const char *fullpath,
+			unsigned dirty_submodule1, unsigned dirty_submodule2);
 
 extern void diff_unmerge(struct diff_options *,
 			 const char *path,
@@ -204,6 +228,7 @@ extern int diff_setup_done(struct diff_options *);
 #define DIFF_PICKAXE_REGEX	2
 
 extern void diffcore_std(struct diff_options *);
+extern void diffcore_fix_diff_index(struct diff_options *);
 
 #define COMMON_DIFF_OPTIONS_HELP \
 "\ncommon diff options:\n" \
@@ -269,5 +294,11 @@ extern int diff_result_code(struct diff_options *, int);
 extern void diff_no_index(struct rev_info *, int, const char **, int, const char *);
 
 extern int index_differs_from(const char *def, int diff_flags);
+
+extern size_t fill_textconv(struct userdiff_driver *driver,
+			    struct diff_filespec *df,
+			    char **outbuf);
+
+extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
 
 #endif /* DIFF_H */

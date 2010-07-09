@@ -82,10 +82,11 @@ objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
 
 objectsize::
-	The size of the object (the same as 'git-cat-file -s' reports).
+	The size of the object (the same as 'git cat-file -s' reports).
 
 objectname::
 	The object name (aka SHA-1).
+	For a non-ambiguous abbreviation of the object name append `:short`.
 
 upstream::
 	The name of a local ref which can be considered ``upstream''

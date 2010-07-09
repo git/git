@@ -5,12 +5,27 @@ test_description='Return value of diffs'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
+	echo "1 " >a &&
+	git add . &&
+	git commit -m zeroth &&
 	echo 1 >a &&
 	git add . &&
 	git commit -m first &&
 	echo 2 >b &&
 	git add . &&
 	git commit -a -m second
+'
+
+test_expect_success 'git diff --quiet -w  HEAD^^ HEAD^' '
+	git diff --quiet -w HEAD^^ HEAD^
+'
+
+test_expect_success 'git diff --quiet HEAD^^ HEAD^' '
+	test_must_fail git diff --quiet HEAD^^ HEAD^
+'
+
+test_expect_success 'git diff --quiet -w  HEAD^ HEAD' '
+	test_must_fail git diff --quiet -w HEAD^ HEAD
 '
 
 test_expect_success 'git diff-tree HEAD^ HEAD' '
@@ -105,7 +120,6 @@ test_expect_success '--check with --no-pager returns 2 for dirty difference' '
 
 '
 
-
 test_expect_success 'check should test not just the last line' '
 	echo "" >>a &&
 	git --no-pager diff --check
@@ -124,6 +138,28 @@ test_expect_success 'check detects leftover conflict markers' '
 		test $? = 2
 	) &&
 	test 3 = $(grep "conflict marker" test.out | wc -l) &&
+	git reset --hard
+'
+
+test_expect_success 'check honors conflict marker length' '
+	git reset --hard &&
+	echo ">>>>>>> boo" >>b &&
+	echo "======" >>a &&
+	git diff --check a &&
+	(
+		git diff --check b
+		test $? = 2
+	) &&
+	git reset --hard &&
+	echo ">>>>>>>> boo" >>b &&
+	echo "========" >>a &&
+	git diff --check &&
+	echo "b conflict-marker-size=8" >.gitattributes &&
+	(
+		git diff --check b
+		test $? = 2
+	) &&
+	git diff --check a &&
 	git reset --hard
 '
 

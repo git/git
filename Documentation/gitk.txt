@@ -22,7 +22,7 @@ git repository.
 OPTIONS
 -------
 To control which revisions to show, the command takes options applicable to
-the 'git-rev-list' command (see linkgit:git-rev-list[1]).
+the 'git rev-list' command (see linkgit:git-rev-list[1]).
 This manual page describes only the most
 frequently used options.
 

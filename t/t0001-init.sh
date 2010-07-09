@@ -167,6 +167,25 @@ test_expect_success 'init with --template (blank)' '
 	! test -f template-blank/.git/info/exclude
 '
 
+test_expect_success 'init with init.templatedir set' '
+	mkdir templatedir-source &&
+	echo Content >templatedir-source/file &&
+	(
+		HOME="`pwd`" &&
+		export HOME &&
+		test_config="${HOME}/.gitconfig" &&
+		git config -f "$test_config"  init.templatedir "${HOME}/templatedir-source" &&
+		mkdir templatedir-set &&
+		cd templatedir-set &&
+		unset GIT_CONFIG_NOGLOBAL &&
+		unset GIT_TEMPLATE_DIR &&
+		NO_SET_GIT_TEMPLATE_DIR=t &&
+		export NO_SET_GIT_TEMPLATE_DIR &&
+		git init
+	) &&
+	test_cmp templatedir-source/file templatedir-set/.git/file
+'
+
 test_expect_success 'init --bare/--shared overrides system/global config' '
 	(
 		HOME="`pwd`" &&
@@ -206,6 +225,103 @@ test_expect_success 'init rejects insanely long --template' '
 		cd test &&
 		test_must_fail git init --template=$insane
 	)
+'
+
+test_expect_success 'init creates a new directory' '
+	rm -fr newdir &&
+	(
+		git init newdir &&
+		test -d newdir/.git/refs
+	)
+'
+
+test_expect_success 'init creates a new bare directory' '
+	rm -fr newdir &&
+	(
+		git init --bare newdir &&
+		test -d newdir/refs
+	)
+'
+
+test_expect_success 'init recreates a directory' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		git init newdir &&
+		test -d newdir/.git/refs
+	)
+'
+
+test_expect_success 'init recreates a new bare directory' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		git init --bare newdir &&
+		test -d newdir/refs
+	)
+'
+
+test_expect_success 'init creates a new deep directory' '
+	rm -fr newdir &&
+	git init newdir/a/b/c &&
+	test -d newdir/a/b/c/.git/refs
+'
+
+test_expect_success POSIXPERM 'init creates a new deep directory (umask vs. shared)' '
+	rm -fr newdir &&
+	(
+		# Leading directories should honor umask while
+		# the repository itself should follow "shared"
+		umask 002 &&
+		git init --bare --shared=0660 newdir/a/b/c &&
+		test -d newdir/a/b/c/refs &&
+		ls -ld newdir/a newdir/a/b > lsab.out &&
+		! grep -v "^drwxrw[sx]r-x" lsab.out &&
+		ls -ld newdir/a/b/c > lsc.out &&
+		! grep -v "^drwxrw[sx]---" lsc.out
+	)
+'
+
+test_expect_success 'init notices EEXIST (1)' '
+	rm -fr newdir &&
+	(
+		>newdir &&
+		test_must_fail git init newdir &&
+		test -f newdir
+	)
+'
+
+test_expect_success 'init notices EEXIST (2)' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		>newdir/a
+		test_must_fail git init newdir/a/b &&
+		test -f newdir/a
+	)
+'
+
+test_expect_success POSIXPERM 'init notices EPERM' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		chmod -w newdir &&
+		test_must_fail git init newdir/a/b
+	)
+'
+
+test_expect_success 'init creates a new bare directory with global --bare' '
+	rm -rf newdir &&
+	git --bare init newdir &&
+	test -d newdir/refs
+'
+
+test_expect_success 'init prefers command line to GIT_DIR' '
+	rm -rf newdir &&
+	mkdir otherdir &&
+	GIT_DIR=otherdir git --bare init newdir &&
+	test -d newdir/refs &&
+	! test -d otherdir/refs
 '
 
 test_done

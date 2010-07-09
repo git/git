@@ -10,7 +10,7 @@ a merge to before the merge.
 '
 . ./test-lib.sh
 
-. ../lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rebase.sh
 
 set_fake_editor
 

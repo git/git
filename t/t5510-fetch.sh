@@ -71,7 +71,7 @@ test_expect_success "fetch test for-merge" '
 		echo "$one_in_two	"
 	} >expected &&
 	cut -f -2 .git/FETCH_HEAD >actual &&
-	diff expected actual'
+	test_cmp expected actual'
 
 test_expect_success 'fetch tags when there is no tags' '
 
@@ -339,6 +339,24 @@ test_expect_success 'fetch into the current branch with --update-head-ok' '
 
 	git fetch --update-head-ok . side:master
 
+'
+
+test_expect_success 'fetch --dry-run' '
+
+	rm -f .git/FETCH_HEAD &&
+	git fetch --dry-run . &&
+	! test -f .git/FETCH_HEAD
+'
+
+test_expect_success "should be able to fetch with duplicate refspecs" '
+        mkdir dups &&
+        cd dups &&
+        git init &&
+        git config branch.master.remote three &&
+        git config remote.three.url ../three/.git &&
+        git config remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
+        git config --add remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
+        git fetch three
 '
 
 test_done

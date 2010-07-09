@@ -43,23 +43,19 @@ OPTIONS
 	a default name determined from the pack content.  If
 	<pack-file> is not specified consider using --keep to
 	prevent a race condition between this process and
-	'git-repack'.
+	'git repack'.
 
 --fix-thin::
-	It is possible for 'git-pack-objects' to build
-	"thin" pack, which records objects in deltified form based on
-	objects not included in the pack to reduce network traffic.
-	Those objects are expected to be present on the receiving end
-	and they must be included in the pack for that pack to be self
-	contained and indexable. Without this option any attempt to
-	index a thin pack will fail. This option only makes sense in
-	conjunction with --stdin.
+	Fix a "thin" pack produced by `git pack-objects --thin` (see
+	linkgit:git-pack-objects[1] for details) by adding the
+	excluded objects the deltified objects are based on to the
+	pack. This option only makes sense in conjunction with --stdin.
 
 --keep::
 	Before moving the index into its final destination
 	create an empty .keep file for the associated pack file.
 	This option is usually necessary with --stdin to prevent a
-	simultaneous 'git-repack' process from deleting
+	simultaneous 'git repack' process from deleting
 	the newly constructed pack and index before refs can be
 	updated to use objects contained in the pack.
 
@@ -86,7 +82,7 @@ Once the index has been created, the list of object names is sorted
 and the SHA1 hash of that list is printed to stdout. If --stdin was
 also used then this is prefixed by either "pack\t", or "keep\t" if a
 new .keep file was successfully created. This is useful to remove a
-.keep file used as a lock to prevent the race with 'git-repack'
+.keep file used as a lock to prevent the race with 'git repack'
 mentioned above.
 
 

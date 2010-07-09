@@ -255,7 +255,7 @@ proc show_other_diff {path w m cont_info} {
 
 proc start_show_diff {cont_info {add_opts {}}} {
 	global file_states file_lists
-	global is_3way_diff diff_active repo_config
+	global is_3way_diff is_submodule_diff diff_active repo_config
 	global ui_diff ui_index ui_workdir
 	global current_diff_path current_diff_side current_diff_header
 
@@ -265,6 +265,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	set s $file_states($path)
 	set m [lindex $s 0]
 	set is_3way_diff 0
+	set is_submodule_diff 0
 	set diff_active 1
 	set current_diff_header {}
 
@@ -277,6 +278,15 @@ proc start_show_diff {cont_info {add_opts {}}} {
 			lappend cmd diff
 		} else {
 			lappend cmd diff-files
+		}
+	}
+
+	if {[string match {160000 *} [lindex $s 2]]
+	 || [string match {160000 *} [lindex $s 3]]} {
+		set is_submodule_diff 1
+
+		if {[git-version >= "1.6.6"]} {
+			lappend cmd --submodule
 		}
 	}
 
@@ -293,6 +303,14 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	} else {
 		lappend cmd --
 		lappend cmd $path
+	}
+
+	if {$is_submodule_diff && [git-version < "1.6.6"]} {
+		if {$w eq $ui_index} {
+			set cmd [list submodule summary --cached -- $path]
+		} else {
+			set cmd [list submodule summary --files -- $path]
+		}
 	}
 
 	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
@@ -312,7 +330,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 }
 
 proc read_diff {fd cont_info} {
-	global ui_diff diff_active
+	global ui_diff diff_active is_submodule_diff
 	global is_3way_diff is_conflict_diff current_diff_header
 	global current_diff_queue
 	global diff_empty_count
@@ -373,6 +391,25 @@ proc read_diff {fd cont_info} {
 				puts "error: Unhandled 3 way diff marker: {$op}"
 				set tags {}
 			}
+			}
+		} elseif {$is_submodule_diff} {
+			if {$line == ""} continue
+			if {[regexp {^Submodule } $line]} {
+				set tags d_@
+			} elseif {[regexp {^\* } $line]} {
+				set line [string replace $line 0 1 {Submodule }]
+				set tags d_@
+			} else {
+				set op [string range $line 0 2]
+				switch -- $op {
+				{  <} {set tags d_-}
+				{  >} {set tags d_+}
+				{  W} {set tags {}}
+				default {
+					puts "error: Unhandled submodule diff marker: {$op}"
+					set tags {}
+				}
+				}
 			}
 		} else {
 			set op [string index $line 0]
@@ -505,9 +542,22 @@ proc apply_hunk {x y} {
 	}
 }
 
-proc apply_line {x y} {
+proc apply_range_or_line {x y} {
 	global current_diff_path current_diff_header current_diff_side
 	global ui_diff ui_index file_states
+
+	set selected [$ui_diff tag nextrange sel 0.0]
+
+	if {$selected == {}} {
+		set first [$ui_diff index "@$x,$y"]
+		set last $first
+	} else {
+		set first [lindex $selected 0]
+		set last [lindex $selected 1]
+	}
+
+	set first_l [$ui_diff index "$first linestart"]
+	set last_l [$ui_diff index "$last lineend"]
 
 	if {$current_diff_path eq {} || $current_diff_header eq {}} return
 	if {![lock_index apply_hunk]} return
@@ -531,119 +581,147 @@ proc apply_line {x y} {
 		}
 	}
 
-	set the_l [$ui_diff index @$x,$y]
+	set wholepatch {}
 
-	# operate only on change lines
-	set c1 [$ui_diff get "$the_l linestart"]
-	if {$c1 ne {+} && $c1 ne {-}} {
-		unlock_index
-		return
-	}
-	set sign $c1
-
-	set i_l [$ui_diff search -backwards -regexp ^@@ $the_l 0.0]
-	if {$i_l eq {}} {
-		unlock_index
-		return
-	}
-	# $i_l is now at the beginning of a line
-
-	# pick start line number from hunk header
-	set hh [$ui_diff get $i_l "$i_l + 1 lines"]
-	set hh [lindex [split $hh ,] 0]
-	set hln [lindex [split $hh -] 1]
-
-	# There is a special situation to take care of. Consider this hunk:
-	#
-	#    @@ -10,4 +10,4 @@
-	#     context before
-	#    -old 1
-	#    -old 2
-	#    +new 1
-	#    +new 2
-	#     context after
-	#
-	# We used to keep the context lines in the order they appear in the
-	# hunk. But then it is not possible to correctly stage only
-	# "-old 1" and "+new 1" - it would result in this staged text:
-	#
-	#    context before
-	#    old 2
-	#    new 1
-	#    context after
-	#
-	# (By symmetry it is not possible to *un*stage "old 2" and "new 2".)
-	#
-	# We resolve the problem by introducing an asymmetry, namely, when
-	# a "+" line is *staged*, it is moved in front of the context lines
-	# that are generated from the "-" lines that are immediately before
-	# the "+" block. That is, we construct this patch:
-	#
-	#    @@ -10,4 +10,5 @@
-	#     context before
-	#    +new 1
-	#     old 1
-	#     old 2
-	#     context after
-	#
-	# But we do *not* treat "-" lines that are *un*staged in a special
-	# way.
-	#
-	# With this asymmetry it is possible to stage the change
-	# "old 1" -> "new 1" directly, and to stage the change
-	# "old 2" -> "new 2" by first staging the entire hunk and
-	# then unstaging the change "old 1" -> "new 1".
-
-	# This is non-empty if and only if we are _staging_ changes;
-	# then it accumulates the consecutive "-" lines (after converting
-	# them to context lines) in order to be moved after the "+" change
-	# line.
-	set pre_context {}
-
-	set n 0
-	set i_l [$ui_diff index "$i_l + 1 lines"]
-	set patch {}
-	while {[$ui_diff compare $i_l < "end - 1 chars"] &&
-	       [$ui_diff get $i_l "$i_l + 2 chars"] ne {@@}} {
-		set next_l [$ui_diff index "$i_l + 1 lines"]
-		set c1 [$ui_diff get $i_l]
-		if {[$ui_diff compare $i_l <= $the_l] &&
-		    [$ui_diff compare $the_l < $next_l]} {
-			# the line to stage/unstage
-			set ln [$ui_diff get $i_l $next_l]
-			if {$c1 eq {-}} {
-				set n [expr $n+1]
-				set patch "$patch$pre_context$ln"
-			} else {
-				set patch "$patch$ln$pre_context"
-			}
-			set pre_context {}
-		} elseif {$c1 ne {-} && $c1 ne {+}} {
-			# context line
-			set ln [$ui_diff get $i_l $next_l]
-			set patch "$patch$pre_context$ln"
-			set n [expr $n+1]
-			set pre_context {}
-		} elseif {$c1 eq $to_context} {
-			# turn change line into context line
-			set ln [$ui_diff get "$i_l + 1 chars" $next_l]
-			if {$c1 eq {-}} {
-				set pre_context "$pre_context $ln"
-			} else {
-				set patch "$patch $ln"
-			}
-			set n [expr $n+1]
+	while {$first_l < $last_l} {
+		set i_l [$ui_diff search -backwards -regexp ^@@ $first_l 0.0]
+		if {$i_l eq {}} {
+			# If there's not a @@ above, then the selected range
+			# must have come before the first_l @@
+			set i_l [$ui_diff search -regexp ^@@ $first_l $last_l]
 		}
-		set i_l $next_l
+		if {$i_l eq {}} {
+			unlock_index
+			return
+		}
+		# $i_l is now at the beginning of a line
+
+		# pick start line number from hunk header
+		set hh [$ui_diff get $i_l "$i_l + 1 lines"]
+		set hh [lindex [split $hh ,] 0]
+		set hln [lindex [split $hh -] 1]
+
+		# There is a special situation to take care of. Consider this
+		# hunk:
+		#
+		#    @@ -10,4 +10,4 @@
+		#     context before
+		#    -old 1
+		#    -old 2
+		#    +new 1
+		#    +new 2
+		#     context after
+		#
+		# We used to keep the context lines in the order they appear in
+		# the hunk. But then it is not possible to correctly stage only
+		# "-old 1" and "+new 1" - it would result in this staged text:
+		#
+		#    context before
+		#    old 2
+		#    new 1
+		#    context after
+		#
+		# (By symmetry it is not possible to *un*stage "old 2" and "new
+		# 2".)
+		#
+		# We resolve the problem by introducing an asymmetry, namely,
+		# when a "+" line is *staged*, it is moved in front of the
+		# context lines that are generated from the "-" lines that are
+		# immediately before the "+" block. That is, we construct this
+		# patch:
+		#
+		#    @@ -10,4 +10,5 @@
+		#     context before
+		#    +new 1
+		#     old 1
+		#     old 2
+		#     context after
+		#
+		# But we do *not* treat "-" lines that are *un*staged in a
+		# special way.
+		#
+		# With this asymmetry it is possible to stage the change "old
+		# 1" -> "new 1" directly, and to stage the change "old 2" ->
+		# "new 2" by first staging the entire hunk and then unstaging
+		# the change "old 1" -> "new 1".
+		#
+		# Applying multiple lines adds complexity to the special
+		# situation.  The pre_context must be moved after the entire
+		# first block of consecutive staged "+" lines, so that
+		# staging both additions gives the following patch:
+		#
+		#    @@ -10,4 +10,6 @@
+		#     context before
+		#    +new 1
+		#    +new 2
+		#     old 1
+		#     old 2
+		#     context after
+
+		# This is non-empty if and only if we are _staging_ changes;
+		# then it accumulates the consecutive "-" lines (after
+		# converting them to context lines) in order to be moved after
+		# "+" change lines.
+		set pre_context {}
+
+		set n 0
+		set m 0
+		set i_l [$ui_diff index "$i_l + 1 lines"]
+		set patch {}
+		while {[$ui_diff compare $i_l < "end - 1 chars"] &&
+		       [$ui_diff get $i_l "$i_l + 2 chars"] ne {@@}} {
+			set next_l [$ui_diff index "$i_l + 1 lines"]
+			set c1 [$ui_diff get $i_l]
+			if {[$ui_diff compare $first_l <= $i_l] &&
+			    [$ui_diff compare $i_l < $last_l] &&
+			    ($c1 eq {-} || $c1 eq {+})} {
+				# a line to stage/unstage
+				set ln [$ui_diff get $i_l $next_l]
+				if {$c1 eq {-}} {
+					set n [expr $n+1]
+					set patch "$patch$pre_context$ln"
+					set pre_context {}
+				} else {
+					set m [expr $m+1]
+					set patch "$patch$ln"
+				}
+			} elseif {$c1 ne {-} && $c1 ne {+}} {
+				# context line
+				set ln [$ui_diff get $i_l $next_l]
+				set patch "$patch$pre_context$ln"
+				set n [expr $n+1]
+				set m [expr $m+1]
+				set pre_context {}
+			} elseif {$c1 eq $to_context} {
+				# turn change line into context line
+				set ln [$ui_diff get "$i_l + 1 chars" $next_l]
+				if {$c1 eq {-}} {
+					set pre_context "$pre_context $ln"
+				} else {
+					set patch "$patch $ln"
+				}
+				set n [expr $n+1]
+				set m [expr $m+1]
+			} else {
+				# a change in the opposite direction of
+				# to_context which is outside the range of
+				# lines to apply.
+				set patch "$patch$pre_context"
+				set pre_context {}
+			}
+			set i_l $next_l
+		}
+		set patch "$patch$pre_context"
+		set wholepatch "$wholepatch@@ -$hln,$n +$hln,$m @@\n$patch"
+		set first_l [$ui_diff index "$next_l + 1 lines"]
 	}
-	set patch "@@ -$hln,$n +$hln,[eval expr $n $sign 1] @@\n$patch"
 
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
 		set p [eval git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $current_diff_header
-		puts -nonewline $p $patch
+		puts -nonewline $p $wholepatch
 		close $p} err]} {
 		error_popup [append $failed_msg "\n\n$err"]
 	}

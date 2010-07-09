@@ -69,7 +69,11 @@ extern int match_pathspec(const char **pathspec, const char *name, int namelen, 
 extern int fill_directory(struct dir_struct *dir, const char **pathspec);
 extern int read_directory(struct dir_struct *, const char *path, int len, const char **pathspec);
 
+extern int excluded_from_list(const char *pathname, int pathlen, const char *basename,
+			      int *dtype, struct exclude_list *el);
 extern int excluded(struct dir_struct *, const char *, int *);
+extern int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
+					  char **buf_p, struct exclude_list *which, int check_index);
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
 extern void add_exclude(const char *string, const char *base,
 			int baselen, struct exclude_list *which);

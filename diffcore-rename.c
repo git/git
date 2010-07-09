@@ -523,10 +523,13 @@ void diffcore_rename(struct diff_options *options)
 			this_src.dst = i;
 			this_src.src = j;
 			record_if_better(m, &this_src);
+			/*
+			 * Once we run estimate_similarity,
+			 * We do not need the text anymore.
+			 */
 			diff_free_filespec_blob(one);
+			diff_free_filespec_blob(two);
 		}
-		/* We do not need the text anymore */
-		diff_free_filespec_blob(two);
 		dst_cnt++;
 	}
 
@@ -566,8 +569,7 @@ void diffcore_rename(struct diff_options *options)
 	/* At this point, we have found some renames and copies and they
 	 * are recorded in rename_dst.  The original list is still in *q.
 	 */
-	outq.queue = NULL;
-	outq.nr = outq.alloc = 0;
+	DIFF_QUEUE_CLEAR(&outq);
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		struct diff_filepair *pair_to_free = NULL;

@@ -1,7 +1,7 @@
 /*
  * test-delta.c: test code to exercise diff-delta.c and patch-delta.c
  *
- * (C) 2005 Nicolas Pitre <nico@cam.org>
+ * (C) 2005 Nicolas Pitre <nico@fluxnic.net>
  *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as

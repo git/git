@@ -12,6 +12,7 @@ struct shortlog {
 	int in1;
 	int in2;
 	int user_format;
+	int abbrev;
 
 	char *common_repo_prefix;
 	int email;

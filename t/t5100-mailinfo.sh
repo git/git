@@ -11,18 +11,30 @@ test_expect_success 'split sample box' \
 	'git mailsplit -o. "$TEST_DIRECTORY"/t5100/sample.mbox >last &&
 	last=`cat last` &&
 	echo total is $last &&
-	test `cat last` = 13'
+	test `cat last` = 16'
+
+check_mailinfo () {
+	mail=$1 opt=$2
+	mo="$mail$opt"
+	git mailinfo -u $opt msg$mo patch$mo <$mail >info$mo &&
+	test_cmp "$TEST_DIRECTORY"/t5100/msg$mo msg$mo &&
+	test_cmp "$TEST_DIRECTORY"/t5100/patch$mo patch$mo &&
+	test_cmp "$TEST_DIRECTORY"/t5100/info$mo info$mo
+}
+
 
 for mail in `echo 00*`
 do
 	test_expect_success "mailinfo $mail" '
-		git mailinfo -u msg$mail patch$mail <$mail >info$mail &&
-		echo msg &&
-		test_cmp "$TEST_DIRECTORY"/t5100/msg$mail msg$mail &&
-		echo patch &&
-		test_cmp "$TEST_DIRECTORY"/t5100/patch$mail patch$mail &&
-		echo info &&
-		test_cmp "$TEST_DIRECTORY"/t5100/info$mail info$mail
+		check_mailinfo $mail "" &&
+		if test -f "$TEST_DIRECTORY"/t5100/msg$mail--scissors
+		then
+			check_mailinfo $mail --scissors
+		fi &&
+		if test -f "$TEST_DIRECTORY"/t5100/msg$mail--no-inbody-headers
+		then
+			check_mailinfo $mail --no-inbody-headers
+		fi
 	'
 done
 

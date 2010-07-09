@@ -3,9 +3,7 @@
 #include <conio.h>
 #include "../strbuf.h"
 
-unsigned int _CRT_fmode = _O_BINARY;
-
-static int err_win_to_posix(DWORD winerr)
+int err_win_to_posix(DWORD winerr)
 {
 	int error = ENOSYS;
 	switch(winerr) {
@@ -123,13 +121,17 @@ int mingw_open (const char *filename, int oflags, ...)
 {
 	va_list args;
 	unsigned mode;
+	int fd;
+
 	va_start(args, oflags);
 	mode = va_arg(args, int);
 	va_end(args);
 
 	if (!strcmp(filename, "/dev/null"))
 		filename = "nul";
-	int fd = open(filename, oflags, mode);
+
+	fd = open(filename, oflags, mode);
+
 	if (fd < 0 && (oflags & O_CREAT) && errno == EACCES) {
 		DWORD attrs = GetFileAttributes(filename);
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
@@ -138,12 +140,53 @@ int mingw_open (const char *filename, int oflags, ...)
 	return fd;
 }
 
-static inline time_t filetime_to_time_t(const FILETIME *ft)
+#undef write
+ssize_t mingw_write(int fd, const void *buf, size_t count)
+{
+	/*
+	 * While write() calls to a file on a local disk are translated
+	 * into WriteFile() calls with a maximum size of 64KB on Windows
+	 * XP and 256KB on Vista, no such cap is placed on writes to
+	 * files over the network on Windows XP.  Unfortunately, there
+	 * seems to be a limit of 32MB-28KB on X64 and 64MB-32KB on x86;
+	 * bigger writes fail on Windows XP.
+	 * So we cap to a nice 31MB here to avoid write failures over
+	 * the net without changing the number of WriteFile() calls in
+	 * the local case.
+	 */
+	return write(fd, buf, min(count, 31 * 1024 * 1024));
+}
+
+#undef fopen
+FILE *mingw_fopen (const char *filename, const char *otype)
+{
+	if (!strcmp(filename, "/dev/null"))
+		filename = "nul";
+	return fopen(filename, otype);
+}
+
+#undef freopen
+FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
+{
+	if (filename && !strcmp(filename, "/dev/null"))
+		filename = "nul";
+	return freopen(filename, otype, stream);
+}
+
+/*
+ * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
+ * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
+ */
+static inline long long filetime_to_hnsec(const FILETIME *ft)
 {
 	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
-	winTime -= 116444736000000000LL; /* Windows to Unix Epoch conversion */
-	winTime /= 10000000;		 /* Nano to seconds resolution */
-	return (time_t)winTime;
+	/* Windows to Unix Epoch conversion */
+	return winTime - 116444736000000000LL;
+}
+
+static inline time_t filetime_to_time_t(const FILETIME *ft)
+{
+	return (time_t)(filetime_to_hnsec(ft) / 10000000);
 }
 
 /* We keep the do_lstat code in a separate function to avoid recursion.
@@ -249,8 +292,17 @@ int mingw_utime (const char *file_name, const struct utimbuf *times)
 	int fh, rc;
 
 	/* must have write permission */
-	if ((fh = open(file_name, O_RDWR | O_BINARY)) < 0)
-		return -1;
+	DWORD attrs = GetFileAttributes(file_name);
+	if (attrs != INVALID_FILE_ATTRIBUTES &&
+	    (attrs & FILE_ATTRIBUTE_READONLY)) {
+		/* ignore errors here; open() will report them */
+		SetFileAttributes(file_name, attrs & ~FILE_ATTRIBUTE_READONLY);
+	}
+
+	if ((fh = open(file_name, O_RDWR | O_BINARY)) < 0) {
+		rc = -1;
+		goto revert_attrs;
+	}
 
 	time_t_to_filetime(times->modtime, &mft);
 	time_t_to_filetime(times->actime, &aft);
@@ -260,6 +312,13 @@ int mingw_utime (const char *file_name, const struct utimbuf *times)
 	} else
 		rc = 0;
 	close(fh);
+
+revert_attrs:
+	if (attrs != INVALID_FILE_ATTRIBUTES &&
+	    (attrs & FILE_ATTRIBUTE_READONLY)) {
+		/* ignore errors again */
+		SetFileAttributes(file_name, attrs);
+	}
 	return rc;
 }
 
@@ -279,64 +338,37 @@ int mkstemp(char *template)
 
 int gettimeofday(struct timeval *tv, void *tz)
 {
-	SYSTEMTIME st;
-	struct tm tm;
-	GetSystemTime(&st);
-	tm.tm_year = st.wYear-1900;
-	tm.tm_mon = st.wMonth-1;
-	tm.tm_mday = st.wDay;
-	tm.tm_hour = st.wHour;
-	tm.tm_min = st.wMinute;
-	tm.tm_sec = st.wSecond;
-	tv->tv_sec = tm_to_time_t(&tm);
-	if (tv->tv_sec < 0)
-		return -1;
-	tv->tv_usec = st.wMilliseconds*1000;
+	FILETIME ft;
+	long long hnsec;
+
+	GetSystemTimeAsFileTime(&ft);
+	hnsec = filetime_to_hnsec(&ft);
+	tv->tv_sec = hnsec / 10000000;
+	tv->tv_usec = (hnsec % 10000000) / 10;
 	return 0;
 }
 
 int pipe(int filedes[2])
 {
-	int fd;
-	HANDLE h[2], parent;
+	HANDLE h[2];
 
-	if (_pipe(filedes, 8192, 0) < 0)
-		return -1;
-
-	parent = GetCurrentProcess();
-
-	if (!DuplicateHandle (parent, (HANDLE)_get_osfhandle(filedes[0]),
-			parent, &h[0], 0, FALSE, DUPLICATE_SAME_ACCESS)) {
-		close(filedes[0]);
-		close(filedes[1]);
+	/* this creates non-inheritable handles */
+	if (!CreatePipe(&h[0], &h[1], NULL, 8192)) {
+		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
-	if (!DuplicateHandle (parent, (HANDLE)_get_osfhandle(filedes[1]),
-			parent, &h[1], 0, FALSE, DUPLICATE_SAME_ACCESS)) {
-		close(filedes[0]);
-		close(filedes[1]);
-		CloseHandle(h[0]);
-		return -1;
-	}
-	fd = _open_osfhandle((int)h[0], O_NOINHERIT);
-	if (fd < 0) {
-		close(filedes[0]);
-		close(filedes[1]);
+	filedes[0] = _open_osfhandle((int)h[0], O_NOINHERIT);
+	if (filedes[0] < 0) {
 		CloseHandle(h[0]);
 		CloseHandle(h[1]);
 		return -1;
 	}
-	close(filedes[0]);
-	filedes[0] = fd;
-	fd = _open_osfhandle((int)h[1], O_NOINHERIT);
-	if (fd < 0) {
+	filedes[1] = _open_osfhandle((int)h[1], O_NOINHERIT);
+	if (filedes[0] < 0) {
 		close(filedes[0]);
-		close(filedes[1]);
 		CloseHandle(h[1]);
 		return -1;
 	}
-	close(filedes[1]);
-	filedes[1] = fd;
 	return 0;
 }
 
@@ -580,10 +612,11 @@ static char **get_path_split(void)
 
 static void free_path_split(char **path)
 {
+	char **p = path;
+
 	if (!path)
 		return;
 
-	char **p = path;
 	while (*p)
 		free(*p++);
 	free(path);
@@ -633,8 +666,9 @@ static int env_compare(const void *a, const void *b)
 	return strcasecmp(*ea, *eb);
 }
 
-static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
-			   int prepend_cmd)
+static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
+			      const char *dir,
+			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
@@ -670,9 +704,9 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdInput = (HANDLE) _get_osfhandle(0);
-	si.hStdOutput = (HANDLE) _get_osfhandle(1);
-	si.hStdError = (HANDLE) _get_osfhandle(2);
+	si.hStdInput = (HANDLE) _get_osfhandle(fhin);
+	si.hStdOutput = (HANDLE) _get_osfhandle(fhout);
+	si.hStdError = (HANDLE) _get_osfhandle(fherr);
 
 	/* concatenate argv, quoting args as we go */
 	strbuf_init(&args, 0);
@@ -713,7 +747,7 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 
 	memset(&pi, 0, sizeof(pi));
 	ret = CreateProcess(cmd, args.buf, NULL, NULL, TRUE, flags,
-		env ? envblk.buf : NULL, NULL, &si, &pi);
+		env ? envblk.buf : NULL, dir, &si, &pi);
 
 	if (env)
 		strbuf_release(&envblk);
@@ -727,7 +761,15 @@ static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
 	return (pid_t)pi.hProcess;
 }
 
-pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
+static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
+			   int prepend_cmd)
+{
+	return mingw_spawnve_fd(cmd, argv, env, NULL, prepend_cmd, 0, 1, 2);
+}
+
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
+		     const char *dir,
+		     int fhin, int fhout, int fherr)
 {
 	pid_t pid;
 	char **path = get_path_split();
@@ -749,13 +791,15 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env)
 				pid = -1;
 			}
 			else {
-				pid = mingw_spawnve(iprog, argv, env, 1);
+				pid = mingw_spawnve_fd(iprog, argv, env, dir, 1,
+						       fhin, fhout, fherr);
 				free(iprog);
 			}
 			argv[0] = argv0;
 		}
 		else
-			pid = mingw_spawnve(prog, argv, env, 0);
+			pid = mingw_spawnve_fd(prog, argv, env, dir, 0,
+					       fhin, fhout, fherr);
 		free(prog);
 	}
 	free_path_split(path);
@@ -824,7 +868,7 @@ void mingw_execvp(const char *cmd, char *const *argv)
 	free_path_split(path);
 }
 
-char **copy_environ()
+static char **copy_environ(void)
 {
 	char **env;
 	int i = 0;
@@ -861,7 +905,7 @@ static int lookup_env(char **env, const char *name, size_t nmln)
 /*
  * If name contains '=', then sets the variable, otherwise it unsets it
  */
-char **env_setenv(char **env, const char *name)
+static char **env_setenv(char **env, const char *name)
 {
 	char *eq = strchrnul(name, '=');
 	int i = lookup_env(env, name, eq-name);
@@ -886,17 +930,205 @@ char **env_setenv(char **env, const char *name)
 	return env;
 }
 
-/* this is the first function to call into WS_32; initialize it */
-#undef gethostbyname
-struct hostent *mingw_gethostbyname(const char *host)
+/*
+ * Copies global environ and adjusts variables as specified by vars.
+ */
+char **make_augmented_environ(const char *const *vars)
+{
+	char **env = copy_environ();
+
+	while (*vars)
+		env = env_setenv(env, *vars++);
+	return env;
+}
+
+/*
+ * Note, this isn't a complete replacement for getaddrinfo. It assumes
+ * that service contains a numerical port, or that it it is null. It
+ * does a simple search using gethostbyname, and returns one IPv4 host
+ * if one was found.
+ */
+static int WSAAPI getaddrinfo_stub(const char *node, const char *service,
+				   const struct addrinfo *hints,
+				   struct addrinfo **res)
+{
+	struct hostent *h = gethostbyname(node);
+	struct addrinfo *ai;
+	struct sockaddr_in *sin;
+
+	if (!h)
+		return WSAGetLastError();
+
+	ai = xmalloc(sizeof(struct addrinfo));
+	*res = ai;
+	ai->ai_flags = 0;
+	ai->ai_family = AF_INET;
+	ai->ai_socktype = hints->ai_socktype;
+	switch (hints->ai_socktype) {
+	case SOCK_STREAM:
+		ai->ai_protocol = IPPROTO_TCP;
+		break;
+	case SOCK_DGRAM:
+		ai->ai_protocol = IPPROTO_UDP;
+		break;
+	default:
+		ai->ai_protocol = 0;
+		break;
+	}
+	ai->ai_addrlen = sizeof(struct sockaddr_in);
+	ai->ai_canonname = strdup(h->h_name);
+
+	sin = xmalloc(ai->ai_addrlen);
+	memset(sin, 0, ai->ai_addrlen);
+	sin->sin_family = AF_INET;
+	if (service)
+		sin->sin_port = htons(atoi(service));
+	sin->sin_addr = *(struct in_addr *)h->h_addr;
+	ai->ai_addr = (struct sockaddr *)sin;
+	ai->ai_next = 0;
+	return 0;
+}
+
+static void WSAAPI freeaddrinfo_stub(struct addrinfo *res)
+{
+	free(res->ai_canonname);
+	free(res->ai_addr);
+	free(res);
+}
+
+static int WSAAPI getnameinfo_stub(const struct sockaddr *sa, socklen_t salen,
+				   char *host, DWORD hostlen,
+				   char *serv, DWORD servlen, int flags)
+{
+	const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
+	if (sa->sa_family != AF_INET)
+		return EAI_FAMILY;
+	if (!host && !serv)
+		return EAI_NONAME;
+
+	if (host && hostlen > 0) {
+		struct hostent *ent = NULL;
+		if (!(flags & NI_NUMERICHOST))
+			ent = gethostbyaddr((const char *)&sin->sin_addr,
+					    sizeof(sin->sin_addr), AF_INET);
+
+		if (ent)
+			snprintf(host, hostlen, "%s", ent->h_name);
+		else if (flags & NI_NAMEREQD)
+			return EAI_NONAME;
+		else
+			snprintf(host, hostlen, "%s", inet_ntoa(sin->sin_addr));
+	}
+
+	if (serv && servlen > 0) {
+		struct servent *ent = NULL;
+		if (!(flags & NI_NUMERICSERV))
+			ent = getservbyport(sin->sin_port,
+					    flags & NI_DGRAM ? "udp" : "tcp");
+
+		if (ent)
+			snprintf(serv, servlen, "%s", ent->s_name);
+		else
+			snprintf(serv, servlen, "%d", ntohs(sin->sin_port));
+	}
+
+	return 0;
+}
+
+static HMODULE ipv6_dll = NULL;
+static void (WSAAPI *ipv6_freeaddrinfo)(struct addrinfo *res);
+static int (WSAAPI *ipv6_getaddrinfo)(const char *node, const char *service,
+				      const struct addrinfo *hints,
+				      struct addrinfo **res);
+static int (WSAAPI *ipv6_getnameinfo)(const struct sockaddr *sa, socklen_t salen,
+				      char *host, DWORD hostlen,
+				      char *serv, DWORD servlen, int flags);
+/*
+ * gai_strerror is an inline function in the ws2tcpip.h header, so we
+ * don't need to try to load that one dynamically.
+ */
+
+static void socket_cleanup(void)
+{
+	WSACleanup();
+	if (ipv6_dll)
+		FreeLibrary(ipv6_dll);
+	ipv6_dll = NULL;
+	ipv6_freeaddrinfo = freeaddrinfo_stub;
+	ipv6_getaddrinfo = getaddrinfo_stub;
+	ipv6_getnameinfo = getnameinfo_stub;
+}
+
+static void ensure_socket_initialization(void)
 {
 	WSADATA wsa;
+	static int initialized = 0;
+	const char *libraries[] = { "ws2_32.dll", "wship6.dll", NULL };
+	const char **name;
+
+	if (initialized)
+		return;
 
 	if (WSAStartup(MAKEWORD(2,2), &wsa))
 		die("unable to initialize winsock subsystem, error %d",
 			WSAGetLastError());
-	atexit((void(*)(void)) WSACleanup);
+
+	for (name = libraries; *name; name++) {
+		ipv6_dll = LoadLibrary(*name);
+		if (!ipv6_dll)
+			continue;
+
+		ipv6_freeaddrinfo = (void (WSAAPI *)(struct addrinfo *))
+			GetProcAddress(ipv6_dll, "freeaddrinfo");
+		ipv6_getaddrinfo = (int (WSAAPI *)(const char *, const char *,
+						   const struct addrinfo *,
+						   struct addrinfo **))
+			GetProcAddress(ipv6_dll, "getaddrinfo");
+		ipv6_getnameinfo = (int (WSAAPI *)(const struct sockaddr *,
+						   socklen_t, char *, DWORD,
+						   char *, DWORD, int))
+			GetProcAddress(ipv6_dll, "getnameinfo");
+		if (!ipv6_freeaddrinfo || !ipv6_getaddrinfo || !ipv6_getnameinfo) {
+			FreeLibrary(ipv6_dll);
+			ipv6_dll = NULL;
+		} else
+			break;
+	}
+	if (!ipv6_freeaddrinfo || !ipv6_getaddrinfo || !ipv6_getnameinfo) {
+		ipv6_freeaddrinfo = freeaddrinfo_stub;
+		ipv6_getaddrinfo = getaddrinfo_stub;
+		ipv6_getnameinfo = getnameinfo_stub;
+	}
+
+	atexit(socket_cleanup);
+	initialized = 1;
+}
+
+#undef gethostbyname
+struct hostent *mingw_gethostbyname(const char *host)
+{
+	ensure_socket_initialization();
 	return gethostbyname(host);
+}
+
+void mingw_freeaddrinfo(struct addrinfo *res)
+{
+	ipv6_freeaddrinfo(res);
+}
+
+int mingw_getaddrinfo(const char *node, const char *service,
+		      const struct addrinfo *hints, struct addrinfo **res)
+{
+	ensure_socket_initialization();
+	return ipv6_getaddrinfo(node, service, hints, res);
+}
+
+int mingw_getnameinfo(const struct sockaddr *sa, socklen_t salen,
+		      char *host, DWORD hostlen, char *serv, DWORD servlen,
+		      int flags)
+{
+	ensure_socket_initialization();
+	return ipv6_getnameinfo(sa, salen, host, hostlen, serv, servlen, flags);
 }
 
 int mingw_socket(int domain, int type, int protocol)
@@ -983,6 +1215,18 @@ repeat:
 	return -1;
 }
 
+/*
+ * Note that this doesn't return the actual pagesize, but
+ * the allocation granularity. If future Windows specific git code
+ * needs the real getpagesize function, we need to find another solution.
+ */
+int mingw_getpagesize(void)
+{
+	SYSTEM_INFO si;
+	GetSystemInfo(&si);
+	return si.dwAllocationGranularity;
+}
+
 struct passwd *getpwuid(int uid)
 {
 	static char user_name[100];
@@ -1012,7 +1256,7 @@ static sig_handler_t timer_fn = SIG_DFL;
  * length to call the signal handler.
  */
 
-static __stdcall unsigned ticktack(void *dummy)
+static unsigned __stdcall ticktack(void *dummy)
 {
 	while (WaitForSingleObject(timer_event, timer_interval) == WAIT_TIMEOUT) {
 		if (timer_fn == SIG_DFL)
@@ -1108,9 +1352,9 @@ int sigaction(int sig, struct sigaction *in, struct sigaction *out)
 #undef signal
 sig_handler_t mingw_signal(int sig, sig_handler_t handler)
 {
+	sig_handler_t old = timer_fn;
 	if (sig != SIGALRM)
 		return signal(sig, handler);
-	sig_handler_t old = timer_fn;
 	timer_fn = handler;
 	return old;
 }
@@ -1133,13 +1377,27 @@ static const char *make_backslash_path(const char *path)
 void mingw_open_html(const char *unixpath)
 {
 	const char *htmlpath = make_backslash_path(unixpath);
+	typedef HINSTANCE (WINAPI *T)(HWND, const char *,
+			const char *, const char *, const char *, INT);
+	T ShellExecute;
+	HMODULE shell32;
+
+	shell32 = LoadLibrary("shell32.dll");
+	if (!shell32)
+		die("cannot load shell32.dll");
+	ShellExecute = (T)GetProcAddress(shell32, "ShellExecuteA");
+	if (!ShellExecute)
+		die("cannot run browser");
+
 	printf("Launching default browser to display HTML ...\n");
 	ShellExecute(NULL, "open", htmlpath, NULL, "\\", 0);
+
+	FreeLibrary(shell32);
 }
 
 int link(const char *oldpath, const char *newpath)
 {
-	typedef BOOL WINAPI (*T)(const char*, const char*, LPSECURITY_ATTRIBUTES);
+	typedef BOOL (WINAPI *T)(const char*, const char*, LPSECURITY_ATTRIBUTES);
 	static T create_hard_link = NULL;
 	if (!create_hard_link) {
 		create_hard_link = (T) GetProcAddress(
@@ -1197,8 +1455,9 @@ struct dirent *mingw_readdir(DIR *dir)
 
 	if (dir->dd_handle == (long)INVALID_HANDLE_VALUE && dir->dd_stat == 0)
 	{
+		DWORD lasterr;
 		handle = FindFirstFileA(dir->dd_name, &buf);
-		DWORD lasterr = GetLastError();
+		lasterr = GetLastError();
 		dir->dd_handle = (long)handle;
 		if (handle == INVALID_HANDLE_VALUE && (lasterr != ERROR_NO_MORE_FILES)) {
 			errno = err_win_to_posix(lasterr);

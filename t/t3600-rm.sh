@@ -39,7 +39,7 @@ if test -f test-file
 then
 	test_set_prereq RO_DIR
 else
-	say 'skipping removal failure test (perhaps running as root?)'
+	skip_all='skipping removal failure test (perhaps running as root?)'
 fi
 chmod 775 .
 rm -f test-file
@@ -269,6 +269,14 @@ test_expect_success 'choking "git rm" should not let it die with cruft' '
 	rm -f .git/index.lock
 	git reset -q --hard
 	test "$status" != 0
+'
+
+test_expect_success 'rm removes subdirectories recursively' '
+	mkdir -p dir/subdir/subsubdir &&
+	echo content >dir/subdir/subsubdir/file &&
+	git add dir/subdir/subsubdir/file &&
+	git rm -f dir/subdir/subsubdir/file &&
+	! test -d dir
 '
 
 test_done

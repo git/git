@@ -72,7 +72,7 @@ void sq_quote_argv(struct strbuf *dst, const char** argv, size_t maxlen)
 	}
 }
 
-char *sq_dequote_step(char *arg, char **next)
+static char *sq_dequote_step(char *arg, char **next)
 {
 	char *dst = arg;
 	char *src = arg;
@@ -213,7 +213,7 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		int ch;
 
 		len = next_quote_pos(p, maxlen);
-		if (len == maxlen || !p[len])
+		if (len == maxlen || (maxlen < 0 && !p[len]))
 			break;
 
 		if (!no_dq && p == name)
@@ -223,6 +223,8 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		EMIT('\\');
 		p += len;
 		ch = (unsigned char)*p++;
+		if (maxlen >= 0)
+			maxlen -= len + 1;
 		if (sq_lookup[ch] >= ' ') {
 			EMIT(sq_lookup[ch]);
 		} else {
@@ -293,42 +295,75 @@ void write_name_quotedpfx(const char *pfx, size_t pfxlen,
 	fputc(terminator, fp);
 }
 
+static const char *path_relative(const char *in, int len,
+				 struct strbuf *sb, const char *prefix,
+				 int prefix_len);
+
+void write_name_quoted_relative(const char *name, size_t len,
+				const char *prefix, size_t prefix_len,
+				FILE *fp, int terminator)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	name = path_relative(name, len, &sb, prefix, prefix_len);
+	write_name_quoted(name, fp, terminator);
+
+	strbuf_release(&sb);
+}
+
+/*
+ * Give path as relative to prefix.
+ *
+ * The strbuf may or may not be used, so do not assume it contains the
+ * returned path.
+ */
+static const char *path_relative(const char *in, int len,
+				 struct strbuf *sb, const char *prefix,
+				 int prefix_len)
+{
+	int off, i;
+
+	if (len < 0)
+		len = strlen(in);
+	if (prefix && prefix_len < 0)
+		prefix_len = strlen(prefix);
+
+	off = 0;
+	i = 0;
+	while (i < prefix_len && i < len && prefix[i] == in[i]) {
+		if (prefix[i] == '/')
+			off = i + 1;
+		i++;
+	}
+	in += off;
+	len -= off;
+
+	if (i >= prefix_len)
+		return in;
+
+	strbuf_reset(sb);
+	strbuf_grow(sb, len);
+
+	while (i < prefix_len) {
+		if (prefix[i] == '/')
+			strbuf_addstr(sb, "../");
+		i++;
+	}
+	strbuf_add(sb, in, len);
+
+	return sb->buf;
+}
+
 /* quote path as relative to the given prefix */
 char *quote_path_relative(const char *in, int len,
 			  struct strbuf *out, const char *prefix)
 {
-	int needquote;
+	struct strbuf sb = STRBUF_INIT;
+	const char *rel = path_relative(in, len, &sb, prefix, -1);
+	strbuf_reset(out);
+	quote_c_style_counted(rel, strlen(rel), out, NULL, 0);
+	strbuf_release(&sb);
 
-	if (len < 0)
-		len = strlen(in);
-
-	/* "../" prefix itself does not need quoting, but "in" might. */
-	needquote = next_quote_pos(in, len) < len;
-	strbuf_setlen(out, 0);
-	strbuf_grow(out, len);
-
-	if (needquote)
-		strbuf_addch(out, '"');
-	if (prefix) {
-		int off = 0;
-		while (prefix[off] && off < len && prefix[off] == in[off])
-			if (prefix[off] == '/') {
-				prefix += off + 1;
-				in += off + 1;
-				len -= off + 1;
-				off = 0;
-			} else
-				off++;
-
-		for (; *prefix; prefix++)
-			if (*prefix == '/')
-				strbuf_addstr(out, "../");
-	}
-
-	quote_c_style_counted (in, len, out, NULL, 1);
-
-	if (needquote)
-		strbuf_addch(out, '"');
 	if (!out->len)
 		strbuf_addstr(out, "./");
 

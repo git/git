@@ -48,7 +48,7 @@ case "$common" in
 "$head")
 	echo "Updating $(git rev-parse --short $head)..$(git rev-parse --short $merge)"
 	git read-tree -u -m $head $merge || exit 1
-	git update-ref -m "resolve $merge_name: Fast forward" \
+	git update-ref -m "resolve $merge_name: Fast-forward" \
 		HEAD "$merge" "$head"
 	git diff-tree -p $head $merge | git apply --stat
 	dropheads

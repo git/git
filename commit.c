@@ -5,6 +5,7 @@
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
+#include "notes.h"
 
 int save_commit_buffer = 1;
 
@@ -132,8 +133,8 @@ struct commit_graft *read_graft_line(char *buf, int len)
 	int i;
 	struct commit_graft *graft = NULL;
 
-	if (buf[len-1] == '\n')
-		buf[--len] = 0;
+	while (len && isspace(buf[len-1]))
+		buf[--len] = '\0';
 	if (buf[0] == '#' || buf[0] == '\0')
 		return NULL;
 	if ((len + 1) % 41) {
@@ -199,7 +200,7 @@ struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
 	return commit_graft[pos];
 }
 
-int write_shallow_commits(int fd, int use_pack_protocol)
+int write_shallow_commits(struct strbuf *out, int use_pack_protocol)
 {
 	int i, count = 0;
 	for (i = 0; i < commit_graft_nr; i++)
@@ -208,12 +209,10 @@ int write_shallow_commits(int fd, int use_pack_protocol)
 				sha1_to_hex(commit_graft[i]->sha1);
 			count++;
 			if (use_pack_protocol)
-				packet_write(fd, "shallow %s", hex);
+				packet_buf_write(out, "shallow %s", hex);
 			else {
-				if (write_in_full(fd, hex,  40) != 40)
-					break;
-				if (write_in_full(fd, "\n", 1) != 1)
-					break;
+				strbuf_addstr(out, hex);
+				strbuf_addch(out, '\n');
 			}
 		}
 	return count;
@@ -225,7 +224,7 @@ int unregister_shallow(const unsigned char *sha1)
 	if (pos < 0)
 		return -1;
 	if (pos + 1 < commit_graft_nr)
-		memcpy(commit_graft + pos, commit_graft + pos + 1,
+		memmove(commit_graft + pos, commit_graft + pos + 1,
 				sizeof(struct commit_graft *)
 				* (commit_graft_nr - pos - 1));
 	commit_graft_nr--;
@@ -564,13 +563,13 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 	while (interesting(list)) {
 		struct commit *commit;
 		struct commit_list *parents;
-		struct commit_list *n;
+		struct commit_list *next;
 		int flags;
 
 		commit = list->item;
-		n = list->next;
+		next = list->next;
 		free(list);
-		list = n;
+		list = next;
 
 		flags = commit->object.flags & (PARENT1 | PARENT2 | STALE);
 		if (flags == (PARENT1 | PARENT2)) {
@@ -598,11 +597,11 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 	free_commit_list(list);
 	list = result; result = NULL;
 	while (list) {
-		struct commit_list *n = list->next;
+		struct commit_list *next = list->next;
 		if (!(list->item->object.flags & STALE))
 			insert_by_date(list->item, &result);
 		free(list);
-		list = n;
+		list = next;
 	}
 	return result;
 }
@@ -789,5 +788,60 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 		free_commit_list(base);
 	}
 	free(other);
+	return result;
+}
+
+static const char commit_utf8_warn[] =
+"Warning: commit message does not conform to UTF-8.\n"
+"You may want to amend it after fixing the message, or set the config\n"
+"variable i18n.commitencoding to the encoding your project uses.\n";
+
+int commit_tree(const char *msg, unsigned char *tree,
+		struct commit_list *parents, unsigned char *ret,
+		const char *author)
+{
+	int result;
+	int encoding_is_utf8;
+	struct strbuf buffer;
+
+	assert_sha1_type(tree, OBJ_TREE);
+
+	/* Not having i18n.commitencoding is the same as having utf-8 */
+	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
+
+	strbuf_init(&buffer, 8192); /* should avoid reallocs for the headers */
+	strbuf_addf(&buffer, "tree %s\n", sha1_to_hex(tree));
+
+	/*
+	 * NOTE! This ordering means that the same exact tree merged with a
+	 * different order of parents will be a _different_ changeset even
+	 * if everything else stays the same.
+	 */
+	while (parents) {
+		struct commit_list *next = parents->next;
+		strbuf_addf(&buffer, "parent %s\n",
+			sha1_to_hex(parents->item->object.sha1));
+		free(parents);
+		parents = next;
+	}
+
+	/* Person/date information */
+	if (!author)
+		author = git_author_info(IDENT_ERROR_ON_NO_NAME);
+	strbuf_addf(&buffer, "author %s\n", author);
+	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
+	if (!encoding_is_utf8)
+		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
+	strbuf_addch(&buffer, '\n');
+
+	/* And add the comment */
+	strbuf_addstr(&buffer, msg);
+
+	/* And check the encoding */
+	if (encoding_is_utf8 && !is_utf8(buffer.buf))
+		fprintf(stderr, commit_utf8_warn);
+
+	result = write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
+	strbuf_release(&buffer);
 	return result;
 }

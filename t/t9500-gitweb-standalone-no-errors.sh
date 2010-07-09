@@ -9,73 +9,8 @@ This test runs gitweb (git web interface) as CGI script from
 commandline, and checks that it would not write any errors
 or warnings to log.'
 
-gitweb_init () {
-	safe_pwd="$(perl -MPOSIX=getcwd -e 'print quotemeta(getcwd)')"
-	cat >gitweb_config.perl <<EOF
-#!/usr/bin/perl
 
-# gitweb configuration for tests
-
-our \$version = "current";
-our \$GIT = "git";
-our \$projectroot = "$safe_pwd";
-our \$project_maxdepth = 8;
-our \$home_link_str = "projects";
-our \$site_name = "[localhost]";
-our \$site_header = "";
-our \$site_footer = "";
-our \$home_text = "indextext.html";
-our @stylesheets = ("file:///$TEST_DIRECTORY/../gitweb/gitweb.css");
-our \$logo = "file:///$TEST_DIRECTORY/../gitweb/git-logo.png";
-our \$favicon = "file:///$TEST_DIRECTORY/../gitweb/git-favicon.png";
-our \$projects_list = "";
-our \$export_ok = "";
-our \$strict_export = "";
-
-EOF
-
-	cat >.git/description <<EOF
-$0 test repository
-EOF
-}
-
-gitweb_run () {
-	GATEWAY_INTERFACE="CGI/1.1"
-	HTTP_ACCEPT="*/*"
-	REQUEST_METHOD="GET"
-	SCRIPT_NAME="$TEST_DIRECTORY/../gitweb/gitweb.perl"
-	QUERY_STRING=""$1""
-	PATH_INFO=""$2""
-	export GATEWAY_INTERFACE HTTP_ACCEPT REQUEST_METHOD \
-		SCRIPT_NAME QUERY_STRING PATH_INFO
-
-	GITWEB_CONFIG=$(pwd)/gitweb_config.perl
-	export GITWEB_CONFIG
-
-	# some of git commands write to STDERR on error, but this is not
-	# written to web server logs, so we are not interested in that:
-	# we are interested only in properly formatted errors/warnings
-	rm -f gitweb.log &&
-	perl -- "$SCRIPT_NAME" \
-		>/dev/null 2>gitweb.log &&
-	if grep "^[[]" gitweb.log >/dev/null 2>&1; then false; else true; fi
-
-	# gitweb.log is left for debugging
-}
-
-. ./test-lib.sh
-
-if ! test_have_prereq PERL; then
-	say 'skipping gitweb tests, perl not available'
-	test_done
-fi
-
-perl -MEncode -e 'decode_utf8("", Encode::FB_CROAK)' >/dev/null 2>&1 || {
-    say 'skipping gitweb tests, perl version is too old'
-    test_done
-}
-
-gitweb_init
+. ./gitweb-lib.sh
 
 # ----------------------------------------------------------------------
 # no commits (empty, just initialized repository)
@@ -656,12 +591,20 @@ test_debug 'cat gitweb.log'
 # ----------------------------------------------------------------------
 # gitweb config and repo config
 
-cat >>gitweb_config.perl <<EOF
+cat >>gitweb_config.perl <<\EOF
 
-\$feature{'blame'}{'override'} = 1;
-\$feature{'snapshot'}{'override'} = 1;
-\$feature{'avatar'}{'override'} = 1;
+# turn on override for each overridable feature
+foreach my $key (keys %feature) {
+	if ($feature{$key}{'sub'}) {
+		$feature{$key}{'override'} = 1;
+	}
+}
 EOF
+
+test_expect_success \
+	'config override: projects list (implicit)' \
+	'gitweb_run'
+test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'config override: tree view, features not overridden in repo config' \
@@ -702,6 +645,35 @@ test_expect_success \
 	'echo "<b>UTF-8 example:</b><br />" > .git/README.html &&
 	 cat "$TEST_DIRECTORY"/t3900/1-UTF-8.txt >> .git/README.html &&
 	 gitweb_run "p=.git;a=summary"'
+test_debug 'cat gitweb.log'
+
+# ----------------------------------------------------------------------
+# syntax highlighting
+
+cat >>gitweb_config.perl <<\EOF
+$feature{'highlight'}{'override'} = 1;
+EOF
+
+highlight --version >/dev/null 2>&1
+if [ $? -eq 127 ]; then
+	say "Skipping syntax highlighting test, because 'highlight' was not found"
+else
+	test_set_prereq HIGHLIGHT
+fi
+
+test_expect_success HIGHLIGHT \
+	'syntax highlighting (no highlight)' \
+	'git config gitweb.highlight yes &&
+	 gitweb_run "p=.git;a=blob;f=file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success HIGHLIGHT \
+	'syntax highlighting (highlighted)' \
+	'git config gitweb.highlight yes &&
+	 echo "#!/usr/bin/sh" > test.sh &&
+	 git add test.sh &&
+	 git commit -m "Add test.sh" &&
+	 gitweb_run "p=.git;a=blob;f=test.sh"'
 test_debug 'cat gitweb.log'
 
 test_done

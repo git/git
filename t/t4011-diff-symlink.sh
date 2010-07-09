@@ -11,7 +11,7 @@ test_description='Test diff of symlinks.
 
 if ! test_have_prereq SYMLINKS
 then
-	say 'Symbolic links not supported, skipping tests.'
+	skip_all='Symbolic links not supported, skipping tests.'
 	test_done
 fi
 
@@ -54,7 +54,7 @@ EOF
 
 test_expect_success \
     'diff removed symlink' \
-    'rm frotz &&
+    'mv frotz frotz2 &&
     git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 
@@ -64,8 +64,7 @@ EOF
 
 test_expect_success \
     'diff identical, but newly created symlink' \
-    'sleep 3 &&
-    ln -s xyzzy frotz &&
+    'ln -s xyzzy frotz &&
     git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 

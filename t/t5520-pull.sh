@@ -26,7 +26,7 @@ cd "$D"
 test_expect_success 'checking the results' '
 	test -f file &&
 	test -f cloned/file &&
-	diff file cloned/file
+	test_cmp file cloned/file
 '
 
 test_expect_success 'pulling into void using master:master' '
@@ -147,6 +147,17 @@ test_expect_success 'pull --rebase dies early with dirty working directory' '
 	git pull &&
 	test $COPY != $(git rev-parse --verify me/copy)
 
+'
+
+test_expect_success 'pull --rebase works on branch yet to be born' '
+	git rev-parse master >expect &&
+	mkdir empty_repo &&
+	(cd empty_repo &&
+	 git init &&
+	 git pull --rebase .. master &&
+	 git rev-parse HEAD >../actual
+	) &&
+	test_cmp expect actual
 '
 
 test_done

@@ -16,6 +16,18 @@
 # been handled already by git read-tree, but that one doesn't
 # do any merges that might change the tree layout.
 
+USAGE='<orig blob> <our blob> <their blob> <path>'
+USAGE="$USAGE <orig mode> <our mode> <their mode>"
+LONG_USAGE="Usage: git merge-one-file $USAGE
+
+Blob ids and modes should be empty for missing files."
+
+if ! test "$#" -eq 7
+then
+	echo "$LONG_USAGE"
+	exit 1
+fi
+
 case "${1:-.}${2:-.}${3:-.}" in
 #
 # Deleted in both or deleted in one and unchanged in the other
@@ -95,7 +107,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		# remove lines that are unique to ours.
 		orig=`git-unpack-file $2`
 		sz0=`wc -c <"$orig"`
-		diff -u -La/$orig -Lb/$orig $orig $src2 | git apply --no-add
+		@@DIFF@@ -u -La/$orig -Lb/$orig $orig $src2 | git apply --no-add
 		sz1=`wc -c <"$orig"`
 
 		# If we do not have enough common material, it is not

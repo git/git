@@ -65,7 +65,7 @@ static int invalid_attr_name(const char *name, int namelen)
 	return 0;
 }
 
-struct git_attr *git_attr(const char *name, int len)
+static struct git_attr *git_attr_internal(const char *name, int len)
 {
 	unsigned hval = hash_name(name, len);
 	unsigned pos = hval % HASHSIZE;
@@ -93,6 +93,11 @@ struct git_attr *git_attr(const char *name, int len)
 	check_all_attr[a->attr_nr].attr = a;
 	check_all_attr[a->attr_nr].value = ATTR__UNKNOWN;
 	return a;
+}
+
+struct git_attr *git_attr(const char *name)
+{
+	return git_attr_internal(name, strlen(name));
 }
 
 /*
@@ -162,7 +167,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		else {
 			e->setto = xmemdupz(equals + 1, ep - equals - 1);
 		}
-		e->attr = git_attr(cp, len);
+		e->attr = git_attr_internal(cp, len);
 	}
 	(*num_attr)++;
 	return ep + strspn(ep, blank);
@@ -221,7 +226,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 			      sizeof(struct attr_state) * num_attr +
 			      (is_macro ? 0 : namelen + 1));
 		if (is_macro)
-			res->u.attr = git_attr(name, namelen);
+			res->u.attr = git_attr_internal(name, namelen);
 		else {
 			res->u.pattern = (char *)&(res->state[num_attr]);
 			memcpy(res->u.pattern, name, namelen);
@@ -282,7 +287,7 @@ static void free_attr_elem(struct attr_stack *e)
 }
 
 static const char *builtin_attr[] = {
-	"[attr]binary -diff -crlf",
+	"[attr]binary -diff -text",
 	NULL,
 };
 
@@ -589,20 +594,25 @@ static int path_matches(const char *pathname, int pathlen,
 	return fnmatch(pattern, pathname + baselen, FNM_PATHNAME) == 0;
 }
 
+static int macroexpand_one(int attr_nr, int rem);
+
 static int fill_one(const char *what, struct match_attr *a, int rem)
 {
 	struct git_attr_check *check = check_all_attr;
 	int i;
 
-	for (i = 0; 0 < rem && i < a->num_attr; i++) {
+	for (i = a->num_attr - 1; 0 < rem && 0 <= i; i--) {
 		struct git_attr *attr = a->state[i].attr;
 		const char **n = &(check[attr->attr_nr].value);
 		const char *v = a->state[i].setto;
 
 		if (*n == ATTR__UNKNOWN) {
-			debug_set(what, a->u.pattern, attr, v);
+			debug_set(what,
+				  a->is_macro ? a->u.attr->name : a->u.pattern,
+				  attr, v);
 			*n = v;
 			rem--;
+			rem = macroexpand_one(attr->attr_nr, rem);
 		}
 	}
 	return rem;
@@ -624,19 +634,27 @@ static int fill(const char *path, int pathlen, struct attr_stack *stk, int rem)
 	return rem;
 }
 
-static int macroexpand(struct attr_stack *stk, int rem)
+static int macroexpand_one(int attr_nr, int rem)
 {
+	struct attr_stack *stk;
+	struct match_attr *a = NULL;
 	int i;
-	struct git_attr_check *check = check_all_attr;
 
-	for (i = stk->num_matches - 1; 0 < rem && 0 <= i; i--) {
-		struct match_attr *a = stk->attrs[i];
-		if (!a->is_macro)
-			continue;
-		if (check[a->u.attr->attr_nr].value != ATTR__TRUE)
-			continue;
+	if (check_all_attr[attr_nr].value != ATTR__TRUE)
+		return rem;
+
+	for (stk = attr_stack; !a && stk; stk = stk->prev)
+		for (i = stk->num_matches - 1; !a && 0 <= i; i--) {
+			struct match_attr *ma = stk->attrs[i];
+			if (!ma->is_macro)
+				continue;
+			if (ma->u.attr->attr_nr == attr_nr)
+				a = ma;
+		}
+
+	if (a)
 		rem = fill_one("expand", a, rem);
-	}
+
 	return rem;
 }
 
@@ -660,9 +678,6 @@ int git_checkattr(const char *path, int num, struct git_attr_check *check)
 	rem = attr_nr;
 	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
 		rem = fill(path, pathlen, stk, rem);
-
-	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
-		rem = macroexpand(stk, rem);
 
 	for (i = 0; i < num; i++) {
 		const char *value = check_all_attr[check[i].attr->attr_nr].value;

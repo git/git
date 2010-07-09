@@ -90,11 +90,17 @@ msgstr "Вызов программы поддержки репозитория 
 
 #: git-gui.sh:1384
 msgid "Commit declined by prepare-commit-msg hook."
-msgstr "Сохранение прервано программой поддержки репозитория prepare-commit-msg"
+msgstr ""
+"Сохранение прервано программой поддержки репозитория prepare-commit-msg"
 
 #: git-gui.sh:1542 lib/browser.tcl:246
 msgid "Ready."
 msgstr "Готово."
+
+#: git-gui.sh:1726
+#, tcl-format
+msgid "Displaying only %s of %s files."
+msgstr "Показано %s из %s файлов."
 
 #: git-gui.sh:1819
 msgid "Unmodified"
@@ -1297,8 +1303,8 @@ msgid ""
 msgstr ""
 "Невозможно исправить состояние во время операции слияния.\n"
 "\n"
-"Текущее слияние не завершено. Невозможно исправить предыдущее "
-"сохраненное состояние, не прерывая эту операцию.\n"
+"Текущее слияние не завершено. Невозможно исправить предыдущее сохраненное "
+"состояние, не прерывая эту операцию.\n"
 
 #: lib/commit.tcl:48
 msgid "Error loading commit data for amend:"
@@ -1723,8 +1729,7 @@ msgid ""
 msgstr ""
 "Невозможно выполнить слияние во время исправления.\n"
 "\n"
-"Завершите исправление данного состояния перед выполнением операции "
-"слияния.\n"
+"Завершите исправление данного состояния перед выполнением операции слияния.\n"
 
 #: lib/merge.tcl:27
 msgid ""
@@ -1888,8 +1893,8 @@ msgstr ""
 #, tcl-format
 msgid "File %s seems to have unresolved conflicts, still stage?"
 msgstr ""
-"Файл %s кажется содержит необработаные конфликты. "
-"Продолжить подготовку к сохранению?"
+"Файл %s кажется содержит необработаные конфликты. Продолжить подготовку к "
+"сохранению?"
 
 #: lib/mergetool.tcl:60
 #, tcl-format
@@ -2213,8 +2218,8 @@ msgid ""
 "One or more of the merge tests failed because you have not fetched the "
 "necessary commits.  Try fetching from %s first."
 msgstr ""
-"Некоторые тесты на слияние не прошли, потому что Вы не "
-"получили необходимые состояния. Попытайтесь получить их из %s."
+"Некоторые тесты на слияние не прошли, потому что Вы не получили необходимые "
+"состояния. Попытайтесь получить их из %s."
 
 #: lib/remote_branch_delete.tcl:207
 msgid "Please select one or more branches to delete."
@@ -2381,8 +2386,8 @@ msgstr "Выполнение: %s"
 
 #: lib/tools.tcl:149
 #, tcl-format
-msgid "Tool completed succesfully: %s"
-msgstr "Программа %s успешно завершилась."
+msgid "Tool completed successfully: %s"
+msgstr "Программа %s завершилась успешно."
 
 #: lib/tools.tcl:151
 #, tcl-format
@@ -2538,4 +2543,3 @@ msgstr "Использовать thin pack (для медленных сетев
 #: lib/transport.tcl:179
 msgid "Include tags"
 msgstr "Передать метки"
-

@@ -10,8 +10,9 @@ SYNOPSIS
 --------
 [verse]
 'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [--html-path]
-    [-p|--paginate|--no-pager]
+    [-p|--paginate|--no-pager] [--no-replace-objects]
     [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]
+    [-c name=value]
     [--help] COMMAND [ARGS]
 
 DESCRIPTION
@@ -42,6 +43,43 @@ You are reading the documentation for the latest (possibly
 unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
+
+* link:v1.7.1.1/git.html[documentation for release 1.7.1.1]
+
+* release notes for
+  link:RelNotes-1.7.1.1.txt[1.7.1.1],
+  link:RelNotes-1.7.1.txt[1.7.1].
+
+* link:v1.7.0.6/git.html[documentation for release 1.7.0.6]
+
+* release notes for
+  link:RelNotes-1.7.0.6.txt[1.7.0.6],
+  link:RelNotes-1.7.0.5.txt[1.7.0.5],
+  link:RelNotes-1.7.0.4.txt[1.7.0.4],
+  link:RelNotes-1.7.0.3.txt[1.7.0.3],
+  link:RelNotes-1.7.0.2.txt[1.7.0.2],
+  link:RelNotes-1.7.0.1.txt[1.7.0.1],
+  link:RelNotes-1.7.0.txt[1.7.0].
+
+* link:v1.6.6.2/git.html[documentation for release 1.6.6.2]
+
+* release notes for
+  link:RelNotes-1.6.6.2.txt[1.6.6.2],
+  link:RelNotes-1.6.6.1.txt[1.6.6.1],
+  link:RelNotes-1.6.6.txt[1.6.6].
+
+* link:v1.6.5.8/git.html[documentation for release 1.6.5.8]
+
+* release notes for
+  link:RelNotes-1.6.5.8.txt[1.6.5.8],
+  link:RelNotes-1.6.5.7.txt[1.6.5.7],
+  link:RelNotes-1.6.5.6.txt[1.6.5.6],
+  link:RelNotes-1.6.5.5.txt[1.6.5.5],
+  link:RelNotes-1.6.5.4.txt[1.6.5.4],
+  link:RelNotes-1.6.5.3.txt[1.6.5.3],
+  link:RelNotes-1.6.5.2.txt[1.6.5.2],
+  link:RelNotes-1.6.5.1.txt[1.6.5.1],
+  link:RelNotes-1.6.5.txt[1.6.5].
 
 * link:v1.6.4.4/git.html[documentation for release 1.6.4.4]
 
@@ -192,6 +230,12 @@ displayed. See linkgit:git-help[1] for more information,
 because `git --help ...` is converted internally into `git
 help ...`.
 
+-c <name>=<value>::
+	Pass a configuration parameter to the command. The value
+	given will override values from configuration files.
+	The <name> is expected in the same format as listed by
+	'git config' (subkeys separated by dots).
+
 --exec-path::
 	Path to wherever your core git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
@@ -204,7 +248,10 @@ help ...`.
 
 -p::
 --paginate::
-	Pipe all output into 'less' (or if set, $PAGER).
+	Pipe all output into 'less' (or if set, $PAGER) if standard
+	output is a terminal.  This overrides the `pager.<cmd>`
+	configuration options (see the "Configuration Mechanism" section
+	below).
 
 --no-pager::
 	Do not pipe git output into a pager.
@@ -231,6 +278,10 @@ help ...`.
 	Treat the repository as a bare repository.  If GIT_DIR
 	environment is not set, it is set to the current working
 	directory.
+
+--no-replace-objects::
+	Do not use replacement refs to replace git objects. See
+	linkgit:git-replace[1] for more information.
 
 
 FURTHER DOCUMENTATION
@@ -372,7 +423,8 @@ people.  Here is an example:
 ------------
 
 Various commands read from the configuration file and adjust
-their operation accordingly.
+their operation accordingly.  See linkgit:git-config[1] for a
+list.
 
 
 Identifier Terminology
@@ -494,6 +546,16 @@ git so take care if using Cogito etc.
 	a GIT_DIR set on the command line or in the environment.
 	(Useful for excluding slow-loading network directories.)
 
+'GIT_DISCOVERY_ACROSS_FILESYSTEM'::
+	When run in a directory that does not have ".git" repository
+	directory, git tries to find such a directory in the parent
+	directories to find the top of the working tree, but by default it
+	does not cross filesystem boundaries.  This environment variable
+	can be set to true to tell git not to stop at filesystem
+	boundaries.  Like 'GIT_CEILING_DIRECTORIES', this will not affect
+	an explicit repository directory set via 'GIT_DIR' or on the
+	command line.
+
 git Commits
 ~~~~~~~~~~~
 'GIT_AUTHOR_NAME'::
@@ -552,8 +614,8 @@ other
 	linkgit:git-config[1].
 
 'GIT_SSH'::
-	If this environment variable is set then 'git-fetch'
-	and 'git-push' will use this command instead
+	If this environment variable is set then 'git fetch'
+	and 'git push' will use this command instead
 	of 'ssh' when they need to connect to a remote system.
 	The '$GIT_SSH' command will be given exactly two arguments:
 	the 'username@host' (or just 'host') from the URL and the
@@ -569,8 +631,8 @@ for further details.
 
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
-	as 'git-blame' (in incremental mode), 'git-rev-list', 'git-log',
-	and 'git-whatchanged' will force a flush of the output stream
+	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
+	and 'git whatchanged' will force a flush of the output stream
 	after each commit-oriented record have been flushed.   If this
 	variable is set to "0", the output of these commands will be done
 	using completely buffered I/O.   If this environment variable is

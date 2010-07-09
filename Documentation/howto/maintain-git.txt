@@ -59,7 +59,7 @@ The policy.
    not yet pass the criteria set for 'next'.
 
  - The tips of 'master', 'maint' and 'next' branches will always
-   fast forward, to allow people to build their own
+   fast-forward, to allow people to build their own
    customization on top of them.
 
  - Usually 'master' contains all of 'maint', 'next' contains all

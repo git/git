@@ -99,19 +99,33 @@ set_reflog_action() {
 }
 
 git_editor() {
-	: "${GIT_EDITOR:=$(git config core.editor)}"
-	: "${GIT_EDITOR:=${VISUAL:-${EDITOR}}}"
-	case "$GIT_EDITOR,$TERM" in
-	,dumb)
-		echo >&2 "No editor specified in GIT_EDITOR, core.editor, VISUAL,"
-		echo >&2 "or EDITOR. Tried to fall back to vi but terminal is dumb."
-		echo >&2 "Please set one of these variables to an appropriate"
-		echo >&2 "editor or run $0 with options that will not cause an"
-		echo >&2 "editor to be invoked (e.g., -m or -F for git-commit)."
-		exit 1
-		;;
-	esac
-	eval "${GIT_EDITOR:=vi}" '"$@"'
+	if test -z "${GIT_EDITOR:+set}"
+	then
+		GIT_EDITOR="$(git var GIT_EDITOR)" || return $?
+	fi
+
+	eval "$GIT_EDITOR" '"$@"'
+}
+
+git_pager() {
+	if test -t 1
+	then
+		GIT_PAGER=$(git var GIT_PAGER)
+	else
+		GIT_PAGER=cat
+	fi
+	: ${LESS=-FRSX}
+	export LESS
+
+	eval "$GIT_PAGER" '"$@"'
+}
+
+sane_grep () {
+	GREP_OPTIONS= LC_ALL=C grep "$@"
+}
+
+sane_egrep () {
+	GREP_OPTIONS= LC_ALL=C egrep "$@"
 }
 
 is_bare_repository () {
@@ -119,24 +133,15 @@ is_bare_repository () {
 }
 
 cd_to_toplevel () {
-	cdup=$(git rev-parse --show-cdup)
-	if test ! -z "$cdup"
-	then
-		# The "-P" option says to follow "physical" directory
-		# structure instead of following symbolic links.  When cdup is
-		# "../", this means following the ".." entry in the current
-		# directory instead textually removing a symlink path element
-		# from the PWD shell variable.  The "-P" behavior is more
-		# consistent with the C-style chdir used by most of Git.
-		cd -P "$cdup" || {
-			echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
-			exit 1
-		}
-	fi
+	cdup=$(git rev-parse --show-toplevel) &&
+	cd "$cdup" || {
+		echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
+		exit 1
+	}
 }
 
 require_work_tree () {
-	test $(git rev-parse --is-inside-work-tree) = true ||
+	test "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = true ||
 	die "fatal: $0 cannot be used without a working tree."
 }
 
@@ -165,6 +170,13 @@ get_author_ident_from_commit () {
 	encoding=$(git config i18n.commitencoding || echo UTF-8)
 	git show -s --pretty=raw --encoding="$encoding" "$1" -- |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"
+}
+
+# Clear repo-local GIT_* environment variables. Useful when switching to
+# another repository (e.g. when entering a submodule). See also the env
+# list in git_connect()
+clear_local_git_env() {
+	unset $(git rev-parse --local-env-vars)
 }
 
 # Make sure we are in a valid repository of a vintage we understand,

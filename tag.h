@@ -9,7 +9,7 @@ struct tag {
 	struct object object;
 	struct object *tagged;
 	char *tag;
-	char *signature; /* not actually implemented */
+	unsigned long date;
 };
 
 extern struct tag *lookup_tag(const unsigned char *sha1);

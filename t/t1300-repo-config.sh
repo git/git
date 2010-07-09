@@ -398,6 +398,17 @@ test_expect_success 'alternative GIT_CONFIG' 'cmp output expect'
 test_expect_success 'alternative GIT_CONFIG (--file)' \
 	'git config --file other-config -l > output && cmp output expect'
 
+test_expect_success 'refer config from subdirectory' '
+	mkdir x &&
+	(
+		cd x &&
+		echo strasse >expect
+		git config --get --file ../other-config ein.bahn >actual &&
+		test_cmp expect actual
+	)
+
+'
+
 GIT_CONFIG=other-config git config anwohner.park ausweis
 
 cat > expect << EOF
@@ -683,6 +694,34 @@ test_expect_success 'set --bool-or-int' '
 
 rm .git/config
 
+cat >expect <<\EOF
+[path]
+	home = ~/
+	normal = /dev/null
+	trailingtilde = foo~
+EOF
+
+test_expect_success 'set --path' '
+	git config --path path.home "~/" &&
+	git config --path path.normal "/dev/null" &&
+	git config --path path.trailingtilde "foo~" &&
+	test_cmp expect .git/config'
+
+cat >expect <<EOF
+$HOME/
+/dev/null
+foo~
+EOF
+
+test_expect_success 'get --path' '
+	git config --get --path path.home > result &&
+	git config --get --path path.normal >> result &&
+	git config --get --path path.trailingtilde >> result &&
+	test_cmp expect result
+'
+
+rm .git/config
+
 git config quote.leading " test"
 git config quote.ending "test "
 git config quote.semicolon "test;test"
@@ -784,5 +823,13 @@ test_expect_success 'check split_cmdline return' "
 	git config branch.master.mergeoptions 'echo \"' &&
 	test_must_fail git merge master
 	"
+
+test_expect_success 'git -c "key=value" support' '
+	test "z$(git -c name=value config name)" = zvalue &&
+	test "z$(git -c core.name=value config core.name)" = zvalue &&
+	test "z$(git -c CamelCase=value config camelcase)" = zvalue &&
+	test "z$(git -c flag config --bool flag)" = ztrue &&
+	test_must_fail git -c core.name=value config name
+'
 
 test_done

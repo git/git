@@ -27,20 +27,20 @@ constructor embed {path title} {
 }
 
 method _init {} {
-	global M1B
+	global M1B use_ttk NS
 
 	if {$is_toplevel} {
-		make_toplevel top w -autodelete 0
+		make_dialog top w -autodelete 0
 		wm title $top "[appname] ([reponame]): $t_short"
 	} else {
-		frame $w
+		${NS}::frame $w
 	}
 
 	set console_cr 1.0
 	set w_t $w.m.t
 
-	frame $w.m
-	label $w.m.l1 \
+	${NS}::frame $w.m
+	${NS}::label $w.m.l1 \
 		-textvariable @t_long  \
 		-anchor w \
 		-justify left \
@@ -78,7 +78,7 @@ method _init {} {
 		"
 
 	if {$is_toplevel} {
-		button $w.ok -text [mc "Close"] \
+		${NS}::button $w.ok -text [mc "Close"] \
 			-state disabled \
 			-command [list destroy $w]
 		pack $w.ok -side bottom -anchor e -pady 10 -padx 10
@@ -206,13 +206,14 @@ method done {ok} {
 }
 
 method _sb_set {sb orient first last} {
+	global NS
 	if {![winfo exists $sb]} {
 		if {$first == $last || ($first == 0 && $last == 1)} return
 		if {$orient eq {h}} {
-			scrollbar $sb -orient h -command [list $w_t xview]
+			${NS}::scrollbar $sb -orient h -command [list $w_t xview]
 			pack $sb -fill x -side bottom -before $w_t
 		} else {
-			scrollbar $sb -orient v -command [list $w_t yview]
+			${NS}::scrollbar $sb -orient v -command [list $w_t yview]
 			pack $sb -fill y -side right -before $w_t
 		}
 	}

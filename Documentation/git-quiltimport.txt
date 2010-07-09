@@ -9,7 +9,7 @@ git-quiltimport - Applies a quilt patchset onto the current branch
 SYNOPSIS
 --------
 [verse]
-'git quiltimport' [--dry-run] [--author <author>] [--patches <dir>]
+'git quiltimport' [--dry-run | -n] [--author <author>] [--patches <dir>]
 
 
 DESCRIPTION

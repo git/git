@@ -35,17 +35,37 @@ Functions
 	Convenience functions that encapsulate a sequence of
 	start_command() followed by finish_command(). The argument argv
 	specifies the program and its arguments. The argument opt is zero
-	or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_GIT_CMD`, or
-	`RUN_COMMAND_STDOUT_TO_STDERR` that correspond to the members
-	.no_stdin, .git_cmd, .stdout_to_stderr of `struct child_process`.
+	or more of the flags `RUN_COMMAND_NO_STDIN`, `RUN_GIT_CMD`,
+	`RUN_COMMAND_STDOUT_TO_STDERR`, or `RUN_SILENT_EXEC_FAILURE`
+	that correspond to the members .no_stdin, .git_cmd,
+	.stdout_to_stderr, .silent_exec_failure of `struct child_process`.
 	The argument dir corresponds the member .dir. The argument env
 	corresponds to the member .env.
+
+The functions above do the following:
+
+. If a system call failed, errno is set and -1 is returned. A diagnostic
+  is printed.
+
+. If the program was not found, then -1 is returned and errno is set to
+  ENOENT; a diagnostic is printed only if .silent_exec_failure is 0.
+
+. Otherwise, the program is run. If it terminates regularly, its exit
+  code is returned. No diagnostic is printed, even if the exit code is
+  non-zero.
+
+. If the program terminated due to a signal, then the return value is the
+  signal number - 128, ie. it is negative and so indicates an unusual
+  condition; a diagnostic is printed. This return value can be passed to
+  exit(2), which will report the same code to the parent process that a
+  POSIX shell's $? would report for a program that died from the signal.
+
 
 `start_async`::
 
 	Run a function asynchronously. Takes a pointer to a `struct
-	async` that specifies the details and returns a pipe FD
-	from which the caller reads. See below for details.
+	async` that specifies the details and returns a set of pipe FDs
+	for communication with the function. See below for details.
 
 `finish_async`::
 
@@ -115,7 +135,7 @@ stderr as follows:
 
 	.in: The FD must be readable; it becomes child's stdin.
 	.out: The FD must be writable; it becomes child's stdout.
-	.err > 0 is not supported.
+	.err: The FD must be writable; it becomes child's stderr.
 
   The specified FD is closed by start_command(), even if it fails to
   run the sub-process!
@@ -143,6 +163,11 @@ string pointers (NULL terminated) in .env:
 To specify a new initial working directory for the sub-process,
 specify it in the .dir member.
 
+If the program cannot be found, the functions return -1 and set
+errno to ENOENT. Normally, an error message is printed, but if
+.silent_exec_failure is set to 1, no message is printed for this
+special error condition.
+
 
 * `struct async`
 
@@ -155,17 +180,47 @@ The caller:
    struct async variable;
 2. initializes .proc and .data;
 3. calls start_async();
-4. processes the data by reading from the fd in .out;
-5. closes .out;
+4. processes communicates with proc through .in and .out;
+5. closes .in and .out;
 6. calls finish_async().
+
+The members .in, .out are used to provide a set of fd's for
+communication between the caller and the callee as follows:
+
+. Specify 0 to have no file descriptor passed.  The callee will
+  receive -1 in the corresponding argument.
+
+. Specify < 0 to have a pipe allocated; start_async() replaces
+  with the pipe FD in the following way:
+
+	.in: Returns the writable pipe end into which the caller
+	writes; the readable end of the pipe becomes the function's
+	in argument.
+
+	.out: Returns the readable pipe end from which the caller
+	reads; the writable end of the pipe becomes the function's
+	out argument.
+
+  The caller of start_async() must close the returned FDs after it
+  has completed reading from/writing from them.
+
+. Specify a file descriptor > 0 to be used by the function:
+
+	.in: The FD must be readable; it becomes the function's in.
+	.out: The FD must be writable; it becomes the function's out.
+
+  The specified FD is closed by start_async(), even if it fails to
+  run the function.
 
 The function pointer in .proc has the following signature:
 
-	int proc(int fd, void *data);
+	int proc(int in, int out, void *data);
 
-. fd specifies a writable file descriptor to which the function must
-  write the data that it produces. The function *must* close this
-  descriptor before it returns.
+. in, out specifies a set of file descriptors to which the function
+  must read/write the data that it needs/produces.  The function
+  *must* close these descriptors before it returns.  A descriptor
+  may be -1 if the caller did not configure a descriptor for that
+  direction.
 
 . data is the value that the caller has specified in the .data member
   of struct async.
@@ -176,12 +231,13 @@ The function pointer in .proc has the following signature:
 
 
 There are serious restrictions on what the asynchronous function can do
-because this facility is implemented by a pipe to a forked process on
-UNIX, but by a thread in the same address space on Windows:
+because this facility is implemented by a thread in the same address
+space on most platforms (when pthreads is available), but by a pipe to
+a forked process otherwise:
 
 . It cannot change the program's state (global variables, environment,
-  etc.) in a way that the caller notices; in other words, .out is the
-  only communication channel to the caller.
+  etc.) in a way that the caller notices; in other words, .in and .out
+  are the only communication channels to the caller.
 
 . It must not change the program's state that the caller of the
   facility also uses.

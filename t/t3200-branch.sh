@@ -43,7 +43,7 @@ test_expect_success \
      git branch -l d/e/f &&
 	 test -f .git/refs/heads/d/e/f &&
 	 test -f .git/logs/refs/heads/d/e/f &&
-	 diff expect .git/logs/refs/heads/d/e/f'
+	 test_cmp expect .git/logs/refs/heads/d/e/f'
 
 test_expect_success \
     'git branch -d d/e/f should delete a branch and a log' \
@@ -222,7 +222,31 @@ test_expect_success \
      git checkout -b g/h/i -l master &&
 	 test -f .git/refs/heads/g/h/i &&
 	 test -f .git/logs/refs/heads/g/h/i &&
-	 diff expect .git/logs/refs/heads/g/h/i'
+	 test_cmp expect .git/logs/refs/heads/g/h/i'
+
+test_expect_success 'checkout -b makes reflog by default' '
+	git checkout master &&
+	git config --unset core.logAllRefUpdates &&
+	git checkout -b alpha &&
+	test -f .git/logs/refs/heads/alpha &&
+	PAGER= git reflog show alpha
+'
+
+test_expect_success 'checkout -b does not make reflog when core.logAllRefUpdates = false' '
+	git checkout master &&
+	git config core.logAllRefUpdates false &&
+	git checkout -b beta &&
+	! test -f .git/logs/refs/heads/beta &&
+	test_must_fail PAGER= git reflog show beta
+'
+
+test_expect_success 'checkout -b with -l makes reflog when core.logAllRefUpdates = false' '
+	git checkout master &&
+	git checkout -lb gamma &&
+	git config --unset core.logAllRefUpdates &&
+	test -f .git/logs/refs/heads/gamma &&
+	PAGER= git reflog show gamma
+'
 
 test_expect_success 'avoid ambiguous track' '
 	git config branch.autosetupmerge true &&
@@ -466,6 +490,32 @@ test_expect_success 'detect misconfigured autosetuprebase (no value)' '
 	echo "[branch] autosetuprebase" >> .git/config &&
 	test_must_fail git branch &&
 	git config --unset branch.autosetuprebase
+'
+
+test_expect_success 'attempt to delete a branch without base and unmerged to HEAD' '
+	git checkout my9 &&
+	git config --unset branch.my8.merge &&
+	test_must_fail git branch -d my8
+'
+
+test_expect_success 'attempt to delete a branch merged to its base' '
+	# we are on my9 which is the initial commit; traditionally
+	# we would not have allowed deleting my8 that is not merged
+	# to my9, but it is set to track master that already has my8
+	git config branch.my8.merge refs/heads/master &&
+	git branch -d my8
+'
+
+test_expect_success 'attempt to delete a branch merged to its base' '
+	git checkout master &&
+	echo Third >>A &&
+	git commit -m "Third commit" A &&
+	git branch -t my10 my9 &&
+	git branch -f my10 HEAD^ &&
+	# we are on master which is at the third commit, and my10
+	# is behind us, so traditionally we would have allowed deleting
+	# it; but my10 is set to track my9 that is further behind.
+	test_must_fail git branch -d my10
 '
 
 test_done

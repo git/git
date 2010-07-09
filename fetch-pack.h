@@ -13,7 +13,8 @@ struct fetch_pack_args
 		fetch_all:1,
 		verbose:1,
 		no_progress:1,
-		include_tag:1;
+		include_tag:1,
+		stateless_rpc:1;
 };
 
 struct ref *fetch_pack(struct fetch_pack_args *args,

@@ -27,7 +27,7 @@ test_expect_success 'apply same filename with independent changes' '
 	cp same_fn same_fn2 &&
 	git reset --hard &&
 	git apply patch0 &&
-	diff same_fn same_fn2
+	test_cmp same_fn same_fn2
 '
 
 test_expect_success 'apply same filename with overlapping changes' '
@@ -40,7 +40,7 @@ test_expect_success 'apply same filename with overlapping changes' '
 	cp same_fn same_fn2 &&
 	git reset --hard &&
 	git apply patch0 &&
-	diff same_fn same_fn2
+	test_cmp same_fn same_fn2
 '
 
 test_expect_success 'apply same new filename after rename' '
@@ -54,7 +54,7 @@ test_expect_success 'apply same new filename after rename' '
 	cp new_fn new_fn2 &&
 	git reset --hard &&
 	git apply --index patch1 &&
-	diff new_fn new_fn2
+	test_cmp new_fn new_fn2
 '
 
 test_expect_success 'apply same old filename after rename -- should fail.' '

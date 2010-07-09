@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # This tool is copyright (c) 2006, Sean Estabrooks.
 # It is released under the Gnu Public License, version 2.

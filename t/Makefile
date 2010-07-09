@@ -3,6 +3,9 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
+-include ../config.mak.autogen
+-include ../config.mak
+
 #GIT_TEST_OPTS=--verbose --debug
 SHELL_PATH ?= $(SHELL)
 TAR ?= $(TAR)
@@ -25,13 +28,17 @@ pre-clean:
 
 clean:
 	$(RM) -r 'trash directory'.* test-results
+	$(RM) t????/cvsroot/CVSROOT/?*
+	$(RM) -r valgrind/bin
 
 aggregate-results-and-cleanup: $(T)
 	$(MAKE) aggregate-results
 	$(MAKE) clean
 
 aggregate-results:
-	'$(SHELL_PATH_SQ)' ./aggregate-results.sh test-results/t*-*
+	for f in test-results/t*-*; do \
+		echo "$$f"; \
+	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
 
 # we can test NO_OPTIMIZE_COMMITS independently of LC_ALL
 full-svn-test:

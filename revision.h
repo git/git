@@ -3,6 +3,7 @@
 
 #include "parse-options.h"
 #include "grep.h"
+#include "notes.h"
 
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
@@ -20,6 +21,7 @@
 
 struct rev_info;
 struct log_info;
+struct string_list;
 
 struct rev_info {
 	/* Starting list */
@@ -55,6 +57,7 @@ struct rev_info {
 			limited:1,
 			unpacked:1,
 			boundary:2,
+			count:1,
 			left_right:1,
 			rewrite_parents:1,
 			print_parents:1,
@@ -63,6 +66,8 @@ struct rev_info {
 			reverse:1,
 			reverse_output_stage:1,
 			cherry_pick:1,
+			bisect:1,
+			ancestry_path:1,
 			first_parent_only:1;
 
 	/* Diff flags */
@@ -79,9 +84,15 @@ struct rev_info {
 	/* Format info */
 	unsigned int	shown_one:1,
 			show_merge:1,
+			show_notes:1,
+			show_notes_given:1,
+			pretty_given:1,
 			abbrev_commit:1,
 			use_terminator:1,
-			missing_newline:1;
+			missing_newline:1,
+			date_mode_explicit:1;
+	unsigned int	disable_stdin:1;
+
 	enum date_mode date_mode;
 
 	unsigned int	abbrev;
@@ -119,6 +130,13 @@ struct rev_info {
 	struct reflog_walk_info *reflog_info;
 	struct decoration children;
 	struct decoration merge_simplification;
+
+	/* notes-specific options: which refs to show */
+	struct display_notes_opt notes_opt;
+
+	/* commit counts */
+	int count_left;
+	int count_right;
 };
 
 #define REV_TREE_SAME		0
@@ -127,13 +145,16 @@ struct rev_info {
 #define REV_TREE_DIFFERENT	3	/* Mixed changes */
 
 /* revision.c */
-void read_revisions_from_stdin(struct rev_info *revs);
-
 typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
 extern volatile show_early_output_fn_t show_early_output;
 
+struct setup_revision_opt {
+	const char *def;
+	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
+};
+
 extern void init_revisions(struct rev_info *revs, const char *prefix);
-extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
+extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *);
 extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 				 const struct option *options,
 				 const char * const usagestr[]);
@@ -168,6 +189,7 @@ enum commit_action {
 	commit_error
 };
 
+extern enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit);
 extern enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit);
 
 #endif

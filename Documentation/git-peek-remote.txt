@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This command is deprecated; use 'git-ls-remote' instead.
+This command is deprecated; use 'git ls-remote' instead.
 
 OPTIONS
 -------

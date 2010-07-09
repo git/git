@@ -64,6 +64,27 @@ test_expect_success 'format' '
 '
 
 cat > expect << EOF
+ This is
+  the sixth
+  commit.
+ This is
+  the fifth
+  commit.
+EOF
+
+test_expect_success 'format %w(12,1,2)' '
+
+	git log -2 --format="%w(12,1,2)This is the %s commit." > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format %w(,1,2)' '
+
+	git log -2 --format="%w(,1,2)This is%nthe %s%ncommit." > actual &&
+	test_cmp expect actual
+'
+
+cat > expect << EOF
 804a787 sixth
 394ef78 fifth
 5d31159 fourth
@@ -234,7 +255,7 @@ EOF
 
 test_expect_success 'log --graph with merge' '
 	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *$//" >actual &&
+		sed "s/ *\$//" >actual &&
 	test_cmp expect actual
 '
 
@@ -294,7 +315,7 @@ EOF
 test_expect_success 'log --graph with full output' '
 	git log --graph --date-order --pretty=short |
 		git name-rev --name-only --stdin |
-		sed "s/Merge:.*/Merge: A B/;s/ *$//" >actual &&
+		sed "s/Merge:.*/Merge: A B/;s/ *\$//" >actual &&
 	test_cmp expect actual
 '
 
@@ -362,8 +383,57 @@ EOF
 
 test_expect_success 'log --graph with merge' '
 	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *$//" >actual &&
+		sed "s/ *\$//" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'log.decorate configuration' '
+	git config --unset-all log.decorate || :
+
+	git log --oneline >expect.none &&
+	git log --oneline --decorate >expect.short &&
+	git log --oneline --decorate=full >expect.full &&
+
+	echo "[log] decorate" >>.git/config &&
+	git log --oneline >actual &&
+	test_cmp expect.short actual &&
+
+	git config --unset-all log.decorate &&
+	git config log.decorate true &&
+	git log --oneline >actual &&
+	test_cmp expect.short actual &&
+	git log --oneline --decorate=full >actual &&
+	test_cmp expect.full actual &&
+	git log --oneline --decorate=no >actual &&
+	test_cmp expect.none actual &&
+
+	git config --unset-all log.decorate &&
+	git config log.decorate no &&
+	git log --oneline >actual &&
+	test_cmp expect.none actual &&
+	git log --oneline --decorate >actual &&
+	test_cmp expect.short actual &&
+	git log --oneline --decorate=full >actual &&
+	test_cmp expect.full actual &&
+
+	git config --unset-all log.decorate &&
+	git config log.decorate short &&
+	git log --oneline >actual &&
+	test_cmp expect.short actual &&
+	git log --oneline --no-decorate >actual &&
+	test_cmp expect.none actual &&
+	git log --oneline --decorate=full >actual &&
+	test_cmp expect.full actual &&
+
+	git config --unset-all log.decorate &&
+	git config log.decorate full &&
+	git log --oneline >actual &&
+	test_cmp expect.full actual &&
+	git log --oneline --no-decorate >actual &&
+	test_cmp expect.none actual &&
+	git log --oneline --decorate >actual &&
+	test_cmp expect.short actual
+
 '
 
 test_done

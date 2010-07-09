@@ -201,10 +201,15 @@ int diffcore_count_changes(struct diff_filespec *src,
 		while (d->cnt) {
 			if (d->hashval >= s->hashval)
 				break;
+			la += d->cnt;
 			d++;
 		}
 		src_cnt = s->cnt;
-		dst_cnt = d->hashval == s->hashval ? d->cnt : 0;
+		dst_cnt = 0;
+		if (d->cnt && d->hashval == s->hashval) {
+			dst_cnt = d->cnt;
+			d++;
+		}
 		if (src_cnt < dst_cnt) {
 			la += dst_cnt - src_cnt;
 			sc += src_cnt;
@@ -212,6 +217,10 @@ int diffcore_count_changes(struct diff_filespec *src,
 		else
 			sc += dst_cnt;
 		s++;
+	}
+	while (d->cnt) {
+		la += d->cnt;
+		d++;
 	}
 
 	if (!src_count_p)

@@ -39,8 +39,6 @@ test_expect_success \
      tree=`git write-tree` &&
      echo $tree'
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 test_output () {
     sed -e "s/ $_x40	/ X	/" <current >check
     test_cmp expected check
@@ -138,6 +136,91 @@ EOF
 test_expect_success 'ls-tree filter is leading path match' '
 	git ls-tree $tree pa path3/a >current &&
 	>expected &&
+	test_output
+'
+
+test_expect_success 'ls-tree --full-name' '
+	(
+		cd path0 &&
+		git ls-tree --full-name $tree a
+	) >current &&
+	cat >expected <<\EOF &&
+040000 tree X	path0/a
+EOF
+	test_output
+'
+
+test_expect_success 'ls-tree --full-tree' '
+	(
+		cd path1/b/c &&
+		git ls-tree --full-tree $tree
+	) >current &&
+	cat >expected <<\EOF &&
+100644 blob X	1.txt
+100644 blob X	2.txt
+040000 tree X	path0
+040000 tree X	path1
+040000 tree X	path2
+040000 tree X	path3
+EOF
+	test_output
+'
+
+test_expect_success 'ls-tree --full-tree -r' '
+	(
+		cd path3/ &&
+		git ls-tree --full-tree -r $tree
+	) >current &&
+	cat >expected <<\EOF &&
+100644 blob X	1.txt
+100644 blob X	2.txt
+100644 blob X	path0/a/b/c/1.txt
+100644 blob X	path1/b/c/1.txt
+100644 blob X	path2/1.txt
+100644 blob X	path3/1.txt
+100644 blob X	path3/2.txt
+EOF
+	test_output
+'
+
+test_expect_success 'ls-tree --abbrev=5' '
+	git ls-tree --abbrev=5 $tree >current &&
+	sed -e "s/ $_x05[0-9a-f]*	/ X	/" <current >check &&
+	cat >expected <<\EOF &&
+100644 blob X	1.txt
+100644 blob X	2.txt
+040000 tree X	path0
+040000 tree X	path1
+040000 tree X	path2
+040000 tree X	path3
+EOF
+	test_cmp expected check
+'
+
+test_expect_success 'ls-tree --name-only' '
+	git ls-tree --name-only $tree >current
+	cat >expected <<\EOF &&
+1.txt
+2.txt
+path0
+path1
+path2
+path3
+EOF
+	test_output
+'
+
+test_expect_success 'ls-tree --name-only -r' '
+	git ls-tree --name-only -r $tree >current
+	cat >expected <<\EOF &&
+1.txt
+2.txt
+path0/a/b/c/1.txt
+path1/b/c/1.txt
+path2/1.txt
+path3/1.txt
+path3/2.txt
+EOF
 	test_output
 '
 

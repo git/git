@@ -35,7 +35,7 @@ commit-id::
 
 --stdin::
 	Instead of a commit id on the command line (which is not expected in this
-	case), 'git-http-fetch' expects lines on stdin in the format
+	case), 'git http-fetch' expects lines on stdin in the format
 
 		<commit-id>['\t'<filename-as-in--w>]
 

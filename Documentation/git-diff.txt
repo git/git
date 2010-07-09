@@ -157,6 +157,10 @@ $ git diff -R                          <2>
 rewrites (very expensive).
 <2> Output diff in reverse.
 
+SEE ALSO
+--------
+linkgit:git-difftool[1]::
+	Show changes using common diff tools
 
 Author
 ------

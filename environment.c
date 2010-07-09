@@ -26,6 +26,7 @@ const char *git_commit_encoding;
 const char *git_log_output_encoding;
 int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
+const char *apply_default_ignorewhitespace;
 int zlib_compression_level = Z_BEST_SPEED;
 int core_compression_level;
 int core_compression_seen;
@@ -37,7 +38,9 @@ const char *pager_program;
 int pager_use_color = 1;
 const char *editor_program;
 const char *excludes_file;
-int auto_crlf = 0;	/* 1: both ways, -1: only when adding git objects */
+enum auto_crlf auto_crlf = AUTO_CRLF_FALSE;
+int read_replace_refs = 1;
+enum eol eol = EOL_UNSET;
 enum safe_crlf safe_crlf = SAFE_CRLF_WARN;
 unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
 enum branch_track git_branch_track = BRANCH_TRACK_REMOTE;
@@ -47,7 +50,9 @@ enum push_default_type push_default = PUSH_DEFAULT_MATCHING;
 #define OBJECT_CREATION_MODE OBJECT_CREATION_USES_HARDLINKS
 #endif
 enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
+char *notes_ref_name;
 int grafts_replace_parents = 1;
+int core_apply_sparse_checkout;
 
 /* Parallel index stat data preload? */
 int core_preload_index = 0;
@@ -58,6 +63,23 @@ static char *work_tree;
 
 static const char *git_dir;
 static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
+
+/*
+ * Repository-local GIT_* environment variables
+ * Remember to update local_repo_env_size in cache.h when
+ * the size of the list changes
+ */
+const char * const local_repo_env[LOCAL_REPO_ENV_SIZE + 1] = {
+	ALTERNATE_DB_ENVIRONMENT,
+	CONFIG_ENVIRONMENT,
+	DB_ENVIRONMENT,
+	GIT_DIR_ENVIRONMENT,
+	GIT_WORK_TREE_ENVIRONMENT,
+	GRAFT_ENVIRONMENT,
+	INDEX_ENVIRONMENT,
+	NO_REPLACE_OBJECTS_ENVIRONMENT,
+	NULL
+};
 
 static void setup_git_env(void)
 {
@@ -81,6 +103,8 @@ static void setup_git_env(void)
 	git_graft_file = getenv(GRAFT_ENVIRONMENT);
 	if (!git_graft_file)
 		git_graft_file = git_pathdup("info/grafts");
+	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
+		read_replace_refs = 0;
 }
 
 int is_bare_repository(void)

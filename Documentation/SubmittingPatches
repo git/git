@@ -41,6 +41,7 @@ Checklist (and a short version for the impatient):
 	  maintainer (gitster@pobox.com) if (and only if) the patch
 	  is ready for inclusion. If you use git-send-email(1),
 	  please test it first by sending email to yourself.
+	- see below for instructions specific to your mailer
 
 Long version:
 
@@ -53,6 +54,34 @@ But the patch submission requirements are a lot more relaxed
 here on the technical/contents front, because the core GIT is
 thousand times smaller ;-).  So here is only the relevant bits.
 
+(0) Decide what to base your work on.
+
+In general, always base your work on the oldest branch that your
+change is relevant to.
+
+ - A bugfix should be based on 'maint' in general. If the bug is not
+   present in 'maint', base it on 'master'. For a bug that's not yet
+   in 'master', find the topic that introduces the regression, and
+   base your work on the tip of the topic.
+
+ - A new feature should be based on 'master' in general. If the new
+   feature depends on a topic that is in 'pu', but not in 'master',
+   base your work on the tip of that topic.
+
+ - Corrections and enhancements to a topic not yet in 'master' should
+   be based on the tip of that topic. If the topic has not been merged
+   to 'next', it's alright to add a note to squash minor corrections
+   into the series.
+
+ - In the exceptional case that a new feature depends on several topics
+   not in 'master', start working on 'next' or 'pu' privately and send
+   out patches for discussion. Before the final merge, you may have to
+   wait until some of the dependent topics graduate to 'master', and
+   rebase your work.
+
+To find the tip of a topic branch, run "git log --first-parent
+master..pu" and look for the merge commit. The second parent of this
+commit is the tip of the topic branch.
 
 (1) Make separate commits for logically separate changes.
 
@@ -170,17 +199,16 @@ patch, format it as "multipart/signed", not a text/plain message
 that starts with '-----BEGIN PGP SIGNED MESSAGE-----'.  That is
 not a text/plain, it's something else.
 
-Note that your maintainer does not necessarily read everything
-on the git mailing list.  If your patch is for discussion first,
-send it "To:" the mailing list, and optionally "cc:" him.  If it
-is trivially correct or after the list reached a consensus, send
-it "To:" the maintainer and optionally "cc:" the list for
-inclusion.
-
-Also note that your maintainer does not actively involve himself in
-maintaining what are in contrib/ hierarchy.  When you send fixes and
-enhancements to them, do not forget to "cc: " the person who primarily
-worked on that hierarchy in contrib/.
+Unless your patch is a very trivial and an obviously correct one,
+first send it with "To:" set to the mailing list, with "cc:" listing
+people who are involved in the area you are touching (the output from
+"git blame $path" and "git shortlog --no-merges $path" would help to
+identify them), to solicit comments and reviews.  After the list
+reached a consensus that it is a good idea to apply the patch, re-send
+it with "To:" set to the maintainer and optionally "cc:" the list for
+inclusion.  Do not forget to add trailers such as "Acked-by:",
+"Reviewed-by:" and "Tested-by:" after your "Signed-off-by:" line as
+necessary.
 
 
 (4) Sign your work
@@ -278,6 +306,20 @@ In any time between the (2)-(3) cycle, the maintainer may pick it up
 from the list and queue it to 'pu', in order to make it easier for
 people play with it without having to pick up and apply the patch to
 their trees themselves.
+
+------------------------------------------------
+Know the status of your patch after submission
+
+* You can use Git itself to find out when your patch is merged in
+  master. 'git pull --rebase' will automatically skip already-applied
+  patches, and will let you know. This works only if you rebase on top
+  of the branch in which your patch has been merged (i.e. it will not
+  tell you if your patch is merged in pu if you rebase on top of
+  master).
+
+* Read the git mailing list, the maintainer regularly posts messages
+  entitled "What's cooking in git.git" and "What's in git.git" giving
+  the status of various proposed changes.
 
 ------------------------------------------------
 MUA specific hints
@@ -505,12 +547,28 @@ Gmail
 
 GMail does not appear to have any way to turn off line wrapping in the web
 interface, so this will mangle any emails that you send.  You can however
-use any IMAP email client to connect to the google imap server, and forward
-the emails through that.  Just make sure to disable line wrapping in that
-email client.  Alternatively, use "git send-email" instead.
+use "git send-email" and send your patches through the GMail SMTP server, or
+use any IMAP email client to connect to the google IMAP server and forward
+the emails through that.
 
-Submitting properly formatted patches via Gmail is simple now that
-IMAP support is available. First, edit your ~/.gitconfig to specify your
+To use "git send-email" and send your patches through the GMail SMTP server,
+edit ~/.gitconfig to specify your account settings:
+
+[sendemail]
+	smtpencryption = tls
+	smtpserver = smtp.gmail.com
+	smtpuser = user@gmail.com
+	smtppass = p4ssw0rd
+	smtpserverport = 587
+
+Once your commits are ready to be sent to the mailing list, run the
+following commands:
+
+  $ git format-patch --cover-letter -M origin/master -o outgoing/
+  $ edit outgoing/0000-*
+  $ git send-email outgoing/*
+
+To submit using the IMAP interface, first, edit your ~/.gitconfig to specify your
 account settings:
 
 [imap]
@@ -524,14 +582,12 @@ account settings:
 You might need to instead use: folder = "[Google Mail]/Drafts" if you get an error
 that the "Folder doesn't exist".
 
-Next, ensure that your Gmail settings are correct. In "Settings" the
-"Use Unicode (UTF-8) encoding for outgoing messages" should be checked.
+Once your commits are ready to be sent to the mailing list, run the
+following commands:
 
-Once your commits are ready to send to the mailing list, run the following
-command to send the patch emails to your Gmail Drafts folder.
+  $ git format-patch --cover-letter -M --stdout origin/master | git imap-send
 
-	$ git format-patch -M --stdout origin/master | git imap-send
-
-Go to your Gmail account, open the Drafts folder, find the patch email, fill
-in the To: and CC: fields and send away!
+Just make sure to disable line wrapping in the email client (GMail web
+interface will line wrap no matter what, so you need to use a real
+IMAP client).
 

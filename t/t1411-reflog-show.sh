@@ -64,4 +64,13 @@ test_expect_success 'using --date= shows reflog date (oneline)' '
 	test_cmp expect actual
 '
 
+: >expect
+test_expect_success 'empty reflog file' '
+	git branch empty &&
+	: >.git/logs/refs/heads/empty &&
+
+	git log -g empty >actual &&
+	test_cmp expect actual
+'
+
 test_done

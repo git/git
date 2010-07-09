@@ -1,0 +1,241 @@
+#!/bin/sh
+#
+# Copyright (c) 2009 Johan Herland
+#
+
+test_description='Test "git submodule foreach"
+
+This test verifies that "git submodule foreach" correctly visits all submodules
+that are currently checked out.
+'
+
+. ./test-lib.sh
+
+
+test_expect_success 'setup a submodule tree' '
+	echo file > file &&
+	git add file &&
+	test_tick &&
+	git commit -m upstream
+	git clone . super &&
+	git clone super submodule &&
+	(
+		cd super &&
+		git submodule add ../submodule sub1 &&
+		git submodule add ../submodule sub2 &&
+		git submodule add ../submodule sub3 &&
+		git config -f .gitmodules --rename-section \
+			submodule.sub1 submodule.foo1 &&
+		git config -f .gitmodules --rename-section \
+			submodule.sub2 submodule.foo2 &&
+		git config -f .gitmodules --rename-section \
+			submodule.sub3 submodule.foo3 &&
+		git add .gitmodules
+		test_tick &&
+		git commit -m "submodules" &&
+		git submodule init sub1 &&
+		git submodule init sub2 &&
+		git submodule init sub3
+	) &&
+	(
+		cd submodule &&
+		echo different > file &&
+		git add file &&
+		test_tick &&
+		git commit -m "different"
+	) &&
+	(
+		cd super &&
+		(
+			cd sub3 &&
+			git pull
+		) &&
+		git add sub3 &&
+		test_tick &&
+		git commit -m "update sub3"
+	)
+'
+
+sub1sha1=$(cd super/sub1 && git rev-parse HEAD)
+sub3sha1=$(cd super/sub3 && git rev-parse HEAD)
+
+pwd=$(pwd)
+
+cat > expect <<EOF
+Entering 'sub1'
+$pwd/clone-foo1-sub1-$sub1sha1
+Entering 'sub3'
+$pwd/clone-foo3-sub3-$sub3sha1
+EOF
+
+test_expect_success 'test basic "submodule foreach" usage' '
+	git clone super clone &&
+	(
+		cd clone &&
+		git submodule update --init -- sub1 sub3 &&
+		git submodule foreach "echo \$toplevel-\$name-\$path-\$sha1" > ../actual &&
+		git config foo.bar zar &&
+		git submodule foreach "git config --file \"\$toplevel/.git/config\" foo.bar"
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup nested submodules' '
+	git clone submodule nested1 &&
+	git clone submodule nested2 &&
+	git clone submodule nested3 &&
+	(
+		cd nested3 &&
+		git submodule add ../submodule submodule &&
+		test_tick &&
+		git commit -m "submodule" &&
+		git submodule init submodule
+	) &&
+	(
+		cd nested2 &&
+		git submodule add ../nested3 nested3 &&
+		test_tick &&
+		git commit -m "nested3" &&
+		git submodule init nested3
+	) &&
+	(
+		cd nested1 &&
+		git submodule add ../nested2 nested2 &&
+		test_tick &&
+		git commit -m "nested2" &&
+		git submodule init nested2
+	) &&
+	(
+		cd super &&
+		git submodule add ../nested1 nested1 &&
+		test_tick &&
+		git commit -m "nested1" &&
+		git submodule init nested1
+	)
+'
+
+test_expect_success 'use "submodule foreach" to checkout 2nd level submodule' '
+	git clone super clone2 &&
+	(
+		cd clone2 &&
+		test ! -d sub1/.git &&
+		test ! -d sub2/.git &&
+		test ! -d sub3/.git &&
+		test ! -d nested1/.git &&
+		git submodule update --init &&
+		test -d sub1/.git &&
+		test -d sub2/.git &&
+		test -d sub3/.git &&
+		test -d nested1/.git &&
+		test ! -d nested1/nested2/.git &&
+		git submodule foreach "git submodule update --init" &&
+		test -d nested1/nested2/.git &&
+		test ! -d nested1/nested2/nested3/.git
+	)
+'
+
+test_expect_success 'use "foreach --recursive" to checkout all submodules' '
+	(
+		cd clone2 &&
+		git submodule foreach --recursive "git submodule update --init" &&
+		test -d nested1/nested2/nested3/.git &&
+		test -d nested1/nested2/nested3/submodule/.git
+	)
+'
+
+cat > expect <<EOF
+Entering 'nested1'
+Entering 'nested1/nested2'
+Entering 'nested1/nested2/nested3'
+Entering 'nested1/nested2/nested3/submodule'
+Entering 'sub1'
+Entering 'sub2'
+Entering 'sub3'
+EOF
+
+test_expect_success 'test messages from "foreach --recursive"' '
+	(
+		cd clone2 &&
+		git submodule foreach --recursive "true" > ../actual
+	) &&
+	test_cmp expect actual
+'
+
+cat > expect <<EOF
+nested1-nested1
+nested2-nested2
+nested3-nested3
+submodule-submodule
+foo1-sub1
+foo2-sub2
+foo3-sub3
+EOF
+
+test_expect_success 'test "foreach --quiet --recursive"' '
+	(
+		cd clone2 &&
+		git submodule foreach -q --recursive "echo \$name-\$path" > ../actual
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success 'use "update --recursive" to checkout all submodules' '
+	git clone super clone3 &&
+	(
+		cd clone3 &&
+		test ! -d sub1/.git &&
+		test ! -d sub2/.git &&
+		test ! -d sub3/.git &&
+		test ! -d nested1/.git &&
+		git submodule update --init --recursive &&
+		test -d sub1/.git &&
+		test -d sub2/.git &&
+		test -d sub3/.git &&
+		test -d nested1/.git &&
+		test -d nested1/nested2/.git &&
+		test -d nested1/nested2/nested3/.git &&
+		test -d nested1/nested2/nested3/submodule/.git
+	)
+'
+
+nested1sha1=$(cd clone3/nested1 && git rev-parse HEAD)
+nested2sha1=$(cd clone3/nested1/nested2 && git rev-parse HEAD)
+nested3sha1=$(cd clone3/nested1/nested2/nested3 && git rev-parse HEAD)
+submodulesha1=$(cd clone3/nested1/nested2/nested3/submodule && git rev-parse HEAD)
+sub1sha1=$(cd clone3/sub1 && git rev-parse HEAD)
+sub2sha1=$(cd clone3/sub2 && git rev-parse HEAD)
+sub3sha1=$(cd clone3/sub3 && git rev-parse HEAD)
+sub1sha1_short=$(cd clone3/sub1 && git rev-parse --short HEAD)
+sub2sha1_short=$(cd clone3/sub2 && git rev-parse --short HEAD)
+
+cat > expect <<EOF
+ $nested1sha1 nested1 (heads/master)
+ $nested2sha1 nested1/nested2 (heads/master)
+ $nested3sha1 nested1/nested2/nested3 (heads/master)
+ $submodulesha1 nested1/nested2/nested3/submodule (heads/master)
+ $sub1sha1 sub1 ($sub1sha1_short)
+ $sub2sha1 sub2 ($sub2sha1_short)
+ $sub3sha1 sub3 (heads/master)
+EOF
+
+test_expect_success 'test "status --recursive"' '
+	(
+		cd clone3 &&
+		git submodule status --recursive > ../actual
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success 'use "git clone --recursive" to checkout all submodules' '
+	git clone --recursive super clone4 &&
+	test -d clone4/.git &&
+	test -d clone4/sub1/.git &&
+	test -d clone4/sub2/.git &&
+	test -d clone4/sub3/.git &&
+	test -d clone4/nested1/.git &&
+	test -d clone4/nested1/nested2/.git &&
+	test -d clone4/nested1/nested2/nested3/.git &&
+	test -d clone4/nested1/nested2/nested3/submodule/.git
+'
+
+test_done

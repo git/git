@@ -73,6 +73,27 @@ then
 	exit 1
 fi
 
+clean=no
+test_expect_success 'tests clean up after themselves' '
+    test_when_finished clean=yes
+'
+
+cleaner=no
+test_expect_code 1 'tests clean up even after a failure' '
+    test_when_finished cleaner=yes &&
+    (exit 1)
+'
+
+if test $clean$cleaner != yesyes
+then
+	say "bug in test framework: cleanup commands do not work reliably"
+	exit 1
+fi
+
+test_expect_code 2 'failure to clean up causes the test to fail' '
+    test_when_finished "(exit 2)"
+'
+
 ################################################################
 # Basics of the basics
 
@@ -280,7 +301,7 @@ $expectfilter >expected <<\EOF
 EOF
 test_expect_success \
     'validate git diff-files output for a know cache/work tree state.' \
-    'git diff-files >current && diff >/dev/null -b current expected'
+    'git diff-files >current && test_cmp current expected >/dev/null'
 
 test_expect_success \
     'git update-index --refresh should succeed.' \

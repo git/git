@@ -4,9 +4,14 @@
 #
 # Copyright (c) 2007 Lars Hjemli
 
-USAGE="[--quiet] [--cached] \
-[add [-b branch] <repo> <path>]|[status|init|update [-i|--init] [-N|--no-fetch] [--rebase|--merge]|summary [-n|--summary-limit <n>] [<commit>]] \
-[--] [<path>...]|[foreach <command>]|[sync [--] [<path>...]]"
+dashless=$(basename "$0" | sed -e 's/-/ /')
+USAGE="[--quiet] add [-b branch] [--reference <repository>] [--] <repository> [<path>]
+   or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] init [--] [<path>...]
+   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
+   or: $dashless [--quiet] foreach [--recursive] <command>
+   or: $dashless [--quiet] sync [--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
 . git-parse-remote
@@ -16,8 +21,12 @@ command=
 branch=
 reference=
 cached=
+recursive=
+init=
+files=
 nofetch=
 update=
+prefix=
 
 # Resolve relative url by appending to parent's url
 resolve_relative_url ()
@@ -50,7 +59,7 @@ resolve_relative_url ()
 #
 module_list()
 {
-	git ls-files --error-unmatch --stage -- "$@" | grep '^160000 '
+	git ls-files --error-unmatch --stage -- "$@" | sane_grep '^160000 '
 }
 
 #
@@ -91,7 +100,7 @@ module_clone()
 	if test -d "$path"
 	then
 		rmdir "$path" 2>/dev/null ||
-		die "Directory '$path' exist, but is neither empty nor a git repository"
+		die "Directory '$path' exists, but is neither empty nor a git repository"
 	fi
 
 	test -e "$path" &&
@@ -153,6 +162,11 @@ cmd_add()
 	repo=$1
 	path=$2
 
+	if test -z "$path"; then
+		path=$(echo "$repo" |
+			sed -e 's|/$||' -e 's|:*/*\.git$||' -e 's|.*[/:]||g')
+	fi
+
 	if test -z "$repo" -o -z "$path"; then
 		usage
 	fi
@@ -210,7 +224,7 @@ cmd_add()
 
 		module_clone "$path" "$realrepo" "$reference" || exit
 		(
-			unset GIT_DIR
+			clear_local_git_env
 			cd "$path" &&
 			# ash fails to wordsplit ${branch:+-b "$branch"...}
 			case "$branch" in
@@ -237,13 +251,45 @@ cmd_add()
 #
 cmd_foreach()
 {
+	# parse $args after "submodule ... foreach".
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			GIT_QUIET=1
+			;;
+		--recursive)
+			recursive=1
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
+	toplevel=$(pwd)
+
 	module_list |
 	while read mode sha1 stage path
 	do
 		if test -e "$path"/.git
 		then
-			say "Entering '$path'"
-			(cd "$path" && eval "$@") ||
+			say "Entering '$prefix$path'"
+			name=$(module_name "$path")
+			(
+				prefix="$prefix$path/"
+				clear_local_git_env
+				cd "$path" &&
+				eval "$@" &&
+				if test -n "$recursive"
+				then
+					cmd_foreach "--recursive" "$@"
+				fi
+			) ||
 			die "Stopping at '$path'; script returned non-zero status."
 		fi
 	done
@@ -316,6 +362,7 @@ cmd_init()
 cmd_update()
 {
 	# parse $args after "submodule ... update".
+	orig_args="$@"
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -347,6 +394,10 @@ cmd_update()
 		-m|--merge)
 			shift
 			update="merge"
+			;;
+		--recursive)
+			shift
+			recursive=1
 			;;
 		--)
 			shift
@@ -387,7 +438,7 @@ cmd_update()
 			module_clone "$path" "$url" "$reference"|| exit
 			subsha1=
 		else
-			subsha1=$(unset GIT_DIR; cd "$path" &&
+			subsha1=$(clear_local_git_env; cd "$path" &&
 				git rev-parse --verify HEAD) ||
 			die "Unable to find current revision in submodule path '$path'"
 		fi
@@ -407,7 +458,7 @@ cmd_update()
 
 			if test -z "$nofetch"
 			then
-				(unset GIT_DIR; cd "$path" &&
+				(clear_local_git_env; cd "$path" &&
 					git-fetch) ||
 				die "Unable to fetch in submodule path '$path'"
 			fi
@@ -430,16 +481,22 @@ cmd_update()
 				;;
 			esac
 
-			(unset GIT_DIR; cd "$path" && $command "$sha1") ||
+			(clear_local_git_env; cd "$path" && $command "$sha1") ||
 			die "Unable to $action '$sha1' in submodule path '$path'"
 			say "Submodule path '$path': $msg '$sha1'"
+		fi
+
+		if test -n "$recursive"
+		then
+			(clear_local_git_env; cd "$path" && cmd_update $orig_args) ||
+			die "Failed to recurse into submodule path '$path'"
 		fi
 	done
 }
 
 set_name_rev () {
 	revname=$( (
-		unset GIT_DIR
+		clear_local_git_env
 		cd "$1" && {
 			git describe "$2" 2>/dev/null ||
 			git describe --tags "$2" 2>/dev/null ||
@@ -460,6 +517,7 @@ set_name_rev () {
 cmd_summary() {
 	summary_limit=-1
 	for_status=
+	diff_cmd=diff-index
 
 	# parse $args after "submodule ... summary".
 	while test $# -ne 0
@@ -467,6 +525,9 @@ cmd_summary() {
 		case "$1" in
 		--cached)
 			cached="$1"
+			;;
+		--files)
+			files="$1"
 			;;
 		--for-status)
 			for_status="$1"
@@ -496,18 +557,31 @@ cmd_summary() {
 
 	test $summary_limit = 0 && return
 
-	if rev=$(git rev-parse -q --verify "$1^0")
+	if rev=$(git rev-parse -q --verify --default HEAD ${1+"$1"})
 	then
 		head=$rev
-		shift
+		test $# = 0 || shift
+	elif test -z "$1" -o "$1" = "HEAD"
+	then
+		# before the first commit: compare with an empty tree
+		head=$(git hash-object -w -t tree --stdin </dev/null)
+		test -z "$1" || shift
 	else
-		head=HEAD
+		head="HEAD"
+	fi
+
+	if [ -n "$files" ]
+	then
+		test -n "$cached" &&
+		die "--cached cannot be used with --files"
+		diff_cmd=diff-files
+		head=
 	fi
 
 	cd_to_toplevel
 	# Get modified modules cared by user
-	modules=$(git diff-index $cached --raw $head -- "$@" |
-		egrep '^:([0-7]* )?160000' |
+	modules=$(git $diff_cmd $cached --ignore-submodules=dirty --raw $head -- "$@" |
+		sane_egrep '^:([0-7]* )?160000' |
 		while read mod_src mod_dst sha1_src sha1_dst status name
 		do
 			# Always show modules deleted or type-changed (blob<->module)
@@ -520,8 +594,8 @@ cmd_summary() {
 
 	test -z "$modules" && return
 
-	git diff-index $cached --raw $head -- $modules |
-	egrep '^:([0-7]* )?160000' |
+	git $diff_cmd $cached --ignore-submodules=dirty --raw $head -- $modules |
+	sane_egrep '^:([0-7]* )?160000' |
 	cut -c2- |
 	while read mod_src mod_dst sha1_src sha1_dst status name
 	do
@@ -578,7 +652,7 @@ cmd_summary() {
 				range=$sha1_dst
 			fi
 			GIT_DIR="$name/.git" \
-			git log --pretty=oneline --first-parent $range | wc -l
+			git rev-list --first-parent $range -- | wc -l
 			)
 			total_commits=" ($(($total_commits + 0)))"
 			;;
@@ -623,7 +697,11 @@ cmd_summary() {
 		echo
 	done |
 	if test -n "$for_status"; then
-		echo "# Modified submodules:"
+		if [ -n "$files" ]; then
+			echo "# Submodules changed but not updated:"
+		else
+			echo "# Submodule changes to be committed:"
+		fi
 		echo "#"
 		sed -e 's|^|# |' -e 's|^# $|#|'
 	else
@@ -643,6 +721,7 @@ cmd_summary() {
 cmd_status()
 {
 	# parse $args after "submodule ... status".
+	orig_args="$@"
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -651,6 +730,9 @@ cmd_status()
 			;;
 		--cached)
 			cached=1
+			;;
+		--recursive)
+			recursive=1
 			;;
 		--)
 			shift
@@ -671,22 +753,34 @@ cmd_status()
 	do
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
+		displaypath="$prefix$path"
 		if test -z "$url" || ! test -d "$path"/.git -o -f "$path"/.git
 		then
-			say "-$sha1 $path"
+			say "-$sha1 $displaypath"
 			continue;
 		fi
 		set_name_rev "$path" "$sha1"
-		if git diff-files --quiet -- "$path"
+		if git diff-files --ignore-submodules=dirty --quiet -- "$path"
 		then
-			say " $sha1 $path$revname"
+			say " $sha1 $displaypath$revname"
 		else
 			if test -z "$cached"
 			then
-				sha1=$(unset GIT_DIR; cd "$path" && git rev-parse --verify HEAD)
+				sha1=$(clear_local_git_env; cd "$path" && git rev-parse --verify HEAD)
 				set_name_rev "$path" "$sha1"
 			fi
-			say "+$sha1 $path$revname"
+			say "+$sha1 $displaypath$revname"
+		fi
+
+		if test -n "$recursive"
+		then
+			(
+				prefix="$displaypath/"
+				clear_local_git_env
+				cd "$path" &&
+				cmd_status $orig_args
+			) ||
+			die "Failed to recurse into submodule path '$path'"
 		fi
 	done
 }
@@ -733,7 +827,7 @@ cmd_sync()
 		if test -e "$path"/.git
 		then
 		(
-			unset GIT_DIR
+			clear_local_git_env
 			cd "$path"
 			remote=$(get_default_remote)
 			say "Synchronizing submodule url for '$name'"

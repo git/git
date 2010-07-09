@@ -52,8 +52,8 @@ following format:
 
 ------------
 
-`Push:` lines are used by 'git-push' and
-`Pull:` lines are used by 'git-pull' and 'git-fetch'.
+`Push:` lines are used by 'git push' and
+`Pull:` lines are used by 'git pull' and 'git fetch'.
 Multiple `Push:` and `Pull:` lines may
 be specified for additional branch mappings.
 

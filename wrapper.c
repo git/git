@@ -3,11 +3,25 @@
  */
 #include "cache.h"
 
+static void try_to_free_builtin(size_t size)
+{
+	release_pack_memory(size, -1);
+}
+
+static void (*try_to_free_routine)(size_t size) = try_to_free_builtin;
+
+try_to_free_t set_try_to_free_routine(try_to_free_t routine)
+{
+	try_to_free_t old = try_to_free_routine;
+	try_to_free_routine = routine;
+	return old;
+}
+
 char *xstrdup(const char *str)
 {
 	char *ret = strdup(str);
 	if (!ret) {
-		release_pack_memory(strlen(str) + 1, -1);
+		try_to_free_routine(strlen(str) + 1);
 		ret = strdup(str);
 		if (!ret)
 			die("Out of memory, strdup failed");
@@ -21,7 +35,7 @@ void *xmalloc(size_t size)
 	if (!ret && !size)
 		ret = malloc(1);
 	if (!ret) {
-		release_pack_memory(size, -1);
+		try_to_free_routine(size);
 		ret = malloc(size);
 		if (!ret && !size)
 			ret = malloc(1);
@@ -34,6 +48,16 @@ void *xmalloc(size_t size)
 	return ret;
 }
 
+void *xmallocz(size_t size)
+{
+	void *ret;
+	if (size + 1 < size)
+		die("Data too large to fit into virtual memory space.");
+	ret = xmalloc(size + 1);
+	((char*)ret)[size] = 0;
+	return ret;
+}
+
 /*
  * xmemdupz() allocates (len + 1) bytes of memory, duplicates "len" bytes of
  * "data" to the allocated memory, zero terminates the allocated memory,
@@ -42,10 +66,7 @@ void *xmalloc(size_t size)
  */
 void *xmemdupz(const void *data, size_t len)
 {
-	char *p = xmalloc(len + 1);
-	memcpy(p, data, len);
-	p[len] = '\0';
-	return p;
+	return memcpy(xmallocz(len), data, len);
 }
 
 char *xstrndup(const char *str, size_t len)
@@ -60,7 +81,7 @@ void *xrealloc(void *ptr, size_t size)
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
 	if (!ret) {
-		release_pack_memory(size, -1);
+		try_to_free_routine(size);
 		ret = realloc(ptr, size);
 		if (!ret && !size)
 			ret = realloc(ptr, 1);
@@ -76,7 +97,7 @@ void *xcalloc(size_t nmemb, size_t size)
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
 	if (!ret) {
-		release_pack_memory(nmemb * size, -1);
+		try_to_free_routine(nmemb * size);
 		ret = calloc(nmemb, size);
 		if (!ret && (!nmemb || !size))
 			ret = calloc(1, 1);
@@ -197,6 +218,16 @@ int xmkstemp(char *template)
 	return fd;
 }
 
+int xmkstemp_mode(char *template, int mode)
+{
+	int fd;
+
+	fd = git_mkstemp_mode(template, mode);
+	if (fd < 0)
+		die_errno("Unable to create temporary file");
+	return fd;
+}
+
 /*
  * zlib wrappers to make sure we don't silently miss errors
  * at init time.
@@ -260,10 +291,14 @@ int git_inflate(z_streamp strm, int flush)
 int odb_mkstemp(char *template, size_t limit, const char *pattern)
 {
 	int fd;
-
+	/*
+	 * we let the umask do its job, don't try to be more
+	 * restrictive except to remove write permission.
+	 */
+	int mode = 0444;
 	snprintf(template, limit, "%s/%s",
 		 get_object_directory(), pattern);
-	fd = mkstemp(template);
+	fd = git_mkstemp_mode(template, mode);
 	if (0 <= fd)
 		return fd;
 
@@ -272,7 +307,7 @@ int odb_mkstemp(char *template, size_t limit, const char *pattern)
 	snprintf(template, limit, "%s/%s",
 		 get_object_directory(), pattern);
 	safe_create_leading_directories(template);
-	return xmkstemp(template);
+	return xmkstemp_mode(template, mode);
 }
 
 int odb_pack_keep(char *name, size_t namesz, unsigned char *sha1)
@@ -290,18 +325,30 @@ int odb_pack_keep(char *name, size_t namesz, unsigned char *sha1)
 	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
 }
 
-int unlink_or_warn(const char *file)
+static int warn_if_unremovable(const char *op, const char *file, int rc)
 {
-	int rc = unlink(file);
-
 	if (rc < 0) {
 		int err = errno;
 		if (ENOENT != err) {
-			warning("unable to unlink %s: %s",
-				file, strerror(errno));
+			warning("unable to %s %s: %s",
+				op, file, strerror(errno));
 			errno = err;
 		}
 	}
 	return rc;
 }
 
+int unlink_or_warn(const char *file)
+{
+	return warn_if_unremovable("unlink", file, unlink(file));
+}
+
+int rmdir_or_warn(const char *file)
+{
+	return warn_if_unremovable("rmdir", file, rmdir(file));
+}
+
+int remove_or_warn(unsigned int mode, const char *file)
+{
+	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
+}

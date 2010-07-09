@@ -5,50 +5,59 @@
  */
 #include "git-compat-util.h"
 
-static void report(const char *prefix, const char *err, va_list params)
+void vreportf(const char *prefix, const char *err, va_list params)
 {
-	char msg[1024];
+	char msg[4096];
 	vsnprintf(msg, sizeof(msg), err, params);
 	fprintf(stderr, "%s%s\n", prefix, msg);
 }
 
-static NORETURN void usage_builtin(const char *err)
+static NORETURN void usage_builtin(const char *err, va_list params)
 {
-	fprintf(stderr, "usage: %s\n", err);
+	vreportf("usage: ", err, params);
 	exit(129);
 }
 
 static NORETURN void die_builtin(const char *err, va_list params)
 {
-	report("fatal: ", err, params);
+	vreportf("fatal: ", err, params);
 	exit(128);
 }
 
 static void error_builtin(const char *err, va_list params)
 {
-	report("error: ", err, params);
+	vreportf("error: ", err, params);
 }
 
 static void warn_builtin(const char *warn, va_list params)
 {
-	report("warning: ", warn, params);
+	vreportf("warning: ", warn, params);
 }
 
 /* If we are in a dlopen()ed .so write to a global variable would segfault
  * (ugh), so keep things static. */
-static void (*usage_routine)(const char *err) NORETURN = usage_builtin;
-static void (*die_routine)(const char *err, va_list params) NORETURN = die_builtin;
+static NORETURN_PTR void (*usage_routine)(const char *err, va_list params) = usage_builtin;
+static NORETURN_PTR void (*die_routine)(const char *err, va_list params) = die_builtin;
 static void (*error_routine)(const char *err, va_list params) = error_builtin;
 static void (*warn_routine)(const char *err, va_list params) = warn_builtin;
 
-void set_die_routine(void (*routine)(const char *err, va_list params) NORETURN)
+void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params))
 {
 	die_routine = routine;
 }
 
+void usagef(const char *err, ...)
+{
+	va_list params;
+
+	va_start(params, err);
+	usage_routine(err, params);
+	va_end(params);
+}
+
 void usage(const char *err)
 {
-	usage_routine(err);
+	usagef("%s", err);
 }
 
 void die(const char *err, ...)

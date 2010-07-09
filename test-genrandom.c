@@ -4,8 +4,7 @@
  * Copyright (C) 2007 by Nicolas Pitre, licensed under the GPL version 2.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "git-compat-util.h"
 
 int main(int argc, char *argv[])
 {

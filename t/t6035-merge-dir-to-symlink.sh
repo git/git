@@ -5,7 +5,7 @@ test_description='merging when a directory was replaced with a symlink'
 
 if ! test_have_prereq SYMLINKS
 then
-	say 'Symbolic links not supported, skipping tests.'
+	skip_all='Symbolic links not supported, skipping tests.'
 	test_done
 fi
 
@@ -74,7 +74,7 @@ test_expect_success 'setup a merge where dir a/b-2 changed to symlink' '
 	git tag test2
 '
 
-test_expect_failure 'merge should not have conflicts (resolve)' '
+test_expect_success 'merge should not have conflicts (resolve)' '
 	git reset --hard &&
 	git checkout baseline^0 &&
 	git merge -s resolve test2 &&

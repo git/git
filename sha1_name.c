@@ -5,6 +5,7 @@
 #include "blob.h"
 #include "tree-walk.h"
 #include "refs.h"
+#include "remote.h"
 
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
@@ -240,7 +241,8 @@ static int ambiguous_path(const char *path, int len)
 
 /*
  * *string and *len will only be substituted, and *string returned (for
- * later free()ing) if the string passed in is of the form @{-<n>}.
+ * later free()ing) if the string passed in is a magic short-hand form
+ * to name a branch.
  */
 static char *substitute_branch_name(const char **string, int *len)
 {
@@ -278,8 +280,7 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 				*ref = xstrdup(r);
 			if (!warn_ambiguous_refs)
 				break;
-		} else if ((flag & REF_ISSYMREF) &&
-			   (len != 4 || strcmp(str, "HEAD")))
+		} else if ((flag & REF_ISSYMREF) && strcmp(fullref, "HEAD"))
 			warning("ignoring dangling symref %s.", fullref);
 	}
 	free(last_branch);
@@ -323,6 +324,20 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 	return logs_found;
 }
 
+static inline int upstream_mark(const char *string, int len)
+{
+	const char *suffix[] = { "@{upstream}", "@{u}" };
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(suffix); i++) {
+		int suffix_len = strlen(suffix[i]);
+		if (suffix_len <= len
+		    && !memcmp(string, suffix[i], suffix_len))
+			return suffix_len;
+	}
+	return 0;
+}
+
 static int get_sha1_1(const char *name, int len, unsigned char *sha1);
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
@@ -340,8 +355,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (len && str[len-1] == '}') {
 		for (at = len-2; at >= 0; at--) {
 			if (str[at] == '@' && str[at+1] == '{') {
-				reflog_len = (len-1) - (at+2);
-				len = at;
+				if (!upstream_mark(str + at, len - at)) {
+					reflog_len = (len-1) - (at+2);
+					len = at;
+				}
 				break;
 			}
 		}
@@ -381,6 +398,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		unsigned long co_time;
 		int co_tz, co_cnt;
 
+		/* a @{-N} placed anywhere except the start is an error */
+		if (str[at+2] == '-')
+			return -1;
+
 		/* Is it asking for N-th entry, or approxidate? */
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
 			char ch = str[at+2+i];
@@ -395,9 +416,12 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		} else if (0 <= nth)
 			at_time = 0;
 		else {
+			int errors = 0;
 			char *tmp = xstrndup(str + at + 2, reflog_len);
-			at_time = approxidate(tmp);
+			at_time = approxidate_careful(tmp, &errors);
 			free(tmp);
+			if (errors)
+				return -1;
 		}
 		if (read_ref_at(real_ref, at_time, nth, sha1, NULL,
 				&co_time, &co_tz, &co_cnt)) {
@@ -655,8 +679,8 @@ static int handle_one_ref(const char *path,
 
 /*
  * This interprets names like ':/Initial revision of "git"' by searching
- * through history and returning the first commit whose message starts
- * with the given string.
+ * through history and returning the first commit whose message matches
+ * the given regular expression.
  *
  * For future extension, ':/!' is reserved. If you want to match a message
  * beginning with a '!', you have to repeat the exclamation mark.
@@ -668,12 +692,17 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 	struct commit_list *list = NULL, *backup = NULL, *l;
 	int retval = -1;
 	char *temp_commit_buffer = NULL;
+	regex_t regex;
 
 	if (prefix[0] == '!') {
 		if (prefix[1] != '!')
 			die ("Invalid search pattern: %s", prefix);
 		prefix++;
 	}
+
+	if (regcomp(&regex, prefix, REG_EXTENDED))
+		die("Invalid search pattern: %s", prefix);
+
 	for_each_ref(handle_one_ref, &list);
 	for (l = list; l; l = l->next)
 		commit_list_insert(l->item, &backup);
@@ -697,12 +726,13 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 		}
 		if (!(p = strstr(p, "\n\n")))
 			continue;
-		if (!prefixcmp(p + 2, prefix)) {
+		if (!regexec(&regex, p + 2, 0, NULL, 0)) {
 			hashcpy(sha1, commit->object.sha1);
 			retval = 0;
 			break;
 		}
 	}
+	regfree(&regex);
 	free(temp_commit_buffer);
 	free_commit_list(list);
 	for (l = backup; l; l = l->next)
@@ -740,17 +770,10 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 }
 
 /*
- * This reads "@{-N}" syntax, finds the name of the Nth previous
- * branch we were on, and places the name of the branch in the given
- * buf and returns the number of characters parsed if successful.
- *
- * If the input is not of the accepted format, it returns a negative
- * number to signal an error.
- *
- * If the input was ok but there are not N branch switches in the
- * reflog, it returns 0.
+ * Parse @{-N} syntax, return the number of characters parsed
+ * if successful; otherwise signal an error with negative value.
  */
-int interpret_branch_name(const char *name, struct strbuf *buf)
+static int interpret_nth_prior_checkout(const char *name, struct strbuf *buf)
 {
 	long nth;
 	int i, retval;
@@ -794,23 +817,244 @@ release_return:
 	return retval;
 }
 
+int get_sha1_mb(const char *name, unsigned char *sha1)
+{
+	struct commit *one, *two;
+	struct commit_list *mbs;
+	unsigned char sha1_tmp[20];
+	const char *dots;
+	int st;
+
+	dots = strstr(name, "...");
+	if (!dots)
+		return get_sha1(name, sha1);
+	if (dots == name)
+		st = get_sha1("HEAD", sha1_tmp);
+	else {
+		struct strbuf sb;
+		strbuf_init(&sb, dots - name);
+		strbuf_add(&sb, name, dots - name);
+		st = get_sha1(sb.buf, sha1_tmp);
+		strbuf_release(&sb);
+	}
+	if (st)
+		return st;
+	one = lookup_commit_reference_gently(sha1_tmp, 0);
+	if (!one)
+		return -1;
+
+	if (get_sha1(dots[3] ? (dots + 3) : "HEAD", sha1_tmp))
+		return -1;
+	two = lookup_commit_reference_gently(sha1_tmp, 0);
+	if (!two)
+		return -1;
+	mbs = get_merge_bases(one, two, 1);
+	if (!mbs || mbs->next)
+		st = -1;
+	else {
+		st = 0;
+		hashcpy(sha1, mbs->item->object.sha1);
+	}
+	free_commit_list(mbs);
+	return st;
+}
+
+/*
+ * This reads short-hand syntax that not only evaluates to a commit
+ * object name, but also can act as if the end user spelled the name
+ * of the branch from the command line.
+ *
+ * - "@{-N}" finds the name of the Nth previous branch we were on, and
+ *   places the name of the branch in the given buf and returns the
+ *   number of characters parsed if successful.
+ *
+ * - "<branch>@{upstream}" finds the name of the other ref that
+ *   <branch> is configured to merge with (missing <branch> defaults
+ *   to the current branch), and places the name of the branch in the
+ *   given buf and returns the number of characters parsed if
+ *   successful.
+ *
+ * If the input is not of the accepted format, it returns a negative
+ * number to signal an error.
+ *
+ * If the input was ok but there are not N branch switches in the
+ * reflog, it returns 0.
+ */
+int interpret_branch_name(const char *name, struct strbuf *buf)
+{
+	char *cp;
+	struct branch *upstream;
+	int namelen = strlen(name);
+	int len = interpret_nth_prior_checkout(name, buf);
+	int tmp_len;
+
+	if (!len)
+		return len; /* syntax Ok, not enough switches */
+	if (0 < len && len == namelen)
+		return len; /* consumed all */
+	else if (0 < len) {
+		/* we have extra data, which might need further processing */
+		struct strbuf tmp = STRBUF_INIT;
+		int used = buf->len;
+		int ret;
+
+		strbuf_add(buf, name + len, namelen - len);
+		ret = interpret_branch_name(buf->buf, &tmp);
+		/* that data was not interpreted, remove our cruft */
+		if (ret < 0) {
+			strbuf_setlen(buf, used);
+			return len;
+		}
+		strbuf_reset(buf);
+		strbuf_addbuf(buf, &tmp);
+		strbuf_release(&tmp);
+		/* tweak for size of {-N} versus expanded ref name */
+		return ret - used + len;
+	}
+
+	cp = strchr(name, '@');
+	if (!cp)
+		return -1;
+	tmp_len = upstream_mark(cp, namelen - (cp - name));
+	if (!tmp_len)
+		return -1;
+	len = cp + tmp_len - name;
+	cp = xstrndup(name, cp - name);
+	upstream = branch_get(*cp ? cp : NULL);
+	if (!upstream
+	    || !upstream->merge
+	    || !upstream->merge[0]->dst)
+		return error("No upstream branch found for '%s'", cp);
+	free(cp);
+	cp = shorten_unambiguous_ref(upstream->merge[0]->dst, 0);
+	strbuf_reset(buf);
+	strbuf_addstr(buf, cp);
+	free(cp);
+	return len;
+}
+
 /*
  * This is like "get_sha1_basic()", except it allows "sha1 expressions",
  * notably "xyz^" for "parent of xyz"
  */
 int get_sha1(const char *name, unsigned char *sha1)
 {
-	unsigned unused;
-	return get_sha1_with_mode(name, sha1, &unused);
+	struct object_context unused;
+	return get_sha1_with_context(name, sha1, &unused);
 }
 
-int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
+/* Must be called only when object_name:filename doesn't exist. */
+static void diagnose_invalid_sha1_path(const char *prefix,
+				       const char *filename,
+				       const unsigned char *tree_sha1,
+				       const char *object_name)
+{
+	struct stat st;
+	unsigned char sha1[20];
+	unsigned mode;
+
+	if (!prefix)
+		prefix = "";
+
+	if (!lstat(filename, &st))
+		die("Path '%s' exists on disk, but not in '%s'.",
+		    filename, object_name);
+	if (errno == ENOENT || errno == ENOTDIR) {
+		char *fullname = xmalloc(strlen(filename)
+					     + strlen(prefix) + 1);
+		strcpy(fullname, prefix);
+		strcat(fullname, filename);
+
+		if (!get_tree_entry(tree_sha1, fullname,
+				    sha1, &mode)) {
+			die("Path '%s' exists, but not '%s'.\n"
+			    "Did you mean '%s:%s'?",
+			    fullname,
+			    filename,
+			    object_name,
+			    fullname);
+		}
+		die("Path '%s' does not exist in '%s'",
+		    filename, object_name);
+	}
+}
+
+/* Must be called only when :stage:filename doesn't exist. */
+static void diagnose_invalid_index_path(int stage,
+					const char *prefix,
+					const char *filename)
+{
+	struct stat st;
+	struct cache_entry *ce;
+	int pos;
+	unsigned namelen = strlen(filename);
+	unsigned fullnamelen;
+	char *fullname;
+
+	if (!prefix)
+		prefix = "";
+
+	/* Wrong stage number? */
+	pos = cache_name_pos(filename, namelen);
+	if (pos < 0)
+		pos = -pos - 1;
+	if (pos < active_nr) {
+		ce = active_cache[pos];
+		if (ce_namelen(ce) == namelen &&
+		    !memcmp(ce->name, filename, namelen))
+			die("Path '%s' is in the index, but not at stage %d.\n"
+			    "Did you mean ':%d:%s'?",
+			    filename, stage,
+			    ce_stage(ce), filename);
+	}
+
+	/* Confusion between relative and absolute filenames? */
+	fullnamelen = namelen + strlen(prefix);
+	fullname = xmalloc(fullnamelen + 1);
+	strcpy(fullname, prefix);
+	strcat(fullname, filename);
+	pos = cache_name_pos(fullname, fullnamelen);
+	if (pos < 0)
+		pos = -pos - 1;
+	if (pos < active_nr) {
+		ce = active_cache[pos];
+		if (ce_namelen(ce) == fullnamelen &&
+		    !memcmp(ce->name, fullname, fullnamelen))
+			die("Path '%s' is in the index, but not '%s'.\n"
+			    "Did you mean ':%d:%s'?",
+			    fullname, filename,
+			    ce_stage(ce), fullname);
+	}
+
+	if (!lstat(filename, &st))
+		die("Path '%s' exists on disk, but not in the index.", filename);
+	if (errno == ENOENT || errno == ENOTDIR)
+		die("Path '%s' does not exist (neither on disk nor in the index).",
+		    filename);
+
+	free(fullname);
+}
+
+
+int get_sha1_with_mode_1(const char *name, unsigned char *sha1, unsigned *mode, int gently, const char *prefix)
+{
+	struct object_context oc;
+	int ret;
+	ret = get_sha1_with_context_1(name, sha1, &oc, gently, prefix);
+	*mode = oc.mode;
+	return ret;
+}
+
+int get_sha1_with_context_1(const char *name, unsigned char *sha1,
+			    struct object_context *oc,
+			    int gently, const char *prefix)
 {
 	int ret, bracket_depth;
 	int namelen = strlen(name);
 	const char *cp;
 
-	*mode = S_IFINVALID;
+	memset(oc, 0, sizeof(*oc));
+	oc->mode = S_IFINVALID;
 	ret = get_sha1_1(name, namelen, sha1);
 	if (!ret)
 		return ret;
@@ -833,6 +1077,11 @@ int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
 			cp = name + 3;
 		}
 		namelen = namelen - (cp - name);
+
+		strncpy(oc->path, cp,
+			sizeof(oc->path));
+		oc->path[sizeof(oc->path)-1] = '\0';
+
 		if (!active_cache)
 			read_cache();
 		pos = cache_name_pos(cp, namelen);
@@ -845,11 +1094,12 @@ int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
 				break;
 			if (ce_stage(ce) == stage) {
 				hashcpy(sha1, ce->sha1);
-				*mode = ce->ce_mode;
 				return 0;
 			}
 			pos++;
 		}
+		if (!gently)
+			diagnose_invalid_index_path(stage, prefix, cp);
 		return -1;
 	}
 	for (cp = name, bracket_depth = 0; *cp; cp++) {
@@ -862,9 +1112,30 @@ int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
 	}
 	if (*cp == ':') {
 		unsigned char tree_sha1[20];
-		if (!get_sha1_1(name, cp-name, tree_sha1))
-			return get_tree_entry(tree_sha1, cp+1, sha1,
-					      mode);
+		char *object_name = NULL;
+		if (!gently) {
+			object_name = xmalloc(cp-name+1);
+			strncpy(object_name, name, cp-name);
+			object_name[cp-name] = '\0';
+		}
+		if (!get_sha1_1(name, cp-name, tree_sha1)) {
+			const char *filename = cp+1;
+			ret = get_tree_entry(tree_sha1, filename, sha1, &oc->mode);
+			if (!gently) {
+				diagnose_invalid_sha1_path(prefix, filename,
+							   tree_sha1, object_name);
+				free(object_name);
+			}
+			hashcpy(oc->tree, tree_sha1);
+			strncpy(oc->path, filename,
+				sizeof(oc->path));
+			oc->path[sizeof(oc->path)-1] = '\0';
+
+			return ret;
+		} else {
+			if (!gently)
+				die("Invalid object name '%s'.", object_name);
+		}
 	}
 	return ret;
 }

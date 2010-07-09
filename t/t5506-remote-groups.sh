@@ -51,7 +51,7 @@ test_expect_success 'nonexistant group produces error' '
 	! repo_fetched two
 '
 
-test_expect_success 'updating group updates all members' '
+test_expect_success 'updating group updates all members (remote update)' '
 	mark group-all &&
 	update_repos &&
 	git config --add remotes.all one &&
@@ -61,8 +61,25 @@ test_expect_success 'updating group updates all members' '
 	repo_fetched two
 '
 
-test_expect_success 'updating group does not update non-members' '
+test_expect_success 'updating group updates all members (fetch)' '
+	mark fetch-group-all &&
+	update_repos &&
+	git fetch all &&
+	repo_fetched one &&
+	repo_fetched two
+'
+
+test_expect_success 'updating group does not update non-members (remote update)' '
 	mark group-some &&
+	update_repos &&
+	git config --add remotes.some one &&
+	git remote update some &&
+	repo_fetched one &&
+	! repo_fetched two
+'
+
+test_expect_success 'updating group does not update non-members (fetch)' '
+	mark fetch-group-some &&
 	update_repos &&
 	git config --add remotes.some one &&
 	git remote update some &&

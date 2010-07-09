@@ -15,7 +15,7 @@ case "$GIT_SVN_LC_ALL" in
 	test_set_prereq UTF8
 	;;
 *)
-	say "UTF-8 locale not set, some tests skipped ($GIT_SVN_LC_ALL)"
+	say "# UTF-8 locale not set, some tests skipped ($GIT_SVN_LC_ALL)"
 	;;
 esac
 

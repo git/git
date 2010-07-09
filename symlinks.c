@@ -179,37 +179,6 @@ static int lstat_cache(struct cache_def *cache, const char *name, int len,
 	return ret_flags;
 }
 
-/*
- * Invalidate the given 'name' from the cache, if 'name' matches
- * completely with the cache.
- */
-void invalidate_lstat_cache(const char *name, int len)
-{
-	int match_len, previous_slash;
-	struct cache_def *cache = &default_cache;	/* FIXME */
-
-	match_len = longest_path_match(name, len, cache->path, cache->len,
-				       &previous_slash);
-	if (len == match_len) {
-		if ((cache->track_flags & FL_DIR) && previous_slash > 0) {
-			cache->path[previous_slash] = '\0';
-			cache->len = previous_slash;
-			cache->flags = FL_DIR;
-		} else {
-			reset_lstat_cache(cache);
-		}
-	}
-}
-
-/*
- * Completely clear the contents of the cache
- */
-void clear_lstat_cache(void)
-{
-	struct cache_def *cache = &default_cache;	/* FIXME */
-	reset_lstat_cache(cache);
-}
-
 #define USE_ONLY_LSTAT  0
 
 /*

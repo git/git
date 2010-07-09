@@ -10,62 +10,62 @@ that the result still makes sense.
 '
 . ./test-lib.sh
 
-. ../lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rebase.sh
 
 set_fake_editor
 
-# set up two branches like this:
+# Set up the repository like this:
 #
-# A - B - C - D - E
-#   \
-#     F - G - H
-#       \
-#         I
+#     one - two - three - four (conflict-branch)
+#   /
+# A - B - C - D - E            (master)
+# | \
+# |   F - G - H                (branch1)
+# |     \
+# |\      I                    (branch2)
+# | \
+# |   J - K - L - M            (no-conflict-branch)
+#  \
+#    N - O - P                 (no-ff-branch)
 #
-# where B, D and G touch the same file.
+# where A, B, D and G all touch file1, and one, two, three, four all
+# touch file "conflict".
+#
+# WARNING: Modifications to the initial repository can change the SHA ID used
+# in the expect2 file for the 'stop on conflicting pick' test.
+
 
 test_expect_success 'setup' '
-	: > file1 &&
-	git add file1 &&
-	test_tick &&
-	git commit -m A &&
-	git tag A &&
-	echo 1 > file1 &&
-	test_tick &&
-	git commit -m B file1 &&
-	: > file2 &&
-	git add file2 &&
-	test_tick &&
-	git commit -m C &&
-	echo 2 > file1 &&
-	test_tick &&
-	git commit -m D file1 &&
-	: > file3 &&
-	git add file3 &&
-	test_tick &&
-	git commit -m E &&
+	test_commit A file1 &&
+	test_commit B file1 &&
+	test_commit C file2 &&
+	test_commit D file1 &&
+	test_commit E file3 &&
 	git checkout -b branch1 A &&
-	: > file4 &&
-	git add file4 &&
-	test_tick &&
-	git commit -m F &&
-	git tag F &&
-	echo 3 > file1 &&
-	test_tick &&
-	git commit -m G file1 &&
-	: > file5 &&
-	git add file5 &&
-	test_tick &&
-	git commit -m H &&
+	test_commit F file4 &&
+	test_commit G file1 &&
+	test_commit H file5 &&
 	git checkout -b branch2 F &&
-	: > file6 &&
-	git add file6 &&
-	test_tick &&
-	git commit -m I &&
-	git tag I
+	test_commit I file6
+	git checkout -b conflict-branch A &&
+	for n in one two three four
+	do
+		test_commit $n conflict
+	done &&
+	git checkout -b no-conflict-branch A &&
+	for n in J K L M
+	do
+		test_commit $n file$n
+	done &&
+	git checkout -b no-ff-branch A &&
+	for n in N O P
+	do
+		test_commit $n file$n
+	done
 '
 
 test_expect_success 'no changes are a nop' '
+	git checkout branch2 &&
 	git rebase -i F &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
 	test $(git rev-parse I) = $(git rev-parse HEAD)
@@ -111,19 +111,20 @@ test_expect_success 'exchange two commits' '
 
 cat > expect << EOF
 diff --git a/file1 b/file1
-index e69de29..00750ed 100644
+index f70f10e..fd79235 100644
 --- a/file1
 +++ b/file1
-@@ -0,0 +1 @@
-+3
+@@ -1 +1 @@
+-A
++G
 EOF
 
 cat > expect2 << EOF
 <<<<<<< HEAD
-2
+D
 =======
-3
->>>>>>> b7ca976... G
+G
+>>>>>>> 5d18e54... G
 EOF
 
 test_expect_success 'stop on conflicting pick' '
@@ -145,6 +146,16 @@ test_expect_success 'abort' '
 	! test -d .git/rebase-merge
 '
 
+test_expect_success 'abort with error when new base cannot be checked out' '
+	git rm --cached file1 &&
+	git commit -m "remove file in base" &&
+	test_must_fail git rebase -i master > output 2>&1 &&
+	grep "Untracked working tree file .file1. would be overwritten" \
+		output &&
+	! test -d .git/rebase-merge &&
+	git reset --hard HEAD^
+'
+
 test_expect_success 'retain authorship' '
 	echo A > file7 &&
 	git add file7 &&
@@ -161,7 +172,8 @@ test_expect_success 'squash' '
 	test_tick &&
 	GIT_AUTHOR_NAME="Nitfol" git commit -m "nitfol" file7 &&
 	echo "******************************" &&
-	FAKE_LINES="1 squash 2" git rebase -i --onto master HEAD~2 &&
+	FAKE_LINES="1 squash 2" EXPECT_HEADER_COUNT=2 \
+		git rebase -i --onto master HEAD~2 &&
 	test B = $(cat file7) &&
 	test $(git rev-parse HEAD^) = $(git rev-parse master)
 '
@@ -177,6 +189,12 @@ test_expect_success '-p handles "no changes" gracefully' '
 	git diff-files --quiet &&
 	git diff-index --quiet --cached HEAD -- &&
 	test $HEAD = $(git rev-parse HEAD)
+'
+
+test_expect_failure 'exchange two commits with -p' '
+	FAKE_LINES="2 1" git rebase -i -p HEAD~2 &&
+	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
+	test G = $(git cat-file commit HEAD | sed -ne \$p)
 '
 
 test_expect_success 'preserve merges with -p' '
@@ -256,30 +274,113 @@ test_expect_success 'verbose flag is heeded, even after --continue' '
 test_expect_success 'multi-squash only fires up editor once' '
 	base=$(git rev-parse HEAD~4) &&
 	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 squash 2 squash 3 squash 4" \
+		EXPECT_HEADER_COUNT=4 \
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l)
 '
 
+test_expect_success 'multi-fixup does not fire up editor' '
+	git checkout -b multi-fixup E &&
+	base=$(git rev-parse HEAD~4) &&
+	FAKE_COMMIT_AMEND="NEVER" FAKE_LINES="1 fixup 2 fixup 3 fixup 4" \
+		git rebase -i $base &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 0 = $(git show | grep NEVER | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D multi-fixup
+'
+
+test_expect_success 'commit message used after conflict' '
+	git checkout -b conflict-fixup conflict-branch &&
+	base=$(git rev-parse HEAD~4) &&
+	(
+		FAKE_LINES="1 fixup 3 fixup 4" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i $base
+	) &&
+	echo three > conflict &&
+	git add conflict &&
+	FAKE_COMMIT_AMEND="ONCE" EXPECT_HEADER_COUNT=2 \
+		git rebase --continue &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 1 = $(git show | grep ONCE | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D conflict-fixup
+'
+
+test_expect_success 'commit message retained after conflict' '
+	git checkout -b conflict-squash conflict-branch &&
+	base=$(git rev-parse HEAD~4) &&
+	(
+		FAKE_LINES="1 fixup 3 squash 4" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i $base
+	) &&
+	echo three > conflict &&
+	git add conflict &&
+	FAKE_COMMIT_AMEND="TWICE" EXPECT_HEADER_COUNT=2 \
+		git rebase --continue &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 2 = $(git show | grep TWICE | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D conflict-squash
+'
+
+cat > expect-squash-fixup << EOF
+B
+
+D
+
+ONCE
+EOF
+
+test_expect_success 'squash and fixup generate correct log messages' '
+	git checkout -b squash-fixup E &&
+	base=$(git rev-parse HEAD~4) &&
+	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 fixup 2 squash 3 fixup 4" \
+		EXPECT_HEADER_COUNT=4 \
+		git rebase -i $base &&
+	git cat-file commit HEAD | sed -e 1,/^\$/d > actual-squash-fixup &&
+	test_cmp expect-squash-fixup actual-squash-fixup &&
+	git checkout to-be-rebased &&
+	git branch -D squash-fixup
+'
+
+test_expect_success 'squash ignores comments' '
+	git checkout -b skip-comments E &&
+	base=$(git rev-parse HEAD~4) &&
+	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="# 1 # squash 2 # squash 3 # squash 4 #" \
+		EXPECT_HEADER_COUNT=4 \
+		git rebase -i $base &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 1 = $(git show | grep ONCE | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D skip-comments
+'
+
+test_expect_success 'squash ignores blank lines' '
+	git checkout -b skip-blank-lines E &&
+	base=$(git rev-parse HEAD~4) &&
+	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="> 1 > squash 2 > squash 3 > squash 4 >" \
+		EXPECT_HEADER_COUNT=4 \
+		git rebase -i $base &&
+	test $base = $(git rev-parse HEAD^) &&
+	test 1 = $(git show | grep ONCE | wc -l) &&
+	git checkout to-be-rebased &&
+	git branch -D skip-blank-lines
+'
+
 test_expect_success 'squash works as expected' '
-	for n in one two three four
-	do
-		echo $n >> file$n &&
-		git add file$n &&
-		git commit -m $n
-	done &&
+	git checkout -b squash-works no-conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
-	FAKE_LINES="1 squash 3 2" git rebase -i HEAD~3 &&
+	FAKE_LINES="1 squash 3 2" EXPECT_HEADER_COUNT=2 \
+		git rebase -i HEAD~3 &&
 	test $one = $(git rev-parse HEAD~2)
 '
 
 test_expect_success 'interrupted squash works as expected' '
-	for n in one two three four
-	do
-		echo $n >> conflict &&
-		git add conflict &&
-		git commit -m $n
-	done &&
+	git checkout -b interrupted-squash conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	(
 		FAKE_LINES="1 squash 3 2" &&
@@ -296,12 +397,7 @@ test_expect_success 'interrupted squash works as expected' '
 '
 
 test_expect_success 'interrupted squash works as expected (case 2)' '
-	for n in one two three four
-	do
-		echo $n >> conflict &&
-		git add conflict &&
-		git commit -m $n
-	done &&
+	git checkout -b interrupted-squash2 conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	(
 		FAKE_LINES="3 squash 1 2" &&
@@ -468,6 +564,70 @@ test_expect_success 'avoid unnecessary reset' '
 	test $HEAD = $(git rev-parse HEAD) &&
 	MTIME=$(test-chmtime -v +0 file3 | sed 's/[^0-9].*$//') &&
 	test 123456789 = $MTIME
+'
+
+test_expect_success 'reword' '
+	git checkout -b reword-branch master &&
+	FAKE_LINES="1 2 3 reword 4" FAKE_COMMIT_MESSAGE="E changed" git rebase -i A &&
+	git show HEAD | grep "E changed" &&
+	test $(git rev-parse master) != $(git rev-parse HEAD) &&
+	test $(git rev-parse master^) = $(git rev-parse HEAD^) &&
+	FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" git rebase -i A &&
+	git show HEAD^ | grep "D changed" &&
+	FAKE_LINES="reword 1 2 3 4" FAKE_COMMIT_MESSAGE="B changed" git rebase -i A &&
+	git show HEAD~3 | grep "B changed" &&
+	FAKE_LINES="1 reword 2 3 4" FAKE_COMMIT_MESSAGE="C changed" git rebase -i A &&
+	git show HEAD~2 | grep "C changed"
+'
+
+test_expect_success 'rebase -i can copy notes' '
+	git config notes.rewrite.rebase true &&
+	git config notes.rewriteRef "refs/notes/*" &&
+	test_commit n1 &&
+	test_commit n2 &&
+	test_commit n3 &&
+	git notes add -m"a note" n3 &&
+	git rebase --onto n1 n2 &&
+	test "a note" = "$(git notes show HEAD)"
+'
+
+cat >expect <<EOF
+an earlier note
+a note
+EOF
+
+test_expect_success 'rebase -i can copy notes over a fixup' '
+	git reset --hard n3 &&
+	git notes add -m"an earlier note" n2 &&
+	GIT_NOTES_REWRITE_MODE=concatenate FAKE_LINES="1 fixup 2" git rebase -i n1 &&
+	git notes show > output &&
+	test_cmp expect output
+'
+
+test_expect_success 'rebase while detaching HEAD' '
+	git symbolic-ref HEAD &&
+	grandparent=$(git rev-parse HEAD~2) &&
+	test_tick &&
+	FAKE_LINES="2 1" git rebase -i HEAD~2 HEAD^0 &&
+	test $grandparent = $(git rev-parse HEAD~2) &&
+	test_must_fail git symbolic-ref HEAD
+'
+
+test_tick # Ensure that the rebased commits get a different timestamp.
+test_expect_success 'always cherry-pick with --no-ff' '
+	git checkout no-ff-branch &&
+	git tag original-no-ff-branch &&
+	git rebase -i --no-ff A &&
+	touch empty &&
+	for p in 0 1 2
+	do
+		test ! $(git rev-parse HEAD~$p) = $(git rev-parse original-no-ff-branch~$p) &&
+		git diff HEAD~$p original-no-ff-branch~$p > out &&
+		test_cmp empty out
+	done &&
+	test $(git rev-parse HEAD~3) = $(git rev-parse original-no-ff-branch~3) &&
+	git diff HEAD~3 original-no-ff-branch~3 > out &&
+	test_cmp empty out
 '
 
 test_done

@@ -26,7 +26,7 @@ static int read_directory(const char *path, struct string_list *list)
 
 	while ((e = readdir(dir)))
 		if (strcmp(".", e->d_name) && strcmp("..", e->d_name))
-			string_list_insert(e->d_name, list);
+			string_list_insert(list, e->d_name);
 
 	closedir(dir);
 	return 0;
@@ -150,16 +150,14 @@ static int queue_diff(struct diff_options *o,
 
 static int path_outside_repo(const char *path)
 {
-	/*
-	 * We have already done setup_git_directory_gently() so we
-	 * know we are inside a git work tree already.
-	 */
 	const char *work_tree;
 	size_t len;
 
 	if (!is_absolute_path(path))
 		return 0;
 	work_tree = get_git_work_tree();
+	if (!work_tree)
+		return 1;
 	len = strlen(work_tree);
 	if (strncmp(path, work_tree, len) ||
 	    (path[len] != '\0' && path[len] != '/'))
@@ -201,8 +199,8 @@ void diff_no_index(struct rev_info *revs,
 			return;
 	}
 	if (argc != i + 2)
-		die("git diff %s takes two paths",
-		    no_index ? "--no-index" : "[--no-index]");
+		usagef("git diff %s <path> <path>",
+		       no_index ? "--no-index" : "[--no-index]");
 
 	diff_setup(&revs->diffopt);
 	for (i = 1; i < argc - 2; ) {

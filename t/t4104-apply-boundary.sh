@@ -134,4 +134,13 @@ test_expect_success 'two lines' '
 
 '
 
+test_expect_success 'apply patch with 3 context lines matching at end' '
+	{ echo a; echo b; echo c; echo d; } >file &&
+	git add file &&
+	echo e >>file &&
+	git diff >patch &&
+	>file &&
+	test_must_fail git apply patch
+'
+
 test_done
