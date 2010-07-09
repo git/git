@@ -56,7 +56,7 @@ test_expect_success 'Handle D/F conflict, do not lose a/b-2/c/d in merge (resolv
 	test -f a/b-2/c/d
 '
 
-test_expect_failure 'Handle D/F conflict, do not lose a/b-2/c/d in merge (recursive)' '
+test_expect_success 'Handle D/F conflict, do not lose a/b-2/c/d in merge (recursive)' '
 	git reset --hard &&
 	git checkout baseline^0 &&
 	git merge -s recursive master &&
@@ -130,7 +130,7 @@ test_expect_success 'merge should not have D/F conflicts (resolve)' '
 	test -f a/b/c/d
 '
 
-test_expect_failure 'merge should not have D/F conflicts (recursive)' '
+test_expect_success 'merge should not have D/F conflicts (recursive)' '
 	git reset --hard &&
 	git checkout baseline^0 &&
 	git merge -s recursive test2 &&
@@ -138,7 +138,7 @@ test_expect_failure 'merge should not have D/F conflicts (recursive)' '
 	test -f a/b/c/d
 '
 
-test_expect_failure 'merge should not have F/D conflicts (recursive)' '
+test_expect_success 'merge should not have F/D conflicts (recursive)' '
 	git reset --hard &&
 	git checkout -b foo test2 &&
 	git merge -s recursive baseline^0 &&
