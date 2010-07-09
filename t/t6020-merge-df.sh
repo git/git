@@ -22,7 +22,7 @@ git commit -m "File: dir"'
 
 test_expect_code 1 'Merge with d/f conflicts' 'git merge "merge msg" B master'
 
-test_expect_failure 'F/D conflict' '
+test_expect_success 'F/D conflict' '
 	git reset --hard &&
 	git checkout master &&
 	rm .git/index &&

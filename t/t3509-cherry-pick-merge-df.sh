@@ -26,7 +26,7 @@ test_expect_success 'Setup rename across paths each below D/F conflicts' '
 	git commit -m f1
 '
 
-test_expect_failure 'Cherry-pick succeeds with rename across D/F conflicts' '
+test_expect_success 'Cherry-pick succeeds with rename across D/F conflicts' '
 	git reset --hard &&
 	git checkout master^0 &&
 	git cherry-pick branch
