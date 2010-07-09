@@ -219,14 +219,9 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	 * "-m ent" or "--reset ent" form), we can obtain a fully
 	 * valid cache-tree because the index must match exactly
 	 * what came from the tree.
-	 *
-	 * The same holds true if we are switching between two trees
-	 * using read-tree -m A B.  The index must match B after that.
 	 */
 	if (nr_trees == 1 && !opts.prefix)
 		prime_cache_tree(&active_cache_tree, trees[0]);
-	else if (nr_trees == 2 && opts.merge)
-		prime_cache_tree(&active_cache_tree, trees[1]);
 
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_locked_index(&lock_file))
