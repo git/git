@@ -2,6 +2,7 @@
 #include "exec_cmd.h"
 #include "http.h"
 #include "walker.h"
+#include "gettext.h"
 
 static const char http_fetch_usage[] = "git http-fetch "
 "[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin] commit-id url";
@@ -23,6 +24,8 @@ int main(int argc, const char **argv)
 	int get_all = 0;
 	int get_verbosely = 0;
 	int get_recover = 0;
+
+	git_setup_gettext();
 
 	git_extract_argv0_path(argv[0]);
 

@@ -3,6 +3,7 @@
 #include "exec_cmd.h"
 #include "run-command.h"
 #include "strbuf.h"
+#include "gettext.h"
 
 #include <syslog.h>
 
@@ -974,6 +975,8 @@ int main(int argc, char **argv)
 	struct group *group;
 	gid_t gid = 0;
 	int i;
+
+	git_setup_gettext();
 
 	git_extract_argv0_path(argv[0]);
 

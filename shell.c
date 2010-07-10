@@ -2,6 +2,7 @@
 #include "quote.h"
 #include "exec_cmd.h"
 #include "strbuf.h"
+#include "gettext.h"
 
 static int do_generic_cmd(const char *me, char *arg)
 {
@@ -50,6 +51,8 @@ int main(int argc, char **argv)
 	char *prog;
 	struct commands *cmd;
 	int devnull_fd;
+
+	git_setup_gettext();
 
 	/*
 	 * Always open file descriptors 0/1/2 to avoid clobbering files

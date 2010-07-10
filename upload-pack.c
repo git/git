@@ -10,6 +10,7 @@
 #include "revision.h"
 #include "list-objects.h"
 #include "run-command.h"
+#include "gettext.h"
 
 static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=nn] <dir>";
 
@@ -685,6 +686,8 @@ int main(int argc, char **argv)
 	char *dir;
 	int i;
 	int strict = 0;
+
+	git_setup_gettext();
 
 	git_extract_argv0_path(argv[0]);
 	read_replace_refs = 0;
