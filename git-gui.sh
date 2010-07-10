@@ -1158,6 +1158,9 @@ apply_config
 # try to set work tree from environment, falling back to core.worktree
 if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
 	set _gitworktree [get_config core.worktree]
+	if {$_gitworktree eq ""} {
+		set _gitworktree [file dirname [file normalize $_gitdir]]
+	}
 }
 if {$_prefix ne {}} {
 	if {$_gitworktree eq {}} {
