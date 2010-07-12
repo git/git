@@ -385,6 +385,7 @@ test_skip () {
 		case $this_test.$test_count in
 		$skp)
 			to_skip=t
+			break
 		esac
 	done
 	if test -z "$to_skip" && test -n "$prereq" &&
@@ -829,16 +830,8 @@ this_test=${0##*/}
 this_test=${this_test%%-*}
 for skp in $GIT_SKIP_TESTS
 do
-	to_skip=
-	for skp in $GIT_SKIP_TESTS
-	do
-		case "$this_test" in
-		$skp)
-			to_skip=t
-		esac
-	done
-	case "$to_skip" in
-	t)
+	case "$this_test" in
+	$skp)
 		say_color skip >&3 "skipping test $this_test altogether"
 		say_color skip "skip all tests in $this_test"
 		test_done
