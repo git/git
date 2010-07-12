@@ -263,7 +263,7 @@ the above checkout would fail like this:
 +
 ------------
 $ git checkout mytopic
-fatal: Entry 'frotz' not uptodate. Cannot merge.
+error: You have local changes to 'frotz'; not switching branches.
 ------------
 +
 You can give the `-m` flag to the command, which would try a
