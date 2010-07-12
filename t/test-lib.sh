@@ -396,7 +396,7 @@ test_skip () {
 	case "$to_skip" in
 	t)
 		say_color skip >&3 "skipping test: $@"
-		say_color skip "ok $test_count: # skip $1"
+		say_color skip "ok $test_count # skip $1"
 		: true
 		;;
 	*)
@@ -833,7 +833,7 @@ do
 	case "$this_test" in
 	$skp)
 		say_color skip >&3 "skipping test $this_test altogether"
-		say_color skip "skip all tests in $this_test"
+		skip_all="skip all tests in $this_test"
 		test_done
 	esac
 done
