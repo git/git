@@ -781,7 +781,6 @@ int normalize_path_copy(char *dst, const char *src);
 int longest_ancestor_length(const char *path, struct string_list *prefixes);
 char *strip_path_suffix(const char *path, const char *suffix);
 int daemon_avoid_alias(const char *path);
-int offset_1st_component(const char *path);
 
 /* object replacement */
 #define LOOKUP_REPLACE_OBJECT 1
