@@ -377,7 +377,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 
 	if (use_global_config) {
-		char *home = get_home_directory();
+		const char *home = get_home_directory();
 		if (home) {
 			char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
 			config_exclusive_filename = user_config;
