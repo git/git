@@ -62,7 +62,7 @@ enum graph_state {
 /*
  * The list of available column colors.
  */
-static char column_colors[][COLOR_MAXLEN] = {
+static const char *column_colors_ansi[] = {
 	GIT_COLOR_RED,
 	GIT_COLOR_GREEN,
 	GIT_COLOR_YELLOW,
@@ -75,23 +75,33 @@ static char column_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_BOLD_BLUE,
 	GIT_COLOR_BOLD_MAGENTA,
 	GIT_COLOR_BOLD_CYAN,
+	GIT_COLOR_RESET,
 };
 
-#define COLUMN_COLORS_MAX (ARRAY_SIZE(column_colors))
+#define COLUMN_COLORS_ANSI_MAX (ARRAY_SIZE(column_colors_ansi) - 1)
 
-static const char *column_get_color_code(const struct column *c)
+static const char **column_colors;
+static unsigned short column_colors_max;
+
+void graph_set_column_colors(const char **colors, unsigned short colors_max)
 {
-	return column_colors[c->color];
+	column_colors = colors;
+	column_colors_max = colors_max;
+}
+
+static const char *column_get_color_code(unsigned short color)
+{
+	return column_colors[color];
 }
 
 static void strbuf_write_column(struct strbuf *sb, const struct column *c,
 				char col_char)
 {
-	if (c->color < COLUMN_COLORS_MAX)
-		strbuf_addstr(sb, column_get_color_code(c));
+	if (c->color < column_colors_max)
+		strbuf_addstr(sb, column_get_color_code(c->color));
 	strbuf_addch(sb, col_char);
-	if (c->color < COLUMN_COLORS_MAX)
-		strbuf_addstr(sb, GIT_COLOR_RESET);
+	if (c->color < column_colors_max)
+		strbuf_addstr(sb, column_get_color_code(column_colors_max));
 }
 
 struct git_graph {
@@ -215,6 +225,11 @@ static struct strbuf *diff_output_prefix_callback(struct diff_options *opt, void
 struct git_graph *graph_init(struct rev_info *opt)
 {
 	struct git_graph *graph = xmalloc(sizeof(struct git_graph));
+
+	if (!column_colors)
+		graph_set_column_colors(column_colors_ansi,
+					COLUMN_COLORS_ANSI_MAX);
+
 	graph->commit = NULL;
 	graph->revs = opt;
 	graph->num_parents = 0;
@@ -231,7 +246,7 @@ struct git_graph *graph_init(struct rev_info *opt)
 	 * always increment it for the first commit we output.
 	 * This way we start at 0 for the first commit.
 	 */
-	graph->default_column_color = COLUMN_COLORS_MAX - 1;
+	graph->default_column_color = column_colors_max - 1;
 
 	/*
 	 * Allocate a reasonably large default number of columns
@@ -354,7 +369,7 @@ static struct commit_list *first_interesting_parent(struct git_graph *graph)
 static unsigned short graph_get_current_column_color(const struct git_graph *graph)
 {
 	if (!DIFF_OPT_TST(&graph->revs->diffopt, COLOR_DIFF))
-		return COLUMN_COLORS_MAX;
+		return column_colors_max;
 	return graph->default_column_color;
 }
 
@@ -364,7 +379,7 @@ static unsigned short graph_get_current_column_color(const struct git_graph *gra
 static void graph_increment_column_color(struct git_graph *graph)
 {
 	graph->default_column_color = (graph->default_column_color + 1) %
-		COLUMN_COLORS_MAX;
+		column_colors_max;
 }
 
 static unsigned short graph_find_commit_color(const struct git_graph *graph,
