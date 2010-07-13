@@ -886,9 +886,11 @@ format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See linkgit:git-format-patch[1].
 
+format.to::
 format.cc::
-	Additional "Cc:" headers to include in a patch to be submitted
-	by mail.  See the --cc option in linkgit:git-format-patch[1].
+	Additional recipients to include in a patch to be submitted
+	by mail.  See the --to and --cc options in
+	linkgit:git-format-patch[1].
 
 format.subjectprefix::
 	The default for format-patch is to output files with the '[PATCH]'

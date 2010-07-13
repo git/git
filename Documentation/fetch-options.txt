@@ -34,6 +34,7 @@ ifndef::git-pull[]
 	Allow several <repository> and <group> arguments to be
 	specified. No <refspec>s may be specified.
 
+-p::
 --prune::
 	After fetching, remove any remote tracking branches which
 	no longer exist	on the remote.
