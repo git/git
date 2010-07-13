@@ -23,10 +23,10 @@ test_expect_success setup '
 '
 
 test_expect_success 'cherry-pick first..fourth works' '
-	cat <<-\EOF >expected &&
-	Finished one cherry-pick.
-	Finished one cherry-pick.
-	Finished one cherry-pick.
+	cat <<-EOF >expected &&
+	Finished cherry-pick of commit $(git rev-parse --short second).
+	Finished cherry-pick of commit $(git rev-parse --short third).
+	Finished cherry-pick of commit $(git rev-parse --short fourth).
 	EOF
 
 	git checkout -f master &&
@@ -40,10 +40,10 @@ test_expect_success 'cherry-pick first..fourth works' '
 '
 
 test_expect_success 'cherry-pick --strategy resolve first..fourth works' '
-	cat <<-\EOF >expected &&
-	Finished one cherry-pick with strategy resolve.
-	Finished one cherry-pick with strategy resolve.
-	Finished one cherry-pick with strategy resolve.
+	cat <<-EOF >expected &&
+	Finished cherry-pick of commit $(git rev-parse --short second) with strategy resolve.
+	Finished cherry-pick of commit $(git rev-parse --short third) with strategy resolve.
+	Finished cherry-pick of commit $(git rev-parse --short fourth) with strategy resolve.
 	EOF
 
 	git checkout -f master &&
