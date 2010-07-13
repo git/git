@@ -361,6 +361,32 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	return !clean;
 }
 
+/*
+ * If we are cherry-pick, and if the merge did not result in
+ * hand-editing, we will hit this commit and inherit the original
+ * author date and name.
+ * If we are revert, or if our cherry-pick results in a hand merge,
+ * we had better say that the current user is responsible for that.
+ */
+static int run_git_commit(const char *defmsg)
+{
+	/* 6 is max possible length of our args array including NULL */
+	const char *args[6];
+	int i = 0;
+
+	args[i++] = "commit";
+	args[i++] = "-n";
+	if (signoff)
+		args[i++] = "-s";
+	if (!edit) {
+		args[i++] = "-F";
+		args[i++] = defmsg;
+	}
+	args[i] = NULL;
+
+	return run_command_v_opt(args, RUN_GIT_CMD);
+}
+
 static int do_pick_commit(void)
 {
 	unsigned char head[20];
@@ -501,33 +527,9 @@ static int do_pick_commit(void)
 	if (res)
 		return 1;
 
-	/*
-	 *
-	 * If we are cherry-pick, and if the merge did not result in
-	 * hand-editing, we will hit this commit and inherit the original
-	 * author date and name.
-	 * If we are revert, or if our cherry-pick results in a hand merge,
-	 * we had better say that the current user is responsible for that.
-	 */
-
 	if (!no_commit) {
-		/* 6 is max possible length of our args array including NULL */
-		const char *args[6];
-		int res;
-		int i = 0;
-
-		args[i++] = "commit";
-		args[i++] = "-n";
-		if (signoff)
-			args[i++] = "-s";
-		if (!edit) {
-			args[i++] = "-F";
-			args[i++] = defmsg;
-		}
-		args[i] = NULL;
-		res = run_command_v_opt(args, RUN_GIT_CMD);
+		res = run_git_commit(defmsg);
 		free(defmsg);
-
 		return res;
 	}
 
