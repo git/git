@@ -23,12 +23,36 @@ test_expect_success setup '
 '
 
 test_expect_success 'cherry-pick first..fourth works' '
+	cat <<-\EOF >expected &&
+	Finished one cherry-pick.
+	Finished one cherry-pick.
+	Finished one cherry-pick.
+	EOF
+
 	git checkout -f master &&
 	git reset --hard first &&
 	test_tick &&
-	git cherry-pick first..fourth &&
+	git cherry-pick first..fourth 2>actual &&
 	git diff --quiet other &&
 	git diff --quiet HEAD other &&
+	test_cmp expected actual &&
+	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify fourth)"
+'
+
+test_expect_success 'cherry-pick --strategy resolve first..fourth works' '
+	cat <<-\EOF >expected &&
+	Finished one cherry-pick with strategy resolve.
+	Finished one cherry-pick with strategy resolve.
+	Finished one cherry-pick with strategy resolve.
+	EOF
+
+	git checkout -f master &&
+	git reset --hard first &&
+	test_tick &&
+	git cherry-pick --strategy resolve first..fourth 2>actual &&
+	git diff --quiet other &&
+	git diff --quiet HEAD other &&
+	test_cmp expected actual &&
 	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify fourth)"
 '
 

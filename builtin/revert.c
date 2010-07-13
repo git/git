@@ -311,10 +311,9 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from)
 	return write_ref_sha1(ref_lock, to, "cherry-pick");
 }
 
-static void do_recursive_merge(struct commit *base, struct commit *next,
-			       const char *base_label, const char *next_label,
-			       unsigned char *head, struct strbuf *msgbuf,
-			       char *defmsg)
+static int do_recursive_merge(struct commit *base, struct commit *next,
+			      const char *base_label, const char *next_label,
+			      unsigned char *head, struct strbuf *msgbuf)
 {
 	struct merge_options o;
 	struct tree *result, *next_tree, *base_tree, *head_tree;
@@ -357,14 +356,9 @@ static void do_recursive_merge(struct commit *base, struct commit *next,
 					i++;
 			}
 		}
-		write_message(msgbuf, defmsg);
-		fprintf(stderr, "Automatic %s failed.%s\n",
-			me, help_msg());
-		rerere(allow_rerere_auto);
-		exit(1);
 	}
-	write_message(msgbuf, defmsg);
-	fprintf(stderr, "Finished one %s.\n", me);
+
+	return !clean;
 }
 
 static int do_pick_commit(void)
@@ -375,6 +369,8 @@ static int do_pick_commit(void)
 	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
+	struct strbuf mebuf = STRBUF_INIT;
+	int res;
 
 	if (no_commit) {
 		/*
@@ -470,29 +466,40 @@ static int do_pick_commit(void)
 		}
 	}
 
-	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT)
-		do_recursive_merge(base, next, base_label, next_label,
-				   head, &msgbuf, defmsg);
-	else {
-		int res;
+	strbuf_addstr(&mebuf, me);
+
+	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT) {
+		res = do_recursive_merge(base, next, base_label, next_label,
+					 head, &msgbuf);
+		write_message(&msgbuf, defmsg);
+	} else {
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
+
+		strbuf_addf(&mebuf, " with strategy %s", strategy);
 		write_message(&msgbuf, defmsg);
+
 		commit_list_insert(base, &common);
 		commit_list_insert(next, &remotes);
 		res = try_merge_command(strategy, common,
 					sha1_to_hex(head), remotes);
 		free_commit_list(common);
 		free_commit_list(remotes);
-		if (res) {
-			fprintf(stderr, "Automatic %s with strategy %s failed.%s\n",
-				me, strategy, help_msg());
-			rerere(allow_rerere_auto);
-			exit(1);
-		}
 	}
 
+	if (res) {
+		fprintf(stderr, "Automatic %s failed.%s\n",
+			mebuf.buf, help_msg());
+		rerere(allow_rerere_auto);
+	} else {
+		fprintf(stderr, "Finished one %s.\n", mebuf.buf);
+	}
+
+	strbuf_release(&mebuf);
 	free_message(&msg);
+
+	if (res)
+		return 1;
 
 	/*
 	 *
