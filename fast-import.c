@@ -1666,7 +1666,7 @@ static void dump_marks_helper(FILE *f,
 	if (m->shift) {
 		for (k = 0; k < 1024; k++) {
 			if (m->data.sets[k])
-				dump_marks_helper(f, (base + k) << m->shift,
+				dump_marks_helper(f, base + (k << m->shift),
 					m->data.sets[k]);
 		}
 	} else {
