@@ -145,8 +145,11 @@ release, unless otherwise noted.
  * "git reset --hard" started from a wrong directory and a working tree in
    a nonstandard location is in use got confused (560fb6a1).
 
+ * "git read-tree -m A B" used to switch to branch B while retaining
+   local changes added an incorrect cache-tree information (b1f47514).
+
 --
 exec >/var/tmp/1
-O=v1.7.2-rc1-37-g2a16315
+O=v1.7.2-rc2-17-gc9a9766
 echo O=$(git describe HEAD)
 git shortlog --no-merges HEAD ^maint ^$O
