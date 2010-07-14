@@ -323,7 +323,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	const char *gitdirenv;
 	const char *gitfile_dir;
 	int len, offset, ceil_offset, root_len;
-	int current_device = 0, one_filesystem = 1;
+	dev_t current_device = 0;
+	int one_filesystem = 1;
 	struct stat buf;
 
 	/*
