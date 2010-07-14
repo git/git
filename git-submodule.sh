@@ -234,12 +234,12 @@ cmd_add()
 		) || die "Unable to checkout submodule '$path'"
 	fi
 
-	git add "$path" ||
+	git add --force "$path" ||
 	die "Failed to add submodule '$path'"
 
 	git config -f .gitmodules submodule."$path".path "$path" &&
 	git config -f .gitmodules submodule."$path".url "$repo" &&
-	git add .gitmodules ||
+	git add --force .gitmodules ||
 	die "Failed to register submodule '$path'"
 }
 
