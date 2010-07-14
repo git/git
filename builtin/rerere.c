@@ -135,7 +135,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 			if (!has_rerere_resolution(name))
 				unlink_rr_item(name);
 		}
-		unlink_or_warn(git_path("rr-cache/MERGE_RR"));
+		unlink_or_warn(git_path("MERGE_RR"));
 	} else if (!strcmp(argv[1], "gc"))
 		garbage_collect(&merge_rr);
 	else if (!strcmp(argv[1], "status"))
