@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2010, #01; Wed, 7)
-X-master-at: 9918285fb10d81af9021dae99c5f4de88ded497c
-X-next-at: d2de19aa28e5ced283c67ce145b26a327a88acd4
+Subject: What's cooking in git.git (Jul 2010, #02; Wed, 14)
+X-master-at: fc051572a3fe171286f10761bd33946c48de3f7f
+X-next-at: 910a0b50db9dba6767ac37e4782912a006093248
 
-What's cooking in git.git (Jul 2010, #01; Wed, 7)
+What's cooking in git.git (Jul 2010, #02; Wed, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,162 +11,66 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
---------------------------------------------------
-[Graduated to "master"]
-
-* ab/tap (2010-06-28) 7 commits
-  (merged to 'next' on 2010-06-29 at c73dc30)
- + t/t9700/test.pl: don't access private object members, use public access methods
-  (merged to 'next' on 2010-06-27 at a761d14)
- + t9700: Use Test::More->builder, not $Test::Builder::Test
- + tests: Say "pass" rather than "ok" on empty lines for TAP
- + tests: Skip tests in a way that makes sense under TAP
- + test-lib: output a newline before "ok" under a TAP harness
- + test-lib: Make the test_external_* functions TAP-aware
- + test-lib: Adjust output to be valid TAP format
-
-* ar/decorate-color (2010-06-29) 5 commits
-  (merged to 'next' on 2010-06-30 at 2d72999)
- + Add test for correct coloring of git log --decoration
- + Allow customizable commit decorations colors
- + log --decorate: Colorize commit decorations
- + log-tree.c: Use struct name_decoration's type for classifying decoration
- + commit.h: add 'type' to struct name_decoration
-
-* as/maint-completion-set-u-fix (2010-06-17) 1 commit
-  (merged to 'next' on 2010-06-27 at 24ce8c2)
- + bash-completion: Fix __git_ps1 to work with "set -u"
-
-* cc/cherry-pick-stdin (2010-06-14) 4 commits
-  (merged to 'next' on 2010-06-29 at ee7a28a)
- + revert: do not rebuild argv on heap
- + Merge commit 'v1.7.2-rc0~6^2' into cc/cherry-pick-stdin
-  (merged to 'next' on 2010-06-27 at 3af0bba)
- + revert: accept arbitrary rev-list options
- + t3508 (cherry-pick): futureproof against unmerged files
-
-* jk/url-decode (2010-06-24) 1 commit
-  (merged to 'next' on 2010-06-28 at 5144a8f)
- + url_decode: URL scheme ends with a colon and does not require a slash
-
-* jl/maint-diff-ignore-submodules (2010-06-25) 3 commits
-  (merged to 'next' on 2010-06-25 at d75dbf1)
- + t4027,4041: Use test -s to test for an empty file
-  (merged to 'next' on 2010-06-23 at 057acb7)
- + Add optional parameters to the diff option "--ignore-submodules"
- + git diff: rename test that had a conflicting name
-
-* jl/maint-submodule-ignore-dirty-submodules (2010-06-25) 1 commit
- + git submodule: ignore dirty submodules for summary and status
-
-* jl/status-ignore-submodules (2010-06-25) 1 commit
-  (merged to 'next' on 2010-06-28 at bd9ae9e)
- + Add the option "--ignore-submodules" to "git status"
-
-* jp/string-list-api-cleanup (2010-06-26) 6 commits
-  (merged to 'next' on 2010-06-27 at b1e8b97)
- + string_list: Fix argument order for string_list_append
- + string_list: Fix argument order for string_list_lookup
- + string_list: Fix argument order for string_list_insert_at_index
- + string_list: Fix argument order for string_list_insert
- + string_list: Fix argument order for for_each_string_list
- + string_list: Fix argument order for print_string_list
-
-* mg/doc-rev-parse-treepath-syntax (2010-06-28) 2 commits
-  (merged to 'next' on 2010-06-30 at be16ac8)
- + git-rev-parse.txt: Add more examples for caret and colon
- + git-rev-parse.txt: Document ":path" specifier
-
-* mg/rev-parse-tests (2010-05-14) 2 commits
-  (merged to 'next' on 2010-06-27 at 3336145)
- + t6018: make sure all tested symbolic names are different revs
- + t6018: add tests for rev-list's --branches and --tags
-
-* tr/rev-list-count (2010-06-17) 2 commits
-  (merged to 'next' on 2010-06-27 at 0525b63)
- + bash completion: Support "divergence from upstream" messages in __git_ps1
- + rev-list: introduce --count option
+v1.7.2-rc3 has been tagged and hopefully we can have the final release
+this weekend.  I've moved some fixes from 'pu' to 'next' but I'd like to
+defer them for a bit longer.
 
 --------------------------------------------------
 [New Topics]
 
-* jn/paginate-fix (2010-06-26) 4 commits
- - git --paginate: do not commit pager choice too early
- - tests: local config file should be honored from subdirs of toplevel
- - t7006: test pager configuration for several git commands
- - t7006 (pager): introduce helper for parameterized tests
+* by/log-range-diff (2010-07-12) 18 commits
+ . Minimum fix to make by/log-range-diff topic at least compile
+ . add test cases for '--graph' of line level log
+ . line.c output the '--graph' padding before each line
+ . add parent rewrite feature to line level log
+ . make rewrite_parents an external function
+ . some document update
+ . add two test cases
+ . add --always-print option
+ . map/print ranges along traversing the history topologically
+ . print the line log
+ . map/take range to parent
+ . add range clone functions
+ . export three functions from diff.c
+ . parse the -L options
+ . refactor parse_loc
+ . add the basic data structure for line level history
+ . parse-options: add two helper functions
+ . parse-options: stop when encounter a non-option
 
-* ar/string-list-foreach (2010-07-03) 2 commits
- - Convert the users of for_each_string_list to for_each_string_list_item macro
- - Add a for_each_string_list_item macro
- (this branch is used by tf/string-list-init.)
+Seems to break some tests in t403X range but we are not in a hurry.
 
-* il/rfc-remote-fd-ext (2010-06-28) 2 commits
- - New remote helper: git-remote-ext
- - New remote helper git-remote-fd
+* eb/doc-log-manpage (2010-07-07) 1 commit
+  (merged to 'next' on 2010-07-14 at d073ef2)
+ + Reorganize `git-log' man page to clarify common diff options.
 
-* ab/submodule-add-f (2010-07-05) 1 commit
- - git submodule: add submodules with git add -f <path>
+* hv/autosquash-config (2010-07-14) 1 commit
+ - add configuration variable for --autosquash option of interactive rebase
 
-* bc/maint-makefile-fixes (2010-07-06) 2 commits
- - Makefile: work around ksh's failure to handle missing list argument to for loop
- - Makefile: remove some unnecessary curly braces
+* jh/graph-next-line (2010-07-13) 2 commits
+ - Enable custom schemes for column colors in the graph API
+ - Make graph_next_line() available in the graph.h API
 
-* gp/pack-refs-remove-empty-dirs (2010-07-06) 1 commit
- - pack-refs: remove newly empty directories
+* jl/add-n-ignore-missing (2010-07-10) 1 commit
+ - git add: Add the "--ignore-missing" option for the dry run
 
-* hv/submodule-find-ff-merge (2010-07-07) 3 commits
- - Implement automatic fast-forward merge for submodules
- - setup_revisions(): Allow walking history in a submodule
- - Teach ref iteration module about submodules
+* jn/tests (2010-07-10) 1 commit
+  (merged to 'next' on 2010-07-14 at 390c1f6)
+ + t3000 (ls-files -o): modernize style
 
-* jc/rebase-i-commit-msg-fix (2010-07-05) 2 commits
- - rebase-i: do not get fooled by a log message ending with backslash
- - rebase-i: style fix
+* ns/merge-recursive-uptodate (2010-07-09) 1 commit
+ - merge-recursive: use "up-to-date" instead of "uptodate" in error message for consistency
 
-* jk/maint-status-keep-index-timestamp (2010-07-06) 1 commit
- - do not write out index when status does not have to
+* jc/diff-merge-base-multi (2010-07-12) 1 commit
+  (merged to 'next' on 2010-07-14 at 910a0b5)
+ + diff A...B: give one possible diff when there are more than one merge-base
 
-* jk/tag-contains (2010-07-05) 4 commits
- - Why is "git tag --contains" so slow?
- - default core.clockskew variable to one day
- - limit "contains" traversals based on commit timestamp
- - tag: speed up --contains calculation
+* js/merge-rr-fix (2010-07-14) 1 commit
+ - MERGE_RR is in .git, not .git/rr-cache
 
-* jn/fast-import-subtree (2010-06-30) 1 commit
- - Teach fast-import to import subtrees named by tree id
-
-* mg/revision-doc (2010-07-05) 3 commits
- - Documentation: link to gitrevisions rather than git-rev-parse
- - Documentation: gitrevisions
- - Documentation: split off rev doc into include file
-
-* sg/rerere-gc-old-still-used (2010-07-01) 2 commits
- . rerere: fix overeager gc
- . mingw_utime(): handle NULL times parameter
-
-* tf/string-list-init (2010-07-04) 1 commit
- - string_list: Add STRING_LIST_INIT macro and make use of it.
- (this branch uses ar/string-list-foreach.)
-
-* en/d-f-conflict-fix (2010-07-07) 9 commits
- - Merge branch 'jc/d-f-conflict-fix-fixup' into en/d-f-conflict-fix
- - fast-import: Improve robustness when D->F changes provided in wrong order
- - Fixup (5)
- - fast-export: Fix output order of D/F changes
- - Fixup (4)
- - merge_recursive: Fix renames across paths below D/F conflicts
- - Fixup (3)
- - merge-recursive: Fix D/F conflicts
- - Add a rename + D/F conflict testcase
- (this branch uses jc/d-f-conflict-fix-fixup.)
-
-* jc/d-f-conflict-fix-fixup (2010-07-07) 4 commits
- - Fixup (2)
- - Add a rename + D/F conflict testcase
- - Fixup (1)
- - Add additional testcases for D/F conflicts
- (this branch is used by en/d-f-conflict-fix.)
+* wp/merge-tree-fix (2010-07-14) 2 commits
+ - merge-tree: fix where two branches share no changes
+ - add basic tests for merge-tree
 
 --------------------------------------------------
 [Stalled -- would discard unless there are some movements soon]
@@ -204,13 +108,88 @@ I recall there was another round of re-roll planned for this one.
 
 I recall there was another round of re-roll planned for this one.
 
+* jk/tag-contains (2010-07-05) 4 commits
+ - Why is "git tag --contains" so slow?
+ - default core.clockskew variable to one day
+ - limit "contains" traversals based on commit timestamp
+ - tag: speed up --contains calculation
+
 --------------------------------------------------
 [Cooking]
 
-* jn/grep-open (2010-07-02) 1 commit
- - grep -O: Do not pass color sequences as filenames to pager
+* jn/paginate-fix (2010-06-26) 4 commits
+ - git --paginate: do not commit pager choice too early
+ - tests: local config file should be honored from subdirs of toplevel
+ - t7006: test pager configuration for several git commands
+ - t7006 (pager): introduce helper for parameterized tests
 
-* ab/i18n (2010-06-23) 1 commit
+* ar/string-list-foreach (2010-07-03) 2 commits
+ - Convert the users of for_each_string_list to for_each_string_list_item macro
+ - Add a for_each_string_list_item macro
+ (this branch is used by tf/string-list-init.)
+
+* il/rfc-remote-fd-ext (2010-06-28) 2 commits
+ - New remote helper: git-remote-ext
+ - New remote helper git-remote-fd
+
+* ab/submodule-add-f (2010-07-05) 1 commit
+  (merged to 'next' on 2010-07-14 at 4ab3d00)
+ + git submodule: add submodules with git add -f <path>
+
+* bc/maint-makefile-fixes (2010-07-06) 2 commits
+  (merged to 'next' on 2010-07-14 at 294ab08)
+ + Makefile: work around ksh's failure to handle missing list argument to for loop
+ + Makefile: remove some unnecessary curly braces
+
+* gp/pack-refs-remove-empty-dirs (2010-07-06) 1 commit
+  (merged to 'next' on 2010-07-14 at 7d25131)
+ + pack-refs: remove newly empty directories
+
+* hv/submodule-find-ff-merge (2010-07-07) 3 commits
+ - Implement automatic fast-forward merge for submodules
+ - setup_revisions(): Allow walking history in a submodule
+ - Teach ref iteration module about submodules
+
+* jc/rebase-i-commit-msg-fix (2010-07-05) 2 commits
+  (merged to 'next' on 2010-07-14 at 2273bd2)
+ + rebase-i: do not get fooled by a log message ending with backslash
+ + rebase-i: style fix
+
+* jk/maint-status-keep-index-timestamp (2010-07-06) 1 commit
+  (merged to 'next' on 2010-07-14 at 43cc5ef)
+ + do not write out index when status does not have to
+
+* jn/fast-import-subtree (2010-06-30) 1 commit
+ - Teach fast-import to import subtrees named by tree id
+
+* mg/revision-doc (2010-07-05) 3 commits
+  (merged to 'next' on 2010-07-14 at 416a2ad)
+ + Documentation: link to gitrevisions rather than git-rev-parse
+ + Documentation: gitrevisions
+ + Documentation: split off rev doc into include file
+
+* sg/rerere-gc-old-still-used (2010-07-13) 2 commits
+ - rerere: fix overeager gc
+ - mingw_utime(): handle NULL times parameter
+
+* tf/string-list-init (2010-07-04) 1 commit
+ - string_list: Add STRING_LIST_INIT macro and make use of it.
+ (this branch uses ar/string-list-foreach.)
+
+* en/d-f-conflict-fix (2010-07-09) 6 commits
+  (merged to 'next' on 2010-07-14 at 2b2a810)
+ + fast-import: Improve robustness when D->F changes provided in wrong order
+ + fast-export: Fix output order of D/F changes
+ + merge_recursive: Fix renames across paths below D/F conflicts
+ + merge-recursive: Fix D/F conflicts
+ + Add a rename + D/F conflict testcase
+ + Add additional testcases for D/F conflicts
+
+* jn/grep-open (2010-07-02) 1 commit
+  (merged to 'next' on 2010-07-14 at c057fd6)
+ + grep -O: Do not pass color sequences as filenames to pager
+
+* ab/i18n (2010-07-10) 1 commit
  - Add infrastructure for translating Git with gettext
 
 * tc/checkout-B (2010-06-24) 3 commits
