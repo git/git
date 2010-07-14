@@ -167,6 +167,7 @@ static int handle_alias(int *argcp, const char ***argv)
 	alias_string = alias_lookup(alias_command);
 	if (alias_string) {
 		if (alias_string[0] == '!') {
+			commit_pager_choice();
 			if (*argcp > 1) {
 				struct strbuf buf;
 
@@ -431,6 +432,8 @@ static void execv_dashed_external(const char **argv)
 	struct strbuf cmd = STRBUF_INIT;
 	const char *tmp;
 	int status;
+
+	commit_pager_choice();
 
 	strbuf_addf(&cmd, "git-%s", argv[0]);
 

@@ -334,17 +334,40 @@ test_doesnt_paginate() {
 	"
 }
 
-test_default_pager        expect_success 'git log'
-test_PAGER_overrides      expect_success 'git log'
-test_core_pager_overrides expect_success 'git log'
-test_core_pager_subdir    expect_success 'git log'
-test_GIT_PAGER_overrides  expect_success 'git log'
+test_pager_choices() {
+	test_default_pager        expect_success "$@"
+	test_PAGER_overrides      expect_success "$@"
+	test_core_pager_overrides expect_success "$@"
+	test_core_pager_subdir    expect_success "$@"
+	test_GIT_PAGER_overrides  expect_success "$@"
+}
 
-test_default_pager        expect_success 'git -p log'
-test_PAGER_overrides      expect_success 'git -p log'
-test_core_pager_overrides expect_success 'git -p log'
-test_core_pager_subdir    expect_success 'git -p log'
-test_GIT_PAGER_overrides  expect_success 'git -p log'
+test_expect_success 'setup: some aliases' '
+	git config alias.aliasedlog log &&
+	git config alias.true "!true"
+'
+
+test_pager_choices                       'git log'
+test_pager_choices                       'git -p log'
+test_pager_choices                       'git aliasedlog'
+
+test_default_pager        expect_success 'git -p aliasedlog'
+test_PAGER_overrides      expect_success 'git -p aliasedlog'
+test_core_pager_overrides expect_success 'git -p aliasedlog'
+test_core_pager_subdir    expect_failure 'git -p aliasedlog'
+test_GIT_PAGER_overrides  expect_success 'git -p aliasedlog'
+
+test_default_pager        expect_success 'git -p true'
+test_PAGER_overrides      expect_success 'git -p true'
+test_core_pager_overrides expect_success 'git -p true'
+test_core_pager_subdir    expect_failure 'git -p true'
+test_GIT_PAGER_overrides  expect_success 'git -p true'
+
+test_default_pager        expect_success test_must_fail 'git -p request-pull'
+test_PAGER_overrides      expect_success test_must_fail 'git -p request-pull'
+test_core_pager_overrides expect_success test_must_fail 'git -p request-pull'
+test_core_pager_subdir    expect_failure test_must_fail 'git -p request-pull'
+test_GIT_PAGER_overrides  expect_success test_must_fail 'git -p request-pull'
 
 test_default_pager        expect_success test_must_fail 'git -p'
 test_PAGER_overrides      expect_success test_must_fail 'git -p'
@@ -352,6 +375,6 @@ test_local_config_ignored expect_failure test_must_fail 'git -p'
 test_no_local_config_subdir expect_success test_must_fail 'git -p'
 test_GIT_PAGER_overrides  expect_success test_must_fail 'git -p'
 
-test_doesnt_paginate      expect_success test_must_fail 'git -p nonsense'
+test_doesnt_paginate      expect_failure test_must_fail 'git -p nonsense'
 
 test_done
