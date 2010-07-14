@@ -20,8 +20,8 @@ OPTIONS
 -------
 <commit>...::
 	Commits to cherry-pick.
-	For a more complete list of ways to spell commits, see the
-	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
+	For a more complete list of ways to spell commits, see
+	linkgit:gitrevisions[1].
 	Sets of commits can be passed but no traversal is done by
 	default, as if the '--no-walk' option was specified, see
 	linkgit:git-rev-list[1].

@@ -68,11 +68,11 @@ for the last two forms that use ".." notations, can be any
 <tree-ish>.
 
 For a more complete list of ways to spell <commit>, see
-"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
+"SPECIFYING REVISIONS" section in linkgit:gitrevisions[1].
 However, "diff" is about comparing two _endpoints_, not ranges,
 and the range notations ("<commit>..<commit>" and
 "<commit>\...<commit>") do not mean a range as defined in the
-"SPECIFYING RANGES" section in linkgit:git-rev-parse[1].
+"SPECIFYING RANGES" section in linkgit:gitrevisions[1].
 
 OPTIONS
 -------

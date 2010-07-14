@@ -31,7 +31,7 @@ OPTIONS
 <commit>...::
 	Commits to revert.
 	For a more complete list of ways to spell commit names, see
-	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
+	linkgit:gitrevisions[1].
 	Sets of commits can also be given but no traversal is done by
 	default, see linkgit:git-rev-list[1] and its '--no-walk'
 	option.

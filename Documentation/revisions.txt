@@ -1,0 +1,199 @@
+SPECIFYING REVISIONS
+--------------------
+
+A revision parameter typically, but not necessarily, names a
+commit object.  They use what is called an 'extended SHA1'
+syntax.  Here are various ways to spell object names.  The
+ones listed near the end of this list are to name trees and
+blobs contained in a commit.
+
+* The full SHA1 object name (40-byte hexadecimal string), or
+  a substring of such that is unique within the repository.
+  E.g. dae86e1950b1277e545cee180551750029cfe735 and dae86e both
+  name the same commit object if there are no other object in
+  your repository whose object name starts with dae86e.
+
+* An output from 'git describe'; i.e. a closest tag, optionally
+  followed by a dash and a number of commits, followed by a dash, a
+  `g`, and an abbreviated object name.
+
+* A symbolic ref name.  E.g. 'master' typically means the commit
+  object referenced by refs/heads/master.  If you
+  happen to have both heads/master and tags/master, you can
+  explicitly say 'heads/master' to tell git which one you mean.
+  When ambiguous, a `<name>` is disambiguated by taking the
+  first match in the following rules:
+
+  . if `$GIT_DIR/<name>` exists, that is what you mean (this is usually
+    useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD` and `MERGE_HEAD`);
+
+  . otherwise, `refs/<name>` if exists;
+
+  . otherwise, `refs/tags/<name>` if exists;
+
+  . otherwise, `refs/heads/<name>` if exists;
+
+  . otherwise, `refs/remotes/<name>` if exists;
+
+  . otherwise, `refs/remotes/<name>/HEAD` if exists.
++
+HEAD names the commit your changes in the working tree is based on.
+FETCH_HEAD records the branch you fetched from a remote repository
+with your last 'git fetch' invocation.
+ORIG_HEAD is created by commands that moves your HEAD in a drastic
+way, to record the position of the HEAD before their operation, so that
+you can change the tip of the branch back to the state before you ran
+them easily.
+MERGE_HEAD records the commit(s) you are merging into your branch
+when you run 'git merge'.
++
+Note that any of the `refs/*` cases above may come either from
+the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
+
+* A ref followed by the suffix '@' with a date specification
+  enclosed in a brace
+  pair (e.g. '\{yesterday\}', '\{1 month 2 weeks 3 days 1 hour 1
+  second ago\}' or '\{1979-02-26 18:30:00\}') to specify the value
+  of the ref at a prior point in time.  This suffix may only be
+  used immediately following a ref name and the ref must have an
+  existing log ($GIT_DIR/logs/<ref>). Note that this looks up the state
+  of your *local* ref at a given time; e.g., what was in your local
+  `master` branch last week. If you want to look at commits made during
+  certain times, see `--since` and `--until`.
+
+* A ref followed by the suffix '@' with an ordinal specification
+  enclosed in a brace pair (e.g. '\{1\}', '\{15\}') to specify
+  the n-th prior value of that ref.  For example 'master@\{1\}'
+  is the immediate prior value of 'master' while 'master@\{5\}'
+  is the 5th prior value of 'master'. This suffix may only be used
+  immediately following a ref name and the ref must have an existing
+  log ($GIT_DIR/logs/<ref>).
+
+* You can use the '@' construct with an empty ref part to get at a
+  reflog of the current branch. For example, if you are on the
+  branch 'blabla', then '@\{1\}' means the same as 'blabla@\{1\}'.
+
+* The special construct '@\{-<n>\}' means the <n>th branch checked out
+  before the current one.
+
+* The suffix '@\{upstream\}' to a ref (short form 'ref@\{u\}') refers to
+  the branch the ref is set to build on top of.  Missing ref defaults
+  to the current branch.
+
+* A suffix '{caret}' to a revision parameter (e.g. 'HEAD{caret}') means the first parent of
+  that commit object.  '{caret}<n>' means the <n>th parent (i.e.
+  'rev{caret}'
+  is equivalent to 'rev{caret}1').  As a special rule,
+  'rev{caret}0' means the commit itself and is used when 'rev' is the
+  object name of a tag object that refers to a commit object.
+
+* A suffix '{tilde}<n>' to a revision parameter means the commit
+  object that is the <n>th generation grand-parent of the named
+  commit object, following only the first parent.  I.e. rev~3 is
+  equivalent to rev{caret}{caret}{caret} which is equivalent to
+  rev{caret}1{caret}1{caret}1.  See below for a illustration of
+  the usage of this form.
+
+* A suffix '{caret}' followed by an object type name enclosed in
+  brace pair (e.g. `v0.99.8{caret}\{commit\}`) means the object
+  could be a tag, and dereference the tag recursively until an
+  object of that type is found or the object cannot be
+  dereferenced anymore (in which case, barf).  `rev{caret}0`
+  introduced earlier is a short-hand for `rev{caret}\{commit\}`.
+
+* A suffix '{caret}' followed by an empty brace pair
+  (e.g. `v0.99.8{caret}\{\}`) means the object could be a tag,
+  and dereference the tag recursively until a non-tag object is
+  found.
+
+* A colon, followed by a slash, followed by a text (e.g. `:/fix nasty bug`): this names
+  a commit whose commit message starts with the specified text.
+  This name returns the youngest matching commit which is
+  reachable from any ref.  If the commit message starts with a
+  '!', you have to repeat that;  the special sequence ':/!',
+  followed by something else than '!' is reserved for now.
+
+* A suffix ':' followed by a path (e.g. `HEAD:README`); this names the blob or tree
+  at the given path in the tree-ish object named by the part
+  before the colon.
+  ':path' (with an empty part before the colon, e.g. `:README`)
+  is a special case of the syntax described next: content
+  recorded in the index at the given path.
+
+* A colon, optionally followed by a stage number (0 to 3) and a
+  colon, followed by a path (e.g. `:0:README`); this names a blob object in the
+  index at the given path. Missing stage number (and the colon
+  that follows it, e.g. `:README`) names a stage 0 entry. During a merge, stage
+  1 is the common ancestor, stage 2 is the target branch's version
+  (typically the current branch), and stage 3 is the version from
+  the branch being merged.
+
+Here is an illustration, by Jon Loeliger.  Both commit nodes B
+and C are parents of commit node A.  Parent commits are ordered
+left-to-right.
+
+........................................
+G   H   I   J
+ \ /     \ /
+  D   E   F
+   \  |  / \
+    \ | /   |
+     \|/    |
+      B     C
+       \   /
+        \ /
+         A
+........................................
+
+    A =      = A^0
+    B = A^   = A^1     = A~1
+    C = A^2  = A^2
+    D = A^^  = A^1^1   = A~2
+    E = B^2  = A^^2
+    F = B^3  = A^^3
+    G = A^^^ = A^1^1^1 = A~3
+    H = D^2  = B^^2    = A^^^2  = A~2^2
+    I = F^   = B^3^    = A^^3^
+    J = F^2  = B^3^2   = A^^3^2
+
+
+SPECIFYING RANGES
+-----------------
+
+History traversing commands such as 'git log' operate on a set
+of commits, not just a single commit.  To these commands,
+specifying a single revision with the notation described in the
+previous section means the set of commits reachable from that
+commit, following the commit ancestry chain.
+
+To exclude commits reachable from a commit, a prefix `{caret}`
+notation is used.  E.g. `{caret}r1 r2` means commits reachable
+from `r2` but exclude the ones reachable from `r1`.
+
+This set operation appears so often that there is a shorthand
+for it.  When you have two commits `r1` and `r2` (named according
+to the syntax explained in SPECIFYING REVISIONS above), you can ask
+for commits that are reachable from r2 excluding those that are reachable
+from r1 by `{caret}r1 r2` and it can be written as `r1..r2`.
+
+A similar notation `r1\...r2` is called symmetric difference
+of `r1` and `r2` and is defined as
+`r1 r2 --not $(git merge-base --all r1 r2)`.
+It is the set of commits that are reachable from either one of
+`r1` or `r2` but not from both.
+
+Two other shorthands for naming a set that is formed by a commit
+and its parent commits exist.  The `r1{caret}@` notation means all
+parents of `r1`.  `r1{caret}!` includes commit `r1` but excludes
+all of its parents.
+
+Here are a handful of examples:
+
+   D                G H D
+   D F              G H I J D F
+   ^G D             H D
+   ^D B             E I J F B
+   B...C            G H D E B C
+   ^D B C           E I J F B C
+   C^@              I J F
+   F^! D            G H D F

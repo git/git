@@ -971,7 +971,7 @@ commits from the master branch.  The string inside brackets
 before the commit log message is a short name you can use to
 name the commit.  In the above example, 'master' and 'mybranch'
 are branch heads.  'master^' is the first parent of 'master'
-branch head.  Please see linkgit:git-rev-parse[1] if you want to
+branch head.  Please see linkgit:gitrevisions[1] if you want to
 see more complex cases.
 
 [NOTE]
