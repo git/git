@@ -1685,6 +1685,15 @@ status.submodulesummary::
 	summary of commits for modified submodules will be shown (see
 	--summary-limit option of linkgit:git-submodule[1]).
 
+submodule.<name>.path::
+submodule.<name>.url::
+submodule.<name>.update::
+	The path within this project, URL, and the updating strategy
+	for a submodule.  These variables are initially populated
+	by 'git submodule init'; edit them to override the
+	URL and other values found in the `.gitmodules` file.  See
+	linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
+
 tar.umask::
 	This variable can be used to restrict the permission bits of
 	tar archive entries.  The default is 0002, which turns off the
