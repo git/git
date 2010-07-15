@@ -23,9 +23,6 @@ each commit introduces are shown.
 OPTIONS
 -------
 
-:git-log: 1
-include::diff-options.txt[]
-
 -<n>::
 	Limits the number of commits to show.
 
@@ -35,6 +32,10 @@ include::diff-options.txt[]
 	`HEAD`, i.e. the tip of the current branch.
 	For a more complete list of ways to spell <since>
 	and <until>, see linkgit:gitrevisions[1].
+
+--follow::
+	Continue listing the history of a file beyond renames
+	(works only for a single file).
 
 --no-decorate::
 --decorate[=short|full|no]::
@@ -55,9 +56,6 @@ include::diff-options.txt[]
 	the specified paths; this means that "<path>..." limits only
 	commits, and doesn't limit diff for those commits.
 
---follow::
-	Continue listing the history of a file beyond renames/copies.
-
 --log-size::
 	Before the log message print out its size in bytes. Intended
 	mainly for porcelain tools consumption. If git is unable to
@@ -71,6 +69,11 @@ include::diff-options.txt[]
 	to be prefixed with "\-- " to separate them from options or
 	refnames.
 
+Common diff options
+~~~~~~~~~~~~~~~~~~~
+
+:git-log: 1
+include::diff-options.txt[]
 
 include::rev-list-options.txt[]
 
