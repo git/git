@@ -125,6 +125,21 @@ test_expect_success 'modified file' '
 	test_cmp empty out
 '
 
+test_config() {
+	git config "$1" "$2" &&
+	test_when_finished "git config --unset $1"
+}
+
+test_expect_success 'copes with color settings' '
+	rm -f actual &&
+	echo grep.h >expect &&
+	test_config color.grep always &&
+	test_config color.grep.filename yellow &&
+	test_config color.grep.separator green &&
+	git grep -O'\''printf "%s\n" >actual'\'' GREP_AND &&
+	test_cmp expect actual
+'
+
 test_expect_success 'run from subdir' '
 	rm -f actual &&
 	echo grep.c >expect &&
