@@ -397,7 +397,7 @@ is usually a shortcut for the HEAD branch in the repository "origin".
 For the complete list of paths which git checks for references, and
 the order it uses to decide which to choose when there are multiple
 references with the same shorthand name, see the "SPECIFYING
-REVISIONS" section of linkgit:git-rev-parse[1].
+REVISIONS" section of linkgit:gitrevisions[1].
 
 [[Updating-a-repository-With-git-fetch]]
 Updating a repository with git fetch
@@ -568,7 +568,7 @@ We have seen several ways of naming commits already:
 	- HEAD: refers to the head of the current branch
 
 There are many more; see the "SPECIFYING REVISIONS" section of the
-linkgit:git-rev-parse[1] man page for the complete list of ways to
+linkgit:gitrevisions[1] man page for the complete list of ways to
 name revisions.  Some examples:
 
 -------------------------------------------------
@@ -909,7 +909,7 @@ commits reachable from some head but not from any tag in the repository:
 $ gitk $( git show-ref --heads ) --not  $( git show-ref --tags )
 -------------------------------------------------
 
-(See linkgit:git-rev-parse[1] for explanations of commit-selecting
+(See linkgit:gitrevisions[1] for explanations of commit-selecting
 syntax such as `--not`.)
 
 [[making-a-release]]
@@ -1635,7 +1635,7 @@ you've checked out.
 The reflogs are kept by default for 30 days, after which they may be
 pruned.  See linkgit:git-reflog[1] and linkgit:git-gc[1] to learn
 how to control this pruning, and see the "SPECIFYING REVISIONS"
-section of linkgit:git-rev-parse[1] for details.
+section of linkgit:gitrevisions[1] for details.
 
 Note that the reflog history is very different from normal git history.
 While normal history is shared by every repository that works on the

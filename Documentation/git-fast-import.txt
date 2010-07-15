@@ -439,7 +439,7 @@ Marks must be declared (via `mark`) before they can be used.
 * A complete 40 byte or abbreviated commit SHA-1 in hex.
 
 * Any valid Git SHA-1 expression that resolves to a commit.  See
-  ``SPECIFYING REVISIONS'' in linkgit:git-rev-parse[1] for details.
+  ``SPECIFYING REVISIONS'' in linkgit:gitrevisions[1] for details.
 
 The special case of restarting an incremental import from the
 current branch value should be written as:
