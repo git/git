@@ -364,6 +364,11 @@ test_expect_success 'path limiting with import-marks does not lose unmodified fi
 	git fast-export --import-marks=marks simple -- file file0 | grep file0
 '
 
+test_expect_success 'full-tree re-shows unmodified files'        '
+	git checkout -f simple &&
+	test $(git fast-export --full-tree simple | grep -c file0) -eq 3
+'
+
 test_expect_success 'set-up a few more tags for tag export tests' '
 	git checkout -f master &&
 	HEAD_TREE=`git show -s --pretty=raw HEAD | grep tree | sed "s/tree //"` &&
