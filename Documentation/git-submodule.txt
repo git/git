@@ -95,10 +95,6 @@ is the superproject and submodule repositories will be kept
 together in the same relative location, and only the
 superproject's URL needs to be provided: git-submodule will correctly
 locate the submodule using the relative URL in .gitmodules.
-+
-The submodule will be added with "git add --force <path>". I.e. git
-doesn't care if the new path is in a `gitignore`. Your invocation of
-"git submodule add" is considered enough to override it.
 
 status::
 	Show the status of the submodules. This will print the SHA-1 of the
