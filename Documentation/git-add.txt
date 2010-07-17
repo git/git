@@ -10,7 +10,8 @@ SYNOPSIS
 [verse]
 'git add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
 	  [--edit | -e] [--all | [--update | -u]] [--intent-to-add | -N]
-	  [--refresh] [--ignore-errors] [--] [<filepattern>...]
+	  [--refresh] [--ignore-errors] [--ignore-missing] [--]
+	  [<filepattern>...]
 
 DESCRIPTION
 -----------
