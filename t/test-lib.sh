@@ -636,7 +636,7 @@ test_done () {
 	GIT_EXIT_OK=t
 	test_results_dir="$TEST_DIRECTORY/test-results"
 	mkdir -p "$test_results_dir"
-	test_results_path="$test_results_dir/${0%.sh}-$$"
+	test_results_path="$test_results_dir/${0%.sh}-$$.counts"
 
 	echo "total $test_count" >> $test_results_path
 	echo "success $test_success" >> $test_results_path
