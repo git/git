@@ -9,7 +9,7 @@ git-submodule - Initialize, update or inspect submodules
 SYNOPSIS
 --------
 [verse]
-'git submodule' [--quiet] add [-b branch]
+'git submodule' [--quiet] add [-b branch] [-f|--force]
 	      [--reference <repository>] [--] <repository> [<path>]
 'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
@@ -186,6 +186,11 @@ OPTIONS
 -b::
 --branch::
 	Branch of repository to add as submodule.
+
+-f::
+--force::
+	This option is only valid for the add command.
+	Allow adding an otherwise ignored submodule path.
 
 --cached::
 	This option is only valid for status and summary commands.  These
