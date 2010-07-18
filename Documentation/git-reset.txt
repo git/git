@@ -8,29 +8,39 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [verse]
-'git reset' [--soft | --mixed | --hard | --merge | --keep] [-q] [<commit>]
 'git reset' [-q] [<commit>] [--] <paths>...
 'git reset' --patch [<commit>] [--] [<paths>...]
+'git reset' [--soft | --mixed | --hard | --merge | --keep] [-q] [<commit>]
 
 DESCRIPTION
 -----------
-Sets the current head to the specified commit and optionally resets the
-index and working tree to match.
+In the first and second form, copy entries from <commit> to the index.
+In the third form, set the current branch to <commit>, optionally
+modifying index and worktree to match.  The <commit> defaults to HEAD
+in all forms.
 
-This command is useful if you notice some small error in a recent
-commit (or set of commits) and want to redo that part without showing
-the undo in the history.
+'git reset' [-q] [<commit>] [--] <paths>...::
+	This form resets the index entries for all <paths> to their
+	state at the <commit>.  (It does not affect the worktree, nor
+	the current branch.)
++
+This means that `git reset <paths>` is the opposite of `git add
+<paths>`.
 
-If you want to undo a commit other than the latest on a branch,
-linkgit:git-revert[1] is your friend.
+'git reset' --patch|-p [<commit>] [--] [<paths>...]::
+	Interactively select hunks in the difference between the index
+	and <commit> (defaults to HEAD).  The chosen hunks are applied
+	in reverse to the index.
++
+This means that `git reset -p` is the opposite of `git add -p` (see
+linkgit:git-add[1]).
 
-The second and third forms with 'paths' and/or --patch are used to
-revert selected paths in the index from a given commit, without moving
-HEAD.
-
-
-OPTIONS
--------
+'git reset' [--<mode>] [<commit>]::
+	This form points the current branch to <commit> and then
+	updates index and working tree according to <mode>, which must
+	be one of the following:
++
+--
 --soft::
 	Does not touch the index file nor the working tree at all, but
 	requires them to be in a good order. This leaves all your changed
@@ -59,22 +69,19 @@ OPTIONS
 	the given commit.  If a file that is different between the
 	current commit and the given commit has local changes, reset
 	is aborted.
+--
 
--p::
---patch::
-	Interactively select hunks in the difference between the index
-	and <commit> (defaults to HEAD).  The chosen hunks are applied
-	in reverse to the index.
-+
-This means that `git reset -p` is the opposite of `git add -p` (see
-linkgit:git-add[1]).
+If you want to undo a commit other than the latest on a branch,
+linkgit:git-revert[1] is your friend.
+
+
+OPTIONS
+-------
 
 -q::
 --quiet::
 	Be quiet, only report errors.
 
-<commit>::
-	Commit to make the current HEAD. If not given defaults to HEAD.
 
 DISCUSSION
 ----------
