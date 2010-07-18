@@ -86,6 +86,29 @@ OPTIONS
 EXAMPLES
 --------
 
+Undo add::
++
+------------
+$ edit                                     <1>
+$ git add frotz.c filfre.c
+$ mailx                                    <2>
+$ git reset                                <3>
+$ git pull git://info.example.com/ nitfol  <4>
+------------
++
+<1> You are happily working on something, and find the changes
+in these files are in good order.  You do not want to see them
+when you run "git diff", because you plan to work on other files
+and changes with these files are distracting.
+<2> Somebody asks you to pull, and the changes sounds worthy of merging.
+<3> However, you already dirtied the index (i.e. your index does
+not match the HEAD commit).  But you know the pull you are going
+to make does not affect frotz.c nor filfre.c, so you revert the
+index changes for these two files.  Your changes in working tree
+remain there.
+<4> Then you can pull and merge, leaving frotz.c and filfre.c
+changes still in the working tree.
+
 Undo a commit and redo::
 +
 ------------
@@ -132,29 +155,6 @@ them in a topic branch, so create "topic/wip" branch off of the
 current HEAD.
 <2> Rewind the master branch to get rid of those three commits.
 <3> Switch to "topic/wip" branch and keep working.
-
-Undo add::
-+
-------------
-$ edit                                     <1>
-$ git add frotz.c filfre.c
-$ mailx                                    <2>
-$ git reset                                <3>
-$ git pull git://info.example.com/ nitfol  <4>
-------------
-+
-<1> You are happily working on something, and find the changes
-in these files are in good order.  You do not want to see them
-when you run "git diff", because you plan to work on other files
-and changes with these files are distracting.
-<2> Somebody asks you to pull, and the changes sounds worthy of merging.
-<3> However, you already dirtied the index (i.e. your index does
-not match the HEAD commit).  But you know the pull you are going
-to make does not affect frotz.c nor filfre.c, so you revert the
-index changes for these two files.  Your changes in working tree
-remain there.
-<4> Then you can pull and merge, leaving frotz.c and filfre.c
-changes still in the working tree.
 
 Undo a merge or pull::
 +
