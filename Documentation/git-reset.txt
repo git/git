@@ -8,7 +8,7 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [verse]
-'git reset' [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]
+'git reset' [--soft | --mixed | --hard | --merge | --keep] [-q] [<commit>]
 'git reset' [-q] [<commit>] [--] <paths>...
 'git reset' --patch [<commit>] [--] [<paths>...]
 
@@ -31,16 +31,16 @@ HEAD.
 
 OPTIONS
 -------
---mixed::
-	Resets the index but not the working tree (i.e., the changed files
-	are preserved but not marked for commit) and reports what has not
-	been updated. This is the default action.
-
 --soft::
 	Does not touch the index file nor the working tree at all, but
 	requires them to be in a good order. This leaves all your changed
 	files "Changes to be committed", as 'git status' would
 	put it.
+
+--mixed::
+	Resets the index but not the working tree (i.e., the changed files
+	are preserved but not marked for commit) and reports what has not
+	been updated. This is the default action.
 
 --hard::
 	Matches the working tree and index to that of the tree being
