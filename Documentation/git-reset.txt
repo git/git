@@ -128,19 +128,6 @@ edit the message further, you can give -C option instead.
 +
 See also the --amend option to linkgit:git-commit[1].
 
-Undo commits permanently::
-+
-------------
-$ git commit ...
-$ git reset --hard HEAD~3   <1>
-------------
-+
-<1> The last three commits (HEAD, HEAD^, and HEAD~2) were bad
-and you do not want to ever see them again.  Do *not* do this if
-you have already given these commits to somebody else.  (See the
-"RECOVERING FROM UPSTREAM REBASE" section in linkgit:git-rebase[1] for
-the implications of doing so.)
-
 Undo a commit, making it a topic branch::
 +
 ------------
@@ -155,6 +142,19 @@ them in a topic branch, so create "topic/wip" branch off of the
 current HEAD.
 <2> Rewind the master branch to get rid of those three commits.
 <3> Switch to "topic/wip" branch and keep working.
+
+Undo commits permanently::
++
+------------
+$ git commit ...
+$ git reset --hard HEAD~3   <1>
+------------
++
+<1> The last three commits (HEAD, HEAD^, and HEAD~2) were bad
+and you do not want to ever see them again.  Do *not* do this if
+you have already given these commits to somebody else.  (See the
+"RECOVERING FROM UPSTREAM REBASE" section in linkgit:git-rebase[1] for
+the implications of doing so.)
 
 Undo a merge or pull::
 +
