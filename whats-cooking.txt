@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2010, #03; Fri, 16)
-X-master-at: 24e7a5be373c95f977bab4f0f41f736bb1d25075
-X-next-at: 917297fa2312cb1baef4b7467153f116c1850589
+Subject: What's cooking in git.git (Jul 2010, #04; Mon, 19)
+X-master-at: c5212b87dafb3f559ceb898bd9b40bfc3cd0ad68
+X-next-at: b7c600f132949b7f995ac2643ab9728272d3aaab
 
-What's cooking in git.git (Jul 2010, #03; Fri, 16)
+What's cooking in git.git (Jul 2010, #04; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,100 +12,17 @@ marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
 I've ended up merging a few more fixes to 'master'; please give it a good
-final round of testing so that we can have the real thing mid next week.
+final round of testing so that we can have the real thing in a couple of
+days.
 
 Thanks.
 
 --------------------------------------------------
-[New Topics]
-
-* ab/report-corrupt-object-with-type (2010-06-10) 1 commit
- - sha1_file: Show the the type and path to corrupt objects
-
-* cc/revert (2010-07-14) 4 commits
- - revert: improve success message by adding abbreviated commit sha1
- - revert: don't print "Finished one cherry-pick." if commit failed
- - revert: refactor commit code into a new run_git_commit() function
- - revert: report success when using option --strategy
-
-* en/fast-export-fix (2010-07-07) 2 commits
- . fast-export: Add a --full-tree option
- . fast-export: Fix dropping of files with --import-marks and path limiting
-
-Seems to have breakage in test 9350 (possibly others but I didn't look).
-
-* jn/parse-date-basic (2010-07-15) 1 commit
- - Export parse_date_basic() to convert a date string to timestamp
- (this branch is used by rr/svn-export.)
-
-* kf/post-receive-sample-hook (2010-07-16) 1 commit
- - post-receive-email: optional message line count limit
-
-* tr/rfc-reset-doc (2010-07-16) 5 commits
- - Documentation/reset: move "undo permanently" example behind "make topic"
- - Documentation/reset: reorder examples to match description
- - Documentation/reset: promote 'examples' one section up
- - Documentation/reset: separate options by mode
- - Documentation/git-reset: reorder modes for soft-mixed-hard progression
-
---------------------------------------------------
 [Graduated to "master"]
 
-* ab/submodule-add-f (2010-07-05) 1 commit
-  (merged to 'next' on 2010-07-14 at 4ab3d00)
- + git submodule: add submodules with git add -f <path>
-
-* bc/maint-makefile-fixes (2010-07-06) 2 commits
-  (merged to 'next' on 2010-07-14 at 294ab08)
- + Makefile: work around ksh's failure to handle missing list argument to for loop
- + Makefile: remove some unnecessary curly braces
-
-* eb/doc-log-manpage (2010-07-07) 1 commit
-  (merged to 'next' on 2010-07-14 at d073ef2)
- + Reorganize `git-log' man page to clarify common diff options.
-
-* jc/diff-merge-base-multi (2010-07-16) 2 commits
- + diff A...B: do not limit the syntax too narrowly
- + diff A...B: give one possible diff when there are more than one merge-base
-
-* jc/rebase-i-commit-msg-fix (2010-07-05) 2 commits
-  (merged to 'next' on 2010-07-14 at 2273bd2)
- + rebase-i: do not get fooled by a log message ending with backslash
- + rebase-i: style fix
-
-* jk/maint-status-keep-index-timestamp (2010-07-06) 1 commit
-  (merged to 'next' on 2010-07-14 at 43cc5ef)
- + do not write out index when status does not have to
-
-* jn/grep-open (2010-07-02) 1 commit
-  (merged to 'next' on 2010-07-14 at c057fd6)
- + grep -O: Do not pass color sequences as filenames to pager
-
-* jn/paginate-fix (2010-06-26) 4 commits
- + git --paginate: do not commit pager choice too early
- + tests: local config file should be honored from subdirs of toplevel
- + t7006: test pager configuration for several git commands
- + t7006 (pager): introduce helper for parameterized tests
-
-* jn/tests (2010-07-10) 1 commit
-  (merged to 'next' on 2010-07-14 at 390c1f6)
- + t3000 (ls-files -o): modernize style
-
-* js/merge-rr-fix (2010-07-14) 1 commit
- + MERGE_RR is in .git, not .git/rr-cache
-
-* mg/revision-doc (2010-07-05) 3 commits
-  (merged to 'next' on 2010-07-14 at 416a2ad)
- + Documentation: link to gitrevisions rather than git-rev-parse
- + Documentation: gitrevisions
- + Documentation: split off rev doc into include file
-
-* ns/merge-recursive-uptodate (2010-07-09) 1 commit
- + merge-recursive: use "up-to-date" instead of "uptodate" in error message for consistency
-
-* wp/merge-tree-fix (2010-07-14) 2 commits
- + merge-tree: fix where two branches share no changes
- + add basic tests for merge-tree
+* jl/add-n-ignore-missing (2010-07-10) 2 commits
+ + git submodule add: Require the new --force option to add ignored paths
+ + git add: Add the "--ignore-missing" option for the dry run
 
 --------------------------------------------------
 [Stalled -- would discard unless there are some movements soon]
@@ -142,11 +59,19 @@ strongly suspect that --reuse-config should be renamed so that the
 variable can be named more sanely and in line with whatever option
 that replaces it.
 
+No responses; I think we will eventually want to have a configuration to
+always enable the new option, so the renaming of the command line option
+is inevitable.  I plan to kick this out of 'next' once the upcoming
+release is out, and expect a re-roll with configuration variable.
+
 * js/rebase-origin-x (2010-02-05) 1 commit
  - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
 
 I retract my objection against the idea of -x; needs polishing before
 moving forward.
+
+No responses; I plan to drop this entirely after the upcoming release
+without prejudice.
 
 * zl/mailinfo-recode-patch (2010-06-14) 2 commits
  - add --recode-patch option to git-am
@@ -162,6 +87,33 @@ I recall there was another round of re-roll planned for this one.
 
 --------------------------------------------------
 [Cooking]
+
+* ab/report-corrupt-object-with-type (2010-06-10) 1 commit
+ - sha1_file: Show the the type and path to corrupt objects
+
+* cc/revert (2010-07-14) 4 commits
+ - revert: improve success message by adding abbreviated commit sha1
+ - revert: don't print "Finished one cherry-pick." if commit failed
+ - revert: refactor commit code into a new run_git_commit() function
+ - revert: report success when using option --strategy
+
+* en/fast-export-fix (2010-07-17) 2 commits
+ - fast-export: Add a --full-tree option
+ - fast-export: Fix dropping of files with --import-marks and path limiting
+
+* jn/parse-date-basic (2010-07-15) 1 commit
+ - Export parse_date_basic() to convert a date string to timestamp
+ (this branch is used by rr/svn-export.)
+
+* kf/post-receive-sample-hook (2010-07-16) 1 commit
+ - post-receive-email: optional message line count limit
+
+* tr/rfc-reset-doc (2010-07-18) 5 commits
+ - Documentation/reset: move "undo permanently" example behind "make topic"
+ - Documentation/reset: reorder examples to match description
+ - Documentation/reset: promote 'examples' one section up
+ - Documentation/reset: separate options by mode
+ - Documentation/git-reset: reorder modes for soft-mixed-hard progression
 
 * rr/svn-export (2010-07-15) 8 commits
  - Add SVN dump parser
@@ -181,15 +133,13 @@ I recall there was another round of re-roll planned for this one.
  - Enable custom schemes for column colors in the graph API
  - Make graph_next_line() available in the graph.h API
 
-* jl/add-n-ignore-missing (2010-07-10) 1 commit
- - git add: Add the "--ignore-missing" option for the dry run
-
 * ar/string-list-foreach (2010-07-03) 2 commits
  - Convert the users of for_each_string_list to for_each_string_list_item macro
  - Add a for_each_string_list_item macro
  (this branch is used by tf/string-list-init.)
 
-* il/rfc-remote-fd-ext (2010-06-28) 2 commits
+* il/rfc-remote-fd-ext (2010-07-19) 3 commits
+ - gitignore: Ignore the new /git-remote-{ext,fd} helpers
  - New remote helper: git-remote-ext
  - New remote helper git-remote-fd
 
