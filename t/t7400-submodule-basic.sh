@@ -86,25 +86,28 @@ test_expect_success 'submodule add' '
 	test_cmp empty untracked
 '
 
-test_expect_success 'submodule add to .gitignored path' '
-	echo "refs/heads/master" >expect &&
-	>empty &&
-
+test_expect_success 'submodule add to .gitignored path fails' '
 	(
 		cd addtest-ignore &&
+		cat <<-\EOF >expect &&
+		The following path is ignored by one of your .gitignore files:
+		submod
+		Use -f if you really want to add it.
+		EOF
 		# Does not use test_commit due to the ignore
 		echo "*" > .gitignore &&
 		git add --force .gitignore &&
 		git commit -m"Ignore everything" &&
-		git submodule add "$submodurl" submod &&
-		git submodule init
-	) &&
+		! git submodule add "$submodurl" submod >actual 2>&1 &&
+		test_cmp expect actual
+	)
+'
 
-	rm -f heads head untracked &&
-	inspect addtest/submod ../.. &&
-	test_cmp expect heads &&
-	test_cmp expect head &&
-	test_cmp empty untracked
+test_expect_success 'submodule add to .gitignored path with --force' '
+	(
+		cd addtest-ignore &&
+		git submodule add --force "$submodurl" submod
+	)
 '
 
 test_expect_success 'submodule add --branch' '

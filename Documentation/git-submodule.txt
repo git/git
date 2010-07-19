@@ -9,7 +9,7 @@ git-submodule - Initialize, update or inspect submodules
 SYNOPSIS
 --------
 [verse]
-'git submodule' [--quiet] add [-b branch]
+'git submodule' [--quiet] add [-b branch] [-f|--force]
 	      [--reference <repository>] [--] <repository> [<path>]
 'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
@@ -95,10 +95,6 @@ is the superproject and submodule repositories will be kept
 together in the same relative location, and only the
 superproject's URL needs to be provided: git-submodule will correctly
 locate the submodule using the relative URL in .gitmodules.
-+
-The submodule will be added with "git add --force <path>". I.e. git
-doesn't care if the new path is in a `gitignore`. Your invocation of
-"git submodule add" is considered enough to override it.
 
 status::
 	Show the status of the submodules. This will print the SHA-1 of the
@@ -186,6 +182,11 @@ OPTIONS
 -b::
 --branch::
 	Branch of repository to add as submodule.
+
+-f::
+--force::
+	This option is only valid for the add command.
+	Allow adding an otherwise ignored submodule path.
 
 --cached::
 	This option is only valid for status and summary commands.  These

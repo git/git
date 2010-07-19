@@ -3169,6 +3169,22 @@ sub has_no_changes {
 			LIST_CACHE => 'FAULT',
 		;
 	}
+
+	sub unmemoize_svn_mergeinfo_functions {
+		return if not $memoized;
+		$memoized = 0;
+
+		Memoize::unmemoize 'lookup_svn_merge';
+		Memoize::unmemoize 'check_cherry_pick';
+		Memoize::unmemoize 'has_no_changes';
+	}
+}
+
+END {
+	# Force cache writeout explicitly instead of waiting for
+	# global destruction to avoid segfault in Storable:
+	# http://rt.cpan.org/Public/Bug/Display.html?id=36087
+	unmemoize_svn_mergeinfo_functions();
 }
 
 sub parents_exclude {
