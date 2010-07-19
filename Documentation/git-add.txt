@@ -57,7 +57,8 @@ OPTIONS
 
 -n::
 --dry-run::
-        Don't actually add the file(s), just show if they exist.
+	Don't actually add the file(s), just show if they exist and/or will
+	be ignored.
 
 -v::
 --verbose::
@@ -130,6 +131,12 @@ subdirectories.
 	If some files could not be added because of errors indexing
 	them, do not abort the operation, but continue adding the
 	others. The command shall still exit with non-zero status.
+
+--ignore-missing::
+	This option can only be used together with --dry-run. By using
+	this option the user can check if any of the given files would
+	be ignored, no matter if they are already present in the work
+	tree or not.
 
 \--::
 	This option can be used to separate command-line options from
