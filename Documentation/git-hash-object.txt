@@ -49,7 +49,7 @@ OPTIONS
 
 --no-filters::
 	Hash the contents as is, ignoring any input filter that would
-	have been chosen by the attributes mechanism, including crlf
+	have been chosen by the attributes mechanism, including the end-of-line
 	conversion. If the file is read from standard input then this
 	is always implied, unless the --path option is given.
 

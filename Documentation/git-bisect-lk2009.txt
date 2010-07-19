@@ -971,7 +971,7 @@ logical change in each commit.
 The smaller the changes in your commit, the most effective "git
 bisect" will be. And you will probably need "git bisect" less in the
 first place, as small changes are easier to review even if they are
-only reviewed by the commiter.
+only reviewed by the committer.
 
 Another good idea is to have good commit messages. They can be very
 helpful to understand why some changes were made.
