@@ -299,7 +299,7 @@ cat expect-F >> expect-rm-F
 test_expect_success 'verify note removal with -F /dev/null' '
 	git log -4 > output &&
 	test_cmp expect-rm-F output &&
-	! git notes show
+	test_must_fail git notes show
 '
 
 test_expect_success 'do not create empty note with -m "" (setup)' '
@@ -309,7 +309,7 @@ test_expect_success 'do not create empty note with -m "" (setup)' '
 test_expect_success 'verify non-creation of note with -m ""' '
 	git log -4 > output &&
 	test_cmp expect-rm-F output &&
-	! git notes show
+	test_must_fail git notes show
 '
 
 cat > expect-combine_m_and_F << EOF
@@ -357,7 +357,7 @@ cat expect-multiline >> expect-rm-remove
 test_expect_success 'verify note removal with "git notes remove"' '
 	git log -4 > output &&
 	test_cmp expect-rm-remove output &&
-	! git notes show HEAD^
+	test_must_fail git notes show HEAD^
 '
 
 cat > expect << EOF

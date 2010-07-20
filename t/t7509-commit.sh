@@ -111,7 +111,7 @@ test_expect_success '--amend option with empty author' '
 	test_when_finished "git checkout Initial" &&
 	echo "Empty author test" >>foo &&
 	test_tick &&
-	! git commit -a -m "empty author" --amend 2>err &&
+	test_must_fail git commit -a -m "empty author" --amend 2>err &&
 	grep "empty ident" err
 '
 
@@ -125,7 +125,7 @@ test_expect_success '--amend option with missing author' '
 	test_when_finished "git checkout Initial" &&
 	echo "Missing author test" >>foo &&
 	test_tick &&
-	! git commit -a -m "malformed author" --amend 2>err &&
+	test_must_fail git commit -a -m "malformed author" --amend 2>err &&
 	grep "empty ident" err
 '
 
