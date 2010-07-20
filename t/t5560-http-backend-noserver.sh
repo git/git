@@ -10,8 +10,7 @@ test_have_prereq MINGW && export GREP_OPTIONS=-U
 run_backend() {
 	echo "$2" |
 	QUERY_STRING="${1#*\?}" \
-	GIT_PROJECT_ROOT="$HTTPD_DOCUMENT_ROOT_PATH" \
-	PATH_INFO="${1%%\?*}" \
+	PATH_TRANSLATED="$HTTPD_DOCUMENT_ROOT_PATH/${1%%\?*}" \
 	git http-backend >act.out 2>act.err
 }
 
