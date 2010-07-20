@@ -438,4 +438,20 @@ test_expect_success 'force removal of nested git work tree' '
 	! test -d bar
 '
 
+test_expect_success 'git clean -e' '
+	rm -fr repo &&
+	mkdir repo &&
+	(
+		cd repo &&
+		git init &&
+		touch 1 2 3 known &&
+		git add known &&
+		git clean -f -e 1 -e 2 &&
+		test -e 1 &&
+		test -e 2 &&
+		! (test -e 3) &&
+		test -e known
+	)
+'
+
 test_done
