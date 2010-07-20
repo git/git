@@ -145,7 +145,7 @@ test_http_push_nonff() {
 		echo "changed" > path2 &&
 		git commit -a -m path2 --amend &&
 
-		!(git push -v origin >output 2>&1) &&
+		test_must_fail git push -v origin >output 2>&1 &&
 		(cd "$REMOTE_REPO" &&
 		 test $HEAD = $(git rev-parse --verify HEAD))
 	'
