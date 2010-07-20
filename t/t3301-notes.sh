@@ -693,7 +693,11 @@ test_expect_success 'create note from non-existing note with "git notes add -c" 
 	git add a10 &&
 	test_tick &&
 	git commit -m 10th &&
-	test_must_fail MSG="yet another note" git notes add -c deadbeef &&
+	(
+		MSG="yet another note" &&
+		export MSG &&
+		test_must_fail git notes add -c deadbeef
+	) &&
 	test_must_fail git notes list HEAD
 '
 

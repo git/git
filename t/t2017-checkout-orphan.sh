@@ -69,7 +69,11 @@ test_expect_success '--orphan makes reflog by default' '
 	git config --unset core.logAllRefUpdates &&
 	git checkout --orphan delta &&
 	! test -f .git/logs/refs/heads/delta &&
-	test_must_fail PAGER= git reflog show delta &&
+	(
+		PAGER= &&
+		export PAGER &&
+		test_must_fail git reflog show delta
+	) &&
 	git commit -m Delta &&
 	test -f .git/logs/refs/heads/delta &&
 	PAGER= git reflog show delta
@@ -80,17 +84,29 @@ test_expect_success '--orphan does not make reflog when core.logAllRefUpdates = 
 	git config core.logAllRefUpdates false &&
 	git checkout --orphan epsilon &&
 	! test -f .git/logs/refs/heads/epsilon &&
-	test_must_fail PAGER= git reflog show epsilon &&
+	(
+		PAGER= &&
+		export PAGER &&
+		test_must_fail git reflog show epsilon
+	) &&
 	git commit -m Epsilon &&
 	! test -f .git/logs/refs/heads/epsilon &&
-	test_must_fail PAGER= git reflog show epsilon
+	(
+		PAGER= &&
+		export PAGER &&
+		test_must_fail git reflog show epsilon
+	)
 '
 
 test_expect_success '--orphan with -l makes reflog when core.logAllRefUpdates = false' '
 	git checkout master &&
 	git checkout -l --orphan zeta &&
 	test -f .git/logs/refs/heads/zeta &&
-	test_must_fail PAGER= git reflog show zeta &&
+	(
+		PAGER= &&
+		export PAGER &&
+		test_must_fail git reflog show zeta
+	) &&
 	git commit -m Zeta &&
 	PAGER= git reflog show zeta
 '
@@ -99,10 +115,18 @@ test_expect_success 'giving up --orphan not committed when -l and core.logAllRef
 	git checkout master &&
 	git checkout -l --orphan eta &&
 	test -f .git/logs/refs/heads/eta &&
-	test_must_fail PAGER= git reflog show eta &&
+	(
+		PAGER= &&
+		export PAGER &&
+		test_must_fail git reflog show eta
+	) &&
 	git checkout master &&
 	! test -f .git/logs/refs/heads/eta &&
-	test_must_fail PAGER= git reflog show eta
+	(
+		PAGER= &&
+		export PAGER &&
+		test_must_fail git reflog show eta
+	)
 '
 
 test_expect_success '--orphan is rejected with an existing name' '

@@ -237,7 +237,11 @@ test_expect_success 'checkout -b does not make reflog when core.logAllRefUpdates
 	git config core.logAllRefUpdates false &&
 	git checkout -b beta &&
 	! test -f .git/logs/refs/heads/beta &&
-	test_must_fail PAGER= git reflog show beta
+	(
+		PAGER= &&
+		export PAGER &&
+		test_must_fail git reflog show beta
+	)
 '
 
 test_expect_success 'checkout -b with -l makes reflog when core.logAllRefUpdates = false' '
