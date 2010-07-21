@@ -259,11 +259,11 @@ Do:
 	test ...
 
    That way all of the commands in your tests will succeed or fail. If
-   you must ignore the return value of something (e.g. the return
-   value of export is unportable) it's best to indicate so explicitly
-   with a semicolon:
+   you must ignore the return value of something (e.g., the return
+   after unsetting a variable that was already unset is unportable) it's
+   best to indicate so explicitly with a semicolon:
 
-	export HLAGH;
+	unset HLAGH;
 	git merge hla &&
 	git push gh &&
 	test ...
