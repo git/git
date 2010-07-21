@@ -1,5 +1,5 @@
-Git v1.7.2 Release Notes (draft)
-================================
+Git v1.7.2 Release Notes
+========================
 
 Updates since v1.7.1
 --------------------
@@ -123,6 +123,8 @@ Updates since v1.7.1
 
  * The test harness has been updated to produce TAP-friendly output.
 
+ * Many documentation improvement patches are also included.
+
 
 Fixes since v1.7.1
 ------------------
@@ -147,9 +149,3 @@ release, unless otherwise noted.
 
  * "git read-tree -m A B" used to switch to branch B while retaining
    local changes added an incorrect cache-tree information (b1f47514).
-
---
-exec >/var/tmp/1
-O=v1.7.2-rc2-17-gc9a9766
-echo O=$(git describe HEAD)
-git shortlog --no-merges HEAD ^maint ^$O
