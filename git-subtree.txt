@@ -236,17 +236,13 @@ EXAMPLE 1
 Let's assume that you have a local repository that you would like
 to add an external vendor library to. In this case we will add the
 git-subtree repository as a subdirectory of your already existing
-git-extensions repository in ~/git-extensions/.
+git-extensions repository in ~/git-extensions/:
 
-First we need to fetch the remote objects
-	$ cd ~/git-extensions
-	$ git fetch git://github.com/apenwarr/git-subtree.git master
+	$ git subtree add --prefix=git-subtree --squash \
+		git://github.com/apenwarr/git-subtree.git master
 
 'master' needs to be a valid remote ref and can be a different branch
 name
-
-Now we add the vendor library with
-	$ git subtree add --prefix=git-subtree --squash FETCH_HEAD
 
 You can omit the --squash flag, but doing so will increase the number
 of commits that are incldued in your local repository.
