@@ -228,28 +228,21 @@ test_expect_success 'checkout -b makes reflog by default' '
 	git checkout master &&
 	git config --unset core.logAllRefUpdates &&
 	git checkout -b alpha &&
-	test -f .git/logs/refs/heads/alpha &&
-	PAGER= git reflog show alpha
+	git rev-parse --verify alpha@{0}
 '
 
 test_expect_success 'checkout -b does not make reflog when core.logAllRefUpdates = false' '
 	git checkout master &&
 	git config core.logAllRefUpdates false &&
 	git checkout -b beta &&
-	! test -f .git/logs/refs/heads/beta &&
-	(
-		PAGER= &&
-		export PAGER &&
-		test_must_fail git reflog show beta
-	)
+	test_must_fail git rev-parse --verify beta@{0}
 '
 
 test_expect_success 'checkout -b with -l makes reflog when core.logAllRefUpdates = false' '
 	git checkout master &&
 	git checkout -lb gamma &&
 	git config --unset core.logAllRefUpdates &&
-	test -f .git/logs/refs/heads/gamma &&
-	PAGER= git reflog show gamma
+	git rev-parse --verify gamma@{0}
 '
 
 test_expect_success 'avoid ambiguous track' '

@@ -68,65 +68,34 @@ test_expect_success '--orphan makes reflog by default' '
 	git checkout master &&
 	git config --unset core.logAllRefUpdates &&
 	git checkout --orphan delta &&
-	! test -f .git/logs/refs/heads/delta &&
-	(
-		PAGER= &&
-		export PAGER &&
-		test_must_fail git reflog show delta
-	) &&
+	test_must_fail git rev-parse --verify delta@{0} &&
 	git commit -m Delta &&
-	test -f .git/logs/refs/heads/delta &&
-	PAGER= git reflog show delta
+	git rev-parse --verify delta@{0}
 '
 
 test_expect_success '--orphan does not make reflog when core.logAllRefUpdates = false' '
 	git checkout master &&
 	git config core.logAllRefUpdates false &&
 	git checkout --orphan epsilon &&
-	! test -f .git/logs/refs/heads/epsilon &&
-	(
-		PAGER= &&
-		export PAGER &&
-		test_must_fail git reflog show epsilon
-	) &&
+	test_must_fail git rev-parse --verify epsilon@{0} &&
 	git commit -m Epsilon &&
-	! test -f .git/logs/refs/heads/epsilon &&
-	(
-		PAGER= &&
-		export PAGER &&
-		test_must_fail git reflog show epsilon
-	)
+	test_must_fail git rev-parse --verify epsilon@{0}
 '
 
 test_expect_success '--orphan with -l makes reflog when core.logAllRefUpdates = false' '
 	git checkout master &&
 	git checkout -l --orphan zeta &&
-	test -f .git/logs/refs/heads/zeta &&
-	(
-		PAGER= &&
-		export PAGER &&
-		test_must_fail git reflog show zeta
-	) &&
+	test_must_fail git rev-parse --verify zeta@{0} &&
 	git commit -m Zeta &&
-	PAGER= git reflog show zeta
+	git rev-parse --verify zeta@{0}
 '
 
 test_expect_success 'giving up --orphan not committed when -l and core.logAllRefUpdates = false deletes reflog' '
 	git checkout master &&
 	git checkout -l --orphan eta &&
-	test -f .git/logs/refs/heads/eta &&
-	(
-		PAGER= &&
-		export PAGER &&
-		test_must_fail git reflog show eta
-	) &&
+	test_must_fail git rev-parse --verify eta@{0} &&
 	git checkout master &&
-	! test -f .git/logs/refs/heads/eta &&
-	(
-		PAGER= &&
-		export PAGER &&
-		test_must_fail git reflog show eta
-	)
+	test_must_fail git rev-parse --verify eta@{0}
 '
 
 test_expect_success '--orphan is rejected with an existing name' '
