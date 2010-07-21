@@ -268,7 +268,7 @@ test_expect_success 'git add --dry-run of existing changed file' "
 
 test_expect_success 'git add --dry-run of non-existing file' "
 	echo ignored-file >>.gitignore &&
-	! (git add --dry-run track-this ignored-file >actual 2>&1) &&
+	test_must_fail git add --dry-run track-this ignored-file >actual 2>&1 &&
 	echo \"fatal: pathspec 'ignored-file' did not match any files\" | test_cmp - actual
 "
 
@@ -281,7 +281,7 @@ add 'track-this'
 EOF
 
 test_expect_success 'git add --dry-run --ignore-missing of non-existing file' '
-	!(git add --dry-run --ignore-missing track-this ignored-file >actual 2>&1) &&
+	test_must_fail git add --dry-run --ignore-missing track-this ignored-file >actual 2>&1 &&
 	test_cmp expect actual
 '
 

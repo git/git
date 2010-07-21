@@ -451,8 +451,10 @@ library for your script to use.
  - test_must_fail <git-command>
 
    Run a git command and ensure it fails in a controlled way.  Use
-   this instead of "! <git-command>" to fail when git commands
-   segfault.
+   this instead of "! <git-command>".  When git-command dies due to a
+   segfault, test_must_fail diagnoses it as an error; "! <git-command>"
+   treats it as just another expected failure, which would let such a
+   bug go unnoticed.
 
  - test_might_fail <git-command>
 
