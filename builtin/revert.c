@@ -98,7 +98,7 @@ struct commit_message {
 static int get_message(const char *raw_message, struct commit_message *out)
 {
 	const char *encoding;
-	const char *p, *abbrev, *eol;
+	const char *p, *abbrev;
 	char *q;
 	int abbrev_len, oneline_len;
 
@@ -121,17 +121,7 @@ static int get_message(const char *raw_message, struct commit_message *out)
 	abbrev = find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV);
 	abbrev_len = strlen(abbrev);
 
-	/* Find beginning and end of commit subject. */
-	p = out->message;
-	while (*p && (*p != '\n' || p[1] != '\n'))
-		p++;
-	if (*p) {
-		p += 2;
-		for (eol = p; *eol && *eol != '\n'; eol++)
-			; /* do nothing */
-	} else
-		eol = p;
-	oneline_len = eol - p;
+	oneline_len = find_commit_subject(out->message, &p);
 
 	out->parent_label = xmalloc(strlen("parent of ") + abbrev_len +
 			      strlen("... ") + oneline_len + 1);
