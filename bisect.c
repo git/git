@@ -141,7 +141,8 @@ static void show_list(const char *debug, int counted, int nr,
 		enum object_type type;
 		unsigned long size;
 		char *buf = read_sha1_file(commit->object.sha1, &type, &size);
-		char *ep, *sp;
+		const char *subject_start;
+		int subject_len;
 
 		fprintf(stderr, "%c%c%c ",
 			(flags & TREESAME) ? ' ' : 'T',
@@ -156,13 +157,9 @@ static void show_list(const char *debug, int counted, int nr,
 			fprintf(stderr, " %.*s", 8,
 				sha1_to_hex(pp->item->object.sha1));
 
-		sp = strstr(buf, "\n\n");
-		if (sp) {
-			sp += 2;
-			for (ep = sp; *ep && *ep != '\n'; ep++)
-				;
-			fprintf(stderr, " %.*s", (int)(ep - sp), sp);
-		}
+		subject_len = find_commit_subject(buf, &subject_start);
+		if (subject_len)
+			fprintf(stderr, " %.*s", subject_len, subject_start);
 		fprintf(stderr, "\n");
 	}
 }
