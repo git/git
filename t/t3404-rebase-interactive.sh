@@ -637,13 +637,19 @@ test_expect_success 'set up commits with funny messages' '
 	git commit -a -m "end with slash\\" &&
 	echo >>file1 &&
 	test_tick &&
+	git commit -a -m "something (\000) that looks like octal" &&
+	echo >>file1 &&
+	test_tick &&
+	git commit -a -m "something (\n) that looks like a newline" &&
+	echo >>file1 &&
+	test_tick &&
 	git commit -a -m "another commit"
 '
 
 test_expect_success 'rebase-i history with funny messages' '
 	git rev-list A..funny >expect &&
 	test_tick &&
-	FAKE_LINES="1 2" git rebase -i A &&
+	FAKE_LINES="1 2 3 4" git rebase -i A &&
 	git rev-list A.. >actual &&
 	test_cmp expect actual
 '
