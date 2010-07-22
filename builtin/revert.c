@@ -127,7 +127,7 @@ static int get_message(const char *raw_message, struct commit_message *out)
 		p++;
 	if (*p) {
 		p += 2;
-		for (eol = p + 1; *eol && *eol != '\n'; eol++)
+		for (eol = p; *eol && *eol != '\n'; eol++)
 			; /* do nothing */
 	} else
 		eol = p;
