@@ -2079,6 +2079,12 @@ endif
 		test -z "$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
 		ln "$$bindir/git$X" "$$execdir/git$X" 2>/dev/null || \
 		cp "$$bindir/git$X" "$$execdir/git$X"; } ; } && \
+	for p in $(filter $(install_bindir_programs),$(BUILT_INS)); do \
+		$(RM) "$$bindir/$$p" && \
+		ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
+		ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
+		cp "$$bindir/git$X" "$$bindir/$$p" || exit; \
+	done && \
 	for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
 		ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
