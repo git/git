@@ -122,6 +122,8 @@ test_expect_success setup '
 '
 
 test_expect_success 'am applies patch correctly' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	test_tick &&
 	git am <patch1 &&
@@ -132,6 +134,8 @@ test_expect_success 'am applies patch correctly' '
 '
 
 test_expect_success 'am applies patch e-mail not in a mbox' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	git am patch1.eml &&
 	! test -d .git/rebase-apply &&
@@ -141,6 +145,8 @@ test_expect_success 'am applies patch e-mail not in a mbox' '
 '
 
 test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	git am patch1-crlf.eml &&
 	! test -d .git/rebase-apply &&
@@ -165,6 +171,8 @@ compare () {
 
 test_expect_success 'am changes committer and keeps author' '
 	test_tick &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	git am patch2 &&
 	! test -d .git/rebase-apply &&
@@ -178,6 +186,8 @@ test_expect_success 'am changes committer and keeps author' '
 '
 
 test_expect_success 'am --signoff adds Signed-off-by: line' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout -b master2 first &&
 	git am --signoff <patch2 &&
 	printf "%s\n" "$signoff" >expected &&
@@ -198,6 +208,8 @@ test_expect_success 'am stays in branch' '
 test_expect_success 'am --signoff does not add Signed-off-by: line if already there' '
 	git format-patch --stdout HEAD^ >patch3 &&
 	sed -e "/^Subject/ s,\[PATCH,Re: Re: Re: & 1/5 v2," patch3 >patch4
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout HEAD^ &&
 	git am --signoff patch4 &&
 	git cat-file commit HEAD >actual &&
@@ -211,6 +223,8 @@ test_expect_success 'am without --keep removes Re: and [PATCH] stuff' '
 '
 
 test_expect_success 'am --keep really keeps the subject' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout HEAD^ &&
 	git am --keep patch4 &&
 	! test -d .git/rebase-apply &&
@@ -219,6 +233,8 @@ test_expect_success 'am --keep really keeps the subject' '
 '
 
 test_expect_success 'am -3 falls back to 3-way merge' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout -b lorem2 master2 &&
 	sed -n -e "3,\$p" msg >file &&
 	head -n 9 msg >>file &&
@@ -231,6 +247,7 @@ test_expect_success 'am -3 falls back to 3-way merge' '
 '
 
 test_expect_success 'am -3 -q is quiet' '
+	rm -fr .git/rebase-apply &&
 	git reset master2 --hard &&
 	sed -n -e "3,\$p" msg >file &&
 	head -n 9 msg >>file &&
@@ -242,6 +259,8 @@ test_expect_success 'am -3 -q is quiet' '
 '
 
 test_expect_success 'am pauses on conflict' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout lorem2^^ &&
 	test_must_fail git am lorem-move.patch &&
 	test -d .git/rebase-apply
@@ -257,6 +276,8 @@ test_expect_success 'am --skip works' '
 
 test_expect_success 'am --resolved works' '
 	echo goodbye >expected &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout lorem2^^ &&
 	test_must_fail git am lorem-move.patch &&
 	test -d .git/rebase-apply &&
@@ -268,6 +289,8 @@ test_expect_success 'am --resolved works' '
 '
 
 test_expect_success 'am takes patches from a Pine mailbox' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	cat pine patch1 | git am &&
 	! test -d .git/rebase-apply &&
@@ -275,11 +298,16 @@ test_expect_success 'am takes patches from a Pine mailbox' '
 '
 
 test_expect_success 'am fails on mail without patch' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	test_must_fail git am <failmail &&
-	rm -r .git/rebase-apply/
+	git am --abort &&
+	! test -d .git/rebase-apply
 '
 
 test_expect_success 'am fails on empty patch' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	echo "---" >>failmail &&
 	test_must_fail git am <failmail &&
 	git am --skip &&
@@ -288,6 +316,8 @@ test_expect_success 'am fails on empty patch' '
 
 test_expect_success 'am works from stdin in subdirectory' '
 	rm -fr subdir &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	(
 		mkdir -p subdir &&
@@ -299,6 +329,8 @@ test_expect_success 'am works from stdin in subdirectory' '
 
 test_expect_success 'am works from file (relative path given) in subdirectory' '
 	rm -fr subdir &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	(
 		mkdir -p subdir &&
@@ -310,6 +342,8 @@ test_expect_success 'am works from file (relative path given) in subdirectory' '
 
 test_expect_success 'am works from file (absolute path given) in subdirectory' '
 	rm -fr subdir &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	P=$(pwd) &&
 	(
@@ -321,6 +355,8 @@ test_expect_success 'am works from file (absolute path given) in subdirectory' '
 '
 
 test_expect_success 'am --committer-date-is-author-date' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	test_tick &&
 	git am --committer-date-is-author-date patch1 &&
@@ -331,6 +367,8 @@ test_expect_success 'am --committer-date-is-author-date' '
 '
 
 test_expect_success 'am without --committer-date-is-author-date' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	test_tick &&
 	git am patch1 &&
@@ -345,6 +383,8 @@ test_expect_success 'am without --committer-date-is-author-date' '
 # by test_tick that uses -0700 timezone; if this feature does not
 # work, we will see that instead of +0000.
 test_expect_success 'am --ignore-date' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	test_tick &&
 	git am --ignore-date patch1 &&
@@ -355,6 +395,8 @@ test_expect_success 'am --ignore-date' '
 
 test_expect_success 'am into an unborn branch' '
 	git rev-parse first^{tree} >expected &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	rm -fr subdir &&
 	mkdir subdir &&
 	git format-patch --numbered-files -o subdir -1 first &&
@@ -371,6 +413,8 @@ test_expect_success 'am into an unborn branch' '
 '
 
 test_expect_success 'am newline in subject' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	test_tick &&
 	sed -e "s/second/second \\\n foo/" patch1 >patchnl &&
@@ -379,6 +423,8 @@ test_expect_success 'am newline in subject' '
 '
 
 test_expect_success 'am -q is quiet' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
 	git checkout first &&
 	test_tick &&
 	git am -q <patch1 >output.out 2>&1 &&
