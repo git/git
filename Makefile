@@ -2075,10 +2075,13 @@ endif
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \
 	execdir=$$(cd '$(DESTDIR_SQ)$(gitexec_instdir_SQ)' && pwd) && \
 	{ test "$$bindir/" = "$$execdir/" || \
-		{ $(RM) "$$execdir/git$X" && \
+	  for p in git$X $(filter $(install_bindir_programs),$(ALL_PROGRAMS)); do \
+		$(RM) "$$execdir/$$p" && \
 		test -z "$(NO_CROSS_DIRECTORY_HARDLINKS)" && \
-		ln "$$bindir/git$X" "$$execdir/git$X" 2>/dev/null || \
-		cp "$$bindir/git$X" "$$execdir/git$X"; } ; } && \
+		ln "$$bindir/$$p" "$$execdir/$$p" 2>/dev/null || \
+		cp "$$bindir/$$p" "$$execdir/$$p" || exit; \
+	  done; \
+	} && \
 	for p in $(filter $(install_bindir_programs),$(BUILT_INS)); do \
 		$(RM) "$$bindir/$$p" && \
 		ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
