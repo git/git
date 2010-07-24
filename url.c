@@ -67,7 +67,8 @@ static int url_decode_char(const char *q)
 	return val;
 }
 
-static char *url_decode_internal(const char **query, const char *stop_at, struct strbuf *out)
+static char *url_decode_internal(const char **query, const char *stop_at,
+				 struct strbuf *out, int decode_plus)
 {
 	const char *q = *query;
 
@@ -90,7 +91,7 @@ static char *url_decode_internal(const char **query, const char *stop_at, struct
 			}
 		}
 
-		if (c == '+')
+		if (decode_plus && c == '+')
 			strbuf_addch(out, ' ');
 		else
 			strbuf_addch(out, c);
@@ -110,17 +111,17 @@ char *url_decode(const char *url)
 		strbuf_add(&out, url, colon - url);
 		url = colon;
 	}
-	return url_decode_internal(&url, NULL, &out);
+	return url_decode_internal(&url, NULL, &out, 0);
 }
 
 char *url_decode_parameter_name(const char **query)
 {
 	struct strbuf out = STRBUF_INIT;
-	return url_decode_internal(query, "&=", &out);
+	return url_decode_internal(query, "&=", &out, 1);
 }
 
 char *url_decode_parameter_value(const char **query)
 {
 	struct strbuf out = STRBUF_INIT;
-	return url_decode_internal(query, "&", &out);
+	return url_decode_internal(query, "&", &out, 1);
 }
