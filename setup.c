@@ -348,6 +348,18 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	return retval;
 }
 
+static int cwd_contains_git_dir(const char **gitfile_dirp)
+{
+	const char *gitfile_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
+	*gitfile_dirp = gitfile_dir;
+	if (gitfile_dir) {
+		if (set_git_dir(gitfile_dir))
+			die("Repository setup failed");
+		return 1;
+	}
+	return is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT);
+}
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
@@ -407,13 +419,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		current_device = buf.st_dev;
 	}
 	for (;;) {
-		gitfile_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
-		if (gitfile_dir) {
-			if (set_git_dir(gitfile_dir))
-				die("Repository setup failed");
-			break;
-		}
-		if (is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT))
+		if (cwd_contains_git_dir(&gitfile_dir))
 			break;
 		if (is_git_directory(".")) {
 			inside_git_dir = 1;
