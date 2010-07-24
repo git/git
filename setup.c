@@ -388,6 +388,16 @@ static const char *setup_nongit(const char *cwd, int *nongit_ok)
 	return NULL;
 }
 
+static dev_t get_device_or_die(const char *path, const char *prefix)
+{
+	struct stat buf;
+	if (stat(path, &buf))
+		die_errno("failed to stat '%s%s%s'",
+				prefix ? prefix : "",
+				prefix ? "/" : "", path);
+	return buf.st_dev;
+}
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
@@ -402,7 +412,6 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	int len, offset, ceil_offset, root_len;
 	dev_t current_device = 0;
 	int one_filesystem = 1;
-	struct stat buf;
 
 	/*
 	 * Let's assume that we are in a git repository.
@@ -441,11 +450,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 */
 	offset = len = strlen(cwd);
 	one_filesystem = !git_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0);
-	if (one_filesystem) {
-		if (stat(".", &buf))
-			die_errno("failed to stat '.'");
-		current_device = buf.st_dev;
-	}
+	if (one_filesystem)
+		current_device = get_device_or_die(".", NULL);
 	for (;;) {
 		if (cwd_contains_git_dir(&gitfile_dir))
 			break;
@@ -456,11 +462,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		if (offset <= ceil_offset)
 			return setup_nongit(cwd, nongit_ok);
 		if (one_filesystem) {
-			if (stat("..", &buf)) {
-				cwd[offset] = '\0';
-				die_errno("failed to stat '%s/..'", cwd);
-			}
-			if (buf.st_dev != current_device) {
+			dev_t parent_device = get_device_or_die("..", cwd);
+			if (parent_device != current_device) {
 				if (nongit_ok) {
 					if (chdir(cwd))
 						die_errno("Cannot come back to cwd");
