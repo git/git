@@ -97,7 +97,7 @@ test_expect_success 'apply from .git dir' '
 	test_cmp expected .git/file
 '
 
-test_expect_failure 'apply from subdir of .git dir' '
+test_expect_success 'apply from subdir of .git dir' '
 	cp postimage expected &&
 	cp preimage .git/file &&
 	cp preimage .git/objects/file
