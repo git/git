@@ -360,6 +360,24 @@ static int cwd_contains_git_dir(const char **gitfile_dirp)
 	return is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT);
 }
 
+static const char *setup_bare_git_dir(const char *work_tree_env,
+		int offset, int len, char *cwd, int *nongit_ok)
+{
+	int root_len;
+
+	inside_git_dir = 1;
+	if (!work_tree_env)
+		inside_work_tree = 0;
+	if (offset != len) {
+		root_len = offset_1st_component(cwd);
+		cwd[offset > root_len ? offset : root_len] = '\0';
+		set_git_dir(cwd);
+	} else
+		set_git_dir(".");
+	check_repository_format_gently(nongit_ok);
+	return NULL;
+}
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
@@ -421,19 +439,9 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	for (;;) {
 		if (cwd_contains_git_dir(&gitfile_dir))
 			break;
-		if (is_git_directory(".")) {
-			inside_git_dir = 1;
-			if (!work_tree_env)
-				inside_work_tree = 0;
-			if (offset != len) {
-				root_len = offset_1st_component(cwd);
-				cwd[offset > root_len ? offset : root_len] = '\0';
-				set_git_dir(cwd);
-			} else
-				set_git_dir(".");
-			check_repository_format_gently(nongit_ok);
-			return NULL;
-		}
+		if (is_git_directory("."))
+			return setup_bare_git_dir(work_tree_env, offset,
+							len, cwd, nongit_ok);
 		while (--offset > ceil_offset && cwd[offset] != '/');
 		if (offset <= ceil_offset) {
 			if (nongit_ok) {
