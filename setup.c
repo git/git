@@ -360,6 +360,28 @@ static int cwd_contains_git_dir(const char **gitfile_dirp)
 	return is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT);
 }
 
+static const char *setup_discovered_git_dir(const char *work_tree_env,
+		int offset, int len, char *cwd, int *nongit_ok)
+{
+	int root_len;
+
+	inside_git_dir = 0;
+	if (!work_tree_env)
+		inside_work_tree = 1;
+	root_len = offset_1st_component(cwd);
+	git_work_tree_cfg = xstrndup(cwd, offset > root_len ? offset : root_len);
+	if (check_repository_format_gently(nongit_ok))
+		return NULL;
+	if (offset == len)
+		return NULL;
+
+	/* Make "offset" point to past the '/', and add a '/' at the end */
+	offset++;
+	cwd[len++] = '/';
+	cwd[len] = 0;
+	return cwd + offset;
+}
+
 static const char *setup_bare_git_dir(const char *work_tree_env,
 		int offset, int len, char *cwd, int *nongit_ok)
 {
@@ -411,7 +433,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	static char cwd[PATH_MAX+1];
 	const char *gitdirenv;
 	const char *gitfile_dir;
-	int len, offset, ceil_offset, root_len;
+	int len, offset, ceil_offset;
 	dev_t current_device = 0;
 	int one_filesystem = 1;
 
@@ -456,7 +478,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		current_device = get_device_or_die(".", NULL);
 	for (;;) {
 		if (cwd_contains_git_dir(&gitfile_dir))
-			break;
+			return setup_discovered_git_dir(work_tree_env, offset,
+							len, cwd, nongit_ok);
 		if (is_git_directory("."))
 			return setup_bare_git_dir(work_tree_env, offset,
 							len, cwd, nongit_ok);
@@ -482,22 +505,6 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			die_errno("Cannot change to '%s/..'", cwd);
 		}
 	}
-
-	inside_git_dir = 0;
-	if (!work_tree_env)
-		inside_work_tree = 1;
-	root_len = offset_1st_component(cwd);
-	git_work_tree_cfg = xstrndup(cwd, offset > root_len ? offset : root_len);
-	if (check_repository_format_gently(nongit_ok))
-		return NULL;
-	if (offset == len)
-		return NULL;
-
-	/* Make "offset" point to past the '/', and add a '/' at the end */
-	offset++;
-	cwd[len++] = '/';
-	cwd[len] = 0;
-	return cwd + offset;
 }
 
 int git_config_perm(const char *var, const char *value)
