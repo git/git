@@ -378,6 +378,16 @@ static const char *setup_bare_git_dir(const char *work_tree_env,
 	return NULL;
 }
 
+static const char *setup_nongit(const char *cwd, int *nongit_ok)
+{
+	if (!nongit_ok)
+		die("Not a git repository (or any of the parent directories): %s", DEFAULT_GIT_DIR_ENVIRONMENT);
+	if (chdir(cwd))
+		die_errno("Cannot come back to cwd");
+	*nongit_ok = 1;
+	return NULL;
+}
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
@@ -443,15 +453,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			return setup_bare_git_dir(work_tree_env, offset,
 							len, cwd, nongit_ok);
 		while (--offset > ceil_offset && cwd[offset] != '/');
-		if (offset <= ceil_offset) {
-			if (nongit_ok) {
-				if (chdir(cwd))
-					die_errno("Cannot come back to cwd");
-				*nongit_ok = 1;
-				return NULL;
-			}
-			die("Not a git repository (or any of the parent directories): %s", DEFAULT_GIT_DIR_ENVIRONMENT);
-		}
+		if (offset <= ceil_offset)
+			return setup_nongit(cwd, nongit_ok);
 		if (one_filesystem) {
 			if (stat("..", &buf)) {
 				cwd[offset] = '\0';
