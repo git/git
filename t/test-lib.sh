@@ -793,6 +793,7 @@ else # normal case, use ../bin-wrappers only unless $with_dashes:
 		PATH="$TEST_DIRECTORY/..:$PATH"
 	fi
 fi
+GIT_BUILD_DIR=$(pwd)/..
 GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 unset GIT_CONFIG
 GIT_CONFIG_NOSYSTEM=1
