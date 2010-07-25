@@ -1485,6 +1485,7 @@ ifndef V
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 	QUIET_GEN      = @echo '   ' GEN $@;
 	QUIET_LNCP     = @echo '   ' LN/CP $@;
+	QUIET_GCOV     = @echo '   ' GCOV $@;
 	QUIET_SUBDIR0  = +@subdir=
 	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
 			 $(MAKE) $(PRINT_DIR) -C $$subdir
@@ -2291,11 +2292,16 @@ coverage:
 	$(MAKE) coverage-build
 	$(MAKE) coverage-report
 
+object_dirs := $(sort $(dir $(OBJECTS)))
 coverage-clean:
-	rm -f *.gcda *.gcno
+	$(RM) $(addsuffix *.gcov,$(object_dirs))
+	$(RM) $(addsuffix *.gcda,$(object_dirs))
+	$(RM) $(addsuffix *.gcno,$(object_dirs))
+	$(RM) coverage-untested-functions
 
 COVERAGE_CFLAGS = $(CFLAGS) -O0 -ftest-coverage -fprofile-arcs
 COVERAGE_LDFLAGS = $(CFLAGS)  -O0 -lgcov
+GCOVFLAGS = --preserve-paths --branch-probabilities --all-blocks
 
 coverage-build: coverage-clean
 	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" all
@@ -2303,7 +2309,9 @@ coverage-build: coverage-clean
 		-j1 test
 
 coverage-report:
-	gcov -b *.c
+	$(QUIET_GCOV)for dir in $(object_dirs); do \
+		gcov $(GCOVFLAGS) --object-directory=$$dir $$dir*.c || exit; \
+	done
 	grep '^function.*called 0 ' *.c.gcov \
 		| sed -e 's/\([^:]*\)\.gcov: *function \([^ ]*\) called.*/\1: \2/' \
-		| tee coverage-untested-functions
+		> coverage-untested-functions
