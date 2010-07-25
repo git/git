@@ -157,3 +157,36 @@ Issues of note:
    It has been reported that docbook-xsl version 1.72 and 1.73 are
    buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
    the patch in contrib/patches/docbook-xsl-manpages-charmap.patch
+
+   Users attempting to build the documentation on Cygwin may need to ensure
+   that the /etc/xml/catalog file looks something like this:
+
+   <?xml version="1.0"?>
+   <!DOCTYPE catalog PUBLIC
+      "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
+      "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd"
+   >
+   <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+     <rewriteURI
+       uriStartString = "http://docbook.sourceforge.net/release/xsl/current"
+       rewritePrefix = "/usr/share/sgml/docbook/xsl-stylesheets"
+     />
+     <rewriteURI
+       uriStartString="http://www.oasis-open.org/docbook/xml/4.5"
+       rewritePrefix="/usr/share/sgml/docbook/xml-dtd-4.5"
+     />
+  </catalog>
+
+  This can be achieved with the following two xmlcatalog commands:
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+        http://docbook.sourceforge.net/release/xsl/current \
+        /usr/share/sgml/docbook/xsl-stylesheets \
+     /etc/xml/catalog
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+         http://www.oasis-open.org/docbook/xml/4.5/xsl/current \
+         /usr/share/sgml/docbook/xml-dtd-4.5 \
+     /etc/xml/catalog
