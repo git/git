@@ -2312,6 +2312,8 @@ coverage-report:
 	$(QUIET_GCOV)for dir in $(object_dirs); do \
 		gcov $(GCOVFLAGS) --object-directory=$$dir $$dir*.c || exit; \
 	done
+
+coverage-untested-functions: coverage-report
 	grep '^function.*called 0 ' *.c.gcov \
 		| sed -e 's/\([^:]*\)\.gcov: *function \([^ ]*\) called.*/\1: \2/' \
 		> coverage-untested-functions
