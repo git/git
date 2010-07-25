@@ -406,7 +406,7 @@ proc start_rev_list {view} {
 	if {$revs eq {}} {
 	    return 0
 	}
-	set args [concat $vflags($view) $revs]
+	set args [limit_arg_length [concat $vflags($view) $revs]]
     } else {
 	set args $vorigargs($view)
     }
@@ -10172,18 +10172,7 @@ proc getallcommits {} {
 	}
     }
     if {$ids ne {}} {
-	set cmd [concat $cmd $ids]
-	# The maximum command line length for the CreateProcess function is 32767 characters, see
-	# http://blogs.msdn.com/oldnewthing/archive/2003/12/10/56028.aspx
-	# Be a little conservative in case Tcl adds some more stuff to the command line we do not
-	# know about and truncate the command line at a SHA1-boundary below 32000 characters.
-	if {[tk windowingsystem] == "win32" &&
-		[string length $cmd] > 32000} {
-	    set ndx [string last " " $cmd 32000]
-	    if {$ndx != -1} {
-		set cmd [string range $cmd 0 $ndx]
-	    }
-	}
+	set cmd [limit_arg_length [concat $cmd $ids]]
 	set fd [open $cmd r]
 	fconfigure $fd -blocking 0
 	incr allcommits
@@ -10192,6 +10181,21 @@ proc getallcommits {} {
     } else {
 	dispneartags 0
     }
+}
+
+# The maximum command line length for the CreateProcess function is 32767 characters, see
+# http://blogs.msdn.com/oldnewthing/archive/2003/12/10/56028.aspx
+# Be a little conservative in case Tcl adds some more stuff to the command line we do not
+# know about and truncate the command line at a SHA1-boundary below 32000 characters.
+proc limit_arg_length {cmd} {
+    if {[tk windowingsystem] == "win32" &&
+       [string length $cmd] > 32000} {
+        set ndx [string last " " $cmd 32000]
+        if {$ndx != -1} {
+            return [string range $cmd 0 $ndx]
+        }
+    }
+    return $cmd
 }
 
 # Since most commits have 1 parent and 1 child, we group strings of
