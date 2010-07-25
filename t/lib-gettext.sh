@@ -5,11 +5,11 @@
 
 . ./test-lib.sh
 
-GIT_TEXTDOMAINDIR="$GIT_EXEC_PATH/share/locale"
-GIT_PO_PATH="$GIT_EXEC_PATH/po"
+GIT_TEXTDOMAINDIR="$GIT_BUILD_DIR/share/locale"
+GIT_PO_PATH="$GIT_BUILD_DIR/po"
 export GIT_TEXTDOMAINDIR GIT_PO_PATH
 
-. "$GIT_EXEC_PATH"/git-sh-i18n
+. "$GIT_BUILD_DIR"/git-sh-i18n
 
 if test_have_prereq GETTEXT
 then
