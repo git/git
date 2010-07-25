@@ -271,6 +271,15 @@ Do:
  - Check the test coverage for your tests. See the "Test coverage"
    below.
 
+   Don't blindly follow test coverage metrics, they're a good way to
+   spot if you've missed something. If a new function you added
+   doesn't have any coverage you're probably doing something wrong,
+   but having 100% coverage doesn't necessarily mean that you tested
+   everything.
+
+   Tests that are likely to smoke out future regressions are better
+   than tests that just inflate the coverage metrics.
+
 Don't:
 
  - exit() within a <script> part.
