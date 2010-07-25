@@ -268,6 +268,9 @@ Do:
 	git push gh &&
 	test ...
 
+ - Check the test coverage for your tests. See the "Test coverage"
+   below.
+
 Don't:
 
  - exit() within a <script> part.
@@ -554,6 +557,45 @@ the purpose of t0000-basic.sh, which is to isolate that level of
 validation in one place.  Your test also ends up needing
 updating when such a change to the internal happens, so do _not_
 do it and leave the low level of validation to t0000-basic.sh.
+
+Test coverage
+-------------
+
+You can use the coverage tests to find code paths that are not being
+used or properly exercised yet.
+
+To do that, run the coverage target at the top-level (not in the t/
+directory):
+
+    make coverage
+
+That'll compile Git with GCC's coverage arguments, and generate a test
+report with gcov after the tests finish. Running the coverage tests
+can take a while, since running the tests in parallel is incompatible
+with GCC's coverage mode.
+
+After the tests have run you can generate a list of untested
+functions:
+
+    make coverage-untested-functions
+
+You can also generate a detailed per-file HTML report using the
+Devel::Cover module. To install it do:
+
+   # On Debian or Ubuntu:
+   sudo aptitude install libdevel-cover-perl
+
+   # From the CPAN with cpanminus
+   curl -L http://cpanmin.us | perl - --sudo --self-upgrade
+   cpanm --sudo Devel::Cover
+
+Then, at the top-level:
+
+    make cover_db_html
+
+That'll generate a detailed cover report in the "cover_db_html"
+directory, which you can then copy to a webserver, or inspect locally
+in a browser.
 
 Smoke testing
 -------------
