@@ -2298,6 +2298,7 @@ coverage-clean:
 	$(RM) $(addsuffix *.gcda,$(object_dirs))
 	$(RM) $(addsuffix *.gcno,$(object_dirs))
 	$(RM) coverage-untested-functions
+	$(RM) -r cover_db/
 
 COVERAGE_CFLAGS = $(CFLAGS) -O0 -ftest-coverage -fprofile-arcs
 COVERAGE_LDFLAGS = $(CFLAGS)  -O0 -lgcov
@@ -2317,3 +2318,6 @@ coverage-untested-functions: coverage-report
 	grep '^function.*called 0 ' *.c.gcov \
 		| sed -e 's/\([^:]*\)\.gcov: *function \([^ ]*\) called.*/\1: \2/' \
 		> coverage-untested-functions
+
+cover_db: coverage-report
+	gcov2perl -db cover_db *.gcov

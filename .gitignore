@@ -185,6 +185,7 @@
 *.gcno
 *.gcov
 /coverage-untested-functions
+/cover_db/
 *+
 /config.mak
 /autom4te.cache
