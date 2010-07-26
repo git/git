@@ -872,10 +872,19 @@ test_expect_success '--ignore-submodules=untracked suppresses submodules with un
 	test_cmp expect output
 '
 
+test_expect_success '.gitmodules ignore=untracked suppresses submodules with untracked content' '
+	git config --add -f .gitmodules submodule.sm.ignore untracked &&
+	git status > output &&
+	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm
+'
+
 test_expect_success '.git/config ignore=untracked suppresses submodules with untracked content' '
+	git config --add -f .gitmodules submodule.sm.ignore none &&
 	git config --add submodule.sm.ignore untracked &&
 	git status > output &&
 	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm &&
 	git config --remove-section submodule.sm
 '
 
@@ -884,10 +893,19 @@ test_expect_success '--ignore-submodules=dirty suppresses submodules with untrac
 	test_cmp expect output
 '
 
+test_expect_success '.gitmodules ignore=dirty suppresses submodules with untracked content' '
+	git config --add -f .gitmodules submodule.sm.ignore dirty &&
+	git status > output &&
+	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm
+'
+
 test_expect_success '.git/config ignore=dirty suppresses submodules with untracked content' '
+	git config --add -f .gitmodules submodule.sm.ignore none &&
 	git config --add submodule.sm.ignore dirty &&
 	git status > output &&
 	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm &&
 	git config --remove-section submodule.sm
 '
 
@@ -897,10 +915,19 @@ test_expect_success '--ignore-submodules=dirty suppresses submodules with modifi
 	test_cmp expect output
 '
 
+test_expect_success '.gitmodules ignore=dirty suppresses submodules with modified content' '
+	git config --add -f .gitmodules submodule.sm.ignore dirty &&
+	git status > output &&
+	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm
+'
+
 test_expect_success '.git/config ignore=dirty suppresses submodules with modified content' '
+	git config --add -f .gitmodules submodule.sm.ignore none &&
 	git config --add submodule.sm.ignore dirty &&
 	git status > output &&
 	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm &&
 	git config --remove-section submodule.sm
 '
 
@@ -941,10 +968,19 @@ test_expect_success "--ignore-submodules=untracked doesn't suppress submodules w
 	test_cmp expect output
 '
 
+test_expect_success ".gitmodules ignore=untracked doesn't suppress submodules with modified content" '
+	git config --add -f .gitmodules submodule.sm.ignore untracked &&
+	git status > output &&
+	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm
+'
+
 test_expect_success ".git/config ignore=untracked doesn't suppress submodules with modified content" '
+	git config --add -f .gitmodules submodule.sm.ignore none &&
 	git config --add submodule.sm.ignore untracked &&
 	git status > output &&
 	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm &&
 	git config --remove-section submodule.sm
 '
 
@@ -991,10 +1027,19 @@ test_expect_success "--ignore-submodules=untracked doesn't suppress submodule su
 	test_cmp expect output
 '
 
+test_expect_success ".gitmodules ignore=untracked doesn't suppress submodule summary" '
+	git config --add -f .gitmodules submodule.sm.ignore untracked &&
+	git status > output &&
+	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm
+'
+
 test_expect_success ".git/config ignore=untracked doesn't suppress submodule summary" '
+	git config --add -f .gitmodules submodule.sm.ignore none &&
 	git config --add submodule.sm.ignore untracked &&
 	git status > output &&
 	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm &&
 	git config --remove-section submodule.sm
 '
 
@@ -1002,14 +1047,21 @@ test_expect_success "--ignore-submodules=dirty doesn't suppress submodule summar
 	git status --ignore-submodules=dirty > output &&
 	test_cmp expect output
 '
+test_expect_success ".gitmodules ignore=dirty doesn't suppress submodule summary" '
+	git config --add -f .gitmodules submodule.sm.ignore dirty &&
+	git status > output &&
+	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm
+'
 
 test_expect_success ".git/config ignore=dirty doesn't suppress submodule summary" '
+	git config --add -f .gitmodules submodule.sm.ignore none &&
 	git config --add submodule.sm.ignore dirty &&
 	git status > output &&
 	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm &&
 	git config --remove-section submodule.sm
 '
-
 
 cat > expect << EOF
 # On branch master
@@ -1037,10 +1089,19 @@ test_expect_success "--ignore-submodules=all suppresses submodule summary" '
 	test_cmp expect output
 '
 
+test_expect_failure '.gitmodules ignore=all suppresses submodule summary' '
+	git config --add -f .gitmodules submodule.sm.ignore all &&
+	git status > output &&
+	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm
+'
+
 test_expect_failure '.git/config ignore=all suppresses submodule summary' '
+	git config --add -f .gitmodules submodule.sm.ignore none &&
 	git config --add submodule.sm.ignore all &&
 	git status > output &&
 	test_cmp expect output &&
+	git config -f .gitmodules  --remove-section submodule.sm &&
 	git config --remove-section submodule.sm
 '
 
