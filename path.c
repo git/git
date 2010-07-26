@@ -316,6 +316,8 @@ char *expand_user_path(const char *path)
 		size_t username_len = first_slash - username;
 		if (username_len == 0) {
 			const char *home = getenv("HOME");
+			if (!home)
+				goto return_null;
 			strbuf_add(&user_path, home, strlen(home));
 		} else {
 			struct passwd *pw = getpw_str(username, username_len);
