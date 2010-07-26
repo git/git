@@ -7,7 +7,7 @@ git-request-pull - Generates a summary of pending changes
 
 SYNOPSIS
 --------
-'git request-pull' <start> <url> [<end>]
+'git request-pull' [-p] <start> <url> [<end>]
 
 DESCRIPTION
 -----------
@@ -17,6 +17,9 @@ the given URL in the generated summary.
 
 OPTIONS
 -------
+-p::
+	Show patch text
+
 <start>::
 	Commit to start at.
 
