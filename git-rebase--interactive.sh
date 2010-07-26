@@ -119,7 +119,7 @@ run 'git rebase --continue'"
 export GIT_CHERRY_PICK_HELP
 
 warn () {
-	echo "$*" >&2
+	printf '%s\n' "$*" >&2
 }
 
 output () {
@@ -606,7 +606,7 @@ skip_unnecessary_picks () {
 			fd=1
 			;;
 		esac
-		echo "$command${sha1:+ }$sha1${rest:+ }$rest" >&$fd
+		printf '%s\n' "$command${sha1:+ }$sha1${rest:+ }$rest" >&$fd
 	done <"$TODO" >"$TODO.new" 3>>"$DONE" &&
 	mv -f "$TODO".new "$TODO" &&
 	case "$(peek_next_command)" in
@@ -649,12 +649,12 @@ rearrange_squash () {
 		case " $used" in
 		*" $sha1 "*) continue ;;
 		esac
-		echo "$pick $sha1 $message"
+		printf '%s\n' "$pick $sha1 $message"
 		while read -r squash action msg
 		do
 			case "$message" in
 			"$msg"*)
-				echo "$action $squash $action! $msg"
+				printf '%s\n' "$action $squash $action! $msg"
 				used="$used$squash "
 				;;
 			esac
@@ -895,7 +895,7 @@ first and then run 'git rebase --continue' again."
 		do
 			if test t != "$PRESERVE_MERGES"
 			then
-				echo "pick $shortsha1 $rest" >> "$TODO"
+				printf '%s\n' "pick $shortsha1 $rest" >> "$TODO"
 			else
 				sha1=$(git rev-parse $shortsha1)
 				if test -z "$REBASE_ROOT"
@@ -914,7 +914,7 @@ first and then run 'git rebase --continue' again."
 				if test f = "$preserve"
 				then
 					touch "$REWRITTEN"/$sha1
-					echo "pick $shortsha1 $rest" >> "$TODO"
+					printf '%s\n' "pick $shortsha1 $rest" >> "$TODO"
 				fi
 			fi
 		done

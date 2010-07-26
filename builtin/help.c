@@ -120,7 +120,7 @@ static void exec_woman_emacs(const char *path, const char *page)
 		if (!path)
 			path = "emacsclient";
 		strbuf_addf(&man_page, "(woman \"%s\")", page);
-		execlp(path, "emacsclient", "-e", man_page.buf, NULL);
+		execlp(path, "emacsclient", "-e", man_page.buf, (char *)NULL);
 		warning("failed to exec '%s': %s", path, strerror(errno));
 	}
 }
@@ -148,7 +148,7 @@ static void exec_man_konqueror(const char *path, const char *page)
 		} else
 			path = "kfmclient";
 		strbuf_addf(&man_page, "man:%s(1)", page);
-		execlp(path, filename, "newTab", man_page.buf, NULL);
+		execlp(path, filename, "newTab", man_page.buf, (char *)NULL);
 		warning("failed to exec '%s': %s", path, strerror(errno));
 	}
 }
@@ -157,7 +157,7 @@ static void exec_man_man(const char *path, const char *page)
 {
 	if (!path)
 		path = "man";
-	execlp(path, "man", page, NULL);
+	execlp(path, "man", page, (char *)NULL);
 	warning("failed to exec '%s': %s", path, strerror(errno));
 }
 
@@ -165,7 +165,7 @@ static void exec_man_cmd(const char *cmd, const char *page)
 {
 	struct strbuf shell_cmd = STRBUF_INIT;
 	strbuf_addf(&shell_cmd, "%s %s", cmd, page);
-	execl("/bin/sh", "sh", "-c", shell_cmd.buf, NULL);
+	execl("/bin/sh", "sh", "-c", shell_cmd.buf, (char *)NULL);
 	warning("failed to exec '%s': %s", cmd, strerror(errno));
 }
 
@@ -372,7 +372,7 @@ static void show_info_page(const char *git_cmd)
 {
 	const char *page = cmd_to_page(git_cmd);
 	setenv("INFOPATH", system_path(GIT_INFO_PATH), 1);
-	execlp("info", "info", "gitman", page, NULL);
+	execlp("info", "info", "gitman", page, (char *)NULL);
 	die("no info viewer handled the request");
 }
 
@@ -398,7 +398,7 @@ static void get_html_page_path(struct strbuf *page_path, const char *page)
 #ifndef open_html
 static void open_html(const char *path)
 {
-	execl_git_cmd("web--browse", "-c", "help.browser", path, NULL);
+	execl_git_cmd("web--browse", "-c", "help.browser", path, (char *)NULL);
 }
 #endif
 

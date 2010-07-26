@@ -200,16 +200,29 @@ summary::
 	For a successfully pushed ref, the summary shows the old and new
 	values of the ref in a form suitable for using as an argument to
 	`git log` (this is `<old>..<new>` in most cases, and
-	`<old>...<new>` for forced non-fast-forward updates). For a
-	failed update, more details are given for the failure.
-	The string `rejected` indicates that git did not try to send the
-	ref at all (typically because it is not a fast-forward). The
-	string `remote rejected` indicates that the remote end refused
-	the update; this rejection is typically caused by a hook on the
-	remote side. The string `remote failure` indicates that the
-	remote end did not report the successful update of the ref
-	(perhaps because of a temporary error on the remote side, a
-	break in the network connection, or other transient error).
+	`<old>...<new>` for forced non-fast-forward updates).
++
+For a failed update, more details are given:
++
+--
+rejected::
+	Git did not try to send the ref at all, typically because it
+	is not a fast-forward and you did not force the update.
+
+remote rejected::
+	The remote end refused the update.  Usually caused by a hook
+	on the remote side, or because the remote repository has one
+	of the following safety options in effect:
+	`receive.denyCurrentBranch` (for pushes to the checked out
+	branch), `receive.denyNonFastForwards` (for forced
+	non-fast-forward updates), `receive.denyDeletes` or
+	`receive.denyDeleteCurrent`.  See linkgit:git-config[1].
+
+remote failure::
+	The remote end did not report the successful update of the ref,
+	perhaps because of a temporary error on the remote side, a
+	break in the network connection, or other transient error.
+--
 
 from::
 	The name of the local ref being pushed, minus its
