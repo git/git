@@ -44,9 +44,11 @@ branch of the `git.git` repository.
 Documentation for older releases are available here:
 
 
-* link:v1.7.1/git.html[documentation for release 1.7.1]
+* link:v1.7.1.2/git.html[documentation for release 1.7.1.2]
 
 * release notes for
+  link:RelNotes-1.7.1.2.txt[1.7.1.2],
+  link:RelNotes-1.7.1.1.txt[1.7.1.1],
   link:RelNotes-1.7.1.txt[1.7.1].
 
 * link:v1.7.0.7/git.html[documentation for release 1.7.0.7]
