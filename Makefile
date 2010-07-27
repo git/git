@@ -2254,6 +2254,7 @@ check-docs::
 		documented,gitglossary | \
 		documented,githooks | \
 		documented,gitrepository-layout | \
+		documented,gitrevisions | \
 		documented,gittutorial | \
 		documented,gittutorial-2 | \
 		documented,git-bisect-lk2009 | \

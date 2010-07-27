@@ -707,16 +707,38 @@ test_expect_success 'set --path' '
 	git config --path path.trailingtilde "foo~" &&
 	test_cmp expect .git/config'
 
+if test "${HOME+set}"
+then
+	test_set_prereq HOMEVAR
+fi
+
 cat >expect <<EOF
 $HOME/
 /dev/null
 foo~
 EOF
 
-test_expect_success 'get --path' '
+test_expect_success HOMEVAR 'get --path' '
 	git config --get --path path.home > result &&
 	git config --get --path path.normal >> result &&
 	git config --get --path path.trailingtilde >> result &&
+	test_cmp expect result
+'
+
+cat >expect <<\EOF
+/dev/null
+foo~
+EOF
+
+test_expect_success 'get --path copes with unset $HOME' '
+	(
+		unset HOME;
+		test_must_fail git config --get --path path.home \
+			>result 2>msg &&
+		git config --get --path path.normal >>result &&
+		git config --get --path path.trailingtilde >>result
+	) &&
+	grep "[Ff]ailed to expand.*~/" msg &&
 	test_cmp expect result
 '
 
