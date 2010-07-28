@@ -7,7 +7,8 @@ Checklist (and a short version for the impatient):
 	  before committing
 	- do not check in commented out code or unneeded files
 	- the first line of the commit message should be a short
-	  description and should skip the full stop
+	  description (50 characters is the soft limit, see DISCUSSION
+	  in git-commit(1)), and should skip the full stop
 	- the body should provide a meaningful commit message, which:
 		- uses the imperative, present tense: "change",
 		  not "changed" or "changes".
