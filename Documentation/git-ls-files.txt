@@ -106,8 +106,16 @@ OPTIONS
 	with `-s` or `-u` options does not make any sense.
 
 -t::
-	Identify the file status with the following tags (followed by
-	a space) at the start of each line:
+	This feature is semi-deprecated. For scripting purpose,
+	linkgit:git-status[1] `--porcelain` and
+	linkgit:git-diff-files[1] `--name-status` are almost always
+	superior alternatives, and users should look at
+	linkgit:git-status[1] `--short` or linkgit:git-diff[1]
+	`--name-status` for more user-friendly alternatives.
++
+This option identifies the file status with the following tags (followed by
+a space) at the start of each line:
+
 	H::	cached
 	S::	skip-worktree
 	M::	unmerged
