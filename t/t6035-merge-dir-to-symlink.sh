@@ -72,7 +72,7 @@ test_expect_success 'Handle F/D conflict, do not lose a/b-2/c/d in merge (resolv
 	test -f a/b-2/c/d
 '
 
-test_expect_failure 'Handle F/D conflict, do not lose a/b-2/c/d in merge (recursive)' '
+test_expect_success 'Handle F/D conflict, do not lose a/b-2/c/d in merge (recursive)' '
 	git reset --hard &&
 	git checkout master^0 &&
 	git merge -s recursive baseline^0 &&
