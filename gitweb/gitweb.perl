@@ -232,6 +232,29 @@ our %avatar_size = (
 # Leave it undefined (or set to 'undef') to turn off load checking.
 our $maxload = 300;
 
+# configuration for 'highlight' (http://www.andre-simon.de/)
+# match by basename
+our %highlight_basename = (
+	#'Program' => 'py',
+	#'Library' => 'py',
+	'SConstruct' => 'py', # SCons equivalent of Makefile
+	'Makefile' => 'make',
+);
+# match by extension
+our %highlight_ext = (
+	# main extensions, defining name of syntax;
+	# see files in /usr/share/highlight/langDefs/ directory
+	map { $_ => $_ }
+		qw(py c cpp rb java css php sh pl js tex bib xml awk bat ini spec tcl),
+	# alternate extensions, see /etc/highlight/filetypes.conf
+	'h' => 'c',
+	map { $_ => 'cpp' } qw(cxx c++ cc),
+	map { $_ => 'php' } qw(php3 php4),
+	map { $_ => 'pl'  } qw(perl pm), # perhaps also 'cgi'
+	'mak' => 'make',
+	map { $_ => 'xml' } qw(xhtml html htm),
+);
+
 # You define site-wide feature defaults here; override them with
 # $GITWEB_CONFIG as necessary.
 our %feature = (
@@ -3316,30 +3339,6 @@ sub blob_contenttype {
 sub guess_file_syntax {
 	my ($highlight, $mimetype, $file_name) = @_;
 	return undef unless ($highlight && defined $file_name);
-
-	# configuration for 'highlight' (http://www.andre-simon.de/)
-	# match by basename
-	my %highlight_basename = (
-		#'Program' => 'py',
-		#'Library' => 'py',
-		'SConstruct' => 'py', # SCons equivalent of Makefile
-		'Makefile' => 'make',
-	);
-	# match by extension
-	my %highlight_ext = (
-		# main extensions, defining name of syntax;
-		# see files in /usr/share/highlight/langDefs/ directory
-		map { $_ => $_ }
-			qw(py c cpp rb java css php sh pl js tex bib xml awk bat ini spec tcl),
-		# alternate extensions, see /etc/highlight/filetypes.conf
-		'h' => 'c',
-		map { $_ => 'cpp' } qw(cxx c++ cc),
-		map { $_ => 'php' } qw(php3 php4),
-		map { $_ => 'pl'  } qw(perl pm), # perhaps also 'cgi'
-		'mak' => 'make',
-		map { $_ => 'xml' } qw(xhtml html htm),
-	);
-
 	my $basename = basename($file_name, '.in');
 	return $highlight_basename{$basename}
 		if exists $highlight_basename{$basename};
