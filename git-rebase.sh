@@ -208,6 +208,7 @@ do
 		test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply ||
 			die "No rebase in progress?"
 
+		git update-index --ignore-submodules --refresh &&
 		git diff-files --quiet --ignore-submodules || {
 			echo "You must edit all merge conflicts and then"
 			echo "mark them as resolved using git add"
