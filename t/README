@@ -319,15 +319,30 @@ Keep in mind:
 Skipping tests
 --------------
 
-If you need to skip all the remaining tests you should set skip_all
-and immediately call test_done. The string you give to skip_all will
-be used as an explanation for why the test was skipped. for instance:
+If you need to skip tests you should do so be using the three-arg form
+of the test_* functions (see the "Test harness library" section
+below), e.g.:
+
+    test_expect_success PERL 'I need Perl' "
+        '$PERL_PATH' -e 'hlagh() if unf_unf()'
+    "
+
+The advantage of skipping tests like this is that platforms that don't
+have the PERL and other optional dependencies get an indication of how
+many tests they're missing.
+
+If the test code is too hairy for that (i.e. does a lot of setup work
+outside test assertions) you can also skip all remaining tests by
+setting skip_all and immediately call test_done:
 
 	if ! test_have_prereq PERL
 	then
 	    skip_all='skipping perl interface tests, perl not available'
 	    test_done
 	fi
+
+The string you give to skip_all will be used as an explanation for why
+the test was skipped.
 
 End with test_done
 ------------------
