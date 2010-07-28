@@ -2,8 +2,10 @@
 #include "quote.h"
 #include "exec_cmd.h"
 #include "strbuf.h"
+#include "run-command.h"
 
 #define COMMAND_DIR "git-shell-commands"
+#define HELP_COMMAND COMMAND_DIR "/help"
 
 static int do_generic_cmd(const char *me, char *arg)
 {
@@ -59,6 +61,56 @@ static void cd_to_homedir(void)
 		die("could not chdir to user's home directory");
 }
 
+static void run_shell(void)
+{
+	int done = 0;
+	static const char *help_argv[] = { HELP_COMMAND, NULL };
+	/* Print help if enabled */
+	run_command_v_opt(help_argv, RUN_SILENT_EXEC_FAILURE);
+
+	do {
+		struct strbuf line = STRBUF_INIT;
+		const char *prog;
+		char *full_cmd;
+		char *rawargs;
+		const char **argv;
+		int code;
+
+		fprintf(stderr, "git> ");
+		if (strbuf_getline(&line, stdin, '\n') == EOF) {
+			fprintf(stderr, "\n");
+			strbuf_release(&line);
+			break;
+		}
+		strbuf_trim(&line);
+		rawargs = strbuf_detach(&line, NULL);
+		if (split_cmdline(rawargs, &argv) == -1) {
+			free(rawargs);
+			continue;
+		}
+
+		prog = argv[0];
+		if (!strcmp(prog, "")) {
+		} else if (!strcmp(prog, "quit") || !strcmp(prog, "logout") ||
+			   !strcmp(prog, "exit") || !strcmp(prog, "bye")) {
+			done = 1;
+		} else if (is_valid_cmd_name(prog)) {
+			full_cmd = make_cmd(prog);
+			argv[0] = full_cmd;
+			code = run_command_v_opt(argv, RUN_SILENT_EXEC_FAILURE);
+			if (code == -1 && errno == ENOENT) {
+				fprintf(stderr, "unrecognized command '%s'\n", prog);
+			}
+			free(full_cmd);
+		} else {
+			fprintf(stderr, "invalid command format '%s'\n", prog);
+		}
+
+		free(argv);
+		free(rawargs);
+	} while (!done);
+}
+
 static struct commands {
 	const char *name;
 	int (*exec)(const char *me, char *arg);
@@ -92,15 +144,23 @@ int main(int argc, char **argv)
 	/*
 	 * Special hack to pretend to be a CVS server
 	 */
-	if (argc == 2 && !strcmp(argv[1], "cvs server"))
+	if (argc == 2 && !strcmp(argv[1], "cvs server")) {
 		argv--;
-
-	/*
-	 * We do not accept anything but "-c" followed by "cmd arg",
-	 * where "cmd" is a very limited subset of git commands.
-	 */
-	else if (argc != 3 || strcmp(argv[1], "-c"))
-		die("What do you think I am? A shell?");
+	} else if (argc == 1) {
+		/* Allow the user to run an interactive shell */
+		cd_to_homedir();
+		if (access(COMMAND_DIR, R_OK | X_OK) == -1)
+			die("Sorry, the interactive git-shell is not enabled");
+		run_shell();
+		exit(0);
+	} else if (argc != 3 || strcmp(argv[1], "-c")) {
+		/*
+		 * We do not accept any other modes except "-c" followed by
+		 * "cmd arg", where "cmd" is a very limited subset of git
+		 * commands or a command in the COMMAND_DIR
+		 */
+		die("Run with no arguments or with -c cmd");
+	}
 
 	prog = xstrdup(argv[2]);
 	if (!strncmp(prog, "git", 3) && isspace(prog[3]))
