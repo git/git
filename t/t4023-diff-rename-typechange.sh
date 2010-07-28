@@ -4,13 +4,7 @@ test_description='typechange rename detection'
 
 . ./test-lib.sh
 
-if ! test_have_prereq SYMLINKS
-then
-	skip_all='Symbolic links not supported, skipping tests.'
-	test_done
-fi
-
-test_expect_success setup '
+test_expect_success SYMLINKS setup '
 
 	rm -f foo bar &&
 	cat "$TEST_DIRECTORY"/../COPYING >foo &&
@@ -56,7 +50,7 @@ test_expect_success setup '
 
 '
 
-test_expect_success 'cross renames to be detected for regular files' '
+test_expect_success SYMLINKS 'cross renames to be detected for regular files' '
 
 	git diff-tree five six -r --name-status -B -M | sort >actual &&
 	{
@@ -67,7 +61,7 @@ test_expect_success 'cross renames to be detected for regular files' '
 
 '
 
-test_expect_success 'cross renames to be detected for typechange' '
+test_expect_success SYMLINKS 'cross renames to be detected for typechange' '
 
 	git diff-tree one two -r --name-status -B -M | sort >actual &&
 	{
@@ -78,7 +72,7 @@ test_expect_success 'cross renames to be detected for typechange' '
 
 '
 
-test_expect_success 'moves and renames' '
+test_expect_success SYMLINKS 'moves and renames' '
 
 	git diff-tree three four -r --name-status -B -M | sort >actual &&
 	{

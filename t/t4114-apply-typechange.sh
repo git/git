@@ -9,13 +9,7 @@ test_description='git apply should not get confused with type changes.
 
 . ./test-lib.sh
 
-if ! test_have_prereq SYMLINKS
-then
-	skip_all='Symbolic links not supported, skipping tests.'
-	test_done
-fi
-
-test_expect_success 'setup repository and commits' '
+test_expect_success SYMLINKS 'setup repository and commits' '
 	echo "hello world" > foo &&
 	echo "hi planet" > bar &&
 	git update-index --add foo bar &&
@@ -48,7 +42,7 @@ test_expect_success 'setup repository and commits' '
 	git branch foo-baz-renamed-from-foo
 	'
 
-test_expect_success 'file renamed from foo to foo/baz' '
+test_expect_success SYMLINKS 'file renamed from foo to foo/baz' '
 	git checkout -f initial &&
 	git diff-tree -M -p HEAD foo-baz-renamed-from-foo > patch &&
 	git apply --index < patch
@@ -56,7 +50,7 @@ test_expect_success 'file renamed from foo to foo/baz' '
 test_debug 'cat patch'
 
 
-test_expect_success 'file renamed from foo/baz to foo' '
+test_expect_success SYMLINKS 'file renamed from foo/baz to foo' '
 	git checkout -f foo-baz-renamed-from-foo &&
 	git diff-tree -M -p HEAD initial > patch &&
 	git apply --index < patch
@@ -64,7 +58,7 @@ test_expect_success 'file renamed from foo/baz to foo' '
 test_debug 'cat patch'
 
 
-test_expect_success 'directory becomes file' '
+test_expect_success SYMLINKS 'directory becomes file' '
 	git checkout -f foo-becomes-a-directory &&
 	git diff-tree -p HEAD initial > patch &&
 	git apply --index < patch
@@ -72,7 +66,7 @@ test_expect_success 'directory becomes file' '
 test_debug 'cat patch'
 
 
-test_expect_success 'file becomes directory' '
+test_expect_success SYMLINKS 'file becomes directory' '
 	git checkout -f initial &&
 	git diff-tree -p HEAD foo-becomes-a-directory > patch &&
 	git apply --index < patch
@@ -80,7 +74,7 @@ test_expect_success 'file becomes directory' '
 test_debug 'cat patch'
 
 
-test_expect_success 'file becomes symlink' '
+test_expect_success SYMLINKS 'file becomes symlink' '
 	git checkout -f initial &&
 	git diff-tree -p HEAD foo-symlinked-to-bar > patch &&
 	git apply --index < patch
@@ -88,21 +82,21 @@ test_expect_success 'file becomes symlink' '
 test_debug 'cat patch'
 
 
-test_expect_success 'symlink becomes file' '
+test_expect_success SYMLINKS 'symlink becomes file' '
 	git checkout -f foo-symlinked-to-bar &&
 	git diff-tree -p HEAD foo-back-to-file > patch &&
 	git apply --index < patch
 	'
 test_debug 'cat patch'
 
-test_expect_success 'binary file becomes symlink' '
+test_expect_success SYMLINKS 'binary file becomes symlink' '
 	git checkout -f foo-becomes-binary &&
 	git diff-tree -p --binary HEAD foo-symlinked-to-bar > patch &&
 	git apply --index < patch
 	'
 test_debug 'cat patch'
 
-test_expect_success 'symlink becomes binary file' '
+test_expect_success SYMLINKS 'symlink becomes binary file' '
 	git checkout -f foo-symlinked-to-bar &&
 	git diff-tree -p --binary HEAD foo-becomes-binary > patch &&
 	git apply --index < patch
@@ -110,7 +104,7 @@ test_expect_success 'symlink becomes binary file' '
 test_debug 'cat patch'
 
 
-test_expect_success 'symlink becomes directory' '
+test_expect_success SYMLINKS 'symlink becomes directory' '
 	git checkout -f foo-symlinked-to-bar &&
 	git diff-tree -p HEAD foo-becomes-a-directory > patch &&
 	git apply --index < patch
@@ -118,7 +112,7 @@ test_expect_success 'symlink becomes directory' '
 test_debug 'cat patch'
 
 
-test_expect_success 'directory becomes symlink' '
+test_expect_success SYMLINKS 'directory becomes symlink' '
 	git checkout -f foo-becomes-a-directory &&
 	git diff-tree -p HEAD foo-symlinked-to-bar > patch &&
 	git apply --index < patch
