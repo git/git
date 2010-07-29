@@ -4,7 +4,7 @@
  */
 
 #include <stdlib.h>
-#include "vcs-svn/svndump.h"
+#include "svndump.h"
 
 int main(int argc, char **argv)
 {
