@@ -184,9 +184,12 @@ scripts the same facilities C builtins have. It works as an option normalizer
 (e.g. splits single switches aggregate values), a bit like `getopt(1)` does.
 
 It takes on the standard input the specification of the options to parse and
-understand, and echoes on the standard output a line suitable for `sh(1)` `eval`
+understand, and echoes on the standard output a string suitable for `sh(1)` `eval`
 to replace the arguments with normalized ones.  In case of error, it outputs
 usage on the standard error stream, and exits with code 129.
+
+Note: Make sure you quote the result when passing it to `eval`.  See
+below for an example.
 
 Input Format
 ~~~~~~~~~~~~
@@ -244,7 +247,7 @@ bar=      some cool option --bar with an argument
   An option group Header
 C?        option C with an optional argument"
 
-eval `echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?`
+eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
 ------------
 
 SQ-QUOTE
