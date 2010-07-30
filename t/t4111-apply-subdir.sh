@@ -36,7 +36,8 @@ test_expect_success 'setup: subdir' '
 		cp "$2" file &&
 		cp "$2" sub/dir/file &&
 		cp "$2" sub/dir/b/file &&
-		cp "$2" objects/file
+		cp "$2" objects/file &&
+		test_might_fail git update-index --refresh -q
 	}
 '
 
