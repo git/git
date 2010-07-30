@@ -140,6 +140,12 @@ a space) at the start of each line:
 	lines, show only a partial prefix.
 	Non default number of digits can be specified with --abbrev=<n>.
 
+--debug::
+	After each line that describes a file, add more data about its
+	cache entry.  This is intended to show as much information as
+	possible for manual inspection; the exact format may change at
+	any time.
+
 \--::
 	Do not interpret any more arguments as options.
 
