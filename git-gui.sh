@@ -269,6 +269,17 @@ proc is_config_true {name} {
 	}
 }
 
+proc is_config_false {name} {
+	global repo_config
+	if {[catch {set v $repo_config($name)}]} {
+		return 0
+	} elseif {$v eq {false} || $v eq {0} || $v eq {no}} {
+		return 1
+	} else {
+		return 0
+	}
+}
+
 proc get_config {name} {
 	global repo_config
 	if {[catch {set v $repo_config($name)}]} {
@@ -785,6 +796,7 @@ set default_config(user.email) {}
 
 set default_config(gui.encoding) [encoding system]
 set default_config(gui.matchtrackingbranch) false
+set default_config(gui.textconv) true
 set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
 set default_config(gui.fastcopyblame) false
@@ -3411,6 +3423,19 @@ lappend diff_actions [list $ctxmsm entryconf [$ctxmsm index last] -state]
 $ctxmsm add separator
 create_common_diff_popup $ctxmsm
 
+proc has_textconv {path} {
+	if {[is_config_false gui.textconv]} {
+		return 0
+	}
+	set filter [gitattr $path diff set]
+	set textconv [get_config [join [list diff $filter textconv] .]]
+	if {$filter ne {set} && $textconv ne {}} {
+		return 1
+	} else {
+		return 0
+	}
+}
+
 proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 	global current_diff_path file_states
 	set ::cursorX $x
@@ -3446,7 +3471,8 @@ proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 			|| {__} eq $state
 			|| {_O} eq $state
 			|| {_T} eq $state
-			|| {T_} eq $state} {
+			|| {T_} eq $state
+			|| [has_textconv $current_diff_path]} {
 			set s disabled
 		} else {
 			set s normal

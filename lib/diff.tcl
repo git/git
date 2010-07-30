@@ -55,7 +55,7 @@ proc handle_empty_diff {} {
 
 	set path $current_diff_path
 	set s $file_states($path)
-	if {[lindex $s 0] ne {_M}} return
+	if {[lindex $s 0] ne {_M} || [has_textconv $path]} return
 
 	# Prevent infinite rescan loops
 	incr diff_empty_count
@@ -279,6 +279,9 @@ proc start_show_diff {cont_info {add_opts {}}} {
 		} else {
 			lappend cmd diff-files
 		}
+	}
+	if {![is_config_false gui.textconv] && [git-version >= 1.6.1]} {
+		lappend cmd --textconv
 	}
 
 	if {[string match {160000 *} [lindex $s 2]]
