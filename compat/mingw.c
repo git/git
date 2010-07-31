@@ -668,11 +668,16 @@ char *mingw_getcwd(char *pointer, int len)
 char *mingw_getenv(const char *name)
 {
 	char *result = getenv(name);
-	if (!result && !strcmp(name, "TMPDIR")) {
-		/* on Windows it is TMP and TEMP */
-		result = getenv("TMP");
-		if (!result)
-			result = getenv("TEMP");
+	if (!result) {
+		if (!strcmp(name, "TMPDIR")) {
+			/* on Windows it is TMP and TEMP */
+			result = getenv("TMP");
+			if (!result)
+				result = getenv("TEMP");
+		} else if (!strcmp(name, "TERM")) {
+			/* simulate TERM to enable auto-color (see color.c) */
+			result = "winansi";
+		}
 	}
 	return result;
 }
