@@ -2,8 +2,11 @@
  * Copyright 2008 Peter Harris <git@peter.is-a-geek.org>
  */
 
+#undef NOGDI
 #include "../git-compat-util.h"
 #include <malloc.h>
+#include <wingdi.h>
+#include <winreg.h>
 
 /*
  Functions to be wrapped:
@@ -26,6 +29,62 @@ static WORD plain_attr;
 static WORD attr;
 static int negative;
 static FILE *last_stream = NULL;
+
+#ifdef __MINGW32__
+typedef struct _CONSOLE_FONT_INFOEX {
+	ULONG cbSize;
+	DWORD nFont;
+	COORD dwFontSize;
+	UINT FontFamily;
+	UINT FontWeight;
+	WCHAR FaceName[LF_FACESIZE];
+} CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
+#endif
+
+typedef BOOL (WINAPI *PGETCURRENTCONSOLEFONTEX)(HANDLE, BOOL,
+		PCONSOLE_FONT_INFOEX);
+
+static void print_font_warning(void)
+{
+	warning("Your console font probably doesn\'t support Unicode. If "
+		"you experience strange characters in the output, consider "
+		"switching to a TrueType font such as Lucida Console!");
+}
+
+static void check_truetype_font(void)
+{
+	static int truetype_font_checked;
+	DWORD fontFamily = 0;
+	PGETCURRENTCONSOLEFONTEX pGetCurrentConsoleFontEx;
+
+	/* don't do this twice */
+	if (truetype_font_checked)
+		return;
+	truetype_font_checked = 1;
+
+	/* GetCurrentConsoleFontEx is available since Vista */
+	pGetCurrentConsoleFontEx = (PGETCURRENTCONSOLEFONTEX) GetProcAddress(
+			GetModuleHandle("kernel32.dll"), "GetCurrentConsoleFontEx");
+	if (pGetCurrentConsoleFontEx) {
+		CONSOLE_FONT_INFOEX cfi;
+		cfi.cbSize = sizeof(cfi);
+		if (pGetCurrentConsoleFontEx(console, 0, &cfi))
+			fontFamily = cfi.FontFamily;
+	} else {
+		/* pre-Vista: check default console font in registry */
+		HKEY hkey;
+		if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_CURRENT_USER, "Console", 0,
+				KEY_READ, &hkey)) {
+			DWORD size = sizeof(fontFamily);
+			RegQueryValueExA(hkey, "FontFamily", NULL, NULL,
+					(LPVOID) &fontFamily, &size);
+			RegCloseKey(hkey);
+		}
+	}
+
+	if (!(fontFamily & TMPF_TRUETYPE))
+		atexit(print_font_warning);
+}
 
 static int is_console(FILE *stream)
 {
@@ -68,6 +127,13 @@ static int write_console(const char *str, size_t len)
 	MultiByteToWideChar(CP_UTF8, 0, str, len, wbuf, wlen);
 
 	WriteConsoleW(console, wbuf, wlen, NULL, NULL);
+
+	/*
+	 * if non-ascii characters are printed, check that the current console
+	 * font supports this
+	 */
+	if (wlen != len)
+		check_truetype_font();
 
 	/* return original (utf-8 encoded) length */
 	return len;
