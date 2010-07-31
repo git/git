@@ -25,27 +25,39 @@ static HANDLE console;
 static WORD plain_attr;
 static WORD attr;
 static int negative;
+static FILE *last_stream = NULL;
 
-static void init(void)
+static int is_console(FILE *stream)
 {
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	HANDLE hcon;
 
 	static int initialized = 0;
-	if (initialized)
-		return;
 
-	console = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (console == INVALID_HANDLE_VALUE)
-		console = NULL;
+	/* use cached value if stream hasn't changed */
+	if (stream == last_stream)
+		return console != NULL;
 
-	if (!console)
-		return;
+	last_stream = stream;
+	console = NULL;
 
-	GetConsoleScreenBufferInfo(console, &sbi);
-	attr = plain_attr = sbi.wAttributes;
-	negative = 0;
+	/* get OS handle of the stream */
+	hcon = (HANDLE) _get_osfhandle(_fileno(stream));
+	if (hcon == INVALID_HANDLE_VALUE)
+		return 0;
 
-	initialized = 1;
+	/* check if its a handle to a console output screen buffer */
+	if (!GetConsoleScreenBufferInfo(hcon, &sbi))
+		return 0;
+
+	if (!initialized) {
+		attr = plain_attr = sbi.wAttributes;
+		negative = 0;
+		initialized = 1;
+	}
+
+	console = hcon;
+	return 1;
 }
 
 static int write_console(const char *str, size_t len)
@@ -292,12 +304,7 @@ int winansi_fputs(const char *str, FILE *stream)
 {
 	int rv;
 
-	if (!isatty(fileno(stream)))
-		return fputs(str, stream);
-
-	init();
-
-	if (!console)
+	if (!is_console(stream))
 		return fputs(str, stream);
 
 	rv = ansi_emulate(str, stream);
@@ -315,12 +322,7 @@ int winansi_vfprintf(FILE *stream, const char *format, va_list list)
 	char *buf = small_buf;
 	va_list cp;
 
-	if (!isatty(fileno(stream)))
-		goto abort;
-
-	init();
-
-	if (!console)
+	if (!is_console(stream))
 		goto abort;
 
 	va_copy(cp, list);
