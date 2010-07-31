@@ -143,9 +143,6 @@ static int will_have_skip_worktree(const struct cache_entry *ce, struct unpack_t
 {
 	const char *basename;
 
-	if (ce_stage(ce))
-		return 0;
-
 	basename = strrchr(ce->name, '/');
 	basename = basename ? basename+1 : ce->name;
 	return excluded_from_list(ce->name, ce_namelen(ce), basename, NULL, o->el) <= 0;
@@ -155,7 +152,7 @@ static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_opt
 {
 	int was_skip_worktree = ce_skip_worktree(ce);
 
-	if (will_have_skip_worktree(ce, o))
+	if (!ce_stage(ce) && will_have_skip_worktree(ce, o))
 		ce->ce_flags |= CE_SKIP_WORKTREE;
 	else
 		ce->ce_flags &= ~CE_SKIP_WORKTREE;
