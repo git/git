@@ -4,6 +4,8 @@
 
 #include "../git-compat-util.h"
 #include <malloc.h>
+#include <wingdi.h>
+#include <winreg.h>
 
 /*
  Functions to be wrapped:
@@ -26,6 +28,54 @@ static WORD plain_attr;
 static WORD attr;
 static int negative;
 static FILE *last_stream = NULL;
+static int non_ascii_used = 0;
+
+typedef struct _CONSOLE_FONT_INFOEX {
+	ULONG cbSize;
+	DWORD nFont;
+	COORD dwFontSize;
+	UINT FontFamily;
+	UINT FontWeight;
+	WCHAR FaceName[LF_FACESIZE];
+} CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
+
+typedef BOOL (WINAPI *PGETCURRENTCONSOLEFONTEX)(HANDLE, BOOL,
+		PCONSOLE_FONT_INFOEX);
+
+static void warn_if_raster_font(void)
+{
+	DWORD fontFamily = 0;
+	PGETCURRENTCONSOLEFONTEX pGetCurrentConsoleFontEx;
+
+	/* don't bother if output was ascii only */
+	if (!non_ascii_used)
+		return;
+
+	/* GetCurrentConsoleFontEx is available since Vista */
+	pGetCurrentConsoleFontEx = GetProcAddress(GetModuleHandle("kernel32.dll"),
+			"GetCurrentConsoleFontEx");
+	if (pGetCurrentConsoleFontEx) {
+		CONSOLE_FONT_INFOEX cfi;
+		cfi.cbSize = sizeof(cfi);
+		if (pGetCurrentConsoleFontEx(console, 0, &cfi))
+			fontFamily = cfi.FontFamily;
+	} else {
+		/* pre-Vista: check default console font in registry */
+		HKEY hkey;
+		if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_CURRENT_USER, "Console", 0,
+				KEY_READ, &hkey)) {
+			DWORD size = sizeof(fontFamily);
+			RegQueryValueExA(hkey, "FontFamily", NULL, NULL,
+					(LPVOID) &fontFamily, &size);
+			RegCloseKey(hkey);
+		}
+	}
+
+	if (!(fontFamily & TMPF_TRUETYPE))
+		warning("Your console font probably doesn\'t support "
+			"Unicode. If you experience strange characters in the output, "
+			"consider switching to a TrueType font such as Lucida Console!");
+}
 
 static int is_console(FILE *stream)
 {
@@ -54,6 +104,8 @@ static int is_console(FILE *stream)
 		attr = plain_attr = sbi.wAttributes;
 		negative = 0;
 		initialized = 1;
+		/* check console font on exit */
+		atexit(warn_if_raster_font);
 	}
 
 	console = hcon;
@@ -68,6 +120,10 @@ static int write_console(const char *str, size_t len)
 	MultiByteToWideChar(CP_UTF8, 0, str, len, wbuf, wlen);
 
 	WriteConsoleW(console, wbuf, wlen, NULL, NULL);
+
+	/* remember if non-ascii characters are printed */
+	if (wlen != len)
+		non_ascii_used = 1;
 
 	/* return original (utf-8 encoded) length */
 	return len;
