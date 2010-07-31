@@ -3,6 +3,7 @@
  */
 
 #include "../git-compat-util.h"
+#include <malloc.h>
 
 /*
  Functions to be wrapped:
@@ -10,6 +11,7 @@
 #undef printf
 #undef fprintf
 #undef fputs
+#undef vfprintf
 /* TODO: write */
 
 /*
@@ -46,6 +48,18 @@ static void init(void)
 	initialized = 1;
 }
 
+static int write_console(const char *str, size_t len)
+{
+	/* convert utf-8 to utf-16, write directly to console */
+	int wlen = MultiByteToWideChar(CP_UTF8, 0, str, len, NULL, 0);
+	wchar_t *wbuf = (wchar_t *) alloca(wlen * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, str, len, wbuf, wlen);
+
+	WriteConsoleW(console, wbuf, wlen, NULL, NULL);
+
+	/* return original (utf-8 encoded) length */
+	return len;
+}
 
 #define FOREGROUND_ALL (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
 #define BACKGROUND_ALL (BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE)
@@ -245,13 +259,15 @@ static int ansi_emulate(const char *str, FILE *stream)
 	int rv = 0;
 	const char *pos = str;
 
+	fflush(stream);
+
 	while (*pos) {
 		pos = strstr(str, "\033[");
 		if (pos) {
 			size_t len = pos - str;
 
 			if (len) {
-				size_t out_len = fwrite(str, 1, len, stream);
+				size_t out_len = write_console(str, len);
 				rv += out_len;
 				if (out_len < len)
 					return rv;
@@ -260,14 +276,12 @@ static int ansi_emulate(const char *str, FILE *stream)
 			str = pos + 2;
 			rv += 2;
 
-			fflush(stream);
-
 			pos = set_attr(str);
 			rv += pos - str;
 			str = pos;
 		} else {
-			rv += strlen(str);
-			fputs(str, stream);
+			size_t len = strlen(str);
+			rv += write_console(str, len);
 			return rv;
 		}
 	}
@@ -294,7 +308,7 @@ int winansi_fputs(const char *str, FILE *stream)
 		return EOF;
 }
 
-static int winansi_vfprintf(FILE *stream, const char *format, va_list list)
+int winansi_vfprintf(FILE *stream, const char *format, va_list list)
 {
 	int len, rv;
 	char small_buf[256];
