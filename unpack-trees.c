@@ -164,13 +164,18 @@ static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_opt
 		ce->ce_flags &= ~CE_SKIP_WORKTREE;
 
 	/*
-	 * We only care about files getting into the checkout area
-	 * If merge strategies want to remove some, go ahead, this
-	 * flag will be removed eventually in unpack_trees() if it's
-	 * outside checkout area.
+	 * if (!was_skip_worktree && !ce_skip_worktree()) {
+	 *	This is perfectly normal. Move on;
+	 * }
 	 */
-	if (ce->ce_flags & CE_REMOVE)
-		return 0;
+
+	/*
+	 * Merge strategies may set CE_UPDATE|CE_REMOVE outside checkout
+	 * area as a result of ce_skip_worktree() shortcuts in
+	 * verify_absent() and verify_uptodate(). Clear them.
+	 */
+	if (was_skip_worktree && ce_skip_worktree(ce))
+		ce->ce_flags &= ~(CE_UPDATE | CE_REMOVE);
 
 	if (!was_skip_worktree && ce_skip_worktree(ce)) {
 		/*
@@ -796,14 +801,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 				ret = -1;
 				goto done;
 			}
-			/*
-			 * Merge strategies may set CE_UPDATE|CE_REMOVE outside checkout
-			 * area as a result of ce_skip_worktree() shortcuts in
-			 * verify_absent() and verify_uptodate(). Clear them.
-			 */
-			if (ce_skip_worktree(ce))
-				ce->ce_flags &= ~(CE_UPDATE | CE_REMOVE);
-			else
+			if (!ce_skip_worktree(ce))
 				empty_worktree = 0;
 
 		}
