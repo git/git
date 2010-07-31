@@ -53,6 +53,9 @@ static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 
 	clear |= CE_HASHED | CE_UNHASHED;
 
+	if (set & CE_REMOVE)
+		set |= CE_WT_REMOVE;
+
 	memcpy(new, ce, size);
 	new->next = NULL;
 	new->ce_flags = (new->ce_flags & ~clear) | set;
@@ -92,7 +95,7 @@ static int check_updates(struct unpack_trees_options *o)
 	if (o->update && o->verbose_update) {
 		for (total = cnt = 0; cnt < index->cache_nr; cnt++) {
 			struct cache_entry *ce = index->cache[cnt];
-			if (ce->ce_flags & (CE_UPDATE | CE_REMOVE | CE_WT_REMOVE))
+			if (ce->ce_flags & (CE_UPDATE | CE_WT_REMOVE))
 				total++;
 		}
 
@@ -111,12 +114,6 @@ static int check_updates(struct unpack_trees_options *o)
 			if (o->update)
 				unlink_entry(ce);
 			continue;
-		}
-
-		if (ce->ce_flags & CE_REMOVE) {
-			display_progress(progress, ++cnt);
-			if (o->update)
-				unlink_entry(ce);
 		}
 	}
 	remove_marked_cache_entries(&o->result);
@@ -172,10 +169,22 @@ static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_opt
 	/*
 	 * Merge strategies may set CE_UPDATE|CE_REMOVE outside checkout
 	 * area as a result of ce_skip_worktree() shortcuts in
-	 * verify_absent() and verify_uptodate(). Clear them.
+	 * verify_absent() and verify_uptodate().
+	 * Make sure they don't modify worktree if they are already
+	 * outside checkout area
 	 */
-	if (was_skip_worktree && ce_skip_worktree(ce))
-		ce->ce_flags &= ~(CE_UPDATE | CE_REMOVE);
+	if (was_skip_worktree && ce_skip_worktree(ce)) {
+		ce->ce_flags &= ~CE_UPDATE;
+
+		/*
+		 * By default, when CE_REMOVE is on, CE_WT_REMOVE is also
+		 * on to get that file removed from both index and worktree.
+		 * If that file is already outside worktree area, don't
+		 * bother remove it.
+		 */
+		if (ce->ce_flags & CE_REMOVE)
+			ce->ce_flags &= ~CE_WT_REMOVE;
+	}
 
 	if (!was_skip_worktree && ce_skip_worktree(ce)) {
 		/*
