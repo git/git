@@ -134,9 +134,6 @@ do
 		with_dashes=t; shift ;;
 	--no-color)
 		color=; shift ;;
-	--no-python)
-		# noop now...
-		shift ;;
 	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
 		valgrind=t; verbose=t; shift ;;
 	--tee)
