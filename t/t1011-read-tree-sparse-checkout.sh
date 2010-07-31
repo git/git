@@ -146,7 +146,7 @@ test_expect_success 'read-tree adds to worktree, absent case' '
 	test ! -f sub/added
 '
 
-test_expect_failure 'read-tree adds to worktree, dirty case' '
+test_expect_success 'read-tree adds to worktree, dirty case' '
 	echo init.t >.git/info/sparse-checkout &&
 	git checkout -f removed &&
 	mkdir sub &&

@@ -1096,6 +1096,8 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 	if (!old) {
 		if (verify_absent(merge, "overwritten", o))
 			return -1;
+		if (!o->skip_sparse_checkout && will_have_skip_worktree(merge, o))
+			update |= CE_SKIP_WORKTREE;
 		invalidate_ce_path(merge, o);
 	} else if (!(old->ce_flags & CE_CONFLICTED)) {
 		/*
