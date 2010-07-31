@@ -1209,6 +1209,10 @@ char *mingw_getenv(const char *name)
 		if (!result)
 			result = getenv_cs("TEMP");
 	}
+	else if (!result && !strcmp(name, "TERM")) {
+		/* simulate TERM to enable auto-color (see color.c) */
+		result = "winansi";
+	}
 	return result;
 }
 
