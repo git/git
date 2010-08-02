@@ -38,7 +38,7 @@ if {[catch {package require Tcl 8.4} err]
 	tk_messageBox \
 		-icon error \
 		-type ok \
-		-title [mc "git-gui: fatal error"] \
+		-title "git-gui: fatal error" \
 		-message $err
 	exit 1
 }
