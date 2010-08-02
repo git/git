@@ -271,6 +271,17 @@ test_expect_success 'able to dcommit to a subdirectory' "
 	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
 	"
 
+test_expect_success 'dcommit should not fail with a touched file' '
+	test_commit "commit-new-file-foo2" foo2 &&
+	test-chmtime =-60 foo &&
+	git svn dcommit
+'
+
+test_expect_success 'rebase should not fail with a touched file' '
+	test-chmtime =-60 foo &&
+	git svn rebase
+'
+
 test_expect_success 'able to set-tree to a subdirectory' "
 	echo cba > d &&
 	git update-index d &&

@@ -494,6 +494,7 @@ sub cmd_set_tree {
 
 sub cmd_dcommit {
 	my $head = shift;
+	command_noisy(qw/update-index --refresh/);
 	git_cmd_try { command_oneline(qw/diff-index --quiet HEAD/) }
 		'Cannot dcommit with a dirty index.  Commit your changes first, '
 		. "or stash them with `git stash'.\n";
@@ -4050,6 +4051,7 @@ sub new {
 	$self->{absent_dir} = {};
 	$self->{absent_file} = {};
 	$self->{gii} = $git_svn->tmp_index_do(sub { Git::IndexInfo->new });
+	$self->{pathnameencoding} = Git::config('svn.pathnameencoding');
 	$self;
 }
 
@@ -4133,6 +4135,10 @@ sub open_directory {
 
 sub git_path {
 	my ($self, $path) = @_;
+	if (my $enc = $self->{pathnameencoding}) {
+		require Encode;
+		Encode::from_to($path, 'UTF-8', $enc);
+	}
 	if ($self->{path_strip}) {
 		$path =~ s!$self->{path_strip}!! or
 		  die "Failed to strip path '$path' ($self->{path_strip})\n";
@@ -4521,6 +4527,10 @@ sub split_path {
 
 sub repo_path {
 	my ($self, $path) = @_;
+	if (my $enc = $self->{pathnameencoding}) {
+		require Encode;
+		Encode::from_to($path, $enc, 'UTF-8');
+	}
 	$self->{path_prefix}.(defined $path ? $path : '');
 }
 

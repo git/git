@@ -646,6 +646,12 @@ svn.brokenSymlinkWorkaround::
 	revision fetched.  If unset, 'git svn' assumes this option to
 	be "true".
 
+svn.pathnameencoding::
+	This instructs git svn to recode pathnames to a given encoding.
+	It can be used by windows users and by those who work in non-utf8
+	locales to avoid corrupted file names with non-ASCII characters.
+	Valid encodings are the ones supported by Perl's Encode module.
+
 Since the noMetadata, rewriteRoot, rewriteUUID, useSvnsyncProps and useSvmProps
 options all affect the metadata generated and used by 'git svn'; they
 *must* be set in the configuration file before any history is imported
