@@ -727,6 +727,13 @@ The documentation for git suite was started by David Greaves
 <david@dgreaves.com>, and later enhanced greatly by the
 contributors on the git-list <git@vger.kernel.org>.
 
+Reporting Bugs
+--------------
+
+Report bugs to the Git mailing list <git@vger.kernel.org> where the
+development and maintenance is primarily done.  You do not have to be
+subscribed to the list to send a message there.
+
 SEE ALSO
 --------
 linkgit:gittutorial[7], linkgit:gittutorial-2[7],

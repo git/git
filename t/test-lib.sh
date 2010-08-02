@@ -127,14 +127,13 @@ do
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
 		verbose=t; shift ;;
 	-q|--q|--qu|--qui|--quie|--quiet)
-		quiet=t; shift ;;
+		# Ignore --quiet under a TAP::Harness. Saying how many tests
+		# passed without the ok/not ok details is always an error.
+		test -z "$HARNESS_ACTIVE" && quiet=t; shift ;;
 	--with-dashes)
 		with_dashes=t; shift ;;
 	--no-color)
 		color=; shift ;;
-	--no-python)
-		# noop now...
-		shift ;;
 	--va|--val|--valg|--valgr|--valgri|--valgrin|--valgrind)
 		valgrind=t; verbose=t; shift ;;
 	--tee)
