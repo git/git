@@ -49,15 +49,18 @@ OPTIONS
 	linkgit:git-web--browse[1] for more information about this. If
 	the script fails, the URL will be printed to stdout.
 
+start::
 --start::
 	Start the httpd instance and exit.  This does not generate
 	any of the configuration files for spawning a new instance.
 
+stop::
 --stop::
 	Stop the httpd instance and exit.  This does not generate
 	any of the configuration files for spawning a new instance,
 	nor does it close the browser.
 
+restart::
 --restart::
 	Restart the httpd instance and exit.  This does not generate
 	any of the configuration files for spawning a new instance.
