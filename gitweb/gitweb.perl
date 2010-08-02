@@ -1125,7 +1125,7 @@ sub run {
 
 		run_request();
 
-		$pre_dispatch_hook->()
+		$post_dispatch_hook->()
 			if $post_dispatch_hook;
 
 		last REQUEST if ($is_last_request->());
