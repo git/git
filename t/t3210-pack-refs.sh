@@ -60,6 +60,12 @@ test_expect_success 'see if git pack-refs --prune remove ref files' '
      ! test -f .git/refs/heads/f
 '
 
+test_expect_success 'see if git pack-refs --prune removes empty dirs' '
+     git branch r/s/t &&
+     git pack-refs --all --prune &&
+     ! test -e .git/refs/heads/r
+'
+
 test_expect_success \
     'git branch g should work when git branch g/h has been deleted' \
     'git branch g/h &&
