@@ -588,7 +588,8 @@ void show_log(struct rev_info *opt)
 	if (opt->graph)
 		graph_show_commit_msg(opt->graph, &msgbuf);
 	else
-		fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
+		/* Do not use fwrite() to give MinGW reencoding a chance */
+		printf("%.*s", (int)msgbuf.len, msgbuf.buf);
 	if (opt->use_terminator) {
 		if (!opt->missing_newline)
 			graph_show_padding(opt->graph);
