@@ -13,10 +13,11 @@ if { $argc >=2 && [lindex $argv 0] == "--working-dir" } {
 	incr argc -2
 }
 
-set bindir [file dirname \
+set basedir [file dirname \
             [file dirname \
              [file dirname [info script]]]]
-set bindir [file join $bindir bin]
+set bindir [file join $basedir bin]
+set bindir "$bindir;[file join $basedir mingw bin]"
 regsub -all ";" $bindir "\\;" bindir
 set env(PATH) "$bindir;$env(PATH)"
 unset bindir
