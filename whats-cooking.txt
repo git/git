@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2010, #05; Wed, 28)
-X-master-at: 61bf126ecb24977b883079942b71ff96174c19fb
-X-next-at: 75e8ac1bc0d18c1f8ca82f22ec04c8407298f41f
+Subject: What's cooking in git.git (Aug 2010, #01; Wed, 4)
+X-master-at: 721e76cbfac650ce676fc789b717eb21e1daa46e
+X-next-at: 7f78604dbfb7c90248f8142905329a97e26c8539
 
-What's cooking in git.git (Jul 2010, #05; Wed, 28)
+What's cooking in git.git (Aug 2010, #01; Wed, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,11 +11,71 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-Now that the latest feature release 1.7.2 is out, we should rewind and
-rebuild 'next' and start cooking new topics.
+The tip of 'next' has been rewound and rebuilt on top of v1.7.2; also a
+few topics have been ejected as I've been warning to.  I'll start merging
+more stuff to 'next' in the next round after reading them over again.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* gp/pack-refs-remove-empty-dirs (2010-07-06) 1 commit
+  (merged to 'next' on 2010-07-14 at 7d25131)
+ + pack-refs: remove newly empty directories
+
+* pt/git-gui (2010-08-02) 13 commits
+ + Merge git://repo.or.cz/git-gui into pt/git-gui
+ + git-gui: fix size and position of window panes on startup
+ + git-gui: mc cannot be used before msgcat has been loaded
+ + git-gui: use textconv filter for diff and blame
+ + git-gui: Avoid using the <<Copy>> binding as a menu accelerator on win32
+ + git-gui: fix shortcut creation on cygwin
+ + git-gui: fix PATH environment for mingw development environment
+ + git-gui: fix usage of _gitworktree when creating shortcut for windows
+ + git-gui: fix "Explore Working Copy" for Windows again
+ + git-gui: fix usage of themed widgets variable
+ + git-gui: Handle failure of core.worktree to identify the working directory.
+ + Merge branch 'maint'
+ + git-gui: check whether systems nice command works or disable it
+
+* rr/svn-fe (2010-07-29) 2 commits
+ + contrib/svn-fe: Add the svn-fe target to .gitignore
+ + contrib/svn-fe: Fix IncludePath
+
+* sv/maint-diff-q-clear-fix (2010-08-02) 1 commit
+ + Fix DIFF_QUEUE_CLEAR refactoring
 
 --------------------------------------------------
 [New Topics]
+
+* jc/sha1-name-find-fix (2010-08-02) 1 commit
+ - sha1_name.c: fix parsing of ":/token" syntax
+
+* jn/doc-pull (2010-08-02) 1 commit
+ - Documentation: flesh out “git pull” description
+
+* jn/maint-gitweb-dynconf (2010-07-30) 1 commit
+ - gitweb: allow configurations that change with each request
+
+* sr/local-config (2010-08-03) 1 commit
+ - config: add --local option
+
+--------------------------------------------------
+[Stalled]
+
+* zl/mailinfo-recode-patch (2010-06-14) 2 commits
+ - add --recode-patch option to git-am
+ - add --recode-patch option to git-mailinfo
+
+I recall there was another round of re-roll planned for this one.
+
+* jk/tag-contains (2010-07-05) 4 commits
+ - Why is "git tag --contains" so slow?
+ - default core.clockskew variable to one day
+ - limit "contains" traversals based on commit timestamp
+ - tag: speed up --contains calculation
+
+--------------------------------------------------
+[Cooking]
 
 * ab/test-coverage (2010-07-26) 8 commits
  - Makefile: make gcov invocation configurable
@@ -72,10 +132,11 @@ rebuild 'next' and start cooking new topics.
  - checkout, commit: remove confusing assignments to rev.abbrev
  - archive: abbreviate substituted commit ids again
 
-* jn/maint-setup-fix (2010-07-24) 10 commits
+* jn/maint-setup-fix (2010-07-24) 11 commits
  - setup: split off a function to handle ordinary .git directories
  - Revert "rehabilitate 'git index-pack' inside the object store"
  - setup: do not forget working dir from subdir of gitdir
+ - t4111 (apply): refresh index before applying patches to it
  - setup: split off get_device_or_die helper
  - setup: split off a function to handle hitting ceiling in repo search
  - setup: split off code to handle stumbling upon a repository
@@ -94,16 +155,19 @@ rebuild 'next' and start cooking new topics.
 * ml/rebase-x-strategy (2010-07-29) 1 commit
  - rebase: support -X to pass through strategy options
 
-* mm/shortopt-detached (2010-07-28) 4 commits
- - Allow detached form for --glob, --branches, --tags and --remote.
- - Allow detached form (e.g. "git log --grep foo") in log options.
- - Allow detached form for git diff --stat-name-width and --stat-width.
- - Allow detached form (e.g. "-S foo" instead of "-Sfoo") for diff options
+* mm/shortopt-detached (2010-07-30) 5 commits
+ - log: parse detached option for --glob
+ - log: parse detached options like git log --grep foo
+ - diff: parse detached options --stat-width n, --stat-name-width n
+ - diff: split off a function for --stat-* option parsing
+ - diff: parse detached options like -S foo
 
-* nd/fix-sparse-checkout (2010-07-26) 3 commits
- - Mark new entries skip-worktree appropriately
- - unpack-trees.c: Do not check ce_stage in will_have_skip_worktree()
- - Fix sparse checkout not removing files from index
+* nd/fix-sparse-checkout (2010-07-31) 5 commits
+ - unpack-trees: mark new entries skip-worktree appropriately
+ - unpack-trees: do not check for conflict entries too early
+ - unpack-trees: let read-tree -u remove index entries outside sparse area
+ - unpack-trees: only clear CE_UPDATE|CE_REMOVE when skip-worktree is always set
+ - t1011 (sparse checkout): style nitpicks
 
 * tr/ab-i18n-fix (2010-07-25) 1 commit
  - tests: locate i18n lib&data correctly under --valgrind
@@ -117,71 +181,6 @@ rebuild 'next' and start cooking new topics.
 
 * vs/doc-spell (2010-07-20) 1 commit
  - Documentation: spelling fixes
-
---------------------------------------------------
-[Stalled -- would discard unless there are some movements soon]
-
-* by/log-range-diff (2010-07-12) 18 commits
- . Minimum fix to make by/log-range-diff topic at least compile
- . add test cases for '--graph' of line level log
- . line.c output the '--graph' padding before each line
- . add parent rewrite feature to line level log
- . make rewrite_parents an external function
- . some document update
- . add two test cases
- . add --always-print option
- . map/print ranges along traversing the history topologically
- . print the line log
- . map/take range to parent
- . add range clone functions
- . export three functions from diff.c
- . parse the -L options
- . refactor parse_loc
- . add the basic data structure for line level history
- . parse-options: add two helper functions
- . parse-options: stop when encounter a non-option
-
-Perhaps a re-roll is coming?  I suspect that we would have some overlaps
-to mm/shortopt-detached topic.
-
-* ps/gitweb-soc (2010-06-02) 2 commits
-  (merged to 'next' on 2010-06-13 at 92245ae)
- + git-instaweb: Add option to reuse previous config file
- + Makefile: Use $(sharedir)/gitweb for target 'install-gitweb'
-
-If we are going to have a configuration variable to control this, I
-strongly suspect that --reuse-config should be renamed so that the
-variable can be named more sanely and in line with whatever option
-that replaces it.
-
-No responses; I think we will eventually want to have a configuration to
-always enable the new option, so the renaming of the command line option
-is inevitable.  I plan to kick this out of 'next' once the upcoming
-release is out, and expect a re-roll with configuration variable.
-
-* js/rebase-origin-x (2010-02-05) 1 commit
- - [RFC w/o test and incomplete] rebase: add -x option to record original commit name
-
-I retract my objection against the idea of -x; needs polishing before
-moving forward.
-
-No responses; I plan to drop this entirely after the upcoming release
-without prejudice.
-
-* zl/mailinfo-recode-patch (2010-06-14) 2 commits
- - add --recode-patch option to git-am
- - add --recode-patch option to git-mailinfo
-
-I recall there was another round of re-roll planned for this one.
-
-* jk/tag-contains (2010-07-05) 4 commits
- - Why is "git tag --contains" so slow?
- - default core.clockskew variable to one day
- - limit "contains" traversals based on commit timestamp
- - tag: speed up --contains calculation
-
---------------------------------------------------
-[Cooking]
 
 * ab/report-corrupt-object-with-type (2010-06-10) 1 commit
  - sha1_file: Show the the type and path to corrupt objects
@@ -211,7 +210,8 @@ I recall there was another round of re-roll planned for this one.
  - Documentation/reset: separate options by mode
  - Documentation/git-reset: reorder modes for soft-mixed-hard progression
 
-* rr/svn-export (2010-07-15) 8 commits
+* rr/svn-export (2010-07-29) 9 commits
+ - vcs-svn: Remove stray calls to removed functions
  - Add SVN dump parser
  - Add infrastructure to write revisions in fast-export format
  - Add stream helper library
@@ -234,14 +234,11 @@ I recall there was another round of re-roll planned for this one.
  - Add a for_each_string_list_item macro
  (this branch is used by tf/string-list-init.)
 
-* il/rfc-remote-fd-ext (2010-07-19) 3 commits
+* il/rfc-remote-fd-ext (2010-07-31) 4 commits
+ - Rewrite bidirectional traffic loop
  - gitignore: Ignore the new /git-remote-{ext,fd} helpers
  - New remote helper: git-remote-ext
  - New remote helper git-remote-fd
-
-* gp/pack-refs-remove-empty-dirs (2010-07-06) 1 commit
-  (merged to 'next' on 2010-07-14 at 7d25131)
- + pack-refs: remove newly empty directories
 
 * hv/submodule-find-ff-merge (2010-07-07) 3 commits
  - Implement automatic fast-forward merge for submodules
@@ -260,9 +257,8 @@ I recall there was another round of re-roll planned for this one.
  (this branch uses ar/string-list-foreach.)
 
 * en/d-f-conflict-fix (2010-07-27) 7 commits
-  (merged to 'next' on 2010-07-28 at 75e8ac1)
+  (merged to 'next' on 2010-08-03 at 7f78604)
  + t/t6035-merge-dir-to-symlink.sh: Remove TODO on passing test
-  (merged to 'next' on 2010-07-14 at 2b2a810)
  + fast-import: Improve robustness when D->F changes provided in wrong order
  + fast-export: Fix output order of D/F changes
  + merge_recursive: Fix renames across paths below D/F conflicts
