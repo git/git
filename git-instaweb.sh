@@ -57,6 +57,13 @@ resolve_full_httpd () {
 		httpd_only="${httpd%% *}" # cut on first space
 		return
 		;;
+	*webrick*)
+		# server is started by running via generated webrick.sh in
+		# $fqgitdir/gitweb
+		full_httpd="$fqgitdir/gitweb/webrick.sh"
+		httpd_only="${httpd%% *}" # cut on first space
+		return
+		;;
 	esac
 
 	httpd_only="$(echo $httpd | cut -f1 -d' ')"
@@ -188,6 +195,23 @@ GITWEB_CONFIG="$fqgitdir/gitweb/gitweb_config.perl"
 export GIT_EXEC_PATH GIT_DIR GITWEB_CONFIG
 
 webrick_conf () {
+	# webrick seems to have no way of passing arbitrary environment
+	# variables to the underlying CGI executable, so we wrap the
+	# actual gitweb.cgi using a shell script to force it
+  wrapper="$fqgitdir/gitweb/$httpd/wrapper.sh"
+	cat > "$wrapper" <<EOF
+#!/bin/sh
+# we use this shell script wrapper around the real gitweb.cgi since
+# there appears to be no other way to pass arbitrary environment variables
+# into the CGI process
+GIT_EXEC_PATH=$GIT_EXEC_PATH GIT_DIR=$GIT_DIR GITWEB_CONFIG=$GITWEB_CONFIG
+export GIT_EXEC_PATH GIT_DIR GITWEB_CONFIG
+exec $root/gitweb.cgi
+EOF
+	chmod +x "$wrapper"
+
+	# This assumes _ruby_ is in the user's $PATH. that's _one_
+	# portable way to run ruby, which could be installed anywhere, really.
 	# generate a standalone server script in $fqgitdir/gitweb.
 	cat >"$fqgitdir/gitweb/$httpd.rb" <<EOF
 require 'webrick'
@@ -209,17 +233,18 @@ EOF
 	# which assumes _ruby_ is in the user's $PATH. that's _one_
 	# portable way to run ruby, which could be installed anywhere,
 	# really.
-	cat >"$fqgitdir/gitweb/$httpd" <<EOF
+	cat >"$fqgitdir/gitweb/$httpd.sh" <<EOF
 #!/bin/sh
 exec ruby "$fqgitdir/gitweb/$httpd.rb" \$*
 EOF
-	chmod +x "$fqgitdir/gitweb/$httpd"
+	chmod +x "$fqgitdir/gitweb/$httpd.sh"
 
 	cat >"$conf" <<EOF
 :Port: $port
 :DocumentRoot: "$root"
 :DirectoryIndex: ["gitweb.cgi"]
 :PidFile: "$fqgitdir/pid"
+:CGIInterpreter: "$wrapper"
 EOF
 	test "$local" = true && echo ':BindAddress: "127.0.0.1"' >> "$conf"
 }
