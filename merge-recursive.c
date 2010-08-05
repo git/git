@@ -1074,7 +1074,7 @@ static int read_sha1_strbuf(const unsigned char *sha1, struct strbuf *dst)
 
 static int blob_unchanged(const unsigned char *o_sha,
 			  const unsigned char *a_sha,
-			  const char *path)
+			  int renormalize, const char *path)
 {
 	struct strbuf o = STRBUF_INIT;
 	struct strbuf a = STRBUF_INIT;
@@ -1082,7 +1082,7 @@ static int blob_unchanged(const unsigned char *o_sha,
 
 	if (sha_eq(o_sha, a_sha))
 		return 1;
-	if (!merge_renormalize)
+	if (!renormalize)
 		return 0;
 
 	assert(o_sha && a_sha);
@@ -1112,6 +1112,7 @@ static int process_entry(struct merge_options *o,
 	print_index_entry("\tpath: ", entry);
 	*/
 	int clean_merge = 1;
+	int normalize = merge_renormalize;
 	unsigned o_mode = entry->stages[1].mode;
 	unsigned a_mode = entry->stages[2].mode;
 	unsigned b_mode = entry->stages[3].mode;
@@ -1122,8 +1123,8 @@ static int process_entry(struct merge_options *o,
 	if (o_sha && (!a_sha || !b_sha)) {
 		/* Case A: Deleted in one */
 		if ((!a_sha && !b_sha) ||
-		    (!b_sha && blob_unchanged(o_sha, a_sha, path)) ||
-		    (!a_sha && blob_unchanged(o_sha, b_sha, path))) {
+		    (!b_sha && blob_unchanged(o_sha, a_sha, normalize, path)) ||
+		    (!a_sha && blob_unchanged(o_sha, b_sha, normalize, path))) {
 			/* Deleted in both or deleted in one and
 			 * unchanged in the other */
 			if (a_sha)
