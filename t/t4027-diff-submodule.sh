@@ -115,6 +115,9 @@ test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match)'
 '
 
 test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match) [.git/config]' '
+	git config diff.ignoreSubmodules all &&
+	git diff HEAD >actual &&
+	! test -s actual &&
 	git config submodule.subname.ignore none &&
 	git config submodule.subname.path sub &&
 	git diff HEAD >actual &&
@@ -136,10 +139,14 @@ test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match) 
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config --remove-section submodule.subname
+	git config --remove-section submodule.subname &&
+	git config --unset diff.ignoreSubmodules
 '
 
 test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match) [.gitmodules]' '
+	git config diff.ignoreSubmodules dirty &&
+	git diff HEAD >actual &&
+	! test -s actual &&
 	git config --add -f .gitmodules submodule.subname.ignore none &&
 	git config --add -f .gitmodules submodule.subname.path sub &&
 	git diff HEAD >actual &&
@@ -166,6 +173,7 @@ test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match) 
 	test_cmp expect.body actual.body &&
 	git config --remove-section submodule.subname &&
 	git config --remove-section -f .gitmodules submodule.subname &&
+	git config --unset diff.ignoreSubmodules &&
 	rm .gitmodules
 '
 
