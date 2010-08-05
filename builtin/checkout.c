@@ -437,6 +437,13 @@ static int merge_working_tree(struct checkout_opts *opts,
 			 */
 
 			add_files_to_cache(NULL, NULL, 0);
+			/*
+			 * NEEDSWORK: carrying over local changes
+			 * when branches have different end-of-line
+			 * normalization (or clean+smudge rules) is
+			 * a pain; plumb in an option to set
+			 * o.renormalize?
+			 */
 			init_merge_options(&o);
 			o.verbosity = 0;
 			work = write_tree_from_memory(&o);

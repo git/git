@@ -318,6 +318,13 @@ static void do_recursive_merge(struct commit *base, struct commit *next,
 	index_fd = hold_locked_index(&index_lock, 1);
 
 	read_cache();
+
+	/*
+	 * NEEDSWORK: cherry-picking between branches with
+	 * different end-of-line normalization is a pain;
+	 * plumb in an option to set o.renormalize?
+	 * (or better: arbitrary -X options)
+	 */
 	init_merge_options(&o);
 	o.ancestor = base ? base_label : "(empty tree)";
 	o.branch1 = "HEAD";

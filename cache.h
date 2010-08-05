@@ -551,7 +551,6 @@ extern int read_replace_refs;
 extern int fsync_object_files;
 extern int core_preload_index;
 extern int core_apply_sparse_checkout;
-extern int merge_renormalize;
 
 enum safe_crlf {
 	SAFE_CRLF_FALSE = 0,
