@@ -29,7 +29,6 @@ static WORD plain_attr;
 static WORD attr;
 static int negative;
 static FILE *last_stream = NULL;
-static int non_ascii_used = 0;
 
 #ifdef __MINGW32__
 typedef struct _CONSOLE_FONT_INFOEX {
@@ -45,14 +44,23 @@ typedef struct _CONSOLE_FONT_INFOEX {
 typedef BOOL (WINAPI *PGETCURRENTCONSOLEFONTEX)(HANDLE, BOOL,
 		PCONSOLE_FONT_INFOEX);
 
-static void warn_if_raster_font(void)
+static void print_font_warning(void)
 {
+	warning("Your console font probably doesn\'t support Unicode. If "
+		"you experience strange characters in the output, consider "
+		"switching to a TrueType font such as Lucida Console!");
+}
+
+static void check_truetype_font(void)
+{
+	static int truetype_font_checked;
 	DWORD fontFamily = 0;
 	PGETCURRENTCONSOLEFONTEX pGetCurrentConsoleFontEx;
 
-	/* don't bother if output was ascii only */
-	if (!non_ascii_used)
+	/* don't do this twice */
+	if (truetype_font_checked)
 		return;
+	truetype_font_checked = 1;
 
 	/* GetCurrentConsoleFontEx is available since Vista */
 	pGetCurrentConsoleFontEx = (PGETCURRENTCONSOLEFONTEX) GetProcAddress(
@@ -75,9 +83,7 @@ static void warn_if_raster_font(void)
 	}
 
 	if (!(fontFamily & TMPF_TRUETYPE))
-		warning("Your console font probably doesn\'t support "
-			"Unicode. If you experience strange characters in the output, "
-			"consider switching to a TrueType font such as Lucida Console!");
+		atexit(print_font_warning);
 }
 
 static int is_console(FILE *stream)
@@ -107,8 +113,6 @@ static int is_console(FILE *stream)
 		attr = plain_attr = sbi.wAttributes;
 		negative = 0;
 		initialized = 1;
-		/* check console font on exit */
-		atexit(warn_if_raster_font);
 	}
 
 	console = hcon;
@@ -124,9 +128,12 @@ static int write_console(const char *str, size_t len)
 
 	WriteConsoleW(console, wbuf, wlen, NULL, NULL);
 
-	/* remember if non-ascii characters are printed */
+	/*
+	 * if non-ascii characters are printed, check that the current console
+	 * font supports this
+	 */
 	if (wlen != len)
-		non_ascii_used = 1;
+		check_truetype_font();
 
 	/* return original (utf-8 encoded) length */
 	return len;
