@@ -292,4 +292,95 @@ test_expect_success 'merge --no-rerere-autoupdate' '
 	test_cmp expected actual
 '
 
+test_expect_success 'set up an unresolved merge' '
+	headblob=$(git rev-parse version2:file3) &&
+	mergeblob=$(git rev-parse fifth:file3) &&
+	cat >expected.unresolved <<-EOF &&
+	100644 $headblob 2	file3
+	100644 $mergeblob 3	file3
+	EOF
+
+	test_might_fail git config --unset rerere.autoupdate &&
+	git reset --hard &&
+	git checkout version2 &&
+	fifth=$(git rev-parse fifth) &&
+	echo "$fifth		branch 'fifth' of ." |
+	git fmt-merge-msg >msg &&
+	ancestor=$(git merge-base version2 fifth) &&
+	test_must_fail git merge-recursive "$ancestor" -- HEAD fifth &&
+
+	git ls-files --stage >failedmerge &&
+	cp file3 file3.conflict &&
+
+	git ls-files -u >actual &&
+	test_cmp expected.unresolved actual
+'
+
+test_expect_success 'explicit rerere' '
+	test_might_fail git config --unset rerere.autoupdate &&
+	git rm -fr --cached . &&
+	git update-index --index-info <failedmerge &&
+	cp file3.conflict file3 &&
+	test_must_fail git update-index --refresh -q &&
+
+	git rerere &&
+	git ls-files -u >actual &&
+	test_cmp expected.unresolved actual
+'
+
+test_expect_success 'explicit rerere with autoupdate' '
+	git config rerere.autoupdate true &&
+	git rm -fr --cached . &&
+	git update-index --index-info <failedmerge &&
+	cp file3.conflict file3 &&
+	test_must_fail git update-index --refresh -q &&
+
+	git rerere &&
+	git update-index --refresh
+'
+
+test_expect_success 'explicit rerere --rerere-autoupdate overrides' '
+	git config rerere.autoupdate false &&
+	git rm -fr --cached . &&
+	git update-index --index-info <failedmerge &&
+	cp file3.conflict file3 &&
+	git rerere &&
+	git ls-files -u >actual1 &&
+
+	git rm -fr --cached . &&
+	git update-index --index-info <failedmerge &&
+	cp file3.conflict file3 &&
+	git rerere --rerere-autoupdate &&
+	git update-index --refresh &&
+
+	git rm -fr --cached . &&
+	git update-index --index-info <failedmerge &&
+	cp file3.conflict file3 &&
+	git rerere --rerere-autoupdate --no-rerere-autoupdate &&
+	git ls-files -u >actual2 &&
+
+	git rm -fr --cached . &&
+	git update-index --index-info <failedmerge &&
+	cp file3.conflict file3 &&
+	git rerere --rerere-autoupdate --no-rerere-autoupdate --rerere-autoupdate &&
+	git update-index --refresh &&
+
+	test_cmp expected.unresolved actual1 &&
+	test_cmp expected.unresolved actual2
+'
+
+test_expect_success 'rerere --no-no-rerere-autoupdate' '
+	git rm -fr --cached . &&
+	git update-index --index-info <failedmerge &&
+	cp file3.conflict file3 &&
+	test_must_fail git rerere --no-no-rerere-autoupdate 2>err &&
+	grep [Uu]sage err &&
+	test_must_fail git update-index --refresh
+'
+
+test_expect_success 'rerere -h' '
+	test_must_fail git rerere -h >help &&
+	grep [Uu]sage help
+'
+
 test_done
