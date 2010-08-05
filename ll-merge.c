@@ -99,8 +99,8 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 			  int flag, int marker_size)
 {
 	/* Use union favor */
-	flag = (flag & LL_OPT_VIRTUAL_ANCESTOR) |
-	       create_ll_flag(XDL_MERGE_FAVOR_UNION);
+	flag &= ~LL_OPT_FAVOR_MASK;
+	flag |= create_ll_flag(XDL_MERGE_FAVOR_UNION);
 	return ll_xdl_merge(drv_unused, result, path_unused,
 			    orig, NULL, src1, NULL, src2, NULL,
 			    flag, marker_size);
@@ -345,7 +345,7 @@ int ll_merge(mmbuffer_t *result_buf,
 	const struct ll_merge_driver *driver;
 	int virtual_ancestor = flag & LL_OPT_VIRTUAL_ANCESTOR;
 
-	if (merge_renormalize) {
+	if (flag & LL_OPT_RENORMALIZE) {
 		normalize_file(ancestor, path);
 		normalize_file(ours, path);
 		normalize_file(theirs, path);

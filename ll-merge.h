@@ -8,6 +8,7 @@
 #define LL_OPT_VIRTUAL_ANCESTOR	(1 << 0)
 #define LL_OPT_FAVOR_MASK	((1 << 1) | (1 << 2))
 #define LL_OPT_FAVOR_SHIFT 1
+#define LL_OPT_RENORMALIZE	(1 << 3)
 
 static inline int ll_opt_favor(int flag)
 {
