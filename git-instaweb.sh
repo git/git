@@ -58,9 +58,9 @@ resolve_full_httpd () {
 		return
 		;;
 	*webrick*)
-		# server is started by running via generated webrick.sh in
+		# server is started by running via generated webrick.rb in
 		# $fqgitdir/gitweb
-		full_httpd="$fqgitdir/gitweb/webrick.sh"
+		full_httpd="$fqgitdir/gitweb/webrick.rb"
 		httpd_only="${httpd%% *}" # cut on first space
 		return
 		;;
@@ -214,39 +214,28 @@ EOF
 	# portable way to run ruby, which could be installed anywhere, really.
 	# generate a standalone server script in $fqgitdir/gitweb.
 	cat >"$fqgitdir/gitweb/$httpd.rb" <<EOF
+#!/usr/bin/env ruby
 require 'webrick'
-require 'yaml'
-options = YAML::load_file(ARGV[0])
-options[:StartCallback] = proc do
-  File.open(options[:PidFile],"w") do |f|
-    f.puts Process.pid
-  end
-end
-options[:ServerType] = WEBrick::Daemon
+options = {
+  :Port => $port,
+  :DocumentRoot => "$root",
+  :DirectoryIndex => ["gitweb.cgi"],
+  :CGIInterpreter => "$wrapper",
+  :StartCallback => lambda do
+    File.open("$fqgitdir/pid", "w") { |f| f.puts Process.pid }
+  end,
+  :ServerType => WEBrick::Daemon,
+}
+options[:BindAddress] = '127.0.0.1' if "$local" == "true"
 server = WEBrick::HTTPServer.new(options)
 ['INT', 'TERM'].each do |signal|
   trap(signal) {server.shutdown}
 end
 server.start
 EOF
-	# generate a shell script to invoke the above ruby script,
-	# which assumes _ruby_ is in the user's $PATH. that's _one_
-	# portable way to run ruby, which could be installed anywhere,
-	# really.
-	cat >"$fqgitdir/gitweb/$httpd.sh" <<EOF
-#!/bin/sh
-exec ruby "$fqgitdir/gitweb/$httpd.rb" \$*
-EOF
-	chmod +x "$fqgitdir/gitweb/$httpd.sh"
-
-	cat >"$conf" <<EOF
-:Port: $port
-:DocumentRoot: "$root"
-:DirectoryIndex: ["gitweb.cgi"]
-:PidFile: "$fqgitdir/pid"
-:CGIInterpreter: "$wrapper"
-EOF
-	test "$local" = true && echo ':BindAddress: "127.0.0.1"' >> "$conf"
+	chmod +x "$fqgitdir/gitweb/$httpd.rb"
+	# configuration is embedded in server script file, webrick.rb
+	rm -f "$conf"
 }
 
 lighttpd_conf () {
