@@ -49,12 +49,15 @@ supports this.
 
 The `flag` parameter is a bitfield:
 
- - The least significant bit indicates whether this is an internal
-   merge to consolidate ancestors for a recursive merge.
+ - The `LL_OPT_VIRTUAL_ANCESTOR` bit indicates whether this is an
+   internal merge to consolidate ancestors for a recursive merge.
 
- - The next two bits allow local conflicts to be automatically
+ - The `LL_OPT_FAVOR_MASK` bits allow local conflicts to be automatically
    resolved in favor of one side or the other (as in 'git merge-file'
-   `--ours`/`--theirs`/`--union` for 01, 10, and 11, respectively).
+   `--ours`/`--theirs`/`--union`).
+   They can be populated by `create_ll_flag`, whose argument can be
+   `XDL_MERGE_FAVOR_OURS`, `XDL_MERGE_FAVOR_THEIRS`, or
+   `XDL_MERGE_FAVOR_UNION`.
 
 Everything else
 ---------------

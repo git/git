@@ -647,7 +647,8 @@ static int merge_3way(struct merge_options *o,
 
 	merge_status = ll_merge(result_buf, a->path, &orig, base_name,
 				&src1, name1, &src2, name2,
-				(!!o->call_depth) | (favor << 1));
+				((o->call_depth ? LL_OPT_VIRTUAL_ANCESTOR : 0) |
+				 create_ll_flag(favor)));
 
 	free(name1);
 	free(name2);

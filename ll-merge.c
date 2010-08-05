@@ -46,7 +46,7 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	 * or common ancestor for an internal merge.  Still return
 	 * "conflicted merge" status.
 	 */
-	mmfile_t *stolen = (flag & 01) ? orig : src1;
+	mmfile_t *stolen = (flag & LL_OPT_VIRTUAL_ANCESTOR) ? orig : src1;
 
 	result->ptr = stolen->ptr;
 	result->size = stolen->size;
@@ -79,7 +79,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 
 	memset(&xmp, 0, sizeof(xmp));
 	xmp.level = XDL_MERGE_ZEALOUS;
-	xmp.favor= (flag >> 1) & 03;
+	xmp.favor = ll_opt_favor(flag);
 	if (git_xmerge_style >= 0)
 		xmp.style = git_xmerge_style;
 	if (marker_size > 0)
@@ -99,7 +99,8 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 			  int flag, int marker_size)
 {
 	/* Use union favor */
-	flag = (flag & 1) | (XDL_MERGE_FAVOR_UNION << 1);
+	flag = (flag & LL_OPT_VIRTUAL_ANCESTOR) |
+	       create_ll_flag(XDL_MERGE_FAVOR_UNION);
 	return ll_xdl_merge(drv_unused, result, path_unused,
 			    orig, NULL, src1, NULL, src2, NULL,
 			    flag, marker_size);
@@ -342,7 +343,7 @@ int ll_merge(mmbuffer_t *result_buf,
 	const char *ll_driver_name = NULL;
 	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	const struct ll_merge_driver *driver;
-	int virtual_ancestor = flag & 01;
+	int virtual_ancestor = flag & LL_OPT_VIRTUAL_ANCESTOR;
 
 	if (merge_renormalize) {
 		normalize_file(ancestor, path);
