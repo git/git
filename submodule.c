@@ -123,6 +123,10 @@ int parse_submodule_config_option(const char *var, const char *value)
 void handle_ignore_submodules_arg(struct diff_options *diffopt,
 				  const char *arg)
 {
+	DIFF_OPT_CLR(diffopt, IGNORE_SUBMODULES);
+	DIFF_OPT_CLR(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES);
+	DIFF_OPT_CLR(diffopt, IGNORE_DIRTY_SUBMODULES);
+
 	if (!strcmp(arg, "all"))
 		DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
 	else if (!strcmp(arg, "untracked"))

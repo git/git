@@ -826,6 +826,11 @@ diff.renames::
 	will enable basic rename detection.  If set to "copies" or
 	"copy", it will detect copies, as well.
 
+diff.ignoreSubmodules::
+	Sets the default value of --ignore-submodules. Note that this
+	affects only 'git diff' Porcelain, and not lower level 'diff'
+	commands such as 'git diff-files'.
+
 diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space
 	before each empty output line. Defaults to false.
@@ -1754,7 +1759,7 @@ submodule.<name>.ignore::
 	submodules that have untracked files in their work tree as changed.
 	This setting overrides any setting made in .gitmodules for this submodule,
 	both settings can be overriden on the command line by using the
-	"--ignore-submodule" option.
+	"--ignore-submodules" option.
 
 tar.umask::
 	This variable can be used to restrict the permission bits of
