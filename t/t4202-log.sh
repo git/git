@@ -100,13 +100,11 @@ test_expect_success 'oneline' '
 
 test_expect_success 'diff-filter=A' '
 
-	actual=$(git log --pretty="format:%s" --diff-filter=A HEAD) &&
-	expect=$(echo fifth ; echo fourth ; echo third ; echo initial) &&
-	test "$actual" = "$expect" || {
-		echo Oops
-		echo "Actual: $actual"
-		false
-	}
+	git log --pretty="format:%s" --diff-filter=A HEAD > actual &&
+	git log --pretty="format:%s" --diff-filter A HEAD > actual-separate &&
+	printf "fifth\nfourth\nthird\ninitial" > expect &&
+	test_cmp expect actual &&
+	test_cmp expect actual-separate
 
 '
 
