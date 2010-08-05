@@ -365,7 +365,7 @@ static int find_conflict(struct string_list *conflict)
 	return 0;
 }
 
-static int merge(const char *name, int renormalize, const char *path)
+static int merge(const char *name, const char *path)
 {
 	int ret;
 	mmfile_t cur = {NULL, 0}, base = {NULL, 0}, other = {NULL, 0};
@@ -380,8 +380,7 @@ static int merge(const char *name, int renormalize, const char *path)
 		ret = 1;
 		goto out;
 	}
-	ret = ll_merge(&result, path, &base, NULL, &cur, "", &other, "",
-			renormalize ? LL_OPT_RENORMALIZE : 0);
+	ret = ll_merge(&result, path, &base, NULL, &cur, "", &other, "", 0);
 	if (!ret) {
 		FILE *f = fopen(path, "w");
 		if (!f)
@@ -429,7 +428,7 @@ static int update_paths(struct string_list *update)
 	return status;
 }
 
-static int do_plain_rerere(struct string_list *rr, int fd, int renormalize)
+static int do_plain_rerere(struct string_list *rr, int fd)
 {
 	struct string_list conflict = { NULL, 0, 0, 1 };
 	struct string_list update = { NULL, 0, 0, 1 };
@@ -474,7 +473,7 @@ static int do_plain_rerere(struct string_list *rr, int fd, int renormalize)
 		const char *name = (const char *)rr->items[i].util;
 
 		if (has_rerere_resolution(name)) {
-			if (!merge(name, renormalize, path)) {
+			if (!merge(name, path)) {
 				if (rerere_autoupdate)
 					string_list_insert(path, &update);
 				fprintf(stderr,
@@ -558,7 +557,7 @@ int rerere(int flags)
 	fd = setup_rerere(&merge_rr, flags);
 	if (fd < 0)
 		return 0;
-	return do_plain_rerere(&merge_rr, fd, merge_renormalize);
+	return do_plain_rerere(&merge_rr, fd);
 }
 
 static int rerere_forget_one_path(const char *path, struct string_list *rr)
