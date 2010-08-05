@@ -128,6 +128,7 @@ set _githtmldir {}
 set _reponame {}
 set _iscygwin {}
 set _search_path {}
+set _shellpath {@@SHELL_PATH@@}
 
 set _trace [lsearch -exact $argv --trace]
 if {$_trace >= 0} {
@@ -135,6 +136,11 @@ if {$_trace >= 0} {
 	set _trace 1
 } else {
 	set _trace 0
+}
+
+proc shellpath {} {
+	global _shellpath
+	return $_shellpath
 }
 
 proc appname {} {
