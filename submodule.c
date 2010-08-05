@@ -62,6 +62,25 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 	}
 }
 
+static int submodule_config(const char *var, const char *value, void *cb)
+{
+	if (!prefixcmp(var, "submodule."))
+		return parse_submodule_config_option(var, value);
+	return 0;
+}
+
+void gitmodules_config(void)
+{
+	const char *work_tree = get_git_work_tree();
+	if (work_tree) {
+		struct strbuf gitmodules_path = STRBUF_INIT;
+		strbuf_addstr(&gitmodules_path, work_tree);
+		strbuf_addstr(&gitmodules_path, "/.gitmodules");
+		git_config_from_file(submodule_config, gitmodules_path.buf, NULL);
+		strbuf_release(&gitmodules_path);
+	}
+}
+
 int parse_submodule_config_option(const char *var, const char *value)
 {
 	int len;

@@ -1752,6 +1752,9 @@ submodule.<name>.ignore::
 	let submodules with modified tracked files in their work tree show up.
 	Using "none" (the default when this option is not set) also shows
 	submodules that have untracked files in their work tree as changed.
+	This setting overrides any setting made in .gitmodules for this submodule,
+	both settings can be overriden on the command line by using the
+	"--ignore-submodule" option.
 
 tar.umask::
 	This variable can be used to restrict the permission bits of
