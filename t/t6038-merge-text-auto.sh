@@ -85,6 +85,47 @@ test_expect_success 'Merge addition of text=auto' '
 	test_cmp expected file
 '
 
+test_expect_failure 'checkout -m after setting text=auto' '
+	cat <<-\EOF >expected &&
+	first line
+	same line
+	EOF
+
+	git rm -fr . &&
+	rm -f .gitattributes &&
+	git reset --hard initial &&
+	git checkout a -- . &&
+	git checkout -m b &&
+	test_cmp expected file
+'
+
+test_expect_failure 'checkout -m addition of text=auto' '
+	cat <<-\EOF >expected &&
+	first line
+	same line
+	EOF
+
+	git rm -fr . &&
+	rm -f .gitattributes file &&
+	git reset --hard initial &&
+	git checkout b -- . &&
+	git checkout -m a &&
+	test_cmp expected file
+'
+
+test_expect_failure 'cherry-pick patch from after text=auto was added' '
+	append_cr <<-\EOF >expected &&
+	first line
+	same line
+	EOF
+
+	git rm -fr . &&
+	git reset --hard b &&
+	test_must_fail git cherry-pick a >err 2>&1 &&
+	grep "[Nn]othing added" err &&
+	test_cmp expected file
+'
+
 test_expect_success 'Test delete/normalize conflict' '
 	git checkout -f side &&
 	git rm -fr . &&
