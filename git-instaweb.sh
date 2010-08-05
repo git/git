@@ -216,9 +216,15 @@ EOF
 	cat >"$fqgitdir/gitweb/$httpd.rb" <<EOF
 #!/usr/bin/env ruby
 require 'webrick'
+require 'logger'
 options = {
   :Port => $port,
   :DocumentRoot => "$root",
+  :Logger => Logger.new('$fqgitdir/gitweb/error.log'),
+  :AccessLog => [
+    [ Logger.new('$fqgitdir/gitweb/access.log'),
+      WEBrick::AccessLog::COMBINED_LOG_FORMAT ]
+  ],
   :DirectoryIndex => ["gitweb.cgi"],
   :CGIInterpreter => "$wrapper",
   :StartCallback => lambda do
