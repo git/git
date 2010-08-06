@@ -14,6 +14,7 @@ const char git_usage_string[] =
 const char git_more_info_string[] =
 	"See 'git help COMMAND' for more information on a specific command.";
 
+static struct startup_info git_startup_info;
 static int use_pager = -1;
 struct pager_config {
 	const char *cmd;
@@ -488,6 +489,8 @@ static int run_argv(int *argcp, const char ***argv)
 int main(int argc, const char **argv)
 {
 	const char *cmd;
+
+	startup_info = &git_startup_info;
 
 	cmd = git_extract_argv0_path(argv[0]);
 	if (!cmd)
