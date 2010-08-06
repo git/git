@@ -403,7 +403,7 @@ test_skip () {
 	case "$to_skip" in
 	t)
 		say_color skip >&3 "skipping test: $@"
-		say_color skip "ok $test_count # skip $1"
+		say_color skip "ok $test_count # skip $1 (prereqs: $prereq)"
 		: true
 		;;
 	*)
