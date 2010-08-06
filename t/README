@@ -350,6 +350,12 @@ library for your script to use.
 	test_expect_success TTY 'git --paginate rev-list uses a pager' \
 	    ' ... '
 
+   You can also supply a comma-separated list of prerequisites, in the
+   rare case where your test depends on more than one:
+
+	test_expect_success PERL,PYTHON 'yo dawg' \
+	    ' test $(perl -E 'print eval "1 +" . qx[python -c "print 2"]') == "4" '
+
  - test_expect_failure [<prereq>] <message> <script>
 
    This is NOT the opposite of test_expect_success, but is used

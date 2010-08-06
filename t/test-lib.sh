@@ -327,12 +327,20 @@ test_set_prereq () {
 satisfied=" "
 
 test_have_prereq () {
-	case $satisfied in
-	*" $1 "*)
-		: yes, have it ;;
-	*)
-		! : nope ;;
-	esac
+	# prerequisites can be concatenated with ','
+	save_IFS=$IFS
+	IFS=,
+	set -- $*
+	IFS=$save_IFS
+	for prerequisite
+	do
+		case $satisfied in
+		*" $prerequisite "*)
+			: yes, have it ;;
+		*)
+			! : nope ;;
+		esac
+	done
 }
 
 # You are not expected to call test_ok_ and test_failure_ directly, use

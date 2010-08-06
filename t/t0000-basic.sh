@@ -73,6 +73,23 @@ then
 	exit 1
 fi
 
+test_set_prereq HAVETHIS
+haveit=no
+test_expect_success HAVETHIS,HAVEIT 'test runs if prerequisites are satisfied' '
+    test_have_prereq HAVEIT &&
+    test_have_prereq HAVETHIS &&
+    haveit=yes
+'
+donthaveit=yes
+test_expect_success HAVEIT,DONTHAVEIT 'unmet prerequisites causes test to be skipped' '
+    donthaveit=no
+'
+if test $haveit$donthaveit != yesyes
+then
+	say "bug in test framework: multiple prerequisite tags do not work reliably"
+	exit 1
+fi
+
 clean=no
 test_expect_success 'tests clean up after themselves' '
     test_when_finished clean=yes
