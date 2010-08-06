@@ -129,10 +129,12 @@ OPTIONS
 	is taken to be in `refs/notes/` if it is not qualified.
 
 -n::
+--dry-run::
 	Do not remove anything; just report the object names whose notes
 	would be removed.
 
 -v::
+--verbose::
 	Report all object names whose notes are removed.
 
 

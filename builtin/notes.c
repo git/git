@@ -798,8 +798,9 @@ static int prune(int argc, const char **argv, const char *prefix)
 	struct notes_tree *t;
 	int show_only = 0, verbose = 0;
 	struct option options[] = {
-		OPT_BOOLEAN('n', NULL, &show_only, "do not remove, show only"),
-		OPT_BOOLEAN('v', NULL, &verbose, "report pruned notes"),
+		OPT_BOOLEAN('n', "dry-run", &show_only,
+			    "do not remove, show only"),
+		OPT_BOOLEAN('v', "verbose", &verbose, "report pruned notes"),
 		OPT_END()
 	};
 
