@@ -505,11 +505,12 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 		rpc->len = n;
 		err |= post_rpc(rpc);
 	}
-	strbuf_read(&rpc->result, client.out, 0);
 
 	close(client.in);
-	close(client.out);
 	client.in = -1;
+	strbuf_read(&rpc->result, client.out, 0);
+
+	close(client.out);
 	client.out = -1;
 
 	err |= finish_command(&client);
