@@ -339,7 +339,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "grep", cmd_grep, RUN_SETUP_GENTLY },
 		{ "hash-object", cmd_hash_object },
 		{ "help", cmd_help },
-		{ "index-pack", cmd_index_pack },
+		{ "index-pack", cmd_index_pack, RUN_SETUP_GENTLY },
 		{ "init", cmd_init_db },
 		{ "init-db", cmd_init_db },
 		{ "log", cmd_log, RUN_SETUP | USE_PAGER },
