@@ -31,10 +31,12 @@ OPTIONS
 -------
 
 -n::
+--dry-run::
 	Do not remove anything; just report what it would
 	remove.
 
 -v::
+--verbose::
 	Report all removed objects.
 
 \--::
