@@ -106,6 +106,19 @@ test_expect_success TTY 'no pager with --no-pager' '
 	! test -e paginated.out
 '
 
+test_expect_success TTY 'configuration can disable pager' '
+	rm -f paginated.out &&
+	test_might_fail git config --unset pager.grep &&
+	test_terminal git grep initial &&
+	test -e paginated.out &&
+
+	rm -f paginated.out &&
+	git config pager.grep false &&
+	test_when_finished "git config --unset pager.grep" &&
+	test_terminal git grep initial &&
+	! test -e paginated.out
+'
+
 # A colored commit log will begin with an appropriate ANSI escape
 # for the first color; the text "commit" comes later.
 colorful() {
