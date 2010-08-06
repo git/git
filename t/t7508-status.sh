@@ -793,7 +793,7 @@ test_expect_success 'commit --dry-run submodule summary (--amend)' '
 	test_cmp expect output
 '
 
-test_expect_success POSIXPERM 'status succeeds in a read-only repository' '
+test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository' '
 	(
 		chmod a-w .git &&
 		# make dir1/tracked stat-dirty

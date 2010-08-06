@@ -388,16 +388,15 @@ test_expect_success 'core.excludesfile' '
 
 '
 
-test_expect_success 'removal failure' '
+test_expect_success SANITY 'removal failure' '
 
 	mkdir foo &&
 	touch foo/bar &&
 	(exec <foo/bar &&
 	 chmod 0 foo &&
-	 test_must_fail git clean -f -d)
-
+	 test_must_fail git clean -f -d &&
+	 chmod 755 foo)
 '
-chmod 755 foo
 
 test_expect_success 'nested git work tree' '
 	rm -fr foo bar &&

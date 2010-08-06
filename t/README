@@ -523,6 +523,11 @@ use these, and "test_set_prereq" for how to define your own.
    The filesystem we're on supports symbolic links. E.g. a FAT
    filesystem doesn't support these. See 704a3143 for details.
 
+ - SANITY
+
+   Test is not run by root user, and an attempt to write to an
+   unwritable file is expected to fail correctly.
+
 Tips for Writing Tests
 ----------------------
 

@@ -179,7 +179,7 @@ test_expect_success 'git add --refresh' '
 	test -z "`git diff-index HEAD -- foo`"
 '
 
-test_expect_success POSIXPERM 'git add should fail atomically upon an unreadable file' '
+test_expect_success POSIXPERM,SANITY 'git add should fail atomically upon an unreadable file' '
 	git reset --hard &&
 	date >foo1 &&
 	date >foo2 &&
@@ -190,7 +190,7 @@ test_expect_success POSIXPERM 'git add should fail atomically upon an unreadable
 
 rm -f foo2
 
-test_expect_success POSIXPERM 'git add --ignore-errors' '
+test_expect_success POSIXPERM,SANITY 'git add --ignore-errors' '
 	git reset --hard &&
 	date >foo1 &&
 	date >foo2 &&
@@ -201,7 +201,7 @@ test_expect_success POSIXPERM 'git add --ignore-errors' '
 
 rm -f foo2
 
-test_expect_success POSIXPERM 'git add (add.ignore-errors)' '
+test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors)' '
 	git config add.ignore-errors 1 &&
 	git reset --hard &&
 	date >foo1 &&
@@ -212,7 +212,7 @@ test_expect_success POSIXPERM 'git add (add.ignore-errors)' '
 '
 rm -f foo2
 
-test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
+test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors = false)' '
 	git config add.ignore-errors 0 &&
 	git reset --hard &&
 	date >foo1 &&
@@ -223,7 +223,7 @@ test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
 '
 rm -f foo2
 
-test_expect_success POSIXPERM '--no-ignore-errors overrides config' '
+test_expect_success POSIXPERM,SANITY '--no-ignore-errors overrides config' '
        git config add.ignore-errors 1 &&
        git reset --hard &&
        date >foo1 &&
