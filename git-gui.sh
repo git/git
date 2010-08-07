@@ -2944,7 +2944,12 @@ blame {
 	}
 	blame   {
 		if {$head eq {} && ![file exists $path]} {
-			puts stderr [mc "fatal: cannot stat path %s: No such file or directory" $path]
+			catch {wm withdraw .}
+			tk_messageBox \
+				-icon error \
+				-type ok \
+				-title [mc "git-gui: fatal error"] \
+				-message [mc "fatal: cannot stat path %s: No such file or directory" $path]
 			exit 1
 		}
 		blame::new $head $path $jump_spec
