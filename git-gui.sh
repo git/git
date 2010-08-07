@@ -2845,7 +2845,13 @@ bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 
 set subcommand_args {}
 proc usage {} {
-	puts stderr "usage: $::argv0 $::subcommand $::subcommand_args"
+	set s "usage: $::argv0 $::subcommand $::subcommand_args"
+	if {[tk windowingsystem] eq "win32"} {
+		wm withdraw .
+		tk_messageBox -icon info -title "Usage" -message $s
+	} else {
+		puts stderr $s
+	}
 	exit 1
 }
 
