@@ -6522,12 +6522,13 @@ sub git_search {
 			$paging_nav .= " &sdot; next";
 		}
 
-		if ($#commitlist >= 100) {
-		}
-
 		git_print_page_nav('','', $hash,$co{'tree'},$hash, $paging_nav);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash);
-		git_search_grep_body(\@commitlist, 0, 99, $next_link);
+		if ($page == 0 && !@commitlist) {
+			print "<p>No match.</p>\n";
+		} else {
+			git_search_grep_body(\@commitlist, 0, 99, $next_link);
+		}
 	}
 
 	if ($searchtype eq 'pickaxe') {
