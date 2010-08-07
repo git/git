@@ -139,7 +139,14 @@ if {$_trace >= 0} {
 }
 
 proc shellpath {} {
-	global _shellpath
+	global _shellpath env
+	if {[string match @@* $_shellpath]} {
+		if {[info exists env(SHELL)]} {
+			return $env(SHELL)
+		} else {
+			return /bin/sh
+		}
+	}
 	return $_shellpath
 }
 
