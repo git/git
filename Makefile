@@ -1856,7 +1856,7 @@ builtin/tar-tree.o archive-tar.o: tar.h
 builtin/pack-objects.o: thread-utils.h
 connect.o transport.o http-backend.o: url.h
 http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
-http.o http-walker.o http-push.o remote-curl.o: http.h
+http.o http-walker.o http-push.o http-fetch.o remote-curl.o: http.h
 
 xdiff-interface.o $(XDIFF_OBJS): \
 	xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
