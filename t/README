@@ -600,6 +600,13 @@ and password you'll be able to do:
 
     SMOKE_USERNAME=<username> SMOKE_PASSWORD=<password> make smoke_report
 
+You can also add an additional comment to attach to the report, and/or
+a comma separated list of tags:
+
+    SMOKE_USERNAME=<username> SMOKE_PASSWORD=<password> \
+        SMOKE_COMMENT=<comment> SMOKE_TAGS=<tags> \
+        make smoke_report
+
 Once the report is uploaded it'll be made available at
 http://smoke.git.nix.is, here's an overview of Recent Smoke Reports
 for Git:

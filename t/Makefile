@@ -69,6 +69,12 @@ SMOKE_UPLOAD_FLAGS =
 ifdef SMOKE_USERNAME
 	SMOKE_UPLOAD_FLAGS += -F username="$(SMOKE_USERNAME)" -F password="$(SMOKE_PASSWORD)"
 endif
+ifdef SMOKE_COMMENT
+	SMOKE_UPLOAD_FLAGS += -F comments="$(SMOKE_COMMENT)"
+endif
+ifdef SMOKE_TAGS
+	SMOKE_UPLOAD_FLAGS += -F tags="$(SMOKE_TAGS)"
+endif
 
 smoke_report: smoke
 	curl \
