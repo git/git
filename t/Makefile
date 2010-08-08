@@ -49,4 +49,37 @@ full-svn-test:
 valgrind:
 	GIT_TEST_OPTS=--valgrind $(MAKE)
 
-.PHONY: pre-clean $(T) aggregate-results clean valgrind
+# Smoke testing targets
+-include ../GIT-BUILD-OPTIONS
+-include ../GIT-VERSION-FILE
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo unknown')
+uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo unknown')
+
+test-results:
+	mkdir -p test-results
+
+test-results/git-smoke.tar.gz:
+	$(PERL_PATH) ./harness \
+		--archive="test-results/git-smoke.tar.gz" \
+		$(T)
+
+smoke: test-results/git-smoke.tar.gz
+
+SMOKE_UPLOAD_FLAGS =
+ifdef SMOKE_USERNAME
+	SMOKE_UPLOAD_FLAGS += -F username="$(SMOKE_USERNAME)" -F password="$(SMOKE_PASSWORD)"
+endif
+
+smoke_report: smoke
+	curl \
+		-H "Expect: " \
+		-F project=Git \
+		-F architecture="$(uname_M)" \
+		-F platform="$(uname_S)" \
+		-F revision="$(GIT_VERSION)" \
+		-F report_file=@test-results/git-smoke.tar.gz \
+		$(SMOKE_UPLOAD_FLAGS) \
+		http://smoke.git.nix.is/app/projects/process_add_report/1 \
+	| grep -v ^Redirecting
+
+.PHONY: pre-clean $(T) aggregate-results clean valgrind smoke smoke_report
