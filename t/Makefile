@@ -8,6 +8,7 @@
 
 #GIT_TEST_OPTS=--verbose --debug
 SHELL_PATH ?= $(SHELL)
+PERL_PATH ?= /usr/bin/perl
 TAR ?= $(TAR)
 RM ?= rm -f
 
@@ -50,7 +51,6 @@ valgrind:
 	GIT_TEST_OPTS=--valgrind $(MAKE)
 
 # Smoke testing targets
--include ../GIT-BUILD-OPTIONS
 -include ../GIT-VERSION-FILE
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo unknown')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo unknown')
