@@ -206,10 +206,29 @@ endif::git-format-patch[]
 	the diff-patch output format.  Non default number of
 	digits can be specified with `--abbrev=<n>`.
 
--B::
-	Break complete rewrite changes into pairs of delete and create.
+-B[<n>][/<m>]::
+	Break complete rewrite changes into pairs of delete and
+	create. This serves two purposes:
++
+It affects the way a change that amounts to a total rewrite of a file
+not as a series of deletion and insertion mixed together with a very
+few lines that happen to match textually as the context, but as a
+single deletion of everything old followed by a single insertion of
+everything new, and the number `m` controls this aspect of the -B
+option (defaults to 60%). `-B/70%` specifies that less than 30% of the
+original should remain in the result for git to consider it a total
+rewrite (i.e. otherwise the resulting patch will be a series of
+deletion and insertion mixed together with context lines).
++
+When used with -M, a totally-rewritten file is also considered as the
+source of a rename (usually -M only considers a file that disappeared
+as the source of a rename), and the number `n` controls this aspect of
+the -B option (defaults to 50%). `-B20%` specifies that a change with
+addition and deletion compared to 20% or more of the file's size are
+eligible for being picked up as a possible source of a rename to
+another file.
 
--M::
+-M[<n>]::
 ifndef::git-log[]
 	Detect renames.
 endif::git-log[]
@@ -218,9 +237,15 @@ ifdef::git-log[]
 	For following files across renames while traversing history, see
 	`--follow`.
 endif::git-log[]
+	If `n` is specified, it is a is a threshold on the similarity
+	index (i.e. amount of addition/deletions compared to the
+	file's size). For example, `-M90%` means git should consider a
+	delete/add pair to be a rename if more than 90% of the file
+	hasn't changed.
 
--C::
+-C[<n>]::
 	Detect copies as well as renames.  See also `--find-copies-harder`.
+	If `n` is specified, it has the same meaning as for `-M<n>`.
 
 ifndef::git-format-patch[]
 --diff-filter=[ACDMRTUXB*]::
