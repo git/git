@@ -1744,7 +1744,8 @@ ifndef NO_CURL
 endif
 XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 	xdiff/xmerge.o xdiff/xpatience.o
-VCSSVN_OBJS = vcs-svn/string_pool.o vcs-svn/line_buffer.o
+VCSSVN_OBJS = vcs-svn/string_pool.o vcs-svn/line_buffer.o \
+	vcs-svn/repo_tree.o vcs-svn/fast_export.o
 OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS) $(VCSSVN_OBJS)
 
 dep_files := $(foreach f,$(OBJECTS),$(dir $f).depend/$(notdir $f).d)
@@ -1870,7 +1871,7 @@ xdiff-interface.o $(XDIFF_OBJS): \
 
 $(VCSSVN_OBJS): \
 	vcs-svn/obj_pool.h vcs-svn/trp.h vcs-svn/string_pool.h \
-	vcs-svn/line_buffer.h
+	vcs-svn/line_buffer.h vcs-svn/repo_tree.h vcs-svn/fast_export.h
 endif
 
 exec_cmd.s exec_cmd.o: EXTRA_CPPFLAGS = \
