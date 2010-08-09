@@ -124,6 +124,12 @@ test_expect_success 'checkout -B to an existing branch resets branch to HEAD' '
 	do_checkout branch2 "" -B
 '
 
+test_expect_success 'checkout -B to an existing branch from detached HEAD resets branch to HEAD' '
+	git checkout $(git rev-parse --verify HEAD) &&
+
+	do_checkout branch2 "" -B
+'
+
 test_expect_success 'checkout -B to an existing branch with an explicit ref resets branch to that ref' '
 	git checkout branch1 &&
 
