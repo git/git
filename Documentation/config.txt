@@ -1763,7 +1763,7 @@ submodule.<name>.update::
 	URL and other values found in the `.gitmodules` file.  See
 	linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
 
-submodule.<submodulename>.ignore::
+submodule.<name>.ignore::
 	Defines under what circumstances "git status" and the diff family show
 	a submodule as modified. When set to "all", it will never be considered
 	modified, "dirty" will ignore all changes to the submodules work tree and
