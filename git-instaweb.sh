@@ -57,6 +57,13 @@ resolve_full_httpd () {
 		httpd_only="${httpd%% *}" # cut on first space
 		return
 		;;
+	*webrick*)
+		# server is started by running via generated webrick.rb in
+		# $fqgitdir/gitweb
+		full_httpd="$fqgitdir/gitweb/webrick.rb"
+		httpd_only="${httpd%% *}" # cut on first space
+		return
+		;;
 	esac
 
 	httpd_only="$(echo $httpd | cut -f1 -d' ')"
@@ -188,40 +195,53 @@ GITWEB_CONFIG="$fqgitdir/gitweb/gitweb_config.perl"
 export GIT_EXEC_PATH GIT_DIR GITWEB_CONFIG
 
 webrick_conf () {
+	# webrick seems to have no way of passing arbitrary environment
+	# variables to the underlying CGI executable, so we wrap the
+	# actual gitweb.cgi using a shell script to force it
+  wrapper="$fqgitdir/gitweb/$httpd/wrapper.sh"
+	cat > "$wrapper" <<EOF
+#!/bin/sh
+# we use this shell script wrapper around the real gitweb.cgi since
+# there appears to be no other way to pass arbitrary environment variables
+# into the CGI process
+GIT_EXEC_PATH=$GIT_EXEC_PATH GIT_DIR=$GIT_DIR GITWEB_CONFIG=$GITWEB_CONFIG
+export GIT_EXEC_PATH GIT_DIR GITWEB_CONFIG
+exec $root/gitweb.cgi
+EOF
+	chmod +x "$wrapper"
+
+	# This assumes _ruby_ is in the user's $PATH. that's _one_
+	# portable way to run ruby, which could be installed anywhere, really.
 	# generate a standalone server script in $fqgitdir/gitweb.
 	cat >"$fqgitdir/gitweb/$httpd.rb" <<EOF
+#!/usr/bin/env ruby
 require 'webrick'
-require 'yaml'
-options = YAML::load_file(ARGV[0])
-options[:StartCallback] = proc do
-  File.open(options[:PidFile],"w") do |f|
-    f.puts Process.pid
-  end
-end
-options[:ServerType] = WEBrick::Daemon
+require 'logger'
+options = {
+  :Port => $port,
+  :DocumentRoot => "$root",
+  :Logger => Logger.new('$fqgitdir/gitweb/error.log'),
+  :AccessLog => [
+    [ Logger.new('$fqgitdir/gitweb/access.log'),
+      WEBrick::AccessLog::COMBINED_LOG_FORMAT ]
+  ],
+  :DirectoryIndex => ["gitweb.cgi"],
+  :CGIInterpreter => "$wrapper",
+  :StartCallback => lambda do
+    File.open("$fqgitdir/pid", "w") { |f| f.puts Process.pid }
+  end,
+  :ServerType => WEBrick::Daemon,
+}
+options[:BindAddress] = '127.0.0.1' if "$local" == "true"
 server = WEBrick::HTTPServer.new(options)
 ['INT', 'TERM'].each do |signal|
   trap(signal) {server.shutdown}
 end
 server.start
 EOF
-	# generate a shell script to invoke the above ruby script,
-	# which assumes _ruby_ is in the user's $PATH. that's _one_
-	# portable way to run ruby, which could be installed anywhere,
-	# really.
-	cat >"$fqgitdir/gitweb/$httpd" <<EOF
-#!/bin/sh
-exec ruby "$fqgitdir/gitweb/$httpd.rb" \$*
-EOF
-	chmod +x "$fqgitdir/gitweb/$httpd"
-
-	cat >"$conf" <<EOF
-:Port: $port
-:DocumentRoot: "$root"
-:DirectoryIndex: ["gitweb.cgi"]
-:PidFile: "$fqgitdir/pid"
-EOF
-	test "$local" = true && echo ':BindAddress: "127.0.0.1"' >> "$conf"
+	chmod +x "$fqgitdir/gitweb/$httpd.rb"
+	# configuration is embedded in server script file, webrick.rb
+	rm -f "$conf"
 }
 
 lighttpd_conf () {
