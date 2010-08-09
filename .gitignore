@@ -173,6 +173,7 @@
 /test-run-command
 /test-sha1
 /test-sigchain
+/test-treap
 /common-cmds.h
 *.tar.gz
 *.dsc
