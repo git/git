@@ -41,6 +41,23 @@ test_expect_success "check-ref-format --branch @{-1}" '
 	refname2=$(git check-ref-format --branch @{-2}) &&
 	test "$refname2" = master'
 
+test_expect_success 'check-ref-format --branch from subdir' '
+	mkdir subdir &&
+
+	T=$(git write-tree) &&
+	sha1=$(echo A | git commit-tree $T) &&
+	git update-ref refs/heads/master $sha1 &&
+	git update-ref refs/remotes/origin/master $sha1
+	git checkout master &&
+	git checkout origin/master &&
+	git checkout master &&
+	refname=$(
+		cd subdir &&
+		git check-ref-format --branch @{-1}
+	) &&
+	test "$refname" = "$sha1"
+'
+
 valid_ref_normalized() {
 	test_expect_success "ref name '$1' simplifies to '$2'" "
 		refname=\$(git check-ref-format --print '$1') &&
