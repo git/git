@@ -167,6 +167,7 @@
 /test-genrandom
 /test-index-version
 /test-match-trees
+/test-obj-pool
 /test-parse-options
 /test-path-utils
 /test-run-command
