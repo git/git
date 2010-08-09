@@ -12,7 +12,7 @@ svnadmin dump --incremental REPO | svn-fe [url] | git fast-import
 DESCRIPTION
 -----------
 
-Converts a Subversion dumpfile (version: 2) into input suitable for
+Converts a Subversion dumpfile into input suitable for
 git-fast-import(1) and similar importers. REPO is a path to a
 Subversion repository mirrored on the local disk. Remote Subversion
 repositories can be mirrored on local disk using the `svnsync`
@@ -24,6 +24,9 @@ Subversion's repository dump format is documented in full in
 `notes/dump-load-format.txt` from the Subversion source tree.
 Files in this format can be generated using the 'svnadmin dump' or
 'svk admin dump' command.
+
+Dumps produced with 'svnadmin dump --deltas' (dumpfile format v3)
+are not supported.
 
 OUTPUT FORMAT
 -------------
