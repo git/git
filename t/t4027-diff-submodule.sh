@@ -115,52 +115,57 @@ test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match)'
 '
 
 test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match) [.git/config]' '
-	git config submodule.sub.ignore none &&
+	git config submodule.subname.ignore none &&
+	git config submodule.subname.path sub &&
 	git diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config submodule.sub.ignore all &&
+	git config submodule.subname.ignore all &&
 	git diff HEAD >actual2 &&
 	! test -s actual2 &&
-	git config submodule.sub.ignore untracked &&
+	git config submodule.subname.ignore untracked &&
 	git diff HEAD >actual3 &&
 	sed -e "1,/^@@/d" actual3 >actual3.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual3.body &&
-	git config submodule.sub.ignore dirty &&
+	git config submodule.subname.ignore dirty &&
 	git diff HEAD >actual4 &&
 	! test -s actual4 &&
 	git diff HEAD --ignore-submodules=none >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config --remove-section submodule.sub
+	git config --remove-section submodule.subname
 '
 
 test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match) [.gitmodules]' '
-	git config --add -f .gitmodules submodule.sub.ignore none &&
+	git config --add -f .gitmodules submodule.subname.ignore none &&
+	git config --add -f .gitmodules submodule.subname.path sub &&
 	git diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config -f .gitmodules submodule.sub.ignore all &&
+	git config -f .gitmodules submodule.subname.ignore all &&
+	git config -f .gitmodules submodule.subname.path sub &&
 	git diff HEAD >actual2 &&
 	! test -s actual2 &&
-	git config -f .gitmodules submodule.sub.ignore untracked &&
+	git config -f .gitmodules submodule.subname.ignore untracked &&
 	git diff HEAD >actual3 &&
 	sed -e "1,/^@@/d" actual3 >actual3.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual3.body &&
-	git config -f .gitmodules submodule.sub.ignore dirty &&
+	git config -f .gitmodules submodule.subname.ignore dirty &&
 	git diff HEAD >actual4 &&
 	! test -s actual4 &&
-	git config submodule.sub.ignore none &&
+	git config submodule.subname.ignore none &&
+	git config submodule.subname.path sub &&
 	git diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config --remove-section submodule.sub &&
+	git config --remove-section submodule.subname &&
+	git config --remove-section -f .gitmodules submodule.subname &&
 	rm .gitmodules
 '
 
@@ -197,38 +202,42 @@ test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match)'
 '
 
 test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match) [.git/config]' '
-	git config submodule.sub.ignore all &&
+	git config submodule.subname.ignore all &&
+	git config submodule.subname.path sub &&
 	git diff HEAD >actual2 &&
 	! test -s actual2 &&
-	git config submodule.sub.ignore untracked &&
+	git config submodule.subname.ignore untracked &&
 	git diff HEAD >actual3 &&
 	! test -s actual3 &&
-	git config submodule.sub.ignore dirty &&
+	git config submodule.subname.ignore dirty &&
 	git diff HEAD >actual4 &&
 	! test -s actual4 &&
 	git diff --ignore-submodules=none HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config --remove-section submodule.sub
+	git config --remove-section submodule.subname
 '
 
 test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match) [.gitmodules]' '
-	git config --add -f .gitmodules submodule.sub.ignore all &&
+	git config --add -f .gitmodules submodule.subname.ignore all &&
+	git config --add -f .gitmodules submodule.subname.path sub &&
 	git diff HEAD >actual2 &&
 	! test -s actual2 &&
-	git config -f .gitmodules submodule.sub.ignore untracked &&
+	git config -f .gitmodules submodule.subname.ignore untracked &&
 	git diff HEAD >actual3 &&
 	! test -s actual3 &&
-	git config -f .gitmodules submodule.sub.ignore dirty &&
+	git config -f .gitmodules submodule.subname.ignore dirty &&
 	git diff HEAD >actual4 &&
 	! test -s actual4 &&
-	git config submodule.sub.ignore none &&
+	git config submodule.subname.ignore none &&
+	git config submodule.subname.path sub &&
 	git diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
-	git config --remove-section submodule.sub &&
+	git config --remove-section submodule.subname &&
+	git config --remove-section -f .gitmodules submodule.subname &&
 	rm .gitmodules
 '
 
@@ -250,18 +259,19 @@ test_expect_success 'git diff between submodule commits [.git/config]' '
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body &&
-	git config submodule.sub.ignore dirty &&
+	git config submodule.subname.ignore dirty &&
+	git config submodule.subname.path sub &&
 	git diff HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body &&
-	git config submodule.sub.ignore all &&
+	git config submodule.subname.ignore all &&
 	git diff HEAD^..HEAD >actual &&
 	! test -s actual &&
 	git diff --ignore-submodules=dirty HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
-	git config --remove-section submodule.sub
+	git config --remove-section submodule.subname
 '
 
 test_expect_success 'git diff between submodule commits [.gitmodules]' '
@@ -269,19 +279,22 @@ test_expect_success 'git diff between submodule commits [.gitmodules]' '
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body &&
-	git config --add -f .gitmodules submodule.sub.ignore dirty &&
+	git config --add -f .gitmodules submodule.subname.ignore dirty &&
+	git config --add -f .gitmodules submodule.subname.path sub &&
 	git diff HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
 	test_cmp expect.body actual.body &&
-	git config -f .gitmodules submodule.sub.ignore all &&
+	git config -f .gitmodules submodule.subname.ignore all &&
 	git diff HEAD^..HEAD >actual &&
 	! test -s actual &&
-	git config submodule.sub.ignore dirty &&
+	git config submodule.subname.ignore dirty &&
+	git config submodule.subname.path sub &&
 	git diff  HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
-	git config --remove-section submodule.sub &&
+	git config --remove-section submodule.subname &&
+	git config --remove-section -f .gitmodules submodule.subname &&
 	rm .gitmodules
 '
 
