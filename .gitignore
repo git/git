@@ -166,6 +166,7 @@
 /test-dump-cache-tree
 /test-genrandom
 /test-index-version
+/test-line-buffer
 /test-match-trees
 /test-obj-pool
 /test-parse-options
