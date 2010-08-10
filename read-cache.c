@@ -1516,6 +1516,7 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 	int size = ondisk_ce_size(ce);
 	struct ondisk_cache_entry *ondisk = xcalloc(1, size);
 	char *name;
+	int result;
 
 	ondisk->ctime.sec = htonl(ce->ce_ctime.sec);
 	ondisk->mtime.sec = htonl(ce->ce_mtime.sec);
@@ -1539,7 +1540,9 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 		name = ondisk->name;
 	memcpy(name, ce->name, ce_namelen(ce));
 
-	return ce_write(c, fd, ondisk, size);
+	result = ce_write(c, fd, ondisk, size);
+	free(ondisk);
+	return result;
 }
 
 int write_index(struct index_state *istate, int newfd)
