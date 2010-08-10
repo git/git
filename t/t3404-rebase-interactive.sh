@@ -79,18 +79,18 @@ test_expect_success 'rebase -i with the exec command' '
 	export FAKE_LINES &&
 	test_must_fail git rebase -i A
 	) &&
-	test -f touch-one &&
-	test -f touch-two &&
-	! test -f touch-three &&
+	test_path_is_file touch-one &&
+	test_path_is_file touch-two &&
+	test_path_is_missing touch-three " (should have stopped before)" &&
 	test $(git rev-parse C) = $(git rev-parse HEAD) || {
 		echo "Stopped at wrong revision:"
 		echo "($(git describe --tags HEAD) instead of C)"
 		false
 	} &&
 	git rebase --continue &&
-	test -f touch-three &&
-	test -f "touch-file  name with spaces" &&
-	test -f touch-after-semicolon &&
+	test_path_is_file touch-three &&
+	test_path_is_file "touch-file  name with spaces" &&
+	test_path_is_file touch-after-semicolon &&
 	test $(git rev-parse master) = $(git rev-parse HEAD) || {
 		echo "Stopped at wrong revision:"
 		echo "($(git describe --tags HEAD) instead of master)"
@@ -105,7 +105,7 @@ test_expect_success 'rebase -i with the exec command runs from tree root' '
 	FAKE_LINES="1 exec_>touch-subdir" \
 		git rebase -i HEAD^ &&
 	cd .. &&
-	test -f touch-subdir &&
+	test_path_is_file touch-subdir &&
 	rm -fr subdir
 '
 
@@ -204,7 +204,7 @@ test_expect_success 'abort' '
 	git rebase --abort &&
 	test $(git rev-parse new-branch1) = $(git rev-parse HEAD) &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
-	! test -d .git/rebase-merge
+	test_path_is_missing .git/rebase-merge
 '
 
 test_expect_success 'abort with error when new base cannot be checked out' '
@@ -213,7 +213,7 @@ test_expect_success 'abort with error when new base cannot be checked out' '
 	test_must_fail git rebase -i master > output 2>&1 &&
 	grep "Untracked working tree file .file1. would be overwritten" \
 		output &&
-	! test -d .git/rebase-merge &&
+	test_path_is_missing .git/rebase-merge &&
 	git reset --hard HEAD^
 '
 
