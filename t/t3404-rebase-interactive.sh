@@ -150,8 +150,9 @@ test_expect_success 'abort with error when new base cannot be checked out' '
 	git rm --cached file1 &&
 	git commit -m "remove file in base" &&
 	test_must_fail git rebase -i master > output 2>&1 &&
-	grep "Untracked working tree file .file1. would be overwritten" \
+	grep "The following untracked working tree files would be overwritten by checkout:" \
 		output &&
+	grep "file1" output &&
 	! test -d .git/rebase-merge &&
 	git reset --hard HEAD^
 '

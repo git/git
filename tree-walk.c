@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "tree-walk.h"
+#include "unpack-trees.h"
 #include "tree.h"
 
 static const char *get_mode(const char *str, unsigned int *modep)
@@ -310,6 +311,7 @@ static void free_extended_entry(struct tree_desc_x *t)
 int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 {
 	int ret = 0;
+	int error = 0;
 	struct name_entry *entry = xmalloc(n*sizeof(*entry));
 	int i;
 	struct tree_desc_x *tx = xcalloc(n, sizeof(*tx));
@@ -377,8 +379,11 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 		if (!mask)
 			break;
 		ret = info->fn(n, mask, dirmask, entry, info);
-		if (ret < 0)
-			break;
+		if (ret < 0) {
+			error = ret;
+			if (!info->show_all_errors)
+				break;
+		}
 		mask &= ret;
 		ret = 0;
 		for (i = 0; i < n; i++)
@@ -389,7 +394,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 	for (i = 0; i < n; i++)
 		free_extended_entry(tx + i);
 	free(tx);
-	return ret;
+	return error;
 }
 
 static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char *result, unsigned *mode)

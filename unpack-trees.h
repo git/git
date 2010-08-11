@@ -22,6 +22,11 @@ enum unpack_trees_error_types {
 	NB_UNPACK_TREES_ERROR_TYPES
 };
 
+struct rejected_paths_list {
+	char *path;
+	struct rejected_paths_list *next;
+};
+
 struct unpack_trees_options {
 	unsigned int reset,
 		     merge,
@@ -36,12 +41,18 @@ struct unpack_trees_options {
 		     diff_index_cached,
 		     debug_unpack,
 		     skip_sparse_checkout,
-		     gently;
+		     gently,
+		     show_all_errors;
 	const char *prefix;
 	int cache_bottom;
 	struct dir_struct *dir;
 	merge_fn_t fn;
 	const char *msgs[NB_UNPACK_TREES_ERROR_TYPES];
+	/*
+	 * Store error messages in an array, each case
+	 * corresponding to a error message type
+	 */
+	struct rejected_paths_list *unpack_rejects[NB_UNPACK_TREES_ERROR_TYPES];
 
 	int head_idx;
 	int merge_size;

@@ -65,6 +65,73 @@ static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 }
 
 /*
+ * add error messages on path <path>
+ * corresponding to the type <e> with the message <msg>
+ * indicating if it should be display in porcelain or not
+ */
+static int add_rejected_path(struct unpack_trees_options *o,
+			     enum unpack_trees_error_types e,
+			     const char *path)
+{
+	struct rejected_paths_list *newentry;
+	int porcelain = o && (o)->msgs[e];
+	/*
+	 * simply display the given error message if in plumbing mode
+	 */
+	if (!porcelain)
+		o->show_all_errors = 0;
+	if (!o->show_all_errors)
+		return error(ERRORMSG(o, e), path);
+
+	/*
+	 * Otherwise, insert in a list for future display by
+	 * display_error_msgs()
+	 */
+	newentry = xmalloc(sizeof(struct rejected_paths_list));
+	newentry->path = (char *)path;
+	newentry->next = o->unpack_rejects[e];
+	o->unpack_rejects[e] = newentry;
+	return -1;
+}
+
+/*
+ * free all the structures allocated for the error <e>
+ */
+static void free_rejected_paths(struct unpack_trees_options *o,
+				enum unpack_trees_error_types e)
+{
+	while (o->unpack_rejects[e]) {
+		struct rejected_paths_list *del = o->unpack_rejects[e];
+		o->unpack_rejects[e] = o->unpack_rejects[e]->next;
+		free(del);
+	}
+	free(o->unpack_rejects[e]);
+}
+
+/*
+ * display all the error messages stored in a nice way
+ */
+static void display_error_msgs(struct unpack_trees_options *o)
+{
+	int e;
+	int something_displayed = 0;
+	for (e = 0; e < NB_UNPACK_TREES_ERROR_TYPES; e++) {
+		if (o->unpack_rejects[e]) {
+			struct rejected_paths_list *rp;
+			struct strbuf path = STRBUF_INIT;
+			something_displayed = 1;
+			for (rp = o->unpack_rejects[e]; rp; rp = rp->next)
+				strbuf_addf(&path, "\t%s\n", rp->path);
+			error(ERRORMSG(o, e), path.buf);
+			strbuf_release(&path);
+			free_rejected_paths(o, e);
+		}
+	}
+	if (something_displayed)
+		printf("Aborting\n");
+}
+
+/*
  * Unlink the last component and schedule the leading directories for
  * removal, such that empty directories get removed.
  */
@@ -755,6 +822,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		setup_traverse_info(&info, prefix);
 		info.fn = unpack_callback;
 		info.data = o;
+		info.show_all_errors = o->show_all_errors;
 
 		if (o->prefix) {
 			/*
@@ -834,6 +902,8 @@ done:
 	return ret;
 
 return_failed:
+	if (o->show_all_errors)
+		display_error_msgs(o);
 	mark_all_ce_unused(o->src_index);
 	ret = unpack_failed(o, NULL);
 	goto done;
@@ -843,7 +913,7 @@ return_failed:
 
 static int reject_merge(struct cache_entry *ce, struct unpack_trees_options *o)
 {
-	return error(ERRORMSG(o, ERROR_WOULD_OVERWRITE), ce->name);
+	return add_rejected_path(o, ERROR_WOULD_OVERWRITE, ce->name);
 }
 
 static int same(struct cache_entry *a, struct cache_entry *b)
@@ -890,7 +960,7 @@ static int verify_uptodate_1(struct cache_entry *ce,
 	if (errno == ENOENT)
 		return 0;
 	return o->gently ? -1 :
-		error(ERRORMSG(o, error_type), ce->name);
+		add_rejected_path(o, error_type, ce->name);
 }
 
 static int verify_uptodate(struct cache_entry *ce,
@@ -993,7 +1063,7 @@ static int verify_clean_subdirectory(struct cache_entry *ce,
 	i = read_directory(&d, pathbuf, namelen+1, NULL);
 	if (i)
 		return o->gently ? -1 :
-			error(ERRORMSG(o, ERROR_NOT_UPTODATE_DIR), ce->name);
+			add_rejected_path(o, ERROR_NOT_UPTODATE_DIR, ce->name);
 	free(pathbuf);
 	return cnt;
 }
@@ -1075,7 +1145,7 @@ static int verify_absent_1(struct cache_entry *ce,
 		}
 
 		return o->gently ? -1 :
-			error(ERRORMSG(o, error_type), ce->name);
+			add_rejected_path(o, error_type, ce->name);
 	}
 	return 0;
 }
