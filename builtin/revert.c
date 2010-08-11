@@ -521,8 +521,6 @@ static int do_pick_commit(void)
 	} else {
 		if (!no_commit)
 			res = run_git_commit(defmsg);
-		if (!res)
-			fprintf(stderr, "Finished %s.\n", mebuf.buf);
 	}
 
 	strbuf_release(&mebuf);

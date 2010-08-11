@@ -35,36 +35,54 @@ test_expect_success setup '
 '
 
 test_expect_success 'cherry-pick first..fourth works' '
-	cat <<-EOF >expected &&
-	Finished cherry-pick of commit $(git rev-parse --short second).
-	Finished cherry-pick of commit $(git rev-parse --short third).
-	Finished cherry-pick of commit $(git rev-parse --short fourth).
+	cat <<-\EOF >expected &&
+	[master OBJID] second
+	 Author: A U Thor <author@example.com>
+	 1 files changed, 1 insertions(+), 0 deletions(-)
+	[master OBJID] third
+	 Author: A U Thor <author@example.com>
+	 1 files changed, 1 insertions(+), 0 deletions(-)
+	[master OBJID] fourth
+	 Author: A U Thor <author@example.com>
+	 1 files changed, 1 insertions(+), 0 deletions(-)
 	EOF
 
 	git checkout -f master &&
 	git reset --hard first &&
 	test_tick &&
-	git cherry-pick first..fourth 2>actual &&
+	git cherry-pick first..fourth >actual &&
 	git diff --quiet other &&
 	git diff --quiet HEAD other &&
-	test_cmp expected actual &&
+
+	sed -e "s/$_x05[0-9a-f][0-9a-f]/OBJID/" <actual >actual.fuzzy &&
+	test_cmp expected actual.fuzzy &&
 	check_head_differs_from fourth
 '
 
 test_expect_success 'cherry-pick --strategy resolve first..fourth works' '
-	cat <<-EOF >expected &&
-	Finished cherry-pick of commit $(git rev-parse --short second) with strategy resolve.
-	Finished cherry-pick of commit $(git rev-parse --short third) with strategy resolve.
-	Finished cherry-pick of commit $(git rev-parse --short fourth) with strategy resolve.
+	cat <<-\EOF >expected &&
+	Trying simple merge.
+	[master OBJID] second
+	 Author: A U Thor <author@example.com>
+	 1 files changed, 1 insertions(+), 0 deletions(-)
+	Trying simple merge.
+	[master OBJID] third
+	 Author: A U Thor <author@example.com>
+	 1 files changed, 1 insertions(+), 0 deletions(-)
+	Trying simple merge.
+	[master OBJID] fourth
+	 Author: A U Thor <author@example.com>
+	 1 files changed, 1 insertions(+), 0 deletions(-)
 	EOF
 
 	git checkout -f master &&
 	git reset --hard first &&
 	test_tick &&
-	git cherry-pick --strategy resolve first..fourth 2>actual &&
+	git cherry-pick --strategy resolve first..fourth >actual &&
 	git diff --quiet other &&
 	git diff --quiet HEAD other &&
-	test_cmp expected actual &&
+	sed -e "s/$_x05[0-9a-f][0-9a-f]/OBJID/" <actual >actual.fuzzy &&
+	test_cmp expected actual.fuzzy &&
 	check_head_differs_from fourth
 '
 
