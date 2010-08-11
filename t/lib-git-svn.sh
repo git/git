@@ -16,7 +16,6 @@ fi
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
-PERL=${PERL:-perl}
 
 svn >/dev/null 2>&1
 if test $? -ne 1
@@ -30,7 +29,7 @@ export svnrepo
 svnconf=$PWD/svnconf
 export svnconf
 
-$PERL -w -e "
+"$PERL_PATH" -w -e "
 use SVN::Core;
 use SVN::Repos;
 \$SVN::Core::VERSION gt '1.1.0' or exit(42);
@@ -130,7 +129,7 @@ stop_httpd () {
 }
 
 convert_to_rev_db () {
-	$PERL -w -- - "$@" <<\EOF
+	"$PERL_PATH" -w -- - "$@" <<\EOF
 use strict;
 @ARGV == 2 or die "Usage: convert_to_rev_db <input> <output>";
 open my $wr, '+>', $ARGV[1] or die "$!: couldn't open: $ARGV[1]";
