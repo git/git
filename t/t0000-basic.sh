@@ -84,7 +84,11 @@ donthaveit=yes
 test_expect_success HAVEIT,DONTHAVEIT 'unmet prerequisites causes test to be skipped' '
     donthaveit=no
 '
-if test $haveit$donthaveit != yesyes
+donthaveiteither=yes
+test_expect_success DONTHAVEIT,HAVEIT 'unmet prerequisites causes test to be skipped' '
+    donthaveiteither=no
+'
+if test $haveit$donthaveit$donthaveiteither != yesyesyes
 then
 	say "bug in test framework: multiple prerequisite tags do not work reliably"
 	exit 1

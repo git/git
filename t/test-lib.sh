@@ -332,15 +332,30 @@ test_have_prereq () {
 	IFS=,
 	set -- $*
 	IFS=$save_IFS
+
+	total_prereq=0
+	ok_prereq=0
+	missing_prereq=
+
 	for prerequisite
 	do
+		total_prereq=$(($total_prereq + 1))
 		case $satisfied in
 		*" $prerequisite "*)
-			: yes, have it ;;
+			ok_prereq=$(($ok_prereq + 1))
+			;;
 		*)
-			! : nope ;;
+			# Keep a list of missing prerequisites
+			if test -z "$missing_prereq"
+			then
+				missing_prereq=$prerequisite
+			else
+				missing_prereq="$prerequisite,$missing_prereq"
+			fi
 		esac
 	done
+
+	test $total_prereq = $ok_prereq
 }
 
 # You are not expected to call test_ok_ and test_failure_ directly, use
@@ -403,7 +418,7 @@ test_skip () {
 	case "$to_skip" in
 	t)
 		say_color skip >&3 "skipping test: $@"
-		say_color skip "ok $test_count # skip $1 (prereqs: $prereq)"
+		say_color skip "ok $test_count # skip $1 (missing $missing_prereq of $prereq)"
 		: true
 		;;
 	*)
