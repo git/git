@@ -136,4 +136,6 @@ const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 
 extern int cmd_line_log_walk(struct rev_info *rev);
 
+extern void limit_list_line(struct rev_info *rev);
+
 #endif
