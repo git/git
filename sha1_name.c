@@ -659,6 +659,16 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	return get_short_sha1(name, len, sha1, 0);
 }
 
+/*
+ * This interprets names like ':/Initial revision of "git"' by searching
+ * through history and returning the first commit whose message starts
+ * the given regular expression.
+ *
+ * For future extension, ':/!' is reserved. If you want to match a message
+ * beginning with a '!', you have to repeat the exclamation mark.
+ */
+#define ONELINE_SEEN (1u<<20)
+
 static int handle_one_ref(const char *path,
 		const unsigned char *sha1, int flag, void *cb_data)
 {
@@ -674,19 +684,10 @@ static int handle_one_ref(const char *path,
 	if (object->type != OBJ_COMMIT)
 		return 0;
 	insert_by_date((struct commit *)object, list);
+	object->flags |= ONELINE_SEEN;
 	return 0;
 }
 
-/*
- * This interprets names like ':/Initial revision of "git"' by searching
- * through history and returning the first commit whose message matches
- * the given regular expression.
- *
- * For future extension, ':/!' is reserved. If you want to match a message
- * beginning with a '!', you have to repeat the exclamation mark.
- */
-
-#define ONELINE_SEEN (1u<<20)
 static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 {
 	struct commit_list *list = NULL, *backup = NULL, *l;
