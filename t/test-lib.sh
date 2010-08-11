@@ -633,16 +633,19 @@ test_create_repo () {
 
 test_done () {
 	GIT_EXIT_OK=t
-	test_results_dir="$TEST_DIRECTORY/test-results"
-	mkdir -p "$test_results_dir"
-	test_results_path="$test_results_dir/${0%.sh}-$$.counts"
 
-	echo "total $test_count" >> $test_results_path
-	echo "success $test_success" >> $test_results_path
-	echo "fixed $test_fixed" >> $test_results_path
-	echo "broken $test_broken" >> $test_results_path
-	echo "failed $test_failure" >> $test_results_path
-	echo "" >> $test_results_path
+	if test -z "$HARNESS_ACTIVE"; then
+		test_results_dir="$TEST_DIRECTORY/test-results"
+		mkdir -p "$test_results_dir"
+		test_results_path="$test_results_dir/${0%.sh}-$$.counts"
+
+		echo "total $test_count" >> $test_results_path
+		echo "success $test_success" >> $test_results_path
+		echo "fixed $test_fixed" >> $test_results_path
+		echo "broken $test_broken" >> $test_results_path
+		echo "failed $test_failure" >> $test_results_path
+		echo "" >> $test_results_path
+	fi
 
 	if test "$test_fixed" != 0
 	then
