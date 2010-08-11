@@ -85,6 +85,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 {
 	int i;
 	int decoration_given = 0;
+	static int full_line_diff;
 	struct userformat_want w;
 	const char *path = NULL, *fullpath = NULL;
 	static struct diff_line_range *range;
@@ -95,6 +96,9 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		OPT_CALLBACK('L', NULL, &line_cb, "n,m",
 			     "Process only line range n,m, counting from 1",
 			     log_line_range_callback),
+		OPT_BOOLEAN(0, "full-line-diff", &full_line_diff,
+			    "Always print the interesting range even if the \
+			    current commit does not change any line of it"),
 		OPT_END()
 	};
 
@@ -223,8 +227,10 @@ parse_done:
 	}
 
 	/* Test whether line level history is asked for */
-	if (range && range->nr > 0)
+	if (range && range->nr > 0) {
 		setup_line(rev, range);
+		rev->full_line_diff = full_line_diff;
+	}
 }
 
 /*
