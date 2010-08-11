@@ -23,8 +23,8 @@ struct merge_options {
 	struct string_list current_directory_set;
 };
 
-/* Return a list of user-friendly error messages to be used by merge */
-struct unpack_trees_error_msgs get_porcelain_error_msgs(void);
+/* Sets the list of user-friendly error messages to be used by merge */
+void set_porcelain_error_msgs(const char **msgs);
 
 /* merge_trees() but with recursive ancestor consolidation */
 int merge_recursive(struct merge_options *o,

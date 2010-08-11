@@ -13,37 +13,37 @@
  * Error messages expected by scripts out of plumbing commands such as
  * read-tree.  Non-scripted Porcelain is not required to use these messages
  * and in fact are encouraged to reword them to better suit their particular
- * situation better.  See how "git checkout" replaces not_uptodate_file to
+ * situation better.  See how "git checkout" replaces ERROR_NOT_UPTODATE_FILE to
  * explain why it does not allow switching between branches when you have
  * local changes, for example.
  */
-static struct unpack_trees_error_msgs unpack_plumbing_errors = {
-	/* would_overwrite */
+const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
+	/* ERROR_WOULD_OVERWRITE */
 	"Entry '%s' would be overwritten by merge. Cannot merge.",
 
-	/* not_uptodate_file */
+	/* ERROR_NOT_UPTODATE_FILE */
 	"Entry '%s' not uptodate. Cannot merge.",
 
-	/* not_uptodate_dir */
+	/* ERROR_NOT_UPTODATE_DIR */
 	"Updating '%s' would lose untracked files in it",
 
-	/* would_lose_untracked */
+	/* ERROR_WOULD_LOSE_UNTRACKED */
 	"Untracked working tree file '%s' would be %s by merge.",
 
-	/* bind_overlap */
+	/* ERROR_BIND_OVERLAP */
 	"Entry '%s' overlaps with '%s'.  Cannot bind.",
 
-	/* sparse_not_uptodate_file */
+	/* ERROR_SPARSE_NOT_UPTODATE_FILE */
 	"Entry '%s' not uptodate. Cannot update sparse checkout.",
 
-	/* would_lose_orphaned */
+	/* ERROR_WOULD_LOSE_ORPHANED */
 	"Working tree file '%s' would be %s by sparse checkout update.",
 };
 
-#define ERRORMSG(o,fld) \
-	( ((o) && (o)->msgs.fld) \
-	? ((o)->msgs.fld) \
-	: (unpack_plumbing_errors.fld) )
+#define ERRORMSG(o,type) \
+	( ((o) && (o)->msgs[(type)]) \
+	  ? ((o)->msgs[(type)])      \
+	  : (unpack_plumbing_errors[(type)]) )
 
 static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 	unsigned int set, unsigned int clear)
@@ -838,7 +838,7 @@ return_failed:
 
 static int reject_merge(struct cache_entry *ce, struct unpack_trees_options *o)
 {
-	return error(ERRORMSG(o, would_overwrite), ce->name);
+	return error(ERRORMSG(o, ERROR_WOULD_OVERWRITE), ce->name);
 }
 
 static int same(struct cache_entry *a, struct cache_entry *b)
@@ -893,13 +893,13 @@ static int verify_uptodate(struct cache_entry *ce,
 {
 	if (!o->skip_sparse_checkout && will_have_skip_worktree(ce, o))
 		return 0;
-	return verify_uptodate_1(ce, o, ERRORMSG(o, not_uptodate_file));
+	return verify_uptodate_1(ce, o, ERRORMSG(o, ERROR_NOT_UPTODATE_FILE));
 }
 
 static int verify_uptodate_sparse(struct cache_entry *ce,
 				  struct unpack_trees_options *o)
 {
-	return verify_uptodate_1(ce, o, ERRORMSG(o, sparse_not_uptodate_file));
+	return verify_uptodate_1(ce, o, ERRORMSG(o, ERROR_SPARSE_NOT_UPTODATE_FILE));
 }
 
 static void invalidate_ce_path(struct cache_entry *ce, struct unpack_trees_options *o)
@@ -986,7 +986,7 @@ static int verify_clean_subdirectory(struct cache_entry *ce, const char *action,
 	i = read_directory(&d, pathbuf, namelen+1, NULL);
 	if (i)
 		return o->gently ? -1 :
-			error(ERRORMSG(o, not_uptodate_dir), ce->name);
+			error(ERRORMSG(o, ERROR_NOT_UPTODATE_DIR), ce->name);
 	free(pathbuf);
 	return cnt;
 }
@@ -1068,7 +1068,7 @@ static int verify_absent_1(struct cache_entry *ce, const char *action,
 		}
 
 		return o->gently ? -1 :
-			error(ERRORMSG(o, would_lose_untracked), ce->name, action);
+			error(ERRORMSG(o, ERROR_WOULD_LOSE_UNTRACKED), ce->name, action);
 	}
 	return 0;
 }
@@ -1077,13 +1077,13 @@ static int verify_absent(struct cache_entry *ce, const char *action,
 {
 	if (!o->skip_sparse_checkout && will_have_skip_worktree(ce, o))
 		return 0;
-	return verify_absent_1(ce, action, o, ERRORMSG(o, would_lose_untracked));
+	return verify_absent_1(ce, action, o, ERRORMSG(o, ERROR_WOULD_LOSE_UNTRACKED));
 }
 
 static int verify_absent_sparse(struct cache_entry *ce, const char *action,
 			 struct unpack_trees_options *o)
 {
-	return verify_absent_1(ce, action, o, ERRORMSG(o, would_lose_orphaned));
+	return verify_absent_1(ce, action, o, ERRORMSG(o, ERROR_WOULD_LOSE_ORPHANED));
 }
 
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
@@ -1412,7 +1412,7 @@ int bind_merge(struct cache_entry **src,
 			     o->merge_size);
 	if (a && old)
 		return o->gently ? -1 :
-			error(ERRORMSG(o, bind_overlap), a->name, old->name);
+			error(ERRORMSG(o, ERROR_BIND_OVERLAP), a->name, old->name);
 	if (!a)
 		return keep_entry(old, o);
 	else

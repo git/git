@@ -704,7 +704,7 @@ int checkout_fast_forward(const unsigned char *head, const unsigned char *remote
 	opts.verbose_update = 1;
 	opts.merge = 1;
 	opts.fn = twoway_merge;
-	opts.msgs = get_porcelain_error_msgs();
+	set_porcelain_error_msgs(opts.msgs);
 
 	trees[nr_trees] = parse_tree_indirect(head);
 	if (!trees[nr_trees++])

@@ -185,7 +185,7 @@ static int git_merge_trees(int index_only,
 	opts.fn = threeway_merge;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
-	opts.msgs = get_porcelain_error_msgs();
+	set_porcelain_error_msgs(opts.msgs);
 
 	init_tree_desc_from_tree(t+0, common);
 	init_tree_desc_from_tree(t+1, head);
@@ -1178,26 +1178,19 @@ static int process_entry(struct merge_options *o,
 	return clean_merge;
 }
 
-struct unpack_trees_error_msgs get_porcelain_error_msgs(void)
+void set_porcelain_error_msgs(const char **msgs)
 {
-	struct unpack_trees_error_msgs msgs = {
-		/* would_overwrite */
-		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
-		/* not_uptodate_file */
-		"Your local changes to '%s' would be overwritten by merge.  Aborting.",
-		/* not_uptodate_dir */
-		"Updating '%s' would lose untracked files in it.  Aborting.",
-		/* would_lose_untracked */
-		"Untracked working tree file '%s' would be %s by merge.  Aborting",
-		/* bind_overlap -- will not happen here */
-		NULL,
-	};
-	if (advice_commit_before_merge) {
-		msgs.would_overwrite = msgs.not_uptodate_file =
+	if (advice_commit_before_merge)
+		msgs[ERROR_WOULD_OVERWRITE] = msgs[ERROR_NOT_UPTODATE_FILE] =
 			"Your local changes to '%s' would be overwritten by merge.  Aborting.\n"
 			"Please, commit your changes or stash them before you can merge.";
-	}
-	return msgs;
+	else
+		msgs[ERROR_WOULD_OVERWRITE] = msgs[ERROR_NOT_UPTODATE_FILE] =
+			"Your local changes to '%s' would be overwritten by merge.  Aborting.";
+	msgs[ERROR_NOT_UPTODATE_DIR] =
+		"Updating '%s' would lose untracked files in it.  Aborting.";
+	msgs[ERROR_WOULD_LOSE_UNTRACKED] =
+		"Untracked working tree file '%s' would be %s by merge.  Aborting";
 }
 
 int merge_trees(struct merge_options *o,

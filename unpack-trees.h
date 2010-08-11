@@ -9,14 +9,15 @@ struct exclude_list;
 typedef int (*merge_fn_t)(struct cache_entry **src,
 		struct unpack_trees_options *options);
 
-struct unpack_trees_error_msgs {
-	const char *would_overwrite;
-	const char *not_uptodate_file;
-	const char *not_uptodate_dir;
-	const char *would_lose_untracked;
-	const char *bind_overlap;
-	const char *sparse_not_uptodate_file;
-	const char *would_lose_orphaned;
+enum unpack_trees_error_types {
+	ERROR_WOULD_OVERWRITE = 0,
+	ERROR_NOT_UPTODATE_FILE,
+	ERROR_NOT_UPTODATE_DIR,
+	ERROR_WOULD_LOSE_UNTRACKED,
+	ERROR_BIND_OVERLAP,
+	ERROR_SPARSE_NOT_UPTODATE_FILE,
+	ERROR_WOULD_LOSE_ORPHANED,
+	NB_UNPACK_TREES_ERROR_TYPES
 };
 
 struct unpack_trees_options {
@@ -38,7 +39,7 @@ struct unpack_trees_options {
 	int cache_bottom;
 	struct dir_struct *dir;
 	merge_fn_t fn;
-	struct unpack_trees_error_msgs msgs;
+	const char *msgs[NB_UNPACK_TREES_ERROR_TYPES];
 
 	int head_idx;
 	int merge_size;

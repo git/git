@@ -373,7 +373,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.src_index = &the_index;
 		topts.dst_index = &the_index;
 
-		topts.msgs.not_uptodate_file = "You have local changes to '%s'; cannot switch branches.";
+		topts.msgs[ERROR_NOT_UPTODATE_FILE] = "You have local changes to '%s'; cannot switch branches.";
 
 		refresh_cache(REFRESH_QUIET);
 
