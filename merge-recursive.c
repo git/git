@@ -185,7 +185,7 @@ static int git_merge_trees(int index_only,
 	opts.fn = threeway_merge;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
-	set_porcelain_error_msgs(opts.msgs);
+	set_porcelain_error_msgs(opts.msgs, "merge");
 
 	init_tree_desc_from_tree(t+0, common);
 	init_tree_desc_from_tree(t+1, head);
@@ -1178,19 +1178,32 @@ static int process_entry(struct merge_options *o,
 	return clean_merge;
 }
 
-void set_porcelain_error_msgs(const char **msgs)
+void set_porcelain_error_msgs(const char **msgs, const char *cmd)
 {
+	const char *msg;
+	char *tmp;
+	const char *cmd2 = strcmp(cmd, "checkout") ? cmd : "switch branches";
 	if (advice_commit_before_merge)
-		msgs[ERROR_WOULD_OVERWRITE] = msgs[ERROR_NOT_UPTODATE_FILE] =
-			"Your local changes to '%s' would be overwritten by merge.  Aborting.\n"
-			"Please, commit your changes or stash them before you can merge.";
+		msg = "Your local changes to '%%s' would be overwritten by %s.  Aborting.\n"
+			"Please, commit your changes or stash them before you can %s.";
 	else
-		msgs[ERROR_WOULD_OVERWRITE] = msgs[ERROR_NOT_UPTODATE_FILE] =
-			"Your local changes to '%s' would be overwritten by merge.  Aborting.";
+		msg = "Your local changes to '%%s' would be overwritten by %s.  Aborting.";
+	tmp = xmalloc(strlen(msg) + strlen(cmd) + strlen(cmd2) - 3);
+	sprintf(tmp, msg, cmd, cmd2);
+	msgs[ERROR_WOULD_OVERWRITE] = tmp;
+	msgs[ERROR_NOT_UPTODATE_FILE] = tmp;
+
 	msgs[ERROR_NOT_UPTODATE_DIR] =
 		"Updating '%s' would lose untracked files in it.  Aborting.";
-	msgs[ERROR_WOULD_LOSE_UNTRACKED] =
-		"Untracked working tree file '%s' would be %s by merge.  Aborting";
+
+	if (advice_commit_before_merge)
+		msg = "Untracked working tree file '%%s' would be %%s by %s.  Aborting"
+			"Please move or remove them before you can %s.";
+	else
+		msg = "Untracked working tree file '%%s' would be %%s by %s.  Aborting";
+	tmp = xmalloc(strlen(msg) + strlen(cmd) + strlen(cmd2) - 3);
+	sprintf(tmp, msg, cmd, cmd2);
+	msgs[ERROR_WOULD_LOSE_UNTRACKED] = tmp;
 }
 
 int merge_trees(struct merge_options *o,

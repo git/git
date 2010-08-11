@@ -13,9 +13,8 @@
  * Error messages expected by scripts out of plumbing commands such as
  * read-tree.  Non-scripted Porcelain is not required to use these messages
  * and in fact are encouraged to reword them to better suit their particular
- * situation better.  See how "git checkout" replaces ERROR_NOT_UPTODATE_FILE to
- * explain why it does not allow switching between branches when you have
- * local changes, for example.
+ * situation better.  See how "git checkout" and "git merge" replaces
+ * them using set_porcelain_error_msgs(), for example.
  */
 const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 	/* ERROR_WOULD_OVERWRITE */
