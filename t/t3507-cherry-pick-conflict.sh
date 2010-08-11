@@ -38,6 +38,26 @@ test_expect_success 'failed cherry-pick does not advance HEAD' '
 	test "$head" = "$newhead"
 '
 
+test_expect_success 'advice from failed cherry-pick' '
+	git checkout -f initial^0 &&
+	git read-tree -u --reset HEAD &&
+	git clean -d -f -f -q -x &&
+
+	git update-index --refresh &&
+	git diff-index --exit-code HEAD &&
+
+	picked=$(git rev-parse --short picked) &&
+	cat <<-EOF >expected &&
+	error: could not apply $picked... picked
+	hint: after resolving the conflicts, mark the corrected paths
+	hint: with 'git add <paths>' or 'git rm <paths>'
+	hint: and commit the result with 'git commit -c $picked'
+	EOF
+	test_must_fail git cherry-pick picked 2>actual &&
+
+	test_cmp expected actual
+'
+
 test_expect_success 'failed cherry-pick produces dirty index' '
 
 	git checkout -f initial^0 &&

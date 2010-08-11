@@ -250,27 +250,21 @@ static void advise(const char *advice, ...)
 	va_end(params);
 }
 
-static char *help_msg(void)
+static void print_advice(void)
 {
-	struct strbuf helpbuf = STRBUF_INIT;
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
 
-	if (msg)
-		return msg;
-
-	strbuf_addstr(&helpbuf, "  After resolving the conflicts,\n"
-		"mark the corrected paths with 'git add <paths>' or 'git rm <paths>'\n"
-		"and commit the result");
-
-	if (action == CHERRY_PICK) {
-		strbuf_addf(&helpbuf, " with: \n"
-			"\n"
-			"        git commit -c %s\n",
-			    sha1_to_hex(commit->object.sha1));
+	if (msg) {
+		fprintf(stderr, "%s\n", msg);
+		return;
 	}
-	else
-		strbuf_addch(&helpbuf, '.');
-	return strbuf_detach(&helpbuf, NULL);
+
+	advise("after resolving the conflicts, mark the corrected paths");
+	advise("with 'git add <paths>' or 'git rm <paths>'");
+
+	if (action == CHERRY_PICK)
+		advise("and commit the result with 'git commit -c %s'",
+		       find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
 }
 
 static void write_message(struct strbuf *msgbuf, const char *filename)
@@ -404,7 +398,6 @@ static int do_pick_commit(void)
 	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
-	struct strbuf mebuf = STRBUF_INIT;
 	int res;
 
 	if (no_commit) {
@@ -501,9 +494,6 @@ static int do_pick_commit(void)
 		}
 	}
 
-	strbuf_addf(&mebuf, "%s of commit %s", me,
-		    find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
-
 	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT) {
 		res = do_recursive_merge(base, next, base_label, next_label,
 					 head, &msgbuf);
@@ -512,7 +502,6 @@ static int do_pick_commit(void)
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
 
-		strbuf_addf(&mebuf, " with strategy %s", strategy);
 		write_message(&msgbuf, defmsg);
 
 		commit_list_insert(base, &common);
@@ -528,14 +517,13 @@ static int do_pick_commit(void)
 		      action == REVERT ? "revert" : "apply",
 		      find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV),
 		      msg.subject);
-		fprintf(stderr, help_msg());
+		print_advice();
 		rerere(allow_rerere_auto);
 	} else {
 		if (!no_commit)
 			res = run_git_commit(defmsg);
 	}
 
-	strbuf_release(&mebuf);
 	free_message(&msg);
 	free(defmsg);
 
