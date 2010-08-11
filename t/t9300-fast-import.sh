@@ -166,6 +166,63 @@ test_expect_success \
 	 test `git rev-parse --verify master:file2` \
 	    = `git rev-parse --verify verify--import-marks:copy-of-file2`'
 
+test_tick
+mt=$(git hash-object --stdin < /dev/null)
+: >input.blob
+: >marks.exp
+: >tree.exp
+
+cat >input.commit <<EOF
+commit refs/heads/verify--dump-marks
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+test the sparse array dumping routines with exponentially growing marks
+COMMIT
+EOF
+
+i=0
+l=4
+m=6
+n=7
+while test "$i" -lt 27; do
+    cat >>input.blob <<EOF
+blob
+mark :$l
+data 0
+blob
+mark :$m
+data 0
+blob
+mark :$n
+data 0
+EOF
+    echo "M 100644 :$l l$i" >>input.commit
+    echo "M 100644 :$m m$i" >>input.commit
+    echo "M 100644 :$n n$i" >>input.commit
+
+    echo ":$l $mt" >>marks.exp
+    echo ":$m $mt" >>marks.exp
+    echo ":$n $mt" >>marks.exp
+
+    printf "100644 blob $mt\tl$i\n" >>tree.exp
+    printf "100644 blob $mt\tm$i\n" >>tree.exp
+    printf "100644 blob $mt\tn$i\n" >>tree.exp
+
+    l=$(($l + $l))
+    m=$(($m + $m))
+    n=$(($l + $n))
+
+    i=$((1 + $i))
+done
+
+sort tree.exp > tree.exp_s
+
+test_expect_success 'A: export marks with large values' '
+	cat input.blob input.commit | git fast-import --export-marks=marks.large &&
+	git ls-tree refs/heads/verify--dump-marks >tree.out &&
+	test_cmp tree.exp_s tree.out &&
+	test_cmp marks.exp marks.large'
+
 ###
 ### series B
 ###
