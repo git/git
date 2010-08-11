@@ -119,6 +119,10 @@ extern struct diff_line_range *diff_line_range_merge(
 		struct diff_line_range *out,
 		struct diff_line_range *other);
 
+extern struct diff_line_range *diff_line_range_clone(struct diff_line_range *r);
+
+extern struct diff_line_range *diff_line_range_clone_deeply(struct diff_line_range *r);
+
 extern void setup_line(struct rev_info *rev, struct diff_line_range *r);
 
 extern void add_line_range(struct rev_info *revs, struct commit *commit,
