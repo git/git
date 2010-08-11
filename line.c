@@ -95,25 +95,29 @@ static void fill_line_ends(struct diff_filespec *spec, long *lines,
 	*line_ends = ends;
 }
 
-static const char *nth_line(struct diff_filespec *spec, long line,
-		long lines, unsigned long *line_ends)
+struct nth_line_cb {
+	struct diff_filespec *spec;
+	long lines;
+	unsigned long *line_ends;
+};
+
+static const char *nth_line(void *data, long line)
 {
-	assert(line < lines);
-	assert(spec && spec->data);
+	struct nth_line_cb *d = data;
+	assert(d && line < d->lines);
+	assert(d->spec && d->spec->data);
 
 	if (line == 0)
-		return (char *)spec->data;
+		return (char *)d->spec->data;
 	else
-		return (char *)spec->data + line_ends[line] + 1;
+		return (char *)d->spec->data + d->line_ends[line] + 1;
 }
 
 /*
- * copied from blame.c, indeed, we can even to use this to test
- * whether line log works. :)
+ * Parsing of (comma separated) one item in the -L option
  */
-static const char *parse_loc(const char *spec, struct diff_filespec *file,
-			     long lines, unsigned long *line_ends,
-			     long begin, long *ret)
+const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
+		void *data, long lines, long begin, long *ret)
 {
 	char *term;
 	const char *line;
@@ -121,6 +125,13 @@ static const char *parse_loc(const char *spec, struct diff_filespec *file,
 	int reg_error;
 	regex_t regexp;
 	regmatch_t match[1];
+
+	/* Catch the '$' matcher, now it is used to match the last
+	 * line of the file. */
+	if (spec[0] == '$') {
+		*ret = lines;
+		return spec + 1;
+	}
 
 	/* Allow "-L <something>,+20" to mean starting at <something>
 	 * for 20 lines, or "-L <something>,-5" for 5 lines ending at
@@ -160,7 +171,7 @@ static const char *parse_loc(const char *spec, struct diff_filespec *file,
 	/* try [spec+1 .. term-1] as regexp */
 	*term = 0;
 	begin--; /* input is in human terms */
-	line = nth_line(file, begin, lines, line_ends);
+	line = nth_line(data, begin);
 
 	if (!(reg_error = regcomp(&regexp, spec + 1, REG_NEWLINE)) &&
 	    !(reg_error = regexec(&regexp, line, 1, match, 0))) {
@@ -168,7 +179,7 @@ static const char *parse_loc(const char *spec, struct diff_filespec *file,
 		const char *nline;
 
 		while (begin++ < lines) {
-			nline = nth_line(file, begin, lines, line_ends);
+			nline = nth_line(data, begin);
 			if (line <= cp && cp < nline)
 				break;
 			line = nline;
@@ -188,10 +199,11 @@ static void parse_range(long lines, unsigned long *line_ends,
 		struct line_range *r, struct diff_filespec *spec)
 {
 	const char *term;
+	struct nth_line_cb data = {spec, lines, line_ends};
 
-	term = parse_loc(r->arg, spec, lines, line_ends, 1, &r->start);
+	term = parse_loc(r->arg, nth_line, &data, lines - 1, 1, &r->start);
 	if (*term == ',') {
-		term = parse_loc(term + 1, spec, lines, line_ends,
+		term = parse_loc(term + 1, nth_line, &data, lines - 1,
 			r->start + 1, &r->end);
 		if (*term)
 			die("-L parameter's argument should be <start>,<end>");
@@ -200,16 +212,16 @@ static void parse_range(long lines, unsigned long *line_ends,
 	if (*term)
 		die("-L parameter's argument should be <start>,<end>");
 
+	if (r->start < 1)
+		r->start = 1;
+	if (r->end >= lines)
+		r->end = lines - 1;
+
 	if (r->start > r->end) {
 		long tmp = r->start;
 		r->start = r->end;
 		r->end = tmp;
 	}
-
-	if (r->start < 1)
-		r->start = 1;
-	if (r->end >= lines)
-		r->end = lines - 1;
 }
 
 static void parse_lines(struct commit *commit, struct diff_line_range *r)

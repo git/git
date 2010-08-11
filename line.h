@@ -8,6 +8,8 @@ struct commit;
 struct diff_line_range;
 struct diff_options;
 
+typedef const char *(*nth_line_fn_t)(void *data, long lno);
+
 struct print_range {
 	int start, end;		/* Line range of post-image */
 	int pstart, pend;	/* Line range of pre-image */
@@ -124,5 +126,8 @@ extern void add_line_range(struct rev_info *revs, struct commit *commit,
 
 extern struct diff_line_range *lookup_line_range(struct rev_info *revs,
 		struct commit *commit);
+
+const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
+		void *data, long lines, long begin, long *ret);
 
 #endif
