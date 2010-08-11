@@ -1197,13 +1197,16 @@ void set_porcelain_error_msgs(const char **msgs, const char *cmd)
 		"Updating '%s' would lose untracked files in it.  Aborting.";
 
 	if (advice_commit_before_merge)
-		msg = "Untracked working tree file '%%s' would be %%s by %s.  Aborting"
+		msg = "Untracked working tree file '%%s' would be %s by %s.  Aborting"
 			"Please move or remove them before you can %s.";
 	else
-		msg = "Untracked working tree file '%%s' would be %%s by %s.  Aborting";
-	tmp = xmalloc(strlen(msg) + strlen(cmd) + strlen(cmd2) - 3);
-	sprintf(tmp, msg, cmd, cmd2);
-	msgs[ERROR_WOULD_LOSE_UNTRACKED] = tmp;
+		msg = "Untracked working tree file '%%s' would be %s by %s.  Aborting";
+	tmp = xmalloc(strlen(msg) + strlen(cmd) + strlen("removed") + strlen(cmd2) - 4);
+	sprintf(tmp, msg, "removed", cmd, cmd2);
+	msgs[ERROR_WOULD_LOSE_UNTRACKED_REMOVED] = tmp;
+	tmp = xmalloc(strlen(msg) + strlen(cmd) + strlen("overwritten") + strlen(cmd2) - 4);
+	sprintf(tmp, msg, "overwritten", cmd, cmd2);
+	msgs[ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN] = tmp;
 }
 
 int merge_trees(struct merge_options *o,
