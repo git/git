@@ -134,4 +134,6 @@ extern struct diff_line_range *lookup_line_range(struct rev_info *revs,
 const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 		void *data, long lines, long begin, long *ret);
 
+extern int cmd_line_log_walk(struct rev_info *rev);
+
 #endif
