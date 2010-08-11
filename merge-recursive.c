@@ -20,6 +20,7 @@
 #include "attr.h"
 #include "merge-recursive.h"
 #include "dir.h"
+#include "submodule.h"
 
 static struct tree *shift_tree_object(struct tree *one, struct tree *two,
 				      const char *subtree_shift)
@@ -525,13 +526,15 @@ static void update_file_flags(struct merge_options *o,
 		void *buf;
 		unsigned long size;
 
-		if (S_ISGITLINK(mode))
+		if (S_ISGITLINK(mode)) {
 			/*
 			 * We may later decide to recursively descend into
 			 * the submodule directory and update its index
 			 * and/or work tree, but we do not do that now.
 			 */
+			update_wd = 0;
 			goto update_index;
+		}
 
 		buf = read_sha1_file(sha, &type, &size);
 		if (!buf)
@@ -716,8 +719,8 @@ static struct merge_file_info merge_file(struct merge_options *o,
 			free(result_buf.ptr);
 			result.clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
-			result.clean = 0;
-			hashcpy(result.sha, a->sha1);
+			result.clean = merge_submodule(result.sha, one->path, one->sha1,
+						       a->sha1, b->sha1);
 		} else if (S_ISLNK(a->mode)) {
 			hashcpy(result.sha, a->sha1);
 
