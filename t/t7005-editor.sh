@@ -111,13 +111,13 @@ do
 	'
 done
 
-if ! echo 'echo space > "$1"' > "e space.sh"
+if echo 'echo space > "$1"' > "e space.sh"
 then
-	skip_all="Skipping; FS does not support spaces in filenames"
-	test_done
+	# FS supports spaces in filenames
+	test_set_prereq SPACES_IN_FILENAMES
 fi
 
-test_expect_success 'editor with a space' '
+test_expect_success SPACES_IN_FILENAMES 'editor with a space' '
 
 	chmod a+x "e space.sh" &&
 	GIT_EDITOR="./e\ space.sh" git commit --amend &&
@@ -126,7 +126,7 @@ test_expect_success 'editor with a space' '
 '
 
 unset GIT_EDITOR
-test_expect_success 'core.editor with a space' '
+test_expect_success SPACES_IN_FILENAMES 'core.editor with a space' '
 
 	git config core.editor \"./e\ space.sh\" &&
 	git commit --amend &&
