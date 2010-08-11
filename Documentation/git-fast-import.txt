@@ -482,9 +482,11 @@ External data format::
 	'M' SP <mode> SP <dataref> SP <path> LF
 ....
 +
-Here `<dataref>` can be either a mark reference (`:<idnum>`)
+Here usually `<dataref>` must be either a mark reference (`:<idnum>`)
 set by a prior `blob` command, or a full 40-byte SHA-1 of an
-existing Git blob object.
+existing Git blob object.  If `<mode>` is `040000`` then
+`<dataref>` must be the full 40-byte SHA-1 of an existing
+Git tree object or a mark reference set with `--import-marks`.
 
 Inline data format::
 	The data content for the file has not been supplied yet.
@@ -509,6 +511,8 @@ in octal.  Git only supports the following modes:
 * `160000`: A gitlink, SHA-1 of the object refers to a commit in
   another repository. Git links can only be specified by SHA or through
   a commit mark. They are used to implement submodules.
+* `040000`: A subdirectory.  Subdirectories can only be specified by
+  SHA or through a tree mark set with `--import-marks`.
 
 In both formats `<path>` is the complete path of the file to be added
 (if not already existing) or modified (if already existing).
