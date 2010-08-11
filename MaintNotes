@@ -10,7 +10,7 @@ IRC channel on Freenode.  Its log is available at:
 
         http://colabti.org/irclogger/irclogger_log/git
 
-The development is primarily done on the Git mailing list If you have
+The development is primarily done on the Git mailing list. If you have
 patches, please send them to the list address (git@vger.kernel.org).
 following Documentation/SubmittingPatches.  You don't have to be
 subscribed to send messages there, and the convention is to Cc:
