@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2010, #01; Wed, 4)
-X-master-at: 721e76cbfac650ce676fc789b717eb21e1daa46e
-X-next-at: 7f78604dbfb7c90248f8142905329a97e26c8539
+Subject: What's cooking in git.git (Aug 2010, #02; Wed, 11)
+X-master-at: 7980e41746bc5de91eea775f9142ce44b1100361
+X-next-at: ca9fef0665a1958ac7895c60b29faa8be1e281e0
 
-What's cooking in git.git (Aug 2010, #01; Wed, 4)
+What's cooking in git.git (Aug 2010, #02; Wed, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,53 +11,198 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-The tip of 'next' has been rewound and rebuilt on top of v1.7.2; also a
-few topics have been ejected as I've been warning to.  I'll start merging
-more stuff to 'next' in the next round after reading them over again.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* gp/pack-refs-remove-empty-dirs (2010-07-06) 1 commit
-  (merged to 'next' on 2010-07-14 at 7d25131)
- + pack-refs: remove newly empty directories
-
-* pt/git-gui (2010-08-02) 13 commits
- + Merge git://repo.or.cz/git-gui into pt/git-gui
- + git-gui: fix size and position of window panes on startup
- + git-gui: mc cannot be used before msgcat has been loaded
- + git-gui: use textconv filter for diff and blame
- + git-gui: Avoid using the <<Copy>> binding as a menu accelerator on win32
- + git-gui: fix shortcut creation on cygwin
- + git-gui: fix PATH environment for mingw development environment
- + git-gui: fix usage of _gitworktree when creating shortcut for windows
- + git-gui: fix "Explore Working Copy" for Windows again
- + git-gui: fix usage of themed widgets variable
- + git-gui: Handle failure of core.worktree to identify the working directory.
- + Merge branch 'maint'
- + git-gui: check whether systems nice command works or disable it
-
-* rr/svn-fe (2010-07-29) 2 commits
- + contrib/svn-fe: Add the svn-fe target to .gitignore
- + contrib/svn-fe: Fix IncludePath
-
-* sv/maint-diff-q-clear-fix (2010-08-02) 1 commit
- + Fix DIFF_QUEUE_CLEAR refactoring
+Has the rate of patch traffic increased markedly for the past few months?
+I am feeling perpetually behind these days...
 
 --------------------------------------------------
 [New Topics]
 
-* jc/sha1-name-find-fix (2010-08-02) 1 commit
- - sha1_name.c: fix parsing of ":/token" syntax
+* ab/omit-aggregate-test-result-under-tap-harness (2010-08-11) 1 commit
+ - test-lib: Don't write test-results when HARNESS_ACTIVE
 
-* jn/doc-pull (2010-08-02) 1 commit
- - Documentation: flesh out “git pull” description
+* ab/test-prereq (2010-08-11) 5 commits
+ - test-lib: Multi-prereq support only checked the last prereq
+ - tests: A SANITY test prereq for testing if we're root
+ - t/README: Document the predefined test prerequisites
+ - test-lib: Print missing prerequisites in test output
+ - test-lib: Add support for multiple test prerequisites
 
-* jn/maint-gitweb-dynconf (2010-07-30) 1 commit
- - gitweb: allow configurations that change with each request
+* ab/test-smoke (2010-08-08) 4 commits
+ - t/README: Add SMOKE_{COMMENT,TAGS}= to smoke_report target
+ - t/Makefile: Can't include GIT-BUILD-OPTIONS, it's a .sh
+ - t/README: Document the Smoke testing
+ - tests: Infrastructure for Git smoke testing
 
-* sr/local-config (2010-08-03) 1 commit
- - config: add --local option
+Will merge the above three topics to 'next' together with other "test"
+topics from the same author shortly.
+
+* by/line-log (2010-08-11) 18 commits
+ - line-log: minimum compilation fix
+ - Document line history browser
+ - Add tests for line history browser
+ - Add --full-line-diff option
+ - Add --graph prefix before line history output
+ - Add parent rewriting to line history browser
+ - Make graph_next_line external to other part of git
+ - Make rewrite_parents public to other part of git
+ - Hook line history into cmd_log, ensuring a topo-ordered walk
+ - Print the line log
+ - map/take range to the parent of commits
+ - Add range clone functions
+ - Export three functions from diff.c
+ - Parse the -L options
+ - Refactor parse_loc
+ - Add the basic data structure for line level history
+ - parse-options: add two helper functions
+ - parse-options: enhance STOP_AT_NON_OPTION
+
+Does not seem to pass the self test for me...
+
+* dg/local-mod-error-messages (2010-08-11) 5 commits
+ - t7609: test merge and checkout error messages
+ - unpack_trees: group error messages by type
+ - merge-recursive: distinguish "removed" and "overwritten" messages
+ - merge-recursive: porcelain messages for checkout
+ - Turn unpack_trees_options.msgs into an array + enum
+
+Looking good.
+
+* en/rebase-against-rebase-fix (2010-08-06) 2 commits
+ - pull --rebase: Avoid spurious conflicts and reapplying unnecessary patches
+ - t5520-pull: Add testcases showing spurious conflicts from git pull --rebase
+
+* gb/split-cmdline-errmsg (2010-08-07) 1 commit
+ - split_cmdline: Allow caller to access error string
+
+* jc/builtin-binsearch (2010-08-05) 2 commits
+ . git.c: binary search in the built-in command list
+ . git.c: sort the list of built-in command names
+
+* jl/submodule-ignore-diff (2010-08-06) 4 commits
+ - Add tests for the diff.ignoreSubmodules config option
+ - Add the 'diff.ignoreSubmodules' config setting
+ - Submodules: Use "ignore" settings from .gitmodules too for diff and status
+ - Submodules: Add the new "ignore" config option for diff and status
+
+Looking good.
+
+* jn/commit-no-change-wo-status (2010-07-24) 9 commits
+ . commit: suppress status summary when no changes staged
+ . commit --dry-run: give advice on empty amend
+ . commit: give empty-commit avoidance code its own function
+ . t7508 (status): modernize style
+ . commit: split off the piece that writes status
+ . commit: split commit -s handling into its own function
+ . commit: split off a function to fetch the default log message
+ . wt-status: split off a function for printing submodule summary
+ . wt-status: split wt_status_print into digestible pieces
+
+* jn/merge-renormalize (2010-08-05) 12 commits
+ . merge-recursive --renormalize
+ . rerere: never renormalize
+ . rerere: migrate to parse-options API
+ . t4200 (rerere): modernize style
+ . ll-merge: let caller decide whether to renormalize
+ . ll-merge: make flag easier to populate
+ . Documentation/technical: document ll_merge
+ . merge-trees: let caller decide whether to renormalize
+ . merge-trees: push choice to renormalize away from low level
+ . t6038 (merge.renormalize): check that it can be turned off
+ . t6038 (merge.renormalize): try checkout -m and cherry-pick
+ . t6038 (merge.renormalize): style nitpicks
+ (this branch uses eb/double-convert-before-merge.)
+
+* jn/paginate-fix (2010-08-05) 13 commits
+ . merge-file: run setup_git_directory_gently() sooner
+ . var: run setup_git_directory_gently() sooner
+ . ls-remote: run setup_git_directory_gently() sooner
+ . index-pack: run setup_git_directory_gently() sooner
+ . Merge branch 'jn/maint-setup-fix' (early part) into HEAD
+ . config: run setup_git_directory_gently() sooner
+ . bundle: run setup_git_directory_gently() sooner
+ . apply: run setup_git_directory_gently() sooner
+ . grep: run setup_git_directory_gently() sooner
+ . shortlog: run setup_git_directory_gently() sooner
+ . git wrapper: allow setup_git_directory_gently() be called earlier
+ . setup: remember whether repository was found
+ . git wrapper: introduce startup_info struct
+ (this branch uses jn/maint-setup-fix.)
+
+I had trouble merging these three topics to 'pu' and ran out of time my
+git Wednesday this week.  I think the "no-change-wo-status" one had some
+unintended consequences discovered on the list?
+
+* jn/maint-plug-leak (2010-08-09) 3 commits
+ - write-tree: Avoid leak when index refers to an invalid object
+ - read-tree: stop leaking tree objects
+ - core: Stop leaking ondisk_cache_entrys
+
+Will fast-track merging to 'next', 'master' and 'maint' after giving it
+another look.
+
+* jn/svn-fe (2010-08-09) 10 commits
+ - svn-fe manual: Clarify warning about deltas in dump files
+ - Update svn-fe manual
+ - SVN dump parser
+ - Infrastructure to write revisions in fast-export format
+ - Add stream helper library
+ - Add string-specific memory pool
+ - Add treap implementation
+ - Add memory pool library
+ - Introduce vcs-svn lib
+ - Export parse_date_basic() to convert a date string to timestamp
+
+There was a screw-up on my part---I should have dropped the first one and
+branched this off of jn/parse-date-basic (I'll fix it up before merging
+this to 'next').
+
+* js/detached-stash (2010-08-10) 9 commits
+ - Documentation: git stash branch now tolerates non-stash references.
+ - t3903-stash.sh: tests of git stash with stash-like arguments
+ - stash: teach git stash show to always tolerate stash-like arguments.
+ - stash: teach git stash branch to tolerate stash-like arguments
+ - stash: teach git stash drop to fail early if the specified revision is not a stash reference
+ - stash: teach git stash pop to fail early if the argument is not a stash ref
+ - stash: introduce is_stash_ref and assert_stash_ref functions.
+ - stash: extract stash-like check into its own function
+ - stash: refactor - create pop_stash function
+
+Haven't looked this new round closely yet.
+
+* mm/rebase-i-exec (2010-08-10) 2 commits
+ - test-lib: user-friendly alternatives to test [-d|-f|-e]
+ - rebase -i: add exec command to launch a shell command
+
+Looking good.
+
+* so/http-user-agent (2010-08-11) 1 commit
+ - Allow HTTP user agent string to be modified.
+
+Looking good.
+
+* sp/fix-smart-http-deadlock-on-error (2010-08-06) 1 commit
+  (merged to 'next' on 2010-08-11 at 0a6369e)
+ + smart-http: Don't deadlock on server failure
+
+Will fast-track merging to 'master' and 'maint' after giving it another
+look.
+
+--------------------------------------------------
+[Ejected]
+
+* rr/svn-export (2010-07-29) 9 commits
+ . vcs-svn: Remove stray calls to removed functions
+ . Add SVN dump parser
+ . Add infrastructure to write revisions in fast-export format
+ . Add stream helper library
+ . Add string-specific memory pool
+ . vcs-svn: treap_search should return NULL for missing items
+ . Add treap implementation
+ . Add memory pool library
+ . Introduce vcs-svn lib
+ (this branch uses jn/parse-date-basic.)
+
+Replaced with Jonathan's reroll.
 
 --------------------------------------------------
 [Stalled]
@@ -77,6 +222,29 @@ I recall there was another round of re-roll planned for this one.
 --------------------------------------------------
 [Cooking]
 
+* jc/sha1-name-find-fix (2010-08-02) 1 commit
+  (merged to 'next' on 2010-08-11 at 51106a5)
+ + sha1_name.c: fix parsing of ":/token" syntax
+
+Will merge to 'master' (and perhaps 'maint').
+
+* jn/doc-pull (2010-08-02) 1 commit
+  (merged to 'next' on 2010-08-11 at a223479)
+ + Documentation: flesh out “git pull” description
+
+Will merge to 'master'.
+
+* jn/maint-gitweb-dynconf (2010-07-30) 1 commit
+  (merged to 'next' on 2010-08-11 at a94ce85)
+ + gitweb: allow configurations that change with each request
+
+Will merge to 'master'.
+
+* sr/local-config (2010-08-03) 1 commit
+ - config: add --local option
+
+Looked Ok.  Will merge to 'next'.
+
 * ab/test-coverage (2010-07-26) 8 commits
  - Makefile: make gcov invocation configurable
  - t/README: Add a note about the dangers of coverage chasing
@@ -87,7 +255,15 @@ I recall there was another round of re-roll planned for this one.
  - Makefile: Include subdirectories in "make cover" reports
  - gitignore: Ignore files generated by "make coverage"
 
-* ab/test-no-skip (2010-07-28) 5 commits
+* ab/test-no-skip (2010-08-10) 13 commits
+ - git-notes: Run partial expensive test everywhere
+ - t/t3300-funny-names: change from skip_all=* to prereq skip
+ - t/t3902-quoted: change from skip_all=* to prereq skip
+ - t/t4016-diff-quote: change from skip_all=* to prereq skip
+ - t/t5503-tagfollow: change from skip_all=* to prereq skip
+ - t/t7005-editor: change from skip_all=* to prereq skip
+ - t/t5705-clone-2gb: change from skip_all=* to prereq skip
+ - t/t1304-default-acl: change from skip_all=* to prereq skip
  - t/README: Update "Skipping tests" to align with best practices
  - t/t7800-difftool.sh: Skip with prereq on no PERL
  - t/t5800-remote-helpers.sh: Skip with prereq on python <2.4
@@ -95,8 +271,11 @@ I recall there was another round of re-roll planned for this one.
  - tests: implicitly skip SYMLINKS tests using <prereq>
 
 * bc/use-more-hardlinks-in-install (2010-07-23) 2 commits
- - Makefile: make hard/symbolic links for non-builtins too
- - Makefile: link builtins residing in bin directory to main git binary too
+  (merged to 'next' on 2010-08-11 at 59dd30e)
+ + Makefile: make hard/symbolic links for non-builtins too
+ + Makefile: link builtins residing in bin directory to main git binary too
+
+Will merge to 'master'.
 
 * cc/find-commit-subject (2010-07-22) 6 commits
  - blame: use find_commit_subject() instead of custom code
@@ -106,6 +285,8 @@ I recall there was another round of re-roll planned for this one.
  - revert: refactor code to find commit subject in find_commit_subject()
  - revert: fix off by one read when searching the end of a commit subject
 
+Looked Ok.  Will merge to 'next'.
+
 * gb/shell-ext (2010-07-28) 3 commits
  - Add sample commands for git-shell
  - Add interactive mode to git-shell for user-friendliness
@@ -114,12 +295,18 @@ I recall there was another round of re-roll planned for this one.
 * jc/log-grep (2010-07-19) 1 commit
  - git log: add -G<regexp> that greps in the patch text
 
+This is broken, but haven't found any time to revisit it yet.
+
 * jh/clean-exclude (2010-07-20) 2 commits
  - Add test for git clean -e.
  - Add -e/--exclude to git-clean.
 
+Looked Ok.  Will merge to 'next'.
+
 * jh/use-test-must-fail (2010-07-20) 1 commit
  - Convert "! git" to "test_must_fail git"
+
+Looked Ok.  Will merge to 'next'.
 
 * jn/apply-filename-with-sp (2010-07-23) 4 commits
  - apply: Handle traditional patches with space in filename
@@ -127,10 +314,14 @@ I recall there was another round of re-roll planned for this one.
  - tests: Test how well "git apply" copes with weird filenames
  - apply: Split quoted filename handling into new function
 
+Looked Ok.  Will merge to 'next'.
+
 * jn/fix-abbrev (2010-07-27) 3 commits
  - examples/commit: use --abbrev for commit summary
  - checkout, commit: remove confusing assignments to rev.abbrev
  - archive: abbreviate substituted commit ids again
+
+Looked Ok.  Will merge to 'next'.
 
 * jn/maint-setup-fix (2010-07-24) 11 commits
  - setup: split off a function to handle ordinary .git directories
@@ -144,6 +335,7 @@ I recall there was another round of re-roll planned for this one.
  - setup: split off $GIT_DIR-set case from setup_git_directory_gently
  - tests: try git apply from subdir of toplevel
  - t1501 (rev-parse): clarify
+ (this branch is used by jn/paginate-fix.)
 
 * jn/rebase-rename-am (2008-11-10) 5 commits
  - rebase: protect against diff.renames configuration
@@ -152,15 +344,21 @@ I recall there was another round of re-roll planned for this one.
  - t4150 (am): futureproof against failing tests
  - t4150 (am): style fix
 
+Will merge to 'next'.
+
 * ml/rebase-x-strategy (2010-07-29) 1 commit
  - rebase: support -X to pass through strategy options
 
-* mm/shortopt-detached (2010-07-30) 5 commits
- - log: parse detached option for --glob
- - log: parse detached options like git log --grep foo
- - diff: parse detached options --stat-width n, --stat-name-width n
+Looked Ok.  Will merge to 'next'.
+
+* mm/shortopt-detached (2010-08-05) 5 commits
+ - log: parse separate option for --glob
+ - log: parse separate options like git log --grep foo
+ - diff: parse separate options --stat-width n, --stat-name-width n
  - diff: split off a function for --stat-* option parsing
- - diff: parse detached options like -S foo
+ - diff: parse separate options like -S foo
+
+Looked Ok.  Will merge to 'next'.
 
 * nd/fix-sparse-checkout (2010-07-31) 5 commits
  - unpack-trees: mark new entries skip-worktree appropriately
@@ -169,21 +367,30 @@ I recall there was another round of re-roll planned for this one.
  - unpack-trees: only clear CE_UPDATE|CE_REMOVE when skip-worktree is always set
  - t1011 (sparse checkout): style nitpicks
 
+Looked Ok.  Will merge to 'next'.
+
 * tr/ab-i18n-fix (2010-07-25) 1 commit
  - tests: locate i18n lib&data correctly under --valgrind
  (this branch uses ab/i18n.)
+
+Looked Ok.  Will merge to 'next'.
 
 * tr/maint-no-unquote-plus (2010-07-24) 1 commit
  - Do not unquote + into ' ' in URLs
 
 * tr/xsize-bits (2010-07-28) 1 commit
- - xsize_t: check whether we lose bits
+  (merged to 'next' on 2010-08-11 at bcc0271)
+ + xsize_t: check whether we lose bits
 
 * vs/doc-spell (2010-07-20) 1 commit
  - Documentation: spelling fixes
 
+Looked Ok.  Will merge to 'next'.
+
 * ab/report-corrupt-object-with-type (2010-06-10) 1 commit
  - sha1_file: Show the the type and path to corrupt objects
+
+Looked Ok.  Will merge to 'next'.
 
 * cc/revert (2010-07-21) 5 commits
  - t3508: add check_head_differs_from() helper function and use it
@@ -197,41 +404,41 @@ I recall there was another round of re-roll planned for this one.
  - fast-export: Fix dropping of files with --import-marks and path limiting
 
 * jn/parse-date-basic (2010-07-15) 1 commit
- - Export parse_date_basic() to convert a date string to timestamp
+  (merged to 'next' on 2010-08-11 at ca9fef0)
+ + Export parse_date_basic() to convert a date string to timestamp
  (this branch is used by rr/svn-export.)
+
+Will merge to 'master'.
 
 * kf/post-receive-sample-hook (2010-07-16) 1 commit
  - post-receive-email: optional message line count limit
 
-* tr/rfc-reset-doc (2010-07-18) 5 commits
- - Documentation/reset: move "undo permanently" example behind "make topic"
- - Documentation/reset: reorder examples to match description
- - Documentation/reset: promote 'examples' one section up
- - Documentation/reset: separate options by mode
- - Documentation/git-reset: reorder modes for soft-mixed-hard progression
+I do not particularly like the idea of counting number of lines in a shell
+loop but this is an opt-in feature to a contrib/ item so it should be ok.
+Will merge to 'next'.
 
-* rr/svn-export (2010-07-29) 9 commits
- - vcs-svn: Remove stray calls to removed functions
- - Add SVN dump parser
- - Add infrastructure to write revisions in fast-export format
- - Add stream helper library
- - Add string-specific memory pool
- - vcs-svn: treap_search should return NULL for missing items
- - Add treap implementation
- - Add memory pool library
- - Introduce vcs-svn lib
- (this branch uses jn/parse-date-basic.)
+* tr/rfc-reset-doc (2010-07-18) 5 commits
+  (merged to 'next' on 2010-08-11 at 8e7c8d1)
+ + Documentation/reset: move "undo permanently" example behind "make topic"
+ + Documentation/reset: reorder examples to match description
+ + Documentation/reset: promote 'examples' one section up
+ + Documentation/reset: separate options by mode
+ + Documentation/git-reset: reorder modes for soft-mixed-hard progression
+
+Looked fine.  Will merge to 'master'.
 
 * hv/autosquash-config (2010-07-14) 1 commit
  - add configuration variable for --autosquash option of interactive rebase
 
 * jh/graph-next-line (2010-07-13) 2 commits
- - Enable custom schemes for column colors in the graph API
- - Make graph_next_line() available in the graph.h API
+  (merged to 'next' on 2010-08-11 at 333f9df)
+ + Enable custom schemes for column colors in the graph API
+ + Make graph_next_line() available in the graph.h API
 
 * ar/string-list-foreach (2010-07-03) 2 commits
- - Convert the users of for_each_string_list to for_each_string_list_item macro
- - Add a for_each_string_list_item macro
+  (merged to 'next' on 2010-08-11 at 993dc02)
+ + Convert the users of for_each_string_list to for_each_string_list_item macro
+ + Add a for_each_string_list_item macro
  (this branch is used by tf/string-list-init.)
 
 * il/rfc-remote-fd-ext (2010-07-31) 4 commits
@@ -241,12 +448,14 @@ I recall there was another round of re-roll planned for this one.
  - New remote helper git-remote-fd
 
 * hv/submodule-find-ff-merge (2010-07-07) 3 commits
- - Implement automatic fast-forward merge for submodules
- - setup_revisions(): Allow walking history in a submodule
- - Teach ref iteration module about submodules
+  (merged to 'next' on 2010-08-11 at 6900d2c)
+ + Implement automatic fast-forward merge for submodules
+ + setup_revisions(): Allow walking history in a submodule
+ + Teach ref iteration module about submodules
 
 * jn/fast-import-subtree (2010-06-30) 1 commit
- - Teach fast-import to import subtrees named by tree id
+  (merged to 'next' on 2010-08-11 at 5e19de0)
+ + Teach fast-import to import subtrees named by tree id
 
 * sg/rerere-gc-old-still-used (2010-07-13) 2 commits
  - rerere: fix overeager gc
@@ -271,12 +480,15 @@ I recall there was another round of re-roll planned for this one.
  - Add infrastructure for translating Git with gettext
  (this branch is used by tr/ab-i18n-fix.)
 
-* tc/checkout-B (2010-06-24) 3 commits
- - builtin/checkout: learn -B
- - builtin/checkout: reword hint for -b
- - add tests for checkout -b
+* tc/checkout-B (2010-08-10) 4 commits
+  (merged to 'next' on 2010-08-11 at 5433b51)
+ + builtin/checkout: handle -B from detached HEAD correctly
+ + builtin/checkout: learn -B
+ + builtin/checkout: reword hint for -b
+ + add tests for checkout -b
 
 * eb/double-convert-before-merge (2010-07-02) 3 commits
  - Don't expand CRLFs when normalizing text during merge
  - Try normalizing files to avoid delete/modify conflicts when merging
  - Avoid conflicts when merging branches with mixed normalization
+ (this branch is used by jn/merge-renormalize.)
