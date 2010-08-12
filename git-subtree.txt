@@ -19,7 +19,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-git subtree allows you to include an subproject in your
+git subtree allows you to include a subproject in your
 own repository as a subdirectory, optionally including the
 subproject's entire history. For example, you could
 include the source code for a library as a subdirectory of your
