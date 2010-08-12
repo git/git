@@ -98,7 +98,7 @@ struct diff_queue_struct {
 		(q)->queue = NULL; \
 		(q)->nr = (q)->alloc = 0; \
 		(q)->run = 0; \
-	} while(0);
+	} while (0)
 
 extern struct diff_queue_struct diff_queued_diff;
 extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
@@ -118,9 +118,9 @@ void diff_debug_filespec(struct diff_filespec *, int, const char *);
 void diff_debug_filepair(const struct diff_filepair *, int);
 void diff_debug_queue(const char *, struct diff_queue_struct *);
 #else
-#define diff_debug_filespec(a,b,c) do {} while(0)
-#define diff_debug_filepair(a,b) do {} while(0)
-#define diff_debug_queue(a,b) do {} while(0)
+#define diff_debug_filespec(a,b,c) do { /* nothing */ } while (0)
+#define diff_debug_filepair(a,b) do { /* nothing */ } while (0)
+#define diff_debug_queue(a,b) do { /* nothing */ } while (0)
 #endif
 
 extern int diffcore_count_changes(struct diff_filespec *src,
