@@ -17,6 +17,5 @@ extern void git_setup_gettext(void) {
 	}
 
 	(void)setlocale(LC_MESSAGES, "");
-	(void)setlocale(LC_CTYPE, "");
 	(void)textdomain("git");
 }
