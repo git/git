@@ -37,7 +37,7 @@ struct trp_root {
 			*trpn_pointer(a_base, a_offset) = \
 				*trpn_pointer(a_base, old_offset); \
 		} \
-	} while (0);
+	} while (0)
 
 /* Left accessors. */
 #define trp_left_get(a_base, a_field, a_node) \
@@ -46,7 +46,7 @@ struct trp_root {
 	do { \
 		trpn_modify(a_base, a_node); \
 		trp_left_get(a_base, a_field, a_node) = (a_left); \
-	} while(0)
+	} while (0)
 
 /* Right accessors. */
 #define trp_right_get(a_base, a_field, a_node) \
@@ -55,7 +55,7 @@ struct trp_root {
 	do { \
 		trpn_modify(a_base, a_node); \
 		trp_right_get(a_base, a_field, a_node) = (a_right); \
-	} while(0)
+	} while (0)
 
 /*
  * Fibonacci hash function.
@@ -72,7 +72,7 @@ struct trp_root {
 	do { \
 		trp_left_set(a_base, a_field, (a_node), ~0); \
 		trp_right_set(a_base, a_field, (a_node), ~0); \
-	} while(0)
+	} while (0)
 
 /* Internal utility macros. */
 #define trpn_first(a_base, a_field, a_root, r_node) \
@@ -90,7 +90,7 @@ struct trp_root {
 		trp_right_set(a_base, a_field, (a_node), \
 			trp_left_get(a_base, a_field, (r_node))); \
 		trp_left_set(a_base, a_field, (r_node), (a_node)); \
-	} while(0)
+	} while (0)
 
 #define trpn_rotate_right(a_base, a_field, a_node, r_node) \
 	do { \
@@ -98,7 +98,7 @@ struct trp_root {
 		trp_left_set(a_base, a_field, (a_node), \
 			trp_right_get(a_base, a_field, (r_node))); \
 		trp_right_set(a_base, a_field, (r_node), (a_node)); \
-	} while(0)
+	} while (0)
 
 #define trp_gen(a_attr, a_pre, a_type, a_field, a_base, a_cmp) \
 a_attr a_type MAYBE_UNUSED *a_pre##first(struct trp_root *treap) \
@@ -136,7 +136,7 @@ a_attr a_type MAYBE_UNUSED *a_pre##search(struct trp_root *treap, a_type *key) \
 { \
 	int cmp; \
 	uint32_t ret = treap->trp_root; \
-	while (~ret && (cmp = (a_cmp)(key, trpn_pointer(a_base,ret)))) { \
+	while (~ret && (cmp = (a_cmp)(key, trpn_pointer(a_base, ret)))) { \
 		if (cmp < 0) { \
 			ret = trp_left_get(a_base, a_field, ret); \
 		} else { \
@@ -149,7 +149,7 @@ a_attr a_type MAYBE_UNUSED *a_pre##nsearch(struct trp_root *treap, a_type *key) 
 { \
 	int cmp; \
 	uint32_t ret = treap->trp_root; \
-	while (~ret && (cmp = (a_cmp)(key, trpn_pointer(a_base,ret)))) { \
+	while (~ret && (cmp = (a_cmp)(key, trpn_pointer(a_base, ret)))) { \
 		if (cmp < 0) { \
 			if (!~trp_left_get(a_base, a_field, ret)) \
 				break; \
@@ -163,7 +163,7 @@ a_attr a_type MAYBE_UNUSED *a_pre##nsearch(struct trp_root *treap, a_type *key) 
 a_attr uint32_t MAYBE_UNUSED a_pre##insert_recurse(uint32_t cur_node, uint32_t ins_node) \
 { \
 	if (cur_node == ~0) { \
-		return (ins_node); \
+		return ins_node; \
 	} else { \
 		uint32_t ret; \
 		int cmp = (a_cmp)(trpn_pointer(a_base, ins_node), \
@@ -185,7 +185,7 @@ a_attr uint32_t MAYBE_UNUSED a_pre##insert_recurse(uint32_t cur_node, uint32_t i
 			else \
 				ret = cur_node; \
 		} \
-		return (ret); \
+		return ret; \
 	} \
 } \
 a_attr void MAYBE_UNUSED a_pre##insert(struct trp_root *treap, a_type *node) \
@@ -204,27 +204,27 @@ a_attr uint32_t MAYBE_UNUSED a_pre##remove_recurse(uint32_t cur_node, uint32_t r
 		uint32_t right = trp_right_get(a_base, a_field, cur_node); \
 		if (left == ~0) { \
 			if (right == ~0) \
-				return (~0); \
+				return ~0; \
 		} else if (right == ~0 || trp_prio_get(left) < trp_prio_get(right)) { \
 			trpn_rotate_right(a_base, a_field, cur_node, ret); \
 			right = a_pre##remove_recurse(cur_node, rem_node); \
 			trp_right_set(a_base, a_field, ret, right); \
-			return (ret); \
+			return ret; \
 		} \
 		trpn_rotate_left(a_base, a_field, cur_node, ret); \
 		left = a_pre##remove_recurse(cur_node, rem_node); \
 		trp_left_set(a_base, a_field, ret, left); \
-		return (ret); \
+		return ret; \
 	} else if (cmp < 0) { \
 		uint32_t left = a_pre##remove_recurse( \
 			trp_left_get(a_base, a_field, cur_node), rem_node); \
 		trp_left_set(a_base, a_field, cur_node, left); \
-		return (cur_node); \
+		return cur_node; \
 	} else { \
 		uint32_t right = a_pre##remove_recurse( \
 			trp_right_get(a_base, a_field, cur_node), rem_node); \
 		trp_right_set(a_base, a_field, cur_node, right); \
-		return (cur_node); \
+		return cur_node; \
 	} \
 } \
 a_attr void MAYBE_UNUSED a_pre##remove(struct trp_root *treap, a_type *node) \
