@@ -15,7 +15,9 @@
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
 #define RANGE_UPDATE	(1u<<9) /* for line level traverse */
-#define ALL_REV_FLAGS	((1u<<10)-1)
+#define NEED_PRINT	(1u<<10)
+#define EVIL_MERGE	(1u<<11)
+#define ALL_REV_FLAGS	((1u<<12)-1)
 
 #define DECORATE_SHORT_REFS	1
 #define DECORATE_FULL_REFS	2
@@ -141,6 +143,7 @@ struct rev_info {
 	int count_right;
 	/* line level range that we are chasing */
 	struct decoration line_range;
+	struct decoration nontrivial_merge;
 };
 
 #define REV_TREE_SAME		0
