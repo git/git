@@ -3,50 +3,55 @@ git-subtree(1)
 
 NAME
 ----
-git-subtree - add, merge, and split subprojects stored in subtrees
+git-subtree - Merge subtrees together and split repository into subtrees
 
 
 SYNOPSIS
 --------
 [verse]
-'git subtree' add   --prefix=<prefix> <repository> <refspec...>
-'git subtree' pull  --prefix=<prefix> <repository> <refspec...>
-'git subtree' push  --prefix=<prefix> <repository> <refspec...>
-'git subtree' add   --prefix=<prefix> <refspec>
-'git subtree' merge --prefix=<prefix> <refspec>
-'git subtree' split --prefix=<prefix> <refspec...>
-         
+'git subtree' add   -P <prefix>|--prefix=<prefix> <commit>
+'git subtree' pull  -P <prefix>|--prefix=<prefix> <repository> <refspec...>
+'git subtree' push  -P <prefix>|--prefix=<prefix> <repository> <refspec...>
+'git subtree' merge -P <prefix>|--prefix=<prefix> <commit>
+'git subtree' split -P <prefix>|--prefix=<prefix> [OPTIONS] [<commit>]
+
 
 DESCRIPTION
 -----------
-git subtree allows you to include a subproject in your
-own repository as a subdirectory, optionally including the
-subproject's entire history. For example, you could
-include the source code for a library as a subdirectory of your
-application.
+Subtrees allow subprojects to be included within a subdirectory
+of the main project, optionally including the subproject's
+entire history.
 
-You can also extract the entire history of a subdirectory from
-your project and make it into a standalone project.  For
-example, if a library you made for one application ends up being
-useful elsewhere, you can extract its entire history and publish
-that as its own git repository, without accidentally
-intermingling the history of your application project.
+For example, you could include the source code for a library
+as a subdirectory of your application.
 
-Most importantly, you can alternate back and forth between these
-two operations.  If the standalone library gets updated, you can
+Subtrees are not to be confused with submodules, which are meant for
+the same task. Unlike submodules, subtrees do not need any special
+constructions (like .gitmodule files or gitlinks) be present in
+your repository, and do not force end-users of your
+repository to do anything special or to understand how subtrees
+work. A subtree is just a subdirectory that can be
+committed to, branched, and merged along with your project in
+any way you want.
+
+They are neither not to be confused with using the subtree merge
+strategy. The main difference is that, besides merging
+of the other project as a subdirectory, you can also extract the
+entire history of a subdirectory from your project and make it
+into a standalone project. Unlike the subtree merge strategy
+you can alternate back and forth between these
+two operations. If the standalone library gets updated, you can
 automatically merge the changes into your project; if you
 update the library inside your project, you can "split" the
 changes back out again and merge them back into the library
 project.
 
-Unlike the 'git submodule' command, git subtree doesn't produce
-any special constructions (like .gitmodule files or gitlinks) in
-your repository, and doesn't require end-users of your
-repository to do anything special or to understand how subtrees
-work.  A subtree is just another subdirectory and can be
-committed to, branched, and merged along with your project in
-any way you want.
+For example, if a library you made for one application ends up being
+useful elsewhere, you can extract its entire history and publish
+that as its own git repository, without accidentally
+intermingling the history of your application project.
 
+[TIP]
 In order to keep your commit messages clean, we recommend that
 people split their commits between the subtrees and the main
 project as much as possible.  That is, if you make a change that
@@ -128,20 +133,29 @@ OPTIONS
 --debug::
 	Produce even more unnecessary output messages on stderr.
 
+-P <prefix>::
 --prefix=<prefix>::
 	Specify the path in the repository to the subtree you
-	want to manipulate.  This option is currently mandatory
+	want to manipulate.  This option is mandatory
 	for all commands.
 
+-m <message>::
+--message=<message>::
+	This option is only valid for add, merge and pull (unsure).
+	Specify <message> as the commit message for the merge commit.
 
-OPTIONS FOR add, merge, AND pull
---------------------------------
+
+OPTIONS FOR add, merge, push, pull
+----------------------------------
 --squash::
+	This option is only valid for add, merge, push and pull
+	commands.
+
 	Instead of merging the entire history from the subtree
 	project, produce only a single commit that contains all
 	the differences you want to merge, and then merge that
 	new commit into your project.
-
+	
 	Using this option helps to reduce log clutter. People
 	rarely want to see every change that happened between
 	v1.0 and v1.1 of the library they're using, since none of the
@@ -169,6 +183,8 @@ OPTIONS FOR add, merge, AND pull
 OPTIONS FOR split
 -----------------
 --annotate=<annotation>::
+	This option is only valid for the split command.
+
 	When generating synthetic history, add <annotation> as a
 	prefix to each commit message.  Since we're creating new
 	commits with the same commit message, but possibly
@@ -184,12 +200,16 @@ OPTIONS FOR split
 
 -b <branch>::
 --branch=<branch>::
+	This option is only valid for the split command.
+
 	After generating the synthetic history, create a new
 	branch called <branch> that contains the new history. 
 	This is suitable for immediate pushing upstream. 
 	<branch> must not already exist.
 
 --ignore-joins::
+	This option is only valid for the split command.
+
 	If you use '--rejoin', git subtree attempts to optimize
 	its history reconstruction to generate only the new
 	commits since the last '--rejoin'.  '--ignore-join'
@@ -198,6 +218,8 @@ OPTIONS FOR split
 	long time.
 
 --onto=<onto>::
+	This option is only valid for the split command.
+
 	If your subtree was originally imported using something
 	other than git subtree, its history may not match what
 	git subtree is expecting.  In that case, you can specify
@@ -210,6 +232,8 @@ OPTIONS FOR split
 	this option.
 
 --rejoin::
+	This option is only valid for the split command.
+
 	After splitting, merge the newly created synthetic
 	history back into your main project.  That way, future
 	splits can search only the part of history that has
@@ -231,8 +255,8 @@ OPTIONS FOR split
 	subproject's history to be part of your project anyway.
 
 
-EXAMPLE 1
----------
+EXAMPLE 1. Add command
+----------------------
 Let's assume that you have a local repository that you would like
 to add an external vendor library to. In this case we will add the
 git-subtree repository as a subdirectory of your already existing
@@ -251,8 +275,8 @@ We now have a ~/git-extensions/git-subtree directory containing code
 from the master branch of git://github.com/apenwarr/git-subtree.git
 in our git-extensions repository.
 
-EXAMPLE 2
----------
+EXAMPLE 2. Extract a subtree using commit, merge and pull
+---------------------------------------------------------
 Let's use the repository for the git source code as an example.
 First, get your own copy of the git.git repository:
 
@@ -312,22 +336,24 @@ the standard gitweb:
 
 	git log gitweb-latest..$(git subtree split --prefix=gitweb)
 
-EXAMPLE 3
----------
+EXAMPLE 3. Extract a subtree using branch
+-----------------------------------------
 Suppose you have a source directory with many files and
 subdirectories, and you want to extract the lib directory to its own
 git project. Here's a short way to do it:
 
 First, make the new repository wherever you want:
-       <go to the new location>
-       git init --bare
+
+	$ <go to the new location>
+	$ git init --bare
 
 Back in your original directory:
-       git subtree split --prefix=lib --annotate="(split)" -b split
+
+	$ git subtree split --prefix=lib --annotate="(split)" -b split
 
 Then push the new branch onto the new empty repository:
-        git push <new-repo> split:master
 
+	$ git push <new-repo> split:master
 
 
 AUTHOR
