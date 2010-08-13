@@ -68,6 +68,8 @@ all::
 #
 # Define NO_MKSTEMPS if you don't have mkstemps in the C library.
 #
+# Define NO_STRTOK_R if you don't have strtok_r in the C library.
+#
 # Define NO_LIBGEN_H if you don't have libgen.h.
 #
 # Define NEEDS_LIBGEN if your libgen needs -lgen when linking
@@ -1041,6 +1043,7 @@ ifeq ($(uname_S),Windows)
 	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
+	NO_STRTOK_R = YesPlease
 	NO_MEMMEM = YesPlease
 	# NEEDS_LIBICONV = YesPlease
 	NO_ICONV = YesPlease
@@ -1095,6 +1098,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
+	NO_STRTOK_R = YesPlease
 	NO_MEMMEM = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
@@ -1324,6 +1328,10 @@ ifdef NO_STRTOUMAX
 endif
 ifdef NO_STRTOULL
 	COMPAT_CFLAGS += -DNO_STRTOULL
+endif
+ifdef NO_STRTOK_R
+	COMPAT_CFLAGS += -DNO_STRTOK_R
+	COMPAT_OBJS += compat/strtok_r.o
 endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV
