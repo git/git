@@ -8,7 +8,6 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
-PROG='git send-email'
 test_expect_success \
     'prepare reference tree' \
     'echo "1A quick brown fox jumps over the" >file &&
