@@ -3,7 +3,7 @@
 test_description='Test cherry-pick with directory/file conflicts'
 . ./test-lib.sh
 
-test_expect_success 'Setup rename across paths each below D/F conflicts' '
+test_expect_success SYMLINKS 'Setup rename across paths each below D/F conflicts' '
 	mkdir a &&
 	>a/f &&
 	git add a &&
@@ -26,7 +26,7 @@ test_expect_success 'Setup rename across paths each below D/F conflicts' '
 	git commit -m f1
 '
 
-test_expect_success 'Cherry-pick succeeds with rename across D/F conflicts' '
+test_expect_success SYMLINKS 'Cherry-pick succeeds with rename across D/F conflicts' '
 	git reset --hard &&
 	git checkout master^0 &&
 	git cherry-pick branch
