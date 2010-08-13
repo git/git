@@ -85,12 +85,15 @@ test_expect_success $PREREQ 'Send patches' '
      git send-email --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
 '
 
+test_expect_success $PREREQ 'setup expect' '
 cat >expected <<\EOF
 !nobody@example.com!
 !author@example.com!
 !one@example.com!
 !two@example.com!
 EOF
+'
+
 test_expect_success $PREREQ \
     'Verify commandline' \
     'test_cmp expected commandline1'
@@ -100,6 +103,7 @@ test_expect_success $PREREQ 'Send patches with --envelope-sender' '
      git send-email --envelope-sender="Patch Contributer <patch@example.com>" --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
 '
 
+test_expect_success $PREREQ 'setup expect' '
 cat >expected <<\EOF
 !patch@example.com!
 !-i!
@@ -108,6 +112,8 @@ cat >expected <<\EOF
 !one@example.com!
 !two@example.com!
 EOF
+'
+
 test_expect_success $PREREQ \
     'Verify commandline' \
     'test_cmp expected commandline1'
@@ -117,6 +123,7 @@ test_expect_success $PREREQ 'Send patches with --envelope-sender=auto' '
      git send-email --envelope-sender=auto --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
 '
 
+test_expect_success $PREREQ 'setup expect' '
 cat >expected <<\EOF
 !nobody@example.com!
 !-i!
@@ -125,10 +132,13 @@ cat >expected <<\EOF
 !one@example.com!
 !two@example.com!
 EOF
+'
+
 test_expect_success $PREREQ \
     'Verify commandline' \
     'test_cmp expected commandline1'
 
+test_expect_success $PREREQ 'setup expect' "
 cat >expected-show-all-headers <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -158,6 +168,7 @@ References: <unique-message-id@example.com>
 
 Result: OK
 EOF
+"
 
 test_expect_success $PREREQ 'Show all headers' '
 	git send-email \
@@ -209,10 +220,10 @@ test_expect_success $PREREQ 'cccmd works' '
 	grep "^	cccmd@example.com" msgtxt1
 '
 
-z8=zzzzzzzz
-z64=$z8$z8$z8$z8$z8$z8$z8$z8
-z512=$z64$z64$z64$z64$z64$z64$z64$z64
 test_expect_success $PREREQ 'reject long lines' '
+	z8=zzzzzzzz &&
+	z64=$z8$z8$z8$z8$z8$z8$z8$z8 &&
+	z512=$z64$z64$z64$z64$z64$z64$z64$z64 &&
 	clean_fake_sendmail &&
 	cp $patches longline.patch &&
 	echo $z512$z512 >>longline.patch &&
@@ -312,6 +323,7 @@ test_expect_success $PREREQ 'second message is patch' '
 	grep "Subject:.*Second" msgtxt2
 '
 
+test_expect_success $PREREQ 'setup expect' "
 cat >expected-suppress-sob <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -338,6 +350,7 @@ X-Mailer: X-MAILER-STRING
 
 Result: OK
 EOF
+"
 
 test_suppression () {
 	git send-email \
@@ -359,6 +372,7 @@ test_expect_success $PREREQ 'sendemail.cc set' '
 	test_suppression sob
 '
 
+test_expect_success $PREREQ 'setup expect' "
 cat >expected-suppress-sob <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -383,12 +397,14 @@ X-Mailer: X-MAILER-STRING
 
 Result: OK
 EOF
+"
 
 test_expect_success $PREREQ 'sendemail.cc unset' '
 	git config --unset sendemail.cc &&
 	test_suppression sob
 '
 
+test_expect_success $PREREQ 'setup expect' "
 cat >expected-suppress-cccmd <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -416,6 +432,7 @@ X-Mailer: X-MAILER-STRING
 
 Result: OK
 EOF
+"
 
 test_expect_success $PREREQ 'sendemail.cccmd' '
 	echo echo cc-cmd@example.com > cccmd &&
@@ -424,6 +441,7 @@ test_expect_success $PREREQ 'sendemail.cccmd' '
 	test_suppression cccmd
 '
 
+test_expect_success $PREREQ 'setup expect' '
 cat >expected-suppress-all <<\EOF
 0001-Second.patch
 Dry-OK. Log says:
@@ -439,11 +457,13 @@ X-Mailer: X-MAILER-STRING
 
 Result: OK
 EOF
+'
 
 test_expect_success $PREREQ '--suppress-cc=all' '
 	test_suppression all
 '
 
+test_expect_success $PREREQ 'setup expect' "
 cat >expected-suppress-body <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -471,11 +491,13 @@ X-Mailer: X-MAILER-STRING
 
 Result: OK
 EOF
+"
 
 test_expect_success $PREREQ '--suppress-cc=body' '
 	test_suppression body
 '
 
+test_expect_success $PREREQ 'setup expect' "
 cat >expected-suppress-body-cccmd <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -500,11 +522,13 @@ X-Mailer: X-MAILER-STRING
 
 Result: OK
 EOF
+"
 
 test_expect_success $PREREQ '--suppress-cc=body --suppress-cc=cccmd' '
 	test_suppression body cccmd
 '
 
+test_expect_success $PREREQ 'setup expect' "
 cat >expected-suppress-sob <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -529,12 +553,14 @@ X-Mailer: X-MAILER-STRING
 
 Result: OK
 EOF
+"
 
 test_expect_success $PREREQ '--suppress-cc=sob' '
 	git config --unset sendemail.cccmd
 	test_suppression sob
 '
 
+test_expect_success $PREREQ 'setup expect' "
 cat >expected-suppress-bodycc <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -562,11 +588,13 @@ X-Mailer: X-MAILER-STRING
 
 Result: OK
 EOF
+"
 
 test_expect_success $PREREQ '--suppress-cc=bodycc' '
 	test_suppression bodycc
 '
 
+test_expect_success $PREREQ 'setup expect' "
 cat >expected-suppress-cc <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -588,6 +616,7 @@ X-Mailer: X-MAILER-STRING
 
 Result: OK
 EOF
+"
 
 test_expect_success $PREREQ '--suppress-cc=cc' '
 	test_suppression cc
@@ -918,6 +947,7 @@ test_expect_success $PREREQ '--no-bcc overrides sendemail.bcc' '
 	! grep "RCPT TO:<other@ex.com>" stdout
 '
 
+test_expect_success $PREREQ 'setup expect' '
 cat >email-using-8bit <<EOF
 From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
 Message-Id: <bogus-message-id@example.com>
@@ -927,12 +957,15 @@ Subject: subject goes here
 
 Dieser deutsche Text enthält einen Umlaut!
 EOF
+'
 
+test_expect_success $PREREQ 'setup expect' '
 cat >content-type-decl <<EOF
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 EOF
+'
 
 test_expect_success $PREREQ 'asks about and fixes 8bit encodings' '
 	clean_fake_sendmail &&
@@ -970,6 +1003,7 @@ test_expect_success $PREREQ '--8bit-encoding overrides sendemail.8bitEncoding' '
 	test_cmp actual content-type-decl
 '
 
+test_expect_success $PREREQ 'setup expect' '
 cat >email-using-8bit <<EOF
 From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
 Message-Id: <bogus-message-id@example.com>
@@ -979,10 +1013,13 @@ Subject: Dieser Betreff enthält auch einen Umlaut!
 
 Nothing to see here.
 EOF
+'
 
+test_expect_success $PREREQ 'setup expect' '
 cat >expected <<EOF
 Subject: =?UTF-8?q?Dieser=20Betreff=20enth=C3=A4lt=20auch=20einen=20Umlaut!?=
 EOF
+'
 
 test_expect_success $PREREQ '--8bit-encoding also treats subject' '
 	clean_fake_sendmail &&
