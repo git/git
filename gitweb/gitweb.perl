@@ -1060,7 +1060,11 @@ sub run_request {
 	reset_timer();
 
 	evaluate_uri();
+	evaluate_gitweb_config();
 	check_loadavg();
+
+	# $projectroot and $projects_list might be set in gitweb config file
+	$projects_list ||= $projectroot;
 
 	evaluate_query_params();
 	evaluate_path_info();
@@ -1109,11 +1113,7 @@ sub evaluate_argv {
 
 sub run {
 	evaluate_argv();
-	evaluate_gitweb_config();
 	evaluate_git_version();
-
-	# $projectroot and $projects_list might be set in gitweb config file
-	$projects_list ||= $projectroot;
 
 	$pre_listen_hook->()
 		if $pre_listen_hook;
