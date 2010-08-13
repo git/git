@@ -359,7 +359,7 @@ test_expect_success \
 
 test_expect_success \
     'a/b (untracked) vs a, plus c/d case test.' \
-    '! git read-tree -u -m "$treeH" "$treeM" &&
+    'test_must_fail git read-tree -u -m "$treeH" "$treeM" &&
      git ls-files --stage &&
      test -f a/b'
 

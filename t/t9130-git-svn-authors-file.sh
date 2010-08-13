@@ -20,7 +20,7 @@ test_expect_success 'setup svnrepo' '
 	'
 
 test_expect_success 'start import with incomplete authors file' '
-	! git svn clone --authors-file=svn-authors "$svnrepo" x
+	test_must_fail git svn clone --authors-file=svn-authors "$svnrepo" x
 	'
 
 test_expect_success 'imported 2 revisions successfully' '
@@ -63,7 +63,7 @@ test_expect_success 'authors-file against globs' '
 	'
 
 test_expect_success 'fetch fails on ee' '
-	( cd aa-work && ! git svn fetch --authors-file=../svn-authors )
+	( cd aa-work && test_must_fail git svn fetch --authors-file=../svn-authors )
 	'
 
 tmp_config_get () {

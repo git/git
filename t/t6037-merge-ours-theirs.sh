@@ -58,7 +58,7 @@ test_expect_success 'pull with -X' '
 	git reset --hard master && git pull -s recursive -X ours . side &&
 	git reset --hard master && git pull -s recursive -Xtheirs . side &&
 	git reset --hard master && git pull -s recursive -X theirs . side &&
-	git reset --hard master && ! git pull -s recursive -X bork . side
+	git reset --hard master && test_must_fail git pull -s recursive -X bork . side
 '
 
 test_done

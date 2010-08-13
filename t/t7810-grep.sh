@@ -65,7 +65,7 @@ do
 
 	test_expect_success "grep -w $L (w)" '
 		: >expected &&
-		! git grep -n -w -e "^w" >actual &&
+		test_must_fail git grep -n -w -e "^w" >actual &&
 		test_cmp expected actual
 	'
 

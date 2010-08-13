@@ -41,7 +41,7 @@ test_expect_success 'modify hidden file in SVN repo' '
 test_expect_success 'fetch fails on modified hidden file' '
 	( cd g &&
 	  git svn find-rev refs/remotes/git-svn > ../expect &&
-	  ! git svn fetch 2> ../errors &&
+	  test_must_fail git svn fetch 2> ../errors &&
 	  git svn find-rev refs/remotes/git-svn > ../expect2 ) &&
 	fgrep "not found in commit" errors &&
 	test_cmp expect expect2
