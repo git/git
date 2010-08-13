@@ -219,6 +219,12 @@ test_expect_success 'bisect and replacements' '
      git bisect reset
 '
 
+test_expect_success 'index-pack and replacements' '
+	git --no-replace-objects rev-list --objects HEAD |
+	git --no-replace-objects pack-objects test- &&
+	git index-pack test-*.pack
+'
+
 #
 #
 test_done
