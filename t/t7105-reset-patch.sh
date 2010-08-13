@@ -41,27 +41,27 @@ test_expect_success 'git reset -p HEAD^' '
 # dir/foo.  There's always an extra 'n' to reject edits to dir/foo in
 # the failure case (and thus get out of the loop).
 
-test_expect_success 'git reset -p dir' '
+test_expect_success PERL 'git reset -p dir' '
 	set_state dir/foo work work
 	(echo y; echo n) | git reset -p dir &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar
 '
 
-test_expect_success 'git reset -p -- foo (inside dir)' '
+test_expect_success PERL 'git reset -p -- foo (inside dir)' '
 	set_state dir/foo work work
 	(echo y; echo n) | (cd dir && git reset -p -- foo) &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar
 '
 
-test_expect_success 'git reset -p HEAD^ -- dir' '
+test_expect_success PERL 'git reset -p HEAD^ -- dir' '
 	(echo y; echo n) | git reset -p HEAD^ -- dir &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar
 '
 
-test_expect_success 'none of this moved HEAD' '
+test_expect_success PERL 'none of this moved HEAD' '
 	verify_saved_head
 '
 
