@@ -625,7 +625,7 @@ skip_unnecessary_picks () {
 		case "$fd,$command" in
 		3,pick|3,p)
 			# pick a commit whose parent is current $ONTO -> skip
-			sha1=$(echo "$rest" | cut -d ' ' -f 1)
+			sha1=$(printf '%s' "$rest" | cut -d ' ' -f 1)
 			case "$(git rev-parse --verify --quiet "$sha1"^)" in
 			"$ONTO"*)
 				ONTO=$sha1
@@ -642,7 +642,7 @@ skip_unnecessary_picks () {
 			fd=1
 			;;
 		esac
-		echo "$command${rest:+ }$rest" >&$fd
+		printf '%s\n' "$command${rest:+ }$rest" >&$fd
 	done <"$TODO" >"$TODO.new" 3>>"$DONE" &&
 	mv -f "$TODO".new "$TODO" &&
 	case "$(peek_next_command)" in
