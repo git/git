@@ -2,11 +2,7 @@
 
 test_description='merge-recursive: handle file mode'
 . ./test-lib.sh
-
-if ! test "$(git config --bool core.filemode)" = false
-then
-	test_set_prereq FILEMODE
-fi
+. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 test_expect_success 'mode change in one branch: keep changed version' '
 	: >file1 &&

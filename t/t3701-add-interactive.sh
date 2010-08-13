@@ -2,6 +2,7 @@
 
 test_description='add -i basic tests'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 if ! test_have_prereq PERL; then
 	skip_all='skipping git add -i tests, perl not available'
@@ -151,13 +152,6 @@ test_expect_success 'skip files similarly as commit -a' '
 	git reset --hard HEAD^
 '
 rm -f .gitignore
-
-if test "$(git config --bool core.filemode)" = false
-then
-	say '# skipping filemode tests (filesystem does not properly support modes)'
-else
-	test_set_prereq FILEMODE
-fi
 
 test_expect_success FILEMODE 'patch does not affect mode' '
 	git reset --hard &&
