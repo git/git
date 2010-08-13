@@ -449,7 +449,7 @@ extern int init_db(const char *template_dir, unsigned int flags);
 				alloc = alloc_nr(alloc); \
 			x = xrealloc((x), alloc * sizeof(*(x))); \
 		} \
-	} while(0)
+	} while (0)
 
 /* Initialize and use the cache information */
 extern int read_index(struct index_state *);
