@@ -359,6 +359,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 	diff_tree_release_paths(&diff_opts);
 
 	/* Go through the new set of filepairing, and see if we find a more interesting one */
+	opt->found_follow = 0;
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 
@@ -376,6 +377,16 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 			diff_tree_release_paths(opt);
 			opt->paths[0] = xstrdup(p->one->path);
 			diff_tree_setup_paths(opt->paths, opt);
+
+			/*
+			 * The caller expects us to return a set of vanilla
+			 * filepairs to let a later call to diffcore_std()
+			 * it makes to sort the renames out (among other
+			 * things), but we already have found renames
+			 * ourselves; signal diffcore_std() not to muck with
+			 * rename information.
+			 */
+			opt->found_follow = 1;
 			break;
 		}
 	}
