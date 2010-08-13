@@ -467,6 +467,13 @@ library for your script to use.
    <expected> file.  This behaves like "cmp" but produces more
    helpful output when the test is run with "-v" option.
 
+ - test_path_is_file <file> [<diagnosis>]
+   test_path_is_dir <dir> [<diagnosis>]
+   test_path_is_missing <path> [<diagnosis>]
+
+   Check whether a file/directory exists or doesn't. <diagnosis> will
+   be displayed if the test fails.
+
  - test_when_finished <script>
 
    Prepend <script> to a list of commands to run to clean up

@@ -545,6 +545,38 @@ test_external_without_stderr () {
 	fi
 }
 
+# debugging-friendly alternatives to "test [-f|-d|-e]"
+# The commands test the existence or non-existence of $1. $2 can be
+# given to provide a more precise diagnosis.
+test_path_is_file () {
+	if ! [ -f "$1" ]
+	then
+		echo "File $1 doesn't exist. $*"
+		false
+	fi
+}
+
+test_path_is_dir () {
+	if ! [ -d "$1" ]
+	then
+		echo "Directory $1 doesn't exist. $*"
+		false
+	fi
+}
+
+test_path_is_missing () {
+	if [ -e "$1" ]
+	then
+		echo "Path exists:"
+		ls -ld "$1"
+		if [ $# -ge 1 ]; then
+			echo "$*"
+		fi
+		false
+	fi
+}
+
+
 # This is not among top-level (test_expect_success | test_expect_failure)
 # but is a prefix that can be used in the test script, like:
 #
