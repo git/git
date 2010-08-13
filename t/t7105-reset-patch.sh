@@ -3,7 +3,7 @@
 test_description='git reset --patch'
 . ./lib-patch-mode.sh
 
-test_expect_success 'setup' '
+test_expect_success PERL 'setup' '
 	mkdir dir &&
 	echo parent > dir/foo &&
 	echo dummy > bar &&
@@ -17,20 +17,20 @@ test_expect_success 'setup' '
 
 # note: bar sorts before foo, so the first 'n' is always to skip 'bar'
 
-test_expect_success 'saying "n" does nothing' '
+test_expect_success PERL 'saying "n" does nothing' '
 	set_and_save_state dir/foo work work
 	(echo n; echo n) | git reset -p &&
 	verify_saved_state dir/foo &&
 	verify_saved_state bar
 '
 
-test_expect_success 'git reset -p' '
+test_expect_success PERL 'git reset -p' '
 	(echo n; echo y) | git reset -p &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar
 '
 
-test_expect_success 'git reset -p HEAD^' '
+test_expect_success PERL 'git reset -p HEAD^' '
 	(echo n; echo y) | git reset -p HEAD^ &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar
