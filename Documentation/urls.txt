@@ -25,7 +25,7 @@ The ssh and git protocols additionally support ~username expansion:
 - git://host.xz{startsb}:port{endsb}/~{startsb}user{endsb}/path/to/repo.git/
 - {startsb}user@{endsb}host.xz:/~{startsb}user{endsb}/path/to/repo.git/
 
-For local respositories, also supported by git natively, the following
+For local repositories, also supported by git natively, the following
 syntaxes may be used:
 
 - /path/to/repo.git/

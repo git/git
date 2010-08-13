@@ -366,8 +366,8 @@ CRLF Line Ending Conversions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default the server leaves the '-k' mode blank for all files,
-which causes the cvs client to treat them as a text files, subject
-to crlf conversion on some platforms.
+which causes the CVS client to treat them as a text files, subject
+to end-of-line conversion on some platforms.
 
 You can make the server use the end-of-line conversion attributes to
 set the '-k' modes for files by setting the `gitcvs.usecrlfattr`
