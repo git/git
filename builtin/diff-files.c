@@ -8,6 +8,7 @@
 #include "commit.h"
 #include "revision.h"
 #include "builtin.h"
+#include "submodule.h"
 
 static const char diff_files_usage[] =
 "git diff-files [-q] [-0/-1/2/3 |-c|--cc] [<common diff options>] [<path>...]"
@@ -20,6 +21,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	unsigned options = 0;
 
 	init_revisions(&rev, prefix);
+	gitmodules_config();
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	rev.abbrev = 0;
 
