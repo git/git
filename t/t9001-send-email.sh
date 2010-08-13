@@ -3,19 +3,17 @@
 test_description='git send-email'
 . ./test-lib.sh
 
-if ! test_have_prereq PERL; then
-	skip_all='skipping git send-email tests, perl not available'
-	test_done
-fi
+# May be altered later in the test
+PREREQ="PERL"
 
-test_expect_success \
+test_expect_success $PREREQ \
     'prepare reference tree' \
     'echo "1A quick brown fox jumps over the" >file &&
      echo "lazy dog" >>file &&
      git add file &&
      GIT_AUTHOR_NAME="A" git commit -a -m "Initial."'
 
-test_expect_success \
+test_expect_success $PREREQ \
     'Setup helper tool' \
     '(echo "#!$SHELL_PATH"
       echo shift
@@ -35,7 +33,7 @@ clean_fake_sendmail() {
 	rm -f commandline* msgtxt*
 }
 
-test_expect_success 'Extract patches' '
+test_expect_success $PREREQ 'Extract patches' '
     patches=`git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1`
 '
 
@@ -56,31 +54,34 @@ test_no_confirm () {
 
 # Exit immediately to prevent hang if a no-confirm test fails
 check_no_confirm () {
-	test -f no_confirm_okay || {
-		skip_all='confirm test failed; skipping remaining tests to prevent hanging'
-		test_done
-	}
+	if ! test -f no_confirm_okay
+	then
+		say 'confirm test failed; skipping remaining tests to prevent hanging'
+		PREREQ="$PREREQ,CHECK_NO_CONFIRM"
+	fi
+	return 0
 }
 
-test_expect_success 'No confirm with --suppress-cc' '
-	test_no_confirm --suppress-cc=sob
+test_expect_success $PREREQ 'No confirm with --suppress-cc' '
+	test_no_confirm --suppress-cc=sob &&
+	check_no_confirm
 '
-check_no_confirm
 
-test_expect_success 'No confirm with --confirm=never' '
-	test_no_confirm --confirm=never
+
+test_expect_success $PREREQ 'No confirm with --confirm=never' '
+	test_no_confirm --confirm=never &&
+	check_no_confirm
 '
-check_no_confirm
 
 # leave sendemail.confirm set to never after this so that none of the
 # remaining tests prompt unintentionally.
-test_expect_success 'No confirm with sendemail.confirm=never' '
+test_expect_success $PREREQ 'No confirm with sendemail.confirm=never' '
 	git config sendemail.confirm never &&
-	test_no_confirm --compose --subject=foo
+	test_no_confirm --compose --subject=foo &&
+	check_no_confirm
 '
-check_no_confirm
 
-test_expect_success 'Send patches' '
+test_expect_success $PREREQ 'Send patches' '
      git send-email --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
 '
 
@@ -90,11 +91,11 @@ cat >expected <<\EOF
 !one@example.com!
 !two@example.com!
 EOF
-test_expect_success \
+test_expect_success $PREREQ \
     'Verify commandline' \
     'test_cmp expected commandline1'
 
-test_expect_success 'Send patches with --envelope-sender' '
+test_expect_success $PREREQ 'Send patches with --envelope-sender' '
     clean_fake_sendmail &&
      git send-email --envelope-sender="Patch Contributer <patch@example.com>" --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
 '
@@ -107,11 +108,11 @@ cat >expected <<\EOF
 !one@example.com!
 !two@example.com!
 EOF
-test_expect_success \
+test_expect_success $PREREQ \
     'Verify commandline' \
     'test_cmp expected commandline1'
 
-test_expect_success 'Send patches with --envelope-sender=auto' '
+test_expect_success $PREREQ 'Send patches with --envelope-sender=auto' '
     clean_fake_sendmail &&
      git send-email --envelope-sender=auto --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
 '
@@ -124,7 +125,7 @@ cat >expected <<\EOF
 !one@example.com!
 !two@example.com!
 EOF
-test_expect_success \
+test_expect_success $PREREQ \
     'Verify commandline' \
     'test_cmp expected commandline1'
 
@@ -158,7 +159,7 @@ References: <unique-message-id@example.com>
 Result: OK
 EOF
 
-test_expect_success 'Show all headers' '
+test_expect_success $PREREQ 'Show all headers' '
 	git send-email \
 		--dry-run \
 		--suppress-cc=sob \
@@ -176,7 +177,7 @@ test_expect_success 'Show all headers' '
 	test_cmp expected-show-all-headers actual-show-all-headers
 '
 
-test_expect_success 'Prompting works' '
+test_expect_success $PREREQ 'Prompting works' '
 	clean_fake_sendmail &&
 	(echo "Example <from@example.com>"
 	 echo "to@example.com"
@@ -189,7 +190,7 @@ test_expect_success 'Prompting works' '
 		grep "^To: to@example.com\$" msgtxt1
 '
 
-test_expect_success 'cccmd works' '
+test_expect_success $PREREQ 'cccmd works' '
 	clean_fake_sendmail &&
 	cp $patches cccmd.patch &&
 	echo cccmd--cccmd@example.com >>cccmd.patch &&
@@ -211,7 +212,7 @@ test_expect_success 'cccmd works' '
 z8=zzzzzzzz
 z64=$z8$z8$z8$z8$z8$z8$z8$z8
 z512=$z64$z64$z64$z64$z64$z64$z64$z64
-test_expect_success 'reject long lines' '
+test_expect_success $PREREQ 'reject long lines' '
 	clean_fake_sendmail &&
 	cp $patches longline.patch &&
 	echo $z512$z512 >>longline.patch &&
@@ -224,11 +225,11 @@ test_expect_success 'reject long lines' '
 	grep longline.patch errors
 '
 
-test_expect_success 'no patch was sent' '
+test_expect_success $PREREQ 'no patch was sent' '
 	! test -e commandline1
 '
 
-test_expect_success 'Author From: in message body' '
+test_expect_success $PREREQ 'Author From: in message body' '
 	clean_fake_sendmail &&
 	git send-email \
 		--from="Example <nobody@example.com>" \
@@ -239,7 +240,7 @@ test_expect_success 'Author From: in message body' '
 	grep "From: A <author@example.com>" msgbody1
 '
 
-test_expect_success 'Author From: not in message body' '
+test_expect_success $PREREQ 'Author From: not in message body' '
 	clean_fake_sendmail &&
 	git send-email \
 		--from="A <author@example.com>" \
@@ -250,7 +251,7 @@ test_expect_success 'Author From: not in message body' '
 	! grep "From: A <author@example.com>" msgbody1
 '
 
-test_expect_success 'allow long lines with --no-validate' '
+test_expect_success $PREREQ 'allow long lines with --no-validate' '
 	git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
@@ -260,7 +261,7 @@ test_expect_success 'allow long lines with --no-validate' '
 		2>errors
 '
 
-test_expect_success 'Invalid In-Reply-To' '
+test_expect_success $PREREQ 'Invalid In-Reply-To' '
 	clean_fake_sendmail &&
 	git send-email \
 		--from="Example <nobody@example.com>" \
@@ -272,7 +273,7 @@ test_expect_success 'Invalid In-Reply-To' '
 	! grep "^In-Reply-To: < *>" msgtxt1
 '
 
-test_expect_success 'Valid In-Reply-To when prompting' '
+test_expect_success $PREREQ 'Valid In-Reply-To when prompting' '
 	clean_fake_sendmail &&
 	(echo "From Example <from@example.com>"
 	 echo "To Example <to@example.com>"
@@ -283,7 +284,7 @@ test_expect_success 'Valid In-Reply-To when prompting' '
 	! grep "^In-Reply-To: < *>" msgtxt1
 '
 
-test_expect_success 'setup fake editor' '
+test_expect_success $PREREQ 'setup fake editor' '
 	(echo "#!$SHELL_PATH" &&
 	 echo "echo fake edit >>\"\$1\""
 	) >fake-editor &&
@@ -292,7 +293,7 @@ test_expect_success 'setup fake editor' '
 
 test_set_editor "$(pwd)/fake-editor"
 
-test_expect_success '--compose works' '
+test_expect_success $PREREQ '--compose works' '
 	clean_fake_sendmail &&
 	git send-email \
 	--compose --subject foo \
@@ -303,11 +304,11 @@ test_expect_success '--compose works' '
 	2>errors
 '
 
-test_expect_success 'first message is compose text' '
+test_expect_success $PREREQ 'first message is compose text' '
 	grep "^fake edit" msgtxt1
 '
 
-test_expect_success 'second message is patch' '
+test_expect_success $PREREQ 'second message is patch' '
 	grep "Subject:.*Second" msgtxt2
 '
 
@@ -353,7 +354,7 @@ test_suppression () {
 	test_cmp expected-suppress-$1${2+"-$2"} actual-suppress-$1${2+"-$2"}
 }
 
-test_expect_success 'sendemail.cc set' '
+test_expect_success $PREREQ 'sendemail.cc set' '
 	git config sendemail.cc cc@example.com &&
 	test_suppression sob
 '
@@ -383,7 +384,7 @@ X-Mailer: X-MAILER-STRING
 Result: OK
 EOF
 
-test_expect_success 'sendemail.cc unset' '
+test_expect_success $PREREQ 'sendemail.cc unset' '
 	git config --unset sendemail.cc &&
 	test_suppression sob
 '
@@ -416,7 +417,7 @@ X-Mailer: X-MAILER-STRING
 Result: OK
 EOF
 
-test_expect_success 'sendemail.cccmd' '
+test_expect_success $PREREQ 'sendemail.cccmd' '
 	echo echo cc-cmd@example.com > cccmd &&
 	chmod +x cccmd &&
 	git config sendemail.cccmd ./cccmd &&
@@ -439,7 +440,7 @@ X-Mailer: X-MAILER-STRING
 Result: OK
 EOF
 
-test_expect_success '--suppress-cc=all' '
+test_expect_success $PREREQ '--suppress-cc=all' '
 	test_suppression all
 '
 
@@ -471,7 +472,7 @@ X-Mailer: X-MAILER-STRING
 Result: OK
 EOF
 
-test_expect_success '--suppress-cc=body' '
+test_expect_success $PREREQ '--suppress-cc=body' '
 	test_suppression body
 '
 
@@ -500,7 +501,7 @@ X-Mailer: X-MAILER-STRING
 Result: OK
 EOF
 
-test_expect_success '--suppress-cc=body --suppress-cc=cccmd' '
+test_expect_success $PREREQ '--suppress-cc=body --suppress-cc=cccmd' '
 	test_suppression body cccmd
 '
 
@@ -529,7 +530,7 @@ X-Mailer: X-MAILER-STRING
 Result: OK
 EOF
 
-test_expect_success '--suppress-cc=sob' '
+test_expect_success $PREREQ '--suppress-cc=sob' '
 	git config --unset sendemail.cccmd
 	test_suppression sob
 '
@@ -562,7 +563,7 @@ X-Mailer: X-MAILER-STRING
 Result: OK
 EOF
 
-test_expect_success '--suppress-cc=bodycc' '
+test_expect_success $PREREQ '--suppress-cc=bodycc' '
 	test_suppression bodycc
 '
 
@@ -588,7 +589,7 @@ X-Mailer: X-MAILER-STRING
 Result: OK
 EOF
 
-test_expect_success '--suppress-cc=cc' '
+test_expect_success $PREREQ '--suppress-cc=cc' '
 	test_suppression cc
 '
 
@@ -603,23 +604,23 @@ test_confirm () {
 	grep "Send this email" stdout
 }
 
-test_expect_success '--confirm=always' '
+test_expect_success $PREREQ '--confirm=always' '
 	test_confirm --confirm=always --suppress-cc=all
 '
 
-test_expect_success '--confirm=auto' '
+test_expect_success $PREREQ '--confirm=auto' '
 	test_confirm --confirm=auto
 '
 
-test_expect_success '--confirm=cc' '
+test_expect_success $PREREQ '--confirm=cc' '
 	test_confirm --confirm=cc
 '
 
-test_expect_success '--confirm=compose' '
+test_expect_success $PREREQ '--confirm=compose' '
 	test_confirm --confirm=compose --compose
 '
 
-test_expect_success 'confirm by default (due to cc)' '
+test_expect_success $PREREQ 'confirm by default (due to cc)' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config --unset sendemail.confirm &&
 	test_confirm
@@ -628,7 +629,7 @@ test_expect_success 'confirm by default (due to cc)' '
 	test $ret = "0"
 '
 
-test_expect_success 'confirm by default (due to --compose)' '
+test_expect_success $PREREQ 'confirm by default (due to --compose)' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config --unset sendemail.confirm &&
 	test_confirm --suppress-cc=all --compose
@@ -637,7 +638,7 @@ test_expect_success 'confirm by default (due to --compose)' '
 	test $ret = "0"
 '
 
-test_expect_success 'confirm detects EOF (inform assumes y)' '
+test_expect_success $PREREQ 'confirm detects EOF (inform assumes y)' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config --unset sendemail.confirm &&
 	rm -fr outdir &&
@@ -653,7 +654,7 @@ test_expect_success 'confirm detects EOF (inform assumes y)' '
 	test $ret = "0"
 '
 
-test_expect_success 'confirm detects EOF (auto causes failure)' '
+test_expect_success $PREREQ 'confirm detects EOF (auto causes failure)' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config sendemail.confirm auto &&
 	GIT_SEND_EMAIL_NOTTY=1 &&
@@ -668,7 +669,7 @@ test_expect_success 'confirm detects EOF (auto causes failure)' '
 	test $ret = "0"
 '
 
-test_expect_success 'confirm doesnt loop forever' '
+test_expect_success $PREREQ 'confirm doesnt loop forever' '
 	CONFIRM=$(git config --get sendemail.confirm) &&
 	git config sendemail.confirm auto &&
 	GIT_SEND_EMAIL_NOTTY=1 &&
@@ -683,7 +684,7 @@ test_expect_success 'confirm doesnt loop forever' '
 	test $ret = "0"
 '
 
-test_expect_success 'utf8 Cc is rfc2047 encoded' '
+test_expect_success $PREREQ 'utf8 Cc is rfc2047 encoded' '
 	clean_fake_sendmail &&
 	rm -fr outdir &&
 	git format-patch -1 -o outdir --cc="àéìöú <utf8@example.com>" &&
@@ -696,7 +697,7 @@ test_expect_success 'utf8 Cc is rfc2047 encoded' '
 	grep "=?UTF-8?q?=C3=A0=C3=A9=C3=AC=C3=B6=C3=BA?= <utf8@example.com>"
 '
 
-test_expect_success '--compose adds MIME for utf8 body' '
+test_expect_success $PREREQ '--compose adds MIME for utf8 body' '
 	clean_fake_sendmail &&
 	(echo "#!$SHELL_PATH" &&
 	 echo "echo utf8 body: àéìöú >>\"\$1\""
@@ -713,7 +714,7 @@ test_expect_success '--compose adds MIME for utf8 body' '
 	grep "^Content-Type: text/plain; charset=UTF-8" msgtxt1
 '
 
-test_expect_success '--compose respects user mime type' '
+test_expect_success $PREREQ '--compose respects user mime type' '
 	clean_fake_sendmail &&
 	(echo "#!$SHELL_PATH" &&
 	 echo "(echo MIME-Version: 1.0"
@@ -736,7 +737,7 @@ test_expect_success '--compose respects user mime type' '
 	! grep "^Content-Type: text/plain; charset=UTF-8" msgtxt1
 '
 
-test_expect_success '--compose adds MIME for utf8 subject' '
+test_expect_success $PREREQ '--compose adds MIME for utf8 subject' '
 	clean_fake_sendmail &&
 	  GIT_EDITOR="\"$(pwd)/fake-editor\"" \
 	  git send-email \
@@ -749,7 +750,7 @@ test_expect_success '--compose adds MIME for utf8 subject' '
 	grep "^Subject: =?UTF-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
 '
 
-test_expect_success 'detects ambiguous reference/file conflict' '
+test_expect_success $PREREQ 'detects ambiguous reference/file conflict' '
 	echo master > master &&
 	git add master &&
 	git commit -m"add master" &&
@@ -757,7 +758,7 @@ test_expect_success 'detects ambiguous reference/file conflict' '
 	grep disambiguate errors
 '
 
-test_expect_success 'feed two files' '
+test_expect_success $PREREQ 'feed two files' '
 	rm -fr outdir &&
 	git format-patch -2 -o outdir &&
 	git send-email \
@@ -770,7 +771,7 @@ test_expect_success 'feed two files' '
 	test "z$(sed -n -e 2p subjects)" = "zSubject: [PATCH 2/2] add master"
 '
 
-test_expect_success 'in-reply-to but no threading' '
+test_expect_success $PREREQ 'in-reply-to but no threading' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
@@ -781,7 +782,7 @@ test_expect_success 'in-reply-to but no threading' '
 	grep "In-Reply-To: <in-reply-id@example.com>"
 '
 
-test_expect_success 'no in-reply-to and no threading' '
+test_expect_success $PREREQ 'no in-reply-to and no threading' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
@@ -791,7 +792,7 @@ test_expect_success 'no in-reply-to and no threading' '
 	! grep "In-Reply-To: " stdout
 '
 
-test_expect_success 'threading but no chain-reply-to' '
+test_expect_success $PREREQ 'threading but no chain-reply-to' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
@@ -802,7 +803,7 @@ test_expect_success 'threading but no chain-reply-to' '
 	grep "In-Reply-To: " stdout
 '
 
-test_expect_success 'warning with an implicit --chain-reply-to' '
+test_expect_success $PREREQ 'warning with an implicit --chain-reply-to' '
 	git send-email \
 	--dry-run \
 	--from="Example <nobody@example.com>" \
@@ -811,7 +812,7 @@ test_expect_success 'warning with an implicit --chain-reply-to' '
 	grep "no-chain-reply-to" errors
 '
 
-test_expect_success 'no warning with an explicit --chain-reply-to' '
+test_expect_success $PREREQ 'no warning with an explicit --chain-reply-to' '
 	git send-email \
 	--dry-run \
 	--from="Example <nobody@example.com>" \
@@ -821,7 +822,7 @@ test_expect_success 'no warning with an explicit --chain-reply-to' '
 	! grep "no-chain-reply-to" errors
 '
 
-test_expect_success 'no warning with an explicit --no-chain-reply-to' '
+test_expect_success $PREREQ 'no warning with an explicit --no-chain-reply-to' '
 	git send-email \
 	--dry-run \
 	--from="Example <nobody@example.com>" \
@@ -831,7 +832,7 @@ test_expect_success 'no warning with an explicit --no-chain-reply-to' '
 	! grep "no-chain-reply-to" errors
 '
 
-test_expect_success 'no warning with sendemail.chainreplyto = false' '
+test_expect_success $PREREQ 'no warning with sendemail.chainreplyto = false' '
 	git config sendemail.chainreplyto false &&
 	git send-email \
 	--dry-run \
@@ -841,7 +842,7 @@ test_expect_success 'no warning with sendemail.chainreplyto = false' '
 	! grep "no-chain-reply-to" errors
 '
 
-test_expect_success 'no warning with sendemail.chainreplyto = true' '
+test_expect_success $PREREQ 'no warning with sendemail.chainreplyto = true' '
 	git config sendemail.chainreplyto true &&
 	git send-email \
 	--dry-run \
@@ -851,7 +852,7 @@ test_expect_success 'no warning with sendemail.chainreplyto = true' '
 	! grep "no-chain-reply-to" errors
 '
 
-test_expect_success 'sendemail.to works' '
+test_expect_success $PREREQ 'sendemail.to works' '
 	git config --replace-all sendemail.to "Somebody <somebody@ex.com>" &&
 	git send-email \
 		--dry-run \
@@ -860,7 +861,7 @@ test_expect_success 'sendemail.to works' '
 	grep "To: Somebody <somebody@ex.com>" stdout
 '
 
-test_expect_success '--no-to overrides sendemail.to' '
+test_expect_success $PREREQ '--no-to overrides sendemail.to' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
@@ -871,7 +872,7 @@ test_expect_success '--no-to overrides sendemail.to' '
 	! grep "To: Somebody <somebody@ex.com>" stdout
 '
 
-test_expect_success 'sendemail.cc works' '
+test_expect_success $PREREQ 'sendemail.cc works' '
 	git config --replace-all sendemail.cc "Somebody <somebody@ex.com>" &&
 	git send-email \
 		--dry-run \
@@ -881,7 +882,7 @@ test_expect_success 'sendemail.cc works' '
 	grep "Cc: Somebody <somebody@ex.com>" stdout
 '
 
-test_expect_success '--no-cc overrides sendemail.cc' '
+test_expect_success $PREREQ '--no-cc overrides sendemail.cc' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
@@ -893,7 +894,7 @@ test_expect_success '--no-cc overrides sendemail.cc' '
 	! grep "Cc: Somebody <somebody@ex.com>" stdout
 '
 
-test_expect_success 'sendemail.bcc works' '
+test_expect_success $PREREQ 'sendemail.bcc works' '
 	git config --replace-all sendemail.bcc "Other <other@ex.com>" &&
 	git send-email \
 		--dry-run \
@@ -904,7 +905,7 @@ test_expect_success 'sendemail.bcc works' '
 	grep "RCPT TO:<other@ex.com>" stdout
 '
 
-test_expect_success '--no-bcc overrides sendemail.bcc' '
+test_expect_success $PREREQ '--no-bcc overrides sendemail.bcc' '
 	git send-email \
 		--dry-run \
 		--from="Example <nobody@example.com>" \
@@ -933,7 +934,7 @@ Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 EOF
 
-test_expect_success 'asks about and fixes 8bit encodings' '
+test_expect_success $PREREQ 'asks about and fixes 8bit encodings' '
 	clean_fake_sendmail &&
 	echo |
 	git send-email --from=author@example.com --to=nobody@example.com \
@@ -946,7 +947,7 @@ test_expect_success 'asks about and fixes 8bit encodings' '
 	test_cmp actual content-type-decl
 '
 
-test_expect_success 'sendemail.8bitEncoding works' '
+test_expect_success $PREREQ 'sendemail.8bitEncoding works' '
 	clean_fake_sendmail &&
 	git config sendemail.assume8bitEncoding UTF-8 &&
 	echo bogus |
@@ -957,7 +958,7 @@ test_expect_success 'sendemail.8bitEncoding works' '
 	test_cmp actual content-type-decl
 '
 
-test_expect_success '--8bit-encoding overrides sendemail.8bitEncoding' '
+test_expect_success $PREREQ '--8bit-encoding overrides sendemail.8bitEncoding' '
 	clean_fake_sendmail &&
 	git config sendemail.assume8bitEncoding "bogus too" &&
 	echo bogus |
@@ -983,7 +984,7 @@ cat >expected <<EOF
 Subject: =?UTF-8?q?Dieser=20Betreff=20enth=C3=A4lt=20auch=20einen=20Umlaut!?=
 EOF
 
-test_expect_success '--8bit-encoding also treats subject' '
+test_expect_success $PREREQ '--8bit-encoding also treats subject' '
 	clean_fake_sendmail &&
 	echo bogus |
 	git send-email --from=author@example.com --to=nobody@example.com \
