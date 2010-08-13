@@ -619,25 +619,30 @@ do_rest () {
 # skip picking commits whose parents are unchanged
 skip_unnecessary_picks () {
 	fd=3
-	while read -r line
+	while read -r command rest
 	do
-		command=$(echo "$line" | sed 's/  */ /' | cut -d ' ' -f 1)
-		sha1=$(echo "$line"    | sed 's/  */ /' | cut -d ' ' -f 2)
-		rest=$(echo "$line"    | sed 's/  */ /' | cut -d ' ' -f 3-)
 		# fd=3 means we skip the command
-		case "$fd,$command,$(git rev-parse --verify --quiet "$sha1"^)" in
-		3,pick,"$ONTO"*|3,p,"$ONTO"*)
+		case "$fd,$command" in
+		3,pick|3,p)
 			# pick a commit whose parent is current $ONTO -> skip
-			ONTO=$sha1
+			sha1=$(echo "$rest" | cut -d ' ' -f 1)
+			case "$(git rev-parse --verify --quiet "$sha1"^)" in
+			"$ONTO"*)
+				ONTO=$sha1
+				;;
+			*)
+				fd=1
+				;;
+			esac
 			;;
-		3,#*|3,,*)
+		3,#*|3,)
 			# copy comments
 			;;
 		*)
 			fd=1
 			;;
 		esac
-		echo "$line" >&$fd
+		echo "$command${rest:+ }$rest" >&$fd
 	done <"$TODO" >"$TODO.new" 3>>"$DONE" &&
 	mv -f "$TODO".new "$TODO" &&
 	case "$(peek_next_command)" in
