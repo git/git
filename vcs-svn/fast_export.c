@@ -48,8 +48,9 @@ void fast_export_commit(uint32_t revision, uint32_t author, char *log,
 		   ~author ? pool_fetch(author) : "nobody",
 		   ~author ? pool_fetch(author) : "nobody",
 		   ~uuid ? pool_fetch(uuid) : "local", timestamp);
-	printf("data %zd\n%s%s\n",
-		   strlen(log) + strlen(gitsvnline), log, gitsvnline);
+	printf("data %"PRIu32"\n%s%s\n",
+		   (uint32_t) (strlen(log) + strlen(gitsvnline)),
+		   log, gitsvnline);
 	if (!first_commit_done) {
 		if (revision > 1)
 			printf("from refs/heads/master^0\n");
