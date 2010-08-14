@@ -10,7 +10,7 @@ test_dump() {
 	test_expect_success "$dump" '
 		svnadmin create "$label-svn" &&
 		svnadmin load "$label-svn" < "$TEST_DIRECTORY/$dump" &&
-		svn_cmd export "file://$(pwd)/$label-svn" "$label-svnco" &&
+		svn_cmd export "file://$PWD/$label-svn" "$label-svnco" &&
 		git init "$label-git" &&
 		test-svn-fe "$TEST_DIRECTORY/$dump" >"$label.fe" &&
 		(
