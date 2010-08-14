@@ -301,10 +301,9 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from)
 	return write_ref_sha1(ref_lock, to, "cherry-pick");
 }
 
-static void do_recursive_merge(struct commit *base, struct commit *next,
-			       const char *base_label, const char *next_label,
-			       unsigned char *head, struct strbuf *msgbuf,
-			       char *defmsg)
+static int do_recursive_merge(struct commit *base, struct commit *next,
+			      const char *base_label, const char *next_label,
+			      unsigned char *head, struct strbuf *msgbuf)
 {
 	struct merge_options o;
 	struct tree *result, *next_tree, *base_tree, *head_tree;
@@ -347,14 +346,35 @@ static void do_recursive_merge(struct commit *base, struct commit *next,
 					i++;
 			}
 		}
-		write_message(msgbuf, defmsg);
-		fprintf(stderr, "Automatic %s failed.%s\n",
-			me, help_msg());
-		rerere(allow_rerere_auto);
-		exit(1);
 	}
-	write_message(msgbuf, defmsg);
-	fprintf(stderr, "Finished one %s.\n", me);
+
+	return !clean;
+}
+
+/*
+ * If we are cherry-pick, and if the merge did not result in
+ * hand-editing, we will hit this commit and inherit the original
+ * author date and name.
+ * If we are revert, or if our cherry-pick results in a hand merge,
+ * we had better say that the current user is responsible for that.
+ */
+static int run_git_commit(const char *defmsg)
+{
+	/* 6 is max possible length of our args array including NULL */
+	const char *args[6];
+	int i = 0;
+
+	args[i++] = "commit";
+	args[i++] = "-n";
+	if (signoff)
+		args[i++] = "-s";
+	if (!edit) {
+		args[i++] = "-F";
+		args[i++] = defmsg;
+	}
+	args[i] = NULL;
+
+	return run_command_v_opt(args, RUN_GIT_CMD);
 }
 
 static int do_pick_commit(void)
@@ -365,6 +385,8 @@ static int do_pick_commit(void)
 	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
+	struct strbuf mebuf = STRBUF_INIT;
+	int res;
 
 	if (no_commit) {
 		/*
@@ -460,63 +482,44 @@ static int do_pick_commit(void)
 		}
 	}
 
-	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT)
-		do_recursive_merge(base, next, base_label, next_label,
-				   head, &msgbuf, defmsg);
-	else {
-		int res;
+	strbuf_addf(&mebuf, "%s of commit %s", me,
+		    find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
+
+	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT) {
+		res = do_recursive_merge(base, next, base_label, next_label,
+					 head, &msgbuf);
+		write_message(&msgbuf, defmsg);
+	} else {
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
+
+		strbuf_addf(&mebuf, " with strategy %s", strategy);
 		write_message(&msgbuf, defmsg);
+
 		commit_list_insert(base, &common);
 		commit_list_insert(next, &remotes);
 		res = try_merge_command(strategy, common,
 					sha1_to_hex(head), remotes);
 		free_commit_list(common);
 		free_commit_list(remotes);
-		if (res) {
-			fprintf(stderr, "Automatic %s with strategy %s failed.%s\n",
-				me, strategy, help_msg());
-			rerere(allow_rerere_auto);
-			exit(1);
-		}
 	}
 
+	if (res) {
+		fprintf(stderr, "Automatic %s failed.%s\n",
+			mebuf.buf, help_msg());
+		rerere(allow_rerere_auto);
+	} else {
+		if (!no_commit)
+			res = run_git_commit(defmsg);
+		if (!res)
+			fprintf(stderr, "Finished %s.\n", mebuf.buf);
+	}
+
+	strbuf_release(&mebuf);
 	free_message(&msg);
-
-	/*
-	 *
-	 * If we are cherry-pick, and if the merge did not result in
-	 * hand-editing, we will hit this commit and inherit the original
-	 * author date and name.
-	 * If we are revert, or if our cherry-pick results in a hand merge,
-	 * we had better say that the current user is responsible for that.
-	 */
-
-	if (!no_commit) {
-		/* 6 is max possible length of our args array including NULL */
-		const char *args[6];
-		int res;
-		int i = 0;
-
-		args[i++] = "commit";
-		args[i++] = "-n";
-		if (signoff)
-			args[i++] = "-s";
-		if (!edit) {
-			args[i++] = "-F";
-			args[i++] = defmsg;
-		}
-		args[i] = NULL;
-		res = run_command_v_opt(args, RUN_GIT_CMD);
-		free(defmsg);
-
-		return res;
-	}
-
 	free(defmsg);
 
-	return 0;
+	return res;
 }
 
 static void prepare_revs(struct rev_info *revs)

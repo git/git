@@ -4,6 +4,18 @@ test_description='test cherry-picking many commits'
 
 . ./test-lib.sh
 
+check_head_differs_from() {
+	head=$(git rev-parse --verify HEAD) &&
+	arg=$(git rev-parse --verify "$1") &&
+	test "$head" != "$arg"
+}
+
+check_head_equals() {
+	head=$(git rev-parse --verify HEAD) &&
+	arg=$(git rev-parse --verify "$1") &&
+	test "$head" = "$arg"
+}
+
 test_expect_success setup '
 	echo first > file1 &&
 	git add file1 &&
@@ -23,13 +35,37 @@ test_expect_success setup '
 '
 
 test_expect_success 'cherry-pick first..fourth works' '
+	cat <<-EOF >expected &&
+	Finished cherry-pick of commit $(git rev-parse --short second).
+	Finished cherry-pick of commit $(git rev-parse --short third).
+	Finished cherry-pick of commit $(git rev-parse --short fourth).
+	EOF
+
 	git checkout -f master &&
 	git reset --hard first &&
 	test_tick &&
-	git cherry-pick first..fourth &&
+	git cherry-pick first..fourth 2>actual &&
 	git diff --quiet other &&
 	git diff --quiet HEAD other &&
-	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify fourth)"
+	test_cmp expected actual &&
+	check_head_differs_from fourth
+'
+
+test_expect_success 'cherry-pick --strategy resolve first..fourth works' '
+	cat <<-EOF >expected &&
+	Finished cherry-pick of commit $(git rev-parse --short second) with strategy resolve.
+	Finished cherry-pick of commit $(git rev-parse --short third) with strategy resolve.
+	Finished cherry-pick of commit $(git rev-parse --short fourth) with strategy resolve.
+	EOF
+
+	git checkout -f master &&
+	git reset --hard first &&
+	test_tick &&
+	git cherry-pick --strategy resolve first..fourth 2>actual &&
+	git diff --quiet other &&
+	git diff --quiet HEAD other &&
+	test_cmp expected actual &&
+	check_head_differs_from fourth
 '
 
 test_expect_success 'cherry-pick --ff first..fourth works' '
@@ -39,7 +75,7 @@ test_expect_success 'cherry-pick --ff first..fourth works' '
 	git cherry-pick --ff first..fourth &&
 	git diff --quiet other &&
 	git diff --quiet HEAD other &&
-	test "$(git rev-parse --verify HEAD)" = "$(git rev-parse --verify fourth)"
+	check_head_equals fourth
 '
 
 test_expect_success 'cherry-pick -n first..fourth works' '
@@ -89,7 +125,7 @@ test_expect_success 'cherry-pick -3 fourth works' '
 	git cherry-pick -3 fourth &&
 	git diff --quiet other &&
 	git diff --quiet HEAD other &&
-	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify fourth)"
+	check_head_differs_from fourth
 '
 
 test_expect_success 'cherry-pick --stdin works' '
@@ -99,7 +135,7 @@ test_expect_success 'cherry-pick --stdin works' '
 	git rev-list --reverse first..fourth | git cherry-pick --stdin &&
 	git diff --quiet other &&
 	git diff --quiet HEAD other &&
-	test "$(git rev-parse --verify HEAD)" != "$(git rev-parse --verify fourth)"
+	check_head_differs_from fourth
 '
 
 test_done
