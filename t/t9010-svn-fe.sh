@@ -27,6 +27,6 @@ test_dump() {
 	'
 }
 
-test_dump simple t9111/svnsync.dump
+test_dump simple t9135/svn.dump
 
 test_done
