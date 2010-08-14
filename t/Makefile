@@ -58,7 +58,7 @@ uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo unknown')
 test-results:
 	mkdir -p test-results
 
-test-results/git-smoke.tar.gz:
+test-results/git-smoke.tar.gz: test-results
 	$(PERL_PATH) ./harness \
 		--archive="test-results/git-smoke.tar.gz" \
 		$(T)
