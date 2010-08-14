@@ -38,8 +38,8 @@ void init_src_data(struct src_data *data)
 	data->generic.strdup_strings = 1;
 }
 
-static struct string_list srcs = { NULL, 0, 0, 1 };
-static struct string_list origins = { NULL, 0, 0, 1 };
+static struct string_list srcs = STRING_LIST_INIT_DUP;
+static struct string_list origins = STRING_LIST_INIT_DUP;
 
 static int handle_line(char *line)
 {
@@ -146,7 +146,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	int i, count = 0;
 	struct commit *commit;
 	struct object *branch;
-	struct string_list subjects = { NULL, 0, 0, 1 };
+	struct string_list subjects = STRING_LIST_INIT_DUP;
 	int flags = UNINTERESTING | TREESAME | SEEN | SHOWN | ADDED;
 	struct strbuf sb = STRBUF_INIT;
 
