@@ -2959,7 +2959,7 @@ sub other_gs {
 	my $gs = Git::SVN->find_by_url($new_url, $url, $branch_from);
 	unless ($gs) {
 		my $ref_id = $old_ref_id;
-		$ref_id =~ s/\@\d+$//;
+		$ref_id =~ s/\@\d+-*$//;
 		$ref_id .= "\@$r";
 		# just grow a tail if we're not unique enough :x
 		$ref_id .= '-' while find_ref($ref_id);
