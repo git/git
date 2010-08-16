@@ -134,7 +134,7 @@ test_expect_success TTY 'configuration can disable pager' '
 	! test -e paginated.out
 '
 
-test_expect_success 'git config uses a pager if configured to' '
+test_expect_success TTY 'git config uses a pager if configured to' '
 	rm -f paginated.out &&
 	git config pager.config true &&
 	test_when_finished "git config --unset pager.config" &&
@@ -142,7 +142,7 @@ test_expect_success 'git config uses a pager if configured to' '
 	test -e paginated.out
 '
 
-test_expect_success 'configuration can enable pager (from subdir)' '
+test_expect_success TTY 'configuration can enable pager (from subdir)' '
 	rm -f paginated.out &&
 	mkdir -p subdir &&
 	git config pager.bundle true &&
