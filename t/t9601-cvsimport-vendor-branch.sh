@@ -34,10 +34,7 @@
 test_description='git cvsimport handling of vendor branches'
 . ./lib-cvs.sh
 
-test_expect_success PERL 'setup CVSROOT' '
-	CVSROOT="$TEST_DIRECTORY"/t9601/cvsroot &&
-	export CVSROOT
-'
+setup_cvs_test_repository t9601
 
 test_expect_success PERL 'import a module with a vendor branch' '
 

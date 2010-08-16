@@ -29,7 +29,6 @@ pre-clean:
 
 clean:
 	$(RM) -r 'trash directory'.* test-results
-	$(RM) t????/cvsroot/CVSROOT/?*
 	$(RM) -r valgrind/bin
 	$(RM) .prove
 

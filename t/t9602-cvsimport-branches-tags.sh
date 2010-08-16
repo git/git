@@ -6,10 +6,7 @@
 test_description='git cvsimport handling of branches and tags'
 . ./lib-cvs.sh
 
-test_expect_success PERL 'setup CVSROOT' '
-	CVSROOT="$TEST_DIRECTORY"/t9602/cvsroot &&
-	export CVSROOT
-'
+setup_cvs_test_repository t9602
 
 test_expect_success PERL 'import module' '
 

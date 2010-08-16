@@ -14,8 +14,7 @@
 test_description='git cvsimport testing for correct patchset estimation'
 . ./lib-cvs.sh
 
-CVSROOT="$TEST_DIRECTORY"/t9603/cvsroot
-export CVSROOT
+setup_cvs_test_repository t9603
 
 test_expect_failure 'import with criss cross times on revisions' '
 

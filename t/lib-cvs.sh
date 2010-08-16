@@ -30,6 +30,12 @@ case "$cvsps_version" in
 	;;
 esac
 
+setup_cvs_test_repository () {
+	CVSROOT="$(pwd)/.cvsroot" &&
+	cp -r "$TEST_DIRECTORY/$1/cvsroot" "$CVSROOT" &&
+	export CVSROOT
+}
+
 test_cvs_co () {
 	# Usage: test_cvs_co BRANCH_NAME
 	rm -rf module-cvs-"$1"
