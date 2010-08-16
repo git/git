@@ -391,4 +391,7 @@ test_no_local_config_subdir expect_success 'git shortlog'
 test_default_pager        expect_success 'git -p shortlog'
 test_core_pager_subdir    expect_success 'git -p shortlog'
 
+test_core_pager_subdir    expect_success test_must_fail \
+					 'git -p apply </dev/null'
+
 test_done
