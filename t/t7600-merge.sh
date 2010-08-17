@@ -149,10 +149,16 @@ test_expect_success 'reject non-strategy with a git-merge-foo name' '
 '
 
 test_expect_success 'merge c0 with c1' '
+	echo "OBJID HEAD@{0}: merge c1: Fast-forward" >reflog.expected &&
+
 	git reset --hard c0 &&
 	git merge c1 &&
 	verify_merge file result.1 &&
-	verify_head "$c1"
+	verify_head "$c1" &&
+
+	git reflog -1 >reflog.actual &&
+	sed "s/$_x05[0-9a-f]*/OBJID/g" reflog.actual >reflog.fuzzy &&
+	test_cmp reflog.expected reflog.fuzzy
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
