@@ -129,6 +129,38 @@ test_expect_success '[merge] summary/log configuration' '
 	test_cmp expected actual2
 '
 
+test_expect_success 'fmt-merge-msg -m' '
+	echo "Sync with left" >expected &&
+	cat >expected.log <<-EOF &&
+	Sync with left
+
+	* ${apos}left${apos} of $(pwd):
+	  Left #5
+	  Left #4
+	  Left #3
+	  Common #2
+	  Common #1
+	EOF
+
+	test_might_fail git config --unset merge.log &&
+	test_might_fail git config --unset merge.summary &&
+	git checkout master &&
+	git fetch "$(pwd)" left &&
+	git fmt-merge-msg -m "Sync with left" <.git/FETCH_HEAD >actual &&
+	git fmt-merge-msg --log -m "Sync with left" \
+					<.git/FETCH_HEAD >actual.log &&
+	git config merge.log true &&
+	git fmt-merge-msg -m "Sync with left" \
+					<.git/FETCH_HEAD >actual.log-config &&
+	git fmt-merge-msg --no-log -m "Sync with left" \
+					<.git/FETCH_HEAD >actual.nolog &&
+
+	test_cmp expected actual &&
+	test_cmp expected.log actual.log &&
+	test_cmp expected.log actual.log-config &&
+	test_cmp expected actual.nolog
+'
+
 test_expect_success 'setup: expected shortlog for two branches' '
 	cat >expected <<-EOF
 	Merge branches ${apos}left${apos} and ${apos}right${apos}
