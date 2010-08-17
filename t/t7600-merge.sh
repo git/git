@@ -558,8 +558,11 @@ test_expect_success 'refresh the index before merging' '
 	git merge c3
 '
 
-cat >expected <<EOF
-Merge branch 'c5' (early part)
+cat >expected.branch <<\EOF
+Merge branch 'c5-branch' (early part)
+EOF
+cat >expected.tag <<\EOF
+Merge commit 'c5~1'
 EOF
 
 test_expect_success 'merge early part of c2' '
@@ -577,9 +580,14 @@ test_expect_success 'merge early part of c2' '
 	git add c6.c &&
 	git commit -m c6 &&
 	git tag c6 &&
+	git branch -f c5-branch c5 &&
+	git merge c5-branch~1 &&
+	git show -s --pretty=format:%s HEAD >actual.branch &&
+	git reset --keep HEAD^ &&
 	git merge c5~1 &&
-	git show -s --pretty=format:%s HEAD > actual &&
-	test_cmp actual expected
+	git show -s --pretty=format:%s HEAD >actual.tag &&
+	test_cmp expected.branch actual.branch &&
+	test_cmp expected.tag actual.tag
 '
 
 test_debug 'gitk --all'
