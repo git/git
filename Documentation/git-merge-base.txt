@@ -8,7 +8,9 @@ git-merge-base - Find as good common ancestors as possible for a merge
 
 SYNOPSIS
 --------
+[verse]
 'git merge-base' [-a|--all] [--octopus] <commit> <commit>...
+'git merge-base' --independent <commit>...
 
 DESCRIPTION
 -----------
@@ -41,6 +43,13 @@ OPTIONS
 	Compute the best common ancestors of all supplied commits,
 	in preparation for an n-way merge.  This mimics the behavior
 	of 'git show-branch --merge-base'.
+
+--independent::
+	Instead of printing merge bases, print a minimal subset of
+	the supplied commits with the same ancestors.  In other words,
+	among the commits given, list those which cannot be reached
+	from any other.  This mimics the behavior of 'git show-branch
+	--independent'.
 
 DISCUSSION
 ----------

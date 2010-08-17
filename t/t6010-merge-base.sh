@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='Merge base computation.
+test_description='Merge base and parent list computation.
 '
 
 . ./test-lib.sh
@@ -75,6 +75,26 @@ test_expect_success 'merge-base G H' '
 	test_cmp expected actual.sb
 '
 
+test_expect_success 'merge-base/show-branch --independent' '
+	git name-rev "$H" >expected1 &&
+	git name-rev "$H" "$G" >expected2 &&
+
+	parents=$(git merge-base --independent H) &&
+	git name-rev $parents >actual1.mb &&
+	parents=$(git merge-base --independent A H G) &&
+	git name-rev $parents >actual2.mb &&
+
+	parents=$(git show-branch --independent H) &&
+	git name-rev $parents >actual1.sb &&
+	parents=$(git show-branch --independent A H G) &&
+	git name-rev $parents >actual2.sb &&
+
+	test_cmp expected1 actual1.mb &&
+	test_cmp expected2 actual2.mb &&
+	test_cmp expected1 actual1.sb &&
+	test_cmp expected2 actual2.sb
+'
+
 test_expect_success 'unsynchronized clocks' '
 	# This test is to demonstrate that relying on timestamps in a distributed
 	# SCM to provide a _consistent_ partial ordering of commits leads to
@@ -123,6 +143,23 @@ test_expect_success 'unsynchronized clocks' '
 
 	test_cmp expected actual.single &&
 	test_cmp expected actual.all
+'
+
+test_expect_success '--independent with unsynchronized clocks' '
+	IB=$(doit 0 IB) &&
+	I1=$(doit -10 I1 $IB) &&
+	I2=$(doit  -9 I2 $I1) &&
+	I3=$(doit  -8 I3 $I2) &&
+	I4=$(doit  -7 I4 $I3) &&
+	I5=$(doit  -6 I5 $I4) &&
+	I6=$(doit  -5 I6 $I5) &&
+	I7=$(doit  -4 I7 $I6) &&
+	I8=$(doit  -3 I8 $I7) &&
+	IH=$(doit  -2 IH $I8) &&
+
+	echo $IH >expected &&
+	git merge-base --independent IB IH >actual &&
+	test_cmp expected actual
 '
 
 test_expect_success 'merge-base for octopus-step (setup)' '
