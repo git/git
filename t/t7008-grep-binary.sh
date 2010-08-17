@@ -61,7 +61,7 @@ test_expect_success 'git grep -Fi iLE a' '
 
 # This test actually passes on platforms where regexec() supports the
 # flag REG_STARTEND.
-test_expect_failure 'git grep ile a' '
+test_expect_success 'git grep ile a' '
 	git grep ile a
 '
 
