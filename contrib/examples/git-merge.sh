@@ -245,6 +245,10 @@ then
 		exit 1
 	fi
 
+	test "$squash" != t ||
+		die "Squash commit into empty head not supported yet"
+	test "$allow_fast_forward" = t ||
+		die "Non-fast-forward into an empty head does not make sense"
 	rh=$(git rev-parse --verify "$1^0") ||
 		die "$1 - not something we can merge"
 
