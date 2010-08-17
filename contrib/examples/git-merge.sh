@@ -148,13 +148,15 @@ merge_name () {
 	if found_ref=$(git rev-parse --symbolic-full-name --verify \
 							"$remote" 2>/dev/null)
 	then
+		expanded=$(git check-ref-format --branch "$remote") ||
+			exit
 		if test "${found_ref#refs/heads/}" != "$found_ref"
 		then
-			echo "$rh		branch '$remote' of ."
+			echo "$rh		branch '$expanded' of ."
 			return
 		elif test "${found_ref#refs/remotes/}" != "$found_ref"
 		then
-			echo "$rh		remote branch '$remote' of ."
+			echo "$rh		remote branch '$expanded' of ."
 			return
 		fi
 	fi
