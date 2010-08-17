@@ -264,17 +264,35 @@ merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo fa
 
 last_status=0
 rollup_status=0
+rerere=false
+
+files_to_merge() {
+    if test "$rerere" = true
+    then
+	git rerere status
+    else
+	git ls-files -u | sed -e 's/^[^	]*	//' | sort -u
+    fi
+}
+
 
 if test $# -eq 0 ; then
-    files=$(git ls-files -u | sed -e 's/^[^	]*	//' | sort -u)
+    cd_to_toplevel
+
+    if test -e "$GIT_DIR/MERGE_RR"
+    then
+	rerere=true
+    fi
+
+    files=$(files_to_merge)
     if test -z "$files" ; then
 	echo "No files need merging"
 	exit 0
     fi
-    echo Merging the files: "$files"
-    git ls-files -u |
-    sed -e 's/^[^	]*	//' |
-    sort -u |
+    printf "Merging:\n"
+    printf "$files\n"
+
+    files_to_merge |
     while IFS= read i
     do
 	if test $last_status -ne 0; then
