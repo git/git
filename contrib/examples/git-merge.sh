@@ -134,21 +134,32 @@ finish () {
 merge_name () {
 	remote="$1"
 	rh=$(git rev-parse --verify "$remote^0" 2>/dev/null) || return
-	bh=$(git show-ref -s --verify "refs/heads/$remote" 2>/dev/null)
-	if test "$rh" = "$bh"
-	then
-		echo "$rh		branch '$remote' of ."
-	elif truname=$(expr "$remote" : '\(.*\)~[1-9][0-9]*$') &&
+	if truname=$(expr "$remote" : '\(.*\)~[0-9]*$') &&
 		git show-ref -q --verify "refs/heads/$truname" 2>/dev/null
 	then
 		echo "$rh		branch '$truname' (early part) of ."
-	elif test "$remote" = "FETCH_HEAD" -a -r "$GIT_DIR/FETCH_HEAD"
+		return
+	fi
+	if found_ref=$(git rev-parse --symbolic-full-name --verify \
+							"$remote" 2>/dev/null)
+	then
+		if test "${found_ref#refs/heads/}" != "$found_ref"
+		then
+			echo "$rh		branch '$remote' of ."
+			return
+		elif test "${found_ref#refs/remotes/}" != "$found_ref"
+		then
+			echo "$rh		remote branch '$remote' of ."
+			return
+		fi
+	fi
+	if test "$remote" = "FETCH_HEAD" -a -r "$GIT_DIR/FETCH_HEAD"
 	then
 		sed -e 's/	not-for-merge	/		/' -e 1q \
 			"$GIT_DIR/FETCH_HEAD"
-	else
-		echo "$rh		commit '$remote'"
+		return
 	fi
+	echo "$rh		commit '$remote'"
 }
 
 parse_config () {
