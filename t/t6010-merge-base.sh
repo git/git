@@ -164,9 +164,11 @@ test_expect_success 'merge-base A B C' '
 	git rev-parse --verify MMR >expected.sb &&
 
 	git merge-base --all MMA MMB MMC >actual &&
+	git merge-base --all --octopus MMA MMB MMC >actual.common &&
 	git show-branch --merge-base MMA MMB MMC >actual.sb &&
 
 	test_cmp expected actual &&
+	test_cmp expected.sb actual.common &&
 	test_cmp expected.sb actual.sb
 '
 
