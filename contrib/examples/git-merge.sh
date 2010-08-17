@@ -16,6 +16,7 @@ squash               create a single commit instead of doing a merge
 commit               perform a commit if the merge succeeds (default)
 ff                   allow fast-forward (default)
 s,strategy=          merge strategy to use
+X=                   option for selected merge strategy
 m,message=           message to be used for the merge commit (if any)
 "
 
@@ -40,6 +41,7 @@ default_octopus_strategies='octopus'
 no_fast_forward_strategies='subtree ours'
 no_trivial_strategies='recursive recur subtree ours recursive-ours recursive-theirs'
 use_strategies=
+xopt=
 
 allow_fast_forward=t
 allow_trivial_merge=t
@@ -195,6 +197,10 @@ parse_config () {
 			*)
 				die "available strategies are: $all_strategies" ;;
 			esac
+			;;
+		-X)
+			shift
+			xopt="${xopt:+$xopt }$(git rev-parse --sq-quote "--$1")"
 			;;
 		-m|--message)
 			shift
@@ -469,7 +475,7 @@ do
     # Remember which strategy left the state in the working tree
     wt_strategy=$strategy
 
-    git-merge-$strategy $common -- "$head_arg" "$@"
+    eval 'git-merge-$strategy '"$xopt"' $common -- "$head_arg" "$@"'
     exit=$?
     if test "$no_commit" = t && test "$exit" = 0
     then
