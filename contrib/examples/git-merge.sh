@@ -193,9 +193,13 @@ parse_config () {
 			shift
 			case " $all_strategies " in
 			*" $1 "*)
-				use_strategies="$use_strategies$1 " ;;
+				use_strategies="$use_strategies$1 "
+				;;
 			*)
-				die "available strategies are: $all_strategies" ;;
+				type "git-merge-$1" >/dev/null 2>&1 ||
+					die "available strategies are: $all_strategies"
+				use_strategies="$use_strategies$1 "
+				;;
 			esac
 			;;
 		-X)
