@@ -16,6 +16,7 @@ squash               create a single commit instead of doing a merge
 commit               perform a commit if the merge succeeds (default)
 ff                   allow fast-forward (default)
 ff-only              abort if fast-forward is not possible
+rerere-autoupdate    update index with any reused conflict resolution
 s,strategy=          merge strategy to use
 X=                   option for selected merge strategy
 m,message=           message to be used for the merge commit (if any)
@@ -48,7 +49,7 @@ xopt=
 allow_fast_forward=t
 fast_forward_only=
 allow_trivial_merge=t
-squash= no_commit= log_arg=
+squash= no_commit= log_arg= rr_arg=
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
@@ -200,6 +201,8 @@ parse_config () {
 			test "$allow_fast_forward" != f ||
 				die "You cannot combine --ff-only with --no-ff."
 			fast_forward_only=t ;;
+		--rerere-autoupdate|--no-rerere-autoupdate)
+			rr_arg=$1 ;;
 		-s|--strategy)
 			shift
 			case " $all_strategies " in
@@ -612,6 +615,6 @@ Conflicts:
 		sed -e 's/^[^	]*	/	/' |
 		uniq
 	} >>"$GIT_DIR/MERGE_MSG"
-	git rerere
+	git rerere $rr_arg
 	die "Automatic merge failed; fix conflicts and then commit the result."
 fi
