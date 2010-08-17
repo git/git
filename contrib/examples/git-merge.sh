@@ -27,6 +27,9 @@ cd_to_toplevel
 test -z "$(git ls-files -u)" ||
 	die "Merge is not possible because you have unmerged files."
 
+! test -e "$GIT_DIR/MERGE_HEAD" ||
+	die 'You have not concluded your merge (MERGE_HEAD exists).'
+
 LF='
 '
 
