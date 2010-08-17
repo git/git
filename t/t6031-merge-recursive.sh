@@ -57,7 +57,7 @@ test_expect_success FILEMODE 'verify executable bit on file' '
 	test -x file2
 '
 
-test_expect_failure 'merging with triple rename across D/F conflict' '
+test_expect_success 'merging with triple rename across D/F conflict' '
 	git reset --hard HEAD &&
 	git checkout -b main &&
 	git rm -rf . &&
