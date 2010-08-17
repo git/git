@@ -294,12 +294,18 @@ else
 	# the given message.  If remote is invalid we will die
 	# later in the common codepath so we discard the error
 	# in this loop.
-	merge_name=$(for remote
+	merge_msg="$(
+		for remote
 		do
 			merge_name "$remote"
-		done | git fmt-merge-msg $log_arg
-	)
-	merge_msg="${merge_msg:+$merge_msg$LF$LF}$merge_name"
+		done |
+		if test "$have_message" = t
+		then
+			git fmt-merge-msg -m "$merge_msg" $log_arg
+		else
+			git fmt-merge-msg $log_arg
+		fi
+	)"
 fi
 head=$(git rev-parse --verify "$head_arg"^0) || usage
 
