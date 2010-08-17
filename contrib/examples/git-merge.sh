@@ -15,6 +15,7 @@ log                  add list of one-line log to merge commit message
 squash               create a single commit instead of doing a merge
 commit               perform a commit if the merge succeeds (default)
 ff                   allow fast-forward (default)
+ff-only              abort if fast-forward is not possible
 s,strategy=          merge strategy to use
 X=                   option for selected merge strategy
 m,message=           message to be used for the merge commit (if any)
@@ -45,6 +46,7 @@ use_strategies=
 xopt=
 
 allow_fast_forward=t
+fast_forward_only=
 allow_trivial_merge=t
 squash= no_commit= log_arg=
 
@@ -189,7 +191,13 @@ parse_config () {
 		--no-ff)
 			test "$squash" != t ||
 				die "You cannot combine --squash with --no-ff."
+			test "$fast_forward_only" != t ||
+				die "You cannot combine --ff-only with --no-ff."
 			allow_fast_forward=f ;;
+		--ff-only)
+			test "$allow_fast_forward" != f ||
+				die "You cannot combine --ff-only with --no-ff."
+			fast_forward_only=t ;;
 		-s|--strategy)
 			shift
 			case " $all_strategies " in
@@ -412,8 +420,8 @@ t,1,"$head",*)
 	# We are not doing octopus, not fast-forward, and have only
 	# one common.
 	git update-index --refresh 2>/dev/null
-	case "$allow_trivial_merge" in
-	t)
+	case "$allow_trivial_merge,$fast_forward_only" in
+	t,)
 		# See if it is really trivial.
 		git var GIT_COMMITTER_IDENT >/dev/null || exit
 		echo "Trying really trivial in-index merge..."
@@ -451,6 +459,11 @@ t,1,"$head",*)
 	fi
 	;;
 esac
+
+if test "$fast_forward_only" = t
+then
+	die "Not possible to fast-forward, aborting."
+fi
 
 # We are going to make a new commit.
 git var GIT_COMMITTER_IDENT >/dev/null || exit
