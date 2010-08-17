@@ -36,6 +36,7 @@ LF='
 
 all_strategies='recur recursive octopus resolve stupid ours subtree'
 all_strategies="$all_strategies recursive-ours recursive-theirs"
+not_strategies='base file index tree'
 default_twohead_strategies='recursive'
 default_octopus_strategies='octopus'
 no_fast_forward_strategies='subtree ours'
@@ -196,6 +197,10 @@ parse_config () {
 				use_strategies="$use_strategies$1 "
 				;;
 			*)
+				case " $not_strategies " in
+				*" $1 "*)
+					false
+				esac &&
 				type "git-merge-$1" >/dev/null 2>&1 ||
 					die "available strategies are: $all_strategies"
 				use_strategies="$use_strategies$1 "
