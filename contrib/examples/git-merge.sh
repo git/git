@@ -374,7 +374,7 @@ case "$#" in
 	common=$(git merge-base --all $head "$@")
 	;;
 *)
-	common=$(git show-branch --merge-base $head "$@")
+	common=$(git merge-base --all --octopus $head "$@")
 	;;
 esac
 echo "$head" >"$GIT_DIR/ORIG_HEAD"
@@ -528,9 +528,9 @@ if test '' != "$result_tree"
 then
     if test "$allow_fast_forward" = "t"
     then
-        parents=$(git show-branch --independent "$head" "$@")
+	parents=$(git merge-base --independent "$head" "$@")
     else
-        parents=$(git rev-parse "$head" "$@")
+	parents=$(git rev-parse "$head" "$@")
     fi
     parents=$(echo "$parents" | sed -e 's/^/-p /')
     result_commit=$(printf '%s\n' "$merge_msg" | git commit-tree $result_tree $parents) || exit
