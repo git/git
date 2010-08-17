@@ -133,7 +133,7 @@ test_expect_success 'setup' '
 	create_merge_msgs
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'test option parsing' '
 	test_must_fail git merge -$ c1 &&
@@ -155,7 +155,7 @@ test_expect_success 'merge c0 with c1' '
 	verify_head "$c1"
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c0 with c1 with --ff-only' '
 	git reset --hard c0 &&
@@ -165,7 +165,7 @@ test_expect_success 'merge c0 with c1 with --ff-only' '
 	verify_head "$c1"
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2' '
 	git reset --hard c1 &&
@@ -175,7 +175,7 @@ test_expect_success 'merge c1 with c2' '
 	verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 and c3' '
 	git reset --hard c1 &&
@@ -185,7 +185,7 @@ test_expect_success 'merge c1 with c2 and c3' '
 	verify_parents $c1 $c2 $c3
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'failing merges with --ff-only' '
 	git reset --hard c1 &&
@@ -202,7 +202,7 @@ test_expect_success 'merge c0 with c1 (no-commit)' '
 	verify_head $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (no-commit)' '
 	git reset --hard c1 &&
@@ -212,7 +212,7 @@ test_expect_success 'merge c1 with c2 (no-commit)' '
 	verify_mergeheads $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 and c3 (no-commit)' '
 	git reset --hard c1 &&
@@ -222,7 +222,7 @@ test_expect_success 'merge c1 with c2 and c3 (no-commit)' '
 	verify_mergeheads $c2 $c3
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c0 with c1 (squash)' '
 	git reset --hard c0 &&
@@ -233,7 +233,7 @@ test_expect_success 'merge c0 with c1 (squash)' '
 	test_cmp squash.1 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c0 with c1 (squash, ff-only)' '
 	git reset --hard c0 &&
@@ -244,7 +244,7 @@ test_expect_success 'merge c0 with c1 (squash, ff-only)' '
 	test_cmp squash.1 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (squash)' '
 	git reset --hard c1 &&
@@ -255,14 +255,14 @@ test_expect_success 'merge c1 with c2 (squash)' '
 	test_cmp squash.1-5 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'unsuccesful merge of c1 with c2 (squash, ff-only)' '
 	git reset --hard c1 &&
 	test_must_fail git merge --squash --ff-only c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 and c3 (squash)' '
 	git reset --hard c1 &&
@@ -273,7 +273,7 @@ test_expect_success 'merge c1 with c2 and c3 (squash)' '
 	test_cmp squash.1-5-9 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (no-commit in config)' '
 	git reset --hard c1 &&
@@ -284,7 +284,7 @@ test_expect_success 'merge c1 with c2 (no-commit in config)' '
 	verify_mergeheads $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (squash in config)' '
 	git reset --hard c1 &&
@@ -296,7 +296,7 @@ test_expect_success 'merge c1 with c2 (squash in config)' '
 	test_cmp squash.1-5 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'override config option -n with --summary' '
 	git reset --hard c1 &&
@@ -326,7 +326,7 @@ test_expect_success 'override config option -n with --stat' '
 	fi
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'override config option --stat' '
 	git reset --hard c1 &&
@@ -342,7 +342,7 @@ test_expect_success 'override config option --stat' '
 	fi
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (override --no-commit)' '
 	git reset --hard c1 &&
@@ -353,7 +353,7 @@ test_expect_success 'merge c1 with c2 (override --no-commit)' '
 	verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (override --squash)' '
 	git reset --hard c1 &&
@@ -364,7 +364,7 @@ test_expect_success 'merge c1 with c2 (override --squash)' '
 	verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c0 with c1 (no-ff)' '
 	git reset --hard c0 &&
@@ -375,7 +375,7 @@ test_expect_success 'merge c0 with c1 (no-ff)' '
 	verify_parents $c0 $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'combining --squash and --no-ff is refused' '
 	test_must_fail git merge --squash --no-ff c1 &&
@@ -412,7 +412,7 @@ test_expect_success 'merge log message' '
 	test_cmp msg.log msg.act
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c0, c2, c0, and c1' '
        git reset --hard c1 &&
@@ -423,7 +423,7 @@ test_expect_success 'merge c1 with c0, c2, c0, and c1' '
        verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c0, c2, c0, and c1' '
        git reset --hard c1 &&
@@ -434,7 +434,7 @@ test_expect_success 'merge c1 with c0, c2, c0, and c1' '
        verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c1 and c2' '
        git reset --hard c1 &&
@@ -445,7 +445,7 @@ test_expect_success 'merge c1 with c1 and c2' '
        verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge fast-forward in a dirty tree' '
        git reset --hard c0 &&
@@ -455,7 +455,7 @@ test_expect_success 'merge fast-forward in a dirty tree' '
        git merge c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'in-index merge' '
 	git reset --hard c0 &&
@@ -464,7 +464,7 @@ test_expect_success 'in-index merge' '
 	verify_parents $c0 $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'refresh the index before merging' '
 	git reset --hard c1 &&
@@ -504,7 +504,7 @@ test_expect_success 'merge early part of c2' '
 	test_cmp expected.tag actual.tag
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge --no-ff --no-commit && commit' '
 	git reset --hard c0 &&
@@ -513,13 +513,13 @@ test_expect_success 'merge --no-ff --no-commit && commit' '
 	verify_parents $c0 $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'amending no-ff merge commit' '
 	EDITOR=: git commit --amend &&
 	verify_parents $c0 $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_done
