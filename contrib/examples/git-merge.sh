@@ -25,7 +25,7 @@ require_work_tree
 cd_to_toplevel
 
 test -z "$(git ls-files -u)" ||
-	die "You are in the middle of a conflicted merge."
+	die "Merge is not possible because you have unmerged files."
 
 LF='
 '
