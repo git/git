@@ -1021,7 +1021,7 @@ static int process_renames(struct merge_options *o,
 				    sha_eq(mfi.sha, ren1->pair->two->sha1) &&
 				    mfi.mode == ren1->pair->two->mode) {
 					/*
-					 * This messaged is part of
+					 * This message is part of
 					 * t6022 test. If you change
 					 * it update the test too.
 					 */
