@@ -96,6 +96,12 @@ Documentation
 --------------
 Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
+See also
+--------
+linkgit:git-rev-list[1],
+linkgit:git-show-branch[1],
+linkgit:git-merge[1]
+
 GIT
 ---
 Part of the linkgit:git[1] suite
