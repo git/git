@@ -173,6 +173,27 @@ test_expect_success 'merge c0 with c1 with --ff-only' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
+test_expect_success 'merge from unborn branch' '
+	git checkout -f master &&
+	test_might_fail git branch -D kid &&
+
+	echo "OBJID HEAD@{0}: initial pull" >reflog.expected &&
+
+	git checkout --orphan kid &&
+	test_when_finished "git checkout -f master" &&
+	git rm -fr . &&
+	test_tick &&
+	git merge --ff-only c1 &&
+	verify_merge file result.1 &&
+	verify_head "$c1" &&
+
+	git reflog -1 >reflog.actual &&
+	sed "s/$_x05[0-9a-f][0-9a-f]/OBJID/g" reflog.actual >reflog.fuzzy &&
+	test_cmp reflog.expected reflog.fuzzy
+'
+
+test_debug 'git log --graph --decorate --oneline --all'
+
 test_expect_success 'merge c1 with c2' '
 	git reset --hard c1 &&
 	test_tick &&
