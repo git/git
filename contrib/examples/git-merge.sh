@@ -52,7 +52,7 @@ squash= no_commit= log_arg=
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
-		 "$GIT_DIR/MERGE_STASH" || exit 1
+		 "$GIT_DIR/MERGE_STASH" "$GIT_DIR/MERGE_MODE" || exit 1
 }
 
 savestate() {
@@ -585,7 +585,15 @@ else
 	do
 		echo $remote
 	done >"$GIT_DIR/MERGE_HEAD"
-	printf '%s\n' "$merge_msg" >"$GIT_DIR/MERGE_MSG"
+	printf '%s\n' "$merge_msg" >"$GIT_DIR/MERGE_MSG" ||
+		die "Could not write to $GIT_DIR/MERGE_MSG"
+	if test "$allow_fast_forward" != t
+	then
+		printf "%s" no-ff
+	else
+		:
+	fi >"$GIT_DIR/MERGE_MODE" ||
+		die "Could not write to $GIT_DIR/MERGE_MODE"
 fi
 
 if test "$merge_was_ok" = t
