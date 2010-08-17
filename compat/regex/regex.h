@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stddef.h>
+
 /* Definitions for data structures and routines for the regular
    expression library.
    Copyright (C) 1985,1989-93,1995-98,2000,2001,2002,2003,2005,2006,2008
