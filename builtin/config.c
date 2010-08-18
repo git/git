@@ -331,11 +331,10 @@ static int get_colorbool(int print)
 		return get_colorbool_found ? 0 : 1;
 }
 
-int cmd_config(int argc, const char **argv, const char *unused_prefix)
+int cmd_config(int argc, const char **argv, const char *prefix)
 {
-	int nongit;
+	int nongit = !startup_info->have_repository;
 	char *value;
-	const char *prefix = setup_git_directory_gently(&nongit);
 
 	config_exclusive_filename = getenv(CONFIG_ENVIRONMENT);
 

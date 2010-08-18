@@ -18,7 +18,6 @@ static const char builtin_bundle_usage[] =
 int cmd_bundle(int argc, const char **argv, const char *prefix)
 {
 	struct bundle_header header;
-	int nongit;
 	const char *cmd, *bundle_file;
 	int bundle_fd = -1;
 	char buffer[PATH_MAX];
@@ -31,7 +30,6 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 	argc -= 2;
 	argv += 2;
 
-	prefix = setup_git_directory_gently(&nongit);
 	if (prefix && bundle_file[0] != '/') {
 		snprintf(buffer, sizeof(buffer), "%s/%s", prefix, bundle_file);
 		bundle_file = buffer;
@@ -54,11 +52,11 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 		return !!list_bundle_refs(&header, argc, argv);
 	}
 	if (!strcmp(cmd, "create")) {
-		if (nongit)
+		if (!startup_info->have_repository)
 			die("Need a repository to create a bundle.");
 		return !!create_bundle(&header, bundle_file, argc, argv);
 	} else if (!strcmp(cmd, "unbundle")) {
-		if (nongit)
+		if (!startup_info->have_repository)
 			die("Need a repository to unbundle.");
 		return !!unbundle(&header, bundle_fd) ||
 			list_bundle_refs(&header, argc, argv);

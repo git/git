@@ -53,6 +53,7 @@ enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
 char *notes_ref_name;
 int grafts_replace_parents = 1;
 int core_apply_sparse_checkout;
+struct startup_info *startup_info;
 
 /* Parallel index stat data preload? */
 int core_preload_index = 0;
