@@ -40,7 +40,7 @@ static int git_rerere_gc_config(const char *var, const char *value, void *cb)
 
 static void garbage_collect(struct string_list *rr)
 {
-	struct string_list to_remove = { NULL, 0, 0, 1 };
+	struct string_list to_remove = STRING_LIST_INIT_DUP;
 	DIR *dir;
 	struct dirent *e;
 	int i, cutoff;
@@ -102,7 +102,7 @@ static int diff_two(const char *file1, const char *label1,
 
 int cmd_rerere(int argc, const char **argv, const char *prefix)
 {
-	struct string_list merge_rr = { NULL, 0, 0, 1 };
+	struct string_list merge_rr = STRING_LIST_INIT_DUP;
 	int i, fd, flags = 0;
 
 	if (2 < argc) {

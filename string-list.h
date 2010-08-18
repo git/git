@@ -12,6 +12,9 @@ struct string_list
 	unsigned int strdup_strings:1;
 };
 
+#define STRING_LIST_INIT_NODUP { NULL, 0, 0, 0 }
+#define STRING_LIST_INIT_DUP   { NULL, 0, 0, 1 }
+
 void print_string_list(const struct string_list *p, const char *text);
 void string_list_clear(struct string_list *list, int free_util);
 

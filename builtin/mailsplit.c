@@ -137,7 +137,7 @@ static int split_maildir(const char *maildir, const char *dir,
 	char name[PATH_MAX];
 	int ret = -1;
 	int i;
-	struct string_list list = {NULL, 0, 0, 1};
+	struct string_list list = STRING_LIST_INIT_DUP;
 
 	if (populate_maildir_list(&list, maildir) < 0)
 		goto out;
