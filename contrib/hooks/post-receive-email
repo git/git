@@ -55,6 +55,11 @@
 #     "t=%s; printf 'http://.../?id=%%s' \$t; echo;echo; git show -C \$t; echo"
 #   Be careful if "..." contains things that will be expanded by shell "eval"
 #   or printf.
+# hooks.emailmaxlines
+#   The maximum number of lines that should be included in the generated
+#   email body. If not specified, there is no limit.
+#   Lines beyond the limit are suppressed and counted, and a final
+#   line is added indicating the number of suppressed lines.
 #
 # Notes
 # -----
@@ -84,6 +89,7 @@ generate_email()
 	oldrev=$(git rev-parse $1)
 	newrev=$(git rev-parse $2)
 	refname="$3"
+	maxlines=$4
 
 	# --- Interpret
 	# 0000->1234 (create)
@@ -192,7 +198,12 @@ generate_email()
 		fn_name=atag
 		;;
 	esac
-	generate_${change_type}_${fn_name}_email
+
+	if [ -z "$maxlines" ]; then
+		generate_${change_type}_${fn_name}_email
+	else
+		generate_${change_type}_${fn_name}_email | limit_lines $maxlines
+	fi
 
 	generate_email_footer
 }
@@ -642,6 +653,24 @@ show_new_revisions()
 }
 
 
+limit_lines()
+{
+	lines=0
+	skipped=0
+	while IFS="" read -r line; do
+		lines=$((lines + 1))
+		if [ $lines -gt $1 ]; then
+			skipped=$((skipped + 1))
+		else
+			printf "%s\n" "$line"
+		fi
+	done
+	if [ $skipped -ne 0 ]; then
+		echo "... $skipped lines suppressed ..."
+	fi
+}
+
+
 send_mail()
 {
 	if [ -n "$envelopesender" ]; then
@@ -679,6 +708,7 @@ announcerecipients=$(git config hooks.announcelist)
 envelopesender=$(git config hooks.envelopesender)
 emailprefix=$(git config hooks.emailprefix || echo '[SCM] ')
 custom_showrev=$(git config hooks.showrev)
+maxlines=$(git config hooks.emailmaxlines)
 
 # --- Main loop
 # Allow dual mode: run from the command line just like the update hook, or
@@ -691,6 +721,6 @@ if [ -n "$1" -a -n "$2" -a -n "$3" ]; then
 else
 	while read oldrev newrev refname
 	do
-		generate_email $oldrev $newrev $refname | send_mail
+		generate_email $oldrev $newrev $refname $maxlines | send_mail
 	done
 fi
