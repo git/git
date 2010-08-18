@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "pack.h"
+#include "gettext.h"
 
 static const char show_index_usage[] =
 "git show-index < <packed archive index>";
@@ -10,6 +11,8 @@ int main(int argc, char **argv)
 	unsigned nr;
 	unsigned int version;
 	static unsigned int top_index[256];
+
+	git_setup_gettext();
 
 	if (argc != 1)
 		usage(show_index_usage);

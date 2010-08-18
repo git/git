@@ -600,6 +600,12 @@ AC_CHECK_LIB([c], [basename],
 AC_SUBST(NEEDS_LIBGEN)
 test -n "$NEEDS_LIBGEN" && LIBS="$LIBS -lgen"
 
+AC_CHECK_LIB([c], [gettext],
+[NEEDS_LIBINTL=],
+[NEEDS_LIBINTL=YesPlease])
+AC_SUBST(NEEDS_LIBINTL)
+test -n "$NEEDS_LIBINTL" && LIBS="$LIBS -lintl"
+
 ## Checks for header files.
 AC_MSG_NOTICE([CHECKS for header files])
 #
@@ -776,6 +782,12 @@ AC_CHECK_HEADER([paths.h],
 [HAVE_PATHS_H=YesPlease],
 [HAVE_PATHS_H=])
 AC_SUBST(HAVE_PATHS_H)
+#
+# Define NO_GETTEXT if you don't have libintl.h
+AC_CHECK_HEADER([libintl.h],
+[NO_GETTEXT=],
+[NO_GETTEXT=YesPlease])
+AC_SUBST(NO_GETTEXT)
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 GIT_CHECK_FUNC(strcasestr,
