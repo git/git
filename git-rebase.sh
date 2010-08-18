@@ -44,6 +44,7 @@ To restore the original branch and stop rebasing run \"git rebase --abort\".
 "
 unset newbase
 strategy=recursive
+strategy_opts=
 do_merge=
 dotest="$GIT_DIR"/rebase-merge
 prec=4
@@ -112,7 +113,7 @@ call_merge () {
 	then
 		export GIT_MERGE_VERBOSITY=1
 	fi
-	git-merge-$strategy "$cmt^" -- "$hd" "$cmt"
+	eval 'git-merge-$strategy' $strategy_opts '"$cmt^" -- "$hd" "$cmt"'
 	rv=$?
 	case "$rv" in
 	0)
@@ -293,6 +294,27 @@ do
 		;;
 	-M|-m|--m|--me|--mer|--merg|--merge)
 		do_merge=t
+		;;
+	-X*|--strategy-option*)
+		case "$#,$1" in
+		1,-X|1,--strategy-option)
+			usage ;;
+		*,-X|*,--strategy-option)
+			newopt="$2"
+			shift ;;
+		*,--strategy-option=*)
+			newopt="$(expr " $1" : ' --strategy-option=\(.*\)')" ;;
+		*,-X*)
+			newopt="$(expr " $1" : ' -X\(.*\)')" ;;
+		1,*)
+			usage ;;
+		esac
+		strategy_opts="$strategy_opts $(git rev-parse --sq-quote "--$newopt")"
+		do_merge=t
+		if test -n "$strategy"
+		then
+			strategy=recursive
+		fi
 		;;
 	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
 		--strateg=*|--strategy=*|\

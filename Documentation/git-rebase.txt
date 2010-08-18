@@ -250,6 +250,13 @@ on top of the <upstream> branch using the given strategy, using
 the 'ours' strategy simply discards all patches from the <branch>,
 which makes little sense.
 
+-X <strategy-option>::
+--strategy-option=<strategy-option>::
+	Pass the <strategy-option> through to the merge strategy.
+	This implies `\--merge` and, if no strategy has been
+	specified, `-s recursive`.  Note the reversal of 'ours' and
+	'theirs' as noted in above for the `-m` option.
+
 -q::
 --quiet::
 	Be quiet. Implies --no-stat.
