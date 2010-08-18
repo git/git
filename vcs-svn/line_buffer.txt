@@ -1,0 +1,58 @@
+line_buffer API
+===============
+
+The line_buffer library provides a convenient interface for
+mostly-line-oriented input.
+
+Each line is not permitted to exceed 10000 bytes.  The provided
+functions are not thread-safe or async-signal-safe, and like
+`fgets()`, they generally do not function correctly if interrupted
+by a signal without SA_RESTART set.
+
+Calling sequence
+----------------
+
+The calling program:
+
+ - specifies a file to read with `buffer_init`
+ - processes input with `buffer_read_line`, `buffer_read_string`,
+   `buffer_skip_bytes`, and `buffer_copy_bytes`
+ - closes the file with `buffer_deinit`, perhaps to start over and
+   read another file.
+
+Before exiting, the caller can use `buffer_reset` to deallocate
+resources for the benefit of profiling tools.
+
+Functions
+---------
+
+`buffer_init`::
+	Open the named file for input.  If filename is NULL,
+	start reading from stdin.  On failure, returns -1 (with
+	errno indicating the nature of the failure).
+
+`buffer_deinit`::
+	Stop reading from the current file (closing it unless
+	it was stdin).  Returns nonzero if `fclose` fails or
+	the error indicator was set.
+
+`buffer_read_line`::
+	Read a line and strip off the trailing newline.
+	On failure or end of file, returns NULL.
+
+`buffer_read_string`::
+	Read `len` characters of input or up to the end of the
+	file, whichever comes first.  Returns NULL on error.
+	Returns whatever characters were read (possibly "")
+	for end of file.
+
+`buffer_copy_bytes`::
+	Read `len` bytes of input and dump them to the standard output
+	stream.  Returns early for error or end of file.
+
+`buffer_skip_bytes`::
+	Discards `len` bytes from the input stream (stopping early
+	if necessary because of an error or eof).
+
+`buffer_reset`::
+	Deallocates non-static buffers.

@@ -12,7 +12,7 @@ svnadmin dump --incremental REPO | svn-fe [url] | git fast-import
 DESCRIPTION
 -----------
 
-Converts a Subversion dumpfile (version: 2) into input suitable for
+Converts a Subversion dumpfile into input suitable for
 git-fast-import(1) and similar importers. REPO is a path to a
 Subversion repository mirrored on the local disk. Remote Subversion
 repositories can be mirrored on local disk using the `svnsync`
@@ -24,6 +24,9 @@ Subversion's repository dump format is documented in full in
 `notes/dump-load-format.txt` from the Subversion source tree.
 Files in this format can be generated using the 'svnadmin dump' or
 'svk admin dump' command.
+
+Dumps produced with 'svnadmin dump --deltas' (dumpfile format v3)
+are not supported.
 
 OUTPUT FORMAT
 -------------
@@ -43,11 +46,9 @@ user <user@UUID>
 as committer, where 'user' is the value of the `svn:author` property
 and 'UUID' the repository's identifier.
 
-To support incremental imports, 'svn-fe' will put a `git-svn-id`
-line at the end of each commit log message if passed an url on the
-command line.  This line has the form `git-svn-id: URL@REVNO UUID`.
-
-Empty directories and unknown properties are silently discarded.
+To support incremental imports, 'svn-fe' puts a `git-svn-id` line at
+the end of each commit log message if passed an url on the command
+line.  This line has the form `git-svn-id: URL@REVNO UUID`.
 
 The resulting repository will generally require further processing
 to put each project in its own repository and to separate the history
@@ -56,9 +57,9 @@ may be useful for this purpose.
 
 BUGS
 ----
-Litters the current working directory with .bin files for
-persistence. Will be fixed when the svn-fe infrastructure is aware of
-a Git working directory.
+Empty directories and unknown properties are silently discarded.
+
+The exit status does not reflect whether an error was detected.
 
 SEE ALSO
 --------
