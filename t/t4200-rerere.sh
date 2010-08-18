@@ -132,6 +132,8 @@ test_expect_success 'commit succeeds' \
 
 test_expect_success 'recorded postimage' "test -f $rr/postimage"
 
+oldmtimepost=$(test-chmtime -v -60 $rr/postimage |cut -f 1)
+
 test_expect_success 'another conflicting merge' '
 	git checkout -b third master &&
 	git show second^:a1 | sed "s/To die: t/To die! T/" > a1 &&
@@ -143,6 +145,11 @@ git show first:a1 | sed 's/To die: t/To die! T/' > expect
 test_expect_success 'rerere kicked in' "! grep ^=======$ a1"
 
 test_expect_success 'rerere prefers first change' 'test_cmp a1 expect'
+
+test_expect_success 'rerere updates postimage timestamp' '
+	newmtimepost=$(test-chmtime -v +0 $rr/postimage |cut -f 1) &&
+	test $oldmtimepost -lt $newmtimepost
+'
 
 rm $rr/postimage
 echo "$sha1	a1" | perl -pe 'y/\012/\000/' > .git/MERGE_RR
@@ -165,15 +172,16 @@ just_over_15_days_ago=$((-1-15*86400))
 almost_60_days_ago=$((60-60*86400))
 just_over_60_days_ago=$((-1-60*86400))
 
-test-chmtime =$almost_60_days_ago $rr/preimage
+test-chmtime =$just_over_60_days_ago $rr/preimage
+test-chmtime =$almost_60_days_ago $rr/postimage
 test-chmtime =$almost_15_days_ago $rr2/preimage
 
 test_expect_success 'garbage collection (part1)' 'git rerere gc'
 
-test_expect_success 'young records still live' \
+test_expect_success 'young or recently used records still live' \
 	"test -f $rr/preimage && test -f $rr2/preimage"
 
-test-chmtime =$just_over_60_days_ago $rr/preimage
+test-chmtime =$just_over_60_days_ago $rr/postimage
 test-chmtime =$just_over_15_days_ago $rr2/preimage
 
 test_expect_success 'garbage collection (part2)' 'git rerere gc'
