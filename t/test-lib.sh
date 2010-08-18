@@ -256,6 +256,10 @@ q_to_cr () {
 	tr Q '\015'
 }
 
+q_to_tab () {
+	tr Q '\011'
+}
+
 append_cr () {
 	sed -e 's/$/Q/' | tr Q '\015'
 }
