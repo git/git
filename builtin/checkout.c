@@ -32,7 +32,11 @@ struct checkout_opts {
 	int writeout_stage;
 	int writeout_error;
 
+	/* not set by parse_options */
+	int branch_exists;
+
 	const char *new_branch;
+	const char *new_branch_force;
 	const char *new_orphan_branch;
 	int new_branch_log;
 	enum branch_track track;
@@ -511,7 +515,8 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 			}
 		}
 		else
-			create_branch(old->name, opts->new_branch, new->name, 0,
+			create_branch(old->name, opts->new_branch, new->name,
+				      opts->new_branch_force ? 1 : 0,
 				      opts->new_branch_log, opts->track);
 		new->name = opts->new_branch;
 		setup_branch_path(new);
@@ -531,7 +536,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 					new->name);
 			else
 				fprintf(stderr, "Switched to%s branch '%s'\n",
-					opts->new_branch ? " a new" : "",
+					opts->branch_exists ? " and reset" : " a new",
 					new->name);
 		}
 		if (old->path && old->name) {
@@ -657,7 +662,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	int dwim_new_local_branch = 1;
 	struct option options[] = {
 		OPT__QUIET(&opts.quiet),
-		OPT_STRING('b', NULL, &opts.new_branch, "new branch", "branch"),
+		OPT_STRING('b', NULL, &opts.new_branch, "branch",
+			   "create and checkout a new branch"),
+		OPT_STRING('B', NULL, &opts.new_branch_force, "branch",
+			   "create/reset and checkout a branch"),
 		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, "log for new branch"),
 		OPT_SET_INT('t', "track",  &opts.track, "track",
 			BRANCH_TRACK_EXPLICIT),
@@ -688,6 +696,14 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
 
+	/* we can assume from now on new_branch = !new_branch_force */
+	if (opts.new_branch && opts.new_branch_force)
+		die("-B cannot be used with -b");
+
+	/* copy -B over to -b, so that we can just check the latter */
+	if (opts.new_branch_force)
+		opts.new_branch = opts.new_branch_force;
+
 	if (patch_mode && (opts.track > 0 || opts.new_branch
 			   || opts.new_branch_log || opts.merge || opts.force))
 		die ("--patch is incompatible with all other options");
@@ -709,7 +725,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	if (opts.new_orphan_branch) {
 		if (opts.new_branch)
-			die("--orphan and -b are mutually exclusive");
+			die("--orphan and -b|-B are mutually exclusive");
 		if (opts.track > 0)
 			die("--orphan cannot be used with -t");
 		opts.new_branch = opts.new_orphan_branch;
@@ -858,8 +874,12 @@ no_reference:
 		if (strbuf_check_branch_ref(&buf, opts.new_branch))
 			die("git checkout: we do not like '%s' as a branch name.",
 			    opts.new_branch);
-		if (!get_sha1(buf.buf, rev))
-			die("git checkout: branch %s already exists", opts.new_branch);
+		if (!get_sha1(buf.buf, rev)) {
+			opts.branch_exists = 1;
+			if (!opts.new_branch_force)
+				die("git checkout: branch %s already exists",
+				    opts.new_branch);
+		}
 		strbuf_release(&buf);
 	}
 
