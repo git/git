@@ -4,7 +4,7 @@ test_description='git archive attribute tests'
 
 . ./test-lib.sh
 
-SUBSTFORMAT=%H%n
+SUBSTFORMAT='%H (%h)%n'
 
 test_expect_exists() {
 	test_expect_success " $1 exists" "test -e $1"
