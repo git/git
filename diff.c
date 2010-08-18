@@ -31,6 +31,7 @@ static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
+static struct diff_options default_diff_options;
 
 static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -107,6 +108,9 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.wordregex"))
 		return git_config_string(&diff_word_regex_cfg, var, value);
 
+	if (!strcmp(var, "diff.ignoresubmodules"))
+		handle_ignore_submodules_arg(&default_diff_options, value);
+
 	return git_diff_basic_config(var, value, cb);
 }
 
@@ -140,6 +144,9 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		diff_suppress_blank_empty = git_config_bool(var, value);
 		return 0;
 	}
+
+	if (!prefixcmp(var, "submodule."))
+		return parse_submodule_config_option(var, value);
 
 	return git_color_default_config(var, value, cb);
 }
@@ -2819,7 +2826,7 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 
 void diff_setup(struct diff_options *options)
 {
-	memset(options, 0, sizeof(*options));
+	memcpy(options, &default_diff_options, sizeof(*options));
 
 	options->file = stdout;
 
@@ -3171,11 +3178,13 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_SET(options, ALLOW_TEXTCONV);
 	else if (!strcmp(arg, "--no-textconv"))
 		DIFF_OPT_CLR(options, ALLOW_TEXTCONV);
-	else if (!strcmp(arg, "--ignore-submodules"))
+	else if (!strcmp(arg, "--ignore-submodules")) {
+		DIFF_OPT_SET(options, OVERRIDE_SUBMODULE_CONFIG);
 		handle_ignore_submodules_arg(options, "all");
-	else if (!prefixcmp(arg, "--ignore-submodules="))
+	} else if (!prefixcmp(arg, "--ignore-submodules=")) {
+		DIFF_OPT_SET(options, OVERRIDE_SUBMODULE_CONFIG);
 		handle_ignore_submodules_arg(options, arg + 20);
-	else if (!strcmp(arg, "--submodule"))
+	} else if (!strcmp(arg, "--submodule"))
 		DIFF_OPT_SET(options, SUBMODULE_LOG);
 	else if (!prefixcmp(arg, "--submodule=")) {
 		if (!strcmp(arg + 12, "log"))
@@ -4108,6 +4117,24 @@ int diff_result_code(struct diff_options *opt, int status)
 	return result;
 }
 
+/*
+ * Shall changes to this submodule be ignored?
+ *
+ * Submodule changes can be configured to be ignored separately for each path,
+ * but that configuration can be overridden from the command line.
+ */
+static int is_submodule_ignored(const char *path, struct diff_options *options)
+{
+	int ignored = 0;
+	unsigned orig_flags = options->flags;
+	if (!DIFF_OPT_TST(options, OVERRIDE_SUBMODULE_CONFIG))
+		set_diffopt_flags_from_submodule_config(options, path);
+	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES))
+		ignored = 1;
+	options->flags = orig_flags;
+	return ignored;
+}
+
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
@@ -4115,7 +4142,7 @@ void diff_addremove(struct diff_options *options,
 {
 	struct diff_filespec *one, *two;
 
-	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES) && S_ISGITLINK(mode))
+	if (S_ISGITLINK(mode) && is_submodule_ignored(concatpath, options))
 		return;
 
 	/* This may look odd, but it is a preparation for
@@ -4162,8 +4189,8 @@ void diff_change(struct diff_options *options,
 {
 	struct diff_filespec *one, *two;
 
-	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES) && S_ISGITLINK(old_mode)
-			&& S_ISGITLINK(new_mode))
+	if (S_ISGITLINK(old_mode) && S_ISGITLINK(new_mode) &&
+	    is_submodule_ignored(concatpath, options))
 		return;
 
 	if (DIFF_OPT_TST(options, REVERSE_DIFF)) {

@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "revision.h"
 #include "builtin.h"
+#include "submodule.h"
 
 static const char diff_cache_usage[] =
 "git diff-index [-m] [--cached] "
@@ -17,6 +18,7 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	int result;
 
 	init_revisions(&rev, prefix);
+	gitmodules_config();
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	rev.abbrev = 0;
 

@@ -13,6 +13,7 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
+#include "submodule.h"
 
 struct blobinfo {
 	unsigned char sha1[20];
@@ -279,6 +280,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	 */
 
 	prefix = setup_git_directory_gently(&nongit);
+	gitmodules_config();
 	git_config(git_diff_ui_config, NULL);
 
 	if (diff_use_color_default == -1)

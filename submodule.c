@@ -6,6 +6,10 @@
 #include "revision.h"
 #include "run-command.h"
 #include "diffcore.h"
+#include "string-list.h"
+
+struct string_list config_name_for_path;
+struct string_list config_ignore_for_name;
 
 static int add_submodule_odb(const char *path)
 {
@@ -46,16 +50,90 @@ done:
 	return ret;
 }
 
+void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
+					     const char *path)
+{
+	struct string_list_item *path_option, *ignore_option;
+	path_option = unsorted_string_list_lookup(&config_name_for_path, path);
+	if (path_option) {
+		ignore_option = unsorted_string_list_lookup(&config_ignore_for_name, path_option->util);
+		if (ignore_option)
+			handle_ignore_submodules_arg(diffopt, ignore_option->util);
+	}
+}
+
+static int submodule_config(const char *var, const char *value, void *cb)
+{
+	if (!prefixcmp(var, "submodule."))
+		return parse_submodule_config_option(var, value);
+	return 0;
+}
+
+void gitmodules_config(void)
+{
+	const char *work_tree = get_git_work_tree();
+	if (work_tree) {
+		struct strbuf gitmodules_path = STRBUF_INIT;
+		strbuf_addstr(&gitmodules_path, work_tree);
+		strbuf_addstr(&gitmodules_path, "/.gitmodules");
+		git_config_from_file(submodule_config, gitmodules_path.buf, NULL);
+		strbuf_release(&gitmodules_path);
+	}
+}
+
+int parse_submodule_config_option(const char *var, const char *value)
+{
+	int len;
+	struct string_list_item *config;
+	struct strbuf submodname = STRBUF_INIT;
+
+	var += 10;		/* Skip "submodule." */
+
+	len = strlen(var);
+	if ((len > 5) && !strcmp(var + len - 5, ".path")) {
+		strbuf_add(&submodname, var, len - 5);
+		config = unsorted_string_list_lookup(&config_name_for_path, value);
+		if (config)
+			free(config->util);
+		else
+			config = string_list_append(&config_name_for_path, xstrdup(value));
+		config->util = strbuf_detach(&submodname, NULL);
+		strbuf_release(&submodname);
+	} else if ((len > 7) && !strcmp(var + len - 7, ".ignore")) {
+		if (strcmp(value, "untracked") && strcmp(value, "dirty") &&
+		    strcmp(value, "all") && strcmp(value, "none")) {
+			warning("Invalid parameter \"%s\" for config option \"submodule.%s.ignore\"", value, var);
+			return 0;
+		}
+
+		strbuf_add(&submodname, var, len - 7);
+		config = unsorted_string_list_lookup(&config_ignore_for_name, submodname.buf);
+		if (config)
+			free(config->util);
+		else
+			config = string_list_append(&config_ignore_for_name,
+						    strbuf_detach(&submodname, NULL));
+		strbuf_release(&submodname);
+		config->util = xstrdup(value);
+		return 0;
+	}
+	return 0;
+}
+
 void handle_ignore_submodules_arg(struct diff_options *diffopt,
 				  const char *arg)
 {
+	DIFF_OPT_CLR(diffopt, IGNORE_SUBMODULES);
+	DIFF_OPT_CLR(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES);
+	DIFF_OPT_CLR(diffopt, IGNORE_DIRTY_SUBMODULES);
+
 	if (!strcmp(arg, "all"))
 		DIFF_OPT_SET(diffopt, IGNORE_SUBMODULES);
 	else if (!strcmp(arg, "untracked"))
 		DIFF_OPT_SET(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES);
 	else if (!strcmp(arg, "dirty"))
 		DIFF_OPT_SET(diffopt, IGNORE_DIRTY_SUBMODULES);
-	else
+	else if (strcmp(arg, "none"))
 		die("bad --ignore-submodules argument: %s", arg);
 }
 

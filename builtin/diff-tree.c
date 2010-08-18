@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "log-tree.h"
 #include "builtin.h"
+#include "submodule.h"
 
 static struct rev_info log_tree_opt;
 
@@ -112,6 +113,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	int read_stdin = 0;
 
 	init_revisions(opt, prefix);
+	gitmodules_config();
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	opt->abbrev = 0;
 	opt->diff = 1;
