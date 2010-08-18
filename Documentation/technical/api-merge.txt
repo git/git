@@ -1,0 +1,73 @@
+merge API
+=========
+
+The merge API helps a program to reconcile two competing sets of
+improvements to some files (e.g., unregistered changes from the work
+tree versus changes involved in switching to a new branch), reporting
+conflicts if found.  The library called through this API is
+responsible for a few things.
+
+ * determining which trees to merge (recursive ancestor consolidation);
+
+ * lining up corresponding files in the trees to be merged (rename
+   detection, subtree shifting), reporting edge cases like add/add
+   and rename/rename conflicts to the user;
+
+ * performing a three-way merge of corresponding files, taking
+   path-specific merge drivers (specified in `.gitattributes`)
+   into account.
+
+Low-level (single file) merge
+-----------------------------
+
+`ll_merge`::
+
+	Perform a three-way single-file merge in core.  This is
+	a thin wrapper around `xdl_merge` that takes the path and
+	any merge backend specified in `.gitattributes` or
+	`.git/info/attributes` into account.  Returns 0 for a
+	clean merge.
+
+The caller:
+
+1. allocates an mmbuffer_t variable for the result;
+2. allocates and fills variables with the file's original content
+   and two modified versions (using `read_mmfile`, for example);
+3. calls ll_merge();
+4. reads the output from result_buf.ptr and result_buf.size;
+5. releases buffers when finished (free(ancestor.ptr); free(ours.ptr);
+   free(theirs.ptr); free(result_buf.ptr);).
+
+If the modifications do not merge cleanly, `ll_merge` will return a
+nonzero value and `result_buf` will generally include a description of
+the conflict bracketed by markers such as the traditional `<<<<<<<`
+and `>>>>>>>`.
+
+The `ancestor_label`, `our_label`, and `their_label` parameters are
+used to label the different sides of a conflict if the merge driver
+supports this.
+
+The `flag` parameter is a bitfield:
+
+ - The `LL_OPT_VIRTUAL_ANCESTOR` bit indicates whether this is an
+   internal merge to consolidate ancestors for a recursive merge.
+
+ - The `LL_OPT_FAVOR_MASK` bits allow local conflicts to be automatically
+   resolved in favor of one side or the other (as in 'git merge-file'
+   `--ours`/`--theirs`/`--union`).
+   They can be populated by `create_ll_flag`, whose argument can be
+   `XDL_MERGE_FAVOR_OURS`, `XDL_MERGE_FAVOR_THEIRS`, or
+   `XDL_MERGE_FAVOR_UNION`.
+
+Everything else
+---------------
+
+Talk about <merge-recursive.h> and merge_file():
+
+ - merge_trees() to merge with rename detection
+ - merge_recursive() for ancestor consolidation
+ - try_merge_command() for other strategies
+ - conflict format
+ - merge options
+
+(Daniel, Miklos, Stephan, JC)

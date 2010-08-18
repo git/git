@@ -319,6 +319,10 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 		if (!mmfile[i].ptr && !mmfile[i].size)
 			mmfile[i].ptr = xstrdup("");
 	}
+	/*
+	 * NEEDSWORK: handle conflicts from merges with
+	 * merge.renormalize set, too
+	 */
 	ll_merge(&result, path, &mmfile[0], NULL,
 		 &mmfile[1], "ours",
 		 &mmfile[2], "theirs", 0);

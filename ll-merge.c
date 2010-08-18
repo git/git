@@ -46,7 +46,7 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	 * or common ancestor for an internal merge.  Still return
 	 * "conflicted merge" status.
 	 */
-	mmfile_t *stolen = (flag & 01) ? orig : src1;
+	mmfile_t *stolen = (flag & LL_OPT_VIRTUAL_ANCESTOR) ? orig : src1;
 
 	result->ptr = stolen->ptr;
 	result->size = stolen->size;
@@ -79,7 +79,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 
 	memset(&xmp, 0, sizeof(xmp));
 	xmp.level = XDL_MERGE_ZEALOUS;
-	xmp.favor= (flag >> 1) & 03;
+	xmp.favor = ll_opt_favor(flag);
 	if (git_xmerge_style >= 0)
 		xmp.style = git_xmerge_style;
 	if (marker_size > 0)
@@ -99,7 +99,8 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 			  int flag, int marker_size)
 {
 	/* Use union favor */
-	flag = (flag & 1) | (XDL_MERGE_FAVOR_UNION << 1);
+	flag &= ~LL_OPT_FAVOR_MASK;
+	flag |= create_ll_flag(XDL_MERGE_FAVOR_UNION);
 	return ll_xdl_merge(drv_unused, result, path_unused,
 			    orig, NULL, src1, NULL, src2, NULL,
 			    flag, marker_size);
@@ -321,6 +322,16 @@ static int git_path_check_merge(const char *path, struct git_attr_check check[2]
 	return git_checkattr(path, 2, check);
 }
 
+static void normalize_file(mmfile_t *mm, const char *path)
+{
+	struct strbuf strbuf = STRBUF_INIT;
+	if (renormalize_buffer(path, mm->ptr, mm->size, &strbuf)) {
+		free(mm->ptr);
+		mm->size = strbuf.len;
+		mm->ptr = strbuf_detach(&strbuf, NULL);
+	}
+}
+
 int ll_merge(mmbuffer_t *result_buf,
 	     const char *path,
 	     mmfile_t *ancestor, const char *ancestor_label,
@@ -332,8 +343,13 @@ int ll_merge(mmbuffer_t *result_buf,
 	const char *ll_driver_name = NULL;
 	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	const struct ll_merge_driver *driver;
-	int virtual_ancestor = flag & 01;
+	int virtual_ancestor = flag & LL_OPT_VIRTUAL_ANCESTOR;
 
+	if (flag & LL_OPT_RENORMALIZE) {
+		normalize_file(ancestor, path);
+		normalize_file(ours, path);
+		normalize_file(theirs, path);
+	}
 	if (!git_path_check_merge(path, check)) {
 		ll_driver_name = check[0].value;
 		if (check[1].value) {

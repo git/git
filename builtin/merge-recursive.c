@@ -45,6 +45,10 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 				o.subtree_shift = "";
 			else if (!prefixcmp(arg+2, "subtree="))
 				o.subtree_shift = arg + 10;
+			else if (!strcmp(arg+2, "renormalize"))
+				o.renormalize = 1;
+			else if (!strcmp(arg+2, "no-renormalize"))
+				o.renormalize = 0;
 			else
 				die("Unknown option %s", arg);
 			continue;
