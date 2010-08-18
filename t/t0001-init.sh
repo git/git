@@ -301,7 +301,7 @@ test_expect_success 'init notices EEXIST (2)' '
 	)
 '
 
-test_expect_success POSIXPERM 'init notices EPERM' '
+test_expect_success POSIXPERM,SANITY 'init notices EPERM' '
 	rm -fr newdir &&
 	(
 		mkdir newdir &&

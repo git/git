@@ -13,13 +13,11 @@ if sys.hexversion < 0x02040000:
     sys.exit(1)
 '
 then
-	:
-else
-	skip_all='skipping git remote-testgit tests: requires Python 2.4 or newer'
-	test_done
+    # Requires Python 2.4 or newer
+	test_set_prereq PYTHON_24
 fi
 
-test_expect_success 'setup repository' '
+test_expect_success PYTHON_24 'setup repository' '
 	git init --bare server/.git &&
 	git clone server public &&
 	(cd public &&
@@ -29,34 +27,34 @@ test_expect_success 'setup repository' '
 	 git push origin master)
 '
 
-test_expect_success 'cloning from local repo' '
+test_expect_success PYTHON_24 'cloning from local repo' '
 	git clone "testgit::${PWD}/server" localclone &&
 	test_cmp public/file localclone/file
 '
 
-test_expect_success 'cloning from remote repo' '
+test_expect_success PYTHON_24 'cloning from remote repo' '
 	git clone "testgit::file://${PWD}/server" clone &&
 	test_cmp public/file clone/file
 '
 
-test_expect_success 'create new commit on remote' '
+test_expect_success PYTHON_24 'create new commit on remote' '
 	(cd public &&
 	 echo content >>file &&
 	 git commit -a -m two &&
 	 git push)
 '
 
-test_expect_success 'pulling from local repo' '
+test_expect_success PYTHON_24 'pulling from local repo' '
 	(cd localclone && git pull) &&
 	test_cmp public/file localclone/file
 '
 
-test_expect_success 'pulling from remote remote' '
+test_expect_success PYTHON_24 'pulling from remote remote' '
 	(cd clone && git pull) &&
 	test_cmp public/file clone/file
 '
 
-test_expect_success 'pushing to local repo' '
+test_expect_success PYTHON_24 'pushing to local repo' '
 	(cd localclone &&
 	echo content >>file &&
 	git commit -a -m three &&
@@ -65,12 +63,12 @@ test_expect_success 'pushing to local repo' '
 	test $HEAD = $(git --git-dir=server/.git rev-parse --verify HEAD)
 '
 
-test_expect_success 'synch with changes from localclone' '
+test_expect_success PYTHON_24 'synch with changes from localclone' '
 	(cd clone &&
 	 git pull)
 '
 
-test_expect_success 'pushing remote local repo' '
+test_expect_success PYTHON_24 'pushing remote local repo' '
 	(cd clone &&
 	echo content >>file &&
 	git commit -a -m four &&

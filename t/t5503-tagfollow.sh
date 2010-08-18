@@ -6,8 +6,11 @@ test_description='test automatic tag following'
 
 case $(uname -s) in
 *MINGW*)
-	skip_all="GIT_DEBUG_SEND_PACK not supported - skipping tests"
-	test_done
+	say "GIT_DEBUG_SEND_PACK not supported - skipping tests"
+	;;
+*)
+	test_set_prereq NOT_MINGW
+	;;
 esac
 
 # End state of the repository:
@@ -19,7 +22,7 @@ esac
 #     \   C - origin/cat    \
 #      origin/master         master
 
-test_expect_success setup '
+test_expect_success NOT_MINGW setup '
 	test_tick &&
 	echo ichi >file &&
 	git add file &&
@@ -42,12 +45,15 @@ test_expect_success setup '
 
 U=UPLOAD_LOG
 
+test_expect_success NOT_MINGW 'setup expect' '
 cat - <<EOF >expect
 #S
 want $A
 #E
 EOF
-test_expect_success 'fetch A (new commit : 1 connection)' '
+'
+
+test_expect_success NOT_MINGW 'fetch A (new commit : 1 connection)' '
 	rm -f $U
 	(
 		cd cloned &&
@@ -59,7 +65,7 @@ test_expect_success 'fetch A (new commit : 1 connection)' '
 	test_cmp expect actual
 '
 
-test_expect_success "create tag T on A, create C on branch cat" '
+test_expect_success NOT_MINGW "create tag T on A, create C on branch cat" '
 	git tag -a -m tag1 tag1 $A &&
 	T=$(git rev-parse --verify tag1) &&
 
@@ -71,13 +77,16 @@ test_expect_success "create tag T on A, create C on branch cat" '
 	git checkout master
 '
 
+test_expect_success NOT_MINGW 'setup expect' '
 cat - <<EOF >expect
 #S
 want $C
 want $T
 #E
 EOF
-test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
+'
+
+test_expect_success NOT_MINGW 'fetch C, T (new branch, tag : 1 connection)' '
 	rm -f $U
 	(
 		cd cloned &&
@@ -91,7 +100,7 @@ test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
 	test_cmp expect actual
 '
 
-test_expect_success "create commits O, B, tag S on B" '
+test_expect_success NOT_MINGW "create commits O, B, tag S on B" '
 	test_tick &&
 	echo O >file &&
 	git add file &&
@@ -107,13 +116,16 @@ test_expect_success "create commits O, B, tag S on B" '
 	S=$(git rev-parse --verify tag2)
 '
 
+test_expect_success NOT_MINGW 'setup expect' '
 cat - <<EOF >expect
 #S
 want $B
 want $S
 #E
 EOF
-test_expect_success 'fetch B, S (commit and tag : 1 connection)' '
+'
+
+test_expect_success NOT_MINGW 'fetch B, S (commit and tag : 1 connection)' '
 	rm -f $U
 	(
 		cd cloned &&
@@ -127,13 +139,16 @@ test_expect_success 'fetch B, S (commit and tag : 1 connection)' '
 	test_cmp expect actual
 '
 
+test_expect_success NOT_MINGW 'setup expect' '
 cat - <<EOF >expect
 #S
 want $B
 want $S
 #E
 EOF
-test_expect_success 'new clone fetch master and tags' '
+'
+
+test_expect_success NOT_MINGW 'new clone fetch master and tags' '
 	git branch -D cat
 	rm -f $U
 	(

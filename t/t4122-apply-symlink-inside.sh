@@ -3,12 +3,6 @@
 test_description='apply to deeper directory without getting fooled with symlink'
 . ./test-lib.sh
 
-if ! test_have_prereq SYMLINKS
-then
-	skip_all='Symbolic links not supported, skipping tests.'
-	test_done
-fi
-
 lecho () {
 	for l_
 	do
@@ -16,7 +10,7 @@ lecho () {
 	done
 }
 
-test_expect_success setup '
+test_expect_success SYMLINKS setup '
 
 	mkdir -p arch/i386/boot arch/x86_64 &&
 	lecho 1 2 3 4 5 >arch/i386/boot/Makefile &&
@@ -37,7 +31,7 @@ test_expect_success setup '
 
 '
 
-test_expect_success apply '
+test_expect_success SYMLINKS apply '
 
 	git checkout test &&
 	git diff --exit-code test &&
@@ -46,7 +40,7 @@ test_expect_success apply '
 
 '
 
-test_expect_success 'check result' '
+test_expect_success SYMLINKS 'check result' '
 
 	git diff --exit-code master &&
 	git diff --exit-code --cached master &&

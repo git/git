@@ -3,12 +3,14 @@
 test_description='Test cloning a repository larger than 2 gigabyte'
 . ./test-lib.sh
 
-test -z "$GIT_TEST_CLONE_2GB" &&
-skip_all="Skipping expensive 2GB clone test; enable it with GIT_TEST_CLONE_2GB=t" &&
-test_done &&
-exit
+if test -z "$GIT_TEST_CLONE_2GB"
+then
+	say 'Skipping expensive 2GB clone test; enable it with GIT_TEST_CLONE_2GB=t'
+else
+	test_set_prereq CLONE_2GB
+fi
 
-test_expect_success 'setup' '
+test_expect_success CLONE_2GB 'setup' '
 
 	git config pack.compression 0 &&
 	git config pack.depth 0 &&
@@ -36,13 +38,13 @@ test_expect_success 'setup' '
 
 '
 
-test_expect_success 'clone - bare' '
+test_expect_success CLONE_2GB 'clone - bare' '
 
 	git clone --bare --no-hardlinks . clone-bare
 
 '
 
-test_expect_success 'clone - with worktree, file:// protocol' '
+test_expect_success CLONE_2GB 'clone - with worktree, file:// protocol' '
 
 	git clone file://. clone-wt
 
