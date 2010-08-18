@@ -41,6 +41,9 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
 
 int parse_commit(struct commit *item);
 
+/* Find beginning and length of commit subject. */
+int find_commit_subject(const char *commit_buffer, const char **subject);
+
 struct commit_list * commit_list_insert(struct commit *item, struct commit_list **list_p);
 unsigned commit_list_count(const struct commit_list *l);
 struct commit_list * insert_by_date(struct commit *item, struct commit_list **list);
