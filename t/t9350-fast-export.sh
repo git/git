@@ -355,6 +355,20 @@ test_expect_failure 'no exact-ref revisions included' '
 	)
 '
 
+test_expect_success 'path limiting with import-marks does not lose unmodified files'        '
+	git checkout -b simple marks~2 &&
+	git fast-export --export-marks=marks simple -- file > /dev/null &&
+	echo more content >> file &&
+	test_tick &&
+	git commit -mnext file &&
+	git fast-export --import-marks=marks simple -- file file0 | grep file0
+'
+
+test_expect_success 'full-tree re-shows unmodified files'        '
+	git checkout -f simple &&
+	test $(git fast-export --full-tree simple | grep -c file0) -eq 3
+'
+
 test_expect_success 'set-up a few more tags for tag export tests' '
 	git checkout -f master &&
 	HEAD_TREE=`git show -s --pretty=raw HEAD | grep tree | sed "s/tree //"` &&
