@@ -544,40 +544,14 @@ static int will_fetch(struct ref **head, const unsigned char *sha1)
 	return 0;
 }
 
-struct tag_data {
-	struct ref **head;
-	struct ref ***tail;
-};
-
-static int add_to_tail(struct string_list_item *item, void *cb_data)
-{
-	struct tag_data *data = (struct tag_data *)cb_data;
-	struct ref *rm = NULL;
-
-	/* We have already decided to ignore this item */
-	if (!item->util)
-		return 0;
-
-	rm = alloc_ref(item->string);
-	rm->peer_ref = alloc_ref(item->string);
-	hashcpy(rm->old_sha1, item->util);
-
-	**data->tail = rm;
-	*data->tail = &rm->next;
-
-	return 0;
-}
-
 static void find_non_local_tags(struct transport *transport,
 			struct ref **head,
 			struct ref ***tail)
 {
 	struct string_list existing_refs = { NULL, 0, 0, 0 };
 	struct string_list remote_refs = { NULL, 0, 0, 0 };
-	struct tag_data data;
 	const struct ref *ref;
 	struct string_list_item *item = NULL;
-	data.head = head; data.tail = tail;
 
 	for_each_ref(add_existing, &existing_refs);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
@@ -631,10 +605,20 @@ static void find_non_local_tags(struct transport *transport,
 		item->util = NULL;
 
 	/*
-	 * For all the tags in the remote_refs string list, call
-	 * add_to_tail to add them to the list of refs to be fetched
+	 * For all the tags in the remote_refs string list,
+	 * add them to the list of refs to be fetched
 	 */
-	for_each_string_list(&remote_refs, add_to_tail, &data);
+	for_each_string_list_item(item, &remote_refs) {
+		/* Unless we have already decided to ignore this item... */
+		if (item->util)
+		{
+			struct ref *rm = alloc_ref(item->string);
+			rm->peer_ref = alloc_ref(item->string);
+			hashcpy(rm->old_sha1, item->util);
+			**tail = rm;
+			*tail = &rm->next;
+		}
+	}
 
 	string_list_clear(&remote_refs, 0);
 }
