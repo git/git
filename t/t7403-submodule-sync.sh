@@ -58,6 +58,9 @@ test_expect_success '"git submodule sync" should update submodule URLs' '
 	(cd super-clone/submodule &&
 	 git checkout master &&
 	 git pull
+	) &&
+	(cd super-clone &&
+	 test -d "$(git config submodule.submodule.url)"
 	)
 '
 
