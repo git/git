@@ -2131,6 +2131,7 @@ static void file_change_m(struct branch *b)
 	case S_IFREG | 0644:
 	case S_IFREG | 0755:
 	case S_IFLNK:
+	case S_IFDIR:
 	case S_IFGITLINK:
 		/* ok */
 		break;
@@ -2176,23 +2177,28 @@ static void file_change_m(struct branch *b)
 		 * another repository.
 		 */
 	} else if (inline_data) {
+		if (S_ISDIR(mode))
+			die("Directories cannot be specified 'inline': %s",
+				command_buf.buf);
 		if (p != uq.buf) {
 			strbuf_addstr(&uq, p);
 			p = uq.buf;
 		}
 		read_next_command();
 		parse_and_store_blob(&last_blob, sha1, 0);
-	} else if (oe) {
-		if (oe->type != OBJ_BLOB)
-			die("Not a blob (actually a %s): %s",
-				typename(oe->type), command_buf.buf);
 	} else {
-		enum object_type type = sha1_object_info(sha1, NULL);
+		enum object_type expected = S_ISDIR(mode) ?
+						OBJ_TREE: OBJ_BLOB;
+		enum object_type type = oe ? oe->type :
+					sha1_object_info(sha1, NULL);
 		if (type < 0)
-			die("Blob not found: %s", command_buf.buf);
-		if (type != OBJ_BLOB)
-			die("Not a blob (actually a %s): %s",
-			    typename(type), command_buf.buf);
+			die("%s not found: %s",
+					S_ISDIR(mode) ?  "Tree" : "Blob",
+					command_buf.buf);
+		if (type != expected)
+			die("Not a %s (actually a %s): %s",
+				typename(expected), typename(type),
+				command_buf.buf);
 	}
 
 	tree_content_set(&b->branch_tree, p, sha1, mode, NULL);
