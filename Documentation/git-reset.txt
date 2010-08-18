@@ -256,7 +256,7 @@ Keep changes in working tree while discarding some previous commits::
 Suppose you are working on something and you commit it, and then you
 continue working a bit more, but now you think that what you have in
 your working tree should be in another branch that has nothing to do
-with what you commited previously. You can start a new branch and
+with what you committed previously. You can start a new branch and
 reset it while keeping the changes in your work tree.
 +
 ------------
