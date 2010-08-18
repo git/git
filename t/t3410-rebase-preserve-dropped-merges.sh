@@ -43,11 +43,11 @@ test_expect_success 'setup' '
 # G2 = same changes as G
 test_expect_success 'skip same-resolution merges with -p' '
 	git checkout H &&
-	! git merge E &&
+	test_must_fail git merge E &&
 	test_commit L file1 23 &&
 	git checkout I &&
 	test_commit G2 file1 3 &&
-	! git merge E &&
+	test_must_fail git merge E &&
 	test_commit J file1 23 &&
 	test_commit K file7 file7 &&
 	git rebase -i -p L &&
@@ -65,11 +65,11 @@ test_expect_success 'skip same-resolution merges with -p' '
 # G2 = different changes as G
 test_expect_success 'keep different-resolution merges with -p' '
 	git checkout H &&
-	! git merge E &&
+	test_must_fail git merge E &&
 	test_commit L2 file1 23 &&
 	git checkout I &&
 	test_commit G3 file1 4 &&
-	! git merge E &&
+	test_must_fail git merge E &&
 	test_commit J2 file1 24 &&
 	test_commit K2 file7 file7 &&
 	test_must_fail git rebase -i -p L2 &&
