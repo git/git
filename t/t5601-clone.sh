@@ -178,8 +178,14 @@ test_expect_success 'clone respects global branch.autosetuprebase' '
 
 test_expect_success 'respect url-encoding of file://' '
 	git init x+y &&
-	test_must_fail git clone "file://$PWD/x+y" xy-url &&
-	git clone "file://$PWD/x%2By" xy-url
+	git clone "file://$PWD/x+y" xy-url-1 &&
+	git clone "file://$PWD/x%2By" xy-url-2
+'
+
+test_expect_success 'do not query-string-decode + in URLs' '
+	rm -rf x+y &&
+	git init "x y" &&
+	test_must_fail git clone "file://$PWD/x+y" xy-no-plus
 '
 
 test_expect_success 'do not respect url-encoding of non-url path' '
