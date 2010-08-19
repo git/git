@@ -54,9 +54,40 @@ test_expect_success 'success is reported like this' '
 test_expect_failure 'pretend we have a known breakage' '
     false
 '
+
+test_expect_success 'pretend we have fixed a known breakage (run in sub test-lib)' "
+    mkdir passing-todo &&
+    (cd passing-todo &&
+    cat >passing-todo.sh <<EOF &&
+#!$SHELL_PATH
+
+test_description='A passing TODO test
+
+This is run in a sub test-lib so that we do not get incorrect passing
+metrics
+'
+
+# Point to the t/test-lib.sh, which isn't in ../ as usual
+TEST_DIRECTORY=\"$TEST_DIRECTORY\"
+. \"\$TEST_DIRECTORY\"/test-lib.sh
+
 test_expect_failure 'pretend we have fixed a known breakage' '
     :
 '
+
+test_done
+EOF
+    chmod +x passing-todo.sh &&
+    ./passing-todo.sh >out 2>err &&
+    ! test -s err &&
+cat >expect <<EOF &&
+ok 1 - pretend we have fixed a known breakage # TODO known breakage
+# fixed 1 known breakage(s)
+# passed all 1 test(s)
+1..1
+EOF
+    test_cmp expect out)
+"
 test_set_prereq HAVEIT
 haveit=no
 test_expect_success HAVEIT 'test runs if prerequisite is satisfied' '
