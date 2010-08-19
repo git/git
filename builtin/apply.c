@@ -416,44 +416,52 @@ static char *squash_slash(char *name)
 	return name;
 }
 
+static char *find_name_gnu(const char *line, char *def, int p_value)
+{
+	struct strbuf name = STRBUF_INIT;
+	char *cp;
+
+	/*
+	 * Proposed "new-style" GNU patch/diff format; see
+	 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
+	 */
+	if (unquote_c_style(&name, line, NULL)) {
+		strbuf_release(&name);
+		return NULL;
+	}
+
+	for (cp = name.buf; p_value; p_value--) {
+		cp = strchr(cp, '/');
+		if (!cp) {
+			strbuf_release(&name);
+			return NULL;
+		}
+		cp++;
+	}
+
+	/* name can later be freed, so we need
+	 * to memmove, not just return cp
+	 */
+	strbuf_remove(&name, 0, cp - name.buf);
+	free(def);
+	if (root)
+		strbuf_insert(&name, 0, root, root_len);
+	return squash_slash(strbuf_detach(&name, NULL));
+}
+
 static char *find_name(const char *line, char *def, int p_value, int terminate)
 {
 	int len;
 	const char *start = NULL;
 
-	if (p_value == 0)
-		start = line;
-
 	if (*line == '"') {
-		struct strbuf name = STRBUF_INIT;
-
-		/*
-		 * Proposed "new-style" GNU patch/diff format; see
-		 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
-		 */
-		if (!unquote_c_style(&name, line, NULL)) {
-			char *cp;
-
-			for (cp = name.buf; p_value; p_value--) {
-				cp = strchr(cp, '/');
-				if (!cp)
-					break;
-				cp++;
-			}
-			if (cp) {
-				/* name can later be freed, so we need
-				 * to memmove, not just return cp
-				 */
-				strbuf_remove(&name, 0, cp - name.buf);
-				free(def);
-				if (root)
-					strbuf_insert(&name, 0, root, root_len);
-				return squash_slash(strbuf_detach(&name, NULL));
-			}
-		}
-		strbuf_release(&name);
+		char *name = find_name_gnu(line, def, p_value);
+		if (name)
+			return name;
 	}
 
+	if (p_value == 0)
+		start = line;
 	for (;;) {
 		char c = *line;
 
