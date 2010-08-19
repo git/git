@@ -12,7 +12,7 @@ test_expect_success 'setup svn repo' '
 	svn_cmd import -m "import for git svn" import "$svnrepo" &&
 	rm -rf import &&
 
-	svn_cmd mkdir --parents -m "create mybranch directory" "$svnrepo/branches/mybranch" &&
+	svn_cmd mkdir -m "create mybranch directory" "$svnrepo/branches/mybranch" &&
 	svn_cmd cp -m "create branch mybranch" "$svnrepo/trunk" "$svnrepo/branches/mybranch/trunk" &&
 
 	svn_cmd co "$svnrepo/trunk" svn_project &&
