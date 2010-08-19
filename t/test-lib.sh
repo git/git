@@ -710,7 +710,13 @@ test_done () {
 
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
-TEST_DIRECTORY=$(pwd)
+if test -z "$TEST_DIRECTORY"
+then
+	# We allow tests to override this, in case they want to run tests
+	# outside of t/, e.g. for running tests on the test library
+	# itself.
+	TEST_DIRECTORY=$(pwd)
+fi
 GIT_BUILD_DIR="$TEST_DIRECTORY"/..
 
 if test -n "$valgrind"
