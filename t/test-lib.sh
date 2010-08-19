@@ -793,14 +793,14 @@ else # normal case, use ../bin-wrappers only unless $with_dashes:
 		PATH="$TEST_DIRECTORY/..:$PATH"
 	fi
 fi
-GIT_BUILD_DIR=$(pwd)/..
-GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
+GIT_BUILD_DIR="$TEST_DIRECTORY"/..
+GIT_TEMPLATE_DIR="$TEST_DIRECTORY"/../templates/blt
 unset GIT_CONFIG
 GIT_CONFIG_NOSYSTEM=1
 GIT_CONFIG_NOGLOBAL=1
 export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_CONFIG_NOGLOBAL
 
-. ../GIT-BUILD-OPTIONS
+. "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
 
 if test -z "$GIT_TEST_CMP"
 then
@@ -812,22 +812,22 @@ then
 	fi
 fi
 
-GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
+GITPERLLIB="$TEST_DIRECTORY"/../perl/blib/lib:"$TEST_DIRECTORY"/../perl/blib/arch/auto/Git
 export GITPERLLIB
-test -d ../templates/blt || {
+test -d "$TEST_DIRECTORY"/../templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
 if test -z "$GIT_TEST_INSTALLED" && test -z "$NO_PYTHON"
 then
-	GITPYTHONLIB="$(pwd)/../git_remote_helpers/build/lib"
+	GITPYTHONLIB="$TEST_DIRECTORY/../git_remote_helpers/build/lib"
 	export GITPYTHONLIB
-	test -d ../git_remote_helpers/build || {
+	test -d "$TEST_DIRECTORY"/../git_remote_helpers/build || {
 		error "You haven't built git_remote_helpers yet, have you?"
 	}
 fi
 
-if ! test -x ../test-chmtime; then
+if ! test -x "$TEST_DIRECTORY"/../test-chmtime; then
 	echo >&2 'You need to build test-chmtime:'
 	echo >&2 'Run "make test-chmtime" in the source (toplevel) directory'
 	exit 1
