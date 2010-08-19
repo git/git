@@ -3059,7 +3059,9 @@ check_arrival_add_next_nodes (re_match_context_t *mctx, int str_idx,
   const re_dfa_t *const dfa = mctx->dfa;
   int result;
   int cur_idx;
+#ifdef RE_ENABLE_I18N
   reg_errcode_t err = REG_NOERROR;
+#endif
   re_node_set union_set;
   re_node_set_init_empty (&union_set);
   for (cur_idx = 0; cur_idx < cur_nodes->nelem; ++cur_idx)
