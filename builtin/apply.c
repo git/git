@@ -449,23 +449,157 @@ static char *find_name_gnu(const char *line, char *def, int p_value)
 	return squash_slash(strbuf_detach(&name, NULL));
 }
 
-static char *find_name(const char *line, char *def, int p_value, int terminate)
+static size_t tz_len(const char *line, size_t len)
+{
+	const char *tz, *p;
+
+	if (len < strlen(" +0500") || line[len-strlen(" +0500")] != ' ')
+		return 0;
+	tz = line + len - strlen(" +0500");
+
+	if (tz[1] != '+' && tz[1] != '-')
+		return 0;
+
+	for (p = tz + 2; p != line + len; p++)
+		if (!isdigit(*p))
+			return 0;
+
+	return line + len - tz;
+}
+
+static size_t date_len(const char *line, size_t len)
+{
+	const char *date, *p;
+
+	if (len < strlen("72-02-05") || line[len-strlen("-05")] != '-')
+		return 0;
+	p = date = line + len - strlen("72-02-05");
+
+	if (!isdigit(*p++) || !isdigit(*p++) || *p++ != '-' ||
+	    !isdigit(*p++) || !isdigit(*p++) || *p++ != '-' ||
+	    !isdigit(*p++) || !isdigit(*p++))	/* Not a date. */
+		return 0;
+
+	if (date - line >= strlen("19") &&
+	    isdigit(date[-1]) && isdigit(date[-2]))	/* 4-digit year */
+		date -= strlen("19");
+
+	return line + len - date;
+}
+
+static size_t short_time_len(const char *line, size_t len)
+{
+	const char *time, *p;
+
+	if (len < strlen(" 07:01:32") || line[len-strlen(":32")] != ':')
+		return 0;
+	p = time = line + len - strlen(" 07:01:32");
+
+	/* Permit 1-digit hours? */
+	if (*p++ != ' ' ||
+	    !isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
+	    !isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
+	    !isdigit(*p++) || !isdigit(*p++))	/* Not a time. */
+		return 0;
+
+	return line + len - time;
+}
+
+static size_t fractional_time_len(const char *line, size_t len)
+{
+	const char *p;
+	size_t n;
+
+	/* Expected format: 19:41:17.620000023 */
+	if (!len || !isdigit(line[len - 1]))
+		return 0;
+	p = line + len - 1;
+
+	/* Fractional seconds. */
+	while (p > line && isdigit(*p))
+		p--;
+	if (*p != '.')
+		return 0;
+
+	/* Hours, minutes, and whole seconds. */
+	n = short_time_len(line, p - line);
+	if (!n)
+		return 0;
+
+	return line + len - p + n;
+}
+
+static size_t trailing_spaces_len(const char *line, size_t len)
+{
+	const char *p;
+
+	/* Expected format: ' ' x (1 or more)  */
+	if (!len || line[len - 1] != ' ')
+		return 0;
+
+	p = line + len;
+	while (p != line) {
+		p--;
+		if (*p != ' ')
+			return line + len - (p + 1);
+	}
+
+	/* All spaces! */
+	return len;
+}
+
+static size_t diff_timestamp_len(const char *line, size_t len)
+{
+	const char *end = line + len;
+	size_t n;
+
+	/*
+	 * Posix: 2010-07-05 19:41:17
+	 * GNU: 2010-07-05 19:41:17.620000023 -0500
+	 */
+
+	if (!isdigit(end[-1]))
+		return 0;
+
+	n = tz_len(line, end - line);
+	end -= n;
+
+	n = short_time_len(line, end - line);
+	if (!n)
+		n = fractional_time_len(line, end - line);
+	end -= n;
+
+	n = date_len(line, end - line);
+	if (!n)	/* No date.  Too bad. */
+		return 0;
+	end -= n;
+
+	if (end == line)	/* No space before date. */
+		return 0;
+	if (end[-1] == '\t') {	/* Success! */
+		end--;
+		return line + len - end;
+	}
+	if (end[-1] != ' ')	/* No space before date. */
+		return 0;
+
+	/* Whitespace damage. */
+	end -= trailing_spaces_len(line, end - line);
+	return line + len - end;
+}
+
+static char *find_name_common(const char *line, char *def, int p_value,
+				const char *end, int terminate)
 {
 	int len;
 	const char *start = NULL;
 
-	if (*line == '"') {
-		char *name = find_name_gnu(line, def, p_value);
-		if (name)
-			return name;
-	}
-
 	if (p_value == 0)
 		start = line;
-	for (;;) {
+	while (line != end) {
 		char c = *line;
 
-		if (isspace(c)) {
+		if (!end && isspace(c)) {
 			if (c == '\n')
 				break;
 			if (name_terminate(start, line-start, c, terminate))
@@ -505,6 +639,37 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 	return squash_slash(xmemdupz(start, len));
 }
 
+static char *find_name(const char *line, char *def, int p_value, int terminate)
+{
+	if (*line == '"') {
+		char *name = find_name_gnu(line, def, p_value);
+		if (name)
+			return name;
+	}
+
+	return find_name_common(line, def, p_value, NULL, terminate);
+}
+
+static char *find_name_traditional(const char *line, char *def, int p_value)
+{
+	size_t len = strlen(line);
+	size_t date_len;
+
+	if (*line == '"') {
+		char *name = find_name_gnu(line, def, p_value);
+		if (name)
+			return name;
+	}
+
+	len = strchrnul(line, '\n') - line;
+	date_len = diff_timestamp_len(line, len);
+	if (!date_len)
+		return find_name_common(line, def, p_value, NULL, TERM_TAB);
+	len -= date_len;
+
+	return find_name_common(line, def, p_value, line + len, 0);
+}
+
 static int count_slashes(const char *cp)
 {
 	int cnt = 0;
@@ -527,7 +692,7 @@ static int guess_p_value(const char *nameline)
 
 	if (is_dev_null(nameline))
 		return -1;
-	name = find_name(nameline, NULL, 0, TERM_SPACE | TERM_TAB);
+	name = find_name_traditional(nameline, NULL, 0);
 	if (!name)
 		return -1;
 	cp = strchr(name, '/');
@@ -646,16 +811,16 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 	if (is_dev_null(first)) {
 		patch->is_new = 1;
 		patch->is_delete = 0;
-		name = find_name(second, NULL, p_value, TERM_SPACE | TERM_TAB);
+		name = find_name_traditional(second, NULL, p_value);
 		patch->new_name = name;
 	} else if (is_dev_null(second)) {
 		patch->is_new = 0;
 		patch->is_delete = 1;
-		name = find_name(first, NULL, p_value, TERM_SPACE | TERM_TAB);
+		name = find_name_traditional(first, NULL, p_value);
 		patch->old_name = name;
 	} else {
-		name = find_name(first, NULL, p_value, TERM_SPACE | TERM_TAB);
-		name = find_name(second, name, p_value, TERM_SPACE | TERM_TAB);
+		name = find_name_traditional(first, NULL, p_value);
+		name = find_name_traditional(second, name, p_value);
 		if (has_epoch_timestamp(first)) {
 			patch->is_new = 1;
 			patch->is_delete = 0;
