@@ -126,6 +126,9 @@ struct diff_options {
 	/* this is set by diffcore for DIFF_FORMAT_PATCH */
 	int found_changes;
 
+	/* to support internal diff recursion by --follow hack*/
+	int found_follow;
+
 	FILE *file;
 	int close_file;
 

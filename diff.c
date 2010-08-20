@@ -4064,25 +4064,24 @@ void diffcore_fix_diff_index(struct diff_options *options)
 
 void diffcore_std(struct diff_options *options)
 {
-	/* We never run this function more than one time, because the
-	 * rename/copy detection logic can only run once.
-	 */
-	if (diff_queued_diff.run)
-		return;
-
 	if (options->skip_stat_unmatch)
 		diffcore_skip_stat_unmatch(options);
-	if (options->break_opt != -1)
-		diffcore_break(options->break_opt);
-	if (options->detect_rename)
-		diffcore_rename(options);
-	if (options->break_opt != -1)
-		diffcore_merge_broken();
+	if (!options->found_follow) {
+		/* See try_to_follow_renames() in tree-diff.c */
+		if (options->break_opt != -1)
+			diffcore_break(options->break_opt);
+		if (options->detect_rename)
+			diffcore_rename(options);
+		if (options->break_opt != -1)
+			diffcore_merge_broken();
+	}
 	if (options->pickaxe)
 		diffcore_pickaxe(options->pickaxe, options->pickaxe_opts);
 	if (options->orderfile)
 		diffcore_order(options->orderfile);
-	diff_resolve_rename_copy();
+	if (!options->found_follow)
+		/* See try_to_follow_renames() in tree-diff.c */
+		diff_resolve_rename_copy();
 	diffcore_apply_filter(options->filter);
 
 	if (diff_queued_diff.nr && !DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
@@ -4090,7 +4089,7 @@ void diffcore_std(struct diff_options *options)
 	else
 		DIFF_OPT_CLR(options, HAS_CHANGES);
 
-	diff_queued_diff.run = 1;
+	options->found_follow = 0;
 }
 
 int diff_result_code(struct diff_options *opt, int status)
