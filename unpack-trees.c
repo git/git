@@ -329,6 +329,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long 
 {
 	int i, ret, bottom;
 	struct tree_desc t[MAX_UNPACK_TREES];
+	void *buf[MAX_UNPACK_TREES];
 	struct traverse_info newinfo;
 	struct name_entry *p;
 
@@ -346,12 +347,16 @@ static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long 
 		const unsigned char *sha1 = NULL;
 		if (dirmask & 1)
 			sha1 = names[i].sha1;
-		fill_tree_descriptor(t+i, sha1);
+		buf[i] = fill_tree_descriptor(t+i, sha1);
 	}
 
 	bottom = switch_cache_bottom(&newinfo);
 	ret = traverse_trees(n, t, &newinfo);
 	restore_cache_bottom(&newinfo, bottom);
+
+	for (i = 0; i < n; i++)
+		free(buf[i]);
+
 	return ret;
 }
 
