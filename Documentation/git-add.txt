@@ -157,14 +157,14 @@ those in info/exclude.  See linkgit:gitrepository-layout[5].
 EXAMPLES
 --------
 
-* Adds content from all `\*.txt` files under `Documentation` directory
+* Adds content from all `*.txt` files under `Documentation` directory
 and its subdirectories:
 +
 ------------
 $ git add Documentation/\*.txt
 ------------
 +
-Note that the asterisk `\*` is quoted from the shell in this
+Note that the asterisk `*` is quoted from the shell in this
 example; this lets the command include the files from
 subdirectories of `Documentation/` directory.
 
