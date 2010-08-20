@@ -8,28 +8,71 @@ git-pull - Fetch from and merge with another repository or a local branch
 
 SYNOPSIS
 --------
-'git pull' <options> <repository> <refspec>...
+'git pull' [options] [<repository> [<refspec>...]]
 
 
 DESCRIPTION
 -----------
-Runs 'git fetch' with the given parameters, and calls 'git merge'
-to merge the retrieved head(s) into the current branch.
-With `--rebase`, calls 'git rebase' instead of 'git merge'.
 
-Note that you can use `.` (current directory) as the
-<repository> to pull from the local repository -- this is useful
-when merging local branches into the current branch.
+Incorporates changes from a remote repository into the current
+branch.  In its default mode, `git pull` is shorthand for
+`git fetch` followed by `git merge FETCH_HEAD`.
 
-Also note that options meant for 'git pull' itself and underlying
-'git merge' must be given before the options meant for 'git fetch'.
+More precisely, 'git pull' runs 'git fetch' with the given
+parameters and calls 'git merge' to merge the retrieved branch
+heads into the current branch.
+With `--rebase`, it runs 'git rebase' instead of 'git merge'.
 
-*Warning*: Running 'git pull' (actually, the underlying 'git merge')
+<repository> should be the name of a remote repository as
+passed to linkgit:git-fetch[1].  <refspec> can name an
+arbitrary remote ref (for example, the name of a tag) or even
+a collection of refs with corresponding remote tracking branches
+(e.g., refs/heads/*:refs/remotes/origin/*), but usually it is
+the name of a branch in the remote repository.
+
+Default values for <repository> and <branch> are read from the
+"remote" and "merge" configuration for the current branch
+as set by linkgit:git-branch[1] `--track`.
+
+Assume the following history exists and the current branch is
+"`master`":
+
+------------
+	  A---B---C master on origin
+	 /
+    D---E---F---G master
+------------
+
+Then "`git pull`" will fetch and replay the changes from the remote
+`master` branch since it diverged from the local `master` (i.e., `E`)
+until its current commit (`C`) on top of `master` and record the
+result in a new commit along with the names of the two parent commits
+and a log message from the user describing the changes.
+
+------------
+	  A---B---C remotes/origin/master
+	 /         \
+    D---E---F---G---H master
+------------
+
+See linkgit:git-merge[1] for details, including how conflicts
+are presented and handled.
+
+In git 1.7.0 or later, to cancel a conflicting merge, use
+`git reset --merge`.  *Warning*: In older versions of git, running 'git pull'
 with uncommitted changes is discouraged: while possible, it leaves you
-in a state that is hard to back out of in the case of a conflict.
+in a state that may be hard to back out of in the case of a conflict.
+
+If any of the remote changes overlap with local uncommitted changes,
+the merge will be automatically cancelled and the work tree untouched.
+It is generally best to get any local changes in working order before
+pulling or stash them away with linkgit:git-stash[1].
 
 OPTIONS
 -------
+
+Options meant for 'git pull' itself and the underlying 'git merge'
+must be given before the options meant for 'git fetch'.
 
 -q::
 --quiet::
