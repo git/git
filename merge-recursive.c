@@ -1020,7 +1020,6 @@ static int process_renames(struct merge_options *o,
 				if (mfi.clean &&
 				    sha_eq(mfi.sha, ren1->pair->two->sha1) &&
 				    mfi.mode == ren1->pair->two->mode) {
-					int i;
 					/*
 					 * This message is part of
 					 * t6022 test. If you change
@@ -1032,12 +1031,9 @@ static int process_renames(struct merge_options *o,
 					 * in the index (e.g. due to a D/F
 					 * conflict) that need to be resolved.
 					 */
-					for (i = 1; i <= 3; i++) {
-						if (!ren1->dst_entry->stages[i].mode)
-							continue;
+					if (!ren1->dst_entry->stages[2].mode !=
+					    !ren1->dst_entry->stages[3].mode)
 						ren1->dst_entry->processed = 0;
-						break;
-					}
 				} else {
 					if (mfi.merge || !mfi.clean)
 						output(o, 1, "Renaming %s => %s", ren1_src, ren1_dst);
