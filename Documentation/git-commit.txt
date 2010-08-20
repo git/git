@@ -130,11 +130,11 @@ OPTIONS
 	Usually recording a commit that has the exact same tree as its
 	sole parent commit is a mistake, and the command prevents you
 	from making such a commit.  This option bypasses the safety, and
-	is primarily for use by foreign scm interface scripts.
+	is primarily for use by foreign SCM interface scripts.
 
 --allow-empty-message::
        Like --allow-empty this command is primarily for use by foreign
-       scm interface scripts. It allows you to create a commit with an
+       SCM interface scripts. It allows you to create a commit with an
        empty commit message without using plumbing commands like
        linkgit:git-commit-tree[1].
 
