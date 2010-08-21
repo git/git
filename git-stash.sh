@@ -441,20 +441,17 @@ drop_stash () {
 }
 
 apply_to_branch () {
-	have_stash || die 'Nothing to apply'
-
 	test -n "$1" || die 'No branch name specified'
 	branch=$1
+	shift 1
 
-	if test -z "$2"
-	then
-		set x "$ref_stash@{0}"
-	fi
-	stash=$2
+	set -- --index "$@"
+	assert_stash_like "$@"
 
-	git checkout -b $branch $stash^ &&
-	apply_stash --index $stash &&
-	drop_stash $stash
+	git checkout -b $branch $REV^ &&
+	apply_stash "$@"
+
+	test -z "$IS_STASH_REF" || drop_stash "$@"
 }
 
 PARSE_CACHE='--not-parsed'
