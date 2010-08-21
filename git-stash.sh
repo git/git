@@ -424,35 +424,10 @@ apply_stash () {
 }
 
 drop_stash () {
-	have_stash || die 'No stash entries to drop'
+	assert_stash_ref "$@"
 
-	while test $# != 0
-	do
-		case "$1" in
-		-q|--quiet)
-			GIT_QUIET=t
-			;;
-		*)
-			break
-			;;
-		esac
-		shift
-	done
-
-	if test $# = 0
-	then
-		set x "$ref_stash@{0}"
-		shift
-	fi
-	# Verify supplied argument looks like a stash entry
-	s=$(git rev-parse --verify "$@") &&
-	git rev-parse --verify "$s:"   > /dev/null 2>&1 &&
-	git rev-parse --verify "$s^1:" > /dev/null 2>&1 &&
-	git rev-parse --verify "$s^2:" > /dev/null 2>&1 ||
-		die "$*: not a valid stashed state"
-
-	git reflog delete --updateref --rewrite "$@" &&
-		say "Dropped $* ($s)" || die "$*: Could not drop stash entry"
+	git reflog delete --updateref --rewrite "${REV}" &&
+		say "Dropped ${REV} ($s)" || die "${REV}: Could not drop stash entry"
 
 	# clear_stash if we just dropped the last stash entry
 	git rev-parse --verify "$ref_stash@{0}" > /dev/null 2>&1 || clear_stash
