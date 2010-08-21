@@ -225,6 +225,129 @@ show_stash () {
 	git diff $flags $b_commit $w_commit
 }
 
+#
+# Parses the remaining options looking for flags and
+# at most one revision defaulting to ${ref_stash}@{0}
+# if none found.
+#
+# Derives related tree and commit objects from the
+# revision, if one is found.
+#
+# stash records the work tree, and is a merge between the
+# base commit (first parent) and the index tree (second parent).
+#
+#   REV is set to the symbolic version of the specified stash-like commit
+#   IS_STASH_LIKE is non-blank if ${REV} looks like a stash
+#   IS_STASH_REF is non-blank if the ${REV} looks like a stash ref
+#   s is set to the SHA1 of the stash commit
+#   w_commit is set to the commit containing the working tree
+#   b_commit is set to the base commit
+#   i_commit is set to the commit containing the index tree
+#   w_tree is set to the working tree
+#   b_tree is set to the base tree
+#   i_tree is set to the index tree
+#
+#   GIT_QUIET is set to t if -q is specified
+#   INDEX_OPTION is set to --index if --index is specified.
+#   FLAGS is set to the remaining flags
+#
+# dies if:
+#   * too many revisions specified
+#   * no revision is specified and there is no stash stack
+#   * a revision is specified which cannot be resolve to a SHA1
+#   * a non-existent stash reference is specified
+#
+
+parse_flags_and_rev()
+{
+	test "$PARSE_CACHE" = "$*" && return 0 # optimisation
+	PARSE_CACHE="$*"
+
+	IS_STASH_LIKE=
+	IS_STASH_REF=
+	INDEX_OPTION=
+	s=
+	w_commit=
+	b_commit=
+	i_commit=
+	w_tree=
+	b_tree=
+	i_tree=
+
+	REV=$(git rev-parse --no-flags --symbolic "$@" 2>/dev/null)
+	FLAGS=$(git rev-parse --no-revs -- "$@" 2>/dev/null)
+
+	set -- $FLAGS
+
+	FLAGS=
+	while test $# -ne 0
+	do
+		case "$1" in
+			-q|--quiet)
+				GIT_QUIET=-t
+			;;
+			--index)
+				INDEX_OPTION=--index
+			;;
+			--)
+				:
+			;;
+			*)
+				FLAGS="${FLAGS}${FLAGS:+ }$1"
+			;;
+		esac
+		shift
+	done
+
+	set -- $REV
+
+	case $# in
+		0)
+			have_stash || die "No stash found."
+			set -- ${ref_stash}@{0}
+		;;
+		1)
+			:
+		;;
+		*)
+			die "Too many revisions specified: $REV"
+		;;
+	esac
+
+	REV=$(git rev-parse --quiet --symbolic --verify $1 2>/dev/null) || die "$1 is not valid reference"
+
+	i_commit=$(git rev-parse --quiet --verify $REV^2 2>/dev/null) &&
+	set -- $(git rev-parse $REV $REV^1 $REV: $REV^1: $REV^2: 2>/dev/null) &&
+	s=$1 &&
+	w_commit=$1 &&
+	b_commit=$2 &&
+	w_tree=$3 &&
+	b_tree=$4 &&
+	i_tree=$5 &&
+	IS_STASH_LIKE=t &&
+	test "$ref_stash" = "$(git rev-parse --symbolic-full-name "${REV%@*}")" &&
+	IS_STASH_REF=t
+
+}
+
+is_stash_like()
+{
+	parse_flags_and_rev "$@"
+	test -n "$IS_STASH_LIKE"
+}
+
+assert_stash_like() {
+	is_stash_like "$@" || die "'$*' is not a stash-like commit"
+}
+
+is_stash_ref() {
+	is_stash_like "$@" && test -n "$IS_STASH_REF"
+}
+
+assert_stash_ref() {
+	is_stash_ref "$@" || die "'$*' is not a stash reference"
+}
+
 apply_stash () {
 	applied_stash=
 	unstash_index=
@@ -375,6 +498,7 @@ apply_to_branch () {
 	drop_stash $stash
 }
 
+PARSE_CACHE='--not-parsed'
 # The default command is "save" if nothing but options are given
 seen_non_option=
 for opt
