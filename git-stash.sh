@@ -210,19 +210,9 @@ list_stash () {
 }
 
 show_stash () {
-	have_stash || die 'No stash found'
+	assert_stash_like "$@"
 
-	flags=$(git rev-parse --no-revs --flags "$@")
-	if test -z "$flags"
-	then
-		flags=--stat
-	fi
-
-	w_commit=$(git rev-parse --quiet --verify --default $ref_stash "$@") &&
-	b_commit=$(git rev-parse --quiet --verify "$w_commit^") ||
-		die "'$*' is not a stash"
-
-	git diff $flags $b_commit $w_commit
+	git diff ${FLAGS:---stat} $b_commit $w_commit
 }
 
 #
