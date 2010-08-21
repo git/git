@@ -328,6 +328,15 @@ parse_flags_and_rev()
 	test "$ref_stash" = "$(git rev-parse --symbolic-full-name "${REV%@*}")" &&
 	IS_STASH_REF=t
 
+	if test "${REV}" != "${REV%{*\}}"
+	then
+		# maintainers: it would be better if git rev-parse indicated
+		# this condition with a non-zero status code but as of 1.7.2.1 it
+		# it did not. So, we use non-empty stderr output as a proxy for the
+		# condition of interest.
+		test -z "$(git rev-parse "$REV" 2>&1 >/dev/null)" || die "$REV does not exist in the stash log"
+	fi
+
 }
 
 is_stash_like()
