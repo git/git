@@ -423,6 +423,13 @@ apply_stash () {
 	fi
 }
 
+pop_stash() {
+	assert_stash_ref "$@"
+
+	apply_stash "$@" &&
+	drop_stash "$@"
+}
+
 drop_stash () {
 	assert_stash_ref "$@"
 
@@ -498,10 +505,7 @@ drop)
 	;;
 pop)
 	shift
-	if apply_stash "$@"
-	then
-		drop_stash "$applied_stash"
-	fi
+	pop_stash "$@"
 	;;
 branch)
 	shift
