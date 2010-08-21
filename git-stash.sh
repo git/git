@@ -358,40 +358,8 @@ assert_stash_ref() {
 }
 
 apply_stash () {
-	applied_stash=
-	unstash_index=
 
-	while test $# != 0
-	do
-		case "$1" in
-		--index)
-			unstash_index=t
-			;;
-		-q|--quiet)
-			GIT_QUIET=t
-			;;
-		*)
-			break
-			;;
-		esac
-		shift
-	done
-
-	if test $# = 0
-	then
-		have_stash || die 'Nothing to apply'
-		applied_stash="$ref_stash@{0}"
-	else
-		applied_stash="$*"
-	fi
-
-	# stash records the work tree, and is a merge between the
-	# base commit (first parent) and the index tree (second parent).
-	s=$(git rev-parse --quiet --verify --default $ref_stash "$@") &&
-	w_tree=$(git rev-parse --quiet --verify "$s:") &&
-	b_tree=$(git rev-parse --quiet --verify "$s^1:") &&
-	i_tree=$(git rev-parse --quiet --verify "$s^2:") ||
-		die "$*: no valid stashed state found"
+	assert_stash_like "$@"
 
 	git update-index -q --refresh &&
 	git diff-files --quiet --ignore-submodules ||
@@ -402,7 +370,7 @@ apply_stash () {
 		die 'Cannot apply a stash in the middle of a merge'
 
 	unstashed_index_tree=
-	if test -n "$unstash_index" && test "$b_tree" != "$i_tree" &&
+	if test -n "$INDEX_OPTION" && test "$b_tree" != "$i_tree" &&
 			test "$c_tree" != "$i_tree"
 	then
 		git diff-tree --binary $s^2^..$s^2 | git apply --cached
@@ -447,7 +415,7 @@ apply_stash () {
 	else
 		# Merge conflict; keep the exit status from merge-recursive
 		status=$?
-		if test -n "$unstash_index"
+		if test -n "$INDEX_OPTION"
 		then
 			echo >&2 'Index was not unstashed.'
 		fi
