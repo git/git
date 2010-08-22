@@ -439,7 +439,7 @@ static void graph_update_width(struct git_graph *graph,
 		max_cols++;
 
 	/*
-	 * We added a column for the the current commit as part of
+	 * We added a column for the current commit as part of
 	 * graph->num_parents.  If the current commit was already in
 	 * graph->columns, then we have double counted it.
 	 */

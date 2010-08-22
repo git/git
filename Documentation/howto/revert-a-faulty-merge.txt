@@ -229,7 +229,7 @@ reverting W.  Mainline's history would look like this:
    A---B---C
 
 But if you don't actually need to change commit A, then you need some way to
-recreate it as a new commit with the same changes in it.  The rebase commmand's
+recreate it as a new commit with the same changes in it.  The rebase command's
 --no-ff option provides a way to do this:
 
     $ git rebase [-i] --no-ff P

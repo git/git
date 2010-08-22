@@ -17,7 +17,7 @@ Fixes since v1.6.0.1
 * Many commands did not use the correct working tree location when used
   with GIT_WORK_TREE environment settings.
 
-* Some systems needs to use compatibility fnmach and regex libraries
+* Some systems need to use compatibility fnmatch and regex libraries
   independent from each other; the compat/ area has been reorganized to
   allow this.
 

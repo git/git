@@ -245,7 +245,7 @@ our %feature = (
 	# return value of feature-sub indicates if to enable specified feature
 	#
 	# if there is no 'sub' key (no feature-sub), then feature cannot be
-	# overriden
+	# overridden
 	#
 	# use gitweb_get_feature(<feature>) to retrieve the <feature> value
 	# (an array) or gitweb_check_feature(<feature>) to check if <feature>
@@ -1323,7 +1323,7 @@ sub esc_param {
 	return $str;
 }
 
-# quote unsafe chars in whole URL, so some charactrs cannot be quoted
+# quote unsafe chars in whole URL, so some characters cannot be quoted
 sub esc_url {
 	my $str = shift;
 	return undef unless defined $str;
@@ -3782,9 +3782,9 @@ sub git_print_authorship {
 }
 
 # Outputs table rows containing the full author or committer information,
-# in the format expected for 'commit' view (& similia).
+# in the format expected for 'commit' view (& similar).
 # Parameters are a commit hash reference, followed by the list of people
-# to output information for. If the list is empty it defalts to both
+# to output information for. If the list is empty it defaults to both
 # author and committer.
 sub git_print_authorship_rows {
 	my $co = shift;
@@ -4513,8 +4513,8 @@ sub git_patchset_body {
 		print "</div>\n"; # class="patch"
 	}
 
-	# for compact combined (--cc) format, with chunk and patch simpliciaction
-	# patchset might be empty, but there might be unprocessed raw lines
+	# for compact combined (--cc) format, with chunk and patch simplification
+	# the patchset might be empty, but there might be unprocessed raw lines
 	for (++$patch_idx if $patch_number > 0;
 	     $patch_idx < @$difftree;
 	     ++$patch_idx) {
