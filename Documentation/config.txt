@@ -1248,6 +1248,15 @@ http.noEPSV::
 	support EPSV mode. Can be overridden by the 'GIT_CURL_FTP_NO_EPSV'
 	environment variable. Default is false (curl will use EPSV).
 
+http.useragent::
+	The HTTP USER_AGENT string presented to an HTTP server.  The default
+	value represents the version of the client git such as git/1.7.1.
+	This option allows you to override this value to a more common value
+	such as Mozilla/4.0.  This may be necessary, for instance, if
+	connecting through a firewall that restricts HTTP connections to a set
+	of common USER_AGENT strings (but not including those like git/1.7.1).
+	Can be overridden by the 'GIT_HTTP_USER_AGENT' environment variable.
+
 i18n.commitEncoding::
 	Character encoding the commit messages are stored in; git itself
 	does not care per se, but this information is necessary e.g. when

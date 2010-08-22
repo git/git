@@ -41,6 +41,7 @@ static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static char *user_name, *user_pass;
+static const char *user_agent;
 
 #if LIBCURL_VERSION_NUM >= 0x071700
 /* Use CURLOPT_KEYPASSWD as is */
@@ -196,6 +197,9 @@ static int http_options(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (!strcmp("http.useragent", var))
+		return git_config_string(&user_agent, var, value);
+
 	/* Fall back on the default ones */
 	return git_default_config(var, value, cb);
 }
@@ -279,7 +283,8 @@ static CURL *get_curl_handle(void)
 	if (getenv("GIT_CURL_VERBOSE"))
 		curl_easy_setopt(result, CURLOPT_VERBOSE, 1);
 
-	curl_easy_setopt(result, CURLOPT_USERAGENT, GIT_USER_AGENT);
+	curl_easy_setopt(result, CURLOPT_USERAGENT,
+		user_agent ? user_agent : GIT_HTTP_USER_AGENT);
 
 	if (curl_ftp_no_epsv)
 		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
@@ -379,6 +384,8 @@ void http_init(struct remote *remote)
 	set_from_env(&ssl_capath, "GIT_SSL_CAPATH");
 #endif
 	set_from_env(&ssl_cainfo, "GIT_SSL_CAINFO");
+
+	set_from_env(&user_agent, "GIT_HTTP_USER_AGENT");
 
 	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
 	if (low_speed_limit != NULL)
