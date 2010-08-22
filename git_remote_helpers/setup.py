@@ -13,5 +13,6 @@ setup(
     author_email = 'git@vger.kernel.org',
     url = 'http://www.git-scm.com/',
     package_dir = {'git_remote_helpers': ''},
-    packages = ['git_remote_helpers', 'git_remote_helpers.git'],
+    packages = ['git_remote_helpers', 'git_remote_helpers.git',
+                'git_remote_helpers.fastimport'],
 )
