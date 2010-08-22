@@ -14,7 +14,7 @@ test_expect_success setup '
 	echo file > file &&
 	git add file &&
 	test_tick &&
-	git commit -m upstream
+	git commit -m upstream &&
 	git clone . super &&
 	git clone super submodule &&
 	(cd super &&
@@ -42,7 +42,7 @@ test_expect_success 'change submodule url' '
 	) &&
 	mv submodule moved-submodule &&
 	(cd super &&
-	 git config -f .gitmodules submodule.submodule.url ../moved-submodule
+	 git config -f .gitmodules submodule.submodule.url ../moved-submodule &&
 	 test_tick &&
 	 git commit -a -m moved-submodule
 	)
