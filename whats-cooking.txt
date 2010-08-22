@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2010, #04; Wed, 18)
-X-master-at: bd3a97a27a97485b130802d497214be312b737f9
-X-next-at: f88bdb1c315a588128fcf0b68cfd286e3e096110
+Subject: What's cooking in git.git (Aug 2010, #05; Sat, 21)
+X-master-at: 5cba1229d8246da2a6d1d956eeed8227f69e185b
+X-next-at: 5af700393e003167b0b86690fd4132ebfc677088
 
-What's cooking in git.git (Aug 2010, #04; Wed, 18)
+What's cooking in git.git (Aug 2010, #05; Sat, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,203 +14,118 @@ still holding onto them.
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/report-corrupt-object-with-type (2010-06-10) 1 commit
-  (merged to 'next' on 2010-08-12 at 8a9e1d0)
- + sha1_file: Show the the type and path to corrupt objects
+* ab/perl-install (2010-08-03) 1 commit
+  (merged to 'next' on 2010-08-14 at f2a27ee)
+ + perl/Makefile: Unset INSTALL_BASE when making perl.mak
 
-* ar/string-list-foreach (2010-07-03) 2 commits
-  (merged to 'next' on 2010-08-11 at 993dc02)
- + Convert the users of for_each_string_list to for_each_string_list_item macro
- + Add a for_each_string_list_item macro
- (this branch is used by tf/string-list-init.)
+* dg/local-mod-error-messages (2010-08-11) 5 commits
+  (merged to 'next' on 2010-08-14 at e684ca8)
+ + t7609: test merge and checkout error messages
+ + unpack_trees: group error messages by type
+ + merge-recursive: distinguish "removed" and "overwritten" messages
+ + merge-recursive: porcelain messages for checkout
+ + Turn unpack_trees_options.msgs into an array + enum
 
-* cc/find-commit-subject (2010-07-22) 6 commits
-  (merged to 'next' on 2010-08-12 at ce38436)
- + blame: use find_commit_subject() instead of custom code
- + merge-recursive: use find_commit_subject() instead of custom code
- + bisect: use find_commit_subject() instead of custom code
- + revert: rename variables related to subject in get_message()
- + revert: refactor code to find commit subject in find_commit_subject()
- + revert: fix off by one read when searching the end of a commit subject
+* en/rebase-against-rebase-fix (2010-08-12) 2 commits
+  (merged to 'next' on 2010-08-14 at 1dea7b9)
+ + pull --rebase: Avoid spurious conflicts and reapplying unnecessary patches
+ + t5520-pull: Add testcases showing spurious conflicts from git pull --rebase
 
-* jc/maint-follow-rename-fix (2010-08-15) 3 commits
-  (merged to 'next' on 2010-08-15 at 2f41ea8)
- + log: test for regression introduced in v1.7.2-rc0~103^2~2
-  (merged to 'next' on 2010-08-14 at 16706d6)
- + diff --follow: do call diffcore_std() as necessary
- + diff --follow: do not waste cycles while recursing
+* gb/split-cmdline-errmsg (2010-08-07) 1 commit
+  (merged to 'next' on 2010-08-14 at 41146ff)
+ + split_cmdline: Allow caller to access error string
 
-* jh/clean-exclude (2010-07-20) 2 commits
-  (merged to 'next' on 2010-08-12 at 9a63fd4)
- + Add test for git clean -e.
- + Add -e/--exclude to git-clean.
+* hv/submodule-find-ff-merge (2010-07-07) 3 commits
+  (merged to 'next' on 2010-08-11 at 6900d2c)
+ + Implement automatic fast-forward merge for submodules
+ + setup_revisions(): Allow walking history in a submodule
+ + Teach ref iteration module about submodules
 
-* jh/graph-next-line (2010-07-13) 2 commits
-  (merged to 'next' on 2010-08-11 at 333f9df)
- + Enable custom schemes for column colors in the graph API
- + Make graph_next_line() available in the graph.h API
+* mm/rebase-i-exec (2010-08-13) 4 commits
+  (merged to 'next' on 2010-08-14 at 17620dc)
+ + git-rebase--interactive.sh: use printf instead of echo to print commit message
+ + git-rebase--interactive.sh: rework skip_unnecessary_picks
+  (merged to 'next' on 2010-08-12 at 377e3f0)
+ + test-lib: user-friendly alternatives to test [-d|-f|-e]
+ + rebase -i: add exec command to launch a shell command
 
-* jh/use-test-must-fail (2010-07-20) 1 commit
-  (merged to 'next' on 2010-08-12 at 16d4e11)
- + Convert "! git" to "test_must_fail git"
+* mm/shortopt-detached (2010-08-05) 5 commits
+  (merged to 'next' on 2010-08-12 at 35ceb98)
+ + log: parse separate option for --glob
+ + log: parse separate options like git log --grep foo
+ + diff: parse separate options --stat-width n, --stat-name-width n
+ + diff: split off a function for --stat-* option parsing
+ + diff: parse separate options like -S foo
 
-* jl/submodule-ignore-diff (2010-08-06) 4 commits
-  (merged to 'next' on 2010-08-12 at ffe84bb)
- + Add tests for the diff.ignoreSubmodules config option
- + Add the 'diff.ignoreSubmodules' config setting
- + Submodules: Use "ignore" settings from .gitmodules too for diff and status
- + Submodules: Add the new "ignore" config option for diff and status
+* nd/fix-sparse-checkout (2010-07-31) 5 commits
+  (merged to 'next' on 2010-08-12 at 4f7a3b9)
+ + unpack-trees: mark new entries skip-worktree appropriately
+ + unpack-trees: do not check for conflict entries too early
+ + unpack-trees: let read-tree -u remove index entries outside sparse area
+ + unpack-trees: only clear CE_UPDATE|CE_REMOVE when skip-worktree is always set
+ + t1011 (sparse checkout): style nitpicks
 
-* jn/fast-import-subtree (2010-06-30) 1 commit
-  (merged to 'next' on 2010-08-11 at 5e19de0)
- + Teach fast-import to import subtrees named by tree id
+* po/userdiff-csharp (2010-08-16) 1 commit
+  (merged to 'next' on 2010-08-18 at f5edb3a)
+ + Userdiff patterns for C#
 
-* jn/fix-abbrev (2010-07-27) 3 commits
-  (merged to 'next' on 2010-08-12 at 2cf70df)
- + examples/commit: use --abbrev for commit summary
- + checkout, commit: remove confusing assignments to rev.abbrev
- + archive: abbreviate substituted commit ids again
+* so/http-user-agent (2010-08-11) 1 commit
+  (merged to 'next' on 2010-08-12 at 86cc5c4)
+ + Allow HTTP user agent string to be modified.
 
-* jn/maint-plug-leak (2010-08-09) 3 commits
-  (merged to 'next' on 2010-08-14 at ec2ba20)
- + write-tree: Avoid leak when index refers to an invalid object
- + read-tree: stop leaking tree objects
- + core: Stop leaking ondisk_cache_entrys
-
-* jn/rebase-rename-am (2008-11-10) 5 commits
-  (merged to 'next' on 2010-08-12 at a6d25c4)
- + rebase: protect against diff.renames configuration
- + t3400 (rebase): whitespace cleanup
- + Teach "apply --index-info" to handle rename patches
- + t4150 (am): futureproof against failing tests
- + t4150 (am): style fix
-
-* kf/post-receive-sample-hook (2010-07-16) 1 commit
-  (merged to 'next' on 2010-08-12 at 9b7e3c9)
- + post-receive-email: optional message line count limit
-
-I do not particularly like the idea of counting number of lines in a shell
-loop but this is an opt-in feature to a contrib/ item so it should be ok.
-
-* ml/rebase-x-strategy (2010-07-29) 1 commit
-  (merged to 'next' on 2010-08-12 at 0aa2fdb)
- + rebase: support -X to pass through strategy options
-
-* tc/checkout-B (2010-08-10) 4 commits
-  (merged to 'next' on 2010-08-11 at 5433b51)
- + builtin/checkout: handle -B from detached HEAD correctly
- + builtin/checkout: learn -B
- + builtin/checkout: reword hint for -b
- + add tests for checkout -b
-
-* tf/string-list-init (2010-07-04) 1 commit
-  (merged to 'next' on 2010-08-14 at 193b4db)
- + string_list: Add STRING_LIST_INIT macro and make use of it.
-
-* tr/xsize-bits (2010-07-28) 1 commit
-  (merged to 'next' on 2010-08-11 at bcc0271)
- + xsize_t: check whether we lose bits
-
-* vs/doc-spell (2010-07-20) 1 commit
-  (merged to 'next' on 2010-08-12 at 3fbd06c)
- + Documentation: spelling fixes
+* sr/local-config (2010-08-03) 1 commit
+  (merged to 'next' on 2010-08-12 at 431f7af)
+ + config: add --local option
 
 --------------------------------------------------
 [New Topics]
 
-* ab/maint-reset-mixed-w-pathspec-advice (2010-08-15) 1 commit
- - reset: Better warning message on git reset --mixed <paths>
+* jn/maint-doc-user-manual-html-doctype (2010-08-21) 2 commits
+ - docs: fix Makefile dependency for user manual
+ - Documentation: set a !DOCTYPE for user manual
 
-Probably needs a "better" title; the commit shouldn't advertise itself
-being "better" (or "clean" for that matter), but say what it changed and
-leave it to the readers to judge if it is better.
+* cb/maint-mergetool-no-tty (2010-08-20) 1 commit
+ - mergetool: Remove explicit references to /dev/tty
 
-* cb/binary-patch-id (2010-08-15) 1 commit
- - hash binary sha1 into patch id
+* jn/doc-backslash (2010-08-20) 17 commits
+ - Documentation: remove stray backslash in show-branch discussion
+ - Documentation: remove stray backslashes from "Fighting regressions" article
+ - Documentation: do not convert ... operator to ellipses
+ - Documentation: avoid stray backslash in user manual
+ - Documentation: avoid stray backslashes in core tutorial
+ - Documentation: remove stray backslashes in rev-parse manual
+ - Documentation: remove backslash before ~ in fast-import manual
+ - Documentation: remove stray backslash from "git bundle" manual
+ - Documentation/technical: avoid stray backslash in parse-options API docs
+ - Documentation: remove backslashes in manpage synopses
+ - Documentation: clarify quoting in gitignore docs
+ - Documentation: clarify quoting in "git rm" example
+ - Documentation: add missing quotes to "git grep" examples
+ - Documentation: clarify quoting in "git add" example
+ - Documentation: unbreak regex in show-ref manual
+ - Documentation: quoting trouble in "git rm" discussion
+ - Documentation: tweak description of log.date
 
-* jj/icase-directory (2010-08-16) 6 commits
- - Support case folding in git fast-import when core.ignorecase=true
- - Support case folding for git add when core.ignorecase=true
- - Add case insensitivity support when using git ls-files
- - Add case insensitivity support for directories when using git status
- - Case insensitivity support for .gitignore via core.ignorecase
- - Add string comparison functions that respect the ignore_case variable.
+* nd/clone-depth-zero (2010-08-20) 3 commits
+ - {fetch,upload}-pack: allow --depth=0 for infinite depth
+ - fetch-pack: use args.shallow to detect shallow clone instead of args.depth
+ - clone: do not accept --depth on local clones
 
-Depends on GNU extension to fnmatch(3).
+* cb/ignored-paths-are-precious (2010-08-21) 1 commit
+ - checkout/merge: optionally fail operation when ignored files need to be overwritten
 
-* jn/cherry-revert-message-clean-up (2010-08-18) 5 commits
- - tests: fix syntax error in "Use advise() for hints" test
- - cherry-pick/revert: Use advise() for hints
- - cherry-pick/revert: Use error() for failure message
- - Introduce advise() to print hints
- - Eliminate “Finished cherry-pick/revert” message
- (this branch uses cc/revert.)
+I fixed up a trivial error in the configuration parser (which didn't
+return immediately after parsing), and while at it flipped the default 
+value of the configuration and the command line option to false.
 
-* jn/merge-custom-no-trivial (2010-08-15) 2 commits
- - merge: let custom strategies intervene in trivial merges
- - t7606 (merge-theirs): modernize style
+This probably needs tests; also we know of longstanding bugs in related
+area that needs to be addressed---they do not have to be part of this
+series but their reproduction recipe would belong to the test script for
+this topic.
 
-* po/etc-gitattributes (2010-08-16) 1 commit
- - Add global and system-wide gitattributes
-
-* ab/compat-regex (2010-08-17) 5 commits
- - autoconf: don't use platform regex if it lacks REG_STARTEND
- - t/t7008-grep-binary.sh: un-TODO a test that needs REG_STARTEND
- - Change regerror() declaration from K&R style to ANSI C (C89)
- - compat/regex: get the gawk regex engine to compile within git
- - compat/regex: use the regex engine from gawk for compat
-
-* ab/test-1 (2010-08-18) 5 commits
- . t/t0000-basic.sh: Run the passing TODO test inside its own test-lib
- . test-lib: Allow overriding of TEST_DIRECTORY
- . test-lib: Use "$GIT_BUILD_DIR" instead of "$TEST_DIRECTORY"/../
- . test-lib: Use $TEST_DIRECTORY or $GIT_BUILD_DIR instead of $(pwd) and ../
- . Merge branch 'ab/i18n' into ab/test-1
- (this branch uses ab/i18n and ab/test.)
-
-Not merged to 'pu' as it seemed to have broken something.
-
-* da/fix-submodule-sync-superproject-config (2010-08-18) 1 commit
- - submodule sync: Update "submodule.<name>.url"
-
-Looked reasonable; will merge to 'next' soonish.
-
-* jn/update-contrib-example-merge (2010-08-17) 25 commits
- - mergetool: Skip autoresolved paths
- - merge script: learn --[no-]rerere-autoupdate
- - merge script: notice @{-1} shorthand
- - merge script: handle --no-ff --no-commit correctly
- - merge script: --ff-only to disallow true merge
- - merge script: handle many-way octopus
- - merge script: handle -m --log correctly
- - merge script: forbid merge -s index
- - merge script: allow custom strategies
- - merge script: merge -X<option>
- - merge script: improve log message subject
- - merge script: refuse to merge during merge
- - merge script: tweak unmerged files message to match builtin
- - merge script: --squash, --ff from unborn branch are errors
- - fmt-merge-msg -m to override merge title
- - merge-base --independent to print reduced parent list in a merge
- - merge-base --octopus to mimic show-branch --merge-base
- - Documentation: add a SEE ALSO section for merge-base
- - t6200 (fmt-merge-msg): style nitpicks
- - t6010 (merge-base): modernize style
- - t7600 (merge): test merge from branch yet to be born
- - t7600 (merge): check reflog entry
- - t7600 (merge): do not launch gitk for --debug
- - t7600 (merge): modernize style
- - merge: do not mistake (ancestor of) tag for branch
-
-I am of two minds about this series.  While I do very much like the ease
-of experimenting with scripted implementations, contrib/examples has been
-about giving easier access to the historical implementations (iow, people
-could check out an older version to see how the things looked like, but
-they do not have to with scripted implementations shipped in
-contrib/examples).  A series like this may update scripted Porcelains with
-recent new features, but the result will never be as solidly battle tested
-implementations (admittedly with only subset of features and without later
-fixes) like we had there so far.
+* np/maint-huge-delta-generation (2010-08-21) 1 commit
+  (merged to 'next' on 2010-08-21 at 5af7003)
+ + fix >4GiB source delta assertion failure
 
 --------------------------------------------------
 [Stalled]
@@ -219,14 +134,6 @@ fixes) like we had there so far.
  - git log: add -G<regexp> that greps in the patch text
 
 This is broken, but haven't found any time to revisit it yet.
-
-* jn/apply-filename-with-sp (2010-07-23) 4 commits
- - apply: Handle traditional patches with space in filename
- - t4135 (apply): use expand instead of pr for portability
- - tests: Test how well "git apply" copes with weird filenames
- - apply: Split quoted filename handling into new function
-
-Needs prereq?
 
 * zl/mailinfo-recode-patch (2010-06-14) 2 commits
  - add --recode-patch option to git-am
@@ -240,26 +147,99 @@ I recall there was another round of re-roll planned for this one.
  - limit "contains" traversals based on commit timestamp
  - tag: speed up --contains calculation
 
-* jn/commit-no-change-wo-status (2010-08-11) 10 commits
- . t6040 (branch tracking): check “status” instead of “commit”
- . commit: suppress status summary when no changes staged
- . commit --dry-run: give advice on empty amend
- . commit: give empty-commit avoidance code its own function
- . t7508 (status): modernize style
- . commit: split off the piece that writes status
- . commit: split commit -s handling into its own function
- . commit: split off a function to fetch the default log message
- . wt-status: split off a function for printing submodule summary
- . wt-status: split wt_status_print into digestible pieces
-
-There seemed to be some doubts on removal of the "no changes" line?
-
 --------------------------------------------------
 [Cooking]
 
-* ab/perl-install (2010-08-03) 1 commit
-  (merged to 'next' on 2010-08-14 at f2a27ee)
- + perl/Makefile: Unset INSTALL_BASE when making perl.mak
+* jn/apply-filename-with-sp (2010-08-18) 3 commits
+ - apply: handle traditional patches with space in filename
+ - tests: exercise "git apply" with weird filenames
+ - apply: split quoted filename handling into new function
+
+* ab/maint-reset-mixed-w-pathspec-advice (2010-08-15) 1 commit
+  (merged to 'next' on 2010-08-21 at b09ee46)
+ + reset: suggest what to do upon "git reset --mixed <paths>"
+
+Retitled.
+
+* cb/binary-patch-id (2010-08-15) 1 commit
+  (merged to 'next' on 2010-08-21 at ff38c3e)
+ + hash binary sha1 into patch id
+
+* jj/icase-directory (2010-08-16) 6 commits
+ - Support case folding in git fast-import when core.ignorecase=true
+ - Support case folding for git add when core.ignorecase=true
+ - Add case insensitivity support when using git ls-files
+ - Add case insensitivity support for directories when using git status
+ - Case insensitivity support for .gitignore via core.ignorecase
+ - Add string comparison functions that respect the ignore_case variable.
+
+Depends on GNU extension to fnmatch(3).
+
+* jn/cherry-revert-message-clean-up (2010-08-18) 5 commits
+  (merged to 'next' on 2010-08-21 at 09b123c)
+ + tests: fix syntax error in "Use advise() for hints" test
+ + cherry-pick/revert: Use advise() for hints
+ + cherry-pick/revert: Use error() for failure message
+ + Introduce advise() to print hints
+ + Eliminate “Finished cherry-pick/revert” message
+ (this branch uses cc/revert.)
+
+* jn/merge-custom-no-trivial (2010-08-15) 2 commits
+  (merged to 'next' on 2010-08-21 at 674498b)
+ + merge: let custom strategies intervene in trivial merges
+ + t7606 (merge-theirs): modernize style
+
+* po/etc-gitattributes (2010-08-16) 1 commit
+ - Add global and system-wide gitattributes
+
+* ab/compat-regex (2010-08-17) 7 commits
+  (merged to 'next' on 2010-08-21 at 632d60f)
+ + autoconf: don't use platform regex if it lacks REG_STARTEND
+ + t/t7008-grep-binary.sh: un-TODO a test that needs REG_STARTEND
+ + compat/regex: get rid of old-style definition
+ + compat/regex: define out variables only used under RE_ENABLE_I18N
+ + Change regerror() declaration from K&R style to ANSI C (C89)
+ + compat/regex: get the gawk regex engine to compile within git
+ + compat/regex: use the regex engine from gawk for compat
+
+* ab/test-1 (2010-08-19) 5 commits
+ - t/t0000-basic.sh: Run the passing TODO test inside its own test-lib
+ - test-lib: Allow overriding of TEST_DIRECTORY
+ - test-lib: Use "$GIT_BUILD_DIR" instead of "$TEST_DIRECTORY"/../
+ - test-lib: Use $TEST_DIRECTORY or $GIT_BUILD_DIR instead of $(pwd) and ../
+ - Merge branch 'ab/i18n' into ab/test-1
+ (this branch uses ab/i18n and ab/test.)
+
+* da/fix-submodule-sync-superproject-config (2010-08-18) 1 commit
+  (merged to 'next' on 2010-08-21 at e96772a)
+ + submodule sync: Update "submodule.<name>.url"
+
+* jn/update-contrib-example-merge (2010-08-17) 24 commits
+  (merged to 'next' on 2010-08-21 at 41b5c4d)
+ + merge script: learn --[no-]rerere-autoupdate
+ + merge script: notice @{-1} shorthand
+ + merge script: handle --no-ff --no-commit correctly
+ + merge script: --ff-only to disallow true merge
+ + merge script: handle many-way octopus
+ + merge script: handle -m --log correctly
+ + merge script: forbid merge -s index
+ + merge script: allow custom strategies
+ + merge script: merge -X<option>
+ + merge script: improve log message subject
+ + merge script: refuse to merge during merge
+ + merge script: tweak unmerged files message to match builtin
+ + merge script: --squash, --ff from unborn branch are errors
+ + fmt-merge-msg -m to override merge title
+ + merge-base --independent to print reduced parent list in a merge
+ + merge-base --octopus to mimic show-branch --merge-base
+ + Documentation: add a SEE ALSO section for merge-base
+ + t6200 (fmt-merge-msg): style nitpicks
+ + t6010 (merge-base): modernize style
+ + t7600 (merge): test merge from branch yet to be born
+ + t7600 (merge): check reflog entry
+ + t7600 (merge): do not launch gitk for --debug
+ + t7600 (merge): modernize style
+ + merge: do not mistake (ancestor of) tag for branch
 
 * ab/test (2010-08-16) 43 commits
   (merged to 'next' on 2010-08-18 at f88bdb1)
@@ -313,11 +293,8 @@ regarding tests.  I thought it probably was ready for 'next' but was
 holding off as we seem to still keep getting many fixes on top.
 
 * dj/fetch-tagopt (2010-08-11) 1 commit
- - fetch: allow command line --tags to override config
-
-* po/userdiff-csharp (2010-08-16) 1 commit
-  (merged to 'next' on 2010-08-18 at f5edb3a)
- + Userdiff patterns for C#
+  (merged to 'next' on 2010-08-21 at 737dfec)
+ + fetch: allow command line --tags to override config
 
 * jn/paginate-fix (2010-08-16) 14 commits
   (merged to 'next' on 2010-08-18 at bb04a13)
@@ -353,10 +330,6 @@ holding off as we seem to still keep getting many fixes on top.
  + t6038 (merge.renormalize): style nitpicks
  (this branch uses eb/double-convert-before-merge.)
 
-There were heavy merge conflicts in t4200; I tried to be careful when
-merging this, but extra sets of eyeballs from parties involved (Jonathan
-and Szeder) would always be a good idea.
-
 * eb/double-convert-before-merge (2010-07-02) 3 commits
  + Don't expand CRLFs when normalizing text during merge
  + Try normalizing files to avoid delete/modify conflicts when merging
@@ -385,24 +358,9 @@ and Szeder) would always be a good idea.
 Not entirely happy with the command line parser, but will merge to 'next'
 after giving the series another look.
 
-* dg/local-mod-error-messages (2010-08-11) 5 commits
-  (merged to 'next' on 2010-08-14 at e684ca8)
- + t7609: test merge and checkout error messages
- + unpack_trees: group error messages by type
- + merge-recursive: distinguish "removed" and "overwritten" messages
- + merge-recursive: porcelain messages for checkout
- + Turn unpack_trees_options.msgs into an array + enum
-
-* en/rebase-against-rebase-fix (2010-08-12) 2 commits
-  (merged to 'next' on 2010-08-14 at 1dea7b9)
- + pull --rebase: Avoid spurious conflicts and reapplying unnecessary patches
- + t5520-pull: Add testcases showing spurious conflicts from git pull --rebase
-
-* gb/split-cmdline-errmsg (2010-08-07) 1 commit
-  (merged to 'next' on 2010-08-14 at 41146ff)
- + split_cmdline: Allow caller to access error string
-
-* jn/svn-fe (2010-08-13) 16 commits
+* jn/svn-fe (2010-08-19) 17 commits
+  (merged to 'next' on 2010-08-19 at b1a242a)
+ + t/t9010-svn-fe.sh: add an +x bit to this test
   (merged to 'next' on 2010-08-18 at 24ab19e)
  + t9010 (svn-fe): avoid symlinks in test
  + t9010 (svn-fe): use Unix-style path in URI
@@ -421,7 +379,7 @@ after giving the series another look.
  + Add memory pool library
  + Introduce vcs-svn lib
 
-* js/detached-stash (2010-08-18) 8 commits
+* js/detached-stash (2010-08-21) 9 commits
  - detached-stash: update Documentation
  - detached-stash: tests of git stash with stash-like arguments
  - detached-stash: simplify git stash show
@@ -429,36 +387,19 @@ after giving the series another look.
  - detached-stash: refactor git stash pop implementation
  - detached-stash: simplify stash_drop
  - detached-stash: simplify stash_apply
+ - detached-stash: work around git rev-parse failure to detect bad log refs
  - detached-stash: introduce parse_flags_and_revs function
 
-Rerolled.
-
-* mm/rebase-i-exec (2010-08-13) 4 commits
-  (merged to 'next' on 2010-08-14 at 17620dc)
- + git-rebase--interactive.sh: use printf instead of echo to print commit message
- + git-rebase--interactive.sh: rework skip_unnecessary_picks
-  (merged to 'next' on 2010-08-12 at 377e3f0)
- + test-lib: user-friendly alternatives to test [-d|-f|-e]
- + rebase -i: add exec command to launch a shell command
-
-* so/http-user-agent (2010-08-11) 1 commit
-  (merged to 'next' on 2010-08-12 at 86cc5c4)
- + Allow HTTP user agent string to be modified.
-
-* sr/local-config (2010-08-03) 1 commit
-  (merged to 'next' on 2010-08-12 at 431f7af)
- + config: add --local option
-
-Will merge to 'master' soon.
+Rerolled again.
 
 * gb/shell-ext (2010-07-28) 3 commits
  - Add sample commands for git-shell
  - Add interactive mode to git-shell for user-friendliness
  - Allow creation of arbitrary git-shell commands
 
-Replaced the first one with the version that uses getenv("HOME"); I am not
-very happy about adding these backdoors to git-shell, which is primarily a
-security mechanism, and obviously security and backdoor do not mix well.
+I am not very happy about adding these backdoors to git-shell, which is
+primarily a security mechanism, and obviously security and backdoor do not
+mix well.
 
 * jn/maint-setup-fix (2010-07-24) 11 commits
   (merged to 'next' on 2010-08-18 at ded5f4d)
@@ -474,22 +415,6 @@ security mechanism, and obviously security and backdoor do not mix well.
  + tests: try git apply from subdir of toplevel
  + t1501 (rev-parse): clarify
  (this branch is used by jn/paginate-fix.)
-
-* mm/shortopt-detached (2010-08-05) 5 commits
-  (merged to 'next' on 2010-08-12 at 35ceb98)
- + log: parse separate option for --glob
- + log: parse separate options like git log --grep foo
- + diff: parse separate options --stat-width n, --stat-name-width n
- + diff: split off a function for --stat-* option parsing
- + diff: parse separate options like -S foo
-
-* nd/fix-sparse-checkout (2010-07-31) 5 commits
-  (merged to 'next' on 2010-08-12 at 4f7a3b9)
- + unpack-trees: mark new entries skip-worktree appropriately
- + unpack-trees: do not check for conflict entries too early
- + unpack-trees: let read-tree -u remove index entries outside sparse area
- + unpack-trees: only clear CE_UPDATE|CE_REMOVE when skip-worktree is always set
- + t1011 (sparse checkout): style nitpicks
 
 * tr/maint-no-unquote-plus (2010-07-24) 1 commit
   (merged to 'next' on 2010-08-18 at b811248)
@@ -527,18 +452,14 @@ interface).
 I haven't heard anything about this series.  Is it desirable?  Or is it
 not used by anybody and just another baggage we'd rather not carry?
 
-* hv/submodule-find-ff-merge (2010-07-07) 3 commits
-  (merged to 'next' on 2010-08-11 at 6900d2c)
- + Implement automatic fast-forward merge for submodules
- + setup_revisions(): Allow walking history in a submodule
- + Teach ref iteration module about submodules
-
 * sg/rerere-gc-old-still-used (2010-07-13) 2 commits
   (merged to 'next' on 2010-08-18 at 8bc4635)
  + rerere: fix overeager gc
  + mingw_utime(): handle NULL times parameter
 
-* en/d-f-conflict-fix (2010-08-17) 11 commits
+* en/d-f-conflict-fix (2010-08-20) 12 commits
+  (merged to 'next' on 2010-08-20 at af7f2b0)
+ + merge-recursive: Avoid excessive output for and reprocessing of renames
   (merged to 'next' on 2010-08-18 at 6be0f13)
  + merge-recursive: Fix multiple file rename across D/F conflict
  + t6031: Add a testcase covering multiple renames across a D/F conflict
@@ -560,3 +481,19 @@ not used by anybody and just another baggage we'd rather not carry?
  - tests: rename test to work around GNU gettext bug
  - Add infrastructure for translating Git with gettext
  (this branch is used by ab/test-1.)
+
+--------------------------------------------------
+[Ejected]
+
+* jn/commit-no-change-wo-status (2010-08-11) 10 commits
+ . t6040 (branch tracking): check “status” instead of “commit”
+ . commit: suppress status summary when no changes staged
+ . commit --dry-run: give advice on empty amend
+ . commit: give empty-commit avoidance code its own function
+ . t7508 (status): modernize style
+ . commit: split off the piece that writes status
+ . commit: split commit -s handling into its own function
+ . commit: split off a function to fetch the default log message
+ . wt-status: split off a function for printing submodule summary
+ . wt-status: split wt_status_print into digestible pieces
+
