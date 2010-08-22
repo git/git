@@ -84,4 +84,20 @@ test_expect_success 'will not overwrite removed file with staged changes' '
 	test_cmp important c1.c
 '
 
+test_expect_success 'set up unborn branch and content' '
+	git symbolic-ref HEAD refs/heads/unborn &&
+	rm -f .git/index &&
+	echo foo > tracked-file &&
+	git add tracked-file &&
+	echo bar > untracked-file
+'
+
+test_expect_failure 'will not clobber WT/index when merging into unborn' '
+	git merge master &&
+	grep foo tracked-file &&
+	git show :tracked-file >expect &&
+	grep foo expect &&
+	grep bar untracked-file
+'
+
 test_done
