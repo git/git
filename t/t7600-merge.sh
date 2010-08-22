@@ -5,189 +5,103 @@
 
 test_description='git merge
 
-Testing basic merge operations/option parsing.'
+Testing basic merge operations/option parsing.
+
+! [c0] commit 0
+ ! [c1] commit 1
+  ! [c2] commit 2
+   ! [c3] commit 3
+    ! [c4] c4
+     ! [c5] c5
+      ! [c6] c6
+       * [master] Merge commit 'c1'
+--------
+       - [master] Merge commit 'c1'
+ +     * [c1] commit 1
+      +  [c6] c6
+     +   [c5] c5
+    ++   [c4] c4
+   ++++  [c3] commit 3
+  +      [c2] commit 2
++++++++* [c0] commit 0
+'
 
 . ./test-lib.sh
 
-cat >file <<EOF
-1
-2
-3
-4
-5
-6
-7
-8
-9
-EOF
+test_expect_success 'set up test data and helpers' '
+	printf "%s\n" 1 2 3 4 5 6 7 8 9 >file &&
+	printf "%s\n" "1 X" 2 3 4 5 6 7 8 9 >file.1 &&
+	printf "%s\n" 1 2 3 4 "5 X" 6 7 8 9 >file.5 &&
+	printf "%s\n" 1 2 3 4 5 6 7 8 "9 X" >file.9 &&
+	printf "%s\n" "1 X" 2 3 4 5 6 7 8 9 >result.1 &&
+	printf "%s\n" "1 X" 2 3 4 "5 X" 6 7 8 9 >result.1-5 &&
+	printf "%s\n" "1 X" 2 3 4 "5 X" 6 7 8 "9 X" >result.1-5-9 &&
 
-cat >file.1 <<EOF
-1 X
-2
-3
-4
-5
-6
-7
-8
-9
-EOF
+	create_merge_msgs() {
+		echo "Merge commit '\''c2'\''" >msg.1-5 &&
+		echo "Merge commit '\''c2'\''; commit '\''c3'\''" >msg.1-5-9 &&
+		{
+			echo "Squashed commit of the following:" &&
+			echo &&
+			git log --no-merges ^HEAD c1
+		} >squash.1 &&
+		{
+			echo "Squashed commit of the following:" &&
+			echo &&
+			git log --no-merges ^HEAD c2
+		} >squash.1-5 &&
+		{
+			echo "Squashed commit of the following:" &&
+			echo &&
+			git log --no-merges ^HEAD c2 c3
+		} >squash.1-5-9 &&
+		echo >msg.nolog &&
+		{
+			echo "* commit '\''c3'\'':" &&
+			echo "  commit 3" &&
+			echo
+		} >msg.log
+	} &&
 
-cat >file.5 <<EOF
-1
-2
-3
-4
-5 X
-6
-7
-8
-9
-EOF
-
-cat >file.9 <<EOF
-1
-2
-3
-4
-5
-6
-7
-8
-9 X
-EOF
-
-cat  >result.1 <<EOF
-1 X
-2
-3
-4
-5
-6
-7
-8
-9
-EOF
-
-cat >result.1-5 <<EOF
-1 X
-2
-3
-4
-5 X
-6
-7
-8
-9
-EOF
-
-cat >result.1-5-9 <<EOF
-1 X
-2
-3
-4
-5 X
-6
-7
-8
-9 X
-EOF
-
-create_merge_msgs() {
-	echo "Merge commit 'c2'" >msg.1-5 &&
-	echo "Merge commit 'c2'; commit 'c3'" >msg.1-5-9 &&
-	echo "Squashed commit of the following:" >squash.1 &&
-	echo >>squash.1 &&
-	git log --no-merges ^HEAD c1 >>squash.1 &&
-	echo "Squashed commit of the following:" >squash.1-5 &&
-	echo >>squash.1-5 &&
-	git log --no-merges ^HEAD c2 >>squash.1-5 &&
-	echo "Squashed commit of the following:" >squash.1-5-9 &&
-	echo >>squash.1-5-9 &&
-	git log --no-merges ^HEAD c2 c3 >>squash.1-5-9 &&
-	echo > msg.nolog &&
-	echo "* commit 'c3':" >msg.log &&
-	echo "  commit 3" >>msg.log &&
-	echo >>msg.log
-}
-
-verify_diff() {
-	if ! test_cmp "$1" "$2"
-	then
-		echo "$3"
-		false
-	fi
-}
-
-verify_merge() {
-	verify_diff "$2" "$1" "[OOPS] bad merge result" &&
-	if test $(git ls-files -u | wc -l) -gt 0
-	then
-		echo "[OOPS] unmerged files"
-		false
-	fi &&
-	if test_must_fail git diff --exit-code
-	then
-		echo "[OOPS] working tree != index"
-		false
-	fi &&
-	if test -n "$3"
-	then
-		git show -s --pretty=format:%s HEAD >msg.act &&
-		verify_diff "$3" msg.act "[OOPS] bad merge message"
-	fi
-}
-
-verify_head() {
-	if test "$1" != "$(git rev-parse HEAD)"
-	then
-		echo "[OOPS] HEAD != $1"
-		false
-	fi
-}
-
-verify_parents() {
-	i=1
-	while test $# -gt 0
-	do
-		if test "$1" != "$(git rev-parse HEAD^$i)"
+	verify_merge() {
+		test_cmp "$2" "$1" &&
+		git update-index --refresh &&
+		git diff --exit-code &&
+		if test -n "$3"
 		then
-			echo "[OOPS] HEAD^$i != $1"
-			return 1
+			git show -s --pretty=format:%s HEAD >msg.act &&
+			test_cmp "$3" msg.act
 		fi
-		i=$(expr $i + 1)
-		shift
-	done
-}
+	} &&
 
-verify_mergeheads() {
-	i=1
-	if ! test -f .git/MERGE_HEAD
-	then
-		echo "[OOPS] MERGE_HEAD is missing"
-		false
-	fi &&
-	while test $# -gt 0
-	do
-		head=$(head -n $i .git/MERGE_HEAD | sed -ne \$p)
-		if test "$1" != "$head"
-		then
-			echo "[OOPS] MERGE_HEAD $i != $1"
+	verify_head() {
+		echo "$1" >head.expected &&
+		git rev-parse HEAD >head.actual &&
+		test_cmp head.expected head.actual
+	} &&
+
+	verify_parents() {
+		printf "%s\n" "$@" >parents.expected &&
+		>parents.actual &&
+		i=1 &&
+		while test $i -le $#
+		do
+			git rev-parse HEAD^$i >>parents.actual &&
+			i=$(expr $i + 1) ||
 			return 1
-		fi
-		i=$(expr $i + 1)
-		shift
-	done
-}
+		done &&
+		test_cmp parents.expected parents.actual
+	} &&
 
-verify_no_mergehead() {
-	if test -f .git/MERGE_HEAD
-	then
-		echo "[OOPS] MERGE_HEAD exists"
-		false
-	fi
-}
+	verify_mergeheads() {
+		printf "%s\n" "$@" >mergehead.expected &&
+		test_cmp mergehead.expected .git/MERGE_HEAD
+	} &&
 
+	verify_no_mergehead() {
+		! test -e .git/MERGE_HEAD
+	}
+'
 
 test_expect_success 'setup' '
 	git add file &&
@@ -219,7 +133,7 @@ test_expect_success 'setup' '
 	create_merge_msgs
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'test option parsing' '
 	test_must_fail git merge -$ c1 &&
@@ -235,13 +149,19 @@ test_expect_success 'reject non-strategy with a git-merge-foo name' '
 '
 
 test_expect_success 'merge c0 with c1' '
+	echo "OBJID HEAD@{0}: merge c1: Fast-forward" >reflog.expected &&
+
 	git reset --hard c0 &&
 	git merge c1 &&
 	verify_merge file result.1 &&
-	verify_head "$c1"
+	verify_head "$c1" &&
+
+	git reflog -1 >reflog.actual &&
+	sed "s/$_x05[0-9a-f]*/OBJID/g" reflog.actual >reflog.fuzzy &&
+	test_cmp reflog.expected reflog.fuzzy
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c0 with c1 with --ff-only' '
 	git reset --hard c0 &&
@@ -251,7 +171,28 @@ test_expect_success 'merge c0 with c1 with --ff-only' '
 	verify_head "$c1"
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
+
+test_expect_success 'merge from unborn branch' '
+	git checkout -f master &&
+	test_might_fail git branch -D kid &&
+
+	echo "OBJID HEAD@{0}: initial pull" >reflog.expected &&
+
+	git checkout --orphan kid &&
+	test_when_finished "git checkout -f master" &&
+	git rm -fr . &&
+	test_tick &&
+	git merge --ff-only c1 &&
+	verify_merge file result.1 &&
+	verify_head "$c1" &&
+
+	git reflog -1 >reflog.actual &&
+	sed "s/$_x05[0-9a-f][0-9a-f]/OBJID/g" reflog.actual >reflog.fuzzy &&
+	test_cmp reflog.expected reflog.fuzzy
+'
+
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2' '
 	git reset --hard c1 &&
@@ -261,7 +202,7 @@ test_expect_success 'merge c1 with c2' '
 	verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 and c3' '
 	git reset --hard c1 &&
@@ -271,7 +212,7 @@ test_expect_success 'merge c1 with c2 and c3' '
 	verify_parents $c1 $c2 $c3
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'failing merges with --ff-only' '
 	git reset --hard c1 &&
@@ -288,7 +229,7 @@ test_expect_success 'merge c0 with c1 (no-commit)' '
 	verify_head $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (no-commit)' '
 	git reset --hard c1 &&
@@ -298,7 +239,7 @@ test_expect_success 'merge c1 with c2 (no-commit)' '
 	verify_mergeheads $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 and c3 (no-commit)' '
 	git reset --hard c1 &&
@@ -308,7 +249,7 @@ test_expect_success 'merge c1 with c2 and c3 (no-commit)' '
 	verify_mergeheads $c2 $c3
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c0 with c1 (squash)' '
 	git reset --hard c0 &&
@@ -316,10 +257,10 @@ test_expect_success 'merge c0 with c1 (squash)' '
 	verify_merge file result.1 &&
 	verify_head $c0 &&
 	verify_no_mergehead &&
-	verify_diff squash.1 .git/SQUASH_MSG "[OOPS] bad squash message"
+	test_cmp squash.1 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c0 with c1 (squash, ff-only)' '
 	git reset --hard c0 &&
@@ -327,10 +268,10 @@ test_expect_success 'merge c0 with c1 (squash, ff-only)' '
 	verify_merge file result.1 &&
 	verify_head $c0 &&
 	verify_no_mergehead &&
-	verify_diff squash.1 .git/SQUASH_MSG "[OOPS] bad squash message"
+	test_cmp squash.1 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (squash)' '
 	git reset --hard c1 &&
@@ -338,17 +279,17 @@ test_expect_success 'merge c1 with c2 (squash)' '
 	verify_merge file result.1-5 &&
 	verify_head $c1 &&
 	verify_no_mergehead &&
-	verify_diff squash.1-5 .git/SQUASH_MSG "[OOPS] bad squash message"
+	test_cmp squash.1-5 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'unsuccesful merge of c1 with c2 (squash, ff-only)' '
 	git reset --hard c1 &&
 	test_must_fail git merge --squash --ff-only c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 and c3 (squash)' '
 	git reset --hard c1 &&
@@ -356,10 +297,10 @@ test_expect_success 'merge c1 with c2 and c3 (squash)' '
 	verify_merge file result.1-5-9 &&
 	verify_head $c1 &&
 	verify_no_mergehead &&
-	verify_diff squash.1-5-9 .git/SQUASH_MSG "[OOPS] bad squash message"
+	test_cmp squash.1-5-9 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (no-commit in config)' '
 	git reset --hard c1 &&
@@ -370,7 +311,7 @@ test_expect_success 'merge c1 with c2 (no-commit in config)' '
 	verify_mergeheads $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (squash in config)' '
 	git reset --hard c1 &&
@@ -379,10 +320,10 @@ test_expect_success 'merge c1 with c2 (squash in config)' '
 	verify_merge file result.1-5 &&
 	verify_head $c1 &&
 	verify_no_mergehead &&
-	verify_diff squash.1-5 .git/SQUASH_MSG "[OOPS] bad squash message"
+	test_cmp squash.1-5 .git/SQUASH_MSG
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'override config option -n with --summary' '
 	git reset --hard c1 &&
@@ -412,7 +353,7 @@ test_expect_success 'override config option -n with --stat' '
 	fi
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'override config option --stat' '
 	git reset --hard c1 &&
@@ -428,7 +369,7 @@ test_expect_success 'override config option --stat' '
 	fi
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (override --no-commit)' '
 	git reset --hard c1 &&
@@ -439,7 +380,7 @@ test_expect_success 'merge c1 with c2 (override --no-commit)' '
 	verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c2 (override --squash)' '
 	git reset --hard c1 &&
@@ -450,7 +391,7 @@ test_expect_success 'merge c1 with c2 (override --squash)' '
 	verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c0 with c1 (no-ff)' '
 	git reset --hard c0 &&
@@ -461,7 +402,7 @@ test_expect_success 'merge c0 with c1 (no-ff)' '
 	verify_parents $c0 $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'combining --squash and --no-ff is refused' '
 	test_must_fail git merge --squash --no-ff c1 &&
@@ -485,20 +426,20 @@ test_expect_success 'merge log message' '
 	git reset --hard c0 &&
 	git merge --no-log c2 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
-	verify_diff msg.nolog msg.act "[OOPS] bad merge log message" &&
+	test_cmp msg.nolog msg.act &&
 
 	git merge --log c3 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
-	verify_diff msg.log msg.act "[OOPS] bad merge log message" &&
+	test_cmp msg.log msg.act &&
 
 	git reset --hard HEAD^ &&
 	git config merge.log yes &&
 	git merge c3 &&
 	git show -s --pretty=format:%b HEAD >msg.act &&
-	verify_diff msg.log msg.act "[OOPS] bad merge log message"
+	test_cmp msg.log msg.act
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c0, c2, c0, and c1' '
        git reset --hard c1 &&
@@ -509,7 +450,7 @@ test_expect_success 'merge c1 with c0, c2, c0, and c1' '
        verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c0, c2, c0, and c1' '
        git reset --hard c1 &&
@@ -520,7 +461,7 @@ test_expect_success 'merge c1 with c0, c2, c0, and c1' '
        verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge c1 with c1 and c2' '
        git reset --hard c1 &&
@@ -531,7 +472,7 @@ test_expect_success 'merge c1 with c1 and c2' '
        verify_parents $c1 $c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge fast-forward in a dirty tree' '
        git reset --hard c0 &&
@@ -541,16 +482,16 @@ test_expect_success 'merge fast-forward in a dirty tree' '
        git merge c2
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'in-index merge' '
 	git reset --hard c0 &&
-	git merge --no-ff -s resolve c1 > out &&
+	git merge --no-ff -s resolve c1 >out &&
 	grep "Wonderful." out &&
 	verify_parents $c0 $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'refresh the index before merging' '
 	git reset --hard c1 &&
@@ -558,31 +499,39 @@ test_expect_success 'refresh the index before merging' '
 	git merge c3
 '
 
-cat >expected <<EOF
-Merge branch 'c5' (early part)
+cat >expected.branch <<\EOF
+Merge branch 'c5-branch' (early part)
+EOF
+cat >expected.tag <<\EOF
+Merge commit 'c5~1'
 EOF
 
 test_expect_success 'merge early part of c2' '
 	git reset --hard c3 &&
-	echo c4 > c4.c &&
+	echo c4 >c4.c &&
 	git add c4.c &&
 	git commit -m c4 &&
 	git tag c4 &&
-	echo c5 > c5.c &&
+	echo c5 >c5.c &&
 	git add c5.c &&
 	git commit -m c5 &&
 	git tag c5 &&
 	git reset --hard c3 &&
-	echo c6 > c6.c &&
+	echo c6 >c6.c &&
 	git add c6.c &&
 	git commit -m c6 &&
 	git tag c6 &&
+	git branch -f c5-branch c5 &&
+	git merge c5-branch~1 &&
+	git show -s --pretty=format:%s HEAD >actual.branch &&
+	git reset --keep HEAD^ &&
 	git merge c5~1 &&
-	git show -s --pretty=format:%s HEAD > actual &&
-	test_cmp actual expected
+	git show -s --pretty=format:%s HEAD >actual.tag &&
+	test_cmp expected.branch actual.branch &&
+	test_cmp expected.tag actual.tag
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'merge --no-ff --no-commit && commit' '
 	git reset --hard c0 &&
@@ -591,13 +540,13 @@ test_expect_success 'merge --no-ff --no-commit && commit' '
 	verify_parents $c0 $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'amending no-ff merge commit' '
 	EDITOR=: git commit --amend &&
 	verify_parents $c0 $c1
 '
 
-test_debug 'gitk --all'
+test_debug 'git log --graph --decorate --oneline --all'
 
 test_done
