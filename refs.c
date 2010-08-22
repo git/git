@@ -157,7 +157,7 @@ static struct cached_refs {
 	char did_packed;
 	struct ref_list *loose;
 	struct ref_list *packed;
-} cached_refs;
+} cached_refs, submodule_refs;
 static struct ref_list *current_ref;
 
 static struct ref_list *extra_refs;
@@ -229,23 +229,45 @@ void clear_extra_refs(void)
 	extra_refs = NULL;
 }
 
-static struct ref_list *get_packed_refs(void)
+static struct ref_list *get_packed_refs(const char *submodule)
 {
-	if (!cached_refs.did_packed) {
-		FILE *f = fopen(git_path("packed-refs"), "r");
-		cached_refs.packed = NULL;
+	const char *packed_refs_file;
+	struct cached_refs *refs;
+
+	if (submodule) {
+		packed_refs_file = git_path_submodule(submodule, "packed-refs");
+		refs = &submodule_refs;
+		free_ref_list(refs->packed);
+	} else {
+		packed_refs_file = git_path("packed-refs");
+		refs = &cached_refs;
+	}
+
+	if (!refs->did_packed || submodule) {
+		FILE *f = fopen(packed_refs_file, "r");
+		refs->packed = NULL;
 		if (f) {
-			read_packed_refs(f, &cached_refs);
+			read_packed_refs(f, refs);
 			fclose(f);
 		}
-		cached_refs.did_packed = 1;
+		refs->did_packed = 1;
 	}
-	return cached_refs.packed;
+	return refs->packed;
 }
 
-static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
+static struct ref_list *get_ref_dir(const char *submodule, const char *base,
+				    struct ref_list *list)
 {
-	DIR *dir = opendir(git_path("%s", base));
+	DIR *dir;
+	const char *path;
+
+	if (submodule)
+		path = git_path_submodule(submodule, "%s", base);
+	else
+		path = git_path("%s", base);
+
+
+	dir = opendir(path);
 
 	if (dir) {
 		struct dirent *de;
@@ -261,6 +283,7 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 			struct stat st;
 			int flag;
 			int namelen;
+			const char *refdir;
 
 			if (de->d_name[0] == '.')
 				continue;
@@ -270,16 +293,27 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 			if (has_extension(de->d_name, ".lock"))
 				continue;
 			memcpy(ref + baselen, de->d_name, namelen+1);
-			if (stat(git_path("%s", ref), &st) < 0)
+			refdir = submodule
+				? git_path_submodule(submodule, "%s", ref)
+				: git_path("%s", ref);
+			if (stat(refdir, &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
-				list = get_ref_dir(ref, list);
+				list = get_ref_dir(submodule, ref, list);
 				continue;
 			}
-			if (!resolve_ref(ref, sha1, 1, &flag)) {
+			if (submodule) {
 				hashclr(sha1);
-				flag |= REF_BROKEN;
-			}
+				flag = 0;
+				if (resolve_gitlink_ref(submodule, ref, sha1) < 0) {
+					hashclr(sha1);
+					flag |= REF_BROKEN;
+				}
+			} else
+				if (!resolve_ref(ref, sha1, 1, &flag)) {
+					hashclr(sha1);
+					flag |= REF_BROKEN;
+				}
 			list = add_ref(ref, sha1, flag, list, NULL);
 		}
 		free(ref);
@@ -322,10 +356,16 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 	for_each_rawref(warn_if_dangling_symref, &data);
 }
 
-static struct ref_list *get_loose_refs(void)
+static struct ref_list *get_loose_refs(const char *submodule)
 {
+	if (submodule) {
+		free_ref_list(submodule_refs.loose);
+		submodule_refs.loose = get_ref_dir(submodule, "refs", NULL);
+		return submodule_refs.loose;
+	}
+
 	if (!cached_refs.did_loose) {
-		cached_refs.loose = get_ref_dir("refs", NULL);
+		cached_refs.loose = get_ref_dir(NULL, "refs", NULL);
 		cached_refs.did_loose = 1;
 	}
 	return cached_refs.loose;
@@ -459,7 +499,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		git_snpath(path, sizeof(path), "%s", ref);
 		/* Special case: non-existing file. */
 		if (lstat(path, &st) < 0) {
-			struct ref_list *list = get_packed_refs();
+			struct ref_list *list = get_packed_refs(NULL);
 			while (list) {
 				if (!strcmp(ref, list->name)) {
 					hashcpy(sha1, list->sha1);
@@ -588,7 +628,7 @@ int peel_ref(const char *ref, unsigned char *sha1)
 		return -1;
 
 	if ((flag & REF_ISPACKED)) {
-		struct ref_list *list = get_packed_refs();
+		struct ref_list *list = get_packed_refs(NULL);
 
 		while (list) {
 			if (!strcmp(list->name, ref)) {
@@ -615,12 +655,12 @@ fallback:
 	return -1;
 }
 
-static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
-			   int flags, void *cb_data)
+static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
+			   int trim, int flags, void *cb_data)
 {
 	int retval = 0;
-	struct ref_list *packed = get_packed_refs();
-	struct ref_list *loose = get_loose_refs();
+	struct ref_list *packed = get_packed_refs(submodule);
+	struct ref_list *loose = get_loose_refs(submodule);
 
 	struct ref_list *extra;
 
@@ -657,24 +697,54 @@ end_each:
 	return retval;
 }
 
-int head_ref(each_ref_fn fn, void *cb_data)
+
+static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 {
 	unsigned char sha1[20];
 	int flag;
 
+	if (submodule) {
+		if (resolve_gitlink_ref(submodule, "HEAD", sha1) == 0)
+			return fn("HEAD", sha1, 0, cb_data);
+
+		return 0;
+	}
+
 	if (resolve_ref("HEAD", sha1, 1, &flag))
 		return fn("HEAD", sha1, flag, cb_data);
+
 	return 0;
+}
+
+int head_ref(each_ref_fn fn, void *cb_data)
+{
+	return do_head_ref(NULL, fn, cb_data);
+}
+
+int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return do_head_ref(submodule, fn, cb_data);
 }
 
 int for_each_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/", fn, 0, 0, cb_data);
+	return do_for_each_ref(NULL, "refs/", fn, 0, 0, cb_data);
+}
+
+int for_each_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_ref(submodule, "refs/", fn, 0, 0, cb_data);
 }
 
 int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref(prefix, fn, strlen(prefix), 0, cb_data);
+	return do_for_each_ref(NULL, prefix, fn, strlen(prefix), 0, cb_data);
+}
+
+int for_each_ref_in_submodule(const char *submodule, const char *prefix,
+		each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_ref(submodule, prefix, fn, strlen(prefix), 0, cb_data);
 }
 
 int for_each_tag_ref(each_ref_fn fn, void *cb_data)
@@ -682,9 +752,19 @@ int for_each_tag_ref(each_ref_fn fn, void *cb_data)
 	return for_each_ref_in("refs/tags/", fn, cb_data);
 }
 
+int for_each_tag_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return for_each_ref_in_submodule(submodule, "refs/tags/", fn, cb_data);
+}
+
 int for_each_branch_ref(each_ref_fn fn, void *cb_data)
 {
 	return for_each_ref_in("refs/heads/", fn, cb_data);
+}
+
+int for_each_branch_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return for_each_ref_in_submodule(submodule, "refs/heads/", fn, cb_data);
 }
 
 int for_each_remote_ref(each_ref_fn fn, void *cb_data)
@@ -692,9 +772,14 @@ int for_each_remote_ref(each_ref_fn fn, void *cb_data)
 	return for_each_ref_in("refs/remotes/", fn, cb_data);
 }
 
+int for_each_remote_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return for_each_ref_in_submodule(submodule, "refs/remotes/", fn, cb_data);
+}
+
 int for_each_replace_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/replace/", fn, 13, 0, cb_data);
+	return do_for_each_ref(NULL, "refs/replace/", fn, 13, 0, cb_data);
 }
 
 int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
@@ -734,7 +819,7 @@ int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data)
 
 int for_each_rawref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/", fn, 0,
+	return do_for_each_ref(NULL, "refs/", fn, 0,
 			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
@@ -958,7 +1043,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	 * name is a proper prefix of our refname.
 	 */
 	if (missing &&
-	     !is_refname_available(ref, NULL, get_packed_refs(), 0)) {
+	     !is_refname_available(ref, NULL, get_packed_refs(NULL), 0)) {
 		last_errno = ENOTDIR;
 		goto error_return;
 	}
@@ -1021,7 +1106,7 @@ static int repack_without_ref(const char *refname)
 	int fd;
 	int found = 0;
 
-	packed_ref_list = get_packed_refs();
+	packed_ref_list = get_packed_refs(NULL);
 	for (list = packed_ref_list; list; list = list->next) {
 		if (!strcmp(refname, list->name)) {
 			found = 1;
@@ -1119,10 +1204,10 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	if (!symref)
 		return error("refname %s not found", oldref);
 
-	if (!is_refname_available(newref, oldref, get_packed_refs(), 0))
+	if (!is_refname_available(newref, oldref, get_packed_refs(NULL), 0))
 		return 1;
 
-	if (!is_refname_available(newref, oldref, get_loose_refs(), 0))
+	if (!is_refname_available(newref, oldref, get_loose_refs(NULL), 0))
 		return 1;
 
 	lock = lock_ref_sha1_basic(renamed_ref, NULL, 0, NULL);
