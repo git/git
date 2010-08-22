@@ -231,27 +231,30 @@ static void set_author_ident_env(const char *message)
 			sha1_to_hex(commit->object.sha1));
 }
 
-static char *help_msg(void)
+static void advise(const char *advice, ...)
 {
-	struct strbuf helpbuf = STRBUF_INIT;
+	va_list params;
+
+	va_start(params, advice);
+	vreportf("hint: ", advice, params);
+	va_end(params);
+}
+
+static void print_advice(void)
+{
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
 
-	if (msg)
-		return msg;
-
-	strbuf_addstr(&helpbuf, "  After resolving the conflicts,\n"
-		"mark the corrected paths with 'git add <paths>' or 'git rm <paths>'\n"
-		"and commit the result");
-
-	if (action == CHERRY_PICK) {
-		strbuf_addf(&helpbuf, " with: \n"
-			"\n"
-			"        git commit -c %s\n",
-			    sha1_to_hex(commit->object.sha1));
+	if (msg) {
+		fprintf(stderr, "%s\n", msg);
+		return;
 	}
-	else
-		strbuf_addch(&helpbuf, '.');
-	return strbuf_detach(&helpbuf, NULL);
+
+	advise("after resolving the conflicts, mark the corrected paths");
+	advise("with 'git add <paths>' or 'git rm <paths>'");
+
+	if (action == CHERRY_PICK)
+		advise("and commit the result with 'git commit -c %s'",
+		       find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
 }
 
 static void write_message(struct strbuf *msgbuf, const char *filename)
@@ -392,7 +395,6 @@ static int do_pick_commit(void)
 	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
-	struct strbuf mebuf = STRBUF_INIT;
 	int res;
 
 	if (no_commit) {
@@ -489,9 +491,6 @@ static int do_pick_commit(void)
 		}
 	}
 
-	strbuf_addf(&mebuf, "%s of commit %s", me,
-		    find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
-
 	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT) {
 		res = do_recursive_merge(base, next, base_label, next_label,
 					 head, &msgbuf);
@@ -500,7 +499,6 @@ static int do_pick_commit(void)
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
 
-		strbuf_addf(&mebuf, " with strategy %s", strategy);
 		write_message(&msgbuf, defmsg);
 
 		commit_list_insert(base, &common);
@@ -512,17 +510,17 @@ static int do_pick_commit(void)
 	}
 
 	if (res) {
-		fprintf(stderr, "Automatic %s failed.%s\n",
-			mebuf.buf, help_msg());
+		error("could not %s %s... %s",
+		      action == REVERT ? "revert" : "apply",
+		      find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV),
+		      msg.subject);
+		print_advice();
 		rerere(allow_rerere_auto);
 	} else {
 		if (!no_commit)
 			res = run_git_commit(defmsg);
-		if (!res)
-			fprintf(stderr, "Finished %s.\n", mebuf.buf);
 	}
 
-	strbuf_release(&mebuf);
 	free_message(&msg);
 	free(defmsg);
 

@@ -181,7 +181,6 @@ Conflicts:
 	esac
 	exit 1
 }
-echo >&2 "Finished one $me."
 
 # If we are cherry-pick, and if the merge did not result in
 # hand-editing, we will hit this commit and inherit the original
