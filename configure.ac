@@ -718,7 +718,7 @@ yippeeyeswehaveit
 #endif
 ]),
 	[ac_cv_c_excellent_regex=yes],
-	[ac_cv_c_excellent_regex=yes])
+	[ac_cv_c_excellent_regex=no])
 ])
 if test $ac_cv_c_excellent_regex = yes; then
 	NO_REGEX=
