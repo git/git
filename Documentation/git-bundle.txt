@@ -9,7 +9,7 @@ git-bundle - Move objects and refs by archive
 SYNOPSIS
 --------
 [verse]
-'git bundle' create <file> <git-rev-list args>
+'git bundle' create <file> <git-rev-list-args>
 'git bundle' verify <file>
 'git bundle' list-heads <file> [refname...]
 'git bundle' unbundle <file> [refname...]
@@ -35,7 +35,7 @@ OPTIONS
 
 create <file>::
        Used to create a bundle named 'file'.  This requires the
-       'git rev-list' arguments to define the bundle contents.
+       'git-rev-list-args' arguments to define the bundle contents.
 
 verify <file>::
        Used to check that a bundle file is valid and will apply
@@ -57,10 +57,10 @@ unbundle <file>::
        references matching those in the list are printed. This command is
        really plumbing, intended to be called only by 'git fetch'.
 
-[git-rev-list-args...]::
+<git-rev-list-args>::
        A list of arguments, acceptable to 'git rev-parse' and
        'git rev-list', that specifies the specific objects and references
-       to transport.  For example, `master\~10..master` causes the
+       to transport.  For example, `master{tilde}10..master` causes the
        current master reference to be packaged along with all objects
        added since its 10th ancestor commit.  There is no explicit
        limit to the number of references and objects that may be
@@ -79,12 +79,12 @@ SPECIFYING REFERENCES
 
 'git bundle' will only package references that are shown by
 'git show-ref': this includes heads, tags, and remote heads.  References
-such as `master\~1` cannot be packaged, but are perfectly suitable for
+such as `master{tilde}1` cannot be packaged, but are perfectly suitable for
 defining the basis.  More than one reference may be packaged, and more
 than one basis can be specified.  The objects packaged are those not
 contained in the union of the given bases.  Each basis can be
-specified explicitly (e.g. `^master\~10`), or implicitly (e.g.
-`master\~10..master`, `--since=10.days.ago master`).
+specified explicitly (e.g. `^master{tilde}10`), or implicitly (e.g.
+`master{tilde}10..master`, `--since=10.days.ago master`).
 
 It is very important that the basis used be held by the destination.
 It is okay to err on the side of caution, causing the bundle file
@@ -154,7 +154,7 @@ machineB$ git pull
 If you know up to what commit the intended recipient repository should
 have the necessary objects, you can use that knowledge to specify the
 basis, giving a cut-off point to limit the revisions and objects that go
-in the resulting bundle. The previous example used lastR2bundle tag
+in the resulting bundle. The previous example used the lastR2bundle tag
 for this purpose, but you can use any other options that you would give to
 the linkgit:git-log[1] command. Here are more examples:
 
@@ -194,7 +194,7 @@ references when fetching:
 $ git fetch mybundle master:localRef
 ----------------
 
-You can also see what references it offers.
+You can also see what references it offers:
 
 ----------------
 $ git ls-remote mybundle
