@@ -59,7 +59,8 @@ unbundle <file>::
 
 <git-rev-list-args>::
 	A list of arguments, acceptable to 'git rev-parse' and
-	'git rev-list', that specifies the specific objects and references
+	'git rev-list' (and containg a named ref, see SPECIFYING REFERENCES
+	below), that specifies the specific objects and references
 	to transport.  For example, `master{tilde}10..master` causes the
 	current master reference to be packaged along with all objects
 	added since its 10th ancestor commit.  There is no explicit
