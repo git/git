@@ -187,7 +187,7 @@ As a special case, the `"@\{-N\}"` syntax for the N-th last branch
 checks out the branch (instead of detaching).  You may also specify
 `-` which is synonymous with `"@\{-1\}"`.
 +
-As a further special case, you may use `"A...B"` as a shortcut for the
+As a further special case, you may use `"A\...B"` as a shortcut for the
 merge base of `A` and `B` if there is exactly one merge base. You can
 leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
