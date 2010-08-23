@@ -284,8 +284,12 @@ ifndef::git-format-patch[]
 	appearing in diff output; see the 'pickaxe' entry in
 	linkgit:gitdiffcore[7] for more details.
 
+-G<regex>::
+	Look for differences whose added or removed line matches
+	the given <regex>.
+
 --pickaxe-all::
-	When `-S` finds a change, show all the changes in that
+	When `-S` or `-G` finds a change, show all the changes in that
 	changeset, not just the files that contain the change
 	in <string>.
 
