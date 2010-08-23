@@ -95,7 +95,7 @@ You can specify the following configuration variables when building GIT:
    in the browser's URL bar and next to site name in bookmarks).  Relative
    to base URI of gitweb.  [Default: static/git-favicon.png]
  * GITWEB_JS
-   Points to the localtion where you put gitweb.js on your web server
+   Points to the location where you put gitweb.js on your web server
    (or to be more generic URI of JavaScript code used by gitweb).
    Relative to base URI of gitweb.  [Default: static/gitweb.js (or
    static/gitweb.min.js if JSMIN build variable is defined / JavaScript
@@ -233,7 +233,7 @@ not include variables usually directly set during build):
    is false.
  * $maxload
    Used to set the maximum load that we will still respond to gitweb queries.
-   If server load exceed this value then return "503 Service Unavaliable" error.
+   If server load exceed this value then return "503 Service Unavailable" error.
    Server load is taken to be 0 if gitweb cannot determine its value.  Set it to
    undefined value to turn it off.  The default is 300.
 

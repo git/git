@@ -11,7 +11,7 @@ Fixes since v1.6.4.2
   been deprecated.
 
 * "git fetch" and "git clone" had an extra sanity check to verify the
-  presense of the corresponding *.pack file before downloading *.idx
+  presence of the corresponding *.pack file before downloading *.idx
   file by issuing a HEAD request.  Github server however sometimes
   gave 500 (Internal server error) response to HEAD even if a GET
   request for *.pack file to the same URL would have succeeded, and broke
