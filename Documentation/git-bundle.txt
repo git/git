@@ -34,45 +34,45 @@ OPTIONS
 -------
 
 create <file>::
-       Used to create a bundle named 'file'.  This requires the
-       'git-rev-list-args' arguments to define the bundle contents.
+	Used to create a bundle named 'file'.  This requires the
+	'git-rev-list-args' arguments to define the bundle contents.
 
 verify <file>::
-       Used to check that a bundle file is valid and will apply
-       cleanly to the current repository.  This includes checks on the
-       bundle format itself as well as checking that the prerequisite
-       commits exist and are fully linked in the current repository.
-       'git bundle' prints a list of missing commits, if any, and exits
-       with a non-zero status.
+	Used to check that a bundle file is valid and will apply
+	cleanly to the current repository.  This includes checks on the
+	bundle format itself as well as checking that the prerequisite
+	commits exist and are fully linked in the current repository.
+	'git bundle' prints a list of missing commits, if any, and exits
+	with a non-zero status.
 
 list-heads <file>::
-       Lists the references defined in the bundle.  If followed by a
-       list of references, only references matching those given are
-       printed out.
+	Lists the references defined in the bundle.  If followed by a
+	list of references, only references matching those given are
+	printed out.
 
 unbundle <file>::
-       Passes the objects in the bundle to 'git index-pack'
-       for storage in the repository, then prints the names of all
-       defined references. If a list of references is given, only
-       references matching those in the list are printed. This command is
-       really plumbing, intended to be called only by 'git fetch'.
+	Passes the objects in the bundle to 'git index-pack'
+	for storage in the repository, then prints the names of all
+	defined references. If a list of references is given, only
+	references matching those in the list are printed. This command is
+	really plumbing, intended to be called only by 'git fetch'.
 
 <git-rev-list-args>::
-       A list of arguments, acceptable to 'git rev-parse' and
-       'git rev-list', that specifies the specific objects and references
-       to transport.  For example, `master{tilde}10..master` causes the
-       current master reference to be packaged along with all objects
-       added since its 10th ancestor commit.  There is no explicit
-       limit to the number of references and objects that may be
-       packaged.
+	A list of arguments, acceptable to 'git rev-parse' and
+	'git rev-list', that specifies the specific objects and references
+	to transport.  For example, `master{tilde}10..master` causes the
+	current master reference to be packaged along with all objects
+	added since its 10th ancestor commit.  There is no explicit
+	limit to the number of references and objects that may be
+	packaged.
 
 
 [refname...]::
-       A list of references used to limit the references reported as
-       available. This is principally of use to 'git fetch', which
-       expects to receive only those references asked for and not
-       necessarily everything in the pack (in this case, 'git bundle' acts
-       like 'git fetch-pack').
+	A list of references used to limit the references reported as
+	available. This is principally of use to 'git fetch', which
+	expects to receive only those references asked for and not
+	necessarily everything in the pack (in this case, 'git bundle' acts
+	like 'git fetch-pack').
 
 SPECIFYING REFERENCES
 ---------------------
