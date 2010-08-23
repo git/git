@@ -4,7 +4,7 @@ GIT v1.5.6.3 Release Notes
 Fixes since v1.5.6.2
 --------------------
 
-* Setting core.sharerepository to traditional "true" value was supposed to make
+* Setting core.sharedrepository to traditional "true" value was supposed to make
   the repository group writable but should not affect permission for others.
   However, since 1.5.6, it was broken to drop permission for others when umask is
   022, making the repository unreadable by others.

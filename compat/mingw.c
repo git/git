@@ -641,7 +641,7 @@ static char *lookup_prog(const char *dir, const char *cmd, int isexe, int exe_on
 }
 
 /*
- * Determines the absolute path of cmd using the the split path in path.
+ * Determines the absolute path of cmd using the split path in path.
  * If cmd contains a slash or backslash, no lookup is performed.
  */
 static char *path_lookup(const char *cmd, char **path, int exe_only)

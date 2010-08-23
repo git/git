@@ -29,7 +29,7 @@ or adjust to the new behaviour, on the day their sysadmin decides to install
 the new version of git.  When we switched from "git-foo" to "git foo" in
 1.6.0, even though the change had been advertised and the transition
 guide had been provided for a very long time, the users procrastinated
-during the entire transtion period, and ended up panicking on the day
+during the entire transition period, and ended up panicking on the day
 their sysadmins updated their git installation.  We are trying to avoid
 repeating that unpleasantness in the 1.7.0 release.
 
@@ -94,7 +94,7 @@ users will fare this time.
  * "git diff" traditionally treated various "ignore whitespace" options
    only as a way to filter the patch output.  "git diff --exit-code -b"
    exited with non-zero status even if all changes were about changing the
-   ammount of whitespace and nothing else.  and "git diff -b" showed the
+   amount of whitespace and nothing else.  and "git diff -b" showed the
    "diff --git" header line for such a change without patch text.
 
    In 1.7.0, the "ignore whitespaces" will affect the semantics of the

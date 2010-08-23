@@ -202,7 +202,7 @@ release, unless otherwise noted.
    the branch is fully merged to its upstream branch if it is not merged
    to the current branch.  It now deletes it in such a case.
 
- * "fiter-branch" command incorrectly said --prune-empty and --filter-commit
+ * "filter-branch" command incorrectly said --prune-empty and --filter-commit
    were incompatible; the latter should be read as --commit-filter.
 
  * When using "git status" or asking "git diff" to compare the work tree

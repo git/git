@@ -26,7 +26,7 @@ Fixes since v1.6.5.3
    future versions, but not in this release,
 
  * "git merge -m <message> <branch>..." added the standard merge message
-   on its own after user-supplied message, which should have overrided the
+   on its own after user-supplied message, which should have overridden the
    standard one.
 
 Other minor documentation updates are included.

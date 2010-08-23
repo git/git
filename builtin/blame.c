@@ -2368,11 +2368,11 @@ parse_done:
 	 *
 	 * The remaining are:
 	 *
-	 * (1) if dashdash_pos != 0, its either
+	 * (1) if dashdash_pos != 0, it is either
 	 *     "blame [revisions] -- <path>" or
 	 *     "blame -- <path> <rev>"
 	 *
-	 * (2) otherwise, its one of the two:
+	 * (2) otherwise, it is one of the two:
 	 *     "blame [revisions] <path>"
 	 *     "blame <path> <rev>"
 	 *

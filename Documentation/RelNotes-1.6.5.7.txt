@@ -10,7 +10,7 @@ Fixes since v1.6.5.6
   an older version of git should just ignore them.  Instead we diagnosed
   it as an error.
 
-* With help.autocorrect set to non-zero value, the logic to guess typoes
+* With help.autocorrect set to non-zero value, the logic to guess typos
   in the subcommand name misfired and ran a random nonsense command.
 
 * If a command is run with an absolute path as a pathspec inside a bare
