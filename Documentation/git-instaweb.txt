@@ -44,9 +44,9 @@ OPTIONS
 -b::
 --browser::
 	The web browser that should be used to view the gitweb
-	page. This will be passed to the 'git web--browse' helper
+	page. This will be passed to the 'git web{litdd}browse' helper
 	script along with the URL of the gitweb instance. See
-	linkgit:git-web--browse[1] for more information about this. If
+	linkgit:git-web{litdd}browse[1] for more information about this. If
 	the script fails, the URL will be printed to stdout.
 
 start::
@@ -82,7 +82,7 @@ You may specify configuration in your .git/config
 
 If the configuration variable 'instaweb.browser' is not set,
 'web.browser' will be used instead if it is defined. See
-linkgit:git-web--browse[1] for more information about this.
+linkgit:git-web{litdd}browse[1] for more information about this.
 
 Author
 ------
