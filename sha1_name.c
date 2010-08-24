@@ -342,7 +342,7 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1);
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 {
-	static const char *warning = "warning: refname '%.*s' is ambiguous.\n";
+	static const char *warn_msg = "refname '%.*s' is ambiguous.";
 	char *real_ref = NULL;
 	int refs_found = 0;
 	int at, reflog_len;
@@ -390,7 +390,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		return -1;
 
 	if (warn_ambiguous_refs && refs_found > 1)
-		fprintf(stderr, warning, len, str);
+		warning(warn_msg, len, str);
 
 	if (reflog_len) {
 		int nth, i;
@@ -426,9 +426,8 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		if (read_ref_at(real_ref, at_time, nth, sha1, NULL,
 				&co_time, &co_tz, &co_cnt)) {
 			if (at_time)
-				fprintf(stderr,
-					"warning: Log for '%.*s' only goes "
-					"back to %s.\n", len, str,
+				warning("Log for '%.*s' only goes "
+					"back to %s.", len, str,
 					show_date(co_time, co_tz, DATE_RFC2822));
 			else {
 				free(real_ref);
