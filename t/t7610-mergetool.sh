@@ -68,22 +68,24 @@ test_expect_success 'mergetool crlf' '
 '
 
 test_expect_success 'mergetool in subdir' '
-    git checkout -b test3 branch1
-    cd subdir && (
-    test_must_fail git merge master >/dev/null 2>&1 &&
-    ( yes "" | git mergetool file3 >/dev/null 2>&1 ) &&
-    test "$(cat file3)" = "master new sub") &&
-    cd ..
+    git checkout -b test3 branch1 &&
+    (
+	cd subdir &&
+	test_must_fail git merge master >/dev/null 2>&1 &&
+	( yes "" | git mergetool file3 >/dev/null 2>&1 ) &&
+	test "$(cat file3)" = "master new sub"
+    )
 '
 
 test_expect_success 'mergetool on file in parent dir' '
-    cd subdir && (
-    ( yes "" | git mergetool ../file1 >/dev/null 2>&1 ) &&
-    ( yes "" | git mergetool ../file2 >/dev/null 2>&1 ) &&
-    test "$(cat ../file1)" = "master updated" &&
-    test "$(cat ../file2)" = "master new" &&
-    git commit -m "branch1 resolved with mergetool - subdir") &&
-    cd ..
+    (
+	cd subdir &&
+	( yes "" | git mergetool ../file1 >/dev/null 2>&1 ) &&
+	( yes "" | git mergetool ../file2 >/dev/null 2>&1 ) &&
+	test "$(cat ../file1)" = "master updated" &&
+	test "$(cat ../file2)" = "master new" &&
+	git commit -m "branch1 resolved with mergetool - subdir"
+    )
 '
 
 test_expect_success 'mergetool skips autoresolved' '
@@ -96,16 +98,17 @@ test_expect_success 'mergetool skips autoresolved' '
 '
 
 test_expect_success 'mergetool merges all from subdir' '
-    cd subdir && (
-    git config rerere.enabled false &&
-    test_must_fail git merge master &&
-    git mergetool --no-prompt &&
-    test "$(cat ../file1)" = "master updated" &&
-    test "$(cat ../file2)" = "master new" &&
-    test "$(cat file3)" = "master new sub" &&
-    git add ../file1 ../file2 file3 &&
-    git commit -m "branch2 resolved by mergetool from subdir") &&
-    cd ..
+    (
+	cd subdir &&
+	git config rerere.enabled false &&
+	test_must_fail git merge master &&
+	git mergetool --no-prompt &&
+	test "$(cat ../file1)" = "master updated" &&
+	test "$(cat ../file2)" = "master new" &&
+	test "$(cat file3)" = "master new sub" &&
+	git add ../file1 ../file2 file3 &&
+	git commit -m "branch2 resolved by mergetool from subdir"
+    )
 '
 
 test_done
