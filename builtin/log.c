@@ -125,6 +125,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		rev->show_decorations = 1;
 		load_ref_decorations(decoration_style);
 	}
+	setup_pager();
 }
 
 /*
@@ -490,12 +491,6 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	rev.commit_format = CMIT_FMT_ONELINE;
 	rev.use_terminator = 1;
 	rev.always_show_header = 1;
-
-	/*
-	 * We get called through "git reflog", so unlike the other log
-	 * routines, we need to set up our pager manually..
-	 */
-	setup_pager();
 
 	return cmd_log_walk(&rev);
 }
