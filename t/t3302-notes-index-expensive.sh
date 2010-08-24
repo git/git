@@ -98,7 +98,7 @@ time_notes () {
 	for mode in no-notes notes
 	do
 		echo $mode
-		/usr/bin/time sh ../time_notes $mode $1
+		/usr/bin/time "$SHELL_PATH" ../time_notes $mode $1
 	done
 }
 
