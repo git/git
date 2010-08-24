@@ -94,6 +94,29 @@ test_expect_success 'refuse deleting push with denyDeletes' '
 	test_must_fail git send-pack ./victim :extra master
 '
 
+test_expect_success 'cannot override denyDeletes with git -c send-pack' '
+	(
+		cd victim &&
+		test_might_fail git branch -D extra &&
+		git config receive.denyDeletes true &&
+		git branch extra master
+	) &&
+	test_must_fail git -c receive.denyDeletes=false \
+					send-pack ./victim :extra master
+'
+
+test_expect_success 'override denyDeletes with git -c receive-pack' '
+	(
+		cd victim &&
+		test_might_fail git branch -D extra &&
+		git config receive.denyDeletes true &&
+		git branch extra master
+	) &&
+	git send-pack \
+		--receive-pack="git -c receive.denyDeletes=false receive-pack" \
+		./victim :extra master
+'
+
 test_expect_success 'denyNonFastforwards trumps --force' '
 	(
 	    cd victim &&

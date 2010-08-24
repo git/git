@@ -72,6 +72,7 @@ static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
 const char * const local_repo_env[LOCAL_REPO_ENV_SIZE + 1] = {
 	ALTERNATE_DB_ENVIRONMENT,
 	CONFIG_ENVIRONMENT,
+	CONFIG_DATA_ENVIRONMENT,
 	DB_ENVIRONMENT,
 	GIT_DIR_ENVIRONMENT,
 	GIT_WORK_TREE_ENVIRONMENT,

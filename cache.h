@@ -398,7 +398,7 @@ static inline enum object_type object_type(unsigned int mode)
  * environment creation or simple walk of the list.
  * The number of non-NULL entries is available as a macro.
  */
-#define LOCAL_REPO_ENV_SIZE 8
+#define LOCAL_REPO_ENV_SIZE 9
 extern const char *const local_repo_env[LOCAL_REPO_ENV_SIZE + 1];
 
 extern int is_bare_repository_cfg;
