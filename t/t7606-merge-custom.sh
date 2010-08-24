@@ -46,7 +46,7 @@ test_expect_success 'merge c2 with a custom strategy' '
 	git rev-parse c2^{tree} >tree.expected &&
 	git merge -s theirs c2 &&
 
-	git rev-parse HEAD >head &&
+	git rev-parse HEAD >head.new &&
 	git rev-parse HEAD^1 >first-parent &&
 	git rev-parse HEAD^2 >second-parent &&
 	git rev-parse HEAD^{tree} >tree &&
@@ -55,7 +55,7 @@ test_expect_success 'merge c2 with a custom strategy' '
 	git diff --exit-code c2 HEAD &&
 	git diff --exit-code c2 &&
 
-	! test_cmp head.old head &&
+	! test_cmp head.old head.new &&
 	test_cmp head.old first-parent &&
 	test_cmp second-parent.expected second-parent &&
 	test_cmp tree.expected tree &&
@@ -72,7 +72,7 @@ test_expect_success 'trivial merge with custom strategy' '
 	git rev-parse c3^{tree} >tree.expected &&
 	git merge -s theirs c3 &&
 
-	git rev-parse HEAD >head &&
+	git rev-parse HEAD >head.new &&
 	git rev-parse HEAD^1 >first-parent &&
 	git rev-parse HEAD^2 >second-parent &&
 	git rev-parse HEAD^{tree} >tree &&
@@ -81,7 +81,7 @@ test_expect_success 'trivial merge with custom strategy' '
 	git diff --exit-code c3 HEAD &&
 	git diff --exit-code c3 &&
 
-	! test_cmp head.old head &&
+	! test_cmp head.old head.new &&
 	test_cmp head.old first-parent &&
 	test_cmp second-parent.expected second-parent &&
 	test_cmp tree.expected tree &&
