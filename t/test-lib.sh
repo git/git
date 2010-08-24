@@ -417,8 +417,14 @@ test_skip () {
 	fi
 	case "$to_skip" in
 	t)
+		of_prereq=
+		if test "$missing_prereq" != "$prereq"
+		then
+			of_prereq=" of $prereq"
+		fi
+
 		say_color skip >&3 "skipping test: $@"
-		say_color skip "ok $test_count # skip $1 (missing $missing_prereq of $prereq)"
+		say_color skip "ok $test_count # skip $1 (missing $missing_prereq${of_prereq})"
 		: true
 		;;
 	*)
