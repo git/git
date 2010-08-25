@@ -18,6 +18,7 @@
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "resolve-undo.h"
+#include "submodule.h"
 
 static const char * const checkout_usage[] = {
 	"git checkout [options] <branch>",
@@ -36,6 +37,7 @@ struct checkout_opts {
 	const char *new_orphan_branch;
 	int new_branch_log;
 	enum branch_track track;
+	struct diff_options diff_options;
 };
 
 static int post_checkout_hook(struct commit *old, struct commit *new,
@@ -274,12 +276,13 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	return errs;
 }
 
-static void show_local_changes(struct object *head)
+static void show_local_changes(struct object *head, struct diff_options *opts)
 {
 	struct rev_info rev;
 	/* I think we want full paths, even if we're in a subdirectory. */
 	init_revisions(&rev, NULL);
 	rev.abbrev = 0;
+	rev.diffopt.flags = opts->flags;
 	rev.diffopt.output_format |= DIFF_FORMAT_NAME_STATUS;
 	if (diff_setup_done(&rev.diffopt) < 0)
 		die("diff_setup_done failed");
@@ -456,7 +459,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		die("unable to write new index file");
 
 	if (!opts->force && !opts->quiet)
-		show_local_changes(&new->commit->object);
+		show_local_changes(&new->commit->object, &opts->diff_options);
 
 	return 0;
 }
@@ -600,7 +603,12 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 
 static int git_checkout_config(const char *var, const char *value, void *cb)
 {
-	return git_xmerge_config(var, value, cb);
+	if (!strcmp(var, "diff.ignoresubmodules")) {
+		struct checkout_opts *opts = cb;
+		handle_ignore_submodules_arg(&opts->diff_options, value);
+		return 0;
+	}
+	return git_xmerge_config(var, value, NULL);
 }
 
 static int interactive_checkout(const char *revision, const char **pathspec,
@@ -681,7 +689,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	memset(&opts, 0, sizeof(opts));
 	memset(&new, 0, sizeof(new));
 
-	git_config(git_checkout_config, NULL);
+	git_config(git_checkout_config, &opts);
 
 	opts.track = BRANCH_TRACK_UNSPECIFIED;
 
