@@ -240,7 +240,7 @@ test_expect_success 'fetch with a non-applying branch.<name>.merge' '
 	git fetch blub
 '
 
-test_expect_failure 'fetch from GIT URL with a non-applying branch.<name>.merge' '
+test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge' '
 	git update-ref -d FETCH_HEAD &&
 	git fetch one &&
 	git rev-parse --verify FETCH_HEAD
