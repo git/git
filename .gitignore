@@ -125,6 +125,7 @@
 /git-rm
 /git-send-email
 /git-send-pack
+/git-sh-i18n
 /git-sh-setup
 /git-shell
 /git-shortlog
@@ -215,3 +216,4 @@
 *.pdb
 /Debug/
 /Release/
+/share/
