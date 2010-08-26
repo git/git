@@ -9,6 +9,7 @@ git-log - Show commit logs
 SYNOPSIS
 --------
 'git log' [<options>] [<since>..<until>] [[\--] <path>...]
+'git log' [<options>] -L n,m <path>
 
 DESCRIPTION
 -----------
@@ -18,6 +19,9 @@ The command takes options applicable to the 'git rev-list'
 command to control what is shown and how, and options applicable to
 the 'git diff-*' commands to control how the changes
 each commit introduces are shown.
+
+With '-L' option, the command will help to trace the history of user specified
+line ranges. It can trace multiple ranges coming from multiple files.
 
 
 OPTIONS
@@ -65,6 +69,17 @@ produced by --stat etc.
 	produce a valid value size is set to zero.
 	Note that only message is considered, if also a diff is shown
 	its size is not included.
+
+-L <start>,<end>::
+	The line range.  <start> and <end> can take one of these forms:
+
+include::line-range-format.txt[]
+You can also specify this option more than once before each path.
+
+
+--full-line-diff::
+	Always print the interesting range even if the current commit
+	does not change any line of the range.
 
 [\--] <path>...::
 	Show only commits that affect any of the specified paths. To

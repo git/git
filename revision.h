@@ -14,7 +14,11 @@
 #define CHILD_SHOWN	(1u<<6)
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
-#define ALL_REV_FLAGS	((1u<<9)-1)
+#define RANGE_UPDATE	(1u<<9) /* for line level traverse */
+#define NEED_PRINT	(1u<<10)
+#define NONTRIVIAL_MERGE	(1u<<11)
+#define EVIL_MERGE	(1u<<12)
+#define ALL_REV_FLAGS	((1u<<13)-1)
 
 #define DECORATE_SHORT_REFS	1
 #define DECORATE_FULL_REFS	2
@@ -68,7 +72,9 @@ struct rev_info {
 			cherry_pick:1,
 			bisect:1,
 			ancestry_path:1,
-			first_parent_only:1;
+			first_parent_only:1,
+			line_level_traverse:1,
+			full_line_diff:1;
 
 	/* Diff flags */
 	unsigned int	diff:1,
@@ -137,6 +143,9 @@ struct rev_info {
 	/* commit counts */
 	int count_left;
 	int count_right;
+	/* line level range that we are chasing */
+	struct decoration line_range;
+	struct decoration nontrivial_merge;
 };
 
 #define REV_TREE_SAME		0
@@ -193,4 +202,14 @@ enum commit_action {
 extern enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit);
 extern enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit);
 
+enum rewrite_result {
+	rewrite_one_ok,
+	rewrite_one_noparents,
+	rewrite_one_error
+};
+
+typedef enum rewrite_result (*rewrite_parent_fn_t)(struct rev_info *revs, struct commit **pp);
+
+extern int rewrite_parents(struct rev_info *revs, struct commit *commit,
+	rewrite_parent_fn_t rewrite_parent);
 #endif
