@@ -85,6 +85,8 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 /*
  * Is a tree entry interesting given the pathspec we have?
  *
+ * Pre-condition: baselen == 0 || base[baselen-1] == '/'
+ *
  * Return:
  *  - 2 for "yes, and all subsequent entries will be"
  *  - 1 for yes
