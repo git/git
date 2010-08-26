@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2010, #05; Sat, 21)
-X-master-at: 5cba1229d8246da2a6d1d956eeed8227f69e185b
-X-next-at: 5af700393e003167b0b86690fd4132ebfc677088
+Subject: What's cooking in git.git (Aug 2010, #06; Thu, 26)
+X-master-at: 515cc0101943b766fde7aa894827119e332ec033
+X-next-at: 7180a87c9a993afee64514d82f1e85dbacc8e120
 
-What's cooking in git.git (Aug 2010, #05; Sat, 21)
+What's cooking in git.git (Aug 2010, #06; Thu, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,125 +12,70 @@ marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ab/perl-install (2010-08-03) 1 commit
-  (merged to 'next' on 2010-08-14 at f2a27ee)
- + perl/Makefile: Unset INSTALL_BASE when making perl.mak
-
-* dg/local-mod-error-messages (2010-08-11) 5 commits
-  (merged to 'next' on 2010-08-14 at e684ca8)
- + t7609: test merge and checkout error messages
- + unpack_trees: group error messages by type
- + merge-recursive: distinguish "removed" and "overwritten" messages
- + merge-recursive: porcelain messages for checkout
- + Turn unpack_trees_options.msgs into an array + enum
-
-* en/rebase-against-rebase-fix (2010-08-12) 2 commits
-  (merged to 'next' on 2010-08-14 at 1dea7b9)
- + pull --rebase: Avoid spurious conflicts and reapplying unnecessary patches
- + t5520-pull: Add testcases showing spurious conflicts from git pull --rebase
-
-* gb/split-cmdline-errmsg (2010-08-07) 1 commit
-  (merged to 'next' on 2010-08-14 at 41146ff)
- + split_cmdline: Allow caller to access error string
-
-* hv/submodule-find-ff-merge (2010-07-07) 3 commits
-  (merged to 'next' on 2010-08-11 at 6900d2c)
- + Implement automatic fast-forward merge for submodules
- + setup_revisions(): Allow walking history in a submodule
- + Teach ref iteration module about submodules
-
-* mm/rebase-i-exec (2010-08-13) 4 commits
-  (merged to 'next' on 2010-08-14 at 17620dc)
- + git-rebase--interactive.sh: use printf instead of echo to print commit message
- + git-rebase--interactive.sh: rework skip_unnecessary_picks
-  (merged to 'next' on 2010-08-12 at 377e3f0)
- + test-lib: user-friendly alternatives to test [-d|-f|-e]
- + rebase -i: add exec command to launch a shell command
-
-* mm/shortopt-detached (2010-08-05) 5 commits
-  (merged to 'next' on 2010-08-12 at 35ceb98)
- + log: parse separate option for --glob
- + log: parse separate options like git log --grep foo
- + diff: parse separate options --stat-width n, --stat-name-width n
- + diff: split off a function for --stat-* option parsing
- + diff: parse separate options like -S foo
-
-* nd/fix-sparse-checkout (2010-07-31) 5 commits
-  (merged to 'next' on 2010-08-12 at 4f7a3b9)
- + unpack-trees: mark new entries skip-worktree appropriately
- + unpack-trees: do not check for conflict entries too early
- + unpack-trees: let read-tree -u remove index entries outside sparse area
- + unpack-trees: only clear CE_UPDATE|CE_REMOVE when skip-worktree is always set
- + t1011 (sparse checkout): style nitpicks
-
-* po/userdiff-csharp (2010-08-16) 1 commit
-  (merged to 'next' on 2010-08-18 at f5edb3a)
- + Userdiff patterns for C#
-
-* so/http-user-agent (2010-08-11) 1 commit
-  (merged to 'next' on 2010-08-12 at 86cc5c4)
- + Allow HTTP user agent string to be modified.
-
-* sr/local-config (2010-08-03) 1 commit
-  (merged to 'next' on 2010-08-12 at 431f7af)
- + config: add --local option
-
---------------------------------------------------
 [New Topics]
 
-* jn/maint-doc-user-manual-html-doctype (2010-08-21) 2 commits
- - docs: fix Makefile dependency for user manual
- - Documentation: set a !DOCTYPE for user manual
+* mg/doc-bundle (2010-08-23) 3 commits
+  (merged to 'next' on 2010-08-23 at 2251a51)
+ + git-bundle.txt: Clarify rev-list-args restrictions
+ + git-bundle.txt: whitespace cleanup
+ + git-bundle.txt: Cleanup
 
-* cb/maint-mergetool-no-tty (2010-08-20) 1 commit
- - mergetool: Remove explicit references to /dev/tty
+* jc/builtin-binsearch (2010-08-05) 2 commits
+ . git.c: binary search in the built-in command list
+ . git.c: sort the list of built-in command names
 
-* jn/doc-backslash (2010-08-20) 17 commits
- - Documentation: remove stray backslash in show-branch discussion
- - Documentation: remove stray backslashes from "Fighting regressions" article
- - Documentation: do not convert ... operator to ellipses
- - Documentation: avoid stray backslash in user manual
- - Documentation: avoid stray backslashes in core tutorial
- - Documentation: remove stray backslashes in rev-parse manual
- - Documentation: remove backslash before ~ in fast-import manual
- - Documentation: remove stray backslash from "git bundle" manual
- - Documentation/technical: avoid stray backslash in parse-options API docs
- - Documentation: remove backslashes in manpage synopses
- - Documentation: clarify quoting in gitignore docs
- - Documentation: clarify quoting in "git rm" example
- - Documentation: add missing quotes to "git grep" examples
- - Documentation: clarify quoting in "git add" example
- - Documentation: unbreak regex in show-ref manual
- - Documentation: quoting trouble in "git rm" discussion
- - Documentation: tweak description of log.date
+* bc/maint-fetch-url-only (2010-08-25) 2 commits
+ - builtin/fetch.c: ignore merge config when not fetching from branch's remote
+ - t/t5510: demonstrate failure to fetch when current branch has merge ref
 
-* nd/clone-depth-zero (2010-08-20) 3 commits
- - {fetch,upload}-pack: allow --depth=0 for infinite depth
- - fetch-pack: use args.shallow to detect shallow clone instead of args.depth
- - clone: do not accept --depth on local clones
+* jc/maint-doc-em-dash (2010-08-23) 1 commit
+  (merged to 'next' on 2010-08-24 at 2e4d30b)
+ + Work around em-dash handling in newer AsciiDoc
 
-* cb/ignored-paths-are-precious (2010-08-21) 1 commit
- - checkout/merge: optionally fail operation when ignored files need to be overwritten
+* jf/merge-ignore-ws (2010-08-26) 4 commits
+ - merge-recursive: options to ignore whitespace changes
+ - merge-recursive --patience
+ - ll-merge: replace flag argument with options struct
+ - merge-recursive: expose merge options for builtin merge
+ (this branch uses eb/double-convert-before-merge, jn/merge-renormalize and jn/merge-renormalize.)
 
-I fixed up a trivial error in the configuration parser (which didn't
-return immediately after parsing), and while at it flipped the default 
-value of the configuration and the command line option to false.
+* jk/maint-pass-c-config-in-env (2010-08-24) 2 commits
+ - do not pass "git -c foo=bar" params to transport helpers
+ - pass "git -c foo=bar" params through environment
 
-This probably needs tests; also we know of longstanding bugs in related
-area that needs to be addressed---they do not have to be part of this
-series but their reproduction recipe would belong to the test script for
-this topic.
+* jl/submodule-ignore-diff (2010-08-25) 1 commit
+  (merged to 'next' on 2010-08-26 at af1c819)
+ + checkout: respect diff.ignoreSubmodules setting
 
-* np/maint-huge-delta-generation (2010-08-21) 1 commit
-  (merged to 'next' on 2010-08-21 at 5af7003)
- + fix >4GiB source delta assertion failure
+* js/maint-reflog-beyond-horizon (2010-08-24) 3 commits
+  (merged to 'next' on 2010-08-26 at 4281562)
+ + rev-parse: tests git rev-parse --verify master@{n}, for various n
+ + sha1_name.c: use warning in preference to fprintf(stderr
+ + rev-parse: exit with non-zero status if ref@{n} is not valid.
+
+* rr/fmt-merge-msg (2010-08-25) 3 commits
+ - merge: Make 'merge.log' an integer or boolean option
+ - merge: Make '--log' an integer option for number of shortlog entries
+ - fmt_merge_msg: Change fmt_merge_msg API to accept shortlog_len
+ (this branch uses jn/update-contrib-example-merge.)
+
+* tr/merge-unborn-clobber (2010-08-22) 1 commit
+ - Exhibit merge bug that clobbers index&WT
+
+* en/object-list-with-pathspec (2010-08-26) 2 commits
+ - Make rev-list --objects work together with pathspecs
+ - Add testcases showing how pathspecs are ignored with rev-list --objects
+
+* en/tree-walk-optim (2010-08-26) 4 commits
+ - diff_tree(): Skip skip_uninteresting() when all remaining paths interesting
+ - tree_entry_interesting(): Make return value more specific
+ - tree-walk: Correct bitrotted comment about tree_entry()
+ - Document pre-condition for tree_entry_interesting
 
 --------------------------------------------------
 [Stalled]
 
-* jc/log-grep (2010-07-19) 1 commit
+* jc/log-grep (2010-08-23) 1 commit
  - git log: add -G<regexp> that greps in the patch text
 
 This is broken, but haven't found any time to revisit it yet.
@@ -150,30 +95,83 @@ I recall there was another round of re-roll planned for this one.
 --------------------------------------------------
 [Cooking]
 
+* jn/maint-doc-user-manual-html-doctype (2010-08-21) 2 commits
+  (merged to 'next' on 2010-08-26 at e9084af)
+ + docs: fix Makefile dependency for user manual
+ + Documentation: set a !DOCTYPE for user manual
+
+* cb/maint-mergetool-no-tty (2010-08-20) 1 commit
+  (merged to 'next' on 2010-08-26 at b14989a)
+ + mergetool: Remove explicit references to /dev/tty
+
+* jn/doc-backslash (2010-08-20) 17 commits
+  (merged to 'next' on 2010-08-23 at 8c364b2)
+ + Documentation: remove stray backslash in show-branch discussion
+ + Documentation: remove stray backslashes from "Fighting regressions" article
+ + Documentation: do not convert ... operator to ellipses
+ + Documentation: avoid stray backslash in user manual
+ + Documentation: avoid stray backslashes in core tutorial
+ + Documentation: remove stray backslashes in rev-parse manual
+ + Documentation: remove backslash before ~ in fast-import manual
+ + Documentation: remove stray backslash from "git bundle" manual
+ + Documentation/technical: avoid stray backslash in parse-options API docs
+ + Documentation: remove backslashes in manpage synopses
+ + Documentation: clarify quoting in gitignore docs
+ + Documentation: clarify quoting in "git rm" example
+ + Documentation: add missing quotes to "git grep" examples
+ + Documentation: clarify quoting in "git add" example
+ + Documentation: unbreak regex in show-ref manual
+ + Documentation: quoting trouble in "git rm" discussion
+ + Documentation: tweak description of log.date
+
+* nd/clone-depth-zero (2010-08-23) 1 commit
+  (merged to 'next' on 2010-08-26 at b4491c3)
+ + clone: warn users --depth is ignored in local clones
+
+* cb/ignored-paths-are-precious (2010-08-21) 1 commit
+ - checkout/merge: optionally fail operation when ignored files need to be overwritten
+
+I fixed up a trivial error in the configuration parser (which didn't
+return immediately after parsing), and while at it flipped the default 
+value of the configuration and the command line option to false.
+
+This probably needs tests; also we know of longstanding bugs in related
+area that needs to be addressed---they do not have to be part of this
+series but their reproduction recipe would belong to the test script for
+this topic.
+
+* np/maint-huge-delta-generation (2010-08-21) 1 commit
+  (merged to 'next' on 2010-08-21 at 5af7003)
+ + fix >4GiB source delta assertion failure
+
+Will merge to 'master' shortly.
+
 * jn/apply-filename-with-sp (2010-08-18) 3 commits
- - apply: handle traditional patches with space in filename
- - tests: exercise "git apply" with weird filenames
- - apply: split quoted filename handling into new function
+  (merged to 'next' on 2010-08-26 at 4f60840)
+ + apply: handle traditional patches with space in filename
+ + tests: exercise "git apply" with weird filenames
+ + apply: split quoted filename handling into new function
 
 * ab/maint-reset-mixed-w-pathspec-advice (2010-08-15) 1 commit
   (merged to 'next' on 2010-08-21 at b09ee46)
  + reset: suggest what to do upon "git reset --mixed <paths>"
 
-Retitled.
+Will merge to 'master' shortly.
 
 * cb/binary-patch-id (2010-08-15) 1 commit
   (merged to 'next' on 2010-08-21 at ff38c3e)
  + hash binary sha1 into patch id
 
-* jj/icase-directory (2010-08-16) 6 commits
- - Support case folding in git fast-import when core.ignorecase=true
- - Support case folding for git add when core.ignorecase=true
- - Add case insensitivity support when using git ls-files
- - Add case insensitivity support for directories when using git status
- - Case insensitivity support for .gitignore via core.ignorecase
- - Add string comparison functions that respect the ignore_case variable.
+Will merge to 'master' shortly.
 
-Depends on GNU extension to fnmatch(3).
+* jj/icase-directory (2010-08-16) 6 commits
+  (merged to 'next' on 2010-08-26 at 9d8e1bc)
+ + Support case folding in git fast-import when core.ignorecase=true
+ + Support case folding for git add when core.ignorecase=true
+ + Add case insensitivity support when using git ls-files
+ + Add case insensitivity support for directories when using git status
+ + Case insensitivity support for .gitignore via core.ignorecase
+ + Add string comparison functions that respect the ignore_case variable.
 
 * jn/cherry-revert-message-clean-up (2010-08-18) 5 commits
   (merged to 'next' on 2010-08-21 at 09b123c)
@@ -184,7 +182,11 @@ Depends on GNU extension to fnmatch(3).
  + Eliminate “Finished cherry-pick/revert” message
  (this branch uses cc/revert.)
 
-* jn/merge-custom-no-trivial (2010-08-15) 2 commits
+Will merge to 'master' shortly.
+
+* jn/merge-custom-no-trivial (2010-08-23) 3 commits
+  (merged to 'next' on 2010-08-24 at d9e5b2d)
+ + t7606: Avoid using head as a file name
   (merged to 'next' on 2010-08-21 at 674498b)
  + merge: let custom strategies intervene in trivial merges
  + t7606 (merge-theirs): modernize style
@@ -192,7 +194,11 @@ Depends on GNU extension to fnmatch(3).
 * po/etc-gitattributes (2010-08-16) 1 commit
  - Add global and system-wide gitattributes
 
-* ab/compat-regex (2010-08-17) 7 commits
+* ab/compat-regex (2010-08-26) 9 commits
+  (merged to 'next' on 2010-08-26 at c5cc9d2)
+ + Fix compat/regex ANSIfication on MinGW
+  (merged to 'next' on 2010-08-22 at 40bce7c)
+ + autoconf: regex library detection typofix
   (merged to 'next' on 2010-08-21 at 632d60f)
  + autoconf: don't use platform regex if it lacks REG_STARTEND
  + t/t7008-grep-binary.sh: un-TODO a test that needs REG_STARTEND
@@ -202,17 +208,11 @@ Depends on GNU extension to fnmatch(3).
  + compat/regex: get the gawk regex engine to compile within git
  + compat/regex: use the regex engine from gawk for compat
 
-* ab/test-1 (2010-08-19) 5 commits
- - t/t0000-basic.sh: Run the passing TODO test inside its own test-lib
- - test-lib: Allow overriding of TEST_DIRECTORY
- - test-lib: Use "$GIT_BUILD_DIR" instead of "$TEST_DIRECTORY"/../
- - test-lib: Use $TEST_DIRECTORY or $GIT_BUILD_DIR instead of $(pwd) and ../
- - Merge branch 'ab/i18n' into ab/test-1
- (this branch uses ab/i18n and ab/test.)
-
 * da/fix-submodule-sync-superproject-config (2010-08-18) 1 commit
   (merged to 'next' on 2010-08-21 at e96772a)
  + submodule sync: Update "submodule.<name>.url"
+
+Will merge to 'master' shortly.
 
 * jn/update-contrib-example-merge (2010-08-17) 24 commits
   (merged to 'next' on 2010-08-21 at 41b5c4d)
@@ -240,8 +240,16 @@ Depends on GNU extension to fnmatch(3).
  + t7600 (merge): do not launch gitk for --debug
  + t7600 (merge): modernize style
  + merge: do not mistake (ancestor of) tag for branch
+ (this branch is used by rr/fmt-merge-msg.)
 
-* ab/test (2010-08-16) 43 commits
+* ab/test (2010-08-24) 49 commits
+  (merged to 'next' on 2010-08-26 at fb6a7cf)
+ + tests: simplify "missing PREREQ" message
+ + t/t0000-basic.sh: Run the passing TODO test inside its own test-lib
+ + test-lib: Allow overriding of TEST_DIRECTORY
+ + test-lib: Use "$GIT_BUILD_DIR" instead of "$TEST_DIRECTORY"/../
+ + test-lib: Use $TEST_DIRECTORY or $GIT_BUILD_DIR instead of $(pwd) and ../
+ + Merge branch 'ab/i18n' into ab/test-1
   (merged to 'next' on 2010-08-18 at f88bdb1)
  + cvs tests: do not touch test CVS repositories shipped with source
  + t/t9602-cvsimport-branches-tags.sh: Add a PERL prerequisite
@@ -286,15 +294,13 @@ Depends on GNU extension to fnmatch(3).
  + test-lib: Print missing prerequisites in test output
  + test-lib: Add support for multiple test prerequisites
  + test-lib: Don't write test-results when HARNESS_ACTIVE
- (this branch is used by ab/test-1.)
-
-Previously many individual topic branches from the same author, all
-regarding tests.  I thought it probably was ready for 'next' but was
-holding off as we seem to still keep getting many fixes on top.
+ (this branch uses ab/i18n.)
 
 * dj/fetch-tagopt (2010-08-11) 1 commit
   (merged to 'next' on 2010-08-21 at 737dfec)
  + fetch: allow command line --tags to override config
+
+Will merge to 'master' shortly.
 
 * jn/paginate-fix (2010-08-16) 14 commits
   (merged to 'next' on 2010-08-18 at bb04a13)
@@ -314,6 +320,8 @@ holding off as we seem to still keep getting many fixes on top.
  + git wrapper: introduce startup_info struct
  (this branch uses jn/maint-setup-fix.)
 
+Will merge to 'master' shortly.
+
 * jn/merge-renormalize (2010-08-05) 12 commits
   (merged to 'next' on 2010-08-18 at d9aa77b)
  + merge-recursive --renormalize
@@ -328,32 +336,33 @@ holding off as we seem to still keep getting many fixes on top.
  + t6038 (merge.renormalize): check that it can be turned off
  + t6038 (merge.renormalize): try checkout -m and cherry-pick
  + t6038 (merge.renormalize): style nitpicks
- (this branch uses eb/double-convert-before-merge.)
+ (this branch is used by jf/merge-ignore-ws and jf/merge-ignore-ws; uses eb/double-convert-before-merge.)
 
 * eb/double-convert-before-merge (2010-07-02) 3 commits
  + Don't expand CRLFs when normalizing text during merge
  + Try normalizing files to avoid delete/modify conflicts when merging
  + Avoid conflicts when merging branches with mixed normalization
- (this branch is used by jn/merge-renormalize.)
+ (this branch is used by jf/merge-ignore-ws and jn/merge-renormalize.)
 
 * by/line-log (2010-08-11) 17 commits
- - Document line history browser
- - Add tests for line history browser
- - Add --full-line-diff option
- - Add --graph prefix before line history output
- - Add parent rewriting to line history browser
- - Make graph_next_line external to other part of git
- - Make rewrite_parents public to other part of git
- - Hook line history into cmd_log, ensuring a topo-ordered walk
- - Print the line log
- - map/take range to the parent of commits
- - Add range clone functions
- - Export three functions from diff.c
- - Parse the -L options
- - Refactor parse_loc
- - Add the basic data structure for line level history
- - parse-options: add two helper functions
- - parse-options: enhance STOP_AT_NON_OPTION
+  (merged to 'next' on 2010-08-26 at a160ff1)
+ + Document line history browser
+ + Add tests for line history browser
+ + Add --full-line-diff option
+ + Add --graph prefix before line history output
+ + Add parent rewriting to line history browser
+ + Make graph_next_line external to other part of git
+ + Make rewrite_parents public to other part of git
+ + Hook line history into cmd_log, ensuring a topo-ordered walk
+ + Print the line log
+ + map/take range to the parent of commits
+ + Add range clone functions
+ + Export three functions from diff.c
+ + Parse the -L options
+ + Refactor parse_loc
+ + Add the basic data structure for line level history
+ + parse-options: add two helper functions
+ + parse-options: enhance STOP_AT_NON_OPTION
 
 Not entirely happy with the command line parser, but will merge to 'next'
 after giving the series another look.
@@ -379,23 +388,26 @@ after giving the series another look.
  + Add memory pool library
  + Introduce vcs-svn lib
 
+Will merge to 'master' shortly.
+
 * js/detached-stash (2010-08-21) 9 commits
- - detached-stash: update Documentation
- - detached-stash: tests of git stash with stash-like arguments
- - detached-stash: simplify git stash show
- - detached-stash: simplify git stash branch
- - detached-stash: refactor git stash pop implementation
- - detached-stash: simplify stash_drop
- - detached-stash: simplify stash_apply
- - detached-stash: work around git rev-parse failure to detect bad log refs
- - detached-stash: introduce parse_flags_and_revs function
+  (merged to 'next' on 2010-08-26 at 7180a87)
+ + detached-stash: update Documentation
+ + detached-stash: tests of git stash with stash-like arguments
+ + detached-stash: simplify git stash show
+ + detached-stash: simplify git stash branch
+ + detached-stash: refactor git stash pop implementation
+ + detached-stash: simplify stash_drop
+ + detached-stash: simplify stash_apply
+ + detached-stash: work around git rev-parse failure to detect bad log refs
+ + detached-stash: introduce parse_flags_and_revs function
 
-Rerolled again.
-
-* gb/shell-ext (2010-07-28) 3 commits
- - Add sample commands for git-shell
- - Add interactive mode to git-shell for user-friendliness
- - Allow creation of arbitrary git-shell commands
+* gb/shell-ext (2010-08-24) 4 commits
+  (merged to 'next' on 2010-08-24 at 49ea7b8)
+ + shell: Rewrite documentation and improve error message
+ + Add sample commands for git-shell
+ + Add interactive mode to git-shell for user-friendliness
+ + Allow creation of arbitrary git-shell commands
 
 I am not very happy about adding these backdoors to git-shell, which is
 primarily a security mechanism, and obviously security and backdoor do not
@@ -416,12 +428,16 @@ mix well.
  + t1501 (rev-parse): clarify
  (this branch is used by jn/paginate-fix.)
 
+Will merge to 'master' shortly.
+
 * tr/maint-no-unquote-plus (2010-07-24) 1 commit
   (merged to 'next' on 2010-08-18 at b811248)
  + Do not unquote + into ' ' in URLs
 
 I think this one is safe in the context of git (namely smart-http
 interface).
+
+Will merge to 'master' shortly.
 
 * cc/revert (2010-07-21) 5 commits
   (merged to 'next' on 2010-08-14 at a910d5a)
@@ -437,9 +453,13 @@ interface).
  + fast-export: Add a --full-tree option
  + fast-export: Fix dropping of files with --import-marks and path limiting
 
+Will merge to 'master' shortly.
+
 * hv/autosquash-config (2010-07-14) 1 commit
   (merged to 'next' on 2010-08-18 at 03a8eec)
  + add configuration variable for --autosquash option of interactive rebase
+
+Will merge to 'master' shortly.
 
 * il/rfc-remote-fd-ext (2010-08-14) 6 commits
  - Fix build on Windows
@@ -449,13 +469,12 @@ interface).
  - New remote helper: git-remote-ext
  - New remote helper git-remote-fd
 
-I haven't heard anything about this series.  Is it desirable?  Or is it
-not used by anybody and just another baggage we'd rather not carry?
-
 * sg/rerere-gc-old-still-used (2010-07-13) 2 commits
   (merged to 'next' on 2010-08-18 at 8bc4635)
  + rerere: fix overeager gc
  + mingw_utime(): handle NULL times parameter
+
+Will merge to 'master' shortly.
 
 * en/d-f-conflict-fix (2010-08-20) 12 commits
   (merged to 'next' on 2010-08-20 at af7f2b0)
@@ -475,25 +494,11 @@ not used by anybody and just another baggage we'd rather not carry?
  + Add a rename + D/F conflict testcase
  + Add additional testcases for D/F conflicts
 
+Will merge to 'master' shortly.
+
 * ab/i18n (2010-07-25) 4 commits
- - tests: locate i18n lib&data correctly under --valgrind
- - gettext: setlocale(LC_CTYPE, "") breaks Git's C function assumptions
- - tests: rename test to work around GNU gettext bug
- - Add infrastructure for translating Git with gettext
- (this branch is used by ab/test-1.)
-
---------------------------------------------------
-[Ejected]
-
-* jn/commit-no-change-wo-status (2010-08-11) 10 commits
- . t6040 (branch tracking): check “status” instead of “commit”
- . commit: suppress status summary when no changes staged
- . commit --dry-run: give advice on empty amend
- . commit: give empty-commit avoidance code its own function
- . t7508 (status): modernize style
- . commit: split off the piece that writes status
- . commit: split commit -s handling into its own function
- . commit: split off a function to fetch the default log message
- . wt-status: split off a function for printing submodule summary
- . wt-status: split wt_status_print into digestible pieces
-
+ + tests: locate i18n lib&data correctly under --valgrind
+ + gettext: setlocale(LC_CTYPE, "") breaks Git's C function assumptions
+ + tests: rename test to work around GNU gettext bug
+ + Add infrastructure for translating Git with gettext
+ (this branch is used by ab/test.)
