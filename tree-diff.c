@@ -103,7 +103,7 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 	int never_interesting = -1;
 
 	if (!opt->nr_paths)
-		return 1;
+		return 2;
 
 	sha1 = tree_entry_extract(desc, &path, &mode);
 
