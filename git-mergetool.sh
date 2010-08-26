@@ -289,6 +289,10 @@ if test $# -eq 0 ; then
 	echo "No files need merging"
 	exit 0
     fi
+
+    # Save original stdin
+    exec 3<&0
+
     printf "Merging:\n"
     printf "$files\n"
 
@@ -296,10 +300,10 @@ if test $# -eq 0 ; then
     while IFS= read i
     do
 	if test $last_status -ne 0; then
-	    prompt_after_failed_merge < /dev/tty || exit 1
+	    prompt_after_failed_merge <&3 || exit 1
 	fi
 	printf "\n"
-	merge_file "$i" < /dev/tty > /dev/tty
+	merge_file "$i" <&3
 	last_status=$?
 	if test $last_status -ne 0; then
 	    rollup_status=1
