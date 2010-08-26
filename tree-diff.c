@@ -259,19 +259,12 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 	}
 }
 
-static void skip_uninteresting(struct tree_desc *t, const char *base, int baselen, struct diff_options *opt)
+static void skip_uninteresting(struct tree_desc *t, const char *base, int baselen, struct diff_options *opt, int *all_interesting)
 {
-	int all_interesting = 0;
 	while (t->size) {
-		int show;
-
-		if (all_interesting)
-			show = 1;
-		else {
-			show = tree_entry_interesting(t, base, baselen, opt);
-			if (show == 2)
-				all_interesting = 1;
-		}
+		int show = tree_entry_interesting(t, base, baselen, opt);
+		if (show == 2)
+			*all_interesting = 1;
 		if (!show) {
 			update_tree_entry(t);
 			continue;
@@ -286,14 +279,20 @@ static void skip_uninteresting(struct tree_desc *t, const char *base, int basele
 int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, struct diff_options *opt)
 {
 	int baselen = strlen(base);
+	int all_t1_interesting = 0;
+	int all_t2_interesting = 0;
 
 	for (;;) {
 		if (DIFF_OPT_TST(opt, QUICK) &&
 		    DIFF_OPT_TST(opt, HAS_CHANGES))
 			break;
 		if (opt->nr_paths) {
-			skip_uninteresting(t1, base, baselen, opt);
-			skip_uninteresting(t2, base, baselen, opt);
+			if (!all_t1_interesting)
+				skip_uninteresting(t1, base, baselen, opt,
+						   &all_t1_interesting);
+			if (!all_t2_interesting)
+				skip_uninteresting(t2, base, baselen, opt,
+						   &all_t2_interesting);
 		}
 		if (!t1->size) {
 			if (!t2->size)
