@@ -352,7 +352,7 @@ re_search_2 (struct re_pattern_buffer *bufp,
 weak_alias (__re_search_2, re_search_2)
 #endif
 
-static int
+static int internal_function
 re_search_2_stub (struct re_pattern_buffer *bufp,
 		  const char *string1, int length1,
 		  const char *string2, int length2, int start,
@@ -396,7 +396,7 @@ re_search_2_stub (struct re_pattern_buffer *bufp,
    If RET_LEN is nonzero the length of the match is returned (re_match style);
    otherwise the position of the match is returned.  */
 
-static int
+static int internal_function
 re_search_stub (struct re_pattern_buffer *bufp,
 		const char *string, int length, int start,
 		int range, int stop,
@@ -483,7 +483,7 @@ re_search_stub (struct re_pattern_buffer *bufp,
   return rval;
 }
 
-static unsigned
+static unsigned internal_function
 re_copy_regs (struct re_registers *regs,
 	      regmatch_t *pmatch,
 	      int nregs, int regs_allocated)
@@ -613,7 +613,7 @@ re_exec (s)
    Note: We assume front end functions already check ranges.
    (START + RANGE >= 0 && START + RANGE <= LENGTH)  */
 
-static reg_errcode_t
+static reg_errcode_t internal_function
 re_search_internal (const regex_t *preg,
 		    const char *string,
 		    int length, int start, int range, int stop,
@@ -937,7 +937,7 @@ re_search_internal (const regex_t *preg,
   return err;
 }
 
-static reg_errcode_t
+static reg_errcode_t internal_function
 prune_impossible_nodes (re_match_context_t *mctx)
 {
   const re_dfa_t *const dfa = mctx->dfa;
