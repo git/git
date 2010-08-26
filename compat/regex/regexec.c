@@ -40,20 +40,19 @@ static reg_errcode_t re_search_internal (const regex_t *preg,
 					 const char *string, int length,
 					 int start, int range, int stop,
 					 size_t nmatch, regmatch_t pmatch[],
-					 int eflags) internal_function;
+					 int eflags);
 static int re_search_2_stub (struct re_pattern_buffer *bufp,
 			     const char *string1, int length1,
 			     const char *string2, int length2,
 			     int start, int range, struct re_registers *regs,
-			     int stop, int ret_len) internal_function;
+			     int stop, int ret_len);
 static int re_search_stub (struct re_pattern_buffer *bufp,
 			   const char *string, int length, int start,
 			   int range, int stop, struct re_registers *regs,
-			   int ret_len) internal_function;
+			   int ret_len);
 static unsigned re_copy_regs (struct re_registers *regs, regmatch_t *pmatch,
-			      int nregs, int regs_allocated) internal_function;
-static reg_errcode_t prune_impossible_nodes (re_match_context_t *mctx)
-     internal_function;
+			      int nregs, int regs_allocated);
+static reg_errcode_t prune_impossible_nodes (re_match_context_t *mctx);
 static int check_matching (re_match_context_t *mctx, int fl_longest_match,
 			   int *p_match_first) internal_function;
 static int check_halt_state_context (const re_match_context_t *mctx,
