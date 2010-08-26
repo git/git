@@ -608,22 +608,25 @@ static int merge_3way(struct merge_options *o,
 		      const char *branch2)
 {
 	mmfile_t orig, src1, src2;
+	struct ll_merge_options ll_opts = {0};
 	char *base_name, *name1, *name2;
 	int merge_status;
-	int favor;
 
-	if (o->call_depth)
-		favor = 0;
-	else {
+	ll_opts.renormalize = o->renormalize;
+
+	if (o->call_depth) {
+		ll_opts.virtual_ancestor = 1;
+		ll_opts.variant = 0;
+	} else {
 		switch (o->recursive_variant) {
 		case MERGE_RECURSIVE_OURS:
-			favor = XDL_MERGE_FAVOR_OURS;
+			ll_opts.variant = XDL_MERGE_FAVOR_OURS;
 			break;
 		case MERGE_RECURSIVE_THEIRS:
-			favor = XDL_MERGE_FAVOR_THEIRS;
+			ll_opts.variant = XDL_MERGE_FAVOR_THEIRS;
 			break;
 		default:
-			favor = 0;
+			ll_opts.variant = 0;
 			break;
 		}
 	}
@@ -646,10 +649,7 @@ static int merge_3way(struct merge_options *o,
 	read_mmblob(&src2, b->sha1);
 
 	merge_status = ll_merge(result_buf, a->path, &orig, base_name,
-				&src1, name1, &src2, name2,
-				((o->call_depth ? LL_OPT_VIRTUAL_ANCESTOR : 0) |
-				 (o->renormalize ? LL_OPT_RENORMALIZE : 0) |
-				 create_ll_flag(favor)));
+				&src1, name1, &src2, name2, &ll_opts);
 
 	free(name1);
 	free(name2);
