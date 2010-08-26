@@ -1515,6 +1515,12 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 		o->subtree_shift = s + strlen("subtree=");
 	else if (!strcmp(s, "patience"))
 		o->xdl_opts |= XDF_PATIENCE_DIFF;
+	else if (!strcmp(s, "ignore-space-change"))
+		o->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
+	else if (!strcmp(s, "ignore-all-space"))
+		o->xdl_opts |= XDF_IGNORE_WHITESPACE;
+	else if (!strcmp(s, "ignore-space-at-eol"))
+		o->xdl_opts |= XDF_IGNORE_WHITESPACE_AT_EOL;
 	else if (!strcmp(s, "renormalize"))
 		o->renormalize = 1;
 	else if (!strcmp(s, "no-renormalize"))
