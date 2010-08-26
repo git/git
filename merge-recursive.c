@@ -613,6 +613,7 @@ static int merge_3way(struct merge_options *o,
 	int merge_status;
 
 	ll_opts.renormalize = o->renormalize;
+	ll_opts.xdl_opts = o->xdl_opts;
 
 	if (o->call_depth) {
 		ll_opts.virtual_ancestor = 1;
@@ -1512,6 +1513,8 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 		o->subtree_shift = "";
 	else if (!prefixcmp(s, "subtree="))
 		o->subtree_shift = s + strlen("subtree=");
+	else if (!strcmp(s, "patience"))
+		o->xdl_opts |= XDF_PATIENCE_DIFF;
 	else if (!strcmp(s, "renormalize"))
 		o->renormalize = 1;
 	else if (!strcmp(s, "no-renormalize"))

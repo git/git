@@ -40,6 +40,13 @@ the other tree did, declaring 'our' history contains all that happened in it.
 theirs;;
 	This is opposite of 'ours'.
 
+patience;;
+	With this option, 'merge-recursive' spends a little extra time
+	to avoid mismerges that sometimes occur due to unimportant
+	matching lines (e.g., braces from distinct functions).  Use
+	this when the branches to be merged have diverged wildly.
+	See also linkgit:git-diff[1] `--patience`.
+
 renormalize;;
 	This runs a virtual check-out and check-in of all three stages
 	of a file when resolving a three-way merge.  This option is

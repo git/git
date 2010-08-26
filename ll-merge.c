@@ -86,6 +86,7 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	memset(&xmp, 0, sizeof(xmp));
 	xmp.level = XDL_MERGE_ZEALOUS;
 	xmp.favor = opts->variant;
+	xmp.xpp.flags = opts->xdl_opts;
 	if (git_xmerge_style >= 0)
 		xmp.style = git_xmerge_style;
 	if (marker_size > 0)

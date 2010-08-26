@@ -2,6 +2,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "merge-recursive.h"
+#include "xdiff-interface.h"
 
 static const char *better_branch_name(const char *branch)
 {
