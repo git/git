@@ -1499,3 +1499,24 @@ void init_merge_options(struct merge_options *o)
 	memset(&o->current_directory_set, 0, sizeof(struct string_list));
 	o->current_directory_set.strdup_strings = 1;
 }
+
+int parse_merge_opt(struct merge_options *o, const char *s)
+{
+	if (!s || !*s)
+		return -1;
+	if (!strcmp(s, "ours"))
+		o->recursive_variant = MERGE_RECURSIVE_OURS;
+	else if (!strcmp(s, "theirs"))
+		o->recursive_variant = MERGE_RECURSIVE_THEIRS;
+	else if (!strcmp(s, "subtree"))
+		o->subtree_shift = "";
+	else if (!prefixcmp(s, "subtree="))
+		o->subtree_shift = s + strlen("subtree=");
+	else if (!strcmp(s, "renormalize"))
+		o->renormalize = 1;
+	else if (!strcmp(s, "no-renormalize"))
+		o->renormalize = 0;
+	else
+		return -1;
+	return 0;
+}
