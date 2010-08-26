@@ -228,7 +228,8 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 			v->s = s;
 		}
 		else if (!strcmp(name, "objectname:short")) {
-			v->s = find_unique_abbrev(obj->sha1, DEFAULT_ABBREV);
+			v->s = xstrdup(find_unique_abbrev(obj->sha1,
+							  DEFAULT_ABBREV));
 		}
 	}
 }
