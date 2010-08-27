@@ -56,6 +56,22 @@ test_expect_success "format-patch --ignore-if-in-upstream" '
 
 '
 
+test_expect_success "format-patch doesn't consider merge commits" '
+
+	git checkout -b slave master &&
+	echo "Another line" >>file &&
+	test_tick &&
+	git commit -am "Slave change #1" &&
+	echo "Yet another line" >>file &&
+	test_tick &&
+	git commit -am "Slave change #2" &&
+	git checkout -b merger master &&
+	test_tick &&
+	git merge --no-ff slave &&
+	cnt=`git format-patch -3 --stdout | grep "^From " | wc -l` &&
+	test $cnt = 3
+'
+
 test_expect_success "format-patch result applies" '
 
 	git checkout -b rebuild-0 master &&
