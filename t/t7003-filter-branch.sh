@@ -307,6 +307,24 @@ test_expect_success '--remap-to-ancestor with filename filters' '
 	test $orig_invariant = $(git rev-parse invariant)
 '
 
+test_expect_success 'automatic remapping to ancestor with filename filters' '
+	git checkout master &&
+	git reset --hard A &&
+	test_commit add-foo2 foo 1 &&
+	git branch moved-foo2 &&
+	test_commit add-bar2 bar a &&
+	git branch invariant2 &&
+	orig_invariant=$(git rev-parse invariant2) &&
+	git branch moved-bar2 &&
+	test_commit change-foo2 foo 2 &&
+	git filter-branch -f \
+		moved-foo2 moved-bar2 A..master \
+		-- -- foo &&
+	test $(git rev-parse moved-foo2) = $(git rev-parse moved-bar2) &&
+	test $(git rev-parse moved-foo2) = $(git rev-parse master^) &&
+	test $orig_invariant = $(git rev-parse invariant2)
+'
+
 test_expect_success 'setup submodule' '
 	rm -fr ?* .git &&
 	git init &&
