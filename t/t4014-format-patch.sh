@@ -12,24 +12,29 @@ test_expect_success setup '
 	for i in 1 2 3 4 5 6 7 8 9 10; do echo "$i"; done >file &&
 	cat file >elif &&
 	git add file elif &&
+	test_tick &&
 	git commit -m Initial &&
 	git checkout -b side &&
 
 	for i in 1 2 5 6 A B C 7 8 9 10; do echo "$i"; done >file &&
 	test_chmod +x elif &&
+	test_tick &&
 	git commit -m "Side changes #1" &&
 
 	for i in D E F; do echo "$i"; done >>file &&
 	git update-index file &&
+	test_tick &&
 	git commit -m "Side changes #2" &&
 	git tag C2 &&
 
 	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >file &&
 	git update-index file &&
+	test_tick &&
 	git commit -m "Side changes #3 with \\n backslash-n in it." &&
 
 	git checkout master &&
 	git diff-tree -p C2 | git apply --index &&
+	test_tick &&
 	git commit -m "Master accepts moral equivalent of #2"
 
 '
