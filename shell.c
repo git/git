@@ -73,8 +73,10 @@ static void run_shell(void)
 		const char *prog;
 		char *full_cmd;
 		char *rawargs;
+		char *split_args;
 		const char **argv;
 		int code;
+		int count;
 
 		fprintf(stderr, "git> ");
 		if (strbuf_getline(&line, stdin, '\n') == EOF) {
@@ -84,7 +86,12 @@ static void run_shell(void)
 		}
 		strbuf_trim(&line);
 		rawargs = strbuf_detach(&line, NULL);
-		if (split_cmdline(rawargs, &argv) == -1) {
+		split_args = xstrdup(rawargs);
+		count = split_cmdline(split_args, &argv);
+		if (count < 0) {
+			fprintf(stderr, "invalid command format '%s': %s\n", rawargs,
+				split_cmdline_strerror(count));
+			free(split_args);
 			free(rawargs);
 			continue;
 		}
@@ -128,6 +135,7 @@ int main(int argc, char **argv)
 	const char **user_argv;
 	struct commands *cmd;
 	int devnull_fd;
+	int count;
 
 	/*
 	 * Always open file descriptors 0/1/2 to avoid clobbering files
@@ -190,7 +198,8 @@ int main(int argc, char **argv)
 	}
 
 	cd_to_homedir();
-	if (split_cmdline(prog, &user_argv) != -1) {
+	count = split_cmdline(prog, &user_argv);
+	if (count >= 0) {
 		if (is_valid_cmd_name(user_argv[0])) {
 			prog = make_cmd(user_argv[0]);
 			user_argv[0] = prog;
@@ -201,6 +210,7 @@ int main(int argc, char **argv)
 		die("unrecognized command '%s'", argv[2]);
 	} else {
 		free(prog);
-		die("invalid command format '%s'", argv[2]);
+		die("invalid command format '%s': %s", argv[2],
+		    split_cmdline_strerror(count));
 	}
 }
