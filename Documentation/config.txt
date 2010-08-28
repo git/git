@@ -829,7 +829,8 @@ diff.renames::
 diff.ignoreSubmodules::
 	Sets the default value of --ignore-submodules. Note that this
 	affects only 'git diff' Porcelain, and not lower level 'diff'
-	commands such as 'git diff-files'.
+	commands such as 'git diff-files'. 'git checkout' also honors
+	this setting when reporting uncommitted changes.
 
 diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space

@@ -39,4 +39,11 @@ test_expect_success '"checkout <submodule>" updates the index only' '
 	git diff-files --quiet
 '
 
+test_expect_success '"checkout <submodule>" honors diff.ignoreSubmodules' '
+	git config diff.ignoreSubmodules dirty &&
+	echo x> submodule/untracked &&
+	git checkout HEAD >actual 2>&1 &&
+	! test -s actual
+'
+
 test_done
