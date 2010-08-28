@@ -608,6 +608,10 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 		handle_ignore_submodules_arg(&opts->diff_options, value);
 		return 0;
 	}
+
+	if (!prefixcmp(var, "submodule."))
+		return parse_submodule_config_option(var, value);
+
 	return git_xmerge_config(var, value, NULL);
 }
 
@@ -689,6 +693,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	memset(&opts, 0, sizeof(opts));
 	memset(&new, 0, sizeof(new));
 
+	gitmodules_config();
 	git_config(git_checkout_config, &opts);
 
 	opts.track = BRANCH_TRACK_UNSPECIFIED;

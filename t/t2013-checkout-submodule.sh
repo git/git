@@ -46,4 +46,20 @@ test_expect_success '"checkout <submodule>" honors diff.ignoreSubmodules' '
 	! test -s actual
 '
 
+test_expect_success '"checkout <submodule>" honors submodule.*.ignore from .gitmodules' '
+	git config diff.ignoreSubmodules none &&
+	git config -f .gitmodules submodule.submodule.path submodule &&
+	git config -f .gitmodules submodule.submodule.ignore untracked &&
+	git checkout HEAD >actual 2>&1 &&
+	! test -s actual
+'
+
+test_expect_success '"checkout <submodule>" honors submodule.*.ignore from .git/config' '
+	git config -f .gitmodules submodule.submodule.ignore none &&
+	git config submodule.submodule.path submodule &&
+	git config submodule.submodule.ignore all &&
+	git checkout HEAD >actual 2>&1 &&
+	! test -s actual
+'
+
 test_done
