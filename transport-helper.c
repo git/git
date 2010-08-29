@@ -410,7 +410,7 @@ static int get_exporter(struct transport *transport,
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */
 	fastexport->out = dup(helper->in);
-	fastexport->argv = xcalloc(5 + revlist_args->nr, sizeof(*fastexport->argv));
+	fastexport->argv = xcalloc(6 + revlist_args->nr, sizeof(*fastexport->argv));
 	fastexport->argv[argc++] = "fast-export";
 	fastexport->argv[argc++] = "--use-done-feature";
 	if (data->export_marks)
@@ -420,6 +420,8 @@ static int get_exporter(struct transport *transport,
 
 	for (i = 0; i < revlist_args->nr; i++)
 		fastexport->argv[argc++] = revlist_args->items[i].string;
+
+	fastexport->argv[argc++] = "--";
 
 	fastexport->git_cmd = 1;
 	return start_command(fastexport);
