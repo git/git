@@ -736,9 +736,9 @@ static int set_reuse_addr(int sockfd)
 
 #ifndef NO_IPV6
 
-static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
+static int setup_named_sock(char *listen_addr, int listen_port, int **socklist_p, int socknum)
 {
-	int socknum = 0, *socklist = NULL;
+	int *socklist = *socklist_p;
 	int maxfd = -1;
 	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *ai0, *ai;
@@ -810,8 +810,9 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 
 #else /* NO_IPV6 */
 
-static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
+static int setup_named_sock(char *listen_addr, int listen_port, int **socklist_p, int socknum)
 {
+	int *socklist = *socklist_p;
 	struct sockaddr_in sin;
 	int sockfd;
 	long flags;
@@ -823,40 +824,52 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 	if (listen_addr) {
 		/* Well, host better be an IP address here. */
 		if (inet_pton(AF_INET, listen_addr, &sin.sin_addr.s_addr) <= 0)
-			return 0;
+			return socknum;
 	} else {
 		sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	}
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0)
-		return 0;
+		return socknum;
 
 	if (set_reuse_addr(sockfd)) {
 		close(sockfd);
-		return 0;
+		return socknum;
 	}
 
 	if ( bind(sockfd, (struct sockaddr *)&sin, sizeof sin) < 0 ) {
 		close(sockfd);
-		return 0;
+		return socknum;
 	}
 
 	if (listen(sockfd, 5) < 0) {
 		close(sockfd);
-		return 0;
+		return socknum;
 	}
 
 	flags = fcntl(sockfd, F_GETFD, 0);
 	if (flags >= 0)
 		fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
 
-	*socklist_p = xmalloc(sizeof(int));
-	**socklist_p = sockfd;
-	return 1;
+	socklist = xrealloc(socklist, sizeof(int) * (socknum + 1));
+	socklist[socknum++] = sockfd;
+
+	*socklist_p = socklist;
+	return socknum;
 }
 
 #endif
+
+static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
+{
+	int socknum = 0, *socklist = NULL;
+
+	socknum = setup_named_sock(listen_addr, listen_port, &socklist, socknum);
+
+	*socklist_p = socklist;
+	return socknum;
+}
 
 static int service_loop(int socknum, int *socklist)
 {
