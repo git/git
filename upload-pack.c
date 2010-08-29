@@ -482,7 +482,7 @@ static int get_common_commits(void)
 
 static void receive_needs(void)
 {
-	struct object_array shallows = {0, 0, NULL};
+	struct object_array shallows = OBJECT_ARRAY_INIT;
 	static char line[1000];
 	int len, depth = 0;
 

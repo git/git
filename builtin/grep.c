@@ -834,7 +834,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	int external_grep_allowed__ignored;
 	const char *show_in_pager = NULL, *default_pager = "dummy";
 	struct grep_opt opt;
-	struct object_array list = { 0, 0, NULL };
+	struct object_array list = OBJECT_ARRAY_INIT;
 	const char **paths = NULL;
 	struct string_list path_list = STRING_LIST_INIT_NODUP;
 	int i;

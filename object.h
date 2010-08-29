@@ -21,6 +21,8 @@ struct object_array {
 	} *objects;
 };
 
+#define OBJECT_ARRAY_INIT { 0, 0, NULL }
+
 #define TYPE_BITS   3
 #define FLAG_BITS  27
 
