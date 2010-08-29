@@ -12,6 +12,7 @@
 #include "parse-options.h"
 #include "sigchain.h"
 #include "transport.h"
+#include "submodule.h"
 
 static const char * const builtin_fetch_usage[] = {
 	"git fetch [<options>] [<repository> [<refspec>...]]",
@@ -27,7 +28,7 @@ enum {
 	TAGS_SET = 2
 };
 
-static int all, append, dry_run, force, keep, multiple, prune, update_head_ok, verbosity;
+static int all, append, dry_run, force, keep, multiple, prune, recursive = -1, update_head_ok, verbosity;
 static int progress;
 static int tags = TAGS_DEFAULT;
 static const char *depth;
@@ -53,6 +54,8 @@ static struct option builtin_fetch_options[] = {
 		    "do not fetch all tags (--no-tags)", TAGS_UNSET),
 	OPT_BOOLEAN('p', "prune", &prune,
 		    "prune tracking branches no longer on remote"),
+	OPT_BOOLEAN(0, "recursive", &recursive,
+		    "control recursive fetching of submodules"),
 	OPT_BOOLEAN(0, "dry-run", &dry_run,
 		    "dry run"),
 	OPT_BOOLEAN('k', "keep", &keep, "keep downloaded pack"),
@@ -917,6 +920,12 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			remote = remote_get(argv[0]);
 			result = fetch_one(remote, argc-1, argv+1);
 		}
+	}
+
+	if (!result && recursive) {
+		gitmodules_config();
+		git_config(submodule_config, NULL);
+		result = fetch_populated_submodules();
 	}
 
 	/* All names were strdup()ed or strndup()ed */

@@ -60,6 +60,11 @@ endif::git-pull[]
 	flag lets all tags and their associated objects be
 	downloaded.
 
+--[no-]recursive::
+	By default new commits of all populated submodules will be fetched
+	too. This option can be used to disable/enable recursive fetching of
+	submodules.
+
 -u::
 --update-head-ok::
 	By default 'git fetch' refuses to update the head which

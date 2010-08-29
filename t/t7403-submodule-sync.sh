@@ -50,7 +50,7 @@ test_expect_success 'change submodule url' '
 
 test_expect_success '"git submodule sync" should update submodule URLs' '
 	(cd super-clone &&
-	 git pull &&
+	 git pull --no-recursive &&
 	 git submodule sync
 	) &&
 	test -d "$(git config -f super-clone/submodule/.git/config \

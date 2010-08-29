@@ -63,7 +63,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 	}
 }
 
-static int submodule_config(const char *var, const char *value, void *cb)
+int submodule_config(const char *var, const char *value, void *cb)
 {
 	if (!prefixcmp(var, "submodule."))
 		return parse_submodule_config_option(var, value);
@@ -227,6 +227,47 @@ void show_submodule_summary(FILE *f, const char *path,
 		clear_commit_marks(right, ~0);
 	}
 	strbuf_release(&sb);
+}
+
+int fetch_populated_submodules()
+{
+	int result = 0;
+	struct child_process cp;
+	const char *argv[] = {
+		"fetch",
+		NULL,
+	};
+	struct string_list_item *name_for_path;
+	const char *work_tree = get_git_work_tree();
+	if (!work_tree)
+		return 0;
+
+	memset(&cp, 0, sizeof(cp));
+	cp.argv = argv;
+	cp.env = local_repo_env;
+	cp.git_cmd = 1;
+	cp.no_stdin = 1;
+	cp.out = -1;
+
+	for_each_string_list_item(name_for_path, &config_name_for_path) {
+		struct strbuf submodule_path = STRBUF_INIT;
+		struct strbuf submodule_git_dir = STRBUF_INIT;
+		const char *git_dir;
+		strbuf_addf(&submodule_path, "%s/%s", work_tree, name_for_path->string);
+		strbuf_addf(&submodule_git_dir, "%s/.git", submodule_path.buf);
+		git_dir = read_gitfile_gently(submodule_git_dir.buf);
+		if (!git_dir)
+			git_dir = submodule_git_dir.buf;
+		if (is_directory(git_dir)) {
+			printf("Fetching submodule %s\n", name_for_path->string);
+			cp.dir = submodule_path.buf;
+			if (run_command(&cp))
+				result = 1;
+		}
+		strbuf_release(&submodule_path);
+		strbuf_release(&submodule_git_dir);
+	}
+	return result;
 }
 
 unsigned is_submodule_modified(const char *path, int ignore_untracked)
