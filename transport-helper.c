@@ -469,6 +469,8 @@ static int get_exporter(struct transport *transport,
 	for (i = 0; i < revlist_args->nr; i++)
 		argv_array_push(&fastexport->args, revlist_args->items[i].string);
 
+	argv_array_push(&fastexport->args, "--");
+
 	fastexport->git_cmd = 1;
 	return start_command(fastexport);
 }
