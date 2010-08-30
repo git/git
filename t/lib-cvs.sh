@@ -3,9 +3,6 @@
 . ./test-lib.sh
 
 unset CVS_SERVER
-# for clean cvsps cache
-HOME=$(pwd)
-export HOME
 
 if ! type cvs >/dev/null 2>&1
 then
