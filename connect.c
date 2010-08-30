@@ -629,7 +629,8 @@ char *git_getpass(const char *prompt)
 	askpass = getenv("GIT_ASKPASS");
 	if (!askpass)
 		askpass = askpass_program;
-
+	if (!askpass)
+		askpass = getenv("SSH_ASKPASS");
 	if (!askpass || !(*askpass))
 		return getpass(prompt);
 
