@@ -621,12 +621,14 @@ int finish_connect(struct child_process *conn)
 
 char *git_getpass(const char *prompt)
 {
-	char *askpass;
+	const char *askpass;
 	struct child_process pass;
 	const char *args[3];
 	static struct strbuf buffer = STRBUF_INIT;
 
 	askpass = getenv("GIT_ASKPASS");
+	if (!askpass)
+		askpass = askpass_program;
 
 	if (!askpass || !(*askpass))
 		return getpass(prompt);

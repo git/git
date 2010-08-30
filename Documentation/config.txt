@@ -450,6 +450,12 @@ core.excludesfile::
 	to the value of `$HOME` and "{tilde}user/" to the specified user's
 	home directory.  See linkgit:gitignore[5].
 
+core.askpass::
+	Some commands (e.g. svn and http interfaces) that interactively
+	ask for a password can be told to use an external program given
+	via the value of this variable when it is set, and the
+	environment variable `GIT_ASKPASS` is not set.
+
 core.editor::
 	Commands such as `commit` and `tag` that lets you edit
 	messages by launching an editor uses the value of this
