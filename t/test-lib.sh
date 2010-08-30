@@ -650,14 +650,14 @@ test_when_finished () {
 test_create_repo () {
 	test "$#" = 1 ||
 	error "bug in the test script: not 1 parameter to test-create-repo"
-	owd=`pwd`
 	repo="$1"
 	mkdir -p "$repo"
-	cd "$repo" || error "Cannot setup test environment"
-	"$GIT_EXEC_PATH/git-init" "--template=$GIT_BUILD_DIR/templates/blt/" >&3 2>&4 ||
-	error "cannot run git init -- have you built things yet?"
-	mv .git/hooks .git/hooks-disabled
-	cd "$owd"
+	(
+		cd "$repo" || error "Cannot setup test environment"
+		"$GIT_EXEC_PATH/git-init" "--template=$GIT_BUILD_DIR/templates/blt/" >&3 2>&4 ||
+		error "cannot run git init -- have you built things yet?"
+		mv .git/hooks .git/hooks-disabled
+	) || exit
 }
 
 test_done () {
