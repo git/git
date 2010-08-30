@@ -48,11 +48,11 @@ test_expect_success 'attribute test' '
 	attr_check a/b/g a/b/g &&
 	attr_check b/g unspecified &&
 	attr_check a/b/h a/b/h &&
-	attr_check a/b/d/g "a/b/d/*"
-	attr_check onoff unset
-	attr_check offon set
-	attr_check no unspecified
-	attr_check a/b/d/no "a/b/d/*"
+	attr_check a/b/d/g "a/b/d/*" &&
+	attr_check onoff unset &&
+	attr_check offon set &&
+	attr_check no unspecified &&
+	attr_check a/b/d/no "a/b/d/*" &&
 	attr_check a/b/d/yes unspecified
 
 '

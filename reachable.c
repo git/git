@@ -90,7 +90,7 @@ static void walk_commit_list(struct rev_info *revs)
 {
 	int i;
 	struct commit *commit;
-	struct object_array objects = { 0, 0, NULL };
+	struct object_array objects = OBJECT_ARRAY_INIT;
 
 	/* Walk all commits, process their trees */
 	while ((commit = get_revision(revs)) != NULL)

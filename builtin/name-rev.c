@@ -220,7 +220,7 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 
 int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
-	struct object_array revs = { 0, 0, NULL };
+	struct object_array revs = OBJECT_ARRAY_INIT;
 	int all = 0, transform_stdin = 0, allow_undefined = 1, always = 0;
 	struct name_ref_data data = { 0, 0, NULL };
 	struct option opts[] = {
