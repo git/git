@@ -10,6 +10,7 @@
 #include "string-list.h"
 
 struct string_list config_name_for_path;
+struct string_list config_fetch_for_name;
 struct string_list config_ignore_for_name;
 
 static int add_submodule_odb(const char *path)
@@ -99,6 +100,14 @@ int parse_submodule_config_option(const char *var, const char *value)
 		else
 			config = string_list_append(&config_name_for_path, xstrdup(value));
 		config->util = strbuf_detach(&submodname, NULL);
+		strbuf_release(&submodname);
+	} else if ((len > 5) && !strcmp(var + len - 6, ".fetch")) {
+		strbuf_add(&submodname, var, len - 6);
+		config = unsorted_string_list_lookup(&config_fetch_for_name, submodname.buf);
+		if (!config)
+			config = string_list_append(&config_fetch_for_name,
+						    strbuf_detach(&submodname, NULL));
+		config->util = git_config_bool(var, value) ? (void *)1 : NULL;
 		strbuf_release(&submodname);
 	} else if ((len > 7) && !strcmp(var + len - 7, ".ignore")) {
 		if (strcmp(value, "untracked") && strcmp(value, "dirty") &&
@@ -229,7 +238,7 @@ void show_submodule_summary(FILE *f, const char *path,
 	strbuf_release(&sb);
 }
 
-int fetch_populated_submodules()
+int fetch_populated_submodules(int forced)
 {
 	int result = 0;
 	struct child_process cp;
@@ -253,6 +262,14 @@ int fetch_populated_submodules()
 		struct strbuf submodule_path = STRBUF_INIT;
 		struct strbuf submodule_git_dir = STRBUF_INIT;
 		const char *git_dir;
+
+		if (!forced) {
+			struct string_list_item *fetch_option;
+			fetch_option = unsorted_string_list_lookup(&config_fetch_for_name, name_for_path->util);
+			if (fetch_option && !fetch_option->util)
+				continue;
+		}
+
 		strbuf_addf(&submodule_path, "%s/%s", work_tree, name_for_path->string);
 		strbuf_addf(&submodule_git_dir, "%s/.git", submodule_path.buf);
 		git_dir = read_gitfile_gently(submodule_git_dir.buf);

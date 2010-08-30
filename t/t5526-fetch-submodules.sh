@@ -52,6 +52,46 @@ test_expect_success "fetch recurses into submodules" '
 '
 
 test_expect_success "fetch --no-recursive only fetches superproject" '
+	(
+		cd downstream &&
+		git fetch --no-recursive >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	! test -s actual.err
+'
+
+test_expect_success "using fetch=false in .gitmodules only fetches superproject" '
+	(
+		cd downstream &&
+		git config -f .gitmodules submodule.submodule.fetch false &&
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	! test -s actual.err
+'
+
+test_expect_success "--recursive overrides .gitmodules config" '
+	add_upstream_commit &&
+	(
+		cd downstream &&
+		git fetch --recursive >../actual.out 2>../actual.err
+	) &&
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success "using fetch=true in .git/config overrides setting in .gitmodules" '
+	add_upstream_commit &&
+	(
+		cd downstream &&
+		git config submodule.submodule.fetch true &&
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success "--no-recursive overrides fetch setting from .git/config" '
 	add_upstream_commit &&
 	(
 		cd downstream &&
