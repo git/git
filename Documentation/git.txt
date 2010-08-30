@@ -634,6 +634,13 @@ Usually it is easier to configure any desired options through your
 personal `.ssh/config` file.  Please consult your ssh documentation
 for further details.
 
+'GIT_ASKPASS'::
+	If this environment variable is set, then git commands which need to
+	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
+	will call this program with a suitable prompt as command line argument
+	and read the password from its STDOUT. See also the 'core.askpass'
+	option in linkgit:git-config[1].
+
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
 	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
