@@ -591,7 +591,15 @@ test_path_is_missing () {
 
 test_must_fail () {
 	"$@"
-	test $? -gt 0 -a $? -le 129 -o $? -gt 192
+	exit_code=$?
+	if test $exit_code = 0; then
+		echo >&2 "test_must_fail: command succeeded: $*"
+		return 1
+	elif test $exit_code -gt 129 -a $exit_code -le 192; then
+		echo >&2 "test_must_fail: died by signal: $*"
+		return 1
+	fi
+	return 0
 }
 
 # Similar to test_must_fail, but tolerates success, too.  This is
