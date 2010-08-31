@@ -111,8 +111,8 @@ test_expect_success 'master@{n} for various n' '
 	git rev-parse --verify master@{0} &&
 	git rev-parse --verify master@{1} &&
 	git rev-parse --verify master@{$Nm1} &&
-	test_must_fail "git rev-parse --verify master@{$N}" &&
-	test_must_fail "git rev-parse --verify master@{$Np1}"
+	test_must_fail git rev-parse --verify master@{$N} &&
+	test_must_fail git rev-parse --verify master@{$Np1}
 '
 
 test_done
