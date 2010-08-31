@@ -58,6 +58,21 @@ test_expect_success TTY 'some commands use a pager' '
 	test -e paginated.out
 '
 
+test_expect_failure TTY 'pager runs from subdir' '
+	echo subdir/paginated.out >expected &&
+	mkdir -p subdir &&
+	rm -f paginated.out subdir/paginated.out &&
+	(
+		cd subdir &&
+		test_terminal git log
+	) &&
+	{
+		ls paginated.out subdir/paginated.out ||
+		:
+	} >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success TTY 'some commands do not use a pager' '
 	rm -f paginated.out ||
 	cleanup_fail &&
@@ -104,6 +119,45 @@ test_expect_success TTY 'no pager with --no-pager' '
 
 	test_terminal git --no-pager log &&
 	! test -e paginated.out
+'
+
+test_expect_success TTY 'configuration can disable pager' '
+	rm -f paginated.out &&
+	test_might_fail git config --unset pager.grep &&
+	test_terminal git grep initial &&
+	test -e paginated.out &&
+
+	rm -f paginated.out &&
+	git config pager.grep false &&
+	test_when_finished "git config --unset pager.grep" &&
+	test_terminal git grep initial &&
+	! test -e paginated.out
+'
+
+test_expect_success TTY 'git config uses a pager if configured to' '
+	rm -f paginated.out &&
+	git config pager.config true &&
+	test_when_finished "git config --unset pager.config" &&
+	test_terminal git config --list &&
+	test -e paginated.out
+'
+
+test_expect_success TTY 'configuration can enable pager (from subdir)' '
+	rm -f paginated.out &&
+	mkdir -p subdir &&
+	git config pager.bundle true &&
+	test_when_finished "git config --unset pager.bundle" &&
+
+	git bundle create test.bundle --all &&
+	rm -f paginated.out subdir/paginated.out &&
+	(
+		cd subdir &&
+		test_terminal git bundle unbundle ../test.bundle
+	) &&
+	{
+		test -e paginated.out ||
+		test -e subdir/paginated.out
+	}
 '
 
 # A colored commit log will begin with an appropriate ANSI escape
@@ -368,5 +422,17 @@ test_no_local_config_subdir expect_success test_must_fail 'git -p'
 test_GIT_PAGER_overrides  expect_success test_must_fail 'git -p'
 
 test_doesnt_paginate      expect_failure test_must_fail 'git -p nonsense'
+
+test_pager_choices                       'git shortlog'
+test_expect_success 'setup: configure shortlog not to paginate' '
+	git config pager.shortlog false
+'
+test_doesnt_paginate      expect_success 'git shortlog'
+test_no_local_config_subdir expect_success 'git shortlog'
+test_default_pager        expect_success 'git -p shortlog'
+test_core_pager_subdir    expect_success 'git -p shortlog'
+
+test_core_pager_subdir    expect_success test_must_fail \
+					 'git -p apply </dev/null'
 
 test_done

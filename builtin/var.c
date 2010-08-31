@@ -74,14 +74,9 @@ static int show_config(const char *var, const char *value, void *cb)
 
 int cmd_var(int argc, const char **argv, const char *prefix)
 {
-	const char *val;
-	int nongit;
-	if (argc != 2) {
+	const char *val = NULL;
+	if (argc != 2)
 		usage(var_usage);
-	}
-
-	setup_git_directory_gently(&nongit);
-	val = NULL;
 
 	if (strcmp(argv[1], "-l") == 0) {
 		git_config(show_config, NULL);
