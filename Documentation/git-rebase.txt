@@ -199,6 +199,9 @@ rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
 	rebase. False by default.
 
+rebase.autosquash::
+	If set to true enable '--autosquash' option by default.
+
 OPTIONS
 -------
 <newbase>::
@@ -333,6 +336,7 @@ idea unless you know what you are doing (see BUGS below).
 	instead.
 
 --autosquash::
+--no-autosquash::
 	When the commit log message begins with "squash! ..." (or
 	"fixup! ..."), and there is a commit whose title begins with
 	the same ..., automatically modify the todo list of rebase -i
@@ -341,6 +345,10 @@ idea unless you know what you are doing (see BUGS below).
 	commit from `pick` to `squash` (or `fixup`).
 +
 This option is only valid when the '--interactive' option is used.
++
+If the '--autosquash' option is enabled by default using the
+configuration variable `rebase.autosquash`, this option can be
+used to override and disable this setting.
 
 --no-ff::
 	With --interactive, cherry-pick all rebased commits instead of
