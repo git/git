@@ -5191,15 +5191,15 @@ sub git_summary {
 }
 
 sub git_tag {
-	my $head = git_get_head_hash($project);
-	git_header_html();
-	git_print_page_nav('','', $head,undef,$head);
 	my %tag = parse_tag($hash);
 
 	if (! %tag) {
 		die_error(404, "Unknown tag object");
 	}
 
+	my $head = git_get_head_hash($project);
+	git_header_html();
+	git_print_page_nav('','', $head,undef,$head);
 	git_print_header_div('commit', esc_html($tag{'name'}), $hash);
 	print "<div class=\"title_text\">\n" .
 	      "<table class=\"object_header\">\n" .
