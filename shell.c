@@ -2,7 +2,6 @@
 #include "quote.h"
 #include "exec_cmd.h"
 #include "strbuf.h"
-#include "gettext.h"
 #include "run-command.h"
 
 #define COMMAND_DIR "git-shell-commands"
@@ -137,8 +136,6 @@ int main(int argc, char **argv)
 	struct commands *cmd;
 	int devnull_fd;
 	int count;
-
-	git_setup_gettext();
 
 	/*
 	 * Always open file descriptors 0/1/2 to avoid clobbering files

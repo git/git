@@ -25,7 +25,6 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include "run-command.h"
-#include "gettext.h"
 #ifdef NO_OPENSSL
 typedef void *SSL;
 #else
@@ -1539,8 +1538,6 @@ int main(int argc, char **argv)
 	int nongit_ok;
 
 	git_extract_argv0_path(argv[0]);
-
-	git_setup_gettext();
 
 	if (argc != 1)
 		usage(imap_send_usage);

@@ -1,12 +1,4 @@
-use strict;
-use warnings;
 use ExtUtils::MakeMaker;
-use Getopt::Long;
-
-# Sanity: die at first unknown option
-Getopt::Long::Configure qw/ pass_through /;
-
-GetOptions("localedir=s" => \my $localedir);
 
 sub MY::postamble {
 	return <<'MAKE_FRAG';
@@ -24,10 +16,7 @@ endif
 MAKE_FRAG
 }
 
-my %pm = (
-	'Git.pm' => '$(INST_LIBDIR)/Git.pm',
-	'Git/I18N.pm' => '$(INST_LIBDIR)/Git/I18N.pm',
-);
+my %pm = ('Git.pm' => '$(INST_LIBDIR)/Git.pm');
 
 # We come with our own bundled Error.pm. It's not in the set of default
 # Perl modules so install it if it's not available on the system yet.
@@ -44,7 +33,6 @@ WriteMakefile(
 	NAME            => 'Git',
 	VERSION_FROM    => 'Git.pm',
 	PM		=> \%pm,
-	PM_FILTER	=> qq[\$(PERL) -pe "s<\\Q++LOCALEDIR++\\E><$localedir>"],
 	MAKEFILE	=> 'perl.mak',
 	INSTALLSITEMAN3DIR => '$(SITEPREFIX)/share/man/man3'
 );

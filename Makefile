@@ -34,15 +34,6 @@ all::
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports.
 #
-# Define NO_GETTEXT if you don't want to build with Git with gettext
-# support. Building it requires GNU libintl or another gettext
-# implementation, and additionally libintl-perl at runtime.
-#
-# Define NEEDS_LIBINTL if you haven't set NO_GETTEXT and your system
-# needs to be explicitly linked to -lintl. It's defined automatically
-# on platforms where we don't expect glibc (Linux, Hurd,
-# GNU/kFreeBSD), which includes libintl.
-#
 # Define EXPATDIR=/foo/bar if your expat header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
 #
@@ -292,7 +283,6 @@ infodir = share/info
 gitexecdir = libexec/git-core
 sharedir = $(prefix)/share
 gitwebdir = $(sharedir)/gitweb
-localedir = $(sharedir)/locale
 template_dir = share/git-core/templates
 htmldir = share/doc/git-doc
 ifeq ($(prefix),/usr)
@@ -306,7 +296,7 @@ lib = lib
 # DESTDIR=
 pathsep = :
 
-export prefix bindir sharedir sysconfdir gitwebdir localedir
+export prefix bindir sharedir sysconfdir gitwebdir
 
 CC = gcc
 AR = ar
@@ -320,8 +310,6 @@ TCL_PATH = tclsh
 TCLTK_PATH = wish
 PTHREAD_LIBS = -lpthread
 PTHREAD_CFLAGS =
-XGETTEXT = xgettext
-MSGFMT = msgfmt
 GCOV = gcov
 
 export TCL_PATH TCLTK_PATH
@@ -384,7 +372,6 @@ SCRIPT_SH += git-web--browse.sh
 SCRIPT_LIB += git-mergetool--lib
 SCRIPT_LIB += git-parse-remote
 SCRIPT_LIB += git-sh-setup
-SCRIPT_LIB += git-sh-i18n
 
 SCRIPT_PERL += git-add--interactive.perl
 SCRIPT_PERL += git-difftool.perl
@@ -557,7 +544,6 @@ LIB_H += userdiff.h
 LIB_H += utf8.h
 LIB_H += xdiff-interface.h
 LIB_H += xdiff/xdiff.h
-LIB_H += gettext.h
 
 LIB_OBJS += abspath.o
 LIB_OBJS += advice.o
@@ -599,9 +585,6 @@ LIB_OBJS += entry.o
 LIB_OBJS += environment.o
 LIB_OBJS += exec_cmd.o
 LIB_OBJS += fsck.o
-ifndef NO_GETTEXT
-LIB_OBJS += gettext.o
-endif
 LIB_OBJS += graph.o
 LIB_OBJS += grep.o
 LIB_OBJS += hash.o
@@ -775,14 +758,6 @@ EXTLIBS =
 # Platform specific tweaks
 #
 
-# Platform specific defaults. Where we'd only like some feature on the
-# minority of systems, e.g. if linking to a library isn't needed
-# because its features are included in the GNU C library.
-ifndef NO_GETTEXT
-	# Systems that use GNU gettext and glibc are the exception
-	NEEDS_LIBINTL = YesPlease
-endif
-
 # We choose to avoid "if .. else if .. else .. endif endif"
 # because maintaining the nesting to match is a pain.  If
 # we had "elif" things would have been much nicer...
@@ -798,13 +773,11 @@ ifeq ($(uname_S),Linux)
 	NO_STRLCPY = YesPlease
 	NO_MKSTEMPS = YesPlease
 	HAVE_PATHS_H = YesPlease
-	NEEDS_LIBINTL =
 endif
 ifeq ($(uname_S),GNU/kFreeBSD)
 	NO_STRLCPY = YesPlease
 	NO_MKSTEMPS = YesPlease
 	HAVE_PATHS_H = YesPlease
-	NEEDS_LIBINTL =
 endif
 ifeq ($(uname_S),UnixWare)
 	CC = cc
@@ -996,7 +969,6 @@ ifeq ($(uname_S),GNU)
 	NO_STRLCPY=YesPlease
 	NO_MKSTEMPS = YesPlease
 	HAVE_PATHS_H = YesPlease
-	NEEDS_LIBINTL =
 endif
 ifeq ($(uname_S),IRIX)
 	NO_SETENV = YesPlease
@@ -1501,14 +1473,6 @@ ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
 	export GIT_TEST_CMP_USE_COPIED_CONTEXT
 endif
 
-ifdef NO_GETTEXT
-	COMPAT_CFLAGS += -DNO_GETTEXT
-endif
-
-ifdef NEEDS_LIBINTL
-	EXTLIBS += -lintl
-endif
-
 ifeq ($(TCLTK_PATH),)
 NO_TCLTK=NoThanks
 endif
@@ -1538,7 +1502,6 @@ ifndef V
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 	QUIET_GEN      = @echo '   ' GEN $@;
 	QUIET_LNCP     = @echo '   ' LN/CP $@;
-	QUIET_MSGFMT   = @echo '   ' MSGFMT $@;
 	QUIET_GCOV     = @echo '   ' GCOV $@;
 	QUIET_SUBDIR0  = +@subdir=
 	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
@@ -1568,9 +1531,7 @@ template_dir_SQ = $(subst ','\'',$(template_dir))
 htmldir_SQ = $(subst ','\'',$(htmldir))
 prefix_SQ = $(subst ','\'',$(prefix))
 gitwebdir_SQ = $(subst ','\'',$(gitwebdir))
-sharedir_SQ = $(subst ','\'',$(sharedir))
 
-LOCALEDIR_SQ = $(subst ','\'',$(localedir))
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
@@ -1620,7 +1581,7 @@ ifndef NO_TCLTK
 	$(QUIET_SUBDIR0)gitk-git $(QUIET_SUBDIR1) all
 endif
 ifndef NO_PERL
-	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' localedir='$(localedir_SQ)' all
+	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
 endif
 ifndef NO_PYTHON
 	$(QUIET_SUBDIR0)git_remote_helpers $(QUIET_SUBDIR1) PYTHON_PATH='$(PYTHON_PATH_SQ)' prefix='$(prefix_SQ)' all
@@ -1666,7 +1627,6 @@ sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
     -e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
     -e 's|@@DIFF@@|$(DIFF_SQ)|' \
     -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-    -e 's|@@LOCALEDIR@@|$(LOCALEDIR_SQ)|g' \
     -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
     -e $(BROKEN_PATH_FIX) \
     $@.sh >$@+
@@ -2008,21 +1968,6 @@ cscope:
 	$(RM) cscope*
 	$(FIND) . -name '*.[hcS]' -print | xargs cscope -b
 
-pot:
-	$(XGETTEXT) --add-comments --keyword=_ --keyword=N_ --output=po/git.pot --language=C $(C_OBJ:o=c) t/t0200/test.c
-	$(XGETTEXT) --add-comments --join-existing --output=po/git.pot --language=Shell $(SCRIPT_SH) t/t0200/test.sh
-	$(XGETTEXT) --add-comments --join-existing --keyword=__ --output=po/git.pot --language=Perl $(SCRIPT_PERL) t/t0200/test.perl
-
-POFILES := $(wildcard po/*.po)
-MOFILES := $(patsubst po/%.po,share/locale/%/LC_MESSAGES/git.mo,$(POFILES))
-MODIRS := $(patsubst po/%.po,share/locale/%/LC_MESSAGES/,$(POFILES))
-ifndef NO_GETTEXT
-all:: $(MOFILES)
-endif
-share/locale/%/LC_MESSAGES/git.mo: po/%.po
-	@mkdir -p $(dir $@)
-	$(QUIET_MSGFMT)$(MSGFMT) -o $@ $<
-
 ### Detect prefix changes
 TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):\
              $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ)
@@ -2052,7 +1997,6 @@ endif
 ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
 	@echo GIT_TEST_CMP_USE_COPIED_CONTEXT=YesPlease >>$@
 endif
-	@echo NO_GETTEXT=\''$(subst ','\'',$(subst ','\'',$(NO_GETTEXT)))'\' >>$@
 
 ### Detect Tck/Tk interpreter path changes
 ifndef NO_TCLTK
@@ -2150,11 +2094,6 @@ install: all
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 	$(INSTALL) -m 644 $(SCRIPT_LIB) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
 	$(INSTALL) $(install_bindir_programs) '$(DESTDIR_SQ)$(bindir_SQ)'
-ifndef NO_GETTEXT
-	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(sharedir_SQ)/locale'
-	(cd share && tar cf - locale) | \
-		(cd '$(DESTDIR_SQ)$(sharedir_SQ)' && umask 022 && tar xof -)
-endif
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 ifndef NO_PERL
 	$(MAKE) -C perl prefix='$(prefix_SQ)' DESTDIR='$(DESTDIR_SQ)' install
@@ -2312,10 +2251,6 @@ ifndef NO_TCLTK
 	$(MAKE) -C git-gui clean
 endif
 	$(RM) GIT-VERSION-FILE GIT-CFLAGS GIT-GUI-VARS GIT-BUILD-OPTIONS
-ifndef NO_GETTEXT
-	$(RM) po/git.pot
-	$(RM) -r share/
-endif
 
 .PHONY: all install clean strip
 .PHONY: shell_compatibility_test please_set_SHELL_PATH_to_a_more_modern_shell

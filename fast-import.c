@@ -157,7 +157,6 @@ Format of STDIN stream:
 #include "quote.h"
 #include "exec_cmd.h"
 #include "dir.h"
-#include "gettext.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -2919,8 +2918,6 @@ int main(int argc, const char **argv)
 	unsigned int i;
 
 	git_extract_argv0_path(argv[0]);
-
-	git_setup_gettext();
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(fast_import_usage);
