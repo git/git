@@ -687,14 +687,14 @@ test_when_finished () {
 test_create_repo () {
 	test "$#" = 1 ||
 	error "bug in the test script: not 1 parameter to test-create-repo"
-	owd=`pwd`
 	repo="$1"
 	mkdir -p "$repo"
-	cd "$repo" || error "Cannot setup test environment"
-	"$GIT_EXEC_PATH/git-init" "--template=$GIT_BUILD_DIR/templates/blt/" >&3 2>&4 ||
-	error "cannot run git init -- have you built things yet?"
-	mv .git/hooks .git/hooks-disabled
-	cd "$owd"
+	(
+		cd "$repo" || error "Cannot setup test environment"
+		"$GIT_EXEC_PATH/git-init" "--template=$GIT_BUILD_DIR/templates/blt/" >&3 2>&4 ||
+		error "cannot run git init -- have you built things yet?"
+		mv .git/hooks .git/hooks-disabled
+	) || exit
 }
 
 test_done () {
@@ -901,6 +901,9 @@ test_create_repo "$test"
 # Use -P to resolve symlinks in our working directory so that the cwd
 # in subprocesses like git equals our $PWD (for pathname comparisons).
 cd -P "$test" || exit 1
+
+HOME=$(pwd)
+export HOME
 
 this_test=${0##*/}
 this_test=${this_test%%-*}
