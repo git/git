@@ -263,11 +263,13 @@ static int note_tree_consolidate(struct int_node *tree,
  * To remove a leaf_node:
  * Search to the tree location appropriate for the given leaf_node's key:
  * - If location does not hold a matching entry, abort and do nothing.
+ * - Copy the matching entry's value into the given entry.
  * - Replace the matching leaf_node with a NULL entry (and free the leaf_node).
  * - Consolidate int_nodes repeatedly, while walking up the tree towards root.
  */
-static void note_tree_remove(struct notes_tree *t, struct int_node *tree,
-		unsigned char n, struct leaf_node *entry)
+static void note_tree_remove(struct notes_tree *t,
+		struct int_node *tree, unsigned char n,
+		struct leaf_node *entry)
 {
 	struct leaf_node *l;
 	struct int_node *parent_stack[20];
@@ -282,6 +284,7 @@ static void note_tree_remove(struct notes_tree *t, struct int_node *tree,
 		return; /* key mismatch, nothing to remove */
 
 	/* we have found a matching entry */
+	hashcpy(entry->val_sha1, l->val_sha1);
 	free(l);
 	*p = SET_PTR_TYPE(NULL, PTR_TYPE_NULL);
 
@@ -1003,17 +1006,20 @@ void add_note(struct notes_tree *t, const unsigned char *object_sha1,
 	note_tree_insert(t, t->root, 0, l, PTR_TYPE_NOTE, combine_notes);
 }
 
-void remove_note(struct notes_tree *t, const unsigned char *object_sha1)
+int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 {
 	struct leaf_node l;
 
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
-	t->dirty = 1;
 	hashcpy(l.key_sha1, object_sha1);
 	hashclr(l.val_sha1);
 	note_tree_remove(t, t->root, 0, &l);
+	if (is_null_sha1(l.val_sha1)) // no note was removed
+		return 1;
+	t->dirty = 1;
+	return 0;
 }
 
 const unsigned char *get_note(struct notes_tree *t,
