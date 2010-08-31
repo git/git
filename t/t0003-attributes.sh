@@ -36,6 +36,9 @@ test_expect_success 'setup' '
 		echo "d/* test=a/b/d/*"
 		echo "d/yes notest"
 	) >a/b/.gitattributes
+	(
+		echo "global test=global"
+	) >$HOME/global-gitattributes
 
 '
 
@@ -55,6 +58,16 @@ test_expect_success 'attribute test' '
 	attr_check a/b/d/no "a/b/d/*"
 	attr_check a/b/d/yes unspecified
 
+'
+
+test_expect_success 'core.attributesfile' '
+	attr_check global unspecified &&
+	git config core.attributesfile "$HOME/global-gitattributes" &&
+	attr_check global global &&
+	git config core.attributesfile "~/global-gitattributes" &&
+	attr_check global global &&
+	echo "global test=precedence" >> .gitattributes &&
+	attr_check global precedence
 '
 
 test_expect_success 'attribute test: read paths from stdin' '

@@ -62,14 +62,21 @@ consults `$GIT_DIR/info/attributes` file (which has the highest
 precedence), `.gitattributes` file in the same directory as the
 path in question, and its parent directories up to the toplevel of the
 work tree (the further the directory that contains `.gitattributes`
-is from the path in question, the lower its precedence).
+is from the path in question, the lower its precedence). Finally
+global and system-wide files are considered (they have the lowest
+precedence).
 
 If you wish to affect only a single repository (i.e., to assign
-attributes to files that are particular to one user's workflow), then
+attributes to files that are particular to
+one user's workflow for that repository), then
 attributes should be placed in the `$GIT_DIR/info/attributes` file.
 Attributes which should be version-controlled and distributed to other
 repositories (i.e., attributes of interest to all users) should go into
-`.gitattributes` files.
+`.gitattributes` files. Attributes that should affect all repositories
+for a single user should be placed in a file specified by the
+`core.attributesfile` configuration option (see linkgit:git-config[1]).
+Attributes for all users on a system should be placed in the
+`$(prefix)/etc/gitattributes` file.
 
 Sometimes you would need to override an setting of an attribute
 for a path to `unspecified` state.  This can be done by listing

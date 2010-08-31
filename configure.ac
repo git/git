@@ -282,7 +282,15 @@ GIT_PARSE_WITH(iconv))
 GIT_PARSE_WITH_SET_MAKE_VAR(gitconfig, ETC_GITCONFIG,
 			Use VALUE instead of /etc/gitconfig as the
 			global git configuration file.
-			If VALUE is not fully qualified it will be interpretted
+			If VALUE is not fully qualified it will be interpreted
+			as a path relative to the computed prefix at runtime.)
+
+#
+# Allow user to set ETC_GITATTRIBUTES variable
+GIT_PARSE_WITH_SET_MAKE_VAR(gitattributes, ETC_GITATTRIBUTES,
+			Use VALUE instead of /etc/gitattributes as the
+			global git attributes file.
+			If VALUE is not fully qualified it will be interpreted
 			as a path relative to the computed prefix at runtime.)
 
 #
