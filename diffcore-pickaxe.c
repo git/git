@@ -48,8 +48,10 @@ static unsigned int contains(struct diff_filespec *one,
 	return cnt;
 }
 
-void diffcore_pickaxe(const char *needle, int opts)
+void diffcore_pickaxe(struct diff_options *o)
 {
+	const char *needle = o->pickaxe;
+	int opts = o->pickaxe_opts;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	unsigned long len = strlen(needle);
 	int i, has_changes;
