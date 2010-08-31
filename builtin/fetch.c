@@ -659,10 +659,12 @@ static int do_fetch(struct transport *transport,
 
 	for_each_ref(add_existing, &existing_refs);
 
-	if (transport->remote->fetch_tags == 2 && tags != TAGS_UNSET)
-		tags = TAGS_SET;
-	if (transport->remote->fetch_tags == -1)
-		tags = TAGS_UNSET;
+	if (tags == TAGS_DEFAULT) {
+		if (transport->remote->fetch_tags == 2)
+			tags = TAGS_SET;
+		if (transport->remote->fetch_tags == -1)
+			tags = TAGS_UNSET;
+	}
 
 	if (!transport->get_refs_list || !transport->fetch)
 		die("Don't know how to fetch from %s", transport->url);
