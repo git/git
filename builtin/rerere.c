@@ -19,6 +19,12 @@ static time_t rerere_created_at(const char *name)
 	return stat(rerere_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
 
+static time_t rerere_last_used_at(const char *name)
+{
+	struct stat st;
+	return stat(rerere_path(name, "postimage"), &st) ? (time_t) 0 : st.st_mtime;
+}
+
 static void unlink_rr_item(const char *name)
 {
 	unlink(rerere_path(name, "thisimage"));
@@ -53,11 +59,16 @@ static void garbage_collect(struct string_list *rr)
 	while ((e = readdir(dir))) {
 		if (is_dot_or_dotdot(e->d_name))
 			continue;
-		then = rerere_created_at(e->d_name);
-		if (!then)
-			continue;
-		cutoff = (has_rerere_resolution(e->d_name)
-			  ? cutoff_resolve : cutoff_noresolve);
+
+		then = rerere_last_used_at(e->d_name);
+		if (then) {
+			cutoff = cutoff_resolve;
+		} else {
+			then = rerere_created_at(e->d_name);
+			if (!then)
+				continue;
+			cutoff = cutoff_noresolve;
+		}
 		if (then < now - cutoff * 86400)
 			string_list_append(&to_remove, e->d_name);
 	}
