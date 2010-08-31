@@ -435,7 +435,7 @@ test_expect_success 'stash drop - fail early if specified stash is not a stash r
 	git stash &&
 	echo bar > file &&
 	git stash &&
-	test_must_fail "git stash drop $(git rev-parse stash@{0})" &&
+	test_must_fail git stash drop $(git rev-parse stash@{0}) &&
 	git stash pop &&
 	test bar = "$(cat file)" &&
 	git reset --hard HEAD
@@ -449,7 +449,7 @@ test_expect_success 'stash pop - fail early if specified stash is not a stash re
 	git stash &&
 	echo bar > file &&
 	git stash &&
-	test_must_fail "git stash pop $(git rev-parse stash@{0})" &&
+	test_must_fail git stash pop $(git rev-parse stash@{0}) &&
 	git stash pop &&
 	test bar = "$(cat file)" &&
 	git reset --hard HEAD
@@ -462,31 +462,31 @@ test_expect_success 'ref with non-existant reflog' '
 	git add file2 &&
 	git stash &&
 	! "git rev-parse --quiet --verify does-not-exist" &&
-	test_must_fail "git stash drop does-not-exist" &&
-	test_must_fail "git stash drop does-not-exist@{0}" &&
-	test_must_fail "git stash pop does-not-exist" &&
-	test_must_fail "git stash pop does-not-exist@{0}" &&
-	test_must_fail "git stash apply does-not-exist" &&
-	test_must_fail "git stash apply does-not-exist@{0}" &&
-	test_must_fail "git stash show does-not-exist" &&
-	test_must_fail "git stash show does-not-exist@{0}" &&
-	test_must_fail "git stash branch tmp does-not-exist" &&
-	test_must_fail "git stash branch tmp does-not-exist@{0}" &&
+	test_must_fail git stash drop does-not-exist &&
+	test_must_fail git stash drop does-not-exist@{0} &&
+	test_must_fail git stash pop does-not-exist &&
+	test_must_fail git stash pop does-not-exist@{0} &&
+	test_must_fail git stash apply does-not-exist &&
+	test_must_fail git stash apply does-not-exist@{0} &&
+	test_must_fail git stash show does-not-exist &&
+	test_must_fail git stash show does-not-exist@{0} &&
+	test_must_fail git stash branch tmp does-not-exist &&
+	test_must_fail git stash branch tmp does-not-exist@{0} &&
 	git stash drop
 '
 
 test_expect_success 'invalid ref of the form stash@{n}, n >= N' '
 	git stash clear &&
-	test_must_fail "git stash drop stash@{0}" &&
+	test_must_fail git stash drop stash@{0} &&
 	echo bar5 > file &&
 	echo bar6 > file2 &&
 	git add file2 &&
 	git stash &&
-	test_must_fail "git drop stash@{1}" &&
-	test_must_fail "git pop stash@{1}" &&
-	test_must_fail "git apply stash@{1}" &&
-	test_must_fail "git show stash@{1}" &&
-	test_must_fail "git branch tmp stash@{1}" &&
+	test_must_fail git drop stash@{1} &&
+	test_must_fail git pop stash@{1} &&
+	test_must_fail git apply stash@{1} &&
+	test_must_fail git show stash@{1} &&
+	test_must_fail git branch tmp stash@{1} &&
 	git stash drop
 '
 
