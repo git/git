@@ -148,10 +148,39 @@ static void handle_object(const unsigned char *sha1)
 	free(buf);
 }
 
+static int depth_first(const void *a_, const void *b_)
+{
+	const struct diff_filepair *a = *((const struct diff_filepair **)a_);
+	const struct diff_filepair *b = *((const struct diff_filepair **)b_);
+	const char *name_a, *name_b;
+	int len_a, len_b, len;
+	int cmp;
+
+	name_a = a->one ? a->one->path : a->two->path;
+	name_b = b->one ? b->one->path : b->two->path;
+
+	len_a = strlen(name_a);
+	len_b = strlen(name_b);
+	len = (len_a < len_b) ? len_a : len_b;
+
+	/* strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd' */
+	cmp = memcmp(name_a, name_b, len);
+	if (cmp)
+		return cmp;
+	return (len_b - len_a);
+}
+
 static void show_filemodify(struct diff_queue_struct *q,
 			    struct diff_options *options, void *data)
 {
 	int i;
+
+	/*
+	 * Handle files below a directory first, in case they are all deleted
+	 * and the directory changes to a file or symlink.
+	 */
+	qsort(q->queue, q->nr, sizeof(q->queue[0]), depth_first);
+
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filespec *ospec = q->queue[i]->one;
 		struct diff_filespec *spec = q->queue[i]->two;
