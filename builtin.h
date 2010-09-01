@@ -11,8 +11,6 @@ extern const char git_version_string[];
 extern const char git_usage_string[];
 extern const char git_more_info_string[];
 
-extern void list_common_cmds_help(void);
-extern const char *help_unknown_cmd(const char *cmd);
 extern void prune_packed_objects(int);
 extern int fmt_merge_msg(int merge_summary, struct strbuf *in,
 	struct strbuf *out);

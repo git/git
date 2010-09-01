@@ -1,6 +1,7 @@
 #include "builtin.h"
-#include "exec_cmd.h"
 #include "cache.h"
+#include "exec_cmd.h"
+#include "help.h"
 #include "quote.h"
 #include "run-command.h"
 
