@@ -60,6 +60,37 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 	return 0;
 }
 
+/*
+ * Remove empty parents, but spare refs/ and immediate subdirs.
+ * Note: munges *name.
+ */
+static void try_remove_empty_parents(char *name)
+{
+	char *p, *q;
+	int i;
+	p = name;
+	for (i = 0; i < 2; i++) { /* refs/{heads,tags,...}/ */
+		while (*p && *p != '/')
+			p++;
+		/* tolerate duplicate slashes; see check_ref_format() */
+		while (*p == '/')
+			p++;
+	}
+	for (q = p; *q; q++)
+		;
+	while (1) {
+		while (q > p && *q != '/')
+			q--;
+		while (q > p && *(q-1) == '/')
+			q--;
+		if (q == p)
+			break;
+		*q = '\0';
+		if (rmdir(git_path("%s", name)))
+			break;
+	}
+}
+
 /* make sure nobody touched the ref, and unlink */
 static void prune_ref(struct ref_to_prune *r)
 {
@@ -68,6 +99,7 @@ static void prune_ref(struct ref_to_prune *r)
 	if (lock) {
 		unlink_or_warn(git_path("%s", r->name));
 		unlock_ref(lock);
+		try_remove_empty_parents(r->name);
 	}
 }
 
