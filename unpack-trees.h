@@ -26,7 +26,8 @@ enum unpack_trees_error_types {
  * Sets the list of user-friendly error messages to be used by the
  * command "cmd" (either merge or checkout)
  */
-void setup_unpack_trees_porcelain(const char **msgs, const char *cmd);
+void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
+				  const char *cmd);
 
 struct rejected_paths_list {
 	char *path;

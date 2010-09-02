@@ -373,7 +373,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.src_index = &the_index;
 		topts.dst_index = &the_index;
 
-		setup_unpack_trees_porcelain(topts.msgs, "checkout");
+		setup_unpack_trees_porcelain(&topts, "checkout");
 
 		refresh_cache(REFRESH_QUIET);
 

@@ -50,8 +50,10 @@ const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 	  ? ((o)->msgs[(type)])      \
 	  : (unpack_plumbing_errors[(type)]) )
 
-void setup_unpack_trees_porcelain(const char **msgs, const char *cmd)
+void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
+				  const char *cmd)
 {
+	const char **msgs = opts->msgs;
 	const char *msg;
 	char *tmp;
 	const char *cmd2 = strcmp(cmd, "checkout") ? cmd : "switch branches";
