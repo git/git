@@ -94,6 +94,8 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 		"The following Working tree files would be overwritten by sparse checkout update:\n%s";
 	msgs[ERROR_WOULD_LOSE_ORPHANED_REMOVED] =
 		"The following Working tree files would be removed by sparse checkout update:\n%s";
+
+	opts->show_all_errors = 1;
 }
 
 static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
@@ -120,12 +122,6 @@ static int add_rejected_path(struct unpack_trees_options *o,
 			     const char *path)
 {
 	struct rejected_paths_list *newentry;
-	int porcelain = o && (o)->msgs[e];
-	/*
-	 * simply display the given error message if in plumbing mode
-	 */
-	if (!porcelain)
-		o->show_all_errors = 0;
 	if (!o->show_all_errors)
 		return error(ERRORMSG(o, e), path);
 
