@@ -3118,9 +3118,10 @@ sub _rev_list {
 sub check_cherry_pick {
 	my $base = shift;
 	my $tip = shift;
+	my $parents = shift;
 	my @ranges = @_;
 	my %commits = map { $_ => 1 }
-		_rev_list("--no-merges", $tip, "--not", $base);
+		_rev_list("--no-merges", $tip, "--not", $base, @$parents);
 	for my $range ( @ranges ) {
 		delete @commits{_rev_list($range)};
 	}
@@ -3296,6 +3297,7 @@ sub find_extra_svn_parents {
 		# double check that there are no missing non-merge commits
 		my (@incomplete) = check_cherry_pick(
 			$merge_base, $merge_tip,
+			$parents,
 			@$ranges,
 		       );
 
