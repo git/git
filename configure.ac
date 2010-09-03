@@ -706,6 +706,27 @@ else
 fi
 AC_SUBST(NO_C99_FORMAT)
 #
+# Define NO_REGEX if you have no or inferior regex support in your C library.
+AC_CACHE_CHECK([whether the platform regex can handle null bytes],
+ [ac_cv_c_excellent_regex], [
+AC_EGREP_CPP(yippeeyeswehaveit,
+	AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
+#include <regex.h>
+],
+[#ifdef REG_STARTEND
+yippeeyeswehaveit
+#endif
+]),
+	[ac_cv_c_excellent_regex=yes],
+	[ac_cv_c_excellent_regex=no])
+])
+if test $ac_cv_c_excellent_regex = yes; then
+	NO_REGEX=
+else
+	NO_REGEX=YesPlease
+fi
+AC_SUBST(NO_REGEX)
+#
 # Define FREAD_READS_DIRECTORIES if your are on a system which succeeds
 # when attempting to read from an fopen'ed directory.
 AC_CACHE_CHECK([whether system succeeds to read fopen'ed directory],
