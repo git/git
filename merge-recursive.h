@@ -14,6 +14,7 @@ struct merge_options {
 	} recursive_variant;
 	const char *subtree_shift;
 	unsigned buffer_output : 1;
+	unsigned renormalize : 1;
 	int verbosity;
 	int diff_rename_limit;
 	int merge_rename_limit;
