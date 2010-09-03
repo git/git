@@ -67,7 +67,7 @@ test_expect_success setup '
 # b in the main repository.
 test_expect_success 'setup for merge search' '
 	mkdir merge-search &&
-	cd merge-search &&
+	(cd merge-search &&
 	git init &&
 	mkdir sub &&
 	(cd sub &&
@@ -101,8 +101,7 @@ test_expect_success 'setup for merge search' '
 	 git checkout -b sub-d sub-b &&
 	 git merge sub-c) &&
 	git commit -a -m "d" &&
-	git branch test b &&
-	cd ..
+	git branch test b)
 '
 
 test_expect_success 'merge with one side as a fast-forward of the other' '
@@ -126,7 +125,7 @@ test_expect_success 'merging should conflict for non fast-forward' '
 '
 
 test_expect_success 'merging should fail for ambiguous common parent' '
-	cd merge-search &&
+	(cd merge-search &&
 	git checkout -b test-ambiguous b &&
 	(cd sub &&
 	 git checkout -b ambiguous sub-b &&
@@ -136,8 +135,7 @@ test_expect_success 'merging should fail for ambiguous common parent' '
 	test_must_fail git merge c 2> actual &&
 	grep $(cat expect1) actual > /dev/null &&
 	grep $(cat expect2) actual > /dev/null &&
-	git reset --hard &&
-	cd ..
+	git reset --hard)
 '
 
 # in a situation like this
@@ -158,7 +156,7 @@ test_expect_success 'merging should fail for ambiguous common parent' '
 # commits (sub-a) does not descend from the submodule merge-base (sub-b).
 #
 test_expect_success 'merging should fail for changes that are backwards' '
-	cd merge-search &&
+	(cd merge-search &&
 	git checkout -b bb a &&
 	(cd sub &&
 	 git checkout sub-b) &&
@@ -175,16 +173,13 @@ test_expect_success 'merging should fail for changes that are backwards' '
 	git commit -a -m "f" &&
 
 	git checkout -b test-backward e &&
-	test_must_fail git merge f &&
-	cd ..
+	test_must_fail git merge f)
 '
 
 test_expect_success 'merging with a modify/modify conflict between merge bases' '
-
 	git reset --hard HEAD &&
 	git checkout -b test2 c &&
 	git merge d
-
 '
 
 test_done

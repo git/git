@@ -37,10 +37,3 @@ Fixes since v1.7.2.2
 
  * "git pack-refs --all --prune" did not remove a directory that has
    become empty.
-
----
-exec >/var/tmp/1
-echo O=$(git describe maint)
-O=v1.7.2.2
-git shortlog --no-merges $O..maint
-exit 0
