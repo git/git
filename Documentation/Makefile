@@ -279,7 +279,7 @@ $(patsubst %,%.html,$(API_DOCS) technical/api-index): %.html : %.txt
 XSLT = docbook.xsl
 XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
 
-user-manual.html: user-manual.xml
+user-manual.html: user-manual.xml $(XSLT)
 	$(QUIET_XSLTPROC)$(RM) $@+ $@ && \
 	xsltproc $(XSLTOPTS) -o $@+ $(XSLT) $< && \
 	mv $@+ $@
