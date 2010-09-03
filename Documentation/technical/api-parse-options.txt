@@ -201,7 +201,7 @@ The last element of the array must be `OPT_END()`.
 If not stated otherwise, interpret the arguments as follows:
 
 * `short` is a character for the short option
-  (e.g. `\'e\'` for `-e`, use `0` to omit),
+  (e.g. `{apostrophe}e{apostrophe}` for `-e`, use `0` to omit),
 
 * `long` is a string for the long option
   (e.g. `"example"` for `\--example`, use `NULL` to omit),
@@ -228,10 +228,10 @@ The function must be defined in this form:
 The callback mechanism is as follows:
 
 * Inside `func`, the only interesting member of the structure
-  given by `opt` is the void pointer `opt->value`.
-  `\*opt->value` will be the value that is saved into `var`, if you
+  given by `opt` is the void pointer `opt\->value`.
+  `\*opt\->value` will be the value that is saved into `var`, if you
   use `OPT_CALLBACK()`.
-  For example, do `*(unsigned long *)opt->value = 42;` to get 42
+  For example, do `*(unsigned long *)opt\->value = 42;` to get 42
   into an `unsigned long` variable.
 
 * Return value `0` indicates success and non-zero return

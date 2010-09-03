@@ -4251,9 +4251,9 @@ Two things are interesting here:
   negative numbers in case of different errors--and 0 on success.
 
 - the variable `sha1` in the function signature of `get_sha1()` is `unsigned
-  char \*`, but is actually expected to be a pointer to `unsigned
+  char {asterisk}`, but is actually expected to be a pointer to `unsigned
   char[20]`.  This variable will contain the 160-bit SHA-1 of the given
-  commit.  Note that whenever a SHA-1 is passed as `unsigned char \*`, it
+  commit.  Note that whenever a SHA-1 is passed as `unsigned char {asterisk}`, it
   is the binary representation, as opposed to the ASCII representation in
   hex characters, which is passed as `char *`.
 

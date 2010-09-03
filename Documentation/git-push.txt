@@ -200,7 +200,7 @@ summary::
 	For a successfully pushed ref, the summary shows the old and new
 	values of the ref in a form suitable for using as an argument to
 	`git log` (this is `<old>..<new>` in most cases, and
-	`<old>...<new>` for forced non-fast-forward updates).
+	`<old>\...<new>` for forced non-fast-forward updates).
 +
 For a failed update, more details are given:
 +

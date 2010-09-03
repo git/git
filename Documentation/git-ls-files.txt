@@ -10,14 +10,14 @@ SYNOPSIS
 --------
 [verse]
 'git ls-files' [-z] [-t] [-v]
-		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])\*
-		(-[c|d|o|i|s|u|k|m])\*
+		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])*
+		(-[c|d|o|i|s|u|k|m])*
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>]
 		[--exclude-standard]
 		[--error-unmatch] [--with-tree=<tree-ish>]
-		[--full-name] [--abbrev] [--] [<file>]\*
+		[--full-name] [--abbrev] [--] [<file>]*
 
 DESCRIPTION
 -----------
