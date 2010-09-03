@@ -132,6 +132,7 @@ static struct strategy *get_strategy(const char *name)
 
 	ret = xcalloc(1, sizeof(struct strategy));
 	ret->name = xstrdup(name);
+	ret->attr = NO_TRIVIAL;
 	return ret;
 }
 
