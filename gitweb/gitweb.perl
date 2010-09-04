@@ -3501,10 +3501,15 @@ EOF
 		insert_file($site_header);
 	}
 
-	print "<div class=\"page_header\">\n" .
-	      $cgi->a({-href => esc_url($logo_url),
-	               -title => $logo_label},
-	              qq(<img src=").esc_url($logo).qq(" width="72" height="27" alt="git" class="logo"/>));
+	print "<div class=\"page_header\">\n";
+	if (defined $logo) {
+		print $cgi->a({-href => esc_url($logo_url),
+		               -title => $logo_label},
+		              $cgi->img({-src => esc_url($logo),
+		                         -width => 72, -height => 27,
+		                         -alt => "git",
+		                         -class => "logo"}));
+	}
 	print $cgi->a({-href => esc_url($home_link)}, $home_link_str) . " / ";
 	if (defined $project) {
 		print $cgi->a({-href => href(action=>"summary")}, esc_html($project));
