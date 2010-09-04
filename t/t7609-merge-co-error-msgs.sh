@@ -34,9 +34,17 @@ error: The following untracked working tree files would be overwritten by merge:
 Please move or remove them before you can merge.
 EOF
 
-test_expect_success 'untracked files overwritten by merge' '
+test_expect_success 'untracked files overwritten by merge (fast and non-fast forward)' '
 	test_must_fail git merge branch 2>out &&
-	test_cmp out expect
+	test_cmp out expect &&
+	git commit --allow-empty -m empty &&
+	(
+		GIT_MERGE_VERBOSITY=0 &&
+		export GIT_MERGE_VERBOSITY &&
+		test_must_fail git merge branch 2>out2
+	) &&
+	test_cmp out2 expect &&
+	git reset --hard HEAD^
 '
 
 cat >expect <<\EOF
