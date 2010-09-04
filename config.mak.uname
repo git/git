@@ -507,6 +507,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 		compat/win32/dirent.o
 	EXTLIBS += -lws2_32
 	PTHREAD_LIBS =
+	NATIVE_CRLF = YesPlease
 	X = .exe
 	SPARSE_FLAGS = -Wno-one-bit-signed-bitfield
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
