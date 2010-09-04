@@ -240,6 +240,12 @@ test_expect_success 'fetch with a non-applying branch.<name>.merge' '
 	git fetch blub
 '
 
+test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge' '
+	git update-ref -d FETCH_HEAD &&
+	git fetch one &&
+	git rev-parse --verify FETCH_HEAD
+'
+
 # the strange name is: a\!'b
 test_expect_success 'quoting of a strangely named repo' '
 	test_must_fail git fetch "a\\!'\''b" > result 2>&1 &&
