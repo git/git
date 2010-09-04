@@ -104,18 +104,22 @@ tree's changes, but also the index's ones. However, this can fail, when you
 have conflicts (which are stored in the index, where you therefore can no
 longer apply the changes as they were originally).
 +
-When no `<stash>` is given, `stash@\{0}` is assumed.
+When no `<stash>` is given, `stash@\{0}` is assumed, otherwise `<stash>` must
+be a reference of the form `stash@\{<revision>}`.
 
 apply [--index] [-q|--quiet] [<stash>]::
 
-	Like `pop`, but do not remove the state from the stash list.
+	Like `pop`, but do not remove the state from the stash list. Unlike `pop`,
+	`<stash>` may be any commit that looks like a commit created by
+	`stash save` or `stash create`.
 
 branch <branchname> [<stash>]::
 
 	Creates and checks out a new branch named `<branchname>` starting from
 	the commit at which the `<stash>` was originally created, applies the
-	changes recorded in `<stash>` to the new working tree and index, then
-	drops the `<stash>` if that completes successfully. When no `<stash>`
+	changes recorded in `<stash>` to the new working tree and index.
+	If that succeeds, and `<stash>` is a reference of the form
+	`stash@{<revision>}`, it then drops the `<stash>`. When no `<stash>`
 	is given, applies the latest one.
 +
 This is useful if the branch on which you ran `git stash save` has
@@ -132,7 +136,9 @@ clear::
 drop [-q|--quiet] [<stash>]::
 
 	Remove a single stashed state from the stash list. When no `<stash>`
-	is given, it removes the latest one. i.e. `stash@\{0}`
+	is given, it removes the latest one. i.e. `stash@\{0}`, otherwise
+	`<stash>` must a valid stash log reference of the form
+	`stash@\{<revision>}`.
 
 create::
 
