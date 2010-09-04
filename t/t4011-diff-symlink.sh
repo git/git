@@ -9,12 +9,6 @@ test_description='Test diff of symlinks.
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh
 
-if ! test_have_prereq SYMLINKS
-then
-	skip_all='Symbolic links not supported, skipping tests.'
-	test_done
-fi
-
 cat > expected << EOF
 diff --git a/frotz b/frotz
 new file mode 120000
@@ -26,7 +20,7 @@ index 0000000..7c465af
 \ No newline at end of file
 EOF
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'diff new symlink' \
     'ln -s xyzzy frotz &&
     git update-index &&
@@ -35,7 +29,7 @@ test_expect_success \
     GIT_DIFF_OPTS=--unified=0 git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'diff unchanged symlink' \
     'tree=$(git write-tree) &&
     git update-index frotz &&
@@ -52,7 +46,7 @@ index 7c465af..0000000
 \ No newline at end of file
 EOF
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'diff removed symlink' \
     'mv frotz frotz2 &&
     git diff-index -M -p $tree > current &&
@@ -62,7 +56,7 @@ cat > expected << EOF
 diff --git a/frotz b/frotz
 EOF
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'diff identical, but newly created symlink' \
     'ln -s xyzzy frotz &&
     git diff-index -M -p $tree > current &&
@@ -80,14 +74,14 @@ index 7c465af..df1db54 120000
 \ No newline at end of file
 EOF
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'diff different symlink' \
     'rm frotz &&
     ln -s yxyyz frotz &&
     git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'diff symlinks with non-existing targets' \
     'ln -s narf pinky &&
     ln -s take\ over brain &&

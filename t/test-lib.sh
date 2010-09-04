@@ -331,12 +331,35 @@ test_set_prereq () {
 satisfied=" "
 
 test_have_prereq () {
-	case $satisfied in
-	*" $1 "*)
-		: yes, have it ;;
-	*)
-		! : nope ;;
-	esac
+	# prerequisites can be concatenated with ','
+	save_IFS=$IFS
+	IFS=,
+	set -- $*
+	IFS=$save_IFS
+
+	total_prereq=0
+	ok_prereq=0
+	missing_prereq=
+
+	for prerequisite
+	do
+		total_prereq=$(($total_prereq + 1))
+		case $satisfied in
+		*" $prerequisite "*)
+			ok_prereq=$(($ok_prereq + 1))
+			;;
+		*)
+			# Keep a list of missing prerequisites
+			if test -z "$missing_prereq"
+			then
+				missing_prereq=$prerequisite
+			else
+				missing_prereq="$prerequisite,$missing_prereq"
+			fi
+		esac
+	done
+
+	test $total_prereq = $ok_prereq
 }
 
 # You are not expected to call test_ok_ and test_failure_ directly, use
@@ -398,8 +421,14 @@ test_skip () {
 	fi
 	case "$to_skip" in
 	t)
+		of_prereq=
+		if test "$missing_prereq" != "$prereq"
+		then
+			of_prereq=" of $prereq"
+		fi
+
 		say_color skip >&3 "skipping test: $@"
-		say_color skip "ok $test_count # skip $1"
+		say_color skip "ok $test_count # skip $1 (missing $missing_prereq${of_prereq})"
 		: true
 		;;
 	*)
@@ -657,28 +686,31 @@ test_when_finished () {
 test_create_repo () {
 	test "$#" = 1 ||
 	error "bug in the test script: not 1 parameter to test-create-repo"
-	owd=`pwd`
 	repo="$1"
 	mkdir -p "$repo"
-	cd "$repo" || error "Cannot setup test environment"
-	"$GIT_EXEC_PATH/git-init" "--template=$TEST_DIRECTORY/../templates/blt/" >&3 2>&4 ||
-	error "cannot run git init -- have you built things yet?"
-	mv .git/hooks .git/hooks-disabled
-	cd "$owd"
+	(
+		cd "$repo" || error "Cannot setup test environment"
+		"$GIT_EXEC_PATH/git-init" "--template=$GIT_BUILD_DIR/templates/blt/" >&3 2>&4 ||
+		error "cannot run git init -- have you built things yet?"
+		mv .git/hooks .git/hooks-disabled
+	) || exit
 }
 
 test_done () {
 	GIT_EXIT_OK=t
-	test_results_dir="$TEST_DIRECTORY/test-results"
-	mkdir -p "$test_results_dir"
-	test_results_path="$test_results_dir/${0%.sh}-$$.counts"
 
-	echo "total $test_count" >> $test_results_path
-	echo "success $test_success" >> $test_results_path
-	echo "fixed $test_fixed" >> $test_results_path
-	echo "broken $test_broken" >> $test_results_path
-	echo "failed $test_failure" >> $test_results_path
-	echo "" >> $test_results_path
+	if test -z "$HARNESS_ACTIVE"; then
+		test_results_dir="$TEST_DIRECTORY/test-results"
+		mkdir -p "$test_results_dir"
+		test_results_path="$test_results_dir/${0%.sh}-$$.counts"
+
+		echo "total $test_count" >> $test_results_path
+		echo "success $test_success" >> $test_results_path
+		echo "fixed $test_fixed" >> $test_results_path
+		echo "broken $test_broken" >> $test_results_path
+		echo "failed $test_failure" >> $test_results_path
+		echo "" >> $test_results_path
+	fi
 
 	if test "$test_fixed" != 0
 	then
@@ -720,7 +752,15 @@ test_done () {
 
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
-TEST_DIRECTORY=$(pwd)
+if test -z "$TEST_DIRECTORY"
+then
+	# We allow tests to override this, in case they want to run tests
+	# outside of t/, e.g. for running tests on the test library
+	# itself.
+	TEST_DIRECTORY=$(pwd)
+fi
+GIT_BUILD_DIR="$TEST_DIRECTORY"/..
+
 if test -n "$valgrind"
 then
 	make_symlink () {
@@ -747,7 +787,7 @@ then
 		test -x "$1" || return
 
 		base=$(basename "$1")
-		symlink_target=$TEST_DIRECTORY/../$base
+		symlink_target=$GIT_BUILD_DIR/$base
 		# do not override scripts
 		if test -x "$symlink_target" &&
 		    test ! -d "$symlink_target" &&
@@ -766,7 +806,7 @@ then
 	# override all git executables in TEST_DIRECTORY/..
 	GIT_VALGRIND=$TEST_DIRECTORY/valgrind
 	mkdir -p "$GIT_VALGRIND"/bin
-	for file in $TEST_DIRECTORY/../git* $TEST_DIRECTORY/../test-*
+	for file in $GIT_BUILD_DIR/git* $GIT_BUILD_DIR/test-*
 	do
 		make_valgrind_symlink $file
 	done
@@ -787,10 +827,10 @@ then
 elif test -n "$GIT_TEST_INSTALLED" ; then
 	GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
 	error "Cannot run git from $GIT_TEST_INSTALLED."
-	PATH=$GIT_TEST_INSTALLED:$TEST_DIRECTORY/..:$PATH
+	PATH=$GIT_TEST_INSTALLED:$GIT_BUILD_DIR:$PATH
 	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
 else # normal case, use ../bin-wrappers only unless $with_dashes:
-	git_bin_dir="$TEST_DIRECTORY/../bin-wrappers"
+	git_bin_dir="$GIT_BUILD_DIR/bin-wrappers"
 	if ! test -x "$git_bin_dir/git" ; then
 		if test -z "$with_dashes" ; then
 			say "$git_bin_dir/git is not executable; using GIT_EXEC_PATH"
@@ -798,18 +838,18 @@ else # normal case, use ../bin-wrappers only unless $with_dashes:
 		with_dashes=t
 	fi
 	PATH="$git_bin_dir:$PATH"
-	GIT_EXEC_PATH=$TEST_DIRECTORY/..
+	GIT_EXEC_PATH=$GIT_BUILD_DIR
 	if test -n "$with_dashes" ; then
-		PATH="$TEST_DIRECTORY/..:$PATH"
+		PATH="$GIT_BUILD_DIR:$PATH"
 	fi
 fi
-GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
+GIT_TEMPLATE_DIR="$GIT_BUILD_DIR"/templates/blt
 unset GIT_CONFIG
 GIT_CONFIG_NOSYSTEM=1
 GIT_CONFIG_NOGLOBAL=1
 export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_CONFIG_NOGLOBAL
 
-. ../GIT-BUILD-OPTIONS
+. "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
 
 if test -z "$GIT_TEST_CMP"
 then
@@ -821,22 +861,22 @@ then
 	fi
 fi
 
-GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
+GITPERLLIB="$GIT_BUILD_DIR"/perl/blib/lib:"$GIT_BUILD_DIR"/perl/blib/arch/auto/Git
 export GITPERLLIB
-test -d ../templates/blt || {
+test -d "$GIT_BUILD_DIR"/templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
 if test -z "$GIT_TEST_INSTALLED" && test -z "$NO_PYTHON"
 then
-	GITPYTHONLIB="$(pwd)/../git_remote_helpers/build/lib"
+	GITPYTHONLIB="$GIT_BUILD_DIR/git_remote_helpers/build/lib"
 	export GITPYTHONLIB
-	test -d ../git_remote_helpers/build || {
+	test -d "$GIT_BUILD_DIR"/git_remote_helpers/build || {
 		error "You haven't built git_remote_helpers yet, have you?"
 	}
 fi
 
-if ! test -x ../test-chmtime; then
+if ! test -x "$GIT_BUILD_DIR"/test-chmtime; then
 	echo >&2 'You need to build test-chmtime:'
 	echo >&2 'Run "make test-chmtime" in the source (toplevel) directory'
 	exit 1
@@ -860,6 +900,9 @@ test_create_repo "$test"
 # Use -P to resolve symlinks in our working directory so that the cwd
 # in subprocesses like git equals our $PWD (for pathname comparisons).
 cd -P "$test" || exit 1
+
+HOME=$(pwd)
+export HOME
 
 this_test=${0##*/}
 this_test=${this_test%%-*}
@@ -922,3 +965,7 @@ test -z "$NO_PYTHON" && test_set_prereq PYTHON
 # test whether the filesystem supports symbolic links
 ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
 rm -f y
+
+# When the tests are run as root, permission tests will report that
+# things are writable when they shouldn't be.
+test -w / || test_set_prereq SANITY

@@ -186,6 +186,12 @@
 *.[aos]
 *.py[co]
 .depend/
+*.gcda
+*.gcno
+*.gcov
+/coverage-untested-functions
+/cover_db/
+/cover_db_html/
 *+
 /config.mak
 /autom4te.cache
