@@ -86,15 +86,16 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			Name="Debug|x64"
+			OutputDirectory="$(SolutionDir)\$(ConfigurationName)64"
+			IntermediateDirectory="$(ConfigurationName)64"
 			ConfigurationType="4"
 			CharacterSet="0"
-			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Create Dumy header file"
+				CommandLine="IF NOT EXIST $(InputDir)\..\sys\param.h echo ;&gt; $(InputDir)\..\sys\param.h&#x0D;&#x0A;IF NOT EXIST $(InputDir)\..\include\utime.h echo ;&gt; $(InputDir)\..\include\utime.h&#x0D;&#x0A;IF NOT EXIST $(InputDir)\..\sys\type.h echo ;&gt; $(InputDir)\..\sys\type.h&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -107,17 +108,16 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				TargetEnvironment="3"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
+				Optimization="0"
 				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="..\..\..;..\..\..\..\zlib;..\..;..\;..\include;..\..\..\compat;..\..\..\compat\fnmatch;..\..\..\compat\regex;.\;..\..\..\..\libcurl\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;HAVE_STRING_H;USE_WIN32_MMAP"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;HAVE_STRING_H;USE_WIN32_MMAP"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -152,16 +152,15 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)\$(ConfigurationName)64"
-			IntermediateDirectory="$(ConfigurationName)64"
+			Name="Release|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="0"
+			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Create Dumy header file"
-				CommandLine="IF NOT EXIST $(InputDir)\..\sys\param.h echo ;&gt; $(InputDir)\..\sys\param.h&#x0D;&#x0A;IF NOT EXIST $(InputDir)\..\include\utime.h echo ;&gt; $(InputDir)\..\include\utime.h&#x0D;&#x0A;IF NOT EXIST $(InputDir)\..\sys\type.h echo ;&gt; $(InputDir)\..\sys\type.h&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -174,16 +173,17 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TargetEnvironment="3"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
+				Optimization="2"
 				InlineFunctionExpansion="1"
+				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="..\..\..;..\..\..\..\zlib;..\..;..\;..\include;..\..\..\compat;..\..\..\compat\fnmatch;..\..\..\compat\regex;.\;..\..\..\..\libcurl\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;HAVE_STRING_H;USE_WIN32_MMAP"
-				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;HAVE_STRING_H;USE_WIN32_MMAP"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -621,10 +621,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\compat\mkstemps.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\compat\pread.c"
 				>
 			</File>
@@ -644,7 +640,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="Debug|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -652,7 +648,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|x64"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -758,326 +754,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\branch.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-add.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-annotate.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-apply.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-archive.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-bisect--helper.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-blame.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-branch.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-bundle.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-cat-file.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-check-attr.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-check-ref-format.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-checkout-index.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-checkout.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-clean.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-clone.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-commit-tree.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-commit.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-config.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-count-objects.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-describe.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-diff-files.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-diff-index.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-diff-tree.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-diff.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-fast-export.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-fetch--tool.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-fetch-pack.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-fetch.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-fmt-merge-msg.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-for-each-ref.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-fsck.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-gc.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-grep.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-help.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-init-db.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-log.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-ls-remote.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-ls-tree.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-mailinfo.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-mailsplit.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-merge-base.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-merge-file.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-merge-ours.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-merge-recursive.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-merge.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-mktree.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-mv.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-name-rev.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-pack-objects.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-pack-refs.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-prune-packed.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-prune.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-push.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-read-tree.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-receive-pack.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-reflog.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-remote.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-replace.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-rerere.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-reset.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-rev-list.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-rev-parse.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-revert.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-rm.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-send-pack.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-shortlog.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-show-branch.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-show-ref.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-stripspace.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-symbolic-ref.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-tag.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-tar-tree.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-unpack-objects.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-update-index.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-update-ref.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-update-server-info.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-upload-archive.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-verify-pack.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-verify-tag.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\builtin-write-tree.c"
 				>
 			</File>
 			<File
@@ -1209,6 +885,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\hex.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\http-walker.c"
 				>
 			</File>
@@ -1241,6 +921,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\builtin\log.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\mailmap.c"
 				>
 			</File>
@@ -1257,11 +941,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\merge-tree.c"
+				RelativePath="..\..\..\name-hash.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\name-hash.c"
+				RelativePath="..\..\..\notes-cache.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\notes.c"
 				>
 			</File>
 			<File
@@ -1353,6 +1041,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\resolve-undo.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\revision.c"
 				>
 			</File>
@@ -1385,6 +1077,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\builtin\shortlog.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\sideband.c"
 				>
 			</File>
@@ -1401,15 +1097,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\submodule.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\symlinks.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\tag.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\thread-utils.c"
 				>
 			</File>
 			<File
@@ -1438,6 +1134,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\unpack-trees.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\upload-pack.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\url.c"
 				>
 			</File>
 			<File
@@ -1536,6 +1240,10 @@
 				RelativePath="..\..\..\xdiff\xutils.h"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="igit"
+			>
 		</Filter>
 	</Files>
 	<Globals>
