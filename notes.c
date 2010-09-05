@@ -71,7 +71,7 @@ struct non_note {
 struct notes_tree default_notes_tree;
 
 static struct string_list display_notes_refs;
-static struct notes_tree **display_notes_trees;
+struct notes_tree **display_notes_trees;
 
 static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 		struct int_node *node, unsigned int n);
