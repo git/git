@@ -28,12 +28,12 @@ struct tag *lookup_tag(const unsigned char *sha1)
 		return create_object(sha1, OBJ_TAG, alloc_tag_node());
 	if (!obj->type)
 		obj->type = OBJ_TAG;
-        if (obj->type != OBJ_TAG) {
-                error("Object %s is a %s, not a tag",
-                      sha1_to_hex(sha1), typename(obj->type));
-                return NULL;
-        }
-        return (struct tag *) obj;
+	if (obj->type != OBJ_TAG) {
+		error("Object %s is a %s, not a tag",
+		      sha1_to_hex(sha1), typename(obj->type));
+		return NULL;
+	}
+	return (struct tag *) obj;
 }
 
 int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
@@ -44,9 +44,9 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 	char type[20];
 	const char *start = data;
 
-        if (item->object.parsed)
-                return 0;
-        item->object.parsed = 1;
+	if (item->object.parsed)
+		return 0;
+	item->object.parsed = 1;
 
 	if (size < 64)
 		return -1;
