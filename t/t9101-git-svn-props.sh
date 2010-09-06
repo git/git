@@ -54,7 +54,7 @@ cd ..
 rm -rf import
 test_expect_success 'checkout working copy from svn' 'svn co "$svnrepo" test_wc'
 test_expect_success 'setup some commits to svn' \
-	'cd test_wc &&
+	'(cd test_wc &&
 		echo Greetings >> kw.c &&
 		poke kw.c &&
 		svn_cmd commit -m "Not yet an Id" &&
@@ -63,8 +63,8 @@ test_expect_success 'setup some commits to svn' \
 		svn_cmd commit -m "Modified file, but still not yet an Id" &&
 		svn_cmd propset svn:keywords Id kw.c &&
 		poke kw.c &&
-		svn_cmd commit -m "Propset Id" &&
-	cd ..'
+		svn_cmd commit -m "Propset Id"
+	)'
 
 test_expect_success 'initialize git svn' 'git svn init "$svnrepo"'
 test_expect_success 'fetch revisions from svn' 'git svn fetch'
@@ -82,12 +82,12 @@ got="`sed -ne 2p kw.c`"
 test_expect_success 'raw $Id$ found in kw.c' "test '$expect' = '$got'"
 
 test_expect_success "propset CR on crlf files" \
-	'cd test_wc &&
+	'(cd test_wc &&
 		svn_cmd propset svn:eol-style CR empty &&
 		svn_cmd propset svn:eol-style CR crlf &&
 		svn_cmd propset svn:eol-style CR ne_crlf &&
-		svn_cmd commit -m "propset CR on crlf files" &&
-	 cd ..'
+		svn_cmd commit -m "propset CR on crlf files"
+	 )'
 
 test_expect_success 'fetch and pull latest from svn and checkout a new wc' \
 	'git svn fetch &&
@@ -137,7 +137,7 @@ cat > show-ignore.expect <<\EOF
 EOF
 
 test_expect_success 'test show-ignore' "
-	cd test_wc &&
+	(cd test_wc &&
 	mkdir -p deeply/nested/directory &&
 	touch deeply/nested/directory/.keep &&
 	svn_cmd add deeply &&
@@ -146,7 +146,7 @@ test_expect_success 'test show-ignore' "
 no-such-file*
 ' .
 	svn_cmd commit -m 'propset svn:ignore'
-	cd .. &&
+	) &&
 	git svn show-ignore > show-ignore.got &&
 	cmp show-ignore.expect show-ignore.got
 	"
