@@ -1,0 +1,165 @@
+GIT index format
+================
+
+= The git index file has the following format
+
+  All binary numbers are in network byte order. Version 2 is described
+  here unless stated otherwise.
+
+   - A 12-byte header consisting of
+
+     4-byte signature:
+       The signature is { 'D', 'I', 'R', 'C' }
+
+     4-byte version number:
+       The current supported versions are 2 and 3.
+
+     32-bit number of index entries.
+
+   - A number of sorted index entries
+
+   - Extensions
+
+     Extensions are identified by signature. Optional extensions can
+     be ignored if GIT does not understand them.
+
+     GIT currently supports tree cache and resolve undo extensions.
+
+     4-byte extension signature. If the first byte is 'A'..'Z' the
+     extension is optional and can be ignored.
+
+     32-bit size of the extension
+
+     Extension data
+
+   - 160-bit SHA-1 over the content of the index file before this
+     checksum.
+
+== Index entry
+
+  Index entries are sorted in ascending order on the name field,
+  interpreted as a string of unsigned bytes. Entries with the same
+  name are sorted by their stage field.
+
+  32-bit ctime seconds, the last time a file's metadata changed
+    this is stat(2) data
+
+  32-bit ctime nanosecond fractions
+    this is stat(2) data
+
+  32-bit mtime seconds, the last time a file's data changed
+    this is stat(2) data
+
+  32-bit mtime nanosecond fractions
+    this is stat(2) data
+
+  32-bit dev
+    this is stat(2) data
+
+  32-bit ino
+    this is stat(2) data
+
+  32-bit mode, split into (high to low bits)
+
+    4-bit object type
+      valid values in binary are 1000 (blob), 1010 (symbolic link)
+      and 1110 (gitlink)
+
+    3-bit unused
+
+    9-bit unix permission (only 0755 and 0644 are valid)
+
+  32-bit uid
+    this is stat(2) data
+
+  32-bit gid
+    this is stat(2) data
+
+  32-bit file size
+    This is the on-disk size from stat(2)
+
+  160-bit SHA-1 for the represented object
+
+  A 16-bit field split into (high to low bits)
+
+    1-bit assume-valid flag
+
+    1-bit extended flag (must be zero in version 2)
+
+    2-bit stage (during merge)
+
+    12-bit name length if the length is less than 0x0FFF
+
+  (Version 3) A 16-bit field, only applicable if the "extended flag"
+  above is 1, split into (high to low bits).
+
+    1-bit reserved for future
+
+    1-bit skip-worktree flag (used by sparse checkout)
+
+    1-bit intent-to-add flag (used by "git add -N")
+
+    13-bit unused, must be zero
+
+  Entry path name (variable length) relative to top level directory
+    (without leading slash). '/' is used as path separator. The special
+    paths ".", ".." and ".git" (without quotes) are disallowed.
+    Trailing slash is also disallowed.
+
+    The exact encoding is undefined, but the '.' and '/' characters
+    are encoded in 7-bit ASCII and the encoding cannot contain a nul
+    byte. Generally a superset of ASCII.
+
+  1-8 nul bytes as necessary to pad the entry to a multiple of eight bytes
+  while keeping the name NUL-terminated.
+
+== Extensions
+
+=== Tree cache
+
+  Tree cache extension contains pre-computed hashes for trees that can
+  be derived from the index. It helps speed up tree object generation
+  from index for a new commit.
+
+  When a path is updated in index, the path must be invalidated and
+  removed from tree cache.
+
+  - Extension tag { 'T', 'R', 'E', 'E' }
+
+  - 32-bit size
+
+  - A number of entries
+
+     NUL-terminated tree name
+
+     Blank-terminated ASCII decimal number of entries in this tree
+
+     Newline-terminated position of this tree in the parent tree. 0 for
+     the root tree
+
+     160-bit SHA-1 for this tree and it's children
+
+=== Resolve undo
+
+  A conflict is represented in index as a set of higher stage entries.
+  When a conflict is resolved (e.g. with "git add path"), these higher
+  stage entries will be removed and a stage-0 entry with proper
+  resoluton is added.
+
+  Resolve undo extension saves these higher stage entries so that
+  conflicts can be recreated (e.g. with "git checkout -m"), in case
+  users want to redo a conflict resolution from scratch.
+
+  - Extension tag { 'R', 'E', 'U', 'C' }
+
+  - 32-bit size
+
+  - A number of conflict entries
+
+    NUL-terminated conflict path
+
+    Three NUL-terminated ASCII octal numbers, entry mode of entries in
+    stage 1 to 3.
+
+    At most three 160-bit SHA-1s of the entry in three stages from 1
+    to 3. SHA-1 is not saved for any stage with entry mode zero.
