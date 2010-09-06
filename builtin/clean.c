@@ -44,7 +44,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	struct dir_struct dir;
 	static const char **pathspec;
 	struct strbuf buf = STRBUF_INIT;
-	struct string_list exclude_list = { NULL, 0, 0, 0 };
+	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	const char *qname;
 	char *seen = NULL;
 	struct option options[] = {
