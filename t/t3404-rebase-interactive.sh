@@ -101,10 +101,10 @@ test_expect_success 'rebase -i with the exec command' '
 
 test_expect_success 'rebase -i with the exec command runs from tree root' '
 	git checkout master &&
-	mkdir subdir && cd subdir &&
+	mkdir subdir && (cd subdir &&
 	FAKE_LINES="1 exec_>touch-subdir" \
-		git rebase -i HEAD^ &&
-	cd .. &&
+		git rebase -i HEAD^
+	) &&
 	test_path_is_file touch-subdir &&
 	rm -fr subdir
 '
