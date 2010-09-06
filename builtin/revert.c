@@ -495,7 +495,6 @@ static int do_pick_commit(void)
 	free_message(&msg);
 
 	/*
-	 *
 	 * If we are cherry-pick, and if the merge did not result in
 	 * hand-editing, we will hit this commit and inherit the original
 	 * author date and name.
