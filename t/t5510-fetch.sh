@@ -21,18 +21,18 @@ test_expect_success setup '
 
 test_expect_success "clone and setup child repos" '
 	git clone . one &&
-	cd one &&
+	(cd one &&
 	echo >file updated by one &&
-	git commit -a -m "updated by one" &&
-	cd .. &&
+	git commit -a -m "updated by one"
+	) &&
 	git clone . two &&
-	cd two &&
+	(cd two &&
 	git config branch.master.remote one &&
 	git config remote.one.url ../one/.git/ &&
-	git config remote.one.fetch refs/heads/master:refs/heads/one &&
-	cd .. &&
+	git config remote.one.fetch refs/heads/master:refs/heads/one
+	) &&
 	git clone . three &&
-	cd three &&
+	(cd three &&
 	git config branch.master.remote two &&
 	git config branch.master.merge refs/heads/one &&
 	mkdir -p .git/remotes &&
@@ -40,8 +40,8 @@ test_expect_success "clone and setup child repos" '
 		echo "URL: ../two/.git/"
 		echo "Pull: refs/heads/master:refs/heads/two"
 		echo "Pull: refs/heads/one:refs/heads/one"
-	} >.git/remotes/two &&
-	cd .. &&
+	} >.git/remotes/two
+	) &&
 	git clone . bundle &&
 	git clone . seven
 '

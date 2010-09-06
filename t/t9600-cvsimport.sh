@@ -17,7 +17,7 @@ test_expect_success 'setup a cvs module' '
 
 	mkdir "$CVSROOT/module" &&
 	$CVS co -d module-cvs module &&
-	cd module-cvs &&
+	(cd module-cvs &&
 	cat <<EOF >o_fortuna &&
 O Fortuna
 velut luna
@@ -41,8 +41,8 @@ add "O Fortuna" lyrics
 
 These public domain lyrics make an excellent sample text.
 EOF
-	$CVS commit -F message &&
-	cd ..
+	$CVS commit -F message
+	)
 '
 
 test_expect_success 'import a trivial module' '
@@ -52,7 +52,7 @@ test_expect_success 'import a trivial module' '
 
 '
 
-test_expect_success 'pack refs' 'cd module-git && git gc && cd ..'
+test_expect_success 'pack refs' '(cd module-git && git gc)'
 
 test_expect_success 'initial import has correct .git/cvs-revisions' '
 
@@ -62,8 +62,7 @@ test_expect_success 'initial import has correct .git/cvs-revisions' '
 '
 
 test_expect_success 'update cvs module' '
-
-	cd module-cvs &&
+	(cd module-cvs &&
 	cat <<EOF >o_fortuna &&
 O Fortune,
 like the moon
@@ -86,16 +85,16 @@ translate to English
 
 My Latin is terrible.
 EOF
-	$CVS commit -F message &&
-	cd ..
+	$CVS commit -F message
+	)
 '
 
 test_expect_success 'update git module' '
 
-	cd module-git &&
+	(cd module-git &&
 	git cvsimport -a -R -z 0 module &&
-	git merge origin &&
-	cd .. &&
+	git merge origin
+	) &&
 	test_cmp module-cvs/o_fortuna module-git/o_fortuna
 
 '
@@ -110,21 +109,20 @@ test_expect_success 'update has correct .git/cvs-revisions' '
 
 test_expect_success 'update cvs module' '
 
-	cd module-cvs &&
+	(cd module-cvs &&
 		echo 1 >tick &&
 		$CVS add tick &&
 		$CVS commit -m 1
-	cd ..
-
+	)
 '
 
 test_expect_success 'cvsimport.module config works' '
 
-	cd module-git &&
+	(cd module-git &&
 		git config cvsimport.module module &&
 		git cvsimport -a -R -z0 &&
-		git merge origin &&
-	cd .. &&
+		git merge origin
+	) &&
 	test_cmp module-cvs/tick module-git/tick
 
 '
@@ -141,12 +139,12 @@ test_expect_success 'second update has correct .git/cvs-revisions' '
 test_expect_success 'import from a CVS working tree' '
 
 	$CVS co -d import-from-wt module &&
-	cd import-from-wt &&
+	(cd import-from-wt &&
 		git cvsimport -a -z0 &&
 		echo 1 >expect &&
 		git log -1 --pretty=format:%s%n >actual &&
-		test_cmp actual expect &&
-	cd ..
+		test_cmp actual expect
+	)
 
 '
 

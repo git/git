@@ -63,10 +63,10 @@ cat > expected <<\EOF
 EOF
 test_expect_success 'update-index --update from subdir' \
 	'echo not so happy >file2 &&
-	cd dir1 &&
+	(cd dir1 &&
 	cat ../file2 >file3 &&
-	git update-index --again &&
-	cd .. &&
+	git update-index --again
+	) &&
 	git ls-files -s >current &&
 	cmp current expected'
 
