@@ -6,9 +6,10 @@ test_description='git svn commit-diff'
 
 test_expect_success 'initialize repo' '
 	mkdir import &&
-	(cd import &&
-	echo hello > readme &&
-	svn_cmd import -m "initial" . "$svnrepo"
+	(
+		cd import &&
+		echo hello >readme &&
+		svn_cmd import -m "initial" . "$svnrepo"
 	) &&
 	echo hello > readme &&
 	git update-index --add readme &&

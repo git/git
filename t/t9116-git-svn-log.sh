@@ -8,14 +8,16 @@ test_description='git svn log tests'
 
 test_expect_success 'setup repository and import' '
 	mkdir import &&
-	(cd import &&
-		for i in trunk branches/a branches/b \
-		         tags/0.1 tags/0.2 tags/0.3; do
-			mkdir -p $i && \
-			echo hello >> $i/README || exit 1
-		done && \
+	(
+		cd import &&
+		for i in trunk branches/a branches/b tags/0.1 tags/0.2 tags/0.3
+		do
+			mkdir -p $i &&
+			echo hello >>$i/README ||
+			exit 1
+		done &&
 		svn_cmd import -m test . "$svnrepo"
-		) &&
+	) &&
 	git svn init "$svnrepo" -T trunk -b branches -t tags &&
 	git svn fetch &&
 	git reset --hard trunk &&

@@ -27,12 +27,13 @@ test_expect_success 'update-index and ls-files' '
 	one) echo pass one ;;
 	*) echo bad one; exit 1 ;;
 	esac &&
-	(cd dir &&
-	git update-index --add two &&
-	case "`git ls-files`" in
-	two) echo pass two ;;
-	*) echo bad two; exit 1 ;;
-	esac
+	(
+		cd dir &&
+		git update-index --add two &&
+		case "`git ls-files`" in
+		two) echo pass two ;;
+		*) echo bad two; exit 1 ;;
+		esac
 	) &&
 	case "`git ls-files`" in
 	dir/two"$LF"one) echo pass both ;;

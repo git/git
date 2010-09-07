@@ -66,9 +66,10 @@ EOF
 "
 
 commit_file sm1 &&
-head3=$(cd sm1 &&
-git reset --hard HEAD~2 >/dev/null &&
-git rev-parse --verify HEAD | cut -c1-7
+head3=$(
+	cd sm1 &&
+	git reset --hard HEAD~2 >/dev/null &&
+	git rev-parse --verify HEAD | cut -c1-7
 )
 
 test_expect_success 'modified submodule(backward)' "

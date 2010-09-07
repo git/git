@@ -52,12 +52,13 @@ test_expect_success 'setup for merge-preserving rebase' \
 	git commit -m "Add different B" &&
 
 	git clone ./. clone2 &&
-	(cd clone2 &&
-	git checkout -b topic origin/topic &&
-	test_must_fail git merge origin/master &&
-	echo Resolved > B &&
-	git add B &&
-	git commit -m "Merge origin/master into topic"
+	(
+		cd clone2 &&
+		git checkout -b topic origin/topic &&
+		test_must_fail git merge origin/master &&
+		echo Resolved >B &&
+		git add B &&
+		git commit -m "Merge origin/master into topic"
 	) &&
 
 	git checkout topic &&

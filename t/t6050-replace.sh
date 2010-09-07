@@ -104,16 +104,17 @@ test_expect_success '"git fsck" works' '
 test_expect_success 'repack, clone and fetch work' '
      git repack -a -d &&
      git clone --no-hardlinks . clone_dir &&
-     (cd clone_dir &&
-     git show HEAD~5 | grep "A U Thor" &&
-     git show $HASH2 | grep "A U Thor" &&
-     git cat-file commit $R &&
-     git repack -a -d &&
-     test_must_fail git cat-file commit $R &&
-     git fetch ../ "refs/replace/*:refs/replace/*" &&
-     git show HEAD~5 | grep "O Thor" &&
-     git show $HASH2 | grep "O Thor" &&
-     git cat-file commit $R
+     (
+	  cd clone_dir &&
+	  git show HEAD~5 | grep "A U Thor" &&
+	  git show $HASH2 | grep "A U Thor" &&
+	  git cat-file commit $R &&
+	  git repack -a -d &&
+	  test_must_fail git cat-file commit $R &&
+	  git fetch ../ "refs/replace/*:refs/replace/*" &&
+	  git show HEAD~5 | grep "O Thor" &&
+	  git show $HASH2 | grep "O Thor" &&
+	  git cat-file commit $R
      )
 '
 
@@ -177,9 +178,10 @@ test_expect_success 'create parallel branch without the bug' '
 
 test_expect_success 'push to cloned repo' '
      git push cloned $HASH6^:refs/heads/parallel &&
-     (cd clone_dir &&
-     git checkout parallel &&
-     git log --pretty=oneline | grep $PARA2
+     (
+	  cd clone_dir &&
+	  git checkout parallel &&
+	  git log --pretty=oneline | grep $PARA2
      )
 '
 
@@ -191,19 +193,21 @@ test_expect_success 'push branch with replacement' '
      git show $HASH6~2 | grep "O Thor" &&
      git show $PARA3 | grep "O Thor" &&
      git push cloned $HASH6^:refs/heads/parallel2 &&
-     (cd clone_dir &&
-     git checkout parallel2 &&
-     git log --pretty=oneline | grep $PARA3 &&
-     git show $PARA3 | grep "A U Thor"
+     (
+	  cd clone_dir &&
+	  git checkout parallel2 &&
+	  git log --pretty=oneline | grep $PARA3 &&
+	  git show $PARA3 | grep "A U Thor"
      )
 '
 
 test_expect_success 'fetch branch with replacement' '
      git branch tofetch $HASH6 &&
-     (cd clone_dir &&
-     git fetch origin refs/heads/tofetch:refs/heads/parallel3
-     git log --pretty=oneline parallel3 | grep $PARA3
-     git show $PARA3 | grep "A U Thor"
+     (
+	  cd clone_dir &&
+	  git fetch origin refs/heads/tofetch:refs/heads/parallel3
+	  git log --pretty=oneline parallel3 | grep $PARA3
+	  git show $PARA3 | grep "A U Thor"
      )
 '
 

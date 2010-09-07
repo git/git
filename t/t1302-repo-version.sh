@@ -33,8 +33,15 @@ test_expect_success 'gitdir selection on unsupported repo' '
 
 test_expect_success 'gitdir not required mode' '
 	git apply --stat test.patch &&
-	(cd test && git apply --stat ../test.patch) &&
-	(cd test2 && git apply --stat ../test.patch)'
+	(
+		cd test &&
+		git apply --stat ../test.patch
+	) &&
+	(
+		cd test2 &&
+		git apply --stat ../test.patch
+	)
+'
 
 test_expect_success 'gitdir required mode on normal repos' '
 	(git apply --check --index test.patch &&
