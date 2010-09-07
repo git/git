@@ -4231,7 +4231,9 @@ function toggleLineNumbers() {
                 e2.innerHTML = "[Hide line numbers]";
         }
 }
-document.getElementsByTagName("head")[0].innerHTML += "<style id=\'lineNoStyle\'></style>";
+var style = document.createElement("style");
+style.setAttribute("id", "lineNoStyle");
+document.getElementsByTagName("head")[0].appendChild(style);
 toggleLineNumbers();
 </script>
 ';
