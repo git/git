@@ -6,7 +6,7 @@ for h in \
 	*.txt *.html \
 	howto/*.txt howto/*.html \
 	technical/*.txt technical/*.html \
-	RelNotes-*.txt *.css
+	RelNotes/*.txt *.css
 do
 	if test ! -f "$h"
 	then
