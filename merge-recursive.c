@@ -935,14 +935,7 @@ static int process_renames(struct merge_options *o,
 
 			try_merge = 0;
 
-			if (string_list_has_string(&o->current_directory_set, ren1_dst)) {
-				clean_merge = 0;
-				output(o, 1, "CONFLICT (rename/directory): Rename %s->%s in %s "
-				       " directory %s added in %s",
-				       ren1_src, ren1_dst, branch1,
-				       ren1_dst, branch2);
-				conflict_rename_dir(o, ren1, branch1);
-			} else if (sha_eq(src_other.sha1, null_sha1)) {
+			if (sha_eq(src_other.sha1, null_sha1)) {
 				clean_merge = 0;
 				output(o, 1, "CONFLICT (rename/delete): Rename %s->%s in %s "
 				       "and deleted in %s",
@@ -1034,6 +1027,13 @@ static int process_renames(struct merge_options *o,
 					if (!ren1->dst_entry->stages[2].mode !=
 					    !ren1->dst_entry->stages[3].mode)
 						ren1->dst_entry->processed = 0;
+				} else if (string_list_has_string(&o->current_directory_set, ren1_dst)) {
+					clean_merge = 0;
+					output(o, 1, "CONFLICT (rename/directory): Rename %s->%s in %s "
+					       " directory %s added in %s",
+					       ren1_src, ren1_dst, branch1,
+					       ren1_dst, branch2);
+					conflict_rename_dir(o, ren1, branch1);
 				} else {
 					if (mfi.merge || !mfi.clean)
 						output(o, 1, "Renaming %s => %s", ren1_src, ren1_dst);

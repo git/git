@@ -58,7 +58,7 @@ test_expect_success 'Cherry-pick succeeds with was_a_dir/file -> was_a_dir (reso
 	git cherry-pick --strategy=resolve simple
 '
 
-test_expect_failure 'Cherry-pick succeeds with was_a_dir/file -> was_a_dir (recursive)' '
+test_expect_success 'Cherry-pick succeeds with was_a_dir/file -> was_a_dir (recursive)' '
 	git reset --hard &&
 	git checkout -q nick-testcase^0 &&
 	git cherry-pick --strategy=recursive simple
@@ -92,7 +92,7 @@ test_expect_success 'Cherry-pick with rename to different D/F conflict succeeds 
 	git cherry-pick --strategy=resolve mergeme
 '
 
-test_expect_failure 'Cherry-pick with rename to different D/F conflict succeeds (recursive)' '
+test_expect_success 'Cherry-pick with rename to different D/F conflict succeeds (recursive)' '
 	git reset --hard &&
 	git checkout -q newhead^0 &&
 	git cherry-pick --strategy=recursive mergeme
