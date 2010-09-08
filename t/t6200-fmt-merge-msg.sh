@@ -129,6 +129,54 @@ test_expect_success '[merge] summary/log configuration' '
 	test_cmp expected actual2
 '
 
+test_expect_success 'setup: clear [merge] configuration' '
+	test_might_fail git config --unset-all merge.log &&
+	test_might_fail git config --unset-all merge.summary
+'
+
+test_expect_success 'setup FETCH_HEAD' '
+	git checkout master &&
+	test_tick &&
+	git fetch . left
+'
+
+test_expect_success 'merge.log=3 limits shortlog length' '
+	cat >expected <<-EOF &&
+	Merge branch ${apos}left${apos}
+
+	* left: (5 commits)
+	  Left #5
+	  Left #4
+	  Left #3
+	  ...
+	EOF
+
+	git -c merge.log=3 fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'merge.log=5 shows all 5 commits' '
+	cat >expected <<-EOF &&
+	Merge branch ${apos}left${apos}
+
+	* left:
+	  Left #5
+	  Left #4
+	  Left #3
+	  Common #2
+	  Common #1
+	EOF
+
+	git -c merge.log=5 fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'merge.log=0 disables shortlog' '
+	echo "Merge branch ${apos}left${apos}" >expected
+	git -c merge.log=0 fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'fmt-merge-msg -m' '
 	echo "Sync with left" >expected &&
 	cat >expected.log <<-EOF &&
