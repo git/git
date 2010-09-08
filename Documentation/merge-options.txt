@@ -16,11 +16,11 @@ inspect and further tweak the merge result before committing.
 With --no-ff Generate a merge commit even if the merge
 resolved as a fast-forward.
 
---log::
+--log[=<n>]::
 --no-log::
 	In addition to branch names, populate the log message with
-	one-line descriptions from the actual commits that are being
-	merged.
+	one-line descriptions from at most <n> actual commits that are being
+	merged. See also linkgit:git-fmt-merge-msg[1].
 +
 With --no-log do not list one-line descriptions from the
 actual commits being merged.
