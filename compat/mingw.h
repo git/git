@@ -97,7 +97,7 @@ static inline int fcntl(int fd, int cmd, ...)
 	return -1;
 }
 /* bash cannot reliably detect negative return codes as failure */
-#define exit(code) exit((code) & 0xff)
+#define exit(code) vc_exit((code) & 0xff)
 
 /*
  * simple adaptors
