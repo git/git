@@ -255,9 +255,9 @@ static void do_fmt_merge_msg_title(struct strbuf *out,
 		strbuf_addf(out, " into %s\n", current_branch);
 }
 
-static int do_fmt_merge_msg(int merge_title, int merge_summary,
-	struct strbuf *in, struct strbuf *out) {
-	int limit = 20, i = 0, pos = 0;
+static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
+	struct strbuf *out, int shortlog_len) {
+	int i = 0, pos = 0;
 	unsigned char head_sha1[20];
 	const char *current_branch;
 
@@ -288,7 +288,7 @@ static int do_fmt_merge_msg(int merge_title, int merge_summary,
 	if (merge_title)
 		do_fmt_merge_msg_title(out, current_branch);
 
-	if (merge_summary) {
+	if (shortlog_len) {
 		struct commit *head;
 		struct rev_info rev;
 
@@ -303,17 +303,14 @@ static int do_fmt_merge_msg(int merge_title, int merge_summary,
 
 		for (i = 0; i < origins.nr; i++)
 			shortlog(origins.items[i].string, origins.items[i].util,
-					head, &rev, limit, out);
+					head, &rev, shortlog_len, out);
 	}
 	return 0;
 }
 
-int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
-	return do_fmt_merge_msg(1, merge_summary, in, out);
-}
-
-int fmt_merge_msg_shortlog(struct strbuf *in, struct strbuf *out) {
-	return do_fmt_merge_msg(0, 1, in, out);
+int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
+		  int merge_title, int shortlog_len) {
+	return do_fmt_merge_msg(merge_title, in, out, shortlog_len);
 }
 
 int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
@@ -355,12 +352,13 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 
 	if (strbuf_read(&input, fileno(in), 0) < 0)
 		die_errno("could not read input file");
-	if (message) {
+
+	if (message)
 		strbuf_addstr(&output, message);
-		ret = fmt_merge_msg_shortlog(&input, &output);
-	} else {
-		ret = fmt_merge_msg(merge_summary, &input, &output);
-	}
+	ret = fmt_merge_msg(&input, &output,
+			    message ? 0 : 1,
+			    merge_summary ? DEFAULT_MERGE_LOG_LEN : 0);
+
 	if (ret)
 		return ret;
 	write_in_full(STDOUT_FILENO, output.buf, output.len);

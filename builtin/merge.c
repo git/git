@@ -998,14 +998,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < argc; i++)
 			merge_name(argv[i], &merge_names);
 
-		if (have_message && option_log)
-			fmt_merge_msg_shortlog(&merge_names, &merge_msg);
-		else if (!have_message)
-			fmt_merge_msg(option_log, &merge_names, &merge_msg);
-
-
-		if (!(have_message && !option_log) && merge_msg.len)
-			strbuf_setlen(&merge_msg, merge_msg.len-1);
+		if (!have_message || option_log) {
+			fmt_merge_msg(&merge_names, &merge_msg, !have_message,
+				      option_log ? DEFAULT_MERGE_LOG_LEN : 0);
+			if (merge_msg.len)
+				strbuf_setlen(&merge_msg, merge_msg.len - 1);
+		}
 	}
 
 	if (head_invalid || !argc)
