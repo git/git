@@ -146,7 +146,9 @@ static struct ref *get_ref_map(struct transport *transport,
 		struct remote *remote = transport->remote;
 		struct branch *branch = branch_get(NULL);
 		int has_merge = branch_has_merge_config(branch);
-		if (remote && (remote->fetch_refspec_nr || has_merge)) {
+		if (remote &&
+		    (remote->fetch_refspec_nr ||
+		     (has_merge && !strcmp(branch->remote_name, remote->name)))) {
 			for (i = 0; i < remote->fetch_refspec_nr; i++) {
 				get_fetch_map(remote_refs, &remote->fetch[i], &tail, 0);
 				if (remote->fetch[i].dst &&
