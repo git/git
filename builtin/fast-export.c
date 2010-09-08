@@ -167,7 +167,15 @@ static int depth_first(const void *a_, const void *b_)
 	cmp = memcmp(name_a, name_b, len);
 	if (cmp)
 		return cmp;
-	return (len_b - len_a);
+	cmp = len_b - len_a;
+	if (cmp)
+		return cmp;
+	/*
+	 * Move 'R'ename entries last so that all references of the file
+	 * appear in the output before it is renamed (e.g., when a file
+	 * was copied and renamed in the same commit).
+	 */
+	return (a->status == 'R') - (b->status == 'R');
 }
 
 static void show_filemodify(struct diff_queue_struct *q,
