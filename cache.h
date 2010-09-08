@@ -1035,6 +1035,7 @@ extern int pager_in_use(void);
 extern int pager_use_color;
 
 extern const char *editor_program;
+extern const char *askpass_program;
 extern const char *excludes_file;
 
 /* base85 */
