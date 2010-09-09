@@ -148,6 +148,7 @@ static struct ref *get_ref_map(struct transport *transport,
 		int has_merge = branch_has_merge_config(branch);
 		if (remote &&
 		    (remote->fetch_refspec_nr ||
+		     /* Note: has_merge implies non-NULL branch->remote_name */
 		     (has_merge && !strcmp(branch->remote_name, remote->name)))) {
 			for (i = 0; i < remote->fetch_refspec_nr; i++) {
 				get_fetch_map(remote_refs, &remote->fetch[i], &tail, 0);
@@ -162,6 +163,8 @@ static struct ref *get_ref_map(struct transport *transport,
 			 * if the remote we're fetching from is the same
 			 * as given in branch.<name>.remote, we add the
 			 * ref given in branch.<name>.merge, too.
+			 *
+			 * Note: has_merge implies non-NULL branch->remote_name
 			 */
 			if (has_merge &&
 			    !strcmp(branch->remote_name, remote->name))
