@@ -286,9 +286,8 @@ static long ff_regexp(const char *line, long len,
 	result = pmatch[i].rm_eo - pmatch[i].rm_so;
 	if (result > buffer_size)
 		result = buffer_size;
-	else
-		while (result > 0 && (isspace(line[result - 1])))
-			result--;
+	while (result > 0 && (isspace(line[result - 1])))
+		result--;
 	memcpy(buffer, line, result);
  fail:
 	free(line_buffer);
