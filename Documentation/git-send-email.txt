@@ -165,6 +165,15 @@ user is prompted for a password while the input is masked for privacy.
 	are also accepted. The port can also be set with the
 	'sendemail.smtpserverport' configuration variable.
 
+--smtp-server-option=<option>::
+	If set, specifies the outgoing SMTP server option to use.
+	Default value can be specified by the 'sendemail.smtpserveroption'
+	configuration option.
++
+The --smtp-server-option option must be repeated for each option you want
+to pass to the server. Likewise, different lines in the configuration files
+must be used for each option.
+
 --smtp-ssl::
 	Legacy alias for '--smtp-encryption ssl'.
 
