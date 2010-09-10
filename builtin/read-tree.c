@@ -16,6 +16,7 @@
 #include "resolve-undo.h"
 
 static int nr_trees;
+static int read_empty;
 static struct tree *trees[MAX_UNPACK_TREES];
 
 static int list_tree(unsigned char *sha1)
@@ -32,7 +33,7 @@ static int list_tree(unsigned char *sha1)
 }
 
 static const char * const read_tree_usage[] = {
-	"git read-tree [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u [--exclude-per-directory=<gitignore>] | -i]] [--no-sparse-checkout] [--index-output=<file>] <tree-ish1> [<tree-ish2> [<tree-ish3>]]",
+	"git read-tree [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u [--exclude-per-directory=<gitignore>] | -i]] [--no-sparse-checkout] [--index-output=<file>] (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])",
 	NULL
 };
 
@@ -106,6 +107,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		{ OPTION_CALLBACK, 0, "index-output", NULL, "FILE",
 		  "write resulting index to <FILE>",
 		  PARSE_OPT_NONEG, index_output_cb },
+		OPT_SET_INT(0, "empty", &read_empty,
+			    "only empty the index", 1),
 		OPT__VERBOSE(&opts.verbose_update),
 		OPT_GROUP("Merging"),
 		OPT_SET_INT('m', NULL, &opts.merge,
@@ -166,6 +169,11 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			die("failed to unpack tree object %s", arg);
 		stage++;
 	}
+	if (nr_trees == 0 && !read_empty)
+		warning("read-tree: emptying the index with no arguments is deprecated; use --empty");
+	else if (nr_trees > 0 && read_empty)
+		die("passing trees as arguments contradicts --empty");
+
 	if (1 < opts.index_only + opts.update)
 		die("-u and -i at the same time makes no sense");
 	if ((opts.update||opts.index_only) && !opts.merge)
