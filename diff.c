@@ -919,7 +919,10 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 		free (ecbdata->diff_words->minus.orig);
 		free (ecbdata->diff_words->plus.text.ptr);
 		free (ecbdata->diff_words->plus.orig);
-		free(ecbdata->diff_words->word_regex);
+		if (ecbdata->diff_words->word_regex) {
+			regfree(ecbdata->diff_words->word_regex);
+			free(ecbdata->diff_words->word_regex);
+		}
 		free(ecbdata->diff_words);
 		ecbdata->diff_words = NULL;
 	}

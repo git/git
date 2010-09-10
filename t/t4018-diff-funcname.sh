@@ -40,6 +40,11 @@ do
 		! ( git diff --no-index Beer.java Beer-correct.java 2>&1 |
 			grep "fatal" > /dev/null )
 	'
+	test_expect_success "builtin $p wordRegex pattern compiles" '
+		! ( git diff --no-index --word-diff \
+			Beer.java Beer-correct.java 2>&1 |
+			grep "fatal" > /dev/null )
+	'
 done
 
 test_expect_success 'default behaviour' '
