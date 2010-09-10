@@ -10,6 +10,7 @@
 #include "string-list.h"
 
 struct string_list config_name_for_path;
+struct string_list config_fetch_for_name;
 struct string_list config_ignore_for_name;
 
 static int add_submodule_odb(const char *path)
@@ -63,7 +64,7 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 	}
 }
 
-static int submodule_config(const char *var, const char *value, void *cb)
+int submodule_config(const char *var, const char *value, void *cb)
 {
 	if (!prefixcmp(var, "submodule."))
 		return parse_submodule_config_option(var, value);
@@ -99,6 +100,14 @@ int parse_submodule_config_option(const char *var, const char *value)
 		else
 			config = string_list_append(&config_name_for_path, xstrdup(value));
 		config->util = strbuf_detach(&submodname, NULL);
+		strbuf_release(&submodname);
+	} else if ((len > 5) && !strcmp(var + len - 6, ".fetch")) {
+		strbuf_add(&submodname, var, len - 6);
+		config = unsorted_string_list_lookup(&config_fetch_for_name, submodname.buf);
+		if (!config)
+			config = string_list_append(&config_fetch_for_name,
+						    strbuf_detach(&submodname, NULL));
+		config->util = git_config_bool(var, value) ? (void *)1 : NULL;
 		strbuf_release(&submodname);
 	} else if ((len > 7) && !strcmp(var + len - 7, ".ignore")) {
 		if (strcmp(value, "untracked") && strcmp(value, "dirty") &&
@@ -227,6 +236,55 @@ void show_submodule_summary(FILE *f, const char *path,
 		clear_commit_marks(right, ~0);
 	}
 	strbuf_release(&sb);
+}
+
+int fetch_populated_submodules(int forced)
+{
+	int result = 0;
+	struct child_process cp;
+	const char *argv[] = {
+		"fetch",
+		NULL,
+	};
+	struct string_list_item *name_for_path;
+	const char *work_tree = get_git_work_tree();
+	if (!work_tree)
+		return 0;
+
+	memset(&cp, 0, sizeof(cp));
+	cp.argv = argv;
+	cp.env = local_repo_env;
+	cp.git_cmd = 1;
+	cp.no_stdin = 1;
+	cp.out = -1;
+
+	for_each_string_list_item(name_for_path, &config_name_for_path) {
+		struct strbuf submodule_path = STRBUF_INIT;
+		struct strbuf submodule_git_dir = STRBUF_INIT;
+		const char *git_dir;
+
+		if (!forced) {
+			struct string_list_item *fetch_option;
+			fetch_option = unsorted_string_list_lookup(&config_fetch_for_name, name_for_path->util);
+			if (fetch_option && !fetch_option->util)
+				continue;
+		}
+
+		strbuf_addf(&submodule_path, "%s/%s", work_tree, name_for_path->string);
+		strbuf_addf(&submodule_git_dir, "%s/.git", submodule_path.buf);
+		git_dir = read_gitfile_gently(submodule_git_dir.buf);
+		if (!git_dir)
+			git_dir = submodule_git_dir.buf;
+		if (is_directory(git_dir)) {
+			printf("Fetching submodule %s\n", name_for_path->string);
+			cp.dir = submodule_path.buf;
+			if (run_command(&cp))
+				result = 1;
+		}
+		strbuf_release(&submodule_path);
+		strbuf_release(&submodule_git_dir);
+	}
+	return result;
 }
 
 unsigned is_submodule_modified(const char *path, int ignore_untracked)

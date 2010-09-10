@@ -64,6 +64,12 @@ endif::git-pull[]
 	specified with the remote.<name>.tagopt setting. See
 	linkgit:git-config[1].
 
+--[no-]recursive::
+	By default new commits of all populated submodules will be fetched
+	too. This option can be used to disable/enable recursive fetching of
+	submodules regardless of the 'fetch' configuration setting (see
+	linkgit:git-config[1] or linkgit:gitmodules[5]).
+
 -u::
 --update-head-ok::
 	By default 'git fetch' refuses to update the head which
