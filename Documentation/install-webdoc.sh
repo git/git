@@ -6,7 +6,7 @@ for h in \
 	*.txt *.html \
 	howto/*.txt howto/*.html \
 	technical/*.txt technical/*.html \
-	RelNotes-*.txt *.css
+	RelNotes/*.txt *.css
 do
 	if test ! -f "$h"
 	then
@@ -30,7 +30,7 @@ for th in \
 do
 	h=`expr "$th" : "$strip_leading"'\(.*\)'`
 	case "$h" in
-	index.html) continue ;;
+	RelNotes-*.txt | index.html) continue ;;
 	esac
 	test -f "$h" && continue
 	echo >&2 "# rm -f $th"
