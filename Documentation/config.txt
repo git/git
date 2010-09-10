@@ -813,8 +813,6 @@ diff.mnemonicprefix::
 	standard "a/" and "b/" depending on what is being compared.  When
 	this configuration is in effect, reverse diff output also swaps
 	the order of the prefixes:
-diff.noprefix::
-	If set, 'git diff' does not show any source or destination prefix.
 `git diff`;;
 	compares the (i)ndex and the (w)ork tree;
 `git diff HEAD`;;
@@ -825,6 +823,9 @@ diff.noprefix::
 	compares an (o)bject and a (w)ork tree entity;
 `git diff --no-index a b`;;
 	compares two non-git things (1) and (2).
+
+diff.noprefix::
+	If set, 'git diff' does not show any source or destination prefix.
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
