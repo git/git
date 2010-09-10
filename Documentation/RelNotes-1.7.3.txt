@@ -60,11 +60,19 @@ release, unless otherwise noted.
  * "git fetch" and friends were accidentally broken for url with "+" in
    its path, e.g. "git://git.gnome.org/gtk+".
 
+ * "git fetch $url" (i.e. without refspecs) was broken for quite some
+   time, if the current branch happen to be tracking some remote.
+
+ * "git note remove" created unnecessary extra commit when named object
+   did not have any note to begin with.
+
+ * "git -c foo=bar subcmd" did not work well for subcmd that is not
+   implemented as a built-in command.
+
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.2.2-268-g7e42332
-O=v1.7.2
+O=v1.7.3-rc0
 git shortlog --no-merges $O..master ^maint
 exit 0
 
