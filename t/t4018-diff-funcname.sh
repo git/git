@@ -37,13 +37,13 @@ for p in $builtin_patterns
 do
 	test_expect_success "builtin $p pattern compiles" '
 		echo "*.java diff=$p" > .gitattributes &&
-		! ( git diff --no-index Beer.java Beer-correct.java 2>&1 |
-			grep "fatal" > /dev/null )
+		! { git diff --no-index Beer.java Beer-correct.java 2>&1 |
+			grep "fatal" > /dev/null; }
 	'
 	test_expect_success "builtin $p wordRegex pattern compiles" '
-		! ( git diff --no-index --word-diff \
+		! { git diff --no-index --word-diff \
 			Beer.java Beer-correct.java 2>&1 |
-			grep "fatal" > /dev/null )
+			grep "fatal" > /dev/null; }
 	'
 done
 
