@@ -3,6 +3,7 @@
 #include "exec_cmd.h"
 #include "run-command.h"
 #include "strbuf.h"
+#include "string-list.h"
 
 #include <syslog.h>
 
@@ -736,9 +737,9 @@ static int set_reuse_addr(int sockfd)
 
 #ifndef NO_IPV6
 
-static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
+static int setup_named_sock(char *listen_addr, int listen_port, int **socklist_p, int socknum)
 {
-	int socknum = 0, *socklist = NULL;
+	int *socklist = *socklist_p;
 	int maxfd = -1;
 	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *ai0, *ai;
@@ -810,8 +811,9 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 
 #else /* NO_IPV6 */
 
-static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
+static int setup_named_sock(char *listen_addr, int listen_port, int **socklist_p, int socknum)
 {
+	int *socklist = *socklist_p;
 	struct sockaddr_in sin;
 	int sockfd;
 	long flags;
@@ -823,40 +825,61 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 	if (listen_addr) {
 		/* Well, host better be an IP address here. */
 		if (inet_pton(AF_INET, listen_addr, &sin.sin_addr.s_addr) <= 0)
-			return 0;
+			return socknum;
 	} else {
 		sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	}
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0)
-		return 0;
+		return socknum;
 
 	if (set_reuse_addr(sockfd)) {
 		close(sockfd);
-		return 0;
+		return socknum;
 	}
 
 	if ( bind(sockfd, (struct sockaddr *)&sin, sizeof sin) < 0 ) {
 		close(sockfd);
-		return 0;
+		return socknum;
 	}
 
 	if (listen(sockfd, 5) < 0) {
 		close(sockfd);
-		return 0;
+		return socknum;
 	}
 
 	flags = fcntl(sockfd, F_GETFD, 0);
 	if (flags >= 0)
 		fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
 
-	*socklist_p = xmalloc(sizeof(int));
-	**socklist_p = sockfd;
-	return 1;
+	socklist = xrealloc(socklist, sizeof(int) * (socknum + 1));
+	socklist[socknum++] = sockfd;
+
+	*socklist_p = socklist;
+	return socknum;
 }
 
 #endif
+
+static int socksetup(struct string_list *listen_addr, int listen_port, int **socklist_p)
+{
+	int socknum = 0, *socklist = NULL;
+
+	if (!listen_addr->nr)
+		socknum = setup_named_sock(NULL, listen_port, &socklist,
+					   socknum);
+	else {
+		int i;
+		for (i = 0; i < listen_addr->nr; i++)
+			socknum = setup_named_sock(listen_addr->items[i].string,
+						   listen_port, &socklist,
+						   socknum);
+	}
+
+	*socklist_p = socklist;
+	return socknum;
+}
 
 static int service_loop(int socknum, int *socklist)
 {
@@ -946,14 +969,14 @@ static void store_pid(const char *path)
 		die_errno("failed to write pid file '%s'", path);
 }
 
-static int serve(char *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
+static int serve(struct string_list *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
 {
 	int socknum, *socklist;
 
 	socknum = socksetup(listen_addr, listen_port, &socklist);
 	if (socknum == 0)
-		die("unable to allocate any listen sockets on host %s port %u",
-		    listen_addr, listen_port);
+		die("unable to allocate any listen sockets on port %u",
+		    listen_port);
 
 	if (pass && gid &&
 	    (initgroups(pass->pw_name, gid) || setgid (gid) ||
@@ -966,7 +989,7 @@ static int serve(char *listen_addr, int listen_port, struct passwd *pass, gid_t 
 int main(int argc, char **argv)
 {
 	int listen_port = 0;
-	char *listen_addr = NULL;
+	struct string_list listen_addr = STRING_LIST_INIT_NODUP;
 	int inetd_mode = 0;
 	const char *pid_file = NULL, *user_name = NULL, *group_name = NULL;
 	int detach = 0;
@@ -974,6 +997,7 @@ int main(int argc, char **argv)
 	struct group *group;
 	gid_t gid = 0;
 	int i;
+	int return_value;
 
 	git_extract_argv0_path(argv[0]);
 
@@ -981,7 +1005,7 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (!prefixcmp(arg, "--listen=")) {
-			listen_addr = xstrdup_tolower(arg + 9);
+			string_list_append(&listen_addr, xstrdup_tolower(arg + 9));
 			continue;
 		}
 		if (!prefixcmp(arg, "--port=")) {
@@ -1106,7 +1130,7 @@ int main(int argc, char **argv)
 	if (inetd_mode && (group_name || user_name))
 		die("--user and --group are incompatible with --inetd");
 
-	if (inetd_mode && (listen_port || listen_addr))
+	if (inetd_mode && (listen_port || (listen_addr.nr > 0)))
 		die("--listen= and --port= are incompatible with --inetd");
 	else if (listen_port == 0)
 		listen_port = DEFAULT_GIT_PORT;
@@ -1161,5 +1185,9 @@ int main(int argc, char **argv)
 	if (pid_file)
 		store_pid(pid_file);
 
-	return serve(listen_addr, listen_port, pass, gid);
+	return_value = serve(&listen_addr, listen_port, pass, gid);
+
+	string_list_clear(&listen_addr, 0);
+
+	return return_value;
 }
