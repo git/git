@@ -22,17 +22,18 @@ esac
 test_expect_success \
     'initialize git svn' '
 	mkdir import &&
-	cd import &&
-	echo foo > foo &&
-	ln -s foo foo.link
-	mkdir -p dir/a/b/c/d/e &&
-	echo "deep dir" > dir/a/b/c/d/e/file &&
-	mkdir bar &&
-	echo "zzz" > bar/zzz &&
-	echo "#!/bin/sh" > exec.sh &&
-	chmod +x exec.sh &&
-	svn_cmd import -m "import for git svn" . "$svnrepo" >/dev/null &&
-	cd .. &&
+	(
+		cd import &&
+		echo foo >foo &&
+		ln -s foo foo.link
+		mkdir -p dir/a/b/c/d/e &&
+		echo "deep dir" >dir/a/b/c/d/e/file &&
+		mkdir bar &&
+		echo "zzz" >bar/zzz &&
+		echo "#!/bin/sh" >exec.sh &&
+		chmod +x exec.sh &&
+		svn_cmd import -m "import for git svn" . "$svnrepo" >/dev/null
+	) &&
 	rm -rf import &&
 	git svn init "$svnrepo"'
 

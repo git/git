@@ -1110,11 +1110,10 @@ test_expect_success \
 	'P: supermodule & submodule mix' \
 	'git fast-import <input &&
 	 git checkout subuse1 &&
-	 rm -rf sub && mkdir sub && cd sub &&
+	 rm -rf sub && mkdir sub && (cd sub &&
 	 git init &&
 	 git fetch --update-head-ok .. refs/heads/sub:refs/heads/master &&
-	 git checkout master &&
-	 cd .. &&
+	 git checkout master) &&
 	 git submodule init &&
 	 git submodule update'
 

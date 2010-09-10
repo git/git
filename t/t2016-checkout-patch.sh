@@ -52,7 +52,7 @@ test_expect_success PERL 'git checkout -p HEAD with NO staged changes: apply' '
 '
 
 test_expect_success PERL 'git checkout -p HEAD with change already staged' '
-	set_state dir/foo index index
+	set_state dir/foo index index &&
 	# the third n is to get out in case it mistakenly does not apply
 	(echo n; echo y; echo n) | git checkout -p HEAD &&
 	verify_saved_state bar &&
