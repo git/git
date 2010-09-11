@@ -1448,7 +1448,7 @@ ifdef NO_REGEX
 endif
 
 ifdef USE_NED_ALLOCATOR
-       COMPAT_CFLAGS += -DUSE_NED_ALLOCATOR -DOVERRIDE_STRDUP -DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR -Icompat/nedmalloc
+       COMPAT_CFLAGS += -Icompat/nedmalloc
        COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
 endif
 
@@ -1877,6 +1877,11 @@ http.s http.o: EXTRA_CPPFLAGS = -DGIT_USER_AGENT='"git/$(GIT_VERSION)"'
 
 ifdef NO_EXPAT
 http-walker.s http-walker.o: EXTRA_CPPFLAGS = -DNO_EXPAT
+endif
+
+ifdef USE_NED_ALLOCATOR
+compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
+	-DNDEBUG -DOVERRIDE_STRDUP -DREPLACE_SYSTEM_ALLOCATOR
 endif
 
 git-%$X: %.o $(GITLIBS)
