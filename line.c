@@ -961,8 +961,10 @@ static int assign_range_to_parent(struct rev_info *rev, struct commit *c,
 		 * If there is no new ranges assigned to the parent,
 		 * we should mark it as a 'root' commit.
 		 */
-		free(c->parents);
-		c->parents = NULL;
+		if (c->parents && !c->parents->next) {
+			free(c->parents);
+			c->parents = NULL;
+		}
 	}
 
 	/* and the ranges of current commit c is updated */
