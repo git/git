@@ -970,6 +970,7 @@ case $(uname -s) in
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
 	# exec does not inherit the PID
+	test_set_prereq MINGW
 	;;
 *)
 	test_set_prereq POSIXPERM
