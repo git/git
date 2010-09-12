@@ -1465,7 +1465,7 @@ ifdef NO_REGEX
 endif
 
 ifdef USE_NED_ALLOCATOR
-       COMPAT_CFLAGS += -DUSE_NED_ALLOCATOR -DOVERRIDE_STRDUP -DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR -Icompat/nedmalloc
+       COMPAT_CFLAGS += -Icompat/nedmalloc
        COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
 endif
 
@@ -1906,6 +1906,11 @@ endif
 
 ifdef NO_REGEX
 compat/regex/regex.o: EXTRA_CPPFLAGS = -DGAWK -DNO_MBSUPPORT
+endif
+
+ifdef USE_NED_ALLOCATOR
+compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
+	-DNDEBUG -DOVERRIDE_STRDUP -DREPLACE_SYSTEM_ALLOCATOR
 endif
 
 git-%$X: %.o $(GITLIBS)
