@@ -81,8 +81,8 @@ if ! test_have_prereq PERL; then
 fi
 
 perl -MEncode -e 'decode_utf8("", Encode::FB_CROAK)' >/dev/null 2>&1 || {
-    skip_all='skipping gitweb tests, perl version is too old'
-    test_done
+	skip_all='skipping gitweb tests, perl version is too old'
+	test_done
 }
 
 gitweb_init
