@@ -160,6 +160,10 @@ extern char *gitbasename(char *);
 #define PRIx32 "x"
 #endif
 
+#ifndef PRIo32
+#define PRIo32 "o"
+#endif
+
 #ifndef PATH_SEP
 #define PATH_SEP ':'
 #endif

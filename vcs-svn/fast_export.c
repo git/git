@@ -25,7 +25,7 @@ void fast_export_modify(uint32_t depth, uint32_t *path, uint32_t mode,
 			uint32_t mark)
 {
 	/* Mode must be 100644, 100755, 120000, or 160000. */
-	printf("M %06o :%d ", mode, mark);
+	printf("M %06"PRIo32" :%"PRIu32" ", mode, mark);
 	pool_print_seq(depth, path, '/', stdout);
 	putchar('\n');
 }
@@ -38,7 +38,8 @@ void fast_export_commit(uint32_t revision, uint32_t author, char *log,
 	if (!log)
 		log = "";
 	if (~uuid && ~url) {
-		snprintf(gitsvnline, MAX_GITSVN_LINE_LEN, "\n\ngit-svn-id: %s@%d %s\n",
+		snprintf(gitsvnline, MAX_GITSVN_LINE_LEN,
+				"\n\ngit-svn-id: %s@%"PRIu32" %s\n",
 				 pool_fetch(url), revision, pool_fetch(uuid));
 	} else {
 		*gitsvnline = '\0';
@@ -59,7 +60,7 @@ void fast_export_commit(uint32_t revision, uint32_t author, char *log,
 	repo_diff(revision - 1, revision);
 	fputc('\n', stdout);
 
-	printf("progress Imported commit %d.\n\n", revision);
+	printf("progress Imported commit %"PRIu32".\n\n", revision);
 }
 
 void fast_export_blob(uint32_t mode, uint32_t mark, uint32_t len)
@@ -69,7 +70,7 @@ void fast_export_blob(uint32_t mode, uint32_t mark, uint32_t len)
 		buffer_skip_bytes(5);
 		len -= 5;
 	}
-	printf("blob\nmark :%d\ndata %d\n", mark, len);
+	printf("blob\nmark :%"PRIu32"\ndata %"PRIu32"\n", mark, len);
 	buffer_copy_bytes(len);
 	fputc('\n', stdout);
 }
