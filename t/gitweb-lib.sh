@@ -19,9 +19,9 @@ our \$site_name = '[localhost]';
 our \$site_header = '';
 our \$site_footer = '';
 our \$home_text = 'indextext.html';
-our @stylesheets = ('file:///$TEST_DIRECTORY/../gitweb/static/gitweb.css');
-our \$logo = 'file:///$TEST_DIRECTORY/../gitweb/static/git-logo.png';
-our \$favicon = 'file:///$TEST_DIRECTORY/../gitweb/static/git-favicon.png';
+our @stylesheets = ('file:///$GIT_BUILD_DIR/gitweb/static/gitweb.css');
+our \$logo = 'file:///$GIT_BUILD_DIR/gitweb/static/git-logo.png';
+our \$favicon = 'file:///$GIT_BUILD_DIR/gitweb/static/git-favicon.png';
 our \$projects_list = '';
 our \$export_ok = '';
 our \$strict_export = '';
@@ -38,7 +38,7 @@ gitweb_run () {
 	GATEWAY_INTERFACE='CGI/1.1'
 	HTTP_ACCEPT='*/*'
 	REQUEST_METHOD='GET'
-	SCRIPT_NAME="$TEST_DIRECTORY/../gitweb/gitweb.perl"
+	SCRIPT_NAME="$GIT_BUILD_DIR/gitweb/gitweb.perl"
 	QUERY_STRING=""$1""
 	PATH_INFO=""$2""
 	export GATEWAY_INTERFACE HTTP_ACCEPT REQUEST_METHOD \
@@ -81,8 +81,8 @@ if ! test_have_prereq PERL; then
 fi
 
 perl -MEncode -e 'decode_utf8("", Encode::FB_CROAK)' >/dev/null 2>&1 || {
-    skip_all='skipping gitweb tests, perl version is too old'
-    test_done
+	skip_all='skipping gitweb tests, perl version is too old'
+	test_done
 }
 
 gitweb_init
