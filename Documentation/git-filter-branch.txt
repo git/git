@@ -81,7 +81,7 @@ OPTIONS
 	This filter may be used if you only need to modify the environment
 	in which the commit will be performed.  Specifically, you might
 	want to rewrite the author/committer name/email/time environment
-	variables (see linkgit:git-commit[1] for details).  Do not forget
+	variables (see linkgit:git-commit-tree[1] for details).  Do not forget
 	to re-export the variables.
 
 --tree-filter <command>::
