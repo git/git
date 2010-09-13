@@ -10,8 +10,8 @@
  exec wish "$argv0" -- "$@"
 
 set appvers {@@GITGUI_VERSION@@}
-set copyright [encoding convertfrom utf-8 {
-Copyright © 2006, 2007 Shawn Pearce, et. al.
+set copyright [string map [list (c) \u00a9] {
+Copyright (c) 2006-2010 Shawn Pearce, et. al.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
