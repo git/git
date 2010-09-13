@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2010, #03; Fri, 10)
-X-master-at: 3b3a8ed4beadf5d9437597108355b23c7143bc81
-X-next-at: 6997c032819c723ef892e89b21b9bf245420086d
+Subject: What's cooking in git.git (Sep 2010, #04; Sun, 12)
+X-master-at: 5879b6bbcaba7696e4abfa717748da166f915405
+X-next-at: ee5c7b80a60b21d82897a2c9d9a55bcea89e8c99
 
-What's cooking in git.git (Sep 2010, #03; Fri, 10)
+What's cooking in git.git (Sep 2010, #04; Sun, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -18,97 +18,14 @@ Please give it a good beating to find regressions.
 --------------------------------------------------
 [New Topics]
 
-* jl/fix-test (2010-09-07) 7 commits
-  (merged to 'next' on 2010-09-10 at 849b1bb)
- + t1020: Get rid of 'cd "$HERE"' at the start of each test
- + t2016 (checkout -p): add missing &&
- + t1302 (core.repositoryversion): style tweaks
- + t2105 (gitfile): add missing &&
- + t1450 (fsck): remove dangling objects
- + tests: subshell indentation stylefix
- + Merge branch 'jl/maint-fix-test'
- (this branch uses jl/maint-fix-test.)
+* dr/maint-ls-tree-prefix-recursion-fix (2010-09-11) 1 commit
+  (merged to 'next' on 2010-09-12 at c9d05a6)
+ + ls-tree $di $dir: do not mistakenly recurse into directories
 
-* jl/maint-fix-test (2010-09-06) 1 commit
- + Several tests: cd inside subshell instead of around
- (this branch is used by jl/fix-test.)
-
-* nd/index-doc (2010-09-06) 1 commit
-  (merged to 'next' on 2010-09-10 at 2ab8572)
- + doc: technical details about the index file format
-
-Half-written but it is a good start.
-
-* tr/send-email-refuse-sending-unedited-cover-letter (2009-06-08) 1 commit
- - send-email: Refuse to send cover-letter template subject
-
-* bc/describe-not-dirty-for-untracked-paths-in-submodule (2010-09-09) 1 commit
- - builtin/describe.c: ignore untracked changes in submodules
-
-* bc/fortran-userdiff (2010-09-10) 1 commit
-  (merged to 'next' on 2010-09-10 at b76b831)
- + userdiff.c: add builtin fortran regex patterns
-
-* en/rename-d-f (2010-09-08) 2 commits
- - merge-recursive: D/F conflicts where was_a_dir/file -> was_a_dir
- - t3509: Add rename + D/F conflict testcase that recursive strategy fails
-
-* jk/read-tree-empty (2010-09-10) 1 commit
-  (merged to 'next' on 2010-09-10 at 2f3a995)
- + read-tree: deprecate syntax without tree-ish args
-
-* kf/post-receive-sample-hook (2010-09-10) 1 commit
-  (merged to 'next' on 2010-09-10 at 53ebeba)
- + post-receive-email: ensure sent messages are not empty
-
-* ml/completion-zsh (2010-09-06) 1 commit
-  (merged to 'next' on 2010-09-10 at b509ebc)
- + completion: make compatible with zsh
-
-* os/fix-rebase-diff-no-prefix (2010-09-09) 1 commit
-  (merged to 'next' on 2010-09-10 at f1acd10)
- + Add --src/dst-prefix to git-formt-patch in git-rebase.sh
-
---------------------------------------------------
-[Graduated to "master"]
-
-* bc/maint-fetch-url-only (2010-08-25) 2 commits
-  (merged to 'next' on 2010-09-04 at 710af12)
- + builtin/fetch.c: ignore merge config when not fetching from branch's remote
- + t/t5510: demonstrate failure to fetch when current branch has merge ref
-
-* jh/error-removing-missing-note (2010-08-31) 1 commit
-  (merged to 'next' on 2010-09-04 at 428b078)
- + notes: Don't create (empty) commit when removing non-existing notes
-
-* jk/maint-pass-c-config-in-env (2010-08-24) 2 commits
-  (merged to 'next' on 2010-09-04 at f4ed3ac)
- + do not pass "git -c foo=bar" params to transport helpers
- + pass "git -c foo=bar" params through environment
-
-* jk/test-must-fail-missing (2010-08-31) 4 commits
-  (merged to 'next' on 2010-09-04 at cc5c1c4)
- + tests: make test_might_fail fail on missing commands
- + tests: make test_might_fail more verbose
- + tests: make test_must_fail fail on missing commands
- + tests: make test_must_fail more verbose
-
-* kf/askpass-config (2010-08-30) 3 commits
-  (merged to 'next' on 2010-09-04 at c49783f)
- + Extend documentation of core.askpass and GIT_ASKPASS.
- + Allow core.askpass to override SSH_ASKPASS.
- + Add a new option 'core.askpass'.
-
-* np/relnotes-in-subdir (2010-09-09) 2 commits
- + install-webdoc: keep installed RelNotes-*.txt
- + Documentation: move RelNotes into a directory of their own
-
-Needed to devise a way to grandfather URLs that point at release notes of
-older versions, but other than that, this is a good thing to do.
-
-* tf/cleanup-builtin-help-headers (2010-08-31) 1 commit
-  (merged to 'next' on 2010-09-06 at dbf0d4b)
- + builtin.h: Move two functions definitions to help.h.
+* jn/gitweb-test-lib (2010-09-12) 2 commits
+  (merged to 'next' on 2010-09-12 at 4621733)
+ + t/gitweb-lib.sh: Use tabs for indent consistently
+ + t/gitweb-lib.sh: Use GIT_BUILD_DIR
 
 --------------------------------------------------
 [Stalled]
@@ -125,7 +42,9 @@ older versions, but other than that, this is a good thing to do.
 Depends on GNU FNM_CASEFOLD.  Presumably a bit of tweak in Makefile for
 non-windows but non-GNU platforms is all it takes?
 
-* by/line-log (2010-08-11) 17 commits
+* by/line-log (2010-09-11) 18 commits
+  (merged to 'next' on 2010-09-12 at e29a029)
+ + log -L: do not free parents lists we might need again
   (merged to 'next' on 2010-08-26 at a160ff1)
  + Document line history browser
  + Add tests for line history browser
@@ -144,9 +63,6 @@ non-windows but non-GNU platforms is all it takes?
  + Add the basic data structure for line level history
  + parse-options: add two helper functions
  + parse-options: enhance STOP_AT_NON_OPTION
-
-There is a reported crash with valgrind trace.  Bo seems to be looking
-into it.
 
 * il/rfc-remote-fd-ext (2010-08-26) 7 commits
  - remote-ext/fd style fixup
@@ -177,8 +93,59 @@ flags needs to be rethought, or at least the helper needs to be moved to
 builtin/tag.c to make it clear that it should not be used outside the
 current usage context.
 
+* bc/describe-not-dirty-for-untracked-paths-in-submodule (2010-09-09) 1 commit
+ - builtin/describe.c: ignore untracked changes in submodules
+
 --------------------------------------------------
 [Cooking]
+
+* jl/fix-test (2010-09-07) 7 commits
+  (merged to 'next' on 2010-09-10 at 849b1bb)
+ + t1020: Get rid of 'cd "$HERE"' at the start of each test
+ + t2016 (checkout -p): add missing &&
+ + t1302 (core.repositoryversion): style tweaks
+ + t2105 (gitfile): add missing &&
+ + t1450 (fsck): remove dangling objects
+ + tests: subshell indentation stylefix
+ + Merge branch 'jl/maint-fix-test'
+ (this branch uses jl/maint-fix-test.)
+
+* jl/maint-fix-test (2010-09-06) 1 commit
+ + Several tests: cd inside subshell instead of around
+ (this branch is used by jl/fix-test.)
+
+* nd/index-doc (2010-09-06) 1 commit
+  (merged to 'next' on 2010-09-10 at 2ab8572)
+ + doc: technical details about the index file format
+
+Half-written but it is a good start.
+
+* tr/send-email-refuse-sending-unedited-cover-letter (2009-06-08) 1 commit
+ - send-email: Refuse to send cover-letter template subject
+
+* bc/fortran-userdiff (2010-09-10) 1 commit
+  (merged to 'next' on 2010-09-10 at b76b831)
+ + userdiff.c: add builtin fortran regex patterns
+
+* en/rename-d-f (2010-09-08) 2 commits
+ - merge-recursive: D/F conflicts where was_a_dir/file -> was_a_dir
+ - t3509: Add rename + D/F conflict testcase that recursive strategy fails
+
+* jk/read-tree-empty (2010-09-10) 1 commit
+  (merged to 'next' on 2010-09-10 at 2f3a995)
+ + read-tree: deprecate syntax without tree-ish args
+
+* kf/post-receive-sample-hook (2010-09-10) 1 commit
+  (merged to 'next' on 2010-09-10 at 53ebeba)
+ + post-receive-email: ensure sent messages are not empty
+
+* ml/completion-zsh (2010-09-06) 1 commit
+  (merged to 'next' on 2010-09-10 at b509ebc)
+ + completion: make compatible with zsh
+
+* os/fix-rebase-diff-no-prefix (2010-09-09) 1 commit
+  (merged to 'next' on 2010-09-10 at f1acd10)
+ + Add --src/dst-prefix to git-formt-patch in git-rebase.sh
 
 * ks/recursive-rename-add-identical (2010-09-01) 1 commit
   (merged to 'next' on 2010-09-03 at 1a5082f)
@@ -302,8 +269,19 @@ I am not very happy about adding these backdoors to git-shell, which is
 primarily a security mechanism, and obviously security and backdoor do not
 mix well.
 
-* ab/i18n (2010-09-09) 94 commits
+* ab/i18n (2010-09-10) 98 commits
+ - gettext docs: add "Testing marked strings" section to po/README
+ - gettext docs: the Git::I18N Perl interface
+ - gettext docs: the git-sh-i18n.sh Shell interface
+ - gettext docs: the gettext.h C interface
+ - gettext docs: add "Marking strings for translation" section in po/README
+ - gettext docs: add a "Testing your changes" section to po/README
  - po/hi.po: add Hindi Translation
+ - po/pl.po: add Polish translation
+ - po/en_GB.po: add British English translation
+ - po/de.po: add German translation
+ - po/is.po: add Icelandic translation
+ - gettext docs: add po/README file documenting Git's gettext
  - gettextize: git-am printf(1) message to eval_gettext
  - gettextize: git-am core say messages
  - gettextize: git-am "Apply?" message
@@ -318,7 +296,6 @@ mix well.
  - gettext: add GETTEXT_POISON support for shell scripts
  - Makefile: MSGFMT="msgfmt --check" under GNU_GETTEXT
  - Makefile: add GNU_GETTEXT, set when we expect GNU gettext
- - po/de.po: make the German translation msgfmt --check clean
  - gettextize: git-shortlog basic messages
  - gettextize: git-revert split up "could not revert/apply" message
  - gettextize: git-revert literal "me" messages
@@ -334,8 +311,6 @@ mix well.
  - gettextize: git-clean basic messages
  - gettextize: git-bundle basic messages
  - gettextize: git-archive basic messages
- - po/en_GB.po: add British English Translation
- - po/de.po: add German translation
  - gettextize: git-status shortstatus messages
  - gettextize: git-status basic messages
  - gettextize: git-push basic messages
@@ -372,12 +347,8 @@ mix well.
  - gettext tests: skip breaking tests under GETTEXT_POISON
  - gettext tests: skip lib-gettext.sh tests under GETTEXT_POISON
  - gettext tests: add GETTEXT_POISON=YesPlease Makefile parameter
- - gettext docs: add po/README file documenting Git's gettext
  - gettext tests: remove old sanity test under NO_GETTEXT
  - gettext tests: test message re-encoding under C
- - po/pl.po: add Polish translation
- - po/is.po: add Icelandic translation
- - po/is.po: msgmerge and add Language: header
  - gettext tests: mark a test message as not needing translation
  - gettext tests: test re-encoding with a UTF-8 msgid under Shell
  - gettext tests: test message re-encoding under Shell
