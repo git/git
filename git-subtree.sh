@@ -28,7 +28,7 @@ rejoin        merge the new branch back into HEAD
  options for 'add', 'merge', 'pull' and 'push'
 squash        merge subtree changes as a single commit
 "
-eval $(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
+eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
 
 PATH=$PATH:$(git --exec-path)
 . git-sh-setup
