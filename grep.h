@@ -22,6 +22,7 @@ enum grep_header_field {
 	GREP_HEADER_AUTHOR = 0,
 	GREP_HEADER_COMMITTER
 };
+#define GREP_HEADER_FIELD_MAX (GREP_HEADER_COMMITTER + 1)
 
 struct grep_pat {
 	struct grep_pat *next;
@@ -41,6 +42,7 @@ enum grep_expr_node {
 	GREP_NODE_ATOM,
 	GREP_NODE_NOT,
 	GREP_NODE_AND,
+	GREP_NODE_TRUE,
 	GREP_NODE_OR
 };
 
