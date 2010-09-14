@@ -182,7 +182,7 @@
 				AdditionalIncludeDirectories="..\..\..;..\..\..\..\zlib;..\..;..\;..\include;..\..\..\compat;..\..\..\compat\fnmatch;..\..\..\compat\regex;.\;..\..\..\..\libcurl\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;HAVE_STRING_H;USE_WIN32_MMAP"
 				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -1631,6 +1631,38 @@
 			<File
 				RelativePath="..\..\..\builtin\hash-object.c"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\buildinhashobject"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\buildinhashobject"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\buildinhashobject"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\buildinhashobject"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\builtin\help.c"
@@ -1993,6 +2025,30 @@
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\BuildInRerer"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\BuildInRerer"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\BuildInRerer"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
