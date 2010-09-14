@@ -24,6 +24,7 @@ use Text::ParseWords;
 use Data::Dumper;
 use Term::ANSIColor;
 use File::Temp qw/ tempdir tempfile /;
+use File::Spec::Functions qw(catfile);
 use Error qw(:try);
 use Git;
 
@@ -511,7 +512,7 @@ while (defined(my $f = shift @ARGV)) {
 		opendir(DH,$f)
 			or die "Failed to opendir $f: $!";
 
-		push @files, grep { -f $_ } map { +$f . "/" . $_ }
+		push @files, grep { -f $_ } map { catfile($f, $_) }
 				sort readdir(DH);
 		closedir(DH);
 	} elsif ((-f $f or -p $f) and !check_file_rev_conflict($f)) {
