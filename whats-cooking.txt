@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2010, #04; Sun, 12)
-X-master-at: 5879b6bbcaba7696e4abfa717748da166f915405
-X-next-at: ee5c7b80a60b21d82897a2c9d9a55bcea89e8c99
+Subject: What's cooking in git.git (Sep 2010, #05; Wed, 15)
+X-master-at: 7e100effc6c3a8acbb4bf305638c7b324a63236d
+X-next-at: bf93f8322c5e01b030ee9a1d3dee19e4d4dbd2d7
 
-What's cooking in git.git (Sep 2010, #04; Sun, 12)
+What's cooking in git.git (Sep 2010, #05; Wed, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,24 +11,109 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-We have in 'master' is more-or-less the final 1.7.3; it is tagged as rc1.
+The tip of 'master' is now at 1.7.3-rc2; I am hoping that we can do the
+real 1.7.3 release perhaps this weekend.  Please give it a final round of
+beating so that we can find and fix the last minute regressions.
 
-Please give it a good beating to find regressions.
+Thanks.
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* ch/filter-branch-deprecate-remap-to-ancestor (2010-08-27) 1 commit
+  (merged to 'next' on 2010-09-10 at f91d974)
+ + filter-branch: retire --remap-to-ancestor
+
+* ch/maint-cannot-create-bundle-error (2010-08-27) 1 commit
+  (merged to 'next' on 2010-09-10 at ba139f1)
+ + bundle: detect if bundle file cannot be created
 
 * dr/maint-ls-tree-prefix-recursion-fix (2010-09-11) 1 commit
   (merged to 'next' on 2010-09-12 at c9d05a6)
  + ls-tree $di $dir: do not mistakenly recurse into directories
 
-* jn/gitweb-test-lib (2010-09-12) 2 commits
-  (merged to 'next' on 2010-09-12 at 4621733)
- + t/gitweb-lib.sh: Use tabs for indent consistently
- + t/gitweb-lib.sh: Use GIT_BUILD_DIR
+* jl/fix-test (2010-09-07) 7 commits
+  (merged to 'next' on 2010-09-10 at 849b1bb)
+ + t1020: Get rid of 'cd "$HERE"' at the start of each test
+ + t2016 (checkout -p): add missing &&
+ + t1302 (core.repositoryversion): style tweaks
+ + t2105 (gitfile): add missing &&
+ + t1450 (fsck): remove dangling objects
+ + tests: subshell indentation stylefix
+ + Merge branch 'jl/maint-fix-test'
+ (this branch uses jl/maint-fix-test.)
+
+* jl/maint-fix-test (2010-09-06) 1 commit
+ + Several tests: cd inside subshell instead of around
+ (this branch is used by jl/fix-test.)
+
+* ks/recursive-rename-add-identical (2010-09-01) 1 commit
+  (merged to 'next' on 2010-09-03 at 1a5082f)
+ + RE: [PATCH] Avoid rename/add conflict when contents are identical
+
+* os/fix-rebase-diff-no-prefix (2010-09-09) 1 commit
+  (merged to 'next' on 2010-09-10 at f1acd10)
+ + Add --src/dst-prefix to git-formt-patch in git-rebase.sh
+
+--------------------------------------------------
+[New Topics]
+
+* ab/send-email-catfile (2010-09-14) 1 commit
+ - send-email: use catfile() to concatenate files
+
+Sane; should be safe to be among the first batch after 1.7.3 release.
+
+* bg/fix-t7003 (2010-09-10) 1 commit
+  (merged to 'next' on 2010-09-13 at 9d7756e)
+ + t7003: Use test_commit instead of custom function
+
+Sane; should be safe to be among the first batch after 1.7.3 release.
+
+* jc/grep-header-all-match-fix (2010-09-12) 2 commits
+ - log --author: take union of multiple "author" requests
+ - grep: move logic to compile header pattern into a separate helper
+ (this branch is used by jc/grep-header-all-match-fix-debug.)
+
+We might want to give a more comprehensive revamp to the "filter by
+grepping the commit log message" feature some day, somehow allowing the
+full "git grep" boolean expression.  But until then, this should suffice.
+
+* jc/grep-header-all-match-fix-debug (2010-09-13) 1 commit
+ - grep debugging, just in case
+ (this branch uses jc/grep-header-all-match-fix.)
+
+* jc/no-branch-name-with-dash-at-front (2010-09-14) 1 commit
+ - disallow branch names that start with a hyphen
+
+This also came up at $WORK; should be safe to be among the first batch
+after 1.7.3 release.
+
+* dm/mergetool-vimdiff (2010-09-14) 2 commits
+ - mergetool-lib: add a three-way diff view for vim/gvim
+ - mergetool-lib: combine vimdiff and gvimdiff run blocks
+
+The bottom one should be without controversy.  I don't use vimdiff, so
+cannot comment on the other one.
 
 --------------------------------------------------
 [Stalled]
+
+* cb/ignored-paths-are-precious (2010-08-21) 1 commit
+ - checkout/merge: optionally fail operation when ignored files need to be overwritten
+
+I fixed up a trivial error in the configuration parser (which didn't
+return immediately after parsing), and while at it flipped the default 
+value of the configuration and the command line option to false.
+
+This probably needs tests; also we know of longstanding bugs in related
+area that needs to be addressed---they do not have to be part of this
+series but their reproduction recipe would belong to the test script for
+this topic.
+
+It may hurt users to make the new feature on by default, especially the
+ones with subdirectories that come and go.  For a patch that changes a
+long established semantics, it came a bit late in the cycle, so it will
+have to wait until the next release.
 
 * jj/icase-directory (2010-08-16) 6 commits
   (merged to 'next' on 2010-08-26 at 9d8e1bc)
@@ -41,28 +126,6 @@ Please give it a good beating to find regressions.
 
 Depends on GNU FNM_CASEFOLD.  Presumably a bit of tweak in Makefile for
 non-windows but non-GNU platforms is all it takes?
-
-* by/line-log (2010-09-11) 18 commits
-  (merged to 'next' on 2010-09-12 at e29a029)
- + log -L: do not free parents lists we might need again
-  (merged to 'next' on 2010-08-26 at a160ff1)
- + Document line history browser
- + Add tests for line history browser
- + Add --full-line-diff option
- + Add --graph prefix before line history output
- + Add parent rewriting to line history browser
- + Make graph_next_line external to other part of git
- + Make rewrite_parents public to other part of git
- + Hook line history into cmd_log, ensuring a topo-ordered walk
- + Print the line log
- + map/take range to the parent of commits
- + Add range clone functions
- + Export three functions from diff.c
- + Parse the -L options
- + Refactor parse_loc
- + Add the basic data structure for line level history
- + parse-options: add two helper functions
- + parse-options: enhance STOP_AT_NON_OPTION
 
 * il/rfc-remote-fd-ext (2010-08-26) 7 commits
  - remote-ext/fd style fixup
@@ -99,57 +162,90 @@ current usage context.
 --------------------------------------------------
 [Cooking]
 
-* jl/fix-test (2010-09-07) 7 commits
-  (merged to 'next' on 2010-09-10 at 849b1bb)
- + t1020: Get rid of 'cd "$HERE"' at the start of each test
- + t2016 (checkout -p): add missing &&
- + t1302 (core.repositoryversion): style tweaks
- + t2105 (gitfile): add missing &&
- + t1450 (fsck): remove dangling objects
- + tests: subshell indentation stylefix
- + Merge branch 'jl/maint-fix-test'
- (this branch uses jl/maint-fix-test.)
+* by/line-log (2010-09-11) 18 commits
+  (merged to 'next' on 2010-09-12 at e29a029)
+ + log -L: do not free parents lists we might need again
+  (merged to 'next' on 2010-08-26 at a160ff1)
+ + Document line history browser
+ + Add tests for line history browser
+ + Add --full-line-diff option
+ + Add --graph prefix before line history output
+ + Add parent rewriting to line history browser
+ + Make graph_next_line external to other part of git
+ + Make rewrite_parents public to other part of git
+ + Hook line history into cmd_log, ensuring a topo-ordered walk
+ + Print the line log
+ + map/take range to the parent of commits
+ + Add range clone functions
+ + Export three functions from diff.c
+ + Parse the -L options
+ + Refactor parse_loc
+ + Add the basic data structure for line level history
+ + parse-options: add two helper functions
+ + parse-options: enhance STOP_AT_NON_OPTION
 
-* jl/maint-fix-test (2010-09-06) 1 commit
- + Several tests: cd inside subshell instead of around
- (this branch is used by jl/fix-test.)
+How would one trace history of lines 440,450 in t/t7300-clean.sh starting
+from the tip of 'pu'?  "git log -p -L 440,450 pu -- t/t7300-clean.sh"
+would be the most natural but it does not work (it wants "pu" to be a
+path).  "git log -p -L 440,450 t/t7300-clean.sh pu" doesn't work either.
+
+The command line parser of this series needs to be rethought (didn't I say
+that many times?  Perhaps I was ignored).  Might want to kick this out of
+'next' and move to the stalled category after 1.7.3.
+
+* jn/gitweb-test-lib (2010-09-12) 2 commits
+  (merged to 'next' on 2010-09-12 at 4621733)
+ + t/gitweb-lib.sh: Use tabs for indent consistently
+ + t/gitweb-lib.sh: Use GIT_BUILD_DIR
+
+Sane; should be safe to be among the first batch after 1.7.3 release.
 
 * nd/index-doc (2010-09-06) 1 commit
   (merged to 'next' on 2010-09-10 at 2ab8572)
  + doc: technical details about the index file format
 
-Half-written but it is a good start.
+Half-written but it is a good start.  I may need to give some help in
+describing more recent index extensions.
 
 * tr/send-email-refuse-sending-unedited-cover-letter (2009-06-08) 1 commit
  - send-email: Refuse to send cover-letter template subject
+
+Sane; should be safe to be among the first batch after 1.7.3 release.
 
 * bc/fortran-userdiff (2010-09-10) 1 commit
   (merged to 'next' on 2010-09-10 at b76b831)
  + userdiff.c: add builtin fortran regex patterns
 
+Sane; should be safe to be among the first batch after 1.7.3 release.
+
 * en/rename-d-f (2010-09-08) 2 commits
- - merge-recursive: D/F conflicts where was_a_dir/file -> was_a_dir
- - t3509: Add rename + D/F conflict testcase that recursive strategy fails
+  (merged to 'next' on 2010-09-15 at d6a2e1e)
+ + merge-recursive: D/F conflicts where was_a_dir/file -> was_a_dir
+ + t3509: Add rename + D/F conflict testcase that recursive strategy fails
+
+I am not entirely convinced this is a regression free band-aid; need to
+look at this a few more times.
 
 * jk/read-tree-empty (2010-09-10) 1 commit
   (merged to 'next' on 2010-09-10 at 2f3a995)
  + read-tree: deprecate syntax without tree-ish args
 
+Sane; should be safe to be among the first batch after 1.7.3 release.
+
 * kf/post-receive-sample-hook (2010-09-10) 1 commit
   (merged to 'next' on 2010-09-10 at 53ebeba)
  + post-receive-email: ensure sent messages are not empty
+
+I notice that it uses "PAGER= generate_email" where generate_email is a
+shell function, which may break in some implementations of POSIX /bin/sh.
+This is not a regression (the original also had the same issue), but
+somebody who cares enough might want to look into it.
 
 * ml/completion-zsh (2010-09-06) 1 commit
   (merged to 'next' on 2010-09-10 at b509ebc)
  + completion: make compatible with zsh
 
-* os/fix-rebase-diff-no-prefix (2010-09-09) 1 commit
-  (merged to 'next' on 2010-09-10 at f1acd10)
- + Add --src/dst-prefix to git-formt-patch in git-rebase.sh
-
-* ks/recursive-rename-add-identical (2010-09-01) 1 commit
-  (merged to 'next' on 2010-09-03 at 1a5082f)
- + RE: [PATCH] Avoid rename/add conflict when contents are identical
+Comments from bash users regarding regressions?
 
 * po/sendemail (2010-09-06) 3 commits
   (merged to 'next' on 2010-09-10 at d39274d)
@@ -157,26 +253,26 @@ Half-written but it is a good start.
  + Remove @smtp_host_parts variable as not used.
  + Minor indentation fix.
 
-* ch/filter-branch-deprecate-remap-to-ancestor (2010-08-27) 1 commit
-  (merged to 'next' on 2010-09-10 at f91d974)
- + filter-branch: retire --remap-to-ancestor
-
-* ch/maint-cannot-create-bundle-error (2010-08-27) 1 commit
-  (merged to 'next' on 2010-09-10 at ba139f1)
- + bundle: detect if bundle file cannot be created
+Comments from potential users?
 
 * rr/format-patch-count-without-merges (2010-08-28) 2 commits
   (merged to 'next' on 2010-09-10 at c23bd48)
  + format-patch: Don't go over merge commits
  + t4014-format-patch: Call test_tick before committing
 
+Should be safe to be among the first batch after 1.7.3 release.
+
 * as/daemon-multi-listen (2010-08-29) 2 commits
   (merged to 'next' on 2010-09-10 at 69e4b23)
  + daemon: allow more than one host address given via --listen
  + daemon: add helper function setup_named_sock()
 
-I think the idea is sound.  It came a bit late in the cycle for the next
-release and probably needs a bit more polish.
+I think the idea is sound.  It probably needs a bit more polish.
+
+If you give two --listen options and got some but not all sockets, the
+code does not say anything even when no socket was created for one of
+them, which is questionable.  Might want to kick this out of 'next' and
+move to the stalled category after 1.7.3.
 
 * jc/pickaxe-grep (2010-08-31) 4 commits
   (merged to 'next' on 2010-09-10 at 3604fc3)
@@ -188,27 +284,31 @@ release and probably needs a bit more polish.
 This is a re-roll of "grepping inside the log -p output" which is a
 feature that is often asked for when people hear about -S option.
 
+Should be safe to be among the first batch after 1.7.3 release.
+
 * jl/fetch-submodule-recursive (2010-08-30) 2 commits
   (merged to 'next' on 2010-09-10 at 67a5138)
  + Submodules: Add the new "fetch" config option for fetch and pull
  + fetch/pull: Recursively fetch populated submodules
 
-I think the idea is sound and hopefully the end result will help the heavy
-users of subprojects.  It came a bit late in the cycle for the next
-release, though.
+Further work expected after 1.7.3 between Jens and Kevin.
 
 * en/object-list-with-pathspec (2010-08-26) 2 commits
  - Make rev-list --objects work together with pathspecs
  - Add testcases showing how pathspecs are ignored with rev-list --objects
 
-* jf/merge-ignore-ws (2010-08-26) 4 commits
- - merge-recursive: options to ignore whitespace changes
- - merge-recursive --patience
- - ll-merge: replace flag argument with options struct
- - merge-recursive: expose merge options for builtin merge
+There is a reroll helped by Duy, which I expect to be rerolled after
+en/tree-walk-optim hits master.
 
-I think the idea is sound.  It came a bit late in the cycle for the next
-release, though.
+* jf/merge-ignore-ws (2010-08-26) 4 commits
+  (merged to 'next' on 2010-09-15 at bf93f83)
+ + merge-recursive: options to ignore whitespace changes
+ + merge-recursive --patience
+ + ll-merge: replace flag argument with options struct
+ + merge-recursive: expose merge options for builtin merge
+
+Possibly one of the star features of the release after 1.7.3, whether it
+is called 1.7.4 or 1.8.0.
 
 * rr/fmt-merge-msg (2010-09-08) 5 commits
   (merged to 'next' on 2010-09-10 at 40fe79e)
@@ -217,6 +317,8 @@ release, though.
  + merge: Make 'merge.log' an integer or boolean option
  + merge: Make '--log' an integer option for number of shortlog entries
  + fmt_merge_msg: Change fmt_merge_msg API to accept shortlog_len
+
+Should be safe to be among the first batch after 1.7.3 release.
 
 * tr/merge-unborn-clobber (2010-08-22) 1 commit
  - Exhibit merge bug that clobbers index&WT
@@ -228,32 +330,14 @@ release, though.
  + tree-walk: Correct bitrotted comment about tree_entry()
  + Document pre-condition for tree_entry_interesting
 
-I think the idea is sound.  For a patch that touches fairly core part of
-the system, it came a bit late in the cycle, though.
-
-* cb/ignored-paths-are-precious (2010-08-21) 1 commit
- - checkout/merge: optionally fail operation when ignored files need to be overwritten
-
-I fixed up a trivial error in the configuration parser (which didn't
-return immediately after parsing), and while at it flipped the default 
-value of the configuration and the command line option to false.
-
-This probably needs tests; also we know of longstanding bugs in related
-area that needs to be addressed---they do not have to be part of this
-series but their reproduction recipe would belong to the test script for
-this topic.
-
-It may hurt users to make the new feature on by default, especially the
-ones with subdirectories that come and go.  For a patch that changes a
-long established semantics, it came a bit late in the cycle, so it will
-have to wait until the next release.
+Need to look at this a few more times to convince myself that this is Ok;
+will happen after 1.7.3.
 
 * po/etc-gitattributes (2010-09-01) 1 commit
   (merged to 'next' on 2010-09-10 at c503fd5)
  + Add global and system-wide gitattributes
 
-I think the idea is sound.  For a patch that touches fairly core part of
-the system, it came a bit late in the cycle, though.
+Sane; should be safe to be among the first batch after 1.7.3 release.
 
 * gb/shell-ext (2010-08-27) 6 commits
   (merged to 'next' on 2010-08-27 at e1ef3c1)
@@ -265,11 +349,49 @@ the system, it came a bit late in the cycle, though.
  + Add interactive mode to git-shell for user-friendliness
  + Allow creation of arbitrary git-shell commands
 
-I am not very happy about adding these backdoors to git-shell, which is
-primarily a security mechanism, and obviously security and backdoor do not
-mix well.
+Should be safe to be among the first batch after 1.7.3 release.
 
-* ab/i18n (2010-09-10) 98 commits
+* ab/i18n (2010-09-14) 140 commits
+ - gettextize: git-bisect bisect_next_check "You need to" message
+ - gettextize: git-bisect [Y/n] messages
+ - gettextize: git-bisect bisect_replay + $1 messages
+ - gettextize: git-bisect bisect_reset + $1 messages
+ - gettextize: git-bisect bisect_run + $@ messages
+ - gettextize: git-bisect die + eval_gettext messages
+ - gettextize: git-bisect die + gettext messages
+ - gettextize: git-bisect echo + eval_gettext message
+ - gettextize: git-bisect echo + gettext messages
+ - gettextize: git-bisect gettext + echo message
+ - gettextize: git-bisect add git-sh-i18n
+ - gettextize: git-stash drop_stash say/die messages
+ - gettextize: git-stash "unknown option" message
+ - gettextize: git-stash die + eval_gettext $1 messages
+ - gettextize: git-stash die + eval_gettext $* messages
+ - gettextize: git-stash die + eval_gettext messages
+ - gettextize: git-stash die + gettext messages
+ - gettextize: git-stash say + gettext messages
+ - gettextize: git-stash echo + gettext message
+ - gettextize: git-stash add git-sh-i18n
+ - gettextize: git-submodule "blob" and "submodule" messages
+ - gettextize: git-submodule "path not initialized" message
+ - gettextize: git-submodule "[...] path is ignored" message
+ - gettextize: git-submodule "Entering [...]" message
+ - gettextize: git-submodule $errmsg messages
+ - gettextize: git-submodule "Submodule change[...]" messages
+ - gettextize: git-submodule "cached cannot be used" message
+ - gettextize: git-submodule $update_module say + die messages
+ - gettextize: git-submodule die + eval_gettext messages
+ - gettextize: git-submodule say + eval_gettext messages
+ - gettextize: git-submodule echo + eval_gettext messages
+ - gettextize: git-submodule add git-sh-i18n
+ - gettextize: git-pull "rebase against" / "merge with" messages
+ - gettextize: git-pull "[...] not currently on a branch" message
+ - gettextize: git-pull "You asked to pull" message
+ - gettextize: git-pull split up "no candidate" message
+ - gettextize: git-pull eval_gettext + warning message
+ - gettextize: git-pull eval_gettext + die message
+ - gettextize: git-pull die messages
+ - gettextize: git-pull add git-sh-i18n
  - gettext docs: add "Testing marked strings" section to po/README
  - gettext docs: the Git::I18N Perl interface
  - gettext docs: the git-sh-i18n.sh Shell interface
@@ -281,6 +403,7 @@ mix well.
  - po/en_GB.po: add British English translation
  - po/de.po: add German translation
  - po/is.po: add Icelandic translation
+ - Makefile: only add gettext tests on XGETTEXT_INCLUDE_TESTS=YesPlease
  - gettext docs: add po/README file documenting Git's gettext
  - gettextize: git-am printf(1) message to eval_gettext
  - gettextize: git-am core say messages
@@ -363,8 +486,9 @@ mix well.
  - Makefile: tell xgettext(1) that our source is in UTF-8
  - Makefile: provide a --msgid-bugs-address to xgettext(1)
  - Makefile: A variable for options used by xgettext(1) calls
- - tests: locate i18n lib&data correctly under --valgrind
+ - gettext tests: locate i18n lib&data correctly under --valgrind
  - gettext: setlocale(LC_CTYPE, "") breaks Git's C function assumptions
- - tests: rename test to work around GNU gettext bug
- - Add infrastructure for translating Git with gettext
+ - gettext tests: rename test to work around GNU gettext bug
+ - gettext: add infrastructure for translating Git with gettext
  - builtin: use builtin.h for all builtin commands
+ - tests: use test_cmp instead of piping to diff(1)
