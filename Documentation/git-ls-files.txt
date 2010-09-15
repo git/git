@@ -79,8 +79,9 @@ OPTIONS
 
 -x <pattern>::
 --exclude=<pattern>::
-	Skips files matching pattern.
-	Note that pattern is a shell wildcard pattern.
+	Skips untracked files matching pattern.
+	Note that pattern is a shell wildcard pattern. See EXCLUDE PATTERNS
+	below for more information.
 
 -X <file>::
 --exclude-from=<file>::
