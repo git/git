@@ -42,10 +42,10 @@ linkgit:git-add[1]).
 +
 --
 --soft::
-	Does not touch the index file nor the working tree at all, but
-	requires them to be in a good order. This leaves all your changed
-	files "Changes to be committed", as 'git status' would
-	put it.
+	Does not touch the index file nor the working tree at all (but
+	resets the head to <commit>, just like all modes do). This leaves
+	all your changed files "Changes to be committed", as 'git status'
+	would put it.
 
 --mixed::
 	Resets the index but not the working tree (i.e., the changed files
