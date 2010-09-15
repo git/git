@@ -159,18 +159,7 @@ to other tags will be rewritten to point to the underlying commit.
 --subdirectory-filter <directory>::
 	Only look at the history which touches the given subdirectory.
 	The result will contain that directory (and only that) as its
-	project root.  Implies --remap-to-ancestor.
-
---remap-to-ancestor::
-	Rewrite refs to the nearest rewritten ancestor instead of
-	ignoring them.
-+
-Normally, positive refs on the command line are only changed if the
-commit they point to was rewritten.  However, you can limit the extent
-of this rewriting by using linkgit:rev-list[1] arguments, e.g., path
-limiters.  Refs pointing to such excluded commits would then normally
-be ignored.  With this option, they are instead rewritten to point at
-the nearest ancestor that was not excluded.
+	project root. Implies <<Remap_to_ancestor>>.
 
 --prune-empty::
 	Some kind of filters will generate empty commits, that left the tree
@@ -204,7 +193,18 @@ the nearest ancestor that was not excluded.
 	Arguments for 'git rev-list'.  All positive refs included by
 	these options are rewritten.  You may also specify options
 	such as '--all', but you must use '--' to separate them from
-	the 'git filter-branch' options.
+	the 'git filter-branch' options. Implies <<Remap_to_ancestor>>.
+
+
+[[Remap_to_ancestor]]
+Remap to ancestor
+~~~~~~~~~~~~~~~~~
+
+By using linkgit:rev-list[1] arguments, e.g., path limiters, you can limit the
+set of revisions which get rewritten. However, positive refs on the command
+line are distinguished: we don't let them be excluded by such limiters. For
+this purpose, they are instead rewritten to point at the nearest ancestor that
+was not excluded.
 
 
 Examples
