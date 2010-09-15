@@ -69,9 +69,10 @@ test_expect_success 'apply stashed changes (including index)' '
 test_expect_success 'unstashing in a subdirectory' '
 	git reset --hard HEAD &&
 	mkdir subdir &&
-	cd subdir &&
-	git stash apply &&
-	cd ..
+	(
+		cd subdir &&
+		git stash apply
+	)
 '
 
 test_expect_success 'drop top stash' '

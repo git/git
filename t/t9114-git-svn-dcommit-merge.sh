@@ -37,11 +37,12 @@ EOF
 test_expect_success 'setup svn repository' '
 	svn_cmd co "$svnrepo" mysvnwork &&
 	mkdir -p mysvnwork/trunk &&
-	cd mysvnwork &&
-		big_text_block >> trunk/README &&
+	(
+		cd mysvnwork &&
+		big_text_block >>trunk/README &&
 		svn_cmd add trunk &&
-		svn_cmd ci -m "first commit" trunk &&
-		cd ..
+		svn_cmd ci -m "first commit" trunk
+	)
 	'
 
 test_expect_success 'setup git mirror and merge' '
