@@ -15,7 +15,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 In the first and second form, copy entries from <commit> to the index.
-In the third form, set the current branch to <commit>, optionally
+In the third form, set the current branch head to <commit>, optionally
 modifying index and worktree to match.  The <commit> defaults to HEAD
 in all forms.
 
@@ -36,7 +36,7 @@ This means that `git reset -p` is the opposite of `git add -p` (see
 linkgit:git-add[1]).
 
 'git reset' [--<mode>] [<commit>]::
-	This form points the current branch to <commit> and then
+	This form resets the current branch head to <commit> and then
 	updates index and working tree according to <mode>, which must
 	be one of the following:
 +
