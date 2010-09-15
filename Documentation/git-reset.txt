@@ -26,6 +26,13 @@ in all forms.
 +
 This means that `git reset <paths>` is the opposite of `git add
 <paths>`.
++
+After running `git reset <paths>` to update the index entry, you can
+use linkgit:git-checkout[1] to check the contents out of the index to
+the working tree.
+Alternatively, using linkgit:git-checkout[1] and specifying a commit, you
+can copy the contents of a path out of a commit to the index and to the
+working tree in one go.
 
 'git reset' --patch|-p [<commit>] [--] [<paths>...]::
 	Interactively select hunks in the difference between the index
