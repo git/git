@@ -15,13 +15,13 @@ SYNOPSIS
 DESCRIPTION
 -----------
 In the first and second form, copy entries from <commit> to the index.
-In the third form, set the current branch head to <commit>, optionally
+In the third form, set the current branch head (HEAD) to <commit>, optionally
 modifying index and working tree to match.  The <commit> defaults to HEAD
 in all forms.
 
 'git reset' [-q] [<commit>] [--] <paths>...::
 	This form resets the index entries for all <paths> to their
-	state at the <commit>.  (It does not affect the working tree, nor
+	state at <commit>.  (It does not affect the working tree, nor
 	the current branch.)
 +
 This means that `git reset <paths>` is the opposite of `git add
@@ -43,9 +43,10 @@ This means that `git reset -p` is the opposite of `git add -p` (see
 linkgit:git-add[1]).
 
 'git reset' [--<mode>] [<commit>]::
-	This form resets the current branch head to <commit> and then
-	updates index and working tree according to <mode>, which must
-	be one of the following:
+	This form resets the current branch head to <commit> and
+	possibly updates the index (resetting it to the tree of <commit>) and
+	the working tree depending on <mode>, which
+	must be one of the following:
 +
 --
 --soft::
@@ -60,22 +61,30 @@ linkgit:git-add[1]).
 	been updated. This is the default action.
 
 --hard::
-	Matches the working tree and index to that of the tree being
-	switched to. Any changes to tracked files in the working tree
-	since <commit> are lost.
+	Resets the index and working tree. Any changes to tracked files in the
+	working tree since <commit> are discarded.
 
 --merge::
-	Resets the index to match the tree recorded by the named commit,
-	and updates the files that are different between the named commit
-	and the current commit in the working tree.
+	Resets the index and updates the files in the working tree that are
+	different between <commit> and HEAD, but keeps those which are
+	different between the index and working tree (i.e. which have changes
+	which have not been added).
+	If a file that is different between <commit> and the index has unstaged
+	changes, reset is aborted.
++
+In other words, --merge does something like a 'git read-tree -u -m <commit>',
+but carries forward unmerged index entries.
 
 --keep::
-	Reset the index to the given commit, keeping local changes in
-	the working tree since the current commit, while updating
-	working tree files without local changes to what appears in
-	the given commit.  If a file that is different between the
-	current commit and the given commit has local changes, reset
-	is aborted.
+	Resets the index, updates files in the working tree that are
+	different between <commit> and HEAD, but keeps those
+	which are different between HEAD and the working tree (i.e.
+	which have local changes).
+	If a file that is different between <commit> and HEAD has local changes,
+	reset is aborted.
++
+In other words, --keep does a 2-way merge between <commit> and HEAD followed by
+'git reset --mixed <commit>'.
 --
 
 If you want to undo a commit other than the latest on a branch,
