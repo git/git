@@ -294,8 +294,10 @@ In these tables, A, B, C and D are some different states of a
 file. For example, the first line of the first table means that if a
 file is in state A in the working tree, in state B in the index, in
 state C in HEAD and in state D in the target, then "git reset --soft
-target" will put the file in state A in the working tree, in state B
-in the index and in state D in HEAD.
+target" will leave the file in the working tree in state A and in the
+index in state B.  It resets (i.e. moves) the HEAD (i.e. the tip of
+the current branch, if you are on one) to "target" (which has the file
+in state D).
 
       working index HEAD target         working index HEAD
       ----------------------------------------------------
