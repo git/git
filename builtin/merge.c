@@ -639,25 +639,9 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 
 		o.renormalize = option_renormalize;
 
-		/*
-		 * NEEDSWORK: merge with table in builtin/merge-recursive
-		 */
-		for (x = 0; x < xopts_nr; x++) {
-			if (!strcmp(xopts[x], "ours"))
-				o.recursive_variant = MERGE_RECURSIVE_OURS;
-			else if (!strcmp(xopts[x], "theirs"))
-				o.recursive_variant = MERGE_RECURSIVE_THEIRS;
-			else if (!strcmp(xopts[x], "subtree"))
-				o.subtree_shift = "";
-			else if (!prefixcmp(xopts[x], "subtree="))
-				o.subtree_shift = xopts[x]+8;
-			else if (!strcmp(xopts[x], "renormalize"))
-				o.renormalize = 1;
-			else if (!strcmp(xopts[x], "no-renormalize"))
-				o.renormalize = 0;
-			else
+		for (x = 0; x < xopts_nr; x++)
+			if (parse_merge_opt(&o, xopts[x]))
 				die("Unknown option for merge-recursive: -X%s", xopts[x]);
-		}
 
 		o.branch1 = head_arg;
 		o.branch2 = remoteheads->item->util;
