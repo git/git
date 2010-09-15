@@ -460,7 +460,14 @@ method _load {jump} {
 	}
 	if {$commit eq {}} {
 		if {$do_textconv ne 0} {
-			set fd [open |[list $textconv $path] r]
+			# Run textconv with sh -c "..." to allow it to
+			# contain command + arguments. On windows, just
+			# call the filter command.
+			if {![file executable [shellpath]]} {
+				set fd [open |[linsert $textconv end $path] r]
+			} else {
+				set fd [open |[list [shellpath] -c "$textconv \"\$0\"" $path] r]
+			}
 		} else {
 			set fd [open $path r]
 		}

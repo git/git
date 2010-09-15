@@ -10,8 +10,8 @@
  exec wish "$argv0" -- "$@"
 
 set appvers {@@GITGUI_VERSION@@}
-set copyright [encoding convertfrom utf-8 {
-Copyright © 2006, 2007 Shawn Pearce, et. al.
+set copyright [string map [list (c) \u00a9] {
+Copyright (c) 2006-2010 Shawn Pearce, et. al.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -128,6 +128,7 @@ set _githtmldir {}
 set _reponame {}
 set _iscygwin {}
 set _search_path {}
+set _shellpath {@@SHELL_PATH@@}
 
 set _trace [lsearch -exact $argv --trace]
 if {$_trace >= 0} {
@@ -135,6 +136,18 @@ if {$_trace >= 0} {
 	set _trace 1
 } else {
 	set _trace 0
+}
+
+proc shellpath {} {
+	global _shellpath env
+	if {[string match @@* $_shellpath]} {
+		if {[info exists env(SHELL)]} {
+			return $env(SHELL)
+		} else {
+			return /bin/sh
+		}
+	}
+	return $_shellpath
 }
 
 proc appname {} {
@@ -2845,7 +2858,13 @@ bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 
 set subcommand_args {}
 proc usage {} {
-	puts stderr "usage: $::argv0 $::subcommand $::subcommand_args"
+	set s "usage: $::argv0 $::subcommand $::subcommand_args"
+	if {[tk windowingsystem] eq "win32"} {
+		wm withdraw .
+		tk_messageBox -icon info -title "Usage" -message $s
+	} else {
+		puts stderr $s
+	}
 	exit 1
 }
 
@@ -2938,7 +2957,12 @@ blame {
 	}
 	blame   {
 		if {$head eq {} && ![file exists $path]} {
-			puts stderr [mc "fatal: cannot stat path %s: No such file or directory" $path]
+			catch {wm withdraw .}
+			tk_messageBox \
+				-icon error \
+				-type ok \
+				-title [mc "git-gui: fatal error"] \
+				-message [mc "fatal: cannot stat path %s: No such file or directory" $path]
 			exit 1
 		}
 		blame::new $head $path $jump_spec
