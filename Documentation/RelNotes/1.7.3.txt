@@ -4,7 +4,8 @@ Git v1.7.3 Release Notes (draft)
 Updates since v1.7.2
 --------------------
 
- * git-gui got various updates and a new maintainer, Pat Thoyts.
+ * git-gui, now at version 0.13.0, got various updates and a new
+   maintainer, Pat Thoyts.
 
  * Gitweb allows its configuration to change per each request; it used to
    read the configuration once upon startup.
@@ -63,8 +64,13 @@ release, unless otherwise noted.
  * "git fetch $url" (i.e. without refspecs) was broken for quite some
    time, if the current branch happen to be tracking some remote.
 
+ * "git ls-tree dir dirgarbage", when "dir" was a directory,
+   incorrectly recursed into "dir".
+
  * "git note remove" created unnecessary extra commit when named object
    did not have any note to begin with.
+
+ * "git rebase" did not work well if you had diff.noprefix configured.
 
  * "git -c foo=bar subcmd" did not work well for subcmd that is not
    implemented as a built-in command.
@@ -72,7 +78,7 @@ release, unless otherwise noted.
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.3-rc0
+O=v1.7.3-rc2
 git shortlog --no-merges $O..master ^maint
 exit 0
 
