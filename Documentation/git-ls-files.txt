@@ -79,16 +79,16 @@ OPTIONS
 
 -x <pattern>::
 --exclude=<pattern>::
-	Skips untracked files matching pattern.
+	Skip untracked files matching pattern.
 	Note that pattern is a shell wildcard pattern. See EXCLUDE PATTERNS
 	below for more information.
 
 -X <file>::
 --exclude-from=<file>::
-	exclude patterns are read from <file>; 1 per line.
+	Read exclude patterns from <file>; 1 per line.
 
 --exclude-per-directory=<file>::
-	read additional exclude patterns that apply only to the
+	Read additional exclude patterns that apply only to the
 	directory and its subdirectories in <file>.
 
 --exclude-standard::
@@ -178,7 +178,7 @@ These exclude patterns come from these places, in order:
      file containing a list of patterns.  Patterns are ordered
      in the same order they appear in the file.
 
-  3. command line flag --exclude-per-directory=<name> specifies
+  3. The command line flag --exclude-per-directory=<name> specifies
      a name of the file in each directory 'git-ls-files'
      examines, normally `.gitignore`.  Files in deeper
      directories take precedence.  Patterns are ordered in the
