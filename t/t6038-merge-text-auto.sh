@@ -14,6 +14,8 @@ test_description='CRLF merge conflict across text=auto change
 
 . ./test-lib.sh
 
+test_have_prereq MINGW && SED_OPTIONS=-b
+
 test_expect_success setup '
 	git config core.autocrlf false &&
 
@@ -60,7 +62,7 @@ test_expect_success setup '
 
 test_expect_success 'set up fuzz_conflict() helper' '
 	fuzz_conflict() {
-		sed -e "s/^\([<>=]......\) .*/\1/" "$@"
+		sed $SED_OPTIONS -e "s/^\([<>=]......\) .*/\1/" "$@"
 	}
 '
 
