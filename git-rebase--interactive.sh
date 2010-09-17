@@ -626,7 +626,7 @@ skip_unnecessary_picks () {
 		case "$fd,$command" in
 		3,pick|3,p)
 			# pick a commit whose parent is current $ONTO -> skip
-			sha1=$(printf '%s' "$rest" | cut -d ' ' -f 1)
+			sha1=${rest%% *}
 			case "$(git rev-parse --verify --quiet "$sha1"^)" in
 			"$ONTO"*)
 				ONTO=$sha1

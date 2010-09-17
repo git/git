@@ -443,7 +443,7 @@ test_expect_success 'git clean -e' '
 	(
 		cd repo &&
 		git init &&
-		touch 1 2 3 known &&
+		touch known 1 2 3 &&
 		git add known &&
 		git clean -f -e 1 -e 2 &&
 		test -e 1 &&
