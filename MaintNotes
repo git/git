@@ -96,7 +96,7 @@ minor breakages or brown paper bag bugs but they are not expected to be
 anything major, and more importantly quickly and trivially fixable.  Every
 now and then, a "feature release" is cut from the tip of this branch and
 they typically are named with three dotted decimal digits.  The last such
-release was 1.7.2 done on Jul 21, 2010.  You can expect that the tip of
+release was 1.7.3 done on Sep 19, 2010.  You can expect that the tip of
 the "master" branch is always more stable than any of the released
 versions.
 
@@ -105,7 +105,7 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.7.1.1.  New features never go to this branch.  This branch is also
+1.7.2.3.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
 A trivial and safe enhancement goes directly on top of "master".  A new
