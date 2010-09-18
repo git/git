@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2010, #05; Wed, 15)
-X-master-at: 7e100effc6c3a8acbb4bf305638c7b324a63236d
-X-next-at: bf93f8322c5e01b030ee9a1d3dee19e4d4dbd2d7
+Subject: What's cooking in git.git (Sep 2010, #06; Sat, 18)
+X-master-at: 1125297ca1744be09f9e392aab0dd2c70d838583
+X-next-at: df51bf2791c619324c7c5f7ea2d42a200dab62f0
 
-What's cooking in git.git (Sep 2010, #05; Wed, 15)
+What's cooking in git.git (Sep 2010, #06; Sat, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,89 +11,12 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-The tip of 'master' is now at 1.7.3-rc2; I am hoping that we can do the
-real 1.7.3 release perhaps this weekend.  Please give it a final round of
-beating so that we can find and fix the last minute regressions.
-
-Thanks.
-
 --------------------------------------------------
 [Graduated to "master"]
-
-* ch/filter-branch-deprecate-remap-to-ancestor (2010-08-27) 1 commit
-  (merged to 'next' on 2010-09-10 at f91d974)
- + filter-branch: retire --remap-to-ancestor
-
-* ch/maint-cannot-create-bundle-error (2010-08-27) 1 commit
-  (merged to 'next' on 2010-09-10 at ba139f1)
- + bundle: detect if bundle file cannot be created
-
-* dr/maint-ls-tree-prefix-recursion-fix (2010-09-11) 1 commit
-  (merged to 'next' on 2010-09-12 at c9d05a6)
- + ls-tree $di $dir: do not mistakenly recurse into directories
-
-* jl/fix-test (2010-09-07) 7 commits
-  (merged to 'next' on 2010-09-10 at 849b1bb)
- + t1020: Get rid of 'cd "$HERE"' at the start of each test
- + t2016 (checkout -p): add missing &&
- + t1302 (core.repositoryversion): style tweaks
- + t2105 (gitfile): add missing &&
- + t1450 (fsck): remove dangling objects
- + tests: subshell indentation stylefix
- + Merge branch 'jl/maint-fix-test'
- (this branch uses jl/maint-fix-test.)
-
-* jl/maint-fix-test (2010-09-06) 1 commit
- + Several tests: cd inside subshell instead of around
- (this branch is used by jl/fix-test.)
-
-* ks/recursive-rename-add-identical (2010-09-01) 1 commit
-  (merged to 'next' on 2010-09-03 at 1a5082f)
- + RE: [PATCH] Avoid rename/add conflict when contents are identical
-
-* os/fix-rebase-diff-no-prefix (2010-09-09) 1 commit
-  (merged to 'next' on 2010-09-10 at f1acd10)
- + Add --src/dst-prefix to git-formt-patch in git-rebase.sh
-
---------------------------------------------------
-[New Topics]
-
-* ab/send-email-catfile (2010-09-14) 1 commit
- - send-email: use catfile() to concatenate files
-
-Sane; should be safe to be among the first batch after 1.7.3 release.
 
 * bg/fix-t7003 (2010-09-10) 1 commit
   (merged to 'next' on 2010-09-13 at 9d7756e)
  + t7003: Use test_commit instead of custom function
-
-Sane; should be safe to be among the first batch after 1.7.3 release.
-
-* jc/grep-header-all-match-fix (2010-09-12) 2 commits
- - log --author: take union of multiple "author" requests
- - grep: move logic to compile header pattern into a separate helper
- (this branch is used by jc/grep-header-all-match-fix-debug.)
-
-We might want to give a more comprehensive revamp to the "filter by
-grepping the commit log message" feature some day, somehow allowing the
-full "git grep" boolean expression.  But until then, this should suffice.
-
-* jc/grep-header-all-match-fix-debug (2010-09-13) 1 commit
- - grep debugging, just in case
- (this branch uses jc/grep-header-all-match-fix.)
-
-* jc/no-branch-name-with-dash-at-front (2010-09-14) 1 commit
- - disallow branch names that start with a hyphen
-
-This also came up at $WORK; should be safe to be among the first batch
-after 1.7.3 release.
-
-* dm/mergetool-vimdiff (2010-09-14) 2 commits
- - mergetool-lib: add a three-way diff view for vim/gvim
- - mergetool-lib: combine vimdiff and gvimdiff run blocks
-
-The bottom one should be without controversy.  I don't use vimdiff, so
-cannot comment on the other one.
 
 --------------------------------------------------
 [Stalled]
@@ -162,6 +85,41 @@ current usage context.
 --------------------------------------------------
 [Cooking]
 
+* ab/send-email-catfile (2010-09-14) 1 commit
+  (merged to 'next' on 2010-09-18 at 1b2e2a3)
+ + send-email: use catfile() to concatenate files
+
+Sane; should be safe to be among the first batch after 1.7.3 release.
+
+* jc/grep-header-all-match-fix (2010-09-12) 2 commits
+  (merged to 'next' on 2010-09-18 at 380305c)
+ + log --author: take union of multiple "author" requests
+ + grep: move logic to compile header pattern into a separate helper
+ (this branch is used by jc/grep-header-all-match-fix-debug.)
+
+We might want to give a more comprehensive revamp to the "filter by
+grepping the commit log message" feature some day, somehow allowing the
+full "git grep" boolean expression.  But until then, this should suffice.
+
+* jc/grep-header-all-match-fix-debug (2010-09-13) 1 commit
+ - grep debugging, just in case
+ (this branch uses jc/grep-header-all-match-fix.)
+
+* jc/no-branch-name-with-dash-at-front (2010-09-14) 1 commit
+  (merged to 'next' on 2010-09-18 at ac22cbc)
+ + disallow branch names that start with a hyphen
+
+This came up at $WORK; should be safe to be among the first batch after
+1.7.3 release.
+
+* dm/mergetool-vimdiff (2010-09-14) 2 commits
+  (merged to 'next' on 2010-09-18 at df51bf2)
+ + mergetool-lib: add a three-way diff view for vim/gvim
+ + mergetool-lib: combine vimdiff and gvimdiff run blocks
+
+The bottom one should be without controversy.  I don't use vimdiff, so
+cannot comment on the other one.
+
 * by/line-log (2010-09-11) 18 commits
   (merged to 'next' on 2010-09-12 at e29a029)
  + log -L: do not free parents lists we might need again
@@ -188,6 +146,8 @@ How would one trace history of lines 440,450 in t/t7300-clean.sh starting
 from the tip of 'pu'?  "git log -p -L 440,450 pu -- t/t7300-clean.sh"
 would be the most natural but it does not work (it wants "pu" to be a
 path).  "git log -p -L 440,450 t/t7300-clean.sh pu" doesn't work either.
+And "git log -p pu -L440,450 t/t7300-clean.sh" goes totally against our
+command line convention.
 
 The command line parser of this series needs to be rethought (didn't I say
 that many times?  Perhaps I was ignored).  Might want to kick this out of
@@ -208,7 +168,8 @@ Half-written but it is a good start.  I may need to give some help in
 describing more recent index extensions.
 
 * tr/send-email-refuse-sending-unedited-cover-letter (2009-06-08) 1 commit
- - send-email: Refuse to send cover-letter template subject
+  (merged to 'next' on 2010-09-18 at 0fedaef)
+ + send-email: Refuse to send cover-letter template subject
 
 Sane; should be safe to be among the first batch after 1.7.3 release.
 
