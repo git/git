@@ -1,5 +1,5 @@
-Git v1.7.3 Release Notes (draft)
-================================
+Git v1.7.3 Release Notes
+========================
 
 Updates since v1.7.2
 --------------------
@@ -74,14 +74,3 @@ release, unless otherwise noted.
 
  * "git -c foo=bar subcmd" did not work well for subcmd that is not
    implemented as a built-in command.
-
----
-exec >/var/tmp/1
-echo O=$(git describe master)
-O=v1.7.3-rc2
-git shortlog --no-merges $O..master ^maint
-exit 0
-
-What did we want to do with...
-
-1e3d411 (Enable custom schemes for column colors in the graph API, 2010-07-13)
