@@ -178,6 +178,9 @@ ssize_t mingw_write(int fd, const void *buf, size_t count);
 FILE *mingw_fopen (const char *filename, const char *otype);
 #define fopen mingw_fopen
 
+int mingw_fclose (FILE * stream);
+#define fclose mingw_fclose
+
 FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream);
 #define freopen mingw_freopen
 

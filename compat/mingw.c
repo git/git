@@ -6,20 +6,32 @@
 
 #include <shellapi.h>
 
+#define OPEN_HANDLE 1
+#define OPEN_FILE   2
 
-static int *p_opened_file_handle;
+struct open_data
+{
+	long long data;
+	int	flag;
+};
+
+static struct open_data *p_opened_file_handle;
 static int p_opened_file_size;
 static int p_alloc_size;
 
-int add_handle(int handle)
+int add_handle(long long x, int flag)
 {
 	int i=0;
+	struct open_data handle;
+	handle.data =x;
+	handle.flag =flag;
+
 	if(p_opened_file_handle == NULL)
 		ALLOC_GROW(p_opened_file_handle, p_opened_file_size+10, p_alloc_size);
 
 	for(i=0;i<p_opened_file_size;i++)
 	{
-		if(p_opened_file_handle[i] == handle)
+		if(p_opened_file_handle[i].data == handle.data && p_opened_file_handle[i].flag == handle.flag )
 			return 0;
 	}
 
@@ -28,15 +40,19 @@ int add_handle(int handle)
 
 }
 
-int remove_handle(int handle)
+int remove_handle(long long x, int flag)
 {
 	int i=0;
+	struct open_data handle;
+	handle.data =x;
+	handle.flag = flag;
+
 	if(p_opened_file_handle == NULL)
 		return 0;
 
 	for(i=0;i<p_opened_file_size;i++)
 	{
-		if(p_opened_file_handle[i] == handle)
+		if(p_opened_file_handle[i].data == handle.data && p_opened_file_handle[i].flag == handle.flag)
 		{
 			memcpy(p_opened_file_handle+i, p_opened_file_handle+i+1, sizeof(int)*(p_opened_file_size-i-1));
 			p_opened_file_size--;
@@ -47,6 +63,9 @@ int remove_handle(int handle)
 
 }
 
+#undef close
+#undef fclose
+
 int close_all()
 {
 	int i=0;
@@ -55,7 +74,11 @@ int close_all()
 
 	for( i=0;i< p_opened_file_size; i++)
 	{
-		close(p_opened_file_handle[i]);
+		if(p_opened_file_handle[i].flag == OPEN_HANDLE)
+			close(p_opened_file_handle[i].data);
+		
+		if(p_opened_file_handle[i].flag == OPEN_FILE)
+			fclose((FILE*)p_opened_file_handle[i].data);
 	}
 
 	free(p_opened_file_handle);
@@ -200,7 +223,7 @@ int mingw_open (const char *filename, int oflags, ...)
 	}
 	
 	if(fd>=0)
-		add_handle(fd);
+		add_handle(fd, OPEN_HANDLE);
 
 	return fd;
 }
@@ -233,9 +256,22 @@ FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
 #undef fopen
 FILE *mingw_fopen (const char *filename, const char *otype)
 {
+	FILE *file;
 	if (!strcmp(filename, "/dev/null"))
 		filename = "nul";
-	return fopen(filename, otype);
+	file = fopen(filename, otype);
+
+	if(file)
+		add_handle((long long)file, OPEN_FILE);
+
+	return file;
+}
+
+#undef fclose
+int mingw_fclose (FILE * stream)
+{
+	remove_handle((long long)stream, OPEN_FILE);
+	return fclose(stream);
 }
 /*
  * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
@@ -251,7 +287,7 @@ static inline long long filetime_to_hnsec(const FILETIME *ft)
 int mingw_close(int fileHandle)
 {
 	if(fileHandle>=0)
-		remove_handle(fileHandle);
+		remove_handle(fileHandle,OPEN_HANDLE);
 
 	return close(fileHandle);
 }
