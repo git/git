@@ -730,12 +730,13 @@ static struct merge_file_info merge_file(struct merge_options *o,
 	return result;
 }
 
-static void conflict_rename_rename(struct merge_options *o,
-				   struct rename *ren1,
-				   const char *branch1,
-				   struct rename *ren2,
-				   const char *branch2)
+static void conflict_rename_rename_1to2(struct merge_options *o,
+					struct rename *ren1,
+					const char *branch1,
+					struct rename *ren2,
+					const char *branch2)
 {
+	/* One file was renamed in both branches, but to different names. */
 	char *del[2];
 	int delp = 0;
 	const char *ren1_dst = ren1->pair->two->path;
@@ -782,12 +783,13 @@ static void conflict_rename_dir(struct merge_options *o,
 	free(new_path);
 }
 
-static void conflict_rename_rename_2(struct merge_options *o,
-				     struct rename *ren1,
-				     const char *branch1,
-				     struct rename *ren2,
-				     const char *branch2)
+static void conflict_rename_rename_2to1(struct merge_options *o,
+					struct rename *ren1,
+					const char *branch1,
+					struct rename *ren2,
+					const char *branch2)
 {
+	/* Two files were renamed to the same thing. */
 	char *new_path1 = unique_path(o, ren1->pair->two->path, branch1);
 	char *new_path2 = unique_path(o, ren2->pair->two->path, branch2);
 	output(o, 1, "Renaming %s to %s and %s to %s instead",
@@ -889,7 +891,7 @@ static int process_renames(struct merge_options *o,
 					update_file(o, 0, ren1->pair->one->sha1,
 						    ren1->pair->one->mode, src);
 				}
-				conflict_rename_rename(o, ren1, branch1, ren2, branch2);
+				conflict_rename_rename_1to2(o, ren1, branch1, ren2, branch2);
 			} else {
 				struct merge_file_info mfi;
 				remove_file(o, 1, ren1_src, 1);
@@ -1004,7 +1006,7 @@ static int process_renames(struct merge_options *o,
 				       "Rename %s->%s in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren2->pair->one->path, ren2->pair->two->path, branch2);
-				conflict_rename_rename_2(o, ren1, branch1, ren2, branch2);
+				conflict_rename_rename_2to1(o, ren1, branch1, ren2, branch2);
 			} else
 				try_merge = 1;
 
