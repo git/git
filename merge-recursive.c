@@ -1259,9 +1259,8 @@ static int process_df_entry(struct merge_options *o,
 	const char *conf;
 	struct stat st;
 
-	/* We currently only handle D->F cases */
-	assert((!o_sha && a_sha && !b_sha) ||
-	       (!o_sha && !a_sha && b_sha));
+	if (!((!o_sha && a_sha && !b_sha) || (!o_sha && !a_sha && b_sha)))
+		return 1; /* we don't handle non D-F cases */
 
 	entry->processed = 1;
 
@@ -1349,6 +1348,12 @@ int merge_trees(struct merge_options *o,
 			if (!e->processed
 				&& !process_df_entry(o, path, e))
 				clean = 0;
+		}
+		for (i = 0; i < entries->nr; i++) {
+			struct stage_data *e = entries->items[i].util;
+			if (!e->processed)
+				die("Unprocessed path??? %s",
+				    entries->items[i].string);
 		}
 
 		string_list_clear(re_merge, 0);
