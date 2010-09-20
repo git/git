@@ -971,33 +971,13 @@ static int process_renames(struct merge_options *o,
 				remove_file(o, 0, ren1_dst, 0);
 				/* ren2_dst not in head, so no need to delete */
 			} else {
-				struct merge_file_info mfi;
 				remove_file(o, 1, ren1_src, 1);
-				mfi = merge_file(o,
-						 ren1->pair->one,
-						 ren1->pair->two,
-						 ren2->pair->two,
-						 branch1,
-						 branch2);
-				if (mfi.merge || !mfi.clean)
-					output(o, 1, "Renaming %s->%s", src, ren1_dst);
-
-				if (mfi.merge)
-					output(o, 2, "Auto-merging %s", ren1_dst);
-
-				if (!mfi.clean) {
-					output(o, 1, "CONFLICT (content): merge conflict in %s",
-					       ren1_dst);
-					clean_merge = 0;
-
-					if (!o->call_depth)
-						update_stages(ren1_dst,
-							      ren1->pair->one,
-							      ren1->pair->two,
-							      ren2->pair->two,
-							      1 /* clear */);
-				}
-				update_file(o, mfi.clean, mfi.sha, mfi.mode, ren1_dst);
+				update_stages_and_entry(ren1_dst,
+							ren1->dst_entry,
+							ren1->pair->one,
+							ren1->pair->two,
+							ren2->pair->two,
+							1 /* clear */);
 			}
 		} else {
 			/* Renamed in 1, maybe changed in 2 */
