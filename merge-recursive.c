@@ -807,6 +807,8 @@ static void conflict_rename_delete(struct merge_options *o,
 				   const char *other_branch)
 {
 	char *dest_name = pair->two->path;
+	int df_conflict = 0;
+	struct stat st;
 
 	output(o, 1, "CONFLICT (rename/delete): Rename %s->%s in %s "
 	       "and deleted in %s",
@@ -817,7 +819,13 @@ static void conflict_rename_delete(struct merge_options *o,
 			      rename_branch == o->branch1 ? pair->two : NULL,
 			      rename_branch == o->branch1 ? NULL : pair->two,
 			      1);
+	if (lstat(dest_name, &st) == 0 && S_ISDIR(st.st_mode)) {
+		dest_name = unique_path(o, dest_name, rename_branch);
+		df_conflict = 1;
+	}
 	update_file(o, 0, pair->two->sha1, pair->two->mode, dest_name);
+	if (df_conflict)
+		free(dest_name);
 }
 
 static void conflict_rename_rename_1to2(struct merge_options *o,

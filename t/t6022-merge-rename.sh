@@ -549,7 +549,7 @@ test_expect_success 'setup both rename source and destination involved in D/F co
 	git commit -m "Conflicts in the way"
 '
 
-test_expect_failure 'both rename source and destination involved in D/F conflict' '
+test_expect_success 'both rename source and destination involved in D/F conflict' '
 	git reset --hard &&
 	rm -rf dir~* &&
 	git checkout -q rename-dest^0 &&
@@ -589,7 +589,7 @@ test_expect_success 'setup pair rename to parent of other (D/F conflicts)' '
 	git commit -m "Rename one/file -> two"
 '
 
-test_expect_failure 'pair rename to parent of other (D/F conflicts) w/ untracked dir' '
+test_expect_success 'pair rename to parent of other (D/F conflicts) w/ untracked dir' '
 	git checkout -q rename-one^0 &&
 	mkdir one &&
 	test_must_fail git merge --strategy=recursive rename-two &&
