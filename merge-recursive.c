@@ -1249,6 +1249,10 @@ static int process_entry(struct merge_options *o,
 				output(o, 2, "Removing %s", path);
 			/* do not touch working file if it did not exist */
 			remove_file(o, 1, path, !a_sha);
+		} else if (string_list_has_string(&o->current_directory_set,
+						  path)) {
+			entry->processed = 0;
+			return 1; /* Assume clean till processed */
 		} else {
 			/* Deleted in one and changed in the other */
 			clean_merge = 0;
@@ -1367,6 +1371,11 @@ static int process_df_entry(struct merge_options *o,
 			entry->processed = 0;
 			break;
 		}
+	} else if (o_sha && (!a_sha || !b_sha)) {
+		/* Modify/delete; deleted side may have put a directory in the way */
+		clean_merge = 0;
+		handle_delete_modify(o, path,
+				     a_sha, a_mode, b_sha, b_mode);
 	} else if (!o_sha && !!a_sha != !!b_sha) {
 		/* directory -> (directory, file) */
 		const char *add_branch;
