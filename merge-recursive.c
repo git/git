@@ -821,16 +821,16 @@ static void conflict_rename_delete(struct merge_options *o,
 }
 
 static void conflict_rename_rename_1to2(struct merge_options *o,
-					struct rename *ren1,
+					struct diff_filepair *pair1,
 					const char *branch1,
-					struct rename *ren2,
+					struct diff_filepair *pair2,
 					const char *branch2)
 {
 	/* One file was renamed in both branches, but to different names. */
 	char *del[2];
 	int delp = 0;
-	const char *ren1_dst = ren1->pair->two->path;
-	const char *ren2_dst = ren2->pair->two->path;
+	const char *ren1_dst = pair1->two->path;
+	const char *ren2_dst = pair2->two->path;
 	const char *dst_name1 = ren1_dst;
 	const char *dst_name2 = ren2_dst;
 	if (string_list_has_string(&o->current_directory_set, ren1_dst)) {
@@ -851,12 +851,12 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		/*
 		 * Uncomment to leave the conflicting names in the resulting tree
 		 *
-		 * update_file(o, 0, ren1->pair->two->sha1, ren1->pair->two->mode, dst_name1);
-		 * update_file(o, 0, ren2->pair->two->sha1, ren2->pair->two->mode, dst_name2);
+		 * update_file(o, 0, pair1->two->sha1, pair1->two->mode, dst_name1);
+		 * update_file(o, 0, pair2->two->sha1, pair2->two->mode, dst_name2);
 		 */
 	} else {
-		update_stages(dst_name1, NULL, ren1->pair->two, NULL, 1);
-		update_stages(dst_name2, NULL, NULL, ren2->pair->two, 1);
+		update_stages(dst_name1, NULL, pair1->two, NULL, 1);
+		update_stages(dst_name2, NULL, NULL, pair2->two, 1);
 	}
 	while (delp--)
 		free(del[delp]);
@@ -970,7 +970,7 @@ static int process_renames(struct merge_options *o,
 					update_file(o, 0, ren1->pair->one->sha1,
 						    ren1->pair->one->mode, src);
 				}
-				conflict_rename_rename_1to2(o, ren1, branch1, ren2, branch2);
+				conflict_rename_rename_1to2(o, ren1->pair, branch1, ren2->pair, branch2);
 			} else {
 				struct merge_file_info mfi;
 				remove_file(o, 1, ren1_src, 1);
