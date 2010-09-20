@@ -730,6 +730,25 @@ static struct merge_file_info merge_file(struct merge_options *o,
 	return result;
 }
 
+static void conflict_rename_delete(struct merge_options *o,
+				   struct diff_filepair *pair,
+				   const char *rename_branch,
+				   const char *other_branch)
+{
+	char *dest_name = pair->two->path;
+
+	output(o, 1, "CONFLICT (rename/delete): Rename %s->%s in %s "
+	       "and deleted in %s",
+	       pair->one->path, pair->two->path, rename_branch,
+	       other_branch);
+	if (!o->call_depth)
+		update_stages(dest_name, NULL,
+			      rename_branch == o->branch1 ? pair->two : NULL,
+			      rename_branch == o->branch1 ? NULL : pair->two,
+			      1);
+	update_file(o, 0, pair->two->sha1, pair->two->mode, dest_name);
+}
+
 static void conflict_rename_rename_1to2(struct merge_options *o,
 					struct rename *ren1,
 					const char *branch1,
@@ -936,17 +955,7 @@ static int process_renames(struct merge_options *o,
 
 			if (sha_eq(src_other.sha1, null_sha1)) {
 				clean_merge = 0;
-				output(o, 1, "CONFLICT (rename/delete): Rename %s->%s in %s "
-				       "and deleted in %s",
-				       ren1_src, ren1_dst, branch1,
-				       branch2);
-				update_file(o, 0, ren1->pair->two->sha1, ren1->pair->two->mode, ren1_dst);
-				if (!o->call_depth)
-					update_stages(ren1_dst, NULL,
-							branch1 == o->branch1 ?
-							ren1->pair->two : NULL,
-							branch1 == o->branch1 ?
-							NULL : ren1->pair->two, 1);
+				conflict_rename_delete(o, ren1->pair, branch1, branch2);
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
 				   sha_eq(dst_other.sha1, ren1->pair->two->sha1)) {
 				/* Added file on the other side
