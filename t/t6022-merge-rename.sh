@@ -652,7 +652,7 @@ test_expect_success 'setup rename of one file to two, with directories in the wa
 	git commit -m "Put one/file in the way, rename to two"
 '
 
-test_expect_failure 'check handling of differently renamed file with D/F conflicts' '
+test_expect_success 'check handling of differently renamed file with D/F conflicts' '
 	git checkout -q first-rename^0 &&
 	test_must_fail git merge --strategy=recursive second-rename &&
 
