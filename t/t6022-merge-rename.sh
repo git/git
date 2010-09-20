@@ -565,4 +565,67 @@ test_expect_failure 'both rename source and destination involved in D/F conflict
 	test "stuff" = "$(cat destdir~HEAD)"
 '
 
+test_expect_success 'setup pair rename to parent of other (D/F conflicts)' '
+	git reset --hard &&
+	git checkout --orphan rename-two &&
+	git rm -rf . &&
+	git clean -fdqx &&
+
+	mkdir one &&
+	mkdir two &&
+	echo stuff >one/file &&
+	echo other >two/file &&
+	git add -A &&
+	git commit -m "Common commmit" &&
+
+	git rm -rf one &&
+	git mv two/file one &&
+	git commit -m "Rename two/file -> one" &&
+
+	git checkout -b rename-one HEAD~1 &&
+	git rm -rf two &&
+	git mv one/file two &&
+	rm -r one &&
+	git commit -m "Rename one/file -> two"
+'
+
+test_expect_failure 'pair rename to parent of other (D/F conflicts) w/ untracked dir' '
+	git checkout -q rename-one^0 &&
+	mkdir one &&
+	test_must_fail git merge --strategy=recursive rename-two &&
+
+	test 2 = "$(git ls-files -u | wc -l)" &&
+	test 1 = "$(git ls-files -u one | wc -l)" &&
+	test 1 = "$(git ls-files -u two | wc -l)" &&
+
+	test_must_fail git diff --quiet &&
+
+	test 4 = $(find . | grep -v .git | wc -l) &&
+
+	test -d one &&
+	test -f one~rename-two &&
+	test -f two &&
+	test "other" = $(cat one~rename-two) &&
+	test "stuff" = $(cat two)
+'
+
+test_expect_success 'pair rename to parent of other (D/F conflicts) w/ clean start' '
+	git reset --hard &&
+	git clean -fdqx &&
+	test_must_fail git merge --strategy=recursive rename-two &&
+
+	test 2 = "$(git ls-files -u | wc -l)" &&
+	test 1 = "$(git ls-files -u one | wc -l)" &&
+	test 1 = "$(git ls-files -u two | wc -l)" &&
+
+	test_must_fail git diff --quiet &&
+
+	test 3 = $(find . | grep -v .git | wc -l) &&
+
+	test -f one &&
+	test -f two &&
+	test "other" = $(cat one) &&
+	test "stuff" = $(cat two)
+'
+
 test_done
