@@ -1032,8 +1032,6 @@ static int process_renames(struct merge_options *o,
 							      branch2,
 							      ren1->dst_entry,
 							      ren2->dst_entry);
-				remove_file(o, 0, ren1_dst, 0);
-				/* ren2_dst not in head, so no need to delete */
 			} else {
 				remove_file(o, 1, ren1_src, 1);
 				update_stages_and_entry(ren1_dst,
@@ -1077,7 +1075,6 @@ static int process_renames(struct merge_options *o,
 								      branch2,
 								      ren1->dst_entry,
 								      NULL);
-					remove_file(o, 0, ren1_dst, 0);
 				} else {
 					clean_merge = 0;
 					conflict_rename_delete(o, ren1->pair, branch1, branch2);
@@ -1156,7 +1153,6 @@ static int process_renames(struct merge_options *o,
 								      NULL,
 								      ren1->dst_entry,
 								      NULL);
-					remove_file(o, 0, ren1_dst, 0);
 				}
 			}
 		}
@@ -1338,7 +1334,7 @@ static int process_entry(struct merge_options *o,
 		} else if (string_list_has_string(&o->current_directory_set,
 						  path)) {
 			entry->processed = 0;
-			return 1; /* Assume clean till processed */
+			return 1; /* Assume clean until processed */
 		} else {
 			/* Deleted in one and changed in the other */
 			clean_merge = 0;
@@ -1362,15 +1358,7 @@ static int process_entry(struct merge_options *o,
 		if (string_list_has_string(&o->current_directory_set, path)) {
 			/* Handle D->F conflicts after all subfiles */
 			entry->processed = 0;
-			/* But get any file out of the way now, so conflicted
-			 * entries below the directory of the same name can
-			 * be put in the working directory.
-			 */
-			if (a_sha)
-				output(o, 2, "Removing %s", path);
-			/* do not touch working file if it did not exist */
-			remove_file(o, 0, path, !a_sha);
-			return 1; /* Assume clean till processed */
+			return 1; /* Assume clean until processed */
 		} else {
 			output(o, 2, "Adding %s", path);
 			update_file(o, 1, sha, mode, path);
@@ -1492,7 +1480,6 @@ static int process_df_entry(struct merge_options *o,
 			output(o, 1, "CONFLICT (%s): There is a directory with name %s in %s. "
 			       "Adding %s as %s",
 			       conf, path, other_branch, path, new_path);
-			remove_file(o, 0, path, 0);
 			update_file(o, 0, sha, mode, new_path);
 		} else {
 			output(o, 2, "Adding %s", path);
