@@ -1214,7 +1214,8 @@ static int merge_content(struct merge_options *o,
 			 const char *path,
 			 unsigned char *o_sha, int o_mode,
 			 unsigned char *a_sha, int a_mode,
-			 unsigned char *b_sha, int b_mode)
+			 unsigned char *b_sha, int b_mode,
+			 const char *df_rename_conflict_branch)
 {
 	const char *reason = "content";
 	struct merge_file_info mfi;
@@ -1322,7 +1323,8 @@ static int process_entry(struct merge_options *o,
 		/* Case C: Added in both (check for same permissions) and */
 		/* case D: Modified in both, but differently. */
 		clean_merge = merge_content(o, path,
-					    o_sha, o_mode, a_sha, a_mode, b_sha, b_mode);
+					    o_sha, o_mode, a_sha, a_mode, b_sha, b_mode,
+					    NULL);
 	} else if (!o_sha && !a_sha && !b_sha) {
 		/*
 		 * this entry was deleted altogether. a_mode == 0 means
