@@ -3,6 +3,11 @@
 test_description='Merge-recursive merging renames'
 . ./test-lib.sh
 
+modify () {
+	sed -e "$1" <"$2" >"$2.x" &&
+	mv "$2.x" "$2"
+}
+
 test_expect_success setup \
 '
 cat >A <<\EOF &&
@@ -339,6 +344,129 @@ test_expect_success 'merge of identical changes in a renamed file' '
 	git reset --hard HEAD^ &&
 	git checkout change &&
 	GIT_MERGE_VERBOSITY=3 git merge change+rename | grep "^Skipped B"
+'
+
+test_expect_success 'setup for rename + d/f conflicts' '
+	git reset --hard &&
+	git checkout --orphan dir-in-way &&
+	git rm -rf . &&
+
+	mkdir sub &&
+	mkdir dir &&
+	printf "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" >sub/file &&
+	echo foo >dir/file-in-the-way &&
+	git add -A &&
+	git commit -m "Common commmit" &&
+
+	echo 11 >>sub/file &&
+	echo more >>dir/file-in-the-way &&
+	git add -u &&
+	git commit -m "Commit to merge, with dir in the way" &&
+
+	git checkout -b dir-not-in-way &&
+	git reset --soft HEAD^ &&
+	git rm -rf dir &&
+	git commit -m "Commit to merge, with dir removed" -- dir sub/file &&
+
+	git checkout -b renamed-file-has-no-conflicts dir-in-way~1 &&
+	git rm -rf dir &&
+	git rm sub/file &&
+	printf "1\n2\n3\n4\n5555\n6\n7\n8\n9\n10\n" >dir &&
+	git add dir &&
+	git commit -m "Independent change" &&
+
+	git checkout -b renamed-file-has-conflicts dir-in-way~1 &&
+	git rm -rf dir &&
+	git mv sub/file dir &&
+	echo 12 >>dir &&
+	git add dir &&
+	git commit -m "Conflicting change"
+'
+
+printf "1\n2\n3\n4\n5555\n6\n7\n8\n9\n10\n11\n" >expected
+
+test_expect_success 'Rename+D/F conflict; renamed file merges + dir not in way' '
+	git reset --hard &&
+	git checkout -q renamed-file-has-no-conflicts^0 &&
+	git merge --strategy=recursive dir-not-in-way &&
+	git diff --quiet &&
+	test -f dir &&
+	test_cmp expected dir
+'
+
+test_expect_failure 'Rename+D/F conflict; renamed file merges but dir in way' '
+	git reset --hard &&
+	rm -rf dir~* &&
+	git checkout -q renamed-file-has-no-conflicts^0 &&
+	test_must_fail git merge --strategy=recursive dir-in-way >output &&
+
+	grep "CONFLICT (delete/modify): dir/file-in-the-way" output &&
+	grep "Auto-merging dir" output &&
+	grep "Adding as dir~HEAD instead" output &&
+
+	test 2 = "$(git ls-files -u | wc -l)" &&
+	test 2 = "$(git ls-files -u dir/file-in-the-way | wc -l)" &&
+
+	test_must_fail git diff --quiet &&
+	test_must_fail git diff --cached --quiet &&
+
+	test -f dir/file-in-the-way &&
+	test -f dir~HEAD &&
+	test_cmp expected dir~HEAD
+'
+
+cat >expected <<\EOF &&
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+<<<<<<< HEAD
+12
+=======
+11
+>>>>>>> dir-not-in-way
+EOF
+
+test_expect_failure 'Rename+D/F conflict; renamed file cannot merge, dir not in way' '
+	git reset --hard &&
+	rm -rf dir~* &&
+	git checkout -q renamed-file-has-conflicts^0 &&
+	test_must_fail git merge --strategy=recursive dir-not-in-way &&
+
+	test 3 = "$(git ls-files -u | wc -l)" &&
+	test 3 = "$(git ls-files -u dir | wc -l)" &&
+
+	test_must_fail git diff --quiet &&
+	test_must_fail git diff --cached --quiet &&
+
+	test -f dir &&
+	test_cmp expected dir
+'
+
+test_expect_failure 'Rename+D/F conflict; renamed file cannot merge and dir in the way' '
+	modify s/dir-not-in-way/dir-in-way/ expected &&
+
+	git reset --hard &&
+	rm -rf dir~* &&
+	git checkout -q renamed-file-has-conflicts^0 &&
+	test_must_fail git merge --strategy=recursive dir-in-way &&
+
+	test 5 = "$(git ls-files -u | wc -l)" &&
+	test 3 = "$(git ls-files -u dir | grep -v file-in-the-way | wc -l)" &&
+	test 2 = "$(git ls-files -u dir/file-in-the-way | wc -l)" &&
+
+	test_must_fail git diff --quiet &&
+	test_must_fail git diff --cached --quiet &&
+
+	test -f dir/file-in-the-way &&
+	test -f dir~HEAD &&
+	test_cmp expected dir~HEAD
 '
 
 test_done
