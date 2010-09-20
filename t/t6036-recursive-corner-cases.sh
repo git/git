@@ -120,7 +120,7 @@ test_expect_success 'setup criss-cross + rename merges with basic modification' 
 	git tag R2
 '
 
-test_expect_failure 'merge criss-cross + rename merges with basic modification' '
+test_expect_success 'merge criss-cross + rename merges with basic modification' '
 	git reset --hard &&
 	git checkout L2^0 &&
 
@@ -202,7 +202,7 @@ test_expect_success 'setup differently handled merges of rename/add conflict' '
 	git tag E
 '
 
-test_expect_failure 'git detects differently handled merges conflict' '
+test_expect_success 'git detects differently handled merges conflict' '
 	git reset --hard &&
 	git checkout D^0 &&
 

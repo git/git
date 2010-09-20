@@ -1061,6 +1061,7 @@ static int process_renames(struct merge_options *o,
 						    mfi.sha,
 						    mfi.mode,
 						    ren1_dst);
+					try_merge = 0;
 				} else {
 					new_path = unique_path(o, ren1_dst, branch2);
 					output(o, 1, "Adding as %s instead", new_path);
