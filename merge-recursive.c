@@ -63,6 +63,22 @@ static int sha_eq(const unsigned char *a, const unsigned char *b)
 	return a && b && hashcmp(a, b) == 0;
 }
 
+enum rename_type {
+	RENAME_NORMAL = 0,
+	RENAME_DELETE,
+	RENAME_ONE_FILE_TO_TWO
+};
+
+struct rename_df_conflict_info {
+	enum rename_type rename_type;
+	struct diff_filepair *pair1;
+	struct diff_filepair *pair2;
+	const char *branch1;
+	const char *branch2;
+	struct stage_data *dst_entry1;
+	struct stage_data *dst_entry2;
+};
+
 /*
  * Since we want to write the index eventually, we cannot reuse the index
  * for these (temporary) data.
@@ -74,8 +90,36 @@ struct stage_data
 		unsigned mode;
 		unsigned char sha[20];
 	} stages[4];
+	struct rename_df_conflict_info *rename_df_conflict_info;
 	unsigned processed:1;
 };
+
+static inline void setup_rename_df_conflict_info(enum rename_type rename_type,
+						 struct diff_filepair *pair1,
+						 struct diff_filepair *pair2,
+						 const char *branch1,
+						 const char *branch2,
+						 struct stage_data *dst_entry1,
+						 struct stage_data *dst_entry2)
+{
+	struct rename_df_conflict_info *ci = xcalloc(1, sizeof(struct rename_df_conflict_info));
+	ci->rename_type = rename_type;
+	ci->pair1 = pair1;
+	ci->branch1 = branch1;
+	ci->branch2 = branch2;
+
+	ci->dst_entry1 = dst_entry1;
+	dst_entry1->rename_df_conflict_info = ci;
+	dst_entry1->processed = 0;
+
+	assert(!pair2 == !dst_entry2);
+	if (dst_entry2) {
+		ci->dst_entry2 = dst_entry2;
+		ci->pair2 = pair2;
+		dst_entry2->rename_df_conflict_info = ci;
+		dst_entry2->processed = 0;
+	}
+}
 
 static int show(struct merge_options *o, int v)
 {
