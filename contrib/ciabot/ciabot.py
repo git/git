@@ -122,7 +122,7 @@ def report(refname, merged):
     branch = os.path.basename(refname)
 
     # Compute a shortnane for the revision
-    rev = do("git describe ${merged} 2>/dev/null") or merged[:12]
+    rev = do("git describe '"+ merged +"' 2>/dev/null") or merged[:12]
 
     # Extract the neta-information for the commit
     rawcommit = do("git cat-file commit " + merged)
