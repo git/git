@@ -924,15 +924,23 @@ static int process_renames(struct merge_options *o,
 			struct string_list_item *item;
 			/* we only use sha1 and mode of these */
 			struct diff_filespec src_other, dst_other;
-			int try_merge, stage = a_renames == renames1 ? 3: 2;
+			int try_merge;
 
-			remove_file(o, 1, ren1_src, o->call_depth || stage == 3);
+			/*
+			 * unpack_trees loads entries from common-commit
+			 * into stage 1, from head-commit into stage 2, and
+			 * from merge-commit into stage 3.  We keep track
+			 * of which side corresponds to the rename.
+			 */
+			int renamed_stage = a_renames == renames1 ? 2 : 3;
+			int other_stage =   a_renames == renames1 ? 3 : 2;
 
-			hashcpy(src_other.sha1, ren1->src_entry->stages[stage].sha);
-			src_other.mode = ren1->src_entry->stages[stage].mode;
-			hashcpy(dst_other.sha1, ren1->dst_entry->stages[stage].sha);
-			dst_other.mode = ren1->dst_entry->stages[stage].mode;
+			remove_file(o, 1, ren1_src, o->call_depth || renamed_stage == 2);
 
+			hashcpy(src_other.sha1, ren1->src_entry->stages[other_stage].sha);
+			src_other.mode = ren1->src_entry->stages[other_stage].mode;
+			hashcpy(dst_other.sha1, ren1->dst_entry->stages[other_stage].sha);
+			dst_other.mode = ren1->dst_entry->stages[other_stage].mode;
 			try_merge = 0;
 
 			if (sha_eq(src_other.sha1, null_sha1)) {
