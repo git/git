@@ -71,7 +71,7 @@ test_expect_success 'setup modify/delete + directory/file conflict' '
 	git commit -m deleted
 '
 
-test_expect_failure 'modify/delete + directory/file conflict' '
+test_expect_success 'modify/delete + directory/file conflict' '
 	git checkout delete^0 &&
 	test_must_fail git merge modify &&
 

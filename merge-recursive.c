@@ -1164,24 +1164,28 @@ error_return:
 
 static void handle_delete_modify(struct merge_options *o,
 				 const char *path,
+				 const char *new_path,
 				 unsigned char *a_sha, int a_mode,
 				 unsigned char *b_sha, int b_mode)
 {
 	if (!a_sha) {
 		output(o, 1, "CONFLICT (delete/modify): %s deleted in %s "
-		       "and modified in %s. Version %s of %s left in tree.",
+		       "and modified in %s. Version %s of %s left in tree%s%s.",
 		       path, o->branch1,
-		       o->branch2, o->branch2, path);
-		update_file(o, 0, b_sha, b_mode, path);
+		       o->branch2, o->branch2, path,
+		       path == new_path ? "" : " at ",
+		       path == new_path ? "" : new_path);
+		update_file(o, 0, b_sha, b_mode, new_path);
 	} else {
 		output(o, 1, "CONFLICT (delete/modify): %s deleted in %s "
-		       "and modified in %s. Version %s of %s left in tree.",
+		       "and modified in %s. Version %s of %s left in tree%s%s.",
 		       path, o->branch2,
-		       o->branch1, o->branch1, path);
-		update_file(o, 0, a_sha, a_mode, path);
+		       o->branch1, o->branch1, path,
+		       path == new_path ? "" : " at ",
+		       path == new_path ? "" : new_path);
+		update_file(o, 0, a_sha, a_mode, new_path);
 	}
 }
-
 
 static int merge_content(struct merge_options *o,
 			 const char *path,
@@ -1281,7 +1285,7 @@ static int process_entry(struct merge_options *o,
 		} else {
 			/* Deleted in one and changed in the other */
 			clean_merge = 0;
-			handle_delete_modify(o, path,
+			handle_delete_modify(o, path, path,
 					     a_sha, a_mode, b_sha, b_mode);
 		}
 
@@ -1398,8 +1402,11 @@ static int process_df_entry(struct merge_options *o,
 		}
 	} else if (o_sha && (!a_sha || !b_sha)) {
 		/* Modify/delete; deleted side may have put a directory in the way */
+		const char *new_path = path;
+		if (lstat(path, &st) == 0 && S_ISDIR(st.st_mode))
+			new_path = unique_path(o, path, a_sha ? o->branch1 : o->branch2);
 		clean_merge = 0;
-		handle_delete_modify(o, path,
+		handle_delete_modify(o, path, new_path,
 				     a_sha, a_mode, b_sha, b_mode);
 	} else if (!o_sha && !!a_sha != !!b_sha) {
 		/* directory -> (directory, file) */
