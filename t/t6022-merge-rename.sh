@@ -415,6 +415,28 @@ test_expect_failure 'Rename+D/F conflict; renamed file merges but dir in way' '
 	test_cmp expected dir~HEAD
 '
 
+test_expect_failure 'Same as previous, but merged other way' '
+	git reset --hard &&
+	rm -rf dir~* &&
+	git checkout -q dir-in-way^0 &&
+	test_must_fail git merge --strategy=recursive renamed-file-has-no-conflicts >output 2>errors &&
+
+	! grep "error: refusing to lose untracked file at" errors &&
+	grep "CONFLICT (delete/modify): dir/file-in-the-way" output &&
+	grep "Auto-merging dir" output &&
+	grep "Adding as dir~renamed-file-has-no-conflicts instead" output &&
+
+	test 2 = "$(git ls-files -u | wc -l)" &&
+	test 2 = "$(git ls-files -u dir/file-in-the-way | wc -l)" &&
+
+	test_must_fail git diff --quiet &&
+	test_must_fail git diff --cached --quiet &&
+
+	test -f dir/file-in-the-way &&
+	test -f dir~renamed-file-has-no-conflicts &&
+	test_cmp expected dir~renamed-file-has-no-conflicts
+'
+
 cat >expected <<\EOF &&
 1
 2
@@ -467,6 +489,42 @@ test_expect_failure 'Rename+D/F conflict; renamed file cannot merge and dir in t
 	test -f dir/file-in-the-way &&
 	test -f dir~HEAD &&
 	test_cmp expected dir~HEAD
+'
+
+cat >expected <<\EOF &&
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+<<<<<<< HEAD
+11
+=======
+12
+>>>>>>> renamed-file-has-conflicts
+EOF
+
+test_expect_failure 'Same as previous, but merged other way' '
+	git reset --hard &&
+	rm -rf dir~* &&
+	git checkout -q dir-in-way^0 &&
+	test_must_fail git merge --strategy=recursive renamed-file-has-conflicts &&
+
+	test 5 = "$(git ls-files -u | wc -l)" &&
+	test 3 = "$(git ls-files -u dir | grep -v file-in-the-way | wc -l)" &&
+	test 2 = "$(git ls-files -u dir/file-in-the-way | wc -l)" &&
+
+	test_must_fail git diff --quiet &&
+	test_must_fail git diff --cached --quiet &&
+
+	test -f dir/file-in-the-way &&
+	test -f dir~renamed-file-has-conflicts &&
+	test_cmp expected dir~renamed-file-has-conflicts
 '
 
 test_done
