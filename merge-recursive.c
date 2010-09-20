@@ -841,17 +841,16 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 	const char *ren2_dst = pair2->two->path;
 	const char *dst_name1 = ren1_dst;
 	const char *dst_name2 = ren2_dst;
-	if (string_list_has_string(&o->current_directory_set, ren1_dst)) {
+	struct stat st;
+	if (lstat(ren1_dst, &st) == 0 && S_ISDIR(st.st_mode)) {
 		dst_name1 = del[delp++] = unique_path(o, ren1_dst, branch1);
 		output(o, 1, "%s is a directory in %s adding as %s instead",
 		       ren1_dst, branch2, dst_name1);
-		remove_file(o, 0, ren1_dst, 0);
 	}
-	if (string_list_has_string(&o->current_directory_set, ren2_dst)) {
+	if (lstat(ren2_dst, &st) == 0 && S_ISDIR(st.st_mode)) {
 		dst_name2 = del[delp++] = unique_path(o, ren2_dst, branch2);
 		output(o, 1, "%s is a directory in %s adding as %s instead",
 		       ren2_dst, branch1, dst_name2);
-		remove_file(o, 0, ren2_dst, 0);
 	}
 	if (o->call_depth) {
 		remove_file_from_cache(dst_name1);

@@ -692,7 +692,7 @@ test_expect_success 'setup rename one file to two; directories moving out of the
 	git commit -m "Rename to two"
 '
 
-test_expect_failure 'check handling of differently renamed file with D/F conflicts' '
+test_expect_success 'check handling of differently renamed file with D/F conflicts' '
 	git checkout -q first-rename-redo^0 &&
 	test_must_fail git merge --strategy=recursive second-rename-redo &&
 
