@@ -1004,8 +1004,20 @@ static int process_renames(struct merge_options *o,
 			try_merge = 0;
 
 			if (sha_eq(src_other.sha1, null_sha1)) {
-				clean_merge = 0;
-				conflict_rename_delete(o, ren1->pair, branch1, branch2);
+				if (string_list_has_string(&o->current_directory_set, ren1_dst)) {
+					ren1->dst_entry->processed = 0;
+					setup_rename_df_conflict_info(RENAME_DELETE,
+								      ren1->pair,
+								      NULL,
+								      branch1,
+								      branch2,
+								      ren1->dst_entry,
+								      NULL);
+					remove_file(o, 0, ren1_dst, 0);
+				} else {
+					clean_merge = 0;
+					conflict_rename_delete(o, ren1->pair, branch1, branch2);
+				}
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
 				   sha_eq(dst_other.sha1, ren1->pair->two->sha1)) {
 				/* Added file on the other side
@@ -1346,6 +1358,12 @@ static int process_df_entry(struct merge_options *o,
 		struct rename_df_conflict_info *conflict_info = entry->rename_df_conflict_info;
 		char *src;
 		switch (conflict_info->rename_type) {
+		case RENAME_DELETE:
+			clean_merge = 0;
+			conflict_rename_delete(o, conflict_info->pair1,
+					       conflict_info->branch1,
+					       conflict_info->branch2);
+			break;
 		case RENAME_ONE_FILE_TO_TWO:
 			src = conflict_info->pair1->one->path;
 			clean_merge = 0;
