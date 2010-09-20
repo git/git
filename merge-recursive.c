@@ -1138,6 +1138,47 @@ static void handle_delete_modify(struct merge_options *o,
 	}
 }
 
+
+static int merge_content(struct merge_options *o,
+			 const char *path,
+			 unsigned char *o_sha, int o_mode,
+			 unsigned char *a_sha, int a_mode,
+			 unsigned char *b_sha, int b_mode)
+{
+	const char *reason = "content";
+	struct merge_file_info mfi;
+	struct diff_filespec one, a, b;
+
+	if (!o_sha) {
+		reason = "add/add";
+		o_sha = (unsigned char *)null_sha1;
+	}
+	one.path = a.path = b.path = (char *)path;
+	hashcpy(one.sha1, o_sha);
+	one.mode = o_mode;
+	hashcpy(a.sha1, a_sha);
+	a.mode = a_mode;
+	hashcpy(b.sha1, b_sha);
+	b.mode = b_mode;
+
+	mfi = merge_file(o, &one, &a, &b, o->branch1, o->branch2);
+	if (mfi.clean && sha_eq(mfi.sha, a_sha) && mfi.mode == a.mode)
+		output(o, 3, "Skipped %s (merged same as existing)", path);
+	else
+		output(o, 2, "Auto-merging %s", path);
+
+	if (!mfi.clean) {
+		if (S_ISGITLINK(mfi.mode))
+			reason = "submodule";
+		output(o, 1, "CONFLICT (%s): Merge conflict in %s",
+				reason, path);
+	}
+
+	update_file(o, mfi.clean, mfi.sha, mfi.mode, path);
+	return mfi.clean;
+
+}
+
 /* Per entry merge function */
 static int process_entry(struct merge_options *o,
 			 const char *path, struct stage_data *entry)
@@ -1206,34 +1247,8 @@ static int process_entry(struct merge_options *o,
 	} else if (a_sha && b_sha) {
 		/* Case C: Added in both (check for same permissions) and */
 		/* case D: Modified in both, but differently. */
-		const char *reason = "content";
-		struct merge_file_info mfi;
-		struct diff_filespec one, a, b;
-
-		if (!o_sha) {
-			reason = "add/add";
-			o_sha = (unsigned char *)null_sha1;
-		}
-		output(o, 2, "Auto-merging %s", path);
-		one.path = a.path = b.path = (char *)path;
-		hashcpy(one.sha1, o_sha);
-		one.mode = o_mode;
-		hashcpy(a.sha1, a_sha);
-		a.mode = a_mode;
-		hashcpy(b.sha1, b_sha);
-		b.mode = b_mode;
-
-		mfi = merge_file(o, &one, &a, &b,
-				 o->branch1, o->branch2);
-
-		clean_merge = mfi.clean;
-		if (!mfi.clean) {
-			if (S_ISGITLINK(mfi.mode))
-				reason = "submodule";
-			output(o, 1, "CONFLICT (%s): Merge conflict in %s",
-					reason, path);
-		}
-		update_file(o, mfi.clean, mfi.sha, mfi.mode, path);
+		clean_merge = merge_content(o, path,
+					    o_sha, o_mode, a_sha, a_mode, b_sha, b_mode);
 	} else if (!o_sha && !a_sha && !b_sha) {
 		/*
 		 * this entry was deleted altogether. a_mode == 0 means
