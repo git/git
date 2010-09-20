@@ -527,4 +527,42 @@ test_expect_failure 'Same as previous, but merged other way' '
 	test_cmp expected dir~renamed-file-has-conflicts
 '
 
+test_expect_success 'setup both rename source and destination involved in D/F conflict' '
+	git reset --hard &&
+	git checkout --orphan rename-dest &&
+	git rm -rf . &&
+	git clean -fdqx &&
+
+	mkdir one &&
+	echo stuff >one/file &&
+	git add -A &&
+	git commit -m "Common commmit" &&
+
+	git mv one/file destdir &&
+	git commit -m "Renamed to destdir" &&
+
+	git checkout -b source-conflict HEAD~1 &&
+	git rm -rf one &&
+	mkdir destdir &&
+	touch one destdir/foo &&
+	git add -A &&
+	git commit -m "Conflicts in the way"
+'
+
+test_expect_failure 'both rename source and destination involved in D/F conflict' '
+	git reset --hard &&
+	rm -rf dir~* &&
+	git checkout -q rename-dest^0 &&
+	test_must_fail git merge --strategy=recursive source-conflict &&
+
+	test 1 = "$(git ls-files -u | wc -l)" &&
+
+	test_must_fail git diff --quiet &&
+
+	test -f destdir/foo &&
+	test -f one &&
+	test -f destdir~HEAD &&
+	test "stuff" = "$(cat destdir~HEAD)"
+'
+
 test_done
