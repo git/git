@@ -14,7 +14,7 @@ test_description='recursive merge corner cases'
 #  R1  R2
 #
 
-test_expect_success setup '
+test_expect_success 'setup basic criss-cross + rename with no modifications' '
 	ten="0 1 2 3 4 5 6 7 8 9"
 	for i in $ten
 	do
@@ -45,11 +45,29 @@ test_expect_success setup '
 	git tag R2
 '
 
-test_expect_success merge '
+test_expect_success 'merge simple rename+criss-cross with no modifications' '
 	git reset --hard &&
 	git checkout L2^0 &&
 
-	test_must_fail git merge -s recursive R2^0
+	test_must_fail git merge -s recursive R2^0 &&
+
+	test 5 = $(git ls-files -s | wc -l) &&
+	test 3 = $(git ls-files -u | wc -l) &&
+	test 0 = $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse :0:one) = $(git rev-parse L2:one) &&
+	test $(git rev-parse :0:two) = $(git rev-parse R2:two) &&
+	test $(git rev-parse :2:three) = $(git rev-parse L2:three) &&
+	test $(git rev-parse :3:three) = $(git rev-parse R2:three) &&
+
+	cp two merged &&
+	>empty &&
+	test_must_fail git merge-file \
+		-L "Temporary merge branch 2" \
+		-L "" \
+		-L "Temporary merge branch 1" \
+		merged empty one &&
+	test $(git rev-parse :1:three) = $(git hash-object merged)
 '
 
 test_done
