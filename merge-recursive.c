@@ -772,17 +772,6 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		free(del[delp]);
 }
 
-static void conflict_rename_dir(struct merge_options *o,
-				struct rename *ren1,
-				const char *branch1)
-{
-	char *new_path = unique_path(o, ren1->pair->two->path, branch1);
-	output(o, 1, "Renaming %s to %s instead", ren1->pair->one->path, new_path);
-	remove_file(o, 0, ren1->pair->two->path, 0);
-	update_file(o, 0, ren1->pair->two->sha1, ren1->pair->two->mode, new_path);
-	free(new_path);
-}
-
 static void conflict_rename_rename_2to1(struct merge_options *o,
 					struct rename *ren1,
 					const char *branch1,
@@ -1043,13 +1032,6 @@ static int process_renames(struct merge_options *o,
 					if (!ren1->dst_entry->stages[2].mode !=
 					    !ren1->dst_entry->stages[3].mode)
 						ren1->dst_entry->processed = 0;
-				} else if (string_list_has_string(&o->current_directory_set, ren1_dst)) {
-					clean_merge = 0;
-					output(o, 1, "CONFLICT (rename/directory): Rename %s->%s in %s "
-					       " directory %s added in %s",
-					       ren1_src, ren1_dst, branch1,
-					       ren1_dst, branch2);
-					conflict_rename_dir(o, ren1, branch1);
 				} else {
 					if (mfi.merge || !mfi.clean)
 						output(o, 1, "Renaming %s => %s", ren1_src, ren1_dst);
