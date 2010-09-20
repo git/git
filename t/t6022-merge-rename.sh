@@ -628,4 +628,83 @@ test_expect_success 'pair rename to parent of other (D/F conflicts) w/ clean sta
 	test "stuff" = $(cat two)
 '
 
+test_expect_success 'setup rename of one file to two, with directories in the way' '
+	git reset --hard &&
+	git checkout --orphan first-rename &&
+	git rm -rf . &&
+	git clean -fdqx &&
+
+	echo stuff >original &&
+	git add -A &&
+	git commit -m "Common commmit" &&
+
+	mkdir two &&
+	>two/file &&
+	git add two/file &&
+	git mv original one &&
+	git commit -m "Put two/file in the way, rename to one" &&
+
+	git checkout -b second-rename HEAD~1 &&
+	mkdir one &&
+	>one/file &&
+	git add one/file &&
+	git mv original two &&
+	git commit -m "Put one/file in the way, rename to two"
+'
+
+test_expect_failure 'check handling of differently renamed file with D/F conflicts' '
+	git checkout -q first-rename^0 &&
+	test_must_fail git merge --strategy=recursive second-rename &&
+
+	test 5 = "$(git ls-files -s | wc -l)" &&
+	test 3 = "$(git ls-files -u | wc -l)" &&
+	test 1 = "$(git ls-files -u one | wc -l)" &&
+	test 1 = "$(git ls-files -u two | wc -l)" &&
+	test 1 = "$(git ls-files -u original | wc -l)" &&
+	test 2 = "$(git ls-files -o | wc -l)" &&
+
+	test -f one/file &&
+	test -f two/file &&
+	test -f one~HEAD &&
+	test -f two~second-rename &&
+	! test -f original
+'
+
+test_expect_success 'setup rename one file to two; directories moving out of the way' '
+	git reset --hard &&
+	git checkout --orphan first-rename-redo &&
+	git rm -rf . &&
+	git clean -fdqx &&
+
+	echo stuff >original &&
+	mkdir one two &&
+	touch one/file two/file &&
+	git add -A &&
+	git commit -m "Common commmit" &&
+
+	git rm -rf one &&
+	git mv original one &&
+	git commit -m "Rename to one" &&
+
+	git checkout -b second-rename-redo HEAD~1 &&
+	git rm -rf two &&
+	git mv original two &&
+	git commit -m "Rename to two"
+'
+
+test_expect_failure 'check handling of differently renamed file with D/F conflicts' '
+	git checkout -q first-rename-redo^0 &&
+	test_must_fail git merge --strategy=recursive second-rename-redo &&
+
+	test 3 = "$(git ls-files -u | wc -l)" &&
+	test 1 = "$(git ls-files -u one | wc -l)" &&
+	test 1 = "$(git ls-files -u two | wc -l)" &&
+	test 1 = "$(git ls-files -u original | wc -l)" &&
+	test 0 = "$(git ls-files -o | wc -l)" &&
+
+	test -f one &&
+	test -f two &&
+	! test -f original
+'
+
 test_done
