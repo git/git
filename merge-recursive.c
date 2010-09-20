@@ -346,6 +346,63 @@ static struct string_list *get_unmerged(void)
 	return unmerged;
 }
 
+static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
+						      struct string_list *entries)
+{
+	/* If there are D/F conflicts, and the paths currently exist
+	 * in the working copy as a file, we want to remove them to
+	 * make room for the corresponding directory.  Such paths will
+	 * later be processed in process_df_entry() at the end.  If
+	 * the corresponding directory ends up being removed by the
+	 * merge, then the file will be reinstated at that time;
+	 * otherwise, if the file is not supposed to be removed by the
+	 * merge, the contents of the file will be placed in another
+	 * unique filename.
+	 *
+	 * NOTE: This function relies on the fact that entries for a
+	 * D/F conflict will appear adjacent in the index, with the
+	 * entries for the file appearing before entries for paths
+	 * below the corresponding directory.
+	 */
+	const char *last_file = NULL;
+	int last_len;
+	struct stage_data *last_e;
+	int i;
+
+	for (i = 0; i < entries->nr; i++) {
+		const char *path = entries->items[i].string;
+		int len = strlen(path);
+		struct stage_data *e = entries->items[i].util;
+
+		/*
+		 * Check if last_file & path correspond to a D/F conflict;
+		 * i.e. whether path is last_file+'/'+<something>.
+		 * If so, remove last_file to make room for path and friends.
+		 */
+		if (last_file &&
+		    len > last_len &&
+		    memcmp(path, last_file, last_len) == 0 &&
+		    path[last_len] == '/') {
+			output(o, 3, "Removing %s to make room for subdirectory; may re-add later.", last_file);
+			unlink(last_file);
+		}
+
+		/*
+		 * Determine whether path could exist as a file in the
+		 * working directory as a possible D/F conflict.  This
+		 * will only occur when it exists in stage 2 as a
+		 * file.
+		 */
+		if (S_ISREG(e->stages[2].mode) || S_ISLNK(e->stages[2].mode)) {
+			last_file = path;
+			last_len = len;
+			last_e = e;
+		} else {
+			last_file = NULL;
+		}
+	}
+}
+
 struct rename
 {
 	struct diff_filepair *pair;
@@ -1488,6 +1545,7 @@ int merge_trees(struct merge_options *o,
 		get_files_dirs(o, merge);
 
 		entries = get_unmerged();
+		make_room_for_directories_of_df_conflicts(o, entries);
 		re_head  = get_renames(o, head, common, head, merge, entries);
 		re_merge = get_renames(o, merge, common, head, merge, entries);
 		clean = process_renames(o, re_head, re_merge);

@@ -83,7 +83,7 @@ test_expect_success 'modify/delete + directory/file conflict' '
 	test -f letters~modify
 '
 
-test_expect_failure 'modify/delete + directory/file conflict; other way' '
+test_expect_success 'modify/delete + directory/file conflict; other way' '
 	git reset --hard &&
 	git clean -f &&
 	git checkout modify^0 &&
