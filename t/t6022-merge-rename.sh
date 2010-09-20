@@ -455,7 +455,7 @@ cat >expected <<\EOF &&
 >>>>>>> dir-not-in-way
 EOF
 
-test_expect_failure 'Rename+D/F conflict; renamed file cannot merge, dir not in way' '
+test_expect_success 'Rename+D/F conflict; renamed file cannot merge, dir not in way' '
 	git reset --hard &&
 	rm -rf dir~* &&
 	git checkout -q renamed-file-has-conflicts^0 &&

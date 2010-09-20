@@ -1073,7 +1073,6 @@ static int process_renames(struct merge_options *o,
 
 			if (try_merge) {
 				struct diff_filespec *one, *a, *b;
-				struct merge_file_info mfi;
 				src_other.path = (char *)ren1_src;
 
 				one = ren1->pair->one;
@@ -1084,41 +1083,16 @@ static int process_renames(struct merge_options *o,
 					b = ren1->pair->two;
 					a = &src_other;
 				}
-				mfi = merge_file(o, one, a, b,
-						o->branch1, o->branch2);
-
-				if (mfi.clean &&
-				    sha_eq(mfi.sha, ren1->pair->two->sha1) &&
-				    mfi.mode == ren1->pair->two->mode) {
-					/*
-					 * This message is part of
-					 * t6022 test. If you change
-					 * it update the test too.
-					 */
-					output(o, 3, "Skipped %s (merged same as existing)", ren1_dst);
-
-					/* There may be higher stage entries left
-					 * in the index (e.g. due to a D/F
-					 * conflict) that need to be resolved.
-					 */
-					if (!ren1->dst_entry->stages[2].mode !=
-					    !ren1->dst_entry->stages[3].mode)
-						ren1->dst_entry->processed = 0;
-				} else {
-					if (mfi.merge || !mfi.clean)
-						output(o, 1, "Renaming %s => %s", ren1_src, ren1_dst);
-					if (mfi.merge)
-						output(o, 2, "Auto-merging %s", ren1_dst);
-					if (!mfi.clean) {
-						output(o, 1, "CONFLICT (rename/modify): Merge conflict in %s",
-						       ren1_dst);
-						clean_merge = 0;
-
-						if (!o->call_depth)
-							update_stages(ren1_dst,
-								      one, a, b, 1);
-					}
-					update_file(o, mfi.clean, mfi.sha, mfi.mode, ren1_dst);
+				update_stages_and_entry(ren1_dst, ren1->dst_entry, one, a, b, 1);
+				if (string_list_has_string(&o->current_directory_set, ren1_dst)) {
+					setup_rename_df_conflict_info(RENAME_NORMAL,
+								      ren1->pair,
+								      NULL,
+								      branch1,
+								      NULL,
+								      ren1->dst_entry,
+								      NULL);
+					remove_file(o, 0, ren1_dst, 0);
 				}
 			}
 		}
@@ -1358,6 +1332,11 @@ static int process_df_entry(struct merge_options *o,
 		struct rename_df_conflict_info *conflict_info = entry->rename_df_conflict_info;
 		char *src;
 		switch (conflict_info->rename_type) {
+		case RENAME_NORMAL:
+			clean_merge = merge_content(o, path,
+						    o_sha, o_mode, a_sha, a_mode, b_sha, b_mode,
+						    conflict_info->branch1);
+			break;
 		case RENAME_DELETE:
 			clean_merge = 0;
 			conflict_rename_delete(o, conflict_info->pair1,
