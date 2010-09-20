@@ -394,7 +394,7 @@ test_expect_success 'Rename+D/F conflict; renamed file merges + dir not in way' 
 	test_cmp expected dir
 '
 
-test_expect_failure 'Rename+D/F conflict; renamed file merges but dir in way' '
+test_expect_success 'Rename+D/F conflict; renamed file merges but dir in way' '
 	git reset --hard &&
 	rm -rf dir~* &&
 	git checkout -q renamed-file-has-no-conflicts^0 &&
@@ -415,7 +415,7 @@ test_expect_failure 'Rename+D/F conflict; renamed file merges but dir in way' '
 	test_cmp expected dir~HEAD
 '
 
-test_expect_failure 'Same as previous, but merged other way' '
+test_expect_success 'Same as previous, but merged other way' '
 	git reset --hard &&
 	rm -rf dir~* &&
 	git checkout -q dir-in-way^0 &&
@@ -471,7 +471,7 @@ test_expect_success 'Rename+D/F conflict; renamed file cannot merge, dir not in 
 	test_cmp expected dir
 '
 
-test_expect_failure 'Rename+D/F conflict; renamed file cannot merge and dir in the way' '
+test_expect_success 'Rename+D/F conflict; renamed file cannot merge and dir in the way' '
 	modify s/dir-not-in-way/dir-in-way/ expected &&
 
 	git reset --hard &&
@@ -509,7 +509,7 @@ cat >expected <<\EOF &&
 >>>>>>> renamed-file-has-conflicts
 EOF
 
-test_expect_failure 'Same as previous, but merged other way' '
+test_expect_success 'Same as previous, but merged other way' '
 	git reset --hard &&
 	rm -rf dir~* &&
 	git checkout -q dir-in-way^0 &&

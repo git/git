@@ -1193,6 +1193,8 @@ static int merge_content(struct merge_options *o,
 	const char *reason = "content";
 	struct merge_file_info mfi;
 	struct diff_filespec one, a, b;
+	struct stat st;
+	unsigned df_conflict_remains = 0;
 
 	if (!o_sha) {
 		reason = "add/add";
@@ -1207,7 +1209,13 @@ static int merge_content(struct merge_options *o,
 	b.mode = b_mode;
 
 	mfi = merge_file(o, &one, &a, &b, o->branch1, o->branch2);
-	if (mfi.clean && sha_eq(mfi.sha, a_sha) && mfi.mode == a.mode)
+	if (df_rename_conflict_branch &&
+	    lstat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+		df_conflict_remains = 1;
+	}
+
+	if (mfi.clean && !df_conflict_remains &&
+	    sha_eq(mfi.sha, a_sha) && mfi.mode == a.mode)
 		output(o, 3, "Skipped %s (merged same as existing)", path);
 	else
 		output(o, 2, "Auto-merging %s", path);
@@ -1219,7 +1227,17 @@ static int merge_content(struct merge_options *o,
 				reason, path);
 	}
 
-	update_file(o, mfi.clean, mfi.sha, mfi.mode, path);
+	if (df_conflict_remains) {
+		const char *new_path;
+		update_file_flags(o, mfi.sha, mfi.mode, path,
+				  o->call_depth || mfi.clean, 0);
+		new_path = unique_path(o, path, df_rename_conflict_branch);
+		mfi.clean = 0;
+		output(o, 1, "Adding as %s instead", new_path);
+		update_file_flags(o, mfi.sha, mfi.mode, new_path, 0, 1);
+	} else {
+		update_file(o, mfi.clean, mfi.sha, mfi.mode, path);
+	}
 	return mfi.clean;
 
 }
