@@ -417,11 +417,10 @@ static struct string_list *get_renames(struct merge_options *o,
 	return renames;
 }
 
-static int update_stages(const char *path, struct diff_filespec *o,
+static int update_stages_options(const char *path, struct diff_filespec *o,
 			 struct diff_filespec *a, struct diff_filespec *b,
-			 int clear)
+			 int clear, int options)
 {
-	int options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE;
 	if (clear)
 		if (remove_file_from_cache(path))
 			return -1;
@@ -435,6 +434,34 @@ static int update_stages(const char *path, struct diff_filespec *o,
 		if (add_cacheinfo(b->mode, b->sha1, path, 3, 0, options))
 			return -1;
 	return 0;
+}
+
+static int update_stages(const char *path, struct diff_filespec *o,
+			 struct diff_filespec *a, struct diff_filespec *b,
+			 int clear)
+{
+	int options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE;
+	return update_stages_options(path, o, a, b, clear, options);
+}
+
+static int update_stages_and_entry(const char *path,
+				   struct stage_data *entry,
+				   struct diff_filespec *o,
+				   struct diff_filespec *a,
+				   struct diff_filespec *b,
+				   int clear)
+{
+	int options;
+
+	entry->processed = 0;
+	entry->stages[1].mode = o->mode;
+	entry->stages[2].mode = a->mode;
+	entry->stages[3].mode = b->mode;
+	hashcpy(entry->stages[1].sha, o->sha1);
+	hashcpy(entry->stages[2].sha, a->sha1);
+	hashcpy(entry->stages[3].sha, b->sha1);
+	options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_SKIP_DFCHECK;
+	return update_stages_options(path, o, a, b, clear, options);
 }
 
 static int remove_file(struct merge_options *o, int clean,
