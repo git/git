@@ -43,6 +43,10 @@ For shell scripts specifically (not exhaustive):
 
  - We use Arithmetic Expansion $(( ... )).
 
+ - Inside Arithmetic Expansion, spell shell variables with $ in front
+   of them, as some shells do not grok $((x)) while accepting $(($x))
+   just fine (e.g. dash older than 0.5.4).
+
  - No "Substring Expansion" ${parameter:offset:length}.
 
  - No shell arrays.
