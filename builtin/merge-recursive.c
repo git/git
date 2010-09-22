@@ -2,6 +2,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "merge-recursive.h"
+#include "xdiff-interface.h"
 
 static const char builtin_merge_recursive_usage[] =
 	"git %s <base>... -- <head> <remote> ...";
@@ -40,19 +41,7 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 		if (!prefixcmp(arg, "--")) {
 			if (!arg[2])
 				break;
-			if (!strcmp(arg+2, "ours"))
-				o.recursive_variant = MERGE_RECURSIVE_OURS;
-			else if (!strcmp(arg+2, "theirs"))
-				o.recursive_variant = MERGE_RECURSIVE_THEIRS;
-			else if (!strcmp(arg+2, "subtree"))
-				o.subtree_shift = "";
-			else if (!prefixcmp(arg+2, "subtree="))
-				o.subtree_shift = arg + 10;
-			else if (!strcmp(arg+2, "renormalize"))
-				o.renormalize = 1;
-			else if (!strcmp(arg+2, "no-renormalize"))
-				o.renormalize = 0;
-			else
+			if (parse_merge_opt(&o, arg + 2))
 				die("Unknown option %s", arg);
 			continue;
 		}
