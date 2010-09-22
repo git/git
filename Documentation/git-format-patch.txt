@@ -74,7 +74,7 @@ OPTIONS
 include::diff-options.txt[]
 
 -<n>::
-	Limits the number of patches to prepare.
+	Prepare patches from the topmost <n> commits.
 
 -o <dir>::
 --output-directory <dir>::
