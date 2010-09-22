@@ -169,25 +169,19 @@ run_merge_tool () {
 			"$merge_tool_path" "$LOCAL" "$REMOTE" | cat
 		fi
 		;;
-	vimdiff)
+	vimdiff|gvimdiff)
 		if merge_mode; then
 			touch "$BACKUP"
-			"$merge_tool_path" -d -c "wincmd l" \
-				"$LOCAL" "$MERGED" "$REMOTE"
+			if $base_present; then
+				"$merge_tool_path" -f -d -c "wincmd J" \
+					"$MERGED" "$LOCAL" "$BASE" "$REMOTE"
+			else
+				"$merge_tool_path" -f -d -c "wincmd l" \
+					"$LOCAL" "$MERGED" "$REMOTE"
+			fi
 			check_unchanged
 		else
-			"$merge_tool_path" -d -c "wincmd l" \
-				"$LOCAL" "$REMOTE"
-		fi
-		;;
-	gvimdiff)
-		if merge_mode; then
-			touch "$BACKUP"
-			"$merge_tool_path" -d -c "wincmd l" -f \
-				"$LOCAL" "$MERGED" "$REMOTE"
-			check_unchanged
-		else
-			"$merge_tool_path" -d -c "wincmd l" -f \
+			"$merge_tool_path" -f -d -c "wincmd l" \
 				"$LOCAL" "$REMOTE"
 		fi
 		;;
