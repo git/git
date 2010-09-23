@@ -127,7 +127,7 @@ int mingw_open (const char *filename, int oflags, ...)
 	mode = va_arg(args, int);
 	va_end(args);
 
-	if (!strcmp(filename, "/dev/null"))
+	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
 
 	fd = open(filename, oflags, mode);
@@ -160,7 +160,7 @@ ssize_t mingw_write(int fd, const void *buf, size_t count)
 #undef fopen
 FILE *mingw_fopen (const char *filename, const char *otype)
 {
-	if (!strcmp(filename, "/dev/null"))
+	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
 	return fopen(filename, otype);
 }
