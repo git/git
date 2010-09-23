@@ -297,7 +297,7 @@ int mingw_open (const char *filename, int oflags, ...)
 	mode = va_arg(args, int);
 	va_end(args);
 
-	if (!strcmp(filename, "/dev/null"))
+	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
 
 	fd = open(filename, oflags, mode);
