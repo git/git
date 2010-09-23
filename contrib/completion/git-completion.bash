@@ -1125,7 +1125,7 @@ _git_diff ()
 	case "$cur" in
 	--*)
 		__gitcomp "--cached --staged --pickaxe-all --pickaxe-regex
-			--base --ours --theirs
+			--base --ours --theirs --no-index
 			$__git_diff_common_options
 			"
 		return
