@@ -171,7 +171,7 @@ static void free_ref_list(struct ref_list *list)
 	}
 }
 
-static void invalidate_cached_refs(void)
+void invalidate_cached_refs(void)
 {
 	struct cached_refs *ca = &cached_refs;
 
