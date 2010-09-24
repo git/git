@@ -1062,6 +1062,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 	/* sha1:path --> object name of path in ent sha1
 	 * :path -> object name of path in index
 	 * :[0-3]:path -> object name of path in index at stage
+	 * :/foo -> recent commit matching foo
 	 */
 	if (name[0] == ':') {
 		int stage = 0;
