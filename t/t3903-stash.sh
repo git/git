@@ -406,7 +406,7 @@ test_expect_success 'stash branch - stashes on stack, stash-like argument' '
 	test $(git ls-files --modified | wc -l) -eq 1
 '
 
-test_expect_failure 'stash show - stashes on stack, stash-like argument' '
+test_expect_success 'stash show - stashes on stack, stash-like argument' '
 	git stash clear &&
 	test_when_finished "git reset --hard HEAD" &&
 	git reset --hard &&
@@ -424,7 +424,7 @@ test_expect_failure 'stash show - stashes on stack, stash-like argument' '
 	test_cmp expected actual
 '
 
-test_expect_failure 'stash show -p - stashes on stack, stash-like argument' '
+test_expect_success 'stash show -p - stashes on stack, stash-like argument' '
 	git stash clear &&
 	test_when_finished "git reset --hard HEAD" &&
 	git reset --hard &&
@@ -447,7 +447,7 @@ test_expect_failure 'stash show -p - stashes on stack, stash-like argument' '
 	test_cmp expected actual
 '
 
-test_expect_failure 'stash show - no stashes on stack, stash-like argument' '
+test_expect_success 'stash show - no stashes on stack, stash-like argument' '
 	git stash clear &&
 	test_when_finished "git reset --hard HEAD" &&
 	git reset --hard &&
@@ -462,7 +462,7 @@ test_expect_failure 'stash show - no stashes on stack, stash-like argument' '
 	test_cmp expected actual
 '
 
-test_expect_failure 'stash show -p - no stashes on stack, stash-like argument' '
+test_expect_success 'stash show -p - no stashes on stack, stash-like argument' '
 	git stash clear &&
 	test_when_finished "git reset --hard HEAD" &&
 	git reset --hard &&
