@@ -67,10 +67,10 @@ Issues of note:
 	- A POSIX-compliant shell is required to run many scripts needed
 	  for everyday use (e.g. "bisect", "pull").
 
-	- "Perl" is needed to use some of the features (e.g. preparing a
-	  partial commit using "git add -i/-p", interacting with svn
-	  repositories with "git svn").  If you can live without these, use
-	  NO_PERL.
+	- "Perl" version 5.8 or later is needed to use some of the
+	  features (e.g. preparing a partial commit using "git add -i/-p",
+	  interacting with svn repositories with "git svn").  If you can
+	  live without these, use NO_PERL.
 
 	- "openssl" library is used by git-imap-send to use IMAP over SSL.
 	  If you don't need it, use NO_OPENSSL.

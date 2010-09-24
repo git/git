@@ -16,6 +16,7 @@
 #    and second line is the subject of the message.
 #
 
+use 5.008;
 use strict;
 use warnings;
 use Term::ReadLine;

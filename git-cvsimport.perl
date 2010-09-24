@@ -13,6 +13,7 @@
 # The head revision is on branch "origin" by default.
 # You can change that with the '-o' option.
 
+use 5.008;
 use strict;
 use warnings;
 use Getopt::Long;

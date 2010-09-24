@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 
+use 5.008;
 use strict;
 use Getopt::Std;
 use File::Temp qw(tempdir);
