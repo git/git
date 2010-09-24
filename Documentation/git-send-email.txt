@@ -97,7 +97,7 @@ See the CONFIGURATION section for 'sendemail.multiedit'.
 	Specify the primary recipient of the emails generated. Generally, this
 	will be the upstream maintainer of the project involved. Default is the
 	value of the 'sendemail.to' configuration value; if that is unspecified,
-	this will be prompted for.
+	and --to-cmd is not specified, this will be prompted for.
 +
 The --to option must be repeated for each user you want on the to list.
 
@@ -176,6 +176,12 @@ user is prompted for a password while the input is masked for privacy.
 
 Automating
 ~~~~~~~~~~
+
+--to-cmd=<command>::
+	Specify a command to execute once per patch file which
+	should generate patch file specific "To:" entries.
+	Output of this command must be single email address per line.
+	Default is the value of 'sendemail.tocmd' configuration value.
 
 --cc-cmd=<command>::
 	Specify a command to execute once per patch file which

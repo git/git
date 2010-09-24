@@ -201,6 +201,24 @@ test_expect_success $PREREQ 'Prompting works' '
 		grep "^To: to@example.com\$" msgtxt1
 '
 
+test_expect_success $PREREQ 'tocmd works' '
+	clean_fake_sendmail &&
+	cp $patches tocmd.patch &&
+	echo tocmd--tocmd@example.com >>tocmd.patch &&
+	{
+	  echo "#!$SHELL_PATH"
+	  echo sed -n -e s/^tocmd--//p \"\$1\"
+	} > tocmd-sed &&
+	chmod +x tocmd-sed &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to-cmd=./tocmd-sed \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		tocmd.patch \
+		&&
+	grep "^To: tocmd@example.com" msgtxt1
+'
+
 test_expect_success $PREREQ 'cccmd works' '
 	clean_fake_sendmail &&
 	cp $patches cccmd.patch &&
