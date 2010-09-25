@@ -84,7 +84,7 @@ my ($_stdin, $_help, $_edit,
 	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_git_format, $_commit_url, $_tag);
+	$_git_format, $_commit_url, $_tag, $_merge_info);
 $Git::SVN::_follow_parent = 1;
 $_q ||= 0;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
@@ -154,6 +154,7 @@ my %cmd = (
 			  'commit-url=s' => \$_commit_url,
 			  'revision|r=i' => \$_revision,
 			  'no-rebase' => \$_no_rebase,
+			  'mergeinfo=s' => \$_merge_info,
 			%cmt_opts, %fc_opts } ],
 	branch => [ \&cmd_branch,
 	            'Create a branch in the SVN repository',
@@ -569,6 +570,7 @@ sub cmd_dcommit {
 			                       print "Committed r$_[0]\n";
 			                       $cmt_rev = $_[0];
 			                },
+					mergeinfo => $_merge_info,
 			                svn_path => '');
 			if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
 				print "No changes\n$d~1 == $d\n";
@@ -4451,6 +4453,7 @@ sub new {
 	$self->{path_prefix} = length $self->{svn_path} ?
 	                       "$self->{svn_path}/" : '';
 	$self->{config} = $opts->{config};
+	$self->{mergeinfo} = $opts->{mergeinfo};
 	return $self;
 }
 
@@ -4760,6 +4763,11 @@ sub change_file_prop {
 	$self->SUPER::change_file_prop($fbat, $pname, $pval, $self->{pool});
 }
 
+sub change_dir_prop {
+	my ($self, $pbat, $pname, $pval) = @_;
+	$self->SUPER::change_dir_prop($pbat, $pname, $pval, $self->{pool});
+}
+
 sub _chg_file_get_blob ($$$$) {
 	my ($self, $fbat, $m, $which) = @_;
 	my $fh = $::_repository->temp_acquire("git_blob_$which");
@@ -4852,6 +4860,11 @@ sub apply_diff {
 		} else {
 			fatal("Invalid change type: $f");
 		}
+	}
+
+	if (defined($self->{mergeinfo})) {
+		$self->change_dir_prop($self->{bat}{''}, "svn:mergeinfo",
+			               $self->{mergeinfo});
 	}
 	$self->rmdirs if $_rmdir;
 	if (@$mods == 0) {
