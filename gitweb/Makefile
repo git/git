@@ -143,6 +143,15 @@ gitweb.cgi: gitweb.perl GITWEB-BUILD-OPTIONS
 	chmod +x $@+ && \
 	mv $@+ $@
 
+### Testing rules
+
+test:
+	$(MAKE) -C ../t gitweb-test
+
+test-installed:
+	GITWEB_TEST_INSTALLED='$(DESTDIR_SQ)$(gitwebdir_SQ)' \
+		$(MAKE) -C ../t gitweb-test
+
 ### Installation rules
 
 install: all
@@ -156,5 +165,5 @@ install: all
 clean:
 	$(RM) gitweb.cgi static/gitweb.min.js static/gitweb.min.css GITWEB-BUILD-OPTIONS
 
-.PHONY: all clean install .FORCE-GIT-VERSION-FILE FORCE
+.PHONY: all clean install test test-installed .FORCE-GIT-VERSION-FILE FORCE
 
