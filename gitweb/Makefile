@@ -39,6 +39,7 @@ GITWEB_SITE_FOOTER =
 # include user config
 -include ../config.mak.autogen
 -include ../config.mak
+-include config.mak
 
 # determine version
 ../GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
