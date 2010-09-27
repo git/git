@@ -339,6 +339,7 @@ static struct string_list *get_renames(struct merge_options *o,
 	opts.rename_limit = o->merge_rename_limit >= 0 ? o->merge_rename_limit :
 			    o->diff_rename_limit >= 0 ? o->diff_rename_limit :
 			    500;
+	opts.rename_score = o->rename_score;
 	opts.warn_on_too_large_rename = 1;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	if (diff_setup_done(&opts) < 0)
@@ -1525,6 +1526,11 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 		o->renormalize = 1;
 	else if (!strcmp(s, "no-renormalize"))
 		o->renormalize = 0;
+	else if (!prefixcmp(s, "rename-threshold=")) {
+		const char *score = s + strlen("rename-threshold=");
+		if ((o->rename_score = parse_rename_score(&score)) == -1 || *score != 0)
+			return -1;
+	}
 	else
 		return -1;
 	return 0;

@@ -3219,7 +3219,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	return 1;
 }
 
-static int parse_num(const char **cp_p)
+int parse_rename_score(const char **cp_p)
 {
 	unsigned long num, scale;
 	int ch, dot;
@@ -3265,7 +3265,7 @@ static int diff_scoreopt_parse(const char *opt)
 	if (cmd != 'M' && cmd != 'C' && cmd != 'B')
 		return -1; /* that is not a -M, -C nor -B option */
 
-	opt1 = parse_num(&opt);
+	opt1 = parse_rename_score(&opt);
 	if (cmd != 'B')
 		opt2 = 0;
 	else {
@@ -3275,7 +3275,7 @@ static int diff_scoreopt_parse(const char *opt)
 			return -1; /* we expect -B80/99 or -B80 */
 		else {
 			opt++;
-			opt2 = parse_num(&opt);
+			opt2 = parse_rename_score(&opt);
 		}
 	}
 	if (*opt != 0)
