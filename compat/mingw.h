@@ -256,6 +256,8 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
 		     int fhin, int fhout, int fherr);
 void mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp
+void mingw_execv(const char *cmd, char *const *argv);
+#define execv mingw_execv
 
 static inline unsigned int git_ntohl(unsigned int x)
 { return (unsigned int)ntohl(x); }
