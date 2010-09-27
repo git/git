@@ -143,7 +143,7 @@ test_expect_success "$name" '
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
-	test -L "$SVN_TREE"/exec.sh'
+	test -h "$SVN_TREE"/exec.sh'
 
 name='new symlink is added to a file that was also just made executable'
 
@@ -156,7 +156,7 @@ test_expect_success "$name" '
 		${remotes_git_svn}..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/bar/zzz &&
-	test -L "$SVN_TREE"/exec-2.sh'
+	test -h "$SVN_TREE"/exec-2.sh'
 
 name='modify a symlink to become a file'
 test_expect_success "$name" '
@@ -169,7 +169,7 @@ test_expect_success "$name" '
 		${remotes_git_svn}..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -f "$SVN_TREE"/exec-2.sh &&
-	test ! -L "$SVN_TREE"/exec-2.sh &&
+	test ! -h "$SVN_TREE"/exec-2.sh &&
 	test_cmp help "$SVN_TREE"/exec-2.sh'
 
 name="commit with UTF-8 message: locale: $GIT_SVN_LC_ALL"
