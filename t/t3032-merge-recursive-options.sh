@@ -13,9 +13,14 @@ test_description='merge-recursive options
 
 . ./test-lib.sh
 
+if test_have_prereq MINGW; then
+	export GREP_OPTIONS=-U
+	SED_OPTIONS=-b
+fi
+
 test_expect_success 'setup' '
 	conflict_hunks () {
-		sed -n -e "
+		sed $SED_OPTIONS -n -e "
 			/^<<<</ b inconflict
 			b
 			: inconflict
@@ -69,7 +74,7 @@ test_expect_success 'setup' '
 	git commit -m "Initial revision" &&
 
 	git checkout -b remote &&
-	sed -e "
+	sed $SED_OPTIONS -e "
 			s/\.  /\. /g
 			s/[?]  /? /g
 			s/    /	/g
@@ -81,7 +86,7 @@ test_expect_success 'setup' '
 	git commit -a -m "Remove cruft" &&
 
 	git checkout master &&
-	sed -e "
+	sed $SED_OPTIONS -e "
 			s/\(not in his right mind\),\(.*\)/\1;\2Q/
 			s/Quite correct\(.*\)/It is too correct\1Q/
 			s/unintentionally/un intentionally/
