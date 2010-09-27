@@ -79,6 +79,12 @@ struct itimerval {
 #define ITIMER_REAL 0
 
 /*
+ * sanitize preprocessor namespace polluted by Windows headers defining
+ * macros which collide with git local versions
+ */
+#undef HELP_COMMAND /* from winuser.h */
+
+/*
  * trivial stubs
  */
 
