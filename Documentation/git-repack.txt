@@ -8,7 +8,7 @@ git-repack - Pack unpacked objects in a repository
 
 SYNOPSIS
 --------
-'git repack' [-a] [-A] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
+'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [--window=N] [--depth=N]
 
 DESCRIPTION
 -----------
@@ -62,6 +62,10 @@ other objects in that pack they already have locally.
 	linkgit:git-pack-objects[1].
 
 -f::
+	Pass the `--no-reuse-delta` option to `git-pack-objects`, see
+	linkgit:git-pack-objects[1].
+
+-F::
 	Pass the `--no-reuse-object` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
