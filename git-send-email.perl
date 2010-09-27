@@ -895,7 +895,7 @@ sub sanitize_address {
 
 sub valid_fqdn {
 	my $domain = shift;
-	return !($^O eq 'darwin' && $domain =~ /\.local$/) && $domain =~ /\./;
+	return defined $domain && !($^O eq 'darwin' && $domain =~ /\.local$/) && $domain =~ /\./;
 }
 
 sub maildomain_net {
