@@ -442,7 +442,7 @@ static int do_pick_commit(void)
 	else
 		parent = commit->parents->item;
 
-	if (allow_ff && !hashcmp(parent->object.sha1, head))
+	if (allow_ff && parent && !hashcmp(parent->object.sha1, head))
 		return fast_forward_to(commit->object.sha1, head);
 
 	if (parent && parse_commit(parent) < 0)
