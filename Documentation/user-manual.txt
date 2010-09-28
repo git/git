@@ -2439,9 +2439,9 @@ You have performed no merges into mywork, so it is just a simple linear
 sequence of patches on top of "origin":
 
 ................................................
- o--o--o <-- origin
+ o--o--O <-- origin
         \
-         o--o--o <-- mywork
+	 a--b--c <-- mywork
 ................................................
 
 Some more interesting work has been done in the upstream project, and
