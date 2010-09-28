@@ -545,4 +545,15 @@ test_expect_success 'invalid ref of the form stash@{n}, n >= N' '
 	git stash drop
 '
 
+test_expect_failure 'stash branch should not drop the stash if the branch exists' '
+	git stash clear &&
+	echo foo >file &&
+	git add file &&
+	git commit -m initial &&
+	echo bar >file &&
+	git stash &&
+	test_must_fail git stash branch master stash@{0} &&
+	git rev-parse stash@{0} --
+'
+
 test_done
