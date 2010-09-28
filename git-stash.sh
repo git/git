@@ -446,9 +446,9 @@ apply_to_branch () {
 	assert_stash_like "$@"
 
 	git checkout -b $branch $REV^ &&
-	apply_stash "$@"
-
-	test -z "$IS_STASH_REF" || drop_stash "$@"
+	apply_stash "$@" && {
+		test -z "$IS_STASH_REF" || drop_stash "$@"
+	}
 }
 
 PARSE_CACHE='--not-parsed'
