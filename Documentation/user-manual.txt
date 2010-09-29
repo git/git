@@ -955,7 +955,7 @@ echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
 and then he just cut-and-pastes the output commands after verifying that
 they look OK.
 
-[[Finding-comments-With-given-Content]]
+[[Finding-commits-With-given-Content]]
 Finding commits referencing a file with given content
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2439,9 +2439,9 @@ You have performed no merges into mywork, so it is just a simple linear
 sequence of patches on top of "origin":
 
 ................................................
- o--o--o <-- origin
+ o--o--O <-- origin
         \
-         o--o--o <-- mywork
+	 a--b--c <-- mywork
 ................................................
 
 Some more interesting work has been done in the upstream project, and
