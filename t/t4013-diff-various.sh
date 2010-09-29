@@ -210,6 +210,9 @@ log -m -p master
 log -SF master
 log -S F master
 log -SF -p master
+log -GF master
+log -GF -p master
+log -GF -p --pickaxe-all master
 log --decorate --all
 log --decorate=full --all
 

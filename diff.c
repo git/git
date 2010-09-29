@@ -3271,12 +3271,17 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if ((argcount = short_opt('S', av, &optarg))) {
 		options->pickaxe = optarg;
+		options->pickaxe_opts |= DIFF_PICKAXE_KIND_S;
+		return argcount;
+	} else if ((argcount = short_opt('G', av, &optarg))) {
+		options->pickaxe = optarg;
+		options->pickaxe_opts |= DIFF_PICKAXE_KIND_G;
 		return argcount;
 	}
 	else if (!strcmp(arg, "--pickaxe-all"))
-		options->pickaxe_opts = DIFF_PICKAXE_ALL;
+		options->pickaxe_opts |= DIFF_PICKAXE_ALL;
 	else if (!strcmp(arg, "--pickaxe-regex"))
-		options->pickaxe_opts = DIFF_PICKAXE_REGEX;
+		options->pickaxe_opts |= DIFF_PICKAXE_REGEX;
 	else if ((argcount = short_opt('O', av, &optarg))) {
 		options->orderfile = optarg;
 		return argcount;
@@ -4176,7 +4181,7 @@ void diffcore_std(struct diff_options *options)
 			diffcore_merge_broken();
 	}
 	if (options->pickaxe)
-		diffcore_pickaxe(options->pickaxe, options->pickaxe_opts);
+		diffcore_pickaxe(options);
 	if (options->orderfile)
 		diffcore_order(options->orderfile);
 	if (!options->found_follow)
