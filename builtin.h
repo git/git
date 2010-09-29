@@ -7,14 +7,15 @@
 #include "commit.h"
 #include "notes.h"
 
+#define DEFAULT_MERGE_LOG_LEN 20
+
 extern const char git_version_string[];
 extern const char git_usage_string[];
 extern const char git_more_info_string[];
 
 extern void prune_packed_objects(int);
-extern int fmt_merge_msg(int merge_summary, struct strbuf *in,
-	struct strbuf *out);
-extern int fmt_merge_msg_shortlog(struct strbuf *in, struct strbuf *out);
+extern int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
+			 int merge_title, int shortlog_len);
 extern int commit_notes(struct notes_tree *t, const char *msg);
 
 struct notes_rewrite_cfg {
