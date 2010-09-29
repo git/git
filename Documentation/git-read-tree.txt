@@ -11,7 +11,7 @@ SYNOPSIS
 'git read-tree' [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>]
 		[-u [--exclude-per-directory=<gitignore>] | -i]]
 		[--index-output=<file>] [--no-sparse-checkout]
-		<tree-ish1> [<tree-ish2> [<tree-ish3>]]
+		(--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
 DESCRIPTION
@@ -113,6 +113,10 @@ OPTIONS
 --no-sparse-checkout::
 	Disable sparse checkout support even if `core.sparseCheckout`
 	is true.
+
+--empty::
+	Instead of reading tree object(s) into the index, just empty
+	it.
 
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
