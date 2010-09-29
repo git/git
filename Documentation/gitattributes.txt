@@ -484,6 +484,8 @@ patterns are available:
 
 - `csharp` suitable for source code in the C# language.
 
+- `fortran` suitable for source code in the Fortran language.
+
 - `html` suitable for HTML/XHTML documents.
 
 - `java` suitable for source code in the Java language.
