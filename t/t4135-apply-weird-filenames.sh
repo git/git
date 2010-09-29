@@ -72,4 +72,20 @@ test_expect_success 'whitespace-damaged traditional patch' '
 	test_cmp expected postimage.txt
 '
 
+test_expect_success 'traditional patch with colon in timezone' '
+	echo postimage >expected &&
+	reset_preimage &&
+	rm -f "post image.txt" &&
+	git apply "$vector/funny-tz.diff" &&
+	test_cmp expected "post image.txt"
+'
+
+test_expect_success 'traditional, whitespace-damaged, colon in timezone' '
+	echo postimage >expected &&
+	reset_preimage &&
+	rm -f "post image.txt" &&
+	git apply "$vector/damaged-tz.diff" &&
+	test_cmp expected "post image.txt"
+'
+
 test_done

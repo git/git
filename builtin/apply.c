@@ -449,7 +449,7 @@ static char *find_name_gnu(const char *line, char *def, int p_value)
 	return squash_slash(strbuf_detach(&name, NULL));
 }
 
-static size_t tz_len(const char *line, size_t len)
+static size_t sane_tz_len(const char *line, size_t len)
 {
 	const char *tz, *p;
 
@@ -463,6 +463,24 @@ static size_t tz_len(const char *line, size_t len)
 	for (p = tz + 2; p != line + len; p++)
 		if (!isdigit(*p))
 			return 0;
+
+	return line + len - tz;
+}
+
+static size_t tz_with_colon_len(const char *line, size_t len)
+{
+	const char *tz, *p;
+
+	if (len < strlen(" +08:00") || line[len - strlen(":00")] != ':')
+		return 0;
+	tz = line + len - strlen(" +08:00");
+
+	if (tz[0] != ' ' || (tz[1] != '+' && tz[1] != '-'))
+		return 0;
+	p = tz + 2;
+	if (!isdigit(*p++) || !isdigit(*p++) || *p++ != ':' ||
+	    !isdigit(*p++) || !isdigit(*p++))
+		return 0;
 
 	return line + len - tz;
 }
@@ -561,7 +579,9 @@ static size_t diff_timestamp_len(const char *line, size_t len)
 	if (!isdigit(end[-1]))
 		return 0;
 
-	n = tz_len(line, end - line);
+	n = sane_tz_len(line, end - line);
+	if (!n)
+		n = tz_with_colon_len(line, end - line);
 	end -= n;
 
 	n = short_time_len(line, end - line);
