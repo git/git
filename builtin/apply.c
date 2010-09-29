@@ -733,8 +733,8 @@ static int has_epoch_timestamp(const char *nameline)
 		" "
 		"[0-2][0-9]:[0-5][0-9]:00(\\.0+)?"
 		" "
-		"([-+][0-2][0-9][0-5][0-9])\n";
-	const char *timestamp = NULL, *cp;
+		"([-+][0-2][0-9]:?[0-5][0-9])\n";
+	const char *timestamp = NULL, *cp, *colon;
 	static regex_t *stamp;
 	regmatch_t m[10];
 	int zoneoffset;
@@ -764,8 +764,11 @@ static int has_epoch_timestamp(const char *nameline)
 		return 0;
 	}
 
-	zoneoffset = strtol(timestamp + m[3].rm_so + 1, NULL, 10);
-	zoneoffset = (zoneoffset / 100) * 60 + (zoneoffset % 100);
+	zoneoffset = strtol(timestamp + m[3].rm_so + 1, (char **) &colon, 10);
+	if (*colon == ':')
+		zoneoffset = zoneoffset * 60 + strtol(colon + 1, NULL, 10);
+	else
+		zoneoffset = (zoneoffset / 100) * 60 + (zoneoffset % 100);
 	if (timestamp[m[3].rm_so] == '-')
 		zoneoffset = -zoneoffset;
 
