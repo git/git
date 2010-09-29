@@ -3310,7 +3310,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if ((argcount = parse_long_opt("output", av, &optarg))) {
 		options->file = fopen(optarg, "w");
 		if (!options->file)
-			die_errno("Could not open '%s'", arg + strlen("--output="));
+			die_errno("Could not open '%s'", optarg);
 		options->close_file = 1;
 		return argcount;
 	} else
