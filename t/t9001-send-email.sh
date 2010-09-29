@@ -1032,4 +1032,40 @@ test_expect_success $PREREQ '--8bit-encoding also treats subject' '
 	test_cmp expected actual
 '
 
+# Note that the patches in this test are deliberately out of order; we
+# want to make sure it works even if the cover-letter is not in the
+# first mail.
+test_expect_success 'refusing to send cover letter template' '
+	clean_fake_sendmail &&
+	rm -fr outdir &&
+	git format-patch --cover-letter -2 -o outdir &&
+	test_must_fail git send-email \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  outdir/0002-*.patch \
+	  outdir/0000-*.patch \
+	  outdir/0001-*.patch \
+	  2>errors >out &&
+	grep "SUBJECT HERE" errors &&
+	test -z "$(ls msgtxt*)"
+'
+
+test_expect_success '--force sends cover letter template anyway' '
+	clean_fake_sendmail &&
+	rm -fr outdir &&
+	git format-patch --cover-letter -2 -o outdir &&
+	git send-email \
+	  --force \
+	  --from="Example <nobody@example.com>" \
+	  --to=nobody@example.com \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  outdir/0002-*.patch \
+	  outdir/0000-*.patch \
+	  outdir/0001-*.patch \
+	  2>errors >out &&
+	! grep "SUBJECT HERE" errors &&
+	test -n "$(ls msgtxt*)"
+'
+
 test_done
