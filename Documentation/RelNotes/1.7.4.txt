@@ -1,0 +1,54 @@
+Git v1.7.4 Release Notes (draft)
+================================
+
+Updates since v1.7.3
+--------------------
+
+ * The option parsers of various commands that create new branch (or
+   rename existing ones to a new name) were too loose and users were
+   allowed to call a branch with a name that begins with a dash by
+   creative abuse of their command line options, which only lead to
+   burn themselves.  The name of a branch cannot begin with a dash
+   now.
+
+ * System-wide fallback default attributes can be stored in
+   /etc/gitattributes; core.attributesfile configuration variable can
+   be used to customize the path to this file.
+
+ * "git diff" and "git grep" learned how functions and subroutines
+   in Fortran look like.
+
+ * "git log -G<pattern>" limits the output to commits whose change has
+   added or deleted lines that match the given pattern.
+
+ * "git read-tree" with no argument as a way to empty the index is
+   deprecated; we might want to remove it in the future.  Users can
+   use the new --empty option to be more explicit instead.
+
+ * "git merge --log" used to limit the resulting merge log to 20
+   entries; this is now customizable by giving e.g. "--log=47".
+
+ * you can extend "git shell", which is often used on boxes that allow
+   git-only login over ssh as login shell, with custom set of
+   commands.
+
+Also contains various documentation updates.
+
+
+Fixes since v1.7.3
+------------------
+
+All of the fixes in v1.7.3.X maintenance series are included in this
+release, unless otherwise noted.
+
+ * "git log --author=me --author=her" did not find commits written by
+   me or by her; instead it looked for commits written by me and by
+   her, which is impossible.
+
+
+---
+exec >/var/tmp/1
+O=v1.7.3
+O=v1.7.3.1-42-g34289ec
+echo O=$(git describe master)
+git shortlog --no-merges ^maint ^$O master
