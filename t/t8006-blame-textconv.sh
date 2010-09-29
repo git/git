@@ -9,22 +9,23 @@ find_blame() {
 
 cat >helper <<'EOF'
 #!/bin/sh
-sed 's/^/converted: /' "$@"
+grep -q '^bin: ' "$1" || { echo "E: $1 is not \"binary\" file" 1>&2; exit 1; }
+sed 's/^bin: /converted: /' "$1"
 EOF
 chmod +x helper
 
 test_expect_success 'setup ' '
-	echo test 1 >one.bin &&
-	echo test number 2 >two.bin &&
+	echo "bin: test 1" >one.bin &&
+	echo "bin: test number 2" >two.bin &&
 	git add . &&
 	GIT_AUTHOR_NAME=Number1 git commit -a -m First --date="2010-01-01 18:00:00" &&
-	echo test 1 version 2 >one.bin &&
-	echo test number 2 version 2 >>two.bin &&
+	echo "bin: test 1 version 2" >one.bin &&
+	echo "bin: test number 2 version 2" >>two.bin &&
 	GIT_AUTHOR_NAME=Number2 git commit -a -m Second --date="2010-01-01 20:00:00"
 '
 
 cat >expected <<EOF
-(Number2 2010-01-01 20:00:00 +0000 1) test 1 version 2
+(Number2 2010-01-01 20:00:00 +0000 1) bin: test 1 version 2
 EOF
 
 test_expect_success 'no filter specified' '
@@ -67,7 +68,7 @@ test_expect_success 'blame --textconv going through revisions' '
 '
 
 test_expect_success 'make a new commit' '
-	echo "test number 2 version 3" >>two.bin &&
+	echo "bin: test number 2 version 3" >>two.bin &&
 	GIT_AUTHOR_NAME=Number3 git commit -a -m Third --date="2010-01-01 22:00:00"
 '
 
