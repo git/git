@@ -12,6 +12,9 @@ chmod +x helper
 
 test_expect_success 'setup ' '
 	echo "bin: test" >one.bin &&
+	if test_have_prereq SYMLINKS; then
+		ln -s one.bin symlink.bin
+	fi &&
 	git add . &&
 	GIT_AUTHOR_NAME=Number1 git commit -a -m First --date="2010-01-01 18:00:00" &&
 	echo "bin: test version 2" >one.bin &&
@@ -68,4 +71,30 @@ test_expect_success 'cat-file --textconv on previous commit' '
 	git cat-file --textconv HEAD^:one.bin >result &&
 	test_cmp expected result
 '
+
+test_expect_success SYMLINKS 'cat-file without --textconv (symlink)' '
+	git cat-file blob :symlink.bin >result &&
+	printf "%s" "one.bin" >expected
+	test_cmp expected result
+'
+
+
+# fails because cat-file tries to run converter on symlink.bin
+test_expect_failure SYMLINKS 'cat-file --textconv on index (symlink)' '
+	! git cat-file --textconv :symlink.bin 2>result &&
+	cat >expected <<\EOF &&
+fatal: git cat-file --textconv: unable to run textconv on :symlink.bin
+EOF
+	test_cmp expected result
+'
+
+# fails because cat-file tries to run converter on symlink.bin
+test_expect_failure SYMLINKS 'cat-file --textconv on HEAD (symlink)' '
+	! git cat-file --textconv HEAD:symlink.bin 2>result &&
+	cat >expected <<EOF &&
+fatal: git cat-file --textconv: unable to run textconv on HEAD:symlink.bin
+EOF
+	test_cmp expected result
+'
+
 test_done
