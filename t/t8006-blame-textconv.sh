@@ -94,8 +94,7 @@ test_expect_success SYMLINKS 'blame with --no-textconv (on symlink)' '
 	test_cmp expected result
 '
 
-# fails with '...symlink.bin is not "binary" file'
-test_expect_failure SYMLINKS 'blame --textconv (on symlink)' '
+test_expect_success SYMLINKS 'blame --textconv (on symlink)' '
 	git blame --textconv symlink.bin >blame &&
 	find_blame <blame >result &&
 	test_cmp expected result
@@ -114,8 +113,7 @@ EOF
 	GIT_AUTHOR_NAME=Number4 git commit -a -m Fourth --date="2010-01-01 23:00:00"
 '
 
-# fails with '...symlink.bin is not "binary" file'
-test_expect_failure SYMLINKS 'blame on last commit (-C -C, symlink)' '
+test_expect_success SYMLINKS 'blame on last commit (-C -C, symlink)' '
 	git blame -C -C three.bin >blame &&
 	find_blame <blame >result &&
 	cat >expected <<\EOF &&
