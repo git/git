@@ -947,6 +947,30 @@ test_expect_success $PREREQ '--no-bcc overrides sendemail.bcc' '
 	! grep "RCPT TO:<other@ex.com>" stdout
 '
 
+test_expect_success $PREREQ 'patches To headers are used by default' '
+	patch=`git format-patch -1 --to="bodies@example.com"` &&
+	test_when_finished "rm $patch" &&
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--smtp-server relay.example.com \
+		$patch >stdout &&
+	grep "RCPT TO:<bodies@example.com>" stdout
+'
+
+test_expect_success $PREREQ 'patches To headers are appended to' '
+	patch=`git format-patch -1 --to="bodies@example.com"` &&
+	test_when_finished "rm $patch" &&
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server relay.example.com \
+		$patch >stdout &&
+	grep "RCPT TO:<bodies@example.com>" stdout &&
+	grep "RCPT TO:<nobody@example.com>" stdout
+'
+
 test_expect_success $PREREQ 'setup expect' '
 cat >email-using-8bit <<EOF
 From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001

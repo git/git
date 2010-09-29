@@ -1176,6 +1176,13 @@ foreach my $t (@files) {
 					$1, $_) unless $quiet;
 				push @cc, $1;
 			}
+			elsif (/^To:\s+(.*)$/) {
+				foreach my $addr (parse_address_line($1)) {
+					printf("(mbox) Adding to: %s from line '%s'\n",
+						$addr, $_) unless $quiet;
+					push @to, sanitize_address($addr);
+				}
+			}
 			elsif (/^Cc:\s+(.*)$/) {
 				foreach my $addr (parse_address_line($1)) {
 					if (unquote_rfc2047($addr) eq $sender) {
