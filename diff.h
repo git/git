@@ -315,4 +315,6 @@ extern size_t fill_textconv(struct userdiff_driver *driver,
 
 extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
 
+extern int parse_rename_score(const char **cp_p);
+
 #endif /* DIFF_H */

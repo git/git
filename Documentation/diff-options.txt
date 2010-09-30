@@ -207,6 +207,7 @@ endif::git-format-patch[]
 	digits can be specified with `--abbrev=<n>`.
 
 -B[<n>][/<m>]::
+--break-rewrites[=[<n>][/<m>]]::
 	Break complete rewrite changes into pairs of delete and
 	create. This serves two purposes:
 +
@@ -229,6 +230,7 @@ eligible for being picked up as a possible source of a rename to
 another file.
 
 -M[<n>]::
+--detect-renames[=<n>]::
 ifndef::git-log[]
 	Detect renames.
 endif::git-log[]
@@ -244,6 +246,7 @@ endif::git-log[]
 	hasn't changed.
 
 -C[<n>]::
+--detect-copies[=<n>]::
 	Detect copies as well as renames.  See also `--find-copies-harder`.
 	If `n` is specified, it has the same meaning as for `-M<n>`.
 
