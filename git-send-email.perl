@@ -549,7 +549,7 @@ if (@files) {
 	usage();
 }
 
-sub get_patch_subject($) {
+sub get_patch_subject {
 	my $fn = shift;
 	open (my $fh, '<', $fn);
 	while (my $line = <$fh>) {
