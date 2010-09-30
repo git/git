@@ -30,7 +30,7 @@ static const char pack_usage[] =
   "        [--no-reuse-delta] [--no-reuse-object] [--delta-base-offset]\n"
   "        [--threads=N] [--non-empty] [--revs [--unpacked | --all]*]\n"
   "        [--reflog] [--stdout | base-name] [--include-tag]\n"
-  "        [--keep-unreachable | --unpack-unreachable \n"
+  "        [--keep-unreachable | --unpack-unreachable]\n"
   "        [<ref-list | <object-list]";
 
 struct object_entry {

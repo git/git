@@ -45,13 +45,13 @@ endif::git-rev-list[]
 
 --parents::
 
-	Print the parents of the commit.  Also enables parent
-	rewriting, see 'History Simplification' below.
+	Print also the parents of the commit (in the form "commit parent...").
+	Also enables parent rewriting, see 'History Simplification' below.
 
 --children::
 
-	Print the children of the commit.  Also enables parent
-	rewriting, see 'History Simplification' below.
+	Print also the children of the commit (in the form "commit child...").
+	Also enables parent rewriting, see 'History Simplification' below.
 
 ifdef::git-rev-list[]
 --timestamp::
