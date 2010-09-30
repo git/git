@@ -819,7 +819,7 @@ sub make_message_id {
 		last if (defined $du_part and $du_part ne '');
 	}
 	if (not defined $du_part or $du_part eq '') {
-		use Sys::Hostname qw();
+		require Sys::Hostname;
 		$du_part = 'user@' . Sys::Hostname::hostname();
 	}
 	my $message_id_template = "<%s-git-send-email-%s>";
