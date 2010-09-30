@@ -679,7 +679,7 @@ sub ask {
 
 my %broken_encoding;
 
-sub file_declares_8bit_cte($) {
+sub file_declares_8bit_cte {
 	my $fn = shift;
 	open (my $fh, '<', $fn);
 	while (my $line = <$fh>) {
