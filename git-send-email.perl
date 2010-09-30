@@ -73,6 +73,7 @@ git send-email [options] <file | directory | rev-list options >
 
   Automating:
     --identity              <str>  * Use the sendemail.<id> options.
+    --to-cmd                <str>  * Email To: via `<str> \$patch_path`
     --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
     --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, all.
     --[no-]signed-off-by-cc        * Send to Signed-off-by: addresses. Default on.
@@ -189,7 +190,8 @@ sub do_edit {
 }
 
 # Variables with corresponding config settings
-my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc, $cc_cmd);
+my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc);
+my ($to_cmd, $cc_cmd);
 my ($smtp_server, $smtp_server_port, @smtp_server_options);
 my ($smtp_authuser, $smtp_encryption);
 my ($identity, $aliasfiletype, @alias_files, $smtp_domain);
@@ -218,6 +220,7 @@ my %config_settings = (
     "smtppass" => \$smtp_authpass,
     "smtpdomain" => \$smtp_domain,
     "to" => \@to,
+    "tocmd" => \$to_cmd,
     "cc" => \@initial_cc,
     "cccmd" => \$cc_cmd,
     "aliasfiletype" => \$aliasfiletype,
@@ -276,6 +279,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
                     "in-reply-to=s" => \$initial_reply_to,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@to,
+		    "to-cmd=s" => \$to_cmd,
 		    "no-to" => \$no_to,
 		    "cc=s" => \@initial_cc,
 		    "no-cc" => \$no_cc,
@@ -727,7 +731,7 @@ if (!defined $sender) {
 	$prompting++;
 }
 
-if (!@to) {
+if (!@to && !defined $to_cmd) {
 	my $to = ask("Who should the emails be sent to? ");
 	push @to, parse_address_line($to) if defined $to; # sanitized/validated later
 	$prompting++;
@@ -1263,20 +1267,10 @@ foreach my $t (@files) {
 	}
 	close $fh;
 
-	if (defined $cc_cmd && !$suppress_cc{'cccmd'}) {
-		open my $fh, "$cc_cmd \Q$t\E |"
-			or die "(cc-cmd) Could not execute '$cc_cmd'";
-		while(my $c = <$fh>) {
-			chomp $c;
-			$c =~ s/^\s*//g;
-			next if ($c eq $sender and $suppress_from);
-			push @cc, $c;
-			printf("(cc-cmd) Adding cc: %s from: '%s'\n",
-				$c, $cc_cmd) unless $quiet;
-		}
-		close $fh
-			or die "(cc-cmd) failed to close pipe to '$cc_cmd'";
-	}
+	push @to, recipients_cmd("to-cmd", "to", $to_cmd, $t)
+		if defined $to_cmd;
+	push @cc, recipients_cmd("cc-cmd", "cc", $cc_cmd, $t)
+		if defined $cc_cmd && !$suppress_cc{'cccmd'};
 
 	if ($broken_encoding{$t} && !$has_content_type) {
 		$has_content_type = 1;
@@ -1332,6 +1326,29 @@ foreach my $t (@files) {
 		}
 	}
 	$message_id = undef;
+}
+
+# Execute a command (e.g. $to_cmd) to get a list of email addresses
+# and return a results array
+sub recipients_cmd {
+	my ($prefix, $what, $cmd, $file) = @_;
+
+	my $sanitized_sender = sanitize_address($sender);
+	my @addresses = ();
+	open my $fh, "$cmd \Q$file\E |"
+	    or die "($prefix) Could not execute '$cmd'";
+	while (my $address = <$fh>) {
+		$address =~ s/^\s*//g;
+		$address =~ s/\s*$//g;
+		$address = sanitize_address($address);
+		next if ($address eq $sanitized_sender and $suppress_from);
+		push @addresses, $address;
+		printf("($prefix) Adding %s: %s from: '%s'\n",
+		       $what, $address, $cmd) unless $quiet;
+		}
+	close $fh
+	    or die "($prefix) failed to close pipe to '$cmd'";
+	return @addresses;
 }
 
 cleanup_compose_files();
