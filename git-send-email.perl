@@ -136,8 +136,6 @@ my $have_mail_address = eval { require Mail::Address; 1 };
 my $smtp;
 my $auth;
 
-sub cleanup_compose_files();
-
 # Variables we fill in automatically, or via prompting:
 my (@to,$no_to,@cc,$no_cc,@initial_cc,@bcclist,$no_bcc,@xh,
 	$initial_reply_to,$initial_subject,@files,
@@ -1325,7 +1323,7 @@ foreach my $t (@files) {
 
 cleanup_compose_files();
 
-sub cleanup_compose_files() {
+sub cleanup_compose_files {
 	unlink($compose_filename, $compose_filename . ".final") if $compose;
 }
 
