@@ -204,7 +204,7 @@ test_expect_success $PREREQ 'Prompting works' '
 test_expect_success $PREREQ 'cccmd works' '
 	clean_fake_sendmail &&
 	cp $patches cccmd.patch &&
-	echo cccmd--cccmd@example.com >>cccmd.patch &&
+	echo "cccmd--  cccmd@example.com" >>cccmd.patch &&
 	{
 	  echo "#!$SHELL_PATH"
 	  echo sed -n -e s/^cccmd--//p \"\$1\"

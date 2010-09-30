@@ -1252,10 +1252,9 @@ foreach my $t (@files) {
 	if (defined $cc_cmd && !$suppress_cc{'cccmd'}) {
 		open my $fh, "$cc_cmd \Q$t\E |"
 			or die "(cc-cmd) Could not execute '$cc_cmd'";
-		while(<$fh>) {
-			my $c = $_;
+		while(my $c = <$fh>) {
+			chomp $c;
 			$c =~ s/^\s*//g;
-			$c =~ s/\n$//g;
 			next if ($c eq $sender and $suppress_from);
 			push @cc, $c;
 			printf("(cc-cmd) Adding cc: %s from: '%s'\n",
