@@ -1144,7 +1144,7 @@ $subject = $initial_subject;
 $message_num = 0;
 
 foreach my $t (@files) {
-	open(F,"<",$t) or die "can't open file $t";
+	open my $fh, "<", $t or die "can't open file $t";
 
 	my $author = undef;
 	my $author_encoding;
@@ -1157,7 +1157,7 @@ foreach my $t (@files) {
 	$message = "";
 	$message_num++;
 	# First unfold multiline header fields
-	while(<F>) {
+	while(<$fh>) {
 		last if /^\s*$/;
 		if (/^\s+\S/ and @header) {
 			chomp($header[$#header]);
@@ -1233,7 +1233,7 @@ foreach my $t (@files) {
 		}
 	}
 	# Now parse the message body
-	while(<F>) {
+	while(<$fh>) {
 		$message .=  $_;
 		if (/^(Signed-off-by|Cc): (.*)$/i) {
 			chomp;
@@ -1250,12 +1250,12 @@ foreach my $t (@files) {
 				$c, $_) unless $quiet;
 		}
 	}
-	close F;
+	close $fh;
 
 	if (defined $cc_cmd && !$suppress_cc{'cccmd'}) {
-		open(F, "$cc_cmd \Q$t\E |")
+		open my $fh, "$cc_cmd \Q$t\E |"
 			or die "(cc-cmd) Could not execute '$cc_cmd'";
-		while(<F>) {
+		while(<$fh>) {
 			my $c = $_;
 			$c =~ s/^\s*//g;
 			$c =~ s/\n$//g;
@@ -1264,7 +1264,7 @@ foreach my $t (@files) {
 			printf("(cc-cmd) Adding cc: %s from: '%s'\n",
 				$c, $cc_cmd) unless $quiet;
 		}
-		close F
+		close $fh
 			or die "(cc-cmd) failed to close pipe to '$cc_cmd'";
 	}
 
