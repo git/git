@@ -3,6 +3,7 @@
 #include "exec_cmd.h"
 #include "run-command.h"
 #include "strbuf.h"
+#include "string-list.h"
 
 #include <syslog.h>
 
@@ -734,11 +735,17 @@ static int set_reuse_addr(int sockfd)
 			  &on, sizeof(on));
 }
 
+struct socketlist {
+	int *list;
+	size_t nr;
+	size_t alloc;
+};
+
 #ifndef NO_IPV6
 
-static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
+static int setup_named_sock(char *listen_addr, int listen_port, struct socketlist *socklist)
 {
-	int socknum = 0, *socklist = NULL;
+	int socknum = 0;
 	int maxfd = -1;
 	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *ai0, *ai;
@@ -753,8 +760,10 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 	hints.ai_flags = AI_PASSIVE;
 
 	gai = getaddrinfo(listen_addr, pbuf, &hints, &ai0);
-	if (gai)
-		die("getaddrinfo() failed: %s", gai_strerror(gai));
+	if (gai) {
+		logerror("getaddrinfo() for %s failed: %s", listen_addr, gai_strerror(gai));
+		return 0;
+	}
 
 	for (ai = ai0; ai; ai = ai->ai_next) {
 		int sockfd;
@@ -795,8 +804,9 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 		if (flags >= 0)
 			fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
 
-		socklist = xrealloc(socklist, sizeof(int) * (socknum + 1));
-		socklist[socknum++] = sockfd;
+		ALLOC_GROW(socklist->list, socklist->nr + 1, socklist->alloc);
+		socklist->list[socklist->nr++] = sockfd;
+		socknum++;
 
 		if (maxfd < sockfd)
 			maxfd = sockfd;
@@ -804,13 +814,12 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 
 	freeaddrinfo(ai0);
 
-	*socklist_p = socklist;
 	return socknum;
 }
 
 #else /* NO_IPV6 */
 
-static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
+static int setup_named_sock(char *listen_addr, int listen_port, struct socketlist *socklist)
 {
 	struct sockaddr_in sin;
 	int sockfd;
@@ -851,22 +860,39 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 	if (flags >= 0)
 		fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
 
-	*socklist_p = xmalloc(sizeof(int));
-	**socklist_p = sockfd;
+	ALLOC_GROW(socklist->list, socklist->nr + 1, socklist->alloc);
+	socklist->list[socklist->nr++] = sockfd;
 	return 1;
 }
 
 #endif
 
-static int service_loop(int socknum, int *socklist)
+static void socksetup(struct string_list *listen_addr, int listen_port, struct socketlist *socklist)
+{
+	if (!listen_addr->nr)
+		setup_named_sock(NULL, listen_port, socklist);
+	else {
+		int i, socknum;
+		for (i = 0; i < listen_addr->nr; i++) {
+			socknum = setup_named_sock(listen_addr->items[i].string,
+						   listen_port, socklist);
+
+			if (socknum == 0)
+				logerror("unable to allocate any listen sockets for host %s on port %u",
+					 listen_addr->items[i].string, listen_port);
+		}
+	}
+}
+
+static int service_loop(struct socketlist *socklist)
 {
 	struct pollfd *pfd;
 	int i;
 
-	pfd = xcalloc(socknum, sizeof(struct pollfd));
+	pfd = xcalloc(socklist->nr, sizeof(struct pollfd));
 
-	for (i = 0; i < socknum; i++) {
-		pfd[i].fd = socklist[i];
+	for (i = 0; i < socklist->nr; i++) {
+		pfd[i].fd = socklist->list[i];
 		pfd[i].events = POLLIN;
 	}
 
@@ -877,7 +903,7 @@ static int service_loop(int socknum, int *socklist)
 
 		check_dead_children();
 
-		if (poll(pfd, socknum, -1) < 0) {
+		if (poll(pfd, socklist->nr, -1) < 0) {
 			if (errno != EINTR) {
 				logerror("Poll failed, resuming: %s",
 				      strerror(errno));
@@ -886,7 +912,7 @@ static int service_loop(int socknum, int *socklist)
 			continue;
 		}
 
-		for (i = 0; i < socknum; i++) {
+		for (i = 0; i < socklist->nr; i++) {
 			if (pfd[i].revents & POLLIN) {
 				struct sockaddr_storage ss;
 				unsigned int sslen = sizeof(ss);
@@ -946,27 +972,27 @@ static void store_pid(const char *path)
 		die_errno("failed to write pid file '%s'", path);
 }
 
-static int serve(char *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
+static int serve(struct string_list *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
 {
-	int socknum, *socklist;
+	struct socketlist socklist = { NULL, 0, 0 };
 
-	socknum = socksetup(listen_addr, listen_port, &socklist);
-	if (socknum == 0)
-		die("unable to allocate any listen sockets on host %s port %u",
-		    listen_addr, listen_port);
+	socksetup(listen_addr, listen_port, &socklist);
+	if (socklist.nr == 0)
+		die("unable to allocate any listen sockets on port %u",
+		    listen_port);
 
 	if (pass && gid &&
 	    (initgroups(pass->pw_name, gid) || setgid (gid) ||
 	     setuid(pass->pw_uid)))
 		die("cannot drop privileges");
 
-	return service_loop(socknum, socklist);
+	return service_loop(&socklist);
 }
 
 int main(int argc, char **argv)
 {
 	int listen_port = 0;
-	char *listen_addr = NULL;
+	struct string_list listen_addr = STRING_LIST_INIT_NODUP;
 	int inetd_mode = 0;
 	const char *pid_file = NULL, *user_name = NULL, *group_name = NULL;
 	int detach = 0;
@@ -981,7 +1007,7 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (!prefixcmp(arg, "--listen=")) {
-			listen_addr = xstrdup_tolower(arg + 9);
+			string_list_append(&listen_addr, xstrdup_tolower(arg + 9));
 			continue;
 		}
 		if (!prefixcmp(arg, "--port=")) {
@@ -1106,7 +1132,7 @@ int main(int argc, char **argv)
 	if (inetd_mode && (group_name || user_name))
 		die("--user and --group are incompatible with --inetd");
 
-	if (inetd_mode && (listen_port || listen_addr))
+	if (inetd_mode && (listen_port || (listen_addr.nr > 0)))
 		die("--listen= and --port= are incompatible with --inetd");
 	else if (listen_port == 0)
 		listen_port = DEFAULT_GIT_PORT;
@@ -1161,5 +1187,5 @@ int main(int argc, char **argv)
 	if (pid_file)
 		store_pid(pid_file);
 
-	return serve(listen_addr, listen_port, pass, gid);
+	return serve(&listen_addr, listen_port, pass, gid);
 }
