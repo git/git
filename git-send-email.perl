@@ -567,7 +567,7 @@ if ($compose) {
 	$compose_filename = ($repo ?
 		tempfile(".gitsendemail.msg.XXXXXX", DIR => $repo->repo_path()) :
 		tempfile(".gitsendemail.msg.XXXXXX", DIR => "."))[1];
-	open(C,">",$compose_filename)
+	open my $c, ">", $compose_filename
 		or die "Failed to open for writing $compose_filename: $!";
 
 
@@ -575,7 +575,7 @@ if ($compose) {
 	my $tpl_subject = $initial_subject || '';
 	my $tpl_reply_to = $initial_reply_to || '';
 
-	print C <<EOT;
+	print $c <<EOT;
 From $tpl_sender # This line is ignored.
 GIT: Lines beginning in "GIT:" will be removed.
 GIT: Consider including an overall diffstat or table of contents
@@ -588,9 +588,9 @@ In-Reply-To: $tpl_reply_to
 
 EOT
 	for my $f (@files) {
-		print C get_patch_subject($f);
+		print $c get_patch_subject($f);
 	}
-	close(C);
+	close $c;
 
 	if ($annotate) {
 		do_edit($compose_filename, @files);
@@ -598,23 +598,23 @@ EOT
 		do_edit($compose_filename);
 	}
 
-	open(C2,">",$compose_filename . ".final")
+	open my $c2, ">", $compose_filename . ".final"
 		or die "Failed to open $compose_filename.final : " . $!;
 
-	open(C,"<",$compose_filename)
+	open $c, "<", $compose_filename
 		or die "Failed to open $compose_filename : " . $!;
 
 	my $need_8bit_cte = file_has_nonascii($compose_filename);
 	my $in_body = 0;
 	my $summary_empty = 1;
-	while(<C>) {
+	while(<$c>) {
 		next if m/^GIT:/;
 		if ($in_body) {
 			$summary_empty = 0 unless (/^\n$/);
 		} elsif (/^\n$/) {
 			$in_body = 1;
 			if ($need_8bit_cte) {
-				print C2 "MIME-Version: 1.0\n",
+				print $c2 "MIME-Version: 1.0\n",
 					 "Content-Type: text/plain; ",
 					   "charset=UTF-8\n",
 					 "Content-Transfer-Encoding: 8bit\n";
@@ -639,10 +639,10 @@ EOT
 			print "To/Cc/Bcc fields are not interpreted yet, they have been ignored\n";
 			next;
 		}
-		print C2 $_;
+		print $c2 $_;
 	}
-	close(C);
-	close(C2);
+	close $c;
+	close $c2;
 
 	if ($summary_empty) {
 		print "Summary email is empty, skipping it\n";
