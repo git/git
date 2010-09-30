@@ -705,7 +705,7 @@ if (!defined $auto_8bit_encoding && scalar %broken_encoding) {
 
 if (!$force) {
 	for my $f (@files) {
-		if (get_patch_subject($f) =~ /\*\*\* SUBJECT HERE \*\*\*/) {
+		if (get_patch_subject($f) =~ /\Q*** SUBJECT HERE ***\E/) {
 			die "Refusing to send because the patch\n\t$f\n"
 				. "has the template subject '*** SUBJECT HERE ***'. "
 				. "Pass --force if you really want to send.\n";
