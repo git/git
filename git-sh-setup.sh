@@ -209,5 +209,20 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
+	is_absolute_path () {
+		case "$1" in
+		[/\\]* | [A-Za-z]:*)
+			return 0 ;;
+		esac
+		return 1
+	}
 	;;
+*)
+	is_absolute_path () {
+		case "$1" in
+		/*)
+			return 0 ;;
+		esac
+		return 1
+	}
 esac
