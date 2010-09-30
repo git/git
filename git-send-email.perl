@@ -852,8 +852,8 @@ sub quote_rfc2047 {
 
 sub is_rfc2047_quoted {
 	my $s = shift;
-	my $token = '[^][()<>@,;:"\/?.= \000-\037\177-\377]+';
-	my $encoded_text = '[!->@-~]+';
+	my $token = qr/[^][()<>@,;:"\/?.= \000-\037\177-\377]+/;
+	my $encoded_text = qr/[!->@-~]+/;
 	length($s) <= 75 &&
 	$s =~ m/^(?:"[[:ascii:]]*"|=\?$token\?$token\?$encoded_text\?=)$/o;
 }
