@@ -512,12 +512,12 @@ while (defined(my $f = shift @ARGV)) {
 		push @rev_list_opts, "--", @ARGV;
 		@ARGV = ();
 	} elsif (-d $f and !check_file_rev_conflict($f)) {
-		opendir(DH,$f)
+		opendir my $dh, $f
 			or die "Failed to opendir $f: $!";
 
 		push @files, grep { -f $_ } map { catfile($f, $_) }
-				sort readdir(DH);
-		closedir(DH);
+				sort readdir $dh;
+		closedir $dh;
 	} elsif ((-f $f or -p $f) and !check_file_rev_conflict($f)) {
 		push @files, $f;
 	} else {
