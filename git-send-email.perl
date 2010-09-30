@@ -138,9 +138,6 @@ my $have_mail_address = eval { require Mail::Address; 1 };
 my $smtp;
 my $auth;
 
-sub unique_email_list(@);
-sub cleanup_compose_files();
-
 # Variables we fill in automatically, or via prompting:
 my (@to,$no_to,@cc,$no_cc,@initial_cc,@bcclist,$no_bcc,@xh,
 	$initial_reply_to,$initial_subject,@files,
@@ -373,7 +370,7 @@ my(%suppress_cc);
 if (@suppress_cc) {
 	foreach my $entry (@suppress_cc) {
 		die "Unknown --suppress-cc field: '$entry'\n"
-			unless $entry =~ /^(all|cccmd|cc|author|self|sob|body|bodycc)$/;
+			unless $entry =~ /^(?:all|cccmd|cc|author|self|sob|body|bodycc)$/;
 		$suppress_cc{$entry} = 1;
 	}
 }
@@ -517,12 +514,12 @@ while (defined(my $f = shift @ARGV)) {
 		push @rev_list_opts, "--", @ARGV;
 		@ARGV = ();
 	} elsif (-d $f and !check_file_rev_conflict($f)) {
-		opendir(DH,$f)
+		opendir my $dh, $f
 			or die "Failed to opendir $f: $!";
 
 		push @files, grep { -f $_ } map { catfile($f, $_) }
-				sort readdir(DH);
-		closedir(DH);
+				sort readdir $dh;
+		closedir $dh;
 	} elsif ((-f $f or -p $f) and !check_file_rev_conflict($f)) {
 		push @files, $f;
 	} else {
@@ -554,7 +551,7 @@ if (@files) {
 	usage();
 }
 
-sub get_patch_subject($) {
+sub get_patch_subject {
 	my $fn = shift;
 	open (my $fh, '<', $fn);
 	while (my $line = <$fh>) {
@@ -572,7 +569,7 @@ if ($compose) {
 	$compose_filename = ($repo ?
 		tempfile(".gitsendemail.msg.XXXXXX", DIR => $repo->repo_path()) :
 		tempfile(".gitsendemail.msg.XXXXXX", DIR => "."))[1];
-	open(C,">",$compose_filename)
+	open my $c, ">", $compose_filename
 		or die "Failed to open for writing $compose_filename: $!";
 
 
@@ -580,7 +577,7 @@ if ($compose) {
 	my $tpl_subject = $initial_subject || '';
 	my $tpl_reply_to = $initial_reply_to || '';
 
-	print C <<EOT;
+	print $c <<EOT;
 From $tpl_sender # This line is ignored.
 GIT: Lines beginning in "GIT:" will be removed.
 GIT: Consider including an overall diffstat or table of contents
@@ -593,9 +590,9 @@ In-Reply-To: $tpl_reply_to
 
 EOT
 	for my $f (@files) {
-		print C get_patch_subject($f);
+		print $c get_patch_subject($f);
 	}
-	close(C);
+	close $c;
 
 	if ($annotate) {
 		do_edit($compose_filename, @files);
@@ -603,23 +600,23 @@ EOT
 		do_edit($compose_filename);
 	}
 
-	open(C2,">",$compose_filename . ".final")
+	open my $c2, ">", $compose_filename . ".final"
 		or die "Failed to open $compose_filename.final : " . $!;
 
-	open(C,"<",$compose_filename)
+	open $c, "<", $compose_filename
 		or die "Failed to open $compose_filename : " . $!;
 
 	my $need_8bit_cte = file_has_nonascii($compose_filename);
 	my $in_body = 0;
 	my $summary_empty = 1;
-	while(<C>) {
+	while(<$c>) {
 		next if m/^GIT:/;
 		if ($in_body) {
 			$summary_empty = 0 unless (/^\n$/);
 		} elsif (/^\n$/) {
 			$in_body = 1;
 			if ($need_8bit_cte) {
-				print C2 "MIME-Version: 1.0\n",
+				print $c2 "MIME-Version: 1.0\n",
 					 "Content-Type: text/plain; ",
 					   "charset=UTF-8\n",
 					 "Content-Transfer-Encoding: 8bit\n";
@@ -644,10 +641,10 @@ EOT
 			print "To/Cc/Bcc fields are not interpreted yet, they have been ignored\n";
 			next;
 		}
-		print C2 $_;
+		print $c2 $_;
 	}
-	close(C);
-	close(C2);
+	close $c;
+	close $c2;
 
 	if ($summary_empty) {
 		print "Summary email is empty, skipping it\n";
@@ -684,7 +681,7 @@ sub ask {
 
 my %broken_encoding;
 
-sub file_declares_8bit_cte($) {
+sub file_declares_8bit_cte {
 	my $fn = shift;
 	open (my $fh, '<', $fn);
 	while (my $line = <$fh>) {
@@ -713,7 +710,7 @@ if (!defined $auto_8bit_encoding && scalar %broken_encoding) {
 
 if (!$force) {
 	for my $f (@files) {
-		if (get_patch_subject($f) =~ /\*\*\* SUBJECT HERE \*\*\*/) {
+		if (get_patch_subject($f) =~ /\Q*** SUBJECT HERE ***\E/) {
 			die "Refusing to send because the patch\n\t$f\n"
 				. "has the template subject '*** SUBJECT HERE ***'. "
 				. "Pass --force if you really want to send.\n";
@@ -785,8 +782,8 @@ our ($message_id, %mail, $subject, $reply_to, $references, $message,
 
 sub extract_valid_address {
 	my $address = shift;
-	my $local_part_regexp = '[^<>"\s@]+';
-	my $domain_regexp = '[^.<>"\s@]+(?:\.[^.<>"\s@]+)+';
+	my $local_part_regexp = qr/[^<>"\s@]+/;
+	my $domain_regexp = qr/[^.<>"\s@]+(?:\.[^.<>"\s@]+)+/;
 
 	# check for a local address:
 	return $address if ($address =~ /^($local_part_regexp)$/);
@@ -827,7 +824,7 @@ sub make_message_id {
 		last if (defined $du_part and $du_part ne '');
 	}
 	if (not defined $du_part or $du_part eq '') {
-		use Sys::Hostname qw();
+		require Sys::Hostname;
 		$du_part = 'user@' . Sys::Hostname::hostname();
 	}
 	my $message_id_template = "<%s-git-send-email-%s>";
@@ -860,8 +857,8 @@ sub quote_rfc2047 {
 
 sub is_rfc2047_quoted {
 	my $s = shift;
-	my $token = '[^][()<>@,;:"\/?.= \000-\037\177-\377]+';
-	my $encoded_text = '[!->@-~]+';
+	my $token = qr/[^][()<>@,;:"\/?.= \000-\037\177-\377]+/;
+	my $encoded_text = qr/[!->@-~]+/;
 	length($s) <= 75 &&
 	$s =~ m/^(?:"[[:ascii:]]*"|=\?$token\?$token\?$encoded_text\?=)$/o;
 }
@@ -872,7 +869,7 @@ sub sanitize_address {
 	my ($recipient_name, $recipient_addr) = ($recipient =~ /^(.*?)\s*(<.*)/);
 
 	if (not $recipient_name) {
-		return "$recipient";
+		return $recipient;
 	}
 
 	# if recipient_name is already quoted, do nothing
@@ -889,7 +886,7 @@ sub sanitize_address {
 	# double quotes are needed if specials or CTLs are included
 	elsif ($recipient_name =~ /[][()<>@,;:\\".\000-\037\177]/) {
 		$recipient_name =~ s/(["\\\r])/\\$1/g;
-		$recipient_name = "\"$recipient_name\"";
+		$recipient_name = qq["$recipient_name"];
 	}
 
 	return "$recipient_name $recipient_addr";
@@ -1045,7 +1042,7 @@ X-Mailer: git-send-email $gitversion
 			exec($smtp_server, @sendmail_parameters) or die $!;
 		}
 		print $sm "$header\n$message";
-		close $sm or die $?;
+		close $sm or die $!;
 	} else {
 
 		if (!defined $smtp_server) {
@@ -1151,7 +1148,7 @@ $subject = $initial_subject;
 $message_num = 0;
 
 foreach my $t (@files) {
-	open(F,"<",$t) or die "can't open file $t";
+	open my $fh, "<", $t or die "can't open file $t";
 
 	my $author = undef;
 	my $author_encoding;
@@ -1164,7 +1161,7 @@ foreach my $t (@files) {
 	$message = "";
 	$message_num++;
 	# First unfold multiline header fields
-	while(<F>) {
+	while(<$fh>) {
 		last if /^\s*$/;
 		if (/^\s+\S/ and @header) {
 			chomp($header[$#header]);
@@ -1240,7 +1237,7 @@ foreach my $t (@files) {
 		}
 	}
 	# Now parse the message body
-	while(<F>) {
+	while(<$fh>) {
 		$message .=  $_;
 		if (/^(Signed-off-by|Cc): (.*)$/i) {
 			chomp;
@@ -1257,21 +1254,20 @@ foreach my $t (@files) {
 				$c, $_) unless $quiet;
 		}
 	}
-	close F;
+	close $fh;
 
 	if (defined $cc_cmd && !$suppress_cc{'cccmd'}) {
-		open(F, "$cc_cmd \Q$t\E |")
+		open my $fh, "$cc_cmd \Q$t\E |"
 			or die "(cc-cmd) Could not execute '$cc_cmd'";
-		while(<F>) {
-			my $c = $_;
+		while(my $c = <$fh>) {
+			chomp $c;
 			$c =~ s/^\s*//g;
-			$c =~ s/\n$//g;
 			next if ($c eq $sender and $suppress_from);
 			push @cc, $c;
 			printf("(cc-cmd) Adding cc: %s from: '%s'\n",
 				$c, $cc_cmd) unless $quiet;
 		}
-		close F
+		close $fh
 			or die "(cc-cmd) failed to close pipe to '$cc_cmd'";
 	}
 
@@ -1333,13 +1329,13 @@ foreach my $t (@files) {
 
 cleanup_compose_files();
 
-sub cleanup_compose_files() {
+sub cleanup_compose_files {
 	unlink($compose_filename, $compose_filename . ".final") if $compose;
 }
 
 $smtp->quit if $smtp;
 
-sub unique_email_list(@) {
+sub unique_email_list {
 	my %seen;
 	my @emails;
 
