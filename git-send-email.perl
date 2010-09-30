@@ -864,7 +864,7 @@ sub sanitize_address {
 	my ($recipient_name, $recipient_addr) = ($recipient =~ /^(.*?)\s*(<.*)/);
 
 	if (not $recipient_name) {
-		return "$recipient";
+		return $recipient;
 	}
 
 	# if recipient_name is already quoted, do nothing
