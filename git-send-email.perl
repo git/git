@@ -136,7 +136,6 @@ my $have_mail_address = eval { require Mail::Address; 1 };
 my $smtp;
 my $auth;
 
-sub unique_email_list(@);
 sub cleanup_compose_files();
 
 # Variables we fill in automatically, or via prompting:
@@ -1332,7 +1331,7 @@ sub cleanup_compose_files() {
 
 $smtp->quit if $smtp;
 
-sub unique_email_list(@) {
+sub unique_email_list {
 	my %seen;
 	my @emails;
 
