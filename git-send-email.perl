@@ -777,8 +777,8 @@ our ($message_id, %mail, $subject, $reply_to, $references, $message,
 
 sub extract_valid_address {
 	my $address = shift;
-	my $local_part_regexp = '[^<>"\s@]+';
-	my $domain_regexp = '[^.<>"\s@]+(?:\.[^.<>"\s@]+)+';
+	my $local_part_regexp = qr/[^<>"\s@]+/;
+	my $domain_regexp = qr/[^.<>"\s@]+(?:\.[^.<>"\s@]+)+/;
 
 	# check for a local address:
 	return $address if ($address =~ /^($local_part_regexp)$/);
