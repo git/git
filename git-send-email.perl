@@ -1035,7 +1035,7 @@ X-Mailer: git-send-email $gitversion
 			exec($smtp_server, @sendmail_parameters) or die $!;
 		}
 		print $sm "$header\n$message";
-		close $sm or die $?;
+		close $sm or die $!;
 	} else {
 
 		if (!defined $smtp_server) {
