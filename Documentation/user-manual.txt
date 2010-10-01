@@ -2171,11 +2171,14 @@ $ git push mytree release
 
 Now to apply some patches from the community.  Think of a short
 snappy name for a branch to hold this patch (or related group of
-patches), and create a new branch from the current tip of Linus's
-branch:
+patches), and create a new branch from a recent stable tag of
+Linus's branch. Picking a stable base for your branch will:
+1) help you: by avoiding inclusion of unrelated and perhaps lightly
+tested changes
+2) help future bug hunters that use "git bisect" to find problems
 
 -------------------------------------------------
-$ git checkout -b speed-up-spinlocks origin
+$ git checkout -b speed-up-spinlocks v2.6.35
 -------------------------------------------------
 
 Now you apply the patch(es), run some tests, and commit the change(s).  If
