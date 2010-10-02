@@ -64,7 +64,7 @@ char *git_work_tree_cfg;
 static char *work_tree;
 
 static const char *git_dir;
-static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
+static char *git_object_dir, *git_index_file, *git_graft_file;
 
 /*
  * Repository-local GIT_* environment variables
@@ -96,8 +96,6 @@ static void setup_git_env(void)
 		git_object_dir = xmalloc(strlen(git_dir) + 9);
 		sprintf(git_object_dir, "%s/objects", git_dir);
 	}
-	git_refs_dir = xmalloc(strlen(git_dir) + 6);
-	sprintf(git_refs_dir, "%s/refs", git_dir);
 	git_index_file = getenv(INDEX_ENVIRONMENT);
 	if (!git_index_file) {
 		git_index_file = xmalloc(strlen(git_dir) + 7);
