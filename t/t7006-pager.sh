@@ -41,7 +41,7 @@ else
 fi
 
 test_expect_success 'setup' '
-	unset GIT_PAGER GIT_PAGER_IN_USE;
+	sane_unset GIT_PAGER GIT_PAGER_IN_USE &&
 	test_might_fail git config --unset core.pager &&
 
 	PAGER="cat >paginated.out" &&
@@ -254,7 +254,7 @@ test_default_pager() {
 	parse_args "$@"
 
 	$test_expectation SIMPLEPAGERTTY "$cmd - default pager is used by default" "
-		unset PAGER GIT_PAGER;
+		sane_unset PAGER GIT_PAGER &&
 		test_might_fail git config --unset core.pager &&
 		rm -f default_pager_used ||
 		cleanup_fail &&
@@ -277,7 +277,7 @@ test_PAGER_overrides() {
 	parse_args "$@"
 
 	$test_expectation TTY "$cmd - PAGER overrides default pager" "
-		unset GIT_PAGER;
+		sane_unset GIT_PAGER &&
 		test_might_fail git config --unset core.pager &&
 		rm -f PAGER_used ||
 		cleanup_fail &&
@@ -305,7 +305,7 @@ test_core_pager() {
 	parse_args "$@"
 
 	$test_expectation TTY "$cmd - repository-local core.pager setting $used_if_wanted" "
-		unset GIT_PAGER;
+		sane_unset GIT_PAGER &&
 		rm -f core.pager_used ||
 		cleanup_fail &&
 
@@ -333,7 +333,7 @@ test_pager_subdir_helper() {
 	parse_args "$@"
 
 	$test_expectation TTY "$cmd - core.pager $used_if_wanted from subdirectory" "
-		unset GIT_PAGER;
+		sane_unset GIT_PAGER &&
 		rm -f core.pager_used &&
 		rm -fr sub ||
 		cleanup_fail &&

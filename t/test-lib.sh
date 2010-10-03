@@ -268,6 +268,17 @@ remove_cr () {
 	tr '\015' Q | sed -e 's/Q$//'
 }
 
+# In some bourne shell implementations, the "unset" builtin returns
+# nonzero status when a variable to be unset was not set in the first
+# place.
+#
+# Use sane_unset when that should not be considered an error.
+
+sane_unset () {
+	unset "$@"
+	return 0
+}
+
 test_tick () {
 	if test -z "${test_tick+set}"
 	then

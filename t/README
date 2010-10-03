@@ -259,14 +259,11 @@ Do:
 	test ...
 
    That way all of the commands in your tests will succeed or fail. If
-   you must ignore the return value of something (e.g., the return
-   after unsetting a variable that was already unset is unportable) it's
-   best to indicate so explicitly with a semicolon:
-
-	unset HLAGH;
-	git merge hla &&
-	git push gh &&
-	test ...
+   you must ignore the return value of something, consider using a
+   helper function (e.g. use sane_unset instead of unset, in order
+   to avoid unportable return value for unsetting a variable that was
+   already unset), or prepending the command with test_might_fail or
+   test_must_fail.
 
  - Check the test coverage for your tests. See the "Test coverage"
    below.
