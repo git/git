@@ -393,7 +393,7 @@ test_expect_success 'log --graph with merge' '
 '
 
 test_expect_success 'log.decorate configuration' '
-	git config --unset-all log.decorate || :
+	test_might_fail git config --unset-all log.decorate &&
 
 	git log --oneline >expect.none &&
 	git log --oneline --decorate >expect.short &&
