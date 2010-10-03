@@ -9,8 +9,9 @@ test_prefix() {
 }
 
 test_fail() {
-	test_expect_code 128 "$1: prefix" \
-	"git rev-parse --show-prefix"
+	test_expect_success "$1: prefix" '
+		test_expect_code 128 git rev-parse --show-prefix
+	'
 }
 
 TRASH_ROOT="$PWD"

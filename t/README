@@ -395,13 +395,6 @@ library for your script to use.
    Like test_expect_success this function can optionally use a three
    argument invocation with a prerequisite as the first argument.
 
- - test_expect_code [<prereq>] <code> <message> <script>
-
-   Analogous to test_expect_success, but pass the test if it exits
-   with a given exit <code>
-
- test_expect_code 1 'Merge with d/f conflicts' 'git merge "merge msg" B master'
-
  - test_debug <script>
 
    This takes a single argument, <script>, and evaluates it only
@@ -481,6 +474,15 @@ library for your script to use.
 	test_external_without_stderr \
 	    'Perl API' \
 	    "$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl
+
+ - test_expect_code <exit-code> <command>
+
+   Run a command and ensure that it exits with the given exit code.
+   For example:
+
+	test_expect_success 'Merge with d/f conflicts' '
+		test_expect_code 1 git merge "merge msg" B master
+	'
 
  - test_must_fail <git-command>
 

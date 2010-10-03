@@ -20,7 +20,9 @@ echo "file dir" > dir &&
 git add dir &&
 git commit -m "File: dir"'
 
-test_expect_code 1 'Merge with d/f conflicts' 'git merge "merge msg" B master'
+test_expect_success 'Merge with d/f conflicts' '
+	test_expect_code 1 git merge "merge msg" B master
+'
 
 test_expect_success 'F/D conflict' '
 	git reset --hard &&

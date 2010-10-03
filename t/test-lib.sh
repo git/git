@@ -473,24 +473,6 @@ test_expect_success () {
 	echo >&3 ""
 }
 
-test_expect_code () {
-	test "$#" = 4 && { prereq=$1; shift; } || prereq=
-	test "$#" = 3 ||
-	error "bug in the test script: not 3 or 4 parameters to test-expect-code"
-	if ! test_skip "$@"
-	then
-		say >&3 "expecting exit code $1: $3"
-		test_run_ "$3"
-		if [ "$?" = 0 -a "$eval_ret" = "$1" ]
-		then
-			test_ok_ "$2"
-		else
-			test_failure_ "$@"
-		fi
-	fi
-	echo >&3 ""
-}
-
 # test_external runs external test scripts that provide continuous
 # test output about their progress, and succeeds/fails on
 # zero/non-zero exit code.  It outputs the test output on stdout even
@@ -656,6 +638,28 @@ test_might_fail () {
 		return 1
 	fi
 	return 0
+}
+
+# Similar to test_must_fail and test_might_fail, but check that a
+# given command exited with a given exit code. Meant to be used as:
+#
+#	test_expect_success 'Merge with d/f conflicts' '
+#		test_expect_code 1 git merge "merge msg" B master
+#	'
+
+test_expect_code () {
+	want_code=$1
+	shift
+	"$@"
+	exit_code=$?
+	if test $exit_code = $want_code
+	then
+		echo >&2 "test_expect_code: command exited with $exit_code: $*"
+		return 0
+	else
+		echo >&2 "test_expect_code: command exited with $exit_code, we wanted $want_code $*"
+		return 1
+	fi
 }
 
 # test_cmp is a helper function to compare actual and expected output.
