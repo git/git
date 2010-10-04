@@ -281,7 +281,7 @@ void diffcore_pickaxe(struct diff_options *o)
 {
 	/* Might want to warn when both S and G are on; I don't care... */
 	if (o->pickaxe_opts & DIFF_PICKAXE_KIND_G)
-		return diffcore_pickaxe_grep(o);
+		diffcore_pickaxe_grep(o);
 	else
-		return diffcore_pickaxe_count(o);
+		diffcore_pickaxe_count(o);
 }
