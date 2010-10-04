@@ -70,6 +70,9 @@ all::
 #
 # Define NO_FNMATCH if you don't have fnmatch in the C library.
 #
+# Define NO_FNMATCH_CASEFOLD if your fnmatch function doesn't have the
+# FNM_CASEFOLD GNU extension.
+#
 # Define NO_LIBGEN_H if you don't have libgen.h.
 #
 # Define NEEDS_LIBGEN if your libgen needs -lgen when linking
@@ -834,6 +837,7 @@ ifeq ($(uname_S),SunOS)
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
 	NO_REGEX = YesPlease
+	NO_FNMATCH_CASEFOLD = YesPlease
 	ifeq ($(uname_R),5.6)
 		SOCKLEN_T = int
 		NO_HSTRERROR = YesPlease
@@ -1326,6 +1330,12 @@ ifdef NO_FNMATCH
 	COMPAT_CFLAGS += -Icompat/fnmatch
 	COMPAT_CFLAGS += -DNO_FNMATCH
 	COMPAT_OBJS += compat/fnmatch/fnmatch.o
+else
+ifdef NO_FNMATCH_CASEFOLD
+	COMPAT_CFLAGS += -Icompat/fnmatch
+	COMPAT_CFLAGS += -DNO_FNMATCH_CASEFOLD
+	COMPAT_OBJS += compat/fnmatch/fnmatch.o
+endif
 endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV
