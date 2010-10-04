@@ -128,9 +128,8 @@ void diffcore_pickaxe(const char *needle, int opts)
 				diff_free_filepair(p);
 		}
 
-	if (opts & DIFF_PICKAXE_REGEX) {
+	if (opts & DIFF_PICKAXE_REGEX)
 		regfree(&regex);
-	}
 
 	free(q->queue);
 	*q = outq;
