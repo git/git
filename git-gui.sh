@@ -83,6 +83,7 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 		puts stderr "source    $name"
 		uplevel 1 real__source $name
 	}
+	if {[tk windowingsystem] eq "win32"} { console show }
 }
 
 ######################################################################
@@ -675,6 +676,7 @@ bind . <Visibility> {
 if {[is_Windows]} {
 	wm iconbitmap . -default $oguilib/git-gui.ico
 	set ::tk::AlwaysShowSelection 1
+	bind . <Control-F2> {console show}
 
 	# Spoof an X11 display for SSH
 	if {![info exists env(DISPLAY)]} {
