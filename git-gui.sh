@@ -444,6 +444,8 @@ proc _lappend_nice {cmd_var} {
 		set _nice [_which nice]
 		if {[catch {exec $_nice git version}]} {
 			set _nice {}
+		} elseif {[is_Windows] && [file dirname $_nice] ne [file dirname $::_git]} {
+			set _nice {}
 		}
 	}
 	if {$_nice ne {}} {
