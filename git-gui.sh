@@ -2863,7 +2863,8 @@ proc usage {} {
 	set s "usage: $::argv0 $::subcommand $::subcommand_args"
 	if {[tk windowingsystem] eq "win32"} {
 		wm withdraw .
-		tk_messageBox -icon info -title "Usage" -message $s
+		tk_messageBox -icon info -message $s \
+			-title [mc "Usage"]
 	} else {
 		puts stderr $s
 	}
@@ -2936,7 +2937,11 @@ blame {
 			if {[catch {
 					set head [git rev-parse --verify $head]
 				} err]} {
-				puts stderr $err
+				if {[tk windowingsystem] eq "win32"} {
+					tk_messageBox -icon error -title [mc Error] -message $err
+				} else {
+					puts stderr $err
+				}
 				exit 1
 			}
 		}
@@ -2975,18 +2980,19 @@ blame {
 citool -
 gui {
 	if {[llength $argv] != 0} {
-		puts -nonewline stderr "usage: $argv0"
-		if {$subcommand ne {gui}
-			&& [file tail $argv0] ne "git-$subcommand"} {
-			puts -nonewline stderr " $subcommand"
-		}
-		puts stderr {}
-		exit 1
+		usage
 	}
 	# fall through to setup UI for commits
 }
 default {
-	puts stderr "usage: $argv0 \[{blame|browser|citool}\]"
+	set err "usage: $argv0 \[{blame|browser|citool}\]"
+	if {[tk windowingsystem] eq "win32"} {
+		wm withdraw .
+		tk_messageBox -icon error -message $err \
+			-title [mc "Usage"]
+	} else {
+		puts stderr $err
+	}
 	exit 1
 }
 }
