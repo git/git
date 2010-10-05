@@ -56,6 +56,8 @@ COMMANDS
 	as well, they take precedence.
 --no-metadata;;
 	Set the 'noMetadata' option in the [svn-remote] config.
+	This option is not recommended, please read the 'svn.noMetadata'
+	section of this manpage before using this option.
 --use-svm-props;;
 	Set the 'useSvmProps' option in the [svn-remote] config.
 --use-svnsync-props;;
@@ -597,13 +599,22 @@ svn.noMetadata::
 svn-remote.<name>.noMetadata::
 	This gets rid of the 'git-svn-id:' lines at the end of every commit.
 +
-If you lose your .git/svn/git-svn/.rev_db file, 'git svn' will not
-be able to rebuild it and you won't be able to fetch again,
-either.  This is fine for one-shot imports.
+This option can only be used for one-shot imports as 'git svn'
+will not be able to fetch again without metadata. Additionally,
+if you lose your .git/svn/**/.rev_map.* files, 'git svn' will not
+be able to rebuild them.
 +
 The 'git svn log' command will not work on repositories using
 this, either.  Using this conflicts with the 'useSvmProps'
 option for (hopefully) obvious reasons.
++
+This option is NOT recommended as it makes it difficult to track down
+old references to SVN revision numbers in existing documentation, bug
+reports and archives.  If you plan to eventually migrate from SVN to git
+and are certain about dropping SVN history, consider
+linkgit:git-filter-branch[1] instead.  filter-branch also allows
+reformating of metadata for ease-of-reading and rewriting authorship
+info for non-"svn.authorsFile" users.
 
 svn.useSvmProps::
 svn-remote.<name>.useSvmProps::
