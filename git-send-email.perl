@@ -140,7 +140,7 @@ my $smtp;
 my $auth;
 
 # Variables we fill in automatically, or via prompting:
-my (@to,$no_to,@cc,$no_cc,@initial_cc,@bcclist,$no_bcc,@xh,
+my (@to,$no_to,@initial_to,@cc,$no_cc,@initial_cc,@bcclist,$no_bcc,@xh,
 	$initial_reply_to,$initial_subject,@files,
 	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
 
@@ -219,7 +219,7 @@ my %config_settings = (
     "smtpuser" => \$smtp_authuser,
     "smtppass" => \$smtp_authpass,
     "smtpdomain" => \$smtp_domain,
-    "to" => \@to,
+    "to" => \@initial_to,
     "tocmd" => \$to_cmd,
     "cc" => \@initial_cc,
     "cccmd" => \$cc_cmd,
@@ -278,7 +278,7 @@ $SIG{INT}  = \&signal_handler;
 my $rc = GetOptions("sender|from=s" => \$sender,
                     "in-reply-to=s" => \$initial_reply_to,
 		    "subject=s" => \$initial_subject,
-		    "to=s" => \@to,
+		    "to=s" => \@initial_to,
 		    "to-cmd=s" => \$to_cmd,
 		    "no-to" => \$no_to,
 		    "cc=s" => \@initial_cc,
@@ -419,7 +419,7 @@ my ($repoauthor, $repocommitter);
 
 # Verify the user input
 
-foreach my $entry (@to) {
+foreach my $entry (@initial_to) {
 	die "Comma in --to entry: $entry'\n" unless $entry !~ m/,/;
 }
 
@@ -731,9 +731,9 @@ if (!defined $sender) {
 	$prompting++;
 }
 
-if (!@to && !defined $to_cmd) {
+if (!@initial_to && !defined $to_cmd) {
 	my $to = ask("Who should the emails be sent to? ");
-	push @to, parse_address_line($to) if defined $to; # sanitized/validated later
+	push @initial_to, parse_address_line($to) if defined $to; # sanitized/validated later
 	$prompting++;
 }
 
@@ -751,8 +751,8 @@ sub expand_one_alias {
 	return $aliases{$alias} ? expand_aliases(@{$aliases{$alias}}) : $alias;
 }
 
-@to = expand_aliases(@to);
-@to = (map { sanitize_address($_) } @to);
+@initial_to = expand_aliases(@initial_to);
+@initial_to = (map { sanitize_address($_) } @initial_to);
 @initial_cc = expand_aliases(@initial_cc);
 @bcclist = expand_aliases(@bcclist);
 
@@ -1158,6 +1158,7 @@ foreach my $t (@files) {
 	my $author_encoding;
 	my $has_content_type;
 	my $body_encoding;
+	@to = ();
 	@cc = ();
 	@xh = ();
 	my $input_format = undef;
@@ -1311,6 +1312,7 @@ foreach my $t (@files) {
 		($confirm =~ /^(?:auto|compose)$/ && $compose && $message_num == 1));
 	$needs_confirm = "inform" if ($needs_confirm && $confirm_unconfigured && @cc);
 
+	@to = (@initial_to, @to);
 	@cc = (@initial_cc, @cc);
 
 	my $message_was_sent = send_message();
