@@ -26,7 +26,7 @@ test_auto_fixup() {
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "fixup! first"
+	git commit -m "fixup! first" &&
 
 	git tag $1 &&
 	test_tick &&
@@ -55,7 +55,7 @@ test_auto_squash() {
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! first"
+	git commit -m "squash! first" &&
 
 	git tag $1 &&
 	test_tick &&
@@ -84,7 +84,7 @@ test_expect_success 'misspelled auto squash' '
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! forst"
+	git commit -m "squash! forst" &&
 	git tag final-missquash &&
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&
