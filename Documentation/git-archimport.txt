@@ -109,7 +109,7 @@ OPTIONS
 
 Author
 ------
-Written by Martin Langhoff <martin@catalyst.net.nz>.
+Written by Martin Langhoff <martin@laptop.org>.
 
 Documentation
 --------------

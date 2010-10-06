@@ -83,7 +83,7 @@ static void use(int bytes)
 	offset += bytes;
 
 	/* make sure off_t is sufficiently large not to wrap */
-	if (consumed_bytes > consumed_bytes + bytes)
+	if (signed_add_overflows(consumed_bytes, bytes))
 		die("pack too large for current definition of off_t");
 	consumed_bytes += bytes;
 }

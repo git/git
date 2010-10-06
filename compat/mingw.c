@@ -127,7 +127,7 @@ int mingw_open (const char *filename, int oflags, ...)
 	mode = va_arg(args, int);
 	va_end(args);
 
-	if (!strcmp(filename, "/dev/null"))
+	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
 
 	fd = open(filename, oflags, mode);
@@ -160,7 +160,7 @@ ssize_t mingw_write(int fd, const void *buf, size_t count)
 #undef fopen
 FILE *mingw_fopen (const char *filename, const char *otype)
 {
-	if (!strcmp(filename, "/dev/null"))
+	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
 	return fopen(filename, otype);
 }
@@ -192,8 +192,11 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
 /* We keep the do_lstat code in a separate function to avoid recursion.
  * When a path ends with a slash, the stat will fail with ENOENT. In
  * this case, we strip the trailing slashes and stat again.
+ *
+ * If follow is true then act like stat() and report on the link
+ * target. Otherwise report on the link itself.
  */
-static int do_lstat(const char *file_name, struct stat *buf)
+static int do_lstat(int follow, const char *file_name, struct stat *buf)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
 
@@ -209,6 +212,25 @@ static int do_lstat(const char *file_name, struct stat *buf)
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
+		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+			WIN32_FIND_DATAA findbuf;
+			HANDLE handle = FindFirstFileA(file_name, &findbuf);
+			if (handle != INVALID_HANDLE_VALUE) {
+				if ((findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+						(findbuf.dwReserved0 == IO_REPARSE_TAG_SYMLINK)) {
+					if (follow) {
+						char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+						buf->st_size = readlink(file_name, buffer, MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+					} else {
+						buf->st_mode = S_IFLNK;
+					}
+					buf->st_mode |= S_IREAD;
+					if (!(findbuf.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+						buf->st_mode |= S_IWRITE;
+				}
+				FindClose(handle);
+			}
+		}
 		return 0;
 	}
 	return -1;
@@ -220,12 +242,12 @@ static int do_lstat(const char *file_name, struct stat *buf)
  * complete. Note that Git stat()s are redirected to mingw_lstat()
  * too, since Windows doesn't really handle symlinks that well.
  */
-int mingw_lstat(const char *file_name, struct stat *buf)
+static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 {
 	int namelen;
 	static char alt_name[PATH_MAX];
 
-	if (!do_lstat(file_name, buf))
+	if (!do_lstat(follow, file_name, buf))
 		return 0;
 
 	/* if file_name ended in a '/', Windows returned ENOENT;
@@ -244,7 +266,16 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 
 	memcpy(alt_name, file_name, namelen);
 	alt_name[namelen] = 0;
-	return do_lstat(alt_name, buf);
+	return do_lstat(follow, alt_name, buf);
+}
+
+int mingw_lstat(const char *file_name, struct stat *buf)
+{
+	return do_stat_internal(0, file_name, buf);
+}
+int mingw_stat(const char *file_name, struct stat *buf)
+{
+	return do_stat_internal(1, file_name, buf);
 }
 
 #undef fstat
@@ -873,6 +904,11 @@ void mingw_execvp(const char *cmd, char *const *argv)
 	free_path_split(path);
 }
 
+void mingw_execv(const char *cmd, char *const *argv)
+{
+	mingw_execve(cmd, argv, environ);
+}
+
 static char **copy_environ(void)
 {
 	char **env;
@@ -1386,6 +1422,7 @@ void mingw_open_html(const char *unixpath)
 			const char *, const char *, const char *, INT);
 	T ShellExecute;
 	HMODULE shell32;
+	int r;
 
 	shell32 = LoadLibrary("shell32.dll");
 	if (!shell32)
@@ -1395,9 +1432,12 @@ void mingw_open_html(const char *unixpath)
 		die("cannot run browser");
 
 	printf("Launching default browser to display HTML ...\n");
-	ShellExecute(NULL, "open", htmlpath, NULL, "\\", 0);
-
+	r = (int)ShellExecute(NULL, "open", htmlpath, NULL, "\\", SW_SHOWNORMAL);
 	FreeLibrary(shell32);
+	/* see the MSDN documentation referring to the result codes here */
+	if (r <= 32) {
+		die("failed to launch browser for %.*s", MAX_PATH, unixpath);
+	}
 }
 
 int link(const char *oldpath, const char *newpath)

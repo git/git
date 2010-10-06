@@ -64,7 +64,7 @@ char *git_work_tree_cfg;
 static char *work_tree;
 
 static const char *git_dir;
-static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
+static char *git_object_dir, *git_index_file, *git_graft_file;
 
 /*
  * Repository-local GIT_* environment variables
@@ -87,8 +87,10 @@ const char * const local_repo_env[LOCAL_REPO_ENV_SIZE + 1] = {
 static void setup_git_env(void)
 {
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	if (!git_dir)
+	if (!git_dir) {
 		git_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
+		git_dir = git_dir ? xstrdup(git_dir) : NULL;
+	}
 	if (!git_dir)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 	git_object_dir = getenv(DB_ENVIRONMENT);
@@ -96,8 +98,6 @@ static void setup_git_env(void)
 		git_object_dir = xmalloc(strlen(git_dir) + 9);
 		sprintf(git_object_dir, "%s/objects", git_dir);
 	}
-	git_refs_dir = xmalloc(strlen(git_dir) + 6);
-	sprintf(git_refs_dir, "%s/refs", git_dir);
 	git_index_file = getenv(INDEX_ENVIRONMENT);
 	if (!git_index_file) {
 		git_index_file = xmalloc(strlen(git_dir) + 7);

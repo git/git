@@ -269,9 +269,8 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 				diff_free_filepair(p);
 		}
 
-	if (opts & DIFF_PICKAXE_REGEX) {
+	if (opts & DIFF_PICKAXE_REGEX)
 		regfree(&regex);
-	}
 
 	free(q->queue);
 	*q = outq;
@@ -282,7 +281,7 @@ void diffcore_pickaxe(struct diff_options *o)
 {
 	/* Might want to warn when both S and G are on; I don't care... */
 	if (o->pickaxe_opts & DIFF_PICKAXE_KIND_G)
-		return diffcore_pickaxe_grep(o);
+		diffcore_pickaxe_grep(o);
 	else
-		return diffcore_pickaxe_count(o);
+		diffcore_pickaxe_count(o);
 }

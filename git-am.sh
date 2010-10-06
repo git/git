@@ -444,12 +444,12 @@ else
 				set x
 				first=
 			}
-			case "$arg" in
-			/*)
-				set "$@" "$arg" ;;
-			*)
-				set "$@" "$prefix$arg" ;;
-			esac
+			if is_absolute_path "$arg"
+			then
+				set "$@" "$arg"
+			else
+				set "$@" "$prefix$arg"
+			fi
 		done
 		shift
 	fi
