@@ -10,7 +10,8 @@ git repack [options]
 a               pack everything in a single pack
 A               same as -a, and turn unreachable objects loose
 d               remove redundant packs, and run git-prune-packed
-f               pass --no-reuse-object to git-pack-objects
+f               pass --no-reuse-delta to git-pack-objects
+F               pass --no-reuse-object to git-pack-objects
 n               do not run git-update-server-info
 q,quiet         be quiet
 l               pass --local to git-pack-objects
@@ -34,7 +35,8 @@ do
 		unpack_unreachable=--unpack-unreachable ;;
 	-d)	remove_redundant=t ;;
 	-q)	GIT_QUIET=t ;;
-	-f)	no_reuse=--no-reuse-object ;;
+	-f)	no_reuse=--no-reuse-delta ;;
+	-F)	no_reuse=--no-reuse-object ;;
 	-l)	local=--local ;;
 	--max-pack-size|--window|--window-memory|--depth)
 		extra="$extra $1=$2"; shift ;;
