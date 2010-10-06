@@ -151,17 +151,14 @@ get_author_ident_from_commit () {
 		s/'\''/'\''\\'\'\''/g
 		h
 		s/^author \([^<]*\) <[^>]*> .*$/\1/
-		s/'\''/'\''\'\'\''/g
 		s/.*/GIT_AUTHOR_NAME='\''&'\''/p
 
 		g
 		s/^author [^<]* <\([^>]*\)> .*$/\1/
-		s/'\''/'\''\'\'\''/g
 		s/.*/GIT_AUTHOR_EMAIL='\''&'\''/p
 
 		g
 		s/^author [^<]* <[^>]*> \(.*\)$/\1/
-		s/'\''/'\''\'\'\''/g
 		s/.*/GIT_AUTHOR_DATE='\''&'\''/p
 
 		q
