@@ -269,9 +269,8 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 				diff_free_filepair(p);
 		}
 
-	if (opts & DIFF_PICKAXE_REGEX) {
+	if (opts & DIFF_PICKAXE_REGEX)
 		regfree(&regex);
-	}
 
 	free(q->queue);
 	*q = outq;

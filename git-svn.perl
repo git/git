@@ -1513,7 +1513,8 @@ sub cmt_sha2rev_batch {
 
 sub working_head_info {
 	my ($head, $refs) = @_;
-	my @args = ('log', '--no-color', '--first-parent', '--pretty=medium');
+	my @args = qw/log --no-color --no-decorate --first-parent
+	              --pretty=medium/;
 	my ($fh, $ctx) = command_output_pipe(@args, $head);
 	my $hash;
 	my %max;
@@ -3118,9 +3119,10 @@ sub _rev_list {
 sub check_cherry_pick {
 	my $base = shift;
 	my $tip = shift;
+	my $parents = shift;
 	my @ranges = @_;
 	my %commits = map { $_ => 1 }
-		_rev_list("--no-merges", $tip, "--not", $base);
+		_rev_list("--no-merges", $tip, "--not", $base, @$parents);
 	for my $range ( @ranges ) {
 		delete @commits{_rev_list($range)};
 	}
@@ -3296,6 +3298,7 @@ sub find_extra_svn_parents {
 		# double check that there are no missing non-merge commits
 		my (@incomplete) = check_cherry_pick(
 			$merge_base, $merge_tip,
+			$parents,
 			@$ranges,
 		       );
 
