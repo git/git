@@ -878,12 +878,19 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 	exit 1
 }
 
+proc get_trimmed_version {s} {
+    set r {}
+    foreach x [split $s -._] {
+        if {[string is integer -strict $x]} {
+            lappend r $x
+        } else {
+            break
+        }
+    }
+    return [join $r .]
+}
 set _real_git_version $_git_version
-regsub -- {[\-\.]dirty$} $_git_version {} _git_version
-regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
-regsub {\.[a-zA-Z]+\.?[0-9]+$} $_git_version {} _git_version
-regsub {\.GIT$} $_git_version {} _git_version
-regsub {\.[a-zA-Z]+\.?[0-9]+$} $_git_version {} _git_version
+set _git_version [get_trimmed_version $_git_version]
 
 if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
 	catch {wm withdraw .}
