@@ -147,8 +147,10 @@ static void show_commit(struct commit *commit, void *data)
 			}
 		} else {
 			if (revs->commit_format != CMIT_FMT_USERFORMAT ||
-			    buf.len)
-				printf("%s%c", buf.buf, info->hdr_termination);
+			    buf.len) {
+				fwrite(buf.buf, 1, buf.len, stdout);
+				putchar(info->hdr_termination);
+			}
 		}
 		strbuf_release(&buf);
 	} else {

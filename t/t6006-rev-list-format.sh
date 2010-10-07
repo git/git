@@ -162,6 +162,14 @@ commit 131a310eb913d107dd3c09a65d1651175898735d
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
 EOF
 
+test_expect_success '%x00 shows NUL' '
+	echo  >expect commit f58db70b055c5718631e5c61528b28b12090cdea &&
+	echo >>expect fooQbar &&
+	git rev-list -1 --format=foo%x00bar HEAD >actual.nul &&
+	nul_to_q <actual.nul >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '%ad respects --date=' '
 	echo 2005-04-07 >expect.ad-short &&
 	git log -1 --date=short --pretty=tformat:%ad >output.ad-short master &&
