@@ -6,14 +6,14 @@
 #include "run-command.h"
 
 const char git_usage_string[] =
-	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [--html-path]\n"
+	"git [--version] [--exec-path[=<path>]] [--html-path]\n"
 	"           [-p|--paginate|--no-pager] [--no-replace-objects]\n"
-	"           [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]\n"
+	"           [--bare] [--git-dir=<path>] [--work-tree=<path>]\n"
 	"           [-c name=value] [--help]\n"
-	"           COMMAND [ARGS]";
+	"           <command> [<args>]";
 
 const char git_more_info_string[] =
-	"See 'git help COMMAND' for more information on a specific command.";
+	"See 'git help <command>' for more information on a specific command.";
 
 static struct startup_info git_startup_info;
 static int use_pager = -1;

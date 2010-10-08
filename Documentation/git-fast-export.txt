@@ -96,7 +96,7 @@ marks the same across runs.
 	in the commit (as opposed to just listing the files which are
 	different from the commit's first parent).
 
-[git-rev-list-args...]::
+[<git-rev-list-args>...]::
        A list of arguments, acceptable to 'git rev-parse' and
        'git rev-list', that specifies the specific objects and references
        to export.  For example, `master{tilde}10..master` causes the

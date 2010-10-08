@@ -48,9 +48,9 @@ endif::git-format-patch[]
 --patience::
 	Generate a diff using the "patience diff" algorithm.
 
---stat[=width[,name-width]]::
+--stat[=<width>[,<name-width>]]::
 	Generate a diffstat.  You can override the default
-	output width for 80-column terminal by `--stat=width`.
+	output width for 80-column terminal by `--stat=<width>`.
 	The width of the filename part can be controlled by
 	giving another width to it separated by a comma.
 
@@ -66,14 +66,14 @@ endif::git-format-patch[]
 	number of modified files, as well as number of added and deleted
 	lines.
 
---dirstat[=limit]::
+--dirstat[=<limit>]::
 	Output the distribution of relative amount of changes (number of lines added or
 	removed) for each sub-directory. Directories with changes below
 	a cut-off percent (3% by default) are not shown. The cut-off percent
-	can be set with `--dirstat=limit`. Changes in a child directory is not
+	can be set with `--dirstat=<limit>`. Changes in a child directory are not
 	counted for the parent directory, unless `--cumulative` is used.
 
---dirstat-by-file[=limit]::
+--dirstat-by-file[=<limit>]::
 	Same as `--dirstat`, but counts changed files instead of lines.
 
 --summary::

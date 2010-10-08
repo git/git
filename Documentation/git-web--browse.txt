@@ -32,19 +32,19 @@ Custom commands may also be specified.
 
 OPTIONS
 -------
--b BROWSER::
---browser=BROWSER::
-	Use the specified BROWSER. It must be in the list of supported
+-b <browser>::
+--browser=<browser>::
+	Use the specified browser. It must be in the list of supported
 	browsers.
 
--t BROWSER::
---tool=BROWSER::
+-t <browser>::
+--tool=<browser>::
 	Same as above.
 
--c CONF.VAR::
---config=CONF.VAR::
+-c <conf.var>::
+--config=<conf.var>::
 	CONF.VAR is looked up in the git config files. If it's set,
-	then its value specify the browser that should be used.
+	then its value specifies the browser that should be used.
 
 CONFIGURATION VARIABLES
 -----------------------

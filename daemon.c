@@ -20,15 +20,15 @@ static int reuseaddr;
 
 static const char daemon_usage[] =
 "git daemon [--verbose] [--syslog] [--export-all]\n"
-"           [--timeout=n] [--init-timeout=n] [--max-connections=n]\n"
-"           [--strict-paths] [--base-path=path] [--base-path-relaxed]\n"
-"           [--user-path | --user-path=path]\n"
-"           [--interpolated-path=path]\n"
-"           [--reuseaddr] [--detach] [--pid-file=file]\n"
-"           [--[enable|disable|allow-override|forbid-override]=service]\n"
-"           [--inetd | [--listen=host_or_ipaddr] [--port=n]\n"
-"                      [--user=user [--group=group]]\n"
-"           [directory...]";
+"           [--timeout=<n>] [--init-timeout=<n>] [--max-connections=<n>]\n"
+"           [--strict-paths] [--base-path=<path>] [--base-path-relaxed]\n"
+"           [--user-path | --user-path=<path>]\n"
+"           [--interpolated-path=<path>]\n"
+"           [--reuseaddr] [--detach] [--pid-file=<file>]\n"
+"           [--(enable|disable|allow-override|forbid-override)=<service>]\n"
+"           [--inetd | [--listen=<host_or_ipaddr>] [--port=<n>]\n"
+"                      [--user=<user> [--group=<group>]]\n"
+"           [<directory>...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths;
