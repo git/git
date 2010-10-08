@@ -13,7 +13,7 @@ SYNOPSIS
 		   [--stage=<number>|all]
 		   [--temp]
 		   [-z] [--stdin]
-		   [--] [<file>]*
+		   [--] [<file>...]
 
 DESCRIPTION
 -----------

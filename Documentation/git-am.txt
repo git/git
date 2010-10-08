@@ -14,7 +14,7 @@ SYNOPSIS
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--reject] [-q | --quiet] [--scissors | --no-scissors]
-	 [<mbox> | <Maildir>...]
+	 [(<mbox> | <Maildir>)...]
 'git am' (--continue | --skip | --abort)
 
 DESCRIPTION
@@ -25,7 +25,7 @@ current branch.
 
 OPTIONS
 -------
-<mbox>|<Maildir>...::
+(<mbox>|<Maildir>)...::
 	The list of mailbox files to read patches from. If you do not
 	supply this argument, the command reads from the standard input.
 	If you supply directories, they will be treated as Maildirs.

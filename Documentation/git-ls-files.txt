@@ -17,7 +17,7 @@ SYNOPSIS
 		[--exclude-per-directory=<file>]
 		[--exclude-standard]
 		[--error-unmatch] [--with-tree=<tree-ish>]
-		[--full-name] [--abbrev] [--] [<file>]*
+		[--full-name] [--abbrev] [--] [<file>...]
 
 DESCRIPTION
 -----------

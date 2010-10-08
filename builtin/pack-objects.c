@@ -23,7 +23,7 @@
 #endif
 
 static const char pack_usage[] =
-  "git pack-objects [{ -q | --progress | --all-progress }]\n"
+  "git pack-objects [ -q | --progress | --all-progress ]\n"
   "        [--all-progress-implied]\n"
   "        [--max-pack-size=<n>] [--local] [--incremental]\n"
   "        [--window=<n>] [--window-memory=<n>] [--depth=<n>]\n"

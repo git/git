@@ -12,7 +12,7 @@ SYNOPSIS
 		[--current] [--color[=<when>] | --no-color] [--sparse]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics]
-		[<rev> | <glob>]...
+		[(<rev> | <glob>)...]
 
 'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
