@@ -31,7 +31,7 @@ static const char pack_usage[] =
   "        [--threads=<n>] [--non-empty] [--revs [--unpacked | --all]]\n"
   "        [--reflog] [--stdout | base-name] [--include-tag]\n"
   "        [--keep-unreachable | --unpack-unreachable]\n"
-  "        [<ref-list | <object-list]";
+  "        [< ref-list | < object-list]";
 
 struct object_entry {
 	struct pack_idx_entry idx;
