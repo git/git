@@ -4,7 +4,7 @@ test_description='test automatic tag following'
 
 . ./test-lib.sh
 
-if !test_have_prereq NOT_MINGW; then
+if ! test_have_prereq NOT_MINGW; then
 	say "GIT_DEBUG_SEND_PACK not supported - skipping tests"
 fi
 
