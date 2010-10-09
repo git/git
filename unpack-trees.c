@@ -182,7 +182,7 @@ static void display_error_msgs(struct unpack_trees_options *o)
  */
 static void unlink_entry(struct cache_entry *ce)
 {
-	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
+	if (!check_leading_path(ce->name, ce_namelen(ce)))
 		return;
 	if (remove_or_warn(ce->ce_mode, ce->name))
 		return;
@@ -1194,18 +1194,28 @@ static int verify_absent_1(struct cache_entry *ce,
 				 enum unpack_trees_error_types error_type,
 				 struct unpack_trees_options *o)
 {
+	int len;
 	struct stat st;
 
 	if (o->index_only || o->reset || !o->update)
 		return 0;
 
-	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
+	len = check_leading_path(ce->name, ce_namelen(ce));
+	if (!len)
 		return 0;
+	else if (len > 0) {
+		char path[PATH_MAX + 1];
+		memcpy(path, ce->name, len);
+		path[len] = 0;
+		lstat(path, &st);
 
-	if (!lstat(ce->name, &st))
+		return check_ok_to_remove(path, len, DT_UNKNOWN, NULL, &st,
+				error_type, o);
+	} else if (!lstat(ce->name, &st))
 		return check_ok_to_remove(ce->name, ce_namelen(ce),
 				ce_to_dtype(ce), ce, &st,
 				error_type, o);
+
 	return 0;
 }
 
