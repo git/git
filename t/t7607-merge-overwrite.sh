@@ -100,7 +100,7 @@ test_expect_success 'will not overwrite untracked subtree' '
 	test_cmp important sub/f/important
 '
 
-test_expect_failure 'will not overwrite untracked file in leading path' '
+test_expect_success 'will not overwrite untracked file in leading path' '
 	git reset --hard c0 &&
 	rm -rf sub &&
 	cp important sub &&

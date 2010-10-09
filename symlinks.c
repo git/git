@@ -209,15 +209,26 @@ int has_symlink_leading_path(const char *name, int len)
 }
 
 /*
- * Return non-zero if path 'name' has a leading symlink component or
+ * Return zero if path 'name' has a leading symlink component or
  * if some leading path component does not exists.
+ *
+ * Return -1 if leading path exists and is a directory.
+ *
+ * Return path length if leading path exists and is neither a
+ * directory nor a symlink.
  */
-int has_symlink_or_noent_leading_path(const char *name, int len)
+int check_leading_path(const char *name, int len)
 {
 	struct cache_def *cache = &default_cache;	/* FIXME */
-	return lstat_cache(cache, name, len,
-			   FL_SYMLINK|FL_NOENT|FL_DIR, USE_ONLY_LSTAT) &
-		(FL_SYMLINK|FL_NOENT);
+	int flags;
+	int match_len = lstat_cache_matchlen(cache, name, len, &flags,
+			   FL_SYMLINK|FL_NOENT|FL_DIR, USE_ONLY_LSTAT);
+	if (flags & (FL_SYMLINK|FL_NOENT))
+		return 0;
+	else if (flags & FL_DIR)
+		return -1;
+	else
+		return match_len;
 }
 
 /*
