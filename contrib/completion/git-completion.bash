@@ -912,7 +912,7 @@ _git_bisect ()
 	fi
 
 	case "$subcommand" in
-	bad|good|reset|skip)
+	bad|good|reset|skip|start)
 		__gitcomp "$(__git_refs)"
 		;;
 	*)
