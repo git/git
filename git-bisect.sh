@@ -316,7 +316,12 @@ bisect_reset() {
 	*)
 	    usage ;;
 	esac
-	git checkout "$branch" -- && bisect_clean_state
+	if git checkout "$branch" -- ; then
+		bisect_clean_state
+	else
+		die "Could not check out original HEAD '$branch'." \
+				"Try 'git bisect reset <commit>'."
+	fi
 }
 
 bisect_clean_state() {
