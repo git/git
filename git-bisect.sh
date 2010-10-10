@@ -343,6 +343,7 @@ bisect_clean_state() {
 }
 
 bisect_replay () {
+	test "$#" -eq 1 || die "No logfile given"
 	test -r "$1" || die "cannot read $1 for replaying"
 	bisect_reset
 	while read git bisect command rev
