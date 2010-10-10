@@ -1472,18 +1472,50 @@ _git_name_rev ()
 
 _git_notes ()
 {
-	local subcommands="edit show"
-	if [ -z "$(__git_find_on_cmdline "$subcommands")" ]; then
-		__gitcomp "$subcommands"
-		return
-	fi
+	local subcommands='add append copy edit list prune remove show'
+	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	local cur="${COMP_WORDS[COMP_CWORD]}"
 
-	case "${COMP_WORDS[COMP_CWORD-1]}" in
-	-m|-F)
-		COMPREPLY=()
+	case "$subcommand,$cur" in
+	,--*)
+		__gitcomp '--ref'
+		;;
+	,*)
+		case "${COMP_WORDS[COMP_CWORD-1]}" in
+		--ref)
+			__gitcomp "$(__git_refs)"
+			;;
+		*)
+			__gitcomp "$subcommands --ref"
+			;;
+		esac
+		;;
+	add,--reuse-message=*|append,--reuse-message=*)
+		__gitcomp "$(__git_refs)" "" "${cur##--reuse-message=}"
+		;;
+	add,--reedit-message=*|append,--reedit-message=*)
+		__gitcomp "$(__git_refs)" "" "${cur##--reedit-message=}"
+		;;
+	add,--*|append,--*)
+		__gitcomp '--file= --message= --reedit-message=
+				--reuse-message='
+		;;
+	copy,--*)
+		__gitcomp '--stdin'
+		;;
+	prune,--*)
+		__gitcomp '--dry-run --verbose'
+		;;
+	prune,*)
 		;;
 	*)
-		__gitcomp "$(__git_refs)"
+		case "${COMP_WORDS[COMP_CWORD-1]}" in
+		-m|-F)
+			;;
+		*)
+			__gitcomp "$(__git_refs)"
+			;;
+		esac
 		;;
 	esac
 }
