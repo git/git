@@ -412,6 +412,10 @@ bisect_run () {
     done
 }
 
+bisect_log () {
+	test -s "$GIT_DIR/BISECT_LOG" || die "We are not bisecting."
+	cat "$GIT_DIR/BISECT_LOG"
+}
 
 case "$#" in
 0)
@@ -438,7 +442,7 @@ case "$#" in
     replay)
 	bisect_replay "$@" ;;
     log)
-	cat "$GIT_DIR/BISECT_LOG" ;;
+	bisect_log ;;
     run)
         bisect_run "$@" ;;
     *)
