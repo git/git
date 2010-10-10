@@ -875,6 +875,27 @@ test_expect_success \
 	 compare_diff_raw expect actual'
 
 test_expect_success \
+	'N: copy root directory by tree hash' \
+	'cat >expect <<-\EOF &&
+	:100755 000000 f1fb5da718392694d0076d677d6d0e364c79b0bc 0000000000000000000000000000000000000000 D	file3/newf
+	:100644 000000 7123f7f44e39be127c5eb701e5968176ee9d78b1 0000000000000000000000000000000000000000 D	file3/oldf
+	EOF
+	 root=$(git rev-parse refs/heads/branch^0^{tree}) &&
+	 cat >input <<-INPUT_END &&
+	commit refs/heads/N6
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy root directory by tree hash
+	COMMIT
+
+	from refs/heads/branch^0
+	M 040000 $root ""
+	INPUT_END
+	 git fast-import <input &&
+	 git diff-tree -C --find-copies-harder -r N4 N6 >actual &&
+	 compare_diff_raw expect actual'
+
+test_expect_success \
 	'N: modify copied tree' \
 	'cat >expect <<-\EOF &&
 	:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 C100	newdir/interesting	file3/file5
