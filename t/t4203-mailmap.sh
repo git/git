@@ -11,6 +11,7 @@ test_expect_success setup '
 	git commit -m initial &&
 	echo two >>one &&
 	git add one &&
+	test_tick &&
 	git commit --author "nick1 <bugs@company.xx>" -m second
 '
 
@@ -54,7 +55,7 @@ Repo Guy (1):
 
 EOF
 test_expect_success 'mailmap.file set' '
-	mkdir internal_mailmap &&
+	mkdir -p internal_mailmap &&
 	echo "Internal Guy <bugs@company.xx>" > internal_mailmap/.mailmap &&
 	git config mailmap.file internal_mailmap/.mailmap &&
 	git shortlog HEAD >actual &&
@@ -93,6 +94,40 @@ test_expect_success 'mailmap.file non-existant' '
 '
 
 cat >expect <<\EOF
+Internal Guy (1):
+      second
+
+Repo Guy (1):
+      initial
+
+EOF
+
+test_expect_success 'name entry after email entry' '
+	mkdir -p internal_mailmap &&
+	echo "<bugs@company.xy> <bugs@company.xx>" >internal_mailmap/.mailmap &&
+	echo "Internal Guy <bugs@company.xx>" >>internal_mailmap/.mailmap &&
+	git shortlog >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<\EOF
+Internal Guy (1):
+      second
+
+Repo Guy (1):
+      initial
+
+EOF
+
+test_expect_success 'name entry after email entry, case-insensitive' '
+	mkdir -p internal_mailmap &&
+	echo "<bugs@company.xy> <bugs@company.xx>" >internal_mailmap/.mailmap &&
+	echo "Internal Guy <BUGS@Company.xx>" >>internal_mailmap/.mailmap &&
+	git shortlog >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<\EOF
 A U Thor (1):
       initial
 
@@ -101,7 +136,7 @@ nick1 (1):
 
 EOF
 test_expect_success 'No mailmap files, but configured' '
-	rm .mailmap &&
+	rm -f .mailmap internal_mailmap/.mailmap &&
 	git shortlog HEAD >actual &&
 	test_cmp expect actual
 '
@@ -153,7 +188,7 @@ test_expect_success 'Shortlog output (complex mapping)' '
 	test_tick &&
 	git commit --author "CTO <cto@coompany.xx>" -m seventh &&
 
-	mkdir internal_mailmap &&
+	mkdir -p internal_mailmap &&
 	echo "Committed <committer@example.com>" > internal_mailmap/.mailmap &&
 	echo "<cto@company.xx>                       <cto@coompany.xx>" >> internal_mailmap/.mailmap &&
 	echo "Some Dude <some@dude.xx>         nick1 <bugs@company.xx>" >> internal_mailmap/.mailmap &&
