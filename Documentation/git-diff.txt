@@ -160,8 +160,12 @@ rewrites (very expensive).
 
 SEE ALSO
 --------
-linkgit:git-difftool[1]::
-	Show changes using common diff tools
+diff(1),
+linkgit:git-difftool[1],
+linkgit:git-log[1],
+linkgit:gitdiffcore[7],
+linkgit:git-format-patch[1],
+linkgit:git-apply[1]
 
 Author
 ------
