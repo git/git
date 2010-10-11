@@ -12,12 +12,12 @@ struct line_buffer {
 };
 #define LINE_BUFFER_INIT {"", STRBUF_INIT, NULL}
 
-int buffer_init(const char *filename);
-int buffer_deinit(void);
-char *buffer_read_line(void);
-char *buffer_read_string(uint32_t len);
-void buffer_copy_bytes(uint32_t len);
-void buffer_skip_bytes(uint32_t len);
-void buffer_reset(void);
+int buffer_init(struct line_buffer *buf, const char *filename);
+int buffer_deinit(struct line_buffer *buf);
+char *buffer_read_line(struct line_buffer *buf);
+char *buffer_read_string(struct line_buffer *buf, uint32_t len);
+void buffer_copy_bytes(struct line_buffer *buf, uint32_t len);
+void buffer_skip_bytes(struct line_buffer *buf, uint32_t len);
+void buffer_reset(struct line_buffer *buf);
 
 #endif
