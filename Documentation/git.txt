@@ -495,7 +495,7 @@ HEAD::
 	(i.e. the contents of `$GIT_DIR/refs/heads/<head>`).
 
 For a more complete list of ways to spell object names, see
-"SPECIFYING REVISIONS" section in linkgit:gitrevisions[1].
+"SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 
 
 File/Directory Structure
