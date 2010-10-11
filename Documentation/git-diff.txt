@@ -64,8 +64,9 @@ forced by --no-index.
 
 Just in case if you are doing something exotic, it should be
 noted that all of the <commit> in the above description, except
-for the last two forms that use ".." notations, can be any
-<tree-ish>.
+in the last two forms that use ".." notations, can be any
+<tree>.  The third form ('git diff <commit> <commit>') can also
+be used to compare two <blob> objects.
 
 For a more complete list of ways to spell <commit>, see
 "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
