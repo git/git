@@ -7,17 +7,16 @@
 #include "line_buffer.h"
 #include "strbuf.h"
 
-#define LINE_BUFFER_LEN 10000
 #define COPY_BUFFER_LEN 4096
-
-static char line_buffer[LINE_BUFFER_LEN];
-static struct strbuf blob_buffer = STRBUF_INIT;
-static FILE *infile;
+static struct line_buffer buf_ = LINE_BUFFER_INIT;
+static struct line_buffer *buf;
 
 int buffer_init(const char *filename)
 {
-	infile = filename ? fopen(filename, "r") : stdin;
-	if (!infile)
+	buf = &buf_;
+
+	buf->infile = filename ? fopen(filename, "r") : stdin;
+	if (!buf->infile)
 		return -1;
 	return 0;
 }
@@ -25,10 +24,10 @@ int buffer_init(const char *filename)
 int buffer_deinit(void)
 {
 	int err;
-	if (infile == stdin)
-		return ferror(infile);
-	err = ferror(infile);
-	err |= fclose(infile);
+	if (buf->infile == stdin)
+		return ferror(buf->infile);
+	err = ferror(buf->infile);
+	err |= fclose(buf->infile);
 	return err;
 }
 
@@ -36,13 +35,13 @@ int buffer_deinit(void)
 char *buffer_read_line(void)
 {
 	char *end;
-	if (!fgets(line_buffer, sizeof(line_buffer), infile))
+	if (!fgets(buf->line_buffer, sizeof(buf->line_buffer), buf->infile))
 		/* Error or data exhausted. */
 		return NULL;
-	end = line_buffer + strlen(line_buffer);
+	end = buf->line_buffer + strlen(buf->line_buffer);
 	if (end[-1] == '\n')
 		end[-1] = '\0';
-	else if (feof(infile))
+	else if (feof(buf->infile))
 		; /* No newline at end of file.  That's fine. */
 	else
 		/*
@@ -51,23 +50,23 @@ char *buffer_read_line(void)
 		 * but for now let's return an error.
 		 */
 		return NULL;
-	return line_buffer;
+	return buf->line_buffer;
 }
 
 char *buffer_read_string(uint32_t len)
 {
-	strbuf_reset(&blob_buffer);
-	strbuf_fread(&blob_buffer, len, infile);
-	return ferror(infile) ? NULL : blob_buffer.buf;
+	strbuf_reset(&buf->blob_buffer);
+	strbuf_fread(&buf->blob_buffer, len, buf->infile);
+	return ferror(buf->infile) ? NULL : buf->blob_buffer.buf;
 }
 
 void buffer_copy_bytes(uint32_t len)
 {
 	char byte_buffer[COPY_BUFFER_LEN];
 	uint32_t in;
-	while (len > 0 && !feof(infile) && !ferror(infile)) {
+	while (len > 0 && !feof(buf->infile) && !ferror(buf->infile)) {
 		in = len < COPY_BUFFER_LEN ? len : COPY_BUFFER_LEN;
-		in = fread(byte_buffer, 1, in, infile);
+		in = fread(byte_buffer, 1, in, buf->infile);
 		len -= in;
 		fwrite(byte_buffer, 1, in, stdout);
 		if (ferror(stdout)) {
@@ -81,14 +80,14 @@ void buffer_skip_bytes(uint32_t len)
 {
 	char byte_buffer[COPY_BUFFER_LEN];
 	uint32_t in;
-	while (len > 0 && !feof(infile) && !ferror(infile)) {
+	while (len > 0 && !feof(buf->infile) && !ferror(buf->infile)) {
 		in = len < COPY_BUFFER_LEN ? len : COPY_BUFFER_LEN;
-		in = fread(byte_buffer, 1, in, infile);
+		in = fread(byte_buffer, 1, in, buf->infile);
 		len -= in;
 	}
 }
 
 void buffer_reset(void)
 {
-	strbuf_release(&blob_buffer);
+	strbuf_release(&buf->blob_buffer);
 }
