@@ -21,6 +21,7 @@ int buffer_tmpfile_init(struct line_buffer *buf);
 FILE *buffer_tmpfile_rewind(struct line_buffer *buf);	/* prepare to write. */
 long buffer_tmpfile_prepare_to_read(struct line_buffer *buf);
 
+int buffer_ferror(struct line_buffer *buf);
 char *buffer_read_line(struct line_buffer *buf);
 char *buffer_read_string(struct line_buffer *buf, uint32_t len);
 int buffer_read_char(struct line_buffer *buf);

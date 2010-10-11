@@ -59,6 +59,11 @@ long buffer_tmpfile_prepare_to_read(struct line_buffer *buf)
 	return pos;
 }
 
+int buffer_ferror(struct line_buffer *buf)
+{
+	return ferror(buf->infile);
+}
+
 int buffer_read_char(struct line_buffer *buf)
 {
 	return fgetc(buf->infile);
