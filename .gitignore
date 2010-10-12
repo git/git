@@ -113,6 +113,7 @@
 /git-remote-ftp
 /git-remote-ftps
 /git-remote-fd
+/git-remote-ext
 /git-remote-testgit
 /git-repack
 /git-replace
