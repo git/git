@@ -168,4 +168,46 @@ test_expect_success 'catch attempt to copy missing data' '
 	test_must_fail test-svn-fe -d preimage copy.incomplete $len
 '
 
+test_expect_success 'copyfrom target to repeat data' '
+	printf foofoo >expect &&
+	printf "SVNQ%b%b%s" "QQ\006\004\003" "\0203\0100\003Q" "foo" |
+		q_to_nul >copytarget.repeat &&
+	len=$(wc -c <copytarget.repeat) &&
+	test-svn-fe -d preimage copytarget.repeat $len >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'copyfrom target out of order' '
+	printf foooof >expect &&
+	printf "SVNQ%b%b%s" \
+		"QQ\006\007\003" "\0203\0101\002\0101\001\0101Q" "foo" |
+		q_to_nul >copytarget.reverse &&
+	len=$(wc -c <copytarget.reverse) &&
+	test-svn-fe -d preimage copytarget.reverse $len >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'catch copyfrom future' '
+	printf "SVNQ%b%b%s" "QQ\004\004\003" "\0202\0101\002\0201" "XYZ" |
+		q_to_nul >copytarget.infuture &&
+	len=$(wc -c <copytarget.infuture) &&
+	test_must_fail test-svn-fe -d preimage copytarget.infuture $len
+'
+
+test_expect_success 'copy to sustain' '
+	printf XYXYXYXYXYXZ >expect &&
+	printf "SVNQ%b%b%s" "QQ\014\004\003" "\0202\0111Q\0201" "XYZ" |
+		q_to_nul >copytarget.sustain &&
+	len=$(wc -c <copytarget.sustain) &&
+	test-svn-fe -d preimage copytarget.sustain $len >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'catch copy that overflows' '
+	printf "SVNQ%b%b%s" "QQ\003\003\001" "\0201\0177Q" X |
+		q_to_nul >copytarget.overflow &&
+	len=$(wc -c <copytarget.overflow) &&
+	test_must_fail test-svn-fe -d preimage copytarget.overflow $len
+'
+
 test_done
