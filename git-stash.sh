@@ -373,7 +373,7 @@ apply_stash () {
 
 	if test -n "$GIT_QUIET"
 	then
-		export GIT_MERGE_VERBOSITY=0
+		GIT_MERGE_VERBOSITY=0 && export GIT_MERGE_VERBOSITY
 	fi
 	if git merge-recursive $b_tree -- $c_tree $w_tree
 	then
