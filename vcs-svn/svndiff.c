@@ -15,26 +15,47 @@
  *
  * svndiff0 ::= 'SVN\0' window*
  * window ::= int int int int int instructions inline_data;
+ * instructions ::= instruction*;
+ * instruction ::= view_selector int int
+ *   | copyfrom_data int
+ *   | packed_view_selector int
+ *   | packed_copyfrom_data
+ *   ;
+ * copyfrom_data ::= # binary 10 000000;
+ * packed_copyfrom_data ::= # copyfrom_data OR-ed with 6 bit value;
  * int ::= highdigit* lowdigit;
  * highdigit ::= # binary 1000 0000 OR-ed with 7 bit value;
  * lowdigit ::= # 7 bit value;
  */
+
+#define INSN_MASK	0xc0
+#define INSN_COPYFROM_DATA	0x80
+#define OPERAND_MASK	0x3f
 
 #define VLI_CONTINUE	0x80
 #define VLI_DIGIT_MASK	0x7f
 #define VLI_BITS_PER_DIGIT 7
 
 struct window {
+	struct strbuf out;
 	struct strbuf instructions;
 	struct strbuf data;
 };
 
-#define WINDOW_INIT	{ STRBUF_INIT, STRBUF_INIT }
+#define WINDOW_INIT	{ STRBUF_INIT, STRBUF_INIT, STRBUF_INIT }
 
 static void window_release(struct window *ctx)
 {
+	strbuf_release(&ctx->out);
 	strbuf_release(&ctx->instructions);
 	strbuf_release(&ctx->data);
+}
+
+static int write_strbuf(struct strbuf *sb, FILE *out)
+{
+	if (fwrite(sb->buf, 1, sb->len, out) == sb->len)	/* Success. */
+		return 0;
+	return error("cannot write delta postimage: %s", strerror(errno));
 }
 
 static int error_short_read(struct line_buffer *input)
@@ -93,6 +114,25 @@ static int read_int(struct line_buffer *in, uintmax_t *result, off_t *len)
 	return error_short_read(in);
 }
 
+static int parse_int(const char **buf, size_t *result, const char *end)
+{
+	size_t rv = 0;
+	const char *pos;
+	for (pos = *buf; pos != end; pos++) {
+		unsigned char ch = *pos;
+
+		rv <<= VLI_BITS_PER_DIGIT;
+		rv += (ch & VLI_DIGIT_MASK);
+		if (ch & VLI_CONTINUE)
+			continue;
+
+		*result = rv;
+		*buf = pos + 1;
+		return 0;
+	}
+	return error("invalid delta: unexpected end of instructions section");
+}
+
 static int read_offset(struct line_buffer *in, off_t *result, off_t *len)
 {
 	uintmax_t val;
@@ -115,7 +155,64 @@ static int read_length(struct line_buffer *in, size_t *result, off_t *len)
 	return 0;
 }
 
-static int apply_one_window(struct line_buffer *delta, off_t *delta_len)
+static int copyfrom_data(struct window *ctx, size_t *data_pos, size_t nbytes)
+{
+	const size_t pos = *data_pos;
+	if (unsigned_add_overflows(pos, nbytes) ||
+	    pos + nbytes > ctx->data.len)
+		return error("invalid delta: copies unavailable inline data");
+	strbuf_add(&ctx->out, ctx->data.buf + pos, nbytes);
+	*data_pos += nbytes;
+	return 0;
+}
+
+static int parse_first_operand(const char **buf, size_t *out, const char *end)
+{
+	size_t result = (unsigned char) *(*buf)++ & OPERAND_MASK;
+	if (result) {	/* immediate operand */
+		*out = result;
+		return 0;
+	}
+	return parse_int(buf, out, end);
+}
+
+static int execute_one_instruction(struct window *ctx,
+				const char **instructions, size_t *data_pos)
+{
+	unsigned int instruction;
+	const char *insns_end = ctx->instructions.buf + ctx->instructions.len;
+	size_t nbytes;
+	assert(ctx);
+	assert(instructions && *instructions);
+	assert(data_pos);
+
+	instruction = (unsigned char) **instructions;
+	if (parse_first_operand(instructions, &nbytes, insns_end))
+		return -1;
+	if ((instruction & INSN_MASK) != INSN_COPYFROM_DATA)
+		return error("Unknown instruction %x", instruction);
+	return copyfrom_data(ctx, data_pos, nbytes);
+}
+
+static int apply_window_in_core(struct window *ctx)
+{
+	const char *instructions;
+	size_t data_pos = 0;
+
+	/*
+	 * Fill ctx->out.buf using data from the source, target,
+	 * and inline data views.
+	 */
+	for (instructions = ctx->instructions.buf;
+	     instructions != ctx->instructions.buf + ctx->instructions.len;
+	     )
+		if (execute_one_instruction(ctx, &instructions, &data_pos))
+			return -1;
+	return 0;
+}
+
+static int apply_one_window(struct line_buffer *delta, off_t *delta_len,
+			    FILE *out)
 {
 	struct window ctx = WINDOW_INIT;
 	size_t out_len;
@@ -127,13 +224,17 @@ static int apply_one_window(struct line_buffer *delta, off_t *delta_len)
 	if (read_length(delta, &out_len, delta_len) ||
 	    read_length(delta, &instructions_len, delta_len) ||
 	    read_length(delta, &data_len, delta_len) ||
-	    read_chunk(delta, delta_len, &ctx.instructions, instructions_len))
+	    read_chunk(delta, delta_len, &ctx.instructions, instructions_len) ||
+	    read_chunk(delta, delta_len, &ctx.data, data_len))
 		goto error_out;
-	if (instructions_len) {
-		error("What do you think I am?  A delta applier?");
+	strbuf_grow(&ctx.out, out_len);
+	if (apply_window_in_core(&ctx))
+		goto error_out;
+	if (ctx.out.len != out_len) {
+		error("invalid delta: incorrect postimage length");
 		goto error_out;
 	}
-	if (read_chunk(delta, delta_len, &ctx.data, data_len))
+	if (write_strbuf(&ctx.out, out))
 		goto error_out;
 	window_release(&ctx);
 	return 0;
@@ -156,7 +257,7 @@ int svndiff0_apply(struct line_buffer *delta, off_t delta_len,
 		if (read_offset(delta, &pre_off, &delta_len) ||
 		    read_length(delta, &pre_len, &delta_len) ||
 		    move_window(preimage, pre_off, pre_len) ||
-		    apply_one_window(delta, &delta_len))
+		    apply_one_window(delta, &delta_len, postimage))
 			return -1;
 	}
 	return 0;

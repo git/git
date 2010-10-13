@@ -138,4 +138,35 @@ test_expect_success 'reject truncated inline data (after instruction section)' '
 	test_must_fail test-svn-fe -d preimage insn.trunc 11
 '
 
+test_expect_success 'copyfrom_data' '
+	echo hi >expect &&
+	printf "SVNQ%b%b%b" "QQ\003\001\003" "\0203" "hi\n" | q_to_nul >copydat &&
+	test-svn-fe -d preimage copydat 13 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'multiple copyfrom_data' '
+	echo hi >expect &&
+	printf "SVNQ%b%b%b%b%b" "QQ\003\002\003" "\0201\0202" "hi\n" \
+		"QQQ\002Q" "\0200Q" | q_to_nul >copy.multi &&
+	len=$(wc -c <copy.multi) &&
+	test-svn-fe -d preimage copy.multi $len >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'incomplete multiple insn' '
+	printf "SVNQ%b%b%b" "QQ\003\002\003" "\0203\0200" "hi\n" |
+		q_to_nul >copy.partial &&
+	len=$(wc -c <copy.partial) &&
+	test_must_fail test-svn-fe -d preimage copy.partial $len
+'
+
+test_expect_success 'catch attempt to copy missing data' '
+	printf "SVNQ%b%b%s%b%s" "QQ\002\002\001" "\0201\0201" "X" \
+			"QQQQ\002" "YZ" |
+		q_to_nul >copy.incomplete &&
+	len=$(wc -c <copy.incomplete) &&
+	test_must_fail test-svn-fe -d preimage copy.incomplete $len
+'
+
 test_done
