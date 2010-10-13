@@ -24,6 +24,17 @@
 #define VLI_DIGIT_MASK	0x7f
 #define VLI_BITS_PER_DIGIT 7
 
+struct window {
+	struct strbuf data;
+};
+
+#define WINDOW_INIT	{ STRBUF_INIT }
+
+static void window_release(struct window *ctx)
+{
+	strbuf_release(&ctx->data);
+}
+
 static int error_short_read(struct line_buffer *input)
 {
 	if (buffer_ferror(input))
@@ -31,24 +42,30 @@ static int error_short_read(struct line_buffer *input)
 	return error("invalid delta: unexpected end of file");
 }
 
+static int read_chunk(struct line_buffer *delta, off_t *delta_len,
+		      struct strbuf *buf, size_t len)
+{
+	strbuf_reset(buf);
+	if (len > *delta_len ||
+	    buffer_read_binary(delta, buf, len) != len)
+		return error_short_read(delta);
+	*delta_len -= buf->len;
+	return 0;
+}
+
 static int read_magic(struct line_buffer *in, off_t *len)
 {
 	static const char magic[] = {'S', 'V', 'N', '\0'};
 	struct strbuf sb = STRBUF_INIT;
 
-	if (*len < sizeof(magic) ||
-	    buffer_read_binary(in, &sb, sizeof(magic)) != sizeof(magic)) {
-		error_short_read(in);
+	if (read_chunk(in, len, &sb, sizeof(magic))) {
 		strbuf_release(&sb);
 		return -1;
 	}
-
 	if (memcmp(sb.buf, magic, sizeof(magic))) {
 		strbuf_release(&sb);
 		return error("invalid delta: unrecognized file type");
 	}
-
-	*len -= sizeof(magic);
 	strbuf_release(&sb);
 	return 0;
 }
@@ -98,6 +115,7 @@ static int read_length(struct line_buffer *in, size_t *result, off_t *len)
 
 static int apply_one_window(struct line_buffer *delta, off_t *delta_len)
 {
+	struct window ctx = WINDOW_INIT;
 	size_t out_len;
 	size_t instructions_len;
 	size_t data_len;
@@ -107,12 +125,18 @@ static int apply_one_window(struct line_buffer *delta, off_t *delta_len)
 	if (read_length(delta, &out_len, delta_len) ||
 	    read_length(delta, &instructions_len, delta_len) ||
 	    read_length(delta, &data_len, delta_len))
-		return -1;
-	if (instructions_len)
-		return error("What do you think I am?  A delta applier?");
-	if (data_len)
-		return error("No support for inline data yet");
+		goto error_out;
+	if (instructions_len) {
+		error("What do you think I am?  A delta applier?");
+		goto error_out;
+	}
+	if (read_chunk(delta, delta_len, &ctx.data, data_len))
+		goto error_out;
+	window_release(&ctx);
 	return 0;
+error_out:
+	window_release(&ctx);
+	return -1;
 }
 
 int svndiff0_apply(struct line_buffer *delta, off_t delta_len,
