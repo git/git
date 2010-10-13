@@ -121,11 +121,10 @@ test_expect_success 'preimage view: reject truncated preimage' '
 	test_must_fail test-svn-fe -d preimage clear.longread 9
 '
 
-test_expect_success 'inline data' '
+test_expect_success 'forbid unconsumed inline data' '
 	printf "SVNQ%b%s%b%s" "QQQQ\003" "bar" "QQQQ\001" "x" |
 		q_to_nul >inline.clear &&
-	test-svn-fe -d preimage inline.clear 18 >actual &&
-	test_cmp empty actual
+	test_must_fail test-svn-fe -d preimage inline.clear 18 >actual
 '
 
 test_expect_success 'reject truncated inline data' '

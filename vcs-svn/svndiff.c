@@ -208,6 +208,8 @@ static int apply_window_in_core(struct window *ctx)
 	     )
 		if (execute_one_instruction(ctx, &instructions, &data_pos))
 			return -1;
+	if (data_pos != ctx->data.len)
+		return error("invalid delta: does not copy all inline data");
 	return 0;
 }
 
