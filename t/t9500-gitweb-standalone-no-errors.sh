@@ -650,25 +650,26 @@ test_debug 'cat gitweb.log'
 # ----------------------------------------------------------------------
 # syntax highlighting
 
-cat >>gitweb_config.perl <<\EOF
-$feature{'highlight'}{'override'} = 1;
-EOF
 
 highlight --version >/dev/null 2>&1
 if [ $? -eq 127 ]; then
 	say "Skipping syntax highlighting test, because 'highlight' was not found"
 else
 	test_set_prereq HIGHLIGHT
+	cat >>gitweb_config.perl <<-\EOF
+	our $highlight_bin = "highlight";
+	$feature{'highlight'}{'override'} = 1;
+	EOF
 fi
 
 test_expect_success HIGHLIGHT \
-	'syntax highlighting (no highlight)' \
+	'syntax highlighting (no highlight, unknown syntax)' \
 	'git config gitweb.highlight yes &&
 	 gitweb_run "p=.git;a=blob;f=file"'
 test_debug 'cat gitweb.log'
 
 test_expect_success HIGHLIGHT \
-	'syntax highlighting (highlighted)' \
+	'syntax highlighting (highlighted, shell script)' \
 	'git config gitweb.highlight yes &&
 	 echo "#!/usr/bin/sh" > test.sh &&
 	 git add test.sh &&
