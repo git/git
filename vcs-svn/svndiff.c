@@ -4,6 +4,7 @@
  */
 
 #include "git-compat-util.h"
+#include "sliding_window.h"
 #include "line_buffer.h"
 #include "svndiff.h"
 
@@ -127,6 +128,7 @@ int svndiff0_apply(struct line_buffer *delta, off_t delta_len,
 
 		if (read_offset(delta, &pre_off, &delta_len) ||
 		    read_length(delta, &pre_len, &delta_len) ||
+		    move_window(preimage, pre_off, pre_len) ||
 		    apply_one_window(delta, &delta_len))
 			return -1;
 	}
