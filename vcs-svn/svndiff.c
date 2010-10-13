@@ -25,13 +25,15 @@
 #define VLI_BITS_PER_DIGIT 7
 
 struct window {
+	struct strbuf instructions;
 	struct strbuf data;
 };
 
-#define WINDOW_INIT	{ STRBUF_INIT }
+#define WINDOW_INIT	{ STRBUF_INIT, STRBUF_INIT }
 
 static void window_release(struct window *ctx)
 {
+	strbuf_release(&ctx->instructions);
 	strbuf_release(&ctx->data);
 }
 
@@ -124,7 +126,8 @@ static int apply_one_window(struct line_buffer *delta, off_t *delta_len)
 	/* "source view" offset and length already handled; */
 	if (read_length(delta, &out_len, delta_len) ||
 	    read_length(delta, &instructions_len, delta_len) ||
-	    read_length(delta, &data_len, delta_len))
+	    read_length(delta, &data_len, delta_len) ||
+	    read_chunk(delta, delta_len, &ctx.instructions, instructions_len))
 		goto error_out;
 	if (instructions_len) {
 		error("What do you think I am?  A delta applier?");

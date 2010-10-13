@@ -133,4 +133,9 @@ test_expect_success 'reject truncated inline data' '
 	test_must_fail test-svn-fe -d preimage inline.trunc 10
 '
 
+test_expect_success 'reject truncated inline data (after instruction section)' '
+	printf "SVNQ%b%b%s" "QQ\001\001\003" "\0201" "b" | q_to_nul >insn.trunc &&
+	test_must_fail test-svn-fe -d preimage insn.trunc 11
+'
+
 test_done
