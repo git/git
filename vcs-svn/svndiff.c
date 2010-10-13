@@ -24,6 +24,7 @@
  * view_selector ::= copyfrom_source
  *   | copyfrom_target
  *   ;
+ * copyfrom_source ::= # binary 00 000000;
  * copyfrom_target ::= # binary 01 000000;
  * copyfrom_data ::= # binary 10 000000;
  * packed_view_selector ::= # view_selector OR-ed with 6 bit value;
@@ -34,6 +35,7 @@
  */
 
 #define INSN_MASK	0xc0
+#define INSN_COPYFROM_SOURCE	0x00
 #define INSN_COPYFROM_TARGET	0x40
 #define INSN_COPYFROM_DATA	0x80
 #define OPERAND_MASK	0x3f
@@ -43,12 +45,13 @@
 #define VLI_BITS_PER_DIGIT 7
 
 struct window {
+	struct sliding_view *in;
 	struct strbuf out;
 	struct strbuf instructions;
 	struct strbuf data;
 };
 
-#define WINDOW_INIT	{ STRBUF_INIT, STRBUF_INIT, STRBUF_INIT }
+#define WINDOW_INIT(w)	{ (w), STRBUF_INIT, STRBUF_INIT, STRBUF_INIT }
 
 static void window_release(struct window *ctx)
 {
@@ -161,6 +164,19 @@ static int read_length(struct line_buffer *in, size_t *result, off_t *len)
 	return 0;
 }
 
+static int copyfrom_source(struct window *ctx, const char **instructions,
+			   size_t nbytes, const char *insns_end)
+{
+	size_t offset;
+	if (parse_int(instructions, &offset, insns_end))
+		return -1;
+	if (unsigned_add_overflows(offset, nbytes) ||
+	    offset + nbytes > ctx->in->width)
+		return error("invalid delta: copies source data outside view");
+	strbuf_add(&ctx->out, ctx->in->buf.buf + offset, nbytes);
+	return 0;
+}
+
 static int copyfrom_target(struct window *ctx, const char **instructions,
 			   size_t nbytes, const char *instructions_end)
 {
@@ -209,12 +225,14 @@ static int execute_one_instruction(struct window *ctx,
 	if (parse_first_operand(instructions, &nbytes, insns_end))
 		return -1;
 	switch (instruction & INSN_MASK) {
+	case INSN_COPYFROM_SOURCE:
+		return copyfrom_source(ctx, instructions, nbytes, insns_end);
 	case INSN_COPYFROM_TARGET:
 		return copyfrom_target(ctx, instructions, nbytes, insns_end);
 	case INSN_COPYFROM_DATA:
 		return copyfrom_data(ctx, data_pos, nbytes);
 	default:
-		return error("Unknown instruction %x", instruction);
+		return error("invalid delta: unrecognized instruction");
 	}
 }
 
@@ -238,9 +256,9 @@ static int apply_window_in_core(struct window *ctx)
 }
 
 static int apply_one_window(struct line_buffer *delta, off_t *delta_len,
-			    FILE *out)
+			    struct sliding_view *preimage, FILE *out)
 {
-	struct window ctx = WINDOW_INIT;
+	struct window ctx = WINDOW_INIT(preimage);
 	size_t out_len;
 	size_t instructions_len;
 	size_t data_len;
@@ -283,7 +301,7 @@ int svndiff0_apply(struct line_buffer *delta, off_t delta_len,
 		if (read_offset(delta, &pre_off, &delta_len) ||
 		    read_length(delta, &pre_len, &delta_len) ||
 		    move_window(preimage, pre_off, pre_len) ||
-		    apply_one_window(delta, &delta_len, postimage))
+		    apply_one_window(delta, &delta_len, preimage, postimage))
 			return -1;
 	}
 	return 0;

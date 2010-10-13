@@ -210,4 +210,39 @@ test_expect_success 'catch copy that overflows' '
 	test_must_fail test-svn-fe -d preimage copytarget.overflow $len
 '
 
+test_expect_success 'copyfrom source' '
+	printf foo >expect &&
+	printf "SVNQ%b%b" "Q\003\003\002Q" "\003Q" | q_to_nul >copysource.all &&
+	test-svn-fe -d preimage copysource.all 11 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'copy backwards' '
+	printf oof >expect &&
+	printf "SVNQ%b%b" "Q\003\003\006Q" "\001\002\001\001\001Q" |
+		q_to_nul >copysource.rev &&
+	test-svn-fe -d preimage copysource.rev 15 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'offsets are relative to window' '
+	printf fo >expect &&
+	printf "SVNQ%b%b%b%b" "Q\003\001\002Q" "\001Q" \
+		"\002\001\001\002Q" "\001Q" |
+		q_to_nul >copysource.two &&
+	test-svn-fe -d preimage copysource.two 18 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'example from notes/svndiff' '
+	printf aaaaccccdddddddd >expect &&
+	printf aaaabbbbcccc >source &&
+	printf "SVNQ%b%b%s" "Q\014\020\007\001" \
+		"\004Q\004\010\0201\0107\010" d |
+		q_to_nul >delta.example &&
+	len=$(wc -c <delta.example) &&
+	test-svn-fe -d source delta.example $len >actual &&
+	test_cmp expect actual
+'
+
 test_done
