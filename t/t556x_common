@@ -50,7 +50,7 @@ get_static_files() {
 }
 
 SMART=smart
-export GIT_HTTP_EXPORT_ALL=1
+GIT_HTTP_EXPORT_ALL=1 && export GIT_HTTP_EXPORT_ALL
 test_expect_success 'direct refs/heads/master not found' '
 	log_div "refs/heads/master"
 	GET refs/heads/master "404 Not Found"
@@ -73,7 +73,7 @@ test_expect_success 'export if git-daemon-export-ok' '
         get_static_files "200 OK"
 '
 SMART=smart
-export GIT_HTTP_EXPORT_ALL=1
+GIT_HTTP_EXPORT_ALL=1 && export GIT_HTTP_EXPORT_ALL
 test_expect_success 'static file if http.getanyfile true is ok' '
 	log_div "getanyfile true"
 	config http.getanyfile true &&

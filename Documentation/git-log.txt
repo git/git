@@ -31,7 +31,7 @@ OPTIONS
 	either <since> or <until> is omitted, it defaults to
 	`HEAD`, i.e. the tip of the current branch.
 	For a more complete list of ways to spell <since>
-	and <until>, see linkgit:gitrevisions[1].
+	and <until>, see linkgit:gitrevisions[7].
 
 --follow::
 	Continue listing the history of a file beyond renames
