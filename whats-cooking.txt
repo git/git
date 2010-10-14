@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2010, #07; Wed, 29)
-X-master-at: 9855b08d35edf8a8a441f24ff7b00e220a29f261
-X-next-at: 92b87a9bab1a84261d2381e813e58577967bdc79
+Subject: What's cooking in git.git (Oct 2010, #01; Wed, 13)
+X-master-at: 38a18873b21f6f2eebedc65aff2249fd6ec2168c
+X-next-at: 53ea256ab9071d54b4f09772408e442ad43bc73a
 
-What's cooking in git.git (Sep 2010, #07; Wed, 29)
+What's cooking in git.git (Oct 2010, #01; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -11,88 +11,25 @@ only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
 marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
-With fixes to a few brown paper bag regressions to "git stash", 1.7.3.1 is
-out.  The first batch of topics that have been cooking have graduated on
-the 'master' front.
-
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/send-email-catfile (2010-09-14) 1 commit
-  (merged to 'next' on 2010-09-22 at 5c53513)
- + send-email: use catfile() to concatenate files
+* ab/makefile-track-cc (2010-09-12) 1 commit
+  (merged to 'next' on 2010-09-27 at 51daee0)
+ + Makefile: add CC to TRACK_CFLAGS
 
-* bc/fortran-userdiff (2010-09-10) 1 commit
-  (merged to 'next' on 2010-09-22 at f0c8ddb)
- + userdiff.c: add builtin fortran regex patterns
+* bc/fix-cherry-pick-root (2010-09-27) 1 commit
+  (merged to 'next' on 2010-09-27 at e27f4c9)
+ + builtin/revert.c: don't dereference a NULL pointer
 
-* gb/shell-ext (2010-08-27) 6 commits
-  (merged to 'next' on 2010-09-22 at e529b2a)
- + shell: Display errors from improperly-formatted command lines
- + Merge branch 'gb/split-cmdline-errmsg' into gb/shell-ext
- + shell: Rewrite documentation and improve error message
- + Add sample commands for git-shell
- + Add interactive mode to git-shell for user-friendliness
- + Allow creation of arbitrary git-shell commands
+* cw/gitweb-hilite-config (2010-09-21) 1 commit
+  (merged to 'next' on 2010-09-27 at dd234ba)
+ + Enable highlight executable path as a configuration option
 
-* jc/grep-header-all-match-fix (2010-09-12) 2 commits
-  (merged to 'next' on 2010-09-22 at c78a8aa)
- + log --author: take union of multiple "author" requests
- + grep: move logic to compile header pattern into a separate helper
- (this branch is used by jc/grep-header-all-match-fix-debug.)
-
-We might want to give a more comprehensive revamp to the "filter by
-grepping the commit log message" feature some day, somehow allowing the
-full "git grep" boolean expression.  But until then, this should suffice.
-
-* jc/no-branch-name-with-dash-at-front (2010-09-14) 1 commit
-  (merged to 'next' on 2010-09-22 at 5918d77)
- + disallow branch names that start with a hyphen
-
-This came up at $WORK.
-
-* jc/pickaxe-grep (2010-08-31) 4 commits
-  (merged to 'next' on 2010-09-22 at 2a33735)
- + diff/log -G<pattern>: tests
- + git log/diff: add -G<regexp> that greps in the patch text
- + diff: pass the entire diff-options to diffcore_pickaxe()
- + gitdiffcore doc: update pickaxe description
-
-This is a re-roll of "grepping inside the log -p output" which is a
-feature that is often asked for when people hear about -S option.
-
-* jk/read-tree-empty (2010-09-10) 1 commit
-  (merged to 'next' on 2010-09-22 at a6a00bd)
- + read-tree: deprecate syntax without tree-ish args
-
-* jn/gitweb-test-lib (2010-09-12) 2 commits
-  (merged to 'next' on 2010-09-22 at 8a471ba)
- + t/gitweb-lib.sh: Use tabs for indent consistently
- + t/gitweb-lib.sh: Use GIT_BUILD_DIR
-
-* po/etc-gitattributes (2010-09-01) 1 commit
-  (merged to 'next' on 2010-09-22 at dc64419)
- + Add global and system-wide gitattributes
-
-* rr/fmt-merge-msg (2010-09-08) 5 commits
-  (merged to 'next' on 2010-09-22 at 958ca95)
- + t6200-fmt-merge-msg: Exercise '--log' to configure shortlog length
- + t6200-fmt-merge-msg: Exercise 'merge.log' to configure shortlog length
- + merge: Make 'merge.log' an integer or boolean option
- + merge: Make '--log' an integer option for number of shortlog entries
- + fmt_merge_msg: Change fmt_merge_msg API to accept shortlog_len
-
-* rr/format-patch-count-without-merges (2010-08-28) 2 commits
-  (merged to 'next' on 2010-09-22 at 4ae3edc)
- + format-patch: Don't go over merge commits
- + t4014-format-patch: Call test_tick before committing
-
-* tr/send-email-refuse-sending-unedited-cover-letter (2009-06-08) 1 commit
-  (merged to 'next' on 2010-09-22 at e306400)
- + send-email: Refuse to send cover-letter template subject
-
---------------------------------------------------
-[New Topics]
+* jk/repack-reuse-object (2010-09-27) 2 commits
+  (merged to 'next' on 2010-09-27 at 5719f72)
+ + Documentation: pack.compression: explain how to recompress
+ + repack: add -F flag to let user choose between --no-reuse-delta/object
 
 * mg/reset-doc (2010-09-15) 6 commits
   (merged to 'next' on 2010-09-22 at 2a10b71)
@@ -103,114 +40,183 @@ feature that is often asked for when people hear about -S option.
  + git-reset.txt: reset does not change files in target
  + git-reset.txt: clarify branch vs. branch head
 
-Will merge to 'master' shortly.
-
-* ab/makefile-track-cc (2010-09-12) 1 commit
-  (merged to 'next' on 2010-09-27 at 51daee0)
- + Makefile: add CC to TRACK_CFLAGS
-
-Will merge to 'master' shortly.
-
-* ab/require-perl-5.8 (2010-09-24) 2 commits
-  (merged to 'next' on 2010-09-27 at 1fcdd3c)
- + perl: use "use warnings" instead of -w
- + perl: bump the required Perl version to 5.8 from 5.6.[21]
-
-* bc/fix-cherry-pick-root (2010-09-27) 1 commit
-  (merged to 'next' on 2010-09-27 at e27f4c9)
- + builtin/revert.c: don't dereference a NULL pointer
-
-Will merge to 'master' shortly.
-
-* cw/gitweb-hilite-config (2010-09-21) 1 commit
-  (merged to 'next' on 2010-09-27 at dd234ba)
- + Enable highlight executable path as a configuration option
-
-Will merge to 'master' shortly.
-
-* en/and-cascade-tests (2010-09-26) 12 commits
- - Add missing &&'s throughout the testsuite
- - t7601 (merge-pull-config): add missing &&
- - t7001 (mv): add missing &&
- - t6016 (rev-list-graph-simplify-history): add missing &&
- - t4026 (color): remove unneeded and unchained command
- - t4019 (diff-wserror): add lots of missing &&
- - t3600 (rm): add lots of missing &&
- - t4202 (log): Replace '<git-command> || :' with test_might_fail
- - t4002 (diff-basic): use test_might_fail for commands that might fail
- - t100[12] (read-tree-m-2way, read_tree_m_u_2way): add missing &&
- - t4017 (diff-retval): replace manual exit code check with test_expect_code
- - t3020 (ls-files-error-unmatch): remove stray '1' from end of file
-
-I've rejected a few patches in the series; will merge this to 'next'
-perhaps after a reroll or two.
-
-* jk/no-textconv-symlink (2010-09-21) 1 commit
- - diff: don't use pathname-based diff drivers for symlinks
- (this branch is used by ks/no-textconv-symlink.)
-
-* ks/no-textconv-symlink (2010-09-29) 3 commits
- - blame,cat-file --textconv: Don't assume mode is ``S_IFREF | 0664''
- - blame,cat-file: Demonstrate --textconv is wrongly running converter on symlinks
- - blame,cat-file: Prepare --textconv tests for correctly-failing conversion program
- (this branch uses jk/no-textconv-symlink.)
-
-* jk/repack-reuse-object (2010-09-27) 2 commits
-  (merged to 'next' on 2010-09-27 at 5719f72)
- + Documentation: pack.compression: explain how to recompress
- + repack: add -F flag to let user choose between --no-reuse-delta/object
-
-Will merge to 'master' shortly.
-
-* jp/send-email-to-cmd (2010-09-24) 1 commit
- - git-send-email.perl: Add --to-cmd
-
-Should be Ok for 'next'.
-
-* kb/merge-recursive-rename-threshold (2010-09-27) 2 commits
- - diff: add synonyms for -M, -C, -B
- - merge-recursive: option to specify rename threshold
- (this branch uses jf/merge-ignore-ws.)
-
-Should be Ok for 'next'.
-
-* mg/fix-build-remote-helpers (2010-09-17) 1 commit
- - remote-helpers: build in platform independent directory
-
-Should be Ok for 'next'.
-
-* nd/struct-pathspec (2010-09-20) 5 commits
- - ce_path_match: drop prefix matching in favor of match_pathspec
- - Convert ce_path_match() to use struct pathspec
- - tree_entry_interesting: turn to match_pathspec if wildcard is present
- - pathspec: add tree_recursive_diff parameter
- - pathspec: mark wildcard pathspecs from the beginning
- (this branch uses en/object-list-with-pathspec.)
-
-* en/object-list-with-pathspec (2010-09-20) 8 commits
- - Add testcases showing how pathspecs are handled with rev-list --objects
- - Make rev-list --objects work together with pathspecs
- - Move tree_entry_interesting() to tree-walk.c and export it
- - tree_entry_interesting(): remove dependency on struct diff_options
- - Convert struct diff_options to use struct pathspec
- - pathspec: cache string length when initialize pathspec
- - diff-no-index: use diff_tree_setup_paths()
- - Add struct pathspec
- (this branch is used by nd/struct-pathspec.)
-
-* sb/send-email-use-to-from-input (2010-09-29) 1 commit
- - send-email: Use To: headers in patch files
-
-Should be Ok for 'next'.
-
-* tc/smart-http-post-redirect (2010-09-25) 1 commit
- - smart-http: Don't change POST to GET when following redirect
-
 * uk/fix-author-ident-sed-script (2010-09-23) 1 commit
   (merged to 'next' on 2010-09-27 at 5ad7d90)
  + get_author_ident_from_commit(): remove useless quoting
 
-Will merge to 'master' shortly.
+--------------------------------------------------
+[New Topics]
+
+* ab/send-email-perl (2010-09-30) 16 commits
+  (merged to 'next' on 2010-09-30 at cf8e58e)
+ + send-email: extract_valid_address use qr// regexes
+ + send-email: is_rfc2047_quoted use qr// regexes
+ + send-email: use Perl idioms in while loop
+ + send-email: make_message_id use "require" instead of "use"
+ + send-email: send_message die on $!, not $?
+ + send-email: use (?:) instead of () if no match variables are needed
+ + send-email: sanitize_address use qq["foo"], not "\"foo\""
+ + send-email: sanitize_address use $foo, not "$foo"
+ + send-email: use \E***\Q instead of \*\*\*
+ + send-email: cleanup_compose_files doesn't need a prototype
+ + send-email: unique_email_list doesn't need a prototype
+ + send-email: file_declares_8bit_cte doesn't need a prototype
+ + send-email: get_patch_subject doesn't need a prototype
+ + send-email: use lexical filehandles during sending
+ + send-email: use lexical filehandles for $compose
+ + send-email: use lexical filehandle for opendir
+
+* cb/diff-fname-optim (2010-09-26) 3 commits
+ - diff: avoid repeated scanning while looking for funcname
+ - do not search functions for patch ID
+ - add rebase patch id tests
+
+* en/merge-recursive (2010-09-20) 38 commits
+ - merge-recursive: Remove redundant path clearing for D/F conflicts
+ - merge-recursive: Make room for directories in D/F conflicts
+ - handle_delete_modify(): Check whether D/F conflicts are still present
+ - merge_content(): Check whether D/F conflicts are still present
+ - conflict_rename_rename_1to2(): Fix checks for presence of D/F conflicts
+ - conflict_rename_delete(): Check whether D/F conflicts are still present
+ - merge-recursive: Delay modify/delete conflicts if D/F conflict present
+ - merge-recursive: Delay content merging for renames
+ - merge-recursive: Delay handling of rename/delete conflicts
+ - merge-recursive: Move handling of double rename of one file to other file
+ - merge-recursive: Move handling of double rename of one file to two
+ - merge-recursive: Avoid doubly merging rename/add conflict contents
+ - merge-recursive: Update merge_content() call signature
+ - merge-recursive: Update conflict_rename_rename_1to2() call signature
+ - merge-recursive: Structure process_df_entry() to handle more cases
+ - merge-recursive: Have process_entry() skip D/F or rename entries
+ - merge-recursive: New function to assist resolving renames in-core only
+ - merge-recursive: New data structures for deferring of D/F conflicts
+ - merge-recursive: Move process_entry's content merging into a function
+ - merge-recursive: Move delete/modify handling into dedicated function
+ - merge-recursive: Move rename/delete handling into dedicated function
+ - merge-recursive: Nuke rename/directory conflict detection
+ - merge-recursive: Rename conflict_rename_rename*() for clarity
+ - merge-recursive: Small code clarification -- variable name and comments
+ - t6036: Add testcase for undetected conflict
+ - t6036: Add a second testcase similar to the first but with content changes
+ - t6036: Test index and worktree state, not just that merge fails
+ - t6020: Add a testcase for modify/delete + directory/file conflict
+ - t6020: Modernize style a bit
+ - t6022: Add tests for rename/rename combined with D/F conflicts
+ - t6022: Add paired rename+D/F conflict: (two/file, one/file) -> (one, two)
+ - t6022: Add tests with both rename source & dest involved in D/F conflicts
+ - t6022: Add tests for reversing order of merges when D/F conflicts present
+ - t6022: Add test combinations of {content conflict?, D/F conflict remains?}
+ - t6032: Add a test checking for excessive output from merge
+ - merge-recursive: Restructure showing how to chain more process_* functions
+ - t3030: Add a testcase for resolvable rename/add conflict with symlinks
+ - Merge branch 'en/rename-d-f' into en/merge-recursive
+ (this branch uses en/rename-d-f.)
+
+* il/remote-fd-ext (2010-10-12) 3 commits
+ - git-remote-ext
+ - git-remote-fd
+ - Add bidirectional_transfer_loop()
+
+* jn/gitweb-test (2010-09-26) 4 commits
+ - gitweb/Makefile: Include gitweb/config.mak
+ - gitweb/Makefile: Add 'test' and 'test-installed' targets
+ - t/gitweb-lib.sh: Add support for GITWEB_TEST_INSTALLED
+ - gitweb: Move call to evaluate_git_version after evaluate_gitweb_config
+
+* ak/apply-non-git-epoch (2010-09-29) 1 commit
+ - apply: Recognize epoch timestamps with : in the timezone
+
+* ak/submodule-sync (2010-10-08) 1 commit
+ - submodule sync: Update "submodule.<name>.url" for empty directories
+
+* cb/leading-path-removal (2010-10-09) 5 commits
+ - do not overwrite files in leading path
+ - lstat_cache: optionally return match_len
+ - add function check_ok_to_remove()
+ - t7607: add leading-path tests
+ - t7607: use test-lib functions and check MERGE_HEAD
+
+* jh/notes-merge (2010-10-09) 21 commits
+ - Provide 'git notes get-ref' to easily retrieve current notes ref
+ - git notes merge: Add testcases for merging notes trees at different fanouts
+ - git notes merge: Add another auto-resolving strategy: "cat_sort_uniq"
+ - git notes merge: --commit should fail if underlying notes ref has moved
+ - git notes merge: List conflicting notes in notes merge commit message
+ - git notes merge: Manual conflict resolution, part 2/2
+ - git notes merge: Manual conflict resolution, part 1/2
+ - Documentation: Preliminary docs on 'git notes merge'
+ - git notes merge: Add automatic conflict resolvers (ours, theirs, union)
+ - git notes merge: Handle real, non-conflicting notes merges
+ - builtin/notes.c: Refactor creation of notes commits.
+ - git notes merge: Initial implementation handling trivial merges only
+ - builtin/notes.c: Split notes ref DWIMmery into a separate function
+ - notes.c: Use two newlines (instead of one) when concatenating notes
+ - (trivial) t3303: Indent with tabs instead of spaces for consistency
+ - notes.h/c: Propagate combine_notes_fn return value to add_note() and beyond
+ - notes.h/c: Clarify the handling of notes objects that are == null_sha1
+ - notes.c: Reorder functions in preparation for next commit
+ - notes.h: Make default_notes_ref() available in notes API
+ - (trivial) notes.h: Minor documentation fixes to copy_notes()
+ - notes.c: Hexify SHA1 in die() message from init_notes()
+
+Breaks build with arithmetic on (void *).
+
+* jk/maint-rev-list-nul (2010-10-07) 1 commit
+ - rev-list: handle %x00 NUL in user format
+
+* jk/push-progress (2010-10-14) 2 commits
+ - push: pass --progress down to git-pack-objects
+ - t5523-push-upstream: test progress messages
+
+* jm/mailmap (2010-10-11) 1 commit
+ - mailmap: fix use of freed memory
+
+The new test seems to make t4203 break intermittently.
+
+* jn/send-pack-error (2010-10-12) 1 commit
+ - send-pack: avoid redundant "pack-objects died with strange error"
+
+* kb/completion-checkout (2010-10-12) 1 commit
+ - completion: Support the DWIM mode for git checkout
+
+* pn/commit-autosquash (2010-10-07) 8 commits
+ - add tests of commit --squash
+ - commit: --squash option for use with rebase --autosquash
+ - add tests of commit --fixup
+ - commit: --fixup option for use with rebase --autosquash
+ - pretty.c: teach format_commit_message() to reencode the output
+ - pretty.c: helper methods for getting output encodings
+ - commit.c: new function for looking up a comit by name
+ - commit.c: prefer get_header() to manual searching
+
+* sg/bisect (2010-10-10) 3 commits
+ - bisect: check for mandatory argument of 'bisect replay'
+ - bisect: improve error msg of 'bisect reset' when original HEAD is deleted
+ - bisect: improve error message of 'bisect log' while not bisecting
+
+* sg/completion (2010-10-11) 4 commits
+ - bash: support pretty format aliases
+ - bash: support more 'git notes' subcommands and their options
+ - bash: not all 'git bisect' subcommands make sense when not bisecting
+ - bash: offer refs for 'git bisect start'
+
+* sn/doc-opt-notation (2010-10-08) 6 commits
+  (merged to 'next' on 2010-10-13 at 53ea256)
+ + Fix {update,checkout}-index usage strings
+ + Put a space between `<' and argument in pack-objects usage string
+ + Remove stray quotes in --pretty and --format documentation
+ + Use parentheses and `...' where appropriate
+ + Fix odd markup in --diff-filter documentation
+ + Use angles for placeholders consistently
+
+* yd/dir-rename (2010-10-10) 5 commits
+ - diff --check: correct line numbers of new blank lines at EOF
+ - Transfer special display of toplevel dir to display-time.
+ - Only show bulkmoves in output.
+ - Add testcases for the --detect-bulk-moves diffcore flag.
+ - Introduce bulk-move detection in diffcore.
+
+This seems to break the build with decl-after-stmt.
 
 --------------------------------------------------
 [Stalled]
@@ -254,17 +260,6 @@ their reproduction recipe would belong to the test script for this topic.
 It would hurt users to make the new feature on by default, especially the
 ones with subdirectories that come and go.
 
-* jj/icase-directory (2010-08-16) 6 commits
- - Support case folding in git fast-import when core.ignorecase=true
- - Support case folding for git add when core.ignorecase=true
- - Add case insensitivity support when using git ls-files
- - Add case insensitivity support for directories when using git status
- - Case insensitivity support for .gitignore via core.ignorecase
- - Add string comparison functions that respect the ignore_case variable.
-
-Depends on GNU FNM_CASEFOLD.  Presumably a bit of tweak in Makefile for
-non-windows but non-GNU platforms is all it takes?
-
 * jk/tag-contains (2010-07-05) 4 commits
  - Why is "git tag --contains" so slow?
  - default core.clockskew variable to one day
@@ -279,16 +274,95 @@ current usage context.
 --------------------------------------------------
 [Cooking]
 
+* jj/icase-directory (2010-10-03) 8 commits
+ - Support case folding in git fast-import when core.ignorecase=true
+ - Support case folding for git add when core.ignorecase=true
+ - Add case insensitivity support when using git ls-files
+ - Add case insensitivity support for directories when using git status
+ - Case insensitivity support for .gitignore via core.ignorecase
+ - Add string comparison functions that respect the ignore_case variable.
+ - Makefile & configure: add a NO_FNMATCH_CASEFOLD flag
+ - Makefile & configure: add a NO_FNMATCH flag
+
+* ab/require-perl-5.8 (2010-09-24) 2 commits
+  (merged to 'next' on 2010-09-27 at 1fcdd3c)
+ + perl: use "use warnings" instead of -w
+ + perl: bump the required Perl version to 5.8 from 5.6.[21]
+
+* en/and-cascade-tests (2010-10-03) 13 commits
+ - Introduce sane_unset and use it to ensure proper && chaining
+ - t7800 (difftool): add missing &&
+ - t7601 (merge-pull-config): add missing &&
+ - t7001 (mv): add missing &&
+ - t6016 (rev-list-graph-simplify-history): add missing &&
+ - t5602 (clone-remote-exec): add missing &&
+ - t4026 (color): remove unneeded and unchained command
+ - t4019 (diff-wserror): add lots of missing &&
+ - t4202 (log): Replace '<git-command> || :' with test_might_fail
+ - t4002 (diff-basic): use test_might_fail for commands that might fail
+ - t100[12] (read-tree-m-2way, read_tree_m_u_2way): add missing &&
+ - t4017 (diff-retval): replace manual exit code check with test_expect_code
+ - test-lib: make test_expect_code a test command
+
+Somewhat rerolled, but the largest one among the series was Nacked by a
+few people and needs to be rerolled again.
+
+* jk/no-textconv-symlink (2010-09-21) 1 commit
+ - diff: don't use pathname-based diff drivers for symlinks
+ (this branch is used by ks/no-textconv-symlink.)
+
+* ks/no-textconv-symlink (2010-09-29) 3 commits
+ - blame,cat-file --textconv: Don't assume mode is ``S_IFREF | 0664''
+ - blame,cat-file: Demonstrate --textconv is wrongly running converter on symlinks
+ - blame,cat-file: Prepare --textconv tests for correctly-failing conversion program
+ (this branch uses jk/no-textconv-symlink.)
+
+* jp/send-email-to-cmd (2010-09-24) 1 commit
+  (merged to 'next' on 2010-09-30 at 4284ddb)
+ + git-send-email.perl: Add --to-cmd
+
+* kb/merge-recursive-rename-threshold (2010-09-27) 2 commits
+  (merged to 'next' on 2010-09-30 at 4f33817)
+ + diff: add synonyms for -M, -C, -B
+ + merge-recursive: option to specify rename threshold
+ (this branch uses jf/merge-ignore-ws.)
+
+* mg/fix-build-remote-helpers (2010-09-17) 1 commit
+  (merged to 'next' on 2010-09-30 at 0583d5f)
+ + remote-helpers: build in platform independent directory
+
+* nd/struct-pathspec (2010-09-20) 5 commits
+ - ce_path_match: drop prefix matching in favor of match_pathspec
+ - Convert ce_path_match() to use struct pathspec
+ - tree_entry_interesting: turn to match_pathspec if wildcard is present
+ - pathspec: add tree_recursive_diff parameter
+ - pathspec: mark wildcard pathspecs from the beginning
+ (this branch uses en/object-list-with-pathspec.)
+
+* en/object-list-with-pathspec (2010-09-20) 8 commits
+ - Add testcases showing how pathspecs are handled with rev-list --objects
+ - Make rev-list --objects work together with pathspecs
+ - Move tree_entry_interesting() to tree-walk.c and export it
+ - tree_entry_interesting(): remove dependency on struct diff_options
+ - Convert struct diff_options to use struct pathspec
+ - pathspec: cache string length when initializing pathspec
+ - diff-no-index: use diff_tree_setup_paths()
+ - Add struct pathspec
+ (this branch is used by nd/struct-pathspec.)
+
+* sb/send-email-use-to-from-input (2010-10-04) 2 commits
+  (merged to 'next' on 2010-10-06 at 5e9cb61)
+ + send-email: Don't leak To: headers between patches
+  (merged to 'next' on 2010-09-30 at 513b6f1)
+ + send-email: Use To: headers in patch files
+
+* tc/smart-http-post-redirect (2010-09-25) 1 commit
+ - smart-http: Don't change POST to GET when following redirect
+
 * as/daemon-multi-listen (2010-08-30) 2 commits
- - daemon: allow more than one host address given via --listen
- - daemon: add helper function named_sock_setup
-
-Should be Ok for 'next'.
-
-* jc/grep-header-all-match-fix-debug (2010-09-13) 1 commit
- - grep debugging, just in case
-
-Not necessary; will drop shortly.
+  (merged to 'next' on 2010-09-30 at 8083bf4)
+ + daemon: allow more than one host address given via --listen
+ + daemon: add helper function named_sock_setup
 
 * dm/mergetool-vimdiff (2010-09-27) 3 commits
   (merged to 'next' on 2010-09-29 at c8e22ea)
@@ -300,9 +374,7 @@ Not necessary; will drop shortly.
 * en/rename-d-f (2010-09-08) 2 commits
  - merge-recursive: D/F conflicts where was_a_dir/file -> was_a_dir
  - t3509: Add rename + D/F conflict testcase that recursive strategy fails
-
-I am not entirely convinced this is a regression free band-aid; need to
-look at this a few more times.
+ (this branch is used by en/merge-recursive.)
 
 * kf/post-receive-sample-hook (2010-09-10) 1 commit
   (merged to 'next' on 2010-09-22 at db674a3)
@@ -317,7 +389,7 @@ somebody who cares enough might want to look into it.
   (merged to 'next' on 2010-09-22 at d62d10e)
  + completion: make compatible with zsh
 
-Comments from bash users regarding regressions?
+Reported as breaking people with "set -u".
 
 * po/sendemail (2010-09-06) 3 commits
   (merged to 'next' on 2010-09-22 at 1105f62)
@@ -325,7 +397,7 @@ Comments from bash users regarding regressions?
  + Remove @smtp_host_parts variable as not used.
  + Minor indentation fix.
 
-Comments from potential users?
+Will merge to 'master' shortly.
 
 * jl/fetch-submodule-recursive (2010-09-19) 4 commits
  - fetch: Get submodule paths from index and not from .gitmodules
@@ -333,7 +405,7 @@ Comments from potential users?
  - Submodules: Add the new "fetch" config option for fetch and pull
  - fetch/pull: Recursively fetch populated submodules
 
-Further work expected after 1.7.3 between Jens and Kevin.
+I haven't picked up the rerolled one yet.
 
 * jf/merge-ignore-ws (2010-08-26) 4 commits
   (merged to 'next' on 2010-09-22 at 5161fb8)
@@ -343,8 +415,7 @@ Further work expected after 1.7.3 between Jens and Kevin.
  + merge-recursive: expose merge options for builtin merge
  (this branch is used by kb/merge-recursive-rename-threshold.)
 
-Possibly one of the star features of the release after 1.7.3, whether it
-is called 1.7.4 or 1.8.0.
+Possibly one of the star features of the coming release.
 
 * tr/merge-unborn-clobber (2010-08-22) 1 commit
  - Exhibit merge bug that clobbers index&WT
@@ -356,7 +427,7 @@ is called 1.7.4 or 1.8.0.
  + tree-walk: Correct bitrotted comment about tree_entry()
  + Document pre-condition for tree_entry_interesting
 
-Need to look at this a few more times to convince myself that this is Ok.
+Will merge to 'master' shortly.
 
 * ab/i18n (2010-09-12) 159 commits
  - po/sv.po: add Swedish translation
