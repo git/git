@@ -59,10 +59,10 @@ OPTIONS
 	the newly constructed pack and index before refs can be
 	updated to use objects contained in the pack.
 
---keep='why'::
+--keep=<msg>::
 	Like --keep create a .keep file before moving the index into
 	its final destination, but rather than creating an empty file
-	place 'why' followed by an LF into the .keep file.  The 'why'
+	place '<msg>' followed by an LF into the .keep file.  The '<msg>'
 	message can later be searched for within all .keep files to
 	locate any which have outlived their usefulness.
 

@@ -24,7 +24,7 @@ static int chomp_prefix;
 static const char *ls_tree_prefix;
 
 static const  char * const ls_tree_usage[] = {
-	"git ls-tree [<options>] <tree-ish> [path...]",
+	"git ls-tree [<options>] <tree-ish> [<path>...]",
 	NULL
 };
 

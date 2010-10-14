@@ -12,7 +12,7 @@ SYNOPSIS
 'git archive' [--format=<fmt>] [--list] [--prefix=<prefix>/] [<extra>]
 	      [-o | --output=<file>] [--worktree-attributes]
 	      [--remote=<repo> [--exec=<git-upload-archive>]] <tree-ish>
-	      [path...]
+	      [<path>...]
 
 DESCRIPTION
 -----------
@@ -73,7 +73,7 @@ OPTIONS
 <tree-ish>::
 	The tree or commit to produce an archive for.
 
-path::
+<path>::
 	Without an optional path parameter, all files and subdirectories
 	of the current working directory are included in the archive.
 	If one or more paths are specified, only these are included.

@@ -438,7 +438,7 @@ git rebase --onto remotes/git-svn A^ master
 OPTIONS
 -------
 
---shared[={false|true|umask|group|all|world|everybody}]::
+--shared[=(false|true|umask|group|all|world|everybody)]::
 --template=<template_directory>::
 	Only used with the 'init' command.
 	These are passed directly to 'git init'.

@@ -3853,7 +3853,7 @@ You create a commit object by giving it the tree that describes the
 state at the time of the commit, and a list of parents:
 
 -------------------------------------------------
-$ git commit-tree <tree> -p <parent> [-p <parent2> ..]
+$ git commit-tree <tree> -p <parent> [(-p <parent2>)...]
 -------------------------------------------------
 
 and then giving the reason for the commit on stdin (either through

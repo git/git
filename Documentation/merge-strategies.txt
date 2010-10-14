@@ -78,7 +78,7 @@ rename-threshold=<n>;;
 	Controls the similarity threshold used for rename detection.
 	See also linkgit:git-diff[1] `-M`.
 
-subtree[=path];;
+subtree[=<path>];;
 	This option is a more advanced form of 'subtree' strategy, where
 	the strategy makes a guess on how two trees must be shifted to
 	match with each other when merging.  Instead, the specified path
