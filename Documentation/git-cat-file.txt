@@ -27,7 +27,7 @@ OPTIONS
 <object>::
 	The name of the object to show.
 	For a more complete list of ways to spell object names, see
-	the "SPECIFYING REVISIONS" section in linkgit:gitrevisions[1].
+	the "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 
 -t::
 	Instead of the content, show the object type identified by
