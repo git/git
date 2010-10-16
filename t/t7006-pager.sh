@@ -184,11 +184,6 @@ test_expect_success 'color when writing to a file intended for a pager' '
 	colorful colorful.log
 '
 
-if test_have_prereq SIMPLEPAGER && test_have_prereq TTY
-then
-	test_set_prereq SIMPLEPAGERTTY
-fi
-
 # Use this helper to make it easy for the caller of your
 # terminal-using function to specify whether it should fail.
 # If you write
@@ -224,7 +219,7 @@ parse_args() {
 test_default_pager() {
 	parse_args "$@"
 
-	$test_expectation SIMPLEPAGERTTY "$cmd - default pager is used by default" "
+	$test_expectation SIMPLEPAGER,TTY "$cmd - default pager is used by default" "
 		unset PAGER GIT_PAGER;
 		test_might_fail git config --unset core.pager &&
 		rm -f default_pager_used ||
