@@ -362,6 +362,15 @@ test_have_prereq () {
 	test $total_prereq = $ok_prereq
 }
 
+test_declared_prereq () {
+	case ",$test_prereq," in
+	*,$1,*)
+		return 0
+		;;
+	esac
+	return 1
+}
+
 # You are not expected to call test_ok_ and test_failure_ directly, use
 # the text_expect_* functions instead.
 
@@ -414,17 +423,17 @@ test_skip () {
 			break
 		esac
 	done
-	if test -z "$to_skip" && test -n "$prereq" &&
-	   ! test_have_prereq "$prereq"
+	if test -z "$to_skip" && test -n "$test_prereq" &&
+	   ! test_have_prereq "$test_prereq"
 	then
 		to_skip=t
 	fi
 	case "$to_skip" in
 	t)
 		of_prereq=
-		if test "$missing_prereq" != "$prereq"
+		if test "$missing_prereq" != "$test_prereq"
 		then
-			of_prereq=" of $prereq"
+			of_prereq=" of $test_prereq"
 		fi
 
 		say_color skip >&3 "skipping test: $@"
@@ -438,9 +447,10 @@ test_skip () {
 }
 
 test_expect_failure () {
-	test "$#" = 3 && { prereq=$1; shift; } || prereq=
+	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-failure"
+	export test_prereq
 	if ! test_skip "$@"
 	then
 		say >&3 "checking known breakage: $2"
@@ -456,9 +466,10 @@ test_expect_failure () {
 }
 
 test_expect_success () {
-	test "$#" = 3 && { prereq=$1; shift; } || prereq=
+	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
+	export test_prereq
 	if ! test_skip "$@"
 	then
 		say >&3 "expecting success: $2"
@@ -500,11 +511,12 @@ test_expect_code () {
 # Usage: test_external description command arguments...
 # Example: test_external 'Perl API' perl ../path/to/test.pl
 test_external () {
-	test "$#" = 4 && { prereq=$1; shift; } || prereq=
+	test "$#" = 4 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 3 ||
 	error >&5 "bug in the test script: not 3 or 4 parameters to test_external"
 	descr="$1"
 	shift
+	export test_prereq
 	if ! test_skip "$descr" "$@"
 	then
 		# Announce the script to reduce confusion about the
