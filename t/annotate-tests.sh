@@ -39,7 +39,7 @@ test_expect_success \
     'echo "1A quick brown fox jumps over the" >file &&
      echo "lazy dog" >>file &&
      git add file
-     GIT_AUTHOR_NAME="A" git commit -a -m "Initial."'
+     GIT_AUTHOR_NAME="A" GIT_AUTHOR_EMAIL="A@test.git" git commit -a -m "Initial."'
 
 test_expect_success \
     'check all lines blamed on A' \
@@ -49,7 +49,7 @@ test_expect_success \
     'Setup new lines blamed on B' \
     'echo "2A quick brown fox jumps over the" >>file &&
      echo "lazy dog" >> file &&
-     GIT_AUTHOR_NAME="B" git commit -a -m "Second."'
+     GIT_AUTHOR_NAME="B" GIT_AUTHOR_EMAIL="B@test.git" git commit -a -m "Second."'
 
 test_expect_success \
     'Two lines blamed on A, two on B' \
@@ -60,7 +60,7 @@ test_expect_success \
     'git checkout -b branch1 master &&
      echo "3A slow green fox jumps into the" >> file &&
      echo "well." >> file &&
-     GIT_AUTHOR_NAME="B1" git commit -a -m "Branch1-1"'
+     GIT_AUTHOR_NAME="B1" GIT_AUTHOR_EMAIL="B1@test.git" git commit -a -m "Branch1-1"'
 
 test_expect_success \
     'Two lines blamed on A, two on B, two on B1' \
@@ -71,7 +71,7 @@ test_expect_success \
     'git checkout -b branch2 master &&
      sed -e "s/2A quick brown/4A quick brown lazy dog/" < file > file.new &&
      mv file.new file &&
-     GIT_AUTHOR_NAME="B2" git commit -a -m "Branch2-1"'
+     GIT_AUTHOR_NAME="B2" GIT_AUTHOR_EMAIL="B2@test.git" git commit -a -m "Branch2-1"'
 
 test_expect_success \
     'Two lines blamed on A, one on B, one on B2' \
@@ -105,7 +105,7 @@ test_expect_success \
 test_expect_success \
     'an incomplete line added' \
     'echo "incomplete" | tr -d "\\012" >>file &&
-    GIT_AUTHOR_NAME="C" git commit -a -m "Incomplete"'
+    GIT_AUTHOR_NAME="C" GIT_AUTHOR_EMAIL="C@test.git" git commit -a -m "Incomplete"'
 
 test_expect_success \
     'With incomplete lines.' \
@@ -119,7 +119,7 @@ test_expect_success \
 	echo
     } | sed -e "s/^3A/99/" -e "/^1A/d" -e "/^incomplete/d" > file &&
     echo "incomplete" | tr -d "\\012" >>file &&
-    GIT_AUTHOR_NAME="D" git commit -a -m "edit"'
+    GIT_AUTHOR_NAME="D" GIT_AUTHOR_EMAIL="D@test.git" git commit -a -m "edit"'
 
 test_expect_success \
     'some edit' \
