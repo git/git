@@ -4,14 +4,15 @@ use warnings;
 use IO::Pty;
 use File::Copy;
 
-# Run @$argv in the background with stdout redirected to $out.
+# Run @$argv in the background with stdio redirected to $out and $err.
 sub start_child {
-	my ($argv, $out) = @_;
+	my ($argv, $out, $err) = @_;
 	my $pid = fork;
 	if (not defined $pid) {
 		die "fork failed: $!"
 	} elsif ($pid == 0) {
 		open STDOUT, ">&", $out;
+		open STDERR, ">&", $err;
 		close $out;
 		exec(@$argv) or die "cannot exec '$argv->[0]': $!"
 	}
@@ -47,12 +48,28 @@ sub xsendfile {
 	copy($in, $out, 4096) or $!{EIO} or die "cannot copy from child: $!";
 }
 
+sub copy_stdio {
+	my ($out, $err) = @_;
+	my $pid = fork;
+	defined $pid or die "fork failed: $!";
+	if (!$pid) {
+		close($out);
+		xsendfile(\*STDERR, $err);
+		exit 0;
+	}
+	close($err);
+	xsendfile(\*STDOUT, $out);
+	finish_child($pid) == 0
+		or exit 1;
+}
+
 if ($#ARGV < 1) {
 	die "usage: test-terminal program args";
 }
-my $master = new IO::Pty;
-my $slave = $master->slave;
-my $pid = start_child(\@ARGV, $slave);
-close $slave;
-xsendfile(\*STDOUT, $master);
+my $master_out = new IO::Pty;
+my $master_err = new IO::Pty;
+my $pid = start_child(\@ARGV, $master_out->slave, $master_err->slave);
+close $master_out->slave;
+close $master_err->slave;
+copy_stdio($master_out, $master_err);
 exit(finish_child($pid));
