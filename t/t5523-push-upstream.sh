@@ -3,8 +3,12 @@
 test_description='push with --set-upstream'
 . ./test-lib.sh
 
+ensure_fresh_upstream() {
+	rm -rf parent && git init --bare parent
+}
+
 test_expect_success 'setup bare parent' '
-	git init --bare parent &&
+	ensure_fresh_upstream &&
 	git remote add upstream parent
 '
 
