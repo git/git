@@ -789,6 +789,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	args.use_thin_pack = data->options.thin;
 	args.verbose = (transport->verbose > 0);
 	args.quiet = (transport->verbose < 0);
+	args.progress = transport->progress;
 	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
 	args.porcelain = !!(flags & TRANSPORT_PUSH_PORCELAIN);
 

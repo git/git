@@ -78,7 +78,7 @@ test_expect_success TTY 'progress messages go to tty' '
 	grep "Writing objects" err
 '
 
-test_expect_failure 'progress messages do not go to non-tty' '
+test_expect_success 'progress messages do not go to non-tty' '
 	ensure_fresh_upstream &&
 
 	# skip progress messages, since stderr is non-tty
@@ -86,7 +86,7 @@ test_expect_failure 'progress messages do not go to non-tty' '
 	! grep "Writing objects" err
 '
 
-test_expect_failure 'progress messages go to non-tty (forced)' '
+test_expect_success 'progress messages go to non-tty (forced)' '
 	ensure_fresh_upstream &&
 
 	# force progress messages to stderr, even though it is non-tty

@@ -48,6 +48,7 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 		NULL,
 		NULL,
 		NULL,
+		NULL,
 	};
 	struct child_process po;
 	int i;
@@ -59,6 +60,8 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 		argv[i++] = "--delta-base-offset";
 	if (args->quiet)
 		argv[i++] = "-q";
+	if (args->progress)
+		argv[i++] = "--progress";
 	memset(&po, 0, sizeof(po));
 	po.argv = argv;
 	po.in = -1;
