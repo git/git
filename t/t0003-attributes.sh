@@ -38,7 +38,7 @@ test_expect_success 'setup' '
 	) >a/b/.gitattributes
 	(
 		echo "global test=global"
-	) >$HOME/global-gitattributes
+	) >"$HOME"/global-gitattributes
 
 '
 
