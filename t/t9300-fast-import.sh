@@ -928,6 +928,43 @@ test_expect_success \
 	 git diff-tree -C --find-copies-harder -r N5^^ N5 >actual &&
 	 compare_diff_raw expect actual'
 
+test_expect_success \
+	'N: copy to root by id and modify' \
+	'echo "hello, world" >expect.foo &&
+	 echo hello >expect.bar &&
+	 git fast-import <<-SETUP_END &&
+	commit refs/heads/N7
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	hello, tree
+	COMMIT
+
+	deleteall
+	M 644 inline foo/bar
+	data <<EOF
+	hello
+	EOF
+	SETUP_END
+
+	 tree=$(git rev-parse --verify N7:) &&
+	 git fast-import <<-INPUT_END &&
+	commit refs/heads/N8
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy to root by id and modify
+	COMMIT
+
+	M 040000 $tree ""
+	M 644 inline foo/foo
+	data <<EOF
+	hello, world
+	EOF
+	INPUT_END
+	 git show N8:foo/foo >actual.foo &&
+	 git show N8:foo/bar >actual.bar &&
+	 test_cmp expect.foo actual.foo &&
+	 test_cmp expect.bar actual.bar'
+
 ###
 ### series O
 ###

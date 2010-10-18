@@ -1444,7 +1444,7 @@ static int tree_content_set(
 	const uint16_t mode,
 	struct tree_content *subtree)
 {
-	struct tree_content *t = root->tree;
+	struct tree_content *t;
 	const char *slash1;
 	unsigned int i, n;
 	struct tree_entry *e;
@@ -1468,6 +1468,9 @@ static int tree_content_set(
 	if (!slash1 && !S_ISDIR(mode) && subtree)
 		die("Non-directories cannot have subtrees");
 
+	if (!root->tree)
+		load_tree(root);
+	t = root->tree;
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
 		if (e->name->str_len == n && !strncmp(p, e->name->str_dat, n)) {
@@ -1523,7 +1526,7 @@ static int tree_content_remove(
 	const char *p,
 	struct tree_entry *backup_leaf)
 {
-	struct tree_content *t = root->tree;
+	struct tree_content *t;
 	const char *slash1;
 	unsigned int i, n;
 	struct tree_entry *e;
@@ -1534,6 +1537,9 @@ static int tree_content_remove(
 	else
 		n = strlen(p);
 
+	if (!root->tree)
+		load_tree(root);
+	t = root->tree;
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
 		if (e->name->str_len == n && !strncmp(p, e->name->str_dat, n)) {
@@ -1581,7 +1587,7 @@ static int tree_content_get(
 	const char *p,
 	struct tree_entry *leaf)
 {
-	struct tree_content *t = root->tree;
+	struct tree_content *t;
 	const char *slash1;
 	unsigned int i, n;
 	struct tree_entry *e;
@@ -1592,6 +1598,9 @@ static int tree_content_get(
 	else
 		n = strlen(p);
 
+	if (!root->tree)
+		load_tree(root);
+	t = root->tree;
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
 		if (e->name->str_len == n && !strncmp(p, e->name->str_dat, n)) {
@@ -2056,13 +2065,16 @@ static uintmax_t do_change_note_fanout(
 		char *fullpath, unsigned int fullpath_len,
 		unsigned char fanout)
 {
-	struct tree_content *t = root->tree;
+	struct tree_content *t;
 	struct tree_entry *e, leaf;
 	unsigned int i, tmp_hex_sha1_len, tmp_fullpath_len;
 	uintmax_t num_notes = 0;
 	unsigned char sha1[20];
 	char realpath[60];
 
+	if (!root->tree);
+		load_tree(root);
+	t = root->tree;
 	for (i = 0; t && i < t->entry_count; i++) {
 		e = t->entries[i];
 		tmp_hex_sha1_len = hex_sha1_len + e->name->str_len;
