@@ -990,10 +990,51 @@ test_expect_success \
 	COMMIT
 
 	M 040000 $branch ""
-	R "newdir" ""
+	C "newdir" ""
 	INPUT_END
 	 git fast-import <input &&
 	 git diff --exit-code branch:newdir N9'
+
+test_expect_success \
+	'N: modify subtree, extract it, and modify again' \
+	'echo hello >expect.baz &&
+	 echo hello, world >expect.qux &&
+	 git fast-import <<-SETUP_END &&
+	commit refs/heads/N10
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	hello, tree
+	COMMIT
+
+	deleteall
+	M 644 inline foo/bar/baz
+	data <<EOF
+	hello
+	EOF
+	SETUP_END
+
+	 tree=$(git rev-parse --verify N10:) &&
+	 git fast-import <<-INPUT_END &&
+	commit refs/heads/N11
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy to root by id and modify
+	COMMIT
+
+	M 040000 $tree ""
+	M 100644 inline foo/bar/qux
+	data <<EOF
+	hello, world
+	EOF
+	R "foo" ""
+	C "bar/qux" "bar/quux"
+	INPUT_END
+	 git show N11:bar/baz >actual.baz &&
+	 git show N11:bar/qux >actual.qux &&
+	 git show N11:bar/quux >actual.quux &&
+	 test_cmp expect.baz actual.baz &&
+	 test_cmp expect.qux actual.qux &&
+	 test_cmp expect.qux actual.quux'
 
 ###
 ### series O
