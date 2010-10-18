@@ -929,6 +929,20 @@ test_expect_success \
 	 compare_diff_raw expect actual'
 
 test_expect_success \
+	'N: reject foo/ syntax' \
+	'subdir=$(git rev-parse refs/heads/branch^0:file2) &&
+	 test_must_fail git fast-import <<-INPUT_END
+	commit refs/heads/N5B
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy with invalid syntax
+	COMMIT
+
+	from refs/heads/branch^0
+	M 040000 $subdir file3/
+	INPUT_END'
+
+test_expect_success \
 	'N: copy to root by id and modify' \
 	'echo "hello, world" >expect.foo &&
 	 echo hello >expect.bar &&
@@ -964,6 +978,22 @@ test_expect_success \
 	 git show N8:foo/bar >actual.bar &&
 	 test_cmp expect.foo actual.foo &&
 	 test_cmp expect.bar actual.bar'
+
+test_expect_success \
+	'N: extract subtree' \
+	'branch=$(git rev-parse --verify refs/heads/branch^{tree}) &&
+	 cat >input <<-INPUT_END &&
+	commit refs/heads/N9
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	extract subtree branch:newdir
+	COMMIT
+
+	M 040000 $branch ""
+	R "newdir" ""
+	INPUT_END
+	 git fast-import <input &&
+	 git diff --exit-code branch:newdir N9'
 
 ###
 ### series O

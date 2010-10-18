@@ -1437,6 +1437,20 @@ static void store_tree(struct tree_entry *root)
 	t->entry_count -= del;
 }
 
+static void tree_content_replace(
+	struct tree_entry *root,
+	const unsigned char *sha1,
+	const uint16_t mode,
+	struct tree_content *newtree)
+{
+	if (!S_ISDIR(mode))
+		die("Root cannot be a non-directory");
+	hashcpy(root->versions[1].sha1, sha1);
+	if (root->tree)
+		release_tree_content_recursive(root->tree);
+	root->tree = newtree;
+}
+
 static int tree_content_set(
 	struct tree_entry *root,
 	const char *p,
@@ -1454,15 +1468,6 @@ static int tree_content_set(
 		n = slash1 - p;
 	else
 		n = strlen(p);
-	if (!slash1 && !n) {
-		if (!S_ISDIR(mode))
-			die("Root cannot be a non-directory");
-		hashcpy(root->versions[1].sha1, sha1);
-		if (root->tree)
-			release_tree_content_recursive(root->tree);
-		root->tree = subtree;
-		return 1;
-	}
 	if (!n)
 		die("Empty path component found in input");
 	if (!slash1 && !S_ISDIR(mode) && subtree)
@@ -2230,6 +2235,10 @@ static void file_change_m(struct branch *b)
 				command_buf.buf);
 	}
 
+	if (!*p) {
+		tree_content_replace(&b->branch_tree, sha1, mode, NULL);
+		return;
+	}
 	tree_content_set(&b->branch_tree, p, sha1, mode, NULL);
 }
 
@@ -2288,6 +2297,13 @@ static void file_change_cr(struct branch *b, int rename)
 		tree_content_get(&b->branch_tree, s, &leaf);
 	if (!leaf.versions[1].mode)
 		die("Path %s not in branch", s);
+	if (!*d) {	/* C "path/to/subdir" "" */
+		tree_content_replace(&b->branch_tree,
+			leaf.versions[1].sha1,
+			leaf.versions[1].mode,
+			leaf.tree);
+		return;
+	}
 	tree_content_set(&b->branch_tree, d,
 		leaf.versions[1].sha1,
 		leaf.versions[1].mode,
