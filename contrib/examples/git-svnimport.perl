@@ -289,7 +289,7 @@ my $current_rev = $opt_s || 1;
 unless(-d $git_dir) {
 	system("git init");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
-	system("git read-tree");
+	system("git read-tree --empty");
 	die "Cannot init an empty tree: $?\n" if $?;
 
 	$last_branch = $opt_o;

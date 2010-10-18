@@ -611,7 +611,7 @@ my %index; # holds filenames of one index per branch
 unless (-d $git_dir) {
 	system(qw(git init));
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
-	system(qw(git read-tree));
+	system(qw(git read-tree --empty));
 	die "Cannot init an empty tree: $?\n" if $?;
 
 	$last_branch = $opt_o;
