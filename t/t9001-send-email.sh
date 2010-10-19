@@ -279,7 +279,7 @@ test_expect_success $PREREQ 'Invalid In-Reply-To' '
 		--to=nobody@example.com \
 		--in-reply-to=" " \
 		--smtp-server="$(pwd)/fake.sendmail" \
-		$patches
+		$patches \
 		2>errors
 	! grep "^In-Reply-To: < *>" msgtxt1
 '
