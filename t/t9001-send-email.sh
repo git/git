@@ -313,6 +313,47 @@ test_expect_success $PREREQ 'Valid In-Reply-To when prompting' '
 	! grep "^In-Reply-To: < *>" msgtxt1
 '
 
+test_expect_success $PREREQ 'In-Reply-To without --chain-reply-to' '
+	clean_fake_sendmail &&
+	echo "<unique-message-id@example.com>" >expect &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--no-chain-reply-to \
+		--in-reply-to="$(cat expect)" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches $patches $patches \
+		2>errors &&
+	# All the messages are replies to --in-reply-to
+	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt1 >actual &&
+	test_cmp expect actual &&
+	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt2 >actual &&
+	test_cmp expect actual &&
+	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt3 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success $PREREQ 'In-Reply-To with --chain-reply-to' '
+	clean_fake_sendmail &&
+	echo "<unique-message-id@example.com>" >expect &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--chain-reply-to \
+		--in-reply-to="$(cat expect)" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$patches $patches $patches \
+		2>errors &&
+	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt1 >actual &&
+	test_cmp expect actual &&
+	sed -n -e "s/^Message-Id: *\(.*\)/\1/p" msgtxt1 >expect &&
+	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt2 >actual &&
+	test_cmp expect actual &&
+	sed -n -e "s/^Message-Id: *\(.*\)/\1/p" msgtxt2 >expect &&
+	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt3 >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success $PREREQ 'setup fake editor' '
 	(echo "#!$SHELL_PATH" &&
 	 echo "echo fake edit >>\"\$1\""
