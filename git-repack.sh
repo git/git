@@ -50,7 +50,7 @@ true)
 esac
 
 PACKDIR="$GIT_OBJECT_DIRECTORY/pack"
-PACKTMP="$GIT_OBJECT_DIRECTORY/.tmp-$$-pack"
+PACKTMP="$PACKDIR/.tmp-$$-pack"
 rm -f "$PACKTMP"-*
 trap 'rm -f "$PACKTMP"-*' 0 1 2 3 15
 
@@ -80,6 +80,8 @@ case ",$all_into_one," in
 	;;
 esac
 
+mkdir -p "$PACKDIR" || exit
+
 args="$args $local ${GIT_QUIET:+-q} $no_reuse$extra"
 names=$(git pack-objects --keep-true-parents --honor-pack-keep --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
@@ -88,7 +90,6 @@ if [ -z "$names" ]; then
 fi
 
 # Ok we have prepared all new packfiles.
-mkdir -p "$PACKDIR" || exit
 
 # First see if there are packs of the same name and if so
 # if we can move them out of the way (this can happen if we
