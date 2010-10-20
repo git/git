@@ -174,8 +174,11 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 		}
 	}
 
+	if (trailing_whitespace == -1)
+		trailing_whitespace = len;
+
 	/* Check indentation */
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < trailing_whitespace; i++) {
 		if (line[i] == ' ')
 			continue;
 		if (line[i] != '\t')
@@ -218,8 +221,6 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 		 * Now the rest of the line starts at "written".
 		 * The non-highlighted part ends at "trailing_whitespace".
 		 */
-		if (trailing_whitespace == -1)
-			trailing_whitespace = len;
 
 		/* Emit non-highlighted (middle) segment. */
 		if (trailing_whitespace - written > 0) {
