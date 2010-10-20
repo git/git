@@ -114,7 +114,7 @@ test_expect_success 'name entry after email entry' '
 	mkdir -p internal_mailmap &&
 	echo "<bugs@company.xy> <bugs@company.xx>" >internal_mailmap/.mailmap &&
 	echo "Internal Guy <bugs@company.xx>" >>internal_mailmap/.mailmap &&
-	git shortlog >actual &&
+	git shortlog HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -131,7 +131,7 @@ test_expect_success 'name entry after email entry, case-insensitive' '
 	mkdir -p internal_mailmap &&
 	echo "<bugs@company.xy> <bugs@company.xx>" >internal_mailmap/.mailmap &&
 	echo "Internal Guy <BUGS@Company.xx>" >>internal_mailmap/.mailmap &&
-	git shortlog >actual &&
+	git shortlog HEAD >actual &&
 	test_cmp expect actual
 '
 
