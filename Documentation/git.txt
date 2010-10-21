@@ -9,11 +9,11 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [--html-path]
+'git' [--version] [--exec-path[=<path>]] [--html-path]
     [-p|--paginate|--no-pager] [--no-replace-objects]
-    [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]
-    [-c name=value]
-    [--help] COMMAND [ARGS]
+    [--bare] [--git-dir=<path>] [--work-tree=<path>]
+    [-c <name>=<value>]
+    [--help] <command> [<args>]
 
 DESCRIPTION
 -----------
@@ -28,7 +28,7 @@ also want to read linkgit:gitcvs-migration[7].  See
 the link:user-manual.html[Git User's Manual] for a more in-depth
 introduction.
 
-The COMMAND is either a name of a Git command (see below) or an alias
+The '<command>' is either a name of a Git command (see below) or an alias
 as defined in the configuration file (see linkgit:git-config[1]).
 
 Formatted and hyperlinked version of the latest git
@@ -252,7 +252,7 @@ help ...`.
 	The <name> is expected in the same format as listed by
 	'git config' (subkeys separated by dots).
 
---exec-path::
+--exec-path[=<path>]::
 	Path to wherever your core git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
 	environment variable. If no path is given, 'git' will print

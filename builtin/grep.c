@@ -24,7 +24,7 @@
 #endif
 
 static char const * const grep_usage[] = {
-	"git grep [options] [-e] <pattern> [<rev>...] [[--] path...]",
+	"git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]",
 	NULL
 };
 
