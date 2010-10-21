@@ -365,7 +365,7 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 	 * below the corresponding directory.
 	 */
 	const char *last_file = NULL;
-	int last_len;
+	int last_len = 0;
 	struct stage_data *last_e;
 	int i;
 
