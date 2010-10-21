@@ -871,9 +871,7 @@ int git_config(config_fn_t fn, void *data)
 	if (config_parameters)
 		found += 1;
 
-	if (found == 0)
-		return -1;
-	return ret;
+	return ret == 0 ? found : ret;
 }
 
 /*
