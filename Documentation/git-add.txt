@@ -92,9 +92,35 @@ See ``Interactive mode'' for details.
 	edit it.  After the editor was closed, adjust the hunk headers
 	and apply the patch to the index.
 +
-*NOTE*: Obviously, if you change anything else than the first character
-on lines beginning with a space or a minus, the patch will no longer
-apply.
+The intent of this option is to pick and choose lines of the patch to
+apply, or even to modify the contents of lines to be staged. There are
+three line types in a patch: addition lines (beginning with a plus),
+removal lines (beginning with a minus), and context lines (beginning
+with a space). In general, it should be safe to:
++
+--
+* remove addition lines (don't stage the line)
+* modify the content of any addition lines (stage modified contents)
+* add new addition lines (stage the new line)
+* convert context lines to removal lines (stage removal of line)
+* convert removal lines to context lines (don't stage removal)
+--
++
+Similarly, your patch will likely not apply if you:
++
+--
+* add context or removal lines
+* delete removal or context lines
+* modify the contents of context or removal lines
+--
++
+NOTE: In the first list above, the results given for each action are
+with respect to that patch line only. Conceptual changes like
+modification of a line in the original file are actually represented by
+removal of the old line followed by addition of the new line. Deleting
+only the addition line of this pair but leaving the removal line would
+therefore convert the modification into a deletion. In other words, use
+this feature with caution, as it is easy to stage unintended changes.
 
 -u::
 --update::
