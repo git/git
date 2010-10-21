@@ -9,11 +9,11 @@ git-subtree - Merge subtrees together and split repository into subtrees
 SYNOPSIS
 --------
 [verse]
-'git subtree' add   -P <prefix>|--prefix=<prefix> <commit>
-'git subtree' pull  -P <prefix>|--prefix=<prefix> <repository> <refspec...>
-'git subtree' push  -P <prefix>|--prefix=<prefix> <repository> <refspec...>
-'git subtree' merge -P <prefix>|--prefix=<prefix> <commit>
-'git subtree' split -P <prefix>|--prefix=<prefix> [OPTIONS] [<commit>]
+'git subtree' add   -P <prefix> <commit>
+'git subtree' pull  -P <prefix> <repository> <refspec...>
+'git subtree' push  -P <prefix> <repository> <refspec...>
+'git subtree' merge -P <prefix> <commit>
+'git subtree' split -P <prefix> [OPTIONS] [<commit>]
 
 
 DESCRIPTION
@@ -34,9 +34,9 @@ work. A subtree is just a subdirectory that can be
 committed to, branched, and merged along with your project in
 any way you want.
 
-They are neither not to be confused with using the subtree merge
+They are also not to be confused with using the subtree merge
 strategy. The main difference is that, besides merging
-of the other project as a subdirectory, you can also extract the
+the other project as a subdirectory, you can also extract the
 entire history of a subdirectory from your project and make it
 into a standalone project. Unlike the subtree merge strategy
 you can alternate back and forth between these
