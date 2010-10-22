@@ -589,6 +589,9 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	int lock_error = 0;
 	struct lock_file *lock_file;
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(update_index_usage);
+
 	git_config(git_default_config, NULL);
 
 	/* We can't free this memory, it becomes part of a linked list parsed atexit() */
