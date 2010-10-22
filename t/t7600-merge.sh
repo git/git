@@ -144,6 +144,17 @@ test_expect_success 'test option parsing' '
 	test_must_fail git merge
 '
 
+test_expect_success 'merge -h with invalid index' '
+	mkdir broken &&
+	(
+		cd broken &&
+		git init &&
+		>.git/index &&
+		test_expect_code 129 git merge -h 2>usage
+	) &&
+	grep "[Uu]sage: git merge" broken/usage
+'
+
 test_expect_success 'reject non-strategy with a git-merge-foo name' '
 	test_must_fail git merge -s index c1
 '
