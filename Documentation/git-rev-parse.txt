@@ -95,7 +95,7 @@ OPTIONS
 	unfortunately named tag "master"), and show them as full
 	refnames (e.g. "refs/heads/master").
 
---abbrev-ref[={strict|loose}]::
+--abbrev-ref[=(strict|loose)]::
 	A non-ambiguous short name of the objects name.
 	The option core.warnAmbiguousRefs is used to select the strict
 	abbreviation mode.

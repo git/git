@@ -12,10 +12,10 @@ SYNOPSIS
 'git apply' [--stat] [--numstat] [--summary] [--check] [--index]
 	  [--apply] [--no-add] [--build-fake-ancestor=<file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
-	  [-pNUM] [-CNUM] [--inaccurate-eof] [--recount] [--cached]
+	  [-p<n>] [-C<n>] [--inaccurate-eof] [--recount] [--cached]
 	  [--ignore-space-change | --ignore-whitespace ]
-	  [--whitespace=<nowarn|warn|fix|error|error-all>]
-	  [--exclude=PATH] [--include=PATH] [--directory=<root>]
+	  [--whitespace=(nowarn|warn|fix|error|error-all)]
+	  [--exclude=<path>] [--include=<path>] [--directory=<root>]
 	  [--verbose] [<patch>...]
 
 DESCRIPTION

@@ -11,8 +11,8 @@ SYNOPSIS
 [verse]
 'git bundle' create <file> <git-rev-list-args>
 'git bundle' verify <file>
-'git bundle' list-heads <file> [refname...]
-'git bundle' unbundle <file> [refname...]
+'git bundle' list-heads <file> [<refname>...]
+'git bundle' unbundle <file> [<refname>...]
 
 DESCRIPTION
 -----------
@@ -68,7 +68,7 @@ unbundle <file>::
 	packaged.
 
 
-[refname...]::
+[<refname>...]::
 	A list of references used to limit the references reported as
 	available. This is principally of use to 'git fetch', which
 	expects to receive only those references asked for and not
