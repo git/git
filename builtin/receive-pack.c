@@ -478,7 +478,7 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 static void merge_worktree(unsigned char *sha1)
 {
 	const char *update_refresh[] = {
-		"update-index", "--refresh", NULL
+		"update-index", "--ignore-submodules", "--refresh", NULL
 	};
 	const char *read_tree[] = {
 		"read-tree", "-u", "-m", sha1_to_hex(sha1), NULL
