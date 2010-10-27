@@ -19,6 +19,7 @@ struct merge_options {
 	int verbosity;
 	int diff_rename_limit;
 	int merge_rename_limit;
+	int rename_score;
 	int call_depth;
 	struct strbuf obuf;
 	struct string_list current_file_set;
