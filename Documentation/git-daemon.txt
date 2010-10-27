@@ -85,6 +85,7 @@ OPTIONS
 	be either an IPv4 address or an IPv6 address if supported.  If IPv6
 	is not supported, then --listen=hostname is also not supported and
 	--listen must be given an IPv4 address.
+	Can be given more than once.
 	Incompatible with '--inetd' option.
 
 --port=<n>::
