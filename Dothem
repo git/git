@@ -38,7 +38,23 @@ do
 	shift
 done
 
+for TRASH in /dev/shm /tmp ""
+do
+	if test -n "$TRASH" && test -d "$TRASH" && test -w "$TRASH"
+	then
+		TRASH="--root=$TRASH/testpen"
+		break
+	fi
+done
+
 sh -c 'asciidoc --version >/dev/null 2>&1' || nodoc=y
+if sh -c 'prove --version >/dev/null 2>&1'
+then
+	DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="$jobs"
+	export DEFAULT_TEST_TARGET GIT_PROVE_OPTS
+fi
+GIT_TEST_OPTS="$TRASH${GIT_TEST_OPTS+" $GIT_TEST_OPTS"}"
+export GIT_TEST_OPTS
 
 test -f /bin/dash || with_dash=
 if test -z "$BUILDBASE"
