@@ -605,22 +605,26 @@ static int merge_3way(struct merge_options *o,
 		      const char *branch2)
 {
 	mmfile_t orig, src1, src2;
+	struct ll_merge_options ll_opts = {0};
 	char *base_name, *name1, *name2;
 	int merge_status;
-	int favor;
 
-	if (o->call_depth)
-		favor = 0;
-	else {
+	ll_opts.renormalize = o->renormalize;
+	ll_opts.xdl_opts = o->xdl_opts;
+
+	if (o->call_depth) {
+		ll_opts.virtual_ancestor = 1;
+		ll_opts.variant = 0;
+	} else {
 		switch (o->recursive_variant) {
 		case MERGE_RECURSIVE_OURS:
-			favor = XDL_MERGE_FAVOR_OURS;
+			ll_opts.variant = XDL_MERGE_FAVOR_OURS;
 			break;
 		case MERGE_RECURSIVE_THEIRS:
-			favor = XDL_MERGE_FAVOR_THEIRS;
+			ll_opts.variant = XDL_MERGE_FAVOR_THEIRS;
 			break;
 		default:
-			favor = 0;
+			ll_opts.variant = 0;
 			break;
 		}
 	}
@@ -643,10 +647,7 @@ static int merge_3way(struct merge_options *o,
 	read_mmblob(&src2, b->sha1);
 
 	merge_status = ll_merge(result_buf, a->path, &orig, base_name,
-				&src1, name1, &src2, name2,
-				((o->call_depth ? LL_OPT_VIRTUAL_ANCESTOR : 0) |
-				 (o->renormalize ? LL_OPT_RENORMALIZE : 0) |
-				 create_ll_flag(favor)));
+				&src1, name1, &src2, name2, &ll_opts);
 
 	free(name1);
 	free(name2);
@@ -1549,4 +1550,33 @@ void init_merge_options(struct merge_options *o)
 	o->current_file_set.strdup_strings = 1;
 	memset(&o->current_directory_set, 0, sizeof(struct string_list));
 	o->current_directory_set.strdup_strings = 1;
+}
+
+int parse_merge_opt(struct merge_options *o, const char *s)
+{
+	if (!s || !*s)
+		return -1;
+	if (!strcmp(s, "ours"))
+		o->recursive_variant = MERGE_RECURSIVE_OURS;
+	else if (!strcmp(s, "theirs"))
+		o->recursive_variant = MERGE_RECURSIVE_THEIRS;
+	else if (!strcmp(s, "subtree"))
+		o->subtree_shift = "";
+	else if (!prefixcmp(s, "subtree="))
+		o->subtree_shift = s + strlen("subtree=");
+	else if (!strcmp(s, "patience"))
+		o->xdl_opts |= XDF_PATIENCE_DIFF;
+	else if (!strcmp(s, "ignore-space-change"))
+		o->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
+	else if (!strcmp(s, "ignore-all-space"))
+		o->xdl_opts |= XDF_IGNORE_WHITESPACE;
+	else if (!strcmp(s, "ignore-space-at-eol"))
+		o->xdl_opts |= XDF_IGNORE_WHITESPACE_AT_EOL;
+	else if (!strcmp(s, "renormalize"))
+		o->renormalize = 1;
+	else if (!strcmp(s, "no-renormalize"))
+		o->renormalize = 0;
+	else
+		return -1;
+	return 0;
 }

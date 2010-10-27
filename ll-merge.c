@@ -18,7 +18,7 @@ typedef int (*ll_merge_fn)(const struct ll_merge_driver *,
 			   mmfile_t *orig, const char *orig_name,
 			   mmfile_t *src1, const char *name1,
 			   mmfile_t *src2, const char *name2,
-			   int flag,
+			   const struct ll_merge_options *opts,
 			   int marker_size);
 
 struct ll_merge_driver {
@@ -39,14 +39,18 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 			   mmfile_t *orig, const char *orig_name,
 			   mmfile_t *src1, const char *name1,
 			   mmfile_t *src2, const char *name2,
-			   int flag, int marker_size)
+			   const struct ll_merge_options *opts,
+			   int marker_size)
 {
+	mmfile_t *stolen;
+	assert(opts);
+
 	/*
 	 * The tentative merge result is "ours" for the final round,
 	 * or common ancestor for an internal merge.  Still return
 	 * "conflicted merge" status.
 	 */
-	mmfile_t *stolen = (flag & LL_OPT_VIRTUAL_ANCESTOR) ? orig : src1;
+	stolen = opts->virtual_ancestor ? orig : src1;
 
 	result->ptr = stolen->ptr;
 	result->size = stolen->size;
@@ -60,9 +64,11 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 			mmfile_t *orig, const char *orig_name,
 			mmfile_t *src1, const char *name1,
 			mmfile_t *src2, const char *name2,
-			int flag, int marker_size)
+			const struct ll_merge_options *opts,
+			int marker_size)
 {
 	xmparam_t xmp;
+	assert(opts);
 
 	if (buffer_is_binary(orig->ptr, orig->size) ||
 	    buffer_is_binary(src1->ptr, src1->size) ||
@@ -74,12 +80,13 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 				       orig, orig_name,
 				       src1, name1,
 				       src2, name2,
-				       flag, marker_size);
+				       opts, marker_size);
 	}
 
 	memset(&xmp, 0, sizeof(xmp));
 	xmp.level = XDL_MERGE_ZEALOUS;
-	xmp.favor = ll_opt_favor(flag);
+	xmp.favor = opts->variant;
+	xmp.xpp.flags = opts->xdl_opts;
 	if (git_xmerge_style >= 0)
 		xmp.style = git_xmerge_style;
 	if (marker_size > 0)
@@ -96,15 +103,17 @@ static int ll_union_merge(const struct ll_merge_driver *drv_unused,
 			  mmfile_t *orig, const char *orig_name,
 			  mmfile_t *src1, const char *name1,
 			  mmfile_t *src2, const char *name2,
-			  int flag, int marker_size)
+			  const struct ll_merge_options *opts,
+			  int marker_size)
 {
 	/* Use union favor */
-	flag &= ~LL_OPT_FAVOR_MASK;
-	flag |= create_ll_flag(XDL_MERGE_FAVOR_UNION);
+	struct ll_merge_options o;
+	assert(opts);
+	o = *opts;
+	o.variant = XDL_MERGE_FAVOR_UNION;
 	return ll_xdl_merge(drv_unused, result, path_unused,
 			    orig, NULL, src1, NULL, src2, NULL,
-			    flag, marker_size);
-	return 0;
+			    &o, marker_size);
 }
 
 #define LL_BINARY_MERGE 0
@@ -136,7 +145,8 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 			mmfile_t *orig, const char *orig_name,
 			mmfile_t *src1, const char *name1,
 			mmfile_t *src2, const char *name2,
-			int flag, int marker_size)
+			const struct ll_merge_options *opts,
+			int marker_size)
 {
 	char temp[4][50];
 	struct strbuf cmd = STRBUF_INIT;
@@ -144,6 +154,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	const char *args[] = { NULL, NULL };
 	int status, fd, i;
 	struct stat st;
+	assert(opts);
 
 	dict[0].placeholder = "O"; dict[0].value = temp[0];
 	dict[1].placeholder = "A"; dict[1].value = temp[1];
@@ -337,15 +348,21 @@ int ll_merge(mmbuffer_t *result_buf,
 	     mmfile_t *ancestor, const char *ancestor_label,
 	     mmfile_t *ours, const char *our_label,
 	     mmfile_t *theirs, const char *their_label,
-	     int flag)
+	     const struct ll_merge_options *opts)
 {
 	static struct git_attr_check check[2];
 	const char *ll_driver_name = NULL;
 	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	const struct ll_merge_driver *driver;
-	int virtual_ancestor = flag & LL_OPT_VIRTUAL_ANCESTOR;
 
-	if (flag & LL_OPT_RENORMALIZE) {
+	if (!opts) {
+		struct ll_merge_options default_opts = {0};
+		return ll_merge(result_buf, path, ancestor, ancestor_label,
+				ours, our_label, theirs, their_label,
+				&default_opts);
+	}
+
+	if (opts->renormalize) {
 		normalize_file(ancestor, path);
 		normalize_file(ours, path);
 		normalize_file(theirs, path);
@@ -359,11 +376,11 @@ int ll_merge(mmbuffer_t *result_buf,
 		}
 	}
 	driver = find_ll_merge_driver(ll_driver_name);
-	if (virtual_ancestor && driver->recursive)
+	if (opts->virtual_ancestor && driver->recursive)
 		driver = find_ll_merge_driver(driver->recursive);
 	return driver->fn(driver, result_buf, path, ancestor, ancestor_label,
 			  ours, our_label, theirs, their_label,
-			  flag, marker_size);
+			  opts, marker_size);
 }
 
 int ll_merge_marker_size(const char *path)

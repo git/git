@@ -325,7 +325,7 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 	 */
 	ll_merge(&result, path, &mmfile[0], NULL,
 		 &mmfile[1], "ours",
-		 &mmfile[2], "theirs", 0);
+		 &mmfile[2], "theirs", NULL);
 	for (i = 0; i < 3; i++)
 		free(mmfile[i].ptr);
 
