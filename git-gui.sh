@@ -3312,6 +3312,7 @@ text $ui_diff -background white -foreground black \
 	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
 	-state disabled
+catch {$ui_diff configure -tabstyle wordprocessor}
 ${NS}::scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
 	-command [list $ui_diff xview]
 ${NS}::scrollbar .vpane.lower.diff.body.sby -orient vertical \
