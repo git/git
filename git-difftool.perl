@@ -10,6 +10,7 @@
 #
 # Any arguments that are unknown to this script are forwarded to 'git diff'.
 
+use 5.008;
 use strict;
 use warnings;
 use Cwd qw(abs_path);

@@ -6,7 +6,7 @@
 #
 # Scan two git object-trees, and hardlink any common objects between them.
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 use Getopt::Long;

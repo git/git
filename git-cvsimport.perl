@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # This tool is copyright (c) 2005, Matthias Urlichs.
 # It is released under the Gnu Public License, version 2.
@@ -13,6 +13,7 @@
 # The head revision is on branch "origin" by default.
 # You can change that with the '-o' option.
 
+use 5.008;
 use strict;
 use warnings;
 use Getopt::Long;
