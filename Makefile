@@ -1096,6 +1096,25 @@ else
 endif
 	X = .exe
 endif
+ifeq ($(uname_S),Interix)
+	NO_SYS_POLL_H = YesPlease
+	NO_INTTYPES_H = YesPlease
+	NO_INITGROUPS = YesPlease
+	NO_IPV6 = YesPlease
+	NO_MEMMEM = YesPlease
+	NO_MKDTEMP = YesPlease
+	NO_STRTOUMAX = YesPlease
+	NO_NSEC = YesPlease
+	NO_MKSTEMPS = YesPlease
+	ifeq ($(uname_R),3.5)
+		NO_INET_NTOP = YesPlease
+		NO_INET_PTON = YesPlease
+	endif
+	ifeq ($(uname_R),5.2)
+		NO_INET_NTOP = YesPlease
+		NO_INET_PTON = YesPlease
+	endif
+endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	pathsep = ;
 	NO_PREAD = YesPlease
@@ -1359,6 +1378,15 @@ ifdef NO_UNSETENV
 endif
 ifdef NO_SYS_SELECT_H
 	BASIC_CFLAGS += -DNO_SYS_SELECT_H
+endif
+ifdef NO_SYS_POLL_H
+	BASIC_CFLAGS += -DNO_SYS_POLL_H
+endif
+ifdef NO_INTTYPES_H
+	BASIC_CFLAGS += -DNO_INTTYPES_H
+endif
+ifdef NO_INITGROUPS
+	BASIC_CFLAGS += -DNO_INITGROUPS
 endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
