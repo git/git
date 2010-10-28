@@ -489,6 +489,13 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.abbrevguard")) {
+		unique_abbrev_extra_length = git_config_int(var, value);
+		if (unique_abbrev_extra_length < 0)
+			unique_abbrev_extra_length = 0;
+		return 0;
+	}
+
 	if (!strcmp(var, "core.bare")) {
 		is_bare_repository_cfg = git_config_bool(var, value);
 		return 0;
