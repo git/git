@@ -1003,7 +1003,7 @@ static void mark_bad_packed_object(struct packed_git *p,
 	p->num_bad_objects++;
 }
 
-static int has_packed_and_bad(const unsigned char *sha1)
+static const struct packed_git *has_packed_and_bad(const unsigned char *sha1)
 {
 	struct packed_git *p;
 	unsigned i;
@@ -1011,8 +1011,8 @@ static int has_packed_and_bad(const unsigned char *sha1)
 	for (p = packed_git; p; p = p->next)
 		for (i = 0; i < p->num_bad_objects; i++)
 			if (!hashcmp(sha1, p->bad_object_sha1 + 20 * i))
-				return 1;
-	return 0;
+				return p;
+	return NULL;
 }
 
 int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)
@@ -2079,6 +2079,11 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
 	return read_packed_sha1(sha1, type, size);
 }
 
+/*
+ * This function dies on corrupt objects; the callers who want to
+ * deal with them should arrange to call read_object() and give error
+ * messages themselves.
+ */
 void *read_sha1_file_repl(const unsigned char *sha1,
 			  enum object_type *type,
 			  unsigned long *size,
@@ -2087,28 +2092,30 @@ void *read_sha1_file_repl(const unsigned char *sha1,
 	const unsigned char *repl = lookup_replace_object(sha1);
 	void *data = read_object(repl, type, size);
 	char *path;
+	const struct packed_git *p;
+
+	if (data) {
+		if (replacement)
+			*replacement = repl;
+		return data;
+	}
 
 	/* die if we replaced an object with one that does not exist */
-	if (!data && repl != sha1)
+	if (repl != sha1)
 		die("replacement %s not found for %s",
 		    sha1_to_hex(repl), sha1_to_hex(sha1));
 
-	/* legacy behavior is to die on corrupted objects */
-	if (!data) {
-		if (has_loose_object(repl)) {
-			path = sha1_file_name(sha1);
-			die("loose object %s (stored in %s) is corrupted", sha1_to_hex(repl), path);
-		}
-		if (has_packed_and_bad(repl)) {
-			path = sha1_pack_name(sha1);
-			die("packed object %s (stored in %s) is corrupted", sha1_to_hex(repl), path);
-		}
+	if (has_loose_object(repl)) {
+		path = sha1_file_name(sha1);
+		die("loose object %s (stored in %s) is corrupt",
+		    sha1_to_hex(repl), path);
 	}
 
-	if (replacement)
-		*replacement = repl;
+	if ((p = has_packed_and_bad(repl)) != NULL)
+		die("packed object %s (stored in %s) is corrupt",
+		    sha1_to_hex(repl), p->pack_name);
 
-	return data;
+	return NULL;
 }
 
 void *read_object_with_reference(const unsigned char *sha1,
