@@ -2345,7 +2345,7 @@ _git ()
 {
 	local i c=1 command __git_dir
 
-	if [[ -n $ZSH_VERSION ]]; then
+	if [[ -n ${ZSH_VERSION-} ]]; then
 		emulate -L bash
 		setopt KSH_TYPESET
 	fi
@@ -2394,7 +2394,7 @@ _git ()
 
 _gitk ()
 {
-	if [[ -n $ZSH_VERSION ]]; then
+	if [[ -n ${ZSH_VERSION-} ]]; then
 		emulate -L bash
 		setopt KSH_TYPESET
 	fi
@@ -2434,7 +2434,7 @@ complete -o bashdefault -o default -o nospace -F _git git.exe 2>/dev/null \
 	|| complete -o default -o nospace -F _git git.exe
 fi
 
-if [[ -n $ZSH_VERSION ]]; then
+if [[ -n ${ZSH_VERSION-} ]]; then
 	shopt () {
 		local option
 		if [ $# -ne 2 ]; then
