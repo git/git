@@ -191,7 +191,7 @@ test_expect_success 'git show <commits> leaves list of commits as given' '
 test_expect_success 'setup case sensitivity tests' '
 	echo case >one &&
 	test_tick &&
-	git add one
+	git add one &&
 	git commit -a -m Second
 '
 
@@ -341,7 +341,7 @@ test_expect_success 'set up more tangled history' '
 	test_commit octopus-b &&
 	git checkout master &&
 	test_commit seventh &&
-	git merge octopus-a octopus-b
+	git merge octopus-a octopus-b &&
 	git merge reach
 '
 

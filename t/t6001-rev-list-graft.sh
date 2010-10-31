@@ -90,22 +90,22 @@ check () {
 for type in basic parents parents-raw
 do
 	test_expect_success 'without grafts' "
-		rm -f .git/info/grafts
+		rm -f .git/info/grafts &&
 		check $type $B2 -- $B2 $B1 $B0
 	"
 
 	test_expect_success 'with grafts' "
-		echo '$B0 $A2' >.git/info/grafts
+		echo '$B0 $A2' >.git/info/grafts &&
 		check $type $B2 -- $B2 $B1 $B0 $A2 $A1 $A0
 	"
 
 	test_expect_success 'without grafts, with pathlimit' "
-		rm -f .git/info/grafts
+		rm -f .git/info/grafts &&
 		check $type $B2 subdir -- $B2 $B0
 	"
 
 	test_expect_success 'with grafts, with pathlimit' "
-		echo '$B0 $A2' >.git/info/grafts
+		echo '$B0 $A2' >.git/info/grafts &&
 		check $type $B2 subdir -- $B2 $B0 $A2 $A0
 	"
 

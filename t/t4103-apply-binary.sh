@@ -41,11 +41,11 @@ test_expect_success 'setup' "
 "
 
 test_expect_success 'stat binary diff -- should not fail.' \
-	'git checkout master
+	'git checkout master &&
 	 git apply --stat --summary B.diff'
 
 test_expect_success 'stat binary diff (copy) -- should not fail.' \
-	'git checkout master
+	'git checkout master &&
 	 git apply --stat --summary C.diff'
 
 test_expect_success 'check binary diff -- should fail.' \
@@ -69,11 +69,11 @@ test_expect_success \
 '
 
 test_expect_success 'check binary diff with replacement.' \
-	'git checkout master
+	'git checkout master &&
 	 git apply --check --allow-binary-replacement BF.diff'
 
 test_expect_success 'check binary diff with replacement (copy).' \
-	'git checkout master
+	'git checkout master &&
 	 git apply --check --allow-binary-replacement CF.diff'
 
 # Now we start applying them.

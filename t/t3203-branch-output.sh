@@ -12,13 +12,13 @@ test_expect_success 'make commits' '
 '
 
 test_expect_success 'make branches' '
-	git branch branch-one
+	git branch branch-one &&
 	git branch branch-two HEAD^
 '
 
 test_expect_success 'make remote branches' '
-	git update-ref refs/remotes/origin/branch-one branch-one
-	git update-ref refs/remotes/origin/branch-two branch-two
+	git update-ref refs/remotes/origin/branch-one branch-one &&
+	git update-ref refs/remotes/origin/branch-two branch-two &&
 	git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/branch-one
 '
 

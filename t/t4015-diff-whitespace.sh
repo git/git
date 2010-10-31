@@ -330,7 +330,7 @@ test_expect_success 'check space before tab in indent (space-before-tab: on)' '
 
 test_expect_success 'check spaces as indentation (indent-with-non-tab: off)' '
 
-	git config core.whitespace "-indent-with-non-tab"
+	git config core.whitespace "-indent-with-non-tab" &&
 	echo "        foo ();" > x &&
 	git diff --check
 

@@ -20,7 +20,7 @@ test_expect_success PERL 'setup' '
 # note: bar sorts before dir, so the first 'n' is always to skip 'bar'
 
 test_expect_success PERL 'saying "n" does nothing' '
-	set_state dir/foo work index
+	set_state dir/foo work index &&
 	(echo n; echo n) | test_must_fail git stash save -p &&
 	verify_state dir/foo work index &&
 	verify_saved_state bar

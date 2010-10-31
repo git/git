@@ -119,7 +119,7 @@ test_expect_success 'fetch must not resolve short tag name' '
 test_expect_success 'fetch must not resolve short remote name' '
 
 	cd "$D" &&
-	git update-ref refs/remotes/six/HEAD HEAD
+	git update-ref refs/remotes/six/HEAD HEAD &&
 
 	mkdir six &&
 	cd six &&

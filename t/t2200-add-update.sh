@@ -25,7 +25,7 @@ test_expect_success setup '
 	echo initial >dir1/sub2 &&
 	echo initial >dir2/sub3 &&
 	git add check dir1 dir2 top foo &&
-	test_tick
+	test_tick &&
 	git commit -m initial &&
 
 	echo changed >check &&

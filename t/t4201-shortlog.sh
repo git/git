@@ -35,7 +35,7 @@ test_expect_success 'setup' '
 		tr 1234 "\370\235\204\236")" a1 &&
 
 	echo 5 >a1 &&
-	git commit --quiet -m "a								12	34	56	78" a1
+	git commit --quiet -m "a								12	34	56	78" a1 &&
 
 	echo 6 >a1 &&
 	git commit --quiet -m "Commit by someone else" \

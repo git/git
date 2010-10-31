@@ -316,11 +316,11 @@ test_expect_success 'git diff (empty submodule dir)' '
 test_expect_success 'conflicted submodule setup' '
 
 	# 39 efs
-	c=fffffffffffffffffffffffffffffffffffffff
+	c=fffffffffffffffffffffffffffffffffffffff &&
 	(
-		echo "000000 $_z40 0	sub"
-		echo "160000 1$c 1	sub"
-		echo "160000 2$c 2	sub"
+		echo "000000 $_z40 0	sub" &&
+		echo "160000 1$c 1	sub" &&
+		echo "160000 2$c 2	sub" &&
 		echo "160000 3$c 3	sub"
 	) | git update-index --index-info &&
 	echo >expect.nosub '\''diff --cc sub

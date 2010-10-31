@@ -6,8 +6,8 @@ test_description='word diff colors'
 
 test_expect_success setup '
 
-	git config diff.color.old red
-	git config diff.color.new green
+	git config diff.color.old red &&
+	git config diff.color.new green &&
 	git config diff.color.func magenta
 
 '

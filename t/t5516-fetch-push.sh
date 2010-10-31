@@ -586,7 +586,7 @@ test_expect_success 'push --delete refuses src:dest refspecs' '
 '
 
 test_expect_success 'warn on push to HEAD of non-bare repository' '
-	mk_test heads/master
+	mk_test heads/master &&
 	(
 		cd testrepo &&
 		git checkout master &&
@@ -597,7 +597,7 @@ test_expect_success 'warn on push to HEAD of non-bare repository' '
 '
 
 test_expect_success 'deny push to HEAD of non-bare repository' '
-	mk_test heads/master
+	mk_test heads/master &&
 	(
 		cd testrepo &&
 		git checkout master &&
@@ -607,7 +607,7 @@ test_expect_success 'deny push to HEAD of non-bare repository' '
 '
 
 test_expect_success 'allow push to HEAD of bare repository (bare)' '
-	mk_test heads/master
+	mk_test heads/master &&
 	(
 		cd testrepo &&
 		git checkout master &&
@@ -619,7 +619,7 @@ test_expect_success 'allow push to HEAD of bare repository (bare)' '
 '
 
 test_expect_success 'allow push to HEAD of non-bare repository (config)' '
-	mk_test heads/master
+	mk_test heads/master &&
 	(
 		cd testrepo &&
 		git checkout master &&

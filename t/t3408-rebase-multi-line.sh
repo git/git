@@ -16,7 +16,7 @@ test_expect_success setup '
 	git commit -a -m "A sample commit log message that has a long
 summary that spills over multiple lines.
 
-But otherwise with a sane description."
+But otherwise with a sane description." &&
 
 	git branch side &&
 

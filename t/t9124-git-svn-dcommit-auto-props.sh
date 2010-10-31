@@ -24,7 +24,7 @@ test_expect_success 'initialize git svn' '
 		svn_cmd import -m "import for git svn" . "$svnrepo"
 	) &&
 	rm -rf import &&
-	git svn init "$svnrepo"
+	git svn init "$svnrepo" &&
 	git svn fetch
 '
 

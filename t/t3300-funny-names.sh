@@ -43,8 +43,8 @@ test_expect_success TABS_IN_FILENAMES 'git ls-files no-funny' \
 	test_cmp expected current'
 
 test_expect_success TABS_IN_FILENAMES 'setup expect' '
-t0=`git write-tree`
-echo "$t0" >t0
+t0=`git write-tree` &&
+echo "$t0" >t0 &&
 
 cat > expected <<\EOF
 just space
@@ -69,8 +69,8 @@ test_expect_success TABS_IN_FILENAMES 'git ls-files -z with-funny' \
 	test_cmp expected current'
 
 test_expect_success TABS_IN_FILENAMES 'setup expect' '
-t1=`git write-tree`
-echo "$t1" >t1
+t1=`git write-tree` &&
+echo "$t1" >t1 &&
 
 cat > expected <<\EOF
 just space

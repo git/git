@@ -59,7 +59,7 @@ test_expect_success 'attribute test' '
 
 test_expect_success 'attribute test: read paths from stdin' '
 
-	cat <<EOF > expect
+	cat <<EOF > expect &&
 f: test: f
 a/f: test: f
 a/c/f: test: f

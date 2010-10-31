@@ -173,14 +173,14 @@ EOF
 test_expect_success 'pre-rebase hook stops rebase' '
 	git checkout -b stops1 other &&
 	test_must_fail git rebase --root --onto master &&
-	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops1
+	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops1 &&
 	test 0 = $(git rev-list other...stops1 | wc -l)
 '
 
 test_expect_success 'pre-rebase hook stops rebase -i' '
 	git checkout -b stops2 other &&
 	test_must_fail git rebase --root --onto master &&
-	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops2
+	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops2 &&
 	test 0 = $(git rev-list other...stops2 | wc -l)
 '
 

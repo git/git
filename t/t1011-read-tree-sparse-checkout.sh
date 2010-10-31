@@ -47,7 +47,7 @@ test_expect_success 'read-tree without .git/info/sparse-checkout' '
 '
 
 test_expect_success 'read-tree with .git/info/sparse-checkout but disabled' '
-	echo >.git/info/sparse-checkout
+	echo >.git/info/sparse-checkout &&
 	git read-tree -m -u HEAD &&
 	git ls-files -t >result &&
 	test_cmp expected.swt result &&

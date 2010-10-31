@@ -70,7 +70,7 @@ test_expect_success 'setup' '
     mkdir subdir &&
     echo "Another text file" > subdir/file.h &&
     echo "Another binary: Q (this time CR)" | q_to_cr > subdir/withCr.bin &&
-    echo "Mixed up NUL, but marked text: Q <- there" | q_to_nul > mixedUp.c
+    echo "Mixed up NUL, but marked text: Q <- there" | q_to_nul > mixedUp.c &&
     echo "Unspecified" > subdir/unspecified.other &&
     echo "/*.bin -crlf" > .gitattributes &&
     echo "/*.c crlf" >> .gitattributes &&

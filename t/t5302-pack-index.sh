@@ -8,7 +8,7 @@ test_description='pack index with 64-bit offsets and object CRC'
 
 test_expect_success \
     'setup' \
-    'rm -rf .git
+    'rm -rf .git &&
      git init &&
      git config pack.threads 1 &&
      i=1 &&

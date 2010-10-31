@@ -309,7 +309,7 @@ test_expect_success \
 test_expect_success \
     '6 - must not exist in O && !A && !B case' "
      rm -f .git/index DD &&
-     echo DD >DD
+     echo DD >DD &&
      git update-index --add DD &&
      test_must_fail git read-tree -m $tree_O $tree_A $tree_B
 "

@@ -186,8 +186,8 @@ test_expect_success 'delete' '
 	test_tick &&
 	git commit -m tiger C &&
 
-	HEAD_entry_count=$(git reflog | wc -l)
-	master_entry_count=$(git reflog show master | wc -l)
+	HEAD_entry_count=$(git reflog | wc -l) &&
+	master_entry_count=$(git reflog show master | wc -l) &&
 
 	test $HEAD_entry_count = 5 &&
 	test $master_entry_count = 5 &&
@@ -199,13 +199,13 @@ test_expect_success 'delete' '
 	test $HEAD_entry_count = $(git reflog | wc -l) &&
 	! grep ox < output &&
 
-	master_entry_count=$(wc -l < output)
+	master_entry_count=$(wc -l < output) &&
 
 	git reflog delete HEAD@{1} &&
 	test $(($HEAD_entry_count -1)) = $(git reflog | wc -l) &&
 	test $master_entry_count = $(git reflog show master | wc -l) &&
 
-	HEAD_entry_count=$(git reflog | wc -l)
+	HEAD_entry_count=$(git reflog | wc -l) &&
 
 	git reflog delete master@{07.04.2005.15:15:00.-0700} &&
 	git reflog show master > output &&

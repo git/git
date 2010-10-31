@@ -12,7 +12,7 @@ test_expect_success setup '
 
 	git config core.autocrlf false &&
 
-	echo "one text" > .gitattributes
+	echo "one text" > .gitattributes &&
 
 	for w in Hello world how are you; do echo $w; done >one &&
 	for w in I am very very fine thank you; do echo $w; done >two &&

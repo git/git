@@ -452,7 +452,7 @@ test_expect_success 'outside of git repository' '
 		echo file1:hello &&
 		echo sub/file2:world
 	} >non/expect.full &&
-	echo file2:world >non/expect.sub
+	echo file2:world >non/expect.sub &&
 	(
 		GIT_CEILING_DIRECTORIES="$(pwd)/non/git" &&
 		export GIT_CEILING_DIRECTORIES &&
@@ -478,7 +478,7 @@ test_expect_success 'inside git repository but with --no-index' '
 		echo sub/file2:world
 	} >is/expect.full &&
 	: >is/expect.empty &&
-	echo file2:world >is/expect.sub
+	echo file2:world >is/expect.sub &&
 	(
 		cd is/git &&
 		git init &&

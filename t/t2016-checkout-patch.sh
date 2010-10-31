@@ -32,7 +32,7 @@ test_expect_success PERL 'git checkout -p' '
 '
 
 test_expect_success PERL 'git checkout -p with staged changes' '
-	set_state dir/foo work index
+	set_state dir/foo work index &&
 	(echo n; echo y) | git checkout -p &&
 	verify_saved_state bar &&
 	verify_state dir/foo index index

@@ -26,7 +26,7 @@ test_expect_success 'setup' '
 	test_tick &&
 	git tag rein &&
 	git checkout -b wer HEAD^ &&
-	echo lange > file2
+	echo lange > file2 &&
 	test_tick &&
 	git commit -m sitzt file2 &&
 	test_tick &&

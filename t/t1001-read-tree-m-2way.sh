@@ -394,7 +394,7 @@ test_expect_success '-m references the correct modified tree' '
 	echo >file-a &&
 	echo >file-b &&
 	git add file-a file-b &&
-	git commit -a -m "test for correct modified tree"
+	git commit -a -m "test for correct modified tree" &&
 	git branch initial-mod &&
 	echo b >file-b &&
 	git commit -a -m "B" &&

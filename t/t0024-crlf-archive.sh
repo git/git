@@ -7,7 +7,7 @@ UNZIP=${UNZIP:-unzip}
 
 test_expect_success setup '
 
-	git config core.autocrlf true
+	git config core.autocrlf true &&
 
 	printf "CRLF line ending\r\nAnd another\r\n" > sample &&
 	git add sample &&
@@ -20,7 +20,7 @@ test_expect_success setup '
 test_expect_success 'tar archive' '
 
 	git archive --format=tar HEAD |
-	( mkdir untarred && cd untarred && "$TAR" -xf - )
+	( mkdir untarred && cd untarred && "$TAR" -xf - ) &&
 
 	test_cmp sample untarred/sample
 

@@ -95,7 +95,7 @@ test_expect_success 'format.numbered && --keep-subject' '
 
 test_expect_success 'format.numbered = auto' '
 
-	git config format.numbered auto
+	git config format.numbered auto &&
 	git format-patch --stdout HEAD~2 > patch5 &&
 	test_numbered patch5
 

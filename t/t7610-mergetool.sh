@@ -54,7 +54,7 @@ test_expect_success 'custom mergetool' '
 
 test_expect_success 'mergetool crlf' '
     git config core.autocrlf true &&
-    git checkout -b test2 branch1
+    git checkout -b test2 branch1 &&
     test_must_fail git merge master >/dev/null 2>&1 &&
     ( yes "" | git mergetool file1 >/dev/null 2>&1 ) &&
     ( yes "" | git mergetool file2 >/dev/null 2>&1 ) &&
