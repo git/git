@@ -500,6 +500,10 @@ library for your script to use.
    <expected> file.  This behaves like "cmp" but produces more
    helpful output when the test is run with "-v" option.
 
+ - test_line_count (= | -lt | -ge | ...) <length> <file>
+
+   Check whether a file has the length it is expected to.
+
  - test_path_is_file <file> [<diagnosis>]
    test_path_is_dir <dir> [<diagnosis>]
    test_path_is_missing <path> [<diagnosis>]
