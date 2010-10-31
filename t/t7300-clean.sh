@@ -183,7 +183,7 @@ test_expect_success 'git clean symbolic link' '
 
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
-	ln -s docs/manual.txt src/part4.c
+	ln -s docs/manual.txt src/part4.c &&
 	git clean &&
 	test -f Makefile &&
 	test -f README &&

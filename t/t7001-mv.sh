@@ -207,7 +207,7 @@ test_expect_success 'git mv should not change sha1 of moved cache entry' '
 	git init &&
 	echo 1 >dirty &&
 	git add dirty &&
-	entry="$(git ls-files --stage dirty | cut -f 1)"
+	entry="$(git ls-files --stage dirty | cut -f 1)" &&
 	git mv dirty dirty2 &&
 	[ "$entry" = "$(git ls-files --stage dirty2 | cut -f 1)" ] &&
 	echo 2 >dirty2 &&

@@ -390,7 +390,7 @@ try_commit_status_combo () {
 
 	test_expect_success 'commit --no-status' '
 		clear_config commit.status &&
-		try_commit --no-status
+		try_commit --no-status &&
 		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
