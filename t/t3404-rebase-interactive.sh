@@ -7,6 +7,23 @@ test_description='git rebase interactive
 
 This test runs git rebase "interactively", by faking an edit, and verifies
 that the result still makes sense.
+
+Initial setup:
+
+     one - two - three - four (conflict-branch)
+   /
+ A - B - C - D - E            (master)
+ | \
+ |   F - G - H                (branch1)
+ |     \
+ |\      I                    (branch2)
+ | \
+ |   J - K - L - M            (no-conflict-branch)
+  \
+    N - O - P                 (no-ff-branch)
+
+ where A, B, D and G all touch file1, and one, two, three, four all
+ touch file "conflict".
 '
 . ./test-lib.sh
 
@@ -14,26 +31,8 @@ that the result still makes sense.
 
 set_fake_editor
 
-# Set up the repository like this:
-#
-#     one - two - three - four (conflict-branch)
-#   /
-# A - B - C - D - E            (master)
-# | \
-# |   F - G - H                (branch1)
-# |     \
-# |\      I                    (branch2)
-# | \
-# |   J - K - L - M            (no-conflict-branch)
-#  \
-#    N - O - P                 (no-ff-branch)
-#
-# where A, B, D and G all touch file1, and one, two, three, four all
-# touch file "conflict".
-#
 # WARNING: Modifications to the initial repository can change the SHA ID used
 # in the expect2 file for the 'stop on conflicting pick' test.
-
 
 test_expect_success 'setup' '
 	test_commit A file1 &&
