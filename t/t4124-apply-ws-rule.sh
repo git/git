@@ -176,9 +176,8 @@ test_expect_success 'trailing whitespace & no newline at the end of file' '
 '
 
 test_expect_success 'blank at EOF with --whitespace=fix (1)' '
-	: these can fail depending on what we did before
-	git config --unset core.whitespace
-	rm -f .gitattributes
+	test_might_fail git config --unset core.whitespace &&
+	rm -f .gitattributes &&
 
 	{ echo a; echo b; echo c; } >one &&
 	git add one &&
