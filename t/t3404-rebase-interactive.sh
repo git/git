@@ -48,20 +48,19 @@ test_expect_success 'setup' '
 	git checkout -b branch2 F &&
 	test_commit I file6 &&
 	git checkout -b conflict-branch A &&
-	for n in one two three four
-	do
-		test_commit $n conflict
-	done &&
+	test_commit one conflict &&
+	test_commit two conflict &&
+	test_commit three conflict &&
+	test_commit four conflict &&
 	git checkout -b no-conflict-branch A &&
-	for n in J K L M
-	do
-		test_commit $n file$n
-	done &&
+	test_commit J fileJ &&
+	test_commit K fileK &&
+	test_commit L fileL &&
+	test_commit M fileM &&
 	git checkout -b no-ff-branch A &&
-	for n in N O P
-	do
-		test_commit $n file$n
-	done
+	test_commit N fileN &&
+	test_commit O fileO &&
+	test_commit P fileP
 '
 
 # "exec" commands are ran with the user shell by default, but this may
