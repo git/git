@@ -29,6 +29,12 @@ Initial setup:
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
+test_cmp_rev () {
+	git describe --always --tags "$1" >expect.rev &&
+	git describe --always --tags "$2" >actual.rev &&
+	test_cmp expect.rev actual.rev
+}
+
 set_fake_editor
 
 # WARNING: Modifications to the initial repository can change the SHA ID used
@@ -80,20 +86,12 @@ test_expect_success 'rebase -i with the exec command' '
 	test_path_is_file touch-one &&
 	test_path_is_file touch-two &&
 	test_path_is_missing touch-three " (should have stopped before)" &&
-	test $(git rev-parse C) = $(git rev-parse HEAD) || {
-		echo "Stopped at wrong revision:"
-		echo "($(git describe --tags HEAD) instead of C)"
-		false
-	} &&
+	test_cmp_rev C HEAD &&
 	git rebase --continue &&
 	test_path_is_file touch-three &&
 	test_path_is_file "touch-file  name with spaces" &&
 	test_path_is_file touch-after-semicolon &&
-	test $(git rev-parse master) = $(git rev-parse HEAD) || {
-		echo "Stopped at wrong revision:"
-		echo "($(git describe --tags HEAD) instead of master)"
-		false
-	} &&
+	test_cmp_rev master HEAD &&
 	rm -f touch-*
 '
 
@@ -114,11 +112,7 @@ test_expect_success 'rebase -i with the exec command checks tree cleanness' '
 	export FAKE_LINES &&
 	test_must_fail git rebase -i HEAD^
 	) &&
-	test $(git rev-parse master^) = $(git rev-parse HEAD) || {
-		echo "Stopped at wrong revision:"
-		echo "($(git describe --tags HEAD) instead of master^)"
-		false
-	} &&
+	test_cmp_rev master^ HEAD &&
 	git reset --hard &&
 	git rebase --continue
 '
