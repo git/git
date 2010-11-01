@@ -35,6 +35,8 @@ static size_t sz_fmt(size_t s) { return s; }
 
 const unsigned char null_sha1[20];
 
+static int git_open_noatime(const char *name);
+
 int safe_create_leading_directories(char *path)
 {
 	char *pos = path + offset_1st_component(path);
@@ -298,7 +300,7 @@ static void read_info_alternates(const char * relative_base, int depth)
 	int fd;
 
 	sprintf(path, "%s/%s", relative_base, alt_file_name);
-	fd = open(path, O_RDONLY);
+	fd = git_open_noatime(path);
 	if (fd < 0)
 		return;
 	if (fstat(fd, &st) || (st.st_size == 0)) {
@@ -411,7 +413,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 	struct pack_idx_header *hdr;
 	size_t idx_size;
 	uint32_t version, nr, i, *index;
-	int fd = open(path, O_RDONLY);
+	int fd = git_open_noatime(path);
 	struct stat st;
 
 	if (fd < 0)
@@ -655,9 +657,9 @@ static int open_packed_git_1(struct packed_git *p)
 	if (!p->index_data && open_pack_index(p))
 		return error("packfile %s index unavailable", p->pack_name);
 
-	p->pack_fd = open(p->pack_name, O_RDONLY);
+	p->pack_fd = git_open_noatime(p->pack_name);
 	while (p->pack_fd < 0 && errno == EMFILE && unuse_one_window(p, -1))
-		p->pack_fd = open(p->pack_name, O_RDONLY);
+		p->pack_fd = git_open_noatime(p->pack_name);
 	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
 		return -1;
 
