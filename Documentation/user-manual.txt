@@ -367,12 +367,15 @@ above were created based on the remote branches at clone time and will
 be updated by "git fetch" (hence "git pull") and "git push". See
 <<Updating-a-repository-With-git-fetch>> for details.
 
-You cannot check out these remote-tracking branches, but you can
-examine them on a branch of your own, just as you would a tag:
+You might want to build on one of these remote-tracking branches
+on a branch of your own, just as you would for a tag:
 
 ------------------------------------------------
 $ git checkout -b my-todo-copy origin/todo
 ------------------------------------------------
+
+You can also check out "origin/todo" directly to examine it or
+write a one-off patch.  See <<detached-head,detached head>>.
 
 Note that the name "origin" is just the name that git uses by default
 to refer to the repository that you cloned from.
