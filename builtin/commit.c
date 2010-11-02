@@ -69,7 +69,7 @@ static enum {
 static const char *logfile, *force_author;
 static const char *template_file;
 static char *edit_message, *use_message;
-static char *fixup_message;
+static char *fixup_message, *squash_message;
 static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
@@ -126,6 +126,7 @@ static struct option builtin_commit_options[] = {
 	OPT_STRING('c', "reedit-message", &edit_message, "COMMIT", "reuse and edit message from specified commit"),
 	OPT_STRING('C', "reuse-message", &use_message, "COMMIT", "reuse message from specified commit"),
 	OPT_STRING(0, "fixup", &fixup_message, "COMMIT", "use autosquash formatted message to fixup specified commit"),
+	OPT_STRING(0, "squash", &squash_message, "COMMIT", "use autosquash formatted message to squash specified commit"),
 	OPT_BOOLEAN(0, "reset-author", &renew_authorship, "the commit is authored by me now (used with -C-c/--amend)"),
 	OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 	OPT_FILENAME('t', "template", &template_file, "use specified template file"),
@@ -567,6 +568,25 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		return 0;
 
+	if (squash_message) {
+		/*
+		 * Insert the proper subject line before other commit
+		 * message options add their content.
+		 */
+		if (use_message && !strcmp(use_message, squash_message))
+			strbuf_addstr(&sb, "squash! ");
+		else {
+			struct pretty_print_context ctx = {0};
+			struct commit *c;
+			c = lookup_commit_reference_by_name(squash_message);
+			if (!c)
+				die("could not lookup commit %s", squash_message);
+			ctx.output_encoding = get_commit_output_encoding();
+			format_commit_message(c, "squash! %s\n\n", &sb,
+					      &ctx);
+		}
+	}
+
 	if (message.len) {
 		strbuf_addbuf(&sb, &message);
 		hook_arg1 = "message";
@@ -618,6 +638,16 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	 */
 	else if (in_merge)
 		hook_arg1 = "merge";
+
+	if (squash_message) {
+		/*
+		 * If squash_commit was used for the commit subject,
+		 * then we're possibly hijacking other commit log options.
+		 * Reset the hook args to tell the real story.
+		 */
+		hook_arg1 = "message";
+		hook_arg2 = "";
+	}
 
 	fp = fopen(git_path(commit_editmsg), "w");
 	if (fp == NULL)
@@ -890,7 +920,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		die("You have nothing to amend.");
 	if (amend && in_merge)
 		die("You are in the middle of a merge -- cannot amend.");
-
+	if (fixup_message && squash_message)
+		die("Options --squash and --fixup cannot be used together");
 	if (use_message)
 		f++;
 	if (edit_message)

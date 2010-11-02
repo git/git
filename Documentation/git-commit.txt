@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend] [--dry-run]
-	   [(-c | -C | --fixup) <commit>] [-F <file> | -m <msg>]
+	   [(-c | -C | --fixup | --squash) <commit>] [-F <file> | -m <msg>]
 	   [--reset-author] [--allow-empty] [--allow-empty-message] [--no-verify]
 	   [-e] [--author=<author>] [--date=<date>] [--cleanup=<mode>]
 	   [--status | --no-status] [--] [[-i | -o ]<file>...]
@@ -75,6 +75,13 @@ OPTIONS
 	The commit message will be the subject line from the specified
 	commit with a prefix of "fixup! ".  See linkgit:git-rebase[1]
 	for details.
+
+--squash=<commit>::
+	Construct a commit message for use with `rebase --autosquash`.
+	The commit message subject line is taken from the specified
+	commit with a prefix of "squash! ".  Can be used with additional
+	commit message options (`-m`/`-c`/`-C`/`-F`). See
+	linkgit:git-rebase[1] for details.
 
 --reset-author::
 	When used with -C/-c/--amend options, declare that the
