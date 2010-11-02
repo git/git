@@ -115,4 +115,8 @@ test_expect_success 'use commit --fixup' '
 	test_auto_commit_flags fixup 1
 '
 
+test_expect_success 'use commit --squash' '
+	test_auto_commit_flags squash 2
+'
+
 test_done

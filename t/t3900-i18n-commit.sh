@@ -160,4 +160,6 @@ test_commit_autosquash_flags () {
 
 test_commit_autosquash_flags eucJP fixup
 
+test_commit_autosquash_flags ISO-2022-JP squash '-m "squash message"'
+
 test_done
