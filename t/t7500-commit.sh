@@ -215,4 +215,37 @@ test_expect_success 'Commit a message with --allow-empty-message' '
 	commit_msg_is "hello there"
 '
 
+commit_for_rebase_autosquash_setup () {
+	echo "first content line" >>foo &&
+	git add foo &&
+	cat >log <<EOF &&
+target message subject line
+
+target message body line 1
+target message body line 2
+EOF
+	git commit -F log &&
+	echo "second content line" >>foo &&
+	git add foo &&
+	git commit -m "intermediate commit" &&
+	echo "third content line" >>foo &&
+	git add foo
+}
+
+test_expect_success 'commit --fixup provides correct one-line commit message' '
+	commit_for_rebase_autosquash_setup &&
+	git commit --fixup HEAD~1 &&
+	commit_msg_is "fixup! target message subject line"
+'
+
+test_expect_success 'invalid message options when using --fixup' '
+	echo changes >>foo &&
+	echo "message" >log &&
+	git add foo &&
+	test_must_fail git commit --fixup HEAD~1 -C HEAD~2 &&
+	test_must_fail git commit --fixup HEAD~1 -c HEAD~2 &&
+	test_must_fail git commit --fixup HEAD~1 -m "cmdline message" &&
+	test_must_fail git commit --fixup HEAD~1 -F log
+'
+
 test_done
