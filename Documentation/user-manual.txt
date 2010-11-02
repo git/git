@@ -1724,7 +1724,8 @@ accomplish the above with just a simple
 $ git pull
 -------------------------------------------------
 
-More generally, a branch that is created from a remote branch will pull
+More generally, a branch that is created from a remote-tracking branch
+will pull
 by default from that branch.  See the descriptions of the
 branch.<name>.remote and branch.<name>.merge options in
 linkgit:git-config[1], and the discussion of the `--track` option in
@@ -2106,7 +2107,7 @@ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 $ cd work
 -------------------------------------------------
 
-Linus's tree will be stored in the remote branch named origin/master,
+Linus's tree will be stored in the remote-tracking branch named origin/master,
 and can be updated using linkgit:git-fetch[1]; you can track other
 public trees using linkgit:git-remote[1] to set up a "remote" and
 linkgit:git-fetch[1] to keep them up-to-date; see
@@ -2800,8 +2801,8 @@ Be aware that commits that the old version of example/master pointed at
 may be lost, as we saw in the previous section.
 
 [[remote-branch-configuration]]
-Configuring remote branches
----------------------------
+Configuring remote-tracking branches
+------------------------------------
 
 We saw above that "origin" is just a shortcut to refer to the
 repository that you originally cloned from.  This information is
