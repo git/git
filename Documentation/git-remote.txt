@@ -75,7 +75,7 @@ was passed.
 
 'rename'::
 
-Rename the remote named <old> to <new>. All remote tracking branches and
+Rename the remote named <old> to <new>. All remote-tracking branches and
 configuration settings for the remote are updated.
 +
 In case <old> and <new> are the same, and <old> is a file under
@@ -84,7 +84,7 @@ the configuration file format.
 
 'rm'::
 
-Remove the remote named <name>. All remote tracking branches and
+Remove the remote named <name>. All remote-tracking branches and
 configuration settings for the remote are removed.
 
 'set-head'::

@@ -36,7 +36,7 @@ ifndef::git-pull[]
 
 -p::
 --prune::
-	After fetching, remove any remote tracking branches which
+	After fetching, remove any remote-tracking branches which
 	no longer exist	on the remote.
 endif::git-pull[]
 

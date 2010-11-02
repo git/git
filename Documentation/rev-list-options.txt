@@ -264,7 +264,7 @@ endif::git-rev-list[]
 
 	Pretend as if all the refs in `refs/remotes` are listed
 	on the command line as '<commit>'. If '<pattern>' is given, limit
-	remote tracking branches to ones matching given shell glob.
+	remote-tracking branches to ones matching given shell glob.
 	If pattern lacks '?', '*', or '[', '/*' at the end is implied.
 
 --glob=<glob-pattern>::

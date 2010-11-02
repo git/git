@@ -786,7 +786,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	 *   With no paths, if <something> is _not_ a commit, no -t nor -b
 	 *   was given, and there is a tracking branch whose name is
 	 *   <something> in one and only one remote, then this is a short-hand
-	 *   to fork local <something> from that remote tracking branch.
+	 *   to fork local <something> from that remote-tracking branch.
 	 *
 	 *   Otherwise <something> shall not be ambiguous.
 	 *   - If it's *only* a reference, treat it like case (1).

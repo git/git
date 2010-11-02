@@ -1700,7 +1700,7 @@ may wish to check the original repository for updates and merge them
 into your own work.
 
 We have already seen <<Updating-a-repository-With-git-fetch,how to
-keep remote tracking branches up to date>> with linkgit:git-fetch[1],
+keep remote-tracking branches up to date>> with linkgit:git-fetch[1],
 and how to merge two branches.  So you can merge in changes from the
 original repository's master branch with:
 
