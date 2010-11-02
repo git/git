@@ -107,16 +107,18 @@ test_expect_success 'remove remote' '
 )
 '
 
-test_expect_success 'remove remote protects non-remote branches' '
+test_expect_success 'remove remote protects local branches' '
 (
 	cd test &&
 	{ cat >expect1 <<EOF
-Note: A non-remote branch was not removed; to delete it, use:
+Note: A branch outside the refs/remotes/ hierarchy was not removed;
+to delete it, use:
   git branch -d master
 EOF
 	} &&
 	{ cat >expect2 <<EOF
-Note: Non-remote branches were not removed; to delete them, use:
+Note: Some branches outside the refs/remotes/ hierarchy were not removed;
+to delete them, use:
   git branch -d foobranch
   git branch -d master
 EOF

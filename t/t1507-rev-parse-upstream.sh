@@ -85,7 +85,7 @@ test_expect_success 'merge my-side@{u} records the correct name' '
 	git branch -t new my-side@{u} &&
 	git merge -s ours new@{u} &&
 	git show -s --pretty=format:%s >actual &&
-	echo "Merge remote branch ${sq}origin/side${sq}" >expect &&
+	echo "Merge remote-tracking branch ${sq}origin/side${sq}" >expect &&
 	test_cmp expect actual
 )
 '

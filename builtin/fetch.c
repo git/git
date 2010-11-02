@@ -359,7 +359,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 			what = rm->name + 10;
 		}
 		else if (!prefixcmp(rm->name, "refs/remotes/")) {
-			kind = "remote branch";
+			kind = "remote-tracking branch";
 			what = rm->name + 13;
 		}
 		else {

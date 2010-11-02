@@ -507,7 +507,7 @@ static int add_branch_for_removal(const char *refname,
 			return 0;
 	}
 
-	/* don't delete non-remote refs */
+	/* don't delete non-remote-tracking refs */
 	if (prefixcmp(refname, "refs/remotes")) {
 		/* advise user how to delete local branches */
 		if (!prefixcmp(refname, "refs/heads/"))
@@ -791,9 +791,9 @@ static int rm(int argc, const char **argv)
 
 	if (skipped.nr) {
 		fprintf(stderr, skipped.nr == 1 ?
-			"Note: A non-remote branch was not removed; "
+			"Note: A branch outside the refs/remotes/ hierarchy was not removed;\n"
 			"to delete it, use:\n" :
-			"Note: Non-remote branches were not removed; "
+			"Note: Some branches outside the refs/remotes/ hierarchy were not removed;\n"
 			"to delete them, use:\n");
 		for (i = 0; i < skipped.nr; i++)
 			fprintf(stderr, "  git branch -d %s\n",
