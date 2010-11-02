@@ -146,7 +146,7 @@ With `-n` option, the remote heads are not queried first with
 
 'prune'::
 
-Deletes all stale tracking branches under <name>.
+Deletes all stale remote-tracking branches under <name>.
 These stale branches have already been removed from the remote repository
 referenced by <name>, but are still locally available in
 "remotes/<name>".

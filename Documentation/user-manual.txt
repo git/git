@@ -435,7 +435,7 @@ linux-nfs/master
 origin/master
 -------------------------------------------------
 
-If you run "git fetch <remote>" later, the tracking branches for the
+If you run "git fetch <remote>" later, the remote-tracking branches for the
 named <remote> will be updated.
 
 If you examine the file .git/config, you will see that git has added

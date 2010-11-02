@@ -784,7 +784,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	 *   between A and B, A...B names that merge base.
 	 *
 	 *   With no paths, if <something> is _not_ a commit, no -t nor -b
-	 *   was given, and there is a tracking branch whose name is
+	 *   was given, and there is a remote-tracking branch whose name is
 	 *   <something> in one and only one remote, then this is a short-hand
 	 *   to fork local <something> from that remote-tracking branch.
 	 *

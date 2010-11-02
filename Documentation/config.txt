@@ -680,7 +680,7 @@ color.branch::
 color.branch.<slot>::
 	Use customized color for branch coloration. `<slot>` is one of
 	`current` (the current branch), `local` (a local branch),
-	`remote` (a tracking branch in refs/remotes/), `plain` (other
+	`remote` (a remote-tracking branch in refs/remotes/), `plain` (other
 	refs).
 +
 The value for these configuration variables is a list of colors (at most
@@ -1102,7 +1102,7 @@ gui.newbranchtemplate::
 	linkgit:git-gui[1].
 
 gui.pruneduringfetch::
-	"true" if linkgit:git-gui[1] should prune tracking branches when
+	"true" if linkgit:git-gui[1] should prune remote-tracking branches when
 	performing a fetch. The default value is "false".
 
 gui.trustmtime::

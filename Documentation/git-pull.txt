@@ -134,7 +134,7 @@ and if there is not any such variable, the value on `URL: ` line
 in `$GIT_DIR/remotes/<origin>` file is used.
 
 In order to determine what remote branches to fetch (and
-optionally store in the tracking branches) when the command is
+optionally store in the remote-tracking branches) when the command is
 run without any refspec parameters on the command line, values
 of the configuration variable `remote.<origin>.fetch` are
 consulted, and if there aren't any, `$GIT_DIR/remotes/<origin>`
@@ -147,9 +147,9 @@ refs/heads/*:refs/remotes/origin/*
 ------------
 
 A globbing refspec must have a non-empty RHS (i.e. must store
-what were fetched in tracking branches), and its LHS and RHS
+what were fetched in remote-tracking branches), and its LHS and RHS
 must end with `/*`.  The above specifies that all remote
-branches are tracked using tracking branches in
+branches are tracked using remote-tracking branches in
 `refs/remotes/origin/` hierarchy under the same name.
 
 The rule to determine which remote branch to merge after
