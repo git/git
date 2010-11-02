@@ -192,3 +192,14 @@ int set_git_dir(const char *path)
 	setup_git_env();
 	return 0;
 }
+
+const char *get_log_output_encoding(void)
+{
+	return git_log_output_encoding ? git_log_output_encoding
+		: get_commit_output_encoding();
+}
+
+const char *get_commit_output_encoding(void)
+{
+	return git_commit_encoding ? git_commit_encoding : "UTF-8";
+}
