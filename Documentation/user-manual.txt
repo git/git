@@ -344,7 +344,8 @@ Examining branches from a remote repository
 The "master" branch that was created at the time you cloned is a copy
 of the HEAD in the repository that you cloned from.  That repository
 may also have had other branches, though, and your local repository
-keeps branches which track each of those remote branches, which you
+keeps branches which track each of those remote branches, called
+remote-tracking branches, which you
 can view using the "-r" option to linkgit:git-branch[1]:
 
 ------------------------------------------------
@@ -358,6 +359,13 @@ $ git branch -r
   origin/pu
   origin/todo
 ------------------------------------------------
+
+In this example, "origin" is called a remote repository, or "remote"
+for short. The branches of this repository are called "remote
+branches" from our point of view. The remote-tracking branches listed
+above were created based on the remote branches at clone time and will
+be updated by "git fetch" (hence "git pull") and "git push". See
+<<Updating-a-repository-With-git-fetch>> for details.
 
 You cannot check out these remote-tracking branches, but you can
 examine them on a branch of your own, just as you would a tag:
@@ -1716,13 +1724,18 @@ one step:
 $ git pull origin master
 -------------------------------------------------
 
-In fact, if you have "master" checked out, then by default "git pull"
-merges from the HEAD branch of the origin repository.  So often you can
+In fact, if you have "master" checked out, then this branch has been
+configured by "git clone" to get changes from the HEAD branch of the
+origin repository.  So often you can
 accomplish the above with just a simple
 
 -------------------------------------------------
 $ git pull
 -------------------------------------------------
+
+This command will fetch changes from the remote branches to your
+remote-tracking branches `origin/*`, and merge the default branch into
+the current branch.
 
 More generally, a branch that is created from a remote-tracking branch
 will pull
