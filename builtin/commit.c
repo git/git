@@ -69,6 +69,7 @@ static enum {
 static const char *logfile, *force_author;
 static const char *template_file;
 static char *edit_message, *use_message;
+static char *fixup_message;
 static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
@@ -124,6 +125,7 @@ static struct option builtin_commit_options[] = {
 	OPT_CALLBACK('m', "message", &message, "MESSAGE", "specify commit message", opt_parse_m),
 	OPT_STRING('c', "reedit-message", &edit_message, "COMMIT", "reuse and edit message from specified commit"),
 	OPT_STRING('C', "reuse-message", &use_message, "COMMIT", "reuse message from specified commit"),
+	OPT_STRING(0, "fixup", &fixup_message, "COMMIT", "use autosquash formatted message to fixup specified commit"),
 	OPT_BOOLEAN(0, "reset-author", &renew_authorship, "the commit is authored by me now (used with -C-c/--amend)"),
 	OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 	OPT_FILENAME('t', "template", &template_file, "use specified template file"),
@@ -586,6 +588,16 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		strbuf_add(&sb, buffer + 2, strlen(buffer + 2));
 		hook_arg1 = "commit";
 		hook_arg2 = use_message;
+	} else if (fixup_message) {
+		struct pretty_print_context ctx = {0};
+		struct commit *commit;
+		commit = lookup_commit_reference_by_name(fixup_message);
+		if (!commit)
+			die("could not lookup commit %s", fixup_message);
+		ctx.output_encoding = get_commit_output_encoding();
+		format_commit_message(commit, "fixup! %s\n\n",
+				      &sb, &ctx);
+		hook_arg1 = "message";
 	} else if (!stat(git_path("MERGE_MSG"), &statbuf)) {
 		if (strbuf_read_file(&sb, git_path("MERGE_MSG"), 0) < 0)
 			die_errno("could not read MERGE_MSG");
@@ -863,7 +875,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	if (force_author && renew_authorship)
 		die("Using both --reset-author and --author does not make sense");
 
-	if (logfile || message.len || use_message)
+	if (logfile || message.len || use_message || fixup_message)
 		use_editor = 0;
 	if (edit_flag)
 		use_editor = 1;
@@ -883,15 +895,17 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		f++;
 	if (edit_message)
 		f++;
+	if (fixup_message)
+		f++;
 	if (logfile)
 		f++;
 	if (f > 1)
-		die("Only one of -c/-C/-F can be used.");
+		die("Only one of -c/-C/-F/--fixup can be used.");
 	if (message.len && f > 0)
-		die("Option -m cannot be combined with -c/-C/-F.");
+		die("Option -m cannot be combined with -c/-C/-F/--fixup.");
 	if (edit_message)
 		use_message = edit_message;
-	if (amend && !use_message)
+	if (amend && !use_message && !fixup_message)
 		use_message = "HEAD";
 	if (!use_message && renew_authorship)
 		die("--reset-author can be used only with -C, -c or --amend.");

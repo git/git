@@ -9,10 +9,10 @@ SYNOPSIS
 --------
 [verse]
 'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend] [--dry-run]
-	   [(-c | -C) <commit>] [-F <file> | -m <msg>] [--reset-author]
-	   [--allow-empty] [--allow-empty-message] [--no-verify] [-e] [--author=<author>]
-	   [--date=<date>] [--cleanup=<mode>] [--status | --no-status] [--]
-	   [[-i | -o ]<file>...]
+	   [(-c | -C | --fixup) <commit>] [-F <file> | -m <msg>]
+	   [--reset-author] [--allow-empty] [--allow-empty-message] [--no-verify]
+	   [-e] [--author=<author>] [--date=<date>] [--cleanup=<mode>]
+	   [--status | --no-status] [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
 -----------
@@ -69,6 +69,12 @@ OPTIONS
 --reedit-message=<commit>::
 	Like '-C', but with '-c' the editor is invoked, so that
 	the user can further edit the commit message.
+
+--fixup=<commit>::
+	Construct a commit message for use with `rebase --autosquash`.
+	The commit message will be the subject line from the specified
+	commit with a prefix of "fixup! ".  See linkgit:git-rebase[1]
+	for details.
 
 --reset-author::
 	When used with -C/-c/--amend options, declare that the
