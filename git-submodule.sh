@@ -374,7 +374,7 @@ cmd_init()
 cmd_update()
 {
 	# parse $args after "submodule ... update".
-	orig_args="$@"
+	orig_args=$(git rev-parse --sq-quote "$@")
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -500,7 +500,7 @@ cmd_update()
 
 		if test -n "$recursive"
 		then
-			(clear_local_git_env; cd "$path" && cmd_update $orig_args) ||
+			(clear_local_git_env; cd "$path" && eval cmd_update "$orig_args") ||
 			die "Failed to recurse into submodule path '$path'"
 		fi
 	done
@@ -733,7 +733,7 @@ cmd_summary() {
 cmd_status()
 {
 	# parse $args after "submodule ... status".
-	orig_args="$@"
+	orig_args=$(git rev-parse --sq-quote "$@")
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -790,7 +790,7 @@ cmd_status()
 				prefix="$displaypath/"
 				clear_local_git_env
 				cd "$path" &&
-				cmd_status $orig_args
+				eval cmd_status "$orig_args"
 			) ||
 			die "Failed to recurse into submodule path '$path'"
 		fi

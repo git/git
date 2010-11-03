@@ -238,4 +238,20 @@ test_expect_success 'use "git clone --recursive" to checkout all submodules' '
 	test -d clone4/nested1/nested2/nested3/submodule/.git
 '
 
+test_expect_success 'test "update --recursive" with a flag with spaces' '
+	git clone super "common objects" &&
+	git clone super clone5 &&
+	(
+		cd clone5 &&
+		test ! -d nested1/.git &&
+		git submodule update --init --recursive --reference="$(dirname "$PWD")/common objects" &&
+		test -d nested1/.git &&
+		test -d nested1/nested2/.git &&
+		test -d nested1/nested2/nested3/.git &&
+		test -f nested1/.git/objects/info/alternates &&
+		test -f nested1/nested2/.git/objects/info/alternates &&
+		test -f nested1/nested2/nested3/.git/objects/info/alternates
+	)
+'
+
 test_done
