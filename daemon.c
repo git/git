@@ -23,10 +23,10 @@ static const char daemon_usage[] =
 "           [--strict-paths] [--base-path=<path>] [--base-path-relaxed]\n"
 "           [--user-path | --user-path=<path>]\n"
 "           [--interpolated-path=<path>]\n"
-"           [--reuseaddr] [--detach] [--pid-file=<file>]\n"
+"           [--reuseaddr] [--pid-file=<file>]\n"
 "           [--(enable|disable|allow-override|forbid-override)=<service>]\n"
 "           [--inetd | [--listen=<host_or_ipaddr>] [--port=<n>]\n"
-"                      [--user=<user> [--group=<group>]]\n"
+"                      [--detach] [--user=<user> [--group=<group>]]\n"
 "           [<directory>...]";
 
 /* List of acceptable pathname prefixes */
@@ -1128,8 +1128,8 @@ int main(int argc, char **argv)
 		/* avoid splitting a message in the middle */
 		setvbuf(stderr, NULL, _IOFBF, 4096);
 
-	if (inetd_mode && (group_name || user_name))
-		die("--user and --group are incompatible with --inetd");
+	if (inetd_mode && (detach || group_name || user_name))
+		die("--detach, --user and --group are incompatible with --inetd");
 
 	if (inetd_mode && (listen_port || (listen_addr.nr > 0)))
 		die("--listen= and --port= are incompatible with --inetd");
