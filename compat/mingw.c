@@ -702,6 +702,14 @@ static int env_compare(const void *a, const void *b)
 	return strcasecmp(*ea, *eb);
 }
 
+struct pinfo_t {
+	struct pinfo_t *next;
+	pid_t pid;
+	HANDLE proc;
+} pinfo_t;
+struct pinfo_t *pinfo = NULL;
+CRITICAL_SECTION pinfo_cs;
+
 static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
@@ -794,7 +802,26 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 		return -1;
 	}
 	CloseHandle(pi.hThread);
-	return (pid_t)pi.hProcess;
+
+	/*
+	 * The process ID is the human-readable identifier of the process
+	 * that we want to present in log and error messages. The handle
+	 * is not useful for this purpose. But we cannot close it, either,
+	 * because it is not possible to turn a process ID into a process
+	 * handle after the process terminated.
+	 * Keep the handle in a list for waitpid.
+	 */
+	EnterCriticalSection(&pinfo_cs);
+	{
+		struct pinfo_t *info = xmalloc(sizeof(struct pinfo_t));
+		info->pid = pi.dwProcessId;
+		info->proc = pi.hProcess;
+		info->next = pinfo;
+		pinfo = info;
+	}
+	LeaveCriticalSection(&pinfo_cs);
+
+	return (pid_t)pi.dwProcessId;
 }
 
 static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
@@ -1516,6 +1543,50 @@ char *getpass(const char *prompt)
 	}
 	fputs("\n", stderr);
 	return strbuf_detach(&buf, NULL);
+}
+
+pid_t waitpid(pid_t pid, int *status, unsigned options)
+{
+	HANDLE h = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION,
+	    FALSE, pid);
+	if (!h) {
+		errno = ECHILD;
+		return -1;
+	}
+
+	if (options == 0) {
+		struct pinfo_t **ppinfo;
+		if (WaitForSingleObject(h, INFINITE) != WAIT_OBJECT_0) {
+			CloseHandle(h);
+			return 0;
+		}
+
+		if (status)
+			GetExitCodeProcess(h, (LPDWORD)status);
+
+		EnterCriticalSection(&pinfo_cs);
+
+		ppinfo = &pinfo;
+		while (*ppinfo) {
+			struct pinfo_t *info = *ppinfo;
+			if (info->pid == pid) {
+				CloseHandle(info->proc);
+				*ppinfo = info->next;
+				free(info);
+				break;
+			}
+			ppinfo = &info->next;
+		}
+
+		LeaveCriticalSection(&pinfo_cs);
+
+		CloseHandle(h);
+		return pid;
+	}
+	CloseHandle(h);
+
+	errno = EINVAL;
+	return -1;
 }
 
 #ifndef NO_MINGW_REPLACE_READDIR
