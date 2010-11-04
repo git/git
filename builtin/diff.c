@@ -22,7 +22,7 @@ struct blobinfo {
 };
 
 static const char builtin_diff_usage[] =
-"git diff <options> <rev>{0,2} -- <path>*";
+"git diff [<options>] [<commit> [<commit>]] [--] [<path>...]";
 
 static void stuff_change(struct diff_options *opt,
 			 unsigned old_mode, unsigned new_mode,
