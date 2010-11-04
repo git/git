@@ -104,6 +104,7 @@
 #include <assert.h>
 #include <regex.h>
 #include <utime.h>
+#include <syslog.h>
 #ifndef __MINGW32__
 #include <sys/wait.h>
 #include <sys/poll.h>
