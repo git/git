@@ -1554,6 +1554,14 @@ pid_t waitpid(pid_t pid, int *status, unsigned options)
 		return -1;
 	}
 
+	if (pid > 0 && options & WNOHANG) {
+		if (WAIT_OBJECT_0 != WaitForSingleObject(h, 0)) {
+			CloseHandle(h);
+			return 0;
+		}
+		options &= ~WNOHANG;
+	}
+
 	if (options == 0) {
 		struct pinfo_t **ppinfo;
 		if (WaitForSingleObject(h, INFINITE) != WAIT_OBJECT_0) {
