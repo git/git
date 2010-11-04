@@ -687,8 +687,12 @@ rearrange_squash () {
 		*" $sha1 "*) continue ;;
 		esac
 		printf '%s\n' "$pick $sha1 $message"
+		used="$used$sha1 "
 		while read -r squash action msg
 		do
+			case " $used" in
+			*" $squash "*) continue ;;
+			esac
 			case "$message" in
 			"$msg"*)
 				printf '%s\n' "$action $squash $action! $msg"
