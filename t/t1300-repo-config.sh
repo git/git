@@ -289,6 +289,14 @@ test_expect_success 'working --list' \
 	'git config --list > output && cmp output expect'
 
 cat > expect << EOF
+EOF
+
+test_expect_success '--list without repo produces empty output' '
+	git --git-dir=nonexistent config --list >output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
 beta.noindent sillyValue
 nextsection.nonewline wow2 for me
 EOF
@@ -834,6 +842,27 @@ test_expect_success SYMLINKS 'symlinked configuration' '
 	test "z$(GIT_CONFIG=notyet git config test.frotz)" = znitfol &&
 	test "z$(GIT_CONFIG=notyet git config test.xyzzy)" = zrezrov
 
+'
+
+test_expect_success 'nonexistent configuration' '
+	(
+		GIT_CONFIG=doesnotexist &&
+		export GIT_CONFIG &&
+		test_must_fail git config --list &&
+		test_must_fail git config test.xyzzy
+	)
+'
+
+test_expect_success SYMLINKS 'symlink to nonexistent configuration' '
+	ln -s doesnotexist linktonada &&
+	ln -s linktonada linktolinktonada &&
+	(
+		GIT_CONFIG=linktonada &&
+		export GIT_CONFIG &&
+		test_must_fail git config --list &&
+		GIT_CONFIG=linktolinktonada &&
+		test_must_fail git config --list
+	)
 '
 
 test_expect_success 'check split_cmdline return' "
