@@ -50,6 +50,12 @@ prove and other harnesses come with a lot of useful options. The
     # Repeat until no more failures
     $ prove -j 15 --state=failed,save ./t[0-9]*.sh
 
+You can give DEFAULT_TEST_TARGET=prove on the make command (or define it
+in config.mak) to cause "make test" to run tests under prove.
+GIT_PROVE_OPTS can be used to pass additional options, e.g.
+
+    $ make DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS='--timer --jobs 16' test
+
 You can also run each test individually from command line, like this:
 
     $ sh ./t3010-ls-files-killed-modified.sh
