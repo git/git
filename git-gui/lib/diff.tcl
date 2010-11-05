@@ -294,7 +294,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	}
 
 	lappend cmd -p
-	lappend cmd --no-color
+	lappend cmd --color
 	if {$repo_config(gui.diffcontext) >= 1} {
 		lappend cmd "-U$repo_config(gui.diffcontext)"
 	}
@@ -332,6 +332,23 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	fileevent $fd readable [list read_diff $fd $cont_info]
 }
 
+proc parse_color_line {line} {
+	set start 0
+	set result ""
+	set markup [list]
+	set regexp {\033\[((?:\d+;)*\d+)?m}
+	while {[regexp -indices -start $start $regexp $line match code]} {
+		foreach {begin end} $match break
+		append result [string range $line $start [expr {$begin - 1}]]
+		lappend markup [string length $result] \
+			[eval [linsert $code 0 string range $line]]
+		set start [incr end]
+	}
+	append result [string range $line $start end]
+	if {[llength $markup] < 4} {set markup {}}
+	return [list $result $markup]
+}
+
 proc read_diff {fd cont_info} {
 	global ui_diff diff_active is_submodule_diff
 	global is_3way_diff is_conflict_diff current_diff_header
@@ -340,6 +357,9 @@ proc read_diff {fd cont_info} {
 
 	$ui_diff conf -state normal
 	while {[gets $fd line] >= 0} {
+		foreach {line markup} [parse_color_line $line] break
+		set line [string map {\033 ^} $line]
+
 		# -- Cleanup uninteresting diff header lines.
 		#
 		if {$::current_diff_inheader} {
@@ -434,11 +454,23 @@ proc read_diff {fd cont_info} {
 			}
 			}
 		}
+		set mark [$ui_diff index "end - 1 line linestart"]
 		$ui_diff insert end $line $tags
 		if {[string index $line end] eq "\r"} {
 			$ui_diff tag add d_cr {end - 2c}
 		}
 		$ui_diff insert end "\n" $tags
+
+		foreach {posbegin colbegin posend colend} $markup {
+			set prefix clr
+			foreach style [split $colbegin ";"] {
+				if {$style eq "7"} {append prefix i; continue}
+				if {$style < 30 || $style > 47} {continue}
+				set a "$mark linestart + $posbegin chars"
+				set b "$mark linestart + $posend chars"
+				catch {$ui_diff tag add $prefix$style $a $b}
+			}
+		}
 	}
 	$ui_diff conf -state disabled
 

@@ -83,6 +83,7 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 		puts stderr "source    $name"
 		uplevel 1 real__source $name
 	}
+	if {[tk windowingsystem] eq "win32"} { console show }
 }
 
 ######################################################################
@@ -444,6 +445,8 @@ proc _lappend_nice {cmd_var} {
 		set _nice [_which nice]
 		if {[catch {exec $_nice git version}]} {
 			set _nice {}
+		} elseif {[is_Windows] && [file dirname $_nice] ne [file dirname $::_git]} {
+			set _nice {}
 		}
 	}
 	if {$_nice ne {}} {
@@ -673,6 +676,7 @@ bind . <Visibility> {
 if {[is_Windows]} {
 	wm iconbitmap . -default $oguilib/git-gui.ico
 	set ::tk::AlwaysShowSelection 1
+	bind . <Control-F2> {console show}
 
 	# Spoof an X11 display for SSH
 	if {![info exists env(DISPLAY)]} {
@@ -874,12 +878,19 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 	exit 1
 }
 
+proc get_trimmed_version {s} {
+    set r {}
+    foreach x [split $s -._] {
+        if {[string is integer -strict $x]} {
+            lappend r $x
+        } else {
+            break
+        }
+    }
+    return [join $r .]
+}
 set _real_git_version $_git_version
-regsub -- {[\-\.]dirty$} $_git_version {} _git_version
-regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
-regsub {\.[a-zA-Z]+\.?[0-9]+$} $_git_version {} _git_version
-regsub {\.GIT$} $_git_version {} _git_version
-regsub {\.[a-zA-Z]+\.?[0-9]+$} $_git_version {} _git_version
+set _git_version [get_trimmed_version $_git_version]
 
 if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
 	catch {wm withdraw .}
@@ -1183,13 +1194,22 @@ if {![file isdirectory $_gitdir]} {
 # _gitdir exists, so try loading the config
 load_config 0
 apply_config
-# try to set work tree from environment, falling back to core.worktree
-if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
-	set _gitworktree [get_config core.worktree]
-	if {$_gitworktree eq ""} {
-		set _gitworktree [file dirname [file normalize $_gitdir]]
+
+# v1.7.0 introduced --show-toplevel to return the canonical work-tree
+if {[package vsatisfies $_git_version 1.7.0]} {
+	set _gitworktree [git rev-parse --show-toplevel]
+} else {
+	# try to set work tree from environment, core.worktree or use
+	# cdup to obtain a relative path to the top of the worktree. If
+	# run from the top, the ./ prefix ensures normalize expands pwd.
+	if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
+		set _gitworktree [get_config core.worktree]
+		if {$_gitworktree eq ""} {
+			set _gitworktree [file normalize ./[git rev-parse --show-cdup]]
+		}
 	}
 }
+
 if {$_prefix ne {}} {
 	if {$_gitworktree eq {}} {
 		regsub -all {[^/]+/} $_prefix ../ cdup
@@ -2861,7 +2881,8 @@ proc usage {} {
 	set s "usage: $::argv0 $::subcommand $::subcommand_args"
 	if {[tk windowingsystem] eq "win32"} {
 		wm withdraw .
-		tk_messageBox -icon info -title "Usage" -message $s
+		tk_messageBox -icon info -message $s \
+			-title [mc "Usage"]
 	} else {
 		puts stderr $s
 	}
@@ -2934,7 +2955,11 @@ blame {
 			if {[catch {
 					set head [git rev-parse --verify $head]
 				} err]} {
-				puts stderr $err
+				if {[tk windowingsystem] eq "win32"} {
+					tk_messageBox -icon error -title [mc Error] -message $err
+				} else {
+					puts stderr $err
+				}
 				exit 1
 			}
 		}
@@ -2973,18 +2998,19 @@ blame {
 citool -
 gui {
 	if {[llength $argv] != 0} {
-		puts -nonewline stderr "usage: $argv0"
-		if {$subcommand ne {gui}
-			&& [file tail $argv0] ne "git-$subcommand"} {
-			puts -nonewline stderr " $subcommand"
-		}
-		puts stderr {}
-		exit 1
+		usage
 	}
 	# fall through to setup UI for commits
 }
 default {
-	puts stderr "usage: $argv0 \[{blame|browser|citool}\]"
+	set err "usage: $argv0 \[{blame|browser|citool}\]"
+	if {[tk windowingsystem] eq "win32"} {
+		wm withdraw .
+		tk_messageBox -icon error -message $err \
+			-title [mc "Usage"]
+	} else {
+		puts stderr $err
+	}
 	exit 1
 }
 }
@@ -3286,6 +3312,7 @@ text $ui_diff -background white -foreground black \
 	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
 	-state disabled
+catch {$ui_diff configure -tabstyle wordprocessor}
 ${NS}::scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
 	-command [list $ui_diff xview]
 ${NS}::scrollbar .vpane.lower.diff.body.sby -orient vertical \
@@ -3296,8 +3323,16 @@ pack $ui_diff -side left -fill both -expand 1
 pack .vpane.lower.diff.header -side top -fill x
 pack .vpane.lower.diff.body -side bottom -fill both -expand 1
 
+foreach {n c} {0 black 1 red4 2 green4 3 yellow4 4 blue4 5 magenta4 6 cyan4 7 grey60} {
+	$ui_diff tag configure clr4$n -background $c
+	$ui_diff tag configure clri4$n -foreground $c
+	$ui_diff tag configure clr3$n -foreground $c
+	$ui_diff tag configure clri3$n -background $c
+}
+$ui_diff tag configure clr1 -font font_diffbold
+
 $ui_diff tag conf d_cr -elide true
-$ui_diff tag conf d_@ -foreground blue -font font_diffbold
+$ui_diff tag conf d_@ -font font_diffbold
 $ui_diff tag conf d_+ -foreground {#00a000}
 $ui_diff tag conf d_- -foreground red
 
