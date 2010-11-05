@@ -9,22 +9,29 @@ find_blame() {
 
 cat >helper <<'EOF'
 #!/bin/sh
-sed 's/^/converted: /' "$@"
+grep -q '^bin: ' "$1" || { echo "E: $1 is not \"binary\" file" 1>&2; exit 1; }
+sed 's/^bin: /converted: /' "$1"
 EOF
 chmod +x helper
 
 test_expect_success 'setup ' '
-	echo test 1 >one.bin &&
-	echo test number 2 >two.bin &&
+	echo "bin: test 1" >one.bin &&
+	echo "bin: test number 2" >two.bin &&
+	if test_have_prereq SYMLINKS; then
+		ln -s one.bin symlink.bin
+	fi &&
 	git add . &&
 	GIT_AUTHOR_NAME=Number1 git commit -a -m First --date="2010-01-01 18:00:00" &&
-	echo test 1 version 2 >one.bin &&
-	echo test number 2 version 2 >>two.bin &&
+	echo "bin: test 1 version 2" >one.bin &&
+	echo "bin: test number 2 version 2" >>two.bin &&
+	if test_have_prereq SYMLINKS; then
+		ln -sf two.bin symlink.bin
+	fi &&
 	GIT_AUTHOR_NAME=Number2 git commit -a -m Second --date="2010-01-01 20:00:00"
 '
 
 cat >expected <<EOF
-(Number2 2010-01-01 20:00:00 +0000 1) test 1 version 2
+(Number2 2010-01-01 20:00:00 +0000 1) bin: test 1 version 2
 EOF
 
 test_expect_success 'no filter specified' '
@@ -67,13 +74,54 @@ test_expect_success 'blame --textconv going through revisions' '
 '
 
 test_expect_success 'make a new commit' '
-	echo "test number 2 version 3" >>two.bin &&
+	echo "bin: test number 2 version 3" >>two.bin &&
 	GIT_AUTHOR_NAME=Number3 git commit -a -m Third --date="2010-01-01 22:00:00"
 '
 
 test_expect_success 'blame from previous revision' '
 	git blame HEAD^ two.bin >blame &&
 	find_blame <blame >result &&
+	test_cmp expected result
+'
+
+cat >expected <<EOF
+(Number2 2010-01-01 20:00:00 +0000 1) two.bin
+EOF
+
+test_expect_success SYMLINKS 'blame with --no-textconv (on symlink)' '
+	git blame --no-textconv symlink.bin >blame &&
+	find_blame <blame >result &&
+	test_cmp expected result
+'
+
+test_expect_success SYMLINKS 'blame --textconv (on symlink)' '
+	git blame --textconv symlink.bin >blame &&
+	find_blame <blame >result &&
+	test_cmp expected result
+'
+
+# cp two.bin three.bin  and make small tweak
+# (this will direct blame -C -C three.bin to consider two.bin and symlink.bin)
+test_expect_success SYMLINKS 'make another new commit' '
+	cat >three.bin <<\EOF &&
+bin: test number 2
+bin: test number 2 version 2
+bin: test number 2 version 3
+bin: test number 3
+EOF
+	git add three.bin &&
+	GIT_AUTHOR_NAME=Number4 git commit -a -m Fourth --date="2010-01-01 23:00:00"
+'
+
+test_expect_success SYMLINKS 'blame on last commit (-C -C, symlink)' '
+	git blame -C -C three.bin >blame &&
+	find_blame <blame >result &&
+	cat >expected <<\EOF &&
+(Number1 2010-01-01 18:00:00 +0000 1) converted: test number 2
+(Number2 2010-01-01 20:00:00 +0000 2) converted: test number 2 version 2
+(Number3 2010-01-01 22:00:00 +0000 3) converted: test number 2 version 3
+(Number4 2010-01-01 23:00:00 +0000 4) converted: test number 3
+EOF
 	test_cmp expected result
 '
 
