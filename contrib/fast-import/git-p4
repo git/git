@@ -706,7 +706,9 @@ class P4Submit(Command):
             submitTemplate = self.prepareLogMessage(template, logMessage)
             if os.environ.has_key("P4DIFF"):
                 del(os.environ["P4DIFF"])
-            diff = p4_read_pipe("diff -du ...")
+            diff = ""
+            for editedFile in editedFiles:
+                diff += p4_read_pipe("diff -du %r" % editedFile)
 
             newdiff = ""
             for newFile in filesToAdd:
