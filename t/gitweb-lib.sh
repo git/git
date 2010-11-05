@@ -32,17 +32,34 @@ EOF
 	cat >.git/description <<EOF
 $0 test repository
 EOF
+
+	# You can set the GITWEB_TEST_INSTALLED environment variable to
+	# the gitwebdir (the directory where gitweb is installed / deployed to)
+	# of an existing gitweb instalation to test that installation,
+	# or simply to pathname of installed gitweb script.
+	if test -n "$GITWEB_TEST_INSTALLED" ; then
+		if test -d $GITWEB_TEST_INSTALLED; then
+			SCRIPT_NAME="$GITWEB_TEST_INSTALLED/gitweb.cgi"
+		else
+			SCRIPT_NAME="$GITWEB_TEST_INSTALLED"
+		fi
+		test -f "$SCRIPT_NAME" ||
+		error "Cannot find gitweb at $GITWEB_TEST_INSTALLED."
+		say "# Testing $SCRIPT_NAME"
+	else # normal case, use source version of gitweb
+		SCRIPT_NAME="$GIT_BUILD_DIR/gitweb/gitweb.perl"
+	fi
+	export SCRIPT_NAME
 }
 
 gitweb_run () {
 	GATEWAY_INTERFACE='CGI/1.1'
 	HTTP_ACCEPT='*/*'
 	REQUEST_METHOD='GET'
-	SCRIPT_NAME="$GIT_BUILD_DIR/gitweb/gitweb.perl"
 	QUERY_STRING=""$1""
 	PATH_INFO=""$2""
 	export GATEWAY_INTERFACE HTTP_ACCEPT REQUEST_METHOD \
-		SCRIPT_NAME QUERY_STRING PATH_INFO
+		QUERY_STRING PATH_INFO
 
 	GITWEB_CONFIG=$(pwd)/gitweb_config.perl
 	export GITWEB_CONFIG
