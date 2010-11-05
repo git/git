@@ -226,6 +226,21 @@ test_expect_success 'test "status --recursive"' '
 	test_cmp expect actual
 '
 
+sed -e "/nested1 /s/.*/+$nested1sha1 nested1 (file2~1)/;/sub[1-3]/d" < expect > expect2
+mv -f expect2 expect
+
+test_expect_success 'ensure "status --cached --recursive" preserves the --cached flag' '
+	(
+		cd clone3 &&
+		(
+			cd nested1 &&
+			test_commit file2
+		) &&
+		git submodule status --cached --recursive -- nested1 > ../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_expect_success 'use "git clone --recursive" to checkout all submodules' '
 	git clone --recursive super clone4 &&
 	test -d clone4/.git &&
@@ -236,6 +251,41 @@ test_expect_success 'use "git clone --recursive" to checkout all submodules' '
 	test -d clone4/nested1/nested2/.git &&
 	test -d clone4/nested1/nested2/nested3/.git &&
 	test -d clone4/nested1/nested2/nested3/submodule/.git
+'
+
+test_expect_success 'test "update --recursive" with a flag with spaces' '
+	git clone super "common objects" &&
+	git clone super clone5 &&
+	(
+		cd clone5 &&
+		test ! -d nested1/.git &&
+		git submodule update --init --recursive --reference="$(dirname "$PWD")/common objects" &&
+		test -d nested1/.git &&
+		test -d nested1/nested2/.git &&
+		test -d nested1/nested2/nested3/.git &&
+		test -f nested1/.git/objects/info/alternates &&
+		test -f nested1/nested2/.git/objects/info/alternates &&
+		test -f nested1/nested2/nested3/.git/objects/info/alternates
+	)
+'
+
+test_expect_success 'use "update --recursive nested1" to checkout all submodules rooted in nested1' '
+	git clone super clone6 &&
+	(
+		cd clone6 &&
+		test ! -d sub1/.git &&
+		test ! -d sub2/.git &&
+		test ! -d sub3/.git &&
+		test ! -d nested1/.git &&
+		git submodule update --init --recursive -- nested1 &&
+		test ! -d sub1/.git &&
+		test ! -d sub2/.git &&
+		test ! -d sub3/.git &&
+		test -d nested1/.git &&
+		test -d nested1/nested2/.git &&
+		test -d nested1/nested2/nested3/.git &&
+		test -d nested1/nested2/nested3/submodule/.git
+	)
 '
 
 test_done
