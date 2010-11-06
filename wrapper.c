@@ -3,12 +3,11 @@
  */
 #include "cache.h"
 
-static void try_to_free_builtin(size_t size)
+static void do_nothing(size_t size)
 {
-	release_pack_memory(size, -1);
 }
 
-static void (*try_to_free_routine)(size_t size) = try_to_free_builtin;
+static void (*try_to_free_routine)(size_t size) = do_nothing;
 
 try_to_free_t set_try_to_free_routine(try_to_free_t routine)
 {
