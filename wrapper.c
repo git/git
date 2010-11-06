@@ -274,43 +274,6 @@ int git_inflate(z_streamp strm, int flush)
 	return ret;
 }
 
-int odb_mkstemp(char *template, size_t limit, const char *pattern)
-{
-	int fd;
-	/*
-	 * we let the umask do its job, don't try to be more
-	 * restrictive except to remove write permission.
-	 */
-	int mode = 0444;
-	snprintf(template, limit, "%s/%s",
-		 get_object_directory(), pattern);
-	fd = git_mkstemp_mode(template, mode);
-	if (0 <= fd)
-		return fd;
-
-	/* slow path */
-	/* some mkstemp implementations erase template on failure */
-	snprintf(template, limit, "%s/%s",
-		 get_object_directory(), pattern);
-	safe_create_leading_directories(template);
-	return xmkstemp_mode(template, mode);
-}
-
-int odb_pack_keep(char *name, size_t namesz, unsigned char *sha1)
-{
-	int fd;
-
-	snprintf(name, namesz, "%s/pack/pack-%s.keep",
-		 get_object_directory(), sha1_to_hex(sha1));
-	fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
-	if (0 <= fd)
-		return fd;
-
-	/* slow path */
-	safe_create_leading_directories(name);
-	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
-}
-
 static int warn_if_unremovable(const char *op, const char *file, int rc)
 {
 	if (rc < 0) {
