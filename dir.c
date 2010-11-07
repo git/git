@@ -360,7 +360,8 @@ int excluded_from_list(const char *pathname,
 
 			if (x->flags & EXC_FLAG_MUSTBEDIR) {
 				if (!dtype) {
-					if (!prefixcmp(pathname, exclude))
+					if (!prefixcmp(pathname, exclude) &&
+					    pathname[x->patternlen] == '/')
 						return to_exclude;
 					else
 						continue;
