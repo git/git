@@ -118,7 +118,7 @@ There are some macros to easily define options:
 `OPT__COLOR(&int_var, description)`::
 	Add `\--color[=<when>]` and `--no-color`.
 
-`OPT__DRY_RUN(&int_var)`::
+`OPT__DRY_RUN(&int_var, description)`::
 	Add `-n, \--dry-run`.
 
 `OPT__QUIET(&int_var)`::

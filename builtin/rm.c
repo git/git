@@ -139,7 +139,7 @@ static int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
 static int ignore_unmatch = 0;
 
 static struct option builtin_rm_options[] = {
-	OPT__DRY_RUN(&show_only),
+	OPT__DRY_RUN(&show_only, "dry run"),
 	OPT__QUIET(&quiet),
 	OPT_BOOLEAN( 0 , "cached",         &index_only, "only remove from the index"),
 	OPT_BOOLEAN('f', "force",          &force,      "override the up-to-date check"),

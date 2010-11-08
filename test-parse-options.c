@@ -67,7 +67,7 @@ int main(int argc, const char **argv)
 		OPT_GROUP("Standard options"),
 		OPT__ABBREV(&abbrev),
 		OPT__VERBOSE(&verbose, "be verbose"),
-		OPT__DRY_RUN(&dry_run),
+		OPT__DRY_RUN(&dry_run, "dry run"),
 		OPT__QUIET(&quiet),
 		OPT_END(),
 	};

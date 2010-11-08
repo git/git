@@ -1200,7 +1200,7 @@ static int prune(int argc, const char **argv)
 {
 	int dry_run = 0, result = 0;
 	struct option options[] = {
-		OPT__DRY_RUN(&dry_run),
+		OPT__DRY_RUN(&dry_run, "dry run"),
 		OPT_END()
 	};
 

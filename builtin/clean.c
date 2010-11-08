@@ -49,7 +49,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	char *seen = NULL;
 	struct option options[] = {
 		OPT__QUIET(&quiet),
-		OPT__DRY_RUN(&show_only),
+		OPT__DRY_RUN(&show_only, "dry run"),
 		OPT_BOOLEAN('f', "force", &force, "force"),
 		OPT_BOOLEAN('d', NULL, &remove_directories,
 				"remove whole directories"),
