@@ -572,7 +572,7 @@ static char const * const fsck_usage[] = {
 };
 
 static struct option fsck_opts[] = {
-	OPT__VERBOSE(&verbose),
+	OPT__VERBOSE(&verbose, "be verbose"),
 	OPT_BOOLEAN(0, "unreachable", &show_unreachable, "show unreachable objects"),
 	OPT_BOOLEAN(0, "tags", &show_tags, "report tags"),
 	OPT_BOOLEAN(0, "root", &show_root, "report root nodes"),

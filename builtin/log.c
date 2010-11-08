@@ -1365,7 +1365,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 
 	struct option options[] = {
 		OPT__ABBREV(&abbrev),
-		OPT__VERBOSE(&verbose),
+		OPT__VERBOSE(&verbose, "be verbose"),
 		OPT_END()
 	};
 

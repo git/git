@@ -314,7 +314,7 @@ static int ignore_add_errors, addremove, intent_to_add, ignore_missing = 0;
 
 static struct option builtin_add_options[] = {
 	OPT__DRY_RUN(&show_only),
-	OPT__VERBOSE(&verbose),
+	OPT__VERBOSE(&verbose, "be verbose"),
 	OPT_GROUP(""),
 	OPT_BOOLEAN('i', "interactive", &add_interactive, "interactive picking"),
 	OPT_BOOLEAN('p', "patch", &patch_interactive, "interactive patching"),

@@ -79,7 +79,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 	unsigned long loose = 0, packed = 0, packed_loose = 0, garbage = 0;
 	off_t loose_size = 0;
 	struct option opts[] = {
-		OPT__VERBOSE(&verbose),
+		OPT__VERBOSE(&verbose, "be verbose"),
 		OPT_END(),
 	};
 

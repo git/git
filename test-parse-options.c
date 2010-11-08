@@ -66,7 +66,7 @@ int main(int argc, const char **argv)
 		  "negative ambiguity", PARSE_OPT_NOARG | PARSE_OPT_NONEG },
 		OPT_GROUP("Standard options"),
 		OPT__ABBREV(&abbrev),
-		OPT__VERBOSE(&verbose),
+		OPT__VERBOSE(&verbose, "be verbose"),
 		OPT__DRY_RUN(&dry_run),
 		OPT__QUIET(&quiet),
 		OPT_END(),
