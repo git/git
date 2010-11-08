@@ -319,7 +319,7 @@ static struct option builtin_add_options[] = {
 	OPT_BOOLEAN('i', "interactive", &add_interactive, "interactive picking"),
 	OPT_BOOLEAN('p', "patch", &patch_interactive, "interactive patching"),
 	OPT_BOOLEAN('e', "edit", &edit_interactive, "edit current diff and apply"),
-	OPT_BOOLEAN('f', "force", &ignored_too, "allow adding otherwise ignored files"),
+	OPT__FORCE(&ignored_too, "allow adding otherwise ignored files"),
 	OPT_BOOLEAN('u', "update", &take_worktree_changes, "update tracked files"),
 	OPT_BOOLEAN('N', "intent-to-add", &intent_to_add, "record only the fact that the path will be added later"),
 	OPT_BOOLEAN('A', "all", &addremove, "add all, noticing removal of tracked files"),

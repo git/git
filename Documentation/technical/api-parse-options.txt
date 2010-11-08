@@ -121,6 +121,9 @@ There are some macros to easily define options:
 `OPT__DRY_RUN(&int_var, description)`::
 	Add `-n, \--dry-run`.
 
+`OPT__FORCE(&int_var, description)`::
+	Add `-f, \--force`.
+
 `OPT__QUIET(&int_var, description)`::
 	Add `-q, \--quiet`.
 

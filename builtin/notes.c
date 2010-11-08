@@ -538,7 +538,7 @@ static int add(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, "OBJECT",
 			"reuse specified note object", PARSE_OPT_NONEG,
 			parse_reuse_arg},
-		OPT_BOOLEAN('f', "force", &force, "replace existing notes"),
+		OPT__FORCE(&force, "replace existing notes"),
 		OPT_END()
 	};
 
@@ -594,7 +594,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 	struct notes_tree *t;
 	const char *rewrite_cmd = NULL;
 	struct option options[] = {
-		OPT_BOOLEAN('f', "force", &force, "replace existing notes"),
+		OPT__FORCE(&force, "replace existing notes"),
 		OPT_BOOLEAN(0, "stdin", &from_stdin, "read objects from stdin"),
 		OPT_STRING(0, "for-rewrite", &rewrite_cmd, "command",
 			   "load rewriting config for <command> (implies "

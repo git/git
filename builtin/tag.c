@@ -390,7 +390,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('s', NULL, &sign, "annotated and GPG-signed tag"),
 		OPT_STRING('u', NULL, &keyid, "key-id",
 					"use another key to sign the tag"),
-		OPT_BOOLEAN('f', "force", &force, "replace the tag if exists"),
+		OPT__FORCE(&force, "replace the tag if exists"),
 
 		OPT_GROUP("Tag listing options"),
 		{

@@ -699,7 +699,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			    2),
 		OPT_SET_INT('3', "theirs", &opts.writeout_stage, "checkout their version for unmerged files",
 			    3),
-		OPT_BOOLEAN('f', "force", &opts.force, "force checkout (throw away local modifications)"),
+		OPT__FORCE(&opts.force, "force checkout (throw away local modifications)"),
 		OPT_BOOLEAN('m', "merge", &opts.merge, "perform a 3-way merge with the new branch"),
 		OPT_STRING(0, "conflict", &conflict_style, "style",
 			   "conflict style (merge or diff3)"),

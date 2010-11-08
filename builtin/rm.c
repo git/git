@@ -142,7 +142,7 @@ static struct option builtin_rm_options[] = {
 	OPT__DRY_RUN(&show_only, "dry run"),
 	OPT__QUIET(&quiet, "be quiet"),
 	OPT_BOOLEAN( 0 , "cached",         &index_only, "only remove from the index"),
-	OPT_BOOLEAN('f', "force",          &force,      "override the up-to-date check"),
+	OPT__FORCE(&force, "override the up-to-date check"),
 	OPT_BOOLEAN('r', NULL,             &recursive,  "allow recursive removal"),
 	OPT_BOOLEAN( 0 , "ignore-unmatch", &ignore_unmatch,
 				"exit with a zero status even if nothing matched"),
