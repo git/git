@@ -17,6 +17,7 @@
 #include "grep.h"
 #include "quote.h"
 #include "dir.h"
+#include "attr.h"
 
 static char const * const grep_usage[] = {
 	"git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]",
@@ -205,6 +206,22 @@ static void work_done(struct work_item *w)
 	grep_unlock();
 }
 
+static int skip_binary(struct grep_opt *opt, const char *filename)
+{
+	if ((opt->binary & GREP_BINARY_NOMATCH)) {
+		static struct git_attr *attr_text;
+		struct git_attr_check check;
+
+		if (!attr_text)
+			attr_text = git_attr("text");
+		memset(&check, 0, sizeof(check));
+		check.attr = attr_text;
+		return !git_check_attr(filename, 1, &check) &&
+				ATTR_FALSE(check.value);
+	}
+	return 0;
+}
+
 static void *run(void *arg)
 {
 	int hit = 0;
@@ -214,6 +231,9 @@ static void *run(void *arg)
 		struct work_item *w = get_work();
 		if (!w)
 			break;
+
+		if (skip_binary(opt, (const char *)w->identifier))
+			continue;
 
 		opt->output_priv = w;
 		if (w->type == WORK_SHA1) {
@@ -530,6 +550,9 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 			continue;
 		if (!match_pathspec_depth(pathspec, ce->name, ce_namelen(ce), 0, NULL))
 			continue;
+		if (skip_binary(opt, ce->name))
+			continue;
+
 		/*
 		 * If CE_VALID is on, we assume worktree file and its cache entry
 		 * are identical, even if worktree file has been modified, so use
@@ -996,6 +1019,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		string_list_append(&path_list, show_in_pager);
 		use_threads = 0;
 	}
+	if ((opt.binary & GREP_BINARY_NOMATCH))
+		use_threads = 0;
 
 	if (!opt.pattern_list)
 		die(_("no pattern given."));
