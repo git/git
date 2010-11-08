@@ -114,8 +114,8 @@ static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 }
 
 static struct option builtin_commit_options[] = {
-	OPT__QUIET(&quiet, "be quiet"),
-	OPT__VERBOSE(&verbose, "be verbose"),
+	OPT__QUIET(&quiet, "suppress summary after successful commit"),
+	OPT__VERBOSE(&verbose, "show diff in commit message template"),
 
 	OPT_GROUP("Commit message options"),
 	OPT_FILENAME('F', "file", &logfile, "read log from file"),

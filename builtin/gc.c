@@ -180,7 +180,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	char buf[80];
 
 	struct option builtin_gc_options[] = {
-		OPT__QUIET(&quiet, "be quiet"),
+		OPT__QUIET(&quiet, "suppress progress reporting"),
 		{ OPTION_STRING, 0, "prune", &prune_expire, "date",
 			"prune unreferenced objects",
 			PARSE_OPT_OPTARG, NULL, (intptr_t)prune_expire },

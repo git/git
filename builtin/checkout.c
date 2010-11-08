@@ -686,7 +686,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	int patch_mode = 0;
 	int dwim_new_local_branch = 1;
 	struct option options[] = {
-		OPT__QUIET(&opts.quiet, "be quiet"),
+		OPT__QUIET(&opts.quiet, "suppress progress reporting"),
 		OPT_STRING('b', NULL, &opts.new_branch, "branch",
 			   "create and checkout a new branch"),
 		OPT_STRING('B', NULL, &opts.new_branch_force, "branch",

@@ -140,7 +140,7 @@ static int ignore_unmatch = 0;
 
 static struct option builtin_rm_options[] = {
 	OPT__DRY_RUN(&show_only, "dry run"),
-	OPT__QUIET(&quiet, "be quiet"),
+	OPT__QUIET(&quiet, "do not list removed files"),
 	OPT_BOOLEAN( 0 , "cached",         &index_only, "only remove from the index"),
 	OPT__FORCE(&force, "override the up-to-date check"),
 	OPT_BOOLEAN('r', NULL,             &recursive,  "allow recursive removal"),
