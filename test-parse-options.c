@@ -68,7 +68,7 @@ int main(int argc, const char **argv)
 		OPT__ABBREV(&abbrev),
 		OPT__VERBOSE(&verbose, "be verbose"),
 		OPT__DRY_RUN(&dry_run, "dry run"),
-		OPT__QUIET(&quiet),
+		OPT__QUIET(&quiet, "be quiet"),
 		OPT_END(),
 	};
 	int i;

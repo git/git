@@ -30,7 +30,7 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	const char *msg = NULL;
 	struct option options[] = {
-		OPT__QUIET(&quiet),
+		OPT__QUIET(&quiet, "be quiet"),
 		OPT_STRING('m', NULL, &msg, "reason", "reason of the update"),
 		OPT_END(),
 	};

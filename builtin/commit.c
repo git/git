@@ -114,7 +114,7 @@ static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 }
 
 static struct option builtin_commit_options[] = {
-	OPT__QUIET(&quiet),
+	OPT__QUIET(&quiet, "be quiet"),
 	OPT__VERBOSE(&verbose, "be verbose"),
 
 	OPT_GROUP("Commit message options"),
