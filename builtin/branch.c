@@ -621,7 +621,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 	struct option options[] = {
 		OPT_GROUP("Generic options"),
-		OPT__VERBOSE(&verbose, "be verbose"),
+		OPT__VERBOSE(&verbose,
+			"show hash and subject, give twice for upstream branch"),
 		OPT_SET_INT('t', "track",  &track, "set up tracking mode (see git-pull(1))",
 			BRANCH_TRACK_EXPLICIT),
 		OPT_SET_INT( 0, "set-upstream",  &track, "change upstream info",
