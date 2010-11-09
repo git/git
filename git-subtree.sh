@@ -547,7 +547,7 @@ cmd_split()
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
 	# (and rev-list --follow doesn't seem to solve this)
-	grl='git rev-list --reverse --parents $revs $unrevs'
+	grl='git rev-list --topo-order --reverse --parents $revs $unrevs'
 	revmax=$(eval "$grl" | wc -l)
 	revcount=0
 	createcount=0
