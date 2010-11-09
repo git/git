@@ -14,6 +14,7 @@ SYNOPSIS
 'git notes' append [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' edit [<object>]
 'git notes' show [<object>]
+'git notes' merge [-v | -q] [-s <strategy> ] <notes_ref>
 'git notes' remove [<object>]
 'git notes' prune [-n | -v]
 
@@ -83,6 +84,16 @@ edit::
 show::
 	Show the notes for a given object (defaults to HEAD).
 
+merge::
+	Merge the given notes ref into the current notes ref.
+	This will try to merge the changes made by the given
+	notes ref (called "remote") since the merge-base (if
+	any) into the current notes ref (called "local").
++
+If conflicts arise and a strategy for automatically resolving
+conflicting notes (see the -s/--strategy option) is not given,
+the merge fails (TODO).
+
 remove::
 	Remove the notes for a given object (defaults to HEAD).
 	This is equivalent to specifying an empty note message to
@@ -133,9 +144,23 @@ OPTIONS
 	Do not remove anything; just report the object names whose notes
 	would be removed.
 
+-s <strategy>::
+--strategy=<strategy>::
+	When merging notes, resolve notes conflicts using the given
+	strategy. The following strategies are recognized: "manual"
+	(default), "ours", "theirs" and "union".
+	See the "NOTES MERGE STRATEGIES" section below for more
+	information on each notes merge strategy.
+
+-q::
+--quiet::
+	When merging notes, operate quietly.
+
 -v::
 --verbose::
-	Report all object names whose notes are removed.
+	When merging notes, be more verbose.
+	When pruning notes, report all object names whose notes are
+	removed.
 
 
 DISCUSSION
@@ -161,6 +186,23 @@ These details may change in the future.
 It is also permitted for a notes ref to point directly to a tree
 object, in which case the history of the notes can be read with
 `git log -p -g <refname>`.
+
+
+NOTES MERGE STRATEGIES
+----------------------
+
+The default notes merge strategy is "manual", which is not yet
+implemented (TODO).
+
+"ours" automatically resolves conflicting notes in favor of the local
+version (i.e. the current notes ref).
+
+"theirs" automatically resolves notes conflicts in favor of the remote
+version (i.e. the given notes ref being merged into the current notes
+ref).
+
+"union" automatically resolves notes conflicts by concatenating the
+local and remote versions.
 
 
 EXAMPLES
