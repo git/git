@@ -56,6 +56,7 @@ static size_t xopts_nr, xopts_alloc;
 static const char *branch;
 static int verbosity;
 static int allow_rerere_auto;
+static int abort_current_merge;
 
 static struct strategy all_strategy[] = {
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
@@ -194,6 +195,8 @@ static struct option builtin_merge_options[] = {
 		"message to be used for the merge commit (if any)",
 		option_parse_message),
 	OPT__VERBOSITY(&verbosity),
+	OPT_BOOLEAN(0, "abort", &abort_current_merge,
+		"abort the current in-progress merge"),
 	OPT_END()
 };
 
@@ -913,6 +916,17 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, builtin_merge_options,
 			builtin_merge_usage, 0);
+
+	if (abort_current_merge) {
+		int nargc = 2;
+		const char *nargv[] = {"reset", "--merge", NULL};
+
+		if (!file_exists(git_path("MERGE_HEAD")))
+			die("There is no merge to abort (MERGE_HEAD missing).");
+
+		/* Invoke 'git reset --merge' */
+		return cmd_reset(nargc, nargv, prefix);
+	}
 
 	if (read_cache_unmerged())
 		die_resolve_conflict("merge");
