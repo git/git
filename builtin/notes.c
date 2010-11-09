@@ -31,6 +31,7 @@ static const char * const git_notes_usage[] = {
 	"git notes merge --abort [-v | -q]",
 	"git notes [--ref <notes_ref>] remove [<object>]",
 	"git notes [--ref <notes_ref>] prune [-n | -v]",
+	"git notes [--ref <notes_ref>] get-ref",
 	NULL
 };
 
@@ -79,6 +80,11 @@ static const char * const git_notes_remove_usage[] = {
 
 static const char * const git_notes_prune_usage[] = {
 	"git notes prune [<options>]",
+	NULL
+};
+
+static const char * const git_notes_get_ref_usage[] = {
+	"git notes get-ref",
 	NULL
 };
 
@@ -1002,6 +1008,21 @@ static int prune(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static int get_ref(int argc, const char **argv, const char *prefix)
+{
+	struct option options[] = { OPT_END() };
+	argc = parse_options(argc, argv, prefix, options,
+			     git_notes_get_ref_usage, 0);
+
+	if (argc) {
+		error("too many parameters");
+		usage_with_options(git_notes_get_ref_usage, options);
+	}
+
+	puts(default_notes_ref());
+	return 0;
+}
+
 int cmd_notes(int argc, const char **argv, const char *prefix)
 {
 	int result;
@@ -1040,6 +1061,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		result = remove_cmd(argc, argv, prefix);
 	else if (!strcmp(argv[0], "prune"))
 		result = prune(argc, argv, prefix);
+	else if (!strcmp(argv[0], "get-ref"))
+		result = get_ref(argc, argv, prefix);
 	else {
 		result = error("Unknown subcommand: %s", argv[0]);
 		usage_with_options(git_notes_usage, options);

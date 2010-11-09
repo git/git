@@ -19,6 +19,7 @@ SYNOPSIS
 'git notes' merge --abort [-v | -q]
 'git notes' remove [<object>]
 'git notes' prune [-n | -v]
+'git notes' get-ref
 
 
 DESCRIPTION
@@ -108,6 +109,10 @@ remove::
 
 prune::
 	Remove all notes for non-existing/unreachable objects.
+
+get-ref::
+	Print the current notes ref. This provides an easy way to
+	retrieve the current notes ref (e.g. from scripts).
 
 OPTIONS
 -------
