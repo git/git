@@ -48,7 +48,8 @@ do_merge=
 dotest="$GIT_DIR"/rebase-merge
 prec=4
 verbose=
-diffstat=$(git config --bool rebase.stat)
+diffstat=
+test "$(git config --bool rebase.stat)" = true && diffstat=t
 git_am_opt=
 rebase_root=
 force_rebase=
