@@ -92,7 +92,9 @@ merge::
 +
 If conflicts arise and a strategy for automatically resolving
 conflicting notes (see the -s/--strategy option) is not given,
-the merge fails (TODO).
+the "manual" resolver is used. This resolver checks out the
+conflicting notes in a special worktree (`.git/NOTES_MERGE_WORKTREE`),
+and instructs the user to manually resolve the conflicts there.
 
 remove::
 	Remove the notes for a given object (defaults to HEAD).
@@ -191,8 +193,10 @@ object, in which case the history of the notes can be read with
 NOTES MERGE STRATEGIES
 ----------------------
 
-The default notes merge strategy is "manual", which is not yet
-implemented (TODO).
+The default notes merge strategy is "manual", which checks out
+conflicting notes in a special work tree for resolving notes conflicts
+(`.git/NOTES_MERGE_WORKTREE`), and instructs the user to resolve the
+conflicts in that work tree.
 
 "ours" automatically resolves conflicting notes in favor of the local
 version (i.e. the current notes ref).

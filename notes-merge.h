@@ -1,6 +1,8 @@
 #ifndef NOTES_MERGE_H
 #define NOTES_MERGE_H
 
+#define NOTES_MERGE_WORKTREE "NOTES_MERGE_WORKTREE"
+
 enum notes_merge_verbosity {
 	NOTES_MERGE_VERBOSITY_DEFAULT = 2,
 	NOTES_MERGE_VERBOSITY_MAX = 5
@@ -17,6 +19,7 @@ struct notes_merge_options {
 		NOTES_MERGE_RESOLVE_THEIRS,
 		NOTES_MERGE_RESOLVE_UNION
 	} strategy;
+	unsigned has_worktree:1;
 };
 
 void init_notes_merge_options(struct notes_merge_options *o);
@@ -51,7 +54,13 @@ void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
  * 2. The merge successfully completes, producing a merge commit. local_tree
  *    contains the updated notes tree, the SHA1 of the resulting commit is
  *    written into 'result_sha1', and 1 is returned.
- * 3. The merge fails. result_sha1 is set to null_sha1, and -1 is returned.
+ * 3. The merge results in conflicts. This is similar to #2 in that the
+ *    partial merge result (i.e. merge result minus the unmerged entries)
+ *    are stored in 'local_tree', and the SHA1 or the resulting commit
+ *    (to be amended when the conflicts have been resolved) is written into
+ *    'result_sha1'. The unmerged entries are written into the
+ *    .git/NOTES_MERGE_WORKTREE directory with conflict markers.
+ *    -1 is returned.
  *
  * Both o->local_ref and o->remote_ref must be given (non-NULL), but either ref
  * (although not both) may refer to a non-existing notes ref, in which case
