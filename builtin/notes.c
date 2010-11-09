@@ -17,6 +17,7 @@
 #include "run-command.h"
 #include "parse-options.h"
 #include "string-list.h"
+#include "notes-merge.h"
 
 static const char * const git_notes_usage[] = {
 	"git notes [--ref <notes_ref>] [list [<object>]]",
@@ -25,6 +26,7 @@ static const char * const git_notes_usage[] = {
 	"git notes [--ref <notes_ref>] append [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]",
 	"git notes [--ref <notes_ref>] edit [<object>]",
 	"git notes [--ref <notes_ref>] show [<object>]",
+	"git notes [--ref <notes_ref>] merge [-v | -q] <notes_ref>",
 	"git notes [--ref <notes_ref>] remove [<object>]",
 	"git notes [--ref <notes_ref>] prune [-n | -v]",
 	NULL
@@ -58,6 +60,11 @@ static const char * const git_notes_edit_usage[] = {
 
 static const char * const git_notes_show_usage[] = {
 	"git notes show [<object>]",
+	NULL
+};
+
+static const char * const git_notes_merge_usage[] = {
+	"git notes merge [<options>] <notes_ref>",
 	NULL
 };
 
@@ -772,6 +779,51 @@ static int show(int argc, const char **argv, const char *prefix)
 	return retval;
 }
 
+static int merge(int argc, const char **argv, const char *prefix)
+{
+	struct strbuf remote_ref = STRBUF_INIT, msg = STRBUF_INIT;
+	unsigned char result_sha1[20];
+	struct notes_merge_options o;
+	int verbosity = 0, result;
+	struct option options[] = {
+		OPT__VERBOSITY(&verbosity),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, prefix, options,
+			     git_notes_merge_usage, 0);
+
+	if (argc != 1) {
+		error("Must specify a notes ref to merge");
+		usage_with_options(git_notes_merge_usage, options);
+	}
+
+	init_notes_merge_options(&o);
+	o.verbosity = verbosity + NOTES_MERGE_VERBOSITY_DEFAULT;
+
+	o.local_ref = default_notes_ref();
+	strbuf_addstr(&remote_ref, argv[0]);
+	expand_notes_ref(&remote_ref);
+	o.remote_ref = remote_ref.buf;
+
+	result = notes_merge(&o, result_sha1);
+
+	strbuf_addf(&msg, "notes: Merged notes from %s into %s",
+		    remote_ref.buf, default_notes_ref());
+	if (result == 0) { /* Merge resulted (trivially) in result_sha1 */
+		/* Update default notes ref with new commit */
+		update_ref(msg.buf, default_notes_ref(), result_sha1, NULL,
+			   0, DIE_ON_ERR);
+	} else {
+		/* TODO: */
+		die("'git notes merge' cannot yet handle non-trivial merges!");
+	}
+
+	strbuf_release(&remote_ref);
+	strbuf_release(&msg);
+	return 0;
+}
+
 static int remove_cmd(int argc, const char **argv, const char *prefix)
 {
 	struct option options[] = {
@@ -865,6 +917,8 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 		result = append_edit(argc, argv, prefix);
 	else if (!strcmp(argv[0], "show"))
 		result = show(argc, argv, prefix);
+	else if (!strcmp(argv[0], "merge"))
+		result = merge(argc, argv, prefix);
 	else if (!strcmp(argv[0], "remove"))
 		result = remove_cmd(argc, argv, prefix);
 	else if (!strcmp(argv[0], "prune"))
