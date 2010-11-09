@@ -30,8 +30,8 @@ Initial setup:
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_cmp_rev () {
-	git describe --always --tags "$1" >expect.rev &&
-	git describe --always --tags "$2" >actual.rev &&
+	git rev-parse --verify "$1" >expect.rev &&
+	git rev-parse --verify "$2" >actual.rev &&
 	test_cmp expect.rev actual.rev
 }
 
