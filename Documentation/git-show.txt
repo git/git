@@ -54,6 +54,10 @@ git show v1.0.0::
 git show v1.0.0^\{tree\}::
 	Shows the tree pointed to by the tag `v1.0.0`.
 
+git show -s --format=%s v1.0.0^\{commit\}::
+	Shows the subject of the commit pointed to by the
+	tag `v1.0.0`.
+
 git show next~10:Documentation/README::
 	Shows the contents of the file `Documentation/README` as
 	they were current in the 10th last commit of the branch
