@@ -171,6 +171,7 @@ cp expect_notes_y expect_notes_m
 cp expect_log_y expect_log_m
 
 git rev-parse refs/notes/y > pre_merge_y
+git rev-parse refs/notes/z > pre_merge_z
 
 test_expect_success 'merge z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
 	git update-ref refs/notes/m refs/notes/y &&
@@ -287,6 +288,181 @@ test_expect_success 'can do merge without conflicts even if previous merge is un
 	# Verify that other notes refs has not changed (x and y)
 	verify_notes x &&
 	verify_notes y
+'
+
+cat <<EOF | sort >expect_notes_m
+021faa20e931fb48986ffc6282b4bb05553ac946 $commit_sha4
+5772f42408c0dd6f097a7ca2d24de0e78d1c46b1 $commit_sha3
+283b48219aee9a4105f6cab337e789065c82c2b9 $commit_sha2
+0a59e787e6d688aa6309e56e8c1b89431a0fc1c1 $commit_sha1
+EOF
+
+cat >expect_log_m <<EOF
+$commit_sha5 5th
+
+$commit_sha4 4th
+y and z notes on 4th commit
+
+$commit_sha3 3rd
+y notes on 3rd commit
+
+$commit_sha2 2nd
+z notes on 2nd commit
+
+$commit_sha1 1st
+y and z notes on 1st commit
+
+EOF
+
+test_expect_success 'finalize conflicting merge (z => m)' '
+	# Resolve conflicts and finalize merge
+	cat >.git/NOTES_MERGE_WORKTREE/$commit_sha1 <<EOF &&
+y and z notes on 1st commit
+EOF
+	cat >.git/NOTES_MERGE_WORKTREE/$commit_sha4 <<EOF &&
+y and z notes on 4th commit
+EOF
+	git notes merge --commit &&
+	# No .git/NOTES_MERGE_* files left
+	test_must_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
+	test_cmp /dev/null output &&
+	# Merge commit has pre-merge y and pre-merge z as parents
+	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
+	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
+	# Merge commit mentions the notes refs merged
+	git log -1 --format=%B refs/notes/m > merge_commit_msg &&
+	grep -q refs/notes/m merge_commit_msg &&
+	grep -q refs/notes/z merge_commit_msg &&
+	# Verify contents of merge result
+	verify_notes m &&
+	# Verify that other notes refs has not changed (w, x, y and z)
+	verify_notes w &&
+	verify_notes x &&
+	verify_notes y &&
+	verify_notes z
+'
+
+cat >expect_conflict_$commit_sha4 <<EOF
+<<<<<<< refs/notes/m
+y notes on 4th commit
+=======
+z notes on 4th commit
+
+More z notes on 4th commit
+>>>>>>> refs/notes/z
+EOF
+
+cp expect_notes_y expect_notes_m
+cp expect_log_y expect_log_m
+
+git rev-parse refs/notes/y > pre_merge_y
+git rev-parse refs/notes/z > pre_merge_z
+
+test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
+	git update-ref refs/notes/m refs/notes/y &&
+	git config core.notesRef refs/notes/m &&
+	test_must_fail git notes merge z >output &&
+	# Output should point to where to resolve conflicts
+	grep -q "\\.git/NOTES_MERGE_WORKTREE" output &&
+	# Inspect merge conflicts
+	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
+	test_cmp expect_conflicts output_conflicts &&
+	( for f in $(cat expect_conflicts); do
+		test_cmp "expect_conflict_$f" ".git/NOTES_MERGE_WORKTREE/$f" ||
+		exit 1
+	done ) &&
+	# Verify that current notes tree (pre-merge) has not changed (m == y)
+	verify_notes y &&
+	verify_notes m &&
+	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+'
+
+test_expect_success 'abort notes merge' '
+	git notes merge --abort &&
+	# No .git/NOTES_MERGE_* files left
+	test_must_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
+	test_cmp /dev/null output &&
+	# m has not moved (still == y)
+	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+	# Verify that other notes refs has not changed (w, x, y and z)
+	verify_notes w &&
+	verify_notes x &&
+	verify_notes y &&
+	verify_notes z
+'
+
+git rev-parse refs/notes/y > pre_merge_y
+git rev-parse refs/notes/z > pre_merge_z
+
+test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
+	test_must_fail git notes merge z >output &&
+	# Output should point to where to resolve conflicts
+	grep -q "\\.git/NOTES_MERGE_WORKTREE" output &&
+	# Inspect merge conflicts
+	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
+	test_cmp expect_conflicts output_conflicts &&
+	( for f in $(cat expect_conflicts); do
+		test_cmp "expect_conflict_$f" ".git/NOTES_MERGE_WORKTREE/$f" ||
+		exit 1
+	done ) &&
+	# Verify that current notes tree (pre-merge) has not changed (m == y)
+	verify_notes y &&
+	verify_notes m &&
+	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+'
+
+cat <<EOF | sort >expect_notes_m
+304dfb4325cf243025b9957486eb605a9b51c199 $commit_sha5
+283b48219aee9a4105f6cab337e789065c82c2b9 $commit_sha2
+0a59e787e6d688aa6309e56e8c1b89431a0fc1c1 $commit_sha1
+EOF
+
+cat >expect_log_m <<EOF
+$commit_sha5 5th
+new note on 5th commit
+
+$commit_sha4 4th
+
+$commit_sha3 3rd
+
+$commit_sha2 2nd
+z notes on 2nd commit
+
+$commit_sha1 1st
+y and z notes on 1st commit
+
+EOF
+
+test_expect_success 'add + remove notes in finalized merge (z => m)' '
+	# Resolve one conflict
+	cat >.git/NOTES_MERGE_WORKTREE/$commit_sha1 <<EOF &&
+y and z notes on 1st commit
+EOF
+	# Remove another conflict
+	rm .git/NOTES_MERGE_WORKTREE/$commit_sha4 &&
+	# Remove a D/F conflict
+	rm .git/NOTES_MERGE_WORKTREE/$commit_sha3 &&
+	# Add a new note
+	echo "new note on 5th commit" > .git/NOTES_MERGE_WORKTREE/$commit_sha5 &&
+	# Finalize merge
+	git notes merge --commit &&
+	# No .git/NOTES_MERGE_* files left
+	test_must_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
+	test_cmp /dev/null output &&
+	# Merge commit has pre-merge y and pre-merge z as parents
+	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
+	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
+	# Merge commit mentions the notes refs merged
+	git log -1 --format=%B refs/notes/m > merge_commit_msg &&
+	grep -q refs/notes/m merge_commit_msg &&
+	grep -q refs/notes/z merge_commit_msg &&
+	# Verify contents of merge result
+	verify_notes m &&
+	# Verify that other notes refs has not changed (w, x, y and z)
+	verify_notes w &&
+	verify_notes x &&
+	verify_notes y &&
+	verify_notes z
 '
 
 test_done

@@ -15,6 +15,8 @@ SYNOPSIS
 'git notes' edit [<object>]
 'git notes' show [<object>]
 'git notes' merge [-v | -q] [-s <strategy> ] <notes_ref>
+'git notes' merge --commit [-v | -q]
+'git notes' merge --abort [-v | -q]
 'git notes' remove [<object>]
 'git notes' prune [-n | -v]
 
@@ -95,6 +97,9 @@ conflicting notes (see the -s/--strategy option) is not given,
 the "manual" resolver is used. This resolver checks out the
 conflicting notes in a special worktree (`.git/NOTES_MERGE_WORKTREE`),
 and instructs the user to manually resolve the conflicts there.
+When done, the user can either finalize the merge with
+'git notes merge --commit', or abort the merge with
+'git notes merge --abort'.
 
 remove::
 	Remove the notes for a given object (defaults to HEAD).
@@ -154,6 +159,20 @@ OPTIONS
 	See the "NOTES MERGE STRATEGIES" section below for more
 	information on each notes merge strategy.
 
+--commit::
+	Finalize an in-progress 'git notes merge'. Use this option
+	when you have resolved the conflicts that 'git notes merge'
+	stored in .git/NOTES_MERGE_WORKTREE. This amends the partial
+	merge commit created by 'git notes merge' (stored in
+	.git/NOTES_MERGE_PARTIAL) by adding the notes in
+	.git/NOTES_MERGE_WORKTREE. The notes ref stored in the
+	.git/NOTES_MERGE_REF symref is updated to the resulting commit.
+
+--abort::
+	Abort/reset a in-progress 'git notes merge', i.e. a notes merge
+	with conflicts. This simply removes all files related to the
+	notes merge.
+
 -q::
 --quiet::
 	When merging notes, operate quietly.
@@ -197,6 +216,9 @@ The default notes merge strategy is "manual", which checks out
 conflicting notes in a special work tree for resolving notes conflicts
 (`.git/NOTES_MERGE_WORKTREE`), and instructs the user to resolve the
 conflicts in that work tree.
+When done, the user can either finalize the merge with
+'git notes merge --commit', or abort the merge with
+'git notes merge --abort'.
 
 "ours" automatically resolves conflicting notes in favor of the local
 version (i.e. the current notes ref).

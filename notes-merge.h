@@ -71,4 +71,27 @@ int notes_merge(struct notes_merge_options *o,
 		struct notes_tree *local_tree,
 		unsigned char *result_sha1);
 
+/*
+ * Finalize conflict resolution from an earlier notes_merge()
+ *
+ * The given notes tree 'partial_tree' must be the notes_tree corresponding to
+ * the given 'partial_commit', the partial result commit created by a previous
+ * call to notes_merge().
+ *
+ * This function will add the (now resolved) notes in .git/NOTES_MERGE_WORKTREE
+ * to 'partial_tree', and create a final notes merge commit, the SHA1 of which
+ * will be stored in 'result_sha1'.
+ */
+int notes_merge_commit(struct notes_merge_options *o,
+		       struct notes_tree *partial_tree,
+		       struct commit *partial_commit,
+		       unsigned char *result_sha1);
+
+/*
+ * Abort conflict resolution from an earlier notes_merge()
+ *
+ * Removes the notes merge worktree in .git/NOTES_MERGE_WORKTREE.
+ */
+int notes_merge_abort(struct notes_merge_options *o);
+
 #endif
