@@ -786,7 +786,7 @@ static int merge_abort(struct notes_merge_options *o)
 static int merge_commit(struct notes_merge_options *o)
 {
 	struct strbuf msg = STRBUF_INIT;
-	unsigned char sha1[20];
+	unsigned char sha1[20], parent_sha1[20];
 	struct notes_tree *t;
 	struct commit *partial;
 	struct pretty_print_context pretty_ctx;
@@ -803,6 +803,11 @@ static int merge_commit(struct notes_merge_options *o)
 	else if (parse_commit(partial))
 		die("Could not parse commit from NOTES_MERGE_PARTIAL.");
 
+	if (partial->parents)
+		hashcpy(parent_sha1, partial->parents->item->object.sha1);
+	else
+		hashclr(parent_sha1);
+
 	t = xcalloc(1, sizeof(struct notes_tree));
 	init_notes(t, "NOTES_MERGE_PARTIAL", combine_notes_overwrite, 0);
 
@@ -818,7 +823,9 @@ static int merge_commit(struct notes_merge_options *o)
 	format_commit_message(partial, "%s", &msg, &pretty_ctx);
 	strbuf_trim(&msg);
 	strbuf_insert(&msg, 0, "notes: ", 7);
-	update_ref(msg.buf, o->local_ref, sha1, NULL, 0, DIE_ON_ERR);
+	update_ref(msg.buf, o->local_ref, sha1,
+		   is_null_sha1(parent_sha1) ? NULL : parent_sha1,
+		   0, DIE_ON_ERR);
 
 	free_notes(t);
 	strbuf_release(&msg);
