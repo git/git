@@ -17,12 +17,10 @@ use Encode;
 use Fcntl ':mode';
 use File::Find qw();
 use File::Basename qw(basename);
+use Time::HiRes qw(gettimeofday tv_interval);
 binmode STDOUT, ':utf8';
 
-our $t0;
-if (eval { require Time::HiRes; 1; }) {
-	$t0 = [Time::HiRes::gettimeofday()];
-}
+our $t0 = [ gettimeofday() ];
 our $number_of_git_cmds = 0;
 
 BEGIN {
@@ -1065,7 +1063,7 @@ sub dispatch {
 }
 
 sub reset_timer {
-	our $t0 = [Time::HiRes::gettimeofday()]
+	our $t0 = [ gettimeofday() ]
 		if defined $t0;
 	our $number_of_git_cmds = 0;
 }
@@ -3590,7 +3588,7 @@ sub git_footer_html {
 		print "<div id=\"generating_info\">\n";
 		print 'This page took '.
 		      '<span id="generating_time" class="time_span">'.
-		      Time::HiRes::tv_interval($t0, [Time::HiRes::gettimeofday()]).
+		      tv_interval($t0, [ gettimeofday() ]).
 		      ' seconds </span>'.
 		      ' and '.
 		      '<span id="generating_cmd">'.
@@ -5298,7 +5296,7 @@ sub git_blame_common {
 		print 'END';
 		if (defined $t0 && gitweb_check_feature('timed')) {
 			print ' '.
-			      Time::HiRes::tv_interval($t0, [Time::HiRes::gettimeofday()]).
+			      tv_interval($t0, [ gettimeofday() ]).
 			      ' '.$number_of_git_cmds;
 		}
 		print "\n";
