@@ -11,6 +11,7 @@
 
 struct string_list config_name_for_path;
 struct string_list config_ignore_for_name;
+static int config_fetch_recurse_submodules;
 
 static int add_submodule_odb(const char *path)
 {
@@ -67,6 +68,10 @@ int submodule_config(const char *var, const char *value, void *cb)
 {
 	if (!prefixcmp(var, "submodule."))
 		return parse_submodule_config_option(var, value);
+	else if (!strcmp(var, "fetch.recursesubmodules")) {
+		config_fetch_recurse_submodules = git_config_bool(var, value);
+		return 0;
+	}
 	return 0;
 }
 
@@ -229,8 +234,14 @@ void show_submodule_summary(FILE *f, const char *path,
 	strbuf_release(&sb);
 }
 
+void set_config_fetch_recurse_submodules(int value)
+{
+	config_fetch_recurse_submodules = value;
+}
+
 int fetch_populated_submodules(int num_options, const char **options,
-			       const char *prefix, int quiet)
+			       const char *prefix, int ignore_config,
+			       int quiet)
 {
 	int i, result = 0, argc = 0;
 	struct child_process cp;
@@ -270,6 +281,11 @@ int fetch_populated_submodules(int num_options, const char **options,
 		name_for_path = unsorted_string_list_lookup(&config_name_for_path, ce->name);
 		if (name_for_path)
 			name = name_for_path->util;
+
+		if (!ignore_config) {
+			if (!config_fetch_recurse_submodules)
+				continue;
+		}
 
 		strbuf_addf(&submodule_path, "%s/%s", work_tree, ce->name);
 		strbuf_addf(&submodule_git_dir, "%s/.git", submodule_path.buf);

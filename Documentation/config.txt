@@ -862,6 +862,11 @@ diff.wordRegex::
 	sequences that match the regular expression are "words", all other
 	characters are *ignorable* whitespace.
 
+fetch.recurseSubmodules::
+	A boolean value which changes the behavior for fetch and pull, the
+	default is to not recursively fetch populated sumodules unless
+	configured otherwise.
+
 fetch.unpackLimit::
 	If the number of objects fetched over the git native
 	transfer is below this

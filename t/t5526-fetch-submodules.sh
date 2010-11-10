@@ -106,4 +106,40 @@ test_expect_success "--dry-run propagates to submodules" '
 	test_cmp expect.err actual.err
 '
 
+test_expect_success "recurseSubmodules=true propagates into submodules" '
+	add_upstream_commit &&
+	(
+		cd downstream &&
+		git config fetch.recurseSubmodules true
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success "--recurse-submodules overrides config in submodule" '
+	add_upstream_commit &&
+	(
+		cd downstream &&
+		(
+			cd submodule &&
+			git config fetch.recurseSubmodules false
+		) &&
+		git fetch --recurse-submodules >../actual.out 2>../actual.err
+	) &&
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success "--no-recurse-submodules overrides config setting" '
+	add_upstream_commit &&
+	(
+		cd downstream &&
+		git config fetch.recurseSubmodules true
+		git fetch --no-recurse-submodules >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	! test -s actual.err
+'
+
 test_done

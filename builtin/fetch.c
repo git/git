@@ -28,8 +28,14 @@ enum {
 	TAGS_SET = 2
 };
 
+enum {
+	RECURSE_SUBMODULES_OFF = 0,
+	RECURSE_SUBMODULES_DEFAULT = 1,
+	RECURSE_SUBMODULES_ON = 2
+};
+
 static int all, append, dry_run, force, keep, multiple, prune, update_head_ok, verbosity;
-static int progress, recurse_submodules;
+static int progress, recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int tags = TAGS_DEFAULT;
 static const char *depth;
 static const char *upload_pack;
@@ -55,8 +61,9 @@ static struct option builtin_fetch_options[] = {
 		    "do not fetch all tags (--no-tags)", TAGS_UNSET),
 	OPT_BOOLEAN('p', "prune", &prune,
 		    "prune tracking branches no longer on remote"),
-	OPT_BOOLEAN(0, "recurse-submodules", &recurse_submodules,
-		    "control recursive fetching of submodules"),
+	OPT_SET_INT(0, "recurse-submodules", &recurse_submodules,
+		    "control recursive fetching of submodules",
+		    RECURSE_SUBMODULES_ON),
 	OPT_BOOLEAN(0, "dry-run", &dry_run,
 		    "dry run"),
 	OPT_BOOLEAN('k', "keep", &keep, "keep downloaded pack"),
@@ -795,7 +802,7 @@ static void add_options_to_argv(int *argc, const char **argv)
 		argv[(*argc)++] = "--force";
 	if (keep)
 		argv[(*argc)++] = "--keep";
-	if (recurse_submodules)
+	if (recurse_submodules == RECURSE_SUBMODULES_ON)
 		argv[(*argc)++] = "--recurse-submodules";
 	if (verbosity >= 2)
 		argv[(*argc)++] = "-v";
@@ -933,14 +940,18 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	if (!result && recurse_submodules) {
+	if (!result && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
 		const char *options[10];
 		int num_options = 0;
+		/* Set recursion as default when we already are recursing */
+		if (submodule_prefix[0])
+			set_config_fetch_recurse_submodules(1);
 		gitmodules_config();
 		git_config(submodule_config, NULL);
 		add_options_to_argv(&num_options, options);
 		result = fetch_populated_submodules(num_options, options,
 						    submodule_prefix,
+						    recurse_submodules == RECURSE_SUBMODULES_ON,
 						    verbosity < 0);
 	}
 

@@ -60,8 +60,9 @@ endif::git-pull[]
 	flag lets all tags and their associated objects be
 	downloaded.
 
---recurse-submodules::
-	Use this option to fetch new commits of all populated submodules too.
+--[no-]recurse-submodules::
+	This option controls if new commits of all populated submodules should
+	be fetched too (see linkgit:git-config[1]).
 
 ifndef::git-pull[]
 --submodule-prefix=<path>::

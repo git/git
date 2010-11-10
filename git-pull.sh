@@ -108,6 +108,9 @@ do
 	--recurse-submodules)
 		recurse_submodules=--recurse-submodules
 		;;
+	--no-recurse-submodules)
+		recurse_submodules=--no-recurse-submodules
+		;;
 	--d|--dr|--dry|--dry-|--dry-r|--dry-ru|--dry-run)
 		dry_run=--dry-run
 		;;
