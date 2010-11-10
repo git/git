@@ -3150,14 +3150,14 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		if ((options->break_opt = diff_scoreopt_parse(arg)) == -1)
 			return -1;
 	}
-	else if (!prefixcmp(arg, "-M") || !prefixcmp(arg, "--detect-renames=") ||
-		 !strcmp(arg, "--detect-renames")) {
+	else if (!prefixcmp(arg, "-M") || !prefixcmp(arg, "--find-renames=") ||
+		 !strcmp(arg, "--find-renames")) {
 		if ((options->rename_score = diff_scoreopt_parse(arg)) == -1)
 			return -1;
 		options->detect_rename = DIFF_DETECT_RENAME;
 	}
-	else if (!prefixcmp(arg, "-C") || !prefixcmp(arg, "--detect-copies=") ||
-		 !strcmp(arg, "--detect-copies")) {
+	else if (!prefixcmp(arg, "-C") || !prefixcmp(arg, "--find-copies=") ||
+		 !strcmp(arg, "--find-copies")) {
 		if (options->detect_rename == DIFF_DETECT_COPY)
 			DIFF_OPT_SET(options, FIND_COPIES_HARDER);
 		if ((options->rename_score = diff_scoreopt_parse(arg)) == -1)
@@ -3194,7 +3194,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_SET(options, TEXT);
 	else if (!strcmp(arg, "-R"))
 		DIFF_OPT_SET(options, REVERSE_DIFF);
-	else if (!strcmp(arg, "--find-copies-harder") || !strcmp(arg, "--detect-copies-harder"))
+	else if (!strcmp(arg, "--find-copies-harder"))
 		DIFF_OPT_SET(options, FIND_COPIES_HARDER);
 	else if (!strcmp(arg, "--follow"))
 		DIFF_OPT_SET(options, FOLLOW_RENAMES);
@@ -3380,12 +3380,12 @@ static int diff_scoreopt_parse(const char *opt)
 			opt += strlen("break-rewrites");
 			if (*opt == 0 || *opt++ == '=')
 				cmd = 'B';
-		} else if (!prefixcmp(opt, "detect-copies")) {
-			opt += strlen("detect-copies");
+		} else if (!prefixcmp(opt, "find-copies")) {
+			opt += strlen("find-copies");
 			if (*opt == 0 || *opt++ == '=')
 				cmd = 'C';
-		} else if (!prefixcmp(opt, "detect-renames")) {
-			opt += strlen("detect-renames");
+		} else if (!prefixcmp(opt, "find-renames")) {
+			opt += strlen("find-renames");
 			if (*opt == 0 || *opt++ == '=')
 				cmd = 'M';
 		}
