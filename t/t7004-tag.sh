@@ -1048,19 +1048,19 @@ cp "$1" actual
 EOF
 chmod +x fakeeditor
 
-test_expect_failure GPG \
+test_expect_success GPG \
 	'reediting a signed tag body omits signature' '
 	echo "RFC1991 signed tag" >expect &&
 	GIT_EDITOR=./fakeeditor git tag -f -s rfc1991-signed-tag $commit &&
 	test_cmp expect actual
 '
 
-test_expect_failure GPG \
+test_expect_success GPG \
 	'verifying rfc1991 signature' '
 	git tag -v rfc1991-signed-tag
 '
 
-test_expect_failure GPG \
+test_expect_success GPG \
 	'list tag with rfc1991 signature' '
 	echo "rfc1991-signed-tag RFC1991 signed tag" >expect &&
 	git tag -l -n1 rfc1991-signed-tag >actual &&
@@ -1073,12 +1073,12 @@ test_expect_failure GPG \
 
 rm -f gpghome/gpg.conf
 
-test_expect_failure GPG \
+test_expect_success GPG \
 	'verifying rfc1991 signature without --rfc1991' '
 	git tag -v rfc1991-signed-tag
 '
 
-test_expect_failure GPG \
+test_expect_success GPG \
 	'list tag with rfc1991 signature without --rfc1991' '
 	echo "rfc1991-signed-tag RFC1991 signed tag" >expect &&
 	git tag -l -n1 rfc1991-signed-tag >actual &&
@@ -1089,7 +1089,7 @@ test_expect_failure GPG \
 	test_cmp expect actual
 '
 
-test_expect_failure GPG \
+test_expect_success GPG \
 	'reediting a signed tag body omits signature' '
 	echo "RFC1991 signed tag" >expect &&
 	GIT_EDITOR=./fakeeditor git tag -f -s rfc1991-signed-tag $commit &&
