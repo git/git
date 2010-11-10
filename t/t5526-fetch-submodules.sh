@@ -81,6 +81,56 @@ test_expect_success "fetch alone only fetches superproject" '
 	! test -s actual.err
 '
 
+test_expect_success "fetch --no-recurse-submodules only fetches superproject" '
+	(
+		cd downstream &&
+		git fetch --no-recurse-submodules >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	! test -s actual.err
+'
+
+test_expect_success "using fetchRecurseSubmodules=true in .gitmodules recurses into submodules" '
+	(
+		cd downstream &&
+		git config -f .gitmodules submodule.submodule.fetchRecurseSubmodules true &&
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success "--no-recurse-submodules overrides .gitmodules config" '
+	add_upstream_commit &&
+	(
+		cd downstream &&
+		git fetch --no-recurse-submodules >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	! test -s actual.err
+'
+
+test_expect_success "using fetchRecurseSubmodules=false in .git/config overrides setting in .gitmodules" '
+	(
+		cd downstream &&
+		git config submodule.submodule.fetchRecurseSubmodules false &&
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	! test -s actual.err
+'
+
+test_expect_success "--recurse-submodules overrides fetchRecurseSubmodules setting from .git/config" '
+	(
+		cd downstream &&
+		git fetch --recurse-submodules >../actual.out 2>../actual.err &&
+		git config -f --unset .gitmodules submodule.submodule.fetchRecurseSubmodules true &&
+		git config --unset submodule.submodule.fetchRecurseSubmodules
+	) &&
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err
+'
+
 test_expect_success "--quiet propagates to submodules" '
 	(
 		cd downstream &&

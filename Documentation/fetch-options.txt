@@ -62,7 +62,7 @@ endif::git-pull[]
 
 --[no-]recurse-submodules::
 	This option controls if new commits of all populated submodules should
-	be fetched too (see linkgit:git-config[1]).
+	be fetched too (see linkgit:git-config[1] and linkgit:gitmodules[5]).
 
 ifndef::git-pull[]
 --submodule-prefix=<path>::
