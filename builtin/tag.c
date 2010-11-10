@@ -68,9 +68,9 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 			return 0;
 		}
 		/* only take up to "lines" lines, and strip the signature */
+		size = parse_signature(buf, size);
 		for (i = 0, sp += 2;
-				i < filter->lines && sp < buf + size &&
-				prefixcmp(sp, PGP_SIGNATURE "\n");
+				i < filter->lines && sp < buf + size;
 				i++) {
 			if (i)
 				printf("\n    ");
