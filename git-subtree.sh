@@ -138,6 +138,7 @@ cache_setup()
 	cachedir="$GIT_DIR/subtree-cache/$$"
 	rm -rf "$cachedir" || die "Can't delete old cachedir: $cachedir"
 	mkdir -p "$cachedir" || die "Can't create new cachedir: $cachedir"
+	mkdir -p "$cachedir/notree" || die "Can't create new cachedir: $cachedir/notree"
 	debug "Using cachedir: $cachedir" >&2
 }
 
@@ -149,6 +150,30 @@ cache_get()
 			echo $newrev
 		fi
 	done
+}
+
+cache_miss()
+{
+	for oldrev in $*; do
+		if [ ! -r "$cachedir/$oldrev" ]; then
+			echo $oldrev
+		fi
+	done
+}
+
+check_parents()
+{
+	missed=$(cache_miss $*)
+	for miss in $missed; do
+		if [ ! -r "$cachedir/notree/$miss" ]; then
+			debug "  incorrect order: $miss"
+		fi
+	done
+}
+
+set_notree()
+{
+	echo "1" > "$cachedir/notree/$1"
 }
 
 cache_set()
@@ -568,10 +593,13 @@ cmd_split()
 		
 		tree=$(subtree_for_commit $rev "$dir")
 		debug "  tree is: $tree"
+
+		check_parents $parents
 		
 		# ugly.  is there no better way to tell if this is a subtree
 		# vs. a mainline commit?  Does it matter?
 		if [ -z $tree ]; then
+			set_notree $rev
 			if [ -n "$newparents" ]; then
 				cache_set $rev $rev
 			fi
