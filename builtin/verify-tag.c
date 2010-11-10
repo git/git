@@ -17,13 +17,11 @@ static const char * const verify_tag_usage[] = {
 		NULL
 };
 
-#define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
-
 static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 {
 	struct child_process gpg;
 	const char *args_gpg[] = {"gpg", "--verify", "FILE", "-", NULL};
-	char path[PATH_MAX], *eol;
+	char path[PATH_MAX];
 	size_t len;
 	int fd, ret;
 
@@ -37,11 +35,7 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 	close(fd);
 
 	/* find the length without signature */
-	len = 0;
-	while (len < size && prefixcmp(buf + len, PGP_SIGNATURE)) {
-		eol = memchr(buf + len, '\n', size - len);
-		len += eol ? eol - (buf + len) + 1 : size - len;
-	}
+	len = parse_signature(buf, size);
 	if (verbose)
 		write_in_full(1, buf, len);
 
