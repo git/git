@@ -29,8 +29,6 @@ struct tag_filter {
 	struct commit_list *with_commit;
 };
 
-#define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
-
 static int show_reference(const char *refname, const unsigned char *sha1,
 			  int flag, void *cb_data)
 {
@@ -242,8 +240,7 @@ static void write_tag_body(int fd, const unsigned char *sha1)
 {
 	unsigned long size;
 	enum object_type type;
-	char *buf, *sp, *eob;
-	size_t len;
+	char *buf, *sp;
 
 	buf = read_sha1_file(sha1, &type, &size);
 	if (!buf)
@@ -256,12 +253,7 @@ static void write_tag_body(int fd, const unsigned char *sha1)
 		return;
 	}
 	sp += 2; /* skip the 2 LFs */
-	eob = strstr(sp, "\n" PGP_SIGNATURE "\n");
-	if (eob)
-		len = eob - sp;
-	else
-		len = buf + size - sp;
-	write_or_die(fd, sp, len);
+	write_or_die(fd, sp, parse_signature(sp, buf + size - sp));
 
 	free(buf);
 }
