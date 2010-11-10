@@ -62,7 +62,8 @@ files specified by command-line options.  Higher-level git
 tools, such as 'git status' and 'git add',
 use patterns from the sources specified above.
 
-Patterns have the following format:
+PATTERN FORMAT
+--------------
 
  - A blank line matches no files, so it can serve as a separator
    for readability.
@@ -98,7 +99,8 @@ Patterns have the following format:
    For example, "/{asterisk}.c" matches "cat-file.c" but not
    "mozilla-sha1/sha1.c".
 
-An example:
+EXAMPLES
+--------
 
 --------------------------------------------------------------
     $ git status
