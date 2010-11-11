@@ -87,6 +87,7 @@ const char * const local_repo_env[LOCAL_REPO_ENV_SIZE + 1] = {
 static void setup_git_env(void)
 {
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
+	git_dir = git_dir ? xstrdup(git_dir) : NULL;
 	if (!git_dir) {
 		git_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
 		git_dir = git_dir ? xstrdup(git_dir) : NULL;
