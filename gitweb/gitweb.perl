@@ -3169,15 +3169,18 @@ sub parse_from_to_diffinfo {
 ## parse to array of hashes functions
 
 sub git_get_heads_list {
-	my $limit = shift;
+	my ($limit, @classes) = @_;
+	unless (@classes) {
+		my $remote_heads = gitweb_check_feature('remote_heads');
+		@classes = ('heads', $remote_heads ? 'remotes' : ());
+	}
+	my @patterns = map { "refs/$_" } @classes;
 	my @headslist;
-
-	my $remote_heads = gitweb_check_feature('remote_heads');
 
 	open my $fd, '-|', git_cmd(), 'for-each-ref',
 		($limit ? '--count='.($limit+1) : ()), '--sort=-committerdate',
 		'--format=%(objectname) %(refname) %(subject)%00%(committer)',
-		'refs/heads', ($remote_heads ? 'refs/remotes' : ())
+		@patterns
 		or return;
 	while (my $line = <$fd>) {
 		my %ref_item;
