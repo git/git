@@ -493,6 +493,18 @@ our %feature = (
 		'sub' => sub { feature_bool('highlight', @_) },
 		'override' => 0,
 		'default' => [0]},
+
+	# Enable displaying of remote heads in the heads list
+
+	# To enable system wide have in $GITWEB_CONFIG
+	# $feature{'remote_heads'}{'default'} = [1];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'remote_heads'}{'override'} = 1;
+	# and in project config gitweb.remote_heads = 0|1;
+	'remote_heads' => {
+		'sub' => sub { feature_bool('remote_heads', @_) },
+		'override' => 0,
+		'default' => [0]},
 );
 
 sub gitweb_get_feature {
@@ -3160,10 +3172,12 @@ sub git_get_heads_list {
 	my $limit = shift;
 	my @headslist;
 
+	my $remote_heads = gitweb_check_feature('remote_heads');
+
 	open my $fd, '-|', git_cmd(), 'for-each-ref',
 		($limit ? '--count='.($limit+1) : ()), '--sort=-committerdate',
 		'--format=%(objectname) %(refname) %(subject)%00%(committer)',
-		'refs/heads'
+		'refs/heads', ($remote_heads ? 'refs/remotes' : ())
 		or return;
 	while (my $line = <$fd>) {
 		my %ref_item;
@@ -3174,7 +3188,7 @@ sub git_get_heads_list {
 		my ($committer, $epoch, $tz) =
 			($committerinfo =~ /^(.*) ([0-9]+) (.*)$/);
 		$ref_item{'fullname'}  = $name;
-		$name =~ s!^refs/heads/!!;
+		$name =~ s!^refs/(?:head|remote)s/!!;
 
 		$ref_item{'name'}  = $name;
 		$ref_item{'id'}    = $hash;
