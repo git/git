@@ -719,6 +719,7 @@ our %actions = (
 	"log" => \&git_log,
 	"patch" => \&git_patch,
 	"patches" => \&git_patches,
+	"remotes" => \&git_remotes,
 	"rss" => \&git_rss,
 	"atom" => \&git_atom,
 	"search" => \&git_search,
@@ -3170,10 +3171,7 @@ sub parse_from_to_diffinfo {
 
 sub git_get_heads_list {
 	my ($limit, @classes) = @_;
-	unless (@classes) {
-		my $remote_heads = gitweb_check_feature('remote_heads');
-		@classes = ('heads', $remote_heads ? 'remotes' : ());
-	}
+	@classes = ('heads') unless @classes;
 	my @patterns = map { "refs/$_" } @classes;
 	my @headslist;
 
@@ -5126,6 +5124,7 @@ sub git_summary {
 	my %co = parse_commit("HEAD");
 	my %cd = %co ? parse_date($co{'committer_epoch'}, $co{'committer_tz'}) : ();
 	my $head = $co{'id'};
+	my $remote_heads = gitweb_check_feature('remote_heads');
 
 	my $owner = git_get_project_owner($project);
 
@@ -5134,6 +5133,7 @@ sub git_summary {
 	# there are more ...
 	my @taglist  = git_get_tags_list(16);
 	my @headlist = git_get_heads_list(16);
+	my @remotelist = $remote_heads ? git_get_heads_list(16, 'remotes') : ();
 	my @forklist;
 	my $check_forks = gitweb_check_feature('forks');
 
@@ -5209,6 +5209,13 @@ sub git_summary {
 		git_heads_body(\@headlist, $head, 0, 15,
 		               $#headlist <= 15 ? undef :
 		               $cgi->a({-href => href(action=>"heads")}, "..."));
+	}
+
+	if (@remotelist) {
+		git_print_header_div('remotes');
+		git_heads_body(\@remotelist, $head, 0, 15,
+		               $#remotelist <= 15 ? undef :
+		               $cgi->a({-href => href(action=>"remotes")}, "..."));
 	}
 
 	if (@forklist) {
@@ -5521,6 +5528,22 @@ sub git_heads {
 	my @headslist = git_get_heads_list();
 	if (@headslist) {
 		git_heads_body(\@headslist, $head);
+	}
+	git_footer_html();
+}
+
+sub git_remotes {
+	gitweb_check_feature('remote_heads')
+		or die_error(403, "Remote heads view is disabled");
+
+	my $head = git_get_head_hash($project);
+	git_header_html();
+	git_print_page_nav('','', $head,undef,$head);
+	git_print_header_div('summary', $project);
+
+	my @remotelist = git_get_heads_list(undef, 'remotes');
+	if (@remotelist) {
+		git_heads_body(\@remotelist, $head);
 	}
 	git_footer_html();
 }
