@@ -5558,14 +5558,36 @@ sub git_remotes {
 		or die_error(403, "Remote heads view is disabled");
 
 	my $head = git_get_head_hash($project);
-	git_header_html();
-	git_print_page_nav('','', $head,undef,$head,format_ref_views('remotes'));
-	git_print_header_div('summary', $project);
+	my $remote = $input_params{'hash'};
 
-	my @remotelist = git_get_heads_list(undef, 'remotes');
+	my @remotelist;
+
+	if (defined $remote) {
+		# only display the heads in a given remote, stripping the
+		# remote name which is already visible elsewhere
+		@remotelist = map {
+			my $ref = $_ ;
+			$ref->{'name'} =~ s!^$remote/!!;
+			$ref
+		} git_get_heads_list(undef, "remotes/$remote");
+	} else {
+		@remotelist = git_get_heads_list(undef, 'remotes');
+	}
+
+	git_header_html(undef, undef, -action_extra => $remote);
+	git_print_page_nav('', '',  $head, undef, $head,
+		format_ref_views($remote ? '' : 'remotes'));
+
+	if (defined $remote) {
+		git_print_header_div('remotes', "$remote remote for $project");
+	} else {
+		git_print_header_div('summary', "$project remotes");
+	}
+
 	if (@remotelist) {
 		git_heads_body(\@remotelist, $head);
 	}
+
 	git_footer_html();
 }
 
