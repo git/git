@@ -92,12 +92,14 @@ include::merge-options.txt[]
 :git-pull: 1
 
 --rebase::
-	Instead of a merge, perform a rebase after fetching.  If
-	there is a remote ref for the upstream branch, and this branch
-	was rebased since last fetched, the rebase uses that information
-	to avoid rebasing non-local changes. To make this the default
-	for branch `<name>`, set configuration `branch.<name>.rebase`
-	to `true`.
+	Rebase the current branch on top of the upstream branch after
+	fetching.  If there is a remote-tracking branch corresponding to
+	the upstream branch and the upstream branch was rebased since last
+	fetched, the rebase uses that information to avoid rebasing
+	non-local changes.
++
+See `branch.<name>.rebase` in linkgit:git-config[1] if you want to make
+`git pull` always use `{litdd}rebase` instead of merging.
 +
 [NOTE]
 This is a potentially _dangerous_ mode of operation.
