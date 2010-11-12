@@ -324,9 +324,11 @@ test_expect_success $PREREQ 'In-Reply-To without --chain-reply-to' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches $patches $patches \
 		2>errors &&
-	# All the messages are replies to --in-reply-to
+	# The first message is a reply to --in-reply-to
 	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt1 >actual &&
 	test_cmp expect actual &&
+	# Second and subsequent messages are replies to the first one
+	sed -n -e "s/^Message-Id: *\(.*\)/\1/p" msgtxt1 >expect &&
 	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt2 >actual &&
 	test_cmp expect actual &&
 	sed -n -e "s/^In-Reply-To: *\(.*\)/\1/p" msgtxt3 >actual &&
