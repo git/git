@@ -60,6 +60,16 @@ endif::git-pull[]
 	flag lets all tags and their associated objects be
 	downloaded.
 
+--recurse-submodules::
+	Use this option to fetch new commits of all populated submodules too.
+
+ifndef::git-pull[]
+--submodule-prefix=<path>::
+	Prepend <path> to paths printed in informative messages
+	such as "Fetching submodule foo".  This option is used
+	internally when recursing over submodules.
+endif::git-pull[]
+
 -u::
 --update-head-ok::
 	By default 'git fetch' refuses to update the head which
