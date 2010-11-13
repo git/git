@@ -222,4 +222,11 @@ test_expect_success 'git pull --rebase does not reapply old patches' '
 	)
 '
 
+test_expect_success 'git pull --rebase against local branch' '
+	git checkout -b copy2 to-rebase-orig &&
+	git pull --rebase . to-rebase &&
+	test "conflicting modification" = "$(cat file)" &&
+	test file = "$(cat file2)"
+'
+
 test_done
