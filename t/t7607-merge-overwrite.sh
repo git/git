@@ -84,4 +84,20 @@ test_expect_success 'will not overwrite removed file with staged changes' '
 	test_cmp important c1.c
 '
 
+cat >expect <<\EOF
+error: Untracked working tree file 'c0.c' would be overwritten by merge.
+fatal: read-tree failed
+EOF
+
+test_expect_success 'will not overwrite untracked file on unborn branch' '
+	git reset --hard c0 &&
+	git rm -fr . &&
+	git checkout --orphan new &&
+	cp important c0.c &&
+	test_must_fail git merge c0 2>out &&
+	test_cmp out expect &&
+	test_path_is_missing .git/MERGE_HEAD &&
+	test_cmp important c0.c
+'
+
 test_done
