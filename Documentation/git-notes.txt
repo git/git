@@ -155,7 +155,7 @@ OPTIONS
 --strategy=<strategy>::
 	When merging notes, resolve notes conflicts using the given
 	strategy. The following strategies are recognized: "manual"
-	(default), "ours", "theirs" and "union".
+	(default), "ours", "theirs", "union" and "cat_sort_uniq".
 	See the "NOTES MERGE STRATEGIES" section below for more
 	information on each notes merge strategy.
 
@@ -229,6 +229,16 @@ ref).
 
 "union" automatically resolves notes conflicts by concatenating the
 local and remote versions.
+
+"cat_sort_uniq" is similar to "union", but in addition to concatenating
+the local and remote versions, this strategy also sorts the resulting
+lines, and removes duplicate lines from the result. This is equivalent
+to applying the "cat | sort | uniq" shell pipeline to the local and
+remote versions. This strategy is useful if the notes follow a line-based
+format where one wants to avoid duplicated lines in the merge result.
+Note that if either the local or remote version contain duplicate lines
+prior to the merge, these will also be removed by this notes merge
+strategy.
 
 
 EXAMPLES

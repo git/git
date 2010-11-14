@@ -324,6 +324,8 @@ combine_notes_fn parse_combine_notes_fn(const char *v)
 		return combine_notes_ignore;
 	else if (!strcasecmp(v, "concatenate"))
 		return combine_notes_concatenate;
+	else if (!strcasecmp(v, "cat_sort_uniq"))
+		return combine_notes_cat_sort_uniq;
 	else
 		return NULL;
 }
@@ -846,8 +848,8 @@ static int merge(int argc, const char **argv, const char *prefix)
 		OPT__VERBOSITY(&verbosity),
 		OPT_GROUP("Merge options"),
 		OPT_STRING('s', "strategy", &strategy, "strategy",
-			   "resolve notes conflicts using the given "
-			   "strategy (manual/ours/theirs/union)"),
+			   "resolve notes conflicts using the given strategy "
+			   "(manual/ours/theirs/union/cat_sort_uniq)"),
 		OPT_GROUP("Committing unmerged notes"),
 		{ OPTION_BOOLEAN, 0, "commit", &do_commit, NULL,
 			"finalize notes merge by committing unmerged notes",
@@ -899,6 +901,8 @@ static int merge(int argc, const char **argv, const char *prefix)
 			o.strategy = NOTES_MERGE_RESOLVE_THEIRS;
 		else if (!strcmp(strategy, "union"))
 			o.strategy = NOTES_MERGE_RESOLVE_UNION;
+		else if (!strcmp(strategy, "cat_sort_uniq"))
+			o.strategy = NOTES_MERGE_RESOLVE_CAT_SORT_UNIQ;
 		else {
 			error("Unknown -s/--strategy: %s", strategy);
 			usage_with_options(git_notes_merge_usage, options);

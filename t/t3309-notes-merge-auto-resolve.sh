@@ -499,4 +499,149 @@ test_expect_success 'merge z into y with "union" strategy => Non-conflicting 3-w
 	verify_notes y union
 '
 
+test_expect_success 'reset to pre-merge state (y)' '
+	git update-ref refs/notes/y refs/notes/y^1 &&
+	# Verify pre-merge state
+	verify_notes y y
+'
+
+cat <<EOF | sort >expect_notes_union2
+d682107b8bf7a7aea1e537a8d5cb6a12b60135f1 $commit_sha15
+5de7ea7ad4f47e7ff91989fb82234634730f75df $commit_sha14
+3a631fdb6f41b05b55d8f4baf20728ba8f6fccbc $commit_sha13
+a66055fa82f7a03fe0c02a6aba3287a85abf7c62 $commit_sha12
+7e3c53503a3db8dd996cb62e37c66e070b44b54d $commit_sha11
+b8d03e173f67f6505a76f6e00cf93440200dd9be $commit_sha10
+851e1638784a884c7dd26c5d41f3340f6387413a $commit_sha8
+357b6ca14c7afd59b7f8b8aaaa6b8b723771135b $commit_sha5
+e2bfd06a37dd2031684a59a6e2b033e212239c78 $commit_sha4
+5772f42408c0dd6f097a7ca2d24de0e78d1c46b1 $commit_sha3
+283b48219aee9a4105f6cab337e789065c82c2b9 $commit_sha2
+EOF
+
+cat >expect_log_union2 <<EOF
+$commit_sha15 15th
+z notes on 15th commit
+
+y notes on 15th commit
+
+$commit_sha14 14th
+y notes on 14th commit
+
+$commit_sha13 13th
+y notes on 13th commit
+
+$commit_sha12 12th
+y notes on 12th commit
+
+$commit_sha11 11th
+z notes on 11th commit
+
+$commit_sha10 10th
+x notes on 10th commit
+
+$commit_sha9 9th
+
+$commit_sha8 8th
+z notes on 8th commit
+
+$commit_sha7 7th
+
+$commit_sha6 6th
+
+$commit_sha5 5th
+z notes on 5th commit
+
+y notes on 5th commit
+
+$commit_sha4 4th
+y notes on 4th commit
+
+$commit_sha3 3rd
+y notes on 3rd commit
+
+$commit_sha2 2nd
+z notes on 2nd commit
+
+$commit_sha1 1st
+
+EOF
+
+test_expect_success 'merge y into z with "union" strategy => Non-conflicting 3-way merge' '
+	git config core.notesRef refs/notes/z &&
+	git notes merge --strategy=union y &&
+	verify_notes z union2
+'
+
+test_expect_success 'reset to pre-merge state (z)' '
+	git update-ref refs/notes/z refs/notes/z^1 &&
+	# Verify pre-merge state
+	verify_notes z z
+'
+
+cat <<EOF | sort >expect_notes_cat_sort_uniq
+6be90240b5f54594203e25d9f2f64b7567175aee $commit_sha15
+5de7ea7ad4f47e7ff91989fb82234634730f75df $commit_sha14
+3a631fdb6f41b05b55d8f4baf20728ba8f6fccbc $commit_sha13
+a66055fa82f7a03fe0c02a6aba3287a85abf7c62 $commit_sha12
+7e3c53503a3db8dd996cb62e37c66e070b44b54d $commit_sha11
+b8d03e173f67f6505a76f6e00cf93440200dd9be $commit_sha10
+851e1638784a884c7dd26c5d41f3340f6387413a $commit_sha8
+660311d7f78dc53db12ac373a43fca7465381a7e $commit_sha5
+e2bfd06a37dd2031684a59a6e2b033e212239c78 $commit_sha4
+5772f42408c0dd6f097a7ca2d24de0e78d1c46b1 $commit_sha3
+283b48219aee9a4105f6cab337e789065c82c2b9 $commit_sha2
+EOF
+
+cat >expect_log_cat_sort_uniq <<EOF
+$commit_sha15 15th
+y notes on 15th commit
+z notes on 15th commit
+
+$commit_sha14 14th
+y notes on 14th commit
+
+$commit_sha13 13th
+y notes on 13th commit
+
+$commit_sha12 12th
+y notes on 12th commit
+
+$commit_sha11 11th
+z notes on 11th commit
+
+$commit_sha10 10th
+x notes on 10th commit
+
+$commit_sha9 9th
+
+$commit_sha8 8th
+z notes on 8th commit
+
+$commit_sha7 7th
+
+$commit_sha6 6th
+
+$commit_sha5 5th
+y notes on 5th commit
+z notes on 5th commit
+
+$commit_sha4 4th
+y notes on 4th commit
+
+$commit_sha3 3rd
+y notes on 3rd commit
+
+$commit_sha2 2nd
+z notes on 2nd commit
+
+$commit_sha1 1st
+
+EOF
+
+test_expect_success 'merge y into z with "cat_sort_uniq" strategy => Non-conflicting 3-way merge' '
+	git notes merge --strategy=cat_sort_uniq y &&
+	verify_notes z cat_sort_uniq
+'
+
 test_done

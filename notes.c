@@ -845,6 +845,82 @@ int combine_notes_ignore(unsigned char *cur_sha1,
 	return 0;
 }
 
+static int string_list_add_note_lines(struct string_list *sort_uniq_list,
+				      const unsigned char *sha1)
+{
+	char *data;
+	unsigned long len;
+	enum object_type t;
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf **lines = NULL;
+	int i, list_index;
+
+	if (is_null_sha1(sha1))
+		return 0;
+
+	/* read_sha1_file NUL-terminates */
+	data = read_sha1_file(sha1, &t, &len);
+	if (t != OBJ_BLOB || !data || !len) {
+		free(data);
+		return t != OBJ_BLOB || !data;
+	}
+
+	strbuf_attach(&buf, data, len, len + 1);
+	lines = strbuf_split(&buf, '\n');
+
+	for (i = 0; lines[i]; i++) {
+		if (lines[i]->buf[lines[i]->len - 1] == '\n')
+			strbuf_setlen(lines[i], lines[i]->len - 1);
+		if (!lines[i]->len)
+			continue; /* skip empty lines */
+		list_index = string_list_find_insert_index(sort_uniq_list,
+							   lines[i]->buf, 0);
+		if (list_index < 0)
+			continue; /* skip duplicate lines */
+		string_list_insert_at_index(sort_uniq_list, list_index,
+					    lines[i]->buf);
+	}
+
+	strbuf_list_free(lines);
+	strbuf_release(&buf);
+	return 0;
+}
+
+static int string_list_join_lines_helper(struct string_list_item *item,
+					 void *cb_data)
+{
+	struct strbuf *buf = cb_data;
+	strbuf_addstr(buf, item->string);
+	strbuf_addch(buf, '\n');
+	return 0;
+}
+
+int combine_notes_cat_sort_uniq(unsigned char *cur_sha1,
+		const unsigned char *new_sha1)
+{
+	struct string_list sort_uniq_list = { NULL, 0, 0, 1 };
+	struct strbuf buf = STRBUF_INIT;
+	int ret = 1;
+
+	/* read both note blob objects into unique_lines */
+	if (string_list_add_note_lines(&sort_uniq_list, cur_sha1))
+		goto out;
+	if (string_list_add_note_lines(&sort_uniq_list, new_sha1))
+		goto out;
+
+	/* create a new blob object from sort_uniq_list */
+	if (for_each_string_list(&sort_uniq_list,
+				 string_list_join_lines_helper, &buf))
+		goto out;
+
+	ret = write_sha1_file(buf.buf, buf.len, blob_type, cur_sha1);
+
+out:
+	strbuf_release(&buf);
+	string_list_clear(&sort_uniq_list, 0);
+	return ret;
+}
+
 static int string_list_add_one_ref(const char *path, const unsigned char *sha1,
 				   int flag, void *cb)
 {
