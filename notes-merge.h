@@ -11,6 +11,12 @@ struct notes_merge_options {
 	const char *remote_ref;
 	const char *commit_msg;
 	int verbosity;
+	enum {
+		NOTES_MERGE_RESOLVE_MANUAL = 0,
+		NOTES_MERGE_RESOLVE_OURS,
+		NOTES_MERGE_RESOLVE_THEIRS,
+		NOTES_MERGE_RESOLVE_UNION
+	} strategy;
 };
 
 void init_notes_merge_options(struct notes_merge_options *o);

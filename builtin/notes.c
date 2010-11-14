@@ -26,7 +26,7 @@ static const char * const git_notes_usage[] = {
 	"git notes [--ref <notes_ref>] append [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]",
 	"git notes [--ref <notes_ref>] edit [<object>]",
 	"git notes [--ref <notes_ref>] show [<object>]",
-	"git notes [--ref <notes_ref>] merge [-v | -q] <notes_ref>",
+	"git notes [--ref <notes_ref>] merge [-v | -q] [-s <strategy> ] <notes_ref>",
 	"git notes [--ref <notes_ref>] remove [<object>]",
 	"git notes [--ref <notes_ref>] prune [-n | -v]",
 	NULL
@@ -768,8 +768,12 @@ static int merge(int argc, const char **argv, const char *prefix)
 	struct notes_tree *t;
 	struct notes_merge_options o;
 	int verbosity = 0, result;
+	const char *strategy = NULL;
 	struct option options[] = {
 		OPT__VERBOSITY(&verbosity),
+		OPT_STRING('s', "strategy", &strategy, "strategy",
+			   "resolve notes conflicts using the given "
+			   "strategy (manual/ours/theirs/union)"),
 		OPT_END()
 	};
 
@@ -788,6 +792,21 @@ static int merge(int argc, const char **argv, const char *prefix)
 	strbuf_addstr(&remote_ref, argv[0]);
 	expand_notes_ref(&remote_ref);
 	o.remote_ref = remote_ref.buf;
+
+	if (strategy) {
+		if (!strcmp(strategy, "manual"))
+			o.strategy = NOTES_MERGE_RESOLVE_MANUAL;
+		else if (!strcmp(strategy, "ours"))
+			o.strategy = NOTES_MERGE_RESOLVE_OURS;
+		else if (!strcmp(strategy, "theirs"))
+			o.strategy = NOTES_MERGE_RESOLVE_THEIRS;
+		else if (!strcmp(strategy, "union"))
+			o.strategy = NOTES_MERGE_RESOLVE_UNION;
+		else {
+			error("Unknown -s/--strategy: %s", strategy);
+			usage_with_options(git_notes_merge_usage, options);
+		}
+	}
 
 	t = init_notes_check("merge");
 
