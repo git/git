@@ -2,6 +2,7 @@
 #include "pack.h"
 #include "sideband.h"
 #include "run-command.h"
+#include "url.h"
 
 int data_received;
 int active_requests;
@@ -297,7 +298,7 @@ static CURL *get_curl_handle(void)
 
 static void http_auth_init(const char *url)
 {
-	char *at, *colon, *cp, *slash;
+	char *at, *colon, *cp, *slash, *decoded;
 	int len;
 
 	cp = strstr(url, "://");
@@ -322,16 +323,25 @@ static void http_auth_init(const char *url)
 		user_name = xmalloc(len + 1);
 		memcpy(user_name, cp, len);
 		user_name[len] = '\0';
+		decoded = url_decode(user_name);
+		free(user_name);
+		user_name = decoded;
 		user_pass = NULL;
 	} else {
 		len = colon - cp;
 		user_name = xmalloc(len + 1);
 		memcpy(user_name, cp, len);
 		user_name[len] = '\0';
+		decoded = url_decode(user_name);
+		free(user_name);
+		user_name = decoded;
 		len = at - (colon + 1);
 		user_pass = xmalloc(len + 1);
 		memcpy(user_pass, colon + 1, len);
 		user_pass[len] = '\0';
+		decoded = url_decode(user_pass);
+		free(user_pass);
+		user_pass = decoded;
 	}
 }
 
