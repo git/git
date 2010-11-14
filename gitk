@@ -2477,6 +2477,7 @@ proc makewindow {} {
     global ctxbut
     bind $cflist $ctxbut {pop_flist_menu %W %X %Y %x %y}
     bind $ctext $ctxbut {pop_diff_menu %W %X %Y %x %y}
+    bind $ctext <Button-1> {focus %W}
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
