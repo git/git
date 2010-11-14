@@ -7327,6 +7327,7 @@ proc getblobline {bf id} {
 			    [lindex [split $commentend .] 0]}]
 	    mark_ctext_line $lnum
 	}
+	$ctext config -state disabled
 	return 0
     }
     $ctext config -state disabled
