@@ -104,11 +104,13 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
  * note with the empty note (using the given combine_notes function) results
  * in a new/changed note.
  *
+ * Returns zero on success; non-zero means combine_notes failed.
+ *
  * IMPORTANT: The changes made by add_note() to the given notes_tree structure
  * are not persistent until a subsequent call to write_notes_tree() returns
  * zero.
  */
-void add_note(struct notes_tree *t, const unsigned char *object_sha1,
+int add_note(struct notes_tree *t, const unsigned char *object_sha1,
 		const unsigned char *note_sha1, combine_notes_fn combine_notes);
 
 /*
@@ -131,7 +133,10 @@ const unsigned char *get_note(struct notes_tree *t,
 /*
  * Copy a note from one object to another in the given notes_tree.
  *
- * Fails if the to_obj already has a note unless 'force' is true.
+ * Returns 1 if the to_obj already has a note and 'force' is false. Otherwise,
+ * returns non-zero if 'force' is true, but the given combine_notes function
+ * failed to combine from_obj's note with to_obj's existing note.
+ * Returns zero on success.
  *
  * IMPORTANT: The changes made by copy_note() to the given notes_tree structure
  * are not persistent until a subsequent call to write_notes_tree() returns
@@ -139,7 +144,7 @@ const unsigned char *get_note(struct notes_tree *t,
  */
 int copy_note(struct notes_tree *t,
 	      const unsigned char *from_obj, const unsigned char *to_obj,
-	      int force, combine_notes_fn combine_fn);
+	      int force, combine_notes_fn combine_notes);
 
 /*
  * Flags controlling behaviour of for_each_note()

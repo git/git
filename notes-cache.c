@@ -89,6 +89,5 @@ int notes_cache_put(struct notes_cache *c, unsigned char key_sha1[20],
 
 	if (write_sha1_file(data, size, "blob", value_sha1) < 0)
 		return -1;
-	add_note(&c->tree, key_sha1, value_sha1, NULL);
-	return 0;
+	return add_note(&c->tree, key_sha1, value_sha1, NULL);
 }
