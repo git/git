@@ -153,7 +153,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 					printf("Removing %s\n", qname);
 				if (remove_dir_recursively(&directory,
 							   rm_flags) != 0) {
-					warning("failed to remove '%s'", qname);
+					warning("failed to remove %s", qname);
 					errors++;
 				}
 			} else if (show_only) {
@@ -173,7 +173,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				printf("Removing %s\n", qname);
 			}
 			if (unlink(ent->name) != 0) {
-				warning("failed to remove '%s'", qname);
+				warning("failed to remove %s", qname);
 				errors++;
 			}
 		}
