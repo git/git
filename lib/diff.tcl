@@ -337,12 +337,20 @@ proc parse_color_line {line} {
 	set result ""
 	set markup [list]
 	set regexp {\033\[((?:\d+;)*\d+)?m}
+	set need_reset 0
 	while {[regexp -indices -start $start $regexp $line match code]} {
 		foreach {begin end} $match break
 		append result [string range $line $start [expr {$begin - 1}]]
-		lappend markup [string length $result] \
-			[eval [linsert $code 0 string range $line]]
+		set pos [string length $result]
+		set col [eval [linsert $code 0 string range $line]]
 		set start [incr end]
+		if {$col eq "0" || $col eq ""} {
+			if {!$need_reset} continue
+			set need_reset 0
+		} else {
+			set need_reset 1
+		}
+		lappend markup $pos $col
 	}
 	append result [string range $line $start end]
 	if {[llength $markup] < 4} {set markup {}}
