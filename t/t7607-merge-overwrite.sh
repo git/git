@@ -15,7 +15,9 @@ test_expect_success 'setup' '
 	git reset --hard c0 &&
 	mkdir sub &&
 	echo "sub/f" > sub/f &&
-	git add sub/f &&
+	mkdir sub2 &&
+	echo "sub2/f" > sub2/f &&
+	git add sub/f sub2/f &&
 	git commit -m sub &&
 	git tag sub &&
 	echo "VERY IMPORTANT CHANGES" > important
@@ -100,13 +102,24 @@ test_expect_success 'will not overwrite untracked subtree' '
 	test_cmp important sub/f/important
 '
 
+cat >expect <<\EOF
+error: The following untracked working tree files would be overwritten by merge:
+	sub
+	sub2
+Please move or remove them before you can merge.
+EOF
+
 test_expect_success 'will not overwrite untracked file in leading path' '
 	git reset --hard c0 &&
 	rm -rf sub &&
 	cp important sub &&
-	test_must_fail git merge sub &&
+	cp important sub2 &&
+	test_must_fail git merge sub 2>out &&
+	test_cmp out expect &&
 	test_path_is_missing .git/MERGE_HEAD &&
-	test_cmp important sub
+	test_cmp important sub &&
+	test_cmp important sub2 &&
+	rm -f sub sub2
 '
 
 test_expect_failure SYMLINKS 'will not overwrite untracked symlink in leading path' '

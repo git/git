@@ -53,6 +53,7 @@ const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 				  const char *cmd)
 {
+	int i;
 	const char **msgs = opts->msgs;
 	const char *msg;
 	char *tmp;
@@ -96,6 +97,9 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 		"The following Working tree files would be removed by sparse checkout update:\n%s";
 
 	opts->show_all_errors = 1;
+	/* rejected paths may not have a static buffer */
+	for (i = 0; i < ARRAY_SIZE(opts->unpack_rejects); i++)
+		opts->unpack_rejects[i].strdup_strings = 1;
 }
 
 static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
@@ -124,7 +128,6 @@ static int add_rejected_path(struct unpack_trees_options *o,
 			     enum unpack_trees_error_types e,
 			     const char *path)
 {
-	struct rejected_paths_list *newentry;
 	if (!o->show_all_errors)
 		return error(ERRORMSG(o, e), path);
 
@@ -132,25 +135,8 @@ static int add_rejected_path(struct unpack_trees_options *o,
 	 * Otherwise, insert in a list for future display by
 	 * display_error_msgs()
 	 */
-	newentry = xmalloc(sizeof(struct rejected_paths_list));
-	newentry->path = (char *)path;
-	newentry->next = o->unpack_rejects[e];
-	o->unpack_rejects[e] = newentry;
+	string_list_append(&o->unpack_rejects[e], path);
 	return -1;
-}
-
-/*
- * free all the structures allocated for the error <e>
- */
-static void free_rejected_paths(struct unpack_trees_options *o,
-				enum unpack_trees_error_types e)
-{
-	while (o->unpack_rejects[e]) {
-		struct rejected_paths_list *del = o->unpack_rejects[e];
-		o->unpack_rejects[e] = o->unpack_rejects[e]->next;
-		free(del);
-	}
-	free(o->unpack_rejects[e]);
 }
 
 /*
@@ -158,19 +144,19 @@ static void free_rejected_paths(struct unpack_trees_options *o,
  */
 static void display_error_msgs(struct unpack_trees_options *o)
 {
-	int e;
+	int e, i;
 	int something_displayed = 0;
 	for (e = 0; e < NB_UNPACK_TREES_ERROR_TYPES; e++) {
-		if (o->unpack_rejects[e]) {
-			struct rejected_paths_list *rp;
+		struct string_list *rejects = &o->unpack_rejects[e];
+		if (rejects->nr > 0) {
 			struct strbuf path = STRBUF_INIT;
 			something_displayed = 1;
-			for (rp = o->unpack_rejects[e]; rp; rp = rp->next)
-				strbuf_addf(&path, "\t%s\n", rp->path);
+			for (i = 0; i < rejects->nr; i++)
+				strbuf_addf(&path, "\t%s\n", rejects->items[i].string);
 			error(ERRORMSG(o, e), path.buf);
 			strbuf_release(&path);
-			free_rejected_paths(o, e);
 		}
+		string_list_clear(rejects, 0);
 	}
 	if (something_displayed)
 		printf("Aborting\n");
