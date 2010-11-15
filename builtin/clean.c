@@ -48,9 +48,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	const char *qname;
 	char *seen = NULL;
 	struct option options[] = {
-		OPT__QUIET(&quiet),
-		OPT__DRY_RUN(&show_only),
-		OPT_BOOLEAN('f', "force", &force, "force"),
+		OPT__QUIET(&quiet, "do not print names of files removed"),
+		OPT__DRY_RUN(&show_only, "dry run"),
+		OPT__FORCE(&force, "force"),
 		OPT_BOOLEAN('d', NULL, &remove_directories,
 				"remove whole directories"),
 		{ OPTION_CALLBACK, 'e', "exclude", &exclude_list, "pattern",

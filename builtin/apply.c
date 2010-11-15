@@ -3849,7 +3849,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 			"don't expect at least one line of context"),
 		OPT_BOOLEAN(0, "reject", &apply_with_reject,
 			"leave the rejected hunks in corresponding *.rej files"),
-		OPT__VERBOSE(&apply_verbosely),
+		OPT__VERBOSE(&apply_verbosely, "be verbose"),
 		OPT_BIT(0, "inaccurate-eof", &options,
 			"tolerate incorrectly detected missing new-line at the end of file",
 			INACCURATE_EOF),
