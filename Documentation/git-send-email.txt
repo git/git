@@ -82,11 +82,26 @@ See the CONFIGURATION section for 'sendemail.multiedit'.
 	set, as returned by "git var -l".
 
 --in-reply-to=<identifier>::
-	Specify the contents of the first In-Reply-To header.
-	Subsequent emails will refer to the previous email
-	instead of this if --chain-reply-to is set.
-	Only necessary if --compose is also set.  If --compose
-	is not set, this will be prompted for.
+	Make the first mail (or all the mails with `--no-thread`) appear as a
+	reply to the given Message-Id, which avoids breaking threads to
+	provide a new patch series.
+	The second and subsequent emails will be sent as replies according to
+	the `--[no]-chain-reply-to` setting.
++
+So for example when `--thread` and `--no-chain-reply-to` are specified, the
+second and subsequent patches will be replies to the first one like in the
+illustration below where `[PATCH v2 0/3]` is in reply to `[PATCH 0/2]`:
++
+  [PATCH 0/2] Here is what I did...
+    [PATCH 1/2] Clean up and tests
+    [PATCH 2/2] Implementation
+    [PATCH v2 0/3] Here is a reroll
+      [PATCH v2 1/3] Clean up
+      [PATCH v2 2/3] New tests
+      [PATCH v2 3/3] Implementation
++
+Only necessary if --compose is also set.  If --compose
+is not set, this will be prompted for.
 
 --subject=<string>::
 	Specify the initial subject of the email thread.
