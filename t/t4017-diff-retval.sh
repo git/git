@@ -29,66 +29,49 @@ test_expect_success 'git diff --quiet -w  HEAD^ HEAD' '
 '
 
 test_expect_success 'git diff-tree HEAD^ HEAD' '
-	git diff-tree --exit-code HEAD^ HEAD
-	test $? = 1
+	test_expect_code 1 git diff-tree --exit-code HEAD^ HEAD
 '
 test_expect_success 'git diff-tree HEAD^ HEAD -- a' '
 	git diff-tree --exit-code HEAD^ HEAD -- a
-	test $? = 0
 '
 test_expect_success 'git diff-tree HEAD^ HEAD -- b' '
-	git diff-tree --exit-code HEAD^ HEAD -- b
-	test $? = 1
+	test_expect_code 1 git diff-tree --exit-code HEAD^ HEAD -- b
 '
 test_expect_success 'echo HEAD | git diff-tree --stdin' '
-	echo $(git rev-parse HEAD) | git diff-tree --exit-code --stdin
-	test $? = 1
+	echo $(git rev-parse HEAD) | test_expect_code 1 git diff-tree --exit-code --stdin
 '
 test_expect_success 'git diff-tree HEAD HEAD' '
 	git diff-tree --exit-code HEAD HEAD
-	test $? = 0
 '
 test_expect_success 'git diff-files' '
 	git diff-files --exit-code
-	test $? = 0
 '
 test_expect_success 'git diff-index --cached HEAD' '
 	git diff-index --exit-code --cached HEAD
-	test $? = 0
 '
 test_expect_success 'git diff-index --cached HEAD^' '
-	git diff-index --exit-code --cached HEAD^
-	test $? = 1
+	test_expect_code 1 git diff-index --exit-code --cached HEAD^
 '
 test_expect_success 'git diff-index --cached HEAD^' '
 	echo text >>b &&
 	echo 3 >c &&
-	git add . && {
-		git diff-index --exit-code --cached HEAD^
-		test $? = 1
-	}
+	git add . &&
+	test_expect_code 1 git diff-index --exit-code --cached HEAD^
 '
 test_expect_success 'git diff-tree -Stext HEAD^ HEAD -- b' '
-	git commit -m "text in b" && {
-		git diff-tree -p --exit-code -Stext HEAD^ HEAD -- b
-		test $? = 1
-	}
+	git commit -m "text in b" &&
+	test_expect_code 1 git diff-tree -p --exit-code -Stext HEAD^ HEAD -- b
 '
 test_expect_success 'git diff-tree -Snot-found HEAD^ HEAD -- b' '
 	git diff-tree -p --exit-code -Snot-found HEAD^ HEAD -- b
-	test $? = 0
 '
 test_expect_success 'git diff-files' '
-	echo 3 >>c && {
-		git diff-files --exit-code
-		test $? = 1
-	}
+	echo 3 >>c &&
+	test_expect_code 1 git diff-files --exit-code
 '
 test_expect_success 'git diff-index --cached HEAD' '
-	git update-index c && {
-		git diff-index --exit-code --cached HEAD
-		test $? = 1
-	}
+	git update-index c &&
+	test_expect_code 1 git diff-index --exit-code --cached HEAD
 '
 
 test_expect_success '--check --exit-code returns 0 for no difference' '
@@ -100,30 +83,26 @@ test_expect_success '--check --exit-code returns 0 for no difference' '
 test_expect_success '--check --exit-code returns 1 for a clean difference' '
 
 	echo "good" > a &&
-	git diff --check --exit-code
-	test $? = 1
+	test_expect_code 1 git diff --check --exit-code
 
 '
 
 test_expect_success '--check --exit-code returns 3 for a dirty difference' '
 
 	echo "bad   " >> a &&
-	git diff --check --exit-code
-	test $? = 3
+	test_expect_code 3 git diff --check --exit-code
 
 '
 
 test_expect_success '--check with --no-pager returns 2 for dirty difference' '
 
-	git --no-pager diff --check
-	test $? = 2
+	test_expect_code 2 git --no-pager diff --check
 
 '
 
 test_expect_success 'check should test not just the last line' '
 	echo "" >>a &&
-	git --no-pager diff --check
-	test $? = 2
+	test_expect_code 2 git --no-pager diff --check
 
 '
 
@@ -133,10 +112,8 @@ test_expect_success 'check detects leftover conflict markers' '
 	echo binary >>b &&
 	git commit -m "side" b &&
 	test_must_fail git merge master &&
-	git add b && (
-		git --no-pager diff --cached --check >test.out
-		test $? = 2
-	) &&
+	git add b &&
+	test_expect_code 2 git --no-pager diff --cached --check >test.out &&
 	test 3 = $(grep "conflict marker" test.out | wc -l) &&
 	git reset --hard
 '
@@ -146,19 +123,13 @@ test_expect_success 'check honors conflict marker length' '
 	echo ">>>>>>> boo" >>b &&
 	echo "======" >>a &&
 	git diff --check a &&
-	(
-		git diff --check b
-		test $? = 2
-	) &&
+	test_expect_code 2 git diff --check b &&
 	git reset --hard &&
 	echo ">>>>>>>> boo" >>b &&
 	echo "========" >>a &&
 	git diff --check &&
 	echo "b conflict-marker-size=8" >.gitattributes &&
-	(
-		git diff --check b
-		test $? = 2
-	) &&
+	test_expect_code 2 git diff --check b &&
 	git diff --check a &&
 	git reset --hard
 '

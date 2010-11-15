@@ -104,7 +104,7 @@ test_expect_success 'mark rename/delete as unmerged' '
 	test_tick &&
 	git commit -m delete &&
 	git checkout -b rename HEAD^ &&
-	git mv a1 a2
+	git mv a1 a2 &&
 	test_tick &&
 	git commit -m rename &&
 	test_must_fail git merge delete &&

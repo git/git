@@ -60,7 +60,7 @@ test_expect_success 'checkout' '
 
 test_expect_success 'checkout with local tracked branch' '
 	git checkout master &&
-	git checkout follower >actual
+	git checkout follower >actual &&
 	grep "is ahead of" actual
 '
 

@@ -36,19 +36,19 @@ for_each_name () {
 test_expect_success TABS_IN_FILENAMES 'setup' '
 
 	mkdir "$FN" &&
-	for_each_name "echo initial >\"\$name\""
+	for_each_name "echo initial >\"\$name\"" &&
 	git add . &&
 	git commit -q -m Initial &&
 
 	for_each_name "echo second >\"\$name\"" &&
-	git commit -a -m Second
+	git commit -a -m Second &&
 
 	for_each_name "echo modified >\"\$name\""
 
 '
 
 test_expect_success TABS_IN_FILENAMES 'setup expected files' '
-cat >expect.quoted <<\EOF
+cat >expect.quoted <<\EOF &&
 Name
 "Name and a\nLF"
 "Name and an\tHT"

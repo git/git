@@ -89,7 +89,7 @@ test_expect_success 'same, but do not remove trailing spaces' '
 	git config core.whitespace "-blank-at-eol" &&
 	git reset --hard HEAD^ &&
 	cp third file && git add file && git commit -m third &&
-	git rebase --whitespace=fix HEAD^^
+	git rebase --whitespace=fix HEAD^^ &&
 	git diff --exit-code HEAD^:file expect-second &&
 	test_cmp file third
 '

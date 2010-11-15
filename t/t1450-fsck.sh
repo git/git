@@ -61,7 +61,7 @@ test_expect_success 'object with bad sha1' '
 	sha=$(echo blob | git hash-object -w --stdin) &&
 	old=$(echo $sha | sed "s+^..+&/+") &&
 	new=$(dirname $old)/ffffffffffffffffffffffffffffffffffffff &&
-	sha="$(dirname $new)$(basename $new)"
+	sha="$(dirname $new)$(basename $new)" &&
 	mv .git/objects/$old .git/objects/$new &&
 	test_when_finished "remove_object $sha" &&
 	git update-index --add --cacheinfo 100644 $sha foo &&
@@ -111,7 +111,7 @@ test_expect_success 'email with embedded > is not okay' '
 '
 
 test_expect_success 'tag pointing to nonexistent' '
-	cat >invalid-tag <<-\EOF
+	cat >invalid-tag <<-\EOF &&
 	object ffffffffffffffffffffffffffffffffffffffff
 	type commit
 	tag invalid

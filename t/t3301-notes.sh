@@ -52,7 +52,7 @@ test_expect_success 'refusing to edit notes in refs/remotes/' '
 
 # 1 indicates caught gracefully by die, 128 means git-show barked
 test_expect_success 'handle empty notes gracefully' '
-	git notes show ; test 1 = $?
+	test_expect_code 1 git notes show
 '
 
 test_expect_success 'show non-existent notes entry with %N' '
@@ -627,16 +627,16 @@ test_expect_success '--show-notes=ref accumulates' '
 
 test_expect_success 'Allow notes on non-commits (trees, blobs, tags)' '
 	git config core.notesRef refs/notes/other &&
-	echo "Note on a tree" > expect
+	echo "Note on a tree" > expect &&
 	git notes add -m "Note on a tree" HEAD: &&
 	git notes show HEAD: > actual &&
 	test_cmp expect actual &&
-	echo "Note on a blob" > expect
+	echo "Note on a blob" > expect &&
 	filename=$(git ls-tree --name-only HEAD | head -n1) &&
 	git notes add -m "Note on a blob" HEAD:$filename &&
 	git notes show HEAD:$filename > actual &&
 	test_cmp expect actual &&
-	echo "Note on a tag" > expect
+	echo "Note on a tag" > expect &&
 	git tag -a -m "This is an annotated tag" foobar HEAD^ &&
 	git notes add -m "Note on a tag" foobar &&
 	git notes show foobar > actual &&

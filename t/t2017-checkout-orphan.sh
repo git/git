@@ -14,7 +14,7 @@ TEST_FILE=foo
 test_expect_success 'Setup' '
 	echo "Initial" >"$TEST_FILE" &&
 	git add "$TEST_FILE" &&
-	git commit -m "First Commit"
+	git commit -m "First Commit" &&
 	test_tick &&
 	echo "State 1" >>"$TEST_FILE" &&
 	git add "$TEST_FILE" &&

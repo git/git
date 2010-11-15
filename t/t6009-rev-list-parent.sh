@@ -18,7 +18,7 @@ test_expect_success setup '
 
 	commit one &&
 
-	test_tick=$(($test_tick - 2400))
+	test_tick=$(($test_tick - 2400)) &&
 
 	commit two &&
 	commit three &&

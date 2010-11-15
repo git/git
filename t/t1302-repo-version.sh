@@ -39,7 +39,7 @@ test_expect_success 'gitdir selection on unsupported repo' '
 	(
 		cd test2 &&
 		git config core.repositoryformatversion >../actual
-	)
+	) &&
 	test_cmp expect actual
 '
 

@@ -17,7 +17,7 @@ test_expect_success SYMLINKS setup '
 	git branch side &&
 
 	echo goodbye >nitfol &&
-	git add nitfol
+	git add nitfol &&
 	test_tick &&
 	git commit -m "master adds file nitfol" &&
 

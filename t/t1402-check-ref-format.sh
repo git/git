@@ -32,7 +32,7 @@ test_expect_success "check-ref-format --branch @{-1}" '
 	T=$(git write-tree) &&
 	sha1=$(echo A | git commit-tree $T) &&
 	git update-ref refs/heads/master $sha1 &&
-	git update-ref refs/remotes/origin/master $sha1
+	git update-ref refs/remotes/origin/master $sha1 &&
 	git checkout master &&
 	git checkout origin/master &&
 	git checkout master &&
@@ -47,7 +47,7 @@ test_expect_success 'check-ref-format --branch from subdir' '
 	T=$(git write-tree) &&
 	sha1=$(echo A | git commit-tree $T) &&
 	git update-ref refs/heads/master $sha1 &&
-	git update-ref refs/remotes/origin/master $sha1
+	git update-ref refs/remotes/origin/master $sha1 &&
 	git checkout master &&
 	git checkout origin/master &&
 	git checkout master &&

@@ -131,7 +131,7 @@ test_expect_success 'unsynchronized clocks' '
 	R2=$(doit  3 R2 $R1) &&
 
 	PL=$(doit  4 PL $L2 $C2) &&
-	PR=$(doit  4 PR $C2 $R2)
+	PR=$(doit  4 PR $C2 $R2) &&
 
 	git name-rev $C2 >expected &&
 

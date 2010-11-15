@@ -321,7 +321,7 @@ test_expect_success \
 	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
 test_expect_success \
 	'C: validate reuse existing blob' \
-	'test $newf = `git rev-parse --verify branch:file2/newf`
+	'test $newf = `git rev-parse --verify branch:file2/newf` &&
 	 test $oldf = `git rev-parse --verify branch:file2/oldf`'
 
 cat >expect <<EOF

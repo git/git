@@ -51,7 +51,7 @@ test_expect_success 'update-index again' \
 	echo hello world >dir1/file3 &&
 	echo goodbye people >file2 &&
 	git update-index --add file2 dir1/file3 &&
-	echo hello everybody >file2
+	echo hello everybody >file2 &&
 	echo happy >dir1/file3 &&
 	git update-index --again &&
 	git ls-files -s >current &&

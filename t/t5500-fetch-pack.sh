@@ -91,7 +91,7 @@ test_expect_success 'setup' '
 		prev=$cur &&
 		cur=$(($cur+1))
 	done &&
-	add B1 $A1
+	add B1 $A1 &&
 	echo $ATIP > .git/refs/heads/A &&
 	echo $BTIP > .git/refs/heads/B &&
 	git symbolic-ref HEAD refs/heads/B

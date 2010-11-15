@@ -53,7 +53,7 @@ test_expect_success 'set up buggy branch' '
      echo "line 12" >> hello &&
      echo "line 13" >> hello &&
      add_and_commit_file hello "2 more lines" &&
-     HASH6=$(git rev-parse --verify HEAD)
+     HASH6=$(git rev-parse --verify HEAD) &&
      echo "line 14" >> hello &&
      echo "line 15" >> hello &&
      echo "line 16" >> hello &&

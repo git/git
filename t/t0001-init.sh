@@ -25,7 +25,7 @@ check_config () {
 
 test_expect_success 'plain' '
 	(
-		unset GIT_DIR GIT_WORK_TREE
+		sane_unset GIT_DIR GIT_WORK_TREE &&
 		mkdir plain &&
 		cd plain &&
 		git init
@@ -35,7 +35,7 @@ test_expect_success 'plain' '
 
 test_expect_success 'plain with GIT_WORK_TREE' '
 	if (
-		unset GIT_DIR
+		sane_unset GIT_DIR &&
 		mkdir plain-wt &&
 		cd plain-wt &&
 		GIT_WORK_TREE=$(pwd) git init
@@ -48,7 +48,7 @@ test_expect_success 'plain with GIT_WORK_TREE' '
 
 test_expect_success 'plain bare' '
 	(
-		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG
+		sane_unset GIT_DIR GIT_WORK_TREE GIT_CONFIG &&
 		mkdir plain-bare-1 &&
 		cd plain-bare-1 &&
 		git --bare init
@@ -58,7 +58,7 @@ test_expect_success 'plain bare' '
 
 test_expect_success 'plain bare with GIT_WORK_TREE' '
 	if (
-		unset GIT_DIR GIT_CONFIG
+		sane_unset GIT_DIR GIT_CONFIG &&
 		mkdir plain-bare-2 &&
 		cd plain-bare-2 &&
 		GIT_WORK_TREE=$(pwd) git --bare init
@@ -72,7 +72,7 @@ test_expect_success 'plain bare with GIT_WORK_TREE' '
 test_expect_success 'GIT_DIR bare' '
 
 	(
-		unset GIT_CONFIG
+		sane_unset GIT_CONFIG &&
 		mkdir git-dir-bare.git &&
 		GIT_DIR=git-dir-bare.git git init
 	) &&
@@ -82,7 +82,7 @@ test_expect_success 'GIT_DIR bare' '
 test_expect_success 'init --bare' '
 
 	(
-		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG
+		sane_unset GIT_DIR GIT_WORK_TREE GIT_CONFIG &&
 		mkdir init-bare.git &&
 		cd init-bare.git &&
 		git init --bare
@@ -93,7 +93,7 @@ test_expect_success 'init --bare' '
 test_expect_success 'GIT_DIR non-bare' '
 
 	(
-		unset GIT_CONFIG
+		sane_unset GIT_CONFIG &&
 		mkdir non-bare &&
 		cd non-bare &&
 		GIT_DIR=.git git init
@@ -104,7 +104,7 @@ test_expect_success 'GIT_DIR non-bare' '
 test_expect_success 'GIT_DIR & GIT_WORK_TREE (1)' '
 
 	(
-		unset GIT_CONFIG
+		sane_unset GIT_CONFIG &&
 		mkdir git-dir-wt-1.git &&
 		GIT_WORK_TREE=$(pwd) GIT_DIR=git-dir-wt-1.git git init
 	) &&
@@ -114,7 +114,7 @@ test_expect_success 'GIT_DIR & GIT_WORK_TREE (1)' '
 test_expect_success 'GIT_DIR & GIT_WORK_TREE (2)' '
 
 	if (
-		unset GIT_CONFIG
+		sane_unset GIT_CONFIG &&
 		mkdir git-dir-wt-2.git &&
 		GIT_WORK_TREE=$(pwd) GIT_DIR=git-dir-wt-2.git git --bare init
 	)
@@ -127,7 +127,7 @@ test_expect_success 'GIT_DIR & GIT_WORK_TREE (2)' '
 test_expect_success 'reinit' '
 
 	(
-		unset GIT_CONFIG GIT_WORK_TREE GIT_CONFIG
+		sane_unset GIT_CONFIG GIT_WORK_TREE GIT_CONFIG &&
 
 		mkdir again &&
 		cd again &&
@@ -175,8 +175,8 @@ test_expect_success 'init with init.templatedir set' '
 		git config -f "$test_config"  init.templatedir "${HOME}/templatedir-source" &&
 		mkdir templatedir-set &&
 		cd templatedir-set &&
-		unset GIT_CONFIG_NOGLOBAL &&
-		unset GIT_TEMPLATE_DIR &&
+		sane_unset GIT_CONFIG_NOGLOBAL &&
+		sane_unset GIT_TEMPLATE_DIR &&
 		NO_SET_GIT_TEMPLATE_DIR=t &&
 		export NO_SET_GIT_TEMPLATE_DIR &&
 		git init
@@ -187,7 +187,7 @@ test_expect_success 'init with init.templatedir set' '
 test_expect_success 'init --bare/--shared overrides system/global config' '
 	(
 		test_config="$HOME"/.gitconfig &&
-		unset GIT_CONFIG_NOGLOBAL &&
+		sane_unset GIT_CONFIG_NOGLOBAL &&
 		git config -f "$test_config" core.bare false &&
 		git config -f "$test_config" core.sharedRepository 0640 &&
 		mkdir init-bare-shared-override &&
@@ -202,7 +202,7 @@ test_expect_success 'init --bare/--shared overrides system/global config' '
 test_expect_success 'init honors global core.sharedRepository' '
 	(
 		test_config="$HOME"/.gitconfig &&
-		unset GIT_CONFIG_NOGLOBAL &&
+		sane_unset GIT_CONFIG_NOGLOBAL &&
 		git config -f "$test_config" core.sharedRepository 0666 &&
 		mkdir shared-honor-global &&
 		cd shared-honor-global &&
