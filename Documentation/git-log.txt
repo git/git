@@ -116,7 +116,7 @@ git log --follow builtin-rev-list.c::
 git log --branches --not --remotes=origin::
 
 	Shows all commits that are in any of local branches but not in
-	any of remote tracking branches for 'origin' (what you have that
+	any of remote-tracking branches for 'origin' (what you have that
 	origin doesn't).
 
 git log master --not --remotes=*/master::

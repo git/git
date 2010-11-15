@@ -100,8 +100,8 @@ static int handle_line(char *line)
 		origin = line;
 		string_list_append(&src_data->tag, origin + 4);
 		src_data->head_status |= 2;
-	} else if (!prefixcmp(line, "remote branch ")) {
-		origin = line + 14;
+	} else if (!prefixcmp(line, "remote-tracking branch ")) {
+		origin = line + strlen("remote-tracking branch ");
 		string_list_append(&src_data->r_branch, origin);
 		src_data->head_status |= 2;
 	} else {
@@ -233,7 +233,7 @@ static void do_fmt_merge_msg_title(struct strbuf *out,
 		if (src_data->r_branch.nr) {
 			strbuf_addstr(out, subsep);
 			subsep = ", ";
-			print_joined("remote branch ", "remote branches ",
+			print_joined("remote-tracking branch ", "remote-tracking branches ",
 					&src_data->r_branch, out);
 		}
 		if (src_data->tag.nr) {

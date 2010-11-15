@@ -344,7 +344,8 @@ Examining branches from a remote repository
 The "master" branch that was created at the time you cloned is a copy
 of the HEAD in the repository that you cloned from.  That repository
 may also have had other branches, though, and your local repository
-keeps branches which track each of those remote branches, which you
+keeps branches which track each of those remote branches, called
+remote-tracking branches, which you
 can view using the "-r" option to linkgit:git-branch[1]:
 
 ------------------------------------------------
@@ -359,12 +360,22 @@ $ git branch -r
   origin/todo
 ------------------------------------------------
 
-You cannot check out these remote-tracking branches, but you can
-examine them on a branch of your own, just as you would a tag:
+In this example, "origin" is called a remote repository, or "remote"
+for short. The branches of this repository are called "remote
+branches" from our point of view. The remote-tracking branches listed
+above were created based on the remote branches at clone time and will
+be updated by "git fetch" (hence "git pull") and "git push". See
+<<Updating-a-repository-With-git-fetch>> for details.
+
+You might want to build on one of these remote-tracking branches
+on a branch of your own, just as you would for a tag:
 
 ------------------------------------------------
 $ git checkout -b my-todo-copy origin/todo
 ------------------------------------------------
+
+You can also check out "origin/todo" directly to examine it or
+write a one-off patch.  See <<detached-head,detached head>>.
 
 Note that the name "origin" is just the name that git uses by default
 to refer to the repository that you cloned from.
@@ -435,7 +446,7 @@ linux-nfs/master
 origin/master
 -------------------------------------------------
 
-If you run "git fetch <remote>" later, the tracking branches for the
+If you run "git fetch <remote>" later, the remote-tracking branches for the
 named <remote> will be updated.
 
 If you examine the file .git/config, you will see that git has added
@@ -1700,7 +1711,7 @@ may wish to check the original repository for updates and merge them
 into your own work.
 
 We have already seen <<Updating-a-repository-With-git-fetch,how to
-keep remote tracking branches up to date>> with linkgit:git-fetch[1],
+keep remote-tracking branches up to date>> with linkgit:git-fetch[1],
 and how to merge two branches.  So you can merge in changes from the
 original repository's master branch with:
 
@@ -1716,15 +1727,21 @@ one step:
 $ git pull origin master
 -------------------------------------------------
 
-In fact, if you have "master" checked out, then by default "git pull"
-merges from the HEAD branch of the origin repository.  So often you can
+In fact, if you have "master" checked out, then this branch has been
+configured by "git clone" to get changes from the HEAD branch of the
+origin repository.  So often you can
 accomplish the above with just a simple
 
 -------------------------------------------------
 $ git pull
 -------------------------------------------------
 
-More generally, a branch that is created from a remote branch will pull
+This command will fetch changes from the remote branches to your
+remote-tracking branches `origin/*`, and merge the default branch into
+the current branch.
+
+More generally, a branch that is created from a remote-tracking branch
+will pull
 by default from that branch.  See the descriptions of the
 branch.<name>.remote and branch.<name>.merge options in
 linkgit:git-config[1], and the discussion of the `--track` option in
@@ -2106,7 +2123,7 @@ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 $ cd work
 -------------------------------------------------
 
-Linus's tree will be stored in the remote branch named origin/master,
+Linus's tree will be stored in the remote-tracking branch named origin/master,
 and can be updated using linkgit:git-fetch[1]; you can track other
 public trees using linkgit:git-remote[1] to set up a "remote" and
 linkgit:git-fetch[1] to keep them up-to-date; see
@@ -2800,8 +2817,8 @@ Be aware that commits that the old version of example/master pointed at
 may be lost, as we saw in the previous section.
 
 [[remote-branch-configuration]]
-Configuring remote branches
----------------------------
+Configuring remote-tracking branches
+------------------------------------
 
 We saw above that "origin" is just a shortcut to refer to the
 repository that you originally cloned from.  This information is
