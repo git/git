@@ -93,34 +93,10 @@ See ``Interactive mode'' for details.
 	and apply the patch to the index.
 +
 The intent of this option is to pick and choose lines of the patch to
-apply, or even to modify the contents of lines to be staged. There are
-three line types in a patch: addition lines (beginning with a plus),
-removal lines (beginning with a minus), and context lines (beginning
-with a space). In general, it should be safe to:
-+
---
-* remove addition lines (don't stage the line)
-* modify the content of any addition lines (stage modified contents)
-* add new addition lines (stage the new line)
-* convert context lines to removal lines (stage removal of line)
-* convert removal lines to context lines (don't stage removal)
---
-+
-Similarly, your patch will likely not apply if you:
-+
---
-* add context or removal lines
-* delete removal or context lines
-* modify the contents of context or removal lines
---
-+
-NOTE: In the first list above, the results given for each action are
-with respect to that patch line only. Conceptual changes like
-modification of a line in the original file are actually represented by
-removal of the old line followed by addition of the new line. Deleting
-only the addition line of this pair but leaving the removal line would
-therefore convert the modification into a deletion. In other words, use
-this feature with caution, as it is easy to stage unintended changes.
+apply, or even to modify the contents of lines to be staged. This can be
+quicker and more flexible than using the interactive hunk selector.
+However, it is easy to confuse oneself and create a patch that does not
+apply to the index. See EDITING PATCHES below.
 
 -u::
 --update::
@@ -320,6 +296,78 @@ diff::
 
   This lets you review what will be committed (i.e. between
   HEAD and index).
+
+
+EDITING PATCHES
+---------------
+
+Invoking `git add -e` or selecting `e` from the interactive hunk
+selector will open a patch in your editor; after the editor exits, the
+result is applied to the index. You are free to make arbitrary changes
+to the patch, but note that some changes may have confusing results, or
+even result in a patch that cannot be applied.  If you want to abort the
+operation entirely (i.e., stage nothing new in the index), simply delete
+all lines of the patch. The list below describes some common things you
+may see in a patch, and which editing operations make sense on them.
+
+--
+added content::
+
+Added content is represented by lines beginning with "{plus}". You can
+prevent staging any addition lines by deleting them.
+
+removed content::
+
+Removed content is represented by lines beginning with "-". You can
+prevent staging their removal by converting the "-" to a " " (space).
+
+modified content::
+
+Modified content is represented by "-" lines (removing the old content)
+followed by "{plus}" lines (adding the replacement content). You can
+prevent staging the modification by converting "-" lines to " ", and
+removing "{plus}" lines. Beware that modifying only half of the pair is
+likely to introduce confusing changes to the index.
+--
+
+There are also more complex operations that can be performed. But beware
+that because the patch is applied only to the index and not the working
+tree, the working tree will appear to "undo" the change in the index.
+For example, introducing a a new line into the index that is in neither
+the HEAD nor the working tree will stage the new line for commit, but
+the line will appear to be reverted in the working tree.
+
+Avoid using these constructs, or do so with extreme caution.
+
+--
+removing untouched content::
+
+Content which does not differ between the index and working tree may be
+shown on context lines, beginning with a " " (space).  You can stage
+context lines for removal by converting the space to a "-". The
+resulting working tree file will appear to re-add the content.
+
+modifying existing content::
+
+One can also modify context lines by staging them for removal (by
+converting " " to "-") and adding a "{plus}" line with the new content.
+Similarly, one can modify "{plus}" lines for existing additions or
+modifications. In all cases, the new modification will appear reverted
+in the working tree.
+
+new content::
+
+You may also add new content that does not exist in the patch; simply
+add new lines, each starting with "{plus}". The addition will appear
+reverted in the working tree.
+--
+
+There are also several operations which should be avoided entirely, as
+they will make the patch impossible to apply:
+
+* adding context (" ") or removal ("-") lines
+* deleting context or removal lines
+* modifying the contents of context or removal lines
 
 SEE ALSO
 --------
