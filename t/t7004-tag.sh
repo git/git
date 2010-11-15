@@ -1051,13 +1051,23 @@ test_expect_success \
 
 test_expect_success \
 	'message in editor has initial comment' '
-	GIT_EDITOR=cat git tag -a initial-comment > actual
+	! (GIT_EDITOR=cat git tag -a initial-comment > actual)
+'
+
+test_expect_success \
+	'message in editor has initial comment: first line' '
 	# check the first line --- should be empty
-	first=$(sed -e 1q <actual) &&
-	test -z "$first" &&
+	echo >first.expect &&
+	sed -e 1q <actual >first.actual &&
+	test_cmp first.expect first.actual
+'
+
+test_expect_success \
+	'message in editor has initial comment: remainder' '
 	# remove commented lines from the remainder -- should be empty
-	rest=$(sed -e 1d -e '/^#/d' <actual) &&
-	test -z "$rest"
+	>rest.expect
+	sed -e 1d -e '/^#/d' <actual >rest.actual &&
+	test_cmp rest.expect rest.actual
 '
 
 get_tag_header reuse $commit commit $time >expect
