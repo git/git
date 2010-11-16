@@ -3351,13 +3351,13 @@ $ui_diff tag conf d_s- \
 	-foreground red \
 	-background ivory1
 
-$ui_diff tag conf d<<<<<<< \
+$ui_diff tag conf d< \
 	-foreground orange \
 	-font font_diffbold
-$ui_diff tag conf d======= \
+$ui_diff tag conf d= \
 	-foreground orange \
 	-font font_diffbold
-$ui_diff tag conf d>>>>>>> \
+$ui_diff tag conf d> \
 	-foreground orange \
 	-font font_diffbold
 
