@@ -1069,6 +1069,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 		struct cache_entry *ce;
 		int pos;
 		if (namelen > 2 && name[1] == '/')
+			/* don't need mode for commit */
 			return get_sha1_oneline(name + 2, sha1);
 		if (namelen < 3 ||
 		    name[2] != ':' ||
@@ -1096,6 +1097,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 				break;
 			if (ce_stage(ce) == stage) {
 				hashcpy(sha1, ce->sha1);
+				oc->mode = ce->ce_mode;
 				return 0;
 			}
 			pos++;

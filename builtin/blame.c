@@ -83,6 +83,7 @@ struct origin {
 	struct commit *commit;
 	mmfile_t file;
 	unsigned char blob_sha1[20];
+	unsigned mode;
 	char path[FLEX_ARRAY];
 };
 
@@ -92,6 +93,7 @@ struct origin {
  * Return 1 if the conversion succeeds, 0 otherwise.
  */
 int textconv_object(const char *path,
+		    unsigned mode,
 		    const unsigned char *sha1,
 		    char **buf,
 		    unsigned long *buf_size)
@@ -100,7 +102,7 @@ int textconv_object(const char *path,
 	struct userdiff_driver *textconv;
 
 	df = alloc_filespec(path);
-	fill_filespec(df, sha1, S_IFREG | 0664);
+	fill_filespec(df, sha1, mode);
 	textconv = get_textconv(df);
 	if (!textconv) {
 		free_filespec(df);
@@ -125,7 +127,7 @@ static void fill_origin_blob(struct diff_options *opt,
 
 		num_read_blob++;
 		if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV) &&
-		    textconv_object(o->path, o->blob_sha1, &file->ptr, &file_size))
+		    textconv_object(o->path, o->mode, o->blob_sha1, &file->ptr, &file_size))
 			;
 		else
 			file->ptr = read_sha1_file(o->blob_sha1, &type, &file_size);
@@ -313,21 +315,23 @@ static struct origin *get_origin(struct scoreboard *sb,
  * for an origin is also used to pass the blame for the entire file to
  * the parent to detect the case where a child's blob is identical to
  * that of its parent's.
+ *
+ * This also fills origin->mode for corresponding tree path.
  */
-static int fill_blob_sha1(struct origin *origin)
+static int fill_blob_sha1_and_mode(struct origin *origin)
 {
-	unsigned mode;
 	if (!is_null_sha1(origin->blob_sha1))
 		return 0;
 	if (get_tree_entry(origin->commit->object.sha1,
 			   origin->path,
-			   origin->blob_sha1, &mode))
+			   origin->blob_sha1, &origin->mode))
 		goto error_out;
 	if (sha1_object_info(origin->blob_sha1, NULL) != OBJ_BLOB)
 		goto error_out;
 	return 0;
  error_out:
 	hashclr(origin->blob_sha1);
+	origin->mode = S_IFINVALID;
 	return -1;
 }
 
@@ -360,12 +364,14 @@ static struct origin *find_origin(struct scoreboard *sb,
 			/*
 			 * If the origin was newly created (i.e. get_origin
 			 * would call make_origin if none is found in the
-			 * scoreboard), it does not know the blob_sha1,
+			 * scoreboard), it does not know the blob_sha1/mode,
 			 * so copy it.  Otherwise porigin was in the
-			 * scoreboard and already knows blob_sha1.
+			 * scoreboard and already knows blob_sha1/mode.
 			 */
-			if (porigin->refcnt == 1)
+			if (porigin->refcnt == 1) {
 				hashcpy(porigin->blob_sha1, cached->blob_sha1);
+				porigin->mode = cached->mode;
+			}
 			return porigin;
 		}
 		/* otherwise it was not very useful; free it */
@@ -400,6 +406,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 		/* The path is the same as parent */
 		porigin = get_origin(sb, parent, origin->path);
 		hashcpy(porigin->blob_sha1, origin->blob_sha1);
+		porigin->mode = origin->mode;
 	} else {
 		/*
 		 * Since origin->path is a pathspec, if the parent
@@ -425,6 +432,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 		case 'M':
 			porigin = get_origin(sb, parent, origin->path);
 			hashcpy(porigin->blob_sha1, p->one->sha1);
+			porigin->mode = p->one->mode;
 			break;
 		case 'A':
 		case 'T':
@@ -444,6 +452,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 
 		cached = make_origin(porigin->commit, porigin->path);
 		hashcpy(cached->blob_sha1, porigin->blob_sha1);
+		cached->mode = porigin->mode;
 		parent->util = cached;
 	}
 	return porigin;
@@ -486,6 +495,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 		    !strcmp(p->two->path, origin->path)) {
 			porigin = get_origin(sb, parent, p->one->path);
 			hashcpy(porigin->blob_sha1, p->one->sha1);
+			porigin->mode = p->one->mode;
 			break;
 		}
 	}
@@ -1099,6 +1109,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 
 			norigin = get_origin(sb, parent, p->one->path);
 			hashcpy(norigin->blob_sha1, p->one->sha1);
+			norigin->mode = p->one->mode;
 			fill_origin_blob(&sb->revs->diffopt, norigin, &file_p);
 			if (!file_p.ptr)
 				continue;
@@ -2075,7 +2086,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 		switch (st.st_mode & S_IFMT) {
 		case S_IFREG:
 			if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV) &&
-			    textconv_object(read_from, null_sha1, &buf.buf, &buf_len))
+			    textconv_object(read_from, mode, null_sha1, &buf.buf, &buf_len))
 				buf.len = buf_len;
 			else if (strbuf_read_file(&buf, read_from, st.st_size) != st.st_size)
 				die_errno("cannot open or read '%s'", read_from);
@@ -2455,11 +2466,11 @@ parse_done:
 	}
 	else {
 		o = get_origin(&sb, sb.final, path);
-		if (fill_blob_sha1(o))
+		if (fill_blob_sha1_and_mode(o))
 			die("no such path %s in %s", path, final_commit_name);
 
 		if (DIFF_OPT_TST(&sb.revs->diffopt, ALLOW_TEXTCONV) &&
-		    textconv_object(path, o->blob_sha1, (char **) &sb.final_buf,
+		    textconv_object(path, o->mode, o->blob_sha1, (char **) &sb.final_buf,
 				    &sb.final_buf_size))
 			;
 		else
