@@ -85,27 +85,6 @@ static long def_ff(const char *rec, long len, char *buf, long sz, void *priv)
 	return -1;
 }
 
-static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll,
-		find_func_t ff, void *ff_priv) {
-
-	/*
-	 * Be quite stupid about this for now.  Find a line in the old file
-	 * before the start of the hunk (and context) which starts with a
-	 * plausible character.
-	 */
-
-	const char *rec;
-	long len;
-
-	while (i-- > 0) {
-		len = xdl_get_rec(xf, i, &rec);
-		if ((*ll = ff(rec, len, buf, sz, ff_priv)) >= 0)
-			return;
-	}
-	*ll = 0;
-}
-
-
 static int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
                            xdemitconf_t const *xecfg) {
 	xdfile_t *xdf = &xe->xdf1;
@@ -127,6 +106,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	xdchange_t *xch, *xche;
 	char funcbuf[80];
 	long funclen = 0;
+	long funclineprev = -1;
 	find_func_t ff = xecfg->find_func ?  xecfg->find_func : def_ff;
 
 	if (xecfg->flags & XDL_EMIT_COMMON)
@@ -150,9 +130,19 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		 */
 
 		if (xecfg->flags & XDL_EMIT_FUNCNAMES) {
-			xdl_find_func(&xe->xdf1, s1, funcbuf,
-				      sizeof(funcbuf), &funclen,
-				      ff, xecfg->find_func_priv);
+			long l;
+			for (l = s1 - 1; l >= 0 && l > funclineprev; l--) {
+				const char *rec;
+				long reclen = xdl_get_rec(&xe->xdf1, l, &rec);
+				long newfunclen = ff(rec, reclen, funcbuf,
+						     sizeof(funcbuf),
+						     xecfg->find_func_priv);
+				if (newfunclen >= 0) {
+					funclen = newfunclen;
+					break;
+				}
+			}
+			funclineprev = s1 - 1;
 		}
 		if (xdl_emit_hunk_hdr(s1 + 1, e1 - s1, s2 + 1, e2 - s2,
 				      funcbuf, funclen, ecb) < 0)

@@ -3894,7 +3894,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 
 		xpp.flags = 0;
 		xecfg.ctxlen = 3;
-		xecfg.flags = XDL_EMIT_FUNCNAMES;
+		xecfg.flags = 0;
 		xdi_diff_outf(&mf1, &mf2, patch_id_consume, &data,
 			      &xpp, &xecfg);
 	}
