@@ -617,6 +617,18 @@ AC_CHECK_HEADER([sys/select.h],
 [NO_SYS_SELECT_H=UnfortunatelyYes])
 AC_SUBST(NO_SYS_SELECT_H)
 #
+# Define NO_SYS_POLL_H if you don't have sys/poll.h
+AC_CHECK_HEADER([sys/poll.h],
+[NO_SYS_POLL_H=],
+[NO_SYS_POLL_H=UnfortunatelyYes])
+AC_SUBST(NO_SYS_POLL_H)
+#
+# Define NO_INTTYPES_H if you don't have inttypes.h
+AC_CHECK_HEADER([inttypes.h],
+[NO_INTTYPES_H=],
+[NO_INTTYPES_H=UnfortunatelyYes])
+AC_SUBST(NO_INTTYPES_H)
+#
 # Define OLD_ICONV if your library has an old iconv(), where the second
 # (input buffer pointer) parameter is declared with type (const char **).
 AC_DEFUN([OLDICONVTEST_SRC], [[
@@ -867,6 +879,12 @@ GIT_CHECK_FUNC(mkstemps,
 [NO_MKSTEMPS=],
 [NO_MKSTEMPS=YesPlease])
 AC_SUBST(NO_MKSTEMPS)
+#
+# Define NO_INITGROUPS if you don't have initgroups in the C library.
+GIT_CHECK_FUNC(initgroups,
+[NO_INITGROUPS=],
+[NO_INITGROUPS=YesPlease])
+AC_SUBST(NO_INITGROUPS)
 #
 #
 # Define NO_MMAP if you want to avoid mmap.
