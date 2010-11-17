@@ -386,16 +386,19 @@ __git_tags ()
 	done
 }
 
-# __git_refs accepts 0 or 1 arguments (to pass to __gitdir)
+# __git_refs accepts 0, 1 (to pass to __gitdir), or 2 arguments
+# presence of 2nd argument means use the guess heuristic employed
+# by checkout for tracking branches
 __git_refs ()
 {
-	local i is_hash=y dir="$(__gitdir "${1-}")"
+	local i is_hash=y dir="$(__gitdir "${1-}")" track="${2-}"
 	local cur="${COMP_WORDS[COMP_CWORD]}" format refs
 	if [ -d "$dir" ]; then
 		case "$cur" in
 		refs|refs/*)
 			format="refname"
 			refs="${cur%/*}"
+			track=""
 			;;
 		*)
 			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
@@ -407,6 +410,21 @@ __git_refs ()
 		esac
 		git --git-dir="$dir" for-each-ref --format="%($format)" \
 			$refs
+		if [ -n "$track" ]; then
+			# employ the heuristic used by git checkout
+			# Try to find a remote branch that matches the completion word
+			# but only output if the branch name is unique
+			local ref entry
+			git --git-dir="$dir" for-each-ref --shell --format="ref=%(refname:short)" \
+				"refs/remotes/" | \
+			while read entry; do
+				eval "$entry"
+				ref="${ref#*/}"
+				if [[ "$ref" == "$cur"* ]]; then
+					echo "$ref"
+				fi
+			done | uniq -u
+		fi
 		return
 	fi
 	for i in $(git ls-remote "$dir" 2>/dev/null); do
@@ -1011,7 +1029,13 @@ _git_checkout ()
 			"
 		;;
 	*)
-		__gitcomp "$(__git_refs)"
+		# check if --track, --no-track, or --no-guess was specified
+		# if so, disable DWIM mode
+		local flags="--track --no-track --no-guess" track=1
+		if [ -n "$(__git_find_on_cmdline "$flags")" ]; then
+			track=''
+		fi
+		__gitcomp "$(__git_refs '' $track)"
 		;;
 	esac
 }
