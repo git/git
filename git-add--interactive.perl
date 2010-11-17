@@ -89,6 +89,7 @@ my %patch_modes = (
 		TARGET => '',
 		PARTICIPLE => 'staging',
 		FILTER => 'file-only',
+		IS_REVERSE => 0,
 	},
 	'stash' => {
 		DIFF => 'diff-index -p HEAD',
@@ -98,6 +99,7 @@ my %patch_modes = (
 		TARGET => '',
 		PARTICIPLE => 'stashing',
 		FILTER => undef,
+		IS_REVERSE => 0,
 	},
 	'reset_head' => {
 		DIFF => 'diff-index -p --cached',
@@ -107,6 +109,7 @@ my %patch_modes = (
 		TARGET => '',
 		PARTICIPLE => 'unstaging',
 		FILTER => 'index-only',
+		IS_REVERSE => 1,
 	},
 	'reset_nothead' => {
 		DIFF => 'diff-index -R -p --cached',
@@ -116,6 +119,7 @@ my %patch_modes = (
 		TARGET => ' to index',
 		PARTICIPLE => 'applying',
 		FILTER => 'index-only',
+		IS_REVERSE => 0,
 	},
 	'checkout_index' => {
 		DIFF => 'diff-files -p',
@@ -125,6 +129,7 @@ my %patch_modes = (
 		TARGET => ' from worktree',
 		PARTICIPLE => 'discarding',
 		FILTER => 'file-only',
+		IS_REVERSE => 1,
 	},
 	'checkout_head' => {
 		DIFF => 'diff-index -p',
@@ -134,6 +139,7 @@ my %patch_modes = (
 		TARGET => ' from index and worktree',
 		PARTICIPLE => 'discarding',
 		FILTER => undef,
+		IS_REVERSE => 1,
 	},
 	'checkout_nothead' => {
 		DIFF => 'diff-index -R -p',
@@ -143,6 +149,7 @@ my %patch_modes = (
 		TARGET => ' to index and worktree',
 		PARTICIPLE => 'applying',
 		FILTER => undef,
+		IS_REVERSE => 0,
 	},
 );
 
@@ -1001,10 +1008,12 @@ sub edit_hunk_manually {
 	print $fh "# Manual hunk edit mode -- see bottom for a quick guide\n";
 	print $fh @$oldtext;
 	my $participle = $patch_mode_flavour{PARTICIPLE};
+	my $is_reverse = $patch_mode_flavour{IS_REVERSE};
+	my ($remove_plus, $remove_minus) = $is_reverse ? ('-', '+') : ('+', '-');
 	print $fh <<EOF;
 # ---
-# To remove '-' lines, make them ' ' lines (context).
-# To remove '+' lines, delete them.
+# To remove '$remove_minus' lines, make them ' ' lines (context).
+# To remove '$remove_plus' lines, delete them.
 # Lines starting with # will be removed.
 #
 # If the patch applies cleanly, the edited hunk will immediately be
