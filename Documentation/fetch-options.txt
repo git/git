@@ -53,6 +53,7 @@ endif::git-pull[]
 	behavior for a remote may be specified with the remote.<name>.tagopt
 	setting. See linkgit:git-config[1].
 
+ifndef::git-pull[]
 -t::
 --tags::
 	Most of the tags are fetched automatically as branch
@@ -63,6 +64,7 @@ endif::git-pull[]
 	downloaded. The default behavior for a remote may be
 	specified with the remote.<name>.tagopt setting. See
 	linkgit:git-config[1].
+endif::git-pull[]
 
 -u::
 --update-head-ok::
