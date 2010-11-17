@@ -79,12 +79,14 @@ static void add_mapping(struct string_list *map,
 	if (old_name == NULL) {
 		debug_mm("mailmap: adding (simple) entry for %s at index %d\n", old_email, index);
 		/* Replace current name and new email for simple entry */
-		free(me->name);
-		free(me->email);
-		if (new_name)
+		if (new_name) {
+			free(me->name);
 			me->name = xstrdup(new_name);
-		if (new_email)
+		}
+		if (new_email) {
+			free(me->email);
 			me->email = xstrdup(new_email);
+		}
 	} else {
 		struct mailmap_info *mi = xmalloc(sizeof(struct mailmap_info));
 		debug_mm("mailmap: adding (complex) entry for %s at index %d\n", old_email, index);
