@@ -64,6 +64,14 @@ cp new1.txt test.txt
 test_expect_success "merge without conflict" \
 	"git merge-file test.txt orig.txt new2.txt"
 
+test_expect_success 'works in subdirectory' '
+	mkdir dir &&
+	cp new1.txt dir/a.txt &&
+	cp orig.txt dir/o.txt &&
+	cp new2.txt dir/b.txt &&
+	( cd dir && git merge-file a.txt o.txt b.txt )
+'
+
 cp new1.txt test.txt
 test_expect_success "merge without conflict (--quiet)" \
 	"git merge-file --quiet test.txt orig.txt new2.txt"
