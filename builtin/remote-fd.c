@@ -31,7 +31,7 @@ static void command_loop(int input_fd, int output_fd)
 		}
 		/* Strip end of line characters. */
 		i = strlen(buffer);
-		while (isspace(buffer[i - 1]))
+		while (i > 0 && isspace(buffer[i - 1]))
 			buffer[--i] = 0;
 
 		if (!strcmp(buffer, "capabilities")) {
@@ -56,8 +56,8 @@ int cmd_remote_fd(int argc, const char **argv, const char *prefix)
 	int output_fd = -1;
 	char *end;
 
-	if (argc < 3)
-		die("URL missing");
+	if (argc != 3)
+		die("Expected two arguments");
 
 	input_fd = (int)strtoul(argv[2], &end, 10);
 

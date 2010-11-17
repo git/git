@@ -142,7 +142,7 @@ static const char **parse_argv(const char *arg, const char *service)
 	for (i = 0; i < arguments; i++)
 		ret[i] = temparray[i];
 	ret[arguments] = NULL;
-	return (const char **)ret;
+	return ret;
 }
 
 static void send_git_request(int stdin_fd, const char *serv, const char *repo,
@@ -239,10 +239,8 @@ static int command_loop(const char *child)
 
 int cmd_remote_ext(int argc, const char **argv, const char *prefix)
 {
-	if (argc < 3) {
-		fprintf(stderr, "Error: URL missing");
-		exit(1);
-	}
+	if (argc != 3)
+		die("Expected two arguments");
 
 	return command_loop(argv[2]);
 }

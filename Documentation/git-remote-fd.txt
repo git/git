@@ -1,5 +1,5 @@
 git-remote-fd(1)
-=================
+================
 
 NAME
 ----
@@ -28,13 +28,13 @@ It is assumed that any handshaking procedures have already been completed
 information to user in the URL in case that URL is displayed in some
 context.
 
-ENVIRONMENT VARIABLES:
-----------------------
+ENVIRONMENT VARIABLES
+---------------------
 GIT_TRANSLOOP_DEBUG::
 	If set, prints debugging information about various reads/writes.
 
-EXAMPLES:
----------
+EXAMPLES
+--------
 git fetch fd::17 master::
 	Fetch master, using file descriptor #17 to communicate with
 	git-upload-pack.
