@@ -38,7 +38,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int show_only = 0, remove_directories = 0, quiet = 0, ignored = 0;
-	int ignored_only = 0, baselen = 0, config_set = 0, errors = 0;
+	int ignored_only = 0, config_set = 0, errors = 0;
 	int rm_flags = REMOVE_DIR_KEEP_NESTED_GIT;
 	struct strbuf directory = STRBUF_INIT;
 	struct dir_struct dir;
@@ -138,7 +138,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		if (pathspec) {
 			memset(seen, 0, argc > 0 ? argc : 1);
 			matches = match_pathspec(pathspec, ent->name, len,
-						 baselen, seen);
+						 0, seen);
 		}
 
 		if (S_ISDIR(st.st_mode)) {
@@ -153,7 +153,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 					printf("Removing %s\n", qname);
 				if (remove_dir_recursively(&directory,
 							   rm_flags) != 0) {
-					warning("failed to remove '%s'", qname);
+					warning("failed to remove %s", qname);
 					errors++;
 				}
 			} else if (show_only) {
@@ -173,7 +173,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				printf("Removing %s\n", qname);
 			}
 			if (unlink(ent->name) != 0) {
-				warning("failed to remove '%s'", qname);
+				warning("failed to remove %s", qname);
 				errors++;
 			}
 		}

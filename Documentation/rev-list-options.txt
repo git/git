@@ -95,6 +95,8 @@ you would get an output like this:
 	to be printed in between commits, in order for the graph history
 	to be drawn properly.
 +
+This enables parent rewriting, see 'History Simplification' below.
++
 This implies the '--topo-order' option by default, but the
 '--date-order' option may also be specified.
 
