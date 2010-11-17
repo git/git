@@ -1617,6 +1617,7 @@ static const char *format_time(unsigned long time, const char *tz_str,
 #define OUTPUT_SHOW_NUMBER	040
 #define OUTPUT_SHOW_SCORE      0100
 #define OUTPUT_NO_AUTHOR       0200
+#define OUTPUT_SHOW_EMAIL	0400
 
 static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 {
@@ -1682,12 +1683,17 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 		}
 
 		printf("%.*s", length, hex);
-		if (opt & OUTPUT_ANNOTATE_COMPAT)
-			printf("\t(%10s\t%10s\t%d)", ci.author,
+		if (opt & OUTPUT_ANNOTATE_COMPAT) {
+			const char *name;
+			if (opt & OUTPUT_SHOW_EMAIL)
+				name = ci.author_mail;
+			else
+				name = ci.author;
+			printf("\t(%10s\t%10s\t%d)", name,
 			       format_time(ci.author_time, ci.author_tz,
 					   show_raw_time),
 			       ent->lno + 1 + cnt);
-		else {
+		} else {
 			if (opt & OUTPUT_SHOW_SCORE)
 				printf(" %*d %02d",
 				       max_score_digits, ent->score,
@@ -1700,9 +1706,15 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 				       ent->s_lno + 1 + cnt);
 
 			if (!(opt & OUTPUT_NO_AUTHOR)) {
-				int pad = longest_author - utf8_strwidth(ci.author);
+				const char *name;
+				int pad;
+				if (opt & OUTPUT_SHOW_EMAIL)
+					name = ci.author_mail;
+				else
+					name = ci.author;
+				pad = longest_author - utf8_strwidth(name);
 				printf(" (%s%*s %10s",
-				       ci.author, pad, "",
+				       name, pad, "",
 				       format_time(ci.author_time,
 						   ci.author_tz,
 						   show_raw_time));
@@ -1840,7 +1852,10 @@ static void find_alignment(struct scoreboard *sb, int *option)
 		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
 			suspect->commit->object.flags |= METAINFO_SHOWN;
 			get_commit_info(suspect->commit, &ci, 1);
-			num = utf8_strwidth(ci.author);
+			if (*option & OUTPUT_SHOW_EMAIL)
+				num = utf8_strwidth(ci.author_mail);
+			else
+				num = utf8_strwidth(ci.author);
 			if (longest_author < num)
 				longest_author = num;
 		}
@@ -2289,6 +2304,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		OPT_BIT('t', NULL, &output_option, "Show raw timestamp (Default: off)", OUTPUT_RAW_TIMESTAMP),
 		OPT_BIT('l', NULL, &output_option, "Show long commit SHA1 (Default: off)", OUTPUT_LONG_OBJECT_NAME),
 		OPT_BIT('s', NULL, &output_option, "Suppress author name and timestamp (Default: off)", OUTPUT_NO_AUTHOR),
+		OPT_BIT('e', "show-email", &output_option, "Show author email instead of name (Default: off)", OUTPUT_SHOW_EMAIL),
 		OPT_BIT('w', NULL, &xdl_opts, "Ignore whitespace differences", XDF_IGNORE_WHITESPACE),
 		OPT_STRING('S', NULL, &revs_file, "file", "Use revisions from <file> instead of calling git-rev-list"),
 		OPT_STRING(0, "contents", &contents_from, "file", "Use <file>'s contents as the final image"),
