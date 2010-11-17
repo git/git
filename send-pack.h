@@ -5,6 +5,7 @@ struct send_pack_args {
 	unsigned verbose:1,
 		quiet:1,
 		porcelain:1,
+		progress:1,
 		send_mirror:1,
 		force_update:1,
 		use_thin_pack:1,
