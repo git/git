@@ -77,10 +77,6 @@ test_expect_success 'apply binary patch' \
 	 tree1=`git write-tree` &&
 	 test "$tree1" = "$tree0"'
 
-nul_to_q() {
-	perl -pe 'y/\000/Q/'
-}
-
 test_expect_success 'diff --no-index with binary creation' '
 	echo Q | q_to_nul >binary &&
 	(: hide error code from diff, which just indicates differences
