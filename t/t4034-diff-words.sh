@@ -35,10 +35,10 @@ aeff = aeff * ( aaa )
 EOF
 
 cat > expect <<\EOF
-<WHITE>diff --git a/pre b/post<RESET>
-<WHITE>index 330b04f..5ed8eff 100644<RESET>
-<WHITE>--- a/pre<RESET>
-<WHITE>+++ b/post<RESET>
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 330b04f..5ed8eff 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
 <CYAN>@@ -1,3 +1,7 @@<RESET>
 <RED>h(4)<RESET><GREEN>h(4),hh[44]<RESET>
 
@@ -122,10 +122,10 @@ test_expect_success '--word-diff=plain --no-color' '
 '
 
 cat > expect <<EOF
-<WHITE>diff --git a/pre b/post<RESET>
-<WHITE>index 330b04f..5ed8eff 100644<RESET>
-<WHITE>--- a/pre<RESET>
-<WHITE>+++ b/post<RESET>
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 330b04f..5ed8eff 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
 <CYAN>@@ -1,3 +1,7 @@<RESET>
 <RED>[-h(4)-]<RESET><GREEN>{+h(4),hh[44]+}<RESET>
 
@@ -143,10 +143,10 @@ test_expect_success '--word-diff=plain --color' '
 '
 
 cat > expect <<\EOF
-<WHITE>diff --git a/pre b/post<RESET>
-<WHITE>index 330b04f..5ed8eff 100644<RESET>
-<WHITE>--- a/pre<RESET>
-<WHITE>+++ b/post<RESET>
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 330b04f..5ed8eff 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
 <CYAN>@@ -1 +1 @@<RESET>
 <RED>h(4)<RESET><GREEN>h(4),hh[44]<RESET>
 <CYAN>@@ -3,0 +4,4 @@<RESET> <RESET><MAGENTA>a = b + c<RESET>
@@ -163,10 +163,10 @@ test_expect_success 'word diff without context' '
 '
 
 cat > expect <<\EOF
-<WHITE>diff --git a/pre b/post<RESET>
-<WHITE>index 330b04f..5ed8eff 100644<RESET>
-<WHITE>--- a/pre<RESET>
-<WHITE>+++ b/post<RESET>
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 330b04f..5ed8eff 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
 <CYAN>@@ -1,3 +1,7 @@<RESET>
 h(4),<GREEN>hh<RESET>[44]
 
@@ -199,10 +199,10 @@ test_expect_success 'option overrides .gitattributes' '
 '
 
 cat > expect <<\EOF
-<WHITE>diff --git a/pre b/post<RESET>
-<WHITE>index 330b04f..5ed8eff 100644<RESET>
-<WHITE>--- a/pre<RESET>
-<WHITE>+++ b/post<RESET>
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 330b04f..5ed8eff 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
 <CYAN>@@ -1,3 +1,7 @@<RESET>
 h(4)<GREEN>,hh[44]<RESET>
 
@@ -231,10 +231,10 @@ test_expect_success 'command-line overrides config' '
 '
 
 cat > expect <<\EOF
-<WHITE>diff --git a/pre b/post<RESET>
-<WHITE>index 330b04f..5ed8eff 100644<RESET>
-<WHITE>--- a/pre<RESET>
-<WHITE>+++ b/post<RESET>
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 330b04f..5ed8eff 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
 <CYAN>@@ -1,3 +1,7 @@<RESET>
 h(4),<GREEN>{+hh+}<RESET>[44]
 
@@ -260,10 +260,10 @@ test_expect_success 'remove diff driver regex' '
 '
 
 cat > expect <<\EOF
-<WHITE>diff --git a/pre b/post<RESET>
-<WHITE>index 330b04f..5ed8eff 100644<RESET>
-<WHITE>--- a/pre<RESET>
-<WHITE>+++ b/post<RESET>
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 330b04f..5ed8eff 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
 <CYAN>@@ -1,3 +1,7 @@<RESET>
 h(4),<GREEN>hh[44<RESET>]
 
@@ -282,10 +282,10 @@ echo 'aaa (aaa)' > pre
 echo 'aaa (aaa) aaa' > post
 
 cat > expect <<\EOF
-<WHITE>diff --git a/pre b/post<RESET>
-<WHITE>index c29453b..be22f37 100644<RESET>
-<WHITE>--- a/pre<RESET>
-<WHITE>+++ b/post<RESET>
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index c29453b..be22f37 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
 <CYAN>@@ -1 +1 @@<RESET>
 aaa (aaa) <GREEN>aaa<RESET>
 EOF
@@ -301,10 +301,10 @@ echo '(:' > pre
 echo '(' > post
 
 cat > expect <<\EOF
-<WHITE>diff --git a/pre b/post<RESET>
-<WHITE>index 289cb9d..2d06f37 100644<RESET>
-<WHITE>--- a/pre<RESET>
-<WHITE>+++ b/post<RESET>
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 289cb9d..2d06f37 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
 <CYAN>@@ -1 +1 @@<RESET>
 (<RED>:<RESET>
 EOF
