@@ -928,6 +928,114 @@ test_expect_success \
 	 git diff-tree -C --find-copies-harder -r N5^^ N5 >actual &&
 	 compare_diff_raw expect actual'
 
+test_expect_success \
+	'N: reject foo/ syntax' \
+	'subdir=$(git rev-parse refs/heads/branch^0:file2) &&
+	 test_must_fail git fast-import <<-INPUT_END
+	commit refs/heads/N5B
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy with invalid syntax
+	COMMIT
+
+	from refs/heads/branch^0
+	M 040000 $subdir file3/
+	INPUT_END'
+
+test_expect_success \
+	'N: copy to root by id and modify' \
+	'echo "hello, world" >expect.foo &&
+	 echo hello >expect.bar &&
+	 git fast-import <<-SETUP_END &&
+	commit refs/heads/N7
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	hello, tree
+	COMMIT
+
+	deleteall
+	M 644 inline foo/bar
+	data <<EOF
+	hello
+	EOF
+	SETUP_END
+
+	 tree=$(git rev-parse --verify N7:) &&
+	 git fast-import <<-INPUT_END &&
+	commit refs/heads/N8
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy to root by id and modify
+	COMMIT
+
+	M 040000 $tree ""
+	M 644 inline foo/foo
+	data <<EOF
+	hello, world
+	EOF
+	INPUT_END
+	 git show N8:foo/foo >actual.foo &&
+	 git show N8:foo/bar >actual.bar &&
+	 test_cmp expect.foo actual.foo &&
+	 test_cmp expect.bar actual.bar'
+
+test_expect_success \
+	'N: extract subtree' \
+	'branch=$(git rev-parse --verify refs/heads/branch^{tree}) &&
+	 cat >input <<-INPUT_END &&
+	commit refs/heads/N9
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	extract subtree branch:newdir
+	COMMIT
+
+	M 040000 $branch ""
+	C "newdir" ""
+	INPUT_END
+	 git fast-import <input &&
+	 git diff --exit-code branch:newdir N9'
+
+test_expect_success \
+	'N: modify subtree, extract it, and modify again' \
+	'echo hello >expect.baz &&
+	 echo hello, world >expect.qux &&
+	 git fast-import <<-SETUP_END &&
+	commit refs/heads/N10
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	hello, tree
+	COMMIT
+
+	deleteall
+	M 644 inline foo/bar/baz
+	data <<EOF
+	hello
+	EOF
+	SETUP_END
+
+	 tree=$(git rev-parse --verify N10:) &&
+	 git fast-import <<-INPUT_END &&
+	commit refs/heads/N11
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy to root by id and modify
+	COMMIT
+
+	M 040000 $tree ""
+	M 100644 inline foo/bar/qux
+	data <<EOF
+	hello, world
+	EOF
+	R "foo" ""
+	C "bar/qux" "bar/quux"
+	INPUT_END
+	 git show N11:bar/baz >actual.baz &&
+	 git show N11:bar/qux >actual.qux &&
+	 git show N11:bar/quux >actual.quux &&
+	 test_cmp expect.baz actual.baz &&
+	 test_cmp expect.qux actual.qux &&
+	 test_cmp expect.qux actual.quux'
+
 ###
 ### series O
 ###
