@@ -179,6 +179,15 @@ test_expect_success 'trailing empty lines (2)' '
 
 '
 
+test_expect_success 'checkdiff shows correct line number for trailing blank lines' '
+
+	printf "a\nb\n" > G &&
+	git add G &&
+	printf "x\nx\nx\na\nb\nc\n\n" > G &&
+	[ "$(git diff --check -- G)" = "G:7: new blank line at EOF." ]
+
+'
+
 test_expect_success 'do not color trailing cr in context' '
 	test_might_fail git config --unset core.whitespace &&
 	rm -f .gitattributes &&
