@@ -756,6 +756,19 @@ __git_compute_porcelain_commands ()
 	: ${__git_porcelain_commands:=$(__git_list_porcelain_commands)}
 }
 
+__git_pretty_aliases ()
+{
+	local i IFS=$'\n'
+	for i in $(git --git-dir="$(__gitdir)" config --get-regexp "pretty\..*" 2>/dev/null); do
+		case "$i" in
+		pretty.*)
+			i="${i#pretty.}"
+			echo "${i/ */}"
+			;;
+		esac
+	done
+}
+
 __git_aliases ()
 {
 	local i IFS=$'\n'
@@ -913,12 +926,16 @@ _git_bisect ()
 	local subcommands="start bad good skip reset visualize replay log run"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
-		__gitcomp "$subcommands"
+		if [ -f "$(__gitdir)"/BISECT_START ]; then
+			__gitcomp "$subcommands"
+		else
+			__gitcomp "replay start"
+		fi
 		return
 	fi
 
 	case "$subcommand" in
-	bad|good|reset|skip)
+	bad|good|reset|skip|start)
 		__gitcomp "$(__git_refs)"
 		;;
 	*)
@@ -1374,12 +1391,12 @@ _git_log ()
 	fi
 	case "$cur" in
 	--pretty=*)
-		__gitcomp "$__git_log_pretty_formats
+		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
 			" "" "${cur##--pretty=}"
 		return
 		;;
 	--format=*)
-		__gitcomp "$__git_log_pretty_formats
+		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
 			" "" "${cur##--format=}"
 		return
 		;;
@@ -1474,18 +1491,50 @@ _git_name_rev ()
 
 _git_notes ()
 {
-	local subcommands="edit show"
-	if [ -z "$(__git_find_on_cmdline "$subcommands")" ]; then
-		__gitcomp "$subcommands"
-		return
-	fi
+	local subcommands='add append copy edit list prune remove show'
+	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	local cur="${COMP_WORDS[COMP_CWORD]}"
 
-	case "${COMP_WORDS[COMP_CWORD-1]}" in
-	-m|-F)
-		COMPREPLY=()
+	case "$subcommand,$cur" in
+	,--*)
+		__gitcomp '--ref'
+		;;
+	,*)
+		case "${COMP_WORDS[COMP_CWORD-1]}" in
+		--ref)
+			__gitcomp "$(__git_refs)"
+			;;
+		*)
+			__gitcomp "$subcommands --ref"
+			;;
+		esac
+		;;
+	add,--reuse-message=*|append,--reuse-message=*)
+		__gitcomp "$(__git_refs)" "" "${cur##--reuse-message=}"
+		;;
+	add,--reedit-message=*|append,--reedit-message=*)
+		__gitcomp "$(__git_refs)" "" "${cur##--reedit-message=}"
+		;;
+	add,--*|append,--*)
+		__gitcomp '--file= --message= --reedit-message=
+				--reuse-message='
+		;;
+	copy,--*)
+		__gitcomp '--stdin'
+		;;
+	prune,--*)
+		__gitcomp '--dry-run --verbose'
+		;;
+	prune,*)
 		;;
 	*)
-		__gitcomp "$(__git_refs)"
+		case "${COMP_WORDS[COMP_CWORD-1]}" in
+		-m|-F)
+			;;
+		*)
+			__gitcomp "$(__git_refs)"
+			;;
+		esac
 		;;
 	esac
 }
@@ -2106,12 +2155,12 @@ _git_show ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
-		__gitcomp "$__git_log_pretty_formats
+		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
 			" "" "${cur##--pretty=}"
 		return
 		;;
 	--format=*)
-		__gitcomp "$__git_log_pretty_formats
+		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
 			" "" "${cur##--format=}"
 		return
 		;;
