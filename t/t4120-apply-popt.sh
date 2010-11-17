@@ -56,4 +56,30 @@ test_expect_success 'apply with too large -p and fancy filename' '
 	grep "removing 3 leading" err
 '
 
+test_expect_success 'apply (-p2) diff, mode change only' '
+	cat >patch.chmod <<-\EOF &&
+	diff --git a/sub/file1 b/sub/file1
+	old mode 100644
+	new mode 100755
+	EOF
+	chmod 644 file1 &&
+	git apply -p2 patch.chmod &&
+	test -x file1
+'
+
+test_expect_success 'apply (-p2) diff, rename' '
+	cat >patch.rename <<-\EOF &&
+	diff --git a/sub/file1 b/sub/file2
+	similarity index 100%
+	rename from sub/file1
+	rename to sub/file2
+	EOF
+	echo A >expected &&
+
+	cp file1.saved file1 &&
+	rm -f file2 &&
+	git apply -p2 patch.rename &&
+	test_cmp expected file2
+'
+
 test_done
