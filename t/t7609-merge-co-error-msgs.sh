@@ -27,10 +27,10 @@ test_expect_success 'setup' '
 
 cat >expect <<\EOF
 error: The following untracked working tree files would be overwritten by merge:
-	two
-	three
-	four
 	five
+	four
+	three
+	two
 Please move or remove them before you can merge.
 EOF
 
@@ -49,9 +49,9 @@ test_expect_success 'untracked files overwritten by merge (fast and non-fast for
 
 cat >expect <<\EOF
 error: Your local changes to the following files would be overwritten by merge:
-	two
-	three
 	four
+	three
+	two
 Please, commit your changes or stash them before you can merge.
 error: The following untracked working tree files would be overwritten by merge:
 	five
@@ -68,8 +68,8 @@ test_expect_success 'untracked files or local changes ovewritten by merge' '
 
 cat >expect <<\EOF
 error: Your local changes to the following files would be overwritten by checkout:
-	rep/two
 	rep/one
+	rep/two
 Please, commit your changes or stash them before you can switch branches.
 EOF
 
@@ -89,8 +89,8 @@ test_expect_success 'cannot switch branches because of local changes' '
 
 cat >expect <<\EOF
 error: Your local changes to the following files would be overwritten by checkout:
-	rep/two
 	rep/one
+	rep/two
 Please, commit your changes or stash them before you can switch branches.
 EOF
 
@@ -102,8 +102,8 @@ test_expect_success 'not uptodate file porcelain checkout error' '
 
 cat >expect <<\EOF
 error: Updating the following directories would lose untracked files in it:
-	rep2
 	rep
+	rep2
 
 EOF
 
