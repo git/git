@@ -42,6 +42,7 @@ static char* log_copy(uint32_t length, char *log)
 static struct {
 	uint32_t action, propLength, textLength, srcRev, srcMode, mark, type;
 	uint32_t src[REPO_MAX_PATH_DEPTH], dst[REPO_MAX_PATH_DEPTH];
+	uint32_t text_delta, prop_delta;
 } node_ctx;
 
 static struct {
@@ -58,7 +59,9 @@ static struct {
 	uint32_t svn_log, svn_author, svn_date, svn_executable, svn_special, uuid,
 		revision_number, node_path, node_kind, node_action,
 		node_copyfrom_path, node_copyfrom_rev, text_content_length,
-		prop_content_length, content_length, svn_fs_dump_format_version;
+		prop_content_length, content_length, svn_fs_dump_format_version,
+		/* version 3 format */
+		text_delta, prop_delta;
 } keys;
 
 static void reset_node_ctx(char *fname)
@@ -72,6 +75,8 @@ static void reset_node_ctx(char *fname)
 	node_ctx.srcMode = 0;
 	pool_tok_seq(REPO_MAX_PATH_DEPTH, node_ctx.dst, "/", fname);
 	node_ctx.mark = 0;
+	node_ctx.text_delta = 0;
+	node_ctx.prop_delta = 0;
 }
 
 static void reset_rev_ctx(uint32_t revision)
@@ -107,6 +112,9 @@ static void init_keys(void)
 	keys.prop_content_length = pool_intern("Prop-content-length");
 	keys.content_length = pool_intern("Content-length");
 	keys.svn_fs_dump_format_version = pool_intern("SVN-fs-dump-format-version");
+	/* version 3 format (Subversion 1.1.0) */
+	keys.text_delta = pool_intern("Text-delta");
+	keys.prop_delta = pool_intern("Prop-delta");
 }
 
 static void read_props(void)
@@ -144,6 +152,9 @@ static void read_props(void)
 
 static void handle_node(void)
 {
+	if (node_ctx.text_delta || node_ctx.prop_delta)
+		die("text and property deltas not supported");
+
 	if (node_ctx.propLength != LENGTH_UNKNOWN && node_ctx.propLength)
 		read_props();
 
@@ -210,8 +221,8 @@ void svndump_read(const char *url)
 
 		if (key == keys.svn_fs_dump_format_version) {
 			dump_ctx.version = atoi(val);
-			if (dump_ctx.version > 2)
-				die("expected svn dump format version <= 2, found %d",
+			if (dump_ctx.version > 3)
+				die("expected svn dump format version <= 3, found %d",
 				    dump_ctx.version);
 		} else if (key == keys.uuid) {
 			dump_ctx.uuid = pool_intern(val);
@@ -255,6 +266,10 @@ void svndump_read(const char *url)
 			node_ctx.textLength = atoi(val);
 		} else if (key == keys.prop_content_length) {
 			node_ctx.propLength = atoi(val);
+		} else if (key == keys.text_delta) {
+			node_ctx.text_delta = !strcmp(val, "true");
+		} else if (key == keys.prop_delta) {
+			node_ctx.prop_delta = !strcmp(val, "true");
 		} else if (key == keys.content_length) {
 			len = atoi(val);
 			buffer_read_line();
