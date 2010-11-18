@@ -15,8 +15,17 @@ Updates since v1.7.3
    /etc/gitattributes; core.attributesfile configuration variable can
    be used to customize the path to this file.
 
+ * Bash completion script in contrib/ has been adjusted to be also
+   usable by zsh.
+
+ * "git daemon" can take more than one --listen option to listen to
+   multiple addresses.
+
  * "git diff" and "git grep" learned how functions and subroutines
    in Fortran look like.
+
+ * "git mergetool" tells vim/gvim to show three-way diff by default
+   (use vimdiff2/gvimdiff2 as the tool name for old behaviour).
 
  * "git log -G<pattern>" limits the output to commits whose change has
    added or deleted lines that match the given pattern.
@@ -25,12 +34,35 @@ Updates since v1.7.3
    deprecated; we might want to remove it in the future.  Users can
    use the new --empty option to be more explicit instead.
 
+ * "git repack -f" does not spend cycles to recompress objects in the
+   non-delta representation anymore (use -F if you really mean it when
+   e.g. you changed the compression level).
+
  * "git merge --log" used to limit the resulting merge log to 20
    entries; this is now customizable by giving e.g. "--log=47".
+
+ * The default "recursive" merge strategy learned --rename-threshold
+   option to influence the rename detection, similar to the -M option
+   of "git diff".  E.g. "git merge -Xrename-threshold=50% ..." to use
+   this.
+
+ * The "recursive" strategy also learned to ignore various whitespace
+   changes; the most notable is -Xignore-space-at-eol.
+
+ * "git send-email" learned "--to-cmd", similar to "--cc-cmd", to read
+   recipient list from a command output.
+
+ * "git send-email" learned to read and use "To:" from its input files.
 
  * you can extend "git shell", which is often used on boxes that allow
    git-only login over ssh as login shell, with custom set of
    commands.
+
+ * "git submodule sync" updates metainformation for all submodules,
+   not just the ones that have been checked out.
+
+ * gitweb can use custom 'highlight' command with its configuration file.
+
 
 Also contains various documentation updates.
 
@@ -41,14 +73,33 @@ Fixes since v1.7.3
 All of the fixes in v1.7.3.X maintenance series are included in this
 release, unless otherwise noted.
 
+ * "diff" and friends incorrectly applied textconv filters to symlinks
+   (d391c0ff).
+
+ * "git apply" segfaulted when a bogus input is fed to it (24305cd70).
+
+ * Running "git cherry-pick --ff" on a root commit segfaulted (6355e50).
+
  * "git log --author=me --author=her" did not find commits written by
    me or by her; instead it looked for commits written by me and by
    her, which is impossible.
 
+ * "git merge-file" can be called from within a subdirectory now
+   (55846b9a).
+
+ * "git push --progress" shows progress indicators now.
+
+ * "git repack" places its temporary packs under $GIT_OBJECT_DIRECTORY/pack
+   instead of $GIT_OBJECT_DIRECTORY/ to avoid cross directory renames.
+
+ * "git rev-list --format="...%x00..." incorrectly chopped its output
+   at NUL (9130ac9fe).
+
+ * "git submodule update --recursive --other-flags" passes flags down
+   to its subinvocations.
 
 ---
 exec >/var/tmp/1
-O=v1.7.3
-O=v1.7.3.1-42-g34289ec
+O=v1.7.3.2-245-g03276d9
 echo O=$(git describe master)
 git shortlog --no-merges ^maint ^$O master
