@@ -162,13 +162,13 @@ all::
 # Define NO_ST_BLOCKS_IN_STRUCT_STAT if your platform does not have st_blocks
 # field that counts the on-disk footprint in 512-byte blocks.
 #
-# Define ASCIIDOC8 if you want to format documentation with AsciiDoc 8
+# Define ASCIIDOC7 if you want to format documentation with AsciiDoc 7
 #
 # Define DOCBOOK_XSL_172 if you want to format man pages with DocBook XSL v1.72
 # (not v1.73 or v1.71).
 #
-# Define ASCIIDOC_NO_ROFF if your DocBook XSL escapes raw roff directives
-# (versions 1.72 and later and 1.68.1 and earlier).
+# Define ASCIIDOC_ROFF if your DocBook XSL does not escape raw roff directives
+# (versions 1.68.1 through v1.72).
 #
 # Define GNU_ROFF if your target system uses GNU groff.  This forces
 # apostrophes to be ASCII so that cut&pasting examples to the shell
@@ -1518,8 +1518,8 @@ ifndef V
 endif
 endif
 
-ifdef ASCIIDOC8
-	export ASCIIDOC8
+ifdef ASCIIDOC7
+	export ASCIIDOC7
 endif
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
