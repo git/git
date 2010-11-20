@@ -40,7 +40,7 @@ static char* log_copy(uint32_t length, char *log)
 }
 
 static struct {
-	uint32_t action, propLength, textLength, srcRev, mark, type;
+	uint32_t action, propLength, textLength, srcRev, type;
 	uint32_t src[REPO_MAX_PATH_DEPTH], dst[REPO_MAX_PATH_DEPTH];
 	uint32_t text_delta, prop_delta;
 } node_ctx;
@@ -73,7 +73,6 @@ static void reset_node_ctx(char *fname)
 	node_ctx.src[0] = ~0;
 	node_ctx.srcRev = 0;
 	pool_tok_seq(REPO_MAX_PATH_DEPTH, node_ctx.dst, "/", fname);
-	node_ctx.mark = 0;
 	node_ctx.text_delta = 0;
 	node_ctx.prop_delta = 0;
 }
@@ -151,7 +150,7 @@ static void read_props(void)
 
 static void handle_node(void)
 {
-	uint32_t old_mode = 0;
+	uint32_t old_mode = 0, mark = 0;
 
 	if (node_ctx.text_delta || node_ctx.prop_delta)
 		die("text and property deltas not supported");
@@ -164,7 +163,7 @@ static void handle_node(void)
 
 	if (node_ctx.textLength != LENGTH_UNKNOWN &&
 	    node_ctx.type != REPO_MODE_DIR)
-		node_ctx.mark = next_blob_mark();
+		mark = next_blob_mark();
 
 	if (node_ctx.action == NODEACT_DELETE) {
 		repo_delete(node_ctx.dst);
@@ -172,26 +171,26 @@ static void handle_node(void)
 			   node_ctx.action == NODEACT_REPLACE) {
 		if (node_ctx.action == NODEACT_REPLACE &&
 		    node_ctx.type == REPO_MODE_DIR)
-			repo_replace(node_ctx.dst, node_ctx.mark);
+			repo_replace(node_ctx.dst, mark);
 		else if (node_ctx.propLength != LENGTH_UNKNOWN)
-			repo_modify(node_ctx.dst, node_ctx.type, node_ctx.mark);
+			repo_modify(node_ctx.dst, node_ctx.type, mark);
 		else if (node_ctx.textLength != LENGTH_UNKNOWN)
-			old_mode = repo_replace(node_ctx.dst, node_ctx.mark);
+			old_mode = repo_replace(node_ctx.dst, mark);
 	} else if (node_ctx.action == NODEACT_ADD) {
 		if (node_ctx.srcRev && node_ctx.propLength != LENGTH_UNKNOWN)
-			repo_modify(node_ctx.dst, node_ctx.type, node_ctx.mark);
+			repo_modify(node_ctx.dst, node_ctx.type, mark);
 		else if (node_ctx.srcRev && node_ctx.textLength != LENGTH_UNKNOWN)
-			old_mode = repo_replace(node_ctx.dst, node_ctx.mark);
+			old_mode = repo_replace(node_ctx.dst, mark);
 		else if ((node_ctx.type == REPO_MODE_DIR && !node_ctx.srcRev) ||
 			 node_ctx.textLength != LENGTH_UNKNOWN)
-			repo_add(node_ctx.dst, node_ctx.type, node_ctx.mark);
+			repo_add(node_ctx.dst, node_ctx.type, mark);
 	}
 
 	if (node_ctx.propLength == LENGTH_UNKNOWN && old_mode)
 		node_ctx.type = old_mode;
 
-	if (node_ctx.mark)
-		fast_export_blob(node_ctx.type, node_ctx.mark, node_ctx.textLength);
+	if (mark)
+		fast_export_blob(node_ctx.type, mark, node_ctx.textLength);
 	else if (node_ctx.textLength != LENGTH_UNKNOWN)
 		buffer_skip_bytes(node_ctx.textLength);
 }
