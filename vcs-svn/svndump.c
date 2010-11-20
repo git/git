@@ -134,21 +134,29 @@ static void handle_property(uint32_t key, const char *val, uint32_t len)
 
 static void read_props(void)
 {
-	uint32_t len;
 	uint32_t key = ~0;
-	char *val = NULL;
-	char *t;
+	const char *t;
 	while ((t = buffer_read_line()) && strcmp(t, "PROPS-END")) {
-		if (!strncmp(t, "K ", 2)) {
-			len = atoi(&t[2]);
-			key = pool_intern(buffer_read_string(len));
-			buffer_read_line();
-		} else if (!strncmp(t, "V ", 2)) {
-			len = atoi(&t[2]);
-			val = buffer_read_string(len);
+		uint32_t len;
+		const char *val;
+		const char type = t[0];
+
+		if (!type || t[1] != ' ')
+			die("invalid property line: %s\n", t);
+		len = atoi(&t[2]);
+		val = buffer_read_string(len);
+		buffer_skip_bytes(1);	/* Discard trailing newline. */
+
+		switch (type) {
+		case 'K':
+			key = pool_intern(val);
+			continue;
+		case 'V':
 			handle_property(key, val, len);
 			key = ~0;
-			buffer_read_line();
+			continue;
+		default:
+			die("invalid property line: %s\n", t);
 		}
 	}
 }
