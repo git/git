@@ -290,14 +290,16 @@ void svndump_read(const char *url)
 		handle_revision();
 }
 
-void svndump_init(const char *filename)
+int svndump_init(const char *filename)
 {
-	buffer_init(filename);
+	if (buffer_init(filename))
+		return error("cannot open %s: %s", filename, strerror(errno));
 	repo_init();
 	reset_dump_ctx(~0);
 	reset_rev_ctx(0);
 	reset_node_ctx(NULL);
 	init_keys();
+	return 0;
 }
 
 void svndump_deinit(void)
