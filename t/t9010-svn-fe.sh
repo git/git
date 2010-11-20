@@ -252,6 +252,164 @@ test_expect_success 'directory with files' '
 	test_cmp hi directory/file2
 '
 
+test_expect_failure 'change file mode but keep old content' '
+	reinit_git &&
+	cat >expect <<-\EOF &&
+	OBJID
+	:120000 100644 OBJID OBJID T	greeting
+	OBJID
+	:100644 120000 OBJID OBJID T	greeting
+	OBJID
+	:000000 100644 OBJID OBJID A	greeting
+	EOF
+	echo "link hello" >expect.blob &&
+	echo hello >hello &&
+	cat >filemode.dump <<-\EOF &&
+	SVN-fs-dump-format-version: 3
+
+	Revision-number: 1
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: greeting
+	Node-kind: file
+	Node-action: add
+	Prop-content-length: 10
+	Text-content-length: 11
+	Content-length: 21
+
+	PROPS-END
+	link hello
+
+	Revision-number: 2
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: greeting
+	Node-kind: file
+	Node-action: change
+	Prop-content-length: 33
+	Content-length: 33
+
+	K 11
+	svn:special
+	V 1
+	*
+	PROPS-END
+
+	Revision-number: 3
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: greeting
+	Node-kind: file
+	Node-action: change
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+	EOF
+	test-svn-fe filemode.dump >stream &&
+	git fast-import <stream &&
+	{
+		git rev-list HEAD |
+		git diff-tree --root --stdin |
+		sed "s/$_x40/OBJID/g"
+	} >actual &&
+	git show HEAD:greeting >actual.blob &&
+	git show HEAD^:greeting >actual.target &&
+	test_cmp expect actual &&
+	test_cmp expect.blob actual.blob &&
+	test_cmp hello actual.target
+'
+
+test_expect_success 'change file mode and reiterate content' '
+	reinit_git &&
+	cat >expect <<-\EOF &&
+	OBJID
+	:120000 100644 OBJID OBJID T	greeting
+	OBJID
+	:100644 120000 OBJID OBJID T	greeting
+	OBJID
+	:000000 100644 OBJID OBJID A	greeting
+	EOF
+	echo "link hello" >expect.blob &&
+	echo hello >hello &&
+	cat >filemode.dump <<-\EOF &&
+	SVN-fs-dump-format-version: 3
+
+	Revision-number: 1
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: greeting
+	Node-kind: file
+	Node-action: add
+	Prop-content-length: 10
+	Text-content-length: 11
+	Content-length: 21
+
+	PROPS-END
+	link hello
+
+	Revision-number: 2
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: greeting
+	Node-kind: file
+	Node-action: change
+	Prop-content-length: 33
+	Text-content-length: 11
+	Content-length: 44
+
+	K 11
+	svn:special
+	V 1
+	*
+	PROPS-END
+	link hello
+
+	Revision-number: 3
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: greeting
+	Node-kind: file
+	Node-action: change
+	Prop-content-length: 10
+	Text-content-length: 11
+	Content-length: 21
+
+	PROPS-END
+	link hello
+	EOF
+	test-svn-fe filemode.dump >stream &&
+	git fast-import <stream &&
+	{
+		git rev-list HEAD |
+		git diff-tree --root --stdin |
+		sed "s/$_x40/OBJID/g"
+	} >actual &&
+	git show HEAD:greeting >actual.blob &&
+	git show HEAD^:greeting >actual.target &&
+	test_cmp expect actual &&
+	test_cmp expect.blob actual.blob &&
+	test_cmp hello actual.target
+'
+
 test_expect_success 'deltas not supported' '
 	{
 		# (old) h + (inline) ello + (old) \n
