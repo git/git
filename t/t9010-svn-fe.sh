@@ -514,7 +514,12 @@ test_expect_success 'deltas not supported' '
 	test_must_fail test-svn-fe delta.dump
 '
 
-test_expect_success 'property deltas not supported' '
+test_expect_success 'property deltas supported' '
+	reinit_git &&
+	cat >expect <<-\EOF &&
+	OBJID
+	:100755 100644 OBJID OBJID M	script.sh
+	EOF
 	{
 		properties \
 			svn:author author@example.com \
@@ -565,7 +570,100 @@ test_expect_success 'property deltas not supported' '
 		PROPS-END
 		EOF
 	} >propdelta.dump &&
-	test_must_fail test-svn-fe propdelta.dump
+	test-svn-fe propdelta.dump >stream &&
+	git fast-import <stream &&
+	{
+		git rev-list HEAD |
+		git diff-tree --stdin |
+		sed "s/$_x40/OBJID/g"
+	} >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'deltas for typechange' '
+	reinit_git &&
+	cat >expect <<-\EOF &&
+	OBJID
+	:120000 100644 OBJID OBJID T	test-file
+	OBJID
+	:100755 120000 OBJID OBJID T	test-file
+	OBJID
+	:000000 100755 OBJID OBJID A	test-file
+	EOF
+	cat >deleteprop.dump <<-\EOF &&
+	SVN-fs-dump-format-version: 3
+
+	Revision-number: 1
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: test-file
+	Node-kind: file
+	Node-action: add
+	Prop-delta: true
+	Prop-content-length: 35
+	Text-content-length: 17
+	Content-length: 52
+
+	K 14
+	svn:executable
+	V 0
+
+	PROPS-END
+	link testing 123
+
+	Revision-number: 2
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: test-file
+	Node-kind: file
+	Node-action: change
+	Prop-delta: true
+	Prop-content-length: 53
+	Text-content-length: 17
+	Content-length: 70
+
+	K 11
+	svn:special
+	V 1
+	*
+	D 14
+	svn:executable
+	PROPS-END
+	link testing 231
+
+	Revision-number: 3
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: test-file
+	Node-kind: file
+	Node-action: change
+	Prop-delta: true
+	Prop-content-length: 27
+	Text-content-length: 17
+	Content-length: 44
+
+	D 11
+	svn:special
+	PROPS-END
+	link testing 321
+	EOF
+	test-svn-fe deleteprop.dump >stream &&
+	git fast-import <stream &&
+	{
+		git rev-list HEAD |
+		git diff-tree --root --stdin |
+		sed "s/$_x40/OBJID/g"
+	} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 't9135/svn.dump' '

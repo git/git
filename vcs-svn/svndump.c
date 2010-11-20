@@ -115,20 +115,35 @@ static void init_keys(void)
 	keys.prop_delta = pool_intern("Prop-delta");
 }
 
-static void handle_property(uint32_t key, const char *val, uint32_t len)
+static void handle_property(uint32_t key, const char *val, uint32_t len,
+				uint32_t *type_set)
 {
 	if (key == keys.svn_log) {
+		if (!val)
+			die("invalid dump: unsets svn:log");
 		/* Value length excludes terminating nul. */
 		rev_ctx.log = log_copy(len + 1, val);
 	} else if (key == keys.svn_author) {
 		rev_ctx.author = pool_intern(val);
 	} else if (key == keys.svn_date) {
+		if (!val)
+			die("invalid dump: unsets svn:date");
 		if (parse_date_basic(val, &rev_ctx.timestamp, NULL))
-			fprintf(stderr, "Invalid timestamp: %s\n", val);
-	} else if (key == keys.svn_executable) {
-		node_ctx.type = REPO_MODE_EXE;
-	} else if (key == keys.svn_special) {
-		node_ctx.type = REPO_MODE_LNK;
+			warning("invalid timestamp: %s", val);
+	} else if (key == keys.svn_executable || key == keys.svn_special) {
+		if (*type_set) {
+			if (!val)
+				return;
+			die("invalid dump: sets type twice");
+		}
+		if (!val) {
+			node_ctx.type = REPO_MODE_BLB;
+			return;
+		}
+		*type_set = 1;
+		node_ctx.type = key == keys.svn_executable ?
+				REPO_MODE_EXE :
+				REPO_MODE_LNK;
 	}
 }
 
@@ -136,6 +151,19 @@ static void read_props(void)
 {
 	uint32_t key = ~0;
 	const char *t;
+	/*
+	 * NEEDSWORK: to support simple mode changes like
+	 *	K 11
+	 *	svn:special
+	 *	V 1
+	 *	*
+	 *	D 14
+	 *	svn:executable
+	 * we keep track of whether a mode has been set and reset to
+	 * plain file only if not.  We should be keeping track of the
+	 * symlink and executable bits separately instead.
+	 */
+	uint32_t type_set = 0;
 	while ((t = buffer_read_line()) && strcmp(t, "PROPS-END")) {
 		uint32_t len;
 		const char *val;
@@ -151,8 +179,13 @@ static void read_props(void)
 		case 'K':
 			key = pool_intern(val);
 			continue;
+		case 'D':
+			key = pool_intern(val);
+			val = NULL;
+			len = 0;
+			/* fall through */
 		case 'V':
-			handle_property(key, val, len);
+			handle_property(key, val, len, &type_set);
 			key = ~0;
 			continue;
 		default:
@@ -167,8 +200,8 @@ static void handle_node(void)
 	const uint32_t type = node_ctx.type;
 	const int have_props = node_ctx.propLength != LENGTH_UNKNOWN;
 
-	if (node_ctx.text_delta || node_ctx.prop_delta)
-		die("text and property deltas not supported");
+	if (node_ctx.text_delta)
+		die("text deltas not supported");
 	if (node_ctx.textLength != LENGTH_UNKNOWN)
 		mark = next_blob_mark();
 	if (node_ctx.action == NODEACT_DELETE) {
@@ -206,7 +239,8 @@ static void handle_node(void)
 	}
 	if (have_props) {
 		const uint32_t old_mode = node_ctx.type;
-		node_ctx.type = type;
+		if (!node_ctx.prop_delta)
+			node_ctx.type = type;
 		if (node_ctx.propLength)
 			read_props();
 		if (node_ctx.type != old_mode)
