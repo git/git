@@ -151,11 +151,12 @@ static void read_props(void)
 static void handle_node(void)
 {
 	uint32_t old_mode = 0, mark = 0;
+	const int have_props = node_ctx.propLength != LENGTH_UNKNOWN;
 
 	if (node_ctx.text_delta || node_ctx.prop_delta)
 		die("text and property deltas not supported");
 
-	if (node_ctx.propLength != LENGTH_UNKNOWN && node_ctx.propLength)
+	if (have_props && node_ctx.propLength)
 		read_props();
 
 	if (node_ctx.srcRev)
@@ -172,12 +173,12 @@ static void handle_node(void)
 		if (node_ctx.action == NODEACT_REPLACE &&
 		    node_ctx.type == REPO_MODE_DIR)
 			repo_replace(node_ctx.dst, mark);
-		else if (node_ctx.propLength != LENGTH_UNKNOWN)
+		else if (have_props)
 			repo_modify(node_ctx.dst, node_ctx.type, mark);
 		else if (node_ctx.textLength != LENGTH_UNKNOWN)
 			old_mode = repo_replace(node_ctx.dst, mark);
 	} else if (node_ctx.action == NODEACT_ADD) {
-		if (node_ctx.srcRev && node_ctx.propLength != LENGTH_UNKNOWN)
+		if (node_ctx.srcRev && have_props)
 			repo_modify(node_ctx.dst, node_ctx.type, mark);
 		else if (node_ctx.srcRev && node_ctx.textLength != LENGTH_UNKNOWN)
 			old_mode = repo_replace(node_ctx.dst, mark);
@@ -186,7 +187,7 @@ static void handle_node(void)
 			repo_add(node_ctx.dst, node_ctx.type, mark);
 	}
 
-	if (node_ctx.propLength == LENGTH_UNKNOWN && old_mode)
+	if (!have_props && old_mode)
 		node_ctx.type = old_mode;
 
 	if (mark)
