@@ -182,14 +182,14 @@ static void handle_node(void)
 
 	if (node_ctx.action == NODEACT_CHANGE) {
 		if (have_props)
-			repo_modify(node_ctx.dst, node_ctx.type, mark);
+			repo_modify_path(node_ctx.dst, node_ctx.type, mark);
 		else if (mark)
-			old_mode = repo_replace(node_ctx.dst, mark);
+			old_mode = repo_modify_path(node_ctx.dst, 0, mark);
 	} else if (node_ctx.action == NODEACT_ADD) {
 		if (node_ctx.srcRev && have_props)
-			repo_modify(node_ctx.dst, node_ctx.type, mark);
+			repo_modify_path(node_ctx.dst, node_ctx.type, mark);
 		else if (node_ctx.srcRev && mark)
-			old_mode = repo_replace(node_ctx.dst, mark);
+			old_mode = repo_modify_path(node_ctx.dst, 0, mark);
 		else if ((node_ctx.type == REPO_MODE_DIR && !node_ctx.srcRev) ||
 			 mark)
 			repo_add(node_ctx.dst, node_ctx.type, mark);
