@@ -159,6 +159,13 @@ static void handle_node(void)
 	if (node_ctx.textLength != LENGTH_UNKNOWN)
 		mark = next_blob_mark();
 
+	if (node_ctx.action == NODEACT_DELETE) {
+		if (mark || have_props || node_ctx.srcRev)
+			die("invalid dump: deletion node has "
+				"copyfrom info, text, or properties");
+		return repo_delete(node_ctx.dst);
+	}
+
 	if (have_props && node_ctx.propLength)
 		read_props();
 
@@ -168,9 +175,7 @@ static void handle_node(void)
 	if (mark && node_ctx.type == REPO_MODE_DIR)
 		die("invalid dump: directories cannot have text attached");
 
-	if (node_ctx.action == NODEACT_DELETE) {
-		repo_delete(node_ctx.dst);
-	} else if (node_ctx.action == NODEACT_CHANGE ||
+	if (node_ctx.action == NODEACT_CHANGE ||
 			   node_ctx.action == NODEACT_REPLACE) {
 		if (node_ctx.action == NODEACT_REPLACE &&
 		    node_ctx.type == REPO_MODE_DIR)
