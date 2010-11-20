@@ -252,6 +252,26 @@ test_expect_success 'directory with files' '
 	test_cmp hi directory/file2
 '
 
+test_expect_success 'node without action' '
+	cat >inaction.dump <<-\EOF &&
+	SVN-fs-dump-format-version: 3
+
+	Revision-number: 1
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: directory
+	Node-kind: dir
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+	EOF
+	test_must_fail test-svn-fe inaction.dump
+'
+
 test_expect_failure 'change file mode but keep old content' '
 	reinit_git &&
 	cat >expect <<-\EOF &&

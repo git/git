@@ -174,7 +174,8 @@ static void handle_node(void)
 
 	if (node_ctx.srcRev) {
 		repo_copy(node_ctx.srcRev, node_ctx.src, node_ctx.dst);
-		node_ctx.action = NODEACT_CHANGE;
+		if (node_ctx.action == NODEACT_ADD)
+			node_ctx.action = NODEACT_CHANGE;
 	}
 
 	if (mark && type == REPO_MODE_DIR)
@@ -182,8 +183,10 @@ static void handle_node(void)
 
 	if (node_ctx.action == NODEACT_CHANGE)
 		node_ctx.type = repo_modify_path(node_ctx.dst, 0, mark);
-	else	/* Node-action: add */
+	else if (node_ctx.action == NODEACT_ADD)
 		repo_add(node_ctx.dst, type, mark);
+	else
+		die("invalid dump: Node-path block lacks Node-action");
 
 	if (have_props) {
 		const uint32_t old_mode = node_ctx.type;
