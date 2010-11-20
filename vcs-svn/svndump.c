@@ -156,15 +156,17 @@ static void handle_node(void)
 	if (node_ctx.text_delta || node_ctx.prop_delta)
 		die("text and property deltas not supported");
 
+	if (node_ctx.textLength != LENGTH_UNKNOWN)
+		mark = next_blob_mark();
+
 	if (have_props && node_ctx.propLength)
 		read_props();
 
 	if (node_ctx.srcRev)
 		old_mode = repo_copy(node_ctx.srcRev, node_ctx.src, node_ctx.dst);
 
-	if (node_ctx.textLength != LENGTH_UNKNOWN &&
-	    node_ctx.type != REPO_MODE_DIR)
-		mark = next_blob_mark();
+	if (mark && node_ctx.type == REPO_MODE_DIR)
+		die("invalid dump: directories cannot have text attached");
 
 	if (node_ctx.action == NODEACT_DELETE) {
 		repo_delete(node_ctx.dst);
@@ -175,15 +177,15 @@ static void handle_node(void)
 			repo_replace(node_ctx.dst, mark);
 		else if (have_props)
 			repo_modify(node_ctx.dst, node_ctx.type, mark);
-		else if (node_ctx.textLength != LENGTH_UNKNOWN)
+		else if (mark)
 			old_mode = repo_replace(node_ctx.dst, mark);
 	} else if (node_ctx.action == NODEACT_ADD) {
 		if (node_ctx.srcRev && have_props)
 			repo_modify(node_ctx.dst, node_ctx.type, mark);
-		else if (node_ctx.srcRev && node_ctx.textLength != LENGTH_UNKNOWN)
+		else if (node_ctx.srcRev && mark)
 			old_mode = repo_replace(node_ctx.dst, mark);
 		else if ((node_ctx.type == REPO_MODE_DIR && !node_ctx.srcRev) ||
-			 node_ctx.textLength != LENGTH_UNKNOWN)
+			 mark)
 			repo_add(node_ctx.dst, node_ctx.type, mark);
 	}
 
@@ -192,8 +194,6 @@ static void handle_node(void)
 
 	if (mark)
 		fast_export_blob(node_ctx.type, mark, node_ctx.textLength);
-	else if (node_ctx.textLength != LENGTH_UNKNOWN)
-		buffer_skip_bytes(node_ctx.textLength);
 }
 
 static void handle_revision(void)
