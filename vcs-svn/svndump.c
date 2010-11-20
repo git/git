@@ -156,31 +156,25 @@ static void handle_node(void)
 
 	if (node_ctx.text_delta || node_ctx.prop_delta)
 		die("text and property deltas not supported");
-
 	if (node_ctx.textLength != LENGTH_UNKNOWN)
 		mark = next_blob_mark();
-
 	if (node_ctx.action == NODEACT_DELETE) {
 		if (mark || have_props || node_ctx.srcRev)
 			die("invalid dump: deletion node has "
 				"copyfrom info, text, or properties");
 		return repo_delete(node_ctx.dst);
 	}
-
 	if (node_ctx.action == NODEACT_REPLACE) {
 		repo_delete(node_ctx.dst);
 		node_ctx.action = NODEACT_ADD;
 	}
-
 	if (node_ctx.srcRev) {
 		repo_copy(node_ctx.srcRev, node_ctx.src, node_ctx.dst);
 		if (node_ctx.action == NODEACT_ADD)
 			node_ctx.action = NODEACT_CHANGE;
 	}
-
 	if (mark && type == REPO_MODE_DIR)
 		die("invalid dump: directories cannot have text attached");
-
 	if (node_ctx.action == NODEACT_CHANGE) {
 		uint32_t mode = repo_modify_path(node_ctx.dst, 0, mark);
 		if (!mode)
@@ -197,7 +191,6 @@ static void handle_node(void)
 	} else {
 		die("invalid dump: Node-path block lacks Node-action");
 	}
-
 	if (have_props) {
 		const uint32_t old_mode = node_ctx.type;
 		node_ctx.type = type;
@@ -206,7 +199,6 @@ static void handle_node(void)
 		if (node_ctx.type != old_mode)
 			repo_modify_path(node_ctx.dst, node_ctx.type, mark);
 	}
-
 	if (mark)
 		fast_export_blob(node_ctx.type, mark, node_ctx.textLength);
 }
