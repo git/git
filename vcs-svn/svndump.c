@@ -30,7 +30,7 @@
 /* Create memory pool for log messages */
 obj_pool_gen(log, char, 4096)
 
-static char* log_copy(uint32_t length, char *log)
+static char *log_copy(uint32_t length, const char *log)
 {
 	char *buffer;
 	log_free(log_pool.size);
@@ -115,6 +115,23 @@ static void init_keys(void)
 	keys.prop_delta = pool_intern("Prop-delta");
 }
 
+static void handle_property(uint32_t key, const char *val, uint32_t len)
+{
+	if (key == keys.svn_log) {
+		/* Value length excludes terminating nul. */
+		rev_ctx.log = log_copy(len + 1, val);
+	} else if (key == keys.svn_author) {
+		rev_ctx.author = pool_intern(val);
+	} else if (key == keys.svn_date) {
+		if (parse_date_basic(val, &rev_ctx.timestamp, NULL))
+			fprintf(stderr, "Invalid timestamp: %s\n", val);
+	} else if (key == keys.svn_executable) {
+		node_ctx.type = REPO_MODE_EXE;
+	} else if (key == keys.svn_special) {
+		node_ctx.type = REPO_MODE_LNK;
+	}
+}
+
 static void read_props(void)
 {
 	uint32_t len;
@@ -129,19 +146,7 @@ static void read_props(void)
 		} else if (!strncmp(t, "V ", 2)) {
 			len = atoi(&t[2]);
 			val = buffer_read_string(len);
-			if (key == keys.svn_log) {
-				/* Value length excludes terminating nul. */
-				rev_ctx.log = log_copy(len + 1, val);
-			} else if (key == keys.svn_author) {
-				rev_ctx.author = pool_intern(val);
-			} else if (key == keys.svn_date) {
-				if (parse_date_basic(val, &rev_ctx.timestamp, NULL))
-					fprintf(stderr, "Invalid timestamp: %s\n", val);
-			} else if (key == keys.svn_executable) {
-				node_ctx.type = REPO_MODE_EXE;
-			} else if (key == keys.svn_special) {
-				node_ctx.type = REPO_MODE_LNK;
-			}
+			handle_property(key, val, len);
 			key = ~0;
 			buffer_read_line();
 		}
