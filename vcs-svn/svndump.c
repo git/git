@@ -166,6 +166,11 @@ static void handle_node(void)
 		return repo_delete(node_ctx.dst);
 	}
 
+	if (node_ctx.action == NODEACT_REPLACE) {
+		repo_delete(node_ctx.dst);
+		node_ctx.action = NODEACT_ADD;
+	}
+
 	if (have_props && node_ctx.propLength)
 		read_props();
 
@@ -175,12 +180,8 @@ static void handle_node(void)
 	if (mark && node_ctx.type == REPO_MODE_DIR)
 		die("invalid dump: directories cannot have text attached");
 
-	if (node_ctx.action == NODEACT_CHANGE ||
-			   node_ctx.action == NODEACT_REPLACE) {
-		if (node_ctx.action == NODEACT_REPLACE &&
-		    node_ctx.type == REPO_MODE_DIR)
-			repo_replace(node_ctx.dst, mark);
-		else if (have_props)
+	if (node_ctx.action == NODEACT_CHANGE) {
+		if (have_props)
 			repo_modify(node_ctx.dst, node_ctx.type, mark);
 		else if (mark)
 			old_mode = repo_replace(node_ctx.dst, mark);
