@@ -150,7 +150,8 @@ static void read_props(void)
 
 static void handle_node(void)
 {
-	uint32_t old_mode = 0, mark = 0;
+	uint32_t mark = 0;
+	const uint32_t type = node_ctx.type;
 	const int have_props = node_ctx.propLength != LENGTH_UNKNOWN;
 
 	if (node_ctx.text_delta || node_ctx.prop_delta)
@@ -171,32 +172,27 @@ static void handle_node(void)
 		node_ctx.action = NODEACT_ADD;
 	}
 
-	if (have_props && node_ctx.propLength)
-		read_props();
-
-	if (node_ctx.srcRev)
-		old_mode = repo_copy(node_ctx.srcRev, node_ctx.src, node_ctx.dst);
-
-	if (mark && node_ctx.type == REPO_MODE_DIR)
-		die("invalid dump: directories cannot have text attached");
-
-	if (node_ctx.action == NODEACT_CHANGE) {
-		if (have_props)
-			repo_modify_path(node_ctx.dst, node_ctx.type, mark);
-		else if (mark)
-			old_mode = repo_modify_path(node_ctx.dst, 0, mark);
-	} else if (node_ctx.action == NODEACT_ADD) {
-		if (node_ctx.srcRev && have_props)
-			repo_modify_path(node_ctx.dst, node_ctx.type, mark);
-		else if (node_ctx.srcRev && mark)
-			old_mode = repo_modify_path(node_ctx.dst, 0, mark);
-		else if ((node_ctx.type == REPO_MODE_DIR && !node_ctx.srcRev) ||
-			 mark)
-			repo_add(node_ctx.dst, node_ctx.type, mark);
+	if (node_ctx.srcRev) {
+		repo_copy(node_ctx.srcRev, node_ctx.src, node_ctx.dst);
+		node_ctx.action = NODEACT_CHANGE;
 	}
 
-	if (!have_props && old_mode)
-		node_ctx.type = old_mode;
+	if (mark && type == REPO_MODE_DIR)
+		die("invalid dump: directories cannot have text attached");
+
+	if (node_ctx.action == NODEACT_CHANGE)
+		node_ctx.type = repo_modify_path(node_ctx.dst, 0, mark);
+	else	/* Node-action: add */
+		repo_add(node_ctx.dst, type, mark);
+
+	if (have_props) {
+		const uint32_t old_mode = node_ctx.type;
+		node_ctx.type = type;
+		if (node_ctx.propLength)
+			read_props();
+		if (node_ctx.type != old_mode)
+			repo_modify_path(node_ctx.dst, node_ctx.type, mark);
+	}
 
 	if (mark)
 		fast_export_blob(node_ctx.type, mark, node_ctx.textLength);
