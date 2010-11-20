@@ -272,6 +272,27 @@ test_expect_success 'node without action' '
 	test_must_fail test-svn-fe inaction.dump
 '
 
+test_expect_success 'action: add node without text' '
+	cat >textless.dump <<-\EOF &&
+	SVN-fs-dump-format-version: 3
+
+	Revision-number: 1
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: textless
+	Node-kind: file
+	Node-action: add
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+	EOF
+	test_must_fail test-svn-fe textless.dump
+'
+
 test_expect_failure 'change file mode but keep old content' '
 	reinit_git &&
 	cat >expect <<-\EOF &&

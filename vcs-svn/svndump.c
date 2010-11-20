@@ -181,12 +181,22 @@ static void handle_node(void)
 	if (mark && type == REPO_MODE_DIR)
 		die("invalid dump: directories cannot have text attached");
 
-	if (node_ctx.action == NODEACT_CHANGE)
-		node_ctx.type = repo_modify_path(node_ctx.dst, 0, mark);
-	else if (node_ctx.action == NODEACT_ADD)
+	if (node_ctx.action == NODEACT_CHANGE) {
+		uint32_t mode = repo_modify_path(node_ctx.dst, 0, mark);
+		if (!mode)
+			die("invalid dump: path to be modified is missing");
+		if (mode == REPO_MODE_DIR && type != REPO_MODE_DIR)
+			die("invalid dump: cannot modify a directory into a file");
+		if (mode != REPO_MODE_DIR && type == REPO_MODE_DIR)
+			die("invalid dump: cannot modify a file into a directory");
+		node_ctx.type = mode;
+	} else if (node_ctx.action == NODEACT_ADD) {
+		if (!mark && type != REPO_MODE_DIR)
+			die("invalid dump: adds node without text");
 		repo_add(node_ctx.dst, type, mark);
-	else
+	} else {
 		die("invalid dump: Node-path block lacks Node-action");
+	}
 
 	if (have_props) {
 		const uint32_t old_mode = node_ctx.type;
