@@ -274,15 +274,16 @@ do
 			die "No rebase in progress?"
 
 		git rerere clear
-		if test -d "$dotest"
-		then
-			GIT_QUIET=$(cat "$dotest/quiet")
-			move_to_original_branch
-		else
-			dotest="$GIT_DIR"/rebase-apply
-			GIT_QUIET=$(cat "$dotest/quiet")
-			move_to_original_branch
-		fi
+
+		test -d "$dotest" || dotest="$GIT_DIR"/rebase-apply
+
+		head_name="$(cat "$dotest"/head-name)" &&
+		case "$head_name" in
+		refs/*)
+			git symbolic-ref HEAD $head_name ||
+			die "Could not move back to $head_name"
+			;;
+		esac
 		git reset --hard $(cat "$dotest/orig-head")
 		rm -r "$dotest"
 		exit

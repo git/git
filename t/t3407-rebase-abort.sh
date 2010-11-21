@@ -72,6 +72,18 @@ testrebase() {
 		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
 		test ! -d "$dotest"
 	'
+
+	test_expect_success "rebase$type --abort does not update reflog" '
+		cd "$work_dir" &&
+		# Clean up the state from the previous one
+		git reset --hard pre-rebase &&
+		git reflog show to-rebase > reflog_before &&
+		test_must_fail git rebase$type master &&
+		git rebase --abort &&
+		git reflog show to-rebase > reflog_after &&
+		test_cmp reflog_before reflog_after &&
+		rm reflog_before reflog_after
+	'
 }
 
 testrebase "" .git/rebase-apply
