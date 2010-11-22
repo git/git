@@ -239,7 +239,6 @@ void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)
 
 	commit->parents = xcalloc(sizeof(struct commit_list), 1);
 	commit->parents->item = commit_info->commit;
-	commit->object.flags &= ~(ADDED | SEEN | SHOWN);
 }
 
 void get_reflog_selector(struct strbuf *sb,
