@@ -1582,7 +1582,7 @@ struct dirent *mingw_readdir(DIR *dir)
 	HANDLE handle;
 	struct mingw_DIR *mdir = (struct mingw_DIR*)dir;
 
-	if (!dir->dd_handle) {
+	if (!dir || !dir->dd_handle) {
 		errno = EBADF; /* No set_errno for mingw */
 		return NULL;
 	}
