@@ -5,15 +5,14 @@
 
 DIR *opendir(const char *name)
 {
-	int len;
+	int len = strlen(name);
 	DIR *p;
-	p = malloc(sizeof(DIR));
+	p = malloc(sizeof(DIR) + len + 2);
 	if (!p)
 		return NULL;
 
-	memset(p, 0, sizeof(DIR));
-	strncpy(p->dd_name, name, PATH_MAX);
-	len = strlen(p->dd_name);
+	memset(p, 0, sizeof(DIR) + len + 2);
+	strcpy(p->dd_name, name);
 	p->dd_name[len] = '/';
 	p->dd_name[len+1] = '*';
 
