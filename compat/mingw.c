@@ -195,9 +195,10 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
  */
 static int do_lstat(const char *file_name, struct stat *buf)
 {
+	int err;
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
 
-	if (!(errno = get_file_attr(file_name, &fdata))) {
+	if (!(err = get_file_attr(file_name, &fdata))) {
 		buf->st_ino = 0;
 		buf->st_gid = 0;
 		buf->st_uid = 0;
@@ -211,6 +212,7 @@ static int do_lstat(const char *file_name, struct stat *buf)
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
 		return 0;
 	}
+	errno = err;
 	return -1;
 }
 
