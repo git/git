@@ -319,35 +319,6 @@ int main(int argc, const char **argv) \
 } \
 static int mingw_main(c,v)
 
-#ifndef NO_MINGW_REPLACE_READDIR
-/*
- * A replacement of readdir, to ensure that it reads the file type at
- * the same time. This avoid extra unneeded lstats in git on MinGW
- */
-#undef DT_UNKNOWN
-#undef DT_DIR
-#undef DT_REG
-#undef DT_LNK
-#define DT_UNKNOWN	0
-#define DT_DIR		1
-#define DT_REG		2
-#define DT_LNK		3
-
-struct mingw_dirent
-{
-	long		d_ino;			/* Always zero. */
-	union {
-		unsigned short	d_reclen;	/* Always zero. */
-		unsigned char   d_type;		/* Reimplementation adds this */
-	};
-	unsigned short	d_namlen;		/* Length of name in d_name. */
-	char		d_name[FILENAME_MAX];	/* File name. */
-};
-#define dirent mingw_dirent
-#define readdir(x) mingw_readdir(x)
-struct dirent *mingw_readdir(DIR *dir);
-#endif // !NO_MINGW_REPLACE_READDIR
-
 /*
  * Used by Pthread API implementation for Windows
  */
