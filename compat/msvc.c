@@ -23,6 +23,8 @@ DIR *opendir(const char *name)
 
 	/* check that the pattern won't be too long for FindFirstFileA */
 	len = strlen(name);
+	if (is_dir_sep(name[len - 1]))
+		len--;
 	if (len + 2 >= MAX_PATH) {
 		errno = ENAMETOOLONG;
 		return NULL;
