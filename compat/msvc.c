@@ -16,17 +16,13 @@ DIR *opendir(const char *name)
 	p->dd_name[len] = '/';
 	p->dd_name[len+1] = '*';
 
-	p->dd_handle = _findfirst(p->dd_name, &p->dd_dta);
-
-	if (p->dd_handle == -1) {
-		free(p);
-		return NULL;
-	}
+	p->dd_handle = (long)INVALID_HANDLE_VALUE;
 	return p;
 }
 int closedir(DIR *dir)
 {
-	_findclose(dir->dd_handle);
+	if (dir->dd_handle != (long)INVALID_HANDLE_VALUE)
+		FindClose((HANDLE)dir->dd_handle);
 	free(dir);
 	return 0;
 }
