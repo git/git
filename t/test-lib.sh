@@ -238,14 +238,47 @@ test_set_editor () {
 }
 
 test_decode_color () {
-	sed	-e 's/.\[1m/<WHITE>/g' \
-		-e 's/.\[31m/<RED>/g' \
-		-e 's/.\[32m/<GREEN>/g' \
-		-e 's/.\[33m/<YELLOW>/g' \
-		-e 's/.\[34m/<BLUE>/g' \
-		-e 's/.\[35m/<MAGENTA>/g' \
-		-e 's/.\[36m/<CYAN>/g' \
-		-e 's/.\[m/<RESET>/g'
+	awk '
+		function name(n) {
+			if (n == 0) return "RESET";
+			if (n == 1) return "BOLD";
+			if (n == 30) return "BLACK";
+			if (n == 31) return "RED";
+			if (n == 32) return "GREEN";
+			if (n == 33) return "YELLOW";
+			if (n == 34) return "BLUE";
+			if (n == 35) return "MAGENTA";
+			if (n == 36) return "CYAN";
+			if (n == 37) return "WHITE";
+			if (n == 40) return "BLACK";
+			if (n == 41) return "BRED";
+			if (n == 42) return "BGREEN";
+			if (n == 43) return "BYELLOW";
+			if (n == 44) return "BBLUE";
+			if (n == 45) return "BMAGENTA";
+			if (n == 46) return "BCYAN";
+			if (n == 47) return "BWHITE";
+		}
+		{
+			while (match($0, /\x1b\[[0-9;]*m/) != 0) {
+				printf "%s<", substr($0, 1, RSTART-1);
+				codes = substr($0, RSTART+2, RLENGTH-3);
+				if (length(codes) == 0)
+					printf "%s", name(0)
+				else {
+					n = split(codes, ary, ";");
+					sep = "";
+					for (i = 1; i <= n; i++) {
+						printf "%s%s", sep, name(ary[i]);
+						sep = ";"
+					}
+				}
+				printf ">";
+				$0 = substr($0, RSTART + RLENGTH, length($0) - RSTART - RLENGTH + 1);
+			}
+			print
+		}
+	'
 }
 
 nul_to_q () {
