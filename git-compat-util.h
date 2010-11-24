@@ -104,9 +104,10 @@
 #include <assert.h>
 #include <regex.h>
 #include <utime.h>
+#include <syslog.h>
+#include <sys/poll.h>
 #ifndef __MINGW32__
 #include <sys/wait.h>
-#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -384,6 +385,14 @@ static inline void *gitmempcpy(void *dest, const void *src, size_t n)
 {
 	return (char *)memcpy(dest, src, n) + n;
 }
+#endif
+
+#ifdef NO_INET_PTON
+int inet_pton(int af, const char *src, void *dst);
+#endif
+
+#ifdef NO_INET_NTOP
+const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 #endif
 
 extern void release_pack_memory(size_t, int);

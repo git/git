@@ -78,7 +78,8 @@ OPTIONS
 
 --inetd::
 	Have the server run as an inetd service. Implies --syslog.
-	Incompatible with --port, --listen, --user and --group options.
+	Incompatible with --detach, --port, --listen, --user and --group
+	options.
 
 --listen=<host_or_ipaddr>::
 	Listen on a specific IP address or hostname.  IP addresses can
