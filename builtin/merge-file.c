@@ -40,7 +40,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 			    XDL_MERGE_FAVOR_UNION),
 		OPT_INTEGER(0, "marker-size", &xmp.marker_size,
 			    "for conflicts, use this marker size"),
-		OPT__QUIET(&quiet),
+		OPT__QUIET(&quiet, "do not warn about conflicts"),
 		OPT_CALLBACK('L', NULL, names, "name",
 			     "set labels for file1/orig_file/file2", &label_cb),
 		OPT_END(),

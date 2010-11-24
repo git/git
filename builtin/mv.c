@@ -55,8 +55,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	int i, newfd;
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0;
 	struct option builtin_mv_options[] = {
-		OPT__DRY_RUN(&show_only),
-		OPT_BOOLEAN('f', "force", &force, "force move/rename even if target exists"),
+		OPT__DRY_RUN(&show_only, "dry run"),
+		OPT__FORCE(&force, "force move/rename even if target exists"),
 		OPT_BOOLEAN('k', NULL, &ignore_errors, "skip move/rename errors"),
 		OPT_END(),
 	};

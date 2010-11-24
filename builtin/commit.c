@@ -114,8 +114,8 @@ static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 }
 
 static struct option builtin_commit_options[] = {
-	OPT__QUIET(&quiet),
-	OPT__VERBOSE(&verbose),
+	OPT__QUIET(&quiet, "suppress summary after successful commit"),
+	OPT__VERBOSE(&verbose, "show diff in commit message template"),
 
 	OPT_GROUP("Commit message options"),
 	OPT_FILENAME('F', "file", &logfile, "read log from file"),
@@ -1048,7 +1048,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	int fd;
 	unsigned char sha1[20];
 	static struct option builtin_status_options[] = {
-		OPT__VERBOSE(&verbose),
+		OPT__VERBOSE(&verbose, "be verbose"),
 		OPT_SET_INT('s', "short", &status_format,
 			    "show status concisely", STATUS_FORMAT_SHORT),
 		OPT_BOOLEAN('b', "branch", &status_show_branch,

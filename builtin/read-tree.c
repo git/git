@@ -109,7 +109,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		  PARSE_OPT_NONEG, index_output_cb },
 		OPT_SET_INT(0, "empty", &read_empty,
 			    "only empty the index", 1),
-		OPT__VERBOSE(&opts.verbose_update),
+		OPT__VERBOSE(&opts.verbose_update, "be verbose"),
 		OPT_GROUP("Merging"),
 		OPT_SET_INT('m', NULL, &opts.merge,
 			    "perform a merge in addition to a read", 1),

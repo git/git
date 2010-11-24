@@ -1200,7 +1200,7 @@ static int prune(int argc, const char **argv)
 {
 	int dry_run = 0, result = 0;
 	struct option options[] = {
-		OPT__DRY_RUN(&dry_run),
+		OPT__DRY_RUN(&dry_run, "dry run"),
 		OPT_END()
 	};
 
@@ -1512,7 +1512,7 @@ static int show_all(void)
 int cmd_remote(int argc, const char **argv, const char *prefix)
 {
 	struct option options[] = {
-		OPT_BOOLEAN('v', "verbose", &verbose, "be verbose; must be placed before a subcommand"),
+		OPT__VERBOSE(&verbose, "be verbose; must be placed before a subcommand"),
 		OPT_END()
 	};
 	int result;

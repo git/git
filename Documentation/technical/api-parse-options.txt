@@ -118,13 +118,16 @@ There are some macros to easily define options:
 `OPT__COLOR(&int_var, description)`::
 	Add `\--color[=<when>]` and `--no-color`.
 
-`OPT__DRY_RUN(&int_var)`::
+`OPT__DRY_RUN(&int_var, description)`::
 	Add `-n, \--dry-run`.
 
-`OPT__QUIET(&int_var)`::
+`OPT__FORCE(&int_var, description)`::
+	Add `-f, \--force`.
+
+`OPT__QUIET(&int_var, description)`::
 	Add `-q, \--quiet`.
 
-`OPT__VERBOSE(&int_var)`::
+`OPT__VERBOSE(&int_var, description)`::
 	Add `-v, \--verbose`.
 
 `OPT_GROUP(description)`::
