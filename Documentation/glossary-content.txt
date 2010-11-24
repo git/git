@@ -131,7 +131,7 @@ to point at the new commit.
 	you have. In such these cases, you do not make a new <<def_merge,merge>>
 	<<def_commit,commit>> but instead just update to his
 	revision. This will happen frequently on a
-	<<def_tracking_branch,tracking branch>> of a remote
+	<<def_remote_tracking_branch,remote-tracking branch>> of a remote
 	<<def_repository,repository>>.
 
 [[def_fetch]]fetch::
@@ -260,7 +260,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	The default upstream <<def_repository,repository>>. Most projects have
 	at least one upstream project which they track. By default
 	'origin' is used for that purpose. New upstream updates
-	will be fetched into remote <<def_tracking_branch,tracking branches>> named
+	will be fetched into remote <<def_remote_tracking_branch,remote-tracking branches>> named
 	origin/name-of-upstream-branch, which you can see using
 	`git branch -r`.
 
@@ -349,6 +349,14 @@ This commit is referred to as a "merge commit", or sometimes just a
 	master branch head as to-upstream branch at $URL". See also
 	linkgit:git-push[1].
 
+[[def_remote_tracking_branch]]remote-tracking branch::
+	A regular git <<def_branch,branch>> that is used to follow changes from
+	another <<def_repository,repository>>. A remote-tracking
+	branch should not contain direct modifications or have local commits
+	made to it. A remote-tracking branch can usually be
+	identified as the right-hand-side <<def_ref,ref>> in a Pull:
+	<<def_refspec,refspec>>.
+
 [[def_repository]]repository::
 	A collection of <<def_ref,refs>> together with an
 	<<def_object_database,object database>> containing all objects
@@ -417,14 +425,6 @@ This commit is referred to as a "merge commit", or sometimes just a
 	and inexpensive, it is often desirable to have several small branches
 	that each contain very well defined concepts or small incremental yet
 	related changes.
-
-[[def_tracking_branch]]tracking branch::
-	A regular git <<def_branch,branch>> that is used to follow changes from
-	another <<def_repository,repository>>. A tracking
-	branch should not contain direct modifications or have local commits
-	made to it. A tracking branch can usually be
-	identified as the right-hand-side <<def_ref,ref>> in a Pull:
-	<<def_refspec,refspec>>.
 
 [[def_tree]]tree::
 	Either a <<def_working_tree,working tree>>, or a <<def_tree_object,tree

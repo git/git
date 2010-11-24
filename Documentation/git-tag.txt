@@ -177,7 +177,7 @@ On Automatic following
 ~~~~~~~~~~~~~~~~~~~~~~
 
 If you are following somebody else's tree, you are most likely
-using tracking branches (`refs/heads/origin` in traditional
+using remote-tracking branches (`refs/heads/origin` in traditional
 layout, or `refs/remotes/origin/master` in the separate-remote
 layout).  You usually want the tags from the other end.
 
@@ -232,7 +232,7 @@ this case.
 It may well be that among networking people, they may want to
 exchange the tags internal to their group, but in that workflow
 they are most likely tracking with each other's progress by
-having tracking branches.  Again, the heuristic to automatically
+having remote-tracking branches.  Again, the heuristic to automatically
 follow such tags is a good thing.
 
 
